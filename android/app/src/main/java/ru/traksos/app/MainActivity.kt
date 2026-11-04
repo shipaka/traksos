@@ -66,7 +66,8 @@ class MainActivity : AppCompatActivity() {
                 web.removeCallbacks(watchdog)
                 if (!url.startsWith("http") || failed) return
                 // По адресу может отвечать что угодно (пустой домен, заглушка) — проверяем, что это наш сайт
-                view.evaluateJavascript("!!document.querySelector('meta[name=traksos-app]')") { ok ->
+                // Предупреждение Codespaces «Вы собираетесь получить доступ к порту…» — пропускаем, там кнопка «Продолжить»
+                view.evaluateJavascript("!!document.querySelector('meta[name=traksos-app]') || document.title.indexOf('Codespaces') === 0") { ok ->
                     if (ok != "true") showOffline(getString(R.string.server_not_traksos))
                 }
             }
