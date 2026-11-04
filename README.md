@@ -62,3 +62,15 @@ DATABASE_URL=postgres://postgres@127.0.0.1:5432/traksos ADMIN_PHONES=+7999000000
 | Secrets | `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` | ключ подписи для RuStore |
 
 Без ключа собирается отладочный APK для проверки на своём телефоне.
+
+## Запуск на сервере
+
+Нужен VPS в России (Timeweb Cloud, Selectel, Yandex Cloud), 2 ГБ памяти, Docker. Образ собирается сам при каждом изменении: `ghcr.io/shipaka/traksos`.
+
+```bash
+git clone https://github.com/shipaka/traksos && cd traksos/deploy
+cp .env.example .env   # заполнить домен, пароли, номера админов
+docker compose up -d
+```
+
+Caddy сам получит HTTPS-сертификат, база копируется раз в сутки в `deploy/backups`.
