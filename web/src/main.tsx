@@ -9,6 +9,7 @@ import { Home, Sos, NewOrder, Orders, Garage, Profile } from './screens/client.t
 import { Order } from './screens/order.tsx';
 import { Work, PerformerProfile, IncomingCall } from './screens/performer.tsx';
 import { Admin } from './screens/admin.tsx';
+import { Documents } from './screens/documents.tsx';
 
 type Mode = 'client' | 'performer' | 'admin';
 const PERFORMER_ROLES = ['master', 'tow', 'service'];
@@ -82,7 +83,7 @@ function App() {
     case 'garage': screen = <Garage />; break;
     case 'profile': screen = <Profile />; break;
     case 'work':
-      screen = b === 'profile' ? <PerformerProfile /> : b === 'jobs' ? <Orders as="performer" /> : <Work />;
+      screen = b === 'profile' ? <PerformerProfile /> : b === 'jobs' ? <Orders as="performer" /> : b === 'docs' ? <Documents /> : <Work />;
       break;
     case 'admin': screen = isStaff ? <Admin /> : <Home />; break;
     default: screen = <main><div className="empty">Такой страницы нет</div></main>;

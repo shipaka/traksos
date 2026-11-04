@@ -16,6 +16,8 @@ import { ChatService } from './services/chat.ts';
 import { ReviewsService, REVIEW_TAGS } from './services/reviews.ts';
 import { OffersService } from './services/offers.ts';
 import { AuctionService } from './services/auction.ts';
+import { DocumentsService } from './services/documents.ts';
+import { Raw } from './http/router.ts';
 import { PaymentsService } from './payments/service.ts';
 import { estimate, isNight } from './domain/pricing.ts';
 import { defaultSettings } from './domain/defaults.ts';
@@ -48,6 +50,7 @@ export function createApp(d: Deps) {
   const chat = new ChatService(d.db, settings, notifier, orders);
   const reviews = new ReviewsService(d.db, settings, orders);
   const offers = new OffersService(d.db, notifier, now);
+  const documents = new DocumentsService(d.db, notifier, settings, now);
 
   const r = new Router();
   const staff = ['admin', 'moderator'];
@@ -117,6 +120,16 @@ export function createApp(d: Deps) {
       `select id, client_id, created_by from orders where performer_id=$1 and status in ('accepted','en_route')`, [c.user.id]);
     for (const o of active) hub.send([o.client_id, o.created_by], { type: 'performer_location', orderId: o.id, lat: b.lat, lng: b.lng });
     return { ok: true };
+  });
+  // Проверка: фото документов и машины
+  r.get('/api/performer/documents', true, (c: AuthedCtx) => documents.mine(c.user));
+  r.post('/api/performer/documents', true, (c: AuthedCtx) => documents.upload(c.user, parse(z.object({
+    kind: z.string().max(20), dataUrl: z.string().max(7_000_000), takenAt: z.string().datetime().optional(),
+  }), c.body)));
+  r.post('/api/performer/documents/submit', true, (c: AuthedCtx) => documents.submit(c.user));
+  r.get('/api/documents/:id/file', true, async (c: AuthedCtx) => {
+    const f = await documents.file(c.user, c.params.id);
+    return new Raw(f.mime, f.body);
   });
   r.get('/api/performer/incoming', performerRoles, (c: AuthedCtx) => orders.incoming(c.user));
   r.get('/api/performer/balance', performerRoles, (c: AuthedCtx) => payments.balance(c.user.id));
@@ -225,15 +238,11 @@ export function createApp(d: Deps) {
   });
   r.post('/api/admin/performers/:id/verify', staff, async (c: AuthedCtx) => {
     const b = parse(z.object({ decision: z.enum(['approved', 'rejected', 'pending']), note: z.string().max(300).optional() }), c.body);
-    const p = await d.db.one('update performer_profiles set verification=$2 where user_id=$1 returning user_id', [c.params.id, b.decision]);
-    if (!p) throw notFound();
-    await audit(c.user.id, 'performer.verify', c.params.id, b);
-    await notifier.notify([c.params.id], { type: 'verification', decision: b.decision }, {
-      kind: 'normal', title: b.decision === 'approved' ? 'Проверка пройдена' : 'Проверка не пройдена',
-      body: b.decision === 'approved' ? 'Выходите на линию — заявки начнут приходить.' : b.note ?? 'Подробности в профиле', data: {},
-    });
-    return { ok: true };
+    return documents.decide(c.user, c.params.id, b.decision, b.note);
   });
+  r.get('/api/admin/verification', staff, () => documents.queue());
+  r.post('/api/admin/documents/:id', staff, (c: AuthedCtx) =>
+    documents.review(c.user, c.params.id, parse(z.object({ status: z.enum(['approved', 'rejected']), note: z.string().max(300).optional() }), c.body)));
   r.post('/api/admin/performers/:id/priority', ['admin'], async (c: AuthedCtx) => {
     const b = parse(z.object({ isPriority: z.boolean() }), c.body);
     await d.db.query('update performer_profiles set is_priority=$2 where user_id=$1', [c.params.id, b.isPriority]);
@@ -280,7 +289,8 @@ export function createApp(d: Deps) {
     try {
       const m = r.match(req.method ?? 'GET', url.pathname);
       if (!m) throw notFound('Нет такого адреса');
-      const rawBody = ['POST', 'PUT', 'PATCH'].includes(req.method!) ? await readBody(req) : '';
+      const limit = url.pathname === '/api/performer/documents' ? 8_000_000 : 1_000_000;
+      const rawBody = ['POST', 'PUT', 'PATCH'].includes(req.method!) ? await readBody(req, limit) : '';
       let body: any = {};
       if (rawBody) {
         try { body = JSON.parse(rawBody); } catch { throw bad('bad_json', 'Тело запроса — JSON'); }
@@ -301,7 +311,7 @@ export function createApp(d: Deps) {
     }
   }
 
-  return { handle, hub, auth, settings, orders, payments, auction, profiles, chat, reviews, offers, notifier, router: r };
+  return { handle, hub, auth, settings, orders, payments, auction, documents, profiles, chat, reviews, offers, notifier, router: r };
 }
 
 export type App = ReturnType<typeof createApp>;

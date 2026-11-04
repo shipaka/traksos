@@ -1,18 +1,20 @@
 import { useState } from 'react';
-import { get, post, put, rub, fmtPhone, fmtTime } from '../api.ts';
+import { useEffect } from 'react';
+import { get, post, put, rub, fmtPhone, fmtTime, authedImage } from '../api.ts';
 import { STATUS, SERVICES, LINE } from '../dict.ts';
 import { useLoad, useAction, Loading } from '../ui.tsx';
 
 export function Admin() {
-  const [tab, setTab] = useState<'people' | 'orders' | 'dispatch' | 'payments' | 'flagged'>('people');
+  const [tab, setTab] = useState<'verify' | 'people' | 'orders' | 'dispatch' | 'payments' | 'flagged'>('verify');
   return (
     <main>
       <h1>Администратор</h1>
       <div className="scroll-x">
-        {([['people', 'Люди'], ['orders', 'Заявки'], ['dispatch', 'Распределение'], ['payments', 'Оплата и выплаты'], ['flagged', 'Подозрительное']] as const).map(([id, n]) => (
+        {([['verify', 'Проверка'], ['people', 'Люди'], ['orders', 'Заявки'], ['dispatch', 'Распределение'], ['payments', 'Оплата и выплаты'], ['flagged', 'Подозрительное']] as const).map(([id, n]) => (
           <button key={id} className="chip" aria-pressed={tab === id} onClick={() => setTab(id)}>{n}</button>
         ))}
       </div>
+      {tab === 'verify' && <Verify />}
       {tab === 'people' && <People />}
       {tab === 'orders' && <AllOrders />}
       {tab === 'dispatch' && <Dispatch />}
@@ -175,6 +177,83 @@ function Dispatch() {
         <button className="btn" disabled={busy || !form || f.floor < 50 || f.floor > 100 || f.ceil < 100 || f.ceil > 200 || f.auctionMinutes < 1 || f.sosAuctionSeconds < 30}
           onClick={() => save({ auctionMinutes: f.auctionMinutes, sosAuctionSeconds: f.sosAuctionSeconds, offerFloor: f.floor / 100, offerCeil: f.ceil / 100 })}>Сохранить</button>
       </div>
+    </div>
+  );
+}
+
+// Проверка исполнителей -------------------------------------------------------
+
+function Verify() {
+  const q = useLoad(() => get('/api/admin/verification'), [], (e) => e.type === 'verification_queue');
+  if (!q.data) return <Loading error={q.error} />;
+  if (!q.data.length) return <div className="empty">Очередь пуста — все проверены</div>;
+  return <div className="stack">{q.data.map((u: any) => <VerifyCard key={u.id} u={u} onDone={q.reload} />)}</div>;
+}
+
+const KIND_NAMES: Record<string, string> = { master: 'Мастер', tow: 'Эвакуатор', service: 'Сервис', ecu: 'Блоки управления' };
+
+function VerifyCard({ u, onDone }: { u: any; onDone: () => void }) {
+  const { busy, run } = useAction();
+  const [reason, setReason] = useState('');
+  const allOk = u.docs.length > 0 && u.missing.length === 0 && u.docs.every((d: any) => d.status === 'approved');
+  return (
+    <div className="card">
+      <div className="between">
+        <b>{u.name ?? 'Без имени'} · {fmtPhone(u.phone)}</b>
+        <span className="pill">{KIND_NAMES[u.kind] ?? u.kind}</span>
+      </div>
+      <span className="note">
+        Отправил {fmtTime(u.submitted_at)} · {u.tax_status === 'self_employed' ? 'самозанятый' : u.tax_status === 'ip' ? 'ИП' : 'статус не указан'}{u.inn ? `, ИНН ${u.inn}` : ''}
+        {u.car ? ` · ${u.car.brand}${u.car.color ? ', ' + u.car.color : ''}, ${u.car.plate}` : ''}
+      </span>
+      {u.flags.map((f: string) => <span key={f} className="pill bad" style={{ alignSelf: 'flex-start' }}>⚠ {f}</span>)}
+      {u.missing.length > 0 && <span className="err">Нет фото: {u.missing.join(', ')}</span>}
+      {u.docs.map((d: any) => <DocReview key={d.id} d={d} onDone={onDone} />)}
+      <input className="field" placeholder="Причина отказа — исполнитель её увидит" value={reason} onChange={(e) => setReason(e.target.value)} />
+      <div className="grid2">
+        <button className="btn bad" disabled={busy || reason.length < 3} onClick={() =>
+          run(() => post(`/api/admin/performers/${u.id}/verify`, { decision: 'rejected', note: reason }), 'Отказано').then((r) => r && onDone())}>Отказать</button>
+        <button className="btn good" disabled={busy || !allOk} onClick={() =>
+          run(() => post(`/api/admin/performers/${u.id}/verify`, { decision: 'approved' }), 'Одобрен — может выходить на линию').then((r) => r && onDone())}>Одобрить</button>
+      </div>
+      {!allOk && <span className="note">«Одобрить» станет доступна, когда все фото приняты.</span>}
+    </div>
+  );
+}
+
+function DocReview({ d, onDone }: { d: any; onDone: () => void }) {
+  const { busy, run } = useAction();
+  const [src, setSrc] = useState<string | null>(null);
+  const [big, setBig] = useState(false);
+  const [note, setNote] = useState('');
+  const [retake, setRetake] = useState(false);
+  useEffect(() => {
+    let url: string | null = null;
+    authedImage(`/api/documents/${d.id}/file`).then((x) => { url = x; setSrc(x); }).catch(() => {});
+    return () => { if (url) URL.revokeObjectURL(url); };
+  }, [d.id]);
+  const review = (status: 'approved' | 'rejected') =>
+    run(() => post(`/api/admin/documents/${d.id}`, status === 'rejected' ? { status, note } : { status }), status === 'approved' ? 'Принято' : 'Попросили переснять').then((r) => r && onDone());
+  return (
+    <div className="stack" style={{ gap: 6, borderTop: '1px solid var(--line)', paddingTop: 10 }}>
+      <div className="between">
+        <b style={{ fontSize: 14 }}>{d.name}</b>
+        <span className={`pill ${d.status === 'approved' ? 'good' : d.status === 'rejected' ? 'bad' : ''}`}>
+          {d.status === 'approved' ? 'Принято' : d.status === 'rejected' ? 'Переснять' : 'Новое'}
+        </span>
+      </div>
+      {src && <img src={src} alt={d.name} onClick={() => setBig(!big)} style={{ width: '100%', maxHeight: big ? 'none' : 180, objectFit: big ? 'contain' : 'cover', borderRadius: 10, cursor: 'zoom-in' }} />}
+      {d.status !== 'approved' && (retake ? (
+        <div className="compose">
+          <input className="field" placeholder="Что переснять: номер не читается…" value={note} onChange={(e) => setNote(e.target.value)} />
+          <button className="btn small" disabled={busy || note.length < 3} onClick={() => review('rejected')}>Отправить</button>
+        </div>
+      ) : (
+        <div className="grid2">
+          <button className="btn ghost small" onClick={() => setRetake(true)}>Переснять</button>
+          <button className="btn small" disabled={busy} onClick={() => review('approved')}>Принять</button>
+        </div>
+      ))}
     </div>
   );
 }

@@ -94,7 +94,17 @@ export async function readBody(req: IncomingMessage, limit = 1_000_000): Promise
   return Buffer.concat(chunks).toString('utf8');
 }
 
+/** Ответ не JSON, а файлом (фото документа) */
+export class Raw {
+  constructor(public mime: string, public body: Buffer, public headers: Record<string, string> = {}) {}
+}
+
 export function send(res: ServerResponse, status: number, body: unknown, headers: Record<string, string> = {}) {
+  if (body instanceof Raw) {
+    res.writeHead(status, { 'content-type': body.mime, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff', ...headers, ...body.headers });
+    res.end(body.body);
+    return;
+  }
   const json = body === undefined ? '' : JSON.stringify(body);
   res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', ...headers });
   res.end(json);

@@ -35,8 +35,11 @@ export function Work() {
 
       {p.verification !== 'approved' ? (
         <div className="card hi">
-          <b>{p.verification === 'rejected' ? 'Проверка не пройдена' : 'Профиль на проверке'}</b>
-          <span className="note">{p.verification === 'rejected' ? 'Исправьте данные в профиле или напишите в поддержку.' : 'Обычно до 24 часов. Пока проверяем, заявки не приходят.'}</span>
+          <b>{p.verification === 'rejected' ? 'Проверка не пройдена' : p.submitted_at ? 'Профиль на проверке' : 'Пройдите проверку'}</b>
+          <span className="note">{p.verification === 'rejected' ? (p.verification_note ?? 'Исправьте данные и отправьте ещё раз.')
+            : p.submitted_at ? 'Обычно до 24 часов. Пока проверяем, заявки не приходят.'
+            : 'Снимите паспорт, селфи с паспортом и машину — без проверки заявки не приходят. Это 3 минуты.'}</span>
+          <button className="btn" onClick={() => go('work/docs')}>{p.submitted_at ? 'Мои фото' : 'Снять фото'}</button>
         </div>
       ) : (
         <div className="card">
@@ -292,7 +295,11 @@ export function PerformerProfile() {
       taxStatus: f.taxStatus || null, inn: f.inn || null, car: f.car.brand && f.car.plate ? f.car : null,
     };
     if (!isTow) { body.specialties = f.specialties; body.brands = f.brands; }
-    if (await run(() => put('/api/performer/profile', body), 'Профиль сохранён')) { await reload(); go('as/performer'); }
+    const first = !p;
+    if (await run(() => put('/api/performer/profile', body), first ? 'Профиль сохранён — теперь фото для проверки' : 'Профиль сохранён')) {
+      await reload();
+      go(first ? 'work/docs' : 'as/performer');
+    }
   }
 
   const corridor = pricing.data && pricing.data.tiers;

@@ -110,6 +110,10 @@ export const defaultSettings = {
     minWeight: 0.1,
     maxWeight: 1,
   },
+  verification: {
+    /** Одобрить исполнителя можно только после того, как приняты все обязательные фото */
+    requireDocs: true,
+  },
   chat: {
     suspiciousWords: ['напрямую', 'мимо приложения', 'наличкой мимо', 'без приложения', 'без комиссии', 'скинь номер'],
   },

@@ -10,6 +10,18 @@ async function api(method, path, body, token) {
   return r.json();
 }
 
+// «Фото с камеры»: PNG с шумом, чтобы после сжатия оставалось похоже на настоящий снимок
+import { deflateSync } from 'node:zlib';
+function noisePng(w = 480, h = 360) {
+  const crcTable = Array.from({ length: 256 }, (_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });
+  const crc = (b) => { let c = 0xffffffff; for (const x of b) c = crcTable[(c ^ x) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
+  const chunk = (type, data) => { const len = Buffer.alloc(4); len.writeUInt32BE(data.length); const td = Buffer.concat([Buffer.from(type), data]); const c = Buffer.alloc(4); c.writeUInt32BE(crc(td)); return Buffer.concat([len, td, c]); };
+  const raw = Buffer.alloc((w * 3 + 1) * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w * 3; x++) raw[y * (w * 3 + 1) + 1 + x] = Math.random() * 255;
+  const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(h, 4); ihdr[8] = 8; ihdr[9] = 2;
+  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
+}
+
 const browser = await chromium.launch();
 const phone = { ...devices['Pixel 7'], deviceScaleFactor: 1 };
 const mk = async () => {
@@ -46,10 +58,32 @@ await m.locator('input[placeholder="Марка: Lada Largus"]').fill('Lada Largu
 await m.locator('input[placeholder="Госномер"]').fill('а123вс78');
 await shot(m, '01-master-profile');
 await m.getByRole('button', { name: 'Сохранить' }).click();
-await m.waitForURL(/#\/work$/);
-await m.getByText('Профиль на проверке').waitFor();
-const users = await api('GET', '/api/admin/users?q=2223344', null, admin.token);
-await api('POST', `/api/admin/performers/${users[0].id}/verify`, { decision: 'approved' }, admin.token);
+// Сразу после профиля — фото для проверки
+await m.waitForURL(/work\/docs/);
+await m.getByText(/^0 из \d$/).waitFor();
+const n = await m.locator('input[type=file]').count();
+for (let i = 0; i < n; i++) {
+  await m.locator('input[type=file]').nth(i).setInputFiles({ name: 'photo.png', mimeType: 'image/png', buffer: noisePng() });
+  await m.getByText(`${i + 1} из ${n}`).waitFor({ timeout: 10000 });
+}
+await shot(m, '01b-master-docs');
+await m.getByRole('button', { name: 'Отправить на проверку' }).click();
+await m.getByText('На проверке у модератора').waitFor();
+
+// Модератор принимает фото и одобряет мастера в своей очереди
+const a = await mk();
+await login(a, '+79990000001', 'Мне нужна помощь');
+await a.getByText('Что случилось?').first().waitFor();
+await a.goto(BASE + '/#/admin');
+await a.getByText('Отправил').waitFor();
+for (let i = 0; i < n; i++) {
+  await a.getByRole('button', { name: 'Принять' }).first().click();
+  await a.waitForTimeout(400);
+}
+await shot(a, '01c-admin-verify');
+await a.getByRole('button', { name: 'Одобрить' }).click();
+await a.getByText('Очередь пуста').waitFor();
+await m.goto(BASE + '/#/work');
 await m.getByRole('button', { name: 'Свободен' }).waitFor({ timeout: 10000 });
 await m.getByRole('button', { name: 'Свободен' }).click();
 await m.getByText(/Геолокация включена/).waitFor();
@@ -120,9 +154,6 @@ await m.getByText('Долг по комиссии с наличных').waitFor(
 await shot(m, '11-master-balance');
 
 // Админ в браузере
-const a = await mk();
-await login(a, '+79990000001', 'Мне нужна помощь');
-await a.getByText('Что случилось?').first().waitFor();
 await a.goto(BASE + '/#/admin');
 await a.getByRole('button', { name: 'Распределение' }).click();
 await a.getByText('Сначала заявки нам').waitFor();

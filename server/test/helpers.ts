@@ -23,6 +23,8 @@ export async function setup() {
   const payments = new MockProvider('http://test');
   const app = createApp({ db, sms, push, payments, now: clock.now });
   app.hub.keepLog = true;
+  // В тестах исполнителей одобряем без фото; проверка с фото — в documents.test.ts
+  await app.settings.set('verification', { requireDocs: false }, null);
   const server = http.createServer((req, res) => void app.handle(req, res));
   await new Promise<void>((r) => server.listen(0, r));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
