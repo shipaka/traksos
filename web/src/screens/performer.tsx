@@ -292,7 +292,7 @@ export function PerformerProfile() {
       taxStatus: f.taxStatus || null, inn: f.inn || null, car: f.car.brand && f.car.plate ? f.car : null,
     };
     if (!isTow) { body.specialties = f.specialties; body.brands = f.brands; }
-    if (await run(() => put('/api/performer/profile', body), 'Профиль сохранён')) { await reload(); go('work'); }
+    if (await run(() => put('/api/performer/profile', body), 'Профиль сохранён')) { await reload(); go('as/performer'); }
   }
 
   const corridor = pricing.data && pricing.data.tiers;

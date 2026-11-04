@@ -10,14 +10,16 @@ export function Order({ id }: { id: string }) {
   const [perfPos, setPerfPos] = useState<{ lat: number; lng: number } | null>(null);
   useEffect(() => onEvent((e) => { if (e.type === 'performer_location' && e.orderId === id) setPerfPos({ lat: e.lat, lng: e.lng }); }), [id]);
 
-  if (!o.data) return <main><Back to="orders" /><Loading error={o.error} /></main>;
+  const { mode } = useMe();
+  const backTo = mode === 'admin' ? 'admin' : mode === 'performer' ? 'work' : 'orders';
+  if (!o.data) return <main><Back to={backTo} /><Loading error={o.error} /></main>;
   const d = o.data;
   const isPerformer = d.you === 'performer';
   const done = ['completed', 'cancelled'].includes(d.status);
 
   return (
     <main>
-      <Back to={isPerformer ? 'work/jobs' : 'orders'} />
+      <Back to={d.you === 'performer' ? 'work/jobs' : d.you === 'candidate' ? 'work' : d.you === 'admin' ? 'admin' : 'orders'} />
       <div className="between" style={{ alignItems: 'flex-start' }}>
         <div>
           <h1>№{d.number} · {SERVICES[d.service]?.name ?? d.service}</h1>

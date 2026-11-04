@@ -44,6 +44,7 @@ export function createApp(d: Deps) {
   orders.payments = payments;
   const auction = new AuctionService(d.db, settings, notifier, orders, now);
   orders.auction = auction;
+  profiles.onUnavailable = async (userId) => orders.afterRelease(await orders.release(d.db, userId, null));
   const chat = new ChatService(d.db, settings, notifier, orders);
   const reviews = new ReviewsService(d.db, settings, orders);
   const offers = new OffersService(d.db, notifier, now);

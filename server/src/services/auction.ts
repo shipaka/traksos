@@ -38,7 +38,8 @@ export class AuctionService {
               (select coalesce(-sum(amount),0)::int from ledger_entries l
                 where l.performer_id = p.user_id and l.kind in ('cash_commission','cash_commission_paid')) as cash_debt
          from performer_profiles p join users u on u.id = p.user_id
-        where p.kind = $1 and p.user_id <> $2`, [kind, order.client_id]);
+        where p.kind = $1 and p.user_id <> $2
+          and not exists (select 1 from orders x where x.performer_id=p.user_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation'))`, [kind, order.client_id]);
     const already = await this.db.query<{ performer_id: string }>(
       `select performer_id from order_dispatch where order_id=$1 and status in ('declined','missed','bidding','lost')`, [orderId]);
     const ranked = rankCandidates(order as any, list, {
@@ -49,21 +50,23 @@ export class AuctionService {
     const until = new Date(this.now().getTime() + ms);
     await this.db.query('update orders set auction_until=$2, auto_pick=$3, dispatch_started_at=coalesce(dispatch_started_at,$4) where id=$1',
       [orderId, until, !!order.is_sos, this.now()]);
+    const invited: typeof ranked = [];
     for (const [i, r] of ranked.entries()) {
-      await this.db.query(
+      const ok = await this.orders.enlist(r.user_id,
         `insert into order_dispatch(order_id, performer_id, rank, distance_km, status, ring_until, sent_at)
          values ($1,$2,$3,$4,'bidding',$5,$6)
          on conflict (order_id, performer_id) do update set status='bidding', ring_until=excluded.ring_until, sent_at=excluded.sent_at`,
         [orderId, r.user_id, 100 + i, r.distanceKm, until, this.now()]);
+      if (ok) invited.push(r);
     }
-    await this.orders.event(this.db, orderId, null, 'auction_started', { candidates: ranked.length, until, sos: !!order.is_sos });
+    await this.orders.event(this.db, orderId, null, 'auction_started', { candidates: invited.length, until, sos: !!order.is_sos });
     const ids = await this.participants(orderId);
     this.notifier.live([order.client_id, order.created_by], { type: 'order', orderId, status: 'searching', auction: true });
-    if (!ranked.length) return this.finishEmpty(order);
+    if (!invited.length) return this.finishEmpty(order);
 
     const lim = this.limits(order, all.dispatch);
     const ring = new Date(this.now().getTime() + Math.min(ms, all.dispatch.ringSeconds * 1000)).toISOString();
-    for (const r of ranked) {
+    for (const r of invited) {
       await this.notifier.notify([r.user_id], {
         type: 'auction', orderId, number: order.number, service: order.service, sos: order.is_sos, problem: order.problem,
         description: order.description, address: order.address, destination: order.destination, cargo: order.cargo,
@@ -95,6 +98,9 @@ export class AuctionService {
     if (order.auction_until && new Date(order.auction_until) < this.now() && order.auto_pick) {
       throw conflict('auction_closed', 'Приём откликов закончился');
     }
+    if (await this.orders.busyWith(this.db, user.id, orderId)) throw conflict('busy', 'Сначала закройте текущую заявку');
+    const prof0 = await this.db.one<{ line_status: string; paused: boolean }>('select line_status, paused from performer_profiles where user_id=$1', [user.id]);
+    if (!prof0 || prof0.paused || prof0.line_status === 'offline') throw conflict('offline', 'Выйдите на линию, чтобы откликаться');
     const lim = this.limits(order, all.dispatch);
     const p = price ?? lim.usual;
     if (!Number.isInteger(p) || p < lim.floor || p > lim.ceil) {
@@ -104,11 +110,21 @@ export class AuctionService {
     const speed = order.service === 'tow' ? all.dispatch.towSpeedKmh : all.dispatch.citySpeedKmh;
     const eta = etaMinutes(d.distance_km == null ? null : Number(d.distance_km), prof?.prep_minutes ?? 0, speed);
     const hour = await this.hourFor(user.id, order);
-    const o = await this.db.one(
-      `insert into bids(order_id, performer_id, price, hour_price, eta_minutes) values ($1,$2,$3,$4,$5)
-       on conflict (order_id, performer_id) do update set price=excluded.price, hour_price=excluded.hour_price,
-         eta_minutes=excluded.eta_minutes, status='active', updated_at=now()
-       returning *`, [orderId, user.id, p, hour, eta]);
+    const o = await this.db.tx(async (q) => {
+      // Та же блокировка, что при выборе: занятый или ушедший с линии в этот миг не откликнется
+      const pr = await q.one<{ line_status: string; paused: boolean }>('select line_status, paused from performer_profiles where user_id=$1 for update', [user.id]);
+      if (!pr || pr.paused || pr.line_status === 'offline' || pr.line_status === 'on_job' || await this.orders.busyWith(q, user.id, null)) {
+        throw conflict('busy', 'Вы заняты или не на линии');
+      }
+      const still = await q.one(`select 1 from order_dispatch d join orders o on o.id=d.order_id
+          where d.order_id=$1 and d.performer_id=$2 and d.status='bidding' and o.status='searching'`, [orderId, user.id]);
+      if (!still) throw conflict('too_late', 'Клиент уже выбрал исполнителя');
+      return q.one(
+        `insert into bids(order_id, performer_id, price, hour_price, eta_minutes) values ($1,$2,$3,$4,$5)
+         on conflict (order_id, performer_id) do update set price=excluded.price, hour_price=excluded.hour_price,
+           eta_minutes=excluded.eta_minutes, status='active', updated_at=now()
+         returning *`, [orderId, user.id, p, hour, eta]);
+    });
     await this.orders.event(this.db, orderId, user.id, 'offer', { price: p, eta });
     const diff = Math.round((p / lim.usual - 1) * 100);
     await this.notifier.notify([order.client_id, order.created_by], { type: 'order', orderId, status: 'searching', offers: true },
@@ -151,26 +167,40 @@ export class AuctionService {
 
   /** Клиент (или система для SOS) выбирает отклик — исполнитель назначен, цена выезда зафиксирована */
   async choose(user: AuthUser | null, orderId: string, offerId: string) {
+    const pre = await this.db.one('select o.client_id, o.created_by, b.performer_id from orders o join bids b on b.order_id=o.id where o.id=$1 and b.id=$2', [orderId, offerId]);
+    if (!pre) throw notFound('Отклик не найден');
+    if (user && pre.client_id !== user.id && pre.created_by !== user.id) throw forbidden();
+    // Исполнитель мог только что взять другую заявку — его отклик здесь больше не действует
+    if (await this.orders.busyWith(this.db, pre.performer_id, orderId)) {
+      await this.db.query(`update bids set status='withdrawn', updated_at=now() where id=$1 and status='active'`, [offerId]);
+      this.notifier.live([pre.client_id, pre.created_by], { type: 'order', orderId, status: 'searching', offers: true });
+      throw conflict('performer_busy', 'Этот исполнитель только что взял другую заявку — выберите другого');
+    }
+
     const res = await this.db.tx(async (q) => {
-      const o = await q.one('select * from orders where id=$1', [orderId]);
-      if (!o) throw notFound();
-      if (user && o.client_id !== user.id && o.created_by !== user.id) throw forbidden();
-      if (o.status !== 'searching') throw conflict('too_late', 'Исполнитель уже выбран');
-      const f = await q.one(`update bids set status='chosen', updated_at=now() where id=$1 and order_id=$2 and status='active' returning *`, [offerId, orderId]);
-      if (!f) throw conflict('offer_gone', 'Этот отклик уже недоступен');
-      await q.query(`update bids set status='lost', updated_at=now() where order_id=$1 and id<>$2 and status='active'`, [orderId, offerId]);
-      await q.query(`update order_dispatch set status = case when performer_id=$2 then 'accepted' else 'lost' end, responded_at=$3
-                      where order_id=$1 and status in ('bidding','queued','ringing')`, [orderId, f.performer_id, this.now()]);
+      // Сначала занимаем заявку: из двух одновременных выборов пройдёт только один
+      // Блокируем исполнителя: выборы одного и того же человека в разных заявках идут строго по очереди
+      await q.query('select 1 from performer_profiles where user_id=$1 for update', [pre.performer_id]);
+      const f0 = await q.one(`select * from bids where id=$1 and order_id=$2 and status='active'`, [offerId, orderId]);
+      if (!f0) throw conflict('offer_gone', 'Этот отклик уже недоступен');
       const upd = await q.one(
         `update orders set status='accepted', performer_id=$2, accepted_at=$3, call_out_amount=$4,
             estimate = jsonb_set(estimate, '{hour}', coalesce(to_jsonb($5::int), estimate->'hour'))
-          where id=$1 returning *`,
-        [orderId, f.performer_id, this.now(), f.price, f.hour_price]);
+          where id=$1 and status='searching' returning *`,
+        [orderId, f0.performer_id, this.now(), f0.price, f0.hour_price]);
+      if (!upd) throw conflict('too_late', 'Исполнитель уже выбран');
+      if (await this.orders.busyWith(q, f0.performer_id, orderId)) throw conflict('performer_busy', 'Этот исполнитель только что взял другую заявку');
+      const f = (await q.one(`update bids set status='chosen', updated_at=now() where id=$1 returning *`, [offerId]))!;
+      await q.query(`update bids set status='lost', updated_at=now() where order_id=$1 and id<>$2 and status='active'`, [orderId, offerId]);
+      await q.query(`update order_dispatch set status = case when performer_id=$2 then 'accepted' else 'lost' end, responded_at=$3
+                      where order_id=$1 and status in ('bidding','queued','ringing')`, [orderId, f.performer_id, this.now()]);
       await q.query(`update performer_profiles set line_status='on_job' where user_id=$1`, [f.performer_id]);
       await this.orders.event(q, orderId, user?.id ?? null, user ? 'offer_chosen' : 'offer_autopicked', { offerId, price: f.price, eta: f.eta_minutes });
       const losers = await q.query<{ performer_id: string }>(`select performer_id from order_dispatch where order_id=$1 and status='lost'`, [orderId]);
-      return { o: upd!, f, losers: losers.map((l) => l.performer_id) };
+      const released = await this.orders.release(q, f.performer_id, orderId);
+      return { o: upd, f, losers: losers.map((l) => l.performer_id), released };
     });
+    await this.orders.afterRelease(res.released);
     await this.notifier.notify([res.f.performer_id], { type: 'order', orderId, status: 'accepted' },
       { kind: 'normal', title: 'Клиент выбрал вас', body: `Заявка №${res.o.number}: выезд ${rub(res.f.price)}, подача ~${res.f.eta_minutes} мин`, data: { orderId } });
     this.notifier.live(res.losers, { type: 'order', orderId, status: 'lost' });

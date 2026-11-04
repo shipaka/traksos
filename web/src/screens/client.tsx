@@ -347,7 +347,7 @@ function confirmDelete() {
 // Профиль -------------------------------------------------------------------
 
 export function Profile() {
-  const { me, reload, setMode } = useMe();
+  const { me, reload, mode } = useMe();
   const { busy, run } = useAction();
   const [name, setName] = useState(me?.name ?? '');
   const [company, setCompany] = useState(me?.company_name ?? '');
@@ -377,9 +377,10 @@ export function Profile() {
         <button className="btn" disabled={busy}>Сохранить</button>
       </form>
       <div className="stack">
-        {isPerformer && <button className="btn ghost" onClick={() => { setMode('performer'); go('work'); }}>Перейти в кабинет исполнителя</button>}
+        {mode !== 'client' && <button className="btn ghost" onClick={() => go('as/client')}>Кабинет клиента</button>}
+        {isPerformer && mode !== 'performer' && <button className="btn ghost" onClick={() => go('as/performer')}>Кабинет исполнителя</button>}
         {!isPerformer && <button className="btn ghost" onClick={() => go('work/profile')}>Стать исполнителем на ТракSOS</button>}
-        {me.roles.some((r) => r === 'admin' || r === 'moderator') && <button className="btn ghost" onClick={() => { setMode('admin'); go('admin'); }}>Кабинет администратора</button>}
+        {me.roles.some((r) => r === 'admin' || r === 'moderator') && mode !== 'admin' && <button className="btn ghost" onClick={() => go('as/admin')}>Кабинет администратора</button>}
         <button className="btn bad" onClick={logout}>Выйти</button>
       </div>
     </main>

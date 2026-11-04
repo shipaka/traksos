@@ -95,14 +95,22 @@ export class ProfilesService {
     if (s.lineStatus === 'online' && p.verification !== 'approved') {
       throw bad('not_verified', 'Заявки начнут приходить после проверки профиля');
     }
+    if (s.lineStatus && p.line_status === 'on_job' && s.lineStatus !== 'offline') {
+      throw bad('on_job', 'Вы на выезде — статус сменится сам, когда клиент подтвердит сумму');
+    }
     await this.db.query(
       `update performer_profiles set line_status = coalesce($2::text, line_status), busy_until = $3::timestamptz,
          paused = coalesce($4::boolean, paused), missed_in_row = case when $2::text = 'online' then 0 else missed_in_row end, updated_at = now()
        where user_id=$1`,
       [userId, s.lineStatus ?? null, s.busyUntil ?? null, s.paused ?? null],
     );
+    // Ушёл с линии или на паузу — убираем из звонков и торгов
+    if (s.lineStatus === 'offline' || s.lineStatus === 'busy' || s.paused === true) await this.onUnavailable?.(userId);
     return this.performer(userId);
   }
+
+  /** Подключается из app.ts: снять исполнителя со всех торгов и звонков */
+  onUnavailable?: (userId: string) => Promise<void>;
 
   async setLocation(userId: string, lat: number, lng: number) {
     await this.db.query('update performer_profiles set lat=$2, lng=$3, location_at=now() where user_id=$1', [userId, lat, lng]);

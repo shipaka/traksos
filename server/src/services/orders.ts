@@ -98,7 +98,8 @@ export class OrdersService {
               (select coalesce(-sum(amount),0)::int from ledger_entries l
                 where l.performer_id = p.user_id and l.kind in ('cash_commission','cash_commission_paid')) as cash_debt
          from performer_profiles p join users u on u.id = p.user_id
-        where p.kind = $1 and p.user_id <> $2 and p.is_priority`,
+        where p.kind = $1 and p.user_id <> $2 and p.is_priority
+          and not exists (select 1 from orders x where x.performer_id=p.user_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation'))`,
       [kind, order.client_id],
     );
     const already = await this.db.query<{ performer_id: string }>('select performer_id from order_dispatch where order_id=$1', [orderId]);
@@ -111,10 +112,9 @@ export class OrdersService {
     if (!ranked.length) return this.auction.start(orderId, exclude);
     const base = already.length;
     for (const [i, r] of ranked.entries()) {
-      await this.db.query(
+      await this.enlist(r.user_id,
         `insert into order_dispatch(order_id, performer_id, rank, distance_km) values ($1,$2,$3,$4) on conflict do nothing`,
-        [orderId, r.user_id, base + i, r.distanceKm],
-      );
+        [orderId, r.user_id, base + i, r.distanceKm]);
     }
     await this.db.query('update orders set dispatch_started_at = coalesce(dispatch_started_at, now()) where id=$1', [orderId]);
     await this.event(this.db, orderId, null, 'dispatch_started', { candidates: ranked.length });
@@ -126,6 +126,7 @@ export class OrdersService {
     const all = await this.settings.all();
     const order = await this.db.one('select * from orders where id=$1', [orderId]);
     if (!order || order.status !== 'searching') return;
+    if (order.auction_until) return; // уже на торгах — звонков приоритетным больше нет
     const parallel = order.is_sos ? all.dispatch.parallelSos : all.dispatch.parallel;
     const ringing = await this.db.one<{ c: number }>(`select count(*)::int c from order_dispatch where order_id=$1 and status='ringing'`, [orderId]);
     const free = parallel - (ringing?.c ?? 0);
@@ -133,7 +134,9 @@ export class OrdersService {
     const until = new Date(this.now().getTime() + all.dispatch.ringSeconds * 1000);
     const next = await this.db.query<{ id: string; performer_id: string; distance_km: number | null }>(
       `update order_dispatch set status='ringing', ring_until=$2, sent_at=$3
-        where id in (select id from order_dispatch where order_id=$1 and status='queued' order by rank limit $4)
+        where id in (select d.id from order_dispatch d where d.order_id=$1 and d.status='queued'
+                       and not exists (select 1 from orders x where x.performer_id=d.performer_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation'))
+                     order by d.rank limit $4)
         returning id, performer_id, distance_km`,
       [orderId, until, this.now(), free],
     );
@@ -168,6 +171,7 @@ export class OrdersService {
       this.notifier.live([m.performer_id], { type: 'call_missed', orderId: m.order_id });
       if (p && p.missed_in_row >= all.dispatch.missedToOffline) {
         await this.db.query(`update performer_profiles set line_status='offline' where user_id=$1`, [m.performer_id]);
+        await this.afterRelease(await this.release(this.db, m.performer_id, null));
         await this.notifier.notify([m.performer_id], { type: 'line_status', lineStatus: 'offline' },
           { kind: 'normal', title: 'Вы не на линии', body: `Пропущено ${p.missed_in_row} вызова подряд — заявки пока не приходят. Вернуться — одной кнопкой.`, data: {} });
       }
@@ -178,6 +182,7 @@ export class OrdersService {
 
   async accept(user: AuthUser, orderId: string) {
     const res = await this.db.tx(async (q) => {
+      await q.query('select 1 from performer_profiles where user_id=$1 for update', [user.id]);
       const d = await q.one(
         `update order_dispatch set status='accepted', responded_at=$3
           where order_id=$1 and performer_id=$2 and status='ringing' and ring_until >= $3 returning *`,
@@ -191,11 +196,17 @@ export class OrdersService {
         [orderId, user.id, this.now()],
       );
       if (!o) throw conflict('too_late', 'Заявку уже забрали');
+      if (await this.busyWith(q, user.id, orderId)) throw conflict('busy', 'Сначала закройте текущую заявку');
       await q.query(`update order_dispatch set status='cancelled' where order_id=$1 and status in ('queued','ringing')`, [orderId]);
       await q.query(`update performer_profiles set line_status='on_job', missed_in_row=0 where user_id=$1`, [user.id]);
       await this.event(q, orderId, user.id, 'accepted', {});
-      return o;
+      const others = await q.query<{ performer_id: string }>(
+        `select performer_id from order_dispatch where order_id=$1 and status='cancelled' and performer_id<>$2`, [orderId, user.id]);
+      return Object.assign(o, { _others: others.map((x) => x.performer_id), _released: await this.release(q, user.id, orderId) });
     });
+    await this.afterRelease((res as any)._released);
+    // Остальным приоритетным, кому звонила эта заявка, — закрыть вызов
+    this.notifier.live((res as any)._others, { type: 'order', orderId, status: 'released' });
     const name = user.name ?? 'Исполнитель';
     await this.notifier.notify([res.client_id, res.created_by], { type: 'order', orderId, status: 'accepted' },
       { kind: 'normal', title: 'Заявку приняли', body: `${name} принял заявку №${res.number}`, data: { orderId } });
@@ -229,13 +240,16 @@ export class OrdersService {
     if (!o) throw notFound();
     if (o.performer_id !== user.id) throw forbidden();
     if (!['accepted', 'en_route'].includes(o.status)) throw conflict('bad_status', 'На месте отказаться уже нельзя — закройте выезд с итогом');
-    await this.db.query(
-      `update orders set status='searching', performer_id=null, accepted_at=null, en_route_at=null, call_out_amount=null, auction_until=null where id=$1`, [orderId]);
-    await this.db.query(`update bids set status='withdrawn' where order_id=$1 and status in ('active','chosen','lost')`, [orderId]);
-    await this.db.query(`delete from order_dispatch where order_id=$1 and performer_id<>$2`, [orderId, user.id]);
-    await this.db.query(`update order_dispatch set status='declined' where order_id=$1 and performer_id=$2`, [orderId, user.id]);
-    await this.db.query(`update performer_profiles set line_status='online' where user_id=$1`, [user.id]);
-    await this.event(this.db, orderId, user.id, 'performer_dropped', { reason });
+    await this.db.tx(async (q) => {
+      await this.guarded(q,
+        `update orders set status='searching', performer_id=null, accepted_at=null, en_route_at=null, call_out_amount=null, auction_until=null
+          where id=$1 and status=$2 and performer_id=$3`, [orderId, o.status, user.id]);
+      await q.query(`update bids set status='withdrawn' where order_id=$1 and status in ('active','chosen','lost')`, [orderId]);
+      await q.query(`delete from order_dispatch where order_id=$1 and performer_id<>$2`, [orderId, user.id]);
+      await q.query(`update order_dispatch set status='declined' where order_id=$1 and performer_id=$2`, [orderId, user.id]);
+      await q.query(`update performer_profiles set line_status='online' where user_id=$1 and line_status='on_job'`, [user.id]);
+      await this.event(q, orderId, user.id, 'performer_dropped', { reason });
+    });
     await this.systemMessage(orderId, 'Исполнитель отказался от заявки. Ищем другого.');
     await this.notifier.notify([o.client_id, o.created_by], { type: 'order', orderId, status: 'searching' },
       { kind: 'normal', title: 'Ищем другого исполнителя', body: `Исполнитель отказался от заявки №${o.number}. Уже ищем замену.`, data: { orderId } });
@@ -249,7 +263,8 @@ export class OrdersService {
     const o = await this.mustBePerformer(user, orderId);
     const to = transition(o.status, action, 'performer');
     const col = { depart: 'en_route_at', arrive: 'arrived_at', start_work: null }[action];
-    await this.db.query(`update orders set status=$2 ${col ? `, ${col}=$3` : ''} where id=$1`, col ? [orderId, to, this.now()] : [orderId, to]);
+    await this.guarded(this.db, `update orders set status=$2${col ? `, ${col}=$5` : ''} where id=$1 and status=$3 and performer_id=$4`,
+      col ? [orderId, to, o.status, user.id, this.now()] : [orderId, to, o.status, user.id]);
     await this.event(this.db, orderId, user.id, action, {});
     const text = { depart: 'Исполнитель выехал', arrive: 'Исполнитель на месте', start_work: 'Исполнитель начал работу' }[action];
     await this.systemMessage(orderId, text);
@@ -263,10 +278,10 @@ export class OrdersService {
     const o = await this.mustBePerformer(user, orderId);
     const to = transition(o.status, 'propose_amount', 'performer');
     if (!Number.isInteger(p.workAmount) || p.workAmount < 0) throw bad('bad_amount', 'Сумма — целое число копеек, не меньше нуля');
-    await this.db.query(
+    await this.guarded(this.db,
       `update orders set status=$2, work_amount=$3, amount_proposed_at=$6, amount_confirmed_at=null,
-         result=coalesce($4,result), result_note=coalesce($5,result_note) where id=$1`,
-      [orderId, to, p.workAmount, p.result ?? null, p.note ?? null, this.now()],
+         result=coalesce($4,result), result_note=coalesce($5,result_note) where id=$1 and status=$7 and performer_id=$8`,
+      [orderId, to, p.workAmount, p.result ?? null, p.note ?? null, this.now(), o.status, user.id],
     );
     const m = this.money({ ...o, work_amount: p.workAmount });
     await this.event(this.db, orderId, user.id, 'amount_proposed', { workAmount: p.workAmount, total: m.total, result: p.result });
@@ -282,7 +297,10 @@ export class OrdersService {
     const m = this.money(o);
     if (expectedTotal != null && expectedTotal !== m.total) throw conflict('amount_changed', 'Сумма изменилась — проверьте заново');
     await this.db.tx(async (q) => {
-      await q.query(`update orders set status=$2, amount_confirmed_at=$3, completed_at=$3 where id=$1`, [orderId, to, this.now()]);
+      // Подтверждаем ровно ту сумму, что видел клиент: если мастер успел её поменять — конфликт
+      await this.guarded(q, `update orders set status=$2, amount_confirmed_at=$3, completed_at=$3
+          where id=$1 and status='awaiting_confirmation' and work_amount is not distinct from $4 and performer_id=$5`,
+        [orderId, to, this.now(), o.work_amount, o.performer_id]);
       await q.query(`update performer_profiles set line_status='online' where user_id=$1 and line_status='on_job'`, [o.performer_id]);
       await this.event(q, orderId, user.id, 'amount_confirmed', { total: m.total, method: o.payment_method });
       await this.payments.onConfirmed({ ...o, status: to }, q);
@@ -296,7 +314,7 @@ export class OrdersService {
   async disputeAmount(user: AuthUser, orderId: string, reason: string) {
     const o = await this.mustBeClient(user, orderId);
     const to = transition(o.status, 'dispute_amount', 'client');
-    await this.db.query(`update orders set status=$2 where id=$1`, [orderId, to]);
+    await this.guarded(this.db, `update orders set status=$2 where id=$1 and status='awaiting_confirmation'`, [orderId, to]);
     await this.event(this.db, orderId, user.id, 'amount_disputed', { reason });
     await this.systemMessage(orderId, `Клиент не согласен с суммой: ${reason}. Обсудите в чате или позовите поддержку.`);
     await this.notifier.notify([o.performer_id], { type: 'order', orderId, status: to },
@@ -323,15 +341,19 @@ export class OrdersService {
     const scale = (await this.settings.get('cancel')).scale;
     const m = this.money(o);
     const splitInfo = cancelSplit(scale, stage, m.callOut, pct(m.callOut, Number(o.client_fee_pct)));
+    const invited = (await this.db.query<{ performer_id: string }>(
+      `select performer_id from order_dispatch where order_id=$1 and status in ('queued','ringing','bidding')`, [orderId])).map((x) => x.performer_id);
     await this.db.tx(async (q) => {
-      await q.query(`update orders set status='cancelled', cancelled_at=$5, cancelled_by=$2, cancel_reason=$3, cancel_stage=$4 where id=$1`,
-        [orderId, user.id, reason, stage, this.now()]);
+      await this.guarded(q, `update orders set status='cancelled', cancelled_at=$5, cancelled_by=$2, cancel_reason=$3, cancel_stage=$4
+          where id=$1 and status=$6 and performer_id is not distinct from $7`,
+        [orderId, user.id, reason, stage, this.now(), o.status, o.performer_id]);
       await q.query(`update order_dispatch set status='cancelled' where order_id=$1 and status in ('queued','ringing','bidding')`, [orderId]);
       await q.query(`update bids set status='withdrawn' where order_id=$1 and status='active'`, [orderId]);
       if (o.performer_id) await q.query(`update performer_profiles set line_status='online' where user_id=$1 and line_status='on_job'`, [o.performer_id]);
       await this.event(q, orderId, user.id, 'cancelled', { reason, stage, ...splitInfo });
       await this.payments.onCancelled({ ...o, status: 'cancelled' }, stage, q);
     });
+    this.notifier.live(invited, { type: 'order', orderId, status: 'cancelled' });
     await this.systemMessage(orderId, `Заявка отменена: ${reason}`);
     await this.notifier.notify([o.client_id, o.created_by, o.performer_id].filter((x) => x !== user.id), { type: 'order', orderId, status: 'cancelled' },
       { kind: 'normal', title: 'Заявка отменена', body: `№${o.number}: ${reason}`, data: { orderId } });
@@ -341,7 +363,7 @@ export class OrdersService {
   async retry(user: AuthUser, orderId: string) {
     const o = await this.mustBeClient(user, orderId);
     transition(o.status, 'retry', 'client');
-    await this.db.query(`update orders set status='searching', auction_until=null where id=$1`, [orderId]);
+    await this.guarded(this.db, `update orders set status='searching', auction_until=null where id=$1 and status='no_performer'`, [orderId]);
     await this.db.query(`delete from order_dispatch where order_id=$1`, [orderId]);
     await this.db.query(`update bids set status='withdrawn' where order_id=$1 and status='active'`, [orderId]);
     await this.event(this.db, orderId, user.id, 'retry', {});
@@ -425,6 +447,73 @@ export class OrdersService {
          from orders where ${where} ${status ? 'and status = $2' : ''} order by created_at desc limit 100`,
       status ? [user.id, status] : [user.id],
     );
+  }
+
+  /**
+   * Смена статуса только если заявка всё ещё в том состоянии, которое видел человек.
+   * Иначе — конфликт: два одновременных действия не перезапишут друг друга.
+   */
+  private async guarded(q: Queryable, sql: string, params: unknown[]) {
+    const r = await q.query(sql + ' returning id', params);
+    if (!r.length) throw conflict('state_changed', 'Заявка уже изменилась — обновите экран');
+  }
+
+  /**
+   * Поставить исполнителя в звонки/торги заявки — под блокировкой исполнителя, той же, что при выборе.
+   * Если он в этот миг взял другую заявку или ушёл с линии — не ставим. false — не поставлен.
+   */
+  async enlist(performerId: string, sql: string, params: unknown[]) {
+    return this.db.tx(async (q) => {
+      const p = await q.one<{ line_status: string; paused: boolean }>(
+        'select line_status, paused from performer_profiles where user_id=$1 for update', [performerId]);
+      if (!p || p.paused || p.line_status === 'offline' || p.line_status === 'on_job') return false;
+      if (await this.busyWith(q, performerId, null)) return false;
+      await q.query(sql, params);
+      return true;
+    });
+  }
+
+  // Занятость исполнителя ----------------------------------------------------
+
+  /** Есть ли у исполнителя другая заявка в работе */
+  async busyWith(q: Queryable, performerId: string, exceptOrderId: string | null) {
+    return !!(await q.one(
+      `select 1 from orders where performer_id=$1 and status in ('accepted','en_route','arrived','working','awaiting_confirmation') and ($2::uuid is null or id<>$2::uuid) limit 1`,
+      [performerId, exceptOrderId]));
+  }
+
+  /**
+   * Исполнитель занят (взял заявку, ушёл с линии, на паузе) — убираем его из всех других торгов и звонков:
+   * отклики отзываются, «звонки» гаснут. Возвращает, кого и о чём сообщить.
+   */
+  async release(q: Queryable, performerId: string, exceptOrderId: string | null) {
+    const rows = await q.query<{ order_id: string; client_id: string; created_by: string }>(
+      `update order_dispatch d set status='cancelled', responded_at=$3
+         from orders o
+        where o.id=d.order_id and d.performer_id=$1 and ($2::uuid is null or d.order_id<>$2::uuid)
+          and d.status in ('queued','ringing','bidding') and o.status='searching'
+        returning d.order_id, o.client_id, o.created_by`,
+      [performerId, exceptOrderId, this.now()]);
+    const bids = await q.query<{ order_id: string }>(
+      `update bids set status='withdrawn', updated_at=now()
+        where performer_id=$1 and status='active' and ($2::uuid is null or order_id<>$2::uuid) returning order_id`,
+      [performerId, exceptOrderId]);
+    const orders = new Map<string, string[]>();
+    for (const r of rows) orders.set(r.order_id, [r.client_id, r.created_by]);
+    for (const b of bids) if (!orders.has(b.order_id)) {
+      const o = await q.one<{ client_id: string; created_by: string }>('select client_id, created_by from orders where id=$1', [b.order_id]);
+      if (o) orders.set(b.order_id, [o.client_id, o.created_by]);
+    }
+    return { performerId, orders: [...orders.entries()].map(([orderId, clients]) => ({ orderId, clients })) };
+  }
+
+  /** После release: клиентам — обновить отклики, исполнителю — закрыть вызовы; если там звонили приоритетным — звоним дальше */
+  async afterRelease(r: { performerId: string; orders: { orderId: string; clients: string[] }[] }) {
+    for (const o of r.orders) {
+      this.notifier.live(o.clients, { type: 'order', orderId: o.orderId, status: 'searching', offers: true });
+      this.notifier.live([r.performerId], { type: 'order', orderId: o.orderId, status: 'released' });
+      await this.ringNext(o.orderId);
+    }
   }
 
   // Внутреннее -------------------------------------------------------------

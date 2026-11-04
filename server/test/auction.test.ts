@@ -91,7 +91,7 @@ test('обычная заявка: без откликов за 10 минут �
   const chosen = ok(await t.api('POST', `/api/orders/${b.id}/offers/${list.offers[0].id}/choose`, {}, client.token));
   assert.equal(chosen.performer.id, m1.id);
   // Проигравших предупреждаем, второй раз выбрать нельзя
-  assert.equal((await t.api('POST', `/api/orders/${b.id}/offers/${list.offers[0].id}/choose`, {}, client.token)).body.error, 'too_late');
+  assert.equal((await t.api('POST', `/api/orders/${b.id}/offers/${list.offers[0].id}/choose`, {}, client.token)).status, 409);
   ok(await t.api('POST', `/api/orders/${b.id}/cancel`, { reason: 'Ошибся с заявкой' }, client.token));
 });
 

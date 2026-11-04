@@ -1,6 +1,6 @@
 import './styles.css';
 import { createRoot } from 'react-dom/client';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent } from './api.ts';
 import { MeCtx, ToastProvider, useRoute, useToast, type Me } from './ui.tsx';
 import { native } from './native.ts';
@@ -36,15 +36,24 @@ function App() {
   }, []);
 
   useEffect(() => { reload(); }, [reload]);
+  // #/as/client, #/as/performer, #/as/admin — переключить кабинет и открыть его главную
+  useEffect(() => {
+    const [x, m] = route;
+    if (x !== 'as') return;
+    if (m === 'client' || m === 'performer' || m === 'admin') setMode(m);
+    location.replace('#/' + (m === 'performer' ? 'work' : m === 'admin' ? 'admin' : ''));
+  }, [route.join('/')]); // eslint-disable-line
   useEffect(() => {
     if (!me) return;
     connectWs();
     native.setSession(API_URL || location.origin, getToken());
     native.registerPush((token) => post('/api/me/push-token', { provider: 'rustore', token }));
   }, [me?.id]); // eslint-disable-line
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
   useEffect(() => onEvent((e) => {
     if (e.type === 'verification') { toast(e.decision === 'approved' ? 'Проверка пройдена — выходите на линию' : 'Проверка не пройдена'); reload(); }
-    if (e.type === 'order' && e.status === 'accepted') toast('Заявку приняли');
+    if (e.type === 'order' && e.status === 'accepted' && modeRef.current !== 'performer' && !location.hash.startsWith('#/work')) toast('Исполнитель найден');
   }), [reload, toast]);
 
   if (!ready) return null;
@@ -57,6 +66,7 @@ function App() {
   }
 
   const [a, b] = route;
+  if (a === 'as') return null;
   const isPerformer = me.roles.some((r) => PERFORMER_ROLES.includes(r));
   const isStaff = me.roles.some((r) => r === 'admin' || r === 'moderator');
   const effMode: Mode = a === 'work' ? 'performer' : a === 'admin' ? 'admin' : mode === 'performer' && !isPerformer ? 'client' : mode;
@@ -92,7 +102,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   const tabs: [string, string, string][] = !me ? [] : mode === 'performer'
     ? [['/work', '⚡', 'Линия'], ['/work/jobs', '☰', 'Выезды'], ['/work/profile', '⚙', 'Профиль'], ['/profile', '◉', 'Аккаунт']]
     : mode === 'admin'
-      ? [['/admin', '▦', 'Админ'], ['/', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]
+      ? [['/admin', '▦', 'Админ'], ['/as/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]
       : [['/', '⌂', 'Главная'], ['/orders', '☰', 'Заявки'], ['/sos', '!', 'SOS'], ['/garage', '▭', 'Гараж'], ['/profile', '◉', 'Профиль']];
   return (
     <div className="app">

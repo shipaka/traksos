@@ -131,6 +131,20 @@ await a.getByRole('button', { name: 'Оплата и выплаты' }).click();
 await a.getByText('Способы оплаты').waitFor();
 await shot(a, '13-admin-payments');
 
+// Переходы между кабинетами: из админки в клиента и обратно, «Назад» ведёт в свой список
+await a.getByRole('link', { name: /Клиент/ }).click();
+await a.getByText('Что случилось?').first().waitFor();
+await a.getByRole('link', { name: /Профиль/ }).click();
+await a.getByRole('button', { name: 'Кабинет администратора' }).click();
+await a.getByText('Администратор').first().waitFor();
+await m.goto(BASE + '/#/work/jobs');
+await m.locator('a.list-item').first().click();
+await m.getByText('← Назад').click();
+await m.waitForURL(/#\/work\/jobs$/);
+await m.getByRole('link', { name: /Аккаунт/ }).click();
+await m.getByRole('button', { name: 'Кабинет клиента' }).click();
+await m.getByText('Что случилось?').first().waitFor();
+
 await browser.close();
 if (errors.length) { console.error('ОШИБКИ:\n' + errors.join('\n')); process.exit(1); }
 console.log('Сквозной сценарий пройден, ошибок в консоли нет');
