@@ -47,6 +47,13 @@ export const defaultSettings = {
     parallel: 1,
     parallelSos: 1,
     radiusKm: 220,
+    /** Торги эвакуатора: сколько минут принимаем предложения */
+    towAuctionMinutes: 10,
+    /** Коридор цены эвакуатора — доля от расчётной цены */
+    towCorridorMin: 0.8,
+    towCorridorMax: 1.3,
+    /** Средняя скорость для расчёта подачи, км/ч */
+    towSpeedKmh: 45,
   },
   fees: {
     /** Сервисный сбор с клиента, % */
