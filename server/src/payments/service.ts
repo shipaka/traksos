@@ -218,8 +218,9 @@ export class PaymentsService implements PaymentHooks {
       const actual: number = order.call_out_amount ?? callOutPay.amount;
       const fee = pct(actual, Number(order.client_fee_pct)) - discountOnCallOut;
       await this.provider.capture(callOutPay.provider_payment_id, actual + fee);
-      await q.query(`update payments set status='captured', amount=$2, client_fee=$3, total=$4, refunded_amount=$5, updated_at=now() where id=$1`,
-        [callOutPay.id, actual, fee, actual + fee, callOutPay.total - actual - fee]);
+      // Разморозка лишнего — не возврат: просто списываем меньше, чем было заморожено
+      await q.query(`update payments set status='captured', amount=$2, client_fee=$3, total=$4, updated_at=now() where id=$1`,
+        [callOutPay.id, actual, fee, actual + fee]);
     }
     const m = this.orders.money(order);
     const perf = await q.one<{ is_priority: boolean }>('select is_priority from performer_profiles where user_id=$1', [order.performer_id]);

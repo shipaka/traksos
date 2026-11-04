@@ -116,7 +116,7 @@ export class AdminService {
   /** Ручное начисление (+) или списание (−) исполнителю: компенсация, штраф, исправление ошибки */
   async adjust(admin: AuthUser, performerId: string, p: { amount: number; reason: string; orderId?: string }) {
     if (!Number.isInteger(p.amount) || p.amount === 0) throw bad('bad_amount', 'Сумма не может быть нулевой');
-    const u = await this.db.one('select id from performer_profiles where user_id=$1', [performerId]);
+    const u = await this.db.one('select user_id from performer_profiles where user_id=$1', [performerId]);
     if (!u) throw notFound('Это не исполнитель');
     await this.db.tx(async (q) => {
       for (const [account, amount, pid] of [['performer', p.amount, performerId], ['platform', -p.amount, null]] as const) {

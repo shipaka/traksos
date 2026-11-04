@@ -75,6 +75,7 @@ const a = await mk();
 await login(a, '+79990000001', 'Мне нужна помощь');
 await a.getByText('Что случилось?').first().waitFor();
 await a.goto(BASE + '/#/admin');
+await a.getByRole('button', { name: 'Проверка', exact: true }).click();
 await a.getByText('Отправил').waitFor();
 for (let i = 0; i < n; i++) {
   await a.getByRole('button', { name: 'Принять' }).first().click();
@@ -158,7 +159,7 @@ await a.goto(BASE + '/#/admin');
 await a.getByRole('button', { name: 'Распределение' }).click();
 await a.getByText('Сначала заявки нам').waitFor();
 await shot(a, '12-admin-dispatch');
-await a.getByRole('button', { name: 'Оплата и выплаты' }).click();
+await a.getByRole('button', { name: 'Деньги', exact: true }).click();
 await a.getByText('Способы оплаты').waitFor();
 await shot(a, '13-admin-payments');
 
@@ -175,6 +176,51 @@ await m.waitForURL(/#\/work\/jobs$/);
 await m.getByRole('link', { name: /Аккаунт/ }).click();
 await m.getByRole('button', { name: 'Кабинет клиента' }).click();
 await m.getByText('Что случилось?').first().waitFor();
+
+// Админ: поиск → карточка клиента → бонусы; клиент видит их в профиле
+await a.goto(BASE + '/#/admin');
+await a.locator('input[placeholder^="Телефон, имя"]').fill('1112233');
+await a.getByRole('button', { name: 'Найти' }).click();
+await a.locator('a.list-item').first().click();
+await a.waitForURL(/admin\/user\//);
+for (const tab of ['Заявки', 'Машины', 'Отзывы', 'Платежи', 'Журнал', 'Профиль и цена']) {
+  await a.getByRole('button', { name: tab, exact: true }).click();
+  await a.waitForTimeout(150);
+}
+await a.locator('input[placeholder="Сумма, ₽"]').fill('300');
+await a.locator('input[placeholder^="За что"]').fill('Подарок за первый заказ');
+await a.getByRole('button', { name: 'Начислить' }).click();
+await a.getByText('Бонусы начислены').waitFor();
+await shot(a, '14-admin-user-card');
+await k.goto(BASE + '/#/profile');
+await k.getByText(/спишутся сами/).waitFor({ timeout: 10000 });
+
+// Админ: карточка мастера → начисление; мастер видит в балансе
+await a.goto(BASE + '/#/admin');
+await a.locator('input[placeholder^="Телефон, имя"]').fill('2223344');
+await a.getByRole('button', { name: 'Найти' }).click();
+await a.locator('a.list-item').first().click();
+await a.getByRole('button', { name: 'Исполнитель', exact: true }).click();
+await a.locator('input[placeholder="Сумма, ₽"]').fill('100');
+await a.locator('input[placeholder^="Причина: компенсация"]').fill('Компенсация за простой');
+await a.getByRole('button', { name: 'Начислить' }).click();
+await a.getByText('Начислено').first().waitFor();
+await shot(a, '15-admin-performer');
+
+// Админ: новая редакция оферты → клиенту окно с галочкой → принял
+await a.goto(BASE + '/#/admin');
+await a.getByRole('button', { name: 'Оферты', exact: true }).click();
+await a.getByRole('button', { name: 'Оферта для клиентов' }).click();
+await a.locator('textarea').fill('# Оферта для клиентов\n\nТестовая редакция для проверки окна согласия. Здесь будет текст от юриста.\n\n1. Пункт первый');
+await a.locator('input[placeholder^="Что изменилось"]').fill('Новая шкала отмены');
+await a.getByRole('button', { name: 'Опубликовать' }).click();
+await a.getByText(/Опубликовано/).waitFor();
+await k.goto(BASE + '/#/');
+await k.getByRole('dialog').waitFor({ timeout: 10000 });
+await shot(k, '16-client-offer-gate');
+await k.getByRole('dialog').locator('input[type=checkbox]').check();
+await k.getByRole('button', { name: 'Принимаю' }).click();
+await k.getByRole('dialog').waitFor({ state: 'detached' });
 
 await browser.close();
 if (errors.length) { console.error('ОШИБКИ:\n' + errors.join('\n')); process.exit(1); }

@@ -11,6 +11,7 @@ import { Work, PerformerProfile, IncomingCall } from './screens/performer.tsx';
 import { Admin } from './screens/admin.tsx';
 import { Documents } from './screens/documents.tsx';
 import { OfferGate, OfferPage } from './screens/offers.tsx';
+import { AdminUser } from './screens/adminUser.tsx';
 
 type Mode = 'client' | 'performer' | 'admin';
 const PERFORMER_ROLES = ['master', 'tow', 'service'];
@@ -55,6 +56,8 @@ function App() {
   modeRef.current = mode;
   useEffect(() => onEvent((e) => {
     if (e.type === 'verification') { toast(e.decision === 'approved' ? 'Проверка пройдена — выходите на линию' : 'Проверка не пройдена'); reload(); }
+    // Админ поменял цену, бонусы или баланс — профиль обновляется сам, без перезагрузки
+    if (e.type === 'pricing' || e.type === 'balance' || e.type === 'line_status') reload();
     if (e.type === 'order' && e.status === 'accepted' && modeRef.current !== 'performer' && !location.hash.startsWith('#/work')) toast('Исполнитель найден');
   }), [reload, toast]);
 
@@ -86,7 +89,7 @@ function App() {
     case 'work':
       screen = b === 'profile' ? <PerformerProfile /> : b === 'jobs' ? <Orders as="performer" /> : b === 'docs' ? <Documents /> : <Work />;
       break;
-    case 'admin': screen = isStaff ? <Admin /> : <Home />; break;
+    case 'admin': screen = !isStaff ? <Home /> : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : <Admin />; break;
     case 'offer': screen = <OfferPage audience={b ?? 'client'} />; break;
     default: screen = <main><div className="empty">Такой страницы нет</div></main>;
   }

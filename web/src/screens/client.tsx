@@ -361,6 +361,8 @@ export function Profile() {
         <dl className="kv">
           <dt>Телефон</dt><dd>{fmtPhone(me.phone)}</dd>
           <dt>Рейтинг</dt><dd>{me.rating ? `${me.rating.toFixed(2)} · ${me.rating_count} оценок` : 'пока нет оценок'}</dd>
+          {(me as any).bonus > 0 && <><dt>Бонусы</dt><dd style={{ color: 'var(--good-fg)' }}>{rub((me as any).bonus)} — спишутся сами со следующей заявки</dd></>}
+          {(me as any).personalFee && <><dt>Ваш сбор</dt><dd>{(me as any).feePct}% — персональные условия</dd></>}
         </dl>
       </div>
       <form className="stack" onSubmit={async (e) => {

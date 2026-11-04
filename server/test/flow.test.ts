@@ -186,7 +186,7 @@ test('агентская оплата: выезд замораживается, 
   ok(await t.api('POST', `/api/dev/mock-pay/${t.payments.payments.size && [...t.payments.payments.keys()].at(-1)}`));
   const after = ok(await t.api('GET', `/api/orders/${id}/payments`, undefined, client.token));
   assert.deepEqual(after.map((p: any) => [p.status, p.total]), [['captured', 157_500], ['captured', 157_500]]);
-  assert.equal(after[0].refunded_amount, 47_250, 'лишнее из замороженного вернулось клиенту');
+  assert.equal(after[0].refunded_amount, 0, 'разморозка лишнего — не возврат: списано ровно 1 575 ₽ из замороженных 2 047,50 ₽');
 
   // Учёт сходится: клиент −3 150, мастер +2 850, площадка +300
   const sums = await t.db.query(`select account, sum(amount)::int s from ledger_entries where order_id=$1 group by account order by account`, [id]);

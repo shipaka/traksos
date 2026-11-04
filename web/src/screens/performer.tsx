@@ -11,7 +11,7 @@ import { useToast } from '../ui.tsx';
 export function Work() {
   const { me, reload } = useMe();
   const { busy, run } = useAction();
-  const balance = useLoad(() => get('/api/performer/balance'), []);
+  const balance = useLoad(() => get('/api/performer/balance'), [], (e) => e.type === 'balance' || e.type === 'order');
   const jobs = useLoad(() => get('/api/orders?as=performer'), [], (e) => e.type === 'order');
   const auctions = useLoad(() => get('/api/performer/auctions'), [], (e) => e.type === 'auction' || e.type === 'order');
   useEffect(() => onEvent((e) => { if (e.type === 'line_status') reload(); }), [reload]);

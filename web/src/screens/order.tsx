@@ -4,6 +4,7 @@ import { SERVICES, STATUS, STEPS, STEP_NAMES, RESULTS } from '../dict.ts';
 import { useLoad, useAction, useMe, Loading, Back, RubInput, Field, useToast } from '../ui.tsx';
 import { onEvent } from '../api.ts';
 import { Search, OfferForm } from './search.tsx';
+import { RefundForm, payStatus } from './adminUser.tsx';
 
 export function Order({ id }: { id: string }) {
   const o = useLoad(() => get(`/api/orders/${id}`), [id], (e) => e.orderId === id && (e.type === 'order' || e.type === 'payment'));
@@ -40,6 +41,8 @@ export function Order({ id }: { id: string }) {
 
       {d.you !== 'candidate' && d.status !== 'searching' && <Money d={d} />}
 
+      {d.you === 'admin' && <AdminPanel d={d} onDone={o.reload} />}
+      {(d.you === 'client' || d.you === 'admin') && d.paymentMethod !== 'cash' && <PaymentsList id={id} admin={d.you === 'admin'} />}
       {isPerformer && <PerformerActions d={d} onDone={o.reload} />}
       {!isPerformer && d.status === 'awaiting_confirmation' && <ConfirmAmount d={d} onDone={o.reload} />}
       {d.status === 'completed' && <Review id={id} you={d.you} />}
@@ -151,6 +154,7 @@ function Money({ d }: { d: any }) {
       {proposed ? <div className="sum"><span>Работа</span><span>{rub(m.work)}</span></div>
         : d.estimate?.hour != null && <div className="sum"><span>Час работы</span><span>{rub(d.estimate.hour)}</span></div>}
       {proposed && m.clientFee > 0 && <div className="sum"><span>Сервисный сбор</span><span>{rub(m.clientFee)}</span></div>}
+      {m.discount > 0 && d.you !== 'performer' && <div className="sum" style={{ color: 'var(--good-fg)' }}><span>Скидка{d.discountReason ? ` · ${d.discountReason}` : ''}</span><span>−{rub(m.discount)}</span></div>}
       {proposed && <><div className="hr" /><div className="sum total"><span>Итого</span><span>{rub(m.total)}</span></div></>}
       <span className="note">
         {d.paymentMethod === 'cash' ? 'Оплата мастеру на месте. Сумму подтверждаете в приложении.' : d.paymentMethod === 'online' ? 'Оплата через ТракSOS, мастеру — после подтверждения.' : 'Оплата по счёту на компанию.'}
@@ -342,6 +346,84 @@ function Chat({ id, disabled }: { id: string; disabled: boolean }) {
             <input className="field" placeholder="Сообщение" value={text} onChange={(e) => setText(e.target.value)} maxLength={2000} />
             <button className="btn small" disabled={!text.trim()}>➤</button>
           </form>
+        </>
+      )}
+    </div>
+  );
+}
+
+// Деньги по заявке: клиенту — что списано и что вернули; админу — ещё и кнопка возврата
+function PaymentsList({ id, admin }: { id: string; admin: boolean }) {
+  const list = useLoad(() => get(`/api/orders/${id}/payments`), [id], (e) => e.orderId === id);
+  if (!list.data?.length) return null;
+  return (
+    <div className="card">
+      <b>Оплата</b>
+      {list.data.map((p: any) => (
+        <div key={p.id} className="stack" style={{ gap: 4 }}>
+          <div className="sum"><span>{p.kind === 'call_out' ? 'Выезд' : 'Работа'} · {payStatus(p.status)}</span><span>{rub(p.total)}</span></div>
+          {p.refunded_amount > 0 && <div className="sum" style={{ color: 'var(--good-fg)' }}><span>Возвращено</span><span>{rub(p.refunded_amount)}</span></div>}
+          {p.status === 'pending' && p.confirmation_url && !admin && <a className="btn small" href={p.confirmation_url}>Оплатить {rub(p.total)}</a>}
+          {admin && <RefundForm pay={p} onDone={list.reload} />}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const STAGES: [string, string][] = [
+  ['searching', 'Бесплатно'], ['accepted', 'Мастеру 25%'], ['en_route_first_half', '50%'], ['en_route_second_half', '100%'],
+  ['arrived', 'На месте · 100%'], ['performer_fault', 'Вина мастера · 0'],
+];
+
+function AdminPanel({ d, onDone }: { d: any; onDone: () => void }) {
+  const { busy, run } = useAction();
+  const [mode, setMode] = useState<'none' | 'discount' | 'complete' | 'cancel'>('none');
+  const [amount, setAmount] = useState<number | null>(null);
+  const [stage, setStage] = useState('searching');
+  const [reason, setReason] = useState('');
+  const closed = ['completed', 'cancelled'].includes(d.status);
+  const act = (fn: () => Promise<unknown>, text: string) => run(fn, text).then((r) => { if (r) { setMode('none'); setReason(''); onDone(); } });
+  return (
+    <div className="card" style={{ borderColor: 'var(--accent)' }}>
+      <b>Администратор</b>
+      <div className="row">
+        {d.client && <a className="btn ghost small" href={`#/admin/user/${d.client.id}`}>Клиент: {d.client.company_name ?? d.client.name ?? 'карточка'}</a>}
+        {d.performer && <a className="btn ghost small" href={`#/admin/user/${d.performer.id}`}>Исполнитель: {d.performer.name ?? 'карточка'}</a>}
+      </div>
+      {!closed && (
+        <div className="scroll-x">
+          {([['discount', 'Скидка'], ['complete', 'Закрыть спор'], ['cancel', 'Отменить']] as const).map(([k, n]) => (
+            <button key={k} className="chip" aria-pressed={mode === k} onClick={() => setMode(mode === k ? 'none' : k)}>{n}</button>
+          ))}
+        </div>
+      )}
+      {closed && <span className="note">Заявка закрыта. Деньги можно вернуть в блоке «Оплата» ниже, исполнителю — начислить или списать в его карточке.</span>}
+      {mode === 'discount' && (
+        <>
+          <span className="note">Скидку оплачивает площадка — исполнитель получит полностью. Клиент увидит её в сумме.</span>
+          <RubInput value={amount} onChange={setAmount} placeholder="Скидка, ₽" />
+          <input className="field" placeholder="Причина — клиент её увидит" value={reason} onChange={(e) => setReason(e.target.value)} />
+          <button className="btn" disabled={busy || amount == null || reason.length < 3} onClick={() =>
+            act(() => post(`/api/admin/orders/${d.id}/discount`, { amount, reason }), 'Скидка применена')}>Дать скидку {rub(amount ?? 0)}</button>
+        </>
+      )}
+      {mode === 'complete' && (
+        <>
+          <span className="note">Спор решён: фиксируем сумму работы (без выезда {rub(d.money.callOut)}) и закрываем заявку — как будто клиент подтвердил.</span>
+          <RubInput value={amount} onChange={setAmount} placeholder="Сумма работы, ₽" />
+          <input className="field" placeholder="Как решили — увидят обе стороны" value={reason} onChange={(e) => setReason(e.target.value)} />
+          <button className="btn" disabled={busy || amount == null || reason.length < 3 || !d.performer} onClick={() =>
+            act(() => post(`/api/admin/orders/${d.id}/resolve`, { action: 'complete', workAmount: amount, reason }), 'Заявка закрыта')}>Закрыть заявку</button>
+        </>
+      )}
+      {mode === 'cancel' && (
+        <>
+          <span className="note">Сколько выезда положено исполнителю — по шкале отмены. Остальное клиенту вернётся само (при оплате на сайте).</span>
+          <div className="row">{STAGES.map(([k, n]) => <button key={k} className="chip" aria-pressed={stage === k} onClick={() => setStage(k)}>{n}</button>)}</div>
+          <input className="field" placeholder="Причина — увидят обе стороны" value={reason} onChange={(e) => setReason(e.target.value)} />
+          <button className="btn bad" disabled={busy || reason.length < 3} onClick={() =>
+            act(() => post(`/api/admin/orders/${d.id}/resolve`, { action: 'cancel', stage, reason }), 'Заявка отменена')}>Отменить заявку</button>
         </>
       )}
     </div>

@@ -340,7 +340,7 @@ export function createApp(d: Deps) {
       }
       const ctx: Ctx = { req, params: m.params, query: url.searchParams, body, user, ip: clientIp(req), rawBody, headers: req.headers };
       const out = await m.route.handler(ctx);
-      send(res, 200, out ?? { ok: true }, cors);
+      send(res, 200, out === undefined ? { ok: true } : out, cors);
     } catch (e) {
       const { status, body } = errorBody(e);
       if (status >= 500) console.error(e);

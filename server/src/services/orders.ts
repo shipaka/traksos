@@ -443,7 +443,7 @@ export class OrdersService {
       brand: o.brand, vehicle, estimate: o.estimate, paymentMethod: o.payment_method,
       auction: o.status === 'searching' && !!o.auction_until, auctionUntil: o.auction_until, autoPick: o.auto_pick, search,
       limits: o.status === 'searching' ? this.auction.limits(o, (await this.settings.get('dispatch'))) : null,
-      destination: o.destination, cargo: o.cargo, loaded: o.loaded, driverOnSite: o.driver_on_site,
+      destination: o.destination, cargo: o.cargo, loaded: o.loaded, driverOnSite: o.driver_on_site, discountReason: o.discount_reason,
       money: this.money(o), result: o.result, resultNote: o.result_note,
       cancelReason: o.cancel_reason, cancelStage: o.cancel_stage,
       createdAt: o.created_at, acceptedAt: o.accepted_at, arrivedAt: o.arrived_at, completedAt: o.completed_at,

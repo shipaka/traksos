@@ -5,16 +5,18 @@ import { STATUS, SERVICES, LINE } from '../dict.ts';
 import { useLoad, useAction, Loading } from '../ui.tsx';
 
 export function Admin() {
-  const [tab, setTab] = useState<'verify' | 'people' | 'orders' | 'dispatch' | 'payments' | 'flagged'>('verify');
+  const [tab, setTab] = useState<'search' | 'verify' | 'people' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged'>('search');
   return (
     <main>
       <h1>Администратор</h1>
       <div className="scroll-x">
-        {([['verify', 'Проверка'], ['people', 'Люди'], ['orders', 'Заявки'], ['dispatch', 'Распределение'], ['payments', 'Оплата и выплаты'], ['flagged', 'Подозрительное']] as const).map(([id, n]) => (
+        {([['search', 'Поиск'], ['verify', 'Проверка'], ['orders', 'Заявки'], ['people', 'Все люди'], ['payments', 'Деньги'], ['dispatch', 'Распределение'], ['offers', 'Оферты'], ['flagged', 'Подозрительное']] as const).map(([id, n]) => (
           <button key={id} className="chip" aria-pressed={tab === id} onClick={() => setTab(id)}>{n}</button>
         ))}
       </div>
+      {tab === 'search' && <Search />}
       {tab === 'verify' && <Verify />}
+      {tab === 'offers' && <Offers />}
       {tab === 'people' && <People />}
       {tab === 'orders' && <AllOrders />}
       {tab === 'dispatch' && <Dispatch />}
@@ -35,7 +37,7 @@ function People() {
       {!list.data ? <Loading error={list.error} /> : list.data.map((u: any) => (
         <div key={u.id} className="card">
           <div className="between">
-            <b>{u.name ?? 'Без имени'} · {fmtPhone(u.phone)}</b>
+            <a href={`#/admin/user/${u.id}`}><b>{u.name ?? 'Без имени'} · {fmtPhone(u.phone)}</b></a>
             {u.status === 'blocked' && <span className="pill bad">Заблокирован</span>}
           </div>
           <span className="note">{u.roles.join(', ')}{u.kind ? ` · ${LINE[u.line_status] ?? ''} · проверка: ${u.verification}` : ''}{u.rating ? ` · ★ ${u.rating.toFixed(2)}` : ''}</span>
@@ -95,7 +97,7 @@ function Payments() {
         <div className="sum"><span>Сбор с клиента</span><span>{fees.clientFeePct}%</span></div>
         <div className="sum"><span>Вознаграждение с исполнителя</span><span>{fees.performerCommissionPct}%</span></div>
         <div className="sum"><span>Долг по наличным — пауза с</span><span>{rub(fees.cashDebtLimit)}</span></div>
-        <span className="note">Меняются через API настроек; экран редактирования — следующим шагом.</span>
+        <FeesEditor fees={fees} onDone={settings.reload} />
       </div>
       <div className="card">
         <b>Выплаты исполнителям</b>
@@ -256,4 +258,125 @@ function DocReview({ d, onDone }: { d: any; onDone: () => void }) {
       ))}
     </div>
   );
+}
+
+// Поиск по всему -------------------------------------------------------------
+
+function Search() {
+  const [q, setQ] = useState('');
+  const [res, setRes] = useState<any>(null);
+  const { busy, run } = useAction();
+  const find = async () => { const r = await run(() => get(`/api/admin/search?q=${encodeURIComponent(q)}`), null); if (r) setRes(r); };
+  return (
+    <div className="stack">
+      <form className="compose" onSubmit={(e) => { e.preventDefault(); find(); }}>
+        <input className="field" autoFocus placeholder="Телефон, имя, компания, № заявки, госномер" value={q} onChange={(e) => setQ(e.target.value)} />
+        <button className="btn small" disabled={busy || q.trim().length < 2}>Найти</button>
+      </form>
+      {res && !res.users.length && !res.orders.length && <div className="empty">Ничего не нашлось</div>}
+      {res?.orders.map((o: any) => (
+        <a key={o.id} href={`#/order/${o.id}`} className="card" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <b>Заявка №{o.number} · {SERVICES[o.service]?.name}</b><span className="note">{STATUS[o.status]?.name} · {fmtTime(o.created_at)}</span>
+        </a>
+      ))}
+      {res?.users.length > 0 && (
+        <div className="rows">{res.users.map((u: any) => (
+          <a key={u.id} href={`#/admin/user/${u.id}`} className="list-item">
+            <div className="stack" style={{ gap: 2 }}>
+              <b>{u.name ?? 'Без имени'}{u.company_name ? ` · ${u.company_name}` : ''}</b>
+              <span className="note">{fmtPhone(u.phone)} · {u.roles.join(', ')}{u.kind ? ` · проверка: ${u.verification}` : ''}</span>
+            </div>
+            {u.status === 'blocked' ? <span className="pill bad">Заблокирован</span> : <span className="note">→</span>}
+          </a>
+        ))}</div>
+      )}
+      {!res && <span className="note">Карточка человека: профиль и персональная цена, заявки, машины, баланс исполнителя, отзывы, платежи и возвраты, журнал.</span>}
+    </div>
+  );
+}
+
+// Комиссии ---------------------------------------------------------------------
+
+function FeesEditor({ fees, onDone }: { fees: any; onDone: () => void }) {
+  const { busy, run } = useAction();
+  const [f, setF] = useState({ client: String(fees.clientFeePct), perf: String(fees.performerCommissionPct), debt: String(fees.cashDebtLimit / 100), free: fees.freeUntil ?? '' });
+  const num = (v: string) => Number(v.replace(',', '.'));
+  const valid = num(f.client) >= 0 && num(f.client) <= 30 && num(f.perf) >= 0 && num(f.perf) <= 30 && num(f.debt) >= 0;
+  return (
+    <div className="stack">
+      <div className="grid2">
+        <label className="stack" style={{ gap: 6 }}><span className="label">Сбор с клиента, %</span><input className="field" inputMode="decimal" value={f.client} onChange={(e) => setF({ ...f, client: e.target.value })} /></label>
+        <label className="stack" style={{ gap: 6 }}><span className="label">С исполнителя, %</span><input className="field" inputMode="decimal" value={f.perf} onChange={(e) => setF({ ...f, perf: e.target.value })} /></label>
+      </div>
+      <div className="grid2">
+        <label className="stack" style={{ gap: 6 }}><span className="label">Пауза при долге, ₽</span><input className="field" inputMode="numeric" value={f.debt} onChange={(e) => setF({ ...f, debt: e.target.value.replace(/\D/g, '') })} /></label>
+        <label className="stack" style={{ gap: 6 }}><span className="label">Без комиссии до</span><input className="field" type="date" value={f.free} onChange={(e) => setF({ ...f, free: e.target.value })} /></label>
+      </div>
+      <span className="note">Новые проценты — для новых заявок. «Без комиссии до» — первый месяц для мастеров, включительно.</span>
+      <button className="btn small" disabled={busy || !valid} onClick={() => run(() => put('/api/admin/settings/fees', {
+        clientFeePct: num(f.client), performerCommissionPct: num(f.perf), cashDebtLimit: num(f.debt) * 100, freeUntil: f.free || null,
+      }), 'Комиссии сохранены').then((r) => r && onDone())}>Сохранить комиссии</button>
+    </div>
+  );
+}
+
+// Оферты -----------------------------------------------------------------------
+
+const AUD: Record<string, string> = { client: 'Оферта для клиентов', performer: 'Агентский договор для исполнителей', privacy: 'Согласие на обработку ПДн' };
+
+function Offers() {
+  const list = useLoad(() => get('/api/admin/offers'), []);
+  const { busy, run } = useAction();
+  const [f, setF] = useState({ audience: 'client', version: '', summary: '', body: '', effectiveAt: '' });
+  const [loaded, setLoaded] = useState(false);
+  const loadCurrent = async (aud: string) => {
+    const cur = await get(`/api/offers/current/${aud}`).catch(() => null);
+    setF((x) => ({ ...x, audience: aud, body: cur?.body ?? '', version: cur?.version ? bump(cur.version) : '1.0' }));
+    setLoaded(true);
+  };
+  const minPerf = new Date(Date.now() + 15 * 86_400_000).toISOString().slice(0, 10);
+  return (
+    <div className="stack">
+      <div className="card">
+        <b>Новая редакция</b>
+        <span className="note">После публикации всем, кого касается, придёт уведомление, а при входе — окно «Условия изменились» с галочкой. Пока не примут, клиент не создаст заявку, исполнитель не выйдет на линию. Для исполнителей — не раньше чем через 15 дней (закон о платформах).</span>
+        <div className="scroll-x">{Object.entries(AUD).map(([k, n]) => (
+          <button key={k} className="chip" aria-pressed={f.audience === k && loaded} onClick={() => loadCurrent(k)}>{n}</button>
+        ))}</div>
+        {loaded && (
+          <>
+            <div className="grid2">
+              <input className="field" placeholder="Номер редакции" value={f.version} onChange={(e) => setF({ ...f, version: e.target.value })} />
+              <input className="field" type="date" min={f.audience === 'performer' ? minPerf : undefined} value={f.effectiveAt} onChange={(e) => setF({ ...f, effectiveAt: e.target.value })} />
+            </div>
+            <span className="note">{f.effectiveAt ? '' : f.audience === 'performer' ? `Дата не выбрана — вступит ${new Date(minPerf).toLocaleDateString('ru-RU')}` : 'Дата не выбрана — вступит сразу'}</span>
+            <input className="field" placeholder="Что изменилось — одной строкой, люди увидят первым" value={f.summary} onChange={(e) => setF({ ...f, summary: e.target.value })} />
+            <textarea className="field" style={{ minHeight: 260, fontFamily: 'ui-monospace, monospace', fontSize: 13 }} value={f.body} onChange={(e) => setF({ ...f, body: e.target.value })}
+              placeholder={'# Заголовок\n\nТекст. **Жирный** выделяется звёздочками.\n\n1. Пункт\n2. Пункт'} />
+            <button className="btn" disabled={busy || !f.version || f.body.length < 50} onClick={() => run(() => post('/api/admin/offers', {
+              audience: f.audience, version: f.version, summary: f.summary || undefined, body: f.body,
+              effectiveAt: f.effectiveAt ? new Date(f.effectiveAt + 'T00:00:00+03:00').toISOString() : undefined,
+            }), 'Опубликовано — всем придёт уведомление').then((r) => { if (r) { setLoaded(false); list.reload(); } })}>Опубликовать</button>
+          </>
+        )}
+      </div>
+      <span className="label">История</span>
+      {!list.data ? <Loading error={list.error} /> : !list.data.length ? <div className="empty">Ещё ничего не опубликовано</div> : (
+        <div className="rows">{list.data.map((o: any) => (
+          <a key={o.id} href={`#/offer/${o.audience}`} className="list-item">
+            <div className="stack" style={{ gap: 2 }}>
+              <b>{AUD[o.audience]} · {o.version}</b>
+              <span className="note">с {new Date(o.effective_at).toLocaleDateString('ru-RU')}{o.summary ? ` · ${o.summary}` : ''}</span>
+            </div>
+            <span className="pill">приняли {o.accepted}</span>
+          </a>
+        ))}</div>
+      )}
+    </div>
+  );
+}
+
+function bump(v: string) {
+  const m = /^(\d+)\.(\d+)/.exec(v);
+  return m ? `${m[1]}.${Number(m[2]) + 1}` : v + '-2';
 }
