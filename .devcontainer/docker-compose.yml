@@ -1,0 +1,23 @@
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm
+    volumes:
+      - ..:/workspaces/traksos:cached
+    command: sleep infinity
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/traksos
+      ADMIN_PHONES: "+79000000001"
+      SMS_PROVIDER: log
+      PUSH_PROVIDER: log
+      PAYMENT_PROVIDER: mock
+    depends_on: [db]
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: traksos
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:

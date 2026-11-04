@@ -168,7 +168,7 @@ function CallScreen({ call, onClose }: { call: any; onClose: () => void }) {
 
   async function answer(action: 'accept' | 'decline') {
     stopRing();
-    const r = await run(() => post(`/api/orders/${call.orderId}/${action}`), action === 'accept' ? 'Заявка ваша' : undefined);
+    const r = await run(() => post(`/api/orders/${call.orderId}/${action}`), action === 'accept' ? 'Заявка ваша' : 'Отклонено');
     onClose();
     if (r && action === 'accept') go(`order/${call.orderId}`);
   }

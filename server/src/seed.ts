@@ -1,0 +1,81 @@
+// Тестовые данные для стенда: админ, клиент с машинами, мастера (один — «первый в очереди»),
+// эвакуаторщик — все проверены и на линии, по разным точкам СПб и ЛО. Черновики оферт.
+// Повторный запуск ничего не дублирует. Запуск: npm -w server run seed
+
+import { createDb } from './db/index.ts';
+import { migrate } from './db/migrate.ts';
+import { config } from './config.ts';
+
+export const DEMO = {
+  admin: '+79000000001',
+  client: '+79000000002',
+  company: '+79000000003',
+  masters: [
+    { phone: '+79000000011', name: 'Дима (наш)', lat: 59.93, lng: 30.36, priority: true, brands: { Scania: 'excellent', DAF: 'excellent', Volvo: 'good' } },
+    { phone: '+79000000012', name: 'Сергей', lat: 59.84, lng: 30.38, priority: false, brands: { Scania: 'good', MAN: 'excellent', КАМАЗ: 'excellent' } },
+    { phone: '+79000000013', name: 'Олег', lat: 60.05, lng: 30.33, priority: false, brands: { Volvo: 'excellent', DAF: 'good', Renault: 'excellent' } },
+    { phone: '+79000000014', name: 'Андрей (Тосно)', lat: 59.54, lng: 30.88, priority: false, brands: { Scania: 'good', DAF: 'good' } },
+  ],
+  tow: { phone: '+79000000021', name: 'Пётр, эвакуатор', lat: 59.88, lng: 30.45 },
+};
+
+const DRAFT = (title: string) => `# ${title}
+
+**ЧЕРНОВИК ДЛЯ ТЕСТОВОГО СТЕНДА — не юридический документ.** Итоговый текст готовит и проверяет юрист.
+
+1. ТракSOS (ИП) — информационная площадка и агент исполнителя: принимает оплату за исполнителя и перечисляет её за вычетом вознаграждения.
+2. Цена выезда видна до вызова; сумму работ исполнитель называет на месте, клиент подтверждает в приложении.
+3. Отмена: шкала по этапу (поиск — бесплатно; принял — 25% выезда; в пути — 50–100%; на месте — 100%).
+4. Персональные данные обрабатываются в России, на серверах в РФ (152-ФЗ).
+5. Изменения условий для исполнителей — с уведомлением не позже чем за 15 дней.
+`;
+
+export async function seed(db: Awaited<ReturnType<typeof createDb>>) {
+  const user = async (phone: string, roles: string[], name: string, extra: Record<string, unknown> = {}) => {
+    const u = await db.one<{ id: string }>(
+      `insert into users(phone, roles, name, company_name, company_inn) values ($1,$2,$3,$4,$5)
+       on conflict (phone) do update set roles=(select array(select distinct unnest(users.roles || excluded.roles))), name=excluded.name
+       returning id`, [phone, roles, name, extra.company ?? null, extra.inn ?? null]);
+    return u!.id;
+  };
+  await user(DEMO.admin, ['admin', 'client'], 'Администратор');
+  const client = await user(DEMO.client, ['client'], 'Иван, дальнобойщик');
+  const company = await user(DEMO.company, ['client'], 'Логист ООО «Северный путь»', { company: 'ООО «Северный путь»', inn: '7801234567' });
+  for (const [owner, brand, model, year, plate] of [
+    [client, 'Scania', 'R440', 2012, 'В777ОР178'], [company, 'DAF', 'XF105', 2015, 'А123ВС47'], [company, 'Volvo', 'FH', 2018, 'Е555КХ98'],
+  ] as const) {
+    await db.query(`insert into vehicles(owner_id, brand, model, year, plate) select $1,$2,$3,$4,$5
+                    where not exists (select 1 from vehicles where plate=$5)`, [owner, brand, model, year, plate]);
+  }
+  const performer = async (id: string, p: Record<string, unknown>) => {
+    await db.query(
+      `insert into performer_profiles(user_id, kind, specialties, brands, tier, is_priority, verification, line_status, lat, lng, location_at,
+          tax_status, inn, car, prep_minutes, verified_at)
+       values ($1,$2,$3,$4,'eco',$5,'approved','online',$6,$7,now(),'self_employed',$8,$9,$10,now())
+       on conflict (user_id) do update set verification='approved', is_priority=excluded.is_priority, lat=excluded.lat, lng=excluded.lng`,
+      [id, p.kind, p.specialties, p.brands ?? {}, p.priority ?? false, p.lat, p.lng, p.inn, p.car, p.prep ?? 0]);
+  };
+  for (const [i, m] of DEMO.masters.entries()) {
+    const id = await user(m.phone, ['master'], m.name);
+    await performer(id, { kind: 'master', specialties: ['electric', 'diag', 'air'], brands: m.brands, priority: m.priority, lat: m.lat, lng: m.lng,
+      inn: `78000000001${i}`, car: { brand: 'Lada Largus', color: 'белый', plate: `А10${i}ВС78` } });
+    await db.query('update users set rating=$2, rating_count=$3 where id=$1', [id, [4.9, 4.7, 4.5, 4.8][i], [42, 18, 7, 25][i]]);
+  }
+  const tow = await user(DEMO.tow.phone, ['tow'], DEMO.tow.name);
+  await performer(tow, { kind: 'tow', specialties: [], lat: DEMO.tow.lat, lng: DEMO.tow.lng, inn: '780000000099', car: { brand: 'MAN TGS', plate: 'Т999ТТ78' }, prep: 15 });
+
+  for (const [audience, title] of [['client', 'Оферта для клиентов'], ['performer', 'Агентский договор для исполнителей'], ['privacy', 'Согласие на обработку персональных данных']]) {
+    await db.query(`insert into offers(audience, version, body, summary, effective_at) select $1, '0.1-черновик', $2, 'Черновик для тестов', now()
+                    where not exists (select 1 from offers where audience=$1)`, [audience, DRAFT(title)]);
+  }
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const db = await createDb(config.databaseUrl);
+  await migrate(db);
+  await seed(db);
+  console.log('Тестовые данные на месте. Входите по номерам:');
+  console.log(`  админ ${DEMO.admin} · клиент ${DEMO.client} · компания ${DEMO.company}`);
+  console.log(`  мастера ${DEMO.masters.map((m) => m.phone).join(', ')} · эвакуатор ${DEMO.tow.phone}`);
+  await db.close();
+}

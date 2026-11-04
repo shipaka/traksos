@@ -66,7 +66,10 @@ export class OrdersService {
     const night = i.night ?? isNight(all.pricing, this.now());
     const tier = i.tier ?? 'eco';
     const est = estimate(all.pricing, { service: i.service, tier, zoneId: i.zoneId, night, group: !!i.groupTrip });
-    const feePct = method === 'cash' ? (all.fees.cashChargesClientFee ? all.fees.clientFeePct : 0) : all.fees.clientFeePct;
+    const defaultFee = method === 'cash' ? (all.fees.cashChargesClientFee ? all.fees.clientFeePct : 0) : all.fees.clientFeePct;
+    // Персональный сбор клиента (назначает администратор) важнее общего
+    const personal = await this.db.one<{ fee_pct_override: string | null }>('select fee_pct_override from users where id=$1', [clientId]);
+    const feePct = personal?.fee_pct_override != null ? Number(personal.fee_pct_override) : defaultFee;
 
     const order = await this.db.one(
       `insert into orders(client_id, created_by, vehicle_id, service, is_sos, problem, description, address, lat, lng,
@@ -295,17 +298,26 @@ export class OrdersService {
     const o = await this.mustBeClient(user, orderId);
     const to = transition(o.status, 'confirm_amount', 'client');
     const m = this.money(o);
+    let used = 0;
     if (expectedTotal != null && expectedTotal !== m.total) throw conflict('amount_changed', 'Сумма изменилась — проверьте заново');
     await this.db.tx(async (q) => {
+      // Бонусы клиента списываются сами в момент подтверждения
+      const bonus = await q.one<{ b: number }>('select coalesce(sum(amount),0)::int b from bonus_entries where user_id=$1', [o.client_id]);
+      const use = Math.min(bonus?.b ?? 0, m.total);
+      if (use > 0) {
+        await q.query('update orders set discount_amount = discount_amount + $2, discount_reason = coalesce(discount_reason, $3) where id=$1', [orderId, use, 'Бонусы']);
+        await q.query(`insert into bonus_entries(user_id, amount, kind, order_id, note) values ($1,$2,'use',$3,'Списано за заявку')`, [o.client_id, -use, orderId]);
+      }
+      used = use;
       // Подтверждаем ровно ту сумму, что видел клиент: если мастер успел её поменять — конфликт
       await this.guarded(q, `update orders set status=$2, amount_confirmed_at=$3, completed_at=$3
           where id=$1 and status='awaiting_confirmation' and work_amount is not distinct from $4 and performer_id=$5`,
         [orderId, to, this.now(), o.work_amount, o.performer_id]);
       await q.query(`update performer_profiles set line_status='online' where user_id=$1 and line_status='on_job'`, [o.performer_id]);
       await this.event(q, orderId, user.id, 'amount_confirmed', { total: m.total, method: o.payment_method });
-      await this.payments.onConfirmed({ ...o, status: to }, q);
+      await this.payments.onConfirmed({ ...o, status: to, discount_amount: Number(o.discount_amount ?? 0) + use }, q);
     });
-    await this.systemMessage(orderId, `Сумма ${rub(m.total)} подтверждена. Оставьте отзыв друг о друге.`);
+    await this.systemMessage(orderId, `Сумма ${rub(m.total - used)} подтверждена${used ? ` (бонусами ${rub(used)})` : ''}. Оставьте отзыв друг о друге.`);
     await this.notifier.notify([o.performer_id], { type: 'order', orderId, status: to },
       { kind: 'normal', title: 'Сумма подтверждена', body: `Заявка №${o.number}: ${rub(m.total)}`, data: { orderId } });
     return this.view(user, orderId);
@@ -377,7 +389,9 @@ export class OrdersService {
     const work: number = o.work_amount ?? 0;
     const amount = callOut + work;
     const clientFee = pct(amount, Number(o.client_fee_pct ?? 0));
-    return { callOut, work, amount, clientFee, total: amount + clientFee };
+    // Скидка и бонусы — за счёт площадки, не больше суммы заявки
+    const discount = Math.min(Number(o.discount_amount ?? 0), amount + clientFee);
+    return { callOut, work, amount, clientFee, discount, total: amount + clientFee - discount };
   }
 
   // Просмотр ---------------------------------------------------------------

@@ -19,14 +19,14 @@ export function Login() {
   const [agree, setAgree] = useState(false);
 
   async function sendCode() {
-    const r = await run(() => post('/api/auth/code', { phone }));
+    const r = await run(() => post('/api/auth/code', { phone }), 'Код отправлен');
     if (r) {
       setDevCode(r.devCode ?? null);
       setStep('code');
     }
   }
   async function verify() {
-    const r = await run(() => post('/api/auth/verify', { phone, code, role, device: navigator.userAgent.slice(0, 200) }));
+    const r = await run(() => post('/api/auth/verify', { phone, code, role, device: navigator.userAgent.slice(0, 200), acceptOffers: agree }), 'Вы вошли');
     if (r) {
       setToken(r.token);
       connectWs();
@@ -56,7 +56,7 @@ export function Login() {
           </Field>
           <label className="row note" style={{ flexWrap: 'nowrap', alignItems: 'flex-start' }}>
             <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} style={{ marginTop: 3 }} />
-            <span>Согласен с офертой и на обработку персональных данных</span>
+            <span>Согласен с <a href="#/offer/client" target="_blank" rel="noreferrer">офертой</a>{role !== 'client' ? <>, <a href="#/offer/performer" target="_blank" rel="noreferrer">агентским договором</a></> : null} и на <a href="#/offer/privacy" target="_blank" rel="noreferrer">обработку персональных данных</a></span>
           </label>
           <button className="btn" disabled={busy || !agree || phone.replace(/\D/g, '').length < 11}>Получить код</button>
         </form>

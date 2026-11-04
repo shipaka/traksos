@@ -117,7 +117,7 @@ test('полный путь: SOS → приоритетный отказался
   const prop = ok(await t.api('POST', `/api/orders/${id}/amount`, { workAmount: 210_000, result: 'solved', note: 'Клемма массы' }, master.token));
   assert.equal(prop.status, 'awaiting_confirmation');
   // 5 200 + 2 100 = 7 300 ₽ + сбор 5% 365 ₽ = 7 665 ₽
-  assert.deepEqual(prop.money, { callOut: 520_000, work: 210_000, amount: 730_000, clientFee: 36_500, total: 766_500 });
+  assert.deepEqual(prop.money, { callOut: 520_000, work: 210_000, amount: 730_000, clientFee: 36_500, discount: 0, total: 766_500 });
 
   // Мастер не может подтвердить за клиента; клиент спорит, мастер называет заново, клиент подтверждает
   assert.equal((await t.api('POST', `/api/orders/${id}/confirm`, {}, master.token)).status, 403);

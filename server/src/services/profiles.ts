@@ -27,7 +27,12 @@ export class ProfilesService {
       `select id, phone, name, roles, status, owner_id, company_name, company_inn, edo_operator, edo_id,
               rating::float as rating, rating_count, created_at from users where id=$1`, [user.id]);
     const performer = await this.performer(user.id);
-    return { ...u, performer };
+    const ownerId = user.owner_id ?? user.id;
+    const pr = await this.db.one<{ bonus: number; fee: string | null }>(
+      `select (select coalesce(sum(amount),0)::int from bonus_entries where user_id=$1) as bonus,
+              (select fee_pct_override from users where id=$1) as fee`, [ownerId]);
+    const fees = await this.settings.get('fees');
+    return { ...u, performer, bonus: pr?.bonus ?? 0, feePct: pr?.fee != null ? Number(pr.fee) : fees.clientFeePct, personalFee: pr?.fee != null };
   }
 
   async updateMe(userId: string, p: { name?: string; companyName?: string | null; companyInn?: string | null; edoOperator?: string | null; edoId?: string | null }) {

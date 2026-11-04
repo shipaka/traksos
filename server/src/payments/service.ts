@@ -68,12 +68,19 @@ export class PaymentsService implements PaymentHooks {
     const s = split(fees, m.amount, { isPriority: !!perf?.is_priority });
 
     if (order.payment_method === 'cash') {
-      const debt = s.commission + m.clientFee;
+      // Клиент отдал мастеру итог со скидкой; мастер должен площадке сбор + вознаграждение − скидку.
+      // Если скидка больше — площадка доплачивает мастеру разницу.
+      const debt = s.commission + m.clientFee - m.discount;
       if (debt > 0) {
         await this.ledger(q, order.id, null, [
           { account: 'performer', performerId: order.performer_id, amount: -debt, kind: 'cash_commission',
-            note: `Наличные ${rub(m.total)}: сбор ${rub(m.clientFee)} + вознаграждение ${rub(s.commission)}` },
+            note: `Наличные ${rub(m.total)}: сбор ${rub(m.clientFee)} + вознаграждение ${rub(s.commission)}${m.discount ? ` − скидка ${rub(m.discount)}` : ''}` },
           { account: 'platform', amount: debt, kind: 'cash_commission' },
+        ]);
+      } else if (debt < 0) {
+        await this.ledger(q, order.id, null, [
+          { account: 'performer', performerId: order.performer_id, amount: -debt, kind: 'adjustment', note: `Скидка клиенту ${rub(m.discount)} за счёт площадки` },
+          { account: 'platform', amount: debt, kind: 'adjustment' },
         ]);
       }
       return;
@@ -86,9 +93,10 @@ export class PaymentsService implements PaymentHooks {
       );
       return;
     }
-    // online: выезд уже заморожен, работу списываем сразу
-    if (m.work > 0) {
-      const p = await this.createProviderPayment(q, order, 'work', m.work, true);
+    // online: выезд уже заморожен, работу списываем сразу (скидка сначала уменьшает оплату работы)
+    const workTotal = m.work + pct(m.work, Number(order.client_fee_pct));
+    if (m.work > 0 && workTotal - Math.min(m.discount, workTotal) > 0) {
+      const p = await this.createProviderPayment(q, order, 'work', m.work, true, Math.min(m.discount, workTotal));
       await this.notifier.notify([order.client_id, order.created_by], { type: 'payment', orderId: order.id, url: p.confirmation_url },
         { kind: 'normal', title: 'Оплатите работу', body: `Заявка №${order.number}: ${rub(p.total)}`, data: { orderId: order.id } });
     } else {
@@ -134,10 +142,10 @@ export class PaymentsService implements PaymentHooks {
 
   // Платежи ---------------------------------------------------------------
 
-  private async createProviderPayment(q: Queryable, order: any, kind: 'call_out' | 'work', amount: number, capture: boolean) {
+  private async createProviderPayment(q: Queryable, order: any, kind: 'call_out' | 'work', amount: number, capture: boolean, discount = 0) {
     const p = await this.settings.get('payments');
     const fee = pct(amount, Number(order.client_fee_pct));
-    const total = amount + fee;
+    const total = amount + fee - discount;
     const n = (await q.one<{ c: number }>('select count(*)::int c from payments where order_id=$1 and kind=$2', [order.id, kind]))!.c;
     const key = `${order.id}:${kind}:${n + 1}`;
     const row = await q.one(
@@ -203,9 +211,12 @@ export class PaymentsService implements PaymentHooks {
   private async finalizeOnline(orderId: string, q: Queryable) {
     const order = (await q.one('select * from orders where id=$1', [orderId]))!;
     const callOutPay = await q.one(`select * from payments where order_id=$1 and kind='call_out' and status='held'`, [orderId]);
+    const m0 = this.orders.money(order);
+    const workTotal = m0.work + pct(m0.work, Number(order.client_fee_pct));
+    const discountOnCallOut = Math.max(0, m0.discount - workTotal);
     if (callOutPay) {
       const actual: number = order.call_out_amount ?? callOutPay.amount;
-      const fee = pct(actual, Number(order.client_fee_pct));
+      const fee = pct(actual, Number(order.client_fee_pct)) - discountOnCallOut;
       await this.provider.capture(callOutPay.provider_payment_id, actual + fee);
       await q.query(`update payments set status='captured', amount=$2, client_fee=$3, total=$4, refunded_amount=$5, updated_at=now() where id=$1`,
         [callOutPay.id, actual, fee, actual + fee, callOutPay.total - actual - fee]);
@@ -215,9 +226,10 @@ export class PaymentsService implements PaymentHooks {
     const fees = await this.settings.get('fees');
     const s = split(fees, m.amount, { isPriority: !!perf?.is_priority });
     await this.ledger(q, orderId, null, [
-      { account: 'client', amount: -(m.amount + m.clientFee), kind: 'payment' },
+      { account: 'client', amount: -m.total, kind: 'payment' },
       { account: 'performer', performerId: order.performer_id, amount: m.amount - s.commission, kind: 'earning' },
-      { account: 'platform', amount: m.clientFee + s.commission, kind: 'fee', note: `сбор ${rub(m.clientFee)} + вознаграждение ${rub(s.commission)}` },
+      { account: 'platform', amount: m.clientFee + s.commission - m.discount, kind: 'fee',
+        note: `сбор ${rub(m.clientFee)} + вознаграждение ${rub(s.commission)}${m.discount ? ` − скидка ${rub(m.discount)}` : ''}` },
     ]);
     await q.query(`insert into payouts(order_id, performer_id, amount, commission, provider) values ($1,$2,$3,$4,$5)`,
       [orderId, order.performer_id, m.amount - s.commission, s.commission, this.provider.name]);
@@ -236,7 +248,7 @@ export class PaymentsService implements PaymentHooks {
       await this.ledger(q, order.id, pay.id, [
         { account: 'client', amount: -pay.total, kind: 'payment', note: 'Оплата по счёту' },
         { account: 'performer', performerId: order.performer_id, amount: pay.amount - s.commission, kind: 'earning' },
-        { account: 'platform', amount: pay.client_fee + s.commission, kind: 'fee' },
+        { account: 'platform', amount: pay.total - (pay.amount - s.commission), kind: 'fee' },
       ]);
       await q.query(`insert into payouts(order_id, performer_id, amount, commission, provider) values ($1,$2,$3,$4,'manual')`,
         [order.id, order.performer_id, pay.amount - s.commission, s.commission]);
@@ -255,6 +267,16 @@ export class PaymentsService implements PaymentHooks {
     for (const po of list) {
       if (!po.tax_status) {
         results.push({ id: po.id, status: 'skipped', reason: 'нет статуса самозанятого или ИП' });
+        continue;
+      }
+      // Списания и удержания больше начислений — сначала гасим долг, выплату не отправляем
+      if ((await this.balance(po.performer_id)).to_pay < po.amount) {
+        results.push({ id: po.id, status: 'skipped', reason: 'есть удержания — баланс меньше выплаты' });
+        continue;
+      }
+      if (po.amount === 0) {
+        await this.db.query(`update payouts set status='paid', paid_at=now(), receipt_status='not_required' where id=$1`, [po.id]);
+        results.push({ id: po.id, status: 'paid' });
         continue;
       }
       const r = await this.provider.payout({
@@ -298,7 +320,7 @@ export class PaymentsService implements PaymentHooks {
     const r = await this.db.one<{ cash_debt: number; to_pay: number; paid: number }>(
       `select
          coalesce(-sum(amount) filter (where kind in ('cash_commission','cash_commission_paid')), 0)::int as cash_debt,
-         coalesce(sum(amount) filter (where kind in ('earning','payout')), 0)::int as to_pay,
+         coalesce(sum(amount) filter (where kind in ('earning','payout','adjustment','refund_charge')), 0)::int as to_pay,
          coalesce(-sum(amount) filter (where kind = 'payout'), 0)::int as paid
        from ledger_entries where account='performer' and performer_id=$1`, [performerId]);
     const limit = (await this.settings.get('fees')).cashDebtLimit;

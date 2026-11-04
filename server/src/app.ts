@@ -17,6 +17,7 @@ import { ReviewsService, REVIEW_TAGS } from './services/reviews.ts';
 import { OffersService } from './services/offers.ts';
 import { AuctionService } from './services/auction.ts';
 import { DocumentsService } from './services/documents.ts';
+import { AdminService } from './services/admin.ts';
 import { Raw } from './http/router.ts';
 import { PaymentsService } from './payments/service.ts';
 import { estimate, isNight } from './domain/pricing.ts';
@@ -51,6 +52,7 @@ export function createApp(d: Deps) {
   const reviews = new ReviewsService(d.db, settings, orders);
   const offers = new OffersService(d.db, notifier, now);
   const documents = new DocumentsService(d.db, notifier, settings, now);
+  const admin = new AdminService(d.db, notifier, orders, payments, profiles, settings, now);
 
   const r = new Router();
   const staff = ['admin', 'moderator'];
@@ -61,9 +63,13 @@ export function createApp(d: Deps) {
 
   // Вход ---------------------------------------------------------------------
   r.post('/api/auth/code', false, (c: Ctx) => auth.requestCode(parse(z.object({ phone: z.string() }), c.body).phone));
-  r.post('/api/auth/verify', false, (c: Ctx) => {
-    const b = parse(z.object({ phone: z.string(), code: z.string().min(4).max(6), role: z.enum(SELF_ROLES).optional(), device: z.string().max(200).optional() }), c.body);
-    return auth.verify(b.phone, b.code, b.role, b.device);
+  r.post('/api/auth/verify', false, async (c: Ctx) => {
+    const b = parse(z.object({ phone: z.string(), code: z.string().min(4).max(6), role: z.enum(SELF_ROLES).optional(),
+      device: z.string().max(200).optional(), acceptOffers: z.boolean().optional() }), c.body);
+    const r = await auth.verify(b.phone, b.code, b.role, b.device);
+    // Галочка «Согласен с офертой» на экране входа — записываем согласие на действующие редакции
+    if (b.acceptOffers) await offers.acceptCurrent(r.user as any, c.ip);
+    return r;
   });
   r.post('/api/auth/logout', true, async (c: AuthedCtx) => {
     await auth.logout(bearer(c.req)!);
@@ -89,6 +95,8 @@ export function createApp(d: Deps) {
     d.db.query('select id::int as id, kind, body, data, created_at, read_at from notifications where user_id=$1 order by id desc limit 100', [c.user.id]));
   r.get('/api/me/offers', true, (c: AuthedCtx) => offers.status(c.user));
   r.post('/api/offers/:id/accept', true, (c: AuthedCtx) => offers.accept(c.user, c.params.id, c.ip));
+  r.get('/api/offers/current/:audience', false, async (c: Ctx) => (await offers.current(c.params.audience)) ?? null);
+  r.get('/api/offers/:id', false, (c: Ctx) => offers.byId(c.params.id));
 
   // Гараж --------------------------------------------------------------------
   const vehicleSchema = z.object({ brand: z.string().min(1).max(50), model: z.string().max(50).optional(), year: z.number().int().min(1960).max(2100).optional(),
@@ -109,9 +117,13 @@ export function createApp(d: Deps) {
     acceptsGroup: z.boolean().optional(), taxStatus: z.enum(['self_employed', 'ip']).nullish(), inn: z.string().nullish(),
     car: z.object({ brand: z.string().max(50), color: z.string().max(30).optional(), plate: z.string().max(15) }).nullish(),
   }), c.body)));
-  r.post('/api/performer/line', performerRoles, (c: AuthedCtx) => profiles.setLine(c.user.id, parse(z.object({
-    lineStatus: z.enum(['online', 'on_call', 'busy', 'offline']).optional(), busyUntil: z.string().datetime().nullish(), paused: z.boolean().optional(),
-  }), c.body)));
+  r.post('/api/performer/line', performerRoles, async (c: AuthedCtx) => {
+    const b = parse(z.object({
+      lineStatus: z.enum(['online', 'on_call', 'busy', 'offline']).optional(), busyUntil: z.string().datetime().nullish(), paused: z.boolean().optional(),
+    }), c.body);
+    if (b.lineStatus === 'online') await offers.requirePerformer(c.user);
+    return profiles.setLine(c.user.id, b);
+  });
   r.post('/api/performer/location', performerRoles, async (c: AuthedCtx) => {
     const b = parse(z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) }), c.body);
     await profiles.setLocation(c.user.id, b.lat, b.lng);
@@ -152,18 +164,18 @@ export function createApp(d: Deps) {
   });
 
   // Заявки -------------------------------------------------------------------
-  r.post('/api/orders', true, (c: AuthedCtx) => orders.create(c.user, parse(z.object({
+  r.post('/api/orders', true, async (c: AuthedCtx) => (await offers.requireClient(c.user), orders.create(c.user, parse(z.object({
     service: z.string(), isSos: z.boolean().optional(), problem: z.string().max(40).optional(), description: z.string().max(1000).optional(),
     address: z.string().max(300).optional(), lat: z.number().optional(), lng: z.number().optional(), zoneId: z.string().default('spb'),
     tier: z.enum(['eco', 'comfort', 'pro']).optional(), vehicleId: z.string().uuid().optional(), brand: z.string().max(40).optional(),
     groupTrip: z.boolean().optional(), night: z.boolean().optional(), paymentMethod: z.enum(['cash', 'online', 'invoice']).optional(),
     destination: z.string().max(300).optional(), cargo: z.enum(['tractor', 'semitrailer', 'coupling', 'truck12']).optional(),
     loaded: z.enum(['empty', 'loaded', 'adr']).optional(), driverOnSite: z.boolean().optional(),
-  }), c.body)));
+  }), c.body))));
   r.get('/api/orders', true, (c: AuthedCtx) =>
     orders.list(c.user, c.query.get('as') === 'performer' ? 'performer' : 'client', c.query.get('status') ?? undefined));
   r.get('/api/orders/:id', true, (c: AuthedCtx) => orders.view(c.user, c.params.id));
-  r.post('/api/orders/:id/accept', performerRoles, (c: AuthedCtx) => orders.accept(c.user, c.params.id));
+  r.post('/api/orders/:id/accept', performerRoles, async (c: AuthedCtx) => (await offers.requirePerformer(c.user), orders.accept(c.user, c.params.id)));
   r.post('/api/orders/:id/decline', performerRoles, (c: AuthedCtx) => orders.decline(c.user, c.params.id));
   r.post('/api/orders/:id/drop', performerRoles, (c: AuthedCtx) => orders.drop(c.user, c.params.id, parse(z.object({ reason: z.string().min(2).max(300) }), c.body).reason));
   r.post('/api/orders/:id/step', performerRoles, (c: AuthedCtx) =>
@@ -180,8 +192,10 @@ export function createApp(d: Deps) {
     const sort = c.query.get('sort') ?? 'recommended';
     return auction.list(c.user, c.params.id, (['recommended', 'price', 'eta', 'distance', 'rating'].includes(sort) ? sort : 'recommended') as any);
   });
-  r.post('/api/orders/:id/offers', performerRoles, (c: AuthedCtx) =>
-    auction.offer(c.user, c.params.id, parse(z.object({ price: money.optional() }), c.body).price));
+  r.post('/api/orders/:id/offers', performerRoles, async (c: AuthedCtx) => {
+    await offers.requirePerformer(c.user);
+    return auction.offer(c.user, c.params.id, parse(z.object({ price: money.optional() }), c.body).price);
+  });
   r.delete('/api/orders/:id/offers', performerRoles, (c: AuthedCtx) => auction.withdraw(c.user, c.params.id));
   r.post('/api/orders/:id/offers/:offerId/choose', true, (c: AuthedCtx) => auction.choose(c.user, c.params.id, c.params.offerId));
   r.get('/api/performer/auctions', performerRoles, (c: AuthedCtx) => auction.open(c.user));
@@ -223,12 +237,34 @@ export function createApp(d: Deps) {
          from users u left join performer_profiles p on p.user_id = u.id
         where u.phone ilike $1 or coalesce(u.name,'') ilike $1 order by u.created_at desc limit 100`, [q]);
   });
-  r.post('/api/admin/users/:id/roles', ['admin'], async (c: AuthedCtx) => {
-    const b = parse(z.object({ roles: z.array(z.enum(ROLES as [string, ...string[]])).min(1) }), c.body);
-    await d.db.query('update users set roles=$2 where id=$1', [c.params.id, b.roles]);
-    await audit(c.user.id, 'user.roles', c.params.id, b);
-    return { ok: true };
+  r.post('/api/admin/users/:id/roles', ['admin'], (c: AuthedCtx) =>
+    admin.setRoles(c.user, c.params.id, parse(z.object({ roles: z.array(z.enum(ROLES as [string, ...string[]])).min(1) }), c.body).roles));
+  r.get('/api/admin/users/:id', staff, (c: AuthedCtx) => admin.userCard(c.params.id));
+  r.get('/api/admin/search', staff, (c: AuthedCtx) => admin.search(c.query.get('q') ?? ''));
+  r.post('/api/admin/payments/:id/refund', ['admin'], (c: AuthedCtx) => admin.refund(c.user, c.params.id, parse(z.object({
+    amount: money.positive(), from: z.enum(['platform', 'performer']), reason: z.string().min(3).max(300),
+  }), c.body)));
+  r.post('/api/admin/performers/:id/adjust', ['admin'], (c: AuthedCtx) => admin.adjust(c.user, c.params.id, parse(z.object({
+    amount: z.number().int(), reason: z.string().min(3).max(300), orderId: z.string().uuid().optional(),
+  }), c.body)));
+  r.post('/api/admin/users/:id/fee', ['admin'], (c: AuthedCtx) => {
+    const b = parse(z.object({ pct: z.number().min(0).max(30).nullable(), reason: z.string().min(3).max(300) }), c.body);
+    return admin.setClientFee(c.user, c.params.id, b.pct, b.reason);
   });
+  r.post('/api/admin/users/:id/bonus', ['admin'], (c: AuthedCtx) => {
+    const b = parse(z.object({ amount: z.number().int(), reason: z.string().min(3).max(300) }), c.body);
+    return admin.bonus(c.user, c.params.id, b.amount, b.reason);
+  });
+  r.post('/api/admin/orders/:id/discount', ['admin'], (c: AuthedCtx) => {
+    const b = parse(z.object({ amount: money, reason: z.string().min(3).max(300) }), c.body);
+    return admin.discount(c.user, c.params.id, b.amount, b.reason);
+  });
+  r.post('/api/admin/performers/:id/offline', staff, (c: AuthedCtx) =>
+    admin.forceOffline(c.user, c.params.id, parse(z.object({ reason: z.string().min(3).max(300) }), c.body).reason));
+  r.post('/api/admin/orders/:id/resolve', ['admin'], (c: AuthedCtx) => admin.resolve(c.user, c.params.id, parse(z.object({
+    action: z.enum(['complete', 'cancel']), workAmount: money.optional(), reason: z.string().min(3).max(300),
+    stage: z.enum(['searching', 'accepted', 'en_route_first_half', 'en_route_second_half', 'arrived', 'performer_fault']).optional(),
+  }), c.body)));
   r.post('/api/admin/users/:id/block', staff, async (c: AuthedCtx) => {
     const b = parse(z.object({ blocked: z.boolean(), reason: z.string().max(300).optional() }), c.body);
     await d.db.query('update users set status=$2 where id=$1', [c.params.id, b.blocked ? 'blocked' : 'active']);
@@ -260,9 +296,10 @@ export function createApp(d: Deps) {
   r.post('/api/admin/reviews/:id', staff, (c: AuthedCtx) =>
     reviews.moderate(c.user, c.params.id, parse(z.object({ disputed: z.boolean().optional(), hidden: z.boolean().optional() }), c.body)));
   r.post('/api/admin/offers', ['admin'], (c: AuthedCtx) => offers.publish(c.user, parse(z.object({
-    audience: z.enum(['client', 'performer', 'privacy']), version: z.string().min(1).max(20), url: z.string().url(),
-    summary: z.string().max(500).optional(), effectiveAt: z.string(),
+    audience: z.enum(['client', 'performer', 'privacy']), version: z.string().min(1).max(20), body: z.string().min(50).max(200_000),
+    summary: z.string().max(500).optional(), effectiveAt: z.string().optional(),
   }), c.body)));
+  r.get('/api/admin/offers', staff, () => offers.history());
   r.post('/api/admin/payouts/run', ['admin'], (c: AuthedCtx) => payments.runPayouts(c.user));
   r.post('/api/admin/payments/:id/invoice-paid', ['admin'], (c: AuthedCtx) => payments.markInvoicePaid(c.user, c.params.id));
   r.post('/api/admin/performers/:id/cash-debt-paid', ['admin'], (c: AuthedCtx) =>
@@ -311,7 +348,7 @@ export function createApp(d: Deps) {
     }
   }
 
-  return { handle, hub, auth, settings, orders, payments, auction, documents, profiles, chat, reviews, offers, notifier, router: r };
+  return { handle, hub, auth, settings, orders, payments, auction, documents, admin, profiles, chat, reviews, offers, notifier, router: r };
 }
 
 export type App = ReturnType<typeof createApp>;

@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ApiError, onEvent } from './api.ts';
+import { reportApiError } from './screens/offers.tsx';
 
 // Роутер на хэше: #/order/123 → ['order', '123'] ---------------------------
 
@@ -68,14 +69,15 @@ export function useLoad<T>(fn: () => Promise<T>, deps: unknown[], reloadOn?: (e:
 export function useAction() {
   const toast = useToast();
   const [busy, setBusy] = useState(false);
-  const run = useCallback(async <T,>(fn: () => Promise<T>, okText?: string): Promise<T | undefined> => {
+  const run = useCallback(async <T,>(fn: () => Promise<T>, okText: string | null = 'Готово'): Promise<T | undefined> => {
     setBusy(true);
     try {
       const r = await fn();
       if (okText) toast(okText);
       return r;
     } catch (e) {
-      toast(e instanceof ApiError ? e.message : 'Что-то пошло не так');
+      reportApiError(e);
+      toast(e instanceof ApiError ? e.message : 'Что-то пошло не так — попробуйте ещё раз');
       return undefined;
     } finally {
       setBusy(false);

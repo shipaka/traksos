@@ -10,6 +10,7 @@ import { Order } from './screens/order.tsx';
 import { Work, PerformerProfile, IncomingCall } from './screens/performer.tsx';
 import { Admin } from './screens/admin.tsx';
 import { Documents } from './screens/documents.tsx';
+import { OfferGate, OfferPage } from './screens/offers.tsx';
 
 type Mode = 'client' | 'performer' | 'admin';
 const PERFORMER_ROLES = ['master', 'tow', 'service'];
@@ -61,7 +62,7 @@ function App() {
   if (!me) {
     return (
       <MeCtx.Provider value={{ me: null, reload, mode: 'client', setMode }}>
-        <Shell mode="client" me={null}><Login /></Shell>
+        <Shell mode="client" me={null}>{route[0] === 'offer' ? <OfferPage audience={route[1] ?? 'client'} /> : <Login />}</Shell>
       </MeCtx.Provider>
     );
   }
@@ -86,6 +87,7 @@ function App() {
       screen = b === 'profile' ? <PerformerProfile /> : b === 'jobs' ? <Orders as="performer" /> : b === 'docs' ? <Documents /> : <Work />;
       break;
     case 'admin': screen = isStaff ? <Admin /> : <Home />; break;
+    case 'offer': screen = <OfferPage audience={b ?? 'client'} />; break;
     default: screen = <main><div className="empty">Такой страницы нет</div></main>;
   }
 
@@ -93,6 +95,7 @@ function App() {
     <MeCtx.Provider value={{ me, reload, mode: effMode, setMode }}>
       <Shell mode={effMode} me={me}>{screen}</Shell>
       <IncomingCall />
+      <OfferGate />
     </MeCtx.Provider>
   );
 }

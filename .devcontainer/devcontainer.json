@@ -1,0 +1,15 @@
+{
+  "name": "ТракSOS — тестовый стенд",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/traksos",
+  "forwardPorts": [8080],
+  "portsAttributes": {
+    "8080": { "label": "ТракSOS", "onAutoForward": "openBrowser" }
+  },
+  "postCreateCommand": "npm install && npm run build",
+  "postStartCommand": "bash .devcontainer/start.sh",
+  "customizations": {
+    "codespaces": { "openFiles": [".devcontainer/README.md"] }
+  }
+}
