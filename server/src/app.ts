@@ -18,6 +18,7 @@ import { OffersService } from './services/offers.ts';
 import { AuctionService } from './services/auction.ts';
 import { DocumentsService } from './services/documents.ts';
 import { AdminService } from './services/admin.ts';
+import { SupportService, TOPICS } from './services/support.ts';
 import { Raw } from './http/router.ts';
 import { PaymentsService } from './payments/service.ts';
 import { estimate, isNight } from './domain/pricing.ts';
@@ -53,6 +54,7 @@ export function createApp(d: Deps) {
   const offers = new OffersService(d.db, notifier, now);
   const documents = new DocumentsService(d.db, notifier, settings, now);
   const admin = new AdminService(d.db, notifier, orders, payments, profiles, settings, now);
+  const support = new SupportService(d.db, notifier, orders, now);
 
   const r = new Router();
   const staff = ['admin', 'moderator'];
@@ -91,8 +93,26 @@ export function createApp(d: Deps) {
                       on conflict (user_id, provider, token) do update set updated_at=now()`, [c.user.id, b.provider, b.token]);
     return { ok: true };
   });
-  r.get('/api/me/notifications', true, (c: AuthedCtx) =>
-    d.db.query('select id::int as id, kind, body, data, created_at, read_at from notifications where user_id=$1 order by id desc limit 100', [c.user.id]));
+  r.get('/api/me/notifications', true, async (c: AuthedCtx) => ({
+    unread: (await d.db.one<{ n: number }>('select count(*)::int n from notifications where user_id=$1 and read_at is null', [c.user.id]))!.n,
+    items: await d.db.query(
+      `select id::int as id, kind, body, data, created_at, read_at, title
+         from notifications where user_id=$1 order by id desc limit 100`, [c.user.id]),
+  }));
+  r.post('/api/me/notifications/read', true, async (c: AuthedCtx) => {
+    await d.db.query('update notifications set read_at=now() where user_id=$1 and read_at is null', [c.user.id]);
+    return { ok: true };
+  });
+  // Поддержка
+  r.get('/api/support/topics', false, () => TOPICS);
+  r.get('/api/support', true, (c: AuthedCtx) => support.mine(c.user));
+  r.post('/api/support', true, (c: AuthedCtx) => support.open(c.user, parse(z.object({
+    topic: z.string().min(2).max(80), text: z.string().min(1).max(2000), orderId: z.string().uuid().optional(),
+  }), c.body)));
+  r.get('/api/support/:id', true, (c: AuthedCtx) => support.thread(c.user, c.params.id));
+  r.post('/api/support/:id/messages', true, (c: AuthedCtx) => support.post(c.user, c.params.id, parse(z.object({ body: z.string().min(1).max(2000) }), c.body).body));
+  r.post('/api/support/:id/close', true, (c: AuthedCtx) => support.close(c.user, c.params.id));
+  r.get('/api/admin/support', staff, (c: AuthedCtx) => support.queue(c.query.get('status') === 'closed' ? 'closed' : 'open'));
   r.get('/api/me/offers', true, (c: AuthedCtx) => offers.status(c.user));
   r.post('/api/offers/:id/accept', true, (c: AuthedCtx) => offers.accept(c.user, c.params.id, c.ip));
   r.get('/api/offers/current/:audience', false, async (c: Ctx) => (await offers.current(c.params.audience)) ?? null);

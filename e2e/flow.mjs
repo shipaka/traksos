@@ -215,12 +215,37 @@ await a.locator('textarea').fill('# Оферта для клиентов\n\nТе
 await a.locator('input[placeholder^="Что изменилось"]').fill('Новая шкала отмены');
 await a.getByRole('button', { name: 'Опубликовать' }).click();
 await a.getByText(/Опубликовано/).waitFor();
+// Админ тоже пользователь — новую редакцию для клиентов принимает и он
+await a.getByRole('dialog').waitFor({ timeout: 10000 });
+await a.getByRole('dialog').locator('input[type=checkbox]').check();
+await a.getByRole('button', { name: 'Принимаю' }).click();
+await a.getByRole('dialog').waitFor({ state: 'detached' });
 await k.goto(BASE + '/#/');
 await k.getByRole('dialog').waitFor({ timeout: 10000 });
 await shot(k, '16-client-offer-gate');
 await k.getByRole('dialog').locator('input[type=checkbox]').check();
 await k.getByRole('button', { name: 'Принимаю' }).click();
 await k.getByRole('dialog').waitFor({ state: 'detached' });
+
+// Поддержка: клиент зовёт из заявки → админ отвечает из очереди → клиент видит ответ
+await k.goto(BASE + '/#/orders');
+await k.locator('a.list-item').first().click();
+await k.getByRole('link', { name: 'Позвать поддержку' }).click();
+await k.getByRole('button', { name: 'Не согласен с суммой' }).click();
+await k.locator('textarea').fill('Хочу уточнить итоговую сумму');
+await k.getByRole('button', { name: 'Отправить' }).click();
+await k.waitForURL(/#\/support\//);
+await a.goto(BASE + '/#/admin');
+await a.getByRole('button', { name: 'Обращения', exact: true }).click();
+await a.getByText('Ждёт ответа').click();
+await a.locator('.compose input').fill('Здравствуйте! Сейчас проверим');
+await a.locator('.compose button').click();
+await k.getByText('Сейчас проверим').waitFor({ timeout: 10000 });
+await shot(k, '17-client-support');
+await a.getByRole('button', { name: 'Закрыть обращение' }).click();
+await k.getByText(/Поддержка закрыла обращение/).waitFor({ timeout: 10000 });
+await k.goto(BASE + '/#/notifications');
+await k.getByText('Поддержка ответила', { exact: false }).first().waitFor();
 
 await browser.close();
 if (errors.length) { console.error('ОШИБКИ:\n' + errors.join('\n')); process.exit(1); }

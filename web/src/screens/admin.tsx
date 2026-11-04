@@ -1,20 +1,22 @@
 import { useState } from 'react';
 import { useEffect } from 'react';
+import { SupportQueue } from './support.tsx';
 import { get, post, put, rub, fmtPhone, fmtTime, authedImage } from '../api.ts';
 import { STATUS, SERVICES, LINE } from '../dict.ts';
 import { useLoad, useAction, Loading } from '../ui.tsx';
 
 export function Admin() {
-  const [tab, setTab] = useState<'search' | 'verify' | 'people' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged'>('search');
+  const [tab, setTab] = useState<'search' | 'support' | 'verify' | 'people' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged'>('search');
   return (
     <main>
       <h1>Администратор</h1>
       <div className="scroll-x">
-        {([['search', 'Поиск'], ['verify', 'Проверка'], ['orders', 'Заявки'], ['people', 'Все люди'], ['payments', 'Деньги'], ['dispatch', 'Распределение'], ['offers', 'Оферты'], ['flagged', 'Подозрительное']] as const).map(([id, n]) => (
+        {([['search', 'Поиск'], ['support', 'Обращения'], ['verify', 'Проверка'], ['orders', 'Заявки'], ['people', 'Все люди'], ['payments', 'Деньги'], ['dispatch', 'Распределение'], ['offers', 'Оферты'], ['flagged', 'Подозрительное']] as const).map(([id, n]) => (
           <button key={id} className="chip" aria-pressed={tab === id} onClick={() => setTab(id)}>{n}</button>
         ))}
       </div>
       {tab === 'search' && <Search />}
+      {tab === 'support' && <SupportQueue />}
       {tab === 'verify' && <Verify />}
       {tab === 'offers' && <Offers />}
       {tab === 'people' && <People />}

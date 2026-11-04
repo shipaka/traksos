@@ -383,6 +383,7 @@ export function Profile() {
         {isPerformer && mode !== 'performer' && <button className="btn ghost" onClick={() => go('as/performer')}>Кабинет исполнителя</button>}
         {!isPerformer && <button className="btn ghost" onClick={() => go('work/profile')}>Стать исполнителем на ТракSOS</button>}
         {me.roles.some((r) => r === 'admin' || r === 'moderator') && mode !== 'admin' && <button className="btn ghost" onClick={() => go('as/admin')}>Кабинет администратора</button>}
+        <button className="btn ghost" onClick={() => go('support')}>Поддержка</button>
         <button className="btn bad" onClick={logout}>Выйти</button>
       </div>
     </main>

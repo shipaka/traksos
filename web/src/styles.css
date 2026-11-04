@@ -158,3 +158,5 @@ select.field { appearance: none; }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .radar *, .offer.fresh, .search-title { animation: none !important; } }
 .offer-text { font-size: 14px; line-height: 1.55; max-height: 50vh; overflow-y: auto; }
+.bell { position: relative; text-decoration: none; font-size: 20px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 20px; border: 1px solid var(--line-2); }
+.bell .badge { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--accent); color: var(--on-accent); font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; }

@@ -12,6 +12,7 @@ import { Admin } from './screens/admin.tsx';
 import { Documents } from './screens/documents.tsx';
 import { OfferGate, OfferPage } from './screens/offers.tsx';
 import { AdminUser } from './screens/adminUser.tsx';
+import { SupportList, SupportNew, SupportThread, Notifications, useUnread } from './screens/support.tsx';
 
 type Mode = 'client' | 'performer' | 'admin';
 const PERFORMER_ROLES = ['master', 'tow', 'service'];
@@ -91,6 +92,8 @@ function App() {
       break;
     case 'admin': screen = !isStaff ? <Home /> : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : <Admin />; break;
     case 'offer': screen = <OfferPage audience={b ?? 'client'} />; break;
+    case 'support': screen = b === 'new' ? <SupportNew /> : b ? <SupportThread id={b} /> : <SupportList />; break;
+    case 'notifications': screen = <Notifications />; break;
     default: screen = <main><div className="empty">Такой страницы нет</div></main>;
   }
 
@@ -115,8 +118,11 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     <div className="app">
       <header className="top">
         <span className="logo">Трак<b>SOS</b></span>
-        {me && mode === 'performer' && <span className="pill accent">исполнитель</span>}
-        {me && mode === 'admin' && <span className="pill accent">админ</span>}
+        <div className="row" style={{ flexWrap: 'nowrap' }}>
+          {me && mode === 'performer' && <span className="pill accent">исполнитель</span>}
+          {me && mode === 'admin' && <span className="pill accent">админ</span>}
+          {me && <Bell />}
+        </div>
       </header>
       {children}
       {tabs.length > 0 && (
@@ -129,6 +135,15 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         </nav>
       )}
     </div>
+  );
+}
+
+function Bell() {
+  const n = useUnread();
+  return (
+    <a href="#/notifications" className="bell" aria-label={n ? `Уведомления: ${n} новых` : 'Уведомления'}>
+      🔔{n > 0 && <span className="badge">{n > 99 ? '99+' : n}</span>}
+    </a>
   );
 }
 

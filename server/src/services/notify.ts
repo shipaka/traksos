@@ -17,8 +17,8 @@ export class Notifier {
     this.hub.send(ids, event);
     if (msg.kind !== 'call') {
       for (const id of ids) {
-        await this.db.query('insert into notifications(user_id, kind, body, data) values ($1,$2,$3,$4)', [
-          id, String(event.type), msg.body, msg.data,
+        await this.db.query('insert into notifications(user_id, kind, title, body, data) values ($1,$2,$3,$4,$5)', [
+          id, String(event.type), msg.title, msg.body, msg.data,
         ]);
       }
     }

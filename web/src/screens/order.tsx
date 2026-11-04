@@ -49,6 +49,7 @@ export function Order({ id }: { id: string }) {
 
       {d.status !== 'searching' && d.status !== 'no_performer' && <Chat id={id} disabled={d.status === 'cancelled'} />}
 
+      {d.you !== 'admin' && d.you !== 'candidate' && <a className="btn ghost" href={`#/support/new?order=${d.id}`}>Позвать поддержку</a>}
       {!done && d.actions.includes('cancel') && !isPerformer && <Cancel id={id} status={d.status} onDone={o.reload} />}
       {d.status === 'cancelled' && <div className="card"><b>Заявка отменена</b><span className="note">{d.cancelReason}</span></div>}
     </main>
