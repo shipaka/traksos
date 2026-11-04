@@ -3,6 +3,7 @@ import { get, post, rub, fmtTime } from '../api.ts';
 import { SERVICES, STATUS, STEPS, STEP_NAMES, RESULTS } from '../dict.ts';
 import { useLoad, useAction, useMe, Loading, Back, RubInput, Field, useToast } from '../ui.tsx';
 import { onEvent } from '../api.ts';
+import { Search, OfferForm } from './search.tsx';
 
 export function Order({ id }: { id: string }) {
   const o = useLoad(() => get(`/api/orders/${id}`), [id], (e) => e.orderId === id && (e.type === 'order' || e.type === 'payment'));
@@ -25,20 +26,17 @@ export function Order({ id }: { id: string }) {
         <span className={`pill ${STATUS[d.status]?.tone}`}>{STATUS[d.status]?.name}</span>
       </div>
 
-      {d.status !== 'cancelled' && d.status !== 'no_performer' && <Steps status={d.status} />}
+      {d.status === 'searching' && (d.you === 'client' || d.you === 'admin') && <Search d={d} onChosen={o.reload} />}
+      {d.you === 'candidate' && <CandidateView d={d} onDone={o.reload} />}
 
-      {d.status === 'searching' && !isPerformer && (
-        <div className="card hi">
-          <b>Звоним мастерам рядом</b>
-          <span className="note">Каждому — 30 секунд. Как только кто-то нажмёт «Беру», вы увидите его здесь и получите уведомление.</span>
-        </div>
-      )}
+      {d.status !== 'cancelled' && d.status !== 'no_performer' && d.status !== 'searching' && <Steps status={d.status} service={d.service} />}
       {d.status === 'no_performer' && !isPerformer && <Retry id={id} onDone={o.reload} />}
 
       {d.performer && !isPerformer && <PerformerCard p={d.performer} pos={perfPos} />}
       {isPerformer && <ClientCard d={d} />}
+      {d.service === 'tow' && !isPerformer && d.you !== 'candidate' && d.destination && <TowInfo d={d} />}
 
-      <Money d={d} />
+      {d.you !== 'candidate' && d.status !== 'searching' && <Money d={d} />}
 
       {isPerformer && <PerformerActions d={d} onDone={o.reload} />}
       {!isPerformer && d.status === 'awaiting_confirmation' && <ConfirmAmount d={d} onDone={o.reload} />}
@@ -52,14 +50,53 @@ export function Order({ id }: { id: string }) {
   );
 }
 
-function Steps({ status }: { status: string }) {
+const TOW_STEP_NAMES: Record<string, string> = { ...STEP_NAMES, accepted: 'Эвакуатор выбран', arrived: 'На месте', working: 'Погрузил', awaiting_confirmation: 'Доставил · сумма' };
+const CARGO: Record<string, string> = { tractor: 'Тягач', semitrailer: 'Полуприцеп', coupling: 'Сцепка целиком', truck12: 'Грузовик до 12 т' };
+const LOADED: Record<string, string> = { empty: 'пустой', loaded: 'гружёный', adr: 'опасный груз ADR' };
+
+function TowInfo({ d }: { d: any }) {
+  return (
+    <div className="card">
+      <dl className="kv">
+        <dt>Откуда</dt><dd>{d.address ?? d.estimate?.zoneName}</dd>
+        <dt>Куда</dt><dd>{d.destination}</dd>
+        {d.cargo && <><dt>Что везём</dt><dd>{CARGO[d.cargo]}{d.loaded ? `, ${LOADED[d.loaded]}` : ''}</dd></>}
+        {d.driverOnSite != null && <><dt>Водитель</dt><dd>{d.driverOnSite ? 'на месте, ключи у него' : 'не на месте'}</dd></>}
+      </dl>
+    </div>
+  );
+}
+
+/** Исполнитель, которому предложена заявка: подробности и отклик */
+function CandidateView({ d, onDone }: { d: any; onDone: () => void }) {
+  if (d.status !== 'searching') return <div className="card"><b>Заявка уже у другого исполнителя</b></div>;
+  return (
+    <div className="stack">
+      <div className="card">
+        <dl className="kv">
+          <dt>Машина</dt><dd>{d.brand ?? '—'}</dd>
+          <dt>Где</dt><dd>{d.address ?? d.estimate?.zoneName}</dd>
+          {d.destination && <><dt>Куда</dt><dd>{d.destination}</dd></>}
+          {d.cargo && <><dt>Что везём</dt><dd>{CARGO[d.cargo]}{d.loaded ? `, ${LOADED[d.loaded]}` : ''}</dd></>}
+          {d.description && <><dt>Что случилось</dt><dd>{d.description}</dd></>}
+          {d.estimate?.hour != null && <><dt>Час работы</dt><dd>{rub(d.estimate.hour)} — или по вашему профилю</dd></>}
+        </dl>
+      </div>
+      {d.limits && <OfferForm orderId={d.id} limits={d.limits} onDone={onDone} />}
+      <span className="note">Клиент видит ваш рейтинг, подачу и цену. Контакты откроются, когда он выберет вас.</span>
+    </div>
+  );
+}
+
+function Steps({ status, service }: { status: string; service: string }) {
   const idx = STEPS.indexOf(status);
+  const names = service === 'tow' ? TOW_STEP_NAMES : STEP_NAMES;
   return (
     <ol className="steps card">
-      {STEPS.map((s, i) => (
-        <li key={s} className={i < idx || status === 'completed' ? 'done' : i === idx ? 'now' : ''}>
-          <div className="rail"><span className="d" />{i < STEPS.length - 1 && <span className="ln" />}</div>
-          <span className="tx">{STEP_NAMES[s]}</span>
+      {STEPS.filter((s) => s !== 'searching').map((s, i, arr) => (
+        <li key={s} className={i + 1 < idx || status === 'completed' ? 'done' : i + 1 === idx ? 'now' : ''}>
+          <div className="rail"><span className="d" />{i < arr.length - 1 && <span className="ln" />}</div>
+          <span className="tx">{names[s]}</span>
         </li>
       ))}
     </ol>

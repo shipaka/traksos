@@ -135,3 +135,25 @@ select.field { appearance: none; }
 .rows { border-radius: 14px; border: 1px solid var(--line); background: var(--surface); overflow: hidden; }
 .mini-map { height: 150px; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); }
 .mini-map iframe { width: 100%; height: 100%; border: 0; filter: invert(.9) hue-rotate(180deg); }
+
+/* Живой поиск */
+.search-card { align-items: center; gap: 14px; padding: 18px 14px; overflow: hidden; }
+.search-title { font-size: 17px; min-height: 24px; animation: fadeUp .4s ease-out; }
+.radar { position: relative; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, rgba(255,106,19,.10) 0%, rgba(255,106,19,.03) 55%, transparent 70%); }
+.radar .wave { position: absolute; inset: 50%; border-radius: 50%; border: 2px solid rgba(255,106,19,.55); animation: wave 3s ease-out infinite; }
+.radar .w2 { animation-delay: 1s; } .radar .w3 { animation-delay: 2s; }
+@keyframes wave { 0% { inset: 46%; opacity: 1; } 100% { inset: 0; opacity: 0; } }
+.radar .sweep { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, rgba(255,106,19,.28), transparent 25%); animation: spin 3.2s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.radar .core { position: absolute; left: 50%; top: 50%; width: 58px; height: 58px; margin: -29px 0 0 -29px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 0 0 8px rgba(255,106,19,.15); }
+.radar .blip { position: absolute; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: var(--fg-2); opacity: 0; animation: blip 2.4s ease-in-out infinite; }
+.radar .blip.on { background: var(--good); opacity: 1; animation: none; box-shadow: 0 0 0 4px var(--good-soft); width: 12px; height: 12px; }
+@keyframes blip { 0%, 100% { opacity: .15; transform: scale(.8); } 50% { opacity: .9; transform: scale(1.15); } }
+.progress { width: 100%; height: 6px; border-radius: 3px; background: var(--surface-3); overflow: hidden; }
+.progress span { display: block; height: 100%; background: var(--accent); transition: width .25s linear; }
+.offer.fresh { animation: slideIn .45s cubic-bezier(.2,.9,.3,1.2); }
+.offer.best { border: 2px solid var(--accent); background: var(--surface-2); }
+.offer-price { font-size: 20px; font-variant-numeric: tabular-nums; }
+@keyframes slideIn { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .radar *, .offer.fresh, .search-title { animation: none !important; } }

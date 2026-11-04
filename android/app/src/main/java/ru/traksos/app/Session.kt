@@ -36,25 +36,32 @@ object Session {
         post(ctx, "/api/me/push-token", JSONObject().put("provider", "rustore").put("token", pushToken)) { _, _ -> }
     }
 
+    fun delete(ctx: Context, path: String, done: (ok: Boolean, code: Int) -> Unit) = request(ctx, "DELETE", path, null, done)
+
     /** POST к API в фоне; колбэк — в фоновом потоке */
-    fun post(ctx: Context, path: String, body: JSONObject = JSONObject(), done: (ok: Boolean, code: Int) -> Unit) {
+    fun post(ctx: Context, path: String, body: JSONObject = JSONObject(), done: (ok: Boolean, code: Int) -> Unit) =
+        request(ctx, "POST", path, body, done)
+
+    private fun request(ctx: Context, method: String, path: String, body: JSONObject?, done: (ok: Boolean, code: Int) -> Unit) {
         val base = apiUrl(ctx)
         val auth = token(ctx)
         thread {
             var code = 0
             try {
                 val c = URL(base.trimEnd('/') + path).openConnection() as HttpURLConnection
-                c.requestMethod = "POST"
+                c.requestMethod = method
                 c.connectTimeout = 10_000
                 c.readTimeout = 15_000
-                c.doOutput = true
-                c.setRequestProperty("content-type", "application/json")
                 if (auth != null) c.setRequestProperty("authorization", "Bearer $auth")
-                c.outputStream.use { it.write(body.toString().toByteArray()) }
+                if (body != null) {
+                    c.doOutput = true
+                    c.setRequestProperty("content-type", "application/json")
+                    c.outputStream.use { it.write(body.toString().toByteArray()) }
+                }
                 code = c.responseCode
                 c.disconnect()
             } catch (e: Exception) {
-                Log.w(TrakSosApp.TAG, "POST $path не прошёл", e)
+                Log.w(TrakSosApp.TAG, "$method $path не прошёл", e)
             }
             done(code in 200..299, code)
         }

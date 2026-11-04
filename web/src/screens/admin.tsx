@@ -4,17 +4,18 @@ import { STATUS, SERVICES, LINE } from '../dict.ts';
 import { useLoad, useAction, Loading } from '../ui.tsx';
 
 export function Admin() {
-  const [tab, setTab] = useState<'people' | 'orders' | 'payments' | 'flagged'>('people');
+  const [tab, setTab] = useState<'people' | 'orders' | 'dispatch' | 'payments' | 'flagged'>('people');
   return (
     <main>
       <h1>Администратор</h1>
       <div className="scroll-x">
-        {([['people', 'Люди'], ['orders', 'Заявки'], ['payments', 'Оплата и выплаты'], ['flagged', 'Подозрительное']] as const).map(([id, n]) => (
+        {([['people', 'Люди'], ['orders', 'Заявки'], ['dispatch', 'Распределение'], ['payments', 'Оплата и выплаты'], ['flagged', 'Подозрительное']] as const).map(([id, n]) => (
           <button key={id} className="chip" aria-pressed={tab === id} onClick={() => setTab(id)}>{n}</button>
         ))}
       </div>
       {tab === 'people' && <People />}
       {tab === 'orders' && <AllOrders />}
+      {tab === 'dispatch' && <Dispatch />}
       {tab === 'payments' && <Payments />}
       {tab === 'flagged' && <Flagged />}
     </main>
@@ -132,6 +133,48 @@ function Flagged() {
           </div>
         </a>
       ))}
+    </div>
+  );
+}
+
+function Dispatch() {
+  const settings = useLoad(() => get('/api/admin/settings'), []);
+  const { busy, run } = useAction();
+  const [form, setForm] = useState<any>(null);
+  if (!settings.data) return <Loading error={settings.error} />;
+  const d = settings.data.dispatch;
+  const f = form ?? { auctionMinutes: d.auctionMinutes, sosAuctionSeconds: d.sosAuctionSeconds, floor: Math.round(d.offerFloor * 100), ceil: Math.round(d.offerCeil * 100) };
+  const save = (patch: unknown, text = 'Сохранено') => run(() => put('/api/admin/settings/dispatch', patch), text).then((r) => { if (r) { setForm(null); settings.reload(); } });
+  const num = (k: string) => (e: any) => setForm({ ...f, [k]: Number(e.target.value.replace(/\D/g, '') || 0) });
+
+  return (
+    <div className="stack">
+      <button className="opt" aria-pressed={d.priorityFirst} disabled={busy}
+        onClick={() => save({ priorityFirst: !d.priorityFirst }, d.priorityFirst ? 'Заявки сразу идут на общие торги' : 'Заявки сначала звонят вам')}>
+        <div className="between"><b>Сначала заявки нам</b><span className={`pill ${d.priorityFirst ? 'good' : ''}`}>{d.priorityFirst ? 'Включено' : 'Выключено'}</span></div>
+        <small>{d.priorityFirst
+          ? `Каждая заявка сначала ${d.ringSeconds} секунд звонит исполнителям с пометкой «Первый в очереди» (вкладка «Люди»), потом уходит на торги.`
+          : 'Заявки сразу уходят на общие торги — вы откликаетесь наравне со всеми. Удобно на старте, чтобы мастера получали заказы и оставались на площадке.'}</small>
+      </button>
+
+      <div className="card">
+        <b>Торги</b>
+        <div className="grid2">
+          <label className="stack" style={{ gap: 6 }}><span className="label">Обычная заявка, мин</span>
+            <input className="field" inputMode="numeric" value={f.auctionMinutes} onChange={num('auctionMinutes')} /></label>
+          <label className="stack" style={{ gap: 6 }}><span className="label">SOS, секунд</span>
+            <input className="field" inputMode="numeric" value={f.sosAuctionSeconds} onChange={num('sosAuctionSeconds')} /></label>
+        </div>
+        <div className="grid2">
+          <label className="stack" style={{ gap: 6 }}><span className="label">Пол цены, % обычной</span>
+            <input className="field" inputMode="numeric" value={f.floor} onChange={num('floor')} /></label>
+          <label className="stack" style={{ gap: 6 }}><span className="label">Потолок, %</span>
+            <input className="field" inputMode="numeric" value={f.ceil} onChange={num('ceil')} /></label>
+        </div>
+        <span className="note">SOS: если клиент не выбрал за это время, назначаем лучшего из «Рекомендуем». Пол не даёт цене упасть до дна.</span>
+        <button className="btn" disabled={busy || !form || f.floor < 50 || f.floor > 100 || f.ceil < 100 || f.ceil > 200 || f.auctionMinutes < 1 || f.sosAuctionSeconds < 30}
+          onClick={() => save({ auctionMinutes: f.auctionMinutes, sosAuctionSeconds: f.sosAuctionSeconds, offerFloor: f.floor / 100, offerCeil: f.ceil / 100 })}>Сохранить</button>
+      </div>
     </div>
   );
 }

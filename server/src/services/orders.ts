@@ -395,12 +395,18 @@ export class OrdersService {
       : null;
     const vehicle = o.vehicle_id ? await this.db.one('select brand, model, year, plate, trailer_plate from vehicles where id=$1', [o.vehicle_id]) : null;
     const events = actor ? await this.db.query('select type, data, actor_id, created_at from order_events where order_id=$1 order by id', [orderId]) : [];
+    const search = o.status === 'searching'
+      ? await this.db.one<{ candidates: number; offers: number }>(
+          `select (select count(*)::int from order_dispatch where order_id=$1 and status in ('bidding','ringing','queued')) as candidates,
+                  (select count(*)::int from bids where order_id=$1 and status='active') as offers`, [orderId])
+      : null;
     return {
       id: o.id, number: o.number, status: o.status as OrderStatus, statusLabel: statusLabels[o.status as OrderStatus],
       service: o.service, isSos: o.is_sos, problem: o.problem, description: o.description,
       address: o.address, lat: o.lat, lng: o.lng, zoneId: o.zone_id, night: o.night, groupTrip: o.group_trip, tier: o.tier,
       brand: o.brand, vehicle, estimate: o.estimate, paymentMethod: o.payment_method,
-      auction: o.status === 'searching' && !!o.auction_until, auctionUntil: o.auction_until, autoPick: o.auto_pick,
+      auction: o.status === 'searching' && !!o.auction_until, auctionUntil: o.auction_until, autoPick: o.auto_pick, search,
+      limits: o.status === 'searching' ? this.auction.limits(o, (await this.settings.get('dispatch'))) : null,
       destination: o.destination, cargo: o.cargo, loaded: o.loaded, driverOnSite: o.driver_on_site,
       money: this.money(o), result: o.result, resultNote: o.result_note,
       cancelReason: o.cancel_reason, cancelStage: o.cancel_stage,

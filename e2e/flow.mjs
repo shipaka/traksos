@@ -70,14 +70,22 @@ await k.getByText('Сколько это будет стоить').waitFor();
 await shot(k, '04-client-new-order');
 await k.getByRole('button', { name: 'Вызвать сейчас' }).click();
 await k.waitForURL(/order\//);
-await k.getByText('Звоним мастерам рядом').waitFor();
+await k.locator('.radar').waitFor();
+await k.waitForTimeout(1500);
 await shot(k, '05-client-searching');
 
-// Мастеру звонит
+// Мастеру заявка приходит как звонок — откликается по обычной цене
 await m.getByRole('alertdialog').waitFor({ timeout: 10000 });
 await shot(m, '06-master-incoming-call');
-await m.getByRole('button', { name: 'Беру' }).click();
-await m.waitForURL(/order\//);
+await m.getByRole('alertdialog').getByRole('button', { name: /Беру за/ }).click();
+await m.getByRole('alertdialog').waitFor({ state: 'detached' });
+
+// Клиент видит отклик и выбирает
+await k.getByRole('button', { name: /Выбрать за/ }).waitFor({ timeout: 15000 });
+await k.waitForTimeout(600);
+await shot(k, '06b-client-offers');
+await k.getByRole('button', { name: /Выбрать за/ }).click();
+await m.waitForURL(/order\//, { timeout: 10000 });
 await k.getByText('Иван').first().waitFor({ timeout: 10000 });
 await shot(k, '07-client-accepted');
 
@@ -116,9 +124,12 @@ const a = await mk();
 await login(a, '+79990000001', 'Мне нужна помощь');
 await a.getByText('Что случилось?').first().waitFor();
 await a.goto(BASE + '/#/admin');
+await a.getByRole('button', { name: 'Распределение' }).click();
+await a.getByText('Сначала заявки нам').waitFor();
+await shot(a, '12-admin-dispatch');
 await a.getByRole('button', { name: 'Оплата и выплаты' }).click();
 await a.getByText('Способы оплаты').waitFor();
-await shot(a, '12-admin-payments');
+await shot(a, '13-admin-payments');
 
 await browser.close();
 if (errors.length) { console.error('ОШИБКИ:\n' + errors.join('\n')); process.exit(1); }

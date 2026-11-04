@@ -73,7 +73,7 @@ class CallActivity : AppCompatActivity() {
         answered = true
         stopRinging()
         CallNotifier.cancel(this, orderId)
-        CallActionReceiver.respond(applicationContext, orderId, accept)
+        CallActionReceiver.respond(applicationContext, orderId, accept, intent.getBooleanExtra(CallNotifier.EXTRA_AUCTION, false))
         finish()
     }
 

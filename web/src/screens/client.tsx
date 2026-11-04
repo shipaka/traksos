@@ -84,6 +84,11 @@ export function NewOrder({ service }: { service: string }) {
   const [geoState, setGeoState] = useState<'idle' | 'wait' | 'ok' | 'fail'>('idle');
   const [method, setMethod] = useState<'cash' | 'online' | 'invoice'>('cash');
   const [est, setEst] = useState<any>(null);
+  const [destination, setDestination] = useState('');
+  const [cargo, setCargo] = useState<'tractor' | 'semitrailer' | 'coupling' | 'truck12'>('tractor');
+  const [loaded, setLoaded] = useState<'empty' | 'loaded' | 'adr'>('empty');
+  const [driverOnSite, setDriverOnSite] = useState(true);
+  const isTow = service === 'tow';
 
   useEffect(() => {
     if (pricing.data && night === null) setNight(pricing.data.nightNow);
@@ -117,6 +122,7 @@ export function NewOrder({ service }: { service: string }) {
       service, isSos: !!sos, problem: sos?.id, description: description || undefined, address: address || undefined,
       lat: geo?.lat, lng: geo?.lng, zoneId, tier: service === 'tow' ? undefined : tier, vehicleId: vehicleId || undefined,
       brand: vehicleId ? undefined : brand || undefined, groupTrip: groupAllowed && group, night: night ?? undefined, paymentMethod: method,
+      ...(isTow ? { destination: destination || undefined, cargo, loaded, driverOnSite } : {}),
     }));
     if (!r) return;
     if (r.confirmationUrl) location.href = r.confirmationUrl;
@@ -159,7 +165,24 @@ export function NewOrder({ service }: { service: string }) {
         </span>
       </Field>
 
-      <Field group label="Куда ехать мастеру">
+      {isTow && (
+        <div className="card">
+          <b>Эвакуатор</b>
+          <input className="field" placeholder="Куда везти: сервис, стоянка, адрес" value={destination} onChange={(e) => setDestination(e.target.value)} />
+          <Field group label="Что везём">
+            <Chips value={cargo} onChange={setCargo} options={[{ id: 'tractor', name: 'Тягач' }, { id: 'semitrailer', name: 'Полуприцеп' }, { id: 'coupling', name: 'Сцепка целиком' }, { id: 'truck12', name: 'Грузовик до 12 т' }]} />
+          </Field>
+          <Field group label="Груз в прицепе">
+            <Chips value={loaded} onChange={setLoaded} options={[{ id: 'empty', name: 'Пустой' }, { id: 'loaded', name: 'Гружёный' }, { id: 'adr', name: 'Опасный ADR' }]} />
+          </Field>
+          <div className="grid2">
+            <button type="button" className="seg" aria-pressed={driverOnSite} onClick={() => setDriverOnSite(true)}>Водитель на месте</button>
+            <button type="button" className="seg" aria-pressed={!driverOnSite} onClick={() => setDriverOnSite(false)}>Водителя нет</button>
+          </div>
+        </div>
+      )}
+
+      <Field group label={isTow ? 'Откуда забрать' : 'Куда ехать мастеру'}>
         <Chips value={zoneId} onChange={setZoneId} options={pricing.data.zones.map((z: any) => ({ id: z.id, name: z.km > 30 ? `${z.name} · ${z.km} км` : z.name }))} />
       </Field>
       <div className="grid2">
@@ -196,7 +219,9 @@ export function NewOrder({ service }: { service: string }) {
           {est.hour != null && <div className="sum"><span>Час работы</span><span>{rub(est.hour)}</span></div>}
           {est.night && <span className="note">Ночной тариф уже учтён.</span>}
           {est.group && <span className="note">Совместный выезд: 70% от полной цены.</span>}
-          <span className="note">Сейчас вы ничего не платите. Работу мастер назовёт на месте — вы подтвердите сумму в приложении.</span>
+          <span className="note">{isTow
+            ? 'Это обычная цена. Эвакуаторщики рядом предложат свою — от −15% до +30%, вы выберете по цене, подаче и рейтингу.'
+            : 'Это обычная цена. Мастера рядом откликнутся — по ней или со своей ценой, вы выберете. Работу мастер назовёт на месте, сумму подтверждаете в приложении.'}</span>
         </div>
       )}
 

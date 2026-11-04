@@ -12,6 +12,7 @@ object CallNotifier {
     const val EXTRA_TITLE = "title"
     const val EXTRA_BODY = "body"
     const val EXTRA_RING_UNTIL = "ringUntil"
+    const val EXTRA_AUCTION = "auction"
 
     fun notificationId(orderId: String) = ("call:$orderId").hashCode()
 
@@ -27,7 +28,9 @@ object CallNotifier {
             putExtra(EXTRA_TITLE, data["title"] ?: ctx.getString(R.string.incoming))
             putExtra(EXTRA_BODY, data["body"] ?: "")
             putExtra(EXTRA_RING_UNTIL, ringUntil)
+            putExtra(EXTRA_AUCTION, data["auction"] == "true")
         }
+        val auction = data["auction"] == "true"
         val full = PendingIntent.getActivity(ctx, orderId.hashCode(), callIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
@@ -44,8 +47,8 @@ object CallNotifier {
             .setTimeoutAfter(left)
             .setFullScreenIntent(full, true)
             .setContentIntent(full)
-            .addAction(0, ctx.getString(R.string.decline), CallActionReceiver.pending(ctx, orderId, CallActionReceiver.DECLINE))
-            .addAction(0, ctx.getString(R.string.accept), CallActionReceiver.pending(ctx, orderId, CallActionReceiver.ACCEPT))
+            .addAction(0, ctx.getString(R.string.decline), CallActionReceiver.pending(ctx, orderId, CallActionReceiver.DECLINE, auction))
+            .addAction(0, ctx.getString(R.string.accept), CallActionReceiver.pending(ctx, orderId, CallActionReceiver.ACCEPT, auction))
             .build()
         n.flags = n.flags or android.app.Notification.FLAG_INSISTENT // звук повторяется, пока не ответят
         ctx.getSystemService(NotificationManager::class.java).notify(notificationId(orderId), n)

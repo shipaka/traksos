@@ -3,6 +3,8 @@ import { get, post, put, rub, onEvent } from '../api.ts';
 import { BRANDS, BRAND_LEVELS, LINE, SERVICES } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, RubInput, Back } from '../ui.tsx';
 import { native } from '../native.ts';
+import { OfferForm } from './search.tsx';
+import { useToast } from '../ui.tsx';
 
 // Линия: статус, геолокация, входящие ---------------------------------------
 
@@ -11,6 +13,7 @@ export function Work() {
   const { busy, run } = useAction();
   const balance = useLoad(() => get('/api/performer/balance'), []);
   const jobs = useLoad(() => get('/api/orders?as=performer'), [], (e) => e.type === 'order');
+  const auctions = useLoad(() => get('/api/performer/auctions'), [], (e) => e.type === 'auction' || e.type === 'order');
   useEffect(() => onEvent((e) => { if (e.type === 'line_status') reload(); }), [reload]);
   const p = me?.performer;
   if (!p) return <main><h1>Кабинет исполнителя</h1><div className="card"><b>Заполните профиль</b><span className="note">Марки, цены, машина и статус самозанятого или ИП — после проверки начнут приходить заявки.</span><button className="btn" onClick={() => go('work/profile')}>Заполнить</button></div></main>;
@@ -59,6 +62,22 @@ export function Work() {
         </div>
       )}
 
+      {(auctions.data ?? []).length > 0 && (
+        <div className="stack">
+          <span className="label">Заявки рядом · торги</span>
+          {auctions.data!.map((a: any) => (
+            <div key={a.order_id} className="card">
+              <div className="between">
+                <b>{a.is_sos ? 'SOS · ' : ''}{SERVICES[a.service]?.name} · {a.brand ?? 'грузовик'}</b>
+                {a.distance_km != null && <span className="pill">{a.distance_km.toFixed(1)} км</span>}
+              </div>
+              <span className="note">{a.address ?? a.estimate?.zoneName}{a.destination ? ` → ${a.destination}` : ''}{a.description ? ` · ${a.description}` : ''}</span>
+              <OfferForm orderId={a.order_id} limits={a.limits} myPrice={a.my_price} onDone={auctions.reload} />
+            </div>
+          ))}
+        </div>
+      )}
+
       {balance.data && (
         <div className="card">
           <b>Баланс</b>
@@ -98,6 +117,7 @@ function LocationSharing() {
 
 export function IncomingCall() {
   const { me } = useMe();
+  const toast = useToast();
   const [calls, setCalls] = useState<any[]>([]);
   const isPerformer = !!me?.performer;
 
@@ -106,7 +126,9 @@ export function IncomingCall() {
     const load = () => get('/api/performer/incoming').then((list) => setCalls(list.map(fromIncoming))).catch(() => {});
     load();
     const off = onEvent((e) => {
-      if (e.type === 'incoming_call') setCalls((c) => (c.some((x) => x.orderId === e.orderId) ? c : [...c, e]));
+      if (e.type === 'incoming_call' || e.type === 'auction') setCalls((c) => (c.some((x) => x.orderId === e.orderId) ? c : [...c, e]));
+      if (e.type === 'order' && e.status === 'lost') toast('Клиент выбрал другого исполнителя');
+      if (e.type === 'order' && e.status === 'accepted' && !location.hash.includes(e.orderId)) { toast('Клиент выбрал вас'); go(`order/${e.orderId}`); }
       if (e.type === 'call_missed' || (e.type === 'order' && e.status !== 'searching')) setCalls((c) => c.filter((x) => x.orderId !== e.orderId));
       if (e.type === 'hello') load();
     });
@@ -124,7 +146,10 @@ export function IncomingCall() {
 
   const call = calls[0];
   if (!call) return null;
-  return <CallScreen key={call.orderId} call={call} onClose={() => setCalls((c) => c.filter((x) => x.orderId !== call.orderId))} />;
+  const close = () => setCalls((c) => c.filter((x) => x.orderId !== call.orderId));
+  return call.type === 'auction'
+    ? <AuctionCallScreen key={call.orderId} call={call} onClose={close} />
+    : <CallScreen key={call.orderId} call={call} onClose={close} />;
 }
 
 function fromIncoming(r: any) {
@@ -163,6 +188,31 @@ function CallScreen({ call, onClose }: { call: any; onClose: () => void }) {
           <button className="btn bad" disabled={busy} onClick={() => answer('decline')}>Отклонить</button>
           <button className="btn good" disabled={busy} onClick={() => answer('accept')}>Беру</button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/** Торги: заявка «звонит» 30 секунд, отклик — «Беру за обычную цену» или своя цена */
+function AuctionCallScreen({ call, onClose }: { call: any; onClose: () => void }) {
+  const left = useCountdown(call.ringUntil);
+  const stopRing = useRinging();
+  const [silent, setSilent] = useState(false);
+  useEffect(() => { if (left <= 0 && !silent) { stopRing(); setSilent(true); } }, [left]); // eslint-disable-line
+  return (
+    <div className="call" role="alertdialog" aria-label="Новая заявка">
+      <div className="stack" style={{ textAlign: 'center', gap: 14 }}>
+        <span className="label" style={{ color: 'var(--accent)' }}>{call.sos ? 'SOS · торги 90 секунд' : 'Новая заявка · торги'}</span>
+        <div className="ring" style={silent ? { animation: 'none' } : undefined}>{call.service === 'tow' ? '🚛' : '⚡'}</div>
+        <h1>{SERVICES[call.service]?.name ?? 'Заявка'} · {call.brand ?? 'грузовик'}</h1>
+        <div className="sub" style={{ fontSize: 15 }}>
+          {call.address ?? call.zone}{call.destination ? ` → ${call.destination}` : ''}{call.distanceKm != null ? ` · ${call.distanceKm} км` : ''}
+        </div>
+        {call.description && <div className="note" style={{ fontSize: 14 }}>{call.description}</div>}
+      </div>
+      <div className="stack" style={{ gap: 12 }}>
+        <OfferForm orderId={call.orderId} limits={{ usual: call.usual, floor: call.floor, ceil: call.ceil }} compact onDone={() => { stopRing(); onClose(); }} />
+        <button className="btn ghost" onClick={() => { stopRing(); onClose(); }}>Позже — заявка останется в «Заявки рядом»</button>
       </div>
     </div>
   );
