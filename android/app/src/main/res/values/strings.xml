@@ -11,6 +11,12 @@
     <string name="incoming_sos">SOS-вызов</string>
     <string name="no_connection">Нет связи с сервером. Проверьте интернет — страница обновится сама.</string>
     <string name="retry">Повторить</string>
+    <string name="server_timeout">Сервер не отвечает. Проверьте интернет или адрес сервера.</string>
+    <string name="server_not_traksos">По этому адресу пока нет сервера ТракSOS. Для проверки укажите адрес тестового стенда.</string>
+    <string name="server_error">Сервер ответил ошибкой %1$d. Попробуйте позже или укажите другой адрес.</string>
+    <string name="server_address">Адрес сервера</string>
+    <string name="server_save">Открыть этот адрес</string>
+    <string name="server_hint">Ссылка тестового стенда — в Codespaces, вкладка PORTS. Оставьте поле пустым, чтобы вернуть адрес по умолчанию.</string>
     <string name="fullscreen_title">Разрешите показ заявок на весь экран</string>
     <string name="fullscreen_text">Без этого заявка придёт обычным уведомлением и её легко пропустить на заблокированном телефоне.</string>
     <string name="open_settings">Открыть настройки</string>

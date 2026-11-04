@@ -14,6 +14,7 @@ import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.OnBackPressedCallback
@@ -30,6 +31,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var web: WebView
     private var geoCallback: GeolocationPermissions.Callback? = null
     private var geoOrigin: String? = null
+    /** Страница не отозвалась как сайт ТракSOS — через 20 секунд покажем экран ошибки вместо белого */
+    private var failed = false
+    private val watchdog = Runnable { showOffline(getString(R.string.server_timeout)) }
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,11 +55,26 @@ class MainActivity : AppCompatActivity() {
             override fun shouldOverrideUrlLoading(view: WebView, req: WebResourceRequest): Boolean {
                 val url = req.url
                 // Свой сайт — внутри; карты, телефоны и прочее — во внешних приложениях
-                if (url.host == Uri.parse(BuildConfig.APP_URL).host) return false
+                if (url.host == Uri.parse(Session.server(this@MainActivity)).host) return false
                 return try { startActivity(Intent(Intent.ACTION_VIEW, url)); true } catch (_: Exception) { true }
             }
+            override fun onPageStarted(view: WebView, url: String, favicon: android.graphics.Bitmap?) {
+                web.removeCallbacks(watchdog)
+                if (url.startsWith("http")) { failed = false; web.postDelayed(watchdog, 20_000) }
+            }
+            override fun onPageFinished(view: WebView, url: String) {
+                web.removeCallbacks(watchdog)
+                if (!url.startsWith("http") || failed) return
+                // По адресу может отвечать что угодно (пустой домен, заглушка) — проверяем, что это наш сайт
+                view.evaluateJavascript("!!document.querySelector('meta[name=traksos-app]')") { ok ->
+                    if (ok != "true") showOffline(getString(R.string.server_not_traksos))
+                }
+            }
             override fun onReceivedError(view: WebView, req: WebResourceRequest, err: WebResourceError) {
-                if (req.isForMainFrame) view.loadData(offlinePage(), "text/html; charset=utf-8", "utf-8")
+                if (req.isForMainFrame) showOffline(getString(R.string.no_connection) + " (" + err.description + ")")
+            }
+            override fun onReceivedHttpError(view: WebView, req: WebResourceRequest, res: WebResourceResponse) {
+                if (req.isForMainFrame) showOffline(getString(R.string.server_error, res.statusCode))
             }
         }
         web.webChromeClient = object : WebChromeClient() {
@@ -101,7 +120,10 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
-    private fun urlFor(path: String?) = BuildConfig.APP_URL.trimEnd('/') + "/" + (path?.let { "#/$it" } ?: "")
+    /** Открыть сайт заново — после «Повторить» или смены адреса сервера */
+    fun reload() = web.post { web.loadUrl(urlFor(null)) }
+
+    private fun urlFor(path: String?) = Session.server(this).trimEnd('/') + "/" + (path?.let { "#/$it" } ?: "")
 
     private fun hasLocation() =
         ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
@@ -137,14 +159,29 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun offlinePage() = """
-        <html><body style="background:#15171A;color:#F2F2F0;font-family:sans-serif;display:flex;flex-direction:column;
-        justify-content:center;align-items:center;height:100vh;margin:0;padding:24px;text-align:center">
-        <h2 style="color:#FF6A13">ТракSOS</h2><p>${getString(R.string.no_connection)}</p>
-        <button onclick="location.href='${BuildConfig.APP_URL}'" style="margin-top:16px;padding:14px 24px;border:0;border-radius:14px;
-        background:#FF6A13;color:#15171A;font-weight:bold;font-size:16px">${getString(R.string.retry)}</button>
-        <script>window.addEventListener('online',()=>location.href='${BuildConfig.APP_URL}')</script></body></html>
-    """.trimIndent()
+    /** Экран ошибки: что случилось, «Повторить» и поле адреса сервера (для тестового стенда) */
+    private fun showOffline(reason: String) {
+        failed = true
+        web.removeCallbacks(watchdog)
+        val q = { t: String -> JSONObject.quote(t) }
+        val html = """
+        <html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+        <body style="background:#15171A;color:#F2F2F0;font-family:sans-serif;margin:0;padding:32px 24px;text-align:center">
+        <h2 style="color:#FF6A13;margin-top:15vh">ТракSOS</h2>
+        <p id="r" style="line-height:1.5"></p>
+        <button onclick="TrakSOSNative.retry()" style="margin:16px 0 40px;padding:14px 28px;border:0;border-radius:14px;
+          background:#FF6A13;color:#15171A;font-weight:bold;font-size:16px">${getString(R.string.retry)}</button>
+        <p style="color:#9A9C9F;font-size:14px">${getString(R.string.server_address)}</p>
+        <input id="u" inputmode="url" autocapitalize="off" autocorrect="off" style="width:100%;box-sizing:border-box;padding:14px;
+          border-radius:12px;border:1px solid #33363B;background:#1F2226;color:#F2F2F0;font-size:15px">
+        <button onclick="TrakSOSNative.setServer(document.getElementById('u').value)" style="margin-top:12px;width:100%;padding:14px;
+          border:1px solid #FF6A13;border-radius:14px;background:none;color:#FF6A13;font-weight:bold;font-size:15px">${getString(R.string.server_save)}</button>
+        <p style="color:#6B6E72;font-size:12px;margin-top:12px">${getString(R.string.server_hint)}</p>
+        <script>document.getElementById('r').textContent=${q(reason)};document.getElementById('u').value=${q(Session.server(this))};
+        window.addEventListener('online',()=>TrakSOSNative.retry())</script></body></html>
+        """.trimIndent()
+        web.post { web.loadDataWithBaseURL(null, html, "text/html", "utf-8", null) }
+    }
 
     fun evalEvent(name: String, data: Map<String, String>) {
         val detail = JSONObject(data as Map<*, *>).toString()
@@ -174,6 +211,17 @@ class MainActivity : AppCompatActivity() {
 class WebBridge(private val activity: MainActivity) {
     @JavascriptInterface
     fun isApp(): Boolean = true
+
+    /** Экран ошибки: «Повторить» */
+    @JavascriptInterface
+    fun retry() = activity.reload()
+
+    /** Экран ошибки: другой адрес сервера (тестовый стенд). Пусто — адрес по умолчанию. */
+    @JavascriptInterface
+    fun setServer(url: String) {
+        Session.setServer(activity, url)
+        activity.reload()
+    }
 
     @JavascriptInterface
     fun version(): String = BuildConfig.VERSION_NAME

@@ -21,7 +21,21 @@ object Session {
     }
 
     fun apiUrl(ctx: Context): String =
-        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("apiUrl", null) ?: BuildConfig.APP_URL
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("apiUrl", null) ?: server(ctx)
+
+    /** Адрес сайта: заданный в приложении (тестовый стенд) или вшитый при сборке */
+    fun server(ctx: Context): String =
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("server", null) ?: BuildConfig.APP_URL
+
+    fun setServer(ctx: Context, raw: String) {
+        var u = raw.trim().trimEnd('/')
+        if (u.isNotEmpty() && !u.startsWith("http")) u = "https://$u"
+        // Сервер сменился — старый вход и адрес API к нему не относятся
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .apply { if (u.isEmpty()) remove("server") else putString("server", u) }
+            .remove("apiUrl").remove("token")
+            .apply()
+    }
 
     fun token(ctx: Context): String? = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("token", null)
 
