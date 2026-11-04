@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#FF15171A</color>
+    <color name="accent">#FFFF6A13</color>
+    <color name="fg">#FFF2F2F0</color>
+    <color name="muted">#FFA9ADB3</color>
+    <color name="good">#FF7FD18B</color>
+
+    <style name="Theme.TrakSOS" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:statusBarColor">@color/bg</item>
+        <item name="android:navigationBarColor">@color/bg</item>
+        <item name="colorPrimary">@color/accent</item>
+        <item name="colorAccent">@color/accent</item>
+    </style>
+
+    <style name="Theme.TrakSOS.Call" parent="Theme.TrakSOS">
+        <item name="android:windowShowWallpaper">false</item>
+    </style>
+</resources>

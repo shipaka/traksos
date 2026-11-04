@@ -1,0 +1,62 @@
+name: Android
+
+# Собирает APK для RuStore. Подпись — из секретов репозитория (Settings → Secrets and variables → Actions):
+#   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+# Настройки — из переменных (вкладка Variables): APP_URL (адрес сайта), RUSTORE_PROJECT_ID (проект RuStore Push).
+# Без ключа подписи собирается отладочный APK — его можно поставить на телефон для проверки, но не в RuStore.
+
+on:
+  push:
+    branches: [main]
+    paths: ['android/**', '.github/workflows/android.yml']
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    env:
+      APP_URL: ${{ vars.APP_URL || 'https://traksos.ru' }}
+      RUSTORE_PROJECT_ID: ${{ vars.RUSTORE_PROJECT_ID }}
+      VERSION_CODE: ${{ github.run_number }}
+      VERSION_NAME: 0.1.${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.10.2
+
+      - name: Ключ подписи
+        id: keystore
+        env:
+          KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KS" ]; then
+            echo "$KS" | base64 -d > "$RUNNER_TEMP/release.keystore"
+            echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/release.keystore" >> "$GITHUB_ENV"
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Ключ подписи не задан — собираю отладочный APK"
+          fi
+
+      - name: Сборка
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ "${{ steps.keystore.outputs.signed }}" = "true" ]; then
+            gradle --no-daemon assembleRelease
+          else
+            gradle --no-daemon assembleDebug
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: traksos-${{ steps.keystore.outputs.signed == 'true' && 'release' || 'debug' }}-${{ github.run_number }}
+          path: android/app/build/outputs/apk/**/*.apk

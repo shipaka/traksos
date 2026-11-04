@@ -17,7 +17,11 @@ export function Work() {
 
   const active = (jobs.data ?? []).filter((o: any) => ['accepted', 'en_route', 'arrived', 'working', 'awaiting_confirmation'].includes(o.status));
   const online = p.line_status === 'online' || p.line_status === 'on_job' || p.line_status === 'on_call';
-  const setLine = (lineStatus: string) => run(() => post('/api/performer/line', { lineStatus })).then((r) => r && reload());
+  const setLine = (lineStatus: string) => run(() => post('/api/performer/line', { lineStatus })).then((r) => {
+    if (!r) return;
+    if (lineStatus === 'online') native.performerOnline();
+    reload();
+  });
 
   return (
     <main>
@@ -108,7 +112,10 @@ export function IncomingCall() {
     });
     const onVisible = () => document.visibilityState === 'visible' && load();
     document.addEventListener('visibilitychange', onVisible);
-    native.onCallAction?.((orderId, action) => {
+    // Ответ с экрана блокировки или из уведомления — приложение уже отправило его на сервер
+    native.onCallAction((orderId, action, handled) => {
+      setCalls((c) => c.filter((x) => x.orderId !== orderId));
+      if (handled) { if (action === 'accept') go(`order/${orderId}`); return; }
       if (action === 'accept') post(`/api/orders/${orderId}/accept`).then(() => go(`order/${orderId}`)).catch(() => {});
       else post(`/api/orders/${orderId}/decline`).catch(() => {});
     });
@@ -168,11 +175,10 @@ function useCountdown(until: string) {
   return left;
 }
 
-/** Звук и вибрация, пока открыт экран вызова. В Android-приложении звонит сама система. */
+/** Звук и вибрация, пока открыт экран вызова. Когда приложение свёрнуто, звонит нативный экран вызова. */
 function useRinging() {
   const stop = useRef<() => void>(() => {});
   useEffect(() => {
-    if (native.isApp) return;
     let ctx: AudioContext | null = null;
     let timer: any;
     try {

@@ -1,32 +1,44 @@
-// Мост к Android-приложению (Capacitor). В обычном браузере всё — заглушки.
-// Нативная часть (android/) регистрирует плагин TrakSOS: токен RuStore Push и нажатия «Беру/Отклонить» на экране вызова.
+// Мост к Android-приложению (android/): window.TrakSOSNative + события 'traksos-native'.
+// В обычном браузере всё — заглушки.
 
-type CallAction = (orderId: string, action: 'accept' | 'decline') => void;
+type CallAction = (orderId: string, action: 'accept' | 'decline', handled: boolean) => void;
 
-const cap = (window as any).Capacitor;
-const plugin = cap?.Plugins?.TrakSOS;
+const bridge = (window as any).TrakSOSNative as undefined | {
+  isApp(): boolean;
+  setSession(apiUrl: string, token: string | null): void;
+  pushToken(): string;
+  performerOnline(): void;
+};
+
+const listeners: Record<string, ((d: any) => void)[]> = {};
+window.addEventListener('traksos-native', (e: any) => {
+  for (const fn of listeners[e.detail?.name] ?? []) fn(e.detail.data);
+});
+const on = (name: string, fn: (d: any) => void) => (listeners[name] ??= []).push(fn);
 
 export const native = {
-  isApp: !!cap?.isNativePlatform?.(),
+  isApp: !!bridge,
 
-  /** Получить токен RuStore Push и отправить его на сервер */
+  /** Получить токен RuStore Push и отправить на сервер (приложение отправит и само, но так надёжнее) */
   async registerPush(send: (token: string) => Promise<unknown>) {
-    if (!plugin) return;
-    try {
-      const { token } = await plugin.getPushToken();
-      if (token) await send(token);
-      plugin.addListener('pushToken', (e: { token: string }) => send(e.token).catch(() => {}));
-    } catch (e) {
-      console.warn('[native] push', e);
-    }
+    if (!bridge) return;
+    on('pushToken', (d) => d?.token && send(d.token).catch(() => {}));
+    const t = bridge.pushToken();
+    if (t) await send(t).catch(() => {});
   },
 
-  /** Передать токен входа нативной части, чтобы «Беру» с экрана блокировки работало без открытия приложения */
+  /** Передать токен входа нативной части, чтобы «Беру» с экрана блокировки работало без открытия страницы */
   async setSession(apiUrl: string, token: string | null) {
-    await plugin?.setSession?.({ apiUrl, token }).catch(() => {});
+    bridge?.setSession(apiUrl, token);
   },
 
+  /** Исполнитель на линии: приложение попросит разрешить вызов на весь экран (Android 14+) */
+  performerOnline() {
+    bridge?.performerOnline();
+  },
+
+  /** Ответ на вызов из уведомления или экрана блокировки (уже отправлен приложением — handled) */
   onCallAction(fn: CallAction) {
-    plugin?.addListener?.('callAction', (e: { orderId: string; action: 'accept' | 'decline' }) => fn(e.orderId, e.action));
+    on('callAction', (d) => fn(d.orderId, d.action, d.handled === 'true'));
   },
 };

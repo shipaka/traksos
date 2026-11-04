@@ -48,3 +48,17 @@ DATABASE_URL=postgres://postgres@127.0.0.1:5432/traksos ADMIN_PHONES=+7999000000
 - **Оферты** — версии, согласия, уведомление исполнителей о новых условиях не позже чем за 15 дней (289-ФЗ).
 
 Все суммы в API — в копейках.
+
+## Android-приложение (RuStore)
+
+`android/` — оболочка на Kotlin: сайт в WebView, пуши RuStore, вызов на весь экран поверх блокировки с кнопками «Беру» / «Отклонить» и звонком 30 секунд. Собирается в GitHub Actions (workflow «Android»), APK — в артефактах сборки.
+
+Что задать в репозитории (Settings → Secrets and variables → Actions):
+
+| Где | Имя | Что |
+| --- | --- | --- |
+| Variables | `APP_URL` | адрес сайта, например `https://traksos.ru` |
+| Variables | `RUSTORE_PROJECT_ID` | ID проекта Push в консоли RuStore |
+| Secrets | `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` | ключ подписи для RuStore |
+
+Без ключа собирается отладочный APK для проверки на своём телефоне.
