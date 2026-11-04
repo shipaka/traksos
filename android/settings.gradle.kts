@@ -12,7 +12,7 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         // RuStore SDK (пуши)
-        maven { url = uri("https://artifactory-external.vkpartner.ru/artifactory/maven") }
+        maven { url = uri("https://nexus-external.rustore.ru/repository/maven-rustore-exposed/") }
     }
 }
 
