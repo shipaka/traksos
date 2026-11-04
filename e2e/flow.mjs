@@ -244,6 +244,10 @@ await k.getByText('Сейчас проверим').waitFor({ timeout: 10000 });
 await shot(k, '17-client-support');
 await a.getByRole('button', { name: 'Закрыть обращение' }).click();
 await k.getByText(/Поддержка закрыла обращение/).waitFor({ timeout: 10000 });
+await a.goto(BASE + '/#/admin');
+await a.getByRole('button', { name: 'Статистика', exact: true }).click();
+await a.getByText('Заявок в день').waitFor();
+await shot(a, '18-admin-stats');
 await k.goto(BASE + '/#/notifications');
 await k.getByText('Поддержка ответила', { exact: false }).first().waitFor();
 

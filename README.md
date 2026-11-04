@@ -65,7 +65,7 @@ DATABASE_URL=postgres://postgres@127.0.0.1:5432/traksos ADMIN_PHONES=+7999000000
 | --- | --- | --- |
 | Variables | `APP_URL` | адрес сайта, например `https://traksos.ru` |
 | Variables | `RUSTORE_PROJECT_ID` | ID проекта Push в консоли RuStore |
-| Secrets | `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` | ключ подписи для RuStore |
+| Secrets | `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD` | ключ подписи для RuStore (имя ключа `traksos`) |
 
 Без ключа собирается отладочный APK для проверки на своём телефоне.
 

@@ -51,3 +51,11 @@ test('поддержка: обращение по заявке и без, отв
   assert.equal(gen.order, null);
   assert.equal(ok(await t.api('GET', '/api/support', undefined, stranger.token)).length, 1);
 });
+
+test('статистика: считает заявки, доли и деньги без ошибок на пустых и непустых данных', async () => {
+  const s = ok(await t.api('GET', '/api/admin/stats?days=30', undefined, admin.token));
+  assert.ok(s.totals.created >= 1);
+  assert.equal(typeof s.people.support_open, 'number');
+  assert.ok(Array.isArray(s.byDay) && s.byDay.length >= 1);
+  assert.equal((await t.api('GET', '/api/admin/stats', undefined, client.token)).status, 403);
+});

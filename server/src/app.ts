@@ -19,6 +19,7 @@ import { AuctionService } from './services/auction.ts';
 import { DocumentsService } from './services/documents.ts';
 import { AdminService } from './services/admin.ts';
 import { SupportService, TOPICS } from './services/support.ts';
+import { StatsService } from './services/stats.ts';
 import { Raw } from './http/router.ts';
 import { PaymentsService } from './payments/service.ts';
 import { estimate, isNight } from './domain/pricing.ts';
@@ -55,6 +56,7 @@ export function createApp(d: Deps) {
   const documents = new DocumentsService(d.db, notifier, settings, now);
   const admin = new AdminService(d.db, notifier, orders, payments, profiles, settings, now);
   const support = new SupportService(d.db, notifier, orders, now);
+  const stats = new StatsService(d.db, now);
 
   const r = new Router();
   const staff = ['admin', 'moderator'];
@@ -112,6 +114,7 @@ export function createApp(d: Deps) {
   r.get('/api/support/:id', true, (c: AuthedCtx) => support.thread(c.user, c.params.id));
   r.post('/api/support/:id/messages', true, (c: AuthedCtx) => support.post(c.user, c.params.id, parse(z.object({ body: z.string().min(1).max(2000) }), c.body).body));
   r.post('/api/support/:id/close', true, (c: AuthedCtx) => support.close(c.user, c.params.id));
+  r.get('/api/admin/stats', staff, (c: AuthedCtx) => stats.overview(Math.min(365, Math.max(1, Number(c.query.get('days') ?? 30)))));
   r.get('/api/admin/support', staff, (c: AuthedCtx) => support.queue(c.query.get('status') === 'closed' ? 'closed' : 'open'));
   r.get('/api/me/offers', true, (c: AuthedCtx) => offers.status(c.user));
   r.post('/api/offers/:id/accept', true, (c: AuthedCtx) => offers.accept(c.user, c.params.id, c.ip));

@@ -1,7 +1,8 @@
 name: Android
 
-# Собирает APK для RuStore. Подпись — из секретов репозитория (Settings → Secrets and variables → Actions):
-#   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+# Собирает APK для RuStore. Подпись — из двух секретов репозитория (Settings → Secrets and variables → Actions):
+#   ANDROID_KEYSTORE_BASE64 (файл ключа в base64), ANDROID_KEYSTORE_PASSWORD (пароль).
+#   Имя ключа — traksos, пароль ключа = паролю хранилища (можно переопределить ANDROID_KEY_ALIAS / ANDROID_KEY_PASSWORD).
 # Настройки — из переменных (вкладка Variables): APP_URL (адрес сайта), RUSTORE_PROJECT_ID (проект RuStore Push).
 # Без ключа подписи собирается отладочный APK — его можно поставить на телефон для проверки, но не в RuStore.
 
@@ -47,8 +48,8 @@ jobs:
         working-directory: android
         env:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS || 'traksos' }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD || secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
           if [ "${{ steps.keystore.outputs.signed }}" = "true" ]; then
             gradle --no-daemon assembleRelease
