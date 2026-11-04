@@ -8,6 +8,7 @@ import { createSms } from './providers/sms.ts';
 import { createPush } from './providers/push.ts';
 import { MockProvider } from './payments/provider.ts';
 import { YooKassaProvider } from './payments/yookassa.ts';
+import { staticHandler } from './http/static.ts';
 
 const db = await createDb(config.databaseUrl);
 const applied = await migrate(db);
@@ -19,7 +20,12 @@ const payments = config.payments.provider === 'yookassa'
 
 const app = createApp({ db, sms: createSms(), push: createPush(), payments });
 
-const server = http.createServer((req, res) => void app.handle(req, res));
+const serveWeb = staticHandler(config.webRoot);
+const server = http.createServer((req, res) => {
+  const p = (req.url ?? '/').split('?')[0];
+  if (p.startsWith('/api/') || req.method !== 'GET' && req.method !== 'HEAD') return void app.handle(req, res);
+  return void serveWeb(req, res);
+});
 
 // WebSocket: /ws?token=... — статусы, чат, входящие вызовы
 const wss = new WebSocketServer({ noServer: true });

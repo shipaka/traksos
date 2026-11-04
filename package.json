@@ -3,15 +3,22 @@
   "private": true,
   "description": "ТракSOS — маркетплейс выездной помощи грузовикам, СПб и ЛО",
   "workspaces": [
-    "server"
+    "server",
+    "web"
   ],
   "scripts": {
     "test": "npm -w server test",
     "typecheck": "npm -w server run typecheck",
     "dev": "npm -w server run dev",
-    "migrate": "npm -w server run migrate"
+    "migrate": "npm -w server run migrate",
+    "build": "npm -w web run build",
+    "start": "npm -w server start",
+    "e2e": "node e2e/flow.mjs"
   },
   "engines": {
     "node": ">=22"
+  },
+  "devDependencies": {
+    "playwright": "^1.50.0"
   }
 }

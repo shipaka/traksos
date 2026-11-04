@@ -6,3 +6,5 @@ coverage/
 android/app/build/
 android/.gradle/
 *.keystore
+web/dist/
+e2e/shots/

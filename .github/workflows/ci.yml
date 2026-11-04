@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  server:
+  test:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -25,5 +25,23 @@ jobs:
         with:
           node-version: 22
       - run: npm install
-      - run: npm run typecheck
-      - run: npm test
+      - name: Сервер — типы
+        run: npm run typecheck
+      - name: Сервер — тесты
+        run: npm test
+      - name: Веб — сборка
+        run: npm -w web run build
+      - name: Сквозной сценарий в браузере
+        run: |
+          npx playwright install --with-deps chromium
+          psql -h 127.0.0.1 -U postgres -c 'create database traksos'
+          DATABASE_URL=postgres://postgres@127.0.0.1:5432/traksos ADMIN_PHONES=+79990000001 npm -w server start &
+          until curl -s localhost:8080/api/health >/dev/null; do sleep 1; done
+          node e2e/flow.mjs e2e/shots
+      - name: Снимки экранов
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screens
+          path: e2e/shots
+          if-no-files-found: ignore

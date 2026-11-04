@@ -7,7 +7,8 @@
 | Папка | Что это |
 | --- | --- |
 | `server/` | API на Node.js 22 + PostgreSQL 16, WebSocket для чата и вызовов |
-| `web/` | веб-приложение (все кабинеты) — в работе |
+| `web/` | веб-приложение: клиент, водитель, мастер, эвакуаторщик, админ (React, сборка esbuild) |
+| `e2e/` | сквозной сценарий в браузере: вход → SOS → вызов мастеру → «Беру» → чат → сумма → отзывы |
 | `android/` | оболочка для RuStore с полноэкранным вызовом — в работе |
 
 ## Запуск сервера
@@ -18,7 +19,7 @@ createdb traksos
 DATABASE_URL=postgres://postgres@127.0.0.1:5432/traksos ADMIN_PHONES=+79990000001 npm run dev
 ```
 
-Миграции применяются сами при старте. Тесты: `TEST_DATABASE_URL=postgres://…/traksos_test npm test`.
+Миграции применяются сами при старте. Веб-приложение: `npm run build` — сервер раздаёт его на том же адресе. Тесты: `TEST_DATABASE_URL=postgres://…/traksos_test npm test`.
 
 Пока SMS-сервис не подключён (`SMS_PROVIDER=log`), код входа пишется в лог и возвращается в ответе `/api/auth/code` как `devCode` — только вне production.
 

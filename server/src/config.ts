@@ -11,6 +11,8 @@ export const config = {
   /** Откуда разрешены запросы браузера (веб-приложение). */
   corsOrigins: (env.CORS_ORIGINS ?? '*').split(','),
   publicUrl: env.PUBLIC_URL ?? 'http://localhost:8080',
+  /** Собранное веб-приложение */
+  webRoot: env.WEB_ROOT ?? new URL('../../web/dist', import.meta.url).pathname,
   /** Номера, которые при входе сразу получают роль администратора */
   adminPhones: (env.ADMIN_PHONES ?? '').split(',').map((s) => s.trim()).filter(Boolean),
 
