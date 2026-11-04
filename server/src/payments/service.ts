@@ -19,6 +19,7 @@ import { cancelSplit, commissionPct, pct, split, type CancelStage } from '../dom
 import { agentReceipt } from './yookassa.ts';
 import { config } from '../config.ts';
 import { rub } from '../util.ts';
+import { roundTo } from '../domain/pricing.ts';
 
 const STATUS_MAP: Record<ProviderStatus, string> = {
   pending: 'pending', held: 'held', captured: 'captured', cancelled: 'cancelled', failed: 'failed',
@@ -52,8 +53,11 @@ export class PaymentsService implements PaymentHooks {
 
   async onCreated(order: any) {
     if (order.payment_method !== 'online') return { holdRequired: false };
-    const callOut = order.estimate.callOut as number;
-    const pay = await this.createProviderPayment(this.db, order, 'call_out', callOut, false);
+    // Цена выезда станет известна после выбора отклика (до 130% обычной) — замораживаем потолок,
+    // при списании берём фактическую сумму, остаток вернётся клиенту сам.
+    const d = await this.settings.get('dispatch');
+    const ceil = roundTo((order.estimate.callOut as number) * d.offerCeil, 5_000);
+    const pay = await this.createProviderPayment(this.db, order, 'call_out', ceil, false);
     return { holdRequired: true, confirmationUrl: pay.confirmation_url };
   }
 
@@ -102,8 +106,10 @@ export class PaymentsService implements PaymentHooks {
       return;
     }
     const scale = (await this.settings.get('cancel')).scale;
-    const c = cancelSplit(scale, stage as CancelStage, pay.amount, pay.client_fee);
+    const base: number = order.call_out_amount ?? order.estimate.callOut;
+    const c = cancelSplit(scale, stage as CancelStage, base, pct(base, Number(order.client_fee_pct)));
     const keep = c.toPerformer + c.platformKeeps;
+    c.refund = pay.total - keep; // замороженный потолок минус удержанное
     if (keep === 0) {
       await this.provider.cancel(pay.provider_payment_id);
       await q.query(`update payments set status='cancelled', updated_at=now() where id=$1`, [pay.id]);
@@ -198,8 +204,11 @@ export class PaymentsService implements PaymentHooks {
     const order = (await q.one('select * from orders where id=$1', [orderId]))!;
     const callOutPay = await q.one(`select * from payments where order_id=$1 and kind='call_out' and status='held'`, [orderId]);
     if (callOutPay) {
-      await this.provider.capture(callOutPay.provider_payment_id);
-      await q.query(`update payments set status='captured', updated_at=now() where id=$1`, [callOutPay.id]);
+      const actual: number = order.call_out_amount ?? callOutPay.amount;
+      const fee = pct(actual, Number(order.client_fee_pct));
+      await this.provider.capture(callOutPay.provider_payment_id, actual + fee);
+      await q.query(`update payments set status='captured', amount=$2, client_fee=$3, total=$4, refunded_amount=$5, updated_at=now() where id=$1`,
+        [callOutPay.id, actual, fee, actual + fee, callOutPay.total - actual - fee]);
     }
     const m = this.orders.money(order);
     const perf = await q.one<{ is_priority: boolean }>('select is_priority from performer_profiles where user_id=$1', [order.performer_id]);

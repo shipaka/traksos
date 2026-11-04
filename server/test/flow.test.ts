@@ -20,6 +20,15 @@ after(() => t.close());
 
 const ringingFor = (userId: string) =>
   t.app.hub.log.filter((l) => l.userId === userId && l.event.type === 'incoming_call').map((l) => l.event.orderId);
+const auctionFor = (userId: string) =>
+  t.app.hub.log.filter((l) => l.userId === userId && l.event.type === 'auction').map((l) => l.event.orderId);
+
+/** Исполнитель откликается, клиент выбирает его отклик */
+async function take(orderId: string, performer: { token: string }, by: { token: string } = client, price?: number) {
+  ok(await t.api('POST', `/api/orders/${orderId}/offers`, price ? { price } : {}, performer.token));
+  const list = ok(await t.api('GET', `/api/orders/${orderId}/offers`, undefined, by.token));
+  return ok(await t.api('POST', `/api/orders/${orderId}/offers/${list.offers[0].id}/choose`, {}, by.token));
+}
 
 test('вход: код, неверный код, повтор раньше минуты', async () => {
   const c = await t.api('POST', '/api/auth/code', { phone: '+79995556677' });
@@ -67,20 +76,23 @@ test('полный путь: SOS → приоритетный отказался
   assert.equal(created.order.status, 'searching');
   assert.equal(created.order.brand, 'Scania');
 
-  // Сначала звонит «отцу» (приоритет), он отклоняет — звонок переходит мастеру
+  // Сначала звонит «отцу» (приоритет), он отклоняет — заявка уходит на общие торги
   assert.deepEqual(ringingFor(father.id), [id]);
-  assert.deepEqual(ringingFor(master.id), []);
+  assert.deepEqual(auctionFor(master.id), []);
   assert.equal(t.push.sent.at(-1)!.msg.kind, 'call');
-  // Посторонний мастер не может принять, если ему не звонят
-  assert.equal((await t.api('POST', `/api/orders/${id}/accept`, {}, master.token)).body.error, 'too_late');
+  // Мастер не может откликнуться, пока заявка у приоритетных
+  assert.equal((await t.api('POST', `/api/orders/${id}/offers`, {}, master.token)).status, 403);
   ok(await t.api('POST', `/api/orders/${id}/decline`, {}, father.token));
-  assert.deepEqual(ringingFor(master.id), [id]);
-  const incoming = ok(await t.api('GET', '/api/performer/incoming', undefined, master.token));
-  assert.equal(incoming[0].order_id, id);
+  assert.deepEqual(auctionFor(master.id), [id]);
+  const open = ok(await t.api('GET', '/api/performer/auctions', undefined, master.token));
+  assert.equal(open[0].order_id, id);
+  assert.deepEqual(open[0].limits, { usual: 565_000, floor: 480_000, ceil: 735_000 });
+  // Цена ниже пола не принимается
+  assert.equal((await t.api('POST', `/api/orders/${id}/offers`, { price: 400_000 }, master.token)).body.error, 'price_out_of_corridor');
 
-  const acc = ok(await t.api('POST', `/api/orders/${id}/accept`, {}, master.token));
+  const acc = await take(id, master, client, 520_000);
   assert.equal(acc.status, 'accepted');
-  assert.equal(acc.money.callOut, 565_000);
+  assert.equal(acc.money.callOut, 520_000);
   const seen = ok(await t.api('GET', `/api/orders/${id}`, undefined, client.token));
   assert.equal(seen.performer.name, 'Иван');
   assert.equal(seen.performer.car.plate, 'А123ВС78');
@@ -104,20 +116,20 @@ test('полный путь: SOS → приоритетный отказался
   ok(await t.api('POST', `/api/orders/${id}/step`, { action: 'start_work' }, master.token));
   const prop = ok(await t.api('POST', `/api/orders/${id}/amount`, { workAmount: 210_000, result: 'solved', note: 'Клемма массы' }, master.token));
   assert.equal(prop.status, 'awaiting_confirmation');
-  // 5 650 + 2 100 = 7 750 ₽ + сбор 5% 387,50 ₽ = 8 137,50 ₽
-  assert.deepEqual(prop.money, { callOut: 565_000, work: 210_000, amount: 775_000, clientFee: 38_750, total: 813_750 });
+  // 5 200 + 2 100 = 7 300 ₽ + сбор 5% 365 ₽ = 7 665 ₽
+  assert.deepEqual(prop.money, { callOut: 520_000, work: 210_000, amount: 730_000, clientFee: 36_500, total: 766_500 });
 
   // Мастер не может подтвердить за клиента; клиент спорит, мастер называет заново, клиент подтверждает
   assert.equal((await t.api('POST', `/api/orders/${id}/confirm`, {}, master.token)).status, 403);
   ok(await t.api('POST', `/api/orders/${id}/dispute`, { reason: 'Договаривались на час' }, client.token));
   ok(await t.api('POST', `/api/orders/${id}/amount`, { workAmount: 150_000, result: 'solved' }, master.token));
-  assert.equal((await t.api('POST', `/api/orders/${id}/confirm`, { total: 813_750 }, client.token)).body.error, 'amount_changed');
-  const done = ok(await t.api('POST', `/api/orders/${id}/confirm`, { total: 750_750 }, client.token));
+  assert.equal((await t.api('POST', `/api/orders/${id}/confirm`, { total: 766_500 }, client.token)).body.error, 'amount_changed');
+  const done = ok(await t.api('POST', `/api/orders/${id}/confirm`, { total: 703_500 }, client.token));
   assert.equal(done.status, 'completed');
 
-  // Наличные: мастер должен площадке сбор + 5% (35 750 + 35 750)
+  // Наличные: мастер должен площадке сбор + 5% (33 500 + 33 500)
   const bal = ok(await t.api('GET', '/api/performer/balance', undefined, master.token));
-  assert.equal(bal.cash_debt, 71_500);
+  assert.equal(bal.cash_debt, 67_000);
   assert.equal(bal.paused, false);
 
   // Отзывы друг о друге, вес по рейтингу автора
@@ -158,21 +170,23 @@ test('агентская оплата: выезд замораживается, 
   const c = ok(await t.api('POST', '/api/orders', { service: 'electric', zoneId: 'spb', paymentMethod: 'online' }, client.token));
   const id = c.order.id;
   assert.match(c.confirmationUrl, /mock-pay/);
-  assert.deepEqual(ringingFor(master.id).filter((x) => x === id), [], 'до оплаты выезда никому не звоним');
+  assert.deepEqual(auctionFor(master.id).filter((x) => x === id), [], 'до оплаты выезда никому не звоним');
 
   const payId = c.confirmationUrl.split('/').pop();
   ok(await t.api('POST', `/api/dev/mock-pay/${payId}`));
-  assert.deepEqual(ringingFor(master.id).at(-1), id);
-  ok(await t.api('POST', `/api/orders/${id}/accept`, {}, master.token));
+  assert.deepEqual(auctionFor(master.id).at(-1), id);
+  await take(id, master);
   ok(await t.api('POST', `/api/orders/${id}/step`, { action: 'arrive' }, master.token));
   ok(await t.api('POST', `/api/orders/${id}/amount`, { workAmount: 150_000, result: 'solved' }, master.token));
   ok(await t.api('POST', `/api/orders/${id}/confirm`, {}, client.token));
 
   const pays = ok(await t.api('GET', `/api/orders/${id}/payments`, undefined, client.token));
-  assert.deepEqual(pays.map((p: any) => [p.kind, p.status, p.total]), [['call_out', 'held', 157_500], ['work', 'pending', 157_500]]);
+  // Заморожен потолок: 1 950 ₽ + сбор 97,50 ₽; работа 1 500 ₽ + 75 ₽
+  assert.deepEqual(pays.map((p: any) => [p.kind, p.status, p.total]), [['call_out', 'held', 204_750], ['work', 'pending', 157_500]]);
   ok(await t.api('POST', `/api/dev/mock-pay/${t.payments.payments.size && [...t.payments.payments.keys()].at(-1)}`));
   const after = ok(await t.api('GET', `/api/orders/${id}/payments`, undefined, client.token));
-  assert.deepEqual(after.map((p: any) => p.status), ['captured', 'captured']);
+  assert.deepEqual(after.map((p: any) => [p.status, p.total]), [['captured', 157_500], ['captured', 157_500]]);
+  assert.equal(after[0].refunded_amount, 47_250, 'лишнее из замороженного вернулось клиенту');
 
   // Учёт сходится: клиент −3 150, мастер +2 850, площадка +300
   const sums = await t.db.query(`select account, sum(amount)::int s from ledger_entries where order_id=$1 group by account order by account`, [id]);
@@ -195,13 +209,14 @@ test('агентская оплата: выезд замораживается, 
 test('отмена после принятия: исполнителю 25% выезда, остальное клиенту', async () => {
   const c = ok(await t.api('POST', '/api/orders', { service: 'electric', zoneId: 'spb', paymentMethod: 'online' }, client.token));
   ok(await t.api('POST', `/api/dev/mock-pay/${c.confirmationUrl.split('/').pop()}`));
-  ok(await t.api('POST', `/api/orders/${c.order.id}/accept`, {}, master.token));
+  await take(c.order.id, master);
   const v = ok(await t.api('POST', `/api/orders/${c.order.id}/cancel`, { reason: 'Завелась сама' }, client.token));
   assert.equal(v.status, 'cancelled');
   assert.equal(v.cancelStage, 'accepted');
   const pay = ok(await t.api('GET', `/api/orders/${c.order.id}/payments`, undefined, client.token))[0];
   assert.equal(pay.status, 'partially_refunded');
-  assert.equal(pay.refunded_amount, 118_125); // 1 181,25 ₽ из 1 575 ₽
+  // Заморожено 2 047,50 ₽, удержано 25% выезда и сбора (393,75 ₽), вернулось 1 653,75 ₽
+  assert.equal(pay.refunded_amount, 165_375);
 });
 
 test('водитель: вход по своему номеру, вызов на машину владельца', async () => {

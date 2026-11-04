@@ -15,6 +15,7 @@ import { OrdersService } from './services/orders.ts';
 import { ChatService } from './services/chat.ts';
 import { ReviewsService, REVIEW_TAGS } from './services/reviews.ts';
 import { OffersService } from './services/offers.ts';
+import { AuctionService } from './services/auction.ts';
 import { PaymentsService } from './payments/service.ts';
 import { estimate, isNight } from './domain/pricing.ts';
 import { defaultSettings } from './domain/defaults.ts';
@@ -41,6 +42,8 @@ export function createApp(d: Deps) {
   const orders = new OrdersService(d.db, settings, notifier, now);
   const payments = new PaymentsService(d.db, settings, d.payments, notifier, orders);
   orders.payments = payments;
+  const auction = new AuctionService(d.db, settings, notifier, orders, now);
+  orders.auction = auction;
   const chat = new ChatService(d.db, settings, notifier, orders);
   const reviews = new ReviewsService(d.db, settings, orders);
   const offers = new OffersService(d.db, notifier, now);
@@ -140,6 +143,8 @@ export function createApp(d: Deps) {
     address: z.string().max(300).optional(), lat: z.number().optional(), lng: z.number().optional(), zoneId: z.string().default('spb'),
     tier: z.enum(['eco', 'comfort', 'pro']).optional(), vehicleId: z.string().uuid().optional(), brand: z.string().max(40).optional(),
     groupTrip: z.boolean().optional(), night: z.boolean().optional(), paymentMethod: z.enum(['cash', 'online', 'invoice']).optional(),
+    destination: z.string().max(300).optional(), cargo: z.enum(['tractor', 'semitrailer', 'coupling', 'truck12']).optional(),
+    loaded: z.enum(['empty', 'loaded', 'adr']).optional(), driverOnSite: z.boolean().optional(),
   }), c.body)));
   r.get('/api/orders', true, (c: AuthedCtx) =>
     orders.list(c.user, c.query.get('as') === 'performer' ? 'performer' : 'client', c.query.get('status') ?? undefined));
@@ -156,6 +161,16 @@ export function createApp(d: Deps) {
   r.post('/api/orders/:id/dispute', true, (c: AuthedCtx) => orders.disputeAmount(c.user, c.params.id, parse(z.object({ reason: z.string().min(2).max(500) }), c.body).reason));
   r.post('/api/orders/:id/cancel', true, (c: AuthedCtx) => orders.cancel(c.user, c.params.id, parse(z.object({ reason: z.string().min(2).max(300) }), c.body).reason));
   r.post('/api/orders/:id/retry', true, (c: AuthedCtx) => orders.retry(c.user, c.params.id));
+  // Торги
+  r.get('/api/orders/:id/offers', true, (c: AuthedCtx) => {
+    const sort = c.query.get('sort') ?? 'recommended';
+    return auction.list(c.user, c.params.id, (['recommended', 'price', 'eta', 'distance', 'rating'].includes(sort) ? sort : 'recommended') as any);
+  });
+  r.post('/api/orders/:id/offers', performerRoles, (c: AuthedCtx) =>
+    auction.offer(c.user, c.params.id, parse(z.object({ price: money.optional() }), c.body).price));
+  r.delete('/api/orders/:id/offers', performerRoles, (c: AuthedCtx) => auction.withdraw(c.user, c.params.id));
+  r.post('/api/orders/:id/offers/:offerId/choose', true, (c: AuthedCtx) => auction.choose(c.user, c.params.id, c.params.offerId));
+  r.get('/api/performer/auctions', performerRoles, (c: AuthedCtx) => auction.open(c.user));
   r.get('/api/orders/:id/messages', true, (c: AuthedCtx) => chat.list(c.user, c.params.id, Number(c.query.get('after') ?? 0)));
   r.post('/api/orders/:id/messages', true, (c: AuthedCtx) => {
     const b = parse(z.object({ body: z.string().min(1).max(2000), kind: z.enum(['text', 'quick']).default('text') }), c.body);
@@ -285,7 +300,7 @@ export function createApp(d: Deps) {
     }
   }
 
-  return { handle, hub, auth, settings, orders, payments, profiles, chat, reviews, offers, notifier, router: r };
+  return { handle, hub, auth, settings, orders, payments, auction, profiles, chat, reviews, offers, notifier, router: r };
 }
 
 export type App = ReturnType<typeof createApp>;

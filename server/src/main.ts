@@ -45,7 +45,10 @@ server.on('upgrade', async (req, socket, head) => {
 });
 
 // Очередь вызовов: истёкшие → следующему
-const timer = setInterval(() => app.orders.tick().catch((e) => console.error('[tick]', e)), 2_000);
+const timer = setInterval(() => {
+  app.orders.tick().catch((e) => console.error('[tick]', e));
+  app.auction.tick().catch((e) => console.error('[auction]', e));
+}, 2_000);
 
 server.listen(config.port, () => console.log(`ТракSOS API: http://localhost:${config.port} (БД: ${db.driver})`));
 

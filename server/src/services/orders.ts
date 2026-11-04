@@ -8,6 +8,7 @@ import { transition, canDo, statusLabels, type Action, type Actor, type OrderSta
 import { cancelStage, cancelSplit, pct, split } from '../domain/money.ts';
 import { haversineKm } from '../domain/geo.ts';
 import { rub } from '../util.ts';
+import type { AuctionService } from './auction.ts';
 
 export interface CreateOrderInput {
   service: string;
@@ -24,6 +25,10 @@ export interface CreateOrderInput {
   groupTrip?: boolean;
   night?: boolean;
   paymentMethod?: 'cash' | 'online' | 'invoice';
+  destination?: string;
+  cargo?: 'tractor' | 'semitrailer' | 'coupling' | 'truck12';
+  loaded?: 'empty' | 'loaded' | 'adr';
+  driverOnSite?: boolean;
 }
 
 /** Хуки оплаты — реализует PaymentsService. Пока оплата выключена, работают как заглушки. */
@@ -38,6 +43,7 @@ const SERVICES = ['electric', 'diag', 'air', 'autonomy', 'tyre', 'tow', 'consult
 
 export class OrdersService {
   payments!: PaymentHooks;
+  auction!: AuctionService;
 
   constructor(private db: Db, private settings: SettingsService, private notifier: Notifier, private now: () => Date = () => new Date()) {}
 
@@ -64,10 +70,11 @@ export class OrdersService {
 
     const order = await this.db.one(
       `insert into orders(client_id, created_by, vehicle_id, service, is_sos, problem, description, address, lat, lng,
-          zone_id, night, group_trip, tier, brand, estimate, payment_method, client_fee_pct)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18) returning *`,
+          zone_id, night, group_trip, tier, brand, estimate, payment_method, client_fee_pct, destination, cargo, loaded, driver_on_site)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) returning *`,
       [clientId, user.id, i.vehicleId ?? null, i.service, !!i.isSos, i.problem ?? null, i.description ?? null, i.address ?? null,
-        i.lat ?? null, i.lng ?? null, est.zoneId, night, est.group, tier, brand, est, method, feePct],
+        i.lat ?? null, i.lng ?? null, est.zoneId, night, est.group, tier, brand, est, method, feePct,
+        i.destination ?? null, i.cargo ?? null, i.loaded ?? null, i.driverOnSite ?? null],
     );
     await this.event(this.db, order!.id, user.id, 'created', { estimate: est, sos: !!i.isSos });
 
@@ -78,10 +85,12 @@ export class OrdersService {
 
   // Очередь вызова ---------------------------------------------------------
 
+  /** Шаг 1: звоним приоритетным (вы с отцом). Нет таких или не взяли — шаг 2, общие торги. */
   async startDispatch(orderId: string, exclude: string[] = []) {
     const all = await this.settings.all();
     const order = await this.db.one('select * from orders where id=$1', [orderId]);
     if (!order || order.status !== 'searching') return;
+    if (!all.dispatch.priorityFirst) return this.auction.start(orderId, exclude);
     const kind = performerKindFor(order.service);
     const list = await this.db.query<Candidate>(
       `select p.user_id, p.kind, p.specialties, p.brands, p.is_priority, p.paused, p.line_status, p.verification,
@@ -89,7 +98,7 @@ export class OrdersService {
               (select coalesce(-sum(amount),0)::int from ledger_entries l
                 where l.performer_id = p.user_id and l.kind in ('cash_commission','cash_commission_paid')) as cash_debt
          from performer_profiles p join users u on u.id = p.user_id
-        where p.kind = $1 and p.user_id <> $2`,
+        where p.kind = $1 and p.user_id <> $2 and p.is_priority`,
       [kind, order.client_id],
     );
     const already = await this.db.query<{ performer_id: string }>('select performer_id from order_dispatch where order_id=$1', [orderId]);
@@ -99,6 +108,7 @@ export class OrdersService {
       cashDebtLimit: all.fees.cashDebtLimit,
       exclude: new Set([...exclude, ...already.map((a) => a.performer_id), order.created_by]),
     });
+    if (!ranked.length) return this.auction.start(orderId, exclude);
     const base = already.length;
     for (const [i, r] of ranked.entries()) {
       await this.db.query(
@@ -111,7 +121,7 @@ export class OrdersService {
     await this.ringNext(orderId);
   }
 
-  /** Звоним следующему в очереди; если очередь кончилась — «никто не взял» */
+  /** Звоним следующему приоритетному; очередь кончилась — общие торги */
   async ringNext(orderId: string) {
     const all = await this.settings.all();
     const order = await this.db.one('select * from orders where id=$1', [orderId]);
@@ -127,13 +137,7 @@ export class OrdersService {
         returning id, performer_id, distance_km`,
       [orderId, until, this.now(), free],
     );
-    if (!next.length && (ringing?.c ?? 0) === 0) {
-      await this.db.query(`update orders set status='no_performer' where id=$1 and status='searching'`, [orderId]);
-      await this.event(this.db, orderId, null, 'no_performer', {});
-      await this.notifier.notify([order.client_id, order.created_by], { type: 'order', orderId, status: 'no_performer' },
-        { kind: 'normal', title: 'Никто не взял заявку', body: 'Сейчас свободных исполнителей нет. Попробуйте ещё раз или позвоните в поддержку.', data: { orderId } });
-      return;
-    }
+    if (!next.length && (ringing?.c ?? 0) === 0) return this.auction.start(orderId);
     const est = order.estimate;
     for (const n of next) {
       await this.event(this.db, orderId, null, 'ringing', { performerId: n.performer_id });
@@ -226,7 +230,10 @@ export class OrdersService {
     if (o.performer_id !== user.id) throw forbidden();
     if (!['accepted', 'en_route'].includes(o.status)) throw conflict('bad_status', 'На месте отказаться уже нельзя — закройте выезд с итогом');
     await this.db.query(
-      `update orders set status='searching', performer_id=null, accepted_at=null, en_route_at=null, call_out_amount=null where id=$1`, [orderId]);
+      `update orders set status='searching', performer_id=null, accepted_at=null, en_route_at=null, call_out_amount=null, auction_until=null where id=$1`, [orderId]);
+    await this.db.query(`update bids set status='withdrawn' where order_id=$1 and status in ('active','chosen','lost')`, [orderId]);
+    await this.db.query(`delete from order_dispatch where order_id=$1 and performer_id<>$2`, [orderId, user.id]);
+    await this.db.query(`update order_dispatch set status='declined' where order_id=$1 and performer_id=$2`, [orderId, user.id]);
     await this.db.query(`update performer_profiles set line_status='online' where user_id=$1`, [user.id]);
     await this.event(this.db, orderId, user.id, 'performer_dropped', { reason });
     await this.systemMessage(orderId, 'Исполнитель отказался от заявки. Ищем другого.');
@@ -319,7 +326,8 @@ export class OrdersService {
     await this.db.tx(async (q) => {
       await q.query(`update orders set status='cancelled', cancelled_at=$5, cancelled_by=$2, cancel_reason=$3, cancel_stage=$4 where id=$1`,
         [orderId, user.id, reason, stage, this.now()]);
-      await q.query(`update order_dispatch set status='cancelled' where order_id=$1 and status in ('queued','ringing')`, [orderId]);
+      await q.query(`update order_dispatch set status='cancelled' where order_id=$1 and status in ('queued','ringing','bidding')`, [orderId]);
+      await q.query(`update bids set status='withdrawn' where order_id=$1 and status='active'`, [orderId]);
       if (o.performer_id) await q.query(`update performer_profiles set line_status='online' where user_id=$1 and line_status='on_job'`, [o.performer_id]);
       await this.event(q, orderId, user.id, 'cancelled', { reason, stage, ...splitInfo });
       await this.payments.onCancelled({ ...o, status: 'cancelled' }, stage, q);
@@ -333,8 +341,9 @@ export class OrdersService {
   async retry(user: AuthUser, orderId: string) {
     const o = await this.mustBeClient(user, orderId);
     transition(o.status, 'retry', 'client');
-    await this.db.query(`update orders set status='searching' where id=$1`, [orderId]);
-    await this.db.query(`delete from order_dispatch where order_id=$1 and status in ('missed','declined')`, [orderId]);
+    await this.db.query(`update orders set status='searching', auction_until=null where id=$1`, [orderId]);
+    await this.db.query(`delete from order_dispatch where order_id=$1`, [orderId]);
+    await this.db.query(`update bids set status='withdrawn' where order_id=$1 and status='active'`, [orderId]);
     await this.event(this.db, orderId, user.id, 'retry', {});
     await this.startDispatch(orderId);
     return this.view(user, orderId);
@@ -368,7 +377,7 @@ export class OrdersService {
     if (!o) throw notFound('Заявка не найдена');
     if (this.actorOf(user, o)) return o;
     // Исполнитель, которому сейчас «звонит» заявка, видит её без контактов
-    const ringing = await this.db.one(`select 1 from order_dispatch where order_id=$1 and performer_id=$2 and status='ringing'`, [orderId, user.id]);
+    const ringing = await this.db.one(`select 1 from order_dispatch where order_id=$1 and performer_id=$2 and status in ('ringing','bidding')`, [orderId, user.id]);
     if (ringing) return o;
     throw forbidden();
   }
@@ -391,6 +400,8 @@ export class OrdersService {
       service: o.service, isSos: o.is_sos, problem: o.problem, description: o.description,
       address: o.address, lat: o.lat, lng: o.lng, zoneId: o.zone_id, night: o.night, groupTrip: o.group_trip, tier: o.tier,
       brand: o.brand, vehicle, estimate: o.estimate, paymentMethod: o.payment_method,
+      auction: o.status === 'searching' && !!o.auction_until, auctionUntil: o.auction_until, autoPick: o.auto_pick,
+      destination: o.destination, cargo: o.cargo, loaded: o.loaded, driverOnSite: o.driver_on_site,
       money: this.money(o), result: o.result, resultNote: o.result_note,
       cancelReason: o.cancel_reason, cancelStage: o.cancel_stage,
       createdAt: o.created_at, acceptedAt: o.accepted_at, arrivedAt: o.arrived_at, completedAt: o.completed_at,
