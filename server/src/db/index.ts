@@ -58,17 +58,25 @@ function createPgDb(pg: any, url: string): Db {
       await pool.query(sql);
     },
     async tx(fn) {
-      const client = await pool.connect();
-      try {
-        await client.query('begin');
-        const r = await fn(withOne(async (sql, params) => (await client.query(sql, params)).rows));
-        await client.query('commit');
-        return r;
-      } catch (e) {
-        await client.query('rollback').catch(() => {});
-        throw e;
-      } finally {
-        client.release();
+      // Взаимная блокировка (два выбора одновременно трогают одни и те же отклики в разном порядке):
+      // Postgres откатывает одну из транзакций — повторяем её целиком, до трёх раз
+      for (let attempt = 1; ; attempt++) {
+        const client = await pool.connect();
+        try {
+          await client.query('begin');
+          const r = await fn(withOne(async (sql, params) => (await client.query(sql, params)).rows));
+          await client.query('commit');
+          return r;
+        } catch (e: any) {
+          await client.query('rollback').catch(() => {});
+          if ((e?.code === '40P01' || e?.code === '40001') && attempt < 4) {
+            await new Promise((ok) => setTimeout(ok, 5 + Math.random() * 30 * attempt));
+            continue;
+          }
+          throw e;
+        } finally {
+          client.release();
+        }
       }
     },
     close: () => pool.end(),
