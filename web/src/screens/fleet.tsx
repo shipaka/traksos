@@ -13,6 +13,7 @@ const ALLOW: [string, string, string][] = [
   ['service', 'Запись в сервис', 'рембазы-партнёры'],
   ['shop', 'Магазин', 'покупки запчастей'],
 ];
+const esc = (x: unknown) => String(x ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[c]);
 const stickerUrl = (code: string) => `${API_URL || location.origin}/#/qr/${code}`;
 
 export function Fleet() {
@@ -126,7 +127,7 @@ function Sticker({ car }: { car: any }) {
     if (!w) return;
     w.document.write(`<!doctype html><meta charset="utf-8"><title>Наклейка ТракSOS</title><body style="font-family:sans-serif;text-align:center;padding:24px">
       <div style="max-width:320px;margin:auto;border:2px solid #000;border-radius:16px;padding:16px">
-      <h2 style="margin:0 0 4px">ТракSOS — помощь на дороге</h2><div>${car.brand} ${car.model ?? ''} · ${car.plate ?? ''}</div>
+      <h2 style="margin:0 0 4px">ТракSOS — помощь на дороге</h2><div>${esc(car.brand)} ${esc(car.model)} · ${esc(car.plate)}</div>
       <div style="width:240px;margin:12px auto">${svg}</div>
       <div>Наведите камеру → телефон → код из SMS.<br>Сломались — жмите SOS.</div></div><script>setTimeout(()=>print(),300)</script>`);
     w.document.close();

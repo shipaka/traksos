@@ -11,16 +11,34 @@ const SESSION_DAYS = 90;
 
 export const SELF_ROLES = ['client', 'master', 'tow', 'service'] as const;
 
+/** Защита от накрутки SMS: не больше N кодов на номер в сутки и на один адрес в час */
+const PER_PHONE_DAY = 8;
+const PER_IP_HOUR = 15;
+
 export class AuthService {
+  private sentByPhone = new Map<string, number[]>();
+  private sentByIp = new Map<string, number[]>();
+  private bump(map: Map<string, number[]>, key: string, windowMs: number, max: number, now: number) {
+    const list = (map.get(key) ?? []).filter((t) => now - t < windowMs);
+    if (list.length >= max) return false;
+    list.push(now); map.set(key, list);
+    if (map.size > 50_000) map.clear();
+    return true;
+  }
   constructor(private db: Db, private sms: SmsProvider, private now: () => Date = () => new Date()) {}
 
-  async requestCode(rawPhone: string) {
+  async requestCode(rawPhone: string, ip = '') {
     const phone = normalizePhone(rawPhone);
     if (!phone) throw bad('bad_phone', 'Номер в формате +7 9XX XXX-XX-XX');
     const prev = await this.db.one<{ sent_at: Date }>('select sent_at from auth_codes where phone=$1', [phone]);
     if (prev && this.now().getTime() - new Date(prev.sent_at).getTime() < RESEND_MS) {
       throw new HttpError(429, 'too_often', 'Новый код можно запросить через минуту');
     }
+    const t = this.now().getTime();
+    // Локальные и внутренние адреса не считаем: за прокси без X-Forwarded-For все были бы «одним устройством»
+    const publicIp = ip && !/^(::1|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|::ffff:(127|10|192\.168)\.|fc|fd)/i.test(ip);
+    if (publicIp && !this.bump(this.sentByIp, ip, 3_600_000, PER_IP_HOUR, t)) throw new HttpError(429, 'too_many_codes', 'Слишком много кодов с этого устройства — попробуйте через час');
+    if (!this.bump(this.sentByPhone, phone, 86_400_000, PER_PHONE_DAY, t)) throw new HttpError(429, 'too_many_codes', 'На этот номер сегодня отправлено слишком много кодов — напишите в поддержку');
     const code = newCode();
     await this.db.query(
       `insert into auth_codes(phone, code_hash, expires_at, attempts, sent_at) values ($1,$2,$3,0,$4)

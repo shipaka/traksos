@@ -6,7 +6,6 @@ import { setup, ok, type T } from './helpers.ts';
 
 let t: T;
 let admin: { token: string; id: string };
-let mod2: { token: string; id: string };
 let client: { token: string; id: string };
 let master: { token: string; id: string };
 let orderId: string;

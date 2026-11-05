@@ -49,17 +49,6 @@ export const SYMPTOMS: { id: string; name: string; sub: string; note: string; op
 export const CONSULT_HINTS = ['Проводка', 'Масса', 'АКБ', 'Стартер', 'Предохранители', 'Кнопка / замок', 'Блок управления', 'Топливная', 'Пневма', 'Другое'];
 export const CONSULT_CONF: Record<string, string> = { sure: 'Уверен', likely: 'Вероятно', guess: 'Один из вариантов' };
 
-export const SOS_PROBLEMS: { id: string; name: string; service: string; hint: string }[] = [
-  { id: 'no_start', name: 'Не заводится', service: 'electric', hint: 'Электрик — чаще всего АКБ, масса, стартер' },
-  { id: 'light', name: 'Свет, розетка, проводка', service: 'electric', hint: 'Электрик чинит на месте за час-два' },
-  { id: 'error', name: 'Ошибка, аварийный режим', service: 'diag', hint: 'Диагност со сканером под вашу машину' },
-  { id: 'air', name: 'Воздух, тормоза', service: 'air', hint: 'Воздушник: пневма, ABS/EBS' },
-  { id: 'heater', name: 'Автономка, печка', service: 'autonomy', hint: 'Автономщик' },
-  { id: 'wheel', name: 'Колесо', service: 'tyre', hint: 'Выездной шиномонтаж' },
-  { id: 'accident', name: 'Не на ходу, ДТП', service: 'tow', hint: 'Эвакуатор' },
-  { id: 'other', name: 'Другое', service: 'consult', hint: 'Консультация — мастер подскажет, кого звать' },
-];
-
 /** Марки и модели тягачей и грузовиков, которые чаще всего ездят в СПб и ЛО. Год и модель — по желанию, мастер на месте перепроверит. */
 export const MODELS: Record<string, string[]> = {
   Scania: ['R-серия', 'S-серия', 'G-серия', 'P-серия', '4-серия (R/P/124/114)', 'T-серия'],
@@ -81,19 +70,6 @@ export const MODELS: Record<string, string[]> = {
 };
 export const BRANDS = [...Object.keys(MODELS), 'Прочие'];
 export const YEARS = Array.from({ length: new Date().getFullYear() - 1989 }, (_, i) => new Date().getFullYear() - i);
-
-const BRAND_ALIASES: Record<string, string> = {
-  скания: 'Scania', скан: 'Scania', даф: 'DAF', вольво: 'Volvo', ман: 'MAN', мерс: 'Mercedes-Benz', мерседес: 'Mercedes-Benz',
-  рено: 'Renault', ивеко: 'Iveco', камаз: 'КАМАЗ', шакман: 'Shacman', ситрак: 'Sitrak', фав: 'FAW', хово: 'Howo',
-  маз: 'МАЗ', донгфенг: 'Dongfeng', джак: 'JAC', фотон: 'Foton',
-};
-export function matchBrand(input: string) {
-  const s = input.trim().toLowerCase();
-  if (!s) return [];
-  const alias = Object.entries(BRAND_ALIASES).filter(([k]) => k.startsWith(s)).map(([, v]) => v);
-  const direct = BRANDS.filter((b) => b.toLowerCase().startsWith(s));
-  return [...new Set([...alias, ...direct])];
-}
 
 export const BRAND_LEVELS: { id: string; name: string }[] = [
   { id: 'excellent', name: 'Отлично' },

@@ -260,7 +260,7 @@ export class ServiceCenters {
   }
 
   // ——— Клиент ———
-  async list(user: AuthUser, p: { lat?: number; lng?: number; need?: string; brand?: string }) {
+  async list(_user: AuthUser, p: { lat?: number; lng?: number; need?: string; brand?: string }) {
     const rows = await this.db.query(
       `select c.*,
               (select count(*)::int from service_bookings b where b.center_id=c.id and b.status='closed') as closed_n,

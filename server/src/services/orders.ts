@@ -5,7 +5,7 @@ import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/route
 import { estimate, isNight, type Tier } from '../domain/pricing.ts';
 import { rankCandidates, performerKindFor, type Candidate } from '../domain/dispatch.ts';
 import { transition, canDo, statusLabels, type Action, type Actor, type OrderStatus } from '../domain/orderState.ts';
-import { cancelStage, cancelSplit, pct, split } from '../domain/money.ts';
+import { cancelStage, cancelSplit, pct } from '../domain/money.ts';
 import { haversineKm } from '../domain/geo.ts';
 import { slot } from '../domain/schedule.ts';
 import { rub } from '../util.ts';

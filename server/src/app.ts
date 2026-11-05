@@ -90,7 +90,7 @@ export function createApp(d: Deps) {
   r.get('/api/health', false, async () => ({ ok: true, db: (await d.db.one('select 1 as ok'))?.ok === 1, time: now() }));
 
   // Вход ---------------------------------------------------------------------
-  r.post('/api/auth/code', false, (c: Ctx) => auth.requestCode(parse(z.object({ phone: z.string() }), c.body).phone));
+  r.post('/api/auth/code', false, (c: Ctx) => auth.requestCode(parse(z.object({ phone: z.string() }), c.body).phone, c.ip));
   r.post('/api/auth/verify', false, async (c: Ctx) => {
     const b = parse(z.object({ phone: z.string(), code: z.string().min(4).max(6), role: z.enum(SELF_ROLES).optional(),
       device: z.string().max(200).optional(), acceptOffers: z.boolean().optional() }), c.body);
@@ -436,7 +436,15 @@ export function createApp(d: Deps) {
     stars: z.number().int().min(1).max(5), tags: z.array(z.string().max(60)).max(10).optional(), text: z.string().max(1000).optional(),
   }), c.body)));
   r.get('/api/orders/:id/payments', true, (c: AuthedCtx) => payments.forOrder(c.user, c.params.id));
-  r.get('/api/users/:id/reviews', true, (c: AuthedCtx) => reviews.about(c.params.id));
+  // Отзывы об исполнителе видят все; о клиенте — только исполнители, модераторы и он сам
+  r.get('/api/users/:id/reviews', true, async (c: AuthedCtx) => {
+    const t = await d.db.one<{ roles: string[] }>('select roles from users where id=$1', [c.params.id]);
+    if (!t) throw notFound();
+    const targetIsPerformer = t.roles.some((x) => (performerRoles as readonly string[]).includes(x));
+    const meSees = c.user.id === c.params.id || c.user.roles.some((x) => (performerRoles as readonly string[]).includes(x) || x === 'admin' || x === 'moderator');
+    if (!targetIsPerformer && !meSees) throw forbidden();
+    return reviews.about(c.params.id);
+  });
 
   // Платёжный сервис ---------------------------------------------------------
   r.post('/api/payments/webhook', false, (c: Ctx) => payments.handleWebhook(c.body));
