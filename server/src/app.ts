@@ -209,7 +209,14 @@ export function createApp(d: Deps) {
     groupTrip: z.boolean().optional(), night: z.boolean().optional(), paymentMethod: z.enum(['cash', 'online', 'invoice']).optional(),
     destination: z.string().max(300).optional(), cargo: z.enum(['tractor', 'semitrailer', 'coupling', 'truck12']).optional(),
     loaded: z.enum(['empty', 'loaded', 'adr']).optional(), driverOnSite: z.boolean().optional(), fromConsult: z.string().uuid().optional(),
+    site: z.object({
+      place: z.enum(['parking', 'yard', 'plant', 'road']).optional(), pass: z.enum(['none', 'onsite', 'ahead']).optional(),
+      meet: z.string().max(60).optional(), state: z.enum(['free', 'loading', 'other_work']).optional(),
+      when: z.enum(['now', 'today', 'tomorrow']).optional(), time: z.string().max(20).optional(),
+    }).optional(),
   }), c.body))));
+  r.get('/api/my-performers', true, (c: AuthedCtx) => orders.myPerformers(c.user));
+  r.put('/api/my-performers/:id', true, (c: AuthedCtx) => orders.setPref(c.user, c.params.id, parse(z.object({ pref: z.enum(['fav', 'hide']).nullable() }), c.body).pref));
   r.get('/api/orders', true, (c: AuthedCtx) =>
     orders.list(c.user, c.query.get('as') === 'performer' ? 'performer' : 'client', c.query.get('status') ?? undefined));
   r.get('/api/orders/:id', true, (c: AuthedCtx) => orders.view(c.user, c.params.id));

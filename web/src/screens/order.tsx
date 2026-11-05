@@ -51,6 +51,7 @@ export function Order({ id }: { id: string }) {
       {d.you === 'admin' && <AdminPanel d={d} onDone={o.reload} />}
       {(d.you === 'client' || d.you === 'admin') && d.paymentMethod !== 'cash' && <PaymentsList id={id} admin={d.you === 'admin'} />}
       {isPerformer && (isConsult ? <ConsultFinish d={d} onDone={o.reload} /> : <PerformerActions d={d} onDone={o.reload} />)}
+      {!isPerformer && d.status === 'working' && <WorkInProgress d={d} />}
       {!isPerformer && d.status === 'awaiting_confirmation' && (isConsult ? <ConsultConfirm d={d} onDone={o.reload} /> : <ConfirmAmount d={d} onDone={o.reload} />)}
       {d.status === 'completed' && <Review id={id} you={d.you} />}
 
@@ -93,6 +94,7 @@ function CandidateView({ d, onDone }: { d: any; onDone: () => void }) {
           {d.destination && <><dt>Куда</dt><dd>{d.destination}</dd></>}
           {d.cargo && <><dt>Что везём</dt><dd>{CARGO[d.cargo]}{d.loaded ? `, ${LOADED[d.loaded]}` : ''}</dd></>}
           {d.description && <><dt>Что случилось</dt><dd>{d.description}</dd></>}
+          {d.site && <><dt>Условия</dt><dd><SitePills site={d.site} /></dd></>}
           {d.estimate?.hour != null && <><dt>Час работы</dt><dd>{rub(d.estimate.hour)} — или по вашему профилю</dd></>}
         </dl>
       </div>
@@ -145,6 +147,7 @@ function ClientCard({ d }: { d: any }) {
         <dt>Машина</dt><dd>{d.vehicle ? `${d.vehicle.brand} ${d.vehicle.model ?? ''} ${d.vehicle.year ?? ''} · ${d.vehicle.plate ?? ''}` : [d.brand, d.model, d.year].filter(Boolean).join(' ') || '—'}</dd>
         <dt>Где</dt><dd>{d.service === 'consult' ? 'По телефону — без выезда' : d.address ?? d.estimate?.zoneName}</dd>
         {d.description && <><dt>Что случилось</dt><dd>{d.description}</dd></>}
+        {d.site && <><dt>Условия</dt><dd><SitePills site={d.site} /></dd></>}
       </dl>
       {d.lat != null && d.service !== 'consult' && (
         <a className="btn ghost" target="_blank" rel="noreferrer" href={`https://yandex.ru/maps/?rtext=~${d.lat},${d.lng}&rtt=auto`}>Маршрут в Яндекс Картах</a>
@@ -227,6 +230,41 @@ function PerformerActions({ d, onDone }: { d: any; onDone: () => void }) {
             run(() => post(`/api/orders/${d.id}/drop`, { reason: dropReason }), 'Заявка передана другим').then((r) => r && (location.hash = '#/work'))}>Отказаться</button>
         </div>
       ) : <button className="btn bad" onClick={() => setShowDrop(true)}>Не смогу приехать</button>)}
+    </div>
+  );
+}
+
+const PLACE: Record<string, string> = { parking: 'Парковка', yard: 'Стоянка', plant: 'Завод', road: 'Трасса' };
+const PASS: Record<string, string> = { none: 'пропуск не нужен', onsite: 'пропуск на месте', ahead: 'пропуск заранее' };
+const STATE: Record<string, string> = { loading: 'идёт погрузка', other_work: 'идут другие работы' };
+const WHEN: Record<string, string> = { today: 'сегодня', tomorrow: 'завтра' };
+
+/** Условия на месте одной строкой меток: где стоит, пропуск, кто встретит, что с машиной, когда */
+function SitePills({ site }: { site: any }) {
+  const items = [
+    site.place && PLACE[site.place], site.place === 'plant' && site.pass && PASS[site.pass], site.meet && `встретит: ${site.meet}`,
+    site.state && STATE[site.state], site.when && WHEN[site.when] && `${WHEN[site.when]}${site.time ? ` к ${site.time}` : ''}`,
+  ].filter(Boolean) as string[];
+  if (!items.length) return <>—</>;
+  return <span className="row" style={{ gap: 4 }}>{items.map((x) => <span key={x} className={`pill ${/погрузка|работы|заранее/.test(x) ? 'warn' : ''}`}>{x}</span>)}</span>;
+}
+
+/** Клиент: «Работа идёт» — таймер с начала работы, примерная сумма по часам, гарантия */
+function WorkInProgress({ d }: { d: any }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
+  const start = d.workStartedAt ? new Date(d.workStartedAt).getTime() : null;
+  if (!start) return null;
+  const sec = Math.max(0, Math.floor((now - start) / 1000));
+  const clock = `${Math.floor(sec / 3600)}:${String(Math.floor(sec / 60) % 60).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
+  const hour = d.money?.hourPrice ?? d.estimate?.hour;
+  const work = hour ? Math.max(1, Math.ceil(sec / 3600)) * hour : null;
+  return (
+    <div className="card flat" style={{ alignItems: 'center', textAlign: 'center' }}>
+      <span className="label" style={{ color: 'var(--accent)' }}>Мастер работает</span>
+      <div className="timer">{clock}</div>
+      <span className="note">Время видите и вы, и мастер.{work ? ` По часам сейчас выходит около ${rub(work)} за работу, запчасти — по чеку.` : ''} Итог мастер пришлёт на подтверждение.</span>
+      <div className="banner good" style={{ textAlign: 'left' }}><span>Гарантия на работу — <b>14 дней</b>: та же поломка снова — повторный выезд бесплатно.</span></div>
     </div>
   );
 }
@@ -531,10 +569,35 @@ function Review({ id, you }: { id: string; you: string }) {
         <button key={t} className="chip" aria-pressed={tags.includes(t)} onClick={() => setTags(tags.includes(t) ? tags.filter((x) => x !== t) : [...tags, t])}>{t}</button>
       ))}</div>
       <textarea className="field" placeholder="Пара слов · по желанию" value={text} onChange={(e) => setText(e.target.value)} />
+      {you !== 'performer' && <WorksCheck id={id} />}
       <button className="btn" disabled={busy || !stars} onClick={async () => {
         const r = await run(() => post(`/api/orders/${id}/review`, { stars, tags, text: text || undefined }), 'Спасибо за отзыв');
         if (r) setSent(true);
       }}>Оставить отзыв</button>
+    </div>
+  );
+}
+
+/** Сверка работ: сделали не то или больше, чем указал мастер — спор с модератором */
+function WorksCheck({ id }: { id: string }) {
+  const { busy, run } = useAction();
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState('');
+  const [sent, setSent] = useState<string | null>(null);
+  if (sent) return <a className="banner warn" href={`#/support/${sent}`} style={{ textDecoration: 'none', color: 'inherit' }}><span>Спор по работам открыт — модератор уточнит у вас и у мастера. Открыть обращение →</span></a>;
+  if (!open) return <button className="btn ghost" style={{ borderStyle: 'dashed' }} onClick={() => setOpen(true)}>Работы не совпадают с тем, что указал мастер</button>;
+  return (
+    <div className="card" style={{ background: 'var(--warn-soft)', borderColor: 'rgba(255,178,122,.45)' }}>
+      <b>Что не так с работами?</b>
+      <textarea className="field" placeholder="Например: сделали ещё ремонт проводки, его нет в итоге мастера" value={text} onChange={(e) => setText(e.target.value)} />
+      <div className="grid2">
+        <button className="btn ghost small" onClick={() => setOpen(false)}>Отмена</button>
+        <button className="btn small" disabled={busy || text.trim().length < 5} onClick={async () => {
+          const r = await run(() => post('/api/support', { topic: 'Спор о работах', text, orderId: id }), 'Спор открыт');
+          if (r) setSent(r.id);
+        }}>Открыть спор</button>
+      </div>
+      <span className="note">Модератор увидит заявку, итог мастера и переписку. Приложите фото или чек в обращении, если есть.</span>
     </div>
   );
 }

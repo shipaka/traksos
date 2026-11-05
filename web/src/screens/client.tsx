@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { get, post, del, rub, fmtTime, fmtPhone } from '../api.ts';
+import { get, post, put, del, rub, fmtTime, fmtPhone } from '../api.ts';
 import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFields, LiveStrip, type VehicleValue } from '../ui.tsx';
 
@@ -299,12 +299,14 @@ export function NewOrder({ service }: { service: string }) {
       ...carBody(vehicleId, car), groupTrip: groupAllowed && group, night: night ?? undefined, paymentMethod: method,
       ...(isTow ? { destination: destination || undefined, cargo, loaded, driverOnSite } : {}),
       fromConsult: fromConsult || undefined,
+      site: isTow || !Object.keys(site).length ? undefined : { ...site, meet: site.meet || undefined, time: site.time || undefined },
     }));
     if (!r) return;
     if (r.confirmationUrl) location.href = r.confirmationUrl;
     else go(`order/${r.order.id}`);
   }
 
+  const [site, setSite] = useState<{ place?: string; pass?: string; meet?: string; state?: string; when?: string; time?: string }>({});
   const [tried, setTried] = useState(false);
   const need = {
     car: !!vehicleId || car.brand.trim().length >= 2,
@@ -375,6 +377,34 @@ export function NewOrder({ service }: { service: string }) {
         )}
       </Step>
 
+      {!isTow && (
+        <Step n={4} id="f-site" title="Место и условия" done>
+          <div className="grid4">{([['parking', 'Парковка'], ['yard', 'Стоянка'], ['plant', 'Завод'], ['road', 'Трасса']] as const).map(([k, n]) => (
+            <button key={k} type="button" className="seg" style={{ fontSize: 13, padding: 0 }} aria-pressed={site.place === k} onClick={() => setSite({ ...site, place: site.place === k ? undefined : k })}>{n}</button>
+          ))}</div>
+          {site.place === 'plant' && (
+            <>
+              <span className="label">Пропуск</span>
+              <div className="grid3">{([['none', 'Не нужен'], ['onsite', 'Оформим на месте'], ['ahead', 'Заранее']] as const).map(([k, n]) => (
+                <button key={k} type="button" className="seg" style={{ fontSize: 13 }} aria-pressed={site.pass === k} onClick={() => setSite({ ...site, pass: k })}>{n}</button>
+              ))}</div>
+              <input className="field" placeholder="Кто встретит на проходной — имя" value={site.meet ?? ''} onChange={(e) => setSite({ ...site, meet: e.target.value })} />
+              <span className="note">Долгий въезд и досмотр оплачиваются по ставке ожидания мастера.</span>
+            </>
+          )}
+          <span className="label">Что с машиной</span>
+          <div className="grid3">{([['free', 'Свободна'], ['loading', 'Погрузка'], ['other_work', 'Другие работы']] as const).map(([k, n]) => (
+            <button key={k} type="button" className="seg" style={{ fontSize: 13 }} aria-pressed={(site.state ?? 'free') === k} onClick={() => setSite({ ...site, state: k })}>{n}</button>
+          ))}</div>
+          {site.state && site.state !== 'free' && <span className="note">Мастеру придётся работать параллельно — это может стоить дороже, он скажет сумму до начала.</span>}
+          <span className="label">Когда</span>
+          <div className="grid3">{([['now', 'Сейчас'], ['today', 'Сегодня'], ['tomorrow', 'Завтра']] as const).map(([k, n]) => (
+            <button key={k} type="button" className="seg" aria-pressed={(site.when ?? 'now') === k} onClick={() => setSite({ ...site, when: k })}>{n}</button>
+          ))}</div>
+          {site.when && site.when !== 'now' && <input className="field" placeholder="Примерно к … (например, 14:00)" value={site.time ?? ''} onChange={(e) => setSite({ ...site, time: e.target.value })} />}
+        </Step>
+      )}
+
       {isTow ? (
         <Step n={4} id="f-tow" title="Куда и что везём" req done={need.tow} missing={tried && !need.tow}>
           <input className="field" placeholder="Куда везти: сервис, стоянка, адрес" value={destination} onChange={(e) => setDestination(e.target.value)} />
@@ -387,7 +417,7 @@ export function NewOrder({ service }: { service: string }) {
           </div>
         </Step>
       ) : (
-        <Step n={4} id="f-tier" title="Класс мастера" done>
+        <Step n={5} id="f-tier" title="Класс мастера" done>
           {(Object.keys(TIERS) as (keyof typeof TIERS)[]).map((t) => (
             <button key={t} type="button" className="opt" aria-pressed={tier === t} onClick={() => setTier(t as any)}>
               <div className="between"><b>{TIERS[t].name}</b><span className="note">выезд {rub(pricing.data.tiers[t].callOut)}</span></div>
@@ -397,7 +427,7 @@ export function NewOrder({ service }: { service: string }) {
         </Step>
       )}
 
-      <Step n={5} id="f-pay" title="Оплата" done>
+      <Step n={isTow ? 5 : 6} id="f-pay" title="Оплата" done>
         <div className="grid2">
           <button type="button" className="seg" aria-pressed={method === 'cash'} onClick={() => setMethod('cash')}>Мастеру на месте</button>
           <button type="button" className="seg" aria-pressed={method === 'online'} disabled={!methods?.online} onClick={() => setMethod('online')}>СБП / карта</button>
@@ -409,7 +439,7 @@ export function NewOrder({ service }: { service: string }) {
 
       {est && (
         <div className={`card hi ${tried && !agree ? 'missing' : ''}`} id="f-agree">
-          <span className="label" style={{ color: 'var(--accent)' }}>6 · Проверьте перед вызовом</span>
+          <span className="label" style={{ color: 'var(--accent)' }}>{isTow ? 6 : 7} · Проверьте перед вызовом</span>
           <div className="sum"><span>{isTow ? 'Обычная цена перевозки' : 'Вызов специалиста · выезд'}{est.km ? <small className="note" style={{ display: 'block' }}>{est.roadKm} км: туда и половина обратно</small> : null}</span><b>{rub(est.callOut)}</b></div>
           {est.hour != null && <>
             <div className="sum"><span>Первый час: диагностика <i>или</i> ремонт<small className="note" style={{ display: 'block' }}>одно из двух, не вместе</small></span><b>{rub(est.hour)}</b></div>
@@ -444,14 +474,25 @@ export function NewOrder({ service }: { service: string }) {
 export function Orders({ as }: { as: 'client' | 'performer' }) {
   const list = useLoad(() => get(`/api/orders?as=${as}`), [as], (e) => e.type === 'order');
   const [tab, setTab] = useState<'list' | 'black'>('list');
+  const [ctab, setCtab] = useState<'now' | 'my' | 'hist' | 'black'>('now');
   if (as === 'performer' && tab === 'black') return <main><h1>История</h1><HistoryTabs tab={tab} setTab={setTab} /><PerformerBlacklist /></main>;
+  const live = (o: any) => !['completed', 'cancelled', 'no_performer'].includes(o.status);
+  const shown = as === 'performer' ? list.data : (list.data ?? []).filter((o: any) => ctab === 'now' ? live(o) : !live(o));
   return (
     <main>
       <h1>{as === 'performer' ? 'История' : 'Заявки'}</h1>
       {as === 'performer' && <HistoryTabs tab={tab} setTab={setTab} />}
-      {!list.data ? <Loading error={list.error} /> : !list.data.length ? <div className="empty">Заявок пока нет</div> : (
+      {as === 'client' && (
+        <div className="scroll-x" role="tablist">
+          {([['now', `Сейчас${list.data ? ` · ${list.data.filter(live).length}` : ''}`], ['my', 'Мои мастера'], ['hist', 'История'], ['black', 'Чёрный список']] as const).map(([k, n]) => (
+            <button key={k} className="chip" role="tab" aria-pressed={ctab === k} onClick={() => setCtab(k)}>{n}</button>
+          ))}
+        </div>
+      )}
+      {as === 'client' && (ctab === 'my' || ctab === 'black') ? <MyPerformers black={ctab === 'black'} /> :
+      !list.data ? <Loading error={list.error} /> : !shown!.length ? <div className="empty">{as === 'client' && ctab === 'now' ? 'Сейчас заявок нет — всё закрыто' : 'Заявок пока нет'}</div> : (
         <div className="rows">
-          {list.data.map((o: any) => (
+          {shown!.map((o: any) => (
             <a key={o.id} href={`#/order/${o.id}`} className="list-item">
               <div className="stack" style={{ gap: 2 }}>
                 <b>№{o.number} · {SERVICES[o.service]?.name ?? o.service}{o.is_sos ? ' · SOS' : ''}</b>
@@ -463,6 +504,38 @@ export function Orders({ as }: { as: 'client' | 'performer' }) {
         </div>
       )}
     </main>
+  );
+}
+
+/** «Мои мастера»: кто уже был у вас — в избранное (предлагаем первым), «не предлагать», вызвать снова */
+function MyPerformers({ black }: { black: boolean }) {
+  const list = useLoad(() => get('/api/my-performers'), []);
+  const { busy, run } = useAction();
+  if (!list.data) return <Loading error={list.error} />;
+  const rows = list.data.filter((p: any) => black ? p.pref === 'hide' : p.pref !== 'hide');
+  const set = async (id: string, pref: string | null, msg: string) => { if (await run(() => put(`/api/my-performers/${id}`, { pref }), msg)) list.reload(); };
+  if (!rows.length) return <div className="empty">{black ? 'Список пуст. «Не предлагать» — в карточке мастера во вкладке «Мои мастера».' : 'Здесь появятся мастера и эвакуаторщики, которые у вас уже были.'}</div>;
+  return (
+    <div className="stack">
+      {!black && <span className="note">Мастера, которые уже у вас были. Избранных предлагаем первыми.</span>}
+      {rows.map((p: any) => (
+        <div key={p.id} className="card" style={{ gap: 8 }}>
+          <div className="between">
+            <div style={{ minWidth: 0 }}><b>{p.name ?? 'Исполнитель'}</b><div className="note">{p.kind === 'tow' ? 'Эвакуатор' : 'Мастер'}{p.rating ? ` · ★ ${p.rating.toFixed(1)}` : ''}{p.jobs ? ` · у вас ${p.jobs} раз` : ''}{p.last_at ? ` · последний ${fmtTime(p.last_at)}` : ''}</div></div>
+            <span className={`pill ${p.line_status === 'online' ? 'good' : ''}`}>{p.line_status === 'online' ? 'на линии' : p.line_status === 'on_job' ? 'на выезде' : 'не на линии'}</span>
+          </div>
+          {black ? <button className="btn ghost small" disabled={busy} onClick={() => set(p.id, null, 'Снова будем предлагать')}>Убрать из чёрного списка</button> : (
+            <>
+              <div className="row">
+                <button className="chip" disabled={busy} aria-pressed={p.pref === 'fav'} onClick={() => set(p.id, p.pref === 'fav' ? null : 'fav', p.pref === 'fav' ? 'Убрано из избранного' : 'В избранном — предлагаем первым')}>{p.pref === 'fav' ? '★ В избранном' : '☆ В избранное'}</button>
+                <button className="chip" disabled={busy} onClick={() => set(p.id, 'hide', 'Больше не предлагаем — он в чёрном списке')}>Не предлагать</button>
+              </div>
+              <button className="btn small" onClick={() => go(`new/${p.kind === 'tow' ? 'tow' : p.last_service && p.last_service !== 'consult' ? p.last_service : 'electric'}`)}>Вызвать снова</button>
+            </>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }
 

@@ -32,6 +32,8 @@ export interface CreateOrderInput {
   cargo?: 'tractor' | 'semitrailer' | 'coupling' | 'truck12';
   loaded?: 'empty' | 'loaded' | 'adr';
   driverOnSite?: boolean;
+  /** Условия на месте: тип места, пропуск, кто встретит, что с машиной, когда */
+  site?: { place?: string; pass?: string; meet?: string; state?: string; when?: string; time?: string };
   /** Выезд после консультации: подсказка мастера переходит в заявку, клиенту — скидка */
   fromConsult?: string;
 }
@@ -105,12 +107,12 @@ export class OrdersService {
     const order = await this.db.one(
       `insert into orders(client_id, created_by, vehicle_id, service, is_sos, problem, description, address, lat, lng,
           zone_id, night, group_trip, tier, brand, estimate, payment_method, client_fee_pct, destination, cargo, loaded, driver_on_site,
-          consult_of, discount_amount, discount_reason, model, year)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27) returning *`,
+          consult_of, discount_amount, discount_reason, model, year, site)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28) returning *`,
       [clientId, user.id, i.vehicleId ?? null, i.service, !!i.isSos, i.problem ?? null, i.description ?? null, isConsult ? null : i.address ?? null,
         isConsult ? null : i.lat ?? null, isConsult ? null : i.lng ?? null, est.zoneId, night, est.group, tier, brand, est, method, feePct,
         i.destination ?? null, i.cargo ?? null, i.loaded ?? null, i.driverOnSite ?? null,
-        consultOf, discount, discount ? CONSULT_DISCOUNT : null, model, year],
+        consultOf, discount, discount ? CONSULT_DISCOUNT : null, model, year, isConsult ? null : i.site ?? null],
     );
     await this.event(this.db, order!.id, user.id, 'created', { estimate: est, sos: !!i.isSos });
 
@@ -333,7 +335,7 @@ export class OrdersService {
     const o = await this.mustBePerformer(user, orderId);
     if (o.service === 'consult') throw bad('consult_no_trip', 'Это консультация по телефону — выезда нет. Закройте её с подсказкой.');
     const to = transition(o.status, action, 'performer');
-    const col = { depart: 'en_route_at', arrive: 'arrived_at', start_work: null }[action];
+    const col = { depart: 'en_route_at', arrive: 'arrived_at', start_work: 'work_started_at' }[action];
     await this.guarded(this.db, `update orders set status=$2${col ? `, ${col}=$5` : ''} where id=$1 and status=$3 and performer_id=$4`,
       col ? [orderId, to, o.status, user.id, this.now()] : [orderId, to, o.status, user.id]);
     await this.event(this.db, orderId, user.id, action, {});
@@ -534,6 +536,7 @@ export class OrdersService {
       limits: o.status === 'searching' ? this.auction.limits(o, (await this.settings.get('dispatch'))) : null,
       destination: o.destination, cargo: o.cargo, loaded: o.loaded, driverOnSite: o.driver_on_site, discountReason: o.discount_reason,
       money: this.money(o), result: o.result, resultNote: o.result_note,
+      site: o.site, workStartedAt: o.work_started_at ?? null,
       consultHint: o.consult_hint, consultOf: o.consult_of, siteFlags: o.site_flags ?? [], lateMinutes: o.late_minutes ?? 0, hintCheck: o.hint_check,
       consultFrom: o.consult_of ? await this.db.one(`select o.number, o.consult_hint as hint, u.name as performer_name from orders o
           left join users u on u.id=o.performer_id where o.id=$1`, [o.consult_of]) : null,
@@ -583,9 +586,37 @@ export class OrdersService {
 
   // Занятость исполнителя ----------------------------------------------------
 
-  /** Исполнители, которые не берут заявки этого клиента («Не брать заявки этого клиента») */
+  /** Кому заявку не предлагаем: исполнитель не берёт этого клиента или клиент скрыл исполнителя («Не предлагать») */
   async blockedBy(clientId: string) {
-    return (await this.db.query<{ performer_id: string }>('select performer_id from performer_blocks where client_id=$1', [clientId])).map((r) => r.performer_id);
+    return (await this.db.query<{ performer_id: string }>(
+      `select performer_id from performer_blocks where client_id=$1
+       union select performer_id from client_prefs where client_id=$1 and pref='hide'`, [clientId])).map((r) => r.performer_id);
+  }
+
+  /** «Мои мастера»: кто уже работал у клиента, с отметками «избранное» / «не предлагать» */
+  async myPerformers(user: AuthUser) {
+    const clientId = user.owner_id ?? user.id;
+    return this.db.query(
+      `select u.id, u.name, u.rating::float as rating, u.rating_count, p.kind, p.line_status, p.specialties, cp.pref,
+              count(o.id)::int as jobs, max(o.completed_at) as last_at,
+              (array_agg(o.service order by o.completed_at desc))[1] as last_service
+         from orders o join users u on u.id=o.performer_id join performer_profiles p on p.user_id=u.id
+         left join client_prefs cp on cp.client_id=o.client_id and cp.performer_id=u.id
+        where o.client_id=$1 and o.status='completed'
+        group by u.id, p.kind, p.line_status, p.specialties, cp.pref
+       union
+       select u.id, u.name, u.rating::float, u.rating_count, p.kind, p.line_status, p.specialties, cp.pref, 0, null, null
+         from client_prefs cp join users u on u.id=cp.performer_id join performer_profiles p on p.user_id=u.id
+        where cp.client_id=$1 and not exists (select 1 from orders o where o.client_id=$1 and o.performer_id=u.id and o.status='completed')
+        order by last_at desc nulls last`, [clientId]);
+  }
+
+  async setPref(user: AuthUser, performerId: string, pref: 'fav' | 'hide' | null) {
+    const clientId = user.owner_id ?? user.id;
+    if (pref) await this.db.query(`insert into client_prefs(client_id, performer_id, pref) values ($1,$2,$3)
+      on conflict (client_id, performer_id) do update set pref=excluded.pref, created_at=now()`, [clientId, performerId, pref]);
+    else await this.db.query('delete from client_prefs where client_id=$1 and performer_id=$2', [clientId, performerId]);
+    return { pref };
   }
 
   /** Есть ли у исполнителя другая заявка в работе */

@@ -149,10 +149,11 @@ export class AuctionService {
     const actor = this.orders.actorOf(user, o);
     const rows = await this.rows(orderId, o.brand, actor ? null : user.id);
     const lim = this.limits(o, all.dispatch);
-    return {
-      limits: lim, until: o.auction_until, autoPick: o.auto_pick, sort,
-      offers: sortOffers(rows, sort, lim, all.dispatch.weights).map((r) => ({ ...r, diffPct: Math.round((r.price / lim.usual - 1) * 100) })),
-    };
+    // «Мои мастера»: избранные клиента — первыми в «Рекомендуем»
+    const favs = new Set((await this.db.query<{ performer_id: string }>(`select performer_id from client_prefs where client_id=$1 and pref='fav'`, [o.client_id])).map((r) => r.performer_id));
+    let sorted = sortOffers(rows, sort, lim, all.dispatch.weights).map((r: any) => ({ ...r, favorite: favs.has(r.performer_id), diffPct: Math.round((r.price / lim.usual - 1) * 100) }));
+    if (sort === 'recommended') sorted = [...sorted.filter((r) => r.favorite), ...sorted.filter((r) => !r.favorite)];
+    return { limits: lim, until: o.auction_until, autoPick: o.auto_pick, sort, offers: sorted };
   }
 
   private async rows(orderId: string, brand: string | null, onlyPerformer: string | null) {

@@ -239,6 +239,8 @@ await k.getByRole('dialog').waitFor({ state: 'detached' });
 
 // Поддержка: клиент зовёт из заявки → админ отвечает из очереди → клиент видит ответ
 await k.goto(BASE + '/#/orders');
+await k.getByRole('tab', { name: 'История' }).click();
+await shot(k, '17b-client-history');
 await k.locator('a.list-item').first().click();
 await k.getByRole('link', { name: 'Позвать поддержку' }).click();
 await k.getByRole('button', { name: 'Не согласен с суммой' }).click();
