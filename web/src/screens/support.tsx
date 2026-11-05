@@ -152,6 +152,7 @@ export function Notifications() {
   };
   return (
     <main>
+      <Back to="" />
       <h1>Уведомления</h1>
       {!list.data ? <Loading error={list.error} /> : !list.data.items.length ? <div className="empty">Пока ничего</div> : (
         <div className="rows">{list.data.items.map((n: any) => (

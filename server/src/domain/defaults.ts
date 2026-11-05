@@ -34,6 +34,8 @@ export const defaultSettings = {
     /** Совместный выезд (дальше groupMinKm): каждый клиент платит долю */
     groupShare: 0.7,
     groupMinKm: 31,
+    /** Консультация по телефону: цена для клиента, скидка на выезд после неё и сколько часов она действует */
+    consult: { price: 70_000, backDiscount: 20_000, backHours: 48, autoCloseHours: 24 },
     /** Коридор цен для мастеров */
     corridor: { callOutMin: 150_000, callOutMax: 700_000, hourMin: 150_000, hourMax: 700_000 },
   },

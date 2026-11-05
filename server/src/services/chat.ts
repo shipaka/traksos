@@ -14,11 +14,20 @@ export const QUICK_REPLIES = [
   'Позвоните мне через приложение',
 ];
 
+/** Консультация — разговор по телефону: «на месте» и «буду через 10 минут» тут ни к чему */
+export const CONSULT_QUICK_REPLIES = [
+  'Позвоните мне через приложение',
+  'Нет связи, пишите сюда',
+  'Сейчас пришлю фото',
+  'Какой код ошибки?',
+  'Спасибо, помогло',
+];
+
 export class ChatService {
   constructor(private db: Db, private settings: SettingsService, private notifier: Notifier, private orders: OrdersService) {}
 
   async list(user: AuthUser, orderId: string, afterId = 0) {
-    await this.orders.mustSee(user, orderId);
+    const order = await this.orders.mustSee(user, orderId);
     const msgs = await this.db.query(
       `select m.id::int as id, m.sender_id, u.name as sender_name, m.kind, m.body, m.masked, m.created_at,
               case when m.sender_id is null then 'system'
@@ -29,7 +38,7 @@ export class ChatService {
         where m.order_id=$1 and m.id > $2 order by m.id limit 500`,
       [orderId, afterId],
     );
-    return { messages: msgs, quickReplies: QUICK_REPLIES };
+    return { messages: msgs, quickReplies: order.service === 'consult' ? CONSULT_QUICK_REPLIES : QUICK_REPLIES };
   }
 
   async post(user: AuthUser, orderId: string, body: string, kind: 'text' | 'quick' = 'text') {

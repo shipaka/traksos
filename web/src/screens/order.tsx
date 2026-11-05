@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { get, post, rub, fmtTime } from '../api.ts';
-import { SERVICES, STATUS, STEPS, STEP_NAMES, RESULTS } from '../dict.ts';
+import { SERVICES, STATUS, STEPS, STEP_NAMES, RESULTS, CONSULT_HINTS, CONSULT_CONF } from '../dict.ts';
+import { go } from '../ui.tsx';
 import { useLoad, useAction, useMe, Loading, Back, RubInput, Field, useToast } from '../ui.tsx';
 import { onEvent } from '../api.ts';
 import { Search, OfferForm } from './search.tsx';
@@ -17,6 +18,7 @@ export function Order({ id }: { id: string }) {
   const d = o.data;
   const isPerformer = d.you === 'performer';
   const done = ['completed', 'cancelled'].includes(d.status);
+  const isConsult = d.service === 'consult';
 
   return (
     <main>
@@ -24,18 +26,20 @@ export function Order({ id }: { id: string }) {
       <div className="between" style={{ alignItems: 'flex-start' }}>
         <div>
           <h1>№{d.number} · {SERVICES[d.service]?.name ?? d.service}</h1>
-          <div className="sub">{d.isSos ? 'SOS · ' : ''}{fmtTime(d.createdAt)} · {d.estimate?.zoneName}</div>
+          <div className="sub">{d.isSos ? 'SOS · ' : ''}{fmtTime(d.createdAt)} · {isConsult ? 'по телефону, без выезда' : d.estimate?.zoneName}</div>
         </div>
-        <span className={`pill ${STATUS[d.status]?.tone}`}>{STATUS[d.status]?.name}</span>
+        <span className={`pill ${STATUS[d.status]?.tone}`}>{isConsult && d.status === 'accepted' ? 'На связи' : isConsult && d.status === 'awaiting_confirmation' ? 'Ждём «Вопрос решён»' : STATUS[d.status]?.name}</span>
       </div>
 
       {d.status === 'searching' && (d.you === 'client' || d.you === 'admin') && <Search d={d} onChosen={o.reload} />}
       {d.you === 'candidate' && <CandidateView d={d} onDone={o.reload} />}
 
-      {d.status !== 'cancelled' && d.status !== 'no_performer' && d.status !== 'searching' && <Steps status={d.status} service={d.service} />}
+      {!isConsult && d.status !== 'cancelled' && d.status !== 'no_performer' && d.status !== 'searching' && <Steps status={d.status} service={d.service} />}
+      {isConsult && !isPerformer && d.you !== 'candidate' && <ConsultClient d={d} />}
+      {d.consultFrom?.hint && <ConsultHintCard from={d.consultFrom} />}
       {d.status === 'no_performer' && !isPerformer && <Retry id={id} onDone={o.reload} />}
 
-      {d.performer && !isPerformer && <PerformerCard p={d.performer} pos={perfPos} />}
+      {d.performer && !isPerformer && <PerformerCard p={d.performer} pos={perfPos} consult={isConsult} />}
       {isPerformer && <ClientCard d={d} />}
       {d.service === 'tow' && !isPerformer && d.you !== 'candidate' && d.destination && <TowInfo d={d} />}
 
@@ -43,14 +47,14 @@ export function Order({ id }: { id: string }) {
 
       {d.you === 'admin' && <AdminPanel d={d} onDone={o.reload} />}
       {(d.you === 'client' || d.you === 'admin') && d.paymentMethod !== 'cash' && <PaymentsList id={id} admin={d.you === 'admin'} />}
-      {isPerformer && <PerformerActions d={d} onDone={o.reload} />}
-      {!isPerformer && d.status === 'awaiting_confirmation' && <ConfirmAmount d={d} onDone={o.reload} />}
+      {isPerformer && (isConsult ? <ConsultFinish d={d} onDone={o.reload} /> : <PerformerActions d={d} onDone={o.reload} />)}
+      {!isPerformer && d.status === 'awaiting_confirmation' && (isConsult ? <ConsultConfirm d={d} onDone={o.reload} /> : <ConfirmAmount d={d} onDone={o.reload} />)}
       {d.status === 'completed' && <Review id={id} you={d.you} />}
 
       {d.status !== 'searching' && d.status !== 'no_performer' && <Chat id={id} disabled={d.status === 'cancelled'} />}
 
       {d.you !== 'admin' && d.you !== 'candidate' && <a className="btn ghost" href={`#/support/new?order=${d.id}`}>Позвать поддержку</a>}
-      {!done && d.actions.includes('cancel') && !isPerformer && <Cancel id={id} status={d.status} onDone={o.reload} />}
+      {!done && d.actions.includes('cancel') && !isPerformer && !(isConsult && d.status === 'awaiting_confirmation') && <Cancel id={id} status={d.status} consult={isConsult} onDone={o.reload} />}
       {d.status === 'cancelled' && <div className="card"><b>Заявка отменена</b><span className="note">{d.cancelReason}</span></div>}
     </main>
   );
@@ -81,7 +85,7 @@ function CandidateView({ d, onDone }: { d: any; onDone: () => void }) {
       <div className="card">
         <dl className="kv">
           <dt>Машина</dt><dd>{d.brand ?? '—'}</dd>
-          <dt>Где</dt><dd>{d.address ?? d.estimate?.zoneName}</dd>
+          <dt>Где</dt><dd>{d.service === 'consult' ? 'По телефону — без выезда' : d.address ?? d.estimate?.zoneName}</dd>
           {d.destination && <><dt>Куда</dt><dd>{d.destination}</dd></>}
           {d.cargo && <><dt>Что везём</dt><dd>{CARGO[d.cargo]}{d.loaded ? `, ${LOADED[d.loaded]}` : ''}</dd></>}
           {d.description && <><dt>Что случилось</dt><dd>{d.description}</dd></>}
@@ -109,15 +113,15 @@ function Steps({ status, service }: { status: string; service: string }) {
   );
 }
 
-function PerformerCard({ p, pos }: { p: any; pos: { lat: number; lng: number } | null }) {
-  const at = pos ?? (p.lat != null ? { lat: p.lat, lng: p.lng } : null);
+function PerformerCard({ p, pos, consult }: { p: any; pos: { lat: number; lng: number } | null; consult?: boolean }) {
+  const at = consult ? null : pos ?? (p.lat != null ? { lat: p.lat, lng: p.lng } : null);
   return (
     <div className="card">
       <div className="between">
         <b>{p.name ?? 'Исполнитель'}</b>
         <span className="pill">{p.rating ? `★ ${p.rating.toFixed(1)} · ${p.rating_count}` : 'Новый мастер'}</span>
       </div>
-      {p.car && <span className="note">Приедет на: {p.car.brand}{p.car.color ? `, ${p.car.color}` : ''}, {p.car.plate}</span>}
+      {p.car && !consult && <span className="note">Приедет на: {p.car.brand}{p.car.color ? `, ${p.car.color}` : ''}, {p.car.plate}</span>}
       {at && (
         <div className="mini-map">
           <iframe title="Где мастер" loading="lazy"
@@ -135,10 +139,10 @@ function ClientCard({ d }: { d: any }) {
       <dl className="kv">
         <dt>Клиент</dt><dd>{d.client?.company_name ?? d.client?.name ?? 'Клиент'}{d.client?.rating ? ` · ★ ${d.client.rating.toFixed(1)}` : ''}</dd>
         <dt>Машина</dt><dd>{d.vehicle ? `${d.vehicle.brand} ${d.vehicle.model ?? ''} ${d.vehicle.year ?? ''} · ${d.vehicle.plate ?? ''}` : d.brand ?? '—'}</dd>
-        <dt>Где</dt><dd>{d.address ?? d.estimate?.zoneName}</dd>
+        <dt>Где</dt><dd>{d.service === 'consult' ? 'По телефону — без выезда' : d.address ?? d.estimate?.zoneName}</dd>
         {d.description && <><dt>Что случилось</dt><dd>{d.description}</dd></>}
       </dl>
-      {d.lat != null && (
+      {d.lat != null && d.service !== 'consult' && (
         <a className="btn ghost" target="_blank" rel="noreferrer" href={`https://yandex.ru/maps/?rtext=~${d.lat},${d.lng}&rtt=auto`}>Маршрут в Яндекс Картах</a>
       )}
     </div>
@@ -148,6 +152,13 @@ function ClientCard({ d }: { d: any }) {
 function Money({ d }: { d: any }) {
   const m = d.money;
   const proposed = ['awaiting_confirmation', 'completed'].includes(d.status) || m.work > 0;
+  if (d.service === 'consult') return (
+    <div className="card">
+      <div className="sum total"><span>Консультация</span><span>{rub(m.callOut)}</span></div>
+      {m.discount > 0 && d.you !== 'performer' && <div className="sum" style={{ color: 'var(--good-fg)' }}><span>Скидка{d.discountReason ? ` · ${d.discountReason}` : ''}</span><span>−{rub(m.discount)}</span></div>}
+      <span className="note">{d.you === 'performer' ? 'Фиксированная цена. Вам — за вычетом комиссии площадки.' : 'Фиксированная цена, сбор уже внутри. Выезд и работа сюда не входят.'}</span>
+    </div>
+  );
   return (
     <div className="card">
       <b>{proposed ? 'Сумма' : 'Цена'}</b>
@@ -238,6 +249,107 @@ function ConfirmAmount({ d, onDone }: { d: any; onDone: () => void }) {
   );
 }
 
+// Консультация ---------------------------------------------------------------
+
+/** Клиент: мастер на связи, что дальше; выезды, вызванные после консультации */
+function ConsultClient({ d }: { d: any }) {
+  const back = d.consultBack;
+  const st = d.status;
+  if (st === 'searching' || st === 'cancelled' || st === 'no_performer') return null;
+  return (
+    <div className="card">
+      <div className="between">
+        <b>{st === 'completed' ? 'Консультация завершена' : st === 'awaiting_confirmation' ? 'Мастер закончил разговор' : 'Мастер на связи'}</b>
+        <span className={`pill ${st === 'accepted' ? 'good' : ''}`}>{st === 'accepted' ? 'на связи' : st === 'completed' ? 'в архиве' : 'ждёт вас'}</span>
+      </div>
+      {st === 'accepted' && <span className="note">Мастер позвонит через ТракSOS или напишет в чат ниже. Номера скрыты с обеих сторон. Опишите, что видите, пришлите фото, если попросит.</span>}
+      {d.consultHint && (
+        <div className="card flat" style={{ gap: 4 }}>
+          <span className="label">Мнение мастера по телефону</span>
+          <b>Подозрение: {d.consultHint.hints.join(', ').toLowerCase()}</b>
+          <span className="note">{CONSULT_CONF[d.consultHint.confidence]}{d.consultHint.note ? ` · ${d.consultHint.note}` : ''}. Это предварительно, не диагностика. Если поедет мастер, он увидит эту подсказку.</span>
+        </div>
+      )}
+      {d.followUps?.length > 0 && d.followUps.map((f: any) => (
+        <a key={f.id} className="linkrow" href={`#/order/${f.id}`}><span><b>Выезд №{f.number} · {SERVICES[f.service]?.name}</b><small>{STATUS[f.status]?.name}</small></span><span aria-hidden="true">›</span></a>
+      ))}
+      {st !== 'completed' || (d.completedAt && Date.now() - new Date(d.completedAt).getTime() < (back?.backHours ?? 48) * 3600_000) ? (
+        <button className="btn ghost" onClick={() => go(`new/electric?from=${d.id}`)}>Нужен выезд{back && !d.followUps?.length && st !== 'accepted' ? ` · скидка ${rub(back.backDiscount)}` : ''}</button>
+      ) : null}
+    </div>
+  );
+}
+
+/** Клиент: «Вопрос решён» — или выезд */
+function ConsultConfirm({ d, onDone }: { d: any; onDone: () => void }) {
+  const { busy, run } = useAction();
+  return (
+    <div className="card hi">
+      <b>Вопрос решён?</b>
+      <span className="note">Подтвердите консультацию — {rub(d.money.total)}. Если без выезда не обойтись, вызовите мастера: подсказка перейдёт к нему, а вам скидка {rub(d.consultBack?.backDiscount ?? 0)}.</span>
+      <button className="btn good" disabled={busy} onClick={() =>
+        run(() => post(`/api/orders/${d.id}/confirm`, { total: d.money.total }), 'Спасибо! Консультация закрыта').then((r) => r && onDone())}>Вопрос решён · {rub(d.money.total)}</button>
+      <button className="btn ghost" onClick={() => go(`new/electric?from=${d.id}`)}>Нужен выезд</button>
+      <a className="btn ghost" href={`#/support/new?order=${d.id}`}>Помощи не было — в поддержку</a>
+      <span className="note">Не нажмёте — консультация закроется сама через сутки.</span>
+    </div>
+  );
+}
+
+/** Мастер: подсказка следующему мастеру — 10 секунд — и закрыть консультацию */
+function ConsultFinish({ d, onDone }: { d: any; onDone: () => void }) {
+  const { busy, run } = useAction();
+  const [hints, setHints] = useState<string[]>(d.consultHint?.hints ?? []);
+  const [conf, setConf] = useState<string>(d.consultHint?.confidence ?? 'likely');
+  const [note, setNote] = useState(d.consultHint?.note ?? '');
+  const [showDrop, setShowDrop] = useState(false);
+  const [dropReason, setDropReason] = useState('');
+  if (['completed', 'cancelled'].includes(d.status)) return d.consultHint ? <ConsultHintCard from={{ hint: d.consultHint }} title="Ваша подсказка" /> : null;
+  const toggle = (h: string) => setHints(hints.includes(h) ? hints.filter((x) => x !== h) : hints.length >= 3 ? hints : [...hints, h]);
+  return (
+    <div className="stack">
+      <div className="card hi">
+        <span className="label" style={{ color: 'var(--accent)' }}>Консультация по телефону · без выезда</span>
+        <span className="note">Свяжитесь с клиентом через чат ниже. Когда разговор окончен — отметьте, что подозреваете. Подсказка перейдёт мастеру, если клиент вызовет выезд.</span>
+      </div>
+      <div className="card">
+        <b>{d.status === 'awaiting_confirmation' ? 'Подсказка отправлена — ждём клиента' : 'Что подозреваете'}</b>
+        <div className="row">{CONSULT_HINTS.map((h) => (
+          <button key={h} type="button" className="chip" aria-pressed={hints.includes(h)} onClick={() => toggle(h)}>{hints.includes(h) ? '✓ ' : ''}{h}</button>
+        ))}</div>
+        <span className="note">До трёх вариантов. Чем меньше отмечено, тем больше весит попадание.</span>
+        <b style={{ fontSize: 14 }}>Насколько уверены</b>
+        <div className="grid3">{Object.entries(CONSULT_CONF).map(([k, v]) => (
+          <button key={k} type="button" className="seg" style={{ fontSize: 13 }} aria-pressed={conf === k} onClick={() => setConf(k)}>{v}</button>
+        ))}</div>
+        <input className="field" placeholder="Одной строкой, если есть что добавить" value={note} onChange={(e) => setNote(e.target.value)} maxLength={300} />
+        <button className="btn" disabled={busy || !hints.length} onClick={() =>
+          run(() => post(`/api/orders/${d.id}/consult-finish`, { hints, confidence: conf, note: note || undefined }), 'Консультация завершена — вы снова свободны').then((r) => r && onDone())}>
+          {d.status === 'awaiting_confirmation' ? 'Исправить подсказку' : 'Завершить консультацию'}</button>
+        {!hints.length && <span className="note">Нужна хотя бы одна галочка — без неё консультацию не закрыть. Ошибка в подсказке не штрафуется.</span>}
+      </div>
+      {d.status === 'accepted' && (showDrop ? (
+        <div className="card">
+          <b>Не можете проконсультировать?</b>
+          <input className="field" placeholder="Причина" value={dropReason} onChange={(e) => setDropReason(e.target.value)} />
+          <button className="btn bad" disabled={busy || dropReason.length < 2} onClick={() =>
+            run(() => post(`/api/orders/${d.id}/drop`, { reason: dropReason }), 'Заявка передана другим').then((r) => r && (location.hash = '#/work'))}>Отказаться</button>
+        </div>
+      ) : <button className="btn bad" onClick={() => setShowDrop(true)}>Не могу проконсультировать</button>)}
+    </div>
+  );
+}
+
+function ConsultHintCard({ from, title }: { from: any; title?: string }) {
+  return (
+    <div className="card flat" style={{ gap: 4 }}>
+      <span className="label">{title ?? `Подсказка по телефону${from.performer_name ? ` · ${from.performer_name}` : ''}`}</span>
+      <b>Подозрение: {from.hint.hints.join(', ').toLowerCase()}</b>
+      <span className="note">{CONSULT_CONF[from.hint.confidence]}{from.hint.note ? ` · ${from.hint.note}` : ''}{title ? '' : '. Это предварительно — проверьте на месте.'}</span>
+    </div>
+  );
+}
+
 function Retry({ id, onDone }: { id: string; onDone: () => void }) {
   const { busy, run } = useAction();
   return (
@@ -249,16 +361,17 @@ function Retry({ id, onDone }: { id: string; onDone: () => void }) {
   );
 }
 
-function Cancel({ id, status, onDone }: { id: string; status: string; onDone: () => void }) {
+function Cancel({ id, status, consult, onDone }: { id: string; status: string; consult?: boolean; onDone: () => void }) {
   const { busy, run } = useAction();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState('');
-  const reasons = ['Завелась сама', 'Нашёл другого мастера', 'Долго ждать', 'Ошибся с заявкой'];
+  const reasons = consult ? ['Разобрался сам', 'Мастер не отвечает', 'Долго ждать', 'Ошибся с заявкой'] : ['Завелась сама', 'Нашёл другого мастера', 'Долго ждать', 'Ошибся с заявкой'];
   if (!open) return <button className="btn ghost" onClick={() => setOpen(true)}>Отменить заявку</button>;
   return (
     <div className="card">
       <b>Отменить заявку?</b>
-      {status !== 'searching' && <span className="note">Мастер уже принял заявку: если он в пути, часть выезда уходит ему — по шкале отмены в правилах.</span>}
+      {status !== 'searching' && !consult && <span className="note">Мастер уже принял заявку: если он в пути, часть выезда уходит ему — по шкале отмены в правилах.</span>}
+      {status !== 'searching' && consult && <span className="note">Если мастер не вышел на связь — отменяйте, деньги не спишутся.</span>}
       <div className="scroll-x">{reasons.map((r) => <button key={r} className="chip" aria-pressed={reason === r} onClick={() => setReason(r)}>{r}</button>)}</div>
       <button className="btn bad" disabled={busy || !reason} onClick={() => run(() => post(`/api/orders/${id}/cancel`, { reason }), 'Заявка отменена').then((r) => r && onDone())}>Отменить</button>
       <button className="btn ghost" onClick={() => setOpen(false)}>Не отменять</button>

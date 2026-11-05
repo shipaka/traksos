@@ -1,19 +1,36 @@
 import { useEffect, useMemo, useState } from 'react';
 import { get, post, del, rub, fmtTime, fmtPhone } from '../api.ts';
-import { SERVICES, SOS_PROBLEMS, TIERS, STATUS, matchBrand } from '../dict.ts';
+import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF, matchBrand } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back } from '../ui.tsx';
 
-// Главная: SOS и услуги ------------------------------------------------------
+// Главная: «Что случилось?» и услуги — как в демо --------------------------
+
+/** Подставляет цены площадки в подсказки: {consult}, {eco}, {pro}, {tow} */
+export function usePrices() {
+  const pricing = useLoad(() => get('/api/pricing'), []);
+  const p = pricing.data;
+  const fill = (t: string) => !p ? t.replace(/\{\w+\}/g, '…') : t
+    .replace('{consult}', rub(p.consult?.price ?? 70_000))
+    .replace('{eco}', rub(p.tiers.eco.callOut)).replace('{pro}', rub(p.tiers.pro.callOut))
+    .replace('{tow}', rub(p.towBase ?? 3_000_000));
+  return { pricing: p, fill };
+}
+
+const SERVICE_PRICE: Record<string, string> = {
+  electric: 'выезд от {eco} + час работы', diag: 'со сканером · выезд от {pro}', air: 'выезд от {eco}', autonomy: 'выезд от {eco}',
+  tyre: 'выезд по прайсу мастера', tow: 'торги в ценовом коридоре · от {tow}', consult: '{consult} · голос и чат с мастером, без выезда',
+};
 
 export function Home() {
   const { me } = useMe();
   const active = useLoad(() => get('/api/orders'), [], (e) => e.type === 'order');
   const live = (active.data ?? []).filter((o: any) => !['completed', 'cancelled'].includes(o.status));
+  const { fill } = usePrices();
   return (
     <main>
       <div>
         <h1>{me?.name ? `${me.name}, что случилось?` : 'Что случилось?'}</h1>
-        <div className="sub">Петербург и Ленобласть, круглосуточно</div>
+        <div className="sub">Выберите — подскажем, кому звонить и что делать. Петербург и Ленобласть, круглосуточно.</div>
       </div>
 
       {live.map((o: any) => (
@@ -22,25 +39,51 @@ export function Home() {
             <b>Заявка №{o.number} · {SERVICES[o.service]?.name ?? o.service}</b>
             <span className={`pill ${STATUS[o.status]?.tone}`}>{STATUS[o.status]?.name}</span>
           </div>
-          <span className="note">{o.address ?? o.estimate?.zoneName} · открыть →</span>
+          <span className="note">{o.service === 'consult' ? 'по телефону' : o.address ?? o.estimate?.zoneName} · открыть →</span>
         </a>
       ))}
 
-      <button className="sos" onClick={() => go('sos')}>
-        <span className="label" style={{ color: 'inherit', opacity: .8 }}>Срочно</span>
-        <span className="t">SOS</span>
-        <p>Выберите поломку — заявка уйдёт свободным мастерам рядом. Первым ответит живой человек.</p>
-      </button>
+      <SymptomPicker sos={false} />
 
       <div className="stack">
-        <span className="label">Услуги</span>
+        <span className="label">Все услуги</span>
         {Object.entries(SERVICES).map(([id, s]) => (
-          <button key={id} className="opt" onClick={() => go(`new/${id}`)}>
-            <b>{s.name}</b><small>{s.hint}</small>
+          <button key={id} className="linkrow" onClick={() => go(`new/${id}`)}>
+            <span><b>{s.name}</b><small>{fill(SERVICE_PRICE[id] ?? s.hint)}</small></span><span aria-hidden="true">›</span>
           </button>
         ))}
       </div>
     </main>
+  );
+}
+
+/** Сетка поломок + карточка «Что делать» с вариантами и ценами */
+function SymptomPicker({ sos }: { sos: boolean }) {
+  const [sel, setSel] = useState(SYMPTOMS[0].id);
+  const { fill } = usePrices();
+  const s = SYMPTOMS.find((x) => x.id === sel)!;
+  return (
+    <>
+      <div className="grid2">
+        {SYMPTOMS.map((x) => (
+          <button key={x.id} className="opt" style={{ minHeight: 76 }} aria-pressed={sel === x.id} onClick={() => setSel(x.id)}>
+            <b>{x.name}</b><small>{x.sub}</small>
+          </button>
+        ))}
+      </div>
+      <div className="card hi">
+        <span className="label" style={{ color: 'var(--accent)' }}>Что делать · {s.name}</span>
+        <span className="note" style={{ color: 'var(--fg-2)' }}>{s.note}</span>
+        <div className="stack">
+          {s.opts.map((o, i) => (
+            <button key={o.to + i} className={`linkrow ${i === 0 ? 'primary' : ''}`}
+              onClick={() => go(`new/${o.to}?${sos && o.to !== 'consult' ? 'sos' : 'p'}=${s.id}`)}>
+              <span><b>{o.name}</b><small>{fill(o.hint)}</small></span><span aria-hidden="true">›</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -49,28 +92,114 @@ export function Sos() {
     <main>
       <Back to="" />
       <div>
-        <h1>Что случилось?</h1>
-        <div className="sub">Подскажем, кого звать. Ошиблись — мастер перенаправит.</div>
+        <h1>SOS · что случилось?</h1>
+        <div className="sub">Срочный вызов: заявка уйдёт свободным мастерам рядом. Ошиблись с поломкой — мастер перенаправит.</div>
       </div>
-      <div className="stack">
-        {SOS_PROBLEMS.map((p) => (
-          <button key={p.id} className="opt" onClick={() => go(`new/${p.service}?sos=${p.id}`)}>
-            <b>{p.name}</b><small>{p.hint}</small>
-          </button>
-        ))}
-      </div>
+      <SymptomPicker sos />
     </main>
+  );
+}
+
+// Консультация по телефону — отдельная услуга: фиксированная цена, без выезда ----
+
+export function Consult() {
+  const params = new URLSearchParams(location.hash.split('?')[1] ?? '');
+  const sym = SYMPTOMS.find((p) => p.id === params.get('p'));
+  const { busy, run } = useAction();
+  const { me } = useMe();
+  const { pricing } = usePrices();
+  const vehicles = useLoad(() => get('/api/vehicles'), []);
+  const [vehicleId, setVehicleId] = useState('');
+  const [brand, setBrand] = useState('');
+  const [description, setDescription] = useState(sym ? sym.name + '. ' : '');
+  const [agree, setAgree] = useState(false);
+  useEffect(() => { if (vehicles.data?.length && !vehicleId) setVehicleId(vehicles.data[0].id); }, [vehicles.data]); // eslint-disable-line
+  if (!pricing) return <main><Loading /></main>;
+  const c = pricing.consult ?? { price: 70_000, backDiscount: 20_000, backHours: 48 };
+  const brandSuggest = vehicleId ? [] : matchBrand(brand);
+
+  async function submit() {
+    const r = await run(() => post('/api/orders', {
+      service: 'consult', problem: sym?.id, description: description.trim() || undefined,
+      vehicleId: vehicleId || undefined, brand: vehicleId ? undefined : brand || undefined, paymentMethod: 'cash',
+    }));
+    if (r) go(`order/${r.order.id}`);
+  }
+
+  return (
+    <main>
+      <Back to="" />
+      <div><h1>Консультация по телефону</h1><div className="sub">Мастер ответит голосом и в чате. Выезда нет — только разговор.</div></div>
+      <SelfOrderWarning me={me} />
+      <div className="card flat">
+        <div className="sum total"><span>Стоимость консультации</span><span>{rub(c.price)}</span></div>
+        <div className="banner good"><span>Если в течение {c.backHours} часов понадобится выезд — к этому или другому мастеру, — <b>{rub(c.backDiscount)} вернутся скидкой</b> на него.</span></div>
+      </div>
+
+      <Field group label="Машина">
+        {vehicles.data?.length ? (
+          <select className="field" value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
+            {vehicles.data.map((v: any) => <option key={v.id} value={v.id}>{v.brand} {v.model ?? ''} {v.year ?? ''} {v.plate ?? ''}</option>)}
+            <option value="">Другая машина</option>
+          </select>
+        ) : null}
+        {!vehicleId && (
+          <>
+            <input className="field" placeholder="Марка: Scania, DAF, КАМАЗ…" value={brand} onChange={(e) => setBrand(e.target.value)} />
+            {brandSuggest.length > 0 && brandSuggest[0] !== brand && (
+              <div className="scroll-x">{brandSuggest.map((b) => <button key={b} type="button" className="chip" onClick={() => setBrand(b)}>{b}</button>)}</div>
+            )}
+          </>
+        )}
+        <span className="note">Ответит мастер, который хорошо знает вашу марку.</span>
+      </Field>
+
+      <Field label="Что случилось">
+        <textarea className="field" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Например: не заводится, стартер щёлкает, приборка гаснет. Код ошибки, если есть." />
+      </Field>
+
+      <div className="card">
+        <b>Как это работает</b>
+        <ol className="howto">
+          <li>Мастер берёт заявку и связывается с вами через ТракSOS: звонок и чат, вся переписка сохраняется.</li>
+          <li>В конце мастер оставляет подсказку: что подозревает и насколько уверен.</li>
+          <li>Вы нажимаете «Вопрос решён» — или «Нужен выезд»: подсказка перейдёт мастеру на выезде, а вам скидка.</li>
+          <li>Консультация — предварительное мнение, а не диагностика. Деньги вернём, только если помощи не было: мастер не ответил или бросил разговор.</li>
+          <li>Не нажали «Вопрос решён» — консультация закроется сама через сутки.</li>
+        </ol>
+      </div>
+
+      <label className="agree">
+        <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
+        <span>Согласен со стоимостью {rub(c.price)} и <a href="#/offer/client">офертой ТракSOS</a></span>
+      </label>
+      <button className="btn" disabled={busy || !agree || description.trim().length < 3} onClick={submit}>Заказать консультацию · {rub(c.price)}</button>
+      {!agree && <span className="note" style={{ textAlign: 'center' }}>Отметьте согласие, чтобы заказать.</span>}
+    </main>
+  );
+}
+
+/** Исполнитель заказывает сам себе — свою заявку он взять не сможет */
+function SelfOrderWarning({ me }: { me: any }) {
+  if (!me?.roles?.some((r: string) => r === 'master' || r === 'tow')) return null;
+  return (
+    <div className="banner warn"><span>Вы заказываете со своего номера исполнителя. Свою заявку вы взять не сможете — её увидят другие мастера. Для проверки звонка заказывайте с другого номера.</span></div>
   );
 }
 
 // Новая заявка --------------------------------------------------------------
 
 export function NewOrder({ service }: { service: string }) {
-  const sosId = new URLSearchParams(location.hash.split('?')[1] ?? '').get('sos');
-  const sos = SOS_PROBLEMS.find((p) => p.id === sosId);
+  const params = new URLSearchParams(location.hash.split('?')[1] ?? '');
+  const sos = SYMPTOMS.find((p) => p.id === params.get('sos'));
+  const sym = sos ?? SYMPTOMS.find((p) => p.id === params.get('p'));
+  const fromConsult = params.get('from');
+  const { me } = useMe();
   const { busy, run } = useAction();
   const pricing = useLoad(() => get('/api/pricing'), []);
   const vehicles = useLoad(() => get('/api/vehicles'), []);
+  const consult = useLoad(() => (fromConsult ? get(`/api/orders/${fromConsult}`) : Promise.resolve(null)), [fromConsult]);
+  const [agree, setAgree] = useState(false);
 
   const [zoneId, setZoneId] = useState('spb');
   const [tier, setTier] = useState<'eco' | 'comfort' | 'pro'>(service === 'diag' ? 'pro' : 'eco');
@@ -78,7 +207,7 @@ export function NewOrder({ service }: { service: string }) {
   const [group, setGroup] = useState(false);
   const [vehicleId, setVehicleId] = useState<string>('');
   const [brand, setBrand] = useState('');
-  const [description, setDescription] = useState(sos ? sos.name : '');
+  const [description, setDescription] = useState(sym ? sym.name : '');
   const [address, setAddress] = useState('');
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [geoState, setGeoState] = useState<'idle' | 'wait' | 'ok' | 'fail'>('idle');
@@ -96,6 +225,13 @@ export function NewOrder({ service }: { service: string }) {
   useEffect(() => {
     if (vehicles.data?.length && !vehicleId) setVehicleId(vehicles.data[0].id);
   }, [vehicles.data]); // eslint-disable-line
+  // Выезд после консультации: та же машина и описание
+  useEffect(() => {
+    const c = consult.data;
+    if (!c) return;
+    if (c.description && !description) setDescription(c.description);
+    if (!c.vehicle && c.brand) { setVehicleId(''); setBrand(c.brand); }
+  }, [consult.data]); // eslint-disable-line
   useEffect(() => {
     if (night === null) return;
     post('/api/pricing/estimate', { service, tier, zoneId, night, group }).then(setEst).catch(() => setEst(null));
@@ -123,6 +259,7 @@ export function NewOrder({ service }: { service: string }) {
       lat: geo?.lat, lng: geo?.lng, zoneId, tier: service === 'tow' ? undefined : tier, vehicleId: vehicleId || undefined,
       brand: vehicleId ? undefined : brand || undefined, groupTrip: groupAllowed && group, night: night ?? undefined, paymentMethod: method,
       ...(isTow ? { destination: destination || undefined, cargo, loaded, driverOnSite } : {}),
+      fromConsult: fromConsult || undefined,
     }));
     if (!r) return;
     if (r.confirmationUrl) location.href = r.confirmationUrl;
@@ -134,11 +271,19 @@ export function NewOrder({ service }: { service: string }) {
 
   return (
     <main>
-      <Back to={sos ? 'sos' : ''} />
+      <Back to={fromConsult ? `order/${fromConsult}` : sos ? 'sos' : ''} />
       <div>
-        <h1>{sos ? sos.name : s?.name ?? 'Заявка'}</h1>
-        <div className="sub">{sos ? `${s?.name} · срочный вызов` : s?.hint}</div>
+        <h1>{sym ? sym.name : s?.name ?? 'Заявка'}</h1>
+        <div className="sub">{sos ? `${s?.name} · срочный вызов` : sym ? s?.name : s?.hint}</div>
       </div>
+      <SelfOrderWarning me={me} />
+      {consult.data?.consultHint && (
+        <div className="card flat">
+          <span className="label">Подсказка мастера по телефону</span>
+          <b>Подозрение: {consult.data.consultHint.hints.join(', ').toLowerCase()}</b>
+          <span className="note">{CONSULT_CONF[consult.data.consultHint.confidence]}{consult.data.consultHint.note ? ` · ${consult.data.consultHint.note}` : ''}. Мастер на выезде увидит её в заявке.</span>
+        </div>
+      )}
 
       <Field group label="Машина">
         {vehicles.data?.length ? (
@@ -213,15 +358,27 @@ export function NewOrder({ service }: { service: string }) {
       </Field>
 
       {est && (
-        <div className="card">
-          <b>Сколько это будет стоить</b>
-          <div className="sum"><span>Выезд{est.km ? ` (${est.roadKm} км: туда и половина обратно)` : ''}</span><span>{rub(est.callOut)}</span></div>
-          {est.hour != null && <div className="sum"><span>Час работы</span><span>{rub(est.hour)}</span></div>}
+        <div className="card hi">
+          <span className="label" style={{ color: 'var(--accent)' }}>Проверьте перед вызовом</span>
+          <div className="sum"><span>{isTow ? 'Обычная цена перевозки' : 'Вызов специалиста · выезд'}{est.km ? <small className="note" style={{ display: 'block' }}>{est.roadKm} км: туда и половина обратно</small> : null}</span><b>{rub(est.callOut)}</b></div>
+          {est.hour != null && <>
+            <div className="sum"><span>Первый час: диагностика <i>или</i> ремонт<small className="note" style={{ display: 'block' }}>одно из двух, не вместе</small></span><b>{rub(est.hour)}</b></div>
+            <div className="sum"><span>Каждый следующий час</span><b>{rub(est.hour)}</b></div>
+            <div className="sum"><span>Запчасти</span><b>по чеку</b></div>
+          </>}
+          {fromConsult && consult.data?.status && ['completed', 'awaiting_confirmation'].includes(consult.data.status) && (
+            <div className="sum" style={{ color: 'var(--good-fg)' }}><span>Скидка после консультации</span><b>−{rub(consult.data.consultBack?.backDiscount ?? 20_000)}</b></div>
+          )}
           {est.night && <span className="note">Ночной тариф уже учтён.</span>}
           {est.group && <span className="note">Совместный выезд: 70% от полной цены.</span>}
-          <span className="note">{isTow
-            ? 'Это обычная цена. Эвакуаторщики рядом предложат свою — от −15% до +30%, вы выберете по цене, подаче и рейтингу.'
-            : 'Это обычная цена. Мастера рядом откликнутся — по ней или со своей ценой, вы выберете. Работу мастер назовёт на месте, сумму подтверждаете в приложении.'}</span>
+          <div className="hr" />
+          <span className="note" style={{ color: 'var(--fg-2)' }}>{isTow
+            ? 'Это обычная цена. Эвакуаторщики рядом предложат свою — от −15% до +30%, вы выберете по цене, подаче и рейтингу. Перевозку оплачиваете по факту.'
+            : 'Мастера рядом откликнутся по этой цене или со своей — вы выберете. Работу мастер назовёт на месте, и без вашего «Да» ничего не начнётся.'}</span>
+          <label className="agree">
+            <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
+            <span>Согласен с суммами и <a href="#/offer/client">офертой ТракSOS</a>{me?.company_name ? `: вызов от имени ${me.company_name}` : ''}. Отказ платить за выполненную работу взыскивается по оферте.</span>
+          </label>
         </div>
       )}
 
@@ -236,7 +393,8 @@ export function NewOrder({ service }: { service: string }) {
         {method === 'online' && <span className="note">Выезд оплачивается сейчас и замораживается. Мастеру деньги уйдут после того, как вы подтвердите работу.</span>}
       </div>
 
-      <button className="btn" disabled={busy} onClick={submit}>{sos ? 'Вызвать сейчас' : 'Отправить заявку'}</button>
+      <button className="btn" disabled={busy || !agree} onClick={submit}>{sos ? 'Вызвать сейчас' : isTow ? 'Вызвать эвакуатор' : 'Вызвать мастера'}</button>
+      {!agree && <span className="note" style={{ textAlign: 'center' }}>Отметьте согласие с суммами — и можно вызывать.</span>}
     </main>
   );
 }

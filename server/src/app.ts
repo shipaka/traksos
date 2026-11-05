@@ -172,7 +172,7 @@ export function createApp(d: Deps) {
   // Цены ---------------------------------------------------------------------
   r.get('/api/pricing', false, async () => {
     const all = await settings.all();
-    return { zones: all.pricing.zones, tiers: all.pricing.tiers, nightNow: isNight(all.pricing, now()), payments: await payments.methods(),
+    return { zones: all.pricing.zones, tiers: all.pricing.tiers, consult: all.pricing.consult, towBase: all.pricing.towBase, nightNow: isNight(all.pricing, now()), payments: await payments.methods(),
       clientFeePct: all.fees.clientFeePct, reviewTags: REVIEW_TAGS };
   });
   r.post('/api/pricing/estimate', false, async (c: Ctx) => {
@@ -193,7 +193,7 @@ export function createApp(d: Deps) {
     tier: z.enum(['eco', 'comfort', 'pro']).optional(), vehicleId: z.string().uuid().optional(), brand: z.string().max(40).optional(),
     groupTrip: z.boolean().optional(), night: z.boolean().optional(), paymentMethod: z.enum(['cash', 'online', 'invoice']).optional(),
     destination: z.string().max(300).optional(), cargo: z.enum(['tractor', 'semitrailer', 'coupling', 'truck12']).optional(),
-    loaded: z.enum(['empty', 'loaded', 'adr']).optional(), driverOnSite: z.boolean().optional(),
+    loaded: z.enum(['empty', 'loaded', 'adr']).optional(), driverOnSite: z.boolean().optional(), fromConsult: z.string().uuid().optional(),
   }), c.body))));
   r.get('/api/orders', true, (c: AuthedCtx) =>
     orders.list(c.user, c.query.get('as') === 'performer' ? 'performer' : 'client', c.query.get('status') ?? undefined));
@@ -205,6 +205,9 @@ export function createApp(d: Deps) {
     orders.performerStep(c.user, c.params.id, parse(z.object({ action: z.enum(['depart', 'arrive', 'start_work']) }), c.body).action));
   r.post('/api/orders/:id/amount', performerRoles, (c: AuthedCtx) => orders.proposeAmount(c.user, c.params.id, parse(z.object({
     workAmount: money, result: z.enum(['solved', 'cause_found', 'not_found']).optional(), note: z.string().max(300).optional(),
+  }), c.body)));
+  r.post('/api/orders/:id/consult-finish', performerRoles, (c: AuthedCtx) => orders.finishConsult(c.user, c.params.id, parse(z.object({
+    hints: z.array(z.string().min(1).max(40)).min(1).max(3), confidence: z.enum(['sure', 'likely', 'guess']), note: z.string().max(300).optional(),
   }), c.body)));
   r.post('/api/orders/:id/confirm', true, (c: AuthedCtx) => orders.confirmAmount(c.user, c.params.id, parse(z.object({ total: money.optional() }), c.body).total));
   r.post('/api/orders/:id/dispute', true, (c: AuthedCtx) => orders.disputeAmount(c.user, c.params.id, parse(z.object({ reason: z.string().min(2).max(500) }), c.body).reason));

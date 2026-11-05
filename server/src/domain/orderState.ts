@@ -12,7 +12,7 @@ export type Actor = 'client' | 'performer' | 'system' | 'admin';
 
 export type Action =
   | 'accept' | 'depart' | 'arrive' | 'start_work' | 'propose_amount'
-  | 'confirm_amount' | 'dispute_amount' | 'cancel' | 'expire' | 'retry';
+  | 'confirm_amount' | 'dispute_amount' | 'cancel' | 'expire' | 'retry' | 'finish_consult';
 
 const table: Record<Action, { from: OrderStatus[]; to: OrderStatus; by: Actor[] }> = {
   accept: { from: ['searching'], to: 'accepted', by: ['performer'] },
@@ -25,6 +25,8 @@ const table: Record<Action, { from: OrderStatus[]; to: OrderStatus; by: Actor[] 
   cancel: { from: ['searching', 'accepted', 'en_route', 'arrived', 'working', 'awaiting_confirmation', 'no_performer'], to: 'cancelled', by: ['client', 'performer', 'admin'] },
   expire: { from: ['searching'], to: 'no_performer', by: ['system'] },
   retry: { from: ['no_performer'], to: 'searching', by: ['client'] },
+  // Консультация: мастер оставляет подсказку и закрывает разговор, клиент подтверждает «Вопрос решён»
+  finish_consult: { from: ['accepted', 'working', 'awaiting_confirmation'], to: 'awaiting_confirmation', by: ['performer'] },
 };
 
 export class TransitionError extends Error {

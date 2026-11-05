@@ -29,7 +29,12 @@ export interface CreateOrderInput {
   cargo?: 'tractor' | 'semitrailer' | 'coupling' | 'truck12';
   loaded?: 'empty' | 'loaded' | 'adr';
   driverOnSite?: boolean;
+  /** Выезд после консультации: подсказка мастера переходит в заявку, клиенту — скидка */
+  fromConsult?: string;
 }
+
+/** Подсказка мастера после консультации */
+export interface ConsultHint { hints: string[]; confidence: 'sure' | 'likely' | 'guess'; note?: string }
 
 /** Хуки оплаты — реализует PaymentsService. Пока оплата выключена, работают как заглушки. */
 export interface PaymentHooks {
@@ -40,6 +45,7 @@ export interface PaymentHooks {
 }
 
 const SERVICES = ['electric', 'diag', 'air', 'autonomy', 'tyre', 'tow', 'consult', 'ecu'];
+const CONSULT_DISCOUNT = 'Скидка после консультации';
 
 export class OrdersService {
   payments!: PaymentHooks;
@@ -63,21 +69,38 @@ export class OrdersService {
       if (user.owner_id && v.driver_id !== user.id) throw forbidden('Эта машина закреплена за другим водителем');
       brand = brand ?? v.brand;
     }
-    const night = i.night ?? isNight(all.pricing, this.now());
+    const isConsult = i.service === 'consult';
+    const night = isConsult ? false : i.night ?? isNight(all.pricing, this.now());
     const tier = i.tier ?? 'eco';
-    const est = estimate(all.pricing, { service: i.service, tier, zoneId: i.zoneId, night, group: !!i.groupTrip });
+    const est = estimate(all.pricing, { service: i.service, tier, zoneId: i.zoneId, night, group: !isConsult && !!i.groupTrip });
     const defaultFee = method === 'cash' ? (all.fees.cashChargesClientFee ? all.fees.clientFeePct : 0) : all.fees.clientFeePct;
-    // Персональный сбор клиента (назначает администратор) важнее общего
+    // Персональный сбор клиента (назначает администратор) важнее общего. Консультация — фиксированная цена, сбор уже внутри.
     const personal = await this.db.one<{ fee_pct_override: string | null }>('select fee_pct_override from users where id=$1', [clientId]);
-    const feePct = personal?.fee_pct_override != null ? Number(personal.fee_pct_override) : defaultFee;
+    const feePct = isConsult ? 0 : personal?.fee_pct_override != null ? Number(personal.fee_pct_override) : defaultFee;
+
+    // Выезд после консультации: та же машина, подсказка мастера, скидка — если уложились в срок и скидку ещё не брали
+    let consultOf: string | null = null;
+    let discount = 0;
+    if (i.fromConsult && !isConsult) {
+      const c = await this.db.one<any>(`select * from orders where id=$1 and service='consult' and (client_id=$2 or created_by=$3)`, [i.fromConsult, clientId, user.id]);
+      if (!c) throw bad('bad_consult', 'Консультация не найдена');
+      consultOf = c.id;
+      const used = await this.db.one('select 1 from orders where consult_of=$1 and discount_reason=$2 and status<>$3', [c.id, CONSULT_DISCOUNT, 'cancelled']);
+      const ref = c.completed_at ?? c.accepted_at;
+      const fresh = ref && this.now().getTime() - new Date(ref).getTime() <= all.pricing.consult.backHours * 3600_000;
+      if (fresh && !used && ['completed', 'awaiting_confirmation'].includes(c.status)) discount = all.pricing.consult.backDiscount;
+      brand = brand ?? c.brand;
+    }
 
     const order = await this.db.one(
       `insert into orders(client_id, created_by, vehicle_id, service, is_sos, problem, description, address, lat, lng,
-          zone_id, night, group_trip, tier, brand, estimate, payment_method, client_fee_pct, destination, cargo, loaded, driver_on_site)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) returning *`,
-      [clientId, user.id, i.vehicleId ?? null, i.service, !!i.isSos, i.problem ?? null, i.description ?? null, i.address ?? null,
-        i.lat ?? null, i.lng ?? null, est.zoneId, night, est.group, tier, brand, est, method, feePct,
-        i.destination ?? null, i.cargo ?? null, i.loaded ?? null, i.driverOnSite ?? null],
+          zone_id, night, group_trip, tier, brand, estimate, payment_method, client_fee_pct, destination, cargo, loaded, driver_on_site,
+          consult_of, discount_amount, discount_reason)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25) returning *`,
+      [clientId, user.id, i.vehicleId ?? null, i.service, !!i.isSos, i.problem ?? null, i.description ?? null, isConsult ? null : i.address ?? null,
+        isConsult ? null : i.lat ?? null, isConsult ? null : i.lng ?? null, est.zoneId, night, est.group, tier, brand, est, method, feePct,
+        i.destination ?? null, i.cargo ?? null, i.loaded ?? null, i.driverOnSite ?? null,
+        consultOf, discount, discount ? CONSULT_DISCOUNT : null],
     );
     await this.event(this.db, order!.id, user.id, 'created', { estimate: est, sos: !!i.isSos });
 
@@ -102,7 +125,7 @@ export class OrdersService {
                 where l.performer_id = p.user_id and l.kind in ('cash_commission','cash_commission_paid')) as cash_debt
          from performer_profiles p join users u on u.id = p.user_id
         where p.kind = $1 and p.user_id <> $2 and p.is_priority
-          and not exists (select 1 from orders x where x.performer_id=p.user_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation'))`,
+          and not exists (select 1 from orders x where x.performer_id=p.user_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (x.service='consult' and x.status='awaiting_confirmation'))`,
       [kind, order.client_id],
     );
     const already = await this.db.query<{ performer_id: string }>('select performer_id from order_dispatch where order_id=$1', [orderId]);
@@ -138,7 +161,7 @@ export class OrdersService {
     const next = await this.db.query<{ id: string; performer_id: string; distance_km: number | null }>(
       `update order_dispatch set status='ringing', ring_until=$2, sent_at=$3
         where id in (select d.id from order_dispatch d where d.order_id=$1 and d.status='queued'
-                       and not exists (select 1 from orders x where x.performer_id=d.performer_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation'))
+                       and not exists (select 1 from orders x where x.performer_id=d.performer_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (x.service='consult' and x.status='awaiting_confirmation'))
                      order by d.rank limit $4)
         returning id, performer_id, distance_km`,
       [orderId, until, this.now(), free],
@@ -153,8 +176,8 @@ export class OrdersService {
         ringUntil: until.toISOString(),
       }, {
         kind: 'call',
-        title: order.is_sos ? `SOS · ${est.zoneName}` : `Заявка · ${est.zoneName}`,
-        body: `${order.brand ?? 'Грузовик'} · ${order.description ?? order.problem ?? ''} · выезд ${rub(est.callOut)}`.trim(),
+        title: order.service === 'consult' ? 'Консультация по телефону' : order.is_sos ? `SOS · ${est.zoneName}` : `Заявка · ${est.zoneName}`,
+        body: `${order.brand ?? 'Грузовик'} · ${order.description ?? order.problem ?? ''} · ${order.service === 'consult' ? 'консультация' : 'выезд'} ${rub(est.callOut)}`.trim(),
         data: { orderId, ringUntil: until.toISOString() },
         ttlSeconds: all.dispatch.ringSeconds,
       });
@@ -180,7 +203,20 @@ export class OrdersService {
       }
     }
     for (const orderId of new Set(missed.map((m) => m.order_id))) await this.ringNext(orderId);
+    await this.autoCloseConsults(all.pricing.consult.autoCloseHours);
     return missed.length;
+  }
+
+  /** Консультация, которую клиент не подтвердил за сутки, закрывается сама — как «Вопрос решён» */
+  private async autoCloseConsults(hours: number) {
+    const due = await this.db.query<{ id: string; client_id: string }>(
+      `select id, client_id from orders where service='consult' and status='awaiting_confirmation' and amount_proposed_at < $1 limit 20`,
+      [new Date(this.now().getTime() - hours * 3600_000)]);
+    for (const o of due) {
+      try {
+        await this.confirmAmount({ id: o.client_id, roles: ['client'], owner_id: null } as unknown as AuthUser, o.id);
+      } catch { /* состояние уже поменялось — пропускаем */ }
+    }
   }
 
   async accept(user: AuthUser, orderId: string) {
@@ -264,6 +300,7 @@ export class OrdersService {
 
   async performerStep(user: AuthUser, orderId: string, action: 'depart' | 'arrive' | 'start_work') {
     const o = await this.mustBePerformer(user, orderId);
+    if (o.service === 'consult') throw bad('consult_no_trip', 'Это консультация по телефону — выезда нет. Закройте её с подсказкой.');
     const to = transition(o.status, action, 'performer');
     const col = { depart: 'en_route_at', arrive: 'arrived_at', start_work: null }[action];
     await this.guarded(this.db, `update orders set status=$2${col ? `, ${col}=$5` : ''} where id=$1 and status=$3 and performer_id=$4`,
@@ -279,6 +316,7 @@ export class OrdersService {
   /** Мастер называет сумму за работу (выезд уже зафиксирован) */
   async proposeAmount(user: AuthUser, orderId: string, p: { workAmount: number; result?: 'solved' | 'cause_found' | 'not_found'; note?: string }) {
     const o = await this.mustBePerformer(user, orderId);
+    if (o.service === 'consult') throw bad('consult_fixed', 'Цена консультации фиксированная. Закройте её с подсказкой.');
     const to = transition(o.status, 'propose_amount', 'performer');
     if (!Number.isInteger(p.workAmount) || p.workAmount < 0) throw bad('bad_amount', 'Сумма — целое число копеек, не меньше нуля');
     await this.guarded(this.db,
@@ -291,6 +329,26 @@ export class OrdersService {
     await this.systemMessage(orderId, `Исполнитель назвал сумму: выезд ${rub(m.callOut)} + работа ${rub(m.work)}${m.clientFee ? ` + сбор ${rub(m.clientFee)}` : ''} = ${rub(m.total)}. Подтвердите в заявке.`);
     await this.notifier.notify([o.client_id, o.created_by], { type: 'order', orderId, status: to },
       { kind: 'normal', title: 'Подтвердите сумму', body: `Заявка №${o.number}: ${rub(m.total)}`, data: { orderId } });
+    return this.view(user, orderId);
+  }
+
+  /** Мастер закрывает консультацию: подсказка обязательна — она перейдёт следующему мастеру, если понадобится выезд */
+  async finishConsult(user: AuthUser, orderId: string, h: ConsultHint) {
+    const o = await this.mustBePerformer(user, orderId);
+    if (o.service !== 'consult') throw bad('not_consult', 'Это не консультация');
+    const to = transition(o.status, 'finish_consult', 'performer');
+    if (!h.hints.length) throw bad('need_hint', 'Отметьте хотя бы одно подозрение — без него консультацию не закрыть');
+    await this.guarded(this.db,
+      `update orders set status=$2, work_amount=0, amount_proposed_at=$3, result='consult', consult_hint=$4 where id=$1 and status=$5 and performer_id=$6`,
+      [orderId, to, this.now(), h, o.status, user.id]);
+    // Разговор окончен — мастер снова свободен, пока клиент нажимает «Вопрос решён»
+    await this.db.query(`update performer_profiles set line_status='online' where user_id=$1 and line_status='on_job'`, [user.id]);
+    await this.event(this.db, orderId, user.id, 'consult_finished', h);
+    const m = this.money(o);
+    await this.systemMessage(orderId, `Мастер завершил консультацию. Подозрение: ${h.hints.join(', ')}${h.note ? ` — ${h.note}` : ''}. ` +
+      `Нажмите «Вопрос решён» (${rub(m.total)}) или «Нужен выезд» — подсказка перейдёт мастеру на выезде.`);
+    await this.notifier.notify([o.client_id, o.created_by], { type: 'order', orderId, status: to },
+      { kind: 'normal', title: 'Консультация завершена', body: `Подозрение: ${h.hints.join(', ')}`, data: { orderId } });
     return this.view(user, orderId);
   }
 
@@ -445,6 +503,11 @@ export class OrdersService {
       limits: o.status === 'searching' ? this.auction.limits(o, (await this.settings.get('dispatch'))) : null,
       destination: o.destination, cargo: o.cargo, loaded: o.loaded, driverOnSite: o.driver_on_site, discountReason: o.discount_reason,
       money: this.money(o), result: o.result, resultNote: o.result_note,
+      consultHint: o.consult_hint, consultOf: o.consult_of,
+      consultFrom: o.consult_of ? await this.db.one(`select o.number, o.consult_hint as hint, u.name as performer_name from orders o
+          left join users u on u.id=o.performer_id where o.id=$1`, [o.consult_of]) : null,
+      followUps: o.service === 'consult' ? await this.db.query(`select id, number, service, status from orders where consult_of=$1 order by created_at`, [o.id]) : [],
+      consultBack: o.service === 'consult' ? (await this.settings.get('pricing')).consult : null,
       cancelReason: o.cancel_reason, cancelStage: o.cancel_stage,
       createdAt: o.created_at, acceptedAt: o.accepted_at, arrivedAt: o.arrived_at, completedAt: o.completed_at,
       performer, client, events,
@@ -492,7 +555,7 @@ export class OrdersService {
   /** Есть ли у исполнителя другая заявка в работе */
   async busyWith(q: Queryable, performerId: string, exceptOrderId: string | null) {
     return !!(await q.one(
-      `select 1 from orders where performer_id=$1 and status in ('accepted','en_route','arrived','working','awaiting_confirmation') and ($2::uuid is null or id<>$2::uuid) limit 1`,
+      `select 1 from orders where performer_id=$1 and status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (service='consult' and status='awaiting_confirmation') and ($2::uuid is null or id<>$2::uuid) limit 1`,
       [performerId, exceptOrderId]));
   }
 

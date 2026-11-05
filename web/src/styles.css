@@ -167,3 +167,19 @@ select.field { appearance: none; }
 .tbl th { color: var(--muted); font-weight: 700; font-size: 12px; padding: 6px 4px; border-bottom: 1px solid var(--line); }
 .tbl td { padding: 7px 4px; border-bottom: 1px solid var(--line); }
 .tbl tr:last-child td { border-bottom: 0; }
+
+/* Как в демо: строки-ссылки «Что делать», баннеры, согласие с суммами */
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.card.flat { background: var(--surface-2); border-color: #33373D; }
+.linkrow { display: flex; align-items: center; gap: 12px; min-height: 58px; padding: 8px 16px; border-radius: 16px; border: 1px solid var(--line-2); background: transparent; color: var(--fg); text-decoration: none; text-align: left; width: 100%; font: inherit; cursor: pointer; }
+.linkrow > span:first-child { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.linkrow small { color: var(--muted); font-size: 12px; }
+.linkrow > span:last-child { color: var(--muted); font-size: 22px; line-height: 1; }
+.linkrow.primary { background: var(--accent); color: var(--on-accent); border: 0; }
+.linkrow.primary small, .linkrow.primary > span:last-child { color: var(--on-accent); opacity: .8; }
+.banner { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; background: rgba(61,165,255,.10); border: 1px solid rgba(61,165,255,.4); font-size: 13px; line-height: 1.45; }
+.banner.good { background: var(--good-soft); border-color: rgba(127,209,139,.45); }
+.banner.warn { background: var(--warn-soft); border-color: rgba(255,178,122,.5); }
+.agree { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; line-height: 1.45; cursor: pointer; }
+.agree input { width: 20px; height: 20px; margin: 0; accent-color: #FF6A13; flex-shrink: 0; }
+.howto { margin: 0; padding-left: 18px; font-size: 13.5px; line-height: 1.55; color: var(--fg-2); display: flex; flex-direction: column; gap: 4px; }

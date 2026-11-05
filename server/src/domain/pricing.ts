@@ -46,9 +46,15 @@ export interface Estimate {
   hour: number | null; // час работы, null для эвакуатора
   night: boolean;
   group: boolean;
+  /** Консультация по телефону: фиксированная цена, без выезда */
+  consult?: boolean;
 }
 
 export function estimate(p: Settings['pricing'], i: EstimateInput): Estimate {
+  if (i.service === 'consult') {
+    const price = p.consult?.price ?? 70_000;
+    return { zoneId: 'phone', zoneName: 'По телефону', km: 0, roadKm: 0, base: price, road: 0, callOut: price, hour: null, night: false, group: false, consult: true };
+  }
   const zone = p.zones.find((z) => z.id === i.zoneId);
   if (!zone) throw new Error(`Неизвестная зона: ${i.zoneId}`);
   const isTow = i.service === 'tow';

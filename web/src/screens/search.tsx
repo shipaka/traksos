@@ -57,7 +57,7 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
           </span>
         </div>
         {d.autoPick && left != null && data?.until && <Progress until={data.until} />}
-        {lim && <div className="sum" style={{ justifyContent: 'center', gap: 6 }}><span>Обычная цена {isTow ? 'перевозки' : 'выезда'}</span><b>{rub(lim.usual)}</b></div>}
+        {lim && <div className="sum" style={{ justifyContent: 'center', gap: 6 }}><span>{d.service === 'consult' ? 'Стоимость консультации' : `Обычная цена ${isTow ? 'перевозки' : 'выезда'}`}</span><b>{rub(lim.usual)}</b></div>}
       </div>
 
       {offers.length > 0 && (
@@ -175,7 +175,7 @@ export function OfferForm({ orderId, limits, myPrice, onDone, compact }: { order
         <>
           <button className="btn good" disabled={busy} onClick={() => send()}>Беру за {rub(limits.usual)}</button>
           <div className="grid2">
-            <button className="btn ghost" onClick={() => setOwn(true)}>Своя цена</button>
+            {limits.floor !== limits.ceil && <button className="btn ghost" onClick={() => setOwn(true)}>Своя цена</button>}
             {!compact && <button className="btn ghost" disabled={busy} onClick={skip}>Пропустить</button>}
           </div>
         </>

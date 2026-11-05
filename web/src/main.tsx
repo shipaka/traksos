@@ -5,7 +5,7 @@ import { get, post, getToken, connectWs, API_URL, onEvent } from './api.ts';
 import { MeCtx, ToastProvider, useRoute, useToast, type Me } from './ui.tsx';
 import { native } from './native.ts';
 import { Login } from './screens/login.tsx';
-import { Home, Sos, NewOrder, Orders, Garage, Profile } from './screens/client.tsx';
+import { Consult, Home, Sos, NewOrder, Orders, Garage, Profile } from './screens/client.tsx';
 import { Order } from './screens/order.tsx';
 import { Work, PerformerProfile, IncomingCall } from './screens/performer.tsx';
 import { Admin } from './screens/admin.tsx';
@@ -82,7 +82,7 @@ function App() {
     case undefined: screen = effMode === 'performer' ? <Work /> : effMode === 'admin' && isStaff ? <Admin /> : <Home />; break;
     case 'login': screen = <Home />; break;
     case 'sos': screen = <Sos />; break;
-    case 'new': screen = <NewOrder service={b ?? 'electric'} />; break;
+    case 'new': screen = b === 'consult' ? <Consult /> : <NewOrder service={b ?? 'electric'} />; break;
     case 'order': screen = <Order id={b} />; break;
     case 'orders': screen = <Orders as="client" />; break;
     case 'garage': screen = <Garage />; break;
@@ -110,7 +110,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   const route = useRoute();
   const here = '/' + route.join('/');
   const tabs: [string, string, string][] = !me ? [] : mode === 'performer'
-    ? [['/work', '⚡', 'Линия'], ['/work/jobs', '☰', 'Выезды'], ['/work/profile', '⚙', 'Профиль'], ['/profile', '◉', 'Аккаунт']]
+    ? [['/work', '⚡', 'Линия'], ['/work/jobs', '☰', 'Выезды'], ['/work/profile', '⚙', 'Фильтр'], ['/profile', '◉', 'Аккаунт']]
     : mode === 'admin'
       ? [['/admin', '▦', 'Админ'], ['/as/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]
       : [['/', '⌂', 'Главная'], ['/orders', '☰', 'Заявки'], ['/sos', '!', 'SOS'], ['/garage', '▭', 'Гараж'], ['/profile', '◉', 'Профиль']];

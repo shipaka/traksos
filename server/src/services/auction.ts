@@ -17,12 +17,14 @@ export class AuctionService {
   constructor(private db: Db, private settings: SettingsService, private notifier: Notifier, private orders: OrdersService, private now: () => Date) {}
 
   limits(order: any, d: Settings['dispatch']) {
+    // Консультация — фиксированная цена, торговаться не о чем
+    if (order.service === 'consult') return offerLimits(order.estimate.callOut as number, 1, 1);
     return offerLimits(order.estimate.callOut as number, d.offerFloor, d.offerCeil);
   }
 
   /** Обычная цена часа для отклика исполнителя: из профиля или по уровню */
   private async hourFor(performerId: string, order: any): Promise<number | null> {
-    if (order.service === 'tow') return null;
+    if (order.service === 'tow' || order.service === 'consult') return null;
     const p = await this.db.one<{ hour_price: number | null }>('select hour_price from performer_profiles where user_id=$1', [performerId]);
     return p?.hour_price ?? order.estimate.hour ?? null;
   }
@@ -39,7 +41,7 @@ export class AuctionService {
                 where l.performer_id = p.user_id and l.kind in ('cash_commission','cash_commission_paid')) as cash_debt
          from performer_profiles p join users u on u.id = p.user_id
         where p.kind = $1 and p.user_id <> $2
-          and not exists (select 1 from orders x where x.performer_id=p.user_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation'))`, [kind, order.client_id]);
+          and not exists (select 1 from orders x where x.performer_id=p.user_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (x.service='consult' and x.status='awaiting_confirmation'))`, [kind, order.client_id]);
     const already = await this.db.query<{ performer_id: string }>(
       `select performer_id from order_dispatch where order_id=$1 and status in ('declined','missed','bidding','lost')`, [orderId]);
     const ranked = rankCandidates(order as any, list, {
@@ -74,8 +76,8 @@ export class AuctionService {
         usual: lim.usual, floor: lim.floor, ceil: lim.ceil, until: until.toISOString(), ringUntil: ring,
       }, {
         kind: 'call',
-        title: `${order.is_sos ? 'SOS · ' : ''}${order.service === 'tow' ? 'Эвакуатор' : 'Заявка'} · ${order.estimate.zoneName}`,
-        body: `${order.brand ?? 'Грузовик'} · ${order.description ?? order.problem ?? ''} · обычная цена ${rub(lim.usual)}`.trim(),
+        title: order.service === 'consult' ? 'Консультация по телефону' : `${order.is_sos ? 'SOS · ' : ''}${order.service === 'tow' ? 'Эвакуатор' : 'Заявка'} · ${order.estimate.zoneName}`,
+        body: `${order.brand ?? 'Грузовик'} · ${order.description ?? order.problem ?? ''} · ${order.service === 'consult' ? 'консультация' : 'обычная цена'} ${rub(lim.usual)}`.trim(),
         data: { orderId, ringUntil: ring, auction: 'true', price: String(lim.usual) },
         ttlSeconds: all.dispatch.ringSeconds,
       });
@@ -202,13 +204,15 @@ export class AuctionService {
     });
     await this.orders.afterRelease(res.released);
     await this.notifier.notify([res.f.performer_id], { type: 'order', orderId, status: 'accepted' },
-      { kind: 'normal', title: 'Клиент выбрал вас', body: `Заявка №${res.o.number}: выезд ${rub(res.f.price)}, подача ~${res.f.eta_minutes} мин`, data: { orderId } });
+      { kind: 'normal', title: 'Клиент выбрал вас', body: res.o.service === 'consult' ? `Консультация №${res.o.number}: свяжитесь с клиентом` : `Заявка №${res.o.number}: выезд ${rub(res.f.price)}, подача ~${res.f.eta_minutes} мин`, data: { orderId } });
     this.notifier.live(res.losers, { type: 'order', orderId, status: 'lost' });
     if (!user) {
       await this.notifier.notify([res.o.client_id, res.o.created_by], { type: 'order', orderId, status: 'accepted' },
-        { kind: 'normal', title: 'Исполнитель назначен', body: `Выбрали лучшего из откликов: выезд ${rub(res.f.price)}, подача ~${res.f.eta_minutes} мин`, data: { orderId } });
+        { kind: 'normal', title: 'Исполнитель назначен', body: res.o.service === 'consult' ? 'Мастер на связи — он позвонит или напишет в чат' : `Выбрали лучшего из откликов: выезд ${rub(res.f.price)}, подача ~${res.f.eta_minutes} мин`, data: { orderId } });
     }
-    await this.orders.systemMessage(orderId, `Исполнитель выбран: выезд ${rub(res.f.price)}, подача ~${res.f.eta_minutes} мин. Чат открыт.`);
+    await this.orders.systemMessage(orderId, res.o.service === 'consult'
+      ? `Мастер на связи: консультация ${rub(res.f.price)}. Он позвонит через ТракSOS или напишет здесь.`
+      : `Исполнитель выбран: выезд ${rub(res.f.price)}, подача ~${res.f.eta_minutes} мин. Чат открыт.`);
     return user ? this.orders.view(user, orderId) : null;
   }
 

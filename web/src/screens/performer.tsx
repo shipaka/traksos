@@ -90,7 +90,7 @@ export function Work() {
           <span className="note">ТракSOS работает как агент: отчёт агента и акт — раз в месяц.</span>
         </div>
       )}
-      <button className="btn ghost" onClick={() => go('work/profile')}>Профиль, марки и цены</button>
+      <button className="btn ghost" onClick={() => go('work/profile')}>Фильтр заявок</button>
     </main>
   );
 }
@@ -180,10 +180,10 @@ function CallScreen({ call, onClose }: { call: any; onClose: () => void }) {
         <div className="ring">⚡</div>
         <h1>{SERVICES[call.service]?.name ?? 'Заявка'} · {call.brand ?? 'грузовик'}</h1>
         <div className="sub" style={{ fontSize: 15 }}>
-          {call.address ?? call.zone}{call.distanceKm != null ? ` · ${call.distanceKm} км` : ''}
+          {call.service === 'consult' ? 'По телефону — без выезда' : <>{call.address ?? call.zone}{call.distanceKm != null ? ` · ${call.distanceKm} км` : ''}</>}
         </div>
         {call.description && <div className="note" style={{ fontSize: 14 }}>{call.description}</div>}
-        <div className="pill accent" style={{ alignSelf: 'center', fontSize: 15 }}>Выезд {rub(call.callOut)}</div>
+        <div className="pill accent" style={{ alignSelf: 'center', fontSize: 15 }}>{call.service === 'consult' ? 'Консультация' : 'Выезд'} {rub(call.callOut)}</div>
       </div>
       <div className="stack" style={{ gap: 16 }}>
         <div className="timer">{left}</div>
@@ -307,8 +307,8 @@ export function PerformerProfile() {
     <main>
       <Back to="work" />
       <div>
-        <h1>Профиль исполнителя</h1>
-        <div className="sub">По этим данным заявки уходят тем, кто подходит. Паспорт и ИНН видит только модератор.</div>
+        <h1>Фильтр заявок</h1>
+        <div className="sub">Услуги, марки и цены — от этого зависит, какие заявки придут вам первыми. Ниже — имя, машина и налоговый статус.</div>
       </div>
       <Field group label="Кто вы">
         <div className="grid2">
