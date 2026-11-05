@@ -340,6 +340,8 @@ export function createApp(d: Deps) {
   }), c.body)));
   r.post('/api/orders/:id/recommend-service', performerRoles, (c: AuthedCtx) => onsite.recommend(c.user, c.params.id, parse(z.object({ centerId: z.string().uuid().nullable() }), c.body).centerId));
   r.get('/api/admin/services', staff, () => centers.pending());
+  r.get('/api/admin/summary', staff, () => stats.summary());
+  r.get('/api/admin/live', staff, () => stats.liveOrders());
   r.post('/api/admin/services/:id/verify', staff, (c: AuthedCtx) => centers.verify(c.user, c.params.id, parse(z.object({ decision: z.enum(['approved', 'rejected']) }), c.body).decision));
 
   r.get('/api/my-performers', true, (c: AuthedCtx) => orders.myPerformers(c.user));

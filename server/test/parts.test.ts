@@ -63,3 +63,16 @@ test('уровень: первые заказы — Новичок; точнос
   assert.equal(s.accuracy.counted, false);
   assert.equal((await t.api('GET', '/api/performer/standing', undefined, client.token)).status, 403);
 });
+
+test('админ: сводка и живые заявки', async () => {
+  const live = ok(await t.api('POST', '/api/orders', { service: 'electric', zoneId: 'spb', description: 'Свет 3' }, client.token)).order;
+  const s = ok(await t.api('GET', '/api/admin/summary', undefined, admin.token));
+  assert.equal(typeof s.today.orders, 'number'); // окна «сегодня/месяц» — по часам сервера, в тестах часы подменены
+  assert.equal(typeof s.money.platformMonth, 'number');
+  assert.equal(typeof s.quality.completedMonth, 'number');
+  assert.ok(s.today.mastersOnline >= 1);
+  const l = ok(await t.api('GET', '/api/admin/live', undefined, admin.token));
+  const row = l.find((x: any) => x.id === live.id);
+  assert.ok(row && row.events.length >= 1, 'лента событий');
+  assert.equal((await t.api('GET', '/api/admin/summary', undefined, client.token)).status, 403);
+});

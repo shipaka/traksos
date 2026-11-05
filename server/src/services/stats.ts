@@ -99,6 +99,60 @@ export class StatsService {
       money: money!, people: people!, byDay, byService, cancels, top, zones, brands,
     };
   }
+
+  /** Сводка для админа: сегодня, деньги за месяц, работа, качество */
+  async summary() {
+    const now = this.now();
+    const msk = new Date(now.getTime() + 3 * 3600_000);
+    const dayStart = new Date(Date.UTC(msk.getUTCFullYear(), msk.getUTCMonth(), msk.getUTCDate()) - 3 * 3600_000);
+    const monthStart = new Date(Date.UTC(msk.getUTCFullYear(), msk.getUTCMonth(), 1) - 3 * 3600_000);
+    const r = await this.db.one<any>(
+      `select (select count(*)::int from orders where created_at >= $1) as orders_today,
+              (select count(*)::int from performer_profiles where kind<>'tow' and verification='approved' and line_status in ('online','on_call','on_job')) as masters_online,
+              (select count(*)::int from performer_profiles where kind='tow' and verification='approved' and line_status in ('online','on_call','on_job')) as tow_online,
+              (select count(*)::int from mod_cases where status='open' and kind='dispute') as disputes_open,
+              (select count(*)::int from mod_cases where status='open') as mod_open,
+              (select count(*)::int from support_tickets where status='open') as support_open,
+              (select coalesce(sum(total - refunded_amount), 0)::int from payments where status in ('captured','partially_refunded') and updated_at >= $2) as paid_month,
+              (select coalesce(sum(amount), 0)::int from ledger_entries where account='platform' and created_at >= $2) as platform_month,
+              (select coalesce(sum(b), 0)::int from (select sum(amount) as b from ledger_entries where account='performer' group by performer_id) x where b > 0) as to_payout,
+              (select coalesce(sum(total), 0)::int from payments where status='held') as frozen,
+              (select count(*)::int from orders where status='awaiting_confirmation') as awaiting_confirmation,
+              (select coalesce(sum(d), 0)::int from (select -sum(amount) as d from ledger_entries where kind in ('cash_commission','cash_commission_paid') group by performer_id) x where d > 0) as cash_debts,
+              (select percentile_cont(0.5) within group (order by extract(epoch from arrived_at - accepted_at)) from orders where arrived_at is not null and created_at >= $2) as arrive_median_s,
+              (select count(*)::int from orders where service='consult' and status='completed' and created_at >= $2) as consults,
+              (select count(distinct consult_of)::int from orders where consult_of is not null and created_at >= $2) as consults_to_visit,
+              (select count(*)::int from users where created_at >= $2 and owner_id is null and roles @> '{client}') as new_clients,
+              (select count(*)::int from order_events where type='performer_dropped' and created_at >= $2) as drops_month,
+              (select count(*)::int from orders where status='completed' and completed_at >= $2) as completed_month,
+              (select round(avg(rating)::numeric, 2)::float from users where rating is not null and roles && '{master,tow}') as performers_rating`,
+      [dayStart, monthStart]);
+    const rep = await this.db.one<{ clients: number; returned: number }>(
+      `with c as (select client_id, count(*) n from orders where status='completed' group by client_id)
+       select count(*)::int as clients, count(*) filter (where n >= 2)::int as returned from c`);
+    return {
+      today: { orders: r.orders_today, mastersOnline: r.masters_online, towOnline: r.tow_online, disputesOpen: r.disputes_open, modOpen: r.mod_open, supportOpen: r.support_open },
+      money: { paidMonth: r.paid_month, platformMonth: r.platform_month, toPayout: r.to_payout, frozen: r.frozen, awaitingConfirmation: r.awaiting_confirmation, cashDebts: r.cash_debts },
+      work: { mastersOnline: r.masters_online, towOnline: r.tow_online, arriveMedianMin: r.arrive_median_s == null ? null : Math.round(Number(r.arrive_median_s) / 60),
+        consultToVisit: r.consults ? round(r.consults_to_visit / r.consults) : null, newClients: r.new_clients },
+      quality: { disputesOpen: r.disputes_open, dropsMonth: r.drops_month, completedMonth: r.completed_month, performersRating: r.performers_rating,
+        repeat: rep?.clients ? round(rep.returned / rep.clients) : null },
+    };
+  }
+
+  /** Живые заявки с последними событиями */
+  async liveOrders() {
+    const rows = await this.db.query(
+      `select o.id, o.number, o.service, o.status, o.is_sos, o.created_at, o.address, o.estimate->>'zoneName' as zone,
+              cl.name as client_name, pf.name as performer_name
+         from orders o left join users cl on cl.id=o.client_id left join users pf on pf.id=o.performer_id
+        where o.status in ('awaiting_owner','searching','accepted','en_route','arrived','working','awaiting_confirmation')
+        order by o.is_sos desc, o.created_at limit 100`);
+    const ids = rows.map((r: any) => r.id);
+    const ev = ids.length ? await this.db.query<{ order_id: string; type: string; created_at: Date }>(
+      `select order_id, type, created_at from (select e.*, row_number() over (partition by order_id order by created_at desc) rn from order_events e where order_id = any($1::uuid[])) x where rn <= 5 order by created_at desc`, [ids]) : [];
+    return rows.map((r: any) => ({ ...r, events: ev.filter((e) => e.order_id === r.id).map((e) => ({ type: e.type, at: e.created_at })) }));
+  }
 }
 
 const round = (x: number) => Math.round(x * 1000) / 1000;
