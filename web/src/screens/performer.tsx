@@ -20,7 +20,7 @@ export function Work() {
 
   const active = (jobs.data ?? []).filter((o: any) => ['accepted', 'en_route', 'arrived', 'working', 'awaiting_confirmation'].includes(o.status));
   const online = p.line_status === 'online' || p.line_status === 'on_job' || p.line_status === 'on_call';
-  const setLine = (lineStatus: string) => run(() => post('/api/performer/line', { lineStatus })).then((r) => {
+  const setLine = (lineStatus: string, busyUntil?: string) => run(() => post('/api/performer/line', { lineStatus, busyUntil })).then((r) => {
     if (!r) return;
     if (lineStatus === 'online') native.performerOnline();
     reload();
@@ -43,15 +43,7 @@ export function Work() {
           <button className="btn" onClick={() => go('work/docs')}>{p.submitted_at ? 'Мои фото' : 'Снять фото'}</button>
         </div>
       ) : (
-        <div className="card">
-          <b>Статус на линии</b>
-          <div className="grid2">
-            <button className="seg" aria-pressed={p.line_status === 'online'} disabled={busy || p.line_status === 'on_job'} onClick={() => setLine('online')}>Свободен</button>
-            <button className="seg" aria-pressed={p.line_status === 'offline'} disabled={busy || p.line_status === 'on_job'} onClick={() => setLine('offline')}>Не на линии</button>
-          </div>
-          <span className="note">Пока вы на линии, заявки приходят как звонок — 30 секунд, «Беру» или «Отклонить». Три пропуска подряд — статус сам станет «Не на линии».</span>
-          {online && <LocationSharing />}
-        </div>
+        <LineCard p={p} busy={busy} setLine={setLine} online={online} />
       )}
 
       {active.length > 0 && (
@@ -91,9 +83,85 @@ export function Work() {
           <span className="note">ТракSOS работает как агент: отчёт агента и акт — раз в месяц.</span>
         </div>
       )}
-      <div className="grid2"><button className="btn ghost" onClick={() => go('work/filter')}>Фильтр заявок</button><button className="btn ghost" onClick={() => go('work/me/money')}>Финансы</button></div>
+      <button className="btn ghost" onClick={() => go('work/me/money')}>Финансы · все операции</button>
     </main>
   );
+}
+
+const BREAKS: [number, string][] = [[15, '15 мин'], [30, '30 мин'], [60, '1 час'], [120, '2 часа']];
+
+/** Статус на линии, как в демо: Свободен / На звонке / Перерыв / Не на линии — и что сейчас по графику */
+function LineCard({ p, busy, setLine, online }: { p: any; busy: boolean; setLine: (s: string, until?: string) => void; online: boolean }) {
+  const [breakOpen, setBreakOpen] = useState(false);
+  const sl = scheduleSlot(p.schedule, new Date(), p.off_schedule_until);
+  const onJob = p.line_status === 'on_job';
+  const st: [string, string, string][] = [
+    ['online', 'Свободен', 'Заявки приходят вам как звонок'],
+    ['on_call', 'На звонке', 'Видны клиентам, но ниже в очереди'],
+    ['offline', 'Не на линии', 'Заявки идут другим'],
+  ];
+  return (
+    <div className="card">
+      <div className="between"><b>Статус на линии</b>{onJob && <span className="pill warn">На выезде</span>}</div>
+      <div className="stack" style={{ gap: 6 }}>
+        {st.map(([id, name, hint]) => (
+          <button key={id} className="opt" aria-pressed={p.line_status === id} disabled={busy || onJob} onClick={() => setLine(id)}>
+            <b>{name}</b><small>{hint}</small>
+          </button>
+        ))}
+        <button className="opt" aria-pressed={p.line_status === 'busy'} disabled={busy || onJob} onClick={() => setBreakOpen(!breakOpen)}>
+          <b>Перерыв{p.line_status === 'busy' && p.busy_until ? ` · до ${new Date(p.busy_until).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}` : ''}</b>
+          <small>Обед, заправка — заявки не приходят, по таймеру снова «Свободен»</small>
+        </button>
+        {breakOpen && (
+          <div className="grid4">{BREAKS.map(([m, l]) => (
+            <button key={m} className="seg" style={{ fontSize: 13 }} disabled={busy} onClick={() => { setBreakOpen(false); setLine('busy', new Date(Date.now() + m * 60_000).toISOString()); }}>{l}</button>
+          ))}</div>
+        )}
+      </div>
+      <ScheduleNote p={p} sl={sl} />
+      <SearchSettingsLink p={p} />
+      <span className="note">Три пропущенных вызова подряд — статус сам станет «Не на линии».</span>
+      {online && <LocationSharing />}
+    </div>
+  );
+}
+
+/** «Настройки поиска» — как вы ищете клиентов на линии: услуги, марки, цены. От них — кому и в каком порядке звоним. */
+function SearchSettingsLink({ p }: { p: any }) {
+  const top = Object.entries(p.brands ?? {}).filter(([, v]) => v === 'excellent').map(([k]) => k);
+  const off = Object.entries(p.brands ?? {}).filter(([, v]) => v === 'refuse').length;
+  const sub = p.kind === 'tow' ? `сборы ${p.prep_minutes ?? 0} мин · цена за км`
+    : [(p.specialties ?? []).map((x: string) => SERVICES[x]?.name ?? (x === 'consult' ? 'Консультации' : x)).join(', '),
+      top.length ? `отлично: ${top.join(', ')}` : '', off ? `не берусь: ${off}` : ''].filter(Boolean).join(' · ');
+  return (
+    <button className="linkrow" onClick={() => go('work/filter')}>
+      <span><b>Расширенный поиск</b><small>{sub || 'услуги, марки и цены — от них зависит, какие заявки придут первыми'}</small></span><span aria-hidden="true">›</span>
+    </button>
+  );
+}
+
+function ScheduleNote({ p, sl }: { p: any; sl: string }) {
+  const s = p.schedule;
+  if (!s?.on) return <a className="note" href="#/work/me/schedule">Распорядок не задан — заявки идут, пока вы на линии. Задать рабочие дни и часы →</a>;
+  const text = sl === 'work' ? (p.off_schedule_until && new Date(p.off_schedule_until) > new Date() ? 'Вы вышли на линию вне графика — до конца дня' : `Рабочее время: выезды ${s.from}–${s.to}`)
+    : sl === 'phone' ? `На телефоне до ${s.phoneTo}: приходят только консультации` : 'Сейчас нерабочее время по графику — заявки не приходят';
+  return <a className={`banner ${sl === 'work' ? 'good' : 'warn'}`} href="#/work/me/schedule" style={{ textDecoration: 'none', color: 'inherit' }}><span>{text}. Распорядок →</span></a>;
+}
+
+/** Тот же расчёт, что на сервере (domain/schedule.ts): по московскому времени */
+export function scheduleSlot(s: any, now: Date, offUntil?: string | null): 'work' | 'phone' | 'off' {
+  if (!s?.on) return 'work';
+  if (offUntil && new Date(offUntil) > now) return 'work';
+  const parts = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Moscow', weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(now);
+  const g = (t: string) => parts.find((x) => x.type === t)!.value;
+  const day = g('weekday').toLowerCase().slice(0, 3);
+  const min = Number(g('hour')) * 60 + Number(g('minute'));
+  const m = (t: string) => { const [h, mm] = t.split(':').map(Number); return h * 60 + mm; };
+  if (!s.days?.[day]) return 'off';
+  if (min >= m(s.from) && min < m(s.to)) return 'work';
+  if (min >= m(s.to) && min < Math.max(m(s.phoneTo), m(s.to))) return 'phone';
+  return 'off';
 }
 
 /** Отправляем координаты раз в 30 секунд, пока экран открыт (в приложении — и в фоне) */

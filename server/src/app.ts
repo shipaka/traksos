@@ -43,7 +43,7 @@ export function createApp(d: Deps) {
   const settings = new SettingsService(d.db);
   const notifier = new Notifier(d.db, hub, d.push);
   const auth = new AuthService(d.db, d.sms, now);
-  const profiles = new ProfilesService(d.db, settings);
+  const profiles = new ProfilesService(d.db, settings, now);
   const orders = new OrdersService(d.db, settings, notifier, now);
   const payments = new PaymentsService(d.db, settings, d.payments, notifier, orders);
   orders.payments = payments;
@@ -143,6 +143,14 @@ export function createApp(d: Deps) {
     car: z.object({ brand: z.string().max(50), color: z.string().max(30).optional(), plate: z.string().max(15) }).nullish(),
     cars: z.array(z.object({ brand: z.string().min(1).max(50), color: z.string().max(30).optional(), plate: z.string().min(1).max(15) })).max(3).optional(),
   }), c.body)));
+  r.put('/api/performer/schedule', performerRoles, (c: AuthedCtx) => {
+    const t = z.string().regex(/^\d{2}:\d{2}$/);
+    const day = z.boolean();
+    return profiles.setSchedule(c.user.id, parse(z.object({
+      on: z.boolean(), from: t, to: t, phoneTo: t,
+      days: z.object({ mon: day, tue: day, wed: day, thu: day, fri: day, sat: day, sun: day }),
+    }), c.body));
+  });
   r.get('/api/performer/ledger', performerRoles, (c: AuthedCtx) => profiles.ledger(c.user.id));
   r.post('/api/performer/line', performerRoles, async (c: AuthedCtx) => {
     const b = parse(z.object({

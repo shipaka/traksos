@@ -35,10 +35,10 @@ export function PerformerHub() {
     ['work/me/about', 'Кто вы', `${me?.name ?? 'Имя не указано'} · ${p.kind === 'tow' ? 'эвакуатор' : 'мастер'}`],
     ['work/me/phone', 'Телефон и вход', fmtPhone(me!.phone)],
     ['work/me/cars', p.kind === 'tow' ? 'Эвакуаторы' : 'Машины', cars.length ? `${cars.length} из 3 · сегодня: ${p.car?.brand ?? '—'} ${p.car?.plate ?? ''}` : 'не добавлены'],
+    ['work/me/schedule', 'Распорядок', p.schedule?.on ? `${dayList(p.schedule.days)} · выезды ${p.schedule.from}–${p.schedule.to} · телефон до ${p.schedule.phoneTo}` : 'не задан — заявки идут, пока вы на линии'],
     ['work/me/tax', 'Налоговый статус', p.tax_status ? `${p.tax_status === 'ip' ? 'ИП' : 'Самозанятый'} · ИНН ${p.inn ?? '—'}` : 'не указан'],
     ['work/me/money', 'Финансы', 'баланс, начисления, списания, выплаты'],
     ['work/docs', 'Проверка и фото', p.verification === 'approved' ? 'пройдена' : p.submitted_at ? 'на проверке' : 'нужно пройти'],
-    ['work/filter', 'Фильтр заявок', 'услуги, марки, цены'],
     ['support', 'Поддержка', 'обращения и ответы'],
     ['profile', 'Аккаунт', 'кабинет клиента, выход'],
   ];
@@ -204,6 +204,54 @@ export function CarsSection() {
   );
 }
 
+// Распорядок -------------------------------------------------------------------
+
+const WEEK: [string, string][] = [['mon', 'Пн'], ['tue', 'Вт'], ['wed', 'Ср'], ['thu', 'Чт'], ['fri', 'Пт'], ['sat', 'Сб'], ['sun', 'Вс']];
+const dayList = (d: Record<string, boolean>) => WEEK.filter(([k]) => d?.[k]).map(([, n]) => n).join(', ') || 'нет рабочих дней';
+const TIMES = Array.from({ length: 48 }, (_, i) => `${String(Math.floor(i / 2)).padStart(2, '0')}:${i % 2 ? '30' : '00'}`);
+
+export function ScheduleSection() {
+  const { me } = useMe();
+  const p = me!.performer!;
+  const { busy, run } = useAction();
+  const { reload } = useMe();
+  const [s, setS] = useState(() => p.schedule ?? { on: true, days: { mon: true, tue: true, wed: true, thu: true, fri: true, sat: false, sun: false }, from: '09:00', to: '18:00', phoneTo: '20:00' });
+  const sel = (v: string, on: (x: string) => void, min?: string) => (
+    <select className="field" value={v} onChange={(e) => on(e.target.value)}>{TIMES.filter((t) => !min || t >= min).map((t) => <option key={t} value={t}>{t}</option>)}</select>
+  );
+  return (
+    <main>
+      <Back to="work/me" label="Профиль" />
+      <div><h1>Распорядок</h1><div className="sub">По нему решаем, звонить ли вам. Кончилось рабочее время — статус сам станет «Не на линии», пока вы не выйдете на линию вручную.</div></div>
+      <button className="opt" aria-pressed={s.on} onClick={() => setS({ ...s, on: !s.on })}>
+        <b>{s.on ? '✓ Работаю по графику' : 'Без графика'}</b><small>{s.on ? 'Заявки — только в рабочие дни и часы' : 'Заявки идут всегда, пока вы на линии'}</small>
+      </button>
+      {s.on && (
+        <>
+          <div className="card">
+            <b>Рабочие дни</b>
+            <div className="grid7">{WEEK.map(([k, n]) => (
+              <button key={k} className="seg" style={{ fontSize: 13, padding: 0 }} aria-pressed={!!s.days[k]} onClick={() => setS({ ...s, days: { ...s.days, [k]: !s.days[k] } })}>{n}</button>
+            ))}</div>
+          </div>
+          <div className="card">
+            <b>Выезды</b>
+            <div className="grid2">{sel(s.from, (v) => setS({ ...s, from: v }))}{sel(s.to, (v) => setS({ ...s, to: v, phoneTo: s.phoneTo < v ? v : s.phoneTo }), s.from)}</div>
+            <span className="note">В эти часы приходят все заявки.</span>
+            <b>На телефоне до</b>
+            {sel(s.phoneTo, (v) => setS({ ...s, phoneTo: v }), s.to)}
+            <span className="note">После выездов и до этого времени — только консультации по телефону. Не нужно — поставьте то же время, что конец выездов.</span>
+          </div>
+          <div className="card flat">
+            <span className="note">Обед или заправка — статус «Перерыв» на «Линии»: 15 минут – 2 часа, потом снова «Свободен» сам.</span>
+          </div>
+        </>
+      )}
+      <button className="btn" disabled={busy} onClick={async () => { if (await run(() => put('/api/performer/schedule', s), 'Распорядок сохранён')) reload(); }}>Сохранить</button>
+    </main>
+  );
+}
+
 // Налоги ----------------------------------------------------------------------
 
 function TaxInputs({ taxStatus, inn, onChange }: { taxStatus: string; inn: string; onChange: (t: string, i: string) => void }) {
@@ -342,7 +390,8 @@ export function FilterSection() {
   const cur = isTow ? 'prices' : tab;
   return (
     <main>
-      <div><h1>Фильтр заявок</h1><div className="sub">От этого зависит, какие заявки придут вам первыми.</div></div>
+      <Back to="work" label="Линия" />
+      <div><h1>Расширенный поиск</h1><div className="sub">Как вы ищете клиентов на линии: что берёте, с какими марками и по какой цене. По этому вас и ранжируют.</div></div>
       {tabs.length > 1 && <div className="grid3">{tabs.map(([id, n]) => <button key={id} className="seg" style={{ fontSize: 13 }} aria-pressed={cur === id} onClick={() => setTab(id as any)}>{n}</button>)}</div>}
 
       {cur === 'services' && (
@@ -403,7 +452,7 @@ export function FilterSection() {
         </div>
       )}
 
-      <button className="btn" disabled={busy || (!isTow && !f.specialties.length)} onClick={() => save(body(), 'Фильтр сохранён')}>Сохранить</button>
+      <button className="btn" disabled={busy || (!isTow && !f.specialties.length)} onClick={() => save(body(), 'Поиск настроен — заявки подберём по нему')}>Сохранить</button>
     </main>
   );
 }

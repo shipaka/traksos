@@ -36,7 +36,7 @@ export class AuctionService {
     const kind = performerKindFor(order.service);
     const list = await this.db.query<Candidate>(
       `select p.user_id, p.kind, p.specialties, p.brands, false as is_priority, p.paused, p.line_status, p.verification,
-              p.lat, p.lng, u.rating, p.accepts_group, u.status as user_status,
+              p.lat, p.lng, u.rating, p.accepts_group, u.status as user_status, p.schedule, p.off_schedule_until,
               (select coalesce(-sum(amount),0)::int from ledger_entries l
                 where l.performer_id = p.user_id and l.kind in ('cash_commission','cash_commission_paid')) as cash_debt
          from performer_profiles p join users u on u.id = p.user_id
@@ -45,7 +45,7 @@ export class AuctionService {
     const already = await this.db.query<{ performer_id: string }>(
       `select performer_id from order_dispatch where order_id=$1 and status in ('declined','missed','bidding','lost')`, [orderId]);
     const ranked = rankCandidates(order as any, list, {
-      radiusKm: all.dispatch.radiusKm, maxCandidates: all.dispatch.maxCandidates, cashDebtLimit: all.fees.cashDebtLimit,
+      radiusKm: all.dispatch.radiusKm, maxCandidates: all.dispatch.maxCandidates, cashDebtLimit: all.fees.cashDebtLimit, now: this.now(),
       exclude: new Set([order.created_by, ...exclude, ...already.map((a) => a.performer_id)]),
     });
     const ms = order.is_sos ? all.dispatch.sosAuctionSeconds * 1000 : all.dispatch.auctionMinutes * 60_000;

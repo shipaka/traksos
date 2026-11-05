@@ -85,8 +85,8 @@ await shot(a, '01c-admin-verify');
 await a.getByRole('button', { name: 'Одобрить' }).click();
 await a.getByText('Очередь пуста').waitFor();
 await m.goto(BASE + '/#/work');
-await m.getByRole('button', { name: 'Свободен' }).waitFor({ timeout: 10000 });
-await m.getByRole('button', { name: 'Свободен' }).click();
+await m.getByRole('button', { name: /^Свободен/ }).waitFor({ timeout: 10000 });
+await m.getByRole('button', { name: /^Свободен/ }).click();
 await m.getByText(/Геолокация включена/).waitFor();
 await shot(m, '02-master-online');
 

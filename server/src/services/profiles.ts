@@ -1,6 +1,7 @@
 import type { Db } from '../db/index.ts';
 import type { SettingsService } from './settings.ts';
 import { bad, forbidden, notFound, type AuthUser } from '../http/router.ts';
+import { slot, endOfMoscowDay, validSchedule, type Schedule } from '../domain/schedule.ts';
 import { normalizePhone } from '../util.ts';
 
 export interface PerformerInput {
@@ -22,7 +23,7 @@ export interface PerformerInput {
 }
 
 export class ProfilesService {
-  constructor(private db: Db, private settings: SettingsService) {}
+  constructor(private db: Db, private settings: SettingsService, private now: () => Date = () => new Date()) {}
 
   async me(user: AuthUser) {
     const u = await this.db.one(
@@ -118,14 +119,32 @@ export class ProfilesService {
     if (s.lineStatus && p.line_status === 'on_job' && s.lineStatus !== 'offline') {
       throw bad('on_job', 'Вы на выезде — статус сменится сам, когда клиент подтвердит сумму');
     }
+    if (s.lineStatus === 'busy') {
+      const until = s.busyUntil ? new Date(s.busyUntil) : null;
+      if (!until || until <= this.now() || until.getTime() - this.now().getTime() > 12 * 3600_000) throw bad('bad_busy', 'Перерыв — от нескольких минут до 12 часов');
+    }
+    // Вышел на линию вне своего графика — значит, хочет работать: график не мешает до конца дня
+    const outside = s.lineStatus === 'online' && slot(p.schedule, this.now()) !== 'work';
     await this.db.query(
-      `update performer_profiles set line_status = coalesce($2::text, line_status), busy_until = $3::timestamptz,
+      `update performer_profiles set line_status = coalesce($2::text, line_status),
+         busy_until = case when $2::text = 'busy' then $3::timestamptz else null end,
+         off_schedule_until = case when $2::text = 'online' then $5::timestamptz when $2::text = 'offline' then null else off_schedule_until end,
          paused = coalesce($4::boolean, paused), missed_in_row = case when $2::text = 'online' then 0 else missed_in_row end, updated_at = now()
        where user_id=$1`,
-      [userId, s.lineStatus ?? null, s.busyUntil ?? null, s.paused ?? null],
+      [userId, s.lineStatus ?? null, s.busyUntil ?? null, s.paused ?? null, outside ? endOfMoscowDay(this.now()) : null],
     );
     // Ушёл с линии или на паузу — убираем из звонков и торгов
     if (s.lineStatus === 'offline' || s.lineStatus === 'busy' || s.paused === true) await this.onUnavailable?.(userId);
+    return this.performer(userId);
+  }
+
+  /** Распорядок: рабочие дни и часы. Включённый график сам снимает с линии, когда рабочее время кончилось. */
+  async setSchedule(userId: string, sc: Schedule) {
+    const err = validSchedule(sc);
+    if (err) throw bad('bad_schedule', err);
+    const p = await this.performer(userId);
+    if (!p) throw notFound('Сначала заполните профиль исполнителя');
+    await this.db.query('update performer_profiles set schedule=$2, off_schedule_until=null, updated_at=now() where user_id=$1', [userId, sc]);
     return this.performer(userId);
   }
 

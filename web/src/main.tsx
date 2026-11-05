@@ -5,7 +5,7 @@ import { get, post, getToken, connectWs, API_URL, onEvent } from './api.ts';
 import { MeCtx, ToastProvider, useRoute, useToast, type Me } from './ui.tsx';
 import { native } from './native.ts';
 import { Login } from './screens/login.tsx';
-import { PerformerHub, AboutSection, PhoneSection, CarsSection, TaxSection, MoneySection, FilterSection } from './screens/performerCabinet.tsx';
+import { PerformerHub, ScheduleSection, AboutSection, PhoneSection, CarsSection, TaxSection, MoneySection, FilterSection } from './screens/performerCabinet.tsx';
 import { Consult, Home, Sos, NewOrder, Orders, Garage, Profile } from './screens/client.tsx';
 import { Order } from './screens/order.tsx';
 import { Work,  IncomingCall } from './screens/performer.tsx';
@@ -90,7 +90,7 @@ function App() {
     case 'profile': screen = <Profile />; break;
     case 'work':
       screen = b === 'profile' || (b === 'me' && !route[2]) ? <PerformerHub />
-        : b === 'me' ? ({ about: <AboutSection />, phone: <PhoneSection />, cars: <CarsSection />, tax: <TaxSection />, money: <MoneySection /> } as Record<string, JSX.Element>)[route[2]] ?? <PerformerHub />
+        : b === 'me' ? ({ about: <AboutSection />, phone: <PhoneSection />, schedule: <ScheduleSection />, cars: <CarsSection />, tax: <TaxSection />, money: <MoneySection /> } as Record<string, JSX.Element>)[route[2]] ?? <PerformerHub />
         : b === 'filter' ? <FilterSection /> : b === 'jobs' ? <Orders as="performer" /> : b === 'docs' ? <Documents /> : <Work />;
       break;
     case 'admin': screen = !isStaff ? <Home /> : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : <Admin />; break;
@@ -113,7 +113,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   const route = useRoute();
   const here = '/' + route.join('/');
   const tabs: [string, string, string][] = !me ? [] : mode === 'performer'
-    ? [['/work', '⚡', 'Линия'], ['/work/jobs', '☰', 'Выезды'], ['/work/filter', '⚙', 'Фильтр'], ['/work/me', '◉', 'Профиль']]
+    ? [['/work', '⚡', 'Линия'], ['/work/jobs', '☰', 'История'], ['/work/me', '◉', 'Профиль']]
     : mode === 'admin'
       ? [['/admin', '▦', 'Админ'], ['/as/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]
       : [['/', '⌂', 'Главная'], ['/orders', '☰', 'Заявки'], ['/sos', '!', 'SOS'], ['/garage', '▭', 'Гараж'], ['/profile', '◉', 'Профиль']];

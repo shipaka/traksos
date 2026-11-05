@@ -4,6 +4,7 @@
 // 3) внутри уровня — ближе, потом выше рейтинг.
 
 import { haversineKm } from './geo.ts';
+import { slot, type Schedule } from './schedule.ts';
 
 export type BrandLevel = 'excellent' | 'good' | 'last_resort' | 'refuse';
 
@@ -22,6 +23,8 @@ export interface Candidate {
   accepts_group: boolean;
   user_status: string;
   cash_debt?: number;
+  schedule?: Schedule | null;
+  off_schedule_until?: string | Date | null;
 }
 
 export interface DispatchOrder {
@@ -45,6 +48,8 @@ export interface RankOptions {
   maxCandidates: number;
   cashDebtLimit: number;
   exclude?: Set<string>;
+  /** Текущее время — для распорядка исполнителей */
+  now?: Date;
 }
 
 export interface Ranked {
@@ -59,6 +64,8 @@ export function rankCandidates(order: DispatchOrder, list: Candidate[], o: RankO
     .filter((c) => c.kind === kind && c.user_status === 'active' && c.verification === 'approved' && !c.paused)
     .filter((c) => kind !== 'master' || order.service === 'consult' || c.specialties.includes(order.service))
     .filter((c) => c.line_status === 'online' || c.line_status === 'on_call')
+    // Распорядок: вне рабочего времени не звоним; в часы «на телефоне» — только консультации
+    .filter((c) => { const s = slot(c.schedule, o.now ?? new Date(), c.off_schedule_until); return s === 'work' || (s === 'phone' && order.service === 'consult'); })
     .filter((c) => !o.exclude?.has(c.user_id))
     .filter((c) => !order.group_trip || c.accepts_group)
     .filter((c) => (c.cash_debt ?? 0) <= o.cashDebtLimit)

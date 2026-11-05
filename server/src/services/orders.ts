@@ -7,6 +7,7 @@ import { rankCandidates, performerKindFor, type Candidate } from '../domain/disp
 import { transition, canDo, statusLabels, type Action, type Actor, type OrderStatus } from '../domain/orderState.ts';
 import { cancelStage, cancelSplit, pct, split } from '../domain/money.ts';
 import { haversineKm } from '../domain/geo.ts';
+import { slot } from '../domain/schedule.ts';
 import { rub } from '../util.ts';
 import type { AuctionService } from './auction.ts';
 
@@ -129,7 +130,7 @@ export class OrdersService {
     const kind = performerKindFor(order.service);
     const list = await this.db.query<Candidate>(
       `select p.user_id, p.kind, p.specialties, p.brands, p.is_priority, p.paused, p.line_status, p.verification,
-              p.lat, p.lng, u.rating, p.accepts_group, u.status as user_status,
+              p.lat, p.lng, u.rating, p.accepts_group, u.status as user_status, p.schedule, p.off_schedule_until,
               (select coalesce(-sum(amount),0)::int from ledger_entries l
                 where l.performer_id = p.user_id and l.kind in ('cash_commission','cash_commission_paid')) as cash_debt
          from performer_profiles p join users u on u.id = p.user_id
@@ -141,7 +142,7 @@ export class OrdersService {
     const ranked = rankCandidates(order as any, list, {
       radiusKm: all.dispatch.radiusKm,
       maxCandidates: all.dispatch.maxCandidates,
-      cashDebtLimit: all.fees.cashDebtLimit,
+      cashDebtLimit: all.fees.cashDebtLimit, now: this.now(),
       exclude: new Set([...exclude, ...already.map((a) => a.performer_id), order.created_by]),
     });
     if (!ranked.length) return this.auction.start(orderId, exclude);
@@ -213,7 +214,28 @@ export class OrdersService {
     }
     for (const orderId of new Set(missed.map((m) => m.order_id))) await this.ringNext(orderId);
     await this.autoCloseConsults(all.pricing.consult.autoCloseHours);
+    await this.applyLineTimers();
     return missed.length;
+  }
+
+  /**
+   * Перерыв кончился — снова «Свободен». Рабочее время по графику кончилось — «Не на линии»,
+   * и звонков нет, пока исполнитель сам не выйдет на линию.
+   */
+  private async applyLineTimers() {
+    const back = await this.db.query<{ user_id: string }>(
+      `update performer_profiles set line_status='online', busy_until=null where line_status='busy' and busy_until <= $1 returning user_id`, [this.now()]);
+    for (const b of back) this.notifier.live([b.user_id], { type: 'line_status', lineStatus: 'online' });
+    const scheduled = await this.db.query<{ user_id: string; schedule: any; off_schedule_until: string | null; line_status: string }>(
+      `select user_id, schedule, off_schedule_until, line_status from performer_profiles
+        where (schedule->>'on')::boolean and line_status in ('online','on_call')`);
+    for (const p of scheduled) {
+      if (slot(p.schedule, this.now(), p.off_schedule_until) !== 'off') continue;
+      await this.db.query(`update performer_profiles set line_status='offline', off_schedule_until=null where user_id=$1 and line_status in ('online','on_call')`, [p.user_id]);
+      await this.afterRelease(await this.release(this.db, p.user_id, null));
+      await this.notifier.notify([p.user_id], { type: 'line_status', lineStatus: 'offline' },
+        { kind: 'normal', title: 'Рабочее время закончилось', body: 'Вы не на линии — заявки не приходят. Нужно поработать ещё — выйдите на линию вручную.', data: {} });
+    }
   }
 
   /** Консультация, которую клиент не подтвердил за сутки, закрывается сама — как «Вопрос решён» */

@@ -445,7 +445,8 @@ export function Orders({ as }: { as: 'client' | 'performer' }) {
   const list = useLoad(() => get(`/api/orders?as=${as}`), [as], (e) => e.type === 'order');
   return (
     <main>
-      <h1>{as === 'performer' ? 'Мои выезды' : 'Заявки'}</h1>
+      <h1>{as === 'performer' ? 'История' : 'Заявки'}</h1>
+      {as === 'performer' && <div className="sub">Все ваши заявки: текущие и прошлые.</div>}
       {!list.data ? <Loading error={list.error} /> : !list.data.length ? <div className="empty">Заявок пока нет</div> : (
         <div className="rows">
           {list.data.map((o: any) => (

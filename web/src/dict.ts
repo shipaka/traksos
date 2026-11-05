@@ -134,5 +134,5 @@ export const RESULTS: Record<string, string> = {
 };
 
 export const LINE: Record<string, string> = {
-  online: 'Свободен', on_call: 'На звонке', on_job: 'На выезде', busy: 'Занят', offline: 'Не на линии',
+  online: 'Свободен', on_call: 'На звонке', on_job: 'На выезде', busy: 'Перерыв', offline: 'Не на линии',
 };
