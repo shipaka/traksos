@@ -115,6 +115,7 @@ export const STATUS: Record<string, { name: string; tone: 'good' | 'warn' | 'bad
   arrived: { name: 'На месте', tone: 'good' },
   working: { name: 'Работает', tone: 'good' },
   awaiting_confirmation: { name: 'Подтвердите сумму', tone: 'warn' },
+  awaiting_owner: { name: 'Ждёт владельца', tone: 'warn' },
   completed: { name: 'Готово', tone: '' },
   cancelled: { name: 'Отменена', tone: 'bad' },
   no_performer: { name: 'Никто не взял', tone: 'bad' },

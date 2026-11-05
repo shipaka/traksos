@@ -9,7 +9,7 @@ const ROLES = [
   { id: 'service', name: 'Я рембаза (сервис)', hint: 'Клиенты записываются к вам, мастера советуют вас' },
 ] as const;
 
-export function Login() {
+export function Login({ driver }: { driver?: boolean } = {}) {
   const { reload } = useMe();
   const { busy, run } = useAction();
   const [phone, setPhone] = useState('+7 ');
@@ -32,7 +32,9 @@ export function Login() {
       setToken(r.token);
       connectWs();
       await reload();
-      location.hash = role === 'client' ? '#/' : role === 'service' ? '#/as/service' : '#/work/profile';
+      let qr: string | null = null;
+      try { qr = sessionStorage.getItem('traksos.qr'); } catch { /* */ }
+      location.hash = qr ? '#/qr/' + qr : role === 'client' ? '#/' : role === 'service' ? '#/as/service' : '#/work/profile';
     }
   }
 
@@ -45,13 +47,13 @@ export function Login() {
 
       {step === 'phone' ? (
         <form className="stack" onSubmit={(e) => { e.preventDefault(); sendCode(); }}>
-          <div className="stack">
+          {!driver && <div className="stack">
             {ROLES.map((r) => (
               <button key={r.id} type="button" className="opt" aria-pressed={role === r.id} onClick={() => setRole(r.id)}>
                 <b>{r.name}</b><small>{r.hint}</small>
               </button>
             ))}
-          </div>
+          </div>}
           <Field label="Телефон">
             <input className="field" type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
           </Field>

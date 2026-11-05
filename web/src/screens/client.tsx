@@ -3,6 +3,7 @@ import { get, post, put, del, rub, fmtTime, fmtPhone } from '../api.ts';
 import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFields, LiveStrip, type VehicleValue } from '../ui.tsx';
 import { BookingRows } from './base.tsx';
+import { DriverRules } from './fleet.tsx';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
 
@@ -141,6 +142,7 @@ export function Consult() {
       <Back to="" />
       <div><h1>Консультация по телефону</h1><div className="sub">Мастер ответит голосом и в чате, откуда бы вы ни звонили. Выезда нет — только разговор.</div></div>
       <SelfOrderWarning me={me} />
+      <DriverRules />
       <div className="card flat">
         <div className="sum total"><span>Стоимость консультации</span><span>{rub(c.price)}</span></div>
         <div className="banner good"><span>Если в течение {c.backHours} часов понадобится выезд — к этому или другому мастеру, — <b>{rub(c.backDiscount)} вернутся скидкой</b> на него.</span></div>
@@ -338,6 +340,7 @@ export function NewOrder({ service }: { service: string }) {
         <div className="sub">{sos ? `${s?.name} · срочный вызов` : sym ? s?.name : s?.hint}</div>
       </div>
       <SelfOrderWarning me={me} />
+      <DriverRules />
       {consult.data?.consultHint && (
         <div className="card flat">
           <span className="label">Подсказка мастера по телефону</span>
@@ -597,6 +600,11 @@ export function Garage() {
         <h1>Мой гараж</h1>
         <div className="sub">Машина сохраняется один раз и выбирается одним нажатием во всех заявках.</div>
       </div>
+      {!isDriver && (
+        <button className="linkrow" onClick={() => go('fleet')}>
+          <span><b>Мой парк</b><small>водители и лимиты, QR-наклейки, подтверждение заказов, ЭДО</small></span><span aria-hidden="true">›</span>
+        </button>
+      )}
       {!list.data ? <Loading error={list.error} /> : list.data.map((v: any) => (
         <div key={v.id} className="card">
           <div className="between"><b>{v.brand} {v.model ?? ''}{v.year ? `, ${v.year}` : ''}</b><span className="pill">{v.plate ?? 'без номера'}</span></div>

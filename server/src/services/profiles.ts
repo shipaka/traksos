@@ -246,7 +246,7 @@ export class ProfilesService {
     );
     if (driver!.owner_id && driver!.owner_id !== owner.id) throw bad('driver_taken', 'Этот номер уже водитель другого владельца');
     await this.db.query('update users set owner_id=$2 where id=$1', [driver!.id, owner.id]);
-    await this.db.query('update vehicles set driver_id=$2 where id=$1', [vehicleId, driver!.id]);
+    await this.db.query('update vehicles set driver_id=$2, driver_since=now() where id=$1', [vehicleId, driver!.id]);
     return { driverId: driver!.id };
   }
 }

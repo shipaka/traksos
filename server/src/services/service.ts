@@ -298,6 +298,10 @@ export class ServiceCenters {
     if (p.day < msk(this.now())) throw bad('past', 'Выберите сегодня или позже');
     if ((c.closed_days ?? []).some((d: any) => msk(new Date(d)) === p.day)) throw bad('closed', 'В этот день сервис не работает');
     const clientId = user.owner_id ?? user.id;
+    if (user.owner_id) {
+      const f = (await this.db.one<any>('select fleet from users where id=$1', [user.owner_id]))?.fleet;
+      if (f?.allow?.service === false) throw forbidden('Владелец не разрешил записываться в сервис');
+    }
     let vehicle: any = {};
     if (p.vehicleId) {
       const v = await this.db.one('select * from vehicles where id=$1 and owner_id=$2', [p.vehicleId, clientId]);

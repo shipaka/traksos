@@ -10,6 +10,7 @@ import { haversineKm } from '../domain/geo.ts';
 import { slot } from '../domain/schedule.ts';
 import { rub } from '../util.ts';
 import type { AuctionService } from './auction.ts';
+const SERVICE_TITLE: Record<string, string> = { consult: 'Консультация', electric: 'Электрик', air: 'Пневматика', autonomy: 'Автономка', tyre: 'Шиномонтаж', diag: 'Диагност', ecu: 'Блоки управления', tow: 'Эвакуатор' };
 
 export interface CreateOrderInput {
   service: string;
@@ -104,21 +105,81 @@ export class OrdersService {
       year = year ?? c.year;
     }
 
+    // Водитель парка: что ему можно и до какой суммы. SOS — всегда, без подтверждения.
+    const gate = user.owner_id && !i.isSos ? await this.fleetGate(user, i.service, est.callOut) : null;
     const order = await this.db.one(
       `insert into orders(client_id, created_by, vehicle_id, service, is_sos, problem, description, address, lat, lng,
           zone_id, night, group_trip, tier, brand, estimate, payment_method, client_fee_pct, destination, cargo, loaded, driver_on_site,
-          consult_of, discount_amount, discount_reason, model, year, site)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28) returning *`,
+          consult_of, discount_amount, discount_reason, model, year, site, status, owner_note)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30) returning *`,
       [clientId, user.id, i.vehicleId ?? null, i.service, !!i.isSos, i.problem ?? null, i.description ?? null, isConsult ? null : i.address ?? null,
         isConsult ? null : i.lat ?? null, isConsult ? null : i.lng ?? null, est.zoneId, night, est.group, tier, brand, est, method, feePct,
         i.destination ?? null, i.cargo ?? null, i.loaded ?? null, i.driverOnSite ?? null,
-        consultOf, discount, discount ? CONSULT_DISCOUNT : null, model, year, isConsult ? null : i.site ?? null],
+        consultOf, discount, discount ? CONSULT_DISCOUNT : null, model, year, isConsult ? null : i.site ?? null,
+        gate ? 'awaiting_owner' : 'searching', gate],
     );
     await this.event(this.db, order!.id, user.id, 'created', { estimate: est, sos: !!i.isSos });
 
+    if (gate) {
+      await this.event(this.db, order!.id, user.id, 'owner_approval_requested', { reason: gate });
+      await this.notifier.notify([clientId], { type: 'order', orderId: order!.id, status: 'awaiting_owner' },
+        { kind: 'normal', title: 'Водитель просит подтвердить заказ', body: `${SERVICE_TITLE[i.service] ?? i.service} · ${(est.callOut / 100).toLocaleString('ru-RU')} ₽ — ${gate}`, data: { orderId: order!.id } });
+      return { order: await this.view(user, order!.id), confirmationUrl: null };
+    }
+    return this.launch(user, order);
+  }
+
+  /** Заявка пошла в работу: оплата (холд) и вызов исполнителей */
+  async launch(user: AuthUser, order: any) {
     const pay = await this.payments.onCreated(order);
     if (!pay.holdRequired) await this.startDispatch(order!.id);
     return { order: await this.view(user, order!.id), confirmationUrl: pay.confirmationUrl ?? null };
+  }
+
+  /** null — можно сразу; строка — почему нужно подтверждение владельца; запрещено — ошибка */
+  async fleetGate(user: AuthUser, service: string, amount: number): Promise<string | null> {
+    const owner = await this.db.one<{ fleet: any }>('select fleet from users where id=$1', [user.owner_id]);
+    const f = owner?.fleet ?? {};
+    const kind = service === 'consult' ? 'consult' : service === 'tow' ? 'tow' : 'repair';
+    if (f.allow?.[kind] === false) throw forbidden(kind === 'tow' ? 'Владелец не разрешил вызывать эвакуатор — только SOS' : kind === 'consult' ? 'Владелец не разрешил консультации' : 'Владелец не разрешил вызывать мастера — только SOS');
+    if (f.mode === 'approve') return 'всё через владельца';
+    if (f.perOrder != null && amount > f.perOrder) return `дороже лимита на заказ ${(f.perOrder / 100).toLocaleString('ru-RU')} ₽`;
+    if (f.perMonth != null) {
+      const spent = await this.monthSpent(user.id);
+      if (spent + amount > f.perMonth) return `сверх лимита на месяц ${(f.perMonth / 100).toLocaleString('ru-RU')} ₽`;
+    }
+    return null;
+  }
+
+  async monthSpent(driverId: string) {
+    const r = await this.db.one<{ s: number }>(
+      `select coalesce(sum(coalesce(call_out_amount, (estimate->>'callOut')::int, 0) + coalesce(work_amount, 0)), 0)::int as s from orders
+        where created_by=$1 and status not in ('cancelled','no_performer','awaiting_owner')
+          and created_at >= date_trunc('month', now() at time zone 'Europe/Moscow') at time zone 'Europe/Moscow'`, [driverId]);
+    return r?.s ?? 0;
+  }
+
+  /** Владелец: подтвердить заказ водителя или отказать */
+  async ownerDecision(owner: AuthUser, orderId: string, approve: boolean, reason?: string) {
+    const o = await this.db.one('select * from orders where id=$1 and client_id=$2', [orderId, owner.id]);
+    if (!o) throw notFound('Заявка не найдена');
+    if (o.status !== 'awaiting_owner') throw conflict('bad_status', 'Заявка уже не ждёт подтверждения');
+    if (!approve) {
+      const why = reason?.trim() || 'Владелец отклонил заказ';
+      await this.db.query(`update orders set status='cancelled', cancel_reason=$2, cancelled_at=now() where id=$1 and status='awaiting_owner'`, [orderId, why]);
+      await this.event(this.db, orderId, owner.id, 'owner_rejected', { reason: why });
+      await this.systemMessage(orderId, `Владелец отклонил заказ: ${why}`);
+      await this.notifier.notify([o.created_by], { type: 'order', orderId, status: 'cancelled' },
+        { kind: 'normal', title: 'Владелец отклонил заказ', body: why, data: { orderId } });
+      return this.view(owner, orderId);
+    }
+    const upd = await this.db.one(`update orders set status='searching' where id=$1 and status='awaiting_owner' returning *`, [orderId]);
+    if (!upd) throw conflict('bad_status', 'Заявка уже не ждёт подтверждения');
+    await this.event(this.db, orderId, owner.id, 'owner_approved', {});
+    await this.notifier.notify([o.created_by], { type: 'order', orderId, status: 'searching' },
+      { kind: 'normal', title: 'Владелец подтвердил заказ', body: 'Ищем исполнителя', data: { orderId } });
+    await this.launch(owner, upd);
+    return this.view(owner, orderId);
   }
 
   // Очередь вызова ---------------------------------------------------------
@@ -536,7 +597,7 @@ export class OrdersService {
       limits: o.status === 'searching' ? this.auction.limits(o, (await this.settings.get('dispatch'))) : null,
       destination: o.destination, cargo: o.cargo, loaded: o.loaded, driverOnSite: o.driver_on_site, discountReason: o.discount_reason,
       money: this.money(o), result: o.result, resultNote: o.result_note,
-      site: o.site, workStartedAt: o.work_started_at ?? null,
+      site: o.site, workStartedAt: o.work_started_at ?? null, ownerNote: o.owner_note ?? null,
       consultHint: o.consult_hint, consultOf: o.consult_of, siteFlags: o.site_flags ?? [], lateMinutes: o.late_minutes ?? 0, hintCheck: o.hint_check,
       consultFrom: o.consult_of ? await this.db.one(`select o.number, o.consult_hint as hint, u.name as performer_name from orders o
           left join users u on u.id=o.performer_id where o.id=$1`, [o.consult_of]) : null,

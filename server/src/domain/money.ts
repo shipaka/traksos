@@ -44,7 +44,7 @@ export function cancelStage(
   opts: { byPerformer?: boolean; startKm?: number | null; leftKm?: number | null } = {},
 ): CancelStage {
   if (opts.byPerformer) return 'performer_fault';
-  if (status === 'searching' || status === 'no_performer') return 'searching';
+  if (status === 'searching' || status === 'no_performer' || status === 'awaiting_owner') return 'searching';
   if (status === 'accepted') return 'accepted';
   if (status === 'en_route') {
     if (opts.startKm && opts.leftKm != null && opts.startKm > 0) {

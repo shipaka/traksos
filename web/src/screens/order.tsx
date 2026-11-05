@@ -35,10 +35,11 @@ export function Order({ id }: { id: string }) {
 
       {(isPerformer || d.you === 'candidate') && <PerformerTabs tab={ptab} setTab={setPtab} />}
       {(isPerformer || d.you === 'candidate') && ptab === 'client' ? <ClientTab id={id} canEdit={isPerformer} /> : <>
+      {d.status === 'awaiting_owner' && <OwnerApproval d={d} onDone={o.reload} />}
       {d.status === 'searching' && (d.you === 'client' || d.you === 'admin') && <Search d={d} onChosen={o.reload} />}
       {d.you === 'candidate' && <CandidateView d={d} onDone={o.reload} />}
 
-      {!isConsult && d.status !== 'cancelled' && d.status !== 'no_performer' && d.status !== 'searching' && <Steps status={d.status} service={d.service} />}
+      {!isConsult && !['cancelled', 'no_performer', 'searching', 'awaiting_owner'].includes(d.status) && <Steps status={d.status} service={d.service} />}
       {isConsult && !isPerformer && d.you !== 'candidate' && <ConsultClient d={d} />}
       {d.consultFrom?.hint && <ConsultHintCard from={d.consultFrom} />}
       {d.status === 'no_performer' && !isPerformer && <Retry id={id} onDone={o.reload} />}
@@ -70,6 +71,25 @@ export function Order({ id }: { id: string }) {
       {!done && d.actions.includes('cancel') && !isPerformer && !(isConsult && d.status === 'awaiting_confirmation') && <Cancel id={id} status={d.status} consult={isConsult} onDone={o.reload} />}
       {d.status === 'cancelled' && <div className="card"><b>Заявка отменена</b><span className="note">{d.cancelReason}</span></div>}
     </main>
+  );
+}
+
+/** Водитель заказал дороже лимита: владелец подтверждает, водитель ждёт */
+function OwnerApproval({ d, onDone }: { d: any; onDone: () => void }) {
+  const { me } = useMe();
+  const { busy, run } = useAction();
+  const [why, setWhy] = useState('');
+  if (me?.owner_id || d.you !== 'client') return <div className="banner warn col"><b>Ждёт подтверждения владельца</b><span className="note">{d.ownerNote ? `Причина: ${d.ownerNote}. ` : ''}Владельцу пришло уведомление. SOS — без подтверждения, всегда.</span></div>;
+  return (
+    <div className="card hi">
+      <b>Водитель просит подтвердить заказ</b>
+      <span className="note">{d.ownerNote} · выезд {rub(d.money?.callOut ?? d.estimate?.callOut)}</span>
+      <div className="grid2">
+        <button className="btn" disabled={busy} onClick={async () => { if (await run(() => post(`/api/orders/${d.id}/owner-decision`, { approve: true }), 'Подтверждено — ищем исполнителя')) onDone(); }}>Подтвердить</button>
+        <button className="btn ghost" disabled={busy} onClick={async () => { if (await run(() => post(`/api/orders/${d.id}/owner-decision`, { approve: false, reason: why || undefined }), 'Отклонено — водитель увидит в чате')) onDone(); }}>Отклонить</button>
+      </div>
+      <input className="field" placeholder="Причина отказа — водитель увидит (по желанию)" value={why} onChange={(e) => setWhy(e.target.value)} />
+    </div>
   );
 }
 

@@ -14,6 +14,7 @@ import { Documents } from './screens/documents.tsx';
 import { OfferGate, OfferPage } from './screens/offers.tsx';
 import { AdminUser } from './screens/adminUser.tsx';
 import { BaseHome, BaseCar, BaseSetup, ServicesList, CenterPage, BookForm, BookingPage } from './screens/base.tsx';
+import { Fleet, QrJoin } from './screens/fleet.tsx';
 import { SupportList, SupportNew, SupportThread, Notifications, useUnread } from './screens/support.tsx';
 
 type Mode = 'client' | 'performer' | 'admin' | 'service';
@@ -68,7 +69,7 @@ function App() {
   if (!me) {
     return (
       <MeCtx.Provider value={{ me: null, reload, mode: 'client', setMode }}>
-        <Shell mode="client" me={null}>{route[0] === 'offer' ? <OfferPage audience={route[1] ?? 'client'} /> : <Login />}</Shell>
+        <Shell mode="client" me={null}>{route[0] === 'offer' ? <OfferPage audience={route[1] ?? 'client'} /> : route[0] === 'qr' && route[1] ? <QrJoin code={route[1]} /> : <Login />}</Shell>
       </MeCtx.Provider>
     );
   }
@@ -98,6 +99,8 @@ function App() {
     case 'base': screen = b === 'car' && route[2] ? <BaseCar id={route[2]} /> : b === 'me' ? <BaseSetup /> : <BaseHome />; break;
     case 'services': screen = b && route[2] === 'book' ? <BookForm id={b} /> : b ? <CenterPage id={b} /> : <ServicesList />; break;
     case 'booking': screen = <BookingPage id={b} />; break;
+    case 'fleet': screen = <Fleet />; break;
+    case 'qr': screen = <QrJoin code={b} />; break;
     case 'admin': screen = !isStaff ? <Home /> : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : <Admin />; break;
     case 'offer': screen = <OfferPage audience={b ?? 'client'} />; break;
     case 'support': screen = b === 'new' ? <SupportNew /> : b ? <SupportThread id={b} /> : <SupportList />; break;

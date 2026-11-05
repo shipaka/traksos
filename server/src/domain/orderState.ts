@@ -6,13 +6,13 @@
 
 export type OrderStatus =
   | 'searching' | 'accepted' | 'en_route' | 'arrived' | 'working'
-  | 'awaiting_confirmation' | 'completed' | 'cancelled' | 'no_performer';
+  | 'awaiting_confirmation' | 'completed' | 'cancelled' | 'no_performer' | 'awaiting_owner';
 
 export type Actor = 'client' | 'performer' | 'system' | 'admin';
 
 export type Action =
   | 'accept' | 'depart' | 'arrive' | 'start_work' | 'propose_amount'
-  | 'confirm_amount' | 'dispute_amount' | 'cancel' | 'expire' | 'retry' | 'finish_consult';
+  | 'confirm_amount' | 'dispute_amount' | 'cancel' | 'expire' | 'retry' | 'finish_consult' | 'owner_approve';
 
 const table: Record<Action, { from: OrderStatus[]; to: OrderStatus; by: Actor[] }> = {
   accept: { from: ['searching'], to: 'accepted', by: ['performer'] },
@@ -22,9 +22,11 @@ const table: Record<Action, { from: OrderStatus[]; to: OrderStatus; by: Actor[] 
   propose_amount: { from: ['arrived', 'working', 'awaiting_confirmation'], to: 'awaiting_confirmation', by: ['performer'] },
   confirm_amount: { from: ['awaiting_confirmation'], to: 'completed', by: ['client'] },
   dispute_amount: { from: ['awaiting_confirmation'], to: 'working', by: ['client'] },
-  cancel: { from: ['searching', 'accepted', 'en_route', 'arrived', 'working', 'awaiting_confirmation', 'no_performer'], to: 'cancelled', by: ['client', 'performer', 'admin'] },
+  cancel: { from: ['awaiting_owner', 'searching', 'accepted', 'en_route', 'arrived', 'working', 'awaiting_confirmation', 'no_performer'], to: 'cancelled', by: ['client', 'performer', 'admin'] },
   expire: { from: ['searching'], to: 'no_performer', by: ['system'] },
   retry: { from: ['no_performer'], to: 'searching', by: ['client'] },
+  // Водитель заказал дороже лимита — владелец подтверждает (отказ — это отмена)
+  owner_approve: { from: ['awaiting_owner'], to: 'searching', by: ['client'] },
   // Консультация: мастер оставляет подсказку и закрывает разговор, клиент подтверждает «Вопрос решён»
   finish_consult: { from: ['accepted', 'working', 'awaiting_confirmation'], to: 'awaiting_confirmation', by: ['performer'] },
 };
@@ -58,4 +60,5 @@ export const statusLabels: Record<OrderStatus, string> = {
   completed: 'Готово',
   cancelled: 'Отменена',
   no_performer: 'Никто не взял заявку',
+  awaiting_owner: 'Ждёт подтверждения владельца',
 };

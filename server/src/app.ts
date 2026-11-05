@@ -22,6 +22,7 @@ import { SupportService, TOPICS } from './services/support.ts';
 import { StatsService } from './services/stats.ts';
 import { OnsiteService } from './services/onsite.ts';
 import { ServiceCenters } from './services/service.ts';
+import { FleetService } from './services/fleet.ts';
 import { Raw } from './http/router.ts';
 import { PaymentsService } from './payments/service.ts';
 import { estimate, isNight } from './domain/pricing.ts';
@@ -61,6 +62,7 @@ export function createApp(d: Deps) {
   const support = new SupportService(d.db, notifier, orders, now);
   const stats = new StatsService(d.db, now);
   const centers = new ServiceCenters(d.db, notifier, settings, support, now);
+  const fleet = new FleetService(d.db, notifier, orders);
 
   const r = new Router();
   const staff = ['admin', 'moderator'];
@@ -226,6 +228,23 @@ export function createApp(d: Deps) {
       when: z.enum(['now', 'today', 'tomorrow']).optional(), time: z.string().max(20).optional(),
     }).optional(),
   }), c.body))));
+  // Мой парк --------------------------------------------------------------------
+  r.get('/api/fleet', true, (c: AuthedCtx) => fleet.get(c.user));
+  r.put('/api/fleet', true, (c: AuthedCtx) => fleet.set(c.user, parse(z.object({
+    mode: z.enum(['limit', 'approve']).optional(),
+    perOrder: z.number().int().min(0).max(100_000_000).nullable().optional(), perMonth: z.number().int().min(0).max(1_000_000_000).nullable().optional(),
+    allow: z.object({ repair: z.boolean().optional(), tow: z.boolean().optional(), consult: z.boolean().optional(), service: z.boolean().optional() }).optional(),
+    edoPdfOnly: z.boolean().optional(),
+  }), c.body)));
+  r.post('/api/fleet/vehicles/:id/new-qr', true, (c: AuthedCtx) => fleet.newQr(c.user, c.params.id));
+  r.get('/api/fleet/rules', true, (c: AuthedCtx) => fleet.rules(c.user));
+  r.post('/api/orders/:id/owner-decision', true, (c: AuthedCtx) => {
+    const b = parse(z.object({ approve: z.boolean(), reason: z.string().max(300).optional() }), c.body);
+    return orders.ownerDecision(c.user, c.params.id, b.approve, b.reason);
+  });
+  r.get('/api/qr/:code', false, (c: Ctx) => fleet.qrInfo(c.params.code));
+  r.post('/api/qr/:code/join', true, (c: AuthedCtx) => fleet.qrJoin(c.user, c.params.code));
+
   // Рембаза: кабинет сервиса ---------------------------------------------------
   const centerSchema = z.object({
     name: z.string().min(2).max(120).optional(), address: z.string().min(3).max(300).optional(),
