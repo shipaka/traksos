@@ -77,6 +77,10 @@ export const defaultSettings = {
     cashChargesClientFee: true,
     /** Первый месяц без комиссии (до этой даты включительно) */
     freeUntil: null as string | null,
+    /** Рембаза: комиссия с работ по клиентам ТракSOS, % */
+    serviceCommissionPct: 10,
+    /** Скидка клиенту в сервисе по совету мастера, % — из комиссии ТракSOS */
+    serviceReferralDiscountPct: 5,
   },
   payments: {
     /** Наличные мастеру — работает всегда */

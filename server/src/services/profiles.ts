@@ -196,6 +196,21 @@ export class ProfilesService {
         where o.vehicle_id=$1 ${user.owner_id ? 'and o.created_by=$2' : ''}
         order by o.created_at desc limit 100`,
       user.owner_id ? [id, user.id] : [id]);
+    // Записи в сервис-партнёр — в той же истории, с меткой «Ремонт на рембазе»
+    const bookings = await this.db.query(
+      `select b.id, b.number, b.status, b.need, b.works, b.created_at, b.closed_at, b.amount, b.discount, c.name as center_name
+         from service_bookings b join service_centers c on c.id=b.center_id
+        where b.vehicle_id=$1 and b.status not in ('cancelled','declined') ${user.owner_id ? 'and b.created_by=$2' : ''}
+        order by b.created_at desc limit 100`,
+      user.owner_id ? [id, user.id] : [id]);
+    for (const b of bookings) {
+      rows.push({
+        id: b.id, number: b.number, kind: 'service', service: 'service', status: b.status === 'closed' ? 'completed' : b.status,
+        problem: 'Ремонт на рембазе', description: b.works?.length ? b.works.join(', ') : null, performer_name: `Рембаза «${b.center_name}»`,
+        created_at: b.created_at, completed_at: b.closed_at, amount: b.amount != null ? b.amount - b.discount : 0,
+      });
+    }
+    rows.sort((a: any, b: any) => +new Date(b.created_at) - +new Date(a.created_at));
     const done = rows.filter((r: any) => r.status === 'completed');
     return {
       vehicle: v,

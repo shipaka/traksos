@@ -249,7 +249,7 @@ function parseValue(s: string, oid: number): unknown {
     case 114: case 3802: return JSON.parse(s);
     case 1082: return s;
     case 1114: case 1184: return new Date(s.includes('T') ? s : s.replace(' ', 'T').replace(/([+-]\d\d)$/, '$1:00'));
-    case 1009: case 1015: return parseTextArray(s);
+    case 1009: case 1015: case 1182: return parseTextArray(s);
     default: return s; // int8, numeric, text, uuid → строка, как в pg
   }
 }

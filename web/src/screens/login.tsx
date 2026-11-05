@@ -6,6 +6,7 @@ const ROLES = [
   { id: 'client', name: 'Мне нужна помощь', hint: 'Владелец, водитель, транспортная компания' },
   { id: 'master', name: 'Я мастер', hint: 'Электрик, диагност, воздушник, автономщик, шиномонтаж' },
   { id: 'tow', name: 'Я эвакуаторщик', hint: 'Заявки на эвакуацию приходят как звонок' },
+  { id: 'service', name: 'Я рембаза (сервис)', hint: 'Клиенты записываются к вам, мастера советуют вас' },
 ] as const;
 
 export function Login() {
@@ -31,7 +32,7 @@ export function Login() {
       setToken(r.token);
       connectWs();
       await reload();
-      location.hash = role === 'client' ? '#/' : '#/work/profile';
+      location.hash = role === 'client' ? '#/' : role === 'service' ? '#/as/service' : '#/work/profile';
     }
   }
 

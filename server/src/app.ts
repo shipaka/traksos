@@ -21,6 +21,7 @@ import { AdminService } from './services/admin.ts';
 import { SupportService, TOPICS } from './services/support.ts';
 import { StatsService } from './services/stats.ts';
 import { OnsiteService } from './services/onsite.ts';
+import { ServiceCenters } from './services/service.ts';
 import { Raw } from './http/router.ts';
 import { PaymentsService } from './payments/service.ts';
 import { estimate, isNight } from './domain/pricing.ts';
@@ -59,6 +60,7 @@ export function createApp(d: Deps) {
   const admin = new AdminService(d.db, notifier, orders, payments, profiles, settings, now);
   const support = new SupportService(d.db, notifier, orders, now);
   const stats = new StatsService(d.db, now);
+  const centers = new ServiceCenters(d.db, notifier, settings, support, now);
 
   const r = new Router();
   const staff = ['admin', 'moderator'];
@@ -224,6 +226,53 @@ export function createApp(d: Deps) {
       when: z.enum(['now', 'today', 'tomorrow']).optional(), time: z.string().max(20).optional(),
     }).optional(),
   }), c.body))));
+  // Рембаза: кабинет сервиса ---------------------------------------------------
+  const centerSchema = z.object({
+    name: z.string().min(2).max(120).optional(), address: z.string().min(3).max(300).optional(),
+    lat: z.number().min(-90).max(90).nullable().optional(), lng: z.number().min(-180).max(180).nullable().optional(),
+    hours: z.string().max(60).optional(), inn: z.string().max(12).nullable().optional(),
+    brands: z.array(z.string().max(40)).max(40).optional(),
+    staff: z.record(z.string().max(20), z.enum(['own', 'invite', 'none'])).optional(),
+    conditions: z.array(z.enum(['parking', 'pit', 'lift', 'night'])).max(4).optional(),
+    accepts: z.array(z.enum(['quick', 'day', 'long'])).max(3).optional(),
+    closedDays: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).max(60).optional(),
+    paused: z.boolean().optional(),
+  });
+  r.get('/api/base', true, (c: AuthedCtx) => centers.cabinet(c.user));
+  r.put('/api/base', true, (c: AuthedCtx) => centers.save(c.user, parse(centerSchema, c.body)));
+  r.post('/api/base/confirm-accepts', ['service'], (c: AuthedCtx) => centers.confirmAccepts(c.user));
+  r.post('/api/base/bookings/:id/respond', ['service'], (c: AuthedCtx) => centers.respond(c.user, c.params.id, parse(z.object({
+    action: z.enum(['accept', 'clarify', 'decline', 'undo']), time: z.string().max(20).optional(), q: z.string().max(300).optional(), reason: z.string().max(200).optional(),
+  }), c.body)));
+  r.post('/api/base/bookings/:id/status', ['service'], (c: AuthedCtx) => centers.setStatus(c.user, c.params.id, parse(z.object({ status: z.string().max(20) }), c.body).status));
+  r.post('/api/base/bookings/:id/note', ['service'], (c: AuthedCtx) => centers.note(c.user, c.params.id, parse(z.object({ text: z.string().max(500).optional(), notesPublic: z.boolean().optional() }), c.body)));
+  r.post('/api/base/bookings/:id/still-here', ['service'], (c: AuthedCtx) => centers.stillHere(c.user, c.params.id));
+  r.post('/api/base/bookings/:id/ready', ['service'], (c: AuthedCtx) => centers.ready(c.user, c.params.id, parse(z.object({ works: z.array(z.string().max(80)).max(20) }), c.body).works));
+  r.post('/api/base/bookings/:id/invoice', ['service'], (c: AuthedCtx) => centers.invoice(c.user, c.params.id, parse(z.object({ amount: z.number().int().min(100).max(100_000_000) }), c.body).amount));
+  r.get('/api/base/bookings/:id/company', ['service'], (c: AuthedCtx) => centers.companyCard(c.user, c.params.id));
+  // Рембаза: клиент
+  r.get('/api/services', true, (c: AuthedCtx) => {
+    const q = c.query;
+    const num = (x: string | null) => (x == null || x === '' || !Number.isFinite(Number(x)) ? undefined : Number(x));
+    return centers.list(c.user, { lat: num(q.get('lat')), lng: num(q.get('lng')), need: q.get('need') ?? undefined, brand: q.get('brand') ?? undefined });
+  });
+  r.get('/api/services/:id', true, (c: AuthedCtx) => centers.center(c.user, c.params.id));
+  r.post('/api/services/:id/book', true, (c: AuthedCtx) => centers.book(c.user, c.params.id, parse(z.object({
+    vehicleId: z.string().uuid().nullable().optional(), need: z.string().max(20), day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    time: z.string().max(20).nullable().optional(), arrival: z.enum(['self', 'tow']).default('self'), comment: z.string().max(500).nullable().optional(),
+    fromOrderId: z.string().uuid().nullable().optional(),
+  }), c.body)));
+  r.get('/api/bookings', true, (c: AuthedCtx) => centers.myBookings(c.user));
+  r.get('/api/bookings/:id', true, (c: AuthedCtx) => centers.booking(c.user, c.params.id));
+  r.post('/api/bookings/:id/answer', true, (c: AuthedCtx) => centers.answer(c.user, c.params.id, parse(z.object({ text: z.string().min(2).max(500) }), c.body).text));
+  r.post('/api/bookings/:id/cancel', true, (c: AuthedCtx) => centers.cancel(c.user, c.params.id));
+  r.post('/api/bookings/:id/confirm', true, (c: AuthedCtx) => centers.confirm(c.user, c.params.id, parse(z.object({
+    agree: z.boolean(), stars: z.number().int().min(1).max(5).optional(), text: z.string().max(1000).optional(), why: z.string().max(1000).optional(),
+  }), c.body)));
+  r.post('/api/orders/:id/recommend-service', performerRoles, (c: AuthedCtx) => onsite.recommend(c.user, c.params.id, parse(z.object({ centerId: z.string().uuid().nullable() }), c.body).centerId));
+  r.get('/api/admin/services', staff, () => centers.pending());
+  r.post('/api/admin/services/:id/verify', staff, (c: AuthedCtx) => centers.verify(c.user, c.params.id, parse(z.object({ decision: z.enum(['approved', 'rejected']) }), c.body).decision));
+
   r.get('/api/my-performers', true, (c: AuthedCtx) => orders.myPerformers(c.user));
   r.put('/api/my-performers/:id', true, (c: AuthedCtx) => orders.setPref(c.user, c.params.id, parse(z.object({ pref: z.enum(['fav', 'hide']).nullable() }), c.body).pref));
   r.get('/api/orders', true, (c: AuthedCtx) =>

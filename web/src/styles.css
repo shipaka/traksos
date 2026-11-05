@@ -221,3 +221,4 @@ select.field { appearance: none; }
 .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .grid7 { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
 .opt:disabled { opacity: .5; }
+.banner.col { flex-direction: column; gap: 4px; }

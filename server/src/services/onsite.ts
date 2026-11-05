@@ -91,6 +91,24 @@ export class OnsiteService {
   }
 
   /** Мастер на месте уточняет машину: следующий приедет подготовленным */
+  /** «Причина найдена, на месте не исправить» — мастер советует сервис-партнёр; клиенту там скидка */
+  async recommend(user: AuthUser, orderId: string, centerId: string | null) {
+    const o = await this.mine(user, orderId);
+    if (!['arrived', 'working', 'awaiting_confirmation', 'completed'].includes(o.status)) throw conflict('bad_status', 'Советовать сервис можно после приезда');
+    if (centerId) {
+      const c = await this.db.one(`select id, name from service_centers where id=$1 and verification='approved'`, [centerId]);
+      if (!c) throw notFound('Сервис не найден');
+      await this.db.query('update orders set recommended_center_id=$2 where id=$1', [orderId, centerId]);
+      await this.orders.event(this.db, orderId, user.id, 'service_recommended', { centerId });
+      await this.orders.systemMessage(orderId, `Мастер советует сервис «${c.name}» — запишитесь из заявки, будет скидка.`);
+      await this.notifier.notify([o.client_id, o.created_by], { type: 'order', orderId, status: o.status },
+        { kind: 'normal', title: 'Мастер советует сервис', body: `«${c.name}» — со скидкой по совету мастера`, data: { orderId } });
+    } else {
+      await this.db.query('update orders set recommended_center_id=null where id=$1', [orderId]);
+    }
+    return this.orders.view(user, orderId);
+  }
+
   async fixVehicle(user: AuthUser, orderId: string, v: { brand?: string; model?: string | null; year?: number | null; axles?: number | null }) {
     const o = await this.mine(user, orderId);
     if (o.vehicle_id) {

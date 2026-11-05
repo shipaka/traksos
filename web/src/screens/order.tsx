@@ -1,3 +1,4 @@
+import { RecommendService } from './base.tsx';
 import { useEffect, useRef, useState } from 'react';
 import { get, post, rub, fmtTime } from '../api.ts';
 import { SERVICES, STATUS, STEPS, STEP_NAMES, RESULTS, CONSULT_HINTS, CONSULT_CONF } from '../dict.ts';
@@ -53,6 +54,13 @@ export function Order({ id }: { id: string }) {
       {isPerformer && (isConsult ? <ConsultFinish d={d} onDone={o.reload} /> : <PerformerActions d={d} onDone={o.reload} />)}
       {!isPerformer && d.status === 'working' && <WorkInProgress d={d} />}
       {!isPerformer && d.status === 'awaiting_confirmation' && (isConsult ? <ConsultConfirm d={d} onDone={o.reload} /> : <ConfirmAmount d={d} onDone={o.reload} />)}
+      {d.recommendedCenter && !isPerformer && d.you !== 'candidate' && (
+        <div className="banner good col">
+          <b>Мастер советует сервис «{d.recommendedCenter.name}»</b>
+          <span className="note">{d.recommendedCenter.address} · по совету мастера — скидка в счёте.</span>
+          <a className="btn small" href={`#/services/${d.recommendedCenter.id}/book?from=${d.id}`}>Записаться</a>
+        </div>
+      )}
       {d.status === 'completed' && <Review id={id} you={d.you} />}
 
       {d.status !== 'searching' && d.status !== 'no_performer' && <Chat id={id} disabled={d.status === 'cancelled'} />}
@@ -199,6 +207,7 @@ function PerformerActions({ d, onDone }: { d: any; onDone: () => void }) {
       {d.status === 'accepted' && <button className="btn" disabled={busy} onClick={() => step('depart', 'Клиент видит, что вы выехали')}>Выехал</button>}
       {['accepted', 'en_route'].includes(d.status) && <LateButtons d={d} onDone={onDone} />}
       {['arrived', 'working', 'awaiting_confirmation'].includes(d.status) && <SiteFlags d={d} onDone={onDone} />}
+      {d.service !== 'tow' && ['arrived', 'working', 'awaiting_confirmation'].includes(d.status) && <RecommendService order={d} onDone={onDone} />}
       {(d.status === 'accepted' || d.status === 'en_route') && <button className="btn ghost" disabled={busy} onClick={() => step('arrive', 'Клиент видит, что вы на месте')}>Я на месте</button>}
       {d.status === 'arrived' && <button className="btn" disabled={busy} onClick={() => step('start_work', 'Работа началась')}>Начал работу</button>}
 

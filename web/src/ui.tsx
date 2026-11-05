@@ -24,7 +24,7 @@ export interface Me {
   company_name: string | null; company_inn: string | null; rating: number | null; rating_count: number;
   performer: any | null;
 }
-export const MeCtx = createContext<{ me: Me | null; reload: () => Promise<void>; mode: 'client' | 'performer' | 'admin'; setMode: (m: 'client' | 'performer' | 'admin') => void }>(null as any);
+export const MeCtx = createContext<{ me: Me | null; reload: () => Promise<void>; mode: 'client' | 'performer' | 'admin' | 'service'; setMode: (m: 'client' | 'performer' | 'admin' | 'service') => void }>(null as any);
 export const useMe = () => useContext(MeCtx);
 
 // Уведомления сверху -------------------------------------------------------

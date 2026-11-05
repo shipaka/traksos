@@ -13,9 +13,10 @@ import { Admin } from './screens/admin.tsx';
 import { Documents } from './screens/documents.tsx';
 import { OfferGate, OfferPage } from './screens/offers.tsx';
 import { AdminUser } from './screens/adminUser.tsx';
+import { BaseHome, BaseCar, BaseSetup, ServicesList, CenterPage, BookForm, BookingPage } from './screens/base.tsx';
 import { SupportList, SupportNew, SupportThread, Notifications, useUnread } from './screens/support.tsx';
 
-type Mode = 'client' | 'performer' | 'admin';
+type Mode = 'client' | 'performer' | 'admin' | 'service';
 const PERFORMER_ROLES = ['master', 'tow', 'service'];
 
 function App() {
@@ -32,7 +33,7 @@ function App() {
       const m = await get<Me>('/api/me');
       setMe(m);
       // Первый вход исполнителя — сразу его кабинет
-      if (!localStorageGet('traksos.mode') && m.roles.some((r) => PERFORMER_ROLES.includes(r)) && !m.roles.includes('client')) setMode('performer');
+      if (!localStorageGet('traksos.mode') && m.roles.some((r) => PERFORMER_ROLES.includes(r)) && !m.roles.includes('client')) setMode(m.roles.includes('service') && !m.roles.some((r) => r === 'master' || r === 'tow') ? 'service' : 'performer');
     } catch {
       setMe(null);
     } finally {
@@ -45,8 +46,8 @@ function App() {
   useEffect(() => {
     const [x, m] = route;
     if (x !== 'as') return;
-    if (m === 'client' || m === 'performer' || m === 'admin') setMode(m);
-    location.replace('#/' + (m === 'performer' ? 'work' : m === 'admin' ? 'admin' : ''));
+    if (m === 'client' || m === 'performer' || m === 'admin' || m === 'service') setMode(m);
+    location.replace('#/' + (m === 'performer' ? 'work' : m === 'admin' ? 'admin' : m === 'service' ? 'base' : ''));
   }, [route.join('/')]); // eslint-disable-line
   useEffect(() => {
     if (!me) return;
@@ -76,11 +77,12 @@ function App() {
   if (a === 'as') return null;
   const isPerformer = me.roles.some((r) => PERFORMER_ROLES.includes(r));
   const isStaff = me.roles.some((r) => r === 'admin' || r === 'moderator');
-  const effMode: Mode = a === 'work' ? 'performer' : a === 'admin' ? 'admin' : mode === 'performer' && !isPerformer ? 'client' : mode;
+  const isService = me.roles.includes('service');
+  const effMode: Mode = a === 'work' ? 'performer' : a === 'admin' ? 'admin' : a === 'base' ? 'service' : (mode === 'performer' && !isPerformer) || (mode === 'service' && !isService) ? 'client' : mode;
 
   let screen;
   switch (a) {
-    case undefined: screen = effMode === 'performer' ? <Work /> : effMode === 'admin' && isStaff ? <Admin /> : <Home />; break;
+    case undefined: screen = effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isStaff ? <Admin /> : <Home />; break;
     case 'login': screen = <Home />; break;
     case 'sos': screen = <Sos />; break;
     case 'new': screen = b === 'consult' ? <Consult /> : <NewOrder service={b ?? 'electric'} />; break;
@@ -93,6 +95,9 @@ function App() {
         : b === 'me' ? ({ about: <AboutSection />, phone: <PhoneSection />, schedule: <ScheduleSection />, cars: <CarsSection />, tax: <TaxSection />, money: <MoneySection /> } as Record<string, JSX.Element>)[route[2]] ?? <PerformerHub />
         : b === 'filter' ? <FilterSection /> : b === 'jobs' ? <Orders as="performer" /> : b === 'docs' ? <Documents /> : <Work />;
       break;
+    case 'base': screen = b === 'car' && route[2] ? <BaseCar id={route[2]} /> : b === 'me' ? <BaseSetup /> : <BaseHome />; break;
+    case 'services': screen = b && route[2] === 'book' ? <BookForm id={b} /> : b ? <CenterPage id={b} /> : <ServicesList />; break;
+    case 'booking': screen = <BookingPage id={b} />; break;
     case 'admin': screen = !isStaff ? <Home /> : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : <Admin />; break;
     case 'offer': screen = <OfferPage audience={b ?? 'client'} />; break;
     case 'support': screen = b === 'new' ? <SupportNew /> : b ? <SupportThread id={b} /> : <SupportList />; break;
@@ -114,6 +119,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   const here = '/' + route.join('/');
   const tabs: [string, string, string][] = !me ? [] : mode === 'performer'
     ? [['/work', '⚡', 'Линия'], ['/work/jobs', '☰', 'История'], ['/work/me', '◉', 'Профиль']]
+    : mode === 'service'
+      ? [['/base', '▤', 'Рембаза'], ['/base/me', '⚙', 'Карточка'], ['/support', '?', 'Поддержка'], ['/profile', '◉', 'Аккаунт']]
     : mode === 'admin'
       ? [['/admin', '▦', 'Админ'], ['/as/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]
       : [['/', '⌂', 'Главная'], ['/orders', '☰', 'Заявки'], ['/sos', '!', 'SOS'], ['/garage', '▭', 'Гараж'], ['/profile', '◉', 'Профиль']];
@@ -124,6 +131,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         <div className="row" style={{ flexWrap: 'nowrap' }}>
           {me && mode === 'performer' && <span className="pill accent">исполнитель</span>}
           {me && mode === 'admin' && <span className="pill accent">админ</span>}
+          {me && mode === 'service' && <span className="pill accent">рембаза</span>}
           {me && <Bell />}
         </div>
       </header>
@@ -131,7 +139,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       {tabs.length > 0 && (
         <nav className="tabbar">
           {tabs.map(([href, ic, name]) => (
-            <a key={href} href={'#' + href} className={`${here === href || (href !== '/' && here.startsWith(href + '/') && href !== '/work') ? 'on' : ''} ${href === '/sos' ? 'sosTab' : ''}`}>
+            <a key={href} href={'#' + href} className={`${here === href || (href !== '/' && here.startsWith(href + '/') && href !== '/work' && href !== '/base') ? 'on' : ''} ${href === '/sos' ? 'sosTab' : ''}`}>
               <span className="ic">{ic}</span>{name}
             </a>
           ))}

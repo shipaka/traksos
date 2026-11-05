@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { get, post, put, del, rub, fmtTime, fmtPhone } from '../api.ts';
 import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFields, LiveStrip, type VehicleValue } from '../ui.tsx';
+import { BookingRows } from './base.tsx';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
 
@@ -53,6 +54,9 @@ export function Home() {
             <span><b>{s.name}</b><small>{fill(SERVICE_PRICE[id] ?? s.hint)}</small></span><span aria-hidden="true">›</span>
           </button>
         ))}
+        <button className="linkrow" onClick={() => go('services')}>
+          <span><b>Сервисы-партнёры</b><small>ремзоны рядом: запись, статус ремонта, счёт через ТракSOS</small></span><span aria-hidden="true">›</span>
+        </button>
       </div>
     </main>
   );
@@ -248,12 +252,13 @@ export function NewOrder({ service }: { service: string }) {
   const [vehicleId, setVehicleId] = useState<string>('');
   const [car, setCar] = useState<VehicleValue>({ brand: '', model: '', year: '' });
   const [description, setDescription] = useState(sym ? sym.name : '');
-  const [address, setAddress] = useState('');
+  const [prefill] = useState<{ address?: string; destination?: string }>(() => { try { const v = JSON.parse(sessionStorage.getItem('traksos.prefill') ?? '{}'); sessionStorage.removeItem('traksos.prefill'); return v; } catch { return {}; } });
+  const [address, setAddress] = useState(prefill.address ?? '');
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [geoState, setGeoState] = useState<'idle' | 'wait' | 'ok' | 'fail'>('idle');
   const [method, setMethod] = useState<'cash' | 'online' | 'invoice'>('cash');
   const [est, setEst] = useState<any>(null);
-  const [destination, setDestination] = useState('');
+  const [destination, setDestination] = useState(prefill.destination ?? '');
   const [cargo, setCargo] = useState<'tractor' | 'semitrailer' | 'coupling' | 'truck12' | 'bus' | 'special'>('tractor');
   const [loaded, setLoaded] = useState<'empty' | 'loaded' | 'adr'>('empty');
   const [driverOnSite, setDriverOnSite] = useState(true);
@@ -489,8 +494,9 @@ export function Orders({ as }: { as: 'client' | 'performer' }) {
           ))}
         </div>
       )}
+      {as === 'client' && (ctab === 'now' || ctab === 'hist') && <BookingRows live={ctab === 'now'} />}
       {as === 'client' && (ctab === 'my' || ctab === 'black') ? <MyPerformers black={ctab === 'black'} /> :
-      !list.data ? <Loading error={list.error} /> : !shown!.length ? <div className="empty">{as === 'client' && ctab === 'now' ? 'Сейчас заявок нет — всё закрыто' : 'Заявок пока нет'}</div> : (
+      !list.data ? <Loading error={list.error} /> : !shown!.length ? <div className="empty">{as === 'client' && ctab === 'now' ? 'Выездов сейчас нет' : 'Выездов пока нет'}</div> : (
         <div className="rows">
           {shown!.map((o: any) => (
             <a key={o.id} href={`#/order/${o.id}`} className="list-item">
@@ -653,10 +659,10 @@ function VehicleHistory({ id }: { id: string }) {
           {d.items.map((o: any) => (
             <li key={o.id}>
               <i className={o.status === 'completed' ? 'ok' : o.status === 'cancelled' || o.status === 'no_performer' ? 'off' : 'now'} />
-              <a href={`#/order/${o.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                <b>{o.service === 'consult' ? 'Консультация по телефону' : o.service === 'tow' ? 'Эвакуатор' : `Выезд · ${SERVICES[o.service]?.name ?? o.service}`}{o.is_sos ? ' · SOS' : ''}</b>
-                <small>{fmtTime(o.created_at)}{o.performer_name ? ` · ${o.performer_name}` : ''} · {STATUS[o.status]?.name}{o.amount ? ` · ${rub(o.amount)}` : ''}</small>
-                {o.description && <small>Было: {o.description}</small>}
+              <a href={o.kind === 'service' ? `#/booking/${o.id}` : `#/order/${o.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <b>{o.kind === 'service' ? `Ремонт на рембазе` : o.service === 'consult' ? 'Консультация по телефону' : o.service === 'tow' ? 'Эвакуатор' : `Выезд · ${SERVICES[o.service]?.name ?? o.service}`}{o.is_sos ? ' · SOS' : ''}</b>
+                <small>{fmtTime(o.created_at)}{o.performer_name ? ` · ${o.performer_name}` : ''} · {STATUS[o.status]?.name ?? (o.kind === 'service' ? 'в сервисе' : o.status)}{o.amount ? ` · ${rub(o.amount)}` : ''}</small>
+                {o.description && <small>{o.kind === 'service' ? 'Сделано' : 'Было'}: {o.description}</small>}
                 {o.consult_hint && <small>Подсказка по телефону: {o.consult_hint.hints.join(', ').toLowerCase()}{o.consult_hint.note ? ` — ${o.consult_hint.note}` : ''}</small>}
                 {o.result_note && <small style={{ color: 'var(--fg)' }}>Мастер: {o.result_note}</small>}
               </a>
