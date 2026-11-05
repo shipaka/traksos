@@ -22,6 +22,8 @@ export interface CreateOrderInput {
   tier?: Tier;
   vehicleId?: string;
   brand?: string;
+  model?: string;
+  year?: number;
   groupTrip?: boolean;
   night?: boolean;
   paymentMethod?: 'cash' | 'online' | 'invoice';
@@ -63,11 +65,16 @@ export class OrdersService {
 
     const clientId = user.owner_id ?? user.id;
     let brand = i.brand ?? null;
+    let model = i.model ?? null;
+    let year = i.year ?? null;
     if (i.vehicleId) {
-      const v = await this.db.one<{ brand: string; driver_id: string | null }>('select brand, driver_id from vehicles where id=$1 and owner_id=$2', [i.vehicleId, clientId]);
+      const v = await this.db.one<{ brand: string; model: string | null; year: number | null; driver_id: string | null }>(
+        'select brand, model, year, driver_id from vehicles where id=$1 and owner_id=$2', [i.vehicleId, clientId]);
       if (!v) throw bad('bad_vehicle', 'Машина не найдена в гараже');
       if (user.owner_id && v.driver_id !== user.id) throw forbidden('Эта машина закреплена за другим водителем');
       brand = brand ?? v.brand;
+      model = model ?? v.model;
+      year = year ?? v.year;
     }
     const isConsult = i.service === 'consult';
     const night = isConsult ? false : i.night ?? isNight(all.pricing, this.now());
@@ -90,17 +97,19 @@ export class OrdersService {
       const fresh = ref && this.now().getTime() - new Date(ref).getTime() <= all.pricing.consult.backHours * 3600_000;
       if (fresh && !used && ['completed', 'awaiting_confirmation'].includes(c.status)) discount = all.pricing.consult.backDiscount;
       brand = brand ?? c.brand;
+      model = model ?? c.model;
+      year = year ?? c.year;
     }
 
     const order = await this.db.one(
       `insert into orders(client_id, created_by, vehicle_id, service, is_sos, problem, description, address, lat, lng,
           zone_id, night, group_trip, tier, brand, estimate, payment_method, client_fee_pct, destination, cargo, loaded, driver_on_site,
-          consult_of, discount_amount, discount_reason)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25) returning *`,
+          consult_of, discount_amount, discount_reason, model, year)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27) returning *`,
       [clientId, user.id, i.vehicleId ?? null, i.service, !!i.isSos, i.problem ?? null, i.description ?? null, isConsult ? null : i.address ?? null,
         isConsult ? null : i.lat ?? null, isConsult ? null : i.lng ?? null, est.zoneId, night, est.group, tier, brand, est, method, feePct,
         i.destination ?? null, i.cargo ?? null, i.loaded ?? null, i.driverOnSite ?? null,
-        consultOf, discount, discount ? CONSULT_DISCOUNT : null],
+        consultOf, discount, discount ? CONSULT_DISCOUNT : null, model, year],
     );
     await this.event(this.db, order!.id, user.id, 'created', { estimate: est, sos: !!i.isSos });
 
@@ -498,7 +507,7 @@ export class OrdersService {
       id: o.id, number: o.number, status: o.status as OrderStatus, statusLabel: statusLabels[o.status as OrderStatus],
       service: o.service, isSos: o.is_sos, problem: o.problem, description: o.description,
       address: o.address, lat: o.lat, lng: o.lng, zoneId: o.zone_id, night: o.night, groupTrip: o.group_trip, tier: o.tier,
-      brand: o.brand, vehicle, estimate: o.estimate, paymentMethod: o.payment_method,
+      brand: o.brand, model: o.model, year: o.year, vehicle, estimate: o.estimate, paymentMethod: o.payment_method,
       auction: o.status === 'searching' && !!o.auction_until, auctionUntil: o.auction_until, autoPick: o.auto_pick, search,
       limits: o.status === 'searching' ? this.auction.limits(o, (await this.settings.get('dispatch'))) : null,
       destination: o.destination, cargo: o.cargo, loaded: o.loaded, driverOnSite: o.driver_on_site, discountReason: o.discount_reason,

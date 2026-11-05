@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ApiError, onEvent } from './api.ts';
+import { BRANDS, MODELS, YEARS } from './dict.ts';
 import { reportApiError } from './screens/offers.tsx';
 
 // Роутер на хэше: #/order/123 → ['order', '123'] ---------------------------
@@ -132,5 +133,43 @@ export function RubInput({ value, onChange, placeholder }: { value: number | nul
         const v = e.target.value.replace(/[^\d]/g, '');
         onChange(v === '' ? null : Number(v) * 100);
       }} />
+  );
+}
+
+// Машина: марка → модель → год, всё выпадающими списками. Нет в списке — «Другая…» и вписать самому.
+export type VehicleValue = { brand: string; model: string; year: string };
+export function VehicleFields({ value, onChange }: { value: VehicleValue; onChange: (v: VehicleValue) => void }) {
+  const knownBrand = !value.brand || BRANDS.includes(value.brand);
+  const [ownBrand, setOwnBrand] = useState(!knownBrand);
+  const models = MODELS[value.brand] ?? [];
+  const knownModel = !value.model || models.includes(value.model);
+  const [ownModel, setOwnModel] = useState(!knownModel);
+  const OTHER = '__other';
+  return (
+    <div className="stack" style={{ gap: 8 }}>
+      <select className="field" aria-label="Марка" value={ownBrand ? OTHER : value.brand}
+        onChange={(e) => { const b = e.target.value; if (b === OTHER) { setOwnBrand(true); onChange({ ...value, brand: '', model: '' }); } else { setOwnBrand(false); setOwnModel(false); onChange({ ...value, brand: b, model: '' }); } }}>
+        <option value="">Марка</option>
+        {BRANDS.filter((b) => b !== 'Прочие').map((b) => <option key={b} value={b}>{b}</option>)}
+        <option value={OTHER}>Другая марка…</option>
+      </select>
+      {ownBrand && <input className="field" autoFocus placeholder="Как называется марка" value={value.brand} onChange={(e) => onChange({ ...value, brand: e.target.value })} />}
+      <div className="grid2">
+        {!ownBrand && models.length > 0 && !ownModel ? (
+          <select className="field" aria-label="Модель" value={value.model}
+            onChange={(e) => { if (e.target.value === OTHER) { setOwnModel(true); onChange({ ...value, model: '' }); } else onChange({ ...value, model: e.target.value }); }}>
+            <option value="">Модель</option>
+            {models.map((m) => <option key={m} value={m}>{m}</option>)}
+            <option value={OTHER}>Другая модель…</option>
+          </select>
+        ) : (
+          <input className="field" placeholder="Модель" value={value.model} onChange={(e) => onChange({ ...value, model: e.target.value })} />
+        )}
+        <select className="field" aria-label="Год выпуска" value={value.year} onChange={(e) => onChange({ ...value, year: e.target.value })}>
+          <option value="">Год выпуска</option>
+          {YEARS.map((y) => <option key={y} value={String(y)}>{y}</option>)}
+        </select>
+      </div>
+    </div>
   );
 }

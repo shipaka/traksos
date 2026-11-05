@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { get, post, del, rub, fmtTime, fmtPhone } from '../api.ts';
-import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF, matchBrand } from '../dict.ts';
-import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back } from '../ui.tsx';
+import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF } from '../dict.ts';
+import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFields, type VehicleValue } from '../ui.tsx';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
 
@@ -110,18 +110,24 @@ export function Consult() {
   const { pricing } = usePrices();
   const vehicles = useLoad(() => get('/api/vehicles'), []);
   const [vehicleId, setVehicleId] = useState('');
-  const [brand, setBrand] = useState('');
+  const [car, setCar] = useState<VehicleValue>({ brand: '', model: '', year: '' });
   const [description, setDescription] = useState(sym ? sym.name + '. ' : '');
   const [agree, setAgree] = useState(false);
   useEffect(() => { if (vehicles.data?.length && !vehicleId) setVehicleId(vehicles.data[0].id); }, [vehicles.data]); // eslint-disable-line
+  const [tried, setTried] = useState(false);
+  const needC = { car: !!vehicleId || car.brand.trim().length >= 2, what: description.trim().length >= MIN_WHAT };
+  const missingC = [
+    !needC.car && { id: 'f-car', name: 'марка машины' },
+    !needC.what && { id: 'f-what', name: 'что случилось' },
+    !agree && { id: 'f-agree', name: 'согласие' },
+  ].filter(Boolean) as { id: string; name: string }[];
   if (!pricing) return <main><Loading /></main>;
   const c = pricing.consult ?? { price: 70_000, backDiscount: 20_000, backHours: 48 };
-  const brandSuggest = vehicleId ? [] : matchBrand(brand);
 
   async function submit() {
     const r = await run(() => post('/api/orders', {
       service: 'consult', problem: sym?.id, description: description.trim() || undefined,
-      vehicleId: vehicleId || undefined, brand: vehicleId ? undefined : brand || undefined, paymentMethod: 'cash',
+      vehicleId: vehicleId || undefined, ...carBody(vehicleId, car), paymentMethod: 'cash',
     }));
     if (r) go(`order/${r.order.id}`);
   }
@@ -136,27 +142,21 @@ export function Consult() {
         <div className="banner good"><span>Если в течение {c.backHours} часов понадобится выезд — к этому или другому мастеру, — <b>{rub(c.backDiscount)} вернутся скидкой</b> на него.</span></div>
       </div>
 
-      <Field group label="Машина">
+      <Step n={1} id="f-car" title="Машина" req done={needC.car} missing={tried && !needC.car}>
         {vehicles.data?.length ? (
           <select className="field" value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
             {vehicles.data.map((v: any) => <option key={v.id} value={v.id}>{v.brand} {v.model ?? ''} {v.year ?? ''} {v.plate ?? ''}</option>)}
             <option value="">Другая машина</option>
           </select>
         ) : null}
-        {!vehicleId && (
-          <>
-            <input className="field" placeholder="Марка: Scania, DAF, КАМАЗ…" value={brand} onChange={(e) => setBrand(e.target.value)} />
-            {brandSuggest.length > 0 && brandSuggest[0] !== brand && (
-              <div className="scroll-x">{brandSuggest.map((b) => <button key={b} type="button" className="chip" onClick={() => setBrand(b)}>{b}</button>)}</div>
-            )}
-          </>
-        )}
+        {!vehicleId && <VehicleFields value={car} onChange={setCar} />}
         <span className="note">Ответит мастер, который хорошо знает вашу марку.</span>
-      </Field>
+      </Step>
 
-      <Field label="Что случилось">
+      <Step n={2} id="f-what" title="Что случилось" req done={needC.what} missing={tried && !needC.what}>
         <textarea className="field" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Например: не заводится, стартер щёлкает, приборка гаснет. Код ошибки, если есть." />
-      </Field>
+        <span className="note">{needC.what ? '✓ Мастер поймёт, с чего начать' : `Хотя бы пару слов — ещё ${MIN_WHAT - description.trim().length} симв.`}</span>
+      </Step>
 
       <div className="card">
         <b>Как это работает</b>
@@ -169,14 +169,55 @@ export function Consult() {
         </ol>
       </div>
 
-      <label className="agree">
+      <label className={`agree card ${tried && !agree ? 'missing' : ''}`} id="f-agree">
         <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
         <span>Согласен со стоимостью {rub(c.price)} и <a href="#/offer/client">офертой ТракSOS</a></span>
       </label>
-      <button className="btn" disabled={busy || !agree || description.trim().length < 3} onClick={submit}>Заказать консультацию · {rub(c.price)}</button>
-      {!agree && <span className="note" style={{ textAlign: 'center' }}>Отметьте согласие, чтобы заказать.</span>}
+      <CallBar busy={busy} missing={missingC} price={rub(c.price)} label={`Заказать консультацию · ${rub(c.price)}`}
+        onGo={() => { setTried(true); if (missingC.length) jump(missingC[0].id); else submit(); }} />
     </main>
   );
+}
+
+const MIN_WHAT = 10;
+
+/** Шаг анкеты: номер, «обязательно» / «по желанию», галочка, когда заполнен; подсвечивается, если пропущен */
+function Step({ n, id, title, req, done, missing, children }: { n: number; id: string; title: string; req?: boolean; done?: boolean; missing?: boolean; children: React.ReactNode }) {
+  return (
+    <section id={id} className={`step-card ${missing ? 'missing' : ''}`}>
+      <div className="step-head">
+        <span className={`step-n ${done ? 'done' : ''}`}>{done ? '✓' : n}</span>
+        <b>{title}</b>
+        <span className={`pill ${req ? (done ? 'good' : 'warn') : ''}`}>{req ? (done ? 'готово' : 'обязательно') : 'можно не менять'}</span>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/** Нижняя панель вызова: всегда видна, говорит, чего не хватает; нажали раньше времени — ведёт к пропущенному */
+function CallBar({ busy, missing, price, label, onGo }: { busy: boolean; missing: { id: string; name: string }[]; price: string; label: string; onGo: () => void }) {
+  return (
+    <div className="callbar">
+      <div className="callbar-in">
+        <span className="note">{missing.length ? <>Осталось: <b style={{ color: 'var(--warn)' }}>{missing.map((m) => m.name).join(', ')}</b></> : <>Всё заполнено · {price}</>}</span>
+        <button className={`btn ${missing.length ? 'pending' : ''}`} disabled={busy} onClick={onGo}>{missing.length ? `${label} · заполнить ${missing.length}` : label}</button>
+      </div>
+    </div>
+  );
+}
+
+function jump(id: string) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+}
+
+/** Машина не из гаража: марка, модель и год — в заявку */
+function carBody(vehicleId: string, car: VehicleValue) {
+  if (vehicleId) return {};
+  return { brand: car.brand.trim() || undefined, model: car.model.trim() || undefined, year: car.year ? Number(car.year) : undefined };
 }
 
 /** Исполнитель заказывает сам себе — свою заявку он взять не сможет */
@@ -206,7 +247,7 @@ export function NewOrder({ service }: { service: string }) {
   const [night, setNight] = useState<boolean | null>(null);
   const [group, setGroup] = useState(false);
   const [vehicleId, setVehicleId] = useState<string>('');
-  const [brand, setBrand] = useState('');
+  const [car, setCar] = useState<VehicleValue>({ brand: '', model: '', year: '' });
   const [description, setDescription] = useState(sym ? sym.name : '');
   const [address, setAddress] = useState('');
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
@@ -230,7 +271,7 @@ export function NewOrder({ service }: { service: string }) {
     const c = consult.data;
     if (!c) return;
     if (c.description && !description) setDescription(c.description);
-    if (!c.vehicle && c.brand) { setVehicleId(''); setBrand(c.brand); }
+    if (!c.vehicle && c.brand) { setVehicleId(''); setCar({ brand: c.brand, model: c.model ?? '', year: c.year ? String(c.year) : '' }); }
   }, [consult.data]); // eslint-disable-line
   useEffect(() => {
     if (night === null) return;
@@ -250,14 +291,13 @@ export function NewOrder({ service }: { service: string }) {
 
   const zone = pricing.data?.zones.find((z: any) => z.id === zoneId);
   const groupAllowed = service !== 'tow' && (zone?.km ?? 0) > 30;
-  const brandSuggest = useMemo(() => (vehicleId ? [] : matchBrand(brand)), [brand, vehicleId]);
   const methods = pricing.data?.payments;
 
   async function submit() {
     const r = await run(() => post('/api/orders', {
       service, isSos: !!sos, problem: sos?.id, description: description || undefined, address: address || undefined,
       lat: geo?.lat, lng: geo?.lng, zoneId, tier: service === 'tow' ? undefined : tier, vehicleId: vehicleId || undefined,
-      brand: vehicleId ? undefined : brand || undefined, groupTrip: groupAllowed && group, night: night ?? undefined, paymentMethod: method,
+      ...carBody(vehicleId, car), groupTrip: groupAllowed && group, night: night ?? undefined, paymentMethod: method,
       ...(isTow ? { destination: destination || undefined, cargo, loaded, driverOnSite } : {}),
       fromConsult: fromConsult || undefined,
     }));
@@ -265,6 +305,21 @@ export function NewOrder({ service }: { service: string }) {
     if (r.confirmationUrl) location.href = r.confirmationUrl;
     else go(`order/${r.order.id}`);
   }
+
+  const [tried, setTried] = useState(false);
+  const need = {
+    car: !!vehicleId || car.brand.trim().length >= 2,
+    what: description.trim().length >= MIN_WHAT,
+    where: geoState === 'ok' || address.trim().length >= 3,
+    tow: !isTow || destination.trim().length >= 3,
+  };
+  const missing = [
+    !need.car && { id: 'f-car', name: 'марка машины' },
+    !need.what && { id: 'f-what', name: 'что случилось' },
+    !need.where && { id: 'f-where', name: 'где машина' },
+    !need.tow && { id: 'f-tow', name: 'куда везти' },
+    !agree && { id: 'f-agree', name: 'согласие с суммами' },
+  ].filter(Boolean) as { id: string; name: string }[];
 
   if (!pricing.data) return <main><Loading error={pricing.error} /></main>;
   const s = SERVICES[service];
@@ -285,81 +340,77 @@ export function NewOrder({ service }: { service: string }) {
         </div>
       )}
 
-      <Field group label="Машина">
+      <Step n={1} id="f-car" title="Машина" req done={need.car} missing={tried && !need.car}>
         {vehicles.data?.length ? (
           <select className="field" value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
-            {vehicles.data.map((v: any) => <option key={v.id} value={v.id}>{v.brand} {v.model ?? ''} {v.plate ?? ''}</option>)}
+            {vehicles.data.map((v: any) => <option key={v.id} value={v.id}>{v.brand} {v.model ?? ''} {v.year ?? ''} {v.plate ?? ''}</option>)}
             <option value="">Другая машина</option>
           </select>
         ) : null}
-        {!vehicleId && (
-          <>
-            <input className="field" placeholder="Марка: Scania, DAF, КАМАЗ…" value={brand} onChange={(e) => setBrand(e.target.value)} />
-            {brandSuggest.length > 0 && brandSuggest[0] !== brand && (
-              <div className="scroll-x">{brandSuggest.map((b) => <button key={b} type="button" className="chip" onClick={() => setBrand(b)}>{b}</button>)}</div>
-            )}
-          </>
-        )}
-      </Field>
+        {!vehicleId && <VehicleFields value={car} onChange={setCar} />}
+        {!vehicleId && <span className="note">Марка — обязательно, модель и год — по желанию: так подберём мастера, который знает вашу машину.</span>}
+      </Step>
 
-      <Field group label="Где машина">
+      <Step n={2} id="f-what" title="Что случилось" req done={need.what} missing={tried && !need.what}>
+        <textarea className="field" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Например: не заводится, стартер щёлкает, приборка гаснет" />
+        <span className="note">{need.what ? '✓ Хватит, чтобы мастер понял, что брать с собой' : `Хотя бы пару слов — ещё ${MIN_WHAT - description.trim().length} симв.`}</span>
+      </Step>
+
+      <Step n={3} id="f-where" title={isTow ? 'Откуда забрать' : 'Где машина'} req done={need.where} missing={tried && !need.where}>
         <input className="field" placeholder="Адрес, стоянка или км трассы" value={address} onChange={(e) => setAddress(e.target.value)} />
         <span className="note">
-          {geoState === 'ok' ? '✓ Точка на карте определена' : geoState === 'wait' ? 'Определяю место…' : geoState === 'fail'
-            ? <>Не удалось определить место. <button type="button" className="chip" style={{ minHeight: 30 }} onClick={locate}>Ещё раз</button></> : null}
+          {geoState === 'ok' ? '✓ Точка на карте определена — адрес можно не писать' : geoState === 'wait' ? 'Определяю место…' : geoState === 'fail'
+            ? <>Не удалось определить место — напишите адрес. <button type="button" className="chip" style={{ minHeight: 30 }} onClick={locate}>Ещё раз</button></> : null}
         </span>
-      </Field>
+        <span className="label">Зона — от неё цена выезда</span>
+        <Chips value={zoneId} onChange={setZoneId} options={pricing.data.zones.map((z: any) => ({ id: z.id, name: z.km > 30 ? `${z.name} · ${z.km} км` : z.name }))} />
+        <div className="grid2">
+          <button type="button" className="seg" aria-pressed={!night} onClick={() => setNight(false)}>Днём</button>
+          <button type="button" className="seg" aria-pressed={!!night} onClick={() => setNight(true)}>Ночь 22–7</button>
+        </div>
+        {groupAllowed && (
+          <button type="button" className="opt" aria-pressed={group} onClick={() => setGroup(!group)}>
+            <b>{group ? '✓ ' : ''}Совместный выезд</b>
+            <small>Мастер едет к нескольким машинам рядом — вы платите 70% выезда. Может быть дольше.</small>
+          </button>
+        )}
+      </Step>
 
-      {isTow && (
-        <div className="card">
-          <b>Эвакуатор</b>
+      {isTow ? (
+        <Step n={4} id="f-tow" title="Куда и что везём" req done={need.tow} missing={tried && !need.tow}>
           <input className="field" placeholder="Куда везти: сервис, стоянка, адрес" value={destination} onChange={(e) => setDestination(e.target.value)} />
-          <Field group label="Что везём">
-            <Chips value={cargo} onChange={setCargo} options={[{ id: 'tractor', name: 'Тягач' }, { id: 'semitrailer', name: 'Полуприцеп' }, { id: 'coupling', name: 'Сцепка целиком' }, { id: 'truck12', name: 'Грузовик до 12 т' }]} />
-          </Field>
-          <Field group label="Груз в прицепе">
-            <Chips value={loaded} onChange={setLoaded} options={[{ id: 'empty', name: 'Пустой' }, { id: 'loaded', name: 'Гружёный' }, { id: 'adr', name: 'Опасный ADR' }]} />
-          </Field>
+          <Chips value={cargo} onChange={setCargo} options={[{ id: 'tractor', name: 'Тягач' }, { id: 'semitrailer', name: 'Полуприцеп' }, { id: 'coupling', name: 'Сцепка целиком' }, { id: 'truck12', name: 'Грузовик до 12 т' }]} />
+          <span className="label">Груз в прицепе</span>
+          <Chips value={loaded} onChange={setLoaded} options={[{ id: 'empty', name: 'Пустой' }, { id: 'loaded', name: 'Гружёный' }, { id: 'adr', name: 'Опасный ADR' }]} />
           <div className="grid2">
             <button type="button" className="seg" aria-pressed={driverOnSite} onClick={() => setDriverOnSite(true)}>Водитель на месте</button>
             <button type="button" className="seg" aria-pressed={!driverOnSite} onClick={() => setDriverOnSite(false)}>Водителя нет</button>
           </div>
-        </div>
-      )}
-
-      <Field group label={isTow ? 'Откуда забрать' : 'Куда ехать мастеру'}>
-        <Chips value={zoneId} onChange={setZoneId} options={pricing.data.zones.map((z: any) => ({ id: z.id, name: z.km > 30 ? `${z.name} · ${z.km} км` : z.name }))} />
-      </Field>
-      <div className="grid2">
-        <button type="button" className="seg" aria-pressed={!night} onClick={() => setNight(false)}>Днём</button>
-        <button type="button" className="seg" aria-pressed={!!night} onClick={() => setNight(true)}>Ночь 22–7</button>
-      </div>
-      {groupAllowed && (
-        <button type="button" className="opt" aria-pressed={group} onClick={() => setGroup(!group)}>
-          <b>{group ? '✓ ' : ''}Совместный выезд</b>
-          <small>Мастер едет к нескольким машинам рядом — вы платите 70% выезда. Может быть дольше.</small>
-        </button>
-      )}
-
-      {service !== 'tow' && (
-        <div className="stack">
-          <span className="label">Класс</span>
+        </Step>
+      ) : (
+        <Step n={4} id="f-tier" title="Класс мастера" done>
           {(Object.keys(TIERS) as (keyof typeof TIERS)[]).map((t) => (
             <button key={t} type="button" className="opt" aria-pressed={tier === t} onClick={() => setTier(t as any)}>
               <div className="between"><b>{TIERS[t].name}</b><span className="note">выезд {rub(pricing.data.tiers[t].callOut)}</span></div>
               <small>{TIERS[t].hint}</small>
             </button>
           ))}
-        </div>
+        </Step>
       )}
 
-      <Field label="Что случилось · по желанию">
-        <textarea className="field" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Например: не заводится, стартер щёлкает" />
-      </Field>
+      <Step n={5} id="f-pay" title="Оплата" done>
+        <div className="grid2">
+          <button type="button" className="seg" aria-pressed={method === 'cash'} onClick={() => setMethod('cash')}>Мастеру на месте</button>
+          <button type="button" className="seg" aria-pressed={method === 'online'} disabled={!methods?.online} onClick={() => setMethod('online')}>СБП / карта</button>
+        </div>
+        {methods?.invoice && <button type="button" className="seg" aria-pressed={method === 'invoice'} onClick={() => setMethod('invoice')}>Счёт на компанию</button>}
+        {!methods?.online && <span className="note">Оплата в приложении скоро появится. Пока — наличными или переводом мастеру, сумму подтверждаете здесь.</span>}
+        {method === 'online' && <span className="note">Выезд оплачивается сейчас и замораживается. Мастеру деньги уйдут после того, как вы подтвердите работу.</span>}
+      </Step>
 
       {est && (
-        <div className="card hi">
-          <span className="label" style={{ color: 'var(--accent)' }}>Проверьте перед вызовом</span>
+        <div className={`card hi ${tried && !agree ? 'missing' : ''}`} id="f-agree">
+          <span className="label" style={{ color: 'var(--accent)' }}>6 · Проверьте перед вызовом</span>
           <div className="sum"><span>{isTow ? 'Обычная цена перевозки' : 'Вызов специалиста · выезд'}{est.km ? <small className="note" style={{ display: 'block' }}>{est.roadKm} км: туда и половина обратно</small> : null}</span><b>{rub(est.callOut)}</b></div>
           {est.hour != null && <>
             <div className="sum"><span>Первый час: диагностика <i>или</i> ремонт<small className="note" style={{ display: 'block' }}>одно из двух, не вместе</small></span><b>{rub(est.hour)}</b></div>
@@ -382,19 +433,9 @@ export function NewOrder({ service }: { service: string }) {
         </div>
       )}
 
-      <div className="stack">
-        <span className="label">Оплата</span>
-        <div className="grid2">
-          <button type="button" className="seg" aria-pressed={method === 'cash'} onClick={() => setMethod('cash')}>Мастеру на месте</button>
-          <button type="button" className="seg" aria-pressed={method === 'online'} disabled={!methods?.online} onClick={() => setMethod('online')}>СБП / карта</button>
-        </div>
-        {methods?.invoice && <button type="button" className="seg" aria-pressed={method === 'invoice'} onClick={() => setMethod('invoice')}>Счёт на компанию</button>}
-        {!methods?.online && <span className="note">Оплата в приложении скоро появится. Пока — наличными или переводом мастеру, сумму подтверждаете здесь.</span>}
-        {method === 'online' && <span className="note">Выезд оплачивается сейчас и замораживается. Мастеру деньги уйдут после того, как вы подтвердите работу.</span>}
-      </div>
-
-      <button className="btn" disabled={busy || !agree} onClick={submit}>{sos ? 'Вызвать сейчас' : isTow ? 'Вызвать эвакуатор' : 'Вызвать мастера'}</button>
-      {!agree && <span className="note" style={{ textAlign: 'center' }}>Отметьте согласие с суммами — и можно вызывать.</span>}
+      <CallBar busy={busy} missing={missing} price={est ? `${isTow ? 'перевозка от' : 'выезд'} ${rub(est.callOut)}` : ''}
+        label={sos ? 'Вызвать сейчас' : isTow ? 'Вызвать эвакуатор' : 'Вызвать мастера'}
+        onGo={() => { setTried(true); if (missing.length) jump(missing[0].id); else submit(); }} />
     </main>
   );
 }
@@ -433,7 +474,6 @@ export function Garage() {
   const [driverFor, setDriverFor] = useState<string | null>(null);
   const [driverPhone, setDriverPhone] = useState('+7 ');
   const isDriver = !!me?.owner_id;
-  const suggest = matchBrand(form.brand);
 
   async function add() {
     const r = await run(() => post('/api/vehicles', {
@@ -477,14 +517,7 @@ export function Garage() {
       {!isDriver && (
         <form className="card" onSubmit={(e) => { e.preventDefault(); add(); }}>
           <b>Добавить машину</b>
-          <input className="field" placeholder="Марка (можно по-русски: скания, мерс…)" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} />
-          {suggest.length > 0 && suggest[0] !== form.brand && (
-            <div className="scroll-x">{suggest.map((b) => <button key={b} type="button" className="chip" onClick={() => setForm({ ...form, brand: b })}>{b}</button>)}</div>
-          )}
-          <div className="grid2">
-            <input className="field" placeholder="Серия: R440, XF…" value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} />
-            <input className="field" inputMode="numeric" placeholder="Год" maxLength={4} value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value.replace(/\D/g, '') })} />
-          </div>
+          <VehicleFields value={{ brand: form.brand, model: form.model, year: form.year }} onChange={(v) => setForm({ ...form, ...v })} />
           <div className="grid2">
             <input className="field" placeholder="Госномер тягача" value={form.plate} onChange={(e) => setForm({ ...form, plate: e.target.value })} />
             <input className="field" placeholder="Прицеп" value={form.trailerPlate} onChange={(e) => setForm({ ...form, trailerPlate: e.target.value })} />

@@ -60,11 +60,32 @@ export const SOS_PROBLEMS: { id: string; name: string; service: string; hint: st
   { id: 'other', name: 'Другое', service: 'consult', hint: 'Консультация — мастер подскажет, кого звать' },
 ];
 
-export const BRANDS = ['Scania', 'DAF', 'Volvo', 'MAN', 'Mercedes-Benz', 'Renault', 'Iveco', 'КАМАЗ', 'Shacman', 'Sitrak', 'FAW', 'Howo', 'Прочие'];
+/** Марки и модели тягачей и грузовиков, которые чаще всего ездят в СПб и ЛО. Год и модель — по желанию, мастер на месте перепроверит. */
+export const MODELS: Record<string, string[]> = {
+  Scania: ['R-серия', 'S-серия', 'G-серия', 'P-серия', '4-серия (R/P/124/114)', 'T-серия'],
+  Volvo: ['FH', 'FH16', 'FM', 'FMX'],
+  DAF: ['XF', 'XG', 'CF', 'LF'],
+  MAN: ['TGX', 'TGS', 'TGA', 'TGM', 'TGL'],
+  'Mercedes-Benz': ['Actros', 'Arocs', 'Axor', 'Atego'],
+  Renault: ['T', 'C', 'K', 'Premium', 'Magnum', 'Kerax'],
+  Iveco: ['S-Way', 'Stralis', 'Trakker', 'Eurocargo'],
+  'КАМАЗ': ['54901 (К5)', '5490', '65207', '6520', '65115', '65801', '43118', '5320 / 5410'],
+  'МАЗ': ['5440', '6430', '6312', '5432', '6501'],
+  Shacman: ['X6000', 'X5000', 'X3000', 'F3000', 'M3000'],
+  Sitrak: ['C7H', 'G7'],
+  FAW: ['J7', 'J6', 'CA4250'],
+  Howo: ['TX', 'T5G', 'TH7', 'A7', 'Max'],
+  Dongfeng: ['GX', 'KX', 'KL'],
+  JAC: ['K7', 'K5', 'N-серия'],
+  Foton: ['Auman EST', 'Auman'],
+};
+export const BRANDS = [...Object.keys(MODELS), 'Прочие'];
+export const YEARS = Array.from({ length: new Date().getFullYear() - 1989 }, (_, i) => new Date().getFullYear() - i);
 
 const BRAND_ALIASES: Record<string, string> = {
   скания: 'Scania', скан: 'Scania', даф: 'DAF', вольво: 'Volvo', ман: 'MAN', мерс: 'Mercedes-Benz', мерседес: 'Mercedes-Benz',
   рено: 'Renault', ивеко: 'Iveco', камаз: 'КАМАЗ', шакман: 'Shacman', ситрак: 'Sitrak', фав: 'FAW', хово: 'Howo',
+  маз: 'МАЗ', донгфенг: 'Dongfeng', джак: 'JAC', фотон: 'Foton',
 };
 export function matchBrand(input: string) {
   const s = input.trim().toLowerCase();

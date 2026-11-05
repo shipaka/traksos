@@ -11,7 +11,7 @@ export class StatsService {
   async overview(days = 30) {
     const since = new Date(this.now().getTime() - days * 86_400_000);
     const p = [since];
-    const [totals, byDay, byService, cancels, speed, money, people, top, repeat, zones] = await Promise.all([
+    const [totals, byDay, byService, cancels, speed, money, people, top, repeat, zones, brands] = await Promise.all([
       this.db.one(
         `select count(*)::int as created,
                 count(*) filter (where status='completed')::int as completed,
@@ -64,6 +64,11 @@ export class StatsService {
       this.db.query(
         `select zone_id, count(*)::int as created, count(*) filter (where status='no_performer')::int as no_performer
            from orders where created_at >= $1 group by zone_id order by created desc`, p),
+      // Спрос по маркам и моделям: какие машины чаще ломаются и кого из мастеров не хватает
+      this.db.query(
+        `select coalesce(brand, 'не указана') as brand, coalesce(model, '') as model, count(*)::int as created,
+                count(*) filter (where status='no_performer')::int as no_performer, round(avg(year))::int as avg_year
+           from orders where created_at >= $1 group by 1, 2 order by created desc limit 30`, p),
     ]);
     const t = totals!;
     const closed = t.completed + t.cancelled + t.no_performer;
@@ -80,7 +85,7 @@ export class StatsService {
         acceptMedianMin: speed!.accept_median_s == null ? null : Math.round(Number(speed!.accept_median_s) / 6) / 10,
         arriveMedianMin: speed!.arrive_median_s == null ? null : Math.round(Number(speed!.arrive_median_s) / 60),
       },
-      money: money!, people: people!, byDay, byService, cancels, top, zones,
+      money: money!, people: people!, byDay, byService, cancels, top, zones, brands,
     };
   }
 }

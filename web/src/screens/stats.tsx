@@ -48,6 +48,8 @@ export function Stats() {
         rows={d.byService.map((r: any) => [SERVICES[r.service]?.name ?? r.service, r.created, r.completed, r.avg_check ? rub(r.avg_check) : '—'])} />
       <Table title="Где не хватает исполнителей" head={['Зона', 'Заявок', 'Никто не взял']}
         rows={d.zones.map((r: any) => [r.zone_id, r.created, r.no_performer])} />
+      <Table title="Спрос по маркам" head={['Машина', 'Заявок', 'Никто не взял', 'Средний год']}
+        rows={(d.brands ?? []).map((r: any) => [`${r.brand}${r.model ? ' ' + r.model : ''}`, r.created, r.no_performer, r.avg_year ?? '—'])} />
       <Table title="Отмены по этапам" head={['Этап', 'Отмен']} rows={d.cancels.map((r: any) => [STAGE[r.stage] ?? r.stage, r.n])} />
       <Table title="Лучшие исполнители" head={['Кто', 'Выездов', 'Оборот']}
         rows={d.top.map((r: any) => [<a href={`#/admin/user/${r.id}`}>{r.name ?? '—'}{r.rating ? ` ★${r.rating.toFixed(1)}` : ''}</a>, r.completed, rub(r.turnover)])} />

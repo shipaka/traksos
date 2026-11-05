@@ -98,8 +98,11 @@ await shot(k, '03-client-home');
 await k.getByRole('link', { name: /SOS/ }).first().click();
 await k.getByRole('button', { name: /Не заводится/ }).click();
 await k.getByRole('button', { name: /Электрик или диагност на выезд/ }).click();
-await k.locator('input[placeholder^="Марка"]').fill('скан');
-await k.getByRole('button', { name: 'Scania' }).click();
+await k.getByRole('button', { name: /Вызвать сейчас/ }).click(); // рано: подсветит, чего не хватает
+await k.getByText('Осталось:').waitFor();
+await k.locator('select[aria-label="Марка"]').selectOption('Scania');
+await k.locator('select[aria-label="Модель"]').selectOption('R-серия');
+await k.locator('select[aria-label="Год выпуска"]').selectOption('2012');
 await k.locator('input[placeholder^="Адрес"]').fill('Тосно, М-11, стоянка у АЗС');
 await k.getByRole('button', { name: /Тосно/ }).click();
 await k.getByText('Проверьте перед вызовом').waitFor();

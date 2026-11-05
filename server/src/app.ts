@@ -191,6 +191,7 @@ export function createApp(d: Deps) {
     service: z.string(), isSos: z.boolean().optional(), problem: z.string().max(40).optional(), description: z.string().max(1000).optional(),
     address: z.string().max(300).optional(), lat: z.number().optional(), lng: z.number().optional(), zoneId: z.string().default('spb'),
     tier: z.enum(['eco', 'comfort', 'pro']).optional(), vehicleId: z.string().uuid().optional(), brand: z.string().max(40).optional(),
+    model: z.string().max(40).optional(), year: z.number().int().min(1950).max(2100).optional(),
     groupTrip: z.boolean().optional(), night: z.boolean().optional(), paymentMethod: z.enum(['cash', 'online', 'invoice']).optional(),
     destination: z.string().max(300).optional(), cargo: z.enum(['tractor', 'semitrailer', 'coupling', 'truck12']).optional(),
     loaded: z.enum(['empty', 'loaded', 'adr']).optional(), driverOnSite: z.boolean().optional(), fromConsult: z.string().uuid().optional(),

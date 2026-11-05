@@ -183,3 +183,18 @@ select.field { appearance: none; }
 .agree { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; line-height: 1.45; cursor: pointer; }
 .agree input { width: 20px; height: 20px; margin: 0; accent-color: #FF6A13; flex-shrink: 0; }
 .howto { margin: 0; padding-left: 18px; font-size: 13.5px; line-height: 1.55; color: var(--fg-2); display: flex; flex-direction: column; gap: 4px; }
+
+/* Анкета заявки: пронумерованные шаги и нижняя панель вызова, которая всегда видна */
+.step-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px; scroll-margin: 90px; }
+.step-card.missing, .card.missing { border-color: var(--warn); box-shadow: 0 0 0 2px rgba(255,178,122,.25); }
+.step-head { display: flex; align-items: center; gap: 10px; }
+.step-head b { flex: 1; font-size: 16px; }
+.step-n { width: 28px; height: 28px; border-radius: 14px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; background: var(--surface-3); color: var(--fg); }
+.step-n.done { background: var(--good); color: var(--on-accent); }
+.flash { animation: flash 1.2s ease-out; }
+@keyframes flash { 0%, 40% { box-shadow: 0 0 0 4px rgba(255,178,122,.6); } 100% { box-shadow: 0 0 0 2px rgba(255,178,122,.25); } }
+.callbar { height: 96px; }
+.callbar-in { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(max(12px, env(safe-area-inset-bottom)) + 76px); width: min(408px, calc(100% - 32px)); z-index: 9;
+  display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 18px; background: rgba(27,30,34,.97); border: 1px solid var(--accent); box-shadow: 0 -8px 24px rgba(0,0,0,.45); }
+.callbar-in .note { text-align: center; }
+.btn.pending { background: var(--surface-3); color: var(--fg); }

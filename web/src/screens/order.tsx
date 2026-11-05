@@ -84,7 +84,7 @@ function CandidateView({ d, onDone }: { d: any; onDone: () => void }) {
     <div className="stack">
       <div className="card">
         <dl className="kv">
-          <dt>Машина</dt><dd>{d.brand ?? '—'}</dd>
+          <dt>Машина</dt><dd>{[d.brand, d.model, d.year].filter(Boolean).join(' ') || '—'}</dd>
           <dt>Где</dt><dd>{d.service === 'consult' ? 'По телефону — без выезда' : d.address ?? d.estimate?.zoneName}</dd>
           {d.destination && <><dt>Куда</dt><dd>{d.destination}</dd></>}
           {d.cargo && <><dt>Что везём</dt><dd>{CARGO[d.cargo]}{d.loaded ? `, ${LOADED[d.loaded]}` : ''}</dd></>}
@@ -138,7 +138,7 @@ function ClientCard({ d }: { d: any }) {
     <div className="card">
       <dl className="kv">
         <dt>Клиент</dt><dd>{d.client?.company_name ?? d.client?.name ?? 'Клиент'}{d.client?.rating ? ` · ★ ${d.client.rating.toFixed(1)}` : ''}</dd>
-        <dt>Машина</dt><dd>{d.vehicle ? `${d.vehicle.brand} ${d.vehicle.model ?? ''} ${d.vehicle.year ?? ''} · ${d.vehicle.plate ?? ''}` : d.brand ?? '—'}</dd>
+        <dt>Машина</dt><dd>{d.vehicle ? `${d.vehicle.brand} ${d.vehicle.model ?? ''} ${d.vehicle.year ?? ''} · ${d.vehicle.plate ?? ''}` : [d.brand, d.model, d.year].filter(Boolean).join(' ') || '—'}</dd>
         <dt>Где</dt><dd>{d.service === 'consult' ? 'По телефону — без выезда' : d.address ?? d.estimate?.zoneName}</dd>
         {d.description && <><dt>Что случилось</dt><dd>{d.description}</dd></>}
       </dl>
