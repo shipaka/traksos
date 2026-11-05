@@ -71,3 +71,21 @@ test('перерыв (обед): не звоним, по таймеру — сн
   const me = ok(await t.api('GET', '/api/performer/profile', undefined, master.token));
   assert.equal(me.line_status, 'online');
 });
+
+test('отпуск: заявки не приходят; наценки и «с собой» видны клиенту в отклике', async () => {
+  ok(await t.api('PUT', '/api/performer/schedule', { on: false, days, from: '09:00', to: '18:00', phoneTo: '20:00' }, master.token));
+  ok(await t.api('PUT', '/api/performer/extras', { vacation: true }, master.token));
+  const a = ok(await t.api('POST', '/api/orders', { service: 'electric', zoneId: 'spb', description: 'Не горит свет' }, client.token));
+  assert.equal(invited(a.order.id), false, 'в отпуске не звоним');
+  ok(await t.api('POST', `/api/orders/${a.order.id}/cancel`, { reason: 'тест' }, client.token));
+  const p = ok(await t.api('PUT', '/api/performer/extras', { vacation: false, weekendPct: 20, waitRate: 90_000, stock: ['Розетка прицепа 15-конт.'], prepay: 'always' }, master.token));
+  assert.equal(p.extras.weekendPct, 20);
+  const b = ok(await t.api('POST', '/api/orders', { service: 'electric', zoneId: 'spb', description: 'Не горит свет' }, client.token));
+  assert.equal(invited(b.order.id), true);
+  ok(await t.api('POST', `/api/orders/${b.order.id}/offers`, {}, master.token));
+  const l = ok(await t.api('GET', `/api/orders/${b.order.id}/offers`, undefined, client.token));
+  assert.deepEqual(l.offers[0].extras.stock, ['Розетка прицепа 15-конт.']);
+  assert.equal(l.offers[0].extras.prepay, 'always');
+  assert.equal((await t.api('PUT', '/api/performer/extras', { takes: ['чушь'] }, master.token)).status, 400);
+  ok(await t.api('POST', `/api/orders/${b.order.id}/cancel`, { reason: 'тест' }, client.token));
+});

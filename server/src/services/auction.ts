@@ -36,7 +36,7 @@ export class AuctionService {
     const kind = performerKindFor(order.service);
     const list = await this.db.query<Candidate>(
       `select p.user_id, p.kind, p.specialties, p.brands, false as is_priority, p.paused, p.line_status, p.verification,
-              p.lat, p.lng, u.rating, p.accepts_group, u.status as user_status, p.schedule, p.off_schedule_until,
+              p.lat, p.lng, u.rating, p.accepts_group, u.status as user_status, p.schedule, p.off_schedule_until, p.extras,
               (select coalesce(-sum(amount),0)::int from ledger_entries l
                 where l.performer_id = p.user_id and l.kind in ('cash_commission','cash_commission_paid')) as cash_debt
          from performer_profiles p join users u on u.id = p.user_id
@@ -159,7 +159,7 @@ export class AuctionService {
   private async rows(orderId: string, brand: string | null, onlyPerformer: string | null) {
     const rows = await this.db.query(
       `select f.id, f.performer_id, f.price, f.hour_price, f.eta_minutes, f.status,
-              u.name, u.rating::float as rating, u.rating_count, p.car, p.brands, p.tier, d.distance_km::float as distance_km,
+              u.name, u.rating::float as rating, u.rating_count, p.car, p.brands, p.tier, p.extras, d.distance_km::float as distance_km,
               (select count(*)::int from orders c where c.performer_id=f.performer_id and c.status='completed') as completed
          from bids f join users u on u.id=f.performer_id left join performer_profiles p on p.user_id=f.performer_id
          left join order_dispatch d on d.order_id=f.order_id and d.performer_id=f.performer_id

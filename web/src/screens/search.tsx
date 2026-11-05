@@ -92,6 +92,9 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
                     {o.hour_price && <span>· час {rub(o.hour_price)}</span>}
                     {o.brand_level === 'excellent' && <span className="pill good">Знает {d.brand}</span>}
                   </div>
+                  {o.extras?.stock?.length > 0 && d.service !== 'consult' && <span className="note">С собой: {o.extras.stock.join(', ')}</span>}
+                  {(o.extras?.weekendPct || o.extras?.nightPct || o.extras?.waitRate) && d.service !== 'consult' ? <span className="note">Наценки мастера: {[o.extras.weekendPct && `выходные +${o.extras.weekendPct}%`, o.extras.nightPct && `ночь +${o.extras.nightPct}%`, o.extras.waitRate && `ожидание ${rub(o.extras.waitRate)}/ч`].filter(Boolean).join(' · ')}</span> : null}
+                  {o.extras?.prepay === 'always' && <span className="note" style={{ color: 'var(--warn)' }}>Берёт предоплату за работу</span>}
                   {o.car && d.service !== 'consult' && <span className="note">Приедет на: {o.car.brand}{o.car.color ? `, ${o.car.color}` : ''}</span>}
                   <button className="btn small" style={{ width: '100%' }} disabled={busy} onClick={() => choose(o.id)}>Выбрать за {rub(o.price)}</button>
                 </div>

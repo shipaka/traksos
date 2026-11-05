@@ -138,6 +138,15 @@ export class ProfilesService {
     return this.performer(userId);
   }
 
+  /** Наценки, предоплата, отпуск, запас в машине; у эвакуатора — что берёт, тип, масса. Хранится как есть, проверяется схемой в app.ts. */
+  async setExtras(userId: string, e: Record<string, unknown>) {
+    const p = await this.performer(userId);
+    if (!p) throw notFound('Сначала заполните профиль исполнителя');
+    if (p.kind === 'tow' && e.prepAck === false) throw bad('need_ack', 'Отметьте, что отвечаете за время на сборы');
+    await this.db.query(`update performer_profiles set extras = extras || $2::jsonb, updated_at=now() where user_id=$1`, [userId, JSON.stringify(e)]);
+    return this.performer(userId);
+  }
+
   /** Распорядок: рабочие дни и часы. Включённый график сам снимает с линии, когда рабочее время кончилось. */
   async setSchedule(userId: string, sc: Schedule) {
     const err = validSchedule(sc);

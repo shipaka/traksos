@@ -223,6 +223,7 @@ export function ScheduleSection() {
     <main>
       <Back to="work/me" label="Профиль" />
       <div><h1>Распорядок</h1><div className="sub">По нему решаем, звонить ли вам. Кончилось рабочее время — статус сам станет «Не на линии», пока вы не выйдете на линию вручную.</div></div>
+      <VacationToggle />
       <button className="opt" aria-pressed={s.on} onClick={() => setS({ ...s, on: !s.on })}>
         <b>{s.on ? '✓ Работаю по графику' : 'Без графика'}</b><small>{s.on ? 'Заявки — только в рабочие дни и часы' : 'Заявки идут всегда, пока вы на линии'}</small>
       </button>
@@ -249,6 +250,17 @@ export function ScheduleSection() {
       )}
       <button className="btn" disabled={busy} onClick={async () => { if (await run(() => put('/api/performer/schedule', s), 'Распорядок сохранён')) reload(); }}>Сохранить</button>
     </main>
+  );
+}
+
+function VacationToggle() {
+  const { me, reload } = useMe();
+  const { busy, run } = useAction();
+  const on = !!me?.performer?.extras?.vacation;
+  return (
+    <button className="opt" aria-pressed={on} disabled={busy} onClick={async () => { if (await run(() => put('/api/performer/extras', { vacation: !on }), on ? 'С возвращением — заявки снова приходят, когда вы на линии' : 'Хорошего отдыха — заявки не приходят')) reload(); }}>
+      <b>{on ? '✓ В отпуске' : 'Отпуск / не работаю'}</b><small>{on ? 'Заявки не приходят, даже если вы на линии. Нажмите, чтобы вернуться.' : 'Нажмите — и заявки перестанут приходить, пока не вернётесь'}</small>
+    </button>
   );
 }
 
@@ -367,6 +379,7 @@ export function FilterSection() {
   const p = me?.performer;
   const pricing = useLoad(() => get('/api/pricing'), []);
   const { busy, save } = useSave();
+  const { run } = useAction();
   const [f, setF] = useState(() => ({
     specialties: (p?.specialties ?? ['electric']) as string[],
     brands: (p?.brands ?? {}) as Record<string, string>,
@@ -377,7 +390,8 @@ export function FilterSection() {
     prepMinutes: p?.prep_minutes ?? 0,
     acceptsGroup: p?.accepts_group ?? true,
   }));
-  const [tab, setTab] = useState<'services' | 'brands' | 'prices'>('services');
+  const [x, setX] = useState<any>(() => ({ prepay: 'low', stock: [], takes: [], ...(p?.extras ?? {}) }));
+  const [tab, setTab] = useState<string>(p?.kind === 'tow' ? 'take' : 'services');
   if (!p) return <PerformerOnboarding />;
   const set = (patch: Partial<typeof f>) => setF({ ...f, ...patch });
   const isTow = p.kind === 'tow';
@@ -386,13 +400,66 @@ export function FilterSection() {
   const body = () => isTow
     ? { kmRate: f.kmRate, prepMinutes: f.prepMinutes }
     : { specialties: f.specialties, brands: f.brands, tier: f.tier, callOutPrice: f.callOutPrice, hourPrice: f.hourPrice, kmRate: f.kmRate, acceptsGroup: f.acceptsGroup };
-  const tabs = isTow ? [['prices', 'Цены и подача']] as const : [['services', 'Услуги'], ['brands', `Марки${tuned ? ` · ${tuned}` : ''}`], ['prices', 'Цены']] as const;
-  const cur = isTow ? 'prices' : tab;
+  const extrasBody = () => {
+    const pick = (k: string) => (x[k] === '' || x[k] == null ? undefined : x[k]);
+    const b: any = { weekendPct: pick('weekendPct'), nightPct: pick('nightPct'), holidayPct: pick('holidayPct'), waitRate: pick('waitRate') };
+    if (isTow) Object.assign(b, { takes: x.takes, towType: pick('towType'), maxMass: pick('maxMass'), prepAck: !!x.prepAck });
+    else Object.assign(b, { stock: x.stock, prepay: x.prepay });
+    return b;
+  };
+  const tabs: [string, string][] = isTow ? [['take', 'Что везу'], ['prices', 'Цены'], ['prep', 'Сборы']]
+    : [['services', 'Услуги'], ['brands', `Марки${tuned ? ` · ${tuned}` : ''}`], ['stock', 'С собой'], ['prices', 'Цены']];
+  const cur = tab;
+  const num = (k: string, ph: string, label: string) => (
+    <Field label={label}><input className="field" inputMode="numeric" placeholder={ph} value={x[k] ?? ''} onChange={(e) => setX({ ...x, [k]: e.target.value === '' ? '' : Number(e.target.value.replace(/\D/g, '')) })} /></Field>
+  );
+  const STOCK = ['Розетка прицепа 15-конт.', 'Перекидка', 'Адаптер 15/7', 'Предохранители', 'Лампы 24V', 'Клеммы АКБ', 'Пусковое устройство', 'Сканер под марку'];
+  const TAKES: [string, string][] = [['tractor', 'Тягач'], ['semitrailer', 'Полуприцеп'], ['coupling', 'Сцепка целиком'], ['truck12', 'Грузовик до 12 т'], ['bus', 'Автобус'], ['special', 'Спецтехника']];
   return (
     <main>
       <Back to="work" label="Линия" />
       <div><h1>Расширенный поиск</h1><div className="sub">Как вы ищете клиентов на линии: что берёте, с какими марками и по какой цене. По этому вас и ранжируют.</div></div>
-      {tabs.length > 1 && <div className="grid3">{tabs.map(([id, n]) => <button key={id} className="seg" style={{ fontSize: 13 }} aria-pressed={cur === id} onClick={() => setTab(id as any)}>{n}</button>)}</div>}
+      <div className="scroll-x">{tabs.map(([id, n]) => <button key={id} className="chip" aria-pressed={cur === id} onClick={() => setTab(id)}>{n}</button>)}</div>
+
+      {cur === 'stock' && (
+        <div className="card">
+          <b>Что всегда есть в машине</b>
+          <div className="row">{STOCK.map((t) => (
+            <button key={t} type="button" className="chip" aria-pressed={x.stock.includes(t)} onClick={() => setX({ ...x, stock: x.stock.includes(t) ? x.stock.filter((y: string) => y !== t) : [...x.stock, t] })}>{x.stock.includes(t) ? '✓ ' : ''}{t}</button>
+          ))}</div>
+          <span className="note">Клиент видит это в вашем отклике. Если нужна, например, розетка 15-конт., выше в списке те, у кого она с собой.</span>
+        </div>
+      )}
+
+      {cur === 'take' && (
+        <div className="card">
+          <b>Что берёте</b>
+          <div className="row">{TAKES.map(([k, n]) => (
+            <button key={k} type="button" className="chip" aria-pressed={x.takes.includes(k)} onClick={() => setX({ ...x, takes: x.takes.includes(k) ? x.takes.filter((y: string) => y !== k) : [...x.takes, k] })}>{x.takes.includes(k) ? '✓ ' : ''}{n}</button>
+          ))}</div>
+          <span className="note">Ничего не отмечено — приходят все заказы. Отмечено — только с таким грузом.</span>
+          <b>Тип эвакуатора</b>
+          <div className="stack" style={{ gap: 6 }}>{([['partial', 'Частичная погрузка'], ['break', 'Ломаная платформа'], ['crane', 'С манипулятором']] as const).map(([k, n]) => (
+            <button key={k} type="button" className="seg" aria-pressed={x.towType === k} onClick={() => setX({ ...x, towType: k })}>{n}</button>
+          ))}</div>
+          {num('maxMass', 'Например, 20', 'Максимальная масса, т')}
+        </div>
+      )}
+
+      {cur === 'prep' && (
+        <div className="card">
+          <b>Время на сборы</b>
+          <div className="grid4" style={{ gridTemplateColumns: 'repeat(5, minmax(0, 1fr))' }}>{[0, 15, 30, 45, 60].map((m) => (
+            <button key={m} type="button" className="seg" style={{ fontSize: 13, padding: 0 }} aria-pressed={f.prepMinutes === m} onClick={() => set({ prepMinutes: m })}>{m} мин</button>
+          ))}</div>
+          <div className="banner warn"><span><b>Клиент увидит: подача = {f.prepMinutes} мин на сборы + дорога.</b> Опоздание больше 40 минут от этого времени снижает рейтинг. Ставьте честно.</span></div>
+          <label className="agree"><input type="checkbox" checked={!!x.prepAck} onChange={(e) => setX({ ...x, prepAck: e.target.checked })} /><span>Понимаю: время на сборы ставлю сам и отвечаю за него</span></label>
+          <div className="rows">{[['Вовремя или до 40 мин', 'Норма для грузовых, на рейтинг не влияет', 'good'], ['40–90 мин', 'Небольшой минус, если не предупредили', 'warn'], ['Больше 90 мин', 'Заметный минус к рейтингу', 'warn'], ['Не приехал', 'Возврат клиенту, серьёзный минус', 'bad']].map(([a, b, t]) => (
+            <div key={a} className="list-item"><span className="stack" style={{ gap: 2 }}><b>{a}</b><span className="note">{b}</span></span><span className={`pill ${t}`}>{t === 'good' ? 'ок' : t === 'bad' ? '−−' : '−'}</span></div>
+          ))}</div>
+          <span className="note">Опоздание считается по GPS от обещанного времени. Сдвинули время в заказе кнопкой «Опаздываю» — отсчёт идёт от нового.</span>
+        </div>
+      )}
 
       {cur === 'services' && (
         <div className="card">
@@ -442,17 +509,31 @@ export function FilterSection() {
           <Field label="За КАД, ₽ за км" hint="Считается расстояние × 1,5 — дорога туда и половина обратно.">
             <RubInput value={f.kmRate} onChange={(v) => set({ kmRate: v })} placeholder={isTow ? '110 ₽' : '50 ₽'} />
           </Field>
-          {isTow && (
-            <Field group label="Время на сборы" hint="Клиент видит подачу = сборы + дорога.">
-              <div className="scroll-x">{[0, 15, 30, 45, 60].map((m) => (
-                <button key={m} type="button" className="chip" aria-pressed={f.prepMinutes === m} onClick={() => set({ prepMinutes: m })}>{m} мин</button>
+          <b>Наценки · видны клиенту до вызова</b>
+          <div className="grid2">
+            {num('weekendPct', '0', 'Выходные, %')}
+            {num('nightPct', '0', 'Ночь 22–7, %')}
+            {num('holidayPct', '0', 'Праздники, %')}
+            {num('waitRate', 'например 900', 'Ожидание, ₽/ч')}
+          </div>
+          <span className="note">В выходные и праздники мастеров мало — клиенты это понимают, наценка честная. Ожидание — пока клиент ездит за запчастью или занят своими делами.</span>
+          {!isTow && (
+            <>
+              <b>Предоплата за работу</b>
+              <div className="grid3">{([['never', 'Не беру'], ['low', 'Только ненадёжные'], ['always', 'Всегда']] as const).map(([k, n]) => (
+                <button key={k} type="button" className="seg" style={{ fontSize: 12.5 }} aria-pressed={x.prepay === k} onClick={() => setX({ ...x, prepay: k })}>{n}</button>
               ))}</div>
-            </Field>
+              <span className="note">{x.prepay === 'always' ? 'Риск неоплаты минимальный, но заявок будет меньше.' : x.prepay === 'never' ? 'Заявок больше, риск неоплаты выше.' : 'Обычным клиентам — без предоплаты, ненадёжным — с ней.'}</span>
+            </>
           )}
         </div>
       )}
 
-      <button className="btn" disabled={busy || (!isTow && !f.specialties.length)} onClick={() => save(body(), 'Поиск настроен — заявки подберём по нему')}>Сохранить</button>
+      <button className="btn" disabled={busy || (!isTow && !f.specialties.length) || (isTow && cur === 'prep' && !x.prepAck)} onClick={async () => {
+        const e = extrasBody();
+        Object.keys(e).forEach((k) => e[k] === undefined && delete e[k]);
+        if (await run(() => put('/api/performer/extras', e))) await save(body(), 'Поиск настроен — заявки подберём по нему');
+      }}>Сохранить</button>
     </main>
   );
 }

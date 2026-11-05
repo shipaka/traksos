@@ -254,7 +254,7 @@ export function NewOrder({ service }: { service: string }) {
   const [method, setMethod] = useState<'cash' | 'online' | 'invoice'>('cash');
   const [est, setEst] = useState<any>(null);
   const [destination, setDestination] = useState('');
-  const [cargo, setCargo] = useState<'tractor' | 'semitrailer' | 'coupling' | 'truck12'>('tractor');
+  const [cargo, setCargo] = useState<'tractor' | 'semitrailer' | 'coupling' | 'truck12' | 'bus' | 'special'>('tractor');
   const [loaded, setLoaded] = useState<'empty' | 'loaded' | 'adr'>('empty');
   const [driverOnSite, setDriverOnSite] = useState(true);
   const isTow = service === 'tow';
@@ -408,7 +408,7 @@ export function NewOrder({ service }: { service: string }) {
       {isTow ? (
         <Step n={4} id="f-tow" title="Куда и что везём" req done={need.tow} missing={tried && !need.tow}>
           <input className="field" placeholder="Куда везти: сервис, стоянка, адрес" value={destination} onChange={(e) => setDestination(e.target.value)} />
-          <Chips value={cargo} onChange={setCargo} options={[{ id: 'tractor', name: 'Тягач' }, { id: 'semitrailer', name: 'Полуприцеп' }, { id: 'coupling', name: 'Сцепка целиком' }, { id: 'truck12', name: 'Грузовик до 12 т' }]} />
+          <Chips value={cargo} onChange={setCargo} options={[{ id: 'tractor', name: 'Тягач' }, { id: 'semitrailer', name: 'Полуприцеп' }, { id: 'coupling', name: 'Сцепка целиком' }, { id: 'truck12', name: 'Грузовик до 12 т' }, { id: 'bus', name: 'Автобус' }, { id: 'special', name: 'Спецтехника' }]} />
           <span className="label">Груз в прицепе</span>
           <Chips value={loaded} onChange={setLoaded} options={[{ id: 'empty', name: 'Пустой' }, { id: 'loaded', name: 'Гружёный' }, { id: 'adr', name: 'Опасный ADR' }]} />
           <div className="grid2">

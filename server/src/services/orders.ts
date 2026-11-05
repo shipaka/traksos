@@ -29,7 +29,7 @@ export interface CreateOrderInput {
   night?: boolean;
   paymentMethod?: 'cash' | 'online' | 'invoice';
   destination?: string;
-  cargo?: 'tractor' | 'semitrailer' | 'coupling' | 'truck12';
+  cargo?: 'tractor' | 'semitrailer' | 'coupling' | 'truck12' | 'bus' | 'special';
   loaded?: 'empty' | 'loaded' | 'adr';
   driverOnSite?: boolean;
   /** Условия на месте: тип места, пропуск, кто встретит, что с машиной, когда */
@@ -132,7 +132,7 @@ export class OrdersService {
     const kind = performerKindFor(order.service);
     const list = await this.db.query<Candidate>(
       `select p.user_id, p.kind, p.specialties, p.brands, p.is_priority, p.paused, p.line_status, p.verification,
-              p.lat, p.lng, u.rating, p.accepts_group, u.status as user_status, p.schedule, p.off_schedule_until,
+              p.lat, p.lng, u.rating, p.accepts_group, u.status as user_status, p.schedule, p.off_schedule_until, p.extras,
               (select coalesce(-sum(amount),0)::int from ledger_entries l
                 where l.performer_id = p.user_id and l.kind in ('cash_commission','cash_commission_paid')) as cash_debt
          from performer_profiles p join users u on u.id = p.user_id

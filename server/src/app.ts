@@ -145,6 +145,15 @@ export function createApp(d: Deps) {
     car: z.object({ brand: z.string().max(50), color: z.string().max(30).optional(), plate: z.string().max(15) }).nullish(),
     cars: z.array(z.object({ brand: z.string().min(1).max(50), color: z.string().max(30).optional(), plate: z.string().min(1).max(15) })).max(3).optional(),
   }), c.body)));
+  r.put('/api/performer/extras', performerRoles, (c: AuthedCtx) => profiles.setExtras(c.user.id, parse(z.object({
+    weekendPct: z.number().int().min(0).max(100).optional(), nightPct: z.number().int().min(0).max(100).optional(),
+    holidayPct: z.number().int().min(0).max(100).optional(), waitRate: z.number().int().min(0).max(1_000_000).optional(),
+    prepay: z.enum(['never', 'low', 'always']).optional(), vacation: z.boolean().optional(),
+    stock: z.array(z.string().max(40)).max(20).optional(),
+    takes: z.array(z.enum(['tractor', 'semitrailer', 'coupling', 'truck12', 'bus', 'special'])).max(6).optional(),
+    towType: z.enum(['partial', 'break', 'crane']).optional(), maxMass: z.number().min(1).max(100).optional(), prepAck: z.boolean().optional(),
+    ring: z.boolean().optional(),
+  }), c.body)));
   r.put('/api/performer/schedule', performerRoles, (c: AuthedCtx) => {
     const t = z.string().regex(/^\d{2}:\d{2}$/);
     const day = z.boolean();
@@ -207,7 +216,7 @@ export function createApp(d: Deps) {
     tier: z.enum(['eco', 'comfort', 'pro']).optional(), vehicleId: z.string().uuid().optional(), brand: z.string().max(40).optional(),
     model: z.string().max(40).optional(), year: z.number().int().min(1950).max(2100).optional(),
     groupTrip: z.boolean().optional(), night: z.boolean().optional(), paymentMethod: z.enum(['cash', 'online', 'invoice']).optional(),
-    destination: z.string().max(300).optional(), cargo: z.enum(['tractor', 'semitrailer', 'coupling', 'truck12']).optional(),
+    destination: z.string().max(300).optional(), cargo: z.enum(['tractor', 'semitrailer', 'coupling', 'truck12', 'bus', 'special']).optional(),
     loaded: z.enum(['empty', 'loaded', 'adr']).optional(), driverOnSite: z.boolean().optional(), fromConsult: z.string().uuid().optional(),
     site: z.object({
       place: z.enum(['parking', 'yard', 'plant', 'road']).optional(), pass: z.enum(['none', 'onsite', 'ahead']).optional(),

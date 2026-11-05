@@ -24,6 +24,8 @@ export interface Candidate {
   user_status: string;
   cash_debt?: number;
   schedule?: Schedule | null;
+  /** Отпуск, что берёт эвакуатор и т. п. */
+  extras?: { vacation?: boolean; takes?: string[] } | null;
   off_schedule_until?: string | Date | null;
 }
 
@@ -33,6 +35,7 @@ export interface DispatchOrder {
   lat: number | null;
   lng: number | null;
   group_trip: boolean;
+  cargo?: string | null;
 }
 
 const brandRank: Record<BrandLevel, number> = { excellent: 0, good: 1, last_resort: 2, refuse: 99 };
@@ -67,6 +70,9 @@ export function rankCandidates(order: DispatchOrder, list: Candidate[], o: RankO
     // Распорядок: вне рабочего времени не звоним; в часы «на телефоне» — только консультации
     .filter((c) => { const s = slot(c.schedule, o.now ?? new Date(), c.off_schedule_until); return s === 'work' || (s === 'phone' && order.service === 'consult'); })
     .filter((c) => !o.exclude?.has(c.user_id))
+    // В отпуске — не звоним; эвакуатор не берёт такой груз — не звоним
+    .filter((c) => !c.extras?.vacation)
+    .filter((c) => kind !== 'tow' || !order.cargo || !c.extras?.takes?.length || c.extras.takes.includes(order.cargo))
     .filter((c) => !order.group_trip || c.accepts_group)
     .filter((c) => (c.cash_debt ?? 0) <= o.cashDebtLimit)
     .map((c) => {

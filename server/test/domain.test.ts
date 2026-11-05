@@ -97,3 +97,15 @@ test('агентская схема: деньги и шкала отмены к�
   assert.equal(cancelStage('en_route', { startKm: 20, leftKm: 8 }), 'en_route_second_half');
   assert.equal(cancelStage('accepted', { byPerformer: true }), 'performer_fault');
 });
+
+test('эвакуатор: «что беру» фильтрует по грузу; отпуск — не звоним', () => {
+  const order = { service: 'tow', brand: null, lat: 59.93, lng: 30.31, group_trip: false, cargo: 'bus' };
+  const list = [
+    cand('any', { kind: 'tow' }),
+    cand('bus', { kind: 'tow', extras: { takes: ['bus', 'tractor'] } } as any),
+    cand('small', { kind: 'tow', extras: { takes: ['truck12'] } } as any),
+    cand('rest', { kind: 'tow', extras: { vacation: true } } as any),
+  ];
+  const r = rankCandidates(order, list, { radiusKm: 220, maxCandidates: 10, cashDebtLimit: 300_000 });
+  assert.deepEqual(r.map((x) => x.user_id).sort(), ['any', 'bus']);
+});
