@@ -203,3 +203,14 @@ select.field { appearance: none; }
 .live-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; padding: 8px 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); font-size: 12.5px; color: var(--muted); user-select: none; }
 .live-strip b { color: var(--fg); font-variant-numeric: tabular-nums; }
 .live-dot { width: 8px; height: 8px; border-radius: 4px; background: var(--good); box-shadow: 0 0 0 3px var(--good-soft); }
+
+/* История машины — лента */
+.tl { list-style: none; margin: 0; padding: 0 0 0 4px; display: flex; flex-direction: column; }
+.tl li { display: flex; gap: 12px; position: relative; padding-bottom: 12px; }
+.tl li::before { content: ""; position: absolute; left: 6px; top: 16px; bottom: 0; width: 2px; background: var(--line-2); }
+.tl li:last-child::before { display: none; }
+.tl i { width: 14px; height: 14px; border-radius: 7px; border: 2px solid var(--line-2); background: var(--surface); flex-shrink: 0; margin-top: 3px; }
+.tl i.ok { background: var(--good); border-color: var(--good); }
+.tl i.now { background: var(--accent); border-color: var(--accent); }
+.tl a { display: flex; flex-direction: column; gap: 2px; font-size: 14px; min-width: 0; }
+.tl small { color: var(--fg-2); font-size: 12.5px; line-height: 1.4; }

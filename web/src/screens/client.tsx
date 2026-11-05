@@ -492,6 +492,7 @@ export function Garage() {
         <div key={v.id} className="card">
           <div className="between"><b>{v.brand} {v.model ?? ''}{v.year ? `, ${v.year}` : ''}</b><span className="pill">{v.plate ?? 'без номера'}</span></div>
           {v.trailer_plate && <span className="note">Прицеп {v.trailer_plate}</span>}
+          <VehicleHistory id={v.id} />
           {!isDriver && (driverFor === v.id ? (
             <div className="stack">
               <input className="field" type="tel" value={driverPhone} onChange={(e) => setDriverPhone(e.target.value)} />
@@ -526,6 +527,41 @@ export function Garage() {
         </form>
       )}
     </main>
+  );
+}
+
+/** История машины: что и когда делали, комментарий мастера. Свёрнута, раскрывается по нажатию. */
+function VehicleHistory({ id }: { id: string }) {
+  const [open, setOpen] = useState(false);
+  const h = useLoad(() => get(`/api/vehicles/${id}/history`), [id], (e) => e.type === 'order');
+  const d = h.data;
+  if (!d) return null;
+  if (!d.items.length) return <span className="note">История пока пустая — здесь будут все вызовы по этой машине и что делали мастера.</span>;
+  const last = d.summary.lastAt ? fmtTime(d.summary.lastAt) : '';
+  return (
+    <div className="stack" style={{ gap: 8 }}>
+      <button type="button" className="linkrow" onClick={() => setOpen(!open)} aria-expanded={open}>
+        <span><b>История · {d.summary.total} {d.summary.total === 1 ? 'обращение' : d.summary.total < 5 ? 'обращения' : 'обращений'}</b>
+          <small>последнее {last}{d.summary.spent != null && d.summary.spent > 0 ? ` · всего ${rub(d.summary.spent)}` : ''}</small></span>
+        <span aria-hidden="true">{open ? '˄' : '˅'}</span>
+      </button>
+      {open && (
+        <ol className="tl">
+          {d.items.map((o: any) => (
+            <li key={o.id}>
+              <i className={o.status === 'completed' ? 'ok' : o.status === 'cancelled' || o.status === 'no_performer' ? 'off' : 'now'} />
+              <a href={`#/order/${o.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <b>{SERVICES[o.service]?.name ?? o.service}{o.is_sos ? ' · SOS' : ''}</b>
+                <small>{fmtTime(o.created_at)}{o.performer_name ? ` · ${o.performer_name}` : ''} · {STATUS[o.status]?.name}{o.amount ? ` · ${rub(o.amount)}` : ''}</small>
+                {o.description && <small>Было: {o.description}</small>}
+                {o.consult_hint && <small>Подсказка по телефону: {o.consult_hint.hints.join(', ').toLowerCase()}{o.consult_hint.note ? ` — ${o.consult_hint.note}` : ''}</small>}
+                {o.result_note && <small style={{ color: 'var(--fg)' }}>Мастер: {o.result_note}</small>}
+              </a>
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
   );
 }
 

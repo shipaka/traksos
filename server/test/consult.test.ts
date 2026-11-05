@@ -79,3 +79,23 @@ test('консультация закрывается сама через сут
   const o = ok(await t.api('GET', `/api/orders/${id}`, undefined, client.token));
   assert.equal(o.status, 'completed');
 });
+
+test('история машины: все обращения, подсказка и комментарий мастера; удаление машины заявки не ломает', async () => {
+  const v = ok(await t.api('POST', '/api/vehicles', { brand: 'DAF', model: 'XF', year: 2016, plate: 'а482км178' }, client.token));
+  const c = ok(await t.api('POST', '/api/orders', { service: 'consult', vehicleId: v.id }, client.token));
+  assert.equal(c.order.model, 'XF');
+  assert.equal(c.order.year, 2016);
+  ok(await t.api('POST', `/api/orders/${c.order.id}/offers`, {}, master.token));
+  const list = ok(await t.api('GET', `/api/orders/${c.order.id}/offers`, undefined, client.token));
+  ok(await t.api('POST', `/api/orders/${c.order.id}/offers/${list.offers[0].id}/choose`, {}, client.token));
+  ok(await t.api('POST', `/api/orders/${c.order.id}/consult-finish`, { hints: ['Масса'], confidence: 'sure' }, master.token));
+  ok(await t.api('POST', `/api/orders/${c.order.id}/confirm`, { total: 70_000 }, client.token));
+  const h = ok(await t.api('GET', `/api/vehicles/${v.id}/history`, undefined, client.token));
+  assert.equal(h.summary.total, 1);
+  assert.equal(h.summary.spent, 70_000);
+  assert.deepEqual(h.items[0].consult_hint.hints, ['Масса']);
+  const stranger = await t.login('+79995557788');
+  assert.equal((await t.api('GET', `/api/vehicles/${v.id}/history`, undefined, stranger.token)).status, 404);
+  ok(await t.api('DELETE', `/api/vehicles/${v.id}`, undefined, client.token));
+  assert.equal(ok(await t.api('GET', `/api/orders/${c.order.id}`, undefined, client.token)).status, 'completed');
+});

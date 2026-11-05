@@ -137,6 +137,34 @@ export class ProfilesService {
     );
   }
 
+  /**
+   * История машины: всё, что по ней делали, — услуга, кто, итог и комментарий мастера, подсказка по телефону.
+   * Владелец видит суммы, водитель — только свои заявки и без сумм.
+   */
+  async vehicleHistory(user: AuthUser, id: string) {
+    const ownerId = user.owner_id ?? user.id;
+    const v = await this.db.one('select * from vehicles where id=$1 and owner_id=$2', [id, ownerId]);
+    if (!v || (user.owner_id && v.driver_id !== user.id)) throw notFound('Машина не найдена');
+    const rows = await this.db.query(
+      `select o.id, o.number, o.service, o.status, o.is_sos, o.problem, o.description, o.result, o.result_note, o.consult_hint,
+              o.created_at, o.completed_at, o.created_by, u.name as performer_name,
+              coalesce(o.call_out_amount, 0) + coalesce(o.work_amount, 0) as amount
+         from orders o left join users u on u.id = o.performer_id
+        where o.vehicle_id=$1 ${user.owner_id ? 'and o.created_by=$2' : ''}
+        order by o.created_at desc limit 100`,
+      user.owner_id ? [id, user.id] : [id]);
+    const done = rows.filter((r: any) => r.status === 'completed');
+    return {
+      vehicle: v,
+      summary: {
+        total: rows.length, completed: done.length,
+        lastAt: rows[0]?.created_at ?? null,
+        spent: user.owner_id ? null : done.reduce((s: number, r: any) => s + Number(r.amount), 0),
+      },
+      items: rows.map((r: any) => ({ ...r, amount: user.owner_id ? null : Number(r.amount) })),
+    };
+  }
+
   async removeVehicle(user: AuthUser, id: string) {
     const r = await this.db.query('delete from vehicles where id=$1 and owner_id=$2 returning id', [id, user.id]);
     if (!r.length) throw notFound();

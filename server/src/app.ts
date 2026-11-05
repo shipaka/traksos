@@ -127,6 +127,7 @@ export function createApp(d: Deps) {
     plate: z.string().max(15).optional(), trailerPlate: z.string().max(15).optional() });
   r.get('/api/vehicles', true, (c: AuthedCtx) => profiles.vehicles(c.user));
   r.post('/api/vehicles', true, (c: AuthedCtx) => profiles.addVehicle(c.user, parse(vehicleSchema, c.body)));
+  r.get('/api/vehicles/:id/history', true, (c: AuthedCtx) => profiles.vehicleHistory(c.user, c.params.id));
   r.delete('/api/vehicles/:id', true, async (c: AuthedCtx) => (await profiles.removeVehicle(c.user, c.params.id), { ok: true }));
   r.post('/api/vehicles/:id/driver', true, (c: AuthedCtx) => profiles.assignDriver(c.user, c.params.id, parse(z.object({ phone: z.string().nullable() }), c.body).phone));
 
