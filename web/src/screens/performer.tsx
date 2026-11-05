@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { get, post, put, rub, onEvent } from '../api.ts';
 import { BRANDS, BRAND_LEVELS, LINE, SERVICES } from '../dict.ts';
-import { useLoad, useAction, useMe, go, Loading, Field, RubInput, Back } from '../ui.tsx';
+import { useLoad, useAction, useMe, go, Loading, Field, RubInput, Back, LiveStrip } from '../ui.tsx';
 import { native } from '../native.ts';
 import { OfferForm } from './search.tsx';
 import { useToast } from '../ui.tsx';
@@ -28,6 +28,7 @@ export function Work() {
 
   return (
     <main>
+      <LiveStrip who={p.kind === 'tow' ? 'tow' : 'master'} />
       <div className="between">
         <h1>{me?.name ?? 'Кабинет'}</h1>
         <span className="pill"><span className={`dot ${online ? 'on' : ''}`} /> {LINE[p.line_status]}</span>

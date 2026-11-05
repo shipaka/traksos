@@ -198,3 +198,8 @@ select.field { appearance: none; }
   display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 18px; background: rgba(27,30,34,.97); border: 1px solid var(--accent); box-shadow: 0 -8px 24px rgba(0,0,0,.45); }
 .callbar-in .note { text-align: center; }
 .btn.pending { background: var(--surface-3); color: var(--fg); }
+
+/* «Сейчас в ТракSOS»: тихая строка-факт, не кнопка */
+.live-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; padding: 8px 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); font-size: 12.5px; color: var(--muted); user-select: none; }
+.live-strip b { color: var(--fg); font-variant-numeric: tabular-nums; }
+.live-dot { width: 8px; height: 8px; border-radius: 4px; background: var(--good); box-shadow: 0 0 0 3px var(--good-soft); }

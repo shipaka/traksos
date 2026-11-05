@@ -173,3 +173,31 @@ export function VehicleFields({ value, onChange }: { value: VehicleValue; onChan
     </div>
   );
 }
+
+// «Сейчас в ТракSOS» — просто факт, не кнопка: сколько на линии и сколько заявок за сутки. Обновляется раз в минуту.
+export function LiveStrip({ who }: { who: 'client' | 'master' | 'tow' }) {
+  const [d, setD] = useState<any>(null);
+  useEffect(() => {
+    let alive = true;
+    const load = () => import('./api.ts').then(({ get }) => get('/api/live')).then((x) => alive && setD(x)).catch(() => {});
+    load();
+    const t = setInterval(load, 60_000);
+    return () => { alive = false; clearInterval(t); };
+  }, []);
+  if (!d) return null;
+  const pl = (n: number, one: string, few: string, many: string) => {
+    const m10 = n % 10, m100 = n % 100;
+    return `${n} ${m10 === 1 && m100 !== 11 ? one : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? few : many}`;
+  };
+  const items = [
+    who === 'tow' ? `на линии ${pl(d.tow_online, 'эвакуатор', 'эвакуатора', 'эвакуаторов')}` : `на линии ${pl(d.masters_online, 'мастер', 'мастера', 'мастеров')}`,
+    who === 'client' ? `в работе ${pl(d.in_work, 'заявка', 'заявки', 'заявок')}` : `за сутки ${pl(d.orders_24h, 'заявка', 'заявки', 'заявок')}`,
+    `выполнено ${d.done_24h}`,
+  ];
+  return (
+    <div className="live-strip" aria-label="Сейчас в ТракSOS">
+      <span className="live-dot" />
+      <span>Сейчас в ТракSOS: {items.join(' · ')}</span>
+    </div>
+  );
+}

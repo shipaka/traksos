@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { get, post, del, rub, fmtTime, fmtPhone } from '../api.ts';
 import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF } from '../dict.ts';
-import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFields, type VehicleValue } from '../ui.tsx';
+import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFields, LiveStrip, type VehicleValue } from '../ui.tsx';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
 
@@ -44,6 +44,7 @@ export function Home() {
       ))}
 
       <SymptomPicker sos={false} />
+      <LiveStrip who="client" />
 
       <div className="stack">
         <span className="label">Все услуги</span>

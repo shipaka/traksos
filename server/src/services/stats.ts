@@ -8,6 +8,17 @@ const TZ = `'Europe/Moscow'`;
 export class StatsService {
   constructor(private db: Db, private now: () => Date) {}
 
+  /** Короткая сводка «Сейчас в ТракSOS» — видят все: сколько исполнителей на линии и заявок за сутки */
+  async live() {
+    const since = new Date(this.now().getTime() - 86_400_000);
+    return this.db.one(
+      `select (select count(*)::int from performer_profiles where kind='master' and verification='approved' and line_status in ('online','on_call','on_job')) as masters_online,
+              (select count(*)::int from performer_profiles where kind='tow' and verification='approved' and line_status in ('online','on_call','on_job')) as tow_online,
+              (select count(*)::int from orders where created_at >= $1) as orders_24h,
+              (select count(*)::int from orders where status in ('accepted','en_route','arrived','working','awaiting_confirmation')) as in_work,
+              (select count(*)::int from orders where status='completed' and completed_at >= $1) as done_24h`, [since]);
+  }
+
   async overview(days = 30) {
     const since = new Date(this.now().getTime() - days * 86_400_000);
     const p = [since];
