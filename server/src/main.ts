@@ -49,12 +49,15 @@ const timer = setInterval(() => {
   app.orders.tick().catch((e) => console.error('[tick]', e));
   app.auction.tick().catch((e) => console.error('[auction]', e));
 }, 2_000);
+// Запросы на удаление данных — раз в час
+const hourly = setInterval(() => { app.privacy.processDeletions().catch((e) => console.error('[privacy]', e)); }, 3_600_000);
 
 server.listen(config.port, () => console.log(`ТракSOS API: http://localhost:${config.port} (БД: ${db.driver})`));
 
 for (const sig of ['SIGINT', 'SIGTERM'] as const) {
   process.on(sig, async () => {
     clearInterval(timer);
+    clearInterval(hourly);
     server.close();
     await db.close();
     process.exit(0);

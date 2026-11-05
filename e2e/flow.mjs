@@ -189,6 +189,7 @@ await m.getByText('Что случилось?').first().waitFor();
 
 // Админ: поиск → карточка клиента → бонусы; клиент видит их в профиле
 await a.goto(BASE + '/#/admin');
+await a.getByRole('button', { name: 'Поиск', exact: true }).click();
 await a.locator('input[placeholder^="Телефон, имя"]').fill('1112233');
 await a.getByRole('button', { name: 'Найти' }).click();
 await a.locator('a.list-item').first().click();
@@ -207,6 +208,7 @@ await k.getByText(/спишутся сами/).waitFor({ timeout: 10000 });
 
 // Админ: карточка мастера → начисление; мастер видит в балансе
 await a.goto(BASE + '/#/admin');
+await a.getByRole('button', { name: 'Поиск', exact: true }).click();
 await a.locator('input[placeholder^="Телефон, имя"]').fill('2223344');
 await a.getByRole('button', { name: 'Найти' }).click();
 await a.locator('a.list-item').first().click();

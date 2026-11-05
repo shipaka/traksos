@@ -54,6 +54,7 @@ const SERVICES = ['electric', 'diag', 'air', 'autonomy', 'tyre', 'tow', 'consult
 const CONSULT_DISCOUNT = 'Скидка после консультации';
 
 export class OrdersService {
+  onDispute: ((p: { userId: string; orderId: string; text: string; targetId: string | null; title: string }) => Promise<unknown>) | null = null;
   payments!: PaymentHooks;
   auction!: AuctionService;
 
@@ -481,6 +482,7 @@ export class OrdersService {
     await this.guarded(this.db, `update orders set status=$2 where id=$1 and status='awaiting_confirmation'`, [orderId, to]);
     await this.event(this.db, orderId, user.id, 'amount_disputed', { reason });
     await this.systemMessage(orderId, `Клиент не согласен с суммой: ${reason}. Обсудите в чате или позовите поддержку.`);
+    await this.onDispute?.({ userId: user.id, orderId, text: reason, targetId: o.performer_id, title: `Не согласен с суммой по заявке №${o.number}` });
     await this.notifier.notify([o.performer_id], { type: 'order', orderId, status: to },
       { kind: 'normal', title: 'Клиент не согласен с суммой', body: reason, data: { orderId } });
     return this.view(user, orderId);

@@ -47,7 +47,7 @@ export class ReviewsService {
 
   async about(userId: string) {
     return this.db.query(
-      `select r.stars, r.tags, r.text, r.created_at, u.name as author_name
+      `select r.id, r.stars, r.tags, r.text, r.created_at, r.disputed, u.name as author_name
          from reviews r join users u on u.id = r.author_id
         where r.target_id=$1 and not r.hidden order by r.created_at desc limit 50`, [userId]);
   }

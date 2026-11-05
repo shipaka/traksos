@@ -1,7 +1,7 @@
 import http from 'node:http';
 import { z } from 'zod';
 import type { Db } from './db/index.ts';
-import { Router, parse, readBody, send, errorBody, forbidden, bad, notFound, type Ctx, type AuthedCtx } from './http/router.ts';
+import { Router, parse, readBody, send, errorBody, forbidden, bad, notFound, HttpError, type Ctx, type AuthedCtx } from './http/router.ts';
 import { Hub } from './realtime/hub.ts';
 import type { SmsProvider } from './providers/sms.ts';
 import type { PushProvider } from './providers/push.ts';
@@ -23,6 +23,10 @@ import { StatsService } from './services/stats.ts';
 import { OnsiteService } from './services/onsite.ts';
 import { ServiceCenters } from './services/service.ts';
 import { FleetService } from './services/fleet.ts';
+import { PrivacyService } from './services/privacy.ts';
+import { ModerationService } from './services/moderation.ts';
+import { checkAppealToken } from './services/auth.ts';
+import { normalizePhone } from './util.ts';
 import { Raw } from './http/router.ts';
 import { PaymentsService } from './payments/service.ts';
 import { estimate, isNight } from './domain/pricing.ts';
@@ -63,6 +67,16 @@ export function createApp(d: Deps) {
   const stats = new StatsService(d.db, now);
   const centers = new ServiceCenters(d.db, notifier, settings, support, now);
   const fleet = new FleetService(d.db, notifier, orders);
+  const privacy = new PrivacyService(d.db, notifier, now);
+  const moderation = new ModerationService(d.db, notifier, reviews, now, d.sms);
+  // Споры — в очередь модератора: из суммы заявки, из сверки работ, из ремонта в сервисе
+  orders.onDispute = (p) => moderation.open({ kind: 'dispute', title: p.title, text: p.text, openedBy: p.userId, targetId: p.targetId, orderId: p.orderId, priority: 1 });
+  support.onDispute = async (p) => {
+    if (!p.orderId) return;
+    const o = await d.db.one<any>('select number, performer_id from orders where id=$1', [p.orderId]);
+    return moderation.open({ kind: 'dispute', title: `${p.topic} · заявка №${o?.number ?? ''}`, text: p.text, openedBy: p.userId, targetId: o?.performer_id ?? null, orderId: p.orderId, ticketId: p.ticketId, priority: 1 });
+  };
+  centers.onDispute = (p) => moderation.open({ kind: 'dispute', title: p.title, text: p.text, openedBy: p.userId, targetId: p.targetId, bookingId: p.bookingId, ticketId: p.ticketId, priority: 1 });
 
   const r = new Router();
   const staff = ['admin', 'moderator'];
@@ -200,7 +214,8 @@ export function createApp(d: Deps) {
   r.get('/api/pricing', false, async () => {
     const all = await settings.all();
     return { zones: all.pricing.zones, tiers: all.pricing.tiers, consult: all.pricing.consult, towBase: all.pricing.towBase, nightNow: isNight(all.pricing, now()), payments: await payments.methods(),
-      clientFeePct: all.fees.clientFeePct, reviewTags: REVIEW_TAGS };
+      clientFeePct: all.fees.clientFeePct, reviewTags: REVIEW_TAGS, cancelScale: all.cancel.scale,
+      serviceCommissionPct: all.fees.serviceCommissionPct, serviceReferralDiscountPct: all.fees.serviceReferralDiscountPct, performerCommissionPct: all.fees.performerCommissionPct };
   });
   r.post('/api/pricing/estimate', false, async (c: Ctx) => {
     const b = parse(z.object({ service: z.string(), tier: z.enum(['eco', 'comfort', 'pro']).default('eco'), zoneId: z.string(),
@@ -228,6 +243,35 @@ export function createApp(d: Deps) {
       when: z.enum(['now', 'today', 'tomorrow']).optional(), time: z.string().max(20).optional(),
     }).optional(),
   }), c.body))));
+  // Модерация -----------------------------------------------------------------
+  r.post('/api/appeals', true, (c: AuthedCtx) => moderation.appeal(c.user, parse(z.object({ text: z.string().max(2000) }), c.body).text));
+  r.post('/api/appeals/blocked', false, async (c: Ctx) => {
+    const b = parse(z.object({ phone: z.string(), appealToken: z.string().max(100), text: z.string().max(2000) }), c.body);
+    const phone = normalizePhone(b.phone);
+    if (!phone || !checkAppealToken(phone, b.appealToken, now())) throw new HttpError(403, 'bad_token', 'Войдите по коду ещё раз — и сразу отправьте обжалование');
+    const u = await d.db.one<{ id: string }>(`select id from users where phone=$1 and status='blocked'`, [phone]);
+    if (!u) throw new HttpError(404, 'not_found', 'Аккаунт не заблокирован');
+    return moderation.appealBlocked(u.id, b.text);
+  });
+  r.post('/api/reviews/:id/contest', true, (c: AuthedCtx) => moderation.contestReview(c.user, c.params.id, parse(z.object({ text: z.string().min(5).max(1000) }), c.body).text));
+  r.get('/api/me/reviews', true, (c: AuthedCtx) => reviews.about(c.user.id));
+  r.get('/api/my-cases', true, (c: AuthedCtx) => moderation.mine(c.user));
+  r.get('/api/mod/cases', staff, (c: AuthedCtx) => moderation.queue(c.query.get('status') === 'resolved' ? 'resolved' : 'open', c.query.get('kind') ?? undefined));
+  r.get('/api/mod/cases/:id', staff, (c: AuthedCtx) => moderation.caseView(c.params.id));
+  r.post('/api/mod/cases/:id/decide', staff, (c: AuthedCtx) => {
+    const b = parse(z.object({ decision: z.string().max(20), note: z.string().max(1000).optional() }), c.body);
+    return moderation.decide(c.user, c.params.id, b.decision, b.note);
+  });
+  r.post('/api/mod/cases/:id/reopen', staff, (c: AuthedCtx) => moderation.reopen(c.user, c.params.id));
+  r.post('/api/mod/cases/:id/priority', staff, (c: AuthedCtx) => moderation.setPriority(c.user, c.params.id, parse(z.object({ priority: z.number().int().min(1).max(3) }), c.body).priority));
+  r.post('/api/mod/cases/:id/enter-chat', staff, (c: AuthedCtx) => moderation.enterChat(c.user, c.params.id));
+
+  // Персональные данные ---------------------------------------------------------
+  r.get('/api/me/privacy', true, (c: AuthedCtx) => privacy.status(c.user));
+  r.get('/api/me/export', true, (c: AuthedCtx) => privacy.export(c.user));
+  r.post('/api/me/delete', true, (c: AuthedCtx) => privacy.requestDelete(c.user));
+  r.delete('/api/me/delete', true, (c: AuthedCtx) => privacy.cancelDelete(c.user));
+
   // Мой парк --------------------------------------------------------------------
   r.get('/api/fleet', true, (c: AuthedCtx) => fleet.get(c.user));
   r.put('/api/fleet', true, (c: AuthedCtx) => fleet.set(c.user, parse(z.object({
@@ -487,7 +531,7 @@ export function createApp(d: Deps) {
     }
   }
 
-  return { handle, hub, auth, settings, orders, payments, auction, documents, admin, profiles, chat, reviews, offers, notifier, router: r };
+  return { handle, hub, auth, settings, orders, payments, auction, documents, admin, profiles, chat, reviews, offers, notifier, privacy, router: r };
 }
 
 export type App = ReturnType<typeof createApp>;

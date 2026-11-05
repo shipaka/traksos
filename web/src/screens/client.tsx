@@ -727,6 +727,10 @@ export function Profile() {
         {!isPerformer && <button className="btn ghost" onClick={() => go('work/profile')}>Стать исполнителем на ТракSOS</button>}
         {me.roles.some((r) => r === 'admin' || r === 'moderator') && mode !== 'admin' && <button className="btn ghost" onClick={() => go('as/admin')}>Кабинет администратора</button>}
         <button className="btn ghost" onClick={() => go('support')}>Поддержка</button>
+        <button className="btn ghost" onClick={() => go('help')}>Справка: как всё устроено</button>
+        <button className="btn ghost" onClick={() => go('privacy')}>Персональные данные</button>
+        <button className="btn ghost" onClick={() => go('reviews')}>Отзывы обо мне</button>
+        <button className="btn ghost" onClick={() => go('appeal')}>Оспорить нарушение или блокировку</button>
         <button className="btn bad" onClick={logout}>Выйти</button>
       </div>
     </main>

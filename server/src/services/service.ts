@@ -31,6 +31,7 @@ export interface CenterInput {
 }
 
 export class ServiceCenters {
+  onDispute: ((p: { userId: string; bookingId: string; ticketId: string | null; text: string; targetId: string; title: string }) => Promise<unknown>) | null = null;
   constructor(private db: Db, private notifier: Notifier, private settings: SettingsService, private support: SupportService, private now: () => Date) {}
 
   // ——— Карточка сервиса ———
@@ -370,7 +371,8 @@ export class ServiceCenters {
       const why = p.why?.trim();
       if (!why || why.length < 5) throw bad('empty', 'Напишите, с чем не согласны');
       await this.db.query(`update service_bookings set status='disputed', updated_at=now() where id=$1`, [id]);
-      await this.support.open(user, { topic: 'Не согласен с суммой', text: `Ремонт в сервисе, счёт №${b.number}: ${why}` });
+      const t = await this.support.open(user, { topic: 'Ремонт в сервисе', text: `Ремонт в сервисе, счёт №${b.number}: ${why}` }) as any;
+      await this.onDispute?.({ userId: user.id, bookingId: id, ticketId: t?.id ?? null, text: why, targetId: b.owner_id, title: `Спор по ремонту в сервисе, счёт №${b.number}` });
       await this.notifier.notify([b.owner_id], { type: 'booking', bookingId: id, status: 'disputed' },
         { kind: 'normal', title: 'Клиент не согласен с работами', body: 'Модератор свяжется с обеими сторонами', data: { bookingId: id } });
     }

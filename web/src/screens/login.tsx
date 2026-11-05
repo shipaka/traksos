@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { post, setToken, connectWs } from '../api.ts';
-import { useAction, useMe, Field } from '../ui.tsx';
+import { post, setToken, connectWs, ApiError } from '../api.ts';
+import { useAction, useMe, useToast, Field } from '../ui.tsx';
 
 const ROLES = [
   { id: 'client', name: 'Мне нужна помощь', hint: 'Владелец, водитель, транспортная компания' },
@@ -18,6 +18,10 @@ export function Login({ driver }: { driver?: boolean } = {}) {
   const [devCode, setDevCode] = useState<string | null>(null);
   const [role, setRole] = useState<(typeof ROLES)[number]['id']>('client');
   const [agree, setAgree] = useState(false);
+  const toast = useToast();
+  const [appealToken, setAppealToken] = useState<string | null>(null);
+  const [appealText, setAppealText] = useState('');
+  const [appealSent, setAppealSent] = useState(false);
 
   async function sendCode() {
     const r = await run(() => post('/api/auth/code', { phone }), 'Код отправлен');
@@ -27,8 +31,17 @@ export function Login({ driver }: { driver?: boolean } = {}) {
     }
   }
   async function verify() {
-    const r = await run(() => post('/api/auth/verify', { phone, code, role, device: navigator.userAgent.slice(0, 200), acceptOffers: agree }), 'Вы вошли');
+    const r = await run(async () => {
+      try {
+        return await post('/api/auth/verify', { phone, code, role, device: navigator.userAgent.slice(0, 200), acceptOffers: agree });
+      } catch (e) {
+        // Заблокирован — показываем форму обжалования, номер уже подтверждён кодом
+        if (e instanceof ApiError && e.code === 'blocked' && e.data?.appealToken) { setAppealToken(e.data.appealToken); return null; }
+        throw e;
+      }
+    }, null);
     if (r) {
+      toast('Вы вошли');
       setToken(r.token);
       connectWs();
       await reload();
@@ -45,7 +58,16 @@ export function Login({ driver }: { driver?: boolean } = {}) {
         <div className="sub">Пришлём код. Пароль не нужен.</div>
       </div>
 
-      {step === 'phone' ? (
+      {appealToken ? (
+        <div className="card">
+          <b>Аккаунт заблокирован</b>
+          {appealSent ? <span className="note">Обжалование отправлено модератору. Ответ придёт по SMS в течение суток.</span> : <>
+            <span className="note">Не согласны — опишите, что произошло. Модератор разберётся; если блокировка ошибочная, снимем её.</span>
+            <textarea className="field" value={appealText} onChange={(e) => setAppealText(e.target.value)} placeholder="Что произошло, номер заявки, почему вы не согласны" />
+            <button className="btn" disabled={busy || appealText.trim().length < 10} onClick={async () => { if (await run(() => post('/api/appeals/blocked', { phone, appealToken, text: appealText }), 'Отправлено модератору')) setAppealSent(true); }}>Оспорить блокировку</button>
+          </>}
+        </div>
+      ) : step === 'phone' ? (
         <form className="stack" onSubmit={(e) => { e.preventDefault(); sendCode(); }}>
           {!driver && <div className="stack">
             {ROLES.map((r) => (

@@ -54,7 +54,10 @@ export class AuthService {
        returning id, phone, name, roles, status, owner_id, created_at`,
       [phone, [role, ...extra]],
     );
-    if (!user || user.status !== 'active') throw new HttpError(403, 'blocked', 'Аккаунт заблокирован. Напишите в поддержку.');
+    if (!user || user.status !== 'active') {
+      // Заблокированный может оспорить блокировку — номер подтверждён кодом, выдаём одноразовый пропуск на обжалование
+      throw new HttpError(403, 'blocked', 'Аккаунт заблокирован. Можно оспорить блокировку — ответ придёт по SMS.', { appealToken: appealToken(phone, this.now()) });
+    }
 
     const token = newToken();
     await this.db.query('insert into sessions(token_hash, user_id, expires_at, device) values ($1,$2,$3,$4)', [
@@ -78,4 +81,12 @@ export class AuthService {
   async logout(token: string) {
     await this.db.query('delete from sessions where token_hash=$1', [sha256(token)]);
   }
+}
+
+/** Пропуск на обжалование блокировки: действует 2 часа после входа по коду */
+export function appealToken(phone: string, now: Date, shift = 0) {
+  return hmac(`${phone}:appeal:${Math.floor(now.getTime() / 3_600_000) - shift}`);
+}
+export function checkAppealToken(phone: string, token: string, now: Date) {
+  return [0, 1].some((k) => appealToken(phone, now, k) === token);
 }

@@ -11,6 +11,8 @@ export const TOPICS = ['Мастер не приехал', 'Не согласе�
 const isStaff = (u: AuthUser) => u.roles.includes('admin') || u.roles.includes('moderator');
 
 export class SupportService {
+  /** Споры уходят и в очередь модератора — ставится при сборке приложения */
+  onDispute: ((p: { userId: string; orderId: string | null; ticketId: string; text: string; topic: string }) => Promise<unknown>) | null = null;
   constructor(private db: Db, private notifier: Notifier, private orders: OrdersService, private now: () => Date) {}
 
   private staffIds = async () => (await this.db.query<{ id: string }>(`select id from users where roles && '{admin,moderator}'::text[]`)).map((r) => r.id);
@@ -56,6 +58,7 @@ export class SupportService {
       await this.orders.event(this.db, p.orderId, user.id, 'support_called', { ticket: t!.number, topic: p.topic });
       await this.orders.systemMessage(p.orderId, `Подключили поддержку (обращение №${t!.number}). Ответим в течение 15 минут.`);
     }
+    if (/спор|не согласен/i.test(p.topic) && this.onDispute) await this.onDispute({ userId: user.id, orderId: p.orderId ?? null, ticketId: t!.id, text, topic: p.topic });
     await this.notifier.notify(await this.staffIds(), { type: 'support', ticketId: t!.id }, {
       kind: 'normal', title: `Обращение №${t!.number}: ${p.topic}`, body: `${user.name ?? user.phone}${number ? ` · заявка №${number}` : ''}: ${text.slice(0, 100)}`,
       data: { ticketId: t!.id },

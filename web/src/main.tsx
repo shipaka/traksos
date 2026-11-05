@@ -15,6 +15,9 @@ import { OfferGate, OfferPage } from './screens/offers.tsx';
 import { AdminUser } from './screens/adminUser.tsx';
 import { BaseHome, BaseCar, BaseSetup, ServicesList, CenterPage, BookForm, BookingPage } from './screens/base.tsx';
 import { Fleet, QrJoin } from './screens/fleet.tsx';
+import { Help } from './screens/help.tsx';
+import { Privacy } from './screens/privacy.tsx';
+import { ModCase, Appeal, MyReviews } from './screens/moderation.tsx';
 import { SupportList, SupportNew, SupportThread, Notifications, useUnread } from './screens/support.tsx';
 
 type Mode = 'client' | 'performer' | 'admin' | 'service';
@@ -100,8 +103,12 @@ function App() {
     case 'services': screen = b && route[2] === 'book' ? <BookForm id={b} /> : b ? <CenterPage id={b} /> : <ServicesList />; break;
     case 'booking': screen = <BookingPage id={b} />; break;
     case 'fleet': screen = <Fleet />; break;
+    case 'help': screen = <Help />; break;
+    case 'privacy': screen = <Privacy />; break;
     case 'qr': screen = <QrJoin code={b} />; break;
-    case 'admin': screen = !isStaff ? <Home /> : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : <Admin />; break;
+    case 'appeal': screen = <Appeal />; break;
+    case 'reviews': screen = <MyReviews />; break;
+    case 'admin': screen = !isStaff ? <Home /> : b === 'case' && route[2] ? <ModCase id={route[2]} /> : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : <Admin />; break;
     case 'offer': screen = <OfferPage audience={b ?? 'client'} />; break;
     case 'support': screen = b === 'new' ? <SupportNew /> : b ? <SupportThread id={b} /> : <SupportList />; break;
     case 'notifications': screen = <Notifications />; break;
@@ -135,6 +142,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {me && mode === 'performer' && <span className="pill accent">исполнитель</span>}
           {me && mode === 'admin' && <span className="pill accent">админ</span>}
           {me && mode === 'service' && <span className="pill accent">рембаза</span>}
+          {me && <a href="#/help" className="bell" aria-label="Справка">?</a>}
           {me && <Bell />}
         </div>
       </header>
