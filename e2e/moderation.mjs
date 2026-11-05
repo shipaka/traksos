@@ -24,7 +24,7 @@ await kp.goto(BASE+'/#/help'); await kp.waitForTimeout(800); await C(kp.locator(
 await kp.goto(BASE+'/#/privacy'); await kp.waitForTimeout(800); await shot(kp,'p1-privacy');
 const [dl] = await Promise.all([kp.waitForEvent('download'), C(kp.getByRole('button',{name:'Скачать мои данные'}))]);
 console.log('download', dl.suggestedFilename());
-const ap = await page(adm,'admin'); await ap.goto(BASE+'/#/admin'); await ap.waitForTimeout(1000); await shot(ap,'m1-queue');
+const ap = await page(adm,'admin'); await ap.goto(BASE+'/#/admin'); await ap.waitForTimeout(1000); await C(ap.getByRole('button',{name:'Очередь',exact:true})); await ap.waitForTimeout(600); await shot(ap,'m1-queue');
 await C(ap.locator('a.list-item')); await ap.waitForTimeout(800); await shot(ap,'m2-case');
 await ap.getByPlaceholder('Коротко — стороны увидят').fill('Оплата за полчаса');
 await C(ap.getByRole('button',{name:'Частично'})); await ap.waitForTimeout(800); await shot(ap,'m3-decided');
