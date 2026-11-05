@@ -18,6 +18,7 @@ const PHRASES = [
   'Мастера смотрят заявку',
   'Сравниваем рейтинг и расстояние',
 ];
+const CONSULT_PHRASES = ['Ищем мастеров на связи', 'Сначала — тем, кто хорошо знает вашу марку', 'Мастера смотрят заявку'];
 const TOW_PHRASES = ['Ищем эвакуаторы рядом', 'Эвакуаторщики смотрят заявку', 'Считаем подачу: сборы + дорога'];
 
 export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
@@ -34,7 +35,7 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
 
   const offers: any[] = data?.offers ?? [];
   const isTow = d.service === 'tow';
-  const phrases = isTow ? TOW_PHRASES : PHRASES;
+  const phrases = isTow ? TOW_PHRASES : d.service === 'consult' ? CONSULT_PHRASES : PHRASES;
   const phrase = usePhrase(phrases, offers.length > 0);
   const left = useLeft(d.autoPick ? d.auctionUntil : null);
   const lim = data?.limits ?? d.limits;
@@ -53,7 +54,7 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
           <span className="note">
             {offers.length
               ? (d.autoPick && left != null ? `Выберите сами — или через ${mmss(left)} назначим лучшего` : 'Выберите исполнителя — остальным сообщим сами')
-              : d.search?.candidates ? `Заявку видят ${d.search.candidates} ${plural(d.search.candidates, 'исполнитель', 'исполнителя', 'исполнителей')} рядом` : 'Звоним ближайшим'}
+              : d.search?.candidates ? `Заявку видят ${d.search.candidates} ${plural(d.search.candidates, d.service === 'tow' ? 'эвакуаторщик' : 'мастер', d.service === 'tow' ? 'эвакуаторщика' : 'мастера', d.service === 'tow' ? 'эвакуаторщиков' : 'мастеров')}${d.service === 'consult' ? ' на связи' : ' рядом'} — ждём, кто откликнется` : 'Звоним ближайшим'}
           </span>
         </div>
         {d.autoPick && left != null && data?.until && <Progress until={data.until} />}
@@ -63,7 +64,7 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
       {offers.length > 0 && (
         <>
           <div className="scroll-x">
-            {SORTS.map((s) => <button key={s.id} className="chip" aria-pressed={sort === s.id} onClick={() => setSort(s.id)}>{s.name}</button>)}
+            {SORTS.filter((s) => d.service !== 'consult' || s.id === 'recommended').map((s) => <button key={s.id} className="chip" aria-pressed={sort === s.id} onClick={() => setSort(s.id)}>{s.name}</button>)}
           </div>
           <div className="stack">
             {offers.map((o, i) => {
@@ -86,12 +87,12 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
                     </div>
                   </div>
                   <div className="row note">
-                    <span>⏱ подача ~{o.eta_minutes} мин</span>
-                    {o.distance_km != null && <span>· {o.distance_km.toFixed(1)} км</span>}
+                    {d.service !== 'consult' && <span>⏱ подача ~{o.eta_minutes} мин</span>}
+                    {d.service !== 'consult' && o.distance_km != null && <span>· {o.distance_km.toFixed(1)} км</span>}
                     {o.hour_price && <span>· час {rub(o.hour_price)}</span>}
                     {o.brand_level === 'excellent' && <span className="pill good">Знает {d.brand}</span>}
                   </div>
-                  {o.car && <span className="note">Приедет на: {o.car.brand}{o.car.color ? `, ${o.car.color}` : ''}</span>}
+                  {o.car && d.service !== 'consult' && <span className="note">Приедет на: {o.car.brand}{o.car.color ? `, ${o.car.color}` : ''}</span>}
                   <button className="btn small" style={{ width: '100%' }} disabled={busy} onClick={() => choose(o.id)}>Выбрать за {rub(o.price)}</button>
                 </div>
               );

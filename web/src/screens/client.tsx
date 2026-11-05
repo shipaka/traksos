@@ -115,10 +115,9 @@ export function Consult() {
   const [agree, setAgree] = useState(false);
   useEffect(() => { if (vehicles.data?.length && !vehicleId) setVehicleId(vehicles.data[0].id); }, [vehicles.data]); // eslint-disable-line
   const [tried, setTried] = useState(false);
-  const needC = { car: !!vehicleId || car.brand.trim().length >= 2, what: description.trim().length >= MIN_WHAT };
+  const needC = { car: !!vehicleId || car.brand.trim().length >= 2 };
   const missingC = [
     !needC.car && { id: 'f-car', name: 'марка машины' },
-    !needC.what && { id: 'f-what', name: 'что случилось' },
     !agree && { id: 'f-agree', name: 'согласие' },
   ].filter(Boolean) as { id: string; name: string }[];
   if (!pricing) return <main><Loading /></main>;
@@ -135,7 +134,7 @@ export function Consult() {
   return (
     <main>
       <Back to="" />
-      <div><h1>Консультация по телефону</h1><div className="sub">Мастер ответит голосом и в чате. Выезда нет — только разговор.</div></div>
+      <div><h1>Консультация по телефону</h1><div className="sub">Мастер ответит голосом и в чате, откуда бы вы ни звонили. Выезда нет — только разговор.</div></div>
       <SelfOrderWarning me={me} />
       <div className="card flat">
         <div className="sum total"><span>Стоимость консультации</span><span>{rub(c.price)}</span></div>
@@ -150,12 +149,11 @@ export function Consult() {
           </select>
         ) : null}
         {!vehicleId && <VehicleFields value={car} onChange={setCar} />}
-        <span className="note">Ответит мастер, который хорошо знает вашу марку.</span>
+        <span className="note">Нужна только марка: ответит мастер, который хорошо её знает. Откуда вы звоните — не важно, консультация работает по всей России.</span>
       </Step>
 
-      <Step n={2} id="f-what" title="Что случилось" req done={needC.what} missing={tried && !needC.what}>
-        <textarea className="field" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Например: не заводится, стартер щёлкает, приборка гаснет. Код ошибки, если есть." />
-        <span className="note">{needC.what ? '✓ Мастер поймёт, с чего начать' : `Хотя бы пару слов — ещё ${MIN_WHAT - description.trim().length} симв.`}</span>
+      <Step n={2} id="f-what" title="Что случилось · по желанию">
+        <textarea className="field" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Можно не писать — расскажете мастеру по телефону. Код ошибки, если есть." />
       </Step>
 
       <div className="card">
