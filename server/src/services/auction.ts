@@ -46,7 +46,7 @@ export class AuctionService {
       `select performer_id from order_dispatch where order_id=$1 and status in ('declined','missed','bidding','lost')`, [orderId]);
     const ranked = rankCandidates(order as any, list, {
       radiusKm: all.dispatch.radiusKm, maxCandidates: all.dispatch.maxCandidates, cashDebtLimit: all.fees.cashDebtLimit, now: this.now(),
-      exclude: new Set([order.created_by, ...exclude, ...already.map((a) => a.performer_id)]),
+      exclude: new Set([order.created_by, ...exclude, ...already.map((a) => a.performer_id), ...(await this.orders.blockedBy(order.client_id))]),
     });
     const ms = order.is_sos ? all.dispatch.sosAuctionSeconds * 1000 : all.dispatch.auctionMinutes * 60_000;
     const until = new Date(this.now().getTime() + ms);

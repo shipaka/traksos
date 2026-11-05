@@ -20,6 +20,7 @@ import { DocumentsService } from './services/documents.ts';
 import { AdminService } from './services/admin.ts';
 import { SupportService, TOPICS } from './services/support.ts';
 import { StatsService } from './services/stats.ts';
+import { OnsiteService } from './services/onsite.ts';
 import { Raw } from './http/router.ts';
 import { PaymentsService } from './payments/service.ts';
 import { estimate, isNight } from './domain/pricing.ts';
@@ -52,6 +53,7 @@ export function createApp(d: Deps) {
   profiles.onUnavailable = async (userId) => orders.afterRelease(await orders.release(d.db, userId, null));
   const chat = new ChatService(d.db, settings, notifier, orders);
   const reviews = new ReviewsService(d.db, settings, orders);
+  const onsite = new OnsiteService(d.db, notifier, orders);
   const offers = new OffersService(d.db, notifier, now);
   const documents = new DocumentsService(d.db, notifier, settings, now);
   const admin = new AdminService(d.db, notifier, orders, payments, profiles, settings, now);
@@ -219,6 +221,20 @@ export function createApp(d: Deps) {
   r.post('/api/orders/:id/amount', performerRoles, (c: AuthedCtx) => orders.proposeAmount(c.user, c.params.id, parse(z.object({
     workAmount: money, result: z.enum(['solved', 'cause_found', 'not_found']).optional(), note: z.string().max(300).optional(),
   }), c.body)));
+  // Мастер на заявке
+  r.post('/api/orders/:id/late', performerRoles, (c: AuthedCtx) => onsite.late(c.user, c.params.id, parse(z.object({ minutes: z.number().int().min(5).max(240) }), c.body).minutes));
+  r.post('/api/orders/:id/site-flags', performerRoles, (c: AuthedCtx) => onsite.flags(c.user, c.params.id, parse(z.object({ flags: z.array(z.string().max(30)).max(10) }), c.body).flags));
+  r.post('/api/orders/:id/hint-check', performerRoles, (c: AuthedCtx) => onsite.hintCheck(c.user, c.params.id, parse(z.object({ result: z.enum(['yes', 'part', 'no']) }), c.body).result));
+  r.get('/api/orders/:id/client-card', performerRoles, (c: AuthedCtx) => onsite.clientCard(c.user, c.params.id));
+  r.post('/api/orders/:id/vehicle', performerRoles, (c: AuthedCtx) => onsite.fixVehicle(c.user, c.params.id, parse(z.object({
+    brand: z.string().min(1).max(40).optional(), model: z.string().max(40).nullish(), year: z.number().int().min(1950).max(2100).nullish(), axles: z.number().int().min(2).max(5).nullish(),
+  }), c.body)));
+  r.post('/api/orders/:id/block-client', performerRoles, (c: AuthedCtx) => {
+    const b = parse(z.object({ on: z.boolean(), reason: z.string().max(200).optional() }), c.body);
+    return onsite.block(c.user, c.params.id, b.on, b.reason);
+  });
+  r.get('/api/performer/blacklist', performerRoles, (c: AuthedCtx) => onsite.blacklist(c.user));
+  r.delete('/api/performer/blacklist/:id', performerRoles, (c: AuthedCtx) => onsite.unblock(c.user, c.params.id));
   r.post('/api/orders/:id/consult-finish', performerRoles, (c: AuthedCtx) => orders.finishConsult(c.user, c.params.id, parse(z.object({
     hints: z.array(z.string().min(1).max(40)).min(1).max(3), confidence: z.enum(['sure', 'likely', 'guess']), note: z.string().max(300).optional(),
   }), c.body)));

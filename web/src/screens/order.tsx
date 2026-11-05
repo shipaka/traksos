@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { get, post, rub, fmtTime } from '../api.ts';
 import { SERVICES, STATUS, STEPS, STEP_NAMES, RESULTS, CONSULT_HINTS, CONSULT_CONF } from '../dict.ts';
 import { go } from '../ui.tsx';
-import { useLoad, useAction, useMe, Loading, Back, RubInput, Field, useToast } from '../ui.tsx';
+import { useLoad, useAction, useMe, Loading, Back, RubInput, Field, useToast, VehicleFields } from '../ui.tsx';
 import { onEvent } from '../api.ts';
 import { Search, OfferForm } from './search.tsx';
 import { RefundForm, payStatus } from './adminUser.tsx';
@@ -13,6 +13,7 @@ export function Order({ id }: { id: string }) {
   useEffect(() => onEvent((e) => { if (e.type === 'performer_location' && e.orderId === id) setPerfPos({ lat: e.lat, lng: e.lng }); }), [id]);
 
   const { mode } = useMe();
+  const [ptab, setPtab] = useState<'order' | 'client'>('order');
   const backTo = mode === 'admin' ? 'admin' : mode === 'performer' ? 'work' : 'orders';
   if (!o.data) return <main><Back to={backTo} /><Loading error={o.error} /></main>;
   const d = o.data;
@@ -31,6 +32,8 @@ export function Order({ id }: { id: string }) {
         <span className={`pill ${STATUS[d.status]?.tone}`}>{isConsult && d.status === 'accepted' ? 'На связи' : isConsult && d.status === 'awaiting_confirmation' ? 'Ждём «Вопрос решён»' : STATUS[d.status]?.name}</span>
       </div>
 
+      {(isPerformer || d.you === 'candidate') && <PerformerTabs tab={ptab} setTab={setPtab} />}
+      {(isPerformer || d.you === 'candidate') && ptab === 'client' ? <ClientTab id={id} canEdit={isPerformer} /> : <>
       {d.status === 'searching' && (d.you === 'client' || d.you === 'admin') && <Search d={d} onChosen={o.reload} />}
       {d.you === 'candidate' && <CandidateView d={d} onDone={o.reload} />}
 
@@ -52,6 +55,7 @@ export function Order({ id }: { id: string }) {
       {d.status === 'completed' && <Review id={id} you={d.you} />}
 
       {d.status !== 'searching' && d.status !== 'no_performer' && <Chat id={id} disabled={d.status === 'cancelled'} />}
+      </>}
 
       {d.you !== 'admin' && d.you !== 'candidate' && <a className="btn ghost" href={`#/support/new?order=${d.id}`}>Позвать поддержку</a>}
       {!done && d.actions.includes('cancel') && !isPerformer && !(isConsult && d.status === 'awaiting_confirmation') && <Cancel id={id} status={d.status} consult={isConsult} onDone={o.reload} />}
@@ -188,7 +192,10 @@ function PerformerActions({ d, onDone }: { d: any; onDone: () => void }) {
   if (['completed', 'cancelled'].includes(d.status)) return null;
   return (
     <div className="stack">
+      {d.consultFrom?.hint && <HintCheck d={d} onDone={onDone} />}
       {d.status === 'accepted' && <button className="btn" disabled={busy} onClick={() => step('depart', 'Клиент видит, что вы выехали')}>Выехал</button>}
+      {['accepted', 'en_route'].includes(d.status) && <LateButtons d={d} onDone={onDone} />}
+      {['arrived', 'working', 'awaiting_confirmation'].includes(d.status) && <SiteFlags d={d} onDone={onDone} />}
       {(d.status === 'accepted' || d.status === 'en_route') && <button className="btn ghost" disabled={busy} onClick={() => step('arrive', 'Клиент видит, что вы на месте')}>Я на месте</button>}
       {d.status === 'arrived' && <button className="btn" disabled={busy} onClick={() => step('start_work', 'Работа началась')}>Начал работу</button>}
 
@@ -220,6 +227,132 @@ function PerformerActions({ d, onDone }: { d: any; onDone: () => void }) {
             run(() => post(`/api/orders/${d.id}/drop`, { reason: dropReason }), 'Заявка передана другим').then((r) => r && (location.hash = '#/work'))}>Отказаться</button>
         </div>
       ) : <button className="btn bad" onClick={() => setShowDrop(true)}>Не смогу приехать</button>)}
+    </div>
+  );
+}
+
+// Мастер на заявке --------------------------------------------------------------
+
+function PerformerTabs({ tab, setTab }: { tab: string; setTab: (t: any) => void }) {
+  return (
+    <div className="grid2" role="tablist">
+      <button className="seg" role="tab" aria-pressed={tab === 'order'} onClick={() => setTab('order')}>Заявка</button>
+      <button className="seg" role="tab" aria-pressed={tab === 'client'} onClick={() => setTab('client')}>Клиент и машина</button>
+    </div>
+  );
+}
+
+function LateButtons({ d, onDone }: { d: any; onDone: () => void }) {
+  const { busy, run } = useAction();
+  const [open, setOpen] = useState(false);
+  if (!open) return <button className="btn ghost" onClick={() => setOpen(true)}>Опаздываю{d.lateMinutes ? ` · уже +${d.lateMinutes} мин` : ''}</button>;
+  return (
+    <div className="card">
+      <b>На сколько задерживаетесь?</b>
+      <div className="grid3">{[15, 30, 60].map((m) => (
+        <button key={m} className="seg" disabled={busy} onClick={() => run(() => post(`/api/orders/${d.id}/late`, { minutes: m }), 'Клиент увидит новое время').then((r) => { if (r) { setOpen(false); onDone(); } })}>+{m < 60 ? `${m} мин` : '1 час'}</button>
+      ))}</div>
+      <span className="note">Клиент получит уведомление сразу. До 40 минут для грузовых не считается нарушением — если предупредили.</span>
+    </div>
+  );
+}
+
+const SITE_FLAGS: [string, string][] = [['waited', 'Ждал клиента'], ['client_left', 'Клиент отъехал'], ['loading', 'Работал во время погрузки'], ['gate', 'Долгий въезд, досмотр'], ['price_dispute', 'Спор о цене']];
+
+function SiteFlags({ d, onDone }: { d: any; onDone: () => void }) {
+  const { busy, run } = useAction();
+  const cur: string[] = d.siteFlags ?? [];
+  const toggle = (f: string) => run(() => post(`/api/orders/${d.id}/site-flags`, { flags: cur.includes(f) ? cur.filter((x) => x !== f) : [...cur, f] })).then((r) => r && onDone());
+  return (
+    <div className="card">
+      <b>Отметки на месте · по желанию</b>
+      <div className="row">{SITE_FLAGS.map(([id, n]) => (
+        <button key={id} className="chip" disabled={busy} aria-pressed={cur.includes(id)} onClick={() => toggle(id)}>{cur.includes(id) ? '✓ ' : ''}{n}</button>
+      ))}</div>
+      <span className="note">Ожидание и время на въезд оплачиваются по вашей ставке — укажите их в сумме. Отметки попадут в карточку клиента: другие исполнители будут знать заранее.</span>
+    </div>
+  );
+}
+
+function HintCheck({ d, onDone }: { d: any; onDone: () => void }) {
+  const { busy, run } = useAction();
+  const h = d.consultFrom.hint;
+  return (
+    <div className="card flat">
+      <span className="label">Подсказка с консультации{d.consultFrom.performer_name ? ` · ${d.consultFrom.performer_name}` : ''}</span>
+      <b>Подозрение: {h.hints.join(', ').toLowerCase()}</b>
+      <span className="note">{CONSULT_CONF[h.confidence]}{h.note ? ` · ${h.note}` : ''}</span>
+      {d.hintCheck ? <span className="note" style={{ color: 'var(--good-fg)' }}>Вы отметили: {{ yes: 'подтвердилось', part: 'частично', no: 'не подтвердилось' }[d.hintCheck as 'yes']}. Это учтётся в точности подсказок — без штрафов.</span> : (
+        <>
+          <span className="note">На месте отметьте, совпало ли, — одним нажатием.</span>
+          <div className="grid3">{([['yes', 'Подтвердилось'], ['part', 'Частично'], ['no', 'Нет']] as const).map(([k, n]) => (
+            <button key={k} className="seg" style={{ fontSize: 13 }} disabled={busy} onClick={() => run(() => post(`/api/orders/${d.id}/hint-check`, { result: k }), 'Спасибо').then((r) => r && onDone())}>{n}</button>
+          ))}</div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** Вкладка «Клиент и машина»: метки других исполнителей, история машины без сумм, уточнить машину, «не брать этого клиента» */
+function ClientTab({ id, canEdit }: { id: string; canEdit: boolean }) {
+  const card = useLoad(() => get(`/api/orders/${id}/client-card`), [id]);
+  const { busy, run } = useAction();
+  const [fix, setFix] = useState(false);
+  const [v, setV] = useState({ brand: '', model: '', year: '', axles: '' });
+  if (!card.data) return <Loading error={card.error} />;
+  const c = card.data;
+  const veh = c.vehicle;
+  return (
+    <div className="stack">
+      <div className="card">
+        <div className="between">
+          <div><b>{c.client.company_name ?? c.client.name ?? 'Клиент'}</b>{c.client.company_inn && <div className="note">ИНН {c.client.company_inn}</div>}</div>
+          <div style={{ textAlign: 'right' }}><b>{c.client.rating ? `★ ${c.client.rating.toFixed(1)}` : 'новый'}</b><div className="note">{c.stats.done ? `${c.stats.done} заявок · от ${c.stats.performers} исполн.` : 'первая заявка'}</div></div>
+        </div>
+        {c.marks.length > 0 ? <div className="row">{c.marks.map((m: any) => <span key={m.label} className={`pill ${m.tone}`}>{m.label} · {m.n}</span>)}</div>
+          : <span className="note">Отметок от исполнителей пока нет.</span>}
+        <span className="note">Метки — из отзывов и отметок на месте других мастеров и эвакуаторщиков. Суммы клиента не видны никому.</span>
+      </div>
+
+      <div className="card">
+        <div className="between"><b>{[veh.brand, veh.model, veh.year].filter(Boolean).join(' ') || 'Машина не указана'}</b>{veh.plate && <span className="pill">{veh.plate}</span>}</div>
+        <span className="note">{veh.fixed_at ? `Уточнено мастером ${veh.fixed_by_name ?? ''}` : veh.from === 'order' ? 'Со слов клиента, не из гаража' : 'Со слов клиента'}{veh.axles ? ` · осей: ${veh.axles}` : ''}</span>
+        {canEdit && !fix && <button className="btn ghost small" onClick={() => { setV({ brand: veh.brand ?? '', model: veh.model ?? '', year: veh.year ? String(veh.year) : '', axles: veh.axles ? String(veh.axles) : '' }); setFix(true); }}>{veh.fixed_at ? 'Исправить ещё раз' : 'Проверить на месте · исправить'}</button>}
+        {fix && (
+          <div className="stack" style={{ gap: 8 }}>
+            <VehicleFields value={{ brand: v.brand, model: v.model, year: v.year }} onChange={(x) => setV({ ...v, ...x })} />
+            <span className="note">Осей у тягача</span>
+            <div className="grid3">{['2', '3', '4'].map((a) => <button key={a} className="seg" aria-pressed={v.axles === a} onClick={() => setV({ ...v, axles: a })}>{a}</button>)}</div>
+            <div className="grid2">
+              <button className="btn ghost small" onClick={() => setFix(false)}>Отмена</button>
+              <button className="btn small" disabled={busy || !v.brand} onClick={async () => {
+                const r = await run(() => post(`/api/orders/${id}/vehicle`, { brand: v.brand, model: v.model || null, year: v.year ? Number(v.year) : null, axles: v.axles ? Number(v.axles) : null }), 'Карточка машины уточнена');
+                if (r) { setFix(false); card.reload(); }
+              }}>Сохранить</button>
+            </div>
+            <span className="note">Следующий мастер приедет подготовленным: нужные разъёмы, схемы, запчасти.</span>
+          </div>
+        )}
+      </div>
+
+      <span className="label">История машины · без сумм</span>
+      {c.history.length ? (
+        <ol className="tl">{c.history.map((h: any) => (
+          <li key={h.id}><i className={h.mine ? 'now' : 'ok'} /><div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <b>{SERVICES[h.service]?.name ?? h.service}{h.mine ? ' · вы' : ''}</b>
+            <small>{fmtTime(h.created_at)}{h.performer_name && !h.mine ? ` · ${h.performer_name}` : ''}</small>
+            {h.consult_hint && <small>Подсказка: {h.consult_hint.hints.join(', ').toLowerCase()}</small>}
+            {h.result_note && <small style={{ color: 'var(--fg)' }}>{h.result_note}</small>}
+          </div></li>
+        ))}</ol>
+      ) : <span className="note">По этой машине ещё ничего не делали через ТракSOS.</span>}
+
+      {canEdit && (
+        <button className={`seg ${c.blocked ? '' : ''}`} aria-pressed={c.blocked} disabled={busy} onClick={async () => {
+          if (await run(() => post(`/api/orders/${id}/block-client`, { on: !c.blocked }), c.blocked ? 'Заявки клиента снова будут приходить' : 'Заявки этого клиента вам больше не придут')) card.reload();
+        }}>{c.blocked ? 'Заявки этого клиента вам не приходят · вернуть' : 'Не брать заявки этого клиента'}</button>
+      )}
     </div>
   );
 }

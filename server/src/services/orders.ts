@@ -143,7 +143,7 @@ export class OrdersService {
       radiusKm: all.dispatch.radiusKm,
       maxCandidates: all.dispatch.maxCandidates,
       cashDebtLimit: all.fees.cashDebtLimit, now: this.now(),
-      exclude: new Set([...exclude, ...already.map((a) => a.performer_id), order.created_by]),
+      exclude: new Set([...exclude, ...already.map((a) => a.performer_id), order.created_by, ...(await this.blockedBy(order.client_id))]),
     });
     if (!ranked.length) return this.auction.start(orderId, exclude);
     const base = already.length;
@@ -534,7 +534,7 @@ export class OrdersService {
       limits: o.status === 'searching' ? this.auction.limits(o, (await this.settings.get('dispatch'))) : null,
       destination: o.destination, cargo: o.cargo, loaded: o.loaded, driverOnSite: o.driver_on_site, discountReason: o.discount_reason,
       money: this.money(o), result: o.result, resultNote: o.result_note,
-      consultHint: o.consult_hint, consultOf: o.consult_of,
+      consultHint: o.consult_hint, consultOf: o.consult_of, siteFlags: o.site_flags ?? [], lateMinutes: o.late_minutes ?? 0, hintCheck: o.hint_check,
       consultFrom: o.consult_of ? await this.db.one(`select o.number, o.consult_hint as hint, u.name as performer_name from orders o
           left join users u on u.id=o.performer_id where o.id=$1`, [o.consult_of]) : null,
       followUps: o.service === 'consult' ? await this.db.query(`select id, number, service, status from orders where consult_of=$1 order by created_at`, [o.id]) : [],
@@ -582,6 +582,11 @@ export class OrdersService {
   }
 
   // Занятость исполнителя ----------------------------------------------------
+
+  /** Исполнители, которые не берут заявки этого клиента («Не брать заявки этого клиента») */
+  async blockedBy(clientId: string) {
+    return (await this.db.query<{ performer_id: string }>('select performer_id from performer_blocks where client_id=$1', [clientId])).map((r) => r.performer_id);
+  }
 
   /** Есть ли у исполнителя другая заявка в работе */
   async busyWith(q: Queryable, performerId: string, exceptOrderId: string | null) {

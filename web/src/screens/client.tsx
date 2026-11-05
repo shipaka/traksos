@@ -443,10 +443,12 @@ export function NewOrder({ service }: { service: string }) {
 
 export function Orders({ as }: { as: 'client' | 'performer' }) {
   const list = useLoad(() => get(`/api/orders?as=${as}`), [as], (e) => e.type === 'order');
+  const [tab, setTab] = useState<'list' | 'black'>('list');
+  if (as === 'performer' && tab === 'black') return <main><h1>История</h1><HistoryTabs tab={tab} setTab={setTab} /><PerformerBlacklist /></main>;
   return (
     <main>
       <h1>{as === 'performer' ? 'История' : 'Заявки'}</h1>
-      {as === 'performer' && <div className="sub">Все ваши заявки: текущие и прошлые.</div>}
+      {as === 'performer' && <HistoryTabs tab={tab} setTab={setTab} />}
       {!list.data ? <Loading error={list.error} /> : !list.data.length ? <div className="empty">Заявок пока нет</div> : (
         <div className="rows">
           {list.data.map((o: any) => (
@@ -461,6 +463,33 @@ export function Orders({ as }: { as: 'client' | 'performer' }) {
         </div>
       )}
     </main>
+  );
+}
+
+function HistoryTabs({ tab, setTab }: { tab: string; setTab: (t: any) => void }) {
+  return (
+    <div className="grid2" role="tablist">
+      <button className="seg" aria-pressed={tab === 'list'} onClick={() => setTab('list')}>Все заявки</button>
+      <button className="seg" aria-pressed={tab === 'black'} onClick={() => setTab('black')}>Чёрный список</button>
+    </div>
+  );
+}
+
+function PerformerBlacklist() {
+  const list = useLoad(() => get('/api/performer/blacklist'), []);
+  const { busy, run } = useAction();
+  if (!list.data) return <Loading error={list.error} />;
+  return (
+    <div className="stack">
+      {!list.data.length ? <div className="empty">Список пуст</div> : list.data.map((b: any) => (
+        <div key={b.client_id} className="card" style={{ gap: 6 }}>
+          <div className="between"><b>{b.company_name ?? b.name ?? 'Клиент'}</b><span className="note">{fmtTime(b.created_at)}</span></div>
+          {b.reason && <span className="note">Причина: {b.reason}</span>}
+          <button className="btn ghost small" disabled={busy} onClick={async () => { if (await run(() => del(`/api/performer/blacklist/${b.client_id}`), 'Убрано — заявки клиента снова будут приходить')) list.reload(); }}>Убрать из чёрного списка</button>
+        </div>
+      ))}
+      <span className="note">Заявки от них к вам не приходят. Добавить — в заявке, вкладка «Клиент и машина». Причину видите только вы и модератор.</span>
+    </div>
   );
 }
 
