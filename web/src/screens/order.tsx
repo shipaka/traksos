@@ -54,6 +54,7 @@ export function Order({ id }: { id: string }) {
       {(d.you === 'client' || d.you === 'admin') && d.paymentMethod !== 'cash' && <PaymentsList id={id} admin={d.you === 'admin'} />}
       {isPerformer && (isConsult ? <ConsultFinish d={d} onDone={o.reload} /> : <PerformerActions d={d} onDone={o.reload} />)}
       {!isPerformer && d.status === 'working' && <WorkInProgress d={d} />}
+      {d.you !== 'candidate' && d.you !== 'admin' && d.service !== 'tow' && d.service !== 'consult' && ['arrived', 'working'].includes(d.status) && <PartPicker d={d} onDone={o.reload} performer={isPerformer} />}
       {!isPerformer && d.status === 'awaiting_confirmation' && (isConsult ? <ConsultConfirm d={d} onDone={o.reload} /> : <ConfirmAmount d={d} onDone={o.reload} />)}
       {d.recommendedCenter && !isPerformer && d.you !== 'candidate' && (
         <div className="banner good col">
@@ -234,6 +235,7 @@ function PerformerActions({ d, onDone }: { d: any; onDone: () => void }) {
       {['arrived', 'working', 'awaiting_confirmation'].includes(d.status) && (
         <div className="card">
           <b>{d.status === 'awaiting_confirmation' ? 'Ждём подтверждения клиента' : 'Закрыть выезд'}</b>
+          {(d.waitMinutes > 0 || d.waitStartedAt) && <span className="note">Ожидание запчасти: {d.waitMinutes} мин{d.waitRate ? ` × ${rub(d.waitRate)}/ч ≈ ${rub(Math.round(d.waitMinutes / 60 * d.waitRate / 100) * 100)}` : ''} — включите в сумму.</span>}
           <Field label="Сумма за работу, без выезда">
             <RubInput value={work} onChange={setWork} />
           </Field>
@@ -295,6 +297,33 @@ function WorkInProgress({ d }: { d: any }) {
       <span className="note">Время видите и вы, и мастер.{work ? ` По часам сейчас выходит около ${rub(work)} за работу, запчасти — по чеку.` : ''} Итог мастер пришлёт на подтверждение.</span>
       <div className="banner good" style={{ textAlign: 'left' }}><span>Гарантия на работу — <b>14 дней</b>: та же поломка снова — повторный выезд бесплатно.</span></div>
     </div>
+  );
+}
+
+/** «Нужна запчасть, которой нет у мастера?» — мастер ждёт / уедет и вернётся / эвакуатор. Видят обе стороны. */
+function PartPicker({ d, onDone, performer }: { d: any; onDone: () => void; performer?: boolean }) {
+  const { busy, run } = useAction();
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => { if (!d.waitStartedAt) return; const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, [d.waitStartedAt]);
+  const set = (mode: string, text: string) => run(() => post(`/api/orders/${d.id}/part`, { mode }), text).then((r) => { if (r) onDone(); return r; });
+  const waitMin = d.waitStartedAt ? Math.floor((now - new Date(d.waitStartedAt).getTime()) / 60000) : 0;
+  const rate = d.waitRate;
+  if (d.waitStartedAt) return (
+    <div className="banner warn col">
+      <b>Ожидание запчасти · {waitMin} мин{d.waitMinutes ? ` (до этого ${d.waitMinutes} мин)` : ''}</b>
+      <span className="note">Таймер на «ожидании»{rate ? ` — ${rub(rate)}/ч, дешевле часа работы` : ''}. Привезли не ту деталь — ожидание продолжается.</span>
+      <button className="btn small" disabled={busy} onClick={() => set('resume', 'Работа продолжается')}>Запчасть на месте — продолжаем</button>
+    </div>
+  );
+  return (
+    <details className="card">
+      <summary><b>Нужна запчасть, которой нет у мастера?</b></summary>
+      <div className="stack" style={{ marginTop: 8 }}>
+        <button className="opt" disabled={busy} onClick={() => set('wait', 'Таймер переключён на ожидание')}><b>Мастер ждёт</b><small>Таймер переключится на «ожидание» по ставке мастера{rate ? ` ${rub(rate)}/ч` : ''}. Дорогу за запчастью оплачивает тот, кто уехал.</small></button>
+        <button className="opt" aria-pressed={d.partMode === 'return'} disabled={busy} onClick={() => set('return', 'Мастер вернётся с запчастью')}><b>Уедет и вернётся</b><small>Мастер закроет текущую работу и вернётся, когда деталь будет на месте. Возвращение — новый выезд по его прайсу.</small></button>
+        <button className="opt" aria-pressed={d.partMode === 'tow'} disabled={busy} onClick={async () => { if (await set('tow', 'Мастер закроет работу с диагнозом') && !performer) { try { sessionStorage.setItem('traksos.prefill', JSON.stringify({ address: d.address ?? '' })); } catch { /* */ } go('new/tow'); } }}><b>Эвакуатор</b><small>Мастер закроет работу с диагнозом — его увидит сервис. Эвакуатор — с этого же места.</small></button>
+      </div>
+    </details>
   );
 }
 

@@ -91,6 +91,38 @@ export class OnsiteService {
   }
 
   /** Мастер на месте уточняет машину: следующий приедет подготовленным */
+  /** «Нужна запчасть»: мастер ждёт (оплачивается ожидание), уедет и вернётся, или эвакуатор. Выбирает клиент или мастер. */
+  async part(user: AuthUser, orderId: string, mode: 'wait' | 'resume' | 'return' | 'tow') {
+    const o = await this.db.one('select * from orders where id=$1', [orderId]);
+    if (!o) throw notFound('Заявка не найдена');
+    const isClient = o.client_id === (user.owner_id ?? user.id) || o.created_by === user.id;
+    if (o.performer_id !== user.id && !isClient) throw forbidden();
+    if (!['arrived', 'working'].includes(o.status)) throw conflict('bad_status', 'Это решают на месте, во время работы');
+    const now = new Date();
+    if (mode === 'resume') {
+      if (!o.wait_started_at) throw conflict('not_waiting', 'Ожидание не идёт');
+      const min = Math.max(1, Math.round((now.getTime() - new Date(o.wait_started_at).getTime()) / 60_000));
+      await this.db.query('update orders set wait_minutes = wait_minutes + $2, wait_started_at=null where id=$1', [orderId, min]);
+      await this.orders.systemMessage(orderId, `Запчасть на месте — работа продолжается. Ожидание: ${min} мин.`);
+    } else {
+      if (o.wait_started_at && mode !== 'wait') {
+        const min = Math.max(1, Math.round((now.getTime() - new Date(o.wait_started_at).getTime()) / 60_000));
+        await this.db.query('update orders set wait_minutes = wait_minutes + $2, wait_started_at=null where id=$1', [orderId, min]);
+      }
+      await this.db.query(`update orders set part_mode=$2, wait_started_at = case when $2='wait' then coalesce(wait_started_at, now()) else wait_started_at end where id=$1`, [orderId, mode]);
+      const p = await this.db.one<{ extras: any }>('select extras from performer_profiles where user_id=$1', [o.performer_id]);
+      const rate = p?.extras?.waitRate;
+      await this.orders.systemMessage(orderId, mode === 'wait'
+        ? `Нужна запчасть — мастер ждёт. Таймер на «ожидании»${rate ? ` по ставке ${(rate / 100).toLocaleString('ru-RU')} ₽/ч` : ''}. Привезли не ту деталь — ожидание продолжается.`
+        : mode === 'return' ? 'Нужна запчасть — мастер закроет текущую работу и вернётся, когда деталь будет на месте. Возвращение — новый выезд.'
+        : 'Нужна запчасть — мастер закроет работу с диагнозом, клиент вызывает эвакуатор.');
+    }
+    await this.orders.event(this.db, orderId, user.id, 'part', { mode });
+    await this.notifier.notify([o.client_id, o.created_by, o.performer_id].filter((x: string) => x && x !== user.id), { type: 'order', orderId, status: o.status },
+      { kind: 'normal', title: 'Нужна запчасть', body: { wait: 'Мастер ждёт, таймер на ожидании', resume: 'Работа продолжается', return: 'Мастер вернётся с запчастью', tow: 'Эвакуатор' }[mode], data: { orderId } });
+    return this.orders.view(user, orderId);
+  }
+
   /** «Причина найдена, на месте не исправить» — мастер советует сервис-партнёр; клиенту там скидка */
   async recommend(user: AuthUser, orderId: string, centerId: string | null) {
     const o = await this.mine(user, orderId);

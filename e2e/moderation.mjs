@@ -17,7 +17,7 @@ await api('POST',`/api/orders/${o.id}/amount`,{workAmount:300000,result:'solved'
 await api('POST',`/api/orders/${o.id}/dispute`,{reason:'Работал 20 минут, а не час'},k);
 const b = await chromium.launch(); const errs=[];
 const C = async (l) => { await l.first().evaluate(e=>e.scrollIntoView({block:'center'})); await l.first().click(); };
-const page = async (tok, w) => { const ctx = await b.newContext({...devices['iPhone 13']}); if (tok) await ctx.addInitScript((t)=>{try{localStorage.setItem('traksos.token',t)}catch{}}, tok); const p = await ctx.newPage(); p.on('pageerror',e=>errs.push(w+': '+e.message)); p.on('console',c=>c.type()==='error'&&!c.text().includes('TUNNEL')&&errs.push(w+': '+c.text())); return p; };
+const page = async (tok, w) => { const ctx = await b.newContext({...devices['iPhone 13']}); if (tok) await ctx.addInitScript((t)=>{try{localStorage.setItem('traksos.token',t)}catch{}}, tok); const p = await ctx.newPage(); p.on('pageerror',e=>errs.push(w+': '+e.message)); p.on('console',c=>c.type()==='error'&&!c.text().includes('TUNNEL')&&!(w==='blocked'&&c.text().includes('403'))&&errs.push(w+': '+c.text())); return p; };
 const shot = (p,n) => p.screenshot({path:`${OUT}/${n}.png`,fullPage:true});
 const kp = await page(k,'client');
 await kp.goto(BASE+'/#/help'); await kp.waitForTimeout(800); await C(kp.locator('summary').nth(4)); await shot(kp,'h1-help');

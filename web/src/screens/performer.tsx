@@ -29,6 +29,7 @@ export function Work() {
   return (
     <main>
       <LiveStrip who={p.kind === 'tow' ? 'tow' : 'master'} />
+      {online && p.verification === 'approved' && <Nearby />}
       <div className="between">
         <h1>{me?.name ?? 'Кабинет'}</h1>
         <span className="pill"><span className={`dot ${online ? 'on' : ''}`} /> {LINE[p.line_status]}</span>
@@ -327,3 +328,10 @@ function useRinging() {
   return () => stop.current();
 }
 
+
+/** На линии: открытых заявок рядом по вашему профилю и сколько свободных коллег к ним ближе */
+function Nearby() {
+  const n = useLoad(() => get('/api/performer/nearby'), [], (e) => e.type === 'order' || e.type === 'auction');
+  if (!n.data) return null;
+  return <span className="note">{n.data.openNearby ? `${n.data.openNearby} открыт${n.data.openNearby === 1 ? 'ая заявка' : 'ых заявок'} рядом` : 'Открытых заявок рядом нет'} · {n.data.ahead ? `${n.data.ahead} свободн${n.data.ahead === 1 ? 'ый коллега ближе' : 'ых коллег ближе'} вас` : 'вы ближе всех свободных'}</span>;
+}

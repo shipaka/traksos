@@ -38,6 +38,7 @@ export function PerformerHub() {
     ['work/me/schedule', 'Распорядок', p.schedule?.on ? `${dayList(p.schedule.days)} · выезды ${p.schedule.from}–${p.schedule.to} · телефон до ${p.schedule.phoneTo}` : 'не задан — заявки идут, пока вы на линии'],
     ['work/me/tax', 'Налоговый статус', p.tax_status ? `${p.tax_status === 'ip' ? 'ИП' : 'Самозанятый'} · ИНН ${p.inn ?? '—'}` : 'не указан'],
     ['work/me/money', 'Финансы', 'баланс, начисления, списания, выплаты'],
+    ['work/me/level', 'Мой уровень и точность', 'Новичок · Проверенный · Лучший, точность подсказок по телефону'],
     ['work/docs', 'Проверка и фото', p.verification === 'approved' ? 'пройдена' : p.submitted_at ? 'на проверке' : 'нужно пройти'],
     ['support', 'Поддержка', 'обращения и ответы'],
     ['help', 'Справка', 'как приходят заявки, комиссия, опоздания'],
@@ -538,6 +539,49 @@ export function FilterSection() {
         Object.keys(e).forEach((k) => e[k] === undefined && delete e[k]);
         if (await run(() => put('/api/performer/extras', e))) await save(body(), 'Поиск настроен — заявки подберём по нему');
       }}>Сохранить</button>
+    </main>
+  );
+}
+
+const LEVELS: [string, string, string][] = [['newbie', 'Новичок', 'первые заказы'], ['verified', 'Проверенный', 'обычная работа'], ['best', 'Лучший', 'рейтинг выше нормы, без неприездов и проигранных споров']];
+
+/** Мой уровень и точность подсказок — видно только вам */
+export function LevelSection() {
+  const s = useLoad(() => get('/api/performer/standing'), []);
+  const d = s.data;
+  return (
+    <main>
+      <Back to="work/me" label="Профиль" />
+      <div><h1>Мой уровень</h1><div className="sub">Считается сам — по заказам, рейтингу, неприездам и спорам за 90 дней. Видно только вам.</div></div>
+      {!d ? <Loading error={s.error} /> : <>
+        <div className="card">
+          {LEVELS.map(([k, n, h]) => (
+            <div key={k} className="between">
+              <span><b style={{ color: d.level === k ? 'var(--accent)' : undefined }}>{n}</b> <small className="note">{k === 'newbie' ? `первые ${d.thresholds.newbieJobs} заказов` : h}</small></span>
+              {d.level === k && <span className="pill accent">вы здесь</span>}
+            </div>
+          ))}
+          <dl className="kv">
+            <dt>Выполнено заказов</dt><dd>{d.jobs}</dd>
+            <dt>Рейтинг</dt><dd>{d.rating ? `★ ${d.rating.toFixed(2)}` : 'пока нет'}</dd>
+            <dt>Неприезды за 90 дней</dt><dd>{d.drops}</dd>
+            <dt>Проигранные споры</dt><dd>{d.lostDisputes}</dd>
+          </dl>
+          {d.toBest && <span className="note">До «Лучшего»: {d.toBest.jobs ? `ещё ${d.toBest.jobs} заказов` : 'по заказам — уже'}{!d.toBest.ratingOk ? `, рейтинг от ${d.toBest.rating}` : ''}{!d.toBest.clean ? ', 90 дней без неприездов и проигранных споров' : ''}.</span>}
+          <span className="note">Что даёт уровень — заявки раньше, комиссия ниже, выплаты быстрее — включим, когда наберётся статистика; сейчас уровень виден только вам.</span>
+        </div>
+        <div className="card">
+          <b>Точность подсказок по телефону · видна только вам</b>
+          {d.accuracy.counted ? (
+            <dl className="kv">
+              <dt>Ваша точность</dt><dd>{Math.round((d.accuracy.value ?? 0) * 100)}%</dd>
+              <dt>Норма по платформе</dt><dd>{d.accuracy.norm != null ? `${Math.round(d.accuracy.norm * 100)}%` : '—'}</dd>
+              {d.accuracy.strongIn.length > 0 && <><dt>Значок для клиентов</dt><dd>Сильный в {d.accuracy.strongIn.join(', ')}</dd></>}
+            </dl>
+          ) : <span className="note">Проверено подсказок: {d.accuracy.cases} из {d.thresholds.minHintCases}. Пока меньше {d.thresholds.minHintCases} случаев — точность не считается, вы на уровне нормы.</span>}
+          <span className="note">Точность считается сама: мастер на выезде отмечает, подтвердилась ли ваша подсказка. Свою же консультацию подтвердить нельзя. Ошибка по телефону — не нарушение и не снижает рейтинг.</span>
+        </div>
+      </>}
     </main>
   );
 }

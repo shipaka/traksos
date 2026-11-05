@@ -24,6 +24,7 @@ import { OnsiteService } from './services/onsite.ts';
 import { ServiceCenters } from './services/service.ts';
 import { FleetService } from './services/fleet.ts';
 import { PrivacyService } from './services/privacy.ts';
+import { StandingService } from './services/standing.ts';
 import { ModerationService } from './services/moderation.ts';
 import { checkAppealToken } from './services/auth.ts';
 import { normalizePhone } from './util.ts';
@@ -68,6 +69,7 @@ export function createApp(d: Deps) {
   const centers = new ServiceCenters(d.db, notifier, settings, support, now);
   const fleet = new FleetService(d.db, notifier, orders);
   const privacy = new PrivacyService(d.db, notifier, now);
+  const standing = new StandingService(d.db, now);
   const moderation = new ModerationService(d.db, notifier, reviews, now, d.sms);
   // Споры — в очередь модератора: из суммы заявки, из сверки работ, из ремонта в сервисе
   orders.onDispute = (p) => moderation.open({ kind: 'dispute', title: p.title, text: p.text, openedBy: p.userId, targetId: p.targetId, orderId: p.orderId, priority: 1 });
@@ -243,6 +245,10 @@ export function createApp(d: Deps) {
       when: z.enum(['now', 'today', 'tomorrow']).optional(), time: z.string().max(20).optional(),
     }).optional(),
   }), c.body))));
+  r.get('/api/performer/standing', performerRoles, (c: AuthedCtx) => standing.standing(c.user));
+  r.get('/api/performer/nearby', performerRoles, (c: AuthedCtx) => standing.nearby(c.user));
+  r.post('/api/orders/:id/part', true, (c: AuthedCtx) => onsite.part(c.user, c.params.id, parse(z.object({ mode: z.enum(['wait', 'resume', 'return', 'tow']) }), c.body).mode));
+
   // Модерация -----------------------------------------------------------------
   r.post('/api/appeals', true, (c: AuthedCtx) => moderation.appeal(c.user, parse(z.object({ text: z.string().max(2000) }), c.body).text));
   r.post('/api/appeals/blocked', false, async (c: Ctx) => {
