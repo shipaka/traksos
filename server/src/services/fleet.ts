@@ -9,7 +9,7 @@ export interface FleetSettings {
   mode?: 'limit' | 'approve';
   perOrder?: number | null;
   perMonth?: number | null;
-  allow?: { repair?: boolean; tow?: boolean; consult?: boolean; service?: boolean };
+  allow?: { repair?: boolean; tow?: boolean; consult?: boolean; service?: boolean; shop?: boolean };
 }
 
 const maskPhone = (p: string) => p.replace(/^(\+7)(\d{3})\d{3}(\d{2})(\d{2})$/, '$1 $2 ***-$3-$4');
@@ -34,7 +34,7 @@ export class FleetService {
         where o.client_id=$1 and o.status='awaiting_owner' order by o.created_at`, [owner.id]);
     return {
       settings: { mode: 'limit', perOrder: null, perMonth: null, ...u.fleet,
-        allow: { repair: true, tow: true, consult: true, service: true, ...(u.fleet?.allow ?? {}) } },
+        allow: { repair: true, tow: true, consult: true, service: true, shop: true, ...(u.fleet?.allow ?? {}) } },
       company: { name: u.company_name, inn: u.company_inn, edoOperator: u.edo_operator, edoId: u.edo_id, pdfOnly: u.edo_pdf_only },
       cars: cars.map((c: any) => ({
         id: c.id, brand: c.brand, model: c.model, year: c.year, plate: c.plate, trailerPlate: c.trailer_plate, qrCode: c.qr_code,
@@ -71,7 +71,7 @@ export class FleetService {
     const f = o?.fleet ?? {};
     return {
       owner: o?.owner ?? 'Владелец', mode: f.mode ?? 'limit', perOrder: f.perOrder ?? null, perMonth: f.perMonth ?? null,
-      allow: { repair: true, tow: true, consult: true, service: true, ...(f.allow ?? {}) }, monthSpent: await this.orders.monthSpent(user.id),
+      allow: { repair: true, tow: true, consult: true, service: true, shop: true, ...(f.allow ?? {}) }, monthSpent: await this.orders.monthSpent(user.id),
     };
   }
 

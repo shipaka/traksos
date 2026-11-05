@@ -25,6 +25,7 @@ import { ServiceCenters } from './services/service.ts';
 import { FleetService } from './services/fleet.ts';
 import { PrivacyService } from './services/privacy.ts';
 import { StandingService } from './services/standing.ts';
+import { ShopService } from './services/shop.ts';
 import { ModerationService } from './services/moderation.ts';
 import { checkAppealToken } from './services/auth.ts';
 import { normalizePhone } from './util.ts';
@@ -70,6 +71,7 @@ export function createApp(d: Deps) {
   const fleet = new FleetService(d.db, notifier, orders);
   const privacy = new PrivacyService(d.db, notifier, now);
   const standing = new StandingService(d.db, now);
+  const shop = new ShopService(d.db, notifier, settings);
   const moderation = new ModerationService(d.db, notifier, reviews, now, d.sms);
   // Споры — в очередь модератора: из суммы заявки, из сверки работ, из ремонта в сервисе
   orders.onDispute = (p) => moderation.open({ kind: 'dispute', title: p.title, text: p.text, openedBy: p.userId, targetId: p.targetId, orderId: p.orderId, priority: 1 });
@@ -249,6 +251,33 @@ export function createApp(d: Deps) {
   r.get('/api/performer/nearby', performerRoles, (c: AuthedCtx) => standing.nearby(c.user));
   r.post('/api/orders/:id/part', true, (c: AuthedCtx) => onsite.part(c.user, c.params.id, parse(z.object({ mode: z.enum(['wait', 'resume', 'return', 'tow']) }), c.body).mode));
 
+  // Магазин ---------------------------------------------------------------------
+  const productSchema = z.object({
+    category: z.string().max(20).optional(), name: z.string().min(2).max(120).optional(), spec: z.string().max(200).nullable().optional(),
+    description: z.string().max(2000).nullable().optional(), price: z.number().int().min(0).max(100_000_000).optional(),
+    stock: z.number().int().min(0).max(100_000).nullable().optional(), leadDays: z.number().int().min(0).max(90).optional(),
+    isKit: z.boolean().optional(), active: z.boolean().optional(), sort: z.number().int().min(0).max(10_000).optional(),
+    photoDataUrl: z.string().max(2_100_000).nullable().optional(),
+  });
+  r.get('/api/shop', true, () => shop.catalog());
+  r.get('/api/shop/products/:id/photo', false, async (c: Ctx) => { const f = await shop.photo(c.params.id); return new Raw(f.mime, f.body, { 'cache-control': 'public, max-age=86400' }); });
+  r.post('/api/shop/orders', true, (c: AuthedCtx) => shop.order(c.user, parse(z.object({
+    items: z.array(z.object({ productId: z.string().uuid(), qty: z.number().int().min(1).max(99) })).min(1).max(50),
+    delivery: z.enum(['pickup', 'delivery', 'master']), address: z.string().max(300).nullable().optional(), orderId: z.string().uuid().nullable().optional(),
+    payment: z.enum(['on_receipt', 'invoice']).optional(), comment: z.string().max(500).nullable().optional(),
+  }), c.body)));
+  r.get('/api/shop/orders', true, (c: AuthedCtx) => shop.myOrders(c.user));
+  r.post('/api/shop/orders/:id/cancel', true, (c: AuthedCtx) => shop.cancelMine(c.user, c.params.id));
+  r.get('/api/admin/shop/products', ['admin'], () => shop.adminProducts());
+  r.post('/api/admin/shop/products', ['admin'], (c: AuthedCtx) => shop.saveProduct(c.user, null, parse(productSchema, c.body)));
+  r.put('/api/admin/shop/products/:id', ['admin'], (c: AuthedCtx) => shop.saveProduct(c.user, c.params.id, parse(productSchema, c.body)));
+  r.delete('/api/admin/shop/products/:id', ['admin'], (c: AuthedCtx) => shop.deleteProduct(c.user, c.params.id));
+  r.get('/api/admin/shop/orders', ['admin'], (c: AuthedCtx) => shop.adminOrders(c.query.get('status') ?? undefined));
+  r.post('/api/admin/shop/orders/:id/status', ['admin'], (c: AuthedCtx) => {
+    const b = parse(z.object({ status: z.enum(['confirmed', 'ready', 'shipped', 'done', 'cancelled']), note: z.string().max(300).optional() }), c.body);
+    return shop.setStatus(c.user, c.params.id, b.status, b.note);
+  });
+
   // Модерация -----------------------------------------------------------------
   r.post('/api/appeals', true, (c: AuthedCtx) => moderation.appeal(c.user, parse(z.object({ text: z.string().max(2000) }), c.body).text));
   r.post('/api/appeals/blocked', false, async (c: Ctx) => {
@@ -283,7 +312,7 @@ export function createApp(d: Deps) {
   r.put('/api/fleet', true, (c: AuthedCtx) => fleet.set(c.user, parse(z.object({
     mode: z.enum(['limit', 'approve']).optional(),
     perOrder: z.number().int().min(0).max(100_000_000).nullable().optional(), perMonth: z.number().int().min(0).max(1_000_000_000).nullable().optional(),
-    allow: z.object({ repair: z.boolean().optional(), tow: z.boolean().optional(), consult: z.boolean().optional(), service: z.boolean().optional() }).optional(),
+    allow: z.object({ repair: z.boolean().optional(), tow: z.boolean().optional(), consult: z.boolean().optional(), service: z.boolean().optional(), shop: z.boolean().optional() }).optional(),
     edoPdfOnly: z.boolean().optional(),
   }), c.body)));
   r.post('/api/fleet/vehicles/:id/new-qr', true, (c: AuthedCtx) => fleet.newQr(c.user, c.params.id));

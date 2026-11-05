@@ -11,6 +11,7 @@ const ALLOW: [string, string, string][] = [
   ['tow', 'Эвакуатор', 'вне SOS'],
   ['consult', 'Консультация по телефону', '700 ₽'],
   ['service', 'Запись в сервис', 'рембазы-партнёры'],
+  ['shop', 'Магазин', 'покупки запчастей'],
 ];
 const stickerUrl = (code: string) => `${API_URL || location.origin}/#/qr/${code}`;
 

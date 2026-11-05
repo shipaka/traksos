@@ -53,7 +53,7 @@ export async function setup() {
     await db.close();
   }
 
-  return { db, app, api, login, clock, sms, push, payments, close };
+  return { db, app, api, login, clock, sms, push, payments, close, base };
 }
 
 export type T = Awaited<ReturnType<typeof setup>>;

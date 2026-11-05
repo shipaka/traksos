@@ -1,6 +1,7 @@
 import { AdminServices } from './base.tsx';
 import { ModQueue } from './moderation.tsx';
 import { AdminSummary } from './adminSummary.tsx';
+import { AdminShop } from './shop.tsx';
 import { useState } from 'react';
 import { useEffect } from 'react';
 import { SupportQueue } from './support.tsx';
@@ -10,12 +11,12 @@ import { STATUS, SERVICES, LINE } from '../dict.ts';
 import { useLoad, useAction, Loading } from '../ui.tsx';
 
 export function Admin() {
-  const [tab, setTab] = useState<'stats' | 'search' | 'support' | 'verify' | 'people' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary'>('summary');
+  const [tab, setTab] = useState<'stats' | 'search' | 'support' | 'verify' | 'people' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'shop'>('summary');
   return (
     <main>
       <h1>Администратор</h1>
       <div className="scroll-x">
-        {([['summary', 'Сводка'], ['queue', 'Очередь'], ['stats', 'Статистика'], ['search', 'Поиск'], ['support', 'Обращения'], ['verify', 'Проверка'], ['bases', 'Рембазы'], ['orders', 'Заявки'], ['people', 'Все люди'], ['payments', 'Деньги'], ['dispatch', 'Распределение'], ['offers', 'Оферты'], ['flagged', 'Подозрительное']] as const).map(([id, n]) => (
+        {([['summary', 'Сводка'], ['queue', 'Очередь'], ['shop', 'Магазин'], ['stats', 'Статистика'], ['search', 'Поиск'], ['support', 'Обращения'], ['verify', 'Проверка'], ['bases', 'Рембазы'], ['orders', 'Заявки'], ['people', 'Все люди'], ['payments', 'Деньги'], ['dispatch', 'Распределение'], ['offers', 'Оферты'], ['flagged', 'Подозрительное']] as const).map(([id, n]) => (
           <button key={id} className="chip" aria-pressed={tab === id} onClick={() => setTab(id)}>{n}</button>
         ))}
       </div>
@@ -26,6 +27,7 @@ export function Admin() {
       {tab === 'bases' && <AdminServices />}
       {tab === 'queue' && <ModQueue />}
       {tab === 'summary' && <AdminSummary />}
+      {tab === 'shop' && <AdminShop />}
       {tab === 'offers' && <Offers />}
       {tab === 'people' && <People />}
       {tab === 'orders' && <AllOrders />}
