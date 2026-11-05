@@ -667,12 +667,13 @@ function Chat({ id, disabled }: { id: string; disabled: boolean }) {
   const toast = useToast();
   const [msgs, setMsgs] = useState<any[]>([]);
   const [quick, setQuick] = useState<string[]>([]);
+  const [people, setPeople] = useState<any[]>([]);
   const [text, setText] = useState('');
   const box = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let alive = true;
-    get(`/api/orders/${id}/messages`).then((r) => { if (alive) { setMsgs(r.messages); setQuick(r.quickReplies); } }).catch(() => {});
+    get(`/api/orders/${id}/messages`).then((r) => { if (alive) { setMsgs(r.messages); setQuick(r.quickReplies); setPeople(r.participants ?? []); } }).catch(() => {});
     const off = onEvent((e) => {
       if (e.type === 'chat' && e.message.order_id === id) setMsgs((m) => (m.some((x) => x.id === e.message.id) ? m : [...m, e.message]));
     });
@@ -694,6 +695,7 @@ function Chat({ id, disabled }: { id: string; disabled: boolean }) {
   return (
     <div className="card">
       <b>Чат по заявке</b>
+      {people.length > 0 && <span className="note">В чате: {people.map((p) => p.you ? 'вы' : `${({ owner: 'владелец', driver: 'водитель', performer: 'исполнитель', support: '' } as Record<string, string>)[p.who]} ${p.name ?? ''}`.trim()).join(', ')}. Номера скрыты.</span>}
       <div className="msgs" ref={box}>
         {msgs.length === 0 && <span className="note">Сообщений пока нет</span>}
         {msgs.map((m) => {

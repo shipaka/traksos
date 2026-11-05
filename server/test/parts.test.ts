@@ -51,6 +51,8 @@ test('нужна запчасть: ожидание считается, верн
   assert.ok(v.waitMinutes >= 1);
   const chat = ok(await t.api('GET', `/api/orders/${id}/messages`, undefined, client.token));
   assert.ok(JSON.stringify(chat).includes('900 ₽/ч'), 'ставка ожидания — в чате');
+  assert.deepEqual(chat.participants.map((p: any) => p.who).sort(), ['owner', 'performer'], 'кто в чате');
+  assert.equal(chat.participants.find((p: any) => p.who === 'owner').you, true);
   ok(await t.api('POST', `/api/orders/${id}/amount`, { workAmount: 200_000, result: 'solved' }, master.token));
   ok(await t.api('POST', `/api/orders/${id}/confirm`, {}, client.token));
 });

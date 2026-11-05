@@ -38,7 +38,17 @@ export class ChatService {
         where m.order_id=$1 and m.id > $2 order by m.id limit 500`,
       [orderId, afterId],
     );
-    return { messages: msgs, quickReplies: order.service === 'consult' ? CONSULT_QUICK_REPLIES : QUICK_REPLIES };
+    // Кто в чате: владелец, водитель (если заказывал он), исполнитель, поддержка — если подключалась
+    const people = await this.db.query<{ id: string; name: string | null; who: string }>(
+      `select u.id, u.name, x.who from (values ($1::uuid, 'owner'), ($2::uuid, 'driver'), ($3::uuid, 'performer')) x(id, who) join users u on u.id = x.id
+        where x.id is not null`, [order.client_id, order.created_by !== order.client_id ? order.created_by : null, order.performer_id]);
+    const support = await this.db.one<{ n: number }>(
+      `select count(*)::int as n from chat_messages m join orders o on o.id=m.order_id
+        where m.order_id=$1 and m.sender_id is not null and m.sender_id not in (o.client_id, o.created_by) and m.sender_id is distinct from o.performer_id`, [orderId]);
+    const ticket = await this.db.one('select 1 from support_tickets where order_id=$1 limit 1', [orderId]);
+    const participants = people.map((p) => ({ who: p.who, name: p.name, you: p.id === user.id }));
+    if ((support?.n ?? 0) > 0 || ticket) participants.push({ who: 'support', name: 'Поддержка ТракSOS', you: false });
+    return { messages: msgs, participants, quickReplies: order.service === 'consult' ? CONSULT_QUICK_REPLIES : QUICK_REPLIES };
   }
 
   async post(user: AuthUser, orderId: string, body: string, kind: 'text' | 'quick' = 'text') {
