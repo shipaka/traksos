@@ -15,10 +15,29 @@ export class SupportService {
 
   private staffIds = async () => (await this.db.query<{ id: string }>(`select id from users where roles && '{admin,moderator}'::text[]`)).map((r) => r.id);
 
-  async open(user: AuthUser, p: { topic: string; text: string; orderId?: string }) {
+  async open(user: AuthUser, p: { topic: string; text: string; orderId?: string; ledgerEntryId?: number }) {
     const text = p.text.trim();
     if (text.length < 3) throw bad('empty', 'Опишите, что случилось');
     let number: number | null = null;
+    // Вопрос по конкретной операции: начисление, списание, выплата — поддержка увидит её целиком
+    if (p.ledgerEntryId) {
+      const e = await this.db.one<{ id: number; order_id: string | null }>(
+        `select id, order_id from ledger_entries where id=$1 and performer_id=$2`, [p.ledgerEntryId, user.id]);
+      if (!e) throw notFound('Операция не найдена');
+      const existing = await this.db.one('select id from support_tickets where user_id=$1 and ledger_entry_id=$2 and status=$3', [user.id, e.id, 'open']);
+      if (existing) {
+        await this.post(user, existing.id, text);
+        return this.thread(user, existing.id);
+      }
+      const t = await this.db.one(
+        `insert into support_tickets(user_id, order_id, topic, ledger_entry_id) values ($1,$2,$3,$4) returning id, number`,
+        [user.id, e.order_id, p.topic.slice(0, 80), e.id]);
+      await this.db.query(`insert into support_messages(ticket_id, sender_id, body) values ($1,$2,$3)`, [t!.id, user.id, maskPhones(text).text]);
+      await this.notifier.notify(await this.staffIds(), { type: 'support', ticketId: t!.id }, {
+        kind: 'normal', title: `Обращение №${t!.number}: вопрос по операции`, body: `${user.name ?? user.phone}: ${text.slice(0, 100)}`, data: { ticketId: t!.id },
+      });
+      return this.thread(user, t!.id);
+    }
     if (p.orderId) {
       const o = await this.orders.mustSee(user, p.orderId);
       if (!this.orders.actorOf(user, o)) throw forbidden('Позвать поддержку могут участники заявки');
@@ -104,7 +123,10 @@ export class SupportService {
          from support_messages m left join users u on u.id=m.sender_id where m.ticket_id=$1 order by m.id`, [ticketId]);
     const order = t.order_id ? await this.db.one('select id, number, status, service from orders where id=$1', [t.order_id]) : null;
     const author = isStaff(user) ? await this.db.one('select id, name, phone from users where id=$1', [t.user_id]) : null;
-    return { id: t.id, number: t.number, topic: t.topic, status: t.status, createdAt: t.created_at, order, author, messages };
+    const entry = t.ledger_entry_id ? await this.db.one(
+      `select l.id::int as id, l.kind, l.amount, l.note, l.account, l.created_at, o.number as order_number
+         from ledger_entries l left join orders o on o.id=l.order_id where l.id=$1`, [t.ledger_entry_id]) : null;
+    return { id: t.id, number: t.number, topic: t.topic, status: t.status, createdAt: t.created_at, order, author, messages, entry };
   }
 
   private async mustSee(user: AuthUser, ticketId: string) {

@@ -109,7 +109,7 @@ export function createApp(d: Deps) {
   r.get('/api/support/topics', false, () => TOPICS);
   r.get('/api/support', true, (c: AuthedCtx) => support.mine(c.user));
   r.post('/api/support', true, (c: AuthedCtx) => support.open(c.user, parse(z.object({
-    topic: z.string().min(2).max(80), text: z.string().min(1).max(2000), orderId: z.string().uuid().optional(),
+    topic: z.string().min(2).max(80), text: z.string().min(1).max(2000), orderId: z.string().uuid().optional(), ledgerEntryId: z.number().int().positive().optional(),
   }), c.body)));
   r.get('/api/support/:id', true, (c: AuthedCtx) => support.thread(c.user, c.params.id));
   r.post('/api/support/:id/messages', true, (c: AuthedCtx) => support.post(c.user, c.params.id, parse(z.object({ body: z.string().min(1).max(2000) }), c.body).body));
@@ -141,7 +141,9 @@ export function createApp(d: Deps) {
     callOutPrice: money.nullish(), hourPrice: money.nullish(), kmRate: money.nullish(), prepMinutes: z.number().int().min(0).max(60).optional(),
     acceptsGroup: z.boolean().optional(), taxStatus: z.enum(['self_employed', 'ip']).nullish(), inn: z.string().nullish(),
     car: z.object({ brand: z.string().max(50), color: z.string().max(30).optional(), plate: z.string().max(15) }).nullish(),
+    cars: z.array(z.object({ brand: z.string().min(1).max(50), color: z.string().max(30).optional(), plate: z.string().min(1).max(15) })).max(3).optional(),
   }), c.body)));
+  r.get('/api/performer/ledger', performerRoles, (c: AuthedCtx) => profiles.ledger(c.user.id));
   r.post('/api/performer/line', performerRoles, async (c: AuthedCtx) => {
     const b = parse(z.object({
       lineStatus: z.enum(['online', 'on_call', 'busy', 'offline']).optional(), busyUntil: z.string().datetime().nullish(), paused: z.boolean().optional(),

@@ -16,7 +16,7 @@ export function Work() {
   const auctions = useLoad(() => get('/api/performer/auctions'), [], (e) => e.type === 'auction' || e.type === 'order');
   useEffect(() => onEvent((e) => { if (e.type === 'line_status') reload(); }), [reload]);
   const p = me?.performer;
-  if (!p) return <main><h1>Кабинет исполнителя</h1><div className="card"><b>Заполните профиль</b><span className="note">Марки, цены, машина и статус самозанятого или ИП — после проверки начнут приходить заявки.</span><button className="btn" onClick={() => go('work/profile')}>Заполнить</button></div></main>;
+  if (!p) return <main><h1>Кабинет исполнителя</h1><div className="card"><b>Заполните профиль</b><span className="note">Марки, цены, машина и статус самозанятого или ИП — после проверки начнут приходить заявки.</span><button className="btn" onClick={() => go('work/me')}>Заполнить</button></div></main>;
 
   const active = (jobs.data ?? []).filter((o: any) => ['accepted', 'en_route', 'arrived', 'working', 'awaiting_confirmation'].includes(o.status));
   const online = p.line_status === 'online' || p.line_status === 'on_job' || p.line_status === 'on_call';
@@ -91,7 +91,7 @@ export function Work() {
           <span className="note">ТракSOS работает как агент: отчёт агента и акт — раз в месяц.</span>
         </div>
       )}
-      <button className="btn ghost" onClick={() => go('work/profile')}>Фильтр заявок</button>
+      <div className="grid2"><button className="btn ghost" onClick={() => go('work/filter')}>Фильтр заявок</button><button className="btn ghost" onClick={() => go('work/me/money')}>Финансы</button></div>
     </main>
   );
 }
@@ -259,140 +259,3 @@ function useRinging() {
   return () => stop.current();
 }
 
-// Профиль исполнителя -------------------------------------------------------
-
-const SPECIALTIES: { id: string; name: string }[] = [
-  { id: 'electric', name: 'Электрика' }, { id: 'diag', name: 'Диагностика' }, { id: 'air', name: 'Пневма, тормоза' },
-  { id: 'autonomy', name: 'Автономки' }, { id: 'tyre', name: 'Шиномонтаж' }, { id: 'consult', name: 'Консультации' },
-];
-
-export function PerformerProfile() {
-  const { me, reload } = useMe();
-  const { busy, run } = useAction();
-  const p = me?.performer;
-  const pricing = useLoad(() => get('/api/pricing'), []);
-  const [f, setF] = useState(() => ({
-    kind: p?.kind ?? (me?.roles.includes('tow') ? 'tow' : 'master'),
-    name: me?.name ?? '',
-    specialties: (p?.specialties ?? ['electric']) as string[],
-    brands: (p?.brands ?? {}) as Record<string, string>,
-    tier: p?.tier ?? 'eco',
-    callOutPrice: (p?.call_out_price ?? null) as number | null,
-    hourPrice: (p?.hour_price ?? null) as number | null,
-    kmRate: (p?.km_rate ?? null) as number | null,
-    prepMinutes: p?.prep_minutes ?? 0,
-    acceptsGroup: p?.accepts_group ?? true,
-    taxStatus: p?.tax_status ?? '',
-    inn: p?.inn ?? '',
-    car: p?.car ?? { brand: '', color: '', plate: '' },
-  }));
-  const set = (patch: Partial<typeof f>) => setF({ ...f, ...patch });
-  const isTow = f.kind === 'tow';
-
-  async function save() {
-    const body: any = {
-      kind: f.kind, name: f.name || undefined, tier: f.tier,
-      callOutPrice: f.callOutPrice, hourPrice: f.hourPrice, kmRate: f.kmRate, prepMinutes: f.prepMinutes, acceptsGroup: f.acceptsGroup,
-      taxStatus: f.taxStatus || null, inn: f.inn || null, car: f.car.brand && f.car.plate ? f.car : null,
-    };
-    if (!isTow) { body.specialties = f.specialties; body.brands = f.brands; }
-    const first = !p;
-    if (await run(() => put('/api/performer/profile', body), first ? 'Профиль сохранён — теперь фото для проверки' : 'Профиль сохранён')) {
-      await reload();
-      go(first ? 'work/docs' : 'as/performer');
-    }
-  }
-
-  const corridor = pricing.data && pricing.data.tiers;
-  return (
-    <main>
-      <Back to="work" />
-      <div>
-        <h1>Фильтр заявок</h1>
-        <div className="sub">Услуги, марки и цены — от этого зависит, какие заявки придут вам первыми. Ниже — имя, машина и налоговый статус.</div>
-      </div>
-      <Field group label="Кто вы">
-        <div className="grid2">
-          <button type="button" className="seg" aria-pressed={f.kind === 'master'} onClick={() => set({ kind: 'master' })}>Мастер</button>
-          <button type="button" className="seg" aria-pressed={f.kind === 'tow'} onClick={() => set({ kind: 'tow' })}>Эвакуатор</button>
-        </div>
-      </Field>
-      <Field label="Имя, как увидят клиенты"><input className="field" value={f.name} onChange={(e) => set({ name: e.target.value })} /></Field>
-
-      {!isTow && (
-        <>
-          <Field group label="Что делаете">
-            <div className="row">{SPECIALTIES.map((s) => (
-              <button key={s.id} type="button" className="chip" aria-pressed={f.specialties.includes(s.id)}
-                onClick={() => set({ specialties: f.specialties.includes(s.id) ? f.specialties.filter((x) => x !== s.id) : [...f.specialties, s.id] })}>{s.name}</button>
-            ))}</div>
-          </Field>
-          <div className="stack">
-            <span className="label">Марки</span>
-            <span className="note">По умолчанию — «хорошо». «Не берусь» — такие заявки не придут.</span>
-            {BRANDS.map((b) => (
-              <div key={b} className="stack" style={{ gap: 6 }}>
-                <b style={{ fontSize: 14 }}>{b}</b>
-                <div className="scroll-x">{BRAND_LEVELS.map((l) => (
-                  <button key={l.id} type="button" className="chip" style={{ minHeight: 36 }} aria-pressed={(f.brands[b] ?? 'good') === l.id}
-                    onClick={() => set({ brands: { ...f.brands, [b]: l.id } })}>{l.name}</button>
-                ))}</div>
-              </div>
-            ))}
-          </div>
-          <Field group label="Уровень">
-            <div className="grid2">
-              {(['eco', 'comfort', 'pro'] as const).map((t) => (
-                <button key={t} type="button" className="seg" aria-pressed={f.tier === t} onClick={() => set({ tier: t })}>
-                  {t === 'eco' ? 'Стандарт' : t === 'comfort' ? 'Комфорт' : 'Диагност'}
-                </button>
-              ))}
-            </div>
-          </Field>
-          <div className="grid2">
-            <Field label="Выезд по городу"><RubInput value={f.callOutPrice} onChange={(v) => set({ callOutPrice: v })} placeholder={corridor ? rub(corridor[f.tier].callOut) : ''} /></Field>
-            <Field label="Час работы"><RubInput value={f.hourPrice} onChange={(v) => set({ hourPrice: v })} placeholder={corridor ? rub(corridor[f.tier].hour) : ''} /></Field>
-          </div>
-          <span className="note">Пусто — цена уровня по умолчанию. Коридор площадки: 1 500–7 000 ₽.</span>
-        </>
-      )}
-      <Field label="За КАД, ₽ за км" hint="Считается расстояние × 1,5 — дорога туда и половина обратно.">
-        <RubInput value={f.kmRate} onChange={(v) => set({ kmRate: v })} placeholder={isTow ? '110 ₽' : '50 ₽'} />
-      </Field>
-      {isTow && (
-        <Field group label="Время на сборы" hint="Клиент видит подачу = сборы + дорога. Опоздание больше 40 минут от этого времени снижает рейтинг.">
-          <div className="scroll-x">{[0, 15, 30, 45, 60].map((m) => (
-            <button key={m} type="button" className="chip" aria-pressed={f.prepMinutes === m} onClick={() => set({ prepMinutes: m })}>{m} мин</button>
-          ))}</div>
-        </Field>
-      )}
-      {!isTow && (
-        <button type="button" className="opt" aria-pressed={f.acceptsGroup} onClick={() => set({ acceptsGroup: !f.acceptsGroup })}>
-          <b>{f.acceptsGroup ? '✓ ' : ''}Беру совместные выезды</b><small>Клиенты платят по 70%, вы получаете больше с одной поездки.</small>
-        </button>
-      )}
-
-      <div className="card">
-        <b>Машина, на которой приезжаете</b>
-        <input className="field" placeholder="Марка: Lada Largus" value={f.car.brand} onChange={(e) => set({ car: { ...f.car, brand: e.target.value } })} />
-        <div className="grid2">
-          <input className="field" placeholder="Цвет" value={f.car.color ?? ''} onChange={(e) => set({ car: { ...f.car, color: e.target.value } })} />
-          <input className="field" placeholder="Госномер" value={f.car.plate} onChange={(e) => set({ car: { ...f.car, plate: e.target.value.toUpperCase() } })} />
-        </div>
-      </div>
-
-      <div className="card">
-        <b>Налоговый статус</b>
-        <span className="note">Площадка работает как агент: принимает оплату за вас и перечисляет её. Нужен статус самозанятого или ИП.</span>
-        <div className="grid2">
-          <button type="button" className="seg" aria-pressed={f.taxStatus === 'self_employed'} onClick={() => set({ taxStatus: 'self_employed' })}>Самозанятый</button>
-          <button type="button" className="seg" aria-pressed={f.taxStatus === 'ip'} onClick={() => set({ taxStatus: 'ip' })}>ИП</button>
-        </div>
-        <input className="field" inputMode="numeric" placeholder="ИНН, 12 цифр" maxLength={12} value={f.inn} onChange={(e) => set({ inn: e.target.value.replace(/\D/g, '') })} />
-        <span className="note">Фото паспорта и машины для проверки — следующим шагом, модератор свяжется.</span>
-      </div>
-
-      <button className="btn" disabled={busy || (!isTow && !f.specialties.length)} onClick={save}>Сохранить</button>
-    </main>
-  );
-}

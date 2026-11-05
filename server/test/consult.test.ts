@@ -99,3 +99,24 @@ test('история машины: все обращения, подсказка
   ok(await t.api('DELETE', `/api/vehicles/${v.id}`, undefined, client.token));
   assert.equal(ok(await t.api('GET', `/api/orders/${c.order.id}`, undefined, client.token)).status, 'completed');
 });
+
+test('кабинет исполнителя: до трёх машин, операции, вопрос по операции виден поддержке', async () => {
+  const cars = [{ brand: 'Lada Largus', plate: 'А123ВС78' }, { brand: 'Ford Transit', plate: 'В456ОР78' }];
+  const p = ok(await t.api('PUT', '/api/performer/profile', { kind: 'master', cars, car: cars[1] }, master.token));
+  assert.equal(p.car.plate, 'В456ОР78');
+  assert.equal(p.cars.length, 2);
+  assert.equal((await t.api('PUT', '/api/performer/profile', { kind: 'master', cars: [...cars, cars[0], cars[1]] }, master.token)).status, 400);
+  assert.equal((await t.api('PUT', '/api/performer/profile', { kind: 'master', cars, car: { brand: 'X', plate: 'Х000ХХ00' } }, master.token)).body.error, 'bad_car');
+  ok(await t.api('POST', `/api/admin/performers/${master.id}/adjust`, { amount: 50_000, reason: 'Бонус за ночные выезды' }, admin.token));
+  const ledger = ok(await t.api('GET', '/api/performer/ledger', undefined, master.token));
+  const bonus = ledger.find((e: any) => e.kind === 'adjustment');
+  assert.ok(bonus, 'корректировка видна исполнителю');
+  const th = ok(await t.api('POST', '/api/support', { topic: 'Вопрос по операции', text: 'За что начислили?', ledgerEntryId: bonus.id }, master.token));
+  assert.equal(th.entry.id, bonus.id);
+  const staff = ok(await t.api('GET', `/api/support/${th.id}`, undefined, admin.token));
+  assert.equal(staff.entry.amount, 50_000);
+  // чужую операцию не спросить
+  assert.equal((await t.api('POST', '/api/support', { topic: 'Вопрос', text: 'А это?', ledgerEntryId: bonus.id }, client.token)).status, 404);
+  const again = ok(await t.api('GET', '/api/performer/ledger', undefined, master.token));
+  assert.equal(again.find((e: any) => e.id === bonus.id).ticket_id, th.id);
+});

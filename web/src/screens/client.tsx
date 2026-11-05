@@ -551,7 +551,7 @@ function VehicleHistory({ id }: { id: string }) {
             <li key={o.id}>
               <i className={o.status === 'completed' ? 'ok' : o.status === 'cancelled' || o.status === 'no_performer' ? 'off' : 'now'} />
               <a href={`#/order/${o.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                <b>{SERVICES[o.service]?.name ?? o.service}{o.is_sos ? ' · SOS' : ''}</b>
+                <b>{o.service === 'consult' ? 'Консультация по телефону' : o.service === 'tow' ? 'Эвакуатор' : `Выезд · ${SERVICES[o.service]?.name ?? o.service}`}{o.is_sos ? ' · SOS' : ''}</b>
                 <small>{fmtTime(o.created_at)}{o.performer_name ? ` · ${o.performer_name}` : ''} · {STATUS[o.status]?.name}{o.amount ? ` · ${rub(o.amount)}` : ''}</small>
                 {o.description && <small>Было: {o.description}</small>}
                 {o.consult_hint && <small>Подсказка по телефону: {o.consult_hint.hints.join(', ').toLowerCase()}{o.consult_hint.note ? ` — ${o.consult_hint.note}` : ''}</small>}

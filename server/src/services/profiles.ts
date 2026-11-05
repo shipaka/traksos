@@ -17,6 +17,8 @@ export interface PerformerInput {
   taxStatus?: 'self_employed' | 'ip' | null;
   inn?: string | null;
   car?: { brand: string; color?: string; plate: string } | null;
+  /** До трёх машин; car — та, на которой исполнитель сегодня (её видит клиент) */
+  cars?: { brand: string; color?: string; plate: string }[];
 }
 
 export class ProfilesService {
@@ -61,6 +63,8 @@ export class ProfilesService {
     inRange(p.callOutPrice, corridor.callOutMin, corridor.callOutMax, 'Выезд');
     inRange(p.hourPrice, corridor.hourMin, corridor.hourMax, 'Час работы');
     if (p.inn && !/^\d{12}$/.test(p.inn)) throw bad('bad_inn', 'ИНН физлица или ИП — 12 цифр');
+    if (p.cars && p.cars.length > 3) throw bad('too_many_cars', 'Не больше трёх машин');
+    if (p.car && p.cars && !p.cars.some((c) => c.plate === p.car!.plate)) throw bad('bad_car', 'Выберите машину из своего списка');
 
     const role = p.kind === 'ecu' ? 'master' : p.kind;
     await this.db.tx(async (q) => {
@@ -70,9 +74,9 @@ export class ProfilesService {
       );
       await q.query(
         `insert into performer_profiles(user_id, kind, specialties, brands, tier, call_out_price, hour_price, km_rate,
-            prep_minutes, accepts_group, tax_status, inn, car)
+            prep_minutes, accepts_group, tax_status, inn, car, cars)
          values ($1,$2,coalesce($3::text[],'{electric}'),coalesce($4::jsonb,'{}'),coalesce($5::text,'eco'),$6::int,$7::int,$8::int,
-                 coalesce($9::int,0),coalesce($10::boolean,true),$11::text,$12::text,$13::jsonb)
+                 coalesce($9::int,0),coalesce($10::boolean,true),$11::text,$12::text,$13::jsonb,coalesce($14::jsonb,'[]'))
          on conflict (user_id) do update set
            kind=excluded.kind,
            specialties=coalesce($3::text[], performer_profiles.specialties),
@@ -86,12 +90,23 @@ export class ProfilesService {
            tax_status=coalesce($11::text, performer_profiles.tax_status),
            inn=coalesce($12::text, performer_profiles.inn),
            car=coalesce($13::jsonb, performer_profiles.car),
+           cars=coalesce($14::jsonb, performer_profiles.cars),
            updated_at=now()`,
         [user.id, p.kind, p.specialties ?? null, p.brands ?? null, p.tier ?? null, p.callOutPrice ?? null, p.hourPrice ?? null,
-          p.kmRate ?? null, p.prepMinutes ?? null, p.acceptsGroup ?? null, p.taxStatus ?? null, p.inn ?? null, p.car ?? null],
+          p.kmRate ?? null, p.prepMinutes ?? null, p.acceptsGroup ?? null, p.taxStatus ?? null, p.inn ?? null,
+          p.car ?? (p.cars?.length ? p.cars[0] : null), p.cars ? JSON.stringify(p.cars) : null],
       );
     });
     return this.performer(user.id);
+  }
+
+  /** Все движения денег исполнителя: за что начислили, что списали, выплаты — с номером заявки */
+  async ledger(userId: string) {
+    return this.db.query(
+      `select l.id::int as id, l.kind, l.amount, l.note, l.created_at, o.id as order_id, o.number as order_number, o.service,
+              (select t.id from support_tickets t where t.ledger_entry_id = l.id and t.user_id = $1 order by t.created_at desc limit 1) as ticket_id
+         from ledger_entries l left join orders o on o.id = l.order_id
+        where l.account = 'performer' and l.performer_id = $1 order by l.id desc limit 300`, [userId]);
   }
 
   async setLine(userId: string, s: { lineStatus?: 'online' | 'on_call' | 'busy' | 'offline'; busyUntil?: string | null; paused?: boolean }) {

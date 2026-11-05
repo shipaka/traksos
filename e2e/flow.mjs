@@ -51,13 +51,13 @@ const admin = await api('POST', '/api/auth/verify', { phone: '+79990000001', cod
 const m = await mk();
 await login(m, '+79992223344', 'Я мастер');
 await m.waitForURL(/work\/profile/);
-await m.locator('label:has-text("Имя") input').fill('Иван');
+await m.locator('input[placeholder="Имя, как увидят клиенты"]').fill('Иван');
 await m.getByRole('button', { name: 'Самозанятый' }).click();
 await m.locator('input[placeholder="ИНН, 12 цифр"]').fill('780000000001');
 await m.locator('input[placeholder="Марка: Lada Largus"]').fill('Lada Largus');
 await m.locator('input[placeholder="Госномер"]').fill('а123вс78');
 await shot(m, '01-master-profile');
-await m.getByRole('button', { name: 'Сохранить' }).click();
+await m.getByRole('button', { name: /Дальше — фото/ }).click();
 // Сразу после профиля — фото для проверки
 await m.waitForURL(/work\/docs/);
 await m.getByText(/^0 из \d$/).waitFor();
@@ -178,7 +178,12 @@ await m.goto(BASE + '/#/work/jobs');
 await m.locator('a.list-item').first().click();
 await m.getByText('← Назад').click();
 await m.waitForURL(/#\/work\/jobs$/);
-await m.getByRole('link', { name: /Аккаунт/ }).click();
+await m.getByRole('link', { name: /Профиль/ }).click();
+await m.getByRole('button', { name: /Финансы/ }).click();
+await m.getByText('Операции', { exact: true }).waitFor();
+await shot(m, '16b-master-money');
+await m.getByText('← Профиль').click();
+await m.getByRole('button', { name: /Аккаунт/ }).click();
 await m.getByRole('button', { name: 'Кабинет клиента' }).click();
 await m.getByText('Что случилось?').first().waitFor();
 

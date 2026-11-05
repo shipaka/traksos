@@ -1,7 +1,12 @@
 // Поддержка: список обращений, переписка, новое обращение (по заявке или без). Для сотрудников — то же, плюс «Закрыть».
 
 import { useEffect, useRef, useState } from 'react';
-import { get, post, fmtTime, fmtPhone, onEvent } from '../api.ts';
+import { get, post, fmtTime, fmtPhone, onEvent, rub } from '../api.ts';
+
+const ENTRY_KIND: Record<string, string> = {
+  earning: 'Начислено за заявку', payout: 'Выплата', adjustment: 'Корректировка', refund_charge: 'Удержание за возврат',
+  cash_commission: 'Комиссия с наличных', cash_commission_paid: 'Комиссия оплачена',
+};
 import { useLoad, useAction, useMe, Loading, Back, go } from '../ui.tsx';
 
 export function SupportList() {
@@ -71,6 +76,14 @@ export function SupportThread({ id }: { id: string }) {
         {t.order && <a className="btn ghost small" href={`#/order/${t.order.id}`}>Открыть заявку</a>}
         {staff && t.author && <a className="btn ghost small" href={`#/admin/user/${t.author.id}`}>{t.author.name ?? fmtPhone(t.author.phone)} — карточка</a>}
       </div>
+      {t.entry && (
+        <div className="card flat" style={{ gap: 4 }}>
+          <span className="label">Операция №{t.entry.id}{t.entry.order_number ? ` · заявка №${t.entry.order_number}` : ''}</span>
+          <div className="between"><b>{ENTRY_KIND[t.entry.kind] ?? t.entry.kind}</b><b>{t.entry.amount >= 0 ? '+' : '−'}{rub(Math.abs(t.entry.amount))}</b></div>
+          <span className="note">{fmtTime(t.entry.created_at)}{t.entry.note ? ` · ${t.entry.note}` : ''}</span>
+          {staff && <span className="note">Исправить — в карточке исполнителя: «Начислить» или «Списать» с причиной.</span>}
+        </div>
+      )}
       <div className="card">
         <div className="msgs" ref={box}>
           {t.messages.map((m: any) => {
