@@ -12,8 +12,15 @@ export function ModQueue() {
   const log = kind === 'log';
   const q = useLoad(() => get(`/api/mod/cases?${log ? 'status=resolved' : `kind=${kind}`}`), [kind], (e) => e.type === 'mod_case');
   const counts = q.data?.counts ?? {};
+  const total = Object.values(counts as Record<string, number>).reduce((a, b) => a + b, 0);
+  const urgent = log ? null : (q.data?.items ?? []).filter((c: any) => c.priority === 1).length;
   return (
     <div className="stack">
+      <div className="grid2">
+        <div className="card tile"><span className="label">В очереди</span><span className="tile-value">{total}</span></div>
+        <div className="card tile"><span className="label">Срочно</span><span className="tile-value" style={{ color: urgent ? 'var(--bad)' : undefined }}>{urgent ?? '—'}</span><span className="note">в этой вкладке</span></div>
+      </div>
+      <span className="note">Срочные — сверху. Проверка исполнителей и подозрительное — в соседних вкладках админки.</span>
       <div className="scroll-x" role="tablist">
         {KINDS.map(([k, n]) => <button key={k} className="chip" role="tab" aria-pressed={kind === k} onClick={() => setKind(k)}>{n}{counts[k] ? ` · ${counts[k]}` : ''}</button>)}
         <button className="chip" role="tab" aria-pressed={log} onClick={() => setKind('log')}>Журнал решений</button>
@@ -136,13 +143,17 @@ export function Appeal() {
   const mine = useLoad(() => get('/api/my-cases'), [], (e) => e.type === 'mod_case');
   const { busy, run } = useAction();
   const [text, setText] = useState('');
+  const [why, setWhy] = useState('');
+  const REASONS = ['ДТП', 'Сломалась машина', 'Здоровье', 'Задержали на прошлом заказе', 'Клиент не на месте', 'Не согласен с отзывом', 'Другое'];
   return (
     <main>
       <Back to="profile" label="Назад" />
       <div><h1>Оспорить нарушение</h1><div className="sub">Не согласны с нарушением, ограничением или решением — опишите, что произошло. Модератор разберётся и ответит.</div></div>
       <div className="card">
-        <textarea className="field" value={text} onChange={(e) => setText(e.target.value)} placeholder="Что случилось, номер заявки, почему вы не согласны" />
-        <button className="btn" disabled={busy || text.trim().length < 10} onClick={async () => { if (await run(() => post('/api/appeals', { text }), 'Отправлено модератору. Проверка — до 24 часов')) { setText(''); mine.reload(); } }}>Отправить модератору</button>
+        <span className="label">Что произошло</span>
+        <div className="row" style={{ gap: 6 }}>{REASONS.map((r) => <button key={r} type="button" className="chip" aria-pressed={why === r} onClick={() => setWhy(why === r ? '' : r)}>{r}</button>)}</div>
+        <textarea className="field" value={text} onChange={(e) => setText(e.target.value)} placeholder="Коротко, как было: где, когда, номер заявки, почему не смогли предупредить" />
+        <button className="btn" disabled={busy || text.trim().length < 10} onClick={async () => { if (await run(() => post('/api/appeals', { text: why ? `${why}. ${text}` : text }), 'Отправлено модератору. Проверка — до 24 часов')) { setText(''); setWhy(''); mine.reload(); } }}>Отправить модератору</button>
         <span className="note">Считаются только нарушения, подтверждённые модератором. Неподтверждённые споры никому не идут в минус.</span>
       </div>
       {mine.data && mine.data.length > 0 && (

@@ -222,3 +222,12 @@ select.field { appearance: none; }
 .grid7 { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
 .opt:disabled { opacity: .5; }
 .banner.col { flex-direction: column; gap: 4px; }
+
+/* Подвал с реквизитами */
+.site-footer { display: flex; flex-direction: column; gap: 6px; padding: 24px 16px 120px; max-width: 440px; margin: 0 auto; border-top: 1px solid var(--line); }
+.site-footer .row a { color: var(--muted); }
+/* SOS в нижнем меню — крупная круглая кнопка над панелью */
+.tabbar a.sosTab { position: relative; justify-content: center; }
+.tabbar .sosDot { width: 58px; height: 58px; margin-top: -30px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-size: 16px; box-shadow: 0 6px 18px rgba(255,106,19,.45), 0 0 0 5px var(--bg); }
+.tabbar a.sosTab.on { background: transparent; }
+.tl li > a { display: block; text-decoration: none; color: inherit; }

@@ -70,7 +70,7 @@ export function createApp(d: Deps) {
   const centers = new ServiceCenters(d.db, notifier, settings, support, now);
   const fleet = new FleetService(d.db, notifier, orders);
   const privacy = new PrivacyService(d.db, notifier, now);
-  const standing = new StandingService(d.db, now);
+  const standing = new StandingService(d.db, now, settings);
   const shop = new ShopService(d.db, notifier, settings);
   const moderation = new ModerationService(d.db, notifier, reviews, now, d.sms);
   // Споры — в очередь модератора: из суммы заявки, из сверки работ, из ремонта в сервисе
@@ -249,6 +249,12 @@ export function createApp(d: Deps) {
   }), c.body))));
   r.get('/api/performer/standing', performerRoles, (c: AuthedCtx) => standing.standing(c.user));
   r.get('/api/performer/nearby', performerRoles, (c: AuthedCtx) => standing.nearby(c.user));
+  r.get('/api/masters-nearby', true, (c: AuthedCtx) => {
+    const q = c.query; const num = (x: string | null) => (x == null || x === '' || !Number.isFinite(Number(x)) ? undefined : Number(x));
+    const service = q.get('service') ?? 'electric';
+    if (!/^[a-z]{2,12}$/.test(service)) throw bad('bad_service', 'Нет такой услуги');
+    return standing.mastersNearby(c.user, { service, lat: num(q.get('lat')), lng: num(q.get('lng')), brand: q.get('brand') ?? undefined });
+  });
   r.post('/api/orders/:id/part', true, (c: AuthedCtx) => onsite.part(c.user, c.params.id, parse(z.object({ mode: z.enum(['wait', 'resume', 'return', 'tow']) }), c.body).mode));
 
   // Магазин ---------------------------------------------------------------------
@@ -259,6 +265,7 @@ export function createApp(d: Deps) {
     isKit: z.boolean().optional(), active: z.boolean().optional(), sort: z.number().int().min(0).max(10_000).optional(),
     photoDataUrl: z.string().max(2_100_000).nullable().optional(),
   });
+  r.get('/api/legal', false, () => settings.get('legal'));
   r.get('/api/shop', true, () => shop.catalog());
   r.get('/api/shop/products/:id/photo', false, async (c: Ctx) => { const f = await shop.photo(c.params.id); return new Raw(f.mime, f.body, { 'cache-control': 'public, max-age=86400' }); });
   r.post('/api/shop/orders', true, (c: AuthedCtx) => shop.order(c.user, parse(z.object({
@@ -424,6 +431,7 @@ export function createApp(d: Deps) {
     const b = parse(z.object({ body: z.string().min(1).max(2000), kind: z.enum(['text', 'quick']).default('text') }), c.body);
     return chat.post(c.user, c.params.id, b.body, b.kind);
   });
+  r.get('/api/orders/:id/reviews', true, (c: AuthedCtx) => reviews.forOrder(c.user, c.params.id));
   r.post('/api/orders/:id/review', true, (c: AuthedCtx) => reviews.leave(c.user, c.params.id, parse(z.object({
     stars: z.number().int().min(1).max(5), tags: z.array(z.string().max(60)).max(10).optional(), text: z.string().max(1000).optional(),
   }), c.body)));

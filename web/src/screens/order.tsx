@@ -44,7 +44,7 @@ export function Order({ id }: { id: string }) {
       {d.consultFrom?.hint && <ConsultHintCard from={d.consultFrom} />}
       {d.status === 'no_performer' && !isPerformer && <Retry id={id} onDone={o.reload} />}
 
-      {d.performer && !isPerformer && <PerformerCard p={d.performer} pos={perfPos} consult={isConsult} />}
+      {d.performer && !isPerformer && <PerformerCard p={d.performer} pos={perfPos} consult={isConsult} to={d.lat != null ? { lat: d.lat, lng: d.lng } : null} moving={['accepted', 'en_route'].includes(d.status)} />}
       {isPerformer && <ClientCard d={d} />}
       {d.service === 'tow' && !isPerformer && d.you !== 'candidate' && d.destination && <TowInfo d={d} />}
 
@@ -148,8 +148,12 @@ function Steps({ status, service }: { status: string; service: string }) {
   );
 }
 
-function PerformerCard({ p, pos, consult }: { p: any; pos: { lat: number; lng: number } | null; consult?: boolean }) {
+function PerformerCard({ p, pos, consult, to, moving }: { p: any; pos: { lat: number; lng: number } | null; consult?: boolean; to?: { lat: number; lng: number } | null; moving?: boolean }) {
   const at = consult ? null : pos ?? (p.lat != null ? { lat: p.lat, lng: p.lng } : null);
+  // Примерно: по прямой × 1,3 на дороги, 40 км/ч по городу
+  const km = at && to ? Math.hypot((at.lat - to.lat) * 111, (at.lng - to.lng) * 111 * Math.cos(to.lat * Math.PI / 180)) * 1.3 : null;
+  const min = km != null ? Math.max(5, Math.round(km / 40 * 60)) : null;
+  const arrive = min != null ? new Date(Date.now() + min * 60000).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : null;
   return (
     <div className="card">
       <div className="between">
@@ -157,6 +161,7 @@ function PerformerCard({ p, pos, consult }: { p: any; pos: { lat: number; lng: n
         <span className="pill">{p.rating ? `★ ${p.rating.toFixed(1)} · ${p.rating_count}` : 'Новый мастер'}</span>
       </div>
       {p.car && !consult && <span className="note">Приедет на: {p.car.brand}{p.car.color ? `, ${p.car.color}` : ''}, {p.car.plate}</span>}
+      {moving && min != null && <span><b>~{min} мин · {String(Math.round(km! * 10) / 10).replace('.', ',')} км</b> — будет примерно в <b style={{ color: 'var(--accent)' }}>{arrive}</b>. <small className="note">Опоздание до 40 минут для грузовых — обычное дело, новое время покажем сразу.</small></span>}
       {at && (
         <div className="mini-map">
           <iframe title="Где мастер" loading="lazy"
@@ -615,8 +620,30 @@ function Review({ id, you }: { id: string; you: string }) {
   const [tags, setTags] = useState<string[]>([]);
   const [text, setText] = useState('');
   const [sent, setSent] = useState(false);
-  if (sent || you === 'admin') return null;
+  const rv = useLoad(() => (you === 'admin' || you === 'candidate' ? Promise.resolve(null) : get(`/api/orders/${id}/reviews`)), [id, sent]);
+  const [contest, setContest] = useState(false);
+  const [why, setWhy] = useState('');
+  if (you === 'admin' || you === 'candidate') return null;
   const all: string[] = pricing.data?.reviewTags?.[you === 'performer' ? 'aboutClient' : 'aboutPerformer'] ?? [];
+  const w = (x: number) => String(Math.round(x * 100) / 100).replace('.', ',');
+  if (rv.data?.mine) return (
+    <div className="card">
+      <span className="note">Ваш отзыв: {'★'.repeat(rv.data.mine.stars)}{rv.data.mine.text ? ` — «${rv.data.mine.text}»` : ''} · вес {w(rv.data.mine.weight)}</span>
+      {rv.data.aboutMe ? (
+        <div className="stack" style={{ gap: 6 }}>
+          <div className="between"><b>{you === 'performer' ? 'Клиент оценил вас' : 'Мастер оценил вас'}: ★ {rv.data.aboutMe.stars}</b><span className="note">вес отзыва {w(rv.data.aboutMe.weight)}</span></div>
+          {rv.data.aboutMe.tags?.length > 0 && <div className="row">{rv.data.aboutMe.tags.map((t: string) => <span key={t} className="pill">{t}</span>)}</div>}
+          {rv.data.aboutMe.text && <span>«{rv.data.aboutMe.text}»</span>}
+          {rv.data.aboutMe.disputed ? <span className="note">Оспорен — до решения модератора в рейтинг не идёт.</span> : contest ? (
+            <div className="stack">
+              <textarea className="field" value={why} onChange={(e) => setWhy(e.target.value)} placeholder="Почему отзыв несправедлив" />
+              <button className="btn small" disabled={busy || why.trim().length < 5} onClick={async () => { if (await run(() => post(`/api/reviews/${rv.data.aboutMe.id}/contest`, { text: why }), 'Отправлено модератору')) { setContest(false); rv.reload(); } }}>Отправить модератору</button>
+            </div>
+          ) : <button className="btn ghost small" onClick={() => setContest(true)}>Оспорить отзыв</button>}
+        </div>
+      ) : <span className="note">{you === 'performer' ? 'Клиент' : 'Мастер'} ещё не оставил отзыв о вас.</span>}
+    </div>
+  );
   return (
     <div className="card">
       <b>{you === 'performer' ? 'Как прошло с клиентом?' : 'Как отработал мастер?'}</b>
@@ -627,6 +654,7 @@ function Review({ id, you }: { id: string; you: string }) {
         <button key={t} className="chip" aria-pressed={tags.includes(t)} onClick={() => setTags(tags.includes(t) ? tags.filter((x) => x !== t) : [...tags, t])}>{t}</button>
       ))}</div>
       <textarea className="field" placeholder="Пара слов · по желанию" value={text} onChange={(e) => setText(e.target.value)} />
+      {rv.data && <div className="banner col"><span className="note">Вес вашего отзыва — <b>{w(rv.data.weight)}</b>: он зависит от вашего рейтинга{rv.data.myRating ? ` (★ ${rv.data.myRating.toFixed(1)})` : ''}: чем выше ваш рейтинг, тем больше весит отзыв. Пока у вас меньше трёх оценок, вес небольшой — так защищаемся от накруток.</span></div>}
       {you !== 'performer' && <WorksCheck id={id} />}
       <button className="btn" disabled={busy || !stars} onClick={async () => {
         const r = await run(() => post(`/api/orders/${id}/review`, { stars, tags, text: text || undefined }), 'Спасибо за отзыв');

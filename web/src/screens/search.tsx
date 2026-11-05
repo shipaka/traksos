@@ -24,7 +24,10 @@ const TOW_PHRASES = ['Ищем эвакуаторы рядом', 'Эвакуат
 export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
   const toast = useToast();
   const { busy, run } = useAction();
-  const [sort, setSort] = useState<(typeof SORTS)[number]['id']>('recommended');
+  // Приоритет из формы вызова: «Ближе / Дешевле / Быстрее» — сразу сортирует отклики
+  const [sort, setSort] = useState<(typeof SORTS)[number]['id']>(() => {
+    try { return ({ near: 'distance', cheap: 'price', fast: 'eta' } as Record<string, (typeof SORTS)[number]['id']>)[localStorage.getItem('traksos.prio') ?? ''] ?? 'recommended'; } catch { return 'recommended'; }
+  });
   const [data, setData] = useState<any>(null);
   const seen = useRef(new Set<string>());
 

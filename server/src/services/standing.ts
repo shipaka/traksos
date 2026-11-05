@@ -3,13 +3,14 @@
 import type { Db } from '../db/index.ts';
 import type { AuthUser } from '../http/router.ts';
 import { haversineKm } from '../domain/geo.ts';
-import { performerKindFor } from '../domain/dispatch.ts';
+import { performerKindFor, rankCandidates, type Candidate } from '../domain/dispatch.ts';
+import type { SettingsService } from './settings.ts';
 
 export const LEVEL = { newbieJobs: 10, bestJobs: 50, bestRating: 4.7, minHintCases: 20, windowDays: 90 };
 const SCORE: Record<string, number> = { yes: 1, part: 0.5, no: 0 };
 
 export class StandingService {
-  constructor(private db: Db, private now: () => Date) {}
+  constructor(private db: Db, private now: () => Date, private settings?: SettingsService) {}
 
   async standing(user: AuthUser) {
     const since = new Date(this.now().getTime() - LEVEL.windowDays * 86400_000);
@@ -62,5 +63,36 @@ export class StandingService {
       }
     }
     return { openNearby: near.length, ahead };
+  }
+
+  /** Клиенту до вызова: сколько мастеров на линии, сколько свободны и подходят, и кто ближе всего — без контактов */
+  async mastersNearby(user: AuthUser, p: { service: string; lat?: number; lng?: number; brand?: string }) {
+    const all = await this.settings!.all();
+    const kind = performerKindFor(p.service);
+    const list = await this.db.query<Candidate & { name: string | null; tier: string; call_out_price: number | null; created_at: Date; jobs: number; busy: boolean }>(
+      `select p.user_id, p.kind, p.specialties, p.brands, p.is_priority, p.paused, p.line_status, p.verification, p.tier, p.call_out_price,
+              p.lat, p.lng, u.rating, p.accepts_group, u.status as user_status, p.schedule, p.off_schedule_until, p.extras, u.name, p.prep_minutes,
+              (select count(*)::int from orders o where o.performer_id=p.user_id and o.status='completed') as jobs,
+              exists (select 1 from orders x where x.performer_id=p.user_id and x.status in ('accepted','en_route','arrived','working')) as busy,
+              0 as cash_debt
+         from performer_profiles p join users u on u.id=p.user_id
+        where p.kind=$1 and p.user_id<>$2 and p.verification='approved' and p.line_status in ('online','on_call','on_job')`, [kind, user.id]);
+    const order = { service: p.service, brand: p.brand ?? null, lat: p.lat ?? null, lng: p.lng ?? null, group_trip: false };
+    const free = list.filter((c) => !c.busy && c.line_status !== 'on_job');
+    const ranked = rankCandidates(order as any, free, { radiusKm: all.dispatch.radiusKm, maxCandidates: 20, cashDebtLimit: Number.MAX_SAFE_INTEGER, now: this.now() });
+    const byId = new Map(free.map((c) => [c.user_id, c]));
+    const speed = all.dispatch.citySpeedKmh || 40;
+    const LEVEL: Record<string, number> = { excellent: 3, good: 2, last_resort: 1 };
+    const items = ranked.slice(0, 8).map((r) => {
+      const c = byId.get(r.user_id)!;
+      const tierPrice = (all.pricing.tiers as any)[c.tier]?.callOut ?? null;
+      return {
+        name: (c.name ?? 'Мастер').split(/[\s(]/)[0], tier: c.tier, rating: c.rating == null ? null : Number(c.rating), jobs: (c as any).jobs,
+        distanceKm: r.distanceKm, etaMin: r.distanceKm == null ? null : Math.max(10, Math.round((r.distanceKm * 1.3) / speed * 60) + ((c as any).prep_minutes ?? 0)),
+        brandStars: p.brand ? LEVEL[(c.brands as any)?.[p.brand] ?? 'good'] ?? 2 : null,
+        callOut: c.call_out_price ?? tierPrice,
+      };
+    });
+    return { online: list.length, free: free.length, match: ranked.length, items };
   }
 }

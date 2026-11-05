@@ -114,5 +114,7 @@ export function errorBody(e: unknown) {
   if (e instanceof HttpError) return { status: e.status, body: { error: e.code, message: e.message, data: e.data } };
   if (e instanceof ZodError) return { status: 400, body: { error: 'validation', message: 'Проверьте поля формы', data: e.flatten() } };
   if ((e as any)?.name === 'TransitionError') return { status: 409, body: { error: 'bad_status', message: (e as Error).message } };
+  // Неверный идентификатор в адресе (не uuid, не число) — это «не найдено», а не ошибка сервера
+  if ((e as any)?.code === '22P02') return { status: 404, body: { error: 'not_found', message: 'Не найдено' } };
   return { status: 500, body: { error: 'internal', message: 'Ошибка сервера' } };
 }

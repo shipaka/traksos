@@ -46,6 +46,11 @@ export function BaseHome() {
         <h1>Рембаза «{center.name}»</h1>
         <div className="sub">{center.address} · {center.hours}</div>
       </div>
+      <div className="row" style={{ gap: 6 }}>
+        <span className="pill">{center.rating ? `★ ${center.rating.toFixed(1)} · ${center.reviews} отзывов` : 'отзывов пока нет'}</span>
+        {center.verification === 'approved' && <span className="pill good">проверен</span>}
+        <span className="pill">сейчас машин: {groups.repair.length} · ожидаем: {groups.expected.length}</span>
+      </div>
       {center.verification !== 'approved' && (
         <div className="banner warn col">
           <b>{center.verification === 'rejected' ? 'Проверка не пройдена' : 'Пройдите проверку ТракSOS'}</b>
@@ -486,9 +491,14 @@ export function BookForm({ id }: { id: string }) {
       <div className="card">
         <Field label="Машина" group>
           {cars.data?.length ? (
-            <select className="field" value={vehicleId} onChange={(e) => setVehicle(e.target.value)}>
-              {cars.data.map((v: any) => <option key={v.id} value={v.id}>{carName(v)} · {v.plate ?? 'без номера'}</option>)}
-            </select>
+            <div className="stack" style={{ gap: 6 }}>
+              {cars.data.map((v: any) => (
+                <button key={v.id} type="button" className="opt" aria-pressed={vehicleId === v.id} onClick={() => setVehicle(v.id)}>
+                  <b>{vehicleId === v.id ? '✓ ' : ''}{carName(v)}</b><small>{v.plate ?? 'без номера'}{v.trailer_plate ? ` · прицеп ${v.trailer_plate}` : ''}</small>
+                </button>
+              ))}
+              <a className="note" href="#/garage">+ Добавить машину</a>
+            </div>
           ) : <a className="note" href="#/garage">+ Добавить машину в гараж</a>}
         </Field>
         <Field label="Что нужно" group>

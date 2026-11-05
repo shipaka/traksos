@@ -37,6 +37,18 @@ export class ReviewsService {
     return { ok: true, weight };
   }
 
+  /** Отзывы по заявке: мой, вес моего отзыва и — после моего — что написали обо мне */
+  async forOrder(user: AuthUser, orderId: string) {
+    const o = await this.orders.mustSee(user, orderId);
+    if (!this.orders.actorOf(user, o)) throw forbidden();
+    const me = await this.db.one<{ rating: string | null; rating_count: number }>('select rating, rating_count from users where id=$1', [user.id]);
+    const weight = authorWeight(await this.settings.get('reviews'), me?.rating == null ? null : Number(me.rating), me?.rating_count ?? 0);
+    const mine = await this.db.one('select stars, tags, text, weight::float as weight, created_at from reviews where order_id=$1 and author_id=$2', [orderId, user.id]);
+    const aboutMe = mine ? await this.db.one(
+      `select id, stars, tags, text, weight::float as weight, disputed, hidden, created_at from reviews where order_id=$1 and target_id=$2 and not hidden`, [orderId, user.id]) : null;
+    return { weight, myRating: me?.rating == null ? null : Number(me.rating), mine, aboutMe };
+  }
+
   async recompute(userId: string) {
     const rows = await this.db.query<{ stars: number; weight: string; disputed: boolean; hidden: boolean }>(
       'select stars, weight, disputed, hidden from reviews where target_id=$1', [userId]);

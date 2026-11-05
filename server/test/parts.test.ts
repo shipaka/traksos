@@ -78,3 +78,37 @@ test('админ: сводка и живые заявки', async () => {
   assert.ok(row && row.events.length >= 1, 'лента событий');
   assert.equal((await t.api('GET', '/api/admin/summary', undefined, client.token)).status, 403);
 });
+
+test('неверный id в адресе — 404, а не ошибка сервера; реквизиты — без входа', async () => {
+  assert.equal((await t.api('GET', '/api/orders/не-uuid', undefined, client.token)).status, 404);
+  assert.equal((await t.api('GET', '/api/mod/cases/undefined', undefined, admin.token)).status, 404);
+  const l = ok(await t.api('GET', '/api/legal'));
+  assert.equal(l.brand, 'ТракSOS');
+  ok(await t.api('PUT', '/api/admin/settings/legal', { entity: 'ИП Тестов Т. Т.', inn: '780000000000' }, admin.token));
+  assert.equal(ok(await t.api('GET', '/api/legal')).entity, 'ИП Тестов Т. Т.');
+});
+
+test('мастера рядом до вызова: сколько на линии и кто ближе — без контактов', async () => {
+  const n = ok(await t.api('GET', '/api/masters-nearby?service=electric&lat=59.93&lng=30.31', undefined, client.token));
+  assert.ok(n.online >= 1);
+  assert.equal(typeof n.match, 'number');
+  for (const m of n.items) { assert.equal(m.phone, undefined); assert.equal(m.user_id, undefined); }
+  assert.equal((await t.api('GET', '/api/masters-nearby?service=../x', undefined, client.token)).status, 400);
+});
+
+test('отзывы по заявке: вес моего, после моего — отзыв обо мне', async () => {
+  const id = await take({ service: 'electric', zoneId: 'spb', description: 'Габариты слева' });
+  ok(await t.api('POST', `/api/orders/${id}/step`, { action: 'arrive' }, master.token));
+  ok(await t.api('POST', `/api/orders/${id}/amount`, { workAmount: 100_000, result: 'solved' }, master.token));
+  ok(await t.api('POST', `/api/orders/${id}/confirm`, {}, client.token));
+  ok(await t.api('POST', `/api/orders/${id}/review`, { stars: 2, tags: ['Задержал оплату'] }, master.token));
+  const before = ok(await t.api('GET', `/api/orders/${id}/reviews`, undefined, client.token));
+  assert.equal(before.mine, null);
+  assert.equal(before.aboutMe, null, 'отзыв о себе — только после своего');
+  ok(await t.api('POST', `/api/orders/${id}/review`, { stars: 5 }, client.token));
+  const after = ok(await t.api('GET', `/api/orders/${id}/reviews`, undefined, client.token));
+  assert.equal(after.mine.stars, 5);
+  assert.equal(after.aboutMe.stars, 2);
+  const list = ok(await t.api('GET', '/api/orders', undefined, client.token));
+  assert.ok('vehicle_id' in list[0] && 'consult_of' in list[0], 'в списке — машина и связь с консультацией');
+});

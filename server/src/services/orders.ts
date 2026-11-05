@@ -615,11 +615,13 @@ export class OrdersService {
   }
 
   async list(user: AuthUser, scope: 'client' | 'performer', status?: string) {
-    const where = scope === 'performer' ? 'performer_id = $1' : user.owner_id ? 'created_by = $1' : '(client_id = $1 or created_by = $1)';
+    const where = scope === 'performer' ? 'o.performer_id = $1' : user.owner_id ? 'o.created_by = $1' : '(o.client_id = $1 or o.created_by = $1)';
     return this.db.query(
-      `select id, number, status, service, is_sos, problem, address, brand, estimate, work_amount, call_out_amount,
-              client_fee_pct, payment_method, created_at, completed_at
-         from orders where ${where} ${status ? 'and status = $2' : ''} order by created_at desc limit 100`,
+      `select o.id, o.number, o.status, o.service, o.is_sos, o.problem, o.description, o.address, o.brand, o.estimate, o.work_amount, o.call_out_amount,
+              o.client_fee_pct, o.payment_method, o.created_at, o.completed_at, o.consult_of, o.vehicle_id,
+              v.brand as v_brand, v.model as v_model, v.year as v_year, v.plate as v_plate,
+              (select coalesce(company_name, name) from users where id=o.client_id) as client_name
+         from orders o left join vehicles v on v.id=o.vehicle_id where ${where} ${status ? 'and o.status = $2' : ''} order by o.created_at desc limit 100`,
       status ? [user.id, status] : [user.id],
     );
   }

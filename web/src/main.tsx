@@ -16,6 +16,7 @@ import { AdminUser } from './screens/adminUser.tsx';
 import { BaseHome, BaseCar, BaseSetup, ServicesList, CenterPage, BookForm, BookingPage } from './screens/base.tsx';
 import { Fleet, QrJoin } from './screens/fleet.tsx';
 import { Help } from './screens/help.tsx';
+import { Rules } from './screens/rules.tsx';
 import { Shop, ShopCart } from './screens/shop.tsx';
 import { Privacy } from './screens/privacy.tsx';
 import { ModCase, Appeal, MyReviews } from './screens/moderation.tsx';
@@ -73,7 +74,7 @@ function App() {
   if (!me) {
     return (
       <MeCtx.Provider value={{ me: null, reload, mode: 'client', setMode }}>
-        <Shell mode="client" me={null}>{route[0] === 'offer' ? <OfferPage audience={route[1] ?? 'client'} /> : route[0] === 'qr' && route[1] ? <QrJoin code={route[1]} /> : <Login />}</Shell>
+        <Shell mode="client" me={null}>{route[0] === 'offer' ? <OfferPage audience={route[1] ?? 'client'} /> : route[0] === 'qr' && route[1] ? <QrJoin code={route[1]} /> : route[0] === 'rules' ? <Rules /> : route[0] === 'help' ? <Help /> : <Login />}</Shell>
       </MeCtx.Provider>
     );
   }
@@ -105,6 +106,7 @@ function App() {
     case 'booking': screen = <BookingPage id={b} />; break;
     case 'fleet': screen = <Fleet />; break;
     case 'help': screen = <Help />; break;
+    case 'rules': screen = <Rules />; break;
     case 'shop': screen = b === 'cart' ? <ShopCart /> : <Shop />; break;
     case 'privacy': screen = <Privacy />; break;
     case 'qr': screen = <QrJoin code={b} />; break;
@@ -151,16 +153,46 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         </div>
       </header>
       {children}
+      <SiteFooter />
       {tabs.length > 0 && (
         <nav className="tabbar">
           {tabs.map(([href, ic, name]) => (
             <a key={href} href={'#' + href} className={`${here === href || (href !== '/' && here.startsWith(href + '/') && href !== '/work' && href !== '/base') ? 'on' : ''} ${href === '/sos' ? 'sosTab' : ''}`}>
-              <span className="ic">{ic}</span>{name}
+              {href === '/sos' ? <span className="sosDot">SOS</span> : <><span className="ic">{ic}</span>{name}</>}
             </a>
           ))}
         </nav>
       )}
     </div>
+  );
+}
+
+/** Подвал: реквизиты площадки (их заполняет админ в «Настройках»), ссылки на документы; плашка про cookie — один раз */
+let legalCache: Promise<any> | null = null;
+function SiteFooter() {
+  const [l, setL] = useState<any>(null);
+  const [cookieOk, setCookieOk] = useState(() => { try { return localStorage.getItem('traksos.cookie') === '1'; } catch { return true; } });
+  useEffect(() => { (legalCache ??= get('/api/legal').catch(() => null)).then(setL); }, []);
+  const req = l ? [l.entity, l.inn && `ИНН ${l.inn}`, l.ogrn && `ОГРН ${l.ogrn}`].filter(Boolean).join(' · ') : '';
+  const contacts = l ? [l.phone, l.email].filter(Boolean).join(' · ') : '';
+  return (
+    <footer className="site-footer">
+      {!cookieOk && (
+        <div className="banner col" role="note">
+          <span className="note">Используем только необходимые cookie — чтобы вы оставались в аккаунте. Рекламных нет.</span>
+          <button className="btn ghost small" onClick={() => { try { localStorage.setItem('traksos.cookie', '1'); } catch { /* */ } setCookieOk(true); }}>Понятно</button>
+        </div>
+      )}
+      <span className="logo">Трак<b>SOS</b></span>
+      <span className="note">{l?.tagline}</span>
+      {req && <span className="note">{req}</span>}
+      {l?.address && <span className="note">{l.address}</span>}
+      {contacts && <span className="note">Поддержка: {contacts}</span>}
+      <span className="row note" style={{ gap: 12 }}>
+        <a href="#/offer/client">Оферта</a><a href="#/offer/privacy">Персональные данные</a><a href="#/rules">Правила площадки</a>
+      </span>
+      <span className="note">© {new Date().getFullYear()} {l?.brand ?? 'ТракSOS'}</span>
+    </footer>
   );
 }
 

@@ -89,8 +89,10 @@ export class ServiceCenters {
     const weekAgo = this.now().getTime() - 7 * 86400_000;
     const view = (b: any) => this.bookingView(b, 'service', weekAgo);
     const confirmDue = !c.accepts_confirmed_at || new Date(c.accepts_confirmed_at).getTime() < weekAgo;
+    const rt = await this.db.one<{ r: number | null; n: number }>(
+      `select round(avg(review_stars)::numeric, 1)::float as r, count(review_stars)::int as n from service_bookings where center_id=$1`, [c.id]);
     return {
-      center: { ...c, closedToday: (c.closed_days ?? []).some((d: any) => msk(new Date(d)) === today), confirmDue },
+      center: { ...c, closedToday: (c.closed_days ?? []).some((d: any) => msk(new Date(d)) === today), confirmDue, rating: rt?.r ?? null, reviews: rt?.n ?? 0 },
       groups: {
         requests: rows.filter((b) => ['new', 'clarify'].includes(b.status)).map(view),
         expected: rows.filter((b) => b.status === 'expected').map(view),
@@ -112,7 +114,7 @@ export class ServiceCenters {
       commission: as === 'service' ? b.commission : undefined,
       payout: as === 'service' && b.amount != null ? b.amount - b.commission : undefined,
       toPay: b.amount != null ? b.amount - b.discount : null,
-      fromOrder: !!b.from_order_id, arrivedAt: b.arrived_at, readyAt: b.ready_at, createdAt: b.created_at,
+      fromOrder: !!b.from_order_id, fromOrderId: as === 'client' ? b.from_order_id : undefined, arrivedAt: b.arrived_at, readyAt: b.ready_at, createdAt: b.created_at,
       daysInRepair: b.arrived_at ? Math.max(1, Math.ceil((this.now().getTime() - new Date(b.arrived_at).getTime()) / 86400_000)) : null,
       stillHereDue: as === 'service' && repair && !!b.from_order_id && new Date(b.still_here_at ?? b.arrived_at ?? b.created_at).getTime() < weekAgo,
       client: as === 'service' ? { name: b.company_name || b.client_name || 'Клиент', rating: b.client_rating } : undefined,

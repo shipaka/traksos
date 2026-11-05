@@ -17,6 +17,7 @@ export const DEMO = {
     { phone: '+79000000014', name: 'Андрей (Тосно)', lat: 59.54, lng: 30.88, priority: false, brands: { Scania: 'good', DAF: 'good' } },
   ],
   tow: { phone: '+79000000021', name: 'Пётр, эвакуатор', lat: 59.88, lng: 30.45 },
+  service: '+79000000031',
 };
 
 const DRAFT = (title: string) => `# ${title}
@@ -64,6 +65,26 @@ export async function seed(db: Awaited<ReturnType<typeof createDb>>) {
   const tow = await user(DEMO.tow.phone, ['tow'], DEMO.tow.name);
   await performer(tow, { kind: 'tow', specialties: [], lat: DEMO.tow.lat, lng: DEMO.tow.lng, inn: '780000000099', car: { brand: 'MAN TGS', plate: 'Т999ТТ78' }, prep: 15 });
 
+  // Рембаза — проверена, видна клиентам
+  const base = await user(DEMO.service, ['service'], 'Шушары-Трак');
+  await db.query(
+    `insert into service_centers(owner_id, name, address, lat, lng, hours, inn, brands, staff, conditions, accepts, verification, accepts_confirmed_at)
+     values ($1, 'Шушары-Трак', 'Шушары, Московское ш., 50', 59.80, 30.38, '08:00–21:00', '7820000000', '{Scania,DAF,Volvo,MAN}',
+       '{"electric":"own","air":"own","engine":"own","gearbox":"invite","brakes":"own","chassis":"own","tires":"none"}', '{parking,pit,night}', '{quick,day,long}', 'approved', now())
+     on conflict (owner_id) do nothing`, [base]);
+
+  // Магазин — товары для примера; сам магазин выключен, включается в админке
+  for (const [cat, name, spec, price, stock, kit] of [
+    ['kit', 'Тревожный чемоданчик', 'Розетка, перекидка, адаптер 7/15, предохранители, изолента', 450_000, 2, true],
+    ['socket', 'Розетка 15-контактная', '24 В · ISO 12098', 120_000, 6, false],
+    ['plug', 'Вилка 7-контактная', '24 В · металл', 65_000, 4, false],
+    ['cable', 'Перекидка спиральная 15-конт.', '4,5 м', 210_000, null, false],
+    ['fuse', 'Набор предохранителей', 'флажковые, 40 шт.', 35_000, 10, false],
+  ] as const) {
+    await db.query(`insert into shop_products(category, name, spec, price, stock, is_kit) select $1,$2,$3,$4,$5,$6
+                    where not exists (select 1 from shop_products where name=$2)`, [cat, name, spec, price, stock, kit]);
+  }
+
   for (const [audience, title] of [['client', 'Оферта для клиентов'], ['performer', 'Агентский договор для исполнителей'], ['privacy', 'Согласие на обработку персональных данных']]) {
     await db.query(`insert into offers(audience, version, body, summary, effective_at) select $1, '0.1-черновик', $2, 'Черновик для тестов', now()
                     where not exists (select 1 from offers where audience=$1)`, [audience, DRAFT(title)]);
@@ -76,6 +97,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   await seed(db);
   console.log('Тестовые данные на месте. Входите по номерам:');
   console.log(`  админ ${DEMO.admin} · клиент ${DEMO.client} · компания ${DEMO.company}`);
-  console.log(`  мастера ${DEMO.masters.map((m) => m.phone).join(', ')} · эвакуатор ${DEMO.tow.phone}`);
+  console.log(`  мастера ${DEMO.masters.map((m) => m.phone).join(', ')} · эвакуатор ${DEMO.tow.phone} · рембаза ${DEMO.service}`);
   await db.close();
 }
