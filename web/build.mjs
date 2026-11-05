@@ -21,7 +21,7 @@ const opts = {
 
 await mkdir('dist', { recursive: true });
 const html = await readFile('index.html', 'utf8');
-await writeFile('dist/index.html', html.replace('%BUILD%', Date.now().toString(36)));
+await writeFile('dist/index.html', html.replaceAll('%BUILD%', Date.now().toString(36)));
 await cp('public', 'dist', { recursive: true }).catch(() => {});
 
 if (watch) {
