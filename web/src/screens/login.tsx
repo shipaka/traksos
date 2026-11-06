@@ -74,10 +74,14 @@ export function Login({ driver }: { driver?: boolean } = {}) {
 
   if (!intent) return (
     <main>
-      <button type="button" className="sos" onClick={() => setIntent('help')} style={{ textAlign: 'center', alignItems: 'center', padding: '34px 20px' }}>
-        <span className="t" style={{ fontSize: 34 }}>Помогите</span>
-        <p>Сломался грузовик — мастер или эвакуатор приедут на место</p>
-      </button>
+      <div className="helpWrap">
+        <button type="button" className="helpBtn" onClick={() => setIntent('help')} aria-label="Помогите — вызвать мастера или эвакуатор">
+          <span className="i">🆘</span>
+          <span className="t">Помогите</span>
+          <span className="s">нажмите</span>
+        </button>
+        <div className="helpHint">👆 Сломались в дороге? Нажмите на кнопку<small>Мастер или эвакуатор приедут на место</small></div>
+      </div>
       <button type="button" className="btn ghost" onClick={() => setIntent('login')}>Войти по номеру</button>
       <div className="sub" style={{ textAlign: 'center' }}>Владельцы, водители, мастера, рембазы — один вход, кабинет откроется сам</div>
       <button type="button" className="link" onClick={() => setIntent('join')} style={{ background: 'none', border: 0, color: 'var(--accent)', fontWeight: 600, padding: 8 }}>Хочу работать с ТракSOS →</button>
