@@ -108,7 +108,7 @@ export const defaultSettings = {
     /** Потолок комиссии рембазы за один счёт, копейки (5 000 ₽) */
     serviceCommissionMax: 500_000,
     /** Скидка клиенту в сервисе по совету мастера, % — из комиссии ТракSOS */
-    serviceReferralDiscountPct: 5,
+    serviceReferralDiscountPct: 1,
   },
   payments: {
     /** Наличные мастеру — работает всегда */

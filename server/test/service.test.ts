@@ -110,9 +110,9 @@ test('по совету мастера: скидка клиенту из ком�
   ok(await t.api('POST', `/api/base/bookings/${b.id}/status`, { status: 'in_work' }, base.token));
   ok(await t.api('POST', `/api/base/bookings/${b.id}/ready`, { works: ['КПП'] }, base.token));
   const inv = ok(await t.api('POST', `/api/base/bookings/${b.id}/invoice`, { amount: 5_000_000 }, base.token));
-  assert.equal(inv.discount, 250_000);
+  assert.equal(inv.discount, 50_000, 'скидка 1% от 50 000 ₽');
   assert.equal(inv.payout, 4_750_000, 'выручка сервиса — минус комиссия 5%, скидка клиенту из комиссии');
-  assert.equal(inv.toPay, 4_750_000);
+  assert.equal(inv.toPay, 4_950_000);
   assert.equal((await t.api('POST', `/api/bookings/${b.id}/confirm`, { agree: false }, client.token)).status, 400);
   assert.equal(ok(await t.api('POST', `/api/bookings/${b.id}/confirm`, { agree: false, why: 'Синхронизатор не меняли' }, client.token)).status, 'disputed');
   const tickets = ok(await t.api('GET', '/api/admin/support', undefined, admin.token));
