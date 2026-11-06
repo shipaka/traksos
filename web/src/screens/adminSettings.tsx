@@ -22,6 +22,16 @@ const GROUPS: [string, Row[]][] = [
     ['payments', 'online', 'Онлайн-оплата', 'bool', 'нужна ЮKassa'],
     ['payments', 'invoice', 'По счёту для компаний', 'bool'],
   ]],
+  ['Баллы за приглашения', [
+    ['referral', 'clientSharePct', 'Пригласил клиента: доля с его заявок', 'pct', 'баллами'],
+    ['referral', 'days', 'Сколько дней идёт доля', 'num'],
+    ['referral', 'welcome', 'Подарок приглашённому клиенту', 'rub', 'баллами'],
+    ['referral', 'performerReward', 'Пригласил исполнителя', 'rub', 'баллами'],
+    ['referral', 'performerJobs', '…после скольких его заявок', 'num'],
+    ['referral', 'serviceReward', 'Пригласил рембазу', 'rub', 'баллами, после первого счёта'],
+    ['referral', 'spendCapPct', 'Баллами — не больше от сбора/комиссии', 'pct', 'с одной заявки'],
+    ['referral', 'ttlDays', 'Баллы живут, дней', 'num', 'начисленные в бесплатный месяц — от его конца'],
+  ]],
   ['Правила', [
     ['cancel.scale', 'accepted', 'Отмена: исполнитель принял', 'share', 'доля выезда исполнителю'],
     ['cancel.scale', 'en_route_first_half', 'Отмена: в пути, первая половина', 'share'],

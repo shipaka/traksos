@@ -43,6 +43,7 @@ export interface CenterInput {
 
 export class ServiceCenters {
   onDispute: ((p: { userId: string; bookingId: string; ticketId: string | null; text: string; targetId: string; title: string }) => Promise<unknown>) | null = null;
+  referral: import('./referral.ts').ReferralService | null = null;
   constructor(private db: Db, private notifier: Notifier, private settings: SettingsService, private support: SupportService, private now: () => Date) {}
 
   // ——— Карточка сервиса ———
@@ -238,12 +239,15 @@ export class ServiceCenters {
   }
 
   /** Агентский счёт: клиент платит через ТракSOS, сервису — за вычетом комиссии; скидка по совету мастера — из комиссии */
-  async invoice(user: AuthUser, id: string, amount: number) {
+  async invoice(user: AuthUser, id: string, amount: number, points = 0) {
     const { b } = await this.mineBooking(user, id);
     if (b.status !== 'ready') throw conflict('bad_status', 'Сначала «Машина готова»');
     const fees = await this.settings.get('fees');
-    const commission = Math.min(Math.round(amount * fees.serviceCommissionPct / 100), fees.serviceCommissionMax ?? Infinity);
+    let commission = Math.min(Math.round(amount * fees.serviceCommissionPct / 100), fees.serviceCommissionMax ?? Infinity);
     const discount = b.from_order_id ? Math.min(commission, Math.round(amount * fees.serviceReferralDiscountPct / 100)) : 0;
+    // Баллы рембазы гасят до половины комиссии, что остаётся ТракSOS после скидки
+    const pts = this.referral ? await this.referral.spendServiceCommission(this.db, user.id, commission - discount, id, b.number, points) : 0;
+    commission -= pts;
     await this.db.query(
       `update service_bookings set status='invoiced', amount=$2, commission=$3, discount=$4, invoiced_at=now(), updated_at=now() where id=$1`,
       [id, amount, commission, discount]);
@@ -379,6 +383,7 @@ export class ServiceCenters {
       await this.db.query(
         `update service_bookings set status='closed', closed_at=now(), review_stars=$2, review_text=$3, updated_at=now() where id=$1`,
         [id, p.stars ?? null, p.text?.trim() || null]);
+      await this.referral?.afterBookingClosed(b.owner_id, id);
       await this.notifier.notify([b.owner_id], { type: 'booking', bookingId: id, status: 'closed' },
         { kind: 'normal', title: 'Клиент подтвердил работы', body: `Счёт №${b.number} — деньги придут после оплаты`, data: { bookingId: id } });
     } else {

@@ -191,7 +191,8 @@ export class ProfilesService {
     const rows = await this.db.query(
       `select o.id, o.number, o.service, o.status, o.is_sos, o.problem, o.description, o.result, o.result_note, o.consult_hint,
               o.created_at, o.completed_at, o.created_by, u.name as performer_name,
-              coalesce(o.call_out_amount, 0) + coalesce(o.work_amount, 0) as amount
+              coalesce(o.call_out_amount, 0) + coalesce(o.work_amount, 0) as amount,
+              o.call_out_amount, o.work_amount, o.bill, o.client_fee_pct, o.discount_amount, o.discount_reason, o.points_fee
          from orders o left join users u on u.id = o.performer_id
         where o.vehicle_id=$1 ${user.owner_id ? 'and o.created_by=$2' : ''}
         order by o.created_at desc limit 100`,
@@ -208,8 +209,34 @@ export class ProfilesService {
         id: b.id, number: b.number, kind: 'service', service: 'service', status: b.status === 'closed' ? 'completed' : b.status,
         problem: 'Ремонт на рембазе', description: b.works?.length ? b.works.join(', ') : null, performer_name: `Рембаза «${b.center_name}»`,
         created_at: b.created_at, completed_at: b.closed_at, amount: b.amount != null ? b.amount - b.discount : 0,
+        lines: b.amount != null ? [
+          { label: `Работы${b.works?.length ? `: ${b.works.join(', ')}` : ''}`, amount: b.amount },
+          ...(b.discount ? [{ label: 'Скидка по совету мастера', amount: -b.discount }] : []),
+        ] : null,
       });
     }
+    // Разбивка суммы — разворачивается в истории: выезд, время, ожидание, расходники, сбор, скидки и баллы
+    for (const r of rows as any[]) {
+      if (r.kind === 'service' || r.lines !== undefined) continue;
+      const callOut = Number(r.call_out_amount ?? 0), work = Number(r.work_amount ?? 0);
+      if (!callOut && !work) { r.lines = null; continue; }
+      const b = r.bill;
+      const fee = Math.round(((callOut + work) * Number(r.client_fee_pct ?? 0)) / 100);
+      const disc = Number(r.discount_amount ?? 0), pts = Number(r.points_fee ?? 0);
+      r.lines = [
+        { label: r.service === 'consult' ? 'Консультация' : r.service === 'tow' ? 'Перевозка' : 'Выезд', amount: callOut },
+        ...(b ? [
+          ...(b.units ? [{ label: `Работа · ${String((b.units * b.step) / 60).replace('.', ',')} ч × ${(b.hour / 100).toLocaleString('ru-RU')} ₽`, amount: b.time }] : []),
+          ...(b.wait ? [{ label: `Ожидание запчасти · ${b.waitMinutes} мин`, amount: b.wait }] : []),
+          ...(b.extras ?? []).map((x: any) => ({ label: x.name, amount: x.amount })),
+        ] : work ? [{ label: 'Работа', amount: work }] : []),
+        ...(fee ? [{ label: 'Сервисный сбор', amount: fee }] : []),
+        ...(disc - pts > 0 ? [{ label: r.discount_reason && r.discount_reason !== 'Баллы' ? r.discount_reason : 'Скидка', amount: -(disc - pts) }] : []),
+        ...(pts ? [{ label: 'Баллами', amount: -pts }] : []),
+      ];
+      r.amount = callOut + work + fee - disc;
+    }
+    for (const r of rows as any[]) { delete r.bill; delete r.call_out_amount; delete r.work_amount; delete r.client_fee_pct; delete r.discount_amount; delete r.discount_reason; delete r.points_fee; }
     rows.sort((a: any, b: any) => +new Date(b.created_at) - +new Date(a.created_at));
     const done = rows.filter((r: any) => r.status === 'completed');
     return {
@@ -219,7 +246,7 @@ export class ProfilesService {
         lastAt: rows[0]?.created_at ?? null,
         spent: user.owner_id ? null : done.reduce((s: number, r: any) => s + Number(r.amount), 0),
       },
-      items: rows.map((r: any) => ({ ...r, amount: user.owner_id ? null : Number(r.amount) })),
+      items: rows.map((r: any) => ({ ...r, amount: user.owner_id ? null : Number(r.amount), lines: user.owner_id ? null : r.lines ?? null })),
     };
   }
 

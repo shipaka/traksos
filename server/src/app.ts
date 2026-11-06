@@ -10,6 +10,7 @@ import { MockProvider } from './payments/provider.ts';
 import { SettingsService } from './services/settings.ts';
 import { Notifier } from './services/notify.ts';
 import { AuthService, SELF_ROLES } from './services/auth.ts';
+import { ReferralService } from './services/referral.ts';
 import { ProfilesService } from './services/profiles.ts';
 import { OrdersService } from './services/orders.ts';
 import { ChatService } from './services/chat.ts';
@@ -68,6 +69,10 @@ export function createApp(d: Deps) {
   const support = new SupportService(d.db, notifier, orders, now);
   const stats = new StatsService(d.db, now);
   const centers = new ServiceCenters(d.db, notifier, settings, support, now);
+  const referral = new ReferralService(d.db, settings, notifier, now);
+  referral.ledger = payments.ledger.bind(payments);
+  orders.referral = referral;
+  centers.referral = referral;
   const fleet = new FleetService(d.db, notifier, orders);
   const privacy = new PrivacyService(d.db, notifier, now);
   const standing = new StandingService(d.db, now, settings);
@@ -93,8 +98,10 @@ export function createApp(d: Deps) {
   r.post('/api/auth/code', false, (c: Ctx) => auth.requestCode(parse(z.object({ phone: z.string() }), c.body).phone, c.ip));
   r.post('/api/auth/verify', false, async (c: Ctx) => {
     const b = parse(z.object({ phone: z.string(), code: z.string().min(4).max(6), role: z.enum(SELF_ROLES).optional(),
-      device: z.string().max(200).optional(), acceptOffers: z.boolean().optional() }), c.body);
+      device: z.string().max(200).optional(), acceptOffers: z.boolean().optional(), ref: z.string().max(20).optional() }), c.body);
     const r = await auth.verify(b.phone, b.code, b.role, b.device);
+    // Вход по приглашению: код из ссылки привязывается только к новому номеру
+    if (b.ref) await referral.attach(r.user as any, b.ref).catch(() => false);
     // Галочка «Согласен с офертой» на экране входа — записываем согласие на действующие редакции
     if (b.acceptOffers) await offers.acceptCurrent(r.user as any, c.ip);
     return r;
@@ -141,6 +148,7 @@ export function createApp(d: Deps) {
   r.get('/api/live', true, () => stats.live());
   r.get('/api/admin/stats', staff, (c: AuthedCtx) => stats.overview(Math.min(365, Math.max(1, Number(c.query.get('days') ?? 30)))));
   r.get('/api/admin/support', staff, (c: AuthedCtx) => support.queue(c.query.get('status') === 'closed' ? 'closed' : 'open'));
+  r.get('/api/me/referral', true, (c: AuthedCtx) => referral.mine(c.user));
   r.get('/api/me/offers', true, (c: AuthedCtx) => offers.status(c.user));
   r.post('/api/offers/:id/accept', true, (c: AuthedCtx) => offers.accept(c.user, c.params.id, c.ip));
   r.get('/api/offers/current/:audience', false, async (c: Ctx) => (await offers.current(c.params.audience)) ?? null);
@@ -175,6 +183,8 @@ export function createApp(d: Deps) {
     takes: z.array(z.enum(['tractor', 'semitrailer', 'coupling', 'truck12', 'bus', 'special'])).max(6).optional(),
     towType: z.enum(['partial', 'break', 'crane']).optional(), maxMass: z.number().min(1).max(100).optional(), prepAck: z.boolean().optional(),
     ring: z.boolean().optional(),
+    // Баллы: гасить ли ими комиссию и сколько максимум с одной заявки (копейки, null — сколько можно)
+    pointsAuto: z.boolean().optional(), pointsMax: money.nullable().optional(),
   }), c.body)));
   r.put('/api/performer/schedule', performerRoles, (c: AuthedCtx) => {
     const t = z.string().regex(/^\d{2}:\d{2}$/);
@@ -354,7 +364,9 @@ export function createApp(d: Deps) {
   r.post('/api/base/bookings/:id/note', ['service'], (c: AuthedCtx) => centers.note(c.user, c.params.id, parse(z.object({ text: z.string().max(500).optional(), notesPublic: z.boolean().optional() }), c.body)));
   r.post('/api/base/bookings/:id/still-here', ['service'], (c: AuthedCtx) => centers.stillHere(c.user, c.params.id));
   r.post('/api/base/bookings/:id/ready', ['service'], (c: AuthedCtx) => centers.ready(c.user, c.params.id, parse(z.object({ works: z.array(z.string().max(80)).max(20) }), c.body).works));
-  r.post('/api/base/bookings/:id/invoice', ['service'], (c: AuthedCtx) => centers.invoice(c.user, c.params.id, parse(z.object({ amount: z.number().int().min(100).max(100_000_000) }), c.body).amount));
+  r.post('/api/base/bookings/:id/invoice', ['service'], (c: AuthedCtx) => { const b = parse(z.object({ amount: z.number().int().min(100).max(100_000_000), points: money.optional() }), c.body); return centers.invoice(c.user, c.params.id, b.amount, b.points ?? 0); });
+  // Сколько баллов рембаза может погасить в счёте на сумму amount
+  r.get('/api/base/points', ['service'], async (c: AuthedCtx) => { const fees = await settings.get('fees'); const amount = Number(c.query.get('amount') ?? 0) || 0; const commission = Math.min(Math.round(amount * fees.serviceCommissionPct / 100), fees.serviceCommissionMax); return referral.available(c.user.id, commission); });
   r.get('/api/base/bookings/:id/company', ['service'], (c: AuthedCtx) => centers.companyCard(c.user, c.params.id));
   // Рембаза: клиент
   r.get('/api/services', true, (c: AuthedCtx) => {
@@ -433,7 +445,7 @@ export function createApp(d: Deps) {
   r.post('/api/orders/:id/consult-finish', performerRoles, (c: AuthedCtx) => orders.finishConsult(c.user, c.params.id, parse(z.object({
     hints: z.array(z.string().min(1).max(40)).min(1).max(3), confidence: z.enum(['sure', 'likely', 'guess']), note: z.string().max(300).optional(),
   }), c.body)));
-  r.post('/api/orders/:id/confirm', true, (c: AuthedCtx) => orders.confirmAmount(c.user, c.params.id, parse(z.object({ total: money.optional() }), c.body).total));
+  r.post('/api/orders/:id/confirm', true, (c: AuthedCtx) => { const b = parse(z.object({ total: money.optional(), points: money.optional() }), c.body); return orders.confirmAmount(c.user, c.params.id, b.total, b.points ?? 0); });
   r.post('/api/orders/:id/dispute', true, (c: AuthedCtx) => orders.disputeAmount(c.user, c.params.id, parse(z.object({ reason: z.string().min(2).max(500) }), c.body).reason));
   r.post('/api/orders/:id/cancel', true, (c: AuthedCtx) => orders.cancel(c.user, c.params.id, parse(z.object({ reason: z.string().min(2).max(300) }), c.body).reason));
   r.post('/api/orders/:id/retry', true, (c: AuthedCtx) => orders.retry(c.user, c.params.id));

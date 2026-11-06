@@ -737,13 +737,24 @@ function VehicleHistory({ id }: { id: string }) {
           {d.items.map((o: any) => (
             <li key={o.id}>
               <i className={o.status === 'completed' ? 'ok' : o.status === 'cancelled' || o.status === 'no_performer' ? 'off' : 'now'} />
-              <a href={o.kind === 'service' ? `#/booking/${o.id}` : `#/order/${o.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
+              <a href={o.kind === 'service' ? `#/booking/${o.id}` : `#/order/${o.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column' }}>
                 <b>{o.kind === 'service' ? `Ремонт на рембазе` : o.service === 'consult' ? 'Консультация по телефону' : o.service === 'tow' ? 'Эвакуатор' : `Выезд · ${SERVICES[o.service]?.name ?? o.service}`}{o.is_sos ? ' · SOS' : ''}</b>
-                <small>{fmtTime(o.created_at)}{o.performer_name ? ` · ${o.performer_name}` : ''} · {STATUS[o.status]?.name ?? (o.kind === 'service' ? 'в сервисе' : o.status)}{o.amount ? ` · ${rub(o.amount)}` : ''}</small>
+                <small>{fmtTime(o.created_at)}{o.performer_name ? ` · ${o.performer_name}` : ''} · {STATUS[o.status]?.name ?? (o.kind === 'service' ? 'в сервисе' : o.status)}{o.amount && !o.lines?.length ? ` · ${rub(o.amount)}` : ''}</small>
                 {o.description && <small>{o.kind === 'service' ? 'Сделано' : 'Было'}: {o.description}</small>}
                 {o.consult_hint && <small>Подсказка по телефону: {o.consult_hint.hints.join(', ').toLowerCase()}{o.consult_hint.note ? ` — ${o.consult_hint.note}` : ''}</small>}
                 {o.result_note && <small style={{ color: 'var(--fg)' }}>Мастер: {o.result_note}</small>}
               </a>
+              {o.lines?.length > 0 && (
+                <details style={{ marginTop: 4 }}>
+                  <summary className="note" style={{ cursor: 'pointer' }}>Сумма {rub(o.amount)} — развернуть</summary>
+                  <div className="stack" style={{ gap: 2, marginTop: 4 }}>
+                    {o.lines.map((l: any, i: number) => <div key={i} className="sum" style={{ fontSize: 13 }}><span>{l.label}</span><span>{l.amount < 0 ? '−' : ''}{rub(Math.abs(l.amount))}</span></div>)}
+                    <div className="sum" style={{ fontSize: 13, fontWeight: 700 }}><span>Итого</span><span>{rub(o.amount)}</span></div>
+                  </div>
+                </details>
+              )}
+              </div>
             </li>
           ))}
         </ol>
@@ -770,6 +781,9 @@ export function Profile() {
   return (
     <main>
       <h1>Профиль</h1>
+      <a href="#/invite" className="card" style={{ textDecoration: 'none', color: 'inherit', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span><b>🎁 Пригласить и получать баллы</b><small className="note" style={{ display: 'block' }}>Баллы гасят сбор и комиссию ТракSOS</small></span><span>›</span>
+      </a>
       <div className="card">
         <dl className="kv">
           <dt>Телефон</dt><dd>{fmtPhone(me.phone)}</dd>

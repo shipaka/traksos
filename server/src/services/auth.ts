@@ -65,12 +65,12 @@ export class AuthService {
     await this.db.query('delete from auth_codes where phone=$1', [phone]);
 
     const extra = config.adminPhones.includes(phone) ? ['admin'] : [];
-    const user = await this.db.one<AuthUser & { created_at: Date }>(
+    const user = await this.db.one<AuthUser & { created_at: Date; inserted: boolean }>(
       `insert into users(phone, roles) values ($1, $2)
        on conflict (phone) do update set
          roles = (select array(select distinct unnest(users.roles || $3::text[]))),
          last_seen_at = now()
-       returning id, phone, name, roles, status, owner_id, created_at`,
+       returning id, phone, name, roles, status, owner_id, created_at, (xmax = 0) as inserted`,
       [phone, [role ?? 'client', ...extra], role ? [role, ...extra] : extra],
     );
     if (!user || user.status !== 'active') {

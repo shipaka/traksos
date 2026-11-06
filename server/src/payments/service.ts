@@ -321,7 +321,7 @@ export class PaymentsService implements PaymentHooks {
     const r = await this.db.one<{ cash_debt: number; to_pay: number; paid: number }>(
       `select
          coalesce(-sum(amount) filter (where kind in ('cash_commission','cash_commission_paid')), 0)::int as cash_debt,
-         coalesce(sum(amount) filter (where kind in ('earning','payout','adjustment','refund_charge')), 0)::int as to_pay,
+         coalesce(sum(amount) filter (where kind in ('earning','payout','adjustment','refund_charge','points')), 0)::int as to_pay,
          coalesce(-sum(amount) filter (where kind = 'payout'), 0)::int as paid
        from ledger_entries where account='performer' and performer_id=$1`, [performerId]);
     const limit = (await this.settings.get('fees')).cashDebtLimit;
@@ -366,7 +366,7 @@ export class PaymentsService implements PaymentHooks {
          from payments where order_id=$1 order by created_at`, [orderId]);
   }
 
-  private async ledger(q: Queryable, orderId: string | null, paymentId: string | null,
+  async ledger(q: Queryable, orderId: string | null, paymentId: string | null,
     entries: { account: string; performerId?: string; amount: number; kind: string; note?: string }[]) {
     const sum = entries.reduce((s, e) => s + e.amount, 0);
     if (sum !== 0) throw new Error(`Проводки не сходятся: ${sum}`);

@@ -32,6 +32,21 @@ const isBookingEvent = (e: any) => e.type === 'booking';
 
 // ═══════════════════════ Кабинет рембазы ═══════════════════════
 
+/** Счёт рембазы: по желанию погасить баллами часть комиссии ТракSOS (не больше половины) */
+function InvoicePoints({ amount, value, onChange }: { amount: number | null; value: number | null; onChange: (v: number | null) => void }) {
+  const a = useLoad(() => (amount ? get(`/api/base/points?amount=${amount}`) : Promise.resolve(null)), [amount]);
+  const max: number = a.data?.max ?? 0;
+  if (!amount || max <= 0) return null;
+  const on = value != null && value > 0;
+  return (
+    <div className="card flat" style={{ gap: 6 }}>
+      <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}><input type="checkbox" checked={on} onChange={(e) => onChange(e.target.checked ? max : null)} style={{ marginTop: 3 }} />
+        <span>Погасить комиссию баллами — у вас {Math.round(a.data.balance / 100).toLocaleString('ru-RU')}, в этом счёте можно до {Math.round(max / 100).toLocaleString('ru-RU')}</span></label>
+      {on && <Field label="Сколько баллов"><RubInput value={value} onChange={(v) => onChange(v == null ? null : Math.min(v, max))} /></Field>}
+    </div>
+  );
+}
+
 export function BaseHome() {
   const cab = useLoad(() => get('/api/base'), [], isBookingEvent);
   const [tab, setTab] = useState<'req' | 'cars' | 'done'>('req');
@@ -198,6 +213,7 @@ export function BaseCar({ id }: { id: string }) {
   const [note, setNote] = useState('');
   const [works, setWorks] = useState<string[] | null>(null);
   const [amount, setAmount] = useState<number | null>(null);
+  const [invPts, setInvPts] = useState<number | null>(null);
   const [company, setCompany] = useState<any>(null);
   const d = b.data;
   if (!d) return <main><Back to="base" label="Рембаза" /><Loading error={b.error} /></main>;
@@ -283,7 +299,8 @@ export function BaseCar({ id }: { id: string }) {
           <span className="note">Работы: {d.works.join(', ')}</span>
           <Field label="Сумма работ и запчастей"><RubInput value={amount} onChange={setAmount} placeholder="например, 12 000 ₽" /></Field>
           <span className="note">Счёт и акт формируются сами и уходят клиенту, компаниям — по ИНН. Деньги придут после оплаты и сверки работ.</span>
-          <button className="btn" disabled={busy || !amount} onClick={() => act('invoice', { amount }, 'Агентский счёт сформирован')}>Выставить счёт</button>
+          <InvoicePoints amount={amount} value={invPts} onChange={setInvPts} />
+          <button className="btn" disabled={busy || !amount} onClick={() => act('invoice', { amount, points: invPts ?? 0 }, 'Агентский счёт сформирован')}>Выставить счёт</button>
         </div>
       )}
       {['invoiced', 'closed', 'disputed'].includes(d.status) && d.amount != null && (

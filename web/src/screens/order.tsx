@@ -540,14 +540,26 @@ function ConfirmAmount({ d, onDone }: { d: any; onDone: () => void }) {
   const [mode, setMode] = useState<null | 'menu' | 'extras' | 'not_done' | 'refuse'>(null);
   const [reason, setReason] = useState('');
   const b = d.bill;
+  // Баллы — по желанию: галочка и сколько списать (не больше половины сбора и остатка)
+  const pmax: number = d.points?.max ?? 0;
+  const [usePts, setUsePts] = useState(false);
+  const [pts, setPts] = useState<number | null>(pmax || null);
+  const spend = usePts ? Math.min(pts ?? 0, pmax) : 0;
   const send = (path: string, body: any, ok: string) => run(() => post(`/api/orders/${d.id}/${path}`, body), ok).then((r) => r && onDone());
   return (
     <div className="card hi">
       <b>К оплате: {rub(d.money.total)}</b>
       <span className="note">Разбивка — в карточке «Сумма» выше.</span>
       <span className="note">Выезд и время — по цене, о которой договорились до вызова. Оспорить можно только расходники и запчасти — и только если работа сделана. {d.paymentMethod === 'cash' ? 'Деньги отдайте мастеру.' : ''}</span>
+      {mode === null && pmax > 0 && (
+        <div className="card flat" style={{ gap: 6 }}>
+          <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}><input type="checkbox" checked={usePts} onChange={(e) => setUsePts(e.target.checked)} style={{ marginTop: 3 }} />
+            <span>Списать баллы — у вас {Math.round(d.points.balance / 100).toLocaleString('ru-RU')}, можно до {Math.round(pmax / 100).toLocaleString('ru-RU')}</span></label>
+          {usePts && <Field label="Сколько баллов" hint={`Не больше половины сервисного сбора — ${Math.round(pmax / 100)}`}><RubInput value={pts} onChange={(v) => setPts(v == null ? null : Math.min(v, pmax))} /></Field>}
+        </div>
+      )}
       {mode === null && <>
-        <button className="btn good" disabled={busy} onClick={() => send('confirm', { total: d.money.total }, 'Сумма подтверждена')}>Подтверждаю {rub(d.money.total)}</button>
+        <button className="btn good" disabled={busy} onClick={() => send('confirm', { total: d.money.total, points: spend }, 'Сумма подтверждена')}>Подтверждаю {rub(d.money.total - spend)}{spend ? ' с баллами' : ''}</button>
         <button className="btn ghost" onClick={() => setMode('menu')}>Не согласен</button>
       </>}
       {mode === 'menu' && <div className="stack">
@@ -568,7 +580,7 @@ function ConfirmAmount({ d, onDone }: { d: any; onDone: () => void }) {
         <span className="note">По <a href="#/offer/client" target="_blank" rel="noreferrer">оферте</a> выезд и время работы по согласованной цене оплачиваются, если работа выполнена. Отказ платить за выполненную работу — нарушение договора: долг могут взыскать по закону, а аккаунт — заблокировать до оплаты.</span>
         <span className="note">Если работа не сделана — выберите «Работа не выполнена» и укажите причину.</span>
         <button className="btn" onClick={() => setMode('not_done')}>Работа не выполнена — указать причину</button>
-        <button className="btn good" disabled={busy} onClick={() => send('confirm', { total: d.money.total }, 'Сумма подтверждена')}>Подтвердить {rub(d.money.total)}</button>
+        <button className="btn good" disabled={busy} onClick={() => send('confirm', { total: d.money.total, points: spend }, 'Сумма подтверждена')}>Подтвердить {rub(d.money.total - spend)}</button>
         <button className="btn bad small" disabled={busy} onClick={() => send('nonpayment', { kind: 'refuse' }, 'Поддержка подключена')}>Всё равно отказываюсь — позвать поддержку</button>
       </div>}
     </div>

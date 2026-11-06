@@ -39,6 +39,7 @@ export function PerformerHub() {
     ['work/me/schedule', 'Распорядок', p.schedule?.on ? `${dayList(p.schedule.days)} · выезды ${p.schedule.from}–${p.schedule.to} · телефон до ${p.schedule.phoneTo}` : 'не задан — заявки идут, пока вы на линии'],
     ['work/me/tax', 'Налоговый статус', p.tax_status ? `${p.tax_status === 'ip' ? 'ИП' : 'Самозанятый'} · ИНН ${p.inn ?? '—'}` : 'не указан'],
     ['work/me/money', 'Финансы', 'баланс, начисления, списания, выплаты'],
+    ['invite', 'Пригласить и получать баллы', 'баллы гасят до половины комиссии'],
     ['work/me/level', 'Мой уровень и точность', 'Новичок · Проверенный · Лучший, точность подсказок по телефону'],
     ['work/docs', 'Проверка и фото', p.verification === 'approved' ? 'пройдена' : p.submitted_at ? 'на проверке' : 'нужно пройти'],
     ['support', 'Поддержка', 'обращения и ответы'],
@@ -314,8 +315,36 @@ const KIND: Record<string, [string, string]> = {
   adjustment: ['Корректировка', 'Начисление или списание администратором — причина в комментарии'],
   refund_charge: ['Удержание за возврат', 'Клиенту вернули деньги по заявке — ваша доля удержана'],
   cash_commission: ['Комиссия с наличных', 'Клиент заплатил вам наличными — комиссия ТракSOS к оплате'],
-  cash_commission_paid: ['Комиссия оплачена', 'Долг по комиссии с наличных погашен'],
+  cash_commission_paid: ['Комиссия оплачена', 'Долг по комиссии с наличных погашен — деньгами или баллами, см. комментарий'],
+  points: ['Комиссия оплачена баллами', 'Баллы за приглашения погасили часть комиссии — эти деньги ваши'],
 };
+
+/** Баллы в финансах: гасить ли ими комиссию и сколько максимум с заявки — решает сам исполнитель */
+function PointsPref() {
+  const { me, reload } = useMe();
+  const { busy, run } = useAction();
+  const pts = useLoad(() => get('/api/me/referral'), [], (e) => e.type === 'points' || e.type === 'order');
+  const ex = me?.performer?.extras ?? {};
+  const on = ex.pointsAuto !== false;
+  const [max, setMax] = useState<number | null>(ex.pointsMax ?? null);
+  if (!pts.data) return null;
+  const save = (body: any, ok: string) => run(() => put('/api/performer/extras', body), ok).then((r) => r && reload());
+  return (
+    <div className="card">
+      <div className="between"><b>Баллы за приглашения</b><a href="#/invite" className="pill accent" style={{ textDecoration: 'none' }}>{Math.round(pts.data.balance / 100).toLocaleString('ru-RU')} баллов</a></div>
+      <button type="button" className="opt" aria-pressed={on} disabled={busy} onClick={() => save({ pointsAuto: !on }, on ? 'Баллы копятся, комиссию платите деньгами' : 'Комиссия будет гаситься баллами')}>
+        <b>{on ? 'Гасить комиссию баллами — включено' : 'Гасить комиссию баллами — выключено'}</b>
+        <small>Сами, при подтверждении суммы клиентом: не больше {pts.data.rules.spendCapPct}% комиссии с заявки.</small>
+      </button>
+      {on && <>
+        <Field label="Не больше с одной заявки, баллов" hint="Пусто — сколько можно">
+          <RubInput value={max} onChange={setMax} placeholder="сколько можно" />
+        </Field>
+        {(max ?? null) !== (ex.pointsMax ?? null) && <button className="btn small" disabled={busy} onClick={() => save({ pointsMax: max }, 'Сохранено')}>Сохранить</button>}
+      </>}
+    </div>
+  );
+}
 
 export function MoneySection() {
   const balance = useLoad(() => get('/api/performer/balance'), [], (e) => e.type === 'balance' || e.type === 'order');
@@ -333,8 +362,10 @@ export function MoneySection() {
           {balance.data.paused && <span className="err">Долг больше {rub(balance.data.cashDebtLimit)} — новые заявки на паузе до оплаты.</span>}
           <span className="note">ТракSOS работает как агент: отчёт агента и акт — раз в месяц.</span>
           <span className="note">{FEE_PURPOSE}</span>
+          <a className="note" href="#/invite">Баллы за приглашения гасят до половины комиссии →</a>
         </div>
       )}
+      <PointsPref />
       <span className="label">Операции</span>
       {!ledger.data ? <Loading error={ledger.error} /> : !ledger.data.length ? <div className="empty">Операций пока нет — появятся после первой заявки</div> : (
         <div className="stack">

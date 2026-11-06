@@ -55,6 +55,8 @@ const CONSULT_DISCOUNT = 'Скидка после консультации';
 
 export class OrdersService {
   onDispute: ((p: { userId: string; orderId: string; text: string; targetId: string | null; title: string }) => Promise<unknown>) | null = null;
+  /** Реферальные баллы: гашение сбора/комиссии и начисления пригласившим */
+  referral: import('./referral.ts').ReferralService | null = null;
   payments!: PaymentHooks;
   auction!: AuctionService;
 
@@ -476,7 +478,7 @@ export class OrdersService {
     return this.view(user, orderId);
   }
 
-  async confirmAmount(user: AuthUser, orderId: string, expectedTotal?: number) {
+  async confirmAmount(user: AuthUser, orderId: string, expectedTotal?: number, points = 0) {
     const o = await this.mustBeClient(user, orderId);
     const to = transition(o.status, 'confirm_amount', 'client');
     const m = this.money(o);
@@ -491,15 +493,19 @@ export class OrdersService {
         await q.query(`insert into bonus_entries(user_id, amount, kind, order_id, note) values ($1,$2,'use',$3,'Списано за заявку')`, [o.client_id, -use, orderId]);
       }
       used = use;
+      // Баллы — по выбору клиента: сколько вписал, но не больше половины сервисного сбора и остатка
+      const pts = this.referral ? await this.referral.spendClientFee(q, o, m.clientFee, points) : 0;
+      used += pts;
       // Подтверждаем ровно ту сумму, что видел клиент: если мастер успел её поменять — конфликт
       await this.guarded(q, `update orders set status=$2, amount_confirmed_at=$3, completed_at=$3
           where id=$1 and status='awaiting_confirmation' and work_amount is not distinct from $4 and performer_id=$5`,
         [orderId, to, this.now(), o.work_amount, o.performer_id]);
       await q.query(`update performer_profiles set line_status='online' where user_id=$1 and line_status='on_job'`, [o.performer_id]);
       await this.event(q, orderId, user.id, 'amount_confirmed', { total: m.total, method: o.payment_method });
-      await this.payments.onConfirmed({ ...o, status: to, discount_amount: Number(o.discount_amount ?? 0) + use }, q);
+      await this.payments.onConfirmed({ ...o, status: to, discount_amount: Number(o.discount_amount ?? 0) + used }, q);
+      await this.referral?.afterOrder(q, { ...o, status: to }, m.amount);
     });
-    await this.systemMessage(orderId, `Сумма ${rub(m.total - used)} подтверждена${used ? ` (бонусами ${rub(used)})` : ''}. Оставьте отзыв друг о друге.`);
+    await this.systemMessage(orderId, `Сумма ${rub(m.total - used)} подтверждена${used ? ` (бонусами и баллами ${rub(used)})` : ''}. Оставьте отзыв друг о друге.`);
     await this.notifier.notify([o.performer_id], { type: 'order', orderId, status: to },
       { kind: 'normal', title: 'Сумма подтверждена', body: `Заявка №${o.number}: ${rub(m.total)}`, data: { orderId } });
     return this.view(user, orderId);
@@ -629,6 +635,8 @@ export class OrdersService {
       limits: o.status === 'searching' ? this.auction.limits(o, (await this.settings.get('dispatch'))) : null,
       destination: o.destination, cargo: o.cargo, loaded: o.loaded, driverOnSite: o.driver_on_site, discountReason: o.discount_reason,
       money: this.money(o), result: o.result, resultNote: o.result_note,
+      pointsFee: o.points_fee ?? 0, pointsCommission: actor === 'performer' || actor === 'admin' ? o.points_commission ?? 0 : undefined,
+      points: actor === 'client' && o.status === 'awaiting_confirmation' && this.referral ? await this.referral.available(o.client_id, this.money(o).clientFee) : null,
       bill: o.bill ?? null, billingStep: Number((await this.settings.get('pricing')).billingStepMinutes ?? 60),
       site: o.site, workStartedAt: o.work_started_at ?? null, waitRate: performer?.wait_rate ?? null, ownerNote: o.owner_note ?? null, partMode: o.part_mode ?? null, waitStartedAt: o.wait_started_at ?? null, waitMinutes: o.wait_minutes ?? 0,
       consultHint: o.consult_hint, consultOf: o.consult_of, siteFlags: o.site_flags ?? [], lateMinutes: o.late_minutes ?? 0, hintCheck: o.hint_check,

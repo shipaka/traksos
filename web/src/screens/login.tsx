@@ -48,7 +48,7 @@ export function Login({ driver }: { driver?: boolean } = {}) {
   async function verify() {
     const r = await run(async () => {
       try {
-        return await post('/api/auth/verify', { phone, code, role: intent === 'join' ? role : undefined, device: navigator.userAgent.slice(0, 200), acceptOffers: agree });
+        return await post('/api/auth/verify', { phone, code, role: intent === 'join' ? role : undefined, ref: (() => { try { return localStorage.getItem('traksos.ref') ?? undefined; } catch { return undefined; } })(), device: navigator.userAgent.slice(0, 200), acceptOffers: agree });
       } catch (e) {
         // Заблокирован — показываем форму обжалования, номер уже подтверждён кодом
         if (e instanceof ApiError && e.code === 'blocked' && e.data?.appealToken) { setAppealToken(e.data.appealToken); return null; }
@@ -57,6 +57,7 @@ export function Login({ driver }: { driver?: boolean } = {}) {
     }, null);
     if (r) {
       toast('Вы вошли');
+      try { localStorage.removeItem('traksos.ref'); } catch { /* */ }
       setToken(r.token);
       connectWs();
       await reload();
