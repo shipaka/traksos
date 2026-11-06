@@ -10,6 +10,8 @@ export const DEMO = {
   admin: '+79000000001',
   client: '+79000000002',
   company: '+79000000003',
+  driver: '+79000000004',
+  moderator: '+79000000005',
   masters: [
     { phone: '+79000000011', name: 'Дима (наш)', lat: 59.93, lng: 30.36, priority: true, brands: { Scania: 'excellent', DAF: 'excellent', Volvo: 'good' } },
     { phone: '+79000000012', name: 'Сергей', lat: 59.84, lng: 30.38, priority: false, brands: { Scania: 'good', MAN: 'excellent', КАМАЗ: 'excellent' } },
@@ -48,6 +50,11 @@ export async function seed(db: Awaited<ReturnType<typeof createDb>>) {
     await db.query(`insert into vehicles(owner_id, brand, model, year, plate) select $1,$2,$3,$4,$5
                     where not exists (select 1 from vehicles where plate=$5)`, [owner, brand, model, year, plate]);
   }
+  // Водитель компании — закреплён за DAF А123ВС47 (как после входа по QR-наклейке)
+  const driver = await user(DEMO.driver, ['client', 'driver'], 'Николай, водитель');
+  await db.query('update users set owner_id=$2 where id=$1', [driver, company]);
+  await db.query(`update vehicles set driver_id=$1, driver_since=coalesce(driver_since, now()) where plate='А123ВС47'`, [driver]);
+  await user(DEMO.moderator, ['moderator'], 'Модератор');
   const performer = async (id: string, p: Record<string, unknown>) => {
     await db.query(
       `insert into performer_profiles(user_id, kind, specialties, brands, tier, is_priority, verification, line_status, lat, lng, location_at,
@@ -96,7 +103,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   await migrate(db);
   await seed(db);
   console.log('Тестовые данные на месте. Входите по номерам:');
-  console.log(`  админ ${DEMO.admin} · клиент ${DEMO.client} · компания ${DEMO.company}`);
+  console.log(`  админ ${DEMO.admin} · модератор ${DEMO.moderator} · клиент ${DEMO.client} · компания ${DEMO.company} · водитель компании ${DEMO.driver}`);
   console.log(`  мастера ${DEMO.masters.map((m) => m.phone).join(', ')} · эвакуатор ${DEMO.tow.phone} · рембаза ${DEMO.service}`);
   await db.close();
 }
