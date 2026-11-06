@@ -124,3 +124,18 @@ test('комиссия рембазы: 5%, но не больше 5 000 ₽ за
   assert.equal(fees.serviceCommissionPct, 5);
   assert.equal(Math.min(Math.round(30_000_000 * fees.serviceCommissionPct / 100), fees.serviceCommissionMax), 500_000, 'с 300 000 ₽ — 5 000 ₽, а не 15 000');
 });
+
+test('финансы рембазы: к выплате после сверки клиента, выплачено — после отметки админа', async () => {
+  const m0 = ok(await t.api('GET', '/api/base/money', undefined, base.token));
+  assert.ok(m0.summary.toPay > 0, 'подтверждённый клиентом счёт — к выплате');
+  assert.ok(m0.items.every((x: any) => x.payout === x.amount - x.commission));
+  assert.ok(m0.months.length >= 1);
+  const due = ok(await t.api('GET', '/api/admin/service-payouts', undefined, admin.token));
+  assert.ok(due.length >= 1);
+  assert.equal((await t.api('POST', `/api/admin/bookings/${due[0].id}/paid`, {}, base.token)).status, 403, 'выплату отмечает только админ');
+  ok(await t.api('POST', `/api/admin/bookings/${due[0].id}/paid`, {}, admin.token));
+  const m1 = ok(await t.api('GET', '/api/base/money', undefined, base.token));
+  assert.equal(m1.summary.paid, due[0].payout);
+  assert.equal(m1.summary.toPay, m0.summary.toPay - due[0].payout);
+  assert.equal((await t.api('GET', '/api/base/money', undefined, client.token)).status, 403);
+});

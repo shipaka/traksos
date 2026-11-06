@@ -123,7 +123,7 @@ export class ServiceCenters {
       whenDay: b.when_day, whenTime: b.when_time, acceptTime: b.accept_time, arrival: b.arrival, comment: b.comment,
       vehicle: b.vehicle, vehicleId: b.vehicle_id, clarifyQ: b.clarify_q, clientAnswer: b.client_answer, declineReason: b.decline_reason,
       notes, notesPublic: b.notes_public, works: b.works, amount: b.amount, discount: b.discount,
-      commission: as === 'service' ? b.commission : undefined,
+      commission: as === 'service' ? b.commission : undefined, points: as === 'service' ? b.points ?? 0 : undefined, paidOutAt: as === 'service' ? b.paid_out_at ?? null : undefined,
       payout: as === 'service' && b.amount != null ? b.amount - b.commission : undefined,
       toPay: b.amount != null ? b.amount - b.discount : null,
       fromOrder: !!b.from_order_id, fromOrderId: as === 'client' ? b.from_order_id : undefined, arrivedAt: b.arrived_at, readyAt: b.ready_at, createdAt: b.created_at,
@@ -249,8 +249,8 @@ export class ServiceCenters {
     const pts = this.referral ? await this.referral.spendServiceCommission(this.db, user.id, commission - discount, id, b.number, points) : 0;
     commission -= pts;
     await this.db.query(
-      `update service_bookings set status='invoiced', amount=$2, commission=$3, discount=$4, invoiced_at=now(), updated_at=now() where id=$1`,
-      [id, amount, commission, discount]);
+      `update service_bookings set status='invoiced', amount=$2, commission=$3, discount=$4, points=$5, invoiced_at=now(), updated_at=now() where id=$1`,
+      [id, amount, commission, discount, pts]);
     await this.tell({ ...b, status: 'invoiced' }, 'Счёт за ремонт', `${((amount - discount) / 100).toLocaleString('ru-RU')} ₽ — сверьте работы`);
     return this.booking(user, id);
   }
@@ -272,6 +272,64 @@ export class ServiceCenters {
       park: u.park, closedRepairs: closed?.n ?? 0, disputes: closed?.disputes ?? 0,
       cars: cars.map((x: any) => ({ id: x.id, vehicle: x.vehicle, status: x.status, statusName: STATUS_NAME[x.status], needName: NEEDS[x.need], at: x.created_at })),
     };
+  }
+
+  // ——— Финансы рембазы ———
+  /** Сводка, по месяцам и по каждому счёту: работы, скидка клиенту, комиссия, погашено баллами, к выплате, выплачено */
+  async money(user: AuthUser) {
+    const c = await this.mustMine(user);
+    const rows = await this.db.query<any>(
+      `select b.id, b.number, b.status, b.works, b.amount, b.discount, b.commission, b.points, b.invoiced_at, b.closed_at, b.paid_out_at, b.vehicle,
+              coalesce(nullif(u.company_name,''), u.name, 'Клиент') as client_name, b.from_order_id is not null as from_order
+         from service_bookings b join users u on u.id=b.client_id
+        where b.center_id=$1 and b.amount is not null and b.status in ('invoiced','closed','disputed')
+        order by coalesce(b.invoiced_at, b.created_at) desc limit 300`, [c.id]);
+    const item = (b: any) => ({
+      id: b.id, number: b.number, status: b.status, works: b.works ?? [], vehicle: b.vehicle, client: b.client_name, fromOrder: b.from_order,
+      amount: b.amount, discount: b.discount, commission: b.commission, points: b.points ?? 0,
+      commissionFull: b.commission + (b.points ?? 0), payout: b.amount - b.commission,
+      invoicedAt: b.invoiced_at, closedAt: b.closed_at, paidOutAt: b.paid_out_at,
+      state: b.paid_out_at ? 'paid' : b.status === 'closed' ? 'to_pay' : b.status === 'disputed' ? 'disputed' : 'awaiting',
+    });
+    const items = rows.map(item);
+    const sum = (f: (x: any) => boolean, k: string) => items.filter(f).reduce((s, x: any) => s + x[k], 0);
+    const months = new Map<string, any>();
+    for (const x of items.filter((i) => i.state !== 'awaiting' && i.state !== 'disputed')) {
+      const m = new Date(new Date(x.closedAt ?? x.invoicedAt).getTime() + 3 * 3600_000).toISOString().slice(0, 7);
+      const r = months.get(m) ?? { month: m, count: 0, amount: 0, discount: 0, commission: 0, points: 0, payout: 0 };
+      r.count++; r.amount += x.amount; r.discount += x.discount; r.commission += x.commission; r.points += x.points; r.payout += x.payout;
+      months.set(m, r);
+    }
+    const fees = await this.settings.get('fees');
+    return {
+      summary: {
+        toPay: sum((x) => x.state === 'to_pay', 'payout'), awaiting: sum((x) => x.state === 'awaiting', 'payout'),
+        disputed: sum((x) => x.state === 'disputed', 'payout'), paid: sum((x) => x.state === 'paid', 'payout'),
+        points: sum(() => true, 'points'),
+      },
+      months: [...months.values()],
+      items,
+      rule: { pct: fees.serviceCommissionPct, max: fees.serviceCommissionMax, referralPct: fees.serviceReferralDiscountPct },
+    };
+  }
+
+  /** Админ: подтверждённые счета, которые ещё не выплачены сервисам */
+  async payoutsDue() {
+    return this.db.query(
+      `select b.id, b.number, b.amount, b.commission, b.amount - b.commission as payout, b.closed_at, c.name as center_name, c.inn
+         from service_bookings b join service_centers c on c.id=b.center_id
+        where b.status='closed' and b.amount is not null and b.paid_out_at is null order by b.closed_at`);
+  }
+
+  async markPaidOut(admin: AuthUser, id: string) {
+    const b = await this.db.one<any>(`update service_bookings set paid_out_at=now() where id=$1 and status='closed' and paid_out_at is null
+        returning id, number, center_id, amount - commission as payout`, [id]);
+    if (!b) throw conflict('bad_status', 'Счёт не подтверждён клиентом или уже выплачен');
+    const c = await this.db.one<{ owner_id: string }>('select owner_id from service_centers where id=$1', [b.center_id]);
+    await this.db.query('insert into audit_log(actor_id, action, target) values ($1,$2,$3)', [admin.id, 'service.paid_out', id]);
+    if (c) await this.notifier.notify([c.owner_id], { type: 'booking', bookingId: id, status: 'paid' },
+      { kind: 'normal', title: 'Выплата отправлена', body: `Счёт №${b.number}: ${(b.payout / 100).toLocaleString('ru-RU')} ₽`, data: { bookingId: id } });
+    return { ok: true };
   }
 
   // ——— Клиент ———

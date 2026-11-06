@@ -14,7 +14,7 @@ import { Admin } from './screens/admin.tsx';
 import { Documents } from './screens/documents.tsx';
 import { OfferGate, OfferPage } from './screens/offers.tsx';
 import { AdminUser } from './screens/adminUser.tsx';
-import { BaseHome, BaseCar, BaseSetup, ServicesList, CenterPage, BookForm, BookingPage } from './screens/base.tsx';
+import { BaseHome, BaseCar, BaseSetup, BaseMoney, AdminServicePayouts, ServicesList, CenterPage, BookForm, BookingPage } from './screens/base.tsx';
 import { Fleet, QrJoin } from './screens/fleet.tsx';
 import { Help } from './screens/help.tsx';
 import { Rules } from './screens/rules.tsx';
@@ -106,7 +106,7 @@ function App() {
         : b === 'me' ? ({ about: <AboutSection />, phone: <PhoneSection />, schedule: <ScheduleSection />, cars: <CarsSection />, tax: <TaxSection />, money: <MoneySection />, level: <LevelSection /> } as Record<string, JSX.Element>)[route[2]] ?? <PerformerHub />
         : b === 'filter' ? <FilterSection /> : b === 'jobs' ? <Orders as="performer" /> : b === 'docs' ? <Documents /> : <Work />;
       break;
-    case 'base': screen = b === 'car' && route[2] ? <BaseCar id={route[2]} /> : b === 'me' ? <BaseSetup /> : <BaseHome />; break;
+    case 'base': screen = b === 'car' && route[2] ? <BaseCar id={route[2]} /> : b === 'me' ? <BaseSetup /> : b === 'money' ? <BaseMoney /> : <BaseHome />; break;
     case 'services': screen = b && route[2] === 'book' ? <BookForm id={b} /> : b ? <CenterPage id={b} /> : <ServicesList />; break;
     case 'booking': screen = <BookingPage id={b} />; break;
     case 'fleet': screen = <Fleet />; break;
@@ -139,7 +139,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   const tabs: [string, string, string][] = !me ? [] : mode === 'performer'
     ? [['/work', '⚡', 'Линия'], ['/work/jobs', '☰', 'История'], ['/work/me', '◉', 'Профиль']]
     : mode === 'service'
-      ? [['/base', '▤', 'Рембаза'], ['/base/me', '⚙', 'Карточка'], ['/support', '?', 'Поддержка'], ['/profile', '◉', 'Аккаунт']]
+      ? [['/base', '▤', 'Рембаза'], ['/base/money', '₽', 'Финансы'], ['/base/me', '⚙', 'Карточка'], ['/support', '?', 'Поддержка'], ['/profile', '◉', 'Аккаунт']]
     : mode === 'admin'
       ? [['/admin', '▦', 'Админ'], ['/as/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]
       : [['/shop', '🛍', 'Магазин'], ['/', '🔧', 'Услуги'], ['/sos', '!', 'SOS'], ['/orders', '☰', 'Заявки'], ['/garage', '▭', 'Гараж']];

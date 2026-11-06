@@ -792,6 +792,7 @@ export function AdminServices() {
   if (!l.data.length) return <div className="empty">Рембаз пока нет</div>;
   return (
     <div className="stack">
+      <details className="card"><summary><b>Выплаты рембазам</b></summary><div style={{ marginTop: 8 }}><AdminServicePayouts /></div></details>
       {l.data.map((c: any) => (
         <div key={c.id} className="card">
           <div className="between"><b>{c.name}</b><span className={`pill ${c.verification === 'approved' ? 'good' : c.verification === 'rejected' ? 'bad' : 'warn'}`}>{c.verification === 'approved' ? 'проверен' : c.verification === 'rejected' ? 'отказ' : 'ждёт проверки'}</span></div>
@@ -801,6 +802,118 @@ export function AdminServices() {
             <button className="btn small" disabled={busy} onClick={async () => { if (await run(() => post(`/api/admin/services/${c.id}/verify`, { decision: 'approved' }), 'Клиенты увидят этот сервис')) l.reload(); }}>Одобрить</button>
             <button className="btn ghost small" disabled={busy} onClick={async () => { if (await run(() => post(`/api/admin/services/${c.id}/verify`, { decision: 'rejected' }), 'Отказ отправлен')) l.reload(); }}>Отказать</button>
           </div>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Финансы рембазы ---------------------------------------------------------------
+
+const MSTATE: Record<string, [string, string]> = {
+  awaiting: ['ждёт сверки клиента', ''], to_pay: ['к выплате', 'warn'], paid: ['выплачено', 'good'], disputed: ['спор у модератора', 'bad'],
+};
+const monthName = (m: string) => { const [y, mm] = m.split('-').map(Number); return new Date(Date.UTC(y, mm - 1, 1)).toLocaleDateString('ru-RU', { month: 'long', year: 'numeric', timeZone: 'UTC' }); };
+
+/** Финансы рембазы: сверху — сколько придёт и когда, ниже — по месяцам, потом — каждый счёт со своей разбивкой. */
+export function BaseMoney() {
+  const m = useLoad(() => get('/api/base/money'), [], isBookingEvent);
+  const pts = useLoad(() => get('/api/me/referral'), [], (e) => e.type === 'points');
+  const [filter, setFilter] = useState<'all' | 'to_pay' | 'awaiting' | 'paid' | 'disputed'>('all');
+  if (!m.data) return <main><Loading error={m.error} /></main>;
+  const { summary: s, months, items, rule } = m.data;
+  const shown = items.filter((x: any) => filter === 'all' || x.state === filter);
+  return (
+    <main>
+      <div>
+        <h1>Финансы</h1>
+        <div className="sub">Каждый счёт — с работами, комиссией и выплатой. Непонятно — задайте вопрос по счёту.</div>
+      </div>
+
+      <div className="card">
+        <div className="sum total"><span>К выплате</span><span>{rub(s.toPay)}</span></div>
+        <div className="sum"><span>Ждёт сверки клиента</span><span>{rub(s.awaiting)}</span></div>
+        {s.disputed > 0 && <div className="sum"><span>В споре</span><span>{rub(s.disputed)}</span></div>}
+        <div className="sum"><span>Уже выплачено</span><span>{rub(s.paid)}</span></div>
+        <span className="note">Деньги приходят после того, как клиент сверит работы. ТракSOS работает как агент: отчёт агента и акт — раз в месяц.</span>
+      </div>
+
+      <details className="card">
+        <summary><b>Комиссия и баллы</b></summary>
+        <div className="stack" style={{ marginTop: 8, gap: 6 }}>
+          <span className="note">Комиссия ТракSOS — {rule.pct}% с работ по клиентам ТракSOS, но не больше {rub(rule.max)} за один счёт. Клиенту по совету мастера — скидка {rule.referralPct}% из комиссии, ваша выручка не меняется.</span>
+          <span className="note">{FEE_PURPOSE}</span>
+          {pts.data && <div className="between"><span>Баллы за приглашения: <b>{Math.round(pts.data.balance / 100).toLocaleString('ru-RU')}</b>{s.points ? ` · уже погашено ${rub(s.points)}` : ''}</span><a href="#/invite" className="note">Пригласить →</a></div>}
+          <span className="note">Баллами можно погасить до {pts.data?.rules?.spendCapPct ?? 50}% комиссии — галочкой при выставлении счёта.</span>
+        </div>
+      </details>
+
+      {months.length > 0 && <details className="card">
+        <summary><b>По месяцам</b></summary>
+        <div className="stack" style={{ marginTop: 8 }}>
+          {months.map((x: any) => (
+            <details key={x.month} className="card flat" style={{ gap: 4 }}>
+              <summary className="between" style={{ cursor: 'pointer' }}><span style={{ textTransform: 'capitalize' }}>{monthName(x.month)} · {x.count} сч.</span><b>{rub(x.payout)}</b></summary>
+              <div className="sum"><span>Работы по счетам</span><span>{rub(x.amount)}</span></div>
+              {x.discount > 0 && <div className="sum"><span>Скидки клиентам (из комиссии)</span><span>{rub(x.discount)}</span></div>}
+              <div className="sum"><span>Комиссия ТракSOS</span><span>−{rub(x.commission)}</span></div>
+              {x.points > 0 && <div className="sum"><span>Комиссии погашено баллами</span><span>{rub(x.points)}</span></div>}
+              <div className="sum total"><span>Вам</span><span>{rub(x.payout)}</span></div>
+            </details>
+          ))}
+        </div>
+      </details>}
+
+      <span className="label">Счета</span>
+      <div className="scroll-x">
+        {([['all', 'Все'], ['to_pay', 'К выплате'], ['awaiting', 'Ждут сверки'], ['paid', 'Выплачено'], ['disputed', 'Споры']] as const).map(([k, n]) =>
+          <button key={k} className="chip" aria-pressed={filter === k} onClick={() => setFilter(k)}>{n}</button>)}
+      </div>
+      {!shown.length ? <div className="empty">{items.length ? 'Здесь пусто' : 'Счетов пока нет — появятся после «Выставить счёт»'}</div> : (
+        <div className="stack">
+          {shown.map((x: any) => (
+            <details key={x.id} className="card" style={{ gap: 6 }}>
+              <summary style={{ cursor: 'pointer', listStyle: 'none' }}>
+                <div className="between"><b>Счёт №{x.number}</b><b>{rub(x.payout)}</b></div>
+                <div className="between" style={{ marginTop: 4 }}>
+                  <span className="note">{x.client}{x.vehicle ? ` · ${carName(x.vehicle)}` : ''} · {fmtDay(x.closedAt ?? x.invoicedAt)}</span>
+                  <span className={`pill ${MSTATE[x.state][1]}`}>{MSTATE[x.state][0]}</span>
+                </div>
+              </summary>
+              <div className="stack" style={{ gap: 2, marginTop: 6 }}>
+                <span className="note">Работы: {x.works.join(', ') || '—'}</span>
+                <div className="sum"><span>Сумма работ</span><span>{rub(x.amount)}</span></div>
+                {x.discount > 0 && <div className="sum"><span>Скидка клиенту по совету мастера</span><span>из комиссии</span></div>}
+                <div className="sum"><span>Комиссия ТракSOS</span><span>−{rub(x.commissionFull)}</span></div>
+                {x.points > 0 && <div className="sum"><span>…из них погашено баллами</span><span>+{rub(x.points)}</span></div>}
+                <div className="sum total"><span>Вам</span><span>{rub(x.payout)}</span></div>
+                {x.paidOutAt && <span className="note">Выплачено {fmtDay(x.paidOutAt)}</span>}
+                <div className="row" style={{ gap: 6, marginTop: 4 }}>
+                  <a className="btn ghost small" href={`#/base/car/${x.id}`}>Открыть счёт</a>
+                  <a className="btn ghost small" href="#/support/new">Вопрос по счёту</a>
+                </div>
+              </div>
+            </details>
+          ))}
+        </div>
+      )}
+    </main>
+  );
+}
+
+/** Админ: подтверждённые клиентами счета рембаз — отметить выплату */
+export function AdminServicePayouts() {
+  const l = useLoad(() => get('/api/admin/service-payouts'), []);
+  const { busy, run } = useAction();
+  if (!l.data) return <Loading error={l.error} />;
+  if (!l.data.length) return <span className="note">Выплачивать рембазам сейчас нечего.</span>;
+  return (
+    <div className="stack">
+      {l.data.map((b: any) => (
+        <div key={b.id} className="card" style={{ gap: 6 }}>
+          <div className="between"><b>{b.center_name} · счёт №{b.number}</b><b>{rub(b.payout)}</b></div>
+          <span className="note">Работы {rub(b.amount)} − комиссия {rub(b.commission)} · ИНН {b.inn ?? '—'} · подтверждён {fmtDay(b.closed_at)}</span>
+          <button className="btn small" disabled={busy} onClick={async () => { if (await run(() => post(`/api/admin/bookings/${b.id}/paid`, {}), 'Отмечено: выплачено')) l.reload(); }}>Отметить выплату</button>
         </div>
       ))}
     </div>
