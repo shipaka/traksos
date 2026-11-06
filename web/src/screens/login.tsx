@@ -76,11 +76,10 @@ export function Login({ driver }: { driver?: boolean } = {}) {
     <main>
       <div className="helpWrap">
         <button type="button" className="helpBtn" onClick={() => setIntent('help')} aria-label="Помогите — вызвать мастера или эвакуатор">
-          <span className="i">🆘</span>
           <span className="t">Помогите</span>
-          <span className="s">нажмите</span>
+          <span className="s">мастер или эвакуатор</span>
         </button>
-        <div className="helpHint">👆 Сломались в дороге? Нажмите на кнопку<small>Мастер или эвакуатор приедут на место</small></div>
+        <div className="sub" style={{ textAlign: 'center', marginTop: 0 }}>Сломались в дороге — приедем на место</div>
       </div>
       <button type="button" className="btn ghost" onClick={() => setIntent('login')}>Войти по номеру</button>
       <div className="sub" style={{ textAlign: 'center' }}>Владельцы, водители, мастера, рембазы — один вход, кабинет откроется сам</div>
