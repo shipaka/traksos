@@ -120,7 +120,7 @@ export function Login({ driver }: { driver?: boolean } = {}) {
           </Field>
           {needAgree && <label className="row note" style={{ flexWrap: 'nowrap', alignItems: 'flex-start' }}>
             <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} style={{ marginTop: 3 }} />
-            <span>Согласен с <a href="#/offer/client" target="_blank" rel="noreferrer">офертой</a>{intent === 'join' ? <>, <a href="#/offer/performer" target="_blank" rel="noreferrer">агентским договором</a></> : null} и на <a href="#/offer/privacy" target="_blank" rel="noreferrer">обработку персональных данных</a></span>
+            <span>Согласен с {intent === 'join' ? <a href="#/offer/performer" target="_blank" rel="noreferrer">агентским договором</a> : <a href="#/offer/client" target="_blank" rel="noreferrer">офертой</a>} и на <a href="#/offer/privacy" target="_blank" rel="noreferrer">обработку персональных данных</a></span>
           </label>}
           <button className="btn" disabled={busy || (needAgree && !agree) || phone.replace(/\D/g, '').length < 11}>Получить код</button>
           {!driver && <button type="button" className="btn ghost" onClick={() => setIntent(null)}>Назад</button>}

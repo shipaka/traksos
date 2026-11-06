@@ -12,7 +12,7 @@ const PERFORMER_NOTICE_DAYS = 15;
 
 export const AUDIENCE_NAMES: Record<string, string> = {
   client: 'Оферта для клиентов',
-  performer: 'Агентский договор для исполнителей',
+  performer: 'Агентский договор для исполнителей и рембаз',
   privacy: 'Согласие на обработку персональных данных',
 };
 
@@ -21,9 +21,14 @@ const isPerformer = (roles: string[]) => roles.some((r) => ['master', 'tow', 'se
 export class OffersService {
   constructor(private db: Db, private notifier: Notifier, private now: () => Date = () => new Date()) {}
 
+  /** Какие документы нужны человеку: клиенту (владелец, водитель) — оферта, исполнителю и рембазе — агентский договор.
+   *  Персонал без других ролей принимает только согласие на обработку данных. */
   audiences(user: AuthUser) {
-    const a = ['client', 'privacy'];
-    if (isPerformer(user.roles)) a.push('performer');
+    const r = user.roles;
+    const a: string[] = [];
+    if (r.includes('client') || r.includes('driver') || (!isPerformer(r) && !r.some((x) => x === 'admin' || x === 'moderator'))) a.push('client');
+    if (isPerformer(r)) a.push('performer');
+    a.push('privacy');
     return a;
   }
 
@@ -97,7 +102,7 @@ export class OffersService {
     // Уведомляем всех, кого касается
     const who = p.audience === 'performer'
       ? `select id from users where roles && '{master,tow,service}'::text[]`
-      : `select id from users`;
+      : p.audience === 'client' ? `select id from users where roles && '{client,driver}'::text[]` : `select id from users`;
     const ids = (await this.db.query<{ id: string }>(who)).map((r) => r.id);
     const when = eff.getTime() <= this.now().getTime() + 60_000 ? 'с сегодняшнего дня' : `с ${eff.toLocaleDateString('ru-RU')}`;
     await this.notifier.notify(ids, { type: 'offer', offerId: offer!.id, audience: p.audience }, {

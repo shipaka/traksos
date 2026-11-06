@@ -92,7 +92,7 @@ export async function seed(db: Awaited<ReturnType<typeof createDb>>) {
                     where not exists (select 1 from shop_products where name=$2)`, [cat, name, spec, price, stock, kit]);
   }
 
-  for (const [audience, title] of [['client', 'Оферта для клиентов'], ['performer', 'Агентский договор для исполнителей'], ['privacy', 'Согласие на обработку персональных данных']]) {
+  for (const [audience, title] of [['client', 'Оферта для клиентов'], ['performer', 'Агентский договор для исполнителей и рембаз'], ['privacy', 'Согласие на обработку персональных данных']]) {
     await db.query(`insert into offers(audience, version, body, summary, effective_at) select $1, '0.1-черновик', $2, 'Черновик для тестов', now()
                     where not exists (select 1 from offers where audience=$1)`, [audience, DRAFT(title)]);
   }

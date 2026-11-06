@@ -336,7 +336,7 @@ function FeesEditor({ fees, onDone }: { fees: any; onDone: () => void }) {
 
 // Оферты -----------------------------------------------------------------------
 
-const AUD: Record<string, string> = { client: 'Оферта для клиентов', performer: 'Агентский договор для исполнителей', privacy: 'Согласие на обработку ПДн' };
+const AUD: Record<string, string> = { client: 'Оферта для клиентов', performer: 'Агентский договор для исполнителей и рембаз', privacy: 'Согласие на обработку ПДн' };
 
 function Offers() {
   const list = useLoad(() => get('/api/admin/offers'), []);

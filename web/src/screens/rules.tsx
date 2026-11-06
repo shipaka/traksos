@@ -54,7 +54,7 @@ export function Rules() {
       ))}
       {me && <a className="btn ghost" href="#/appeal">Оспорить нарушение или блокировку</a>}
       <a className="note" href="#/offer/client">Оферта для клиентов</a>
-      {mode === 'performer' && <a className="note" href="#/offer/performer">Агентский договор</a>}
+      {(mode === 'performer' || mode === 'service') && <a className="note" href="#/offer/performer">Агентский договор</a>}
     </main>
   );
 }

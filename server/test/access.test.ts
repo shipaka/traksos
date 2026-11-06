@@ -86,3 +86,11 @@ test('вход по номеру без роли: роли не меняются
   const a = await enter('+79990000001');
   assert.ok(a.roles.includes('admin'));
 });
+
+test('документы по ролям: рембаза — агентский договор, не клиентская оферта', async () => {
+  const b = await t.login('+79995556677', 'service');
+  const st = ok(await t.api('GET', '/api/me/offers', undefined, b.token));
+  assert.deepEqual(st.map((x: any) => x.audience).sort(), ['performer', 'privacy']);
+  const c = ok(await t.api('GET', '/api/me/offers', undefined, owner.token));
+  assert.deepEqual(c.map((x: any) => x.audience).sort(), ['client', 'privacy']);
+});
