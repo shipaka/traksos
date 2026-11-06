@@ -77,8 +77,9 @@ test('запись → уточнить → готовы принять → ре
   assert.equal(card.park, 1);
   ok(await t.api('POST', `/api/base/bookings/${b.id}/ready`, { works: ['Электрика', 'Диагностика'] }, base.token));
   const inv = ok(await t.api('POST', `/api/base/bookings/${b.id}/invoice`, { amount: 1_200_000 }, base.token));
-  assert.equal(inv.commission, 120_000);
-  assert.equal(inv.payout, 1_080_000);
+  // 5% от 12 000 ₽ = 600 ₽; потолок 5 000 ₽ — не достигнут
+  assert.equal(inv.commission, 60_000);
+  assert.equal(inv.payout, 1_140_000);
   assert.equal(inv.discount, 0, 'пришёл сам — без скидки');
   assert.equal(ok(await t.api('GET', `/api/bookings/${b.id}`, undefined, client.token)).toPay, 1_200_000);
   ok(await t.api('POST', `/api/bookings/${b.id}/confirm`, { agree: true, stars: 5, text: 'Быстро нашли место' }, client.token));
@@ -110,10 +111,16 @@ test('по совету мастера: скидка клиенту из ком�
   ok(await t.api('POST', `/api/base/bookings/${b.id}/ready`, { works: ['КПП'] }, base.token));
   const inv = ok(await t.api('POST', `/api/base/bookings/${b.id}/invoice`, { amount: 5_000_000 }, base.token));
   assert.equal(inv.discount, 250_000);
-  assert.equal(inv.payout, 4_500_000, 'выручка сервиса не меняется');
+  assert.equal(inv.payout, 4_750_000, 'выручка сервиса — минус комиссия 5%, скидка клиенту из комиссии');
   assert.equal(inv.toPay, 4_750_000);
   assert.equal((await t.api('POST', `/api/bookings/${b.id}/confirm`, { agree: false }, client.token)).status, 400);
   assert.equal(ok(await t.api('POST', `/api/bookings/${b.id}/confirm`, { agree: false, why: 'Синхронизатор не меняли' }, client.token)).status, 'disputed');
   const tickets = ok(await t.api('GET', '/api/admin/support', undefined, admin.token));
   assert.ok(JSON.stringify(tickets).includes('Синхронизатор не меняли'));
+});
+
+test('комиссия рембазы: 5%, но не больше 5 000 ₽ за счёт', async () => {
+  const fees = await t.app.settings.get('fees');
+  assert.equal(fees.serviceCommissionPct, 5);
+  assert.equal(Math.min(Math.round(30_000_000 * fees.serviceCommissionPct / 100), fees.serviceCommissionMax), 500_000, 'с 300 000 ₽ — 5 000 ₽, а не 15 000');
 });

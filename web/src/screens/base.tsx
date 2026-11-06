@@ -1,7 +1,7 @@
 // Рембаза (сервис-партнёр): кабинет сервиса и запись клиента в сервис.
 import { useEffect, useState } from 'react';
 import { get, post, put, rub, fmtTime } from '../api.ts';
-import { BRANDS } from '../dict.ts';
+import { BRANDS, FEE_PURPOSE } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '../ui.tsx';
 
 export const NEEDS: Record<string, string> = {
@@ -295,6 +295,7 @@ export function BaseCar({ id }: { id: string }) {
             {d.discount > 0 && <><dt>Скидка клиенту</dt><dd>{rub(d.discount)} — из комиссии ТракSOS</dd></>}
             <dt>Вам к выплате</dt><dd><b>{rub(d.payout)}</b></dd>
           </dl>
+          <span className="note">{FEE_PURPOSE}</span>
           {d.reviewStars && <span className="note">Отзыв: {'★'.repeat(d.reviewStars)}{d.reviewText ? ` — «${d.reviewText}»` : ''}</span>}
         </div>
       )}

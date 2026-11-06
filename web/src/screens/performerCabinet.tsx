@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { get, put, post, rub, fmtTime, fmtPhone } from '../api.ts';
 import { BRANDS, BRAND_LEVELS, SERVICES } from '../dict.ts';
+import { FEE_PURPOSE } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, RubInput, Back } from '../ui.tsx';
 
 const SPECIALTIES: { id: string; name: string }[] = [
@@ -331,6 +332,7 @@ export function MoneySection() {
           <div className="sum"><span>Долг по комиссии с наличных</span><span>{rub(balance.data.cash_debt)}</span></div>
           {balance.data.paused && <span className="err">Долг больше {rub(balance.data.cashDebtLimit)} — новые заявки на паузе до оплаты.</span>}
           <span className="note">ТракSOS работает как агент: отчёт агента и акт — раз в месяц.</span>
+          <span className="note">{FEE_PURPOSE}</span>
         </div>
       )}
       <span className="label">Операции</span>

@@ -231,7 +231,7 @@ export class ServiceCenters {
     const { b } = await this.mineBooking(user, id);
     if (b.status !== 'ready') throw conflict('bad_status', 'Сначала «Машина готова»');
     const fees = await this.settings.get('fees');
-    const commission = Math.round(amount * fees.serviceCommissionPct / 100);
+    const commission = Math.min(Math.round(amount * fees.serviceCommissionPct / 100), fees.serviceCommissionMax ?? Infinity);
     const discount = b.from_order_id ? Math.min(commission, Math.round(amount * fees.serviceReferralDiscountPct / 100)) : 0;
     await this.db.query(
       `update service_bookings set status='invoiced', amount=$2, commission=$3, discount=$4, invoiced_at=now(), updated_at=now() where id=$1`,

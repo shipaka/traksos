@@ -219,7 +219,7 @@ export function createApp(d: Deps) {
     const all = await settings.all();
     return { zones: all.pricing.zones, tiers: all.pricing.tiers, consult: all.pricing.consult, towBase: all.pricing.towBase, nightNow: isNight(all.pricing, now()), payments: await payments.methods(),
       clientFeePct: all.fees.clientFeePct, reviewTags: REVIEW_TAGS, cancelScale: all.cancel.scale,
-      serviceCommissionPct: all.fees.serviceCommissionPct, serviceReferralDiscountPct: all.fees.serviceReferralDiscountPct, performerCommissionPct: all.fees.performerCommissionPct,
+      serviceCommissionPct: all.fees.serviceCommissionPct, serviceCommissionMax: all.fees.serviceCommissionMax, serviceReferralDiscountPct: all.fees.serviceReferralDiscountPct, performerCommissionPct: all.fees.performerCommissionPct,
       billingStep: Number(all.pricing.billingStepMinutes ?? 60) };
   });
   r.post('/api/pricing/estimate', false, async (c: Ctx) => {

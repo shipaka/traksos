@@ -11,6 +11,7 @@ const GROUPS: [string, Row[]][] = [
     ['fees', 'clientFeePct', 'Сервисный сбор с клиента', 'pct'],
     ['fees', 'performerCommissionPct', 'Комиссия с исполнителей', 'pct'],
     ['fees', 'serviceCommissionPct', 'Комиссия с рембаз', 'pct'],
+    ['fees', 'serviceCommissionMax', 'Комиссия с рембазы — не больше за счёт', 'rub'],
     ['fees', 'serviceReferralDiscountPct', 'Скидка в сервисе по совету мастера', 'pct', 'из комиссии ТракSOS'],
     ['fees', 'cashDebtLimit', 'Лимит долга по наличным', 'rub', 'выше — заявки не приходят'],
     ['pricing', 'billingStepMinutes', 'Шаг оплаты работы, минут', 'num', '60 — начатый час целиком, 30 — по получасам'],

@@ -241,7 +241,7 @@ function Money({ d }: { d: any }) {
       <div className="sum"><span>Выезд{d.groupTrip ? ' (совместный)' : ''}{d.night ? ' · ночь' : ''}</span><span>{rub(m.callOut)}</span></div>
       {proposed ? (d.bill ? <BillRows b={d.bill} /> : <div className="sum"><span>Работа</span><span>{rub(m.work)}</span></div>)
         : d.estimate?.hour != null && <div className="sum"><span>Час работы</span><span>{rub(d.estimate.hour)}</span></div>}
-      {proposed && m.clientFee > 0 && <div className="sum"><span>Сервисный сбор</span><span>{rub(m.clientFee)}</span></div>}
+      {proposed && m.clientFee > 0 && <div className="sum"><span>Сервисный сбор<small className="note" style={{ display: 'block' }}>{d.you === 'performer' ? '' : 'на рекламу, поддержку и развитие платформы'}</small></span><span>{rub(m.clientFee)}</span></div>}
       {m.discount > 0 && d.you !== 'performer' && <div className="sum" style={{ color: 'var(--good-fg)' }}><span>Скидка{d.discountReason ? ` · ${d.discountReason}` : ''}</span><span>−{rub(m.discount)}</span></div>}
       {proposed && <><div className="hr" /><div className="sum total"><span>Итого</span><span>{rub(m.total)}</span></div></>}
       {d.service !== 'tow' && d.estimate?.hour != null && !proposed && <span className="note">{billingRule(d.billingStep)}</span>}
