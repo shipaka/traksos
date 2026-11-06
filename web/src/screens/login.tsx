@@ -2,21 +2,36 @@ import { useState } from 'react';
 import { post, setToken, connectWs, ApiError } from '../api.ts';
 import { useAction, useMe, useToast, Field } from '../ui.tsx';
 
-const ROLES = [
-  { id: 'client', name: 'Мне нужна помощь', hint: 'Владелец, водитель, транспортная компания' },
-  { id: 'master', name: 'Я мастер', hint: 'Электрик, диагност, воздушник, автономщик, шиномонтаж' },
+// Роль выбирают только те, кто подключается работать. Остальные входят по номеру — кабинет определяется по ролям.
+const JOIN_ROLES = [
+  { id: 'master', name: 'Я мастер', hint: 'Электрик, диагност, воздушник, автономщик, шиномонтаж — специализация в профиле' },
   { id: 'tow', name: 'Я эвакуаторщик', hint: 'Заявки на эвакуацию приходят как звонок' },
   { id: 'service', name: 'Я рембаза (сервис)', hint: 'Клиенты записываются к вам, мастера советуют вас' },
 ] as const;
+type JoinRole = (typeof JOIN_ROLES)[number]['id'];
+type Intent = 'help' | 'login' | 'join';
+
+/** Куда вести после входа: по ролям из ответа сервера */
+export function homeFor(roles: string[], intent: Intent): string {
+  if (intent === 'help') return '#/sos';
+  const performer = roles.includes('master') || roles.includes('tow');
+  if (intent === 'join') return performer ? '#/as/performer' : '#/as/service';
+  if (roles.includes('admin') || roles.includes('moderator')) return '#/as/admin';
+  if (roles.includes('client') || roles.includes('driver')) return '#/as/client';
+  if (performer) return '#/as/performer';
+  if (roles.includes('service')) return '#/as/service';
+  return '#/as/client';
+}
 
 export function Login({ driver }: { driver?: boolean } = {}) {
   const { reload } = useMe();
   const { busy, run } = useAction();
+  const [intent, setIntent] = useState<Intent | null>(driver ? 'login' : null);
   const [phone, setPhone] = useState('+7 ');
   const [step, setStep] = useState<'phone' | 'code'>('phone');
   const [code, setCode] = useState('');
   const [devCode, setDevCode] = useState<string | null>(null);
-  const [role, setRole] = useState<(typeof ROLES)[number]['id']>('client');
+  const [role, setRole] = useState<JoinRole>('master');
   const [agree, setAgree] = useState(false);
   const toast = useToast();
   const [appealToken, setAppealToken] = useState<string | null>(null);
@@ -33,7 +48,7 @@ export function Login({ driver }: { driver?: boolean } = {}) {
   async function verify() {
     const r = await run(async () => {
       try {
-        return await post('/api/auth/verify', { phone, code, role, device: navigator.userAgent.slice(0, 200), acceptOffers: agree });
+        return await post('/api/auth/verify', { phone, code, role: intent === 'join' ? role : undefined, device: navigator.userAgent.slice(0, 200), acceptOffers: agree });
       } catch (e) {
         // Заблокирован — показываем форму обжалования, номер уже подтверждён кодом
         if (e instanceof ApiError && e.code === 'blocked' && e.data?.appealToken) { setAppealToken(e.data.appealToken); return null; }
@@ -47,15 +62,33 @@ export function Login({ driver }: { driver?: boolean } = {}) {
       await reload();
       let qr: string | null = null;
       try { qr = sessionStorage.getItem('traksos.qr'); } catch { /* */ }
-      location.hash = qr ? '#/qr/' + qr : role === 'client' ? '#/' : role === 'service' ? '#/as/service' : '#/work/profile';
+      location.hash = qr ? '#/qr/' + qr : intent === 'join' && role !== 'service' ? '#/work/profile' : homeFor(r.user?.roles ?? [], intent ?? 'login');
     }
   }
+
+  const needAgree = intent !== 'login' || !!driver; // водитель по QR — обычно новый номер, согласие сразу
+  const title = intent === 'help' ? 'Помощь на дороге' : intent === 'join' ? 'Работать с ТракSOS' : 'Вход по номеру телефона';
+  const sub = intent === 'help' ? 'Подтвердите номер — и сразу к заявке. Мастер позвонит на него.'
+    : intent === 'join' ? 'Выберите, кем подключаетесь. После входа заполните профиль — проверим и откроем заявки.'
+    : 'Пришлём код. Пароль не нужен — кабинет откроется сам.';
+
+  if (!intent) return (
+    <main>
+      <button type="button" className="sos" onClick={() => setIntent('help')} style={{ textAlign: 'center', alignItems: 'center', padding: '34px 20px' }}>
+        <span className="t" style={{ fontSize: 34 }}>Помогите</span>
+        <p>Сломался грузовик — мастер или эвакуатор приедут на место</p>
+      </button>
+      <button type="button" className="btn ghost" onClick={() => setIntent('login')}>Войти по номеру</button>
+      <div className="sub" style={{ textAlign: 'center' }}>Владельцы, водители, мастера, рембазы — один вход, кабинет откроется сам</div>
+      <button type="button" className="link" onClick={() => setIntent('join')} style={{ background: 'none', border: 0, color: 'var(--accent)', fontWeight: 600, padding: 8 }}>Хочу работать с ТракSOS →</button>
+    </main>
+  );
 
   return (
     <main>
       <div>
-        <h1>Вход по номеру телефона</h1>
-        <div className="sub">Пришлём код. Пароль не нужен.</div>
+        <h1>{title}</h1>
+        <div className="sub">{sub}</div>
       </div>
 
       {appealToken ? (
@@ -69,8 +102,8 @@ export function Login({ driver }: { driver?: boolean } = {}) {
         </div>
       ) : step === 'phone' ? (
         <form className="stack" onSubmit={(e) => { e.preventDefault(); sendCode(); }}>
-          {!driver && <div className="stack">
-            {ROLES.map((r) => (
+          {intent === 'join' && <div className="stack">
+            {JOIN_ROLES.map((r) => (
               <button key={r.id} type="button" className="opt" aria-pressed={role === r.id} onClick={() => setRole(r.id)}>
                 <b>{r.name}</b><small>{r.hint}</small>
               </button>
@@ -79,11 +112,12 @@ export function Login({ driver }: { driver?: boolean } = {}) {
           <Field label="Телефон">
             <input className="field" type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
           </Field>
-          <label className="row note" style={{ flexWrap: 'nowrap', alignItems: 'flex-start' }}>
+          {needAgree && <label className="row note" style={{ flexWrap: 'nowrap', alignItems: 'flex-start' }}>
             <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} style={{ marginTop: 3 }} />
-            <span>Согласен с <a href="#/offer/client" target="_blank" rel="noreferrer">офертой</a>{role !== 'client' ? <>, <a href="#/offer/performer" target="_blank" rel="noreferrer">агентским договором</a></> : null} и на <a href="#/offer/privacy" target="_blank" rel="noreferrer">обработку персональных данных</a></span>
-          </label>
-          <button className="btn" disabled={busy || !agree || phone.replace(/\D/g, '').length < 11}>Получить код</button>
+            <span>Согласен с <a href="#/offer/client" target="_blank" rel="noreferrer">офертой</a>{intent === 'join' ? <>, <a href="#/offer/performer" target="_blank" rel="noreferrer">агентским договором</a></> : null} и на <a href="#/offer/privacy" target="_blank" rel="noreferrer">обработку персональных данных</a></span>
+          </label>}
+          <button className="btn" disabled={busy || (needAgree && !agree) || phone.replace(/\D/g, '').length < 11}>Получить код</button>
+          {!driver && <button type="button" className="btn ghost" onClick={() => setIntent(null)}>Назад</button>}
         </form>
       ) : (
         <form className="stack" onSubmit={(e) => { e.preventDefault(); verify(); }}>

@@ -72,3 +72,17 @@ test('SMS: не больше 8 кодов на номер в сутки', async 
   assert.equal(r.status, 429);
   assert.equal(r.body.error, 'too_many_codes');
 });
+
+test('вход по номеру без роли: роли не меняются, новый номер — клиент', async () => {
+  const enter = async (phone: string) => {
+    const c = ok(await t.api('POST', '/api/auth/code', { phone }));
+    t.clock.advance(61);
+    return ok(await t.api('POST', '/api/auth/verify', { phone, code: c.devCode })).user;
+  };
+  const m = await enter('+79992223344');
+  assert.deepEqual([...m.roles].sort(), ['master']);
+  const fresh = await enter('+79993334455');
+  assert.deepEqual(fresh.roles, ['client']);
+  const a = await enter('+79990000001');
+  assert.ok(a.roles.includes('admin'));
+});

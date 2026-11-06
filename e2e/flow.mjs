@@ -32,11 +32,14 @@ const mk = async () => {
   return page;
 };
 
-async function login(page, phoneNum, roleText) {
+// how: 'help' — кнопка «Помогите», 'login' — вход по номеру, иначе текст роли в «Хочу работать с ТракSOS»
+async function login(page, phoneNum, how) {
   await page.goto(BASE + '/#/login');
-  await page.getByRole('button', { name: roleText }).click();
+  if (how === 'help') await page.getByRole('button', { name: /Помогите/ }).click();
+  else if (how === 'login') await page.getByRole('button', { name: 'Войти по номеру' }).click();
+  else { await page.getByRole('button', { name: /Хочу работать/ }).click(); await page.getByRole('button', { name: how }).click(); }
   await page.locator('input[type=tel]').fill(phoneNum);
-  await page.locator('input[type=checkbox]').check();
+  if (how !== 'login') await page.locator('input[type=checkbox]').check();
   await page.getByRole('button', { name: 'Получить код' }).click();
   const hint = await page.getByText(/Тестовый режим: код/).textContent();
   await page.locator('input[autocomplete=one-time-code]').fill(hint.match(/\d{4}/)[0]);
@@ -72,9 +75,9 @@ await m.getByText('На проверке у модератора').waitFor();
 
 // Модератор принимает фото и одобряет мастера в своей очереди
 const a = await mk();
-await login(a, '+79990000001', 'Мне нужна помощь');
-await a.getByText('Что случилось?').first().waitFor();
-await a.goto(BASE + '/#/admin');
+await login(a, '+79990000001', 'login');
+// Админ входит по номеру — сразу в админку, без выбора роли
+await a.waitForURL(/#\/admin/);
 await a.getByRole('button', { name: 'Проверка', exact: true }).click();
 await a.getByText('Отправил').waitFor();
 for (let i = 0; i < n; i++) {
@@ -92,7 +95,10 @@ await shot(m, '02-master-online');
 
 // Клиент
 const k = await mk();
-await login(k, '+79991112233', 'Мне нужна помощь');
+await login(k, '+79991112233', 'help');
+// «Помогите» — после кода сразу экран SOS
+await k.waitForURL(/#\/sos/);
+await k.goto(BASE + '/#/');
 await k.getByText('Что случилось?').first().waitFor();
 await shot(k, '03-client-home');
 await k.getByRole('link', { name: /SOS/ }).first().click();

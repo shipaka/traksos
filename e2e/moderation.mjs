@@ -31,7 +31,7 @@ await C(ap.getByRole('button',{name:'Частично'})); await ap.waitForTimeo
 // Блокировка и обжалование со страницы входа
 await api('POST',`/api/admin/users/${mm.user.id}/block`,{blocked:true,reason:'тест'},adm);
 const bp = await page(null,'blocked'); await bp.goto(BASE+'/#/login'); await bp.waitForTimeout(800);
-await C(bp.getByRole('button',{name:/Я мастер/})); await bp.locator('input[type=tel]').fill('+79992223344'); await bp.locator('input[type=checkbox]').first().check();
+await C(bp.getByRole('button',{name:'Войти по номеру'})); await bp.locator('input[type=tel]').fill('+79992223344');
 await C(bp.getByRole('button',{name:'Получить код'})); await bp.waitForTimeout(800);
 const sms = (await bp.getByText(/Тестовый режим: код/).textContent()).match(/\d{4,6}/)[0];
 await bp.locator('input[autocomplete=one-time-code]').fill(sms); await C(bp.getByRole('button',{name:'Войти'})); await bp.waitForTimeout(800);

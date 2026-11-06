@@ -49,7 +49,8 @@ export class AuthService {
     return { phone, sent: true, devCode: this.sms.exposesCode && !isProd ? code : undefined };
   }
 
-  async verify(rawPhone: string, code: string, role: (typeof SELF_ROLES)[number] = 'client', device?: string) {
+  /** role не передан — вход «как есть»: новый номер становится клиентом, у существующего роли не меняются */
+  async verify(rawPhone: string, code: string, role?: (typeof SELF_ROLES)[number], device?: string) {
     const phone = normalizePhone(rawPhone);
     if (!phone) throw bad('bad_phone', 'Неверный номер');
     const row = await this.db.one<{ code_hash: string; expires_at: Date; attempts: number }>(
@@ -67,10 +68,10 @@ export class AuthService {
     const user = await this.db.one<AuthUser & { created_at: Date }>(
       `insert into users(phone, roles) values ($1, $2)
        on conflict (phone) do update set
-         roles = (select array(select distinct unnest(users.roles || excluded.roles))),
+         roles = (select array(select distinct unnest(users.roles || $3::text[]))),
          last_seen_at = now()
        returning id, phone, name, roles, status, owner_id, created_at`,
-      [phone, [role, ...extra]],
+      [phone, [role ?? 'client', ...extra], role ? [role, ...extra] : extra],
     );
     if (!user || user.status !== 'active') {
       // Заблокированный может оспорить блокировку — номер подтверждён кодом, выдаём одноразовый пропуск на обжалование
