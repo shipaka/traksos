@@ -12,6 +12,7 @@ const C = async (l) => { await l.first().evaluate(e=>e.scrollIntoView({block:'ce
 const shot = (p,n) => p.screenshot({path:`${OUT}/${n}.png`,fullPage:true});
 // Рембаза заполняет карточку
 const sp = await page(s,'service'); await sp.goto(BASE+'/#/as/service'); await sp.waitForTimeout(1200);
+await C(sp.getByRole('link',{name:'Заполнить карточку'})); await sp.waitForTimeout(1000);
 await shot(sp,'b1-setup');
 await sp.getByPlaceholder('Например, Шушары-Трак').fill('Шушары-Трак');
 await sp.getByPlaceholder('Шушары, Московское ш., 50').fill('Шушары, Московское ш., 50');

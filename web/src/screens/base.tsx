@@ -38,7 +38,28 @@ export function BaseHome() {
   const { busy, run } = useAction();
   if (!cab.data) return <main><Loading error={cab.error} /></main>;
   const { center, groups } = cab.data;
-  if (!center) return <BaseSetup first />;
+  // Новая рембаза: на главной — что будет дальше, сама карточка — во вкладке «Карточка»
+  if (!center) return (
+    <main>
+      <div>
+        <h1>Подключите рембазу</h1>
+        <div className="sub">Три шага — и клиенты ТракSOS начнут записываться к вам, а мастера советовать вас после диагностики</div>
+      </div>
+      <div className="card col">
+        <b>1. Заполните карточку сервиса</b>
+        <span className="note">Название, адрес, часы, какие марки и работы берёте, есть ли стоянка и яма.</span>
+        <a className="btn" href="#/base/me">Заполнить карточку</a>
+      </div>
+      <div className="card col">
+        <b>2. Пройдите проверку</b>
+        <span className="note">Модератор сверит ИНН, вывеску и въезд, ремзону. Обычно в течение дня.</span>
+      </div>
+      <div className="card col">
+        <b>3. Принимайте записи</b>
+        <span className="note">Заявки появятся здесь, на главной.</span>
+      </div>
+    </main>
+  );
   const cars = [...groups.expected, ...groups.repair, ...groups.ready];
   return (
     <main>
@@ -289,7 +310,7 @@ export function BaseCar({ id }: { id: string }) {
 }
 
 /** Карточка сервиса: один раз — что принимаете, кто есть, условия, дни без работы */
-export function BaseSetup({ first }: { first?: boolean }) {
+export function BaseSetup() {
   const { reload } = useMe();
   const cab = useLoad(() => get('/api/base'), []);
   const { busy, run } = useAction();
@@ -302,6 +323,7 @@ export function BaseSetup({ first }: { first?: boolean }) {
       : { name: '', address: '', hours: '08:00–20:00', inn: '', lat: null, lng: null, brands: [], staff: { electric: 'own' }, conditions: ['parking'], accepts: ['quick', 'day'], closedDays: [], paused: false });
   }, [cab.data]); // eslint-disable-line
   if (!f) return <main><Loading error={cab.error} /></main>;
+  const first = !cab.data?.center;
   const set = (k: string, v: any) => setF({ ...f, [k]: v });
   async function save() {
     const body = { ...f, inn: f.inn || null, closedDays: f.closedDays.filter((d: string) => d >= mskDay()) };
@@ -314,7 +336,7 @@ export function BaseSetup({ first }: { first?: boolean }) {
     <main>
       {!first && <Back to="base" label="Рембаза" />}
       <div>
-        <h1>{first ? 'Подключите рембазу' : 'Карточка сервиса'}</h1>
+        <h1>Карточка сервиса</h1>
         <div className="sub">Один раз отметьте, что принимаете, кто у вас есть и условия. Цены не нужны: итог зависит от осмотра.</div>
       </div>
       <div className="card">
