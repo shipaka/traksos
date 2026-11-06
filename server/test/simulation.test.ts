@@ -138,7 +138,7 @@ async function randomAction() {
       accepted: () => call('POST', `/api/orders/${o.id}/step`, { action: chance(0.9) ? 'depart' : 'arrive' }, u.token),
       en_route: () => call('POST', `/api/orders/${o.id}/step`, { action: 'arrive' }, u.token),
       arrived: () => call('POST', `/api/orders/${o.id}/step`, { action: 'start_work' }, u.token),
-      working: () => call('POST', `/api/orders/${o.id}/amount`, { workAmount: pick([0, 150_000, 210_000]), result: 'solved' }, u.token),
+      working: () => call('POST', `/api/orders/${o.id}/amount`, { extras: [{ name: 'Расходники', amount: pick([0, 150_000, 210_000]) }], result: 'solved' }, u.token),
       awaiting_confirmation: async () => {
         const c = byId(o.client_id);
         if (chance(0.8)) await call('POST', `/api/orders/${o.id}/confirm`, {}, c.token);

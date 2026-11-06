@@ -136,8 +136,11 @@ await k.getByText('Иван').first().waitFor({ timeout: 10000 });
 await shot(k, '07-client-accepted');
 
 // Чат
+// Чат свёрнут, пока не нажали
+await k.getByRole('button', { name: /Чат по заявке/ }).click();
 await k.locator('.compose input').fill('Позвоните мне 8 921 111-22-33');
 await k.locator('.compose button').click();
+await m.getByRole('button', { name: /Чат по заявке/ }).click();
 await m.getByText('[номер скрыт]').first().waitFor({ timeout: 10000 });
 
 // Статусы
@@ -145,11 +148,14 @@ await m.locator('button.btn', { hasText: 'Выехал' }).click();
 await m.locator('button.btn:not([disabled])', { hasText: 'Я на месте' }).waitFor();
 await m.locator('button.btn', { hasText: 'Я на месте' }).click();
 await m.getByRole('button', { name: 'Начал работу' }).click();
-await m.locator('.card:has-text("Закрыть выезд") input[inputmode=numeric]').fill('2100');
+// Сумму за работу считает таймер; мастер добавляет только расходники строкой
+await m.getByText(/Работа · 1 ч ×/).waitFor();
+await m.getByRole('button', { name: '+ Расходники' }).click();
+await m.locator('.card:has-text("Закрыть выезд") input[inputmode=numeric]').fill('350');
 await m.locator('input[placeholder^="Что сделали"]').fill('Зачистил массу, заменил клемму');
 await shot(m, '08-master-close');
 await m.getByRole('button', { name: 'Отправить клиенту' }).click();
-await k.getByText(/Мастер назвал сумму/).waitFor({ timeout: 10000 });
+await k.getByText(/К оплате:/).waitFor({ timeout: 10000 });
 await shot(k, '09-client-confirm');
 await k.getByRole('button', { name: /Подтверждаю/ }).click();
 await k.getByText('Как отработал мастер?').waitFor({ timeout: 10000 });

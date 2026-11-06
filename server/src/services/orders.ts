@@ -2,7 +2,7 @@ import type { Db, Queryable } from '../db/index.ts';
 import type { SettingsService } from './settings.ts';
 import type { Notifier } from './notify.ts';
 import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
-import { estimate, isNight, type Tier } from '../domain/pricing.ts';
+import { estimate, isNight, billWork, type Tier, type Extra } from '../domain/pricing.ts';
 import { rankCandidates, performerKindFor, type Candidate } from '../domain/dispatch.ts';
 import { transition, canDo, statusLabels, type Action, type Actor, type OrderStatus } from '../domain/orderState.ts';
 import { cancelStage, cancelSplit, pct } from '../domain/money.ts';
@@ -408,20 +408,49 @@ export class OrdersService {
     return this.view(user, orderId);
   }
 
-  /** Мастер называет сумму за работу (выезд уже зафиксирован) */
-  async proposeAmount(user: AuthUser, orderId: string, p: { workAmount: number; result?: 'solved' | 'cause_found' | 'not_found'; note?: string }) {
+  /** Разбивка суммы за работу на этот момент: время с отметки «на месте» × цена часа, ожидание, расходники.
+   *  Пока заявка на подтверждении — время заморожено на моменте, когда мастер отправил сумму. */
+  async billFor(o: any, extras: Extra[], at = this.now()) {
+    const all = await this.settings.all();
+    // Клиент спорит только с расходниками — время уже отработано и не пересчитывается
+    const frozen = (o.status === 'awaiting_confirmation' || o.bill?.disputed) && o.bill?.end ? new Date(o.bill.end) : null;
+    const end = frozen ?? at;
+    let waitMinutes = Number(o.wait_minutes ?? 0);
+    if (o.wait_started_at && !frozen) waitMinutes += Math.max(1, Math.round((end.getTime() - new Date(o.wait_started_at).getTime()) / 60_000));
+    const p = o.performer_id ? await this.db.one<{ extras: any }>('select extras from performer_profiles where user_id=$1', [o.performer_id]) : null;
+    // Время идёт с отметки «Я на месте» — так договорились до вызова; «Начал работу» на сумму не влияет
+    const from = o.arrived_at ?? o.work_started_at;
+    const workMinutes = from ? Math.max(0, Math.floor((end.getTime() - new Date(from).getTime()) / 60_000)) : null;
+    const bill = billWork({
+      hour: o.service === 'tow' ? null : o.estimate?.hour ?? null, step: Number(all.pricing.billingStepMinutes ?? 60),
+      workMinutes, waitMinutes, waitRate: p?.extras?.waitRate ?? null, extras,
+    });
+    return { ...bill, end: end.toISOString() };
+  }
+
+  /** Мастер закрывает выезд. Сумму за работу он не вводит: она идёт по таймеру и цене часа, о которой договорились заранее.
+   *  Сверху — только расходники и запчасти отдельными строками, клиент видит каждую. */
+  async proposeAmount(user: AuthUser, orderId: string, p: { extras?: Extra[]; result?: 'solved' | 'cause_found' | 'not_found'; note?: string }) {
     const o = await this.mustBePerformer(user, orderId);
     if (o.service === 'consult') throw bad('consult_fixed', 'Цена консультации фиксированная. Закройте её с подсказкой.');
     const to = transition(o.status, 'propose_amount', 'performer');
-    if (!Number.isInteger(p.workAmount) || p.workAmount < 0) throw bad('bad_amount', 'Сумма — целое число копеек, не меньше нуля');
+    const extras = (p.extras ?? []).map((x) => ({ name: x.name.trim(), amount: x.amount })).filter((x) => x.name && x.amount > 0);
+    if (extras.some((x) => !Number.isInteger(x.amount))) throw bad('bad_amount', 'Сумма — целое число копеек');
+    const bill = await this.billFor(o, extras);
     await this.guarded(this.db,
-      `update orders set status=$2, work_amount=$3, amount_proposed_at=$6, amount_confirmed_at=null,
+      `update orders set status=$2, work_amount=$3, bill=$9, amount_proposed_at=$6, amount_confirmed_at=null,
+         wait_minutes=$10, wait_started_at=null,
          result=coalesce($4,result), result_note=coalesce($5,result_note) where id=$1 and status=$7 and performer_id=$8`,
-      [orderId, to, p.workAmount, p.result ?? null, p.note ?? null, this.now(), o.status, user.id],
+      [orderId, to, bill.total, p.result ?? null, p.note ?? null, this.now(), o.status, user.id, bill, bill.waitMinutes],
     );
-    const m = this.money({ ...o, work_amount: p.workAmount });
-    await this.event(this.db, orderId, user.id, 'amount_proposed', { workAmount: p.workAmount, total: m.total, result: p.result });
-    await this.systemMessage(orderId, `Исполнитель назвал сумму: выезд ${rub(m.callOut)} + работа ${rub(m.work)}${m.clientFee ? ` + сбор ${rub(m.clientFee)}` : ''} = ${rub(m.total)}. Подтвердите в заявке.`);
+    const m = this.money({ ...o, work_amount: bill.total });
+    await this.event(this.db, orderId, user.id, 'amount_proposed', { workAmount: bill.total, total: m.total, result: p.result, bill });
+    const parts = [
+      bill.units ? `работа ${hoursText(bill.units, bill.step)} × ${rub(bill.hour!)}/ч = ${rub(bill.time)}` : null,
+      bill.wait ? `ожидание ${bill.waitMinutes} мин ${rub(bill.wait)}` : null,
+      ...bill.extras.map((x) => `${x.name} ${rub(x.amount)}`),
+    ].filter(Boolean).join(', ');
+    await this.systemMessage(orderId, `Исполнитель закрыл выезд: выезд ${rub(m.callOut)}${parts ? `, ${parts}` : ''}${m.clientFee ? ` + сбор ${rub(m.clientFee)}` : ''} = ${rub(m.total)}. Подтвердите в заявке.`);
     await this.notifier.notify([o.client_id, o.created_by], { type: 'order', orderId, status: to },
       { kind: 'normal', title: 'Подтвердите сумму', body: `Заявка №${o.number}: ${rub(m.total)}`, data: { orderId } });
     return this.view(user, orderId);
@@ -479,9 +508,10 @@ export class OrdersService {
   async disputeAmount(user: AuthUser, orderId: string, reason: string) {
     const o = await this.mustBeClient(user, orderId);
     const to = transition(o.status, 'dispute_amount', 'client');
-    await this.guarded(this.db, `update orders set status=$2 where id=$1 and status='awaiting_confirmation'`, [orderId, to]);
+    await this.guarded(this.db, `update orders set status=$2, bill = case when bill is null then null else bill || '{"disputed":true}'::jsonb end
+        where id=$1 and status='awaiting_confirmation'`, [orderId, to]);
     await this.event(this.db, orderId, user.id, 'amount_disputed', { reason });
-    await this.systemMessage(orderId, `Клиент не согласен с суммой: ${reason}. Обсудите в чате или позовите поддержку.`);
+    await this.systemMessage(orderId, `Клиент не согласен с расходниками: ${reason}. Время работы не меняется — исправьте строки расходников или позовите поддержку.`);
     await this.onDispute?.({ userId: user.id, orderId, text: reason, targetId: o.performer_id, title: `Не согласен с суммой по заявке №${o.number}` });
     await this.notifier.notify([o.performer_id], { type: 'order', orderId, status: to },
       { kind: 'normal', title: 'Клиент не согласен с суммой', body: reason, data: { orderId } });
@@ -599,6 +629,7 @@ export class OrdersService {
       limits: o.status === 'searching' ? this.auction.limits(o, (await this.settings.get('dispatch'))) : null,
       destination: o.destination, cargo: o.cargo, loaded: o.loaded, driverOnSite: o.driver_on_site, discountReason: o.discount_reason,
       money: this.money(o), result: o.result, resultNote: o.result_note,
+      bill: o.bill ?? null, billingStep: Number((await this.settings.get('pricing')).billingStepMinutes ?? 60),
       site: o.site, workStartedAt: o.work_started_at ?? null, waitRate: performer?.wait_rate ?? null, ownerNote: o.owner_note ?? null, partMode: o.part_mode ?? null, waitStartedAt: o.wait_started_at ?? null, waitMinutes: o.wait_minutes ?? 0,
       consultHint: o.consult_hint, consultOf: o.consult_of, siteFlags: o.site_flags ?? [], lateMinutes: o.late_minutes ?? 0, hintCheck: o.hint_check,
       consultFrom: o.consult_of ? await this.db.one(`select o.number, o.consult_hint as hint, u.name as performer_name from orders o
@@ -756,3 +787,9 @@ export class OrdersService {
 }
 
 export type { Action };
+
+/** «2 ч», «1,5 ч» — сколько шагов насчитано */
+export function hoursText(units: number, step: number) {
+  const h = (units * step) / 60;
+  return `${String(h).replace('.', ',')} ч`;
+}

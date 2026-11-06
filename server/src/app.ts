@@ -219,7 +219,8 @@ export function createApp(d: Deps) {
     const all = await settings.all();
     return { zones: all.pricing.zones, tiers: all.pricing.tiers, consult: all.pricing.consult, towBase: all.pricing.towBase, nightNow: isNight(all.pricing, now()), payments: await payments.methods(),
       clientFeePct: all.fees.clientFeePct, reviewTags: REVIEW_TAGS, cancelScale: all.cancel.scale,
-      serviceCommissionPct: all.fees.serviceCommissionPct, serviceReferralDiscountPct: all.fees.serviceReferralDiscountPct, performerCommissionPct: all.fees.performerCommissionPct };
+      serviceCommissionPct: all.fees.serviceCommissionPct, serviceReferralDiscountPct: all.fees.serviceReferralDiscountPct, performerCommissionPct: all.fees.performerCommissionPct,
+      billingStep: Number(all.pricing.billingStepMinutes ?? 60) };
   });
   r.post('/api/pricing/estimate', false, async (c: Ctx) => {
     const b = parse(z.object({ service: z.string(), tier: z.enum(['eco', 'comfort', 'pro']).default('eco'), zoneId: z.string(),
@@ -391,8 +392,30 @@ export function createApp(d: Deps) {
   r.post('/api/orders/:id/step', performerRoles, (c: AuthedCtx) =>
     orders.performerStep(c.user, c.params.id, parse(z.object({ action: z.enum(['depart', 'arrive', 'start_work']) }), c.body).action));
   r.post('/api/orders/:id/amount', performerRoles, (c: AuthedCtx) => orders.proposeAmount(c.user, c.params.id, parse(z.object({
-    workAmount: money, result: z.enum(['solved', 'cause_found', 'not_found']).optional(), note: z.string().max(300).optional(),
+    // Суммы за работу здесь нет — её считает таймер. Только расходники и запчасти, каждая строкой
+    extras: z.array(z.object({ name: z.string().min(2).max(60), amount: money })).max(10).optional(),
+    result: z.enum(['solved', 'cause_found', 'not_found']).optional(), note: z.string().max(300).optional(),
   }), c.body)));
+  // Неоплата: клиент отказывается платить — сообщает мастер или сам клиент. Сразу поддержка и случай модератору.
+  // not_done — клиент: работа не выполнена (причина обязательна); refuse — клиент отказывается без причины
+  // (экран заранее напомнил ему условия оферты); client_refuses — мастер: клиент не платит.
+  r.post('/api/orders/:id/nonpayment', true, async (c: AuthedCtx) => {
+    const b = parse(z.object({ kind: z.enum(['not_done', 'refuse', 'client_refuses']), reason: z.string().max(500).optional() }), c.body);
+    const o = await orders.mustSee(c.user, c.params.id);
+    const who = orders.actorOf(c.user, o);
+    if (who !== 'client' && who !== 'performer') throw forbidden('Сообщить о неоплате могут участники заявки');
+    if ((who === 'performer') !== (b.kind === 'client_refuses')) throw bad('bad_kind', 'Не тот вариант для вашей роли');
+    if (!['arrived', 'working', 'awaiting_confirmation'].includes(o.status)) throw new HttpError(409, 'bad_status', 'Это решается на месте, пока сумма не подтверждена');
+    const reason = (b.reason ?? '').trim();
+    if (b.kind !== 'refuse' && reason.length < 5) throw bad('need_reason', 'Опишите коротко, что случилось');
+    const label = { not_done: 'Клиент: работа не выполнена', refuse: 'Клиент отказывается платить без причины (условия оферты показаны)', client_refuses: 'Мастер: клиент отказывается платить' }[b.kind];
+    const text = `${label}${reason ? `. ${reason}` : ''}`;
+    const t = await support.open(c.user, { topic: 'Отказ от оплаты', text, orderId: o.id });
+    await moderation.open({ kind: 'dispute', title: `Отказ от оплаты · заявка №${o.number}`, text, openedBy: c.user.id,
+      targetId: b.kind === 'not_done' ? o.performer_id : o.client_id, orderId: o.id, ticketId: (t as any)?.id ?? null, priority: 2 });
+    await orders.event(d.db, o.id, c.user.id, 'nonpayment', { kind: b.kind, reason });
+    return orders.view(c.user, o.id);
+  });
   // Мастер на заявке
   r.post('/api/orders/:id/late', performerRoles, (c: AuthedCtx) => onsite.late(c.user, c.params.id, parse(z.object({ minutes: z.number().int().min(5).max(240) }), c.body).minutes));
   r.post('/api/orders/:id/site-flags', performerRoles, (c: AuthedCtx) => onsite.flags(c.user, c.params.id, parse(z.object({ flags: z.array(z.string().max(30)).max(10) }), c.body).flags));

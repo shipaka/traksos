@@ -53,7 +53,7 @@ test('нужна запчасть: ожидание считается, верн
   assert.ok(JSON.stringify(chat).includes('900 ₽/ч'), 'ставка ожидания — в чате');
   assert.deepEqual(chat.participants.map((p: any) => p.who).sort(), ['owner', 'performer'], 'кто в чате');
   assert.equal(chat.participants.find((p: any) => p.who === 'owner').you, true);
-  ok(await t.api('POST', `/api/orders/${id}/amount`, { workAmount: 200_000, result: 'solved' }, master.token));
+  ok(await t.api('POST', `/api/orders/${id}/amount`, { extras: [{ name: 'Расходники', amount: 200_000 }], result: 'solved' }, master.token));
   ok(await t.api('POST', `/api/orders/${id}/confirm`, {}, client.token));
 });
 
@@ -99,7 +99,7 @@ test('мастера рядом до вызова: сколько на лини�
 test('отзывы по заявке: вес моего, после моего — отзыв обо мне', async () => {
   const id = await take({ service: 'electric', zoneId: 'spb', description: 'Габариты слева' });
   ok(await t.api('POST', `/api/orders/${id}/step`, { action: 'arrive' }, master.token));
-  ok(await t.api('POST', `/api/orders/${id}/amount`, { workAmount: 100_000, result: 'solved' }, master.token));
+  ok(await t.api('POST', `/api/orders/${id}/amount`, { extras: [{ name: 'Расходники', amount: 100_000 }], result: 'solved' }, master.token));
   ok(await t.api('POST', `/api/orders/${id}/confirm`, {}, client.token));
   ok(await t.api('POST', `/api/orders/${id}/review`, { stars: 2, tags: ['Задержал оплату'] }, master.token));
   const before = ok(await t.api('GET', `/api/orders/${id}/reviews`, undefined, client.token));
@@ -111,4 +111,38 @@ test('отзывы по заявке: вес моего, после моего �
   assert.equal(after.aboutMe.stars, 2);
   const list = ok(await t.api('GET', '/api/orders', undefined, client.token));
   assert.ok('vehicle_id' in list[0] && 'consult_of' in list[0], 'в списке — машина и связь с консультацией');
+});
+
+test('сумма за работу: время с «на месте», начатый час — полный, по получасам — настройкой; мастер руками не меняет', async () => {
+  const { billWork } = await import('../src/domain/pricing.ts');
+  const b = (min: number, step = 60) => billWork({ hour: 400_000, step, workMinutes: min, waitMinutes: 0, waitRate: null, extras: [] });
+  assert.equal(b(0).time, 400_000, 'первая минута — уже час');
+  assert.equal(b(60).time, 400_000);
+  assert.equal(b(61).time, 800_000);
+  assert.equal(b(10, 30).time, 200_000, 'по получасам: первые полчаса — половина');
+  assert.equal(b(31, 30).time, 400_000);
+  const w = billWork({ hour: 400_000, step: 60, workMinutes: 90, waitMinutes: 40, waitRate: 90_000, extras: [{ name: 'Блок управления', amount: 2_000_000 }] });
+  assert.equal(w.minutes, 50, 'ожидание запчасти вычитается из работы');
+  assert.equal(w.time, 400_000);
+  assert.equal(w.wait, 60_000);
+  assert.equal(w.total, 400_000 + 60_000 + 2_000_000);
+});
+
+test('неоплата: мастер или клиент сообщают — поддержка и модератор; без причины — только «отказываюсь»', async () => {
+  const id = await take({ service: 'electric', zoneId: 'spb', description: 'Нет зарядки' });
+  ok(await t.api('POST', `/api/orders/${id}/step`, { action: 'arrive' }, master.token));
+  ok(await t.api('POST', `/api/orders/${id}/amount`, { extras: [{ name: 'Генератор', amount: 1_500_000 }] }, master.token));
+  // Не та роль и без причины — нельзя
+  assert.equal((await t.api('POST', `/api/orders/${id}/nonpayment`, { kind: 'client_refuses', reason: 'не платит' }, client.token)).body.error, 'bad_kind');
+  assert.equal((await t.api('POST', `/api/orders/${id}/nonpayment`, { kind: 'not_done' }, client.token)).body.error, 'need_reason');
+  ok(await t.api('POST', `/api/orders/${id}/nonpayment`, { kind: 'not_done', reason: 'Генератор так и не заряжает' }, client.token));
+  ok(await t.api('POST', `/api/orders/${id}/nonpayment`, { kind: 'client_refuses', reason: 'Клиент уехал не заплатив' }, master.token));
+  const tickets = await t.db.query(`select topic from support_tickets where order_id=$1`, [id]);
+  assert.equal(tickets.length, 2);
+  assert.ok(tickets.every((x: any) => x.topic === 'Отказ от оплаты'));
+  const cases = await t.db.query(`select target_id from mod_cases where order_id=$1 and kind='dispute' order by created_at`, [id]);
+  assert.deepEqual(cases.map((c: any) => c.target_id), [master.id, client.id], 'жалоба — на того, о ком она');
+  // Чужой — нет
+  const stranger = await t.login('+79998887766');
+  assert.equal((await t.api('POST', `/api/orders/${id}/nonpayment`, { kind: 'refuse' }, stranger.token)).status, 403);
 });

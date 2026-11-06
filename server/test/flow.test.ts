@@ -110,26 +110,35 @@ test('полный путь: SOS → приоритетный отказался
   assert.equal((await t.api('GET', `/api/orders/${id}/messages`, undefined, father.token)).status, 403);
 
   // Статусы по порядку; нельзя перепрыгнуть
-  assert.equal((await t.api('POST', `/api/orders/${id}/amount`, { workAmount: 1 }, master.token)).body.error, 'bad_status');
+  assert.equal((await t.api('POST', `/api/orders/${id}/amount`, { extras: [{ name: 'Расходники', amount: 1 }]}, master.token)).body.error, 'bad_status');
   ok(await t.api('POST', `/api/orders/${id}/step`, { action: 'depart' }, master.token));
   ok(await t.api('POST', `/api/orders/${id}/step`, { action: 'arrive' }, master.token));
   ok(await t.api('POST', `/api/orders/${id}/step`, { action: 'start_work' }, master.token));
-  const prop = ok(await t.api('POST', `/api/orders/${id}/amount`, { workAmount: 210_000, result: 'solved', note: 'Клемма массы' }, master.token));
+  const prop = ok(await t.api('POST', `/api/orders/${id}/amount`, { extras: [{ name: 'Расходники', amount: 210_000 }], result: 'solved', note: 'Клемма массы' }, master.token));
   assert.equal(prop.status, 'awaiting_confirmation');
-  // 5 200 + 2 100 = 7 300 ₽ + сбор 5% 365 ₽ = 7 665 ₽
-  assert.deepEqual(prop.money, { callOut: 520_000, work: 210_000, amount: 730_000, clientFee: 36_500, discount: 0, total: 766_500 });
+  // Работа — по таймеру: начатый час = полный час (1 500 ₽), сверху расходники 2 100 ₽.
+  // 5 200 + 1 500 + 2 100 = 8 800 ₽ + сбор 5% 440 ₽ = 9 240 ₽
+  assert.deepEqual(prop.money, { callOut: 520_000, work: 360_000, amount: 880_000, clientFee: 44_000, discount: 0, total: 924_000 });
+  assert.equal(prop.bill.units, 1);
+  assert.equal(prop.bill.time, 150_000);
+  assert.deepEqual(prop.bill.extras, [{ name: 'Расходники', amount: 210_000 }]);
 
   // Мастер не может подтвердить за клиента; клиент спорит, мастер называет заново, клиент подтверждает
   assert.equal((await t.api('POST', `/api/orders/${id}/confirm`, {}, master.token)).status, 403);
   ok(await t.api('POST', `/api/orders/${id}/dispute`, { reason: 'Договаривались на час' }, client.token));
-  ok(await t.api('POST', `/api/orders/${id}/amount`, { workAmount: 150_000, result: 'solved' }, master.token));
-  assert.equal((await t.api('POST', `/api/orders/${id}/confirm`, { total: 766_500 }, client.token)).body.error, 'amount_changed');
-  const done = ok(await t.api('POST', `/api/orders/${id}/confirm`, { total: 703_500 }, client.token));
+  // Спорят только о расходниках: время уже отработано и не растёт, пока мастер исправляет строки
+  t.clock.advance(3660);
+  const again = ok(await t.api('POST', `/api/orders/${id}/amount`, { extras: [{ name: 'Расходники', amount: 150_000 }], result: 'solved' }, master.token));
+  assert.equal(again.bill.units, 1);
+  // 5 200 + 1 500 + 1 500 = 8 200 ₽ + сбор 410 ₽ = 8 610 ₽
+  assert.equal(again.money.total, 861_000);
+  assert.equal((await t.api('POST', `/api/orders/${id}/confirm`, { total: 924_000 }, client.token)).body.error, 'amount_changed');
+  const done = ok(await t.api('POST', `/api/orders/${id}/confirm`, { total: 861_000 }, client.token));
   assert.equal(done.status, 'completed');
 
-  // Наличные: мастер должен площадке сбор + 5% (33 500 + 33 500)
+  // Наличные: мастер должен площадке сбор + 5% (41 000 + 41 000)
   const bal = ok(await t.api('GET', '/api/performer/balance', undefined, master.token));
-  assert.equal(bal.cash_debt, 67_000);
+  assert.equal(bal.cash_debt, 82_000);
   assert.equal(bal.paused, false);
 
   // Отзывы друг о друге, вес по рейтингу автора
@@ -177,7 +186,8 @@ test('агентская оплата: выезд замораживается, 
   assert.deepEqual(auctionFor(master.id).at(-1), id);
   await take(id, master);
   ok(await t.api('POST', `/api/orders/${id}/step`, { action: 'arrive' }, master.token));
-  ok(await t.api('POST', `/api/orders/${id}/amount`, { workAmount: 150_000, result: 'solved' }, master.token));
+  // Работа — ровно час по таймеру (1 500 ₽), без расходников
+  ok(await t.api('POST', `/api/orders/${id}/amount`, { result: 'solved' }, master.token));
   ok(await t.api('POST', `/api/orders/${id}/confirm`, {}, client.token));
 
   const pays = ok(await t.api('GET', `/api/orders/${id}/payments`, undefined, client.token));

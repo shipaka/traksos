@@ -516,7 +516,8 @@ export function NewOrder({ service }: { service: string }) {
           {est.hour != null && <>
             <div className="sum"><span>Первый час: диагностика <i>или</i> ремонт<small className="note" style={{ display: 'block' }}>одно из двух, не вместе</small></span><b>{rub(est.hour)}</b></div>
             <div className="sum"><span>Каждый следующий час</span><b>{rub(est.hour)}</b></div>
-            <div className="sum"><span>Запчасти</span><b>по чеку</b></div>
+            <div className="sum"><span>Запчасти и расходники</span><b>по чеку, отдельной строкой</b></div>
+            <span className="note">{pricing.data?.billingStep === 30 ? 'Время работы считается по получасам: начатые полчаса — полные полчаса.' : 'Каждый начатый час работы считается полным — даже если работа заняла 10 минут.'} Сумму за работу мастер не вводит руками — её считает таймер.</span>
           </>}
           {fromConsult && consult.data?.status && ['completed', 'awaiting_confirmation'].includes(consult.data.status) && (
             <div className="sum" style={{ color: 'var(--good-fg)' }}><span>Скидка после консультации</span><b>−{rub(consult.data.consultBack?.backDiscount ?? 20_000)}</b></div>

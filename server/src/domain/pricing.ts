@@ -75,8 +75,20 @@ export function isNight(p: Settings['pricing'], at: Date = new Date()) {
   return h >= p.nightFromHour || h < p.nightToHour;
 }
 
-/** Цена за время работы: округляем вверх до 6 минут, как принято у мастеров */
-export function workCost(hourPrice: number, minutes: number) {
-  const units = Math.ceil(minutes / 6);
-  return Math.round((hourPrice * units) / 10);
+export type Extra = { name: string; amount: number };
+export type Bill = {
+  minutes: number; step: number; units: number; hour: number | null; time: number;
+  waitMinutes: number; waitRate: number | null; wait: number; extras: Extra[]; extrasSum: number; total: number;
+};
+
+/** Сумма за работу по таймеру. Начатый шаг считается полностью (час с первой минуты; при шаге 30 — полчаса).
+ *  Время ожидания запчасти вычитается из работы и идёт по ставке ожидания. Расходники и запчасти — отдельными строками. */
+export function billWork(i: { hour: number | null; step: number; workMinutes: number | null; waitMinutes: number; waitRate: number | null; extras: Extra[] }): Bill {
+  const step = i.step === 30 ? 30 : 60;
+  const minutes = i.workMinutes == null ? 0 : Math.max(0, i.workMinutes - i.waitMinutes);
+  const units = i.hour == null || i.workMinutes == null ? 0 : Math.max(1, Math.ceil(minutes / step));
+  const time = i.hour == null ? 0 : Math.round((i.hour * units * step) / 60);
+  const wait = i.waitRate && i.waitMinutes ? Math.round((i.waitRate * i.waitMinutes) / 60 / 100) * 100 : 0;
+  const extrasSum = i.extras.reduce((s, x) => s + x.amount, 0);
+  return { minutes, step, units, hour: i.hour, time, waitMinutes: i.waitMinutes, waitRate: i.waitRate, wait, extras: i.extras, extrasSum, total: time + wait + extrasSum };
 }

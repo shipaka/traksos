@@ -32,7 +32,9 @@ async function orderToConfirm(method: 'cash' | 'online', work: number, c = clien
   const [f] = ok(await t.api('GET', `/api/orders/${r.order.id}/offers`, undefined, c.token)).offers;
   ok(await t.api('POST', `/api/orders/${r.order.id}/offers/${f.id}/choose`, {}, c.token));
   ok(await t.api('POST', `/api/orders/${r.order.id}/step`, { action: 'arrive' }, master.token));
-  ok(await t.api('POST', `/api/orders/${r.order.id}/amount`, { workAmount: work, result: 'solved' }, master.token));
+  // Здесь проверяем деньги, а не таймер: без цены часа вся работа — одной строкой на нужную сумму
+  await t.db.query(`update orders set estimate = estimate - 'hour' where id=$1`, [r.order.id]);
+  ok(await t.api('POST', `/api/orders/${r.order.id}/amount`, { extras: [{ name: 'Расходники', amount: work }], result: 'solved' }, master.token));
   return r.order.id as string;
 }
 

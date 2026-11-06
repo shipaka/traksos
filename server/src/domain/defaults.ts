@@ -51,6 +51,8 @@ export const defaultSettings = {
     /** За КАД считаем дорогу туда и половину обратно */
     roadFactor: 1.5,
     nightK: 1.5,
+    /** Тарификация работы: начатый шаг — полный шаг. 60 — почасовая, 30 — по получасам */
+    billingStepMinutes: 60,
     nightFromHour: 22,
     nightToHour: 7,
     /** Округление итоговой цены, копейки (50 ₽) */

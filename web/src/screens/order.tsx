@@ -53,7 +53,7 @@ export function Order({ id }: { id: string }) {
       {d.you === 'admin' && <AdminPanel d={d} onDone={o.reload} />}
       {(d.you === 'client' || d.you === 'admin') && d.paymentMethod !== 'cash' && <PaymentsList id={id} admin={d.you === 'admin'} />}
       {isPerformer && (isConsult ? <ConsultFinish d={d} onDone={o.reload} /> : <PerformerActions d={d} onDone={o.reload} />)}
-      {!isPerformer && d.status === 'working' && <WorkInProgress d={d} />}
+      {!isPerformer && ['arrived', 'working'].includes(d.status) && d.service !== 'consult' && <WorkInProgress d={d} />}
       {d.you !== 'candidate' && d.you !== 'admin' && d.service !== 'tow' && d.service !== 'consult' && ['arrived', 'working'].includes(d.status) && <PartPicker d={d} onDone={o.reload} performer={isPerformer} />}
       {!isPerformer && d.status === 'awaiting_confirmation' && (isConsult ? <ConsultConfirm d={d} onDone={o.reload} /> : <ConfirmAmount d={d} onDone={o.reload} />)}
       {d.recommendedCenter && !isPerformer && d.you !== 'candidate' && (
@@ -190,6 +190,41 @@ function ClientCard({ d }: { d: any }) {
   );
 }
 
+/** Правило тарификации одной фразой — его видят и клиент, и мастер */
+export function billingRule(step: number) {
+  return step === 30
+    ? 'Время работы считается по получасам: начатые полчаса — полные полчаса.'
+    : 'Каждый начатый час работы считается полным — даже если работа заняла 10 минут.';
+}
+const hrs = (units: number, step: number) => `${String((units * step) / 60).replace('.', ',')} ч`;
+const dur = (min: number) => min >= 60 ? `${Math.floor(min / 60)} ч ${min % 60} мин` : `${min} мин`;
+
+/** Живая разбивка по таймеру — так же считает сервер */
+function liveBill(d: any, now: number, extras: { name: string; amount: number }[]) {
+  if (d.status === 'awaiting_confirmation' && d.bill) return { ...d.bill, extras, extrasSum: extras.reduce((s, x) => s + x.amount, 0) };
+  const step = d.billingStep === 30 ? 30 : 60;
+  const hour = d.service === 'tow' ? null : d.estimate?.hour ?? null;
+  let waitMinutes = d.waitMinutes ?? 0;
+  if (d.waitStartedAt) waitMinutes += Math.max(1, Math.round((now - new Date(d.waitStartedAt).getTime()) / 60000));
+  const from = d.arrivedAt ?? d.workStartedAt;
+  const work = from ? Math.max(0, Math.floor((now - new Date(from).getTime()) / 60000)) : null;
+  const minutes = work == null ? 0 : Math.max(0, work - waitMinutes);
+  const units = hour == null || work == null ? 0 : Math.max(1, Math.ceil(minutes / step));
+  const time = hour == null ? 0 : Math.round((hour * units * step) / 60);
+  const wait = d.waitRate && waitMinutes ? Math.round((d.waitRate * waitMinutes) / 60 / 100) * 100 : 0;
+  const extrasSum = extras.reduce((s, x) => s + x.amount, 0);
+  return { minutes, step, units, hour, time, waitMinutes, waitRate: d.waitRate, wait, extras, extrasSum, total: time + wait + extrasSum };
+}
+
+/** Строки суммы за работу: время, ожидание, каждая доп. позиция */
+function BillRows({ b }: { b: any }) {
+  return <>
+    {b.units > 0 && <div className="sum"><span>Работа · {hrs(b.units, b.step)} × {rub(b.hour)}<small className="note" style={{ display: 'block' }}>по таймеру {dur(b.minutes)}</small></span><span>{rub(b.time)}</span></div>}
+    {b.wait > 0 && <div className="sum"><span>Ожидание запчасти · {b.waitMinutes} мин</span><span>{rub(b.wait)}</span></div>}
+    {(b.extras ?? []).map((x: any, i: number) => <div key={i} className="sum"><span>{x.name}</span><span>{rub(x.amount)}</span></div>)}
+  </>;
+}
+
 function Money({ d }: { d: any }) {
   const m = d.money;
   const proposed = ['awaiting_confirmation', 'completed'].includes(d.status) || m.work > 0;
@@ -204,11 +239,12 @@ function Money({ d }: { d: any }) {
     <div className="card">
       <b>{proposed ? 'Сумма' : 'Цена'}</b>
       <div className="sum"><span>Выезд{d.groupTrip ? ' (совместный)' : ''}{d.night ? ' · ночь' : ''}</span><span>{rub(m.callOut)}</span></div>
-      {proposed ? <div className="sum"><span>Работа</span><span>{rub(m.work)}</span></div>
+      {proposed ? (d.bill ? <BillRows b={d.bill} /> : <div className="sum"><span>Работа</span><span>{rub(m.work)}</span></div>)
         : d.estimate?.hour != null && <div className="sum"><span>Час работы</span><span>{rub(d.estimate.hour)}</span></div>}
       {proposed && m.clientFee > 0 && <div className="sum"><span>Сервисный сбор</span><span>{rub(m.clientFee)}</span></div>}
       {m.discount > 0 && d.you !== 'performer' && <div className="sum" style={{ color: 'var(--good-fg)' }}><span>Скидка{d.discountReason ? ` · ${d.discountReason}` : ''}</span><span>−{rub(m.discount)}</span></div>}
       {proposed && <><div className="hr" /><div className="sum total"><span>Итого</span><span>{rub(m.total)}</span></div></>}
+      {d.service !== 'tow' && d.estimate?.hour != null && !proposed && <span className="note">{billingRule(d.billingStep)}</span>}
       <span className="note">
         {d.paymentMethod === 'cash' ? 'Оплата мастеру на месте. Сумму подтверждаете в приложении.' : d.paymentMethod === 'online' ? 'Оплата через ТракSOS, мастеру — после подтверждения.' : 'Оплата по счёту на компанию.'}
       </span>
@@ -219,7 +255,12 @@ function Money({ d }: { d: any }) {
 
 function PerformerActions({ d, onDone }: { d: any; onDone: () => void }) {
   const { busy, run } = useAction();
-  const [work, setWork] = useState<number | null>(d.money.work || null);
+  const [extras, setExtras] = useState<{ name: string; amount: number | null }[]>(d.bill?.extras ?? []);
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 15000); return () => clearInterval(t); }, []);
+  const cleanExtras = extras.filter((x) => x.name.trim().length >= 2 && (x.amount ?? 0) > 0).map((x) => ({ name: x.name.trim(), amount: x.amount as number }));
+  const bill = liveBill(d, now, cleanExtras);
+  const setExtra = (i: number, v: Partial<{ name: string; amount: number | null }>) => setExtras(extras.map((x, j) => (j === i ? { ...x, ...v } : x)));
   const [result, setResult] = useState<string>(d.result ?? 'solved');
   const [note, setNote] = useState(d.resultNote ?? '');
   const [dropReason, setDropReason] = useState('');
@@ -240,23 +281,37 @@ function PerformerActions({ d, onDone }: { d: any; onDone: () => void }) {
       {['arrived', 'working', 'awaiting_confirmation'].includes(d.status) && (
         <div className="card">
           <b>{d.status === 'awaiting_confirmation' ? 'Ждём подтверждения клиента' : 'Закрыть выезд'}</b>
-          {(d.waitMinutes > 0 || d.waitStartedAt) && <span className="note">Ожидание запчасти: {d.waitMinutes} мин{d.waitRate ? ` × ${rub(d.waitRate)}/ч ≈ ${rub(Math.round(d.waitMinutes / 60 * d.waitRate / 100) * 100)}` : ''} — включите в сумму.</span>}
-          <Field label="Сумма за работу, без выезда">
-            <RubInput value={work} onChange={setWork} />
-          </Field>
+          <BillRows b={bill} />
+          
+          {bill.hour != null && <span className="note">Время идёт с «Я на месте» по цене часа {rub(bill.hour)}, о которой договорились до вызова, — его не изменить. {billingRule(bill.step)}</span>}
+          <b style={{ fontSize: 14 }}>Расходники и запчасти</b>
+          {extras.map((x, i) => (
+            <div key={i} className="row" style={{ flexWrap: 'nowrap', gap: 6 }}>
+              <input className="field" placeholder="Что: предохранители, провод, блок…" value={x.name} maxLength={60} onChange={(e) => setExtra(i, { name: e.target.value })} style={{ flex: 2 }} />
+              <div style={{ flex: 1 }}><RubInput value={x.amount} onChange={(v) => setExtra(i, { amount: v })} /></div>
+              <button type="button" className="btn ghost small" aria-label="Убрать строку" onClick={() => setExtras(extras.filter((_, j) => j !== i))}>×</button>
+            </div>
+          ))}
+          {extras.length < 10 && <div className="row" style={{ gap: 6 }}>
+            {['Расходники', 'Запчасть по чеку'].map((n) => <button key={n} type="button" className="pill" onClick={() => setExtras([...extras, { name: n, amount: null }])}>+ {n}</button>)}
+          </div>}
+          <div className="hr" />
+          <div className="sum total"><span>За работу итого</span><span>{rub(bill.total)}</span></div>
+          <span className="note">Плюс выезд {rub(d.money.callOut)}{d.money.clientFee ? ' и сервисный сбор' : ''}. Клиент увидит каждую строку.</span>
           <div className="stack">
             {Object.entries(RESULTS).map(([k, v]) => (
               <button key={k} type="button" className="opt" aria-pressed={result === k} onClick={() => setResult(k)}><b>{v}</b></button>
             ))}
           </div>
           <input className="field" placeholder="Что сделали — одной строкой" value={note} onChange={(e) => setNote(e.target.value)} maxLength={300} />
-          <button className="btn" disabled={busy || work == null} onClick={() =>
-            run(() => post(`/api/orders/${d.id}/amount`, { workAmount: work, result, note: note || undefined }), 'Клиенту отправлено на подтверждение').then((r) => r && onDone())}>
+          <button className="btn" disabled={busy} onClick={() =>
+            run(() => post(`/api/orders/${d.id}/amount`, { extras: cleanExtras, result, note: note || undefined }), 'Клиенту отправлено на подтверждение').then((r) => r && onDone())}>
             {d.status === 'awaiting_confirmation' ? 'Исправить сумму' : 'Отправить клиенту'}
           </button>
         </div>
       )}
 
+      {['arrived', 'working', 'awaiting_confirmation'].includes(d.status) && <ClientRefuses d={d} onDone={onDone} />}
       {['accepted', 'en_route'].includes(d.status) && (showDrop ? (
         <div className="card">
           <b>Не сможете приехать?</b>
@@ -266,6 +321,24 @@ function PerformerActions({ d, onDone }: { d: any; onDone: () => void }) {
             run(() => post(`/api/orders/${d.id}/drop`, { reason: dropReason }), 'Заявка передана другим').then((r) => r && (location.hash = '#/work'))}>Отказаться</button>
         </div>
       ) : <button className="btn bad" onClick={() => setShowDrop(true)}>Не смогу приехать</button>)}
+    </div>
+  );
+}
+
+/** Мастер: клиент отказывается платить — сразу поддержка */
+function ClientRefuses({ d, onDone }: { d: any; onDone: () => void }) {
+  const { busy, run } = useAction();
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState('');
+  if (!open) return <button className="btn ghost small" onClick={() => setOpen(true)}>Клиент отказывается платить</button>;
+  return (
+    <div className="card">
+      <b>Клиент отказывается платить</b>
+      <span className="note">Подключим поддержку: она свяжется с клиентом и разберёт по чату, фото и таймеру. Не спорьте на месте.</span>
+      <textarea className="field" placeholder="Что случилось: уехал не заплатив, говорит, что не сделано…" value={reason} onChange={(e) => setReason(e.target.value)} maxLength={500} />
+      <button className="btn bad" disabled={busy || reason.trim().length < 5} onClick={() =>
+        run(() => post(`/api/orders/${d.id}/nonpayment`, { kind: 'client_refuses', reason }), 'Поддержка подключена').then((r) => { if (r) { setOpen(false); onDone(); } })}>Позвать поддержку</button>
+      <button className="btn ghost small" onClick={() => setOpen(false)}>Отмена</button>
     </div>
   );
 }
@@ -289,17 +362,21 @@ function SitePills({ site }: { site: any }) {
 function WorkInProgress({ d }: { d: any }) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
-  const start = d.workStartedAt ? new Date(d.workStartedAt).getTime() : null;
+  const start = d.arrivedAt ?? d.workStartedAt;
   if (!start) return null;
-  const sec = Math.max(0, Math.floor((now - start) / 1000));
+  const sec = Math.max(0, Math.floor((now - new Date(start).getTime()) / 1000));
   const clock = `${Math.floor(sec / 3600)}:${String(Math.floor(sec / 60) % 60).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
-  const hour = d.money?.hourPrice ?? d.estimate?.hour;
-  const work = hour ? Math.max(1, Math.ceil(sec / 3600)) * hour : null;
+  const b = liveBill(d, now, []);
+  const due = d.money.callOut + b.time + b.wait;
   return (
     <div className="card flat" style={{ alignItems: 'center', textAlign: 'center' }}>
-      <span className="label" style={{ color: 'var(--accent)' }}>Мастер работает</span>
+      <span className="label" style={{ color: 'var(--accent)' }}>Мастер на месте · время идёт</span>
       <div className="timer">{clock}</div>
-      <span className="note">Время видите и вы, и мастер.{work ? ` По часам сейчас выходит около ${rub(work)} за работу, запчасти — по чеку.` : ''} Итог мастер пришлёт на подтверждение.</span>
+      {b.hour != null && <>
+        <div style={{ fontFamily: 'var(--display)', fontWeight: 700, fontSize: 22 }}>{rub(due)}</div>
+        <span className="note">Сейчас к оплате: выезд {rub(d.money.callOut)} + {hrs(b.units, b.step)} × {rub(b.hour)}{b.wait ? ` + ожидание ${rub(b.wait)}` : ''}. Эта сумма не меняется задним числом — мастер может добавить только расходники и запчасти, отдельными строками.</span>
+        <span className="note">{billingRule(d.billingStep)}</span>
+      </>}
       <div className="banner good" style={{ textAlign: 'left' }}><span>Гарантия на работу — <b>14 дней</b>: та же поломка снова — повторный выезд бесплатно.</span></div>
     </div>
   );
@@ -460,25 +537,40 @@ function ClientTab({ id, canEdit }: { id: string; canEdit: boolean }) {
 
 function ConfirmAmount({ d, onDone }: { d: any; onDone: () => void }) {
   const { busy, run } = useAction();
-  const [dispute, setDispute] = useState(false);
+  const [mode, setMode] = useState<null | 'menu' | 'extras' | 'not_done' | 'refuse'>(null);
   const [reason, setReason] = useState('');
+  const b = d.bill;
+  const send = (path: string, body: any, ok: string) => run(() => post(`/api/orders/${d.id}/${path}`, body), ok).then((r) => r && onDone());
   return (
     <div className="card hi">
-      <b>Мастер назвал сумму: {rub(d.money.total)}</b>
-      <span className="note">Подтвердите, если работа сделана и сумма как договорились. {d.paymentMethod === 'cash' ? 'Деньги отдайте мастеру.' : ''}</span>
-      {!dispute ? (
-        <>
-          <button className="btn good" disabled={busy} onClick={() =>
-            run(() => post(`/api/orders/${d.id}/confirm`, { total: d.money.total }), 'Сумма подтверждена').then((r) => r && onDone())}>Подтверждаю {rub(d.money.total)}</button>
-          <button className="btn ghost" onClick={() => setDispute(true)}>Не согласен</button>
-        </>
-      ) : (
-        <>
-          <input className="field" placeholder="Что не так: время, перечень работ, сумма" value={reason} onChange={(e) => setReason(e.target.value)} />
-          <button className="btn bad" disabled={busy || reason.length < 2} onClick={() =>
-            run(() => post(`/api/orders/${d.id}/dispute`, { reason }), 'Мастер получил ваше сообщение').then((r) => r && onDone())}>Отправить мастеру</button>
-        </>
-      )}
+      <b>К оплате: {rub(d.money.total)}</b>
+      <span className="note">Разбивка — в карточке «Сумма» выше.</span>
+      <span className="note">Выезд и время — по цене, о которой договорились до вызова. Оспорить можно только расходники и запчасти — и только если работа сделана. {d.paymentMethod === 'cash' ? 'Деньги отдайте мастеру.' : ''}</span>
+      {mode === null && <>
+        <button className="btn good" disabled={busy} onClick={() => send('confirm', { total: d.money.total }, 'Сумма подтверждена')}>Подтверждаю {rub(d.money.total)}</button>
+        <button className="btn ghost" onClick={() => setMode('menu')}>Не согласен</button>
+      </>}
+      {mode === 'menu' && <div className="stack">
+        {b?.extras?.length > 0 && <button className="opt" onClick={() => setMode('extras')}><b>Не согласен с расходниками</b><small>Работа сделана, но строки за материалы и запчасти — не те. Мастер исправит их, время не пересчитывается.</small></button>}
+        <button className="opt" onClick={() => setMode('not_done')}><b>Работа не выполнена</b><small>Поломка осталась или сделано не то. Подключим поддержку — разберёмся по чату и фото.</small></button>
+        <button className="opt" onClick={() => setMode('refuse')}><b>Не буду платить</b><small>Без причины</small></button>
+        <button className="btn ghost small" onClick={() => setMode(null)}>Назад</button>
+      </div>}
+      {(mode === 'extras' || mode === 'not_done') && <>
+        <textarea className="field" placeholder={mode === 'extras' ? 'Какая строка не так и почему' : 'Что не сделано: поломка осталась, сделали не то…'} value={reason} onChange={(e) => setReason(e.target.value)} maxLength={500} />
+        <button className="btn bad" disabled={busy || reason.trim().length < 5} onClick={() => mode === 'extras'
+          ? send('dispute', { reason }, 'Мастер получил ваше сообщение')
+          : send('nonpayment', { kind: 'not_done', reason }, 'Поддержка подключена')}>{mode === 'extras' ? 'Отправить мастеру' : 'Позвать поддержку'}</button>
+        <button className="btn ghost small" onClick={() => setMode('menu')}>Назад</button>
+      </>}
+      {mode === 'refuse' && <div className="banner warn col">
+        <b>Вы приняли оферту при входе</b>
+        <span className="note">По <a href="#/offer/client" target="_blank" rel="noreferrer">оферте</a> выезд и время работы по согласованной цене оплачиваются, если работа выполнена. Отказ платить за выполненную работу — нарушение договора: долг могут взыскать по закону, а аккаунт — заблокировать до оплаты.</span>
+        <span className="note">Если работа не сделана — выберите «Работа не выполнена» и укажите причину.</span>
+        <button className="btn" onClick={() => setMode('not_done')}>Работа не выполнена — указать причину</button>
+        <button className="btn good" disabled={busy} onClick={() => send('confirm', { total: d.money.total }, 'Сумма подтверждена')}>Подтвердить {rub(d.money.total)}</button>
+        <button className="btn bad small" disabled={busy} onClick={() => send('nonpayment', { kind: 'refuse' }, 'Поддержка подключена')}>Всё равно отказываюсь — позвать поддержку</button>
+      </div>}
     </div>
   );
 }
@@ -697,6 +789,8 @@ function Chat({ id, disabled }: { id: string; disabled: boolean }) {
   const [quick, setQuick] = useState<string[]>([]);
   const [people, setPeople] = useState<any[]>([]);
   const [text, setText] = useState('');
+  const [open, setOpen] = useState(false);
+  const [seen, setSeen] = useState(0);
   const box = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -707,7 +801,8 @@ function Chat({ id, disabled }: { id: string; disabled: boolean }) {
     });
     return () => { alive = false; off(); };
   }, [id]);
-  useEffect(() => { box.current?.scrollTo(0, box.current.scrollHeight); }, [msgs.length]);
+  useEffect(() => { box.current?.scrollTo(0, box.current.scrollHeight); }, [msgs.length, open]);
+  useEffect(() => { if (open) setSeen(msgs.length); }, [open, msgs.length]);
 
   async function send(body: string, kind: 'text' | 'quick' = 'text') {
     if (!body.trim()) return;
@@ -720,9 +815,20 @@ function Chat({ id, disabled }: { id: string; disabled: boolean }) {
     }
   }
 
+  // Свёрнут, пока не нажали: лента заявки не переполнена. Новые сообщения видно по счётчику.
+  const fresh = msgs.slice(seen).filter((m) => m.sender_id && m.sender_id !== me?.id && m.kind !== 'system').length;
+  if (!open) return (
+    <button type="button" className="card" onClick={() => setOpen(true)} style={{ textAlign: 'left', cursor: 'pointer', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+      <b>💬 Чат по заявке</b>
+      <span className="row" style={{ gap: 6 }}>
+        {fresh > 0 && <span className="pill warn">новых: {fresh}</span>}
+        <span className="note">{msgs.length ? `${msgs.length} сообщ.` : 'открыть'} ▾</span>
+      </span>
+    </button>
+  );
   return (
     <div className="card">
-      <b>Чат по заявке</b>
+      <button type="button" onClick={() => setOpen(false)} className="between" style={{ background: 'none', border: 0, padding: 0, color: 'inherit', cursor: 'pointer' }}><b>Чат по заявке</b><span className="note">свернуть ▴</span></button>
       {people.length > 0 && <span className="note">В чате: {people.map((p) => p.you ? 'вы' : `${({ owner: 'владелец', driver: 'водитель', performer: 'исполнитель', support: '' } as Record<string, string>)[p.who]} ${p.name ?? ''}`.trim()).join(', ')}. Номера скрыты.</span>}
       <div className="msgs" ref={box}>
         {msgs.length === 0 && <span className="note">Сообщений пока нет</span>}

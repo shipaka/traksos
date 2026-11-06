@@ -52,7 +52,7 @@ test('опаздываю, отметки на месте, проверка по�
   // чужой мастер карточку не видит
   const other = await t.login('+79993334455', 'master');
   assert.equal((await t.api('GET', `/api/orders/${id}/client-card`, undefined, other.token)).status, 403);
-  ok(await t.api('POST', `/api/orders/${id}/amount`, { workAmount: 100_000, result: 'solved' }, master.token));
+  ok(await t.api('POST', `/api/orders/${id}/amount`, { extras: [{ name: 'Расходники', amount: 100_000 }], result: 'solved' }, master.token));
   ok(await t.api('POST', `/api/orders/${id}/confirm`, {}, client.token));
 });
 

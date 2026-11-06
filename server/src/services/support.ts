@@ -6,7 +6,7 @@ import type { OrdersService } from './orders.ts';
 import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { maskPhones } from '../util.ts';
 
-export const TOPICS = ['Мастер не приехал', 'Не согласен с суммой', 'Проблема с оплатой', 'Вернуть деньги', 'Жалоба на исполнителя', 'Жалоба на клиента', 'Не работает приложение', 'Другое'];
+export const TOPICS = ['Мастер не приехал', 'Не согласен с суммой', 'Проблема с оплатой', 'Отказ от оплаты', 'Вернуть деньги', 'Жалоба на исполнителя', 'Жалоба на клиента', 'Не работает приложение', 'Другое'];
 
 const isStaff = (u: AuthUser) => u.roles.includes('admin') || u.roles.includes('moderator');
 

@@ -13,7 +13,7 @@ const o = (await api('POST','/api/orders',{service:'electric',zoneId:'spb',descr
 await api('POST',`/api/orders/${o.id}/offers`,{},m); const l = await api('GET',`/api/orders/${o.id}/offers`,undefined,k);
 await api('POST',`/api/orders/${o.id}/offers/${l.offers[0].id}/choose`,{},k);
 await api('POST',`/api/orders/${o.id}/step`,{action:'arrive'},m);
-await api('POST',`/api/orders/${o.id}/amount`,{workAmount:300000,result:'solved'},m);
+await api('POST',`/api/orders/${o.id}/amount`,{extras: [{ name: 'Расходники', amount: 300000 }],result:'solved'},m);
 await api('POST',`/api/orders/${o.id}/dispute`,{reason:'Работал 20 минут, а не час'},k);
 const b = await chromium.launch(); const errs=[];
 const C = async (l) => { await l.first().evaluate(e=>e.scrollIntoView({block:'center'})); await l.first().click(); };

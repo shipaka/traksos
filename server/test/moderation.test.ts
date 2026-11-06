@@ -23,7 +23,7 @@ before(async () => {
   const l = ok(await t.api('GET', `/api/orders/${o.id}/offers`, undefined, client.token));
   ok(await t.api('POST', `/api/orders/${o.id}/offers/${l.offers[0].id}/choose`, {}, client.token));
   ok(await t.api('POST', `/api/orders/${o.id}/step`, { action: 'arrive' }, master.token));
-  ok(await t.api('POST', `/api/orders/${o.id}/amount`, { workAmount: 300_000, result: 'solved' }, master.token));
+  ok(await t.api('POST', `/api/orders/${o.id}/amount`, { extras: [{ name: 'Расходники', amount: 300_000 }], result: 'solved' }, master.token));
   orderId = o.id;
 });
 after(() => t.close());
@@ -54,7 +54,7 @@ test('спор по сумме попадает в очередь; решени�
 });
 
 test('оспоренный отзыв не влияет на рейтинг до решения; «скрыть» — убирает', async () => {
-  ok(await t.api('POST', `/api/orders/${orderId}/amount`, { workAmount: 150_000, result: 'solved' }, master.token));
+  ok(await t.api('POST', `/api/orders/${orderId}/amount`, { extras: [{ name: 'Расходники', amount: 150_000 }], result: 'solved' }, master.token));
   ok(await t.api('POST', `/api/orders/${orderId}/confirm`, {}, client.token));
   ok(await t.api('POST', `/api/orders/${orderId}/review`, { stars: 5 }, client.token));
   ok(await t.api('POST', `/api/orders/${orderId}/review`, { stars: 1, text: 'Ужасный клиент' }, master.token));
