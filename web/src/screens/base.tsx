@@ -1,7 +1,7 @@
 // Рембаза (сервис-партнёр): кабинет сервиса и запись клиента в сервис.
 import { useEffect, useState } from 'react';
 import { get, post, put, rub, fmtTime } from '../api.ts';
-import { BRANDS, FEE_PURPOSE } from '../dict.ts';
+import { BRANDS, FEE_PURPOSE, PLACES } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '../ui.tsx';
 
 export const NEEDS: Record<string, string> = {
@@ -397,41 +397,130 @@ function useGps() {
   return pos;
 }
 
+type Search = { place: string; need: string; sort: 'near' | 'rating' | 'free'; radius: number; open: boolean; cond: string[]; accepts: string[]; myBrand: boolean };
+const SEARCH0: Search = { place: 'gps', need: '', sort: 'near', radius: 50, open: false, cond: [], accepts: [], myBrand: false };
+const RADII = [15, 30, 50, 100, 0];
+const loadSearch = (): Search => { try { return { ...SEARCH0, ...JSON.parse(localStorage.getItem('traksos.svcsearch') ?? '{}') }; } catch { return SEARCH0; } };
+
+/** Поиск рембазы: откуда искать и что нужно — сверху, сортировка и радиус — одной строкой, остальное — в «Фильтрах».
+ *  В списке — только главное, подробности — в карточке сервиса. */
 export function ServicesList() {
   const q = query();
-  const [need, setNeed] = useState(q.get('need') ?? '');
   const from = q.get('from');
-  const pos = useGps();
+  const [s, setS0] = useState<Search>(() => ({ ...loadSearch(), ...(q.get('need') ? { need: q.get('need')! } : {}) }));
+  const setS = (v: Partial<Search>) => setS0((x) => { const n = { ...x, ...v }; try { localStorage.setItem('traksos.svcsearch', JSON.stringify(n)); } catch { /* */ } return n; });
+  const [pickPlace, setPickPlace] = useState(false);
+  const gps = useGps();
   const cars = useLoad(() => get('/api/vehicles'), []);
   const brand = cars.data?.[0]?.brand ?? '';
-  const list = useLoad(() => get(`/api/services?${new URLSearchParams({ ...(pos ? { lat: String(pos.lat), lng: String(pos.lng) } : {}), ...(need ? { need } : {}), ...(brand ? { brand } : {}) })}`), [pos?.lat, need, brand]);
+  const preset = PLACES.find((p) => p.id === s.place);
+  const point = s.place === 'gps' ? gps : preset ?? null;
+  const list = useLoad(() => get(`/api/services?${new URLSearchParams({ ...(point ? { lat: String(point.lat), lng: String(point.lng) } : {}), ...(s.need ? { need: s.need } : {}), ...(brand ? { brand } : {}) })}`), [point?.lat, point?.lng, s.need, brand]);
+  const nFilters = (s.open ? 1 : 0) + s.cond.length + s.accepts.length + (s.myBrand ? 1 : 0);
+  const all: any[] = list.data ?? [];
+  const inRadius = (c: any) => !s.radius || c.distanceKm == null || c.distanceKm <= s.radius;
+  const shown = all
+    .filter(inRadius)
+    .filter((c) => !s.open || c.openNow)
+    .filter((c) => s.cond.every((k) => (c.conditions ?? []).includes(k)))
+    .filter((c) => s.accepts.every((k) => (c.accepts ?? []).includes(k)))
+    .filter((c) => !s.myBrand || c.knowsBrand)
+    .sort((a, b) => s.sort === 'rating' ? (b.rating ?? 0) - (a.rating ?? 0) || (b.reviews ?? 0) - (a.reviews ?? 0)
+      : s.sort === 'free' ? (a.load ?? 0) - (b.load ?? 0) || (a.distanceKm ?? 1e9) - (b.distanceKm ?? 1e9)
+      : (a.distanceKm ?? 1e9) - (b.distanceKm ?? 1e9));
+  const outside = all.filter((c) => !inRadius(c)).length;
+  const toggle = (k: 'cond' | 'accepts', v: string) => setS({ [k]: s[k].includes(v) ? s[k].filter((x) => x !== v) : [...s[k], v] } as any);
+
   return (
     <main>
       <Back to="" label="Главная" />
       <div>
-        <h1>Сервисы-партнёры</h1>
+        <h1>Найти рембазу</h1>
         <div className="sub">Только ремзоны, с которыми ТракSOS договорился лично. Цену сервис скажет после осмотра.</div>
       </div>
       {from && <div className="banner col"><b>По совету мастера — скидка в сервисе</b><span className="note">Запишитесь отсюда — скидка применится в счёте сама.</span></div>}
-      <div className="scroll-x">
-        <button className="chip" aria-pressed={!need} onClick={() => setNeed('')}>Все</button>
-        {Object.entries(NEEDS).filter(([k]) => k !== 'other').map(([k, n]) => <button key={k} className="chip" aria-pressed={need === k} onClick={() => setNeed(k)}>{n}</button>)}
-      </div>
-      {!list.data ? <Loading error={list.error} /> : !list.data.length ? <div className="empty">Пока нет сервисов{need ? ` с услугой «${NEEDS[need]}»` : ''}. Вызовите выездного мастера — он приедет на место.</div> : (
-        <div className="stack">
-          {list.data.map((c: any) => (
-            <a key={c.id} href={`#/services/${c.id}${from ? `?from=${from}` : ''}`} className="card" style={{ textDecoration: 'none', color: 'inherit' }}>
-              <div className="between">
-                <b>{c.name}</b>
-                {c.rating ? <span className="pill good">★ {c.rating.toFixed(1)} · {c.reviews}</span> : <span className="pill">новый</span>}
-              </div>
-              <span className="note">{c.address} · {c.hours}{c.distanceKm != null ? ` · до вас ${c.distanceKm} км` : ''}</span>
-              <span className="note">{c.paused ? 'Приём временно закрыт' : c.closedToday ? 'Сегодня закрыт' : c.accepts.map((a: string) => ACCEPTS[a]?.[0]).join(' · ')} · {POP[c.popularity]}{c.load ? ` · сейчас машин: ${c.load}` : ''}</span>
-              {c.knowsBrand && <span className="pill accent" style={{ alignSelf: 'flex-start' }}>Знает {brand}</span>}
-            </a>
-          ))}
+
+      {/* 1. Откуда искать */}
+      <div className="card" style={{ gap: 8 }}>
+        <span className="label">Где машина</span>
+        <div className="between">
+          <b>{s.place === 'gps' ? (gps ? '📍 Рядом со мной' : '📍 Определяю место…') : `📍 ${preset?.name ?? 'Выберите место'}`}</b>
+          <button type="button" className="btn ghost small" onClick={() => setPickPlace(!pickPlace)}>{pickPlace ? 'Готово' : 'Изменить'}</button>
         </div>
-      )}
+        {s.place === 'gps' && !gps && !pickPlace && <span className="note">Нет доступа к геолокации? Нажмите «Изменить» и выберите район.</span>}
+        {pickPlace && <div className="row" style={{ gap: 6 }}>
+          <button type="button" className="chip" aria-pressed={s.place === 'gps'} onClick={() => { setS({ place: 'gps' }); setPickPlace(false); }}>По GPS</button>
+          {PLACES.map((p) => <button key={p.id} type="button" className="chip" aria-pressed={s.place === p.id} onClick={() => { setS({ place: p.id }); setPickPlace(false); }}>{p.name}</button>)}
+        </div>}
+      </div>
+
+      {/* 2. Что нужно */}
+      <div className="stack" style={{ gap: 6 }}>
+        <span className="label">Что нужно</span>
+        <div className="scroll-x">
+          <button className="chip" aria-pressed={!s.need} onClick={() => setS({ need: '' })}>Всё</button>
+          {Object.entries(NEEDS).filter(([k]) => k !== 'other').map(([k, n]) => <button key={k} className="chip" aria-pressed={s.need === k} onClick={() => setS({ need: k })}>{n}</button>)}
+        </div>
+      </div>
+
+      {/* 3. Порядок и радиус */}
+      <span className="label">Сначала</span>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginTop: -6 }}>
+        {([['near', 'Ближе'], ['rating', 'Рейтинг'], ['free', 'Свободнее']] as const).map(([k, n]) => <button key={k} type="button" className="seg" aria-pressed={s.sort === k} onClick={() => setS({ sort: k })}>{n}</button>)}
+      </div>
+      <div className="stack" style={{ gap: 6 }}>
+        <span className="label">Радиус поиска</span>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 4 }}>
+          {RADII.map((r) => <button key={r} type="button" className="seg" style={{ fontSize: 13, padding: 0 }} aria-pressed={s.radius === r} onClick={() => setS({ radius: r })}>{r ? `${r} км` : 'все'}</button>)}
+        </div>
+      </div>
+
+      {/* 4. Остальные фильтры — свёрнуты */}
+      <details className="card">
+        <summary><b>Фильтры{nFilters ? ` · ${nFilters}` : ''}</b></summary>
+        <div className="stack" style={{ marginTop: 10 }}>
+          <label className="row" style={{ gap: 8 }}><input type="checkbox" checked={s.open} onChange={(e) => setS({ open: e.target.checked })} /> Открыто сейчас</label>
+          {brand && <label className="row" style={{ gap: 8 }}><input type="checkbox" checked={s.myBrand} onChange={(e) => setS({ myBrand: e.target.checked })} /> Знают {brand}</label>}
+          <span className="label">На месте</span>
+          <div className="row" style={{ gap: 6 }}>{Object.entries(CONDITIONS).map(([k, n]) => <button key={k} type="button" className="chip" aria-pressed={s.cond.includes(k)} onClick={() => toggle('cond', k)}>{n}</button>)}</div>
+          <span className="label">Как быстро</span>
+          <div className="row" style={{ gap: 6 }}>{Object.entries(ACCEPTS).map(([k, [n]]) => <button key={k} type="button" className="chip" aria-pressed={s.accepts.includes(k)} onClick={() => toggle('accepts', k)}>{n}</button>)}</div>
+          {nFilters > 0 && <button type="button" className="btn ghost small" onClick={() => setS({ open: false, cond: [], accepts: [], myBrand: false })}>Сбросить фильтры</button>}
+        </div>
+      </details>
+
+      {/* 5. Результат */}
+      {!list.data ? <Loading error={list.error} /> : <>
+        <span className="note">{shown.length ? `Найдено: ${shown.length}${s.radius && point ? ` в радиусе ${s.radius} км` : ''}` : ''}{!point ? ' · расстояние появится, когда выберете место' : ''}</span>
+        {!shown.length ? (
+          <div className="empty col" style={{ gap: 8 }}>
+            <span>Подходящих сервисов не нашли{s.need ? ` с услугой «${NEEDS[s.need]}»` : ''}.</span>
+            {outside > 0 && <button type="button" className="btn ghost small" onClick={() => setS({ radius: 0 })}>Показать дальше — ещё {outside}</button>}
+            {nFilters > 0 && <button type="button" className="btn ghost small" onClick={() => setS({ open: false, cond: [], accepts: [], myBrand: false })}>Сбросить фильтры</button>}
+            <a className="btn small" href="#/sos">Вызвать выездного мастера</a>
+          </div>
+        ) : (
+          <div className="stack">
+            {shown.map((c: any) => (
+              <a key={c.id} href={`#/services/${c.id}${from ? `?from=${from}` : ''}`} className="card" style={{ textDecoration: 'none', color: 'inherit', gap: 6 }}>
+                <div className="between" style={{ alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                    <b>{c.name}</b>
+                    <span className="note">{c.address}</span>
+                  </div>
+                  {c.distanceKm != null && <b style={{ fontFamily: 'var(--display)', whiteSpace: 'nowrap' }}>{c.distanceKm} км</b>}
+                </div>
+                <div className="row" style={{ gap: 4 }}>
+                  {c.rating ? <span className="pill good">★ {c.rating.toFixed(1)} · {c.reviews}</span> : <span className="pill">новый</span>}
+                  {c.paused ? <span className="pill warn">приём закрыт</span> : c.openNow === true ? <span className="pill good">открыто · {c.hours}</span> : c.openNow === false ? <span className="pill">закрыто · {c.hours}</span> : <span className="pill">{c.hours}</span>}
+                  {c.load ? <span className="pill">машин: {c.load}</span> : <span className="pill good">свободно</span>}
+                  {c.knowsBrand && <span className="pill accent">знают {brand}</span>}
+                </div>
+              </a>
+            ))}
+          </div>
+        )}
+      </>}
     </main>
   );
 }

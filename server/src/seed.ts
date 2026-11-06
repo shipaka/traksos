@@ -82,6 +82,20 @@ export async function seed(db: Awaited<ReturnType<typeof createDb>>) {
        '{"electric":"own","air":"own","engine":"own","gearbox":"invite","brakes":"own","chassis":"own","tires":"none"}', '{parking,pit,night}', '{quick,day,long}', 'approved', now())
      on conflict (owner_id) do nothing`, [base]);
 
+  // Ещё две рембазы для поиска по расстоянию: север и юг области
+  for (const [phone, name, address, lat, lng, hours, brands, staff, cond, acc] of [
+    ['+79000000032', 'Парнас-Дизель', 'Парнас, 4-й Верхний пер., 1', 60.07, 30.36, '00:00–23:59', '{Volvo,Renault,DAF}',
+      '{"electric":"own","air":"own","engine":"invite","gearbox":"none","brakes":"own","chassis":"own","tires":"own"}', '{parking,lift,night}', '{quick,day}'],
+    ['+79000000033', 'Гатчина-Трак', 'Гатчина, Промзона 2', 59.57, 30.12, '09:00–18:00', '{КАМАЗ,MAN,Scania}',
+      '{"electric":"invite","air":"own","engine":"own","gearbox":"own","brakes":"own","chassis":"own","tires":"none"}', '{parking,pit}', '{day,long}'],
+  ] as const) {
+    const owner = await user(phone, ['service'], name);
+    await db.query(
+      `insert into service_centers(owner_id, name, address, lat, lng, hours, inn, brands, staff, conditions, accepts, verification, accepts_confirmed_at)
+       values ($1,$2,$3,$4,$5,$6,null,$7,$8,$9,$10,'approved',now()) on conflict (owner_id) do nothing`,
+      [owner, name, address, lat, lng, hours, brands, staff, cond, acc]);
+  }
+
   // Магазин — товары для примера; сам магазин выключен, включается в админке
   for (const [cat, name, spec, price, stock, kit] of [
     ['kit', 'Тревожный чемоданчик', 'Розетка, перекидка, адаптер 7/15, предохранители, изолента', 450_000, 2, true],
@@ -107,6 +121,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   await seed(db);
   console.log('Тестовые данные на месте. Входите по номерам:');
   console.log(`  админ ${DEMO.admin} · модератор ${DEMO.moderator} · клиент ${DEMO.client} · компания ${DEMO.company} · водитель компании ${DEMO.driver}`);
-  console.log(`  мастера ${DEMO.masters.map((m) => m.phone).join(', ')} · эвакуатор ${DEMO.tow.phone} · рембаза ${DEMO.service}`);
+  console.log(`  мастера ${DEMO.masters.map((m) => m.phone).join(', ')} · эвакуатор ${DEMO.tow.phone} · рембазы ${DEMO.service}, +79000000032, +79000000033`);
   await db.close();
 }

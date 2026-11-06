@@ -23,6 +23,17 @@ export const WORKS = ['Диагностика', 'Электрика', 'Пнев�
 export const DECLINE = ['Нет такого специалиста', 'Нет мест', 'Не работаем с этой маркой'];
 
 const msk = (d: Date) => new Date(d.getTime() + 3 * 3600_000).toISOString().slice(0, 10);
+/** Открыто ли сейчас по строке часов: «08:00–21:00», «22:00–06:00», «круглосуточно», «24/7» */
+export function openAt(hours: string | null | undefined, at: Date): boolean | null {
+  if (!hours) return null;
+  if (/кругл|24\s*\/\s*7|24 ч/i.test(hours)) return true;
+  const m = hours.match(/(\d{1,2})[:.](\d{2})\s*[–—-]\s*(\d{1,2})[:.](\d{2})/);
+  if (!m) return null;
+  const t = new Date(at.getTime() + 3 * 3600_000);
+  const now = t.getUTCHours() * 60 + t.getUTCMinutes();
+  const a = +m[1] * 60 + +m[2], b = +m[3] * 60 + +m[4];
+  return a <= b ? now >= a && now < b : now >= a || now < b;
+}
 
 export interface CenterInput {
   name?: string; address?: string; lat?: number | null; lng?: number | null; hours?: string; inn?: string | null;
@@ -277,6 +288,7 @@ export class ServiceCenters {
         conditions: c.conditions, accepts: c.accepts, rating: c.rating, reviews: c.reviews_n, load: c.load_n,
         popularity: c.closed_n === 0 ? 'new' : c.closed_n / max > 0.66 ? 'top' : c.closed_n / max > 0.33 ? 'often' : 'rare',
         closedToday: (c.closed_days ?? []).some((d: any) => msk(new Date(d)) === today),
+        openNow: (c.closed_days ?? []).some((d: any) => msk(new Date(d)) === today) ? false : openAt(c.hours, this.now()),
         knowsBrand: p.brand ? (c.brands ?? []).includes(p.brand) : null,
         distanceKm: p.lat != null && p.lng != null && c.lat != null && c.lng != null ? Math.round(haversineKm({ lat: p.lat, lng: p.lng }, { lat: c.lat, lng: c.lng }) * 10) / 10 : null,
       }))

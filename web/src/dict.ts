@@ -158,3 +158,19 @@ export function seriesHint(brand?: string | null, year?: number | string | null)
 
 /** Куда идёт сбор ТракSOS — одной фразой для финансов в кабинетах */
 export const FEE_PURPOSE = 'Сбор ТракSOS идёт на рекламу — чтобы клиенты находили помощь, а исполнители заказы, — на поддержку и развитие платформы. Спасибо, что вы с нами.';
+
+/** Точки для поиска рембазы без GPS: где обычно стоят машины в СПб и ЛО */
+export const PLACES: { id: string; name: string; lat: number; lng: number }[] = [
+  { id: 'center', name: 'Центр СПб', lat: 59.934, lng: 30.335 },
+  { id: 'shushary', name: 'Шушары', lat: 59.80, lng: 30.38 },
+  { id: 'pulkovo', name: 'Пулково', lat: 59.80, lng: 30.27 },
+  { id: 'kolpino', name: 'Колпино', lat: 59.75, lng: 30.59 },
+  { id: 'parnas', name: 'Парнас', lat: 60.07, lng: 30.34 },
+  { id: 'murino', name: 'Мурино', lat: 60.05, lng: 30.44 },
+  { id: 'kudrovo', name: 'Кудрово', lat: 59.90, lng: 30.51 },
+  { id: 'gatchina', name: 'Гатчина', lat: 59.57, lng: 30.13 },
+  { id: 'tosno', name: 'Тосно', lat: 59.54, lng: 30.88 },
+  { id: 'kirishi', name: 'Кириши', lat: 59.45, lng: 32.02 },
+  { id: 'vyborg', name: 'Выборг', lat: 60.71, lng: 28.75 },
+  { id: 'luga', name: 'Луга', lat: 58.74, lng: 29.85 },
+];
