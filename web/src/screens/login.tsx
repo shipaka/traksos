@@ -78,12 +78,15 @@ export function Login({ driver }: { driver?: boolean } = {}) {
         <button type="button" className="helpBtn" onClick={() => setIntent('help')} aria-label="Помогите — вызвать мастера или эвакуатор">
           <span className="t">Помогите</span>
           <span className="s">мастер или эвакуатор</span>
+          <span className="tap" aria-hidden="true">👆</span>
         </button>
         <div className="sub" style={{ textAlign: 'center', marginTop: 0 }}>Сломались в дороге — приедем на место</div>
       </div>
-      <button type="button" className="btn ghost" onClick={() => setIntent('login')}>Войти по номеру</button>
-      <div className="sub" style={{ textAlign: 'center' }}>Владельцы, водители, мастера, рембазы — один вход, кабинет откроется сам</div>
-      <button type="button" className="link" onClick={() => setIntent('join')} style={{ background: 'none', border: 0, color: 'var(--accent)', fontWeight: 600, padding: 8 }}>Хочу работать с ТракSOS →</button>
+      <div className="stack" style={{ marginTop: 'clamp(40px, 12vh, 110px)' }}>
+        <button type="button" className="btn ghost" onClick={() => setIntent('login')}>Войти по номеру</button>
+        <div className="sub" style={{ textAlign: 'center' }}>Владельцы, водители, мастера, рембазы — один вход, кабинет откроется сам</div>
+        <button type="button" className="link" onClick={() => setIntent('join')} style={{ background: 'none', border: 0, color: 'var(--accent)', fontWeight: 600, padding: 8 }}>Хочу работать с ТракSOS →</button>
+      </div>
     </main>
   );
 
