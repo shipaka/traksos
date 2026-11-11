@@ -55,6 +55,11 @@ try {
       await page.getByRole('link', { name: /Гараж и история/ }).click();
       await page.getByRole('heading', { name: 'Мой гараж' }).waitFor();
       if (await page.locator('.tabbar:visible').count()) throw new Error('Desktop cabinet uses app navigation');
+      await page.goto(base + '/#/fleet/finances');
+      await page.getByRole('heading', { name: 'Финансы автопарка' }).waitFor();
+      await page.getByRole('combobox', { name: 'Статус оплаты' }).waitFor();
+      await page.getByRole('button', { name: 'Скачать CSV' }).waitFor();
+      await page.locator('.finance-toolbar').waitFor({ state: 'visible' });
       await page.locator('.toast').waitFor({ state: 'hidden', timeout: 8000 });
       if (screenshotDir) await page.screenshot({ path: screenshotDir + '/site-client-desktop.png', fullPage: false });
     }
