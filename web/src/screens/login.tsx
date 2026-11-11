@@ -75,7 +75,7 @@ export function Login({ driver }: { driver?: boolean } = {}) {
     : intent === 'join' ? 'Выберите, кем подключаетесь. После входа заполните профиль — проверим и откроем заявки.'
     : 'Пришлём код. Пароль не нужен — кабинет откроется сам.';
 
-  if (!intent && !native.isApp) return (
+  if (!intent && !native.isApp && window.innerWidth > 800) return (
     <main className="web-landing">
       <section className="web-hero">
         <span className="label" style={{ color: 'var(--accent)' }}>ТракSOS · Санкт-Петербург и Ленинградская область</span>
