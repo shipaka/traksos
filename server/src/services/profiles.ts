@@ -1,3 +1,14 @@
+interface VehicleDetails {
+  brand: string;
+  model?: string;
+  year?: number;
+  plate?: string;
+  trailerPlate?: string;
+  vin?: string;
+  engine?: string;
+  configurationNotes?: string;
+}
+
 import type { Db } from '../db/index.ts';
 import type { SettingsService } from './settings.ts';
 import { bad, forbidden, notFound, type AuthUser } from '../http/router.ts';
@@ -172,12 +183,35 @@ export class ProfilesService {
     return this.db.query(`select * from vehicles where owner_id=$1 and ${own} order by created_at`, user.owner_id ? [ownerId, user.id] : [ownerId]);
   }
 
-  async addVehicle(user: AuthUser, v: { brand: string; model?: string; year?: number; plate?: string; trailerPlate?: string }) {
+  async addVehicle(user: AuthUser, v: VehicleDetails) {
     if (user.owner_id) throw forbidden('Машины добавляет владелец');
     return this.db.one(
-      `insert into vehicles(owner_id, brand, model, year, plate, trailer_plate) values ($1,$2,$3,$4,$5,$6) returning *`,
-      [user.id, v.brand, v.model ?? null, v.year ?? null, v.plate?.toUpperCase() ?? null, v.trailerPlate?.toUpperCase() ?? null],
+      `insert into vehicles(owner_id, brand, model, year, plate, trailer_plate, vin, engine, configuration_notes) values ($1,$2,$3,$4,$5,$6,$7,$8,$9) returning *`,
+      [user.id, v.brand, v.model ?? null, v.year ?? null, v.plate?.toUpperCase() ?? null, v.trailerPlate?.toUpperCase() ?? null, v.vin?.toUpperCase() ?? null, v.engine ?? null, v.configurationNotes ?? null],
     );
+  }
+
+  async updateVehicle(user: AuthUser, id: string, v: Partial<VehicleDetails>) {
+    if (user.owner_id) throw forbidden('Машину редактирует владелец');
+    const fields: string[] = [];
+    const values: unknown[] = [id, user.id];
+    const add = (column: string, value: unknown) => {
+      values.push(value);
+      fields.push(`${column}=${values.length}`);
+    };
+    if (v.brand !== undefined) add('brand', v.brand);
+    if (v.model !== undefined) add('model', v.model || null);
+    if (v.year !== undefined) add('year', v.year);
+    if (v.plate !== undefined) add('plate', v.plate?.toUpperCase() || null);
+    if (v.trailerPlate !== undefined) add('trailer_plate', v.trailerPlate?.toUpperCase() || null);
+    if (v.vin !== undefined) add('vin', v.vin?.toUpperCase() || null);
+    if (v.engine !== undefined) add('engine', v.engine || null);
+    if (v.configurationNotes !== undefined) add('configuration_notes', v.configurationNotes || null);
+    if (!fields.length) throw bad('empty_update', 'Укажите, что изменить');
+    const updated = await this.db.one(
+      `update vehicles set ${fields.join(', ')} where id=$1 and owner_id=$2 returning *`, values);
+    if (!updated) throw notFound('Машина не найдена');
+    return updated;
   }
 
   /**
