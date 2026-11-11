@@ -152,9 +152,13 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       ? [['/insurer', '▤', 'Заявки'], ['/support', '?', 'Помощь'], ['/menu', '☷', 'Меню']]
       : [['/', '🔧', 'Услуги'], ['/sos', '!', 'SOS'], ['/orders', '☰', 'Заявки'], ['/garage', '▭', 'Гараж'], ['/menu', '☷', 'Меню']];
   return (
-    <div className="app">
+    <div className={`app ${native.isApp ? 'native-app' : 'website'}`}>
       <header className="top">
-        <span className="logo">Трак<b>SOS</b></span>
+        <a className="logo" href={me ? (mode === 'performer' ? '#/work' : mode === 'admin' ? '#/admin' : mode === 'service' ? '#/base' : mode === 'insurer' ? '#/insurer' : '#/') : '#/'} aria-label="ТракSOS — главная">Трак<b>SOS</b></a>
+        {!native.isApp && <nav className="site-nav" aria-label="Основная навигация">
+          {tabs.map(([href, , name]) => <a key={href} href={'#' + href} className={here === href || (href !== '/' && here.startsWith(href + '/')) ? 'active' : ''}>{name}</a>)}
+          {!me && <><a href="#/help">Как это работает</a><a href="#/offer/client">Условия</a></>}
+        </nav>}
         <div className="row" style={{ flexWrap: 'nowrap' }}>
           {me && mode === 'performer' && <span className="pill accent">исполнитель</span>}
           {me && mode === 'admin' && <span className="pill accent">админ</span>}
@@ -168,7 +172,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       </header>
       {children}
       <SiteFooter />
-      {tabs.length > 0 && (
+      {native.isApp && tabs.length > 0 && (
         <nav className="tabbar">
           {tabs.map(([href, ic, name]) => (
             <a key={href} href={'#' + href} className={`${here === href || (href !== '/' && here.startsWith(href + '/') && href !== '/work' && href !== '/base') ? 'on' : ''} ${href === '/sos' ? 'sosTab' : ''}`}>
