@@ -18,7 +18,7 @@ export function NearbyMap({ items, center, kind = 'service' }: { items: any[]; c
     <div className="nearby-map-plane">
       {center && <span className="nearby-map-you" style={{ left: x(center.lng) + '%', top: y(center.lat) + '%' }} title="Ваше местоположение">●</span>}
       {located.slice(0, 80).map((p) => <button type="button" key={p.id} className={'nearby-map-pin ' + (p.isPartner === true ? 'partner' : 'neutral')} style={{ left: x(Number(p.lng)) + '%', top: y(Number(p.lat)) + '%' }} aria-label={p.name ?? 'Точка'} title={p.name} onClick={() => setSelected(String(p.id))}>{kind === 'master' ? '🔧' : '✚'}</button>)}
-      {chosen && <div className="nearby-map-selected"><b>{chosen.name}</b><span>{chosen.address ?? 'Координаты предоставлены исполнителем'}</span>{kind === 'service' && <a href={'#/services/' + encodeURIComponent(chosen.id)}>Открыть сервис →</a>}</div>}
+      {chosen && <div className="nearby-map-selected"><b>{chosen.name}</b><span>{chosen.address ?? 'Координаты предоставлены исполнителем'}</span>{kind === 'service' && !chosen.directoryOnly && <a href={'#/services/' + encodeURIComponent(chosen.id)}>Открыть сервис →</a>}{chosen.directoryOnly && <span>Справочная точка · запись пока недоступна</span>}</div>}
     </div>
     <div className="nearby-map-foot"><span>● Вы</span><span>🟠 Партнёр</span><span>⚪ Справочная точка</span></div>
     <small>Положение схематичное, не навигация. Для маршрута откройте карточку сервиса. При плохом интернете список остаётся доступен.</small>
