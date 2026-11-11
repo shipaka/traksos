@@ -33,12 +33,25 @@ jobs:
       - name: Веб — сборка
         run: npm -w web run build
       - name: Сквозной сценарий в браузере
+        timeout-minutes: 15
         run: |
           npx playwright install --with-deps chromium
           psql -h 127.0.0.1 -U postgres -c 'create database traksos'
-          DATABASE_URL=postgres://postgres@127.0.0.1:5432/traksos ADMIN_PHONES=+79990000001 npm -w server start &
-          until curl -s localhost:8080/api/health >/dev/null; do sleep 1; done
-          node e2e/flow.mjs e2e/shots
+          DATABASE_URL=postgres://postgres@127.0.0.1:5432/traksos ADMIN_PHONES=+79990000001 npm -w server start > /tmp/traksos-server.log 2>&1 &
+          ready=false
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:8080/api/health > /dev/null; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" != true ]; then
+            echo 'Сервер ТракSOS не ответил за 90 секунд:'
+            cat /tmp/traksos-server.log
+            exit 1
+          fi
+          timeout 10m node e2e/flow.mjs e2e/shots
       - name: Снимки экранов
         if: always()
         uses: actions/upload-artifact@v4
