@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { post, setToken, connectWs, ApiError } from '../api.ts';
 import { useAction, useMe, useToast, Field } from '../ui.tsx';
+import { native } from '../native.ts';
 
 // Роль выбирают только те, кто подключается работать. Остальные входят по номеру — кабинет определяется по ролям.
 const JOIN_ROLES = [
@@ -73,6 +74,33 @@ export function Login({ driver }: { driver?: boolean } = {}) {
   const sub = intent === 'help' ? 'Подтвердите номер — и сразу к заявке. Мастер позвонит на него.'
     : intent === 'join' ? 'Выберите, кем подключаетесь. После входа заполните профиль — проверим и откроем заявки.'
     : 'Пришлём код. Пароль не нужен — кабинет откроется сам.';
+
+  if (!intent && !native.isApp) return (
+    <main className="web-landing">
+      <section className="web-hero">
+        <span className="label" style={{ color: 'var(--accent)' }}>ТракSOS · Санкт-Петербург и Ленинградская область</span>
+        <h1>Помощь грузовикам на дороге. Без лишних звонков.</h1>
+        <p>Электрик, диагностика, пневматика, шиномонтаж и эвакуатор. Выберите услугу, отправьте заявку и следите за выполнением онлайн — в любое время.</p>
+        <div className="hero-actions">
+          <button className="btn" type="button" onClick={() => setIntent('help')}>Вызвать помощь</button>
+          <button className="btn ghost" type="button" onClick={() => setIntent('login')}>Войти в личный кабинет</button>
+        </div>
+      </section>
+      <section>
+        <h2>Всё для грузовика в одной системе</h2>
+        <div className="web-feature-grid" style={{ marginTop: 16 }}>
+          <div className="web-feature"><b>Помощь 24/7</b><p>Найдите специалиста или эвакуатор и отслеживайте работу по заявке.</p></div>
+          <div className="web-feature"><b>История автомобилей</b><p>Гараж, ремонты, страхование и техосмотр по каждой машине.</p></div>
+          <div className="web-feature"><b>Кабинет автопарка</b><p>Водители, разрешения, лимиты и финансовая история в одном месте.</p></div>
+        </div>
+      </section>
+      <section className="card web-join-card">
+        <h2>Работаете с грузовой техникой?</h2>
+        <p className="sub">Мастера, эвакуаторщики и рембазы могут подключиться к ТракSOS и принимать заявки.</p>
+        <button className="btn ghost" type="button" onClick={() => setIntent('join')}>Стать партнёром ТракSOS</button>
+      </section>
+    </main>
+  );
 
   if (!intent) return (
     <main>
