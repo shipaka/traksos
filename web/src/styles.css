@@ -440,3 +440,14 @@ select.field { appearance: none; }
   .website .admin-desktop-shell .admin-secondary-nav .chip { white-space: nowrap; width: auto; flex-shrink: 0; border: 1px solid var(--line-2); }
   .website .admin-desktop-shell .admin-secondary-nav .chip[aria-pressed="true"] { color: var(--on-accent); background: var(--accent); box-shadow: none; }
 }
+
+.website .website-work-welcome { border-radius: 20px; border: 1px solid #594333; padding: clamp(24px,3vw,36px);
+  background: radial-gradient(ellipse at top right, rgba(255,106,19,.14), transparent 58%), linear-gradient(120deg,#292b30,#1b1e22); }
+.website .website-work-welcome .label { color: var(--accent); }
+.website .website-work-welcome h2 { margin: 12px 0; font-size: clamp(23px, 2.6vw, 34px); max-width: 720px; line-height: 1.2; }
+.website .website-work-welcome p { color: var(--fg-2); line-height: 1.6; font-size: 14px; max-width: 650px; }
+.website .website-work-welcome .row { margin-top: 20px; }
+.website .website-work-welcome .row a { display: inline-flex; align-items: center; gap: 14px; padding: 11px 16px;
+  border-radius: 10px; color: var(--fg); background: var(--surface-3); text-decoration: none; font-weight: 700; font-size: 13px; }
+.website .website-work-welcome .row a:hover { color: var(--accent); }
+.website .website-work-area > .website-work-welcome + main { padding-top: 22px; }
