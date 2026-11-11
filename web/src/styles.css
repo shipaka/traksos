@@ -476,3 +476,21 @@ select.field { appearance: none; }
 .website .web-mobile-intro h1 { font-size: 27px; line-height: 1.18; margin: 12px 0; }
 .website .web-mobile-intro p { color: var(--fg-2); margin: 0 0 16px; line-height: 1.55; }
 .website .web-mobile-intro a { font-weight: 700; text-decoration: none; }
+
+
+/* Компактные рабочие представления вместо длинных колонок на десктопе. */
+.website .web-settings-grid, .website .web-request-grid, .website .web-insurance-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); align-items: start; gap: 14px; }
+.website .web-settings-grid > .linkrow { background: var(--surface); min-height: 86px; }
+.website .web-settings-grid > .linkrow:hover { border-color: #68533f; background: #262a30; }
+.website .web-request-grid > .card, .website .web-insurance-grid > .card { min-width: 0; }
+.website .web-insurance-grid > details[open] { grid-column: 1 / -1; }
+.website .web-finance-metrics { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
+.website .web-finance-metrics > .card { min-height: 145px; justify-content: center; gap: 11px; }
+.website .web-finance-metrics .tile-value { font-size: clamp(20px,2.4vw,32px); overflow-wrap: anywhere; }
+.website .website-work-area main > form.card > .btn { max-width: 340px; }
+.website .website-work-area main > .btn { max-width: 340px; }
+@media (max-width: 850px) {
+  .website .web-settings-grid, .website .web-request-grid, .website .web-insurance-grid { grid-template-columns: 1fr; }
+  .website .web-finance-metrics { grid-template-columns: 1fr; }
+  .website .web-finance-metrics > .card { min-height: 108px; }
+}
