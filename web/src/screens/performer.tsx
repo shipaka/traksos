@@ -35,6 +35,8 @@ export function Work() {
         <span className="pill"><span className={`dot ${online ? 'on' : ''}`} /> {LINE[p.line_status]}</span>
       </div>
 
+      <div className="web-performer-overview">
+      <div className="web-performer-primary">
       {p.verification !== 'approved' ? (
         <div className="card hi">
           <b>{p.verification === 'rejected' ? 'Проверка не пройдена' : p.submitted_at ? 'Профиль на проверке' : 'Пройдите проверку'}</b>
@@ -47,6 +49,12 @@ export function Work() {
         <LineCard p={p} busy={busy} setLine={setLine} online={online} />
       )}
 
+      </div>
+      <div className="web-performer-secondary">
+      <div className="web-performer-stats">
+        <a className="card tile" href="#/work/jobs"><span className="label">Активные заказы</span><b className="tile-value">{active.length}</b></a>
+        <a className="card tile" href="#/work/me/money"><span className="label">К выплате</span><b className="tile-value">{balance.data ? rub(balance.data.to_pay) : '—'}</b></a>
+      </div>
       {active.length > 0 && (
         <div className="stack">
           <span className="label">Сейчас</span>
@@ -85,6 +93,8 @@ export function Work() {
         </div>
       )}
       <button className="btn ghost" onClick={() => go('work/me/money')}>Финансы · все операции</button>
+      </div>
+      </div>
     </main>
   );
 }
