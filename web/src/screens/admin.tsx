@@ -12,7 +12,10 @@ import { STATUS, SERVICES, LINE } from '../dict.ts';
 import { useLoad, useAction, Loading } from '../ui.tsx';
 
 export function Admin() {
-  const [tab, setTab] = useState<'stats' | 'search' | 'support' | 'verify' | 'people' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'shop' | 'settings' | 'vehicleServices'>('summary');
+  const [tab, setTab] = useState<'stats' | 'search' | 'support' | 'verify' | 'people' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'shop' | 'settings' | 'vehicleServices'>(() => {
+    const requested = new URLSearchParams(location.hash.split('?')[1] ?? '').get('tab');
+    return requested === 'vehicleServices' ? 'vehicleServices' : 'summary';
+  });
   return (
     <main>
       <h1>Администратор</h1>
