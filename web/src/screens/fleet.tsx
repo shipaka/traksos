@@ -162,10 +162,39 @@ export function FleetFinances() {
   const { me } = useMe();
   const q = new URLSearchParams(location.hash.split('?')[1] ?? '');
   const [vehicleId, setVehicleId] = useState(q.get('vehicle') ?? '');
+  const [paymentFilter, setPaymentFilter] = useState<'all' | 'collected' | 'pending' | 'unconfirmed'>('all');
   const report = useLoad(() => get('/api/fleet/finances'), [], (e) => e.type === 'order');
   if (me?.owner_id) return <main><Back to="garage" /><div className="empty">Финансы компании доступны только владельцу.</div></main>;
   const items: any[] = report.data?.items ?? [];
-  const shown = vehicleId ? items.filter((o: any) => o.vehicleId === vehicleId) : items;
+  const byVehicle = vehicleId ? items.filter((o: any) => o.vehicleId === vehicleId) : items;
+  const shown = byVehicle.filter((o: any) => paymentFilter === 'all' ||
+    (paymentFilter === 'collected' && Number(o.confirmedCollected ?? 0) > 0) ||
+    (paymentFilter === 'pending' && Number(o.pendingPayment ?? 0) > 0) ||
+    (paymentFilter === 'unconfirmed' && Number(o.confirmedCollected ?? 0) === 0 && Number(o.pendingPayment ?? 0) === 0));
+  const csvCell = (value: unknown) => {
+    const text = String(value ?? '');
+    const safe = /^[\\s]*[=+@-]/.test(text) ? "'" + text : text;
+    return '"' + safe.replace(/"/g, '""') + '"';
+  };
+  const exportCsv = () => {
+    const columns = ['Заявка', 'Дата заявки', 'Дата завершения', 'Машина', 'Госномер', 'Водитель / заказчик', 'Исполнитель', 'Работы', 'Способ оплаты', 'Согласовано, ₽', 'Подтверждено, ₽', 'Возвращено, ₽', 'Ожидает оплаты, ₽'];
+    const lines = [columns, ...shown.map((o: any) => [
+      o.number, o.createdAt ? new Date(o.createdAt).toLocaleString('ru-RU') : '',
+      o.completedAt ? new Date(o.completedAt).toLocaleString('ru-RU') : '',
+      [o.brand, o.model].filter(Boolean).join(' '), o.plate,
+      o.driverName, o.performerName, o.description || o.service,
+      methods[o.paymentMethod] ?? '', o.agreedTotal,
+      o.confirmedCollected, o.confirmedRefunded, o.pendingPayment,
+    ])].map((record) => record.map(csvCell).join(';')).join('\\r\\n');
+    const href = URL.createObjectURL(new Blob(['\\uFEFF' + lines], { type: 'text/csv;charset=utf-8' }));
+    const download = document.createElement('a');
+    download.href = href;
+    download.download = 'traksos-finances-' + new Date().toISOString().slice(0, 10) + '.csv';
+    document.body.appendChild(download);
+    download.click();
+    download.remove();
+    setTimeout(() => URL.revokeObjectURL(href), 1000);
+  };
   const total = shown.reduce((sum: number, o: any) => sum + Number(o.agreedTotal ?? 0), 0);
   const collected = shown.reduce((sum: number, o: any) => sum + Number(o.confirmedCollected ?? 0), 0);
   const refunded = shown.reduce((sum: number, o: any) => sum + Number(o.confirmedRefunded ?? 0), 0);
@@ -197,8 +226,35 @@ export function FleetFinances() {
               {cars.map((car) => <option key={car.id} value={car.id}>{car.label}</option>)}
             </select>
           </label>
-          {!shown.length && <div className="empty">По выбранной машине заказов пока нет.</div>}
-          <div className="rows">
+          <div className="finance-toolbar">
+            <label className="stack">
+              <span className="label">Статус оплаты</span>
+              <select className="field" aria-label="Статус оплаты" value={paymentFilter}
+                onChange={(event) => setPaymentFilter(event.target.value as typeof paymentFilter)}>
+                <option value="all">Все операции</option>
+                <option value="collected">Есть подтверждённая оплата</option>
+                <option value="pending">Ожидают оплаты</option>
+                <option value="unconfirmed">Без подтверждённой оплаты</option>
+              </select>
+            </label>
+            <button type="button" className="btn ghost small" disabled={!shown.length}
+              onClick={exportCsv}>Скачать CSV</button>
+          </div>
+          {!shown.length && <div className="empty">По выбранным фильтрам операций нет.</div>}
+          {!!shown.length && <div className="finance-table-wrap">
+            <table className="finance-table">
+              <thead><tr><th>Заказ / дата</th><th>Автомобиль</th><th>Водитель и исполнитель</th><th>За что</th><th>Согласовано</th><th>Оплачено / возвраты</th></tr></thead>
+              <tbody>{shown.map((o: any) => <tr key={o.id}>
+                <td><a href={`#/order/${o.id}`}>№{o.number}</a><small>{fmtTime(o.createdAt)}</small></td>
+                <td>{[o.brand, o.model].filter(Boolean).join(' ')}<small>{o.plate || 'Без госномера'}</small></td>
+                <td>{o.driverName || '—'}<small>Исполнитель: {o.performerName || 'не назначен'}</small></td>
+                <td>{o.description || o.service}<small>{statuses[o.status] ?? o.status} · {methods[o.paymentMethod] ?? 'Способ не указан'}</small></td>
+                <td>{o.agreedTotal == null ? '—' : rub(o.agreedTotal)}</td>
+                <td>{rub(o.confirmedCollected ?? 0)}{Number(o.confirmedRefunded) > 0 && <small>Возврат: {rub(o.confirmedRefunded)}</small>}{Number(o.pendingPayment) > 0 && <small>Ожидается: {rub(o.pendingPayment)}</small>}</td>
+              </tr>)}</tbody>
+            </table>
+          </div>}
+          <div className="rows finance-mobile-list">
             {shown.map((o: any) => (
               <a key={o.id} className="list-item" href={`#/order/${o.id}`}>
                 <div className="stack" style={{ gap: 4 }}>
