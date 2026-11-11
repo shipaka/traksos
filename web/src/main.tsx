@@ -19,6 +19,7 @@ import { Fleet, FleetFinances, QrJoin } from './screens/fleet.tsx';
 import { Help } from './screens/help.tsx';
 import { InsurerCabinet } from './screens/insurer.tsx';
 import { CommonMenu } from './screens/menu.tsx';
+import { WebsiteWorkspace } from './websiteWorkspace.tsx';
 import { Rules } from './screens/rules.tsx';
 import { Shop, ShopCart } from './screens/shop.tsx';
 import { Privacy } from './screens/privacy.tsx';
@@ -170,7 +171,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {me && mode === 'client' && <a href="#/profile" className="bell" aria-label="Профиль">◉</a>}
         </div>
       </header>
-      {children}
+      {!native.isApp && me ? <WebsiteWorkspace mode={mode} isDriver={!!me.owner_id}>{children}</WebsiteWorkspace> : children}
       <SiteFooter />
       {native.isApp && tabs.length > 0 && (
         <nav className="tabbar">
