@@ -245,8 +245,11 @@ export class ServiceCenters {
     const fees = await this.settings.get('fees');
     let commission = Math.min(Math.round(amount * fees.serviceCommissionPct / 100), fees.serviceCommissionMax ?? Infinity);
     const discount = b.from_order_id ? Math.min(commission, Math.round(amount * fees.serviceReferralDiscountPct / 100)) : 0;
-    // Баллы рембазы гасят до половины комиссии, что остаётся ТракSOS после скидки
-    const pts = this.referral ? await this.referral.spendServiceCommission(this.db, user.id, commission - discount, id, b.number, points) : 0;
+    // Баллы рембазы учитываются вместе с клиентской скидкой в общем бюджете 30% комиссии
+    // Все скидки из комиссии рембазы вместе не выше 30% исходной комиссии.
+    const promoBudget = Math.floor(commission * 0.3);
+    const remainingPromo = Math.max(0, promoBudget - discount);
+    const pts = this.referral ? await this.referral.spendServiceCommission(this.db, user.id, commission - discount, id, b.number, Math.min(points, remainingPromo)) : 0;
     commission -= pts;
     await this.db.query(
       `update service_bookings set status='invoiced', amount=$2, commission=$3, discount=$4, points=$5, invoiced_at=now(), updated_at=now() where id=$1`,
