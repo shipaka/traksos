@@ -425,7 +425,7 @@ export class ServiceCenters {
 
   async center(user: AuthUser, id: string) {
     const c = (await this.list(user, {})).find((x) => x.id === id);
-    if (!c || c.directoryOnly) throw notFound('Запись через TrakSOS доступна только у партнёров');
+    if (!c || !c.isPartner) throw notFound('Запись через TrakSOS доступна только у партнёров');
     const reviews = await this.db.query(
       `select b.review_stars as stars, b.review_text as text, b.closed_at as at, coalesce(u.company_name, u.name) as who
          from service_bookings b join users u on u.id=b.client_id
