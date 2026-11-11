@@ -992,18 +992,34 @@ export function Profile() {
         )}
         <button className="btn" disabled={busy}>Сохранить</button>
       </form>
-      <div className="stack">
-        {mode !== 'client' && <button className="btn ghost" onClick={() => go('as/client')}>Кабинет клиента</button>}
-        {isPerformer && mode !== 'performer' && <button className="btn ghost" onClick={() => go('as/performer')}>Кабинет исполнителя</button>}
-        {!isPerformer && <button className="btn ghost" onClick={() => go('work/profile')}>Стать исполнителем на ТракSOS</button>}
-        {me.roles.some((r) => r === 'admin' || r === 'moderator') && mode !== 'admin' && <button className="btn ghost" onClick={() => go('as/admin')}>Кабинет администратора</button>}
-        <button className="btn ghost" onClick={() => go('support')}>Поддержка</button>
-        <button className="btn ghost" onClick={() => go('help')}>Справка: как всё устроено</button>
-        <button className="btn ghost" onClick={() => go('privacy')}>Персональные данные</button>
-        <button className="btn ghost" onClick={() => go('reviews')}>Отзывы обо мне</button>
-        <button className="btn ghost" onClick={() => go('appeal')}>Оспорить нарушение или блокировку</button>
-        <button className="btn bad" onClick={logout}>Выйти</button>
-      </div>
+      <details className="card">
+        <summary><b>Кабинеты и доступные роли</b></summary>
+        <div className="stack">
+          {mode !== 'client' && <button className="btn ghost" onClick={() => go('as/client')}>Кабинет клиента</button>}
+          {isPerformer && mode !== 'performer' && <button className="btn ghost" onClick={() => go('as/performer')}>Кабинет исполнителя</button>}
+          {mode === 'client' && !isPerformer && !me.roles.some((role) => ['insurer', 'admin', 'moderator'].includes(role)) &&
+            <button className="btn ghost" onClick={() => go('work/profile')}>Стать исполнителем на ТракSOS</button>}
+          {me.roles.some((r) => r === 'admin' || r === 'moderator') && mode !== 'admin' &&
+            <button className="btn ghost" onClick={() => go('as/admin')}>Кабинет администратора</button>}
+          {me.roles.includes('insurer') && mode !== 'insurer' &&
+            <button className="btn ghost" onClick={() => go('as/insurer')}>Кабинет страховщика</button>}
+          {me.roles.includes('service') && mode !== 'service' &&
+            <button className="btn ghost" onClick={() => go('as/service')}>Кабинет рембазы</button>}
+          <a className="btn ghost" href="#/menu">Все разделы и настройки</a>
+        </div>
+      </details>
+      <details className="card">
+        <summary><b>Помощь, документы и обратная связь</b></summary>
+        <div className="stack">
+          <a className="linkrow" href="#/support"><span><b>Поддержка</b><small>Написать модератору</small></span>›</a>
+          <a className="linkrow" href="#/support/new?topic=improvement"><span><b>Предложить улучшение</b><small>Сообщить, что неудобно</small></span>›</a>
+          <a className="linkrow" href="#/help"><span><b>Как пользоваться ТракSOS</b><small>Инструкция и условия</small></span>›</a>
+          <a className="linkrow" href="#/privacy"><span><b>Персональные данные</b><small>Управление данными</small></span>›</a>
+          <a className="linkrow" href="#/reviews"><span><b>Отзывы</b><small>Ваши оценки</small></span>›</a>
+          <a className="linkrow" href="#/appeal"><span><b>Оспорить нарушение</b><small>Обжалование и связь с модерацией</small></span>›</a>
+        </div>
+      </details>
+      <button className="btn bad" onClick={logout}>Выйти из аккаунта</button>
     </main>
   );
 }
