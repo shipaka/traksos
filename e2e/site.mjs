@@ -106,7 +106,7 @@ try {
   const nav = mobileApp.locator('.native-app .tabbar');
   await nav.waitFor({ state: 'visible' });
   const lastTab = nav.locator('a').last();
-  if (await lastTab.textContent() !== '◉Профиль') throw new Error('Profile must be the rightmost Android tab');
+  if (await lastTab.textContent() !== '👤Профиль') throw new Error('Profile must be the rightmost Android tab');
   await lastTab.click();
   await mobileApp.getByRole('heading', { name: 'Профиль' }).waitFor();
   if (await mobileApp.locator('.website-sidebar:visible').count()) throw new Error('Android shows desktop sidebar');
