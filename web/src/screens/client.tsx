@@ -698,8 +698,9 @@ export function Garage() {
         </button>
       )}
       {!list.data ? <Loading error={list.error} /> : list.data.map((v: any) => (
-        <div key={v.id} className="card">
-          <div className="between"><b>{v.brand} {v.model ?? ''}{v.year ? `, ${v.year}` : ''}</b><span className="pill">{v.plate ?? 'без номера'}</span></div>
+        <details key={v.id} className="card">
+          <summary className="between"><b>{v.brand} {v.model ?? ''}{v.year ? `, ${v.year}` : ''}</b><span className="pill">{v.plate ?? 'без номера'}</span></summary>
+          <div className="stack">
           {v.trailer_plate && <span className="note">Прицеп {v.trailer_plate}</span>}
           {v.fixed_at && <span className="pill good" style={{ alignSelf: 'flex-start' }}>уточнено мастером · {fmtTime(v.fixed_at)}</span>}
           {seriesHint(v.brand, v.year) && <span className="note" style={{ color: 'var(--accent)' }}>{seriesHint(v.brand, v.year)}</span>}
@@ -739,7 +740,8 @@ export function Garage() {
               <button className="btn bad small" onClick={async () => { if (confirmDelete() && await run(() => del(`/api/vehicles/${v.id}`))) list.reload(); }}>Удалить</button>
             </div>
           ))}
-        </div>
+          </div>
+        </details>
       ))}
 
       {!isDriver && (
