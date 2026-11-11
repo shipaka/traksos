@@ -307,15 +307,18 @@ function Sticker({ car }: { car: any }) {
 /** Страница наклейки: водитель видит машину, входит по SMS — и он водитель этой машины */
 export function QrJoin({ code }: { code: string }) {
   const { me, reload } = useMe();
-  const info = useLoad(() => get(`/api/qr/${code}`), [code]);
+  const info = useLoad(() => get(`/api/qr/${encodeURIComponent(code)}`), [code]);
   const { busy, run } = useAction();
   useEffect(() => { try { sessionStorage.setItem('traksos.qr', code); } catch { /* */ } }, [code]);
   if (!info.data) return <main><Loading error={info.error} /></main>;
   const v = info.data;
   const join = async () => {
-    const r = await run(() => post(`/api/qr/${code}/join`), 'Готово — вы водитель этой машины');
-    try { sessionStorage.removeItem('traksos.qr'); } catch { /* */ }
-    if (r) { await reload(); go(''); }
+    const r = await run(() => post(`/api/qr/${encodeURIComponent(code)}/join`), 'Готово — вы водитель этой машины');
+    if (r) {
+      try { sessionStorage.removeItem('traksos.qr'); } catch { /* */ }
+      await reload();
+      go('');
+    }
   };
   return (
     <main>
