@@ -634,7 +634,7 @@ export class OrdersService {
       auction: o.status === 'searching' && !!o.auction_until, auctionUntil: o.auction_until, autoPick: o.auto_pick, search,
       limits: o.status === 'searching' ? this.auction.limits(o, (await this.settings.get('dispatch'))) : null,
       destination: o.destination, cargo: o.cargo, loaded: o.loaded, driverOnSite: o.driver_on_site, discountReason: o.discount_reason,
-      money: actor ? this.money(o) : null, result: actor ? o.result : null, resultNote: actor ? o.result_note : null,
+      money: this.money(o), result: actor ? o.result : null, resultNote: actor ? o.result_note : null,
       pointsFee: o.points_fee ?? 0, pointsCommission: actor === 'performer' || actor === 'admin' ? o.points_commission ?? 0 : undefined,
       points: actor === 'client' && o.status === 'awaiting_confirmation' && this.referral ? await this.referral.available(o.client_id, this.money(o).clientFee) : null,
       bill: actor ? o.bill ?? null : null, billingStep: Number((await this.settings.get('pricing')).billingStepMinutes ?? 60),
