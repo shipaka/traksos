@@ -668,3 +668,18 @@ select.field { appearance: none; }
 .web-mobile-faq summary { cursor: pointer; font-weight: 700; }
 .web-mobile-faq details p { color: var(--muted); }
 @media(max-width:380px) { .web-landing-mobile .web-feature-grid { grid-template-columns: 1fr; } }
+
+/* Экономная схема координат: без тяжёлых картографических библиотек и тайлов. */
+.nearby-map { border: 1px solid var(--line-2); border-radius: 20px; overflow: hidden; background: #151f27; }
+.nearby-map-head,.nearby-map-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 15px; flex-wrap: wrap; }
+.nearby-map-head span,.nearby-map-foot { font-size: 11px; color: var(--fg-2); }
+.nearby-map-plane { height: clamp(220px,40vw,340px); position: relative; overflow: hidden; background-color: #1c2a32; background-image: linear-gradient(30deg,transparent 44%,rgba(80,108,121,.19) 45%,rgba(80,108,121,.19) 47%,transparent 48%),linear-gradient(130deg,transparent 46%,rgba(80,108,121,.16) 47%,rgba(80,108,121,.16) 49%,transparent 50%),linear-gradient(rgba(130,160,170,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(130,160,170,.08) 1px,transparent 1px); background-size: 210px 160px,240px 180px,36px 36px,36px 36px; }
+.nearby-map-pin,.nearby-map-you { position:absolute; transform:translate(-50%,-50%); z-index:1; }
+.nearby-map-pin { display:grid; place-items:center; border-radius:50%; width:36px; height:36px; border:2px solid #fff; background:#6e7881; color:#fff; box-shadow:0 3px 12px #0008; cursor:pointer; }
+.nearby-map-pin.partner { background:var(--accent); box-shadow:0 0 0 5px rgba(255,106,19,.18),0 3px 12px #0008; }
+.nearby-map-you { color:#48b7ff; font-size:32px; text-shadow:0 0 0 6px #fff,0 0 14px #48b7ff; z-index:2; }
+.nearby-map-selected { position:absolute; z-index:3; bottom:12px; left:12px; right:12px; background:#141a20ed; border:1px solid #57616b; border-radius:12px; padding:12px; display:grid; gap:4px; font-size:13px; }
+.nearby-map-selected span { color:var(--fg-2); }
+.nearby-map-foot { justify-content:flex-start; }
+.nearby-map>small { display:block; color:var(--muted); padding:0 15px 13px; }
+.nearby-map-empty { padding:22px; background:var(--surface); border:1px dashed var(--line-2); border-radius:14px; color:var(--muted); }
