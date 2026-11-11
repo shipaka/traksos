@@ -15,7 +15,7 @@ import { Documents } from './screens/documents.tsx';
 import { OfferGate, OfferPage } from './screens/offers.tsx';
 import { AdminUser } from './screens/adminUser.tsx';
 import { BaseHome, BaseCar, BaseSetup, BaseMoney, AdminServicePayouts, ServicesList, CenterPage, BookForm, BookingPage } from './screens/base.tsx';
-import { Fleet, QrJoin } from './screens/fleet.tsx';
+import { Fleet, FleetFinances, QrJoin } from './screens/fleet.tsx';
 import { Help } from './screens/help.tsx';
 import { CommonMenu } from './screens/menu.tsx';
 import { Rules } from './screens/rules.tsx';
@@ -110,7 +110,7 @@ function App() {
     case 'base': screen = b === 'car' && route[2] ? <BaseCar id={route[2]} /> : b === 'me' ? <BaseSetup /> : b === 'money' ? <BaseMoney /> : <BaseHome />; break;
     case 'services': screen = b && route[2] === 'book' ? <BookForm id={b} /> : b ? <CenterPage id={b} /> : <ServicesList />; break;
     case 'booking': screen = <BookingPage id={b} />; break;
-    case 'fleet': screen = <Fleet />; break;
+    case 'fleet': screen = b === 'finances' ? <FleetFinances /> : <Fleet />; break;
     case 'help': screen = <Help />; break;
     case 'menu': screen = <CommonMenu />; break;
     case 'rules': screen = <Rules />; break;
