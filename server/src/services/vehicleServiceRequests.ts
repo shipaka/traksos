@@ -94,9 +94,15 @@ export class VehicleServiceRequests {
 
   async setStatus(staff: AuthUser, id: string, status: VehicleServiceStatus, note?: string, policyExpiresOn?: string) {
     // Staff role is enforced at the route as well as here.
-    if (!staff.roles?.some((role: string) => ['admin', 'moderator'].includes(role))) throw forbidden('Нет доступа к обработке заявок');
+    const isStaff = staff.roles?.some((role: string) => ['admin', 'moderator'].includes(role));
+    const isInsurer = staff.roles?.includes('insurer');
+    if (!isStaff && !isInsurer) throw forbidden('Нет доступа к обработке заявок');
     return this.db.tx(async (q) => {
       const current = await q.one<any>('select * from vehicle_service_requests where id=$1 for update', [id]);
+      if (isInsurer && !isStaff && (current?.kind !== 'insurance' || current?.assigned_to !== staff.id ||
+        current?.status !== 'sent_to_partner' || !['completed', 'rejected'].includes(status))) {
+        throw forbidden('Можно изменять только назначенные вам страховые заявки');
+      }
       if (!current) throw notFound('Заявка не найдена');
       if (!transitions[current.status as VehicleServiceStatus]?.includes(status)) throw bad('invalid_status', 'Недопустимый переход статуса');
       if (['rejected', 'need_documents'].includes(status) && !note?.trim()) {
@@ -120,7 +126,7 @@ export class VehicleServiceRequests {
       }
       const updated = await q.one(
         `update vehicle_service_requests set status=$2, staff_note=$3, assigned_to=$4, policy_expires_on=coalesce($5::date, policy_expires_on), updated_at=now()
-         where id=$1 returning *`, [id, status, note?.trim() || null, staff.id, policyExpiresOn ?? null]);
+         where id=$1 returning *`, [id, status, note?.trim() || null, isStaff ? staff.id : current.assigned_to, policyExpiresOn ?? null]);
       if (!updated) throw notFound('Заявка не найдена');
       return updated;
     });
@@ -156,6 +162,43 @@ export class VehicleServiceRequests {
       [request.vehicle_id, request.owner_id, request.requested_by, request.kind],
     );
     return [request.owner_id, ...drivers.map((row) => row.id)];
+  }
+
+  /** Admin assigns a submitted insurance request after forwarding it to a verified partner role. */
+  async assignInsurer(staff: AuthUser, requestId: string, insurerId: string) {
+    if (!staff.roles?.some((role: string) => ['admin', 'moderator'].includes(role))) throw forbidden('Нет доступа');
+    return this.db.tx(async (q) => {
+      const partner = await q.one<{ id: string }>(
+        `select id from users where id=$1 and 'insurer'=any(roles) and status='active'`, [insurerId]);
+      if (!partner) throw notFound('Страховщик не найден');
+      const request = await q.one(
+        `update vehicle_service_requests set assigned_to=$3, updated_at=now()
+         where id=$1 and kind='insurance' and status='sent_to_partner'
+           and exists (select 1 from users where id=$2 and roles && '{admin,moderator}'::text[])
+         returning *`, [requestId, staff.id, insurerId]);
+      if (!request) throw notFound('Заявка не передана партнёру');
+      await q.query(
+        `insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)`,
+        [staff.id, 'insurance.assign', requestId, { insurerId }],
+      );
+      return request;
+    });
+  }
+
+  async insurers(staff: AuthUser) {
+    if (!staff.roles?.some((role: string) => ['admin', 'moderator'].includes(role))) throw forbidden('Нет доступа');
+    return this.db.query<{ id: string; name: string | null }>(
+      `select id, name from users where 'insurer'=any(roles) and status='active' order by name, id`);
+  }
+
+  async insurerQueue(user: AuthUser) {
+    if (!user.roles?.includes('insurer')) throw forbidden('Нет доступа');
+    return this.db.query(
+      `select r.id, r.kind, r.status, r.comment, r.staff_note, r.created_at, r.updated_at,
+              r.policy_expires_on, v.brand, v.model, v.plate
+       from vehicle_service_requests r join vehicles v on v.id=r.vehicle_id
+       where r.kind='insurance' and r.assigned_to=$1
+       order by r.created_at desc limit 100`, [user.id]);
   }
 
   async queue(staff: AuthUser, kind?: VehicleServiceKind) {
