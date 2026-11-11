@@ -356,7 +356,21 @@ export function createApp(d: Deps) {
   r.patch('/api/admin/vehicle-service-requests/:id', staff, async (c: AuthedCtx) => {
     const b = parse(z.object({ status: vehicleRequestStatus, note: z.string().max(2000).optional(), policyExpiresOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }), c.body);
     const updated = await vehicleRequests.setStatus(c.user, c.params.id, b.status, b.note, b.policyExpiresOn);
-    notifier.live([updated?.owner_id, updated?.requested_by], { type: 'vehicle_service', vehicleId: updated?.vehicle_id, requestId: updated?.id });
+    const recipients = [updated?.owner_id, updated?.requested_by];
+    const event = { type: 'vehicle_service', vehicleId: updated?.vehicle_id, requestId: updated?.id, status: updated?.status };
+    const important: Record<string, { title: string; body: string }> = {
+      need_documents: { title: 'Нужны документы по заявке', body: updated?.staff_note || 'Откройте историю автомобиля и проверьте комментарий специалиста.' },
+      completed: { title: 'Услуга выполнена', body: updated?.kind === 'insurance' ? 'Страхование завершено. Проверьте срок полиса в гараже.' : 'Техосмотр завершён. Подробности доступны в гараже.' },
+      rejected: { title: 'Заявка отклонена', body: updated?.staff_note || 'Причину можно посмотреть в истории автомобиля.' },
+    };
+    if (important[b.status]) {
+      await notifier.notify(recipients, event, {
+        kind: 'normal', ...important[b.status],
+        data: { vehicleId: String(updated.vehicle_id), requestId: String(updated.id), status: b.status },
+      }).catch((error) => console.warn('[vehicle service notification]', error));
+    } else {
+      notifier.live(recipients, event);
+    }
     return updated;
   });
   r.get('/api/insurance-reminders/settings', true, async (c: AuthedCtx) => {
