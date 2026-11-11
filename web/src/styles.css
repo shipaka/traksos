@@ -565,3 +565,23 @@ select.field { appearance: none; }
   .website .finance-toolbar .stack { min-width: 0; width: 100%; max-width: none; }
   .website .finance-toolbar .btn { width: 100%; }
 }
+
+/* Рабочий стол мастера: статус на линии слева, заказы и выплаты справа. */
+.website .web-performer-overview { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); align-items: start; gap: 20px; }
+.website .web-performer-primary, .website .web-performer-secondary { display: grid; gap: 18px; min-width: 0; }
+.website .web-performer-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.website .web-performer-stats a { text-decoration: none; color: inherit; min-width: 0; }
+.website .web-performer-stats a:hover { border-color: var(--accent); }
+.website .web-performer-stats .tile-value { font-size: clamp(18px, 2vw, 28px); }
+.website .web-case-toolbar { display: flex; justify-content: space-between; align-items: end; flex-wrap: wrap; gap: 14px; }
+.website .web-case-toolbar > .stack { min-width: 230px; max-width: 420px; flex: 1; }
+.website .web-case-toolbar .row { gap: 7px; }
+.website .web-case-toolbar .chip { min-height: 40px; }
+@media (max-width: 1120px) {
+  .website .web-performer-overview { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .website .web-performer-stats { grid-template-columns: 1fr 1fr; }
+  .website .web-case-toolbar { align-items: stretch; flex-direction: column; }
+  .website .web-case-toolbar > .stack { min-width: 0; max-width: none; }
+}
