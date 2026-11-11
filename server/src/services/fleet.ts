@@ -122,8 +122,21 @@ export class FleetService {
 
   /** Новая наклейка: старая перестаёт пускать, текущий водитель машины снимается */
   async newQr(owner: AuthUser, vehicleId: string) {
-    const v = await this.db.one(`update vehicles set qr_code=encode(gen_random_bytes(9), 'hex'), driver_id=null, driver_since=null where id=$1 and owner_id=$2 returning id`, [vehicleId, owner.id]);
-    if (!v) throw notFound('Машина не найдена');
+    if (owner.owner_id) throw bad('driver', 'Менять наклейку может только владелец');
+    let previousDriver: string | null = null;
+    await this.db.tx(async (q) => {
+      const v = await q.one<{ driver_id: string | null }>(
+        'select driver_id from vehicles where id=$1 and owner_id=$2 for update', [vehicleId, owner.id]);
+      if (!v) throw notFound('Машина не найдена');
+      previousDriver = v.driver_id;
+      await q.query(`update vehicles set qr_code=encode(gen_random_bytes(9), 'hex'),
+        driver_id=null, driver_since=null where id=$1 and owner_id=$2`, [vehicleId, owner.id]);
+      if (previousDriver) await q.query(`update users set owner_id=null, roles=array_remove(roles,'driver')
+        where id=$1 and owner_id=$2 and not exists
+        (select 1 from vehicles where driver_id=$1 and owner_id=$2)`, [previousDriver, owner.id]);
+    });
+    if (previousDriver) await this.notifier.notify([previousDriver], { type: 'fleet' },
+      { kind: 'normal', title: 'Доступ к машине закрыт', body: 'Владелец обновил QR-наклейку машины', data: {} });
     return this.get(owner);
   }
 
