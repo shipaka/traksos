@@ -112,7 +112,6 @@ export function BaseHome() {
         <div className="card tile"><span className="label">Ожидаем</span><span className="tile-value">{groups.expected.length}</span></div>
         <div className="card tile"><span className="label">В ремонте</span><span className="tile-value">{groups.repair.length}</span></div>
       </div>
-      </div>
       <div className="web-base-actions" aria-label="Быстрые действия рембазы">
         <a className="linkrow" href="#/base/money"><span><b>Финансовый кабинет</b><small>Начисления, выплаты и счета</small></span><span aria-hidden="true">›</span></a>
         <a className="linkrow" href="#/base/me"><span><b>Карточка рембазы</b><small>График, услуги и доступность</small></span><span aria-hidden="true">›</span></a>
