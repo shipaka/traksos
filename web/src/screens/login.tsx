@@ -78,13 +78,31 @@ export function Login({ driver }: { driver?: boolean } = {}) {
 
   if (!intent && !native.isApp && window.innerWidth > 800) return (
     <main className="web-landing">
-      <section className="web-hero">
-        <span className="label" style={{ color: 'var(--accent)' }}>ТракSOS · Санкт-Петербург и Ленинградская область</span>
-        <h1>Помощь грузовикам на дороге. Без лишних звонков.</h1>
-        <p>Электрик, диагностика, пневматика, шиномонтаж и эвакуатор. Выберите услугу, отправьте заявку и следите за выполнением онлайн — в любое время.</p>
-        <div className="hero-actions">
-          <button className="btn" type="button" onClick={() => setIntent('help')}>Вызвать помощь</button>
-          <button className="btn ghost" type="button" onClick={() => setIntent('login')}>Войти в личный кабинет</button>
+      <section className="web-hero web-hero-featured">
+        <div className="web-hero-layout">
+          <div className="web-hero-content">
+            <span className="label" style={{ color: 'var(--accent)' }}>ТракSOS · Санкт-Петербург и Ленинградская область</span>
+            <h1>Помощь грузовикам на дороге. Без лишних звонков.</h1>
+            <p>Электрик, диагностика, пневматика, шиномонтаж и эвакуатор. Выберите услугу, отправьте заявку и следите за выполнением онлайн — в любое время.</p>
+            <div className="hero-actions">
+              <button className="btn" type="button" onClick={() => setIntent('help')}>Вызвать помощь</button>
+              <button className="btn ghost" type="button" onClick={() => setIntent('login')}>Войти в личный кабинет</button>
+            </div>
+            <a className="web-hero-discover" href="#/about">Посмотреть, что внутри системы <span aria-hidden="true">↗</span></a>
+          </div>
+          <div className="web-hero-visual" aria-label="Примеры возможностей сервиса">
+            <div className="web-hero-screen">
+              <div className="web-hero-screen-top"><span>● ● ●</span><strong>ТракSOS / рабочий стол</strong></div>
+              <div className="web-hero-screen-body">
+                <div className="web-hero-screen-tag">ЕДИНОЕ ПРОСТРАНСТВО</div>
+                <div className="web-hero-screen-title">Ваша техника под контролем</div>
+                <div className="web-hero-mini-card"><span>▤</span><div><b>История машин</b><small>Обслуживание и документы</small></div><i>↗</i></div>
+                <div className="web-hero-mini-card"><span>₽</span><div><b>Финансы автопарка</b><small>Расходы, оплаты, возвраты</small></div><i>↗</i></div>
+                <div className="web-hero-mini-card"><span>◉</span><div><b>Заявки 24/7</b><small>От обращения до результата</small></div><i>↗</i></div>
+              </div>
+            </div>
+            <div className="web-hero-float"><span aria-hidden="true">✓</span><div><b>Одна система</b><small>От заявки до истории работ</small></div></div>
+          </div>
         </div>
       </section>
       <section>
