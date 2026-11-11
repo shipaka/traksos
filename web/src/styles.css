@@ -248,3 +248,67 @@ select.field { appearance: none; }
 .helpBtn .tap { position: absolute; right: 8px; bottom: 4px; font-size: 46px; line-height: 1; filter: drop-shadow(0 3px 6px rgba(0,0,0,.45)); animation: helpTap 1.6s ease-in-out infinite; pointer-events: none; }
 @keyframes helpTap { 0%, 100% { transform: translate(0,0) scale(1); } 45% { transform: translate(-6px,-8px) scale(.92); } 55% { transform: translate(-6px,-8px) scale(.88); } }
 @media (prefers-reduced-motion: reduce) { .helpBtn .tap { animation: none; } }
+
+
+/* Сайт и нативное приложение — разные оболочки. На сайте нет узкой колонки и нижней панели. */
+.website { max-width: 1280px; width: 100%; padding: 0 clamp(16px, 3vw, 40px); }
+.website .top { min-height: 80px; gap: 24px; padding: 14px 0; }
+.website .logo { color: var(--fg); text-decoration: none; flex-shrink: 0; }
+.website .site-nav { display: flex; flex: 1; align-items: center; gap: 4px; min-width: 0; flex-wrap: wrap; }
+.website .site-nav a { text-decoration: none; color: var(--fg-2); padding: 11px 14px; border-radius: 12px; font-size: 14px; font-weight: 700; white-space: nowrap; }
+.website .site-nav a:hover, .website .site-nav a.active { background: var(--surface-3); color: var(--fg); }
+.website main { width: 100%; padding: 32px 0 60px; gap: 24px; }
+.website main > .stack, .website main > .rows { max-width: 100%; }
+.website h1 { font-size: clamp(28px, 3vw, 42px); line-height: 1.2; }
+.website h2 { font-size: 22px; }
+.website .site-footer { max-width: none; width: 100%; padding: 28px 0 38px; }
+.website .tabbar { display: none; }
+.website .card { padding: 20px; }
+.website .grid2 { gap: 16px; }
+.website .rows { overflow: hidden; }
+.website .rows > .list-item { min-width: 0; }
+.website .list-item > div, .website .list-item > span { min-width: 0; }
+.website .list-item b, .website .card b, .website .site-nav a { overflow-wrap: normal; word-break: normal; }
+.website .web-hero { padding: clamp(30px, 5vw, 72px); border-radius: 28px; border: 1px solid var(--line-2);
+  background: radial-gradient(ellipse at 85% 10%, rgba(255,106,19,.19), transparent 45%), linear-gradient(135deg, #272b31, #17191d 70%); }
+.website .web-hero h1 { max-width: 830px; font-size: clamp(32px, 4.5vw, 62px); line-height: 1.15; }
+.website .web-hero p { font-size: clamp(16px, 1.5vw, 19px); line-height: 1.65; color: var(--fg-2); max-width: 720px; }
+.website .web-hero .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+.website .web-hero .hero-actions .btn { width: auto; min-width: 210px; }
+.website .web-service-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.website .web-service-grid > .linkrow { align-items: flex-start; min-height: 95px; padding: 18px; }
+.website .web-service-grid > .label { grid-column: 1 / -1; }
+.website .web-service-grid > button:last-child { grid-column: auto; }
+.website .web-feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.website .web-feature { padding: 24px; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); }
+.website .web-feature b { display: block; margin-bottom: 8px; font-size: 18px; }
+.website .web-feature p { margin: 0; color: var(--muted); line-height: 1.55; }
+.website .web-content-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.website .web-content-grid > * { min-width: 0; }
+.website .opt { min-height: 84px; }
+.website details.card > summary { cursor: pointer; }
+.website details.card > summary::marker { color: var(--accent); }
+@media (min-width: 900px) {
+  .website main:has(> .scroll-x) > .scroll-x { flex-wrap: wrap; overflow: visible; }
+  .website main:has(> .scroll-x) > .scroll-x .chip { flex-shrink: 0; }
+}
+@media (max-width: 800px) {
+  .website { padding: 0 16px; }
+  .website .top { gap: 12px; min-height: 68px; flex-wrap: wrap; }
+  .website .site-nav { order: 3; width: 100%; flex-basis: 100%; overflow-x: auto; flex-wrap: nowrap; padding: 0 0 6px; scrollbar-width: thin; }
+  .website .site-nav a { font-size: 13px; padding: 8px 12px; }
+  .website .top > .row { margin-left: auto; }
+  .website main { padding: 22px 0 40px; gap: 18px; }
+  .website .web-service-grid, .website .web-feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .website .web-content-grid { grid-template-columns: 1fr; }
+  .website .web-hero { padding: 30px 22px; }
+}
+@media (max-width: 520px) {
+  .website .web-service-grid, .website .web-feature-grid { grid-template-columns: 1fr; }
+  .website .grid2 { gap: 8px; }
+  .website .web-hero .hero-actions { flex-direction: column; }
+  .website .web-hero .hero-actions .btn { width: 100%; }
+  .website .top .pill { display: none; }
+}
+.native-app .site-nav { display: none; }
+.native-app .logo { text-decoration: none; color: var(--fg); }
