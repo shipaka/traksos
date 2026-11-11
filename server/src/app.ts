@@ -334,6 +334,10 @@ export function createApp(d: Deps) {
   const vehicleRequestKind = z.enum(['insurance', 'inspection']);
   const vehicleRequestStatus = z.enum(['in_review', 'need_documents', 'sent_to_partner', 'completed', 'rejected', 'cancelled']);
   r.get('/api/vehicles/:id/service-history', true, (c: AuthedCtx) => vehicleRequests.history(c.user, c.params.id));
+  r.patch('/api/vehicle-service-requests/:id/renewal', true, (c: AuthedCtx) => {
+    const b = parse(z.object({ expiresOn: z.string().regex(/^\\d{4}-\\d{2}-\\d{2}$/) }), c.body);
+    return vehicleRequests.renewPolicy(c.user, c.params.id, b.expiresOn);
+  });
   r.get('/api/vehicle-service-requests', true, (c: AuthedCtx) => vehicleRequests.mine(c.user));
   r.post('/api/vehicle-service-requests', true, (c: AuthedCtx) => {
     const b = parse(z.object({ vehicleId: z.string().uuid(), kind: vehicleRequestKind, comment: z.string().max(2000).optional() }), c.body);
