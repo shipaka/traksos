@@ -711,7 +711,7 @@ export function Garage() {
           <span><b>Мой парк</b><small>водители и лимиты, QR-наклейки, подтверждение заказов, ЭДО</small></span><span aria-hidden="true">›</span>
         </button>
       )}
-      {!list.data ? <Loading error={list.error} /> : list.data.map((v: any) => (
+      {!list.data ? <Loading error={list.error} /> : <div className="web-vehicle-grid">{list.data.map((v: any) => (
         <details key={v.id} className="card">
           <summary className="between">
             <span className="row" style={{ alignItems: 'center', gap: 10 }}>
@@ -763,7 +763,7 @@ export function Garage() {
           ))}
           </div>
         </details>
-      ))}
+      ))}</div>}
 
       {!isDriver && (
         <form className="card" onSubmit={(e) => { e.preventDefault(); add(); }}>
