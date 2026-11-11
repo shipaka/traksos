@@ -74,6 +74,10 @@ export function Fleet() {
         </div>
       ))}
 
+      <a className="linkrow" href="#/fleet/finances">
+        <span><b>Финансы автопарка</b><small>Согласованные суммы и история расходов по каждой машине</small></span>
+        <span aria-hidden="true">›</span>
+      </a>
       <InsuranceReminderSettings />
       <div className="stack">
         <span className="label">Машины</span>
@@ -92,6 +96,7 @@ export function Fleet() {
                 const r = await run(() => post(`/api/fleet/vehicles/${c.id}/new-qr`), 'Новая наклейка: прежний водитель потерял доступ'); if (r) f.setData(r);
               }}>Новая наклейка</button>
             </div>
+            <a className="btn ghost small" href={`#/fleet/finances?vehicle=${c.id}`}>Расходы по машине</a>
             {qrFor === c.id && <Sticker car={c} />}
             </div>
           </details>
