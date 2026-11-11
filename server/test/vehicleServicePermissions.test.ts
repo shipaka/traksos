@@ -71,3 +71,37 @@ test('cancellation fails when no eligible request is updated', async () => {
   const db: any = { one: async () => null };
   await assert.rejects(new VehicleServiceRequests(db).cancel(driver, 'request-1'));
 });
+
+test('policy renewal rejects impossible dates before any database query', async () => {
+  let queries = 0;
+  const db: any = { one: async () => { queries++; return null; } };
+  const service = new VehicleServiceRequests(db);
+  for (const date of ['2026-02-29', '2027-02-30', '2027-13-01', '2027-01-00', '2027/01/01', 'not-a-date']) {
+    await assert.rejects(service.renewPolicy(owner, 'request-1', date), /Некорректная дата/);
+  }
+  assert.equal(queries, 0);
+});
+
+test('driver cannot renew a policy even with a valid date', async () => {
+  let queries = 0;
+  const db: any = { one: async () => { queries++; return null; } };
+  await assert.rejects(new VehicleServiceRequests(db).renewPolicy(driver, 'request-1', '2028-02-29'));
+  assert.equal(queries, 0);
+});
+
+test('valid leap-day renewal re-arms reminders on a completed insurance request', async () => {
+  const calls: Array<{ sql: string; params: unknown[] }> = [];
+  const db: any = {
+    one: async (sql: string, params: unknown[]) => {
+      calls.push({ sql, params });
+      return { id: 'request-1', kind: 'insurance', status: 'completed', policy_expires_on: params[2] };
+    },
+  };
+  const result = await new VehicleServiceRequests(db).renewPolicy(owner, 'request-1', '2028-02-29');
+  assert.equal(result.policy_expires_on, '2028-02-29');
+  assert.deepEqual(calls[0].params, ['request-1', owner.id, '2028-02-29']);
+  assert.match(calls[0].sql, /kind='insurance' and status='completed'/);
+  for (const column of ['reminder_30_sent_at', 'reminder_7_sent_at', 'reminder_1_sent_at']) {
+    assert.match(calls[0].sql, new RegExp(column + '=null'));
+  }
+});
