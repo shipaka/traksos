@@ -703,6 +703,7 @@ export function Garage() {
               <div className="grid2"><button className="btn small" disabled={busy || !editForm.brand}>Сохранить изменения</button><button type="button" className="btn ghost small" onClick={() => setEditing(null)}>Отмена</button></div>
             </form>
           ) : !isDriver && <button type="button" className="btn ghost small" onClick={() => { setEditing(v.id); setEditForm({ brand: v.brand ?? '', model: v.model ?? '', year: v.year ? String(v.year) : '', plate: v.plate ?? '', trailerPlate: v.trailer_plate ?? '', vin: v.vin ?? '', engine: v.engine ?? '', configurationNotes: v.configuration_notes ?? '' }); }}>Редактировать машину</button>}
+          <VehicleServiceHistory id={v.id} />
           <VehicleHistory id={v.id} />
           {!isDriver && (driverFor === v.id ? (
             <div className="stack">
@@ -741,6 +742,38 @@ export function Garage() {
         </form>
       )}
     </main>
+  );
+}
+
+/** История страхования и техосмотра доступна прямо в карточке машины. */
+function VehicleServiceHistory({ id }: { id: string }) {
+  const [open, setOpen] = useState(false);
+  const history = useLoad(() => get(`/api/vehicles/${id}/service-history`), [id]);
+  const items = history.data as any[] | undefined;
+  if (!items?.length) return null;
+  const labels: Record<string, string> = {
+    submitted: 'Подана', in_review: 'На рассмотрении', need_documents: 'Нужны документы',
+    sent_to_partner: 'Передана партнёру', completed: 'Завершена',
+    rejected: 'Отказ', cancelled: 'Отменена',
+  };
+  return (
+    <div className="stack">
+      <button type="button" className="linkrow" aria-expanded={open} onClick={() => setOpen(!open)}>
+        <span><b>Страхование и техосмотр · {items.length}</b><small>Заявки, статусы и сроки полисов</small></span>
+        <span aria-hidden="true">{open ? '˄' : '˅'}</span>
+      </button>
+      {open && <div className="stack">
+        {items.map((r: any) => (
+          <div key={r.id} className="note">
+            <b>{r.kind === 'insurance' ? 'Страхование' : 'Техосмотр'}</b>
+            {' · '}{labels[r.status] ?? r.status}
+            {' · '}{fmtTime(r.created_at)}
+            {r.policy_expires_on && <span> · Действует до {r.policy_expires_on}</span>}
+            {r.staff_note && <div>{r.staff_note}</div>}
+          </div>
+        ))}
+      </div>}
+    </div>
   );
 }
 
