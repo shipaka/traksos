@@ -1,3 +1,4 @@
+import { ServiceBookingContact } from '../components/ServiceBookingContact.tsx';
 import { NearbyMap } from '../components/NearbyMap.tsx';
 // Рембаза (сервис-партнёр): кабинет сервиса и запись клиента в сервис.
 import { useEffect, useState } from 'react';
@@ -230,6 +231,7 @@ export function BaseCar({ id }: { id: string }) {
   return (
     <main>
       <Back to="base" label="Рембаза" />
+      <ServiceBookingContact bookingId={id} asService />
       <div>
         <h1>{carName(d.vehicle)}</h1>
         <div className="sub">Госномер {d.vehicle?.plate ?? '—'}{d.vehicle?.trailerPlate ? ` · прицеп ${d.vehicle.trailerPlate}` : ''} · чтобы узнать машину на въезде</div>
@@ -682,6 +684,7 @@ export function BookingPage({ id }: { id: string }) {
   return (
     <main>
       <Back to="orders" label="Заявки" />
+      <ServiceBookingContact bookingId={id} />
       <div>
         <h1>Ремонт на рембазе</h1>
         <div className="sub">«{d.center.name}» · {d.center.address}</div>
