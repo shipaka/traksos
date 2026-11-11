@@ -55,6 +55,7 @@ try {
       await page.getByRole('link', { name: /Гараж и история/ }).click();
       await page.getByRole('heading', { name: 'Мой гараж' }).waitFor();
       if (await page.locator('.tabbar:visible').count()) throw new Error('Desktop cabinet uses app navigation');
+      await page.locator('.toast').waitFor({ state: 'hidden', timeout: 8000 });
       if (screenshotDir) await page.screenshot({ path: screenshotDir + '/site-client-desktop.png', fullPage: false });
     }
     if (errors.length) throw new Error(name + ': ' + errors.join('; '));
@@ -75,6 +76,8 @@ try {
   await adminPage.locator('.admin-secondary-nav').waitFor({ state: 'visible' });
   await adminPage.getByRole('button', { name: 'Страхование и ТО' }).click();
   await adminPage.getByRole('heading', { name: /Заявки на страхование и техосмотр/ }).waitFor();
+  await adminPage.getByText('Загружаю…', { exact: true }).waitFor({ state: 'hidden', timeout: 15000 });
+  await adminPage.locator('.toast').waitFor({ state: 'hidden', timeout: 8000 });
   if (process.argv[2]) await adminPage.screenshot({ path: process.argv[2] + '/site-admin-desktop.png', fullPage: false });
   await adminPage.close();
   console.log('Website layout, public tour, client and admin workspaces verified at 390, 900 and 1440 px');
