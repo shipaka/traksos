@@ -14,6 +14,15 @@ try {
     const rootWidth = await page.locator('.app').evaluate((el) => el.getBoundingClientRect().width);
     if (width === 1440 && rootWidth < 900) throw new Error('Desktop shell is too narrow: ' + rootWidth);
     if (width === 390 && rootWidth > 390) throw new Error('Mobile page overflows: ' + rootWidth);
+    if (width === 390) {
+      const overflow = await page.evaluate(() => ({
+        viewport: document.documentElement.clientWidth,
+        content: document.documentElement.scrollWidth,
+      }));
+      if (overflow.content > overflow.viewport + 2) {
+        throw new Error('Mobile website has horizontal overflow: ' + JSON.stringify(overflow));
+      }
+    }
     if (width === 1440) {
       await page.getByRole('heading', { name: /Помощь грузовикам на дороге/ }).waitFor();
       await page.getByRole('button', { name: 'Войти в личный кабинет' }).waitFor();
@@ -107,6 +116,16 @@ try {
   await nav.waitFor({ state: 'visible' });
   const lastTab = nav.locator('a').last();
   if (await lastTab.textContent() !== '👤Профиль') throw new Error('Profile must be the rightmost Android tab');
+  const clippedTabs = await nav.locator('a').evaluateAll((items) =>
+    items.filter((item) => item.scrollWidth > item.clientWidth + 2).map((item) => item.textContent));
+  if (clippedTabs.length) throw new Error('Bottom tab labels are clipped: ' + clippedTabs.join(', '));
+  const appOverflow = await mobileApp.evaluate(() => ({
+    viewport: document.documentElement.clientWidth,
+    content: document.documentElement.scrollWidth,
+  }));
+  if (appOverflow.content > appOverflow.viewport + 2) {
+    throw new Error('Android UI has horizontal overflow: ' + JSON.stringify(appOverflow));
+  }
   await lastTab.click();
   await mobileApp.getByRole('heading', { name: 'Профиль' }).waitFor();
   if (await mobileApp.locator('.website-sidebar:visible').count()) throw new Error('Android shows desktop sidebar');
