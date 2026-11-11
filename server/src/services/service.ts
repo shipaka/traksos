@@ -72,9 +72,10 @@ export class ServiceCenters {
       const block = await this.db.one(`select 1 from service_contact_blocks where center_id=$1 and client_id=$2 and lifted_at is null`,[b.center_id,b.client_id]);
       if (block) throw forbidden('Рембаза ограничила новые сообщения. Для спора обратитесь в поддержку ТракSOS.');
     }
-    const { maskPhones } = await import('../util.ts');
-    const safe = maskPhones(text.trim().slice(0,2000));
-    if (!safe.text) throw bad('empty','Введите сообщение');
+    const raw = text.trim().slice(0,2000);
+    if (!raw) throw bad('empty','Введите сообщение');
+    const safe = { text: raw.replace(/(?:\\+?\\d[\\d\\s()\\-]{8,}\\d)/g, '[номер скрыт]'), masked: false };
+    safe.masked = safe.text !== raw;
     const m = await this.db.one(`insert into service_booking_messages(booking_id,sender_id,body,masked)
       values($1,$2,$3,$4) returning id::int,sender_id,body,masked,created_at`,[bookingId,user.id,safe.text,safe.masked]);
     const recipients = [...new Set([b.client_id,b.created_by,b.owner_id])].filter(id=>id!==user.id);
