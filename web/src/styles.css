@@ -619,3 +619,27 @@ select.field { appearance: none; }
   .native-app .tabbar { width: calc(100% - 20px); padding: 6px 4px; gap: 1px; }
   .native-app .tabbar a { padding-inline: 0; }
 }
+
+/* Небольшие экраны: сохраняем бренд и три важных действия без переполнения. */
+@media (max-width: 620px) {
+  .website .top .top-help-link { display: none; }
+  .website .top .row { gap: 6px; }
+  .website .top .bell { width: 38px; height: 38px; font-size: 18px; }
+  .website .top .logo { font-size: 18px; }
+}
+@media (max-width: 380px) {
+  .website .top { gap: 6px; }
+  .website .top .row { gap: 4px; }
+  .website .top .bell { width: 34px; height: 34px; font-size: 17px; }
+}
+/* Заголовки, карточки, подсказки и поля: текст переносится внутри своего блока. */
+.app h1, .app h2, .app h3, .app .label, .app .note,
+.app .linkrow b, .app .linkrow small, .app .list-item b,
+.app .list-item .note, .app .opt b, .app .opt small {
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+.app details > summary { min-width: 0; }
+.app .between > b, .app .between > span, .app .between > a { min-width: 0; }
+.app .field, .app textarea, .app select { max-width: 100%; }
