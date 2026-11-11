@@ -1,4 +1,4 @@
-import type { Db } from '../db/index.ts';
+import type { Db, Row } from '../db/index.ts';
 import type { AuthUser } from '../http/router.ts';
 import { forbidden, notFound, bad } from '../http/router.ts';
 
@@ -148,7 +148,7 @@ export class VehicleServiceRequests {
   }
 
   /** Notify a driver only while they remain assigned to this vehicle and the owner permits the service. */
-  async recipients(request: { owner_id: string; requested_by: string; vehicle_id: string; kind: VehicleServiceKind }) {
+  async recipients(request: Row) {
     const drivers = await this.db.query<{ id: string }>(
       `select v.driver_id as id from vehicles v join users u on u.id=v.owner_id
        where v.id=$1 and v.owner_id=$2 and v.driver_id=$3
