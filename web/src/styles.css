@@ -451,3 +451,22 @@ select.field { appearance: none; }
   border-radius: 10px; color: var(--fg); background: var(--surface-3); text-decoration: none; font-weight: 700; font-size: 13px; }
 .website .website-work-welcome .row a:hover { color: var(--accent); }
 .website .website-work-area > .website-work-welcome + main { padding-top: 22px; }
+
+
+/* Публичная страница возможностей — доступна без входа даже с телефона. */
+.website .web-about { gap: 40px; }
+.website .web-about-intro { padding: clamp(26px, 4vw, 52px); border: 1px solid var(--line-2); border-radius: 24px;
+  background: radial-gradient(ellipse at 80% 30%,rgba(255,106,19,.15),transparent 50%),#202329; }
+.website .web-about-intro .label { color: var(--accent); }
+.website .web-about-intro h1 { max-width: 950px; font-size: clamp(28px,4vw,54px); margin: 18px 0; }
+.website .web-about-intro p { max-width: 790px; color: var(--fg-2); font-size: clamp(15px,1.4vw,19px); line-height: 1.6; }
+.website .web-about-intro .row { margin-top: 25px; }
+.website .web-about-intro .btn { width: auto; min-width: 205px; }
+.website .web-about-actions { display: grid; gap: 18px; }
+.website .web-about-actions .web-feature a { color: var(--accent); text-decoration: none; display: inline-block; margin-top: 15px; font-weight: 700; }
+@media (max-width: 520px) {
+  .website .web-about { gap: 22px; }
+  .website .web-about-intro { padding: 24px 18px; }
+  .website .web-about-intro .row { flex-direction: column; align-items: stretch; }
+  .website .web-about-intro .btn { width: 100%; }
+}
