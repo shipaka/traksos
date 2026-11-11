@@ -20,6 +20,7 @@ export function homeFor(roles: string[], intent: Intent): string {
   if (roles.includes('client') || roles.includes('driver')) return '#/as/client';
   if (performer) return '#/as/performer';
   if (roles.includes('service')) return '#/as/service';
+  if (roles.includes('insurer')) return '#/as/insurer';
   return '#/as/client';
 }
 
