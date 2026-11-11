@@ -80,3 +80,17 @@ test('«всё через меня» и запреты: эвакуатор и з
   assert.equal(fs.settings.allow.repair, true);
   assert.equal((await t.api('GET', '/api/fleet', undefined, driver.token)).status, 400, 'парк видит только владелец');
 });
+
+test('владелец редактирует данные машины, водитель не может менять чужую карточку', async () => {
+  const edited = ok(await t.api('PATCH', `/api/vehicles/${vehicleId}`, {
+    brand: 'DAF', model: 'XF 105', year: 2012, vin: 'WDB9634031L123456',
+    engine: 'MX-13 (заменён)', configurationNotes: 'Двигатель заменён, проверять совместимость вручную',
+  }, owner.token));
+  assert.equal(edited.model, 'XF 105');
+  assert.equal(edited.vin, 'WDB9634031L123456');
+  assert.equal(edited.engine, 'MX-13 (заменён)');
+  assert.equal(edited.configuration_notes, 'Двигатель заменён, проверять совместимость вручную');
+  assert.equal((await t.api('PATCH', `/api/vehicles/${vehicleId}`, { model: 'подмена' }, driver.token)).status, 403);
+  assert.equal((await t.api('PATCH', `/api/vehicles/${vehicleId}`, { vin: 'invalid' }, owner.token)).status, 400);
+  assert.equal((await t.api('PATCH', '/api/vehicles/00000000-0000-0000-0000-000000000000', { model: 'XF' }, owner.token)).status, 404);
+});
