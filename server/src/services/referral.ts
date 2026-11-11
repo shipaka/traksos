@@ -20,12 +20,12 @@ import { rub } from '../util.ts';
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const DAY = 86_400_000;
 
-type Entry = { amount: number; expires_at: Date | null; created_at: Date };
+type Entry = { amount: number; expires_at: Date | null; created_at: Date; status?: string };
 
 /** Остаток с учётом сгорания: траты гасят самые старые начисления (FIFO) */
 export function pointsBalance(entries: Entry[], at: Date) {
   const lots: { left: number; exp: number }[] = [];
-  for (const e of [...entries].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())) {
+  for (const e of [...entries].filter((x) => x.status !== 'held' && x.status !== 'reversed').sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())) {
     const t = new Date(e.created_at).getTime();
     if (e.amount > 0) { lots.push({ left: e.amount, exp: e.expires_at ? new Date(e.expires_at).getTime() : Infinity }); continue; }
     let need = -e.amount;
@@ -70,16 +70,18 @@ export class ReferralService {
   }
 
   async balance(userId: string, q: Queryable = this.db) {
-    const rows = await q.query<Entry>('select amount, expires_at, created_at from points_entries where user_id=$1', [userId]);
+    const rows = await q.query<Entry>('select amount, expires_at, created_at, status from points_entries where user_id=$1', [userId]);
     return pointsBalance(rows, this.now());
   }
 
   async grant(q: Queryable, p: { userId: string; amount: number; kind: string; orderId?: string | null; bookingId?: string | null; refUserId?: string | null; note: string }) {
     if (p.amount <= 0) return 0;
     await q.query('select id from users where id=$1 for update', [p.userId]);
+    const key = ['ref_client', 'ref_performer', 'ref_service', 'welcome'].includes(p.kind)
+      ? [p.kind, p.orderId ?? p.bookingId ?? p.refUserId ?? '', p.userId].join(':') : null;
     const inserted = await q.query(
-      `insert into points_entries(user_id, amount, kind, order_id, booking_id, ref_user_id, note, expires_at, created_at) values ($1,$2,$3,$4,$5,$6,$7,$8,$9) on conflict do nothing returning id`,
-      [p.userId, p.amount, p.kind, p.orderId ?? null, p.bookingId ?? null, p.refUserId ?? null, p.note, await this.expiresAt(), this.now()]);
+      `insert into points_entries(user_id, amount, kind, order_id, booking_id, ref_user_id, note, expires_at, created_at, event_key) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) on conflict do nothing returning id`,
+      [p.userId, p.amount, p.kind, p.orderId ?? null, p.bookingId ?? null, p.refUserId ?? null, p.note, await this.expiresAt(), this.now(), key]);
     if (!inserted.length) return 0;
     await this.notifier.notify([p.userId], { type: 'points' }, { kind: 'normal', title: `+${rub(p.amount).replace(' ₽', '')} баллов`, body: p.note, data: {} });
     return p.amount;
@@ -100,8 +102,9 @@ export class ReferralService {
     const a = await this.available(userId, base, q);
     const use = Math.max(0, Math.min(a.max, want ?? a.max));
     if (use <= 0) return 0;
-    const inserted = await q.query(`insert into points_entries(user_id, amount, kind, order_id, booking_id, note, created_at) values ($1,$2,'spend',$3,$4,$5,$6) on conflict do nothing returning id`,
-      [userId, -use, orderId ?? null, bookingId ?? null, note, this.now()]);
+    const key = orderId || bookingId ? ['spend', userId, orderId ?? bookingId, bookingId ? 'service' : note.startsWith('Сервисный') ? 'client' : 'performer'].join(':') : null;
+    const inserted = await q.query(`insert into points_entries(user_id, amount, kind, order_id, booking_id, note, created_at, event_key) values ($1,$2,'spend',$3,$4,$5,$6,$7) on conflict do nothing returning id`,
+      [userId, -use, orderId ?? null, bookingId ?? null, note, this.now(), key]);
     return inserted.length ? use : 0;
   }
 
@@ -208,7 +211,7 @@ export class ReferralService {
     const code = await this.code(user.id);
     const b = await this.balance(user.id);
     const entries = await this.db.query(
-      `select id::int as id, amount, kind, note, expires_at, created_at from points_entries where user_id=$1 order by created_at desc limit 50`, [user.id]);
+      `select id::int as id, amount, kind, status, note, expires_at, created_at from points_entries where user_id=$1 order by created_at desc limit 50`, [user.id]);
     const invited = await this.db.query(
       `select coalesce(nullif(u.company_name,''), nullif(u.name,''), 'Без имени') as name, u.referred_at as at,
               case when u.roles && '{master,tow}'::text[] then 'performer' when 'service' = any(u.roles) then 'service' else 'client' end as who,
