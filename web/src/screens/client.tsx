@@ -4,6 +4,7 @@ import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF, QUICK_WHAT, ON_SITE, s
 import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFields, LiveStrip, type VehicleValue } from '../ui.tsx';
 import { BookingRows } from './base.tsx';
 import { DriverRules } from './fleet.tsx';
+import { TruckPhoto, TruckPhotoCredit } from '../truckPhotos.tsx';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
 
@@ -699,8 +700,14 @@ export function Garage() {
       )}
       {!list.data ? <Loading error={list.error} /> : list.data.map((v: any) => (
         <details key={v.id} className="card">
-          <summary className="between"><b>{v.brand} {v.model ?? ''}{v.year ? `, ${v.year}` : ''}</b><span className="pill">{v.plate ?? 'без номера'}</span></summary>
+          <summary className="between">
+            <span className="row" style={{ alignItems: 'center', gap: 10 }}>
+              <TruckPhoto brand={v.brand} /><b>{v.brand} {v.model ?? ''}{v.year ? `, ${v.year}` : ''}</b>
+            </span>
+            <span className="pill">{v.plate ?? 'без номера'}</span>
+          </summary>
           <div className="stack">
+          <TruckPhotoCredit brand={v.brand} />
           {v.trailer_plate && <span className="note">Прицеп {v.trailer_plate}</span>}
           {v.fixed_at && <span className="pill good" style={{ alignSelf: 'flex-start' }}>уточнено мастером · {fmtTime(v.fixed_at)}</span>}
           {seriesHint(v.brand, v.year) && <span className="note" style={{ color: 'var(--accent)' }}>{seriesHint(v.brand, v.year)}</span>}
