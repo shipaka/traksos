@@ -62,7 +62,7 @@ export class ServiceCenters {
       from service_booking_messages m where m.booking_id=$1 and m.id>$2 order by m.id limit 200`, [bookingId, Math.max(0,after)]);
     const block = await this.db.one<{ reason: string }>(`select reason from service_contact_blocks
       where center_id=$1 and client_id=$2 and lifted_at is null`, [b.center_id,b.client_id]);
-    return { messages, blocked: !!block, blockedReason: user.id === b.owner_id || user.roles.includes('admin') ? block?.reason ?? null : null };
+    return { messages, blocked: !!block, canMessage: !block || ['expected','arrived','diagnostics','in_work','waiting_part','agreeing','ready','invoiced','disputed'].includes(b.status), blockedReason: user.id === b.owner_id || user.roles.includes('admin') ? block?.reason ?? null : null };
   }
 
   async sendMessage(user: AuthUser, bookingId: string, text: string) {
