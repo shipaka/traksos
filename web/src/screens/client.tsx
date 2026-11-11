@@ -703,6 +703,7 @@ export function Garage() {
               <div className="grid2"><button className="btn small" disabled={busy || !editForm.brand}>Сохранить изменения</button><button type="button" className="btn ghost small" onClick={() => setEditing(null)}>Отмена</button></div>
             </form>
           ) : !isDriver && <button type="button" className="btn ghost small" onClick={() => { setEditing(v.id); setEditForm({ brand: v.brand ?? '', model: v.model ?? '', year: v.year ? String(v.year) : '', plate: v.plate ?? '', trailerPlate: v.trailer_plate ?? '', vin: v.vin ?? '', engine: v.engine ?? '', configurationNotes: v.configuration_notes ?? '' }); }}>Редактировать машину</button>}
+          <VehicleServiceApplication vehicleId={v.id} onCreated={() => list.reload()} />
           <VehicleServiceHistory id={v.id} />
           <VehicleHistory id={v.id} />
           {!isDriver && (driverFor === v.id ? (
@@ -742,6 +743,34 @@ export function Garage() {
         </form>
       )}
     </main>
+  );
+}
+
+/** Оформление заявки для владельца или водителя с разрешением владельца. */
+function VehicleServiceApplication({ vehicleId, onCreated }: { vehicleId: string; onCreated: () => void }) {
+  const { busy, run } = useAction();
+  const [kind, setKind] = useState<'insurance' | 'inspection'>('insurance');
+  const [comment, setComment] = useState('');
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="stack">
+      <button type="button" className="btn ghost small" onClick={() => setOpen(!open)}>
+        {open ? 'Скрыть оформление' : 'Страхование / техосмотр'}
+      </button>
+      {open && <form className="stack" onSubmit={async (e) => {
+        e.preventDefault();
+        const created = await run(() => post('/api/vehicle-service-requests', { vehicleId, kind, comment: comment || undefined }), 'Заявка отправлена');
+        if (created) { setOpen(false); setComment(''); onCreated(); }
+      }}>
+        <select className="field" aria-label="Услуга" value={kind} onChange={(e) => setKind(e.target.value as 'insurance' | 'inspection')}>
+          <option value="insurance">Страхование</option>
+          <option value="inspection">Техосмотр</option>
+        </select>
+        <textarea className="field" aria-label="Комментарий к заявке" placeholder="Комментарий (необязательно)" value={comment} onChange={(e) => setComment(e.target.value)} maxLength={2000} />
+        <span className="note">Заявка передаётся на обработку. Оформление полиса или техосмотра выполняет уполномоченный партнёр.</span>
+        <button className="btn small" disabled={busy}>Отправить заявку</button>
+      </form>}
+    </div>
   );
 }
 
