@@ -585,3 +585,12 @@ select.field { appearance: none; }
   .website .web-case-toolbar { align-items: stretch; flex-direction: column; }
   .website .web-case-toolbar > .stack { min-width: 0; max-width: none; }
 }
+
+/* Рембаза: рабочие показатели рядом с частыми действиями на большом экране. */
+.website .web-base-overview { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(220px, .8fr); align-items: stretch; gap: 18px; }
+.website .web-base-overview .grid3 { align-self: stretch; }
+.website .web-base-overview .grid3 .tile { height: 100%; }
+.website .web-base-actions { display: flex; flex-direction: column; gap: 8px; }
+.website .web-base-actions > .linkrow { height: 100%; min-width: 0; padding: 12px 16px; }
+@media (max-width: 1100px) { .website .web-base-overview { grid-template-columns: 1fr; } }
+.native-app .web-base-actions { display: none; }
