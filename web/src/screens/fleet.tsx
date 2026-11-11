@@ -160,6 +160,8 @@ export function FleetFinances() {
   const items: any[] = report.data?.items ?? [];
   const shown = vehicleId ? items.filter((o: any) => o.vehicleId === vehicleId) : items;
   const total = shown.reduce((sum: number, o: any) => sum + Number(o.agreedTotal ?? 0), 0);
+  const collected = shown.reduce((sum: number, o: any) => sum + Number(o.confirmedCollected ?? 0), 0);
+  const refunded = shown.reduce((sum: number, o: any) => sum + Number(o.confirmedRefunded ?? 0), 0);
   const cars = [...new Map(items.filter((o: any) => o.vehicleId).map((o: any) => [
     o.vehicleId, { id: o.vehicleId, label: [o.brand, o.model, o.plate].filter(Boolean).join(' · ') || 'Автомобиль' },
   ])).values()] as { id: string; label: string }[];
@@ -176,7 +178,9 @@ export function FleetFinances() {
       <div className="card">
         <span className="label">Согласовано по выполненным заявкам</span>
         <b style={{ fontSize: 24 }}>{rub(total)}</b>
-        <span className="note">Это реестр согласованных сумм, не подтверждение списания денег. Фактические платежи и возвраты будут отображаться отдельно после интеграции платёжных документов.</span>
+        <div className="sum"><span>Подтверждено по онлайн-оплате и счетам</span><b>{rub(collected)}</b></div>
+        {refunded > 0 && <div className="sum"><span>Учтённые возвраты</span><b>{rub(refunded)}</b></div>}
+        <span className="note">Согласованная сумма — стоимость услуг, не факт оплаты. Подтверждённые платежи берутся из реестра ТракSOS; наличные вне системы оплаты не подтверждаются. Возвраты указаны отдельно.</span>
       </div>
       {!report.data ? <Loading error={report.error} /> : (
         <>
@@ -197,6 +201,10 @@ export function FleetFinances() {
                   <span className="note">Заказ: {fmtTime(o.createdAt)}{o.completedAt ? ` · Согласовано: ${fmtTime(o.completedAt)}` : ''}</span>
                   <span className="note">Водитель/заказчик: {o.driverName ?? '—'} · Исполнитель: {o.performerName ?? 'не назначен'}</span>
                   <span className="note">{statuses[o.status] ?? o.status} · {methods[o.paymentMethod] ?? 'Способ не выбран'}</span>
+                  {o.confirmedCollected > 0 && <span className="note">Подтверждено платежами: {rub(o.confirmedCollected)}</span>}
+                  {o.confirmedRefunded > 0 && <span className="note">Возвращено: {rub(o.confirmedRefunded)}</span>}
+                  {o.pendingPayment > 0 && <span className="note">Ожидает оплаты/подтверждения: {rub(o.pendingPayment)}</span>}
+                  {o.paymentMethod === 'cash' && o.status === 'completed' && <span className="note">Оплата наличными не подтверждается банковским реестром</span>}
                 </div>
                 <b>{o.agreedTotal == null ? '—' : rub(o.agreedTotal)}</b>
               </a>
