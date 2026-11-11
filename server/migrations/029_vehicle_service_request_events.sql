@@ -13,8 +13,10 @@ create index if not exists vehicle_service_request_events_request_idx
 create or replace function record_vehicle_service_request_event()
 returns trigger language plpgsql as $$
 begin
-  if tg_op = 'INSERT'
-     or new.status is distinct from old.status
+  if tg_op = 'INSERT' then
+    insert into vehicle_service_request_events(request_id, status, policy_expires_on, note, changed_at)
+    values (new.id, new.status, new.policy_expires_on, new.staff_note, now());
+  elsif new.status is distinct from old.status
      or new.policy_expires_on is distinct from old.policy_expires_on then
     insert into vehicle_service_request_events(request_id, status, policy_expires_on, note, changed_at)
     values (new.id, new.status, new.policy_expires_on, new.staff_note, now());
