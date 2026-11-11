@@ -51,6 +51,7 @@ jobs:
             cat /tmp/traksos-server.log
             exit 1
           fi
+          timeout 2m node e2e/site.mjs e2e/shots
           timeout 10m node e2e/flow.mjs e2e/shots
       - name: Снимки экранов
         if: always()
