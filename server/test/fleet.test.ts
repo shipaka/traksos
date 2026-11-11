@@ -94,3 +94,11 @@ test('владелец редактирует данные машины, вод�
   assert.equal((await t.api('PATCH', `/api/vehicles/${vehicleId}`, { vin: 'invalid' }, owner.token)).status, 400);
   assert.equal((await t.api('PATCH', '/api/vehicles/00000000-0000-0000-0000-000000000000', { model: 'XF' }, owner.token)).status, 404);
 });
+
+test('финансовый обзор: владелец видит свои заявки, водитель не видит расходы компании', async () => {
+  const report = ok(await t.api('GET', '/api/fleet/finances', undefined, owner.token));
+  assert.equal(typeof report.agreedTotal, 'number');
+  assert.ok(Array.isArray(report.items));
+  assert.ok(report.items.some((item: any) => item.vehicleId === vehicleId));
+  assert.equal((await t.api('GET', '/api/fleet/finances', undefined, driver.token)).status, 400);
+});
