@@ -302,3 +302,33 @@ test('new staff note is preserved on a later status transition', async () => {
   const update = calls.find(c => c.sql.startsWith('update vehicle_service_requests'));
   assert.equal(update?.params[2], 'Техосмотр завершён');
 });
+
+test('service notifications reach the owner but not a reassigned or forbidden driver', async () => {
+  const request = {
+    owner_id: owner.id, requested_by: driver.id,
+    vehicle_id: 'vehicle-1', kind: 'insurance' as const,
+  };
+  let queries = 0;
+  const db: any = {
+    query: async (sql: string, params: unknown[]) => {
+      queries++;
+      assert.match(sql, /v\.driver_id=\$3/);
+      assert.match(sql, /fleet->'allow'->>\$4/);
+      assert.deepEqual(params, ['vehicle-1', owner.id, driver.id, 'insurance']);
+      return [];
+    },
+  };
+  const recipients = await new VehicleServiceRequests(db).recipients(request);
+  assert.deepEqual(recipients, [owner.id]);
+  assert.equal(queries, 1);
+});
+
+test('service notifications reach the currently permitted requesting driver', async () => {
+  const request = {
+    owner_id: owner.id, requested_by: driver.id,
+    vehicle_id: 'vehicle-1', kind: 'inspection' as const,
+  };
+  const db: any = { query: async () => [{ id: driver.id }] };
+  const recipients = await new VehicleServiceRequests(db).recipients(request);
+  assert.deepEqual(recipients, [owner.id, driver.id]);
+});
