@@ -57,12 +57,18 @@ function VehicleServicesQueue() {
     need_documents: ['in_review', 'cancelled'],
     sent_to_partner: ['completed', 'rejected', 'cancelled'],
   };
-  async function change(id: string, status: string) {
+  async function change(id: string, status: string, currentNote?: string) {
+    const note = (notes[id] ?? currentNote ?? '').trim();
+    // Explain refusals and document requests before updating the client-visible status.
+    if (['rejected', 'need_documents'].includes(status) && !note) {
+      window.alert('Укажите причину отказа или какие документы нужны клиенту.');
+      return;
+    }
     const r = await run(() => patch(`/api/admin/vehicle-service-requests/${id}`, {
-      status, note: notes[id] || undefined,
+      status, note: note || undefined,
       policyExpiresOn: status === 'completed' && expiry[id] ? expiry[id] : undefined,
     }), 'Статус обновлён');
-    if (r) list.reload();
+    if (r) { setNotes(previous => { const nextNotes = { ...previous }; delete nextNotes[id]; return nextNotes; }); list.reload(); }
   }
   return <div className="stack">
     <h2>Заявки на страхование и техосмотр</h2>
@@ -77,7 +83,7 @@ function VehicleServicesQueue() {
           {r.kind === 'insurance' && r.status === 'sent_to_partner' && <label className="stack">Дата окончания полиса
             <input className="field" type="date" value={expiry[r.id] ?? ''} onChange={(e) => setExpiry({ ...expiry, [r.id]: e.target.value })} />
           </label>}
-          <div className="row">{next[r.status].map((status) => <button key={status} type="button" className="btn ghost small" disabled={busy} onClick={() => change(r.id, status)}>{labels[status]}</button>)}</div>
+          <div className="row">{next[r.status].map((status) => <button key={status} type="button" className="btn ghost small" disabled={busy} onClick={() => change(r.id, status, r.staff_note)}>{labels[status]}</button>)}</div>
         </>}
       </div>)}
   </div>;
