@@ -17,6 +17,7 @@ import { AdminUser } from './screens/adminUser.tsx';
 import { BaseHome, BaseCar, BaseSetup, BaseMoney, AdminServicePayouts, ServicesList, CenterPage, BookForm, BookingPage } from './screens/base.tsx';
 import { Fleet, QrJoin } from './screens/fleet.tsx';
 import { Help } from './screens/help.tsx';
+import { CommonMenu } from './screens/menu.tsx';
 import { Rules } from './screens/rules.tsx';
 import { Shop, ShopCart } from './screens/shop.tsx';
 import { Privacy } from './screens/privacy.tsx';
@@ -111,6 +112,7 @@ function App() {
     case 'booking': screen = <BookingPage id={b} />; break;
     case 'fleet': screen = <Fleet />; break;
     case 'help': screen = <Help />; break;
+    case 'menu': screen = <CommonMenu />; break;
     case 'rules': screen = <Rules />; break;
     case 'shop': screen = b === 'cart' ? <ShopCart /> : <Shop />; break;
     case 'privacy': screen = <Privacy />; break;
@@ -137,12 +139,12 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   const route = useRoute();
   const here = '/' + route.join('/');
   const tabs: [string, string, string][] = !me ? [] : mode === 'performer'
-    ? [['/work', '⚡', 'Линия'], ['/work/jobs', '☰', 'История'], ['/work/me', '◉', 'Профиль']]
+    ? [['/work', '⚡', 'Линия'], ['/work/jobs', '☰', 'История'], ['/work/me', '◉', 'Профиль'], ['/menu', '☷', 'Меню']]
     : mode === 'service'
-      ? [['/base', '▤', 'Рембаза'], ['/base/money', '₽', 'Финансы'], ['/base/me', '⚙', 'Карточка'], ['/support', '?', 'Поддержка'], ['/profile', '◉', 'Аккаунт']]
+      ? [['/base', '▤', 'Рембаза'], ['/base/money', '₽', 'Финансы'], ['/base/me', '⚙', 'Карточка'], ['/support', '?', 'Поддержка'], ['/menu', '☷', 'Меню']]
     : mode === 'admin'
-      ? [['/admin', '▦', 'Админ'], ['/as/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]
-      : [['/shop', '🛍', 'Магазин'], ['/', '🔧', 'Услуги'], ['/sos', '!', 'SOS'], ['/orders', '☰', 'Заявки'], ['/garage', '▭', 'Гараж']];
+      ? [['/admin', '▦', 'Админ'], ['/as/client', '⌂', 'Клиент'], ['/menu', '☷', 'Меню']]
+      : [['/', '🔧', 'Услуги'], ['/sos', '!', 'SOS'], ['/orders', '☰', 'Заявки'], ['/garage', '▭', 'Гараж'], ['/menu', '☷', 'Меню']];
   return (
     <div className="app">
       <header className="top">
