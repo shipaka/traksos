@@ -992,7 +992,7 @@ export function Profile() {
         )}
         <button className="btn" disabled={busy}>Сохранить</button>
       </form>
-      <details className="card">
+      <details className="card" open={mode === 'performer'}>
         <summary><b>Кабинеты и доступные роли</b></summary>
         <div className="stack">
           {mode !== 'client' && <button className="btn ghost" onClick={() => go('as/client')}>Кабинет клиента</button>}
