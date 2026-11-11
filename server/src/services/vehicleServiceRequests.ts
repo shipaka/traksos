@@ -90,6 +90,16 @@ export class VehicleServiceRequests {
       if (!current) throw notFound('Заявка не найдена');
       if (!transitions[current.status as VehicleServiceStatus]?.includes(status)) throw bad('invalid_status', 'Недопустимый переход статуса');
       if (policyExpiresOn && (current.kind !== 'insurance' || status !== 'completed')) throw bad('invalid_expiry', 'Срок полиса указывается при завершении страхования');
+      if (status === 'completed' && current.kind === 'insurance') {
+        const expiry = policyExpiresOn ?? current.policy_expires_on;
+        if (!expiry || !/^\\d{4}-\\d{2}-\\d{2}$/.test(String(expiry))) {
+          throw bad('invalid_expiry', 'Для завершения страхования укажите дату окончания полиса');
+        }
+        const parsed = new Date(String(expiry) + 'T00:00:00Z');
+        if (!Number.isFinite(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== String(expiry)) {
+          throw bad('invalid_expiry', 'Некорректная дата окончания полиса');
+        }
+      }
       return q.one(
         `update vehicle_service_requests set status=$2, staff_note=$3, assigned_to=$4, policy_expires_on=coalesce($5::date, policy_expires_on), updated_at=now()
          where id=$1 returning *`, [id, status, note ?? current.staff_note, staff.id, policyExpiresOn ?? null]);
