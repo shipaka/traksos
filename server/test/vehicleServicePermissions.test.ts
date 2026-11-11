@@ -52,6 +52,15 @@ test('insurance completion requires a valid policy expiry', async () => {
   assert.equal(result?.status, 'completed');
 });
 
+test('staff cannot complete insurance with an already expired policy', async () => {
+  const { db, calls } = mockDb({ id: 'request-1', kind: 'insurance', status: 'sent_to_partner', policy_expires_on: null });
+  await assert.rejects(
+    new VehicleServiceRequests(db).setStatus(admin, 'request-1', 'completed', undefined, '2000-01-01'),
+    /позже сегодняшнего дня/,
+  );
+  assert.equal(calls.some(c => c.sql.startsWith('update vehicle_service_requests')), false);
+});
+
 test('cancellation SQL restricts status, owner and driver permission', async () => {
   const { db, calls } = mockDb();
   const service = new VehicleServiceRequests(db);
