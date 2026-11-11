@@ -531,21 +531,23 @@ export function ServicesList() {
         ) : (
           <div className="stack">
             {shown.map((c: any) => (
-              <a key={c.id} href={`#/services/${c.id}${from ? `?from=${from}` : ''}`} className="card" style={{ textDecoration: 'none', color: 'inherit', gap: 6 }}>
+              <div key={c.id} className="card" style={{ textDecoration: 'none', color: 'inherit', gap: 6 }}>
                 <div className="between" style={{ alignItems: 'flex-start' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-                    <b>{c.name}</b>
+                    <b>{c.name}</b><span className={`pill ${c.isPartner ? 'accent' : ''}`}>{c.isPartner ? 'Партнёр ТракSOS' : 'Справочная точка'}</span>
                     <span className="note">{c.address}</span>
                   </div>
                   {c.distanceKm != null && <b style={{ fontFamily: 'var(--display)', whiteSpace: 'nowrap' }}>{c.distanceKm} км</b>}
                 </div>
                 <div className="row" style={{ gap: 4 }}>
-                  {c.rating ? <span className="pill good">★ {c.rating.toFixed(1)} · {c.reviews}</span> : <span className="pill">новый</span>}
+                  {c.rating ? <span className="pill good">★ {c.rating.toFixed(1)} · {c.reviews}</span> : !c.directoryOnly ? <span className="pill">новый</span> : null}
                   {c.paused ? <span className="pill warn">приём закрыт</span> : c.openNow === true ? <span className="pill good">открыто · {c.hours}</span> : c.openNow === false ? <span className="pill">закрыто · {c.hours}</span> : <span className="pill">{c.hours}</span>}
-                  {c.load ? <span className="pill">машин: {c.load}</span> : <span className="pill good">свободно</span>}
+                  {c.load != null && (c.load ? <span className="pill">машин: {c.load}</span> : <span className="pill good">свободно</span>)}
                   {c.knowsBrand && <span className="pill accent">знают {brand}</span>}
                 </div>
-              </a>
+                {!c.directoryOnly && <a className="btn ghost small" href={`#/services/${c.id}${from ? `?from=${from}` : ''}`}>Открыть и записаться</a>}
+                {c.directoryOnly && <span className="note">Справочная рембаза · запись через ТракSOS пока недоступна</span>}
+              </div>
             ))}
           </div>
         )}
