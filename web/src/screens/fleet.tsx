@@ -182,13 +182,12 @@ export function FleetFinances() {
       <Back to="fleet" label="Мой парк" />
       <h1>Финансы автопарка</h1>
       <div className="sub">Суммы по заявкам ваших машин: что делали, кому поручено и когда согласован итог.</div>
-      <div className="card">
-        <span className="label">Согласовано по выполненным заявкам</span>
-        <b style={{ fontSize: 24 }}>{rub(total)}</b>
-        <div className="sum"><span>Подтверждено по онлайн-оплате и счетам</span><b>{rub(collected)}</b></div>
-        {refunded > 0 && <div className="sum"><span>Учтённые возвраты</span><b>{rub(refunded)}</b></div>}
-        <span className="note">Согласованная сумма — стоимость услуг, не факт оплаты. Подтверждённые платежи берутся из реестра ТракSOS; наличные вне системы оплаты не подтверждаются. Возвраты указаны отдельно.</span>
+      <div className="web-finance-metrics">
+        <div className="card"><span className="label">Согласовано по заявкам</span><b className="tile-value">{rub(total)}</b><span className="note">Стоимость выполненных работ</span></div>
+        <div className="card"><span className="label">Подтверждено системой</span><b className="tile-value">{rub(collected)}</b><span className="note">Онлайн-оплата и счета</span></div>
+        <div className="card"><span className="label">Оформленные возвраты</span><b className="tile-value">{rub(refunded)}</b><span className="note">Учтённые возвратные платежи</span></div>
       </div>
+      <div className="note">Стоимость заявки не означает факт оплаты. Подтверждения берутся из платёжного реестра ТракSOS; наличные вне системы не подтверждаются.</div>
       {!report.data ? <Loading error={report.error} /> : (
         <>
           <label className="stack">
