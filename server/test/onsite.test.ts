@@ -71,6 +71,14 @@ test('кандидат не получает ИНН, госномер и ист�
   assert.equal(preview.consultFrom, null);
 });
 
+test('посторонний исполнитель не может заблокировать клиента по чужому заказу', async () => {
+  const assigned = await take({ service: 'electric', zoneId: 'spb', description: 'Не работает электрика' });
+  const stranger = await t.login('+79994445566', 'master');
+  assert.equal((await t.api('POST', `/api/orders/${assigned}/block-client`,
+    { on: true, reason: 'посторонний' }, stranger.token)).status, 403);
+  assert.equal(ok(await t.api('GET', '/api/performer/blacklist', undefined, stranger.token)).length, 0);
+});
+
 test('«не брать заявки этого клиента»: заявки клиента больше не приходят', async () => {
   const last = ok(await t.api('GET', '/api/orders?as=performer', undefined, master.token))[0];
   ok(await t.api('POST', `/api/orders/${last.id}/block-client`, { on: true, reason: 'не оплатил ожидание' }, master.token));
