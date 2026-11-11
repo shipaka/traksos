@@ -16,14 +16,24 @@ export function Admin() {
     const requested = new URLSearchParams(location.hash.split('?')[1] ?? '').get('tab');
     return requested === 'vehicleServices' ? 'vehicleServices' : 'summary';
   });
+  useEffect(() => {
+    const onHash = () => {
+      const target = new URLSearchParams(location.hash.split('?')[1] ?? '').get('tab');
+      if (target === 'vehicleServices') setTab('vehicleServices');
+    };
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
   return (
     <main>
       <h1>Администратор</h1>
-      <div className="scroll-x">
+      <div className="admin-desktop-shell">
+      <div className="scroll-x admin-secondary-nav">
         {([['summary', 'Сводка'], ['queue', 'Очередь'], ['shop', 'Магазин'], ['vehicleServices', 'Страхование и ТО'], ['stats', 'Статистика'], ['search', 'Поиск'], ['support', 'Обращения'], ['verify', 'Проверка'], ['bases', 'Рембазы'], ['orders', 'Заявки'], ['people', 'Все люди'], ['payments', 'Деньги'], ['dispatch', 'Распределение'], ['offers', 'Оферты'], ['flagged', 'Подозрительное'], ['settings', 'Настройки']] as const).map(([id, n]) => (
           <button key={id} className="chip" aria-pressed={tab === id} onClick={() => setTab(id)}>{n}</button>
         ))}
       </div>
+      <section className="admin-content">
       {tab === 'stats' && <Stats />}
       {tab === 'search' && <Search />}
       {tab === 'support' && <SupportQueue />}
@@ -40,6 +50,8 @@ export function Admin() {
       {tab === 'dispatch' && <Dispatch />}
       {tab === 'payments' && <Payments />}
       {tab === 'flagged' && <Flagged />}
+      </section>
+      </div>
     </main>
   );
 }
