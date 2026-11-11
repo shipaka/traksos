@@ -358,15 +358,15 @@ test('assigned insurer can complete insurance but cannot touch inspections or ea
 
 test('insurer sees only assigned insurance requests and cannot see staff queue', async () => {
   const insurer = { id: 'insurer-1', roles: ['insurer'] } as any;
-  let selection: { sql: string; params: unknown[] } | null = null;
+  const selections: Array<{ sql: string; params: unknown[] }> = [];
   const db: any = {
     query: async (sql: string, params: unknown[]) => {
-      selection = { sql, params }; return [];
+      selections.push({ sql, params }); return [];
     },
   };
   await new VehicleServiceRequests(db).insurerQueue(insurer);
-  assert.deepEqual(selection?.params, [insurer.id]);
-  assert.match(selection!.sql, /r.kind='insurance' and r.assigned_to=\$1/);
+  assert.deepEqual(selections[0]?.params, [insurer.id]);
+  assert.match(selections[0].sql, /r.kind='insurance' and r.assigned_to=\$1/);
   await assert.rejects(new VehicleServiceRequests(db).queue(insurer), /Нет доступа/);
   await assert.rejects(new VehicleServiceRequests(db).insurerQueue(outsider), /Нет доступа/);
 });
