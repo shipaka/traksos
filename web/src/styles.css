@@ -422,3 +422,21 @@ select.field { appearance: none; }
 @media (max-width: 850px) {
   .website .web-vehicle-grid, .website .web-fleet-vehicles { grid-template-columns: 1fr; gap: 12px; }
 }
+
+
+/* Админка: отдельное меню рабочих разделов вместо ленты из шестнадцати кнопок. */
+.website .admin-desktop-shell { display: grid; grid-template-columns: 190px minmax(0, 1fr); align-items: start; gap: 20px; }
+.website .admin-desktop-shell .admin-secondary-nav { position: sticky; top: 94px; display: flex; flex-direction: column; align-items: stretch; overflow: visible; border: 1px solid var(--line); border-radius: 15px; padding: 10px; background: var(--surface); gap: 4px; max-height: calc(100vh - 110px); overflow-y: auto; }
+.website .admin-desktop-shell .admin-secondary-nav .chip { text-align: left; min-height: 38px; width: 100%; padding: 9px 12px; border: none; border-radius: 9px; font-size: 12px; white-space: normal; }
+.website .admin-desktop-shell .admin-secondary-nav .chip[aria-pressed="true"] { color: var(--fg); background: var(--surface-3); box-shadow: inset 3px 0 var(--accent); }
+.website .admin-content { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.website .admin-content > main { padding: 0; }
+.website .admin-content .tbl { width: 100%; }
+.native-app .admin-desktop-shell { display: contents; }
+.native-app .admin-content { display: contents; }
+@media (max-width: 1120px) {
+  .website .admin-desktop-shell { grid-template-columns: 1fr; gap: 12px; }
+  .website .admin-desktop-shell .admin-secondary-nav { position: static; flex-direction: row; overflow-x: auto; overflow-y: hidden; flex-wrap: nowrap; max-height: none; }
+  .website .admin-desktop-shell .admin-secondary-nav .chip { white-space: nowrap; width: auto; flex-shrink: 0; border: 1px solid var(--line-2); }
+  .website .admin-desktop-shell .admin-secondary-nav .chip[aria-pressed="true"] { color: var(--on-accent); background: var(--accent); box-shadow: none; }
+}
