@@ -74,7 +74,7 @@ export class ServiceCenters {
     }
     const raw = text.trim().slice(0,2000);
     if (!raw) throw bad('empty','Введите сообщение');
-    const safe = { text: raw.replace(/(?:\\+?\\d[\\d\\s()\\-]{8,}\\d)/g, '[номер скрыт]'), masked: false };
+    const safe = { text: raw.replace(/(?:\+?\d[\d\s()\-]{8,}\d)/g, '[номер скрыт]'), masked: false };
     safe.masked = safe.text !== raw;
     const m = await this.db.one(`insert into service_booking_messages(booking_id,sender_id,body,masked)
       values($1,$2,$3,$4) returning id::int,sender_id,body,masked,created_at`,[bookingId,user.id,safe.text,safe.masked]);
