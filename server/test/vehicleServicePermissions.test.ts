@@ -332,3 +332,41 @@ test('service notifications reach the currently permitted requesting driver', as
   const recipients = await new VehicleServiceRequests(db).recipients(request);
   assert.deepEqual(recipients, [owner.id, driver.id]);
 });
+
+test('insurer cannot change requests not assigned to their account', async () => {
+  const insurer = { id: 'insurer-1', roles: ['insurer'] } as any;
+  const { db, calls } = mockDb({ id: 'request-1', kind: 'insurance', status: 'sent_to_partner', assigned_to: 'another-insurer' });
+  await assert.rejects(new VehicleServiceRequests(db).setStatus(insurer, 'request-1', 'completed', undefined, '2028-12-31'));
+  assert.equal(calls.some((c) => c.sql.startsWith('update vehicle_service_requests')), false);
+});
+
+test('assigned insurer can complete insurance but cannot touch inspections or earlier states', async () => {
+  const insurer = { id: 'insurer-1', roles: ['insurer'] } as any;
+  const valid = mockDb({ id: 'request-1', kind: 'insurance', status: 'sent_to_partner', assigned_to: insurer.id });
+  const completed = await new VehicleServiceRequests(valid.db).setStatus(insurer, 'request-1', 'completed', undefined, '2028-12-31');
+  assert.equal(completed.status, 'completed');
+  assert.equal(valid.calls.find((c) => c.sql.startsWith('update vehicle_service_requests'))?.params[3], insurer.id);
+  for (const current of [
+    { id: 'request-1', kind: 'inspection', status: 'sent_to_partner', assigned_to: insurer.id },
+    { id: 'request-1', kind: 'insurance', status: 'in_review', assigned_to: insurer.id },
+  ]) {
+    const { db, calls } = mockDb(current);
+    await assert.rejects(new VehicleServiceRequests(db).setStatus(insurer, 'request-1', 'completed', undefined, '2028-12-31'));
+    assert.equal(calls.some((c) => c.sql.startsWith('update vehicle_service_requests')), false);
+  }
+});
+
+test('insurer sees only assigned insurance requests and cannot see staff queue', async () => {
+  const insurer = { id: 'insurer-1', roles: ['insurer'] } as any;
+  let selection: { sql: string; params: unknown[] } | null = null;
+  const db: any = {
+    query: async (sql: string, params: unknown[]) => {
+      selection = { sql, params }; return [];
+    },
+  };
+  await new VehicleServiceRequests(db).insurerQueue(insurer);
+  assert.deepEqual(selection?.params, [insurer.id]);
+  assert.match(selection!.sql, /r.kind='insurance' and r.assigned_to=\$1/);
+  await assert.rejects(new VehicleServiceRequests(db).queue(insurer), /Нет доступа/);
+  await assert.rejects(new VehicleServiceRequests(db).insurerQueue(outsider), /Нет доступа/);
+});
