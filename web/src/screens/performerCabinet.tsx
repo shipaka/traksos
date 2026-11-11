@@ -53,7 +53,7 @@ export function PerformerHub() {
   return (
     <main>
       <div><h1>Профиль</h1><div className="sub">Всё по разделам — откройте нужный.</div></div>
-      <div className="stack">
+      <div className="stack web-settings-grid">
         {rows.map(([to, t, sub]) => (
           <button key={to} className="linkrow" onClick={() => go(to)}><span><b>{t}</b><small>{sub}</small></span><span aria-hidden="true">›</span></button>
         ))}
