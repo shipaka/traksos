@@ -5,6 +5,7 @@ import { SERVICES } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '../ui.tsx';
 import { qrSvg } from '../qr.ts';
 import { Login } from './login.tsx';
+import { TruckPhoto, TruckPhotoCredit } from '../truckPhotos.tsx';
 
 const ALLOW: [string, string, string][] = [
   ['repair', 'Вызов мастера', 'электрик, пневматика, автономка, шиномонтаж'],
@@ -84,8 +85,14 @@ export function Fleet() {
         {!d.cars.length && <div className="empty">Машин пока нет — добавьте в гараже.</div>}
         {d.cars.map((c: any) => (
           <details key={c.id} className="card">
-            <summary className="between"><b>{c.brand} {c.model ?? ''}</b><span className="pill">{c.plate ?? 'без номера'}</span></summary>
+            <summary className="between">
+              <span className="row" style={{ alignItems: 'center', gap: 10 }}>
+                <TruckPhoto brand={c.brand} /><b>{c.brand} {c.model ?? ''}</b>
+              </span>
+              <span className="pill">{c.plate ?? 'без номера'}</span>
+            </summary>
             <div className="stack">
+              <TruckPhotoCredit brand={c.brand} />
             {c.driver ? (
               <span className="note">Водитель {c.driver.name ?? c.driver.phone} · доступ с {c.driver.since ? fmtTime(c.driver.since) : '—'} · в этом месяце {rub(c.driver.monthSpent)} <span className="pill good">Активен</span></span>
             ) : <span className="note">Водитель не назначен — он войдёт сам по QR-наклейке.</span>}
