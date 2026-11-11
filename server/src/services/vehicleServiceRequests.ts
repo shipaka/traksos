@@ -91,8 +91,8 @@ export class VehicleServiceRequests {
       if (!transitions[current.status as VehicleServiceStatus]?.includes(status)) throw bad('invalid_status', 'Недопустимый переход статуса');
       if (policyExpiresOn && (current.kind !== 'insurance' || status !== 'completed')) throw bad('invalid_expiry', 'Срок полиса указывается при завершении страхования');
       if (status === 'completed' && current.kind === 'insurance') {
-        const expiry = policyExpiresOn ?? current.policy_expires_on;
-        if (!expiry || !/^\\d{4}-\\d{2}-\\d{2}$/.test(String(expiry))) {
+        const expiry = policyExpiresOn ?? (current.policy_expires_on instanceof Date ? current.policy_expires_on.toISOString().slice(0, 10) : current.policy_expires_on);
+        if (!expiry || !/^\d{4}-\d{2}-\d{2}$/.test(String(expiry))) {
           throw bad('invalid_expiry', 'Для завершения страхования укажите дату окончания полиса');
         }
         const parsed = new Date(String(expiry) + 'T00:00:00Z');
