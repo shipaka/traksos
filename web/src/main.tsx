@@ -168,7 +168,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {me && mode === 'insurer' && <span className="pill accent">страховщик</span>}
           {me && mode === 'service' && <span className="pill accent">рембаза</span>}
           {me && mode === 'client' && !me.owner_id && <a href="#/fleet" className="pill" style={{ textDecoration: 'none' }}>Мой парк</a>}
-          {me && <a href="#/help" className="bell" aria-label="Справка">?</a>}
+          {me && <a href="#/help" className="bell top-help-link" aria-label="Справка">?</a>}
           {me && <Bell />}
           {me && <><a href="#/menu" className="bell top-menu-link" aria-label="Все разделы и помощь" title="Меню">☷</a><a href="#/profile" className="bell top-profile-link" aria-label="Личный профиль" title="Профиль">👤</a></>}
         </div>
