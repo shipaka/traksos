@@ -189,8 +189,10 @@ function SiteFooter() {
   useEffect(() => { (legalCache ??= get('/api/legal').catch(() => null)).then(setL); }, []);
   const req = l ? [l.entity, l.inn && `ИНН ${l.inn}`, l.ogrn && `ОГРН ${l.ogrn}`].filter(Boolean).join(' · ') : '';
   const contacts = l ? [l.phone, l.email].filter(Boolean).join(' · ') : '';
+  const buildRevision = typeof document === 'undefined' ? '' : document.querySelector('meta[name="traksos-build"]')?.getAttribute('content') ?? '';
   return (
     <footer className="site-footer">
+      {buildRevision && <span className="note">Версия стенда: {buildRevision}</span>}
       {!cookieOk && (
         <div className="banner col" role="note">
           <span className="note">Используем только необходимые cookie — чтобы вы оставались в аккаунте. Рекламных нет.</span>
