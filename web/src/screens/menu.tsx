@@ -11,7 +11,9 @@ export function CommonMenu() {
       ? { href: '#/base/money', title: 'Финансы', description: 'Счета, выплаты и спорные суммы' }
       : mode === 'admin'
         ? { href: '#/admin', title: 'Управление финансами', description: 'Раздел «Деньги» в кабинете администратора' }
-        : { href: '#/orders', title: isDriver ? 'Мои заявки' : 'Заявки и расходы', description: isDriver ? 'Только ваши обращения, без расходов компании' : 'История обращений и итоговые суммы по выполненным работам' };
+        : isDriver
+          ? { href: '#/orders', title: 'Мои заявки', description: 'Только ваши обращения, без расходов компании' }
+          : { href: '#/fleet/finances', title: 'Финансы автопарка', description: 'Согласованные расходы по машинам, водителям и исполнителям' };
   return (
     <main>
       <h1>Меню</h1>
