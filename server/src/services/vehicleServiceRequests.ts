@@ -46,13 +46,15 @@ export class VehicleServiceRequests {
     const v = await this.db.one<any>(
       'select id, driver_id from vehicles where id=$1 and owner_id=$2', [vehicleId, owner]);
     if (!v || (user.owner_id && v.driver_id !== user.id)) throw notFound('Машина не найдена');
-    if (user.owner_id) {
-      const settings = await this.db.one<any>('select fleet from users where id=$1', [owner]);
-      if (settings?.fleet?.allow?.[kind] !== true) throw forbidden('Владелец не разрешил эту услугу');
-    }
-    // Prevent concurrent duplicate active applications for the same vehicle/service.
+    // Serialize creation with driver assignment and permissions changes.
     return this.db.tx(async (q) => {
-      await q.one('select id from vehicles where id=$1 and owner_id=$2 for update', [vehicleId, owner]);
+      const locked = await q.one<any>(
+        'select id, driver_id from vehicles where id=$1 and owner_id=$2 for update', [vehicleId, owner]);
+      if (!locked || (user.owner_id && locked.driver_id !== user.id)) throw notFound('Машина не найдена');
+      if (user.owner_id) {
+        const settings = await q.one<any>('select fleet from users where id=$1', [owner]);
+        if (settings?.fleet?.allow?.[kind] !== true) throw forbidden('Владелец не разрешил эту услугу');
+      }
       const active = await q.one<{ id: string }>(
         `select id from vehicle_service_requests
          where owner_id=$1 and vehicle_id=$2 and kind=$3
