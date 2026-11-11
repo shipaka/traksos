@@ -109,7 +109,9 @@ export class PaymentsService implements PaymentHooks {
     const pay = await q.one(`select * from payments where order_id=$1 and kind='call_out' and status in ('pending','held')`, [order.id]);
     if (!pay) return;
     if (pay.status === 'pending') {
-      await this.provider.cancel(pay.provider_payment_id).catch(() => {});
+      // Do not report a payment as cancelled when the provider rejected cancellation.
+      // The provider state must be reconciled before changing our local record.
+      await this.provider.cancel(pay.provider_payment_id);
       await q.query(`update payments set status='cancelled', updated_at=now() where id=$1`, [pay.id]);
       return;
     }
