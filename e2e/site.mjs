@@ -85,7 +85,34 @@ try {
   await adminPage.locator('.toast').waitFor({ state: 'hidden', timeout: 8000 });
   if (process.argv[2]) await adminPage.screenshot({ path: process.argv[2] + '/site-admin-desktop.png', fullPage: false });
   await adminPage.close();
-  console.log('Website layout, public tour, client and admin workspaces verified at 390, 900 and 1440 px');
+  // Android WebView imitation: the familiar Profile icon must be the rightmost bottom tab.
+  const mobileContext = await browser.newContext({ viewport: { width: 360, height: 780 }, locale: 'ru-RU' });
+  await mobileContext.addInitScript(() => {
+    window.TrakSOSNative = {
+      isApp: () => true, setSession: () => {}, pushToken: () => '',
+      performerOnline: () => {},
+    };
+  });
+  const mobileApp = await mobileContext.newPage();
+  await mobileApp.goto(base + '/#/');
+  await mobileApp.getByRole('button', { name: 'Войти по номеру' }).click();
+  await mobileApp.locator('input[type=tel]').fill('+79990009124');
+  await mobileApp.getByRole('button', { name: 'Получить код' }).click();
+  const appHint = await mobileApp.getByText(/Тестовый режим: код/).textContent();
+  const appCode = appHint.match(/[0-9]{4,6}/);
+  if (!appCode) throw new Error('Android demo code not shown');
+  await mobileApp.locator('input[autocomplete=one-time-code]').fill(appCode[0]);
+  await mobileApp.getByRole('button', { name: 'Войти', exact: true }).click();
+  const nav = mobileApp.locator('.native-app .tabbar');
+  await nav.waitFor({ state: 'visible' });
+  const lastTab = nav.locator('a').last();
+  if (await lastTab.textContent() !== '◉Профиль') throw new Error('Profile must be the rightmost Android tab');
+  await lastTab.click();
+  await mobileApp.getByRole('heading', { name: 'Профиль' }).waitFor();
+  if (await mobileApp.locator('.website-sidebar:visible').count()) throw new Error('Android shows desktop sidebar');
+  if (process.argv[2]) await mobileApp.screenshot({ path: process.argv[2] + '/android-profile-nav.png', fullPage: false });
+  await mobileContext.close();
+  console.log('Website and Android navigation verified: profile last, no clipped desktop sidebar');
 } finally {
   await browser.close();
 }
