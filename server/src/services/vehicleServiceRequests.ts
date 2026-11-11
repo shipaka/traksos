@@ -50,16 +50,17 @@ export class VehicleServiceRequests {
     return r;
   }
 
-  async setStatus(staff: AuthUser, id: string, status: VehicleServiceStatus, note?: string) {
+  async setStatus(staff: AuthUser, id: string, status: VehicleServiceStatus, note?: string, policyExpiresOn?: string) {
     // Staff role is enforced at the route as well as here.
     if (!staff.roles?.some((role: string) => ['admin', 'moderator'].includes(role))) throw forbidden('Нет доступа к обработке заявок');
     return this.db.tx(async (q) => {
       const current = await q.one<any>('select * from vehicle_service_requests where id=$1 for update', [id]);
       if (!current) throw notFound('Заявка не найдена');
       if (!transitions[current.status as VehicleServiceStatus]?.includes(status)) throw bad('invalid_status', 'Недопустимый переход статуса');
+      if (policyExpiresOn && (current.kind !== 'insurance' || status !== 'completed')) throw bad('invalid_expiry', 'Срок полиса указывается при завершении страхования');
       return q.one(
-        `update vehicle_service_requests set status=$2, staff_note=$3, assigned_to=$4, updated_at=now()
-         where id=$1 returning *`, [id, status, note ?? current.staff_note, staff.id]);
+        `update vehicle_service_requests set status=$2, staff_note=$3, assigned_to=$4, policy_expires_on=coalesce($5::date, policy_expires_on), updated_at=now()
+         where id=$1 returning *`, [id, status, note ?? current.staff_note, staff.id, policyExpiresOn ?? null]);
     });
   }
 
