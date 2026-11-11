@@ -36,7 +36,7 @@ export function openAt(hours: string | null | undefined, at: Date): boolean | nu
 }
 
 export interface CenterInput {
-  name?: string; address?: string; lat?: number | null; lng?: number | null; hours?: string; inn?: string | null;
+  name?: string; address?: string; arrivalNotes?: string; lat?: number | null; lng?: number | null; hours?: string; inn?: string | null;
   brands?: string[]; staff?: Record<string, 'own' | 'invite' | 'none'>; conditions?: string[]; accepts?: string[];
   closedDays?: string[]; paused?: boolean;
 }
@@ -65,17 +65,17 @@ export class ServiceCenters {
       await q.query(`update users set roles = (select array(select distinct unnest(roles || '{service}'::text[]))) where id=$1`, [user.id]);
       if (!cur) {
         await q.query(
-          `insert into service_centers(owner_id, name, address, lat, lng, hours, inn, brands, staff, conditions, accepts, closed_days, accepts_confirmed_at)
-           values ($1,$2,$3,$4::float8,$5::float8,coalesce($6::text,'08:00–20:00'),$7::text,coalesce($8::text[],'{}'),coalesce($9::jsonb,'{}'),coalesce($10::text[],'{}'),coalesce($11::text[],'{quick,day}'),coalesce($12::date[],'{}'),now())`,
-          [user.id, p.name!.trim(), p.address!.trim(), v(p.lat), v(p.lng), v(p.hours), v(p.inn), v(p.brands), v(p.staff), v(p.conditions), v(p.accepts), v(p.closedDays)]);
+          `insert into service_centers(owner_id, name, address, lat, lng, hours, inn, brands, staff, conditions, accepts, closed_days, accepts_confirmed_at, arrival_notes)
+           values ($1,$2,$3,$4::float8,$5::float8,coalesce($6::text,'08:00–20:00'),$7::text,coalesce($8::text[],'{}'),coalesce($9::jsonb,'{}'),coalesce($10::text[],'{}'),coalesce($11::text[],'{quick,day}'),coalesce($12::date[],'{}'),now(),coalesce($13::text,''))`,
+          [user.id, p.name!.trim(), p.address!.trim(), v(p.lat), v(p.lng), v(p.hours), v(p.inn), v(p.brands), v(p.staff), v(p.conditions), v(p.accepts), v(p.closedDays), v(p.arrivalNotes?.trim())]);
       } else {
         await q.query(
           `update service_centers set name=coalesce($2::text,name), address=coalesce($3::text,address), lat=coalesce($4::float8,lat), lng=coalesce($5::float8,lng),
              hours=coalesce($6::text,hours), inn=coalesce($7::text,inn), brands=coalesce($8::text[],brands), staff=coalesce($9::jsonb,staff),
              conditions=coalesce($10::text[],conditions), accepts=coalesce($11::text[],accepts), closed_days=coalesce($12::date[],closed_days),
-             paused=coalesce($13::boolean,paused), accepts_confirmed_at = case when $11::text[] is not null or $12::date[] is not null then now() else accepts_confirmed_at end
+             paused=coalesce($13::boolean,paused), arrival_notes=coalesce($14::text,arrival_notes), accepts_confirmed_at = case when $11::text[] is not null or $12::date[] is not null then now() else accepts_confirmed_at end
            where owner_id=$1`,
-          [user.id, v(p.name?.trim()), v(p.address?.trim()), v(p.lat), v(p.lng), v(p.hours), v(p.inn), v(p.brands), v(p.staff), v(p.conditions), v(p.accepts), v(p.closedDays), v(p.paused)]);
+          [user.id, v(p.name?.trim()), v(p.address?.trim()), v(p.lat), v(p.lng), v(p.hours), v(p.inn), v(p.brands), v(p.staff), v(p.conditions), v(p.accepts), v(p.closedDays), v(p.paused), v(p.arrivalNotes?.trim())]);
       }
     });
     return this.cabinet(user);
@@ -350,7 +350,7 @@ export class ServiceCenters {
     return rows
       .filter((c: any) => !p.need || c.staff?.[p.need] !== 'none')
       .map((c: any) => ({
-        id: c.id, name: c.name, address: c.address, lat: c.lat, lng: c.lng, hours: c.hours, brands: c.brands, staff: c.staff,
+        id: c.id, name: c.name, address: c.address, arrivalNotes: c.arrival_notes, isPartner: true, lat: c.lat, lng: c.lng, hours: c.hours, brands: c.brands, staff: c.staff,
         conditions: c.conditions, accepts: c.accepts, rating: c.rating, reviews: c.reviews_n, load: c.load_n,
         popularity: c.closed_n === 0 ? 'new' : c.closed_n / max > 0.66 ? 'top' : c.closed_n / max > 0.33 ? 'often' : 'rare',
         closedToday: (c.closed_days ?? []).some((d: any) => msk(new Date(d)) === today),
