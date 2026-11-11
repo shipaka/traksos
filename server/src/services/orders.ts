@@ -619,7 +619,7 @@ export class OrdersService {
     const client = actor === 'performer' || actor === 'admin'
       ? await this.db.one(`select id, name, company_name, rating::float as rating, rating_count from users where id=$1`, [o.client_id])
       : null;
-    const vehicle = o.vehicle_id ? await this.db.one('select brand, model, year, plate, trailer_plate from vehicles where id=$1', [o.vehicle_id]) : null;
+    const vehicle = actor && o.vehicle_id ? await this.db.one('select brand, model, year, plate, trailer_plate from vehicles where id=$1', [o.vehicle_id]) : null;
     const events = actor ? await this.db.query('select type, data, actor_id, created_at from order_events where order_id=$1 order by id', [orderId]) : [];
     const search = o.status === 'searching'
       ? await this.db.one<{ candidates: number; offers: number }>(
@@ -638,8 +638,8 @@ export class OrdersService {
       pointsFee: o.points_fee ?? 0, pointsCommission: actor === 'performer' || actor === 'admin' ? o.points_commission ?? 0 : undefined,
       points: actor === 'client' && o.status === 'awaiting_confirmation' && this.referral ? await this.referral.available(o.client_id, this.money(o).clientFee) : null,
       bill: o.bill ?? null, billingStep: Number((await this.settings.get('pricing')).billingStepMinutes ?? 60),
-      site: o.site, workStartedAt: o.work_started_at ?? null, waitRate: performer?.wait_rate ?? null, ownerNote: o.owner_note ?? null, partMode: o.part_mode ?? null, waitStartedAt: o.wait_started_at ?? null, waitMinutes: o.wait_minutes ?? 0,
-      consultHint: o.consult_hint, consultOf: o.consult_of, siteFlags: o.site_flags ?? [], lateMinutes: o.late_minutes ?? 0, hintCheck: o.hint_check,
+      site: actor ? o.site : null, workStartedAt: o.work_started_at ?? null, waitRate: performer?.wait_rate ?? null, ownerNote: actor === 'client' || actor === 'admin' ? o.owner_note ?? null : null, partMode: o.part_mode ?? null, waitStartedAt: o.wait_started_at ?? null, waitMinutes: o.wait_minutes ?? 0,
+      consultHint: actor ? o.consult_hint : null, consultOf: o.consult_of, siteFlags: o.site_flags ?? [], lateMinutes: o.late_minutes ?? 0, hintCheck: o.hint_check,
       consultFrom: o.consult_of ? await this.db.one(`select o.number, o.consult_hint as hint, u.name as performer_name from orders o
           left join users u on u.id=o.performer_id where o.id=$1`, [o.consult_of]) : null,
       recommendedCenter: o.recommended_center_id ? await this.db.one(`select id, name, address from service_centers where id=$1`, [o.recommended_center_id]) : null,
