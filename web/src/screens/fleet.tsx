@@ -1,6 +1,6 @@
 // «Мой парк» владельца и вход водителя по QR-наклейке в кабине.
 import { useEffect, useState } from 'react';
-import { get, post, put, patch, rub, fmtTime, API_URL } from '../api.ts';
+import { get, post, put, patch, rub, fmtTime } from '../api.ts';
 import { SERVICES } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '../ui.tsx';
 import { qrSvg } from '../qr.ts';
@@ -17,7 +17,8 @@ const ALLOW: [string, string, string][] = [
   ['inspection', 'Техосмотр', 'запись и подача заявок только с разрешения владельца'],
 ];
 const esc = (x: unknown) => String(x ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[c]);
-const stickerUrl = (code: string) => `${API_URL || location.origin}/#/qr/${code}`;
+// QR must open the public website, not the API host (which may be a different domain).
+const stickerUrl = (code: string) => `${location.origin}${location.pathname}${location.search}#/qr/${encodeURIComponent(code)}`;
 
 function InsuranceReminderSettings() {
   const settings = useLoad(() => get('/api/insurance-reminders/settings'), []);
