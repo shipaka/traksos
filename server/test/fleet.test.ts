@@ -31,10 +31,16 @@ test('водитель входит по QR-наклейке; прежний т�
   const other = await t.login('+79993334466');
   ok(await t.api('POST', `/api/qr/${qr}/join`, {}, other.token));
   assert.equal(ok(await t.api('GET', '/api/vehicles', undefined, driver.token)).length, 0, 'прежний водитель машину больше не видит');
+  const revoked = await t.db.one<{ owner_id: string | null; roles: string[] }>('select owner_id, roles from users where id=$1', [driver.id]);
+  assert.equal(revoked?.owner_id, null, 'у прежнего водителя отозвана принадлежность к компании');
+  assert.ok(!revoked?.roles.includes('driver'), 'роль водителя отозвана, если машин больше нет');
   ok(await t.api('POST', `/api/qr/${qr}/join`, {}, driver.token));
   const fresh = ok(await t.api('POST', `/api/fleet/vehicles/${vehicleId}/new-qr`, {}, owner.token));
   assert.notEqual(fresh.cars[0].qrCode, qr);
   assert.equal(fresh.cars[0].driver, null, 'новая наклейка — водителя снимаем');
+  const afterRotation = await t.db.one<{ owner_id: string | null; roles: string[] }>('select owner_id, roles from users where id=$1', [driver.id]);
+  assert.equal(afterRotation?.owner_id, null, 'смена QR отозвала доступ водителя к компании');
+  assert.ok(!afterRotation?.roles.includes('driver'));
   assert.equal((await t.api('GET', `/api/qr/${qr}`)).status, 404, 'старая наклейка не действует');
   qr = fresh.cars[0].qrCode;
   ok(await t.api('POST', `/api/qr/${qr}/join`, {}, driver.token));
