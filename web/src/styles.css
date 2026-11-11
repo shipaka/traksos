@@ -540,3 +540,28 @@ select.field { appearance: none; }
 }
 .website .website-work-area > .website-work-welcome + main > h1:first-child { display: none; }
 .website .website-workspace:has(.admin-desktop-shell) .website-work-welcome { margin-bottom: 8px; }
+
+/* Финансы автопарка: табличный реестр на компьютере, карточки на телефоне. */
+.website .finance-toolbar { display: flex; gap: 14px; align-items: end; flex-wrap: wrap; justify-content: space-between; }
+.website .finance-toolbar .stack { flex: 1; min-width: 230px; max-width: 410px; }
+.website .finance-toolbar .btn { min-width: 145px; }
+.website .finance-table-wrap { overflow-x: auto; width: 100%; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.website .finance-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 770px; text-align: left; }
+.website .finance-table thead { background: var(--surface-3); }
+.website .finance-table th { color: var(--fg-2); font-size: 11px; white-space: nowrap; padding: 14px 12px; letter-spacing: .02em; }
+.website .finance-table td { border-top: 1px solid var(--line); padding: 16px 12px; vertical-align: top; overflow-wrap: anywhere; }
+.website .finance-table td small { display: block; margin-top: 6px; color: var(--muted); line-height: 1.4; }
+.website .finance-table tbody tr:hover { background: #282b30; }
+.website .finance-table td:nth-last-child(-n+2) { white-space: nowrap; font-weight: 700; }
+.website .finance-mobile-list { display: none; }
+.native-app .finance-table-wrap { display: none; }
+.native-app .finance-toolbar { display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
+@media (max-width: 1080px) {
+  .website .finance-table-wrap { display: none; }
+  .website .finance-mobile-list { display: block; }
+}
+@media (max-width: 520px) {
+  .website .finance-toolbar { flex-direction: column; align-items: stretch; }
+  .website .finance-toolbar .stack { min-width: 0; width: 100%; max-width: none; }
+  .website .finance-toolbar .btn { width: 100%; }
+}
