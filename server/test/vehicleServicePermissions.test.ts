@@ -105,3 +105,38 @@ test('valid leap-day renewal re-arms reminders on a completed insurance request'
     assert.match(calls[0].sql, new RegExp(column + '=null'));
   }
 });
+
+test('driver sees only authorized kinds and their assigned vehicle requests', async () => {
+  const calls: Array<{ sql: string; params: any[] }> = [];
+  const db: any = {
+    one: async () => ({ fleet: { allow: { insurance: true, inspection: false } } }),
+    query: async (sql: string, params: any[]) => {
+      calls.push({ sql, params });
+      return [];
+    },
+  };
+  await new VehicleServiceRequests(db).mine(driver);
+  assert.deepEqual(calls[0].params, ['owner-1', 'driver-1', ['insurance']]);
+  assert.match(calls[0].sql, /v\.driver_id=\$2/);
+  assert.match(calls[0].sql, /r\.kind = any\(\$3::text\[\]\)/);
+});
+
+test('driver cannot inspect request history for someone else assigned vehicle', async () => {
+  let queries = 0;
+  const db: any = {
+    one: async () => ({ id: 'vehicle-1', driver_id: 'other-driver' }),
+    query: async () => { queries++; return []; },
+  };
+  await assert.rejects(new VehicleServiceRequests(db).history(driver, 'vehicle-1'));
+  assert.equal(queries, 0);
+});
+
+test('owner history includes both service kinds without driver restrictions', async () => {
+  const queries: any[][] = [];
+  const db: any = {
+    one: async () => ({ id: 'vehicle-1', driver_id: 'driver-1' }),
+    query: async (_sql: string, params: any[]) => { queries.push(params); return []; },
+  };
+  await new VehicleServiceRequests(db).history(owner, 'vehicle-1');
+  assert.deepEqual(queries[0], ['vehicle-1', 'owner-1', ['insurance', 'inspection']]);
+});
