@@ -461,6 +461,13 @@ export function createApp(d: Deps) {
     fromOrderId: z.string().uuid().nullable().optional(),
   }), c.body)));
   r.get('/api/bookings', true, (c: AuthedCtx) => centers.myBookings(c.user));
+  r.get('/api/bookings/:id/messages', true, (c: AuthedCtx) => centers.messages(c.user,c.params.id,Number(c.query.get('after') ?? 0)));
+  r.post('/api/bookings/:id/messages', true, (c: AuthedCtx) => centers.sendMessage(c.user,c.params.id,
+    parse(z.object({body:z.string().min(1).max(2000)}),c.body).body));
+  r.post('/api/bookings/:id/contact-block', true, (c: AuthedCtx) => {
+    const b=parse(z.object({blocked:z.boolean(),reason:z.string().max(500).default('')}),c.body);
+    return centers.setContactBlock(c.user,c.params.id,b.blocked,b.reason);
+  });
   r.get('/api/bookings/:id', true, (c: AuthedCtx) => centers.booking(c.user, c.params.id));
   r.post('/api/bookings/:id/answer', true, (c: AuthedCtx) => centers.answer(c.user, c.params.id, parse(z.object({ text: z.string().min(2).max(500) }), c.body).text));
   r.post('/api/bookings/:id/cancel', true, (c: AuthedCtx) => centers.cancel(c.user, c.params.id));
