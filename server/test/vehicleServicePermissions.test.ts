@@ -257,6 +257,7 @@ test('vehicle service history includes timeline only after ownership check', asy
   await new VehicleServiceRequests(db).history(owner, 'vehicle-1');
   assert.equal(captured.length, 1);
   assert.match(captured[0].sql, /vehicle_service_request_events e/);
+  assert.match(captured[0].sql, /r\.requested_by/);
   assert.match(captured[0].sql, /e\.request_id=r\.id/);
   assert.match(captured[0].sql, /r\.vehicle_id=\$1 and r\.owner_id=\$2/);
   assert.deepEqual(captured[0].params, ['vehicle-1', 'owner-1', ['insurance', 'inspection']]);
