@@ -46,6 +46,56 @@ export class ServiceCenters {
   referral: import('./referral.ts').ReferralService | null = null;
   constructor(private db: Db, private notifier: Notifier, private settings: SettingsService, private support: SupportService, private now: () => Date) {}
 
+  /** Переписка только участников записи; контактные номера не раскрываются. */
+  private async contactContext(user: AuthUser, bookingId: string) {
+    const b = await this.db.one<{ id: string; center_id: string; client_id: string; created_by: string; owner_id: string; status: string }>(
+      `select b.id,b.center_id,b.client_id,b.created_by,c.owner_id,b.status from service_bookings b
+        join service_centers c on c.id=b.center_id where b.id=$1`, [bookingId]);
+    if (!b) throw notFound('Запись не найдена');
+    if (![b.client_id,b.created_by,b.owner_id].includes(user.id) && !user.roles.includes('admin')) throw forbidden('Нет доступа к переписке');
+    return b;
+  }
+
+  async messages(user: AuthUser, bookingId: string, after = 0) {
+    const b = await this.contactContext(user, bookingId);
+    const messages = await this.db.query(`select m.id::int,m.sender_id,m.body,m.masked,m.created_at
+      from service_booking_messages m where m.booking_id=$1 and m.id>$2 order by m.id limit 200`, [bookingId, Math.max(0,after)]);
+    const block = await this.db.one<{ reason: string }>(`select reason from service_contact_blocks
+      where center_id=$1 and client_id=$2 and lifted_at is null`, [b.center_id,b.client_id]);
+    return { messages, blocked: !!block, blockedReason: user.id === b.owner_id || user.roles.includes('admin') ? block?.reason ?? null : null };
+  }
+
+  async sendMessage(user: AuthUser, bookingId: string, text: string) {
+    const b = await this.contactContext(user, bookingId);
+    if (['cancelled','declined'].includes(b.status)) throw conflict('chat_closed','Переписка по отменённой записи закрыта');
+    if (user.id !== b.owner_id && !user.roles.includes('admin')) {
+      const block = await this.db.one(`select 1 from service_contact_blocks where center_id=$1 and client_id=$2 and lifted_at is null`,[b.center_id,b.client_id]);
+      if (block) throw forbidden('Рембаза ограничила новые сообщения. Для спора обратитесь в поддержку ТракSOS.');
+    }
+    const { maskPhones } = await import('../util.ts');
+    const safe = maskPhones(text.trim().slice(0,2000));
+    if (!safe.text) throw bad('empty','Введите сообщение');
+    const m = await this.db.one(`insert into service_booking_messages(booking_id,sender_id,body,masked)
+      values($1,$2,$3,$4) returning id::int,sender_id,body,masked,created_at`,[bookingId,user.id,safe.text,safe.masked]);
+    const recipients = [...new Set([b.client_id,b.created_by,b.owner_id])].filter(id=>id!==user.id);
+    await this.notifier.notify(recipients,{type:'booking',bookingId,status:b.status},{kind:'normal',title:'Сообщение по записи в рембазу',body:safe.text.slice(0,100),data:{bookingId}});
+    return m;
+  }
+
+  async setContactBlock(user: AuthUser, bookingId: string, blocked: boolean, reason: string) {
+    const b = await this.contactContext(user,bookingId);
+    if (user.id !== b.owner_id && !user.roles.includes('admin')) throw forbidden('Блокировать может рембаза или администратор');
+    if (blocked) {
+      if (reason.trim().length < 5) throw bad('reason','Укажите причину блокировки');
+      await this.db.query(`insert into service_contact_blocks(center_id,client_id,reason,created_by)
+        values($1,$2,$3,$4) on conflict(center_id,client_id) do update set reason=excluded.reason,
+        created_by=excluded.created_by,created_at=now(),lifted_at=null,lifted_by=null`,[b.center_id,b.client_id,reason.trim().slice(0,500),user.id]);
+    } else {
+      await this.db.query(`update service_contact_blocks set lifted_at=now(),lifted_by=$3 where center_id=$1 and client_id=$2 and lifted_at is null`,[b.center_id,b.client_id,user.id]);
+    }
+    return { ok:true, blocked };
+  }
+
   // ——— Карточка сервиса ———
   async mine(user: AuthUser) {
     return this.db.one('select * from service_centers where owner_id=$1', [user.id]);
