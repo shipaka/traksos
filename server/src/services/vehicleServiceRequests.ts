@@ -97,7 +97,7 @@ export class VehicleServiceRequests {
       const current = await q.one<any>('select * from vehicle_service_requests where id=$1 for update', [id]);
       if (!current) throw notFound('Заявка не найдена');
       if (!transitions[current.status as VehicleServiceStatus]?.includes(status)) throw bad('invalid_status', 'Недопустимый переход статуса');
-      if (['rejected', 'need_documents'].includes(status) && !(note ?? current.staff_note ?? '').trim()) {
+      if (['rejected', 'need_documents'].includes(status) && !note?.trim()) {
         throw bad('missing_status_reason', 'Укажите причину отказа или список необходимых документов');
       }
       if (policyExpiresOn && (current.kind !== 'insurance' || status !== 'completed')) throw bad('invalid_expiry', 'Срок полиса указывается при завершении страхования');
