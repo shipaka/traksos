@@ -37,6 +37,29 @@ const entries: Record<PortalMode, Item[]> = {
   ],
 };
 
+const introductions: Record<Exclude<PortalMode, 'client'>, { eyebrow: string; title: string; copy: string; links: { href: string; label: string }[] }> = {
+  performer: {
+    eyebrow: 'Кабинет исполнителя', title: 'Заказы, график и расчёты — в одном месте',
+    copy: 'Работайте с заявками, проверяйте историю выплат и управляйте своей доступностью без лишних экранов.',
+    links: [{ href: '#/work/jobs', label: 'История заказов' }, { href: '#/work/me/money', label: 'Финансы' }],
+  },
+  service: {
+    eyebrow: 'Кабинет рембазы', title: 'Ваша работа с сервисом под контролем',
+    copy: 'Новые записи, автомобили клиентов, карточка сервиса и финансовые операции доступны из одного рабочего пространства.',
+    links: [{ href: '#/base/money', label: 'Финансы' }, { href: '#/base/me', label: 'Карточка рембазы' }],
+  },
+  insurer: {
+    eyebrow: 'Страховой партнёр', title: 'Назначенные вам страховые заявки',
+    copy: 'Обрабатывайте только переданные вам обращения. Срок полиса и комментарий клиент увидит в истории автомобиля.',
+    links: [{ href: '#/support', label: 'Связаться с поддержкой' }, { href: '#/help', label: 'Как работать' }],
+  },
+  admin: {
+    eyebrow: 'Администрирование', title: 'Управление ТракSOS в одном окне',
+    copy: 'Заявки, модерация, страхование, финансы и обращения разнесены по разделам. Выбирайте рабочую очередь слева.',
+    links: [{ href: '#/admin?tab=vehicleServices', label: 'Страхование и ТО' }, { href: '#/support', label: 'Обращения' }],
+  },
+};
+
 function isActive(href: string, hash: string) {
   if (href.includes('?')) return hash === href;
   if (href === '#/') return hash === '#/' || hash === '';
@@ -78,7 +101,17 @@ export function WebsiteWorkspace({
           <a href="#/menu"><span className="sidebar-glyph" aria-hidden="true">☰</span>Документы и настройки</a>
         </nav>
       </aside>
-      <div className="website-work-area">{children}</div>
+      <div className="website-work-area">
+        {mode !== 'client' && (hash === '#/' || hash === ({ performer: '#/work', service: '#/base', insurer: '#/insurer', admin: '#/admin' } as Record<string, string>)[mode]) && (
+          <section className="website-work-welcome">
+            <span className="label">{introductions[mode].eyebrow}</span>
+            <h2>{introductions[mode].title}</h2>
+            <p>{introductions[mode].copy}</p>
+            <div className="row">{introductions[mode].links.map((item) => <a href={item.href} key={item.href}>{item.label} <span aria-hidden="true">↗</span></a>)}</div>
+          </section>
+        )}
+        {children}
+      </div>
     </div>
   );
 }
