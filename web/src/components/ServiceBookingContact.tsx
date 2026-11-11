@@ -12,7 +12,7 @@ export function ServiceBookingContact({ bookingId, asService = false }: { bookin
   const messages = useLoad(() => open ? get(`/api/bookings/${bookingId}/messages`) : Promise.resolve(null), [bookingId,open]);
   const send = async () => {
     if (!body.trim()) return;
-    if (await run(() => post(`/api/bookings/${bookingId}/messages`, {body}), 'Сообщение отправлено')) {setBody('');messages.reload();}
+    if ((await run(() => post(`/api/bookings/${bookingId}/messages`, {body}), 'Сообщение отправлено')) !== undefined) {setBody('');messages.reload();}
   };
   return <section className="card" style={{gap:12}}>
     <div className="between"><b>Связь по записи</b><button className="btn ghost small" type="button" onClick={() => setOpen(v=>!v)}>{open ? 'Свернуть диалог' : 'Написать сообщение'}</button></div>
@@ -28,7 +28,7 @@ export function ServiceBookingContact({ bookingId, asService = false }: { bookin
         <div className="row"><button className="btn" disabled={busy || !body.trim()} onClick={send}>Отправить</button><button className="btn ghost small" onClick={()=>messages.reload()}>Обновить</button></div>
       </>}
       {asService && <div className="stack"><button className="btn ghost small" onClick={()=>setBlocking(v=>!v)}>{messages.data?.blocked ? 'Снять ограничение' : 'Ограничить сообщения клиента'}</button>
-        {blocking && <><input className="field" placeholder="Причина блокировки" value={reason} onChange={e=>setReason(e.target.value)}/><button className="btn ghost small" disabled={busy || (!messages.data?.blocked && reason.trim().length<5)} onClick={async()=>{if(await run(()=>post(`/api/bookings/${bookingId}/contact-block`,{blocked:!messages.data?.blocked,reason}), 'Ограничение обновлено')){setBlocking(false);setReason('');messages.reload();}}}>Подтвердить</button></>}
+        {blocking && <><input className="field" placeholder="Причина блокировки" value={reason} onChange={e=>setReason(e.target.value)}/><button className="btn ghost small" disabled={busy || (!messages.data?.blocked && reason.trim().length<5)} onClick={async()=>{if((await run(()=>post(`/api/bookings/${bookingId}/contact-block`,{blocked:!messages.data?.blocked,reason}), 'Ограничение обновлено')) !== undefined){setBlocking(false);setReason('');messages.reload();}}}>Подтвердить</button></>}
       </div>}
     </>}
     <a href="#/support/new" className="note">Спор или жалоба? Обратиться к администратору</a>
