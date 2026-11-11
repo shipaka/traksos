@@ -156,8 +156,16 @@ export class OnsiteService {
 
   /** «Не брать заявки этого клиента» — личный чёрный список исполнителя */
   async block(user: AuthUser, orderId: string, on: boolean, reason?: string) {
-    const o = await this.db.one('select client_id from orders where id=$1', [orderId]);
+    const o = await this.db.one('select client_id, performer_id from orders where id=$1', [orderId]);
     if (!o) throw notFound();
+    // Only the assigned performer or an invited candidate may block this client.
+    // A guessed order ID must not let an unrelated performer manipulate the blacklist.
+    if (o.performer_id !== user.id) {
+      const invited = await this.db.one(
+        `select 1 from order_dispatch where order_id=$1 and performer_id=$2 and status in ('ringing','bidding')`,
+        [orderId, user.id]);
+      if (!invited) throw forbidden();
+    }
     if (on) await this.db.query(`insert into performer_blocks(performer_id, client_id, reason) values ($1,$2,$3) on conflict do nothing`, [user.id, o.client_id, reason ?? null]);
     else await this.db.query('delete from performer_blocks where performer_id=$1 and client_id=$2', [user.id, o.client_id]);
     return { blocked: on };
