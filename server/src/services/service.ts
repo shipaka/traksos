@@ -395,9 +395,10 @@ export class ServiceCenters {
               (select round(avg(review_stars)::numeric, 1)::float from service_bookings b where b.center_id=c.id and review_stars is not null) as rating,
               (select count(*)::int from service_bookings b where b.center_id=c.id and review_stars is not null) as reviews_n
          from service_centers c where c.verification='approved' and not c.paused`);
+    const external = await this.db.query(`select id,name,address,lat,lng,hours,public_notes from external_service_directory where visibility='published'`);
     const today = msk(this.now());
     const max = Math.max(1, ...rows.map((r: any) => r.closed_n));
-    return rows
+    const partners = rows
       .filter((c: any) => !p.need || c.staff?.[p.need] !== 'none')
       .map((c: any) => ({
         id: c.id, name: c.name, address: c.address, arrivalNotes: c.arrival_notes, isPartner: true, lat: c.lat, lng: c.lng, hours: c.hours, brands: c.brands, staff: c.staff,
@@ -409,11 +410,18 @@ export class ServiceCenters {
         distanceKm: p.lat != null && p.lng != null && c.lat != null && c.lng != null ? Math.round(haversineKm({ lat: p.lat, lng: p.lng }, { lat: c.lat, lng: c.lng }) * 10) / 10 : null,
       }))
       .sort((a: any, b: any) => (b.knowsBrand ? 1 : 0) - (a.knowsBrand ? 1 : 0) || (a.distanceKm ?? 1e9) - (b.distanceKm ?? 1e9));
+    return [...partners, ...external.map((c: any) => ({
+      id: c.id, name: c.name, address: c.address, lat: c.lat, lng: c.lng,
+      hours: c.hours, arrivalNotes: c.public_notes, isPartner: false, directoryOnly: true,
+      brands: [], staff: {}, conditions: [], accepts: [], rating: null, reviews: 0,
+      load: null, popularity: 'new', closedToday: null, openNow: null, knowsBrand: null,
+      distanceKm: p.lat != null && p.lng != null && c.lat != null && c.lng != null ? Math.round(haversineKm({lat:p.lat,lng:p.lng},{lat:c.lat,lng:c.lng})*10)/10 : null,
+    }))];
   }
 
   async center(user: AuthUser, id: string) {
     const c = (await this.list(user, {})).find((x) => x.id === id);
-    if (!c) throw notFound('Сервис не найден');
+    if (!c || c.directoryOnly) throw notFound('Запись через TrakSOS доступна только у партнёров');
     const reviews = await this.db.query(
       `select b.review_stars as stars, b.review_text as text, b.closed_at as at, coalesce(u.company_name, u.name) as who
          from service_bookings b join users u on u.id=b.client_id
