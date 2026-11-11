@@ -1,3 +1,4 @@
+import { NearbyMap } from '../components/NearbyMap.tsx';
 // Рембаза (сервис-партнёр): кабинет сервиса и запись клиента в сервис.
 import { useEffect, useState } from 'react';
 import { get, post, put, rub, fmtTime } from '../api.ts';
@@ -460,7 +461,7 @@ export function ServicesList() {
       <Back to="" label="Главная" />
       <div>
         <h1>Найти рембазу</h1>
-        <div className="sub">Только ремзоны, с которыми ТракSOS договорился лично. Цену сервис скажет после осмотра.</div>
+        <div className="sub">Сервисы и рембазы поблизости. Партнёры ТракSOS отмечаются отдельно; условия уточняйте в карточке.</div>
       </div>
       {from && <div className="banner col"><b>По совету мастера — скидка в сервисе</b><span className="note">Запишитесь отсюда — скидка применится в счёте сама.</span></div>}
 
@@ -516,6 +517,7 @@ export function ServicesList() {
       {/* 5. Результат */}
       {!list.data ? <Loading error={list.error} /> : <>
         <span className="note">{shown.length ? `Найдено: ${shown.length}${s.radius && point ? ` в радиусе ${s.radius} км` : ''}` : ''}{!point ? ' · расстояние появится, когда выберете место' : ''}</span>
+        <NearbyMap items={shown} center={point} />
         {!shown.length ? (
           <div className="empty col" style={{ gap: 8 }}>
             <span>Подходящих сервисов не нашли{s.need ? ` с услугой «${NEEDS[s.need]}»` : ''}.</span>
