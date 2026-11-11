@@ -24,6 +24,7 @@ import { StatsService } from './services/stats.ts';
 import { OnsiteService } from './services/onsite.ts';
 import { ServiceCenters } from './services/service.ts';
 import { FleetService } from './services/fleet.ts';
+import { VehicleServiceRequests } from './services/vehicleServiceRequests.ts';
 import { PrivacyService } from './services/privacy.ts';
 import { StandingService } from './services/standing.ts';
 import { ShopService } from './services/shop.ts';
@@ -74,6 +75,7 @@ export function createApp(d: Deps) {
   orders.referral = referral;
   centers.referral = referral;
   const fleet = new FleetService(d.db, notifier, orders);
+  const vehicleRequests = new VehicleServiceRequests(d.db);
   const privacy = new PrivacyService(d.db, notifier, now);
   const standing = new StandingService(d.db, now, settings);
   const shop = new ShopService(d.db, notifier, settings);
@@ -329,6 +331,19 @@ export function createApp(d: Deps) {
   r.delete('/api/me/delete', true, (c: AuthedCtx) => privacy.cancelDelete(c.user));
 
   // Мой парк --------------------------------------------------------------------
+  const vehicleRequestKind = z.enum(['insurance', 'inspection']);
+  const vehicleRequestStatus = z.enum(['in_review', 'need_documents', 'sent_to_partner', 'completed', 'rejected', 'cancelled']);
+  r.get('/api/vehicle-service-requests', true, (c: AuthedCtx) => vehicleRequests.mine(c.user));
+  r.post('/api/vehicle-service-requests', true, (c: AuthedCtx) => {
+    const b = parse(z.object({ vehicleId: z.string().uuid(), kind: vehicleRequestKind, comment: z.string().max(2000).optional() }), c.body);
+    return vehicleRequests.create(c.user, b.vehicleId, b.kind, b.comment);
+  });
+  r.post('/api/vehicle-service-requests/:id/cancel', true, (c: AuthedCtx) => vehicleRequests.cancel(c.user, c.params.id));
+  r.get('/api/admin/vehicle-service-requests', staff, (c: AuthedCtx) => vehicleRequests.queue(c.user));
+  r.patch('/api/admin/vehicle-service-requests/:id', staff, (c: AuthedCtx) => {
+    const b = parse(z.object({ status: vehicleRequestStatus, note: z.string().max(2000).optional() }), c.body);
+    return vehicleRequests.setStatus(c.user, c.params.id, b.status, b.note);
+  });
   r.get('/api/fleet', true, (c: AuthedCtx) => fleet.get(c.user));
   r.put('/api/fleet', true, (c: AuthedCtx) => fleet.set(c.user, parse(z.object({
     mode: z.enum(['limit', 'approve']).optional(),
