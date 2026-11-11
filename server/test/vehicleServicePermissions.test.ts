@@ -140,3 +140,71 @@ test('owner history includes both service kinds without driver restrictions', as
   await new VehicleServiceRequests(db).history(owner, 'vehicle-1');
   assert.deepEqual(queries[0], ['vehicle-1', 'owner-1', ['insurance', 'inspection']]);
 });
+
+test('owner can create a request for their vehicle and remains the requester', async () => {
+  const calls: Array<{ sql: string; params: any[] }> = [];
+  const db: any = {
+    one: async (sql: string, params: any[]) => {
+      calls.push({ sql, params });
+      if (sql.startsWith('select id, driver_id from vehicles')) return { id: 'vehicle-1', driver_id: 'driver-1' };
+      if (sql.startsWith('select id from vehicle_service_requests')) return null;
+      if (sql.startsWith('insert into vehicle_service_requests')) return { id: 'request-1', owner_id: owner.id, requested_by: owner.id, kind: 'insurance' };
+      return null;
+    },
+    tx: async (fn: any) => fn(db),
+  };
+  const result = await new VehicleServiceRequests(db).create(owner, 'vehicle-1', 'insurance', 'Нужен полис');
+  assert.equal(result.requested_by, owner.id);
+  assert.deepEqual(calls.find(c => c.sql.startsWith('insert into vehicle_service_requests'))?.params,
+    [owner.id, owner.id, 'vehicle-1', 'insurance', 'Нужен полис']);
+  assert.match(calls[1].sql, /for update/);
+});
+
+test('driver cannot create a service request when the owner disabled the service', async () => {
+  let inserts = 0;
+  const db: any = {
+    one: async (sql: string) => {
+      if (sql.startsWith('select id, driver_id from vehicles')) return { id: 'vehicle-1', driver_id: driver.id };
+      if (sql.startsWith('select fleet from users')) return { fleet: { allow: { insurance: false } } };
+      if (sql.startsWith('insert into vehicle_service_requests')) inserts++;
+      return null;
+    },
+    tx: async (fn: any) => fn(db),
+  };
+  await assert.rejects(new VehicleServiceRequests(db).create(driver, 'vehicle-1', 'insurance'), /не разрешил/);
+  assert.equal(inserts, 0);
+});
+
+test('request creation rejects duplicates before inserting another active request', async () => {
+  let inserts = 0;
+  const db: any = {
+    one: async (sql: string) => {
+      if (sql.startsWith('select id, driver_id from vehicles')) return { id: 'vehicle-1', driver_id: 'driver-1' };
+      if (sql.startsWith('select id from vehicle_service_requests')) return { id: 'existing-request' };
+      if (sql.startsWith('insert into vehicle_service_requests')) inserts++;
+      return null;
+    },
+    tx: async (fn: any) => fn(db),
+  };
+  await assert.rejects(new VehicleServiceRequests(db).create(owner, 'vehicle-1', 'inspection'), /активная заявка/);
+  assert.equal(inserts, 0);
+});
+
+test('driver reassignment before transaction lock prevents request creation', async () => {
+  let inserts = 0;
+  let vehicleReads = 0;
+  const db: any = {
+    one: async (sql: string) => {
+      if (sql.startsWith('select id, driver_id from vehicles')) {
+        vehicleReads++;
+        return { id: 'vehicle-1', driver_id: vehicleReads === 1 ? driver.id : 'other-driver' };
+      }
+      if (sql.startsWith('insert into vehicle_service_requests')) inserts++;
+      return null;
+    },
+    tx: async (fn: any) => fn(db),
+  };
+  await assert.rejects(new VehicleServiceRequests(db).create(driver, 'vehicle-1', 'inspection'), /Машина не найдена/);
+  assert.equal(vehicleReads, 2);
+  assert.equal(inserts, 0);
+});
