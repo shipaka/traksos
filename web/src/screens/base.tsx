@@ -345,8 +345,8 @@ export function BaseSetup() {
   useEffect(() => {
     if (!cab.data || f) return;
     const c = cab.data.center;
-    setF(c ? { name: c.name, address: c.address, hours: c.hours, inn: c.inn ?? '', lat: c.lat, lng: c.lng, brands: c.brands, staff: c.staff, conditions: c.conditions, accepts: c.accepts, closedDays: (c.closed_days ?? []).map((x: string) => x.slice(0, 10)), paused: c.paused }
-      : { name: '', address: '', hours: '08:00–20:00', inn: '', lat: null, lng: null, brands: [], staff: { electric: 'own' }, conditions: ['parking'], accepts: ['quick', 'day'], closedDays: [], paused: false });
+    setF(c ? { name: c.name, address: c.address, arrivalNotes: c.arrival_notes ?? '', hours: c.hours, inn: c.inn ?? '', lat: c.lat, lng: c.lng, brands: c.brands, staff: c.staff, conditions: c.conditions, accepts: c.accepts, closedDays: (c.closed_days ?? []).map((x: string) => x.slice(0, 10)), paused: c.paused }
+      : { name: '', address: '', arrivalNotes: '', hours: '08:00–20:00', inn: '', lat: null, lng: null, brands: [], staff: { electric: 'own' }, conditions: ['parking'], accepts: ['quick', 'day'], closedDays: [], paused: false });
   }, [cab.data]); // eslint-disable-line
   if (!f) return <main><Loading error={cab.error} /></main>;
   const first = !cab.data?.center;
@@ -368,6 +368,7 @@ export function BaseSetup() {
       <div className="card">
         <Field label="Название"><input className="field" value={f.name} onChange={(e) => set('name', e.target.value)} placeholder="Например, Шушары-Трак" /></Field>
         <Field label="Адрес въезда"><input className="field" value={f.address} onChange={(e) => set('address', e.target.value)} placeholder="Шушары, Московское ш., 50" /></Field>
+        <Field label="Как к вам проехать"><textarea className="field" maxLength={600} value={f.arrivalNotes} onChange={(e) => set('arrivalNotes', e.target.value)} placeholder="Въезд с тыльной стороны, шлагбаум № 2. На КПП назовите номер записи." /></Field>
         <button type="button" className="btn ghost small" onClick={locate}>{f.lat ? `Место на карте отмечено · ${f.lat.toFixed(3)}, ${f.lng.toFixed(3)}` : 'Отметить место по GPS — вы сейчас на базе'}</button>
         <div className="grid2">
           <Field label="Часы работы"><input className="field" value={f.hours} onChange={(e) => set('hours', e.target.value)} /></Field>
@@ -585,6 +586,7 @@ export function CenterPage({ id }: { id: string }) {
         <a className="btn" href={`#/services/${id}/book${from ? `?from=${from}` : ''}`}>Записаться</a>
       )}
       <div className="grid2">
+        {d.arrivalNotes && <div className="card"><b>Как проехать</b><p className="note">{d.arrivalNotes}</p></div>}
         <button className="btn ghost" onClick={() => prefillOrder('tow', { destination: `${d.name}, ${d.address}` })}>Везти сюда эвакуатором</button>
         <button className="btn ghost" onClick={() => prefillOrder('electric', { address: `${d.name}, ${d.address}` })}>Вызвать мастера сюда</button>
       </div>
