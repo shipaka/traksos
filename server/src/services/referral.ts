@@ -144,9 +144,9 @@ export class ReferralService {
     }
     // 2. Пригласивший клиента — доля от оплаченной заявки, пока не прошло days дней
     const c = await q.one<{ referred_by: string | null; referred_at: Date | null; name: string | null }>('select referred_by, referred_at, name from users where id=$1', [order.client_id]);
-    if (c?.referred_by && c.referred_at && this.now().getTime() - new Date(c.referred_at).getTime() <= r.days * DAY) {
-      await this.grant(q, { userId: c.referred_by, amount: pct(amount, r.clientSharePct), kind: 'ref_client', orderId: order.id, refUserId: order.client_id,
-        note: `${r.clientSharePct}% с заявки №${order.number} приглашённого клиента` });
+    if (commission > 0 && c?.referred_by && c.referred_at && this.now().getTime() - new Date(c.referred_at).getTime() <= r.days * DAY) {
+      await this.grant(q, { userId: c.referred_by, amount: pct(commission, r.clientSharePct), kind: 'ref_client', orderId: order.id, refUserId: order.client_id,
+        note: `${r.clientSharePct}% от комиссии ТракSOS по заявке №${order.number} приглашённого клиента` });
     }
     // 3. Мастер пригласил мастера — разово, когда новичок выполнит performerJobs заявок
     if (order.performer_id) {
