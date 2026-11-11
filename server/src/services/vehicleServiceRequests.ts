@@ -52,7 +52,7 @@ export class VehicleServiceRequests {
 
   async setStatus(staff: AuthUser, id: string, status: VehicleServiceStatus, note?: string) {
     // Staff role is enforced at the route as well as here.
-    if (!staff.roles?.some((role: string) => ['admin', 'manager', 'support'].includes(role))) throw forbidden('Нет доступа к обработке заявок');
+    if (!staff.roles?.some((role: string) => ['admin', 'moderator'].includes(role))) throw forbidden('Нет доступа к обработке заявок');
     return this.db.tx(async (q) => {
       const current = await q.one<any>('select * from vehicle_service_requests where id=$1 for update', [id]);
       if (!current) throw notFound('Заявка не найдена');
@@ -64,7 +64,7 @@ export class VehicleServiceRequests {
   }
 
   async queue(staff: AuthUser, kind?: VehicleServiceKind) {
-    if (!staff.roles?.some((role: string) => ['admin', 'manager', 'support'].includes(role))) throw forbidden('Нет доступа');
+    if (!staff.roles?.some((role: string) => ['admin', 'moderator'].includes(role))) throw forbidden('Нет доступа');
     return this.db.query(
       `select r.*, v.brand, v.model, v.plate from vehicle_service_requests r
        join vehicles v on v.id=r.vehicle_id
