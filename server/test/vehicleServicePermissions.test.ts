@@ -14,7 +14,7 @@ function mockDb(current: any = { id: 'request-1', kind: 'inspection', status: 's
     one: async (sql: string, params: any[]) => {
       calls.push({ sql, params });
       if (sql.startsWith('select * from vehicle_service_requests')) return current;
-      if (sql.startsWith('update vehicle_service_requests')) return { ...current, status: params[1] ?? 'cancelled' };
+      if (sql.startsWith('update vehicle_service_requests')) return { ...current, status: sql.includes("set status='cancelled'") ? 'cancelled' : params[1] };
       return null;
     },
     tx: async (fn: any) => fn(db),
@@ -55,8 +55,10 @@ test('insurance completion requires a valid policy expiry', async () => {
 test('cancellation SQL restricts status, owner and driver permission', async () => {
   const { db, calls } = mockDb();
   const service = new VehicleServiceRequests(db);
-  await service.cancel(owner, 'request-1');
-  await service.cancel(driver, 'request-2');
+  const cancelledByOwner = await service.cancel(owner, 'request-1');
+  const cancelledByDriver = await service.cancel(driver, 'request-2');
+  assert.equal(cancelledByOwner.status, 'cancelled');
+  assert.equal(cancelledByDriver.status, 'cancelled');
   assert.match(calls[0].sql, /status in \('submitted','in_review','need_documents'\)/);
   assert.match(calls[0].sql, /owner_id=\$2/);
   assert.match(calls[1].sql, /requested_by=\$3/);
