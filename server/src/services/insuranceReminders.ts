@@ -27,7 +27,7 @@ export async function sendInsuranceReminders(db: Db, notifier: Notifier) {
          returning id`, [item.id, days]);
       if (!claimed) continue;
       await notifier.notify([item.owner_id], { type: 'insurance_expiry', requestId: item.id, days },
-        { title: 'Срок страховки', body: `Страховка автомобиля ${item.plate || ''} заканчивается через ${days} дн. (${item.policy_expires_on}).`,
+        { kind: 'normal', title: 'Срок страховки', body: `Страховка автомобиля ${item.plate || ''} заканчивается через ${days} дн. (${item.policy_expires_on}).`,
           data: { requestId: item.id, days: String(days) } });
     }
   }
