@@ -29,7 +29,8 @@ jobs:
       - name: Сервер — типы
         run: npm run typecheck
       - name: Сервер — тесты
-        run: npm test
+        timeout-minutes: 15
+        run: timeout --signal=TERM --kill-after=30s 14m npm test
       - name: Веб — сборка
         run: npm -w web run build
       - name: Сквозной сценарий в браузере
