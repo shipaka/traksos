@@ -94,6 +94,41 @@ try {
   await adminPage.locator('.toast').waitFor({ state: 'hidden', timeout: 8000 });
   if (process.argv[2]) await adminPage.screenshot({ path: process.argv[2] + '/site-admin-desktop.png', fullPage: false });
   await adminPage.close();
+  // Small mobile BROWSER (not Android WebView): verify authenticated header and profile access.
+  const smallWeb = await browser.newPage({ viewport: { width: 360, height: 780 }, locale: 'ru-RU' });
+  await smallWeb.goto(base + '/#/');
+  await smallWeb.getByRole('button', { name: 'Войти по номеру' }).click();
+  await smallWeb.locator('input[type=tel]').fill('+79990009125');
+  await smallWeb.getByRole('button', { name: 'Получить код' }).click();
+  const webHint = await smallWeb.getByText(/Тестовый режим: код/).textContent();
+  const webCode = webHint.match(/[0-9]{4,6}/);
+  if (!webCode) throw new Error('Mobile browser demo sign-in code unavailable');
+  await smallWeb.locator('input[autocomplete=one-time-code]').fill(webCode[0]);
+  await smallWeb.getByRole('button', { name: 'Войти', exact: true }).click();
+  await smallWeb.locator('.website .top-profile-link').waitFor({ state: 'visible' });
+  for (const width of [360, 390]) {
+    await smallWeb.setViewportSize({ width, height: 780 });
+    const measure = await smallWeb.evaluate(() => {
+      const header = document.querySelector('.top');
+      const actions = document.querySelector('.top > .row');
+      const profile = document.querySelector('.top-profile-link');
+      return {
+        viewport: document.documentElement.clientWidth,
+        content: document.documentElement.scrollWidth,
+        header: header?.getBoundingClientRect().width ?? 0,
+        actions: actions?.getBoundingClientRect().right ?? 0,
+        profile: profile?.getBoundingClientRect().right ?? 0,
+      };
+    });
+    if (measure.content > measure.viewport + 2 || measure.actions > measure.viewport + 1 ||
+        measure.profile > measure.viewport + 1) {
+      throw new Error('Mobile website header or labels exceed viewport: ' + JSON.stringify(measure));
+    }
+  }
+  await smallWeb.getByRole('link', { name: 'Личный профиль' }).click();
+  await smallWeb.getByRole('heading', { name: 'Профиль' }).waitFor();
+  if (process.argv[2]) await smallWeb.screenshot({ path: process.argv[2] + '/site-mobile-profile.png', fullPage: false });
+  await smallWeb.close();
   // Android WebView imitation: the familiar Profile icon must be the rightmost bottom tab.
   const mobileContext = await browser.newContext({ viewport: { width: 360, height: 780 }, locale: 'ru-RU' });
   await mobileContext.addInitScript(() => {
