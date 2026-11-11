@@ -531,3 +531,12 @@ select.field { appearance: none; }
   .website .web-hero-screen-body { padding: 18px 16px; }
   .website .web-hero-float { left: 0; }
 }
+
+
+/* У администратора одно рабочее меню: второе дублировать не нужно. */
+@media (min-width: 1051px) {
+  .website .website-workspace:has(.admin-desktop-shell) { grid-template-columns: minmax(0,1fr); }
+  .website .website-workspace:has(.admin-desktop-shell) > .website-sidebar { display: none; }
+}
+.website .website-work-area > .website-work-welcome + main > h1:first-child { display: none; }
+.website .website-workspace:has(.admin-desktop-shell) .website-work-welcome { margin-bottom: 8px; }
