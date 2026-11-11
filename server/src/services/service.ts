@@ -70,7 +70,10 @@ export class ServiceCenters {
     if (['cancelled','declined'].includes(b.status)) throw conflict('chat_closed','Переписка по отменённой записи закрыта');
     if (user.id !== b.owner_id && !user.roles.includes('admin')) {
       const block = await this.db.one(`select 1 from service_contact_blocks where center_id=$1 and client_id=$2 and lifted_at is null`,[b.center_id,b.client_id]);
-      if (block) throw forbidden('Рембаза ограничила новые сообщения. Для спора обратитесь в поддержку ТракSOS.');
+      // Ограничение новых контактов не закрывает переписку по действующему ремонту,
+      // оплате или спору. Для завершённых записей остаётся поддержка.
+      const activeObligation = ['expected','arrived','diagnostics','in_work','waiting_part','agreeing','ready','invoiced','disputed'].includes(b.status);
+      if (block && !activeObligation) throw forbidden('Рембаза ограничила новые сообщения. По спорным вопросам обратитесь в поддержку ТракSOS.');
     }
     const raw = text.trim().slice(0,2000);
     if (!raw) throw bad('empty','Введите сообщение');
