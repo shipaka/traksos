@@ -830,6 +830,21 @@ function VehicleServiceHistory({ id, isDriver, refreshVersion }: { id: string; i
             {r.policy_expires_on && <span> · Действует до {r.policy_expires_on}</span>}
             <div>{statusHelp[r.status] ?? 'Статус уточняется.'}</div>
             {r.staff_note && <div><b>Комментарий специалиста:</b> {r.staff_note}</div>}
+            {Array.isArray(r.events) && r.events.length > 0 && (
+              <details>
+                <summary>История изменений · {r.events.length}</summary>
+                <div className="stack">
+                  {r.events.map((event: any, index: number) => (
+                    <div className="note" key={index}>
+                      <b>{labels[event.status] ?? event.status}</b>
+                      {' · '}{fmtTime(event.changed_at)}
+                      {event.policy_expires_on && <span> · Срок полиса: {String(event.policy_expires_on).slice(0, 10)}</span>}
+                      {event.note && <div>{event.note}</div>}
+                    </div>
+                  ))}
+                </div>
+              </details>
+            )}
             {!isDriver && r.kind === 'insurance' && r.status === 'completed' && (
               <div className="stack">
                 {renewing === r.id ? (
