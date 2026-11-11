@@ -7,7 +7,7 @@ const windows = [
   { days: 1, column: 'reminder_1_sent_at' },
 ] as const;
 
-/** Run daily; atomically claim each reminder before publishing it. */
+/** Claim reminders atomically; release a claim if notification persistence fails. */
 export async function sendInsuranceReminders(db: Db, notifier: Notifier) {
   for (const { days, column } of windows) {
     const due = await db.query<{ id: string; owner_id: string; plate: string | null; policy_expires_on: string }>(
@@ -21,14 +21,26 @@ export async function sendInsuranceReminders(db: Db, notifier: Notifier) {
           and r.policy_expires_on=current_date + $1::int
         limit 500`, [days]);
     for (const item of due) {
-      const claimed = await db.one(
+      const claimed = await db.one<{ claimed_at: Date }>(
         `update vehicle_service_requests set ${column}=now()
          where id=$1 and ${column} is null and policy_expires_on=current_date + $2::int
-         returning id`, [item.id, days]);
+         returning ${column} as claimed_at`, [item.id, days]);
       if (!claimed) continue;
-      await notifier.notify([item.owner_id], { type: 'insurance_expiry', requestId: item.id, days },
-        { kind: 'normal', title: 'Срок страховки', body: `Страховка автомобиля ${item.plate || ''} заканчивается через ${days} дн. (${item.policy_expires_on}).`,
-          data: { requestId: item.id, days: String(days) } });
+      try {
+        await notifier.notify([item.owner_id], { type: 'insurance_expiry', requestId: item.id, days },
+          { kind: 'normal', title: 'Срок страховки', body: `Страховка автомобиля ${item.plate || ''} заканчивается через ${days} дн. (${item.policy_expires_on}).`,
+            data: { requestId: item.id, days: String(days) } });
+      } catch (error) {
+        // Never leave a failed notification permanently marked as sent.
+        // Only release our own claim, not a newer one or a renewed policy's reminder.
+        await db.one(
+          `update vehicle_service_requests set ${column}=null
+           where id=$1 and ${column}=$2 and policy_expires_on=$3::date
+           returning id`,
+          [item.id, claimed.claimed_at, item.policy_expires_on],
+        );
+        throw error;
+      }
     }
   }
 }
