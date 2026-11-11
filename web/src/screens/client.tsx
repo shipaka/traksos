@@ -791,6 +791,7 @@ function VehicleServiceApplication({ vehicleId, onCreated }: { vehicleId: string
 
 /** История страхования и техосмотра доступна прямо в карточке машины. */
 function VehicleServiceHistory({ id, isDriver, refreshVersion }: { id: string; isDriver: boolean; refreshVersion: number }) {
+  const { me } = useMe();
   const [open, setOpen] = useState(false);
   const history = useLoad(() => get(`/api/vehicles/${id}/service-history`), [id, refreshVersion],
     (event) => event.type === 'connection_restored' || (event.type === 'vehicle_service' && event.vehicleId === id));
@@ -830,6 +831,16 @@ function VehicleServiceHistory({ id, isDriver, refreshVersion }: { id: string; i
             {r.policy_expires_on && <span> · Действует до {r.policy_expires_on}</span>}
             <div>{statusHelp[r.status] ?? 'Статус уточняется.'}</div>
             {r.staff_note && <div><b>Комментарий специалиста:</b> {r.staff_note}</div>}
+            {['submitted', 'in_review', 'need_documents'].includes(r.status) && (!isDriver || r.requested_by === me?.id) && (
+              <button type="button" className="btn ghost small" disabled={busy}
+                onClick={async () => {
+                  if (!window.confirm('Отменить заявку? После отмены её нельзя будет возобновить.')) return;
+                  const result = await run(() => post(`/api/vehicle-service-requests/${r.id}/cancel`), 'Заявка отменена');
+                  if (result) history.reload();
+                }}>
+                Отменить заявку
+              </button>
+            )}
             {Array.isArray(r.events) && r.events.length > 0 && (
               <details>
                 <summary>История изменений · {r.events.length}</summary>
