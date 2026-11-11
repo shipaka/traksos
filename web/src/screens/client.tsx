@@ -704,7 +704,7 @@ export function Garage() {
             </form>
           ) : !isDriver && <button type="button" className="btn ghost small" onClick={() => { setEditing(v.id); setEditForm({ brand: v.brand ?? '', model: v.model ?? '', year: v.year ? String(v.year) : '', plate: v.plate ?? '', trailerPlate: v.trailer_plate ?? '', vin: v.vin ?? '', engine: v.engine ?? '', configurationNotes: v.configuration_notes ?? '' }); }}>Редактировать машину</button>}
           <VehicleServiceApplication vehicleId={v.id} onCreated={() => list.reload()} />
-          <VehicleServiceHistory id={v.id} />
+          <VehicleServiceHistory id={v.id} isDriver={isDriver} />
           <VehicleHistory id={v.id} />
           {!isDriver && (driverFor === v.id ? (
             <div className="stack">
@@ -775,10 +775,13 @@ function VehicleServiceApplication({ vehicleId, onCreated }: { vehicleId: string
 }
 
 /** История страхования и техосмотра доступна прямо в карточке машины. */
-function VehicleServiceHistory({ id }: { id: string }) {
+function VehicleServiceHistory({ id, isDriver }: { id: string; isDriver: boolean }) {
   const [open, setOpen] = useState(false);
   const history = useLoad(() => get(`/api/vehicles/${id}/service-history`), [id]);
   const items = history.data as any[] | undefined;
+  const { busy, run } = useAction();
+  const [renewing, setRenewing] = useState<string | null>(null);
+  const [expiry, setExpiry] = useState('');
   if (!items?.length) return null;
   const labels: Record<string, string> = {
     submitted: 'Подана', in_review: 'На рассмотрении', need_documents: 'Нужны документы',
@@ -799,6 +802,24 @@ function VehicleServiceHistory({ id }: { id: string }) {
             {' · '}{fmtTime(r.created_at)}
             {r.policy_expires_on && <span> · Действует до {r.policy_expires_on}</span>}
             {r.staff_note && <div>{r.staff_note}</div>}
+            {!isDriver && r.kind === 'insurance' && r.status === 'completed' && (
+              <div className="stack">
+                {renewing === r.id ? (
+                  <div className="stack">
+                    <label>Новая дата окончания полиса
+                      <input type="date" value={expiry} min={new Date().toISOString().slice(0, 10)} onChange={(e) => setExpiry(e.target.value)} />
+                    </label>
+                    <div className="row">
+                      <button className="btn small" disabled={busy || !expiry} onClick={async () => {
+                        const result = await run(() => patch(`/api/vehicle-service-requests/${r.id}/renewal`, { expiresOn: expiry }), 'Срок полиса обновлён');
+                        if (result) { setRenewing(null); history.reload(); }
+                      }}>Сохранить срок</button>
+                      <button className="btn ghost small" disabled={busy} onClick={() => setRenewing(null)}>Отмена</button>
+                    </div>
+                  </div>
+                ) : <button className="btn ghost small" onClick={() => { setExpiry(r.policy_expires_on?.slice(0, 10) ?? ''); setRenewing(r.id); }}>Указать новый срок полиса</button>}
+              </div>
+            )}
           </div>
         ))}
       </div>}
