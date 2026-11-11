@@ -184,6 +184,7 @@ await shot(a, '13-admin-payments');
 await a.getByRole('link', { name: /Клиент/ }).click();
 await a.getByText('Что случилось?').first().waitFor();
 await a.getByRole('link', { name: /Профиль/ }).click();
+await a.getByText('Кабинеты и доступные роли').click();
 await a.getByRole('button', { name: 'Кабинет администратора' }).click();
 await a.getByText('Администратор').first().waitFor();
 await m.goto(BASE + '/#/work/jobs');
