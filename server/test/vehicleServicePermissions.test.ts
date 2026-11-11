@@ -235,3 +235,20 @@ test('staff can request documents when a reason is provided', async () => {
   const update = calls.find(c => c.sql.startsWith('update vehicle_service_requests'));
   assert.equal(update?.params[2], 'Пришлите фото свидетельства');
 });
+
+test('vehicle service history includes timeline only after ownership check', async () => {
+  const captured: Array<{ sql: string; params: unknown[] }> = [];
+  const db: any = {
+    one: async () => ({ id: 'vehicle-1', driver_id: 'driver-1' }),
+    query: async (sql: string, params: unknown[]) => {
+      captured.push({ sql, params });
+      return [];
+    },
+  };
+  await new VehicleServiceRequests(db).history(owner, 'vehicle-1');
+  assert.equal(captured.length, 1);
+  assert.match(captured[0].sql, /vehicle_service_request_events e/);
+  assert.match(captured[0].sql, /e\.request_id=r\.id/);
+  assert.match(captured[0].sql, /r\.vehicle_id=\$1 and r\.owner_id=\$2/);
+  assert.deepEqual(captured[0].params, ['vehicle-1', 'owner-1', ['insurance', 'inspection']]);
+});
