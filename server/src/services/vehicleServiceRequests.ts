@@ -109,6 +109,11 @@ export class VehicleServiceRequests {
   /** Renew the expiry date and re-arm reminders for the new policy term. */
   async renewPolicy(user: AuthUser, id: string, expiresOn: string) {
     if (user.owner_id) throw forbidden('Продлить дату полиса может только владелец');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(expiresOn)) throw bad('invalid_expiry', 'Некорректная дата окончания полиса');
+    const parsed = new Date(expiresOn + 'T00:00:00Z');
+    if (!Number.isFinite(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== expiresOn) {
+      throw bad('invalid_expiry', 'Некорректная дата окончания полиса');
+    }
     const updated = await this.db.one(
       `update vehicle_service_requests
           set policy_expires_on=$3::date,
