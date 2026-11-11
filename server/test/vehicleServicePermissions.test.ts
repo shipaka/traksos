@@ -208,3 +208,30 @@ test('driver reassignment before transaction lock prevents request creation', as
   assert.equal(vehicleReads, 2);
   assert.equal(inserts, 0);
 });
+
+test('rejection and document requests require an explanation visible to the client', async () => {
+  for (const status of ['rejected', 'need_documents'] as const) {
+    let updates = 0;
+    const db: any = {
+      one: async (sql: string) => {
+        if (sql.startsWith('select * from vehicle_service_requests')) {
+          return { id: 'request-1', kind: 'inspection', status: 'in_review', staff_note: null };
+        }
+        if (sql.startsWith('update vehicle_service_requests')) updates++;
+        return null;
+      },
+      tx: async (fn: any) => fn(db),
+    };
+    const service = new VehicleServiceRequests(db);
+    await assert.rejects(service.setStatus(admin, 'request-1', status), /причину отказа или список/);
+    assert.equal(updates, 0);
+  }
+});
+
+test('staff can request documents when a reason is provided', async () => {
+  const { db, calls } = mockDb({ id: 'request-1', kind: 'inspection', status: 'in_review', staff_note: null });
+  const result = await new VehicleServiceRequests(db).setStatus(admin, 'request-1', 'need_documents', 'Пришлите фото свидетельства');
+  assert.equal(result?.status, 'need_documents');
+  const update = calls.find(c => c.sql.startsWith('update vehicle_service_requests'));
+  assert.equal(update?.params[2], 'Пришлите фото свидетельства');
+});
