@@ -56,7 +56,8 @@ export class FleetService {
               coalesce(p.name, p.phone) as performer_name,
               coalesce(pay.collected, 0)::int as collected,
               coalesce(pay.refunded, 0)::int as refunded,
-              coalesce(pay.pending, 0)::int as pending_payment
+              coalesce(pay.pending, 0)::int as pending_payment,
+              coalesce(pay.entries, '[]'::json) as payment_entries
          from orders o
          left join vehicles v on v.id=o.vehicle_id and v.owner_id=$1
          left join users d on d.id=o.created_by
@@ -67,7 +68,12 @@ export class FleetService {
                filter (where status in ('captured', 'partially_refunded')), 0) as collected,
              coalesce(sum(coalesce(refunded_amount, 0)), 0) as refunded,
              coalesce(sum(total)
-               filter (where status in ('pending', 'held')), 0) as pending
+               filter (where status in ('created', 'pending', 'held')), 0) as pending,
+             coalesce(json_agg(json_build_object(
+               'id', id, 'kind', kind, 'method', method, 'status', status,
+               'total', total, 'refunded', coalesce(refunded_amount, 0),
+               'createdAt', created_at, 'updatedAt', updated_at
+             ) order by created_at, id), '[]'::json) as entries
            from payments where order_id=o.id
          ) pay on true
         where o.client_id=$1
@@ -89,6 +95,7 @@ export class FleetService {
         confirmedCollected: Number(o.collected ?? 0),
         confirmedRefunded: Number(o.refunded ?? 0),
         pendingPayment: Number(o.pending_payment ?? 0),
+        payments: o.payment_entries ?? [],
         agreedTotal: o.status === 'completed' ? amount + fee - discount : null,
       };
     });
