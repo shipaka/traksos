@@ -18,11 +18,14 @@ export class VehicleServiceRequests {
 
   async mine(user: AuthUser) {
     const owner = user.owner_id ?? user.id;
+    const allow = user.owner_id ? (await this.db.one<any>('select fleet from users where id=$1', [owner]))?.fleet?.allow : null;
+    const kinds = user.owner_id ? (['insurance', 'inspection'] as const).filter(k => allow?.[k] === true) : ['insurance', 'inspection'];
     return this.db.query(
       `select r.*, v.brand, v.model, v.plate from vehicle_service_requests r
        join vehicles v on v.id=r.vehicle_id
        where r.owner_id=$1 and ($2::uuid = r.owner_id or v.driver_id=$2)
-       order by r.created_at desc`, [owner, user.id]);
+         and r.kind = any($3::text[])
+       order by r.created_at desc`, [owner, user.id, kinds]);
   }
 
   async history(user: AuthUser, vehicleId: string) {
@@ -30,10 +33,12 @@ export class VehicleServiceRequests {
     const vehicle = await this.db.one<any>(
       'select id, driver_id from vehicles where id=$1 and owner_id=$2', [vehicleId, owner]);
     if (!vehicle || (user.owner_id && vehicle.driver_id !== user.id)) throw notFound('Машина не найдена');
+    const allow = user.owner_id ? (await this.db.one<any>('select fleet from users where id=$1', [owner]))?.fleet?.allow : null;
+    const kinds = user.owner_id ? (['insurance', 'inspection'] as const).filter(k => allow?.[k] === true) : ['insurance', 'inspection'];
     return this.db.query(
       `select id, kind, status, comment, staff_note, policy_expires_on, created_at, updated_at
-       from vehicle_service_requests where vehicle_id=$1 and owner_id=$2
-       order by created_at desc`, [vehicleId, owner]);
+       from vehicle_service_requests where vehicle_id=$1 and owner_id=$2 and kind=any($3::text[])
+       order by created_at desc`, [vehicleId, owner, kinds]);
   }
 
   async create(user: AuthUser, vehicleId: string, kind: VehicleServiceKind, comment?: string) {
@@ -56,7 +61,11 @@ export class VehicleServiceRequests {
     const r = await this.db.one<any>(
       `update vehicle_service_requests set status='cancelled', updated_at=now()
        where id=$1 and owner_id=$2 and status in ('submitted','in_review','need_documents')
-       and ($3::uuid = owner_id or requested_by=$3) returning *`, [id, owner, user.id]);
+       and ($3::uuid = owner_id or (requested_by=$3 and exists (
+         select 1 from vehicles v join users u on u.id=v.owner_id
+         where v.id=vehicle_service_requests.vehicle_id and v.driver_id=$3
+           and (u.fleet->'allow'->>vehicle_service_requests.kind)::boolean is true
+       ))) returning *`, [id, owner, user.id]);
     if (!r) throw notFound('Заявка не найдена или её уже нельзя отменить');
     return r;
   }
