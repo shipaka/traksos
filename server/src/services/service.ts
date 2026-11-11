@@ -244,7 +244,7 @@ export class ServiceCenters {
     if (b.status !== 'ready') throw conflict('bad_status', 'Сначала «Машина готова»');
     const fees = await this.settings.get('fees');
     let commission = Math.min(Math.round(amount * fees.serviceCommissionPct / 100), fees.serviceCommissionMax ?? Infinity);
-    const discount = b.from_order_id ? Math.min(commission, Math.round(amount * fees.serviceReferralDiscountPct / 100)) : 0;
+    const discount = b.from_order_id ? Math.min(Math.floor(commission * 0.3), Math.round(amount * fees.serviceReferralDiscountPct / 100)) : 0;
     // Баллы рембазы учитываются вместе с клиентской скидкой в общем бюджете 30% комиссии
     // Все скидки из комиссии рембазы вместе не выше 30% исходной комиссии.
     const promoBudget = Math.floor(commission * 0.3);
@@ -330,6 +330,7 @@ export class ServiceCenters {
     if (!b) throw conflict('bad_status', 'Счёт не подтверждён клиентом или уже выплачен');
     const c = await this.db.one<{ owner_id: string }>('select owner_id from service_centers where id=$1', [b.center_id]);
     await this.db.query('insert into audit_log(actor_id, action, target) values ($1,$2,$3)', [admin.id, 'service.paid_out', id]);
+    if (c) await this.referral?.afterBookingPaid(c.owner_id, id);
     if (c) await this.notifier.notify([c.owner_id], { type: 'booking', bookingId: id, status: 'paid' },
       { kind: 'normal', title: 'Выплата отправлена', body: `Счёт №${b.number}: ${(b.payout / 100).toLocaleString('ru-RU')} ₽`, data: { bookingId: id } });
     return { ok: true };
@@ -444,7 +445,7 @@ export class ServiceCenters {
       await this.db.query(
         `update service_bookings set status='closed', closed_at=now(), review_stars=$2, review_text=$3, updated_at=now() where id=$1`,
         [id, p.stars ?? null, p.text?.trim() || null]);
-      await this.referral?.afterBookingClosed(b.owner_id, id);
+      // Закрытие работ не подтверждает получение денег: бонус — только после paid_out_at.
       await this.notifier.notify([b.owner_id], { type: 'booking', bookingId: id, status: 'closed' },
         { kind: 'normal', title: 'Клиент подтвердил работы', body: `Счёт №${b.number} — деньги придут после оплаты`, data: { bookingId: id } });
     } else {
