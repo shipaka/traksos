@@ -784,7 +784,7 @@ function VehicleServiceHistory({ id, isDriver, refreshVersion }: { id: string; i
   const { busy, run } = useAction();
   const [renewing, setRenewing] = useState<string | null>(null);
   const [expiry, setExpiry] = useState('');
-  if (!items?.length) return null;
+  if (!items) return history.error ? <div className="note">Не удалось загрузить историю услуг: {history.error}</div> : null;
   const labels: Record<string, string> = {
     submitted: 'Подана', in_review: 'На рассмотрении', need_documents: 'Нужны документы',
     sent_to_partner: 'Передана партнёру', completed: 'Завершена',
@@ -806,6 +806,7 @@ function VehicleServiceHistory({ id, isDriver, refreshVersion }: { id: string; i
         <span aria-hidden="true">{open ? '˄' : '˅'}</span>
       </button>
       {open && <div className="stack">
+        {items.length === 0 && <span className="note">Пока нет заявок на страхование и техосмотр. После подачи они появятся здесь вместе с историей изменений.</span>}
         {items.map((r: any) => (
           <div key={r.id} className="note">
             <b>{r.kind === 'insurance' ? 'Страхование' : 'Техосмотр'}</b>
