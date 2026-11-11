@@ -7,17 +7,17 @@ import { useState } from 'react';
 import { useEffect } from 'react';
 import { SupportQueue } from './support.tsx';
 import { Stats } from './stats.tsx';
-import { get, post, put, rub, fmtPhone, fmtTime, authedImage } from '../api.ts';
+import { get, post, put, patch, rub, fmtPhone, fmtTime, authedImage } from '../api.ts';
 import { STATUS, SERVICES, LINE } from '../dict.ts';
 import { useLoad, useAction, Loading } from '../ui.tsx';
 
 export function Admin() {
-  const [tab, setTab] = useState<'stats' | 'search' | 'support' | 'verify' | 'people' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'shop' | 'settings'>('summary');
+  const [tab, setTab] = useState<'stats' | 'search' | 'support' | 'verify' | 'people' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'shop' | 'settings' | 'vehicleServices'>('summary');
   return (
     <main>
       <h1>Администратор</h1>
       <div className="scroll-x">
-        {([['summary', 'Сводка'], ['queue', 'Очередь'], ['shop', 'Магазин'], ['stats', 'Статистика'], ['search', 'Поиск'], ['support', 'Обращения'], ['verify', 'Проверка'], ['bases', 'Рембазы'], ['orders', 'Заявки'], ['people', 'Все люди'], ['payments', 'Деньги'], ['dispatch', 'Распределение'], ['offers', 'Оферты'], ['flagged', 'Подозрительное'], ['settings', 'Настройки']] as const).map(([id, n]) => (
+        {([['summary', 'Сводка'], ['queue', 'Очередь'], ['shop', 'Магазин'], ['vehicleServices', 'Страхование и ТО'], ['stats', 'Статистика'], ['search', 'Поиск'], ['support', 'Обращения'], ['verify', 'Проверка'], ['bases', 'Рембазы'], ['orders', 'Заявки'], ['people', 'Все люди'], ['payments', 'Деньги'], ['dispatch', 'Распределение'], ['offers', 'Оферты'], ['flagged', 'Подозрительное'], ['settings', 'Настройки']] as const).map(([id, n]) => (
           <button key={id} className="chip" aria-pressed={tab === id} onClick={() => setTab(id)}>{n}</button>
         ))}
       </div>
@@ -29,6 +29,7 @@ export function Admin() {
       {tab === 'queue' && <ModQueue />}
       {tab === 'summary' && <AdminSummary />}
       {tab === 'shop' && <AdminShop />}
+      {tab === 'vehicleServices' && <VehicleServicesQueue />}
       {tab === 'settings' && <AdminSettings />}
       {tab === 'offers' && <Offers />}
       {tab === 'people' && <People />}
@@ -38,6 +39,48 @@ export function Admin() {
       {tab === 'flagged' && <Flagged />}
     </main>
   );
+}
+
+function VehicleServicesQueue() {
+  const list = useLoad(() => get('/api/admin/vehicle-service-requests'), []);
+  const { busy, run } = useAction();
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const [expiry, setExpiry] = useState<Record<string, string>>({});
+  const labels: Record<string, string> = {
+    submitted: 'Подана', in_review: 'На рассмотрении', need_documents: 'Нужны документы',
+    sent_to_partner: 'Передана партнёру', completed: 'Завершена',
+    rejected: 'Отказ', cancelled: 'Отменена',
+  };
+  const next: Record<string, string[]> = {
+    submitted: ['in_review', 'rejected', 'cancelled'],
+    in_review: ['need_documents', 'sent_to_partner', 'rejected', 'cancelled'],
+    need_documents: ['in_review', 'cancelled'],
+    sent_to_partner: ['completed', 'rejected', 'cancelled'],
+  };
+  async function change(id: string, status: string) {
+    const r = await run(() => patch(`/api/admin/vehicle-service-requests/${id}`, {
+      status, note: notes[id] || undefined,
+      policyExpiresOn: status === 'completed' && expiry[id] ? expiry[id] : undefined,
+    }), 'Статус обновлён');
+    if (r) list.reload();
+  }
+  return <div className="stack">
+    <h2>Заявки на страхование и техосмотр</h2>
+    {!list.data ? <Loading error={list.error} /> : list.data.length === 0 ? <div className="empty">Заявок пока нет</div> : list.data.map((r: any) =>
+      <div className="card" key={r.id}>
+        <div className="between"><b>{r.kind === 'insurance' ? 'Страхование' : 'Техосмотр'} · {r.brand} {r.model ?? ''}</b><span className="pill">{labels[r.status] ?? r.status}</span></div>
+        <span className="note">{r.plate ?? 'Без номера'} · {fmtTime(r.created_at)}</span>
+        {r.comment && <span className="note">Клиент: {r.comment}</span>}
+        {r.policy_expires_on && <span className="note">Срок полиса: {r.policy_expires_on}</span>}
+        {(next[r.status]?.length ?? 0) > 0 && <>
+          <textarea className="field" aria-label="Комментарий сотрудника" placeholder="Комментарий для клиента" value={notes[r.id] ?? r.staff_note ?? ''} onChange={(e) => setNotes({ ...notes, [r.id]: e.target.value })} maxLength={2000} />
+          {r.kind === 'insurance' && r.status === 'sent_to_partner' && <label className="stack">Дата окончания полиса
+            <input className="field" type="date" value={expiry[r.id] ?? ''} onChange={(e) => setExpiry({ ...expiry, [r.id]: e.target.value })} />
+          </label>}
+          <div className="row">{next[r.status].map((status) => <button key={status} type="button" className="btn ghost small" disabled={busy} onClick={() => change(r.id, status)}>{labels[status]}</button>)}</div>
+        </>}
+      </div>)}
+  </div>;
 }
 
 function People() {
