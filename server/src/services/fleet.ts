@@ -44,6 +44,45 @@ export class FleetService {
     };
   }
 
+  /** Owner-only register of work amounts agreed in orders; not a bank payment statement. */
+  async finances(owner: AuthUser) {
+    if (owner.owner_id) throw bad('driver', 'Финансы автопарка доступны только владельцу');
+    const orders = await this.db.query<any>(
+      `select o.id, o.number, o.service, o.status, o.description, o.created_at, o.completed_at,
+              o.call_out_amount, o.work_amount, o.client_fee_pct, o.discount_amount, o.estimate,
+              o.payment_method, o.vehicle_id,
+              v.brand, v.model, v.plate,
+              coalesce(d.name, d.phone) as driver_name,
+              coalesce(p.name, p.phone) as performer_name
+         from orders o
+         left join vehicles v on v.id=o.vehicle_id and v.owner_id=$1
+         left join users d on d.id=o.created_by
+         left join users p on p.id=o.performer_id
+        where o.client_id=$1
+        order by o.created_at desc limit 200`,
+      [owner.id],
+    );
+    const items = orders.map((o: any) => {
+      const callOut = Number(o.call_out_amount ?? o.estimate?.callOut ?? 0);
+      const work = Number(o.work_amount ?? 0);
+      const amount = callOut + work;
+      const fee = Math.round(amount * Number(o.client_fee_pct ?? 0) / 100);
+      const discount = Math.min(Number(o.discount_amount ?? 0), amount + fee);
+      return {
+        id: o.id, number: o.number, service: o.service, status: o.status,
+        description: o.description, createdAt: o.created_at, completedAt: o.completed_at,
+        vehicleId: o.vehicle_id, brand: o.brand, model: o.model, plate: o.plate,
+        driverName: o.driver_name, performerName: o.performer_name,
+        paymentMethod: o.payment_method,
+        agreedTotal: o.status === 'completed' ? amount + fee - discount : null,
+      };
+    });
+    return {
+      agreedTotal: items.reduce((sum, item) => sum + (item.agreedTotal ?? 0), 0),
+      items,
+    };
+  }
+
   async set(owner: AuthUser, p: FleetSettings & { edoPdfOnly?: boolean }) {
     if (owner.owner_id) throw bad('driver', 'Парком управляет владелец');
     const cur = (await this.db.one<any>('select fleet from users where id=$1', [owner.id]))?.fleet ?? {};
