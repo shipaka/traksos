@@ -53,11 +53,23 @@ export class FleetService {
               o.payment_method, o.vehicle_id,
               v.brand, v.model, v.plate,
               coalesce(d.name, d.phone) as driver_name,
-              coalesce(p.name, p.phone) as performer_name
+              coalesce(p.name, p.phone) as performer_name,
+              coalesce(pay.collected, 0)::int as collected,
+              coalesce(pay.refunded, 0)::int as refunded,
+              coalesce(pay.pending, 0)::int as pending_payment
          from orders o
          left join vehicles v on v.id=o.vehicle_id and v.owner_id=$1
          left join users d on d.id=o.created_by
          left join users p on p.id=o.performer_id
+         left join lateral (
+           select
+             coalesce(sum(greatest(total - coalesce(refunded_amount, 0), 0))
+               filter (where status in ('captured', 'partially_refunded')), 0) as collected,
+             coalesce(sum(coalesce(refunded_amount, 0)), 0) as refunded,
+             coalesce(sum(total)
+               filter (where status in ('pending', 'held')), 0) as pending
+           from payments where order_id=o.id
+         ) pay on true
         where o.client_id=$1
         order by o.created_at desc limit 200`,
       [owner.id],
@@ -74,11 +86,16 @@ export class FleetService {
         vehicleId: o.vehicle_id, brand: o.brand, model: o.model, plate: o.plate,
         driverName: o.driver_name, performerName: o.performer_name,
         paymentMethod: o.payment_method,
+        confirmedCollected: Number(o.collected ?? 0),
+        confirmedRefunded: Number(o.refunded ?? 0),
+        pendingPayment: Number(o.pending_payment ?? 0),
         agreedTotal: o.status === 'completed' ? amount + fee - discount : null,
       };
     });
     return {
       agreedTotal: items.reduce((sum, item) => sum + (item.agreedTotal ?? 0), 0),
+      confirmedCollected: items.reduce((sum, item) => sum + item.confirmedCollected, 0),
+      confirmedRefunded: items.reduce((sum, item) => sum + item.confirmedRefunded, 0),
       items,
     };
   }
