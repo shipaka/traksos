@@ -20,6 +20,11 @@ try {
     } else if (width === 390) {
       await page.getByRole('button', { name: 'Войти по номеру' }).waitFor();
     }
+    const screenshotDir = process.argv[2];
+    if (screenshotDir) {
+      await (await import('node:fs/promises')).mkdir(screenshotDir, { recursive: true });
+      await page.screenshot({ path: screenshotDir + '/site-landing-' + name + '.png', fullPage: false });
+    }
     await page.goto(base + '/#/about');
     await page.getByRole('heading', { name: /Не просто вызвать помощь/ }).waitFor();
     const tabs = page.getByRole('tab');
@@ -29,9 +34,7 @@ try {
     await page.getByRole('tab', { name: 'Партнёры' }).click();
     await page.getByRole('heading', { name: /Рабочий кабинет/ }).waitFor();
     if (await page.locator('.tabbar:visible').count()) throw new Error(name + ': website tour unexpectedly shows app tabbar');
-    const screenshotDir = process.argv[2];
     if (screenshotDir) {
-      await (await import('node:fs/promises')).mkdir(screenshotDir, { recursive: true });
       await page.screenshot({ path: screenshotDir + '/site-' + name + '.png', fullPage: false });
       if (name === 'desktop') {
         await page.locator('.showcase').screenshot({ path: screenshotDir + '/site-feature-tour.png' });
@@ -52,6 +55,7 @@ try {
       await page.getByRole('link', { name: /Гараж и история/ }).click();
       await page.getByRole('heading', { name: 'Мой гараж' }).waitFor();
       if (await page.locator('.tabbar:visible').count()) throw new Error('Desktop cabinet uses app navigation');
+      if (screenshotDir) await page.screenshot({ path: screenshotDir + '/site-client-desktop.png', fullPage: false });
     }
     if (errors.length) throw new Error(name + ': ' + errors.join('; '));
     await page.close();
