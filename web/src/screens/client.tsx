@@ -550,7 +550,7 @@ export function NewOrder({ service }: { service: string }) {
       )}
 
       <CallBar busy={busy} missing={missing} price={est ? `${isTow ? 'перевозка от' : 'выезд'} ${rub(est.callOut)}` : ''}
-        label={sos ? 'Вызвать сейчас' : isTow ? 'Вызвать эвакуатор' : 'Вызвать мастера'}
+        label={isTow ? 'Вызвать эвакуатор' : 'Вызвать сейчас'}
         onGo={() => { setTried(true); if (missing.length) jump(missing[0].id); else submit(); }} />
     </main>
   );
