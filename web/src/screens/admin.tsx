@@ -1,3 +1,4 @@
+import { ExternalServicesAdmin } from './externalServicesAdmin.tsx';
 import { AdminServices } from './base.tsx';
 import { ModQueue } from './moderation.tsx';
 import { AdminSummary } from './adminSummary.tsx';
@@ -12,7 +13,7 @@ import { STATUS, SERVICES, LINE } from '../dict.ts';
 import { useLoad, useAction, Loading } from '../ui.tsx';
 
 export function Admin() {
-  const [tab, setTab] = useState<'stats' | 'search' | 'support' | 'verify' | 'people' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'shop' | 'settings' | 'vehicleServices'>(() => {
+  const [tab, setTab] = useState<'stats' | 'search' | 'support' | 'verify' | 'people' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'shop' | 'settings' | 'vehicleServices' | 'externalBases'>(() => {
     const requested = new URLSearchParams(location.hash.split('?')[1] ?? '').get('tab');
     return requested === 'vehicleServices' ? 'vehicleServices' : 'summary';
   });
@@ -29,7 +30,7 @@ export function Admin() {
       <h1>Администратор</h1>
       <div className="admin-desktop-shell">
       <div className="scroll-x admin-secondary-nav">
-        {([['summary', 'Сводка'], ['queue', 'Очередь'], ['shop', 'Магазин'], ['vehicleServices', 'Страхование и ТО'], ['stats', 'Статистика'], ['search', 'Поиск'], ['support', 'Обращения'], ['verify', 'Проверка'], ['bases', 'Рембазы'], ['orders', 'Заявки'], ['people', 'Все люди'], ['payments', 'Деньги'], ['dispatch', 'Распределение'], ['offers', 'Оферты'], ['flagged', 'Подозрительное'], ['settings', 'Настройки']] as const).map(([id, n]) => (
+        {([['summary', 'Сводка'], ['queue', 'Очередь'], ['shop', 'Магазин'], ['vehicleServices', 'Страхование и ТО'], ['stats', 'Статистика'], ['search', 'Поиск'], ['support', 'Обращения'], ['verify', 'Проверка'], ['bases', 'Рембазы'], ['externalBases', 'Справочник рембаз'], ['orders', 'Заявки'], ['people', 'Все люди'], ['payments', 'Деньги'], ['dispatch', 'Распределение'], ['offers', 'Оферты'], ['flagged', 'Подозрительное'], ['settings', 'Настройки']] as const).map(([id, n]) => (
           <button key={id} className="chip" aria-pressed={tab === id} onClick={() => setTab(id)}>{n}</button>
         ))}
       </div>
@@ -39,6 +40,7 @@ export function Admin() {
       {tab === 'support' && <SupportQueue />}
       {tab === 'verify' && <Verify />}
       {tab === 'bases' && <AdminServices />}
+      {tab === 'externalBases' && <ExternalServicesAdmin />}
       {tab === 'queue' && <ModQueue />}
       {tab === 'summary' && <AdminSummary />}
       {tab === 'shop' && <AdminShop />}
