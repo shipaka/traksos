@@ -116,7 +116,11 @@ export class ReferralService {
   /** Заявка подтверждена: клиент гасит баллами сбор (до cap) — в момент подтверждения, как бонусы */
   async spendClientFee(q: Queryable, order: any, clientFee: number, want: number) {
     if (want <= 0) return 0;
-    const used = await this.spend(q, order.client_id, clientFee, `Сервисный сбор по заявке №${order.number}`, order.id, null, want);
+    const fees = await this.settings.get('fees');
+    const perf = order.performer_id ? await q.one<{ is_priority: boolean }>('select is_priority from performer_profiles where user_id=$1', [order.performer_id]) : null;
+    const commissionBase = pct(order.work_amount ?? 0, commissionPct(fees, { isPriority: !!perf?.is_priority, at: this.now() }));
+    const welcomeLimit = Math.max(0, Math.floor(commissionBase * 0.2));
+    const used = await this.spend(q, order.client_id, clientFee, `Сервисный сбор по заявке №${order.number}`, order.id, null, Math.min(want, welcomeLimit));
     if (used > 0) await q.query(`update orders set points_fee=$2, discount_amount = discount_amount + $2,
         discount_reason = coalesce(discount_reason, 'Баллы') where id=$1`, [order.id, used]);
     return used;
@@ -133,7 +137,14 @@ export class ReferralService {
     const pref = order.performer_id ? await q.one<{ extras: any }>('select extras from performer_profiles where user_id=$1', [order.performer_id]) : null;
     const auto = pref?.extras?.pointsAuto !== false;
     if (auto && commission > 0 && order.performer_id && this.ledger) {
-      const used = await this.spend(q, order.performer_id, commission, `Комиссия по заявке №${order.number}`, order.id, null, pref?.extras?.pointsMax ?? null);
+      // Общий бюджет 30% комиссии: учитываем скидку клиента и резервируем 10% за приглашение.
+      const clientPoints = Number(order.points_fee ?? (await q.one<{ points_fee: number }>('select points_fee from orders where id=$1', [order.id]))?.points_fee ?? 0);
+      const invited = await q.one<{ referred_by: string | null; referred_at: Date | null }>('select referred_by, referred_at from users where id=$1', [order.client_id]);
+      const referralDue = invited?.referred_by && invited.referred_at && this.now().getTime() - new Date(invited.referred_at).getTime() <= r.days * DAY
+        ? pct(commission, r.clientSharePct) : 0;
+      const remainingPromo = Math.max(0, Math.floor(commission * 0.3) - clientPoints - referralDue);
+      const desired = Math.min(remainingPromo, pref?.extras?.pointsMax ?? remainingPromo);
+      const used = await this.spend(q, order.performer_id, commission, `Комиссия по заявке №${order.number}`, order.id, null, desired);
       if (used > 0) {
         await this.ledger(q, order.id, null, [
           { account: 'performer', performerId: order.performer_id, amount: used, kind: order.payment_method === 'cash' ? 'cash_commission_paid' : 'points', note: `Комиссия оплачена баллами: ${rub(used)}` },
