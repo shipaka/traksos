@@ -540,7 +540,7 @@ function ConfirmAmount({ d, onDone }: { d: any; onDone: () => void }) {
   const [mode, setMode] = useState<null | 'menu' | 'extras' | 'not_done' | 'refuse'>(null);
   const [reason, setReason] = useState('');
   const b = d.bill;
-  // Баллы — по желанию: галочка и сколько списать (не больше половины сбора и остатка)
+  // Баллы — добровольная скидка только на сбор TrakSOS, с серверным лимитом.
   const pmax: number = d.points?.max ?? 0;
   const [usePts, setUsePts] = useState(false);
   const [pts, setPts] = useState<number | null>(pmax || null);
@@ -555,7 +555,7 @@ function ConfirmAmount({ d, onDone }: { d: any; onDone: () => void }) {
         <div className="card flat" style={{ gap: 6 }}>
           <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}><input type="checkbox" checked={usePts} onChange={(e) => setUsePts(e.target.checked)} style={{ marginTop: 3 }} />
             <span>Списать баллы — у вас {Math.round(d.points.balance / 100).toLocaleString('ru-RU')}, можно до {Math.round(pmax / 100).toLocaleString('ru-RU')}</span></label>
-          {usePts && <Field label="Сколько баллов" hint={`Не больше половины сервисного сбора — ${Math.round(pmax / 100)}`}><RubInput value={pts} onChange={(v) => setPts(v == null ? null : Math.min(v, pmax))} /></Field>}
+          {usePts && <><label className="note" htmlFor="client-points-slider">Скидка баллами: {rub(spend)} из доступных {rub(pmax)}</label><input id="client-points-slider" type="range" min={0} max={pmax} step={Math.max(1, Math.round(pmax / 100))} value={Math.min(pts ?? 0, pmax)} onChange={(e) => setPts(Number(e.target.value))} aria-label="Сколько баллов потратить" /><Field label="Точная сумма скидки" hint={`Не больше ${rub(pmax)} сервисного сбора; работа мастера оплачивается отдельно`}><RubInput value={pts} onChange={(v) => setPts(v == null ? null : Math.min(v, pmax))} /></Field></>}
         </div>
       )}
       {mode === null && <>
