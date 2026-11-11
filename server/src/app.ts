@@ -386,6 +386,7 @@ export function createApp(d: Deps) {
     return { enabled };
   });
   r.get('/api/fleet', true, (c: AuthedCtx) => fleet.get(c.user));
+  r.get('/api/fleet/finances', true, (c: AuthedCtx) => fleet.finances(c.user));
   r.put('/api/fleet', true, (c: AuthedCtx) => fleet.set(c.user, parse(z.object({
     mode: z.enum(['limit', 'approve']).optional(),
     perOrder: z.number().int().min(0).max(100_000_000).nullable().optional(), perMonth: z.number().int().min(0).max(1_000_000_000).nullable().optional(),
