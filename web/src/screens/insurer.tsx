@@ -12,6 +12,8 @@ export function InsurerCabinet() {
   const { busy, run } = useAction();
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [expires, setExpires] = useState<Record<string, string>>({});
+  const [filter, setFilter] = useState<'pending' | 'all' | 'done'>('pending');
+  const [search, setSearch] = useState('');
   async function update(id: string, status: 'completed' | 'rejected') {
     const note = (notes[id] ?? '').trim();
     const policyExpiresOn = expires[id];
@@ -33,6 +35,11 @@ export function InsurerCabinet() {
     }
   }
   const rows: any[] | undefined = requests.data;
+  const visible = (rows ?? []).filter((r) => {
+    if (filter === 'pending' && r.status !== 'sent_to_partner') return false;
+    if (filter === 'done' && r.status === 'sent_to_partner') return false;
+    return [r.brand, r.model, r.plate, r.comment].some((value) => String(value ?? '').toLocaleLowerCase('ru-RU').includes(search.trim().toLocaleLowerCase('ru-RU')));
+  });
   return (
     <main>
       <h1>Кабинет страховщика</h1>
@@ -44,9 +51,22 @@ export function InsurerCabinet() {
             <div className="card tile"><span className="label">Всего назначено</span><b className="tile-value">{rows.length}</b></div>
             <div className="card tile"><span className="label">Ожидают решения</span><b className="tile-value">{rows.filter((r) => r.status === 'sent_to_partner').length}</b></div>
           </div>
-          <span className="label">Мои заявки</span>
+          <div className="web-case-toolbar">
+            <div className="row" role="group" aria-label="Фильтр страховых заявок">
+              {([['pending', 'Ожидают решения'], ['all', 'Все'], ['done', 'Завершённые']] as const).map(([key, title]) => (
+                <button key={key} type="button" className="chip" aria-pressed={filter === key} onClick={() => setFilter(key)}>{title}</button>
+              ))}
+            </div>
+            <label className="stack">
+              <span className="label">Найти автомобиль</span>
+              <input className="field" type="search" placeholder="Марка, модель или госномер"
+                value={search} onChange={(e) => setSearch(e.target.value)} />
+            </label>
+          </div>
+          <span className="label">Показано заявок: {visible.length}</span>
+          {!visible.length && <div className="empty">По выбранным фильтрам заявок нет.</div>}
           <div className="web-insurance-grid">
-          {rows.map((r) => (
+          {visible.map((r) => (
             <details key={r.id} className="card">
               <summary className="between">
                 <b>{r.brand} {r.model ?? ''}</b>
