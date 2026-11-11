@@ -6,6 +6,12 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Keep only the newest validation run for each branch/PR.
+# Rapid commits otherwise queue redundant full database and browser test suites.
+concurrency:
+  group: validation-${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
