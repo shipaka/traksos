@@ -20,6 +20,7 @@ import { Help } from './screens/help.tsx';
 import { InsurerCabinet } from './screens/insurer.tsx';
 import { CommonMenu } from './screens/menu.tsx';
 import { WebsiteWorkspace } from './websiteWorkspace.tsx';
+import { WebsiteAbout } from './screens/websiteShowcase.tsx';
 import { Rules } from './screens/rules.tsx';
 import { Shop, ShopCart } from './screens/shop.tsx';
 import { Privacy } from './screens/privacy.tsx';
@@ -81,7 +82,7 @@ function App() {
   if (!me) {
     return (
       <MeCtx.Provider value={{ me: null, reload, mode: 'client', setMode }}>
-        <Shell mode="client" me={null}>{route[0] === 'offer' ? <OfferPage audience={route[1] ?? 'client'} /> : route[0] === 'qr' && route[1] ? <QrJoin code={route[1]} /> : route[0] === 'rules' ? <Rules /> : route[0] === 'help' ? <Help /> : <>{route[0] === 'r' && <div className="banner good" style={{ margin: '12px 16px 0' }}><span>Вас пригласили в ТракSOS — после входа на счёт придут подарочные баллы.</span></div>}<Login /></>}</Shell>
+        <Shell mode="client" me={null}>{route[0] === 'offer' ? <OfferPage audience={route[1] ?? 'client'} /> : route[0] === 'qr' && route[1] ? <QrJoin code={route[1]} /> : route[0] === 'rules' ? <Rules /> : route[0] === 'help' ? <Help /> : route[0] === 'about' ? <WebsiteAbout /> : <>{route[0] === 'r' && <div className="banner good" style={{ margin: '12px 16px 0' }}><span>Вас пригласили в ТракSOS — после входа на счёт придут подарочные баллы.</span></div>}<Login /></>}</Shell>
       </MeCtx.Provider>
     );
   }
@@ -117,6 +118,7 @@ function App() {
     case 'fleet': screen = b === 'finances' ? <FleetFinances /> : <Fleet />; break;
     case 'insurer': screen = isInsurer ? <InsurerCabinet /> : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
     case 'help': screen = <Help />; break;
+    case 'about': screen = <WebsiteAbout />; break;
     case 'menu': screen = <CommonMenu />; break;
     case 'rules': screen = <Rules />; break;
     case 'shop': screen = b === 'cart' ? <ShopCart /> : <Shop />; break;
@@ -158,7 +160,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         <a className="logo" href={me ? (mode === 'performer' ? '#/work' : mode === 'admin' ? '#/admin' : mode === 'service' ? '#/base' : mode === 'insurer' ? '#/insurer' : '#/') : '#/'} aria-label="ТракSOS — главная">Трак<b>SOS</b></a>
         {!native.isApp && <nav className="site-nav" aria-label="Основная навигация">
           {tabs.map(([href, , name]) => <a key={href} href={'#' + href} className={here === href || (href !== '/' && here.startsWith(href + '/')) ? 'active' : ''}>{name}</a>)}
-          {!me && <><a href="#/help">Как это работает</a><a href="#/offer/client">Условия</a></>}
+          {!me && <><a href="#/about">Возможности</a><a href="#/help">Как это работает</a><a href="#/offer/client">Условия</a></>}
         </nav>}
         <div className="row" style={{ flexWrap: 'nowrap' }}>
           {me && mode === 'performer' && <span className="pill accent">исполнитель</span>}
