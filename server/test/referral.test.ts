@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { setup, ok, type T } from './helpers.ts';
 import { pointsBalance } from '../src/services/referral.ts';
 
-// Реферальные баллы: ссылка, приветственные баллы, 0,5% пригласившему, гашение до 50% сбора/комиссии, сгорание.
+// Реферальные баллы: ссылка, приветственные баллы, 10% от комиссии пригласившему, гашение до 20% сбора/комиссии, сгорание.
 
 let t: T;
 let admin: { token: string; id: string };
@@ -38,7 +38,7 @@ test('остаток: траты гасят старые начисления, �
   assert.equal(b.balance, 500, 'потратили 800 из первой тысячи, остаток 200 сгорел 1 марта');
 });
 
-test('пригласил клиента: ему подарок, мне 0,5% с его заявок; баллами — не больше половины сбора', async () => {
+test('пригласил клиента: ему подарок, мне 10% комиссии; баллами — не больше 20% сбора', async () => {
   const me = ok(await t.api('GET', '/api/me/referral', undefined, inviter.token));
   assert.match(me.code, /^[A-Z2-9]{6}$/);
   assert.equal(me.balance, 0);
@@ -60,19 +60,19 @@ test('пригласил клиента: ему подарок, мне 0,5% с �
   const fee = pr.money.clientFee;
   // Клиент видит, сколько баллов можно списать, и вписывает сам
   const view = ok(await t.api('GET', `/api/orders/${o.id}`, undefined, friend.token));
-  assert.equal(view.points.max, Math.min(30_000, Math.floor(fee / 2)));
+  assert.equal(view.points.max, Math.min(30_000, Math.floor(fee * 0.2)));
   const done = ok(await t.api('POST', `/api/orders/${o.id}/confirm`, { total: pr.money.total, points: 999_999 }, friend.token));
   const row = (await t.db.one<any>('select points_fee from orders where id=$1', [o.id]))!;
-  assert.equal(row.points_fee, Math.min(30_000, Math.floor(fee / 2)), 'вписал больше — списали не больше половины сбора');
+  assert.equal(row.points_fee, Math.min(30_000, Math.floor(fee / 2)), 'вписал больше — списали не больше 20% сбора');
   assert.equal(done.money.discount, row.points_fee);
 
   const mine = ok(await t.api('GET', '/api/me/referral', undefined, inviter.token));
-  assert.equal(mine.balance, Math.round(pr.money.amount * 0.5 / 100), '0,5% от суммы заявки друга');
+  assert.equal(mine.balance, Math.round(pr.money.amount * 5 / 100 * 10 / 100), '10% от комиссии по заявке друга');
   assert.equal(mine.invited.length, 1);
   assert.deepEqual(await t.db.query(`select order_id from ledger_entries where order_id is not null group by order_id having sum(amount) <> 0`), [], 'проводки сходятся');
 });
 
-test('мастер гасит баллами до половины комиссии — по наличным уменьшается долг', async () => {
+test('мастер гасит баллами до 20% комиссии — по наличным уменьшается долг', async () => {
   await t.db.query(`insert into points_entries(user_id, amount, kind, note, expires_at) values ($1, 100_000, 'admin', 'тест', now() + interval '30 days')`, [master.id]);
   const c = await t.login('+79995550011');
   const o = ok(await t.api('POST', '/api/orders', { service: 'electric', zoneId: 'spb', description: 'Стартер' }, c.token)).order;
@@ -86,7 +86,7 @@ test('мастер гасит баллами до половины комисс�
   const after = ok(await t.api('GET', '/api/performer/balance', undefined, master.token)).cash_debt;
   const commission = Math.round(pr.money.amount * 5 / 100);
   const used = (await t.db.one<any>('select points_commission from orders where id=$1', [o.id]))!.points_commission;
-  assert.equal(used, Math.floor(commission / 2));
+  assert.equal(used, Math.floor(commission * 0.2));
   assert.equal(after - before, commission + pr.money.clientFee - used, 'долг меньше на погашенное баллами');
   assert.deepEqual(await t.db.query(`select order_id from ledger_entries where order_id is not null group by order_id having sum(amount) <> 0`), [], 'проводки сходятся');
 });
