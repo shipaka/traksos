@@ -106,6 +106,12 @@ export function Login({ driver }: { driver?: boolean } = {}) {
 
   if (!intent) return (
     <main>
+      {!native.isApp && <section className="web-mobile-intro">
+        <span className="label">ТракSOS · Помощь грузовикам</span>
+        <h1>Помощь в дороге и контроль за техникой</h1>
+        <p>Мастера, эвакуаторы, история автомобилей, автопарк и финансы — всё в одной системе.</p>
+        <a href="#/about">Посмотреть возможности <span aria-hidden="true">→</span></a>
+      </section>}
       <div className="helpWrap">
         <button type="button" className="helpBtn" onClick={() => setIntent('help')} aria-label="Помогите — вызвать мастера или эвакуатор">
           <span className="t">Помогите</span>
