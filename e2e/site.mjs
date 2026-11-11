@@ -37,6 +37,22 @@ try {
         await page.locator('.showcase').screenshot({ path: screenshotDir + '/site-feature-tour.png' });
       }
     }
+    if (name === 'desktop') {
+      await page.goto(base + '/#/');
+      await page.getByRole('button', { name: 'Войти в личный кабинет' }).click();
+      await page.locator('input[type=tel]').fill('+79990009123');
+      await page.getByRole('button', { name: 'Получить код' }).click();
+      const hint = await page.getByText(/Тестовый режим: код/).textContent();
+      const match = hint.match(/[0-9]{4,6}/);
+      if (!match) throw new Error('Demo sign-in code not found');
+      await page.locator('input[autocomplete=one-time-code]').fill(match[0]);
+      await page.getByRole('button', { name: 'Войти', exact: true }).click();
+      await page.locator('.website-workspace').waitFor();
+      await page.locator('.website-sidebar').waitFor({ state: 'visible' });
+      await page.getByRole('link', { name: /Гараж и история/ }).click();
+      await page.getByRole('heading', { name: 'Мой гараж' }).waitFor();
+      if (await page.locator('.tabbar:visible').count()) throw new Error('Desktop cabinet uses app navigation');
+    }
     if (errors.length) throw new Error(name + ': ' + errors.join('; '));
     await page.close();
   }
