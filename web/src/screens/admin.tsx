@@ -57,8 +57,8 @@ function VehicleServicesQueue() {
     need_documents: ['in_review', 'cancelled'],
     sent_to_partner: ['completed', 'rejected', 'cancelled'],
   };
-  async function change(id: string, status: string, currentNote?: string) {
-    const note = (notes[id] ?? currentNote ?? '').trim();
+  async function change(id: string, status: string) {
+    const note = (notes[id] ?? '').trim();
     // Explain refusals and document requests before updating the client-visible status.
     if (['rejected', 'need_documents'].includes(status) && !note) {
       window.alert('Укажите причину отказа или какие документы нужны клиенту.');
@@ -78,12 +78,13 @@ function VehicleServicesQueue() {
         <span className="note">{r.plate ?? 'Без номера'} · {fmtTime(r.created_at)}</span>
         {r.comment && <span className="note">Клиент: {r.comment}</span>}
         {r.policy_expires_on && <span className="note">Срок полиса: {r.policy_expires_on}</span>}
+        {r.staff_note && <span className="note">Предыдущий комментарий: {r.staff_note}</span>}
         {(next[r.status]?.length ?? 0) > 0 && <>
-          <textarea className="field" aria-label="Комментарий сотрудника" placeholder="Комментарий для клиента" value={notes[r.id] ?? r.staff_note ?? ''} onChange={(e) => setNotes({ ...notes, [r.id]: e.target.value })} maxLength={2000} />
+          <textarea className="field" aria-label="Комментарий сотрудника" placeholder="Комментарий для клиента" value={notes[r.id] ?? ''} onChange={(e) => setNotes({ ...notes, [r.id]: e.target.value })} maxLength={2000} />
           {r.kind === 'insurance' && r.status === 'sent_to_partner' && <label className="stack">Дата окончания полиса
             <input className="field" type="date" value={expiry[r.id] ?? ''} onChange={(e) => setExpiry({ ...expiry, [r.id]: e.target.value })} />
           </label>}
-          <div className="row">{next[r.status].map((status) => <button key={status} type="button" className="btn ghost small" disabled={busy} onClick={() => change(r.id, status, r.staff_note)}>{labels[status]}</button>)}</div>
+          <div className="row">{next[r.status].map((status) => <button key={status} type="button" className="btn ghost small" disabled={busy} onClick={() => change(r.id, status)}>{labels[status]}</button>)}</div>
         </>}
       </div>)}
   </div>;
