@@ -197,7 +197,7 @@ export class ProfilesService {
     const values: unknown[] = [id, user.id];
     const add = (column: string, value: unknown) => {
       values.push(value);
-      fields.push(`${column}=${values.length}`);
+      fields.push(`${column}=$${values.length}`);
     };
     if (v.brand !== undefined) add('brand', v.brand);
     if (v.model !== undefined) add('model', v.model || null);
