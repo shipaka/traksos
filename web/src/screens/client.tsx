@@ -778,7 +778,8 @@ function VehicleServiceApplication({ vehicleId, onCreated }: { vehicleId: string
 /** История страхования и техосмотра доступна прямо в карточке машины. */
 function VehicleServiceHistory({ id, isDriver, refreshVersion }: { id: string; isDriver: boolean; refreshVersion: number }) {
   const [open, setOpen] = useState(false);
-  const history = useLoad(() => get(`/api/vehicles/${id}/service-history`), [id, refreshVersion]);
+  const history = useLoad(() => get(`/api/vehicles/${id}/service-history`), [id, refreshVersion],
+    (event) => event.type === 'vehicle_service' && event.vehicleId === id);
   const items = history.data as any[] | undefined;
   const { busy, run } = useAction();
   const [renewing, setRenewing] = useState<string | null>(null);
