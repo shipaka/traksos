@@ -5,6 +5,7 @@ import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFiel
 import { BookingRows } from './base.tsx';
 import { DriverRules } from './fleet.tsx';
 import { TruckPhoto, TruckPhotoCredit } from '../truckPhotos.tsx';
+import { native } from '../native.ts';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
 
@@ -31,10 +32,22 @@ export function Home() {
   const { fill } = usePrices();
   return (
     <main>
-      <div>
-        <h1>{me?.name ? `${me.name}, что случилось?` : 'Что случилось?'}</h1>
-        <div className="sub">Выберите — подскажем, кому звонить и что делать. Петербург и Ленобласть, круглосуточно.</div>
-      </div>
+      {!native.isApp ? (
+        <section className="web-hero">
+          <span className="label" style={{ color: 'var(--accent)' }}>ТракSOS · Помощь грузовикам 24/7</span>
+          <h1>{me?.name ? `${me.name}, помощь уже рядом` : 'Грузовику нужна помощь? Мы рядом.'}</h1>
+          <p>Мастера, диагносты и эвакуаторы в Санкт-Петербурге и Ленинградской области. Оформите заявку, узнайте цену и следите за выполнением в личном кабинете.</p>
+          <div className="hero-actions">
+            <a className="btn" href="#/sos">Нужна срочная помощь</a>
+            <a className="btn ghost" href="#/garage">Мои автомобили</a>
+          </div>
+        </section>
+      ) : (
+        <div>
+          <h1>{me?.name ? `${me.name}, что случилось?` : 'Что случилось?'}</h1>
+          <div className="sub">Выберите — подскажем, кому звонить и что делать. Петербург и Ленобласть, круглосуточно.</div>
+        </div>
+      )}
 
       {live.map((o: any) => (
         <a key={o.id} href={`#/order/${o.id}`} className="card hi" style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -49,7 +62,7 @@ export function Home() {
       <SymptomPicker sos={false} />
       <LiveStrip who="client" />
 
-      <div className="stack">
+      <div className="stack web-service-grid">
         <span className="label">Все услуги</span>
         {Object.entries(SERVICES).map(([id, s]) => (
           <button key={id} className="linkrow" onClick={() => go(`new/${id}`)}>
