@@ -12,6 +12,7 @@ export const DEMO = {
   company: '+79000000003',
   driver: '+79000000004',
   moderator: '+79000000005',
+  insurer: '+79000000041',
   masters: [
     { phone: '+79000000011', name: 'Дима (наш)', lat: 59.93, lng: 30.36, priority: true, brands: { Scania: 'excellent', DAF: 'excellent', Volvo: 'good' } },
     { phone: '+79000000012', name: 'Сергей', lat: 59.84, lng: 30.38, priority: false, brands: { Scania: 'good', MAN: 'excellent', КАМАЗ: 'excellent' } },
@@ -58,6 +59,19 @@ export async function seed(db: Awaited<ReturnType<typeof createDb>>) {
   await db.query('update users set owner_id=$2 where id=$1', [driver, company]);
   await db.query(`update vehicles set driver_id=$1, driver_since=coalesce(driver_since, now()) where plate='А123ВС47'`, [driver]);
   await user(DEMO.moderator, ['moderator'], 'Модератор');
+  // Отдельный тестовый страховщик. Не получает права администратора.
+  const insurer = await user(DEMO.insurer, ['insurer'], 'Страховой партнёр — демо');
+  // Чтобы кабинет был виден сразу: одна назначенная страховая заявка для DAF компании.
+  // Не создаём повторно, если у машины уже есть страховая заявка.
+  await db.query(
+    `insert into vehicle_service_requests(owner_id, requested_by, vehicle_id, kind, status, comment, assigned_to)
+     select v.owner_id, v.owner_id, v.id, 'insurance', 'sent_to_partner',
+            'Демо: оформить страхование для DAF', $1
+       from vehicles v
+      where v.plate='А123ВС47'
+        and not exists (select 1 from vehicle_service_requests r where r.vehicle_id=v.id and r.kind='insurance')`,
+    [insurer],
+  );
   const performer = async (id: string, p: Record<string, unknown>) => {
     await db.query(
       `insert into performer_profiles(user_id, kind, specialties, brands, tier, is_priority, verification, line_status, lat, lng, location_at,
@@ -122,6 +136,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   await seed(db);
   console.log('Тестовые данные на месте. Входите по номерам:');
   console.log(`  админ ${DEMO.admin} · модератор ${DEMO.moderator} · клиент ${DEMO.client} · компания ${DEMO.company} · водитель компании ${DEMO.driver}`);
+  console.log(`  страховщик ${DEMO.insurer} (назначенная заявка компании по DAF)`);
   console.log(`  мастера ${DEMO.masters.map((m) => m.phone).join(', ')} · эвакуатор ${DEMO.tow.phone} · рембазы ${DEMO.service}, +79000000032, +79000000033`);
   await db.close();
 }
