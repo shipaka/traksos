@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { post, setToken, connectWs, ApiError } from '../api.ts';
 import { useAction, useMe, useToast, Field } from '../ui.tsx';
 import { native } from '../native.ts';
+import { WebsiteShowcase } from './websiteShowcase.tsx';
 
 // Роль выбирают только те, кто подключается работать. Остальные входят по номеру — кабинет определяется по ролям.
 const JOIN_ROLES = [
@@ -94,6 +95,7 @@ export function Login({ driver }: { driver?: boolean } = {}) {
           <div className="web-feature"><b>Кабинет автопарка</b><p>Водители, разрешения, лимиты и финансовая история в одном месте.</p></div>
         </div>
       </section>
+      <WebsiteShowcase />
       <section className="card web-join-card">
         <h2>Работаете с грузовой техникой?</h2>
         <p className="sub">Мастера, эвакуаторщики и рембазы могут подключиться к ТракSOS и принимать заявки.</p>
