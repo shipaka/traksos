@@ -75,6 +75,22 @@ export class VehicleServiceRequests {
     });
   }
 
+  /** Renew the expiry date and re-arm reminders for the new policy term. */
+  async renewPolicy(user: AuthUser, id: string, expiresOn: string) {
+    if (user.owner_id) throw forbidden('Продлить дату полиса может только владелец');
+    const updated = await this.db.one(
+      `update vehicle_service_requests
+          set policy_expires_on=$3::date,
+              reminder_30_sent_at=null, reminder_7_sent_at=null, reminder_1_sent_at=null,
+              updated_at=now()
+        where id=$1 and owner_id=$2 and kind='insurance' and status='completed'
+          and $3::date > current_date
+          and (policy_expires_on is distinct from $3::date)
+        returning *`, [id, user.id, expiresOn]);
+    if (!updated) throw notFound('Завершённый полис не найден или дата не изменилась');
+    return updated;
+  }
+
   async queue(staff: AuthUser, kind?: VehicleServiceKind) {
     if (!staff.roles?.some((role: string) => ['admin', 'moderator'].includes(role))) throw forbidden('Нет доступа');
     return this.db.query(
