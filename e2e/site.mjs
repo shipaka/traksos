@@ -60,7 +60,24 @@ try {
     if (errors.length) throw new Error(name + ': ' + errors.join('; '));
     await page.close();
   }
-  console.log('Website layout verified on 390, 900 and 1440 px');
+  // Desktop admin is a workspace with a secondary section navigator, not a horizontal mobile ribbon.
+  const adminPage = await browser.newPage({ viewport: { width: 1440, height: 900 }, locale: 'ru-RU' });
+  await adminPage.goto(base + '/#/');
+  await adminPage.getByRole('button', { name: 'Войти в личный кабинет' }).click();
+  await adminPage.locator('input[type=tel]').fill('+79990000001');
+  await adminPage.getByRole('button', { name: 'Получить код' }).click();
+  const adminHint = await adminPage.getByText(/Тестовый режим: код/).textContent();
+  const adminCode = adminHint.match(/[0-9]{4,6}/);
+  if (!adminCode) throw new Error('Admin demo code not available');
+  await adminPage.locator('input[autocomplete=one-time-code]').fill(adminCode[0]);
+  await adminPage.getByRole('button', { name: 'Войти', exact: true }).click();
+  await adminPage.locator('.admin-desktop-shell').waitFor();
+  await adminPage.locator('.admin-secondary-nav').waitFor({ state: 'visible' });
+  await adminPage.getByRole('button', { name: 'Страхование и ТО' }).click();
+  await adminPage.getByRole('heading', { name: /Заявки на страхование и техосмотр/ }).waitFor();
+  if (process.argv[2]) await adminPage.screenshot({ path: process.argv[2] + '/site-admin-desktop.png', fullPage: false });
+  await adminPage.close();
+  console.log('Website layout, public tour, client and admin workspaces verified at 390, 900 and 1440 px');
 } finally {
   await browser.close();
 }
