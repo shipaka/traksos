@@ -657,6 +657,20 @@ export function Garage() {
   const [driverPhone, setDriverPhone] = useState('+7 ');
   const isDriver = !!me?.owner_id;
   const [serviceHistoryVersion, setServiceHistoryVersion] = useState(0);
+  // Backgrounded mobile apps may miss WebSocket messages even when the socket appears connected.
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === 'visible' && navigator.onLine) {
+        setServiceHistoryVersion(version => version + 1);
+      }
+    };
+    document.addEventListener('visibilitychange', refresh);
+    window.addEventListener('online', refresh);
+    return () => {
+      document.removeEventListener('visibilitychange', refresh);
+      window.removeEventListener('online', refresh);
+    };
+  }, []);
 
   async function add() {
     const r = await run(() => post('/api/vehicles', {
@@ -779,7 +793,7 @@ function VehicleServiceApplication({ vehicleId, onCreated }: { vehicleId: string
 function VehicleServiceHistory({ id, isDriver, refreshVersion }: { id: string; isDriver: boolean; refreshVersion: number }) {
   const [open, setOpen] = useState(false);
   const history = useLoad(() => get(`/api/vehicles/${id}/service-history`), [id, refreshVersion],
-    (event) => event.type === 'vehicle_service' && event.vehicleId === id);
+    (event) => event.type === 'connection_restored' || (event.type === 'vehicle_service' && event.vehicleId === id));
   const items = history.data as any[] | undefined;
   const { busy, run } = useAction();
   const [renewing, setRenewing] = useState<string | null>(null);
