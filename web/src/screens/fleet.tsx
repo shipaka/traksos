@@ -173,7 +173,7 @@ export function FleetFinances() {
     (paymentFilter === 'unconfirmed' && Number(o.confirmedCollected ?? 0) === 0 && Number(o.pendingPayment ?? 0) === 0));
   const csvCell = (value: unknown) => {
     const text = String(value ?? '');
-    const safe = /^[\\s]*[=+@-]/.test(text) ? "'" + text : text;
+    const safe = /^\s*[=+@-]/.test(text) ? "'" + text : text;
     return '"' + safe.replace(/"/g, '""') + '"';
   };
   const exportCsv = () => {
@@ -185,8 +185,8 @@ export function FleetFinances() {
       o.driverName, o.performerName, o.description || o.service,
       methods[o.paymentMethod] ?? '', o.agreedTotal,
       o.confirmedCollected, o.confirmedRefunded, o.pendingPayment,
-    ])].map((record) => record.map(csvCell).join(';')).join('\\r\\n');
-    const href = URL.createObjectURL(new Blob(['\\uFEFF' + lines], { type: 'text/csv;charset=utf-8' }));
+    ])].map((record) => record.map(csvCell).join(';')).join('\r\n');
+    const href = URL.createObjectURL(new Blob(['\uFEFF' + lines], { type: 'text/csv;charset=utf-8' }));
     const download = document.createElement('a');
     download.href = href;
     download.download = 'traksos-finances-' + new Date().toISOString().slice(0, 10) + '.csv';
