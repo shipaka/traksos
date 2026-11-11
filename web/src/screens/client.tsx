@@ -649,7 +649,10 @@ export function Garage() {
   const { me } = useMe();
   const list = useLoad(() => get('/api/vehicles'), []);
   const { busy, run } = useAction();
-  const [form, setForm] = useState({ brand: '', model: '', year: '', plate: '', trailerPlate: '' });
+  const emptyCar = { brand: '', model: '', year: '', plate: '', trailerPlate: '', vin: '', engine: '', configurationNotes: '' };
+  const [form, setForm] = useState(emptyCar);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState(emptyCar);
   const [driverFor, setDriverFor] = useState<string | null>(null);
   const [driverPhone, setDriverPhone] = useState('+7 ');
   const isDriver = !!me?.owner_id;
@@ -658,8 +661,14 @@ export function Garage() {
     const r = await run(() => post('/api/vehicles', {
       brand: form.brand, model: form.model || undefined, year: form.year ? Number(form.year) : undefined,
       plate: form.plate || undefined, trailerPlate: form.trailerPlate || undefined,
+      vin: form.vin || undefined, engine: form.engine || undefined, configurationNotes: form.configurationNotes || undefined,
     }), 'Машина добавлена');
-    if (r) { setForm({ brand: '', model: '', year: '', plate: '', trailerPlate: '' }); list.reload(); }
+    if (r) { setForm(emptyCar); list.reload(); }
+  }
+
+  async function saveEdit(id: string) {
+    const r = await run(() => patch(`/api/vehicles/${id}`, { ...editForm, year: editForm.year ? Number(editForm.year) : undefined }), 'Данные машины обновлены');
+    if (r) { setEditing(null); list.reload(); }
   }
 
   return (
@@ -679,6 +688,21 @@ export function Garage() {
           {v.trailer_plate && <span className="note">Прицеп {v.trailer_plate}</span>}
           {v.fixed_at && <span className="pill good" style={{ alignSelf: 'flex-start' }}>уточнено мастером · {fmtTime(v.fixed_at)}</span>}
           {seriesHint(v.brand, v.year) && <span className="note" style={{ color: 'var(--accent)' }}>{seriesHint(v.brand, v.year)}</span>}
+          {(v.vin || v.engine || v.configuration_notes) && <span className="note">{[v.vin && `VIN: ${v.vin}`, v.engine && `Двигатель: ${v.engine}`, v.configuration_notes].filter(Boolean).join(' · ')}</span>}
+          {!isDriver && (editing === v.id ? (
+            <form className="stack" onSubmit={(e) => { e.preventDefault(); saveEdit(v.id); }}>
+              <VehicleFields value={editForm} onChange={(x) => setEditForm({ ...editForm, ...x })} />
+              <div className="grid2">
+                <input className="field" aria-label="Госномер" placeholder="Госномер" value={editForm.plate} onChange={(e) => setEditForm({ ...editForm, plate: e.target.value })} />
+                <input className="field" aria-label="Номер прицепа" placeholder="Прицеп" value={editForm.trailerPlate} onChange={(e) => setEditForm({ ...editForm, trailerPlate: e.target.value })} />
+              </div>
+              <input className="field" aria-label="VIN" placeholder="VIN (17 символов, необязательно)" value={editForm.vin} onChange={(e) => setEditForm({ ...editForm, vin: e.target.value.toUpperCase() })} />
+              <input className="field" aria-label="Двигатель" placeholder="Двигатель (необязательно)" value={editForm.engine} onChange={(e) => setEditForm({ ...editForm, engine: e.target.value })} />
+              <textarea className="field" aria-label="Особенности комплектации" placeholder="Заменённые агрегаты и особенности комплектации" value={editForm.configurationNotes} onChange={(e) => setEditForm({ ...editForm, configurationNotes: e.target.value })} />
+              <span className="note">VIN и двигатель помогают подобрать запчасти. Можно заполнить позже; изменения комплектации учитываются отдельно.</span>
+              <div className="grid2"><button className="btn small" disabled={busy || !editForm.brand}>Сохранить изменения</button><button type="button" className="btn ghost small" onClick={() => setEditing(null)}>Отмена</button></div>
+            </form>
+          ) : !isDriver && <button type="button" className="btn ghost small" onClick={() => { setEditing(v.id); setEditForm({ brand: v.brand ?? '', model: v.model ?? '', year: v.year ? String(v.year) : '', plate: v.plate ?? '', trailerPlate: v.trailer_plate ?? '', vin: v.vin ?? '', engine: v.engine ?? '', configurationNotes: v.configuration_notes ?? '' }); }}>Редактировать машину</button>}
           <VehicleHistory id={v.id} />
           {!isDriver && (driverFor === v.id ? (
             <div className="stack">
@@ -709,6 +733,9 @@ export function Garage() {
             <input className="field" placeholder="Госномер тягача" value={form.plate} onChange={(e) => setForm({ ...form, plate: e.target.value })} />
             <input className="field" placeholder="Прицеп" value={form.trailerPlate} onChange={(e) => setForm({ ...form, trailerPlate: e.target.value })} />
           </div>
+          <input className="field" placeholder="VIN (необязательно)" value={form.vin} onChange={(e) => setForm({ ...form, vin: e.target.value.toUpperCase() })} />
+          <input className="field" placeholder="Двигатель (необязательно)" value={form.engine} onChange={(e) => setForm({ ...form, engine: e.target.value })} />
+          <textarea className="field" placeholder="Особенности комплектации, заменённые агрегаты" value={form.configurationNotes} onChange={(e) => setForm({ ...form, configurationNotes: e.target.value })} />
           <span className="note">Год влияет на подбор мастера: у разных поколений своя электрика.</span>
           <button className="btn" disabled={busy || !form.brand}>Сохранить</button>
         </form>
