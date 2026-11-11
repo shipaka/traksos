@@ -643,3 +643,28 @@ select.field { appearance: none; }
 .app details > summary { min-width: 0; }
 .app .between > b, .app .between > span, .app .between > a { min-width: 0; }
 .app .field, .app textarea, .app select { max-width: 100%; }
+
+/* Публичная витрина до входа: полноценная мобильная страница для рекламного трафика. */
+.web-landing-mobile { display: flex; flex-direction: column; gap: 26px; padding-bottom: 52px; }
+.web-mobile-hero { padding: 34px 20px 28px; border: 1px solid rgba(255,106,19,.3); border-radius: 24px; background: radial-gradient(ellipse at 90% 5%, rgba(255,106,19,.18), transparent 55%), linear-gradient(145deg,#252a30,#17191d); }
+.web-mobile-hero h1 { font-family: var(--display); font-size: clamp(26px,6.5vw,38px); line-height: 1.16; letter-spacing: -.04em; margin: 14px 0; }
+.web-mobile-hero p { color: var(--fg-2); font-size: 15px; line-height: 1.65; }
+.web-mobile-hero .hero-actions { display: flex; flex-direction: column; gap: 10px; margin: 22px 0; }
+.web-mobile-hero .hero-actions button { width: 100%; min-height: 48px; }
+.web-mobile-proof { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
+.web-mobile-proof span { padding: 12px 8px; text-align: center; font-size: 11px; font-weight: 700; border-radius: 12px; border: 1px solid var(--line-2); background: var(--surface); }
+.web-mobile-section { padding: 0 4px; }
+.web-mobile-section h2 { font-family: var(--display); font-size: clamp(21px,5vw,28px); line-height: 1.25; margin: 10px 0 18px; }
+.web-landing-mobile .web-feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.web-landing-mobile .web-feature { border: 1px solid var(--line-2); border-radius: 16px; background: var(--surface); padding: 16px; }
+.web-landing-mobile .web-feature b { font-size: 14px; }
+.web-landing-mobile .web-feature p { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+.web-mobile-steps { display: grid; gap: 10px; }
+.web-mobile-steps>div { padding: 16px; border-left: 3px solid var(--accent); border-radius: 0 12px 12px 0; background: var(--surface); }
+.web-mobile-steps p { margin: 6px 0 0; color: var(--muted); }
+.web-mobile-join { padding: 22px; background: linear-gradient(130deg,rgba(255,106,19,.17),var(--surface)); border: 1px solid rgba(255,106,19,.3); border-radius: 18px; }
+.web-mobile-join .btn { width: 100%; margin-top: 14px; }
+.web-mobile-faq details { padding: 13px 0; border-bottom: 1px solid var(--line-2); }
+.web-mobile-faq summary { cursor: pointer; font-weight: 700; }
+.web-mobile-faq details p { color: var(--muted); }
+@media(max-width:380px) { .web-landing-mobile .web-feature-grid { grid-template-columns: 1fr; } }
