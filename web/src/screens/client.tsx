@@ -656,6 +656,7 @@ export function Garage() {
   const [driverFor, setDriverFor] = useState<string | null>(null);
   const [driverPhone, setDriverPhone] = useState('+7 ');
   const isDriver = !!me?.owner_id;
+  const [serviceHistoryVersion, setServiceHistoryVersion] = useState(0);
 
   async function add() {
     const r = await run(() => post('/api/vehicles', {
@@ -703,8 +704,8 @@ export function Garage() {
               <div className="grid2"><button className="btn small" disabled={busy || !editForm.brand}>Сохранить изменения</button><button type="button" className="btn ghost small" onClick={() => setEditing(null)}>Отмена</button></div>
             </form>
           ) : !isDriver && <button type="button" className="btn ghost small" onClick={() => { setEditing(v.id); setEditForm({ brand: v.brand ?? '', model: v.model ?? '', year: v.year ? String(v.year) : '', plate: v.plate ?? '', trailerPlate: v.trailer_plate ?? '', vin: v.vin ?? '', engine: v.engine ?? '', configurationNotes: v.configuration_notes ?? '' }); }}>Редактировать машину</button>}
-          <VehicleServiceApplication vehicleId={v.id} onCreated={() => list.reload()} />
-          <VehicleServiceHistory id={v.id} isDriver={isDriver} />
+          <VehicleServiceApplication vehicleId={v.id} onCreated={() => setServiceHistoryVersion(version => version + 1)} />
+          <VehicleServiceHistory id={v.id} isDriver={isDriver} refreshVersion={serviceHistoryVersion} />
           <VehicleHistory id={v.id} />
           {!isDriver && (driverFor === v.id ? (
             <div className="stack">
@@ -775,9 +776,9 @@ function VehicleServiceApplication({ vehicleId, onCreated }: { vehicleId: string
 }
 
 /** История страхования и техосмотра доступна прямо в карточке машины. */
-function VehicleServiceHistory({ id, isDriver }: { id: string; isDriver: boolean }) {
+function VehicleServiceHistory({ id, isDriver, refreshVersion }: { id: string; isDriver: boolean; refreshVersion: number }) {
   const [open, setOpen] = useState(false);
-  const history = useLoad(() => get(`/api/vehicles/${id}/service-history`), [id]);
+  const history = useLoad(() => get(`/api/vehicles/${id}/service-history`), [id, refreshVersion]);
   const items = history.data as any[] | undefined;
   const { busy, run } = useAction();
   const [renewing, setRenewing] = useState<string | null>(null);
@@ -799,7 +800,8 @@ function VehicleServiceHistory({ id, isDriver }: { id: string; isDriver: boolean
           <div key={r.id} className="note">
             <b>{r.kind === 'insurance' ? 'Страхование' : 'Техосмотр'}</b>
             {' · '}{labels[r.status] ?? r.status}
-            {' · '}{fmtTime(r.created_at)}
+            {' · Подана '}{fmtTime(r.created_at)}
+            {r.updated_at && <span> · Обновлена {fmtTime(r.updated_at)}</span>}
             {r.policy_expires_on && <span> · Действует до {r.policy_expires_on}</span>}
             {r.staff_note && <div>{r.staff_note}</div>}
             {!isDriver && r.kind === 'insurance' && r.status === 'completed' && (
