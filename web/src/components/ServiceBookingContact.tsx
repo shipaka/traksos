@@ -23,7 +23,7 @@ export function ServiceBookingContact({ bookingId, asService = false }: { bookin
         {!messages.data && <span className="note">Загрузка сообщений…</span>}
         {messages.data && !messages.data.messages.length && <span className="note">Сообщений пока нет.</span>}
       </div>
-      {messages.data?.blocked && !asService ? <span className="note">Новые сообщения ограничены рембазой. При необходимости обратитесь в поддержку.</span> : <>
+      {messages.data?.blocked && !messages.data?.canMessage && !asService ? <span className="note">Новые сообщения ограничены рембазой. При необходимости обратитесь в поддержку.</span> : <>
         <textarea className="field" rows={3} maxLength={2000} placeholder="Напишите о времени приезда, въезде или проблеме со связью" value={body} onChange={e=>setBody(e.target.value)}/>
         <div className="row"><button className="btn" disabled={busy || !body.trim()} onClick={send}>Отправить</button><button className="btn ghost small" onClick={()=>messages.reload()}>Обновить</button></div>
       </>}
