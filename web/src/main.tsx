@@ -17,6 +17,7 @@ import { AdminUser } from './screens/adminUser.tsx';
 import { BaseHome, BaseCar, BaseSetup, BaseMoney, AdminServicePayouts, ServicesList, CenterPage, BookForm, BookingPage } from './screens/base.tsx';
 import { Fleet, FleetFinances, QrJoin } from './screens/fleet.tsx';
 import { Help } from './screens/help.tsx';
+import { InsurerCabinet } from './screens/insurer.tsx';
 import { CommonMenu } from './screens/menu.tsx';
 import { Rules } from './screens/rules.tsx';
 import { Shop, ShopCart } from './screens/shop.tsx';
@@ -24,7 +25,7 @@ import { Privacy } from './screens/privacy.tsx';
 import { ModCase, Appeal, MyReviews } from './screens/moderation.tsx';
 import { SupportList, SupportNew, SupportThread, Notifications, useUnread } from './screens/support.tsx';
 
-type Mode = 'client' | 'performer' | 'admin' | 'service';
+type Mode = 'client' | 'performer' | 'admin' | 'service' | 'insurer';
 const PERFORMER_ROLES = ['master', 'tow', 'service'];
 
 function App() {
@@ -41,7 +42,8 @@ function App() {
       const m = await get<Me>('/api/me');
       setMe(m);
       // Первый вход исполнителя — сразу его кабинет
-      if (!localStorageGet('traksos.mode') && m.roles.some((r) => PERFORMER_ROLES.includes(r)) && !m.roles.includes('client')) setMode(m.roles.includes('service') && !m.roles.some((r) => r === 'master' || r === 'tow') ? 'service' : 'performer');
+      if (m.roles.includes('insurer') && !m.roles.some((r) => r === 'admin' || r === 'moderator') && !m.roles.includes('client')) setMode('insurer');
+      else if (!localStorageGet('traksos.mode') && m.roles.some((r) => PERFORMER_ROLES.includes(r)) && !m.roles.includes('client')) setMode(m.roles.includes('service') && !m.roles.some((r) => r === 'master' || r === 'tow') ? 'service' : 'performer');
     } catch {
       setMe(null);
     } finally {
@@ -54,8 +56,8 @@ function App() {
   useEffect(() => {
     const [x, m] = route;
     if (x !== 'as') return;
-    if (m === 'client' || m === 'performer' || m === 'admin' || m === 'service') setMode(m);
-    location.replace('#/' + (m === 'performer' ? 'work' : m === 'admin' ? 'admin' : m === 'service' ? 'base' : ''));
+    if (m === 'client' || m === 'performer' || m === 'admin' || m === 'service' || m === 'insurer') setMode(m);
+    location.replace('#/' + (m === 'performer' ? 'work' : m === 'admin' ? 'admin' : m === 'service' ? 'base' : m === 'insurer' ? 'insurer' : ''));
   }, [route.join('/')]); // eslint-disable-line
   useEffect(() => {
     if (!me) return;
@@ -88,11 +90,12 @@ function App() {
   const isPerformer = me.roles.some((r) => PERFORMER_ROLES.includes(r));
   const isStaff = me.roles.some((r) => r === 'admin' || r === 'moderator');
   const isService = me.roles.includes('service');
-  const effMode: Mode = a === 'work' ? 'performer' : a === 'admin' ? 'admin' : a === 'base' ? 'service' : (mode === 'performer' && !isPerformer) || (mode === 'service' && !isService) ? 'client' : mode;
+  const isInsurer = me.roles.includes('insurer');
+  const effMode: Mode = a === 'work' ? 'performer' : a === 'admin' ? 'admin' : a === 'base' ? 'service' : a === 'insurer' ? 'insurer' : (mode === 'performer' && !isPerformer) || (mode === 'service' && !isService) || (mode === 'insurer' && !isInsurer) ? 'client' : mode;
 
   let screen;
   switch (a) {
-    case undefined: screen = effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isStaff ? <Admin /> : <Home />; break;
+    case undefined: screen = effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isStaff ? <Admin /> : effMode === 'insurer' && isInsurer ? <InsurerCabinet /> : <Home />; break;
     case 'login': screen = <Home />; break;
     case 'sos': screen = <Sos />; break;
     case 'new': screen = b === 'consult' ? <Consult /> : <NewOrder service={b ?? 'electric'} />; break;
@@ -111,6 +114,7 @@ function App() {
     case 'services': screen = b && route[2] === 'book' ? <BookForm id={b} /> : b ? <CenterPage id={b} /> : <ServicesList />; break;
     case 'booking': screen = <BookingPage id={b} />; break;
     case 'fleet': screen = b === 'finances' ? <FleetFinances /> : <Fleet />; break;
+    case 'insurer': screen = isInsurer ? <InsurerCabinet /> : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
     case 'help': screen = <Help />; break;
     case 'menu': screen = <CommonMenu />; break;
     case 'rules': screen = <Rules />; break;
@@ -144,6 +148,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       ? [['/base', '▤', 'Рембаза'], ['/base/money', '₽', 'Финансы'], ['/base/me', '⚙', 'Карточка'], ['/support', '?', 'Поддержка'], ['/menu', '☷', 'Меню']]
     : mode === 'admin'
       ? [['/admin', '▦', 'Админ'], ['/as/client', '⌂', 'Клиент'], ['/menu', '☷', 'Меню']]
+    : mode === 'insurer'
+      ? [['/insurer', '▤', 'Заявки'], ['/support', '?', 'Помощь'], ['/menu', '☷', 'Меню']]
       : [['/', '🔧', 'Услуги'], ['/sos', '!', 'SOS'], ['/orders', '☰', 'Заявки'], ['/garage', '▭', 'Гараж'], ['/menu', '☷', 'Меню']];
   return (
     <div className="app">
@@ -152,6 +158,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         <div className="row" style={{ flexWrap: 'nowrap' }}>
           {me && mode === 'performer' && <span className="pill accent">исполнитель</span>}
           {me && mode === 'admin' && <span className="pill accent">админ</span>}
+          {me && mode === 'insurer' && <span className="pill accent">страховщик</span>}
           {me && mode === 'service' && <span className="pill accent">рембаза</span>}
           {me && mode === 'client' && !me.owner_id && <a href="#/fleet" className="pill" style={{ textDecoration: 'none' }}>Мой парк</a>}
           {me && <a href="#/help" className="bell" aria-label="Справка">?</a>}
