@@ -159,6 +159,11 @@ export class FleetService {
       await q.query(`update users set owner_id=$2, roles = (select array(select distinct unnest(roles || '{driver}'::text[]))) where id=$1`, [user.id, v.owner_id]);
       await q.query('update vehicles set driver_id=null, driver_since=null where driver_id=$1 and id<>$2', [user.id, v.id]);
       await q.query('update vehicles set driver_id=$2, driver_since=now() where id=$1', [v.id, user.id]);
+      // Отозвать связь прежнего водителя с компанией, если за ним не осталось машин.
+      // Иначе owner_id продолжит давать доступ к данным прежнего автопарка.
+      if (prev) await q.query(`update users set owner_id=null, roles=array_remove(roles,'driver')
+        where id=$1 and owner_id=$2 and not exists
+        (select 1 from vehicles where driver_id=$1 and owner_id=$2)`, [prev, v.owner_id]);
     });
     await this.notifier.notify([v.owner_id], { type: 'fleet' },
       { kind: 'normal', title: 'Новый водитель вошёл по QR', body: `${v.brand} ${v.plate ?? ''}`.trim() + (prev ? ' · прежний водитель потерял доступ' : ''), data: {} });
