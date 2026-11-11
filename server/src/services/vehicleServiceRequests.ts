@@ -110,6 +110,11 @@ export class VehicleServiceRequests {
         if (!Number.isFinite(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== String(expiry)) {
           throw bad('invalid_expiry', 'Некорректная дата окончания полиса');
         }
+        // A newly completed policy must still be valid on the completion date.
+        const today = new Date().toISOString().slice(0, 10);
+        if (String(expiry) <= today) {
+          throw bad('expired_policy', 'Дата окончания нового полиса должна быть позже сегодняшнего дня');
+        }
       }
       return q.one(
         `update vehicle_service_requests set status=$2, staff_note=$3, assigned_to=$4, policy_expires_on=coalesce($5::date, policy_expires_on), updated_at=now()
