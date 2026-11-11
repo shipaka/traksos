@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { get, post, put, del, rub, fmtTime, fmtPhone } from '../api.ts';
+import { get, post, put, patch, del, rub, fmtTime, fmtPhone } from '../api.ts';
 import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF, QUICK_WHAT, ON_SITE, seriesHint } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFields, LiveStrip, type VehicleValue } from '../ui.tsx';
 import { BookingRows } from './base.tsx';
