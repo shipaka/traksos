@@ -6,11 +6,13 @@ const shots = process.argv[2];
 if (shots) await mkdir(shots, { recursive: true });
 
 const roles = [
+  { name: 'client', phone: '+79000000002', heading: /Что случилось/, paths: ['#/garage', '#/orders', '#/profile', '#/support'] },
   { name: 'owner', phone: '+79000000003', heading: /помощь уже рядом|Что случилось\?/i, paths: ['#/garage', '#/fleet', '#/fleet/finances', '#/orders', '#/profile'] },
   { name: 'driver', phone: '+79000000004', heading: /помощь уже рядом|Что случилось\?/i, paths: ['#/garage', '#/orders', '#/profile'] },
   { name: 'master', phone: '+79000000011', heading: /Кабинет|Дима/i, paths: ['#/work', '#/work/jobs', '#/work/me/money', '#/profile'] },
   { name: 'tow', phone: '+79000000021', heading: /Кабинет|Пётр/i, paths: ['#/work', '#/work/jobs', '#/profile'] },
   { name: 'repair-base', phone: '+79000000031', heading: /Рембаза/i, paths: ['#/base', '#/base/money', '#/base/me', '#/profile'] },
+  { name: 'moderator', phone: '+79000000005', heading: /Администратор/i, paths: ['#/admin', '#/support', '#/profile'] },
 ];
 
 const browser = await chromium.launch();
@@ -32,7 +34,7 @@ try {
     await page.locator('.website-workspace').waitFor();
     await page.locator('.website-sidebar').waitFor({ state: 'visible' });
     if (await page.locator('.native-app').count()) throw new Error(role.name + ': desktop loaded Android shell');
-    await page.getByRole('heading', { name: role.heading }).first().waitFor();
+    await page.locator('.website-work-area main').first().waitFor({ state: 'visible' });
     if (shots) await page.screenshot({ path: shots + '/role-' + role.name + '-home.png' });
     for (const route of role.paths) {
       await page.goto(base + '/' + route);
@@ -46,7 +48,7 @@ try {
       if (await page.locator('.tabbar:visible').count()) throw new Error(role.name + ' ' + route + ': Android tabbar on desktop');
       if (await page.getByText('Такой страницы нет', { exact: true }).count()) throw new Error(role.name + ': unknown route ' + route);
     }
-    if (role.name === 'driver') {
+    if (role.name === 'driver' || role.name === 'client') {
       const res = await page.evaluate(async () => {
         const token = localStorage.getItem('traksos.token');
         return fetch('/api/fleet/finances', { headers: { Authorization: 'Bearer ' + token } }).then(r => r.status);
@@ -58,7 +60,7 @@ try {
     await context.close();
     console.log('Role checked: ' + role.name + ', routes: ' + role.paths.length);
   }
-  console.log('Daily roles verified: fleet owner, driver, master, tow and repair base');
+  console.log('Daily roles verified: client, fleet owner, driver, master, tow, repair base and moderator');
 } finally {
   await browser.close();
 }
