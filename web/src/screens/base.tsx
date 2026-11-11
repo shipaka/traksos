@@ -117,7 +117,7 @@ export function BaseHome() {
         ))}
       </div>
       {tab === 'req' && (groups.requests.length
-        ? groups.requests.map((b: any) => <RequestCard key={b.id} b={b} onDone={cab.reload} />)
+        ? <div className="web-request-grid">{groups.requests.map((b: any) => <RequestCard key={b.id} b={b} onDone={cab.reload} />)}</div>
         : <div className="empty">Новых запросов нет. Они приходят уведомлением — со звуком, даже когда приложение закрыто.</div>)}
       {tab === 'cars' && (cars.length ? (
         <div className="rows">
