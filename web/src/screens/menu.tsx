@@ -5,7 +5,9 @@ export function CommonMenu() {
   const { me, mode } = useMe();
   const isDriver = !!me?.owner_id;
   const isOwner = mode === 'client' && !isDriver;
-  const finances = mode === 'performer'
+  const finances = mode === 'insurer'
+    ? { href: '#/insurer', title: 'Мои заявки', description: 'Назначенные страховые обращения, сроки и результаты' }
+    : mode === 'performer'
     ? { href: '#/work/me/money', title: 'Финансы', description: 'Начисления, комиссия, выплаты и история операций' }
     : mode === 'service'
       ? { href: '#/base/money', title: 'Финансы', description: 'Счета, выплаты и спорные суммы' }
@@ -32,6 +34,7 @@ export function CommonMenu() {
         <div className="stack">
           <a href="#/offer/client">Условия для клиентов</a>
           {(mode === 'performer' || mode === 'service') && <a href="#/offer/performer">Агентский договор для партнёров</a>}
+          {mode === 'insurer' && <span className="note">Условия работы страховых партнёров уточняются при подключении. Не используйте клиентскую оферту как договор со страховщиком.</span>}
           <a href="#/rules">Правила площадки</a>
           <a href="#/privacy">Персональные данные</a>
         </div>
