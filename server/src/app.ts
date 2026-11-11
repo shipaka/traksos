@@ -333,7 +333,7 @@ export function createApp(d: Deps) {
   r.put('/api/fleet', true, (c: AuthedCtx) => fleet.set(c.user, parse(z.object({
     mode: z.enum(['limit', 'approve']).optional(),
     perOrder: z.number().int().min(0).max(100_000_000).nullable().optional(), perMonth: z.number().int().min(0).max(1_000_000_000).nullable().optional(),
-    allow: z.object({ repair: z.boolean().optional(), tow: z.boolean().optional(), consult: z.boolean().optional(), service: z.boolean().optional(), shop: z.boolean().optional() }).optional(),
+    allow: z.object({ repair: z.boolean().optional(), tow: z.boolean().optional(), consult: z.boolean().optional(), service: z.boolean().optional(), shop: z.boolean().optional(), insurance: z.boolean().optional(), inspection: z.boolean().optional() }).optional(),
     edoPdfOnly: z.boolean().optional(),
   }), c.body)));
   r.post('/api/fleet/vehicles/:id/new-qr', true, (c: AuthedCtx) => fleet.newQr(c.user, c.params.id));
