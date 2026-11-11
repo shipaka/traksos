@@ -333,6 +333,7 @@ export function createApp(d: Deps) {
   // Мой парк --------------------------------------------------------------------
   const vehicleRequestKind = z.enum(['insurance', 'inspection']);
   const vehicleRequestStatus = z.enum(['in_review', 'need_documents', 'sent_to_partner', 'completed', 'rejected', 'cancelled']);
+  r.get('/api/vehicles/:id/service-history', true, (c: AuthedCtx) => vehicleRequests.history(c.user, c.params.id));
   r.get('/api/vehicle-service-requests', true, (c: AuthedCtx) => vehicleRequests.mine(c.user));
   r.post('/api/vehicle-service-requests', true, (c: AuthedCtx) => {
     const b = parse(z.object({ vehicleId: z.string().uuid(), kind: vehicleRequestKind, comment: z.string().max(2000).optional() }), c.body);
