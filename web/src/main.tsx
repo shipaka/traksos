@@ -146,14 +146,14 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   const route = useRoute();
   const here = '/' + route.join('/');
   const tabs: [string, string, string][] = !me ? [] : mode === 'performer'
-    ? [['/work', '⚡', 'Линия'], ['/work/jobs', '☰', 'Заказы'], ['/menu', '☷', 'Меню'], ['/work/me', '◉', 'Профиль']]
+    ? [['/work', '⚡', 'Линия'], ['/work/jobs', '☰', 'Заказы'], ['/menu', '☷', 'Меню'], ['/work/me', '👤', 'Профиль']]
     : mode === 'service'
-      ? [['/base', '▤', 'Рембаза'], ['/base/money', '₽', 'Финансы'], ['/support', '?', 'Помощь'], ['/menu', '☷', 'Меню'], ['/profile', '◉', 'Профиль']]
+      ? [['/base', '▤', 'Рембаза'], ['/base/money', '₽', 'Финансы'], ['/support', '?', 'Помощь'], ['/menu', '☷', 'Меню'], ['/profile', '👤', 'Профиль']]
     : mode === 'admin'
-      ? [['/admin', '▦', 'Админ'], ['/as/client', '⌂', 'Клиент'], ['/menu', '☷', 'Меню'], ['/profile', '◉', 'Профиль']]
+      ? [['/admin', '▦', 'Админ'], ['/as/client', '⌂', 'Клиент'], ['/menu', '☷', 'Меню'], ['/profile', '👤', 'Профиль']]
     : mode === 'insurer'
-      ? [['/insurer', '▤', 'Заявки'], ['/support', '?', 'Помощь'], ['/menu', '☷', 'Меню'], ['/profile', '◉', 'Профиль']]
-      : [['/', '🔧', 'Услуги'], ['/sos', '!', 'SOS'], ['/orders', '☰', 'Заявки'], ['/garage', '▭', 'Гараж'], ['/profile', '◉', 'Профиль']];
+      ? [['/insurer', '▤', 'Заявки'], ['/support', '?', 'Помощь'], ['/menu', '☷', 'Меню'], ['/profile', '👤', 'Профиль']]
+      : [['/', '🔧', 'Услуги'], ['/sos', '!', 'SOS'], ['/orders', '☰', 'Заявки'], ['/garage', '▭', 'Гараж'], ['/profile', '👤', 'Профиль']];
   return (
     <div className={`app ${native.isApp ? 'native-app' : 'website'}`}>
       <header className="top">
@@ -170,7 +170,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {me && mode === 'client' && !me.owner_id && <a href="#/fleet" className="pill" style={{ textDecoration: 'none' }}>Мой парк</a>}
           {me && <a href="#/help" className="bell" aria-label="Справка">?</a>}
           {me && <Bell />}
-          {me && <><a href="#/menu" className="bell top-menu-link" aria-label="Все разделы и помощь" title="Меню">☷</a><a href="#/profile" className="bell top-profile-link" aria-label="Личный профиль" title="Профиль">◉</a></>}
+          {me && <><a href="#/menu" className="bell top-menu-link" aria-label="Все разделы и помощь" title="Меню">☷</a><a href="#/profile" className="bell top-profile-link" aria-label="Личный профиль" title="Профиль">👤</a></>}
         </div>
       </header>
       {!native.isApp && me ? <WebsiteWorkspace mode={mode} isDriver={!!me.owner_id}>{children}</WebsiteWorkspace> : children}
