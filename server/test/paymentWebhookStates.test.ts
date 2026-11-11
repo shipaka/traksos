@@ -43,3 +43,17 @@ test('assigned performer can read payment history', async () => {
   assert.deepEqual(payments, [{ id: 'payment-1' }]);
   assert.equal(queries, 1);
 });
+
+test('provider cancellation failure leaves pending payment untouched', async () => {
+  const payment = { id: 'payment-1', status: 'pending', provider_payment_id: 'provider-1' };
+  let updates = 0;
+  const q: any = {
+    one: async () => payment,
+    query: async () => { updates++; },
+  };
+  const provider: any = { cancel: async () => { throw new Error('provider unavailable'); } };
+  const service = new PaymentsService({} as any, {} as any, provider, {} as any, {} as any);
+  await assert.rejects(service.onCancelled({ id: 'order-1', payment_method: 'online' }, 'before_arrival', q),
+    /provider unavailable/);
+  assert.equal(updates, 0, 'local payment must remain pending if provider cancellation failed');
+});
