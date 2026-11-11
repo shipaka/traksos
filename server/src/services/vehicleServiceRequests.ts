@@ -36,7 +36,7 @@ export class VehicleServiceRequests {
     const allow = user.owner_id ? (await this.db.one<any>('select fleet from users where id=$1', [owner]))?.fleet?.allow : null;
     const kinds = user.owner_id ? (['insurance', 'inspection'] as const).filter(k => allow?.[k] === true) : ['insurance', 'inspection'];
     return this.db.query(
-      `select r.id, r.kind, r.status, r.comment, r.staff_note, r.policy_expires_on, r.created_at, r.updated_at,
+      `select r.id, r.kind, r.status, r.requested_by, r.comment, r.staff_note, r.policy_expires_on, r.created_at, r.updated_at,
               coalesce((
                 select json_agg(json_build_object(
                   'status', e.status, 'policy_expires_on', e.policy_expires_on,
