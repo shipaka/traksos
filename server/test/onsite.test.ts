@@ -62,6 +62,8 @@ test('кандидат не получает ИНН, госномер и ист�
   }, client.token)).order;
   ok(await t.api('POST', `/api/orders/${order.id}/offers`, {}, master.token));
   assert.equal((await t.api('GET', `/api/orders/${order.id}/client-card`, undefined, master.token)).status, 403);
+  assert.equal((await t.api('GET', `/api/orders/${order.id}/payments`, undefined, master.token)).status, 403,
+    'кандидат не видит платёжные записи и ссылки подтверждения оплаты');
   const preview = ok(await t.api('GET', `/api/orders/${order.id}`, undefined, master.token));
   assert.equal(preview.you, 'candidate');
   assert.equal(preview.vehicle, null);
