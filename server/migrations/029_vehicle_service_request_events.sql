@@ -17,8 +17,7 @@ begin
     insert into vehicle_service_request_events(request_id, status, policy_expires_on, note, changed_at)
     values (new.id, new.status, new.policy_expires_on, new.staff_note, now());
   elsif new.status is distinct from old.status
-     or new.policy_expires_on is distinct from old.policy_expires_on
-     or new.staff_note is distinct from old.staff_note then
+     or new.policy_expires_on is distinct from old.policy_expires_on then
     insert into vehicle_service_request_events(request_id, status, policy_expires_on, note, changed_at)
     values (new.id, new.status, new.policy_expires_on, new.staff_note, now());
   end if;
@@ -28,7 +27,7 @@ $$;
 
 drop trigger if exists vehicle_service_request_event_trigger on vehicle_service_requests;
 create trigger vehicle_service_request_event_trigger
-after insert or update of status, policy_expires_on, staff_note on vehicle_service_requests
+after insert or update of status, policy_expires_on on vehicle_service_requests
 for each row execute function record_vehicle_service_request_event();
 
 -- Existing requests have only their latest state; do not invent past transitions.
