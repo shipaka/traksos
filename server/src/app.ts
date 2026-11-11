@@ -46,7 +46,7 @@ export interface Deps {
 }
 
 const money = z.number().int().nonnegative();
-const ROLES = ['client', 'driver', 'master', 'tow', 'service', 'moderator', 'admin'];
+const ROLES = ['client', 'driver', 'master', 'tow', 'service', 'insurer', 'moderator', 'admin'];
 
 export function createApp(d: Deps) {
   const now = d.now ?? (() => new Date());
@@ -350,6 +350,25 @@ export function createApp(d: Deps) {
   r.post('/api/vehicle-service-requests/:id/cancel', true, async (c: AuthedCtx) => {
     const updated = await vehicleRequests.cancel(c.user, c.params.id);
     notifier.live(await vehicleRequests.recipients(updated), { type: 'vehicle_service', vehicleId: updated?.vehicle_id, requestId: updated?.id });
+    return updated;
+  });
+  r.get('/api/admin/insurers', staff, (c: AuthedCtx) => vehicleRequests.insurers(c.user));
+  r.post('/api/admin/vehicle-service-requests/:id/assign-insurer', staff, async (c: AuthedCtx) => {
+    const b = parse(z.object({ insurerId: z.string().uuid() }), c.body);
+    const request = await vehicleRequests.assignInsurer(c.user, c.params.id, b.insurerId);
+    notifier.live([b.insurerId], { type: 'vehicle_service', requestId: request.id, vehicleId: request.vehicle_id });
+    return request;
+  });
+  r.get('/api/insurer/requests', ['insurer'], (c: AuthedCtx) => vehicleRequests.insurerQueue(c.user));
+  r.patch('/api/insurer/requests/:id', ['insurer'], async (c: AuthedCtx) => {
+    const b = parse(z.object({ status: z.enum(['completed', 'rejected']), note: z.string().max(2000).optional(),
+      policyExpiresOn: z.string().regex(/^\\d{4}-\\d{2}-\\d{2}$/).optional() }), c.body);
+    const updated = await vehicleRequests.setStatus(c.user, c.params.id, b.status, b.note, b.policyExpiresOn);
+    const recipients = await vehicleRequests.recipients(updated);
+    await notifier.notify(recipients, { type: 'vehicle_service', requestId: updated.id, vehicleId: updated.vehicle_id, status: updated.status },
+      { kind: 'normal', title: b.status === 'completed' ? 'Страхование оформлено' : 'Страхование отклонено',
+        body: updated.staff_note || (b.status === 'completed' ? 'Проверьте срок полиса в гараже' : 'Посмотрите комментарий в истории машины'),
+        data: { vehicleId: String(updated.vehicle_id), requestId: String(updated.id) } });
     return updated;
   });
   r.get('/api/admin/vehicle-service-requests', staff, (c: AuthedCtx) => vehicleRequests.queue(c.user));
