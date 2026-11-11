@@ -118,7 +118,7 @@ export class VehicleServiceRequests {
       }
       return q.one(
         `update vehicle_service_requests set status=$2, staff_note=$3, assigned_to=$4, policy_expires_on=coalesce($5::date, policy_expires_on), updated_at=now()
-         where id=$1 returning *`, [id, status, note ?? current.staff_note, staff.id, policyExpiresOn ?? null]);
+         where id=$1 returning *`, [id, status, note?.trim() || null, staff.id, policyExpiresOn ?? null]);
     });
   }
 
