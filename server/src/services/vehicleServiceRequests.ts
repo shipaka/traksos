@@ -36,9 +36,17 @@ export class VehicleServiceRequests {
     const allow = user.owner_id ? (await this.db.one<any>('select fleet from users where id=$1', [owner]))?.fleet?.allow : null;
     const kinds = user.owner_id ? (['insurance', 'inspection'] as const).filter(k => allow?.[k] === true) : ['insurance', 'inspection'];
     return this.db.query(
-      `select id, kind, status, comment, staff_note, policy_expires_on, created_at, updated_at
-       from vehicle_service_requests where vehicle_id=$1 and owner_id=$2 and kind=any($3::text[])
-       order by created_at desc`, [vehicleId, owner, kinds]);
+      `select r.id, r.kind, r.status, r.comment, r.staff_note, r.policy_expires_on, r.created_at, r.updated_at,
+              coalesce((
+                select json_agg(json_build_object(
+                  'status', e.status, 'policy_expires_on', e.policy_expires_on,
+                  'note', e.note, 'changed_at', e.changed_at
+                ) order by e.changed_at, e.id)
+                from vehicle_service_request_events e where e.request_id=r.id
+              ), '[]'::json) as events
+       from vehicle_service_requests r
+       where r.vehicle_id=$1 and r.owner_id=$2 and r.kind=any($3::text[])
+       order by r.created_at desc`, [vehicleId, owner, kinds]);
   }
 
   async create(user: AuthUser, vehicleId: string, kind: VehicleServiceKind, comment?: string) {
