@@ -79,8 +79,9 @@ export function Fleet() {
         <span className="label">Машины</span>
         {!d.cars.length && <div className="empty">Машин пока нет — добавьте в гараже.</div>}
         {d.cars.map((c: any) => (
-          <div key={c.id} className="card">
-            <div className="between"><b>{c.brand} {c.model ?? ''}</b><span className="pill">{c.plate ?? 'без номера'}</span></div>
+          <details key={c.id} className="card">
+            <summary className="between"><b>{c.brand} {c.model ?? ''}</b><span className="pill">{c.plate ?? 'без номера'}</span></summary>
+            <div className="stack">
             {c.driver ? (
               <span className="note">Водитель {c.driver.name ?? c.driver.phone} · доступ с {c.driver.since ? fmtTime(c.driver.since) : '—'} · в этом месяце {rub(c.driver.monthSpent)} <span className="pill good">Активен</span></span>
             ) : <span className="note">Водитель не назначен — он войдёт сам по QR-наклейке.</span>}
@@ -92,12 +93,14 @@ export function Fleet() {
               }}>Новая наклейка</button>
             </div>
             {qrFor === c.id && <Sticker car={c} />}
-          </div>
+            </div>
+          </details>
         ))}
       </div>
 
-      <div className="card">
-        <b>Как оплачивать</b>
+      <details className="card">
+        <summary><b>Оплата и лимиты</b></summary>
+        <div className="stack">
         <div className="grid2">
           <button type="button" className="seg" aria-pressed={s.mode !== 'approve'} onClick={() => setS({ ...s, mode: 'limit' })}>Сам до лимита</button>
           <button type="button" className="seg" aria-pressed={s.mode === 'approve'} onClick={() => setS({ ...s, mode: 'approve' })}>Всё через меня</button>
@@ -109,19 +112,23 @@ export function Fleet() {
           </div>
         ) : <span className="note">Каждый заказ водителя ждёт вашего «Подтвердить» — придёт уведомление.</span>}
         <span className="note">Заказы до лимита идут сразу. Дороже — вы получаете уведомление и подтверждаете. Статус видно в «Заявках».</span>
-      </div>
+        </div>
+      </details>
 
-      <div className="card">
-        <b>Что водителю можно</b>
+      <details className="card">
+        <summary><b>Разрешения водителей</b></summary>
+        <div className="stack">
         {ALLOW.map(([k, n, h]) => (
           <label key={k} className="agree"><input type="checkbox" checked={s.allow[k] !== false} onChange={(e) => setS({ ...s, allow: { ...s.allow, [k]: e.target.checked } })} /><span><b>{n}</b> — {h}</span></label>
         ))}
         <span className="note">Срочный вызов SOS водитель может сделать всегда — даже если вы не на связи.</span>
-      </div>
+        </div>
+      </details>
       <button className="btn" disabled={busy} onClick={save}>Сохранить</button>
 
-      <div className="card">
-        <b>Документы через ЭДО</b>
+      <details className="card">
+        <summary><b>Документы через ЭДО</b></summary>
+        <div className="stack">
         <div className="grid2">
           <Field label="Оператор"><input className="field" placeholder="СБИС, Диадок…" value={edo.edoOperator} onChange={(e) => setEdo({ ...edo, edoOperator: e.target.value })} /></Field>
           <Field label="Идентификатор ЭДО"><input className="field" placeholder="ID участника" value={edo.edoId} onChange={(e) => setEdo({ ...edo, edoId: e.target.value })} /></Field>
@@ -130,12 +137,10 @@ export function Fleet() {
         <span className="note">Счета и акты приходят в ЭДО, подписанные ТракSOS. По каждой поломке — один счёт: консультация, выезды, работа и эвакуатор вместе.</span>
         <button className="btn ghost small" disabled={busy} onClick={async () => { if (await run(() => patch('/api/me', { edoOperator: edo.edoOperator || null, edoId: edo.edoId || null }), 'ЭДО сохранено')) reload(); }}>Сохранить ЭДО</button>
         {!d.company.inn && <span className="note">Укажите компанию и ИНН в <a href="#/profile">профиле</a> — без них счёт по ЭДО не выставить.</span>}
-      </div>
+        </div>
+      </details>
 
-      <div className="card">
-        <div className="between"><b>Работа с отсрочкой оплаты</b><span className="pill">скоро</span></div>
-        <span className="note">Мастера будут приезжать без предоплаты, пока вы в пределах лимита. Лимит растёт, если вы давно с нами и платите вовремя.</span>
-      </div>
+
     </main>
   );
 }
