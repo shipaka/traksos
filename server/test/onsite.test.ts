@@ -56,16 +56,6 @@ test('опаздываю, отметки на месте, проверка по�
   ok(await t.api('POST', `/api/orders/${id}/confirm`, {}, client.token));
 });
 
-test('«не брать заявки этого клиента»: заявки клиента больше не приходят', async () => {
-  const last = ok(await t.api('GET', '/api/orders?as=performer', undefined, master.token))[0];
-  ok(await t.api('POST', `/api/orders/${last.id}/block-client`, { on: true, reason: 'не оплатил ожидание' }, master.token));
-  assert.equal(ok(await t.api('GET', '/api/performer/blacklist', undefined, master.token)).length, 1);
-  const o = ok(await t.api('POST', '/api/orders', { service: 'electric', zoneId: 'spb', description: 'Нет света' }, client.token)).order;
-  assert.equal(t.app.hub.log.some((l) => l.userId === master.id && l.event.orderId === o.id && ['auction', 'incoming_call'].includes(l.event.type)), false);
-  ok(await t.api('DELETE', `/api/performer/blacklist/${client.id}`, undefined, master.token));
-  assert.equal(ok(await t.api('GET', '/api/performer/blacklist', undefined, master.token)).length, 0);
-});
-
 test('кандидат не получает ИНН, госномер и историю ремонта до выбора клиентом', async () => {
   const order = ok(await t.api('POST', '/api/orders', {
     service: 'electric', zoneId: 'spb', vehicleId, description: 'Проверить электрику',
@@ -80,3 +70,14 @@ test('кандидат не получает ИНН, госномер и ист�
   assert.deepEqual(preview.followUps, []);
   assert.equal(preview.consultFrom, null);
 });
+
+test('«не брать заявки этого клиента»: заявки клиента больше не приходят', async () => {
+  const last = ok(await t.api('GET', '/api/orders?as=performer', undefined, master.token))[0];
+  ok(await t.api('POST', `/api/orders/${last.id}/block-client`, { on: true, reason: 'не оплатил ожидание' }, master.token));
+  assert.equal(ok(await t.api('GET', '/api/performer/blacklist', undefined, master.token)).length, 1);
+  const o = ok(await t.api('POST', '/api/orders', { service: 'electric', zoneId: 'spb', description: 'Нет света' }, client.token)).order;
+  assert.equal(t.app.hub.log.some((l) => l.userId === master.id && l.event.orderId === o.id && ['auction', 'incoming_call'].includes(l.event.type)), false);
+  ok(await t.api('DELETE', `/api/performer/blacklist/${client.id}`, undefined, master.token));
+  assert.equal(ok(await t.api('GET', '/api/performer/blacklist', undefined, master.token)).length, 0);
+});
+
