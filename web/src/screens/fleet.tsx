@@ -80,7 +80,7 @@ export function Fleet() {
         <span aria-hidden="true">›</span>
       </a>
       <InsuranceReminderSettings />
-      <div className="stack">
+      <div className="stack web-fleet-vehicles">
         <span className="label">Машины</span>
         {!d.cars.length && <div className="empty">Машин пока нет — добавьте в гараже.</div>}
         {d.cars.map((c: any) => (
