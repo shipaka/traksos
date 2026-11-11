@@ -408,3 +408,17 @@ select.field { appearance: none; }
   .website .website-work-area main > .grid2 { gap: 18px; }
   .website .website-work-area main > .card { max-width: 100%; }
 }
+
+/* Реальные карточки машин на широком сайте: краткие плитки, детали раскрываются на всю ширину. */
+.website .web-vehicle-grid, .website .web-fleet-vehicles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.website .web-vehicle-grid > details.card, .website .web-fleet-vehicles > details.card { margin: 0; transition: border-color .2s ease, background .2s ease; }
+.website .web-vehicle-grid > details.card:hover, .website .web-fleet-vehicles > details.card:hover { border-color: #655344; }
+.website .web-vehicle-grid > details.card[open], .website .web-fleet-vehicles > details.card[open] { grid-column: 1 / -1; background: #25282d; border-color: #5c4634; }
+.website .web-vehicle-grid > details.card summary, .website .web-fleet-vehicles > details.card summary { gap: 12px; cursor: pointer; flex-wrap: wrap; padding: 3px; }
+.website .web-vehicle-grid > details.card summary b, .website .web-fleet-vehicles > details.card summary b { font-size: 15px; }
+.website .web-vehicle-grid > details.card[open] > .stack, .website .web-fleet-vehicles > details.card[open] > .stack { padding-top: 16px; }
+.website .web-fleet-vehicles > .label { grid-column: 1 / -1; font-size: 12px; }
+.website .web-vehicle-grid + form.card { max-width: 720px; }
+@media (max-width: 850px) {
+  .website .web-vehicle-grid, .website .web-fleet-vehicles { grid-template-columns: 1fr; gap: 12px; }
+}
