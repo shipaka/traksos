@@ -75,3 +75,30 @@ export function WebsiteShowcase() {
     </section>
   );
 }
+
+
+/** Public product tour. No account or personal data is needed. */
+export function WebsiteAbout() {
+  return (
+    <main className="web-about">
+      <div className="web-about-intro">
+        <span className="label">ТракSOS · Возможности</span>
+        <h1>Не просто вызвать помощь. Управлять всей историей обслуживания.</h1>
+        <p>Сервис объединяет клиента, водителя, исполнителя и владельца автопарка. Посмотрите основные сценарии работы до регистрации.</p>
+        <div className="row">
+          <a className="btn" href="#/login">Войти или начать работу</a>
+          <a className="btn ghost" href="#/help">Вопросы и инструкции</a>
+        </div>
+      </div>
+      <WebsiteShowcase />
+      <section className="web-about-actions">
+        <h2>С чего начать?</h2>
+        <div className="web-feature-grid">
+          <div className="web-feature"><b>Я водитель</b><p>Оформите помощь на дороге и отслеживайте заявку.</p><a href="#/login">Открыть вход →</a></div>
+          <div className="web-feature"><b>У меня автопарк</b><p>Добавьте машины, управляйте водителями и контролируйте расходы.</p><a href="#/login">Открыть вход →</a></div>
+          <div className="web-feature"><b>Я исполнитель</b><p>Заполните профиль, пройдите проверку и получайте доступные заявки.</p><a href="#/login">Как подключиться →</a></div>
+        </div>
+      </section>
+    </main>
+  );
+}
