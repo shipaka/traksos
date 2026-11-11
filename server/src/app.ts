@@ -658,6 +658,30 @@ export function createApp(d: Deps) {
   r.post('/api/admin/performers/:id/cash-debt-paid', ['admin'], (c: AuthedCtx) =>
     payments.cashDebtPaid(c.user, c.params.id, parse(z.object({ amount: money }), c.body).amount));
   r.get('/api/admin/agent-report', ['admin'], (c: AuthedCtx) => payments.agentReport(c.query.get('period') ?? '', c.query.get('performer') ?? undefined));
+  // Модерация баллов: только администратор, все решения с причиной и журналом.
+  r.get('/api/admin/points', ['admin'], () => d.db.query(
+    `select p.id, p.user_id, p.amount, p.kind, p.status, p.note, p.order_id, p.booking_id,
+            p.created_at, p.moderated_at, p.moderation_reason
+       from points_entries p order by p.id desc limit 300`));
+  r.post('/api/admin/points/:id/moderate', ['admin'], async (c: AuthedCtx) => {
+    const b = parse(z.object({ status: z.enum(['available', 'held', 'reversed']), reason: z.string().min(5).max(500) }), c.body);
+    return d.db.tx(async (q) => {
+      const e = await q.one<{ id: number; user_id: string; amount: number; kind: string; status: string }>(
+        'select id, user_id, amount, kind, status from points_entries where id=$1 for update', [c.params.id]);
+      if (!e || e.amount <= 0 || e.kind === 'spend') throw new Error('Начисление не найдено');
+      await q.query('select id from users where id=$1 for update', [e.user_id]);
+      if (e.status === 'reversed' && b.status !== 'reversed') throw new Error('Отменённое начисление нельзя восстановить без новой проводки');
+      if (b.status !== 'available' && e.status === 'available') {
+        const balance = await referral.balance(e.user_id, q);
+        if (balance.balance < e.amount) throw new Error('Баллы уже потрачены: требуется отдельная корректирующая проводка');
+      }
+      await q.query('update points_entries set status=$2, moderated_by=$3, moderated_at=now(), moderation_reason=$4 where id=$1',
+        [e.id, b.status, c.user.id, b.reason]);
+      await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
+        [c.user.id, 'points.moderate', String(e.id), { from: e.status, to: b.status, reason: b.reason }]);
+      return { ok: true };
+    });
+  });
   r.get('/api/admin/audit', ['admin'], () => d.db.query('select * from audit_log order by id desc limit 200'));
 
   async function audit(actorId: string, action: string, target: string, data: unknown) {
