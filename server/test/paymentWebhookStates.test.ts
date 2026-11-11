@@ -57,3 +57,22 @@ test('provider cancellation failure leaves pending payment untouched', async () 
     /provider unavailable/);
   assert.equal(updates, 0, 'local payment must remain pending if provider cancellation failed');
 });
+
+test('cancellation cannot capture more than the provider authorized', async () => {
+  let captures = 0;
+  let updates = 0;
+  const payment = { id: 'payment-1', status: 'held', total: 1000, provider_payment_id: 'provider-1' };
+  const q: any = {
+    one: async () => payment,
+    query: async () => { updates++; },
+  };
+  const settings: any = { get: async () => ({ scale: { accepted: 1 } }) };
+  const provider: any = { capture: async () => { captures++; } };
+  const service = new PaymentsService({} as any, settings, provider, {} as any, {} as any);
+  await assert.rejects(service.onCancelled({
+    id: 'order-1', payment_method: 'online', call_out_amount: 2000,
+    client_fee_pct: 0, estimate: { callOut: 2000 },
+  }, 'accepted', q), (err: any) => err.status === 409);
+  assert.equal(captures, 0, 'provider capture must not be attempted');
+  assert.equal(updates, 0, 'payment must not be modified');
+});
