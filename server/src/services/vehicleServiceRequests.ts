@@ -143,6 +143,17 @@ export class VehicleServiceRequests {
     return updated;
   }
 
+  /** Notify a driver only while they remain assigned to this vehicle and the owner permits the service. */
+  async recipients(request: { owner_id: string; requested_by: string; vehicle_id: string; kind: VehicleServiceKind }) {
+    const drivers = await this.db.query<{ id: string }>(
+      `select v.driver_id as id from vehicles v join users u on u.id=v.owner_id
+       where v.id=$1 and v.owner_id=$2 and v.driver_id=$3
+         and (u.fleet->'allow'->>$4)::boolean is true`,
+      [request.vehicle_id, request.owner_id, request.requested_by, request.kind],
+    );
+    return [request.owner_id, ...drivers.map((row) => row.id)];
+  }
+
   async queue(staff: AuthUser, kind?: VehicleServiceKind) {
     if (!staff.roles?.some((role: string) => ['admin', 'moderator'].includes(role))) throw forbidden('Нет доступа');
     return this.db.query(
