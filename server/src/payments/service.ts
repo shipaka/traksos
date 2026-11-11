@@ -14,7 +14,7 @@ import type { SettingsService } from '../services/settings.ts';
 import type { Notifier } from '../services/notify.ts';
 import type { OrdersService, PaymentHooks } from '../services/orders.ts';
 import type { PaymentProvider, ProviderStatus } from './provider.ts';
-import { HttpError, bad, notFound, type AuthUser } from '../http/router.ts';
+import { HttpError, bad, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { cancelSplit, commissionPct, pct, split, type CancelStage } from '../domain/money.ts';
 import { agentReceipt } from './yookassa.ts';
 import { config } from '../config.ts';
@@ -360,7 +360,10 @@ export class PaymentsService implements PaymentHooks {
   }
 
   async forOrder(user: AuthUser, orderId: string) {
-    await this.orders.mustSee(user, orderId);
+    const order = await this.orders.mustSee(user, orderId);
+    // Bidding candidates may preview the job price, but never its payment records
+    // or confirmation links. Those belong to the client, assigned performer and admin.
+    if (!this.orders.actorOf(user, order)) throw forbidden();
     return this.db.query(
       `select id, kind, method, amount, client_fee, total, status, confirmation_url, refunded_amount, created_at
          from payments where order_id=$1 order by created_at`, [orderId]);
