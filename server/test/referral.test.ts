@@ -63,7 +63,7 @@ test('пригласил клиента: ему подарок, мне 10% ко�
   assert.equal(view.points.max, Math.min(30_000, Math.floor(fee * 0.2)));
   const done = ok(await t.api('POST', `/api/orders/${o.id}/confirm`, { total: pr.money.total, points: 999_999 }, friend.token));
   const row = (await t.db.one<any>('select points_fee from orders where id=$1', [o.id]))!;
-  assert.equal(row.points_fee, Math.min(30_000, Math.floor(fee / 2)), 'вписал больше — списали не больше 20% сбора');
+  assert.equal(row.points_fee, Math.min(30_000, Math.min(Math.floor(fee * 0.2), Math.floor(pr.money.amount * 0.05 * 0.2))), 'вписал больше — списали не больше лимита');
   assert.equal(done.money.discount, row.points_fee);
 
   const mine = ok(await t.api('GET', '/api/me/referral', undefined, inviter.token));
@@ -104,4 +104,15 @@ test('баллы — по желанию: мастер выключил гаше
   ok(await t.api('POST', `/api/orders/${o.id}/confirm`, { total: pr.money.total }, c.token));
   assert.equal(ok(await t.api('GET', '/api/me/referral', undefined, master.token)).balance, b0);
   ok(await t.api('PUT', '/api/performer/extras', { pointsAuto: true }, master.token));
+});
+
+
+test('замороженные и отменённые начисления нельзя потратить', () => {
+  const d = new Date('2026-01-01');
+  const rows = [
+    { amount: 1000, expires_at: null, created_at: d, status: 'available' },
+    { amount: 500, expires_at: null, created_at: d, status: 'held' },
+    { amount: 700, expires_at: null, created_at: d, status: 'reversed' },
+  ];
+  assert.equal(pointsBalance(rows, new Date('2026-01-02')).balance, 1000);
 });
