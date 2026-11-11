@@ -161,26 +161,33 @@ export class FleetService {
 
   /** Водитель отсканировал наклейку и вошёл по SMS — сразу работает с этой машиной; прежний водитель теряет доступ */
   async qrJoin(user: AuthUser, code: string) {
-    const v = await this.db.one<any>('select * from vehicles where qr_code=$1', [code]);
-    if (!v) throw notFound('Наклейка не действует — попросите у владельца новую');
-    if (v.owner_id === user.id) throw bad('owner', 'Это ваша машина — вы владелец');
-    if (user.owner_id && user.owner_id !== v.owner_id) throw conflict('driver_taken', 'Вы водитель другого владельца — попросите его снять вас с машины');
-    const own = await this.db.one<{ n: number }>('select count(*)::int as n from vehicles where owner_id=$1', [user.id]);
-    if (!user.owner_id && (own?.n ?? 0) > 0) throw conflict('has_garage', 'У вас свой гараж — водителем чужой машины по наклейке стать нельзя');
-    const prev = v.driver_id && v.driver_id !== user.id ? v.driver_id : null;
-    await this.db.tx(async (q) => {
-      await q.query(`update users set owner_id=$2, roles = (select array(select distinct unnest(roles || '{driver}'::text[]))) where id=$1`, [user.id, v.owner_id]);
-      await q.query('update vehicles set driver_id=null, driver_since=null where driver_id=$1 and id<>$2', [user.id, v.id]);
-      await q.query('update vehicles set driver_id=$2, driver_since=now() where id=$1', [v.id, user.id]);
-      // Отозвать связь прежнего водителя с компанией, если за ним не осталось машин.
-      // Иначе owner_id продолжит давать доступ к данным прежнего автопарка.
-      if (prev) await q.query(`update users set owner_id=null, roles=array_remove(roles,'driver')
+    // Lock the sticker row in the same transaction as assignment. QR rotation
+    // locks this row too, so a revoked code cannot win a read/write race.
+    const { vehicle: v, previousDriver: prev } = await this.db.tx(async (q) => {
+      const current = await q.one<any>('select * from vehicles where qr_code=$1 for update', [code]);
+      if (!current) throw notFound('Наклейка не действует — попросите у владельца новую');
+      if (current.owner_id === user.id) throw bad('owner', 'Это ваша машина — вы владелец');
+      // Check current membership from the database, not a potentially stale token.
+      const member = await q.one<{ owner_id: string | null }>('select owner_id from users where id=$1 for update', [user.id]);
+      if (!member) throw notFound('Пользователь не найден');
+      if (member.owner_id && member.owner_id !== current.owner_id) {
+        throw conflict('driver_taken', 'Вы водитель другого владельца — попросите его снять вас с машины');
+      }
+      const own = await q.one<{ n: number }>('select count(*)::int as n from vehicles where owner_id=$1', [user.id]);
+      if (!member.owner_id && (own?.n ?? 0) > 0) {
+        throw conflict('has_garage', 'У вас свой гараж — водителем чужой машины по наклейке стать нельзя');
+      }
+      const previousDriver = current.driver_id && current.driver_id !== user.id ? current.driver_id : null;
+      await q.query(`update users set owner_id=$2, roles = (select array(select distinct unnest(roles || '{driver}'::text[]))) where id=$1`, [user.id, current.owner_id]);
+      await q.query('update vehicles set driver_id=null, driver_since=null where driver_id=$1 and id<>$2', [user.id, current.id]);
+      await q.query('update vehicles set driver_id=$2, driver_since=now() where id=$1', [current.id, user.id]);
+      if (previousDriver) await q.query(`update users set owner_id=null, roles=array_remove(roles,'driver')
         where id=$1 and owner_id=$2 and not exists
-        (select 1 from vehicles where driver_id=$1 and owner_id=$2)`, [prev, v.owner_id]);
+        (select 1 from vehicles where driver_id=$1 and owner_id=$2)`, [previousDriver, current.owner_id]);
+      return { vehicle: current, previousDriver };
     });
     await this.notifier.notify([v.owner_id], { type: 'fleet' },
       { kind: 'normal', title: 'Новый водитель вошёл по QR', body: `${v.brand} ${v.plate ?? ''}`.trim() + (prev ? ' · прежний водитель потерял доступ' : ''), data: {} });
     if (prev) await this.notifier.notify([prev], { type: 'fleet' }, { kind: 'normal', title: 'Доступ к машине закрыт', body: `${v.brand} ${v.plate ?? ''}: вошёл новый водитель`, data: {} });
     return { vehicleId: v.id, brand: v.brand, model: v.model, plate: v.plate };
-  }
-}
+  }}
