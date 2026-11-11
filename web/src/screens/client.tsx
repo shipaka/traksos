@@ -32,7 +32,7 @@ export function Home() {
   const { fill } = usePrices();
   return (
     <main>
-      {!native.isApp ? (
+      {!native.isApp && window.innerWidth > 800 ? (
         <section className="web-hero">
           <span className="label" style={{ color: 'var(--accent)' }}>ТракSOS · Помощь грузовикам 24/7</span>
           <h1>{me?.name ? `${me.name}, помощь уже рядом` : 'Грузовику нужна помощь? Мы рядом.'}</h1>
