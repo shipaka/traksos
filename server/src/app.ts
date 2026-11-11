@@ -479,17 +479,25 @@ export function createApp(d: Deps) {
   r.get('/api/admin/external-services', staff, () => d.db.query('select * from external_service_directory order by updated_at desc limit 500'));
   r.post('/api/admin/external-services', staff, (c: AuthedCtx) => {
     const b = parse(z.object({ name:z.string().min(2).max(160),address:z.string().min(4).max(400),lat:z.number().min(-90).max(90).optional(),lng:z.number().min(-180).max(180).optional(),hours:z.string().max(100).optional(),publicNotes:z.string().max(500).optional(),privatePhone:z.string().max(60).optional(),visibility:z.enum(['draft','published','hidden']).default('draft') }),c.body);
+    if ((b.lat===undefined)!==(b.lng===undefined)) throw bad('coords','Укажите обе координаты');
+    if (b.visibility==='published' && (b.lat===undefined || b.lng===undefined)) throw bad('coords','Для публикации нужны координаты');
     return d.db.one(`insert into external_service_directory(name,address,lat,lng,hours,public_notes,private_phone,visibility,created_by)
       values($1,$2,$3,$4,$5,$6,$7,$8,$9) returning id,name,address,visibility`,[b.name,b.address,b.lat??null,b.lng??null,b.hours??null,b.publicNotes??null,b.privatePhone??null,b.visibility,c.user.id]);
   });
   r.put('/api/admin/external-services/:id', staff, (c: AuthedCtx) => {
     const b=parse(z.object({name:z.string().min(2).max(160),address:z.string().min(4).max(400),lat:z.number().min(-90).max(90).nullable(),lng:z.number().min(-180).max(180).nullable(),hours:z.string().max(100).nullable(),publicNotes:z.string().max(500).nullable(),privatePhone:z.string().max(60).nullable()}),c.body);
     if ((b.lat===null)!==(b.lng===null)) throw bad('coords','Укажите обе координаты');
+    const existing=await d.db.one<{visibility:string}>('select visibility from external_service_directory where id=$1',[c.params.id]);
+    if (!existing) throw notFound('Рембаза не найдена');
+    if (existing.visibility==='published' && (b.lat===null || b.lng===null)) throw bad('coords','Сначала снимите точку с публикации');
     return d.db.one(`update external_service_directory set name=$2,address=$3,lat=$4,lng=$5,hours=$6,public_notes=$7,private_phone=$8,updated_at=now()
       where id=$1 returning id,name,address,visibility`,[c.params.id,b.name,b.address,b.lat,b.lng,b.hours,b.publicNotes,b.privatePhone]);
   });
   r.post('/api/admin/external-services/:id/status', staff, (c: AuthedCtx) => {
     const b=parse(z.object({visibility:z.enum(['draft','published','hidden']),outreachStatus:z.enum(['not_contacted','contacted','interested','declined']).optional()}),c.body);
+    const existing=await d.db.one<{lat:number|null;lng:number|null}>('select lat,lng from external_service_directory where id=$1',[c.params.id]);
+    if (!existing) throw notFound('Рембаза не найдена');
+    if (b.visibility==='published' && (existing.lat===null || existing.lng===null)) throw bad('coords','Для публикации нужны координаты');
     return d.db.one(`update external_service_directory set visibility=$2,outreach_status=coalesce($3,outreach_status),updated_at=now() where id=$1 returning id,visibility,outreach_status`,[c.params.id,b.visibility,b.outreachStatus??null]);
   });
   r.get('/api/admin/services', staff, () => centers.pending());
