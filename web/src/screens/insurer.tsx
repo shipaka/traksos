@@ -40,7 +40,12 @@ export function InsurerCabinet() {
       {!rows ? <div className="empty">{requests.error ? `Не удалось загрузить: ${requests.error}` : 'Загружаем заявки…'}</div>
         : !rows.length ? <div className="empty">Назначенных заявок пока нет. Администратор передаст их сюда после проверки.</div>
         : <div className="stack">
-          <span className="label">Мои заявки · {rows.length}</span>
+          <div className="grid2">
+            <div className="card tile"><span className="label">Всего назначено</span><b className="tile-value">{rows.length}</b></div>
+            <div className="card tile"><span className="label">Ожидают решения</span><b className="tile-value">{rows.filter((r) => r.status === 'sent_to_partner').length}</b></div>
+          </div>
+          <span className="label">Мои заявки</span>
+          <div className="web-insurance-grid">
           {rows.map((r) => (
             <details key={r.id} className="card">
               <summary className="between">
@@ -69,6 +74,7 @@ export function InsurerCabinet() {
               </div>
             </details>
           ))}
+          </div>
         </div>}
       <a className="linkrow" href="#/menu"><span><b>Помощь, условия и настройки</b><small>Единое меню ТракSOS</small></span><span aria-hidden="true">›</span></a>
     </main>
