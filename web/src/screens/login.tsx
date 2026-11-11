@@ -81,14 +81,14 @@ export function Login({ driver }: { driver?: boolean } = {}) {
       <section className="web-hero web-hero-featured">
         <div className="web-hero-layout">
           <div className="web-hero-content">
-            <span className="label" style={{ color: 'var(--accent)' }}>ТракSOS · Санкт-Петербург и Ленинградская область</span>
-            <h1>Помощь грузовикам на дороге. Без лишних звонков.</h1>
-            <p>Электрик, диагностика, пневматика, шиномонтаж и эвакуатор. Выберите услугу, отправьте заявку и следите за выполнением онлайн — в любое время.</p>
+            <span className="label" style={{ color: 'var(--accent)' }}>ТракSOS · Единая платформа для грузового транспорта</span>
+            <h1>Техпомощь и ремонт грузовиков — быстро, рядом, надёжно.</h1>
+            <p>Водителям — помощь в дороге. Автопаркам — контроль техники и расходов. Мастерам и рембазам — удобные рабочие кабинеты. Всё в одной системе.</p>
             <div className="hero-actions">
-              <button className="btn" type="button" onClick={() => setIntent('help')}>Вызвать помощь</button>
-              <button className="btn ghost" type="button" onClick={() => setIntent('login')}>Войти в личный кабинет</button>
+              <button className="btn" type="button" onClick={() => setIntent('help')}>Нужна помощь сейчас</button>
+              <button className="btn ghost" type="button" onClick={() => setIntent('login')}>Войти в кабинет</button>
             </div>
-            <a className="web-hero-discover" href="#/about">Посмотреть, что внутри системы <span aria-hidden="true">↗</span></a>
+            <a className="web-hero-discover" href="#/about">Посмотреть возможности платформы <span aria-hidden="true">↗</span></a>
           </div>
           <div className="web-hero-visual" aria-label="Примеры возможностей сервиса">
             <div className="web-hero-screen">
@@ -98,7 +98,7 @@ export function Login({ driver }: { driver?: boolean } = {}) {
                 <div className="web-hero-screen-title">Ваша техника под контролем</div>
                 <div className="web-hero-mini-card"><span>▤</span><div><b>История машин</b><small>Обслуживание и документы</small></div><i>↗</i></div>
                 <div className="web-hero-mini-card"><span>₽</span><div><b>Финансы автопарка</b><small>Расходы, оплаты, возвраты</small></div><i>↗</i></div>
-                <div className="web-hero-mini-card"><span>◉</span><div><b>Заявки 24/7</b><small>От обращения до результата</small></div><i>↗</i></div>
+                <div className="web-hero-mini-card"><span>◉</span><div><b>Заявки и статусы</b><small>От обращения до результата</small></div><i>↗</i></div>
               </div>
             </div>
             <div className="web-hero-float"><span aria-hidden="true">✓</span><div><b>Одна система</b><small>От заявки до истории работ</small></div></div>
@@ -108,11 +108,22 @@ export function Login({ driver }: { driver?: boolean } = {}) {
       <section>
         <h2>Всё для грузовика в одной системе</h2>
         <div className="web-feature-grid" style={{ marginTop: 16 }}>
-          <div className="web-feature"><b>Помощь 24/7</b><p>Найдите специалиста или эвакуатор и отслеживайте работу по заявке.</p></div>
+          <div className="web-feature"><b>Помощь в дороге</b><p>Найдите специалиста или эвакуатор и отслеживайте работу по заявке.</p></div>
           <div className="web-feature"><b>История автомобилей</b><p>Гараж, ремонты, страхование и техосмотр по каждой машине.</p></div>
           <div className="web-feature"><b>Кабинет автопарка</b><p>Водители, разрешения, лимиты и финансовая история в одном месте.</p></div>
         </div>
       </section>
+      <section className="web-desktop-audiences">
+        <div className="web-landing-eyebrow">ТракSOS ДЛЯ КАЖДОГО УЧАСТНИКА</div>
+        <h2>Одна платформа. Четыре возможности.</h2>
+        <div className="web-desktop-audience-grid">
+          <article className="web-audience-card"><span>🚛</span><h3>Владельцам грузовиков</h3><p>Помощь на дороге, гараж, история ремонтов и документы.</p></article>
+          <article className="web-audience-card"><span>▦</span><h3>Автопаркам</h3><p>Техника, водители, заявки, доступы и контроль расходов.</p></article>
+          <article className="web-audience-card"><span>🔧</span><h3>Мастерам</h3><p>Заявки по специализации, статусы работ и расчёты.</p></article>
+          <article className="web-audience-card"><span>⚙</span><h3>Рембазам и сервисам</h3><p>Запись клиентов, карточка сервиса и финансовый кабинет.</p></article>
+        </div>
+      </section>
+      <section className="web-desktop-process"><span className="web-landing-eyebrow">КАК ЭТО РАБОТАЕТ</span><h2>От проблемы до результата</h2><div className="web-process-grid"><div><strong>01</strong><b>Опишите ситуацию</b><p>Создайте заявку с данными грузовика.</p></div><div><strong>02</strong><b>Найдите помощь</b><p>Выберите подходящего исполнителя или сервис.</p></div><div><strong>03</strong><b>Следите за работой</b><p>Статусы, связь и детали в одной заявке.</p></div><div><strong>04</strong><b>Сохраните историю</b><p>Результат останется в истории техники.</p></div></div></section>
       <WebsiteShowcase />
       <section className="card web-join-card">
         <h2>Работаете с грузовой техникой?</h2>
