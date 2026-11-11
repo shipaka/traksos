@@ -192,6 +192,13 @@ export class PaymentsService implements PaymentHooks {
 
   private async sync(pay: any, status: string) {
     if (pay.status === status) return { changed: false };
+    // A delayed provider notification must not reopen a settled or cancelled payment.
+    // The local partially_refunded status is also terminal for this payment.
+    if (['captured', 'cancelled', 'failed', 'partially_refunded'].includes(pay.status)) {
+      return { changed: false };
+    }
+    // A hold cannot revert to pending when notifications arrive out of order.
+    if (pay.status === 'held' && status === 'pending') return { changed: false };
     await this.db.query('update payments set status=$2, updated_at=now() where id=$1', [pay.id, status]);
     await this.orders.event(this.db, pay.order_id, null, `payment_${pay.kind}_${status}`, { paymentId: pay.id, total: pay.total });
     if (pay.kind === 'call_out' && status === 'held') {
