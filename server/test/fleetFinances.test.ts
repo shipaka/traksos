@@ -47,9 +47,18 @@ test('fleet finance report does not query company expenses for drivers', async (
 test('QR reassignment revokes previous driver company membership inside transaction', async () => {
   const queries: string[] = [];
   const vehicle = { id: 'vehicle-1', owner_id: 'owner-1', driver_id: 'old-driver', brand: 'DAF', model: 'XF', plate: 'A123AA' };
-  const q = { query: async (sql: string) => { queries.push(sql); return []; } };
+  const q = {
+    one: async (sql: string) => {
+      if (sql.includes('from vehicles where qr_code=')) {
+        assert.match(sql, /for update/, 'QR must be locked during assignment');
+        return vehicle;
+      }
+      if (sql.includes('from users where id=')) return { owner_id: null };
+      return { n: 0 };
+    },
+    query: async (sql: string) => { queries.push(sql); return []; },
+  };
   const db: any = {
-    one: async (sql: string) => sql.includes('from vehicles where qr_code=') ? vehicle : { n: 0 },
     tx: async (fn: (q: any) => Promise<void>) => fn(q),
   };
   const notifier: any = { notify: async () => {} };
