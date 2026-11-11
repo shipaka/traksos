@@ -18,6 +18,7 @@ export function CommonMenu() {
       <div className="sub">Важные разделы под рукой. Дополнительные настройки не мешают повседневной работе.</div>
       <div className="rows">
         <a className="list-item" href={finances.href}><div className="stack" style={{ gap: 2 }}><b>{finances.title}</b><span className="note">{finances.description}</span></div><span aria-hidden="true">›</span></a>
+        {(mode === 'client') && <a className="list-item" href="#/shop"><div className="stack" style={{ gap: 2 }}><b>Магазин</b><span className="note">Запчасти, товары для дороги и мои покупки</span></div><span aria-hidden="true">›</span></a>}
         {(mode === 'client') && <a className="list-item" href="#/garage"><div className="stack" style={{ gap: 2 }}><b>{isDriver ? 'Моя машина' : 'Мой гараж'}</b><span className="note">Карточки автомобилей, заявки и история работ</span></div><span aria-hidden="true">›</span></a>}
         {isOwner && <a className="list-item" href="#/fleet"><div className="stack" style={{ gap: 2 }}><b>Управление автопарком</b><span className="note">Водители, разрешения, лимиты и QR-наклейки</span></div><span aria-hidden="true">›</span></a>}
         <a className="list-item" href="#/support"><div className="stack" style={{ gap: 2 }}><b>Помощь и обращения</b><span className="note">Написать в поддержку или посмотреть ответы модератора</span></div><span aria-hidden="true">›</span></a>
