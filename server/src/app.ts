@@ -345,6 +345,18 @@ export function createApp(d: Deps) {
     const b = parse(z.object({ status: vehicleRequestStatus, note: z.string().max(2000).optional(), policyExpiresOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }), c.body);
     return vehicleRequests.setStatus(c.user, c.params.id, b.status, b.note, b.policyExpiresOn);
   });
+  r.get('/api/insurance-reminders/settings', true, async (c: AuthedCtx) => {
+    const ownerId = c.user.owner_id ?? c.user.id;
+    const row = await d.db.one<{ insurance_reminders_enabled: boolean }>(
+      'select insurance_reminders_enabled from users where id=$1', [ownerId]);
+    return { enabled: row?.insurance_reminders_enabled ?? true };
+  });
+  r.put('/api/insurance-reminders/settings', true, async (c: AuthedCtx) => {
+    if (c.user.owner_id) throw forbidden('Настройками напоминаний управляет владелец');
+    const { enabled } = parse(z.object({ enabled: z.boolean() }), c.body);
+    await d.db.query('update users set insurance_reminders_enabled=$2 where id=$1', [c.user.id, enabled]);
+    return { enabled };
+  });
   r.get('/api/fleet', true, (c: AuthedCtx) => fleet.get(c.user));
   r.put('/api/fleet', true, (c: AuthedCtx) => fleet.set(c.user, parse(z.object({
     mode: z.enum(['limit', 'approve']).optional(),
