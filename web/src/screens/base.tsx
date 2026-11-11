@@ -106,10 +106,18 @@ export function BaseHome() {
           </div>
         </div>
       )}
+      <div className="web-base-overview">
       <div className="grid3">
         <div className="card tile"><span className="label">Запросы</span><span className="tile-value">{groups.requests.length}</span></div>
         <div className="card tile"><span className="label">Ожидаем</span><span className="tile-value">{groups.expected.length}</span></div>
         <div className="card tile"><span className="label">В ремонте</span><span className="tile-value">{groups.repair.length}</span></div>
+      </div>
+      </div>
+      <div className="web-base-actions" aria-label="Быстрые действия рембазы">
+        <a className="linkrow" href="#/base/money"><span><b>Финансовый кабинет</b><small>Начисления, выплаты и счета</small></span><span aria-hidden="true">›</span></a>
+        <a className="linkrow" href="#/base/me"><span><b>Карточка рембазы</b><small>График, услуги и доступность</small></span><span aria-hidden="true">›</span></a>
+        <a className="linkrow" href="#/support"><span><b>Помощь и модерация</b><small>Задать вопрос или сообщить о проблеме</small></span><span aria-hidden="true">›</span></a>
+      </div>
       </div>
       <div className="scroll-x" role="tablist">
         {([['req', `Входящие запросы · ${groups.requests.length}`], ['cars', `Машины у вас · ${cars.length}`], ['done', 'Закрытые']] as const).map(([k, n]) => (
