@@ -60,9 +60,9 @@ export class OnsiteService {
   async clientCard(user: AuthUser, orderId: string) {
     const o = await this.db.one('select * from orders where id=$1', [orderId]);
     if (!o) throw notFound();
-    const allowed = o.performer_id === user.id
-      || !!(await this.db.one(`select 1 from order_dispatch where order_id=$1 and performer_id=$2 and status in ('ringing','bidding')`, [orderId, user.id]));
-    if (!allowed) throw forbidden();
+    // Полная карточка содержит ИНН, госномер и историю ремонтов.
+    // Кандидатам на заказ она недоступна до назначения исполнителем.
+    if (o.performer_id !== user.id) throw forbidden();
     const client = await this.db.one(`select id, name, company_name, company_inn, rating::float as rating, rating_count, created_at from users where id=$1`, [o.client_id]);
     // Метки исполнителей: из отзывов о клиенте и отметок на месте
     const tags = await this.db.query<{ tag: string; n: number }>(
