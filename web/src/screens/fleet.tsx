@@ -12,6 +12,8 @@ const ALLOW: [string, string, string][] = [
   ['consult', 'Консультация по телефону', '700 ₽'],
   ['service', 'Запись в сервис', 'рембазы-партнёры'],
   ['shop', 'Магазин', 'покупки запчастей'],
+  ['insurance', 'Страхование', 'подача заявок только с разрешения владельца'],
+  ['inspection', 'Техосмотр', 'запись и подача заявок только с разрешения владельца'],
 ];
 const esc = (x: unknown) => String(x ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[c]);
 const stickerUrl = (code: string) => `${API_URL || location.origin}/#/qr/${code}`;
