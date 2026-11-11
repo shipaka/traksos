@@ -594,3 +594,28 @@ select.field { appearance: none; }
 .website .web-base-actions > .linkrow { height: 100%; min-width: 0; padding: 12px 16px; }
 @media (max-width: 1100px) { .website .web-base-overview { grid-template-columns: 1fr; } }
 .native-app .web-base-actions { display: none; }
+
+/* Типографика и навигация: не режем русские слова посередине. */
+.app, .website-workspace, .website-work-area, main, section, .stack, .card,
+.linkrow, .list-item, .row, .between, .field, .banner, .web-feature { min-width: 0; }
+.app p, .app b, .app small, .app .note, .app .sub, .app .label,
+.app .list-item, .app .linkrow, .app .card, .app .banner {
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: none;
+}
+.app .tabbar a { min-width: 0; text-align: center; white-space: nowrap; font-size: clamp(9px, 2.8vw, 11.5px); }
+.app .tabbar a .ic { display: block; flex-shrink: 0; }
+.app .top .bell { flex-shrink: 0; }
+.website .website-sidebar nav a { min-width: 0; overflow-wrap: break-word; }
+.website .website-sidebar nav a .sidebar-glyph { flex-shrink: 0; }
+.website .website-work-area .card summary, .website .finance-table td {
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+.native-app .top-profile-link, .native-app .top-menu-link { display: none; }
+@media (max-width: 380px) {
+  .native-app .top .pill { display: none; }
+  .native-app .tabbar { width: calc(100% - 20px); padding: 6px 4px; gap: 1px; }
+  .native-app .tabbar a { padding-inline: 0; }
+}
