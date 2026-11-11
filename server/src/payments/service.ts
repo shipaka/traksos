@@ -14,7 +14,7 @@ import type { SettingsService } from '../services/settings.ts';
 import type { Notifier } from '../services/notify.ts';
 import type { OrdersService, PaymentHooks } from '../services/orders.ts';
 import type { PaymentProvider, ProviderStatus } from './provider.ts';
-import { HttpError, bad, forbidden, notFound, type AuthUser } from '../http/router.ts';
+import { HttpError, bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { cancelSplit, commissionPct, pct, split, type CancelStage } from '../domain/money.ts';
 import { agentReceipt } from './yookassa.ts';
 import { config } from '../config.ts';
@@ -119,6 +119,11 @@ export class PaymentsService implements PaymentHooks {
     const base: number = order.call_out_amount ?? order.estimate.callOut;
     const c = cancelSplit(scale, stage as CancelStage, base, pct(base, Number(order.client_fee_pct)));
     const keep = c.toPerformer + c.platformKeeps;
+    // A partial capture cannot exceed the amount actually authorized by the provider.
+    // Fail before contacting the provider rather than recording a negative refund.
+    if (!Number.isFinite(keep) || keep < 0 || keep > Number(pay.total)) {
+      throw conflict('capture_exceeds_hold', 'Удержание при отмене превышает замороженную сумму — требуется проверка платежа');
+    }
     c.refund = pay.total - keep; // замороженный потолок минус удержанное
     if (keep === 0) {
       await this.provider.cancel(pay.provider_payment_id);
