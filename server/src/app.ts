@@ -341,8 +341,8 @@ export function createApp(d: Deps) {
   r.post('/api/vehicle-service-requests/:id/cancel', true, (c: AuthedCtx) => vehicleRequests.cancel(c.user, c.params.id));
   r.get('/api/admin/vehicle-service-requests', staff, (c: AuthedCtx) => vehicleRequests.queue(c.user));
   r.patch('/api/admin/vehicle-service-requests/:id', staff, (c: AuthedCtx) => {
-    const b = parse(z.object({ status: vehicleRequestStatus, note: z.string().max(2000).optional() }), c.body);
-    return vehicleRequests.setStatus(c.user, c.params.id, b.status, b.note);
+    const b = parse(z.object({ status: vehicleRequestStatus, note: z.string().max(2000).optional(), policyExpiresOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }), c.body);
+    return vehicleRequests.setStatus(c.user, c.params.id, b.status, b.note, b.policyExpiresOn);
   });
   r.get('/api/fleet', true, (c: AuthedCtx) => fleet.get(c.user));
   r.put('/api/fleet', true, (c: AuthedCtx) => fleet.set(c.user, parse(z.object({
