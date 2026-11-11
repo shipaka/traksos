@@ -423,6 +423,7 @@ export function createApp(d: Deps) {
 
   // Рембаза: кабинет сервиса ---------------------------------------------------
   const centerSchema = z.object({
+    arrivalNotes: z.string().max(600).optional(),
     name: z.string().min(2).max(120).optional(), address: z.string().min(3).max(300).optional(),
     lat: z.number().min(-90).max(90).nullable().optional(), lng: z.number().min(-180).max(180).nullable().optional(),
     hours: z.string().max(60).optional(), inn: z.string().max(12).nullable().optional(),
