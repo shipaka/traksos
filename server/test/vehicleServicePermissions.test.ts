@@ -282,3 +282,23 @@ test('a new explicit rejection reason is accepted', async () => {
   const update = calls.find(c => c.sql.startsWith('update vehicle_service_requests'));
   assert.equal(update?.params[2], 'Нет доступного партнёра');
 });
+
+test('old document request note is cleared after completing a later inspection stage', async () => {
+  const { db, calls } = mockDb({
+    id: 'request-1', kind: 'inspection', status: 'sent_to_partner',
+    staff_note: 'Пришлите фото свидетельства',
+  });
+  await new VehicleServiceRequests(db).setStatus(admin, 'request-1', 'completed');
+  const update = calls.find(c => c.sql.startsWith('update vehicle_service_requests'));
+  assert.equal(update?.params[2], null);
+});
+
+test('new staff note is preserved on a later status transition', async () => {
+  const { db, calls } = mockDb({
+    id: 'request-1', kind: 'inspection', status: 'sent_to_partner',
+    staff_note: 'Нужны документы',
+  });
+  await new VehicleServiceRequests(db).setStatus(admin, 'request-1', 'completed', 'Техосмотр завершён');
+  const update = calls.find(c => c.sql.startsWith('update vehicle_service_requests'));
+  assert.equal(update?.params[2], 'Техосмотр завершён');
+});
