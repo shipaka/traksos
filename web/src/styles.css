@@ -494,3 +494,40 @@ select.field { appearance: none; }
   .website .web-finance-metrics { grid-template-columns: 1fr; }
   .website .web-finance-metrics > .card { min-height: 108px; }
 }
+
+
+/* Главный экран сайта: промо возможностей на первой прокрутке. */
+.website .web-hero-featured { position: relative; overflow: hidden; }
+.website .web-hero-layout { display: grid; grid-template-columns: minmax(0,1.05fr) minmax(0,.95fr); gap: clamp(25px,4vw,55px); align-items: center; }
+.website .web-hero-featured .web-hero-content { min-width: 0; position: relative; z-index: 1; }
+.website .web-hero-featured h1 { font-size: clamp(32px,4vw,53px); max-width: 570px; }
+.website .web-hero-featured p { font-size: clamp(15px,1.2vw,17px); }
+.website .web-hero-discover { display: inline-block; margin-top: 24px; font-weight: 700; text-decoration: none; font-size: 14px; }
+.website .web-hero-visual { min-width: 0; position: relative; padding: 12px 8px 35px 0; }
+.website .web-hero-screen { background: #181c21; border: 1px solid #51575d; border-radius: 16px; overflow: hidden; box-shadow: 0 24px 75px rgba(0,0,0,.45); transform: rotate(1deg); }
+.website .web-hero-screen-top { padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; background: #34383e; font-size: 9px; color: #a7aab0; gap: 8px; }
+.website .web-hero-screen-top span { color: #ee915a; letter-spacing: 3px; }
+.website .web-hero-screen-body { padding: 28px 24px 33px; display: grid; gap: 12px; }
+.website .web-hero-screen-tag { color: var(--accent); font-size: 10px; font-weight: 800; letter-spacing: .12em; }
+.website .web-hero-screen-title { font-size: 22px; font-weight: 800; margin-bottom: 12px; line-height: 1.2; }
+.website .web-hero-mini-card { display: flex; align-items: center; gap: 12px; background: #282e34; border: 1px solid #3c434b; padding: 14px; border-radius: 12px; }
+.website .web-hero-mini-card > span { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 10px; color: var(--accent); background: #3a332d; flex-shrink: 0; font-size: 21px; }
+.website .web-hero-mini-card > div { display: grid; gap: 3px; flex: 1; min-width: 0; }
+.website .web-hero-mini-card b { font-size: 13px; }
+.website .web-hero-mini-card small { color: #bbc0c6; font-size: 11px; }
+.website .web-hero-mini-card i { font-style: normal; color: var(--accent); }
+.website .web-hero-float { position: absolute; display: flex; gap: 10px; bottom: 3px; left: -28px; align-items: center; background: #ecf0ec; color: #232629; padding: 13px 17px; border-radius: 14px; box-shadow: 0 15px 40px rgba(0,0,0,.3); transform: rotate(-3deg); }
+.website .web-hero-float > span { background: #cce8d0; color: #167b3a; border-radius: 50%; display: grid; place-items: center; width: 32px; height: 32px; font-weight: 800; }
+.website .web-hero-float > div { display: grid; gap: 2px; }
+.website .web-hero-float b { font-size: 12px; }
+.website .web-hero-float small { font-size: 10px; color: #4f5559; }
+@media (max-width: 980px) {
+  .website .web-hero-layout { grid-template-columns: 1fr; }
+  .website .web-hero-featured h1 { max-width: 800px; }
+  .website .web-hero-visual { max-width: 580px; margin: 12px auto 0; width: 100%; }
+}
+@media (max-width: 520px) {
+  .website .web-hero-visual { padding-left: 10px; padding-right: 12px; }
+  .website .web-hero-screen-body { padding: 18px 16px; }
+  .website .web-hero-float { left: 0; }
+}
