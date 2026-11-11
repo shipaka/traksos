@@ -56,3 +56,23 @@ test('QR reassignment revokes previous driver company membership inside transact
   await new FleetService(db, notifier, {} as any).qrJoin({ id: 'new-driver', roles: [] } as any, 'valid-code');
   assert.ok(queries.some(sql => /update users set owner_id=null/.test(sql) && /not exists/.test(sql)), 'previous driver loses company access when no vehicles remain');
 });
+
+test('owner rotating QR removes old driver membership, not just vehicle assignment', async () => {
+  const queries: string[] = [];
+  const q = {
+    one: async () => ({ driver_id: 'old-driver' }),
+    query: async (sql: string) => { queries.push(sql); return []; },
+  };
+  const db: any = {
+    tx: async (fn: (q: any) => Promise<void>) => fn(q),
+    one: async () => ({ fleet: {}, company_name: 'Company' }),
+    query: async () => [],
+  };
+  const notifications: string[][] = [];
+  const notifier: any = { notify: async (ids: string[]) => { notifications.push(ids); } };
+  const service = new FleetService(db, notifier, { monthSpent: async () => 0 } as any);
+  await service.newQr(owner, 'vehicle-1');
+  assert.ok(queries.some(sql => /driver_id=null/.test(sql)));
+  assert.ok(queries.some(sql => /update users set owner_id=null/.test(sql) && /not exists/.test(sql)));
+  assert.deepEqual(notifications, [['old-driver']]);
+});
