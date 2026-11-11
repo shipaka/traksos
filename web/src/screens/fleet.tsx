@@ -145,6 +145,64 @@ export function Fleet() {
   );
 }
 
+/** Owner's agreed costs by vehicle. A bank statement will be a separate integration. */
+export function FleetFinances() {
+  const { me } = useMe();
+  const q = new URLSearchParams(location.hash.split('?')[1] ?? '');
+  const [vehicleId, setVehicleId] = useState(q.get('vehicle') ?? '');
+  const report = useLoad(() => get('/api/fleet/finances'), [], (e) => e.type === 'order');
+  if (me?.owner_id) return <main><Back to="garage" /><div className="empty">Финансы компании доступны только владельцу.</div></main>;
+  const items: any[] = report.data?.items ?? [];
+  const shown = vehicleId ? items.filter((o: any) => o.vehicleId === vehicleId) : items;
+  const total = shown.reduce((sum: number, o: any) => sum + Number(o.agreedTotal ?? 0), 0);
+  const cars = [...new Map(items.filter((o: any) => o.vehicleId).map((o: any) => [
+    o.vehicleId, { id: o.vehicleId, label: [o.brand, o.model, o.plate].filter(Boolean).join(' · ') || 'Автомобиль' },
+  ])).values()] as { id: string; label: string }[];
+  const methods: Record<string, string> = { cash: 'Наличные', online: 'Онлайн', invoice: 'По счёту' };
+  const statuses: Record<string, string> = {
+    completed: 'Сумма согласована', cancelled: 'Отменена', no_performer: 'Без исполнителя',
+    awaiting_owner: 'Ожидает владельца', awaiting_confirmation: 'Сверка суммы',
+  };
+  return (
+    <main>
+      <Back to="fleet" label="Мой парк" />
+      <h1>Финансы автопарка</h1>
+      <div className="sub">Суммы по заявкам ваших машин: что делали, кому поручено и когда согласован итог.</div>
+      <div className="card">
+        <span className="label">Согласовано по выполненным заявкам</span>
+        <b style={{ fontSize: 24 }}>{rub(total)}</b>
+        <span className="note">Это реестр согласованных сумм, не подтверждение списания денег. Фактические платежи и возвраты будут отображаться отдельно после интеграции платёжных документов.</span>
+      </div>
+      {!report.data ? <Loading error={report.error} /> : (
+        <>
+          <label className="stack">
+            <span className="label">Автомобиль</span>
+            <select className="field" value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
+              <option value="">Весь автопарк</option>
+              {cars.map((car) => <option key={car.id} value={car.id}>{car.label}</option>)}
+            </select>
+          </label>
+          {!shown.length && <div className="empty">По выбранной машине заказов пока нет.</div>}
+          <div className="rows">
+            {shown.map((o: any) => (
+              <a key={o.id} className="list-item" href={`#/order/${o.id}`}>
+                <div className="stack" style={{ gap: 4 }}>
+                  <b>№{o.number} · {o.description || o.service}</b>
+                  <span className="note">{[o.brand, o.model, o.plate].filter(Boolean).join(' · ') || 'Без привязки к машине'}</span>
+                  <span className="note">Заказ: {fmtTime(o.createdAt)}{o.completedAt ? ` · Согласовано: ${fmtTime(o.completedAt)}` : ''}</span>
+                  <span className="note">Водитель/заказчик: {o.driverName ?? '—'} · Исполнитель: {o.performerName ?? 'не назначен'}</span>
+                  <span className="note">{statuses[o.status] ?? o.status} · {methods[o.paymentMethod] ?? 'Способ не выбран'}</span>
+                </div>
+                <b>{o.agreedTotal == null ? '—' : rub(o.agreedTotal)}</b>
+              </a>
+            ))}
+          </div>
+        </>
+      )}
+    </main>
+  );
+}
+
 function Sticker({ car }: { car: any }) {
   const url = stickerUrl(car.qrCode);
   const svg = qrSvg(url);
