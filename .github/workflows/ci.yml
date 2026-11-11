@@ -2,7 +2,7 @@ name: Проверка
 
 on:
   push:
-    branches: [main]
+    branches: [main, feature/vehicle-insurance-workflows]
   pull_request:
 
 jobs:
