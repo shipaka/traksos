@@ -262,3 +262,23 @@ test('vehicle service history includes timeline only after ownership check', asy
   assert.match(captured[0].sql, /r\.vehicle_id=\$1 and r\.owner_id=\$2/);
   assert.deepEqual(captured[0].params, ['vehicle-1', 'owner-1', ['insurance', 'inspection']]);
 });
+
+test('a prior staff comment cannot be reused as the reason for a new rejection', async () => {
+  const { db, calls } = mockDb({
+    id: 'request-1', kind: 'inspection', status: 'sent_to_partner',
+    staff_note: 'Передали партнёру для обработки',
+  });
+  await assert.rejects(new VehicleServiceRequests(db).setStatus(admin, 'request-1', 'rejected'), /причину отказа/);
+  assert.equal(calls.some(c => c.sql.startsWith('update vehicle_service_requests')), false);
+});
+
+test('a new explicit rejection reason is accepted', async () => {
+  const { db, calls } = mockDb({
+    id: 'request-1', kind: 'inspection', status: 'sent_to_partner',
+    staff_note: 'Передали партнёру для обработки',
+  });
+  const result = await new VehicleServiceRequests(db).setStatus(admin, 'request-1', 'rejected', 'Нет доступного партнёра');
+  assert.equal(result?.status, 'rejected');
+  const update = calls.find(c => c.sql.startsWith('update vehicle_service_requests'));
+  assert.equal(update?.params[2], 'Нет доступного партнёра');
+});
