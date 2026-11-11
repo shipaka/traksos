@@ -34,7 +34,7 @@ test('staff can perform allowed transitions but cannot skip states', async () =>
   const { db } = mockDb();
   const service = new VehicleServiceRequests(db);
   const result = await service.setStatus(admin, 'request-1', 'in_review');
-  assert.equal(result.status, 'in_review');
+  assert.equal(result?.status, 'in_review');
   await assert.rejects(service.setStatus(moderator, 'request-1', 'completed'));
 });
 
@@ -49,7 +49,7 @@ test('insurance completion requires a valid policy expiry', async () => {
   await assert.rejects(service.setStatus(admin, 'request-1', 'completed'));
   await assert.rejects(service.setStatus(admin, 'request-1', 'completed', undefined, '2026-02-30'));
   const result = await service.setStatus(admin, 'request-1', 'completed', undefined, '2027-02-28');
-  assert.equal(result.status, 'completed');
+  assert.equal(result?.status, 'completed');
 });
 
 test('cancellation SQL restricts status, owner and driver permission', async () => {
