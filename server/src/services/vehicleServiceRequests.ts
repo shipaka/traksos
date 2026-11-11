@@ -69,10 +69,12 @@ export class VehicleServiceRequests {
            and status in ('submitted','in_review','need_documents','sent_to_partner')
          limit 1`, [owner, vehicleId, kind]);
       if (active) throw bad('duplicate_request', 'По этой машине уже есть активная заявка на эту услугу');
-      return q.one(
+      const created = await q.one(
         `insert into vehicle_service_requests(owner_id, requested_by, vehicle_id, kind, comment)
          values ($1,$2,$3,$4,$5) returning *`,
         [owner, user.id, vehicleId, kind, comment ?? null]);
+      if (!created) throw notFound('Не удалось создать заявку');
+      return created;
     });
   }
 
@@ -116,9 +118,11 @@ export class VehicleServiceRequests {
           throw bad('expired_policy', 'Дата окончания нового полиса должна быть позже сегодняшнего дня');
         }
       }
-      return q.one(
+      const updated = await q.one(
         `update vehicle_service_requests set status=$2, staff_note=$3, assigned_to=$4, policy_expires_on=coalesce($5::date, policy_expires_on), updated_at=now()
          where id=$1 returning *`, [id, status, note?.trim() || null, staff.id, policyExpiresOn ?? null]);
+      if (!updated) throw notFound('Заявка не найдена');
+      return updated;
     });
   }
 
