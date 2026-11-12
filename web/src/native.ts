@@ -8,6 +8,8 @@ const bridge = (window as any).TrakSOSNative as undefined | {
   setSession(apiUrl: string, token: string | null): void;
   pushToken(): string;
   performerOnline(): void;
+  appLockEnabled(): boolean;
+  setAppLockEnabled(enabled: boolean): boolean;
 };
 
 const listeners: Record<string, ((d: any) => void)[]> = {};
@@ -35,6 +37,14 @@ export const native = {
   /** Исполнитель на линии: приложение попросит разрешить вызов на весь экран (Android 14+) */
   performerOnline() {
     bridge?.performerOnline();
+  },
+
+  /** Android optionally unlocks the same saved session with fingerprint or system device PIN. */
+  appLockEnabled(): boolean {
+    try { return bridge?.appLockEnabled?.() === true; } catch { return false; }
+  },
+  setAppLockEnabled(enabled: boolean): boolean {
+    try { return bridge?.setAppLockEnabled?.(enabled) === true; } catch { return false; }
   },
 
   /** Ответ на вызов из уведомления или экрана блокировки (уже отправлен приложением — handled) */
