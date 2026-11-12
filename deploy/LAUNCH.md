@@ -42,6 +42,23 @@ curl -i https://traksos.ru/api/health
 - На публичной карте демо-точки подписаны как условные, без личных данных; услуги ограничены Санкт-Петербургом и Ленинградской областью.
 - Для приложения указан только RuStore; ссылка на скачивание появится после публикации.
 
+## Резервные копии и восстановление
+Контейнер `backup` ежедневно создаёт атомарный PostgreSQL-архив `deploy/backups/traksos-YYYY-MM-DD.dump`. Неудачная выгрузка не заменяет вчерашний архив; каждый файл проверяется `pg_restore --list`. Локальная история хранится приблизительно две недели. Нужны **внешние** зашифрованные копии/снимки дисков у российского хостера: единственный VPS не защищает от его полного отказа.
+
+Проверка архива на VPS (без публикации содержимого):
+```bash
+cd ~/traksos/deploy
+sudo docker compose exec backup sh -c 'ls -lh /backups/traksos-*.dump'
+sudo docker compose exec backup sh -c 'pg_restore -l "$(ls -1t /backups/traksos-*.dump | head -1)" >/dev/null && echo BACKUP_OK'
+```
+После первого запуска выполните пробное восстановление в отдельную тестовую БД, **не поверх работающей базы**:
+```bash
+sudo docker compose exec db createdb -U traksos traksos_restore_test
+sudo docker compose exec backup sh -c 'pg_restore -h db -U traksos -d traksos_restore_test --no-owner --no-acl "$(ls -1t /backups/traksos-*.dump | head -1)"'
+sudo docker compose exec db dropdb -U traksos traksos_restore_test
+```
+Если проверка или восстановление не проходят, запуск реальных данных блокируется до исправления.
+
 ## Обновление
 ```bash
 cd ~/traksos
