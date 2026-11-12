@@ -76,7 +76,7 @@ export class ReferralService {
 
   async grant(q: Queryable, p: { userId: string; amount: number; kind: string; orderId?: string | null; bookingId?: string | null; refUserId?: string | null; note: string }) {
     if (p.amount <= 0) return 0;
-    await q.query('select id from users where id=$1 for update', [p.userId]);
+    await q.query('select id from users where id=$1 for no key update', [p.userId]);
     const key = ['ref_client', 'ref_performer', 'ref_service', 'welcome'].includes(p.kind)
       ? [p.kind, p.orderId ?? p.bookingId ?? p.refUserId ?? '', p.userId].join(':') : null;
     const inserted = await q.query(
@@ -98,7 +98,7 @@ export class ReferralService {
 
   async spend(q: Queryable, userId: string, base: number, note: string, orderId?: string | null, bookingId?: string | null, want?: number | null) {
     // Сериализуем расход по кошельку: второй запрос увидит уже списанные баллы.
-    await q.query('select id from users where id=$1 for update', [userId]);
+    await q.query('select id from users where id=$1 for no key update', [userId]);
     const a = await this.available(userId, base, q);
     const use = Math.max(0, Math.min(a.max, want ?? a.max));
     if (use <= 0) return 0;
@@ -191,7 +191,7 @@ export class ReferralService {
       const r = await this.settings.get('referral');
       const o = await q.one<{ referred_by: string | null }>('select referred_by from users where id=$1', [ownerId]);
       if (!o?.referred_by) return 0;
-      await q.query('select id from users where id=$1 for update', [o.referred_by]);
+      await q.query('select id from users where id=$1 for no key update', [o.referred_by]);
       const b = await q.one<{ commission: number; points: number; discount: number }>(
         `select b.commission, b.points, b.discount from service_bookings b join service_centers c on c.id=b.center_id
          where b.id=$1 and c.owner_id=$2 and b.status='closed' and b.paid_out_at is not null`, [bookingId, ownerId]);
