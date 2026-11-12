@@ -2,6 +2,7 @@ import { chromium } from 'playwright';
 
 const base = process.env.BASE_URL ?? 'http://localhost:8080';
 async function acceptPendingOffers(page) {
+  await page.waitForTimeout(900); // Wait for async current-offer lookup after login.
   // Seeded demo accounts receive current client/partner offers on first sign-in.
   // Accept them through the actual UI before testing navigation beneath the modal.
   for (let i = 0; i < 4; i++) {
