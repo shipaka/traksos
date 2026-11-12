@@ -22,6 +22,7 @@ import { DocumentsService } from './services/documents.ts';
 import { AdminService } from './services/admin.ts';
 import { SupportService, TOPICS } from './services/support.ts';
 import { StatsService } from './services/stats.ts';
+import { OpsService } from './services/ops.ts';
 import { OnsiteService } from './services/onsite.ts';
 import { ServiceCenters } from './services/service.ts';
 import { FleetService } from './services/fleet.ts';
@@ -69,6 +70,8 @@ export function createApp(d: Deps) {
   const admin = new AdminService(d.db, notifier, orders, payments, profiles, settings, now);
   const support = new SupportService(d.db, notifier, orders, now);
   const stats = new StatsService(d.db, now);
+  const ops = new OpsService(d.db, now);
+  orders.ops = ops;
   const centers = new ServiceCenters(d.db, notifier, settings, support, now);
   const referral = new ReferralService(d.db, settings, notifier, now);
   referral.ledger = payments.ledger.bind(payments);
@@ -176,6 +179,38 @@ export function createApp(d: Deps) {
   r.post('/api/support/:id/close', true, (c: AuthedCtx) => support.close(c.user, c.params.id));
   r.get('/api/live', true, () => stats.live());
   r.get('/api/admin/stats', staff, (c: AuthedCtx) => stats.overview(Math.min(365, Math.max(1, Number(c.query.get('days') ?? 30)))));
+
+  // Operational demand analysis does not overwrite or hide any order.
+  r.get('/api/admin/demand', staff, (c: AuthedCtx) =>
+    ops.demand(Math.min(365,Math.max(1,Number(c.query.get('days') ?? 7))),
+      Math.min(240,Math.max(5,Number(c.query.get('wait') ?? 15)))));
+  r.put('/api/admin/demand/:id/review', ['admin'], (c: AuthedCtx) => {
+    const b=parse(z.object({state:z.enum(['open','investigating','resolved']),
+      note:z.string().max(1200)}),c.body);
+    return ops.review(c.user,c.params.id,b.state,b.note);
+  });
+  r.get('/api/admin/announcements', staff, () => ops.announcements(undefined,true));
+  r.post('/api/admin/announcements', ['admin'], (c: AuthedCtx) =>
+    ops.publish(c.user,parse(z.object({
+      audience:z.enum(['master','tow','service','all_workers']),
+      service:z.enum(['electric','diag','air','autonomy','tyre','tow','consult','ecu']).nullish(),
+      title:z.string().trim().min(3).max(140),body:z.string().trim().min(3).max(3000),
+      startsAt:z.string().datetime(),endsAt:z.string().datetime(),published:z.boolean(),
+    }),c.body)));
+  r.get('/api/worker/announcements', performerRoles, (c: AuthedCtx) => {
+    const kind = c.user.roles.includes('service') && c.query.get('audience') === 'service' ? 'service'
+      : c.user.roles.includes('tow') ? 'tow' : c.user.roles.includes('master') ? 'master' : 'service';
+    return ops.announcements(kind, false, c.query.get('service') ?? undefined);
+  });
+  r.get('/api/admin/commission-campaigns', staff, () => ops.campaigns());
+  r.post('/api/admin/commission-campaigns', ['admin'], (c: AuthedCtx) =>
+    ops.campaign(c.user,parse(z.object({
+      service:z.enum(['electric','diag','air','autonomy','tyre','tow','consult','ecu']).nullish(),
+      commissionPct:z.number().min(0).max(100),
+      startsAt:z.string().datetime(),endsAt:z.string().datetime(),
+      enabled:z.boolean(),reason:z.string().trim().min(3).max(500),
+    }),c.body)));
+
   r.get('/api/admin/support', staff, (c: AuthedCtx) => support.queue(c.query.get('status') === 'closed' ? 'closed' : 'open'));
   r.get('/api/me/referral', true, (c: AuthedCtx) => referral.mine(c.user));
   r.get('/api/me/offers', true, (c: AuthedCtx) => offers.status(c.user));
@@ -661,7 +696,7 @@ export function createApp(d: Deps) {
     }
   }
 
-  return { handle, hub, auth, settings, orders, payments, auction, documents, admin, profiles, chat, reviews, offers, notifier, privacy, router: r };
+  return { handle, hub, auth, settings, orders, payments, auction, documents, admin, profiles, chat, reviews, offers, notifier, privacy, ops, router: r };
 }
 
 export type App = ReturnType<typeof createApp>;
