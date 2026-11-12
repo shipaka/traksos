@@ -39,6 +39,9 @@ import android.webkit.WebViewClient
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
+import android.os.SystemClock
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
@@ -51,6 +54,68 @@ import java.lang.ref.WeakReference
 /** Оболочка: сайт ТракSOS в WebView + мост для пушей и вызовов */
 class MainActivity : AppCompatActivity() {
     private lateinit var web: WebView
+    private lateinit var appRoot: FrameLayout
+    private var lockCover: View? = null
+    private var unlockInProgress = false
+    private var pausedAt = 0L
+    private val appLockPrefs by lazy { getSharedPreferences("traksos_app_security", MODE_PRIVATE) }
+    private val allowedAuthenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG or
+        BiometricManager.Authenticators.DEVICE_CREDENTIAL
+
+    /** Fast unlock only protects foreground UI. It does not log out a worker or change line status. */
+    fun appLockEnabled(): Boolean = appLockPrefs.getBoolean("enabled", false)
+
+    fun setAppLockEnabled(value: Boolean): Boolean {
+        if (value && BiometricManager.from(this).canAuthenticate(allowedAuthenticators) != BiometricManager.BIOMETRIC_SUCCESS)
+            return false
+        appLockPrefs.edit().putBoolean("enabled", value).apply()
+        return true
+    }
+
+    private fun requireAppUnlock() {
+        if (lockCover != null || unlockInProgress || !appLockEnabled() || Session.token(this) == null) return
+        val cover = FrameLayout(this).apply {
+            setBackgroundColor(Color.rgb(5, 23, 41))
+            isClickable = true
+            isFocusable = true
+            contentDescription = "ТракSOS заблокирован. Разблокируйте устройство."
+        }
+        val label = TextView(this).apply {
+            text = "ТракSOS\\nРазблокируйте приложение"
+            textSize = 21f
+            setTextColor(Color.WHITE)
+            gravity = Gravity.CENTER
+        }
+        cover.addView(label, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
+        appRoot.addView(cover, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
+        lockCover = cover
+        requestAppUnlock()
+    }
+
+    private fun requestAppUnlock() {
+        if (unlockInProgress || lockCover == null) return
+        unlockInProgress = true
+        val prompt = BiometricPrompt(this, ContextCompat.getMainExecutor(this),
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    super.onAuthenticationSucceeded(result)
+                    unlockInProgress = false
+                    lockCover?.let { appRoot.removeView(it) }
+                    lockCover = null
+                }
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    super.onAuthenticationError(errorCode, errString)
+                    unlockInProgress = false
+                    // No access to the WebView when cancelled: tap the cover to retry.
+                }
+            })
+        lockCover?.setOnClickListener { requestAppUnlock() }
+        prompt.authenticate(BiometricPrompt.PromptInfo.Builder()
+            .setTitle("Разблокировать ТракSOS")
+            .setSubtitle("Отпечаток пальца или код блокировки телефона")
+            .setAllowedAuthenticators(allowedAuthenticators)
+            .build())
+    }
     private lateinit var bundledAssets: WebViewAssetLoader
     private var startupOverlay: View? = null
     private var fileUploadCallback: ValueCallback<Array<Uri>>? = null
@@ -86,6 +151,7 @@ class MainActivity : AppCompatActivity() {
             .build()
         web = WebView(this)
         val root = FrameLayout(this)
+        appRoot = root
         // Android 15 enforces edge-to-edge. The web header must not sit behind
         // clock, network/battery icons or the bottom gesture navigation bar.
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -214,10 +280,14 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         foreground = true
+        val elapsed = SystemClock.elapsedRealtime()
+        if (appLockEnabled() && Session.token(this) != null &&
+            (pausedAt == 0L || elapsed - pausedAt > 20_000L)) requireAppUnlock()
     }
 
     override fun onPause() {
         foreground = false
+        pausedAt = SystemClock.elapsedRealtime()
         super.onPause()
     }
 
@@ -478,6 +548,13 @@ class WebBridge(private val activity: MainActivity) {
         }
         return ""
     }
+
+    /** Opt-in app lock. Android system credentials are used, never a home-made PIN database. */
+    @JavascriptInterface
+    fun appLockEnabled(): Boolean = activity.appLockEnabled()
+
+    @JavascriptInterface
+    fun setAppLockEnabled(value: Boolean): Boolean = activity.setAppLockEnabled(value)
 
     /** Исполнитель вышел на линию — проверим, разрешён ли показ вызова на весь экран */
     @JavascriptInterface
