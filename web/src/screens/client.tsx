@@ -4,6 +4,7 @@ import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF, QUICK_WHAT, ON_SITE, s
 import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFields, LiveStrip, type VehicleValue } from '../ui.tsx';
 import { BookingRows } from './base.tsx';
 import { DriverRules } from './fleet.tsx';
+import { native } from '../native.ts';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
 
@@ -812,11 +813,24 @@ export function Profile() {
   const [name, setName] = useState(me?.name ?? '');
   const [company, setCompany] = useState(me?.company_name ?? '');
   const [inn, setInn] = useState(me?.company_inn ?? '');
+  const [appLock, setAppLock] = useState(() => native.appLockEnabled());
   if (!me) return null;
   const isPerformer = me.roles.some((r) => ['master', 'tow', 'service'].includes(r));
   return (
     <main>
       <h1>Профиль</h1>
+      {native.isApp && <div className="card">
+        <b>Быстрый безопасный вход</b>
+        <label className="row" style={{ alignItems: 'center' }}>
+          <input type="checkbox" checked={appLock} onChange={(e) => {
+            const value = e.target.checked;
+            if (native.setAppLockEnabled(value)) setAppLock(value);
+            else window.alert('Чтобы включить защиту, настройте отпечаток пальца или код блокировки телефона.');
+          }} />
+          <span>Разблокировать ТракSOS отпечатком или PIN телефона</span>
+        </label>
+        <span className="note">При возвращении в приложение после перерыва. Статус «На линии» и входящие вызовы не отключаются.</span>
+      </div>}
       <a href="#/invite" className="card" style={{ textDecoration: 'none', color: 'inherit', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <span><b>🎁 Пригласить и получать баллы</b><small className="note" style={{ display: 'block' }}>Баллы гасят сбор и комиссию ТракSOS</small></span><span>›</span>
       </a>
