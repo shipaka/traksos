@@ -659,3 +659,9 @@ select.field { appearance: none; }
 }
 .public-map-native-demo b{font-size:17px;font-weight:900;}
 .public-map-native-demo span{color:#a6c9e4;}
+
+/* Connection status: keep the local UI usable, but never suggest offline orders are live. */
+.traksos-connection-banner{padding:11px 15px;color:#f6e7e3;background:#53351a;
+  border:1px solid #9b6544;border-radius:10px;font-size:12px;line-height:1.5;margin:10px 0;}
+.traksos-start-loading{min-height:100vh;background:#061426;color:#fff;
+  display:grid;place-items:center;font:600 15px system-ui,sans-serif;}

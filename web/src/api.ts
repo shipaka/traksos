@@ -13,6 +13,7 @@ export const getToken = () => token;
 export function setToken(t: string | null) {
   token = t;
   store.set('traksos.token', t);
+  if (!t) store.set('traksos.offlineIdentity', null);
 }
 
 export class ApiError extends Error {
@@ -22,11 +23,21 @@ export class ApiError extends Error {
 export async function api<T = any>(method: string, path: string, body?: unknown): Promise<T> {
   let r: Response;
   try {
-    r = await fetch(API_URL + path, {
-      method,
-      headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
-      body: body === undefined ? undefined : JSON.stringify(body),
-    });
+    // Bounded waits are crucial on unstable mobile data. Never retry writes silently.
+    // A POST may have been accepted even if the client lost the response.
+    const timeout = new AbortController();
+    const timer = setTimeout(() => timeout.abort(), method === 'GET' ? 12_000 : 30_000);
+    try {
+      r = await fetch(API_URL + path, {
+        method,
+        headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
+        body: body === undefined ? undefined : JSON.stringify(body),
+        cache: 'no-store',
+        signal: timeout.signal,
+      });
+    } finally {
+      clearTimeout(timer);
+    }
   } catch {
     throw new ApiError(0, 'network', 'Нет связи с сервером. Проверьте интернет.');
   }
@@ -59,7 +70,7 @@ export function onEvent(fn: Listener) {
 }
 
 export function connectWs() {
-  if (!token || (ws && ws.readyState <= 1)) return;
+  if (!token || !navigator.onLine || (ws && ws.readyState <= 1)) return;
   closedByUs = false;
   const base = API_URL || location.origin;
   const url = base.replace(/^http/, 'ws') + '/ws?token=' + encodeURIComponent(token);
@@ -72,7 +83,7 @@ export function connectWs() {
   };
   ws.onclose = () => {
     ws = null;
-    if (closedByUs || !token) return;
+    if (closedByUs || !token || !navigator.onLine) return;
     retry = Math.min(retry + 1, 6);
     setTimeout(connectWs, 500 * 2 ** retry);
   };
@@ -83,6 +94,16 @@ export function disconnectWs() {
   ws?.close();
   ws = null;
 }
+
+window.addEventListener('online', () => {
+  if (token) connectWs();
+});
+window.addEventListener('offline', () => {
+  // Avoid reconnect churn and cellular battery usage when disconnected.
+  ws?.close();
+  ws = null;
+});
+
 
 // Форматирование -----------------------------------------------------------
 

@@ -1,7 +1,7 @@
 import './styles.css';
 import { createRoot } from 'react-dom/client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { get, post, getToken, connectWs, API_URL, onEvent } from './api.ts';
+import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
 import { MeCtx, ToastProvider, useRoute, useToast, type Me } from './ui.tsx';
 import { native } from './native.ts';
 import { Login } from './screens/login.tsx';
@@ -35,14 +35,38 @@ function App() {
   const setMode = (m: Mode) => { setModeState(m); localStorageSet('traksos.mode', m); };
 
   const reload = useCallback(async () => {
-    if (!getToken()) { setMe(null); setReady(true); return; }
+    if (!getToken()) {
+      try { localStorage.removeItem('traksos.offlineIdentity'); } catch { /* */ }
+      setMe(null); setReady(true); return;
+    }
     try {
       const m = await get<Me>('/api/me');
       setMe(m);
+      // Store only a minimal identity for read-only UI navigation without a network;
+      // NEVER persist orders, chat, document images or the user's personal profile.
+      try {
+        localStorage.setItem('traksos.offlineIdentity', JSON.stringify({
+          id: m.id, roles: m.roles, owner_id: m.owner_id, at: Date.now()
+        }));
+      } catch { /* private mode */ }
       // Первый вход исполнителя — сразу его кабинет
       if (!localStorageGet('traksos.mode') && m.roles.some((r) => PERFORMER_ROLES.includes(r)) && !m.roles.includes('client')) setMode(m.roles.includes('service') && !m.roles.some((r) => r === 'master' || r === 'tow') ? 'service' : 'performer');
-    } catch {
-      setMe(null);
+    } catch (error) {
+      if (error instanceof ApiError && error.code === 'network' && getToken()) {
+        try {
+          const identity = JSON.parse(localStorage.getItem('traksos.offlineIdentity') ?? 'null');
+          if (identity && typeof identity.id === 'string' &&
+              Array.isArray(identity.roles) && Date.now() - identity.at < 24 * 60 * 60 * 1000) {
+            setMe({ id: identity.id, roles: identity.roles, owner_id: identity.owner_id ?? null,
+              phone: '', name: null, company_name: null, company_inn: null,
+              rating: null, rating_count: 0, performer: null });
+          } else setMe(null);
+        } catch { setMe(null); }
+      } else {
+        // 401/403: an expired or forbidden session must not use an old identity.
+        try { localStorage.removeItem('traksos.offlineIdentity'); } catch { /* */ }
+        setMe(null);
+      }
     } finally {
       setReady(true);
     }
@@ -76,7 +100,7 @@ function App() {
     if (e.type === 'order' && e.status === 'accepted' && modeRef.current !== 'performer' && !location.hash.startsWith('#/work')) toast('Исполнитель найден');
   }), [reload, toast]);
 
-  if (!ready) return null;
+  if (!ready) return <div className="traksos-start-loading" role="status">Загружаем TrackSOS…</div>;
   // Ссылка-приглашение: запоминаем код, вход — как обычно
   if (route[0] === 'r' && route[1]) { try { localStorage.setItem('traksos.ref', route[1].toUpperCase()); } catch { /* */ } }
   if (!me) {
@@ -163,6 +187,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {me && mode === 'client' && <a href="#/profile" className="bell" aria-label="Профиль">◉</a>}
         </div>
       </header>
+      <NetworkStatus />
       <div className="desktop-layout">
         <aside className="desktop-sidebar" aria-label="Навигация по сайту">
           <div className="desktop-sidebar-title">{me ? 'Рабочий кабинет' : 'ТракSOS · помощь в дороге'}</div>
@@ -206,6 +231,21 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       )}
     </div>
   );
+}
+
+function NetworkStatus() {
+  const [offline, setOffline] = useState(!navigator.onLine);
+  useEffect(() => {
+    const yes = () => setOffline(false);
+    const no = () => setOffline(true);
+    window.addEventListener('online', yes);
+    window.addEventListener('offline', no);
+    return () => { window.removeEventListener('online', yes); window.removeEventListener('offline', no); };
+  }, []);
+  if (!offline) return null;
+  return <div className="traksos-connection-banner" role="status">
+    Нет подключения. Интерфейс доступен, но новые заявки, сообщения и изменения требуют интернета.
+  </div>;
 }
 
 /** Подвал: реквизиты площадки (их заполняет админ в «Настройках»), ссылки на документы; плашка про cookie — один раз */
