@@ -139,7 +139,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <p className="public-demo-warning">Демонстрационная карта: точки условные и не означают доступность исполнителей. Реальные данные доступны пользователю после входа.</p>
         </section>
 
-        <aside className="public-app-card">
+        {!(window as any).TrakSOSNative && <aside className="public-app-card">
           <div className="public-section-kicker">ТРАКSOS В ТЕЛЕФОНЕ</div>
           <h2>Мобильное приложение <em>ТракSOS</em></h2>
           <div className="public-app-phone" aria-hidden="true">
@@ -150,7 +150,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <p>Заявки, специалисты, документы и связь с мастером — в одном приложении.</p>
           <span className="public-rustore-soon">Скоро в RuStore</span>
           <small>Ссылка на скачивание появится после публикации приложения.</small>
-        </aside>
+        </aside>}
       </div>
 
       <section className="public-why-strip" aria-label="Преимущества сервиса">
