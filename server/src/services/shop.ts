@@ -99,6 +99,7 @@ export class ShopService {
 
   // ——— Клиент: заказ ———
   async order(user: AuthUser, p: { items: { productId: string; qty: number }[]; delivery: 'pickup' | 'delivery' | 'master'; address?: string | null; orderId?: string | null; payment?: 'on_receipt' | 'invoice'; comment?: string | null }) {
+    if (user.roles.includes('insurer')) throw forbidden('Покупки доступны через отдельный клиентский или партнёрский аккаунт');
     const s = await this.settings.get('shop');
     if (!s.enabled) throw conflict('shop_closed', s.closedTitle);
     if (user.owner_id) {
