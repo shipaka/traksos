@@ -470,3 +470,34 @@ select.field { appearance: none; }
   .public-feature-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .public-bottom-row { grid-template-columns: 1fr; }
 }
+
+/* Refined 2026 public desktop design. Uses a bundled SVG, no remote image dependency. */
+@media (min-width: 900px) {
+  .desktop-content > main.public-home { padding-top: 34px; gap: 22px; }
+  .public-hero { min-height: 460px; background: #112b42; border: 1px solid #28445b; box-shadow: 0 18px 50px rgba(7,29,49,.18); }
+  .public-hero::before { z-index: 1; background: linear-gradient(90deg,#0e253b 0%,rgba(14,37,59,.98) 27%,rgba(14,37,59,.78) 49%,rgba(14,37,59,.08) 86%); }
+  .public-hero-visual { inset: 0 0 0 29%; width: auto; opacity: 1; background: url('/truck-scene.svg') center 52% / cover no-repeat; }
+  .public-hero-visual > * { display: none; }
+  .public-hero-copy { width: 69%; padding: 60px 26px 54px 54px; }
+  .desktop-content .public-hero h1 { font-size: clamp(39px,4.4vw,62px); line-height: 1.05; letter-spacing: -1.65px; max-width: 670px; }
+  .public-hero h1 em { color: #ff9755; }
+  .public-hero p { max-width: 515px; font-size: 16px; }
+  .public-eyebrow { color: #e5b99b; }
+  .public-button { transition: transform .18s, filter .18s, box-shadow .18s; }
+  .public-button:hover { transform: translateY(-2px); filter: brightness(1.08); }
+  .public-button-sos { background: linear-gradient(130deg,#ff663d,#ef3e35); box-shadow: 0 12px 30px rgba(233,61,43,.27); }
+  .public-feature { min-height: 116px; transition: transform .18s,border-color .18s,box-shadow .18s; }
+  .public-feature:hover { box-shadow: 0 12px 32px rgba(30,64,91,.12); }
+  .public-feature-icon { background: #e9f3fd; color: #145d97; font-weight: 800; }
+  .public-how,.public-partner { box-shadow: 0 8px 28px rgba(22,46,68,.045); }
+  .public-partner { background: linear-gradient(140deg,#fff,#f3f8ff); }
+  .public-bottom-row h2 { font-size: 24px; font-weight: 800; }
+  .desktop-sidebar { box-shadow: 8px 0 24px rgba(13,28,46,.08); }
+  .desktop-nav-link.active { box-shadow: inset 3px 0 #ff8048; }
+  .top { box-shadow: 0 3px 18px rgba(7,23,40,.12); }
+}
+@media (min-width: 900px) and (max-width: 1250px) {
+  .public-hero-copy { width: 80%; padding-left: 32px; }
+  .public-hero-visual { background-position: 63% center; }
+  .public-hero::before { background: linear-gradient(90deg,#0e253b 0%,rgba(14,37,59,.96) 45%,rgba(14,37,59,.17) 100%); }
+}
