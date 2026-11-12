@@ -136,6 +136,13 @@ export class OpsService {
     });
   }
 
+  async activeCampaigns() {
+    return this.db.query<any>(`select id,service,commission_pct::float as commission_pct,
+      starts_at,ends_at,reason from commission_campaigns
+      where enabled and starts_at <= $1 and ends_at > $1
+      order by commission_pct,ends_at limit 25`,[this.now()]);
+  }
+
   async campaigns() {
     return this.db.query<any>(`select id,service,commission_pct::float as commission_pct,
       starts_at,ends_at,enabled,reason,created_at from commission_campaigns order by created_at desc limit 100`);
