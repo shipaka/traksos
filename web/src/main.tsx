@@ -57,6 +57,7 @@ function App() {
     location.replace('#/' + (m === 'performer' ? 'work' : m === 'admin' ? 'admin' : m === 'service' ? 'base' : ''));
   }, [route.join('/')]); // eslint-disable-line
   useEffect(() => {
+    if (!ready) return; // Keep the native token until the initial auth check finishes.
     if (!me) {
       // Logout/revoked session must also clear the token held by the Android native bridge.
       native.setSession(API_URL || location.origin, null);
@@ -65,7 +66,7 @@ function App() {
     connectWs();
     native.setSession(API_URL || location.origin, getToken());
     native.registerPush((token) => post('/api/me/push-token', { provider: 'rustore', token }));
-  }, [me?.id]); // eslint-disable-line
+  }, [ready, me?.id]); // eslint-disable-line
   const modeRef = useRef(mode);
   modeRef.current = mode;
   useEffect(() => onEvent((e) => {
