@@ -23,7 +23,18 @@ import { Privacy } from './screens/privacy.tsx';
 import { ModCase, Appeal, MyReviews } from './screens/moderation.tsx';
 import { SupportList, SupportNew, SupportThread, Notifications, useUnread } from './screens/support.tsx';
 
-type Mode = 'client' | 'performer' | 'admin' | 'service';
+function InsuranceHome() {
+  return <main>
+    <h1>Страховой партнёр</h1>
+    <div className="card">
+      <b>Кабинет страховой компании</b>
+      <span className="note">Категория аккаунта выделена отдельно. Подключение страховых продуктов и договоров ещё не запущено; заявки и полисы здесь пока не оформляются.</span>
+      <a className="btn ghost" href="#/support">Связаться с поддержкой</a>
+    </div>
+  </main>;
+}
+
+type Mode = 'client' | 'performer' | 'admin' | 'service' | 'insurer';
 const PERFORMER_ROLES = ['master', 'tow', 'service'];
 
 function App() {
@@ -89,8 +100,8 @@ function App() {
   useEffect(() => {
     const [x, m] = route;
     if (x !== 'as') return;
-    if (m === 'client' || m === 'performer' || m === 'admin' || m === 'service') setMode(m);
-    location.replace('#/' + (m === 'performer' ? 'work' : m === 'admin' ? 'admin' : m === 'service' ? 'base' : ''));
+    if (m === 'client' || m === 'performer' || m === 'admin' || m === 'service' || m === 'insurer') setMode(m);
+    location.replace('#/' + (m === 'performer' ? 'work' : m === 'admin' ? 'admin' : m === 'service' ? 'base' : m === 'insurer' ? 'insurance' : ''));
   }, [route.join('/')]); // eslint-disable-line
   useEffect(() => {
     if (!ready) return; // Keep the native token until the initial auth check finishes.
@@ -128,17 +139,18 @@ function App() {
   const isPerformer = me.roles.some((r) => PERFORMER_ROLES.includes(r));
   const isStaff = me.roles.some((r) => r === 'admin' || r === 'moderator');
   const isService = me.roles.includes('service');
+  const isInsurer = me.roles.includes('insurer');
   // A saved/forced mode must never expose navigation for a role the account lacks.
-  const allowedMode: Mode = mode === 'admin' && !isStaff
+  const allowedMode: Mode = mode === 'insurer' && !isInsurer ? 'client' : mode === 'admin' && !isStaff
     ? 'client' : mode === 'performer' && !isPerformer
     ? 'client' : mode === 'service' && !isService ? 'client' : mode;
   const effMode: Mode = a === 'work' && isPerformer ? 'performer'
     : a === 'admin' && isStaff ? 'admin'
-    : a === 'base' && isService ? 'service' : allowedMode;
+    : a === 'base' && isService ? 'service' : a === 'insurance' && isInsurer ? 'insurer' : allowedMode;
 
   let screen;
   switch (a) {
-    case undefined: screen = effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isStaff ? <Admin /> : <Home />; break;
+    case undefined: screen = effMode === 'insurer' ? <InsuranceHome /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isStaff ? <Admin /> : <Home />; break;
     case 'login': screen = <Home />; break;
     case 'sos': screen = <Sos />; break;
     case 'new': screen = b === 'consult' ? <Consult /> : <NewOrder service={b ?? 'electric'} />; break;
@@ -158,6 +170,7 @@ function App() {
     case 'services': screen = b && route[2] === 'book' ? <BookForm id={b} /> : b ? <CenterPage id={b} /> : <ServicesList />; break;
     case 'booking': screen = <BookingPage id={b} />; break;
     case 'fleet': screen = <Fleet />; break;
+    case 'insurance': screen = isInsurer ? <InsuranceHome /> : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
     case 'help': screen = <Help />; break;
     case 'rules': screen = <Rules />; break;
     case 'shop': screen = b === 'cart' ? <ShopCart /> : <Shop />; break;
@@ -190,6 +203,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     ? [['/work', '⚡', 'Линия'], ['/work/jobs', '☰', 'Заявки'], ['/shop', '🛍', 'Магазин']]
     : mode === 'service'
       ? [['/base', '▤', 'Рембаза'], ['/support', '?', 'Связь'], ['/shop', '🛍', 'Магазин']]
+    : mode === 'insurer'
+      ? [['/insurance', '▣', 'Страхование'], ['/shop', '🛍', 'Магазин']]
     : mode === 'admin'
       ? [['/admin', '▦', 'Управление'], ['/shop', '🛍', 'Магазин']]
       : [['/', '🔧', 'Услуги'], ['/sos', '!', 'SOS'], ['/orders', '☰', 'Заявки'], ['/shop', '🛍', 'Магазин']];
@@ -207,6 +222,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       ? [['/base', 'Заявки и история ремонтов'], ['/base/me', 'Карточка СТО'],
          ['/base/money', 'Финансы'], ['/profile', 'Аккаунт'],
          ['/invite', 'Пригласить партнёра']]
+    : mode === 'insurer'
+      ? [['/insurance', 'Кабинет страхового партнёра'], ['/profile', 'Аккаунт']]
     : mode === 'admin'
       ? [['/admin', 'Административная сводка'],
          ['/admin/section/queue', 'Очередь модерации'],
@@ -232,7 +249,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   const helpLinks: [string, string][] = [
     ['/support', 'Поддержка'], ['/notifications', 'Уведомления'],
     ['/help', 'Помощь и подсказки'], ['/rules', 'Правила площадки'],
-    ['/offer/' + (mode === 'performer' || mode === 'service' ? 'performer' : 'client'), 'Оферта'],
+    ['/offer/' + (mode === 'performer' || mode === 'service' ? 'performer' : mode === 'insurer' ? 'privacy' : 'client'), mode === 'insurer' ? 'Документы и условия' : 'Оферта'],
     ['/offer/privacy', 'Политика персональных данных'],
     ['/privacy', 'Мои персональные данные']];
   return (
@@ -243,6 +260,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {!me && <div className="guest-header-actions"><a href="#/login">Войти</a><a href="#/register" className="register">Зарегистрироваться</a></div>}
           {me && mode === 'performer' && <span className="pill accent">исполнитель</span>}
           {me && mode === 'admin' && <span className="pill accent">админ</span>}
+          {me && mode === 'insurer' && <span className="pill accent">страхование</span>}
           {me && mode === 'service' && <span className="pill accent">рембаза</span>}
           {me && <a href="#/help" className="bell" aria-label="Справка">?</a>}
           {me && <Bell />}
@@ -269,7 +287,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                   ? [...tabs, ['/work/me', '◉', 'Профиль']]
                   : mode === 'service'
                     ? [...tabs, ['/base/money', '₽', 'Финансы'], ['/base/me', '⚙', 'Карточка'], ['/profile', '◉', 'Аккаунт']]
-                    : [...tabs, ['/as/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]).map(([href, ic, name]) => (
+                    : mode === 'insurer'
+                      ? [...tabs, ['/profile', '◉', 'Аккаунт']]
+                      : [...tabs, ['/as/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]).map(([href, ic, name]) => (
                 <a key={href} href={'#' + href} className={`desktop-nav-link ${here === href || (href !== '/' && here.startsWith(href + '/')) ? 'active' : ''} ${href === '/sos' ? 'desktop-nav-sos' : ''}`}>
                   <span aria-hidden="true">{ic}</span><span>{name}</span>
                 </a>
