@@ -966,8 +966,12 @@ export function Profile() {
   if (!me) return null;
   const isPerformer = me.roles.some((r) => ['master', 'tow', 'service'].includes(r));
   return (
-    <main>
-      <h1>Профиль</h1>
+    <main className="cabinet-page">
+      <header className="cabinet-heading">
+        <span className="label">Личный кабинет · TrakSOS</span>
+        <h1>Профиль</h1>
+        <div className="sub">Контакты, данные компании, бонусы и доступные кабинеты.</div>
+      </header>
       {(mode === 'client' || mode === 'performer') && <a href="#/invite" className="card" style={{ textDecoration: 'none', color: 'inherit', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <span><b>🎁 Пригласить и получать баллы</b><small className="note" style={{ display: 'block' }}>Баллы гасят сбор и комиссию ТракSOS</small></span><span>›</span>
       </a>}
