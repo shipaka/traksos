@@ -36,8 +36,8 @@ const mk = async () => {
 async function login(page, phoneNum, how) {
   await page.goto(BASE + '/#/login');
   if (how === 'help') await page.getByRole('button', { name: /Помогите/ }).click();
-  else if (how === 'login') await page.getByRole('button', { name: 'Войти по номеру' }).click();
-  else { await page.getByRole('button', { name: /Хочу работать/ }).click(); await page.getByRole('button', { name: how }).click(); }
+  else if (how === 'login') await page.getByRole('button', { name: 'Войти по номеру телефона' }).click();
+  else { await page.getByRole('button', { name: /Хочу сотрудничать/ }).click(); await page.getByRole('button', { name: how }).click(); }
   await page.locator('input[type=tel]').fill(phoneNum);
   if (how !== 'login') await page.locator('input[type=checkbox]').check();
   await page.getByRole('button', { name: 'Получить код' }).click();
