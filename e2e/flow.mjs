@@ -4,6 +4,26 @@ const OUT = process.argv[2] ?? 'e2e/shots';
 await (await import('node:fs/promises')).mkdir(OUT, { recursive: true });
 const shot = async (page, name) => page.screenshot({ path: `${OUT}/${name}.png`, fullPage: false });
 const errors = [];
+// Mobile secondary links belong to the header drawer, not to a hidden desktop sidebar.
+async function clickCabinetLink(page, name) {
+  await page.locator('.account-menu > summary').click();
+  await page.locator('.account-menu nav').getByRole('link', { name, exact: true }).click();
+}
+async function checkCabinetMenu(page, expectedLinks) {
+  const summary = page.locator('.account-menu > summary');
+  await summary.waitFor();
+  if (!(await summary.isVisible())) throw new Error('Cabinet menu is not visible');
+  await summary.click();
+  for (const label of expectedLinks) {
+    const link = page.locator('.account-menu nav').getByRole('link', { name: label, exact: true });
+    if (!(await link.isVisible())) throw new Error('Missing accessible cabinet section: ' + label);
+    const href = await link.getAttribute('href');
+    if (!href || !href.startsWith('#/')) throw new Error('Invalid cabinet route for ' + label);
+  }
+  await summary.click();
+  if (!(await page.locator('.tabbar').getByRole('link', { name: 'Магазин' }).isVisible()))
+    throw new Error('Shop tab must be visible for every account');
+}
 async function assertDashboardTheme(page, role) {
   const result = await page.evaluate(() => {
     const app = document.querySelector('.app');
@@ -108,6 +128,7 @@ await m.getByRole('button', { name: /^Свободен/ }).waitFor({ timeout: 10
 await m.getByRole('button', { name: /^Свободен/ }).click();
 await m.getByText(/Геолокация включена/).waitFor();
 await assertDashboardTheme(m, 'master');
+await checkCabinetMenu(m, ['Профиль исполнителя', 'Финансы и выплаты', 'Проверка и документы', 'История заявок', 'Оферта']);
 await shot(m, '02-master-online');
 
 // Клиент
@@ -118,6 +139,7 @@ await k.waitForURL(/#\/sos/);
 await k.goto(BASE + '/#/');
 await k.getByText('Что случилось?').first().waitFor();
 await assertDashboardTheme(k, 'client');
+await checkCabinetMenu(k, ['История заявок', 'Мой гараж', 'Мой автопарк', 'Оферта', 'Профиль и настройки']);
 await shot(k, '03-client-home');
 await k.getByRole('link', { name: /SOS/ }).first().click();
 await k.getByRole('button', { name: /Не заводится/ }).click();
@@ -201,22 +223,23 @@ await a.goto(BASE + '/#/admin');
 await a.getByRole('button', { name: 'Распределение' }).click();
 await a.getByText('Сначала заявки нам').waitFor();
 await assertDashboardTheme(a, 'admin');
+await checkCabinetMenu(a, ['Управление магазином', 'Деньги и выплаты', 'Настройки площадки', 'Очередь модерации']);
 await shot(a, '12-admin-dispatch');
 await a.getByRole('button', { name: 'Деньги', exact: true }).click();
 await a.getByText('Способы оплаты').waitFor();
 await shot(a, '13-admin-payments');
 
 // Переходы между кабинетами: из админки в клиента и обратно, «Назад» ведёт в свой список
-await a.getByRole('link', { name: /Клиент/ }).click();
+await clickCabinetLink(a, 'Кабинет клиента');
 await a.getByText('Что случилось?').first().waitFor();
-await a.getByRole('link', { name: /Профиль/ }).click();
+await clickCabinetLink(a, 'Профиль и настройки');
 await a.getByRole('button', { name: 'Кабинет администратора' }).click();
 await a.getByText('Администратор').first().waitFor();
 await m.goto(BASE + '/#/work/jobs');
 await m.locator('a.list-item').first().click();
 await m.getByText('← Назад').click();
 await m.waitForURL(/#\/work\/jobs$/);
-await m.getByRole('link', { name: /Профиль/ }).click();
+await clickCabinetLink(m, 'Профиль исполнителя');
 await m.getByRole('button', { name: /Финансы/ }).click();
 await m.getByText('Операции', { exact: true }).waitFor();
 await shot(m, '16b-master-money');
