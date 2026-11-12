@@ -17,7 +17,7 @@ const opts = {
     'process.env.NODE_ENV': JSON.stringify(watch ? 'development' : 'production'),
     __API_URL__: JSON.stringify(process.env.API_URL ?? ''),
   },
-  loader: { '.css': 'css', '.svg': 'file' },
+  loader: { '.css': 'css', '.svg': 'file', '.webp': 'file' },
 };
 
 await rm('dist', { recursive: true, force: true });
