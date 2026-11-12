@@ -232,7 +232,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   const helpLinks: [string, string][] = [
     ['/support', 'Поддержка'], ['/notifications', 'Уведомления'],
     ['/help', 'Помощь и подсказки'], ['/rules', 'Правила площадки'],
-    ['/offer/' + (mode === 'performer' ? 'performer' : mode === 'service' ? 'service' : 'client'), 'Оферта'],
+    ['/offer/' + (mode === 'performer' || mode === 'service' ? 'performer' : 'client'), 'Оферта'],
     ['/offer/privacy', 'Политика персональных данных'],
     ['/privacy', 'Мои персональные данные']];
   return (
