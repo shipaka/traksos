@@ -27,13 +27,17 @@ export function Work() {
   });
 
   return (
-    <main>
+    <main className="cabinet-page">
       <LiveStrip who={p.kind === 'tow' ? 'tow' : 'master'} />
       {online && p.verification === 'approved' && <Nearby />}
-      <div className="between">
-        <h1>{me?.name ?? 'Кабинет'}</h1>
-        <span className="pill"><span className={`dot ${online ? 'on' : ''}`} /> {LINE[p.line_status]}</span>
-      </div>
+      <header className="cabinet-heading">
+        <span className="label">Рабочий кабинет · {p.kind === 'tow' ? 'Эвакуация' : 'Выездной ремонт'}</span>
+        <div className="between">
+          <h1>{me?.name ?? 'Кабинет'}</h1>
+          <span className="pill"><span className={`dot ${online ? 'on' : ''}`} /> {LINE[p.line_status]}</span>
+        </div>
+        <div className="sub">Новые обращения, активные заказы и расчёты.</div>
+      </header>
 
       <div className="web-performer-overview">
       <div className="web-performer-primary">
