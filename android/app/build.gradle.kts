@@ -61,6 +61,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.webkit:webkit:1.12.1")
+    implementation("androidx.biometric:biometric:1.1.0")
     // RuStore Push — https://www.rustore.ru/help/sdk/push-notifications/kotlin-java
     implementation("ru.rustore.sdk:pushclient:7.5.0")
 }
