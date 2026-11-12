@@ -31,7 +31,6 @@ const PER_PHONE_DAY = 8;
 const PER_IP_HOUR = 15;
 
 export class AuthService {
-  private passwordAttempts = new Map<string, { count: number; since: number }>();
   constructor(private db: Db, private sms: SmsProvider, private now: () => Date = () => new Date()) {}
 
   async requestCode(rawPhone: string, ip = '', purpose: 'register' | 'reset' = 'register') {
@@ -132,7 +131,10 @@ export class AuthService {
     }
 
     // Password reset invalidates every prior session; a stolen token cannot survive recovery.
-    if (purpose === 'reset') await this.db.query('delete from sessions where user_id=$1', [user.id]);
+    if (purpose === 'reset') {
+      await this.db.query('delete from sessions where user_id=$1', [user.id]);
+      await this.db.query("delete from auth_login_attempts where scope='phone' and identity=$1", [phone]);
+    }
     const token = newToken();
     await this.db.query('insert into sessions(token_hash, user_id, expires_at, device) values ($1,$2,$3,$4)', [
       sha256(token), user.id, new Date(this.now().getTime() + SESSION_DAYS * 86_400_000), device ?? null,
@@ -141,25 +143,41 @@ export class AuthService {
   }
 
   /** Normal login: never sends SMS and never changes roles. */
-  async loginPassword(rawPhone: string, password: string, device?: string) {
+  /** Password-only login. Counters are shared by all processes and survive restart. */
+  async loginPassword(rawPhone: string, password: string, device?: string, ip = '') {
     const phone = normalizePhone(rawPhone);
     if (!phone) throw bad('bad_phone', 'Неверный номер');
-    const key = phone;
-    const now = this.now().getTime();
-    const attempt = this.passwordAttempts.get(key);
-    if (attempt && now - attempt.since < 15 * 60_000 && attempt.count >= 10)
-      throw new HttpError(429, 'too_many_attempts', 'Слишком много попыток. Повторите позже.');
+    if (password.length > 128) throw new HttpError(401, 'bad_credentials', 'Неверный номер или пароль');
+    const now = this.now();
+    const externalIp = ip && !/^(::1|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|::ffff:(127|10|192\.168)\.|fc|fd)/i.test(ip);
+    await this.db.tx(async q => {
+      const reserve = async (scope: 'phone' | 'ip', identity: string, limit: number) => {
+        const row = await q.one<{ attempts: number }>(
+          `insert into auth_login_attempts(scope,identity,window_start,attempts)
+           values ($1,$2,$3,1)
+           on conflict (scope, identity) do update
+             set window_start=case when auth_login_attempts.window_start <= $3::timestamptz - interval '15 minutes'
+                   then $3::timestamptz else auth_login_attempts.window_start end,
+                 attempts=case when auth_login_attempts.window_start <= $3::timestamptz - interval '15 minutes'
+                   then 1 else auth_login_attempts.attempts + 1 end
+           where auth_login_attempts.window_start <= $3::timestamptz - interval '15 minutes'
+              or auth_login_attempts.attempts < $4
+           returning attempts`, [scope, identity, now, limit]);
+        if (!row) throw new HttpError(429, 'too_many_attempts',
+          'Слишком много попыток входа. Попробуйте позже или восстановите пароль.');
+      };
+      await reserve('phone', phone, 10);
+      if (externalIp) await reserve('ip', ip, 120);
+    });
     const user = await this.db.one<AuthUser & { password_hash: string | null }>(
       'select id, phone, name, roles, status, owner_id, password_hash from users where phone=$1', [phone]);
     if (!user || user.status !== 'active' || !verifyPassword(password, user.password_hash)) {
-      this.passwordAttempts.set(key, { since: attempt && now - attempt.since < 15*60_000 ? attempt.since : now,
-        count: (attempt && now - attempt.since < 15*60_000 ? attempt.count : 0) + 1 });
       throw new HttpError(401, 'bad_credentials', 'Неверный номер или пароль');
     }
-    this.passwordAttempts.delete(key);
+    await this.db.query("delete from auth_login_attempts where scope='phone' and identity=$1", [phone]);
     const token = newToken();
     await this.db.query('insert into sessions(token_hash, user_id, expires_at, device) values ($1,$2,$3,$4)',
-      [sha256(token), user.id, new Date(now + SESSION_DAYS * 86_400_000), device ?? null]);
+      [sha256(token), user.id, new Date(now.getTime() + SESSION_DAYS * 86_400_000), device ?? null]);
     const { password_hash: _hidden, ...safe } = user;
     return { token, user: safe };
   }
