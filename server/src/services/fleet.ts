@@ -91,9 +91,13 @@ export class FleetService {
     if (user.owner_id && user.owner_id !== v.owner_id) throw conflict('driver_taken', 'Вы водитель другого владельца — попросите его снять вас с машины');
     const own = await this.db.one<{ n: number }>('select count(*)::int as n from vehicles where owner_id=$1', [user.id]);
     if (!user.owner_id && (own?.n ?? 0) > 0) throw conflict('has_garage', 'У вас свой гараж — водителем чужой машины по наклейке стать нельзя');
+    if (user.roles.some((r) => ['master', 'tow', 'service', 'insurer'].includes(r)))
+      throw bad('incompatible_roles', 'Исполнитель или страховщик не может присоединиться к чужому автопарку как водитель');
     const prev = v.driver_id && v.driver_id !== user.id ? v.driver_id : null;
     await this.db.tx(async (q) => {
-      await q.query(`update users set owner_id=$2, roles = (select array(select distinct unnest(roles || '{driver}'::text[]))) where id=$1`, [user.id, v.owner_id]);
+      await q.query(`update users set owner_id=$2,
+        roles = array(select distinct unnest(array_remove(roles, 'client') || '{driver}'::text[])),
+        registration_kind='driver' where id=$1`, [user.id, v.owner_id]);
       await q.query('update vehicles set driver_id=null, driver_since=null where driver_id=$1 and id<>$2', [user.id, v.id]);
       await q.query('update vehicles set driver_id=$2, driver_since=now() where id=$1', [v.id, user.id]);
     });
