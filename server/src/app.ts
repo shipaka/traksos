@@ -202,7 +202,15 @@ export function createApp(d: Deps) {
       : c.user.roles.includes('tow') ? 'tow' : c.user.roles.includes('master') ? 'master' : 'service';
     return ops.announcements(kind, false, c.query.get('service') ?? undefined);
   });
+  r.put('/api/admin/announcements/:id/status', ['admin'], (c:AuthedCtx) => {
+    const b=parse(z.object({published:z.boolean()}),c.body);
+    return ops.setAnnouncementPublished(c.user,c.params.id,b.published);
+  });
   r.get('/api/admin/commission-campaigns', staff, () => ops.campaigns());
+  r.put('/api/admin/commission-campaigns/:id/status', ['admin'], (c:AuthedCtx) => {
+    const b=parse(z.object({enabled:z.boolean()}),c.body);
+    return ops.setCampaignEnabled(c.user,c.params.id,b.enabled);
+  });
   r.post('/api/admin/commission-campaigns', ['admin'], (c: AuthedCtx) =>
     ops.campaign(c.user,parse(z.object({
       service:z.enum(['electric','diag','air','autonomy','tyre','tow','consult','ecu']).nullish(),
