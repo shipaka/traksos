@@ -30,7 +30,7 @@ import { StandingService } from './services/standing.ts';
 import { ShopService } from './services/shop.ts';
 import { ModerationService } from './services/moderation.ts';
 import { checkAppealToken } from './services/auth.ts';
-import { normalizePhone } from './util.ts';
+import { normalizePhone, sha256 } from './util.ts';
 import { Raw } from './http/router.ts';
 import { PaymentsService } from './payments/service.ts';
 import { estimate, isNight } from './domain/pricing.ts';
@@ -126,7 +126,9 @@ export function createApp(d: Deps) {
       await profiles.setLine(c.user.id, { lineStatus: 'offline' });
     // Do not deliver sensitive order/location notifications to a signed-out device.
     // Other logged-in devices re-register their push token on next app launch.
-    await d.db.query('delete from push_tokens where user_id=$1', [c.user.id]);
+    const sessionHash = sha256(bearer(c.req)!);
+    await d.db.query('delete from push_tokens where user_id=$1 and (session_token_hash=$2 or session_token_hash is null)',
+      [c.user.id, sessionHash]);
     await auth.logout(bearer(c.req)!);
     return { ok: true };
   });
@@ -142,8 +144,15 @@ export function createApp(d: Deps) {
   });
   r.post('/api/me/push-token', true, async (c: AuthedCtx) => {
     const b = parse(z.object({ provider: z.enum(['rustore', 'web']), token: z.string().min(10).max(4096) }), c.body);
-    await d.db.query(`insert into push_tokens(user_id, provider, token) values ($1,$2,$3)
-                      on conflict (user_id, provider, token) do update set updated_at=now()`, [c.user.id, b.provider, b.token]);
+    const sessionHash = sha256(bearer(c.req)!);
+    await d.db.tx(async (q) => {
+      // Same physical phone must never receive notifications for an old account.
+      // Serialize token ownership even when an app switches accounts concurrently.
+      await q.query('select pg_advisory_xact_lock(hashtext($1))', ['push:' + b.provider + ':' + b.token]);
+      await q.query('delete from push_tokens where provider=$1 and token=$2', [b.provider, b.token]);
+      await q.query(`insert into push_tokens(user_id, provider, token, session_token_hash)
+                     values ($1,$2,$3,$4)`, [c.user.id, b.provider, b.token, sessionHash]);
+    });
     return { ok: true };
   });
   r.get('/api/me/notifications', true, async (c: AuthedCtx) => ({
