@@ -101,8 +101,8 @@ export function createApp(d: Deps) {
     return auth.requestCode(b.phone, c.ip, b.purpose ?? 'register');
   });
   r.post('/api/auth/login', false, (c: Ctx) => {
-    const b = parse(z.object({ phone: z.string(), password: z.string(), device: z.string().max(200).optional() }), c.body);
-    return auth.loginPassword(b.phone, b.password, b.device);
+    const b = parse(z.object({ phone: z.string(), password: z.string().min(1).max(128), device: z.string().max(200).optional() }), c.body);
+    return auth.loginPassword(b.phone, b.password, b.device, c.ip);
   });
   r.post('/api/auth/verify', false, async (c: Ctx) => {
     const b = parse(z.object({ phone: z.string(), code: z.string().min(4).max(6), role: z.enum(SELF_ROLES).optional(),
