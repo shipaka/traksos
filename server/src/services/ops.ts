@@ -17,17 +17,20 @@ export class OpsService {
     const [summary, hourly, byService, incidents] = await Promise.all([
       this.db.one<any>(`select count(*)::int as total,
           count(*) filter (where status='completed')::int as completed,
-          count(*) filter (where status='no_performer')::int as unfilled,
+          count(*) filter (where status='no_performer' or exists
+          (select 1 from order_events ev where ev.order_id=orders.id and ev.type='no_performer'))::int as unfilled,
           count(*) filter (where status='cancelled' and accepted_at is null)::int as cancelled_before_acceptance,
           count(*) filter (where status='searching' and created_at < $2::timestamptz - $3::int * interval '1 minute')::int as waiting_now,
           count(*) filter (where accepted_at is not null and accepted_at > created_at + $3::int * interval '1 minute')::int as accepted_late,
           count(*) filter (where accepted_at is null and status='no_performer')::int as never_accepted,
+          count(*) filter (where status <> 'no_performer' and exists (select 1 from order_events ev where ev.order_id=orders.id and ev.type='no_performer'))::int as recovered_after_retry,
           round((avg(extract(epoch from accepted_at-created_at)) filter (where accepted_at is not null))/60.0,1) as average_accept_minutes
         from orders where created_at >= $1`,
         [since, this.now(), waitMinutes]),
       this.db.query<any>(`select extract(hour from created_at at time zone 'Europe/Moscow')::int as hour,
           count(*)::int as total,
-          count(*) filter (where status='no_performer')::int as unfilled,
+          count(*) filter (where status='no_performer' or exists
+          (select 1 from order_events ev where ev.order_id=orders.id and ev.type='no_performer'))::int as unfilled,
           count(*) filter (where status='cancelled' and accepted_at is null)::int as cancelled_before_acceptance,
           count(*) filter (where status='searching' and created_at < $2::timestamptz - $3::int * interval '1 minute')::int as waiting_now,
           count(*) filter (where accepted_at > created_at + $3::int * interval '1 minute')::int as accepted_late
@@ -36,7 +39,8 @@ export class OpsService {
       this.db.query<any>(`select service,
           count(*)::int as total,
           count(*) filter (where status='completed')::int as completed,
-          count(*) filter (where status='no_performer')::int as unfilled,
+          count(*) filter (where status='no_performer' or exists
+          (select 1 from order_events ev where ev.order_id=orders.id and ev.type='no_performer'))::int as unfilled,
           count(*) filter (where status='cancelled' and accepted_at is null)::int as cancelled_before_acceptance,
           count(*) filter (where status='searching' and created_at < $2::timestamptz - $3::int * interval '1 minute')::int as waiting_now,
           count(*) filter (where accepted_at > created_at + $3::int * interval '1 minute')::int as accepted_late
@@ -44,11 +48,13 @@ export class OpsService {
         [since, this.now(), waitMinutes]),
       this.db.query<any>(`select o.id, o.number, o.service, o.status, o.is_sos, o.zone_id,
           o.address, o.created_at, o.accepted_at, o.cancelled_at, o.cancel_reason,
+          exists(select 1 from order_events ev where ev.order_id=o.id and ev.type='no_performer') as had_no_performer,
           extract(epoch from (coalesce(o.accepted_at,o.cancelled_at,$2::timestamptz)-o.created_at))/60.0 as elapsed_minutes,
           r.state as review_state, r.note as review_note, r.reviewed_at
         from orders o left join order_ops_reviews r on r.order_id=o.id
         where o.created_at >= $1
           and (o.status='no_performer'
+            or exists(select 1 from order_events ev where ev.order_id=o.id and ev.type='no_performer')
             or (o.status='cancelled' and o.accepted_at is null)
             or (o.status='searching' and o.created_at < $2::timestamptz - $3::int * interval '1 minute')
             or o.accepted_at > o.created_at + $3::int * interval '1 minute')
