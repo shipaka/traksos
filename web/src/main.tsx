@@ -247,7 +247,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/admin/section/settings', 'Настройки площадки'],
          ['/profile', 'Аккаунт'], ['/as/client', 'Кабинет клиента']]
     : [['/orders', 'История заявок'], ['/garage', 'Мой гараж'],
-       ...(!me?.owner_id ? [['/fleet', 'Мой автопарк']] as [string,string][] : []),
+       ...(!me?.owner_id && !me?.roles.includes('driver') ? [['/fleet', 'Мой автопарк']] as [string,string][] : []),
        ['/services', 'СТО и запись'],
        ['/reviews', 'Мои отзывы'], ['/invite', 'Пригласить друга'],
        ['/profile', 'Профиль и настройки']];
@@ -301,7 +301,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               ))}
               {mode === 'client' && <>
                 <div className="desktop-sidebar-title desktop-nav-section">Дополнительно</div>
-                {([['/fleet','▣','Мой парк'],['/support','?','Поддержка'],['/profile','◉','Профиль']] as [string,string,string][]).map(([href, ic, name]) => (
+                {([...(me && !me.owner_id && !me.roles.includes('driver') ? [['/fleet','▣','Мой парк']] as [string,string,string][] : []),['/support','?','Поддержка'],['/profile','◉','Профиль']] as [string,string,string][]).map(([href, ic, name]) => (
                   <a key={href} href={'#' + href} className={`desktop-nav-link ${here === href || here.startsWith(href + '/') ? 'active' : ''}`}>
                     <span aria-hidden="true">{ic}</span><span>{name}</span>
                   </a>
@@ -321,7 +321,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           <SiteFooter />
         </div>
       </div>
-      {tabs.length > 0 && (
+      {tabs.length > 0 && !(route[0] === 'work' && route[1] === 'profile') && !(route[0] === 'base' && route[1] === 'me') && (
         <nav className="tabbar">
           {tabs.map(([href, ic, name]) => (
             <a key={href} href={'#' + href} className={`${here === href || (href !== '/' && here.startsWith(href + '/') && href !== '/work' && href !== '/base') ? 'on' : ''} ${href === '/sos' ? 'sosTab' : ''}`}>
