@@ -39,7 +39,7 @@ export async function setup() {
     return { status: r.status, body: j };
   }
 
-  async function login(phone: string, role = 'client') {
+  async function login(phone: string, role?: string) {
     const c = await api('POST', '/api/auth/code', { phone });
     if (c.status !== 200) throw new Error(JSON.stringify(c.body));
     const v = await api('POST', '/api/auth/verify', { phone, code: c.body.devCode, role });
