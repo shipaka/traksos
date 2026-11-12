@@ -256,7 +256,10 @@ export function createApp(d: Deps) {
   });
 
   // Заявки -------------------------------------------------------------------
-  r.post('/api/orders', true, async (c: AuthedCtx) => (await offers.requireClient(c.user), orders.create(c.user, parse(z.object({
+  r.post('/api/orders', true, async (c: AuthedCtx) => {
+    if (!c.user.roles.some((r) => ['client', 'driver'].includes(r))) throw forbidden('Для заявки нужен отдельный клиентский аккаунт');
+    await offers.requireClient(c.user);
+    return orders.create(c.user, parse(z.object({
     service: z.string(), isSos: z.boolean().optional(), problem: z.string().max(40).optional(), description: z.string().max(1000).optional(),
     address: z.string().max(300).optional(), lat: z.number().optional(), lng: z.number().optional(), zoneId: z.string().default('spb'),
     tier: z.enum(['eco', 'comfort', 'pro']).optional(), vehicleId: z.string().uuid().optional(), brand: z.string().max(40).optional(),
@@ -269,7 +272,8 @@ export function createApp(d: Deps) {
       meet: z.string().max(60).optional(), state: z.enum(['free', 'loading', 'other_work']).optional(),
       when: z.enum(['now', 'today', 'tomorrow']).optional(), time: z.string().max(20).optional(),
     }).optional(),
-  }), c.body))));
+  }), c.body));
+  });
   r.get('/api/performer/standing', performerRoles, (c: AuthedCtx) => standing.standing(c.user));
   r.get('/api/performer/nearby', performerRoles, (c: AuthedCtx) => standing.nearby(c.user));
   r.get('/api/masters-nearby', true, (c: AuthedCtx) => {
@@ -387,11 +391,14 @@ export function createApp(d: Deps) {
     return centers.list(c.user, { lat: num(q.get('lat')), lng: num(q.get('lng')), need: q.get('need') ?? undefined, brand: q.get('brand') ?? undefined });
   });
   r.get('/api/services/:id', true, (c: AuthedCtx) => centers.center(c.user, c.params.id));
-  r.post('/api/services/:id/book', true, (c: AuthedCtx) => centers.book(c.user, c.params.id, parse(z.object({
+  r.post('/api/services/:id/book', true, (c: AuthedCtx) => {
+    if (!c.user.roles.some((r) => ['client','driver'].includes(r))) throw forbidden('Для записи в СТО нужен клиентский аккаунт');
+    return centers.book(c.user, c.params.id, parse(z.object({
     vehicleId: z.string().uuid().nullable().optional(), need: z.string().max(20), day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
     time: z.string().max(20).nullable().optional(), arrival: z.enum(['self', 'tow']).default('self'), comment: z.string().max(500).nullable().optional(),
     fromOrderId: z.string().uuid().nullable().optional(),
-  }), c.body)));
+  }), c.body));
+  });
   r.get('/api/bookings', true, (c: AuthedCtx) => centers.myBookings(c.user));
   r.get('/api/bookings/:id', true, (c: AuthedCtx) => centers.booking(c.user, c.params.id));
   r.post('/api/bookings/:id/answer', true, (c: AuthedCtx) => centers.answer(c.user, c.params.id, parse(z.object({ text: z.string().min(2).max(500) }), c.body).text));
@@ -619,6 +626,9 @@ export function createApp(d: Deps) {
         try { body = JSON.parse(rawBody); } catch { throw bad('bad_json', 'Тело запроса — JSON'); }
       }
       const user = await auth.authenticate(bearer(req));
+      if (user?.roles.includes('insurer') && !user.roles.some((r) => r === 'admin' || r === 'moderator') &&
+          /^\\/api\\/(orders|vehicles|fleet|performer|base|services|bookings|qr)(?:\\/|$)/.test(url.pathname))
+        throw forbidden('Страховой аккаунт не является клиентским или рабочим кабинетом');
       const a = m.route.auth;
       if (a !== false) {
         if (!user) return send(res, 401, { error: 'unauthorized', message: 'Войдите по номеру телефона' }, cors);
