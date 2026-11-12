@@ -24,10 +24,10 @@ try {
       }
     }
     if (width === 1440) {
-      await page.getByRole('heading', { name: /Помощь грузовикам на дороге/ }).waitFor();
-      await page.getByRole('button', { name: 'Войти в личный кабинет' }).waitFor();
+      await page.getByRole('heading', { name: /Техпомощь и ремонт грузовиков/ }).waitFor();
+      await page.getByRole('button', { name: 'Войти в кабинет' }).waitFor();
     } else if (width === 390) {
-      await page.getByRole('button', { name: 'Войти по номеру' }).waitFor();
+      await page.getByRole('button', { name: 'Войти в кабинет' }).waitFor();
     }
     const screenshotDir = process.argv[2];
     if (screenshotDir) {
@@ -51,7 +51,7 @@ try {
     }
     if (name === 'desktop') {
       await page.goto(base + '/#/');
-      await page.getByRole('button', { name: 'Войти в личный кабинет' }).click();
+      await page.getByRole('button', { name: 'Войти в кабинет' }).click();
       await page.locator('input[type=tel]').fill('+79990009123');
       await page.getByRole('button', { name: 'Получить код' }).click();
       const hint = await page.getByText(/Тестовый режим: код/).textContent();
@@ -78,7 +78,7 @@ try {
   // Desktop admin is a workspace with a secondary section navigator, not a horizontal mobile ribbon.
   const adminPage = await browser.newPage({ viewport: { width: 1440, height: 900 }, locale: 'ru-RU' });
   await adminPage.goto(base + '/#/');
-  await adminPage.getByRole('button', { name: 'Войти в личный кабинет' }).click();
+  await adminPage.getByRole('button', { name: 'Войти в кабинет' }).click();
   await adminPage.locator('input[type=tel]').fill('+79990000001');
   await adminPage.getByRole('button', { name: 'Получить код' }).click();
   const adminHint = await adminPage.getByText(/Тестовый режим: код/).textContent();
@@ -97,7 +97,7 @@ try {
   // Small mobile BROWSER (not Android WebView): verify authenticated header and profile access.
   const smallWeb = await browser.newPage({ viewport: { width: 360, height: 780 }, locale: 'ru-RU' });
   await smallWeb.goto(base + '/#/');
-  await smallWeb.getByRole('button', { name: 'Войти по номеру' }).click();
+  await smallWeb.getByRole('button', { name: 'Войти в кабинет' }).click();
   await smallWeb.locator('input[type=tel]').fill('+79990009125');
   await smallWeb.getByRole('button', { name: 'Получить код' }).click();
   const webHint = await smallWeb.getByText(/Тестовый режим: код/).textContent();
