@@ -187,6 +187,11 @@ export function WorkerCommunications() {
           <b>{x.title} · {labels[x.audience]??x.audience}</b>
           <span className="note">{x.body}</span>
           <span className="note">{fmtTime(x.starts_at)} — {fmtTime(x.ends_at)} · {x.published?'опубликовано':'черновик'}</span>
+          <button className="btn ghost small" disabled={busy} onClick={async()=>{
+            const r=await run(()=>put('/api/admin/announcements/'+x.id+'/status',{published:!x.published}),
+              x.published?'Объявление снято':'Объявление опубликовано');
+            if(r)notices.reload();
+          }}>{x.published?'Снять с публикации':'Опубликовать'}</button>
         </div>)}
     </div>
     <div className="card stack">
@@ -196,6 +201,12 @@ export function WorkerCommunications() {
           <b>{x.commission_pct}% · {x.service?(SERVICES[x.service]?.name??x.service):'Все выездные услуги'}</b>
           <span className="note">{fmtTime(x.starts_at)} — {fmtTime(x.ends_at)} · {x.enabled?'включена':'выключена'}</span>
           <span className="note">{x.reason}</span>
+          <button className="btn ghost small" disabled={busy} onClick={async()=>{
+            if(!window.confirm(x.enabled?'Отключить акцию для новых заявок? Уже созданные заявки сохранят свою ставку.':'Включить акцию для новых заявок?'))return;
+            const r=await run(()=>put('/api/admin/commission-campaigns/'+x.id+'/status',{enabled:!x.enabled}),
+              x.enabled?'Акция выключена':'Акция включена');
+            if(r)campaigns.reload();
+          }}>{x.enabled?'Остановить акцию':'Включить акцию'}</button>
         </div>)}
     </div>
   </div>;
