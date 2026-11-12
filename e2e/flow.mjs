@@ -21,8 +21,17 @@ async function checkCabinetMenu(page, expectedLinks) {
     if (!href || !href.startsWith('#/')) throw new Error('Invalid cabinet route for ' + label);
   }
   await summary.click();
-  if (!(await page.locator('.tabbar').getByRole('link', { name: 'Магазин' }).isVisible()))
-    throw new Error('Shop tab must be visible for every account');
+  const shop = page.locator('.tabbar').getByRole('link', { name: 'Магазин' });
+  try {
+    await shop.waitFor({ state: 'visible', timeout: 10000 });
+  } catch {
+    throw new Error('Shop tab must be visible for every account: ' + JSON.stringify({
+      url: page.url(),
+      tabbar: await page.locator('.tabbar').count(),
+      links: await page.locator('.tabbar a').allTextContents(),
+      menu: await page.locator('.account-menu nav a').allTextContents(),
+    }));
+  }
 }
 async function assertDashboardTheme(page, role) {
   const result = await page.evaluate(() => {
