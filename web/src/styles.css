@@ -904,3 +904,31 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
   .app:not(.guest-app) .desktop-aside-symbol{color:#fa348c;}
   .app:not(.guest-app) .desktop-content .client-home .live-strip{color:#a4c8e1;}
 }
+
+
+/* Incoming SOS is a sibling of the application shell; theme it explicitly.
+   It previously kept the obsolete orange/graphite colors even after dashboards changed. */
+.call {
+  --bg:#061526;--surface:#0e2941;--surface-2:#17374e;--surface-3:#193e56;
+  --line:#345570;--line-2:#47718d;--fg:#f2f8ff;--fg-2:#b8d5e5;--muted:#a0c1d7;
+  --accent:#f51a78;--accent-soft:rgba(245,26,120,.14);--on-accent:#fff;
+  --good:#4fe5b1;--bad:#ffafbf;
+  background:radial-gradient(ellipse at 50% 18%,#15446a 0%,#0d2742 32%,#061526 82%);
+  color:#f4faff;overflow-y:auto;
+}
+.call .ring {
+  color:#fff;background:linear-gradient(145deg,#ff3d9a,#e40e6d);
+  box-shadow:0 0 0 10px rgba(229,20,109,.12),0 16px 34px rgba(0,9,20,.3);
+}
+.call h1{color:#f7fcff;}
+.call .sub,.call .note{color:#b5d3e6;}
+.call .pill.accent{background:#412541;color:#ffc0d8;border:1px solid #864768;}
+.call .acts .btn.good{background:linear-gradient(120deg,#45e7b2,#24b99c);color:#04252b;font-weight:900;}
+.call .btn.ghost{background:rgba(11,40,62,.74);border-color:#496c8a;color:#ebf9ff;}
+.call .btn.bad{background:rgba(90,35,62,.65);border-color:#b15c7f;color:#ffd1df;}
+.call .ring{animation:tracksos-call-pulse 1.5s ease-out infinite;}
+@keyframes tracksos-call-pulse {
+  0%{box-shadow:0 0 0 0 rgba(245,26,120,.36),0 15px 30px rgba(0,9,20,.3)}
+  78%,100%{box-shadow:0 0 0 33px rgba(245,26,120,0),0 15px 30px rgba(0,9,20,.3)}
+}
+@media(prefers-reduced-motion:reduce){.call .ring{animation:none!important;}}
