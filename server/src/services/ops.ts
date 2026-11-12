@@ -103,6 +103,39 @@ export class OpsService {
     });
   }
 
+  async setAnnouncementPublished(actor:AuthUser,id:string,published:boolean) {
+    return this.db.tx(async q=>{
+      const row=await q.one<any>(`update worker_announcements set published=$2,updated_at=now()
+        where id=$1 returning id,published,title`,[id,published]);
+      if(!row)throw notFound('Объявление не найдено');
+      await q.query(`insert into audit_log(actor_id,action,target,data) values ($1,'ops.announcement.status',$2,$3)`,
+        [actor.id,id,{published}]);
+      return row;
+    });
+  }
+
+  async setCampaignEnabled(actor:AuthUser,id:string,enabled:boolean) {
+    return this.db.tx(async q=>{
+      await q.query(`select pg_advisory_xact_lock(hashtext('commission-campaigns'))`);
+      const campaign=await q.one<any>(`select id,service,starts_at,ends_at,enabled
+        from commission_campaigns where id=$1 for update`,[id]);
+      if(!campaign)throw notFound('Акция не найдена');
+      if(enabled){
+        const clash=await q.one<{id:string}>(`select id from commission_campaigns
+          where id<>$1 and enabled and starts_at<$3 and ends_at>$2
+            and (service=$4 or service is null or $4::text is null) limit 1`,
+          [id,campaign.starts_at,campaign.ends_at,campaign.service]);
+        if(clash)throw bad('campaign_overlap','Временные интервалы акций пересекаются');
+        if(new Date(campaign.ends_at)<=this.now())throw bad('expired','Истёкшую акцию включать нельзя');
+      }
+      const row=await q.one<any>(`update commission_campaigns set enabled=$2,updated_at=now()
+        where id=$1 returning id,enabled,service,commission_pct::float as commission_pct`,[id,enabled]);
+      await q.query(`insert into audit_log(actor_id,action,target,data) values ($1,'ops.campaign.status',$2,$3)`,
+        [actor.id,id,{enabled}]);
+      return row;
+    });
+  }
+
   async campaigns() {
     return this.db.query<any>(`select id,service,commission_pct::float as commission_pct,
       starts_at,ends_at,enabled,reason,created_at from commission_campaigns order by created_at desc limit 100`);
