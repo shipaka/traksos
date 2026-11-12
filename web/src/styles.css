@@ -643,3 +643,8 @@ select.field { appearance: none; }
  .public-landing .public-brand-hero h1{font-size:22px;}
  .public-landing .public-why-strip{gap:8px;}
 }
+
+/* Compact actions on the existing phone-code page, preserving older deep links. */
+.auth-entry-options{display:flex;flex-wrap:wrap;gap:7px;padding:4px 0;}
+.auth-entry-options button{padding:9px 11px;border-radius:9px;border:1px solid #4a6c88;color:#e5f4ff;background:#102b44;font-weight:750;font-size:12px;}
+.auth-entry-options button:hover{border-color:#ff4b99;}
