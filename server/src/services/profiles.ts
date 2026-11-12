@@ -268,15 +268,28 @@ export class ProfilesService {
     }
     const phone = normalizePhone(rawPhone);
     if (!phone) throw bad('bad_phone', 'Неверный номер');
-    const driver = await this.db.one<{ id: string; owner_id: string | null }>(
-      `insert into users(phone, roles, owner_id) values ($1, '{driver}', $2)
-       on conflict (phone) do update set roles = (select array(select distinct unnest(users.roles || '{driver}'::text[])))
-       returning id, owner_id`,
-      [phone, owner.id],
-    );
-    if (driver!.owner_id && driver!.owner_id !== owner.id) throw bad('driver_taken', 'Этот номер уже водитель другого владельца');
-    await this.db.query('update users set owner_id=$2 where id=$1', [driver!.id, owner.id]);
-    await this.db.query('update vehicles set driver_id=$2, driver_since=now() where id=$1', [vehicleId, driver!.id]);
-    return { driverId: driver!.id };
+    // Owner invitation explicitly converts a standalone client to a driver.
+    // Never append {driver} to {client}: it would create conflicting identities.
+    const driver = await this.db.tx(async (q) => {
+      await q.query('select pg_advisory_xact_lock(hashtext($1))', [phone]);
+      const current = await q.one<{ id: string; owner_id: string | null; roles: string[] }>(
+        'select id, owner_id, roles from users where phone=$1 for update', [phone]);
+      if (current?.owner_id && current.owner_id !== owner.id) throw bad('driver_taken', 'Этот номер уже водитель другого владельца');
+      if (current) {
+        if (current.roles.some((r) => ['master','tow','service','insurer'].includes(r)))
+          throw bad('incompatible_roles', 'Этот номер принадлежит исполнителю или страховщику');
+        const ownCars = await q.one<{ n: number }>('select count(*)::int as n from vehicles where owner_id=$1', [current.id]);
+        if ((ownCars?.n ?? 0) > 0) throw bad('has_garage', 'Владелец своего транспорта не может стать водителем чужого парка');
+        await q.query("update users set roles=array_remove(roles, 'client') || '{driver}'::text[], owner_id=$2, registration_kind='driver' where id=$1",
+          [current.id, owner.id]);
+        return current.id;
+      }
+      const created = await q.one<{ id: string }>(
+        "insert into users(phone,roles,owner_id,registration_kind) values ($1,'{driver}',$2,'driver') returning id",
+        [phone, owner.id]);
+      return created!.id;
+    });
+    await this.db.query('update vehicles set driver_id=$2, driver_since=now() where id=$1', [vehicleId, driver]);
+    return { driverId: driver };
   }
 }
