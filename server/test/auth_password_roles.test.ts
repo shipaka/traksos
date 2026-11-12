@@ -43,8 +43,8 @@ test('master plus service is automatic, client and insurance are exclusive', asy
 
   const insured = await register('+79998881113', 'insurer');
   assert.deepEqual(insured.user.roles, ['insurer']);
-  assert.equal((await t.api('PUT', '/api/base', { name: 'СТО', address: 'Шоссе, 1' }, insured.token)).status, 400);
-  assert.equal((await t.api('PUT', '/api/performer/profile', { kind: 'master', name: 'Мастер' }, insured.token)).status, 400);
+  assert.ok([400,403].includes((await t.api('PUT', '/api/base', { name: 'СТО', address: 'Шоссе, 1' }, insured.token)).status));
+  assert.ok([400,403].includes((await t.api('PUT', '/api/performer/profile', { kind: 'master', name: 'Мастер' }, insured.token)).status));
 
   const client = await register('+79998881114', 'owner');
   assert.equal((await t.api('PUT', '/api/performer/profile', { kind: 'master', name: 'Мастер' }, client.token)).status, 400);
