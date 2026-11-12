@@ -141,15 +141,37 @@ export function compressImage(file: File, max = 1600, quality = 0.82): Promise<s
     const img = new Image();
     const url = URL.createObjectURL(file);
     img.onload = () => {
-      const k = Math.min(1, max / Math.max(img.width, img.height));
-      const c = document.createElement('canvas');
-      c.width = Math.round(img.width * k);
-      c.height = Math.round(img.height * k);
-      c.getContext('2d')!.drawImage(img, 0, 0, c.width, c.height);
-      URL.revokeObjectURL(url);
-      resolve(c.toDataURL('image/jpeg', quality));
+      try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Не удалось обработать изображение');
+        const initial = Math.min(1, max / Math.max(img.width, img.height));
+        let scale = initial;
+        let q = Math.min(0.90, Math.max(0.60, quality));
+        let result = '';
+        // Server accepts JSON up to 1 MB, base64 overhead included.
+        // Target under 800k characters to leave space for request fields.
+        for (let attempt = 0; attempt < 12; attempt++) {
+          canvas.width = Math.max(1, Math.round(img.width * scale));
+          canvas.height = Math.max(1, Math.round(img.height * scale));
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          result = canvas.toDataURL('image/jpeg', q);
+          if (result.length <= 800_000) break;
+          if (q > 0.63) q = Math.max(0.62, q - 0.10);
+          else scale *= 0.79;
+        }
+        if (result.length > 800_000) throw new Error('Фотография слишком большая. Выберите другое фото.');
+        resolve(result);
+      } catch (error) {
+        reject(error);
+      } finally {
+        URL.revokeObjectURL(url);
+      }
     };
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Не удалось открыть фото')); };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Не удалось открыть фото'));
+    };
     img.src = url;
   });
 }

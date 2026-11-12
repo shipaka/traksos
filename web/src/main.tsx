@@ -73,6 +73,18 @@ function App() {
   }, []);
 
   useEffect(() => { reload(); }, [reload]);
+  useEffect(() => {
+    // Refresh the role/profile when the device reconnects or returns to foreground.
+    // Live orders are always re-read from the API; no mutation is queued offline.
+    const refresh = () => { if (getToken()) reload(); };
+    const visible = () => { if (document.visibilityState === 'visible') refresh(); };
+    window.addEventListener('online', refresh);
+    document.addEventListener('visibilitychange', visible);
+    return () => {
+      window.removeEventListener('online', refresh);
+      document.removeEventListener('visibilitychange', visible);
+    };
+  }, [reload]);
   // #/as/client, #/as/performer, #/as/admin — переключить кабинет и открыть его главную
   useEffect(() => {
     const [x, m] = route;

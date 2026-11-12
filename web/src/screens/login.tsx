@@ -1,6 +1,28 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { post, setToken, connectWs, ApiError } from '../api.ts';
 import { useAction, useMe, useToast, Field } from '../ui.tsx';
+
+function PublicDemoMapBackdrop() {
+  const [online, setOnline] = useState(navigator.onLine);
+  useEffect(() => {
+    const connected = () => setOnline(true);
+    const disconnected = () => setOnline(false);
+    window.addEventListener('online', connected);
+    window.addEventListener('offline', disconnected);
+    return () => {
+      window.removeEventListener('online', connected);
+      window.removeEventListener('offline', disconnected);
+    };
+  }, []);
+  if (!online || (window as any).TrakSOSNative) {
+    return <div className="public-map-native-demo">
+      <b>Санкт-Петербург и Ленинградская область</b>
+      <span>Демонстрационные отметки услуг. Реальная карта доступна после входа.</span>
+    </div>;
+  }
+  return <iframe title="Карта Санкт-Петербурга и Ленинградской области — пример расположения сервисов"
+    loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=29.35%2C59.50%2C31.50%2C60.30&layer=mapnik&marker=59.9386%2C30.3141" />;
+}
 
 // Роль выбирают только те, кто подключается работать. Остальные входят по номеру — кабинет определяется по ролям.
 const JOIN_ROLES = [
@@ -123,14 +145,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         <section className="public-demo-map" id="public-map" aria-label="Как выглядит карта помощи">
           <div className="public-section-head"><span className="public-section-kicker">ЗОНА ОБСЛУЖИВАНИЯ</span><h2>Рядом с вами</h2></div>
           <div className="public-map-wrap">
-            {(window as any).TrakSOSNative ? (
-              <div className="public-map-native-demo">
-                <b>Санкт-Петербург и Ленинградская область</b>
-                <span>Демонстрационные отметки услуг. Реальная карта доступна после входа.</span>
-              </div>
-            ) : (
-              <iframe title="Карта Санкт-Петербурга и Ленинградской области — пример расположения сервисов" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=29.35%2C59.50%2C31.50%2C60.30&layer=mapnik&marker=59.9386%2C30.3141" />
-            )}
+            <PublicDemoMapBackdrop />
             <span className="public-map-pin service" style={{ left: '46%', top: '43%' }} title="Демо: СТО">⚙</span>
             <span className="public-map-pin master" style={{ left: '61%', top: '34%' }} title="Демо: мастер">⚡</span>
             <span className="public-map-pin tow" style={{ left: '39%', top: '66%' }} title="Демо: эвакуация">↗</span>
