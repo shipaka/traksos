@@ -12,21 +12,41 @@ import kotlin.concurrent.thread
 object Session {
     private const val PREFS = "traksos"
 
+    private fun trustedOrigin(ctx: Context, url: String): Boolean = try {
+        val target = URI(server(ctx))
+        val candidate = URI(url)
+        candidate.scheme.equals("https", ignoreCase = true) &&
+            candidate.host.equals(target.host, ignoreCase = true) &&
+            (candidate.port == -1 || candidate.port == target.port) &&
+            candidate.rawUserInfo == null
+    } catch (_: Exception) { false }
+
     fun save(ctx: Context, apiUrl: String, token: String?) {
+        if (!trustedOrigin(ctx, apiUrl)) {
+            Log.w(TrakSosApp.TAG, "Blocked session update from an unexpected API origin")
+            return
+        }
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-            .putString("apiUrl", apiUrl)
+            .putString("apiUrl", server(ctx))
             .putString("token", token)
             .apply()
         // токен пушей мог прийти раньше входа — отправим теперь
         pushToken(ctx)?.let { sendPushToken(ctx, it) }
     }
 
-    fun apiUrl(ctx: Context): String =
-        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("apiUrl", null) ?: server(ctx)
+    fun apiUrl(ctx: Context): String {
+        val saved = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("apiUrl", null)
+        return if (saved != null && trustedOrigin(ctx, saved)) saved else server(ctx)
+    }
 
     /** Адрес сайта: заданный в приложении (тестовый стенд) или вшитый при сборке */
     fun server(ctx: Context): String =
-        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("server", null) ?: BuildConfig.APP_URL
+        if (BuildConfig.DEBUG) {
+            ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("server", null) ?: BuildConfig.APP_URL
+        } else {
+            // A public RuStore release cannot silently switch to a third-party server.
+            BuildConfig.APP_URL
+        }
 
     /** В тестовой сборке открываем демо, пока пользователь не указал реальный HTTPS-стенд. */
     fun hasCustomServer(ctx: Context): Boolean =
@@ -34,6 +54,7 @@ object Session {
 
     /** Возвращает false для небезопасного или некорректного адреса. */
     fun setServer(ctx: Context, raw: String): Boolean {
+        if (!BuildConfig.DEBUG) return false
         var u = raw.trim().trimEnd('/')
         if (u.isNotEmpty() && !u.contains("://")) u = "https://$u"
         if (u.isNotEmpty()) {
