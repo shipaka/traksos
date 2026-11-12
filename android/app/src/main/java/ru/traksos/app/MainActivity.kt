@@ -129,7 +129,7 @@ class MainActivity : AppCompatActivity() {
             override fun onShowFileChooser(
                 view: WebView?,
                 filePathCallback: ValueCallback<Array<Uri>>?,
-                fileChooserParams: FileChooserParams?
+                fileChooserParams: WebChromeClient.FileChooserParams?
             ): Boolean {
                 this@MainActivity.fileUploadCallback?.onReceiveValue(null)
                 this@MainActivity.fileUploadCallback = filePathCallback
@@ -138,7 +138,7 @@ class MainActivity : AppCompatActivity() {
                         type = "*/*"
                         addCategory(Intent.CATEGORY_OPENABLE)
                         putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("image/*", "application/pdf"))
-                        putExtra(Intent.EXTRA_ALLOW_MULTIPLE, fileChooserParams?.mode == FileChooserParams.MODE_OPEN_MULTIPLE)
+                        putExtra(Intent.EXTRA_ALLOW_MULTIPLE, fileChooserParams?.mode == WebChromeClient.FileChooserParams.MODE_OPEN_MULTIPLE)
                     }
                     filePicker.launch(Intent.createChooser(choose, "Выберите фото или документ"))
                     true
@@ -306,6 +306,25 @@ class MainActivity : AppCompatActivity() {
         hideStartupOverlay()
         failed = true
         web.removeCallbacks(watchdog)
+        if (!BuildConfig.DEBUG) {
+            val safeReason = android.text.TextUtils.htmlEncode(reason)
+            val html = """
+            <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+            <style>*{box-sizing:border-box}body{background:linear-gradient(155deg,#041326,#112c49 65%,#28102e);margin:0;
+            display:flex;align-items:center;justify-content:center;min-height:100vh;color:white;font-family:Arial,sans-serif}
+            main{padding:28px;max-width:430px;text-align:center}
+            h1{font-size:36px;font-weight:900}em{font-style:normal;color:#fc1978}
+            p{line-height:1.55;color:#c9d9eb}button{background:#ef146a;color:white;width:100%;border:1px solid #ff74b0;
+            border-radius:14px;padding:16px;font-size:17px;font-weight:700;margin-top:22px}
+            small{color:#acbfd4;display:block;margin-top:15px;line-height:1.4}
+            </style></head><body><main><h1>Track<em>SOS</em></h1>
+            <p>Нет связи с сервером TrackSOS. Проверьте интернет и попробуйте снова.</p>
+            <button onclick="TrakSOSNative.retry()">Повторить подключение</button>
+            <small>$safeReason</small></main></body></html>
+            """.trimIndent()
+            web.post { web.loadDataWithBaseURL(null, html, "text/html", "utf-8", null) }
+            return
+        }
         val q = { t: String -> JSONObject.quote(t) }
         val html = """
         <html lang="ru"><head><meta name="viewport" content="width=device-width,initial-scale=1"><meta charset="utf-8">
