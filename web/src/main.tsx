@@ -128,7 +128,13 @@ function App() {
   const isPerformer = me.roles.some((r) => PERFORMER_ROLES.includes(r));
   const isStaff = me.roles.some((r) => r === 'admin' || r === 'moderator');
   const isService = me.roles.includes('service');
-  const effMode: Mode = a === 'work' ? 'performer' : a === 'admin' ? 'admin' : a === 'base' ? 'service' : (mode === 'performer' && !isPerformer) || (mode === 'service' && !isService) ? 'client' : mode;
+  // A saved/forced mode must never expose navigation for a role the account lacks.
+  const allowedMode: Mode = mode === 'admin' && !isStaff
+    ? 'client' : mode === 'performer' && !isPerformer
+    ? 'client' : mode === 'service' && !isService ? 'client' : mode;
+  const effMode: Mode = a === 'work' && isPerformer ? 'performer'
+    : a === 'admin' && isStaff ? 'admin'
+    : a === 'base' && isService ? 'service' : allowedMode;
 
   let screen;
   switch (a) {
@@ -158,7 +164,7 @@ function App() {
     case 'qr': screen = <QrJoin code={b} />; break;
     case 'appeal': screen = <Appeal />; break;
     case 'reviews': screen = <MyReviews />; break;
-    case 'admin': screen = !isStaff ? <Home /> : b === 'case' && route[2] ? <ModCase id={route[2]} /> : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : <Admin />; break;
+    case 'admin': screen = !isStaff ? <Home /> : b === 'case' && route[2] ? <ModCase id={route[2]} /> : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : <Admin key={b === 'section' ? route[2] : 'summary'} initialSection={b === 'section' ? route[2] : undefined} />; break;
     case 'offer': screen = <OfferPage audience={b ?? 'client'} />; break;
     case 'support': screen = b === 'new' ? <SupportNew /> : b ? <SupportThread id={b} /> : <SupportList />; break;
     case 'notifications': screen = <Notifications />; break;
@@ -201,8 +207,22 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/base/money', 'Финансы'], ['/profile', 'Аккаунт'],
          ['/invite', 'Пригласить партнёра']]
     : mode === 'admin'
-      ? [['/admin', 'Административные разделы'], ['/profile', 'Аккаунт'],
-         ['/as/client', 'Кабинет клиента']]
+      ? [['/admin', 'Административная сводка'],
+         ['/admin/section/queue', 'Очередь модерации'],
+         ['/admin/section/orders', 'Все заявки'],
+         ['/admin/section/search', 'Поиск людей и заявок'],
+         ['/admin/section/people', 'Пользователи'],
+         ['/admin/section/verify', 'Проверка исполнителей'],
+         ['/admin/section/bases', 'СТО и рембазы'],
+         ['/admin/section/shop', 'Управление магазином'],
+         ['/admin/section/payments', 'Деньги и выплаты'],
+         ['/admin/section/stats', 'Статистика'],
+         ['/admin/section/support', 'Обращения'],
+         ['/admin/section/dispatch', 'Распределение заявок'],
+         ['/admin/section/offers', 'Оферты площадки'],
+         ['/admin/section/flagged', 'Подозрительные действия'],
+         ['/admin/section/settings', 'Настройки площадки'],
+         ['/profile', 'Аккаунт'], ['/as/client', 'Кабинет клиента']]
     : [['/orders', 'История заявок'], ['/garage', 'Мой гараж'],
        ...(!me?.owner_id ? [['/fleet', 'Мой автопарк']] as [string,string][] : []),
        ['/services', 'СТО и запись'],
