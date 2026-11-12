@@ -166,21 +166,36 @@ class MainActivity : AppCompatActivity() {
         web.removeCallbacks(watchdog)
         val q = { t: String -> JSONObject.quote(t) }
         val html = """
-        <html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-        <body style="background:#15171A;color:#F2F2F0;font-family:sans-serif;margin:0;padding:32px 24px;text-align:center">
-        <h2 style="color:#FF6A13;margin-top:15vh">ТракSOS</h2>
-        <p id="r" style="line-height:1.5"></p>
-        <button onclick="TrakSOSNative.retry()" style="margin:16px 0 40px;padding:14px 28px;border:0;border-radius:14px;
-          background:#FF6A13;color:#15171A;font-weight:bold;font-size:16px">${getString(R.string.retry)}</button>
-        <p style="color:#9A9C9F;font-size:14px">${getString(R.string.server_address)}</p>
-        <input id="u" inputmode="url" autocapitalize="off" autocorrect="off" style="width:100%;box-sizing:border-box;padding:14px;
-          border-radius:12px;border:1px solid #33363B;background:#1F2226;color:#F2F2F0;font-size:15px">
-        <button onclick="TrakSOSNative.setServer(document.getElementById('u').value)" style="margin-top:12px;width:100%;padding:14px;
-          border:1px solid #FF6A13;border-radius:14px;background:none;color:#FF6A13;font-weight:bold;font-size:15px">${getString(R.string.server_save)}</button>
-        <p style="color:#6B6E72;font-size:12px;margin-top:12px">${getString(R.string.server_hint)}</p>
-        <script>document.getElementById('r').textContent=${q(reason)};document.getElementById('u').value=${q(Session.server(this))};
-        window.addEventListener('online',()=>TrakSOSNative.retry())</script></body></html>
-        """.trimIndent()
+        <html lang="ru"><head><meta name="viewport" content="width=device-width,initial-scale=1"><meta charset="utf-8">
+        <style>*{box-sizing:border-box}body{margin:0;background:#15171a;color:#f4f4f2;font-family:Arial,sans-serif}
+        header{padding:20px;background:#202327;display:flex;justify-content:space-between;align-items:center}
+        strong.logo{font-size:24px;color:#ff761c}.badge{font-size:11px;color:#a8adb2}
+        main{padding:18px 18px 85px}.alert,.card{border-radius:14px;padding:16px;margin-bottom:14px}
+        .alert{background:#35291d;border:1px solid #86603a;font-size:13px;line-height:1.5}
+        .card{background:#25292e;border:1px solid #363b41}h2{margin:22px 0 12px}
+        p{font-size:14px;color:#b5bac0;line-height:1.5}
+        button.action{padding:13px;border:0;border-radius:12px;background:#ff771c;color:#171717;font-weight:bold;width:100%;font-size:15px}
+        button.secondary{padding:13px;border:1px solid #ff771c;border-radius:12px;background:none;color:#ff8f43;width:100%}
+        .page{display:none}.page.active{display:block}
+        nav{position:fixed;bottom:0;display:flex;width:100%;background:#202327;border-top:1px solid #41454a}
+        nav button{flex:1;padding:17px 0;background:none;border:0;color:#b5bac0;font-size:12px}
+        nav button.active{color:#ff8f43;font-weight:bold}
+        input{width:100%;padding:14px;border:1px solid #454b51;border-radius:10px;background:#15171a;color:white;margin-bottom:12px}
+        </style></head><body><header><strong class="logo">ТракSOS</strong><span class="badge">АВТОНОМНОЕ ДЕМО</span></header>
+        <main><div class="alert">Сервер TrackSOS ещё не запущен. Это демонстрация интерфейса: реальные вызовы, заявки, вход и загрузка документов отключены.</div>
+        <section class="page active" id="home"><h2>Помощь грузовику</h2>
+        <div class="card"><b>🚨 Срочная помощь</b><p>Вызов специалиста при поломке на дороге.</p><button class="action" onclick="show('sos')">Открыть SOS</button></div>
+        <div class="card"><b>🔧 Выездной мастер</b><p>Электрик, диагностика и ремонт на месте.</p><button class="secondary" onclick="show('orders')">Заявки</button></div>
+        <div class="card"><b>🚛 Эвакуатор</b><p>Помощь с транспортировкой грузового автомобиля.</p></div></section>
+        <section class="page" id="sos"><h2>Вызов SOS</h2><div class="card"><b>Экстренная заявка</b><p>После подключения сервера здесь будут адрес, тип поломки, стоимость и поиск исполнителя.</p><button class="action" onclick="alert('Это демонстрация. SOS-вызов не отправлен.')">Проверить кнопку SOS</button></div></section>
+        <section class="page" id="orders"><h2>Мои заявки</h2><div class="card"><b>Заявок нет</b><p>История, чат, исполнители и документы появятся после запуска системы.</p></div></section>
+        <section class="page" id="profile"><h2>Личный кабинет</h2><div class="card"><b>Профиль · демо</b><p>Автомобили, страховки, документы и личные данные будут доступны после подключения сервера.</p></div>
+        <button class="secondary" onclick="document.getElementById('setup').style.display='block'">Настроить тестовый сервер</button>
+        <div id="setup" style="display:none"><p>Введите HTTPS-адрес работающего тестового стенда.</p><input id="u" placeholder="https://тестовый-сервер"><button class="action" onclick="TrakSOSNative.setServer(document.getElementById('u').value)">Сохранить и открыть</button><p id="r"></p></div></section></main>
+        <nav><button id="tab-home" class="active" onclick="show('home')">Главная</button><button id="tab-sos" onclick="show('sos')">SOS</button><button id="tab-orders" onclick="show('orders')">Заявки</button><button id="tab-profile" onclick="show('profile')">Кабинет</button></nav>
+        <script>function show(id){document.querySelectorAll('.page').forEach(function(e){e.classList.toggle('active',e.id===id)});document.querySelectorAll('nav button').forEach(function(e){e.classList.toggle('active',e.id==='tab-'+id)});scrollTo(0,0)}
+        document.getElementById('u').value=SERVER_VALUE;document.getElementById('r').textContent=REASON_VALUE;</script></body></html>
+        """.trimIndent().replace("SERVER_VALUE", q(Session.server(this))).replace("REASON_VALUE", q(reason))
         web.post { web.loadDataWithBaseURL(null, html, "text/html", "utf-8", null) }
     }
 
