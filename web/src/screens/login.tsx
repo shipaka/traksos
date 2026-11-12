@@ -23,10 +23,10 @@ export function homeFor(roles: string[], intent: Intent): string {
   return '#/as/client';
 }
 
-export function Login({ driver }: { driver?: boolean } = {}) {
+export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = {}) {
   const { reload } = useMe();
   const { busy, run } = useAction();
-  const [intent, setIntent] = useState<Intent | null>(driver ? 'login' : null);
+  const [intent, setIntent] = useState<Intent | null>(driver ? 'login' : entry ?? null);
   const [phone, setPhone] = useState('+7 ');
   const [step, setStep] = useState<'phone' | 'code'>('phone');
   const [code, setCode] = useState('');
