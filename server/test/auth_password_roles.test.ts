@@ -43,6 +43,10 @@ test('master plus service is automatic, client and insurance are exclusive', asy
 
   const insured = await register('+79998881113', 'insurer');
   assert.deepEqual(insured.user.roles, ['insurer']);
+  assert.equal((await t.api('POST', '/api/shop/orders', {
+    items: [{ productId: '00000000-0000-4000-8000-000000000001', qty: 1 }],
+    delivery: 'pickup',
+  }, insured.token)).status, 403, 'страховой аккаунт не может оформлять обычные покупки');
   const insurerOffers = ok(await t.api('GET', '/api/me/offers', undefined, insured.token));
   assert.deepEqual(insurerOffers.map((entry: any) => entry.audience), ['privacy']);
   const hybridOffers = ok(await t.api('GET', '/api/me/offers', undefined, hybrid.token));
