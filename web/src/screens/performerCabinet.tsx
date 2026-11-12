@@ -51,8 +51,17 @@ export function PerformerHub() {
     ['profile', 'Аккаунт', 'кабинет клиента, выход'],
   ];
   return (
-    <main>
-      <div><h1>Профиль</h1><div className="sub">Всё по разделам — откройте нужный.</div></div>
+    <main className="cabinet-page">
+      <header className="cabinet-heading">
+        <span className="label">Кабинет исполнителя · {p.kind === 'tow' ? 'Эвакуатор' : 'Выездной мастер'}</span>
+        <h1>Профиль и настройки</h1>
+        <div className="sub">Управляйте графиком, автомобилями, документами и финансами. Изменения доступны на телефоне и на сайте.</div>
+      </header>
+      <div className="cabinet-metrics">
+        <div className="card tile"><span className="label">Автомобили</span><b className="tile-value">{cars.length}</b></div>
+        <div className="card tile"><span className="label">График</span><b className="tile-value">{p.schedule?.on ? 'Задан' : 'Свободный'}</b></div>
+        <div className="card tile"><span className="label">Проверка</span><b className="tile-value">{p.verification === 'approved' ? 'Пройдена' : 'В процессе'}</b></div>
+      </div>
       <div className="stack web-settings-grid">
         {rows.map(([to, t, sub]) => (
           <button key={to} className="linkrow" onClick={() => go(to)}><span><b>{t}</b><small>{sub}</small></span><span aria-hidden="true">›</span></button>
