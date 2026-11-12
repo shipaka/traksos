@@ -94,7 +94,9 @@ class MainActivity : AppCompatActivity() {
             databaseEnabled = true
             setGeolocationEnabled(true)
             allowFileAccess = false
-            allowContentAccess = false
+            // Picked documents use content:// URIs granted by Android's system file picker.
+            // File:// access remains disabled; no untrusted external iframe is loaded.
+            allowContentAccess = true
             javaScriptCanOpenWindowsAutomatically = false
             setSupportMultipleWindows(false)
             mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
