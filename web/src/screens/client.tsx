@@ -43,11 +43,18 @@ export function Home() {
           </div>
         </section>
       ) : (
-        <div>
+        <header className="cabinet-heading">
+          <span className="label">ТракSOS · Помощь на дороге</span>
           <h1>{me?.name ? `${me.name}, что случилось?` : 'Что случилось?'}</h1>
           <div className="sub">Выберите — подскажем, кому звонить и что делать. Петербург и Ленобласть, круглосуточно.</div>
-        </div>
+        </header>
       )}
+
+      {live.length > 0 && <div className="cabinet-metrics">
+        <div className="card tile"><span className="label">Активные заявки</span><b className="tile-value">{live.length}</b></div>
+        <div className="card tile"><span className="label">Статус</span><b className="tile-value">{live.length === 1 ? 'В работе' : 'Есть заявки'}</b></div>
+        <div className="card tile"><span className="label">История</span><a href="#/orders">Все заявки →</a></div>
+      </div>}
 
       {live.map((o: any) => (
         <a key={o.id} href={`#/order/${o.id}`} className="card hi" style={{ textDecoration: 'none', color: 'inherit' }}>
