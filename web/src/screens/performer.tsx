@@ -4,6 +4,7 @@ import { BRANDS, BRAND_LEVELS, LINE, SERVICES } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, RubInput, Back, LiveStrip } from '../ui.tsx';
 import { native } from '../native.ts';
 import { OfferForm } from './search.tsx';
+import { WorkerNotices } from './ops.tsx';
 import { useToast } from '../ui.tsx';
 
 // Линия: статус, геолокация, входящие ---------------------------------------
@@ -28,6 +29,7 @@ export function Work() {
 
   return (
     <main>
+      <WorkerNotices />
       <LiveStrip who={p.kind === 'tow' ? 'tow' : 'master'} />
       {online && p.verification === 'approved' && <Nearby />}
       <div className="between">
