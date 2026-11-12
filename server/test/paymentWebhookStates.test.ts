@@ -76,3 +76,32 @@ test('cancellation cannot capture more than the provider authorized', async () =
   assert.equal(captures, 0, 'provider capture must not be attempted');
   assert.equal(updates, 0, 'payment must not be modified');
 });
+
+
+test('concurrent duplicate webhook cannot repeat dispatch or payment events', async () => {
+  let claims = 0;
+  let events = 0;
+  let dispatches = 0;
+  const db: any = {
+    one: async (sql: string, args: unknown[]) => {
+      assert.match(sql, /status=\$3 returning id/);
+      assert.deepEqual(args, ['payment-1', 'held', 'pending']);
+      claims++;
+      return claims === 1 ? { id: 'payment-1' } : null;
+    },
+  };
+  const orders: any = {
+    event: async () => { events++; },
+    startDispatch: async () => { dispatches++; },
+  };
+  const service = new PaymentsService(db, {} as any, {} as any, {} as any, orders);
+  const pay = { id: 'payment-1', order_id: 'order-1', kind: 'call_out', total: 500, status: 'pending' };
+  const results = await Promise.all([
+    (service as any).sync(pay, 'held'),
+    (service as any).sync(pay, 'held'),
+  ]);
+  assert.deepEqual(results, [{ changed: true }, { changed: false }]);
+  assert.equal(claims, 2);
+  assert.equal(events, 1, 'only one payment event');
+  assert.equal(dispatches, 1, 'dispatch must start once');
+});
