@@ -3,6 +3,7 @@ package ru.traksos.app
 import android.content.Context
 import android.util.Log
 import org.json.JSONObject
+import java.net.URI
 import java.net.HttpURLConnection
 import java.net.URL
 import kotlin.concurrent.thread
@@ -31,14 +32,28 @@ object Session {
     fun hasCustomServer(ctx: Context): Boolean =
         !ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("server", null).isNullOrBlank()
 
-    fun setServer(ctx: Context, raw: String) {
+    /** Возвращает false для небезопасного или некорректного адреса. */
+    fun setServer(ctx: Context, raw: String): Boolean {
         var u = raw.trim().trimEnd('/')
-        if (u.isNotEmpty() && !u.startsWith("http")) u = "https://$u"
+        if (u.isNotEmpty() && !u.contains("://")) u = "https://$u"
+        if (u.isNotEmpty()) {
+            val valid = try {
+                val parsed = URI(u)
+                parsed.scheme.equals("https", ignoreCase = true) &&
+                    !parsed.host.isNullOrBlank() &&
+                    parsed.rawUserInfo == null &&
+                    parsed.rawQuery == null &&
+                    parsed.rawFragment == null &&
+                    (parsed.port == -1 || parsed.port in 1..65535)
+            } catch (_: Exception) { false }
+            if (!valid) return false
+        }
         // Сервер сменился — старый вход и адрес API к нему не относятся
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
             .apply { if (u.isEmpty()) remove("server") else putString("server", u) }
             .remove("apiUrl").remove("token")
             .apply()
+        return true
     }
 
     fun token(ctx: Context): String? = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("token", null)
