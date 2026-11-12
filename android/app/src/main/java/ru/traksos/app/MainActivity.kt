@@ -248,8 +248,13 @@ class WebBridge(private val activity: MainActivity) {
     /** Экран ошибки: другой адрес сервера (тестовый стенд). Пусто — адрес по умолчанию. */
     @JavascriptInterface
     fun setServer(url: String) {
-        Session.setServer(activity, url)
-        activity.reload()
+        if (Session.setServer(activity, url)) {
+            activity.reload()
+        } else {
+            activity.runOnUiThread {
+                android.widget.Toast.makeText(activity, "Укажите корректный HTTPS-адрес сервера", android.widget.Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     @JavascriptInterface
