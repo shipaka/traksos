@@ -16,7 +16,7 @@ try {
   await context.setOffline(true);
   await page.reload({ waitUntil: 'domcontentloaded', timeout: 15000 });
   await page.locator('.public-landing').waitFor({ timeout: 15000 });
-  await page.getByRole('button', { name: 'Зарегистрироваться' }).first().waitFor();
+  await page.getByRole('link', { name: 'Зарегистрироваться' }).first().waitFor();
   const hasApiCache = await page.evaluate(async () => {
     try { await fetch('/api/health', { cache: 'no-store' }); return true; }
     catch { return false; }
