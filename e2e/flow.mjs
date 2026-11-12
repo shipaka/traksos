@@ -140,6 +140,13 @@ await shot(k, '05-client-searching');
 
 // Мастеру заявка приходит как звонок — откликается по обычной цене
 await m.getByRole('alertdialog').waitFor({ timeout: 10000 });
+const callStyle = await m.locator('[role="alertdialog"]').evaluate((el) => ({
+  accent: getComputedStyle(el).getPropertyValue('--accent').trim().toLowerCase(),
+  bg: getComputedStyle(el).backgroundImage,
+  overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 2,
+}));
+if (callStyle.accent !== '#f51a78' || !callStyle.bg.includes('radial-gradient') || callStyle.overflow)
+  throw new Error('Incoming SOS visual regression: ' + JSON.stringify(callStyle));
 await shot(m, '06-master-incoming-call');
 await m.getByRole('alertdialog').getByRole('button', { name: /Беру за/ }).click();
 await m.getByRole('alertdialog').waitFor({ state: 'detached' });
