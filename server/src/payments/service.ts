@@ -206,7 +206,14 @@ export class PaymentsService implements PaymentHooks {
     }
     // A hold cannot revert to pending when notifications arrive out of order.
     if (pay.status === 'held' && status === 'pending') return { changed: false };
-    await this.db.query('update payments set status=$2, updated_at=now() where id=$1', [pay.id, status]);
+    // Claim the transition atomically: concurrent provider webhooks must not
+    // both trigger dispatch, ledger entries or payouts for the same payment.
+    const claimed = await this.db.one(
+      `update payments set status=$2, updated_at=now()
+       where id=$1 and status=$3 returning id`,
+      [pay.id, status, pay.status],
+    );
+    if (!claimed) return { changed: false };
     await this.orders.event(this.db, pay.order_id, null, `payment_${pay.kind}_${status}`, { paymentId: pay.id, total: pay.total });
     if (pay.kind === 'call_out' && status === 'held') {
       await this.orders.startDispatch(pay.order_id);
