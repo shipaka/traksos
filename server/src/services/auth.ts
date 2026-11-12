@@ -26,21 +26,12 @@ function verifyPassword(password: string, stored: string | null) {
 
 export { SELF_ROLES } from '../domain/roles.ts';
 
-/** Защита от накрутки SMS: не больше N кодов на номер в сутки и на один адрес в час */
+/** Persistent limits: no SMS flood after deployment restart or on multi-instance hosting. */
 const PER_PHONE_DAY = 8;
 const PER_IP_HOUR = 15;
 
 export class AuthService {
-  private sentByPhone = new Map<string, number[]>();
   private passwordAttempts = new Map<string, { count: number; since: number }>();
-  private sentByIp = new Map<string, number[]>();
-  private bump(map: Map<string, number[]>, key: string, windowMs: number, max: number, now: number) {
-    const list = (map.get(key) ?? []).filter((t) => now - t < windowMs);
-    if (list.length >= max) return false;
-    list.push(now); map.set(key, list);
-    if (map.size > 50_000) map.clear();
-    return true;
-  }
   constructor(private db: Db, private sms: SmsProvider, private now: () => Date = () => new Date()) {}
 
   async requestCode(rawPhone: string, ip = '', purpose: 'register' | 'reset' = 'register') {
@@ -49,21 +40,46 @@ export class AuthService {
     const existing = await this.db.one<{ id: string }>('select id from users where phone=$1', [phone]);
     if (isProd && purpose === 'register' && existing) throw bad('already_registered', 'Аккаунт существует. Войдите по паролю или восстановите доступ.');
     if (purpose === 'reset' && !existing) throw bad('not_registered', 'Такой аккаунт не найден — выберите регистрацию.');
-    const prev = await this.db.one<{ sent_at: Date }>('select sent_at from auth_codes where phone=$1', [phone]);
-    if (prev && this.now().getTime() - new Date(prev.sent_at).getTime() < RESEND_MS) {
-      throw new HttpError(429, 'too_often', 'Новый код можно запросить через минуту');
-    }
-    const t = this.now().getTime();
-    // Локальные и внутренние адреса не считаем: за прокси без X-Forwarded-For все были бы «одним устройством»
-    const publicIp = ip && !/^(::1|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|::ffff:(127|10|192\.168)\.|fc|fd)/i.test(ip);
-    if (publicIp && !this.bump(this.sentByIp, ip, 3_600_000, PER_IP_HOUR, t)) throw new HttpError(429, 'too_many_codes', 'Слишком много кодов с этого устройства — попробуйте через час');
-    if (!this.bump(this.sentByPhone, phone, 86_400_000, PER_PHONE_DAY, t)) throw new HttpError(429, 'too_many_codes', 'На этот номер сегодня отправлено слишком много кодов — напишите в поддержку');
+    const now = this.now();
+    const ttl = new Date(now.getTime() + CODE_TTL_MS);
+    // Local and proxy-internal IPs are not a reliable individual identifier.
+    const publicIp = ip && !/^(::1|127\\.|10\\.|192\\.168\\.|172\\.(1[6-9]|2\\d|3[01])\\.|::ffff:(127|10|192\\.168)\\.|fc|fd)/i.test(ip);
     const code = newCode();
-    await this.db.query(
-      `insert into auth_codes(phone, code_hash, expires_at, attempts, sent_at, purpose) values ($1,$2,$3,0,$4,$5)
-       on conflict (phone) do update set code_hash=excluded.code_hash, expires_at=excluded.expires_at, attempts=0, sent_at=excluded.sent_at, purpose=excluded.purpose`,
-      [phone, hmac(phone + ':' + code), new Date(this.now().getTime() + CODE_TTL_MS), this.now(), purpose],
-    );
+    const hash = hmac(phone + ':' + code);
+
+    await this.db.tx(async (q) => {
+      // Prevent two parallel code requests from bypassing the 60-second cooldown.
+      await q.query('select pg_advisory_xact_lock(hashtext($1))', ['sms:' + phone]);
+      const prev = await q.one<{ sent_at: Date }>('select sent_at from auth_codes where phone=$1 for update', [phone]);
+      if (prev && now.getTime() - new Date(prev.sent_at).getTime() < RESEND_MS) {
+        throw new HttpError(429, 'too_often', 'Новый код можно запросить через минуту');
+      }
+      const reserve = async (scope: 'phone_day' | 'ip_hour', identity: string, bucket: Date, cap: number) => {
+        const row = await q.one<{ used: number }>(
+          `insert into auth_sms_limits(scope, identity, bucket, used) values ($1,$2,$3,1)
+           on conflict (scope, identity, bucket) do update
+             set used=auth_sms_limits.used + 1
+           where auth_sms_limits.used < $4
+           returning used`,
+          [scope, identity, bucket, cap],
+        );
+        if (!row) {
+          throw new HttpError(429, 'too_many_codes',
+            scope === 'phone_day' ? 'На этот номер сегодня отправлено слишком много кодов — напишите в поддержку'
+              : 'Слишком много кодов с этого устройства — попробуйте через час');
+        }
+      };
+      const day = new Date(Math.floor(now.getTime() / 86_400_000) * 86_400_000);
+      const hour = new Date(Math.floor(now.getTime() / 3_600_000) * 3_600_000);
+      await reserve('phone_day', phone, day, PER_PHONE_DAY);
+      if (publicIp) await reserve('ip_hour', ip, hour, PER_IP_HOUR);
+      await q.query(
+        `insert into auth_codes(phone, code_hash, expires_at, attempts, sent_at, purpose) values ($1,$2,$3,0,$4,$5)
+         on conflict (phone) do update set code_hash=excluded.code_hash, expires_at=excluded.expires_at,
+           attempts=0, sent_at=excluded.sent_at, purpose=excluded.purpose`,
+        [phone, hash, ttl, now, purpose],
+      );
+    });
     await this.sms.send(phone, `ТракSOS: код ${purpose === 'reset' ? 'восстановления доступа' : 'регистрации'} ${code}. Никому его не сообщайте.`);
     return { phone, sent: true, devCode: this.sms.exposesCode && !isProd ? code : undefined };
   }
