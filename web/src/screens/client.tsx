@@ -848,7 +848,7 @@ export function Profile() {
         if (await run(() => (patchMe({ name, companyName: company || null, companyInn: inn || null })), 'Сохранено')) reload();
       }}>
         <Field label="Имя"><input className="field" value={name} onChange={(e) => setName(e.target.value)} /></Field>
-        {!me.owner_id && (
+        {!me.owner_id && !me.roles.includes('driver') && (
           <>
             <Field label="Компания · если работаете от юрлица"><input className="field" value={company} onChange={(e) => setCompany(e.target.value)} /></Field>
             <Field label="ИНН компании" hint="Для счетов и закрывающих документов по ЭДО"><input className="field" inputMode="numeric" value={inn} onChange={(e) => setInn(e.target.value.replace(/\D/g, ''))} /></Field>
