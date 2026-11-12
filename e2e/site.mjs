@@ -121,6 +121,7 @@ try {
   await smallWeb.locator('input[autocomplete=one-time-code]').fill(webCode[0]);
   await smallWeb.getByRole('button', { name: 'Войти', exact: true }).click();
   await smallWeb.locator('.website .top-profile-link').waitFor({ state: 'visible' });
+  await acceptPendingOffers(smallWeb);
   for (const width of [360, 390]) {
     await smallWeb.setViewportSize({ width, height: 780 });
     const measure = await smallWeb.evaluate(() => {
@@ -164,6 +165,7 @@ try {
   await mobileApp.getByRole('button', { name: 'Войти', exact: true }).click();
   const nav = mobileApp.locator('.native-app .tabbar');
   await nav.waitFor({ state: 'visible' });
+  await acceptPendingOffers(mobileApp);
   const lastTab = nav.locator('a').last();
   if (await lastTab.textContent() !== '👤Профиль') throw new Error('Profile must be the rightmost Android tab');
   const clippedTabs = await nav.locator('a').evaluateAll((items) =>
