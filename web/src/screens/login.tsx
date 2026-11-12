@@ -9,7 +9,7 @@ const JOIN_ROLES = [
   { id: 'service', name: 'Я рембаза (сервис)', hint: 'Клиенты записываются к вам, мастера советуют вас' },
 ] as const;
 type JoinRole = (typeof JOIN_ROLES)[number]['id'];
-type Intent = 'help' | 'login' | 'join';
+type Intent = 'help' | 'login' | 'register' | 'join';
 
 /** Куда вести после входа: по ролям из ответа сервера */
 export function homeFor(roles: string[], intent: Intent): string {
@@ -68,80 +68,107 @@ export function Login({ driver }: { driver?: boolean } = {}) {
   }
 
   const needAgree = intent !== 'login' || !!driver; // водитель по QR — обычно новый номер, согласие сразу
-  const title = intent === 'help' ? 'Помощь на дороге' : intent === 'join' ? 'Работать с ТракSOS' : 'Вход по номеру телефона';
+  const title = intent === 'help' ? 'Помощь на дороге' : intent === 'join' ? 'Работать с ТракSOS' : intent === 'register' ? 'Регистрация в ТракSOS' : 'Вход по номеру телефона';
   const sub = intent === 'help' ? 'Подтвердите номер — и сразу к заявке. Мастер позвонит на него.'
     : intent === 'join' ? 'Выберите, кем подключаетесь. После входа заполните профиль — проверим и откроем заявки.'
-    : 'Пришлём код. Пароль не нужен — кабинет откроется сам.';
+    : intent === 'register' ? 'Укажите номер телефона. Если аккаунта ещё нет, создадим его после подтверждения SMS-кодом.' : 'Пришлём код. Пароль не нужен — кабинет откроется сам.';
 
   if (!intent) return (
-    <main className="public-home">
-      <section className="public-hero">
+    <main className="public-home public-landing" id="public-home">
+      <div className="public-landing-head">
+        <span className="public-landing-region">◉ Санкт-Петербург и Ленинградская область</span>
+        <div className="public-landing-head-actions">
+          <button type="button" onClick={() => setIntent('login')}>Войти</button>
+          <button type="button" className="register" onClick={() => setIntent('register')}>Зарегистрироваться</button>
+        </div>
+      </div>
+
+      <section className="public-hero public-brand-hero" aria-labelledby="public-main-title">
         <div className="public-hero-copy">
-          <span className="public-eyebrow">ТракSOS · Санкт-Петербург и Ленинградская область</span>
-          <h1>Помощь грузовику <em>в дороге 24/7</em></h1>
-          <p>Выездная помощь грузовикам в Санкт-Петербурге и Ленинградской области: мастера, диагностика, эвакуация и связь по заявке в одном сервисе.</p>
-          <div className="launch-region" role="note"><span className="launch-region-dot" aria-hidden="true" /> Зона запуска: Санкт-Петербург и Ленинградская область. В других регионах выездные услуги пока недоступны.</div>
+          <span className="public-eyebrow">ТРАКSOS · ПОМОЩЬ ГРУЗОВОМУ ТРАНСПОРТУ</span>
+          <h1 id="public-main-title">Помощь <em>грузовику</em> в дороге — рядом с вами</h1>
+          <p>Выездные мастера, диагностика, шиномонтаж, эвакуация и проверенные СТО-партнёры. Услуги для грузового транспорта в Санкт-Петербурге и Ленинградской области.</p>
           <div className="public-actions">
             <button type="button" className="public-button public-button-sos" onClick={() => setIntent('help')}>SOS · Нужна помощь</button>
-            <button type="button" className="public-button public-button-outline" onClick={() => setIntent('login')}>Войти в личный кабинет</button>
+            <a className="public-button public-button-outline" href="#public-how">Как это работает?</a>
           </div>
-          <div className="public-hero-caption">Для водителей, владельцев транспорта и сервисных компаний</div>
+          <div className="public-hero-caption">Зона запуска: Санкт-Петербург и Ленинградская область. В других регионах выездные услуги пока недоступны.</div>
         </div>
-        <div className="public-hero-visual" aria-hidden="true">
-          <div className="public-sun" />
-          <div className="public-hill public-hill-back" />
-          <div className="public-hill public-hill-front" />
-          <div className="public-road" />
-          <div className="public-truck">
-            <div className="public-trailer" />
-            <div className="public-cabin"><div className="public-window" /></div>
-            <div className="public-wheel public-wheel-a" /><div className="public-wheel public-wheel-b" /><div className="public-wheel public-wheel-c" />
-          </div>
-        </div>
+        <div className="public-hero-visual" aria-hidden="true" />
       </section>
 
-      <section className="public-feature-grid" aria-label="Возможности ТракSOS">
-        <button type="button" className="public-feature" onClick={() => setIntent('help')}>
-          <span className="public-feature-icon">⚡</span><span><b>Помощь на дороге</b><small>Заявка мастеру и эвакуатору</small></span><span aria-hidden="true">›</span>
-        </button>
-        <button type="button" className="public-feature" onClick={() => setIntent('login')}>
-          <span className="public-feature-icon">▣</span><span><b>Автомобили и документы</b><small>Всё в личном кабинете</small></span><span aria-hidden="true">›</span>
-        </button>
-        <button type="button" className="public-feature" onClick={() => setIntent('login')}>
-          <span className="public-feature-icon">☷</span><span><b>Мои заявки</b><small>Статусы, история и чат</small></span><span aria-hidden="true">›</span>
-        </button>
-        <button type="button" className="public-feature" onClick={() => setIntent('join')}>
-          <span className="public-feature-icon">⚙</span><span><b>Стать партнёром</b><small>Для мастеров и рембаз</small></span><span aria-hidden="true">›</span>
-        </button>
-      </section>
+      <div className="public-content-grid">
+        <section className="public-real-services" id="public-services">
+          <div className="public-section-head"><span className="public-section-kicker">НАША ПОМОЩЬ</span><h2>Что умеет ТракSOS</h2></div>
+          <div className="public-service-tiles">
+            {([
+              ['⚡', 'Электрик', 'Проводка, свет, запуск'],
+              ['▣', 'Диагностика', 'Ошибки и поиск неисправности'],
+              ['◉', 'Пневматика и тормоза', 'Воздушная система, ABS/EBS'],
+              ['≋', 'Автономные отопители', 'Диагностика и ремонт'],
+              ['◎', 'Шиномонтаж', 'Колёса и проколы'],
+              ['↗', 'Эвакуация', 'Помощь грузовику не на ходу'],
+              ['☎', 'Консультация', 'Совет мастера по телефону'],
+              ['⚙', 'СТО-партнёры', 'Сервис и ремонт на базе'],
+            ] as const).map(([icon, name, hint]) => (
+              <button type="button" className="public-service-tile" key={name} onClick={() => setIntent('help')}>
+                <span className="public-service-icon" aria-hidden="true">{icon}</span>
+                <b>{name}</b><small>{hint}</small>
+              </button>
+            ))}
+          </div>
+        </section>
 
-      <section className="public-bottom-row">
+        <section className="public-demo-map" id="public-map" aria-label="Как выглядит карта помощи">
+          <div className="public-section-head"><span className="public-section-kicker">ЗОНА ОБСЛУЖИВАНИЯ</span><h2>Рядом с вами</h2></div>
+          <div className="public-map-wrap">
+            <iframe title="Карта Санкт-Петербурга и Ленинградской области — пример расположения сервисов" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=29.35%2C59.50%2C31.50%2C60.30&layer=mapnik&marker=59.9386%2C30.3141" />
+            <span className="public-map-pin service" style={{ left: '46%', top: '43%' }} title="Демо: СТО">⚙</span>
+            <span className="public-map-pin master" style={{ left: '61%', top: '34%' }} title="Демо: мастер">⚡</span>
+            <span className="public-map-pin tow" style={{ left: '39%', top: '66%' }} title="Демо: эвакуация">↗</span>
+          </div>
+          <div className="public-map-legend"><span><i className="service"/>СТО</span><span><i className="master"/>Мастер</span><span><i className="tow"/>Эвакуация</span></div>
+          <p className="public-demo-warning">Демонстрационная карта: точки условные и не означают доступность исполнителей. Реальные данные доступны пользователю после входа.</p>
+        </section>
+
+        <aside className="public-app-card">
+          <div className="public-section-kicker">ТРАКSOS В ТЕЛЕФОНЕ</div>
+          <h2>Мобильное приложение <em>ТракSOS</em></h2>
+          <div className="public-app-phone" aria-hidden="true">
+            <span className="public-app-logo">Трак<b>SOS</b></span>
+            <span className="public-app-phone-truck">🚚</span>
+            <span>Помощь грузовику<br/>в дороге</span>
+          </div>
+          <p>Заявки, специалисты, документы и связь с мастером — в одном приложении.</p>
+          <span className="public-rustore-soon">Скоро в RuStore</span>
+          <small>Ссылка на скачивание появится после публикации приложения.</small>
+        </aside>
+      </div>
+
+      <section className="public-why-strip" aria-label="Преимущества сервиса">
+        <div><span>◎</span><b>Наш регион</b><small>Санкт-Петербург и Ленобласть</small></div>
+        <div><span>◈</span><b>Подключение партнёров</b><small>Проверка мастеров и СТО</small></div>
+        <div><span>⚡</span><b>Дорожная помощь</b><small>Заявка через единый сервис</small></div>
+        <div><span>☏</span><b>Связь и консультации</b><small>Помощь в выборе специалиста</small></div>
+      </section>
+      <section className="public-bottom-row public-information-row" id="public-how">
         <div className="public-how">
-          <div className="public-section-kicker">КАК ЭТО РАБОТАЕТ</div>
-          <h2>Помощь без лишних звонков</h2>
+          <span className="public-section-kicker">ПОНЯТНЫЙ ПРОЦЕСС</span>
+          <h2>Как получить помощь</h2>
           <div className="public-steps">
-            <div><span>01</span><b>Опишите проблему</b><small>Выберите поломку и местоположение</small></div>
-            <div><span>02</span><b>Найдём специалиста</b><small>Предложения от подходящих исполнителей</small></div>
-            <div><span>03</span><b>Следите за заявкой</b><small>Статус выполнения и связь с мастером</small></div>
+            <div><span>01</span><b>Опишите проблему</b><small>Поломка, автомобиль и место</small></div>
+            <div><span>02</span><b>Выберите предложение</b><small>Когда появятся подходящие исполнители</small></div>
+            <div><span>03</span><b>Следите за заявкой</b><small>Статус и связь с мастером</small></div>
           </div>
         </div>
         <div className="public-partner">
-          <span className="public-section-kicker">РАБОТАЙТЕ С ТРАКSOS</span>
-          <h2>Вы мастер или сервис?</h2>
-          <p>Получайте заявки и управляйте работой через собственный кабинет.</p>
-          <button type="button" className="public-button public-button-partner" onClick={() => setIntent('join')}>Подключиться к платформе →</button>
+          <span className="public-section-kicker">ДЛЯ МАСТЕРОВ И СТО</span>
+          <h2>Станьте партнёром ТракSOS</h2>
+          <p>Подключайте свой сервис и работайте с заявками через отдельный кабинет.</p>
+          <button type="button" className="public-button public-button-partner" onClick={() => setIntent('join')}>Подключиться →</button>
         </div>
       </section>
-      <div className="public-mobile-entry">
-        <div className="helpWrap">
-          <button type="button" className="helpBtn" onClick={() => setIntent('help')} aria-label="Помогите — вызвать мастера или эвакуатор">
-            <span className="t">Помогите</span><span className="s">мастер или эвакуатор</span><span className="tap" aria-hidden="true">👆</span>
-          </button>
-          <div className="sub" style={{ textAlign: 'center' }}>Сломались в дороге — приедем на место</div>
-        </div>
-        <button type="button" className="btn ghost" onClick={() => setIntent('login')}>Войти по номеру</button>
-        <button type="button" className="link" onClick={() => setIntent('join')} style={{ background: 'none', border: 0, color: 'var(--accent)', fontWeight: 600, padding: 8 }}>Хочу работать с ТракSOS →</button>
-      </div>
+      <div className="public-bottom-auth"><button type="button" onClick={() => setIntent('login')}>Войти</button><button type="button" onClick={() => setIntent('register')}>Зарегистрироваться</button></div>
     </main>
   );
 
