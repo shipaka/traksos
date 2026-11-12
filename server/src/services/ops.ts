@@ -21,7 +21,7 @@ export class OpsService {
           count(*) filter (where status='searching' and created_at < $2::timestamptz - $3::int * interval '1 minute')::int as waiting_now,
           count(*) filter (where accepted_at is not null and accepted_at > created_at + $3::int * interval '1 minute')::int as accepted_late,
           count(*) filter (where accepted_at is null and status='no_performer')::int as never_accepted,
-          round(avg(extract(epoch from accepted_at-created_at))/60.0,1) filter (where accepted_at is not null) as average_accept_minutes
+          round((avg(extract(epoch from accepted_at-created_at)) filter (where accepted_at is not null))/60.0,1) as average_accept_minutes
         from orders where created_at >= $1`,
         [since, this.now(), waitMinutes]),
       this.db.query<any>(`select extract(hour from created_at at time zone 'Europe/Moscow')::int as hour,
