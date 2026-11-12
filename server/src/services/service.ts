@@ -2,6 +2,7 @@
 // Клиент: сервисы на карте, запись, статус ремонта, сверка работ и отзыв. Записи попадают в историю машины.
 
 import type { Db } from '../db/index.ts';
+import { assertRoleExtension } from '../domain/roles.ts';
 import type { Notifier } from './notify.ts';
 import type { SettingsService } from './settings.ts';
 import type { SupportService } from './support.ts';
@@ -57,6 +58,8 @@ export class ServiceCenters {
   }
 
   async save(user: AuthUser, p: CenterInput) {
+    const existingRoles = (await this.db.one<{ roles: string[] }>('select roles from users where id=$1', [user.id]))?.roles ?? user.roles;
+    assertRoleExtension(existingRoles, 'service');
     const cur = await this.mine(user);
     if (!cur && (!p.name?.trim() || !p.address?.trim())) throw bad('need_name', 'Укажите название и адрес');
     if (p.inn && !/^(\d{10}|\d{12})$/.test(p.inn)) throw bad('bad_inn', 'ИНН — 10 или 12 цифр');
