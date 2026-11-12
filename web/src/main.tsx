@@ -180,19 +180,19 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   // На телефоне оставляем только рабочие действия. Все прежние маршруты
   // сохраняются через меню; компьютерная боковая навигация остаётся полной.
   const tabs: [string, string, string][] = !me ? [] : mode === 'performer'
-    ? [['/work', '⚡', 'Линия'], ['/work/jobs', '☰', 'Заявки']]
+    ? [['/work', '⚡', 'Линия'], ['/work/jobs', '☰', 'Заявки'], ['/shop', '🛍', 'Магазин']]
     : mode === 'service'
-      ? [['/base', '▤', 'Рембаза'], ['/support', '?', 'Связь']]
+      ? [['/base', '▤', 'Рембаза'], ['/support', '?', 'Связь'], ['/shop', '🛍', 'Магазин']]
     : mode === 'admin'
-      ? [['/admin', '▦', 'Управление']]
-      : [['/', '🔧', 'Услуги'], ['/sos', '!', 'SOS'], ['/orders', '☰', 'Заявки']];
+      ? [['/admin', '▦', 'Управление'], ['/shop', '🛍', 'Магазин']]
+      : [['/', '🔧', 'Услуги'], ['/sos', '!', 'SOS'], ['/orders', '☰', 'Заявки'], ['/shop', '🛍', 'Магазин']];
   const extraLinks: [string, string][] = mode === 'performer'
     ? [['/work/me', 'Мой профиль'], ['/work/filter', 'Настройки заявок'], ['/work/docs', 'Документы'], ['/support', 'Поддержка'], ['/notifications', 'Уведомления']]
     : mode === 'service'
       ? [['/base/me', 'Карточка СТО'], ['/base/money', 'Финансы'], ['/profile', 'Аккаунт'], ['/notifications', 'Уведомления']]
     : mode === 'admin'
       ? [['/profile', 'Аккаунт'], ['/as/client', 'Кабинет клиента'], ['/support', 'Поддержка'], ['/notifications', 'Уведомления']]
-      : [['/garage', 'Мой гараж'], ['/fleet', 'Мой парк'], ['/shop', 'Магазин'], ['/profile', 'Мой профиль'], ['/support', 'Поддержка'], ['/notifications', 'Уведомления']];
+      : [['/garage', 'Мой гараж'], ['/fleet', 'Мой парк'], ['/profile', 'Мой профиль'], ['/support', 'Поддержка'], ['/notifications', 'Уведомления']];
   const menuLinks: [string, string][] = [...extraLinks,
     ['/help', 'Подсказки и помощь'], ['/rules', 'Правила площадки'],
     ['/offer/' + (mode === 'performer' ? 'performer' : mode === 'service' ? 'service' : 'client'), 'Оферта'],
@@ -224,7 +224,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           <nav className="desktop-nav">
             {me ? <>
               {(mode === 'client'
-                ? [...tabs, ['/garage', '▭', 'Гараж'], ['/shop', '🛍', 'Магазин']]
+                ? [...tabs, ['/garage', '▭', 'Гараж']]
                 : mode === 'performer'
                   ? [...tabs, ['/work/me', '◉', 'Профиль']]
                   : mode === 'service'
