@@ -3,13 +3,14 @@ import type { SmsProvider } from '../providers/sms.ts';
 import { HttpError, bad, type AuthUser } from '../http/router.ts';
 import { hmac, newCode, newToken, normalizePhone, sha256 } from '../util.ts';
 import { config, isProd } from '../config.ts';
+import { SELF_ROLES, requestedRoles, validateRoles, type AccountChoice, type SelfRole } from '../domain/roles.ts';
 
 const CODE_TTL_MS = 5 * 60_000;
 const RESEND_MS = 60_000;
 const MAX_ATTEMPTS = 5;
 const SESSION_DAYS = 90;
 
-export const SELF_ROLES = ['client', 'master', 'tow', 'service'] as const;
+export { SELF_ROLES } from '../domain/roles.ts';
 
 /** Защита от накрутки SMS: не больше N кодов на номер в сутки и на один адрес в час */
 const PER_PHONE_DAY = 8;
@@ -50,7 +51,7 @@ export class AuthService {
   }
 
   /** role не передан — вход «как есть»: новый номер становится клиентом, у существующего роли не меняются */
-  async verify(rawPhone: string, code: string, role?: (typeof SELF_ROLES)[number], device?: string) {
+  async verify(rawPhone: string, code: string, role?: SelfRole, device?: string, accountType?: AccountChoice) {
     const phone = normalizePhone(rawPhone);
     if (!phone) throw bad('bad_phone', 'Неверный номер');
     const row = await this.db.one<{ code_hash: string; expires_at: Date; attempts: number }>(
@@ -65,14 +66,28 @@ export class AuthService {
     await this.db.query('delete from auth_codes where phone=$1', [phone]);
 
     const extra = config.adminPhones.includes(phone) ? ['admin'] : [];
-    const user = await this.db.one<AuthUser & { created_at: Date; inserted: boolean }>(
-      `insert into users(phone, roles) values ($1, $2)
-       on conflict (phone) do update set
-         roles = (select array(select distinct unnest(users.roles || $3::text[]))),
-         last_seen_at = now()
-       returning id, phone, name, roles, status, owner_id, created_at, (xmax = 0) as inserted`,
-      [phone, [role ?? 'client', ...extra], role ? [role, ...extra] : extra],
-    );
+    const requested = accountType ? requestedRoles(accountType) : role ? [role] : [];
+    if (role && accountType && !requested.includes(role)) {
+      throw bad('invalid_role', 'Указанная специализация не соответствует типу регистрации');
+    }
+    // Serialize per-phone account creation/role changes, so two simultaneous requests
+    // cannot bypass the mutually exclusive role policy.
+    const user = await this.db.tx(async (q) => {
+      await q.query('select pg_advisory_xact_lock(hashtext($1))', [phone]);
+      const previous = await q.one<AuthUser>('select id, phone, name, roles, status, owner_id from users where phone=$1 for update', [phone]);
+      // A plain login never grants additional privileges. The legacy client default
+      // applies only to a genuinely new account without a selected category.
+      if (previous) {
+        const roles = requested.length ? validateRoles(previous.roles, requested) : previous.roles;
+        const normalized = [...new Set([...roles, ...extra])];
+        return await q.one<AuthUser>('update users set roles=$2::text[], last_seen_at=now() where id=$1 returning id,phone,name,roles,status,owner_id',
+          [previous.id, normalized]);
+      }
+      const roles = [...new Set([...(requested.length ? requested : ['client']), ...extra])];
+      validateRoles([], roles);
+      return await q.one<AuthUser>('insert into users(phone,roles,registration_kind) values ($1,$2::text[],$3) returning id,phone,name,roles,status,owner_id',
+        [phone, roles, accountType ?? (role === 'driver' ? 'driver' : role === 'master' || role === 'tow' || role === 'service' || role === 'insurer' ? role : 'owner')]);
+    });
     if (!user || user.status !== 'active') {
       // Заблокированный может оспорить блокировку — номер подтверждён кодом, выдаём одноразовый пропуск на обжалование
       throw new HttpError(403, 'blocked', 'Аккаунт заблокирован. Можно оспорить блокировку — ответ придёт по SMS.', { appealToken: appealToken(phone, this.now()) });
