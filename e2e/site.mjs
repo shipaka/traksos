@@ -1,6 +1,18 @@
 import { chromium } from 'playwright';
 
 const base = process.env.BASE_URL ?? 'http://localhost:8080';
+async function acceptPendingOffers(page) {
+  // Seeded demo accounts receive current client/partner offers on first sign-in.
+  // Accept them through the actual UI before testing navigation beneath the modal.
+  for (let i = 0; i < 4; i++) {
+    const dialog = page.getByRole('dialog', { name: /Оферта|Согласие/ });
+    if (!(await dialog.isVisible().catch(() => false))) break;
+    await dialog.locator('input[type=checkbox]').check();
+    await dialog.getByRole('button', { name: 'Принимаю' }).click();
+    await dialog.waitFor({ state: 'hidden' });
+  }
+}
+
 const browser = await chromium.launch();
 try {
   for (const [name, width, height] of [['desktop', 1440, 900], ['tablet', 900, 800], ['mobile', 390, 844]]) {
@@ -61,6 +73,7 @@ try {
       await page.getByRole('button', { name: 'Войти', exact: true }).click();
       await page.locator('.website-workspace').waitFor();
       await page.locator('.website-sidebar').waitFor({ state: 'visible' });
+      await acceptPendingOffers(page);
       await page.getByRole('link', { name: /Гараж и история/ }).click();
       await page.getByRole('heading', { name: 'Мой гараж' }).waitFor();
       if (await page.locator('.tabbar:visible').count()) throw new Error('Desktop cabinet uses app navigation');
@@ -87,6 +100,7 @@ try {
   await adminPage.locator('input[autocomplete=one-time-code]').fill(adminCode[0]);
   await adminPage.getByRole('button', { name: 'Войти', exact: true }).click();
   await adminPage.locator('.admin-desktop-shell').waitFor();
+  await acceptPendingOffers(adminPage);
   await adminPage.locator('.admin-secondary-nav').waitFor({ state: 'visible' });
   await adminPage.getByRole('button', { name: 'Страхование и ТО' }).click();
   await adminPage.getByRole('heading', { name: /Заявки на страхование и техосмотр/ }).waitFor();
