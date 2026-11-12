@@ -2,6 +2,7 @@
 // All demand figures are derived from the original orders, including closed ones.
 import type { Db } from '../db/index.ts';
 import type { AuthUser } from '../http/router.ts';
+import type { Notifier } from './notify.ts';
 import { bad, notFound } from '../http/router.ts';
 
 const SERVICES = ['electric','diag','air','autonomy','tyre','tow','consult','ecu'] as const;
@@ -141,6 +142,42 @@ export class OpsService {
       starts_at,ends_at,reason from commission_campaigns
       where enabled and starts_at <= $1 and ends_at > $1
       order by commission_pct,ends_at limit 25`,[this.now()]);
+  }
+
+  async notifyAnnouncement(actor:AuthUser,id:string,notifier:Notifier) {
+    // Claim once so a double click cannot spam workers. Drafts and expired notices
+    // cannot be broadcast. Keep a safe recipient cap for the pilot.
+    const recipients = await this.db.tx(async q=>{
+      const row=await q.one<any>(`select id,title,body,service,audience,published,starts_at,ends_at,notified_at
+         from worker_announcements where id=$1 for update`,[id]);
+      if(!row)throw notFound('Объявление не найдено');
+      if(row.notified_at)throw bad('already_notified','Объявление уже отправлено');
+      if(!row.published||this.now()<new Date(row.starts_at)||this.now()>=new Date(row.ends_at))
+        throw bad('not_active','Для рассылки сначала опубликуйте действующее объявление');
+      const users=await q.query<{id:string}>(`select u.id from users u
+        left join performer_profiles p on p.user_id=u.id
+        where u.status='active' and (
+          ($1 in ('master','all_workers') and u.roles @> '{master}'::text[] and
+             ($2::text is null or $2 = any(coalesce(p.specialties,'{}'::text[]))))
+          or ($1 in ('tow','all_workers') and u.roles @> '{tow}'::text[] and
+             ($2::text is null or $2='tow'))
+          or ($1 in ('service','all_workers') and u.roles @> '{service}'::text[])
+        ) limit 501`,[row.audience,row.service]);
+      if(users.length>500)throw bad('too_many_recipients','Для массовой рассылки более 500 исполнителям обратитесь к администратору сервера');
+      await q.query(`update worker_announcements set notified_at=$2,notified_count=$3 where id=$1`,
+        [id,this.now(),users.length]);
+      await q.query(`insert into audit_log(actor_id,action,target,data) values($1,'ops.announcement.notify',$2,$3)`,
+        [actor.id,id,{audience:row.audience,service:row.service,count:users.length}]);
+      return {title:row.title,body:row.body,ids:users.map(u=>u.id)};
+    });
+    // The durable in-app notice exists regardless of push delivery / disabled device.
+    // If notification provider fails, its in-app message still exists in the cabinet.
+    for(let i=0;i<recipients.ids.length;i+=50){
+      await notifier.notify(recipients.ids.slice(i,i+50),
+        {type:'announcement',announcementId:id},
+        {kind:'normal',title:recipients.title,body:recipients.body,data:{announcementId:id}});
+    }
+    return {ok:true,recipients:recipients.ids.length};
   }
 
   async campaigns() {
