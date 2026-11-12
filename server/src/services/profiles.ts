@@ -176,7 +176,7 @@ export class ProfilesService {
   }
 
   async addVehicle(user: AuthUser, v: { brand: string; model?: string; year?: number; plate?: string; trailerPlate?: string }) {
-    if (user.owner_id) throw forbidden('Машины добавляет владелец');
+    if (user.owner_id || !user.roles.includes('client') || user.roles.includes('driver')) throw forbidden('Машины добавляет владелец');
     return this.db.one(
       `insert into vehicles(owner_id, brand, model, year, plate, trailer_plate) values ($1,$2,$3,$4,$5,$6) returning *`,
       [user.id, v.brand, v.model ?? null, v.year ?? null, v.plate?.toUpperCase() ?? null, v.trailerPlate?.toUpperCase() ?? null],
@@ -260,6 +260,7 @@ export class ProfilesService {
 
   /** «Сменить водителя»: новый водитель входит по своему номеру и видит только эту машину */
   async assignDriver(owner: AuthUser, vehicleId: string, rawPhone: string | null) {
+    if (owner.owner_id || !owner.roles.includes('client') || owner.roles.includes('driver')) throw forbidden('Водителей назначает только владелец автопарка');
     const v = await this.db.one('select * from vehicles where id=$1 and owner_id=$2', [vehicleId, owner.id]);
     if (!v) throw notFound('Машина не найдена');
     if (!rawPhone) {
