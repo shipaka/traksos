@@ -106,7 +106,8 @@ export function send(res: ServerResponse, status: number, body: unknown, headers
     return;
   }
   const json = body === undefined ? '' : JSON.stringify(body);
-  res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', ...headers });
+  // Do not store live or private API responses in intermediaries or HTTP caches.
+  res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', ...headers });
   res.end(json);
 }
 

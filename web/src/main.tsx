@@ -238,9 +238,15 @@ function NetworkStatus() {
   useEffect(() => {
     const yes = () => setOffline(false);
     const no = () => setOffline(true);
+    const fromApi = (e: Event) => setOffline(!(e as CustomEvent<{online: boolean}>).detail.online);
     window.addEventListener('online', yes);
     window.addEventListener('offline', no);
-    return () => { window.removeEventListener('online', yes); window.removeEventListener('offline', no); };
+    window.addEventListener('traksos-connection', fromApi);
+    return () => {
+      window.removeEventListener('online', yes);
+      window.removeEventListener('offline', no);
+      window.removeEventListener('traksos-connection', fromApi);
+    };
   }, []);
   if (!offline) return null;
   return <div className="traksos-connection-banner" role="status">

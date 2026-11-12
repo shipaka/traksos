@@ -11,9 +11,9 @@ const store = {
 let token: string | null = store.get('traksos.token');
 export const getToken = () => token;
 export function setToken(t: string | null) {
+  if (token !== t) store.set('traksos.offlineIdentity', null);
   token = t;
   store.set('traksos.token', t);
-  if (!t) store.set('traksos.offlineIdentity', null);
 }
 
 export class ApiError extends Error {
@@ -39,8 +39,10 @@ export async function api<T = any>(method: string, path: string, body?: unknown)
       clearTimeout(timer);
     }
   } catch {
+    window.dispatchEvent(new CustomEvent('traksos-connection', { detail: { online: false } }));
     throw new ApiError(0, 'network', 'Нет связи с сервером. Проверьте интернет.');
   }
+  window.dispatchEvent(new CustomEvent('traksos-connection', { detail: { online: true } }));
   const j = await r.json().catch(() => null);
   if (r.status === 401 && token) {
     setToken(null);
