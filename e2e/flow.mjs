@@ -254,8 +254,11 @@ await m.getByText('Операции', { exact: true }).waitFor();
 await shot(m, '16b-master-money');
 await m.getByText('← Профиль').click();
 await m.getByRole('button', { name: /Аккаунт/ }).click();
-// Master and client identities must stay exclusive: no shortcut to a client cabinet.
-if (await m.getByRole('button', { name: 'Кабинет клиента' }).count()) {
+await m.waitForURL(/#\/profile$/);
+await m.getByRole('heading', { name: 'Профиль', exact: true }).waitFor();
+// Master/client isolation is checked after route state has settled.
+await m.waitForTimeout(250);
+if (await m.getByRole('button', { name: 'Кабинет клиента', exact: true }).isVisible()) {
   const roles = await m.evaluate(async () => {
     const token = localStorage.getItem('traksos.token');
     const response = await fetch('/api/me', { headers: { authorization: 'Bearer ' + token } });
