@@ -136,14 +136,19 @@ function App() {
 
   const [a, b] = route;
   if (a === 'as') return null;
-  const isPerformer = me.roles.some((r) => PERFORMER_ROLES.includes(r));
+  const isPerformer = me.roles.some((r) => r === 'master' || r === 'tow');
+  const isCustomer = me.roles.some((r) => r === 'client' || r === 'driver');
   const isStaff = me.roles.some((r) => r === 'admin' || r === 'moderator');
   const isService = me.roles.includes('service');
   const isInsurer = me.roles.includes('insurer');
   // A saved/forced mode must never expose navigation for a role the account lacks.
-  const allowedMode: Mode = mode === 'insurer' && !isInsurer ? 'client' : mode === 'admin' && !isStaff
-    ? 'client' : mode === 'performer' && !isPerformer
-    ? 'client' : mode === 'service' && !isService ? 'client' : mode;
+  const fallback: Mode = isInsurer ? 'insurer'
+    : isCustomer ? 'client' : isPerformer ? 'performer'
+    : isService ? 'service' : isStaff ? 'admin' : 'client';
+  const permitted = mode === 'insurer' ? isInsurer : mode === 'admin' ? isStaff
+    : mode === 'performer' ? isPerformer : mode === 'service' ? isService
+    : isCustomer || isStaff;
+  const allowedMode: Mode = isInsurer ? 'insurer' : permitted ? mode : fallback;
   const effMode: Mode = a === 'work' && isPerformer ? 'performer'
     : a === 'admin' && isStaff ? 'admin'
     : a === 'base' && isService ? 'service' : a === 'insurance' && isInsurer ? 'insurer' : allowedMode;
@@ -152,11 +157,11 @@ function App() {
   switch (a) {
     case undefined: screen = effMode === 'insurer' ? <InsuranceHome /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isStaff ? <Admin /> : <Home />; break;
     case 'login': screen = <Home />; break;
-    case 'sos': screen = <Sos />; break;
-    case 'new': screen = b === 'consult' ? <Consult /> : <NewOrder service={b ?? 'electric'} />; break;
+    case 'sos': screen = isCustomer ? <Sos /> : <main><div className="empty">Для вызова SOS нужен клиентский аккаунт</div></main>; break;
+    case 'new': screen = !isCustomer ? <main><div className="empty">Для заказа нужен клиентский аккаунт</div></main> : b === 'consult' ? <Consult /> : <NewOrder service={b ?? 'electric'} />; break;
     case 'order': screen = <Order id={b} />; break;
-    case 'orders': screen = <Orders as="client" />; break;
-    case 'garage': screen = <Garage />; break;
+    case 'orders': screen = isCustomer ? <Orders as="client" /> : <main><div className="empty">Нет доступа к клиентским заявкам</div></main>; break;
+    case 'garage': screen = isCustomer ? <Garage /> : <main><div className="empty">Нет доступа к гаражу</div></main>; break;
     case 'profile': screen = <Profile />; break;
     case 'invite': screen = <Invite />; break;
     case 'r': screen = <Invite />; break;
@@ -169,7 +174,7 @@ function App() {
     case 'base': screen = !isService ? <Home /> : b === 'car' && route[2] ? <BaseCar id={route[2]} /> : b === 'me' ? <BaseSetup /> : b === 'money' ? <BaseMoney /> : <BaseHome />; break;
     case 'services': screen = b && route[2] === 'book' ? <BookForm id={b} /> : b ? <CenterPage id={b} /> : <ServicesList />; break;
     case 'booking': screen = <BookingPage id={b} />; break;
-    case 'fleet': screen = <Fleet />; break;
+    case 'fleet': screen = isCustomer && !me.owner_id && !me.roles.includes('driver') ? <Fleet /> : <main><div className="empty">Парком управляет владелец</div></main>; break;
     case 'insurance': screen = isInsurer ? <InsuranceHome /> : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
     case 'help': screen = <Help />; break;
     case 'rules': screen = <Rules />; break;
