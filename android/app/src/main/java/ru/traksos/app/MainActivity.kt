@@ -89,6 +89,9 @@ class MainActivity : AppCompatActivity() {
         cover.addView(label, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
         appRoot.addView(cover, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
         lockCover = cover
+        // Treat the covered WebView as background for incoming-call notifications.
+        // A ringing job must not get stuck invisibly behind the unlock screen.
+        foreground = false
         requestAppUnlock()
     }
 
@@ -102,6 +105,7 @@ class MainActivity : AppCompatActivity() {
                     unlockInProgress = false
                     lockCover?.let { appRoot.removeView(it) }
                     lockCover = null
+                    foreground = true
                 }
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                     super.onAuthenticationError(errorCode, errString)
@@ -283,6 +287,7 @@ class MainActivity : AppCompatActivity() {
         val elapsed = SystemClock.elapsedRealtime()
         if (appLockEnabled() && Session.token(this) != null &&
             (pausedAt == 0L || elapsed - pausedAt > 20_000L)) requireAppUnlock()
+        if (lockCover != null) foreground = false
     }
 
     override fun onPause() {
