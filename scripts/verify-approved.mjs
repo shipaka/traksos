@@ -27,8 +27,8 @@ const native = await read('android/app/src/main/java/ru/traksos/app/MainActivity
 await asset('web/public/tracksos-approved-truck.webp', 15000);
 await asset('web/public/tracksos-approved-map.webp', 15000);
 await asset('android/app/src/main/res/drawable-nodpi/splash_truck.webp', 2000);
-expect(css.includes("url('/tracksos-approved-truck.webp')"), 'public hero uses approved real truck asset');
-expect(css.includes("url('/tracksos-approved-map.webp')"), 'public demo map is a bundled image');
+expect(css.includes("url('../public/tracksos-approved-truck.webp')"), 'public hero uses approved real truck asset');
+expect(css.includes("url('../public/tracksos-approved-map.webp')"), 'public demo map is a bundled image');
 expect(!css.includes("url('../public/truck-scene.svg')"), 'old cartoon truck is not the active hero image');
 expect(landing.includes('public-map-static'), 'public map does not depend on network services');
 expect(!landing.includes('openstreetmap.org/export/embed'), 'no third-party iframe is required for offline public map');
