@@ -648,3 +648,14 @@ select.field { appearance: none; }
 .auth-entry-options{display:flex;flex-wrap:wrap;gap:7px;padding:4px 0;}
 .auth-entry-options button{padding:9px 11px;border-radius:9px;border:1px solid #4a6c88;color:#e5f4ff;background:#102b44;font-weight:750;font-size:12px;}
 .auth-entry-options button:hover{border-color:#ff4b99;}
+
+
+/* In native WebView there are no untrusted third-party iframes: native JS bridge is restricted to first-party content. */
+.public-map-native-demo{
+  display:flex;position:absolute;inset:0;flex-direction:column;justify-content:center;align-items:center;
+  text-align:center;gap:10px;padding:20px 25px;line-height:1.5;color:#eef5ff;
+  background:radial-gradient(ellipse at 45% 35%,#224978,#0c253e 75%);
+  font-size:13px;
+}
+.public-map-native-demo b{font-size:17px;font-weight:900;}
+.public-map-native-demo span{color:#a6c9e4;}
