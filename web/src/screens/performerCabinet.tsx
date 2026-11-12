@@ -48,6 +48,7 @@ export function PerformerHub() {
     ['reviews', 'Отзывы обо мне', 'оспорить несправедливый'],
     ['rules', 'Правила площадки', 'комиссия, нарушения, что влияет на поиск'],
     ['appeal', 'Оспорить нарушение', 'открыто всегда'],
+    ...(me?.roles.includes('service') ? [['base', 'Моя СТО', 'отдельный кабинет ремонта на рембазе']] as [string, string, string][] : []),
     ['profile', 'Аккаунт', 'личные данные, защита входа и выход'],
   ];
   return (
@@ -67,6 +68,8 @@ function PerformerOnboarding() {
   const { me, reload } = useMe();
   const { busy, run } = useAction();
   const [kind, setKind] = useState(me?.roles.includes('tow') ? 'tow' : 'master');
+  const canTow = !!me?.roles.includes('tow');
+  const canMaster = !!me?.roles.includes('master');
   const [name, setName] = useState(me?.name ?? '');
   const [spec, setSpec] = useState<string[]>(['electric']);
   const [car, setCar] = useState({ brand: '', color: '', plate: '' });
@@ -85,8 +88,8 @@ function PerformerOnboarding() {
       <div className="step-card">
         <div className="step-head"><span className="step-n">1</span><b>Кто вы</b></div>
         <div className="grid2">
-          <button type="button" className="seg" aria-pressed={kind === 'master'} onClick={() => setKind('master')}>Мастер</button>
-          <button type="button" className="seg" aria-pressed={kind === 'tow'} onClick={() => setKind('tow')}>Эвакуатор</button>
+          {canMaster && <button type="button" className="seg" aria-pressed={kind === 'master'} onClick={() => setKind('master')}>Мастер</button>}
+          {canTow && <button type="button" className="seg" aria-pressed={kind === 'tow'} onClick={() => setKind('tow')}>Эвакуатор</button>}
         </div>
         <input className="field" placeholder="Имя, как увидят клиенты" value={name} onChange={(e) => setName(e.target.value)} />
       </div>
