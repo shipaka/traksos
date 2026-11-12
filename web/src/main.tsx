@@ -242,6 +242,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/admin/section/shop', 'Управление магазином'],
          ['/admin/section/payments', 'Деньги и выплаты'],
          ['/admin/section/stats', 'Статистика'],
+         ['/admin/section/demand', 'Проблемные и невыполненные заявки'],
+         ['/admin/section/announcements', 'Объявления и акции комиссии'],
          ['/admin/section/support', 'Обращения'],
          ['/admin/section/dispatch', 'Распределение заявок'],
          ['/admin/section/offers', 'Оферты площадки'],
