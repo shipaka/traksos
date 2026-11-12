@@ -115,6 +115,8 @@ export class AuthService {
       throw new HttpError(403, 'blocked', 'Аккаунт заблокирован. Можно оспорить блокировку — ответ придёт по SMS.', { appealToken: appealToken(phone, this.now()) });
     }
 
+    // Password reset invalidates every prior session; a stolen token cannot survive recovery.
+    if (purpose === 'reset') await this.db.query('delete from sessions where user_id=$1', [user.id]);
     const token = newToken();
     await this.db.query('insert into sessions(token_hash, user_id, expires_at, device) values ($1,$2,$3,$4)', [
       sha256(token), user.id, new Date(this.now().getTime() + SESSION_DAYS * 86_400_000), device ?? null,
