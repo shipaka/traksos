@@ -79,10 +79,16 @@ export function BaseHome() {
   );
   const cars = [...groups.expected, ...groups.repair, ...groups.ready];
   return (
-    <main>
-      <div>
+    <main className="cabinet-page">
+      <header className="cabinet-heading">
+        <span className="label">Кабинет ремонтной базы</span>
         <h1>Рембаза «{center.name}»</h1>
         <div className="sub">{center.address} · {center.hours}</div>
+      </header>
+      <div className="cabinet-metrics">
+        <div className="card tile"><span className="label">Ожидаем</span><b className="tile-value">{groups.expected.length}</b></div>
+        <div className="card tile"><span className="label">В ремонте</span><b className="tile-value">{groups.repair.length}</b></div>
+        <div className="card tile"><span className="label">Готовы</span><b className="tile-value">{groups.ready.length}</b></div>
       </div>
       <div className="row" style={{ gap: 6 }}>
         <span className="pill">{center.rating ? `★ ${center.rating.toFixed(1)} · ${center.reviews} отзывов` : 'отзывов пока нет'}</span>
