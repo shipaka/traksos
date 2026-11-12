@@ -6,6 +6,19 @@ import android.app.NotificationManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.graphics.Color
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
+import android.content.res.ColorStateList
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
+import android.view.Gravity
+import android.view.View
+import android.widget.FrameLayout
+import android.widget.LinearLayout
+import android.widget.ProgressBar
+import android.widget.TextView
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -29,6 +42,7 @@ import java.lang.ref.WeakReference
 /** Оболочка: сайт ТракSOS в WebView + мост для пушей и вызовов */
 class MainActivity : AppCompatActivity() {
     private lateinit var web: WebView
+    private var startupOverlay: View? = null
     private var geoCallback: GeolocationPermissions.Callback? = null
     private var geoOrigin: String? = null
     /** Страница не отозвалась как сайт ТракSOS — через 20 секунд покажем экран ошибки вместо белого */
@@ -40,7 +54,11 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         current = WeakReference(this)
         web = WebView(this)
-        setContentView(web)
+        val root = FrameLayout(this)
+        root.addView(web, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
+        startupOverlay = createStartupOverlay()
+        root.addView(startupOverlay, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
+        setContentView(root)
 
         web.settings.apply {
             javaScriptEnabled = true
@@ -68,7 +86,8 @@ class MainActivity : AppCompatActivity() {
                 // По адресу может отвечать что угодно (пустой домен, заглушка) — проверяем, что это наш сайт
                 // Предупреждение Codespaces «Вы собираетесь получить доступ к порту…» — пропускаем, там кнопка «Продолжить»
                 view.evaluateJavascript("!!document.querySelector('meta[name=traksos-app]') || document.title.indexOf('Codespaces') === 0") { ok ->
-                    if (ok != "true") showOffline(getString(R.string.server_not_traksos))
+                    if (ok == "true") hideStartupOverlay()
+                    else showOffline(getString(R.string.server_not_traksos))
                 }
             }
             override fun onReceivedError(view: WebView, req: WebResourceRequest, err: WebResourceError) {
@@ -172,8 +191,66 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
+    /** Лёгкая заставка: показывается ТОЛЬКО пока WebView загружает и проверяет сайт.
+     * Дизайн ориентирован на согласованный первый splash-концепт:
+     * navy + magenta, логотип и индикатор, без лишних запросов к серверу.
+     * Фотореалистичный фон с фурой из утверждённой картинки ещё требует
+     * добавления согласованного растрового ресурса в drawable.
+     */
+    private fun createStartupOverlay(): View {
+        val screen = FrameLayout(this)
+        screen.background = GradientDrawable(
+            GradientDrawable.Orientation.TL_BR,
+            intArrayOf(Color.rgb(4, 19, 36), Color.rgb(9, 33, 60), Color.rgb(30, 17, 43))
+        )
+        val stack = LinearLayout(this)
+        stack.orientation = LinearLayout.VERTICAL
+        stack.gravity = Gravity.CENTER
+        val container = FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT)
+        container.gravity = Gravity.CENTER
+        container.leftMargin = (28 * resources.displayMetrics.density).toInt()
+        container.rightMargin = container.leftMargin
+
+        val title = TextView(this)
+        val brand = SpannableString("TrackSOS")
+        brand.setSpan(ForegroundColorSpan(Color.rgb(254, 28, 122)), 5, 8, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        title.text = brand
+        title.textSize = 37f
+        title.typeface = Typeface.create("sans-serif-black", Typeface.BOLD_ITALIC)
+        title.setTextColor(Color.WHITE)
+        title.gravity = Gravity.CENTER
+        stack.addView(title)
+
+        val subtitle = TextView(this)
+        subtitle.text = "Помощь грузовику в дороге"
+        subtitle.textSize = 16f
+        subtitle.setTextColor(Color.rgb(208, 224, 240))
+        subtitle.gravity = Gravity.CENTER
+        val subLayout = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+        subLayout.topMargin = (14 * resources.displayMetrics.density).toInt()
+        stack.addView(subtitle, subLayout)
+
+        val progress = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal)
+        progress.isIndeterminate = true
+        progress.progressTintList = ColorStateList.valueOf(Color.rgb(255, 27, 121))
+        progress.indeterminateTintList = ColorStateList.valueOf(Color.rgb(255, 27, 121))
+        val progressLayout = LinearLayout.LayoutParams((185 * resources.displayMetrics.density).toInt(), (5 * resources.displayMetrics.density).toInt())
+        progressLayout.gravity = Gravity.CENTER
+        progressLayout.topMargin = (50 * resources.displayMetrics.density).toInt()
+        stack.addView(progress, progressLayout)
+        screen.addView(stack, container)
+        return screen
+    }
+
+    private fun hideStartupOverlay() {
+        startupOverlay?.visibility = View.GONE
+        startupOverlay = null
+    }
+
     /** Экран ошибки: что случилось, «Повторить» и поле адреса сервера (для тестового стенда) */
     private fun showOffline(reason: String) {
+        hideStartupOverlay()
         failed = true
         web.removeCallbacks(watchdog)
         val q = { t: String -> JSONObject.quote(t) }
