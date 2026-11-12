@@ -177,13 +177,26 @@ function App() {
 function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: React.ReactNode }) {
   const route = useRoute();
   const here = '/' + route.join('/');
+  // На телефоне оставляем только рабочие действия. Все прежние маршруты
+  // сохраняются через меню; компьютерная боковая навигация остаётся полной.
   const tabs: [string, string, string][] = !me ? [] : mode === 'performer'
-    ? [['/work', '⚡', 'Линия'], ['/work/jobs', '☰', 'История'], ['/work/me', '◉', 'Профиль']]
+    ? [['/work', '⚡', 'Линия'], ['/work/jobs', '☰', 'Заявки']]
     : mode === 'service'
-      ? [['/base', '▤', 'Рембаза'], ['/base/money', '₽', 'Финансы'], ['/base/me', '⚙', 'Карточка'], ['/support', '?', 'Поддержка'], ['/profile', '◉', 'Аккаунт']]
+      ? [['/base', '▤', 'Рембаза'], ['/support', '?', 'Связь']]
     : mode === 'admin'
-      ? [['/admin', '▦', 'Админ'], ['/as/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]
-      : [['/shop', '🛍', 'Магазин'], ['/', '🔧', 'Услуги'], ['/sos', '!', 'SOS'], ['/orders', '☰', 'Заявки'], ['/garage', '▭', 'Гараж']];
+      ? [['/admin', '▦', 'Управление']]
+      : [['/', '🔧', 'Услуги'], ['/sos', '!', 'SOS'], ['/orders', '☰', 'Заявки']];
+  const extraLinks: [string, string][] = mode === 'performer'
+    ? [['/work/me', 'Мой профиль'], ['/work/filter', 'Настройки заявок'], ['/work/docs', 'Документы'], ['/support', 'Поддержка'], ['/notifications', 'Уведомления']]
+    : mode === 'service'
+      ? [['/base/me', 'Карточка СТО'], ['/base/money', 'Финансы'], ['/profile', 'Аккаунт'], ['/notifications', 'Уведомления']]
+    : mode === 'admin'
+      ? [['/profile', 'Аккаунт'], ['/as/client', 'Кабинет клиента'], ['/support', 'Поддержка'], ['/notifications', 'Уведомления']]
+      : [['/garage', 'Мой гараж'], ['/fleet', 'Мой парк'], ['/shop', 'Магазин'], ['/profile', 'Мой профиль'], ['/support', 'Поддержка'], ['/notifications', 'Уведомления']];
+  const menuLinks: [string, string][] = [...extraLinks,
+    ['/help', 'Подсказки и помощь'], ['/rules', 'Правила площадки'],
+    ['/offer/' + (mode === 'performer' ? 'performer' : mode === 'service' ? 'service' : 'client'), 'Оферта'],
+    ['/offer/privacy', 'Персональные данные']];
   return (
     <div className={`app ${me ? "" : "guest-app"}`}>
       <header className="top">
@@ -196,7 +209,12 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {me && mode === 'client' && !me.owner_id && <a href="#/fleet" className="pill" style={{ textDecoration: 'none' }}>Мой парк</a>}
           {me && <a href="#/help" className="bell" aria-label="Справка">?</a>}
           {me && <Bell />}
-          {me && mode === 'client' && <a href="#/profile" className="bell" aria-label="Профиль">◉</a>}
+          {me && <details className="account-menu" key={here}>
+            <summary aria-label="Открыть меню кабинета">☰ <span>Меню</span></summary>
+            <nav aria-label="Профиль, настройки и документы">
+              {menuLinks.map(([href, label]) => <a key={href} href={'#' + href}>{label}</a>)}
+            </nav>
+          </details>}
         </div>
       </header>
       <NetworkStatus />
@@ -205,7 +223,13 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           <div className="desktop-sidebar-title">{me ? 'Рабочий кабинет' : 'ТракSOS · помощь в дороге'}</div>
           <nav className="desktop-nav">
             {me ? <>
-              {tabs.map(([href, ic, name]) => (
+              {(mode === 'client'
+                ? [...tabs, ['/garage', '▭', 'Гараж'], ['/shop', '🛍', 'Магазин']]
+                : mode === 'performer'
+                  ? [...tabs, ['/work/me', '◉', 'Профиль']]
+                  : mode === 'service'
+                    ? [...tabs, ['/base/money', '₽', 'Финансы'], ['/base/me', '⚙', 'Карточка'], ['/profile', '◉', 'Аккаунт']]
+                    : [...tabs, ['/as/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]).map(([href, ic, name]) => (
                 <a key={href} href={'#' + href} className={`desktop-nav-link ${here === href || (href !== '/' && here.startsWith(href + '/')) ? 'active' : ''} ${href === '/sos' ? 'desktop-nav-sos' : ''}`}>
                   <span aria-hidden="true">{ic}</span><span>{name}</span>
                 </a>
