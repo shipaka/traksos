@@ -97,7 +97,6 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const sub = intent === 'reset' ? 'Отправим один SMS-код для смены пароля.' : intent === 'help' ? 'Подтвердите номер — и сразу к заявке. Мастер позвонит на него.'
     : intent === 'join' ? 'Выберите, кем подключаетесь. После входа заполните профиль — проверим и откроем заявки.'
     : intent === 'register' ? 'Укажите номер телефона. Если аккаунта ещё нет, создадим его после подтверждения SMS-кодом.'  : 'Вход по паролю, без SMS. Если забыли пароль — восстановите доступ.'; // legacy description
-  const legacy = 'Пришлём код. Пароль не нужен — кабинет откроется сам.';
 
   if (!intent) return (
     <main className="public-home public-landing" id="public-home">
@@ -215,6 +214,14 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
             <button className="btn" disabled={busy || appealText.trim().length < 10} onClick={async () => { if (await run(() => post('/api/appeals/blocked', { phone, appealToken, text: appealText }), 'Отправлено модератору')) setAppealSent(true); }}>Оспорить блокировку</button>
           </>}
         </div>
+      ) : intent === 'login' ? (
+        <form className="stack" onSubmit={(e) => { e.preventDefault(); verify(); }}>
+          <Field label="Телефон"><input className="field" type="tel" autoComplete="username" value={phone} onChange={(e) => setPhone(e.target.value)} /></Field>
+          <Field label="Пароль"><input className="field" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} /></Field>
+          <button className="btn" disabled={busy || password.length === 0}>Войти</button>
+          <button type="button" className="btn ghost" onClick={() => { setIntent('reset'); setStep('phone'); }}>Забыли пароль?</button>
+          <button type="button" className="btn ghost" onClick={() => setIntent(null)}>Назад</button>
+        </form>
       ) : step === 'phone' ? (
         <form className="stack" onSubmit={(e) => { e.preventDefault(); sendCode(); }}>
           {(intent === 'register' || intent === 'help') && <div className="stack" role="group" aria-label="Тип клиента">
@@ -248,7 +255,10 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
             <input className="field" inputMode="numeric" autoComplete="one-time-code" autoFocus maxLength={6} value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} style={{ fontSize: 24, letterSpacing: 8, textAlign: 'center' }} />
           </Field>
-          <button className="btn" disabled={busy || code.length < 4}>Войти</button>
+          <Field label={intent === 'reset' ? 'Новый пароль' : 'Придумайте пароль (минимум 10 символов)'}>
+            <input className="field" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={10} />
+          </Field>
+          <button className="btn" disabled={busy || code.length < 4 || password.length < 10}>{intent === 'reset' ? 'Изменить пароль' : 'Зарегистрироваться'}</button>
           <button type="button" className="btn ghost" onClick={() => { setStep('phone'); setCode(''); }}>Другой номер</button>
         </form>
       )}
