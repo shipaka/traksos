@@ -54,5 +54,5 @@ docker compose up -d --build
 echo "Контейнеры:"
 docker compose ps
 echo "Готово: после настройки A-записи DNS и HTTPS проверяйте https://$DOMAIN/api/health"
-echo "Пока SMS_PROVIDER=log, публичный вход по СМС не работает: подключите SMS.ru до реальной авторизации."
-echo "Пока PAYMENT_PROVIDER=mock, реальную оплату не включайте."
+echo "Пока SMS_PROVIDER=log, публичная регистрация и восстановление пароля по SMS не работают: подключите SMS.ru до подключения реальных людей."
+echo "Пока PAYMENT_PROVIDER=mock, реальную оплату не включайте. Проверьте, что ежедневный backup успешно создаёт .dump и внешний снимок VPS настроен."
