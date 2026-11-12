@@ -95,7 +95,13 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        web.loadUrl(urlFor(intent.getStringExtra(EXTRA_PATH)))
+        // Отладочный APK сразу показывает автономное демо, пока тестовый стенд не задан.
+        // Release-сборка по умолчанию открывает официальный сервер.
+        if (BuildConfig.DEBUG && !Session.hasCustomServer(this)) {
+            showOffline(getString(R.string.no_connection))
+        } else {
+            web.loadUrl(urlFor(intent.getStringExtra(EXTRA_PATH)))
+        }
         askNotifications()
     }
 
