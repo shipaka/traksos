@@ -157,8 +157,38 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {me && mode === 'client' && <a href="#/profile" className="bell" aria-label="Профиль">◉</a>}
         </div>
       </header>
-      {children}
-      <SiteFooter />
+      <div className="desktop-layout">
+        <aside className="desktop-sidebar" aria-label="Навигация по сайту">
+          <div className="desktop-sidebar-title">{me ? 'Рабочий кабинет' : 'ТракSOS · помощь в дороге'}</div>
+          <nav className="desktop-nav">
+            {me ? <>
+              {tabs.map(([href, ic, name]) => (
+                <a key={href} href={'#' + href} className={`desktop-nav-link ${here === href || (href !== '/' && here.startsWith(href + '/')) ? 'active' : ''} ${href === '/sos' ? 'desktop-nav-sos' : ''}`}>
+                  <span aria-hidden="true">{ic}</span><span>{name}</span>
+                </a>
+              ))}
+              {mode === 'client' && <>
+                <div className="desktop-sidebar-title desktop-nav-section">Дополнительно</div>
+                {([['/services','▤','Сервисы-партнёры'],['/fleet','▣','Мой парк'],['/support','?','Поддержка'],['/profile','◉','Профиль']] as [string,string,string][]).map(([href, ic, name]) => (
+                  <a key={href} href={'#' + href} className={`desktop-nav-link ${here === href || here.startsWith(href + '/') ? 'active' : ''}`}>
+                    <span aria-hidden="true">{ic}</span><span>{name}</span>
+                  </a>
+                ))}
+              </>}
+            </> : <>
+              <a className="desktop-nav-link active" href="#/"><span>⌂</span><span>Главная</span></a>
+              <a className="desktop-nav-link" href="#/help"><span>?</span><span>Как это работает</span></a>
+              <a className="desktop-nav-link" href="#/rules"><span>▤</span><span>Правила площадки</span></a>
+              <a className="desktop-nav-link" href="#/offer/privacy"><span>▣</span><span>Персональные данные</span></a>
+            </>}
+          </nav>
+          <div className="desktop-sidebar-bottom">Помощь грузовому транспорту<br />Санкт-Петербург и Ленинградская область</div>
+        </aside>
+        <div className="desktop-content">
+          {children}
+          <SiteFooter />
+        </div>
+      </div>
       {tabs.length > 0 && (
         <nav className="tabbar">
           {tabs.map(([href, ic, name]) => (
