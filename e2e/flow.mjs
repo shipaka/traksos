@@ -75,16 +75,23 @@ async function login(page, phoneNum, how) {
   else if (how === 'login') await page.getByRole('button', { name: 'Войти по номеру' }).click();
   else { await page.getByRole('button', { name: /Хочу работать/ }).click(); await page.getByRole('button', { name: how }).click(); }
   await page.locator('input[type=tel]').fill(phoneNum);
-  if (how !== 'login') await page.locator('input[type=checkbox]').check();
+  const password = 'TrackSOS-Test-2026!';
+  if (how === 'login') {
+    await page.locator('input[type=password]').fill(password);
+    await page.getByRole('button', { name: 'Войти', exact: true }).click();
+    return;
+  }
+  await page.locator('input[type=checkbox]').check();
   await page.getByRole('button', { name: 'Получить код' }).click();
   const hint = await page.getByText(/Тестовый режим: код/).textContent();
-  await page.locator('input[autocomplete=one-time-code]').fill(hint.match(/\d{4}/)[0]);
-  await page.getByRole('button', { name: 'Войти' }).click();
+  await page.locator('input[autocomplete=one-time-code]').fill(hint.match(/\\d{4}/)[0]);
+  await page.locator('input[type=password]').fill(password);
+  await page.getByRole('button', { name: 'Зарегистрироваться' }).click();
 }
 
 // Админ — через API
 const c = await api('POST', '/api/auth/code', { phone: '+79990000001' });
-const admin = await api('POST', '/api/auth/verify', { phone: '+79990000001', code: c.devCode });
+const admin = await api('POST', '/api/auth/verify', { phone: '+79990000001', code: c.devCode, password: 'TrackSOS-Test-2026!' });
 
 // Мастер
 const m = await mk();
