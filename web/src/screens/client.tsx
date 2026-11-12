@@ -50,7 +50,7 @@ export function Home() {
       <section className="desktop-quick-links" aria-label="Быстрый доступ">
         <a href="#/garage" className="desktop-quick-card"><span className="desktop-quick-icon">▣</span><span><b>Мой гараж</b><small>Автомобили и сведения о технике</small></span><span aria-hidden="true">›</span></a>
         <a href="#/orders" className="desktop-quick-card"><span className="desktop-quick-icon">☷</span><span><b>Мои заявки</b><small>История и статусы работ</small></span><span aria-hidden="true">›</span></a>
-        <a href="#/services" className="desktop-quick-card"><span className="desktop-quick-icon">⚙</span><span><b>Сервисы</b><small>Партнёры и запись на ремонт</small></span><span aria-hidden="true">›</span></a>
+        <a href="#/services" className="desktop-quick-card"><span className="desktop-quick-icon">⚙</span><span><b>СТО и ремонт</b><small>Сервисы-партнёры и запись</small></span><span aria-hidden="true">›</span></a>
         <a href="#/fleet" className="desktop-quick-card"><span className="desktop-quick-icon">▤</span><span><b>Мой парк</b><small>Транспорт и водители компании</small></span><span aria-hidden="true">›</span></a>
       </section>
 
@@ -95,8 +95,8 @@ export function Home() {
             <span><b>{s.name}</b><small>{fill(SERVICE_PRICE[id] ?? s.hint)}</small></span><span aria-hidden="true">›</span>
           </button>
         ))}
-        <button className="linkrow" onClick={() => go('services')}>
-          <span><b>Сервисы-партнёры</b><small>ремзоны рядом: запись, статус ремонта, счёт через ТракSOS</small></span><span aria-hidden="true">›</span>
+        <button className="linkrow mobile-services-link" onClick={() => go('services')}>
+          <span><b>СТО и ремонт</b><small>Сервисы-партнёры, запись и статус ремонта</small></span><span aria-hidden="true">›</span>
         </button>
       </div>
     </main>
