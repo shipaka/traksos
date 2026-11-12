@@ -1,3 +1,5 @@
+import { ServiceBookingContact } from '../components/ServiceBookingContact.tsx';
+import { NearbyMap } from '../components/NearbyMap.tsx';
 // Рембаза (сервис-партнёр): кабинет сервиса и запись клиента в сервис.
 import { useEffect, useState } from 'react';
 import { get, post, put, rub, fmtTime } from '../api.ts';
@@ -77,10 +79,16 @@ export function BaseHome() {
   );
   const cars = [...groups.expected, ...groups.repair, ...groups.ready];
   return (
-    <main>
-      <div>
+    <main className="cabinet-page">
+      <header className="cabinet-heading">
+        <span className="label">Кабинет ремонтной базы</span>
         <h1>Рембаза «{center.name}»</h1>
         <div className="sub">{center.address} · {center.hours}</div>
+      </header>
+      <div className="cabinet-metrics">
+        <div className="card tile"><span className="label">Ожидаем</span><b className="tile-value">{groups.expected.length}</b></div>
+        <div className="card tile"><span className="label">В ремонте</span><b className="tile-value">{groups.repair.length}</b></div>
+        <div className="card tile"><span className="label">Готовы</span><b className="tile-value">{groups.ready.length}</b></div>
       </div>
       <div className="row" style={{ gap: 6 }}>
         <span className="pill">{center.rating ? `★ ${center.rating.toFixed(1)} · ${center.reviews} отзывов` : 'отзывов пока нет'}</span>
@@ -106,10 +114,17 @@ export function BaseHome() {
           </div>
         </div>
       )}
+      <div className="web-base-overview">
       <div className="grid3">
         <div className="card tile"><span className="label">Запросы</span><span className="tile-value">{groups.requests.length}</span></div>
         <div className="card tile"><span className="label">Ожидаем</span><span className="tile-value">{groups.expected.length}</span></div>
         <div className="card tile"><span className="label">В ремонте</span><span className="tile-value">{groups.repair.length}</span></div>
+      </div>
+      <div className="web-base-actions" aria-label="Быстрые действия рембазы">
+        <a className="linkrow" href="#/base/money"><span><b>Финансовый кабинет</b><small>Начисления, выплаты и счета</small></span><span aria-hidden="true">›</span></a>
+        <a className="linkrow" href="#/base/me"><span><b>Карточка рембазы</b><small>График, услуги и доступность</small></span><span aria-hidden="true">›</span></a>
+        <a className="linkrow" href="#/support"><span><b>Помощь и модерация</b><small>Задать вопрос или сообщить о проблеме</small></span><span aria-hidden="true">›</span></a>
+      </div>
       </div>
       <div className="scroll-x" role="tablist">
         {([['req', `Входящие запросы · ${groups.requests.length}`], ['cars', `Машины у вас · ${cars.length}`], ['done', 'Закрытые']] as const).map(([k, n]) => (
@@ -117,7 +132,7 @@ export function BaseHome() {
         ))}
       </div>
       {tab === 'req' && (groups.requests.length
-        ? groups.requests.map((b: any) => <RequestCard key={b.id} b={b} onDone={cab.reload} />)
+        ? <div className="web-request-grid">{groups.requests.map((b: any) => <RequestCard key={b.id} b={b} onDone={cab.reload} />)}</div>
         : <div className="empty">Новых запросов нет. Они приходят уведомлением — со звуком, даже когда приложение закрыто.</div>)}
       {tab === 'cars' && (cars.length ? (
         <div className="rows">
@@ -222,6 +237,7 @@ export function BaseCar({ id }: { id: string }) {
   return (
     <main>
       <Back to="base" label="Рембаза" />
+      <ServiceBookingContact bookingId={id} asService />
       <div>
         <h1>{carName(d.vehicle)}</h1>
         <div className="sub">Госномер {d.vehicle?.plate ?? '—'}{d.vehicle?.trailerPlate ? ` · прицеп ${d.vehicle.trailerPlate}` : ''} · чтобы узнать машину на въезде</div>
@@ -337,8 +353,8 @@ export function BaseSetup() {
   useEffect(() => {
     if (!cab.data || f) return;
     const c = cab.data.center;
-    setF(c ? { name: c.name, address: c.address, hours: c.hours, inn: c.inn ?? '', lat: c.lat, lng: c.lng, brands: c.brands, staff: c.staff, conditions: c.conditions, accepts: c.accepts, closedDays: (c.closed_days ?? []).map((x: string) => x.slice(0, 10)), paused: c.paused }
-      : { name: '', address: '', hours: '08:00–20:00', inn: '', lat: null, lng: null, brands: [], staff: { electric: 'own' }, conditions: ['parking'], accepts: ['quick', 'day'], closedDays: [], paused: false });
+    setF(c ? { name: c.name, address: c.address, arrivalNotes: c.arrival_notes ?? '', hours: c.hours, inn: c.inn ?? '', lat: c.lat, lng: c.lng, brands: c.brands, staff: c.staff, conditions: c.conditions, accepts: c.accepts, closedDays: (c.closed_days ?? []).map((x: string) => x.slice(0, 10)), paused: c.paused }
+      : { name: '', address: '', arrivalNotes: '', hours: '08:00–20:00', inn: '', lat: null, lng: null, brands: [], staff: { electric: 'own' }, conditions: ['parking'], accepts: ['quick', 'day'], closedDays: [], paused: false });
   }, [cab.data]); // eslint-disable-line
   if (!f) return <main><Loading error={cab.error} /></main>;
   const first = !cab.data?.center;
@@ -360,6 +376,7 @@ export function BaseSetup() {
       <div className="card">
         <Field label="Название"><input className="field" value={f.name} onChange={(e) => set('name', e.target.value)} placeholder="Например, Шушары-Трак" /></Field>
         <Field label="Адрес въезда"><input className="field" value={f.address} onChange={(e) => set('address', e.target.value)} placeholder="Шушары, Московское ш., 50" /></Field>
+        <Field label="Как к вам проехать"><textarea className="field" maxLength={600} value={f.arrivalNotes} onChange={(e) => set('arrivalNotes', e.target.value)} placeholder="Въезд с тыльной стороны, шлагбаум № 2. На КПП назовите номер записи." /></Field>
         <button type="button" className="btn ghost small" onClick={locate}>{f.lat ? `Место на карте отмечено · ${f.lat.toFixed(3)}, ${f.lng.toFixed(3)}` : 'Отметить место по GPS — вы сейчас на базе'}</button>
         <div className="grid2">
           <Field label="Часы работы"><input className="field" value={f.hours} onChange={(e) => set('hours', e.target.value)} /></Field>
@@ -453,7 +470,7 @@ export function ServicesList() {
       <Back to="" label="Главная" />
       <div>
         <h1>Найти рембазу</h1>
-        <div className="sub">Только ремзоны, с которыми ТракSOS договорился лично. Цену сервис скажет после осмотра.</div>
+        <div className="sub">Сервисы и рембазы поблизости. Партнёры ТракSOS отмечаются отдельно; условия уточняйте в карточке.</div>
       </div>
       {from && <div className="banner col"><b>По совету мастера — скидка в сервисе</b><span className="note">Запишитесь отсюда — скидка применится в счёте сама.</span></div>}
 
@@ -509,6 +526,7 @@ export function ServicesList() {
       {/* 5. Результат */}
       {!list.data ? <Loading error={list.error} /> : <>
         <span className="note">{shown.length ? `Найдено: ${shown.length}${s.radius && point ? ` в радиусе ${s.radius} км` : ''}` : ''}{!point ? ' · расстояние появится, когда выберете место' : ''}</span>
+        <NearbyMap items={shown} center={point} />
         {!shown.length ? (
           <div className="empty col" style={{ gap: 8 }}>
             <span>Подходящих сервисов не нашли{s.need ? ` с услугой «${NEEDS[s.need]}»` : ''}.</span>
@@ -519,21 +537,23 @@ export function ServicesList() {
         ) : (
           <div className="stack">
             {shown.map((c: any) => (
-              <a key={c.id} href={`#/services/${c.id}${from ? `?from=${from}` : ''}`} className="card" style={{ textDecoration: 'none', color: 'inherit', gap: 6 }}>
+              <div key={c.id} className="card" style={{ textDecoration: 'none', color: 'inherit', gap: 6 }}>
                 <div className="between" style={{ alignItems: 'flex-start' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-                    <b>{c.name}</b>
+                    <b>{c.name}</b><span className={`pill ${c.isPartner ? 'accent' : ''}`}>{c.isPartner ? 'Партнёр ТракSOS' : 'Справочная точка'}</span>
                     <span className="note">{c.address}</span>
                   </div>
                   {c.distanceKm != null && <b style={{ fontFamily: 'var(--display)', whiteSpace: 'nowrap' }}>{c.distanceKm} км</b>}
                 </div>
                 <div className="row" style={{ gap: 4 }}>
-                  {c.rating ? <span className="pill good">★ {c.rating.toFixed(1)} · {c.reviews}</span> : <span className="pill">новый</span>}
+                  {c.rating ? <span className="pill good">★ {c.rating.toFixed(1)} · {c.reviews}</span> : !c.directoryOnly ? <span className="pill">новый</span> : null}
                   {c.paused ? <span className="pill warn">приём закрыт</span> : c.openNow === true ? <span className="pill good">открыто · {c.hours}</span> : c.openNow === false ? <span className="pill">закрыто · {c.hours}</span> : <span className="pill">{c.hours}</span>}
-                  {c.load ? <span className="pill">машин: {c.load}</span> : <span className="pill good">свободно</span>}
+                  {c.load != null && (c.load ? <span className="pill">машин: {c.load}</span> : <span className="pill good">свободно</span>)}
                   {c.knowsBrand && <span className="pill accent">знают {brand}</span>}
                 </div>
-              </a>
+                {!c.directoryOnly && <a className="btn ghost small" href={`#/services/${c.id}${from ? `?from=${from}` : ''}`}>Открыть и записаться</a>}
+                {c.directoryOnly && <span className="note">Справочная рембаза · запись через ТракSOS пока недоступна</span>}
+              </div>
             ))}
           </div>
         )}
@@ -576,6 +596,7 @@ export function CenterPage({ id }: { id: string }) {
         <a className="btn" href={`#/services/${id}/book${from ? `?from=${from}` : ''}`}>Записаться</a>
       )}
       <div className="grid2">
+        {d.arrivalNotes && <div className="card"><b>Как проехать</b><p className="note">{d.arrivalNotes}</p></div>}
         <button className="btn ghost" onClick={() => prefillOrder('tow', { destination: `${d.name}, ${d.address}` })}>Везти сюда эвакуатором</button>
         <button className="btn ghost" onClick={() => prefillOrder('electric', { address: `${d.name}, ${d.address}` })}>Вызвать мастера сюда</button>
       </div>
@@ -671,6 +692,7 @@ export function BookingPage({ id }: { id: string }) {
   return (
     <main>
       <Back to="orders" label="Заявки" />
+      <ServiceBookingContact bookingId={id} />
       <div>
         <h1>Ремонт на рембазе</h1>
         <div className="sub">«{d.center.name}» · {d.center.address}</div>

@@ -49,7 +49,10 @@ export async function setup() {
   }
 
   async function close() {
-    server.close();
+    // Await HTTP shutdown before closing PostgreSQL: a detached server.close()
+    // can leave requests running while the next test file resets the schema.
+    server.closeIdleConnections();
+    await new Promise<void>((resolve, reject) => server.close((err) => err ? reject(err) : resolve()));
     await db.close();
   }
 

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { post, setToken, connectWs, ApiError } from '../api.ts';
 import { useAction, useMe, useToast, Field } from '../ui.tsx';
+import { native } from '../native.ts';
+import { WebsiteShowcase } from './websiteShowcase.tsx';
 
 // Роль выбирают только те, кто подключается работать. Остальные входят по номеру — кабинет определяется по ролям.
 const JOIN_ROLES = [
@@ -20,6 +22,7 @@ export function homeFor(roles: string[], intent: Intent): string {
   if (roles.includes('client') || roles.includes('driver')) return '#/as/client';
   if (performer) return '#/as/performer';
   if (roles.includes('service')) return '#/as/service';
+  if (roles.includes('insurer')) return '#/as/insurer';
   return '#/as/client';
 }
 
@@ -73,21 +76,90 @@ export function Login({ driver }: { driver?: boolean } = {}) {
     : intent === 'join' ? 'Выберите, кем подключаетесь. После входа заполните профиль — проверим и откроем заявки.'
     : 'Пришлём код. Пароль не нужен — кабинет откроется сам.';
 
+  if (!intent && !native.isApp && window.innerWidth > 800) return (
+    <main className="web-landing">
+      <section className="web-hero web-hero-featured">
+        <div className="web-hero-layout">
+          <div className="web-hero-content">
+            <span className="label" style={{ color: 'var(--accent)' }}>ТракSOS · Единая платформа для грузового транспорта</span>
+            <h1>Техпомощь и ремонт грузовиков — быстро, рядом, надёжно.</h1>
+            <p>Водителям — помощь в дороге. Автопаркам — контроль техники и расходов. Мастерам и рембазам — удобные рабочие кабинеты. Всё в одной системе.</p>
+            <div className="hero-actions">
+              <button className="btn" type="button" onClick={() => setIntent('help')}>Нужна помощь сейчас</button>
+              <button className="btn ghost" type="button" onClick={() => setIntent('login')}>Войти в кабинет</button>
+            </div>
+            <a className="web-hero-discover" href="#/about">Посмотреть возможности платформы <span aria-hidden="true">↗</span></a>
+          </div>
+          <div className="web-hero-visual" aria-label="Примеры возможностей сервиса">
+            <div className="web-hero-screen">
+              <div className="web-hero-screen-top"><span>● ● ●</span><strong>ТракSOS / рабочий стол</strong></div>
+              <div className="web-hero-screen-body">
+                <div className="web-hero-screen-tag">ЕДИНОЕ ПРОСТРАНСТВО</div>
+                <div className="web-hero-screen-title">Ваша техника под контролем</div>
+                <div className="web-hero-mini-card"><span>▤</span><div><b>История машин</b><small>Обслуживание и документы</small></div><i>↗</i></div>
+                <div className="web-hero-mini-card"><span>₽</span><div><b>Финансы автопарка</b><small>Расходы, оплаты, возвраты</small></div><i>↗</i></div>
+                <div className="web-hero-mini-card"><span>◉</span><div><b>Заявки и статусы</b><small>От обращения до результата</small></div><i>↗</i></div>
+              </div>
+            </div>
+            <div className="web-hero-float"><span aria-hidden="true">✓</span><div><b>Одна система</b><small>От заявки до истории работ</small></div></div>
+          </div>
+        </div>
+      </section>
+      <section>
+        <h2>Всё для грузовика в одной системе</h2>
+        <div className="web-feature-grid" style={{ marginTop: 16 }}>
+          <div className="web-feature"><b>Помощь в дороге</b><p>Найдите специалиста или эвакуатор и отслеживайте работу по заявке.</p></div>
+          <div className="web-feature"><b>История автомобилей</b><p>Гараж, ремонты, страхование и техосмотр по каждой машине.</p></div>
+          <div className="web-feature"><b>Кабинет автопарка</b><p>Водители, разрешения, лимиты и финансовая история в одном месте.</p></div>
+        </div>
+      </section>
+      <section className="web-desktop-audiences">
+        <div className="web-landing-eyebrow">ТракSOS ДЛЯ КАЖДОГО УЧАСТНИКА</div>
+        <h2>Одна платформа. Четыре возможности.</h2>
+        <div className="web-desktop-audience-grid">
+          <article className="web-audience-card"><span>🚛</span><h3>Владельцам грузовиков</h3><p>Помощь на дороге, гараж, история ремонтов и документы.</p></article>
+          <article className="web-audience-card"><span>▦</span><h3>Автопаркам</h3><p>Техника, водители, заявки, доступы и контроль расходов.</p></article>
+          <article className="web-audience-card"><span>🔧</span><h3>Мастерам</h3><p>Заявки по специализации, статусы работ и расчёты.</p></article>
+          <article className="web-audience-card"><span>⚙</span><h3>Рембазам и сервисам</h3><p>Запись клиентов, карточка сервиса и финансовый кабинет.</p></article>
+        </div>
+      </section>
+      <section className="web-desktop-process"><span className="web-landing-eyebrow">КАК ЭТО РАБОТАЕТ</span><h2>От проблемы до результата</h2><div className="web-process-grid"><div><strong>01</strong><b>Опишите ситуацию</b><p>Создайте заявку с данными грузовика.</p></div><div><strong>02</strong><b>Найдите помощь</b><p>Выберите подходящего исполнителя или сервис.</p></div><div><strong>03</strong><b>Следите за работой</b><p>Статусы, связь и детали в одной заявке.</p></div><div><strong>04</strong><b>Сохраните историю</b><p>Результат останется в истории техники.</p></div></div></section>
+      <WebsiteShowcase />
+      <section className="card web-join-card">
+        <h2>Работаете с грузовой техникой?</h2>
+        <p className="sub">Мастера, эвакуаторщики и рембазы могут подключиться к ТракSOS и принимать заявки.</p>
+        <button className="btn ghost" type="button" onClick={() => setIntent('join')}>Стать партнёром ТракSOS</button>
+      </section>
+    </main>
+  );
+
   if (!intent) return (
-    <main>
-      <div className="helpWrap">
-        <button type="button" className="helpBtn" onClick={() => setIntent('help')} aria-label="Помогите — вызвать мастера или эвакуатор">
-          <span className="t">Помогите</span>
-          <span className="s">мастер или эвакуатор</span>
-          <span className="tap" aria-hidden="true">👆</span>
-        </button>
-        <div className="sub" style={{ textAlign: 'center', marginTop: 0 }}>Сломались в дороге — приедем на место</div>
-      </div>
-      <div className="stack" style={{ marginTop: 'clamp(40px, 12vh, 110px)' }}>
-        <button type="button" className="btn ghost" onClick={() => setIntent('login')}>Войти по номеру</button>
-        <div className="sub" style={{ textAlign: 'center' }}>Владельцы, водители, мастера, рембазы — один вход, кабинет откроется сам</div>
-        <button type="button" className="link" onClick={() => setIntent('join')} style={{ background: 'none', border: 0, color: 'var(--accent)', fontWeight: 600, padding: 8 }}>Хочу работать с ТракSOS →</button>
-      </div>
+    <main className={native.isApp ? 'app-welcome' : 'web-landing web-landing-mobile'}>
+      {!native.isApp && <section className="web-mobile-intro web-mobile-hero">
+        <span className="label">ТракSOS · Помощь грузовому транспорту</span>
+        <h1>Грузовик должен ехать. Мы помогаем решить проблему.</h1>
+        <p>Выездные мастера, диагностика, эвакуаторы и рембазы. Заявки, история ремонтов, документы и расходы — в одной системе.</p>
+        <div className="hero-actions">
+          <button className="btn" type="button" onClick={() => setIntent('help')}>Нужна помощь на дороге</button>
+          <button className="btn ghost" type="button" onClick={() => setIntent('login')}>Войти в кабинет</button>
+        </div>
+        <a href="#/about" className="web-hero-discover">Узнать о возможностях ТракSOS →</a>
+      </section>}
+      {native.isApp && <div className="helpWrap"><button type="button" className="helpBtn" onClick={() => setIntent('help')}><span className="t">Помогите</span><span className="s">мастер или эвакуатор</span></button></div>}
+      {!native.isApp && <>
+        <section className="web-mobile-proof"><span>Выездная помощь</span><span>Гараж и документы</span><span>Контроль автопарка</span></section>
+        <section className="web-mobile-section"><span className="label">Для кого сервис</span><h2>Одна платформа — разные задачи</h2><div className="web-feature-grid">
+          <div className="web-feature"><b>Водителям и владельцам</b><p>Найти помощь в дороге, следить за заявкой, хранить историю машины и ремонтов.</p></div>
+          <div className="web-feature"><b>Транспортным компаниям</b><p>Автопарк, водители, доступы, расходы и история обслуживания техники.</p></div>
+          <div className="web-feature"><b>Мастерам и эвакуаторам</b><p>Получать подходящие заявки, вести работу и видеть расчёты в своём кабинете.</p></div>
+          <div className="web-feature"><b>Рембазам и сервисам</b><p>Записи, заказы, сведения о машинах и контроль взаиморасчётов.</p></div>
+        </div></section>
+        <section className="web-mobile-section"><span className="label">Как работает ТракSOS</span><h2>От поломки до истории ремонта</h2><div className="web-mobile-steps"><div><b>01 · Оставьте заявку</b><p>Выберите проблему и опишите ситуацию.</p></div><div><b>02 · Найдите исполнителя</b><p>Специалист или сервис принимает заявку, а вы следите за её статусом.</p></div><div><b>03 · Сохраните результат</b><p>Информация о работах и расходах остаётся в системе.</p></div></div></section>
+        <WebsiteShowcase />
+        <section className="web-mobile-section web-mobile-join"><h2>Работаете с грузовой техникой?</h2><p>Подключайте мастерскую, эвакуатор или рембазу и работайте с заявками в ТракSOS.</p><button type="button" className="btn" onClick={() => setIntent('join')}>Стать партнёром</button></section>
+        <section className="web-mobile-section web-mobile-faq"><h2>Частые вопросы</h2><details><summary>Нужно ли регистрироваться, чтобы узнать о сервисе?</summary><p>Нет. Возможности и правила можно посмотреть до входа.</p></details><details><summary>Что есть в личном кабинете?</summary><p>Заявки, история работ, гараж и профиль. Для компаний и исполнителей предусмотрены отдельные разделы.</p></details><details><summary>Как рассчитывается стоимость?</summary><p>Условия работ и сервисные сборы отображаются в заявке и документах перед подтверждением.</p></details><a href="#/rules">Правила сервиса</a> · <a href="#/help">Помощь и поддержка</a></section>
+      </>}
+      <div className="stack" style={{ marginTop: 24 }}><button type="button" className="btn ghost" onClick={() => setIntent('login')}>Войти по номеру телефона</button><button type="button" className="link" onClick={() => setIntent('join')}>Хочу сотрудничать с ТракSOS →</button></div>
     </main>
   );
 

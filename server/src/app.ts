@@ -24,6 +24,7 @@ import { StatsService } from './services/stats.ts';
 import { OnsiteService } from './services/onsite.ts';
 import { ServiceCenters } from './services/service.ts';
 import { FleetService } from './services/fleet.ts';
+import { VehicleServiceRequests } from './services/vehicleServiceRequests.ts';
 import { PrivacyService } from './services/privacy.ts';
 import { StandingService } from './services/standing.ts';
 import { ShopService } from './services/shop.ts';
@@ -45,7 +46,7 @@ export interface Deps {
 }
 
 const money = z.number().int().nonnegative();
-const ROLES = ['client', 'driver', 'master', 'tow', 'service', 'moderator', 'admin'];
+const ROLES = ['client', 'driver', 'master', 'tow', 'service', 'insurer', 'moderator', 'admin'];
 
 export function createApp(d: Deps) {
   const now = d.now ?? (() => new Date());
@@ -74,6 +75,7 @@ export function createApp(d: Deps) {
   orders.referral = referral;
   centers.referral = referral;
   const fleet = new FleetService(d.db, notifier, orders);
+  const vehicleRequests = new VehicleServiceRequests(d.db);
   const privacy = new PrivacyService(d.db, notifier, now);
   const standing = new StandingService(d.db, now, settings);
   const shop = new ShopService(d.db, notifier, settings);
@@ -156,9 +158,12 @@ export function createApp(d: Deps) {
 
   // Гараж --------------------------------------------------------------------
   const vehicleSchema = z.object({ brand: z.string().min(1).max(50), model: z.string().max(50).optional(), year: z.number().int().min(1960).max(2100).optional(),
-    plate: z.string().max(15).optional(), trailerPlate: z.string().max(15).optional() });
+    plate: z.string().max(15).optional(), trailerPlate: z.string().max(15).optional(),
+    vin: z.string().trim().regex(/^[A-HJ-NPR-Z0-9]{17}$/i, 'VIN должен содержать 17 символов без I, O, Q').optional(),
+    engine: z.string().trim().max(100).optional(), configurationNotes: z.string().trim().max(2000).optional() });
   r.get('/api/vehicles', true, (c: AuthedCtx) => profiles.vehicles(c.user));
   r.post('/api/vehicles', true, (c: AuthedCtx) => profiles.addVehicle(c.user, parse(vehicleSchema, c.body)));
+  r.patch('/api/vehicles/:id', true, (c: AuthedCtx) => profiles.updateVehicle(c.user, c.params.id, parse(vehicleSchema.partial(), c.body)));
   r.get('/api/vehicles/:id/history', true, (c: AuthedCtx) => profiles.vehicleHistory(c.user, c.params.id));
   r.delete('/api/vehicles/:id', true, async (c: AuthedCtx) => (await profiles.removeVehicle(c.user, c.params.id), { ok: true }));
   r.post('/api/vehicles/:id/driver', true, (c: AuthedCtx) => profiles.assignDriver(c.user, c.params.id, parse(z.object({ phone: z.string().nullable() }), c.body).phone));
@@ -326,11 +331,85 @@ export function createApp(d: Deps) {
   r.delete('/api/me/delete', true, (c: AuthedCtx) => privacy.cancelDelete(c.user));
 
   // Мой парк --------------------------------------------------------------------
+  const vehicleRequestKind = z.enum(['insurance', 'inspection']);
+  const vehicleRequestStatus = z.enum(['in_review', 'need_documents', 'sent_to_partner', 'completed', 'rejected', 'cancelled']);
+  r.get('/api/vehicles/:id/service-history', true, (c: AuthedCtx) => vehicleRequests.history(c.user, c.params.id));
+  r.patch('/api/vehicle-service-requests/:id/renewal', true, async (c: AuthedCtx) => {
+    const b = parse(z.object({ expiresOn: z.string().regex(/^\\d{4}-\\d{2}-\\d{2}$/) }), c.body);
+    const updated = await vehicleRequests.renewPolicy(c.user, c.params.id, b.expiresOn);
+    notifier.live(await vehicleRequests.recipients(updated), { type: 'vehicle_service', vehicleId: updated?.vehicle_id, requestId: updated?.id });
+    return updated;
+  });
+  r.get('/api/vehicle-service-requests', true, (c: AuthedCtx) => vehicleRequests.mine(c.user));
+  r.post('/api/vehicle-service-requests', true, async (c: AuthedCtx) => {
+    const b = parse(z.object({ vehicleId: z.string().uuid(), kind: vehicleRequestKind, comment: z.string().max(2000).optional() }), c.body);
+    const created = await vehicleRequests.create(c.user, b.vehicleId, b.kind, b.comment);
+    notifier.live(await vehicleRequests.recipients(created!), { type: 'vehicle_service', vehicleId: b.vehicleId, requestId: created?.id });
+    return created;
+  });
+  r.post('/api/vehicle-service-requests/:id/cancel', true, async (c: AuthedCtx) => {
+    const updated = await vehicleRequests.cancel(c.user, c.params.id);
+    notifier.live(await vehicleRequests.recipients(updated), { type: 'vehicle_service', vehicleId: updated?.vehicle_id, requestId: updated?.id });
+    return updated;
+  });
+  r.get('/api/admin/insurers', staff, (c: AuthedCtx) => vehicleRequests.insurers(c.user));
+  r.post('/api/admin/vehicle-service-requests/:id/assign-insurer', staff, async (c: AuthedCtx) => {
+    const b = parse(z.object({ insurerId: z.string().uuid() }), c.body);
+    const request = await vehicleRequests.assignInsurer(c.user, c.params.id, b.insurerId);
+    notifier.live([b.insurerId], { type: 'vehicle_service', requestId: request.id, vehicleId: request.vehicle_id });
+    return request;
+  });
+  r.get('/api/insurer/requests', ['insurer'], (c: AuthedCtx) => vehicleRequests.insurerQueue(c.user));
+  r.patch('/api/insurer/requests/:id', ['insurer'], async (c: AuthedCtx) => {
+    const b = parse(z.object({ status: z.enum(['completed', 'rejected']), note: z.string().max(2000).optional(),
+      policyExpiresOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }), c.body);
+    const updated = await vehicleRequests.setStatus(c.user, c.params.id, b.status, b.note, b.policyExpiresOn);
+    const recipients = await vehicleRequests.recipients(updated);
+    await notifier.notify(recipients, { type: 'vehicle_service', requestId: updated.id, vehicleId: updated.vehicle_id, status: updated.status },
+      { kind: 'normal', title: b.status === 'completed' ? 'Страхование оформлено' : 'Страхование отклонено',
+        body: updated.staff_note || (b.status === 'completed' ? 'Проверьте срок полиса в гараже' : 'Посмотрите комментарий в истории машины'),
+        data: { vehicleId: String(updated.vehicle_id), requestId: String(updated.id) } });
+    return updated;
+  });
+  r.get('/api/admin/vehicle-service-requests', staff, (c: AuthedCtx) => vehicleRequests.queue(c.user));
+  r.patch('/api/admin/vehicle-service-requests/:id', staff, async (c: AuthedCtx) => {
+    const b = parse(z.object({ status: vehicleRequestStatus, note: z.string().max(2000).optional(), policyExpiresOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }), c.body);
+    const updated = await vehicleRequests.setStatus(c.user, c.params.id, b.status, b.note, b.policyExpiresOn);
+    const recipients = await vehicleRequests.recipients(updated);
+    const event = { type: 'vehicle_service', vehicleId: updated?.vehicle_id, requestId: updated?.id, status: updated?.status };
+    const important: Record<string, { title: string; body: string }> = {
+      need_documents: { title: 'Нужны документы по заявке', body: updated?.staff_note || 'Откройте историю автомобиля и проверьте комментарий специалиста.' },
+      completed: { title: 'Услуга выполнена', body: updated?.kind === 'insurance' ? 'Страхование завершено. Проверьте срок полиса в гараже.' : 'Техосмотр завершён. Подробности доступны в гараже.' },
+      rejected: { title: 'Заявка отклонена', body: updated?.staff_note || 'Причину можно посмотреть в истории автомобиля.' },
+    };
+    if (important[b.status]) {
+      await notifier.notify(recipients, event, {
+        kind: 'normal', ...important[b.status],
+        data: { vehicleId: String(updated.vehicle_id), requestId: String(updated.id), status: b.status },
+      }).catch((error) => console.warn('[vehicle service notification]', error));
+    } else {
+      notifier.live(recipients, event);
+    }
+    return updated;
+  });
+  r.get('/api/insurance-reminders/settings', true, async (c: AuthedCtx) => {
+    const ownerId = c.user.owner_id ?? c.user.id;
+    const row = await d.db.one<{ insurance_reminders_enabled: boolean }>(
+      'select insurance_reminders_enabled from users where id=$1', [ownerId]);
+    return { enabled: row?.insurance_reminders_enabled ?? true };
+  });
+  r.put('/api/insurance-reminders/settings', true, async (c: AuthedCtx) => {
+    if (c.user.owner_id) throw forbidden('Настройками напоминаний управляет владелец');
+    const { enabled } = parse(z.object({ enabled: z.boolean() }), c.body);
+    await d.db.query('update users set insurance_reminders_enabled=$2 where id=$1', [c.user.id, enabled]);
+    return { enabled };
+  });
   r.get('/api/fleet', true, (c: AuthedCtx) => fleet.get(c.user));
+  r.get('/api/fleet/finances', true, (c: AuthedCtx) => fleet.finances(c.user));
   r.put('/api/fleet', true, (c: AuthedCtx) => fleet.set(c.user, parse(z.object({
     mode: z.enum(['limit', 'approve']).optional(),
     perOrder: z.number().int().min(0).max(100_000_000).nullable().optional(), perMonth: z.number().int().min(0).max(1_000_000_000).nullable().optional(),
-    allow: z.object({ repair: z.boolean().optional(), tow: z.boolean().optional(), consult: z.boolean().optional(), service: z.boolean().optional(), shop: z.boolean().optional() }).optional(),
+    allow: z.object({ repair: z.boolean().optional(), tow: z.boolean().optional(), consult: z.boolean().optional(), service: z.boolean().optional(), shop: z.boolean().optional(), insurance: z.boolean().optional(), inspection: z.boolean().optional() }).optional(),
     edoPdfOnly: z.boolean().optional(),
   }), c.body)));
   r.post('/api/fleet/vehicles/:id/new-qr', true, (c: AuthedCtx) => fleet.newQr(c.user, c.params.id));
@@ -344,6 +423,7 @@ export function createApp(d: Deps) {
 
   // Рембаза: кабинет сервиса ---------------------------------------------------
   const centerSchema = z.object({
+    arrivalNotes: z.string().max(600).optional(),
     name: z.string().min(2).max(120).optional(), address: z.string().min(3).max(300).optional(),
     lat: z.number().min(-90).max(90).nullable().optional(), lng: z.number().min(-180).max(180).nullable().optional(),
     hours: z.string().max(60).optional(), inn: z.string().max(12).nullable().optional(),
@@ -381,6 +461,13 @@ export function createApp(d: Deps) {
     fromOrderId: z.string().uuid().nullable().optional(),
   }), c.body)));
   r.get('/api/bookings', true, (c: AuthedCtx) => centers.myBookings(c.user));
+  r.get('/api/bookings/:id/messages', true, (c: AuthedCtx) => centers.messages(c.user,c.params.id,Number(c.query.get('after') ?? 0)));
+  r.post('/api/bookings/:id/messages', true, (c: AuthedCtx) => centers.sendMessage(c.user,c.params.id,
+    parse(z.object({body:z.string().min(1).max(2000)}),c.body).body));
+  r.post('/api/bookings/:id/contact-block', true, (c: AuthedCtx) => {
+    const b=parse(z.object({blocked:z.boolean(),reason:z.string().max(500).default('')}),c.body);
+    return centers.setContactBlock(c.user,c.params.id,b.blocked,b.reason);
+  });
   r.get('/api/bookings/:id', true, (c: AuthedCtx) => centers.booking(c.user, c.params.id));
   r.post('/api/bookings/:id/answer', true, (c: AuthedCtx) => centers.answer(c.user, c.params.id, parse(z.object({ text: z.string().min(2).max(500) }), c.body).text));
   r.post('/api/bookings/:id/cancel', true, (c: AuthedCtx) => centers.cancel(c.user, c.params.id));
@@ -388,6 +475,31 @@ export function createApp(d: Deps) {
     agree: z.boolean(), stars: z.number().int().min(1).max(5).optional(), text: z.string().max(1000).optional(), why: z.string().max(1000).optional(),
   }), c.body)));
   r.post('/api/orders/:id/recommend-service', performerRoles, (c: AuthedCtx) => onsite.recommend(c.user, c.params.id, parse(z.object({ centerId: z.string().uuid().nullable() }), c.body).centerId));
+  // Справочные рембазы: публикация только сотрудником, без статуса партнёра и доступа к заявкам.
+  r.get('/api/admin/external-services', staff, () => d.db.query('select * from external_service_directory order by updated_at desc limit 500'));
+  r.post('/api/admin/external-services', staff, (c: AuthedCtx) => {
+    const b = parse(z.object({ name:z.string().min(2).max(160),address:z.string().min(4).max(400),lat:z.number().min(-90).max(90).optional(),lng:z.number().min(-180).max(180).optional(),hours:z.string().max(100).optional(),publicNotes:z.string().max(500).optional(),privatePhone:z.string().max(60).optional(),visibility:z.enum(['draft','published','hidden']).default('draft') }),c.body);
+    if ((b.lat===undefined)!==(b.lng===undefined)) throw bad('coords','Укажите обе координаты');
+    if (b.visibility==='published' && (b.lat===undefined || b.lng===undefined)) throw bad('coords','Для публикации нужны координаты');
+    return d.db.one(`insert into external_service_directory(name,address,lat,lng,hours,public_notes,private_phone,visibility,created_by)
+      values($1,$2,$3,$4,$5,$6,$7,$8,$9) returning id,name,address,visibility`,[b.name,b.address,b.lat??null,b.lng??null,b.hours??null,b.publicNotes??null,b.privatePhone??null,b.visibility,c.user.id]);
+  });
+  r.put('/api/admin/external-services/:id', staff, async (c: AuthedCtx) => {
+    const b=parse(z.object({name:z.string().min(2).max(160),address:z.string().min(4).max(400),lat:z.number().min(-90).max(90).nullable(),lng:z.number().min(-180).max(180).nullable(),hours:z.string().max(100).nullable(),publicNotes:z.string().max(500).nullable(),privatePhone:z.string().max(60).nullable()}),c.body);
+    if ((b.lat===null)!==(b.lng===null)) throw bad('coords','Укажите обе координаты');
+    const existing=await d.db.one<{visibility:string}>('select visibility from external_service_directory where id=$1',[c.params.id]);
+    if (!existing) throw notFound('Рембаза не найдена');
+    if (existing.visibility==='published' && (b.lat===null || b.lng===null)) throw bad('coords','Сначала снимите точку с публикации');
+    return d.db.one(`update external_service_directory set name=$2,address=$3,lat=$4,lng=$5,hours=$6,public_notes=$7,private_phone=$8,updated_at=now()
+      where id=$1 returning id,name,address,visibility`,[c.params.id,b.name,b.address,b.lat,b.lng,b.hours,b.publicNotes,b.privatePhone]);
+  });
+  r.post('/api/admin/external-services/:id/status', staff, async (c: AuthedCtx) => {
+    const b=parse(z.object({visibility:z.enum(['draft','published','hidden']),outreachStatus:z.enum(['not_contacted','contacted','interested','declined']).optional()}),c.body);
+    const existing=await d.db.one<{lat:number|null;lng:number|null}>('select lat,lng from external_service_directory where id=$1',[c.params.id]);
+    if (!existing) throw notFound('Рембаза не найдена');
+    if (b.visibility==='published' && (existing.lat===null || existing.lng===null)) throw bad('coords','Для публикации нужны координаты');
+    return d.db.one(`update external_service_directory set visibility=$2,outreach_status=coalesce($3,outreach_status),updated_at=now() where id=$1 returning id,visibility,outreach_status`,[c.params.id,b.visibility,b.outreachStatus??null]);
+  });
   r.get('/api/admin/services', staff, () => centers.pending());
   r.get('/api/admin/service-payouts', staff, () => centers.payoutsDue());
   r.post('/api/admin/bookings/:id/paid', ['admin'], (c: AuthedCtx) => centers.markPaidOut(c.user, c.params.id));
@@ -579,6 +691,30 @@ export function createApp(d: Deps) {
   r.post('/api/admin/performers/:id/cash-debt-paid', ['admin'], (c: AuthedCtx) =>
     payments.cashDebtPaid(c.user, c.params.id, parse(z.object({ amount: money }), c.body).amount));
   r.get('/api/admin/agent-report', ['admin'], (c: AuthedCtx) => payments.agentReport(c.query.get('period') ?? '', c.query.get('performer') ?? undefined));
+  // Модерация баллов: только администратор, все решения с причиной и журналом.
+  r.get('/api/admin/points', ['admin'], () => d.db.query(
+    `select p.id, p.user_id, p.amount, p.kind, p.status, p.note, p.order_id, p.booking_id,
+            p.created_at, p.moderated_at, p.moderation_reason
+       from points_entries p order by p.id desc limit 300`));
+  r.post('/api/admin/points/:id/moderate', ['admin'], async (c: AuthedCtx) => {
+    const b = parse(z.object({ status: z.enum(['available', 'held', 'reversed']), reason: z.string().min(5).max(500) }), c.body);
+    return d.db.tx(async (q) => {
+      const e = await q.one<{ id: number; user_id: string; amount: number; kind: string; status: string }>(
+        'select id, user_id, amount, kind, status from points_entries where id=$1 for update', [c.params.id]);
+      if (!e || e.amount <= 0 || e.kind === 'spend') throw new Error('Начисление не найдено');
+      await q.query('select id from users where id=$1 for update', [e.user_id]);
+      if (e.status === 'reversed' && b.status !== 'reversed') throw new Error('Отменённое начисление нельзя восстановить без новой проводки');
+      if (b.status !== 'available' && e.status === 'available') {
+        const balance = await referral.balance(e.user_id, q);
+        if (balance.balance < e.amount) throw new Error('Баллы уже потрачены: требуется отдельная корректирующая проводка');
+      }
+      await q.query('update points_entries set status=$2, moderated_by=$3, moderated_at=now(), moderation_reason=$4 where id=$1',
+        [e.id, b.status, c.user.id, b.reason]);
+      await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
+        [c.user.id, 'points.moderate', String(e.id), { from: e.status, to: b.status, reason: b.reason }]);
+      return { ok: true };
+    });
+  });
   r.get('/api/admin/audit', ['admin'], () => d.db.query('select * from audit_log order by id desc limit 200'));
 
   async function audit(actorId: string, action: string, target: string, data: unknown) {

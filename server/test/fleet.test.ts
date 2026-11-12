@@ -31,10 +31,16 @@ test('водитель входит по QR-наклейке; прежний т�
   const other = await t.login('+79993334466');
   ok(await t.api('POST', `/api/qr/${qr}/join`, {}, other.token));
   assert.equal(ok(await t.api('GET', '/api/vehicles', undefined, driver.token)).length, 0, 'прежний водитель машину больше не видит');
+  const revoked = await t.db.one<{ owner_id: string | null; roles: string[] }>('select owner_id, roles from users where id=$1', [driver.id]);
+  assert.equal(revoked?.owner_id, null, 'у прежнего водителя отозвана принадлежность к компании');
+  assert.ok(!revoked?.roles.includes('driver'), 'роль водителя отозвана, если машин больше нет');
   ok(await t.api('POST', `/api/qr/${qr}/join`, {}, driver.token));
   const fresh = ok(await t.api('POST', `/api/fleet/vehicles/${vehicleId}/new-qr`, {}, owner.token));
   assert.notEqual(fresh.cars[0].qrCode, qr);
   assert.equal(fresh.cars[0].driver, null, 'новая наклейка — водителя снимаем');
+  const afterRotation = await t.db.one<{ owner_id: string | null; roles: string[] }>('select owner_id, roles from users where id=$1', [driver.id]);
+  assert.equal(afterRotation?.owner_id, null, 'смена QR отозвала доступ водителя к компании');
+  assert.ok(!afterRotation?.roles.includes('driver'));
   assert.equal((await t.api('GET', `/api/qr/${qr}`)).status, 404, 'старая наклейка не действует');
   qr = fresh.cars[0].qrCode;
   ok(await t.api('POST', `/api/qr/${qr}/join`, {}, driver.token));
@@ -79,4 +85,26 @@ test('«всё через меня» и запреты: эвакуатор и з
   assert.equal(fs.settings.allow.tow, false);
   assert.equal(fs.settings.allow.repair, true);
   assert.equal((await t.api('GET', '/api/fleet', undefined, driver.token)).status, 400, 'парк видит только владелец');
+});
+
+test('владелец редактирует данные машины, водитель не может менять чужую карточку', async () => {
+  const edited = ok(await t.api('PATCH', `/api/vehicles/${vehicleId}`, {
+    brand: 'DAF', model: 'XF 105', year: 2012, vin: 'WDB9634031L123456',
+    engine: 'MX-13 (заменён)', configurationNotes: 'Двигатель заменён, проверять совместимость вручную',
+  }, owner.token));
+  assert.equal(edited.model, 'XF 105');
+  assert.equal(edited.vin, 'WDB9634031L123456');
+  assert.equal(edited.engine, 'MX-13 (заменён)');
+  assert.equal(edited.configuration_notes, 'Двигатель заменён, проверять совместимость вручную');
+  assert.equal((await t.api('PATCH', `/api/vehicles/${vehicleId}`, { model: 'подмена' }, driver.token)).status, 403);
+  assert.equal((await t.api('PATCH', `/api/vehicles/${vehicleId}`, { vin: 'invalid' }, owner.token)).status, 400);
+  assert.equal((await t.api('PATCH', '/api/vehicles/00000000-0000-0000-0000-000000000000', { model: 'XF' }, owner.token)).status, 404);
+});
+
+test('финансовый обзор: владелец видит свои заявки, водитель не видит расходы компании', async () => {
+  const report = ok(await t.api('GET', '/api/fleet/finances', undefined, owner.token));
+  assert.equal(typeof report.agreedTotal, 'number');
+  assert.ok(Array.isArray(report.items));
+  assert.ok(report.items.some((item: any) => item.vehicleId === vehicleId));
+  assert.equal((await t.api('GET', '/api/fleet/finances', undefined, driver.token)).status, 400);
 });

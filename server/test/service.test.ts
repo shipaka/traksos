@@ -139,3 +139,19 @@ test('финансы рембазы: к выплате после сверки �
   assert.equal(m1.summary.toPay, m0.summary.toPay - due[0].payout);
   assert.equal((await t.api('GET', '/api/base/money', undefined, client.token)).status, 403);
 });
+
+test('справочные рембазы: только администратор, без телефона и записи', async () => {
+  assert.equal((await t.api('GET','/api/admin/external-services',undefined,client.token)).status,403);
+  const created=ok(await t.api('POST','/api/admin/external-services',{name:'Тестовый справочник',address:'Тестовый адрес, 10',privatePhone:'+79991110000'},admin.token));
+  assert.equal(created.visibility,'draft');
+  assert.equal((await t.api('POST',`/api/admin/external-services/${created.id}/status`,{visibility:'published'},admin.token)).status,400,'нельзя публиковать без координат');
+  ok(await t.api('PUT',`/api/admin/external-services/${created.id}`,{name:'Тестовый справочник',address:'Тестовый адрес, 10',lat:59.9,lng:30.3,hours:null,publicNotes:null,privatePhone:'+79991110000'},admin.token));
+  ok(await t.api('POST',`/api/admin/external-services/${created.id}/status`,{visibility:'published',outreachStatus:'contacted'},admin.token));
+  const directory=ok(await t.api('GET','/api/services',undefined,client.token));
+  const entry=directory.find((x:any)=>x.id===created.id);
+  assert.equal(entry?.directoryOnly,true);
+  assert.equal(entry?.isPartner,false);
+  assert.ok(!JSON.stringify(entry).includes('+79991110000'),'внутренний телефон не раскрывается');
+  assert.equal((await t.api('GET',`/api/services/${created.id}`,undefined,client.token)).status,404);
+  assert.equal((await t.api('POST',`/api/services/${created.id}/book`,{need:'electric',day:today(),arrival:'self'},client.token)).status,404);
+});

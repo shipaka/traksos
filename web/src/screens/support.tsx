@@ -35,7 +35,8 @@ export function SupportNew() {
   const orderId = new URLSearchParams(location.hash.split('?')[1] ?? '').get('order') ?? undefined;
   const topics = useLoad(() => get('/api/support/topics'), []);
   const { busy, run } = useAction();
-  const [topic, setTopic] = useState('');
+  const suggestedTopic = new URLSearchParams(location.hash.split('?')[1] ?? '').get('topic') ?? '';
+  const [topic, setTopic] = useState(suggestedTopic === 'improvement' ? 'Предложение по улучшению' : '');
   const [text, setText] = useState('');
   return (
     <main>

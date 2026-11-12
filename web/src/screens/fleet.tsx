@@ -1,10 +1,11 @@
 // «Мой парк» владельца и вход водителя по QR-наклейке в кабине.
 import { useEffect, useState } from 'react';
-import { get, post, put, patch, rub, fmtTime, API_URL } from '../api.ts';
+import { get, post, put, patch, rub, fmtTime } from '../api.ts';
 import { SERVICES } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '../ui.tsx';
 import { qrSvg } from '../qr.ts';
 import { Login } from './login.tsx';
+import { TruckPhoto, TruckPhotoCredit } from '../truckPhotos.tsx';
 
 const ALLOW: [string, string, string][] = [
   ['repair', 'Вызов мастера', 'электрик, пневматика, автономка, шиномонтаж'],
@@ -12,9 +13,30 @@ const ALLOW: [string, string, string][] = [
   ['consult', 'Консультация по телефону', '700 ₽'],
   ['service', 'Запись в сервис', 'рембазы-партнёры'],
   ['shop', 'Магазин', 'покупки запчастей'],
+  ['insurance', 'Страхование', 'подача заявок только с разрешения владельца'],
+  ['inspection', 'Техосмотр', 'запись и подача заявок только с разрешения владельца'],
 ];
 const esc = (x: unknown) => String(x ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[c]);
-const stickerUrl = (code: string) => `${API_URL || location.origin}/#/qr/${code}`;
+// QR must open the public website, not the API host (which may be a different domain).
+const stickerUrl = (code: string) => `${location.origin}${location.pathname}${location.search}#/qr/${encodeURIComponent(code)}`;
+
+function InsuranceReminderSettings() {
+  const settings = useLoad(() => get('/api/insurance-reminders/settings'), []);
+  const { busy, run } = useAction();
+  const enabled = settings.data?.enabled;
+  return <div className="card stack">
+    <b>Напоминания о страховке</b>
+    <span className="note">За 30, 7 и 1 день до окончания полиса. Уведомления получает владелец.</span>
+    {!settings.data ? <Loading error={settings.error} /> :
+      <label className="row">
+        <input type="checkbox" checked={!!enabled} disabled={busy} onChange={async (e) => {
+          const result = await run(() => put('/api/insurance-reminders/settings', { enabled: e.target.checked }), 'Настройка сохранена');
+          if (result) settings.setData(result);
+        }} />
+        <span>Получать напоминания</span>
+      </label>}
+  </div>;
+}
 
 export function Fleet() {
   const f = useLoad(() => get('/api/fleet'), [], (e) => e.type === 'order' || e.type === 'fleet');
@@ -37,9 +59,18 @@ export function Fleet() {
     if (r) f.setData(r);
   }
   return (
-    <main>
+    <main className="cabinet-page">
       <Back to="garage" label="Гараж" />
-      <div><h1>Мой парк</h1><div className="sub">Машины, водители и что им можно. Все заказы и чаты водителей видны вам.</div></div>
+      <header className="cabinet-heading">
+        <span className="label">Кабинет владельца · Автопарк</span>
+        <h1>Мой парк</h1>
+        <div className="sub">Машины, водители, разрешения и расходы — в одном кабинете на телефоне и сайте.</div>
+      </header>
+      <div className="cabinet-metrics">
+        <div className="card tile"><span className="label">Автомобили</span><b className="tile-value">{d.cars.length}</b></div>
+        <div className="card tile"><span className="label">Ожидают решения</span><b className="tile-value">{d.pending.length}</b></div>
+        <div className="card tile"><span className="label">Доступ водителей</span><b className="tile-value">{d.cars.filter((c: any) => !!c.driver_id || !!c.driverId).length}</b></div>
+      </div>
 
       {d.pending.map((o: any) => (
         <div key={o.id} className="card hi">
@@ -54,12 +85,24 @@ export function Fleet() {
         </div>
       ))}
 
-      <div className="stack">
+      <a className="linkrow" href="#/fleet/finances">
+        <span><b>Финансы автопарка</b><small>Согласованные суммы и история расходов по каждой машине</small></span>
+        <span aria-hidden="true">›</span>
+      </a>
+      <InsuranceReminderSettings />
+      <div className="stack web-fleet-vehicles">
         <span className="label">Машины</span>
         {!d.cars.length && <div className="empty">Машин пока нет — добавьте в гараже.</div>}
         {d.cars.map((c: any) => (
-          <div key={c.id} className="card">
-            <div className="between"><b>{c.brand} {c.model ?? ''}</b><span className="pill">{c.plate ?? 'без номера'}</span></div>
+          <details key={c.id} className="card">
+            <summary className="between">
+              <span className="row" style={{ alignItems: 'center', gap: 10 }}>
+                <TruckPhoto brand={c.brand} /><b>{c.brand} {c.model ?? ''}</b>
+              </span>
+              <span className="pill">{c.plate ?? 'без номера'}</span>
+            </summary>
+            <div className="stack">
+              <TruckPhotoCredit brand={c.brand} />
             {c.driver ? (
               <span className="note">Водитель {c.driver.name ?? c.driver.phone} · доступ с {c.driver.since ? fmtTime(c.driver.since) : '—'} · в этом месяце {rub(c.driver.monthSpent)} <span className="pill good">Активен</span></span>
             ) : <span className="note">Водитель не назначен — он войдёт сам по QR-наклейке.</span>}
@@ -70,13 +113,16 @@ export function Fleet() {
                 const r = await run(() => post(`/api/fleet/vehicles/${c.id}/new-qr`), 'Новая наклейка: прежний водитель потерял доступ'); if (r) f.setData(r);
               }}>Новая наклейка</button>
             </div>
+            <a className="btn ghost small" href={`#/fleet/finances?vehicle=${c.id}`}>Расходы по машине</a>
             {qrFor === c.id && <Sticker car={c} />}
-          </div>
+            </div>
+          </details>
         ))}
       </div>
 
-      <div className="card">
-        <b>Как оплачивать</b>
+      <details className="card">
+        <summary><b>Оплата и лимиты</b></summary>
+        <div className="stack">
         <div className="grid2">
           <button type="button" className="seg" aria-pressed={s.mode !== 'approve'} onClick={() => setS({ ...s, mode: 'limit' })}>Сам до лимита</button>
           <button type="button" className="seg" aria-pressed={s.mode === 'approve'} onClick={() => setS({ ...s, mode: 'approve' })}>Всё через меня</button>
@@ -88,19 +134,23 @@ export function Fleet() {
           </div>
         ) : <span className="note">Каждый заказ водителя ждёт вашего «Подтвердить» — придёт уведомление.</span>}
         <span className="note">Заказы до лимита идут сразу. Дороже — вы получаете уведомление и подтверждаете. Статус видно в «Заявках».</span>
-      </div>
+        </div>
+      </details>
 
-      <div className="card">
-        <b>Что водителю можно</b>
+      <details className="card">
+        <summary><b>Разрешения водителей</b></summary>
+        <div className="stack">
         {ALLOW.map(([k, n, h]) => (
           <label key={k} className="agree"><input type="checkbox" checked={s.allow[k] !== false} onChange={(e) => setS({ ...s, allow: { ...s.allow, [k]: e.target.checked } })} /><span><b>{n}</b> — {h}</span></label>
         ))}
         <span className="note">Срочный вызов SOS водитель может сделать всегда — даже если вы не на связи.</span>
-      </div>
+        </div>
+      </details>
       <button className="btn" disabled={busy} onClick={save}>Сохранить</button>
 
-      <div className="card">
-        <b>Документы через ЭДО</b>
+      <details className="card">
+        <summary><b>Документы через ЭДО</b></summary>
+        <div className="stack">
         <div className="grid2">
           <Field label="Оператор"><input className="field" placeholder="СБИС, Диадок…" value={edo.edoOperator} onChange={(e) => setEdo({ ...edo, edoOperator: e.target.value })} /></Field>
           <Field label="Идентификатор ЭДО"><input className="field" placeholder="ID участника" value={edo.edoId} onChange={(e) => setEdo({ ...edo, edoId: e.target.value })} /></Field>
@@ -109,12 +159,131 @@ export function Fleet() {
         <span className="note">Счета и акты приходят в ЭДО, подписанные ТракSOS. По каждой поломке — один счёт: консультация, выезды, работа и эвакуатор вместе.</span>
         <button className="btn ghost small" disabled={busy} onClick={async () => { if (await run(() => patch('/api/me', { edoOperator: edo.edoOperator || null, edoId: edo.edoId || null }), 'ЭДО сохранено')) reload(); }}>Сохранить ЭДО</button>
         {!d.company.inn && <span className="note">Укажите компанию и ИНН в <a href="#/profile">профиле</a> — без них счёт по ЭДО не выставить.</span>}
-      </div>
+        </div>
+      </details>
 
-      <div className="card">
-        <div className="between"><b>Работа с отсрочкой оплаты</b><span className="pill">скоро</span></div>
-        <span className="note">Мастера будут приезжать без предоплаты, пока вы в пределах лимита. Лимит растёт, если вы давно с нами и платите вовремя.</span>
+
+    </main>
+  );
+}
+
+/** Owner's agreed costs by vehicle. A bank statement will be a separate integration. */
+export function FleetFinances() {
+  const { me } = useMe();
+  const q = new URLSearchParams(location.hash.split('?')[1] ?? '');
+  const [vehicleId, setVehicleId] = useState(q.get('vehicle') ?? '');
+  const [paymentFilter, setPaymentFilter] = useState<'all' | 'collected' | 'pending' | 'unconfirmed'>('all');
+  const report = useLoad(() => get('/api/fleet/finances'), [], (e) => e.type === 'order');
+  if (me?.owner_id) return <main><Back to="garage" /><div className="empty">Финансы компании доступны только владельцу.</div></main>;
+  const items: any[] = report.data?.items ?? [];
+  const byVehicle = vehicleId ? items.filter((o: any) => o.vehicleId === vehicleId) : items;
+  const shown = byVehicle.filter((o: any) => paymentFilter === 'all' ||
+    (paymentFilter === 'collected' && Number(o.confirmedCollected ?? 0) > 0) ||
+    (paymentFilter === 'pending' && Number(o.pendingPayment ?? 0) > 0) ||
+    (paymentFilter === 'unconfirmed' && Number(o.confirmedCollected ?? 0) === 0 && Number(o.pendingPayment ?? 0) === 0));
+  const csvCell = (value: unknown) => {
+    const text = String(value ?? '');
+    const safe = /^\s*[=+@-]/.test(text) ? "'" + text : text;
+    return '"' + safe.replace(/"/g, '""') + '"';
+  };
+  const exportCsv = () => {
+    const columns = ['Заявка', 'Дата заявки', 'Дата завершения', 'Машина', 'Госномер', 'Водитель / заказчик', 'Исполнитель', 'Работы', 'Способ оплаты', 'Согласовано, ₽', 'Подтверждено, ₽', 'Возвращено, ₽', 'Ожидает оплаты, ₽'];
+    const lines = [columns, ...shown.map((o: any) => [
+      o.number, o.createdAt ? new Date(o.createdAt).toLocaleString('ru-RU') : '',
+      o.completedAt ? new Date(o.completedAt).toLocaleString('ru-RU') : '',
+      [o.brand, o.model].filter(Boolean).join(' '), o.plate,
+      o.driverName, o.performerName, o.description || o.service,
+      methods[o.paymentMethod] ?? '', o.agreedTotal,
+      o.confirmedCollected, o.confirmedRefunded, o.pendingPayment,
+    ])].map((record) => record.map(csvCell).join(';')).join('\r\n');
+    const href = URL.createObjectURL(new Blob(['\uFEFF' + lines], { type: 'text/csv;charset=utf-8' }));
+    const download = document.createElement('a');
+    download.href = href;
+    download.download = 'traksos-finances-' + new Date().toISOString().slice(0, 10) + '.csv';
+    document.body.appendChild(download);
+    download.click();
+    download.remove();
+    setTimeout(() => URL.revokeObjectURL(href), 1000);
+  };
+  const total = shown.reduce((sum: number, o: any) => sum + Number(o.agreedTotal ?? 0), 0);
+  const collected = shown.reduce((sum: number, o: any) => sum + Number(o.confirmedCollected ?? 0), 0);
+  const refunded = shown.reduce((sum: number, o: any) => sum + Number(o.confirmedRefunded ?? 0), 0);
+  const cars = [...new Map(items.filter((o: any) => o.vehicleId).map((o: any) => [
+    o.vehicleId, { id: o.vehicleId, label: [o.brand, o.model, o.plate].filter(Boolean).join(' · ') || 'Автомобиль' },
+  ])).values()] as { id: string; label: string }[];
+  const methods: Record<string, string> = { cash: 'Наличные', online: 'Онлайн', invoice: 'По счёту' };
+  const statuses: Record<string, string> = {
+    completed: 'Сумма согласована', cancelled: 'Отменена', no_performer: 'Без исполнителя',
+    awaiting_owner: 'Ожидает владельца', awaiting_confirmation: 'Сверка суммы',
+  };
+  return (
+    <main>
+      <Back to="fleet" label="Мой парк" />
+      <h1>Финансы автопарка</h1>
+      <div className="sub">Суммы по заявкам ваших машин: что делали, кому поручено и когда согласован итог.</div>
+      <div className="web-finance-metrics">
+        <div className="card"><span className="label">Согласовано по заявкам</span><b className="tile-value">{rub(total)}</b><span className="note">Стоимость выполненных работ</span></div>
+        <div className="card"><span className="label">Подтверждено системой</span><b className="tile-value">{rub(collected)}</b><span className="note">Онлайн-оплата и счета</span></div>
+        <div className="card"><span className="label">Оформленные возвраты</span><b className="tile-value">{rub(refunded)}</b><span className="note">Учтённые возвратные платежи</span></div>
       </div>
+      <div className="note">Стоимость заявки не означает факт оплаты. Подтверждения берутся из платёжного реестра ТракSOS; наличные вне системы не подтверждаются.</div>
+      {!report.data ? <Loading error={report.error} /> : (
+        <>
+          <label className="stack">
+            <span className="label">Автомобиль</span>
+            <select className="field" value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
+              <option value="">Весь автопарк</option>
+              {cars.map((car) => <option key={car.id} value={car.id}>{car.label}</option>)}
+            </select>
+          </label>
+          <div className="finance-toolbar">
+            <label className="stack">
+              <span className="label">Статус оплаты</span>
+              <select className="field" aria-label="Статус оплаты" value={paymentFilter}
+                onChange={(event) => setPaymentFilter(event.target.value as typeof paymentFilter)}>
+                <option value="all">Все операции</option>
+                <option value="collected">Есть подтверждённая оплата</option>
+                <option value="pending">Ожидают оплаты</option>
+                <option value="unconfirmed">Без подтверждённой оплаты</option>
+              </select>
+            </label>
+            <button type="button" className="btn ghost small" disabled={!shown.length}
+              onClick={exportCsv}>Скачать CSV</button>
+          </div>
+          {!shown.length && <div className="empty">По выбранным фильтрам операций нет.</div>}
+          {!!shown.length && <div className="finance-table-wrap">
+            <table className="finance-table">
+              <thead><tr><th>Заказ / дата</th><th>Автомобиль</th><th>Водитель и исполнитель</th><th>За что</th><th>Согласовано</th><th>Оплачено / возвраты</th></tr></thead>
+              <tbody>{shown.map((o: any) => <tr key={o.id}>
+                <td><a href={`#/order/${o.id}`}>№{o.number}</a><small>{fmtTime(o.createdAt)}</small></td>
+                <td>{[o.brand, o.model].filter(Boolean).join(' ')}<small>{o.plate || 'Без госномера'}</small></td>
+                <td>{o.driverName || '—'}<small>Исполнитель: {o.performerName || 'не назначен'}</small></td>
+                <td>{o.description || o.service}<small>{statuses[o.status] ?? o.status} · {methods[o.paymentMethod] ?? 'Способ не указан'}</small></td>
+                <td>{o.agreedTotal == null ? '—' : rub(o.agreedTotal)}</td>
+                <td>{rub(o.confirmedCollected ?? 0)}{Number(o.confirmedRefunded) > 0 && <small>Возврат: {rub(o.confirmedRefunded)}</small>}{Number(o.pendingPayment) > 0 && <small>Ожидается: {rub(o.pendingPayment)}</small>}</td>
+              </tr>)}</tbody>
+            </table>
+          </div>}
+          <div className="rows finance-mobile-list">
+            {shown.map((o: any) => (
+              <a key={o.id} className="list-item" href={`#/order/${o.id}`}>
+                <div className="stack" style={{ gap: 4 }}>
+                  <b>№{o.number} · {o.description || o.service}</b>
+                  <span className="note">{[o.brand, o.model, o.plate].filter(Boolean).join(' · ') || 'Без привязки к машине'}</span>
+                  <span className="note">Заказ: {fmtTime(o.createdAt)}{o.completedAt ? ` · Согласовано: ${fmtTime(o.completedAt)}` : ''}</span>
+                  <span className="note">Водитель/заказчик: {o.driverName ?? '—'} · Исполнитель: {o.performerName ?? 'не назначен'}</span>
+                  <span className="note">{statuses[o.status] ?? o.status} · {methods[o.paymentMethod] ?? 'Способ не выбран'}</span>
+                  {o.confirmedCollected > 0 && <span className="note">Подтверждено платежами: {rub(o.confirmedCollected)}</span>}
+                  {o.confirmedRefunded > 0 && <span className="note">Возвращено: {rub(o.confirmedRefunded)}</span>}
+                  {o.pendingPayment > 0 && <span className="note">Ожидает оплаты/подтверждения: {rub(o.pendingPayment)}</span>}
+                  {o.paymentMethod === 'cash' && o.status === 'completed' && <span className="note">Оплата наличными не подтверждается банковским реестром</span>}
+                </div>
+                <b>{o.agreedTotal == null ? '—' : rub(o.agreedTotal)}</b>
+              </a>
+            ))}
+          </div>
+        </>
+      )}
     </main>
   );
 }
@@ -147,15 +316,18 @@ function Sticker({ car }: { car: any }) {
 /** Страница наклейки: водитель видит машину, входит по SMS — и он водитель этой машины */
 export function QrJoin({ code }: { code: string }) {
   const { me, reload } = useMe();
-  const info = useLoad(() => get(`/api/qr/${code}`), [code]);
+  const info = useLoad(() => get(`/api/qr/${encodeURIComponent(code)}`), [code]);
   const { busy, run } = useAction();
   useEffect(() => { try { sessionStorage.setItem('traksos.qr', code); } catch { /* */ } }, [code]);
   if (!info.data) return <main><Loading error={info.error} /></main>;
   const v = info.data;
   const join = async () => {
-    const r = await run(() => post(`/api/qr/${code}/join`), 'Готово — вы водитель этой машины');
-    try { sessionStorage.removeItem('traksos.qr'); } catch { /* */ }
-    if (r) { await reload(); go(''); }
+    const r = await run(() => post(`/api/qr/${encodeURIComponent(code)}/join`), 'Готово — вы водитель этой машины');
+    if (r) {
+      try { sessionStorage.removeItem('traksos.qr'); } catch { /* */ }
+      await reload();
+      go('');
+    }
   };
   return (
     <main>

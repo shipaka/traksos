@@ -1,6 +1,6 @@
 // Настройки площадки одним списком: нажмите строку — измените значение. Новые условия — для новых заявок.
 import { useState } from 'react';
-import { get, put, rub } from '../api.ts';
+import { get, put, post, rub } from '../api.ts';
 import { useLoad, useAction, Loading, RubInput } from '../ui.tsx';
 
 type Kind = 'rub' | 'pct' | 'num' | 'text' | 'bool' | 'share';
@@ -28,7 +28,7 @@ const GROUPS: [string, Row[]][] = [
     ['referral', 'welcome', 'Подарок приглашённому клиенту', 'rub', 'баллами'],
     ['referral', 'performerReward', 'Пригласил исполнителя', 'rub', 'баллами'],
     ['referral', 'performerJobs', '…после скольких его заявок', 'num'],
-    ['referral', 'serviceReward', 'Пригласил рембазу', 'rub', 'баллами, после первого счёта'],
+    ['referral', 'serviceReward', 'Пригласил рембазу', 'rub', 'постепенно: 10% комиссии после выплаты, до лимита'],
     ['referral', 'spendCapPct', 'Баллами — не больше от сбора/комиссии', 'pct', 'с одной заявки'],
     ['referral', 'ttlDays', 'Баллы живут, дней', 'num', 'начисленные в бесплатный месяц — от его конца'],
   ]],
@@ -82,6 +82,7 @@ export function AdminSettings() {
   return (
     <div className="stack">
       <span className="note">Нажмите строку, чтобы изменить. Новые условия применяются к новым заявкам.</span>
+      <PointsModeration />
       {GROUPS.map(([g, rows]) => (
         <div key={g} className="stack">
           <span className="label">{g}</span>
@@ -110,4 +111,33 @@ export function AdminSettings() {
       ))}
     </div>
   );
+}
+
+
+function PointsModeration() {
+  const data = useLoad(() => get('/api/admin/points'), []);
+  const { busy, run } = useAction();
+  const [reason, setReason] = useState('');
+  const [selected, setSelected] = useState<number | null>(null);
+  return <div className="stack">
+    <span className="label">Модерация бонусных баллов</span>
+    <span className="note">Администратор может заморозить, разблокировать или отменить ещё не потраченное начисление. Все действия сохраняются в журнале.</span>
+    {data.error && <span className="note">Не удалось загрузить операции</span>}
+    {(data.data ?? []).slice(0, 50).map((e: any) => <div key={e.id} className="card" style={{ gap: 6 }}>
+      <b>#{e.id} · {rub(e.amount)} · {e.kind}</b>
+      <span className="note">{e.status} · {e.note || 'Без примечания'} · пользователь {e.user_id}</span>
+      {e.moderation_reason && <span className="note">Причина: {e.moderation_reason}</span>}
+      {e.amount > 0 && e.status !== 'reversed' && <>
+        {selected === e.id && <input className="field" placeholder="Причина решения (от 5 символов)" value={reason} onChange={(v) => setReason(v.target.value)} />}
+        <div className="row">
+          {(['held', 'available', 'reversed'] as const).filter((status) => status !== e.status).map((status) => <button key={status} className="btn small" disabled={busy} onClick={async () => {
+            if (selected !== e.id) { setSelected(e.id); setReason(''); return; }
+            if (reason.trim().length < 5) return;
+            const ok = await run(() => post(`/api/admin/points/${e.id}/moderate`, { status, reason }), 'Решение записано');
+            if (ok) { setSelected(null); data.reload(); }
+          }}>{status === 'held' ? 'Заморозить' : status === 'available' ? 'Разблокировать' : 'Отменить'}</button>)}
+        </div>
+      </>}
+    </div>)}
+  </div>;
 }

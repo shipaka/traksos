@@ -36,7 +36,7 @@ export function openAt(hours: string | null | undefined, at: Date): boolean | nu
 }
 
 export interface CenterInput {
-  name?: string; address?: string; lat?: number | null; lng?: number | null; hours?: string; inn?: string | null;
+  name?: string; address?: string; arrivalNotes?: string; lat?: number | null; lng?: number | null; hours?: string; inn?: string | null;
   brands?: string[]; staff?: Record<string, 'own' | 'invite' | 'none'>; conditions?: string[]; accepts?: string[];
   closedDays?: string[]; paused?: boolean;
 }
@@ -45,6 +45,60 @@ export class ServiceCenters {
   onDispute: ((p: { userId: string; bookingId: string; ticketId: string | null; text: string; targetId: string; title: string }) => Promise<unknown>) | null = null;
   referral: import('./referral.ts').ReferralService | null = null;
   constructor(private db: Db, private notifier: Notifier, private settings: SettingsService, private support: SupportService, private now: () => Date) {}
+
+  /** Переписка только участников записи; контактные номера не раскрываются. */
+  private async contactContext(user: AuthUser, bookingId: string) {
+    const b = await this.db.one<{ id: string; center_id: string; client_id: string; created_by: string; owner_id: string; status: string }>(
+      `select b.id,b.center_id,b.client_id,b.created_by,c.owner_id,b.status from service_bookings b
+        join service_centers c on c.id=b.center_id where b.id=$1`, [bookingId]);
+    if (!b) throw notFound('Запись не найдена');
+    if (![b.client_id,b.created_by,b.owner_id].includes(user.id) && !user.roles.includes('admin')) throw forbidden('Нет доступа к переписке');
+    return b;
+  }
+
+  async messages(user: AuthUser, bookingId: string, after = 0) {
+    const b = await this.contactContext(user, bookingId);
+    const messages = await this.db.query(`select m.id::int,m.sender_id,m.body,m.masked,m.created_at
+      from service_booking_messages m where m.booking_id=$1 and m.id>$2 order by m.id limit 200`, [bookingId, Math.max(0,after)]);
+    const block = await this.db.one<{ reason: string }>(`select reason from service_contact_blocks
+      where center_id=$1 and client_id=$2 and lifted_at is null`, [b.center_id,b.client_id]);
+    return { messages, blocked: !!block, canMessage: !block || ['expected','arrived','diagnostics','in_work','waiting_part','agreeing','ready','invoiced','disputed'].includes(b.status), blockedReason: user.id === b.owner_id || user.roles.includes('admin') ? block?.reason ?? null : null };
+  }
+
+  async sendMessage(user: AuthUser, bookingId: string, text: string) {
+    const b = await this.contactContext(user, bookingId);
+    if (['cancelled','declined'].includes(b.status)) throw conflict('chat_closed','Переписка по отменённой записи закрыта');
+    if (user.id !== b.owner_id && !user.roles.includes('admin')) {
+      const block = await this.db.one(`select 1 from service_contact_blocks where center_id=$1 and client_id=$2 and lifted_at is null`,[b.center_id,b.client_id]);
+      // Ограничение новых контактов не закрывает переписку по действующему ремонту,
+      // оплате или спору. Для завершённых записей остаётся поддержка.
+      const activeObligation = ['expected','arrived','diagnostics','in_work','waiting_part','agreeing','ready','invoiced','disputed'].includes(b.status);
+      if (block && !activeObligation) throw forbidden('Рембаза ограничила новые сообщения. По спорным вопросам обратитесь в поддержку ТракSOS.');
+    }
+    const raw = text.trim().slice(0,2000);
+    if (!raw) throw bad('empty','Введите сообщение');
+    const safe = { text: raw.replace(/(?:\+?\d[\d\s()\-]{8,}\d)/g, '[номер скрыт]'), masked: false };
+    safe.masked = safe.text !== raw;
+    const m = await this.db.one(`insert into service_booking_messages(booking_id,sender_id,body,masked)
+      values($1,$2,$3,$4) returning id::int,sender_id,body,masked,created_at`,[bookingId,user.id,safe.text,safe.masked]);
+    const recipients = [...new Set([b.client_id,b.created_by,b.owner_id])].filter(id=>id!==user.id);
+    await this.notifier.notify(recipients,{type:'booking',bookingId,status:b.status},{kind:'normal',title:'Сообщение по записи в рембазу',body:safe.text.slice(0,100),data:{bookingId}});
+    return m;
+  }
+
+  async setContactBlock(user: AuthUser, bookingId: string, blocked: boolean, reason: string) {
+    const b = await this.contactContext(user,bookingId);
+    if (user.id !== b.owner_id && !user.roles.includes('admin')) throw forbidden('Блокировать может рембаза или администратор');
+    if (blocked) {
+      if (reason.trim().length < 5) throw bad('reason','Укажите причину блокировки');
+      await this.db.query(`insert into service_contact_blocks(center_id,client_id,reason,created_by)
+        values($1,$2,$3,$4) on conflict(center_id,client_id) do update set reason=excluded.reason,
+        created_by=excluded.created_by,created_at=now(),lifted_at=null,lifted_by=null`,[b.center_id,b.client_id,reason.trim().slice(0,500),user.id]);
+    } else {
+      await this.db.query(`update service_contact_blocks set lifted_at=now(),lifted_by=$3 where center_id=$1 and client_id=$2 and lifted_at is null`,[b.center_id,b.client_id,user.id]);
+    }
+    return { ok:true, blocked };
+  }
 
   // ——— Карточка сервиса ———
   async mine(user: AuthUser) {
@@ -65,17 +119,17 @@ export class ServiceCenters {
       await q.query(`update users set roles = (select array(select distinct unnest(roles || '{service}'::text[]))) where id=$1`, [user.id]);
       if (!cur) {
         await q.query(
-          `insert into service_centers(owner_id, name, address, lat, lng, hours, inn, brands, staff, conditions, accepts, closed_days, accepts_confirmed_at)
-           values ($1,$2,$3,$4::float8,$5::float8,coalesce($6::text,'08:00–20:00'),$7::text,coalesce($8::text[],'{}'),coalesce($9::jsonb,'{}'),coalesce($10::text[],'{}'),coalesce($11::text[],'{quick,day}'),coalesce($12::date[],'{}'),now())`,
-          [user.id, p.name!.trim(), p.address!.trim(), v(p.lat), v(p.lng), v(p.hours), v(p.inn), v(p.brands), v(p.staff), v(p.conditions), v(p.accepts), v(p.closedDays)]);
+          `insert into service_centers(owner_id, name, address, lat, lng, hours, inn, brands, staff, conditions, accepts, closed_days, accepts_confirmed_at, arrival_notes)
+           values ($1,$2,$3,$4::float8,$5::float8,coalesce($6::text,'08:00–20:00'),$7::text,coalesce($8::text[],'{}'),coalesce($9::jsonb,'{}'),coalesce($10::text[],'{}'),coalesce($11::text[],'{quick,day}'),coalesce($12::date[],'{}'),now(),coalesce($13::text,''))`,
+          [user.id, p.name!.trim(), p.address!.trim(), v(p.lat), v(p.lng), v(p.hours), v(p.inn), v(p.brands), v(p.staff), v(p.conditions), v(p.accepts), v(p.closedDays), v(p.arrivalNotes?.trim())]);
       } else {
         await q.query(
           `update service_centers set name=coalesce($2::text,name), address=coalesce($3::text,address), lat=coalesce($4::float8,lat), lng=coalesce($5::float8,lng),
              hours=coalesce($6::text,hours), inn=coalesce($7::text,inn), brands=coalesce($8::text[],brands), staff=coalesce($9::jsonb,staff),
              conditions=coalesce($10::text[],conditions), accepts=coalesce($11::text[],accepts), closed_days=coalesce($12::date[],closed_days),
-             paused=coalesce($13::boolean,paused), accepts_confirmed_at = case when $11::text[] is not null or $12::date[] is not null then now() else accepts_confirmed_at end
+             paused=coalesce($13::boolean,paused), arrival_notes=coalesce($14::text,arrival_notes), accepts_confirmed_at = case when $11::text[] is not null or $12::date[] is not null then now() else accepts_confirmed_at end
            where owner_id=$1`,
-          [user.id, v(p.name?.trim()), v(p.address?.trim()), v(p.lat), v(p.lng), v(p.hours), v(p.inn), v(p.brands), v(p.staff), v(p.conditions), v(p.accepts), v(p.closedDays), v(p.paused)]);
+          [user.id, v(p.name?.trim()), v(p.address?.trim()), v(p.lat), v(p.lng), v(p.hours), v(p.inn), v(p.brands), v(p.staff), v(p.conditions), v(p.accepts), v(p.closedDays), v(p.paused), v(p.arrivalNotes?.trim())]);
       }
     });
     return this.cabinet(user);
@@ -244,9 +298,12 @@ export class ServiceCenters {
     if (b.status !== 'ready') throw conflict('bad_status', 'Сначала «Машина готова»');
     const fees = await this.settings.get('fees');
     let commission = Math.min(Math.round(amount * fees.serviceCommissionPct / 100), fees.serviceCommissionMax ?? Infinity);
-    const discount = b.from_order_id ? Math.min(commission, Math.round(amount * fees.serviceReferralDiscountPct / 100)) : 0;
-    // Баллы рембазы гасят до половины комиссии, что остаётся ТракSOS после скидки
-    const pts = this.referral ? await this.referral.spendServiceCommission(this.db, user.id, commission - discount, id, b.number, points) : 0;
+    const discount = b.from_order_id ? Math.min(Math.floor(commission * 0.3), Math.round(amount * fees.serviceReferralDiscountPct / 100)) : 0;
+    // Баллы рембазы учитываются вместе с клиентской скидкой в общем бюджете 30% комиссии
+    // Все скидки из комиссии рембазы вместе не выше 30% исходной комиссии.
+    const promoBudget = Math.floor(commission * 0.3);
+    const remainingPromo = Math.max(0, promoBudget - discount);
+    const pts = this.referral ? await this.referral.spendServiceCommission(this.db, user.id, commission - discount, id, b.number, Math.min(points, remainingPromo)) : 0;
     commission -= pts;
     await this.db.query(
       `update service_bookings set status='invoiced', amount=$2, commission=$3, discount=$4, points=$5, invoiced_at=now(), updated_at=now() where id=$1`,
@@ -327,6 +384,7 @@ export class ServiceCenters {
     if (!b) throw conflict('bad_status', 'Счёт не подтверждён клиентом или уже выплачен');
     const c = await this.db.one<{ owner_id: string }>('select owner_id from service_centers where id=$1', [b.center_id]);
     await this.db.query('insert into audit_log(actor_id, action, target) values ($1,$2,$3)', [admin.id, 'service.paid_out', id]);
+    if (c) await this.referral?.afterBookingPaid(c.owner_id, id);
     if (c) await this.notifier.notify([c.owner_id], { type: 'booking', bookingId: id, status: 'paid' },
       { kind: 'normal', title: 'Выплата отправлена', body: `Счёт №${b.number}: ${(b.payout / 100).toLocaleString('ru-RU')} ₽`, data: { bookingId: id } });
     return { ok: true };
@@ -341,12 +399,13 @@ export class ServiceCenters {
               (select round(avg(review_stars)::numeric, 1)::float from service_bookings b where b.center_id=c.id and review_stars is not null) as rating,
               (select count(*)::int from service_bookings b where b.center_id=c.id and review_stars is not null) as reviews_n
          from service_centers c where c.verification='approved' and not c.paused`);
+    const external = await this.db.query(`select id,name,address,lat,lng,hours,public_notes from external_service_directory where visibility='published'`);
     const today = msk(this.now());
     const max = Math.max(1, ...rows.map((r: any) => r.closed_n));
-    return rows
+    const partners = rows
       .filter((c: any) => !p.need || c.staff?.[p.need] !== 'none')
       .map((c: any) => ({
-        id: c.id, name: c.name, address: c.address, lat: c.lat, lng: c.lng, hours: c.hours, brands: c.brands, staff: c.staff,
+        id: c.id, name: c.name, address: c.address, arrivalNotes: c.arrival_notes, isPartner: true, lat: c.lat, lng: c.lng, hours: c.hours, brands: c.brands, staff: c.staff,
         conditions: c.conditions, accepts: c.accepts, rating: c.rating, reviews: c.reviews_n, load: c.load_n,
         popularity: c.closed_n === 0 ? 'new' : c.closed_n / max > 0.66 ? 'top' : c.closed_n / max > 0.33 ? 'often' : 'rare',
         closedToday: (c.closed_days ?? []).some((d: any) => msk(new Date(d)) === today),
@@ -355,11 +414,18 @@ export class ServiceCenters {
         distanceKm: p.lat != null && p.lng != null && c.lat != null && c.lng != null ? Math.round(haversineKm({ lat: p.lat, lng: p.lng }, { lat: c.lat, lng: c.lng }) * 10) / 10 : null,
       }))
       .sort((a: any, b: any) => (b.knowsBrand ? 1 : 0) - (a.knowsBrand ? 1 : 0) || (a.distanceKm ?? 1e9) - (b.distanceKm ?? 1e9));
+    return [...partners, ...external.map((c: any) => ({
+      id: c.id, name: c.name, address: c.address, lat: c.lat, lng: c.lng,
+      hours: c.hours, arrivalNotes: c.public_notes, isPartner: false, directoryOnly: true,
+      brands: [], staff: {}, conditions: [], accepts: [], rating: null, reviews: 0,
+      load: null, popularity: 'new', closedToday: null, openNow: null, knowsBrand: null,
+      distanceKm: p.lat != null && p.lng != null && c.lat != null && c.lng != null ? Math.round(haversineKm({lat:p.lat,lng:p.lng},{lat:c.lat,lng:c.lng})*10)/10 : null,
+    }))];
   }
 
   async center(user: AuthUser, id: string) {
     const c = (await this.list(user, {})).find((x) => x.id === id);
-    if (!c) throw notFound('Сервис не найден');
+    if (!c || !c.isPartner) throw notFound('Запись через TrakSOS доступна только у партнёров');
     const reviews = await this.db.query(
       `select b.review_stars as stars, b.review_text as text, b.closed_at as at, coalesce(u.company_name, u.name) as who
          from service_bookings b join users u on u.id=b.client_id
@@ -441,7 +507,7 @@ export class ServiceCenters {
       await this.db.query(
         `update service_bookings set status='closed', closed_at=now(), review_stars=$2, review_text=$3, updated_at=now() where id=$1`,
         [id, p.stars ?? null, p.text?.trim() || null]);
-      await this.referral?.afterBookingClosed(b.owner_id, id);
+      // Закрытие работ не подтверждает получение денег: бонус — только после paid_out_at.
       await this.notifier.notify([b.owner_id], { type: 'booking', bookingId: id, status: 'closed' },
         { kind: 'normal', title: 'Клиент подтвердил работы', body: `Счёт №${b.number} — деньги придут после оплаты`, data: { bookingId: id } });
     } else {

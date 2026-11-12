@@ -27,7 +27,7 @@ export function Invite() {
     <main>
       <div>
         <h1>Пригласить в ТракSOS</h1>
-        <div className="sub">Баллы за приглашения гасят сбор и комиссию ТракSOS. 1 балл = 1 ₽ скидки, в деньги не выводятся.</div>
+        <div className="sub">Баллы за приглашения уменьшают только сбор или комиссию ТракSOS, но не стоимость работы мастера. 1 балл = 1 ₽ скидки, в деньги не выводятся. Общий бюджет поощрений по заказу — до 30% комиссии площадки.</div>
       </div>
 
       <div className="card" style={{ alignItems: 'center', textAlign: 'center' }}>
@@ -52,11 +52,11 @@ export function Invite() {
       <details className="card">
         <summary><b>За что баллы</b></summary>
         <div className="stack" style={{ marginTop: 8, gap: 6 }}>
-          <div className="sum"><span>Пригласили клиента</span><b>{String(r.clientSharePct).replace('.', ',')}% с его заявок · {Math.round(r.days / 30)} мес.</b></div>
+          <div className="sum"><span>Пригласили клиента</span><b>{String(r.clientSharePct).replace('.', ',')}% от комиссии по его заявкам · {Math.round(r.days / 30)} мес.</b></div>
           <div className="sum"><span>Приглашённому клиенту</span><b>{pts(r.welcome)} на первую заявку</b></div>
           <div className="sum"><span>Пригласили мастера или эвакуаторщика</span><b>{pts(r.performerReward)} после {r.performerJobs} его заявок</b></div>
           <div className="sum"><span>Пригласили рембазу</span><b>{pts(r.serviceReward)} после её первого счёта</b></div>
-          <span className="note">Баллы начисляются только за оплаченное, не за регистрацию. Ссылка работает для новых номеров. Себя пригласить нельзя.</span>
+          <span className="note">Приветственные баллы выдаются при регистрации, но расходуются только в пределах разрешённой скидки. Реферальные награды — за оплаченные действия. Ссылка работает для новых номеров. Себя пригласить нельзя.</span>
         </div>
       </details>
 

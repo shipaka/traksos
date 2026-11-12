@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { get, post, put, del, rub, fmtTime, fmtPhone } from '../api.ts';
+import { get, post, put, patch, del, rub, fmtTime, fmtPhone } from '../api.ts';
 import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF, QUICK_WHAT, ON_SITE, seriesHint } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFields, LiveStrip, type VehicleValue } from '../ui.tsx';
 import { BookingRows } from './base.tsx';
 import { DriverRules } from './fleet.tsx';
+import { TruckPhoto, TruckPhotoCredit } from '../truckPhotos.tsx';
+import { native } from '../native.ts';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
 
@@ -30,10 +32,29 @@ export function Home() {
   const { fill } = usePrices();
   return (
     <main>
-      <div>
-        <h1>{me?.name ? `${me.name}, что случилось?` : 'Что случилось?'}</h1>
-        <div className="sub">Выберите — подскажем, кому звонить и что делать. Петербург и Ленобласть, круглосуточно.</div>
-      </div>
+      {!native.isApp && window.innerWidth > 800 ? (
+        <section className="web-hero">
+          <span className="label" style={{ color: 'var(--accent)' }}>ТракSOS · Помощь грузовикам 24/7</span>
+          <h1>{me?.name ? `${me.name}, помощь уже рядом` : 'Грузовику нужна помощь? Мы рядом.'}</h1>
+          <p>Мастера, диагносты и эвакуаторы в Санкт-Петербурге и Ленинградской области. Оформите заявку, узнайте цену и следите за выполнением в личном кабинете.</p>
+          <div className="hero-actions">
+            <a className="btn" href="#/sos">Нужна срочная помощь</a>
+            <a className="btn ghost" href="#/garage">Мои автомобили</a>
+          </div>
+        </section>
+      ) : (
+        <header className="cabinet-heading">
+          <span className="label">ТракSOS · Помощь на дороге</span>
+          <h1>{me?.name ? `${me.name}, что случилось?` : 'Что случилось?'}</h1>
+          <div className="sub">Выберите — подскажем, кому звонить и что делать. Петербург и Ленобласть, круглосуточно.</div>
+        </header>
+      )}
+
+      {live.length > 0 && <div className="cabinet-metrics">
+        <div className="card tile"><span className="label">Активные заявки</span><b className="tile-value">{live.length}</b></div>
+        <div className="card tile"><span className="label">Статус</span><b className="tile-value">{live.length === 1 ? 'В работе' : 'Есть заявки'}</b></div>
+        <div className="card tile"><span className="label">История</span><a href="#/orders">Все заявки →</a></div>
+      </div>}
 
       {live.map((o: any) => (
         <a key={o.id} href={`#/order/${o.id}`} className="card hi" style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -48,7 +69,7 @@ export function Home() {
       <SymptomPicker sos={false} />
       <LiveStrip who="client" />
 
-      <div className="stack">
+      <div className="stack web-service-grid">
         <span className="label">Все услуги</span>
         {Object.entries(SERVICES).map(([id, s]) => (
           <button key={id} className="linkrow" onClick={() => go(`new/${id}`)}>
@@ -536,7 +557,7 @@ export function NewOrder({ service }: { service: string }) {
       )}
 
       <CallBar busy={busy} missing={missing} price={est ? `${isTow ? 'перевозка от' : 'выезд'} ${rub(est.callOut)}` : ''}
-        label={sos ? 'Вызвать сейчас' : isTow ? 'Вызвать эвакуатор' : 'Вызвать мастера'}
+        label={isTow ? 'Вызвать эвакуатор' : 'Вызвать сейчас'}
         onGo={() => { setTried(true); if (missing.length) jump(missing[0].id); else submit(); }} />
     </main>
   );
@@ -649,17 +670,41 @@ export function Garage() {
   const { me } = useMe();
   const list = useLoad(() => get('/api/vehicles'), []);
   const { busy, run } = useAction();
-  const [form, setForm] = useState({ brand: '', model: '', year: '', plate: '', trailerPlate: '' });
+  const emptyCar = { brand: '', model: '', year: '', plate: '', trailerPlate: '', vin: '', engine: '', configurationNotes: '' };
+  const [form, setForm] = useState(emptyCar);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState(emptyCar);
   const [driverFor, setDriverFor] = useState<string | null>(null);
   const [driverPhone, setDriverPhone] = useState('+7 ');
   const isDriver = !!me?.owner_id;
+  const [serviceHistoryVersion, setServiceHistoryVersion] = useState(0);
+  // Backgrounded mobile apps may miss WebSocket messages even when the socket appears connected.
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === 'visible' && navigator.onLine) {
+        setServiceHistoryVersion(version => version + 1);
+      }
+    };
+    document.addEventListener('visibilitychange', refresh);
+    window.addEventListener('online', refresh);
+    return () => {
+      document.removeEventListener('visibilitychange', refresh);
+      window.removeEventListener('online', refresh);
+    };
+  }, []);
 
   async function add() {
     const r = await run(() => post('/api/vehicles', {
       brand: form.brand, model: form.model || undefined, year: form.year ? Number(form.year) : undefined,
       plate: form.plate || undefined, trailerPlate: form.trailerPlate || undefined,
+      vin: form.vin || undefined, engine: form.engine || undefined, configurationNotes: form.configurationNotes || undefined,
     }), 'Машина добавлена');
-    if (r) { setForm({ brand: '', model: '', year: '', plate: '', trailerPlate: '' }); list.reload(); }
+    if (r) { setForm(emptyCar); list.reload(); }
+  }
+
+  async function saveEdit(id: string) {
+    const r = await run(() => patch(`/api/vehicles/${id}`, { ...editForm, year: editForm.year ? Number(editForm.year) : undefined }), 'Данные машины обновлены');
+    if (r) { setEditing(null); list.reload(); }
   }
 
   return (
@@ -673,13 +718,38 @@ export function Garage() {
           <span><b>Мой парк</b><small>водители и лимиты, QR-наклейки, подтверждение заказов, ЭДО</small></span><span aria-hidden="true">›</span>
         </button>
       )}
-      {!list.data ? <Loading error={list.error} /> : list.data.map((v: any) => (
-        <div key={v.id} className="card">
-          <div className="between"><b>{v.brand} {v.model ?? ''}{v.year ? `, ${v.year}` : ''}</b><span className="pill">{v.plate ?? 'без номера'}</span></div>
+      {!list.data ? <Loading error={list.error} /> : <div className="web-vehicle-grid">{list.data.map((v: any) => (
+        <details key={v.id} className="card">
+          <summary className="between">
+            <span className="row" style={{ alignItems: 'center', gap: 10 }}>
+              <TruckPhoto brand={v.brand} /><b>{v.brand} {v.model ?? ''}{v.year ? `, ${v.year}` : ''}</b>
+            </span>
+            <span className="pill">{v.plate ?? 'без номера'}</span>
+          </summary>
+          <div className="stack">
+          <TruckPhotoCredit brand={v.brand} />
           {v.trailer_plate && <span className="note">Прицеп {v.trailer_plate}</span>}
           {v.fixed_at && <span className="pill good" style={{ alignSelf: 'flex-start' }}>уточнено мастером · {fmtTime(v.fixed_at)}</span>}
           {seriesHint(v.brand, v.year) && <span className="note" style={{ color: 'var(--accent)' }}>{seriesHint(v.brand, v.year)}</span>}
+          {(v.vin || v.engine || v.configuration_notes) && <span className="note">{[v.vin && `VIN: ${v.vin}`, v.engine && `Двигатель: ${v.engine}`, v.configuration_notes].filter(Boolean).join(' · ')}</span>}
+          {!isDriver && (editing === v.id ? (
+            <form className="stack" onSubmit={(e) => { e.preventDefault(); saveEdit(v.id); }}>
+              <VehicleFields value={editForm} onChange={(x) => setEditForm({ ...editForm, ...x })} />
+              <div className="grid2">
+                <input className="field" aria-label="Госномер" placeholder="Госномер" value={editForm.plate} onChange={(e) => setEditForm({ ...editForm, plate: e.target.value })} />
+                <input className="field" aria-label="Номер прицепа" placeholder="Прицеп" value={editForm.trailerPlate} onChange={(e) => setEditForm({ ...editForm, trailerPlate: e.target.value })} />
+              </div>
+              <input className="field" aria-label="VIN" placeholder="VIN (17 символов, необязательно)" value={editForm.vin} onChange={(e) => setEditForm({ ...editForm, vin: e.target.value.toUpperCase() })} />
+              <input className="field" aria-label="Двигатель" placeholder="Двигатель (необязательно)" value={editForm.engine} onChange={(e) => setEditForm({ ...editForm, engine: e.target.value })} />
+              <textarea className="field" aria-label="Особенности комплектации" placeholder="Заменённые агрегаты и особенности комплектации" value={editForm.configurationNotes} onChange={(e) => setEditForm({ ...editForm, configurationNotes: e.target.value })} />
+              <span className="note">VIN и двигатель помогают подобрать запчасти. Можно заполнить позже; изменения комплектации учитываются отдельно.</span>
+              <div className="grid2"><button className="btn small" disabled={busy || !editForm.brand}>Сохранить изменения</button><button type="button" className="btn ghost small" onClick={() => setEditing(null)}>Отмена</button></div>
+            </form>
+          ) : <button type="button" className="btn ghost small" onClick={() => { setEditing(v.id); setEditForm({ brand: v.brand ?? '', model: v.model ?? '', year: v.year ? String(v.year) : '', plate: v.plate ?? '', trailerPlate: v.trailer_plate ?? '', vin: v.vin ?? '', engine: v.engine ?? '', configurationNotes: v.configuration_notes ?? '' }); }}>Редактировать машину</button>)}
+          <VehicleServiceApplication vehicleId={v.id} onCreated={() => setServiceHistoryVersion(version => version + 1)} />
+          <VehicleServiceHistory id={v.id} isDriver={isDriver} refreshVersion={serviceHistoryVersion} />
           <VehicleHistory id={v.id} />
+          {!isDriver && <a className="btn ghost small" href={`#/fleet/finances?vehicle=${v.id}`}>Финансы этой машины</a>}
           {!isDriver && (driverFor === v.id ? (
             <div className="stack">
               <input className="field" type="tel" value={driverPhone} onChange={(e) => setDriverPhone(e.target.value)} />
@@ -698,8 +768,9 @@ export function Garage() {
               <button className="btn bad small" onClick={async () => { if (confirmDelete() && await run(() => del(`/api/vehicles/${v.id}`))) list.reload(); }}>Удалить</button>
             </div>
           ))}
-        </div>
-      ))}
+          </div>
+        </details>
+      ))}</div>}
 
       {!isDriver && (
         <form className="card" onSubmit={(e) => { e.preventDefault(); add(); }}>
@@ -709,11 +780,134 @@ export function Garage() {
             <input className="field" placeholder="Госномер тягача" value={form.plate} onChange={(e) => setForm({ ...form, plate: e.target.value })} />
             <input className="field" placeholder="Прицеп" value={form.trailerPlate} onChange={(e) => setForm({ ...form, trailerPlate: e.target.value })} />
           </div>
+          <input className="field" placeholder="VIN (необязательно)" value={form.vin} onChange={(e) => setForm({ ...form, vin: e.target.value.toUpperCase() })} />
+          <input className="field" placeholder="Двигатель (необязательно)" value={form.engine} onChange={(e) => setForm({ ...form, engine: e.target.value })} />
+          <textarea className="field" placeholder="Особенности комплектации, заменённые агрегаты" value={form.configurationNotes} onChange={(e) => setForm({ ...form, configurationNotes: e.target.value })} />
           <span className="note">Год влияет на подбор мастера: у разных поколений своя электрика.</span>
           <button className="btn" disabled={busy || !form.brand}>Сохранить</button>
         </form>
       )}
     </main>
+  );
+}
+
+/** Оформление заявки для владельца или водителя с разрешением владельца. */
+function VehicleServiceApplication({ vehicleId, onCreated }: { vehicleId: string; onCreated: () => void }) {
+  const { busy, run } = useAction();
+  const [kind, setKind] = useState<'insurance' | 'inspection'>('insurance');
+  const [comment, setComment] = useState('');
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="stack">
+      <button type="button" className="btn ghost small" onClick={() => setOpen(!open)}>
+        {open ? 'Скрыть оформление' : 'Страхование / техосмотр'}
+      </button>
+      {open && <form className="stack" onSubmit={async (e) => {
+        e.preventDefault();
+        const created = await run(() => post('/api/vehicle-service-requests', { vehicleId, kind, comment: comment || undefined }), 'Заявка отправлена');
+        if (created) { setOpen(false); setComment(''); onCreated(); }
+      }}>
+        <select className="field" aria-label="Услуга" value={kind} onChange={(e) => setKind(e.target.value as 'insurance' | 'inspection')}>
+          <option value="insurance">Страхование</option>
+          <option value="inspection">Техосмотр</option>
+        </select>
+        <textarea className="field" aria-label="Комментарий к заявке" placeholder="Комментарий (необязательно)" value={comment} onChange={(e) => setComment(e.target.value)} maxLength={2000} />
+        <span className="note">Заявка передаётся на обработку. Оформление полиса или техосмотра выполняет уполномоченный партнёр.</span>
+        <button className="btn small" disabled={busy}>Отправить заявку</button>
+      </form>}
+    </div>
+  );
+}
+
+/** История страхования и техосмотра доступна прямо в карточке машины. */
+function VehicleServiceHistory({ id, isDriver, refreshVersion }: { id: string; isDriver: boolean; refreshVersion: number }) {
+  const { me } = useMe();
+  const [open, setOpen] = useState(false);
+  const history = useLoad(() => get(`/api/vehicles/${id}/service-history`), [id, refreshVersion],
+    (event) => event.type === 'connection_restored' || (event.type === 'vehicle_service' && event.vehicleId === id));
+  const items = history.data as any[] | undefined;
+  const { busy, run } = useAction();
+  const [renewing, setRenewing] = useState<string | null>(null);
+  const [expiry, setExpiry] = useState('');
+  if (!items) return history.error ? <div className="note">Не удалось загрузить историю услуг: {history.error}</div> : null;
+  const labels: Record<string, string> = {
+    submitted: 'Подана', in_review: 'На рассмотрении', need_documents: 'Нужны документы',
+    sent_to_partner: 'Передана партнёру', completed: 'Завершена',
+    rejected: 'Отказ', cancelled: 'Отменена',
+  };
+  const statusHelp: Record<string, string> = {
+    submitted: 'Заявка получена и ожидает рассмотрения.',
+    in_review: 'Специалист проверяет вашу заявку.',
+    need_documents: 'Для продолжения нужны дополнительные документы. Проверьте комментарий специалиста.',
+    sent_to_partner: 'Заявка передана партнёру для выполнения услуги.',
+    completed: 'Услуга выполнена. Информация сохранена в истории автомобиля.',
+    rejected: 'Заявка отклонена. Причина указана в комментарии специалиста, если он добавлен.',
+    cancelled: 'Заявка отменена и больше не обрабатывается.',
+  };
+  return (
+    <div className="stack">
+      <button type="button" className="linkrow" aria-expanded={open} onClick={() => setOpen(!open)}>
+        <span><b>Страхование и техосмотр · {items.length}</b><small>Заявки, статусы и сроки полисов</small></span>
+        <span aria-hidden="true">{open ? '˄' : '˅'}</span>
+      </button>
+      {open && <div className="stack">
+        {items.length === 0 && <span className="note">Пока нет заявок на страхование и техосмотр. После подачи они появятся здесь вместе с историей изменений.</span>}
+        {items.map((r: any) => (
+          <div key={r.id} className="note">
+            <b>{r.kind === 'insurance' ? 'Страхование' : 'Техосмотр'}</b>
+            {' · '}{labels[r.status] ?? r.status}
+            {' · Подана '}{fmtTime(r.created_at)}
+            {r.updated_at && <span> · Обновлена {fmtTime(r.updated_at)}</span>}
+            {r.policy_expires_on && <span> · Действует до {r.policy_expires_on}</span>}
+            <div>{statusHelp[r.status] ?? 'Статус уточняется.'}</div>
+            {r.staff_note && <div><b>Комментарий специалиста:</b> {r.staff_note}</div>}
+            {['submitted', 'in_review', 'need_documents'].includes(r.status) && (!isDriver || r.requested_by === me?.id) && (
+              <button type="button" className="btn ghost small" disabled={busy}
+                onClick={async () => {
+                  if (!window.confirm('Отменить заявку? После отмены её нельзя будет возобновить.')) return;
+                  const result = await run(() => post(`/api/vehicle-service-requests/${r.id}/cancel`), 'Заявка отменена');
+                  if (result) history.reload();
+                }}>
+                Отменить заявку
+              </button>
+            )}
+            {Array.isArray(r.events) && r.events.length > 0 && (
+              <details>
+                <summary>История изменений · {r.events.length}</summary>
+                <div className="stack">
+                  {r.events.map((event: any, index: number) => (
+                    <div className="note" key={index}>
+                      <b>{labels[event.status] ?? event.status}</b>
+                      {' · '}{fmtTime(event.changed_at)}
+                      {event.policy_expires_on && <span> · Срок полиса: {String(event.policy_expires_on).slice(0, 10)}</span>}
+                      {event.note && <div>{event.note}</div>}
+                    </div>
+                  ))}
+                </div>
+              </details>
+            )}
+            {!isDriver && r.kind === 'insurance' && r.status === 'completed' && (
+              <div className="stack">
+                {renewing === r.id ? (
+                  <div className="stack">
+                    <label>Новая дата окончания полиса
+                      <input type="date" value={expiry} min={new Date().toISOString().slice(0, 10)} onChange={(e) => setExpiry(e.target.value)} />
+                    </label>
+                    <div className="row">
+                      <button className="btn small" disabled={busy || !expiry} onClick={async () => {
+                        const result = await run(() => patch(`/api/vehicle-service-requests/${r.id}/renewal`, { expiresOn: expiry }), 'Срок полиса обновлён');
+                        if (result) { setRenewing(null); history.reload(); }
+                      }}>Сохранить срок</button>
+                      <button className="btn ghost small" disabled={busy} onClick={() => setRenewing(null)}>Отмена</button>
+                    </div>
+                  </div>
+                ) : <button className="btn ghost small" onClick={() => { setExpiry(r.policy_expires_on?.slice(0, 10) ?? ''); setRenewing(r.id); }}>Указать новый срок полиса</button>}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>}
+    </div>
   );
 }
 
@@ -779,11 +973,15 @@ export function Profile() {
   if (!me) return null;
   const isPerformer = me.roles.some((r) => ['master', 'tow', 'service'].includes(r));
   return (
-    <main>
-      <h1>Профиль</h1>
-      <a href="#/invite" className="card" style={{ textDecoration: 'none', color: 'inherit', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+    <main className="cabinet-page">
+      <header className="cabinet-heading">
+        <span className="label">Личный кабинет · TrakSOS</span>
+        <h1>Профиль</h1>
+        <div className="sub">Контакты, данные компании, бонусы и доступные кабинеты.</div>
+      </header>
+      {(mode === 'client' || mode === 'performer') && <a href="#/invite" className="card" style={{ textDecoration: 'none', color: 'inherit', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <span><b>🎁 Пригласить и получать баллы</b><small className="note" style={{ display: 'block' }}>Баллы гасят сбор и комиссию ТракSOS</small></span><span>›</span>
-      </a>
+      </a>}
       <div className="card">
         <dl className="kv">
           <dt>Телефон</dt><dd>{fmtPhone(me.phone)}</dd>
@@ -797,7 +995,7 @@ export function Profile() {
         if (await run(() => (patchMe({ name, companyName: company || null, companyInn: inn || null })), 'Сохранено')) reload();
       }}>
         <Field label="Имя"><input className="field" value={name} onChange={(e) => setName(e.target.value)} /></Field>
-        {!me.owner_id && (
+        {!me.owner_id && mode === 'client' && (
           <>
             <Field label="Компания · если работаете от юрлица"><input className="field" value={company} onChange={(e) => setCompany(e.target.value)} /></Field>
             <Field label="ИНН компании" hint="Для счетов и закрывающих документов по ЭДО"><input className="field" inputMode="numeric" value={inn} onChange={(e) => setInn(e.target.value.replace(/\D/g, ''))} /></Field>
@@ -805,18 +1003,34 @@ export function Profile() {
         )}
         <button className="btn" disabled={busy}>Сохранить</button>
       </form>
-      <div className="stack">
-        {mode !== 'client' && <button className="btn ghost" onClick={() => go('as/client')}>Кабинет клиента</button>}
-        {isPerformer && mode !== 'performer' && <button className="btn ghost" onClick={() => go('as/performer')}>Кабинет исполнителя</button>}
-        {!isPerformer && <button className="btn ghost" onClick={() => go('work/profile')}>Стать исполнителем на ТракSOS</button>}
-        {me.roles.some((r) => r === 'admin' || r === 'moderator') && mode !== 'admin' && <button className="btn ghost" onClick={() => go('as/admin')}>Кабинет администратора</button>}
-        <button className="btn ghost" onClick={() => go('support')}>Поддержка</button>
-        <button className="btn ghost" onClick={() => go('help')}>Справка: как всё устроено</button>
-        <button className="btn ghost" onClick={() => go('privacy')}>Персональные данные</button>
-        <button className="btn ghost" onClick={() => go('reviews')}>Отзывы обо мне</button>
-        <button className="btn ghost" onClick={() => go('appeal')}>Оспорить нарушение или блокировку</button>
-        <button className="btn bad" onClick={logout}>Выйти</button>
-      </div>
+      <details className="card" open={mode === 'performer'}>
+        <summary><b>Кабинеты и доступные роли</b></summary>
+        <div className="stack">
+          {mode !== 'client' && <button className="btn ghost" onClick={() => go('as/client')}>Кабинет клиента</button>}
+          {isPerformer && mode !== 'performer' && <button className="btn ghost" onClick={() => go('as/performer')}>Кабинет исполнителя</button>}
+          {mode === 'client' && !isPerformer && !me.roles.some((role) => ['insurer', 'admin', 'moderator'].includes(role)) &&
+            <button className="btn ghost" onClick={() => go('work/profile')}>Стать исполнителем на ТракSOS</button>}
+          {me.roles.some((r) => r === 'admin' || r === 'moderator') && mode !== 'admin' &&
+            <button className="btn ghost" onClick={() => go('as/admin')}>Кабинет администратора</button>}
+          {me.roles.includes('insurer') && mode !== 'insurer' &&
+            <button className="btn ghost" onClick={() => go('as/insurer')}>Кабинет страховщика</button>}
+          {me.roles.includes('service') && mode !== 'service' &&
+            <button className="btn ghost" onClick={() => go('as/service')}>Кабинет рембазы</button>}
+          <a className="btn ghost" href="#/menu">Все разделы и настройки</a>
+        </div>
+      </details>
+      <details className="card">
+        <summary><b>Помощь, документы и обратная связь</b></summary>
+        <div className="stack">
+          <a className="linkrow" href="#/support"><span><b>Поддержка</b><small>Написать модератору</small></span>›</a>
+          <a className="linkrow" href="#/support/new?topic=improvement"><span><b>Предложить улучшение</b><small>Сообщить, что неудобно</small></span>›</a>
+          <a className="linkrow" href="#/help"><span><b>Как пользоваться ТракSOS</b><small>Инструкция и условия</small></span>›</a>
+          <a className="linkrow" href="#/privacy"><span><b>Персональные данные</b><small>Управление данными</small></span>›</a>
+          <a className="linkrow" href="#/reviews"><span><b>Отзывы</b><small>Ваши оценки</small></span>›</a>
+          <a className="linkrow" href="#/appeal"><span><b>Оспорить нарушение</b><small>Обжалование и связь с модерацией</small></span>›</a>
+        </div>
+      </details>
+      <button className="btn bad" onClick={logout}>Выйти из аккаунта</button>
     </main>
   );
 }

@@ -1,7 +1,13 @@
 #!/bin/bash
 # Запуск стенда: свежий код, сборка, тестовые данные, сервер на порту 8080.
 cd /workspaces/traksos
-git pull --ff-only 2>/dev/null; npm install --silent; npm run build --silent
+echo "ТракSOS: текущая ветка $(git branch --show-current), коммит $(git rev-parse --short HEAD)"
+if ! git pull --ff-only; then
+  echo "ВНИМАНИЕ: не удалось обновить код. Проверьте ветку и запустите новый Codespace по ссылке в README."
+fi
+echo "Сборка версии $(git rev-parse --short HEAD)"
+npm install --silent || exit 1
+npm run build || exit 1
 export PUBLIC_URL="https://${CODESPACE_NAME}-8080.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}"
 export CORS_ORIGINS="$PUBLIC_URL"
 until (echo > /dev/tcp/db/5432) 2>/dev/null; do sleep 1; done

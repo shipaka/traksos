@@ -14,7 +14,7 @@ import type { SettingsService } from '../services/settings.ts';
 import type { Notifier } from '../services/notify.ts';
 import type { OrdersService, PaymentHooks } from '../services/orders.ts';
 import type { PaymentProvider, ProviderStatus } from './provider.ts';
-import { HttpError, bad, notFound, type AuthUser } from '../http/router.ts';
+import { HttpError, bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { cancelSplit, commissionPct, pct, split, type CancelStage } from '../domain/money.ts';
 import { agentReceipt } from './yookassa.ts';
 import { config } from '../config.ts';
@@ -109,7 +109,9 @@ export class PaymentsService implements PaymentHooks {
     const pay = await q.one(`select * from payments where order_id=$1 and kind='call_out' and status in ('pending','held')`, [order.id]);
     if (!pay) return;
     if (pay.status === 'pending') {
-      await this.provider.cancel(pay.provider_payment_id).catch(() => {});
+      // Do not report a payment as cancelled when the provider rejected cancellation.
+      // The provider state must be reconciled before changing our local record.
+      await this.provider.cancel(pay.provider_payment_id);
       await q.query(`update payments set status='cancelled', updated_at=now() where id=$1`, [pay.id]);
       return;
     }
@@ -117,6 +119,11 @@ export class PaymentsService implements PaymentHooks {
     const base: number = order.call_out_amount ?? order.estimate.callOut;
     const c = cancelSplit(scale, stage as CancelStage, base, pct(base, Number(order.client_fee_pct)));
     const keep = c.toPerformer + c.platformKeeps;
+    // A partial capture cannot exceed the amount actually authorized by the provider.
+    // Fail before contacting the provider rather than recording a negative refund.
+    if (!Number.isFinite(keep) || keep < 0 || keep > Number(pay.total)) {
+      throw conflict('capture_exceeds_hold', 'Удержание при отмене превышает замороженную сумму — требуется проверка платежа');
+    }
     c.refund = pay.total - keep; // замороженный потолок минус удержанное
     if (keep === 0) {
       await this.provider.cancel(pay.provider_payment_id);
@@ -192,7 +199,21 @@ export class PaymentsService implements PaymentHooks {
 
   private async sync(pay: any, status: string) {
     if (pay.status === status) return { changed: false };
-    await this.db.query('update payments set status=$2, updated_at=now() where id=$1', [pay.id, status]);
+    // A delayed provider notification must not reopen a settled or cancelled payment.
+    // The local partially_refunded status is also terminal for this payment.
+    if (['captured', 'cancelled', 'failed', 'partially_refunded'].includes(pay.status)) {
+      return { changed: false };
+    }
+    // A hold cannot revert to pending when notifications arrive out of order.
+    if (pay.status === 'held' && status === 'pending') return { changed: false };
+    // Claim the transition atomically: concurrent provider webhooks must not
+    // both trigger dispatch, ledger entries or payouts for the same payment.
+    const claimed = await this.db.one(
+      `update payments set status=$2, updated_at=now()
+       where id=$1 and status=$3 returning id`,
+      [pay.id, status, pay.status],
+    );
+    if (!claimed) return { changed: false };
     await this.orders.event(this.db, pay.order_id, null, `payment_${pay.kind}_${status}`, { paymentId: pay.id, total: pay.total });
     if (pay.kind === 'call_out' && status === 'held') {
       await this.orders.startDispatch(pay.order_id);
@@ -360,7 +381,10 @@ export class PaymentsService implements PaymentHooks {
   }
 
   async forOrder(user: AuthUser, orderId: string) {
-    await this.orders.mustSee(user, orderId);
+    const order = await this.orders.mustSee(user, orderId);
+    // Bidding candidates may preview the job price, but never its payment records
+    // or confirmation links. Those belong to the client, assigned performer and admin.
+    if (!this.orders.actorOf(user, order)) throw forbidden();
     return this.db.query(
       `select id, kind, method, amount, client_fee, total, status, confirmation_url, refunded_amount, created_at
          from payments where order_id=$1 order by created_at`, [orderId]);

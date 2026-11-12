@@ -64,7 +64,11 @@ export function connectWs() {
   const base = API_URL || location.origin;
   const url = base.replace(/^http/, 'ws') + '/ws?token=' + encodeURIComponent(token);
   ws = new WebSocket(url);
-  ws.onopen = () => { retry = 0; };
+  ws.onopen = () => {
+    retry = 0;
+    // Reload server-backed views: events sent while offline cannot be replayed by WebSocket.
+    listeners.forEach((listener) => listener({ type: 'connection_restored' }));
+  };
   ws.onmessage = (m) => {
     let e: any;
     try { e = JSON.parse(m.data); } catch { return; }

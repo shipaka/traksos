@@ -1,6 +1,7 @@
 // Сборка веб-приложения в web/dist. API_URL — адрес сервера для Android-сборки (по умолчанию тот же сайт).
 import { build, context } from 'esbuild';
 import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
 
 const watch = process.argv.includes('--watch');
 const opts = {
@@ -21,7 +22,9 @@ const opts = {
 
 await mkdir('dist', { recursive: true });
 const html = await readFile('index.html', 'utf8');
-await writeFile('dist/index.html', html.replaceAll('%BUILD%', Date.now().toString(36)));
+let revision = 'local';
+try { revision = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim(); } catch { /* non-Git build */ }
+await writeFile('dist/index.html', html.replaceAll('%BUILD%', Date.now().toString(36)).replaceAll('%REV%', revision));
 await cp('public', 'dist', { recursive: true }).catch(() => {});
 
 if (watch) {

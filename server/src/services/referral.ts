@@ -20,12 +20,12 @@ import { rub } from '../util.ts';
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const DAY = 86_400_000;
 
-type Entry = { amount: number; expires_at: Date | null; created_at: Date };
+type Entry = { amount: number; expires_at: Date | null; created_at: Date; status?: string };
 
 /** Остаток с учётом сгорания: траты гасят самые старые начисления (FIFO) */
 export function pointsBalance(entries: Entry[], at: Date) {
   const lots: { left: number; exp: number }[] = [];
-  for (const e of [...entries].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())) {
+  for (const e of [...entries].filter((x) => x.status !== 'held' && x.status !== 'reversed').sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())) {
     const t = new Date(e.created_at).getTime();
     if (e.amount > 0) { lots.push({ left: e.amount, exp: e.expires_at ? new Date(e.expires_at).getTime() : Infinity }); continue; }
     let need = -e.amount;
@@ -70,15 +70,19 @@ export class ReferralService {
   }
 
   async balance(userId: string, q: Queryable = this.db) {
-    const rows = await q.query<Entry>('select amount, expires_at, created_at from points_entries where user_id=$1', [userId]);
+    const rows = await q.query<Entry>('select amount, expires_at, created_at, status from points_entries where user_id=$1', [userId]);
     return pointsBalance(rows, this.now());
   }
 
   async grant(q: Queryable, p: { userId: string; amount: number; kind: string; orderId?: string | null; bookingId?: string | null; refUserId?: string | null; note: string }) {
     if (p.amount <= 0) return 0;
-    await q.query(
-      `insert into points_entries(user_id, amount, kind, order_id, booking_id, ref_user_id, note, expires_at, created_at) values ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-      [p.userId, p.amount, p.kind, p.orderId ?? null, p.bookingId ?? null, p.refUserId ?? null, p.note, await this.expiresAt(), this.now()]);
+    await q.query('select id from users where id=$1 for no key update', [p.userId]);
+    const key = ['ref_client', 'ref_performer', 'ref_service', 'welcome'].includes(p.kind)
+      ? [p.kind, p.orderId ?? p.bookingId ?? p.refUserId ?? '', p.userId].join(':') : null;
+    const inserted = await q.query(
+      `insert into points_entries(user_id, amount, kind, order_id, booking_id, ref_user_id, note, expires_at, created_at, event_key) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) on conflict do nothing returning id`,
+      [p.userId, p.amount, p.kind, p.orderId ?? null, p.bookingId ?? null, p.refUserId ?? null, p.note, await this.expiresAt(), this.now(), key]);
+    if (!inserted.length) return 0;
     await this.notifier.notify([p.userId], { type: 'points' }, { kind: 'normal', title: `+${rub(p.amount).replace(' ₽', '')} баллов`, body: p.note, data: {} });
     return p.amount;
   }
@@ -93,12 +97,15 @@ export class ReferralService {
   }
 
   async spend(q: Queryable, userId: string, base: number, note: string, orderId?: string | null, bookingId?: string | null, want?: number | null) {
+    // Сериализуем расход по кошельку: второй запрос увидит уже списанные баллы.
+    await q.query('select id from users where id=$1 for no key update', [userId]);
     const a = await this.available(userId, base, q);
     const use = Math.max(0, Math.min(a.max, want ?? a.max));
     if (use <= 0) return 0;
-    await q.query(`insert into points_entries(user_id, amount, kind, order_id, booking_id, note, created_at) values ($1,$2,'spend',$3,$4,$5,$6)`,
-      [userId, -use, orderId ?? null, bookingId ?? null, note, this.now()]);
-    return use;
+    const key = orderId || bookingId ? ['spend', userId, orderId ?? bookingId, bookingId ? 'service' : note.startsWith('Сервисный') ? 'client' : 'performer'].join(':') : null;
+    const inserted = await q.query(`insert into points_entries(user_id, amount, kind, order_id, booking_id, note, created_at, event_key) values ($1,$2,'spend',$3,$4,$5,$6,$7) on conflict do nothing returning id`,
+      [userId, -use, orderId ?? null, bookingId ?? null, note, this.now(), key]);
+    return inserted.length ? use : 0;
   }
 
   /** Вход по ссылке: только новый номер, не сам себя. Новому клиенту — приветственные баллы */
@@ -116,7 +123,11 @@ export class ReferralService {
   /** Заявка подтверждена: клиент гасит баллами сбор (до cap) — в момент подтверждения, как бонусы */
   async spendClientFee(q: Queryable, order: any, clientFee: number, want: number) {
     if (want <= 0) return 0;
-    const used = await this.spend(q, order.client_id, clientFee, `Сервисный сбор по заявке №${order.number}`, order.id, null, want);
+    const fees = await this.settings.get('fees');
+    const perf = order.performer_id ? await q.one<{ is_priority: boolean }>('select is_priority from performer_profiles where user_id=$1', [order.performer_id]) : null;
+    const commissionBase = pct(order.work_amount ?? 0, commissionPct(fees, { isPriority: !!perf?.is_priority, at: this.now() }));
+    const welcomeLimit = Math.max(0, Math.floor(commissionBase * 0.2));
+    const used = await this.spend(q, order.client_id, clientFee, `Сервисный сбор по заявке №${order.number}`, order.id, null, Math.min(want, welcomeLimit));
     if (used > 0) await q.query(`update orders set points_fee=$2, discount_amount = discount_amount + $2,
         discount_reason = coalesce(discount_reason, 'Баллы') where id=$1`, [order.id, used]);
     return used;
@@ -133,7 +144,14 @@ export class ReferralService {
     const pref = order.performer_id ? await q.one<{ extras: any }>('select extras from performer_profiles where user_id=$1', [order.performer_id]) : null;
     const auto = pref?.extras?.pointsAuto !== false;
     if (auto && commission > 0 && order.performer_id && this.ledger) {
-      const used = await this.spend(q, order.performer_id, commission, `Комиссия по заявке №${order.number}`, order.id, null, pref?.extras?.pointsMax ?? null);
+      // Общий бюджет 30% комиссии: учитываем скидку клиента и резервируем 10% за приглашение.
+      const clientPoints = Number(order.points_fee ?? (await q.one<{ points_fee: number }>('select points_fee from orders where id=$1', [order.id]))?.points_fee ?? 0);
+      const invited = await q.one<{ referred_by: string | null; referred_at: Date | null }>('select referred_by, referred_at from users where id=$1', [order.client_id]);
+      const referralDue = invited?.referred_by && invited.referred_at && this.now().getTime() - new Date(invited.referred_at).getTime() <= r.days * DAY
+        ? pct(commission, r.clientSharePct) : 0;
+      const remainingPromo = Math.max(0, Math.floor(commission * 0.3) - clientPoints - referralDue);
+      const desired = Math.min(remainingPromo, pref?.extras?.pointsMax ?? remainingPromo);
+      const used = await this.spend(q, order.performer_id, commission, `Комиссия по заявке №${order.number}`, order.id, null, desired);
       if (used > 0) {
         await this.ledger(q, order.id, null, [
           { account: 'performer', performerId: order.performer_id, amount: used, kind: order.payment_method === 'cash' ? 'cash_commission_paid' : 'points', note: `Комиссия оплачена баллами: ${rub(used)}` },
@@ -144,9 +162,9 @@ export class ReferralService {
     }
     // 2. Пригласивший клиента — доля от оплаченной заявки, пока не прошло days дней
     const c = await q.one<{ referred_by: string | null; referred_at: Date | null; name: string | null }>('select referred_by, referred_at, name from users where id=$1', [order.client_id]);
-    if (c?.referred_by && c.referred_at && this.now().getTime() - new Date(c.referred_at).getTime() <= r.days * DAY) {
-      await this.grant(q, { userId: c.referred_by, amount: pct(amount, r.clientSharePct), kind: 'ref_client', orderId: order.id, refUserId: order.client_id,
-        note: `${r.clientSharePct}% с заявки №${order.number} приглашённого клиента` });
+    if (commission > 0 && c?.referred_by && c.referred_at && this.now().getTime() - new Date(c.referred_at).getTime() <= r.days * DAY) {
+      await this.grant(q, { userId: c.referred_by, amount: pct(commission, r.clientSharePct), kind: 'ref_client', orderId: order.id, refUserId: order.client_id,
+        note: `${r.clientSharePct}% от комиссии ТракSOS по заявке №${order.number} приглашённого клиента` });
     }
     // 3. Мастер пригласил мастера — разово, когда новичок выполнит performerJobs заявок
     if (order.performer_id) {
@@ -166,14 +184,26 @@ export class ReferralService {
     return this.spend(q, ownerId, commission, `Комиссия по счёту №${number}`, null, bookingId, want);
   }
 
-  async afterBookingClosed(ownerId: string, bookingId: string) {
-    const r = await this.settings.get('referral');
-    const o = await this.db.one<{ referred_by: string | null; n: number }>(
-      `select u.referred_by, (select count(*)::int from service_bookings b join service_centers c on c.id=b.center_id where c.owner_id=u.id and b.status='closed') as n
-         from users u where u.id=$1`, [ownerId]);
-    if (!o?.referred_by || o.n < 1) return;
-    const done = await this.db.one(`select 1 from points_entries where kind='ref_service' and ref_user_id=$1`, [ownerId]);
-    if (!done) await this.grant(this.db, { userId: o.referred_by, amount: r.serviceReward, kind: 'ref_service', bookingId, refUserId: ownerId, note: 'Приглашённая рембаза закрыла первый счёт' });
+  /** Вознаграждение рембазы: только после подтверждённой выплаты, 10% реально удержанной комиссии,
+   *  максимум 2000 баллов на приглашённую рембазу за всё время. */
+  async afterBookingPaid(ownerId: string, bookingId: string) {
+    return this.db.tx(async (q) => {
+      const r = await this.settings.get('referral');
+      const o = await q.one<{ referred_by: string | null }>('select referred_by from users where id=$1', [ownerId]);
+      if (!o?.referred_by) return 0;
+      await q.query('select id from users where id=$1 for no key update', [o.referred_by]);
+      const b = await q.one<{ commission: number; points: number; discount: number }>(
+        `select b.commission, b.points, b.discount from service_bookings b join service_centers c on c.id=b.center_id
+         where b.id=$1 and c.owner_id=$2 and b.status='closed' and b.paid_out_at is not null`, [bookingId, ownerId]);
+      if (!b || b.commission <= 0) return 0;
+      const prior = await q.one<{ total: number }>(
+        `select coalesce(sum(amount),0)::int as total from points_entries where kind='ref_service' and ref_user_id=$1 and amount>0`, [ownerId]);
+      const left = Math.max(0, r.serviceReward - (prior?.total ?? 0));
+      const reward = Math.min(left, pct(b.commission, 10));
+      if (!reward) return 0;
+      return this.grant(q, { userId: o.referred_by, amount: reward, kind: 'ref_service', bookingId, refUserId: ownerId,
+        note: '10% фактически удержанной комиссии по оплаченному счёту приглашённой рембазы' });
+    });
   }
 
   /** Экран «Пригласить»: код, остаток, история, кого пригласили, правила */
@@ -181,7 +211,7 @@ export class ReferralService {
     const code = await this.code(user.id);
     const b = await this.balance(user.id);
     const entries = await this.db.query(
-      `select id::int as id, amount, kind, note, expires_at, created_at from points_entries where user_id=$1 order by created_at desc limit 50`, [user.id]);
+      `select id::int as id, amount, kind, status, note, expires_at, created_at from points_entries where user_id=$1 order by created_at desc limit 50`, [user.id]);
     const invited = await this.db.query(
       `select coalesce(nullif(u.company_name,''), nullif(u.name,''), 'Без имени') as name, u.referred_at as at,
               case when u.roles && '{master,tow}'::text[] then 'performer' when 'service' = any(u.roles) then 'service' else 'client' end as who,

@@ -35,9 +35,9 @@ const mk = async () => {
 // how: 'help' — кнопка «Помогите», 'login' — вход по номеру, иначе текст роли в «Хочу работать с ТракSOS»
 async function login(page, phoneNum, how) {
   await page.goto(BASE + '/#/login');
-  if (how === 'help') await page.getByRole('button', { name: /Помогите/ }).click();
-  else if (how === 'login') await page.getByRole('button', { name: 'Войти по номеру' }).click();
-  else { await page.getByRole('button', { name: /Хочу работать/ }).click(); await page.getByRole('button', { name: how }).click(); }
+  if (how === 'help') await page.getByRole('button', { name: /Нужна помощь/ }).click();
+  else if (how === 'login') await page.getByRole('button', { name: 'Войти по номеру телефона', exact: true }).click();
+  else { await page.getByRole('button', { name: /Стать партнёром/ }).click(); await page.getByRole('button', { name: how }).click(); }
   await page.locator('input[type=tel]').fill(phoneNum);
   if (how !== 'login') await page.locator('input[type=checkbox]').check();
   await page.getByRole('button', { name: 'Получить код' }).click();
@@ -184,6 +184,7 @@ await shot(a, '13-admin-payments');
 await a.getByRole('link', { name: /Клиент/ }).click();
 await a.getByText('Что случилось?').first().waitFor();
 await a.getByRole('link', { name: /Профиль/ }).click();
+await a.getByText('Кабинеты и доступные роли').click();
 await a.getByRole('button', { name: 'Кабинет администратора' }).click();
 await a.getByText('Администратор').first().waitFor();
 await m.goto(BASE + '/#/work/jobs');

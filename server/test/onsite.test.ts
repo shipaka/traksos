@@ -56,6 +56,31 @@ test('опаздываю, отметки на месте, проверка по�
   ok(await t.api('POST', `/api/orders/${id}/confirm`, {}, client.token));
 });
 
+test('кандидат не получает ИНН, госномер и историю ремонта до выбора клиентом', async () => {
+  const order = ok(await t.api('POST', '/api/orders', {
+    service: 'electric', zoneId: 'spb', vehicleId, description: 'Проверить электрику',
+  }, client.token)).order;
+  ok(await t.api('POST', `/api/orders/${order.id}/offers`, {}, master.token));
+  assert.equal((await t.api('GET', `/api/orders/${order.id}/client-card`, undefined, master.token)).status, 403);
+  assert.equal((await t.api('GET', `/api/orders/${order.id}/payments`, undefined, master.token)).status, 403,
+    'кандидат не видит платёжные записи и ссылки подтверждения оплаты');
+  const preview = ok(await t.api('GET', `/api/orders/${order.id}`, undefined, master.token));
+  assert.equal(preview.you, 'candidate');
+  assert.equal(preview.vehicle, null);
+  assert.equal(preview.site, null);
+  assert.equal(preview.bill, null);
+  assert.deepEqual(preview.followUps, []);
+  assert.equal(preview.consultFrom, null);
+});
+
+test('посторонний исполнитель не может заблокировать клиента по чужому заказу', async () => {
+  const assigned = await take({ service: 'electric', zoneId: 'spb', description: 'Не работает электрика' });
+  const stranger = await t.login('+79994445566', 'master');
+  assert.equal((await t.api('POST', `/api/orders/${assigned}/block-client`,
+    { on: true, reason: 'посторонний' }, stranger.token)).status, 403);
+  assert.equal(ok(await t.api('GET', '/api/performer/blacklist', undefined, stranger.token)).length, 0);
+});
+
 test('«не брать заявки этого клиента»: заявки клиента больше не приходят', async () => {
   const last = ok(await t.api('GET', '/api/orders?as=performer', undefined, master.token))[0];
   ok(await t.api('POST', `/api/orders/${last.id}/block-client`, { on: true, reason: 'не оплатил ожидание' }, master.token));
@@ -65,3 +90,4 @@ test('«не брать заявки этого клиента»: заявки �
   ok(await t.api('DELETE', `/api/performer/blacklist/${client.id}`, undefined, master.token));
   assert.equal(ok(await t.api('GET', '/api/performer/blacklist', undefined, master.token)).length, 0);
 });
+

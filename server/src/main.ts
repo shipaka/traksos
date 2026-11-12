@@ -9,6 +9,7 @@ import { createPush } from './providers/push.ts';
 import { MockProvider } from './payments/provider.ts';
 import { YooKassaProvider } from './payments/yookassa.ts';
 import { staticHandler } from './http/static.ts';
+import { sendInsuranceReminders } from './services/insuranceReminders.ts';
 
 const db = await createDb(config.databaseUrl);
 const applied = await migrate(db);
@@ -52,12 +53,17 @@ const timer = setInterval(() => {
 // Запросы на удаление данных — раз в час
 const hourly = setInterval(() => { app.privacy.processDeletions().catch((e) => console.error('[privacy]', e)); }, 3_600_000);
 
+const insuranceReminderJob = () => sendInsuranceReminders(db, app.notifier).catch((e) => console.error('[insurance reminders]', e));
+const insuranceReminderTimer = setInterval(insuranceReminderJob, 3_600_000);
+insuranceReminderJob();
+
 server.listen(config.port, () => console.log(`ТракSOS API: http://localhost:${config.port} (БД: ${db.driver})`));
 
 for (const sig of ['SIGINT', 'SIGTERM'] as const) {
   process.on(sig, async () => {
     clearInterval(timer);
     clearInterval(hourly);
+    clearInterval(insuranceReminderTimer);
     server.close();
     await db.close();
     process.exit(0);
