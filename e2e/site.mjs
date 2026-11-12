@@ -7,9 +7,10 @@ async function acceptPendingOffers(page) {
   for (let i = 0; i < 4; i++) {
     const dialog = page.getByRole('dialog', { name: /Оферта|Согласие/ });
     if (!(await dialog.isVisible().catch(() => false))) break;
+    const offerName = await dialog.getAttribute('aria-label');
     await dialog.locator('input[type=checkbox]').check();
     await dialog.getByRole('button', { name: 'Принимаю' }).click();
-    await dialog.waitFor({ state: 'hidden' });
+    await page.waitForFunction((name) => !document.querySelector('[role="dialog"][aria-label="' + name + '"]'), offerName);
   }
 }
 
