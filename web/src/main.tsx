@@ -321,7 +321,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           <SiteFooter />
         </div>
       </div>
-      {tabs.length > 0 && !(route[0] === 'work' && route[1] === 'profile') && !(route[0] === 'base' && route[1] === 'me') && (
+      {tabs.length > 0 && !(route[0] === 'work' && ['profile', 'docs'].includes(route[1] ?? '')) && !(route[0] === 'base' && route[1] === 'me') && (
         <nav className="tabbar">
           {tabs.map(([href, ic, name]) => (
             <a key={href} href={'#' + href} className={`${here === href || (href !== '/' && here.startsWith(href + '/') && href !== '/work' && href !== '/base') ? 'on' : ''} ${href === '/sos' ? 'sosTab' : ''}`}>
