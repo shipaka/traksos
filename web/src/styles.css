@@ -476,7 +476,7 @@ select.field { appearance: none; }
   .desktop-content > main.public-home { padding-top: 34px; gap: 22px; }
   .public-hero { min-height: 460px; background: #112b42; border: 1px solid #28445b; box-shadow: 0 18px 50px rgba(7,29,49,.18); }
   .public-hero::before { z-index: 1; background: linear-gradient(90deg,#0e253b 0%,rgba(14,37,59,.98) 27%,rgba(14,37,59,.78) 49%,rgba(14,37,59,.08) 86%); }
-  .public-hero-visual { inset: 0 0 0 29%; width: auto; opacity: 1; background: url('../public/truck-scene.svg') center 52% / cover no-repeat; }
+  .public-hero-visual { inset: 0 0 0 29%; width: auto; opacity: 1; background: url('/tracksos-approved-truck.webp') center 52% / cover no-repeat; }
   .public-hero-visual > * { display: none; }
   .public-hero-copy { width: 69%; padding: 60px 26px 54px 54px; }
   .desktop-content .public-hero h1 { font-size: clamp(39px,4.4vw,62px); line-height: 1.05; letter-spacing: -1.65px; max-width: 670px; }
@@ -665,3 +665,27 @@ select.field { appearance: none; }
   border:1px solid #9b6544;border-radius:10px;font-size:12px;line-height:1.5;margin:10px 0;}
 .traksos-start-loading{min-height:100vh;background:#061426;color:#fff;
   display:grid;place-items:center;font:600 15px system-ui,sans-serif;}
+
+/* Approved assets only — copied unchanged from the user-approved references.
+   No AI redraws or fictitious map/network fallbacks. */
+.public-landing .public-map-static{
+ position:absolute;inset:0;
+ background:#071b32 url('/tracksos-approved-map.webp') center/cover no-repeat;
+}
+.public-landing .public-hero-visual{
+ background-position:center right;
+}
+.public-landing .public-app-phone-truck{
+ display:block;max-width:100%;height:78px;width:auto;object-fit:cover;border-radius:8px;
+ box-shadow:0 6px 18px #0007;
+}
+@media (max-width:899px){
+ .public-landing .public-hero-visual{
+    inset:18% -16% 19% -6%;
+    background-position:55% 40%;
+ }
+}
+@media (prefers-reduced-motion: reduce){
+ .public-landing .public-button,
+ .public-landing .public-service-tile{transition:none!important;transform:none!important;}
+}

@@ -6,7 +6,7 @@ function PublicDemoMapBackdrop() {
   // The public demonstration map is a bundled, immutable asset.
   // It is never replaced with text because of network quality.
   return <div className="public-map-static" role="img"
-    aria-label="Иллюстративная карта Санкт-Петербурга с условными точками помощи" />;
+    aria-label="Утверждённая демонстрационная карта Санкт-Петербурга и Ленинградской области с условными отметками услуг; доступна без интернета" />;
 }
 
 // Роль выбирают только те, кто подключается работать. Остальные входят по номеру — кабинет определяется по ролям.
