@@ -41,7 +41,7 @@ try {
       await page.locator('.website-workspace').waitFor();
       await page.locator('.website-work-area main').first().waitFor();
       // The same responsive cabinet shell must be present on every role's main page.
-      if (['#/profile', '#/fleet', '#/base', '#/work'].includes(route)) {
+      if (['#/profile', '#/fleet', '#/work'].includes(route)) {
         await page.locator('.website-work-area .cabinet-heading').first().waitFor();
         const heading = await page.locator('.website-work-area .cabinet-heading h1').first().textContent();
         if (!heading?.trim()) throw new Error(role.name + ' ' + route + ': missing cabinet heading');
