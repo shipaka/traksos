@@ -102,12 +102,12 @@ export class AuthService {
       if (previous) {
         const roles = requested.length ? validateRoles(previous.roles, requested) : previous.roles;
         const normalized = [...new Set([...roles, ...extra])];
-        return await q.one<AuthUser>('update users set roles=$2::text[], password_hash=coalesce($3,password_hash), last_seen_at=now() where id=$1 returning id,phone,name,roles,status,owner_id',
+        return await q.one<AuthUser>('update users set roles=$2::text[], password_hash=coalesce($3,password_hash), last_seen_at=now() where id=$1 returning id,phone,name,roles,status,owner_id,false as inserted',
           [previous.id, normalized, password ? hashPassword(password) : null]);
       }
       const roles = [...new Set([...(requested.length ? requested : ['client']), ...extra])];
       validateRoles([], roles);
-      return await q.one<AuthUser>('insert into users(phone,roles,registration_kind,password_hash) values ($1,$2::text[],$3,$4) returning id,phone,name,roles,status,owner_id',
+      return await q.one<AuthUser>('insert into users(phone,roles,registration_kind,password_hash) values ($1,$2::text[],$3,$4) returning id,phone,name,roles,status,owner_id,true as inserted',
         [phone, roles, accountType ?? (role === 'driver' ? 'driver' : role === 'master' || role === 'tow' || role === 'service' || role === 'insurer' ? role : 'owner'), password ? hashPassword(password) : null]);
     });
     if (!user || user.status !== 'active') {
