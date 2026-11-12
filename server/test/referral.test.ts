@@ -62,8 +62,12 @@ test('пригласил клиента: ему подарок, мне 10% ко�
   const view = ok(await t.api('GET', `/api/orders/${o.id}`, undefined, friend.token));
   assert.equal(view.points.max, Math.min(30_000, Math.floor(fee * 0.2)));
   const done = ok(await t.api('POST', `/api/orders/${o.id}/confirm`, { total: pr.money.total, points: 999_999 }, friend.token));
-  const row = (await t.db.one<any>('select points_fee from orders where id=$1', [o.id]))!;
-  assert.equal(row.points_fee, Math.min(30_000, Math.min(Math.floor(fee * 0.2), Math.floor(pr.money.amount * 0.05 * 0.2))), 'вписал больше — списали не больше лимита');
+  const row = (await t.db.one<any>('select points_fee, work_amount from orders where id=$1', [o.id]))!;
+  // The client welcome discount is capped by commission on WORK only, not
+  // the full order amount (which also includes travel and other charges).
+  const workCommission = Math.round(Number(row.work_amount) * 0.05);
+  assert.equal(row.points_fee, Math.min(30_000, Math.floor(fee * 0.2), Math.floor(workCommission * 0.2)),
+    'вписал больше — списали не больше 20% сбора и 20% комиссии за работу');
   assert.equal(done.money.discount, row.points_fee);
 
   const mine = ok(await t.api('GET', '/api/me/referral', undefined, inviter.token));
