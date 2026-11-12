@@ -18,7 +18,7 @@ export class FleetService {
   constructor(private db: Db, private notifier: Notifier, private orders: OrdersService) {}
 
   async get(owner: AuthUser) {
-    if (owner.owner_id) throw bad('driver', 'Парком управляет владелец');
+    if (owner.owner_id || !owner.roles.includes('client') || owner.roles.includes('driver')) throw bad('driver', 'Парком управляет владелец');
     const u = await this.db.one<any>('select fleet, company_name, company_inn, edo_operator, edo_id, edo_pdf_only from users where id=$1', [owner.id]);
     const cars = await this.db.query(
       `select v.id, v.brand, v.model, v.year, v.plate, v.trailer_plate, v.qr_code, v.driver_id, v.driver_since,
@@ -59,6 +59,7 @@ export class FleetService {
 
   /** Новая наклейка: старая перестаёт пускать, текущий водитель машины снимается */
   async newQr(owner: AuthUser, vehicleId: string) {
+    if (owner.owner_id || !owner.roles.includes('client') || owner.roles.includes('driver')) throw bad('driver', 'Парком управляет владелец');
     const v = await this.db.one(`update vehicles set qr_code=encode(gen_random_bytes(9), 'hex'), driver_id=null, driver_since=null where id=$1 and owner_id=$2 returning id`, [vehicleId, owner.id]);
     if (!v) throw notFound('Машина не найдена');
     return this.get(owner);
