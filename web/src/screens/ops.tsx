@@ -216,9 +216,21 @@ export function WorkerNotices({audience}:{audience?:'service'}) {
   const {me}=useMe();
   const mode=audience==='service'?'service':me?.roles.includes('tow')?'tow':'master';
   const list=useLoad(()=>get('/api/worker/announcements?audience='+mode),[mode]);
-  if(!list.data?.length)return null;
+  const promos=useLoad(()=>get('/api/worker/commission-campaigns'),[mode]);
+  const specialties = (me?.performer?.specialties??[]) as string[];
+  const matching = (service?:string|null) => !service ||
+    (mode==='service' ? true : mode==='tow' ? service==='tow' :
+      specialties.includes(service) || (service==='ecu' && specialties.includes('electric')));
+  const announcements=(list.data??[]).filter((x:any)=>matching(x.service));
+  const offers=(promos.data??[]).filter((x:any)=>matching(x.service));
+  if(!announcements.length&&!offers.length)return null;
   return <div className="stack" style={{gap:8}}>
-    {list.data.map((x:any)=><div key={x.id} className="card hi">
+    {offers.map((x:any)=><div key={'campaign-'+x.id} className="card hi">
+      <b>Комиссия платформы {x.commission_pct}%{x.service?' · '+(SERVICES[x.service]?.name??x.service):''}</b>
+      <span className="note">{x.reason}</span>
+      <span className="note">До {fmtTime(x.ends_at)}. Ставка закрепляется за новыми заявками, созданными во время акции.</span>
+    </div>)}
+    {announcements.map((x:any)=><div key={x.id} className="card hi">
       <b>{x.title}</b>
       <span className="note">{x.body}</span>
       <span className="note">До {fmtTime(x.ends_at)}{x.service?' · '+(SERVICES[x.service]?.name??x.service):''}</span>
