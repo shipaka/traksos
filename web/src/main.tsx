@@ -216,7 +216,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   // Все дополнительные функции доступны в шапке, даже когда они не в нижних вкладках.
   // Не показываем чужие роли и не создаём несуществующие страницы.
   const accountLinks: [string, string][] = mode === 'performer'
-    ? [['/work/me', 'Профиль исполнителя'], ['/work/me/about', 'Личные сведения'],
+    ? [...(me?.roles.includes('service') ? [['/base', 'Моя СТО — стационарный ремонт']] as [string, string][] : []),
+       ['/work/me', 'Профиль исполнителя'], ['/work/me/about', 'Личные сведения'],
        ['/work/me/phone', 'Телефон и вход'], ['/work/me/cars', 'Автомобили'],
        ['/work/me/schedule', 'График работы'], ['/work/filter', 'Фильтры заявок'],
        ['/work/me/money', 'Финансы и выплаты'], ['/work/me/tax', 'Налоговый статус'],
@@ -224,7 +225,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
        ['/reviews', 'Отзывы'], ['/invite', 'Пригласить партнёра'],
        ['/work/jobs', 'История заявок'], ['/profile', 'Аккаунт']]
     : mode === 'service'
-      ? [['/base', 'Заявки и история ремонтов'], ['/base/me', 'Карточка СТО'],
+      ? [...(me?.roles.some(r => r === 'master' || r === 'tow') ? [['/work', 'Выездной мастер — заявки']] as [string, string][] : []),
+         ['/base', 'Заявки и история ремонтов'], ['/base/me', 'Карточка СТО'],
          ['/base/money', 'Финансы'], ['/profile', 'Аккаунт'],
          ['/invite', 'Пригласить партнёра']]
     : mode === 'insurer'
@@ -289,9 +291,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               {(mode === 'client'
                 ? [...tabs, ['/garage', '▭', 'Гараж']]
                 : mode === 'performer'
-                  ? [...tabs, ['/work/me', '◉', 'Профиль']]
+                  ? [...tabs, ['/work/me', '◉', 'Профиль'], ...(me.roles.includes('service') ? [['/base', '▤', 'Моя СТО']] : [])]
                   : mode === 'service'
-                    ? [...tabs, ['/base/money', '₽', 'Финансы'], ['/base/me', '⚙', 'Карточка'], ['/profile', '◉', 'Аккаунт']]
+                    ? [...tabs, ['/base/money', '₽', 'Финансы'], ['/base/me', '⚙', 'Карточка'], ...(me.roles.some(r => r === 'master' || r === 'tow') ? [['/work', '⚡', 'Выездной мастер']] : []), ['/profile', '◉', 'Аккаунт']]
                     : mode === 'insurer'
                       ? [...tabs, ['/profile', '◉', 'Аккаунт']]
                       : [...tabs, ['/as/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]).map(([href, ic, name]) => (
