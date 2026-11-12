@@ -92,6 +92,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
             <button type="button" className="public-button public-button-sos" onClick={() => setIntent('help')}>SOS · Нужна помощь</button>
             <a className="public-button public-button-outline" href="#public-how">Как это работает?</a>
           </div>
+          <div className="public-hero-auth"><button type="button" onClick={() => setIntent('login')}>Войти</button><button type="button" onClick={() => setIntent('register')}>Зарегистрироваться</button></div>
           <div className="public-hero-caption">Зона запуска: Санкт-Петербург и Ленинградская область. В других регионах выездные услуги пока недоступны.</div>
         </div>
         <div className="public-hero-visual" aria-hidden="true" />
