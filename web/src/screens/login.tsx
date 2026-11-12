@@ -3,25 +3,10 @@ import { post, setToken, connectWs, ApiError } from '../api.ts';
 import { useAction, useMe, useToast, Field } from '../ui.tsx';
 
 function PublicDemoMapBackdrop() {
-  const [online, setOnline] = useState(navigator.onLine);
-  useEffect(() => {
-    const connected = () => setOnline(true);
-    const disconnected = () => setOnline(false);
-    window.addEventListener('online', connected);
-    window.addEventListener('offline', disconnected);
-    return () => {
-      window.removeEventListener('online', connected);
-      window.removeEventListener('offline', disconnected);
-    };
-  }, []);
-  if (!online || (window as any).TrakSOSNative) {
-    return <div className="public-map-native-demo">
-      <b>Санкт-Петербург и Ленинградская область</b>
-      <span>Демонстрационные отметки услуг. Реальная карта доступна после входа.</span>
-    </div>;
-  }
-  return <iframe title="Карта Санкт-Петербурга и Ленинградской области — пример расположения сервисов"
-    loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=29.35%2C59.50%2C31.50%2C60.30&layer=mapnik&marker=59.9386%2C30.3141" />;
+  // The public demonstration map is a bundled, immutable asset.
+  // It is never replaced with text because of network quality.
+  return <div className="public-map-static" role="img"
+    aria-label="Иллюстративная карта Санкт-Петербурга с условными точками помощи" />;
 }
 
 // Роль выбирают только те, кто подключается работать. Остальные входят по номеру — кабинет определяется по ролям.
@@ -99,10 +84,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
     <main className="public-home public-landing" id="public-home">
       <div className="public-landing-head">
         <span className="public-landing-region">◉ Санкт-Петербург и Ленинградская область</span>
-        <div className="public-landing-head-actions">
-          <button type="button" onClick={() => setIntent('login')}>Войти</button>
-          <button type="button" className="register" onClick={() => setIntent('register')}>Зарегистрироваться</button>
-        </div>
+
       </div>
 
       <section className="public-hero public-brand-hero" aria-labelledby="public-main-title">
@@ -114,7 +96,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
             <button type="button" className="public-button public-button-sos" onClick={() => setIntent('help')}>SOS · Нужна помощь</button>
             <button type="button" className="public-button public-button-outline" onClick={() => document.getElementById('public-how')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>Как это работает?</button>
           </div>
-          <div className="public-hero-auth"><button type="button" onClick={() => setIntent('login')}>Войти</button><button type="button" onClick={() => setIntent('register')}>Зарегистрироваться</button></div>
+
           <div className="public-hero-caption">Зона запуска: Санкт-Петербург и Ленинградская область. В других регионах выездные услуги пока недоступны.</div>
         </div>
         <div className="public-hero-visual" aria-hidden="true" />
@@ -146,9 +128,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <div className="public-section-head"><span className="public-section-kicker">ЗОНА ОБСЛУЖИВАНИЯ</span><h2>Рядом с вами</h2></div>
           <div className="public-map-wrap">
             <PublicDemoMapBackdrop />
-            <span className="public-map-pin service" style={{ left: '46%', top: '43%' }} title="Демо: СТО">⚙</span>
-            <span className="public-map-pin master" style={{ left: '61%', top: '34%' }} title="Демо: мастер">⚡</span>
-            <span className="public-map-pin tow" style={{ left: '39%', top: '66%' }} title="Демо: эвакуация">↗</span>
+
           </div>
           <div className="public-map-legend"><span><i className="service"/>СТО</span><span><i className="master"/>Мастер</span><span><i className="tow"/>Эвакуация</span></div>
           <p className="public-demo-warning">Демонстрационная карта: точки условные и не означают доступность исполнителей. Реальные данные доступны пользователю после входа.</p>
@@ -159,7 +139,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <h2>Мобильное приложение <em>ТракSOS</em></h2>
           <div className="public-app-phone" aria-hidden="true">
             <span className="public-app-logo">Трак<b>SOS</b></span>
-            <span className="public-app-phone-truck">🚚</span>
+            <img className="public-app-phone-truck" src="/tracksos-approved-truck.webp" alt="" loading="lazy" />
             <span>Помощь грузовику<br/>в дороге</span>
           </div>
           <p>Заявки, специалисты, документы и связь с мастером — в одном приложении.</p>
@@ -191,7 +171,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <button type="button" className="public-button public-button-partner" onClick={() => setIntent('join')}>Подключиться →</button>
         </div>
       </section>
-      <div className="public-bottom-auth"><button type="button" onClick={() => setIntent('login')}>Войти</button><button type="button" onClick={() => setIntent('register')}>Зарегистрироваться</button></div>
+
     </main>
   );
 
