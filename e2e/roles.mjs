@@ -3,6 +3,7 @@ import { mkdir } from 'node:fs/promises';
 
 const base = process.env.BASE_URL ?? 'http://localhost:8080';
 async function acceptPendingOffers(page) {
+  await page.waitForTimeout(900); // Wait for current offers to load after authentication.
   // Seeded demo accounts receive current client/partner offers on first sign-in.
   // Accept them through the actual UI before testing navigation beneath the modal.
   for (let i = 0; i < 4; i++) {
