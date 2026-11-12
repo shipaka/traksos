@@ -37,6 +37,7 @@ jobs:
           psql -h 127.0.0.1 -U postgres -c 'create database traksos'
           DATABASE_URL=postgres://postgres@127.0.0.1:5432/traksos ADMIN_PHONES=+79990000001 npm -w server start &
           until curl -s localhost:8080/api/health >/dev/null; do sleep 1; done
+          node e2e/public-shots.mjs e2e/shots
           node e2e/flow.mjs e2e/shots
       - name: Снимки экранов
         if: always()
