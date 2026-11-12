@@ -175,7 +175,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
 
   return (
     <main>
-      {intent === 'login' && <div className="auth-entry-options" aria-label="Варианты входа">
+      {intent === 'login' && step === 'phone' && <div className="auth-entry-options" aria-label="Варианты входа">
         <button type="button" onClick={() => setIntent('help')}>Помогите — нужна помощь</button>
         <button type="button" onClick={() => setIntent('login')}>Войти по номеру</button>
         <button type="button" onClick={() => setIntent('join')}>Хочу работать с ТракSOS</button>
