@@ -11,8 +11,11 @@ import { get, post, put, rub, fmtPhone, fmtTime, authedImage } from '../api.ts';
 import { STATUS, SERVICES, LINE } from '../dict.ts';
 import { useLoad, useAction, Loading } from '../ui.tsx';
 
-export function Admin() {
-  const [tab, setTab] = useState<'stats' | 'search' | 'support' | 'verify' | 'people' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'shop' | 'settings'>('summary');
+type AdminSection = 'stats' | 'search' | 'support' | 'verify' | 'people' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'shop' | 'settings';
+const ADMIN_SECTIONS: AdminSection[] = ['stats','search','support','verify','people','orders','dispatch','payments','offers','flagged','bases','queue','summary','shop','settings'];
+export function Admin({ initialSection }: { initialSection?: string }) {
+  const [tab, setTab] = useState<AdminSection>(() =>
+    ADMIN_SECTIONS.includes(initialSection as AdminSection) ? initialSection as AdminSection : 'summary');
   return (
     <main>
       <h1>Администратор</h1>
