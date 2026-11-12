@@ -18,11 +18,16 @@ page.setDefaultTimeout(12000);
 await page.addInitScript(t=>localStorage.setItem('traksos.token',t),token);
 const errors=[];
 page.on('pageerror',e=>errors.push(e.message));
+const assertFits = async name => {
+  const widths = await page.evaluate(() => [document.documentElement.clientWidth,document.documentElement.scrollWidth]);
+  if(widths[1]>widths[0]+2)throw new Error(name+' mobile horizontal overflow '+widths.join('/'));
+};
 
 await page.goto(BASE+'/#/admin/section/demand');
 await page.getByText('Контроль невыполненных заявок').waitFor();
 await page.getByText('Спрос по часам (Москва, МСК)').waitFor();
 await page.getByText('Реестр проблемных заявок').waitFor();
+await assertFits('Demand dashboard');
 await page.screenshot({path:OUT+'/23-admin-demand.png'});
 
 await page.goto(BASE+'/#/admin/section/announcements');
@@ -30,6 +35,7 @@ await page.getByText('Объявления для исполнителей').wai
 await page.getByText('Временная комиссия площадки').waitFor();
 await page.getByRole('button',{name:'Сохранить объявление'}).waitFor();
 await page.getByRole('button',{name:'Назначить комиссию'}).waitFor();
+await assertFits('Commission campaigns');
 await page.screenshot({path:OUT+'/24-admin-campaigns.png'});
 if(errors.length)throw new Error('Admin operations page errors: '+errors.join('; '));
 await browser.close();
