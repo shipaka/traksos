@@ -707,3 +707,36 @@ select.field { appearance: none; }
 .web-process-grid p { color:var(--muted); font-size:13px; margin:0; }
 }
 @media (min-width:801px) and (max-width:1060px) { .web-desktop-audience-grid,.web-process-grid {grid-template-columns:repeat(2,minmax(0,1fr));} }
+
+
+/* Shared cabinet language across desktop website and mobile/native screens. */
+.cabinet-page { min-width:0; }
+.cabinet-heading { margin-bottom:20px; padding:20px 22px; border-radius:20px; border:1px solid var(--line-2); background:linear-gradient(120deg,rgba(255,106,19,.11),transparent 62%),var(--surface); }
+.cabinet-heading .label { display:block; margin-bottom:8px; color:var(--accent); letter-spacing:.07em; text-transform:uppercase; }
+.cabinet-heading h1 { margin:0; line-height:1.15; }
+.cabinet-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.cabinet-metrics .tile { min-width:0; display:flex; flex-direction:column; gap:10px; justify-content:space-between; }
+.cabinet-metrics .tile-value { font-variant-numeric:tabular-nums; font-size:clamp(25px,3vw,36px); line-height:1; }
+.cabinet-page .web-case-toolbar { min-width:0; }
+.cabinet-page .web-case-toolbar .row { flex-wrap:wrap; }
+.cabinet-page .web-insurance-grid { min-width:0; }
+.cabinet-page .web-insurance-grid details { min-width:0; }
+.cabinet-page .web-insurance-grid summary { cursor:pointer; gap:12px; }
+.cabinet-page .web-insurance-grid summary .pill { flex-shrink:0; }
+@media(max-width:700px) {
+  .cabinet-heading { padding:18px 16px; border-radius:16px; }
+  .cabinet-metrics { gap:8px; }
+  .cabinet-metrics .tile { padding:12px 10px; gap:8px; }
+  .cabinet-metrics .tile .label { font-size:11px; line-height:1.3; }
+  .cabinet-metrics .tile-value { font-size:clamp(23px,6vw,30px); }
+  .cabinet-page .web-case-toolbar { display:grid; grid-template-columns:minmax(0,1fr); gap:12px; }
+  .cabinet-page .web-case-toolbar .field { width:100%; }
+  .cabinet-page .web-insurance-grid { display:grid; grid-template-columns:minmax(0,1fr); gap:10px; }
+  .cabinet-page .web-insurance-grid summary { align-items:flex-start; flex-wrap:wrap; }
+  .cabinet-page .web-insurance-grid .grid2 { grid-template-columns:minmax(0,1fr); }
+  .cabinet-page .web-insurance-grid .btn { width:100%; min-height:44px; }
+}
+@media(max-width:370px) {
+  .cabinet-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .cabinet-metrics .tile:last-child { grid-column:1/-1; }
+}
