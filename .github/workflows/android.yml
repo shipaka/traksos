@@ -8,7 +8,7 @@ name: Android
 
 on:
   push:
-    branches: [main]
+    branches: [main, feature/vehicle-insurance-workflows]
     paths: ['android/**', '.github/workflows/android.yml']
   workflow_dispatch:
 
