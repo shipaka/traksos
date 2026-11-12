@@ -107,6 +107,9 @@ export function createApp(d: Deps) {
     return r;
   });
   r.post('/api/auth/logout', true, async (c: AuthedCtx) => {
+    // Do not deliver sensitive order/location notifications to a signed-out device.
+    // Other logged-in devices re-register their push token on next app launch.
+    await d.db.query('delete from push_tokens where user_id=$1', [c.user.id]);
     await auth.logout(bearer(c.req)!);
     return { ok: true };
   });

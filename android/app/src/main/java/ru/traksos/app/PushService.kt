@@ -3,7 +3,6 @@ package ru.traksos.app
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import ru.rustore.sdk.pushclient.messaging.model.RemoteMessage
 import ru.rustore.sdk.pushclient.messaging.service.RuStoreMessagingService
@@ -24,7 +23,6 @@ class PushService : RuStoreMessagingService() {
 
     override fun onMessageReceived(message: RemoteMessage) {
         val data = message.data
-        Log.d(TrakSosApp.TAG, "push: $data")
         when (data["kind"]) {
             "call" -> if (!MainActivity.foreground) CallNotifier.show(this, data)
             else -> showNormal(data)
