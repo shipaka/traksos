@@ -43,7 +43,7 @@ export class AuthService {
     const now = this.now();
     const ttl = new Date(now.getTime() + CODE_TTL_MS);
     // Local and proxy-internal IPs are not a reliable individual identifier.
-    const publicIp = ip && !/^(::1|127\\.|10\\.|192\\.168\\.|172\\.(1[6-9]|2\\d|3[01])\\.|::ffff:(127|10|192\\.168)\\.|fc|fd)/i.test(ip);
+    const publicIp = ip && !/^(::1|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|::ffff:(127|10|192\.168)\.|fc|fd)/i.test(ip);
     const code = newCode();
     const hash = hmac(phone + ':' + code);
 
