@@ -248,3 +248,54 @@ select.field { appearance: none; }
 .helpBtn .tap { position: absolute; right: 8px; bottom: 4px; font-size: 46px; line-height: 1; filter: drop-shadow(0 3px 6px rgba(0,0,0,.45)); animation: helpTap 1.6s ease-in-out infinite; pointer-events: none; }
 @keyframes helpTap { 0%, 100% { transform: translate(0,0) scale(1); } 45% { transform: translate(-6px,-8px) scale(.92); } 55% { transform: translate(-6px,-8px) scale(.88); } }
 @media (prefers-reduced-motion: reduce) { .helpBtn .tap { animation: none; } }
+
+
+/* Настоящая ПК-компоновка: одно приложение и общие маршруты для мобильной и настольной версии. */
+.desktop-layout { flex: 1; display: flex; min-width: 0; }
+.desktop-sidebar { display: none; }
+.desktop-content { min-width: 0; flex: 1; display: flex; flex-direction: column; }
+@media (min-width: 900px) {
+  body { padding: 0 24px; }
+  .app { max-width: 1440px; min-height: 100vh; }
+  .top { padding: 18px 26px; min-height: 76px; }
+  .top .logo { font-size: 24px; }
+  .desktop-layout { gap: 28px; align-items: stretch; }
+  .desktop-sidebar {
+    display: flex; width: 258px; flex: 0 0 258px; position: sticky;
+    top: 77px; height: calc(100vh - 77px); flex-direction: column;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 18px; padding: 20px 12px; margin-top: 18px;
+    overflow-y: auto;
+  }
+  .desktop-sidebar-title { font-size: 12px; letter-spacing: .6px; font-weight: 800; color: var(--muted); padding: 0 12px 12px; text-transform: uppercase; }
+  .desktop-nav { display: flex; flex-direction: column; gap: 5px; }
+  .desktop-nav-section { padding-top: 22px; }
+  .desktop-nav-link {
+    display: flex; align-items: center; gap: 14px; padding: 13px 14px; min-height: 48px;
+    border-radius: 12px; color: var(--fg-2); font-weight: 650; text-decoration: none;
+    transition: background .15s, color .15s;
+  }
+  .desktop-nav-link > span:first-child { display: grid; place-items: center; width: 24px; font-size: 19px; flex-shrink: 0; }
+  .desktop-nav-link:hover { color: var(--fg); background: var(--surface-3); }
+  .desktop-nav-link.active { background: var(--accent-soft); color: var(--accent); }
+  .desktop-nav-link.desktop-nav-sos { color: var(--accent); }
+  .desktop-sidebar-bottom { margin-top: auto; border-top: 1px solid var(--line-2); padding: 16px 12px 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+  .desktop-content { max-width: calc(100% - 286px); }
+  .desktop-content > main { width: 100%; max-width: 1040px; padding: 28px 6px 70px; }
+  .desktop-content > main > h1, .desktop-content > main h1 { font-size: 30px; }
+  .desktop-content .grid2 { gap: 14px; }
+  .desktop-content .opt { min-height: 100px; padding: 19px; }
+  .desktop-content .card { padding: 20px; }
+  .desktop-content .site-footer { width: 100%; max-width: 1040px; margin: auto 0 0; padding: 26px 6px 34px; }
+  .tabbar { display: none; }
+  .callbar-in { left: calc(50% + 145px); bottom: 24px; width: min(660px, calc(100% - 360px)); }
+}
+@media (min-width: 1200px) {
+  .desktop-content > main .grid2 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .desktop-content > main .tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (min-width: 900px) and (max-width: 1090px) {
+  .desktop-layout { gap: 18px; }
+  .desktop-sidebar { width: 220px; flex-basis: 220px; }
+  .desktop-content { max-width: calc(100% - 238px); }
+}
