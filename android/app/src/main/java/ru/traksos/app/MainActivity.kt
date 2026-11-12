@@ -41,6 +41,9 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import org.json.JSONObject
 import ru.rustore.sdk.pushclient.RuStorePushClient
 import java.lang.ref.WeakReference
@@ -83,6 +86,16 @@ class MainActivity : AppCompatActivity() {
             .build()
         web = WebView(this)
         val root = FrameLayout(this)
+        // Android 15 enforces edge-to-edge. The web header must not sit behind
+        // clock, network/battery icons or the bottom gesture navigation bar.
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        window.statusBarColor = Color.rgb(5, 23, 41)
+        window.navigationBarColor = Color.rgb(5, 23, 41)
+        ViewCompat.setOnApplyWindowInsetsListener(root) { view, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            insets
+        }
         root.addView(web, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
         startupOverlay = createStartupOverlay()
         root.addView(startupOverlay, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
