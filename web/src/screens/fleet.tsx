@@ -59,9 +59,18 @@ export function Fleet() {
     if (r) f.setData(r);
   }
   return (
-    <main>
+    <main className="cabinet-page">
       <Back to="garage" label="Гараж" />
-      <div><h1>Мой парк</h1><div className="sub">Машины, водители и что им можно. Все заказы и чаты водителей видны вам.</div></div>
+      <header className="cabinet-heading">
+        <span className="label">Кабинет владельца · Автопарк</span>
+        <h1>Мой парк</h1>
+        <div className="sub">Машины, водители, разрешения и расходы — в одном кабинете на телефоне и сайте.</div>
+      </header>
+      <div className="cabinet-metrics">
+        <div className="card tile"><span className="label">Автомобили</span><b className="tile-value">{d.cars.length}</b></div>
+        <div className="card tile"><span className="label">Ожидают решения</span><b className="tile-value">{d.pending.length}</b></div>
+        <div className="card tile"><span className="label">Доступ водителей</span><b className="tile-value">{d.cars.filter((c: any) => !!c.driver_id || !!c.driverId).length}</b></div>
+      </div>
 
       {d.pending.map((o: any) => (
         <div key={o.id} className="card hi">
