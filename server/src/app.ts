@@ -627,7 +627,7 @@ export function createApp(d: Deps) {
       }
       const user = await auth.authenticate(bearer(req));
       if (user?.roles.includes('insurer') && !user.roles.some((r) => r === 'admin' || r === 'moderator') &&
-          /^\\/api\\/(orders|vehicles|fleet|performer|base|services|bookings|qr)(?:\\/|$)/.test(url.pathname))
+          /^\/api\/(orders|vehicles|fleet|performer|base|services|bookings|qr)(?:\/|$)/.test(url.pathname))
         throw forbidden('Страховой аккаунт не является клиентским или рабочим кабинетом');
       const a = m.route.auth;
       if (a !== false) {
