@@ -33,17 +33,13 @@ export function Home() {
       <section className="desktop-hero" aria-label="Помощь грузовому транспорту">
         <div className="desktop-hero-copy">
           <span className="desktop-eyebrow">ТракSOS · Санкт-Петербург и Ленобласть</span>
-          <h1>Помощь в дороге <span>24/7</span></h1>
+          <h1>Помощь в дороге <span>для грузовиков</span></h1>
           <p>Мастера, диагностика и эвакуация грузовиков в Санкт-Петербурге и Ленинградской области — от заявки до завершения работ в одном сервисе.</p>
           <div className="launch-region" role="note">Зона запуска: Санкт-Петербург и Ленинградская область. В других регионах выездные услуги пока недоступны.</div>
           <div className="desktop-hero-buttons">
             <a className="desktop-primary-action" href="#/sos">🚨 SOS · Нужна помощь</a>
             <a className="desktop-outline-action" href="#/new/diag">+ Создать заявку</a>
           </div>
-        </div>
-        <div className="desktop-hero-art" aria-hidden="true">
-          <div className="hero-road" />
-          <div className="hero-truck"><div className="truck-trailer" /><div className="truck-cab"><div className="truck-window" /></div><span className="wheel wheel-one" /><span className="wheel wheel-two" /><span className="wheel wheel-three" /></div>
         </div>
       </section>
 
@@ -58,7 +54,7 @@ export function Home() {
         <section className="desktop-home-main">
           <div className="mobile-home-heading">
             <h1>{me?.name ? `${me.name}, что случилось?` : 'Что случилось?'}</h1>
-            <div className="sub">Выберите — подскажем, кому звонить и что делать. Петербург и Ленобласть, круглосуточно.</div>
+            <div className="sub">Выберите проблему — подскажем, к кому обратиться. Работаем в Санкт-Петербурге и Ленинградской области.</div>
           </div>
           <div className="desktop-section-heading"><h2>Мои активные заявки</h2><a href="#/orders">Все заявки →</a></div>
           <div className="desktop-active-orders">
