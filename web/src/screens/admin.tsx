@@ -7,12 +7,13 @@ import { useState } from 'react';
 import { useEffect } from 'react';
 import { SupportQueue } from './support.tsx';
 import { Stats } from './stats.tsx';
+import { OpsDashboard, WorkerCommunications } from './ops.tsx';
 import { get, post, put, rub, fmtPhone, fmtTime, authedImage } from '../api.ts';
 import { STATUS, SERVICES, LINE } from '../dict.ts';
 import { useLoad, useAction, Loading } from '../ui.tsx';
 
-type AdminSection = 'stats' | 'search' | 'support' | 'verify' | 'people' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'shop' | 'settings';
-const ADMIN_SECTIONS: AdminSection[] = ['stats','search','support','verify','people','orders','dispatch','payments','offers','flagged','bases','queue','summary','shop','settings'];
+type AdminSection = 'stats' | 'search' | 'support' | 'verify' | 'people' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'shop' | 'settings' | 'demand' | 'announcements';
+const ADMIN_SECTIONS: AdminSection[] = ['stats','search','support','verify','people','orders','dispatch','payments','offers','flagged','bases','queue','summary','shop','settings','demand','announcements'];
 export function Admin({ initialSection }: { initialSection?: string }) {
   const [tab, setTab] = useState<AdminSection>(() =>
     ADMIN_SECTIONS.includes(initialSection as AdminSection) ? initialSection as AdminSection : 'summary');
@@ -20,11 +21,13 @@ export function Admin({ initialSection }: { initialSection?: string }) {
     <main>
       <h1>Администратор</h1>
       <div className="scroll-x">
-        {([['summary', 'Сводка'], ['queue', 'Очередь'], ['shop', 'Магазин'], ['stats', 'Статистика'], ['search', 'Поиск'], ['support', 'Обращения'], ['verify', 'Проверка'], ['bases', 'Рембазы'], ['orders', 'Заявки'], ['people', 'Все люди'], ['payments', 'Деньги'], ['dispatch', 'Распределение'], ['offers', 'Оферты'], ['flagged', 'Подозрительное'], ['settings', 'Настройки']] as const).map(([id, n]) => (
+        {([['summary', 'Сводка'], ['queue', 'Очередь'], ['shop', 'Магазин'], ['stats', 'Статистика'], ['demand', 'Проблемные заявки'], ['announcements', 'Объявления и комиссии'], ['search', 'Поиск'], ['support', 'Обращения'], ['verify', 'Проверка'], ['bases', 'Рембазы'], ['orders', 'Заявки'], ['people', 'Все люди'], ['payments', 'Деньги'], ['dispatch', 'Распределение'], ['offers', 'Оферты'], ['flagged', 'Подозрительное'], ['settings', 'Настройки']] as const).map(([id, n]) => (
           <button key={id} className="chip" aria-pressed={tab === id} onClick={() => setTab(id)}>{n}</button>
         ))}
       </div>
       {tab === 'stats' && <Stats />}
+      {tab === 'demand' && <OpsDashboard />}
+      {tab === 'announcements' && <WorkerCommunications />}
       {tab === 'search' && <Search />}
       {tab === 'support' && <SupportQueue />}
       {tab === 'verify' && <Verify />}
