@@ -972,3 +972,13 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
 }
 .account-menu nav { z-index: 30; }
 
+
+
+/* Narrow phone header: the account menu already contains Help and the role.
+   Keep notifications and the visible Menu trigger; avoid widening the viewport. */
+@media (max-width: 520px) {
+  .app:not(.guest-app) .top > .row > .bell[aria-label="Справка"],
+  .app:not(.guest-app) .top .pill.accent { display: none; }
+  .app:not(.guest-app) .top > .row { min-width: 0; gap: 5px; }
+  .app:not(.guest-app) .top .logo { flex-shrink: 0; }
+}
