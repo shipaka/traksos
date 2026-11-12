@@ -815,7 +815,8 @@ export function Profile() {
   const [inn, setInn] = useState(me?.company_inn ?? '');
   const [appLock, setAppLock] = useState(() => native.appLockEnabled());
   if (!me) return null;
-  const isPerformer = me.roles.some((r) => ['master', 'tow', 'service'].includes(r));
+  const isPerformer = me.roles.some((r) => r === 'master' || r === 'tow');
+  const isCustomer = me.roles.some((r) => r === 'client' || r === 'driver');
   return (
     <main>
       <h1>Профиль</h1>
@@ -856,9 +857,9 @@ export function Profile() {
         <button className="btn" disabled={busy}>Сохранить</button>
       </form>
       <div className="stack">
-        {mode !== 'client' && <button className="btn ghost" onClick={() => go('as/client')}>Кабинет клиента</button>}
+        {isCustomer && mode !== 'client' && <button className="btn ghost" onClick={() => go('as/client')}>Кабинет клиента</button>}
         {isPerformer && mode !== 'performer' && <button className="btn ghost" onClick={() => go('as/performer')}>Кабинет исполнителя</button>}
-        {!isPerformer && !me.roles.includes('insurer') && <button className="btn ghost" onClick={() => go('work/profile')}>Стать исполнителем на ТракSOS</button>}
+
         {me.roles.includes('service') && mode !== 'service' && <button className="btn ghost" onClick={() => go('as/service')}>Кабинет СТО</button>}
         {me.roles.includes('insurer') && mode !== 'insurer' && <button className="btn ghost" onClick={() => go('as/insurer')}>Кабинет страхового партнёра</button>}
         {me.roles.some((r) => r === 'admin' || r === 'moderator') && mode !== 'admin' && <button className="btn ghost" onClick={() => go('as/admin')}>Кабинет администратора</button>}
