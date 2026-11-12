@@ -15,8 +15,8 @@
     <application
         android:name=".TrakSosApp"
         android:allowBackup="false"
-        android:icon="@mipmap/ic_launcher"
-        android:roundIcon="@mipmap/ic_launcher"
+        android:icon="@drawable/ic_launcher_track"
+        android:roundIcon="@drawable/ic_launcher_track"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.TrakSOS"
