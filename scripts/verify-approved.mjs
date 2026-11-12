@@ -9,6 +9,12 @@ function expect(ok, description) {
   if (ok) console.log('OK: ' + description);
   else { console.error('FAIL: ' + description); failures.push(description); }
 }
+const LOCKED_ASSETS = {
+  // Exact approved images. Deliberate asset changes require a new owner-approved baseline.
+  'web/public/tracksos-approved-truck.webp': 'a6013f354586e669',
+  'web/public/tracksos-approved-map.webp': '994097c8c01b2c80',
+  'android/app/src/main/res/drawable-nodpi/splash_truck.webp': '5217954dcb773ecf',
+};
 async function asset(path, minBytes = 5000) {
   try {
     const a = await stat(path);
@@ -16,6 +22,9 @@ async function asset(path, minBytes = 5000) {
     if (a.size < minBytes) return;
     const md5 = createHash('sha256').update(await readFile(path)).digest('hex').slice(0, 16);
     console.log('  Asset SHA256 prefix: ' + md5);
+    if (LOCKED_ASSETS[path]) {
+      expect(md5 === LOCKED_ASSETS[path], 'approved image unchanged: ' + path);
+    }
   } catch { expect(false, path + ' is present'); }
 }
 const landing = await read('web/src/screens/login.tsx');
