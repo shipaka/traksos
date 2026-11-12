@@ -67,6 +67,14 @@ test('targeted worker announcements show only for intended role and dates',async
   const separate=await t.login('+79992221103','tow');
   const towNotices=ok(await t.api('GET','/api/worker/announcements',undefined,separate.token));
   assert.ok(!towNotices.some((x:any)=>x.id===notice.id));
+  const delivered=ok(await t.api('POST','/api/admin/announcements/'+notice.id+'/notify',{},admin.token));
+  assert.ok(delivered.recipients>=1);
+  const n=await t.db.one<{n:number}>("select count(*)::int as n from notifications where user_id=$1 and kind='announcement'",[master.id]);
+  assert.equal(n?.n,1);
+  assert.equal((await t.api('POST','/api/admin/announcements/'+notice.id+'/notify',{},admin.token)).status,400);
+  assert.equal((await t.api('POST','/api/admin/announcements/'+notice.id+'/notify',{},customer.token)).status,403);
+  const tn=await t.db.one<{n:number}>("select count(*)::int as n from notifications where user_id=$1 and kind='announcement'",[separate.id]);
+  assert.equal(tn?.n,0,'unrelated tow account must not receive master notice');
   t.clock.advance(3601);
   const expired=ok(await t.api('GET','/api/worker/announcements',undefined,master.token));
   assert.ok(!expired.some((x:any)=>x.id===notice.id));
@@ -104,6 +112,9 @@ test('zero-commission campaign is saved only for NEW matching orders, immutable 
   t.clock.advance(3601);
   const unchanged=await t.db.one<any>('select commission_pct_override from orders where id=$1',[second.order.id]);
   assert.equal(Number(unchanged.commission_pct_override),0,'existing order retains its rate');
+  const stopped=ok(await t.api('PUT','/api/admin/commission-campaigns/'+promo.id+'/status',
+    {enabled:false},admin.token));
+  assert.equal(stopped.enabled,false);
   const next=ok(await t.api('POST','/api/orders',{service:'electric',zoneId:'spb'},customer.token));
   const normal=await t.db.one<any>('select commission_pct_override from orders where id=$1',[next.order.id]);
   assert.equal(normal.commission_pct_override,null,'new order after expiry has normal commission');
