@@ -169,7 +169,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               ))}
               {mode === 'client' && <>
                 <div className="desktop-sidebar-title desktop-nav-section">Дополнительно</div>
-                {([['/services','▤','Сервисы-партнёры'],['/fleet','▣','Мой парк'],['/support','?','Поддержка'],['/profile','◉','Профиль']] as [string,string,string][]).map(([href, ic, name]) => (
+                {([['/fleet','▣','Мой парк'],['/support','?','Поддержка'],['/profile','◉','Профиль']] as [string,string,string][]).map(([href, ic, name]) => (
                   <a key={href} href={'#' + href} className={`desktop-nav-link ${here === href || here.startsWith(href + '/') ? 'active' : ''}`}>
                     <span aria-hidden="true">{ic}</span><span>{name}</span>
                   </a>
