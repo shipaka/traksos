@@ -79,6 +79,17 @@ test('подбор: приоритетные → марка → расстоян
   assert.deepEqual(r.map((x) => x.user_id), ['father', 'near-excellent', 'far-excellent', 'near-good']);
 });
 
+test('мастер с собственной СТО получает выездные заявки только по выбранным специализациям', () => {
+  const specialist = cand('master-with-service', { specialties: ['electric', 'diag'] });
+  const opts = { radiusKm: 220, maxCandidates: 10, cashDebtLimit: 300_000 };
+  const order = (service: string) => ({ service, brand: 'Scania', lat: 59.93, lng: 30.31, group_trip: false });
+  assert.deepEqual(rankCandidates(order('electric'), [specialist], opts).map(x => x.user_id), ['master-with-service']);
+  assert.deepEqual(rankCandidates(order('diag'), [specialist], opts).map(x => x.user_id), ['master-with-service']);
+  assert.deepEqual(rankCandidates(order('air'), [specialist], opts), [], 'не указанная выездная услуга недоступна');
+  assert.deepEqual(rankCandidates(order('engine'), [specialist], opts), [], 'ремонт двигателя на СТО не делает его выездной услугой');
+  assert.deepEqual(rankCandidates(order('gearbox'), [specialist], opts), [], 'КПП нельзя автоматически предлагать на парковке');
+});
+
 test('агентская схема: деньги и шкала отмены как в смете', () => {
   // Стандарт, 1 ч 24 мин: 1 500 + 2 100 = 3 600 ₽
   const s = split(S.fees, 360_000, { isPriority: false });
