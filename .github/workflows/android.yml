@@ -18,10 +18,13 @@ on:
       - 'web/sw.template.js'
       - '.github/workflows/android.yml'
   workflow_dispatch:
+  # 01:40 Moscow, after overnight web/server checks.
+  schedule:
+    - cron: '40 22 * * *'
 
 # Always build the most recent UI revision and cancel obsolete builds.
 concurrency:
-  group: android-${{ github.ref }}
+  group: android-${{ github.event_name == 'schedule' && 'nightly' || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -58,6 +61,9 @@ jobs:
           test -s android/app/src/main/assets/www/app.js
           test -s android/app/src/main/assets/www/app.css
           echo "Bundled web assets:"; du -sh android/app/src/main/assets/www
+
+      - name: Сверка дизайна до ночной сборки
+        run: node scripts/verify-approved.mjs
 
       - name: Ключ подписи
         id: keystore
@@ -99,3 +105,11 @@ jobs:
         with:
           name: traksos-${{ steps.keystore.outputs.signed == 'true' && 'release' || 'debug' }}-${{ github.run_number }}
           path: android/app/build/outputs/apk/**/*.apk
+
+      - name: Итог ночной сборки
+        if: always() && github.event_name == 'schedule'
+        run: |
+          echo '### Ночная сборка TrackSOS для Android' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Встроен полный публичный интерфейс из web/dist.' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Проверена комплектация APK и утверждённые изображения.' >> "$GITHUB_STEP_SUMMARY"
+          echo '- APK только в Artifacts, НЕ отправляется автоматически в RuStore.' >> "$GITHUB_STEP_SUMMARY"
