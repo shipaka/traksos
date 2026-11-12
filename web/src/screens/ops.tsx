@@ -1,19 +1,19 @@
 // Operational control: historical unfilled orders, demand by Moscow hour,
 // targeted notices and commission campaigns. No fake metrics.
 import { useState } from 'react';
-import { get, post, put, fmtTime } from '../api.ts';
+import { get, post, put } from '../api.ts';
 import { SERVICES, STATUS } from '../dict.ts';
 import { useLoad, useAction, Loading, useMe } from '../ui.tsx';
 
 const labels: Record<string,string> = {
   master:'Выездные мастера', tow:'Эвакуаторщики', service:'СТО', all_workers:'Все исполнители',
 };
-const dateInput = (ms:number) => {
-  const d = new Date(ms);
-  const z = new Date(ms - d.getTimezoneOffset()*60_000);
-  return z.toISOString().slice(0,16);
-};
-const datetime = (x:string) => new Date(x).toISOString();
+// Explicit Moscow time for promotions. The administrator's device can be abroad.
+const dateInput = (ms:number) => new Date(ms+3*3_600_000).toISOString().slice(0,16);
+const datetime = (x:string) => new Date(x+':00+03:00').toISOString();
+const mskTime = (iso:string) => new Date(iso).toLocaleString('ru-RU', {
+  timeZone:'Europe/Moscow',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'
+})+' МСК';
 
 function Metric({name,value,hint}:{name:string;value:number|string;hint:string}) {
   return <div className="card tile"><span className="label">{name}</span>
@@ -103,7 +103,7 @@ function IncidentRow({order:o,editable,onSave,busy}:{order:any;editable:boolean;
   return <div className="card" style={{gap:7}}>
     <div className="between"><a href={'#/order/'+o.id}><b>№{o.number} · {SERVICES[o.service]?.name??o.service}{o.is_sos?' · SOS':''}</b></a>
       <span className={'pill '+(o.status==='no_performer'?'bad':'warn')}>{STATUS[o.status]?.name??o.status}</span></div>
-    <span className="note">{fmtTime(o.created_at)} · {o.zone_id??''} · {o.address??'Адрес не указан'} · ожидание {Math.max(0,Math.round(o.elapsed_minutes))} мин</span>
+    <span className="note">{mskTime(o.created_at)} · {o.zone_id??''} · {o.address??'Адрес не указан'} · ожидание {Math.max(0,Math.round(o.elapsed_minutes))} мин</span>
     {o.had_no_performer && o.status!=='no_performer' && <span className="note">Ранее исполнитель не нашёлся; затем заявку запустили повторно. Это остаётся в аналитике.</span>}
     {o.cancel_reason&&<span className="note">Причина отмены: {o.cancel_reason}</span>}
     {editable ? <div className="stack" style={{gap:6}}>
@@ -158,8 +158,8 @@ export function WorkerCommunications() {
       <label className="stack">Сообщение
         <textarea className="field" rows={4} maxLength={3000} value={body} onChange={e=>setBody(e.target.value)} placeholder="Например: за неделю в 01:00–02:00 осталось 15 заявок без исполнителя. Укажите проверенные цифры по таблице." /></label>
       <div className="grid2">
-        <label className="stack">Начало<input type="datetime-local" className="field" value={from} onChange={e=>setFrom(e.target.value)}/></label>
-        <label className="stack">Конец<input type="datetime-local" className="field" value={to} onChange={e=>setTo(e.target.value)}/></label>
+        <label className="stack">Начало (МСК)<input type="datetime-local" className="field" value={from} onChange={e=>setFrom(e.target.value)}/></label>
+        <label className="stack">Конец (МСК)<input type="datetime-local" className="field" value={to} onChange={e=>setTo(e.target.value)}/></label>
       </div>
       <label className="row"><input type="checkbox" checked={published} onChange={e=>setPublished(e.target.checked)}/> Опубликовать после наступления даты</label>
       <button className="btn" disabled={busy||title.trim().length<3||body.trim().length<3} onClick={a}>Сохранить объявление</button>
@@ -174,8 +174,8 @@ export function WorkerCommunications() {
       <label className="stack">Комиссия платформы, % (0 — без комиссии)
         <input className="field" type="number" min={0} max={100} step={0.5} value={promoPct} onChange={e=>setPromoPct(Number(e.target.value))}/></label>
       <div className="grid2">
-        <label className="stack">С<input type="datetime-local" className="field" value={promoFrom} onChange={e=>setPromoFrom(e.target.value)}/></label>
-        <label className="stack">До<input type="datetime-local" className="field" value={promoTo} onChange={e=>setPromoTo(e.target.value)}/></label>
+        <label className="stack">С (МСК)<input type="datetime-local" className="field" value={promoFrom} onChange={e=>setPromoFrom(e.target.value)}/></label>
+        <label className="stack">До (МСК)<input type="datetime-local" className="field" value={promoTo} onChange={e=>setPromoTo(e.target.value)}/></label>
       </div>
       <label className="stack">Причина изменения
         <textarea className="field" rows={2} maxLength={500} value={reason} onChange={e=>setReason(e.target.value)}/></label>
@@ -187,8 +187,8 @@ export function WorkerCommunications() {
         <div key={x.id} className="list-item stack">
           <b>{x.title} · {labels[x.audience]??x.audience}</b>
           <span className="note">{x.body}</span>
-          <span className="note">{fmtTime(x.starts_at)} — {fmtTime(x.ends_at)} · {x.published?'опубликовано':'черновик'}</span>
-          <span className="note">{x.notified_at?'Уведомление отправлено '+fmtTime(x.notified_at)+' · получателей '+x.notified_count:'Push-рассылка ещё не отправлялась'}</span>
+          <span className="note">{mskTime(x.starts_at)} — {mskTime(x.ends_at)} · {x.published?'опубликовано':'черновик'}</span>
+          <span className="note">{x.notified_at?'Уведомление отправлено '+mskTime(x.notified_at)+' · получателей '+x.notified_count:'Push-рассылка ещё не отправлялась'}</span>
           {x.published && !x.notified_at && <button className="btn small" disabled={busy} onClick={async()=>{
             if(!window.confirm('Отправить одно уведомление всем исполнителям выбранной группы? Повторная рассылка этого объявления будет заблокирована.'))return;
             const r=await run(()=>post('/api/admin/announcements/'+x.id+'/notify',{}),'Уведомления отправлены');
@@ -206,7 +206,7 @@ export function WorkerCommunications() {
       {!campaigns.data?<Loading error={campaigns.error}/>:campaigns.data.length===0?<span className="note">Акций пока нет</span>:campaigns.data.map((x:any)=>
         <div key={x.id} className="list-item stack">
           <b>{x.commission_pct}% · {x.service?(SERVICES[x.service]?.name??x.service):'Все выездные услуги'}</b>
-          <span className="note">{fmtTime(x.starts_at)} — {fmtTime(x.ends_at)} · {x.enabled?'включена':'выключена'}</span>
+          <span className="note">{mskTime(x.starts_at)} — {mskTime(x.ends_at)} · {x.enabled?'включена':'выключена'}</span>
           <span className="note">{x.reason}</span>
           <button className="btn ghost small" disabled={busy} onClick={async()=>{
             if(!window.confirm(x.enabled?'Отключить акцию для новых заявок? Уже созданные заявки сохранят свою ставку.':'Включить акцию для новых заявок?'))return;
@@ -235,12 +235,12 @@ export function WorkerNotices({audience}:{audience?:'service'}) {
     {offers.map((x:any)=><div key={'campaign-'+x.id} className="card hi">
       <b>Комиссия платформы {x.commission_pct}%{x.service?' · '+(SERVICES[x.service]?.name??x.service):''}</b>
       <span className="note">{x.reason}</span>
-      <span className="note">До {fmtTime(x.ends_at)}. Ставка закрепляется за новыми заявками, созданными во время акции.</span>
+      <span className="note">До {mskTime(x.ends_at)}. Ставка закрепляется за новыми заявками, созданными во время акции.</span>
     </div>)}
     {announcements.map((x:any)=><div key={x.id} className="card hi">
       <b>{x.title}</b>
       <span className="note">{x.body}</span>
-      <span className="note">До {fmtTime(x.ends_at)}{x.service?' · '+(SERVICES[x.service]?.name??x.service):''}</span>
+      <span className="note">До {mskTime(x.ends_at)}{x.service?' · '+(SERVICES[x.service]?.name??x.service):''}</span>
     </div>)}
   </div>;
 }
