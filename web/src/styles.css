@@ -869,3 +869,38 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
   .app:not(.guest-app) :is(.btn,.opt,.linkrow):hover{transform:none!important;}
   .app:not(.guest-app) .radar *, .app:not(.guest-app) .call .ring{animation:none!important;}
 }
+
+
+/* Signed-in client hero and quick links: remove leftover orange / white desktop styling. */
+@media(min-width:900px){
+  .app:not(.guest-app) .desktop-hero::before{
+    background:linear-gradient(92deg,rgba(7,22,40,.84),rgba(7,22,40,.52) 57%,rgba(7,22,40,.05));
+  }
+  .app:not(.guest-app) .desktop-hero h1 span{color:#48ddf4;}
+  .app:not(.guest-app) .desktop-primary-action{
+    color:white;background:linear-gradient(110deg,#ff278a,#d90c68);
+    box-shadow:0 8px 23px rgba(240,24,115,.23);
+  }
+  .app:not(.guest-app) .desktop-outline-action{border-color:#65a6c9;background:rgba(11,40,66,.68);}
+  .app:not(.guest-app) .desktop-quick-card{
+    color:#effaff;background:linear-gradient(135deg,#113650,#0b2841);
+    border-color:#345c78;box-shadow:0 8px 20px rgba(0,10,24,.18);
+  }
+  .app:not(.guest-app) .desktop-quick-card:hover{border-color:#1bcaeb;background:#153e5b;}
+  .app:not(.guest-app) .desktop-quick-icon{background:#163c59;color:#39def4;}
+  .app:not(.guest-app) .desktop-quick-card b{color:#f2faff;}
+  .app:not(.guest-app) .desktop-quick-card small{color:#a8c4db;}
+  .app:not(.guest-app) .desktop-quick-card > span:last-child{color:#5ad9f1;}
+  .app:not(.guest-app) .desktop-section-heading h2,
+  .app:not(.guest-app) .desktop-aside-card h2{color:#f3faff;}
+  .app:not(.guest-app) .desktop-section-heading a,
+  .app:not(.guest-app) .desktop-aside-cta{color:#58ddf5;}
+  .app:not(.guest-app) .desktop-empty-orders,
+  .app:not(.guest-app) .desktop-aside-card{
+    color:#adcadc;background:linear-gradient(135deg,#11334e,#0c2740);
+    border-color:#355b78;box-shadow:0 8px 20px rgba(0,10,24,.16);
+  }
+  .app:not(.guest-app) .desktop-aside-card p{color:#a7c6d9;}
+  .app:not(.guest-app) .desktop-aside-symbol{color:#fa348c;}
+  .app:not(.guest-app) .desktop-content .client-home .live-strip{color:#a4c8e1;}
+}
