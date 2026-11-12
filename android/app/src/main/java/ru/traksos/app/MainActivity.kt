@@ -19,6 +19,7 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.ImageView
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -248,8 +249,8 @@ class MainActivity : AppCompatActivity() {
     /** Лёгкая заставка: показывается ТОЛЬКО пока WebView загружает и проверяет сайт.
      * Дизайн ориентирован на согласованный первый splash-концепт:
      * navy + magenta, логотип и индикатор, без лишних запросов к серверу.
-     * Фотореалистичный фон с фурой из утверждённой картинки ещё требует
-     * добавления согласованного растрового ресурса в drawable.
+     * Локальный ресурс splash_truck.webp — адаптация грузовика из утверждённого референса,
+     * доступна без интернета. Логотип и индикатор рисуются нативно поверх фотографии.
      */
     private fun createStartupOverlay(): View {
         val screen = FrameLayout(this)
@@ -257,12 +258,28 @@ class MainActivity : AppCompatActivity() {
             GradientDrawable.Orientation.TL_BR,
             intArrayOf(Color.rgb(4, 19, 36), Color.rgb(9, 33, 60), Color.rgb(30, 17, 43))
         )
+        val density = resources.displayMetrics.density
+        val art = ImageView(this)
+        art.setImageResource(R.drawable.splash_truck)
+        art.scaleType = ImageView.ScaleType.CENTER_CROP
+        art.contentDescription = "Брендированный грузовик TrackSOS в Санкт-Петербурге"
+        val artParams = FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            (resources.displayMetrics.heightPixels * 0.56f).toInt(),
+            Gravity.BOTTOM
+        )
+        artParams.bottomMargin = (63 * density).toInt()
+        screen.addView(art, artParams)
+
         val stack = LinearLayout(this)
         stack.orientation = LinearLayout.VERTICAL
-        stack.gravity = Gravity.CENTER
-        val container = FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT)
-        container.gravity = Gravity.CENTER
-        container.leftMargin = (28 * resources.displayMetrics.density).toInt()
+        stack.gravity = Gravity.CENTER_HORIZONTAL
+        val container = FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT
+        )
+        container.gravity = Gravity.TOP
+        container.topMargin = (resources.displayMetrics.heightPixels * 0.12f).toInt()
+        container.leftMargin = (28 * density).toInt()
         container.rightMargin = container.leftMargin
 
         val title = TextView(this)
@@ -290,9 +307,12 @@ class MainActivity : AppCompatActivity() {
         progress.indeterminateTintList = ColorStateList.valueOf(Color.rgb(255, 27, 121))
         val progressLayout = LinearLayout.LayoutParams((185 * resources.displayMetrics.density).toInt(), (5 * resources.displayMetrics.density).toInt())
         progressLayout.gravity = Gravity.CENTER
-        progressLayout.topMargin = (50 * resources.displayMetrics.density).toInt()
-        stack.addView(progress, progressLayout)
         screen.addView(stack, container)
+        val progressAtBottom = FrameLayout.LayoutParams(
+            (190 * density).toInt(), (5 * density).toInt(), Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+        )
+        progressAtBottom.bottomMargin = (38 * density).toInt()
+        screen.addView(progress, progressAtBottom)
         return screen
     }
 
