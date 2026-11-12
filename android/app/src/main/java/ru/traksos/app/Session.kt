@@ -27,6 +27,10 @@ object Session {
     fun server(ctx: Context): String =
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("server", null) ?: BuildConfig.APP_URL
 
+    /** В тестовой сборке открываем демо, пока пользователь не указал реальный HTTPS-стенд. */
+    fun hasCustomServer(ctx: Context): Boolean =
+        !ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("server", null).isNullOrBlank()
+
     fun setServer(ctx: Context, raw: String) {
         var u = raw.trim().trimEnd('/')
         if (u.isNotEmpty() && !u.startsWith("http")) u = "https://$u"
