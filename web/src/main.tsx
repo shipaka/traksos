@@ -149,11 +149,12 @@ function App() {
     case 'invite': screen = <Invite />; break;
     case 'r': screen = <Invite />; break;
     case 'work':
+      if (!isPerformer) { screen = <Home />; break; }
       screen = b === 'profile' || (b === 'me' && !route[2]) ? <PerformerHub />
         : b === 'me' ? ({ about: <AboutSection />, phone: <PhoneSection />, schedule: <ScheduleSection />, cars: <CarsSection />, tax: <TaxSection />, money: <MoneySection />, level: <LevelSection /> } as Record<string, JSX.Element>)[route[2]] ?? <PerformerHub />
         : b === 'filter' ? <FilterSection /> : b === 'jobs' ? <Orders as="performer" /> : b === 'docs' ? <Documents /> : <Work />;
       break;
-    case 'base': screen = b === 'car' && route[2] ? <BaseCar id={route[2]} /> : b === 'me' ? <BaseSetup /> : b === 'money' ? <BaseMoney /> : <BaseHome />; break;
+    case 'base': screen = !isService ? <Home /> : b === 'car' && route[2] ? <BaseCar id={route[2]} /> : b === 'me' ? <BaseSetup /> : b === 'money' ? <BaseMoney /> : <BaseHome />; break;
     case 'services': screen = b && route[2] === 'book' ? <BookForm id={b} /> : b ? <CenterPage id={b} /> : <ServicesList />; break;
     case 'booking': screen = <BookingPage id={b} />; break;
     case 'fleet': screen = <Fleet />; break;
@@ -243,7 +244,6 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {me && mode === 'performer' && <span className="pill accent">исполнитель</span>}
           {me && mode === 'admin' && <span className="pill accent">админ</span>}
           {me && mode === 'service' && <span className="pill accent">рембаза</span>}
-          {me && mode === 'client' && !me.owner_id && <a href="#/fleet" className="pill" style={{ textDecoration: 'none' }}>Мой парк</a>}
           {me && <a href="#/help" className="bell" aria-label="Справка">?</a>}
           {me && <Bell />}
           {me && <details className="account-menu" key={here}>
