@@ -33,6 +33,7 @@ import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
+import androidx.webkit.WebViewAssetLoader
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.OnBackPressedCallback
@@ -47,6 +48,7 @@ import java.lang.ref.WeakReference
 /** Оболочка: сайт ТракSOS в WebView + мост для пушей и вызовов */
 class MainActivity : AppCompatActivity() {
     private lateinit var web: WebView
+    private lateinit var bundledAssets: WebViewAssetLoader
     private var startupOverlay: View? = null
     private var fileUploadCallback: ValueCallback<Array<Uri>>? = null
     private val filePicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -74,6 +76,11 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         current = WeakReference(this)
+        // Same official HTTPS origin: UI resources live in the APK, API calls stay on the network.
+        bundledAssets = WebViewAssetLoader.Builder()
+            .setDomain(Uri.parse(Session.server(this)).host ?: "traksos.ru")
+            .addPathHandler("/", BundledWeb(this))
+            .build()
         web = WebView(this)
         val root = FrameLayout(this)
         root.addView(web, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
@@ -99,10 +106,21 @@ class MainActivity : AppCompatActivity() {
         // Only the packaged official HTTPS origin receives the native bridge in release.
         web.addJavascriptInterface(WebBridge(this), "TrakSOSNative")
         web.webViewClient = object : WebViewClient() {
+            override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+                val url = request.url
+                if (url.scheme != "https") return null
+                // Never embed untrusted third-party frames into a WebView with a JS bridge.
+                // External user-initiated links open separately through Android.
+                if (!url.host.equals(Uri.parse(Session.server(this@MainActivity)).host, ignoreCase = true)) {
+                    return WebResourceResponse("text/plain", "UTF-8", java.io.ByteArrayInputStream(byteArrayOf()))
+                }
+                return bundledAssets.shouldInterceptRequest(url)
+            }
             override fun shouldOverrideUrlLoading(view: WebView, req: WebResourceRequest): Boolean {
                 val url = req.url
                 // Свой сайт — внутри; карты, телефоны и прочее — во внешних приложениях
-                if (url.host == Uri.parse(Session.server(this@MainActivity)).host) return false
+                if (url.scheme == "https" &&
+                    url.host.equals(Uri.parse(Session.server(this@MainActivity)).host, ignoreCase = true)) return false
                 return try { startActivity(Intent(Intent.ACTION_VIEW, url)); true } catch (_: Exception) { true }
             }
             override fun onPageStarted(view: WebView, url: String, favicon: android.graphics.Bitmap?) {
@@ -168,11 +186,7 @@ class MainActivity : AppCompatActivity() {
 
         // Отладочный APK сразу показывает автономное демо, пока тестовый стенд не задан.
         // Release-сборка по умолчанию открывает официальный сервер.
-        if (BuildConfig.DEBUG && !Session.hasCustomServer(this)) {
-            showOffline(getString(R.string.no_connection))
-        } else {
-            web.loadUrl(urlFor(intent.getStringExtra(EXTRA_PATH)))
-        }
+        web.loadUrl(urlFor(intent.getStringExtra(EXTRA_PATH)))
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -201,11 +215,7 @@ class MainActivity : AppCompatActivity() {
 
     /** Открыть сайт заново — после «Повторить» или смены адреса сервера */
     fun reload() = web.post {
-        if (BuildConfig.DEBUG && !Session.hasCustomServer(this)) {
-            showOffline(getString(R.string.no_connection))
-        } else {
-            web.loadUrl(urlFor(null))
-        }
+        web.loadUrl(urlFor(null))
     }
 
     private fun urlFor(path: String?) = Session.server(this).trimEnd('/') + "/" + (path?.let { "#/$it" } ?: "")
