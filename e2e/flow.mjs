@@ -255,8 +255,15 @@ await shot(m, '16b-master-money');
 await m.getByText('← Профиль').click();
 await m.getByRole('button', { name: /Аккаунт/ }).click();
 // Master and client identities must stay exclusive: no shortcut to a client cabinet.
-if (await m.getByRole('button', { name: 'Кабинет клиента' }).count())
-  throw new Error('Provider account incorrectly exposes client mode');
+if (await m.getByRole('button', { name: 'Кабинет клиента' }).count()) {
+  const roles = await m.evaluate(async () => {
+    const token = localStorage.getItem('traksos.token');
+    const response = await fetch('/api/me', { headers: { authorization: 'Bearer ' + token } });
+    const user = await response.json();
+    return { roles: user.roles, accountType: user.registration_kind };
+  });
+  throw new Error('Provider account incorrectly exposes client mode: ' + JSON.stringify(roles));
+}
 await m.goto(BASE + '/#/sos');
 await m.getByText('Для вызова SOS нужен клиентский аккаунт').waitFor();
 await m.goto(BASE + '/#/work');
