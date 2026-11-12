@@ -26,7 +26,7 @@ export class OffersService {
   audiences(user: AuthUser) {
     const r = user.roles;
     const a: string[] = [];
-    if (r.includes('client') || r.includes('driver') || (!isPerformer(r) && !r.some((x) => x === 'admin' || x === 'moderator'))) a.push('client');
+    if (r.includes('client') || r.includes('driver')) a.push('client');
     if (isPerformer(r)) a.push('performer');
     a.push('privacy');
     return a;
