@@ -9,7 +9,7 @@ on:
 # Keep only the newest validation run for each branch/PR.
 # Rapid commits otherwise queue redundant full database and browser test suites.
 concurrency:
-  group: validation-${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  group: validation-${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
