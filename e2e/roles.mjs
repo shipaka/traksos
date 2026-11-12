@@ -23,7 +23,7 @@ try {
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(base + '/#/');
-    await page.getByRole('button', { name: 'Войти в личный кабинет' }).click();
+    await page.getByRole('button', { name: 'Войти в кабинет' }).click();
     await page.locator('input[type=tel]').fill(role.phone);
     await page.getByRole('button', { name: 'Получить код' }).click();
     const hint = await page.getByText(/Тестовый режим: код/).textContent();
