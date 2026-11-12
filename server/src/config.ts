@@ -5,6 +5,8 @@ const env = process.env;
 export const config = {
   env: env.NODE_ENV ?? 'development',
   port: Number(env.PORT ?? 8080),
+  /** Trust X-Forwarded-For only from our private reverse proxy, never from direct clients. */
+  trustProxy: env.TRUST_PROXY === 'true',
   databaseUrl: env.DATABASE_URL ?? 'postgres://postgres@127.0.0.1:5432/traksos',
   /** Секрет для хэшей кодов и токенов. В production обязателен. */
   secret: env.APP_SECRET ?? 'dev-secret-change-me',
