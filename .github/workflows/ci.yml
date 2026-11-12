@@ -58,6 +58,8 @@ jobs:
             cat /tmp/traksos-server.log
             exit 1
           fi
+          # Browser role checks require a real company/driver membership, not just a phone number.
+          DATABASE_URL=postgres://postgres@127.0.0.1:5432/traksos npm -w server run seed
           timeout 2m node e2e/site.mjs e2e/shots
           timeout 4m node e2e/roles.mjs e2e/shots
           timeout 10m node e2e/flow.mjs e2e/shots
