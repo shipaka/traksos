@@ -79,7 +79,8 @@ export function Login({ driver }: { driver?: boolean } = {}) {
         <div className="public-hero-copy">
           <span className="public-eyebrow">ТракSOS · Санкт-Петербург и Ленинградская область</span>
           <h1>Помощь грузовику <em>в дороге 24/7</em></h1>
-          <p>Мастера, диагностика и эвакуация. Оформите заявку, найдите специалиста и следите за работой в одном сервисе.</p>
+          <p>Выездная помощь грузовикам в Санкт-Петербурге и Ленинградской области: мастера, диагностика, эвакуация и связь по заявке в одном сервисе.</p>
+          <div className="launch-region" role="note"><span className="launch-region-dot" aria-hidden="true" /> Зона запуска: Санкт-Петербург и Ленинградская область. В других регионах выездные услуги пока недоступны.</div>
           <div className="public-actions">
             <button type="button" className="public-button public-button-sos" onClick={() => setIntent('help')}>SOS · Нужна помощь</button>
             <button type="button" className="public-button public-button-outline" onClick={() => setIntent('login')}>Войти в личный кабинет</button>
