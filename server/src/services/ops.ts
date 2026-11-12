@@ -75,7 +75,7 @@ export class OpsService {
   }
 
   async announcements(audience?: Audience, includeHistory = false, service?: string) {
-    const rows = await this.db.query<any>(`select id,audience,service,title,body,starts_at,ends_at,published,created_at
+    const rows = await this.db.query<any>(`select id,audience,service,title,body,starts_at,ends_at,published,created_at,notified_at,notified_count
       from worker_announcements
       where ($1::boolean or (published=true and starts_at <= $2 and ends_at > $2))
         and ($3::text is null or audience in ($3,'all_workers'))
