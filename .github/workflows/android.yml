@@ -9,8 +9,20 @@ name: Android
 on:
   push:
     branches: [main]
-    paths: ['android/**', '.github/workflows/android.yml']
+    paths:
+      - 'android/**'
+      - 'web/src/**'
+      - 'web/public/**'
+      - 'web/index.html'
+      - 'web/build.mjs'
+      - 'web/sw.template.js'
+      - '.github/workflows/android.yml'
   workflow_dispatch:
+
+# Always build the most recent UI revision and cancel obsolete builds.
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   apk:
@@ -29,6 +41,24 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: 8.10.2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Встроить фронтенд в APK
+        env:
+          API_URL: ""
+        run: |
+          npm ci
+          npm -w web run build
+          mkdir -p android/app/src/main/assets/www
+          cp -a web/dist/. android/app/src/main/assets/www/
+          test -s android/app/src/main/assets/www/index.html
+          test -s android/app/src/main/assets/www/app.js
+          test -s android/app/src/main/assets/www/app.css
+          echo "Bundled web assets:"; du -sh android/app/src/main/assets/www
 
       - name: Ключ подписи
         id: keystore
@@ -56,6 +86,15 @@ jobs:
           else
             gradle --no-daemon assembleDebug
           fi
+
+      - name: Проверка веб-ресурсов внутри APK
+        run: |
+          APK=$(find android/app/build/outputs/apk -name '*.apk' | head -1)
+          test -n "$APK"
+          unzip -l "$APK" | grep 'assets/www/index.html'
+          unzip -l "$APK" | grep 'assets/www/app.js'
+          unzip -l "$APK" | grep 'assets/www/app.css'
+          echo "APK includes the public UI without network access"
 
       - uses: actions/upload-artifact@v4
         with:
