@@ -98,8 +98,9 @@ export function createApp(d: Deps) {
   r.post('/api/auth/code', false, (c: Ctx) => auth.requestCode(parse(z.object({ phone: z.string() }), c.body).phone, c.ip));
   r.post('/api/auth/verify', false, async (c: Ctx) => {
     const b = parse(z.object({ phone: z.string(), code: z.string().min(4).max(6), role: z.enum(SELF_ROLES).optional(),
-      device: z.string().max(200).optional(), acceptOffers: z.boolean().optional(), ref: z.string().max(20).optional() }), c.body);
-    const r = await auth.verify(b.phone, b.code, b.role, b.device);
+      device: z.string().max(200).optional(), accountType: z.enum(['owner','driver','master','tow','service','master_service','insurer']).optional(),
+      acceptOffers: z.boolean().optional(), ref: z.string().max(20).optional() }), c.body);
+    const r = await auth.verify(b.phone, b.code, b.role, b.device, b.accountType);
     // Вход по приглашению: код из ссылки привязывается только к новому номеру
     if (b.ref) await referral.attach(r.user as any, b.ref).catch(() => false);
     // Галочка «Согласен с офертой» на экране входа — записываем согласие на действующие редакции
