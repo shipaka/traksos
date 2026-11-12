@@ -4,6 +4,22 @@ const OUT = process.argv[2] ?? 'e2e/shots';
 await (await import('node:fs/promises')).mkdir(OUT, { recursive: true });
 const shot = async (page, name) => page.screenshot({ path: `${OUT}/${name}.png`, fullPage: false });
 const errors = [];
+async function assertDashboardTheme(page, role) {
+  const result = await page.evaluate(() => {
+    const app = document.querySelector('.app');
+    const card = document.querySelector('.card');
+    if (!app || !card) return null;
+    const css = getComputedStyle(app);
+    return {
+      theme: css.getPropertyValue('--accent').trim(),
+      gradient: getComputedStyle(card).backgroundImage,
+      overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 2,
+    };
+  });
+  if (!result || result.theme !== '#f51a78' || !result.gradient.includes('gradient') || result.overflow)
+    throw new Error('Dashboard theme regression (' + role + '): ' + JSON.stringify(result));
+}
+
 
 async function api(method, path, body, token) {
   const r = await fetch(BASE + path, { method, headers: { 'content-type': 'application/json', ...(token ? { authorization: 'Bearer ' + token } : {}) }, body: body ? JSON.stringify(body) : undefined });
@@ -91,6 +107,7 @@ await m.goto(BASE + '/#/work');
 await m.getByRole('button', { name: /^Свободен/ }).waitFor({ timeout: 10000 });
 await m.getByRole('button', { name: /^Свободен/ }).click();
 await m.getByText(/Геолокация включена/).waitFor();
+await assertDashboardTheme(m, 'master');
 await shot(m, '02-master-online');
 
 // Клиент
@@ -100,6 +117,7 @@ await login(k, '+79991112233', 'help');
 await k.waitForURL(/#\/sos/);
 await k.goto(BASE + '/#/');
 await k.getByText('Что случилось?').first().waitFor();
+await assertDashboardTheme(k, 'client');
 await shot(k, '03-client-home');
 await k.getByRole('link', { name: /SOS/ }).first().click();
 await k.getByRole('button', { name: /Не заводится/ }).click();
@@ -175,6 +193,7 @@ await shot(m, '11-master-balance');
 await a.goto(BASE + '/#/admin');
 await a.getByRole('button', { name: 'Распределение' }).click();
 await a.getByText('Сначала заявки нам').waitFor();
+await assertDashboardTheme(a, 'admin');
 await shot(a, '12-admin-dispatch');
 await a.getByRole('button', { name: 'Деньги', exact: true }).click();
 await a.getByText('Способы оплаты').waitFor();
