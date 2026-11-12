@@ -262,7 +262,8 @@ if (await m.getByRole('button', { name: 'Кабинет клиента' }).count
     const user = await response.json();
     return { roles: user.roles, accountType: user.registration_kind };
   });
-  throw new Error('Provider account incorrectly exposes client mode: ' + JSON.stringify(roles));
+  const buttons = await m.getByRole('button', { name: 'Кабинет клиента' }).allTextContents();
+  throw new Error('Provider account incorrectly exposes client mode: ' + JSON.stringify({roles, buttons, url:m.url()}));
 }
 await m.goto(BASE + '/#/sos');
 await m.getByText('Для вызова SOS нужен клиентский аккаунт').waitFor();
