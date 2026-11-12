@@ -65,7 +65,7 @@ export class PaymentsService implements PaymentHooks {
     const m = this.orders.money(order);
     const perf = await q.one<{ is_priority: boolean }>('select is_priority from performer_profiles where user_id=$1', [order.performer_id]);
     const fees = await this.settings.get('fees');
-    const s = split(fees, m.amount, { isPriority: !!perf?.is_priority });
+    const s = split(fees, m.amount, { isPriority: !!perf?.is_priority, overridePct: order.commission_pct_override == null ? null : Number(order.commission_pct_override) });
 
     if (order.payment_method === 'cash') {
       // Клиент отдал мастеру итог со скидкой; мастер должен площадке сбор + вознаграждение − скидку.
@@ -128,7 +128,7 @@ export class PaymentsService implements PaymentHooks {
       [pay.id, c.refund > 0 ? 'partially_refunded' : 'captured', c.refund]);
     const fees = await this.settings.get('fees');
     const perf = await q.one<{ is_priority: boolean }>('select is_priority from performer_profiles where user_id=$1', [order.performer_id]);
-    const commission = pct(c.toPerformer, commissionPct(fees, { isPriority: !!perf?.is_priority }));
+    const commission = pct(c.toPerformer, commissionPct(fees, { isPriority: !!perf?.is_priority, overridePct: order.commission_pct_override == null ? null : Number(order.commission_pct_override) }));
     await this.ledger(q, order.id, pay.id, [
       { account: 'client', amount: -keep, kind: 'payment', note: `Отмена (${stage}): удержано ${rub(keep)}, возврат ${rub(c.refund)}` },
       { account: 'performer', performerId: order.performer_id, amount: c.toPerformer - commission, kind: 'earning' },
@@ -225,7 +225,7 @@ export class PaymentsService implements PaymentHooks {
     const m = this.orders.money(order);
     const perf = await q.one<{ is_priority: boolean }>('select is_priority from performer_profiles where user_id=$1', [order.performer_id]);
     const fees = await this.settings.get('fees');
-    const s = split(fees, m.amount, { isPriority: !!perf?.is_priority });
+    const s = split(fees, m.amount, { isPriority: !!perf?.is_priority, overridePct: order.commission_pct_override == null ? null : Number(order.commission_pct_override) });
     await this.ledger(q, orderId, null, [
       { account: 'client', amount: -m.total, kind: 'payment' },
       { account: 'performer', performerId: order.performer_id, amount: m.amount - s.commission, kind: 'earning' },
@@ -245,7 +245,7 @@ export class PaymentsService implements PaymentHooks {
       const order = (await q.one('select * from orders where id=$1', [pay.order_id]))!;
       const fees = await this.settings.get('fees');
       const perf = await q.one<{ is_priority: boolean }>('select is_priority from performer_profiles where user_id=$1', [order.performer_id]);
-      const s = split(fees, pay.amount, { isPriority: !!perf?.is_priority });
+      const s = split(fees, pay.amount, { isPriority: !!perf?.is_priority, overridePct: order.commission_pct_override == null ? null : Number(order.commission_pct_override) });
       await this.ledger(q, order.id, pay.id, [
         { account: 'client', amount: -pay.total, kind: 'payment', note: 'Оплата по счёту' },
         { account: 'performer', performerId: order.performer_id, amount: pay.amount - s.commission, kind: 'earning' },
