@@ -14,6 +14,8 @@ const JOIN_ROLES = [
   { id: 'master', name: 'Я мастер', hint: 'Электрик, диагност, воздушник, автономщик, шиномонтаж — специализация в профиле' },
   { id: 'tow', name: 'Я эвакуаторщик', hint: 'Заявки на эвакуацию приходят как звонок' },
   { id: 'service', name: 'Я рембаза (сервис)', hint: 'Клиенты записываются к вам, мастера советуют вас' },
+  { id: 'master_service', name: 'Мастер и своя СТО', hint: 'Два кабинета: выездные услуги отдельно, ремонт на своей рембазе отдельно' },
+  { id: 'insurer', name: 'Я представитель страховой компании', hint: 'Отдельный тип аккаунта: не совмещается с клиентом или мастером' },
 ] as const;
 type JoinRole = (typeof JOIN_ROLES)[number]['id'];
 type Intent = 'help' | 'login' | 'register' | 'join';
@@ -22,8 +24,9 @@ type Intent = 'help' | 'login' | 'register' | 'join';
 export function homeFor(roles: string[], intent: Intent): string {
   if (intent === 'help') return '#/sos';
   const performer = roles.includes('master') || roles.includes('tow');
-  if (intent === 'join') return performer ? '#/as/performer' : '#/as/service';
+  if (intent === 'join') return roles.includes('insurer') ? '#/insurance' : performer ? '#/as/performer' : '#/as/service';
   if (roles.includes('admin') || roles.includes('moderator')) return '#/as/admin';
+  if (roles.includes('insurer')) return '#/insurance';
   if (roles.includes('client') || roles.includes('driver')) return '#/as/client';
   if (performer) return '#/as/performer';
   if (roles.includes('service')) return '#/as/service';
@@ -39,6 +42,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const [code, setCode] = useState('');
   const [devCode, setDevCode] = useState<string | null>(null);
   const [role, setRole] = useState<JoinRole>('master');
+  const [customerType, setCustomerType] = useState<'owner' | 'driver'>('owner');
   const [agree, setAgree] = useState(false);
   const toast = useToast();
   const [appealToken, setAppealToken] = useState<string | null>(null);
@@ -55,7 +59,10 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   async function verify() {
     const r = await run(async () => {
       try {
-        return await post('/api/auth/verify', { phone, code, role: intent === 'join' ? role : undefined, ref: (() => { try { return localStorage.getItem('traksos.ref') ?? undefined; } catch { return undefined; } })(), device: navigator.userAgent.slice(0, 200), acceptOffers: agree });
+        return await post('/api/auth/verify', { phone, code,
+          role: intent === 'join' ? (role === 'master_service' ? 'master' : role) : undefined,
+          accountType: intent === 'join' ? role : intent === 'register' || intent === 'help' ? customerType : undefined,
+          ref: (() => { try { return localStorage.getItem('traksos.ref') ?? undefined; } catch { return undefined; } })(), device: navigator.userAgent.slice(0, 200), acceptOffers: agree });
       } catch (e) {
         // Заблокирован — показываем форму обжалования, номер уже подтверждён кодом
         if (e instanceof ApiError && e.code === 'blocked' && e.data?.appealToken) { setAppealToken(e.data.appealToken); return null; }
@@ -70,7 +77,10 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
       await reload();
       let qr: string | null = null;
       try { qr = sessionStorage.getItem('traksos.qr'); } catch { /* */ }
-      location.hash = qr ? '#/qr/' + qr : intent === 'join' && role !== 'service' ? '#/work/profile' : homeFor(r.user?.roles ?? [], intent ?? 'login');
+      location.hash = qr ? '#/qr/' + qr
+        : intent === 'join' && role === 'insurer' ? '#/insurance'
+        : intent === 'join' && role === 'service' ? '#/as/service'
+        : intent === 'join' ? '#/work/profile' : homeFor(r.user?.roles ?? [], intent ?? 'login');
     }
   }
 
@@ -198,6 +208,14 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         </div>
       ) : step === 'phone' ? (
         <form className="stack" onSubmit={(e) => { e.preventDefault(); sendCode(); }}>
+          {(intent === 'register' || intent === 'help') && <div className="stack" role="group" aria-label="Тип клиента">
+            <span className="label">Как вы пользуетесь транспортом?</span>
+            <div className="grid2">
+              <button type="button" className="seg" aria-pressed={customerType === 'owner'} onClick={() => setCustomerType('owner')}>Владелец / автопарк</button>
+              <button type="button" className="seg" aria-pressed={customerType === 'driver'} onClick={() => setCustomerType('driver')}>Водитель автопарка</button>
+            </div>
+            {customerType === 'driver' && <span className="note">После входа владелец сможет привязать вас к своей машине по приглашению или QR-коду.</span>}
+          </div>}
           {intent === 'join' && <div className="stack">
             {JOIN_ROLES.map((r) => (
               <button key={r.id} type="button" className="opt" aria-pressed={role === r.id} onClick={() => setRole(r.id)}>
