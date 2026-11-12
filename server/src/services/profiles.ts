@@ -3,6 +3,7 @@ import type { SettingsService } from './settings.ts';
 import { bad, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { slot, endOfMoscowDay, validSchedule, type Schedule } from '../domain/schedule.ts';
 import { normalizePhone } from '../util.ts';
+import { assertRoleExtension } from '../domain/roles.ts';
 
 export interface PerformerInput {
   kind: 'master' | 'tow' | 'service' | 'ecu';
@@ -68,6 +69,8 @@ export class ProfilesService {
     if (p.car && p.cars && !p.cars.some((c) => c.plate === p.car!.plate)) throw bad('bad_car', 'Выберите машину из своего списка');
 
     const role = p.kind === 'ecu' ? 'master' : p.kind;
+    const userRoles = (await this.db.one<{ roles: string[] }>('select roles from users where id=$1', [user.id]))?.roles ?? user.roles;
+    assertRoleExtension(userRoles, role);
     await this.db.tx(async (q) => {
       await q.query(
         `update users set roles = (select array(select distinct unnest(roles || $2::text[]))), name = coalesce($3, name) where id=$1`,
