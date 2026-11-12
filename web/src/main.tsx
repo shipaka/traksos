@@ -186,17 +186,34 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     : mode === 'admin'
       ? [['/admin', '▦', 'Управление'], ['/shop', '🛍', 'Магазин']]
       : [['/', '🔧', 'Услуги'], ['/sos', '!', 'SOS'], ['/orders', '☰', 'Заявки'], ['/shop', '🛍', 'Магазин']];
-  const extraLinks: [string, string][] = mode === 'performer'
-    ? [['/work/me', 'Мой профиль'], ['/work/filter', 'Настройки заявок'], ['/work/docs', 'Документы'], ['/support', 'Поддержка'], ['/notifications', 'Уведомления']]
+  // Все дополнительные функции доступны в шапке, даже когда они не в нижних вкладках.
+  // Не показываем чужие роли и не создаём несуществующие страницы.
+  const accountLinks: [string, string][] = mode === 'performer'
+    ? [['/work/me', 'Профиль исполнителя'], ['/work/me/about', 'Личные сведения'],
+       ['/work/me/phone', 'Телефон и вход'], ['/work/me/cars', 'Автомобили'],
+       ['/work/me/schedule', 'График работы'], ['/work/filter', 'Фильтры заявок'],
+       ['/work/me/money', 'Финансы и выплаты'], ['/work/me/tax', 'Налоговый статус'],
+       ['/work/me/level', 'Рейтинг и уровень'], ['/work/docs', 'Проверка и документы'],
+       ['/reviews', 'Отзывы'], ['/invite', 'Пригласить партнёра'],
+       ['/work/jobs', 'История заявок'], ['/profile', 'Аккаунт']]
     : mode === 'service'
-      ? [['/base/me', 'Карточка СТО'], ['/base/money', 'Финансы'], ['/profile', 'Аккаунт'], ['/notifications', 'Уведомления']]
+      ? [['/base', 'Заявки и история ремонтов'], ['/base/me', 'Карточка СТО'],
+         ['/base/money', 'Финансы'], ['/profile', 'Аккаунт'],
+         ['/invite', 'Пригласить партнёра']]
     : mode === 'admin'
-      ? [['/profile', 'Аккаунт'], ['/as/client', 'Кабинет клиента'], ['/support', 'Поддержка'], ['/notifications', 'Уведомления']]
-      : [['/garage', 'Мой гараж'], ['/fleet', 'Мой парк'], ['/profile', 'Мой профиль'], ['/support', 'Поддержка'], ['/notifications', 'Уведомления']];
-  const menuLinks: [string, string][] = [...extraLinks,
-    ['/help', 'Подсказки и помощь'], ['/rules', 'Правила площадки'],
+      ? [['/admin', 'Административные разделы'], ['/profile', 'Аккаунт'],
+         ['/as/client', 'Кабинет клиента']]
+    : [['/orders', 'История заявок'], ['/garage', 'Мой гараж'],
+       ...(!me?.owner_id ? [['/fleet', 'Мой автопарк']] as [string,string][] : []),
+       ['/services', 'СТО и запись'], ['/booking', 'Записи в СТО'],
+       ['/reviews', 'Мои отзывы'], ['/invite', 'Пригласить друга'],
+       ['/profile', 'Профиль и настройки']];
+  const helpLinks: [string, string][] = [
+    ['/support', 'Поддержка'], ['/notifications', 'Уведомления'],
+    ['/help', 'Помощь и подсказки'], ['/rules', 'Правила площадки'],
     ['/offer/' + (mode === 'performer' ? 'performer' : mode === 'service' ? 'service' : 'client'), 'Оферта'],
-    ['/offer/privacy', 'Персональные данные']];
+    ['/offer/privacy', 'Политика персональных данных'],
+    ['/privacy', 'Мои персональные данные']];
   return (
     <div className={`app ${me ? "" : "guest-app"}`}>
       <header className="top">
@@ -211,8 +228,11 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {me && <Bell />}
           {me && <details className="account-menu" key={here}>
             <summary aria-label="Открыть меню кабинета">☰ <span>Меню</span></summary>
-            <nav aria-label="Профиль, настройки и документы">
-              {menuLinks.map(([href, label]) => <a key={href} href={'#' + href}>{label}</a>)}
+            <nav aria-label="Все разделы кабинета">
+              <span className="account-menu-heading">Мой кабинет</span>
+              {accountLinks.map(([href, label]) => <a key={href} href={'#' + href}>{label}</a>)}
+              <span className="account-menu-heading">Помощь и документы</span>
+              {helpLinks.map(([href, label]) => <a key={href} href={'#' + href}>{label}</a>)}
             </nav>
           </details>}
         </div>
