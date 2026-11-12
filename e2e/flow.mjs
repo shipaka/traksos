@@ -361,6 +361,20 @@ await sto.waitForURL(/#\/base\/me/);
 await shot(sto, '20-service-setup');
 await sto.close();
 
+// Совмещённый аккаунт: оба кабинета назначаются без модератора и открываются через меню.
+const both = await mk();
+await login(both, '+79993334456', 'Мастер и своя СТО');
+await both.goto(BASE + '/#/work');
+await checkCabinetMenu(both, ['Моя СТО — стационарный ремонт', 'Профиль исполнителя']);
+await shot(both, '21-hybrid-master');
+await clickCabinetLink(both, 'Моя СТО — стационарный ремонт');
+await both.waitForURL(/#\/base$/);
+await checkCabinetMenu(both, ['Выездной мастер — заявки', 'Карточка СТО']);
+await shot(both, '22-hybrid-service');
+await clickCabinetLink(both, 'Выездной мастер — заявки');
+await both.waitForURL(/#\/work$/);
+await both.close();
+
 await browser.close();
 if (errors.length) { console.error('ОШИБКИ:\n' + errors.join('\n')); process.exit(1); }
 console.log('Сквозной сценарий пройден, ошибок в консоли нет');
