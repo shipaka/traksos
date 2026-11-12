@@ -326,6 +326,17 @@ await shot(a, '18-admin-stats');
 await k.goto(BASE + '/#/notifications');
 await k.getByText('Поддержка ответила', { exact: false }).first().waitFor();
 
+// СТО: реальный вход и проверка доступности разделов без прокрутки главного экрана.
+const sto = await mk();
+await login(sto, '+79993334455', 'Я рембаза (сервис)');
+await sto.waitForURL(/#\\/base/);
+await checkCabinetMenu(sto, ['Заявки и история ремонтов', 'Карточка СТО', 'Финансы', 'Оферта']);
+await shot(sto, '19-service-cabinet');
+await clickCabinetLink(sto, 'Карточка СТО');
+await sto.waitForURL(/#\\/base\\/me/);
+await shot(sto, '20-service-setup');
+await sto.close();
+
 await browser.close();
 if (errors.length) { console.error('ОШИБКИ:\n' + errors.join('\n')); process.exit(1); }
 console.log('Сквозной сценарий пройден, ошибок в консоли нет');
