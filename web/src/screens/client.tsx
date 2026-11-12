@@ -868,7 +868,11 @@ export function Profile() {
         <button className="btn ghost" onClick={() => go('privacy')}>Персональные данные</button>
         <button className="btn ghost" onClick={() => go('reviews')}>Отзывы обо мне</button>
         <button className="btn ghost" onClick={() => go('appeal')}>Оспорить нарушение или блокировку</button>
-        <button className="btn bad" onClick={logout}>Выйти</button>
+        <button className="btn bad" onClick={() => {
+          if (me.roles.some((r) => ['master','tow'].includes(r)) &&
+              !window.confirm('При выходе из аккаунта статус «На линии» отключится. Просто сверните приложение, если хотите продолжать получать заявки. Выйти?')) return;
+          void logout();
+        }}>Выйти</button>
       </div>
     </main>
   );
@@ -881,7 +885,13 @@ async function patchMe(body: unknown) {
 
 async function logout() {
   const { post, setToken, disconnectWs } = await import('../api.ts');
-  await post('/api/auth/logout').catch(() => {});
+  try {
+    await post('/api/auth/logout');
+  } catch (e) {
+    // Do not silently sign a worker out while the server still marks them on a job.
+    window.alert((e as Error).message || 'Не удалось завершить выход. Проверьте подключение.');
+    return;
+  }
   setToken(null);
   disconnectWs();
   location.hash = '#/login';
