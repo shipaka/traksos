@@ -26,8 +26,12 @@ export function Admin() {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
   return (
-    <main>
-      <h1>Администратор</h1>
+    <main className="cabinet-page">
+      <header className="cabinet-heading">
+        <span className="label">Управление платформой · TrakSOS</span>
+        <h1>Администратор</h1>
+        <div className="sub">Заявки, исполнители, ремонтные базы, страхование и платежи — единая панель управления.</div>
+      </header>
       <div className="admin-desktop-shell">
       <div className="scroll-x admin-secondary-nav">
         {([['summary', 'Сводка'], ['queue', 'Очередь'], ['shop', 'Магазин'], ['vehicleServices', 'Страхование и ТО'], ['stats', 'Статистика'], ['search', 'Поиск'], ['support', 'Обращения'], ['verify', 'Проверка'], ['bases', 'Рембазы'], ['externalBases', 'Справочник рембаз'], ['orders', 'Заявки'], ['people', 'Все люди'], ['payments', 'Деньги'], ['dispatch', 'Распределение'], ['offers', 'Оферты'], ['flagged', 'Подозрительное'], ['settings', 'Настройки']] as const).map(([id, n]) => (
