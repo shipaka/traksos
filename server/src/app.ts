@@ -95,12 +95,20 @@ export function createApp(d: Deps) {
   r.get('/api/health', false, async () => ({ ok: true, db: (await d.db.one('select 1 as ok'))?.ok === 1, time: now() }));
 
   // Вход ---------------------------------------------------------------------
-  r.post('/api/auth/code', false, (c: Ctx) => auth.requestCode(parse(z.object({ phone: z.string() }), c.body).phone, c.ip));
+  r.post('/api/auth/code', false, (c: Ctx) => {
+    const b = parse(z.object({ phone: z.string(), purpose: z.enum(['register','reset']).optional() }), c.body);
+    return auth.requestCode(b.phone, c.ip, b.purpose ?? 'register');
+  });
+  r.post('/api/auth/login', false, (c: Ctx) => {
+    const b = parse(z.object({ phone: z.string(), password: z.string(), device: z.string().max(200).optional() }), c.body);
+    return auth.loginPassword(b.phone, b.password, b.device);
+  });
   r.post('/api/auth/verify', false, async (c: Ctx) => {
     const b = parse(z.object({ phone: z.string(), code: z.string().min(4).max(6), role: z.enum(SELF_ROLES).optional(),
       device: z.string().max(200).optional(), accountType: z.enum(['owner','driver','master','tow','service','master_service','insurer']).optional(),
+      password: z.string().max(128).optional(), purpose: z.enum(['register','reset']).optional(),
       acceptOffers: z.boolean().optional(), ref: z.string().max(20).optional() }), c.body);
-    const r = await auth.verify(b.phone, b.code, b.role, b.device, b.accountType);
+    const r = await auth.verify(b.phone, b.code, b.role, b.device, b.accountType, b.password, b.purpose ?? 'register');
     // Вход по приглашению: код из ссылки привязывается только к новому номеру
     if (b.ref) await referral.attach(r.user as any, b.ref).catch(() => false);
     // Галочка «Согласен с офертой» на экране входа — записываем согласие на действующие редакции
