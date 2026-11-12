@@ -48,6 +48,15 @@ test('unfilled orders and slow acceptance are retained by hour, service and inci
   const again=ok(await t.api('GET','/api/admin/demand?days=7&wait=15',undefined,admin.token));
   assert.equal(again.incidents.find((x:any)=>x.id===missed).review_state,'resolved');
   assert.equal(again.summary.unfilled,1,'marked as reviewed, never disappears from facts');
+  // Client retries the same order, it is eventually fulfilled. The original
+  // no-performer episode remains part of historical supply-demand statistics.
+  await t.db.query("insert into order_events(order_id,type) values ($1,'no_performer')",[missed]);
+  await t.db.query("update orders set status='completed',accepted_at=$2,completed_at=$2 where id=$1",
+    [missed,t.clock.now()]);
+  const recovered=ok(await t.api('GET','/api/admin/demand?days=7&wait=15',undefined,admin.token));
+  assert.equal(recovered.summary.unfilled,1,'historical failure remains counted');
+  assert.equal(recovered.summary.recovered_after_retry,1);
+  assert.equal(recovered.incidents.find((x:any)=>x.id===missed).had_no_performer,true);
 });
 
 test('targeted worker announcements show only for intended role and dates',async()=>{
