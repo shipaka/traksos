@@ -29,26 +29,65 @@ export function Home() {
   const live = (active.data ?? []).filter((o: any) => !['completed', 'cancelled'].includes(o.status));
   const { fill } = usePrices();
   return (
-    <main>
-      <div>
-        <h1>{me?.name ? `${me.name}, что случилось?` : 'Что случилось?'}</h1>
-        <div className="sub">Выберите — подскажем, кому звонить и что делать. Петербург и Ленобласть, круглосуточно.</div>
+    <main className="client-home">
+      <section className="desktop-hero" aria-label="Помощь грузовому транспорту">
+        <div className="desktop-hero-copy">
+          <span className="desktop-eyebrow">ТракSOS · Санкт-Петербург и Ленобласть</span>
+          <h1>Помощь в дороге <span>24/7</span></h1>
+          <p>Мастера, диагностика и эвакуация грузовиков — от заявки до завершения работ в одном сервисе.</p>
+          <div className="desktop-hero-buttons">
+            <a className="desktop-primary-action" href="#/sos">🚨 SOS · Нужна помощь</a>
+            <a className="desktop-outline-action" href="#/new/diag">+ Создать заявку</a>
+          </div>
+        </div>
+        <div className="desktop-hero-art" aria-hidden="true">
+          <div className="hero-road" />
+          <div className="hero-truck"><div className="truck-trailer" /><div className="truck-cab"><div className="truck-window" /></div><span className="wheel wheel-one" /><span className="wheel wheel-two" /><span className="wheel wheel-three" /></div>
+        </div>
+      </section>
+
+      <section className="desktop-quick-links" aria-label="Быстрый доступ">
+        <a href="#/garage" className="desktop-quick-card"><span className="desktop-quick-icon">▣</span><span><b>Мой гараж</b><small>Автомобили и сведения о технике</small></span><span aria-hidden="true">›</span></a>
+        <a href="#/orders" className="desktop-quick-card"><span className="desktop-quick-icon">☷</span><span><b>Мои заявки</b><small>История и статусы работ</small></span><span aria-hidden="true">›</span></a>
+        <a href="#/services" className="desktop-quick-card"><span className="desktop-quick-icon">⚙</span><span><b>Сервисы</b><small>Партнёры и запись на ремонт</small></span><span aria-hidden="true">›</span></a>
+        <a href="#/fleet" className="desktop-quick-card"><span className="desktop-quick-icon">▤</span><span><b>Мой парк</b><small>Транспорт и водители компании</small></span><span aria-hidden="true">›</span></a>
+      </section>
+
+      <div className="desktop-home-columns">
+        <section className="desktop-home-main">
+          <div className="mobile-home-heading">
+            <h1>{me?.name ? `${me.name}, что случилось?` : 'Что случилось?'}</h1>
+            <div className="sub">Выберите — подскажем, кому звонить и что делать. Петербург и Ленобласть, круглосуточно.</div>
+          </div>
+          <div className="desktop-section-heading"><h2>Мои активные заявки</h2><a href="#/orders">Все заявки →</a></div>
+          <div className="desktop-active-orders">
+            {live.length === 0 && <div className="desktop-empty-orders">Сейчас нет активных заявок. Если помощь нужна срочно, используйте кнопку SOS.</div>}
+            {live.map((o: any) => (
+              <a key={o.id} href={`#/order/${o.id}`} className="card hi" style={{ textDecoration: 'none', color: 'inherit' }}>
+                <div className="between">
+                  <b>Заявка №{o.number} · {SERVICES[o.service]?.name ?? o.service}</b>
+                  <span className={`pill ${STATUS[o.status]?.tone}`}>{STATUS[o.status]?.name}</span>
+                </div>
+                <span className="note">{o.service === 'consult' ? 'по телефону' : o.address ?? o.estimate?.zoneName} · открыть →</span>
+              </a>
+            ))}
+          </div>
+          <div className="desktop-section-heading"><h2>Какая помощь требуется?</h2></div>
+          <SymptomPicker sos={false} />
+          <LiveStrip who="client" />
+        </section>
+        <aside className="desktop-home-aside">
+          <div className="desktop-aside-card">
+            <div className="desktop-aside-symbol">24/7</div>
+            <h2>Поддержка в дороге</h2>
+            <p>Экстренный вызов мастера или эвакуатора, консультация и поиск сервиса.</p>
+            <a href="#/sos" className="desktop-aside-cta">Перейти к SOS →</a>
+          </div>
+          <div className="desktop-aside-card"><h2>Ваш кабинет</h2><p>Профиль и уведомления доступны в личном кабинете.</p><a href="#/profile" className="desktop-aside-cta">Открыть профиль →</a></div>
+        </aside>
       </div>
 
-      {live.map((o: any) => (
-        <a key={o.id} href={`#/order/${o.id}`} className="card hi" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <div className="between">
-            <b>Заявка №{o.number} · {SERVICES[o.service]?.name ?? o.service}</b>
-            <span className={`pill ${STATUS[o.status]?.tone}`}>{STATUS[o.status]?.name}</span>
-          </div>
-          <span className="note">{o.service === 'consult' ? 'по телефону' : o.address ?? o.estimate?.zoneName} · открыть →</span>
-        </a>
-      ))}
-
-      <SymptomPicker sos={false} />
-      <LiveStrip who="client" />
-
-      <div className="stack">
+      <div className="stack home-services">
         <span className="label">Все услуги</span>
         {Object.entries(SERVICES).map(([id, s]) => (
           <button key={id} className="linkrow" onClick={() => go(`new/${id}`)}>
