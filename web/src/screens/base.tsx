@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { get, post, put, rub, fmtTime } from '../api.ts';
 import { BRANDS, FEE_PURPOSE, PLACES } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '../ui.tsx';
+import { WorkerNotices } from './ops.tsx';
 
 export const NEEDS: Record<string, string> = {
   electric: 'Электрика', air: 'Пневматика', engine: 'Двигатель', gearbox: 'КПП', brakes: 'Тормоза',
@@ -51,11 +52,11 @@ export function BaseHome() {
   const cab = useLoad(() => get('/api/base'), [], isBookingEvent);
   const [tab, setTab] = useState<'req' | 'cars' | 'done'>('req');
   const { busy, run } = useAction();
-  if (!cab.data) return <main><Loading error={cab.error} /></main>;
+  if (!cab.data) return <main><WorkerNotices audience="service" /><Loading error={cab.error} /></main>;
   const { center, groups } = cab.data;
   // Новая рембаза: на главной — что будет дальше, сама карточка — во вкладке «Карточка»
   if (!center) return (
-    <main>
+    <main><WorkerNotices audience="service" />
       <div>
         <h1>Подключите рембазу</h1>
         <div className="sub">Три шага — и клиенты ТракSOS начнут записываться к вам, а мастера советовать вас после диагностики</div>
@@ -77,7 +78,7 @@ export function BaseHome() {
   );
   const cars = [...groups.expected, ...groups.repair, ...groups.ready];
   return (
-    <main>
+    <main><WorkerNotices audience="service" />
       <div>
         <h1>Рембаза «{center.name}»</h1>
         <div className="sub">{center.address} · {center.hours}</div>
