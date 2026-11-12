@@ -844,7 +844,9 @@ export function Profile() {
       <div className="stack">
         {mode !== 'client' && <button className="btn ghost" onClick={() => go('as/client')}>Кабинет клиента</button>}
         {isPerformer && mode !== 'performer' && <button className="btn ghost" onClick={() => go('as/performer')}>Кабинет исполнителя</button>}
-        {!isPerformer && <button className="btn ghost" onClick={() => go('work/profile')}>Стать исполнителем на ТракSOS</button>}
+        {!isPerformer && !me.roles.includes('insurer') && <button className="btn ghost" onClick={() => go('work/profile')}>Стать исполнителем на ТракSOS</button>}
+        {me.roles.includes('service') && mode !== 'service' && <button className="btn ghost" onClick={() => go('as/service')}>Кабинет СТО</button>}
+        {me.roles.includes('insurer') && mode !== 'insurer' && <button className="btn ghost" onClick={() => go('as/insurer')}>Кабинет страхового партнёра</button>}
         {me.roles.some((r) => r === 'admin' || r === 'moderator') && mode !== 'admin' && <button className="btn ghost" onClick={() => go('as/admin')}>Кабинет администратора</button>}
         <button className="btn ghost" onClick={() => go('support')}>Поддержка</button>
         <button className="btn ghost" onClick={() => go('help')}>Справка: как всё устроено</button>
