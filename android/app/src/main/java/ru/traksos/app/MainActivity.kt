@@ -128,7 +128,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     /** Открыть сайт заново — после «Повторить» или смены адреса сервера */
-    fun reload() = web.post { web.loadUrl(urlFor(null)) }
+    fun reload() = web.post {
+        if (BuildConfig.DEBUG && !Session.hasCustomServer(this)) {
+            showOffline(getString(R.string.no_connection))
+        } else {
+            web.loadUrl(urlFor(null))
+        }
+    }
 
     private fun urlFor(path: String?) = Session.server(this).trimEnd('/') + "/" + (path?.let { "#/$it" } ?: "")
 
@@ -197,7 +203,8 @@ class MainActivity : AppCompatActivity() {
         <section class="page" id="orders"><h2>Мои заявки</h2><div class="card"><b>Заявок нет</b><p>История, чат, исполнители и документы появятся после запуска системы.</p></div></section>
         <section class="page" id="profile"><h2>Личный кабинет</h2><div class="card"><b>Профиль · демо</b><p>Автомобили, страховки, документы и личные данные будут доступны после подключения сервера.</p></div>
         <button class="secondary" onclick="document.getElementById('setup').style.display='block'">Настроить тестовый сервер</button>
-        <div id="setup" style="display:none"><p>Введите HTTPS-адрес работающего тестового стенда.</p><input id="u" placeholder="https://тестовый-сервер"><button class="action" onclick="TrakSOSNative.setServer(document.getElementById('u').value)">Сохранить и открыть</button><p id="r"></p></div></section></main>
+        <div id="setup" style="display:none"><p>Введите HTTPS-адрес работающего тестового стенда.</p><input id="u" placeholder="https://тестовый-сервер"><button class="action" onclick="TrakSOSNative.setServer(document.getElementById('u').value)">Сохранить и открыть</button>
+        <button class="secondary" style="margin-top:10px" onclick="TrakSOSNative.setServer('')">Вернуться в автономное демо</button><p id="r"></p></div></section></main>
         <nav><button id="tab-home" class="active" onclick="show('home')">Главная</button><button id="tab-sos" onclick="show('sos')">SOS</button><button id="tab-orders" onclick="show('orders')">Заявки</button><button id="tab-profile" onclick="show('profile')">Кабинет</button></nav>
         <script>function show(id){document.querySelectorAll('.page').forEach(function(e){e.classList.toggle('active',e.id===id)});document.querySelectorAll('nav button').forEach(function(e){e.classList.toggle('active',e.id==='tab-'+id)});scrollTo(0,0)}
         document.getElementById('u').value=SERVER_VALUE;document.getElementById('r').textContent=REASON_VALUE;</script></body></html>
