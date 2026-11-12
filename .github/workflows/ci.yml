@@ -34,6 +34,11 @@ jobs:
         with:
           node-version: 22
       - run: npm install
+      - name: Предрелизная проверка Docker Compose и резервного копирования
+        run: |
+          bash -n deploy/launch.sh
+          sh -n deploy/backup.sh
+          DB_PASSWORD=ci-only-check APP_SECRET=ci-only-check docker compose --env-file deploy/.env.example -f deploy/docker-compose.yml config --quiet
       - name: Сервер — типы
         run: npm run typecheck
       - name: Сервер — тесты
