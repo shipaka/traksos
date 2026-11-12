@@ -23,14 +23,22 @@ export class SmsRu implements SmsProvider {
   exposesCode = false;
   constructor(private apiId: string) {}
   async send(phone: string, text: string) {
-    const url = new URL('https://sms.ru/sms/send');
-    url.searchParams.set('api_id', this.apiId);
-    url.searchParams.set('to', phone.replace('+', ''));
-    url.searchParams.set('msg', text);
-    url.searchParams.set('json', '1');
-    const r = await fetch(url, { method: 'POST' });
+    if (!this.apiId) throw new Error('SMSRU_API_ID не задан');
+    const to = phone.replace('+', '');
+    const body = new URLSearchParams({ api_id: this.apiId, to, msg: text, json: '1' });
+    const r = await fetch('https://sms.ru/sms/send', {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded; charset=utf-8' },
+      body,
+      signal: AbortSignal.timeout(15_000),
+    });
     const j: any = await r.json().catch(() => null);
-    if (!r.ok || j?.status !== 'OK') throw new Error(`SMS.ru: ${j?.status_text ?? r.status}`);
+    // SMS.ru may return overall status=OK even if a particular recipient is rejected.
+    const delivery = j?.sms?.[to];
+    if (!r.ok || j?.status !== 'OK' || delivery?.status !== 'OK') {
+      const reason = delivery?.status_text ?? j?.status_text ?? `HTTP ${r.status}`;
+      throw new Error(`SMS.ru не принял сообщение: ${reason}`);
+    }
   }
 }
 
