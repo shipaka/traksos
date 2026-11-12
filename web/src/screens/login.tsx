@@ -18,7 +18,7 @@ const JOIN_ROLES = [
   { id: 'insurer', name: 'Я представитель страховой компании', hint: 'Отдельный тип аккаунта: не совмещается с клиентом или мастером' },
 ] as const;
 type JoinRole = (typeof JOIN_ROLES)[number]['id'];
-type Intent = 'help' | 'login' | 'register' | 'join';
+type Intent = 'help' | 'login' | 'register' | 'join' | 'reset';
 
 /** Куда вести после входа: по ролям из ответа сервера */
 export function homeFor(roles: string[], intent: Intent): string {
@@ -40,6 +40,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const [phone, setPhone] = useState('+7 ');
   const [step, setStep] = useState<'phone' | 'code'>('phone');
   const [code, setCode] = useState('');
+  const [password, setPassword] = useState('');
   const [devCode, setDevCode] = useState<string | null>(null);
   const [role, setRole] = useState<JoinRole>('master');
   const [customerType, setCustomerType] = useState<'owner' | 'driver'>('owner');
@@ -50,18 +51,24 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const [appealSent, setAppealSent] = useState(false);
 
   async function sendCode() {
-    const r = await run(() => post('/api/auth/code', { phone }), 'Код отправлен');
+    const r = await run(() => post('/api/auth/code', { phone, purpose: intent === 'reset' ? 'reset' : 'register' }), 'Код отправлен');
     if (r) {
       setDevCode(r.devCode ?? null);
       setStep('code');
     }
   }
   async function verify() {
+    if (intent === 'login') {
+      const login = await run(() => post('/api/auth/login', { phone, password, device: navigator.userAgent.slice(0, 200) }), null);
+      if (login) await signedIn(login);
+      return;
+    }
     const r = await run(async () => {
       try {
         return await post('/api/auth/verify', { phone, code,
           role: intent === 'join' ? (role === 'master_service' ? 'master' : role) : undefined,
           accountType: intent === 'join' ? role : intent === 'register' || intent === 'help' ? customerType : undefined,
+          purpose: intent === 'reset' ? 'reset' : 'register', password,
           ref: (() => { try { return localStorage.getItem('traksos.ref') ?? undefined; } catch { return undefined; } })(), device: navigator.userAgent.slice(0, 200), acceptOffers: agree });
       } catch (e) {
         // Заблокирован — показываем форму обжалования, номер уже подтверждён кодом
@@ -69,7 +76,9 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         throw e;
       }
     }, null);
-    if (r) {
+    if (r) await signedIn(r);
+  }
+  async function signedIn(r: any) {
       toast('Вы вошли');
       try { localStorage.removeItem('traksos.ref'); } catch { /* */ }
       setToken(r.token);
@@ -81,14 +90,14 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         : intent === 'join' && role === 'insurer' ? '#/insurance'
         : intent === 'join' && role === 'service' ? '#/as/service'
         : intent === 'join' ? '#/work/profile' : homeFor(r.user?.roles ?? [], intent ?? 'login');
-    }
   }
 
-  const needAgree = intent !== 'login' || !!driver; // водитель по QR — обычно новый номер, согласие сразу
-  const title = intent === 'help' ? 'Помощь на дороге' : intent === 'join' ? 'Работать с ТракSOS' : intent === 'register' ? 'Регистрация в ТракSOS' : 'Вход по номеру телефона';
-  const sub = intent === 'help' ? 'Подтвердите номер — и сразу к заявке. Мастер позвонит на него.'
+  const needAgree = !['login', 'reset'].includes(intent ?? '') || !!driver; // водитель по QR — обычно новый номер, согласие сразу
+  const title = intent === 'reset' ? 'Восстановить пароль' : intent === 'help' ? 'Помощь на дороге' : intent === 'join' ? 'Работать с ТракSOS' : intent === 'register' ? 'Регистрация в ТракSOS' : 'Вход по номеру телефона';
+  const sub = intent === 'reset' ? 'Отправим один SMS-код для смены пароля.' : intent === 'help' ? 'Подтвердите номер — и сразу к заявке. Мастер позвонит на него.'
     : intent === 'join' ? 'Выберите, кем подключаетесь. После входа заполните профиль — проверим и откроем заявки.'
-    : intent === 'register' ? 'Укажите номер телефона. Если аккаунта ещё нет, создадим его после подтверждения SMS-кодом.' : 'Пришлём код. Пароль не нужен — кабинет откроется сам.';
+    : intent === 'register' ? 'Укажите номер телефона. Если аккаунта ещё нет, создадим его после подтверждения SMS-кодом.'  : 'Вход по паролю, без SMS. Если забыли пароль — восстановите доступ.'; // legacy description
+  const legacy = 'Пришлём код. Пароль не нужен — кабинет откроется сам.';
 
   if (!intent) return (
     <main className="public-home public-landing" id="public-home">
