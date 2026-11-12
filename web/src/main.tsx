@@ -249,4 +249,15 @@ function Bell() {
 function localStorageGet(k: string) { try { return localStorage.getItem(k); } catch { return null; } }
 function localStorageSet(k: string, v: string) { try { localStorage.setItem(k, v); } catch { /* */ } }
 
+// PWA: cache only the public UI shell. Inside the Android APK the same assets
+// are already bundled, and the browser service worker must not be installed.
+if (!(window as any).TrakSOSNative && 'serviceWorker' in navigator &&
+    (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      // The site remains usable online if offline-cache initialization fails.
+    });
+  }, { once: true });
+}
+
 createRoot(document.getElementById('root')!).render(<ToastProvider><App /></ToastProvider>);
