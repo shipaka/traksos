@@ -92,6 +92,36 @@ test('SMS external IP hourly budget survives changes of phone number', async () 
   assert.equal(total?.used, 15);
 });
 
+test('password brute-force lockout survives server restart and expires after fifteen minutes', async () => {
+  const { AuthService } = await import('../src/services/auth.ts');
+  const phone = '+79998881177';
+  await register(phone, 'owner', 'KnownPassword-2026!');
+  const firstInstance = new AuthService(t.db, t.sms, t.clock.now);
+  for (let i = 0; i < 10; i++) {
+    await assert.rejects(() => firstInstance.loginPassword(phone, 'wrong-password'), (e: any) => e.status === 401);
+  }
+  const restarted = new AuthService(t.db, t.sms, t.clock.now);
+  await assert.rejects(() => restarted.loginPassword(phone, 'KnownPassword-2026!'), (e: any) => e.status === 429);
+  t.clock.advance(901);
+  const recovered = await restarted.loginPassword(phone, 'KnownPassword-2026!');
+  assert.ok(recovered.token);
+  assert.equal((await t.db.one<{ n: number }>(
+    "select count(*)::int as n from auth_login_attempts where scope='phone' and identity=$1", [phone]))?.n, 0);
+});
+
+test('untrusted forwarded IP cannot evade direct connection SMS limits', async () => {
+  const phone = '+79998881178';
+  // A direct client cannot claim a different network address through this header.
+  const response = await fetch(t.base + '/api/auth/code', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-forwarded-for': '198.51.100.77' },
+    body: JSON.stringify({ phone }),
+  });
+  assert.equal(response.status, 200);
+  assert.deepEqual(await t.db.query(
+    "select identity from auth_sms_limits where scope='ip_hour' and identity='198.51.100.77'"), []);
+});
+
 test('separate driver type is assigned without a client role', async () => {
   const driver = await register('+79998881115', 'driver');
   assert.deepEqual(driver.user.roles, ['driver']);
