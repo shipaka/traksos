@@ -60,6 +60,7 @@ jobs:
           node e2e/public-shots.mjs e2e/shots
           node e2e/offline.mjs
           node e2e/flow.mjs e2e/shots
+          node e2e/admin-ops.mjs e2e/shots
       - name: Снимки экранов каждой проверяемой версии
         if: always()
         uses: actions/upload-artifact@v4
