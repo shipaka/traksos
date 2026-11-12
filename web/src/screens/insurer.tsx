@@ -41,15 +41,19 @@ export function InsurerCabinet() {
     return [r.brand, r.model, r.plate, r.comment].some((value) => String(value ?? '').toLocaleLowerCase('ru-RU').includes(search.trim().toLocaleLowerCase('ru-RU')));
   });
   return (
-    <main>
-      <h1>Кабинет страховщика</h1>
+    <main className="cabinet-page">
+      <header className="cabinet-heading">
+        <span className="label">Партнёрский кабинет · Страхование</span>
+        <h1>Кабинет страховщика</h1>
+      </header>
       <div className="sub">Только заявки, переданные вам ТракSOS. Остальные автомобили и сведения о клиентах недоступны.</div>
       {!rows ? <div className="empty">{requests.error ? `Не удалось загрузить: ${requests.error}` : 'Загружаем заявки…'}</div>
         : !rows.length ? <div className="empty">Назначенных заявок пока нет. Администратор передаст их сюда после проверки.</div>
         : <div className="stack">
-          <div className="grid2">
+          <div className="cabinet-metrics">
             <div className="card tile"><span className="label">Всего назначено</span><b className="tile-value">{rows.length}</b></div>
             <div className="card tile"><span className="label">Ожидают решения</span><b className="tile-value">{rows.filter((r) => r.status === 'sent_to_partner').length}</b></div>
+            <div className="card tile"><span className="label">Завершено</span><b className="tile-value">{rows.filter((r) => r.status !== 'sent_to_partner').length}</b></div>
           </div>
           <div className="web-case-toolbar">
             <div className="row" role="group" aria-label="Фильтр страховых заявок">
