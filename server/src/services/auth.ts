@@ -132,6 +132,8 @@ export class AuthService {
 
     // Password reset invalidates every prior session; a stolen token cannot survive recovery.
     if (purpose === 'reset') {
+      // Legacy tokens are not session-bound; clear them too when credentials change.
+      await this.db.query('delete from push_tokens where user_id=$1', [user.id]);
       await this.db.query('delete from sessions where user_id=$1', [user.id]);
       await this.db.query("delete from auth_login_attempts where scope='phone' and identity=$1", [phone]);
     }
