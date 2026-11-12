@@ -84,7 +84,7 @@ async function login(page, phoneNum, how) {
   await page.locator('input[type=checkbox]').check();
   await page.getByRole('button', { name: 'Получить код' }).click();
   const hint = await page.getByText(/Тестовый режим: код/).textContent();
-  await page.locator('input[autocomplete=one-time-code]').fill(hint.match(/\\d{4}/)[0]);
+  await page.locator('input[autocomplete=one-time-code]').fill(hint.match(/\d{4}/)[0]);
   await page.locator('input[type=password]').fill(password);
   await page.getByRole('button', { name: 'Зарегистрироваться' }).click();
 }
