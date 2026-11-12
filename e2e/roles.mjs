@@ -2,6 +2,18 @@ import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
 
 const base = process.env.BASE_URL ?? 'http://localhost:8080';
+async function acceptPendingOffers(page) {
+  // Seeded demo accounts receive current client/partner offers on first sign-in.
+  // Accept them through the actual UI before testing navigation beneath the modal.
+  for (let i = 0; i < 4; i++) {
+    const dialog = page.getByRole('dialog', { name: /Оферта|Согласие/ });
+    if (!(await dialog.isVisible().catch(() => false))) break;
+    await dialog.locator('input[type=checkbox]').check();
+    await dialog.getByRole('button', { name: 'Принимаю' }).click();
+    await dialog.waitFor({ state: 'hidden' });
+  }
+}
+
 const shots = process.argv[2];
 if (shots) await mkdir(shots, { recursive: true });
 
@@ -33,6 +45,7 @@ try {
     await page.getByRole('button', { name: 'Войти', exact: true }).click();
     await page.locator('.website-workspace').waitFor();
     await page.locator('.website-sidebar').waitFor({ state: 'visible' });
+    await acceptPendingOffers(page);
     if (await page.locator('.native-app').count()) throw new Error(role.name + ': desktop loaded Android shell');
     await page.locator('.website-work-area main').first().waitFor({ state: 'visible' });
     if (shots) await page.screenshot({ path: shots + '/role-' + role.name + '-home.png' });
