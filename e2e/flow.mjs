@@ -252,8 +252,12 @@ await m.getByText('Операции', { exact: true }).waitFor();
 await shot(m, '16b-master-money');
 await m.getByText('← Профиль').click();
 await m.getByRole('button', { name: /Аккаунт/ }).click();
-await m.getByRole('button', { name: 'Кабинет клиента' }).click();
-await m.getByText('Что случилось?').first().waitFor();
+// Master and client identities must stay exclusive: no shortcut to a client cabinet.
+if (await m.getByRole('button', { name: 'Кабинет клиента' }).count())
+  throw new Error('Provider account incorrectly exposes client mode');
+await m.goto(BASE + '/#/sos');
+await m.getByText('Для вызова SOS нужен клиентский аккаунт').waitFor();
+await m.goto(BASE + '/#/work');
 
 // Админ: поиск → карточка клиента → бонусы; клиент видит их в профиле
 await a.goto(BASE + '/#/admin');
