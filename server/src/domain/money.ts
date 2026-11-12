@@ -13,9 +13,12 @@ export function pct(amount: number, p: number) {
 export interface CommissionCtx {
   isPriority: boolean;
   at?: Date;
+  /** Per-order immutable rate from a promotion; overrides priority/default rates. */
+  overridePct?: number | null;
 }
 
 export function commissionPct(fees: Settings['fees'], ctx: CommissionCtx) {
+  if (ctx.overridePct != null) return ctx.overridePct;
   if (ctx.isPriority) return fees.priorityCommissionPct;
   if (fees.freeUntil && (ctx.at ?? new Date()) <= new Date(fees.freeUntil + 'T23:59:59+03:00')) return 0;
   return fees.performerCommissionPct;
