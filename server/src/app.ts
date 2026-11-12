@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { isIP } from 'node:net';
 import { z } from 'zod';
 import type { Db } from './db/index.ts';
 import { Router, parse, readBody, send, errorBody, forbidden, bad, notFound, HttpError, type Ctx, type AuthedCtx } from './http/router.ts';
@@ -664,6 +665,14 @@ export function bearer(req: http.IncomingMessage) {
 }
 
 function clientIp(req: http.IncomingMessage) {
-  const f = req.headers['x-forwarded-for'];
-  return (Array.isArray(f) ? f[0] : f)?.split(',')[0].trim() ?? req.socket.remoteAddress ?? '';
+  const remote = req.socket.remoteAddress ?? '';
+  // Forwarded IPs may affect security controls and SMS spending.
+  // Trust them only from our private reverse proxy, and only when explicitly enabled.
+  const privatePeer = /^(::1|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|::ffff:(127|10|192\.168)\.|fc|fd)/i.test(remote);
+  if (config.trustProxy && privatePeer) {
+    const f = req.headers['x-forwarded-for'];
+    const forwarded = (Array.isArray(f) ? f[0] : f)?.split(',')[0].trim();
+    if (forwarded && isIP(forwarded)) return forwarded;
+  }
+  return remote;
 }
