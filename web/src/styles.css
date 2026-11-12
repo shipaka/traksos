@@ -506,3 +506,6 @@ select.field { appearance: none; }
 .launch-region { display:flex; align-items:center; gap:9px; margin-top:16px; padding:10px 13px; max-width:545px; border:1px solid rgba(255,188,116,.47); background:rgba(13,32,49,.77); border-radius:11px; color:#ffdfc2; font-size:12px; line-height:1.5; font-weight:600; }
 .launch-region-dot { flex:0 0 8px; height:8px; border-radius:50%; background:#ff934c; box-shadow:0 0 0 4px rgba(255,147,76,.13); }
 @media(max-width:899px){ .launch-region{display:none;} }
+
+/* One STO entry per viewport: desktop quick tile or mobile services row. */
+@media (min-width: 900px) { .client-home .home-services .mobile-services-link { display: none; } }
