@@ -34,6 +34,8 @@ async function assertDashboardTheme(page, role) {
       theme: css.getPropertyValue('--accent').trim(),
       gradient: getComputedStyle(card).backgroundImage,
       overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 2,
+      widths: [document.documentElement.clientWidth, document.documentElement.scrollWidth],
+      offenders: [...document.querySelectorAll('*')].filter(e => e.getBoundingClientRect().right > innerWidth + 2).slice(0, 6).map(e => [e.tagName, e.className, Math.round(e.getBoundingClientRect().right)]),
     };
   });
   if (!result || result.theme !== '#f51a78' || !result.gradient.includes('gradient') || result.overflow)
