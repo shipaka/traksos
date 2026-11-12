@@ -53,7 +53,7 @@ export function OpsDashboard() {
     {!d ? <Loading error={report.error}/> : <>
       <div className="tiles">
         <Metric name="Всего заявок" value={d.summary.total} hint={'За '+days+' дней'}/>
-        <Metric name="Не нашёлся мастер" value={d.summary.unfilled} hint="Сохранены в истории"/>
+        <Metric name="Были без исполнителя" value={d.summary.unfilled} hint={'В том числе повторно найденных: '+(d.summary.recovered_after_retry??0)}/>
         <Metric name="Отменено до принятия" value={d.summary.cancelled_before_acceptance} hint="Отдельно от отсутствия мастера"/>
         <Metric name="Ждут слишком долго сейчас" value={d.summary.waiting_now} hint={'В поиске более '+wait+' мин'}/>
         <Metric name="Поздно приняты" value={d.summary.accepted_late} hint={'Ответ после '+wait+' мин'}/>
@@ -104,6 +104,7 @@ function IncidentRow({order:o,editable,onSave,busy}:{order:any;editable:boolean;
     <div className="between"><a href={'#/order/'+o.id}><b>№{o.number} · {SERVICES[o.service]?.name??o.service}{o.is_sos?' · SOS':''}</b></a>
       <span className={'pill '+(o.status==='no_performer'?'bad':'warn')}>{STATUS[o.status]?.name??o.status}</span></div>
     <span className="note">{fmtTime(o.created_at)} · {o.zone_id??''} · {o.address??'Адрес не указан'} · ожидание {Math.max(0,Math.round(o.elapsed_minutes))} мин</span>
+    {o.had_no_performer && o.status!=='no_performer' && <span className="note">Ранее исполнитель не нашёлся; затем заявку запустили повторно. Это остаётся в аналитике.</span>}
     {o.cancel_reason&&<span className="note">Причина отмены: {o.cancel_reason}</span>}
     {editable ? <div className="stack" style={{gap:6}}>
       <select className="field" value={state} onChange={e=>setState(e.target.value as any)}>
