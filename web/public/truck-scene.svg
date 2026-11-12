@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" role="img" aria-label="Грузовик на вечерней трассе">
+<defs>
+<linearGradient id="sky" x1="0" y1="0" x2=".75" y2="1"><stop stop-color="#15334d"/><stop offset=".55" stop-color="#587086"/><stop offset="1" stop-color="#e29b68"/></linearGradient>
+<radialGradient id="sun"><stop stop-color="#ffe9b6" stop-opacity=".95"/><stop offset=".42" stop-color="#f9ba80" stop-opacity=".65"/><stop offset="1" stop-color="#f4a373" stop-opacity="0"/></radialGradient>
+<linearGradient id="cab" x1="0" y1="0" x2="1" y2=".8"><stop stop-color="#eaf0f1"/><stop offset=".43" stop-color="#b7c9d1"/><stop offset="1" stop-color="#617d90"/></linearGradient>
+<linearGradient id="trailer" x1="0" y1="0" x2=".9" y2="1"><stop stop-color="#eef2ef"/><stop offset=".5" stop-color="#b7c8d1"/><stop offset="1" stop-color="#647e8f"/></linearGradient>
+<linearGradient id="road" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#34485a"/><stop offset="1" stop-color="#111d2b"/></linearGradient>
+<filter id="shadow" x="-30%" y="-50%" width="170%" height="230%"><feGaussianBlur stdDeviation="17"/></filter>
+<filter id="glow"><feGaussianBlur stdDeviation="21"/></filter>
+<pattern id="grain" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="1" cy="2" r=".6" fill="#fff" opacity=".07"/></pattern>
+</defs>
+<rect width="960" height="560" fill="url(#sky)"/>
+<circle cx="730" cy="184" r="228" fill="url(#sun)"/>
+<circle cx="733" cy="194" r="67" fill="#ffd7a1" opacity=".5" filter="url(#glow)"/>
+<path d="M0 340 145 280 265 321 385 257 512 319 652 259 802 313 960 248V560H0Z" fill="#314a60" opacity=".65"/>
+<path d="m0 373 129-49 152 44 126-58 165 45 145-60 243 39V560H0Z" fill="#263b4c" opacity=".94"/>
+<path d="m0 430 240-34 310 28 410-65v201H0Z" fill="url(#road)"/>
+<path d="M-40 532 960 420v6L-40 546Z" fill="#e8bc8f" opacity=".49"/>
+<path d="M0 560 960 455" fill="none" stroke="#f1d2a8" stroke-width="3" stroke-dasharray="72 52" opacity=".58"/>
+<path d="M0 472 960 374" fill="none" stroke="#92a2aa" stroke-width="3" opacity=".22"/>
+<g opacity=".35"><path d="M88 350v-77m-25 34h52M165 345v-111m-21 33h41" stroke="#0a2632" stroke-width="4"/><path d="M84 280c17-13 20-24 4-40m68 29c-18-10-16-21-4-32" stroke="#19384a" stroke-width="4" fill="none"/></g>
+<ellipse cx="535" cy="453" rx="343" ry="43" fill="#090f15" opacity=".48" filter="url(#shadow)"/>
+<g transform="translate(120 155)">
+<!-- trailer body -->
+<path d="M292 88h386q13 0 13 13v190H291Z" fill="#1b303f" opacity=".5" transform="translate(9 10)"/>
+<rect x="281" y="81" width="389" height="204" rx="8" fill="url(#trailer)" stroke="#d2dce0" stroke-width="2"/>
+<path d="M290 104h370" stroke="#fff" opacity=".57" stroke-width="3"/>
+<path d="M291 246h369v33H291Z" fill="#435c6d" opacity=".75"/>
+<path d="M300 92v153m346-153v153" stroke="#eff4f5" opacity=".32" stroke-width="3"/>
+<path d="M294 281h367v19H294Z" fill="#172a39"/>
+<path d="M318 303h324" stroke="#101f2d" stroke-width="13" stroke-linecap="round"/>
+<rect x="305" y="292" width="330" height="13" rx="3" fill="#718a99"/>
+<!-- cab -->
+<path d="M61 145q6-52 37-58l91-7q53-5 69 33l34 72v101H38q-16 0-17-18l-2-46q-1-13 15-26z" fill="url(#cab)" stroke="#f2f4f3" stroke-width="2"/>
+<path d="m116 99 81-7q29-2 36 20l22 54-152 2 3-38q1-23 10-31z" fill="#1a3446" stroke="#d2dde2" stroke-width="6"/>
+<path d="m176 95-3 70" stroke="#d7e0e5" stroke-width="5"/>
+<path d="M114 111h95" stroke="#7294a8" opacity=".5" stroke-width="8"/>
+<path d="M50 214h233v65H33z" fill="#395568" opacity=".8"/>
+<path d="M31 255h259v15H28z" fill="#a3bac4"/>
+<rect x="17" y="259" width="31" height="13" rx="4" fill="#e8b87e"/>
+<rect x="23" y="223" width="21" height="12" rx="4" fill="#e8f5ff"/>
+<rect x="276" y="209" width="18" height="12" rx="3" fill="#db654a"/>
+<path d="M237 196h42m-41 9h42" stroke="#203e52" stroke-width="4"/>
+<rect x="102" y="195" width="30" height="5" rx="2" fill="#375268"/>
+<path d="M52 280h234v21H52Z" fill="#172937"/>
+<path d="M83 304h521" stroke="#142331" stroke-width="13" stroke-linecap="round"/>
+<g fill="#131b25" stroke="#4d606d" stroke-width="6">
+<circle cx="112" cy="301" r="35"/><circle cx="521" cy="301" r="35"/><circle cx="595" cy="301" r="35"/>
+</g>
+<g fill="#889ca8" stroke="#172631" stroke-width="4"><circle cx="112" cy="301" r="15"/><circle cx="521" cy="301" r="15"/><circle cx="595" cy="301" r="15"/></g>
+<g fill="#cfdee5"><circle cx="112" cy="301" r="4"/><circle cx="521" cy="301" r="4"/><circle cx="595" cy="301" r="4"/></g>
+</g>
+<rect width="960" height="560" fill="url(#grain)"/>
+</svg>
