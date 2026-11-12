@@ -23,6 +23,10 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.webkit.GeolocationPermissions
+import android.webkit.CookieManager
+import android.webkit.ValueCallback
+import android.webkit.WebSettings
+import androidx.activity.result.contract.ActivityResultContracts
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
@@ -43,6 +47,22 @@ import java.lang.ref.WeakReference
 class MainActivity : AppCompatActivity() {
     private lateinit var web: WebView
     private var startupOverlay: View? = null
+    private var fileUploadCallback: ValueCallback<Array<Uri>>? = null
+    private val filePicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val data = result.data
+        val files = if (result.resultCode == RESULT_OK) {
+            when {
+                data?.clipData != null -> {
+                    val clips = data.clipData!!
+                    (0 until clips.itemCount).map { clips.getItemAt(it).uri }.toTypedArray()
+                }
+                data?.data != null -> arrayOf(data.data!!)
+                else -> null
+            }
+        } else null
+        fileUploadCallback?.onReceiveValue(files)
+        fileUploadCallback = null
+    }
     private var geoCallback: GeolocationPermissions.Callback? = null
     private var geoOrigin: String? = null
     /** Страница не отозвалась как сайт ТракSOS — через 20 секунд покажем экран ошибки вместо белого */
@@ -65,9 +85,17 @@ class MainActivity : AppCompatActivity() {
             domStorageEnabled = true
             databaseEnabled = true
             setGeolocationEnabled(true)
+            allowFileAccess = false
+            allowContentAccess = false
+            javaScriptCanOpenWindowsAutomatically = false
+            setSupportMultipleWindows(false)
+            mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) safeBrowsingEnabled = true
             mediaPlaybackRequiresUserGesture = false
             userAgentString = "$userAgentString TrakSOSApp/${BuildConfig.VERSION_NAME}"
         }
+        CookieManager.getInstance().setAcceptThirdPartyCookies(web, false)
+        // Only the packaged official HTTPS origin receives the native bridge in release.
         web.addJavascriptInterface(WebBridge(this), "TrakSOSNative")
         web.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, req: WebResourceRequest): Boolean {
@@ -98,6 +126,29 @@ class MainActivity : AppCompatActivity() {
             }
         }
         web.webChromeClient = object : WebChromeClient() {
+            override fun onShowFileChooser(
+                view: WebView?,
+                filePathCallback: ValueCallback<Array<Uri>>?,
+                fileChooserParams: FileChooserParams?
+            ): Boolean {
+                this@MainActivity.fileUploadCallback?.onReceiveValue(null)
+                this@MainActivity.fileUploadCallback = filePathCallback
+                return try {
+                    val choose = Intent(Intent.ACTION_GET_CONTENT).apply {
+                        type = "*/*"
+                        addCategory(Intent.CATEGORY_OPENABLE)
+                        putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("image/*", "application/pdf"))
+                        putExtra(Intent.EXTRA_ALLOW_MULTIPLE, fileChooserParams?.mode == FileChooserParams.MODE_OPEN_MULTIPLE)
+                    }
+                    filePicker.launch(Intent.createChooser(choose, "Выберите фото или документ"))
+                    true
+                } catch (_: Exception) {
+                    this@MainActivity.fileUploadCallback?.onReceiveValue(null)
+                    this@MainActivity.fileUploadCallback = null
+                    false
+                }
+            }
+
             override fun onGeolocationPermissionsShowPrompt(origin: String, callback: GeolocationPermissions.Callback) {
                 if (hasLocation()) callback.invoke(origin, true, false)
                 else {
@@ -121,7 +172,6 @@ class MainActivity : AppCompatActivity() {
         } else {
             web.loadUrl(urlFor(intent.getStringExtra(EXTRA_PATH)))
         }
-        askNotifications()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -143,6 +193,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         if (current?.get() === this) current = null
+        fileUploadCallback?.onReceiveValue(null)
+        fileUploadCallback = null
         super.onDestroy()
     }
 
@@ -161,7 +213,7 @@ class MainActivity : AppCompatActivity() {
         ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
             ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
-    private fun askNotifications() {
+    fun askNotifications() {
         if (Build.VERSION.SDK_INT >= 33 &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQ_NOTIFY)
@@ -170,6 +222,7 @@ class MainActivity : AppCompatActivity() {
 
     /** Android 14+: показ на весь экран нужно разрешить в настройках (спрашиваем только у исполнителей) */
     fun askFullScreenIfNeeded() {
+        askNotifications()
         if (Build.VERSION.SDK_INT < 34) return
         val nm = getSystemService(NotificationManager::class.java)
         if (nm.canUseFullScreenIntent()) return
@@ -325,6 +378,7 @@ class WebBridge(private val activity: MainActivity) {
     /** Экран ошибки: другой адрес сервера (тестовый стенд). Пусто — адрес по умолчанию. */
     @JavascriptInterface
     fun setServer(url: String) {
+        if (!BuildConfig.DEBUG) return
         if (Session.setServer(activity, url)) {
             activity.reload()
         } else {
@@ -341,6 +395,7 @@ class WebBridge(private val activity: MainActivity) {
     @JavascriptInterface
     fun setSession(apiUrl: String, token: String?) {
         Session.save(activity, apiUrl, token?.takeIf { it.isNotEmpty() })
+        if (!token.isNullOrEmpty()) activity.runOnUiThread { activity.askNotifications() }
     }
 
     /** Токен RuStore Push (может быть пустым, пока не пришёл) */
