@@ -57,6 +57,7 @@ export class OrdersService {
   onDispute: ((p: { userId: string; orderId: string; text: string; targetId: string | null; title: string }) => Promise<unknown>) | null = null;
   /** Реферальные баллы: гашение сбора/комиссии и начисления пригласившим */
   referral: import('./referral.ts').ReferralService | null = null;
+  ops: import('./ops.ts').OpsService | null = null;
   payments!: PaymentHooks;
   auction!: AuctionService;
 
@@ -108,18 +109,22 @@ export class OrdersService {
       year = year ?? c.year;
     }
 
+    // Record the commission campaign on creation. Never recalculate an existing order.
+    const campaign = this.ops ? await this.ops.commissionFor(i.service, this.now()) : null;
+
     // Водитель парка: что ему можно и до какой суммы. SOS — всегда, без подтверждения.
     const gate = user.owner_id && !i.isSos ? await this.fleetGate(user, i.service, est.callOut) : null;
     const order = await this.db.one(
       `insert into orders(client_id, created_by, vehicle_id, service, is_sos, problem, description, address, lat, lng,
           zone_id, night, group_trip, tier, brand, estimate, payment_method, client_fee_pct, destination, cargo, loaded, driver_on_site,
-          consult_of, discount_amount, discount_reason, model, year, site, status, owner_note)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30) returning *`,
+          consult_of, discount_amount, discount_reason, model, year, site, status, owner_note,
+          commission_pct_override, commission_campaign_id)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32) returning *`,
       [clientId, user.id, i.vehicleId ?? null, i.service, !!i.isSos, i.problem ?? null, i.description ?? null, isConsult ? null : i.address ?? null,
         isConsult ? null : i.lat ?? null, isConsult ? null : i.lng ?? null, est.zoneId, night, est.group, tier, brand, est, method, feePct,
         i.destination ?? null, i.cargo ?? null, i.loaded ?? null, i.driverOnSite ?? null,
         consultOf, discount, discount ? CONSULT_DISCOUNT : null, model, year, isConsult ? null : i.site ?? null,
-        gate ? 'awaiting_owner' : 'searching', gate],
+        gate ? 'awaiting_owner' : 'searching', gate, campaign?.commission_pct ?? null, campaign?.id ?? null],
     );
     await this.event(this.db, order!.id, user.id, 'created', { estimate: est, sos: !!i.isSos });
 
