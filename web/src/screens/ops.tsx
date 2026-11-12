@@ -122,7 +122,7 @@ export function WorkerCommunications() {
   const [service,setService]=useState('');
   const [title,setTitle]=useState('');
   const [body,setBody]=useState('');
-  const [from,setFrom]=useState(dateInput(Date.now()+60_000));
+  const [from,setFrom]=useState(dateInput(Date.now()-60_000));
   const [to,setTo]=useState(dateInput(Date.now()+7*86_400_000));
   const [published,setPublished]=useState(true);
   const notices=useLoad(()=>get('/api/admin/announcements'),[]);
