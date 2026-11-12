@@ -116,6 +116,13 @@ export function createApp(d: Deps) {
     return r;
   });
   r.post('/api/auth/logout', true, async (c: AuthedCtx) => {
+    // Closing/minimizing the app never calls logout and never changes availability.
+    // Explicit sign-out must not leave a performer discoverable without any call token.
+    const activePerformer = await profiles.performer(c.user.id);
+    if (activePerformer?.line_status === 'on_job')
+      throw bad('active_job', 'Завершите текущую заявку перед выходом из аккаунта');
+    if (activePerformer && ['online', 'on_call', 'busy'].includes(activePerformer.line_status))
+      await profiles.setLine(c.user.id, { lineStatus: 'offline' });
     // Do not deliver sensitive order/location notifications to a signed-out device.
     // Other logged-in devices re-register their push token on next app launch.
     await d.db.query('delete from push_tokens where user_id=$1', [c.user.id]);
