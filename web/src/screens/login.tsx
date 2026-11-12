@@ -74,18 +74,71 @@ export function Login({ driver }: { driver?: boolean } = {}) {
     : 'Пришлём код. Пароль не нужен — кабинет откроется сам.';
 
   if (!intent) return (
-    <main>
-      <div className="helpWrap">
-        <button type="button" className="helpBtn" onClick={() => setIntent('help')} aria-label="Помогите — вызвать мастера или эвакуатор">
-          <span className="t">Помогите</span>
-          <span className="s">мастер или эвакуатор</span>
-          <span className="tap" aria-hidden="true">👆</span>
+    <main className="public-home">
+      <section className="public-hero">
+        <div className="public-hero-copy">
+          <span className="public-eyebrow">ТракSOS · Санкт-Петербург и Ленинградская область</span>
+          <h1>Помощь грузовику <em>в дороге 24/7</em></h1>
+          <p>Мастера, диагностика и эвакуация. Оформите заявку, найдите специалиста и следите за работой в одном сервисе.</p>
+          <div className="public-actions">
+            <button type="button" className="public-button public-button-sos" onClick={() => setIntent('help')}>SOS · Нужна помощь</button>
+            <button type="button" className="public-button public-button-outline" onClick={() => setIntent('login')}>Войти в личный кабинет</button>
+          </div>
+          <div className="public-hero-caption">Для водителей, владельцев транспорта и сервисных компаний</div>
+        </div>
+        <div className="public-hero-visual" aria-hidden="true">
+          <div className="public-sun" />
+          <div className="public-hill public-hill-back" />
+          <div className="public-hill public-hill-front" />
+          <div className="public-road" />
+          <div className="public-truck">
+            <div className="public-trailer" />
+            <div className="public-cabin"><div className="public-window" /></div>
+            <div className="public-wheel public-wheel-a" /><div className="public-wheel public-wheel-b" /><div className="public-wheel public-wheel-c" />
+          </div>
+        </div>
+      </section>
+
+      <section className="public-feature-grid" aria-label="Возможности ТракSOS">
+        <button type="button" className="public-feature" onClick={() => setIntent('help')}>
+          <span className="public-feature-icon">⚡</span><span><b>Помощь на дороге</b><small>Заявка мастеру и эвакуатору</small></span><span aria-hidden="true">›</span>
         </button>
-        <div className="sub" style={{ textAlign: 'center', marginTop: 0 }}>Сломались в дороге — приедем на место</div>
-      </div>
-      <div className="stack" style={{ marginTop: 'clamp(40px, 12vh, 110px)' }}>
+        <button type="button" className="public-feature" onClick={() => setIntent('login')}>
+          <span className="public-feature-icon">▣</span><span><b>Автомобили и документы</b><small>Всё в личном кабинете</small></span><span aria-hidden="true">›</span>
+        </button>
+        <button type="button" className="public-feature" onClick={() => setIntent('login')}>
+          <span className="public-feature-icon">☷</span><span><b>Мои заявки</b><small>Статусы, история и чат</small></span><span aria-hidden="true">›</span>
+        </button>
+        <button type="button" className="public-feature" onClick={() => setIntent('join')}>
+          <span className="public-feature-icon">⚙</span><span><b>Стать партнёром</b><small>Для мастеров и рембаз</small></span><span aria-hidden="true">›</span>
+        </button>
+      </section>
+
+      <section className="public-bottom-row">
+        <div className="public-how">
+          <div className="public-section-kicker">КАК ЭТО РАБОТАЕТ</div>
+          <h2>Помощь без лишних звонков</h2>
+          <div className="public-steps">
+            <div><span>01</span><b>Опишите проблему</b><small>Выберите поломку и местоположение</small></div>
+            <div><span>02</span><b>Найдём специалиста</b><small>Предложения от подходящих исполнителей</small></div>
+            <div><span>03</span><b>Следите за заявкой</b><small>Статус выполнения и связь с мастером</small></div>
+          </div>
+        </div>
+        <div className="public-partner">
+          <span className="public-section-kicker">РАБОТАЙТЕ С ТРАКSOS</span>
+          <h2>Вы мастер или сервис?</h2>
+          <p>Получайте заявки и управляйте работой через собственный кабинет.</p>
+          <button type="button" className="public-button public-button-partner" onClick={() => setIntent('join')}>Подключиться к платформе →</button>
+        </div>
+      </section>
+      <div className="public-mobile-entry">
+        <div className="helpWrap">
+          <button type="button" className="helpBtn" onClick={() => setIntent('help')} aria-label="Помогите — вызвать мастера или эвакуатор">
+            <span className="t">Помогите</span><span className="s">мастер или эвакуатор</span><span className="tap" aria-hidden="true">👆</span>
+          </button>
+          <div className="sub" style={{ textAlign: 'center' }}>Сломались в дороге — приедем на место</div>
+        </div>
         <button type="button" className="btn ghost" onClick={() => setIntent('login')}>Войти по номеру</button>
-        <div className="sub" style={{ textAlign: 'center' }}>Владельцы, водители, мастера, рембазы — один вход, кабинет откроется сам</div>
         <button type="button" className="link" onClick={() => setIntent('join')} style={{ background: 'none', border: 0, color: 'var(--accent)', fontWeight: 600, padding: 8 }}>Хочу работать с ТракSOS →</button>
       </div>
     </main>
