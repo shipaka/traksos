@@ -45,7 +45,7 @@ try {
     await page.locator('input[autocomplete=one-time-code]').fill(match[0]);
     await page.getByRole('button', { name: 'Войти', exact: true }).click();
     await page.locator('.website-workspace').waitFor();
-    await page.locator('.website-sidebar').waitFor({ state: 'visible' });
+    await page.locator('.website-sidebar').waitFor({ state: role.name === 'moderator' ? 'attached' : 'visible' });
     await acceptPendingOffers(page);
     if (await page.locator('.native-app').count()) throw new Error(role.name + ': desktop loaded Android shell');
     await page.locator('.website-work-area main').first().waitFor({ state: 'visible' });
