@@ -34,7 +34,8 @@ export function Home() {
         <div className="desktop-hero-copy">
           <span className="desktop-eyebrow">ТракSOS · Санкт-Петербург и Ленобласть</span>
           <h1>Помощь в дороге <span>24/7</span></h1>
-          <p>Мастера, диагностика и эвакуация грузовиков — от заявки до завершения работ в одном сервисе.</p>
+          <p>Мастера, диагностика и эвакуация грузовиков в Санкт-Петербурге и Ленинградской области — от заявки до завершения работ в одном сервисе.</p>
+          <div className="launch-region" role="note">Зона запуска: Санкт-Петербург и Ленинградская область. В других регионах выездные услуги пока недоступны.</div>
           <div className="desktop-hero-buttons">
             <a className="desktop-primary-action" href="#/sos">🚨 SOS · Нужна помощь</a>
             <a className="desktop-outline-action" href="#/new/diag">+ Создать заявку</a>
