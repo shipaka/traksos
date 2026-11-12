@@ -207,6 +207,8 @@ export function createApp(d: Deps) {
     return ops.setAnnouncementPublished(c.user,c.params.id,b.published);
   });
   r.get('/api/worker/commission-campaigns', performerRoles, () => ops.activeCampaigns());
+  r.post('/api/admin/announcements/:id/notify', ['admin'],
+    (c:AuthedCtx)=>ops.notifyAnnouncement(c.user,c.params.id,notifier));
   r.get('/api/admin/commission-campaigns', staff, () => ops.campaigns());
   r.put('/api/admin/commission-campaigns/:id/status', ['admin'], (c:AuthedCtx) => {
     const b=parse(z.object({enabled:z.boolean()}),c.body);
