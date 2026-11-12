@@ -187,6 +187,12 @@ export function WorkerCommunications() {
           <b>{x.title} · {labels[x.audience]??x.audience}</b>
           <span className="note">{x.body}</span>
           <span className="note">{fmtTime(x.starts_at)} — {fmtTime(x.ends_at)} · {x.published?'опубликовано':'черновик'}</span>
+          <span className="note">{x.notified_at?'Уведомление отправлено '+fmtTime(x.notified_at)+' · получателей '+x.notified_count:'Push-рассылка ещё не отправлялась'}</span>
+          {x.published && !x.notified_at && <button className="btn small" disabled={busy} onClick={async()=>{
+            if(!window.confirm('Отправить одно уведомление всем исполнителям выбранной группы? Повторная рассылка этого объявления будет заблокирована.'))return;
+            const r=await run(()=>post('/api/admin/announcements/'+x.id+'/notify',{}),'Уведомления отправлены');
+            if(r)notices.reload();
+          }}>Разослать уведомление</button>}
           <button className="btn ghost small" disabled={busy} onClick={async()=>{
             const r=await run(()=>put('/api/admin/announcements/'+x.id+'/status',{published:!x.published}),
               x.published?'Объявление снято':'Объявление опубликовано');
