@@ -49,8 +49,18 @@ const timer = setInterval(() => {
   app.orders.tick().catch((e) => console.error('[tick]', e));
   app.auction.tick().catch((e) => console.error('[auction]', e));
 }, 2_000);
-// Запросы на удаление данных — раз в час
-const hourly = setInterval(() => { app.privacy.processDeletions().catch((e) => console.error('[privacy]', e)); }, 3_600_000);
+// Отложенное удаление личных данных и очистка истёкших IP/телефонных
+// лимитов: хранить эти технические идентификаторы бессрочно не нужно.
+const housekeeping = async () => {
+  await Promise.allSettled([
+    app.privacy.processDeletions().catch((e) => console.error('[privacy]', e)),
+    db.query("delete from auth_sms_limits where bucket < now() - interval '48 hours'")
+      .catch((e) => console.error('[sms-quota-cleanup]', e)),
+    db.query("delete from auth_login_attempts where window_start < now() - interval '24 hours'")
+      .catch((e) => console.error('[login-quota-cleanup]', e)),
+  ]);
+};
+const hourly = setInterval(() => { void housekeeping(); }, 3_600_000);
 
 server.listen(config.port, () => console.log(`ТракSOS API: http://localhost:${config.port} (БД: ${db.driver})`));
 
