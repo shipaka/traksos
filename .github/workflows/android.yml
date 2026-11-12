@@ -45,13 +45,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
       - name: Встроить фронтенд в APK
         env:
           API_URL: ""
         run: |
-          npm ci
+          npm install
           npm -w web run build
           mkdir -p android/app/src/main/assets/www
           cp -a web/dist/. android/app/src/main/assets/www/
