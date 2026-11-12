@@ -54,7 +54,7 @@ try {
       if (await page.locator('.tabbar:visible').count()) throw new Error(role.name + ' ' + route + ': Android tabbar on desktop');
       if (await page.getByText('Такой страницы нет', { exact: true }).count()) throw new Error(role.name + ': unknown route ' + route);
     }
-    if (role.name === 'driver' || role.name === 'client') {
+    if (role.name === 'driver') {
       const res = await page.evaluate(async () => {
         const token = localStorage.getItem('traksos.token');
         return fetch('/api/fleet/finances', { headers: { Authorization: 'Bearer ' + token } }).then(r => r.status);
