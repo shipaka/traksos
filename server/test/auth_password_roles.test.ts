@@ -55,6 +55,43 @@ test('master plus service is automatic, client and insurance are exclusive', asy
   assert.equal((await t.api('PUT', '/api/base', { name: 'СТО', address: 'Шоссе, 1' }, client.token)).status, 400);
 });
 
+test('SMS budget survives AuthService restart and concurrent requests cannot double-send', async () => {
+  const { AuthService } = await import('../src/services/auth.ts');
+  const phone = '+79998881166';
+  const first = await Promise.all([
+    t.api('POST', '/api/auth/code', { phone }),
+    t.api('POST', '/api/auth/code', { phone }),
+  ]);
+  assert.deepEqual(first.map(r => r.status).sort(), [200, 429]);
+  assert.equal((await t.db.one<{ used: number }>(
+    "select used from auth_sms_limits where scope='phone_day' and identity=$1", [phone]))?.used, 1);
+  const restarted = new AuthService(t.db, t.sms, t.clock.now);
+  for (let i = 0; i < 7; i++) {
+    t.clock.advance(61);
+    await restarted.requestCode(phone);
+  }
+  t.clock.advance(61);
+  await assert.rejects(() => new AuthService(t.db, t.sms, t.clock.now).requestCode(phone),
+    (e: any) => e.status === 429 || e.code === 'too_many_codes');
+  const count = await t.db.one<{ used: number }>(
+    "select used from auth_sms_limits where scope='phone_day' and identity=$1", [phone]);
+  assert.equal(count?.used, 8);
+});
+
+test('SMS external IP hourly budget survives changes of phone number', async () => {
+  const { AuthService } = await import('../src/services/auth.ts');
+  const auth = new AuthService(t.db, t.sms, t.clock.now);
+  const ip = '198.51.100.123';
+  for (let i = 0; i < 15; i++) {
+    await auth.requestCode('+7999777' + String(1000 + i), ip);
+  }
+  await assert.rejects(() => new AuthService(t.db, t.sms, t.clock.now)
+    .requestCode('+79997772000', ip), (e: any) => e.status === 429 || e.code === 'too_many_codes');
+  const total = await t.db.one<{ used: number }>(
+    "select used from auth_sms_limits where scope='ip_hour' and identity=$1", [ip]);
+  assert.equal(total?.used, 15);
+});
+
 test('separate driver type is assigned without a client role', async () => {
   const driver = await register('+79998881115', 'driver');
   assert.deepEqual(driver.user.roles, ['driver']);
