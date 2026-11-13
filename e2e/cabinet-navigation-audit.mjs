@@ -57,8 +57,14 @@ try {
     if(kind==='admin' && !paths.includes('#/admin/section/queue'))
       throw Error('Admin moderation shortcut missing');
     for(const href of paths){
+      console.log('Navigating:',kind,href);
       await page.goto(BASE+'/'+href,{waitUntil:'domcontentloaded'});
-      await page.locator('.app').waitFor({timeout:12000});
+      try {
+        await page.locator('.app').waitFor({timeout:12000});
+      } catch {
+        throw Error(kind+': app shell did not render for '+href+
+          ' (actual URL '+page.url()+', JS errors: '+errors.join('; ')+')');
+      }
       const state=await page.evaluate(()=>({
         missing:document.querySelector('main')?.textContent?.includes('Такой страницы нет'),
         overflow:document.documentElement.scrollWidth>document.documentElement.clientWidth+3,
