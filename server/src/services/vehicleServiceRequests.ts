@@ -60,12 +60,12 @@ export class VehicleServiceRequests {
         if (user.owner_id) throw forbidden('Добавить автомобиль в парк может только владелец');
         await q.one('select id from users where id=$1 for update', [owner]);
         const v = insurance!.details.vehicle;
-        const plate = v.plate.trim().toUpperCase().replace(/\\s+/g, '');
-        const vin = v.vin.trim().toUpperCase().replace(/\\s+/g, '');
+        const plate = v.plate.trim().toUpperCase().replace(/\s+/g, '');
+        const vin = v.vin.trim().toUpperCase().replace(/\s+/g, '');
         const matches = await q.query<{id:string;brand:string;model:string;year:number;plate:string|null;vin:string|null}>(
           `select id,brand,model,year,plate,vin from vehicles where owner_id=$1
-           and (upper(regexp_replace(coalesce(plate,''),'\\\\s+','','g'))=$2
-             or upper(regexp_replace(coalesce(vin,''),'\\\\s+','','g'))=$3)`,
+           and (upper(regexp_replace(coalesce(plate,''),'[[:space:]]+','','g'))=$2
+             or upper(regexp_replace(coalesce(vin,''),'[[:space:]]+','','g'))=$3)`,
           [owner,plate,vin]);
         // VIN and plate are independent identifiers. Never silently merge records if they disagree.
         if (matches.length > 1 || (matches.length === 1 && (
@@ -73,7 +73,7 @@ export class VehicleServiceRequests {
           (matches[0].model ?? '').trim().toLowerCase() !== v.model.trim().toLowerCase() ||
           Number(matches[0].year) !== Number(v.year) ||
           (!!matches[0].vin && matches[0].vin.trim().toUpperCase() !== vin) ||
-          (!!matches[0].plate && matches[0].plate.trim().toUpperCase().replace(/\\s+/g,'') !== plate)
+          (!!matches[0].plate && matches[0].plate.trim().toUpperCase().replace(/\s+/g,'') !== plate)
         ))) throw bad('vehicle_conflict', 'VIN или госномер уже зарегистрирован с другими данными. Проверьте автомобиль.');
         if (matches.length === 1) {
           resolvedId = matches[0].id;
