@@ -9,7 +9,8 @@ if (!['localhost','127.0.0.1'].includes(new URL(BASE).hostname))
 const accounts = [
   ['owner', '+79990000141', 'Test-Role-Only-2026!', '#/'],
   ['driver', '+79990000142', 'Test-Role-Only-2026!', '#/'],
-  ['master', '+79990000147', 'Test-Role-Only-2026!', '#/work'],
+  ['master', '+79992223344', 'TrackSOS-Test-2026!', '#/work'],
+  ['moderator_master', '+79990000147', 'Test-Role-Only-2026!', '#/moderation'],
   ['tow', '+79990000143', 'Test-Role-Only-2026!', '#/work'],
   ['service', '+79990000144', 'Test-Role-Only-2026!', '#/base'],
   ['master_service', '+79990000146', 'Test-Role-Only-2026!', '#/base'],
