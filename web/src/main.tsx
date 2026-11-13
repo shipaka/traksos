@@ -25,6 +25,7 @@ import { ModeratorDesk } from './screens/moderatorDesk.tsx';
 import { AdminTestCenter } from './screens/adminTestCenter.tsx';
 import { SupportList, SupportNew, SupportThread, Notifications, useUnread } from './screens/support.tsx';
 import { InsurerCabinet } from './screens/insurer.tsx';
+import { InsuranceApplication,InsuranceThread } from './screens/insuranceFlow.tsx';
 
 /** Last-resort screen protection: a broken widget must not produce a blank website. */
 class ScreenErrorBoundary extends Component<
