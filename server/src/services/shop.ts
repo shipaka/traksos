@@ -152,11 +152,17 @@ export class ShopService {
       if (!SHOP_CATEGORIES[category]) throw bad('bad_category', 'Неизвестный раздел каталога');
       params.push(category); filters.push(`category=${params.length}`);
     }
-    const term = q.trim().slice(0, 100);
-    if (term) {
-      params.push('%' + term.replace(/[\\%_]/g, (c) => '\\' + c) + '%');
-      filters.push(`(name ilike $${params.length} escape '\\' or coalesce(article,'') ilike $${params.length} escape '\\'
-        or coalesce(brand,'') ilike $${params.length} escape '\\' or coalesce(search_terms,'') ilike $${params.length} escape '\\')`);
+    // Words can appear in any order across the part name, article, brand and synonyms.
+    // Deliberately bound each term: no user supplied SQL wildcards or expressions.
+    const terms = q.trim().slice(0, 100).split(/\s+/).filter(Boolean).slice(0, 8);
+    for (const term of terms) {
+      params.push(term);
+      const p = '$' + params.length;
+      filters.push(`(position(lower(${p}) in lower(name))>0
+        or position(lower(${p}) in lower(coalesce(article,'')))>0
+        or position(lower(${p}) in lower(coalesce(brand,'')))>0
+        or position(lower(${p}) in lower(coalesce(search_terms,'')))>0
+        or position(lower(${p}) in lower(coalesce(spec,'')))>0)`);
     }
     const where = filters.join(' and ');
     const total = await this.db.one<{ n: number }>(`select count(*)::int as n from shop_products where ${where}`, params);
@@ -203,7 +209,7 @@ export class ShopService {
   async indexChanges(after: string, limit = 750) {
     const setting = await this.settings.get('shop');
     if (!setting.enabled) return { enabled: false, rows: [], next: null, revision: null };
-    if (!/^\\d{1,19}$/.test(after)) throw bad('bad_cursor', 'Неверный курсор справочника');
+    if (!/^\d{1,19}$/.test(after)) throw bad('bad_cursor', 'Неверный курсор справочника');
     const take = Number.isFinite(limit) ? Math.max(1, Math.min(1000, Math.floor(limit))) : 750;
     // A stable upper bound ensures updates arriving during this request can be
     // safely fetched next time rather than silently skipped.
