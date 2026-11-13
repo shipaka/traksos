@@ -76,14 +76,16 @@ export class VehicleServiceRequests {
           where id=$1 and 'insurer'=any(roles) and status='active'`,[insurance.agentId]);
         if(!partner)throw notFound('Страховой агент недоступен');
       }
-      const created = await q.one<any>(
-        `insert into vehicle_service_requests(owner_id, requested_by, vehicle_id, kind, comment,
-          assigned_to,status,insurance_stage,insurance_details)
-         values ($1,$2,$3,$4,$5,$6::uuid,
-           case when $6::uuid is null then 'submitted' else 'sent_to_partner' end,
-           case when $6::uuid is null then null else 'received' end,$7::jsonb) returning *`,
-        [owner, user.id, vehicleId, kind, comment ?? null,insurance?.agentId??null,
-          insurance?JSON.stringify(insurance.details):null]);
+      const created = insurance
+        ? await q.one<any>(
+          `insert into vehicle_service_requests(owner_id, requested_by, vehicle_id, kind, comment,
+             assigned_to,status,insurance_stage,insurance_details)
+           values ($1,$2,$3,$4,$5,$6::uuid,'sent_to_partner','received',$7::jsonb) returning *`,
+          [owner,user.id,vehicleId,kind,comment??null,insurance.agentId,JSON.stringify(insurance.details)])
+        : await q.one<any>(
+          `insert into vehicle_service_requests(owner_id, requested_by, vehicle_id, kind, comment)
+           values ($1,$2,$3,$4,$5) returning *`,
+          [owner,user.id,vehicleId,kind,comment??null]);
       if (!created) throw notFound('Не удалось создать заявку');
       if(insurance)await q.query(`insert into insurance_thread_messages(request_id,sender_id,kind,body)
          values ($1,$2,'status','Заявка получена страховым агентом')`,[created.id,user.id]);
