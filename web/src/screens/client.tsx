@@ -4,6 +4,7 @@ import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF, QUICK_WHAT, ON_SITE, s
 import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFields, LiveStrip, type VehicleValue } from '../ui.tsx';
 import { BookingRows } from './base.tsx';
 import { DriverRules } from './fleet.tsx';
+import { VehicleServiceApplication, VehicleServiceHistory } from './vehicleServices.tsx';
 import { native } from '../native.ts';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
@@ -690,6 +691,13 @@ export function Garage() {
   const [driverFor, setDriverFor] = useState<string | null>(null);
   const [driverPhone, setDriverPhone] = useState('+7 ');
   const isDriver = !!me?.owner_id;
+  const [serviceHistoryVersion, setServiceHistoryVersion] = useState(0);
+  useEffect(() => {
+    const refresh = () => { if (document.visibilityState === 'visible' && navigator.onLine) setServiceHistoryVersion(v => v + 1); };
+    document.addEventListener('visibilitychange', refresh);
+    window.addEventListener('online', refresh);
+    return () => { document.removeEventListener('visibilitychange', refresh); window.removeEventListener('online', refresh); };
+  }, []);
 
   async function add() {
     const r = await run(() => post('/api/vehicles', {
@@ -716,6 +724,8 @@ export function Garage() {
           {v.trailer_plate && <span className="note">Прицеп {v.trailer_plate}</span>}
           {v.fixed_at && <span className="pill good" style={{ alignSelf: 'flex-start' }}>уточнено мастером · {fmtTime(v.fixed_at)}</span>}
           {seriesHint(v.brand, v.year) && <span className="note" style={{ color: 'var(--accent)' }}>{seriesHint(v.brand, v.year)}</span>}
+          <VehicleServiceApplication vehicleId={v.id} onCreated={() => setServiceHistoryVersion(v => v + 1)} />
+          <VehicleServiceHistory id={v.id} isDriver={isDriver} refreshVersion={serviceHistoryVersion} />
           <VehicleHistory id={v.id} />
           {!isDriver && (driverFor === v.id ? (
             <div className="stack">

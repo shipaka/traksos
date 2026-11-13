@@ -22,17 +22,7 @@ import { Shop, ShopCart } from './screens/shop.tsx';
 import { Privacy } from './screens/privacy.tsx';
 import { ModCase, Appeal, MyReviews } from './screens/moderation.tsx';
 import { SupportList, SupportNew, SupportThread, Notifications, useUnread } from './screens/support.tsx';
-
-function InsuranceHome() {
-  return <main>
-    <h1>Страховой партнёр</h1>
-    <div className="card">
-      <b>Кабинет страховой компании</b>
-      <span className="note">Категория аккаунта выделена отдельно. Подключение страховых продуктов и договоров ещё не запущено; заявки и полисы здесь пока не оформляются.</span>
-      <a className="btn ghost" href="#/support">Связаться с поддержкой</a>
-    </div>
-  </main>;
-}
+import { InsurerCabinet } from './screens/insurer.tsx';
 
 type Mode = 'client' | 'performer' | 'admin' | 'service' | 'insurer';
 const PERFORMER_ROLES = ['master', 'tow', 'service'];
@@ -155,7 +145,7 @@ function App() {
 
   let screen;
   switch (a) {
-    case undefined: screen = effMode === 'insurer' ? <InsuranceHome /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isStaff ? <Admin /> : <Home />; break;
+    case undefined: screen = effMode === 'insurer' ? <InsurerCabinet /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isStaff ? <Admin /> : <Home />; break;
     case 'login': screen = <Home />; break;
     case 'sos': screen = isCustomer ? <Sos /> : <main><div className="empty">Для вызова SOS нужен клиентский аккаунт</div></main>; break;
     case 'new': screen = !isCustomer ? <main><div className="empty">Для заказа нужен клиентский аккаунт</div></main> : b === 'consult' ? <Consult /> : <NewOrder service={b ?? 'electric'} />; break;
@@ -175,7 +165,7 @@ function App() {
     case 'services': screen = b && route[2] === 'book' ? <BookForm id={b} /> : b ? <CenterPage id={b} /> : <ServicesList />; break;
     case 'booking': screen = <BookingPage id={b} />; break;
     case 'fleet': screen = isCustomer && !me.owner_id && !me.roles.includes('driver') ? <Fleet /> : <main><div className="empty">Парком управляет владелец</div></main>; break;
-    case 'insurance': screen = isInsurer ? <InsuranceHome /> : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
+    case 'insurance': screen = isInsurer ? <InsurerCabinet /> : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
     case 'help': screen = <Help />; break;
     case 'rules': screen = <Rules />; break;
     case 'shop': screen = b === 'cart' ? <ShopCart /> : <Shop />; break;

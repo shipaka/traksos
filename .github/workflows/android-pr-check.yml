@@ -1,0 +1,76 @@
+name: Android PR smoke (unsigned debug)
+
+# All pull requests get an independent APK build. No release signing secrets,
+# no RuStore publishing and no production deployment.
+on:
+  pull_request:
+    paths:
+      - 'android/**'
+      - 'web/**'
+      - 'server/**'
+      - 'scripts/verify-approved.mjs'
+      - '.github/workflows/android-pr-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-pr-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  debug-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      APP_URL: https://traksos.ru
+      RUSTORE_PROJECT_ID: ""
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.10.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Assemble exact PR web assets
+        run: |
+          npm install
+          npm -w web run build
+          node scripts/verify-approved.mjs
+          mkdir -p android/app/src/main/assets/www
+          cp -a web/dist/. android/app/src/main/assets/www/
+          test -s android/app/src/main/assets/www/index.html
+          test -s android/app/src/main/assets/www/app.js
+          test -s android/app/src/main/assets/www/app.css
+          test -s android/app/src/main/assets/www/tracksos-approved-scania-r520.webp
+
+      - name: Build debug APK without release credentials
+        working-directory: android
+        run: gradle --no-daemon assembleDebug
+
+      - name: Check bundled pages and installed package metadata
+        run: |
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          test -s "$APK"
+          for asset in index.html app.js app.css tracksos-approved-scania-r520.webp; do
+            unzip -Z1 "$APK" | grep -Fx "assets/www/$asset"
+          done
+          sha256sum "$APK"
+          echo '### Android PR smoke' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Built debug APK, without release signing credentials.' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Bundled actual PR web assets and Scania R520.' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Physical-device notifications and calls remain unverified.' >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tracksos-pr-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
+          if-no-files-found: error
