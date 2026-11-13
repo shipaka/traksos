@@ -254,7 +254,16 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
               <button type="button" className="seg" aria-pressed={customerType === 'driver'} onClick={() => setCustomerType('driver')}>Водитель автопарка</button>
             </div>
             {customerType === 'driver' && <span className="note">После входа владелец сможет привязать вас к своей машине по приглашению или QR-коду.</span>}
-            <button type="button" className="btn ghost" onClick={() => setIntent('join')}>Хотите работать с ТракSOS? Подключиться как партнёр</button>
+            <span className="label">Или подключитесь как партнёр</span>
+            <div className="stack">
+              {JOIN_ROLES.map(r => (
+                <button key={r.id} type="button" className="opt" onClick={() => {
+                  setRole(r.id); setCameFromRegister(true); setIntent('join'); setStep('phone');
+                }}>
+                  <b>{r.name}</b><small>{r.hint}</small>
+                </button>
+              ))}
+            </div>
           </div>}
           {intent === 'help' && <div className="stack" role="group" aria-label="Тип клиента">
             <span className="label">Как вы пользуетесь транспортом?</span>
@@ -265,7 +274,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
             {customerType === 'driver' && <span className="note">После входа владелец сможет привязать вас к своей машине по приглашению или QR-коду.</span>}
           </div>}
           {intent === 'join' && <div className="stack">
-            {JOIN_ROLES.filter((r) => r.id !== 'master_service').map((r) => (
+            {JOIN_ROLES.map((r) => (
               <button key={r.id} type="button" className="opt" aria-pressed={role === r.id} onClick={() => setRole(r.id)}>
                 <b>{r.name}</b><small>{r.hint}</small>
               </button>
