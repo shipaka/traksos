@@ -63,6 +63,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
       </header>
       <nav className="partner-workspaces" aria-label="Разделы кабинета партнёра">
         {([['insurance','Страховки'],['inspection','Техосмотры'],['finance','Финансы'],['common','Общее']] as const)
+          .filter(([key])=>!inspectionOnly||key!=='insurance')
           .map(([key,label])=><button type="button" key={key} className={'btn ghost'+(workspace===key?' active':'')}
             aria-pressed={workspace===key} onClick={()=>setWorkspace(key)}>{label}</button>)}
       </nav>
