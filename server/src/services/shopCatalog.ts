@@ -99,6 +99,63 @@ export class ShopCatalogService {
     });
   }
 
+  /** Small revision check for the reviewed, reference-only catalog. */
+  async indexManifest() {
+    const settings = await this.settings.get('shop');
+    if (!settings.enabled) return { enabled: false, revision: '0', count: 0 };
+    const count = await this.db.one<{ n: number }>(
+      'select count(*)::int as n from shop_catalog_entries where reviewed=true');
+    const latest = await this.db.one<{ revision: string }>(
+      'select coalesce(max(seq),0)::text as revision from shop_catalog_reference_changes');
+    return { enabled: true, revision: latest?.revision ?? '0', count: count?.n ?? 0 };
+  }
+
+  /** Snapshot: six small strings per entry, ordered by UUID for cursor paging. */
+  async indexPage(after: string | null, limit = 750) {
+    const settings = await this.settings.get('shop');
+    if (!settings.enabled) return { enabled: false, rows: [], next: null };
+    const take = Number.isFinite(limit) ? Math.max(1, Math.min(1000, Math.floor(limit))) : 750;
+    const pages = await this.db.query<any>(
+      `select id, category, brand, article, name, search_terms from shop_catalog_entries
+       where reviewed=true and ($1::uuid is null or id>$1::uuid)
+       order by id limit $2`, [after, take + 1]);
+    const chunks = pages.slice(0, take);
+    const next = pages.length > take ? chunks[chunks.length - 1].id : null;
+    return {
+      enabled: true,
+      rows: chunks.map((p: any) => [p.id, p.category, p.brand, p.article, p.name, p.search_terms]),
+      next,
+    };
+  }
+
+  /** Deltas include explicit tombstones for revoked or deleted references. */
+  async indexChanges(after: string, limit = 750) {
+    const settings = await this.settings.get('shop');
+    if (!settings.enabled) return { enabled: false, rows: [], next: null, revision: '0' };
+    if (!/^\\d{1,19}$/.test(after) || BigInt(after) > 9223372036854775807n)
+      throw bad('bad_cursor', 'Неверная версия справочника');
+    const take = Number.isFinite(limit) ? Math.max(1, Math.min(1000, Math.floor(limit))) : 750;
+    const latest = await this.db.one<{ revision: string }>(
+      'select coalesce(max(seq),0)::text as revision from shop_catalog_reference_changes');
+    const revision = latest?.revision ?? '0';
+    const events = await this.db.query<any>(
+      `select c.seq::text as seq, c.entry_id, c.removed,
+        p.id, p.reviewed, p.category, p.brand, p.article, p.name, p.search_terms
+       from shop_catalog_reference_changes c
+       left join shop_catalog_entries p on p.id=c.entry_id
+       where c.seq>$1::bigint and c.seq<=$2::bigint
+       order by c.seq limit $3`, [after, revision, take + 1]);
+    const page = events.slice(0, take);
+    return {
+      enabled: true,
+      rows: page.map((p: any) => p.removed || !p.reviewed || !p.id
+        ? [p.seq, p.entry_id]
+        : [p.seq, p.entry_id, p.category, p.brand, p.article, p.name, p.search_terms]),
+      next: events.length > take ? page[page.length - 1].seq : null,
+      revision,
+    };
+  }
+
   async stats() {
     const s = await this.db.one<{ total: number; approved: number; pending: number }>(
       `select count(*)::int as total, count(*) filter (where reviewed)::int as approved,
