@@ -378,6 +378,11 @@ export function createApp(d: Deps) {
     if (after && !z.string().uuid().safeParse(after).success) throw bad('bad_cursor', 'Некорректный курсор');
     return shop.indexPage(after, Number(c.query.get('limit') ?? '750'));
   });
+  r.get('/api/shop/index/changes', true, (c: AuthedCtx) => {
+    const after = c.query.get('after') ?? '0';
+    if (!/^\\d{1,19}$/.test(after)) throw bad('bad_cursor', 'Неверная версия справочника');
+    return shop.indexChanges(after, Number(c.query.get('limit') ?? '750'));
+  });
   r.get('/api/shop/products/:id/analogs', true, (c: AuthedCtx) => shop.alternatives(c.params.id));
   r.post('/api/admin/shop/products/:id/analogs', ['admin'], (c: AuthedCtx) => {
     const b = parse(z.object({
