@@ -66,6 +66,10 @@ try {
     const response = await fetch(BASE+'/api/me',{headers:{authorization:'Bearer '+token}});
     if (response.status !== 401) throw new Error('Expired preview API token was accepted');
     await page.reload();
+    await page.locator('main.public-home').waitFor({timeout:20_000});
+    if (await page.getByRole('heading',{name:'Тестирование кабинетов'}).count())
+      throw new Error('Expired browser session still displays administrator preview');
+    await page.goto(BASE+'/#/login');
     await page.locator('input[type=tel]').waitFor({timeout:20_000});
     await context.close();
   }
