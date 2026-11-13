@@ -49,16 +49,37 @@ export class VehicleServiceRequests {
        order by r.created_at desc`, [vehicleId, owner, kinds]);
   }
 
-  async create(user: AuthUser, vehicleId: string, kind: VehicleServiceKind, comment?: string,
+  async create(user: AuthUser, vehicleId: string | undefined, kind: VehicleServiceKind, comment?: string,
     insurance?: {agentId:string; details:{ applicant:{firstName:string;lastName:string;middleName?:string}; vehicle:Record<string,string>; consentAt?:string}}) {
     const owner = user.owner_id ?? user.id;
-    const v = await this.db.one<any>(
-      'select id, driver_id from vehicles where id=$1 and owner_id=$2', [vehicleId, owner]);
-    if (!v || (user.owner_id && v.driver_id !== user.id)) throw notFound('Машина не найдена');
-    // Serialize creation with driver assignment and permissions changes.
+    if (!vehicleId && (!insurance || kind !== 'insurance')) throw bad('bad_vehicle', 'Выберите автомобиль');
+    // Lock the owner before duplicate lookup: simultaneous insurance submissions cannot create two identical cars.
     return this.db.tx(async (q) => {
+      let resolvedId = vehicleId;
+      if (!resolvedId) {
+        if (user.owner_id) throw forbidden('Добавить автомобиль в парк может только владелец');
+        await q.one('select id from users where id=$1 for update', [owner]);
+        const v = insurance!.details.vehicle;
+        const plate = v.plate.trim().toUpperCase().replace(/\\s+/g, '');
+        const matches = await q.query<{id:string;brand:string;model:string;year:number}>(
+          `select id,brand,model,year from vehicles where owner_id=$1
+           and upper(regexp_replace(coalesce(plate,''),'\\s+','','g'))=$2`, [owner,plate]);
+        if (matches.length > 1 || (matches.length === 1 && (
+          matches[0].brand.toLowerCase() !== v.brand.trim().toLowerCase() ||
+          (matches[0].model ?? '').toLowerCase() !== v.model.trim().toLowerCase() ||
+          Number(matches[0].year) !== Number(v.year)
+        ))) throw bad('vehicle_conflict', 'Номер уже есть в гараже с другими данными. Проверьте автомобиль.');
+        if (matches.length === 1) resolvedId = matches[0].id;
+        else {
+          const created = await q.one<{id:string}>(
+            `insert into vehicles(owner_id,brand,model,year,plate,trailer_plate)
+             values ($1,$2,$3,$4,$5,$6) returning id`,
+            [owner,v.brand.trim(),v.model.trim(),Number(v.year),v.plate.trim(),v.trailerPlate?.trim() || null]);
+          resolvedId = created!.id;
+        }
+      }
       const locked = await q.one<any>(
-        'select id, driver_id from vehicles where id=$1 and owner_id=$2 for update', [vehicleId, owner]);
+        'select id, driver_id from vehicles where id=$1 and owner_id=$2 for update', [resolvedId, owner]);
       if (!locked || (user.owner_id && locked.driver_id !== user.id)) throw notFound('Машина не найдена');
       if (user.owner_id) {
         const settings = await q.one<any>('select fleet from users where id=$1', [owner]);
@@ -68,7 +89,7 @@ export class VehicleServiceRequests {
         `select id from vehicle_service_requests
          where owner_id=$1 and vehicle_id=$2 and kind=$3
            and status in ('submitted','in_review','need_documents','sent_to_partner')
-         limit 1`, [owner, vehicleId, kind]);
+         limit 1`, [owner, resolvedId, kind]);
       if (active) throw bad('duplicate_request', 'По этой машине уже есть активная заявка на эту услугу');
       if (insurance) {
         if (kind !== 'insurance') throw bad('invalid_kind', 'Агент выбирается только для страхования');
@@ -81,11 +102,11 @@ export class VehicleServiceRequests {
           `insert into vehicle_service_requests(owner_id, requested_by, vehicle_id, kind, comment,
              assigned_to,status,insurance_stage,insurance_details)
            values ($1,$2,$3,$4,$5,$6::uuid,'sent_to_partner','received',$7::jsonb) returning *`,
-          [owner,user.id,vehicleId,kind,comment??null,insurance.agentId,JSON.stringify(insurance.details)])
+          [owner,user.id,resolvedId,kind,comment??null,insurance.agentId,JSON.stringify(insurance.details)])
         : await q.one<any>(
           `insert into vehicle_service_requests(owner_id, requested_by, vehicle_id, kind, comment)
            values ($1,$2,$3,$4,$5) returning *`,
-          [owner,user.id,vehicleId,kind,comment??null]);
+          [owner,user.id,resolvedId,kind,comment??null]);
       if (!created) throw notFound('Не удалось создать заявку');
       if(insurance)await q.query(`insert into insurance_thread_messages(request_id,sender_id,kind,body)
          values ($1,$2,'status','Заявка получена страховым агентом')`,[created.id,user.id]);
