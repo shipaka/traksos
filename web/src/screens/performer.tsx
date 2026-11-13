@@ -28,14 +28,23 @@ export function Work() {
   });
 
   return (
-    <main>
+    <main className="work-command-shell stack">
       <WorkerNotices />
       <LiveStrip who={p.kind === 'tow' ? 'tow' : 'master'} />
       {online && p.verification === 'approved' && <Nearby />}
-      <div className="between">
-        <h1>{me?.name ?? 'Кабинет'}</h1>
-        <span className="pill"><span className={`dot ${online ? 'on' : ''}`} /> {LINE[p.line_status]}</span>
-      </div>
+      <section className="work-command-hero">
+        <span className="work-command-eyebrow">TRACKSOS · {p.kind === 'tow' ? 'ЭВАКУАЦИЯ ГРУЗОВИКОВ' : 'ВЫЕЗДНАЯ ПОМОЩЬ'}</span>
+        <div className="between">
+          <h1>{me?.name ?? 'Кабинет'}</h1>
+          <span className="pill"><span className={`dot ${online ? 'on' : ''}`} /> {LINE[p.line_status]}</span>
+        </div>
+        <p>Рабочая смена, заявки рядом, выезды и взаиморасчёты — всё в одном кабинете.</p>
+        <div className="work-command-stats">
+          <div><strong>{active.length}</strong><span>Мои активные выезды</span></div>
+          <div><strong>{(auctions.data ?? []).length}</strong><span>Заявки рядом</span></div>
+          <a className="btn ghost" href="#/work/jobs">История заявок →</a>
+        </div>
+      </section>
 
       {p.verification !== 'approved' ? (
         <div className="card hi">
