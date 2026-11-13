@@ -11,11 +11,11 @@ function PublicDemoMapBackdrop() {
 
 // Роль выбирают только те, кто подключается работать. Остальные входят по номеру — кабинет определяется по ролям.
 const JOIN_ROLES = [
-  { id: 'master', name: 'Выездной мастер', hint: 'Электрик, диагност, воздушник, автономщик, шиномонтаж — специализация в профиле' },
-  { id: 'tow', name: 'Эвакуатор', hint: 'Заявки на эвакуацию приходят как звонок' },
-  { id: 'service', name: 'СТО грузовых автомобилей', hint: 'Клиенты записываются к вам, мастера советуют вас' },
+  { id: 'master', name: 'Я мастер', hint: 'Электрик, диагност, воздушник, автономщик, шиномонтаж — специализация в профиле' },
+  { id: 'tow', name: 'Я эвакуаторщик', hint: 'Заявки на эвакуацию приходят как звонок' },
+  { id: 'service', name: 'Я рембаза (сервис)', hint: 'Клиенты записываются к вам, мастера советуют вас' },
   { id: 'master_service', name: 'Мастер и своя СТО', hint: 'Два кабинета: выездные услуги отдельно, ремонт на своей рембазе отдельно' },
-  { id: 'insurer', name: 'Страховая компания', hint: 'Отдельный тип аккаунта: не совмещается с клиентом или мастером' },
+  { id: 'insurer', name: 'Я представитель страховой компании', hint: 'Отдельный тип аккаунта: не совмещается с клиентом или мастером' },
 ] as const;
 type JoinRole = (typeof JOIN_ROLES)[number]['id'];
 type Intent = 'help' | 'login' | 'register' | 'join' | 'reset';
@@ -28,6 +28,7 @@ export function homeFor(roles: string[], intent: Intent): string {
   if (roles.includes('admin')) return '#/as/admin';
   if (roles.includes('moderator')) return '#/as/moderator';
   if (roles.includes('insurer')) return '#/insurance';
+  if (roles.includes('inspection_operator')) return '#/inspections';
   if (roles.includes('client') || roles.includes('driver')) return '#/as/client';
   if (performer) return '#/as/performer';
   if (roles.includes('service')) return '#/as/service';
