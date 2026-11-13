@@ -280,6 +280,27 @@ export class VehicleServiceRequests {
     });
   }
 
+  async updateInspection(user: AuthUser, requestId: string, status: 'completed'|'rejected', note?: string) {
+    if (!user.roles?.includes('insurer')) throw forbidden('Нет доступа');
+    return this.db.tx(async q => {
+      const current = await q.one<any>(
+        'select * from vehicle_service_requests where id=$1 for update', [requestId]);
+      if (!current || current.kind !== 'inspection' || current.assigned_to !== user.id)
+        throw notFound('Назначенный техосмотр не найден');
+      if (current.status !== 'sent_to_partner')
+        throw bad('invalid_status','Техосмотр уже обработан или ещё не передан партнёру');
+      if (status === 'rejected' && !note?.trim())
+        throw bad('missing_status_reason','Укажите причину отказа');
+      const updated = await q.one<any>(
+        `update vehicle_service_requests set status=$2, staff_note=$3, updated_at=now()
+         where id=$1 and kind='inspection' and assigned_to=$4 returning *`,
+        [requestId,status,note?.trim()||null,user.id]);
+      await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
+        [user.id,'inspection.status',requestId,{status,note:note?.trim()||null}]);
+      return updated;
+    });
+  }
+
   async inspectionQueue(user: AuthUser) {
     if (!user.roles?.includes('insurer')) throw forbidden('Нет доступа');
     // Only inspections assigned to this partner; insurance data never leaks into this workspace.
