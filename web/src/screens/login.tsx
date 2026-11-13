@@ -214,7 +214,8 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   );
 
   return (
-    <main>
+    <main className="auth-desktop-layout">
+      <section className="auth-desktop-form">
       {intent === 'login' && step === 'phone' && <div className="auth-entry-options" aria-label="Варианты входа">
         <button type="button" onClick={() => setIntent('help')}>Помогите — нужна помощь</button>
         <button type="button" onClick={() => setIntent('login')}>Войти по номеру</button>
@@ -315,6 +316,15 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <button type="button" className="btn ghost" onClick={() => { setStep('phone'); setCode(''); setInsurerOnly(false); }}>Другой номер</button>
         </form>
       )}
+      </section>
+      <aside className="auth-desktop-showcase" aria-label="О сервисе ТракSOS">
+        <div className="auth-desktop-showcase-photo" aria-hidden="true" />
+        <div className="auth-desktop-showcase-copy">
+          <span>ТРАКSOS · ПОМОЩЬ ГРУЗОВОМУ ТРАНСПОРТУ</span>
+          <h2>Помощь на дороге, когда она нужна</h2>
+          <p>Выездные мастера, эвакуация и СТО грузовых автомобилей — в одном сервисе.</p>
+        </div>
+      </aside>
     </main>
   );
 }
