@@ -58,7 +58,7 @@ export class InsuranceQuoteFlow {
       left join users agent on agent.id=r.assigned_to where r.id=$1`,[id]);
     if(!request)throw notFound('Страховая заявка не найдена');
     const proposals=await this.db.query(`select id,company,product,premium_kopecks,description,coverage,created_at
-      from insurance_proposals where request_id=$1 order by created_at,id`,[id]);
+      from insurance_proposals where request_id=$1 order by premium_kopecks asc,company,id`,[id]);
     const messages=await this.db.query(`select m.id,m.kind,m.body,m.created_at,
       case when m.sender_id=$2 then 'you' when m.sender_id=$3 then 'agent' else 'system' end as sender
       from insurance_thread_messages m
