@@ -258,6 +258,12 @@ export class AdminService {
       throw forbidden('Администратором может быть только закреплённый основной номер');
     if (roles.includes('moderator') && !config.moderatorPhones.includes(target.phone))
       throw forbidden('Модератором может быть только закреплённый номер');
+    const providerRoles=['master','tow','service'];
+    if (roles.includes('inspection_operator') &&
+        roles.some(role=>['client','driver',...providerRoles].includes(role)))
+      throw bad('incompatible_roles','Оператор техосмотра не совмещается с клиентом или ремонтным исполнителем');
+    if (roles.includes('insurer') && roles.some(role=>['client','driver',...providerRoles].includes(role)))
+      throw bad('incompatible_roles','Страховой партнёр не совмещается с клиентом или ремонтным исполнителем');
     if (roles.includes('admin') && roles.includes('moderator'))
       throw bad('incompatible_staff_roles', 'Администратор и модератор — разные уровни доступа');
     await this.db.tx(async q => {
