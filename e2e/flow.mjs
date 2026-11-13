@@ -165,7 +165,7 @@ await shot(k, '03-client-home');
 // is a separate choice-first flow and must not be mixed into this scenario.
 await k.getByRole('button', { name: /Не заводится/ }).click();
 await k.getByRole('button', { name: /Электрик или диагност на выезд/ }).click();
-await k.getByRole('button', { name: /Вызвать сейчас/ }).click(); // рано: подсветит, чего не хватает
+await k.getByRole('button', { name: /Вызвать мастера/ }).click(); // рано: подсветит, чего не хватает
 await k.getByText('Осталось:').waitFor();
 await k.locator('select[aria-label="Марка"]').selectOption('Scania');
 await k.locator('select[aria-label="Модель"]').selectOption('R-серия');
@@ -175,7 +175,7 @@ await k.getByRole('button', { name: /Тосно/ }).click();
 await k.getByText('Проверьте перед вызовом').waitFor();
 await k.locator('.agree input').check();
 await shot(k, '04-client-new-order');
-await k.getByRole('button', { name: 'Вызвать сейчас' }).click();
+await k.getByRole('button', { name: 'Вызвать мастера' }).click();
 await k.waitForURL(/order\//);
 await k.locator('.radar').waitFor();
 await k.waitForTimeout(1500);
