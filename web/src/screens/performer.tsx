@@ -95,36 +95,41 @@ const BREAKS: [number, string][] = [[15, '15 мин'], [30, '30 мин'], [60, '
 
 /** Статус на линии, как в демо: Свободен / На звонке / Перерыв / Не на линии — и что сейчас по графику */
 function LineCard({ p, busy, setLine, online }: { p: any; busy: boolean; setLine: (s: string, until?: string) => void; online: boolean }) {
+  const [open, setOpen] = useState(false);
   const [breakOpen, setBreakOpen] = useState(false);
   const sl = scheduleSlot(p.schedule, new Date(), p.off_schedule_until);
   const onJob = p.line_status === 'on_job';
-  const st: [string, string, string][] = [
-    ['online', 'Свободен', 'Заявки приходят вам как звонок'],
+  const statuses: [string, string, string][] = [
+    ['online', 'Свободен', 'Принимать новые заявки'],
     ['on_call', 'На звонке', 'Видны клиентам, но ниже в очереди'],
-    ['offline', 'Не на линии', 'Заявки идут другим'],
+    ['offline', 'Не на линии', 'Не получать новые заявки'],
   ];
+  const current = onJob ? 'На выезде' : p.line_status === 'busy' ? 'Перерыв' : statuses.find(([id]) => id === p.line_status)?.[1] ?? LINE[p.line_status] ?? 'Статус';
+  const choose = (id: string, until?: string) => { setLine(id, until); setOpen(false); setBreakOpen(false); };
   return (
     <div className="card">
-      <div className="between"><b>Статус на линии</b>{onJob && <span className="pill warn">На выезде</span>}</div>
-      <div className="stack" style={{ gap: 6 }}>
-        {st.map(([id, name, hint]) => (
-          <button key={id} className="opt" aria-pressed={p.line_status === id} disabled={busy || onJob} onClick={() => setLine(id)}>
-            <b>{name}</b><small>{hint}</small>
+      <button type="button" className="linkrow" aria-expanded={open} aria-controls="performer-line-options" disabled={busy || onJob} onClick={() => { setOpen(!open); setBreakOpen(false); }}>
+        <span><b>Статус · {current}</b><small>{onJob ? 'Во время выезда статус изменить нельзя' : 'Нажмите, чтобы изменить доступность'}</small></span>
+        <span aria-hidden="true">{open ? '⌃' : '⌄'}</span>
+      </button>
+      {open && !onJob && (
+        <div id="performer-line-options" className="stack" style={{ gap: 6 }}>
+          {statuses.map(([id, name, hint]) => (
+            <button key={id} className="opt" aria-pressed={p.line_status === id} disabled={busy} onClick={() => choose(id)}>
+              <b>{name}</b><small>{hint}</small>
+            </button>
+          ))}
+          <button className="opt" aria-pressed={p.line_status === 'busy'} disabled={busy} onClick={() => setBreakOpen(!breakOpen)}>
+            <b>Перерыв{p.line_status === 'busy' && p.busy_until ? ` · до ${new Date(p.busy_until).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}` : ''}</b>
+            <small>Выберите длительность перерыва</small>
           </button>
-        ))}
-        <button className="opt" aria-pressed={p.line_status === 'busy'} disabled={busy || onJob} onClick={() => setBreakOpen(!breakOpen)}>
-          <b>Перерыв{p.line_status === 'busy' && p.busy_until ? ` · до ${new Date(p.busy_until).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}` : ''}</b>
-          <small>Обед, заправка — заявки не приходят, по таймеру снова «Свободен»</small>
-        </button>
-        {breakOpen && (
-          <div className="grid4">{BREAKS.map(([m, l]) => (
-            <button key={m} className="seg" style={{ fontSize: 13 }} disabled={busy} onClick={() => { setBreakOpen(false); setLine('busy', new Date(Date.now() + m * 60_000).toISOString()); }}>{l}</button>
-          ))}</div>
-        )}
-      </div>
-      <ScheduleNote p={p} sl={sl} />
+          {breakOpen && <div className="grid4">{BREAKS.map(([m, label]) => (
+            <button key={m} className="seg" disabled={busy} onClick={() => choose('busy', new Date(Date.now() + m * 60_000).toISOString())}>{label}</button>
+          ))}</div>}
+          <span className="note">Три пропущенных вызова подряд — статус автоматически станет «Не на линии».</span>
+        </div>
+      )}
       <SearchSettingsLink p={p} />
-      <span className="note">Три пропущенных вызова подряд — статус сам станет «Не на линии».</span>
       {online && <LocationSharing />}
     </div>
   );
