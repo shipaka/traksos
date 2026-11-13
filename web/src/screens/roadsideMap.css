@@ -64,3 +64,9 @@
   .roadside-performer-card>.roadside-map{margin:0;}
   .roadside-tracking-status{padding:11px;}
 }
+
+.roadside-location-share{display:flex;flex-direction:column;gap:5px;min-width:0;
+  padding:13px 16px;border:1px solid #43848f;border-radius:15px;
+  background:linear-gradient(130deg,#143c51,#0c2d43);}
+.roadside-location-share>b{color:#e5fbff;font-size:13px;}
+.roadside-location-share>.note{color:#b1d9e7;font-size:12px;line-height:1.4;}
