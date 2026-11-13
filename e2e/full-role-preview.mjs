@@ -25,9 +25,15 @@ try{
    localStorage.setItem('traksos.mode','admin');},token);
   await page.goto(BASE+'/#/admin/test-center/client');
   await page.locator('.role-preview-bar').waitFor();
-  await page.getByRole('heading',{name:/Помощь в дороге/}).first().waitFor();
+  // The approved PHONE layout intentionally hides the desktop hero and its CTA.
+  // Open a visible, real role-specific control on each viewport.
+  await page.locator(width>=900?'.desktop-hero h1':'.mobile-home-heading h1').waitFor({state:'visible'});
   await page.screenshot({path:'e2e/shots/full-role/client-'+width+'.png',fullPage:true});
-  await page.locator('.desktop-hero-buttons .desktop-outline-action').click();
+  if(width>=900) {
+    await page.locator('.desktop-hero-buttons .desktop-outline-action').click();
+  } else {
+    await page.locator('.home-services button.linkrow').filter({hasText:'Диагност'}).first().click();
+  }
   await page.waitForURL(/#\/admin\/test-center\/client\/new\/diag/);
   await page.locator('#f-what textarea').fill('На грузовике не работает пневмосистема, нужна диагностика');
   await page.locator('#f-where input').first().fill('Санкт-Петербург, Софийская улица, 85');
