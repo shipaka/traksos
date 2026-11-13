@@ -32,6 +32,13 @@ async function asset(path, minBytes = 5000) {
 const landing = await read('web/src/screens/login.tsx');
 const css = await read('web/src/styles.css');
 const shell = await read('web/src/main.tsx');
+const demo = await read('web/src/screens/adminTestCenter.tsx');
+expect(shell.includes("b === 'test-center' ? <AdminTestCenter />"), 'admin-only test center is routed explicitly');
+expect(!demo.includes("from '../api.ts'") && !demo.includes('fetch(') && !demo.includes('XMLHttpRequest'),
+  'sandbox performs no real API traffic or requests');
+for(const role of ['client','owner','driver','master','tow','service','master_service','insurer','moderator','admin']) {
+  expect(demo.includes("id:'"+role+"'"), 'safe demo role exists: '+role);
+}
 const labels = await read('web/src/dict.ts');
 const native = await read('android/app/src/main/java/ru/traksos/app/MainActivity.kt');
 
