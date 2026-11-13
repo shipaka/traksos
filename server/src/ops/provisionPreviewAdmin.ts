@@ -42,7 +42,7 @@ try {
     if (!record) throw new Error('Unable to create the preview administrator');
     await q.query(
       `insert into audit_log(actor_id,action,target,data)
-         values ($1,'staff.preview_admin_created',$1,$2)`,
+         values ($1::uuid,'staff.preview_admin_created',$1::text,$2::jsonb)`,
       [record.id, { via: 'local_vps', expiresAt: expiresAt.toISOString(), noSms: true }],
     );
   });
