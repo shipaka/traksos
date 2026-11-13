@@ -36,6 +36,7 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
   const [applicant,setApplicant]=useState({lastName:'',firstName:'',middleName:''});
   const [truck,setTruck]=useState<Record<VehicleKey,string>>(emptyVehicle);
   const [comment,setComment]=useState('');
+  const [consent,setConsent]=useState(false);
   const {busy,run}=useAction();
   useEffect(()=>{
     if(!me?.name)return;
@@ -53,13 +54,13 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
     e.preventDefault();
     if(!agentId||!vehicleId||!applicant.lastName.trim()||!applicant.firstName.trim()||
       !truck.brand.trim()||!truck.model.trim()||!truck.plate.trim()||
-      !/^\d{4}$/.test(truck.year)||truck.vin.trim().length<11){
+      !/^\d{4}$/.test(truck.year)||truck.vin.trim().length<11||!consent){
       window.alert('Выберите агента и заполните все обязательные данные страхователя и грузовика.');
       return;
     }
     const result=await run(()=>post<{id:string}>('/api/vehicle-service-requests',{
       kind:'insurance',vehicleId,comment,
-      insurance:{agentId,details:{applicant,vehicle:truck}},
+      insurance:{agentId,consentToPartner:true,details:{applicant,vehicle:truck}},
     }),'Заявка отправлена выбранному страховому агенту');
     if(result)go('insurance/request/'+result.id);
   };
@@ -108,7 +109,9 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
         <label>Комментарий или пожелания
           <textarea className="field" value={comment} maxLength={2000} onChange={e=>setComment(e.target.value)}
             placeholder="Тип полиса, особенности эксплуатации, вопросы для агента"/></label>
-        <button className="btn insurance-main-action" type="submit" disabled={busy||!agents.data.length}>
+        <label className="agree"><input type="checkbox" required checked={consent}
+          onChange={e=>setConsent(e.target.checked)}/><span>Согласен на передачу указанных ФИО и данных грузовика выбранному страховому партнёру для обработки заявки. <a href="#/offer/privacy">Подробнее о данных</a></span></label>
+        <button className="btn insurance-main-action" type="submit" disabled={busy||!agents.data.length||!consent}>
           Отправить заявку страховому агенту
         </button>
       </section>
