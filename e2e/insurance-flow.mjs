@@ -13,13 +13,16 @@ async function api(method,path,body,token,status=200) {
   return data;
 }
 const assert=(ok,msg)=>{if(!ok)throw Error(msg)};
-async function acceptPendingOffers(page) {
-  for (let i=0; i<5; i++) {
-    const dialog=page.getByRole('dialog',{name:/Оферта|Согласие/});
-    if (!(await dialog.isVisible().catch(()=>false))) break;
+async function acceptPendingOffers(page,token) {
+  const response=await fetch(BASE+'/api/me/offers',{headers:{authorization:'Bearer '+token}});
+  if(!response.ok) throw Error('Could not read pending offer status');
+  const offers=await response.json();
+  for (const item of offers.filter(x=>x.current && !x.accepted)) {
+    const dialog=page.getByRole('dialog',{name:item.name});
+    await dialog.waitFor({state:'visible',timeout:15000});
     await dialog.locator('input[type=checkbox]').check();
     await dialog.getByRole('button',{name:'Принимаю'}).click();
-    await dialog.waitFor({state:'hidden',timeout:10000});
+    await dialog.waitFor({state:'detached',timeout:15000});
   }
 }
 
@@ -84,7 +87,7 @@ try{
     await page.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','client')},item.token);
     await page.goto(BASE+'/'+item.hash,{waitUntil:'domcontentloaded'});
     await page.getByRole('heading',{name:item.heading}).waitFor();
-    await acceptPendingOffers(page);
+    await acceptPendingOffers(page,item.token);
     if(item.name==='insurer') await page.getByRole('button',{name:'Все',exact:true}).click();
     await page.getByText(item.expected,{exact:false}).first().waitFor();
     if(item.name==='admin') {
