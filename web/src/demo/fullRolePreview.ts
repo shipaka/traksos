@@ -48,8 +48,11 @@ const estimate=(input:any)=>({
  step:30,night:!!input?.night,group:!!input?.group,km:0,roadKm:0,
 });
 let orders:DemoOrder[]=[];
+const defaultFleet=()=>({mode:'approve',perOrder:null as number|null,perMonth:null as number|null,
+ allow:{repair:true,tow:true,consult:true,service:true,shop:false,insurance:true,inspection:true}});
+let fleetSettings=defaultFleet();
 const findOrder=(id:string)=>orders.find(o=>o.id===id)??err('Заявка не найдена');
-export function resetFullPreview(){orders=[];counter=100;mid=100;vehicles.splice(2);}
+export function resetFullPreview(){orders=[];counter=100;mid=100;vehicles.splice(2);fleetSettings=defaultFleet();}
 const who=()=>currentPreviewRole();
 const isWorker=()=>['master','tow','master_service'].includes(who()??'');
 const isCustomer=()=>['client','owner','driver'].includes(who()??'');
@@ -90,20 +93,19 @@ export async function rolePreviewApi(method:string, path:string, body:any={}):Pr
   vehicles.push(v);return clone(v);
  }
  if(method==='GET'&&p==='/api/fleet')return {
-   settings:{mode:'limit',perOrder:3000000,perMonth:10000000,allow:{repair:true,tow:true,consult:true,service:true,shop:false,insurance:true,inspection:true}},
+   settings:clone(fleetSettings),
    company:{inn:'',edoOperator:'',edoId:'',pdfOnly:true},
    cars:clone(vehicles.map(v=>({...v,qrCode:'DEMO-NOT-FOR-ENTRY',driver:null}))),
-   pending:[],
+   pending:orders.filter(o=>o.status==='awaiting_owner').map(o=>({...o,driver_name:'Демо · Водитель',amount:o.estimate.callOut,owner_note:'Водитель запрашивает помощь'})),
  };
  if(method==='PUT'&&p==='/api/fleet'){
    forceRole(who()==='owner');
-   return {settings:{mode:body.mode??'limit',perOrder:body.perOrder??null,
-    perMonth:body.perMonth??null,allow:body.allow??{},edoPdfOnly:body.edoPdfOnly??true},
+   fleetSettings={...fleetSettings,...clone(body)};
+   return {settings:clone(fleetSettings),
     company:{inn:'',edoOperator:'',edoId:'',pdfOnly:body.edoPdfOnly??true},
-    cars:clone(vehicles.map(v=>({...v,qrCode:'DEMO-NOT-FOR-ENTRY',driver:null}))),pending:[]};
+    cars:clone(vehicles.map(v=>({...v,qrCode:'DEMO-NOT-FOR-ENTRY',driver:null}))),pending:orders.filter(o=>o.status==='awaiting_owner').map(o=>({...o,driver_name:'Демо · Водитель',amount:o.estimate.callOut,owner_note:'Водитель запрашивает помощь'}))};
  }
- if(method==='GET'&&p==='/api/fleet/rules')return {owner:'Демо Транспорт',mode:'limit',perOrder:3000000,
-   perMonth:10000000,monthSpent:0};
+ if(method==='GET'&&p==='/api/fleet/rules')return {owner:'Демо Транспорт',...clone(fleetSettings),monthSpent:0};
  if(method==='GET'&&p==='/api/insurance-reminders/settings')return {enabled:false};
  if(method==='PUT'&&p==='/api/insurance-reminders/settings')return {enabled:!!body.enabled};
  if(method==='GET'&&p==='/api/vehicle-service-requests')return [];
@@ -121,7 +123,7 @@ export async function rolePreviewApi(method:string, path:string, body:any={}):Pr
   const v=vehicles.find(v=>v.id===body.vehicleId)??{id:'',brand:body.brand,model:body.model,year:body.year,plate:''};
   const e=estimate(body),id='demo-order-'+(++counter);
   const o:DemoOrder={id,number:counter,created_at:stamp(),createdAt:stamp(),
-   service:body.service,status:'searching',description:body.description,address:body.address,
+   service:body.service,status:who()==='driver'&&fleetSettings.mode==='approve'?'awaiting_owner':'searching',description:body.description,address:body.address,
    brand:v.brand,model:v.model??'',year:v.year??2019,plate:v.plate??'',vehicle:clone(v),
    vehicleId:v.id,zoneId:body.zoneId??'spb',paymentMethod:'cash',
    is_sos:!!body.isSos,isSos:!!body.isSos,night:!!body.night,tier:body.tier??'eco',
@@ -197,6 +199,12 @@ export async function rolePreviewApi(method:string, path:string, body:any={}):Pr
    if(method==='POST'&&action==='confirm'){
      forceRole(isCustomer());if(o.status!=='awaiting_confirmation')return err('Сумма ещё не выставлена');
      o.status='completed';update(o);return {ok:true};
+   }
+   if(method==='POST'&&action==='owner-decision'){
+     forceRole(who()==='owner');if(o.status!=='awaiting_owner')return err('Заявка уже рассмотрена');
+     o.status=body.approve?'searching':'cancelled';
+     o.messages.push({id:++mid,order_id:o.id,kind:'system',body:body.approve?'Владелец разрешил выезд':'Владелец отклонил заявку',sender_id:null,created_at:stamp()});
+     update(o);return {ok:true};
    }
    if(method==='POST'&&action==='cancel'){
      forceRole(isCustomer());o.status='cancelled';update(o);return {ok:true};
