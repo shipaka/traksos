@@ -212,7 +212,7 @@ export function InsuranceThread({requestId}:{requestId:string}){
           </div>)}
           {d.proposals.length>0&&<div className="insurance-offers">
             <h3>Предложения страховых компаний · {d.proposals.length}</h3>
-            <p className="note">Окончательные условия и цена уточняются агентом перед выдачей полиса.</p>
+            <p className="note">В тестовом режиме указана итоговая цена с отдельно показанным сбором TrackSOS. Для реальной страховки условия подтверждает агент.</p>
             <div className="insurance-offer-grid">
               {d.proposals.map((o,i)=><div className={'insurance-offer '+(choice===o.id||r?.insurance_choice_id===o.id?'chosen':'')} key={o.id}>
                 <span>Вариант {i+1}</span><h3>{o.company}</h3><b>{o.product}</b>
@@ -270,10 +270,10 @@ export function InsuranceThread({requestId}:{requestId:string}){
                 <div className={s===stage?'current':''} key={s}><span>{i+1}</span>{stepLabels[s]}</div>)}
             </div>
           </section>
-          {isAgent&&['received','selected'].includes(stage)&&<section className="card stack">
+          {isAgent&&['received','selected','paid'].includes(stage)&&<section className="card stack">
             <b>Следующий шаг</b>
             <p className="note">{stage==='received'?'Вы получили заявку. Примите её для подготовки предложений.':
-              'Клиент выбрал вариант. Примите его в работу и оформите полис у страховой компании.'}</p>
+              'Клиент выбрал и оплатил вариант в тестовом режиме. Примите заказ и оформите полис у страховой компании.'}</p>
             <button className="btn" type="button" disabled={busy}
               onClick={async()=>{const v=await run(()=>(preview?previewPost:post)('/api/insurance/requests/'+requestId+'/accept'),
                 'Принято в работу');if(v)notify();}}>Принято в работу</button>
