@@ -101,5 +101,63 @@ try{
     assert(errors.length===0,item.name+' JS errors: '+errors.join(' | '));
     await context.close();
   }
+  // Preview the NEW manual agent workflow using the actual registered client and insurer screens.
+  const truck=await api('POST','/api/vehicles',{brand:'DAF',model:'XF',year:2018,plate:'Р444РР78'},owner.token);
+  const clientCtx=await browser.newContext({...devices['Pixel 7'],deviceScaleFactor:1,locale:'ru-RU',acceptDownloads:true});
+  const clientPage=await clientCtx.newPage();
+  await clientPage.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','client')},owner.token);
+  await clientPage.goto(BASE+'/#/insurance/request/new/'+truck.id);
+  await acceptPendingOffers(clientPage,owner.token);
+  await clientPage.getByRole('heading',{name:'Заявка на страхование грузовика'}).waitFor();
+  await clientPage.locator('select').first().selectOption(partner.user.id);
+  await clientPage.getByLabel('Фамилия').fill('Иванов');
+  await clientPage.getByLabel('Имя',{exact:true}).fill('Иван');
+  await clientPage.getByLabel('VIN / номер рамы *').fill('XLRTE47XS0E123456');
+  await clientPage.locator('input[type=checkbox]').last().check();
+  await clientPage.screenshot({path:OUT+'/client-application.png',fullPage:true});
+  await clientPage.getByRole('button',{name:'Отправить заявку страховому агенту'}).click();
+  await clientPage.waitForURL(/#\/insurance\/request\/[0-9a-f-]{36}$/,{timeout:15000});
+  const requestId=clientPage.url().split('/').pop();
+  assert(requestId&&requestId!==truck.id,'New insurance dossier was not opened');
+  const incoming=await api('GET','/api/insurance/requests/'+requestId,undefined,partner.token);
+  assert(incoming.request.insurance_stage==='received','Agent did not receive insurance dossier');
+  await api('POST','/api/insurance/requests/'+requestId+'/accept',{},partner.token);
+  const one={company:'Страховая А',product:'ОСАГО грузовика',premiumKopecks:3250000,
+    description:'Цена агентом рассчитана вручную',coverage:'Условия согласовываются'};
+  await api('POST','/api/insurance/requests/'+requestId+'/offers',
+    {offers:[one,{...one,company:'Страховая Б',premiumKopecks:3560000}]},partner.token);
+  await clientPage.reload();
+  await clientPage.getByRole('heading',{name:/DAF XF/}).waitFor();
+  await clientPage.getByText('Страховая А',{exact:true}).waitFor();
+  await clientPage.getByText('Страховая Б',{exact:true}).waitFor();
+  await clientPage.screenshot({path:OUT+'/client-offers.png',fullPage:true});
+  await clientPage.getByRole('button',{name:'Выбрать',exact:true}).first().click();
+  await clientPage.getByRole('button',{name:'Оформить выбранный вариант'}).click();
+  await clientPage.getByText('Клиент выбрал предложение').first().waitFor();
+  const agentCtx=await browser.newContext({...devices['Pixel 7'],deviceScaleFactor:1,locale:'ru-RU'});
+  const agentPage=await agentCtx.newPage();
+  await agentPage.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','insurer')},partner.token);
+  await agentPage.goto(BASE+'/#/insurance/request/'+requestId);
+  await acceptPendingOffers(agentPage,partner.token);
+  await agentPage.getByRole('heading',{name:/DAF XF/}).waitFor();
+  await agentPage.getByText('Анкета для оформления').waitFor();
+  await agentPage.screenshot({path:OUT+'/agent-dossier.png',fullPage:true});
+  await agentPage.getByRole('button',{name:'Принято в работу'}).click();
+  await agentPage.locator('input[type=date]').fill('2030-12-31');
+  await agentPage.locator('input[type=file]').setInputFiles({
+    name:'policy.pdf',mimeType:'application/pdf',
+    buffer:Buffer.from('%PDF-1.4\n'+'TrackSOS synthetic test '.repeat(20)),
+  });
+  await agentPage.getByRole('button',{name:'Отправить готовый полис клиенту'}).click();
+  await agentPage.getByText('Готовый страховой полис').first().waitFor();
+  await clientPage.reload();
+  await clientPage.getByRole('button',{name:'Скачать PDF-полис'}).waitFor();
+  const downloadEvent=clientPage.waitForEvent('download');
+  await clientPage.getByRole('button',{name:'Скачать PDF-полис'}).click();
+  const dl=await downloadEvent;
+  assert(dl.suggestedFilename()==='insurance-policy.pdf','Policy PDF download is missing');
+  await clientPage.screenshot({path:OUT+'/client-final-policy.png',fullPage:true});
+  await agentCtx.close();
+  await clientCtx.close();
 } finally { await browser.close(); }
 console.log('Insurance and inspection E2E: partner assignment, role restrictions, history and mobile screens OK');

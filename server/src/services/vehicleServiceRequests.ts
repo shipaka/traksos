@@ -36,7 +36,7 @@ export class VehicleServiceRequests {
     const allow = user.owner_id ? (await this.db.one<any>('select fleet from users where id=$1', [owner]))?.fleet?.allow : null;
     const kinds = user.owner_id ? (['insurance', 'inspection'] as const).filter(k => allow?.[k] === true) : ['insurance', 'inspection'];
     return this.db.query(
-      `select r.id, r.kind, r.status, r.requested_by, r.comment, r.staff_note, r.policy_expires_on, r.created_at, r.updated_at,
+      `select r.id, r.kind, r.status, r.requested_by, r.comment, r.staff_note, r.policy_expires_on, r.insurance_stage, r.created_at, r.updated_at,
               coalesce((
                 select json_agg(json_build_object(
                   'status', e.status, 'policy_expires_on', e.policy_expires_on,
@@ -49,7 +49,8 @@ export class VehicleServiceRequests {
        order by r.created_at desc`, [vehicleId, owner, kinds]);
   }
 
-  async create(user: AuthUser, vehicleId: string, kind: VehicleServiceKind, comment?: string) {
+  async create(user: AuthUser, vehicleId: string, kind: VehicleServiceKind, comment?: string,
+    insurance?: {agentId:string; details:{ applicant:{firstName:string;lastName:string;middleName?:string}; vehicle:Record<string,string>; consentAt?:string}}) {
     const owner = user.owner_id ?? user.id;
     const v = await this.db.one<any>(
       'select id, driver_id from vehicles where id=$1 and owner_id=$2', [vehicleId, owner]);
@@ -69,11 +70,25 @@ export class VehicleServiceRequests {
            and status in ('submitted','in_review','need_documents','sent_to_partner')
          limit 1`, [owner, vehicleId, kind]);
       if (active) throw bad('duplicate_request', 'По этой машине уже есть активная заявка на эту услугу');
-      const created = await q.one(
-        `insert into vehicle_service_requests(owner_id, requested_by, vehicle_id, kind, comment)
-         values ($1,$2,$3,$4,$5) returning *`,
-        [owner, user.id, vehicleId, kind, comment ?? null]);
+      if (insurance) {
+        if (kind !== 'insurance') throw bad('invalid_kind', 'Агент выбирается только для страхования');
+        const partner=await q.one<{id:string}>(`select id from users
+          where id=$1 and 'insurer'=any(roles) and status='active'`,[insurance.agentId]);
+        if(!partner)throw notFound('Страховой агент недоступен');
+      }
+      const created = insurance
+        ? await q.one<any>(
+          `insert into vehicle_service_requests(owner_id, requested_by, vehicle_id, kind, comment,
+             assigned_to,status,insurance_stage,insurance_details)
+           values ($1,$2,$3,$4,$5,$6::uuid,'sent_to_partner','received',$7::jsonb) returning *`,
+          [owner,user.id,vehicleId,kind,comment??null,insurance.agentId,JSON.stringify(insurance.details)])
+        : await q.one<any>(
+          `insert into vehicle_service_requests(owner_id, requested_by, vehicle_id, kind, comment)
+           values ($1,$2,$3,$4,$5) returning *`,
+          [owner,user.id,vehicleId,kind,comment??null]);
       if (!created) throw notFound('Не удалось создать заявку');
+      if(insurance)await q.query(`insert into insurance_thread_messages(request_id,sender_id,kind,body)
+         values ($1,$2,'status','Заявка получена страховым агентом')`,[created.id,user.id]);
       return created;
     });
   }
@@ -104,6 +119,9 @@ export class VehicleServiceRequests {
         throw forbidden('Можно изменять только назначенные вам страховые заявки');
       }
       if (!current) throw notFound('Заявка не найдена');
+      // New manual quote workflow only completes after selected offer + encrypted PDF.
+      if (current.insurance_stage && status === 'completed')
+        throw bad('quote_workflow_required', 'Готовый полис отправляется через страховую переписку');
       if (!transitions[current.status as VehicleServiceStatus]?.includes(status)) throw bad('invalid_status', 'Недопустимый переход статуса');
       if (['rejected', 'need_documents'].includes(status) && !note?.trim()) {
         throw bad('missing_status_reason', 'Укажите причину отказа или список необходимых документов');
@@ -195,7 +213,7 @@ export class VehicleServiceRequests {
     if (!user.roles?.includes('insurer')) throw forbidden('Нет доступа');
     return this.db.query(
       `select r.id, r.kind, r.status, r.comment, r.staff_note, r.created_at, r.updated_at,
-              r.policy_expires_on, v.brand, v.model, v.plate
+              r.policy_expires_on, r.insurance_stage, v.brand, v.model, v.plate
        from vehicle_service_requests r join vehicles v on v.id=r.vehicle_id
        where r.kind='insurance' and r.assigned_to=$1
        order by r.created_at desc limit 100`, [user.id]);
