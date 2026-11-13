@@ -609,6 +609,7 @@ export function createApp(d: Deps) {
     return request;
   });
   r.get('/api/insurer/requests', ['insurer'], (c: AuthedCtx) => vehicleRequests.insurerQueue(c.user));
+  r.get('/api/insurer/inspections', ['insurer'], (c: AuthedCtx) => vehicleRequests.inspectionQueue(c.user));
   r.patch('/api/insurer/requests/:id', ['insurer'], async (c: AuthedCtx) => {
     const b = parse(z.object({ status: z.enum(['completed', 'rejected']), note: z.string().max(2000).optional(),
       policyExpiresOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }), c.body);
