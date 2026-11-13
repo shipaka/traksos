@@ -6,6 +6,7 @@ export function VehicleServicesQueue() {
   const list = useLoad(() => get('/api/admin/vehicle-service-requests'), []);
   const insurers = useLoad(() => get('/api/admin/insurers'), []);
   const [selectedInsurers, setSelectedInsurers] = useState<Record<string, string>>({});
+  const [direction,setDirection]=useState<'insurance'|'inspection'>('insurance');
   const { busy, run } = useAction();
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [expiry, setExpiry] = useState<Record<string, string>>({});
@@ -34,8 +35,12 @@ export function VehicleServicesQueue() {
     if (r) { setNotes(previous => { const nextNotes = { ...previous }; delete nextNotes[id]; return nextNotes; }); list.reload(); }
   }
   return <div className="stack">
-    <h2>Заявки на страхование и техосмотр</h2>
-    {!list.data ? <Loading error={list.error} /> : list.data.length === 0 ? <div className="empty">Заявок пока нет</div> : list.data.map((r: any) =>
+    <h2>{direction==='insurance'?'Страховые заявки':'Заявки на техосмотр'}</h2>
+    <nav className="partner-workspaces" aria-label="Направление заявок">
+      <button type="button" className={'btn ghost'+(direction==='insurance'?' active':'')} aria-pressed={direction==='insurance'} onClick={()=>setDirection('insurance')}>Страхование</button>
+      <button type="button" className={'btn ghost'+(direction==='inspection'?' active':'')} aria-pressed={direction==='inspection'} onClick={()=>setDirection('inspection')}>Техосмотры</button>
+    </nav>
+    {!list.data ? <Loading error={list.error} /> : list.data.filter((r:any)=>r.kind===direction).length === 0 ? <div className="empty">Заявок в этом направлении пока нет</div> : list.data.filter((r:any)=>r.kind===direction).map((r: any) =>
       <div className="card" key={r.id}>
         <div className="between"><b>{r.kind === 'insurance' ? 'Страхование' : 'Техосмотр'} · {r.brand} {r.model ?? ''}</b><span className="pill">{labels[r.status] ?? r.status}</span></div>
         <span className="note">{r.plate ?? 'Без номера'} · {fmtTime(r.created_at)}</span>
@@ -66,6 +71,27 @@ export function VehicleServicesQueue() {
           </div>
         )}
 
+        {r.kind === 'inspection' && ['submitted','in_review'].includes(r.status) && (
+          <div className="stack">
+            <span className="label">Назначить партнёра техосмотра</span>
+            <div className="row">
+              <select className="field" aria-label="Партнёр техосмотра"
+                value={selectedInsurers[r.id] ?? ''}
+                onChange={e=>setSelectedInsurers(prev=>({...prev,[r.id]:e.target.value}))}>
+                <option value="">Выберите партнёра</option>
+                {(insurers.data??[]).map((p:any)=><option key={p.id} value={p.id}>{p.name||p.id}</option>)}
+              </select>
+              <button type="button" className="btn ghost small"
+                disabled={busy||!selectedInsurers[r.id]}
+                onClick={async()=>{
+                  const result=await run(()=>post(`/api/admin/vehicle-service-requests/${r.id}/assign-inspection`,
+                    {partnerId:selectedInsurers[r.id]}),'Техосмотр передан партнёру');
+                  if(result)list.reload();
+                }}>Передать техосмотр</button>
+            </div>
+            <span className="note">Пока доступны партнёры с ролью insurer. Отдельные права оператора техосмотра будут добавлены позднее.</span>
+          </div>
+        )}
         {(next[r.status]?.length ?? 0) > 0 && <>
           <textarea className="field" aria-label="Комментарий сотрудника" placeholder="Комментарий для клиента" value={notes[r.id] ?? ''} onChange={(e) => setNotes({ ...notes, [r.id]: e.target.value })} maxLength={2000} />
           {r.kind === 'insurance' && r.status === 'sent_to_partner' && <label className="stack">Дата окончания полиса
