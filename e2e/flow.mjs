@@ -9,7 +9,7 @@ async function clickCabinetLink(page, name) {
   await page.locator('.account-menu > summary').click();
   await page.locator('.account-menu nav').getByRole('link', { name, exact: true }).click();
 }
-async function checkCabinetMenu(page, expectedLinks) {
+async function checkCabinetMenu(page, expectedLinks, { shopTab = true } = {}) {
   const summary = page.locator('.account-menu > summary');
   await summary.waitFor();
   if (!(await summary.isVisible())) throw new Error('Cabinet menu is not visible');
@@ -21,6 +21,7 @@ async function checkCabinetMenu(page, expectedLinks) {
     if (!href || !href.startsWith('#/')) throw new Error('Invalid cabinet route for ' + label);
   }
   await summary.click();
+  if (!shopTab) return; // Admin, insurer, inspection and moderator use role-specific navigation.
   const shop = page.locator('.tabbar').getByRole('link', { name: 'Магазин' });
   try {
     await shop.waitFor({ state: 'visible', timeout: 10000 });
@@ -244,7 +245,7 @@ await a.goto(BASE + '/#/admin');
 await a.getByRole('button', { name: 'Распределение' }).click();
 await a.getByText('Сначала заявки нам').waitFor();
 await assertDashboardTheme(a, 'admin');
-await checkCabinetMenu(a, ['Управление магазином', 'Деньги и выплаты', 'Настройки площадки', 'Модерация — очередь']);
+await checkCabinetMenu(a, ['Управление магазином', 'Деньги и выплаты', 'Настройки площадки', 'Модерация — очередь'], { shopTab: false });
 await shot(a, '12-admin-dispatch');
 await a.getByRole('button', { name: 'Деньги', exact: true }).click();
 await a.getByText('Способы оплаты').waitFor();
