@@ -982,3 +982,56 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
   .app:not(.guest-app) .top > .row { min-width: 0; gap: 5px; }
   .app:not(.guest-app) .top .logo { flex-shrink: 0; }
 }
+
+/* Approved public palette and mobile readability, 2026-11-13.
+   Layout-only corrections: no account, route or product-behaviour changes.
+   The truck asset must be separately replaced by the approved Scania R520. */
+.guest-app .desktop-content > main:not(.public-landing) {
+  min-width: 0;
+  max-width: 100%;
+}
+.guest-app .desktop-content > main:not(.public-landing) .stack,
+.guest-app .desktop-content > main:not(.public-landing) .grid2,
+.guest-app .desktop-content > main:not(.public-landing) .row {
+  min-width: 0;
+}
+.guest-app .desktop-content > main:not(.public-landing) .stack > *,
+.guest-app .desktop-content > main:not(.public-landing) .grid2 > * {
+  min-width: 0;
+}
+.guest-app .desktop-content > main:not(.public-landing) .seg,
+.guest-app .desktop-content > main:not(.public-landing) .opt,
+.guest-app .desktop-content > main:not(.public-landing) .field {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.guest-app .desktop-content > main:not(.public-landing) .btn:not(.ghost):not(.bad):not(.good) {
+  background: linear-gradient(120deg,#f61972,#d90861);
+  border-color: #fd4199;
+  color: white;
+}
+.guest-app .desktop-content > main:not(.public-landing) .seg[aria-pressed="true"] {
+  background: #e91673;
+  border-color: #ff4d9e;
+  color: white;
+}
+@media(max-width:899px) {
+  .guest-app .top { padding-inline: 12px; gap: 7px; }
+  .guest-app .top > .row { min-width: 0; gap: 6px; }
+  .guest-app .top .logo { flex-shrink: 0; letter-spacing: -.5px; }
+  .guest-header-actions { min-width: 0; }
+  .guest-header-actions a { min-height: 42px; padding: 8px 10px; font-size: 11px; }
+  .guest-app .desktop-content > main:not(.public-landing) { padding-inline: 12px; }
+  .guest-app .desktop-content > main:not(.public-landing) .grid2 { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .guest-app .desktop-content > main:not(.public-landing) .seg { white-space: normal; line-height: 1.25; }
+  .guest-app .desktop-content > main:not(.public-landing) .row.note { overflow-wrap: anywhere; }
+  .public-landing .public-hero-visual {
+    inset: 18% 0 18% 0;
+    background-position: center center;
+  }
+}
+@media(max-width:380px) {
+  .guest-app .top { padding-inline: 7px; }
+  .guest-header-actions a { padding-inline: 7px; font-size: 10px; }
+  .guest-app .desktop-content > main:not(.public-landing) .grid2 { grid-template-columns: minmax(0,1fr); }
+}
