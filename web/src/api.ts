@@ -23,7 +23,7 @@ export class ApiError extends Error {
 
 export async function api<T = any>(method: string, path: string, body?: unknown): Promise<T> {
   // Fake roles use only in-memory data, never live calls. /api/me refreshes the real admin session.
-  if(currentPreviewRole() && path.startsWith('/api/') && path.split('?')[0] !== '/api/me')
+  if(currentPreviewRole() && path.startsWith('/api/') && !(method === 'GET' && path.split('?')[0] === '/api/me'))
     return rolePreviewApi(method,path,body) as Promise<T>;
   let r: Response;
   try {
