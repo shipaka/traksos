@@ -45,6 +45,7 @@ jobs:
           bash -n deploy/configure-staff.sh
           bash -n deploy/configure-insurer.sh
           bash -n deploy/activate-primary-admin.sh
+          bash -n deploy/provision-preview-admin.sh
           # docker compose requires app.env_file to exist even for config-only checks.
           cp deploy/.env.example deploy/.env
           trap 'rm -f deploy/.env' EXIT
