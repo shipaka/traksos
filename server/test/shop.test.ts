@@ -175,3 +175,48 @@ test('Обновление локального каталога — тольк�
   assert.equal(locked.enabled, false);
   assert.equal(locked.rows.length, 0, 'покупатели не получают каталог до открытия магазина');
 });
+
+test('Артикулы Автоконтинента доступны только администратору, без подключения поставщика', async () => {
+  const product = ok(await t.api('POST', '/api/admin/shop/products', {
+    category: 'trailer_axles', name: 'Ступица оси прицепа TEST', article: 'OUR-011',
+    brand: 'TEST-BPW', price: 10_000, stock: null,
+  }, admin.token));
+  const uri = `/api/admin/shop/products/${product.id}/supplier`;
+  const blank = ok(await t.api('GET', uri, undefined, admin.token));
+  assert.equal(blank.article, null);
+  assert.equal(blank.connected, false);
+  assert.equal((await t.api('GET', uri, undefined, client.token)).status, 403);
+  assert.equal((await t.api('PUT', uri, {
+    article: 'AK-ABC-111', verified: true, sourceNote: '',
+  }, admin.token)).status, 400, 'нельзя подтверждать без источника');
+  assert.equal((await t.api('PUT', uri, {
+    article: 'AK-ABC-111', sourceNote: 'Каталог поставщика TEST', verified: false,
+  }, client.token)).status, 403);
+
+  const saved = ok(await t.api('PUT', uri, {
+    article: 'AK-ABC-111', brand: 'TEST-PROVIDER', verified: true,
+    sourceNote: 'Каталог поставщика TEST, ручная сверка',
+  }, admin.token));
+  assert.equal(saved.article, 'AK-ABC-111');
+  assert.equal(saved.verified, true);
+  assert.equal(saved.connected, false, 'не заявляем активную интеграцию без API');
+  const status = ok(await t.api('GET', '/api/admin/shop/supplier/status', undefined, admin.token));
+  assert.equal(status.connected, false);
+  assert.equal(status.automaticOrders, false);
+  assert.ok(status.verified >= 1);
+  assert.equal((await t.api('GET', '/api/admin/shop/supplier/status', undefined, client.token)).status, 403);
+
+  ok(await t.api('PUT', '/api/admin/settings/shop', { enabled: true }, admin.token));
+  const publicData = ok(await t.api('GET', '/api/shop/search?q=OUR-011', undefined, client.token));
+  const record = publicData.items.find((p: any) => p.id === product.id);
+  assert.ok(record);
+  assert.equal(record.article, 'OUR-011');
+  assert.equal('supplier_article' in record, false);
+  assert.ok(!JSON.stringify(publicData).includes('AK-ABC-111'), 'в клиентском поиске нет артикула поставщика');
+  const localPage = ok(await t.api('GET', '/api/shop/index/page?limit=1000', undefined, client.token));
+  assert.ok(!JSON.stringify(localPage).includes('AK-ABC-111'), 'поставщик не попадает в офлайн кэш');
+
+  ok(await t.api('DELETE', uri, undefined, admin.token));
+  assert.equal(ok(await t.api('GET', uri, undefined, admin.token)).article, null);
+  ok(await t.api('PUT', '/api/admin/settings/shop', { enabled: false }, admin.token));
+});

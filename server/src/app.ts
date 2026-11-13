@@ -404,6 +404,20 @@ export function createApp(d: Deps) {
   }), c.body)));
   r.get('/api/shop/orders', true, (c: AuthedCtx) => shop.myOrders(c.user));
   r.post('/api/shop/orders/:id/cancel', true, (c: AuthedCtx) => shop.cancelMine(c.user, c.params.id));
+  // Autokontinent purchase identifiers: strictly admin-only; there is no supplier API connection yet.
+  r.get('/api/admin/shop/supplier/status', ['admin'], () => shop.supplierStatus());
+  r.get('/api/admin/shop/products/:id/supplier', ['admin'], (c: AuthedCtx) => shop.supplierRef(c.params.id));
+  r.put('/api/admin/shop/products/:id/supplier', ['admin'], (c: AuthedCtx) => {
+    const body = parse(z.object({
+      article: z.string().trim().min(2).max(100),
+      brand: z.string().trim().max(80).nullable().optional(),
+      sourceNote: z.string().trim().max(500).nullable().optional(),
+      verified: z.boolean().default(false),
+    }), c.body);
+    return shop.setSupplierRef(c.user, c.params.id, body);
+  });
+  r.delete('/api/admin/shop/products/:id/supplier', ['admin'], (c: AuthedCtx) =>
+    shop.clearSupplierRef(c.user, c.params.id));
   r.get('/api/admin/shop/products', ['admin'], () => shop.adminProducts());
   r.post('/api/admin/shop/products', ['admin'], (c: AuthedCtx) => shop.saveProduct(c.user, null, parse(productSchema, c.body)));
   r.put('/api/admin/shop/products/:id', ['admin'], (c: AuthedCtx) => shop.saveProduct(c.user, c.params.id, parse(productSchema, c.body)));
