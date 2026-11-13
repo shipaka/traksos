@@ -127,7 +127,7 @@ export class AuthService {
       // A plain login never grants additional privileges. The legacy client default
       // applies only to a genuinely new account without a selected category.
       if (purpose === 'reset' && !previous) throw bad('not_registered', 'Такой аккаунт не найден');
-      if (purpose === 'reset' && (previous.roles.some(r => r === 'admin' || r === 'moderator') || config.adminPhones.includes(phone) || config.moderatorPhones.includes(phone)))
+      if (purpose === 'reset' && (previous?.roles.some(r => r === 'admin' || r === 'moderator') || config.adminPhones.includes(phone) || config.moderatorPhones.includes(phone)))
         throw new HttpError(403, 'staff_recovery_protected', 'Нельзя сбросить служебный пароль только по SMS.');
       if (previous && purpose === 'register' && isProd) throw bad('already_registered', 'Аккаунт уже зарегистрирован');
       if (previous) {
