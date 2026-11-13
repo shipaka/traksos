@@ -25,7 +25,8 @@ export function homeFor(roles: string[], intent: Intent): string {
   if (intent === 'help') return '#/sos';
   const performer = roles.includes('master') || roles.includes('tow');
   if (intent === 'join') return roles.includes('insurer') ? '#/insurance' : performer ? '#/as/performer' : '#/as/service';
-  if (roles.includes('admin') || roles.includes('moderator')) return '#/as/admin';
+  if (roles.includes('admin')) return '#/as/admin';
+  if (roles.includes('moderator')) return '#/as/moderator';
   if (roles.includes('insurer')) return '#/insurance';
   if (roles.includes('client') || roles.includes('driver')) return '#/as/client';
   if (performer) return '#/as/performer';
@@ -44,6 +45,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const [devCode, setDevCode] = useState<string | null>(null);
   const [role, setRole] = useState<JoinRole>('master');
   const [customerType, setCustomerType] = useState<'owner' | 'driver'>('owner');
+  const [cameFromRegister, setCameFromRegister] = useState(false);
   const [agree, setAgree] = useState(false);
   const toast = useToast();
   const [appealToken, setAppealToken] = useState<string | null>(null);
@@ -231,7 +233,26 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         </form>
       ) : step === 'phone' ? (
         <form className="stack" onSubmit={(e) => { e.preventDefault(); sendCode(); }}>
-          {(intent === 'register' || intent === 'help') && <div className="stack" role="group" aria-label="Тип клиента">
+          {intent === 'register' && <div className="stack" role="group" aria-label="Выбор кабинета при регистрации">
+            <span className="label">Кем вы будете работать в ТракSOS?</span>
+            <span className="note">Выберите подходящий кабинет. Для клиента и исполнителя используются разные рабочие разделы.</span>
+            <div className="grid2">
+              <button type="button" className="seg" aria-pressed={customerType === 'owner'} onClick={() => setCustomerType('owner')}>Владелец / автопарк</button>
+              <button type="button" className="seg" aria-pressed={customerType === 'driver'} onClick={() => setCustomerType('driver')}>Водитель автопарка</button>
+            </div>
+            {customerType === 'driver' && <span className="note">После входа владелец сможет привязать вас к своей машине по приглашению или QR-коду.</span>}
+            <span className="label">Работа с ТракSOS — отдельные кабинеты</span>
+            <div className="grid2" role="group" aria-label="Кабинеты исполнителей и партнёров">
+              {JOIN_ROLES.map((r) => (
+                <button key={r.id} type="button" className="seg"
+                  onClick={() => { setCameFromRegister(true); setRole(r.id); setIntent('join'); }}>
+                  {r.name}
+                </button>
+              ))}
+            </div>
+            <span className="note">Администратор и модератор получают служебные права только после отдельной проверки. Для совмещения с работой мастера выберите «Я мастер».</span>
+          </div>}
+          {intent === 'help' && <div className="stack" role="group" aria-label="Тип клиента">
             <span className="label">Как вы пользуетесь транспортом?</span>
             <div className="grid2">
               <button type="button" className="seg" aria-pressed={customerType === 'owner'} onClick={() => setCustomerType('owner')}>Владелец / автопарк</button>
@@ -255,7 +276,12 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           </label>}
           <button className="btn" disabled={busy || (needAgree && !agree) || phone.replace(/\D/g, '').length < 11}>Получить код</button>
           {intent !== 'login' && <button type="button" className="btn ghost" onClick={() => { setIntent('login'); setStep('phone'); setCode(''); }}>Уже есть аккаунт? Войти по паролю</button>}
-          {!driver && <button type="button" className="btn ghost" onClick={() => setIntent(null)}>Назад</button>}
+          {!driver && <button type="button" className="btn ghost"
+            onClick={() => {
+              if (intent === 'join' && cameFromRegister) {
+                setStep('phone'); setIntent('register'); setCameFromRegister(false);
+              } else setIntent(null);
+            }}>{intent === 'join' && cameFromRegister ? 'Назад к выбору кабинета' : 'Назад'}</button>}
         </form>
       ) : (
         <form className="stack" onSubmit={(e) => { e.preventDefault(); verify(); }}>

@@ -37,8 +37,14 @@ if (watch) {
   const files = (await readdir('dist')).filter((name) =>
     /\.(?:js|css|svg|png|ico|webp|webmanifest|woff2)$/.test(name));
   const staticPaths = ['/', '/index.html', ...files.map((file) => '/' + file)];
-  const digest = createHash('sha256').update(await readFile('dist/app.js'))
-    .update(await readFile('dist/app.css')).digest('hex').slice(0, 16);
+  // Version the complete static bundle, including branded artwork. Otherwise
+  // a truck image replacement under an unchanged file name stays in old PWA caches.
+  const cacheHash = createHash('sha256');
+  for (const p of staticPaths) {
+    const file = p === '/' ? 'index.html' : p.slice(1);
+    cacheHash.update(p).update(await readFile('dist/' + file));
+  }
+  const digest = cacheHash.digest('hex').slice(0, 16);
   const template = await readFile('sw.template.js', 'utf8');
   await writeFile('dist/sw.js', template
     .replace('__CACHE_NAME__', JSON.stringify('tracksos-static-' + digest))

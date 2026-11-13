@@ -18,6 +18,14 @@ export class LogSms implements SmsProvider {
 }
 
 /** SMS.ru — https://sms.ru/api/send. Проверить формат ответа при подключении. */
+/** An explicit refusal from SMS.ru (not an ambiguous network timeout). */
+export class SmsRejectedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'SmsRejectedError';
+  }
+}
+
 export class SmsRu implements SmsProvider {
   name = 'smsru';
   exposesCode = false;
@@ -37,7 +45,13 @@ export class SmsRu implements SmsProvider {
     const delivery = j?.sms?.[to];
     if (!r.ok || j?.status !== 'OK' || delivery?.status !== 'OK') {
       const reason = delivery?.status_text ?? j?.status_text ?? `HTTP ${r.status}`;
-      throw new Error(`SMS.ru не принял сообщение: ${reason}`);
+      // Rejection is certain only when the provider explicitly says ERROR.
+      // A malformed or incomplete response could follow an accepted SMS;
+      // keep the cooldown instead of risking an accidental duplicate send.
+      const rejected = (typeof j?.status === 'string' && j.status !== 'OK')
+        || (typeof delivery?.status === 'string' && delivery.status !== 'OK');
+      if (rejected) throw new SmsRejectedError(`SMS.ru не принял сообщение: ${reason}`);
+      throw new Error('SMS.ru не подтвердил итог отправки; попробуйте позже');
     }
   }
 }

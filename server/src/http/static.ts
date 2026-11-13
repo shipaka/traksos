@@ -27,7 +27,10 @@ export function staticHandler(root: string) {
       const ext = path.extname(file);
       res.writeHead(200, {
         'content-type': TYPES[ext] ?? 'application/octet-stream',
-        'cache-control': ext === '.html' || url.pathname === '/sw.js' ? 'no-cache' : 'public, max-age=31536000, immutable',
+        // Files keep stable paths between releases, so a 1-year immutable cache
+        // can pin an obsolete truck picture/UI indefinitely. Revalidate every
+        // deploy; the service worker still retains an offline copy.
+        'cache-control': 'no-cache, must-revalidate',
         'x-content-type-options': 'nosniff',
       });
       res.end(body);

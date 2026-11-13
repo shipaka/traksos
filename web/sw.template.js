@@ -32,9 +32,22 @@ self.addEventListener('fetch', (event) => {
   if (!STATIC_PATHS.has(url.pathname)) return;
   event.respondWith(
     caches.open(CACHE_NAME).then(async (cache) => {
-      const hit = await cache.match(url.pathname);
-      if (hit) return hit;
-      return fetch(request); // Graceful recovery if installation was interrupted
+      // Online users must see the current deployment, not an obsolete cached
+      // truck image or old registration. Offline users retain the last copy.
+      try {
+        const current = await fetch(new Request(request, { cache: 'no-store' }));
+        if (current.ok) {
+          await cache.put(url.pathname, current.clone());
+          return current;
+        }
+        const saved = await cache.match(url.pathname);
+        return saved ?? current;
+      } catch {
+        return (await cache.match(url.pathname)) ??
+          new Response('Нет подключения. Проверьте интернет и повторите.', {
+            status: 503, headers: { 'content-type': 'text/plain; charset=utf-8' }
+          });
+      }
     })
   );
 });
