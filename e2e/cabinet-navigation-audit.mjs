@@ -32,6 +32,20 @@ try {
     await page.addInitScript(t=>localStorage.setItem('traksos.token',t),token);
     await page.goto(BASE+'/'+initial,{waitUntil:'domcontentloaded'});
     await page.locator('.account-menu > summary').waitFor();
+    // Previous E2E tests publish a new client offer. All synthetic users must
+    // accept it through the actual UI before their navigation can be audited.
+    const offersResponse = await fetch(BASE+'/api/me/offers',{
+      headers:{authorization:'Bearer '+token}});
+    if(!offersResponse.ok)throw Error(kind+': failed loading required offer status');
+    const offers = await offersResponse.json();
+    const pendingOffers = offers.filter(item=>item.current && !item.accepted);
+    for(const item of pendingOffers){
+      const modal=page.getByRole('dialog',{name:item.name});
+      await modal.waitFor({state:'visible',timeout:12000});
+      await modal.locator('input[type=checkbox]').check();
+      await modal.getByRole('button',{name:'Принимаю'}).click();
+      await modal.waitFor({state:'detached',timeout:12000});
+    }
     await page.locator('.account-menu > summary').click();
     const links=await page.locator('.account-menu nav a[href^="#/"]').evaluateAll(
       els=>els.map(el=>({href:el.getAttribute('href'),text:(el.textContent??'').trim()}))
