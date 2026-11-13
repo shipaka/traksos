@@ -42,12 +42,10 @@ export function Shop() {
     : Promise.resolve({ items: [], total: 0, page: 0, limit: 24 }),
     [c.data?.enabled, cat, debouncedTerm, page], (e) => e.type === 'shop');
   const local = useLoad(() => searchOfflineParts(debouncedTerm, cat), [debouncedTerm, cat, offlineVersion]);
-  const mine = useLoad(() => get('/api/shop/orders'), [], (e) => e.type === 'shop');
   const d = c.data;
   if (!d) return <main><Loading error={c.error} /></main>;
   const count = Object.values(cart).reduce((a, b) => a + b, 0);
   const add = (id: string) => setCart({ ...cart, [id]: (cart[id] ?? 0) + 1 });
-  const myOrders = (mine.data ?? []) as any[];
   if (!d.enabled) return (
     <main>
       <div><h1>Магазин</h1></div>
@@ -56,11 +54,11 @@ export function Shop() {
         <b style={{ fontSize: 20 }}>{d.closedTitle}</b>
         <span className="note">{d.closedText}</span>
       </div>
-      {myOrders.length > 0 && <MyShopOrders orders={myOrders} reload={mine.reload} canOrder={!!d.enabled} />}
+      <a className="linkrow" href="#/shop/history"><span><b>История покупок</b><small>Просмотреть предыдущие заказы</small></span><span aria-hidden="true">›</span></a>}
     </main>
   );
   const kits = d.products.filter((p: any) => p.isKit);
-  const usedCats = Object.entries(d.categories as Record<string, string>).filter(([k]) => k !== 'kit');
+  const groups = (d.categoryGroups ?? []) as { id: string; title: string; categories: string[] }[];
   const items: any[] = search.data?.items ?? [];
   return (
     <main>
@@ -79,8 +77,9 @@ export function Shop() {
           if (result) {
             setOfflineVersion((n) => n + 1);
             setOfflineNote(result.unchanged ? 'Локальный справочник уже актуален'
-              : result.complete ? `Справочник сохранён: ${result.total} позиций`
-              : `Сохранено ещё ${result.added} позиций. Нажмите повторно для продолжения.`);
+              : !result.complete ? `Обработано ${result.added} записей. Нажмите ещё раз для продолжения.`
+              : result.incremental ? `Изменения получены: ${result.added}, удалено устаревших: ${result.removed}.`
+              : `Локальный справочник сохранён: ${result.total} позиций.`);
           }
         }}>{syncing ? 'Сохраняем…' : 'Сохранить справочник для слабого интернета'}</button>
       </div>
@@ -96,12 +95,24 @@ export function Shop() {
           <span className={`pill ${p.inStock ? 'good' : ''}`} style={{ alignSelf: 'flex-start' }}>{p.inStock ? 'в наличии' : `под заказ · от ${p.leadDays} дн.`}</span>
         </div>
       ))}
-      {usedCats.length > 1 && (
-        <div className="scroll-x">
-          <button className="chip" aria-pressed={cat === 'all'} onClick={() => { setCat('all'); setPage(0); }}>Все</button>
-          {usedCats.map(([k, n]) => <button key={k} className="chip" aria-pressed={cat === k} onClick={() => { setCat(k); setPage(0); }}>{n}</button>)}
+      <div className="card stack" style={{ gap: 10 }}>
+        <div className="between">
+          <b>Каталог запчастей</b>
+          <button type="button" className="btn ghost small" onClick={() => { setCat('all'); setPage(0); }}>Все категории</button>
         </div>
-      )}
+        {cat !== 'all' && <span className="pill good" style={{ alignSelf: 'flex-start' }}>Раздел: {d.categories[cat] ?? cat}</span>}
+        {groups.map((group) => (
+          <details key={group.id} className="stack" style={{ gap: 8 }}>
+            <summary style={{ cursor: 'pointer', fontWeight: 600 }}>{group.id === 'truck' ? '🚚 ' : group.id === 'trailer' ? '🚛 ' : '🔧 '}{group.title}</summary>
+            <div className="row" style={{ gap: 8, paddingTop: 8 }}>
+              {group.categories.map((key) => (
+                <button key={key} type="button" className="chip" aria-pressed={cat === key}
+                  onClick={() => { setCat(key); setPage(0); }}>{d.categories[key]}</button>
+              ))}
+            </div>
+          </details>
+        ))}
+      </div>
       {!search.data && search.error && (local.data?.length ?? 0) > 0 ? (
         <div className="stack">
           <span className="note">Нет связи с каталогом. Показываем сохранённые названия и артикулы без цен и наличия. Для заказа нужен интернет.</span>
@@ -137,7 +148,7 @@ export function Shop() {
         </div>
       )}
       {count > 0 && <button className="btn" onClick={() => go('shop/cart')}>Корзина · {count} шт.</button>}
-      {myOrders.length > 0 && <MyShopOrders orders={myOrders} reload={mine.reload} canOrder={!!d.enabled} />}
+      <a className="linkrow" href="#/shop/history"><span><b>Мои покупки</b><small>Повторить заказ или подобрать аналоги</small></span><span aria-hidden="true">›</span></a>}
     </main>
   );
 }
