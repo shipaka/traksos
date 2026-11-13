@@ -1726,3 +1726,172 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
 @media(max-width:520px){.insurer-empty-intro{grid-template-columns:1fr;gap:10px;}
  .insurer-empty-symbol{width:63px;height:63px;font-size:40px;}
  .insurer-workflow-step{padding:12px;min-height:165px;}}
+
+/* Global administrator role-switch panel: keep this ABOVE the actual signed-in shell. */
+.role-preview-bar{position:sticky;top:0;z-index:120;display:flex;align-items:center;justify-content:space-between;
+ gap:14px;flex-wrap:wrap;padding:12px max(15px,calc((100vw - 1440px)/2));
+ color:#f8fcff;background:linear-gradient(115deg,#112a46,#182c50 58%,#311b45);
+ border-bottom:2px solid #5fe1f3;box-shadow:0 9px 29px rgba(0,7,22,.36);}
+.role-preview-identity{display:flex;flex-direction:column;gap:4px;min-width:0;}
+.role-preview-identity b{font-size:11px;color:#84e9f7;letter-spacing:.1em;}
+.role-preview-identity small{font-size:11px;color:#d3e6f3;}
+.role-preview-controls{display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+.role-preview-controls>label{display:flex;align-items:center;gap:8px;font-size:11px;color:#c7d8e9;}
+.role-preview-controls select{max-width:min(280px,100%);min-height:42px;
+ background:#143d5d;color:#fff;border:1px solid #6cc3e0;border-radius:12px;padding:9px 30px 9px 12px;
+ font:inherit;font-size:12px;font-weight:750;cursor:pointer;}
+.role-preview-controls>a,.role-preview-controls>button{min-height:42px;padding:10px 13px;
+ color:#f3fbff;background:#164363;border:1px solid #456f8b;border-radius:12px;
+ text-decoration:none;font-weight:750;font-size:12px;font-family:inherit;cursor:pointer;}
+.role-preview-controls>a:hover,.role-preview-controls>button:hover{border-color:#8de9ff;background:#215a79;}
+.role-preview-controls>a[href="#/admin/test-center"]{background:linear-gradient(110deg,#168db7,#1d689c);}
+.role-preview-guarded,.role-preview-profile{width:100%;max-width:1250px;margin:auto;padding:20px;}
+.role-preview-guarded{border:1px solid #416981;border-radius:23px;
+ background:radial-gradient(ellipse at 100% 0,rgba(49,219,245,.13),transparent 55%),linear-gradient(155deg,#142f49,#0c233b);}
+.role-preview-guarded h1{font-size:clamp(24px,3vw,38px);color:#fff;margin:8px 0;}
+.role-preview-guarded .btn{align-self:flex-start;}
+/* Use authentic screens, but visually distinguish synthetic records from live records. */
+.app[class*="role-"] .desktop-content>main:not(.sandbox-root)>.stack>.card,
+.app[class*="role-"] .desktop-content>main:not(.sandbox-root)>.rows>.list-item{
+ border-color:#346580;box-shadow:0 8px 21px rgba(0,8,27,.13);}
+.app.role-performer .desktop-content>main>div.between:first-of-type{
+ padding:20px;border:1px solid #396884;border-radius:18px;
+ background:radial-gradient(circle at 85% 25%,rgba(58,219,239,.14),transparent 55%),linear-gradient(145deg,#163951,#0e2941);}
+@media(max-width:900px){
+ .role-preview-bar{padding:10px 12px;gap:8px;}
+ .role-preview-controls{width:100%;}
+ .role-preview-controls>label{flex:1 1 160px;min-width:0;}
+ .role-preview-controls select{flex:1;min-width:0;max-width:100%;font-size:11px;}
+ .role-preview-controls>a,.role-preview-controls>button{flex:1;font-size:11px;text-align:center;padding:8px 9px;}
+}
+@media(max-width:440px){
+ .role-preview-bar{gap:5px;padding:8px;}
+ .role-preview-identity b{font-size:10px;}
+ .role-preview-identity small{font-size:10px;}
+ .role-preview-controls{gap:5px;}
+ .role-preview-controls>label{flex:1 1 100%;justify-content:space-between;}
+ .role-preview-controls>a,.role-preview-controls>button{min-height:35px;border-radius:9px;padding:6px 5px;font-size:10px;}
+}
+@media(prefers-reduced-motion:reduce){.role-preview-controls *{transition:none!important;}}
+
+/* Actual on-duty performer dashboard, shared with the administrator preview. */
+.work-command-shell{width:100%;max-width:1380px;margin:0 auto;padding:10px 0 35px;}
+.work-command-hero{position:relative;isolation:isolate;display:flex;flex-direction:column;gap:14px;
+  border:1px solid #3c7394;border-radius:24px;padding:clamp(23px,4vw,45px);overflow:hidden;
+  background:radial-gradient(ellipse at 85% 20%,rgba(76,224,246,.2),transparent 50%),
+    radial-gradient(ellipse at 10% 98%,rgba(240,46,139,.17),transparent 53%),
+    repeating-radial-gradient(circle at 86% 48%,transparent 0 32px,rgba(85,209,236,.04) 33px 35px,transparent 36px 75px),
+    linear-gradient(130deg,#0c243d,#11405c 70%,#152a4f);
+  box-shadow:0 19px 39px rgba(0,7,24,.23);}
+.work-command-hero:after{content:'⚡';position:absolute;right:6%;top:8%;
+  color:#5be6f7;font-size:clamp(100px,13vw,175px);line-height:1;opacity:.12;pointer-events:none;}
+.work-command-eyebrow{font-size:11px;color:#85ebf7;letter-spacing:.13em;font-weight:900;position:relative;z-index:1;}
+.work-command-hero>.between{align-items:center;gap:12px;flex-wrap:wrap;position:relative;z-index:1;}
+.work-command-hero h1{color:#fff;font-size:clamp(27px,3.5vw,43px);margin:0;letter-spacing:-.03em;overflow-wrap:anywhere;}
+.work-command-hero>p{color:#c3deed;font-size:13px;line-height:1.55;margin:0;max-width:700px;position:relative;z-index:1;}
+.work-command-stats{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px;z-index:1;}
+.work-command-stats>div{display:flex;align-items:center;gap:11px;min-width:160px;padding:12px 17px;
+ background:rgba(7,35,56,.67);border:1px solid #416f8d;border-radius:13px;}
+.work-command-stats strong{font-size:26px;color:#fff;font-variant-numeric:tabular-nums;}
+.work-command-stats span{font-size:11px;color:#adcede;}
+.work-command-stats>a{display:flex;align-items:center;justify-content:center;min-height:51px;margin-left:auto;}
+.work-command-shell>.card,.work-command-shell>.stack>.card{border-color:#3c6886;
+ border-radius:18px;background:linear-gradient(140deg,#153952,#102b44);
+ box-shadow:0 9px 22px rgba(0,10,26,.14);}
+@media(max-width:690px){.work-command-hero{padding:20px 15px;gap:10px;}
+ .work-command-stats>div{flex:1 1 calc(50% - 5px);padding:11px;}
+ .work-command-stats>a{width:100%;margin:0;}
+ .work-command-hero:after{opacity:.06;}}
+
+/* The REAL insurer dashboard and the same reusable components inside admin preview. */
+.insurer-workspace{width:100%;max-width:1390px;margin:0 auto;min-width:0;padding:12px 0 42px;}
+.insurer-workspace-hero{position:relative;overflow:hidden;isolation:isolate;
+  padding:clamp(24px,4vw,48px);min-height:260px;border:1px solid #4e6c92;border-radius:25px;
+  background:radial-gradient(ellipse at 87% 22%,rgba(99,217,246,.16),transparent 38%),
+    radial-gradient(ellipse at 35% 90%,rgba(235,53,141,.22),transparent 54%),
+    linear-gradient(120deg,#0b223a,#172d53 72%,#221e40);
+  box-shadow:0 19px 44px rgba(0,8,23,.27);}
+.insurer-workspace-hero-art{position:absolute;top:50%;right:8%;transform:translateY(-50%);
+  font-size:clamp(110px,17vw,220px);line-height:1;color:#9ae7fc;opacity:.14;pointer-events:none;}
+.insurer-workspace-hero h1{position:relative;z-index:1;font-size:clamp(27px,3.7vw,43px);
+  letter-spacing:-.04em;color:#fff;margin:13px 0 12px;}
+.insurer-workspace-hero p{position:relative;z-index:1;color:#c7deef;font-size:14px;
+  line-height:1.55;max-width:710px;margin:0 0 23px;}
+.insurer-workspace-hero .row{position:relative;z-index:1;flex-wrap:wrap;}
+.insurer-workspace-hero .btn{min-height:43px;}
+.insurer-overview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;}
+.insurer-stat{display:flex;flex-direction:column;gap:7px;min-width:0;padding:20px 19px;
+  border:1px solid #3c6482;border-radius:18px;
+  background:linear-gradient(140deg,#153b59,#122943);
+  box-shadow:0 9px 23px rgba(0,8,21,.16);}
+.insurer-stat span{font-size:12px;color:#accee5;font-weight:750;}
+.insurer-stat strong{font-size:clamp(28px,3.7vw,44px);color:#f5fcff;
+  line-height:1;font-variant-numeric:tabular-nums;}
+.insurer-stat small{color:#67e0f1;font-size:11px;}
+.insurer-workspace>.card{background:linear-gradient(145deg,#112f4a,#0b253c);
+  border-color:#426b88;padding:22px;}
+.insurer-workspace>.card .between{flex-wrap:wrap;}
+.insurer-toolbar{display:flex;align-items:end;justify-content:space-between;gap:15px;flex-wrap:wrap;}
+.insurer-toolbar .stack{min-width:min(100%,235px);}
+.insurer-case-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;}
+.insurer-case-card{display:flex;flex-direction:column;gap:10px;min-width:0;padding:23px;
+  border-radius:20px;border:1px solid #416e8c;
+  background:radial-gradient(circle at 92% 8%,rgba(76,191,232,.13),transparent 42%),
+    linear-gradient(140deg,#143752,#102841);
+  box-shadow:0 10px 23px #0003;transition:transform .18s,border-color .18s,box-shadow .18s;}
+.insurer-case-card:hover{transform:translateY(-2px);border-color:#69def4;box-shadow:0 16px 29px #0005;}
+.insurer-case-card h3{font-size:clamp(19px,2vw,25px);margin:0;color:#fff;}
+.insurer-case-card p{font-size:12px;color:#bbd1e2;margin:0;line-height:1.5;overflow-wrap:anywhere;}
+.insurer-case-card .btn{margin-top:auto;}
+.insurer-case-no{font-size:10px;font-weight:850;color:#e888b9;letter-spacing:.07em;}
+.insurer-case-meta{display:flex;flex-direction:column;gap:4px;margin:3px 0;padding:12px;
+  background:#0a2941;border:1px solid #2e5c79;border-radius:12px;font-size:11px;color:#c0d9e8;}
+.insurer-case-meta b{font-size:12px;color:#6ee9f6;}
+.insurance-preview-admin{border-bottom:2px solid #ec4a9e;}
+.insurance-preview-admin .insurance-preview-active{border-color:#77eaff;background:#164f76;
+  box-shadow:inset 0 2px rgba(96,228,250,.28);}
+.insurance-preview-admin .service-preview-admin-actions a:first-child:not(.insurance-preview-active){
+  background:rgba(21,68,92,.8);}
+.insurance-client-hero{background:radial-gradient(ellipse at 87% 25%,rgba(63,236,242,.2),transparent 47%),
+  radial-gradient(circle at 12% 90%,rgba(234,44,135,.15),transparent 44%),
+  linear-gradient(115deg,#0c2540,#123c5b);}
+/* Clear customer-facing final price: agent's price + TrackSOS fee, never silently bundled. */
+.insurance-price-details{display:flex;flex-direction:column;gap:9px;padding:13px;border-radius:13px;
+  background:#0b2940;border:1px solid #386a83;}
+.insurance-price-details span{display:flex;justify-content:space-between;align-items:start;
+  gap:12px;font-size:11px;color:#b8d4e4;line-height:1.4;}
+.insurance-price-details span b{white-space:nowrap;color:#f4fcff;font-size:12px;font-variant-numeric:tabular-nums;}
+.insurance-price-details span:last-child{border-top:1px solid #3d6279;padding-top:8px;
+  font-size:13px;color:#6feafa;font-weight:800;}
+.insurance-price-details span:last-child b{font-size:17px;color:#77eff9;}
+.insurance-demo-payment{border-color:#43bad0!important;
+  background:linear-gradient(140deg,#144460,#122d53)!important;}
+.insurance-demo-payment h3{margin:0;color:#fff;}
+.insurance-demo-payment p{font-size:13px;color:#cbe2f2;line-height:1.6;}
+.insurance-offer{position:relative;}
+.insurance-offer:has(button[aria-pressed=true]){border-color:#ec4d9f;box-shadow:0 0 0 1px #fa40964a,0 11px 27px #0004;}
+/* Do not overload mobile: one-column content, visual richness without horizontal scrolling. */
+@media(max-width:900px){
+  .insurer-overview{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .insurer-case-grid{grid-template-columns:1fr;}
+  .internal-role-hero{padding:22px 18px;min-height:190px;}
+  .internal-role-hero::after{opacity:.07;}
+  .performer-workspace>.stack{grid-template-columns:1fr;}
+}
+@media(max-width:520px){
+  .insurer-workspace-hero{padding:23px 17px;border-radius:20px;min-height:242px;}
+  .insurer-workspace-hero .btn{width:100%;}
+  .insurer-workspace-hero-art{opacity:.08;right:0;}
+  .insurer-overview{gap:8px;}
+  .insurer-stat{padding:14px 11px;border-radius:14px;}
+  .insurer-stat strong{font-size:28px;}
+  .insurer-workspace>.card{padding:14px;}
+  .insurer-case-card{padding:16px;}
+  .insurance-price-details span{flex-wrap:wrap;gap:4px;}
+}
+@media(prefers-reduced-motion:reduce){
+  .app[class*="role-"] :is(.desktop-nav-link,.btn),.insurer-case-card,
+  .performer-workspace>.stack .linkrow{transition:none!important;}
+  .app[class*="role-"] :is(.desktop-nav-link,.btn):hover,.insurer-case-card:hover,
+  .performer-workspace>.stack .linkrow:hover{transform:none!important;}
+}
