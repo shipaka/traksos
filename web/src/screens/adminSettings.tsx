@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { get, put, rub } from '../api.ts';
 import { useLoad, useAction, Loading, RubInput } from '../ui.tsx';
+import { InsuranceAccessAdmin } from './insuranceAccessAdmin.tsx';
 
 type Kind = 'rub' | 'pct' | 'num' | 'text' | 'bool' | 'share';
 type Row = [section: string, key: string, label: string, kind: Kind, hint?: string];
@@ -81,6 +82,7 @@ export function AdminSettings() {
   }
   return (
     <div className="stack">
+      <InsuranceAccessAdmin />
       <span className="note">Нажмите строку, чтобы изменить. Новые условия применяются к новым заявкам.</span>
       {GROUPS.map(([g, rows]) => (
         <div key={g} className="stack">
