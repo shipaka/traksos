@@ -153,6 +153,9 @@ export function Sos() {
         <button className="linkrow" onClick={() => go('services')}>
           <span><b>СТО грузовых автомобилей</b><small>Найти сервис и записаться на ремонт</small></span><span aria-hidden="true">›</span>
         </button>
+        <button className="linkrow" onClick={() => go('consult')}>
+          <span><b>Консультация по телефону</b><small>Связаться с диагностом без выезда</small></span><span aria-hidden="true">›</span>
+        </button>
       </div>
       {choice === 'master' && (
         <section className="card">
