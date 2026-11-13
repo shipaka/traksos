@@ -8,6 +8,7 @@ import {PerformerHub,AboutSection,PhoneSection,CarsSection,ScheduleSection,TaxSe
 import {Order} from './order.tsx';
 import {Fleet} from './fleet.tsx';
 import {ModeratorDesk} from './moderatorDesk.tsx';
+import {ModCase} from './moderation.tsx';
 import {BaseHome,BaseCar,BaseMoney,BaseSetup} from './base.tsx';
 import {Admin} from './admin.tsx';
 import type {Me} from '../ui.tsx';
@@ -115,6 +116,7 @@ export function FullRolePreviewPage({role,parts}:{role:Role;parts:string[]}){
   return <DisabledArea role={role}/>;
  }
  if(role==='moderator'){
+  if(a==='admin'&&b==='case'&&c)return <ModCase id={c}/>;
   if(!a||a==='moderation')return <ModeratorDesk/>;
   if(a==='profile')return <PreviewProfile role={role}/>;
   return <DisabledArea role={role}/>;
