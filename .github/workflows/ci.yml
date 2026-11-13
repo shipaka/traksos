@@ -58,6 +58,7 @@ jobs:
           until curl -s localhost:8080/api/health >/dev/null; do sleep 1; done
           node e2e/ui-smoke.mjs
           node e2e/public-shots.mjs e2e/shots
+          SHOTS_DIR=e2e/shots/public node e2e/public-layout.mjs
           node e2e/offline.mjs
           node e2e/flow.mjs e2e/shots
           node e2e/admin-ops.mjs e2e/shots
