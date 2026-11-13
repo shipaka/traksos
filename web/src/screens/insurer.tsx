@@ -104,5 +104,11 @@ export function InsurerCabinet({section}:{section?:string}={}){
         </article>)}
       </div>
     </section>
+    <section className="card stack">
+      <span className="insurance-step-title">СПРАВКА ПАРТНЁРА</span>
+      <b>Помощь и условия работы</b>
+      <p className="note">Оформление полисов выполняется агентом вручную. Контакты, документы и история согласования доступны в рамках соответствующей страховой заявки.</p>
+      <a className="btn ghost small" href="#/help">Помощь, условия и настройки</a>
+    </section>
   </main>;
 }
