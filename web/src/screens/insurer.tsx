@@ -48,7 +48,7 @@ export function InsurerCabinet() {
       </header>
       <div className="sub">Только заявки, переданные вам ТракSOS. Остальные автомобили и сведения о клиентах недоступны.</div>
       {!rows ? <div className="empty">{requests.error ? `Не удалось загрузить: ${requests.error}` : 'Загружаем заявки…'}</div>
-        : !rows.length ? <div className="empty">Назначенных заявок пока нет. Администратор передаст их сюда после проверки.</div>
+        : !rows.length ? <InsurerEmptyState onRefresh={requests.reload} />
         : <div className="stack">
           <div className="cabinet-metrics">
             <div className="card tile"><span className="label">Всего назначено</span><b className="tile-value">{rows.length}</b></div>
@@ -113,4 +113,42 @@ export function InsurerCabinet() {
       <a className="linkrow" href="#/menu"><span><b>Помощь, условия и настройки</b><small>Единое меню ТракSOS</small></span><span aria-hidden="true">›</span></a>
     </main>
   );
+}
+
+
+function InsurerEmptyState({onRefresh}:{onRefresh:()=>void}){
+  const stages=[
+    ['◇','Получение обращения','Клиент выбирает страхового агента и передаёт сведения о грузовике.'],
+    ['▤','Подготовка расчётов','Вы проверяете документы и вручную готовите до 20 предложений.'],
+    ['◈','Выбор клиентом','Клиент сравнивает стоимость и подтверждает нужный вариант.'],
+    ['✓','Выдача полиса','Вы оформляете документ у страховщика и прикрепляете PDF в переписке.'],
+  ];
+  return <div className="insurer-empty-workspace stack">
+    <div className="insurer-overview">
+      <div className="insurer-stat"><span>Назначено</span><strong>0</strong><small>Пока нет заявок</small></div>
+      <div className="insurer-stat"><span>Входящие</span><strong>0</strong><small>Ожидают приёма</small></div>
+      <div className="insurer-stat"><span>На оформлении</span><strong>0</strong><small>Дела в работе</small></div>
+      <div className="insurer-stat"><span>Завершены</span><strong>0</strong><small>Переданные полисы</small></div>
+    </div>
+    <section className="card insurer-empty-intro">
+      <div className="insurer-empty-symbol" aria-hidden="true">◇</div>
+      <div className="stack"><span className="insurance-step-title">РАБОЧАЯ ОЧЕРЕДЬ</span>
+        <h2>Заявок пока нет</h2>
+        <p>Когда клиент выберет вас страховым партнёром, здесь появится его обращение, анкета автомобиля и переписка.
+        Заявки от других агентств недоступны.</p>
+        <div className="row"><button className="btn small" type="button" onClick={onRefresh}>↻ Проверить новые заявки</button>
+          <a className="btn ghost small" href="#/profile">Профиль партнёра</a></div>
+      </div>
+    </section>
+    <section className="card insurer-workflow-guide">
+      <div><span className="insurance-step-title">РАБОЧИЙ ПРОЦЕСС</span><h2>Как обрабатывается страхование</h2>
+        <p className="note">Оформление у страховой компании проходит вручную, без API-интеграции.</p></div>
+      <div className="insurer-workflow-steps">{stages.map(([symbol,title,description],i)=>
+        <div className="insurer-workflow-step" key={title}>
+          <span className="insurer-workflow-icon" aria-hidden="true">{symbol}</span>
+          <small>Этап {i+1}</small><b>{title}</b><p>{description}</p>
+        </div>)}
+      </div>
+    </section>
+  </div>;
 }
