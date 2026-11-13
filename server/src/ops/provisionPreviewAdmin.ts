@@ -20,10 +20,11 @@ if (config.moderatorPhones.includes(phone) || config.insurerPrimaryPhone === pho
 const password = randomInt(0, 10_000_000_000).toString().padStart(10, '0');
 const salt = randomBytes(16).toString('hex');
 const passwordHash = `scrypt:${salt}:${scryptSync(password, Buffer.from(salt, 'hex'), 64).toString('hex')}`;
-// Exact next midnight in Moscow, regardless of where the VPS is hosted.
-const moscowClock = new Date(Date.now() + 3 * 60 * 60 * 1000);
-moscowClock.setUTCHours(24, 0, 0, 0);
-const expiresAt = new Date(moscowClock.getTime() - 3 * 60 * 60 * 1000);
+// This is a ONE-EVENING preview, not a reusable daily bypass.
+// 14 Nov 2026 00:00 Moscow time is 13 Nov 2026 21:00 UTC.
+const expiresAt = new Date('2026-11-13T21:00:00.000Z');
+if (Date.now() >= expiresAt.getTime())
+  throw new Error('Today\'s preview window has ended; temporary owner login is no longer available');
 const db = await createDb(config.databaseUrl);
 try {
   if (db.driver !== 'pg') throw new Error('Real PostgreSQL is required');
