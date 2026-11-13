@@ -262,6 +262,17 @@ export class VehicleServiceRequests {
        order by r.created_at desc limit 100`, [user.id]);
   }
 
+  async inspectionQueue(user: AuthUser) {
+    if (!user.roles?.includes('insurer')) throw forbidden('Нет доступа');
+    // Only inspections assigned to this partner; insurance data never leaks into this workspace.
+    return this.db.query(
+      `select r.id, r.kind, r.status, r.comment, r.staff_note, r.created_at, r.updated_at,
+              v.brand, v.model, v.plate
+       from vehicle_service_requests r join vehicles v on v.id=r.vehicle_id
+       where r.kind='inspection' and r.assigned_to=$1
+       order by r.created_at desc limit 100`, [user.id]);
+  }
+
   async queue(staff: AuthUser, kind?: VehicleServiceKind) {
     if (!staff.roles?.some((role: string) => ['admin', 'moderator'].includes(role))) throw forbidden('Нет доступа');
     return this.db.query(
