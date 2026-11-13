@@ -1,5 +1,5 @@
-// Text-only offline lookup for part names and article numbers.
-// No private history, VINs, prices, inventory or authentication tokens are stored.
+// Lightweight part-title/article search, stored locally in IndexedDB.
+// Never cache private history, VIN, stock, supplier credentials or prices.
 import { get } from './api.ts';
 
 export interface OfflinePart {
@@ -11,13 +11,32 @@ export interface OfflinePart {
   aliases: string | null;
 }
 
-interface IndexMeta { key: string; revision: string | null; cursor: string | null; complete: boolean; count: number }
-export interface SyncSummary { added: number; total: number; complete: boolean; unchanged: boolean }
+interface IndexMeta {
+  key: 'index';
+  schema: 2;
+  revision: string;      // database change sequence, not a timestamp
+  cursor: string | null; // UUID during initial snapshot, null after completion
+  complete: boolean;
+  count: number;
+}
+export interface SyncSummary {
+  added: number;
+  removed: number;
+  total: number;
+  complete: boolean;
+  unchanged: boolean;
+  incremental: boolean;
+}
 
 function open(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    if (!('indexedDB' in window)) { reject(new Error('Локальный справочник не поддерживается этим браузером')); return; }
-    const req = indexedDB.open('traksos-parts-index', 1);
+    if (!('indexedDB' in window)) {
+      reject(new Error('Локальный каталог не поддерживается устройством'));
+      return;
+    }
+    // Version 2 keeps the same stores. The metadata schema changes from timestamps to
+    // change sequence numbers; old caches are rebuilt once rather than trusted.
+    const req = indexedDB.open('traksos-parts-index', 2);
     req.onupgradeneeded = () => {
       const db = req.result;
       if (!db.objectStoreNames.contains('parts')) db.createObjectStore('parts', { keyPath: 'id' });
@@ -27,7 +46,6 @@ function open(): Promise<IDBDatabase> {
     req.onerror = () => reject(req.error);
   });
 }
-
 function readMeta(db: IDBDatabase): Promise<IndexMeta | null> {
   return new Promise((resolve, reject) => {
     const req = db.transaction('meta', 'readonly').objectStore('meta').get('index');
@@ -36,56 +54,90 @@ function readMeta(db: IDBDatabase): Promise<IndexMeta | null> {
   });
 }
 
-function commitPage(db: IDBDatabase, rows: unknown[][], meta: IndexMeta, reset: boolean): Promise<void> {
+/** Save a batch and its position in one IDB transaction. Interruption can never
+ * leave the cursor ahead of stored records or behind removed tombstones. */
+function storeBatch(db: IDBDatabase, rows: unknown[][], meta: IndexMeta,
+  reset: boolean, delta: boolean): Promise<number> {
   return new Promise((resolve, reject) => {
+    let removed = 0;
     const tx = db.transaction(['parts', 'meta'], 'readwrite');
     const parts = tx.objectStore('parts');
     if (reset) parts.clear();
     for (const line of rows) {
-      const [id, category, brand, article, name, aliases] = line;
-      if (typeof id !== 'string' || typeof name !== 'string') continue;
-      parts.put({ id, category, brand, article, name, aliases });
+      const record = delta ? line.slice(1) : line;
+      const [id, category, brand, article, name, aliases] = record;
+      if (typeof id !== 'string') continue;
+      if (delta && record.length === 1) { parts.delete(id); removed++; continue; }
+      if (typeof name !== 'string') continue;
+      parts.put({ id, category, brand, article, name, aliases } satisfies OfflinePart);
     }
     tx.objectStore('meta').put(meta);
-    tx.oncomplete = () => resolve();
+    tx.oncomplete = () => resolve(removed);
     tx.onerror = () => reject(tx.error);
     tx.onabort = () => reject(tx.error);
   });
 }
 
-/** One deliberate sync fetches at most ~3,000 compact records, not an entire huge catalog.
- * Repeated sync resumes from the saved cursor; unchanged completed catalogs cost one small manifest request. */
+/** Per tap: at most four requests of <=750 compact rows; resume on next tap.
+ * Once seeded, only changed/deleted articles travel over the network. */
 export async function syncOfflineParts(): Promise<SyncSummary> {
-  const manifest = await get<{ enabled: boolean; revision: string | null; count: number }>('/api/shop/index/manifest');
-  if (!manifest.enabled) throw new Error('Каталог пока в разработке');
+  const manifest = await get<{ enabled: boolean; revision: string; count: number }>(
+    '/api/shop/index/manifest');
+  if (!manifest.enabled) throw new Error('Магазин пока в разработке');
   const db = await open();
   try {
     const prev = await readMeta(db);
-    const reset = prev?.revision !== manifest.revision;
-    if (!reset && prev?.complete) return { added: 0, total: manifest.count, complete: true, unchanged: true };
-    let cursor: string | null = reset ? null : (prev?.cursor ?? null);
-    let added = 0;
-    for (let page = 0; page < 4; page += 1) {
-      const args = `?limit=750${cursor ? '&after=' + encodeURIComponent(cursor) : ''}`;
-      const result = await get<{ enabled: boolean; rows: unknown[][]; next: string | null }>(
-        '/api/shop/index/page' + args);
-      if (!result.enabled) throw new Error('Каталог пока закрыт');
-      const complete = result.next === null;
-      await commitPage(db, result.rows, {
-        key: 'index', revision: manifest.revision, cursor: result.next,
-        complete, count: manifest.count,
-      }, reset && page === 0);
-      added += result.rows.length;
-      cursor = result.next;
-      if (complete) return { added, total: manifest.count, complete: true, unchanged: false };
+    const valid = prev?.schema === 2 && /^\d+$/.test(prev.revision);
+    const continuingSnapshot = !!valid && !prev!.complete;
+    // Initial bootstrap (or migration from the old timestamp scheme).
+    if (!valid || continuingSnapshot) {
+      const initialRevision = continuingSnapshot ? prev!.revision : manifest.revision;
+      let cursor = continuingSnapshot ? prev!.cursor : null;
+      let added = 0;
+      for (let page = 0; page < 4; page++) {
+        const response = await get<{ enabled: boolean; rows: unknown[][]; next: string | null }>(
+          '/api/shop/index/page?limit=750' + (cursor ? '&after=' + encodeURIComponent(cursor) : ''));
+        if (!response.enabled) throw new Error('Магазин пока закрыт');
+        const complete = !response.next;
+        await storeBatch(db, response.rows, {
+          key: 'index', schema: 2, revision: initialRevision,
+          cursor: response.next, complete, count: manifest.count,
+        }, !continuingSnapshot && page === 0, false);
+        added += response.rows.length;
+        cursor = response.next;
+        if (complete) return { added, removed: 0, total: manifest.count, complete: true, unchanged: false, incremental: false };
+      }
+      return { added, removed: 0, total: manifest.count, complete: false, unchanged: false, incremental: false };
     }
-    return { added, total: manifest.count, complete: false, unchanged: false };
+    if (prev!.revision === manifest.revision)
+      return { added: 0, removed: 0, total: manifest.count, complete: true, unchanged: true, incremental: true };
+
+    // Durable incremental feed. We can apply <=3,000 changes per action and resume
+    // from the last applied sequence, without ever redownloading the entire catalog.
+    let after = prev!.revision;
+    let added = 0;
+    let removed = 0;
+    for (let page = 0; page < 4; page++) {
+      const response = await get<{
+        enabled: boolean; rows: unknown[][]; next: string | null; revision: string;
+      }>('/api/shop/index/changes?limit=750&after=' + encodeURIComponent(after));
+      if (!response.enabled) throw new Error('Магазин пока закрыт');
+      const complete = response.next === null;
+      const rev = complete ? response.revision : response.next!;
+      removed += await storeBatch(db, response.rows, {
+        key: 'index', schema: 2, revision: rev, cursor: null,
+        complete: true, count: manifest.count,
+      }, false, true);
+      added += response.rows.length;
+      after = rev;
+      if (complete) return { added, removed, total: manifest.count, complete: true, unchanged: false, incremental: true };
+    }
+    return { added, removed, total: manifest.count, complete: false, unchanged: false, incremental: true };
   } finally {
     db.close();
   }
 }
 
-/** Cursor scan keeps memory bounded even for large catalogs. Never shows offline prices. */
 export async function searchOfflineParts(query: string, category = 'all', limit = 24): Promise<OfflinePart[]> {
   let db: IDBDatabase;
   try { db = await open(); } catch { return []; }
@@ -98,9 +150,11 @@ export async function searchOfflineParts(query: string, category = 'all', limit 
       req.onsuccess = () => {
         const cursor = req.result;
         if (!cursor || found.length >= limit) { resolve(found); return; }
-        const p = cursor.value as OfflinePart;
-        const text = [p.name, p.article, p.brand, p.aliases].filter(Boolean).join(' ').toLocaleLowerCase('ru-RU');
-        if ((category === 'all' || p.category === category) && terms.every((term) => text.includes(term))) found.push(p);
+        const part = cursor.value as OfflinePart;
+        const searchable = [part.name, part.article, part.brand, part.aliases]
+          .filter(Boolean).join(' ').toLocaleLowerCase('ru-RU');
+        if ((category === 'all' || part.category === category) &&
+            terms.every((term) => searchable.includes(term))) found.push(part);
         cursor.continue();
       };
       req.onerror = () => reject(req.error);
