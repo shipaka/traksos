@@ -47,9 +47,13 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
   },[me?.name]);
   const vehicle=(vehicles.data??[]).find(v=>v.id===selectedVehicleId);
   useEffect(()=>{
-    if(!vehicle)return;
-    setTruck(old=>({...old,brand:vehicle.brand??'',model:vehicle.model??'',
-      year:String(vehicle.year??''),plate:vehicle.plate??'',vin:vehicle.vin??vehicle.vin_code??'',trailerPlate:vehicle.trailer_plate??''}));
+    // Switching vehicles must not leak fields from the previously selected truck.
+    if(!vehicle){setTruck(emptyVehicle());return;}
+    setTruck({...emptyVehicle(),
+      brand:String(vehicle.brand??''),model:String(vehicle.model??''),
+      year:String(vehicle.year??''),plate:String(vehicle.plate??''),
+      vin:String(vehicle.vin??vehicle.vin_code??''),
+      trailerPlate:String(vehicle.trailer_plate??'')});
   },[vehicle?.id]);
   const fill=(key:VehicleKey,value:string)=>setTruck(prev=>({...prev,[key]:value}));
   const submit=async(e:React.FormEvent)=>{
