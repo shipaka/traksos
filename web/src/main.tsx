@@ -295,7 +295,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     ['/offer/privacy', 'Политика персональных данных'],
     ['/privacy', 'Мои персональные данные']];
   return (
-    <div className={`app ${me ? "" : "guest-app"}`}>
+    <div className={`app ${me ? "role-"+mode : "guest-app"}`}>
       <header className="top">
         <span className="logo">Трак<b>SOS</b></span>
         <div className="row" style={{ flexWrap: 'nowrap' }}>
