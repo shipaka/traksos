@@ -134,6 +134,18 @@ export function Admin({ initialSection }: { initialSection?: string }) {
             {tab === 'payments' && <Payments />}
             {tab === 'flagged' && <Flagged />}
           </div>
+          <div className="admin-mobile-quick">
+            <div className="admin-mobile-quick-heading"><b>Быстрые переходы</b><small>Частые задачи администратора</small></div>
+            <div className="admin-mobile-quick-grid">
+              {(['verify','dispatch','payments','search','offers','support','stats'] as AdminSection[]).map(id => {
+                const item = ADMIN_GROUPS.flatMap(group => group.items).find(entry => entry.id === id)!;
+                return <button type="button" key={id} aria-label={item.name}
+                  className="admin-mobile-quick-item" onClick={() => navigate(id)}>
+                  <span aria-hidden="true">{item.symbol}</span><b>{item.name}</b><i aria-hidden="true">›</i>
+                </button>;
+              })}
+            </div>
+          </div>
         </section>
       </div>
     </main>
