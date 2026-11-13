@@ -89,6 +89,26 @@ export async function rolePreviewApi(method:string, path:string, body:any={}):Pr
     year:body.year??null,plate:body.plate??'',trailer_plate:body.trailerPlate??''};
   vehicles.push(v);return clone(v);
  }
+ if(method==='GET'&&p==='/api/fleet')return {
+   settings:{mode:'limit',perOrder:3000000,perMonth:10000000,allow:{repair:true,tow:true,consult:true,service:true,shop:false,insurance:true,inspection:true}},
+   company:{inn:'',edoOperator:'',edoId:'',pdfOnly:true},
+   cars:clone(vehicles.map(v=>({...v,qrCode:'DEMO-NOT-FOR-ENTRY',driver:null}))),
+   pending:[],
+ };
+ if(method==='PUT'&&p==='/api/fleet'){
+   forceRole(who()==='owner');
+   return {settings:{mode:body.mode??'limit',perOrder:body.perOrder??null,
+    perMonth:body.perMonth??null,allow:body.allow??{},edoPdfOnly:body.edoPdfOnly??true},
+    company:{inn:'',edoOperator:'',edoId:'',pdfOnly:body.edoPdfOnly??true},
+    cars:clone(vehicles.map(v=>({...v,qrCode:'DEMO-NOT-FOR-ENTRY',driver:null}))),pending:[]};
+ }
+ if(method==='GET'&&p==='/api/fleet/rules')return {owner:'Демо Транспорт',mode:'limit',perOrder:3000000,
+   perMonth:10000000,monthSpent:0};
+ if(method==='GET'&&p==='/api/insurance-reminders/settings')return {enabled:false};
+ if(method==='PUT'&&p==='/api/insurance-reminders/settings')return {enabled:!!body.enabled};
+ if(method==='GET'&&p==='/api/vehicle-service-requests')return [];
+ if(method==='GET'&&p==='/api/vehicles/demo-truck-1/service-history')return [];
+ if(method==='GET'&&p==='/api/vehicles/demo-truck-2/service-history')return [];
  if(method==='GET'&&p==='/api/orders'){
   const byWorker=qs.get('as')==='performer'||(isWorker()&&qs.get('as')!=='client');
   return clone(orders.filter(o=>byWorker?o.assigned:!isWorker()).map(o=>({...o,created_at:o.created_at})));
