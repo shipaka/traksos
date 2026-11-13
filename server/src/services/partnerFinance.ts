@@ -1,9 +1,31 @@
 import type {Db} from '../db/index.ts';
 import type {AuthUser} from '../http/router.ts';
-import {forbidden} from '../http/router.ts';
+import {forbidden,bad,notFound} from '../http/router.ts';
 
 export class PartnerFinance {
   constructor(private db:Db){}
+  async recordAccrual(staff:AuthUser,requestId:string,amountKopecks:number,note:string) {
+    if(!staff.roles?.includes('admin'))throw forbidden('Начисления подтверждает администратор');
+    if(!Number.isSafeInteger(amountKopecks)||amountKopecks<=0||!note.trim())
+      throw bad('invalid_accrual','Укажите сумму в копейках и основание начисления');
+    return this.db.tx(async q=>{
+      const request=await q.one<{id:string;kind:string;assigned_to:string|null;status:string}>(
+        'select id,kind,assigned_to,status from vehicle_service_requests where id=$1 for update',[requestId]);
+      if(!request||!request.assigned_to||request.status!=='completed')
+        throw notFound('Нет завершённой заявки с назначенным партнёром');
+      const existing=await q.one<{id:string}>(
+        `select id from partner_finance_entries where request_id=$1 and entry_type='accrual' limit 1`,[requestId]);
+      if(existing)throw bad('duplicate_accrual','Начисление по заявке уже создано');
+      const entry=await q.one<any>(
+        `insert into partner_finance_entries(partner_id,request_id,kind,amount_kopecks,entry_type,note,created_by)
+         values ($1,$2,$3,$4,'accrual',$5,$6) returning *`,
+        [request.assigned_to,request.id,request.kind,amountKopecks,note.trim(),staff.id]);
+      await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
+        [staff.id,'partner_finance.accrual',requestId,{amountKopecks,partnerId:request.assigned_to}]);
+      return entry;
+    });
+  }
+
   async mine(user:AuthUser) {
     if(!user.roles?.includes('insurer'))throw forbidden('Нет доступа к финансам партнёра');
     const entries=await this.db.query<{
