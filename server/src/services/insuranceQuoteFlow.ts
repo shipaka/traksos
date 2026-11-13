@@ -136,12 +136,12 @@ export class InsuranceQuoteFlow {
   }
 
   async uploadPolicy(user:AuthUser,id:string,dataUrl:string,fileName:string,expiresOn:string) {
-    const m=/^data:application\\/pdf;base64,([a-zA-Z0-9+/=]+)$/.exec(dataUrl);
+    const m=/^data:application\/pdf;base64,([a-zA-Z0-9+/=]+)$/.exec(dataUrl);
     if(!m)throw bad('invalid_file','Загрузите документ PDF');
     const bytes=Buffer.from(m[1],'base64');
     if(bytes.length<100||bytes.length>4*1024*1024||bytes.subarray(0,5).toString()!=='%PDF-')
       throw bad('invalid_file','Нужен настоящий PDF размером до 4 МБ');
-    if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(expiresOn)||expiresOn<=new Date().toISOString().slice(0,10)||
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(expiresOn)||expiresOn<=new Date().toISOString().slice(0,10)||
        new Date(expiresOn+'T00:00:00Z').toISOString().slice(0,10)!==expiresOn)
       throw bad('invalid_expiry','Укажите корректный будущий срок действия полиса');
     const safeName=(fileName||'policy.pdf').replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,90);
