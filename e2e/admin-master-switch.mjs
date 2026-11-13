@@ -41,6 +41,25 @@ try {
   await page.locator('.account-menu > summary').click();
   await nav.getByRole('link',{name:'Администратор'}).click();
   await page.waitForURL(/#\/admin/);
+  // One admin-only sandbox opens every simulated cabin with ZERO API writes.
+  await page.goto(BASE+'/#/admin/test-center');
+  await page.getByRole('heading',{name:'Тестирование кабинетов'}).waitFor();
+  const writes=[];
+  page.on('request',r=>{
+    if(r.url().includes('/api/') && !['GET','HEAD'].includes(r.method())) writes.push(r.method());
+  });
+  for(const label of ['Клиент','Владелец / автопарк','Водитель автопарка','Выездной мастер',
+    'Эвакуаторщик','Рембаза / СТО','Мастер и своя СТО','Страховой партнёр','Модератор','Администратор']){
+    const role=page.getByRole('group',{name:'Выбор тестового кабинета'}).getByRole('button',{name:label});
+    await role.click();
+    if(await role.getAttribute('aria-pressed')!=='true')throw new Error('Sandbox role failed: '+label);
+    await page.getByRole('tab',{name:'Проверка ошибок'}).click();
+    await page.getByRole('button',{name:'Смоделировать отсутствие связи'}).click();
+    await page.getByRole('alert').getByText('Нет связи с сервером.',{exact:false}).waitFor();
+  }
+  if(writes.length)throw new Error('Sandbox unexpectedly changed live API');
+  await page.getByRole('link',{name:'Вернуться в админку'}).click();
+  await page.getByRole('heading',{name:'Администратор'}).waitFor();
   if(exceptions.length)throw new Error('JavaScript error: '+exceptions.join(' | '));
   console.log('Admin and master cabinets switch correctly within one account');
   await context.close();
@@ -90,6 +109,10 @@ try {
   await page.goto(BASE+'/#/admin');
   await page.getByRole('heading',{name:'Модерация'}).waitFor();
   if (await page.getByRole('button',{name:'Статистика'}).count()) throw new Error('Moderator sees admin statistics');
+  await page.goto(BASE+'/#/admin/test-center');
+  await page.getByRole('heading',{name:'Модерация'}).waitFor();
+  if(await page.getByRole('heading',{name:'Тестирование кабинетов'}).count())
+    throw new Error('Moderator can see the admin sandbox');
   await context.close();
 } finally { await mb.close(); }
 console.log('Moderator/master role switching and financial-report access restrictions OK');
