@@ -117,6 +117,9 @@ export class VehicleServiceRequests {
         throw forbidden('Можно изменять только назначенные вам страховые заявки');
       }
       if (!current) throw notFound('Заявка не найдена');
+      // New manual quote workflow only completes after selected offer + encrypted PDF.
+      if (current.insurance_stage && status === 'completed')
+        throw bad('quote_workflow_required', 'Готовый полис отправляется через страховую переписку');
       if (!transitions[current.status as VehicleServiceStatus]?.includes(status)) throw bad('invalid_status', 'Недопустимый переход статуса');
       if (['rejected', 'need_documents'].includes(status) && !note?.trim()) {
         throw bad('missing_status_reason', 'Укажите причину отказа или список необходимых документов');
