@@ -33,6 +33,8 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
   const agents=useLoad(()=>get<{id:string;name:string}[]>('/api/insurance/agents'),[]);
   const vehicles=useLoad(()=>get<any[]>('/api/vehicles'),[]);
   const [agentId,setAgentId]=useState('');
+  const [selectedVehicleId,setSelectedVehicleId]=useState(vehicleId);
+  const [showVehicleDetails,setShowVehicleDetails]=useState(false);
   const [applicant,setApplicant]=useState({lastName:'',firstName:'',middleName:''});
   const [truck,setTruck]=useState<Record<VehicleKey,string>>(emptyVehicle);
   const [comment,setComment]=useState('');
@@ -43,23 +45,23 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
     const words=me.name.trim().split(/\s+/);
     if(words.length>=2)setApplicant({lastName:words[0]||'',firstName:words[1]||'',middleName:words.slice(2).join(' ')});
   },[me?.name]);
-  const vehicle=(vehicles.data??[]).find(v=>v.id===vehicleId);
+  const vehicle=(vehicles.data??[]).find(v=>v.id===selectedVehicleId);
   useEffect(()=>{
     if(!vehicle)return;
     setTruck(old=>({...old,brand:vehicle.brand??'',model:vehicle.model??'',
-      year:String(vehicle.year??''),plate:vehicle.plate??'',trailerPlate:vehicle.trailer_plate??''}));
+      year:String(vehicle.year??''),plate:vehicle.plate??'',vin:vehicle.vin??vehicle.vin_code??'',trailerPlate:vehicle.trailer_plate??''}));
   },[vehicle?.id]);
   const fill=(key:VehicleKey,value:string)=>setTruck(prev=>({...prev,[key]:value}));
   const submit=async(e:React.FormEvent)=>{
     e.preventDefault();
-    if(!agentId||!vehicleId||!applicant.lastName.trim()||!applicant.firstName.trim()||
+    if(!agentId||!selectedVehicleId||!applicant.lastName.trim()||!applicant.firstName.trim()||
       !truck.brand.trim()||!truck.model.trim()||!truck.plate.trim()||
       !/^\d{4}$/.test(truck.year)||truck.vin.trim().length<11||!consent){
       window.alert('Выберите агента и заполните все обязательные данные страхователя и грузовика.');
       return;
     }
     const result=await run(()=>post<{id:string}>('/api/vehicle-service-requests',{
-      kind:'insurance',vehicleId,comment,
+      kind:'insurance',vehicleId:selectedVehicleId,comment,
       insurance:{agentId,consentToPartner:true,details:{applicant,vehicle:truck}},
     }),'Заявка отправлена выбранному страховому агенту');
     if(result)go('insurance/request/'+result.id);
@@ -72,7 +74,6 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
     </section>
     <div className="banner" role="note">Страховой агент оформляет документы вручную. Расчёт и выпуск полиса через API страховой компании пока не подключены.</div>
     {(!vehicles.data||!agents.data)?<Loading error={vehicles.error||agents.error}/>:
-    !vehicle?<div className="empty">Транспорт не найден в вашем гараже. Сначала добавьте машину.</div>:
     <form className="stack" onSubmit={submit}>
       <section className="card stack">
         <span className="insurance-step-title">01 · Кому отправить</span><h2>Страховой агент</h2>
@@ -96,13 +97,30 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
       </section>
       <section className="card stack">
         <span className="insurance-step-title">03 · Что страхуем</span><h2>Грузовой автомобиль</h2>
-        <p className="note">Все данные перечислены отдельными полями. Сведения из гаража можно проверить и дополнить. Для конкретной страховой компании агент может запросить дополнительные документы.</p>
+        <label>Выберите автомобиль из гаража
+          <select className="field" value={selectedVehicleId} onChange={e=>setSelectedVehicleId(e.target.value)}>
+            <option value="">Выберите автомобиль</option>
+            {vehicles.data.map(v=><option key={v.id} value={v.id}>
+              {[v.brand,v.model,v.year,v.plate,v.vin ? 'VIN '+String(v.vin).slice(-6) : ''].filter(Boolean).join(' · ')}
+            </option>)}
+          </select>
+        </label>
+        {!selectedVehicleId&&<p className="note">Для отправки заявки пока требуется автомобиль из гаража. Возможность заявки без сохранённой машины требует изменения серверной логики.</p>}
+        <p className="note">Данные выбранного автомобиля подставляются автоматически. Проверьте VIN и обязательные сведения.</p>
         <div className="insurance-field-grid">
-          {VEHICLE_FIELDS.map(([key,label])=><label key={key}>{label}
+          {VEHICLE_FIELDS.filter(([,label])=>label.endsWith('*')).map(([key,label])=><label key={key}>{label}
             <input className="field" value={truck[key]} maxLength={120} required={label.endsWith('*')}
               inputMode={key==='year'?'numeric':'text'} onChange={e=>fill(key,e.target.value)} />
           </label>)}
         </div>
+        <button className="btn ghost" type="button" aria-expanded={showVehicleDetails} onClick={()=>setShowVehicleDetails(v=>!v)}>
+          {showVehicleDetails?'Скрыть дополнительные сведения':'Дополнительные сведения об автомобиле'}
+        </button>
+        {showVehicleDetails&&<div className="insurance-field-grid">
+          {VEHICLE_FIELDS.filter(([,label])=>!label.endsWith('*')).map(([key,label])=>
+            <label key={key}>{label}<input className="field" value={truck[key]} maxLength={120}
+              onChange={e=>fill(key,e.target.value)}/></label>)}
+        </div>}
       </section>
       <section className="card stack">
         <span className="insurance-step-title">04 · Дополнительно</span>
