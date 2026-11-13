@@ -58,6 +58,24 @@ try {
     await page.getByRole('heading', { name: 'Вход по номеру телефона' }).waitFor();
     await page.goto(BASE + '/#/register');
     await page.getByRole('heading', { name: 'Регистрация в ТракSOS' }).waitFor();
+    for (const label of ['Владелец / автопарк', 'Водитель автопарка',
+      'Я мастер', 'Я эвакуаторщик', 'Я рембаза (сервис)',
+      'Мастер и своя СТО', 'Я представитель страховой компании']) {
+      assert(await page.getByRole('button', { name: label }).isVisible(),
+        width + 'px: missing registration category: ' + label);
+    }
+    // Every publicly offered provider cabinet must work from /register,
+    // not only via the separate /join link.
+    for (const label of ['Я мастер', 'Я эвакуаторщик',
+      'Я рембаза (сервис)', 'Мастер и своя СТО',
+      'Я представитель страховой компании']) {
+      await page.getByRole('button', { name: label }).click();
+      await page.getByRole('heading', { name: 'Работать с ТракSOS' }).waitFor();
+      assert(await page.getByRole('button', { name: label }).getAttribute('aria-pressed') === 'true',
+        width + 'px: registration category not selected: ' + label);
+      await page.goto(BASE + '/#/register');
+      await page.getByRole('heading', { name: 'Регистрация в ТракSOS' }).waitFor();
+    }
     assert(errors.length === 0, width + 'px: browser errors: ' + errors.join('; '));
     console.log('OK: viewport ' + width + 'px, 8 services, approved assets, SOS/login/register, no overflow');
     await context.close();
