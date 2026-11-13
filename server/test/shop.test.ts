@@ -69,3 +69,63 @@ test('статусы заказа; отмена возвращает на скл
   ok(await t.api('PUT', '/api/admin/settings/shop', { enabled: true }, admin.token));
   assert.equal(ok(await t.api('GET', '/api/shop', undefined, client.token)).products.some((x: any) => x.id === socket), false, 'скрытый товар не виден');
 });
+
+test('Поиск, компактный кэш и история техники; только вручную подтверждённые аналоги', async () => {
+  const first = ok(await t.api('POST', '/api/admin/shop/products', {
+    category: 'air', name: 'Датчик давления воздуха', brand: 'TEST-VDO',
+    article: 'TS-042', searchTerms: 'пневматика давление', price: 71_000, stock: 4,
+  }, admin.token)).id;
+  const second = ok(await t.api('POST', '/api/admin/shop/products', {
+    category: 'air', name: 'Датчик воздуха аналог', brand: 'TEST-WABCO',
+    article: 'ALT-042', price: 68_000, stock: 5,
+  }, admin.token)).id;
+
+  const hit = ok(await t.api('GET', '/api/shop/search?q=TS-042&limit=1', undefined, client.token));
+  assert.equal(hit.items.length, 1);
+  assert.equal(hit.items[0].article, 'TS-042');
+  const aliases = ok(await t.api('GET', '/api/shop/search?q=пневматика', undefined, client.token));
+  assert.ok(aliases.items.some((p: any) => p.id === first));
+  const selection = ok(await t.api('GET', `/api/shop/selection?ids=${first}`, undefined, client.token));
+  assert.equal(selection.products[0].brand, 'TEST-VDO');
+
+  const manifest = ok(await t.api('GET', '/api/shop/index/manifest', undefined, client.token));
+  assert.equal(manifest.enabled, true);
+  assert.ok(manifest.count >= 2);
+  const compact = ok(await t.api('GET', '/api/shop/index/page?limit=750', undefined, client.token));
+  assert.ok(compact.rows.some((row: any[]) => row[0] === first && row[3] === 'TS-042'));
+  assert.ok(compact.rows.every((row: any[]) => row.length === 6), 'нет цен, остатков и личных данных');
+
+  ok(await t.api('POST', `/api/admin/shop/products/${first}/analogs`, {
+    analogId: second, source: 'Тестовая проверка', verified: false,
+  }, admin.token));
+  let analogs = ok(await t.api('GET', `/api/shop/products/${first}/analogs`, undefined, client.token));
+  assert.equal(analogs.items.length, 0, 'непроверенные кроссы не выдаём клиенту');
+  ok(await t.api('POST', `/api/admin/shop/products/${first}/analogs`, {
+    analogId: second, source: 'Тестовая проверка', verified: true,
+  }, admin.token));
+  analogs = ok(await t.api('GET', `/api/shop/products/${first}/analogs`, undefined, client.token));
+  assert.equal(analogs.items[0].id, second);
+  assert.equal(analogs.compatibilityConfirmed, false, 'применяемость по VIN отдельно');
+
+  const vehicle = ok(await t.api('POST', '/api/vehicles', {
+    brand: 'DAF', model: 'XF 105', plate: 'А001АА', vin: 'XLRTE47MS0E123456',
+  }, client.token));
+  const order = ok(await t.api('POST', '/api/shop/orders', {
+    items: [{ productId: first, qty: 1 }], delivery: 'pickup', vehicleId: vehicle.id,
+  }, client.token));
+  assert.equal(order.vehicleId, vehicle.id);
+  assert.equal(order.items[0].article, 'TS-042');
+  const history = ok(await t.api('GET', `/api/shop/history?vehicleId=${vehicle.id}`, undefined, client.token));
+  assert.ok(history.items.some((r: any) => r.id === order.id), 'покупка отображается у машины');
+  assert.equal((await t.api('POST', '/api/shop/orders', {
+    items: [{ productId: first, qty: 1 }], delivery: 'pickup', vehicleId: '00000000-0000-4000-8000-000000000001',
+  }, client.token)).status, 403, 'нельзя привязать чужой грузовик');
+
+  ok(await t.api('PUT', '/api/admin/settings/shop', { enabled: false }, admin.token));
+  const closed = ok(await t.api('GET', '/api/shop/search?q=TS-042', undefined, client.token));
+  assert.equal(closed.items.length, 0, 'магазин закрыт даже если индекс уже существует');
+  assert.equal(ok(await t.api('GET', '/api/shop/index/manifest', undefined, client.token)).enabled, false);
+  assert.equal((await t.api('POST', '/api/shop/orders', {
+    items: [{ productId: first, qty: 1 }], delivery: 'pickup',
+  }, client.token)).status, 409);
+});

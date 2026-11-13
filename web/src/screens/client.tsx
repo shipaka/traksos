@@ -727,6 +727,7 @@ export function Garage() {
           <VehicleServiceApplication vehicleId={v.id} onCreated={() => setServiceHistoryVersion(v => v + 1)} />
           <VehicleServiceHistory id={v.id} isDriver={isDriver} refreshVersion={serviceHistoryVersion} />
           <VehicleHistory id={v.id} />
+          <a className="btn ghost small" href={`#/shop/history/${v.id}`}>Покупки и запчасти этой машины</a>
           {!isDriver && (driverFor === v.id ? (
             <div className="stack">
               <input className="field" type="tel" value={driverPhone} onChange={(e) => setDriverPhone(e.target.value)} />

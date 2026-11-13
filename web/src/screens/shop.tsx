@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { get, post, put, del, rub, fmtTime, API_URL } from '../api.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '../ui.tsx';
+import { syncOfflineParts, searchOfflineParts } from '../shopOffline.ts';
 
 const CART_KEY = 'traksos.cart';
 type Cart = Record<string, number>;
@@ -18,14 +19,29 @@ const DELIVERY: Record<string, string> = { pickup: 'Самовывоз', deliver
 
 function Thumb({ p, size = 56 }: { p: any; size?: number }) {
   return p.hasPhoto
-    ? <img src={photoUrl(p)} alt="" width={size} height={size} style={{ borderRadius: 12, objectFit: 'cover', flex: 'none', background: 'var(--bg-2)' }} />
+    ? <img src={photoUrl(p)} alt="" loading="lazy" decoding="async" width={size} height={size} style={{ borderRadius: 12, objectFit: 'cover', flex: 'none', background: 'var(--bg-2)' }} />
     : <div aria-hidden="true" style={{ width: size, height: size, borderRadius: 12, background: 'var(--bg-2)', display: 'grid', placeItems: 'center', flex: 'none', fontSize: 22 }}>🔧</div>;
 }
 
 export function Shop() {
-  const c = useLoad(() => get('/api/shop'), []);
+  const c = useLoad(() => get('/api/shop?light=1'), []);
   const [cart, setCart] = useCart();
   const [cat, setCat] = useState('all');
+  const [term, setTerm] = useState('');
+  const [debouncedTerm, setDebouncedTerm] = useState('');
+  const [page, setPage] = useState(0);
+  const [offlineVersion, setOfflineVersion] = useState(0);
+  const [offlineNote, setOfflineNote] = useState('');
+  const { busy: syncing, run: runSync } = useAction();
+  useEffect(() => {
+    const t = setTimeout(() => { setDebouncedTerm(term); setPage(0); }, 280);
+    return () => clearTimeout(t);
+  }, [term]);
+  const search = useLoad(() => c.data?.enabled
+    ? get(`/api/shop/search?q=${encodeURIComponent(debouncedTerm)}&category=${encodeURIComponent(cat)}&page=${page}`)
+    : Promise.resolve({ items: [], total: 0, page: 0, limit: 24 }),
+    [c.data?.enabled, cat, debouncedTerm, page], (e) => e.type === 'shop');
+  const local = useLoad(() => searchOfflineParts(debouncedTerm, cat), [debouncedTerm, cat, offlineVersion]);
   const mine = useLoad(() => get('/api/shop/orders'), [], (e) => e.type === 'shop');
   const d = c.data;
   if (!d) return <main><Loading error={c.error} /></main>;
@@ -40,12 +56,12 @@ export function Shop() {
         <b style={{ fontSize: 20 }}>{d.closedTitle}</b>
         <span className="note">{d.closedText}</span>
       </div>
-      {myOrders.length > 0 && <MyShopOrders orders={myOrders} reload={mine.reload} />}
+      {myOrders.length > 0 && <MyShopOrders orders={myOrders} reload={mine.reload} canOrder={!!d.enabled} />}
     </main>
   );
   const kits = d.products.filter((p: any) => p.isKit);
-  const usedCats = Object.entries(d.categories as Record<string, string>).filter(([k]) => k !== 'kit' && d.products.some((p: any) => !p.isKit && p.category === k));
-  const items = d.products.filter((p: any) => !p.isKit && (cat === 'all' || p.category === cat));
+  const usedCats = Object.entries(d.categories as Record<string, string>).filter(([k]) => k !== 'kit');
+  const items: any[] = search.data?.items ?? [];
   return (
     <main>
       <div className="between" style={{ alignItems: 'flex-start' }}>
@@ -54,6 +70,21 @@ export function Shop() {
           🛒{count > 0 && <span className="badge">{count}</span>}
         </button>
       </div>
+      <input className="field" type="search" aria-label="Поиск запчастей по названию или артикулу"
+        placeholder="Название, артикул или производитель" value={term} onChange={(e) => setTerm(e.target.value)} />
+      <span className="note">Поиск по названию и номеру детали. Можно выбрать категорию, не вводя артикул.</span>
+      <div className="row" style={{ alignItems: 'center', gap: 8 }}>
+        <button className="btn ghost small" disabled={syncing} onClick={async () => {
+          const result = await runSync(() => syncOfflineParts(), null);
+          if (result) {
+            setOfflineVersion((n) => n + 1);
+            setOfflineNote(result.unchanged ? 'Локальный справочник уже актуален'
+              : result.complete ? `Справочник сохранён: ${result.total} позиций`
+              : `Сохранено ещё ${result.added} позиций. Нажмите повторно для продолжения.`);
+          }
+        }}>{syncing ? 'Сохраняем…' : 'Сохранить справочник для слабого интернета'}</button>
+      </div>
+      {offlineNote && <span className="note">{offlineNote}</span>}
       {kits.map((p: any) => (
         <div key={p.id} className="card hi">
           <span className="label" style={{ color: 'var(--accent)' }}>Набор</span>
@@ -67,17 +98,28 @@ export function Shop() {
       ))}
       {usedCats.length > 1 && (
         <div className="scroll-x">
-          <button className="chip" aria-pressed={cat === 'all'} onClick={() => setCat('all')}>Все</button>
-          {usedCats.map(([k, n]) => <button key={k} className="chip" aria-pressed={cat === k} onClick={() => setCat(k)}>{n}</button>)}
+          <button className="chip" aria-pressed={cat === 'all'} onClick={() => { setCat('all'); setPage(0); }}>Все</button>
+          {usedCats.map(([k, n]) => <button key={k} className="chip" aria-pressed={cat === k} onClick={() => { setCat(k); setPage(0); }}>{n}</button>)}
         </div>
       )}
-      {!d.products.length ? <div className="empty">Товары скоро появятся</div> : (
+      {!search.data && search.error && (local.data?.length ?? 0) > 0 ? (
+        <div className="stack">
+          <span className="note">Нет связи с каталогом. Показываем сохранённые названия и артикулы без цен и наличия. Для заказа нужен интернет.</span>
+          {local.data!.map((p) => <div key={p.id} className="card" style={{ padding: 12 }}>
+            <b>{p.name}</b>
+            <span className="note">{[p.brand, p.article].filter(Boolean).join(' · ')}</span>
+          </div>)}
+        </div>
+      ) : !search.data ? <Loading error={search.error} /> : !items.length ? (
+        <div className="empty">{term || cat !== 'all' ? 'По вашему запросу пока ничего не найдено' : 'Товары скоро появятся'}</div>
+      ) : (
         <div className="stack">
           {items.map((p: any) => (
             <div key={p.id} className="card" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 }}>
               <Thumb p={p} />
               <div className="stack" style={{ gap: 2, flex: 1, minWidth: 0 }}>
                 <b>{p.name}</b>
+                {(p.brand || p.article) && <span className="note">{[p.brand, p.article].filter(Boolean).join(' · ')}</span>}
                 {p.spec && <span className="note">{p.spec}</span>}
                 <span className="row" style={{ gap: 8 }}><b>{rub(p.price)}</b><span className={`pill ${p.inStock ? 'good' : ''}`}>{p.inStock ? 'в наличии' : `под заказ · от ${p.leadDays} дн.`}</span></span>
               </div>
@@ -86,14 +128,25 @@ export function Shop() {
           ))}
         </div>
       )}
+      {search.data && search.data.total > search.data.limit && (
+        <div className="between">
+          <button className="btn ghost small" disabled={page === 0} onClick={() => setPage((n) => Math.max(0, n - 1))}>Назад</button>
+          <span className="note">Страница {page + 1} из {Math.ceil(search.data.total / search.data.limit)}</span>
+          <button className="btn ghost small" disabled={(page + 1) * search.data.limit >= search.data.total}
+            onClick={() => setPage((n) => n + 1)}>Дальше</button>
+        </div>
+      )}
       {count > 0 && <button className="btn" onClick={() => go('shop/cart')}>Корзина · {count} шт.</button>}
-      {myOrders.length > 0 && <MyShopOrders orders={myOrders} reload={mine.reload} />}
+      {myOrders.length > 0 && <MyShopOrders orders={myOrders} reload={mine.reload} canOrder={!!d.enabled} />}
     </main>
   );
 }
 
-function MyShopOrders({ orders, reload }: { orders: any[]; reload: () => void }) {
+function MyShopOrders({ orders, reload, canOrder }: { orders: any[]; reload: () => void; canOrder: boolean }) {
   const { busy, run } = useAction();
+  const [cart, setCart] = useCart();
+  const [openAnalog, setOpenAnalog] = useState<string | null>(null);
+  const addItem = (id: string, qty = 1) => setCart({ ...cart, [id]: Math.min(99, (cart[id] ?? 0) + qty) });
   return (
     <div className="stack">
       <span className="label">Мои покупки</span>
@@ -101,7 +154,15 @@ function MyShopOrders({ orders, reload }: { orders: any[]; reload: () => void })
         <div key={o.id} className="card">
           <div className="between"><b>Заказ №{o.number} · {rub(o.total)}</b><span className={`pill ${STATUS_TONE[o.status]}`}>{o.statusName}</span></div>
           <span className="note">{fmtTime(o.createdAt)} · {DELIVERY[o.delivery]}{o.address ? `: ${o.address}` : ''}</span>
-          <span className="note">{o.items.map((i: any) => `${i.name} × ${i.qty}`).join(', ')}</span>
+          {o.vehicle && <span className="note">Для: {[o.vehicle.brand, o.vehicle.model, o.vehicle.plate].filter(Boolean).join(' ')}</span>}
+          {o.items.map((i: any) => <div key={i.productId} className="stack" style={{ gap: 6 }}>
+            <span className="note">{i.name}{i.article ? ` · ${i.article}` : ''} × {i.qty}</span>
+            {canOrder && o.status !== 'cancelled' && <div className="row" style={{ gap: 6 }}>
+              <button className="btn ghost small" onClick={() => { addItem(i.productId, i.qty); go('shop/cart'); }}>Повторить</button>
+              <button className="btn ghost small" aria-expanded={openAnalog === i.productId} onClick={() => setOpenAnalog(openAnalog === i.productId ? null : i.productId)}>Найти аналоги</button>
+            </div>}
+            {openAnalog === i.productId && <HistoryAnalogs productId={i.productId} add={addItem} />}
+          </div>)}
           {o.adminNote && <span>{o.adminNote}</span>}
           {o.cancelReason && <span className="note">Отменён: {o.cancelReason}</span>}
           {o.status === 'new' && <button className="btn ghost small" disabled={busy} onClick={async () => { if (await run(() => post(`/api/shop/orders/${o.id}/cancel`), 'Заказ отменён')) reload(); }}>Отменить</button>}
@@ -111,11 +172,54 @@ function MyShopOrders({ orders, reload }: { orders: any[]; reload: () => void })
   );
 }
 
+function HistoryAnalogs({ productId, add }: { productId: string; add: (id: string) => void }) {
+  const a = useLoad(() => get(`/api/shop/products/${productId}/analogs`), [productId]);
+  if (!a.data) return <Loading error={a.error} />;
+  if (!a.data.enabled) return <span className="note">Каталог аналогов пока в разработке.</span>;
+  if (!a.data.items.length) return <span className="note">Подтверждённых аналогов пока нет — нельзя рекомендовать замену наугад.</span>;
+  return <div className="stack">
+    <span className="note">Внимание: взаимозаменяемость артикула не гарантирует применяемость к конкретной машине. Проверьте VIN и агрегат.</span>
+    {a.data.items.map((p: any) => <div key={p.id} className="card" style={{ padding: 10 }}>
+      <b>{p.name}</b>
+      <span className="note">{[p.brand, p.article, p.analogSource].filter(Boolean).join(' · ')}</span>
+      <div className="between"><b>{rub(p.price)}</b><button className="btn small" onClick={() => add(p.id)}>В корзину</button></div>
+    </div>)}
+  </div>;
+}
+
+/** Purchase history is loaded only when the customer opens this page, never for all fleet vehicles. */
+export function ShopHistory({ vehicleId }: { vehicleId?: string }) {
+  const [page, setPage] = useState(0);
+  const c = useLoad(() => get('/api/shop?light=1'), []);
+  const history = useLoad(() => get(`/api/shop/history?page=${page}${vehicleId ? '&vehicleId=' + encodeURIComponent(vehicleId) : ''}`),
+    [page, vehicleId], (e) => e.type === 'shop');
+  return <main>
+    <Back to={vehicleId ? 'garage' : 'shop'} label={vehicleId ? 'Мой гараж' : 'Магазин'} />
+    <h1>История покупок</h1>
+    {!history.data ? <Loading error={history.error} /> : <>
+      {history.data.items.length === 0 ? <div className="empty">Покупок пока нет</div> :
+        <MyShopOrders orders={history.data.items} reload={history.reload} canOrder={!!c.data?.enabled} />}
+      {(page > 0 || history.data.hasMore) && <div className="between">
+        <button className="btn ghost small" disabled={page === 0} onClick={() => setPage((n) => Math.max(0, n - 1))}>Назад</button>
+        <span className="note">Страница {page + 1}</span>
+        <button className="btn ghost small" disabled={!history.data.hasMore} onClick={() => setPage((n) => n + 1)}>Дальше</button>
+      </div>}
+    </>}
+  </main>;
+}
+
 export function ShopCart() {
-  const c = useLoad(() => get('/api/shop'), []);
+  const c = useLoad(() => get('/api/shop?light=1'), []);
   const live = useLoad(() => get('/api/orders').catch(() => []), []);
   const { me } = useMe();
   const [cart, setCart] = useCart();
+  const selectedIds = Object.keys(cart).sort().join(',');
+  const selection = useLoad(() => c.data?.enabled && selectedIds
+    ? get(`/api/shop/selection?ids=${encodeURIComponent(selectedIds)}`)
+    : Promise.resolve({ products: [] }), [c.data?.enabled, selectedIds]);
+  const vehicles = useLoad(() => c.data?.enabled && selectedIds
+    ? get('/api/vehicles') : Promise.resolve([]), [c.data?.enabled, !!selectedIds]);
+  const [vehicleId, setVehicleId] = useState('');
   const { busy, run } = useAction();
   const [delivery, setDelivery] = useState<'pickup' | 'delivery' | 'master' | ''>('');
   const [address, setAddress] = useState('');
@@ -125,7 +229,7 @@ export function ShopCart() {
   const d = c.data;
   if (!d) return <main><Back to="shop" label="Магазин" /><Loading error={c.error} /></main>;
   if (!d.enabled) { go('shop'); return null; }
-  const lines = Object.entries(cart).map(([id, qty]) => ({ p: d.products.find((x: any) => x.id === id), qty })).filter((l) => l.p);
+  const lines = Object.entries(cart).map(([id, qty]) => ({ p: selection.data?.products?.find((x: any) => x.id === id), qty })).filter((l) => l.p);
   const goods = lines.reduce((a, l) => a + l.p.price * l.qty, 0);
   const dl = d.delivery;
   const open = ((live.data ?? []) as any[]).filter((o) => ['accepted', 'en_route', 'arrived', 'working'].includes(o.status));
@@ -134,14 +238,14 @@ export function ShopCart() {
   const total = goods + (delivery === 'delivery' ? dl.deliveryPrice : 0);
   const setQty = (id: string, q: number) => { const n = { ...cart }; if (q <= 0) delete n[id]; else n[id] = Math.min(99, q); setCart(n); };
   async function submit() {
-    const r = await run(() => post('/api/shop/orders', { items: lines.map((l) => ({ productId: l.p.id, qty: l.qty })), delivery, address: address || null, orderId: orderId || null, payment, comment: comment || null }), 'Заказ оформлен — подтвердим и напишем');
+    const r = await run(() => post('/api/shop/orders', { items: lines.map((l) => ({ productId: l.p.id, qty: l.qty })), delivery, address: address || null, orderId: orderId || null, payment, comment: comment || null, vehicleId: vehicleId || null }), 'Заказ оформлен — подтвердим и напишем');
     if (r) { setCart({}); go('shop'); }
   }
   return (
     <main>
       <Back to="shop" label="Магазин" />
       <div><h1>Корзина</h1><div className="sub">Оплата при получении — наличными, картой или СБП. Компаниям — по счёту.</div></div>
-      {!lines.length ? <div className="empty">Корзина пуста</div> : <>
+      {!lines.length ? <div className="empty">{selection.error ?? (selectedIds ? 'Проверяем актуальную цену и наличие…' : 'Корзина пуста')}</div> : <>
         <div className="stack">
           {lines.map(({ p, qty }) => (
             <div key={p.id} className="card" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 }}>
@@ -154,6 +258,16 @@ export function ShopCart() {
               </div>
             </div>
           ))}
+        </div>
+        <div className="card">
+          <Field label="Для какой машины / прицепа (необязательно)">
+            <select className="field" value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
+              <option value="">Без привязки к машине</option>
+              {((vehicles.data ?? []) as any[]).map((v: any) =>
+                <option key={v.id} value={v.id}>{[v.brand, v.model, v.plate || v.trailer_plate].filter(Boolean).join(' ')}</option>)}
+            </select>
+          </Field>
+          <span className="note">Покупка появится в истории выбранной техники. Для проверки совместимости могут потребоваться VIN и данные агрегата.</span>
         </div>
         <div className="card">
           <b>Как получить</b>
@@ -252,14 +366,14 @@ function ShopSettings() {
   );
 }
 
-const EMPTY = { category: 'other', name: '', spec: '', description: '', price: null as number | null, stock: null as number | null, leadDays: 2, isKit: false, active: true, sort: 100 };
+const EMPTY = { category: 'other', name: '', spec: '', description: '', brand: '', article: '', searchTerms: '', price: null as number | null, stock: null as number | null, leadDays: 2, isKit: false, active: true, sort: 100 };
 
 function AdminProducts() {
   const l = useLoad(() => get('/api/admin/shop/products'), []);
   const cats = useLoad(() => get('/api/shop'), []);
   const [edit, setEdit] = useState<any>(null);
   if (!l.data || !cats.data) return <Loading error={l.error ?? cats.error} />;
-  if (edit) return <ProductForm p={edit} categories={cats.data.categories} onDone={() => { setEdit(null); l.reload(); }} />;
+  if (edit) return <ProductForm p={edit} products={l.data} categories={cats.data.categories} onDone={() => { setEdit(null); l.reload(); }} />;
   return (
     <div className="stack">
       <button className="btn" onClick={() => setEdit({ ...EMPTY })}>+ Добавить товар</button>
@@ -278,13 +392,16 @@ function AdminProducts() {
   );
 }
 
-function ProductForm({ p, categories, onDone }: { p: any; categories: Record<string, string>; onDone: () => void }) {
+function ProductForm({ p, products, categories, onDone }: { p: any; products: any[]; categories: Record<string, string>; onDone: () => void }) {
   const { busy, run } = useAction();
-  const [f, setF] = useState<any>({ ...p, spec: p.spec ?? '', description: p.description ?? '' });
+  const [f, setF] = useState<any>({ ...p, spec: p.spec ?? '', description: p.description ?? '', brand: p.brand ?? '', article: p.article ?? '', searchTerms: p.searchTerms ?? '' });
+  const [analogId, setAnalogId] = useState('');
+  const [analogSource, setAnalogSource] = useState('');
+  const [verified, setVerified] = useState(false);
   const [photo, setPhoto] = useState<string | null | undefined>(undefined);
   const set = (k: string, v: any) => setF({ ...f, [k]: v });
   async function save() {
-    const body: any = { category: f.category, name: f.name, spec: f.spec || null, description: f.description || null, price: f.price, stock: f.stock, leadDays: f.leadDays, isKit: f.isKit, active: f.active, sort: f.sort };
+    const body: any = { category: f.category, name: f.name, spec: f.spec || null, description: f.description || null, brand: f.brand || null, article: f.article || null, searchTerms: f.searchTerms || null, price: f.price, stock: f.stock, leadDays: f.leadDays, isKit: f.isKit, active: f.active, sort: f.sort };
     if (photo !== undefined) body.photoDataUrl = photo;
     if (await run(() => (p.id ? put(`/api/admin/shop/products/${p.id}`, body) : post('/api/admin/shop/products', body)), 'Товар сохранён')) onDone();
   }
@@ -292,6 +409,12 @@ function ProductForm({ p, categories, onDone }: { p: any; categories: Record<str
     <div className="card">
       <b>{p.id ? 'Товар' : 'Новый товар'}</b>
       <Field label="Название"><input className="field" value={f.name} onChange={(e) => set('name', e.target.value)} placeholder="Розетка 15-контактная" /></Field>
+      <div className="grid2">
+        <Field label="Производитель детали"><input className="field" value={f.brand} maxLength={80} onChange={(e) => set('brand', e.target.value)} placeholder="VDO, WABCO, BPW…" /></Field>
+        <Field label="Артикул"><input className="field" value={f.article} maxLength={100} onChange={(e) => set('article', e.target.value)} placeholder="Каталожный номер" /></Field>
+      </div>
+      <Field label="Синонимы для поиска"><input className="field" value={f.searchTerms} maxLength={400}
+        onChange={(e) => set('searchTerms', e.target.value)} placeholder="Например: датчик скорости, импульсный…" /></Field>
       <Field label="Кратко — характеристики"><input className="field" value={f.spec} onChange={(e) => set('spec', e.target.value)} placeholder="24 В · ISO 12098" /></Field>
       <Field label="Описание · по желанию"><textarea className="field" value={f.description} onChange={(e) => set('description', e.target.value)} /></Field>
       <Field label="Категория" group>
@@ -316,6 +439,23 @@ function ProductForm({ p, categories, onDone }: { p: any; categories: Record<str
         <button className="btn" disabled={busy || f.name.trim().length < 2 || f.price == null} onClick={save}>Сохранить</button>
         <button className="btn ghost" onClick={onDone}>Назад</button>
       </div>
+      {p.id && <div className="stack" style={{ gap: 8 }}>
+        <b>Связать с аналогом из каталога</b>
+        <select className="field" aria-label="Выберите аналог" value={analogId} onChange={(e) => setAnalogId(e.target.value)}>
+          <option value="">Выберите другую деталь</option>
+          {products.filter((x: any) => x.id !== p.id).map((x: any) =>
+            <option key={x.id} value={x.id}>{x.brand ?? ''} {x.article ?? ''} — {x.name}</option>)}
+        </select>
+        <input className="field" aria-label="Источник кросс-номера" value={analogSource}
+          onChange={(e) => setAnalogSource(e.target.value)} placeholder="Источник: каталог производителя, документ…" />
+        <label className="agree"><input type="checkbox" checked={verified} onChange={(e) => setVerified(e.target.checked)} />
+          <span>Подтверждаю кросс-артикул по указанному источнику (применяемость к VIN проверяется отдельно)</span></label>
+        <button className="btn ghost small" disabled={busy || !analogId || analogSource.trim().length < 3}
+          onClick={async () => { if (await run(() => post(`/api/admin/shop/products/${p.id}/analogs`,
+            { analogId, source: analogSource, verified }), 'Связь сохранена')) { setAnalogId(''); setAnalogSource(''); setVerified(false); } }}>
+          Сохранить связь с аналогом
+        </button>
+      </div>}
       {p.id && <button className="btn ghost small" disabled={busy} onClick={async () => { if (await run(() => del(`/api/admin/shop/products/${p.id}`), 'Товар скрыт')) onDone(); }}>Скрыть из магазина</button>}
     </div>
   );

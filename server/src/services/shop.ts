@@ -17,25 +17,31 @@ const MIMES = ['image/jpeg', 'image/png', 'image/webp'];
 export interface ProductInput {
   category?: string; name?: string; spec?: string | null; description?: string | null; price?: number; stock?: number | null;
   leadDays?: number; isKit?: boolean; active?: boolean; sort?: number; photoDataUrl?: string | null;
+  brand?: string | null; article?: string | null; searchTerms?: string | null;
 }
 
 const view = (p: any) => ({
   id: p.id, category: p.category, categoryName: SHOP_CATEGORIES[p.category] ?? p.category, name: p.name, spec: p.spec, description: p.description,
   price: p.price, stock: p.stock, inStock: p.stock != null && p.stock > 0, leadDays: p.lead_days, isKit: p.is_kit, active: p.active, sort: p.sort,
   hasPhoto: !!p.photo_mime, photoVersion: p.updated_at ? new Date(p.updated_at).getTime() : 0,
+  brand: p.brand ?? null, article: p.article ?? null, searchTerms: p.search_terms ?? null,
 });
 
 export class ShopService {
   constructor(private db: Db, private notifier: Notifier, private settings: SettingsService) {}
 
-  private cols = 'id, category, name, spec, description, price, stock, lead_days, is_kit, active, sort, photo_mime, updated_at';
+  private cols = 'id, category, name, spec, description, price, stock, lead_days, is_kit, active, sort, photo_mime, updated_at, brand, article, search_terms';
 
   /** Витрина: выключен — только табличка «скоро» */
-  async catalog() {
+  async catalog(light = false) {
     const s = await this.settings.get('shop');
     const base = { enabled: s.enabled, closedTitle: s.closedTitle, closedText: s.closedText, note: s.note, categories: SHOP_CATEGORIES,
       delivery: { pickup: s.pickup, pickupAddress: s.pickupAddress, delivery: s.delivery, deliveryPrice: s.deliveryPrice, deliveryNote: s.deliveryNote, withMaster: s.withMaster } };
     if (!s.enabled) return { ...base, products: [] };
+    if (light) {
+      const kits = await this.db.query(`select ${this.cols} from shop_products where active and is_kit order by sort, name limit 8`);
+      return { ...base, products: kits.map(view) };
+    }
     const rows = await this.db.query(`select ${this.cols} from shop_products where active order by is_kit desc, sort, name`);
     return { ...base, products: rows.map(view) };
   }
@@ -86,6 +92,17 @@ export class ShopService {
           has('photoDataUrl'), photo?.mime ?? null, photo ? '\\x' + photo.buf.toString('hex') : null]);
       if (!row) throw notFound('Товар не найден');
     }
+    // Optional metadata is independent of the legacy manual product form.
+    // Explicit null clears it; omitted fields preserve the existing value.
+    if (['brand', 'article', 'searchTerms'].some((k) => Object.prototype.hasOwnProperty.call(p, k))) {
+      const has = (k: keyof ProductInput) => Object.prototype.hasOwnProperty.call(p, k);
+      await this.db.query(
+        `update shop_products set brand=case when $2::boolean then $3 else brand end,
+           article=case when $4::boolean then $5 else article end,
+           search_terms=case when $6::boolean then $7 else search_terms end, updated_at=now() where id=$1`,
+        [row.id, has('brand'), p.brand?.trim() || null, has('article'), p.article?.trim() || null, has('searchTerms'), p.searchTerms?.trim() || null]);
+      row = await this.db.one(`select ${this.cols} from shop_products where id=$1`, [row.id]);
+    }
     await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [actor.id, id ? 'shop.product_update' : 'shop.product_create', row.id, { name: row.name, price: row.price, stock: row.stock }]);
     return view(row);
   }
@@ -97,8 +114,120 @@ export class ShopService {
     return { ok: true };
   }
 
+  /** Paginated live stock/price results. Never download the entire shop for a search. */
+  async search(q = '', category = '', page = 0, limit = 24) {
+    const setting = await this.settings.get('shop');
+    if (!setting.enabled) return { items: [], total: 0, page: 0, limit: 24 };
+    const safePage = Number.isFinite(page) ? Math.max(0, Math.min(1000, Math.floor(page))) : 0;
+    const take = Number.isFinite(limit) ? Math.max(1, Math.min(48, Math.floor(limit))) : 24;
+    const params: unknown[] = [];
+    const filters = ['active=true', 'is_kit=false'];
+    if (category && category !== 'all') { params.push(category); filters.push(`category=$${params.length}`); }
+    const term = q.trim().slice(0, 100);
+    if (term) {
+      params.push('%' + term.replace(/[\\%_]/g, (c) => '\\' + c) + '%');
+      filters.push(`(name ilike $${params.length} escape '\\' or coalesce(article,'') ilike $${params.length} escape '\\'
+        or coalesce(brand,'') ilike $${params.length} escape '\\' or coalesce(search_terms,'') ilike $${params.length} escape '\\')`);
+    }
+    const where = filters.join(' and ');
+    const total = await this.db.one<{ n: number }>(`select count(*)::int as n from shop_products where ${where}`, params);
+    const rows = await this.db.query(`select ${this.cols} from shop_products where ${where}
+      order by sort, name, id limit $${params.length + 1} offset $${params.length + 2}`, [...params, take, safePage * take]);
+    return { items: rows.map(view), total: total?.n ?? 0, page: safePage, limit: take };
+  }
+
+  /** A small selection lookup keeps checkout lightweight and refreshes live prices. */
+  async selection(ids: string[]) {
+    const setting = await this.settings.get('shop');
+    if (!setting.enabled) return { products: [] };
+    const rows = await this.db.query(`select ${this.cols} from shop_products where active=true and id=any($1::uuid[])`, [ids.slice(0, 50)]);
+    return { products: rows.map(view) };
+  }
+
+  /** Compact article/name index, without prices, private data or stock levels.
+   * Clients can store pages in IndexedDB and replace them by manifest revision. */
+  async indexManifest() {
+    const setting = await this.settings.get('shop');
+    if (!setting.enabled) return { enabled: false, revision: null, count: 0 };
+    const r = await this.db.one<{ count: number; revision: string | null }>(
+      `select count(*)::int as count, max(updated_at)::text as revision from shop_products where active`);
+    return { enabled: true, revision: r?.revision ?? null, count: r?.count ?? 0 };
+  }
+
+  async indexPage(after: string | null, limit = 750) {
+    const setting = await this.settings.get('shop');
+    if (!setting.enabled) return { enabled: false, rows: [], next: null };
+    const take = Number.isFinite(limit) ? Math.max(1, Math.min(1000, Math.floor(limit))) : 750;
+    const rows = await this.db.query<any>(
+      `select id, category, brand, article, name, search_terms from shop_products
+       where active=true and ($1::uuid is null or id>$1::uuid) order by id limit $2`, [after, take + 1]);
+    const hasMore = rows.length > take;
+    const chunk = rows.slice(0, take);
+    return { enabled: true, rows: chunk.map((p: any) =>
+      [p.id, p.category, p.brand, p.article, p.name, p.search_terms]),
+      next: hasMore ? chunk[chunk.length - 1].id : null };
+  }
+
+  /** Only curated, verified substitutions are offered as guaranteed catalog links.
+   * VIN/assembly compatibility remains a separate check, not inferred here. */
+  async alternatives(id: string) {
+    const setting = await this.settings.get('shop');
+    if (!setting.enabled) return { enabled: false, items: [] };
+    const rows = await this.db.query<any>(
+      `select p.*, a.source from shop_product_analogs a
+       join shop_products p on p.id=case when a.product_id=$1 then a.analog_id else a.product_id end
+       where (a.product_id=$1 or a.analog_id=$1) and a.verified=true and p.active=true
+       order by p.price, p.name limit 30`, [id]);
+    return { enabled: true, items: rows.map((p: any) => ({ ...view(p), analogSource: p.source ?? null })),
+      compatibilityConfirmed: false };
+  }
+
+  async linkAnalog(actor: AuthUser, productId: string, analogId: string, source: string, verified = false) {
+    if (productId === analogId) throw bad('same_part', 'Одна и та же деталь не является аналогом самой себя');
+    const parts = await this.db.query<{ id: string }>(
+      'select id from shop_products where id=any($1::uuid[])', [[productId, analogId]]);
+    if (parts.length !== 2) throw notFound('Одна из деталей не найдена');
+    const [first, second] = [productId, analogId].sort();
+    await this.db.query(
+      `insert into shop_product_analogs(product_id, analog_id, source, verified)
+       values ($1,$2,$3,$4)
+       on conflict (product_id, analog_id) do update set source=excluded.source, verified=excluded.verified`,
+      [first, second, source.trim(), verified]);
+    await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
+      [actor.id, 'shop.analog_link', first, { second, source, verified }]);
+    return { ok: true };
+  }
+
+  /** Vehicle binding is optional, but always checked against the buyer's fleet. */
+  private async allowedVehicle(user: AuthUser, vehicleId: string | null | undefined) {
+    if (!vehicleId) return null;
+    const ownerId = user.owner_id ?? user.id;
+    const r = await this.db.one<any>(
+      `select id, brand, model, plate, trailer_plate from vehicles
+       where id=$1 and owner_id=$2 ${user.owner_id ? 'and driver_id=$3' : ''}`,
+      user.owner_id ? [vehicleId, ownerId, user.id] : [vehicleId, ownerId]);
+    if (!r) throw forbidden('Эта машина не привязана к вашему кабинету');
+    return r;
+  }
+
+  async history(user: AuthUser, vehicleId: string | null, page = 0) {
+    await this.allowedVehicle(user, vehicleId);
+    const ownerId = user.owner_id ?? user.id;
+    const safePage = Math.max(0, Math.min(1000, Math.floor(page)));
+    const params: unknown[] = [ownerId];
+    const filters = ['client_id=$1'];
+    if (user.owner_id) { params.push(user.id); filters.push(`created_by=$${params.length}`); }
+    if (vehicleId) { params.push(vehicleId); filters.push(`vehicle_id=$${params.length}`); }
+    const where = filters.join(' and ');
+    const take = 20;
+    const rows = await this.db.query<any>(
+      `select * from shop_orders where ${where} order by created_at desc, id desc
+       limit $${params.length + 1} offset $${params.length + 2}`, [...params, take + 1, safePage * take]);
+    return { items: rows.slice(0, take).map((o: any) => this.orderView(o)), hasMore: rows.length > take, page: safePage };
+  }
+
   // ——— Клиент: заказ ———
-  async order(user: AuthUser, p: { items: { productId: string; qty: number }[]; delivery: 'pickup' | 'delivery' | 'master'; address?: string | null; orderId?: string | null; payment?: 'on_receipt' | 'invoice'; comment?: string | null }) {
+  async order(user: AuthUser, p: { items: { productId: string; qty: number }[]; delivery: 'pickup' | 'delivery' | 'master'; address?: string | null; orderId?: string | null; payment?: 'on_receipt' | 'invoice'; comment?: string | null; vehicleId?: string | null }) {
     if (user.roles.includes('insurer')) throw forbidden('Покупки доступны через отдельный клиентский или партнёрский аккаунт');
     const s = await this.settings.get('shop');
     if (!s.enabled) throw conflict('shop_closed', s.closedTitle);
@@ -112,6 +241,7 @@ export class ShopService {
     if ((p.delivery === 'pickup' && !s.pickup) || (p.delivery === 'delivery' && !s.delivery) || (p.delivery === 'master' && !s.withMaster)) throw bad('bad_delivery', 'Такой способ получения сейчас недоступен');
     if (p.delivery === 'delivery' && !p.address?.trim()) throw bad('need_address', 'Куда привезти?');
     const clientId = user.owner_id ?? user.id;
+    const vehicle = await this.allowedVehicle(user, p.vehicleId);
     if (p.payment === 'invoice') {
       const u = await this.db.one<{ company_inn: string | null }>('select company_inn from users where id=$1', [clientId]);
       if (!u?.company_inn) throw bad('need_inn', 'Счёт выставляем компаниям — укажите ИНН в профиле');
@@ -124,21 +254,21 @@ export class ShopService {
       linkOrder = o.id;
     }
     return this.db.tx(async (q) => {
-      const rows = await q.query<any>(`select id, name, price, stock, active, lead_days from shop_products where id = any($1::uuid[]) for update`, [[...want.keys()]]);
+      const rows = await q.query<any>(`select id, name, brand, article, price, stock, active, lead_days from shop_products where id = any($1::uuid[]) for update`, [[...want.keys()]]);
       if (rows.length !== want.size || rows.some((r) => !r.active)) throw conflict('gone', 'Часть товаров уже недоступна — обновите корзину');
       const items = rows.map((r) => {
         const qty = want.get(r.id)!;
         if (qty < 1 || qty > 99) throw bad('bad_qty', 'Количество от 1 до 99');
-        return { productId: r.id, name: r.name, price: r.price, qty, inStock: r.stock != null && r.stock >= qty, leadDays: r.lead_days };
+        return { productId: r.id, name: r.name, brand: r.brand ?? null, article: r.article ?? null, price: r.price, qty, inStock: r.stock != null && r.stock >= qty, leadDays: r.lead_days };
       });
       // Что есть в наличии — резервируем сразу
       for (const it of items) if (it.inStock) await q.query('update shop_products set stock = stock - $2 where id=$1', [it.productId, it.qty]);
       const goods = items.reduce((a, it) => a + it.price * it.qty, 0);
       const dprice = p.delivery === 'delivery' ? s.deliveryPrice : 0;
       const [row] = await q.query<any>(
-        `insert into shop_orders(client_id, created_by, items, goods_total, delivery, delivery_price, total, address, order_id, payment, comment)
-         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) returning *`,
-        [clientId, user.id, JSON.stringify(items), goods, p.delivery, dprice, goods + dprice, p.address?.trim() || null, linkOrder, p.payment ?? 'on_receipt', p.comment?.trim() || null]);
+        `insert into shop_orders(client_id, created_by, items, goods_total, delivery, delivery_price, total, address, order_id, payment, comment, vehicle_id, vehicle_snapshot)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) returning *`,
+        [clientId, user.id, JSON.stringify(items), goods, p.delivery, dprice, goods + dprice, p.address?.trim() || null, linkOrder, p.payment ?? 'on_receipt', p.comment?.trim() || null, vehicle?.id ?? null, vehicle ? JSON.stringify({ brand: vehicle.brand, model: vehicle.model, plate: vehicle.plate, trailerPlate: vehicle.trailer_plate }) : null]);
       return row;
     }).then(async (row: any) => {
       const staff = (await this.db.query<{ id: string }>(`select id from users where roles && '{admin}'::text[]`)).map((r) => r.id);
@@ -152,7 +282,7 @@ export class ShopService {
     return {
       id: o.id, number: o.number, status: o.status, statusName: SHOP_STATUS[o.status], items: o.items, goodsTotal: o.goods_total, delivery: o.delivery,
       deliveryPrice: o.delivery_price, total: o.total, address: o.address, orderId: o.order_id, payment: o.payment, comment: o.comment,
-      adminNote: o.admin_note, cancelReason: o.cancel_reason, createdAt: o.created_at, updatedAt: o.updated_at,
+      adminNote: o.admin_note, cancelReason: o.cancel_reason, vehicleId: o.vehicle_id ?? null, vehicle: o.vehicle_snapshot ?? null, createdAt: o.created_at, updatedAt: o.updated_at,
     };
   }
 
