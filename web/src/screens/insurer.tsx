@@ -79,9 +79,19 @@ export function InsurerCabinet() {
               <div className="stack">
                 <span className="note">{r.plate || 'Без номера'} · Подана {fmtTime(r.created_at)}</span>
                 {r.comment && <span className="note">Комментарий клиента: {r.comment}</span>}
+                {r.insurance_stage && <div className="insurance-agent-preview">
+                  <b>Заявка через TrackSOS · {({
+                    received:'Получено',preparing:'Готовятся варианты',
+                    offers_sent:'Клиент выбирает предложение',
+                    selected:'Клиент выбрал полис',processing:'Оформляется вручную',
+                    policy_sent:'PDF-полис отправлен'
+                  } as Record<string,string>)[r.insurance_stage] ?? 'В обработке'}</b>
+                  <p className="note">ФИО, сведения о грузовике, предложения и переписка открываются в рабочем деле.</p>
+                  <a className="btn" href={`#/insurance/request/${r.id}`}>Открыть страховую заявку и чат →</a>
+                </div>}
                 {r.staff_note && <span className="note">Последний ответ: {r.staff_note}</span>}
                 {r.policy_expires_on && <span className="note">Срок полиса: {String(r.policy_expires_on).slice(0, 10)}</span>}
-                {r.status === 'sent_to_partner' && <>
+                {r.status === 'sent_to_partner' && !r.insurance_stage && <>
                   <label className="stack">
                     <span className="label">Действует до</span>
                     <input className="field" type="date" value={expires[r.id] ?? ''}
