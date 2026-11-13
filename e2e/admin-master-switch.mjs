@@ -52,6 +52,7 @@ try {
     ['client','Клиент'],['owner','Владелец / автопарк'],['driver','Водитель автопарка'],
     ['master','Выездной мастер'],['tow','Эвакуаторщик'],['service','Рембаза / СТО'],
     ['master_service','Мастер и своя СТО'],['insurer','Страховой партнёр'],
+    ['inspection','Оператор техосмотра'],
     ['moderator','Модератор'],['admin','Администратор'],
   ]){
     await page.locator('a.sandbox-role-card[href="#/admin/test-center/'+id+'"]').click();
