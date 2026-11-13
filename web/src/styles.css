@@ -1726,3 +1726,20 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
 @media(max-width:520px){.insurer-empty-intro{grid-template-columns:1fr;gap:10px;}
  .insurer-empty-symbol{width:63px;height:63px;font-size:40px;}
  .insurer-workflow-step{padding:12px;min-height:165px;}}
+
+
+/* Desktop authentication is a site page, not a stretched mobile form. */
+.auth-desktop-layout{width:100%;min-width:0;}
+.auth-desktop-form{min-width:0;display:flex;flex-direction:column;gap:16px;}
+.auth-desktop-showcase{display:none;}
+@media(min-width:900px){
+  .auth-desktop-layout{display:grid;grid-template-columns:minmax(320px,440px) minmax(0,1fr);gap:clamp(20px,3vw,48px);align-items:stretch;min-height:min(740px,calc(100vh - 145px));max-width:1420px;margin:0 auto;padding:24px clamp(12px,2vw,28px);}
+  .auth-desktop-form{justify-content:center;max-width:440px;padding:18px 4px;}
+  .auth-desktop-showcase{display:flex;position:relative;isolation:isolate;overflow:hidden;min-height:510px;border-radius:24px;background:#091e32;align-items:flex-end;color:white;box-shadow:0 18px 45px rgba(0,0,0,.2);}
+  .auth-desktop-showcase-photo{position:absolute;inset:0;background:url('../public/tracksos-approved-truck.webp') center center/contain no-repeat;}
+  .auth-desktop-showcase::after{content:'';position:absolute;inset:0;z-index:0;background:linear-gradient(0deg,rgba(5,19,34,.96),rgba(5,19,34,.08) 65%);}
+  .auth-desktop-showcase-copy{position:relative;z-index:1;padding:clamp(22px,4vw,48px);max-width:650px;}
+  .auth-desktop-showcase-copy span{font-size:11px;font-weight:800;letter-spacing:1.6px;color:#ffb5d3;}
+  .auth-desktop-showcase-copy h2{font-size:clamp(27px,3vw,43px);line-height:1.15;color:white;margin:14px 0;}
+  .auth-desktop-showcase-copy p{font-size:15px;line-height:1.6;color:#d9e7f4;}
+}
