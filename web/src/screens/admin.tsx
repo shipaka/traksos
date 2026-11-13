@@ -36,7 +36,10 @@ export function Admin({ initialSection }: { initialSection?: string }) {
       {tab === 'queue' && <ModQueue />}
       {tab === 'summary' && <AdminSummary />}
       {tab === 'shop' && <AdminShop />}
-      {tab === 'vehicleServices' && <VehicleServicesQueue />}
+      {tab === 'vehicleServices' && <>
+        <a className="btn ghost small" href="#/admin/section/settings">Управлять регистрацией страховых агентов</a>
+        <VehicleServicesQueue />
+      </>}
       {tab === 'settings' && <AdminSettings />}
       {tab === 'offers' && <Offers />}
       {tab === 'people' && <People />}
