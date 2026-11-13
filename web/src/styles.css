@@ -1035,3 +1035,20 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
   .guest-header-actions a { padding-inline: 7px; font-size: 10px; }
   .guest-app .desktop-content > main:not(.public-landing) .grid2 { grid-template-columns: minmax(0,1fr); }
 }
+
+/* The guest pages must never inherit the legacy orange account palette. */
+.guest-app {
+  --accent: #fa176e;
+  --accent-soft: rgba(250,23,110,.14);
+  --on-accent: #fff;
+}
+.guest-app .site-footer .logo,
+.guest-app .site-footer .logo b { color: #fa176e; }
+@media(max-width:899px) {
+  /* Keep the headline fully above the photo, and buttons below the cab. */
+  .public-landing .public-hero-visual {
+    inset: 32% 0 19% 0;
+    background-size: cover;
+    background-position: center center;
+  }
+}
