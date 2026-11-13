@@ -2,7 +2,6 @@ import '../adminExperience.css';
 import { AdminServices } from './base.tsx';
 import { ModQueue } from './moderation.tsx';
 import { AdminSummary } from './adminSummary.tsx';
-import { AdminShop } from './shop.tsx';
 import { AdminSettings } from './adminSettings.tsx';
 import { useState } from 'react';
 import { useEffect } from 'react';
@@ -14,7 +13,7 @@ import { get, post, put, rub, fmtPhone, fmtTime, authedImage } from '../api.ts';
 import { STATUS, SERVICES, LINE } from '../dict.ts';
 import { useLoad, useAction, Loading } from '../ui.tsx';
 
-type AdminSection = 'stats' | 'search' | 'support' | 'verify' | 'people' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'shop' | 'settings' | 'demand' | 'announcements' | 'vehicleServices';
+type AdminSection = 'stats' | 'search' | 'support' | 'verify' | 'people' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'settings' | 'demand' | 'announcements' | 'vehicleServices';
 type AdminNavItem = { id: AdminSection; name: string; description: string; symbol: string };
 const ADMIN_GROUPS: { name: string; items: AdminNavItem[] }[] = [
   { name: 'Операционная работа', items: [
@@ -32,8 +31,7 @@ const ADMIN_GROUPS: { name: string; items: AdminNavItem[] }[] = [
     { id: 'bases', name: 'Рембазы', description: 'Партнёрские станции ремонта', symbol: '10' },
     { id: 'vehicleServices', name: 'Страхование и ТО', description: 'Заявки и контроль партнёров', symbol: '11' },
   ] },
-  { name: 'Магазин и расчёты', items: [
-    { id: 'shop', name: 'Магазин', description: 'Каталог и закрытый режим продаж', symbol: '12' },
+  { name: 'Финансы и документы', items: [
     { id: 'payments', name: 'Деньги', description: 'Комиссии, отчёты и выплаты', symbol: '13' },
     { id: 'offers', name: 'Оферты', description: 'Документы для пользователей', symbol: '14' },
     { id: 'announcements', name: 'Объявления и комиссии', description: 'Оповещения и условия работы', symbol: '15' },
@@ -69,7 +67,7 @@ export function Admin({ initialSection }: { initialSection?: string }) {
         <div className="admin-command-art" aria-hidden="true"><span>◈</span><i/><i/><i/></div>
         <span className="admin-command-eyebrow">TRACKSOS · ОПЕРАЦИОННЫЙ ЦЕНТР</span>
         <h1>Администратор</h1>
-        <p>Заявки, партнёры, страхование, магазин и качество сервиса — в одном рабочем пространстве.</p>
+        <p>Заявки, партнёры, страхование, финансы и качество сервиса — в одном рабочем пространстве.</p>
         <div className="admin-command-actions">
           <button type="button" className="btn" onClick={() => navigate('summary')}>Открыть общую сводку</button>
           <a className="btn ghost" href="#/admin/test-center">Тестирование всех кабинетов (без реальных действий)</a>
@@ -85,7 +83,7 @@ export function Admin({ initialSection }: { initialSection?: string }) {
           aria-label="Разделы администрации">
           <div className="admin-nav-intro"><b>Управление TrackSOS</b><span>Все рабочие инструменты в одном месте</span></div>
           <label className="admin-nav-search"><span className="label">Быстрый поиск раздела</span>
-            <input className="field" type="search" placeholder="Например, заявки или магазин"
+            <input className="field" type="search" placeholder="Например, заявки или страхование"
               aria-label="Поиск раздела администрации" value={filter} onChange={event => setFilter(event.target.value)} />
           </label>
           {groups.map(group => <section className="admin-nav-group" key={group.name}>
@@ -122,7 +120,6 @@ export function Admin({ initialSection }: { initialSection?: string }) {
             {tab === 'bases' && <AdminServices />}
             {tab === 'queue' && <ModQueue />}
             {tab === 'summary' && <AdminSummary />}
-            {tab === 'shop' && <AdminShop />}
             {tab === 'vehicleServices' && <>
               <a className="btn ghost small" href="#/admin/section/settings">Управлять регистрацией страховых агентов</a>
               <VehicleServicesQueue />
