@@ -1268,3 +1268,41 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
   .app:not(.guest-app) .desktop-content main:not(.public-landing)>.grid3,
   .app:not(.guest-app) .desktop-content main:not(.public-landing)>.tiles{animation:none!important;}
 }
+
+/* Each role's scenario is intentionally distinct: roadside status, fleet, dispatch,
+   repair bays, insurance pipeline or operations monitoring. No real map or numbers. */
+.sandbox-scenario{min-width:0;display:flex;flex-direction:column;gap:18px;padding:21px;
+  border:1px solid #356580;border-radius:20px;overflow:hidden;position:relative;
+  background:radial-gradient(circle at 100% 0,rgba(51,208,240,.12),transparent 50%),linear-gradient(145deg,#102e49,#092439);
+  box-shadow:0 10px 26px rgba(0,9,25,.16);}
+.sandbox-scenario-head{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;}
+.sandbox-scenario-head>div{min-width:0;}
+.sandbox-scenario h3{font-size:clamp(17px,2.4vw,22px);color:#f4fbff;margin:6px 0 7px;}
+.sandbox-scenario p{font-size:12px;color:#a4c5d9;line-height:1.5;margin:0;}
+.sandbox-fleet,.sandbox-bays{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+.sandbox-fleet>div,.sandbox-bays>div{display:flex;flex-direction:column;min-width:0;gap:8px;padding:15px;
+  border:1px solid #3d627b;border-radius:14px;background:rgba(13,47,72,.8);}
+.sandbox-fleet>div>span,.sandbox-bays>div>span{font-size:25px;color:#65e3f1;}
+.sandbox-fleet b,.sandbox-bays b{font-size:12px;overflow-wrap:anywhere;}
+.sandbox-fleet small,.sandbox-bays small{font-size:11px;color:#a2c6dc;}
+.sandbox-route,.sandbox-road-flow{display:flex;justify-content:space-between;align-items:stretch;gap:9px;}
+.sandbox-route>div{position:relative;flex:1;display:flex;flex-direction:column;align-items:flex-start;min-width:0;gap:7px;
+  padding:12px;border-radius:12px;background:rgba(15,54,81,.85);border:1px solid #356582;}
+.sandbox-route>div>span{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;
+  background:linear-gradient(145deg,#e82485,#ac217b);font-size:12px;font-weight:800;color:white;}
+.sandbox-route b{font-size:11px;overflow-wrap:anywhere;}
+.sandbox-route small{font-size:10px;color:#9dbbd0;line-height:1.4;}
+.sandbox-road-flow{align-items:center;min-height:76px;}
+.sandbox-road-flow>span{flex:1;text-align:center;border:1px solid #477493;border-radius:14px;padding:15px 8px;
+  background:#153d5c;font-size:12px;color:#eefaff;font-weight:750;}
+.sandbox-road-flow>i{height:3px;flex:0 0 6%;background:linear-gradient(90deg,#54ddec,#f42b89);border-radius:5px;}
+@media(max-width:650px){
+  .sandbox-fleet,.sandbox-bays{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .sandbox-route{flex-wrap:wrap;}
+  .sandbox-route>div{flex:1 1 calc(50% - 10px);}
+  .sandbox-road-flow{gap:5px;}
+  .sandbox-road-flow>span{font-size:10px;padding:12px 5px;}
+}
+@media(max-width:385px){
+  .sandbox-fleet,.sandbox-bays{grid-template-columns:1fr;}
+}
