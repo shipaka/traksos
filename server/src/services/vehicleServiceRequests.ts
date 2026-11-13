@@ -88,8 +88,21 @@ export class VehicleServiceRequests {
         }
       }
       const locked = await q.one<any>(
-        'select id, driver_id from vehicles where id=$1 and owner_id=$2 for update', [resolvedId, owner]);
+        'select id, driver_id, brand, model, year, plate, vin from vehicles where id=$1 and owner_id=$2 for update', [resolvedId, owner]);
       if (!locked || (user.owner_id && locked.driver_id !== user.id)) throw notFound('Машина не найдена');
+      if (insurance && vehicleId) {
+        // A selected garage record must not be paired with an unrelated VIN or registration.
+        const supplied = insurance.details.vehicle;
+        const norm = (value: unknown) => String(value ?? '').trim().toUpperCase().replace(/\\s+/g, '');
+        if (norm(locked.brand) !== norm(supplied.brand) ||
+            (locked.model && norm(locked.model) !== norm(supplied.model)) ||
+            (locked.year && Number(locked.year) !== Number(supplied.year)) ||
+            (locked.plate && norm(locked.plate) !== norm(supplied.plate)) ||
+            (locked.vin && norm(locked.vin) !== norm(supplied.vin))) {
+          throw bad('vehicle_conflict', 'Данные заявки не совпадают с выбранным автомобилем. Проверьте VIN, номер и характеристики.');
+        }
+        // Do not overwrite missing VIN from unverified client text: insurer must verify documents.
+      }
       if (user.owner_id) {
         const settings = await q.one<any>('select fleet from users where id=$1', [owner]);
         if (settings?.fleet?.allow?.[kind] !== true) throw forbidden('Владелец не разрешил эту услугу');
