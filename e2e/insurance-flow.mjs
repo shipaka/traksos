@@ -89,9 +89,11 @@ try{
     await page.getByRole('heading',{name:item.heading}).waitFor();
     await acceptPendingOffers(page,item.token);
     if(item.name==='insurer') await page.getByRole('button',{name:'Все',exact:true}).click();
-    await page.getByText(item.expected,{exact:false}).first().waitFor();
+    if(item.name!=='admin') await page.getByText(item.expected,{exact:false}).first().waitFor();
     if(item.name==='admin') {
-      await page.getByRole('button',{name:'Страхование и ТО'}).click();
+      await page.getByRole('button',{name:/Разделы управления/}).click();
+      await page.getByRole('navigation',{name:'Разделы администрации'})
+        .getByRole('button',{name:'Страхование и ТО'}).click();
       await page.getByRole('link',{name:'Управлять регистрацией страховых агентов'}).click();
       await page.getByText('Страховые партнёры',{exact:true}).waitFor();
       await page.getByRole('button',{name:/Регистрация новых партнёров закрыта/}).waitFor();
