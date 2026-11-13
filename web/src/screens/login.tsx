@@ -241,11 +241,14 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
             </div>
             {customerType === 'driver' && <span className="note">После входа владелец сможет привязать вас к своей машине по приглашению или QR-коду.</span>}
             <span className="label">Работа с ТракSOS — отдельные кабинеты</span>
-            {JOIN_ROLES.map((r) => (
-              <button key={r.id} type="button" className="opt" onClick={() => { setRole(r.id); setIntent('join'); }}>
-                <b>{r.name}</b><small>{r.hint}</small>
-              </button>
-            ))}
+            <div className="grid2" role="group" aria-label="Кабинеты исполнителей и партнёров">
+              {JOIN_ROLES.map((r) => (
+                <button key={r.id} type="button" className="seg"
+                  onClick={() => { setRole(r.id); setIntent('join'); }}>
+                  {r.name}
+                </button>
+              ))}
+            </div>
             <span className="note">Администратор и модератор получают служебные права только после отдельной проверки. Для совмещения с работой мастера выберите «Я мастер».</span>
           </div>}
           {intent === 'help' && <div className="stack" role="group" aria-label="Тип клиента">
