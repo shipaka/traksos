@@ -118,17 +118,17 @@ export class ShopService {
     const take = Math.max(1, Math.min(48, Math.floor(limit)));
     const params: unknown[] = [];
     const filters = ['active=true', 'is_kit=false'];
-    if (category && category !== 'all') { params.push(category); filters.push(`category=${params.length}`); }
+    if (category && category !== 'all') { params.push(category); filters.push(`category=$${params.length}`); }
     const term = q.trim().slice(0, 100);
     if (term) {
       params.push('%' + term.replace(/[\\%_]/g, (c) => '\\' + c) + '%');
-      filters.push(`(name ilike ${params.length} escape '\\' or coalesce(article,'') ilike ${params.length} escape '\\'
-        or coalesce(brand,'') ilike ${params.length} escape '\\' or coalesce(search_terms,'') ilike ${params.length} escape '\\')`);
+      filters.push(`(name ilike $${params.length} escape '\\' or coalesce(article,'') ilike $${params.length} escape '\\'
+        or coalesce(brand,'') ilike $${params.length} escape '\\' or coalesce(search_terms,'') ilike $${params.length} escape '\\')`);
     }
     const where = filters.join(' and ');
     const total = await this.db.one<{ n: number }>(`select count(*)::int as n from shop_products where ${where}`, params);
     const rows = await this.db.query(`select ${this.cols} from shop_products where ${where}
-      order by sort, name, id limit ${params.length + 1} offset ${params.length + 2}`, [...params, take, safePage * take]);
+      order by sort, name, id limit $${params.length + 1} offset $${params.length + 2}`, [...params, take, safePage * take]);
     return { items: rows.map(view), total: total?.n ?? 0, page: safePage, limit: take };
   }
 
@@ -212,13 +212,13 @@ export class ShopService {
     const safePage = Math.max(0, Math.min(1000, Math.floor(page)));
     const params: unknown[] = [ownerId];
     const filters = ['client_id=$1'];
-    if (user.owner_id) { params.push(user.id); filters.push(`created_by=${params.length}`); }
-    if (vehicleId) { params.push(vehicleId); filters.push(`vehicle_id=${params.length}`); }
+    if (user.owner_id) { params.push(user.id); filters.push(`created_by=$${params.length}`); }
+    if (vehicleId) { params.push(vehicleId); filters.push(`vehicle_id=$${params.length}`); }
     const where = filters.join(' and ');
     const take = 20;
     const rows = await this.db.query<any>(
       `select * from shop_orders where ${where} order by created_at desc, id desc
-       limit ${params.length + 1} offset ${params.length + 2}`, [...params, take + 1, safePage * take]);
+       limit $${params.length + 1} offset $${params.length + 2}`, [...params, take + 1, safePage * take]);
     return { items: rows.slice(0, take).map((o: any) => this.orderView(o)), hasMore: rows.length > take, page: safePage };
   }
 
