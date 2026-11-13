@@ -211,7 +211,7 @@ function App() {
 
   return (
     <MeCtx.Provider value={{ me, reload, mode: effMode, setMode }}>
-      <ScreenErrorBoundary key={here}>
+      <ScreenErrorBoundary key={route.join('/')}>
         <Shell mode={effMode} me={me}>{screen}</Shell>
         <IncomingCall />
         <OfferGate />
