@@ -1697,3 +1697,32 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
 }
 @media(prefers-reduced-motion:reduce){.moderator-action,.fleet-share div[role=progressbar] i{transition:none!important;}
  .moderator-action:hover{transform:none!important;}}
+
+/* Real insurer empty state: visual guidance and truthful zero counts, not fake demand. */
+.insurer-empty-workspace{width:100%;min-width:0;gap:16px;}
+.insurer-empty-intro{display:grid!important;grid-template-columns:auto minmax(0,1fr);
+  gap:24px;align-items:center;padding:clamp(22px,3vw,34px)!important;
+  background:radial-gradient(circle at 10% 25%,#f9398c27,transparent 33%),linear-gradient(145deg,#153751,#102a43)!important;
+  border:1px solid #426c8a!important;border-radius:20px!important;}
+.insurer-empty-symbol{width:110px;height:110px;display:grid;place-items:center;flex-shrink:0;
+  font-size:78px;color:#7ae8fa;background:radial-gradient(circle,#3097c81f,transparent 72%);
+  border-radius:26px;box-shadow:inset 0 0 0 1px #4b87a94c;}
+.insurer-empty-intro h2{font-size:clamp(20px,2.6vw,28px);color:#fff;}
+.insurer-empty-intro p{margin:0;color:#c4dbea;font-size:13px;line-height:1.65;max-width:750px;}
+.insurer-empty-intro .row{margin-top:8px;}
+.insurer-workflow-guide{gap:18px!important;border:1px solid #375f7b!important;
+ background:linear-gradient(145deg,#102d48,#0c253d)!important;}
+.insurer-workflow-guide h2{font-size:clamp(19px,2.5vw,25px);margin:7px 0;color:#f5fcff;}
+.insurer-workflow-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;}
+.insurer-workflow-step{display:flex;min-width:0;flex-direction:column;gap:9px;min-height:205px;
+ padding:17px;border:1px solid #456984;border-radius:17px;background:radial-gradient(circle at 100% 0,#20d2e31c,transparent 40%),#0e304b;}
+.insurer-workflow-icon{display:grid;place-items:center;width:46px;height:46px;border-radius:13px;
+ background:#17465f;color:#79e6f1;font-size:25px;}
+.insurer-workflow-step small{font-size:10px;font-weight:850;color:#e96ea6;letter-spacing:.08em;}
+.insurer-workflow-step b{font-size:13px;color:#fff;overflow-wrap:anywhere;}
+.insurer-workflow-step p{font-size:11px;line-height:1.55;color:#b5cfdf;margin:0;}
+@media(max-width:920px){.insurer-workflow-steps{grid-template-columns:repeat(2,minmax(0,1fr));}
+ .insurer-workflow-step{min-height:175px;}}
+@media(max-width:520px){.insurer-empty-intro{grid-template-columns:1fr;gap:10px;}
+ .insurer-empty-symbol{width:63px;height:63px;font-size:40px;}
+ .insurer-workflow-step{padding:12px;min-height:165px;}}
