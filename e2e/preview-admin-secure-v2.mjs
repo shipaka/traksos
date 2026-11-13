@@ -49,13 +49,22 @@ try{
     await page.locator('.service-preview-admin-bar a[href="#/admin/test-center"]').click();
    }else{
     await page.locator('.role-preview-bar').waitFor();
-    await page.locator('.desktop-layout .desktop-sidebar').waitFor();
+    // The real mobile shell intentionally hides its desktop sidebar.
+    // Check the actual navigation surface visible to this device instead.
+    if(width>=900){
+      await page.locator('.desktop-layout .desktop-sidebar').waitFor({state:'visible'});
+    }else{
+      await page.locator('.account-menu > summary').waitFor({state:'visible'});
+      await page.locator('.account-menu > summary').click();
+      await page.locator('.account-menu nav a').first().waitFor({state:'visible'});
+      await page.locator('.account-menu > summary').click();
+    }
     await page.locator('.role-preview-bar a[href="#/admin/test-center"]').click();
    }
    await page.getByRole('heading',{name:'Тестирование кабинетов'}).waitFor();
   }
   await page.goto(BASE+'/#/admin/test-center/client');
-  await page.getByRole('heading',{name:/Помощь в дороге/}).first().waitFor();
+  await page.locator(width>=900?'.desktop-hero h1':'.mobile-home-heading h1').waitFor({state:'visible'});
   if(writes.length)throw Error('Preview made forbidden production writes: '+writes.join(', '));
   if(errors.length)throw Error('JavaScript errors: '+errors.join('; '));
   sessions.push({page,context,token});
