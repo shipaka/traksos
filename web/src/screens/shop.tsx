@@ -84,7 +84,7 @@ export function Shop() {
           }
         }}>{syncing ? 'Сохраняем…' : 'Сохранить справочник для слабого интернета'}</button>
       </div>
-      {offlineNote && <span className="note">{offlineNote}</span>
+      {offlineNote && <span className="note">{offlineNote}</span>}
       {kits.map((p: any) => (
         <div key={p.id} className="card hi">
           <span className="label" style={{ color: 'var(--accent)' }}>Набор</span>
