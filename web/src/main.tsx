@@ -53,7 +53,7 @@ class ScreenErrorBoundary extends Component<
   }
 }
 
-type Mode = 'client' | 'performer' | 'admin' | 'moderator' | 'service' | 'insurer';
+type Mode = 'client' | 'performer' | 'admin' | 'moderator' | 'service' | 'insurer' | 'inspection';
 const PERFORMER_ROLES = ['master', 'tow', 'service'];
 
 function App() {
@@ -119,8 +119,8 @@ function App() {
   useEffect(() => {
     const [x, m] = route;
     if (x !== 'as') return;
-    if (m === 'client' || m === 'performer' || m === 'admin' || m === 'moderator' || m === 'service' || m === 'insurer') setMode(m);
-    location.replace('#/' + (m === 'performer' ? 'work' : m === 'admin' ? 'admin' : m === 'moderator' ? 'moderation' : m === 'service' ? 'base' : m === 'insurer' ? 'insurance' : ''));
+    if (m === 'client' || m === 'performer' || m === 'admin' || m === 'moderator' || m === 'service' || m === 'insurer' || m === 'inspection') setMode(m);
+    location.replace('#/' + (m === 'performer' ? 'work' : m === 'admin' ? 'admin' : m === 'moderator' ? 'moderation' : m === 'service' ? 'base' : m === 'insurer' ? 'insurance' : m === 'inspection' ? 'inspections' : ''));
   }, [route.join('/')]); // eslint-disable-line
   useEffect(() => {
     if (!ready) return; // Keep the native token until the initial auth check finishes.
@@ -163,21 +163,22 @@ function App() {
   const isStaff = isModerator;
   const isService = me.roles.includes('service');
   const isInsurer = me.roles.includes('insurer');
+  const isInspection = me.roles.includes('inspection_operator');
   // A saved/forced mode must never expose navigation for a role the account lacks.
-  const fallback: Mode = isInsurer ? 'insurer'
+  const fallback: Mode = isInsurer ? 'insurer' : isInspection ? 'inspection'
     : isCustomer ? 'client' : isPerformer ? 'performer'
     : isService ? 'service' : isAdmin ? 'admin' : isModerator ? 'moderator' : 'client';
-  const permitted = mode === 'insurer' ? isInsurer : mode === 'admin' ? isAdmin : mode === 'moderator' ? isModerator
+  const permitted = mode === 'insurer' ? isInsurer : mode === 'inspection' ? isInspection : mode === 'admin' ? isAdmin : mode === 'moderator' ? isModerator
     : mode === 'performer' ? isPerformer : mode === 'service' ? isService
     : isCustomer || isStaff;
-  const allowedMode: Mode = isInsurer ? 'insurer' : permitted ? mode : fallback;
+  const allowedMode: Mode = permitted ? mode : fallback;
   const effMode: Mode = serviceSandbox ? 'service' : a === 'work' && isPerformer ? 'performer'
     : a === 'admin' && isAdmin ? 'admin' : a === 'moderation' && isModerator ? 'moderator'
-    : a === 'base' && isService ? 'service' : a === 'insurance' && isInsurer ? 'insurer' : allowedMode;
+    : a === 'base' && isService ? 'service' : a === 'insurance' && isInsurer ? 'insurer' : a === 'inspections' && (isInspection||isInsurer) ? 'inspection' : allowedMode;
 
   let screen;
   switch (a) {
-    case undefined: screen = effMode === 'insurer' ? <InsurerCabinet /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isAdmin ? <Admin /> : effMode === 'moderator' && isModerator ? <ModeratorDesk /> : <Home />; break;
+    case undefined: screen = effMode === 'insurer' ? <InsurerCabinet /> : effMode === 'inspection' ? <InsurerCabinet inspectionOnly /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isAdmin ? <Admin /> : effMode === 'moderator' && isModerator ? <ModeratorDesk /> : <Home />; break;
     case 'login': screen = <Home />; break;
     case 'sos': screen = isCustomer ? <Sos /> : <main><div className="empty">Для вызова SOS нужен клиентский аккаунт</div></main>; break;
     case 'new': screen = !isCustomer ? <main><div className="empty">Для заказа нужен клиентский аккаунт</div></main> : b === 'consult' ? <Consult /> : <NewOrder service={b ?? 'electric'} />; break;
@@ -197,6 +198,7 @@ function App() {
     case 'services': screen = b && route[2] === 'book' ? <BookForm id={b} /> : b ? <CenterPage id={b} /> : <ServicesList />; break;
     case 'booking': screen = <BookingPage id={b} />; break;
     case 'fleet': screen = isCustomer && !me.owner_id && !me.roles.includes('driver') ? <Fleet /> : <main><div className="empty">Парком управляет владелец</div></main>; break;
+    case 'inspections': screen = isInspection || isInsurer ? <InsurerCabinet inspectionOnly /> : <Home />; break;
     case 'insurance': screen = b === 'request' ? (route[2] === 'new' ? <InsuranceApplication vehicleId={route[3]??''} /> : <InsuranceThread requestId={route[2]??''} />) : isInsurer ? <InsurerCabinet /> : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
     case 'help': screen = <Help />; break;
     case 'rules': screen = <Rules />; break;
@@ -236,6 +238,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     ? [['/work', '⚡', 'Линия'], ['/work/jobs', '☰', 'Заявки'], ['/shop', '🛍', 'Магазин']]
     : mode === 'service'
       ? [['/base', '▤', 'Рембаза'], ['/support', '?', 'Связь'], ['/shop', '🛍', 'Магазин']]
+    : mode === 'inspection'
+      ? [['/inspections', '▣', 'Техосмотры'], ['/profile', '◉', 'Аккаунт']]
     : mode === 'insurer'
       ? [['/insurance', '▣', 'Рабочий стол'], ['/profile', '◉', 'Аккаунт']]
     : mode === 'moderator'
@@ -259,6 +263,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/base', 'Заявки и история ремонтов'], ['/base/me', 'Карточка СТО'],
          ['/base/money', 'Финансы'], ['/profile', 'Аккаунт'],
          ['/invite', 'Пригласить партнёра']]
+    : mode === 'inspection'
+      ? [['/inspections', 'Кабинет техосмотра'], ['/profile', 'Аккаунт']]
     : mode === 'insurer'
       ? [['/insurance', 'Кабинет страхового партнёра'], ['/profile', 'Аккаунт']]
     : mode === 'moderator'
@@ -337,7 +343,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                   ? [...tabs, ['/work/me', '◉', 'Профиль'], ...(me.roles.includes('service') ? [['/base', '▤', 'Моя СТО']] : [])]
                   : mode === 'service'
                     ? [...tabs, ['/base/money', '₽', 'Финансы'], ['/base/me', '⚙', 'Карточка'], ...(me.roles.some(r => r === 'master' || r === 'tow') ? [['/work', '⚡', 'Выездной мастер']] : []), ['/profile', '◉', 'Аккаунт']]
-                    : mode === 'insurer'
+                    : mode === 'insurer' || mode === 'inspection'
                       ? [...tabs, ['/profile', '◉', 'Аккаунт']]
                       : mode === 'moderator' ? [...tabs, ['/profile', '◉', 'Аккаунт']]
                       : [...tabs, ['/as/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]).map(([href, ic, name]) => (
