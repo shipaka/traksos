@@ -78,7 +78,7 @@ jobs:
           node e2e/full-role-preview.mjs
           node e2e/staff-security.mjs
           node e2e/cabinet-navigation-audit.mjs
-          node e2e/preview-admin-secure.mjs
+          node e2e/preview-admin-secure-v2.mjs
       - name: Снимки экранов каждой проверяемой версии
         if: always()
         uses: actions/upload-artifact@v4
