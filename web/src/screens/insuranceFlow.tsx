@@ -33,6 +33,7 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
   const agents=useLoad(()=>get<{id:string;name:string}[]>('/api/insurance/agents'),[]);
   const vehicles=useLoad(()=>get<any[]>('/api/vehicles'),[]);
   const [agentId,setAgentId]=useState('');
+  const [step,setStep]=useState(0);
   const [selectedVehicleId,setSelectedVehicleId]=useState(vehicleId);
   const [showVehicleDetails,setShowVehicleDetails]=useState(false);
   const [applicant,setApplicant]=useState({lastName:'',firstName:'',middleName:''});
@@ -56,6 +57,17 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
       trailerPlate:String(vehicle.trailer_plate??'')});
   },[vehicle?.id]);
   const fill=(key:VehicleKey,value:string)=>setTruck(prev=>({...prev,[key]:value}));
+  const nextStep=()=>{
+    if(step===0&&!agentId){window.alert('Выберите страхового агента');return;}
+    if(step===1&&(!applicant.firstName.trim()||!applicant.lastName.trim())){
+      window.alert('Укажите имя и фамилию страхователя');return;
+    }
+    if(step===2&&(!truck.brand.trim()||!truck.model.trim()||!truck.plate.trim()||
+      !/^\\d{4}$/.test(truck.year)||truck.vin.trim().length<11)){
+      window.alert('Заполните марку, модель, год, номер и VIN автомобиля');return;
+    }
+    setStep(v=>Math.min(3,v+1));
+  };
   const submit=async(e:React.FormEvent)=>{
     e.preventDefault();
     if(!agentId||!applicant.lastName.trim()||!applicant.firstName.trim()||
@@ -78,8 +90,14 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
     </section>
     <div className="banner" role="note">Страховой агент оформляет документы вручную. Расчёт и выпуск полиса через API страховой компании пока не подключены.</div>
     {(!vehicles.data||!agents.data)?<Loading error={vehicles.error||agents.error}/>:
-    <form className="stack" onSubmit={submit}>
-      <section className="card stack">
+    <form className="stack" onSubmit={submit} noValidate>
+      <nav className="insurance-step-navigation" aria-label="Этапы страховой заявки">
+        {['Агент','Страхователь','Автомобиль','Отправка'].map((label,index)=><button
+          type="button" key={label} className={'btn ghost'+(step===index?' active':'')}
+          aria-current={step===index?'step':undefined} disabled={index>step}
+          onClick={()=>setStep(index)}>{index+1}. {label}</button>)}
+      </nav>
+      {step===0&&<section className="card stack">
         <span className="insurance-step-title">01 · Кому отправить</span><h2>Страховой агент</h2>
         <label>Выберите партнёра
           <select className="field" value={agentId} onChange={e=>setAgentId(e.target.value)} required>
@@ -88,8 +106,8 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
           </select>
         </label>
         {agents.data.length===0&&<span className="note">Пока нет доступных страховых агентов. Администратор должен подключить партнёра.</span>}
-      </section>
-      <section className="card stack">
+      </section>}
+      {step===1&&<section className="card stack">
         <span className="insurance-step-title">02 · Кто страхует</span><h2>Страхователь</h2>
         <p className="note">Данные из профиля подставлены автоматически, если были заполнены. Проверьте написание перед отправкой.</p>
         <div className="insurance-field-grid">
@@ -98,8 +116,8 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
               required={key!=='middleName'} value={applicant[key]}
               onChange={e=>setApplicant(a=>({...a,[key]:e.target.value}))}/></label>)}
         </div>
-      </section>
-      <section className="card stack">
+      </section>}
+      {step===2&&<section className="card stack">
         <span className="insurance-step-title">03 · Что страхуем</span><h2>Грузовой автомобиль</h2>
         <label>Автомобиль из гаража (необязательно)
           <select className="field" value={selectedVehicleId} onChange={e=>setSelectedVehicleId(e.target.value)}>
@@ -125,8 +143,8 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
             <label key={key}>{label}<input className="field" value={truck[key]} maxLength={120}
               onChange={e=>fill(key,e.target.value)}/></label>)}
         </div>}
-      </section>
-      <section className="card stack">
+      </section>}
+      {step===3&&<section className="card stack">
         <span className="insurance-step-title">04 · Дополнительно</span>
         <label>Комментарий или пожелания
           <textarea className="field" value={comment} maxLength={2000} onChange={e=>setComment(e.target.value)}
@@ -136,7 +154,12 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
         <button className="btn insurance-main-action" type="submit" disabled={busy||!agents.data.length||!consent}>
           Отправить заявку страховому агенту
         </button>
-      </section>
+      </section>}
+      {step<3&&<div className="insurance-wizard-actions">
+        {step>0&&<button type="button" className="btn ghost" onClick={()=>setStep(v=>v-1)}>Назад</button>}
+        <button type="button" className="btn insurance-main-action" onClick={nextStep}>Продолжить</button>
+      </div>}
+      {step===3&&<button type="button" className="btn ghost" onClick={()=>setStep(2)}>Вернуться к автомобилю</button>}
     </form>}
   </main>;
 }
