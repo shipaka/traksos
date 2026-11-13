@@ -46,7 +46,7 @@ export function InsurerCabinet({section}:{section?:string}={}){
     <section className="insurer-workspace-hero">
       <div className="insurer-workspace-hero-art" aria-hidden="true">◇</div>
       <span className="insurance-step-title">TRACKSOS · ПАРТНЁРСКИЙ КАБИНЕТ</span>
-      <h1>Страховой партнёр</h1>
+      <h1>Кабинет страховщика</h1>
       <p>Заявки на грузовой транспорт, расчёты страховых компаний, выбор клиента и готовые полисы — в одном рабочем месте.</p>
       <div className="row">
         <button type="button" className="btn" onClick={()=>{setStageFocus('');setFilter('pending');}}>Входящие заявки · {active}</button>
