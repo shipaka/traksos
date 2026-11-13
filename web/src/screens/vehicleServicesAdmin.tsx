@@ -14,6 +14,8 @@ export function VehicleServicesQueue() {
   const [accrualReasons,setAccrualReasons]=useState<Record<string,string>>({});
   const [payoutAmounts,setPayoutAmounts]=useState<Record<string,string>>({});
   const [payoutReferences,setPayoutReferences]=useState<Record<string,string>>({});
+  const [reversalAmounts,setReversalAmounts]=useState<Record<string,string>>({});
+  const [reversalReasons,setReversalReasons]=useState<Record<string,string>>({});
   const labels: Record<string, string> = {
     submitted: 'Подана', in_review: 'На рассмотрении', need_documents: 'Нужны документы',
     sent_to_partner: 'Передана партнёру', completed: 'Завершена',
@@ -148,6 +150,30 @@ export function VehicleServicesQueue() {
               {requestId:r.id,amountKopecks,reference}),'Выплата учтена');
             if(result){setPayoutAmounts(v=>({...v,[r.id]:''}));setPayoutReferences(v=>({...v,[r.id]:''}));list.reload();}
           }}>Зафиксировать выплаченную сумму</button>
+        </details>}
+        {r.status==='completed'&&r.assigned_to&&r.has_partner_accrual&&<details className="stack">
+          <summary><b>Корректировка начисления</b></summary>
+          <p className="note">Уменьшает только невыплаченный остаток. Уже выплаченные деньги не изменяются задним числом.</p>
+          <label className="stack">Сумма корректировки, ₽
+            <input className="field" type="number" min="0.01" step="0.01" inputMode="decimal"
+              value={reversalAmounts[r.id]??''} onChange={e=>setReversalAmounts(v=>({...v,[r.id]:e.target.value}))}/>
+          </label>
+          <label className="stack">Причина корректировки
+            <textarea className="field" maxLength={1000} value={reversalReasons[r.id]??''}
+              onChange={e=>setReversalReasons(v=>({...v,[r.id]:e.target.value}))}/>
+          </label>
+          <button type="button" className="btn ghost small" disabled={busy} onClick={async()=>{
+            const raw=(reversalAmounts[r.id]??'').trim().replace(',','.');
+            const amount=Number(raw),amountKopecks=Math.round(amount*100);
+            const reason=(reversalReasons[r.id]??'').trim();
+            if(!raw||!Number.isFinite(amount)||amount<=0||Math.abs(amount*100-amountKopecks)>0.000001||!Number.isSafeInteger(amountKopecks)||reason.length<3){
+              window.alert('Укажите корректную сумму и обоснование.');return;
+            }
+            if(!window.confirm('Уменьшить невыплаченный остаток на '+amount.toFixed(2)+' ₽?'))return;
+            const result=await run(()=>post('/api/admin/partner-finance/reversals',
+              {requestId:r.id,amountKopecks,reason}),'Корректировка учтена');
+            if(result){setReversalAmounts(v=>({...v,[r.id]:''}));setReversalReasons(v=>({...v,[r.id]:''}));list.reload();}
+          }}>Подтвердить корректировку</button>
         </details>}
         {(next[r.status]?.length ?? 0) > 0 && <>
           <textarea className="field" aria-label="Комментарий сотрудника" placeholder="Комментарий для клиента" value={notes[r.id] ?? ''} onChange={(e) => setNotes({ ...notes, [r.id]: e.target.value })} maxLength={2000} />
