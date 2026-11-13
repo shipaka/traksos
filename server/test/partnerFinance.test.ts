@@ -46,3 +46,27 @@ test('partner can see only own ledger',async()=>{
   assert.equal(queries.length,2);
   assert.ok(queries.every(q=>q.params[0]==='partner'));
 });
+
+test('confirmed payout cannot exceed the request balance',async()=>{
+  const calls:{sql:string;params:any[]}[]=[];
+  const db:any={
+    tx:async(fn:any)=>fn(db),
+    one:async(sql:string,params:any[])=>{
+      calls.push({sql,params});
+      if(sql.startsWith('select id,kind,assigned_to from'))return {id:'req',kind:'inspection',assigned_to:'partner'};
+      if(sql.includes('as balance'))return {balance:'2500'};
+      if(sql.startsWith('select id from partner_finance_entries'))return null;
+      if(sql.startsWith('insert into partner_finance_entries'))return {id:'payout',amount_kopecks:params[3]};
+      return null;
+    },
+    query:async(sql:string,params:any[])=>{calls.push({sql,params});return [];},
+  };
+  const finance=new PartnerFinance(db);
+  await assert.rejects(finance.recordPayout(client,'req',500,'transfer-001'));
+  await assert.rejects(finance.recordPayout(admin,'req',2600,'transfer-001'));
+  await assert.rejects(finance.recordPayout(admin,'req',100,''));
+  const result=await finance.recordPayout(admin,'req',2500,'transfer-001');
+  assert.equal(result.amount_kopecks,2500);
+  assert.ok(calls.some(c=>c.sql.includes('partner_finance.payout')));
+  assert.ok(calls.some(c=>c.sql.includes('for update')));
+});
