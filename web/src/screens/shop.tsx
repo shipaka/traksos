@@ -366,14 +366,14 @@ function ShopSettings() {
   );
 }
 
-const EMPTY = { category: 'other', name: '', spec: '', description: '', price: null as number | null, stock: null as number | null, leadDays: 2, isKit: false, active: true, sort: 100 };
+const EMPTY = { category: 'other', name: '', spec: '', description: '', brand: '', article: '', searchTerms: '', price: null as number | null, stock: null as number | null, leadDays: 2, isKit: false, active: true, sort: 100 };
 
 function AdminProducts() {
   const l = useLoad(() => get('/api/admin/shop/products'), []);
   const cats = useLoad(() => get('/api/shop'), []);
   const [edit, setEdit] = useState<any>(null);
   if (!l.data || !cats.data) return <Loading error={l.error ?? cats.error} />;
-  if (edit) return <ProductForm p={edit} categories={cats.data.categories} onDone={() => { setEdit(null); l.reload(); }} />;
+  if (edit) return <ProductForm p={edit} products={l.data} categories={cats.data.categories} onDone={() => { setEdit(null); l.reload(); }} />;
   return (
     <div className="stack">
       <button className="btn" onClick={() => setEdit({ ...EMPTY })}>+ Добавить товар</button>
@@ -392,13 +392,16 @@ function AdminProducts() {
   );
 }
 
-function ProductForm({ p, categories, onDone }: { p: any; categories: Record<string, string>; onDone: () => void }) {
+function ProductForm({ p, products, categories, onDone }: { p: any; products: any[]; categories: Record<string, string>; onDone: () => void }) {
   const { busy, run } = useAction();
-  const [f, setF] = useState<any>({ ...p, spec: p.spec ?? '', description: p.description ?? '' });
+  const [f, setF] = useState<any>({ ...p, spec: p.spec ?? '', description: p.description ?? '', brand: p.brand ?? '', article: p.article ?? '', searchTerms: p.searchTerms ?? '' });
+  const [analogId, setAnalogId] = useState('');
+  const [analogSource, setAnalogSource] = useState('');
+  const [verified, setVerified] = useState(false);
   const [photo, setPhoto] = useState<string | null | undefined>(undefined);
   const set = (k: string, v: any) => setF({ ...f, [k]: v });
   async function save() {
-    const body: any = { category: f.category, name: f.name, spec: f.spec || null, description: f.description || null, price: f.price, stock: f.stock, leadDays: f.leadDays, isKit: f.isKit, active: f.active, sort: f.sort };
+    const body: any = { category: f.category, name: f.name, spec: f.spec || null, description: f.description || null, brand: f.brand || null, article: f.article || null, searchTerms: f.searchTerms || null, price: f.price, stock: f.stock, leadDays: f.leadDays, isKit: f.isKit, active: f.active, sort: f.sort };
     if (photo !== undefined) body.photoDataUrl = photo;
     if (await run(() => (p.id ? put(`/api/admin/shop/products/${p.id}`, body) : post('/api/admin/shop/products', body)), 'Товар сохранён')) onDone();
   }
@@ -406,6 +409,12 @@ function ProductForm({ p, categories, onDone }: { p: any; categories: Record<str
     <div className="card">
       <b>{p.id ? 'Товар' : 'Новый товар'}</b>
       <Field label="Название"><input className="field" value={f.name} onChange={(e) => set('name', e.target.value)} placeholder="Розетка 15-контактная" /></Field>
+      <div className="grid2">
+        <Field label="Производитель детали"><input className="field" value={f.brand} maxLength={80} onChange={(e) => set('brand', e.target.value)} placeholder="VDO, WABCO, BPW…" /></Field>
+        <Field label="Артикул"><input className="field" value={f.article} maxLength={100} onChange={(e) => set('article', e.target.value)} placeholder="Каталожный номер" /></Field>
+      </div>
+      <Field label="Синонимы для поиска"><input className="field" value={f.searchTerms} maxLength={400}
+        onChange={(e) => set('searchTerms', e.target.value)} placeholder="Например: датчик скорости, импульсный…" /></Field>
       <Field label="Кратко — характеристики"><input className="field" value={f.spec} onChange={(e) => set('spec', e.target.value)} placeholder="24 В · ISO 12098" /></Field>
       <Field label="Описание · по желанию"><textarea className="field" value={f.description} onChange={(e) => set('description', e.target.value)} /></Field>
       <Field label="Категория" group>
@@ -430,6 +439,23 @@ function ProductForm({ p, categories, onDone }: { p: any; categories: Record<str
         <button className="btn" disabled={busy || f.name.trim().length < 2 || f.price == null} onClick={save}>Сохранить</button>
         <button className="btn ghost" onClick={onDone}>Назад</button>
       </div>
+      {p.id && <div className="stack" style={{ gap: 8 }}>
+        <b>Связать с аналогом из каталога</b>
+        <select className="field" aria-label="Выберите аналог" value={analogId} onChange={(e) => setAnalogId(e.target.value)}>
+          <option value="">Выберите другую деталь</option>
+          {products.filter((x: any) => x.id !== p.id).map((x: any) =>
+            <option key={x.id} value={x.id}>{x.brand ?? ''} {x.article ?? ''} — {x.name}</option>)}
+        </select>
+        <input className="field" aria-label="Источник кросс-номера" value={analogSource}
+          onChange={(e) => setAnalogSource(e.target.value)} placeholder="Источник: каталог производителя, документ…" />
+        <label className="agree"><input type="checkbox" checked={verified} onChange={(e) => setVerified(e.target.checked)} />
+          <span>Подтверждаю кросс-артикул по указанному источнику (применяемость к VIN проверяется отдельно)</span></label>
+        <button className="btn ghost small" disabled={busy || !analogId || analogSource.trim().length < 3}
+          onClick={async () => { if (await run(() => post(`/api/admin/shop/products/${p.id}/analogs`,
+            { analogId, source: analogSource, verified }), 'Связь сохранена')) { setAnalogId(''); setAnalogSource(''); setVerified(false); } }}>
+          Сохранить связь с аналогом
+        </button>
+      </div>}
       {p.id && <button className="btn ghost small" disabled={busy} onClick={async () => { if (await run(() => del(`/api/admin/shop/products/${p.id}`), 'Товар скрыт')) onDone(); }}>Скрыть из магазина</button>}
     </div>
   );
