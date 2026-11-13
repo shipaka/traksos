@@ -14,6 +14,8 @@ docker compose version >/dev/null 2>&1 || fail "Docker Compose unavailable"
 [[ -f deploy/docker-compose.yml ]] || fail "Compose file missing"
 cd deploy
 docker compose config --quiet || fail "Invalid Compose configuration"
+# Release lock: refuse to update while the approved shop is unexpectedly open.
+bash ./verify-shop-closed.sh || fail "Shop lock guard failed before deployment"
 db="$(docker compose ps -q db)"
 [[ -n "$db" && "$(docker inspect -f '{{.State.Running}}' "$db" 2>/dev/null)" == true ]] ||
   fail "Database container is not running. Do not deploy."
@@ -52,6 +54,8 @@ if [[ "$ready" != 1 ]]; then
   exit 1
 fi
 echo "OK: application API answers /api/health inside the container."
+# Check the same immutable shop constraint after application migrations/startup.
+bash ./verify-shop-closed.sh || fail "Shop lock guard failed after deployment; investigate without restoring over live data"
 docker compose ps
 echo "Release finished. Verify the public site from a browser and run: bash deploy/doctor.sh (from project root)."
 echo "SMS provider, admin account and Android push still require separate live checks."
