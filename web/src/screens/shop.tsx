@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { get, post, put, del, rub, fmtTime, API_URL } from '../api.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '../ui.tsx';
+import { syncOfflineParts, searchOfflineParts } from '../shopOffline.ts';
 
 const CART_KEY = 'traksos.cart';
 type Cart = Record<string, number>;
@@ -29,6 +30,9 @@ export function Shop() {
   const [term, setTerm] = useState('');
   const [debouncedTerm, setDebouncedTerm] = useState('');
   const [page, setPage] = useState(0);
+  const [offlineVersion, setOfflineVersion] = useState(0);
+  const [offlineNote, setOfflineNote] = useState('');
+  const { busy: syncing, run: runSync } = useAction();
   useEffect(() => {
     const t = setTimeout(() => { setDebouncedTerm(term); setPage(0); }, 280);
     return () => clearTimeout(t);
@@ -37,6 +41,7 @@ export function Shop() {
     ? get(`/api/shop/search?q=${encodeURIComponent(debouncedTerm)}&category=${encodeURIComponent(cat)}&page=${page}`)
     : Promise.resolve({ items: [], total: 0, page: 0, limit: 24 }),
     [c.data?.enabled, cat, debouncedTerm, page], (e) => e.type === 'shop');
+  const local = useLoad(() => searchOfflineParts(debouncedTerm, cat), [debouncedTerm, cat, offlineVersion]);
   const mine = useLoad(() => get('/api/shop/orders'), [], (e) => e.type === 'shop');
   const d = c.data;
   if (!d) return <main><Loading error={c.error} /></main>;
@@ -51,7 +56,7 @@ export function Shop() {
         <b style={{ fontSize: 20 }}>{d.closedTitle}</b>
         <span className="note">{d.closedText}</span>
       </div>
-      {myOrders.length > 0 && <MyShopOrders orders={myOrders} reload={mine.reload} />}
+      {myOrders.length > 0 && <MyShopOrders orders={myOrders} reload={mine.reload} canOrder={!!d.enabled} />}
     </main>
   );
   const kits = d.products.filter((p: any) => p.isKit);
@@ -68,6 +73,18 @@ export function Shop() {
       <input className="field" type="search" aria-label="Поиск запчастей по названию или артикулу"
         placeholder="Название, артикул или производитель" value={term} onChange={(e) => setTerm(e.target.value)} />
       <span className="note">Поиск по названию и номеру детали. Можно выбрать категорию, не вводя артикул.</span>
+      <div className="row" style={{ alignItems: 'center', gap: 8 }}>
+        <button className="btn ghost small" disabled={syncing} onClick={async () => {
+          const result = await runSync(() => syncOfflineParts(), null);
+          if (result) {
+            setOfflineVersion((n) => n + 1);
+            setOfflineNote(result.unchanged ? 'Локальный справочник уже актуален'
+              : result.complete ? `Справочник сохранён: ${result.total} позиций`
+              : `Сохранено ещё ${result.added} позиций. Нажмите повторно для продолжения.`);
+          }
+        }}>{syncing ? 'Сохраняем…' : 'Сохранить справочник для слабого интернета'}</button>
+      </div>
+      {offlineNote && <span className="note">{offlineNote}</span>
       {kits.map((p: any) => (
         <div key={p.id} className="card hi">
           <span className="label" style={{ color: 'var(--accent)' }}>Набор</span>
@@ -85,7 +102,15 @@ export function Shop() {
           {usedCats.map(([k, n]) => <button key={k} className="chip" aria-pressed={cat === k} onClick={() => { setCat(k); setPage(0); }}>{n}</button>)}
         </div>
       )}
-      {!search.data ? <Loading error={search.error} /> : !items.length ? (
+      {!search.data && search.error && (local.data?.length ?? 0) > 0 ? (
+        <div className="stack">
+          <span className="note">Нет связи с каталогом. Показываем сохранённые названия и артикулы без цен и наличия. Для заказа нужен интернет.</span>
+          {local.data!.map((p) => <div key={p.id} className="card" style={{ padding: 12 }}>
+            <b>{p.name}</b>
+            <span className="note">{[p.brand, p.article].filter(Boolean).join(' · ')}</span>
+          </div>)}
+        </div>
+      ) : !search.data ? <Loading error={search.error} /> : !items.length ? (
         <div className="empty">{term || cat !== 'all' ? 'По вашему запросу пока ничего не найдено' : 'Товары скоро появятся'}</div>
       ) : (
         <div className="stack">
@@ -112,12 +137,12 @@ export function Shop() {
         </div>
       )}
       {count > 0 && <button className="btn" onClick={() => go('shop/cart')}>Корзина · {count} шт.</button>}
-      {myOrders.length > 0 && <MyShopOrders orders={myOrders} reload={mine.reload} />}
+      {myOrders.length > 0 && <MyShopOrders orders={myOrders} reload={mine.reload} canOrder={!!d.enabled} />}
     </main>
   );
 }
 
-function MyShopOrders({ orders, reload }: { orders: any[]; reload: () => void }) {
+function MyShopOrders({ orders, reload, canOrder }: { orders: any[]; reload: () => void; canOrder: boolean }) {
   const { busy, run } = useAction();
   const [cart, setCart] = useCart();
   const [openAnalog, setOpenAnalog] = useState<string | null>(null);
@@ -132,7 +157,7 @@ function MyShopOrders({ orders, reload }: { orders: any[]; reload: () => void })
           {o.vehicle && <span className="note">Для: {[o.vehicle.brand, o.vehicle.model, o.vehicle.plate].filter(Boolean).join(' ')}</span>}
           {o.items.map((i: any) => <div key={i.productId} className="stack" style={{ gap: 6 }}>
             <span className="note">{i.name}{i.article ? ` · ${i.article}` : ''} × {i.qty}</span>
-            {o.status !== 'cancelled' && <div className="row" style={{ gap: 6 }}>
+            {canOrder && o.status !== 'cancelled' && <div className="row" style={{ gap: 6 }}>
               <button className="btn ghost small" onClick={() => { addItem(i.productId, i.qty); go('shop/cart'); }}>Повторить</button>
               <button className="btn ghost small" aria-expanded={openAnalog === i.productId} onClick={() => setOpenAnalog(openAnalog === i.productId ? null : i.productId)}>Найти аналоги</button>
             </div>}
@@ -160,6 +185,27 @@ function HistoryAnalogs({ productId, add }: { productId: string; add: (id: strin
       <div className="between"><b>{rub(p.price)}</b><button className="btn small" onClick={() => add(p.id)}>В корзину</button></div>
     </div>)}
   </div>;
+}
+
+/** Purchase history is loaded only when the customer opens this page, never for all fleet vehicles. */
+export function ShopHistory({ vehicleId }: { vehicleId?: string }) {
+  const [page, setPage] = useState(0);
+  const c = useLoad(() => get('/api/shop?light=1'), []);
+  const history = useLoad(() => get(`/api/shop/history?page=${page}${vehicleId ? '&vehicleId=' + encodeURIComponent(vehicleId) : ''}`),
+    [page, vehicleId], (e) => e.type === 'shop');
+  return <main>
+    <Back to={vehicleId ? 'garage' : 'shop'} label={vehicleId ? 'Мой гараж' : 'Магазин'} />
+    <h1>История покупок</h1>
+    {!history.data ? <Loading error={history.error} /> : <>
+      {history.data.items.length === 0 ? <div className="empty">Покупок пока нет</div> :
+        <MyShopOrders orders={history.data.items} reload={history.reload} canOrder={!!c.data?.enabled} />}
+      {(page > 0 || history.data.hasMore) && <div className="between">
+        <button className="btn ghost small" disabled={page === 0} onClick={() => setPage((n) => Math.max(0, n - 1))}>Назад</button>
+        <span className="note">Страница {page + 1}</span>
+        <button className="btn ghost small" disabled={!history.data.hasMore} onClick={() => setPage((n) => n + 1)}>Дальше</button>
+      </div>}
+    </>}
+  </main>;
 }
 
 export function ShopCart() {
@@ -199,7 +245,7 @@ export function ShopCart() {
     <main>
       <Back to="shop" label="Магазин" />
       <div><h1>Корзина</h1><div className="sub">Оплата при получении — наличными, картой или СБП. Компаниям — по счёту.</div></div>
-      {!lines.length ? <div className="empty">Корзина пуста</div> : <>
+      {!lines.length ? <div className="empty">{selection.error ?? (selectedIds ? 'Проверяем актуальную цену и наличие…' : 'Корзина пуста')}</div> : <>
         <div className="stack">
           {lines.map(({ p, qty }) => (
             <div key={p.id} className="card" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 }}>
