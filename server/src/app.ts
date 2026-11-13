@@ -30,6 +30,7 @@ import { VehicleServiceRequests } from './services/vehicleServiceRequests.ts';
 import { PrivacyService } from './services/privacy.ts';
 import { StandingService } from './services/standing.ts';
 import { ShopService } from './services/shop.ts';
+import { ShopCatalogService } from './services/shopCatalog.ts';
 import { ModerationService } from './services/moderation.ts';
 import { checkAppealToken } from './services/auth.ts';
 import { normalizePhone, sha256 } from './util.ts';
@@ -83,6 +84,7 @@ export function createApp(d: Deps) {
   const privacy = new PrivacyService(d.db, notifier, now);
   const standing = new StandingService(d.db, now, settings);
   const shop = new ShopService(d.db, notifier, settings);
+  const partCatalog = new ShopCatalogService(d.db, settings);
   const moderation = new ModerationService(d.db, notifier, reviews, now, d.sms);
   // Споры — в очередь модератора: из суммы заявки, из сверки работ, из ремонта в сервисе
   orders.onDispute = (p) => moderation.open({ kind: 'dispute', title: p.title, text: p.text, openedBy: p.userId, targetId: p.targetId, orderId: p.orderId, priority: 1 });
@@ -389,6 +391,34 @@ export function createApp(d: Deps) {
       analogId: z.string().uuid(), source: z.string().min(3).max(300), verified: z.boolean().default(false),
     }), c.body);
     return shop.linkAnalog(c.user, c.params.id, b.analogId, b.source, b.verified);
+  });
+  // Reference-only catalog: no fictitious prices or stock, and no sales before opening.
+  r.get('/api/shop/catalog/search', true, (c: AuthedCtx) => partCatalog.search(
+    c.query.get('q') ?? '', c.query.get('category') ?? '', Number(c.query.get('page') ?? '0')));
+  // Upload preview and import are deliberately admin-only, licensed-data gated,
+  // and capped at 200 records per atomic request.
+  const catalogRecordSchema = z.object({
+    brand: z.string().min(1).max(80),
+    article: z.string().min(2).max(100),
+    name: z.string().min(2).max(120),
+    category: z.string().min(1).max(30),
+    searchTerms: z.string().max(400).nullable().optional(),
+  });
+  r.post('/api/admin/shop/catalog/import', ['admin'], (c: AuthedCtx) =>
+    partCatalog.importBatch(c.user, parse(z.object({
+      sourceNote: z.string().trim().min(3).max(300),
+      rightsConfirmed: z.literal(true),
+      dryRun: z.boolean().default(true),
+      rows: z.array(catalogRecordSchema).min(1).max(200),
+    }), c.body)));
+  r.get('/api/admin/shop/catalog/stats', ['admin'], () => partCatalog.stats());
+  r.get('/api/admin/shop/catalog', ['admin'], (c: AuthedCtx) =>
+    partCatalog.adminList(c.query.get('q') ?? '', c.query.get('state') ?? 'all',
+      Number(c.query.get('page') ?? '0')));
+  r.post('/api/admin/shop/catalog/:id/review', ['admin'], (c: AuthedCtx) => {
+    if (!z.string().uuid().safeParse(c.params.id).success) throw bad('bad_id', 'Неверный идентификатор');
+    const b = parse(z.object({ reviewed: z.boolean() }), c.body);
+    return partCatalog.review(c.user, c.params.id, b.reviewed);
   });
   r.get('/api/shop/history', true, (c: AuthedCtx) => {
     const vehicleId = c.query.get('vehicleId');
