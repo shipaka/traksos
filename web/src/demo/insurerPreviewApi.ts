@@ -71,6 +71,13 @@ export async function previewInsurerApi(method:'GET'|'POST'|'PATCH',path:string,
  if(method==='GET'&&p==='/api/insurance/agents')
   return [{id:'demo-agent',name:'Демо · Страховой партнёр'}];
  if(method==='GET'&&p==='/api/vehicles')return [clone(vehicle)];
+ if(method==='GET'&&p==='/api/insurer/requests/client'){
+  assertSide(true);
+  const stageNames:Record<string,string>={received:'Получено',preparing:'Принято в работу',offers_sent:'Есть предложения',
+    awaiting_payment:'Ожидается оплата',paid:'Тестовая оплата подтверждена',
+    processing:'Оформляется',policy_sent:'Полис готов'};
+  return records.map(x=>clone({...x.request,stageLabel:stageNames[x.request.insurance_stage]??x.request.insurance_stage}));
+ }
  if(method==='GET'&&p==='/api/insurer/requests'){
   assertSide(false);
   return records.map(x=>clone({...x.request,...x.request.insurance_details.vehicle,insurance_stage:x.request.insurance_stage,
