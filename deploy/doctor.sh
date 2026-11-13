@@ -62,14 +62,20 @@ if [[ -d backups ]] && find backups -maxdepth 1 -type f -name '*.dump' -size +0c
   fi
   # Validate only the format/index of the latest dump; do not expose its contents.
   latest="$(find backups -maxdepth 1 -type f -name '*.dump' -size +0c -printf '%T@ %p\n' 2>/dev/null | sort -nr | head -n 1 | cut -d' ' -f2-)"
-  if command -v pg_restore >/dev/null 2>&1; then
+  if [[ -n "$(docker compose ps -q backup 2>/dev/null || true)" ]]; then
+    if docker compose exec -T backup pg_restore --list "/backups/$(basename "$latest")" >/dev/null 2>&1; then
+      pass "Latest .dump archive catalog can be read in backup container"
+    else
+      flag "Latest .dump catalog cannot be read by backup container"
+    fi
+  elif command -v pg_restore >/dev/null 2>&1; then
     if pg_restore --list "$latest" >/dev/null 2>&1; then
       pass "Latest .dump archive catalog can be read"
     else
       flag "Latest .dump catalog cannot be read"
     fi
   else
-    info "pg_restore unavailable locally; archive integrity not checked"
+    flag "No pg_restore available to validate backup archive"
   fi
 else
   flag "No nonempty local .dump backup found"
