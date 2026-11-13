@@ -15,6 +15,7 @@ export function InsurerCabinet() {
   const { busy, run } = useAction();
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [inspectionNotes,setInspectionNotes]=useState<Record<string,string>>({});
+  const [inspectionView,setInspectionView]=useState<'active'|'history'>('active');
   const [expires, setExpires] = useState<Record<string, string>>({});
   const [filter, setFilter] = useState<'pending' | 'all' | 'done'>('pending');
   const [search, setSearch] = useState('');
@@ -69,9 +70,16 @@ export function InsurerCabinet() {
           <div className="card tile"><span className="label">В работе</span><b className="tile-value">{inspections.data?.filter(r=>!['completed','rejected','cancelled'].includes(r.status)).length??'—'}</b></div>
           <div className="card tile"><span className="label">История</span><b className="tile-value">{inspections.data?.filter(r=>['completed','rejected','cancelled'].includes(r.status)).length??'—'}</b></div>
         </div>
+        <div className="row" role="group" aria-label="Показ техосмотров">
+          <button type="button" className="chip" aria-pressed={inspectionView==='active'} onClick={()=>setInspectionView('active')}>В работе</button>
+          <button type="button" className="chip" aria-pressed={inspectionView==='history'} onClick={()=>setInspectionView('history')}>История техосмотров</button>
+          <button type="button" className="btn ghost small" onClick={inspections.reload}>Обновить</button>
+        </div>
         {!inspections.data?<div className="empty">{inspections.error?'Не удалось загрузить техосмотры: '+inspections.error:'Загружаем техосмотры…'}</div>:
           inspections.data.length===0?<div className="card stack"><h2>Техосмотров пока нет</h2><p>Здесь появятся назначенные заявки и история. Оформление диагностической карты будет добавлено отдельно.</p><button type="button" className="btn ghost" onClick={inspections.reload}>Обновить</button></div>:
-          inspections.data.map(r=><article className="card stack" key={r.id}>
+          inspections.data.filter(r=>inspectionView==='history' ? ['completed','rejected','cancelled'].includes(r.status) : !['completed','rejected','cancelled'].includes(r.status)).length===0 ?
+          <div className="empty">{inspectionView==='history'?'История техосмотров пока пуста':'Активных техосмотров сейчас нет'}</div> :
+          inspections.data.filter(r=>inspectionView==='history' ? ['completed','rejected','cancelled'].includes(r.status) : !['completed','rejected','cancelled'].includes(r.status)).map(r=><article className="card stack" key={r.id}>
             <b>{r.brand} {r.model}</b><span>{r.plate||'Номер не указан'} · {fmtTime(r.created_at)}</span>
             <span className="pill">{r.status==='completed'?'Завершён':r.status==='rejected'?'Отклонён':'В обработке'}</span>
             {r.comment&&<p>{r.comment}</p>}{r.staff_note&&<p className="note">{r.staff_note}</p>}
