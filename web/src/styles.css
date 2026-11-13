@@ -982,3 +982,133 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
   .app:not(.guest-app) .top > .row { min-width: 0; gap: 5px; }
   .app:not(.guest-app) .top .logo { flex-shrink: 0; }
 }
+
+/* Approved public palette and mobile readability, 2026-11-13.
+   Layout-only corrections: no account, route or product-behaviour changes.
+   The truck asset must be separately replaced by the approved Scania R520. */
+.guest-app .desktop-content > main:not(.public-landing) {
+  min-width: 0;
+  max-width: 100%;
+}
+.guest-app .desktop-content > main:not(.public-landing) .stack,
+.guest-app .desktop-content > main:not(.public-landing) .grid2,
+.guest-app .desktop-content > main:not(.public-landing) .row {
+  min-width: 0;
+}
+.guest-app .desktop-content > main:not(.public-landing) .stack > *,
+.guest-app .desktop-content > main:not(.public-landing) .grid2 > * {
+  min-width: 0;
+}
+.guest-app .desktop-content > main:not(.public-landing) .seg,
+.guest-app .desktop-content > main:not(.public-landing) .opt,
+.guest-app .desktop-content > main:not(.public-landing) .field {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.guest-app .desktop-content > main:not(.public-landing) .btn:not(.ghost):not(.bad):not(.good) {
+  background: linear-gradient(120deg,#f61972,#d90861);
+  border-color: #fd4199;
+  color: white;
+}
+.guest-app .desktop-content > main:not(.public-landing) .seg[aria-pressed="true"] {
+  background: #e91673;
+  border-color: #ff4d9e;
+  color: white;
+}
+@media(max-width:899px) {
+  .guest-app .top { padding-inline: 12px; gap: 7px; }
+  .guest-app .top > .row { min-width: 0; gap: 6px; }
+  .guest-app .top .logo { flex-shrink: 0; letter-spacing: -.5px; }
+  .guest-header-actions { min-width: 0; }
+  .guest-header-actions a { min-height: 42px; padding: 8px 10px; font-size: 11px; }
+  .guest-app .desktop-content > main:not(.public-landing) { padding-inline: 12px; }
+  .guest-app .desktop-content > main:not(.public-landing) .grid2 { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .guest-app .desktop-content > main:not(.public-landing) .seg { white-space: normal; line-height: 1.25; }
+  .guest-app .desktop-content > main:not(.public-landing) .row.note { overflow-wrap: anywhere; }
+  .public-landing .public-hero-visual {
+    inset: 18% 0 18% 0;
+    background-position: center center;
+  }
+}
+@media(max-width:380px) {
+  .guest-app .top { padding-inline: 7px; }
+  .guest-header-actions a { padding-inline: 7px; font-size: 10px; }
+  .guest-app .desktop-content > main:not(.public-landing) .grid2 { grid-template-columns: minmax(0,1fr); }
+}
+
+/* The guest pages must never inherit the legacy orange account palette. */
+.guest-app {
+  --accent: #fa176e;
+  --accent-soft: rgba(250,23,110,.14);
+  --on-accent: #fff;
+}
+.guest-app .site-footer .logo,
+.guest-app .site-footer .logo b { color: #fa176e; }
+@media(max-width:899px) {
+  /* Keep the headline fully above the photo, and buttons below the cab. */
+  .public-landing .public-hero-visual {
+    inset: 32% 0 19% 0;
+    background-size: cover;
+    background-position: center center;
+  }
+}
+
+/* The Scania R520 is an unaltered crop of the approved owner-reviewed composite.
+   Keep SCANIA and R520 entirely visible; never substitute a generic cab. */
+.public-landing .public-hero-visual {
+  inset: 0 0 0 50%;
+  background: #071a2d url('../public/tracksos-approved-scania-r520.webp') right center / auto 102% no-repeat;
+  opacity: 1;
+}
+.public-landing .public-brand-hero::before {
+  background: linear-gradient(90deg, #071626 0%, #081a2b 42%, rgba(7,24,43,.65) 59%, rgba(7,24,43,0) 90%);
+}
+.app:not(.guest-app) .desktop-hero {
+  background: linear-gradient(90deg,#071727 5%,rgba(7,23,39,.89) 45%,rgba(7,23,39,0) 90%),
+    url('../public/tracksos-approved-scania-r520.webp') right center / auto 105% no-repeat #071b2d;
+}
+@media(max-width:899px) {
+  .public-landing .public-hero-visual {
+    inset: 25% 0 20%;
+    background-position: center center;
+    background-size: auto 100%;
+  }
+  .public-landing .public-brand-hero::before {
+    background: linear-gradient(180deg, #071a2c 0%,rgba(7,26,44,.94) 16%,rgba(6,20,35,.05) 41%,rgba(6,20,35,.08) 76%,#06182b 99%);
+  }
+}
+
+/* Scania R520 visual QA: keep the cab and grille legible on narrow screens.
+   Do not cover the picture with title or clickable controls. */
+@media (max-width: 899px) {
+  .public-landing .public-brand-hero {
+    min-height: 650px;
+  }
+  .public-landing .public-hero-visual {
+    inset: 29% 0 20% 0;
+    background-color: #071b2d;
+    background-size: cover;
+    background-position: center 43%;
+  }
+  .public-landing .public-brand-hero::before {
+    background: linear-gradient(180deg,
+      #071a2c 0%,
+      rgba(7,26,44,.96) 17%,
+      rgba(7,26,44,.35) 32%,
+      rgba(7,26,44,0) 42%,
+      rgba(6,20,35,0) 72%,
+      rgba(6,20,35,.86) 83%,
+      #06182b 100%);
+  }
+}
+
+/* Very narrow phones need extra room for the longer Russian hero copy. */
+@media (max-width: 365px) {
+  .public-landing .public-brand-hero { min-height: 700px; }
+  .public-landing .public-hero-visual { inset: 35% 0 20% 0; }
+}
+
+/* Final mobile hero separation: tested action offsets require >= 6% bottom clearance. */
+@media(max-width:899px) {
+  .public-landing .public-hero-visual { bottom: 26%; }
+}
