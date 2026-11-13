@@ -37,7 +37,11 @@ export class ShopService {
     const s = await this.settings.get('shop');
     const base = { enabled: s.enabled, closedTitle: s.closedTitle, closedText: s.closedText, note: s.note, categories: SHOP_CATEGORIES,
       delivery: { pickup: s.pickup, pickupAddress: s.pickupAddress, delivery: s.delivery, deliveryPrice: s.deliveryPrice, deliveryNote: s.deliveryNote, withMaster: s.withMaster } };
-    if (!s.enabled || light) return { ...base, products: [] };
+    if (!s.enabled) return { ...base, products: [] };
+    if (light) {
+      const kits = await this.db.query(`select ${this.cols} from shop_products where active and is_kit order by sort, name limit 8`);
+      return { ...base, products: kits.map(view) };
+    }
     const rows = await this.db.query(`select ${this.cols} from shop_products where active order by is_kit desc, sort, name`);
     return { ...base, products: rows.map(view) };
   }
@@ -114,8 +118,8 @@ export class ShopService {
   async search(q = '', category = '', page = 0, limit = 24) {
     const setting = await this.settings.get('shop');
     if (!setting.enabled) return { items: [], total: 0, page: 0, limit: 24 };
-    const safePage = Math.max(0, Math.min(1000, Math.floor(page)));
-    const take = Math.max(1, Math.min(48, Math.floor(limit)));
+    const safePage = Number.isFinite(page) ? Math.max(0, Math.min(1000, Math.floor(page))) : 0;
+    const take = Number.isFinite(limit) ? Math.max(1, Math.min(48, Math.floor(limit))) : 24;
     const params: unknown[] = [];
     const filters = ['active=true', 'is_kit=false'];
     if (category && category !== 'all') { params.push(category); filters.push(`category=$${params.length}`); }
@@ -153,7 +157,7 @@ export class ShopService {
   async indexPage(after: string | null, limit = 750) {
     const setting = await this.settings.get('shop');
     if (!setting.enabled) return { enabled: false, rows: [], next: null };
-    const take = Math.max(1, Math.min(1000, Math.floor(limit)));
+    const take = Number.isFinite(limit) ? Math.max(1, Math.min(1000, Math.floor(limit))) : 750;
     const rows = await this.db.query<any>(
       `select id, category, brand, article, name, search_terms from shop_products
        where active=true and ($1::uuid is null or id>$1::uuid) order by id limit $2`, [after, take + 1]);
