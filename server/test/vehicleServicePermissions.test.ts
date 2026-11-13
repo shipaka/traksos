@@ -166,7 +166,7 @@ test('owner can create a request for their vehicle and remains the requester', a
   assert.equal(result.requested_by, owner.id);
   assert.deepEqual(calls.find(c => c.sql.startsWith('insert into vehicle_service_requests'))?.params,
     [owner.id, owner.id, 'vehicle-1', 'insurance', 'Нужен полис']);
-  assert.match(calls[1].sql, /for update/);
+  assert.match(calls[0].sql, /for update/);
 });
 
 test('driver cannot create a service request when the owner disabled the service', async () => {
