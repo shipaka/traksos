@@ -58,6 +58,8 @@ jobs:
         run: npm -w web run build
       - name: Сверка утверждённого дизайна и комплектации
         run: node scripts/verify-approved.mjs
+      - name: Страховая песочница — роли, 20 предложений, оплата и PDF
+        run: node --experimental-strip-types e2e/insurer-preview-state.mjs
       - name: Сквозной сценарий в браузере и контроль интерактивности
         run: |
           npx playwright install --with-deps chromium
