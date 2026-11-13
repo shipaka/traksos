@@ -45,6 +45,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const [devCode, setDevCode] = useState<string | null>(null);
   const [role, setRole] = useState<JoinRole>('master');
   const [customerType, setCustomerType] = useState<'owner' | 'driver'>('owner');
+  const [cameFromRegister, setCameFromRegister] = useState(false);
   const [agree, setAgree] = useState(false);
   const toast = useToast();
   const [appealToken, setAppealToken] = useState<string | null>(null);
@@ -244,7 +245,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
             <div className="grid2" role="group" aria-label="Кабинеты исполнителей и партнёров">
               {JOIN_ROLES.map((r) => (
                 <button key={r.id} type="button" className="seg"
-                  onClick={() => { setRole(r.id); setIntent('join'); }}>
+                  onClick={() => { setCameFromRegister(true); setRole(r.id); setIntent('join'); }}>
                   {r.name}
                 </button>
               ))}
@@ -275,7 +276,12 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           </label>}
           <button className="btn" disabled={busy || (needAgree && !agree) || phone.replace(/\D/g, '').length < 11}>Получить код</button>
           {intent !== 'login' && <button type="button" className="btn ghost" onClick={() => { setIntent('login'); setStep('phone'); setCode(''); }}>Уже есть аккаунт? Войти по паролю</button>}
-          {!driver && <button type="button" className="btn ghost" onClick={() => setIntent(null)}>Назад</button>}
+          {!driver && <button type="button" className="btn ghost"
+            onClick={() => {
+              if (intent === 'join' && cameFromRegister) {
+                setStep('phone'); setIntent('register'); setCameFromRegister(false);
+              } else setIntent(null);
+            }}>{intent === 'join' && cameFromRegister ? 'Назад к выбору кабинета' : 'Назад'}</button>}
         </form>
       ) : (
         <form className="stack" onSubmit={(e) => { e.preventDefault(); verify(); }}>
