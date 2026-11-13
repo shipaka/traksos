@@ -567,7 +567,7 @@ export function createApp(d: Deps) {
     const b=parse(z.object({proposalId:z.string().uuid()}),c.body);
     const out=await insuranceFlow.choose(c.user,c.params.id,b.proposalId);
     const item=await insuranceFlow.detail(c.user,c.params.id);
-    notifier.live([item.request.owner_id,item.request.insurance_choice_id ? '' : ''].filter(Boolean),
+    notifier.live([item.request.owner_id,item.request.assigned_to].filter(Boolean),
       {type:'vehicle_service',requestId:c.params.id});
     return out;
   });
@@ -575,7 +575,7 @@ export function createApp(d: Deps) {
     const b=parse(z.object({message:z.string().trim().min(1).max(2000)}),c.body);
     const out=await insuranceFlow.message(c.user,c.params.id,b.message);
     const item=await insuranceFlow.detail(c.user,c.params.id);
-    notifier.live([item.request.owner_id],
+    notifier.live([item.request.owner_id,item.request.assigned_to].filter(Boolean),
       {type:'vehicle_service',requestId:c.params.id});
     return out;
   });
