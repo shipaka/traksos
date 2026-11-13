@@ -140,6 +140,59 @@ export class ShopService {
     return { ok: true };
   }
 
+  // ——— Internal supplier identifiers (admin only, never in client catalog) ———
+  async supplierRef(productId: string) {
+    const product = await this.db.one<{ id: string }>('select id from shop_products where id=$1', [productId]);
+    if (!product) throw notFound('Товар не найден');
+    const row = await this.db.one<any>(
+      'select supplier_article, supplier_brand, source_note, verified, updated_at from shop_supplier_refs where product_id=$1', [productId]);
+    return {
+      supplier: 'autokontinent', article: row?.supplier_article ?? null,
+      brand: row?.supplier_brand ?? null, sourceNote: row?.source_note ?? null,
+      verified: !!row?.verified, updatedAt: row?.updated_at ?? null,
+      connected: false, // No live supplier API calls until licensing/credentials.
+    };
+  }
+
+  async setSupplierRef(actor: AuthUser, productId: string, input: {
+    article: string; brand?: string | null; sourceNote?: string | null; verified?: boolean;
+  }) {
+    const product = await this.db.one<{ id: string }>('select id from shop_products where id=$1', [productId]);
+    if (!product) throw notFound('Товар не найден');
+    const source = input.sourceNote?.trim() || null;
+    if (input.verified && (!source || source.length < 3))
+      throw bad('need_source', 'Для подтверждения артикула укажите источник сверки');
+    await this.db.query(
+      `insert into shop_supplier_refs(product_id, supplier_article, supplier_brand, source_note, verified, updated_by)
+       values ($1,$2,$3,$4,$5,$6)
+       on conflict(product_id) do update set
+         supplier_article=excluded.supplier_article, supplier_brand=excluded.supplier_brand,
+         source_note=excluded.source_note, verified=excluded.verified,
+         updated_by=excluded.updated_by, updated_at=now()`,
+      [productId, input.article.trim(), input.brand?.trim() || null, source, !!input.verified, actor.id]);
+    await this.db.query(
+      'insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
+      [actor.id, 'shop.supplier_ref_set', productId, { supplier: 'autokontinent', verified: !!input.verified }]);
+    return this.supplierRef(productId);
+  }
+
+  async clearSupplierRef(actor: AuthUser, productId: string) {
+    await this.db.query('delete from shop_supplier_refs where product_id=$1', [productId]);
+    await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
+      [actor.id, 'shop.supplier_ref_clear', productId, { supplier: 'autokontinent' }]);
+    return { ok: true };
+  }
+
+  async supplierStatus() {
+    const counts = await this.db.one<{ mapped: number; verified: number }>(
+      `select count(*)::int as mapped, count(*) filter (where verified)::int as verified from shop_supplier_refs`);
+    return {
+      supplier: 'autokontinent', connected: false, liveOffers: false, automaticOrders: false,
+      mapped: counts?.mapped ?? 0, verified: counts?.verified ?? 0,
+      message: 'Артикулы готовятся внутри TrackSOS. API поставщика не подключён.',
+    };
+  }
+
   /** Paginated live stock/price results. Never download the entire shop for a search. */
   async search(q = '', category = '', page = 0, limit = 24) {
     const setting = await this.settings.get('shop');
