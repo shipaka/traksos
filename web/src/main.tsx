@@ -237,9 +237,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     : mode === 'service'
       ? [['/base', '▤', 'Рембаза'], ['/support', '?', 'Связь'], ['/shop', '🛍', 'Магазин']]
     : mode === 'insurer'
-      ? [['/insurance', '▣', 'Рабочий стол'], ['/insurance/requests', '☰', 'Заявки'], ['/profile', '◉', 'Аккаунт']]
+      ? [['/insurance', '▣', 'Рабочий стол'], ['/insurance', '☰', 'Полисы'], ['/profile', '◉', 'Аккаунт']]
     : mode === 'moderator'
-      ? [['/moderation', '▦', 'Рабочий стол'], ['/moderation', '⚑', 'Проверки'], ['/support', '?', 'Обращения']]
+      ? [['/moderation', '▦', 'Рабочий стол'], ['/admin/section/queue', '⚑', 'Проверки'], ['/support', '?', 'Обращения']]
     : mode === 'admin'
       ? [['/admin', '▦', 'Рабочий стол'], ['/admin/section/orders', '☰', 'Заявки'], ['/admin/section/support', '?', 'Обращения']]
       : [['/', '🔧', 'Услуги'], ['/sos', '!', 'SOS'], ['/orders', '☰', 'Заявки'], ['/shop', '🛍', 'Магазин']];
