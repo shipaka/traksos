@@ -158,6 +158,7 @@ function SandboxCabinet({role}:{role:RoleInfo}) {
               <span aria-hidden="true">{symbol}</span><b>{title}</b><small>{subtitle}</small><em>Перейти ↗</em>
             </button>)}
           </div>
+          <RoleScenario role={role} onOpen={()=>go('tasks')} />
           <div className="sandbox-overview-bottom">
             <div className="card stack"><b>Последние события</b>
               {role.activity.map((entry,i)=><div className="sandbox-event" key={entry}>
@@ -213,4 +214,58 @@ function SandboxCabinet({role}:{role:RoleInfo}) {
     <div className="sandbox-footer"><a href="#/admin/test-center">← Назад к выбору кабинетов</a>
       <span>Изолированный учебный режим · данные не сохраняются на сервере</span></div>
   </main>;
+}
+
+/* The role dashboards intentionally differ by workflow, not just the heading.
+   These diagrams show fictitious statuses only and cannot perform live actions. */
+function RoleScenario({role,onOpen}:{role:RoleInfo;onOpen:()=>void}) {
+  if(['client','driver'].includes(role.id)) return <section className="sandbox-scenario sandbox-road">
+    <div className="sandbox-scenario-head"><div><span className="sandbox-eyebrow">ПОМОЩЬ В ДОРОГЕ · ДЕМО</span>
+      <h3>Связь с дорожной помощью</h3><p>Тестовый сценарий выбора специалиста и контроля заявки.</p></div>
+      <button className="btn small" onClick={onOpen} type="button">Перейти к заявке</button></div>
+    <div className="sandbox-road-flow"><span>◉ Ваш грузовик</span><i/><span>⚡ Специалист</span><i/><span>✓ Завершение</span></div>
+  </section>;
+  if(role.id==='owner') return <section className="sandbox-scenario">
+    <div className="sandbox-scenario-head"><div><span className="sandbox-eyebrow">АВТОПАРК · ДЕМО</span>
+      <h3>Техника под контролем</h3><p>Пример карточек закреплённого транспорта.</p></div>
+      <button className="btn ghost small" onClick={onOpen} type="button">Заявки автопарка</button></div>
+    <div className="sandbox-fleet">
+      {['Scania R520 · тягач','Полуприцеп · рефрижератор','DAF XF · тягач'].map((v,i)=><div key={v}>
+        <span>▰</span><b>{v}</b><small>{i===1?'На обслуживании':'В эксплуатации'}</small></div>)}
+    </div>
+  </section>;
+  if(['master','tow'].includes(role.id))return <section className="sandbox-scenario">
+    <div className="sandbox-scenario-head"><div><span className="sandbox-eyebrow">ДИСПЕТЧЕРИЗАЦИЯ · ДЕМО</span>
+      <h3>Новые вызовы и смена</h3><p>Тестовый путь от входящей заявки до завершения выезда.</p></div>
+      <button className="btn small" type="button" onClick={onOpen}>Смотреть вызовы</button></div>
+    <div className="sandbox-route">
+      {['Получен заказ','Подтверждён выезд','Работа у клиента','Отчёт и оплата'].map((s,i)=><div key={s}>
+        <span>{i+1}</span><b>{s}</b><small>{i===0?'Проверить детали':i===1?'Пример статуса':'Только демонстрация'}</small></div>)}
+    </div>
+  </section>;
+  if(['service','master_service'].includes(role.id))return <section className="sandbox-scenario">
+    <div className="sandbox-scenario-head"><div><span className="sandbox-eyebrow">РЕМОНТНАЯ ЗОНА · ДЕМО</span>
+      <h3>Загрузка ремонтных боксов</h3><p>Пример планирования работ по рабочим местам.</p></div>
+      <button className="btn ghost small" type="button" onClick={onOpen}>Открыть записи</button></div>
+    <div className="sandbox-bays">{['Бокс 1','Бокс 2','Бокс 3','Выездной пост'].slice(0,role.id==='service'?3:4).map((b,i)=>
+      <div key={b}><span>⚙</span><b>{b}</b><small>{i===0?'Диагностика':i===1?'Ремонт':i===2?'Свободен':'На выезде'}</small></div>)}</div>
+  </section>;
+  if(role.id==='insurer')return <section className="sandbox-scenario">
+    <div className="sandbox-scenario-head"><div><span className="sandbox-eyebrow">СТРАХОВАНИЕ · ДЕМО</span>
+      <h3>Путь страхового обращения</h3><p>Контроль документов и предложения без оформления настоящего полиса.</p></div>
+      <button className="btn small" type="button" onClick={onOpen}>Страховые заявки</button></div>
+    <div className="sandbox-route">
+      {['Новая заявка','Документы','Расчёт предложения','Ответ клиенту'].map((s,i)=>
+        <div key={s}><span>{i+1}</span><b>{s}</b><small>{i===0?'Ожидает рассмотрения':'Демонстрационный этап'}</small></div>)}</div>
+  </section>;
+  return <section className="sandbox-scenario">
+    <div className="sandbox-scenario-head"><div><span className="sandbox-eyebrow">КОНТРОЛЬ ПЛОЩАДКИ · ДЕМО</span>
+      <h3>{role.id==='moderator'?'Очередь решений':'Операционный мониторинг'}</h3>
+      <p>{role.id==='moderator'?'Проверка жалоб и документов по порядку.':'Пример контроля запросов, качества и состояния сервиса.'}</p></div>
+      <button className="btn small" type="button" onClick={onOpen}>Открыть очередь</button></div>
+    <div className="sandbox-route">
+      {(role.id==='moderator'?['Принять обращение','Проверить сведения','Вынести решение','Записать итог']:
+        ['Новая заявка','Проверка исполнителя','Решение оператора','Контроль качества']).map((s,i)=>
+        <div key={s}><span>{i+1}</span><b>{s}</b><small>Тестовый процесс</small></div>)}</div>
+  </section>;
 }
