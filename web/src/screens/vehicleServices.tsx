@@ -34,7 +34,7 @@ export function VehicleServiceApplication({ vehicleId, onCreated }: { vehicleId:
         <textarea className="field" aria-label="Комментарий к заявке" placeholder="Комментарий (необязательно)" value={comment} onChange={(e) => setComment(e.target.value)} maxLength={2000} />
         <span className="note">Заявка передаётся на обработку. Оформление полиса или техосмотра выполняет уполномоченный партнёр.</span>
         <button className="btn small" disabled={busy}>Отправить заявку</button>
-        </>
+        </>}
       </form>}
     </div>
   );
