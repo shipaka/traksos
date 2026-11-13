@@ -35,7 +35,7 @@ test('only admin can register a positive justified accrual',async()=>{
   assert.ok(queries.some(q=>q.sql.includes('partner_finance.accrual')));
 });
 test('no accrual for unfinished, unassigned or already accrued request',async()=>{
-  await assert.rejects(new PartnerFinance(mock({...mock().db.request,id:'req',kind:'insurance',assigned_to:'partner',status:'submitted'}).db).recordAccrual(admin,'req',100,'Act 123'));
+  await assert.rejects(new PartnerFinance(mock({id:'req',kind:'insurance',assigned_to:'partner',status:'submitted'}).db).recordAccrual(admin,'req',100,'Act 123'));
   await assert.rejects(new PartnerFinance(mock({id:'req',kind:'inspection',assigned_to:null,status:'completed'}).db).recordAccrual(admin,'req',100,'Act 123'));
   await assert.rejects(new PartnerFinance(mock(undefined,true).db).recordAccrual(admin,'req',100,'Act 123'));
 });
