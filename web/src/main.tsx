@@ -227,8 +227,8 @@ function App() {
 
 function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: React.ReactNode }) {
   const route = useRoute();
-  const here = '/' + route.join('/');
   const serviceSandbox = route[0]==='admin'&&route[1]==='test-center'&&route[2]==='service';
+  const here = serviceSandbox ? '/'+(route.slice(3).join('/')||'base') : '/'+route.join('/');
   const sandboxHref=(href:string)=>serviceSandbox?'#/admin/test-center/service'+(href==='/base'||href.startsWith('/base/')?href:'/unavailable'):'#'+href;
   // На телефоне оставляем только рабочие действия. Все прежние маршруты
   // сохраняются через меню; компьютерная боковая навигация остаётся полной.
