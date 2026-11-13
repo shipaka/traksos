@@ -52,6 +52,22 @@ async function run(width, height, mobile) {
       return { ok: img.naturalWidth > 0, width: img.naturalWidth, height: img.naturalHeight };
     });
     check(image.ok, 'Hero image failed to load: ' + JSON.stringify(image));
+    if (mobile && width <= 430) {
+      const heroGeometry = await page.evaluate(() => {
+        const visual = document.querySelector('.public-hero-visual')?.getBoundingClientRect();
+        const paragraph = document.querySelector('.public-hero-copy > p')?.getBoundingClientRect();
+        const actions = document.querySelector('.public-actions')?.getBoundingClientRect();
+        if (!visual || !paragraph || !actions) return null;
+        return { pictureTop: visual.top, pictureBottom: visual.bottom,
+          paragraphBottom: paragraph.bottom, actionsTop: actions.top, pictureWidth: visual.width };
+      });
+      check(heroGeometry && heroGeometry.pictureWidth >= width * .75,
+        suffix + ': picture shrunk into a narrow column: ' + JSON.stringify(heroGeometry));
+      check(heroGeometry.paragraphBottom <= heroGeometry.pictureTop + 2,
+        suffix + ': hero description overlaps photo: ' + JSON.stringify(heroGeometry));
+      check(heroGeometry.actionsTop >= heroGeometry.pictureBottom - 2,
+        suffix + ': hero buttons overlap photo: ' + JSON.stringify(heroGeometry));
+    }
     await verifyPage(page, suffix + ':home');
     await page.screenshot({ path: OUT + '/home-' + suffix + '.png', fullPage: true });
 
