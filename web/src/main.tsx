@@ -1,6 +1,6 @@
 import './styles.css';
 import { createRoot } from 'react-dom/client';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
 import { MeCtx, ToastProvider, useRoute, useToast, type Me } from './ui.tsx';
 import { native } from './native.ts';
@@ -24,6 +24,31 @@ import { ModCase, Appeal, MyReviews } from './screens/moderation.tsx';
 import { ModeratorDesk } from './screens/moderatorDesk.tsx';
 import { SupportList, SupportNew, SupportThread, Notifications, useUnread } from './screens/support.tsx';
 import { InsurerCabinet } from './screens/insurer.tsx';
+
+/** Last-resort screen protection: a broken widget must not produce a blank website. */
+class ScreenErrorBoundary extends Component<
+  { children: React.ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch(error: Error) {
+    console.error('[TrackSOS] Section failed to render:', error);
+  }
+  render() {
+    if (!this.state.failed) return this.props.children;
+    return <div className="app">
+      <main className="stack" style={{ padding: 24, maxWidth: 640, margin: '40px auto' }}>
+        <h1>Не удалось открыть раздел</h1>
+        <p className="sub">Возникла ошибка отображения. Ваши данные не удалены. Можно вернуться на главную или обновить страницу.</p>
+        <div className="row">
+          <a className="btn" href="#/" onClick={() => { this.setState({ failed: false }); }}>На главную</a>
+          <button className="btn ghost" type="button" onClick={() => location.reload()}>Обновить страницу</button>
+        </div>
+      </main>
+    </div>;
+  }
+}
 
 type Mode = 'client' | 'performer' | 'admin' | 'moderator' | 'service' | 'insurer';
 const PERFORMER_ROLES = ['master', 'tow', 'service'];
@@ -186,9 +211,11 @@ function App() {
 
   return (
     <MeCtx.Provider value={{ me, reload, mode: effMode, setMode }}>
-      <Shell mode={effMode} me={me}>{screen}</Shell>
-      <IncomingCall />
-      <OfferGate />
+      <ScreenErrorBoundary key={here}>
+        <Shell mode={effMode} me={me}>{screen}</Shell>
+        <IncomingCall />
+        <OfferGate />
+      </ScreenErrorBoundary>
     </MeCtx.Provider>
   );
 }
@@ -418,4 +445,6 @@ if (!(window as any).TrakSOSNative && 'serviceWorker' in navigator &&
   }, { once: true });
 }
 
-createRoot(document.getElementById('root')!).render(<ToastProvider><App /></ToastProvider>);
+createRoot(document.getElementById('root')!).render(
+  <ToastProvider><ScreenErrorBoundary><App /></ScreenErrorBoundary></ToastProvider>
+);
