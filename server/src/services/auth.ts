@@ -65,7 +65,7 @@ export class AuthService {
       throw new HttpError(403, 'reserved_recovery_contact', 'Этот резервный контакт зарезервирован и не используется для обычной регистрации.');
     if (isProd && purpose === 'register' && existing) throw bad('already_registered', 'Аккаунт существует. Войдите по паролю или восстановите доступ.');
     if (purpose === 'reset' && !existing) throw bad('not_registered', 'Такой аккаунт не найден — выберите регистрацию.');
-    if (purpose === 'reset' && (existing?.roles.some(r => r === 'admin' || r === 'moderator') || config.adminPhones.includes(phone) || config.moderatorPhones.includes(phone)))
+    if (purpose === 'reset' && (existing?.roles.some(r => r === 'admin' || r === 'moderator') || config.adminPhones.includes(phone) || config.moderatorPhones.includes(phone) || (config.insurerPrimaryPhone && phone === config.insurerPrimaryPhone)))
       throw new HttpError(403, 'staff_recovery_protected', 'Служебный аккаунт восстанавливается только через защищённую процедуру администратора.');
     const now = this.now();
     const ttl = new Date(now.getTime() + CODE_TTL_MS);
@@ -168,7 +168,7 @@ export class AuthService {
       // A plain login never grants additional privileges. The legacy client default
       // applies only to a genuinely new account without a selected category.
       if (purpose === 'reset' && !previous) throw bad('not_registered', 'Такой аккаунт не найден');
-      if (purpose === 'reset' && (previous?.roles.some(r => r === 'admin' || r === 'moderator') || config.adminPhones.includes(phone) || config.moderatorPhones.includes(phone)))
+      if (purpose === 'reset' && (previous?.roles.some(r => r === 'admin' || r === 'moderator') || config.adminPhones.includes(phone) || config.moderatorPhones.includes(phone) || (config.insurerPrimaryPhone && phone === config.insurerPrimaryPhone)))
         throw new HttpError(403, 'staff_recovery_protected', 'Нельзя сбросить служебный пароль только по SMS.');
       if (previous && purpose === 'register' && isProd) throw bad('already_registered', 'Аккаунт уже зарегистрирован');
       if (previous) {
