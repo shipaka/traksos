@@ -11,11 +11,11 @@ function PublicDemoMapBackdrop() {
 
 // Роль выбирают только те, кто подключается работать. Остальные входят по номеру — кабинет определяется по ролям.
 const JOIN_ROLES = [
-  { id: 'master', name: 'Я мастер', hint: 'Электрик, диагност, воздушник, автономщик, шиномонтаж — специализация в профиле' },
-  { id: 'tow', name: 'Я эвакуаторщик', hint: 'Заявки на эвакуацию приходят как звонок' },
-  { id: 'service', name: 'Я рембаза (сервис)', hint: 'Клиенты записываются к вам, мастера советуют вас' },
+  { id: 'master', name: 'Выездной мастер', hint: 'Электрик, диагност, воздушник, автономщик, шиномонтаж — специализация в профиле' },
+  { id: 'tow', name: 'Эвакуатор', hint: 'Заявки на эвакуацию приходят как звонок' },
+  { id: 'service', name: 'СТО грузовых автомобилей', hint: 'Клиенты записываются к вам, мастера советуют вас' },
   { id: 'master_service', name: 'Мастер и своя СТО', hint: 'Два кабинета: выездные услуги отдельно, ремонт на своей рембазе отдельно' },
-  { id: 'insurer', name: 'Я представитель страховой компании', hint: 'Отдельный тип аккаунта: не совмещается с клиентом или мастером' },
+  { id: 'insurer', name: 'Страховая компания', hint: 'Отдельный тип аккаунта: не совмещается с клиентом или мастером' },
 ] as const;
 type JoinRole = (typeof JOIN_ROLES)[number]['id'];
 type Intent = 'help' | 'login' | 'register' | 'join' | 'reset';
@@ -246,23 +246,14 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
       ) : step === 'phone' ? (
         <form className="stack" onSubmit={(e) => { e.preventDefault(); sendCode(); }}>
           {intent === 'register' && <div className="stack" role="group" aria-label="Выбор кабинета при регистрации">
-            <span className="label">Кем вы будете работать в ТракSOS?</span>
+            <span className="label">Как вы пользуетесь ТракSOS?</span>
             <span className="note">Выберите подходящий кабинет. Для клиента и исполнителя используются разные рабочие разделы.</span>
             <div className="grid2">
               <button type="button" className="seg" aria-pressed={customerType === 'owner'} onClick={() => setCustomerType('owner')}>Владелец / автопарк</button>
               <button type="button" className="seg" aria-pressed={customerType === 'driver'} onClick={() => setCustomerType('driver')}>Водитель автопарка</button>
             </div>
             {customerType === 'driver' && <span className="note">После входа владелец сможет привязать вас к своей машине по приглашению или QR-коду.</span>}
-            <span className="label">Работа с ТракSOS — отдельные кабинеты</span>
-            <div className="grid2" role="group" aria-label="Кабинеты исполнителей и партнёров">
-              {JOIN_ROLES.map((r) => (
-                <button key={r.id} type="button" className="seg"
-                  onClick={() => { setCameFromRegister(true); setRole(r.id); setIntent('join'); }}>
-                  {r.name}
-                </button>
-              ))}
-            </div>
-            <span className="note">Администратор и модератор получают служебные права только после отдельной проверки. Для совмещения с работой мастера выберите «Я мастер».</span>
+            <button type="button" className="btn ghost" onClick={() => setIntent('join')}>Хотите работать с ТракSOS? Подключиться как партнёр</button>
           </div>}
           {intent === 'help' && <div className="stack" role="group" aria-label="Тип клиента">
             <span className="label">Как вы пользуетесь транспортом?</span>
@@ -273,7 +264,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
             {customerType === 'driver' && <span className="note">После входа владелец сможет привязать вас к своей машине по приглашению или QR-коду.</span>}
           </div>}
           {intent === 'join' && <div className="stack">
-            {JOIN_ROLES.map((r) => (
+            {JOIN_ROLES.filter((r) => r.id !== 'master_service').map((r) => (
               <button key={r.id} type="button" className="opt" aria-pressed={role === r.id} onClick={() => setRole(r.id)}>
                 <b>{r.name}</b><small>{r.hint}</small>
               </button>
