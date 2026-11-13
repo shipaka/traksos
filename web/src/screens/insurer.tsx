@@ -8,6 +8,8 @@ const labels: Record<string, string> = {
 };
 export function InsurerCabinet() {
   const [workspace,setWorkspace]=useState<'insurance'|'inspection'|'finance'|'common'>('insurance');
+  const finance=useLoad(()=>get<{entries:{id:string;kind:string;entry_type:string;amount_kopecks:string;note:string|null;created_at:string}[];totals:{kind:string;accrued:string;paid:string;balance:string}[]}>('/api/insurer/finance'),[]);
+  const money=(value:string|number)=>new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB'}).format(Number(value)/100);
   const inspections=useLoad(()=>get<any[]>('/api/insurer/inspections'),[],
     event=>event.type==='vehicle_service');
   const requests = useLoad(() => get('/api/insurer/requests'), [],
@@ -99,13 +101,30 @@ export function InsurerCabinet() {
         <p className="note">Назначение выполняет администратор. Выполнение заявки фиксируется отдельно от выдачи диагностической карты.</p>
       </section>}
       {workspace==='finance'&&<section className="stack">
-        <p className="sub">Финансовая информация партнёра по направлениям. Суммы появятся после подключения подтверждённых операций.</p>
-        <div className="cabinet-metrics">
-          {['Страхование','Техосмотры','Всего'].map(title=><div className="card tile" key={title}>
-            <span className="label">{title}</span><b className="tile-value">—</b><small>Нет подключённого финансового реестра</small>
-          </div>)}
-        </div>
-        <p className="note">Не показываем расчётные суммы без данных о подтверждённых начислениях и выплатах.</p>
+        <p className="sub">Подтверждённые финансовые проводки по двум направлениям. Заявки без начислений не считаются доходом.</p>
+        {!finance.data?<div className="empty">{finance.error?'Не удалось загрузить финансы: '+finance.error:'Загружаем финансовый реестр…'}</div>:<>
+          <div className="cabinet-metrics">
+            {(['insurance','inspection'] as const).map(kind=>{
+              const total=finance.data!.totals.find(t=>t.kind===kind);
+              return <div className="card tile" key={kind}>
+                <span className="label">{kind==='insurance'?'Страхование':'Техосмотры'}</span>
+                <b className="tile-value">{money(total?.balance??0)}</b>
+                <small>Начислено: {money(total?.accrued??0)} · Выплачено: {money(total?.paid??0)}</small>
+              </div>;
+            })}
+            <div className="card tile"><span className="label">Общий остаток</span>
+              <b className="tile-value">{money(finance.data.totals.reduce((sum,t)=>sum+Number(t.balance),0))}</b>
+              <small>По всем подтверждённым проводкам</small>
+            </div>
+          </div>
+          <h2>История операций</h2>
+          {finance.data.entries.length===0?<div className="empty">Подтверждённых операций пока нет.</div>:
+            finance.data.entries.map(entry=><article className="card between" key={entry.id}>
+              <div className="stack"><b>{entry.kind==='insurance'?'Страхование':'Техосмотр'} · {entry.entry_type==='accrual'?'Начисление':entry.entry_type==='payout'?'Выплата':'Корректировка'}</b>
+                <small>{fmtTime(entry.created_at)}</small>{entry.note&&<small>{entry.note}</small>}</div>
+              <b>{entry.entry_type==='accrual'?'+':'−'}{money(entry.amount_kopecks)}</b>
+            </article>)}
+        </>}
       </section>}
       {workspace==='common'&&<section className="card stack">
         <h2>Общие разделы партнёра</h2>
