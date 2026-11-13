@@ -132,7 +132,7 @@ export class ShopCatalogService {
   async indexChanges(after: string, limit = 750) {
     const settings = await this.settings.get('shop');
     if (!settings.enabled) return { enabled: false, rows: [], next: null, revision: '0' };
-    if (!/^\\d{1,19}$/.test(after) || BigInt(after) > 9223372036854775807n)
+    if (!/^\d{1,19}$/.test(after) || BigInt(after) > 9223372036854775807n)
       throw bad('bad_cursor', 'Неверная версия справочника');
     const take = Number.isFinite(limit) ? Math.max(1, Math.min(1000, Math.floor(limit))) : 750;
     const latest = await this.db.one<{ revision: string }>(
