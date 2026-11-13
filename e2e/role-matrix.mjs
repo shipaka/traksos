@@ -72,9 +72,9 @@ try {
       }
       if (entry.name === 'insurer') {
         await page.goto(BASE + '/#/insurance', { waitUntil: 'domcontentloaded' });
-        await page.getByRole('heading', { name: 'Страховой партнёр' }).waitFor();
-        await page.getByText(/Подключение страховых продуктов и договоров ещё не запущено/).waitFor();
-        await page.getByRole('link', { name: 'Связаться с поддержкой' }).waitFor();
+        await page.getByRole('heading', { name: 'Кабинет страховщика' }).waitFor();
+        await page.getByText(/Назначенных заявок пока нет/).waitFor();
+        await page.getByRole('link', { name: /Помощь, условия и настройки/ }).waitFor();
       }
       if (entry.name === 'driver') {
         await page.goto(BASE + '/#/fleet', { waitUntil: 'domcontentloaded' });
