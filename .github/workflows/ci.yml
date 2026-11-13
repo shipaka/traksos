@@ -40,6 +40,7 @@ jobs:
           sh -n deploy/backup.sh
           bash -n deploy/doctor.sh
           bash -n deploy/update-site.sh
+          bash -n deploy/verify-shop-closed.sh
           bash -n deploy/diagnose-sms.sh
           bash -n deploy/configure-staff.sh
           bash -n deploy/configure-insurer.sh
