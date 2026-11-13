@@ -618,6 +618,14 @@ export function createApp(d: Deps) {
     return partnerFinance.recordAccrual(c.user,b.requestId,b.amountKopecks,b.note);
   });
 
+  r.post('/api/admin/partner-finance/reversals', ['admin'], (c: AuthedCtx) => {
+    const b=parse(z.object({
+      requestId:z.string().uuid(),amountKopecks:z.number().int().positive().safe(),
+      reason:z.string().trim().min(3).max(1000)
+    }),c.body);
+    return partnerFinance.recordReversal(c.user,b.requestId,b.amountKopecks,b.reason);
+  });
+
   r.post('/api/admin/partner-finance/payouts', ['admin'], (c: AuthedCtx) => {
     const b=parse(z.object({
       requestId:z.string().uuid(),amountKopecks:z.number().int().positive().safe(),
