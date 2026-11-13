@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ApiError, onEvent } from './api.ts';
+import {previewNavigate} from './demo/fullRolePreview.ts';
 import { BRANDS, MODELS, YEARS } from './dict.ts';
 import { reportApiError } from './screens/offers.tsx';
 
@@ -15,7 +16,7 @@ export function useRoute() {
   }, []);
   return r;
 }
-export const go = (path: string) => { location.hash = '#/' + path.replace(/^\//, ''); };
+export const go = (path: string) => { previewNavigate(path); };
 
 // Сессия ------------------------------------------------------------------
 
