@@ -163,6 +163,7 @@ function App() {
   const serviceSandbox = isAdmin && a === 'admin' && b === 'test-center' && route[2] === 'service';
   const fullSandbox = isAdmin && a === 'admin' && b === 'test-center' && PREVIEW_ROLES.includes(route[2] as Role);
   const fullRole = fullSandbox ? route[2] as Role : null;
+  const insurerClientSandbox=fullRole==='insurer'&&route[3]==='client';
   const isModerator = me.roles.includes('moderator') || isAdmin;
   const isStaff = isModerator;
   const isService = me.roles.includes('service');
@@ -175,7 +176,7 @@ function App() {
     : mode === 'performer' ? isPerformer : mode === 'service' ? isService
     : isCustomer || isStaff;
   const allowedMode: Mode = isInsurer ? 'insurer' : permitted ? mode : fallback;
-  const effMode: Mode = fullRole ? previewMode(fullRole) : serviceSandbox ? 'service' : a === 'work' && isPerformer ? 'performer'
+  const effMode: Mode = insurerClientSandbox ? 'client' : fullRole ? previewMode(fullRole) : serviceSandbox ? 'service' : a === 'work' && isPerformer ? 'performer'
     : a === 'admin' && isAdmin ? 'admin' : a === 'moderation' && isModerator ? 'moderator'
     : a === 'base' && isService ? 'service' : a === 'insurance' && isInsurer ? 'insurer' : allowedMode;
 
@@ -235,8 +236,11 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   const route = useRoute();
   const serviceSandbox = route[0]==='admin'&&route[1]==='test-center'&&route[2]==='service';
   const fullRole=currentPreviewRole();
-  const here = fullRole ? '/'+(route.slice(3).join('/')||(['master','tow','master_service'].includes(fullRole)?'work':'')) : serviceSandbox ? '/'+(route.slice(3).join('/')||'base') : '/'+route.join('/');
-  const sandboxHref=(href:string)=>fullRole?previewLink(fullRole,href==='/as/client'?'':href):serviceSandbox?'#/admin/test-center/service'+(href==='/base'||href.startsWith('/base/')?href:'/unavailable'):'#'+href;
+  const here = fullRole ? fullRole==='insurer' ? (route[3]==='client'?'/':('/insurance'+(route.slice(4).length?'/'+route.slice(4).join('/') : '')))
+    : '/'+(route.slice(3).join('/')||(['master','tow','master_service'].includes(fullRole)?'work':'')) : serviceSandbox ? '/'+(route.slice(3).join('/')||'base') : '/'+route.join('/');
+  const sandboxHref=(href:string)=>fullRole ? fullRole==='insurer' ? (route[3]==='client' ? previewLink('insurer','client') : previewLink('insurer',href==='/insurance'||href.startsWith('/insurance/')?href:'unavailable'))
+    : previewLink(fullRole,href==='/as/client'?'':href)
+    :serviceSandbox?'#/admin/test-center/service'+(href==='/base'||href.startsWith('/base/')?href:'/unavailable'):'#'+href;
   // На телефоне оставляем только рабочие действия. Все прежние маршруты
   // сохраняются через меню; компьютерная боковая навигация остаётся полной.
   const tabs: [string, string, string][] = !me ? [] : mode === 'performer'
