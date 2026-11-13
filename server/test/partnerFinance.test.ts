@@ -6,7 +6,7 @@ const admin={id:'admin',roles:['admin']} as any;
 const partner={id:'partner',roles:['insurer']} as any;
 const client={id:'client',roles:['client']} as any;
 
-function mock(request={id:'req',kind:'insurance',assigned_to:'partner',status:'completed'},existing=false){
+function mock(request:{id:string;kind:string;assigned_to:string|null;status:string}={id:'req',kind:'insurance',assigned_to:'partner',status:'completed'},existing=false){
   const queries:{sql:string;params:any[]}[]=[];
   const db:any={
     tx:async(fn:any)=>fn(db),
