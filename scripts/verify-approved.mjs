@@ -13,7 +13,7 @@ const LOCKED_ASSETS = {
   // Exact approved images. Deliberate asset changes require a new owner-approved baseline.
   'web/public/tracksos-approved-truck.webp': 'a6013f354586e669',
   // Exact crop of the original approved Scania R520 reference (no UI baked in).
-  'web/public/tracksos-approved-scania-r520.webp': 'f72c2075c44e46a',
+  'web/public/tracksos-approved-scania-r520.webp': 'f72c2075c44e46a7',
   'web/public/tracksos-approved-map.webp': '994097c8c01b2c80',
   'android/app/src/main/res/drawable-nodpi/splash_truck.webp': '5217954dcb773ecf',
 };
