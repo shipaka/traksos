@@ -18,7 +18,7 @@ function mock(existing: any[] = []) {
       statements.push({ sql, params });
       if (sql.startsWith('select id from users')) return { id: owner.id };
       if (sql.startsWith('insert into vehicles')) return { id: 'new-vehicle' };
-      if (sql.startsWith('select id, driver_id from vehicles')) return { id: params[0], driver_id: null };
+      if (sql.startsWith('select id, driver_id, brand')) return { id: params[0], driver_id: null, brand: 'Scania', model: 'R500', year: 2007, plate: 'А123АА77', vin: details.vehicle.vin };
       if (sql.includes('from users') && sql.includes('insurer')) return { id: insurance.agentId };
       if (sql.startsWith('insert into vehicle_service_requests')) return { id: 'request-1', vehicle_id: params[2] };
       return null;
@@ -60,4 +60,22 @@ test('driver cannot silently add a vehicle to the company garage', async () => {
   const { db, statements } = mock();
   await assert.rejects(new VehicleServiceRequests(db).create(driver, undefined, 'insurance', '', insurance));
   assert.equal(statements.some(x => x.sql.startsWith('insert into vehicles')), false);
+});
+
+test('selected garage vehicle cannot be insured with a different VIN', async () => {
+  const { db, statements } = mock();
+  const changed = { ...insurance, details: {
+    ...details, vehicle: { ...details.vehicle, vin: 'YS2R4X20009999999' },
+  }};
+  await assert.rejects(
+    new VehicleServiceRequests(db).create(owner, 'existing-vehicle', 'insurance', '', changed),
+    /VIN|не совпадают/,
+  );
+  assert.equal(statements.some(x => x.sql.startsWith('insert into vehicle_service_requests')), false);
+});
+
+test('selected garage vehicle accepts matching details', async () => {
+  const { db } = mock();
+  const created = await new VehicleServiceRequests(db).create(owner, 'existing-vehicle', 'insurance', '', insurance);
+  assert.equal(created.vehicle_id, 'existing-vehicle');
 });
