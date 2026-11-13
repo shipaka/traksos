@@ -1,4 +1,5 @@
 // Связь с сервером: HTTP + WebSocket. Токен хранится в localStorage (в Android — тоже, внутри WebView).
+import {currentPreviewRole,rolePreviewApi} from './demo/fullRolePreview.ts';
 
 declare const __API_URL__: string;
 export const API_URL = (window as any).TRAKSOS_API ?? (__API_URL__ || '');
@@ -21,6 +22,9 @@ export class ApiError extends Error {
 }
 
 export async function api<T = any>(method: string, path: string, body?: unknown): Promise<T> {
+  // Fake roles use only in-memory data, never live calls. /api/me refreshes the real admin session.
+  if(currentPreviewRole() && path.startsWith('/api/') && path.split('?')[0] !== '/api/me')
+    return rolePreviewApi(method,path,body) as Promise<T>;
   let r: Response;
   try {
     // Bounded waits are crucial on unstable mobile data. Never retry writes silently.
