@@ -40,7 +40,7 @@ export function VehicleServicesQueue() {
         <div className="between"><b>{r.kind === 'insurance' ? 'Страхование' : 'Техосмотр'} · {r.brand} {r.model ?? ''}</b><span className="pill">{labels[r.status] ?? r.status}</span></div>
         <span className="note">{r.plate ?? 'Без номера'} · {fmtTime(r.created_at)}</span>
         {r.comment && <span className="note">Клиент: {r.comment}</span>}
-        {r.policy_expires_on && <span className="note">Срок полиса: {r.policy_expires_on}</span>}
+        {r.policy_expires_on && <span className="note">Срок полиса: {String(r.policy_expires_on).slice(0, 10)}</span>}
         {r.staff_note && <span className="note">Предыдущий комментарий: {r.staff_note}</span>}
         {r.kind === 'insurance' && r.status === 'sent_to_partner' && (
           <div className="stack">
