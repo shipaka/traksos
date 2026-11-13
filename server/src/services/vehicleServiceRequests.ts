@@ -61,20 +61,29 @@ export class VehicleServiceRequests {
         await q.one('select id from users where id=$1 for update', [owner]);
         const v = insurance!.details.vehicle;
         const plate = v.plate.trim().toUpperCase().replace(/\\s+/g, '');
-        const matches = await q.query<{id:string;brand:string;model:string;year:number}>(
-          `select id,brand,model,year from vehicles where owner_id=$1
-           and upper(regexp_replace(coalesce(plate,''),'\\s+','','g'))=$2`, [owner,plate]);
+        const vin = v.vin.trim().toUpperCase().replace(/\\s+/g, '');
+        const matches = await q.query<{id:string;brand:string;model:string;year:number;plate:string|null;vin:string|null}>(
+          `select id,brand,model,year,plate,vin from vehicles where owner_id=$1
+           and (upper(regexp_replace(coalesce(plate,''),'\\\\s+','','g'))=$2
+             or upper(regexp_replace(coalesce(vin,''),'\\\\s+','','g'))=$3)`,
+          [owner,plate,vin]);
+        // VIN and plate are independent identifiers. Never silently merge records if they disagree.
         if (matches.length > 1 || (matches.length === 1 && (
-          matches[0].brand.toLowerCase() !== v.brand.trim().toLowerCase() ||
-          (matches[0].model ?? '').toLowerCase() !== v.model.trim().toLowerCase() ||
-          Number(matches[0].year) !== Number(v.year)
-        ))) throw bad('vehicle_conflict', 'Номер уже есть в гараже с другими данными. Проверьте автомобиль.');
-        if (matches.length === 1) resolvedId = matches[0].id;
-        else {
+          matches[0].brand.trim().toLowerCase() !== v.brand.trim().toLowerCase() ||
+          (matches[0].model ?? '').trim().toLowerCase() !== v.model.trim().toLowerCase() ||
+          Number(matches[0].year) !== Number(v.year) ||
+          (!!matches[0].vin && matches[0].vin.trim().toUpperCase() !== vin) ||
+          (!!matches[0].plate && matches[0].plate.trim().toUpperCase().replace(/\\s+/g,'') !== plate)
+        ))) throw bad('vehicle_conflict', 'VIN или госномер уже зарегистрирован с другими данными. Проверьте автомобиль.');
+        if (matches.length === 1) {
+          resolvedId = matches[0].id;
+          // Legacy garage entries can lack VIN. Fill it only when no other value exists.
+          if (!matches[0].vin) await q.query('update vehicles set vin=$2 where id=$1 and vin is null', [resolvedId,vin]);
+        } else {
           const created = await q.one<{id:string}>(
-            `insert into vehicles(owner_id,brand,model,year,plate,trailer_plate)
-             values ($1,$2,$3,$4,$5,$6) returning id`,
-            [owner,v.brand.trim(),v.model.trim(),Number(v.year),v.plate.trim(),v.trailerPlate?.trim() || null]);
+            `insert into vehicles(owner_id,brand,model,year,plate,trailer_plate,vin)
+             values ($1,$2,$3,$4,$5,$6,$7) returning id`,
+            [owner,v.brand.trim(),v.model.trim(),Number(v.year),v.plate.trim(),v.trailerPlate?.trim() || null,vin]);
           resolvedId = created!.id;
         }
       }
