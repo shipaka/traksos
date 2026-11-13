@@ -27,6 +27,7 @@ import { OnsiteService } from './services/onsite.ts';
 import { ServiceCenters } from './services/service.ts';
 import { FleetService } from './services/fleet.ts';
 import { VehicleServiceRequests } from './services/vehicleServiceRequests.ts';
+import { PartnerFinance } from './services/partnerFinance.ts';
 import { InsuranceQuoteFlow } from './services/insuranceQuoteFlow.ts';
 import { PrivacyService } from './services/privacy.ts';
 import { StandingService } from './services/standing.ts';
@@ -50,7 +51,7 @@ export interface Deps {
 }
 
 const money = z.number().int().nonnegative();
-const ROLES = ['client', 'driver', 'master', 'tow', 'service', 'moderator', 'admin'];
+const ROLES = ['client', 'driver', 'master', 'tow', 'service', 'insurer', 'moderator', 'admin'];
 
 export function createApp(d: Deps) {
   const now = d.now ?? (() => new Date());
@@ -82,6 +83,7 @@ export function createApp(d: Deps) {
   centers.referral = referral;
   const fleet = new FleetService(d.db, notifier, orders);
   const vehicleRequests = new VehicleServiceRequests(d.db);
+  const partnerFinance = new PartnerFinance(d.db);
   const insuranceFlow = new InsuranceQuoteFlow(d.db);
   const privacy = new PrivacyService(d.db, notifier, now);
   const standing = new StandingService(d.db, now, settings);
@@ -610,6 +612,7 @@ export function createApp(d: Deps) {
   });
   r.get('/api/insurer/requests', ['insurer'], (c: AuthedCtx) => vehicleRequests.insurerQueue(c.user));
   r.get('/api/insurer/inspections', ['insurer'], (c: AuthedCtx) => vehicleRequests.inspectionQueue(c.user));
+  r.get('/api/insurer/finance', ['insurer'], (c: AuthedCtx) => partnerFinance.mine(c.user));
   r.patch('/api/insurer/inspections/:id', ['insurer'], async (c: AuthedCtx) => {
     const b = parse(z.object({status:z.enum(['completed','rejected']),note:z.string().max(2000).optional()}),c.body);
     const updated = await vehicleRequests.updateInspection(c.user,c.params.id,b.status,b.note);
