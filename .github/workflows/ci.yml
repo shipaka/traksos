@@ -66,6 +66,7 @@ jobs:
           node e2e/admin-ops.mjs e2e/shots
           SHOTS_DIR=e2e/shots/roles node e2e/role-matrix.mjs
           SHOTS_DIR=e2e/shots/insurance node e2e/insurance-flow.mjs
+          node e2e/admin-master-switch.mjs
       - name: Снимки экранов каждой проверяемой версии
         if: always()
         uses: actions/upload-artifact@v4
