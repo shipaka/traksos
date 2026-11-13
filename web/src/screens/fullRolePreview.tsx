@@ -1,7 +1,7 @@
 // The SAME registered account screens, not a condensed administration mock.
 // Role data are only provided by fullRolePreview.ts; no actual user is impersonated.
 import type {MouseEvent} from 'react';
-import {Home,NewOrder,Orders,Garage,Profile} from './client.tsx';
+import {Home,Sos,Consult,NewOrder,Orders,Garage} from './client.tsx';
 import {Work} from './performer.tsx';
 import {PerformerHub,AboutSection,PhoneSection,CarsSection,ScheduleSection,TaxSection,MoneySection,
  FilterSection,LevelSection} from './performerCabinet.tsx';
@@ -87,8 +87,8 @@ export function FullRolePreviewPage({role,parts}:{role:Role;parts:string[]}){
  const client=['client','owner','driver'].includes(role);
  if(client){
   if(!a)return <Home/>;
-  if(a==='new'&&b)return <NewOrder service={b}/>;
-  if(a==='sos')return <NewOrder service="tow"/>;
+  if(a==='new'&&b)return b==='consult'?<Consult/>:<NewOrder service={b}/>;
+  if(a==='sos')return <Sos/>;
   if(a==='orders')return <Orders as="client"/>;
   if(a==='order'&&b)return <Order id={b}/>;
   if(a==='garage')return <Garage/>;
