@@ -262,6 +262,24 @@ export class VehicleServiceRequests {
        order by r.created_at desc limit 100`, [user.id]);
   }
 
+  async assignInspection(staff: AuthUser, requestId: string, partnerId: string) {
+    if (!staff.roles?.some(role => ['admin','moderator'].includes(role))) throw forbidden('Нет доступа');
+    return this.db.tx(async q => {
+      const partner = await q.one<{id:string}>(
+        `select id from users where id=$1 and 'insurer'=any(roles) and status='active'`, [partnerId]);
+      if (!partner) throw notFound('Партнёр техосмотра не найден');
+      const request = await q.one<any>(
+        `update vehicle_service_requests set assigned_to=$3, status='sent_to_partner', updated_at=now()
+         where id=$1 and kind='inspection' and status in ('submitted','in_review')
+           and exists(select 1 from users where id=$2 and roles && '{admin,moderator}'::text[])
+         returning *`, [requestId,staff.id,partnerId]);
+      if (!request) throw bad('inspection_not_assignable','Техосмотр нельзя назначить на этом этапе');
+      await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
+        [staff.id,'inspection.assign',requestId,{partnerId}]);
+      return request;
+    });
+  }
+
   async inspectionQueue(user: AuthUser) {
     if (!user.roles?.includes('insurer')) throw forbidden('Нет доступа');
     // Only inspections assigned to this partner; insurance data never leaks into this workspace.
