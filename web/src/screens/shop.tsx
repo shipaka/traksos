@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { get, post, put, del, rub, fmtTime, API_URL } from '../api.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '../ui.tsx';
 import { syncOfflineParts, searchOfflineParts } from '../shopOffline.ts';
+import { AdminShopCatalog } from './shopCatalogAdmin.tsx';
 
 const CART_KEY = 'traksos.cart';
 type Cart = Record<string, number>;
@@ -42,6 +43,13 @@ export function Shop() {
     : Promise.resolve({ items: [], total: 0, page: 0, limit: 24 }),
     [c.data?.enabled, cat, debouncedTerm, page], (e) => e.type === 'shop');
   const local = useLoad(() => searchOfflineParts(debouncedTerm, cat), [debouncedTerm, cat, offlineVersion]);
+  // A separate small result set for reviewed reference entries without live pricing.
+  // Do not fetch it before a search/category selection or while the shop is closed.
+  const references = useLoad(() =>
+    c.data?.enabled && (debouncedTerm.trim() || cat !== 'all')
+      ? get(`/api/shop/catalog/search?q=${encodeURIComponent(debouncedTerm)}&category=${encodeURIComponent(cat)}`)
+      : Promise.resolve({ enabled: false, items: [], total: 0 }),
+    [c.data?.enabled, debouncedTerm, cat]);
   const d = c.data;
   if (!d) return <main><Loading error={c.error} /></main>;
   const count = Object.values(cart).reduce((a, b) => a + b, 0);
@@ -139,6 +147,15 @@ export function Shop() {
           ))}
         </div>
       )}
+      {(references.data?.items?.length ?? 0) > 0 && <div className="stack">
+        <b>Ещё детали из справочника</b>
+        <span className="note">Найдены по номеру или названию, но цена и наличие пока не подтверждены. Эти позиции нельзя заказать без проверки поставщика.</span>
+        {references.data.items.map((p: any) => <div key={p.id} className="card" style={{ padding: 12 }}>
+          <b>{p.name}</b>
+          <span className="note">{p.brand} · {p.article} · {d.categories[p.category] ?? p.category}</span>
+          <span className="pill" style={{ alignSelf: 'flex-start' }}>Стоимость уточняется</span>
+        </div>)}
+      </div>}
       {search.data && search.data.total > search.data.limit && (
         <div className="between">
           <button className="btn ghost small" disabled={page === 0} onClick={() => setPage((n) => Math.max(0, n - 1))}>Назад</button>
@@ -324,15 +341,16 @@ async function resizeImage(file: File): Promise<string> {
 }
 
 export function AdminShop() {
-  const [tab, setTab] = useState<'orders' | 'products' | 'settings'>('orders');
+  const [tab, setTab] = useState<'orders' | 'products' | 'catalog' | 'settings'>('orders');
   return (
     <div className="stack">
       <ShopSwitch />
       <div className="scroll-x" role="tablist">
-        {([['orders', 'Заказы'], ['products', 'Товары'], ['settings', 'Получение и тексты']] as const).map(([k, n]) => <button key={k} className="chip" role="tab" aria-pressed={tab === k} onClick={() => setTab(k)}>{n}</button>)}
+        {([['orders', 'Заказы'], ['products', 'Товары'], ['catalog', 'Справочник'], ['settings', 'Получение и тексты']] as const).map(([k, n]) => <button key={k} className="chip" role="tab" aria-pressed={tab === k} onClick={() => setTab(k)}>{n}</button>)}
       </div>
       {tab === 'orders' && <AdminShopOrders />}
       {tab === 'products' && <AdminProducts />}
+      {tab === 'catalog' && <AdminShopCatalog />}
       {tab === 'settings' && <ShopSettings />}
     </div>
   );
