@@ -66,11 +66,12 @@ try {
     const response = await fetch(BASE+'/api/me',{headers:{authorization:'Bearer '+token}});
     if (response.status !== 401) throw new Error('Expired preview API token was accepted');
     await page.reload();
-    await page.locator('main.public-home').waitFor({timeout:20_000});
+    // The existing API client correctly redirects a 401 to #/login.
+    await page.locator('input[type=tel]').waitFor({timeout:20_000});
+    if (!page.url().includes('#/login'))
+      throw new Error('Expired preview did not redirect to login');
     if (await page.getByRole('heading',{name:'Тестирование кабинетов'}).count())
       throw new Error('Expired browser session still displays administrator preview');
-    await page.goto(BASE+'/#/login');
-    await page.locator('input[type=tel]').waitFor({timeout:20_000});
     await context.close();
   }
   const relog = await fetch(BASE+'/api/auth/login',{
