@@ -45,3 +45,51 @@ try {
   console.log('Admin and master cabinets switch correctly within one account');
   await context.close();
 } finally {await browser.close();}
+
+const modDb = new pg.Client({ connectionString: 'postgres://postgres@127.0.0.1:5432/traksos' });
+await modDb.connect();
+try {
+  const row = await modDb.query(
+    "update users set roles=ARRAY['master','moderator']::text[] where phone=$1 and 'master'=any(roles) returning roles",
+    ['+79990000147']
+  );
+  if (row.rowCount !== 1) throw new Error('Synthetic moderator/master account missing');
+} finally { await modDb.end(); }
+const moderatorLogin = await fetch(BASE+'/api/auth/login', {
+  method: 'POST', headers: {'content-type':'application/json'},
+  body: JSON.stringify({ phone:'+79990000147', password:'Test-Role-Only-2026!' })
+});
+if (!moderatorLogin.ok) throw new Error('Moderator/master login failed');
+const moderator = await moderatorLogin.json();
+if (!moderator.user.roles.includes('moderator') || !moderator.user.roles.includes('master')
+  || moderator.user.roles.includes('admin')) throw new Error('Wrong moderator roles');
+for(const endpoint of ['/api/admin/stats','/api/admin/summary','/api/admin/settings',
+                        '/api/admin/users','/api/admin/orders','/api/admin/agent-report']) {
+  const response = await fetch(BASE+endpoint, {headers:{authorization:'Bearer '+moderator.token}});
+  if(response.status!==403) throw new Error('Moderator may access '+endpoint+' with HTTP '+response.status);
+}
+const moderatorCases = await fetch(BASE+'/api/mod/cases',{headers:{authorization:'Bearer '+moderator.token}});
+if(!moderatorCases.ok) throw new Error('Moderator cannot access cases');
+const mb = await chromium.launch();
+try {
+  const context = await mb.newContext({viewport:{width:390,height:844},locale:'ru-RU'});
+  const page = await context.newPage();
+  await page.addInitScript(token => {
+    localStorage.setItem('traksos.token',token);
+    localStorage.setItem('traksos.mode','moderator');
+  }, moderator.token);
+  await page.goto(BASE+'/#/moderation');
+  await page.getByRole('heading',{name:'Модерация'}).waitFor();
+  await page.locator('.account-menu > summary').click();
+  const nav = page.getByRole('navigation',{name:'Все разделы кабинета'});
+  await nav.getByRole('link',{name:'Выездной мастер'}).click();
+  await page.waitForURL(/#\\/work/);
+  await page.locator('.account-menu > summary').click();
+  await nav.getByRole('link',{name:'Модератор'}).click();
+  await page.waitForURL(/#\\/moderation/);
+  await page.goto(BASE+'/#/admin');
+  await page.getByRole('heading',{name:'Модерация'}).waitFor();
+  if (await page.getByRole('button',{name:'Статистика'}).count()) throw new Error('Moderator sees admin statistics');
+  await context.close();
+} finally { await mb.close(); }
+console.log('Moderator/master role switching and financial-report access restrictions OK');
