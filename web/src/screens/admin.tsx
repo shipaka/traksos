@@ -19,10 +19,18 @@ export function Admin({ initialSection }: { initialSection?: string }) {
   const [tab, setTab] = useState<AdminSection>(() =>
     ADMIN_SECTIONS.includes(initialSection as AdminSection) ? initialSection as AdminSection : 'queue');
   return (
-    <main>
-      <h1>Администратор</h1>
-      <a className="btn ghost small" href="#/admin/test-center">Тестирование всех кабинетов (без реальных действий)</a>
-      <div className="scroll-x">
+    <main className="admin-workspace">
+      <section className="admin-command-hero">
+        <div className="admin-command-art" aria-hidden="true"><span>◈</span><i/><i/><i/></div>
+        <span className="admin-command-eyebrow">TRACKSOS · ОПЕРАЦИОННЫЙ ЦЕНТР</span>
+        <h1>Администратор</h1>
+        <p>Заявки, партнёры, страхование, магазин и качество сервиса — в одном рабочем пространстве.</p>
+        <div className="admin-command-actions">
+          <button type="button" className="btn" onClick={()=>setTab('summary')}>Открыть общую сводку</button>
+          <a className="btn ghost" href="#/admin/test-center">Тестирование всех кабинетов (без реальных действий)</a>
+        </div>
+      </section>
+      <div className="scroll-x admin-section-tabs">
         {([['queue', 'Модерация'], ['summary', 'Сводка'], ['shop', 'Магазин'], ['vehicleServices', 'Страхование и ТО'], ['stats', 'Статистика'], ['demand', 'Проблемные заявки'], ['announcements', 'Объявления и комиссии'], ['search', 'Поиск'], ['support', 'Обращения'], ['verify', 'Проверка'], ['bases', 'Рембазы'], ['orders', 'Заявки'], ['people', 'Все люди'], ['payments', 'Деньги'], ['dispatch', 'Распределение'], ['offers', 'Оферты'], ['flagged', 'Подозрительное'], ['settings', 'Настройки']] as const).map(([id, n]) => (
           <button key={id} className="chip" aria-pressed={tab === id} onClick={() => setTab(id)}>{n}</button>
         ))}
