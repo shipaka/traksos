@@ -160,7 +160,7 @@ function App() {
     case 'r': screen = <Invite />; break;
     case 'work':
       if (!isPerformer) { screen = <Home />; break; }
-      screen = b === 'profile' || (b === 'me' && !route[2]) ? <PerformerHub />
+      screen = !me.performer || b === 'profile' || (b === 'me' && !route[2]) ? <PerformerHub />
         : b === 'me' ? ({ about: <AboutSection />, phone: <PhoneSection />, schedule: <ScheduleSection />, cars: <CarsSection />, tax: <TaxSection />, money: <MoneySection />, level: <LevelSection /> } as Record<string, JSX.Element>)[route[2]] ?? <PerformerHub />
         : b === 'filter' ? <FilterSection /> : b === 'jobs' ? <Orders as="performer" /> : b === 'docs' ? <Documents /> : <Work />;
       break;
