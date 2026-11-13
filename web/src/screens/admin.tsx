@@ -57,9 +57,10 @@ export function Admin({ initialSection }: { initialSection?: string }) {
     !search || (item.name + ' ' + item.description).toLocaleLowerCase('ru-RU').includes(search))
   })).filter(group => group.items.length > 0);
   const navigate = (id: AdminSection) => {
-    setTab(id);
+    // Route changes already remount Admin with a fresh initialSection in main.tsx.
+    // Do not render a temporary tab before changing the hash: fast input would be
+    // detached during that second mount (admin search losing what was typed).
     setNavOpen(false);
-    // A real deep link survives reload and works from any cabinet.
     location.hash = '#/admin/section/' + id;
   };
   return (
