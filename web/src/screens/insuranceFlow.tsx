@@ -146,6 +146,7 @@ export function InsuranceThread({requestId}:{requestId:string}){
   const source=useLoad(()=>get<CaseData>('/api/insurance/requests/'+requestId),
     [requestId],e=>e.type==='vehicle_service'&&e.requestId===requestId);
   const [message,setMessage]=useState('');
+  const [chatExpanded,setChatExpanded]=useState(false);
   const [drafts,setDrafts]=useState([{company:'',product:'',price:'',description:'',coverage:''}]);
   const [choice,setChoice]=useState('');
   const [expiresOn,setExpiresOn]=useState('');
@@ -217,13 +218,7 @@ export function InsuranceThread({requestId}:{requestId:string}){
         </div>
       </section>}
       <div className="insurance-conversation">
-        <section className="insurance-conversation-feed card stack" aria-label="Переписка по страховой заявке">
-          <div className="between"><h2>Переписка</h2><span className="pill">{d.messages.length} сообщений</span></div>
-          {d.messages.length===0&&<div className="empty">Заявка получена. Напишите агенту вопрос.</div>}
-          {d.messages.map(m=><div key={m.id} className={'insurance-message '+(m.sender==='you'?'mine':'')}>
-            <small>{m.sender==='you'?'Вы':m.sender==='agent'?'Страховой агент':'Система'} · {fmtTime(m.created_at)}</small>
-            <div>{m.body}</div>
-          </div>)}
+        <section className="insurance-conversation-feed card stack" aria-label="Страховая сделка">
           {d.proposals.length>0&&<div className="insurance-offers">
             <h3>Предложения страховых компаний · {d.proposals.length}</h3>
             <p className="note">Окончательные условия и цена уточняются агентом перед выдачей полиса.</p>
@@ -248,6 +243,19 @@ export function InsuranceThread({requestId}:{requestId:string}){
             <span>Агент прикрепил итоговый PDF. Документ доступен в этой переписке.</span>
             <button type="button" className="btn" onClick={download}>Скачать PDF-полис</button>
           </div>}
+          <section className="insurance-chat-panel stack" aria-label="Уточнения по заявке">
+            <button type="button" className="btn ghost" aria-expanded={chatExpanded}
+              onClick={()=>setChatExpanded(v=>!v)}>
+              {chatExpanded?'Скрыть переписку':'Показать переписку'} · {d.messages.length}
+            </button>
+            {chatExpanded&&<>
+              {d.messages.length===0&&<div className="empty">Сообщений пока нет.</div>}
+              {d.messages.map(m=><div key={m.id} className={'insurance-message '+(m.sender==='you'?'mine':'')}>
+                <small>{m.sender==='you'?'Вы':m.sender==='agent'?'Страховой агент':'Система'} · {fmtTime(m.created_at)}</small>
+                <div>{m.body}</div>
+              </div>)}
+            </>}
+          </section>
           <div className="insurance-chat-editor">
             <label>Сообщение агенту / клиенту
               <textarea className="field" maxLength={2000} rows={3} value={message}
