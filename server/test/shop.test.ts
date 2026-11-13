@@ -133,7 +133,7 @@ test('Поиск, компактный кэш и история техники; 
 test('Обновление локального каталога — только изменённые артикулы, без цен и персональных данных', async () => {
   ok(await t.api('PUT', '/api/admin/settings/shop', { enabled: true }, admin.token));
   const v0 = ok(await t.api('GET', '/api/shop/index/manifest', undefined, client.token));
-  assert.match(v0.revision, /^\\d+$/, 'версия изменений — последовательность, не timestamp');
+  assert.match(v0.revision, /^\d+$/, 'версия изменений — последовательность, не timestamp');
   const product = ok(await t.api('POST', '/api/admin/shop/products', {
     category: 'trailer_brakes', name: 'Колодки тормозные прицепа TEST',
     brand: 'TEST-BPW', article: 'TR-100', price: 99_000, stock: 1,
