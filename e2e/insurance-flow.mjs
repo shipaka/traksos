@@ -77,7 +77,7 @@ const browser=await chromium.launch();
 try{
   for(const item of [
     {name:'owner',token:owner.token,hash:'#/garage',heading:'Мой гараж',expected:'Страхование и техосмотр'},
-    {name:'insurer',token:partner.token,hash:'#/insurance',heading:'Кабинет страховщика',expected:'Полис оформлен'},
+    {name:'insurer',token:partner.token,hash:'#/insurance',heading:'Страхование',expected:'Полис оформлен'},
     {name:'admin',token:admin.token,hash:'#/admin',heading:'Администратор',expected:'Страхование и ТО'}
   ]){
     const context=await browser.newContext({...devices['Pixel 7'],deviceScaleFactor:1,locale:'ru-RU'});
