@@ -50,7 +50,7 @@ export class VehicleServiceRequests {
   }
 
   async create(user: AuthUser, vehicleId: string, kind: VehicleServiceKind, comment?: string,
-    insurance?: {agentId:string; details:{ applicant:{firstName:string;lastName:string;middleName?:string}; vehicle:Record<string,string>}}) {
+    insurance?: {agentId:string; details:{ applicant:{firstName:string;lastName:string;middleName?:string}; vehicle:Record<string,string>; consentAt?:string}}) {
     const owner = user.owner_id ?? user.id;
     const v = await this.db.one<any>(
       'select id, driver_id from vehicles where id=$1 and owner_id=$2', [vehicleId, owner]);
