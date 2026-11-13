@@ -305,8 +305,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {me && mode === 'moderator' && <span className="pill accent">модерация</span>}
           {me && mode === 'insurer' && <span className="pill accent">страхование</span>}
           {me && mode === 'service' && <span className="pill accent">рембаза</span>}
-          {me && <a href="#/help" className="bell" aria-label="Справка">?</a>}
-          {me && <Bell />}
+          {me && !serviceSandbox && <a href="#/help" className="bell" aria-label="Справка">?</a>}
+          {me && !serviceSandbox && <Bell />}
           {me && <details className="account-menu" key={here}>
             <summary aria-label="Открыть меню кабинета">☰ <span>Меню</span></summary>
             <nav aria-label="Все разделы кабинета">
@@ -318,9 +318,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                 <a href="#/as/performer" aria-current={mode === 'performer' ? 'page' : undefined}>Выездной мастер</a>
               </>}
               <span className="account-menu-heading">Мой кабинет</span>
-              {accountLinks.map(([href, label]) => <a key={href} href={'#' + href}>{label}</a>)}
+              {accountLinks.map(([href, label]) => <a key={href} href={sandboxHref(href)}>{label}</a>)}
               <span className="account-menu-heading">Помощь и документы</span>
-              {helpLinks.map(([href, label]) => <a key={href} href={'#' + href}>{label}</a>)}
+              {helpLinks.map(([href, label]) => <a key={href} href={sandboxHref(href)}>{label}</a>)}
             </nav>
           </details>}
         </div>
@@ -341,14 +341,14 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                       ? [...tabs, ['/profile', '◉', 'Аккаунт']]
                       : mode === 'moderator' ? [...tabs, ['/profile', '◉', 'Аккаунт']]
                       : [...tabs, ['/as/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]).map(([href, ic, name]) => (
-                <a key={href} href={'#' + href} className={`desktop-nav-link ${here === href || (href !== '/' && here.startsWith(href + '/')) ? 'active' : ''} ${href === '/sos' ? 'desktop-nav-sos' : ''}`}>
+                <a key={href} href={sandboxHref(href)} className={`desktop-nav-link ${here === href || (href !== '/' && here.startsWith(href + '/')) ? 'active' : ''} ${href === '/sos' ? 'desktop-nav-sos' : ''}`}>
                   <span aria-hidden="true">{ic}</span><span>{name}</span>
                 </a>
               ))}
               {mode === 'client' && <>
                 <div className="desktop-sidebar-title desktop-nav-section">Дополнительно</div>
                 {([...(me && !me.owner_id && !me.roles.includes('driver') ? [['/fleet','▣','Мой парк']] as [string,string,string][] : []),['/support','?','Поддержка'],['/profile','◉','Профиль']] as [string,string,string][]).map(([href, ic, name]) => (
-                  <a key={href} href={'#' + href} className={`desktop-nav-link ${here === href || here.startsWith(href + '/') ? 'active' : ''}`}>
+                  <a key={href} href={sandboxHref(href)} className={`desktop-nav-link ${here === href || here.startsWith(href + '/') ? 'active' : ''}`}>
                     <span aria-hidden="true">{ic}</span><span>{name}</span>
                   </a>
                 ))}
@@ -370,7 +370,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       {tabs.length > 0 && !(route[0] === 'work' && ['profile', 'docs'].includes(route[1] ?? '')) && !(route[0] === 'base' && route[1] === 'me') && (
         <nav className="tabbar">
           {tabs.map(([href, ic, name]) => (
-            <a key={href} href={'#' + href} className={`${here === href || (href !== '/' && here.startsWith(href + '/') && href !== '/work' && href !== '/base') ? 'on' : ''} ${href === '/sos' ? 'sosTab' : ''}`}>
+            <a key={href} href={sandboxHref(href)} className={`${here === href || (href !== '/' && here.startsWith(href + '/') && href !== '/work' && href !== '/base') ? 'on' : ''} ${href === '/sos' ? 'sosTab' : ''}`}>
               {href === '/sos' ? <span className="sosDot">SOS</span> : <><span className="ic">{ic}</span>{name}</>}
             </a>
           ))}
