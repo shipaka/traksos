@@ -145,7 +145,7 @@ function Payments() {
   );
 }
 
-function Flagged() {
+export function Flagged() {
   const list = useLoad(() => get('/api/admin/chat/flagged'), []);
   if (!list.data) return <Loading error={list.error} />;
   if (!list.data.length) return <div className="empty">Ничего подозрительного</div>;
@@ -207,7 +207,7 @@ function Dispatch() {
 
 // Проверка исполнителей -------------------------------------------------------
 
-function Verify() {
+export function Verify() {
   const q = useLoad(() => get('/api/admin/verification'), [], (e) => e.type === 'verification_queue');
   if (!q.data) return <Loading error={q.error} />;
   if (!q.data.length) return <div className="empty">Очередь пуста — все проверены</div>;
