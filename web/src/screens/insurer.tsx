@@ -77,7 +77,7 @@ export function InsurerCabinet({section}:{section?:string}={}){
       </div>
       {stageFocus&&<div className="banner" role="status">Раздел: <b>{status[stageFocus]??stageFocus}</b>. <button className="btn ghost small" type="button" onClick={()=>setStageFocus('')}>Все заявки</button></div>}
       {!data.data&&<div className="empty">{data.error??'Загружаем страховые заявки…'}</div>}
-      {!!data.data&&!visible.length&&<div className="empty">Заявок по выбранному фильтру пока нет.
+      {!!data.data&&!visible.length&&<div className="empty">{rows.length===0?'Назначенных заявок пока нет.':'Заявок по выбранному фильтру пока нет.'}
         {preview&&' Создайте первую заявку из тестового кабинета клиента.'}</div>}
       <div className="insurer-case-grid">
         {visible.map(r=><article className="insurer-case-card" key={r.id}>
