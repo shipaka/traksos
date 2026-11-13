@@ -61,7 +61,7 @@ if [[ -d backups ]] && find backups -maxdepth 1 -type f -name '*.dump' -size +0c
     flag "Backups appear older than 48 hours"
   fi
   # Validate only the format/index of the latest dump; do not expose its contents.
-  latest="$(find backups -maxdepth 1 -type f -name '*.dump' -size +0c -printf '%T@ %p\\n' 2>/dev/null | sort -nr | head -n 1 | cut -d' ' -f2-)"
+  latest="$(find backups -maxdepth 1 -type f -name '*.dump' -size +0c -printf '%T@ %p\n' 2>/dev/null | sort -nr | head -n 1 | cut -d' ' -f2-)"
   if command -v pg_restore >/dev/null 2>&1; then
     if pg_restore --list "$latest" >/dev/null 2>&1; then
       pass "Latest .dump archive catalog can be read"
