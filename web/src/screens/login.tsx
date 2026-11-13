@@ -89,7 +89,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
       const roles: string[] = r.user?.roles ?? [];
       // Dual-role admins may choose a preferred workspace on their own device.
       // A new master registration still goes to the profile first.
-      const preferredMode = localStorageGet('traksos.mode');
+      const preferredMode = (() => { try { return localStorage.getItem('traksos.mode'); } catch { return null; } })();
       const isAdminMaster = roles.includes('admin') && roles.includes('master');
       location.hash = qr ? '#/qr/' + qr
         : intent === 'join' && role === 'insurer' ? '#/insurance'
