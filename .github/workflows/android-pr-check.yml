@@ -41,7 +41,7 @@ jobs:
 
       - name: Assemble exact PR web assets
         run: |
-          npm ci
+          npm install
           npm -w web run build
           node scripts/verify-approved.mjs
           mkdir -p android/app/src/main/assets/www
