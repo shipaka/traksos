@@ -48,14 +48,21 @@ try {
   page.on('request',r=>{
     if(r.url().includes('/api/') && !['GET','HEAD'].includes(r.method())) writes.push(r.method());
   });
-  for(const label of ['Клиент','Владелец / автопарк','Водитель автопарка','Выездной мастер',
-    'Эвакуаторщик','Рембаза / СТО','Мастер и своя СТО','Страховой партнёр','Модератор','Администратор']){
-    const role=page.getByRole('group',{name:'Выбор тестового кабинета'}).getByRole('button',{name:label});
-    await role.click();
-    if(await role.getAttribute('aria-pressed')!=='true')throw new Error('Sandbox role failed: '+label);
-    await page.getByRole('tab',{name:'Проверка ошибок'}).click();
-    await page.getByRole('button',{name:'Смоделировать отсутствие связи'}).click();
-    await page.getByRole('alert').getByText('Нет связи с сервером.',{exact:false}).waitFor();
+  for(const [id,label] of [
+    ['client','Клиент'],['owner','Владелец / автопарк'],['driver','Водитель автопарка'],
+    ['master','Выездной мастер'],['tow','Эвакуаторщик'],['service','Рембаза / СТО'],
+    ['master_service','Мастер и своя СТО'],['insurer','Страховой партнёр'],
+    ['moderator','Модератор'],['admin','Администратор'],
+  ]){
+    await page.locator('a.sandbox-role-card[href="#/admin/test-center/'+id+'"]').click();
+    await page.getByRole('main',{name:'Тестовый кабинет: '+label}).waitFor();
+    // Real-looking separate role dashboard, working sections and demo-only actions.
+    await page.getByRole('navigation',{name:'Разделы тестового кабинета'})
+      .getByRole('button',{name:'▤',exact:false}).click();
+    await page.getByRole('button',{name:'Создать тестовую заявку'}).click();
+    await page.getByRole('alert').getByText('Укажи описание', {exact:false}).waitFor();
+    await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
+    await page.getByRole('heading',{name:'Тестирование кабинетов'}).waitFor();
   }
   if(writes.length)throw new Error('Sandbox unexpectedly changed live API');
   await page.getByRole('link',{name:'Вернуться в админку'}).click();

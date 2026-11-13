@@ -30,6 +30,7 @@ try {
     [hash,new Date(Date.now()+30*60_000),original.id],
   );
   browser = await chromium.launch();
+  await (await import('node:fs/promises')).mkdir('e2e/shots/sandbox',{recursive:true});
   const sessions = [];
   for (const width of [390,1440]) {
     const context = await browser.newContext({ viewport: { width, height: 900 }, locale: 'ru-RU' });
@@ -45,14 +46,21 @@ try {
     const previewLink = page.getByRole('link',{name:/Тестирование всех кабинетов/}).first();
     await previewLink.click();
     await page.getByRole('heading',{name:'Тестирование кабинетов'}).waitFor();
-    for (const label of ['Клиент','Владелец / автопарк','Водитель автопарка',
-      'Выездной мастер','Эвакуаторщик','Рембаза / СТО','Мастер и своя СТО',
-      'Страховой партнёр','Модератор','Администратор']) {
-      const role = page.getByRole('group',{name:'Выбор тестового кабинета'})
-        .getByRole('button',{name:label,exact:true});
-      await role.click();
-      if (await role.getAttribute('aria-pressed') !== 'true')
-        throw new Error('Preview role switch failed: '+label+' at '+width);
+    for (const [id,label] of [
+      ['client','Клиент'],['owner','Владелец / автопарк'],['driver','Водитель автопарка'],
+      ['master','Выездной мастер'],['tow','Эвакуаторщик'],['service','Рембаза / СТО'],
+      ['master_service','Мастер и своя СТО'],['insurer','Страховой партнёр'],
+      ['moderator','Модератор'],['admin','Администратор'],
+    ]) {
+      const link=page.locator('a.sandbox-role-card[href="#/admin/test-center/'+id+'"]');
+      await link.click();
+      await page.waitForURL('**/#/admin/test-center/'+id);
+      await page.getByRole('main',{name:'Тестовый кабинет: '+label}).waitFor();
+      await page.screenshot({path:'e2e/shots/sandbox/'+id+'-'+width+'.png',fullPage:true});
+      await page.locator('.sandbox-nav button').nth(1).click();
+      await page.getByRole('button',{name:'Создать тестовую заявку'}).waitFor();
+      await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
+      await page.getByRole('heading',{name:'Тестирование кабинетов'}).waitFor();
     }
     if (errors.length) throw new Error('Browser error at '+width+': '+errors.join('; '));
     const token = await page.evaluate(()=>localStorage.getItem('traksos.token'));
