@@ -10,6 +10,8 @@ export function VehicleServicesQueue() {
   const { busy, run } = useAction();
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [expiry, setExpiry] = useState<Record<string, string>>({});
+  const [accrualAmounts,setAccrualAmounts]=useState<Record<string,string>>({});
+  const [accrualReasons,setAccrualReasons]=useState<Record<string,string>>({});
   const labels: Record<string, string> = {
     submitted: 'Подана', in_review: 'На рассмотрении', need_documents: 'Нужны документы',
     sent_to_partner: 'Передана партнёру', completed: 'Завершена',
@@ -92,6 +94,34 @@ export function VehicleServicesQueue() {
             <span className="note">Пока доступны партнёры с ролью insurer. Отдельные права оператора техосмотра будут добавлены позднее.</span>
           </div>
         )}
+        {r.status==='completed'&&r.assigned_to&&<details className="stack">
+          <summary><b>Подтвердить начисление партнёру</b></summary>
+          <p className="note">Только после проверки основания и суммы. Повторное начисление по заявке сервер отклонит.</p>
+          <label className="stack">Сумма начисления, ₽
+            <input className="field" type="number" min="0.01" step="0.01" inputMode="decimal"
+              value={accrualAmounts[r.id]??''}
+              onChange={e=>setAccrualAmounts(v=>({...v,[r.id]:e.target.value}))}/>
+          </label>
+          <label className="stack">Основание начисления
+            <textarea className="field" maxLength={1000} value={accrualReasons[r.id]??''}
+              onChange={e=>setAccrualReasons(v=>({...v,[r.id]:e.target.value}))}
+              placeholder="Номер акта, подтверждённый расчёт комиссии или другое основание"/>
+          </label>
+          <button type="button" className="btn small" disabled={busy}
+            onClick={async()=>{
+              const raw=(accrualAmounts[r.id]??'').trim().replace(',','.');
+              const amount=Number(raw);
+              const amountKopecks=Math.round(amount*100);
+              const reason=(accrualReasons[r.id]??'').trim();
+              if(!raw||!Number.isFinite(amount)||amount<=0||Math.abs(amount*100-amountKopecks)>0.000001||!Number.isSafeInteger(amountKopecks)||reason.length<3){
+                window.alert('Укажите корректную сумму с точностью до копейки и основание начисления.');return;
+              }
+              if(!window.confirm('Подтвердить начисление '+amount.toFixed(2)+' ₽ партнёру?'))return;
+              const result=await run(()=>post('/api/admin/partner-finance/accruals',
+                {requestId:r.id,amountKopecks,note:reason}),'Начисление зарегистрировано');
+              if(result){setAccrualAmounts(v=>({...v,[r.id]:''}));setAccrualReasons(v=>({...v,[r.id]:''}));}
+            }}>Зарегистрировать начисление</button>
+        </details>}
         {(next[r.status]?.length ?? 0) > 0 && <>
           <textarea className="field" aria-label="Комментарий сотрудника" placeholder="Комментарий для клиента" value={notes[r.id] ?? ''} onChange={(e) => setNotes({ ...notes, [r.id]: e.target.value })} maxLength={2000} />
           {r.kind === 'insurance' && r.status === 'sent_to_partner' && <label className="stack">Дата окончания полиса
