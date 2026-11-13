@@ -315,7 +315,10 @@ export class VehicleServiceRequests {
   async queue(staff: AuthUser, kind?: VehicleServiceKind) {
     if (!staff.roles?.some((role: string) => ['admin', 'moderator'].includes(role))) throw forbidden('Нет доступа');
     return this.db.query(
-      `select r.*, v.brand, v.model, v.plate from vehicle_service_requests r
+      `select r.*, v.brand, v.model, v.plate,
+              exists(select 1 from partner_finance_entries p
+                     where p.request_id=r.id and p.entry_type='accrual') as has_partner_accrual
+       from vehicle_service_requests r
        join vehicles v on v.id=r.vehicle_id
        where ($1::text is null or r.kind=$1) order by r.created_at desc limit 200`, [kind ?? null]);
   }
