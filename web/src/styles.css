@@ -1052,3 +1052,28 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
     background-position: center center;
   }
 }
+
+/* The Scania R520 is an unaltered crop of the approved owner-reviewed composite.
+   Keep SCANIA and R520 entirely visible; never substitute a generic cab. */
+.public-landing .public-hero-visual {
+  inset: 0 0 0 50%;
+  background: #071a2d url('../public/tracksos-approved-scania-r520.webp') right center / auto 102% no-repeat;
+  opacity: 1;
+}
+.public-landing .public-brand-hero::before {
+  background: linear-gradient(90deg, #071626 0%, #081a2b 42%, rgba(7,24,43,.65) 59%, rgba(7,24,43,0) 90%);
+}
+.app:not(.guest-app) .desktop-hero {
+  background: linear-gradient(90deg,#071727 5%,rgba(7,23,39,.89) 45%,rgba(7,23,39,0) 90%),
+    url('../public/tracksos-approved-scania-r520.webp') right center / auto 105% no-repeat #071b2d;
+}
+@media(max-width:899px) {
+  .public-landing .public-hero-visual {
+    inset: 25% 0 20%;
+    background-position: center center;
+    background-size: auto 100%;
+  }
+  .public-landing .public-brand-hero::before {
+    background: linear-gradient(180deg, #071a2c 0%,rgba(7,26,44,.94) 16%,rgba(6,20,35,.05) 41%,rgba(6,20,35,.08) 76%,#06182b 99%);
+  }
+}
