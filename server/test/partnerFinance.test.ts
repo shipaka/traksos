@@ -32,7 +32,7 @@ test('only admin can register a positive justified accrual',async()=>{
   await assert.rejects(new PartnerFinance(db).recordAccrual(admin,'req',100,''));
   const entry=await new PartnerFinance(db).recordAccrual(admin,'req',100,'Act 123');
   assert.equal(entry.partner_id,'partner');
-  assert.ok(queries.some(q=>q.sql.includes('partner_finance.accrual')));
+  assert.ok(queries.some(q=>q.params.includes('partner_finance.accrual')));
 });
 test('no accrual for unfinished, unassigned or already accrued request',async()=>{
   await assert.rejects(new PartnerFinance(mock({id:'req',kind:'insurance',assigned_to:'partner',status:'submitted'}).db).recordAccrual(admin,'req',100,'Act 123'));
@@ -67,7 +67,7 @@ test('confirmed payout cannot exceed the request balance',async()=>{
   await assert.rejects(finance.recordPayout(admin,'req',100,''));
   const result=await finance.recordPayout(admin,'req',2500,'transfer-001');
   assert.equal(result.amount_kopecks,2500);
-  assert.ok(calls.some(c=>c.sql.includes('partner_finance.payout')));
+  assert.ok(calls.some(c=>c.params.includes('partner_finance.payout')));
   assert.ok(calls.some(c=>c.sql.includes('for update')));
 });
 
@@ -90,7 +90,7 @@ test('reversal cannot reduce a paid or absent balance',async()=>{
   await assert.rejects(finance.recordReversal(admin,'req',100,''));
   const entry=await finance.recordReversal(admin,'req',300,'Correction');
   assert.equal(entry.amount_kopecks,300);
-  assert.ok(calls.some(c=>c.sql.includes('partner_finance.reversal')));
+  assert.ok(calls.some(c=>c.params.includes('partner_finance.reversal')));
 });
 
 test('inspection-only finance access never includes insurance entries',async()=>{
