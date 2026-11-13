@@ -17,12 +17,12 @@ type AdminSection = 'stats' | 'search' | 'support' | 'verify' | 'people' | 'orde
 const ADMIN_SECTIONS: AdminSection[] = ['stats','search','support','verify','people','orders','dispatch','payments','offers','flagged','bases','queue','summary','shop','settings','demand','announcements','vehicleServices'];
 export function Admin({ initialSection }: { initialSection?: string }) {
   const [tab, setTab] = useState<AdminSection>(() =>
-    ADMIN_SECTIONS.includes(initialSection as AdminSection) ? initialSection as AdminSection : 'summary');
+    ADMIN_SECTIONS.includes(initialSection as AdminSection) ? initialSection as AdminSection : 'queue');
   return (
     <main>
       <h1>Администратор</h1>
       <div className="scroll-x">
-        {([['summary', 'Сводка'], ['queue', 'Очередь'], ['shop', 'Магазин'], ['vehicleServices', 'Страхование и ТО'], ['stats', 'Статистика'], ['demand', 'Проблемные заявки'], ['announcements', 'Объявления и комиссии'], ['search', 'Поиск'], ['support', 'Обращения'], ['verify', 'Проверка'], ['bases', 'Рембазы'], ['orders', 'Заявки'], ['people', 'Все люди'], ['payments', 'Деньги'], ['dispatch', 'Распределение'], ['offers', 'Оферты'], ['flagged', 'Подозрительное'], ['settings', 'Настройки']] as const).map(([id, n]) => (
+        {([['queue', 'Модерация'], ['summary', 'Сводка'], ['shop', 'Магазин'], ['vehicleServices', 'Страхование и ТО'], ['stats', 'Статистика'], ['demand', 'Проблемные заявки'], ['announcements', 'Объявления и комиссии'], ['search', 'Поиск'], ['support', 'Обращения'], ['verify', 'Проверка'], ['bases', 'Рембазы'], ['orders', 'Заявки'], ['people', 'Все люди'], ['payments', 'Деньги'], ['dispatch', 'Распределение'], ['offers', 'Оферты'], ['flagged', 'Подозрительное'], ['settings', 'Настройки']] as const).map(([id, n]) => (
           <button key={id} className="chip" aria-pressed={tab === id} onClick={() => setTab(id)}>{n}</button>
         ))}
       </div>
@@ -145,7 +145,7 @@ function Payments() {
   );
 }
 
-function Flagged() {
+export function Flagged() {
   const list = useLoad(() => get('/api/admin/chat/flagged'), []);
   if (!list.data) return <Loading error={list.error} />;
   if (!list.data.length) return <div className="empty">Ничего подозрительного</div>;
@@ -207,7 +207,7 @@ function Dispatch() {
 
 // Проверка исполнителей -------------------------------------------------------
 
-function Verify() {
+export function Verify() {
   const q = useLoad(() => get('/api/admin/verification'), [], (e) => e.type === 'verification_queue');
   if (!q.data) return <Loading error={q.error} />;
   if (!q.data.length) return <div className="empty">Очередь пуста — все проверены</div>;

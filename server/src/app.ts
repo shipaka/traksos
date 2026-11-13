@@ -180,10 +180,10 @@ export function createApp(d: Deps) {
   r.post('/api/support/:id/messages', true, (c: AuthedCtx) => support.post(c.user, c.params.id, parse(z.object({ body: z.string().min(1).max(2000) }), c.body).body));
   r.post('/api/support/:id/close', true, (c: AuthedCtx) => support.close(c.user, c.params.id));
   r.get('/api/live', true, () => stats.live());
-  r.get('/api/admin/stats', staff, (c: AuthedCtx) => stats.overview(Math.min(365, Math.max(1, Number(c.query.get('days') ?? 30)))));
+  r.get('/api/admin/stats', ['admin'], (c: AuthedCtx) => stats.overview(Math.min(365, Math.max(1, Number(c.query.get('days') ?? 30)))));
 
   // Operational demand analysis does not overwrite or hide any order.
-  r.get('/api/admin/demand', staff, (c: AuthedCtx) =>
+  r.get('/api/admin/demand', ['admin'], (c: AuthedCtx) =>
     ops.demand(Math.min(365,Math.max(1,Number(c.query.get('days') ?? 7))),
       Math.min(240,Math.max(5,Number(c.query.get('wait') ?? 15)))));
   r.put('/api/admin/demand/:id/review', ['admin'], (c: AuthedCtx) => {
@@ -191,7 +191,7 @@ export function createApp(d: Deps) {
       note:z.string().max(1200)}),c.body);
     return ops.review(c.user,c.params.id,b.state,b.note);
   });
-  r.get('/api/admin/announcements', staff, () => ops.announcements(undefined,true));
+  r.get('/api/admin/announcements', ['admin'], () => ops.announcements(undefined,true));
   r.post('/api/admin/announcements', ['admin'], (c: AuthedCtx) =>
     ops.publish(c.user,parse(z.object({
       audience:z.enum(['master','tow','service','all_workers']),
@@ -211,7 +211,7 @@ export function createApp(d: Deps) {
   r.get('/api/worker/commission-campaigns', performerRoles, () => ops.activeCampaigns());
   r.post('/api/admin/announcements/:id/notify', ['admin'],
     (c:AuthedCtx)=>ops.notifyAnnouncement(c.user,c.params.id,notifier));
-  r.get('/api/admin/commission-campaigns', staff, () => ops.campaigns());
+  r.get('/api/admin/commission-campaigns', ['admin'], () => ops.campaigns());
   r.put('/api/admin/commission-campaigns/:id/status', ['admin'], (c:AuthedCtx) => {
     const b=parse(z.object({enabled:z.boolean()}),c.body);
     return ops.setCampaignEnabled(c.user,c.params.id,b.enabled);
@@ -429,7 +429,7 @@ export function createApp(d: Deps) {
     notifier.live(await vehicleRequests.recipients(updated), { type: 'vehicle_service', vehicleId: updated?.vehicle_id, requestId: updated?.id });
     return updated;
   });
-  r.get('/api/admin/insurers', staff, (c: AuthedCtx) => vehicleRequests.insurers(c.user));
+  r.get('/api/admin/insurers', ['admin'], (c: AuthedCtx) => vehicleRequests.insurers(c.user));
   r.post('/api/admin/vehicle-service-requests/:id/assign-insurer', staff, async (c: AuthedCtx) => {
     const b = parse(z.object({ insurerId: z.string().uuid() }), c.body);
     const request = await vehicleRequests.assignInsurer(c.user, c.params.id, b.insurerId);
@@ -448,7 +448,7 @@ export function createApp(d: Deps) {
         data: { vehicleId: String(updated.vehicle_id), requestId: String(updated.id) } });
     return updated;
   });
-  r.get('/api/admin/vehicle-service-requests', staff, (c: AuthedCtx) => vehicleRequests.queue(c.user));
+  r.get('/api/admin/vehicle-service-requests', ['admin'], (c: AuthedCtx) => vehicleRequests.queue(c.user));
   r.patch('/api/admin/vehicle-service-requests/:id', staff, async (c: AuthedCtx) => {
     const b = parse(z.object({ status: vehicleRequestStatus, note: z.string().max(2000).optional(), policyExpiresOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }), c.body);
     const updated = await vehicleRequests.setStatus(c.user, c.params.id, b.status, b.note, b.policyExpiresOn);
@@ -547,11 +547,11 @@ export function createApp(d: Deps) {
   }), c.body)));
   r.post('/api/orders/:id/recommend-service', performerRoles, (c: AuthedCtx) => onsite.recommend(c.user, c.params.id, parse(z.object({ centerId: z.string().uuid().nullable() }), c.body).centerId));
   r.get('/api/admin/services', staff, () => centers.pending());
-  r.get('/api/admin/service-payouts', staff, () => centers.payoutsDue());
+  r.get('/api/admin/service-payouts', ['admin'], () => centers.payoutsDue());
   r.post('/api/admin/bookings/:id/paid', ['admin'], (c: AuthedCtx) => centers.markPaidOut(c.user, c.params.id));
   r.get('/api/base/money', ['service'], (c: AuthedCtx) => centers.money(c.user));
-  r.get('/api/admin/summary', staff, () => stats.summary());
-  r.get('/api/admin/live', staff, () => stats.liveOrders());
+  r.get('/api/admin/summary', ['admin'], () => stats.summary());
+  r.get('/api/admin/live', ['admin'], () => stats.liveOrders());
   r.post('/api/admin/services/:id/verify', staff, (c: AuthedCtx) => centers.verify(c.user, c.params.id, parse(z.object({ decision: z.enum(['approved', 'rejected']) }), c.body).decision));
 
   r.get('/api/my-performers', true, (c: AuthedCtx) => orders.myPerformers(c.user));
@@ -656,12 +656,12 @@ export function createApp(d: Deps) {
   }
 
   // Модератор и админ -----------------------------------------------------------
-  r.get('/api/admin/settings', staff, () => settings.all());
+  r.get('/api/admin/settings', ['admin'], () => settings.all());
   r.put('/api/admin/settings/:key', ['admin'], (c: AuthedCtx) => {
     if (!(c.params.key in defaultSettings)) throw notFound('Нет такой настройки');
     return settings.set(c.params.key as any, c.body ?? {}, c.user.id);
   });
-  r.get('/api/admin/users', staff, (c: AuthedCtx) => {
+  r.get('/api/admin/users', ['admin'], (c: AuthedCtx) => {
     const q = `%${(c.query.get('q') ?? '').replace(/[%_]/g, '')}%`;
     return d.db.query(
       `select u.id, u.phone, u.name, u.roles, u.status, u.rating::float as rating, u.rating_count, u.created_at,
@@ -671,8 +671,8 @@ export function createApp(d: Deps) {
   });
   r.post('/api/admin/users/:id/roles', ['admin'], (c: AuthedCtx) =>
     admin.setRoles(c.user, c.params.id, parse(z.object({ roles: z.array(z.enum(ROLES as [string, ...string[]])).min(1) }), c.body).roles));
-  r.get('/api/admin/users/:id', staff, (c: AuthedCtx) => admin.userCard(c.params.id));
-  r.get('/api/admin/search', staff, (c: AuthedCtx) => admin.search(c.query.get('q') ?? ''));
+  r.get('/api/admin/users/:id', ['admin'], (c: AuthedCtx) => admin.userCard(c.params.id));
+  r.get('/api/admin/search', ['admin'], (c: AuthedCtx) => admin.search(c.query.get('q') ?? ''));
   r.post('/api/admin/payments/:id/refund', ['admin'], (c: AuthedCtx) => admin.refund(c.user, c.params.id, parse(z.object({
     amount: money.positive(), from: z.enum(['platform', 'performer']), reason: z.string().min(3).max(300),
   }), c.body)));
@@ -699,6 +699,12 @@ export function createApp(d: Deps) {
   }), c.body)));
   r.post('/api/admin/users/:id/block', staff, async (c: AuthedCtx) => {
     const b = parse(z.object({ blocked: z.boolean(), reason: z.string().max(300).optional() }), c.body);
+    // A moderator may help with abuse cases, but cannot disable a privileged account.
+    if (!c.user.roles.includes('admin')) {
+      const target = await d.db.one<{ roles: string[] }>('select roles from users where id=$1', [c.params.id]);
+      if (!target || target.roles.some(r => r === 'admin' || r === 'moderator'))
+        throw forbidden('Модератор не может блокировать сотрудников площадки');
+    }
     await d.db.query('update users set status=$2 where id=$1', [c.params.id, b.blocked ? 'blocked' : 'active']);
     if (b.blocked) await d.db.query('delete from sessions where user_id=$1', [c.params.id]);
     await audit(c.user.id, b.blocked ? 'user.block' : 'user.unblock', c.params.id, b);
@@ -717,7 +723,7 @@ export function createApp(d: Deps) {
     await audit(c.user.id, 'performer.priority', c.params.id, b);
     return { ok: true };
   });
-  r.get('/api/admin/orders', staff, (c: AuthedCtx) => d.db.query(
+  r.get('/api/admin/orders', ['admin'], (c: AuthedCtx) => d.db.query(
     `select o.id, o.number, o.status, o.service, o.is_sos, o.address, o.created_at, o.payment_method,
             o.call_out_amount, o.work_amount, c.phone as client_phone, p.name as performer_name
        from orders o join users c on c.id=o.client_id left join users p on p.id=o.performer_id
@@ -731,7 +737,7 @@ export function createApp(d: Deps) {
     audience: z.enum(['client', 'performer', 'privacy']), version: z.string().min(1).max(20), body: z.string().min(50).max(200_000),
     summary: z.string().max(500).optional(), effectiveAt: z.string().optional(),
   }), c.body)));
-  r.get('/api/admin/offers', staff, () => offers.history());
+  r.get('/api/admin/offers', ['admin'], () => offers.history());
   r.post('/api/admin/payouts/run', ['admin'], (c: AuthedCtx) => payments.runPayouts(c.user));
   r.post('/api/admin/payments/:id/invoice-paid', ['admin'], (c: AuthedCtx) => payments.markInvoicePaid(c.user, c.params.id));
   r.post('/api/admin/performers/:id/cash-debt-paid', ['admin'], (c: AuthedCtx) =>

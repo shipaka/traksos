@@ -86,10 +86,17 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
       await reload();
       let qr: string | null = null;
       try { qr = sessionStorage.getItem('traksos.qr'); } catch { /* */ }
+      const roles: string[] = r.user?.roles ?? [];
+      // Dual-role admins may choose a preferred workspace on their own device.
+      // A new master registration still goes to the profile first.
+      const preferredMode = (() => { try { return localStorage.getItem('traksos.mode'); } catch { return null; } })();
+      const isAdminMaster = roles.includes('admin') && roles.includes('master');
       location.hash = qr ? '#/qr/' + qr
         : intent === 'join' && role === 'insurer' ? '#/insurance'
         : intent === 'join' && role === 'service' ? '#/as/service'
-        : intent === 'join' ? '#/work/profile' : homeFor(r.user?.roles ?? [], intent ?? 'login');
+        : intent === 'join' ? '#/work/profile'
+        : isAdminMaster && preferredMode === 'performer' ? '#/as/performer'
+        : homeFor(roles, intent ?? 'login');
   }
 
   const needAgree = !['login', 'reset'].includes(intent ?? '') || !!driver; // водитель по QR — обычно новый номер, согласие сразу

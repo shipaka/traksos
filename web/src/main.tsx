@@ -21,10 +21,11 @@ import { Rules } from './screens/rules.tsx';
 import { Shop, ShopCart } from './screens/shop.tsx';
 import { Privacy } from './screens/privacy.tsx';
 import { ModCase, Appeal, MyReviews } from './screens/moderation.tsx';
+import { ModeratorDesk } from './screens/moderatorDesk.tsx';
 import { SupportList, SupportNew, SupportThread, Notifications, useUnread } from './screens/support.tsx';
 import { InsurerCabinet } from './screens/insurer.tsx';
 
-type Mode = 'client' | 'performer' | 'admin' | 'service' | 'insurer';
+type Mode = 'client' | 'performer' | 'admin' | 'moderator' | 'service' | 'insurer';
 const PERFORMER_ROLES = ['master', 'tow', 'service'];
 
 function App() {
@@ -90,8 +91,8 @@ function App() {
   useEffect(() => {
     const [x, m] = route;
     if (x !== 'as') return;
-    if (m === 'client' || m === 'performer' || m === 'admin' || m === 'service' || m === 'insurer') setMode(m);
-    location.replace('#/' + (m === 'performer' ? 'work' : m === 'admin' ? 'admin' : m === 'service' ? 'base' : m === 'insurer' ? 'insurance' : ''));
+    if (m === 'client' || m === 'performer' || m === 'admin' || m === 'moderator' || m === 'service' || m === 'insurer') setMode(m);
+    location.replace('#/' + (m === 'performer' ? 'work' : m === 'admin' ? 'admin' : m === 'moderator' ? 'moderation' : m === 'service' ? 'base' : m === 'insurer' ? 'insurance' : ''));
   }, [route.join('/')]); // eslint-disable-line
   useEffect(() => {
     if (!ready) return; // Keep the native token until the initial auth check finishes.
@@ -128,24 +129,26 @@ function App() {
   if (a === 'as') return null;
   const isPerformer = me.roles.some((r) => r === 'master' || r === 'tow');
   const isCustomer = me.roles.some((r) => r === 'client' || r === 'driver');
-  const isStaff = me.roles.some((r) => r === 'admin' || r === 'moderator');
+  const isAdmin = me.roles.includes('admin');
+  const isModerator = me.roles.includes('moderator') || isAdmin;
+  const isStaff = isModerator;
   const isService = me.roles.includes('service');
   const isInsurer = me.roles.includes('insurer');
   // A saved/forced mode must never expose navigation for a role the account lacks.
   const fallback: Mode = isInsurer ? 'insurer'
     : isCustomer ? 'client' : isPerformer ? 'performer'
-    : isService ? 'service' : isStaff ? 'admin' : 'client';
-  const permitted = mode === 'insurer' ? isInsurer : mode === 'admin' ? isStaff
+    : isService ? 'service' : isAdmin ? 'admin' : isModerator ? 'moderator' : 'client';
+  const permitted = mode === 'insurer' ? isInsurer : mode === 'admin' ? isAdmin : mode === 'moderator' ? isModerator
     : mode === 'performer' ? isPerformer : mode === 'service' ? isService
     : isCustomer || isStaff;
   const allowedMode: Mode = isInsurer ? 'insurer' : permitted ? mode : fallback;
   const effMode: Mode = a === 'work' && isPerformer ? 'performer'
-    : a === 'admin' && isStaff ? 'admin'
+    : a === 'admin' && isAdmin ? 'admin' : a === 'moderation' && isModerator ? 'moderator'
     : a === 'base' && isService ? 'service' : a === 'insurance' && isInsurer ? 'insurer' : allowedMode;
 
   let screen;
   switch (a) {
-    case undefined: screen = effMode === 'insurer' ? <InsurerCabinet /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isStaff ? <Admin /> : <Home />; break;
+    case undefined: screen = effMode === 'insurer' ? <InsurerCabinet /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isAdmin ? <Admin /> : effMode === 'moderator' && isModerator ? <ModeratorDesk /> : <Home />; break;
     case 'login': screen = <Home />; break;
     case 'sos': screen = isCustomer ? <Sos /> : <main><div className="empty">Для вызова SOS нужен клиентский аккаунт</div></main>; break;
     case 'new': screen = !isCustomer ? <main><div className="empty">Для заказа нужен клиентский аккаунт</div></main> : b === 'consult' ? <Consult /> : <NewOrder service={b ?? 'electric'} />; break;
@@ -173,7 +176,8 @@ function App() {
     case 'qr': screen = <QrJoin code={b} />; break;
     case 'appeal': screen = <Appeal />; break;
     case 'reviews': screen = <MyReviews />; break;
-    case 'admin': screen = !isStaff ? <Home /> : b === 'case' && route[2] ? <ModCase id={route[2]} /> : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : <Admin key={b === 'section' ? route[2] : 'summary'} initialSection={b === 'section' ? route[2] : undefined} />; break;
+    case 'admin': screen = !isStaff ? <Home /> : b === 'case' && route[2] ? <ModCase id={route[2]} /> : !isAdmin ? <ModeratorDesk /> : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : <Admin key={b === 'section' ? route[2] : 'summary'} initialSection={b === 'section' ? route[2] : undefined} />; break;
+    case 'moderation': screen = isModerator ? <ModeratorDesk /> : <Home />; break;
     case 'offer': screen = <OfferPage audience={b ?? 'client'} />; break;
     case 'support': screen = b === 'new' ? <SupportNew /> : b ? <SupportThread id={b} /> : <SupportList />; break;
     case 'notifications': screen = <Notifications />; break;
@@ -200,6 +204,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       ? [['/base', '▤', 'Рембаза'], ['/support', '?', 'Связь'], ['/shop', '🛍', 'Магазин']]
     : mode === 'insurer'
       ? [['/insurance', '▣', 'Страхование'], ['/shop', '🛍', 'Магазин']]
+    : mode === 'moderator'
+      ? [['/moderation', '⚑', 'Модерация'], ['/support', '?', 'Обращения']]
     : mode === 'admin'
       ? [['/admin', '▦', 'Управление'], ['/shop', '🛍', 'Магазин']]
       : [['/', '🔧', 'Услуги'], ['/sos', '!', 'SOS'], ['/orders', '☰', 'Заявки'], ['/shop', '🛍', 'Магазин']];
@@ -221,9 +227,11 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/invite', 'Пригласить партнёра']]
     : mode === 'insurer'
       ? [['/insurance', 'Кабинет страхового партнёра'], ['/profile', 'Аккаунт']]
+    : mode === 'moderator'
+      ? [['/moderation', 'Очередь модерации'], ['/support', 'Поддержка'], ['/profile', 'Аккаунт']]
     : mode === 'admin'
-      ? [['/admin', 'Административная сводка'],
-         ['/admin/section/queue', 'Очередь модерации'],
+      ? [['/admin/section/queue', 'Модерация — очередь'],
+         ['/admin', 'Административная сводка'],
          ['/admin/section/orders', 'Все заявки'],
          ['/admin/section/search', 'Поиск людей и заявок'],
          ['/admin/section/people', 'Пользователи'],
@@ -259,6 +267,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {!me && <div className="guest-header-actions"><a href="#/login">Войти</a><a href="#/register" className="register">Зарегистрироваться</a></div>}
           {me && mode === 'performer' && <span className="pill accent">исполнитель</span>}
           {me && mode === 'admin' && <span className="pill accent">админ</span>}
+          {me && mode === 'moderator' && <span className="pill accent">модерация</span>}
           {me && mode === 'insurer' && <span className="pill accent">страхование</span>}
           {me && mode === 'service' && <span className="pill accent">рембаза</span>}
           {me && <a href="#/help" className="bell" aria-label="Справка">?</a>}
@@ -266,6 +275,13 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {me && <details className="account-menu" key={here}>
             <summary aria-label="Открыть меню кабинета">☰ <span>Меню</span></summary>
             <nav aria-label="Все разделы кабинета">
+              {me && me.roles.some(r => r === 'master' || r === 'tow') && me.roles.some(r => r === 'admin' || r === 'moderator') && <>
+                <span className="account-menu-heading">Переключить кабинет</span>
+                {me.roles.includes('admin') && <a href="#/as/admin" aria-current={mode === 'admin' ? 'page' : undefined}>Администратор</a>}
+                {!me.roles.includes('admin') && me.roles.includes('moderator') && <a href="#/as/moderator" aria-current={mode === 'moderator' ? 'page' : undefined}>Модератор</a>}
+                <a href={me.roles.includes('admin') ? '#/admin/section/queue' : '#/moderation'}>Модерация — очередь</a>
+                <a href="#/as/performer" aria-current={mode === 'performer' ? 'page' : undefined}>Выездной мастер</a>
+              </>}
               <span className="account-menu-heading">Мой кабинет</span>
               {accountLinks.map(([href, label]) => <a key={href} href={'#' + href}>{label}</a>)}
               <span className="account-menu-heading">Помощь и документы</span>
@@ -288,6 +304,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                     ? [...tabs, ['/base/money', '₽', 'Финансы'], ['/base/me', '⚙', 'Карточка'], ...(me.roles.some(r => r === 'master' || r === 'tow') ? [['/work', '⚡', 'Выездной мастер']] : []), ['/profile', '◉', 'Аккаунт']]
                     : mode === 'insurer'
                       ? [...tabs, ['/profile', '◉', 'Аккаунт']]
+                      : mode === 'moderator' ? [...tabs, ['/profile', '◉', 'Аккаунт']]
                       : [...tabs, ['/as/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]).map(([href, ic, name]) => (
                 <a key={href} href={'#' + href} className={`desktop-nav-link ${here === href || (href !== '/' && here.startsWith(href + '/')) ? 'active' : ''} ${href === '/sos' ? 'desktop-nav-sos' : ''}`}>
                   <span aria-hidden="true">{ic}</span><span>{name}</span>
