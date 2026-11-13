@@ -220,3 +220,62 @@ test('Артикулы Автоконтинента доступны тольк�
   assert.equal(ok(await t.api('GET', uri, undefined, admin.token)).article, null);
   ok(await t.api('PUT', '/api/admin/settings/shop', { enabled: false }, admin.token));
 });
+
+test('CSV-справочник: проверка прав, безопасный импорт, повтор без дублей и ручная публикация', async () => {
+  const batch = {
+    sourceNote: 'Тестовый каталог с разрешением для тестовых данных',
+    rightsConfirmed: true,
+    rows: [
+      { brand: 'TEST-WABCO', article: 'QA-REF-001', name: 'Датчик ABS прицепа тестовый',
+        category: 'trailer_ebs', searchTerms: 'тормозной датчик' },
+      { brand: 'TEST-BPW', article: 'QA-REF-002', name: 'Тестовая ступица прицепа',
+        category: 'trailer_axles', searchTerms: 'ступичный узел' },
+    ],
+  };
+  const path = '/api/admin/shop/catalog/import';
+  assert.equal((await t.api('POST', path, { ...batch, rightsConfirmed: false }, admin.token)).status, 400,
+    'отказ без подтверждения прав на загрузку');
+  assert.equal((await t.api('POST', path, { ...batch, rows: [batch.rows[0], batch.rows[0]] }, admin.token)).status, 400,
+    'повтор одного номера внутри пакета запрещён');
+  assert.equal((await t.api('POST', path, {
+    ...batch, rows: [{ ...batch.rows[0], category: 'untrusted_category' }],
+  }, admin.token)).status, 400, 'неизвестные категории не импортируются');
+  assert.equal((await t.api('POST', path, batch, client.token)).status, 403,
+    'обычный клиент не может импортировать');
+  const initial = ok(await t.api('GET', '/api/admin/shop/catalog/stats', undefined, admin.token));
+  const preview = ok(await t.api('POST', path, { ...batch, dryRun: true }, admin.token));
+  assert.equal(preview.newRows, 2);
+  assert.equal(preview.published, 0);
+  assert.equal(ok(await t.api('GET', '/api/admin/shop/catalog/stats', undefined, admin.token)).total, initial.total,
+    'предварительная проверка не меняет базу');
+  const imported = ok(await t.api('POST', path, { ...batch, dryRun: false }, admin.token));
+  assert.equal(imported.newRows, 2);
+  assert.equal(imported.published, 0);
+  const staged = ok(await t.api('GET', '/api/admin/shop/catalog?state=pending', undefined, admin.token));
+  const entry = staged.items.find((p: any) => p.article === 'QA-REF-001');
+  assert.ok(entry && !entry.reviewed, 'импортированные номера требуют проверки');
+  assert.equal((await t.api('GET', '/api/admin/shop/catalog', undefined, client.token)).status, 403);
+  const closed = ok(await t.api('GET', '/api/shop/catalog/search?q=QA-REF-001', undefined, client.token));
+  assert.equal(closed.enabled, false);
+  assert.equal(closed.items.length, 0);
+
+  ok(await t.api('POST', `/api/admin/shop/catalog/${entry.id}/review`, { reviewed: true }, admin.token));
+  ok(await t.api('PUT', '/api/admin/settings/shop', { enabled: true }, admin.token));
+  const result = ok(await t.api('GET', '/api/shop/catalog/search?q=ABS%20прицепа', undefined, client.token));
+  assert.ok(result.items.some((p: any) => p.id === entry.id));
+  assert.ok(!JSON.stringify(result).includes(batch.sourceNote), 'источник импорта не отдаём покупателю');
+  assert.ok(result.items.every((p: any) => !('price' in p) && !('stock' in p)),
+    'каталожные позиции без выдуманных цен и остатков');
+  assert.equal((await t.api('POST', '/api/shop/orders', {
+    items: [{ productId: entry.id, qty: 1 }], delivery: 'pickup',
+  }, client.token)).status, 409, 'ссылку на справочник нельзя оформить как товар');
+
+  ok(await t.api('POST', path, { ...batch, dryRun: false }, admin.token));
+  const afterRepeat = ok(await t.api('GET', '/api/admin/shop/catalog?state=approved&q=QA-REF-001', undefined, admin.token));
+  assert.equal(afterRepeat.total, 1, 'повторная загрузка не плодит дубли и не сбрасывает подтверждение');
+  const changed = { ...batch, rows: [{ ...batch.rows[0], name: 'Изменённый тестовый датчик ABS' }] };
+  ok(await t.api('POST', path, { ...changed, dryRun: false }, admin.token));
+  const afterChange = ok(await t.api('GET', '/api/shop/catalog/search?q=QA-REF-001', undefined, client.token));
+  assert.equal(afterChange.items.length, 0, 'изменение исходного номера требует повторной проверки');
+  ok(await t.api('PUT', '/api/admin/settings/shop', { enabled: false }, admin.token));
+});
