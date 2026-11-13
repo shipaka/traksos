@@ -78,6 +78,7 @@ jobs:
           node e2e/moderator-permission-check.mjs
           # The real registered-role sandbox replaces obsolete single-panel assumptions.
           node e2e/full-role-preview.mjs
+          node e2e/prepare-staff-fixtures.mjs
           node e2e/staff-security.mjs
           node e2e/cabinet-navigation-audit.mjs
           node e2e/preview-admin-secure-v2.mjs
