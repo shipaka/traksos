@@ -1802,3 +1802,96 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
  .work-command-stats>div{flex:1 1 calc(50% - 5px);padding:11px;}
  .work-command-stats>a{width:100%;margin:0;}
  .work-command-hero:after{opacity:.06;}}
+
+/* The REAL insurer dashboard and the same reusable components inside admin preview. */
+.insurer-workspace{width:100%;max-width:1390px;margin:0 auto;min-width:0;padding:12px 0 42px;}
+.insurer-workspace-hero{position:relative;overflow:hidden;isolation:isolate;
+  padding:clamp(24px,4vw,48px);min-height:260px;border:1px solid #4e6c92;border-radius:25px;
+  background:radial-gradient(ellipse at 87% 22%,rgba(99,217,246,.16),transparent 38%),
+    radial-gradient(ellipse at 35% 90%,rgba(235,53,141,.22),transparent 54%),
+    linear-gradient(120deg,#0b223a,#172d53 72%,#221e40);
+  box-shadow:0 19px 44px rgba(0,8,23,.27);}
+.insurer-workspace-hero-art{position:absolute;top:50%;right:8%;transform:translateY(-50%);
+  font-size:clamp(110px,17vw,220px);line-height:1;color:#9ae7fc;opacity:.14;pointer-events:none;}
+.insurer-workspace-hero h1{position:relative;z-index:1;font-size:clamp(27px,3.7vw,43px);
+  letter-spacing:-.04em;color:#fff;margin:13px 0 12px;}
+.insurer-workspace-hero p{position:relative;z-index:1;color:#c7deef;font-size:14px;
+  line-height:1.55;max-width:710px;margin:0 0 23px;}
+.insurer-workspace-hero .row{position:relative;z-index:1;flex-wrap:wrap;}
+.insurer-workspace-hero .btn{min-height:43px;}
+.insurer-overview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;}
+.insurer-stat{display:flex;flex-direction:column;gap:7px;min-width:0;padding:20px 19px;
+  border:1px solid #3c6482;border-radius:18px;
+  background:linear-gradient(140deg,#153b59,#122943);
+  box-shadow:0 9px 23px rgba(0,8,21,.16);}
+.insurer-stat span{font-size:12px;color:#accee5;font-weight:750;}
+.insurer-stat strong{font-size:clamp(28px,3.7vw,44px);color:#f5fcff;
+  line-height:1;font-variant-numeric:tabular-nums;}
+.insurer-stat small{color:#67e0f1;font-size:11px;}
+.insurer-workspace>.card{background:linear-gradient(145deg,#112f4a,#0b253c);
+  border-color:#426b88;padding:22px;}
+.insurer-workspace>.card .between{flex-wrap:wrap;}
+.insurer-toolbar{display:flex;align-items:end;justify-content:space-between;gap:15px;flex-wrap:wrap;}
+.insurer-toolbar .stack{min-width:min(100%,235px);}
+.insurer-case-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;}
+.insurer-case-card{display:flex;flex-direction:column;gap:10px;min-width:0;padding:23px;
+  border-radius:20px;border:1px solid #416e8c;
+  background:radial-gradient(circle at 92% 8%,rgba(76,191,232,.13),transparent 42%),
+    linear-gradient(140deg,#143752,#102841);
+  box-shadow:0 10px 23px #0003;transition:transform .18s,border-color .18s,box-shadow .18s;}
+.insurer-case-card:hover{transform:translateY(-2px);border-color:#69def4;box-shadow:0 16px 29px #0005;}
+.insurer-case-card h3{font-size:clamp(19px,2vw,25px);margin:0;color:#fff;}
+.insurer-case-card p{font-size:12px;color:#bbd1e2;margin:0;line-height:1.5;overflow-wrap:anywhere;}
+.insurer-case-card .btn{margin-top:auto;}
+.insurer-case-no{font-size:10px;font-weight:850;color:#e888b9;letter-spacing:.07em;}
+.insurer-case-meta{display:flex;flex-direction:column;gap:4px;margin:3px 0;padding:12px;
+  background:#0a2941;border:1px solid #2e5c79;border-radius:12px;font-size:11px;color:#c0d9e8;}
+.insurer-case-meta b{font-size:12px;color:#6ee9f6;}
+.insurance-preview-admin{border-bottom:2px solid #ec4a9e;}
+.insurance-preview-admin .insurance-preview-active{border-color:#77eaff;background:#164f76;
+  box-shadow:inset 0 2px rgba(96,228,250,.28);}
+.insurance-preview-admin .service-preview-admin-actions a:first-child:not(.insurance-preview-active){
+  background:rgba(21,68,92,.8);}
+.insurance-client-hero{background:radial-gradient(ellipse at 87% 25%,rgba(63,236,242,.2),transparent 47%),
+  radial-gradient(circle at 12% 90%,rgba(234,44,135,.15),transparent 44%),
+  linear-gradient(115deg,#0c2540,#123c5b);}
+/* Clear customer-facing final price: agent's price + TrackSOS fee, never silently bundled. */
+.insurance-price-details{display:flex;flex-direction:column;gap:9px;padding:13px;border-radius:13px;
+  background:#0b2940;border:1px solid #386a83;}
+.insurance-price-details span{display:flex;justify-content:space-between;align-items:start;
+  gap:12px;font-size:11px;color:#b8d4e4;line-height:1.4;}
+.insurance-price-details span b{white-space:nowrap;color:#f4fcff;font-size:12px;font-variant-numeric:tabular-nums;}
+.insurance-price-details span:last-child{border-top:1px solid #3d6279;padding-top:8px;
+  font-size:13px;color:#6feafa;font-weight:800;}
+.insurance-price-details span:last-child b{font-size:17px;color:#77eff9;}
+.insurance-demo-payment{border-color:#43bad0!important;
+  background:linear-gradient(140deg,#144460,#122d53)!important;}
+.insurance-demo-payment h3{margin:0;color:#fff;}
+.insurance-demo-payment p{font-size:13px;color:#cbe2f2;line-height:1.6;}
+.insurance-offer{position:relative;}
+.insurance-offer:has(button[aria-pressed=true]){border-color:#ec4d9f;box-shadow:0 0 0 1px #fa40964a,0 11px 27px #0004;}
+/* Do not overload mobile: one-column content, visual richness without horizontal scrolling. */
+@media(max-width:900px){
+  .insurer-overview{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .insurer-case-grid{grid-template-columns:1fr;}
+  .internal-role-hero{padding:22px 18px;min-height:190px;}
+  .internal-role-hero::after{opacity:.07;}
+  .performer-workspace>.stack{grid-template-columns:1fr;}
+}
+@media(max-width:520px){
+  .insurer-workspace-hero{padding:23px 17px;border-radius:20px;min-height:242px;}
+  .insurer-workspace-hero .btn{width:100%;}
+  .insurer-workspace-hero-art{opacity:.08;right:0;}
+  .insurer-overview{gap:8px;}
+  .insurer-stat{padding:14px 11px;border-radius:14px;}
+  .insurer-stat strong{font-size:28px;}
+  .insurer-workspace>.card{padding:14px;}
+  .insurer-case-card{padding:16px;}
+  .insurance-price-details span{flex-wrap:wrap;gap:4px;}
+}
+@media(prefers-reduced-motion:reduce){
+  .app[class*="role-"] :is(.desktop-nav-link,.btn),.insurer-case-card,
+  .performer-workspace>.stack .linkrow{transition:none!important;}
+  .app[class*="role-"] :is(.desktop-nav-link,.btn):hover,.insurer-case-card:hover,
+  .performer-workspace>.stack .linkrow:hover{transform:none!important;}
+}
