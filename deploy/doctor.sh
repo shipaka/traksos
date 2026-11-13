@@ -39,11 +39,14 @@ fi
 # Database query returns counts only, not personal data. No DB password is read or printed.
 db="$(docker compose ps -q db 2>/dev/null || true)"
 if [[ -n "$db" ]]; then
-  sql="select count(*)::text || ',' || count(*) filter (where 'admin'=any(roles))::text from users;"
+  sql="select count(*)::text || ',' || count(*) filter (where 'admin'=any(roles))::text || ',' || count(*) filter (where 'admin'=any(roles) and password_hash is not null)::text from users;"
   totals="$(docker exec "$db" sh -c 'psql -XAtq -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "$1"' sh "$sql" 2>/dev/null || true)"
-  if [[ "$totals" =~ ^[0-9]+,[0-9]+$ ]]; then
+  if [[ "$totals" =~ ^[0-9]+,[0-9]+,[0-9]+$ ]]; then
     info "Registered accounts: ${totals%%,*}"
-    if (( ${totals##*,} > 0 )); then pass "Admin account exists"; else flag "No admin account yet; first admin must be provisioned securely"; fi
+    admin_count="${totals#*,}"; admin_count="${admin_count%%,*}"
+    password_count="${totals##*,}"
+    if (( admin_count > 0 )); then pass "Admin account exists"; else flag "No admin account yet; first admin must be provisioned securely"; fi
+    if (( password_count > 0 )); then pass "Admin password hash is present (login not attempted)"; else flag "No admin account with password; login is not ready"; fi
   else
     flag "Unable to read user/admin counts from database"
   fi
@@ -51,7 +54,23 @@ fi
 
 # Backup dump check is metadata-only. Backups are never restored or modified.
 if [[ -d backups ]] && find backups -maxdepth 1 -type f -name '*.dump' -size +0c -print -quit 2>/dev/null | grep -q .; then
-  pass "At least one nonempty PostgreSQL .dump exists (restore still requires testing)"
+  pass "At least one nonempty PostgreSQL .dump exists"
+  if find backups -maxdepth 1 -type f -name '*.dump' -size +0c -mmin -2880 -print -quit 2>/dev/null | grep -q .; then
+    pass "A nonempty .dump was created within the last 48 hours"
+  else
+    flag "Backups appear older than 48 hours"
+  fi
+  # Validate only the format/index of the latest dump; do not expose its contents.
+  latest="$(find backups -maxdepth 1 -type f -name '*.dump' -size +0c -printf '%T@ %p\\n' 2>/dev/null | sort -nr | head -n 1 | cut -d' ' -f2-)"
+  if command -v pg_restore >/dev/null 2>&1; then
+    if pg_restore --list "$latest" >/dev/null 2>&1; then
+      pass "Latest .dump archive catalog can be read"
+    else
+      flag "Latest .dump catalog cannot be read"
+    fi
+  else
+    info "pg_restore unavailable locally; archive integrity not checked"
+  fi
 else
   flag "No nonempty local .dump backup found"
 fi
