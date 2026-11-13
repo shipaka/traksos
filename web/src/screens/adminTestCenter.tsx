@@ -3,7 +3,7 @@ import { useState } from 'react';
 // Admin-only DEMONSTRATION. This file deliberately has no API imports or fetch:
 // even realistic-looking actions never touch real accounts, jobs, SMS or money.
 type DemoRole = 'client'|'owner'|'driver'|'master'|'tow'|'service'|
-  'master_service'|'insurer'|'moderator'|'admin';
+  'master_service'|'insurer'|'inspection'|'moderator'|'admin';
 type Section = 'overview'|'tasks'|'profile'|'history';
 type Ticket = {id:number;title:string;status:'Новая'|'В работе'|'Завершена'|'Отменена'};
 type RoleInfo = {
@@ -53,6 +53,11 @@ const DEMO_ROLES:RoleInfo[] = [
     profile:'Компания и документы',history:'История полисов',task:'Подготовить страховое предложение',
     metrics:['1','2','1'],activity:['Получена заявка на оформление полиса','Документы ожидают проверки'],
     features:[['◇','Обращения','Запросы клиентов и автопарков'],['▤','Документы','Сведения о технике и страхователе'],['◉','Статусы','Сроки, ответы и напоминания']]},
+  {id:'inspection',icon:'▣',label:'Оператор техосмотра',subtitle:'Диагностические карты, осмотры и расчёты',
+    headline:'Технический осмотр транспорта',section:'Заявки на техосмотр',action:'Открыть осмотр',
+    profile:'Оператор и документы',history:'История техосмотров',task:'Провести технический осмотр тягача',
+    metrics:['1','2','1'],activity:['Получена заявка на техосмотр','Диагностическая карта ожидает оформления'],
+    features:[['▣','Осмотры','Очередь назначенных транспортных средств'],['▤','Документы','Результаты и диагностические карты'],['₽','Финансы','Начисления и выплаты оператора']]},
   {id:'moderator',icon:'⚑',label:'Модератор',subtitle:'Споры и проверка партнёров',
     headline:'Контроль качества TrackSOS',section:'Очередь модерации',action:'Открыть обращение',
     profile:'Мой профиль',history:'Журнал решений',task:'Рассмотреть жалобу на услугу',
