@@ -40,6 +40,8 @@ jobs:
           sh -n deploy/backup.sh
           bash -n deploy/doctor.sh
           bash -n deploy/update-site.sh
+          bash -n deploy/configure-staff.sh
+          bash -n deploy/activate-primary-admin.sh
           # docker compose requires app.env_file to exist even for config-only checks.
           cp deploy/.env.example deploy/.env
           trap 'rm -f deploy/.env' EXIT
@@ -68,6 +70,7 @@ jobs:
           SHOTS_DIR=e2e/shots/insurance node e2e/insurance-flow.mjs
           node e2e/moderator-permission-check.mjs
           node e2e/admin-master-switch.mjs
+          node e2e/staff-security.mjs
       - name: Снимки экранов каждой проверяемой версии
         if: always()
         uses: actions/upload-artifact@v4
