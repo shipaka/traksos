@@ -37,6 +37,14 @@
 
 The old `GET /api/shop` and `GET /api/shop/orders` endpoints are retained for older APK versions.
 
+## Internal Autokontinent procurement mapping (not a live integration)
+
+- Admins can assign a preferred supplier article and supplier brand to a TrackSOS product, with a source note and evidence-verified flag.
+- Stored separately in `shop_supplier_refs`. Values are never joined into `GET /api/shop`, search results, local article index, customer orders or Android static assets.
+- `GET/PUT/DELETE /api/admin/shop/products/:id/supplier` and `GET /api/admin/shop/supplier/status` require the administrator role.
+- The status always reports `connected: false`, `liveOffers: false` and `automaticOrders: false` until an authorized, tested provider integration is implemented. Saving a supplier SKU does not activate purchases.
+- Real API parameters, credentials, rate limits and allowed data usage must be sourced from the official supplier agreement. Never guess endpoints or store secrets in app bundles or GitHub.
+
 ## Next data steps
 
 - Obtain a licensed cross-reference and VIN-fitment source covering heavy trucks, trailers, axle brands and brake systems. Vehicle VIN alone may not identify replacement axles, engines and brakes.
