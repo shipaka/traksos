@@ -22,6 +22,7 @@ import { Shop, ShopCart, ShopHistory } from './screens/shop.tsx';
 import { Privacy } from './screens/privacy.tsx';
 import { ModCase, Appeal, MyReviews } from './screens/moderation.tsx';
 import { ModeratorDesk } from './screens/moderatorDesk.tsx';
+import { AdminTestCenter } from './screens/adminTestCenter.tsx';
 import { SupportList, SupportNew, SupportThread, Notifications, useUnread } from './screens/support.tsx';
 import { InsurerCabinet } from './screens/insurer.tsx';
 
@@ -201,7 +202,7 @@ function App() {
     case 'qr': screen = <QrJoin code={b} />; break;
     case 'appeal': screen = <Appeal />; break;
     case 'reviews': screen = <MyReviews />; break;
-    case 'admin': screen = !isStaff ? <Home /> : b === 'case' && route[2] ? <ModCase id={route[2]} /> : !isAdmin ? <ModeratorDesk /> : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : <Admin key={b === 'section' ? route[2] : 'summary'} initialSection={b === 'section' ? route[2] : undefined} />; break;
+    case 'admin': screen = !isStaff ? <Home /> : b === 'case' && route[2] ? <ModCase id={route[2]} /> : !isAdmin ? <ModeratorDesk /> : b === 'test-center' ? <AdminTestCenter /> : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : <Admin key={b === 'section' ? route[2] : 'summary'} initialSection={b === 'section' ? route[2] : undefined} />; break;
     case 'moderation': screen = isModerator ? <ModeratorDesk /> : <Home />; break;
     case 'offer': screen = <OfferPage audience={b ?? 'client'} />; break;
     case 'support': screen = b === 'new' ? <SupportNew /> : b ? <SupportThread id={b} /> : <SupportList />; break;
@@ -213,8 +214,8 @@ function App() {
     <MeCtx.Provider value={{ me, reload, mode: effMode, setMode }}>
       <ScreenErrorBoundary key={route.join('/')}>
         <Shell mode={effMode} me={me}>{screen}</Shell>
-        <IncomingCall />
-        <OfferGate />
+        {!(a === 'admin' && b === 'test-center' && isAdmin) && <IncomingCall />}
+        {!(a === 'admin' && b === 'test-center' && isAdmin) && <OfferGate />}
       </ScreenErrorBoundary>
     </MeCtx.Provider>
   );
@@ -257,7 +258,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     : mode === 'moderator'
       ? [['/moderation', 'Очередь модерации'], ['/support', 'Поддержка'], ['/profile', 'Аккаунт']]
     : mode === 'admin'
-      ? [['/admin/section/queue', 'Модерация — очередь'],
+      ? [['/admin/test-center', 'Тестирование всех кабинетов'],
+         ['/admin/section/queue', 'Модерация — очередь'],
          ['/admin', 'Административная сводка'],
          ['/admin/section/orders', 'Все заявки'],
          ['/admin/section/search', 'Поиск людей и заявок'],

@@ -21,6 +21,7 @@ export function Admin({ initialSection }: { initialSection?: string }) {
   return (
     <main>
       <h1>Администратор</h1>
+      <a className="btn ghost small" href="#/admin/test-center">Тестирование всех кабинетов (без реальных действий)</a>
       <div className="scroll-x">
         {([['queue', 'Модерация'], ['summary', 'Сводка'], ['shop', 'Магазин'], ['vehicleServices', 'Страхование и ТО'], ['stats', 'Статистика'], ['demand', 'Проблемные заявки'], ['announcements', 'Объявления и комиссии'], ['search', 'Поиск'], ['support', 'Обращения'], ['verify', 'Проверка'], ['bases', 'Рембазы'], ['orders', 'Заявки'], ['people', 'Все люди'], ['payments', 'Деньги'], ['dispatch', 'Распределение'], ['offers', 'Оферты'], ['flagged', 'Подозрительное'], ['settings', 'Настройки']] as const).map(([id, n]) => (
           <button key={id} className="chip" aria-pressed={tab === id} onClick={() => setTab(id)}>{n}</button>
