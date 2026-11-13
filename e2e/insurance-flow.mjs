@@ -13,6 +13,16 @@ async function api(method,path,body,token,status=200) {
   return data;
 }
 const assert=(ok,msg)=>{if(!ok)throw Error(msg)};
+async function acceptPendingOffers(page) {
+  for (let i=0; i<5; i++) {
+    const dialog=page.getByRole('dialog',{name:/Оферта|Согласие/});
+    if (!(await dialog.isVisible().catch(()=>false))) break;
+    await dialog.locator('input[type=checkbox]').check();
+    await dialog.getByRole('button',{name:'Принимаю'}).click();
+    await dialog.waitFor({state:'hidden',timeout:10000});
+  }
+}
+
 async function register(phone,accountType) {
   const {devCode}=await api('POST','/api/auth/code',{phone});
   assert(/^\d{4}$/.test(devCode??''),'Dev-only code required in local CI');
@@ -60,6 +70,7 @@ try{
     await page.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','client')},item.token);
     await page.goto(BASE+'/'+item.hash,{waitUntil:'domcontentloaded'});
     await page.getByRole('heading',{name:item.heading}).waitFor();
+    await acceptPendingOffers(page);
     if(item.name==='insurer') await page.getByRole('button',{name:'Все',exact:true}).click();
     await page.getByText(item.expected,{exact:false}).first().waitFor();
     if(item.name==='admin')await page.getByRole('button',{name:'Страхование и ТО'}).click();
