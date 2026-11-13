@@ -300,10 +300,10 @@ function PerformerActions({ d, onDone }: { d: any; onDone: () => void }) {
       {['accepted', 'en_route'].includes(d.status) && <LateButtons d={d} onDone={onDone} />}
       {['arrived', 'working', 'awaiting_confirmation'].includes(d.status) && <SiteFlags d={d} onDone={onDone} />}
       {d.service !== 'tow' && ['arrived', 'working', 'awaiting_confirmation'].includes(d.status) && <RecommendService order={d} onDone={onDone} />}
-      {(d.status === 'accepted' || d.status === 'en_route') && <button className="btn ghost" disabled={busy} onClick={() => step('arrive', 'Клиент видит, что вы на месте')}>Я на месте</button>}
-      {d.status === 'arrived' && <button className="btn" disabled={busy} onClick={() => step('start_work', 'Работа началась')}>Начал работу</button>}
+      {d.status === 'en_route' && <button className="btn" disabled={busy} onClick={() => step('arrive', 'Клиент видит, что вы на месте')}>Я на месте</button>}
+      {d.status === 'arrived' && <button className="btn" disabled={busy} onClick={() => step('start_work', 'Работа началась')}>Начать работу</button>}
 
-      {['arrived', 'working', 'awaiting_confirmation'].includes(d.status) && (
+      {['working', 'awaiting_confirmation'].includes(d.status) && (
         <div className="card">
           <b>{d.status === 'awaiting_confirmation' ? 'Ждём подтверждения клиента' : 'Закрыть выезд'}</b>
           <BillRows b={bill} />
