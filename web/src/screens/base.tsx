@@ -91,7 +91,7 @@ export function BaseHome() {
         <p>{center.address} · {center.hours}</p>
         <div className="base-command-actions">
           <button className="btn" onClick={()=>setTab('req')}>Входящие заявки · {groups.requests.length}</button>
-          <button className="btn ghost" onClick={()=>setTab('cars')}>Машины на ремонте</button>
+          <button className="btn ghost" onClick={()=>setTab('cars')}>Машины у вас</button>
           <a className="btn ghost" href={servicePreviewHref('base/money')}>Финансы</a>
         </div>
       </section>
