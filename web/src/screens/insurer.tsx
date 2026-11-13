@@ -14,6 +14,7 @@ export function InsurerCabinet() {
     (event) => event.type === 'vehicle_service');
   const { busy, run } = useAction();
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [inspectionNotes,setInspectionNotes]=useState<Record<string,string>>({});
   const [expires, setExpires] = useState<Record<string, string>>({});
   const [filter, setFilter] = useState<'pending' | 'all' | 'done'>('pending');
   const [search, setSearch] = useState('');
@@ -36,6 +37,13 @@ export function InsurerCabinet() {
       setNotes((old) => { const value = { ...old }; delete value[id]; return value; });
       requests.reload();
     }
+  }
+  async function decideInspection(id:string,status:'completed'|'rejected') {
+    const note=(inspectionNotes[id]??'').trim();
+    if(status==='rejected'&&!note){alert('Укажите причину отказа');return;}
+    const result=await run(()=>patch('/api/insurer/inspections/'+id,{status,note:note||undefined}),
+      status==='completed'?'Техосмотр отмечен выполненным':'Заявка отклонена');
+    if(result) inspections.reload();
   }
   const rows: any[] | undefined = requests.data;
   const visible = (rows ?? []).filter((r) => {
@@ -67,8 +75,20 @@ export function InsurerCabinet() {
             <b>{r.brand} {r.model}</b><span>{r.plate||'Номер не указан'} · {fmtTime(r.created_at)}</span>
             <span className="pill">{r.status==='completed'?'Завершён':r.status==='rejected'?'Отклонён':'В обработке'}</span>
             {r.comment&&<p>{r.comment}</p>}{r.staff_note&&<p className="note">{r.staff_note}</p>}
+            {r.status==='sent_to_partner'&&<>
+              <label className="stack"><span className="label">Комментарий или причина отказа</span>
+                <textarea className="field" maxLength={2000} value={inspectionNotes[r.id]??''}
+                  onChange={e=>setInspectionNotes(v=>({...v,[r.id]:e.target.value}))}/></label>
+              <div className="row">
+                <button type="button" className="btn small" disabled={busy}
+                  onClick={()=>decideInspection(r.id,'completed')}>Отметить выполненным</button>
+                <button type="button" className="btn ghost small" disabled={busy}
+                  onClick={()=>decideInspection(r.id,'rejected')}>Отказать</button>
+              </div>
+              <p className="note">Отметка выполнения не является выдачей диагностической карты.</p>
+            </>}
           </article>)}
-        <p className="note">Приём, назначение и завершение техосмотров в этом разделе пока не подключены.</p>
+        <p className="note">Назначение выполняет администратор. Выполнение заявки фиксируется отдельно от выдачи диагностической карты.</p>
       </section>}
       {workspace==='finance'&&<section className="stack">
         <p className="sub">Финансовая информация партнёра по направлениям. Суммы появятся после подключения подтверждённых операций.</p>
