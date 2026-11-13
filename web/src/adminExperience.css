@@ -132,3 +132,35 @@
   .admin-workspace .admin-nav-item{transition:none;}
   .admin-workspace .admin-nav-item:hover{transform:none;}
 }
+
+/* One-touch access to common admin operations on phones, without a
+   18-item horizontal tab row or blocking the real work area. */
+.admin-workspace .admin-mobile-quick{display:none;}
+@media(max-width:950px){
+  .admin-workspace .admin-mobile-quick{
+    display:flex;flex-direction:column;gap:12px;margin-top:4px;
+    padding:16px 14px;border:1px solid #426681;border-radius:19px;
+    background:linear-gradient(140deg,#142f49,#0e263e);
+  }
+  .admin-workspace .admin-mobile-quick-heading{display:flex;flex-direction:column;gap:3px;}
+  .admin-workspace .admin-mobile-quick-heading b{font-size:14px;color:#f4fcff;}
+  .admin-workspace .admin-mobile-quick-heading small{font-size:11px;color:#b8d2e2;}
+  .admin-workspace .admin-mobile-quick-grid{
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;
+  }
+  .admin-workspace .admin-mobile-quick-item{
+    display:grid;grid-template-columns:30px minmax(0,1fr) 10px;align-items:center;gap:6px;
+    min-width:0;min-height:62px;border:1px solid #4a718a;border-radius:13px;
+    padding:10px;background:linear-gradient(135deg,#1b405b,#12324b);
+    color:#f8fdff;text-align:left;
+  }
+  .admin-workspace .admin-mobile-quick-item:hover,
+  .admin-workspace .admin-mobile-quick-item:focus-visible{
+    border-color:#80e5ee;background:#24506a;outline-offset:2px;
+  }
+  .admin-workspace .admin-mobile-quick-item>span:first-child{
+    font-size:10px;color:#a9ebf3;font-weight:900;
+  }
+  .admin-workspace .admin-mobile-quick-item b{font-size:11.5px;line-height:1.35;overflow-wrap:anywhere;}
+  .admin-workspace .admin-mobile-quick-item i{font-style:normal;font-size:19px;color:#9be6ef;}
+}
