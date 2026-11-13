@@ -12,6 +12,8 @@ export function VehicleServicesQueue() {
   const [expiry, setExpiry] = useState<Record<string, string>>({});
   const [accrualAmounts,setAccrualAmounts]=useState<Record<string,string>>({});
   const [accrualReasons,setAccrualReasons]=useState<Record<string,string>>({});
+  const [payoutAmounts,setPayoutAmounts]=useState<Record<string,string>>({});
+  const [payoutReferences,setPayoutReferences]=useState<Record<string,string>>({});
   const labels: Record<string, string> = {
     submitted: 'Подана', in_review: 'На рассмотрении', need_documents: 'Нужны документы',
     sent_to_partner: 'Передана партнёру', completed: 'Завершена',
@@ -123,6 +125,30 @@ export function VehicleServicesQueue() {
               if(result){setAccrualAmounts(v=>({...v,[r.id]:''}));setAccrualReasons(v=>({...v,[r.id]:''}));list.reload();}
             }}>Зарегистрировать начисление</button>
         </details>)}
+        {r.status==='completed'&&r.assigned_to&&r.has_partner_accrual&&<details className="stack">
+          <summary><b>Зарегистрировать фактическую выплату</b></summary>
+          <p className="note">Только после перечисления денег партнёру. Эта форма не отправляет платёж — она фиксирует уже подтверждённую выплату.</p>
+          <label className="stack">Выплаченная сумма, ₽
+            <input className="field" type="number" min="0.01" step="0.01" inputMode="decimal"
+              value={payoutAmounts[r.id]??''} onChange={e=>setPayoutAmounts(v=>({...v,[r.id]:e.target.value}))}/>
+          </label>
+          <label className="stack">Номер платёжного поручения / подтверждение перевода
+            <input className="field" maxLength={1000} value={payoutReferences[r.id]??''}
+              onChange={e=>setPayoutReferences(v=>({...v,[r.id]:e.target.value}))}/>
+          </label>
+          <button type="button" className="btn small" disabled={busy} onClick={async()=>{
+            const raw=(payoutAmounts[r.id]??'').trim().replace(',','.');
+            const amount=Number(raw),amountKopecks=Math.round(amount*100);
+            const reference=(payoutReferences[r.id]??'').trim();
+            if(!raw||!Number.isFinite(amount)||amount<=0||Math.abs(amount*100-amountKopecks)>0.000001||!Number.isSafeInteger(amountKopecks)||reference.length<3){
+              window.alert('Укажите корректную сумму и подтверждение фактического перевода.');return;
+            }
+            if(!window.confirm('Деньги уже переведены? Зарегистрировать выплату '+amount.toFixed(2)+' ₽?'))return;
+            const result=await run(()=>post('/api/admin/partner-finance/payouts',
+              {requestId:r.id,amountKopecks,reference}),'Выплата учтена');
+            if(result){setPayoutAmounts(v=>({...v,[r.id]:''}));setPayoutReferences(v=>({...v,[r.id]:''}));list.reload();}
+          }}>Зафиксировать выплаченную сумму</button>
+        </details>}
         {(next[r.status]?.length ?? 0) > 0 && <>
           <textarea className="field" aria-label="Комментарий сотрудника" placeholder="Комментарий для клиента" value={notes[r.id] ?? ''} onChange={(e) => setNotes({ ...notes, [r.id]: e.target.value })} maxLength={2000} />
           {r.kind === 'insurance' && r.status === 'sent_to_partner' && <label className="stack">Дата окончания полиса
