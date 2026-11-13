@@ -46,6 +46,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const [role, setRole] = useState<JoinRole>('master');
   const [customerType, setCustomerType] = useState<'owner' | 'driver'>('owner');
   const [cameFromRegister, setCameFromRegister] = useState(false);
+  const [insurerOnly, setInsurerOnly] = useState(false);
   const [agree, setAgree] = useState(false);
   const toast = useToast();
   const [appealToken, setAppealToken] = useState<string | null>(null);
@@ -53,7 +54,16 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const [appealSent, setAppealSent] = useState(false);
 
   async function sendCode() {
-    const r = await run(() => post('/api/auth/code', { phone, purpose: intent === 'reset' ? 'reset' : 'register' }), 'Код отправлен');
+    setInsurerOnly(false);
+    const r = await run(async () => {
+      try {
+        return await post('/api/auth/code', { phone, purpose: intent === 'reset' ? 'reset' : 'register',
+          accountType: intent === 'join' ? role : intent === 'register' || intent === 'help' ? customerType : undefined });
+      } catch (e) {
+        if (e instanceof ApiError && e.code === 'insurer_only') setInsurerOnly(true);
+        throw e;
+      }
+    }, 'Код отправлен');
     if (r) {
       setDevCode(r.devCode ?? null);
       setStep('code');
@@ -75,6 +85,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
       } catch (e) {
         // Заблокирован — показываем форму обжалования, номер уже подтверждён кодом
         if (e instanceof ApiError && e.code === 'blocked' && e.data?.appealToken) { setAppealToken(e.data.appealToken); return null; }
+        if (e instanceof ApiError && e.code === 'insurer_only') setInsurerOnly(true);
         throw e;
       }
     }, null);
@@ -268,8 +279,15 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
             ))}
           </div>}
           <Field label="Телефон">
-            <input className="field" type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
+            <input className="field" type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => { setPhone(e.target.value); setInsurerOnly(false); }} />
           </Field>
+          {insurerOnly && <div className="card stack" role="alert">
+            <b>Для этого номера доступен только страховой кабинет</b>
+            <span className="note">Выберите регистрацию «Я представитель страховой компании». Другой тип аккаунта на этот номер создать нельзя.</span>
+            <button className="btn" type="button" onClick={() => {
+              setStep('phone'); setRole('insurer'); setIntent('join'); setInsurerOnly(false);
+            }}>Перейти к регистрации страхового агента</button>
+          </div>}
           {needAgree && <label className="row note" style={{ flexWrap: 'nowrap', alignItems: 'flex-start' }}>
             <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} style={{ marginTop: 3 }} />
             <span>Согласен с {intent === 'join' ? <a href="#/offer/performer" target="_blank" rel="noreferrer">агентским договором</a> : <a href="#/offer/client" target="_blank" rel="noreferrer">офертой</a>} и на <a href="#/offer/privacy" target="_blank" rel="noreferrer">обработку персональных данных</a></span>
@@ -293,7 +311,8 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
             <input className="field" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={10} />
           </Field>
           <button className="btn" disabled={busy || code.length < 4 || password.length < 10}>{intent === 'reset' ? 'Изменить пароль' : 'Зарегистрироваться'}</button>
-          <button type="button" className="btn ghost" onClick={() => { setStep('phone'); setCode(''); }}>Другой номер</button>
+          {insurerOnly && <button type="button" className="btn" onClick={() => { setStep('phone'); setCode(''); setRole('insurer'); setIntent('join'); setInsurerOnly(false); }}>Перейти к страховому кабинету</button>}
+          <button type="button" className="btn ghost" onClick={() => { setStep('phone'); setCode(''); setInsurerOnly(false); }}>Другой номер</button>
         </form>
       )}
     </main>

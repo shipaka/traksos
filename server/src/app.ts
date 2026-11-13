@@ -56,7 +56,7 @@ export function createApp(d: Deps) {
   const hub = new Hub();
   const settings = new SettingsService(d.db);
   const notifier = new Notifier(d.db, hub, d.push);
-  const auth = new AuthService(d.db, d.sms, now);
+  const auth = new AuthService(d.db, d.sms, now, settings);
   const profiles = new ProfilesService(d.db, settings, now);
   const orders = new OrdersService(d.db, settings, notifier, now);
   const payments = new PaymentsService(d.db, settings, d.payments, notifier, orders);
@@ -104,8 +104,9 @@ export function createApp(d: Deps) {
 
   // Вход ---------------------------------------------------------------------
   r.post('/api/auth/code', false, (c: Ctx) => {
-    const b = parse(z.object({ phone: z.string(), purpose: z.enum(['register','reset']).optional() }), c.body);
-    return auth.requestCode(b.phone, c.ip, b.purpose ?? 'register');
+    const b = parse(z.object({ phone: z.string(), purpose: z.enum(['register','reset']).optional(),
+      accountType: z.enum(['owner','driver','master','tow','service','master_service','insurer']).optional() }), c.body);
+    return auth.requestCode(b.phone, c.ip, b.purpose ?? 'register', b.accountType);
   });
   r.post('/api/auth/login', false, (c: Ctx) => {
     const b = parse(z.object({ phone: z.string(), password: z.string().min(1).max(128), device: z.string().max(200).optional() }), c.body);
@@ -746,9 +747,22 @@ export function createApp(d: Deps) {
   }
 
   // Модератор и админ -----------------------------------------------------------
+  r.get('/api/admin/insurance-access', ['admin'], async () => {
+    const policy = await settings.get('insurancePartners');
+    const counts = await d.db.one<{ count: string }>(
+      "select count(*)::text as count from users where 'insurer'=any(roles) and status='active'");
+    return { primaryConfigured: !!config.insurerPrimaryPhone,
+      registrationOpen: policy.registrationOpen, registeredCount: Number(counts?.count ?? 0) };
+  });
   r.get('/api/admin/settings', ['admin'], () => settings.all());
   r.put('/api/admin/settings/:key', ['admin'], (c: AuthedCtx) => {
     if (!(c.params.key in defaultSettings)) throw notFound('Нет такой настройки');
+    if (c.params.key === 'insurancePartners') {
+      const input = parse(z.object({ registrationOpen: z.boolean() }).strict(), c.body);
+      if (input.registrationOpen && !config.insurerPrimaryPhone)
+        throw bad('insurer_number_missing', 'Сначала закрепите номер первого страхового агента в настройках сервера.');
+      return settings.set('insurancePartners', input, c.user.id);
+    }
     return settings.set(c.params.key as any, c.body ?? {}, c.user.id);
   });
   r.get('/api/admin/users', ['admin'], (c: AuthedCtx) => {

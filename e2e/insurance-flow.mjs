@@ -24,7 +24,7 @@ async function acceptPendingOffers(page) {
 }
 
 async function register(phone,accountType) {
-  const {devCode}=await api('POST','/api/auth/code',{phone});
+  const {devCode}=await api('POST','/api/auth/code',{phone,accountType});
   assert(/^\d{4}$/.test(devCode??''),'Dev-only code required in local CI');
   return api('POST','/api/auth/verify',{phone,code:devCode,accountType,password:'CI-Insurance-Test-2026!'});
 }
@@ -35,6 +35,20 @@ const [owner,partner,outsider]=await Promise.all([
 ]);
 const admin=await api('POST','/api/auth/login',{phone:'+79990000001',password:'TrackSOS-Test-2026!'});
 assert(admin.user.roles.includes('admin'),'Admin role not present');
+const policy=await api('GET','/api/admin/insurance-access',undefined,admin.token);
+assert(policy.registrationOpen===false,'Insurer registration must be closed by default');
+assert(policy.registeredCount>=1,'Initial insurer not recorded');
+await api('GET','/api/admin/insurance-access',undefined,partner.token,403);
+await api('PUT','/api/admin/settings/insurancePartners',{registrationOpen:true},partner.token,403);
+await api('PUT','/api/admin/settings/insurancePartners',{registrationOpen:'yes'},admin.token,400);
+if(policy.primaryConfigured) {
+  await api('PUT','/api/admin/settings/insurancePartners',{registrationOpen:true},admin.token);
+  const enabled=await api('GET','/api/admin/insurance-access',undefined,admin.token);
+  assert(enabled.registrationOpen===true,'Admin enable action not reflected');
+  await api('PUT','/api/admin/settings/insurancePartners',{registrationOpen:false},admin.token);
+} else {
+  await api('PUT','/api/admin/settings/insurancePartners',{registrationOpen:true},admin.token,400);
+}
 const car=await api('POST','/api/vehicles',{brand:'Scania',model:'R520',year:2020,plate:'Т123ТТ78'},owner.token);
 assert(car.id,'Vehicle was not created');
 await api('GET','/api/vehicles/'+car.id+'/service-history',undefined,outsider.token,404);
@@ -73,7 +87,12 @@ try{
     await acceptPendingOffers(page);
     if(item.name==='insurer') await page.getByRole('button',{name:'Все',exact:true}).click();
     await page.getByText(item.expected,{exact:false}).first().waitFor();
-    if(item.name==='admin')await page.getByRole('button',{name:'Страхование и ТО'}).click();
+    if(item.name==='admin') {
+      await page.getByRole('button',{name:'Страхование и ТО'}).click();
+      await page.getByRole('link',{name:'Управлять регистрацией страховых агентов'}).click();
+      await page.getByText('Страховые партнёры',{exact:true}).waitFor();
+      await page.getByRole('button',{name:/Регистрация новых партнёров закрыта/}).waitFor();
+    }
     if(item.name==='owner')await page.getByText('Страхование и техосмотр',{exact:false}).first().click();
     await page.screenshot({path:OUT+'/'+item.name+'.png',fullPage:true});
     assert(errors.length===0,item.name+' JS errors: '+errors.join(' | '));

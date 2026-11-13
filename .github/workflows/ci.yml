@@ -42,6 +42,7 @@ jobs:
           bash -n deploy/update-site.sh
           bash -n deploy/diagnose-sms.sh
           bash -n deploy/configure-staff.sh
+          bash -n deploy/configure-insurer.sh
           bash -n deploy/activate-primary-admin.sh
           # docker compose requires app.env_file to exist even for config-only checks.
           cp deploy/.env.example deploy/.env
@@ -69,6 +70,7 @@ jobs:
           node e2e/admin-ops.mjs e2e/shots
           SHOTS_DIR=e2e/shots/roles node e2e/role-matrix.mjs
           SHOTS_DIR=e2e/shots/insurance node e2e/insurance-flow.mjs
+          node e2e/insurance-locked-ui.mjs
           node e2e/moderator-permission-check.mjs
           node e2e/admin-master-switch.mjs
           node e2e/staff-security.mjs
