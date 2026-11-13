@@ -45,6 +45,8 @@ export class AuthService {
     const phone = normalizePhone(rawPhone);
     if (!phone) throw bad('bad_phone', 'Номер в формате +7 9XX XXX-XX-XX');
     const existing = await this.db.one<{ id: string; roles: string[] }>('select id, roles from users where phone=$1', [phone]);
+    if (isProd && purpose === 'register' && config.recoveryContactPhone && phone === config.recoveryContactPhone)
+      throw new HttpError(403, 'reserved_recovery_contact', 'Этот резервный контакт зарезервирован и не используется для обычной регистрации.');
     if (isProd && purpose === 'register' && existing) throw bad('already_registered', 'Аккаунт существует. Войдите по паролю или восстановите доступ.');
     if (purpose === 'reset' && !existing) throw bad('not_registered', 'Такой аккаунт не найден — выберите регистрацию.');
     if (purpose === 'reset' && (existing?.roles.some(r => r === 'admin' || r === 'moderator') || config.adminPhones.includes(phone) || config.moderatorPhones.includes(phone)))
