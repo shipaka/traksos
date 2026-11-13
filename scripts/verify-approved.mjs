@@ -48,6 +48,14 @@ expect(!landing.includes('openstreetmap.org/export/embed'), 'no third-party ifra
 expect(landing.includes('Демонстрационная карта'), 'demo map is explicitly labelled');
 expect(landing.includes('Санкт-Петербург и Ленинградская область'), 'launch region is shown');
 expect(shell.includes('guest-header-actions'), 'public header provides sign-in and registration');
+expect(landing.includes('Выбор кабинета при регистрации'), 'registration exposes a complete public account chooser');
+for(const name of ['Я мастер','Я эвакуаторщик','Я рембаза (сервис)','Мастер и своя СТО','Я представитель страховой компании',
+  'Владелец / автопарк','Водитель автопарка']) {
+  expect(landing.includes(name), 'approved registration category is available: '+name);
+}
+expect(landing.includes("roles.includes('moderator') return '#/as/moderator'") ||
+       landing.includes("roles.includes('moderator')) return '#/as/moderator'"),
+       'moderator enters the restricted cabinet instead of the administrator panel');
 expect(!landing.includes('public-bottom-auth'), 'no duplicate sign-in/register controls at page end');
 expect(landing.includes('RuStore') && !landing.includes('Google Play'), 'only RuStore is promoted');
 expect(native.includes('BundledWeb(this)'), 'APK loads bundled web interface');
