@@ -49,7 +49,8 @@ export class VehicleServiceRequests {
        order by r.created_at desc`, [vehicleId, owner, kinds]);
   }
 
-  async create(user: AuthUser, vehicleId: string, kind: VehicleServiceKind, comment?: string) {
+  async create(user: AuthUser, vehicleId: string, kind: VehicleServiceKind, comment?: string,
+    insurance?: {agentId:string; details:{ applicant:{firstName:string;lastName:string;middleName?:string}; vehicle:Record<string,string>}}) {
     const owner = user.owner_id ?? user.id;
     const v = await this.db.one<any>(
       'select id, driver_id from vehicles where id=$1 and owner_id=$2', [vehicleId, owner]);
@@ -69,11 +70,23 @@ export class VehicleServiceRequests {
            and status in ('submitted','in_review','need_documents','sent_to_partner')
          limit 1`, [owner, vehicleId, kind]);
       if (active) throw bad('duplicate_request', 'По этой машине уже есть активная заявка на эту услугу');
-      const created = await q.one(
-        `insert into vehicle_service_requests(owner_id, requested_by, vehicle_id, kind, comment)
-         values ($1,$2,$3,$4,$5) returning *`,
-        [owner, user.id, vehicleId, kind, comment ?? null]);
+      if (insurance) {
+        if (kind !== 'insurance') throw bad('invalid_kind', 'Агент выбирается только для страхования');
+        const partner=await q.one<{id:string}>(`select id from users
+          where id=$1 and 'insurer'=any(roles) and status='active'`,[insurance.agentId]);
+        if(!partner)throw notFound('Страховой агент недоступен');
+      }
+      const created = await q.one<any>(
+        `insert into vehicle_service_requests(owner_id, requested_by, vehicle_id, kind, comment,
+          assigned_to,status,insurance_stage,insurance_details)
+         values ($1,$2,$3,$4,$5,$6::uuid,
+           case when $6::uuid is null then 'submitted' else 'sent_to_partner' end,
+           case when $6::uuid is null then null else 'received' end,$7::jsonb) returning *`,
+        [owner, user.id, vehicleId, kind, comment ?? null,insurance?.agentId??null,
+          insurance?JSON.stringify(insurance.details):null]);
       if (!created) throw notFound('Не удалось создать заявку');
+      if(insurance)await q.query(`insert into insurance_thread_messages(request_id,sender_id,kind,body)
+         values ($1,$2,'status','Заявка получена страховым агентом')`,[created.id,user.id]);
       return created;
     });
   }
