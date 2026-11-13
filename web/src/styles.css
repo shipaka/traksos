@@ -1077,3 +1077,27 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
     background: linear-gradient(180deg, #071a2c 0%,rgba(7,26,44,.94) 16%,rgba(6,20,35,.05) 41%,rgba(6,20,35,.08) 76%,#06182b 99%);
   }
 }
+
+/* Scania R520 visual QA: keep the cab and grille legible on narrow screens.
+   Do not cover the picture with title or clickable controls. */
+@media (max-width: 899px) {
+  .public-landing .public-brand-hero {
+    min-height: 650px;
+  }
+  .public-landing .public-hero-visual {
+    inset: 29% 0 20% 0;
+    background-color: #071b2d;
+    background-size: cover;
+    background-position: center 43%;
+  }
+  .public-landing .public-brand-hero::before {
+    background: linear-gradient(180deg,
+      #071a2c 0%,
+      rgba(7,26,44,.96) 17%,
+      rgba(7,26,44,.35) 32%,
+      rgba(7,26,44,0) 42%,
+      rgba(6,20,35,0) 72%,
+      rgba(6,20,35,.86) 83%,
+      #06182b 100%);
+  }
+}
