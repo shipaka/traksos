@@ -83,10 +83,10 @@ try {
   await page.locator('.account-menu > summary').click();
   const nav = page.getByRole('navigation',{name:'Все разделы кабинета'});
   await nav.getByRole('link',{name:'Выездной мастер'}).click();
-  await page.waitForURL(/#\\/work/);
+  await page.waitForURL(/#\/work/);
   await page.locator('.account-menu > summary').click();
   await nav.getByRole('link',{name:'Модератор'}).click();
-  await page.waitForURL(/#\\/moderation/);
+  await page.waitForURL(/#\/moderation/);
   await page.goto(BASE+'/#/admin');
   await page.getByRole('heading',{name:'Модерация'}).waitFor();
   if (await page.getByRole('button',{name:'Статистика'}).count()) throw new Error('Moderator sees admin statistics');
