@@ -83,12 +83,12 @@ export class PartnerFinance {
   }
 
   async mine(user:AuthUser) {
-    if(!user.roles?.includes('insurer'))throw forbidden('Нет доступа к финансам партнёра');
+    if(!user.roles?.some(role=>['insurer','inspection_operator'].includes(role)))throw forbidden('Нет доступа к финансам партнёра');
     const entries=await this.db.query<{
       id:string;kind:'insurance'|'inspection';entry_type:'accrual'|'reversal'|'payout';
       amount_kopecks:string|number;request_id:string;note:string|null;created_at:string
     }>(`select id,kind,entry_type,amount_kopecks::text as amount_kopecks,request_id,note,created_at
-        from partner_finance_entries where partner_id=$1 order by created_at desc limit 200`,[user.id]);
+        from partner_finance_entries where partner_id=$1 and ($2::boolean or kind='inspection') order by created_at desc limit 200`,[user.id,user.roles.includes('insurer')]);
     // Aggregate over the full ledger, not just the last 200 rows shown in history.
     const totals=await this.db.query<{kind:string;accrued:string;paid:string;balance:string}>(`
       select kind,
@@ -97,7 +97,7 @@ export class PartnerFinance {
         coalesce(sum(case when entry_type='payout' then amount_kopecks else 0 end),0)::text as paid,
         coalesce(sum(case when entry_type='accrual' then amount_kopecks
                           else -amount_kopecks end),0)::text as balance
-      from partner_finance_entries where partner_id=$1 group by kind`,[user.id]);
+      from partner_finance_entries where partner_id=$1 and ($2::boolean or kind='inspection') group by kind`,[user.id,user.roles.includes('insurer')]);
     return {entries,totals};
   }
 }
