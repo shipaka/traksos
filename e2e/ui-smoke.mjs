@@ -73,7 +73,7 @@ try {
       await page.getByRole('heading', { name: 'Работать с ТракSOS' }).waitFor();
       assert(await page.getByRole('button', { name: label }).getAttribute('aria-pressed') === 'true',
         width + 'px: registration category not selected: ' + label);
-      await page.goto(BASE + '/#/register');
+      await page.getByRole('button', { name: 'Назад к выбору кабинета' }).click();
       await page.getByRole('heading', { name: 'Регистрация в ТракSOS' }).waitFor();
     }
     assert(errors.length === 0, width + 'px: browser errors: ' + errors.join('; '));
