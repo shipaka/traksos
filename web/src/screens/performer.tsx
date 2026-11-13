@@ -6,6 +6,7 @@ import { native } from '../native.ts';
 import { OfferForm } from './search.tsx';
 import { WorkerNotices } from './ops.tsx';
 import { useToast } from '../ui.tsx';
+import { currentPreviewRole } from '../demo/fullRolePreview.ts';
 
 // Линия: статус, геолокация, входящие ---------------------------------------
 
@@ -170,7 +171,10 @@ export function scheduleSlot(s: any, now: Date, offUntil?: string | null): 'work
 /** Отправляем координаты раз в 30 секунд, пока экран открыт (в приложении — и в фоне) */
 export function LocationSharing() {
   const [state, setState] = useState<'wait' | 'ok' | 'off'>('wait');
+  const demo=!!currentPreviewRole();
   useEffect(() => {
+    // A test role must NEVER request the administrator's physical GPS location.
+    if(demo)return;
     if (!navigator.geolocation) { setState('off'); return; }
     let last = 0;
     const id = navigator.geolocation.watchPosition(
@@ -184,7 +188,8 @@ export function LocationSharing() {
       { enableHighAccuracy: false, maximumAge: 60_000 },
     );
     return () => navigator.geolocation.clearWatch(id);
-  }, []);
+  }, [demo]);
+  if(demo)return <span className="note">Тестовый режим: GPS устройства отключён, заявки и координаты только вымышленные.</span>;
   return <span className="note">{state === 'ok' ? '✓ Геолокация включена — заявки рядом приходят вам первыми' : state === 'off' ? 'Геолокация выключена — без неё подбор хуже. Разрешите доступ к местоположению.' : 'Определяю место…'}</span>;
 }
 
