@@ -6,12 +6,21 @@ import { go } from '../ui.tsx';
 import { useLoad, useAction, useMe, Loading, Back, RubInput, Field, useToast, VehicleFields } from '../ui.tsx';
 import { onEvent } from '../api.ts';
 import { Search, OfferForm } from './search.tsx';
+import { RoadsideMap } from './roadsideMap.tsx';
 import { RefundForm, payStatus } from './adminUser.tsx';
 
 export function Order({ id }: { id: string }) {
   const o = useLoad(() => get(`/api/orders/${id}`), [id], (e) => e.orderId === id && (e.type === 'order' || e.type === 'payment'));
-  const [perfPos, setPerfPos] = useState<{ lat: number; lng: number } | null>(null);
-  useEffect(() => onEvent((e) => { if (e.type === 'performer_location' && e.orderId === id) setPerfPos({ lat: e.lat, lng: e.lng }); }), [id]);
+  const [perfPos, setPerfPos] = useState<{ lat: number; lng: number; at: number } | null>(null);
+  useEffect(() => {
+    setPerfPos(null); // Never display another order's last GPS position after switching the route.
+    return onEvent(e => {
+      if(e.type === 'performer_location' && e.orderId === id &&
+        Number.isFinite(e.lat) && Number.isFinite(e.lng) &&
+        Math.abs(e.lat) <= 90 && Math.abs(e.lng) <= 180)
+        setPerfPos({lat:e.lat,lng:e.lng,at:Date.now()});
+    });
+  }, [id]);
 
   const { mode } = useMe();
   const [ptab, setPtab] = useState<'order' | 'client'>('order');
@@ -148,29 +157,38 @@ function Steps({ status, service }: { status: string; service: string }) {
   );
 }
 
-function PerformerCard({ p, pos, consult, to, moving }: { p: any; pos: { lat: number; lng: number } | null; consult?: boolean; to?: { lat: number; lng: number } | null; moving?: boolean }) {
-  const at = consult ? null : pos ?? (p.lat != null ? { lat: p.lat, lng: p.lng } : null);
-  // Примерно: по прямой × 1,3 на дороги, 40 км/ч по городу
-  const km = at && to ? Math.hypot((at.lat - to.lat) * 111, (at.lng - to.lng) * 111 * Math.cos(to.lat * Math.PI / 180)) * 1.3 : null;
-  const min = km != null ? Math.max(5, Math.round(km / 40 * 60)) : null;
-  const arrive = min != null ? new Date(Date.now() + min * 60000).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : null;
-  return (
-    <div className="card">
-      <div className="between">
-        <b>{p.name ?? 'Исполнитель'}</b>
-        <span className="pill">{p.rating ? `★ ${p.rating.toFixed(1)} · ${p.rating_count}` : 'Новый мастер'}</span>
-      </div>
-      {p.car && !consult && <span className="note">Приедет на: {p.car.brand}{p.car.color ? `, ${p.car.color}` : ''}, {p.car.plate}</span>}
-      {moving && min != null && <span><b>~{min} мин · {String(Math.round(km! * 10) / 10).replace('.', ',')} км</b> — будет примерно в <b style={{ color: 'var(--accent)' }}>{arrive}</b>. <small className="note">Опоздание до 40 минут для грузовых — обычное дело, новое время покажем сразу.</small></span>}
-      {at && (
-        <div className="mini-map">
-          <iframe title="Где мастер" loading="lazy"
-            src={`https://www.openstreetmap.org/export/embed.html?bbox=${at.lng - 0.03},${at.lat - 0.015},${at.lng + 0.03},${at.lat + 0.015}&layer=mapnik&marker=${at.lat},${at.lng}`} />
-        </div>
-      )}
-      <span className="note">Звонки — через чат заявки. Номера скрыты с обеих сторон.</span>
+function PerformerCard({p,pos,consult,to,moving}:{
+  p:any;pos:{lat:number;lng:number;at:number}|null;consult?:boolean;
+  to?:{lat:number;lng:number}|null;moving?:boolean;
+}){
+  const previousPoint=Number.isFinite(p.lat)&&Number.isFinite(p.lng)?{lat:p.lat,lng:p.lng}:null;
+  const at=consult?null:pos??previousPoint;
+  const lastAt=pos?.at??(p.location_at?Date.parse(p.location_at):null);
+  const ageMs=lastAt==null?null:Date.now()-lastAt;
+  const fresh=ageMs!=null && ageMs>=-30000 && ageMs<=120000;
+  // An estimate is NOT a routing ETA; it is omitted for old/missing GPS.
+  const km=fresh&&at&&to?Math.hypot((at.lat-to.lat)*111,(at.lng-to.lng)*111*Math.cos(to.lat*Math.PI/180))*1.3:null;
+  const min=km!=null?Math.max(5,Math.round(km/40*60)):null;
+  return <div className="card roadside-performer-card">
+    <div className="between">
+      <b>{p.name??'Исполнитель'}</b>
+      <span className="pill">{p.rating?`★ ${p.rating.toFixed(1)} · ${p.rating_count}`:'Новый мастер'}</span>
     </div>
-  );
+    {p.car&&!consult&&<span className="note">Приедет на: {p.car.brand}{p.car.color?`, ${p.car.color}`:''}, {p.car.plate}</span>}
+    {!consult&&<div className="roadside-tracking-status">
+      <span aria-hidden="true">{fresh?'●':'○'}</span>
+      <b>{fresh?'GPS исполнителя обновлялся недавно':at?'Последняя GPS-точка устарела':'Ждём геолокацию исполнителя'}</b>
+      <small>{fresh?'Координаты обновляются, пока устройство передаёт их на сервер.':
+        'Местоположение не подтверждено сейчас. Не используйте старую точку как текущую.'}</small>
+    </div>}
+    {moving&&min!=null&&<div className="roadside-eta">
+      <b>Ориентир: около {min} мин · {String(Math.round(km!*10)/10).replace('.',',')} км</b>
+      <small>Грубая оценка без учёта маршрута, трафика и ограничений для грузовиков — не обещание времени прибытия.</small>
+    </div>}
+    {!consult&&<RoadsideMap point={at} kind="performer" updatedAt={lastAt}
+      synthetic={String(p.id??'').startsWith('demo-')}/>}
+    <span className="note">Общение — через чат заявки. Личные номера скрыты.</span>
+  </div>;
 }
 
 function ClientCard({ d }: { d: any }) {
