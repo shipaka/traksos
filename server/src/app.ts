@@ -610,6 +610,14 @@ export function createApp(d: Deps) {
   });
   r.get('/api/insurer/requests', ['insurer'], (c: AuthedCtx) => vehicleRequests.insurerQueue(c.user));
   r.get('/api/insurer/inspections', ['insurer'], (c: AuthedCtx) => vehicleRequests.inspectionQueue(c.user));
+  r.patch('/api/insurer/inspections/:id', ['insurer'], async (c: AuthedCtx) => {
+    const b = parse(z.object({status:z.enum(['completed','rejected']),note:z.string().max(2000).optional()}),c.body);
+    const updated = await vehicleRequests.updateInspection(c.user,c.params.id,b.status,b.note);
+    notifier.live(await vehicleRequests.recipients(updated),
+      {type:'vehicle_service',requestId:updated.id,vehicleId:updated.vehicle_id,status:updated.status});
+    return updated;
+  });
+
   r.post('/api/admin/vehicle-service-requests/:id/assign-inspection', staff, async (c: AuthedCtx) => {
     const b = parse(z.object({ partnerId: z.string().uuid() }), c.body);
     const request = await vehicleRequests.assignInspection(c.user,c.params.id,b.partnerId);
