@@ -1,4 +1,4 @@
-// Настройки площадки одним списком: нажмите строку — измените значение. Новые условия — для новых заявок.
+// Настройки площадки по разделам: открыта только выбранная группа.
 import { useState } from 'react';
 import { get, put, rub } from '../api.ts';
 import { useLoad, useAction, Loading, RubInput } from '../ui.tsx';
@@ -69,6 +69,7 @@ export function AdminSettings() {
   const s = useLoad(() => get('/api/admin/settings'), []);
   const { busy, run } = useAction();
   const [edit, setEdit] = useState<string | null>(null);
+  const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const [val, setVal] = useState<any>(null);
   if (!s.data) return <Loading error={s.error} />;
   async function save(section: string, key: string, kind: Kind) {
@@ -82,12 +83,17 @@ export function AdminSettings() {
   }
   return (
     <div className="stack">
-      <InsuranceAccessAdmin />
-      <span className="note">Нажмите строку, чтобы изменить. Новые условия применяются к новым заявкам.</span>
+      <span className="note">Выберите раздел. Остальные настройки останутся скрытыми. Новые условия применяются к новым заявкам.</span>
+      <button type="button" className="linkrow" aria-expanded={activeGroup === 'insurance'} onClick={() => { setActiveGroup(activeGroup === 'insurance' ? null : 'insurance'); setEdit(null); }}>
+        <span><b>Страховые агенты</b><small>Доступы и подключение страховых партнёров</small></span><span aria-hidden="true">{activeGroup === 'insurance' ? '−' : '›'}</span>
+      </button>
+      {activeGroup === 'insurance' && <InsuranceAccessAdmin />}
       {GROUPS.map(([g, rows]) => (
         <div key={g} className="stack">
-          <span className="label">{g}</span>
-          <div className="rows">
+          <button type="button" className="linkrow" aria-expanded={activeGroup === g} onClick={() => { setActiveGroup(activeGroup === g ? null : g); setEdit(null); }}>
+            <span><b>{g}</b><small>{rows.length} параметров</small></span><span aria-hidden="true">{activeGroup === g ? '−' : '›'}</span>
+          </button>
+          {activeGroup === g &&           <div className="rows">
             {rows.map(([section, key, label, kind, hint]) => {
               const id = section + '.' + key;
               const cur = path(s.data, section)?.[key];
@@ -107,7 +113,7 @@ export function AdminSettings() {
                 </div>
               );
             })}
-          </div>
+          </div>}
         </div>
       ))}
     </div>
