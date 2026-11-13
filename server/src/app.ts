@@ -527,6 +527,7 @@ export function createApp(d: Deps) {
       vehicleId: z.string().uuid(), kind: vehicleRequestKind, comment: z.string().max(2000).optional(),
       insurance: z.object({
         agentId:z.string().uuid(),
+        consentToPartner:z.literal(true),
         details:z.object({
           applicant:z.object({firstName:z.string().trim().min(1).max(90),
             lastName:z.string().trim().min(1).max(90), middleName:z.string().trim().max(90).optional()}),
@@ -534,7 +535,7 @@ export function createApp(d: Deps) {
         }),
       }).optional(),
     }), c.body);
-    const created = await vehicleRequests.create(c.user,b.vehicleId,b.kind,b.comment,b.insurance);
+    const created = await vehicleRequests.create(c.user,b.vehicleId,b.kind,b.comment,b.insurance ? {...b.insurance,details:{...b.insurance.details,consentAt:new Date().toISOString()}} : undefined);
     const recipients = await vehicleRequests.recipients(created!);
     if(b.insurance) recipients.push(b.insurance.agentId);
     notifier.live(recipients,{type:'vehicle_service',vehicleId:b.vehicleId,requestId:created?.id});
