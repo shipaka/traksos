@@ -27,7 +27,7 @@ else:
         category = 'Ограничения отправителя / подписи'
     elif any(word in last for word in ('лимит','limit','quota','слишком много')):
         category = 'Ограничение отправок'
-    elif any(word in last for word in ('номер','phone','number','запрещ','blocked','recipient')):
+    elif any(word in last for word in ('номер','phone','number','запрещ','blocked','recipient','получатель')):
         category = 'Номер или ограничение получателя'
     else:
         category = 'Другая причина, подробности проверьте в кабинете SMS.ru'
