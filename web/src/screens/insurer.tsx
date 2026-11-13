@@ -6,13 +6,13 @@ import { useLoad, useAction } from '../ui.tsx';
 const labels: Record<string, string> = {
   sent_to_partner: 'Ждёт оформления', completed: 'Полис оформлен', rejected: 'Отказ',
 };
-export function InsurerCabinet() {
-  const [workspace,setWorkspace]=useState<'insurance'|'inspection'|'finance'|'common'>('insurance');
+export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}={}) {
+  const [workspace,setWorkspace]=useState<'insurance'|'inspection'|'finance'|'common'>(inspectionOnly?'inspection':'insurance');
   const finance=useLoad(()=>get<{entries:{id:string;kind:string;entry_type:string;amount_kopecks:string;note:string|null;created_at:string}[];totals:{kind:string;accrued:string;paid:string;balance:string}[]}>('/api/insurer/finance'),[]);
   const money=(value:string|number)=>new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB'}).format(Number(value)/100);
   const inspections=useLoad(()=>get<any[]>('/api/insurer/inspections'),[],
     event=>event.type==='vehicle_service');
-  const requests = useLoad(() => get('/api/insurer/requests'), [],
+  const requests = useLoad(() => inspectionOnly ? Promise.resolve([]) : get('/api/insurer/requests'), [],
     (event) => event.type === 'vehicle_service');
   const { busy, run } = useAction();
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -32,6 +32,7 @@ export function InsurerCabinet() {
       alert('Укажите дату окончания полиса.');
       return;
     }
+    if(inspectionOnly)return;
     const result = await run(() => patch(`/api/insurer/requests/${id}`, {
       status, note: note || undefined,
       policyExpiresOn: status === 'completed' ? policyExpiresOn : undefined,
@@ -132,7 +133,7 @@ export function InsurerCabinet() {
         <a className="linkrow" href="#/menu">Помощь и настройки аккаунта</a>
         <a className="linkrow" href="#/offer/privacy">Обработка персональных данных</a>
       </section>}
-      {workspace==='insurance'&&<>
+      {workspace==='insurance'&&!inspectionOnly&&<>
       <div className="sub">Только страховые заявки, переданные вам TrackSOS. Остальные автомобили и сведения о клиентах недоступны.</div>
       {!rows ? <div className="empty">{requests.error ? `Не удалось загрузить: ${requests.error}` : 'Загружаем заявки…'}</div>
         : !rows.length ? <InsurerEmptyState onRefresh={requests.reload} />
