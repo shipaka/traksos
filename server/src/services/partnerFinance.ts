@@ -57,6 +57,31 @@ export class PartnerFinance {
     });
   }
 
+  async recordReversal(staff:AuthUser,requestId:string,amountKopecks:number,reason:string) {
+    if(!staff.roles?.includes('admin'))throw forbidden('Корректировки подтверждает администратор');
+    if(!Number.isSafeInteger(amountKopecks)||amountKopecks<=0||reason.trim().length<3)
+      throw bad('invalid_reversal','Укажите сумму и обоснование корректировки');
+    return this.db.tx(async q=>{
+      const request=await q.one<{id:string;kind:string;assigned_to:string|null}>(
+        'select id,kind,assigned_to from vehicle_service_requests where id=$1 for update',[requestId]);
+      if(!request?.assigned_to)throw notFound('Заявка с назначенным партнёром не найдена');
+      const totals=await q.one<{balance:string}>(
+        `select coalesce(sum(case when entry_type='accrual' then amount_kopecks
+                                   else -amount_kopecks end),0)::text as balance
+         from partner_finance_entries where request_id=$1 and partner_id=$2`,
+        [requestId,request.assigned_to]);
+      if(BigInt(totals?.balance??'0')<BigInt(amountKopecks))
+        throw bad('reversal_exceeds_balance','Нельзя уменьшить начисление больше невыплаченного остатка');
+      const entry=await q.one<any>(
+        `insert into partner_finance_entries(partner_id,request_id,kind,amount_kopecks,entry_type,note,created_by)
+         values ($1,$2,$3,$4,'reversal',$5,$6) returning *`,
+        [request.assigned_to,requestId,request.kind,amountKopecks,reason.trim(),staff.id]);
+      await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
+        [staff.id,'partner_finance.reversal',requestId,{amountKopecks,reason:reason.trim()}]);
+      return entry;
+    });
+  }
+
   async mine(user:AuthUser) {
     if(!user.roles?.includes('insurer'))throw forbidden('Нет доступа к финансам партнёра');
     const entries=await this.db.query<{
