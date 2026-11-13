@@ -55,13 +55,20 @@ try {
     ['moderator','Модератор'],['admin','Администратор'],
   ]){
     await page.locator('a.sandbox-role-card[href="#/admin/test-center/'+id+'"]').click();
-    await page.getByRole('main',{name:'Тестовый кабинет: '+label}).waitFor();
-    // Real-looking separate role dashboard, working sections and demo-only actions.
-    await page.getByRole('navigation',{name:'Разделы тестового кабинета'})
-      .getByRole('button',{name:'▤',exact:false}).click();
-    await page.getByRole('button',{name:'Создать тестовую заявку'}).click();
-    await page.getByRole('alert').getByText('Укажи описание', {exact:false}).waitFor();
-    await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
+    if(id==='service'){
+      await page.getByRole('heading',{name:/Рембаза/}).waitFor();
+      await page.getByRole('button',{name:'Готовы принять'}).first().click();
+      await page.getByRole('button',{name:'Отправить клиенту'}).click();
+      await page.locator('.service-preview-admin-bar a[href="#/admin/test-center"]').click();
+    }else{
+      await page.getByRole('main',{name:'Тестовый кабинет: '+label}).waitFor();
+      // Other roles remain in existing isolated demo until their full real-cabinet upgrade.
+      await page.getByRole('navigation',{name:'Разделы тестового кабинета'})
+        .getByRole('button',{name:'▤',exact:false}).click();
+      await page.getByRole('button',{name:'Создать тестовую заявку'}).click();
+      await page.getByRole('alert').getByText('Укажи описание', {exact:false}).waitFor();
+      await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
+    }
     await page.getByRole('heading',{name:'Тестирование кабинетов'}).waitFor();
   }
   if(writes.length)throw new Error('Sandbox unexpectedly changed live API');
