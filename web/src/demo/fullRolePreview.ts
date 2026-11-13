@@ -29,6 +29,18 @@ export type DemoOrder={id:string;number:number;created_at:string;createdAt:strin
  paymentMethod:'cash';is_sos:boolean;isSos:boolean;night:boolean;tier:string;
  estimate:any;money:any;site:any;actions:string[];bill:any;points:any;result:string;
  assigned:boolean;offerPrice:number|null;messages:any[];limits:any};
+let modCases:any[]=[
+ {id:'demo-mod-1',number:801,kind:'dispute',kindName:'Спор',title:'Спор по стоимости диагностики',
+  text:'Клиент просит проверить расхождение в стоимости работы.',createdAt:stamp(),
+  openedBy:'Демо · Клиент',target:null,order:null,booking:null,review:null,chat:[],
+  status:'open',priority:2,decisions:{warn:'Предупреждение',dismiss:'Без нарушения',resolve:'Урегулировано'},
+  log:[],decisionName:null,decisionNote:null,decidedAt:null},
+ {id:'demo-mod-2',number:802,kind:'appeal',kindName:'Обжалование',title:'Проверка ответа поддержки',
+  text:'Запрос на повторное рассмотрение решения.',createdAt:stamp(),
+  openedBy:'Демо · Выездной мастер',target:null,order:null,booking:null,review:null,chat:[],
+  status:'open',priority:3,decisions:{approve:'Удовлетворить',reject:'Отклонить'},
+  log:[],decisionName:null,decisionNote:null,decidedAt:null},
+];
 const vehicles:any[]=[
  {id:'demo-truck-1',brand:'Scania',model:'R520',year:2019,plate:'А123АА78',trailer_plate:'В987ВВ78',vin:'YS2R4X20001234567'},
  {id:'demo-truck-2',brand:'DAF',model:'XF',year:2018,plate:'М555ММ78',trailer_plate:''},
@@ -52,7 +64,7 @@ const defaultFleet=()=>({mode:'approve',perOrder:null as number|null,perMonth:nu
  allow:{repair:true,tow:true,consult:true,service:true,shop:false,insurance:true,inspection:true}});
 let fleetSettings=defaultFleet();
 const findOrder=(id:string)=>orders.find(o=>o.id===id)??err('Заявка не найдена');
-export function resetFullPreview(){orders=[];counter=100;mid=100;vehicles.splice(2);fleetSettings=defaultFleet();}
+export function resetFullPreview(){orders=[];counter=100;mid=100;vehicles.splice(2);fleetSettings=defaultFleet();modCases.forEach(x=>{x.status='open';x.decisionName=null;x.decisionNote=null;x.decidedAt=null;x.log=[];});}
 const who=()=>currentPreviewRole();
 const isWorker=()=>['master','tow','master_service'].includes(who()??'');
 const isCustomer=()=>['client','owner','driver'].includes(who()??'');
@@ -152,7 +164,34 @@ export async function rolePreviewApi(method:string, path:string, body:any={}):Pr
  if(method==='GET'&&p==='/api/me/referral')return {balance:0,rules:{spendCapPct:50}};
  if(method==='GET'&&p==='/api/performer/profile')return {ok:true};
  if(method==='GET'&&p==='/api/insurer/requests')return [];
- if(method==='GET'&&p==='/api/mod/cases')return [];
+ if(method==='GET'&&p==='/api/mod/cases'){
+  const counts={dispute:modCases.filter(x=>x.kind==='dispute'&&x.status==='open').length,
+    appeal:modCases.filter(x=>x.kind==='appeal'&&x.status==='open').length,
+    review:modCases.filter(x=>x.kind==='review'&&x.status==='open').length};
+  const filter=qs.get('kind');
+  return {counts,items:clone(modCases.filter(x=>qs.get('status')==='resolved'?x.status==='resolved':
+    x.status==='open'&&(!filter||x.kind===filter)))};
+ }
+ if(p.startsWith('/api/mod/cases/')){
+  const parts=p.split('/');const x=modCases.find(x=>x.id===parts[4]);if(!x)return err('Обращение не найдено');
+  if(method==='GET')return clone(x);
+  if(method==='POST'){
+   forceRole(who()==='moderator');
+   const action=parts[5];if(action==='priority'&&[1,2,3].includes(body.priority))x.priority=body.priority;
+   else if(action==='decide'&&x.status==='open'&&x.decisions[body.decision]){
+    x.status='resolved';x.decisionName=x.decisions[body.decision];x.decisionNote=body.note??null;
+    x.decidedAt=stamp();x.decidedBy='Демо · Модератор';x.decision=body.decision;
+   }else if(action==='reopen'&&x.status==='resolved'){x.status='open';x.decisionName=null;}
+   else return err('Недоступный этап обращения');
+   x.log.push({action:'mod.'+action,created_at:stamp(),data:clone(body)});
+   return clone(x);
+  }
+ }
+ if(method==='GET'&&p==='/api/admin/support')return [];
+ if(method==='GET'&&p==='/api/admin/chat/flagged')return [];
+ if(method==='GET'&&p==='/api/admin/users')return [];
+ if(method==='GET'&&p==='/api/admin/performers')return [];
+
  if(method==='GET'&&p==='/api/pricing/settings')return clone(samplePricing);
  if(p.startsWith('/api/orders/')){
    const match=p.match(/^\/api\/orders\/([^/]+)(?:\/(.*))?$/);
