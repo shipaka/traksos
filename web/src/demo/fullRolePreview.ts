@@ -2,7 +2,7 @@
 // No data persisted to production, never sends SMS, payments, GPS or service orders.
 // Every endpoint not expressly listed here fails CLOSED and never falls through to fetch.
 export const PREVIEW_ROOT='admin/test-center';
-export const PREVIEW_ROLES=['client','owner','driver','master','tow','master_service','moderator','admin'] as const;
+export const PREVIEW_ROLES=['client','owner','driver','master','tow','master_service','insurer','moderator','admin'] as const;
 export type Role=typeof PREVIEW_ROLES[number];
 export function currentPreviewRole():Role|null{
   const path=location.hash.replace(/^#\/?/,'').split('?')[0].split('/');
