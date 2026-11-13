@@ -51,7 +51,7 @@ export interface Deps {
 }
 
 const money = z.number().int().nonnegative();
-const ROLES = ['client', 'driver', 'master', 'tow', 'service', 'insurer', 'moderator', 'admin'];
+const ROLES = ['client', 'driver', 'master', 'tow', 'service', 'insurer', 'inspection_operator', 'moderator', 'admin'];
 
 export function createApp(d: Deps) {
   const now = d.now ?? (() => new Date());
@@ -611,8 +611,9 @@ export function createApp(d: Deps) {
     return request;
   });
   r.get('/api/insurer/requests', ['insurer'], (c: AuthedCtx) => vehicleRequests.insurerQueue(c.user));
-  r.get('/api/insurer/inspections', ['insurer'], (c: AuthedCtx) => vehicleRequests.inspectionQueue(c.user));
-  r.get('/api/insurer/finance', ['insurer'], (c: AuthedCtx) => partnerFinance.mine(c.user));
+  r.get('/api/admin/inspection-partners', ['admin','moderator'], (c: AuthedCtx) => vehicleRequests.inspectionPartners(c.user));
+  r.get('/api/insurer/inspections', ['insurer','inspection_operator'], (c: AuthedCtx) => vehicleRequests.inspectionQueue(c.user));
+  r.get('/api/insurer/finance', ['insurer','inspection_operator'], (c: AuthedCtx) => partnerFinance.mine(c.user));
   r.post('/api/admin/partner-finance/accruals', ['admin'], (c: AuthedCtx) => {
     const b=parse(z.object({requestId:z.string().uuid(),amountKopecks:z.number().int().positive().safe(),note:z.string().trim().min(3).max(1000)}),c.body);
     return partnerFinance.recordAccrual(c.user,b.requestId,b.amountKopecks,b.note);
@@ -634,7 +635,7 @@ export function createApp(d: Deps) {
     return partnerFinance.recordPayout(c.user,b.requestId,b.amountKopecks,b.reference);
   });
 
-  r.patch('/api/insurer/inspections/:id', ['insurer'], async (c: AuthedCtx) => {
+  r.patch('/api/insurer/inspections/:id', ['insurer','inspection_operator'], async (c: AuthedCtx) => {
     const b = parse(z.object({status:z.enum(['completed','rejected']),note:z.string().max(2000).optional()}),c.body);
     const updated = await vehicleRequests.updateInspection(c.user,c.params.id,b.status,b.note);
     notifier.live(await vehicleRequests.recipients(updated),
