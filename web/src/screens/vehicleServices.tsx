@@ -15,6 +15,7 @@ export function VehicleServiceApplication({ vehicleId, onCreated }: { vehicleId:
       </button>
       {open && <form className="stack" onSubmit={async (e) => {
         e.preventDefault();
+        if (kind === 'insurance') return;
         const created = await run(() => post('/api/vehicle-service-requests', { vehicleId, kind, comment: comment || undefined }), 'Заявка отправлена');
         if (created) { setOpen(false); setComment(''); onCreated(); }
       }}>
@@ -22,9 +23,18 @@ export function VehicleServiceApplication({ vehicleId, onCreated }: { vehicleId:
           <option value="insurance">Страхование</option>
           <option value="inspection">Техосмотр</option>
         </select>
+        {kind === 'insurance' && <>
+          <div className="banner">
+            Страхование оформляется с выбранным агентом: ФИО, полные данные грузовика,
+            предложения от 1 до 20 страховых компаний и готовый PDF в одной переписке.
+          </div>
+          <a className="btn" href={`#/insurance/request/new/${vehicleId}`}>Выбрать агента и заполнить анкету →</a>
+        </>}
+        {kind === 'inspection' && <>
         <textarea className="field" aria-label="Комментарий к заявке" placeholder="Комментарий (необязательно)" value={comment} onChange={(e) => setComment(e.target.value)} maxLength={2000} />
         <span className="note">Заявка передаётся на обработку. Оформление полиса или техосмотра выполняет уполномоченный партнёр.</span>
         <button className="btn small" disabled={busy}>Отправить заявку</button>
+        </>
       </form>}
     </div>
   );
@@ -72,6 +82,8 @@ export function VehicleServiceHistory({ id, isDriver, refreshVersion }: { id: st
             {r.policy_expires_on && <span> · Действует до {String(r.policy_expires_on).slice(0, 10)}</span>}
             <div>{statusHelp[r.status] ?? 'Статус уточняется.'}</div>
             {r.staff_note && <div><b>Комментарий специалиста:</b> {r.staff_note}</div>}
+            {r.kind === 'insurance' && r.insurance_stage && <a className="btn ghost small"
+              href={`#/insurance/request/${r.id}`}>Открыть страховую переписку и предложения →</a>}
             {['submitted', 'in_review', 'need_documents'].includes(r.status) && (!isDriver || r.requested_by === me?.id) && (
               <button type="button" className="btn ghost small" disabled={busy}
                 onClick={async () => {
