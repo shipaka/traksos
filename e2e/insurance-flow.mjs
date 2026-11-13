@@ -60,6 +60,7 @@ try{
     await page.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','client')},item.token);
     await page.goto(BASE+'/'+item.hash,{waitUntil:'domcontentloaded'});
     await page.getByRole('heading',{name:item.heading}).waitFor();
+    if(item.name==='insurer') await page.getByRole('button',{name:'Все',exact:true}).click();
     await page.getByText(item.expected,{exact:false}).first().waitFor();
     if(item.name==='admin')await page.getByRole('button',{name:'Страхование и ТО'}).click();
     if(item.name==='owner')await page.getByText('Страхование и техосмотр',{exact:false}).first().click();
