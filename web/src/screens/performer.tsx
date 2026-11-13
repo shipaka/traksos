@@ -168,7 +168,7 @@ export function scheduleSlot(s: any, now: Date, offUntil?: string | null): 'work
 }
 
 /** Отправляем координаты раз в 30 секунд, пока экран открыт (в приложении — и в фоне) */
-function LocationSharing() {
+export function LocationSharing() {
   const [state, setState] = useState<'wait' | 'ok' | 'off'>('wait');
   useEffect(() => {
     if (!navigator.geolocation) { setState('off'); return; }
