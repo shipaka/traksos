@@ -24,6 +24,7 @@ import { ModCase, Appeal, MyReviews } from './screens/moderation.tsx';
 import { ModeratorDesk } from './screens/moderatorDesk.tsx';
 import { AdminTestCenter } from './screens/adminTestCenter.tsx';
 import { ServicePreviewBar,ServicePreviewPage } from './screens/servicePreview.tsx';
+import {InsurerPreviewBar,InsurerPreviewPage} from './screens/insurerPreview.tsx';
 import { SupportList, SupportNew, SupportThread, Notifications, useUnread } from './screens/support.tsx';
 import { InsurerCabinet } from './screens/insurer.tsx';
 import { InsuranceApplication,InsuranceThread } from './screens/insuranceFlow.tsx';
@@ -159,6 +160,8 @@ function App() {
   const isCustomer = me.roles.some((r) => r === 'client' || r === 'driver');
   const isAdmin = me.roles.includes('admin');
   const serviceSandbox = isAdmin && a === 'admin' && b === 'test-center' && route[2] === 'service';
+  const insurerSandbox = isAdmin && a === 'admin' && b === 'test-center' && route[2] === 'insurer';
+  const insurerClient = insurerSandbox && route[3] === 'client';
   const isModerator = me.roles.includes('moderator') || isAdmin;
   const isStaff = isModerator;
   const isService = me.roles.includes('service');
@@ -171,7 +174,7 @@ function App() {
     : mode === 'performer' ? isPerformer : mode === 'service' ? isService
     : isCustomer || isStaff;
   const allowedMode: Mode = isInsurer ? 'insurer' : permitted ? mode : fallback;
-  const effMode: Mode = serviceSandbox ? 'service' : a === 'work' && isPerformer ? 'performer'
+  const effMode: Mode = insurerSandbox ? (insurerClient?'client':'insurer') : serviceSandbox ? 'service' : a === 'work' && isPerformer ? 'performer'
     : a === 'admin' && isAdmin ? 'admin' : a === 'moderation' && isModerator ? 'moderator'
     : a === 'base' && isService ? 'service' : a === 'insurance' && isInsurer ? 'insurer' : allowedMode;
 
@@ -197,7 +200,7 @@ function App() {
     case 'services': screen = b && route[2] === 'book' ? <BookForm id={b} /> : b ? <CenterPage id={b} /> : <ServicesList />; break;
     case 'booking': screen = <BookingPage id={b} />; break;
     case 'fleet': screen = isCustomer && !me.owner_id && !me.roles.includes('driver') ? <Fleet /> : <main><div className="empty">Парком управляет владелец</div></main>; break;
-    case 'insurance': screen = b === 'request' ? (route[2] === 'new' ? <InsuranceApplication vehicleId={route[3]??''} /> : <InsuranceThread requestId={route[2]??''} />) : isInsurer ? <InsurerCabinet /> : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
+    case 'insurance': screen = b === 'request' ? (route[2] === 'new' ? <InsuranceApplication vehicleId={route[3]??''} /> : <InsuranceThread requestId={route[2]??''} />) : isInsurer ? <InsurerCabinet section={b==='queue'?route[2]:undefined}/> : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
     case 'help': screen = <Help />; break;
     case 'rules': screen = <Rules />; break;
     case 'shop': screen = b === 'cart' ? <ShopCart /> : b === 'history' ? <ShopHistory vehicleId={route[2]} /> : <Shop />; break;
@@ -205,7 +208,7 @@ function App() {
     case 'qr': screen = <QrJoin code={b} />; break;
     case 'appeal': screen = <Appeal />; break;
     case 'reviews': screen = <MyReviews />; break;
-    case 'admin': screen = !isStaff ? <Home /> : b === 'case' && route[2] ? <ModCase id={route[2]} /> : !isAdmin ? <ModeratorDesk /> : b === 'test-center' ? (serviceSandbox ? <ServicePreviewPage section={route[3]} sub={route[4]} id={route[5]} /> : <AdminTestCenter roleId={route[2]} />) : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : <Admin key={b === 'section' ? route[2] : 'summary'} initialSection={b === 'section' ? route[2] : undefined} />; break;
+    case 'admin': screen = !isStaff ? <Home /> : b === 'case' && route[2] ? <ModCase id={route[2]} /> : !isAdmin ? <ModeratorDesk /> : b === 'test-center' ? (serviceSandbox ? <ServicePreviewPage section={route[3]} sub={route[4]} id={route[5]} /> : insurerSandbox ? <InsurerPreviewPage section={route[3]} sub={route[4]} id={route[5]} /> : <AdminTestCenter roleId={route[2]} />) : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : <Admin key={b === 'section' ? route[2] : 'summary'} initialSection={b === 'section' ? route[2] : undefined} />; break;
     case 'moderation': screen = isModerator ? <ModeratorDesk /> : <Home />; break;
     case 'offer': screen = <OfferPage audience={b ?? 'client'} />; break;
     case 'support': screen = b === 'new' ? <SupportNew /> : b ? <SupportThread id={b} /> : <SupportList />; break;
@@ -213,11 +216,13 @@ function App() {
     default: screen = <main><div className="empty">Такой страницы нет</div></main>;
   }
 
+  const previewMe=insurerSandbox?{...me,roles:(insurerClient?['client']:['insurer']) as Me['roles'],name:insurerClient?'Иванов Иван Иванович':'Демо · Страховой партнёр',owner_id:null}:me;
   return (
-    <MeCtx.Provider value={{ me, reload, mode: effMode, setMode }}>
+    <MeCtx.Provider value={{ me:previewMe, reload, mode: effMode, setMode }}>
       <ScreenErrorBoundary key={route.join('/')}>
         {serviceSandbox && <ServicePreviewBar />}
-        <Shell mode={effMode} me={serviceSandbox ? {...me,roles:['service'],name:'Тестовый сервис'} : me}>{screen}</Shell>
+        {insurerSandbox && <InsurerPreviewBar />}
+        <Shell mode={effMode} me={serviceSandbox ? {...me,roles:['service'],name:'Тестовый сервис'} : previewMe}>{screen}</Shell>
         {!(a === 'admin' && b === 'test-center' && isAdmin) && <IncomingCall />}
         {!(a === 'admin' && b === 'test-center' && isAdmin) && <OfferGate />}
       </ScreenErrorBoundary>
@@ -228,8 +233,12 @@ function App() {
 function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: React.ReactNode }) {
   const route = useRoute();
   const serviceSandbox = route[0]==='admin'&&route[1]==='test-center'&&route[2]==='service';
-  const here = serviceSandbox ? '/'+(route.slice(3).join('/')||'base') : '/'+route.join('/');
-  const sandboxHref=(href:string)=>serviceSandbox?'#/admin/test-center/service'+(href==='/base'||href.startsWith('/base/')?href:'/unavailable'):'#'+href;
+  const insurerSandbox = route[0]==='admin'&&route[1]==='test-center'&&route[2]==='insurer';
+  const insurerClient = insurerSandbox&&route[3]==='client';
+  const here = serviceSandbox ? '/'+(route.slice(3).join('/')||'base') : insurerSandbox ? (insurerClient?'/':('/insurance'+(route.slice(4).length?'/'+route.slice(4).join('/') : ''))): '/'+route.join('/');
+  const sandboxHref=(href:string)=>serviceSandbox?'#/admin/test-center/service'+(href==='/base'||href.startsWith('/base/')?href:'/unavailable')
+    : insurerSandbox ? insurerClient ? '#/admin/test-center/insurer'+(href==='/garage'||href==='/'||href==='/orders'?'/client':'/unavailable')
+    : '#/admin/test-center/insurer'+(href==='/insurance'||href.startsWith('/insurance/')?href:'/unavailable'):'#'+href;
   // На телефоне оставляем только рабочие действия. Все прежние маршруты
   // сохраняются через меню; компьютерная боковая навигация остаётся полной.
   const tabs: [string, string, string][] = !me ? [] : mode === 'performer'
@@ -237,7 +246,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     : mode === 'service'
       ? [['/base', '▤', 'Рембаза'], ['/support', '?', 'Связь'], ['/shop', '🛍', 'Магазин']]
     : mode === 'insurer'
-      ? [['/insurance', '▣', 'Страхование'], ['/shop', '🛍', 'Магазин']]
+      ? [['/insurance', '▣', 'Страхование'], ['/insurance/queue/received', '◉', 'Входящие'], ['/insurance/queue/processing', '▣', 'Оформление']]
     : mode === 'moderator'
       ? [['/moderation', '⚑', 'Модерация'], ['/support', '?', 'Обращения']]
     : mode === 'admin'
@@ -260,7 +269,11 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/base/money', 'Финансы'], ['/profile', 'Аккаунт'],
          ['/invite', 'Пригласить партнёра']]
     : mode === 'insurer'
-      ? [['/insurance', 'Кабинет страхового партнёра'], ['/profile', 'Аккаунт']]
+      ? [['/insurance', 'Мой страховой кабинет'], ['/insurance/queue/received', 'Полученные заявки'],
+        ['/insurance/queue/preparing', 'Готовлю предложения'], ['/insurance/queue/offers_sent', 'Ожидается выбор клиента'],
+        ['/insurance/queue/awaiting_payment', 'Ожидается оплата'], ['/insurance/queue/paid', 'Оплачено'],
+        ['/insurance/queue/processing', 'Оформляю полис'], ['/insurance/queue/policy_sent', 'Готовые полисы'],
+        ['/profile', 'Аккаунт']]
     : mode === 'moderator'
       ? [['/moderation', 'Очередь модерации'], ['/support', 'Поддержка'], ['/profile', 'Аккаунт']]
     : mode === 'admin'
@@ -295,7 +308,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     ['/offer/privacy', 'Политика персональных данных'],
     ['/privacy', 'Мои персональные данные']];
   return (
-    <div className={`app ${me ? "" : "guest-app"}`}>
+    <div className={`app ${me ? 'role-'+mode : 'guest-app'}`}>
       <header className="top">
         <span className="logo">Трак<b>SOS</b></span>
         <div className="row" style={{ flexWrap: 'nowrap' }}>
@@ -305,8 +318,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {me && mode === 'moderator' && <span className="pill accent">модерация</span>}
           {me && mode === 'insurer' && <span className="pill accent">страхование</span>}
           {me && mode === 'service' && <span className="pill accent">рембаза</span>}
-          {me && !serviceSandbox && <a href="#/help" className="bell" aria-label="Справка">?</a>}
-          {me && !serviceSandbox && <Bell />}
+          {me && !serviceSandbox && !insurerSandbox && <a href="#/help" className="bell" aria-label="Справка">?</a>}
+          {me && !serviceSandbox && !insurerSandbox && <Bell />}
           {me && <details className="account-menu" key={here}>
             <summary aria-label="Открыть меню кабинета">☰ <span>Меню</span></summary>
             <nav aria-label="Все разделы кабинета">

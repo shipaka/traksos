@@ -52,8 +52,8 @@ export function PerformerHub() {
     ['profile', 'Аккаунт', 'личные данные, защита входа и выход'],
   ];
   return (
-    <main>
-      <div><h1>Профиль</h1><div className="sub">Всё по разделам — откройте нужный.</div></div>
+    <main className="performer-workspace stack">
+      <section className="internal-role-hero internal-role-hero-performer"><span>TRACKSOS · ВЫЕЗДНОЙ СПЕЦИАЛИСТ</span><h1>Рабочий профиль</h1><p>Выезды, техника, расписание, документы, уровень и выплаты — всё в вашем кабинете.</p><a className="btn" href="#/work">← На линию и к заявкам</a></section>
       <div className="stack">
         {rows.map(([to, t, sub]) => (
           <button key={to} className="linkrow" onClick={() => go(to)}><span><b>{t}</b><small>{sub}</small></span><span aria-hidden="true">›</span></button>

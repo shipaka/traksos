@@ -57,9 +57,10 @@ export function Fleet() {
     if (r) f.setData(r);
   }
   return (
-    <main>
+    <main className="fleet-workspace stack">
       <Back to="garage" label="Гараж" />
-      <div><h1>Мой парк</h1><div className="sub">Машины, водители и что им можно. Все заказы и чаты водителей видны вам.</div></div>
+      <section className="internal-role-hero internal-role-hero-fleet"><span>TRACKSOS · УПРАВЛЕНИЕ ПЕРЕВОЗКАМИ</span><h1>Мой автопарк</h1>
+      <p>Машины, водители, допуски, расходы и заявки по каждому грузовику — под вашим контролем.</p></section>
 
       {d.pending.map((o: any) => (
         <div key={o.id} className="card hi">
