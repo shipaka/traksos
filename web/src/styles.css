@@ -1107,3 +1107,8 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
   .public-landing .public-brand-hero { min-height: 700px; }
   .public-landing .public-hero-visual { inset: 35% 0 20% 0; }
 }
+
+/* Final mobile hero separation: tested action offsets require >= 6% bottom clearance. */
+@media(max-width:899px) {
+  .public-landing .public-hero-visual { bottom: 26%; }
+}
