@@ -215,7 +215,7 @@ await m.getByText('[номер скрыт]').first().waitFor({ timeout: 10000 })
 await m.locator('button.btn', { hasText: 'Выехал' }).click();
 await m.locator('button.btn:not([disabled])', { hasText: 'Я на месте' }).waitFor();
 await m.locator('button.btn', { hasText: 'Я на месте' }).click();
-await m.getByRole('button', { name: 'Начал работу' }).click();
+await m.getByRole('button', { name: 'Начать работу' }).click();
 // Сумму за работу считает таймер; мастер добавляет только расходники строкой
 await m.getByText(/Работа · 1 ч ×/).waitFor();
 await m.getByRole('button', { name: '+ Расходники' }).click();
