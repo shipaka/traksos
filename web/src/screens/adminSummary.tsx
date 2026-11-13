@@ -36,6 +36,23 @@ export function AdminSummary() {
         <Tile label="На линии" value={d.today.mastersOnline + d.today.towOnline} hint={`эвакуаторов: ${d.today.towOnline}`} />
         <Tile label="Споров" value={d.today.disputesOpen} tone={d.today.disputesOpen ? 'warn' : undefined} hint={`в очереди всего: ${d.today.modOpen}`} />
       </div>
+      <div className="admin-live-viz card" aria-label="Оперативная диаграмма по текущим показателям">
+        <div className="between"><b>Пульс площадки</b><span className="pill">Данные сервера · сегодня</span></div>
+        <div className="admin-live-bars">
+          {([
+            ['Заявки',d.today.orders],
+            ['На линии',d.today.mastersOnline + d.today.towOnline],
+            ['Споры',d.today.disputesOpen],
+          ] as [string,number][]).map(([label,value],_,data)=>{
+            const max=Math.max(1,...data.map(x=>x[1]));
+            return <div className="admin-live-bar" key={label}>
+              <span className="admin-live-bar-track"><i style={{height:(value===0?2:Math.max(8,value/max*100))+'%'}}/></span>
+              <b>{value}</b><small>{label}</small>
+            </div>;
+          })}
+        </div>
+        <span className="note">Высота столбцов — относительная величина по трём показателям. Платежи здесь не отображаются.</span>
+      </div>
       <div className="scroll-x" role="tablist">
         {([['money', 'Деньги'], ['work', 'Работа'], ['quality', 'Качество']] as const).map(([k, n]) => <button key={k} className="chip" role="tab" aria-pressed={tab === k} onClick={() => setTab(k)}>{n}</button>)}
       </div>
