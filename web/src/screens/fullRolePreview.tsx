@@ -11,25 +11,27 @@ import {ModeratorDesk} from './moderatorDesk.tsx';
 import {ModCase} from './moderation.tsx';
 import {BaseHome,BaseCar,BaseMoney,BaseSetup} from './base.tsx';
 import {Admin} from './admin.tsx';
+import {InsurerPreviewPage} from './insurerPreview.tsx';
 import type {Me} from '../ui.tsx';
 import {currentPreviewRole,previewLink,resetFullPreview,PREVIEW_ROLES,type Role} from '../demo/fullRolePreview.ts';
 
 const names:Record<Role,string>={client:'Клиент',owner:'Владелец автопарка',driver:'Водитель',
- master:'Выездной мастер',tow:'Эвакуаторщик',master_service:'Мастер + СТО',
+ master:'Выездной мастер',tow:'Эвакуаторщик',master_service:'Мастер + СТО',insurer:'Страховой партнёр',
  moderator:'Модератор',admin:'Администратор'};
-const kinds:Record<Role,'client'|'performer'|'moderator'|'admin'>={
+const kinds:Record<Role,'client'|'performer'|'insurer'|'moderator'|'admin'>={
  client:'client',owner:'client',driver:'client',master:'performer',
- tow:'performer',master_service:'performer',moderator:'moderator',admin:'admin'};
+ tow:'performer',master_service:'performer',insurer:'insurer',moderator:'moderator',admin:'admin'};
 export function previewMode(role:Role){return kinds[role];}
 export function previewIdentity(admin:Me,role:Role):Me{
+ const insuranceClient=role==='insurer'&&location.hash.includes('/insurer/client');
  const master=['master','tow','master_service'].includes(role);
  const person=role==='owner'?'Демо · Владелец автопарка':role==='driver'?'Демо · Водитель':
  role==='tow'?'Демо · Эвакуаторщик':role==='master'?'Демо · Выездной мастер':
- role==='master_service'?'Демо · Мастер и СТО':role==='moderator'?'Демо · Модератор':
+ role==='master_service'?'Демо · Мастер и СТО':role==='insurer'?(insuranceClient?'Демо · Клиент':'Демо · Страховой партнёр'):role==='moderator'?'Демо · Модератор':
  role==='admin'?'Демо · Администратор':'Демо · Клиент';
  return {...admin,id:master?'demo-performer':'demo-customer',name:person,
   phone:'+70000000000',owner_id:role==='driver'?'demo-customer':null,
-  roles:role==='master_service'?['master','service']:
+  roles:role==='insurer'?(insuranceClient?['client']:['insurer']):role==='master_service'?['master','service']:
    role==='owner'?['client']:role==='driver'?['driver']:
    role==='master'?['master']:role==='tow'?['tow']:
    role==='moderator'?['moderator']:role==='admin'?['admin']:['client'],
@@ -51,9 +53,12 @@ export function RolePreviewBar({role}:{role:Role}){
        onChange={e=>{location.hash=previewLink(e.target.value as Role);}}>
        {PREVIEW_ROLES.map(id=><option value={id} key={id}>{names[id]}</option>)}
        <option value="service">Рембаза / СТО</option>
-       <option value="insurer">Страховой партнёр</option>
       </select>
      </label>
+     {role==='insurer'&&<>
+       <a href={previewLink('insurer')}>Вид страховщика</a>
+       <a href={previewLink('insurer','client')}>Вид клиента</a>
+     </>}
      <a href="#/admin/test-center">Все кабинеты</a>
      <a href="#/admin">В админку</a>
      <button type="button" onClick={()=>{resetFullPreview();location.hash=previewLink(role);location.reload();}}>↻ Сбросить тест</button>
@@ -83,6 +88,7 @@ function DisabledArea({role}:{role:Role}){
 }
 export function FullRolePreviewPage({role,parts}:{role:Role;parts:string[]}){
  const [a,b,c]=parts;
+ if(role==='insurer')return <InsurerPreviewPage section={a} sub={b} id={c}/>;
  const worker=['master','tow','master_service'].includes(role);
  const client=['client','owner','driver'].includes(role);
  if(client){
