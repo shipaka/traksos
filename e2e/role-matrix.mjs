@@ -49,6 +49,18 @@ try {
       }));
       if (widths.content > widths.viewport + 2) throw new Error('Horizontal overflow ' + JSON.stringify(widths));
       await page.screenshot({ path: OUT + '/' + entry.name + '.png', fullPage: true });
+      // UI hiding is insufficient: ensure the server refuses direct privileged API access.
+      for (const endpoint of ['/api/admin/summary', '/api/admin/users', '/api/admin/settings']) {
+        const resp = await fetch(BASE + endpoint, {
+          headers: { authorization: 'Bearer ' + result.token }
+        });
+        if (resp.status !== 403) throw new Error(
+          entry.name + ' accessed ' + endpoint + ': HTTP ' + resp.status + ' (expected 403)'
+        );
+      }
+      // A random unauthenticated client must not read protected profile data.
+      const unauth = await fetch(BASE + '/api/me');
+      if (unauth.status !== 401) throw new Error('Unauthenticated profile access: HTTP ' + unauth.status);
       // Privileged pages must be inaccessible even when a direct URL is entered.
       await page.goto(BASE + '/#/admin', { waitUntil: 'domcontentloaded' });
       await page.locator('.app').waitFor();
