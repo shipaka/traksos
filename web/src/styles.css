@@ -528,7 +528,7 @@ select.field { appearance: none; }
 .public-landing-head-actions{display:none;}
 .public-landing .public-brand-hero{display:flex;position:relative;isolation:isolate;min-height:430px;overflow:hidden;border-radius:22px;background:#081e35;color:#fff;box-shadow:0 16px 48px #0007;}
 .public-landing .public-brand-hero::before{content:"";z-index:1;position:absolute;inset:0;background:linear-gradient(90deg,#071626 0%,#081a2b 24%,rgba(7,24,43,.89) 45%,rgba(7,24,43,.05) 90%);}
-.public-landing .public-hero-visual{z-index:0;position:absolute;inset:0 0 0 28%;background:radial-gradient(circle at 72% 25%,#e06c8c44,transparent 56%),url('../public/tracksos-approved-truck.webp') center center/cover no-repeat;pointer-events:none;}
+.public-landing .public-hero-visual{z-index:0;position:absolute;inset:0 0 0 28%;background:radial-gradient(circle at 72% 25%,#e06c8c44,transparent 56%),url('../public/tracksos-approved-truck.webp') center center/contain no-repeat;pointer-events:none;}
 .public-landing .public-hero-copy{position:relative;z-index:2;width:min(68%,710px);padding:49px 22px 38px 45px;display:flex;flex-direction:column;align-items:flex-start;}
 .public-landing .public-eyebrow{color:#dd8caf;font-size:11px;font-weight:800;letter-spacing:2px;}
 .public-landing .public-brand-hero h1{margin:16px 0 17px;font-family:var(--display);font-size:clamp(29px,3.2vw,48px);line-height:1.13;letter-spacing:-1px;color:#fff;}
@@ -608,7 +608,7 @@ select.field { appearance: none; }
  .public-landing .public-landing-region{font-size:10px;}
  .public-landing .public-brand-hero{min-height:515px;display:flex;border-radius:15px;}
  .public-landing .public-brand-hero::before{background:linear-gradient(180deg,#071a2c 0%,rgba(7,26,44,.87) 18%,rgba(6,20,35,.2) 54%,#06182b 99%);}
- .public-landing .public-hero-visual{inset:20% -35% 17% -15%;opacity:1;background-size:cover;background-position:55% center;}
+ .public-landing .public-hero-visual{inset:19% 0 17% 0;opacity:1;background-size:auto,contain;background-position:center,center;}
  .public-landing .public-hero-copy{width:100%;height:100%;padding:20px 15px;align-items:stretch;justify-content:flex-start;}
  .public-landing .public-eyebrow{font-size:9px;letter-spacing:.9px;}
  .public-landing .public-brand-hero h1{font-size:25px;margin:8px 0;}
