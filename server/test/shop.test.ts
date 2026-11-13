@@ -279,3 +279,54 @@ test('CSV-справочник: проверка прав, безопасный 
   assert.equal(afterChange.items.length, 0, 'изменение исходного номера требует повторной проверки');
   ok(await t.api('PUT', '/api/admin/settings/shop', { enabled: false }, admin.token));
 });
+
+test('Офлайн-индекс справочных артикулов: только проверенные, изменения и отзыв проверки', async () => {
+  const prefix = '/api/shop/catalog/index';
+  const disabled = ok(await t.api('GET', prefix + '/manifest', undefined, client.token));
+  assert.equal(disabled.enabled, false);
+  assert.equal(ok(await t.api('GET', prefix + '/page', undefined, client.token)).rows.length, 0);
+  assert.equal(ok(await t.api('GET', prefix + '/changes?after=0', undefined, client.token)).rows.length, 0);
+  const ref = {
+    sourceNote: 'Синтетический тестовый справочник с разрешённым использованием',
+    rightsConfirmed: true, dryRun: false,
+    rows: [{ brand: 'TEST-KNORR', article: 'OFFLINE-REF-011',
+      name: 'Тестовый датчик EBS прицепа', category: 'trailer_ebs', searchTerms: 'электронный тормоз' }],
+  };
+  ok(await t.api('POST', '/api/admin/shop/catalog/import', ref, admin.token));
+  ok(await t.api('PUT', '/api/admin/settings/shop', { enabled: true }, admin.token));
+  const v0 = ok(await t.api('GET', prefix + '/manifest', undefined, client.token));
+  assert.equal(v0.enabled, true);
+  assert.match(v0.revision, /^\d+$/);
+  const pendingSearch = ok(await t.api('GET', '/api/admin/shop/catalog?q=OFFLINE-REF-011', undefined, admin.token));
+  const entry = pendingSearch.items.find((p: any) => p.article === 'OFFLINE-REF-011');
+  assert.ok(entry && !entry.reviewed);
+  assert.ok(!ok(await t.api('GET', prefix + '/page', undefined, client.token)).rows.some((row: any[]) => row[0] === entry.id),
+    'Непроверенные записи нельзя загрузить на устройство');
+
+  ok(await t.api('POST', `/api/admin/shop/catalog/${entry.id}/review`, { reviewed: true }, admin.token));
+  const v1 = ok(await t.api('GET', prefix + '/manifest', undefined, client.token));
+  assert.ok(BigInt(v1.revision) > BigInt(v0.revision));
+  const snapshot = ok(await t.api('GET', prefix + '/page?limit=1000', undefined, client.token));
+  assert.ok(snapshot.rows.some((row: any[]) => row[0] === entry.id && row[3] === 'OFFLINE-REF-011'));
+  assert.ok(snapshot.rows.every((row: any[]) => row.length === 6));
+  assert.ok(!JSON.stringify(snapshot).includes(ref.sourceNote), 'источник и цены не в кэше');
+  const delta = ok(await t.api('GET', `${prefix}/changes?after=${v0.revision}`, undefined, client.token));
+  assert.ok(delta.rows.some((row: any[]) => row[1] === entry.id && row.length === 7));
+  const approvedRevision = v1.revision;
+
+  ok(await t.api('POST', `/api/admin/shop/catalog/${entry.id}/review`, { reviewed: true }, admin.token));
+  assert.equal(ok(await t.api('GET', prefix + '/manifest', undefined, client.token)).revision, approvedRevision,
+    'Повторное подтверждение без изменения данных не перекачивает кэш');
+
+  ok(await t.api('POST', '/api/admin/shop/catalog/import', {
+    ...ref, rows: [{ ...ref.rows[0], name: 'Изменённый тестовый датчик EBS' }],
+  }, admin.token));
+  const afterChange = ok(await t.api('GET', `${prefix}/changes?after=${approvedRevision}`, undefined, client.token));
+  assert.ok(afterChange.rows.some((row: any[]) => row[1] === entry.id && row.length === 2),
+    'Отзыв проверки удаляет устаревший артикул с телефона');
+  assert.ok(!ok(await t.api('GET', prefix + '/page', undefined, client.token)).rows.some((row: any[]) => row[0] === entry.id));
+  assert.equal((await t.api('GET', prefix + '/changes?after=invalid', undefined, client.token)).status, 400);
+  assert.equal((await t.api('GET', prefix + '/changes?after=9999999999999999999', undefined, client.token)).status, 400);
+  ok(await t.api('PUT', '/api/admin/settings/shop', { enabled: false }, admin.token));
+  assert.equal(ok(await t.api('GET', prefix + '/manifest', undefined, client.token)).enabled, false);
+});

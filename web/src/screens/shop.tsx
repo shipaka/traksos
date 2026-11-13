@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { get, post, put, del, rub, fmtTime, API_URL } from '../api.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '../ui.tsx';
 import { syncOfflineParts, searchOfflineParts } from '../shopOffline.ts';
+import { syncOfflineReferences, searchOfflineReferences } from '../shopReferenceOffline.ts';
 import { AdminShopCatalog } from './shopCatalogAdmin.tsx';
 
 const CART_KEY = 'traksos.cart';
@@ -43,6 +44,7 @@ export function Shop() {
     : Promise.resolve({ items: [], total: 0, page: 0, limit: 24 }),
     [c.data?.enabled, cat, debouncedTerm, page], (e) => e.type === 'shop');
   const local = useLoad(() => searchOfflineParts(debouncedTerm, cat), [debouncedTerm, cat, offlineVersion]);
+  const localRefs = useLoad(() => searchOfflineReferences(debouncedTerm, cat), [debouncedTerm, cat, offlineVersion]);
   // A separate small result set for reviewed reference entries without live pricing.
   // Do not fetch it before a search/category selection or while the shop is closed.
   const references = useLoad(() =>
@@ -81,13 +83,18 @@ export function Shop() {
       <span className="note">Поиск по названию и номеру детали. Можно выбрать категорию, не вводя артикул.</span>
       <div className="row" style={{ alignItems: 'center', gap: 8 }}>
         <button className="btn ghost small" disabled={syncing} onClick={async () => {
-          const result = await runSync(() => syncOfflineParts(), null);
+          const result = await runSync(async () => {
+            const products = await syncOfflineParts();
+            const references = await syncOfflineReferences();
+            return { products, references };
+          }, null);
           if (result) {
             setOfflineVersion((n) => n + 1);
-            setOfflineNote(result.unchanged ? 'Локальный справочник уже актуален'
-              : !result.complete ? `Обработано ${result.added} записей. Нажмите ещё раз для продолжения.`
-              : result.incremental ? `Изменения получены: ${result.added}, удалено устаревших: ${result.removed}.`
-              : `Локальный справочник сохранён: ${result.total} позиций.`);
+            const { products, references } = result;
+            setOfflineNote(products.unchanged && references.unchanged
+              ? 'Локальный каталог уже актуален'
+              : `Товары: обновлено ${products.added}, справочные номера: ${references.added}; удалено устаревших: ${products.removed + references.removed}.`
+                + (!products.complete || !references.complete ? ' Нажмите ещё раз для продолжения.' : ''));
           }
         }}>{syncing ? 'Сохраняем…' : 'Сохранить справочник для слабого интернета'}</button>
       </div>
@@ -121,16 +128,21 @@ export function Shop() {
           </details>
         ))}
       </div>
-      {!search.data && search.error && (local.data?.length ?? 0) > 0 ? (
+      {!search.data && search.error && ((local.data?.length ?? 0) + (localRefs.data?.length ?? 0)) > 0 ? (
         <div className="stack">
           <span className="note">Нет связи с каталогом. Показываем сохранённые названия и артикулы без цен и наличия. Для заказа нужен интернет.</span>
-          {local.data!.map((p) => <div key={p.id} className="card" style={{ padding: 12 }}>
+          {(local.data ?? []).map((p) => <div key={p.id} className="card" style={{ padding: 12 }}>
             <b>{p.name}</b>
             <span className="note">{[p.brand, p.article].filter(Boolean).join(' · ')}</span>
           </div>)}
+          {(localRefs.data ?? []).map((p) => <div key={p.id} className="card" style={{ padding: 12 }}>
+            <b>{p.name}</b>
+            <span className="note">{[p.brand, p.article].filter(Boolean).join(' · ')}</span>
+            <span className="pill" style={{ alignSelf: 'flex-start' }}>Справочник · цена уточняется</span>
+          </div>)}
         </div>
       ) : !search.data ? <Loading error={search.error} /> : !items.length ? (
-        <div className="empty">{term || cat !== 'all' ? 'По вашему запросу пока ничего не найдено' : 'Товары скоро появятся'}</div>
+        <div className="empty">{references.data?.items?.length ? 'Товаров с подтверждённой ценой не найдено — ниже есть справочные позиции' : term || cat !== 'all' ? 'По вашему запросу пока ничего не найдено' : 'Товары скоро появятся'}</div>
       ) : (
         <div className="stack">
           {items.map((p: any) => (

@@ -63,6 +63,15 @@ TEST-BPW;DEMO-001;Тестовая ступица прицепа;trailer_axles;�
 TEST-WABCO;DEMO-002;Тестовый датчик ABS;trailer_ebs;датчик тормоза
 ```
 
+## Offline cache of reviewed reference-only articles
+
+- After the storefront is deliberately opened, the customer can opt to save both priced products and **approved reference-only articles** to local IndexedDB.
+- Reviewed references have their **own** database and versioned delta feed. The app syncs at most two 500-row reference batches per tap (1,000 rows max), on top of the bounded product-name index. It resumes interrupted snapshots and applies deletions with atomic metadata checkpoints.
+- `GET /api/shop/catalog/index/manifest`, `/page`, `/changes` are guarded by the existing shop enable flag. They never expose unreviewed entries, source/licensing notes, supplier numbers, prices, VINs, or customer/order information.
+- Importing or editing an unreviewed reference never sends it to a customer. Approving generates an add/update event; revoking review or editing an already-approved reference generates a deletion event, so the phone discards obsolete records on the next sync.
+- Offline references are **informational only**: no price, no stock, no guaranteed fitment and no offline checkout. The UI shows this distinction.
+- The catalog is not silently preloaded: the user explicitly chooses to save the text index, protecting low-bandwidth connections. The code contains no commercial or unlicensed part-number dataset.
+
 ## Next data steps
 
 - Obtain a licensed cross-reference and VIN-fitment source covering heavy trucks, trailers, axle brands and brake systems. Vehicle VIN alone may not identify replacement axles, engines and brakes.
