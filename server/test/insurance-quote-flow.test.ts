@@ -21,7 +21,7 @@ test('manual insurance: owner -> assigned agent -> <=20 offers -> choice -> PDF 
       registrationRegion:'Санкт-Петербург',trailerPlate:'В888ВВ78',usage:'Грузоперевозки'};
     const request=ok(await t.api('POST','/api/vehicle-service-requests',{
       vehicleId:vehicle.id,kind:'insurance',comment:'Проверить варианты',
-      insurance:{agentId:agent.id,details:{applicant:{firstName:'Иван',lastName:'Иванов',middleName:'Иванович'},vehicle:v}}
+      insurance:{agentId:agent.id,consentToPartner:true,details:{applicant:{firstName:'Иван',lastName:'Иванов',middleName:'Иванович'},vehicle:v}}
     },client.token));
     assert.equal(request.insurance_stage,'received');
     assert.equal(request.assigned_to,agent.id);
