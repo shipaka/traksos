@@ -12,6 +12,8 @@ function expect(ok, description) {
 const LOCKED_ASSETS = {
   // Exact approved images. Deliberate asset changes require a new owner-approved baseline.
   'web/public/tracksos-approved-truck.webp': 'a6013f354586e669',
+  // Exact crop of the original approved Scania R520 reference (no UI baked in).
+  'web/public/tracksos-approved-scania-r520.webp': 'f72c2075c44e46a',
   'web/public/tracksos-approved-map.webp': '994097c8c01b2c80',
   'android/app/src/main/res/drawable-nodpi/splash_truck.webp': '5217954dcb773ecf',
 };
@@ -34,9 +36,11 @@ const labels = await read('web/src/dict.ts');
 const native = await read('android/app/src/main/java/ru/traksos/app/MainActivity.kt');
 
 await asset('web/public/tracksos-approved-truck.webp', 15000);
+await asset('web/public/tracksos-approved-scania-r520.webp', 40000);
 await asset('web/public/tracksos-approved-map.webp', 15000);
 await asset('android/app/src/main/res/drawable-nodpi/splash_truck.webp', 2000);
-expect(css.includes("url('../public/tracksos-approved-truck.webp')"), 'public hero uses approved real truck asset');
+expect(css.includes("url('../public/tracksos-approved-scania-r520.webp')"), 'public hero uses approved Scania R520 crop');
+expect(landing.includes('src="/tracksos-approved-scania-r520.webp"'), 'app teaser uses same approved Scania R520');
 expect(css.includes("url('../public/tracksos-approved-map.webp')"), 'public demo map is a bundled image');
 expect(!css.includes("url('../public/truck-scene.svg')"), 'old cartoon truck is not the active hero image');
 expect(landing.includes('public-map-static'), 'public map does not depend on network services');
