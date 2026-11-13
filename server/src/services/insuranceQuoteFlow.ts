@@ -73,6 +73,7 @@ export class InsuranceQuoteFlow {
     return this.db.tx(async q=>{
       const r=await this.case(q,id);
       if(!canAgent(user,r))throw forbidden('Только назначенный страховой агент может принять заявку');
+      if(r.status!=='sent_to_partner')throw bad('closed','Заявка закрыта');
       const target=r.insurance_stage==='received'?'preparing':r.insurance_stage==='selected'?'processing':null;
       if(!target)throw bad('invalid_stage','Заявка сейчас не ожидает принятия в работу');
       await q.query('update vehicle_service_requests set insurance_stage=$2,updated_at=now() where id=$1',[id,target]);
@@ -93,6 +94,7 @@ export class InsuranceQuoteFlow {
     return this.db.tx(async q=>{
       const r=await this.case(q,id);
       if(!canAgent(user,r))throw forbidden('Только назначенный агент может отправлять предложения');
+      if(r.status!=='sent_to_partner')throw bad('closed','Заявка закрыта');
       if(r.insurance_stage!=='preparing')throw bad('invalid_stage','Сначала примите заявку в работу');
       const count=await q.one<{n:number}>('select count(*)::int as n from insurance_proposals where request_id=$1',[id]);
       if((count?.n??0)!==0)throw bad('offers_already_sent','Предложения уже отправлены');
@@ -111,6 +113,7 @@ export class InsuranceQuoteFlow {
     return this.db.tx(async q=>{
       const r=await this.case(q,id);
       if(!await this.clientAccess(q,user,r))throw forbidden('Выбирать страховой полис может только заявитель');
+      if(r.status!=='sent_to_partner')throw bad('closed','Заявка закрыта');
       if(r.insurance_stage!=='offers_sent')throw bad('invalid_stage','Предложения пока не готовы или выбор уже сделан');
       const choice=await q.one<{company:string;product:string}>(
         'select company,product from insurance_proposals where id=$1 and request_id=$2',[proposalId,id]);
@@ -142,8 +145,9 @@ export class InsuranceQuoteFlow {
     const bytes=Buffer.from(m[1],'base64');
     if(bytes.length<100||bytes.length>4*1024*1024||bytes.subarray(0,5).toString()!=='%PDF-')
       throw bad('invalid_file','Нужен настоящий PDF размером до 4 МБ');
+    const parsedDate=new Date(expiresOn+'T00:00:00Z');
     if(!/^\d{4}-\d{2}-\d{2}$/.test(expiresOn)||expiresOn<=new Date().toISOString().slice(0,10)||
-       new Date(expiresOn+'T00:00:00Z').toISOString().slice(0,10)!==expiresOn)
+       !Number.isFinite(parsedDate.getTime())||parsedDate.toISOString().slice(0,10)!==expiresOn)
       throw bad('invalid_expiry','Укажите корректный будущий срок действия полиса');
     const safeName=(fileName||'policy.pdf').replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,90);
     const iv=randomBytes(12),cipher=createCipheriv('aes-256-gcm',key(),iv);
@@ -151,6 +155,7 @@ export class InsuranceQuoteFlow {
     return this.db.tx(async q=>{
       const r=await this.case(q,id);
       if(!canAgent(user,r))throw forbidden('Только назначенный агент может передать полис');
+      if(r.status!=='sent_to_partner')throw bad('closed','Заявка закрыта');
       if(r.insurance_stage!=='processing')throw bad('invalid_stage','Сначала примите выбранный вариант в работу');
       const current=await q.one<{id:string}>(`select id from insurance_proposals where id=$1 and request_id=$2`,
         [r.insurance_choice_id,id]);
