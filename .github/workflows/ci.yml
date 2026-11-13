@@ -38,6 +38,7 @@ jobs:
         run: |
           bash -n deploy/launch.sh
           sh -n deploy/backup.sh
+          bash -n deploy/doctor.sh
           # docker compose requires app.env_file to exist even for config-only checks.
           cp deploy/.env.example deploy/.env
           trap 'rm -f deploy/.env' EXIT
@@ -62,6 +63,7 @@ jobs:
           node e2e/offline.mjs
           node e2e/flow.mjs e2e/shots
           node e2e/admin-ops.mjs e2e/shots
+          SHOTS_DIR=e2e/shots/roles node e2e/role-matrix.mjs
       - name: Снимки экранов каждой проверяемой версии
         if: always()
         uses: actions/upload-artifact@v4
