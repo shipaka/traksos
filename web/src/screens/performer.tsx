@@ -6,7 +6,6 @@ import { native } from '../native.ts';
 import { OfferForm } from './search.tsx';
 import { WorkerNotices } from './ops.tsx';
 import { useToast } from '../ui.tsx';
-import { currentPreviewRole } from '../demo/fullRolePreview.ts';
 
 // Линия: статус, геолокация, входящие ---------------------------------------
 
@@ -171,7 +170,7 @@ export function scheduleSlot(s: any, now: Date, offUntil?: string | null): 'work
 /** Отправляем координаты раз в 30 секунд, пока экран открыт (в приложении — и в фоне) */
 export function LocationSharing() {
   const [state, setState] = useState<'wait' | 'ok' | 'off'>('wait');
-  const demo=!!currentPreviewRole();
+  const demo=location.hash.startsWith('#/admin/test-center/');
   useEffect(() => {
     // A test role must NEVER request the administrator's physical GPS location.
     if(demo)return;
