@@ -199,7 +199,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
           ))}
           </div>
         </div>}
-      </>
+      </>}
 
     </main>
   );
