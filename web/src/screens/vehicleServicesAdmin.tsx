@@ -94,7 +94,8 @@ export function VehicleServicesQueue() {
             <span className="note">Пока доступны партнёры с ролью insurer. Отдельные права оператора техосмотра будут добавлены позднее.</span>
           </div>
         )}
-        {r.status==='completed'&&r.assigned_to&&<details className="stack">
+        {r.status==='completed'&&r.assigned_to&& (r.has_partner_accrual ?
+          <p className="note">Начисление партнёру по этой заявке уже зарегистрировано.</p> : <details className="stack">
           <summary><b>Подтвердить начисление партнёру</b></summary>
           <p className="note">Только после проверки основания и суммы. Повторное начисление по заявке сервер отклонит.</p>
           <label className="stack">Сумма начисления, ₽
@@ -119,9 +120,9 @@ export function VehicleServicesQueue() {
               if(!window.confirm('Подтвердить начисление '+amount.toFixed(2)+' ₽ партнёру?'))return;
               const result=await run(()=>post('/api/admin/partner-finance/accruals',
                 {requestId:r.id,amountKopecks,note:reason}),'Начисление зарегистрировано');
-              if(result){setAccrualAmounts(v=>({...v,[r.id]:''}));setAccrualReasons(v=>({...v,[r.id]:''}));}
+              if(result){setAccrualAmounts(v=>({...v,[r.id]:''}));setAccrualReasons(v=>({...v,[r.id]:''}));list.reload();}
             }}>Зарегистрировать начисление</button>
-        </details>}
+        </details>)}
         {(next[r.status]?.length ?? 0) > 0 && <>
           <textarea className="field" aria-label="Комментарий сотрудника" placeholder="Комментарий для клиента" value={notes[r.id] ?? ''} onChange={(e) => setNotes({ ...notes, [r.id]: e.target.value })} maxLength={2000} />
           {r.kind === 'insurance' && r.status === 'sent_to_partner' && <label className="stack">Дата окончания полиса
