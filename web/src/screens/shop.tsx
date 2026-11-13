@@ -450,6 +450,7 @@ function ProductForm({ p, products, categories, onDone }: { p: any; products: an
         <button className="btn" disabled={busy || f.name.trim().length < 2 || f.price == null} onClick={save}>Сохранить</button>
         <button className="btn ghost" onClick={onDone}>Назад</button>
       </div>
+      {p.id && <SupplierMapping productId={p.id} />}
       {p.id && <div className="stack" style={{ gap: 8 }}>
         <b>Связать с аналогом из каталога</b>
         <select className="field" aria-label="Выберите аналог" value={analogId} onChange={(e) => setAnalogId(e.target.value)}>
@@ -470,6 +471,56 @@ function ProductForm({ p, products, categories, onDone }: { p: any; products: an
       {p.id && <button className="btn ghost small" disabled={busy} onClick={async () => { if (await run(() => del(`/api/admin/shop/products/${p.id}`), 'Товар скрыт')) onDone(); }}>Скрыть из магазина</button>}
     </div>
   );
+}
+
+/** Internal procurement mapping: supplier SKUs never appear in public product cards. */
+function SupplierMapping({ productId }: { productId: string }) {
+  const ref = useLoad(() => get(`/api/admin/shop/products/${productId}/supplier`), [productId]);
+  const { busy, run } = useAction();
+  const [form, setForm] = useState({
+    article: '', brand: '', sourceNote: '', verified: false,
+  });
+  useEffect(() => {
+    if (!ref.data) return;
+    setForm({
+      article: ref.data.article ?? '', brand: ref.data.brand ?? '',
+      sourceNote: ref.data.sourceNote ?? '', verified: !!ref.data.verified,
+    });
+  }, [ref.data?.updatedAt, productId]); // eslint-disable-line
+  const set = (key: keyof typeof form, value: string | boolean) => setForm((v) => ({ ...v, [key]: value }));
+  if (!ref.data) return <Loading error={ref.error} />;
+  return <div className="card stack" style={{ gap: 8 }}>
+    <b>Артикул поставщика · Автоконтинент</b>
+    <span className="note">Внутренняя закупка. Покупатель эти поля не видит. API поставщика ещё не подключён.</span>
+    <div className="grid2">
+      <Field label="Артикул Автоконтинента"><input className="field" value={form.article} maxLength={100}
+        onChange={(e) => set('article', e.target.value)} placeholder="Номер по прайсу поставщика" /></Field>
+      <Field label="Марка по каталогу поставщика"><input className="field" value={form.brand} maxLength={80}
+        onChange={(e) => set('brand', e.target.value)} placeholder="Производитель" /></Field>
+    </div>
+    <Field label="Источник сверки"><input className="field" value={form.sourceNote} maxLength={500}
+      onChange={(e) => set('sourceNote', e.target.value)} placeholder="Ссылка/название каталога или документа" /></Field>
+    <label className="agree"><input type="checkbox" checked={form.verified}
+      onChange={(e) => set('verified', e.target.checked)} />
+      <span>Артикул проверен по указанному источнику. Применяемость по VIN проверяется отдельно.</span>
+    </label>
+    <div className="row">
+      <button type="button" className="btn ghost small"
+        disabled={busy || form.article.trim().length < 2 || (form.verified && form.sourceNote.trim().length < 3)}
+        onClick={async () => {
+          const saved = await run(() => put(`/api/admin/shop/products/${productId}/supplier`, {
+            article: form.article, brand: form.brand || null, sourceNote: form.sourceNote || null,
+            verified: form.verified,
+          }), 'Внутренний артикул сохранён');
+          if (saved) ref.reload();
+        }}>Сохранить артикул поставщика</button>
+      {ref.data.article && <button type="button" className="btn ghost small" disabled={busy}
+        onClick={async () => {
+          if (!confirm('Удалить привязку артикула Автоконтинента?')) return;
+          if (await run(() => del(`/api/admin/shop/products/${productId}/supplier`), 'Привязка удалена')) ref.reload();
+        }}>Удалить привязку</button>}
+    </div>
+  </div>;
 }
 
 const NEXT: Record<string, [string, string][]> = {
