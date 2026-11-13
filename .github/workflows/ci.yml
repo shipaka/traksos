@@ -77,6 +77,8 @@ jobs:
           node e2e/admin-master-switch.mjs
           node e2e/staff-security.mjs
           node e2e/cabinet-navigation-audit.mjs
+          node e2e/admin-navigation-ux.mjs
+          node e2e/cabinet-visual-sweep.mjs
           node e2e/preview-login.mjs
       - name: Снимки экранов каждой проверяемой версии
         if: always()
