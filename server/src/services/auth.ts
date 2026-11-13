@@ -95,6 +95,15 @@ export class AuthService {
       await this.sms.send(phone, `ТракSOS: код ${purpose === 'reset' ? 'восстановления доступа' : 'регистрации'} ${code}. Никому его не сообщайте.`);
     } catch (error) {
       if (error instanceof SmsRejectedError) {
+        // Only a coarse, non-sensitive reason is logged. Do not log the number,
+        // API key, requested code or raw (possibly identifying) provider text.
+        const reason = error.message.toLowerCase();
+        const category = /баланс|balance|недостаточно|funds/.test(reason) ? 'баланс'
+          : /api_id|авторизац|api key/.test(reason) ? 'авторизация'
+          : /отправител|sender|подпись/.test(reason) ? 'отправитель'
+          : /лимит|quota|limit/.test(reason) ? 'лимит'
+          : /номер|phone|recipient/.test(reason) ? 'получатель' : 'другая причина';
+        console.warn('SMS.ru не принял сообщение: ' + category);
         // SMS.ru explicitly refused the message: the code was never delivered.
         // Remove only this exact pending code, never one from a newer request.
         // Keep hourly/daily quotas to prevent repeated rejected requests being abused.
