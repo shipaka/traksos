@@ -2,3 +2,9 @@
 	encode gzip
 	reverse_proxy app:8080
 }
+
+# Optional mobile alias: once DNS A/AAAA points m.<domain> at this VPS,
+# redirect to the one responsive website so sessions and URLs stay canonical.
+m.{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} 308
+}
