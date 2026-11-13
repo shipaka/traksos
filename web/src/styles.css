@@ -1726,3 +1726,50 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
 @media(max-width:520px){.insurer-empty-intro{grid-template-columns:1fr;gap:10px;}
  .insurer-empty-symbol{width:63px;height:63px;font-size:40px;}
  .insurer-workflow-step{padding:12px;min-height:165px;}}
+
+/* Global administrator role-switch panel: keep this ABOVE the actual signed-in shell. */
+.role-preview-bar{position:sticky;top:0;z-index:120;display:flex;align-items:center;justify-content:space-between;
+ gap:14px;flex-wrap:wrap;padding:12px max(15px,calc((100vw - 1440px)/2));
+ color:#f8fcff;background:linear-gradient(115deg,#112a46,#182c50 58%,#311b45);
+ border-bottom:2px solid #5fe1f3;box-shadow:0 9px 29px rgba(0,7,22,.36);}
+.role-preview-identity{display:flex;flex-direction:column;gap:4px;min-width:0;}
+.role-preview-identity b{font-size:11px;color:#84e9f7;letter-spacing:.1em;}
+.role-preview-identity small{font-size:11px;color:#d3e6f3;}
+.role-preview-controls{display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+.role-preview-controls>label{display:flex;align-items:center;gap:8px;font-size:11px;color:#c7d8e9;}
+.role-preview-controls select{max-width:min(280px,100%);min-height:42px;
+ background:#143d5d;color:#fff;border:1px solid #6cc3e0;border-radius:12px;padding:9px 30px 9px 12px;
+ font:inherit;font-size:12px;font-weight:750;cursor:pointer;}
+.role-preview-controls>a,.role-preview-controls>button{min-height:42px;padding:10px 13px;
+ color:#f3fbff;background:#164363;border:1px solid #456f8b;border-radius:12px;
+ text-decoration:none;font-weight:750;font-size:12px;font-family:inherit;cursor:pointer;}
+.role-preview-controls>a:hover,.role-preview-controls>button:hover{border-color:#8de9ff;background:#215a79;}
+.role-preview-controls>a[href="#/admin/test-center"]{background:linear-gradient(110deg,#168db7,#1d689c);}
+.role-preview-guarded,.role-preview-profile{width:100%;max-width:1250px;margin:auto;padding:20px;}
+.role-preview-guarded{border:1px solid #416981;border-radius:23px;
+ background:radial-gradient(ellipse at 100% 0,rgba(49,219,245,.13),transparent 55%),linear-gradient(155deg,#142f49,#0c233b);}
+.role-preview-guarded h1{font-size:clamp(24px,3vw,38px);color:#fff;margin:8px 0;}
+.role-preview-guarded .btn{align-self:flex-start;}
+/* Use authentic screens, but visually distinguish synthetic records from live records. */
+.app[class*="role-"] .desktop-content>main:not(.sandbox-root)>.stack>.card,
+.app[class*="role-"] .desktop-content>main:not(.sandbox-root)>.rows>.list-item{
+ border-color:#346580;box-shadow:0 8px 21px rgba(0,8,27,.13);}
+.app.role-performer .desktop-content>main>div.between:first-of-type{
+ padding:20px;border:1px solid #396884;border-radius:18px;
+ background:radial-gradient(circle at 85% 25%,rgba(58,219,239,.14),transparent 55%),linear-gradient(145deg,#163951,#0e2941);}
+@media(max-width:900px){
+ .role-preview-bar{padding:10px 12px;gap:8px;}
+ .role-preview-controls{width:100%;}
+ .role-preview-controls>label{flex:1 1 160px;min-width:0;}
+ .role-preview-controls select{flex:1;min-width:0;max-width:100%;font-size:11px;}
+ .role-preview-controls>a,.role-preview-controls>button{flex:1;font-size:11px;text-align:center;padding:8px 9px;}
+}
+@media(max-width:440px){
+ .role-preview-bar{gap:5px;padding:8px;}
+ .role-preview-identity b{font-size:10px;}
+ .role-preview-identity small{font-size:10px;}
+ .role-preview-controls{gap:5px;}
+ .role-preview-controls>label{flex:1 1 100%;justify-content:space-between;}
+ .role-preview-controls>a,.role-preview-controls>button{min-height:35px;border-radius:9px;padding:6px 5px;font-size:10px;}
+}
+@media(prefers-reduced-motion:reduce){.role-preview-controls *{transition:none!important;}}
