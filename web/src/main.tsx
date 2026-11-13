@@ -266,6 +266,11 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {me && <details className="account-menu" key={here}>
             <summary aria-label="Открыть меню кабинета">☰ <span>Меню</span></summary>
             <nav aria-label="Все разделы кабинета">
+              {me && me.roles.includes('admin') && me.roles.some(r => r === 'master' || r === 'tow') && <>
+                <span className="account-menu-heading">Переключить кабинет</span>
+                <a href="#/as/admin" aria-current={mode === 'admin' ? 'page' : undefined}>Администратор</a>
+                <a href="#/as/performer" aria-current={mode === 'performer' ? 'page' : undefined}>Выездной мастер</a>
+              </>}
               <span className="account-menu-heading">Мой кабинет</span>
               {accountLinks.map(([href, label]) => <a key={href} href={'#' + href}>{label}</a>)}
               <span className="account-menu-heading">Помощь и документы</span>
