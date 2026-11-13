@@ -16,7 +16,7 @@ const roles = [
   {name:'master_service',phone:'+79990000146',password:'Test-Role-Only-2026!',mode:'service',home:'#/base',inner:'#/base/money'},
   {name:'insurer',phone:'+79990000145',password:'Test-Role-Only-2026!',mode:'insurer',home:'#/insurance',inner:'#/profile'},
   {name:'moderator',phone:'+79990000147',password:'Test-Role-Only-2026!',mode:'moderator',home:'#/moderation',inner:'#/profile'},
-  {name:'admin',phone:'+79990000001',password:'TrackSOS-Test-2026!',mode:'admin',home:'#/admin',inner:'#/admin/section/summary'},
+  {name:'admin',phone:'+79990000001',password:'TrackSOS-Test-2026!',mode:'admin',home:'#/admin',inner:'#/admin/section/orders'},
 ];
 await mkdir('e2e/shots/cabinet-ux',{recursive:true});
 const browser=await chromium.launch();
@@ -62,7 +62,18 @@ try {
       await page.locator('.account-menu > summary').click();
       const links=await page.locator('.account-menu nav a[href^="#/"]').count();
       if(links<5)throw Error(entry.name+' '+width+'px: account menu contains too few links');
-      await page.goto(BASE+'/'+entry.inner,{waitUntil:'domcontentloaded'});
+      const inner = page.locator('.account-menu nav a[href="'+entry.inner+'"]');
+      if(await inner.count() !== 1)throw Error(entry.name+' '+width+'px: missing or duplicate working link '+entry.inner);
+      await inner.click();
+      await page.waitForURL(new RegExp(entry.inner.replace(/[.*+?^\x24{}()|[\]\\]/g,'\\      await page.goto(BASE+'/'+entry.inner,{waitUntil:'domcontentloaded'});
+      await verify('inner');')+'
+      await page.screenshot({path:'e2e/shots/cabinet-ux/'+entry.name+'-inner-'+width+'.png',fullPage:true});
+      await context.close();
+    }
+  }
+  console.log('REAL signed-in cabinets: 9 roles × 2 widths × home and inner pages = 36 browser screenshots; zero broken screens or overflow');
+}finally{await browser.close();}
+));
       await verify('inner');
       await page.screenshot({path:'e2e/shots/cabinet-ux/'+entry.name+'-inner-'+width+'.png',fullPage:true});
       await context.close();
