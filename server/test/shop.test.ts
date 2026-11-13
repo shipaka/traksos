@@ -129,3 +129,49 @@ test('Поиск, компактный кэш и история техники; 
     items: [{ productId: first, qty: 1 }], delivery: 'pickup',
   }, client.token)).status, 409);
 });
+
+test('Обновление локального каталога — только изменённые артикулы, без цен и персональных данных', async () => {
+  ok(await t.api('PUT', '/api/admin/settings/shop', { enabled: true }, admin.token));
+  const v0 = ok(await t.api('GET', '/api/shop/index/manifest', undefined, client.token));
+  assert.match(v0.revision, /^\d+$/, 'версия изменений — последовательность, не timestamp');
+  const product = ok(await t.api('POST', '/api/admin/shop/products', {
+    category: 'trailer_brakes', name: 'Колодки тормозные прицепа TEST',
+    brand: 'TEST-BPW', article: 'TR-100', price: 99_000, stock: 1,
+  }, admin.token));
+  const v1 = ok(await t.api('GET', '/api/shop/index/manifest', undefined, client.token));
+  assert.ok(BigInt(v1.revision) > BigInt(v0.revision), 'новый артикул добавлен в журнал');
+  const changes = ok(await t.api('GET',
+    `/api/shop/index/changes?after=${v0.revision}&limit=50`, undefined, client.token));
+  assert.ok(changes.rows.some((row: any[]) => row[1] === product.id &&
+    row[2] === 'trailer_brakes' && row[4] === 'TR-100'));
+  assert.ok(changes.rows.every((row: any[]) => row.length === 2 || row.length === 7));
+  assert.ok(!JSON.stringify(changes.rows).includes('99000'), 'в офлайн-справочнике нет цен');
+
+  const configured = ok(await t.api('GET', '/api/shop?light=1', undefined, client.token));
+  assert.ok(configured.categoryGroups.some((group: any) => group.id === 'trailer' &&
+    group.categories.includes('trailer_brakes')));
+  const catalog = ok(await t.api('GET', '/api/shop/search?category=trailer_brakes', undefined, client.token));
+  assert.ok(catalog.items.some((row: any) => row.id === product.id));
+
+  ok(await t.api('PUT', `/api/admin/shop/products/${product.id}`, { price: 85_000 }, admin.token));
+  const priceOnly = ok(await t.api('GET', '/api/shop/index/manifest', undefined, client.token));
+  assert.equal(priceOnly.revision, v1.revision, 'цена не заставляет скачивать текстовый справочник');
+  ok(await t.api('PUT', `/api/admin/shop/products/${product.id}`, { name: 'Тормозные колодки BPW TEST' }, admin.token));
+  const renamed = ok(await t.api('GET', `/api/shop/index/changes?after=${priceOnly.revision}`, undefined, client.token));
+  assert.ok(renamed.rows.some((row: any[]) => row[1] === product.id && row[5] === 'Тормозные колодки BPW TEST'));
+
+  const beforeHide = renamed.revision;
+  ok(await t.api('DELETE', `/api/admin/shop/products/${product.id}`, undefined, admin.token));
+  const hidden = ok(await t.api('GET', `/api/shop/index/changes?after=${beforeHide}`, undefined, client.token));
+  assert.ok(hidden.rows.some((row: any[]) => row.length === 2 && row[1] === product.id), 'скрытый товар удаляется из кэша');
+  assert.equal(ok(await t.api('GET', '/api/shop/search?category=trailer_brakes', undefined, client.token)).items.some((row: any) => row.id === product.id), false);
+
+  const next = ok(await t.api('GET', `/api/shop/index/changes?after=${v0.revision}&limit=1`, undefined, client.token));
+  assert.equal(next.rows.length, 1);
+  assert.ok(next.next, 'большую ленту изменений можно получать порциями');
+  assert.equal((await t.api('GET', '/api/shop/index/changes?after=broken', undefined, client.token)).status, 400);
+  ok(await t.api('PUT', '/api/admin/settings/shop', { enabled: false }, admin.token));
+  const locked = ok(await t.api('GET', '/api/shop/index/changes?after=0', undefined, client.token));
+  assert.equal(locked.enabled, false);
+  assert.equal(locked.rows.length, 0, 'покупатели не получают каталог до открытия магазина');
+});

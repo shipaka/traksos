@@ -7,7 +7,33 @@ import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/route
 
 export const SHOP_CATEGORIES: Record<string, string> = {
   kit: 'Наборы', socket: 'Розетки', plug: 'Разъёмы', cable: 'Провода', light: 'Свет', fuse: 'Предохранители', air: 'Пневматика', other: 'Разное',
+  engine: 'Двигатель', fuel: 'Топливная система', cooling: 'Охлаждение', filtration: 'Фильтры и расходники',
+  transmission: 'КПП и сцепление', drivetrain: 'Кардан и редуктор', brakes: 'Тормозная система',
+  steer: 'Рулевое управление', suspension: 'Подвеска', electric: 'Электрика',
+  sensors: 'Датчики и управление', exhaust: 'Выпускная система',
+  hydraulic: 'Гидравлика', cabin: 'Кабина и кузов', wheels: 'Колёса и ступицы',
+  trailer_axles: 'Оси прицепов', trailer_brakes: 'Тормоза прицепов',
+  trailer_ebs: 'ABS / EBS прицепов', trailer_suspension: 'Подвеска прицепов',
+  trailer_coupling: 'Сцепные устройства', trailer_body: 'Кузов и фурнитура',
+  trailer_lights: 'Фонари прицепов', trailer_air: 'Пневматика прицепов',
+  trailer_wheels: 'Колёса и ступицы прицепов',
+  seals: 'Прокладки и уплотнения', tools: 'Инструменты и дорожные товары',
 };
+/** Grouped navigation for heavy trucks and trailers; legacy categories remain valid. */
+export const SHOP_CATEGORY_GROUPS = [
+  { id: 'truck', title: 'Грузовые автомобили', categories: [
+    'engine', 'fuel', 'cooling', 'filtration', 'transmission', 'drivetrain', 'brakes', 'steer',
+    'suspension', 'electric', 'sensors', 'exhaust', 'hydraulic', 'cabin', 'wheels',
+  ] },
+  { id: 'trailer', title: 'Прицепы и полуприцепы', categories: [
+    'trailer_axles', 'trailer_brakes', 'trailer_ebs', 'trailer_suspension',
+    'trailer_coupling', 'trailer_body', 'trailer_lights', 'trailer_air', 'trailer_wheels',
+  ] },
+  { id: 'universal', title: 'Универсальные запчасти и помощь в дороге', categories: [
+    'socket', 'plug', 'cable', 'light', 'fuse', 'air', 'seals', 'tools', 'kit', 'other',
+  ] },
+];
+
 export const SHOP_STATUS: Record<string, string> = {
   new: 'Новый', confirmed: 'Подтверждён', ready: 'Собран, ждёт', shipped: 'В пути', done: 'Получен', cancelled: 'Отменён',
 };
@@ -35,7 +61,7 @@ export class ShopService {
   /** Витрина: выключен — только табличка «скоро» */
   async catalog(light = false) {
     const s = await this.settings.get('shop');
-    const base = { enabled: s.enabled, closedTitle: s.closedTitle, closedText: s.closedText, note: s.note, categories: SHOP_CATEGORIES,
+    const base = { enabled: s.enabled, closedTitle: s.closedTitle, closedText: s.closedText, note: s.note, categories: SHOP_CATEGORIES, categoryGroups: SHOP_CATEGORY_GROUPS,
       delivery: { pickup: s.pickup, pickupAddress: s.pickupAddress, delivery: s.delivery, deliveryPrice: s.deliveryPrice, deliveryNote: s.deliveryNote, withMaster: s.withMaster } };
     if (!s.enabled) return { ...base, products: [] };
     if (light) {
@@ -122,12 +148,21 @@ export class ShopService {
     const take = Number.isFinite(limit) ? Math.max(1, Math.min(48, Math.floor(limit))) : 24;
     const params: unknown[] = [];
     const filters = ['active=true', 'is_kit=false'];
-    if (category && category !== 'all') { params.push(category); filters.push(`category=$${params.length}`); }
-    const term = q.trim().slice(0, 100);
-    if (term) {
-      params.push('%' + term.replace(/[\\%_]/g, (c) => '\\' + c) + '%');
-      filters.push(`(name ilike $${params.length} escape '\\' or coalesce(article,'') ilike $${params.length} escape '\\'
-        or coalesce(brand,'') ilike $${params.length} escape '\\' or coalesce(search_terms,'') ilike $${params.length} escape '\\')`);
+    if (category && category !== 'all') {
+      if (!SHOP_CATEGORIES[category]) throw bad('bad_category', 'Неизвестный раздел каталога');
+      params.push(category); filters.push(`category=$${params.length}`);
+    }
+    // Words can appear in any order across the part name, article, brand and synonyms.
+    // Deliberately bound each term: no user supplied SQL wildcards or expressions.
+    const terms = q.trim().slice(0, 100).split(/\s+/).filter(Boolean).slice(0, 8);
+    for (const term of terms) {
+      params.push(term);
+      const p = '$' + params.length;
+      filters.push(`(position(lower(${p}) in lower(name))>0
+        or position(lower(${p}) in lower(coalesce(article,'')))>0
+        or position(lower(${p}) in lower(coalesce(brand,'')))>0
+        or position(lower(${p}) in lower(coalesce(search_terms,'')))>0
+        or position(lower(${p}) in lower(coalesce(spec,'')))>0)`);
     }
     const where = filters.join(' and ');
     const total = await this.db.one<{ n: number }>(`select count(*)::int as n from shop_products where ${where}`, params);
@@ -149,9 +184,10 @@ export class ShopService {
   async indexManifest() {
     const setting = await this.settings.get('shop');
     if (!setting.enabled) return { enabled: false, revision: null, count: 0 };
-    const r = await this.db.one<{ count: number; revision: string | null }>(
-      `select count(*)::int as count, max(updated_at)::text as revision from shop_products where active`);
-    return { enabled: true, revision: r?.revision ?? null, count: r?.count ?? 0 };
+    const count = await this.db.one<{ count: number }>('select count(*)::int as count from shop_products where active');
+    const version = await this.db.one<{ revision: string }>(
+      'select coalesce(max(seq),0)::text as revision from shop_catalog_changes');
+    return { enabled: true, revision: version?.revision ?? '0', count: count?.count ?? 0 };
   }
 
   async indexPage(after: string | null, limit = 750) {
@@ -166,6 +202,38 @@ export class ShopService {
     return { enabled: true, rows: chunk.map((p: any) =>
       [p.id, p.category, p.brand, p.article, p.name, p.search_terms]),
       next: hasMore ? chunk[chunk.length - 1].id : null };
+  }
+
+  /** Incremental catalog changes. Tombstones remove obsolete/inactive articles.
+   * No price, stock, VIN, order, or personal information leaves this endpoint. */
+  async indexChanges(after: string, limit = 750) {
+    const setting = await this.settings.get('shop');
+    if (!setting.enabled) return { enabled: false, rows: [], next: null, revision: null };
+    if (!/^\d{1,19}$/.test(after)) throw bad('bad_cursor', 'Неверный курсор справочника');
+    const take = Number.isFinite(limit) ? Math.max(1, Math.min(1000, Math.floor(limit))) : 750;
+    // A stable upper bound ensures updates arriving during this request can be
+    // safely fetched next time rather than silently skipped.
+    const latest = await this.db.one<{ revision: string }>(
+      'select coalesce(max(seq),0)::text as revision from shop_catalog_changes');
+    const revision = latest?.revision ?? '0';
+    const events = await this.db.query<any>(
+      `select c.seq::text as seq, c.product_id, c.removed, p.id, p.active,
+              p.category, p.brand, p.article, p.name, p.search_terms
+         from shop_catalog_changes c
+         left join shop_products p on p.id=c.product_id
+        where c.seq>$1::bigint and c.seq<=$2::bigint
+        order by c.seq limit $3`, [after, revision, take + 1]);
+    const hasMore = events.length > take;
+    const page = events.slice(0, take);
+    return {
+      enabled: true,
+      rows: page.map((e: any) =>
+        e.removed || !e.id || !e.active
+          ? [e.seq, e.product_id]
+          : [e.seq, e.product_id, e.category, e.brand, e.article, e.name, e.search_terms]),
+      next: hasMore ? page[page.length - 1].seq : null,
+      revision,
+    };
   }
 
   /** Only curated, verified substitutions are offered as guaranteed catalog links.
