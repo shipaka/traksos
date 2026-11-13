@@ -45,14 +45,20 @@ try {
     const previewLink = page.getByRole('link',{name:/Тестирование всех кабинетов/}).first();
     await previewLink.click();
     await page.getByRole('heading',{name:'Тестирование кабинетов'}).waitFor();
-    for (const label of ['Клиент','Владелец / автопарк','Водитель автопарка',
-      'Выездной мастер','Эвакуаторщик','Рембаза / СТО','Мастер и своя СТО',
-      'Страховой партнёр','Модератор','Администратор']) {
-      const role = page.getByRole('group',{name:'Выбор тестового кабинета'})
-        .getByRole('button',{name:label,exact:true});
-      await role.click();
-      if (await role.getAttribute('aria-pressed') !== 'true')
-        throw new Error('Preview role switch failed: '+label+' at '+width);
+    for (const [id,label] of [
+      ['client','Клиент'],['owner','Владелец / автопарк'],['driver','Водитель автопарка'],
+      ['master','Выездной мастер'],['tow','Эвакуаторщик'],['service','Рембаза / СТО'],
+      ['master_service','Мастер и своя СТО'],['insurer','Страховой партнёр'],
+      ['moderator','Модератор'],['admin','Администратор'],
+    ]) {
+      const link=page.locator('a.sandbox-role-card[href="#/admin/test-center/'+id+'"]');
+      await link.click();
+      await page.waitForURL('**/#/admin/test-center/'+id);
+      await page.getByRole('main',{name:'Тестовый кабинет: '+label}).waitFor();
+      await page.getByRole('navigation',{name:'Разделы тестового кабинета'}).getByRole('button',{name:/Заявки|Очередь|Запись|Выезды|Мои/}).first().click();
+      await page.getByRole('heading',{name:/заявки|Заявки|очередь|Очередь|Запись|Выезды|Мои|Заказы|События|Страховые|Вызовы|Записи/}).first().waitFor();
+      await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
+      await page.getByRole('heading',{name:'Тестирование кабинетов'}).waitFor();
     }
     if (errors.length) throw new Error('Browser error at '+width+': '+errors.join('; '));
     const token = await page.evaluate(()=>localStorage.getItem('traksos.token'));
