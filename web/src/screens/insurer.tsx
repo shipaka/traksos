@@ -133,7 +133,7 @@ function InsurerEmptyState({onRefresh}:{onRefresh:()=>void}){
     <section className="card insurer-empty-intro">
       <div className="insurer-empty-symbol" aria-hidden="true">◇</div>
       <div className="stack"><span className="insurance-step-title">РАБОЧАЯ ОЧЕРЕДЬ</span>
-        <h2>Заявок пока нет</h2>
+        <h2>Назначенных заявок пока нет</h2>
         <p>Когда клиент выберет вас страховым партнёром, здесь появится его обращение, анкета автомобиля и переписка.
         Заявки от других агентств недоступны.</p>
         <div className="row"><button className="btn small" type="button" onClick={onRefresh}>↻ Проверить новые заявки</button>
