@@ -5,6 +5,7 @@ import { createDb } from './db/index.ts';
 import { migrate } from './db/migrate.ts';
 import { createApp, bearer } from './app.ts';
 import { createSms } from './providers/sms.ts';
+import { sendInsuranceReminders } from './services/insuranceReminders.ts';
 import { createPush } from './providers/push.ts';
 import { MockProvider } from './payments/provider.ts';
 import { YooKassaProvider } from './payments/yookassa.ts';
@@ -54,6 +55,7 @@ const timer = setInterval(() => {
 const housekeeping = async () => {
   await Promise.allSettled([
     app.privacy.processDeletions().catch((e) => console.error('[privacy]', e)),
+    sendInsuranceReminders(db, app.notifier).catch((e) => console.error('[insurance reminders]', e)),
     db.query("delete from auth_sms_limits where bucket < now() - interval '48 hours'")
       .catch((e) => console.error('[sms-quota-cleanup]', e)),
     db.query("delete from auth_login_attempts where window_start < now() - interval '24 hours'")
