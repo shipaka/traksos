@@ -54,7 +54,7 @@ export function Admin({ initialSection }: { initialSection?: string }) {
   const selected = ADMIN_GROUPS.flatMap(group => group.items).find(item => item.id === tab)!;
   const search = filter.trim().toLocaleLowerCase('ru-RU');
   const groups = ADMIN_GROUPS.map(group => ({...group, items: group.items.filter(item =>
-    !search || (item.name + ' ' + item.description + ' ' + group.name).toLocaleLowerCase('ru-RU').includes(search))
+    !search || (item.name + ' ' + item.description).toLocaleLowerCase('ru-RU').includes(search))
   })).filter(group => group.items.length > 0);
   const navigate = (id: AdminSection) => {
     setTab(id);
