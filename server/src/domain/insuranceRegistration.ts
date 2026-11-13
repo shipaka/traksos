@@ -27,7 +27,7 @@ export function insuranceRegistrationError(
 export function insuranceRegistrationMessage(error: InsuranceRegistrationError): string {
   switch (error) {
     case 'insurer_only':
-      return 'Этот номер закреплён за страховым агентом. Для него доступна только регистрация «Страховой партнёр». Перейдите в страховой кабинет.';
+      return 'Этот номер закреплён за страховым агентом. Для него доступна только регистрация «Я представитель страховой компании». Перейдите в страховой кабинет.';
     case 'insurer_registration_closed':
       return 'Регистрация новых страховых агентов сейчас закрыта. Обратитесь к администратору ТракSOS.';
     case 'insurer_number_missing':
