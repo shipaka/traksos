@@ -7,6 +7,9 @@ const labels: Record<string, string> = {
   sent_to_partner: 'Ждёт оформления', completed: 'Полис оформлен', rejected: 'Отказ',
 };
 export function InsurerCabinet() {
+  const [workspace,setWorkspace]=useState<'insurance'|'inspection'|'finance'|'common'>('insurance');
+  const inspections=useLoad(()=>get<any[]>('/api/insurer/inspections'),[],
+    event=>event.type==='vehicle_service');
   const requests = useLoad(() => get('/api/insurer/requests'), [],
     (event) => event.type === 'vehicle_service');
   const { busy, run } = useAction();
@@ -43,10 +46,47 @@ export function InsurerCabinet() {
   return (
     <main className="cabinet-page">
       <header className="cabinet-heading">
-        <span className="label">Партнёрский кабинет · Страхование</span>
-        <h1>Кабинет страховщика</h1>
+        <span className="label">TRACKSOS · Партнёрский кабинет</span>
+        <h1>{workspace==='insurance'?'Страхование':workspace==='inspection'?'Техосмотры':workspace==='finance'?'Финансы':'Общие настройки'}</h1>
       </header>
-      <div className="sub">Только заявки, переданные вам ТракSOS. Остальные автомобили и сведения о клиентах недоступны.</div>
+      <nav className="partner-workspaces" aria-label="Разделы кабинета партнёра">
+        {([['insurance','Страховки'],['inspection','Техосмотры'],['finance','Финансы'],['common','Общее']] as const)
+          .map(([key,label])=><button type="button" key={key} className={'btn ghost'+(workspace===key?' active':'')}
+            aria-pressed={workspace===key} onClick={()=>setWorkspace(key)}>{label}</button>)}
+      </nav>
+      {workspace==='inspection'&&<section className="stack">
+        <p className="sub">Здесь отображаются исключительно назначенные вам заявки на техосмотр. Страховые полисы и предложения в этом разделе не показываются.</p>
+        <div className="cabinet-metrics">
+          <div className="card tile"><span className="label">Заявок на техосмотр</span><b className="tile-value">{inspections.data?.length??'—'}</b></div>
+          <div className="card tile"><span className="label">В работе</span><b className="tile-value">{inspections.data?.filter(r=>!['completed','rejected','cancelled'].includes(r.status)).length??'—'}</b></div>
+          <div className="card tile"><span className="label">История</span><b className="tile-value">{inspections.data?.filter(r=>['completed','rejected','cancelled'].includes(r.status)).length??'—'}</b></div>
+        </div>
+        {!inspections.data?<div className="empty">{inspections.error?'Не удалось загрузить техосмотры: '+inspections.error:'Загружаем техосмотры…'}</div>:
+          inspections.data.length===0?<div className="card stack"><h2>Техосмотров пока нет</h2><p>Здесь появятся назначенные заявки и история. Оформление диагностической карты будет добавлено отдельно.</p><button type="button" className="btn ghost" onClick={inspections.reload}>Обновить</button></div>:
+          inspections.data.map(r=><article className="card stack" key={r.id}>
+            <b>{r.brand} {r.model}</b><span>{r.plate||'Номер не указан'} · {fmtTime(r.created_at)}</span>
+            <span className="pill">{r.status==='completed'?'Завершён':r.status==='rejected'?'Отклонён':'В обработке'}</span>
+            {r.comment&&<p>{r.comment}</p>}{r.staff_note&&<p className="note">{r.staff_note}</p>}
+          </article>)}
+        <p className="note">Приём, назначение и завершение техосмотров в этом разделе пока не подключены.</p>
+      </section>}
+      {workspace==='finance'&&<section className="stack">
+        <p className="sub">Финансовая информация партнёра по направлениям. Суммы появятся после подключения подтверждённых операций.</p>
+        <div className="cabinet-metrics">
+          {['Страхование','Техосмотры','Всего'].map(title=><div className="card tile" key={title}>
+            <span className="label">{title}</span><b className="tile-value">—</b><small>Нет подключённого финансового реестра</small>
+          </div>)}
+        </div>
+        <p className="note">Не показываем расчётные суммы без данных о подтверждённых начислениях и выплатах.</p>
+      </section>}
+      {workspace==='common'&&<section className="card stack">
+        <h2>Общие разделы партнёра</h2>
+        <a className="linkrow" href="#/profile">Профиль и настройки</a>
+        <a className="linkrow" href="#/menu">Помощь и настройки аккаунта</a>
+        <a className="linkrow" href="#/offer/privacy">Обработка персональных данных</a>
+      </section>}
+      {workspace==='insurance'&&<>
+      <div className="sub">Только страховые заявки, переданные вам TrackSOS. Остальные автомобили и сведения о клиентах недоступны.</div>
       {!rows ? <div className="empty">{requests.error ? `Не удалось загрузить: ${requests.error}` : 'Загружаем заявки…'}</div>
         : !rows.length ? <InsurerEmptyState onRefresh={requests.reload} />
         : <div className="stack">
@@ -110,7 +150,8 @@ export function InsurerCabinet() {
           ))}
           </div>
         </div>}
-      <a className="linkrow" href="#/menu"><span><b>Помощь, условия и настройки</b><small>Единое меню ТракSOS</small></span><span aria-hidden="true">›</span></a>
+      </>
+
     </main>
   );
 }
