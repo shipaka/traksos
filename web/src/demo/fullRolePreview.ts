@@ -25,7 +25,7 @@ const stamp=()=>new Date().toISOString();
 let counter=100, mid=100;
 export type DemoOrder={id:string;number:number;created_at:string;createdAt:string;
  service:string;status:string;description:string;address:string;brand:string;model:string;
- year:number;plate:string;vehicle:any;vehicleId:string;zoneId:string;
+ year:number;plate:string;vehicle:any;vehicleId:string;zoneId:string;lat:number;lng:number;
  paymentMethod:'cash';is_sos:boolean;isSos:boolean;night:boolean;tier:string;
  estimate:any;money:any;site:any;actions:string[];bill:any;points:any;result:string;
  assigned:boolean;offerPrice:number|null;messages:any[];limits:any};
@@ -137,7 +137,11 @@ export async function rolePreviewApi(method:string, path:string, body:any={}):Pr
   const o:DemoOrder={id,number:counter,created_at:stamp(),createdAt:stamp(),
    service:body.service,status:who()==='driver'&&fleetSettings.mode==='approve'?'awaiting_owner':'searching',description:body.description,address:body.address,
    brand:v.brand,model:v.model??'',year:v.year??2019,plate:v.plate??'',vehicle:clone(v),
-   vehicleId:v.id,zoneId:body.zoneId??'spb',paymentMethod:'cash',
+   vehicleId:v.id,zoneId:body.zoneId??'spb',
+   // Fictitious map marker for sandbox ONLY; never geolocate the administrator.
+   // The UI labels it DEMO and does not present it as the address entered by a client.
+   lat:body.zoneId==='lo'?60.03:59.9343,lng:body.zoneId==='lo'?30.53:30.3351,
+   paymentMethod:'cash',
    is_sos:!!body.isSos,isSos:!!body.isSos,night:!!body.night,tier:body.tier??'eco',
    estimate:e,money:{callOut:e.callOut,hour:e.hour,clientFee:0,total:e.callOut+(e.hour??0)},
    site:body.site??{},actions:['cancel'],bill:{callOut:e.callOut,hour:e.hour,step:30,extras:[],total:e.callOut+(e.hour??0)},
