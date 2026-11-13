@@ -45,6 +45,24 @@ The old `GET /api/shop` and `GET /api/shop/orders` endpoints are retained for ol
 - The status always reports `connected: false`, `liveOffers: false` and `automaticOrders: false` until an authorized, tested provider integration is implemented. Saving a supplier SKU does not activate purchases.
 - Real API parameters, credentials, rate limits and allowed data usage must be sourced from the official supplier agreement. Never guess endpoints or store secrets in app bundles or GitHub.
 
+## Bulk reference import (no prices, no auto-publishing)
+
+- The admin-only `Справочник` tab accepts UTF-8 CSV/TSV exported from authorized heavy-truck or trailer catalog data. Columns: `бренд;артикул;название;категория;синонимы` (English headers are accepted too). Column `категория` can be a TrackSOS key or the exact Russian label.
+- Import is explicitly gated by a recorded data-source note and the administrator's rights confirmation. This is **not** a substitute for the actual licensing agreement; import only data the business is entitled to use.
+- First use `Проверить перед загрузкой`. No data is changed during dry-run. Then `Загрузить на проверку` sends at most 150 records per request, up to 200 accepted by the server. Each request is atomic. Repeated imports use a normalized brand/article key and do not duplicate rows. Changing source/metadata revokes prior review.
+- Imported records reside in `shop_catalog_entries`, **not** `shop_products`. They have **no price, stock or order button**. Newly staged rows default to `reviewed=false`, and must be checked manually before eventual display.
+- Customer `GET /api/shop/catalog/search` returns only reviewed references and only when `settings.shop.enabled=true`. It never exposes importer source notes or supplier SKUs. Closed storefront still displays its original unchanged text.
+- All new mutations require admin permissions; dry-run checks, duplicate/invalid-category rejection, changes invalidating review and inability to purchase a reference are tested.
+- This staging index is currently online-only. A future iteration can merge approved reference metadata into versioned offline index packs once adequate source rights and bounded mobile cache sizes are established.
+
+**Template (demonstration codes, not genuine part numbers):**
+
+```csv
+бренд;артикул;название;категория;синонимы
+TEST-BPW;DEMO-001;Тестовая ступица прицепа;trailer_axles;ось ступица
+TEST-WABCO;DEMO-002;Тестовый датчик ABS;trailer_ebs;датчик тормоза
+```
+
 ## Next data steps
 
 - Obtain a licensed cross-reference and VIN-fitment source covering heavy trucks, trailers, axle brands and brake systems. Vehicle VIN alone may not identify replacement axles, engines and brakes.
