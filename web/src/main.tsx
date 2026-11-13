@@ -24,6 +24,8 @@ import { ModCase, Appeal, MyReviews } from './screens/moderation.tsx';
 import { ModeratorDesk } from './screens/moderatorDesk.tsx';
 import { AdminTestCenter } from './screens/adminTestCenter.tsx';
 import { ServicePreviewBar,ServicePreviewPage } from './screens/servicePreview.tsx';
+import {FullRolePreviewPage,RolePreviewBar,handlePreviewClick,previewMode,previewIdentity} from './screens/fullRolePreview.tsx';
+import {currentPreviewRole,previewLink,PREVIEW_ROLES,type Role} from './demo/fullRolePreview.ts';
 import { SupportList, SupportNew, SupportThread, Notifications, useUnread } from './screens/support.tsx';
 import { InsurerCabinet } from './screens/insurer.tsx';
 import { InsuranceApplication,InsuranceThread } from './screens/insuranceFlow.tsx';
@@ -159,6 +161,8 @@ function App() {
   const isCustomer = me.roles.some((r) => r === 'client' || r === 'driver');
   const isAdmin = me.roles.includes('admin');
   const serviceSandbox = isAdmin && a === 'admin' && b === 'test-center' && route[2] === 'service';
+  const fullSandbox = isAdmin && a === 'admin' && b === 'test-center' && PREVIEW_ROLES.includes(route[2] as Role);
+  const fullRole = fullSandbox ? route[2] as Role : null;
   const isModerator = me.roles.includes('moderator') || isAdmin;
   const isStaff = isModerator;
   const isService = me.roles.includes('service');
@@ -171,7 +175,7 @@ function App() {
     : mode === 'performer' ? isPerformer : mode === 'service' ? isService
     : isCustomer || isStaff;
   const allowedMode: Mode = isInsurer ? 'insurer' : permitted ? mode : fallback;
-  const effMode: Mode = serviceSandbox ? 'service' : a === 'work' && isPerformer ? 'performer'
+  const effMode: Mode = fullRole ? previewMode(fullRole) : serviceSandbox ? 'service' : a === 'work' && isPerformer ? 'performer'
     : a === 'admin' && isAdmin ? 'admin' : a === 'moderation' && isModerator ? 'moderator'
     : a === 'base' && isService ? 'service' : a === 'insurance' && isInsurer ? 'insurer' : allowedMode;
 
@@ -205,7 +209,7 @@ function App() {
     case 'qr': screen = <QrJoin code={b} />; break;
     case 'appeal': screen = <Appeal />; break;
     case 'reviews': screen = <MyReviews />; break;
-    case 'admin': screen = !isStaff ? <Home /> : b === 'case' && route[2] ? <ModCase id={route[2]} /> : !isAdmin ? <ModeratorDesk /> : b === 'test-center' ? (serviceSandbox ? <ServicePreviewPage section={route[3]} sub={route[4]} id={route[5]} /> : <AdminTestCenter roleId={route[2]} />) : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : <Admin key={b === 'section' ? route[2] : 'summary'} initialSection={b === 'section' ? route[2] : undefined} />; break;
+    case 'admin': screen = !isStaff ? <Home /> : b === 'case' && route[2] ? <ModCase id={route[2]} /> : !isAdmin ? <ModeratorDesk /> : b === 'test-center' ? (serviceSandbox ? <ServicePreviewPage section={route[3]} sub={route[4]} id={route[5]} /> : fullRole ? <FullRolePreviewPage role={fullRole} parts={route.slice(3)}/> : <AdminTestCenter roleId={route[2]} />) : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : <Admin key={b === 'section' ? route[2] : 'summary'} initialSection={b === 'section' ? route[2] : undefined} />; break;
     case 'moderation': screen = isModerator ? <ModeratorDesk /> : <Home />; break;
     case 'offer': screen = <OfferPage audience={b ?? 'client'} />; break;
     case 'support': screen = b === 'new' ? <SupportNew /> : b ? <SupportThread id={b} /> : <SupportList />; break;
@@ -213,11 +217,13 @@ function App() {
     default: screen = <main><div className="empty">Такой страницы нет</div></main>;
   }
 
+  const renderedMe = fullRole ? previewIdentity(me,fullRole) : serviceSandbox ? {...me,roles:['service'],name:'Тестовый сервис'} : me;
   return (
-    <MeCtx.Provider value={{ me, reload, mode: effMode, setMode }}>
+    <MeCtx.Provider value={{ me:renderedMe, reload, mode: effMode, setMode }}>
       <ScreenErrorBoundary key={route.join('/')}>
         {serviceSandbox && <ServicePreviewBar />}
-        <Shell mode={effMode} me={serviceSandbox ? {...me,roles:['service'],name:'Тестовый сервис'} : me}>{screen}</Shell>
+        {fullRole && <RolePreviewBar role={fullRole}/>}
+        <Shell mode={effMode} me={renderedMe}>{screen}</Shell>
         {!(a === 'admin' && b === 'test-center' && isAdmin) && <IncomingCall />}
         {!(a === 'admin' && b === 'test-center' && isAdmin) && <OfferGate />}
       </ScreenErrorBoundary>
@@ -228,8 +234,9 @@ function App() {
 function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: React.ReactNode }) {
   const route = useRoute();
   const serviceSandbox = route[0]==='admin'&&route[1]==='test-center'&&route[2]==='service';
-  const here = serviceSandbox ? '/'+(route.slice(3).join('/')||'base') : '/'+route.join('/');
-  const sandboxHref=(href:string)=>serviceSandbox?'#/admin/test-center/service'+(href==='/base'||href.startsWith('/base/')?href:'/unavailable'):'#'+href;
+  const fullRole=currentPreviewRole();
+  const here = fullRole ? '/'+(route.slice(3).join('/')||(['master','tow','master_service'].includes(fullRole)?'work':'')) : serviceSandbox ? '/'+(route.slice(3).join('/')||'base') : '/'+route.join('/');
+  const sandboxHref=(href:string)=>fullRole?previewLink(fullRole,href==='/as/client'?'':href):serviceSandbox?'#/admin/test-center/service'+(href==='/base'||href.startsWith('/base/')?href:'/unavailable'):'#'+href;
   // На телефоне оставляем только рабочие действия. Все прежние маршруты
   // сохраняются через меню; компьютерная боковая навигация остаётся полной.
   const tabs: [string, string, string][] = !me ? [] : mode === 'performer'
@@ -295,7 +302,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     ['/offer/privacy', 'Политика персональных данных'],
     ['/privacy', 'Мои персональные данные']];
   return (
-    <div className={`app ${me ? "role-"+mode : "guest-app"}`}>
+    <div className={`app ${me ? "role-"+mode : "guest-app"}`} onClickCapture={handlePreviewClick}>
       <header className="top">
         <span className="logo">Трак<b>SOS</b></span>
         <div className="row" style={{ flexWrap: 'nowrap' }}>
@@ -305,8 +312,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {me && mode === 'moderator' && <span className="pill accent">модерация</span>}
           {me && mode === 'insurer' && <span className="pill accent">страхование</span>}
           {me && mode === 'service' && <span className="pill accent">рембаза</span>}
-          {me && !serviceSandbox && <a href="#/help" className="bell" aria-label="Справка">?</a>}
-          {me && !serviceSandbox && <Bell />}
+          {me && !serviceSandbox && !fullRole && <a href="#/help" className="bell" aria-label="Справка">?</a>}
+          {me && !serviceSandbox && !fullRole && <Bell />}
           {me && <details className="account-menu" key={here}>
             <summary aria-label="Открыть меню кабинета">☰ <span>Меню</span></summary>
             <nav aria-label="Все разделы кабинета">
