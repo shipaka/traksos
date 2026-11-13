@@ -20,6 +20,7 @@ const cases = [
   { name: 'service', phone: '+79990000144', role: 'service', url: '#/base' },
   { name: 'insurer', phone: '+79990000145', role: 'insurer', url: '#/insurance' },
   { name: 'master_service', phone: '+79990000146', role: 'master', url: '#/base', secondRole: 'service' },
+  { name: 'master', phone: '+79990000147', role: 'master', url: '#/work' },
 ];
 const browser = await chromium.launch();
 const failures = [], results = [];
