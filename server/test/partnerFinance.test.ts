@@ -70,3 +70,25 @@ test('confirmed payout cannot exceed the request balance',async()=>{
   assert.ok(calls.some(c=>c.sql.includes('partner_finance.payout')));
   assert.ok(calls.some(c=>c.sql.includes('for update')));
 });
+
+test('reversal cannot reduce a paid or absent balance',async()=>{
+  const calls:{sql:string;params:any[]}[]=[];
+  const db:any={
+    tx:async(fn:any)=>fn(db),
+    one:async(sql:string,params:any[])=>{
+      calls.push({sql,params});
+      if(sql.startsWith('select id,kind,assigned_to from'))return {id:'req',kind:'insurance',assigned_to:'partner'};
+      if(sql.includes('as balance'))return {balance:'300'};
+      if(sql.startsWith('insert into partner_finance_entries'))return {id:'reversal',amount_kopecks:params[3]};
+      return null;
+    },
+    query:async(sql:string,params:any[])=>{calls.push({sql,params});return [];},
+  };
+  const finance=new PartnerFinance(db);
+  await assert.rejects(finance.recordReversal(client,'req',100,'Correction'));
+  await assert.rejects(finance.recordReversal(admin,'req',400,'Correction'));
+  await assert.rejects(finance.recordReversal(admin,'req',100,''));
+  const entry=await finance.recordReversal(admin,'req',300,'Correction');
+  assert.equal(entry.amount_kopecks,300);
+  assert.ok(calls.some(c=>c.sql.includes('partner_finance.reversal')));
+});
