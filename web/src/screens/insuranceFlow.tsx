@@ -1,6 +1,7 @@
 import {useEffect,useMemo,useState} from 'react';
 import {API_URL,fmtTime,get,getToken,post,rub} from '../api.ts';
 import {go,useAction,useLoad,useMe,Loading} from '../ui.tsx';
+import {insurerPreviewActive,insurerPreviewClient,PREVIEW_CLIENT,PREVIEW_AGENT,previewGet,previewPost,previewGet as demoGet,insurerPreviewPdf,insurerPreviewRequestHref,demoTotal,PREVIEW_FEE_PCT} from '../demo/insurerPreviewApi.ts';
 
 const VEHICLE_FIELDS=[
   ['brand','Марка *'],['model','Модель *'],['year','Год выпуска *'],
@@ -23,15 +24,16 @@ type CaseData={request:{id:string;owner_id:string;assigned_to:string;status:stri
   hasPolicy:boolean;isClient:boolean;isPartner:boolean};
 const stepLabels:Record<string,string>={
   received:'Получено',preparing:'Принято в работу · расчёт',
-  offers_sent:'Предложения отправлены',selected:'Клиент выбрал предложение',
+  offers_sent:'Предложения отправлены',awaiting_payment:'Ожидается оплата',paid:'Тестовая оплата подтверждена',selected:'Клиент выбрал предложение',
   processing:'Принято в работу · оформление',policy_sent:'Полис отправлен'};
 const insuranceStatus=(key:string|null|undefined)=>stepLabels[key||'']??'На рассмотрении';
 const emptyVehicle=()=>Object.fromEntries(VEHICLE_FIELDS.map(([name])=>[name,''])) as Record<VehicleKey,string>;
 
 export function InsuranceApplication({vehicleId}:{vehicleId:string}){
   const {me}=useMe();
-  const agents=useLoad(()=>get<{id:string;name:string}[]>('/api/insurance/agents'),[]);
-  const vehicles=useLoad(()=>get<any[]>('/api/vehicles'),[]);
+  const preview=insurerPreviewActive();
+  const agents=useLoad(()=>preview?previewGet<{id:string;name:string}[]>('/api/insurance/agents'):get<{id:string;name:string}[]>('/api/insurance/agents'),[preview]);
+  const vehicles=useLoad(()=>preview?previewGet<any[]>('/api/vehicles'):get<any[]>('/api/vehicles'),[preview]);
   const [agentId,setAgentId]=useState('');
   const [applicant,setApplicant]=useState({lastName:'',firstName:'',middleName:''});
   const [truck,setTruck]=useState<Record<VehicleKey,string>>(emptyVehicle);
@@ -47,7 +49,9 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
   useEffect(()=>{
     if(!vehicle)return;
     setTruck(old=>({...old,brand:vehicle.brand??'',model:vehicle.model??'',
-      year:String(vehicle.year??''),plate:vehicle.plate??'',trailerPlate:vehicle.trailer_plate??''}));
+      year:String(vehicle.year??''),plate:vehicle.plate??'',trailerPlate:vehicle.trailer_plate??'',vin:vehicle.vin??'',
+      ...Object.fromEntries(VEHICLE_FIELDS.filter(([key])=>!['brand','model','year','plate','trailerPlate','vin'].includes(key))
+        .map(([key])=>[key,String(vehicle[key]??vehicle[key.replace(/[A-Z]/g,m=>'_'+m.toLowerCase())]??'')]))}));
   },[vehicle?.id]);
   const fill=(key:VehicleKey,value:string)=>setTruck(prev=>({...prev,[key]:value}));
   const submit=async(e:React.FormEvent)=>{
@@ -58,14 +62,14 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
       window.alert('Выберите агента и заполните все обязательные данные страхователя и грузовика.');
       return;
     }
-    const result=await run(()=>post<{id:string}>('/api/vehicle-service-requests',{
+    const result=await run(()=>(preview?previewPost<{id:string}>:post<{id:string}>)('/api/vehicle-service-requests',{
       kind:'insurance',vehicleId,comment,
       insurance:{agentId,consentToPartner:true,details:{applicant,vehicle:truck}},
     }),'Заявка отправлена выбранному страховому агенту');
-    if(result)go('insurance/request/'+result.id);
+    if(result){if(preview)location.hash=insurerPreviewRequestHref(result.id,true);else go('insurance/request/'+result.id);}
   };
   return <main className="insurance-workflow stack">
-    <a className="insurance-back" href="#/garage">← Мой гараж</a>
+    <a className="insurance-back" href={preview?PREVIEW_CLIENT:"#/garage"}>← {preview?"В страховой кабинет клиента":"Мой гараж"}</a>
     <section className="insurance-workflow-hero">
       <span>TRACKSOS · СТРАХОВАНИЕ</span><h1>Заявка на страхование грузовика</h1>
       <p>Выберите агента, проверьте свои данные и сведения о технике. Предложения и готовый полис придут в переписку по этой заявке.</p>
@@ -121,8 +125,9 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
 
 export function InsuranceThread({requestId}:{requestId:string}){
   const {me}=useMe();const {busy,run}=useAction();
-  const source=useLoad(()=>get<CaseData>('/api/insurance/requests/'+requestId),
-    [requestId],e=>e.type==='vehicle_service'&&e.requestId===requestId);
+  const preview=insurerPreviewActive();
+  const source=useLoad(()=>(preview?previewGet<CaseData>:get<CaseData>)('/api/insurance/requests/'+requestId),
+    [requestId,preview],e=>!preview&&e.type==='vehicle_service'&&e.requestId===requestId);
   const [message,setMessage]=useState('');
   const [drafts,setDrafts]=useState([{company:'',product:'',price:'',description:'',coverage:''}]);
   const [choice,setChoice]=useState('');
@@ -135,7 +140,7 @@ export function InsuranceThread({requestId}:{requestId:string}){
   const notify=()=>source.reload();
   const send=async()=>{
     const m=message.trim();if(!m)return;
-    const v=await run(()=>post('/api/insurance/requests/'+requestId+'/messages',{message:m}),'Сообщение отправлено');
+    const v=await run(()=>(preview?previewPost:post)('/api/insurance/requests/'+requestId+'/messages',{message:m}),'Сообщение отправлено');
     if(v){setMessage('');notify();}
   };
   const publish=async()=>{
@@ -146,7 +151,7 @@ export function InsuranceThread({requestId}:{requestId:string}){
       window.alert('Для каждого предложения заполните компанию, продукт и стоимость.');
       return;
     }
-    const v=await run(()=>post('/api/insurance/requests/'+requestId+'/offers',{offers:data}),'Предложения отправлены клиенту');
+    const v=await run(()=>(preview?previewPost:post)('/api/insurance/requests/'+requestId+'/offers',{offers:data}),'Предложения отправлены клиенту');
     if(v)notify();
   };
   const upload=async()=>{
@@ -157,12 +162,15 @@ export function InsuranceThread({requestId}:{requestId:string}){
       const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(reader.error);
       reader.readAsDataURL(pdf);
     });
-    const v=await run(()=>post('/api/insurance/requests/'+requestId+'/policy',{
+    const v=await run(()=>(preview?previewPost:post)('/api/insurance/requests/'+requestId+'/policy',{
       dataUrl,fileName:pdf.name,expiresOn}),'Готовый PDF отправлен клиенту');
     if(v){setPdf(null);notify();}
   };
   const download=async()=>{
     try{
+      if(preview){const url=URL.createObjectURL(insurerPreviewPdf(requestId));
+        const link=document.createElement('a');link.href=url;link.download='insurance-policy-demo.pdf';link.click();
+        setTimeout(()=>URL.revokeObjectURL(url),30000);return;}
       const response=await fetch(API_URL+'/api/insurance/requests/'+requestId+'/policy',{
         headers:{authorization:'Bearer '+(getToken()??'')},cache:'no-store'});
       if(!response.ok)throw new Error('Не удалось получить документ');
@@ -173,7 +181,7 @@ export function InsuranceThread({requestId}:{requestId:string}){
   };
   const updateDraft=(i:number,key:string,value:string)=>setDrafts(prev=>prev.map((q,n)=>n===i?{...q,[key]:value}:q));
   return <main className="insurance-workflow stack">
-    <a className="insurance-back" href={isAgent?'#/insurance':'#/garage'}>← {isAgent?'К списку страховых заявок':'Мой гараж'}</a>
+    <a className="insurance-back" href={preview?(isAgent?PREVIEW_AGENT:PREVIEW_CLIENT):(isAgent?'#/insurance':'#/garage')}>← {isAgent?'К списку страховых заявок':'Мой гараж'}</a>
     {!d?<Loading error={source.error}/>:
     <>
       <section className="insurance-workflow-hero">
@@ -208,7 +216,10 @@ export function InsuranceThread({requestId}:{requestId:string}){
             <div className="insurance-offer-grid">
               {d.proposals.map((o,i)=><div className={'insurance-offer '+(choice===o.id||r?.insurance_choice_id===o.id?'chosen':'')} key={o.id}>
                 <span>Вариант {i+1}</span><h3>{o.company}</h3><b>{o.product}</b>
-                <strong>{rub(o.premium_kopecks)}</strong>
+                <strong>{rub(preview?demoTotal(o.premium_kopecks).totalKopecks:o.premium_kopecks)}</strong>
+                {preview&&<div className="insurance-price-details"><span>Стоимость от агента <b>{rub(o.premium_kopecks)}</b></span>
+                  <span>Сервисный сбор TrackSOS ({PREVIEW_FEE_PCT}% сверху) <b>{rub(demoTotal(o.premium_kopecks).platformFeeKopecks)}</b></span>
+                  <span>К оплате <b>{rub(demoTotal(o.premium_kopecks).totalKopecks)}</b></span></div>}
                 {o.coverage&&<p>{o.coverage}</p>}{o.description&&<small>{o.description}</small>}
                 {d.isClient&&stage==='offers_sent'&&
                   <button className="btn ghost small" type="button" onClick={()=>setChoice(o.id)}
@@ -218,9 +229,25 @@ export function InsuranceThread({requestId}:{requestId:string}){
             </div>
             {d.isClient&&stage==='offers_sent'&&
               <button className="btn" disabled={busy||!choice} type="button"
-                onClick={async()=>{const v=await run(()=>post('/api/insurance/requests/'+requestId+'/choose',
+                onClick={async()=>{const v=await run(()=>(preview?previewPost:post)('/api/insurance/requests/'+requestId+'/choose',
                   {proposalId:choice}),'Выбор отправлен страховому агенту');if(v)notify();}}>Оформить выбранный вариант</button>}
           </div>}
+          {preview&&d.isClient&&stage==='awaiting_payment'&&<div className="insurance-demo-payment card stack">
+            <span className="insurance-step-title">ПОСЛЕ ВЫБОРА · ОПЛАТА</span>
+            <h3>Оплатить выбранный полис</h3>
+            {selected&&<><b>{selected.company} · {selected.product}</b>
+              <div className="insurance-price-details"><span>Цена страхования (с комиссией агента) <b>{rub(selected.premium_kopecks)}</b></span>
+                <span>TrackSOS {PREVIEW_FEE_PCT}% <b>{rub(demoTotal(selected.premium_kopecks).platformFeeKopecks)}</b></span>
+                <span>Всего <b>{rub(demoTotal(selected.premium_kopecks).totalKopecks)}</b></span></div></>}
+            <p className="note">Учебная оплата, без списания денег и подключения банка. На настоящем сайте нужна подтверждённая платёжная интеграция.</p>
+            <button className="btn" type="button" disabled={busy} onClick={async()=>{
+              const v=await run(()=>previewPost('/api/insurance/requests/'+requestId+'/pay'), 'Тестовая оплата подтверждена');if(v)notify();
+            }}>Оплатить — тестовый режим</button>
+          </div>}
+          {preview&&d.isClient&&['paid','processing'].includes(stage)&&<div className="insurance-demo-payment card stack">
+            <span className="insurance-step-title">ОПЛАТА · ДЕМО</span><h3>Заказ принят</h3>
+            <p>Оплата в тестовом режиме подтверждена. Агент подготовит полис в течение <b>1–2 рабочих дней</b>.</p>
+            <p className="note">Это демонстрационный срок обслуживания, не гарантия реального страховщика.</p></div>}
           {d.hasPolicy&&<div className="insurance-policy">
             <b>✓ Готовый страховой полис</b>
             <span>Агент прикрепил итоговый PDF. Документ доступен в этой переписке.</span>
@@ -239,7 +266,7 @@ export function InsuranceThread({requestId}:{requestId:string}){
           <section className="card stack">
             <span className="insurance-step-title">ЭТАП ЗАЯВКИ</span><h3>{insuranceStatus(stage)}</h3>
             <div className="insurance-progress">
-              {['received','preparing','offers_sent','selected','processing','policy_sent'].map((s,i)=>
+              {(preview?['received','preparing','offers_sent','awaiting_payment','paid','processing','policy_sent']:['received','preparing','offers_sent','selected','processing','policy_sent']).map((s,i)=>
                 <div className={s===stage?'current':''} key={s}><span>{i+1}</span>{stepLabels[s]}</div>)}
             </div>
           </section>
@@ -248,7 +275,7 @@ export function InsuranceThread({requestId}:{requestId:string}){
             <p className="note">{stage==='received'?'Вы получили заявку. Примите её для подготовки предложений.':
               'Клиент выбрал вариант. Примите его в работу и оформите полис у страховой компании.'}</p>
             <button className="btn" type="button" disabled={busy}
-              onClick={async()=>{const v=await run(()=>post('/api/insurance/requests/'+requestId+'/accept'),
+              onClick={async()=>{const v=await run(()=>(preview?previewPost:post)('/api/insurance/requests/'+requestId+'/accept'),
                 'Принято в работу');if(v)notify();}}>Принято в работу</button>
           </section>}
           {isAgent&&stage==='preparing'&&<section className="card stack">
