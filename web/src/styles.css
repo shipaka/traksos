@@ -1743,3 +1743,11 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
   .auth-desktop-showcase-copy h2{font-size:clamp(27px,3vw,43px);line-height:1.15;color:white;margin:14px 0;}
   .auth-desktop-showcase-copy p{font-size:15px;line-height:1.6;color:#d9e7f4;}
 }
+
+/* Insurance application: focused four-stage form, usable on narrow screens. */
+.insurance-step-navigation{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.5rem}
+.insurance-step-navigation .btn{min-width:0;white-space:normal;padding:.8rem .35rem;text-align:center}
+.insurance-step-navigation .btn.active{border-color:var(--accent,#e48c39);font-weight:700}
+.insurance-step-navigation .btn:disabled{opacity:.55;cursor:default}
+.insurance-wizard-actions{display:flex;justify-content:flex-end;gap:.75rem;flex-wrap:wrap}
+@media(max-width:600px){.insurance-step-navigation{grid-template-columns:repeat(2,minmax(0,1fr))}}
