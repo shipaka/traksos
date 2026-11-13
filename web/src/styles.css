@@ -1101,3 +1101,9 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
       #06182b 100%);
   }
 }
+
+/* Very narrow phones need extra room for the longer Russian hero copy. */
+@media (max-width: 365px) {
+  .public-landing .public-brand-hero { min-height: 700px; }
+  .public-landing .public-hero-visual { inset: 35% 0 20% 0; }
+}
