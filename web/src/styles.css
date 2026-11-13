@@ -1751,3 +1751,9 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
 .insurance-step-navigation .btn:disabled{opacity:.55;cursor:default}
 .insurance-wizard-actions{display:flex;justify-content:flex-end;gap:.75rem;flex-wrap:wrap}
 @media(max-width:600px){.insurance-step-navigation{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Partner workspace: distinct insurance, inspections, finance and shared account. */
+.partner-workspaces{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.6rem;margin:1rem 0 1.4rem}
+.partner-workspaces .btn{min-width:0;white-space:normal;padding:.85rem .4rem;text-align:center}
+.partner-workspaces .btn.active{font-weight:750;border-color:var(--accent,#e48c39)}
+@media(max-width:560px){.partner-workspaces{grid-template-columns:repeat(2,minmax(0,1fr))}}
