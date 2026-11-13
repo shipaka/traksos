@@ -55,8 +55,8 @@ try {
       await link.click();
       await page.waitForURL('**/#/admin/test-center/'+id);
       await page.getByRole('main',{name:'Тестовый кабинет: '+label}).waitFor();
-      await page.getByRole('navigation',{name:'Разделы тестового кабинета'}).getByRole('button',{name:/Заявки|Очередь|Запись|Выезды|Мои/}).first().click();
-      await page.getByRole('heading',{name:/заявки|Заявки|очередь|Очередь|Запись|Выезды|Мои|Заказы|События|Страховые|Вызовы|Записи/}).first().waitFor();
+      await page.locator('.sandbox-nav button').nth(1).click();
+      await page.getByRole('button',{name:'Создать тестовую заявку'}).waitFor();
       await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
       await page.getByRole('heading',{name:'Тестирование кабинетов'}).waitFor();
     }
