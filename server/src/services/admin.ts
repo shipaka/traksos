@@ -248,6 +248,10 @@ export class AdminService {
     if (userId === admin.id && !roles.includes('admin')) throw bad('self_lockout', 'Нельзя снять роль администратора с самого себя');
     const target = await this.db.one<{ phone: string }>('select phone from users where id=$1', [userId]);
     if (!target) throw notFound('Пользователь не найден');
+    // The designated insurance agent must never be repurposed in the admin UI.
+    if (config.insurerPrimaryPhone && target.phone === config.insurerPrimaryPhone &&
+        (roles.length !== 1 || roles[0] !== 'insurer'))
+      throw forbidden('Этот номер закреплён за страховым агентом. Ему доступен только страховой кабинет.');
     // Staff grants are limited to the exact private VPS allowlist, never to
     // arbitrary accounts selected in the admin UI. The backup phone is not a role.
     if (roles.includes('admin') && (config.adminPhones.length !== 1 || !config.adminPhones.includes(target.phone)))
