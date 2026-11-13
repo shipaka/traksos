@@ -14,6 +14,10 @@ export const defaultSettings = {
     email: '',
     tagline: 'Маркетплейс выездной помощи грузовикам · Санкт-Петербург и Ленинградская область',
   },
+  /** Insurance partners: closed to new registrations until admin allows them. */
+  insurancePartners: {
+    registrationOpen: false,
+  },
   /** Магазин: выключатель для клиентов и тексты. Выключен — клиент видит «скоро», заказы не принимаются. */
   shop: {
     enabled: false,
