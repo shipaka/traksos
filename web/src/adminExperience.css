@@ -331,3 +331,18 @@
   .app.role-client .client-home>.desktop-hero{min-height:175px;padding:16px 13px;}
   .app.role-client .client-home>.desktop-hero h1{max-width:195px;}
 }
+
+
+/* Shared cabinet art treatment: show the entire approved Scania, never crop it. */
+.app.role-admin .admin-command-hero .admin-command-art{
+  background:linear-gradient(90deg,#0a2945 0%,rgba(9,31,50,.12) 65%),url('../public/tracksos-approved-scania-r520.webp') center center / contain no-repeat;
+}
+.app.role-performer .desktop-content main > .between:has(> h1 + .pill),
+.app.role-service .base-workspace:has(> .card.col) > div:has(> h1){
+  background:linear-gradient(105deg,#09233c 0%,rgba(9,34,55,.9) 46%,rgba(9,36,60,.15) 100%),url('../public/tracksos-approved-scania-r520.webp') right center / contain no-repeat #0b2742;
+}
+@media(prefers-reduced-motion:no-preference){
+  .app .desktop-content main > .card,
+  .app .desktop-content main > .list-item{transition:box-shadow .2s ease,border-color .2s ease,transform .2s ease;}
+  .app .desktop-content main > .card:hover{box-shadow:0 12px 30px rgba(5,23,40,.13);}
+}
