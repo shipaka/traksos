@@ -395,6 +395,15 @@ export function createApp(d: Deps) {
   // Reference-only catalog: no fictitious prices or stock, and no sales before opening.
   r.get('/api/shop/catalog/search', true, (c: AuthedCtx) => partCatalog.search(
     c.query.get('q') ?? '', c.query.get('category') ?? '', Number(c.query.get('page') ?? '0')));
+  r.get('/api/shop/catalog/index/manifest', true, () => partCatalog.indexManifest());
+  r.get('/api/shop/catalog/index/page', true, (c: AuthedCtx) => {
+    const after = c.query.get('after');
+    if (after && !z.string().uuid().safeParse(after).success)
+      throw bad('bad_cursor', 'Некорректный курсор');
+    return partCatalog.indexPage(after, Number(c.query.get('limit') ?? '750'));
+  });
+  r.get('/api/shop/catalog/index/changes', true, (c: AuthedCtx) =>
+    partCatalog.indexChanges(c.query.get('after') ?? '0', Number(c.query.get('limit') ?? '750')));
   // Upload preview and import are deliberately admin-only, licensed-data gated,
   // and capped at 200 records per atomic request.
   const catalogRecordSchema = z.object({
