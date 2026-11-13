@@ -50,7 +50,7 @@ export class InsuranceQuoteFlow {
   async detail(user:AuthUser,id:string) {
     const r=await this.case(this.db,id);
     const permissions=await this.access(this.db,user,r);
-    const request=await this.db.one(`select r.id,r.kind,r.status,r.insurance_stage,r.insurance_details,
+    const request=await this.db.one(`select r.id,r.owner_id,r.requested_by,r.assigned_to,r.kind,r.status,r.insurance_stage,r.insurance_details,
       r.insurance_choice_id,r.created_at,r.updated_at,r.policy_expires_on,r.comment,
       v.brand,v.model,v.year,v.plate,
       coalesce(nullif(agent.company_name,''),nullif(agent.name,''),'Страховой партнёр') as agent_name
@@ -62,7 +62,7 @@ export class InsuranceQuoteFlow {
       case when m.sender_id=$2 then 'you' when m.sender_id=$3 then 'agent' else 'system' end as sender
       from insurance_thread_messages m
       join vehicle_service_requests r on r.id=m.request_id
-      where m.request_id=$1 order by m.id`,[id,r.owner_id,r.assigned_to]);
+      where m.request_id=$1 order by m.id`,[id,user.id,r.assigned_to]);
     const hasPolicy=await this.db.one<{has:boolean}>(
       `select exists(select 1 from insurance_policy_files where request_id=$1) as has`,[id]);
     return {request,proposals,messages,hasPolicy:hasPolicy?.has??false,...permissions};
