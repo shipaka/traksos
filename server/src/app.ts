@@ -356,14 +356,46 @@ export function createApp(d: Deps) {
     stock: z.number().int().min(0).max(100_000).nullable().optional(), leadDays: z.number().int().min(0).max(90).optional(),
     isKit: z.boolean().optional(), active: z.boolean().optional(), sort: z.number().int().min(0).max(10_000).optional(),
     photoDataUrl: z.string().max(2_100_000).nullable().optional(),
+    brand: z.string().max(80).nullable().optional(), article: z.string().max(100).nullable().optional(),
+    searchTerms: z.string().max(400).nullable().optional(),
   });
   r.get('/api/legal', false, () => settings.get('legal'));
-  r.get('/api/shop', true, () => shop.catalog());
+  // The legacy full catalog endpoint remains for older APK versions. New clients
+  // request light configuration then load only one page of products at a time.
+  r.get('/api/shop', true, (c: AuthedCtx) => shop.catalog(c.query.get('light') === '1'));
+  r.get('/api/shop/search', true, (c: AuthedCtx) => shop.search(
+    c.query.get('q') ?? '', c.query.get('category') ?? '',
+    Number(c.query.get('page') ?? '0'), Number(c.query.get('limit') ?? '24')));
+  r.get('/api/shop/selection', true, (c: AuthedCtx) => {
+    const raw = c.query.get('ids') ?? '';
+    const ids = raw.split(',').filter(Boolean).slice(0, 50);
+    if (ids.some((id) => !z.string().uuid().safeParse(id).success)) throw bad('bad_ids', 'Неверный артикул товара');
+    return shop.selection(ids);
+  });
+  r.get('/api/shop/index/manifest', true, () => shop.indexManifest());
+  r.get('/api/shop/index/page', true, (c: AuthedCtx) => {
+    const after = c.query.get('after');
+    if (after && !z.string().uuid().safeParse(after).success) throw bad('bad_cursor', 'Некорректный курсор');
+    return shop.indexPage(after, Number(c.query.get('limit') ?? '750'));
+  });
+  r.get('/api/shop/products/:id/analogs', true, (c: AuthedCtx) => shop.alternatives(c.params.id));
+  r.post('/api/admin/shop/products/:id/analogs', ['admin'], (c: AuthedCtx) => {
+    const b = parse(z.object({
+      analogId: z.string().uuid(), source: z.string().min(3).max(300), verified: z.boolean().default(false),
+    }), c.body);
+    return shop.linkAnalog(c.user, c.params.id, b.analogId, b.source, b.verified);
+  });
+  r.get('/api/shop/history', true, (c: AuthedCtx) => {
+    const vehicleId = c.query.get('vehicleId');
+    if (vehicleId && !z.string().uuid().safeParse(vehicleId).success) throw bad('bad_vehicle', 'Неверная машина');
+    return shop.history(c.user, vehicleId, Number(c.query.get('page') ?? '0'));
+  });
   r.get('/api/shop/products/:id/photo', false, async (c: Ctx) => { const f = await shop.photo(c.params.id); return new Raw(f.mime, f.body, { 'cache-control': 'public, max-age=86400' }); });
   r.post('/api/shop/orders', true, (c: AuthedCtx) => shop.order(c.user, parse(z.object({
     items: z.array(z.object({ productId: z.string().uuid(), qty: z.number().int().min(1).max(99) })).min(1).max(50),
     delivery: z.enum(['pickup', 'delivery', 'master']), address: z.string().max(300).nullable().optional(), orderId: z.string().uuid().nullable().optional(),
     payment: z.enum(['on_receipt', 'invoice']).optional(), comment: z.string().max(500).nullable().optional(),
+    vehicleId: z.string().uuid().nullable().optional(),
   }), c.body)));
   r.get('/api/shop/orders', true, (c: AuthedCtx) => shop.myOrders(c.user));
   r.post('/api/shop/orders/:id/cancel', true, (c: AuthedCtx) => shop.cancelMine(c.user, c.params.id));
