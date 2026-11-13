@@ -230,9 +230,10 @@ export class AuthService {
       await reserve('phone', phone, 10);
       if (externalIp) await reserve('ip', ip, 120);
     });
-    const user = await this.db.one<AuthUser & { password_hash: string | null }>(
-      'select id, phone, name, roles, status, owner_id, password_hash from users where phone=$1', [phone]);
-    if (!user || user.status !== 'active' || !verifyPassword(password, user.password_hash)) {
+    const user = await this.db.one<AuthUser & { password_hash: string | null; admin_preview_until: Date | null }>(
+      'select id, phone, name, roles, status, owner_id, password_hash, admin_preview_until from users where phone=$1', [phone]);
+    if (!user || user.status !== 'active' || !verifyPassword(password, user.password_hash) ||
+        (user.admin_preview_until !== null && new Date(user.admin_preview_until) <= now)) {
       throw new HttpError(401, 'bad_credentials', 'Неверный номер или пароль');
     }
     if (!staffRoleAllowed(phone, user.roles))
@@ -241,7 +242,7 @@ export class AuthService {
     const token = newToken();
     await this.db.query('insert into sessions(token_hash, user_id, expires_at, device) values ($1,$2,$3,$4)',
       [sha256(token), user.id, new Date(now.getTime() + SESSION_DAYS * 86_400_000), device ?? null]);
-    const { password_hash: _hidden, ...safe } = user;
+    const { password_hash: _hidden, admin_preview_until: _previewUntil, ...safe } = user;
     return { token, user: safe };
   }
 
@@ -250,7 +251,8 @@ export class AuthService {
     const u = await this.db.one<AuthUser>(
       `select u.id, u.phone, u.name, u.roles, u.status, u.owner_id
          from sessions s join users u on u.id = s.user_id
-        where s.token_hash = $1 and s.expires_at > now()`,
+        where s.token_hash = $1 and s.expires_at > now()
+          and (u.admin_preview_until is null or u.admin_preview_until > now())`,
       [sha256(token)],
     );
     if (!u || u.status !== 'active' || !staffRoleAllowed(u.phone, u.roles)) return null;

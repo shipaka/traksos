@@ -34,12 +34,20 @@ server.on('upgrade', async (req, socket, head) => {
   if (!req.url?.startsWith('/ws')) return socket.destroy();
   const user = await app.auth.authenticate(bearer(req));
   if (!user) return socket.destroy();
+  const previewUntil = user.roles.includes('admin')
+    ? (await db.one<{ admin_preview_until: Date | null }>('select admin_preview_until from users where id=$1', [user.id]))?.admin_preview_until ?? null
+    : null;
   wss.handleUpgrade(req, socket, head, (ws) => {
     app.hub.add(user.id, ws);
     ws.send(JSON.stringify({ type: 'hello', userId: user.id }));
     const ping = setInterval(() => ws.readyState === 1 && ws.ping(), 25_000);
+    // A preview login must not keep receiving staff notifications after expiry.
+    const previewTimer = previewUntil
+      ? setTimeout(() => ws.close(1008, 'Preview expired'), Math.max(0, new Date(previewUntil).getTime() - Date.now()))
+      : null;
     ws.on('close', () => {
       clearInterval(ping);
+      if (previewTimer) clearTimeout(previewTimer);
       app.hub.remove(user.id, ws);
     });
   });
