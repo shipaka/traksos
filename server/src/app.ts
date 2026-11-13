@@ -610,6 +610,13 @@ export function createApp(d: Deps) {
   });
   r.get('/api/insurer/requests', ['insurer'], (c: AuthedCtx) => vehicleRequests.insurerQueue(c.user));
   r.get('/api/insurer/inspections', ['insurer'], (c: AuthedCtx) => vehicleRequests.inspectionQueue(c.user));
+  r.post('/api/admin/vehicle-service-requests/:id/assign-inspection', staff, async (c: AuthedCtx) => {
+    const b = parse(z.object({ partnerId: z.string().uuid() }), c.body);
+    const request = await vehicleRequests.assignInspection(c.user,c.params.id,b.partnerId);
+    notifier.live([b.partnerId],{type:'vehicle_service',requestId:request.id,vehicleId:request.vehicle_id});
+    return request;
+  });
+
   r.patch('/api/insurer/requests/:id', ['insurer'], async (c: AuthedCtx) => {
     const b = parse(z.object({ status: z.enum(['completed', 'rejected']), note: z.string().max(2000).optional(),
       policyExpiresOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }), c.body);
