@@ -56,6 +56,7 @@ export class InsuranceQuoteFlow {
       coalesce(nullif(agent.company_name,''),nullif(agent.name,''),'Страховой партнёр') as agent_name
       from vehicle_service_requests r join vehicles v on v.id=r.vehicle_id
       left join users agent on agent.id=r.assigned_to where r.id=$1`,[id]);
+    if(!request)throw notFound('Страховая заявка не найдена');
     const proposals=await this.db.query(`select id,company,product,premium_kopecks,description,coverage,created_at
       from insurance_proposals where request_id=$1 order by created_at,id`,[id]);
     const messages=await this.db.query(`select m.id,m.kind,m.body,m.created_at,
