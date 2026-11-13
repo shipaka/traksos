@@ -58,14 +58,14 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
   const fill=(key:VehicleKey,value:string)=>setTruck(prev=>({...prev,[key]:value}));
   const submit=async(e:React.FormEvent)=>{
     e.preventDefault();
-    if(!agentId||!selectedVehicleId||!applicant.lastName.trim()||!applicant.firstName.trim()||
+    if(!agentId||!applicant.lastName.trim()||!applicant.firstName.trim()||
       !truck.brand.trim()||!truck.model.trim()||!truck.plate.trim()||
       !/^\d{4}$/.test(truck.year)||truck.vin.trim().length<11||!consent){
       window.alert('Выберите агента и заполните все обязательные данные страхователя и грузовика.');
       return;
     }
     const result=await run(()=>post<{id:string}>('/api/vehicle-service-requests',{
-      kind:'insurance',vehicleId:selectedVehicleId,comment,
+      kind:'insurance',...(selectedVehicleId?{vehicleId:selectedVehicleId}:{}),comment,
       insurance:{agentId,consentToPartner:true,details:{applicant,vehicle:truck}},
     }),'Заявка отправлена выбранному страховому агенту');
     if(result)go('insurance/request/'+result.id);
@@ -101,15 +101,15 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
       </section>
       <section className="card stack">
         <span className="insurance-step-title">03 · Что страхуем</span><h2>Грузовой автомобиль</h2>
-        <label>Выберите автомобиль из гаража
+        <label>Автомобиль из гаража (необязательно)
           <select className="field" value={selectedVehicleId} onChange={e=>setSelectedVehicleId(e.target.value)}>
-            <option value="">Выберите автомобиль</option>
+            <option value="">Новый автомобиль — заполню данные ниже</option>
             {vehicles.data.map(v=><option key={v.id} value={v.id}>
               {[v.brand,v.model,v.year,v.plate,v.vin ? 'VIN '+String(v.vin).slice(-6) : ''].filter(Boolean).join(' · ')}
             </option>)}
           </select>
         </label>
-        {!selectedVehicleId&&<p className="note">Для отправки заявки пока требуется автомобиль из гаража. Возможность заявки без сохранённой машины требует изменения серверной логики.</p>}
+        {!selectedVehicleId&&<p className="note">Заполните данные ниже. Если автомобиль ещё не сохранён, система проверит совпадения и добавит его в гараж при отправке заявки.</p>}
         <p className="note">Данные выбранного автомобиля подставляются автоматически. Проверьте VIN и обязательные сведения.</p>
         <div className="insurance-field-grid">
           {VEHICLE_FIELDS.filter(([,label])=>label.endsWith('*')).map(([key,label])=><label key={key}>{label}
