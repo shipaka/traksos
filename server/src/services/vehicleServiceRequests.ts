@@ -246,6 +246,13 @@ export class VehicleServiceRequests {
     });
   }
 
+  async inspectionPartners(staff: AuthUser) {
+    if (!staff.roles?.some(role=>['admin','moderator'].includes(role))) throw forbidden('Нет доступа');
+    return this.db.query<{id:string;name:string|null}>(
+      `select id,name from users where roles && '{insurer,inspection_operator}'::text[]
+       and status='active' order by name,id`);
+  }
+
   async insurers(staff: AuthUser) {
     if (!staff.roles?.some((role: string) => ['admin', 'moderator'].includes(role))) throw forbidden('Нет доступа');
     return this.db.query<{ id: string; name: string | null }>(
@@ -266,7 +273,7 @@ export class VehicleServiceRequests {
     if (!staff.roles?.some(role => ['admin','moderator'].includes(role))) throw forbidden('Нет доступа');
     return this.db.tx(async q => {
       const partner = await q.one<{id:string}>(
-        `select id from users where id=$1 and 'insurer'=any(roles) and status='active'`, [partnerId]);
+        `select id from users where id=$1 and roles && '{insurer,inspection_operator}'::text[] and status='active'`, [partnerId]);
       if (!partner) throw notFound('Партнёр техосмотра не найден');
       const request = await q.one<any>(
         `update vehicle_service_requests set assigned_to=$3, status='sent_to_partner', updated_at=now()
@@ -281,7 +288,7 @@ export class VehicleServiceRequests {
   }
 
   async updateInspection(user: AuthUser, requestId: string, status: 'completed'|'rejected', note?: string) {
-    if (!user.roles?.includes('insurer')) throw forbidden('Нет доступа');
+    if (!user.roles?.some(role=>['insurer','inspection_operator'].includes(role))) throw forbidden('Нет доступа');
     return this.db.tx(async q => {
       const current = await q.one<any>(
         'select * from vehicle_service_requests where id=$1 for update', [requestId]);
@@ -302,7 +309,7 @@ export class VehicleServiceRequests {
   }
 
   async inspectionQueue(user: AuthUser) {
-    if (!user.roles?.includes('insurer')) throw forbidden('Нет доступа');
+    if (!user.roles?.some(role=>['insurer','inspection_operator'].includes(role))) throw forbidden('Нет доступа');
     // Only inspections assigned to this partner; insurance data never leaks into this workspace.
     return this.db.query(
       `select r.id, r.kind, r.status, r.comment, r.staff_note, r.created_at, r.updated_at,
