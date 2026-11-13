@@ -34,11 +34,11 @@ try {
   await page.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','admin')},token);
   await page.goto(BASE+'/#/admin');
   await page.getByRole('heading',{name:'Администратор'}).waitFor();
-  await page.getByRole('summary',{name:'Открыть меню кабинета'}).click();
+  await page.locator('.account-menu > summary').click();
   const nav=page.getByRole('navigation',{name:'Все разделы кабинета'});
   await nav.getByRole('link',{name:'Выездной мастер'}).click();
   await page.waitForURL(/#\/work/);
-  await page.getByRole('summary',{name:'Открыть меню кабинета'}).click();
+  await page.locator('.account-menu > summary').click();
   await nav.getByRole('link',{name:'Администратор'}).click();
   await page.waitForURL(/#\/admin/);
   if(exceptions.length)throw new Error('JavaScript error: '+exceptions.join(' | '));
