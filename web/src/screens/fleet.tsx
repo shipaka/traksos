@@ -12,9 +12,29 @@ const ALLOW: [string, string, string][] = [
   ['consult', 'Консультация по телефону', '700 ₽'],
   ['service', 'Запись в сервис', 'рембазы-партнёры'],
   ['shop', 'Магазин', 'покупки запчастей'],
+  ['insurance', 'Страхование', 'подача заявок только с разрешения владельца'],
+  ['inspection', 'Техосмотр', 'запись и подача заявок только с разрешения владельца'],
 ];
 const esc = (x: unknown) => String(x ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[c]);
 const stickerUrl = (code: string) => `${API_URL || location.origin}/#/qr/${code}`;
+
+function InsuranceReminderSettings() {
+  const settings = useLoad(() => get('/api/insurance-reminders/settings'), []);
+  const { busy, run } = useAction();
+  const enabled = settings.data?.enabled;
+  return <div className="card stack">
+    <b>Напоминания о страховке</b>
+    <span className="note">За 30, 7 и 1 день до окончания полиса. Уведомления получает владелец.</span>
+    {!settings.data ? <Loading error={settings.error} /> :
+      <label className="row">
+        <input type="checkbox" checked={!!enabled} disabled={busy} onChange={async (e) => {
+          const result = await run(() => put('/api/insurance-reminders/settings', { enabled: e.target.checked }), 'Настройка сохранена');
+          if (result) settings.setData(result);
+        }} />
+        <span>Получать напоминания</span>
+      </label>}
+  </div>;
+}
 
 export function Fleet() {
   const f = useLoad(() => get('/api/fleet'), [], (e) => e.type === 'order' || e.type === 'fleet');
@@ -54,6 +74,7 @@ export function Fleet() {
         </div>
       ))}
 
+      <InsuranceReminderSettings />
       <div className="stack">
         <span className="label">Машины</span>
         {!d.cars.length && <div className="empty">Машин пока нет — добавьте в гараже.</div>}
@@ -93,7 +114,7 @@ export function Fleet() {
       <div className="card">
         <b>Что водителю можно</b>
         {ALLOW.map(([k, n, h]) => (
-          <label key={k} className="agree"><input type="checkbox" checked={s.allow[k] !== false} onChange={(e) => setS({ ...s, allow: { ...s.allow, [k]: e.target.checked } })} /><span><b>{n}</b> — {h}</span></label>
+          <label key={k} className="agree"><input type="checkbox" checked={k === 'insurance' || k === 'inspection' ? s.allow[k] === true : s.allow[k] !== false} onChange={(e) => setS({ ...s, allow: { ...s.allow, [k]: e.target.checked } })} /><span><b>{n}</b> — {h}</span></label>
         ))}
         <span className="note">Срочный вызов SOS водитель может сделать всегда — даже если вы не на связи.</span>
       </div>
