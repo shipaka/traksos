@@ -21,6 +21,8 @@ export const config = {
   moderatorPhones: (env.MODERATOR_PHONES ?? '').split(',').map((s) => s.trim()).filter(Boolean),
   /** Contact information only. This phone NEVER grants access or recovery by itself. */
   recoveryContactPhone: env.RECOVERY_CONTACT_PHONE ?? '',
+  /** Exactly one initial insurance agent's phone. Stored only in VPS .env. */
+  insurerPrimaryPhone: env.INSURER_PRIMARY_PHONE ?? '',
 
   sms: {
     /** log — код пишется в лог и возвращается в ответе (только не в production); smsru — SMS.ru */
