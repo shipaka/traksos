@@ -92,3 +92,12 @@ test('reversal cannot reduce a paid or absent balance',async()=>{
   assert.equal(entry.amount_kopecks,300);
   assert.ok(calls.some(c=>c.sql.includes('partner_finance.reversal')));
 });
+
+test('inspection-only finance access never includes insurance entries',async()=>{
+  const {db,queries}=mock();
+  const operator={id:'operator',roles:['inspection_operator']} as any;
+  await new PartnerFinance(db).mine(operator);
+  assert.equal(queries.length,2);
+  assert.ok(queries.every(q=>q.sql.includes("kind='inspection'")));
+  assert.ok(queries.every(q=>q.params[0]==='operator'&&q.params[1]===false));
+});
