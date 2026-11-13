@@ -6,6 +6,11 @@ export const PREVIEW_AGENT='#/'+PREVIEW_ROOT;
 export const PREVIEW_CLIENT='#/'+PREVIEW_ROOT+'/client';
 export const PREVIEW_NEW=PREVIEW_CLIENT+'/new';
 export const demoVehicleId='demo-insurance-truck';
+export const PREVIEW_FEE_PCT=5; // Explicitly illustrative. Real tariff must be approved first.
+export const demoTotal=(agentKopecks:number)=>({agentKopecks,platformFeeKopecks:Math.round(agentKopecks*PREVIEW_FEE_PCT/100),totalKopecks:agentKopecks+Math.round(agentKopecks*PREVIEW_FEE_PCT/100)});
+export const previewGet=<T=any>(path:string):Promise<T>=>previewInsurerApi('GET',path) as Promise<T>;
+export const previewPost=<T=any>(path:string,body:any={}):Promise<T>=>previewInsurerApi('POST',path,body) as Promise<T>;
+export const previewPatch=<T=any>(path:string,body:any={}):Promise<T>=>previewInsurerApi('PATCH',path,body) as Promise<T>;
 const now=()=>new Date().toISOString();
 const fail=(message:string):never=>{throw new ApiError(400,'demo_error',message);};
 export function insurerPreviewActive(){return location.hash.replace(/^#\/?/,'').startsWith(PREVIEW_ROOT);}
@@ -20,7 +25,7 @@ type Case={id:string;owner_id:string;assigned_to:string;kind:'insurance';status:
  brand:string;model:string;plate:string;year:number;created_at:string;updated_at:string;
  comment:string;agent_name:string;policy_expires_on:string|null};
 type Proposal={id:string;company:string;product:string;premium_kopecks:number;description:string;coverage:string;created_at:string};
-type Message={id:number;kind:'status'|'message'|'offers'|'selection'|'policy';sender:'agent'|'client'|'system';
+type Message={id:number;kind:'status'|'message'|'offers'|'selection'|'payment'|'policy';sender:'agent'|'client'|'system';
  body:string;created_at:string};
 type RecordItem={request:Case;proposals:Proposal[];messages:Message[];pdf:Blob|null};
 const clone=<T>(x:T):T=>structuredClone(x);
@@ -83,7 +88,7 @@ export async function previewInsurerApi(method:'GET'|'POST'|'PATCH',path:string,
   r.request.insurance_details=clone({...d,consentAt:now()});r.request.comment=String(body.comment??'');
   records.unshift(r);emit(r);return {id:r.request.id,insurance_stage:'received'};
  }
- const m=/^\/api\/insurance\/requests\/([^/]+)(?:\/(accept|offers|choose|messages|policy))?$/.exec(p);
+ const m=/^\/api\/insurance\/requests\/([^/]+)(?:\/(accept|offers|choose|pay|messages|policy))?$/.exec(p);
  if(!m)return fail('Внешние действия недоступны в страховой песочнице');
  const r=item(m[1]),action=m[2]??'';
  if(method==='GET'&&!action)return view(r);
@@ -92,9 +97,9 @@ export async function previewInsurerApi(method:'GET'|'POST'|'PATCH',path:string,
  if(action==='accept'){
   assertSide(false);
   const stage=r.request.insurance_stage;
-  if(stage!=='received'&&stage!=='selected')return fail('Сначала дождитесь заявки или выбора клиента');
+  if(stage!=='received'&&stage!=='paid')return fail('Сначала дождитесь заявки или подтверждения оплаты');
   r.request.insurance_stage=stage==='received'?'preparing':'processing';
-  log(r,'status','agent',stage==='received'?'Принято в работу: подготовка предложений':'Принято в работу: оформление полиса');
+  log(r,'status','agent',stage==='received'?'Принято в работу: подготовка предложений':'Принято в работу: оформление оплаченного полиса');
  }else if(action==='offers'){
   assertSide(false);
   if(r.request.insurance_stage!=='preparing')return fail('Заявка пока не на этапе предложений');
@@ -109,8 +114,14 @@ export async function previewInsurerApi(method:'GET'|'POST'|'PATCH',path:string,
   if(r.request.insurance_stage!=='offers_sent')return fail('Предложения ещё не готовы');
   const o=r.proposals.find(p=>p.id===body.proposalId);
   if(!o)return fail('Выберите предложение из списка');
-  r.request.insurance_choice_id=o.id;r.request.insurance_stage='selected';
-  log(r,'selection','client','Выбран полис: '+o.company+' · '+o.product);
+  r.request.insurance_choice_id=o.id;r.request.insurance_stage='awaiting_payment';
+  const totals=demoTotal(o.premium_kopecks);
+  log(r,'selection','client','Выбран полис: '+o.company+' · '+o.product+' · итог '+(totals.totalKopecks/100)+' ₽');
+ }else if(action==='pay'){
+  assertSide(true);
+  if(r.request.insurance_stage!=='awaiting_payment'||!r.request.insurance_choice_id)return fail('Сначала выберите вариант страхования');
+  r.request.insurance_stage='paid';
+  log(r,'payment','system','ТЕСТОВАЯ оплата подтверждена. Ожидаемый срок оформления — 1–2 рабочих дня. Реальные деньги не списаны.');
  }else if(action==='messages'){
   const value=String(body.message??'').trim();
   if(!value||value.length>2000)return fail('Введите сообщение длиной до 2000 символов');
