@@ -150,7 +150,7 @@ export class ShopService {
     const filters = ['active=true', 'is_kit=false'];
     if (category && category !== 'all') {
       if (!SHOP_CATEGORIES[category]) throw bad('bad_category', 'Неизвестный раздел каталога');
-      params.push(category); filters.push(`category=${params.length}`);
+      params.push(category); filters.push(`category=$${params.length}`);
     }
     // Words can appear in any order across the part name, article, brand and synonyms.
     // Deliberately bound each term: no user supplied SQL wildcards or expressions.
