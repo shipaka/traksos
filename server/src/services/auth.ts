@@ -4,6 +4,8 @@ import { SmsRejectedError, type SmsProvider } from '../providers/sms.ts';
 import { HttpError, bad, type AuthUser } from '../http/router.ts';
 import { hmac, newCode, newToken, normalizePhone, sha256 } from '../util.ts';
 import { config, isProd } from '../config.ts';
+import type { SettingsService } from './settings.ts';
+import { insuranceRegistrationError, insuranceRegistrationMessage } from '../domain/insuranceRegistration.ts';
 import { SELF_ROLES, requestedRoles, validateRoles, type AccountChoice, type SelfRole } from '../domain/roles.ts';
 
 const CODE_TTL_MS = 5 * 60_000;
@@ -15,6 +17,9 @@ function staffRoleAllowed(phone: string, roles: string[]): boolean {
   if (roles.includes('admin') && (config.adminPhones.length !== 1 || !config.adminPhones.includes(phone))) return false;
   if (roles.includes('moderator') && !config.moderatorPhones.includes(phone)) return false;
   if (roles.includes('admin') && roles.includes('moderator')) return false;
+  // The initial insurance agent can NEVER be repurposed into a client/performer.
+  if (config.insurerPrimaryPhone && phone === config.insurerPrimaryPhone &&
+      (roles.length !== 1 || roles[0] !== 'insurer')) return false;
   return true;
 }
 
@@ -39,11 +44,22 @@ const PER_PHONE_DAY = 8;
 const PER_IP_HOUR = 15;
 
 export class AuthService {
-  constructor(private db: Db, private sms: SmsProvider, private now: () => Date = () => new Date()) {}
+  constructor(private db: Db, private sms: SmsProvider,
+    private now: () => Date = () => new Date(), private settings?: SettingsService) {}
 
-  async requestCode(rawPhone: string, ip = '', purpose: 'register' | 'reset' = 'register') {
+  private async ensureInsuranceRegistration(phone: string, choice?: AccountChoice) {
+    // Legacy local CI fixtures remain supported without any partner configuration.
+    if (!isProd && !config.insurerPrimaryPhone) return;
+    const registrationOpen = (await this.settings?.get('insurancePartners'))?.registrationOpen ?? false;
+    const error = insuranceRegistrationError(phone, choice, config.insurerPrimaryPhone, registrationOpen);
+    if (error) throw new HttpError(403, error, insuranceRegistrationMessage(error));
+  }
+
+  async requestCode(rawPhone: string, ip = '', purpose: 'register' | 'reset' = 'register', accountType?: AccountChoice) {
     const phone = normalizePhone(rawPhone);
     if (!phone) throw bad('bad_phone', 'Номер в формате +7 9XX XXX-XX-XX');
+    // Reject a wrong registration BEFORE reserving a code or contacting SMS.ru.
+    if (purpose === 'register') await this.ensureInsuranceRegistration(phone, accountType);
     const existing = await this.db.one<{ id: string; roles: string[] }>('select id, roles from users where phone=$1', [phone]);
     if (isProd && purpose === 'register' && config.recoveryContactPhone && phone === config.recoveryContactPhone)
       throw new HttpError(403, 'reserved_recovery_contact', 'Этот резервный контакт зарезервирован и не используется для обычной регистрации.');
@@ -122,6 +138,8 @@ export class AuthService {
   async verify(rawPhone: string, code: string, role?: SelfRole, device?: string, accountType?: AccountChoice, password?: string, purpose: 'register' | 'reset' = 'register') {
     const phone = normalizePhone(rawPhone);
     if (!phone) throw bad('bad_phone', 'Неверный номер');
+    // Re-check on verification: users may forge accountType or re-use an old SMS.
+    if (purpose === 'register') await this.ensureInsuranceRegistration(phone, accountType ?? (role as AccountChoice | undefined));
     const row = await this.db.one<{ code_hash: string; expires_at: Date; attempts: number; purpose: string }>(
       'select code_hash, expires_at, attempts, purpose from auth_codes where phone=$1', [phone],
     );
@@ -217,6 +235,8 @@ export class AuthService {
     if (!user || user.status !== 'active' || !verifyPassword(password, user.password_hash)) {
       throw new HttpError(401, 'bad_credentials', 'Неверный номер или пароль');
     }
+    if (!staffRoleAllowed(phone, user.roles))
+      throw new HttpError(403, 'account_role_restricted', 'Для этого номера доступен только закреплённый кабинет. Обратитесь в поддержку.');
     await this.db.query("delete from auth_login_attempts where scope='phone' and identity=$1", [phone]);
     const token = newToken();
     await this.db.query('insert into sessions(token_hash, user_id, expires_at, device) values ($1,$2,$3,$4)',
