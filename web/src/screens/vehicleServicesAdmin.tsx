@@ -5,6 +5,7 @@ import { useLoad, useAction, Loading } from '../ui.tsx';
 export function VehicleServicesQueue() {
   const list = useLoad(() => get('/api/admin/vehicle-service-requests'), []);
   const insurers = useLoad(() => get('/api/admin/insurers'), []);
+  const inspectionPartners=useLoad(()=>get('/api/admin/inspection-partners'),[]);
   const [selectedInsurers, setSelectedInsurers] = useState<Record<string, string>>({});
   const [direction,setDirection]=useState<'insurance'|'inspection'>('insurance');
   const { busy, run } = useAction();
@@ -85,7 +86,7 @@ export function VehicleServicesQueue() {
                 value={selectedInsurers[r.id] ?? ''}
                 onChange={e=>setSelectedInsurers(prev=>({...prev,[r.id]:e.target.value}))}>
                 <option value="">Выберите партнёра</option>
-                {(insurers.data??[]).map((p:any)=><option key={p.id} value={p.id}>{p.name||p.id}</option>)}
+                {(inspectionPartners.data??[]).map((p:any)=><option key={p.id} value={p.id}>{p.name||p.id}</option>)}
               </select>
               <button type="button" className="btn ghost small"
                 disabled={busy||!selectedInsurers[r.id]}
@@ -95,7 +96,7 @@ export function VehicleServicesQueue() {
                   if(result)list.reload();
                 }}>Передать техосмотр</button>
             </div>
-            <span className="note">Пока доступны партнёры с ролью insurer. Отдельные права оператора техосмотра будут добавлены позднее.</span>
+            <span className="note">Доступны операторы техосмотра и партнёры с разрешённой ролью страховщика.</span>
           </div>
         )}
         {r.status==='completed'&&r.assigned_to&& (r.has_partner_accrual ?
