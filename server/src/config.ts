@@ -17,6 +17,10 @@ export const config = {
   webRoot: env.WEB_ROOT ?? new URL('../../web/dist', import.meta.url).pathname,
   /** Номера, которые при входе сразу получают роль администратора */
   adminPhones: (env.ADMIN_PHONES ?? '').split(',').map((s) => s.trim()).filter(Boolean),
+  /** Dedicated, non-administrator moderator phone allowlist (private VPS .env only). */
+  moderatorPhones: (env.MODERATOR_PHONES ?? '').split(',').map((s) => s.trim()).filter(Boolean),
+  /** Contact information only. This phone NEVER grants access or recovery by itself. */
+  recoveryContactPhone: env.RECOVERY_CONTACT_PHONE ?? '',
 
   sms: {
     /** log — код пишется в лог и возвращается в ответе (только не в production); smsru — SMS.ru */

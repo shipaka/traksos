@@ -40,6 +40,8 @@ jobs:
           sh -n deploy/backup.sh
           bash -n deploy/doctor.sh
           bash -n deploy/update-site.sh
+          bash -n deploy/configure-staff.sh
+          bash -n deploy/activate-primary-admin.sh
           # docker compose requires app.env_file to exist even for config-only checks.
           cp deploy/.env.example deploy/.env
           trap 'rm -f deploy/.env' EXIT
@@ -56,7 +58,7 @@ jobs:
         run: |
           npx playwright install --with-deps chromium
           psql -h 127.0.0.1 -U postgres -c 'create database traksos'
-          DATABASE_URL=postgres://postgres@127.0.0.1:5432/traksos ADMIN_PHONES=+79990000001 npm -w server start &
+          DATABASE_URL=postgres://postgres@127.0.0.1:5432/traksos ADMIN_PHONES=+79990000001 MODERATOR_PHONES=+79990000147 npm -w server start &
           until curl -s localhost:8080/api/health >/dev/null; do sleep 1; done
           node e2e/ui-smoke.mjs
           node e2e/public-shots.mjs e2e/shots
@@ -68,6 +70,7 @@ jobs:
           SHOTS_DIR=e2e/shots/insurance node e2e/insurance-flow.mjs
           node e2e/moderator-permission-check.mjs
           node e2e/admin-master-switch.mjs
+          node e2e/staff-security.mjs
       - name: Снимки экранов каждой проверяемой версии
         if: always()
         uses: actions/upload-artifact@v4

@@ -7,7 +7,8 @@ import type { Notifier } from './notify.ts';
 import type { OrdersService } from './orders.ts';
 import type { PaymentsService } from '../payments/service.ts';
 import type { ProfilesService } from './profiles.ts';
-import { bad, conflict, notFound, type AuthUser } from '../http/router.ts';
+import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
+import { config } from '../config.ts';
 import { cancelSplit, pct, type CancelStage } from '../domain/money.ts';
 import type { SettingsService } from './settings.ts';
 import { rub } from '../util.ts';
@@ -245,8 +246,22 @@ export class AdminService {
 
   async setRoles(admin: AuthUser, userId: string, roles: string[]) {
     if (userId === admin.id && !roles.includes('admin')) throw bad('self_lockout', 'Нельзя снять роль администратора с самого себя');
-    await this.db.query('update users set roles=$2 where id=$1', [userId, roles]);
-    await this.audit(this.db, admin, 'user.roles', userId, { roles });
+    const target = await this.db.one<{ phone: string }>('select phone from users where id=$1', [userId]);
+    if (!target) throw notFound('Пользователь не найден');
+    // Staff grants are limited to the exact private VPS allowlist, never to
+    // arbitrary accounts selected in the admin UI. The backup phone is not a role.
+    if (roles.includes('admin') && (config.adminPhones.length !== 1 || !config.adminPhones.includes(target.phone)))
+      throw forbidden('Администратором может быть только закреплённый основной номер');
+    if (roles.includes('moderator') && !config.moderatorPhones.includes(target.phone))
+      throw forbidden('Модератором может быть только закреплённый номер');
+    if (roles.includes('admin') && roles.includes('moderator'))
+      throw bad('incompatible_staff_roles', 'Администратор и модератор — разные уровни доступа');
+    await this.db.tx(async q => {
+      await q.query('update users set roles=$2 where id=$1', [userId, roles]);
+      // Any previous sessions must lose old privileges immediately.
+      await q.query('delete from sessions where user_id=$1', [userId]);
+      await this.audit(q, admin, 'user.roles', userId, { roles });
+    });
     return { ok: true };
   }
 

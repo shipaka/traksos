@@ -10,6 +10,14 @@ const CODE_TTL_MS = 5 * 60_000;
 const RESEND_MS = 60_000;
 const MAX_ATTEMPTS = 5;
 const SESSION_DAYS = 90;
+/** Fail closed for staff roles if protected VPS phone allowlists do not match. */
+function staffRoleAllowed(phone: string, roles: string[]): boolean {
+  if (roles.includes('admin') && (config.adminPhones.length !== 1 || !config.adminPhones.includes(phone))) return false;
+  if (roles.includes('moderator') && !config.moderatorPhones.includes(phone)) return false;
+  if (roles.includes('admin') && roles.includes('moderator')) return false;
+  return true;
+}
+
 const passwordValid = (p: string) => p.length >= 10 && p.length <= 128;
 function hashPassword(password: string) {
   const salt = randomBytes(16).toString('hex');
@@ -36,9 +44,13 @@ export class AuthService {
   async requestCode(rawPhone: string, ip = '', purpose: 'register' | 'reset' = 'register') {
     const phone = normalizePhone(rawPhone);
     if (!phone) throw bad('bad_phone', 'Номер в формате +7 9XX XXX-XX-XX');
-    const existing = await this.db.one<{ id: string }>('select id from users where phone=$1', [phone]);
+    const existing = await this.db.one<{ id: string; roles: string[] }>('select id, roles from users where phone=$1', [phone]);
+    if (isProd && purpose === 'register' && config.recoveryContactPhone && phone === config.recoveryContactPhone)
+      throw new HttpError(403, 'reserved_recovery_contact', 'Этот резервный контакт зарезервирован и не используется для обычной регистрации.');
     if (isProd && purpose === 'register' && existing) throw bad('already_registered', 'Аккаунт существует. Войдите по паролю или восстановите доступ.');
     if (purpose === 'reset' && !existing) throw bad('not_registered', 'Такой аккаунт не найден — выберите регистрацию.');
+    if (purpose === 'reset' && (existing?.roles.some(r => r === 'admin' || r === 'moderator') || config.adminPhones.includes(phone) || config.moderatorPhones.includes(phone)))
+      throw new HttpError(403, 'staff_recovery_protected', 'Служебный аккаунт восстанавливается только через защищённую процедуру администратора.');
     const now = this.now();
     const ttl = new Date(now.getTime() + CODE_TTL_MS);
     // Local and proxy-internal IPs are not a reliable individual identifier.
@@ -100,7 +112,9 @@ export class AuthService {
     }
     await this.db.query('delete from auth_codes where phone=$1', [phone]);
 
-    const extra = config.adminPhones.includes(phone) ? ['admin'] : [];
+    // Production never grants administrator privileges from control of an SMS number alone.
+    // Historical development fixtures retain the old behavior solely outside production.
+    const extra = !isProd && config.adminPhones.includes(phone) ? ['admin'] : [];
     const requested = purpose === 'reset' ? [] : accountType ? requestedRoles(accountType) : role ? [role] : [];
     if (role && accountType && !requested.includes(role)) {
       throw bad('invalid_role', 'Указанная специализация не соответствует типу регистрации');
@@ -113,6 +127,8 @@ export class AuthService {
       // A plain login never grants additional privileges. The legacy client default
       // applies only to a genuinely new account without a selected category.
       if (purpose === 'reset' && !previous) throw bad('not_registered', 'Такой аккаунт не найден');
+      if (purpose === 'reset' && (previous?.roles.some(r => r === 'admin' || r === 'moderator') || config.adminPhones.includes(phone) || config.moderatorPhones.includes(phone)))
+        throw new HttpError(403, 'staff_recovery_protected', 'Нельзя сбросить служебный пароль только по SMS.');
       if (previous && purpose === 'register' && isProd) throw bad('already_registered', 'Аккаунт уже зарегистрирован');
       if (previous) {
         const roles = requested.length ? validateRoles(previous.roles, requested) : previous.roles;
@@ -135,7 +151,9 @@ export class AuthService {
       // Legacy tokens are not session-bound; clear them too when credentials change.
       await this.db.query('delete from push_tokens where user_id=$1', [user.id]);
       await this.db.query('delete from sessions where user_id=$1', [user.id]);
-      await this.db.query("delete from auth_login_attempts where scope='phone' and identity=$1", [phone]);
+      if (!staffRoleAllowed(phone, user.roles))
+      throw new HttpError(403, 'staff_phone_mismatch', 'Доступ к служебному аккаунту ограничен.');
+    await this.db.query("delete from auth_login_attempts where scope='phone' and identity=$1", [phone]);
     }
     const token = newToken();
     await this.db.query('insert into sessions(token_hash, user_id, expires_at, device) values ($1,$2,$3,$4)', [
@@ -192,7 +210,7 @@ export class AuthService {
         where s.token_hash = $1 and s.expires_at > now()`,
       [sha256(token)],
     );
-    if (!u || u.status !== 'active') return null;
+    if (!u || u.status !== 'active' || !staffRoleAllowed(u.phone, u.roles)) return null;
     return u;
   }
 
