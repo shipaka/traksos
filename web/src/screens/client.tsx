@@ -49,7 +49,9 @@ export function Home() {
         <a href="#/garage" className="desktop-quick-card"><span className="desktop-quick-icon">▣</span><span><b>Мой гараж</b><small>Автомобили и сведения о технике</small></span><span aria-hidden="true">›</span></a>
         <a href="#/orders" className="desktop-quick-card"><span className="desktop-quick-icon">☷</span><span><b>Мои заявки</b><small>История и статусы работ</small></span><span aria-hidden="true">›</span></a>
         <a href="#/services" className="desktop-quick-card"><span className="desktop-quick-icon">⚙</span><span><b>СТО и ремонт</b><small>Сервисы-партнёры и запись</small></span><span aria-hidden="true">›</span></a>
-        <a href="#/fleet" className="desktop-quick-card"><span className="desktop-quick-icon">▤</span><span><b>Мой парк</b><small>Транспорт и водители компании</small></span><span aria-hidden="true">›</span></a>
+        {!me?.owner_id && !me?.roles.includes('driver')
+          ? <a href="#/fleet" className="desktop-quick-card"><span className="desktop-quick-icon">▤</span><span><b>Мой парк</b><small>Транспорт и водители компании</small></span><span aria-hidden="true">›</span></a>
+          : <a href="#/support" className="desktop-quick-card"><span className="desktop-quick-icon">?</span><span><b>Моя поддержка</b><small>Обращения и помощь водителю</small></span><span aria-hidden="true">›</span></a>}
       </section>
 
       <div className="desktop-home-columns">
