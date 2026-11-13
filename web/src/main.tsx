@@ -216,7 +216,7 @@ function App() {
     default: screen = <main><div className="empty">Такой страницы нет</div></main>;
   }
 
-  const previewMe=insurerSandbox?{...me,roles:[insurerClient?'client':'insurer'],name:insurerClient?'Иванов Иван Иванович':'Демо · Страховой партнёр',owner_id:null}:me;
+  const previewMe=insurerSandbox?{...me,roles:(insurerClient?['client']:['insurer']) as Me['roles'],name:insurerClient?'Иванов Иван Иванович':'Демо · Страховой партнёр',owner_id:null}:me;
   return (
     <MeCtx.Provider value={{ me:previewMe, reload, mode: effMode, setMode }}>
       <ScreenErrorBoundary key={route.join('/')}>
@@ -308,7 +308,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     ['/offer/privacy', 'Политика персональных данных'],
     ['/privacy', 'Мои персональные данные']];
   return (
-    <div className={`app ${me ? "" : "guest-app"}`}>
+    <div className={`app ${me ? 'role-'+mode : 'guest-app'}`}>
       <header className="top">
         <span className="logo">Трак<b>SOS</b></span>
         <div className="row" style={{ flexWrap: 'nowrap' }}>
