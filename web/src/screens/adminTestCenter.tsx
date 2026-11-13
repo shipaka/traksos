@@ -34,7 +34,7 @@ export function AdminTestCenter() {
   const [notice,setNotice] = useState<Notice>(null);
   const data = tickets[role] ?? demoInitial(role);
   const current = labelFor(role);
-  const announce = (kind:Notice['kind'],message:string) => setNotice({kind,message});
+  const announce = (kind:'ok'|'bad',message:string) => setNotice({kind,message});
   const choose = (id:DemoRole) => {
     setRole(id);setTab('overview');setNotice(null);setText('');
     setDisplayName('Тестовый пользователь');
