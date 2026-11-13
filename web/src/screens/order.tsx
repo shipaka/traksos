@@ -7,6 +7,7 @@ import { useLoad, useAction, useMe, Loading, Back, RubInput, Field, useToast, Ve
 import { onEvent } from '../api.ts';
 import { Search, OfferForm } from './search.tsx';
 import { RoadsideMap } from './roadsideMap.tsx';
+import { LocationSharing } from './performer.tsx';
 import { RefundForm, payStatus } from './adminUser.tsx';
 
 export function Order({ id }: { id: string }) {
@@ -42,6 +43,12 @@ export function Order({ id }: { id: string }) {
         <span className={`pill ${STATUS[d.status]?.tone}`}>{isConsult && d.status === 'accepted' ? 'На связи' : isConsult && d.status === 'awaiting_confirmation' ? 'Ждём «Вопрос решён»' : STATUS[d.status]?.name}</span>
       </div>
 
+      {isPerformer && ['accepted','en_route','arrived','working'].includes(d.status)
+        && !location.hash.startsWith('#/admin/test-center') &&
+        <section className="roadside-location-share" aria-label="Передача GPS при выезде">
+          <b>GPS во время выезда</b>
+          <LocationSharing />
+        </section>}
       {(isPerformer || d.you === 'candidate') && <PerformerTabs tab={ptab} setTab={setPtab} />}
       {(isPerformer || d.you === 'candidate') && ptab === 'client' ? <ClientTab id={id} canEdit={isPerformer} /> : <>
       {d.status === 'awaiting_owner' && <OwnerApproval d={d} onDone={o.reload} />}
