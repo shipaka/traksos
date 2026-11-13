@@ -287,7 +287,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
             <button className="btn" type="button" onClick={() => {
               setStep('phone'); setRole('insurer'); setIntent('join'); setInsurerOnly(false);
             }}>Перейти к регистрации страхового агента</button>
-          </div>
+          </div>}
           {needAgree && <label className="row note" style={{ flexWrap: 'nowrap', alignItems: 'flex-start' }}>
             <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} style={{ marginTop: 3 }} />
             <span>Согласен с {intent === 'join' ? <a href="#/offer/performer" target="_blank" rel="noreferrer">агентским договором</a> : <a href="#/offer/client" target="_blank" rel="noreferrer">офертой</a>} и на <a href="#/offer/privacy" target="_blank" rel="noreferrer">обработку персональных данных</a></span>
