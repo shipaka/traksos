@@ -62,6 +62,19 @@ export function Fleet() {
       <section className="internal-role-hero internal-role-hero-fleet"><span>TRACKSOS · УПРАВЛЕНИЕ ПЕРЕВОЗКАМИ</span><h1>Мой автопарк</h1>
       <p>Машины, водители, допуски, расходы и заявки по каждому грузовику — под вашим контролем.</p></section>
 
+      <section className="fleet-live-insights" aria-label="Текущие показатели автопарка">
+        <div><span>Машин</span><strong>{d.cars.length}</strong><small>в вашем гараже</small></div>
+        <div><span>С водителями</span><strong>{d.cars.filter((c:any)=>!!c.driver).length}</strong><small>назначено</small></div>
+        <div><span>Ждут решения</span><strong>{d.pending.length}</strong><small>заявки водителей</small></div>
+        <div className="fleet-share" aria-label="Доля машин с назначенными водителями">
+          <b>Закрепление транспорта за водителями</b>
+          <div role="progressbar" aria-valuemin={0} aria-valuemax={100}
+            aria-valuenow={d.cars.length?Math.round(d.cars.filter((c:any)=>!!c.driver).length/d.cars.length*100):0}>
+            <i style={{width:(d.cars.length?Math.round(d.cars.filter((c:any)=>!!c.driver).length/d.cars.length*100):0)+'%'}} />
+          </div>
+          <small>Данные вашего реального автопарка</small>
+        </div>
+      </section>
       {d.pending.map((o: any) => (
         <div key={o.id} className="card hi">
           <span className="label">Ждёт вашего подтверждения</span>
