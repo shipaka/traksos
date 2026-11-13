@@ -26,6 +26,7 @@ import { OpsService } from './services/ops.ts';
 import { OnsiteService } from './services/onsite.ts';
 import { ServiceCenters } from './services/service.ts';
 import { FleetService } from './services/fleet.ts';
+import { VehicleServiceRequests } from './services/vehicleServiceRequests.ts';
 import { PrivacyService } from './services/privacy.ts';
 import { StandingService } from './services/standing.ts';
 import { ShopService } from './services/shop.ts';
@@ -78,6 +79,7 @@ export function createApp(d: Deps) {
   orders.referral = referral;
   centers.referral = referral;
   const fleet = new FleetService(d.db, notifier, orders);
+  const vehicleRequests = new VehicleServiceRequests(d.db);
   const privacy = new PrivacyService(d.db, notifier, now);
   const standing = new StandingService(d.db, now, settings);
   const shop = new ShopService(d.db, notifier, settings);
@@ -405,6 +407,80 @@ export function createApp(d: Deps) {
   r.delete('/api/me/delete', true, (c: AuthedCtx) => privacy.cancelDelete(c.user));
 
   // Мой парк --------------------------------------------------------------------
+  // Страхование и ТО (восстановлено из согласованной рабочей ветки) ----------
+  const vehicleRequestKind = z.enum(['insurance', 'inspection']);
+  const vehicleRequestStatus = z.enum(['in_review', 'need_documents', 'sent_to_partner', 'completed', 'rejected', 'cancelled']);
+  r.get('/api/vehicles/:id/service-history', true, (c: AuthedCtx) => vehicleRequests.history(c.user, c.params.id));
+  r.patch('/api/vehicle-service-requests/:id/renewal', true, async (c: AuthedCtx) => {
+    const b = parse(z.object({ expiresOn: z.string().regex(/^\\d{4}-\\d{2}-\\d{2}$/) }), c.body);
+    const updated = await vehicleRequests.renewPolicy(c.user, c.params.id, b.expiresOn);
+    notifier.live(await vehicleRequests.recipients(updated), { type: 'vehicle_service', vehicleId: updated?.vehicle_id, requestId: updated?.id });
+    return updated;
+  });
+  r.get('/api/vehicle-service-requests', true, (c: AuthedCtx) => vehicleRequests.mine(c.user));
+  r.post('/api/vehicle-service-requests', true, async (c: AuthedCtx) => {
+    const b = parse(z.object({ vehicleId: z.string().uuid(), kind: vehicleRequestKind, comment: z.string().max(2000).optional() }), c.body);
+    const created = await vehicleRequests.create(c.user, b.vehicleId, b.kind, b.comment);
+    notifier.live(await vehicleRequests.recipients(created!), { type: 'vehicle_service', vehicleId: b.vehicleId, requestId: created?.id });
+    return created;
+  });
+  r.post('/api/vehicle-service-requests/:id/cancel', true, async (c: AuthedCtx) => {
+    const updated = await vehicleRequests.cancel(c.user, c.params.id);
+    notifier.live(await vehicleRequests.recipients(updated), { type: 'vehicle_service', vehicleId: updated?.vehicle_id, requestId: updated?.id });
+    return updated;
+  });
+  r.get('/api/admin/insurers', staff, (c: AuthedCtx) => vehicleRequests.insurers(c.user));
+  r.post('/api/admin/vehicle-service-requests/:id/assign-insurer', staff, async (c: AuthedCtx) => {
+    const b = parse(z.object({ insurerId: z.string().uuid() }), c.body);
+    const request = await vehicleRequests.assignInsurer(c.user, c.params.id, b.insurerId);
+    notifier.live([b.insurerId], { type: 'vehicle_service', requestId: request.id, vehicleId: request.vehicle_id });
+    return request;
+  });
+  r.get('/api/insurer/requests', ['insurer'], (c: AuthedCtx) => vehicleRequests.insurerQueue(c.user));
+  r.patch('/api/insurer/requests/:id', ['insurer'], async (c: AuthedCtx) => {
+    const b = parse(z.object({ status: z.enum(['completed', 'rejected']), note: z.string().max(2000).optional(),
+      policyExpiresOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }), c.body);
+    const updated = await vehicleRequests.setStatus(c.user, c.params.id, b.status, b.note, b.policyExpiresOn);
+    const recipients = await vehicleRequests.recipients(updated);
+    await notifier.notify(recipients, { type: 'vehicle_service', requestId: updated.id, vehicleId: updated.vehicle_id, status: updated.status },
+      { kind: 'normal', title: b.status === 'completed' ? 'Страхование оформлено' : 'Страхование отклонено',
+        body: updated.staff_note || (b.status === 'completed' ? 'Проверьте срок полиса в гараже' : 'Посмотрите комментарий в истории машины'),
+        data: { vehicleId: String(updated.vehicle_id), requestId: String(updated.id) } });
+    return updated;
+  });
+  r.get('/api/admin/vehicle-service-requests', staff, (c: AuthedCtx) => vehicleRequests.queue(c.user));
+  r.patch('/api/admin/vehicle-service-requests/:id', staff, async (c: AuthedCtx) => {
+    const b = parse(z.object({ status: vehicleRequestStatus, note: z.string().max(2000).optional(), policyExpiresOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }), c.body);
+    const updated = await vehicleRequests.setStatus(c.user, c.params.id, b.status, b.note, b.policyExpiresOn);
+    const recipients = await vehicleRequests.recipients(updated);
+    const event = { type: 'vehicle_service', vehicleId: updated?.vehicle_id, requestId: updated?.id, status: updated?.status };
+    const important: Record<string, { title: string; body: string }> = {
+      need_documents: { title: 'Нужны документы по заявке', body: updated?.staff_note || 'Откройте историю автомобиля и проверьте комментарий специалиста.' },
+      completed: { title: 'Услуга выполнена', body: updated?.kind === 'insurance' ? 'Страхование завершено. Проверьте срок полиса в гараже.' : 'Техосмотр завершён. Подробности доступны в гараже.' },
+      rejected: { title: 'Заявка отклонена', body: updated?.staff_note || 'Причину можно посмотреть в истории автомобиля.' },
+    };
+    if (important[b.status]) {
+      await notifier.notify(recipients, event, {
+        kind: 'normal', ...important[b.status],
+        data: { vehicleId: String(updated.vehicle_id), requestId: String(updated.id), status: b.status },
+      }).catch((error) => console.warn('[vehicle service notification]', error));
+    } else {
+      notifier.live(recipients, event);
+    }
+    return updated;
+  });
+  r.get('/api/insurance-reminders/settings', true, async (c: AuthedCtx) => {
+    const ownerId = c.user.owner_id ?? c.user.id;
+    const row = await d.db.one<{ insurance_reminders_enabled: boolean }>(
+      'select insurance_reminders_enabled from users where id=$1', [ownerId]);
+    return { enabled: row?.insurance_reminders_enabled ?? true };
+  });
+  r.put('/api/insurance-reminders/settings', true, async (c: AuthedCtx) => {
+    if (c.user.owner_id) throw forbidden('Настройками напоминаний управляет владелец');
+    const { enabled } = parse(z.object({ enabled: z.boolean() }), c.body);
+    await d.db.query('update users set insurance_reminders_enabled=$2 where id=$1', [c.user.id, enabled]);
+    return { enabled };
+  });
   r.get('/api/fleet', true, (c: AuthedCtx) => fleet.get(c.user));
   r.put('/api/fleet', true, (c: AuthedCtx) => fleet.set(c.user, parse(z.object({
     mode: z.enum(['limit', 'approve']).optional(),
