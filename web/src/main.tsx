@@ -222,8 +222,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     : mode === 'insurer'
       ? [['/insurance', 'Кабинет страхового партнёра'], ['/profile', 'Аккаунт']]
     : mode === 'admin'
-      ? [['/admin', 'Административная сводка'],
-         ['/admin/section/queue', 'Очередь модерации'],
+      ? [['/admin/section/queue', 'Модерация — очередь'],
+         ['/admin', 'Административная сводка'],
          ['/admin/section/orders', 'Все заявки'],
          ['/admin/section/search', 'Поиск людей и заявок'],
          ['/admin/section/people', 'Пользователи'],
@@ -269,6 +269,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               {me && me.roles.includes('admin') && me.roles.some(r => r === 'master' || r === 'tow') && <>
                 <span className="account-menu-heading">Переключить кабинет</span>
                 <a href="#/as/admin" aria-current={mode === 'admin' ? 'page' : undefined}>Администратор</a>
+                <a href="#/admin/section/queue">Модерация — очередь</a>
                 <a href="#/as/performer" aria-current={mode === 'performer' ? 'page' : undefined}>Выездной мастер</a>
               </>}
               <span className="account-menu-heading">Мой кабинет</span>
