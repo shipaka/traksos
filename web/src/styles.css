@@ -1463,3 +1463,237 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
  .base-workspace>.rows>.list-item{transition:none;}
  .base-workspace>.rows>.list-item:hover{transform:none;}
 }
+
+/* VISUAL FINISH / all REAL signed-in cabinets. Retains approved navy, cyan and
+   magenta. Backgrounds are CSS gradients, no slow remote images or fake live data. */
+.app.role-client{--role-light:#5ee5ee;--role-glow:rgba(38,207,240,.14);}
+.app.role-performer{--role-light:#65ecf2;--role-glow:rgba(38,208,242,.16);}
+.app.role-service{--role-light:#6fe0f2;--role-glow:rgba(31,210,243,.12);}
+.app.role-insurer{--role-light:#e86ca8;--role-glow:rgba(229,52,137,.16);}
+.app.role-moderator{--role-light:#b4a1ff;--role-glow:rgba(152,94,242,.17);}
+.app.role-admin{--role-light:#64e4f6;--role-glow:rgba(25,202,235,.15);}
+.app[class*="role-"]{--internal-border:#345d79;}
+.app[class*="role-"] .top{background:linear-gradient(118deg,#091c30,#0c2942 70%,#151f3e);
+  border-bottom:1px solid #315873;box-shadow:0 6px 20px rgba(0,7,20,.14);}
+.app[class*="role-"] .desktop-sidebar{background:radial-gradient(ellipse at 20% 0,var(--role-glow),transparent 58%),
+  linear-gradient(180deg,#0c263e,#0b1a30 92%);border-right:1px solid #2d506a;}
+.app[class*="role-"] .desktop-sidebar-title{color:#a8d0e4;}
+.app[class*="role-"] .desktop-nav-link{border:1px solid transparent;border-radius:12px;
+  transition:background .19s,border-color .19s,transform .19s;}
+.app[class*="role-"] .desktop-nav-link:hover{background:rgba(79,183,213,.09);
+  border-color:rgba(109,199,230,.27);transform:translateX(2px);}
+.app[class*="role-"] .desktop-nav-link.active{border-color:rgba(107,215,243,.48);
+  background:linear-gradient(105deg,#164661,#243451);box-shadow:inset 3px 0 var(--role-light);}
+.app[class*="role-"] .desktop-content{background:
+  radial-gradient(ellipse at 48% 0,var(--role-glow),transparent 45%),
+  linear-gradient(170deg,rgba(4,17,33,.06),transparent 35%);}
+.app[class*="role-"] :is(.client-home,.performer-workspace,.fleet-workspace,.moderator-workspace,
+ .insurer-workspace,.base-workspace,.admin-workspace)>.card{border-color:var(--internal-border);
+  background:linear-gradient(145deg,rgba(20,51,75,.96),rgba(12,34,55,.98));
+  box-shadow:0 10px 24px rgba(0,10,24,.16);}
+.app[class*="role-"] :is(.client-home,.performer-workspace,.fleet-workspace,.moderator-workspace,
+ .insurer-workspace,.base-workspace,.admin-workspace)>.grid2>.card{
+  border-color:var(--internal-border);box-shadow:0 8px 20px rgba(0,8,25,.14);}
+.app[class*="role-"] :is(.linkrow,.desktop-quick-card):hover{border-color:#58cbe3;
+  background:linear-gradient(130deg,#163d59,#0b2942);}
+.app[class*="role-"] :is(a,button,.card):focus-visible{outline:2px solid #76ecf7;outline-offset:3px;}
+.app[class*="role-"] .btn:not(.ghost){transition:filter .18s,transform .18s,box-shadow .18s;}
+.app[class*="role-"] .btn:not(.ghost):not(:disabled):hover{
+  filter:brightness(1.07);transform:translateY(-1px);box-shadow:0 6px 19px rgba(30,203,236,.23);}
+.app[class*="role-"] .tabbar{border-color:#396987;background:rgba(8,29,49,.96);
+  box-shadow:0 8px 28px rgba(0,8,18,.38);}
+
+/* Role-specific hero areas use actual working routes and data, never separate fake screens. */
+.internal-role-hero{position:relative;isolation:isolate;display:flex;flex-direction:column;gap:11px;
+  min-width:0;min-height:210px;overflow:hidden;padding:clamp(23px,4vw,44px);
+  border:1px solid #366b88;border-radius:24px;color:#f9fcff;
+  background:radial-gradient(ellipse at 86% 17%,rgba(48,223,243,.18),transparent 42%),
+    radial-gradient(ellipse at 16% 95%,rgba(245,51,145,.19),transparent 51%),
+    linear-gradient(125deg,#081d34,#103b58 75%,#0b1d39);
+  box-shadow:0 19px 37px rgba(0,8,22,.22);}
+.internal-role-hero::after{position:absolute;top:50%;right:5%;transform:translateY(-50%);
+  pointer-events:none;font-size:clamp(95px,12vw,165px);line-height:1;color:#74e9fa;opacity:.13;}
+.internal-role-hero-performer::after{content:'⚡';}
+.internal-role-hero-fleet::after{content:'▣';}
+.internal-role-hero-moderator::after{content:'⚑';color:#c5a8ff;}
+.internal-role-hero>span{font-size:11px;color:#67e4f4;font-weight:900;letter-spacing:.14em;position:relative;z-index:1;}
+.internal-role-hero h1{font-size:clamp(24px,3vw,40px);letter-spacing:-.04em;color:#fff;
+  position:relative;z-index:1;max-width:650px;margin:0;}
+.internal-role-hero p{position:relative;z-index:1;max-width:620px;color:#d0e1ee;
+  line-height:1.6;font-size:13px;margin:0 0 9px;}
+.internal-role-hero .btn{position:relative;z-index:1;align-self:flex-start;}
+.performer-workspace,.fleet-workspace,.moderator-workspace{width:100%;max-width:1370px;
+  margin:0 auto;min-width:0;padding-top:12px;}
+.performer-workspace>.stack{display:grid;grid-template-columns:repeat(auto-fit,minmax(265px,1fr));
+  gap:12px;align-items:stretch;}
+.performer-workspace>.stack .linkrow{min-height:92px;align-items:flex-start;padding:18px;
+  background:linear-gradient(145deg,#133650,#10263e);border:1px solid #345c7c;
+  box-shadow:0 7px 19px rgba(0,8,20,.13);transition:transform .18s,border-color .18s;}
+.performer-workspace>.stack .linkrow:hover{transform:translateY(-2px);border-color:#55d5ee;}
+.moderator-workspace>.scroll-x{padding:8px 0 12px;}
+.fleet-workspace>.stack>.card{background:linear-gradient(150deg,#143951,#102b45);border-color:#356683;}
+@media(max-width:920px){
+  .app.role-client .client-home .mobile-home-heading{border:1px solid #356685;border-radius:21px;
+    padding:20px 18px;background:radial-gradient(circle at 90% 18%,rgba(50,223,246,.14),transparent 42%),
+    radial-gradient(circle at 25% 100%,rgba(252,51,144,.13),transparent 55%),
+    linear-gradient(150deg,#102f4b,#0b2137);box-shadow:0 8px 22px #0004;}
+  .app.role-client .client-home .mobile-home-heading h1{color:#fff;}
+}
+
+/* The REAL insurer dashboard and the same reusable components inside admin preview. */
+.insurer-workspace{width:100%;max-width:1390px;margin:0 auto;min-width:0;padding:12px 0 42px;}
+.insurer-workspace-hero{position:relative;overflow:hidden;isolation:isolate;
+  padding:clamp(24px,4vw,48px);min-height:260px;border:1px solid #4e6c92;border-radius:25px;
+  background:radial-gradient(ellipse at 87% 22%,rgba(99,217,246,.16),transparent 38%),
+    radial-gradient(ellipse at 35% 90%,rgba(235,53,141,.22),transparent 54%),
+    linear-gradient(120deg,#0b223a,#172d53 72%,#221e40);
+  box-shadow:0 19px 44px rgba(0,8,23,.27);}
+.insurer-workspace-hero-art{position:absolute;top:50%;right:8%;transform:translateY(-50%);
+  font-size:clamp(110px,17vw,220px);line-height:1;color:#9ae7fc;opacity:.14;pointer-events:none;}
+.insurer-workspace-hero h1{position:relative;z-index:1;font-size:clamp(27px,3.7vw,43px);
+  letter-spacing:-.04em;color:#fff;margin:13px 0 12px;}
+.insurer-workspace-hero p{position:relative;z-index:1;color:#c7deef;font-size:14px;
+  line-height:1.55;max-width:710px;margin:0 0 23px;}
+.insurer-workspace-hero .row{position:relative;z-index:1;flex-wrap:wrap;}
+.insurer-workspace-hero .btn{min-height:43px;}
+.insurer-overview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;}
+.insurer-stat{display:flex;flex-direction:column;gap:7px;min-width:0;padding:20px 19px;
+  border:1px solid #3c6482;border-radius:18px;
+  background:linear-gradient(140deg,#153b59,#122943);
+  box-shadow:0 9px 23px rgba(0,8,21,.16);}
+.insurer-stat span{font-size:12px;color:#accee5;font-weight:750;}
+.insurer-stat strong{font-size:clamp(28px,3.7vw,44px);color:#f5fcff;
+  line-height:1;font-variant-numeric:tabular-nums;}
+.insurer-stat small{color:#67e0f1;font-size:11px;}
+.insurer-workspace>.card{background:linear-gradient(145deg,#112f4a,#0b253c);
+  border-color:#426b88;padding:22px;}
+.insurer-workspace>.card .between{flex-wrap:wrap;}
+.insurer-toolbar{display:flex;align-items:end;justify-content:space-between;gap:15px;flex-wrap:wrap;}
+.insurer-toolbar .stack{min-width:min(100%,235px);}
+.insurer-case-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;}
+.insurer-case-card{display:flex;flex-direction:column;gap:10px;min-width:0;padding:23px;
+  border-radius:20px;border:1px solid #416e8c;
+  background:radial-gradient(circle at 92% 8%,rgba(76,191,232,.13),transparent 42%),
+    linear-gradient(140deg,#143752,#102841);
+  box-shadow:0 10px 23px #0003;transition:transform .18s,border-color .18s,box-shadow .18s;}
+.insurer-case-card:hover{transform:translateY(-2px);border-color:#69def4;box-shadow:0 16px 29px #0005;}
+.insurer-case-card h3{font-size:clamp(19px,2vw,25px);margin:0;color:#fff;}
+.insurer-case-card p{font-size:12px;color:#bbd1e2;margin:0;line-height:1.5;overflow-wrap:anywhere;}
+.insurer-case-card .btn{margin-top:auto;}
+.insurer-case-no{font-size:10px;font-weight:850;color:#e888b9;letter-spacing:.07em;}
+.insurer-case-meta{display:flex;flex-direction:column;gap:4px;margin:3px 0;padding:12px;
+  background:#0a2941;border:1px solid #2e5c79;border-radius:12px;font-size:11px;color:#c0d9e8;}
+.insurer-case-meta b{font-size:12px;color:#6ee9f6;}
+.insurance-preview-admin{border-bottom:2px solid #ec4a9e;}
+.insurance-preview-admin .insurance-preview-active{border-color:#77eaff;background:#164f76;
+  box-shadow:inset 0 2px rgba(96,228,250,.28);}
+.insurance-preview-admin .service-preview-admin-actions a:first-child:not(.insurance-preview-active){
+  background:rgba(21,68,92,.8);}
+.insurance-client-hero{background:radial-gradient(ellipse at 87% 25%,rgba(63,236,242,.2),transparent 47%),
+  radial-gradient(circle at 12% 90%,rgba(234,44,135,.15),transparent 44%),
+  linear-gradient(115deg,#0c2540,#123c5b);}
+/* Clear customer-facing final price: agent's price + TrackSOS fee, never silently bundled. */
+.insurance-price-details{display:flex;flex-direction:column;gap:9px;padding:13px;border-radius:13px;
+  background:#0b2940;border:1px solid #386a83;}
+.insurance-price-details span{display:flex;justify-content:space-between;align-items:start;
+  gap:12px;font-size:11px;color:#b8d4e4;line-height:1.4;}
+.insurance-price-details span b{white-space:nowrap;color:#f4fcff;font-size:12px;font-variant-numeric:tabular-nums;}
+.insurance-price-details span:last-child{border-top:1px solid #3d6279;padding-top:8px;
+  font-size:13px;color:#6feafa;font-weight:800;}
+.insurance-price-details span:last-child b{font-size:17px;color:#77eff9;}
+.insurance-demo-payment{border-color:#43bad0!important;
+  background:linear-gradient(140deg,#144460,#122d53)!important;}
+.insurance-demo-payment h3{margin:0;color:#fff;}
+.insurance-demo-payment p{font-size:13px;color:#cbe2f2;line-height:1.6;}
+.insurance-offer{position:relative;}
+.insurance-offer:has(button[aria-pressed=true]){border-color:#ec4d9f;box-shadow:0 0 0 1px #fa40964a,0 11px 27px #0004;}
+/* Do not overload mobile: one-column content, visual richness without horizontal scrolling. */
+@media(max-width:900px){
+  .insurer-overview{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .insurer-case-grid{grid-template-columns:1fr;}
+  .internal-role-hero{padding:22px 18px;min-height:190px;}
+  .internal-role-hero::after{opacity:.07;}
+  .performer-workspace>.stack{grid-template-columns:1fr;}
+}
+@media(max-width:520px){
+  .insurer-workspace-hero{padding:23px 17px;border-radius:20px;min-height:242px;}
+  .insurer-workspace-hero .btn{width:100%;}
+  .insurer-workspace-hero-art{opacity:.08;right:0;}
+  .insurer-overview{gap:8px;}
+  .insurer-stat{padding:14px 11px;border-radius:14px;}
+  .insurer-stat strong{font-size:28px;}
+  .insurer-workspace>.card{padding:14px;}
+  .insurer-case-card{padding:16px;}
+  .insurance-price-details span{flex-wrap:wrap;gap:4px;}
+}
+@media(prefers-reduced-motion:reduce){
+  .app[class*="role-"] :is(.desktop-nav-link,.btn),.insurer-case-card,
+  .performer-workspace>.stack .linkrow{transition:none!important;}
+  .app[class*="role-"] :is(.desktop-nav-link,.btn):hover,.insurer-case-card:hover,
+  .performer-workspace>.stack .linkrow:hover{transform:none!important;}
+}
+
+/* Existing insurer queue — same approved visual polish without changing its real workflows. */
+.app.role-insurer .cabinet-page{width:100%;max-width:1360px;margin:0 auto;min-width:0;padding:12px 0 40px;}
+.app.role-insurer .cabinet-heading{position:relative;overflow:hidden;min-height:190px;display:flex;
+  flex-direction:column;justify-content:center;gap:12px;padding:clamp(23px,4vw,44px);border-radius:22px;
+  border:1px solid #456b8a;background:radial-gradient(ellipse at 83% 24%,#38d5ed2e,transparent 46%),
+  radial-gradient(ellipse at 22% 100%,#eb2c8333,transparent 56%),linear-gradient(120deg,#0d2b49,#172b4a);
+  box-shadow:0 18px 42px #0004;}
+.app.role-insurer .cabinet-heading:after{content:'◇';position:absolute;right:6%;top:15%;
+  font-size:125px;color:#83ddf4;opacity:.13;pointer-events:none;line-height:1;}
+.app.role-insurer .cabinet-heading>.label{color:#7de7f3;font-size:11px;position:relative;z-index:1;}
+.app.role-insurer .cabinet-heading h1{font-size:clamp(25px,3.6vw,39px);letter-spacing:-.04em;color:#fff;position:relative;z-index:1;}
+.app.role-insurer .cabinet-metrics{gap:13px;}
+.app.role-insurer .cabinet-metrics .card{min-height:117px;background:linear-gradient(135deg,#163951,#102c46);
+  border:1px solid #426781;border-radius:18px;box-shadow:0 9px 23px #0003;}
+.app.role-insurer .cabinet-metrics .tile-value{font-size:clamp(24px,3.4vw,36px);color:#f4fbff;}
+.app.role-insurer .web-case-toolbar{padding:13px;border:1px solid #315d7d;border-radius:16px;
+  background:linear-gradient(135deg,#122d45,#0e263c);}
+.app.role-insurer .web-insurance-grid>details{border-radius:18px;padding:20px;border:1px solid #3b6784;
+  background:radial-gradient(ellipse at 100% 0,#30cfe021,transparent 45%),linear-gradient(145deg,#153851,#0f2941);
+  box-shadow:0 11px 26px #0004;}
+.app.role-insurer .web-insurance-grid>details summary{cursor:pointer;min-height:44px;color:#fff;}
+.app.role-insurer .web-insurance-grid>details[open]{border-color:#65dced;}
+@media(max-width:700px){.app.role-insurer .cabinet-heading{padding:23px 16px;min-height:170px;}
+ .app.role-insurer .web-insurance-grid>details{padding:14px;}}
+
+/* Real numbers from existing cabinet state, never synthetic dashboard metrics. */
+.fleet-live-insights,.performer-live-insights{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;min-width:0;}
+.fleet-live-insights>div,.performer-live-insights>div{min-width:0;padding:19px;border:1px solid #396b88;
+  border-radius:17px;display:flex;flex-direction:column;gap:7px;
+  background:radial-gradient(ellipse at 95% 5%,#49bfe61f,transparent 50%),linear-gradient(135deg,#163751,#10263f);
+  box-shadow:0 9px 22px #0003;}
+.fleet-live-insights span,.performer-live-insights span{font-size:12px;font-weight:800;color:#bcd9e9;}
+.fleet-live-insights strong,.performer-live-insights strong{font-size:clamp(26px,3.2vw,41px);
+  font-variant-numeric:tabular-nums;line-height:1;color:#fff;}
+.fleet-live-insights small,.performer-live-insights small{font-size:11px;color:#75e4f3;}
+.fleet-live-insights .fleet-share{grid-column:1/-1;gap:12px;padding:17px 21px;}
+.fleet-share b{font-size:13px;color:#e8f8ff;}
+.fleet-share div[role=progressbar]{height:11px;overflow:hidden;border-radius:100px;
+  background:#0c253b;border:1px solid #345c78;}
+.fleet-share div[role=progressbar] i{display:block;height:100%;border-radius:100px;
+  background:linear-gradient(90deg,#39d9ec,#fa398d);transition:width .4s ease;}
+.performer-live-insights .performer-verify{font-size:32px;color:#6eebf2;}
+.moderator-action-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;}
+.moderator-action{display:flex;flex-direction:column;align-items:flex-start;gap:9px;min-width:0;
+  min-height:135px;padding:18px;border-radius:18px;border:1px solid #43637d;
+  background:radial-gradient(ellipse at 100% 0,#ae67e71f,transparent 55%),linear-gradient(145deg,#172d4d,#0e2943);
+  color:#e8f8ff;text-align:left;transition:transform .18s,border-color .18s,box-shadow .18s;}
+.moderator-action>span{font-size:27px;color:#bc9bff;}
+.moderator-action b{font-size:13px;overflow-wrap:anywhere;}
+.moderator-action small{font-size:11px;color:#a6c8dd;margin-top:auto;}
+.moderator-action.active,.moderator-action:hover{border-color:#c2a0f6;
+  box-shadow:0 10px 24px #0004;transform:translateY(-2px);}
+@media(max-width:800px){
+ .moderator-action-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+ .fleet-live-insights,.performer-live-insights{gap:8px;}
+ .fleet-live-insights>div,.performer-live-insights>div{padding:13px 10px;}
+ .fleet-live-insights strong,.performer-live-insights strong{font-size:28px;}
+}
+@media(max-width:450px){.moderator-action{padding:13px;min-height:110px;}
+ .fleet-live-insights span,.performer-live-insights span{font-size:10px;}
+}
+@media(prefers-reduced-motion:reduce){.moderator-action,.fleet-share div[role=progressbar] i{transition:none!important;}
+ .moderator-action:hover{transform:none!important;}}

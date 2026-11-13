@@ -52,8 +52,15 @@ export function PerformerHub() {
     ['profile', 'Аккаунт', 'личные данные, защита входа и выход'],
   ];
   return (
-    <main>
-      <div><h1>Профиль</h1><div className="sub">Всё по разделам — откройте нужный.</div></div>
+    <main className="performer-workspace stack">
+      <section className="internal-role-hero internal-role-hero-performer"><span>TRACKSOS · ВЫЕЗДНОЙ СПЕЦИАЛИСТ</span><h1>Профиль</h1><p>Всё по разделам — откройте нужный.</p><a className="btn" href="#/work">← На линию и к заявкам</a></section>
+      <section className="performer-live-insights" aria-label="Обзор профиля исполнителя">
+        <div><span>Моя техника</span><strong>{cars.length}</strong><small>{p.kind==='tow'?'эвакуаторов':'автомобилей'}</small></div>
+        <div><span>Проверка</span><strong className="performer-verify">{p.verification==='approved'?'✓':p.verification==='rejected'?'!':'…'}</strong>
+          <small>{p.verification==='approved'?'пройдена':p.verification==='rejected'?'требует исправления':'в процессе'}</small></div>
+        <div><span>График</span><strong className="performer-verify">{p.schedule?.on?'●':'○'}</strong>
+          <small>{p.schedule?.on?'установлен':'не задан'}</small></div>
+      </section>
       <div className="stack">
         {rows.map(([to, t, sub]) => (
           <button key={to} className="linkrow" onClick={() => go(to)}><span><b>{t}</b><small>{sub}</small></span><span aria-hidden="true">›</span></button>
