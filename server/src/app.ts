@@ -524,7 +524,7 @@ export function createApp(d: Deps) {
   }).strict();
   r.post('/api/vehicle-service-requests', true, async (c: AuthedCtx) => {
     const b = parse(z.object({
-      vehicleId: z.string().uuid(), kind: vehicleRequestKind, comment: z.string().max(2000).optional(),
+      vehicleId: z.string().uuid().optional(), kind: vehicleRequestKind, comment: z.string().max(2000).optional(),
       insurance: z.object({
         agentId:z.string().uuid(),
         consentToPartner:z.literal(true),
@@ -538,7 +538,7 @@ export function createApp(d: Deps) {
     const created = await vehicleRequests.create(c.user,b.vehicleId,b.kind,b.comment,b.insurance ? {...b.insurance,details:{...b.insurance.details,consentAt:new Date().toISOString()}} : undefined);
     const recipients = await vehicleRequests.recipients(created!);
     if(b.insurance) recipients.push(b.insurance.agentId);
-    notifier.live(recipients,{type:'vehicle_service',vehicleId:b.vehicleId,requestId:created?.id});
+    notifier.live(recipients,{type:'vehicle_service',vehicleId:created?.vehicle_id,requestId:created?.id});
     return created;
   });
   // Quotation and PDF workflow: real insured customer vs designated agent, never automatic insurer API calls.
