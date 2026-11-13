@@ -51,3 +51,12 @@ test('rejection requires reason and terminal state cannot be changed',async()=>{
   const done=fixture('inspection','partner','completed');
   await assert.rejects(new VehicleServiceRequests(done.db).updateInspection(partner,'request','completed'));
 });
+
+test('inspection-only operator can access assigned inspection queue and decision',async()=>{
+  const operator={id:'partner',roles:['inspection_operator']} as any;
+  const {db,calls}=fixture();
+  await new VehicleServiceRequests(db).inspectionQueue(operator);
+  assert.ok(calls.some(c=>c.sql.includes("kind='inspection'")));
+  const result=await new VehicleServiceRequests(db).updateInspection(operator,'request','completed');
+  assert.equal(result.status,'completed');
+});
