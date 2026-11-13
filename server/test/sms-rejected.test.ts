@@ -73,6 +73,8 @@ test('SMS.ru response refusals are distinct from ambiguous connection failures',
   try {
     globalThis.fetch=async()=>new Response(JSON.stringify({status:'OK',sms:{'79990000557':{status:'ERROR',status_text:'Refused'}}}),{status:200});
     await assert.rejects(new SmsRu('ci-test-secret').send('+79990000557','test'),SmsRejectedError);
+    globalThis.fetch=async()=>new Response('not json',{status:200});
+    await assert.rejects(new SmsRu('ci-test-secret').send('+79990000557','test'),(e: any)=>!(e instanceof SmsRejectedError));
     globalThis.fetch=async()=>{throw new Error('connection lost');};
     await assert.rejects(new SmsRu('ci-test-secret').send('+79990000557','test'),(e: any)=>!(e instanceof SmsRejectedError));
   } finally {globalThis.fetch=previous;}
