@@ -33,7 +33,9 @@ const landing = await read('web/src/screens/login.tsx');
 const css = await read('web/src/styles.css');
 const shell = await read('web/src/main.tsx');
 const demo = await read('web/src/screens/adminTestCenter.tsx');
-expect(shell.includes("b === 'test-center' ? <AdminTestCenter roleId={route[2]} />"), 'admin-only test center is routed explicitly');
+expect(shell.includes("const serviceSandbox = isAdmin && a === 'admin' && b === 'test-center' && route[2] === 'service'") &&
+  shell.includes("b === 'test-center' ? (serviceSandbox ? <ServicePreviewPage section={route[3]} sub={route[4]} id={route[5]} /> : <AdminTestCenter roleId={route[2]} />)"),
+  'admin-only test center and genuine, isolated service role are routed explicitly');
 expect(!demo.includes("from '../api.ts'") && !demo.includes('fetch(') && !demo.includes('XMLHttpRequest'),
   'sandbox performs no real API traffic or requests');
 for(const role of ['client','owner','driver','master','tow','service','master_service','insurer','moderator','admin']) {

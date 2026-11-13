@@ -55,11 +55,25 @@ try {
       const link=page.locator('a.sandbox-role-card[href="#/admin/test-center/'+id+'"]');
       await link.click();
       await page.waitForURL('**/#/admin/test-center/'+id);
-      await page.getByRole('main',{name:'Тестовый кабинет: '+label}).waitFor();
-      await page.screenshot({path:'e2e/shots/sandbox/'+id+'-'+width+'.png',fullPage:true});
-      await page.locator('.sandbox-nav button').nth(1).click();
-      await page.getByRole('button',{name:'Создать тестовую заявку'}).waitFor();
-      await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
+      if(id==='service'){
+        await page.getByRole('heading',{name:/Рембаза/}).waitFor();
+        await page.locator('.service-preview-admin-bar').waitFor();
+        await page.getByRole('button',{name:'Готовы принять'}).first().waitFor();
+        await page.screenshot({path:'e2e/shots/sandbox/'+id+'-'+width+'.png',fullPage:true});
+        await page.getByRole('button',{name:'Готовы принять'}).first().click();
+        await page.getByRole('button',{name:'Отправить клиенту'}).first().click();
+        await page.getByRole('button',{name:/Машины у вас/}).first().click();
+        await page.locator('a[href="#/admin/test-center/service/base/car/demo-booking-1"]').click();
+        await page.getByRole('heading',{name:/Scania/}).waitFor();
+        await page.getByRole('button',{name:'Машина приехала'}).click();
+        await page.locator('.service-preview-admin-bar a[href="#/admin/test-center"]').click();
+      } else {
+        await page.getByRole('main',{name:'Тестовый кабинет: '+label}).waitFor();
+        await page.screenshot({path:'e2e/shots/sandbox/'+id+'-'+width+'.png',fullPage:true});
+        await page.locator('.sandbox-nav button').nth(1).click();
+        await page.getByRole('button',{name:'Создать тестовую заявку'}).waitFor();
+        await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
+      }
       await page.getByRole('heading',{name:'Тестирование кабинетов'}).waitFor();
     }
     if (errors.length) throw new Error('Browser error at '+width+': '+errors.join('; '));
