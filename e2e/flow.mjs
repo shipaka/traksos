@@ -161,7 +161,8 @@ await k.getByText('Что случилось?').first().waitFor();
 await assertDashboardTheme(k, 'client');
 await checkCabinetMenu(k, ['История заявок', 'Мой гараж', 'Мой автопарк', 'Оферта', 'Профиль и настройки']);
 await shot(k, '03-client-home');
-await k.getByRole('link', { name: /SOS/ }).first().click();
+// The home symptom picker leads directly to the service form; the SOS tab
+// is a separate choice-first flow and must not be mixed into this scenario.
 await k.getByRole('button', { name: /Не заводится/ }).click();
 await k.getByRole('button', { name: /Электрик или диагност на выезд/ }).click();
 await k.getByRole('button', { name: /Вызвать сейчас/ }).click(); // рано: подсветит, чего не хватает
