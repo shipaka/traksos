@@ -243,3 +243,91 @@
 @media(prefers-reduced-motion:reduce){
   .app.role-performer .desktop-content main > .card .opt[aria-pressed]{transition:none;}
 }
+
+/* The approved TrackSOS truck artwork ties inside cabinets to the public brand.
+   NO unapproved stock images, fake demand or extra downloads. */
+.app.role-admin .admin-command-hero .admin-command-art{
+  width:min(44%,460px);opacity:1;border-radius:0 22px 22px 0;
+  background:linear-gradient(90deg,#0a2945 0%,rgba(9,31,50,.22) 45%,rgba(6,22,38,.06)),
+    url('../public/tracksos-approved-scania-r520.webp') 72% center / cover no-repeat;
+  mask-image:linear-gradient(90deg,transparent,black 18%);
+}
+.app.role-admin .admin-command-hero .admin-command-art>span,
+.app.role-admin .admin-command-hero .admin-command-art i{display:none;}
+.app.role-performer .desktop-content main > .between:has(> h1 + .pill){
+  background:linear-gradient(105deg,#0a2238 1%,rgba(11,41,62,.96) 42%,rgba(9,36,53,.38)),
+    url('../public/tracksos-approved-scania-r520.webp') 78% center / cover no-repeat #0a253c;
+}
+.app.role-service .base-workspace:has(> .card.col) > div:has(> h1){
+  position:relative;isolation:isolate;overflow:hidden;
+  min-height:194px;display:flex;flex-direction:column;justify-content:center;
+  padding:24px 24px;border:1px solid #3e7891;border-radius:21px;
+  box-shadow:0 13px 35px #0003;
+  background:linear-gradient(105deg,#09233c 0%,rgba(9,34,55,.93) 48%,rgba(9,36,60,.25) 100%),
+    url('../public/tracksos-approved-scania-r520.webp') right 38% / cover no-repeat #0b2742;
+}
+.app.role-service .base-workspace:has(> .card.col) > div:has(> h1) h1{
+  max-width:460px;color:#f7fcff;font-size:clamp(23px,3vw,33px);
+  letter-spacing:-.035em;text-wrap:balance;
+}
+.app.role-service .base-workspace:has(> .card.col) > div:has(> h1) .sub{
+  max-width:440px;line-height:1.6;font-size:13px;color:#e2edf5;
+}
+.app.role-service .base-workspace:has(> .card.col) > .card.col{
+  border-color:#44708a;border-radius:18px;min-height:133px;padding:19px 20px;
+  box-shadow:0 9px 23px #0002;background:radial-gradient(ellipse at 100% 0,#4dddf21c,transparent 45%),
+    linear-gradient(135deg,#163953,#0d263f);
+}
+.app.role-service .base-workspace:has(> .card.col) > .card.col b{
+  font-size:17px;color:#f7fcff;line-height:1.35;
+}
+.app.role-service .base-workspace:has(> .card.col) > .card.col .note{
+  color:#bad4e3;line-height:1.55;font-size:12.5px;
+}
+@media(max-width:899px){
+  .app.role-client .desktop-content .client-home>.desktop-hero{
+    display:flex!important;position:relative;isolation:isolate;overflow:hidden;
+    flex-direction:column;justify-content:center;min-height:186px;
+    padding:19px;border:1px solid #3c6a87;border-radius:20px;
+    box-shadow:0 13px 31px rgba(0,8,24,.28);
+    background:linear-gradient(100deg,#071d31 0%,rgba(6,25,42,.95) 48%,rgba(5,22,40,.23)),
+      url('../public/tracksos-approved-scania-r520.webp') 66% center / cover no-repeat #09243e;
+  }
+  .app.role-client .client-home>.desktop-hero::before{display:none;}
+  .app.role-client .client-home>.desktop-hero .desktop-hero-copy{
+    display:flex;flex-direction:column;gap:7px;min-width:0;position:relative;z-index:1;
+  }
+  .app.role-client .client-home>.desktop-hero .desktop-eyebrow{
+    font-size:9px;line-height:1.3;letter-spacing:.08em;color:#99e6ef;
+  }
+  .app.role-client .client-home>.desktop-hero h1{
+    font-size:clamp(19px,5.5vw,27px)!important;line-height:1.18;
+    max-width:235px;letter-spacing:-.045em;margin:0;color:#fff;
+  }
+  .app.role-client .client-home>.desktop-hero h1 span{color:#79e6f4;}
+  .app.role-client .client-home>.desktop-hero p,
+  .app.role-client .client-home>.desktop-hero .launch-region{display:none;}
+  .app.role-client .client-home>.desktop-hero .desktop-hero-buttons{
+    display:flex;flex-wrap:wrap;gap:7px;margin-top:9px;
+  }
+  .app.role-client .client-home>.desktop-hero :is(.desktop-primary-action,.desktop-outline-action){
+    display:inline-flex;align-items:center;justify-content:center;min-height:39px;
+    padding:7px 10px;border-radius:10px;text-decoration:none;
+    font-size:11px;font-weight:850;line-height:1.25;text-align:center;
+    border:1px solid #8cc9df;
+  }
+  .app.role-client .client-home>.desktop-hero .desktop-primary-action{
+    background:linear-gradient(110deg,#f62b8a,#c80c65);color:#fff;border-color:#f6549d;
+  }
+  .app.role-client .client-home>.desktop-hero .desktop-outline-action{
+    background:rgba(7,29,47,.78);color:#fff;
+  }
+  .app.role-admin .admin-command-hero .admin-command-art{opacity:.35;width:70%;}
+  .app.role-service .base-workspace:has(> .card.col) > div:has(> h1){
+    min-height:178px;padding:21px 18px;background-position:center, 64% center;
+  }
+}
+@media(max-width:350px){
+  .app.role-client .client-home>.desktop-hero{min-height:175px;padding:16px 13px;}
+  .app.role-client .client-home>.desktop-hero h1{max-width:195px;}
+}
