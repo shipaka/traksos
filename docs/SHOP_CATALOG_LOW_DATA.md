@@ -30,6 +30,7 @@
 - `GET /api/shop/selection?ids=id,id` — up to 50 active cart products; fresh prices.
 - `GET /api/shop/index/manifest` — catalog revision, count and enable state.
 - `GET /api/shop/index/page?after=UUID&limit=750` — max 1000 **text-only** rows [id, category, brand, article, name, synonyms], cursor by UUID, no prices or private fields.
+- `GET /api/shop/index/changes?after=SEQ&limit=750` — increments only; rows [sequence, id, category, brand, article, name, synonyms], or [sequence, id] to delete obsolete articles. A bounded sequence cursor and server revision prevent missed changes during sync.
 - `GET /api/shop/history?vehicleId=UUID&page=0` — 20 orders per page, owner/driver scope preserved.
 - `GET /api/shop/products/:id/analogs` — only admin-verified analog links; no VIN applicability claim.
 - `POST /api/admin/shop/products/:id/analogs` — admin curates a linked in-catalog analog and cites evidence; links remain hidden until verified.
@@ -40,6 +41,9 @@ The old `GET /api/shop` and `GET /api/shop/orders` endpoints are retained for ol
 
 - Obtain a licensed cross-reference and VIN-fitment source covering heavy trucks, trailers, axle brands and brake systems. Vehicle VIN alone may not identify replacement axles, engines and brakes.
 - Validate Autokontinent credentials/API terms, update cadence and reserve/checkout behavior. Add supplier SKU to catalog mapping only after permission.
-- Import external catalog data in **small, versioned category/manufacturer packs**; measure network payload sizes and APK growth before bundling.
+- Import legally licensed external catalog data in **small, versioned category/manufacturer packs**; measure network payload sizes and APK growth before bundling. Updates use a database change journal and tombstones, not full downloads. 
+- A text-only index can grow large; keep it separate from the APK until licensed data and mobile-size measurements justify shipping a specific bounded starter pack.
+- Group browsing by heavy truck systems, trailer components and universal roadside parts, preserving all old category keys.
+- The supplier SKU mapping and actual Autokontinent sync still require documented API access, terms and credentials. Never expose them in the mobile bundle.
 - Add safe offline search indexes for million-row catalogs instead of scanning IDB cursors; current IDB cursor scan bounds memory but is intended for modest initial catalogs.
 - Test older Android APK compatibility, poor mobile connections, migrations on existing databases, photo placeholders and every click before release.
