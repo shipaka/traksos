@@ -241,7 +241,7 @@ await a.goto(BASE + '/#/admin');
 await a.getByRole('button', { name: 'Распределение' }).click();
 await a.getByText('Сначала заявки нам').waitFor();
 await assertDashboardTheme(a, 'admin');
-await checkCabinetMenu(a, ['Управление магазином', 'Деньги и выплаты', 'Настройки площадки', 'Очередь модерации']);
+await checkCabinetMenu(a, ['Управление магазином', 'Деньги и выплаты', 'Настройки площадки', 'Модерация — очередь']);
 await shot(a, '12-admin-dispatch');
 await a.getByRole('button', { name: 'Деньги', exact: true }).click();
 await a.getByText('Способы оплаты').waitFor();
