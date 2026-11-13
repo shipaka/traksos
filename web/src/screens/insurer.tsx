@@ -1,116 +1,105 @@
-// Кабинет партнёра-страховщика: только назначенные администратором страховые заявки.
-import { useState } from 'react';
-import { get, patch, fmtTime } from '../api.ts';
-import { useLoad, useAction } from '../ui.tsx';
+// The ACTUAL partner cabinet, also used unchanged in an isolated admin preview.
+// Preview never queries live applications or sends a real insurer/payout request.
+import {useState} from 'react';
+import {get,patch,fmtTime} from '../api.ts';
+import {useLoad,useAction} from '../ui.tsx';
+import {insurerPreviewActive,previewGet,previewPatch,insurerPreviewRequestHref,PREVIEW_CLIENT} from '../demo/insurerPreviewApi.ts';
 
-const labels: Record<string, string> = {
-  sent_to_partner: 'Ждёт оформления', completed: 'Полис оформлен', rejected: 'Отказ',
-};
-export function InsurerCabinet() {
-  const requests = useLoad(() => get('/api/insurer/requests'), [],
-    (event) => event.type === 'vehicle_service');
-  const { busy, run } = useAction();
-  const [notes, setNotes] = useState<Record<string, string>>({});
-  const [expires, setExpires] = useState<Record<string, string>>({});
-  const [filter, setFilter] = useState<'pending' | 'all' | 'done'>('pending');
-  const [search, setSearch] = useState('');
-  async function update(id: string, status: 'completed' | 'rejected') {
-    const note = (notes[id] ?? '').trim();
-    const policyExpiresOn = expires[id];
-    if (status === 'rejected' && !note) {
-      alert('Укажите причину отказа — клиент должен её видеть.');
-      return;
-    }
-    if (status === 'completed' && !policyExpiresOn) {
-      alert('Укажите дату окончания полиса.');
-      return;
-    }
-    const result = await run(() => patch(`/api/insurer/requests/${id}`, {
-      status, note: note || undefined,
-      policyExpiresOn: status === 'completed' ? policyExpiresOn : undefined,
-    }), 'Заявка обновлена');
-    if (result) {
-      setNotes((old) => { const value = { ...old }; delete value[id]; return value; });
-      requests.reload();
-    }
-  }
-  const rows: any[] | undefined = requests.data;
-  const visible = (rows ?? []).filter((r) => {
-    if (filter === 'pending' && r.status !== 'sent_to_partner') return false;
-    if (filter === 'done' && r.status === 'sent_to_partner') return false;
-    return [r.brand, r.model, r.plate, r.comment].some((value) => String(value ?? '').toLocaleLowerCase('ru-RU').includes(search.trim().toLocaleLowerCase('ru-RU')));
+const status:Record<string,string>={
+ received:'Получено',preparing:'Принято · готовятся расчёты',
+ offers_sent:'Предложения отправлены',awaiting_payment:'Ожидается оплата',
+ paid:'Оплачено · ждёт оформления',selected:'Клиент выбрал вариант',
+ processing:'Оформляется полис',policy_sent:'Полис отправлен',
+ sent_to_partner:'Ждёт оформления',completed:'Полис оформлен',rejected:'Отказ'};
+type View='pending'|'all'|'done';
+export function InsurerCabinet(){
+  const preview=insurerPreviewActive();
+  const data=useLoad<any[]>(()=>preview?previewGet('/api/insurer/requests'):get('/api/insurer/requests'),[preview],
+    event=>!preview&&event.type==='vehicle_service');
+  const {busy,run}=useAction();
+  const [filter,setFilter]=useState<View>('all');
+  const [search,setSearch]=useState('');
+  const [notes,setNotes]=useState<Record<string,string>>({});
+  const [expires,setExpires]=useState<Record<string,string>>({});
+  const rows=data.data??[];
+  const active=rows.filter(x=>x.status==='sent_to_partner').length;
+  const received=rows.filter(x=>x.insurance_stage==='received'||x.insurance_stage==='paid').length;
+  const done=rows.filter(x=>x.status!=='sent_to_partner').length;
+  const visible=rows.filter(r=>{
+    if(filter==='pending'&&r.status!=='sent_to_partner')return false;
+    if(filter==='done'&&r.status==='sent_to_partner')return false;
+    const needle=search.trim().toLocaleLowerCase('ru-RU');
+    return [r.brand,r.model,r.plate,r.comment].some(x=>String(x??'').toLocaleLowerCase('ru-RU').includes(needle));
   });
-  return (
-    <main className="cabinet-page">
-      <header className="cabinet-heading">
-        <span className="label">Партнёрский кабинет · Страхование</span>
-        <h1>Кабинет страховщика</h1>
-      </header>
-      <div className="sub">Только заявки, переданные вам ТракSOS. Остальные автомобили и сведения о клиентах недоступны.</div>
-      {!rows ? <div className="empty">{requests.error ? `Не удалось загрузить: ${requests.error}` : 'Загружаем заявки…'}</div>
-        : !rows.length ? <div className="empty">Назначенных заявок пока нет. Администратор передаст их сюда после проверки.</div>
-        : <div className="stack">
-          <div className="cabinet-metrics">
-            <div className="card tile"><span className="label">Всего назначено</span><b className="tile-value">{rows.length}</b></div>
-            <div className="card tile"><span className="label">Ожидают решения</span><b className="tile-value">{rows.filter((r) => r.status === 'sent_to_partner').length}</b></div>
-            <div className="card tile"><span className="label">Завершено</span><b className="tile-value">{rows.filter((r) => r.status !== 'sent_to_partner').length}</b></div>
-          </div>
-          <div className="web-case-toolbar">
-            <div className="row" role="group" aria-label="Фильтр страховых заявок">
-              {([['pending', 'Ожидают решения'], ['all', 'Все'], ['done', 'Завершённые']] as const).map(([key, title]) => (
-                <button key={key} type="button" className="chip" aria-pressed={filter === key} onClick={() => setFilter(key)}>{title}</button>
-              ))}
-            </div>
-            <label className="stack">
-              <span className="label">Найти автомобиль</span>
-              <input className="field" type="search" placeholder="Марка, модель или госномер"
-                value={search} onChange={(e) => setSearch(e.target.value)} />
-            </label>
-          </div>
-          <span className="label">Показано заявок: {visible.length}</span>
-          {!visible.length && <div className="empty">По выбранным фильтрам заявок нет.</div>}
-          <div className="web-insurance-grid">
-          {visible.map((r) => (
-            <details key={r.id} className="card">
-              <summary className="between">
-                <b>{r.brand} {r.model ?? ''}</b>
-                <span className="pill">{labels[r.status] ?? r.status}</span>
-              </summary>
-              <div className="stack">
-                <span className="note">{r.plate || 'Без номера'} · Подана {fmtTime(r.created_at)}</span>
-                {r.comment && <span className="note">Комментарий клиента: {r.comment}</span>}
-                {r.insurance_stage && <div className="insurance-agent-preview">
-                  <b>Заявка через TrackSOS · {({
-                    received:'Получено',preparing:'Готовятся варианты',
-                    offers_sent:'Клиент выбирает предложение',
-                    selected:'Клиент выбрал полис',processing:'Оформляется вручную',
-                    policy_sent:'PDF-полис отправлен'
-                  } as Record<string,string>)[r.insurance_stage] ?? 'В обработке'}</b>
-                  <p className="note">ФИО, сведения о грузовике, предложения и переписка открываются в рабочем деле.</p>
-                  <a className="btn" href={`#/insurance/request/${r.id}`}>Открыть страховую заявку и чат →</a>
-                </div>}
-                {r.staff_note && <span className="note">Последний ответ: {r.staff_note}</span>}
-                {r.policy_expires_on && <span className="note">Срок полиса: {String(r.policy_expires_on).slice(0, 10)}</span>}
-                {r.status === 'sent_to_partner' && !r.insurance_stage && <>
-                  <label className="stack">
-                    <span className="label">Действует до</span>
-                    <input className="field" type="date" value={expires[r.id] ?? ''}
-                      onChange={(e) => setExpires((old) => ({ ...old, [r.id]: e.target.value }))} />
-                  </label>
-                  <textarea className="field" aria-label="Комментарий страховщика" maxLength={2000}
-                    placeholder="Комментарий или причина отказа"
-                    value={notes[r.id] ?? ''} onChange={(e) => setNotes((old) => ({ ...old, [r.id]: e.target.value }))} />
-                  <div className="grid2">
-                    <button type="button" className="btn small" disabled={busy} onClick={() => update(r.id, 'completed')}>Полис оформлен</button>
-                    <button type="button" className="btn ghost small" disabled={busy} onClick={() => update(r.id, 'rejected')}>Отказать</button>
-                  </div>
-                </>}
-              </div>
-            </details>
-          ))}
-          </div>
-        </div>}
-      <a className="linkrow" href="#/menu"><span><b>Помощь, условия и настройки</b><small>Единое меню ТракSOS</small></span><span aria-hidden="true">›</span></a>
-    </main>
-  );
+  const update=async(id:string,state:'completed'|'rejected')=>{
+    const note=(notes[id]??'').trim(),expire=expires[id];
+    if(state==='rejected'&&!note){alert('Укажите причину отказа.');return;}
+    if(state==='completed'&&!expire){alert('Укажите дату окончания полиса.');return;}
+    const response=await run(()=>preview?previewPatch('/api/insurer/requests/'+id,{status:state,note,policyExpiresOn:expire})
+      :patch('/api/insurer/requests/'+id,{status:state,note,policyExpiresOn:expire}),
+    'Статус заявки обновлён');
+    if(response)data.reload();
+  };
+  return <main className="insurer-workspace stack">
+    <section className="insurer-workspace-hero">
+      <div className="insurer-workspace-hero-art" aria-hidden="true">◇</div>
+      <span className="insurance-step-title">TRACKSOS · ПАРТНЁРСКИЙ КАБИНЕТ</span>
+      <h1>Страховой партнёр</h1>
+      <p>Заявки на грузовой транспорт, расчёты страховых компаний, выбор клиента и готовые полисы — в одном рабочем месте.</p>
+      <div className="row">
+        <button type="button" className="btn" onClick={()=>setFilter('pending')}>Входящие заявки · {active}</button>
+        <button type="button" className="btn ghost" onClick={()=>setFilter('all')}>Все страховые дела</button>
+      </div>
+    </section>
+    {preview&&<div className="banner" role="note"><b>Песочница · настоящий интерфейс страховщика</b>
+      <span>Для проверки всей цепочки создайте заявление в виде клиента. Все действия и суммы вымышленные — сервер не получает оплату и настоящие заявки.</span>
+      <a className="btn small" href={PREVIEW_CLIENT}>Перейти в кабинет клиента и подать заявку</a>
+    </div>}
+    <div className="insurer-overview">
+      <div className="insurer-stat"><span>Назначено</span><strong>{rows.length}</strong><small>Всего заявок</small></div>
+      <div className="insurer-stat"><span>Нужно действие</span><strong>{received}</strong><small>Получены или оплачены</small></div>
+      <div className="insurer-stat"><span>В работе</span><strong>{active}</strong><small>Текущие обращения</small></div>
+      <div className="insurer-stat"><span>Завершено</span><strong>{done}</strong><small>Архив полисов</small></div>
+    </div>
+    <section className="card stack">
+      <div className="between"><div><span className="insurance-step-title">РАБОЧАЯ ОЧЕРЕДЬ</span><h2>Страховые обращения</h2></div><span className="pill">{visible.length} заявок</span></div>
+      <div className="insurer-toolbar">
+        <div className="row" role="group" aria-label="Фильтр страховых заявок">
+          {([['all','Все'],['pending','В работе'],['done','Завершены']] as const).map(([key,title])=>
+            <button key={key} type="button" className="chip" aria-pressed={filter===key}
+              onClick={()=>setFilter(key)}>{title}</button>)}
+        </div>
+        <label className="stack"><span className="label">Поиск по грузовику</span>
+          <input className="field" type="search" placeholder="Марка, модель, госномер" value={search}
+            onChange={e=>setSearch(e.target.value)}/></label>
+      </div>
+      {!data.data&&<div className="empty">{data.error??'Загружаем страховые заявки…'}</div>}
+      {!!data.data&&!visible.length&&<div className="empty">Заявок по выбранному фильтру пока нет.
+        {preview&&' Создайте первую заявку из тестового кабинета клиента.'}</div>}
+      <div className="insurer-case-grid">
+        {visible.map(r=><article className="insurer-case-card" key={r.id}>
+          <div className="between"><span className="insurer-case-no">СТРАХОВОЕ ДЕЛО · {String(r.id).slice(-8)}</span>
+            <span className="pill">{status[r.insurance_stage]??status[r.status]??r.status}</span></div>
+          <h3>{r.brand} {r.model}</h3>
+          <p>{r.plate||'Номер не указан'} · {r.created_at?fmtTime(r.created_at):'Тестовый запрос'}</p>
+          {r.comment&&<p>{r.comment}</p>}
+          {r.insurance_stage&&<div className="insurer-case-meta"><span>Данные ТС и страхователя</span><b>Предложения · чат · полис</b></div>}
+          {r.insurance_stage&&<a className="btn" href={preview?insurerPreviewRequestHref(r.id):'#/insurance/request/'+r.id}>
+            Открыть страховое дело →</a>}
+          {!r.insurance_stage&&r.status==='sent_to_partner'&&<div className="stack">
+            <label className="stack">Срок действия полиса<input className="field" type="date" value={expires[r.id]??''}
+              onChange={e=>setExpires(old=>({...old,[r.id]:e.target.value}))}/></label>
+            <textarea className="field" aria-label="Комментарий страховщика" maxLength={2000}
+              placeholder="Комментарий / причина отказа" value={notes[r.id]??''}
+              onChange={e=>setNotes(old=>({...old,[r.id]:e.target.value}))}/>
+            <div className="row"><button type="button" className="btn small" disabled={busy}
+              onClick={()=>update(r.id,'completed')}>Полис оформлен</button>
+              <button type="button" className="btn ghost small" disabled={busy}
+                onClick={()=>update(r.id,'rejected')}>Отказать</button></div>
+          </div>}
+          {r.status==='completed'&&<span className="note">Готовый полис уже передан клиенту.</span>}
+        </article>)}
+      </div>
+    </section>
+  </main>;
 }
