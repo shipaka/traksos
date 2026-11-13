@@ -27,6 +27,7 @@ import { OnsiteService } from './services/onsite.ts';
 import { ServiceCenters } from './services/service.ts';
 import { FleetService } from './services/fleet.ts';
 import { VehicleServiceRequests } from './services/vehicleServiceRequests.ts';
+import { InsuranceQuoteFlow } from './services/insuranceQuoteFlow.ts';
 import { PrivacyService } from './services/privacy.ts';
 import { StandingService } from './services/standing.ts';
 import { ShopService } from './services/shop.ts';
@@ -81,6 +82,7 @@ export function createApp(d: Deps) {
   centers.referral = referral;
   const fleet = new FleetService(d.db, notifier, orders);
   const vehicleRequests = new VehicleServiceRequests(d.db);
+  const insuranceFlow = new InsuranceQuoteFlow(d.db);
   const privacy = new PrivacyService(d.db, notifier, now);
   const standing = new StandingService(d.db, now, settings);
   const shop = new ShopService(d.db, notifier, settings);
@@ -509,11 +511,89 @@ export function createApp(d: Deps) {
     return updated;
   });
   r.get('/api/vehicle-service-requests', true, (c: AuthedCtx) => vehicleRequests.mine(c.user));
+  r.get('/api/insurance/agents', true, () => insuranceFlow.agents());
+  const truckInsuranceFields = z.object({
+    brand: z.string().trim().min(1).max(90), model: z.string().trim().min(1).max(90),
+    year: z.string().regex(/^\d{4}$/), vin: z.string().trim().min(11).max(17),
+    plate: z.string().trim().min(3).max(24), category: z.string().trim().max(60),
+    bodyType: z.string().trim().max(90), enginePower: z.string().trim().max(60),
+    maximumMass: z.string().trim().max(40), emptyMass: z.string().trim().max(40),
+    chassisNumber: z.string().trim().max(50), registrationCertificate: z.string().trim().max(80),
+    engineNumber: z.string().trim().max(80), trailerPlate: z.string().trim().max(30),
+    registrationRegion: z.string().trim().max(90), usage: z.string().trim().max(120),
+  }).strict();
   r.post('/api/vehicle-service-requests', true, async (c: AuthedCtx) => {
-    const b = parse(z.object({ vehicleId: z.string().uuid(), kind: vehicleRequestKind, comment: z.string().max(2000).optional() }), c.body);
-    const created = await vehicleRequests.create(c.user, b.vehicleId, b.kind, b.comment);
-    notifier.live(await vehicleRequests.recipients(created!), { type: 'vehicle_service', vehicleId: b.vehicleId, requestId: created?.id });
+    const b = parse(z.object({
+      vehicleId: z.string().uuid(), kind: vehicleRequestKind, comment: z.string().max(2000).optional(),
+      insurance: z.object({
+        agentId:z.string().uuid(),
+        details:z.object({
+          applicant:z.object({firstName:z.string().trim().min(1).max(90),
+            lastName:z.string().trim().min(1).max(90), middleName:z.string().trim().max(90).optional()}),
+          vehicle:truckInsuranceFields,
+        }),
+      }).optional(),
+    }), c.body);
+    const created = await vehicleRequests.create(c.user,b.vehicleId,b.kind,b.comment,b.insurance);
+    const recipients = await vehicleRequests.recipients(created!);
+    if(b.insurance) recipients.push(b.insurance.agentId);
+    notifier.live(recipients,{type:'vehicle_service',vehicleId:b.vehicleId,requestId:created?.id});
     return created;
+  });
+  // Quotation and PDF workflow: real insured customer vs designated agent, never automatic insurer API calls.
+  r.get('/api/insurance/requests/:id', true, (c:AuthedCtx)=>insuranceFlow.detail(c.user,c.params.id));
+  r.post('/api/insurance/requests/:id/accept', ['insurer'], async (c:AuthedCtx)=>{
+    const out=await insuranceFlow.accept(c.user,c.params.id);
+    const item=await insuranceFlow.detail(c.user,c.params.id);
+    notifier.live([item.request.owner_id],{type:'vehicle_service',requestId:c.params.id});
+    return out;
+  });
+  r.post('/api/insurance/requests/:id/offers', ['insurer'], async (c:AuthedCtx)=>{
+    const o=z.object({company:z.string().trim().min(1).max(140),
+      product:z.string().trim().min(1).max(140),
+      premiumKopecks:z.number().int().positive().max(1_000_000_000),
+      description:z.string().max(1000),coverage:z.string().max(800)});
+    const b=parse(z.object({offers:z.array(o).min(1).max(20)}),c.body);
+    const out=await insuranceFlow.publish(c.user,c.params.id,b.offers);
+    const item=await insuranceFlow.detail(c.user,c.params.id);
+    await notifier.notify([item.request.owner_id],
+      {type:'vehicle_service',requestId:c.params.id},
+      {kind:'normal',title:'Пришли страховые предложения',
+       body:'Сравните цены и выберите вариант в страховой заявке.',
+       data:{requestId:c.params.id}}).catch(()=>{});
+    return out;
+  });
+  r.post('/api/insurance/requests/:id/choose',true,async(c:AuthedCtx)=>{
+    const b=parse(z.object({proposalId:z.string().uuid()}),c.body);
+    const out=await insuranceFlow.choose(c.user,c.params.id,b.proposalId);
+    const item=await insuranceFlow.detail(c.user,c.params.id);
+    notifier.live([item.request.owner_id,item.request.insurance_choice_id ? '' : ''].filter(Boolean),
+      {type:'vehicle_service',requestId:c.params.id});
+    return out;
+  });
+  r.post('/api/insurance/requests/:id/messages',true,async(c:AuthedCtx)=>{
+    const b=parse(z.object({message:z.string().trim().min(1).max(2000)}),c.body);
+    const out=await insuranceFlow.message(c.user,c.params.id,b.message);
+    const item=await insuranceFlow.detail(c.user,c.params.id);
+    notifier.live([item.request.owner_id],
+      {type:'vehicle_service',requestId:c.params.id});
+    return out;
+  });
+  r.post('/api/insurance/requests/:id/policy', ['insurer'],async(c:AuthedCtx)=>{
+    const b=parse(z.object({dataUrl:z.string().max(6_100_000),
+      fileName:z.string().max(120),expiresOn:z.string().regex(/^\d{4}-\d{2}-\d{2}$/)}),c.body);
+    const out=await insuranceFlow.uploadPolicy(c.user,c.params.id,b.dataUrl,b.fileName,b.expiresOn);
+    const item=await insuranceFlow.detail(c.user,c.params.id);
+    await notifier.notify([item.request.owner_id],{type:'vehicle_service',requestId:c.params.id},
+      {kind:'normal',title:'Готовый страховой полис',body:'PDF-полис загружен в переписку по вашей заявке.',
+        data:{requestId:c.params.id}}).catch(()=>{});
+    return out;
+  });
+  r.get('/api/insurance/requests/:id/policy',true,async(c:AuthedCtx)=>{
+    const file=await insuranceFlow.downloadPolicy(c.user,c.params.id);
+    return new Raw('application/pdf',file.body,{
+      'content-disposition':'attachment; filename="insurance-policy.pdf"'
+    });
   });
   r.post('/api/vehicle-service-requests/:id/cancel', true, async (c: AuthedCtx) => {
     const updated = await vehicleRequests.cancel(c.user, c.params.id);
@@ -868,7 +948,7 @@ export function createApp(d: Deps) {
     try {
       const m = r.match(req.method ?? 'GET', url.pathname);
       if (!m) throw notFound('Нет такого адреса');
-      const limit = url.pathname === '/api/performer/documents' ? 8_000_000 : 1_000_000;
+      const limit = url.pathname === '/api/performer/documents' || /^\/api\/insurance\/requests\/[^/]+\/policy$/.test(url.pathname) ? 8_000_000 : 1_000_000;
       const rawBody = ['POST', 'PUT', 'PATCH'].includes(req.method!) ? await readBody(req, limit) : '';
       let body: any = {};
       if (rawBody) {
