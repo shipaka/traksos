@@ -69,7 +69,7 @@ export function VehicleServiceHistory({ id, isDriver, refreshVersion }: { id: st
             {' · '}{labels[r.status] ?? r.status}
             {' · Подана '}{fmtTime(r.created_at)}
             {r.updated_at && <span> · Обновлена {fmtTime(r.updated_at)}</span>}
-            {r.policy_expires_on && <span> · Действует до {r.policy_expires_on}</span>}
+            {r.policy_expires_on && <span> · Действует до {String(r.policy_expires_on).slice(0, 10)}</span>}
             <div>{statusHelp[r.status] ?? 'Статус уточняется.'}</div>
             {r.staff_note && <div><b>Комментарий специалиста:</b> {r.staff_note}</div>}
             {['submitted', 'in_review', 'need_documents'].includes(r.status) && (!isDriver || r.requested_by === me?.id) && (
