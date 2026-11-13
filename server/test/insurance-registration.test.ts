@@ -75,3 +75,20 @@ test('only primary insurer receives registration SMS while registration is close
   await auth.requestCode(someoneElse,'','register','insurer');
   assert.deepEqual(providerCalls,[primary,someoneElse]);
 });
+
+test('existing reserved phone cannot authenticate with a non-insurer role',async()=>{
+  let roles=['master'];
+  const dbSession: any = {
+    one: async (sql: string) => {
+      if (!sql.includes('from sessions')) throw Error('Unexpected query: '+sql);
+      return {id:'test-user',phone:primary,roles,status:'active',owner_id:null,name:null};
+    }
+  };
+  const sessionAuth = new AuthService(dbSession,{
+    name:'log',exposesCode:true,send:async()=>{}
+  },()=>new Date(),settings);
+  assert.equal(await sessionAuth.authenticate('synthetic-test-token'),null);
+  roles=['insurer'];
+  const user=await sessionAuth.authenticate('synthetic-test-token');
+  assert.equal(user?.roles[0],'insurer');
+});
