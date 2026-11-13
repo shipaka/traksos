@@ -58,6 +58,12 @@ try {
         await page.goto(BASE + '/#/insurance', { waitUntil: 'domcontentloaded' });
         await page.getByText('Нет доступа к кабинету страховщика').waitFor();
       }
+      if (entry.name === 'insurer') {
+        await page.goto(BASE + '/#/insurance', { waitUntil: 'domcontentloaded' });
+        await page.getByRole('heading', { name: 'Страховой партнёр' }).waitFor();
+        await page.getByText(/оформление страховых продуктов и договоров ещё не запущено/).waitFor();
+        await page.getByRole('link', { name: 'Связаться с поддержкой' }).waitFor();
+      }
       if (entry.name === 'driver') {
         await page.goto(BASE + '/#/fleet', { waitUntil: 'domcontentloaded' });
         await page.getByText('Парком управляет владелец').waitFor();
