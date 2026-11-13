@@ -1,7 +1,7 @@
 // Operator-only, first-account bootstrap for an owner who cannot receive SMS yet.
 // Run solely via deploy/provision-preview-admin.sh on the production VPS.
 // No public route, shared PIN, .env secret, SMS bypass or fixture data.
-import { randomBytes, scryptSync } from 'node:crypto';
+import { randomBytes, randomInt, scryptSync } from 'node:crypto';
 import { config, isProd } from '../config.ts';
 import { createDb } from '../db/index.ts';
 import { normalizePhone } from '../util.ts';
@@ -15,10 +15,15 @@ if (config.moderatorPhones.includes(phone) || config.insurerPrimaryPhone === pho
     config.recoveryContactPhone === phone)
   throw new Error('The protected administrator number conflicts with another restricted staff number');
 
-const password = randomBytes(24).toString('base64url'); // 256 bits, shown once in local SSH terminal.
+// Ten-digit one-time preview code, typed into the existing password field.
+// No code, phone, or plaintext password is stored in source or logs.
+const password = randomInt(0, 10_000_000_000).toString().padStart(10, '0');
 const salt = randomBytes(16).toString('hex');
 const passwordHash = `scrypt:${salt}:${scryptSync(password, Buffer.from(salt, 'hex'), 64).toString('hex')}`;
-const expiresAt = new Date(Date.now() + 4 * 60 * 60 * 1000);
+// Exact next midnight in Moscow, regardless of where the VPS is hosted.
+const moscowClock = new Date(Date.now() + 3 * 60 * 60 * 1000);
+moscowClock.setUTCHours(24, 0, 0, 0);
+const expiresAt = new Date(moscowClock.getTime() - 3 * 60 * 60 * 1000);
 const db = await createDb(config.databaseUrl);
 try {
   if (db.driver !== 'pg') throw new Error('Real PostgreSQL is required');
@@ -41,10 +46,10 @@ try {
     );
   });
   console.log('OK: created one restricted administrator + master account.');
-  console.log('Temporary login password (shown only here): ' + password);
+  console.log('Temporary 10-digit login code (shown only here): ' + password);
   console.log('Expires at (UTC): ' + expiresAt.toISOString());
-  console.log('Log in to the site using the single ADMIN_PHONES number and this password.');
-  console.log('Do NOT send this password in chat, screenshots or support tickets.');
+  console.log('On the site: enter the single ADMIN_PHONES number in Phone and this code in Password.');
+  console.log('Do NOT send this code in chat, screenshots or support tickets.');
 } finally {
   await db.close();
 }
