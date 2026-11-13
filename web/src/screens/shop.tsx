@@ -82,7 +82,7 @@ export function Shop() {
               : result.complete ? `Справочник сохранён: ${result.total} позиций`
               : `Сохранено ещё ${result.added} позиций. Нажмите повторно для продолжения.`);
           }
-        }}>{syncing ? 'Сохраняем…' : 'Сохранить справочник для слабого интернета'}</button>
+        }}}>{syncing ? 'Сохраняем…' : 'Сохранить справочник для слабого интернета'}</button>
       </div>
       {offlineNote && <span className="note">{offlineNote}</span>
       {kits.map((p: any) => (
