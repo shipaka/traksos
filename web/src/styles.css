@@ -1220,3 +1220,51 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
   .sandbox-role-card,.sandbox-feature{transition:none!important;}
   .sandbox-role-card:hover,.sandbox-feature:hover{transform:none!important;}
 }
+
+/* The REAL operator cabinet uses the same approved visual vocabulary.
+   Keep every existing administrative control and server action intact. */
+.admin-workspace{min-width:0;display:flex;flex-direction:column;gap:14px;}
+.admin-command-hero{isolation:isolate;position:relative;overflow:hidden;min-height:215px;
+  padding:clamp(23px,4vw,40px);border-radius:23px;border:1px solid #346486;
+  background:radial-gradient(circle at 87% 30%,rgba(35,202,234,.20),transparent 34%),
+    radial-gradient(circle at 36% 100%,rgba(249,40,135,.18),transparent 50%),
+    linear-gradient(118deg,#091d32,#123752 80%,#071b30);box-shadow:0 17px 44px #020b1938;}
+.admin-command-hero h1{position:relative;z-index:1;color:#fff;font-size:clamp(25px,3.4vw,39px);letter-spacing:-.04em;margin:11px 0 9px;}
+.admin-command-eyebrow{position:relative;z-index:1;color:#67e1f3;letter-spacing:.13em;font-size:11px;font-weight:850;}
+.admin-command-hero p{position:relative;z-index:1;color:#c5dcea;max-width:590px;line-height:1.55;font-size:13px;margin-bottom:19px;}
+.admin-command-actions{position:relative;z-index:1;display:flex;align-items:center;flex-wrap:wrap;gap:10px;}
+.admin-command-art{position:absolute;right:0;top:0;bottom:0;width:min(45%,330px);
+  opacity:.65;background:repeating-radial-gradient(circle at 58% 49%,transparent 0 32px,rgba(56,221,242,.15) 33px 34px,transparent 35px 66px);pointer-events:none;}
+.admin-command-art>span{position:absolute;top:48%;right:28%;font-size:98px;color:#56deed;transform:translateY(-50%);text-shadow:0 0 42px rgba(35,211,237,.4);}
+.admin-command-art i{position:absolute;width:8px;height:8px;background:#fa398a;border-radius:100%;box-shadow:0 0 14px #e32682;}
+.admin-command-art i:nth-of-type(1){top:16%;left:13%;}.admin-command-art i:nth-of-type(2){top:74%;left:30%;}.admin-command-art i:nth-of-type(3){top:42%;right:12%;}
+.admin-section-tabs{padding:10px 0;scrollbar-width:thin;}
+.admin-live-viz{display:flex;flex-direction:column;gap:12px;}
+.admin-live-viz .between{align-items:center;flex-wrap:wrap;}
+.admin-live-bars{display:flex;align-items:end;justify-content:space-around;gap:16px;
+  border-bottom:1px solid #3a6580;min-height:138px;padding:12px 8px 0;}
+.admin-live-bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;}
+.admin-live-bar-track{width:clamp(26px,6vw,65px);height:92px;display:flex;align-items:end;justify-content:center;}
+.admin-live-bar-track i{display:block;width:100%;border-radius:8px 8px 0 0;
+  background:linear-gradient(0deg,#ef247f,#24d4f0);animation:ts-bar-grow .55s ease-out both;}
+.admin-live-bar b{font-size:17px;font-variant-numeric:tabular-nums;}
+.admin-live-bar small{font-size:10px;color:#a5cadc;text-align:center;}
+/* Shared signed-in detail pages get quiet transitions and better focus visibility
+   without changing typography, colors, section order or existing functionality. */
+.app:not(.guest-app) .desktop-content main:not(.public-landing)>.card,
+.app:not(.guest-app) .desktop-content main:not(.public-landing)>.grid2,
+.app:not(.guest-app) .desktop-content main:not(.public-landing)>.grid3,
+.app:not(.guest-app) .desktop-content main:not(.public-landing)>.tiles{
+  animation:ts-appear .28s ease-out both;}
+.app:not(.guest-app) :is(button,a,input,select,textarea):focus-visible{outline:2px solid #62e4f4;outline-offset:2px;}
+@media(max-width:520px){
+  .admin-command-hero{padding:20px 16px;min-height:225px;}
+  .admin-command-art{opacity:.25;width:65%;}
+  .admin-command-actions .btn{width:100%;justify-content:center;text-align:center;}
+}
+@media(prefers-reduced-motion:reduce){
+  .admin-live-bar-track i,.app:not(.guest-app) .desktop-content main:not(.public-landing)>.card,
+  .app:not(.guest-app) .desktop-content main:not(.public-landing)>.grid2,
+  .app:not(.guest-app) .desktop-content main:not(.public-landing)>.grid3,
+  .app:not(.guest-app) .desktop-content main:not(.public-landing)>.tiles{animation:none!important;}
+}
