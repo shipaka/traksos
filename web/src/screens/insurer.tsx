@@ -12,12 +12,13 @@ const status:Record<string,string>={
  processing:'Оформляется полис',policy_sent:'Полис отправлен',
  sent_to_partner:'Ждёт оформления',completed:'Полис оформлен',rejected:'Отказ'};
 type View='pending'|'all'|'done';
-export function InsurerCabinet(){
+export function InsurerCabinet({section}:{section?:string}={}){
   const preview=insurerPreviewActive();
   const data=useLoad<any[]>(()=>preview?previewGet('/api/insurer/requests'):get('/api/insurer/requests'),[preview],
     event=>!preview&&event.type==='vehicle_service');
   const {busy,run}=useAction();
   const [filter,setFilter]=useState<View>('all');
+  const [stageFocus,setStageFocus]=useState(section??'');
   const [search,setSearch]=useState('');
   const [notes,setNotes]=useState<Record<string,string>>({});
   const [expires,setExpires]=useState<Record<string,string>>({});
@@ -26,6 +27,7 @@ export function InsurerCabinet(){
   const received=rows.filter(x=>x.insurance_stage==='received'||x.insurance_stage==='paid').length;
   const done=rows.filter(x=>x.status!=='sent_to_partner').length;
   const visible=rows.filter(r=>{
+    if(stageFocus&&r.insurance_stage!==stageFocus)return false;
     if(filter==='pending'&&r.status!=='sent_to_partner')return false;
     if(filter==='done'&&r.status==='sent_to_partner')return false;
     const needle=search.trim().toLocaleLowerCase('ru-RU');
@@ -47,8 +49,8 @@ export function InsurerCabinet(){
       <h1>Страховой партнёр</h1>
       <p>Заявки на грузовой транспорт, расчёты страховых компаний, выбор клиента и готовые полисы — в одном рабочем месте.</p>
       <div className="row">
-        <button type="button" className="btn" onClick={()=>setFilter('pending')}>Входящие заявки · {active}</button>
-        <button type="button" className="btn ghost" onClick={()=>setFilter('all')}>Все страховые дела</button>
+        <button type="button" className="btn" onClick={()=>{setStageFocus('');setFilter('pending');}}>Входящие заявки · {active}</button>
+        <button type="button" className="btn ghost" onClick={()=>{setStageFocus('');setFilter('all');}}>Все страховые дела</button>
       </div>
     </section>
     {preview&&<div className="banner" role="note"><b>Песочница · настоящий интерфейс страховщика</b>
@@ -67,12 +69,13 @@ export function InsurerCabinet(){
         <div className="row" role="group" aria-label="Фильтр страховых заявок">
           {([['all','Все'],['pending','В работе'],['done','Завершены']] as const).map(([key,title])=>
             <button key={key} type="button" className="chip" aria-pressed={filter===key}
-              onClick={()=>setFilter(key)}>{title}</button>)}
+              onClick={()=>{setStageFocus('');setFilter(key);}}>{title}</button>)}
         </div>
         <label className="stack"><span className="label">Поиск по грузовику</span>
           <input className="field" type="search" placeholder="Марка, модель, госномер" value={search}
             onChange={e=>setSearch(e.target.value)}/></label>
       </div>
+      {stageFocus&&<div className="banner" role="status">Раздел: <b>{status[stageFocus]??stageFocus}</b>. <button className="btn ghost small" type="button" onClick={()=>setStageFocus('')}>Все заявки</button></div>}
       {!data.data&&<div className="empty">{data.error??'Загружаем страховые заявки…'}</div>}
       {!!data.data&&!visible.length&&<div className="empty">Заявок по выбранному фильтру пока нет.
         {preview&&' Создайте первую заявку из тестового кабинета клиента.'}</div>}
