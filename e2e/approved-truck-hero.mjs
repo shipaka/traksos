@@ -41,7 +41,16 @@ try{
       const picture=image?.getBoundingClientRect();
       const outer=shell?.getBoundingClientRect();
       const aside=document.querySelector('.desktop-home-aside');
+      const art=document.querySelector('.client-home .client-hero-art');
+      const computed=shell?getComputedStyle(shell):null;
       return {
+        appClass:document.querySelector('.app')?.className,
+        heroDisplay:computed?.display,
+        heroBackground:computed?.backgroundImage?.slice(0,200),
+        heroColumns:computed?.gridTemplateColumns,
+        heroMatched:!!shell?.matches('.app.role-client .desktop-content .client-home .desktop-hero'),
+        art:{left:art?.getBoundingClientRect().left,right:art?.getBoundingClientRect().right,width:art?.getBoundingClientRect().width},
+        firstActionDisplay:document.querySelector('.desktop-primary-action')?getComputedStyle(document.querySelector('.desktop-primary-action')).display:'missing',
         nativeWidth:image?.naturalWidth,
         nativeHeight:image?.naturalHeight,
         objectFit:image?getComputedStyle(image).objectFit:null,
@@ -53,6 +62,9 @@ try{
         viewport:document.documentElement.clientWidth
       };
     });
+    await page.waitForTimeout(450);
+    await page.screenshot({path:'e2e/shots/approved-truck/client-'+width+'.png',fullPage:true});
+    console.log('Scania computed layout '+width+'px: '+JSON.stringify(check));
     if(!check.nativeWidth||!check.nativeHeight||check.objectFit!=='contain')
       throw Error(width+'px approved truck image missing or cropped by CSS: '+JSON.stringify(check));
     if(!check.hero||check.hero.right<check.image.right-2||check.hero.left>check.image.left+2)
@@ -62,8 +74,6 @@ try{
     if(width>=900 && (!check.asideVisible||check.asideCards<4))
       throw Error(width+'px useful right column not filled: '+JSON.stringify(check));
     if(errors.length)throw Error(width+'px JS error: '+errors.join('; '));
-    await page.waitForTimeout(450);
-    await page.screenshot({path:'e2e/shots/approved-truck/client-'+width+'.png',fullPage:true});
     await context.close();
 
     const guest=await browser.newContext({viewport:{width,height:900},locale:'ru-RU'});
