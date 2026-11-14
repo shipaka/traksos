@@ -96,6 +96,44 @@ async function run(width, height, mobile) {
     check(await page.locator('input[type=password]').isVisible(), 'Password login unavailable');
     await verifyPage(page, suffix + ':login');
     await page.screenshot({ path: OUT + '/login-' + suffix + '.png', fullPage: true });
+
+    // Regression: closing an entry must not leave the same #/login/#/register/#/join
+    // hash behind, or the guest header links appear permanently unresponsive.
+    const landing = page.getByRole('heading', { name: /Помощь.*грузовику/i });
+    const expectLanding = async (from) => {
+      await landing.waitFor();
+      check(new URL(page.url()).hash === '#/', from + ': back left a stale auth route');
+    };
+    await page.getByRole('button', { name: 'Назад', exact: true }).click();
+    await expectLanding('login');
+    await page.getByRole('link', { name: 'Войти', exact: true }).click();
+    await page.locator('input[type=password]').waitFor();
+    await page.getByRole('button', { name: 'Забыли пароль?' }).click();
+    await page.getByRole('heading', { name: 'Восстановить пароль' }).waitFor();
+    await page.getByRole('button', { name: 'Назад', exact: true }).click();
+    await expectLanding('reset');
+    await page.getByRole('link', { name: 'Войти', exact: true }).click();
+    await page.locator('input[type=password]').waitFor();
+
+    await page.getByRole('link', { name: 'Зарегистрироваться', exact: true }).click();
+    await page.getByRole('heading', { name: 'Регистрация в ТракSOS' }).waitFor();
+    await page.getByRole('button', { name: 'Назад', exact: true }).click();
+    await expectLanding('register');
+    await page.getByRole('link', { name: 'Зарегистрироваться', exact: true }).click();
+    await page.getByRole('heading', { name: 'Регистрация в ТракSOS' }).waitFor();
+    await page.getByRole('button', { name: 'Я мастер', exact: true }).click();
+    await page.getByRole('heading', { name: 'Работать с ТракSOS' }).waitFor();
+    await page.getByRole('button', { name: 'Назад к выбору кабинета' }).click();
+    await page.getByRole('heading', { name: 'Регистрация в ТракSOS' }).waitFor();
+    await page.getByRole('button', { name: 'Назад', exact: true }).click();
+    await expectLanding('register after choosing role');
+
+    await page.getByRole('button', { name: 'Подключиться →' }).click();
+    await page.getByRole('heading', { name: 'Работать с ТракSOS' }).waitFor();
+    await page.getByRole('button', { name: 'Назад', exact: true }).click();
+    await expectLanding('partner join');
+    await page.getByRole('button', { name: 'Подключиться →' }).click();
+    await page.getByRole('heading', { name: 'Работать с ТракSOS' }).waitFor();
     check(errors.length === 0, 'JS exceptions: ' + errors.join(' | '));
   } catch (e) {
     failures.push({ viewport: suffix, error: e.message });
