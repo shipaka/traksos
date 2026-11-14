@@ -15,6 +15,10 @@ const LOCKED_ASSETS = {
   // New 14 November branded high-resolution portrait with correct Scania grille and TrakSOS trailer.
   'web/public/tracksos-approved-scania-r520.webp': '8f5161004a18746f',
   'web/public/tracksos-approved-map.webp': '994097c8c01b2c80',
+  // The ONLY final desktop design uses the truck crop and service visuals from owner's last PNG.
+  'web/public/traksos-final-hero.webp': 'bfce4ea62b859d80',
+  'web/public/traksos-final-insurance.webp': '6cbcba4d541f4ddc',
+  'web/public/traksos-final-parts.webp': '0531cbfd715179c3',
   'android/app/src/main/res/mipmap-mdpi/ic_launcher.png': '08149a1f4aea8b62',
   'android/app/src/main/res/mipmap-hdpi/ic_launcher.png': '371bbc4c29e4f9a5',
   'android/app/src/main/res/mipmap-xhdpi/ic_launcher.png': '78e3982186506d31',
@@ -40,6 +44,7 @@ async function asset(path, minBytes = 5000) {
   } catch { expect(false, path + ' is present'); }
 }
 const landing = await read('web/src/screens/login.tsx');
+const finalCss = await read('web/src/finalCanon.css');
 const css = await read('web/src/styles.css');
 const shell = await read('web/src/main.tsx');
 const demo = await read('web/src/screens/adminTestCenter.tsx');
@@ -57,6 +62,9 @@ const native = await read('android/app/src/main/java/ru/traksos/app/MainActivity
 await asset('web/public/tracksos-approved-truck.webp', 15000);
 await asset('web/public/tracksos-approved-scania-r520.webp', 40000);
 await asset('web/public/tracksos-approved-map.webp', 15000);
+await asset('web/public/traksos-final-hero.webp', 100000);
+await asset('web/public/traksos-final-insurance.webp', 25000);
+await asset('web/public/traksos-final-parts.webp', 25000);
 await asset('web/public/tracksos-photo-master.webp', 30000);
 await asset('web/public/tracksos-photo-tow.webp', 30000);
 await asset('web/public/tracksos-photo-sto.webp', 30000);
@@ -77,6 +85,27 @@ expect(landing.includes('public-map-static'), 'public map does not depend on net
 expect(!landing.includes('openstreetmap.org/export/embed'), 'no third-party iframe is required for offline public map');
 expect(landing.includes('Демонстрационная карта'), 'demo map is explicitly labelled');
 expect(landing.includes('Санкт-Петербург и Ленинградская область'), 'launch region is shown');
+expect(shell.includes("import './finalCanon.css';"), 'the only final design layer is loaded by the real app');
+expect(shell.includes('guest-site-nav'), 'the guest PC has horizontal navigation, not an alternative sidebar');
+expect(finalCss.includes("url('../public/traksos-final-hero.webp')"), 'the final PC truck image is displayed by live CSS');
+expect(finalCss.includes('grid-template-columns:repeat(6,minmax(0,1fr))'), 'six photographic service cards in desktop row');
+const finalServices = [
+  "['tow', '↗', 'Эвакуация'",
+  "['van', '⚒', 'Выездной мастер'",
+  "['sto', '▣', 'СТО и сервисы'",
+  "['insurance', '◇', 'Страхование'",
+  "['parts', '⚙', 'Запчасти'",
+  "['consult', '☏', 'Консультации'",
+];
+let previous = -1;
+for (const item of finalServices) {
+  const index = landing.indexOf(item);
+  expect(index > previous, 'six single-canon service cards are present and ordered: '+item);
+  previous = index;
+}
+try { await stat('web/public/approved-desktop.html'); expect(false, 'superseded static demo was deleted'); }
+catch { console.log('OK: superseded static HTML mockup not present'); }
+
 expect(shell.includes('guest-header-actions'), 'public header provides sign-in and registration');
 expect(landing.includes('Выбор кабинета при регистрации'), 'registration exposes a complete public account chooser');
 for(const name of ['Я мастер','Я эвакуаторщик','Я рембаза (сервис)','Мастер и своя СТО','Я представитель страховой компании',
