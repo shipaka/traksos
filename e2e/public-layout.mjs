@@ -43,7 +43,7 @@ async function run(width, height, mobile) {
     check(await page.getByRole('button', { name: 'Помощь в дороге' }).isVisible(), 'SOS not visible');
     check(await page.getByRole('button', { name: 'Как это работает?' }).isVisible(), 'How it works not visible');
     const image = await page.locator('.public-hero-visual').evaluate(async el => {
-      const bg = getComputedStyle(el).backgroundImage;
+      const bg = [getComputedStyle(el).backgroundImage, getComputedStyle(el,'::after').backgroundImage].join(' | ');
       const match = bg.match(/url\(["']?([^"')]+)["']?\)/);
       if (!match) return { ok: false, bg };
       const img = new Image();
