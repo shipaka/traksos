@@ -12,7 +12,7 @@ export function GuestExplore({ id, itemKey }: {id: string; itemKey?: string}) {
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'auto' }); }, [id, itemKey]);
   if (!tile || !service) {
     return <main className="guest-explore"><section className="guest-explore-hero">
-      <h1>Раздел не найден</h1><p>Вернитесь к каталогу услуг TrackSOS.</p><a className="guest-explore-cta" href="#/">На главную</a>
+      <h1>Раздел не найден</h1><p>Вернитесь к каталогу услуг TrakSOS.</p><a className="guest-explore-cta" href="#/">На главную</a>
     </section></main>;
   }
   const selected = service.services.find(x => x.key === itemKey);
