@@ -456,27 +456,57 @@ export function FilterSection() {
     else Object.assign(b, { stock: x.stock, prepay: x.prepay });
     return b;
   };
-  const tabs: [string, string][] = isTow ? [['take', 'Что везу'], ['prices', 'Цены'], ['prep', 'Сборы']]
-    : [['services', 'Услуги'], ['brands', `Марки${tuned ? ` · ${tuned}` : ''}`], ['stock', 'С собой'], ['prices', 'Цены']];
+  const tabs: [string, string][] = isTow ? [['take', 'Что везу'], ['prices', 'Тарифы'], ['prep', 'Сборы']]
+    : [['services', 'Услуги'], ['brands', `Марки${tuned ? ` · ${tuned}` : ''}`], ['stock', 'Оснащение'], ['prices', 'Тарифы']];
   const cur = tab;
   const num = (k: string, ph: string, label: string) => (
     <Field label={label}><input className="field" inputMode="numeric" placeholder={ph} value={x[k] ?? ''} onChange={(e) => setX({ ...x, [k]: e.target.value === '' ? '' : Number(e.target.value.replace(/\D/g, '')) })} /></Field>
   );
-  const STOCK = ['Розетка прицепа 15-конт.', 'Перекидка', 'Адаптер 15/7', 'Предохранители', 'Лампы 24V', 'Клеммы АКБ', 'Пусковое устройство', 'Сканер под марку'];
+  const STOCK: { name: string; skills: string[] }[] = [
+    { name: 'Розетка прицепа 15-конт.', skills: ['electric'] },
+    { name: 'Перекидка', skills: ['electric'] },
+    { name: 'Адаптер 15/7', skills: ['electric'] },
+    { name: 'Предохранители', skills: ['electric', 'diag'] },
+    { name: 'Лампы 24V', skills: ['electric'] },
+    { name: 'Клеммы АКБ', skills: ['electric'] },
+    { name: 'Пусковое устройство', skills: ['electric', 'diag'] },
+    { name: 'Мультиметр', skills: ['electric', 'diag'] },
+    { name: 'Сканер под марку', skills: ['diag', 'electric', 'air'] },
+    { name: 'Манометр пневмосистемы', skills: ['air'] },
+    { name: 'Пневмофитинги и трубки', skills: ['air'] },
+    { name: 'Диагностический адаптер отопителя', skills: ['autonomy'] },
+    { name: 'Грузовой домкрат', skills: ['tyre'] },
+    { name: 'Гайковёрт для колёс', skills: ['tyre'] },
+    { name: 'Комплект ремонта бескамерных шин', skills: ['tyre'] },
+    { name: 'Диагностический планшет', skills: ['diag'] },
+  ];
+  const visibleStock = STOCK.filter((item) => item.skills.some((skill) => f.specialties.includes(skill)));
+  const otherSelectedStock = (x.stock as string[]).filter((name) => !visibleStock.some((item) => item.name === name));
+  const toggleStock = (name: string) => setX({ ...x, stock: x.stock.includes(name) ? x.stock.filter((v: string) => v !== name) : [...x.stock, name] });
   const TAKES: [string, string][] = [['tractor', 'Тягач'], ['semitrailer', 'Полуприцеп'], ['coupling', 'Сцепка целиком'], ['truck12', 'Грузовик до 12 т'], ['bus', 'Автобус'], ['special', 'Спецтехника']];
   return (
     <main>
       <Back to="work" label="Линия" />
-      <div><h1>Расширенный поиск</h1><div className="sub">Как вы ищете клиентов на линии: что берёте, с какими марками и по какой цене. По этому вас и ранжируют.</div></div>
+      <div><h1>Настройки заявок</h1><div className="sub">Выберите специализацию и марки для подбора подходящих заказов. Оснащение и тарифы — отдельные сведения для клиента, не фильтры очереди.</div></div>
       <div className="scroll-x">{tabs.map(([id, n]) => <button key={id} className="chip" aria-pressed={cur === id} onClick={() => setTab(id)}>{n}</button>)}</div>
 
       {cur === 'stock' && (
         <div className="card">
-          <b>Что всегда есть в машине</b>
-          <div className="row">{STOCK.map((t) => (
-            <button key={t} type="button" className="chip" aria-pressed={x.stock.includes(t)} onClick={() => setX({ ...x, stock: x.stock.includes(t) ? x.stock.filter((y: string) => y !== t) : [...x.stock, t] })}>{x.stock.includes(t) ? '✓ ' : ''}{t}</button>
-          ))}</div>
-          <span className="note">Клиент видит это в вашем отклике. Если нужна, например, розетка 15-конт., выше в списке те, у кого она с собой.</span>
+          <b>Оснащение под ваши услуги</b>
+          <span className="note">Показываем оборудование, подходящее под выбранную специализацию. Клиент увидит отмеченное в отклике. Это не фильтр автоматической очереди.</span>
+          {visibleStock.length ? (
+            <div className="row">{visibleStock.map((item) => (
+              <button key={item.name} type="button" className="chip" aria-pressed={x.stock.includes(item.name)}
+                onClick={() => toggleStock(item.name)}>{x.stock.includes(item.name) ? '✓ ' : ''}{item.name}</button>
+            ))}</div>
+          ) : <span className="note">Сначала отметьте услугу во вкладке «Услуги».</span>}
+          {otherSelectedStock.length > 0 && <details className="card flat">
+            <summary><b>Ранее отмеченное оборудование · {otherSelectedStock.length}</b></summary>
+            <span className="note">Если вы больше не возите эти вещи, снимите отметки. Сохранили предыдущие настройки, ничего не удалили автоматически.</span>
+            <div className="row">{otherSelectedStock.map((name) => (
+              <button key={name} type="button" className="chip" aria-pressed={true} onClick={() => toggleStock(name)}>✓ {name}</button>
+            ))}</div>
+          </details>}
         </div>
       )}
 
@@ -486,12 +516,13 @@ export function FilterSection() {
           <div className="row">{TAKES.map(([k, n]) => (
             <button key={k} type="button" className="chip" aria-pressed={x.takes.includes(k)} onClick={() => setX({ ...x, takes: x.takes.includes(k) ? x.takes.filter((y: string) => y !== k) : [...x.takes, k] })}>{x.takes.includes(k) ? '✓ ' : ''}{n}</button>
           ))}</div>
-          <span className="note">Ничего не отмечено — приходят все заказы. Отмечено — только с таким грузом.</span>
+          <span className="note">Эти категории реально фильтруют вызовы эвакуатора. Если ничего не выбрать, ограничение по типу груза не применяется.</span>
           <b>Тип эвакуатора</b>
           <div className="stack" style={{ gap: 6 }}>{([['partial', 'Частичная погрузка'], ['break', 'Ломаная платформа'], ['crane', 'С манипулятором']] as const).map(([k, n]) => (
             <button key={k} type="button" className="seg" aria-pressed={x.towType === k} onClick={() => setX({ ...x, towType: k })}>{n}</button>
           ))}</div>
           {num('maxMass', 'Например, 20', 'Максимальная масса, т')}
+          <span className="note">Тип эвакуатора и предельная масса сохраняются в анкете. Сейчас автоматически отсекаются только несовместимые категории груза — тоннаж отдельно не проверяется системой.</span>
         </div>
       )}
 
@@ -512,17 +543,18 @@ export function FilterSection() {
 
       {cur === 'services' && (
         <div className="card">
-          <b>Что делаете</b>
+          <b>Какие заявки получать</b>
           <div className="row">{SPECIALTIES.map((s) => (
             <button key={s.id} type="button" className="chip" aria-pressed={f.specialties.includes(s.id)}
               onClick={() => set({ specialties: f.specialties.includes(s.id) ? f.specialties.filter((x) => x !== s.id) : [...f.specialties, s.id] })}>{s.name}</button>
           ))}</div>
-          <b>Уровень</b>
+          <b>Тарифный уровень</b>
           <div className="grid3">
             {(['eco', 'comfort', 'pro'] as const).map((t) => (
               <button key={t} type="button" className="seg" style={{ fontSize: 13 }} aria-pressed={f.tier === t} onClick={() => set({ tier: t })}>{t === 'eco' ? 'Стандарт' : t === 'comfort' ? 'Комфорт' : 'Диагност'}</button>
             ))}
           </div>
+          <span className="note">Специализации и марки влияют на подбор заявок. Тарифный уровень — на стандартную стоимость, а не на место в очереди.</span>
           <button type="button" className="opt" aria-pressed={f.acceptsGroup} onClick={() => set({ acceptsGroup: !f.acceptsGroup })}>
             <b>{f.acceptsGroup ? '✓ ' : ''}Беру совместные выезды</b><small>Клиенты платят по 70%, вы получаете больше с одной поездки.</small>
           </button>
