@@ -118,6 +118,20 @@ try {
           await page.goto(BASE+'/#/admin/test-center/'+previewRole,{waitUntil:'domcontentloaded'});
           await page.locator(previewRole==='service'?'.service-preview-admin-bar':'.role-preview-bar').waitFor();
           await verify('preview-'+previewRole);
+          if(previewRole==='insurer'||previewRole==='inspection'){
+            await page.locator('.insurer-workspace .cabinet-metrics .card').first().waitFor();
+            const layout=await page.locator('.insurer-workspace .cabinet-metrics').evaluate(el=>{
+              const cards=[...el.querySelectorAll('.card')].map(x=>x.getBoundingClientRect());
+              const banner=document.querySelector('.insurer-workspace > .banner');
+              const note=banner?.querySelector('.note')?.getBoundingClientRect();
+              const title=banner?.querySelector('b')?.getBoundingClientRect();
+              return {rows:cards.map(x=>Math.round(x.y)),bannerVertical:!!(title&&note&&note.y>=title.bottom-2)};
+            });
+            if(width>=900&&layout.rows.length>=3&&Math.max(...layout.rows)-Math.min(...layout.rows)>3)
+              throw Error(previewRole+' desktop partner metrics must share a row: '+JSON.stringify(layout));
+            if(width<900&&!layout.bannerVertical)
+              throw Error(previewRole+' mobile banner text overlaps its heading: '+JSON.stringify(layout));
+          }
           await page.waitForTimeout(450);
           await page.screenshot({path:'e2e/shots/cabinet-ux/preview-'+previewRole+'-'+width+'.png',fullPage:true});
           if(previewRole==='insurer'){

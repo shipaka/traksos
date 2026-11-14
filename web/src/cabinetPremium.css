@@ -717,3 +717,78 @@
     white-space: normal;
   }
 }
+
+/* Premium insurance and inspection panels: compact, legible, consistent.
+   The same components remain real and interactive, only their layout changes. */
+.app:is(.role-insurer,.role-inspection) .insurer-workspace .cabinet-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
+}
+.app:is(.role-insurer,.role-inspection) .insurer-workspace .cabinet-metrics > .card {
+  min-width: 0;
+  min-height: 118px;
+  padding: 19px 20px;
+  border-radius: 17px;
+}
+.app:is(.role-insurer,.role-inspection) .insurer-workspace > .banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  border-radius: 16px;
+  padding: 18px 20px;
+}
+.app:is(.role-insurer,.role-inspection) .insurer-workspace > .banner > b {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+.app:is(.role-insurer,.role-inspection) .insurer-workspace > .banner > .note {
+  flex: 2 1 250px;
+  min-width: 0;
+  line-height: 1.55;
+}
+.app:is(.role-insurer,.role-inspection) .insurer-workspace > .banner > .btn {
+  flex: 1 1 210px;
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+  text-align: center;
+}
+@media (max-width: 899px) {
+  .app:is(.role-insurer,.role-inspection) .insurer-workspace > .banner {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 11px;
+    padding: 17px;
+  }
+  .app:is(.role-insurer,.role-inspection) .insurer-workspace > .banner > b,
+  .app:is(.role-insurer,.role-inspection) .insurer-workspace > .banner > .note,
+  .app:is(.role-insurer,.role-inspection) .insurer-workspace > .banner > .btn {
+    flex: none;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+  .app:is(.role-insurer,.role-inspection) .insurer-workspace .cabinet-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+  .app:is(.role-insurer,.role-inspection) .insurer-workspace .cabinet-metrics > .card {
+    min-height: 96px;
+    padding: 14px;
+  }
+  .app:is(.role-insurer,.role-inspection) .insurer-workspace .cabinet-metrics > .card:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+  .app:is(.role-insurer,.role-inspection) .insurer-workspace-hero {
+    min-height: 145px;
+    padding: 22px 19px;
+  }
+  .app:is(.role-insurer,.role-inspection) .insurer-workspace-hero h1 {
+    font-size: clamp(26px, 7vw, 32px);
+    line-height: 1.15;
+  }
+}
