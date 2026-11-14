@@ -674,7 +674,13 @@ export function BookForm({ id }: { id: string }) {
       <div><h1>Запись в сервис</h1><div className="sub">Рембаза «{d.name}» · {d.address}</div></div>
       <div className="card">
         <Field label="Машина" group>
-          {cars.data?.length ? (
+          {caseOrder ? (linkedOrder.data ? (
+            <div className="card flat" aria-label="Грузовик из текущего обращения">
+              <b>{[linkedOrder.data.vehicle?.brand ?? linkedOrder.data.brand, linkedOrder.data.vehicle?.model ?? linkedOrder.data.model].filter(Boolean).join(' ') || 'Грузовик из заявки'}</b>
+              {linkedOrder.data.vehicle?.plate && <span className="note">Госномер: {linkedOrder.data.vehicle.plate}</span>}
+              <span className="note">Для продолжения используется тот же грузовик. Сменить автомобиль можно только в новом обращении.</span>
+            </div>
+          ) : <Loading error={linkedOrder.error} />) : cars.data?.length ? (
             <div className="stack" style={{ gap: 6 }}>
               {cars.data.map((v: any) => (
                 <button key={v.id} type="button" className="opt" aria-pressed={vehicleId === v.id} onClick={() => setVehicle(v.id)}>
@@ -704,7 +710,7 @@ export function BookForm({ id }: { id: string }) {
       </div>
       {caseOrder ? <div className="banner"><span>Это отдельный этап вашего обращения. Сервис согласует стоимость ремонта после осмотра — предыдущие суммы не прибавляются к нему.</span></div>
         : from && <span className="note">По совету мастера — скидка применится в счёте сама.</span>}
-      <button className="btn" disabled={busy || !need || !day} onClick={send}>Отправить запрос</button>
+      <button className="btn" disabled={busy || !need || !day || (!!caseOrder && !linkedOrder.data)} onClick={send}>Отправить запрос</button>
       <span className="note">Сервис подтвердит готовность или уточнит детали — придёт уведомление.</span>
     </main>
   );
