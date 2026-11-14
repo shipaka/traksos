@@ -26,7 +26,8 @@ const cssAudit=async(page,selector,width)=>page.evaluate(({selector,width})=>{
      if(width<900&&el.tagName==='B'&&parseFloat(getComputedStyle(el).fontSize)<11)
        issues.push('unreadable title '+i+': '+getComputedStyle(el).fontSize);
    }
-   const icon=getComputedStyle(card,'::after').backgroundImage;
+   const layer=getComputedStyle(card,'::after').backgroundImage;
+   const icon=layer&&layer!=='none'?layer:getComputedStyle(card).backgroundImage;
    const expected=['master','tow','sto','consult'][i];
    if(!icon||icon==='none')issues.push('missing illustration '+i);
    if(expected&&!icon.includes('tracksos-photo-'+expected))
@@ -55,8 +56,8 @@ try{
    const page=await ctx.newPage();
    await page.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','client');},token);
    await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
-   await page.locator('.tracksos-visual-home .client-direction-card').first().waitFor();
-   const client=await cssAudit(page,'.tracksos-visual-home .client-direction-card',width);
+   await page.locator('.client-dashboard .desktop-quick-card').first().waitFor();
+   const client=await cssAudit(page,'.client-dashboard .desktop-quick-card',width);
    assert(client.count===4&&client.issues.length===0,width+'px client layout: '+JSON.stringify(client));
    await page.screenshot({path:out+'/client-'+width+'.png',fullPage:true});
    await ctx.close();
