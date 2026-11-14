@@ -37,6 +37,8 @@ export interface CreateOrderInput {
   site?: { place?: string; pass?: string; meet?: string; state?: string; when?: string; time?: string };
   /** Выезд после консультации: подсказка мастера переходит в заявку, клиенту — скидка */
   fromConsult?: string;
+  /** Следующий самостоятельный этап того же обращения. */
+  continueFrom?: string;
 }
 
 /** Подсказка мастера после консультации */
@@ -72,6 +74,25 @@ export class OrdersService {
     await this.payments.assertMethodAllowed(method);
 
     const clientId = user.owner_id ?? user.id;
+    // Previous stage must be closed; never mix its price into the next auction.
+    let previous: any = null;
+    if (i.continueFrom) {
+      if (i.fromConsult || i.service !== 'tow')
+        throw bad('bad_continuation', 'Сейчас можно продолжить выезд мастера вызовом эвакуатора');
+      previous = await this.db.one<any>('select * from orders where id=$1', [i.continueFrom]);
+      if (!previous || previous.client_id !== clientId || (user.owner_id && previous.created_by !== user.id))
+        throw forbidden('Продолжить можно только собственное обращение');
+      if (previous.status !== 'completed' || !['cause_found', 'not_found'].includes(previous.result) || previous.service === 'tow')
+        throw conflict('stage_not_ready', 'Предыдущий этап не завершён или не требует эвакуации');
+      const existing = await this.db.one('select id from orders where continuation_of=$1 and status<>$2', [previous.id, 'cancelled']);
+      if (existing) throw conflict('continuation_exists', 'Следующий этап этого обращения уже оформлен');
+      if (previous.vehicle_id && i.vehicleId && previous.vehicle_id !== i.vehicleId)
+        throw bad('different_vehicle', 'Продолжение относится к тому же грузовику');
+      i = { ...i, isSos: true, vehicleId: previous.vehicle_id ?? i.vehicleId,
+        brand: previous.brand ?? i.brand, model: previous.model ?? i.model, year: previous.year ?? i.year,
+        address: i.address || previous.address, lat: i.lat ?? previous.lat, lng: i.lng ?? previous.lng,
+        description: i.description || previous.description || 'Эвакуация после выездного ремонта' };
+    }
     let brand = i.brand ?? null;
     let model = i.model ?? null;
     let year = i.year ?? null;
@@ -118,15 +139,20 @@ export class OrdersService {
       `insert into orders(client_id, created_by, vehicle_id, service, is_sos, problem, description, address, lat, lng,
           zone_id, night, group_trip, tier, brand, estimate, payment_method, client_fee_pct, destination, cargo, loaded, driver_on_site,
           consult_of, discount_amount, discount_reason, model, year, site, status, owner_note,
-          commission_pct_override, commission_campaign_id)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32) returning *`,
+          commission_pct_override, commission_campaign_id, case_root_id, continuation_of)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34) returning *`,
       [clientId, user.id, i.vehicleId ?? null, i.service, !!i.isSos, i.problem ?? null, i.description ?? null, isConsult ? null : i.address ?? null,
         isConsult ? null : i.lat ?? null, isConsult ? null : i.lng ?? null, est.zoneId, night, est.group, tier, brand, est, method, feePct,
         i.destination ?? null, i.cargo ?? null, i.loaded ?? null, i.driverOnSite ?? null,
         consultOf, discount, discount ? CONSULT_DISCOUNT : null, model, year, isConsult ? null : i.site ?? null,
-        gate ? 'awaiting_owner' : 'searching', gate, campaign?.commission_pct ?? null, campaign?.id ?? null],
-    );
-    await this.event(this.db, order!.id, user.id, 'created', { estimate: est, sos: !!i.isSos });
+        gate ? 'awaiting_owner' : 'searching', gate, campaign?.commission_pct ?? null, campaign?.id ?? null,
+        previous ? (previous.case_root_id ?? previous.id) : null, previous?.id ?? null],
+    ).catch((e: any) => {
+      if (e?.code === '23505' && e?.constraint === 'orders_one_live_continuation_idx')
+        throw conflict('continuation_exists', 'Этап уже оформлен: откройте его из обращения');
+      throw e;
+    });
+    await this.event(this.db, order!.id, user.id, 'created', { estimate: est, sos: !!i.isSos, continuationOf: previous?.id ?? null });
 
     if (gate) {
       await this.event(this.db, order!.id, user.id, 'owner_approval_requested', { reason: gate });
@@ -626,6 +652,21 @@ export class OrdersService {
       : null;
     const vehicle = o.vehicle_id ? await this.db.one('select brand, model, year, plate, trailer_plate from vehicles where id=$1', [o.vehicle_id]) : null;
     const events = actor ? await this.db.query('select type, data, actor_id, created_at from order_events where order_id=$1 order by id', [orderId]) : [];
+    const caseRootId = o.case_root_id ?? o.id;
+    // The combined customer invoice is visible to the customer/admin only:
+    // a performer sees exclusively the price of their own contract.
+    const caseRows = actor === 'client' || actor === 'admin'
+      ? await this.db.query<any>(
+          `select id, number, status, service, result, result_note, continuation_of, estimate,
+                  call_out_amount, work_amount, client_fee_pct, discount_amount
+             from orders where id=$1 or case_root_id=$1 order by created_at, number`, [caseRootId])
+      : [];
+    const caseSteps = caseRows.map((step: any) => ({
+      id: step.id, number: step.number, service: step.service, status: step.status,
+      result: step.result, resultNote: step.result_note, money: this.money(step),
+    }));
+    const caseConfirmedTotal = caseRows.filter((step: any) => step.status === 'completed')
+      .reduce((sum: number, step: any) => sum + this.money(step).total, 0);
     const search = o.status === 'searching'
       ? await this.db.one<{ candidates: number; offers: number }>(
           `select (select count(*)::int from order_dispatch where order_id=$1 and status in ('bidding','ringing','queued')) as candidates,
@@ -644,7 +685,13 @@ export class OrdersService {
       points: actor === 'client' && o.status === 'awaiting_confirmation' && this.referral ? await this.referral.available(o.client_id, this.money(o).clientFee) : null,
       bill: o.bill ?? null, billingStep: Number((await this.settings.get('pricing')).billingStepMinutes ?? 60),
       site: o.site, workStartedAt: o.work_started_at ?? null, waitRate: performer?.wait_rate ?? null, ownerNote: o.owner_note ?? null, partMode: o.part_mode ?? null, waitStartedAt: o.wait_started_at ?? null, waitMinutes: o.wait_minutes ?? 0,
-      consultHint: o.consult_hint, consultOf: o.consult_of, siteFlags: o.site_flags ?? [], lateMinutes: o.late_minutes ?? 0, hintCheck: o.hint_check,
+      consultHint: o.consult_hint, consultOf: o.consult_of,
+      continuationOf: o.continuation_of ?? null, caseRootId,
+      caseSummary: { rootId: caseRootId, stages: caseSteps, confirmedTotal: caseConfirmedTotal, multiStage: caseSteps.length > 1 },
+      canContinueWithTow: actor === 'client' && o.status === 'completed' &&
+        o.service !== 'tow' && ['cause_found', 'not_found'].includes(o.result) &&
+        !caseRows.some((step: any) => step.continuation_of === o.id && step.status !== 'cancelled'),
+      siteFlags: o.site_flags ?? [], lateMinutes: o.late_minutes ?? 0, hintCheck: o.hint_check,
       consultFrom: o.consult_of ? await this.db.one(`select o.number, o.consult_hint as hint, u.name as performer_name from orders o
           left join users u on u.id=o.performer_id where o.id=$1`, [o.consult_of]) : null,
       recommendedCenter: o.recommended_center_id ? await this.db.one(`select id, name, address from service_centers where id=$1`, [o.recommended_center_id]) : null,
@@ -662,7 +709,8 @@ export class OrdersService {
     const where = scope === 'performer' ? 'o.performer_id = $1' : user.owner_id ? 'o.created_by = $1' : '(o.client_id = $1 or o.created_by = $1)';
     return this.db.query(
       `select o.id, o.number, o.status, o.service, o.is_sos, o.problem, o.description, o.address, o.brand, o.estimate, o.work_amount, o.call_out_amount,
-              o.client_fee_pct, o.payment_method, o.created_at, o.completed_at, o.consult_of, o.vehicle_id,
+              o.client_fee_pct, o.payment_method, o.created_at, o.completed_at, o.consult_of,
+              o.case_root_id, o.continuation_of, o.result, o.result_note, o.vehicle_id,
               v.brand as v_brand, v.model as v_model, v.year as v_year, v.plate as v_plate,
               (select coalesce(company_name, name) from users where id=o.client_id) as client_name
          from orders o left join vehicles v on v.id=o.vehicle_id where ${where} ${status ? 'and o.status = $2' : ''} order by o.created_at desc limit 100`,
