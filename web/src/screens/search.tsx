@@ -84,7 +84,7 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
                     <div className="stack" style={{ gap: 2 }}>
                       <b>{o.name ?? 'Исполнитель'}</b>
                       <span className="note">
-                        {o.rating && o.rating_count >= 3 ? `★ ${o.rating.toFixed(1)} · ${o.rating_count} ${plural(o.rating_count, 'отзыв', 'отзыва', 'отзывов')}` : 'Новый на ТракSOS'}
+                        {o.rating && o.rating_count >= 3 ? `★ ${o.rating.toFixed(1)} · ${o.rating_count} ${plural(o.rating_count, 'отзыв', 'отзыва', 'отзывов')}` : 'Новый на TrakSOS'}
                         {o.completed ? ` · ${o.completed} ${plural(o.completed, 'выезд', 'выезда', 'выездов')}` : ''}
                       </span>
                     </div>

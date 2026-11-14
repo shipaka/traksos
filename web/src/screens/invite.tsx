@@ -1,4 +1,4 @@
-// «Пригласить»: личная ссылка и QR, баллы и за что они, кого пригласили. 1 балл = 1 ₽ скидки на сбор или комиссию ТракSOS.
+// «Пригласить»: личная ссылка и QR, баллы и за что они, кого пригласили. 1 балл = 1 ₽ скидки на сбор или комиссию TrakSOS.
 import { get, fmtTime } from '../api.ts';
 import { useLoad, useToast, Loading } from '../ui.tsx';
 import { qrSvg } from '../qr.ts';
@@ -6,7 +6,7 @@ import { qrSvg } from '../qr.ts';
 const pts = (k: number) => Math.round(k / 100).toLocaleString('ru-RU');
 const KIND: Record<string, string> = {
   welcome: 'Подарок за вход по приглашению', ref_client: 'За приглашённого клиента', ref_performer: 'За приглашённого исполнителя',
-  ref_service: 'За приглашённую рембазу', spend: 'Погашено баллами', expire: 'Сгорело', admin: 'От ТракSOS',
+  ref_service: 'За приглашённую рембазу', spend: 'Погашено баллами', expire: 'Сгорело', admin: 'От TrakSOS',
 };
 const WHO: Record<string, string> = { client: 'клиент', performer: 'исполнитель', service: 'рембаза' };
 
@@ -17,17 +17,17 @@ export function Invite() {
   const r = d.data.rules;
   const link = `${location.origin}${location.pathname}#/r/${d.data.code}`;
   async function share() {
-    const text = `ТракSOS — помощь грузовикам в СПб и ЛО: мастер или эвакуатор на место. По ссылке — ${pts(r.welcome)} баллов на первую заявку: ${link}`;
+    const text = `TrakSOS — помощь грузовикам в СПб и ЛО: мастер или эвакуатор на место. По ссылке — ${pts(r.welcome)} баллов на первую заявку: ${link}`;
     try {
-      if (navigator.share) await navigator.share({ title: 'ТракSOS', text, url: link });
+      if (navigator.share) await navigator.share({ title: 'TrakSOS', text, url: link });
       else { await navigator.clipboard.writeText(link); toast('Ссылка скопирована'); }
     } catch { /* закрыли окно «Поделиться» */ }
   }
   return (
     <main>
       <div>
-        <h1>Пригласить в ТракSOS</h1>
-        <div className="sub">Баллы за приглашения гасят сбор и комиссию ТракSOS. 1 балл = 1 ₽ скидки, в деньги не выводятся.</div>
+        <h1>Пригласить в TrakSOS</h1>
+        <div className="sub">Баллы за приглашения гасят сбор и комиссию TrakSOS. 1 балл = 1 ₽ скидки, в деньги не выводятся.</div>
       </div>
 
       <div className="card" style={{ alignItems: 'center', textAlign: 'center' }}>

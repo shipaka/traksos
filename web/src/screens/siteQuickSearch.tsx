@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-/** Small, honest navigation search: finds only actual existing TrackSOS
+/** Small, honest navigation search: finds only actual existing TrakSOS
  * sections/workflows. Supplier inventory is searched in the parts shop itself. */
 const sections=[
   {id:'road',title:'Помощь в дороге',hint:'Вызов мастера, эвакуатора или выбор СТО',
@@ -21,7 +21,7 @@ const sections=[
     tags:'техосмотр диагностическая карта осмотр',to:'/garage',guest:'/register',icon:'✓'},
   {id:'orders',title:'Мои заявки',hint:'Активные обращения и история',
     tags:'мои заявки история статус заказы обращения',to:'/orders',guest:'/login',icon:'☷'},
-  {id:'guide',title:'Помощь и подсказки',hint:'Как пользоваться TrackSOS',
+  {id:'guide',title:'Помощь и подсказки',hint:'Как пользоваться TrakSOS',
     tags:'справочник руководство как работает помощь подсказки',to:'/help',guest:'/help',icon:'?'},
 ];
 

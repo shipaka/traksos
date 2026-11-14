@@ -59,7 +59,7 @@ export function Fleet() {
   return (
     <main className="fleet-workspace stack">
       <Back to="garage" label="Гараж" />
-      <section className="internal-role-hero internal-role-hero-fleet"><span>TRACKSOS · УПРАВЛЕНИЕ ПЕРЕВОЗКАМИ</span><h1>Мой парк</h1>
+      <section className="internal-role-hero internal-role-hero-fleet"><span>TRAKSOS · УПРАВЛЕНИЕ ПЕРЕВОЗКАМИ</span><h1>Мой парк</h1>
       <p>Машины, водители и что им можно. Все заказы и чаты водителей видны вам.</p></section>
 
       <section className="fleet-live-insights" aria-label="Текущие показатели автопарка">
@@ -141,7 +141,7 @@ export function Fleet() {
           <Field label="Идентификатор ЭДО"><input className="field" placeholder="ID участника" value={edo.edoId} onChange={(e) => setEdo({ ...edo, edoId: e.target.value })} /></Field>
         </div>
         <label className="agree"><input type="checkbox" checked={d.company.pdfOnly} onChange={async (e) => { const r = await run(() => put('/api/fleet', { edoPdfOnly: e.target.checked }), 'Сохранено'); if (r) f.setData(r); }} /><span>Получать документы только в PDF</span></label>
-        <span className="note">Счета и акты приходят в ЭДО, подписанные ТракSOS. По каждой поломке — один счёт: консультация, выезды, работа и эвакуатор вместе.</span>
+        <span className="note">Счета и акты приходят в ЭДО, подписанные TrakSOS. По каждой поломке — один счёт: консультация, выезды, работа и эвакуатор вместе.</span>
         <button className="btn ghost small" disabled={busy} onClick={async () => { if (await run(() => patch('/api/me', { edoOperator: edo.edoOperator || null, edoId: edo.edoId || null }), 'ЭДО сохранено')) reload(); }}>Сохранить ЭДО</button>
         {!d.company.inn && <span className="note">Укажите компанию и ИНН в <a href="#/profile">профиле</a> — без них счёт по ЭДО не выставить.</span>}
       </div>
@@ -160,9 +160,9 @@ function Sticker({ car }: { car: any }) {
   function print() {
     const w = window.open('', '_blank');
     if (!w) return;
-    w.document.write(`<!doctype html><meta charset="utf-8"><title>Наклейка ТракSOS</title><body style="font-family:sans-serif;text-align:center;padding:24px">
+    w.document.write(`<!doctype html><meta charset="utf-8"><title>Наклейка TrakSOS</title><body style="font-family:sans-serif;text-align:center;padding:24px">
       <div style="max-width:320px;margin:auto;border:2px solid #000;border-radius:16px;padding:16px">
-      <h2 style="margin:0 0 4px">ТракSOS — помощь на дороге</h2><div>${esc(car.brand)} ${esc(car.model)} · ${esc(car.plate)}</div>
+      <h2 style="margin:0 0 4px">TrakSOS — помощь на дороге</h2><div>${esc(car.brand)} ${esc(car.model)} · ${esc(car.plate)}</div>
       <div style="width:240px;margin:12px auto">${svg}</div>
       <div>Наведите камеру → телефон → код из SMS.<br>Сломались — жмите SOS.</div></div><script>setTimeout(()=>print(),300)</script>`);
     w.document.close();
