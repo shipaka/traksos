@@ -44,6 +44,7 @@ async function asset(path, minBytes = 5000) {
   } catch { expect(false, path + ' is present'); }
 }
 const landing = await read('web/src/screens/login.tsx');
+const catalogue = await read('web/src/guestCatalog.ts');
 const finalCss = await read('web/src/finalCanon.css');
 const css = await read('web/src/styles.css');
 const shell = await read('web/src/main.tsx');
@@ -83,35 +84,50 @@ expect(css.includes("url('../public/tracksos-approved-map.webp')"), 'public demo
 expect(!css.includes("url('../public/truck-scene.svg')"), 'old cartoon truck is not the active hero image');
 expect(landing.includes('public-map-static'), 'public map does not depend on network services');
 expect(!landing.includes('openstreetmap.org/export/embed'), 'no third-party iframe is required for offline public map');
-expect(landing.includes('Демонстрационная карта'), 'demo map is explicitly labelled');
+expect(landing.includes('Пример расположения услуг.'), 'demo map explicitly labels fictional service markers');
+expect(landing.includes('yandex.ru/maps/'), 'guest static map opens real Yandex Maps on click');
 expect(landing.includes('Санкт-Петербург и Ленинградская область'), 'launch region is shown');
 expect(shell.includes("import './finalCanon.css';"), 'the only final design layer is loaded by the real app');
 expect(shell.includes('guest-site-nav'), 'the guest PC has horizontal navigation, not an alternative sidebar');
 expect(finalCss.includes("url('../public/traksos-final-hero.webp')"), 'the final PC truck image is displayed by live CSS');
 expect(finalCss.includes('grid-template-columns:repeat(6,minmax(0,1fr))'), 'six photographic service cards in desktop row');
 const finalServices = [
-  "['tow', '↗', 'Эвакуация'",
-  "['van', '⚒', 'Выездной мастер'",
-  "['sto', '▣', 'СТО и сервисы'",
-  "['insurance', '◇', 'Страхование'",
-  "['parts', '⚙', 'Запчасти'",
-  "['consult', '☏', 'Консультации'",
+  "{ id: 'tow', icon: '↗', title: 'Эвакуация'",
+  "{ id: 'van', icon: '⚒', title: 'Выездной мастер'",
+  "{ id: 'sto', icon: '▤', title: 'СТО и сервисы'",
+  "{ id: 'insurance', icon: '◇', title: 'Страхование'",
+  "{ id: 'parts', icon: '⚙', title: 'Запчасти'",
+  "{ id: 'consult', icon: '☏', title: 'Консультации'",
 ];
 let previous = -1;
 for (const item of finalServices) {
-  const index = landing.indexOf(item);
-  expect(index > previous, 'six single-canon service cards are present and ordered: '+item);
+  const index = catalogue.indexOf(item);
+  expect(index > previous, 'approved 6 services are present and ordered: ' + item);
   previous = index;
 }
+expect(landing.includes('SERVICE_TILES.map') && landing.includes('Далее'),
+  'six photographic services link to public previews with Далее action');
+expect(shell.includes("route[0] === 'explore'") && shell.includes("route[0] === 'company'") && shell.includes("route[0] === 'offers'"),
+  'public catalogue, Company and Offers have real routes');
+expect(shell.includes('guest-mobile-catalog') && shell.includes('guest-nav-group'),
+  'guest catalogue links work on mobile and desktop');
+expect(landing.includes('>Войти</button>') && landing.includes('>Регистрация</button>'),
+  'approved hero calls to action open login and client registration');
 try { await stat('web/public/approved-desktop.html'); expect(false, 'superseded static demo was deleted'); }
 catch { console.log('OK: superseded static HTML mockup not present'); }
 
 expect(shell.includes('guest-header-actions'), 'public header provides sign-in and registration');
-expect(landing.includes('Выбор кабинета при регистрации'), 'registration exposes a complete public account chooser');
-for(const name of ['Я мастер','Я эвакуаторщик','Я рембаза (сервис)','Мастер и своя СТО','Я представитель страховой компании',
-  'Владелец / автопарк','Водитель автопарка']) {
-  expect(landing.includes(name), 'approved registration category is available: '+name);
+expect(landing.includes('Выбор кабинета при регистрации'), 'client registration has a separate account-type choice');
+for(const name of ['Владелец / автопарк','Водитель автопарка']) {
+  expect(landing.includes(name), 'client type selectable: '+name);
 }
+for(const name of ["id: 'master', name: 'Мастер'", "id: 'tow', name: 'Эвакуаторщик'",
+  "id: 'service', name: 'СТО'", "id: 'insurer', name: 'Страховой агент'"]) {
+  expect(landing.includes(name), 'exactly 4 partner entry types are available: '+name);
+}
+expect(!landing.includes("id: 'master_service'"), 'hybrid role is not a fifth public partner registration choice');
+expect(landing.includes('MASTER_SPECIALTIES.map'), 'master chooses specialties during registration');
+expect(!landing.includes('Помогите — нужна помощь'), 'legacy help button removed from login');
 expect(landing.includes("roles.includes('moderator') return '#/as/moderator'") ||
        landing.includes("roles.includes('moderator')) return '#/as/moderator'"),
        'moderator enters the restricted cabinet instead of the administrator panel');
