@@ -158,7 +158,7 @@ await login(k, '+79991112233', 'help');
 // «Помогите» — после кода сразу экран SOS
 await k.waitForURL(/#\/sos/);
 await k.goto(BASE + '/#/');
-await k.getByRole('heading', { name: 'Кто вам нужен?' }).first().waitFor();
+await k.locator('.client-dashboard .desktop-quick-card').first().waitFor();
 await assertDashboardTheme(k, 'client');
 await checkCabinetMenu(k, ['История заявок', 'Мой гараж', 'Мой автопарк', 'Оферта', 'Профиль и настройки']);
 await shot(k, '03-client-home');
