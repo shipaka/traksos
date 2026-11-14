@@ -1,4 +1,4 @@
-// Оплата по агентской схеме. ТракSOS — агент исполнителя: принимает деньги клиента за исполнителя,
+// Оплата по агентской схеме. TrakSOS — агент исполнителя: принимает деньги клиента за исполнителя,
 // перечисляет ему сумму за вычетом вознаграждения, себе оставляет сбор и вознаграждение.
 //
 // Три способа, каждый включается отдельно в настройках площадки (payments.cash/online/invoice):
@@ -163,13 +163,13 @@ export class PaymentsService implements PaymentHooks {
         customerPhone: client!.phone,
         items: [
           { description: kind === 'call_out' ? 'Выезд мастера' : 'Работы по заявке', amount, supplier: perf?.inn ? { name: perf.name, inn: perf.inn } : undefined },
-          ...(fee ? [{ description: 'Сервисный сбор ТракSOS', amount: fee }] : []),
+          ...(fee ? [{ description: 'Сервисный сбор TrakSOS', amount: fee }] : []),
         ],
       });
     }
     const r = await this.provider.createPayment({
       total, capture, method: p.defaultMethod, idempotencyKey: key,
-      description: `ТракSOS, заявка №${order.number}: ${kind === 'call_out' ? 'выезд' : 'работа'}`,
+      description: `TrakSOS, заявка №${order.number}: ${kind === 'call_out' ? 'выезд' : 'работа'}`,
       returnUrl: `${config.publicUrl}/orders/${order.id}`,
       metadata: { orderId: order.id, paymentId: row!.id, kind },
       receipt,
@@ -282,7 +282,7 @@ export class PaymentsService implements PaymentHooks {
       }
       const r = await this.provider.payout({
         amount: po.amount, idempotencyKey: `payout:${po.id}`,
-        description: `ТракSOS: выплата по заявке`, metadata: { payoutId: po.id, orderId: po.order_id },
+        description: `TrakSOS: выплата по заявке`, metadata: { payoutId: po.id, orderId: po.order_id },
         performer: { id: po.performer_id, taxStatus: po.tax_status, inn: po.inn },
       });
       if (!r) {

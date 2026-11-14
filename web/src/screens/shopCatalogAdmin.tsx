@@ -92,7 +92,7 @@ export function AdminShopCatalog() {
         <span className="pill">На проверке: {stats.data?.pending ?? '…'}</span>
         <span className="pill good">Проверено: {stats.data?.approved ?? '…'}</span>
       </div>
-      <span className="note">Формат CSV (разделитель «;», запятая или табуляция). Колонки: <b>бренд;артикул;название;категория;синонимы</b>. Категория — код или название раздела TrackSOS. Поддерживаются русские заголовки и кавычки.</span>
+      <span className="note">Формат CSV (разделитель «;», запятая или табуляция). Колонки: <b>бренд;артикул;название;категория;синонимы</b>. Категория — код или название раздела TrakSOS. Поддерживаются русские заголовки и кавычки.</span>
       <label className="field" style={{ display: 'block' }}>
         Выберите файл CSV
         <input type="file" accept=".csv,.tsv,text/csv,text/tab-separated-values,text/plain"
@@ -105,7 +105,7 @@ export function AdminShopCatalog() {
       </label>
       <label className="agree">
         <input type="checkbox" checked={rights} onChange={(e) => { setRights(e.target.checked); setPreview(null); }}/>
-        <span>Подтверждаю, что имею право использовать и импортировать эти данные в TrackSOS.</span>
+        <span>Подтверждаю, что имею право использовать и импортировать эти данные в TrakSOS.</span>
       </label>
       {fileError && <div className="banner warn">{fileError}</div>}
       {!!rows.length && <>

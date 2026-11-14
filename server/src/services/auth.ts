@@ -108,7 +108,7 @@ export class AuthService {
       );
     });
     try {
-      await this.sms.send(phone, `TrackSOS: код ${purpose === 'reset' ? 'восстановления доступа' : 'регистрации'} ${code}. Никому его не сообщайте.`);
+      await this.sms.send(phone, `TrakSOS: код ${purpose === 'reset' ? 'восстановления доступа' : 'регистрации'} ${code}. Никому его не сообщайте.`);
     } catch (error) {
       if (error instanceof SmsRejectedError) {
         // Only a coarse, non-sensitive reason is logged. Do not log the number,

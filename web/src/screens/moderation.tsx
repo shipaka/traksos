@@ -77,7 +77,7 @@ export function ModCase({ id }: { id: string }) {
             <details>
               <summary className="note">Чат заявки · {d.chat.length} сообщ.</summary>
               <div className="stack" style={{ gap: 4, marginTop: 8 }}>
-                {d.chat.map((m: any, i: number) => <span key={i} className="note"><b>{m.sender ?? 'ТракSOS'}</b> · {fmtTime(m.created_at)}: {m.body}</span>)}
+                {d.chat.map((m: any, i: number) => <span key={i} className="note"><b>{m.sender ?? 'TrakSOS'}</b> · {fmtTime(m.created_at)}: {m.body}</span>)}
               </div>
             </details>
           )}
