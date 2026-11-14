@@ -50,6 +50,21 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const [insurerOnly, setInsurerOnly] = useState(false);
   const [agree, setAgree] = useState(false);
   const toast = useToast();
+  // The desktop "Услуги" link also works when opened from the sign-in form.
+  // The destination is a real section, never a second/legacy landing page.
+  useEffect(() => {
+    if (intent) return;
+    let pending = false;
+    try {
+      pending = sessionStorage.getItem('traksos.scrollPublicServices') === '1';
+      sessionStorage.removeItem('traksos.scrollPublicServices');
+    } catch { /* private browsing */ }
+    if (!pending) return;
+    const frame = requestAnimationFrame(() => {
+      document.getElementById('public-services')?.scrollIntoView({ behavior: 'auto', block: 'start' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [intent]);
   // Store only the navigation choice from the public tile, never client data.
   const chooseGuestAction = (choice: string, next: Intent = 'help') => {
     try { sessionStorage.setItem('traksos.pendingLandingAction', choice); } catch { /* private browsing */ }
