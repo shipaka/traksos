@@ -16,7 +16,16 @@ const KIND_NAME: Record<string, string> = { dispute: 'Спор', appeal: 'Обж
 export class ModerationService {
   constructor(private db: Db, private notifier: Notifier, private reviews: ReviewsService, private now: () => Date, private sms?: SmsProvider) {}
 
-  private async staff() {
+  private async staff(linkedSupportTicket = false) {
+    // A support-linked dispute belongs to the moderator during the first
+    // 60 minutes. Admin receives the separate one-time overdue alert.
+    if (linkedSupportTicket) {
+      const moderators = await this.db.query<{ id: string }>(
+        `select id from users where roles && '{moderator}'::text[]`);
+      if (moderators.length) return moderators.map(r => r.id);
+      return (await this.db.query<{ id: string }>(
+        `select id from users where roles && '{admin}'::text[]`)).map(r => r.id);
+    }
     return (await this.db.query<{ id: string }>(`select id from users where roles && '{admin,moderator}'::text[]`)).map((r) => r.id);
   }
 
@@ -43,7 +52,7 @@ export class ModerationService {
       return { id: created!.id, number: created!.number, created: true };
     });
     if (result.created)
-      await this.notifier.notify(await this.staff(), { type: 'mod_case', caseId: result.id },
+      await this.notifier.notify(await this.staff(!!p.ticketId), { type: 'mod_case', caseId: result.id },
         { kind: 'normal', title: `${KIND_NAME[p.kind]} №${result.number}`, body: p.title, data: { caseId: result.id } });
     return result.id;
   }
