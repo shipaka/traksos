@@ -111,7 +111,7 @@ try{
         const photoImage=css.backgroundImage;
         const photoSize=css.backgroundSize;
         const rect=el.getBoundingClientRect();
-        const url=photoImage.match(/url\\(["']?([^"')]+)["']?\\)/)?.[1];
+        const url=photoImage.match(/url\(["']?([^"')]+)["']?\)/)?.[1];
         const image=url?new Image():null;
         if(image){image.src=url;await image.decode().catch(()=>{});}
         return {photoSize,photoImage,visible:rect.width>100&&rect.height>100,
