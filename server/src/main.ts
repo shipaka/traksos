@@ -83,6 +83,7 @@ const hourly = setInterval(() => { void housekeeping(); }, 3_600_000);
 const captureReconcile = () => Promise.all([
   app.payments.reconcileCaptures(),
   app.payments.reconcileCancellations(),
+  app.payments.reconcileWorkCreations(),
 ]).catch((e) => console.error('[payment-reconciliation]', e));
 const captureTimer = setInterval(() => { void captureReconcile(); }, 30_000);
 void captureReconcile();
