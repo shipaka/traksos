@@ -17,6 +17,7 @@ import { MeCtx, ToastProvider, useRoute, useToast, type Me } from './ui.tsx';
 import { native } from './native.ts';
 import { Login } from './screens/login.tsx';
 import { GuestExplore } from './screens/guestExplore.tsx';
+import { GuestCompany, GuestOffers } from './screens/guestInfo.tsx';
 import { TOP_CATALOGUE, SERVICE_TILES, CATALOGUE, rememberGuestService } from './guestCatalog.ts';
 import { SiteQuickSearch } from './screens/siteQuickSearch.tsx';
 import { Invite } from './screens/invite.tsx';
@@ -185,7 +186,7 @@ function App() {
   if (!me) {
     return (
       <MeCtx.Provider value={{ me: null, reload, mode: 'client', setMode }}>
-        <Shell mode="client" me={null}>{route[0] === 'offer' ? <OfferPage audience={route[1] ?? 'client'} /> : route[0] === 'qr' && route[1] ? <QrJoin code={route[1]} /> : route[0] === 'rules' ? <Rules /> : route[0] === 'help' ? <Help /> : route[0] === 'explore' ? <GuestExplore id={route[1] || ''} itemKey={route[2]} /> : <>{route[0] === 'r' && <div className="banner good" style={{ margin: '12px 16px 0' }}><span>Вас пригласили в TrakSOS — после входа на счёт придут подарочные баллы.</span></div>}<Login key={route[0] ?? 'public'} entry={route[0] === 'login' ? 'login' : route[0] === 'register' ? 'register' : route[0] === 'join' ? 'join' : undefined} /></>}</Shell>
+        <Shell mode="client" me={null}>{route[0] === 'offer' ? <OfferPage audience={route[1] ?? 'client'} /> : route[0] === 'qr' && route[1] ? <QrJoin code={route[1]} /> : route[0] === 'rules' ? <Rules /> : route[0] === 'help' ? <Help /> : route[0] === 'explore' ? <GuestExplore id={route[1] || ''} itemKey={route[2]} /> : route[0] === 'company' ? <GuestCompany /> : route[0] === 'offers' ? <GuestOffers /> : <>{route[0] === 'r' && <div className="banner good" style={{ margin: '12px 16px 0' }}><span>Вас пригласили в TrakSOS — после входа на счёт придут подарочные баллы.</span></div>}<Login key={route[0] ?? 'public'} entry={route[0] === 'login' ? 'login' : route[0] === 'register' ? 'register' : route[0] === 'join' ? 'join' : undefined} /></>}</Shell>
       </MeCtx.Provider>
     );
   }
@@ -362,6 +363,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
             </div>
           </details>)}
           <a href="#/join" className="guest-business-link">Для бизнеса</a>
+          <a href="#/company" className="guest-business-link">Компания</a>
+          <a href="#/offers" className="guest-business-link">Оферты</a>
         </nav>}
         {!me && <details className="guest-mobile-catalog">
           <summary>Каталог услуг <span aria-hidden="true">⌄</span></summary>
@@ -377,6 +380,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               </div>
             </details>)}
             <a href="#/join" className="guest-mobile-business">Для бизнеса · регистрация партнёра</a>
+            <a href="#/company" className="guest-mobile-business">Компания</a>
+            <a href="#/offers" className="guest-mobile-business">Оферты</a>
           </nav>
         </details>}
         <SiteQuickSearch authenticated={!!me} />
@@ -446,6 +451,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               <a className="desktop-nav-link" href="#/login"><span>◉</span><span>Войти</span></a>
               <a className="desktop-nav-link" href="#/register"><span>＋</span><span>Регистрация клиента</span></a>
               <a className="desktop-nav-link" href="#/join"><span>▣</span><span>Для бизнеса</span></a>
+              <a className="desktop-nav-link" href="#/company"><span>ⓘ</span><span>Компания</span></a>
+              <a className="desktop-nav-link" href="#/offers"><span>▤</span><span>Оферты</span></a>
               <a className="desktop-nav-link" href="#/rules"><span>▤</span><span>Правила площадки</span></a>
                         </>}
           </nav>
@@ -533,7 +540,7 @@ function SiteFooter() {
       {l?.address && <span className="note">{l.address}</span>}
       {contacts && <span className="note">Поддержка: {contacts}</span>}
       <span className="row note" style={{ gap: 12 }}>
-        <a href="#/offer/client">Оферта</a><a href="#/offer/privacy">Персональные данные</a><a href="#/rules">Правила площадки</a>
+        <a href="#/company">Компания</a><a href="#/offers">Оферты</a><a href="#/offer/privacy">Персональные данные</a><a href="#/rules">Правила площадки</a>
       </span>
       <span className="note">© {new Date().getFullYear()} {l?.brand ?? 'TrakSOS'}</span>
     </footer>
