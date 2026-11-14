@@ -25,8 +25,113 @@ export function Home() {
   const { me } = useMe();
   const active = useLoad(() => get('/api/orders'), [], (e) => e.type === 'order');
   const live = (active.data ?? []).filter((o: any) => !['completed', 'cancelled'].includes(o.status));
-  return <VisualClientHome me={me} live={live} ordersLoaded={active.data !== null} ordersError={active.error} help={<HelpDirections />} />;
+  const { fill } = usePrices();
+  return (
+    <main className="client-home client-dashboard">
+      <section className="desktop-hero" aria-label="Помощь грузовому транспорту">
+        <div className="desktop-hero-copy">
+          <span className="desktop-eyebrow">ТРАКSOS · САНКТ-ПЕТЕРБУРГ И ЛЕНОБЛАСТЬ</span>
+          <h1>Помощь в дороге. <span>Всё в одном месте.</span></h1>
+          <p>Вызывайте специалиста, выбирайте СТО и следите за работой в едином кабинете.</p>
+          <div className="desktop-hero-buttons">
+            <a className="desktop-primary-action" href="#/sos">SOS · Помощь в дороге ↗</a>
+            <a className="desktop-outline-action" href="#/orders">Мои заявки</a>
+          </div>
+          <div className="launch-region" role="note">Зона запуска: Санкт-Петербург и Ленинградская область</div>
+        </div>
+        <img className="client-hero-scania" src="/tracksos-approved-scania-r520.webp" alt="Фирменный тягач Scania R520" loading="eager" />
+      </section>
+
+      <section className="desktop-quick-links" aria-label="Выберите помощь">
+        <a href="#/sos" className="desktop-quick-card"><span className="desktop-quick-icon">⚡</span><span><b>Выездной мастер</b><small>Электрика, диагностика, пневматика, шиномонтаж</small></span><span aria-hidden="true">↗</span></a>
+        <a href="#/new/tow" className="desktop-quick-card"><span className="desktop-quick-icon">↗</span><span><b>Эвакуатор</b><small>Тягач, полуприцеп или сцепка</small></span><span aria-hidden="true">↗</span></a>
+        <a href="#/services" className="desktop-quick-card"><span className="desktop-quick-icon">▤</span><span><b>СТО грузовых автомобилей</b><small>Выбор сервиса и запись на ремонт</small></span><span aria-hidden="true">↗</span></a>
+        <a href="#/new/consult" className="desktop-quick-card"><span className="desktop-quick-icon">☎</span><span><b>Консультация по телефону</b><small>Обсудить проблему со специалистом</small></span><span aria-hidden="true">↗</span></a>
+      </section>
+
+      <div className="desktop-home-columns">
+        <section className="desktop-home-main">
+          <div className="mobile-home-heading">
+            <h1>{me?.name ? `${me.name}, что случилось?` : 'Что случилось?'}</h1>
+            <div className="sub">Выберите проблему — подскажем, к кому обратиться. Работаем в Санкт-Петербурге и Ленинградской области.</div>
+          </div>
+          <div className="desktop-section-heading"><h2>Мои активные заявки</h2><a href="#/orders">Все заявки →</a></div>
+          <div className="desktop-active-orders">
+            {active.error ? <div className="desktop-empty-orders">Не удалось загрузить заявки. <a href="#/orders">Открыть раздел</a></div> : !active.data ? <div className="desktop-empty-orders">Загружаем заявки…</div> : live.length === 0 ? <div className="desktop-empty-orders">Сейчас нет активных заявок. Когда вы вызовете помощь, её статус появится здесь.</div> : null}
+            {live.map((o: any) => (
+              <a key={o.id} href={`#/order/${o.id}`} className="card hi" style={{ textDecoration: 'none', color: 'inherit' }}>
+                <div className="between">
+                  <b>Заявка №{o.number} · {SERVICES[o.service]?.name ?? o.service}</b>
+                  <span className={`pill ${STATUS[o.status]?.tone}`}>{STATUS[o.status]?.name}</span>
+                </div>
+                <span className="note">{o.service === 'consult' ? 'по телефону' : o.address ?? o.estimate?.zoneName} · открыть →</span>
+              </a>
+            ))}
+          </div>
+          <div className="desktop-section-heading"><h2>Сервисы ТракSOS</h2></div>
+          <section className="client-dashboard-hubs" aria-label="Разделы кабинета">
+            <a href="#/garage"><span className="client-dashboard-hub-icon">◇</span><b>Страхование и техосмотр</b><small>Документы и оформление для вашей техники</small><em>К автомобилям →</em></a>
+            <a href="#/shop"><span className="client-dashboard-hub-icon">▧</span><b>Грузовые запчасти</b><small>Поиск, аналоги и история покупок. Магазин пока закрыт</small><em>Открыть раздел →</em></a>
+            <a href="#/garage"><span className="client-dashboard-hub-icon">▤</span><b>Мой транспорт</b><small>Грузовики, прицепы и история обслуживания</small><em>Мой гараж →</em></a>
+            <a href="#/support"><span className="client-dashboard-hub-icon">☏</span><b>Поддержка</b><small>Обращения и помощь по вашим заявкам</small><em>Написать →</em></a>
+          </section>
+        </section>
+        <aside className="desktop-home-aside">
+          <div className="desktop-aside-card">
+            <div className="desktop-aside-symbol">24/7</div>
+            <h2>Поддержка в дороге</h2>
+            <p>Экстренный вызов мастера или эвакуатора, консультация и поиск сервиса.</p>
+            <a href="#/sos" className="desktop-aside-cta">Перейти к SOS →</a>
+          </div>
+          <div className="desktop-aside-card"><h2>Ваш кабинет</h2><p>Профиль и уведомления доступны в личном кабинете.</p><a href="#/profile" className="desktop-aside-cta">Открыть профиль →</a></div>
+        </aside>
+      </div>
+
+      <div className="stack home-services">
+        <span className="label">Все услуги</span>
+        {Object.entries(SERVICES).map(([id, s]) => (
+          <button key={id} className="linkrow" onClick={() => go(`new/${id}`)}>
+            <span><b>{s.name}</b><small>{fill(SERVICE_PRICE[id] ?? s.hint)}</small></span><span aria-hidden="true">›</span>
+          </button>
+        ))}
+        <button className="linkrow mobile-services-link" onClick={() => go('services')}>
+          <span><b>СТО и ремонт</b><small>Сервисы-партнёры, запись и статус ремонта</small></span><span aria-hidden="true">›</span>
+        </button>
+      </div>
+    </main>
+  );
 }
+
+/** Сетка поломок + карточка «Что делать» с вариантами и ценами */
+function SymptomPicker({ sos }: { sos: boolean }) {
+  const [sel, setSel] = useState(SYMPTOMS[0].id);
+  const { fill } = usePrices();
+  const s = SYMPTOMS.find((x) => x.id === sel)!;
+  return (
+    <>
+      <div className="grid2">
+        {SYMPTOMS.map((x) => (
+          <button key={x.id} className="opt" style={{ minHeight: 76 }} aria-pressed={sel === x.id} onClick={() => setSel(x.id)}>
+            <b>{x.name}</b><small>{x.sub}</small>
+          </button>
+        ))}
+      </div>
+      <div className="card hi">
+        <span className="label" style={{ color: 'var(--accent)' }}>Что делать · {s.name}</span>
+        <span className="note" style={{ color: 'var(--fg-2)' }}>{s.note}</span>
+        <div className="stack">
+          {s.opts.map((o, i) => (
+            <button key={o.to + i} className={`linkrow ${i === 0 ? 'primary' : ''}`}
+              onClick={() => go(`new/${o.to}?${sos && o.to !== 'consult' ? 'sos' : 'p'}=${s.id}`)}>
+              <span><b>{o.name}</b><small>{fill(o.hint)}</small></span><span aria-hidden="true">›</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
 
 /** One agreed customer decision. First choose WHO can help; ask for specifics only on the next step. */
 function HelpDirections() {
@@ -79,16 +184,66 @@ function HelpDirections() {
 }
 
 export function Sos() {
+  const [direction, setDirection] = useState<'master' | 'tow' | 'service' | null>(null);
+  const options = [
+    { id: 'master', name: 'Выездной мастер', icon: '⚡', detail: 'Электрик, диагност, пневматика, отопители, шиномонтаж' },
+    { id: 'tow', name: 'Эвакуатор', icon: '↗', detail: 'Тягач, прицеп или сцепка — перевозка и подача' },
+    { id: 'service', name: 'Грузовая СТО', icon: '▤', detail: 'Найти сервис, записаться, согласовать ремонт' },
+  ] as const;
+  const specialties = [
+    { href: '#/new/electric?sos=light', icon: '⚡', name: 'Электрик', note: 'Проводка, запуск, освещение' },
+    { href: '#/new/diag?sos=error', icon: '▣', name: 'Диагност', note: 'Ошибки ЭБУ, аварийный режим' },
+    { href: '#/new/air?sos=air', icon: '◉', name: 'Пневматика и тормоза', note: 'ABS/EBS, воздух, тормоза' },
+    { href: '#/new/autonomy?sos=heater', icon: '≋', name: 'Автономные отопители', note: 'Отопитель, печка' },
+    { href: '#/new/tyre?sos=wheel', icon: '◎', name: 'Шиномонтаж', note: 'Колесо и проколы' },
+  ];
+  const chosen = options.find((item) => item.id === direction);
   return (
-    <main className="client-sos-page">
+    <main className="client-sos-directions">
       <Back to="" />
-      <div className="client-section-hero client-section-hero-sos">
+      <div className="client-sos-intro">
+        <span className="label">ТРАКSOS · СРОЧНАЯ ПОМОЩЬ</span>
         <h1>Помощь в дороге</h1>
-        <div className="sub">Сначала выберите направление помощи. Остальные вопросы появятся только после выбора.</div>
+        <p>Выберите направление. Затем укажете машину, местоположение и детали заявки.</p>
       </div>
-      <HelpDirections />
+      {!direction ? (
+        <section className="client-sos-choices" aria-label="Направление помощи">
+          {options.map((item) => (
+            <button key={item.id} type="button" className="client-sos-choice" onClick={() => setDirection(item.id)}>
+              <span className="client-sos-choice-icon" aria-hidden="true">{item.icon}</span>
+              <span><b>{item.name}</b><small>{item.detail}</small></span>
+              <span aria-hidden="true">↗</span>
+            </button>
+          ))}
+        </section>
+      ) : (
+        <section className="client-sos-selected">
+          <div className="client-sos-selected-header">
+            <div><span className="label">ВЫБРАНО НАПРАВЛЕНИЕ</span><h2>{chosen?.name}</h2></div>
+            <button type="button" className="chip" onClick={() => setDirection(null)}>Изменить</button>
+          </div>
+          {direction === 'master' ? <>
+            <p className="note">Выберите специализацию. Описание поломки можно будет уточнить своими словами.</p>
+            <div className="client-sos-specialties">
+              {specialties.map((item) => (
+                <a key={item.href} href={item.href} className="client-sos-specialty">
+                  <span className="client-sos-specialty-icon" aria-hidden="true">{item.icon}</span>
+                  <span><b>{item.name}</b><small>{item.note}</small></span>
+                  <span aria-hidden="true">↗</span>
+                </a>
+              ))}
+            </div>
+          </> : direction === 'tow' ? <>
+            <p className="note">Для эвакуации укажете тип машины или сцепки, откуда и куда её везти.</p>
+            <a className="btn" href="#/new/tow?sos=accident">Оформить вызов эвакуатора →</a>
+          </> : <>
+            <p className="note">В каталоге грузовых СТО выберите подходящий сервис и отправьте запрос на запись.</p>
+            <a className="btn" href="#/services">Выбрать СТО →</a>
+          </>}
+        </section>
+      )}
+      <div className="client-sos-secondary"><span>Не знаете, кто нужен?</span><a href="#/new/consult">Консультация по телефону →</a></div>
       <MyPlace />
-      <LiveStrip who="client" />
     </main>
   );
 }
