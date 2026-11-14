@@ -6,7 +6,6 @@ import { BookingRows } from './base.tsx';
 import { DriverRules } from './fleet.tsx';
 import { VehicleServiceApplication, VehicleServiceHistory } from './vehicleServices.tsx';
 import { native } from '../native.ts';
-import { VisualClientHome } from './visualClientHome.tsx';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
 
@@ -90,87 +89,7 @@ export function Home() {
   );
 }
 
-/** Сетка поломок + карточка «Что делать» с вариантами и ценами */
-function SymptomPicker({ sos }: { sos: boolean }) {
-  const [sel, setSel] = useState(SYMPTOMS[0].id);
-  const { fill } = usePrices();
-  const s = SYMPTOMS.find((x) => x.id === sel)!;
-  return (
-    <>
-      <div className="grid2">
-        {SYMPTOMS.map((x) => (
-          <button key={x.id} className="opt" style={{ minHeight: 76 }} aria-pressed={sel === x.id} onClick={() => setSel(x.id)}>
-            <b>{x.name}</b><small>{x.sub}</small>
-          </button>
-        ))}
-      </div>
-      <div className="card hi">
-        <span className="label" style={{ color: 'var(--accent)' }}>Что делать · {s.name}</span>
-        <span className="note" style={{ color: 'var(--fg-2)' }}>{s.note}</span>
-        <div className="stack">
-          {s.opts.map((o, i) => (
-            <button key={o.to + i} className={`linkrow ${i === 0 ? 'primary' : ''}`}
-              onClick={() => go(`new/${o.to}?${sos && o.to !== 'consult' ? 'sos' : 'p'}=${s.id}`)}>
-              <span><b>{o.name}</b><small>{fill(o.hint)}</small></span><span aria-hidden="true">›</span>
-            </button>
-          ))}
-        </div>
-      </div>
-    </>
-  );
-}
-
-
-/** One agreed customer decision. First choose WHO can help; ask for specifics only on the next step. */
-function HelpDirections() {
-  const [showSpecialties, setShowSpecialties] = useState(() => location.hash.startsWith('#/sos/master'));
-  const masterServices = ['electric', 'diag', 'air', 'autonomy', 'tyre'] as const;
-  return (
-    <section className="client-help-directions" aria-label="Направления помощи">
-      <h2>Кто вам нужен?</h2>
-      <p className="client-directions-lead">Выберите нужный вид помощи. Причину поломки и детали расскажете в заявке.</p>
-      <div className={`client-direction-grid${showSpecialties ? " expanded" : ""}`}>
-        <button type="button" className="client-direction-card main-direction"
-          aria-expanded={showSpecialties} aria-controls="master-specializations"
-          onClick={() => setShowSpecialties(open => !open)}>
-          <span className="client-direction-symbol" aria-hidden="true">⚒</span>
-          <span className="client-direction-copy"><b>Выездной мастер</b><small>Ремонт и диагностика грузовика на месте</small></span>
-          <span className="client-direction-arrow" aria-hidden="true">{showSpecialties ? '−' : '›'}</span>
-        </button>
-        {!showSpecialties && <><a className="client-direction-card" href="#/new/tow">
-          <span className="client-direction-symbol" aria-hidden="true">↗</span>
-          <span className="client-direction-copy"><b>Эвакуатор</b><small>Перевезти грузовик в нужное место</small></span>
-          <span className="client-direction-arrow" aria-hidden="true">›</span>
-        </a>
-        <a className="client-direction-card" href="#/services">
-          <span className="client-direction-symbol" aria-hidden="true">▣</span>
-          <span className="client-direction-copy"><b>СТО грузовых автомобилей</b><small>Найти сервис и записаться на ремонт</small></span>
-          <span className="client-direction-arrow" aria-hidden="true">›</span>
-        </a>
-        <a className="client-direction-card" href="#/new/consult">
-          <span className="client-direction-symbol" aria-hidden="true">◉</span>
-          <span className="client-direction-copy"><b>Консультация по телефону</b><small>Помощь специалиста без выезда</small></span>
-          <span className="client-direction-arrow" aria-hidden="true">›</span>
-        </a></>}
-      </div>
-      {showSpecialties && (
-        <section id="master-specializations" className="client-specializations" aria-label="Специализация выездного мастера">
-          <h3>Какой специалист вам нужен?</h3>
-          <p>Не знаете причину? Выберите диагностику — определять поломку заранее не требуется.</p>
-          <div className="client-specialization-grid">
-            {masterServices.map(id => (
-              <a key={id} href={`#/new/${id}`} className="client-specialization-card">
-                <b>{SERVICES[id].name}</b><small>{SERVICES[id].hint}</small>
-                <span aria-hidden="true">›</span>
-              </a>
-            ))}
-          </div>
-        </section>
-      )}
-    </section>
-  );
-}
-
+/** Direction-first SOS workflow is the single active customer help entry point. */
 export function Sos() {
   const [direction, setDirection] = useState<'master' | 'tow' | 'service' | null>(null);
   const options = [
