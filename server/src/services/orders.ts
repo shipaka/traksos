@@ -543,6 +543,8 @@ export class OrdersService {
     });
     // The order and capture-intent transaction MUST commit before bank IO.
     // A transport failure leaves the durable intent for manual/provider reconciliation.
+    await this.payments.processWorkPaymentForOrder(orderId)
+      .catch((e) => console.error('[order-work-payment-create]', e));
     await this.payments.processCaptureForOrder(orderId)
       .catch((e) => console.error('[order-capture]', e));
     await this.systemMessage(orderId, `Сумма ${rub(m.total - used)} подтверждена${used ? ` (бонусами и баллами ${rub(used)})` : ''}. Оставьте отзыв друг о друге.`);
