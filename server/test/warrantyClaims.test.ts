@@ -287,6 +287,15 @@ test('warranty alternative: bank transfer proof is recorded once from platform o
     const expense=await f.t.db.query<any>('select * from warranty_platform_expenses where job_id=$1',[id]);
     assert.equal(expense.length,1);
     assert.equal(expense[0].amount_kopecks,110000);
+    const clientView=ok(await f.t.api('GET',`/api/warranty-remedies/${id}`,undefined,f.client.token));
+    assert.equal(clientView.expense,null,'only admin can see bank transfer evidence');
+    assert.equal(clientView.expenseRecorded,true);
+    assert.ok(!JSON.stringify(clientView).includes(payload.bankReference),
+      'a non-admin event timeline must not leak the bank reference');
+    const workerView=ok(await f.t.api('GET',`/api/warranty-remedies/${id}`,undefined,alternative.token));
+    assert.ok(!JSON.stringify(workerView).includes(payload.bankReference));
+    const adminView=ok(await f.t.api('GET',`/api/warranty-remedies/${id}`,undefined,f.admin.token));
+    assert.equal(adminView.expense.bank_reference,payload.bankReference);
     const journal=await f.t.db.query<any>(
       'select account,amount_kopecks from warranty_platform_expense_ledger where expense_id=$1 order by account',
       [expense[0].id]);
