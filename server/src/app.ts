@@ -257,6 +257,8 @@ export function createApp(d: Deps) {
 
   // Legal/financial recourse: documentation and voluntary receipts ONLY.
   // Never linked to automatic payouts, holds, fines or third-party balances.
+  r.get('/api/admin/warranty-finance/summary', ['admin'],
+    (c: AuthedCtx) => warrantyRecourse.financialSummary(c.user));
   r.get('/api/warranty-recourse', true, (c: AuthedCtx) =>
     warrantyRecourse.mine(c.user));
   r.get('/api/warranty-recourse/:id', true, (c: AuthedCtx) =>
