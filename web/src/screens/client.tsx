@@ -6,6 +6,7 @@ import { BookingRows } from './base.tsx';
 import { DriverRules } from './fleet.tsx';
 import { VehicleServiceApplication, VehicleServiceHistory } from './vehicleServices.tsx';
 import { native } from '../native.ts';
+import { VisualClientHome } from './visualClientHome.tsx';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
 
@@ -24,88 +25,7 @@ export function Home() {
   const { me } = useMe();
   const active = useLoad(() => get('/api/orders'), [], (e) => e.type === 'order');
   const live = (active.data ?? []).filter((o: any) => !['completed', 'cancelled'].includes(o.status));
-  return (
-    <main className="client-home">
-      <section className="desktop-hero" aria-label="Помощь грузовому транспорту">
-        <div className="desktop-hero-copy">
-          <span className="desktop-eyebrow">ТракSOS · Санкт-Петербург и Ленобласть</span>
-          <h1>Помощь в дороге <span>для грузовиков</span></h1>
-          <p>Мастера, диагностика и эвакуация грузовиков в Санкт-Петербурге и Ленинградской области — от заявки до завершения работ в одном сервисе.</p>
-          <div className="launch-region" role="note">Зона запуска: Санкт-Петербург и Ленинградская область. В других регионах выездные услуги пока недоступны.</div>
-          <div className="desktop-hero-buttons">
-            <a className="desktop-primary-action" href="#/sos">🚨 SOS · Нужна помощь</a>
-            <a className="desktop-outline-action" href="#/orders">Мои заявки</a>
-          </div>
-        </div>
-        <div className="client-hero-art" aria-label="Фирменная Scania R520 TrackSOS на дороге">
-          <img src="/tracksos-approved-scania-r520.webp" alt="Грузовик Scania R520 TrackSOS на дороге" loading="eager" decoding="async" />
-        </div>
-      </section>
-
-      <section className="desktop-quick-links" aria-label="Быстрый доступ">
-        <a href="#/garage" className="desktop-quick-card"><span className="desktop-quick-icon">▣</span><span><b>Мой гараж</b><small>Автомобили и сведения о технике</small></span><span aria-hidden="true">›</span></a>
-        <a href="#/orders" className="desktop-quick-card"><span className="desktop-quick-icon">☷</span><span><b>Мои заявки</b><small>История и статусы работ</small></span><span aria-hidden="true">›</span></a>
-        <a href="#/services" className="desktop-quick-card"><span className="desktop-quick-icon">⚙</span><span><b>СТО и ремонт</b><small>Сервисы-партнёры и запись</small></span><span aria-hidden="true">›</span></a>
-        {!me?.owner_id && !me?.roles.includes('driver')
-          ? <a href="#/fleet" className="desktop-quick-card"><span className="desktop-quick-icon">▤</span><span><b>Мой парк</b><small>Транспорт и водители компании</small></span><span aria-hidden="true">›</span></a>
-          : <a href="#/support" className="desktop-quick-card"><span className="desktop-quick-icon">?</span><span><b>Моя поддержка</b><small>Обращения и помощь водителю</small></span><span aria-hidden="true">›</span></a>}
-      </section>
-
-      <div className="desktop-home-columns">
-        <section className="desktop-home-main">
-          <div className="mobile-home-heading">
-            <span className="mobile-home-kicker">TRACKSOS · ВАША ПОМОЩЬ В ДОРОГЕ</span>
-            <h1>{me?.name ? `${me.name}, нужна помощь?` : 'Нужна помощь?'}</h1>
-            <div className="sub">Выберите направление помощи. Причину неисправности можно описать позже, без лишних переключателей.</div>
-          </div>
-          <div className="desktop-section-heading"><h2>Мои активные заявки</h2><a href="#/orders">Все заявки →</a></div>
-          <div className="desktop-active-orders">
-            {live.length === 0 && <div className="card desktop-empty-orders">Сейчас нет активных заявок. Если помощь нужна срочно, используйте кнопку SOS.</div>}
-            {live.map((o: any) => (
-              <a key={o.id} href={`#/order/${o.id}`} className="card hi" style={{ textDecoration: 'none', color: 'inherit' }}>
-                <div className="between">
-                  <b>Заявка №{o.number} · {SERVICES[o.service]?.name ?? o.service}</b>
-                  <span className={`pill ${STATUS[o.status]?.tone}`}>{STATUS[o.status]?.name}</span>
-                </div>
-                <span className="note">{o.service === 'consult' ? 'по телефону' : o.address ?? o.estimate?.zoneName} · открыть →</span>
-              </a>
-            ))}
-          </div>
-          <HelpDirections />
-          <LiveStrip who="client" />
-        </section>
-        <aside className="desktop-home-aside">
-          <div className="desktop-aside-card">
-            <div className="desktop-aside-symbol">24/7</div>
-            <h2>Поддержка в дороге</h2>
-            <p>Экстренный вызов мастера или эвакуатора, консультация и поиск сервиса.</p>
-            <a href="#/sos" className="desktop-aside-cta">Перейти к SOS →</a>
-          </div>
-          <div className="desktop-aside-card"><h2>Ваш кабинет</h2><p>Профиль и уведомления доступны в личном кабинете.</p><a href="#/profile" className="desktop-aside-cta">Открыть профиль →</a></div>
-          <section className="desktop-aside-card desktop-journey-card" aria-label="Быстрые действия с транспортом">
-            <span className="desktop-aside-kicker">ВАШИ ИНСТРУМЕНТЫ</span>
-            <h2>Техника и заявки</h2>
-            <p>Не нужно искать нужный раздел — всё, что связано с вашим транспортом, рядом.</p>
-            <div className="desktop-journey-links">
-              <a href="#/garage"><b>Гараж и автомобили</b><small>Ваш транспорт и документы</small><span aria-hidden="true">›</span></a>
-              <a href="#/orders"><b>История обращений</b><small>Работы, статусы и детали заявок</small><span aria-hidden="true">›</span></a>
-              <a href="#/services"><b>СТО и ремонт</b><small>Сервисы и запись</small><span aria-hidden="true">›</span></a>
-            </div>
-          </section>
-          <section className="desktop-aside-card desktop-journey-card" aria-label="Поддержка и информация">
-            <span className="desktop-aside-kicker">ВСЕГДА ПОД РУКОЙ</span>
-            <h2>Помощь и информация</h2>
-            <div className="desktop-journey-links">
-              <a href="#/notifications"><b>Уведомления</b><small>Изменения по заявкам</small><span aria-hidden="true">›</span></a>
-              <a href="#/support"><b>Связаться с поддержкой</b><small>Обращения и вопросы</small><span aria-hidden="true">›</span></a>
-              <a href="#/help"><b>Как работает TrackSOS</b><small>Ответы на частые вопросы</small><span aria-hidden="true">›</span></a>
-            </div>
-          </section>
-        </aside>
-      </div>
-
-    </main>
-  );
+  return <VisualClientHome me={me} live={live} help={<HelpDirections />} />;
 }
 
 /** One agreed customer decision. First choose WHO can help; ask for specifics only on the next step. */
