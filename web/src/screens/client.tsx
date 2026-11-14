@@ -60,7 +60,7 @@ export function Home() {
           </div>
           <div className="desktop-section-heading"><h2>Мои активные заявки</h2><a href="#/orders">Все заявки →</a></div>
           <div className="desktop-active-orders">
-            {live.length === 0 && <div className="desktop-empty-orders">Сейчас нет активных заявок. Если помощь нужна срочно, используйте кнопку SOS.</div>}
+            {live.length === 0 && <div className="card desktop-empty-orders">Сейчас нет активных заявок. Если помощь нужна срочно, используйте кнопку SOS.</div>}
             {live.map((o: any) => (
               <a key={o.id} href={`#/order/${o.id}`} className="card hi" style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div className="between">
