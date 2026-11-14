@@ -647,6 +647,7 @@ export function BookForm({ id }: { id: string }) {
   const cars = useLoad(() => get('/api/vehicles'), []);
   const from = query().get('from');
   const caseOrder = query().get('case');
+  const linkedOrder = useLoad(() => caseOrder ? get(`/api/orders/${caseOrder}`) : Promise.resolve(null), [caseOrder]);
   const { busy, run } = useAction();
   const [vehicleId, setVehicle] = useState('');
   const [need, setNeed] = useState(query().get('need') ?? '');
@@ -654,7 +655,12 @@ export function BookForm({ id }: { id: string }) {
   const [time, setTime] = useState('');
   const [arrival, setArrival] = useState<'self' | 'tow'>('self');
   const [comment, setComment] = useState('');
-  useEffect(() => { if (cars.data?.length && !vehicleId) setVehicle(cars.data[0].id); }, [cars.data]); // eslint-disable-line
+  // A workshop continuation must keep the vehicle from the same incident,
+  // rather than silently selecting the first unrelated truck in the garage.
+  useEffect(() => {
+    if (caseOrder && linkedOrder.data?.vehicleId) setVehicle(linkedOrder.data.vehicleId);
+    else if (cars.data?.length && !vehicleId && !caseOrder) setVehicle(cars.data[0].id);
+  }, [cars.data, linkedOrder.data?.vehicleId, caseOrder]); // eslint-disable-line
   if (!c.data) return <main><Back to={`services/${id}`} label="Сервис" /><Loading error={c.error} /></main>;
   const d = c.data;
   const needs = Object.entries(NEEDS).filter(([k]) => k === 'other' || (d.staff?.[k] && d.staff[k] !== 'none'));
