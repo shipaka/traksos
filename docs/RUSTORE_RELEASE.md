@@ -15,7 +15,7 @@
 
 ## Утверждённая визуальная система
 - Заставка Android: фото фирменной фуры TrakSOS из **первого согласованного трёхэкранного коллажа**; индикатор загрузки без маркетинговых карточек; локальный ресурс в `android/app/src/main/res/drawable-nodpi/splash_truck.webp`.
-- Иконка приложения: фирменный грузовик cyan/pink на navy, XML `android/app/src/main/res/drawable/ic_launcher_track.xml`; исходный SVG магазина — `branding/tracksos-rustore-icon.svg`. Для карточки нужен PNG **512×512, фон без прозрачных внешних полей**, сделанный из того же SVG.
+- Иконка приложения: **утверждённая 15.11.2026 кинематографическая иконка TrakSOS** (фура, трасса, бирюзово-розовая подсветка, фирменная надпись). Android launcher: `android/app/src/main/res/mipmap-*/ic_launcher.png`, манифест использует `@mipmap/ic_launcher`; RuStore: `branding/tracksos-rustore-icon.png` (PNG 512×512 без прозрачности); сайт/PWA: `web/public/icon-192.png` и `web/public/icon-512.png`. Не возвращать старую схематичную XML/SVG-пиктограмму.
 - Ни в приложении, ни в карточке не упоминать Google Play / App Store: **только RuStore**.
 
 ## Предлагаемые тексты карточки (проверить по фактически доступным функциям после запуска)
