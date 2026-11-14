@@ -75,7 +75,7 @@ try {
       await page.getByRole('button',{name:'Выйти на линию'}).click();
       await page.getByRole('button',{name:'Принять вызов'}).click();
       await page.getByRole('button',{name:'Начать выезд'}).last().click();
-      await page.getByRole('button',{name:'Финансы и выплаты'}).click();
+      await page.getByRole('button',{name:'Финансы',exact:true}).click();
       await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
     }else if(id==='owner'){
       await page.getByRole('main',{name:'Тестовый кабинет: Владелец автопарка'}).waitFor();
