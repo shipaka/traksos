@@ -66,11 +66,14 @@ export class ChatService {
 
   async post(user: AuthUser, orderId: string, body: string, kind: 'text' | 'quick' = 'text') {
     const o = await this.orders.mustSee(user, orderId);
-    if (!this.orders.actorOf(user, o)) throw bad('not_participant', 'Писать могут только участники заявки');
+    const actor = this.orders.actorOf(user, o);
+    if (!actor) throw bad('not_participant', 'Писать могут только участники заявки');
     if (['completed', 'cancelled'].includes(o.status))
       throw conflict('chat_closed', 'Диалог завершён. История доступна для просмотра, новое сообщение отправить нельзя');
     const text = body.trim().slice(0, 2000);
     if (!text) throw bad('empty', 'Пустое сообщение');
+    if (kind === 'quick' && !quickRepliesFor(o.service, o.status, actor).includes(text))
+      throw bad('invalid_quick_reply', 'Этот быстрый ответ недоступен на текущем этапе заявки');
     const { text: safe, masked } = maskPhones(text);
     const words = (await this.settings.get('chat')).suspiciousWords;
     const lower = safe.toLowerCase();
