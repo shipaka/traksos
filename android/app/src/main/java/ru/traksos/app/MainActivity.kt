@@ -185,6 +185,10 @@ class MainActivity : AppCompatActivity() {
             .addPathHandler("/", BundledWeb(this))
             .build()
         web = WebView(this)
+        if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val pkg = WebView.getCurrentWebViewPackage()
+            android.util.Log.i("TrakSOSRuntime", "WEBVIEW_VERSION=" + (pkg?.versionName ?: "unknown"))
+        }
         val root = FrameLayout(this)
         appRoot = root
         // Android 15 enforces edge-to-edge. The web header must not sit behind
@@ -278,6 +282,14 @@ class MainActivity : AppCompatActivity() {
             }
         }
         web.webChromeClient = object : WebChromeClient() {
+            override fun onConsoleMessage(consoleMessage: android.webkit.ConsoleMessage?): Boolean {
+                if (BuildConfig.DEBUG &&
+                    consoleMessage?.messageLevel() == android.webkit.ConsoleMessage.MessageLevel.ERROR) {
+                    android.util.Log.w("TrakSOSRuntime",
+                        "JS_ERROR=" + (consoleMessage.message()?.take(280) ?: "unknown"))
+                }
+                return super.onConsoleMessage(consoleMessage)
+            }
             override fun onShowFileChooser(
                 view: WebView?,
                 filePathCallback: ValueCallback<Array<Uri>>?,
