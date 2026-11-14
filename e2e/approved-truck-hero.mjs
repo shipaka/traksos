@@ -112,7 +112,7 @@ try{
           const cs=getComputedStyle(el,p===el?undefined:p);
           return {size:cs.backgroundSize,image:cs.backgroundImage};
         });
-        const layer=layers.find(p=>p.image.includes('tracksos-approved-scania-r520'));
+        const layer=layers.find(p=>p.image.includes('tracksos-approved-scenic-hero'));
         const url=layer?.image.match(/url\(["']?([^"')]+)["']?\)/)?.[1];
         const photo=url?new Image():null;
         if(photo){photo.src=url;await photo.decode().catch(()=>{});}
