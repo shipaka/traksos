@@ -140,10 +140,25 @@ export async function rolePreviewApi(method:string, path:string, body:any={}):Pr
  if(method==='GET'&&p==='/api/vehicles/demo-truck-2/service-history')return [];
  if(method==='GET'&&p==='/api/orders'){
   const byWorker=qs.get('as')==='performer'||(isWorker()&&qs.get('as')!=='client');
-  return clone(orders.filter(o=>byWorker?o.assigned:!isWorker()).map(o=>({...o,created_at:o.created_at})));
+  return clone(orders.filter(o=>byWorker?o.assigned:!isWorker()).map(o=>({
+    ...o,created_at:o.created_at,case_root_id:o.caseRootId??null,continuation_of:o.continuationOf??null
+   })));
  }
  if(method==='POST'&&p==='/api/orders'){
   forceRole(isCustomer());
+  const prior=body.continueFrom ? findOrder(body.continueFrom) : null;
+  if(prior){
+    if(body.service!=='tow'||prior.service==='tow'||prior.status!=='completed'||
+      !['cause_found','not_found'].includes(prior.result))
+      return err('Продолжить можно только завершённый этап мастера с невозможностью ремонта на дороге');
+    if(orders.some(x=>x.continuationOf===prior.id && x.status!=='cancelled'))
+      return err('Эвакуатор уже добавлен к этому обращению');
+    if(prior.vehicleId && body.vehicleId && prior.vehicleId!==body.vehicleId)
+      return err('Продолжение должно относиться к прежнему грузовику');
+    body={...body,vehicleId:prior.vehicleId??body.vehicleId,
+      brand:prior.brand,model:prior.model,year:prior.year,address:body.address||prior.address,
+      description:body.description||prior.description||'Эвакуация после диагностики',isSos:true};
+  }
   const hasCar=body.vehicleId||String(body.brand??'').trim();
   if(!hasCar||!body.service||!String(body.description??'').trim()||!String(body.address??'').trim())
     return err('Укажите машину, проблему и адрес');
@@ -160,7 +175,9 @@ export async function rolePreviewApi(method:string, path:string, body:any={}):Pr
    is_sos:!!body.isSos,isSos:!!body.isSos,night:!!body.night,tier:body.tier??'eco',
    estimate:e,money:{callOut:e.callOut,hour:e.hour,clientFee:0,total:e.callOut+(e.hour??0)},
    site:body.site??{},actions:['cancel'],bill:{callOut:e.callOut,hour:e.hour,step:30,extras:[],total:e.callOut+(e.hour??0)},
-   points:{max:0,balance:0},result:'solved',assigned:false,offerPrice:null,messages:[],
+   points:{max:0,balance:0},result:'solved',resultNote:null,assigned:false,offerPrice:null,messages:[],
+   caseRootId:prior ? prior.caseRootId??prior.id : null,
+   continuationOf:prior?.id??null,
    limits:{usual:e.callOut,floor:Math.round(e.callOut*.85),ceil:Math.round(e.callOut*1.3)}};
   orders.unshift(o);update(o);return {order:{id:o.id},confirmationUrl:null};
  }
