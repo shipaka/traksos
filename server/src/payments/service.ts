@@ -448,7 +448,7 @@ export class PaymentsService implements PaymentHooks {
       const verify = await this.provider.getPayment(response.id);
       if (verify.id!==response.id || verify.total!==req.total ||
           (verify.metadata && (verify.metadata.paymentId!==paymentId ||
-            verify.metadata.orderId!==intent.order_id || verify.metadata.kind!=='work')))
+            verify.metadata.orderId!==intent.order_id || verify.metadata.kind!==req.metadata.kind)))
         throw new Error('Bank creation response does not match saved request');
       const result = await this.bindWorkPayment(paymentId,response);
       if (result.changed) {
