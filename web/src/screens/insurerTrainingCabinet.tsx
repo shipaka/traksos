@@ -1,4 +1,5 @@
 import {useState} from 'react';
+import {PartnerInspectionTraining} from './partnerInspectionTraining.tsx';
 
 // Isolated insurance partner training workspace. No API, storage, SMS or payment calls.
 type Stage='Новая'|'Принята'|'Предложение отправлено'|'Завершена';
@@ -7,7 +8,7 @@ const seed:Case[]=[
   {id:'DEMO-101',vehicle:'Scania R520 · 2021',client:'ООО «Транспорт»',stage:'Новая',offer:'',document:''},
   {id:'DEMO-102',vehicle:'DAF XF · 2018',client:'Иванов И.И.',stage:'Принята',offer:'',document:''},
 ];
-type Tab='queue'|'documents'|'finance'|'company';
+type Tab='queue'|'inspection'|'documents'|'finance'|'company';
 export function InsurerTrainingCabinet(){
   const [tab,setTab]=useState<Tab>('queue');
   const [cases,setCases]=useState<Case[]>(seed);
@@ -17,13 +18,13 @@ export function InsurerTrainingCabinet(){
   const [company,setCompany]=useState('Тестовый страховой партнёр');
   const item=cases.find(c=>c.id===selected)!;
   const update=(patch:Partial<Case>)=>setCases(prev=>prev.map(c=>c.id===selected?{...c,...patch}:c));
-  const nav:[Tab,string][]=[['queue','Заявки'],['documents','Документы и полисы'],['finance','Финансы'],['company','Компания']];
+  const nav:[Tab,string][]=[['queue','Страховки'],['inspection','Техосмотры'],['documents','Документы и полисы'],['finance','Финансы'],['company','Компания']];
   return <main className="sandbox-root sandbox-cabinet stack" aria-label="Тестовый кабинет: Страховой партнёр">
     <div className="sandbox-breadcrumb"><a href="#/admin/test-center">← Назад к выбору кабинетов</a><span className="pill accent">ТЕСТОВЫЙ РЕЖИМ</span></div>
     <section className="sandbox-hero"><span className="sandbox-eyebrow">TRACKSOS · СТРАХОВОЙ ПАРТНЁР</span>
-      <h1>Страхование грузового транспорта</h1><p>Рабочая очередь, предложения, документы и расчёты · безопасный тренажёр без настоящих операций.</p>
+      <h1>{tab==='inspection'?'Техосмотры грузового транспорта':'Страхование и техосмотры'}</h1><p>Два отдельных рабочих направления: страховые предложения и технические осмотры, документы и расчёты · без настоящих операций.</p>
       <div className="row"><button className="btn" type="button" onClick={()=>setTab('queue')}>Открыть заявки</button>
-      <button className="btn ghost" type="button" onClick={()=>setTab('finance')}>Мои финансы</button></div>
+      <button className="btn ghost" type="button" onClick={()=>setTab('inspection')}>Перейти к техосмотрам</button><button className="btn ghost" type="button" onClick={()=>setTab('finance')}>Мои финансы</button></div>
     </section>
     <div className="banner" role="note"><b>АДМИНИСТРАТОР · ДЕМОНСТРАЦИЯ</b><span>Изменения существуют только на этой странице. Реальные полисы, выплаты и уведомления не создаются.</span></div>
     <div className="sandbox-workspace">
@@ -46,14 +47,16 @@ export function InsurerTrainingCabinet(){
             {item.offer&&<p className="note">Предложение: {item.offer} ₽ · демонстрация, не платёж</p>}
           </section>
         </>}
+        {tab==='inspection'&&<PartnerInspectionTraining/>}
         {tab==='documents'&&<section className="card stack"><span className="sandbox-eyebrow">ДОКУМЕНТЫ</span><h2>Полисы и документы</h2>
           <label className="stack">Страховое дело<select className="field" value={selected} onChange={e=>setSelected(e.target.value)}>{cases.map(c=><option key={c.id} value={c.id}>{c.id} · {c.vehicle}</option>)}</select></label>
           <p className="note">Загрузка настоящих файлов отключена: здесь проверяется последовательность работы с документами.</p>
           <button type="button" className="btn" disabled={item.stage!=='Предложение отправлено'} onClick={()=>{update({document:'Тестовый полис (образец)',stage:'Завершена'});setMessage('Образец полиса прикреплён только в тренажёре.')}}>Прикрепить образец полиса</button>
           <p>{item.document||'Документ пока не прикреплён'}</p>
         </section>}
-        {tab==='finance'&&<section className="card stack"><span className="sandbox-eyebrow">ФИНАНСЫ · ДЕМО</span><h2>Расчёты по страхованию</h2>
+        {tab==='finance'&&<section className="card stack"><span className="sandbox-eyebrow">ФИНАНСЫ · ДЕМО</span><h2>Финансы страхования и техосмотров</h2>
           <p className="note">Начисления и выплаты в реальном кабинете приходят с сервера. В тренажёре банковские операции и изменение финансового реестра отключены.</p>
+          <p className="note">Страхование: показаны суммы предложений, не подтверждённые начисления. Техосмотры: выплаты отсутствуют — расчётные операции в тренажёре отключены.</p>
           {cases.map(c=><div key={c.id} className="between"><span>{c.id} · {c.client}</span><b>{c.offer?c.offer+' ₽ (предложение)':'Без предложения'}</b></div>)}
         </section>}
         {tab==='company'&&<section className="card stack"><span className="sandbox-eyebrow">ПАРТНЁР</span><h2>Данные организации</h2>
