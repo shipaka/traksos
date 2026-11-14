@@ -339,6 +339,7 @@ export function createApp(d: Deps) {
     groupTrip: z.boolean().optional(), night: z.boolean().optional(), paymentMethod: z.enum(['cash', 'online', 'invoice']).optional(),
     destination: z.string().max(300).optional(), cargo: z.enum(['tractor', 'semitrailer', 'coupling', 'truck12', 'bus', 'special']).optional(),
     loaded: z.enum(['empty', 'loaded', 'adr']).optional(), driverOnSite: z.boolean().optional(), fromConsult: z.string().uuid().optional(),
+    continueFrom: z.string().uuid().optional(),
     site: z.object({
       place: z.enum(['parking', 'yard', 'plant', 'road']).optional(), pass: z.enum(['none', 'onsite', 'ahead']).optional(),
       meet: z.string().max(60).optional(), state: z.enum(['free', 'loading', 'other_work']).optional(),
@@ -748,7 +749,7 @@ export function createApp(d: Deps) {
     return centers.book(c.user, c.params.id, parse(z.object({
     vehicleId: z.string().uuid().nullable().optional(), need: z.string().max(20), day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
     time: z.string().max(20).nullable().optional(), arrival: z.enum(['self', 'tow']).default('self'), comment: z.string().max(500).nullable().optional(),
-    fromOrderId: z.string().uuid().nullable().optional(),
+    fromOrderId: z.string().uuid().nullable().optional(), caseOrderId: z.string().uuid().nullable().optional(),
   }), c.body));
   });
   r.get('/api/bookings', true, (c: AuthedCtx) => centers.myBookings(c.user));

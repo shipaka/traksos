@@ -65,7 +65,23 @@ export function Order({ id }: { id: string }) {
       {d.service === 'tow' && !isPerformer && d.you !== 'candidate' && d.destination && <TowInfo d={d} />}
 
       {d.you !== 'candidate' && d.status !== 'searching' && <Money d={d} />}
+      {(d.you === 'client' || d.you === 'admin') && <CaseStages d={d} />}
+      {d.you === 'client' && d.canContinueWithTow && (
+        <section className="card hi" aria-label="Продолжить помощь после мастера">
+          <b>Поломку не удалось устранить на дороге</b>
+          <span className="note">Этап с мастером завершён, его сумма зафиксирована отдельно. Если машина не может ехать дальше, продолжите это же обращение вызовом эвакуатора.</span>
+          {d.resultNote && <span className="note">Комментарий мастера: {d.resultNote}</span>}
+          <a className="btn" href={`#/new/tow?continueFrom=${encodeURIComponent(d.id)}`}>Продолжить обращение · вызвать эвакуатор</a>
+        </section>
+      )}
 
+      {d.you === 'client' && d.service === 'tow' && d.status === 'completed' && (
+        <section className="card hi" aria-label="Продолжить обращение в СТО">
+          <b>Грузовик доставлен · нужна запись в сервис?</b>
+          <span className="note">Вы можете продолжить это же обращение стационарным ремонтом. Счёт эвакуаторщика уже отделён; сервис назовёт стоимость только после осмотра.</span>
+          <a className="btn" href={`#/services?case=${encodeURIComponent(d.id)}`}>Продолжить обращение · выбрать грузовой сервис</a>
+        </section>
+      )}
       {d.you === 'admin' && <AdminPanel d={d} onDone={o.reload} />}
       {(d.you === 'client' || d.you === 'admin') && d.paymentMethod !== 'cash' && <PaymentsList id={id} admin={d.you === 'admin'} />}
       {isPerformer && (isConsult ? <ConsultFinish d={d} onDone={o.reload} /> : <PerformerActions d={d} onDone={o.reload} />)}
@@ -81,13 +97,66 @@ export function Order({ id }: { id: string }) {
       )}
       {d.status === 'completed' && <Review id={id} you={d.you} />}
 
-      {d.status !== 'searching' && d.status !== 'no_performer' && <Chat id={id} disabled={d.status === 'cancelled'} />}
+      {d.status !== 'searching' && d.status !== 'no_performer' && <Chat id={id} status={d.status} />}
       </>}
 
       {d.you !== 'admin' && d.you !== 'candidate' && <a className="btn ghost" href={`#/support/new?order=${d.id}`}>Позвать поддержку</a>}
       {!done && d.actions.includes('cancel') && !isPerformer && !(isConsult && d.status === 'awaiting_confirmation') && <Cancel id={id} status={d.status} consult={isConsult} onDone={o.reload} />}
       {d.status === 'cancelled' && <div className="card"><b>Заявка отменена</b><span className="note">{d.cancelReason}</span></div>}
     </main>
+  );
+}
+
+/** One incident, separate contracts. An active tow estimate is NEVER added
+ * to an already confirmed repair, and is not billed as part of that repair. */
+function CaseStages({ d }: { d: any }) {
+  const summary = d.caseSummary;
+  if (!summary?.multiStage) return null;
+  const rows = summary.stages as any[];
+  const workshops = (summary.serviceBookings ?? []) as any[];
+  const count = rows.length + workshops.length;
+  const closed = rows.filter((s) => s.status === 'completed').length
+    + workshops.filter((b) => b.status === 'closed').length;
+  const active = rows.filter((s) => !['completed', 'cancelled', 'no_performer'].includes(s.status)).length
+    + workshops.filter((b) => !['closed', 'cancelled', 'declined'].includes(b.status)).length;
+  return (
+    <section className="card stack case-journey" aria-label="Этапы одного обращения">
+      <div className="between" style={{ alignItems: 'flex-start' }}>
+        <div className="stack" style={{ gap: 5 }}>
+          <b>Одно обращение · {count} этапов</b>
+          <span className="note">Каждый этап имеет своего исполнителя, расчёт и подтверждение. Предыдущие суммы не входят в новые торги.</span>
+        </div>
+        <span className="pill accent">{active ? 'Помощь продолжается' : 'Этапы завершены'}</span>
+      </div>
+      <ol className="case-stage-list">
+        {rows.map((step, index) => (
+          <li key={step.id} className={step.status === 'completed' ? 'is-done' : ''}>
+            <div className="stack" style={{ gap: 4 }}>
+              <span className="note">Этап {index + 1} · №{step.number}</span>
+              <a href={`#/order/${step.id}`}><b>{SERVICES[step.service]?.name ?? step.service}</b></a>
+              <span className="note">{STATUS[step.status]?.name ?? step.status}</span>
+              {step.resultNote && <span className="note">Результат: {step.resultNote}</span>}
+            </div>
+            <b>{step.status === 'completed' ? rub(step.money.total) : 'Сумма этапа ещё не подтверждена'}</b>
+          </li>
+        ))}
+        {workshops.map((b, i) => (
+          <li key={b.id} className={b.status === 'closed' ? 'is-done' : ''}>
+            <div className="stack" style={{ gap: 4 }}>
+              <span className="note">Этап {rows.length + i + 1} · №{b.number}</span>
+              <a href={`#/booking/${b.id}`}><b>Грузовой сервис (СТО)</b></a>
+              <span className="note">{b.status === 'closed' ? 'Ремонт подтверждён' : 'Запись и работы в сервисе'}</span>
+            </div>
+            <b>{b.confirmedTotal != null ? rub(b.confirmedTotal) : 'Счёт СТО ещё не подтверждён'}</b>
+          </li>
+        ))}
+      </ol>
+      <div className="sum total">
+        <span>Подтверждено по обращению · {closed} из {count} этапов</span>
+        <b>{rub(summary.confirmedTotal)}</b>
+      </div>
+      {active > 0 && <span className="note">Новый этап рассчитывается отдельно. Его итог появится здесь после подтверждения клиентом.</span>}
+    </section>
   );
 }
 
@@ -819,7 +888,8 @@ function WorksCheck({ id }: { id: string }) {
 
 // Чат -----------------------------------------------------------------------
 
-function Chat({ id, disabled }: { id: string; disabled: boolean }) {
+function Chat({ id, status }: { id: string; status: string }) {
+  const closed = status === 'completed' || status === 'cancelled';
   const { me } = useMe();
   const toast = useToast();
   const [msgs, setMsgs] = useState<any[]>([]);
@@ -837,7 +907,7 @@ function Chat({ id, disabled }: { id: string; disabled: boolean }) {
       if (e.type === 'chat' && e.message.order_id === id) setMsgs((m) => (m.some((x) => x.id === e.message.id) ? m : [...m, e.message]));
     });
     return () => { alive = false; off(); };
-  }, [id]);
+  }, [id, status]);
   useEffect(() => { box.current?.scrollTo(0, box.current.scrollHeight); }, [msgs.length, open]);
   useEffect(() => { if (open) setSeen(msgs.length); }, [open, msgs.length]);
 
@@ -856,7 +926,7 @@ function Chat({ id, disabled }: { id: string; disabled: boolean }) {
   const fresh = msgs.slice(seen).filter((m) => m.sender_id && m.sender_id !== me?.id && m.kind !== 'system').length;
   if (!open) return (
     <button type="button" className="card" onClick={() => setOpen(true)} style={{ textAlign: 'left', cursor: 'pointer', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-      <b>💬 Чат по заявке</b>
+      <b>{closed ? '💬 История диалога' : '💬 Чат по заявке'}</b>
       <span className="row" style={{ gap: 6 }}>
         {fresh > 0 && <span className="pill warn">новых: {fresh}</span>}
         <span className="note">{msgs.length ? `${msgs.length} сообщ.` : 'открыть'} ▾</span>
@@ -880,10 +950,21 @@ function Chat({ id, disabled }: { id: string; disabled: boolean }) {
           );
         })}
       </div>
-      {!disabled && (
+      {closed ? (
+        <div className="stack" aria-label="Завершённый диалог">
+          <div className="banner good" role="status">
+            Переписка завершена. Сообщения сохранены в истории заявки, отправка новых сообщений недоступна.
+          </div>
+          <button type="button" className="btn ghost small" onClick={() => setOpen(false)}>
+            Завершить диалог
+          </button>
+        </div>
+      ) : (
         <>
-          <div className="scroll-x">{quick.map((q) => <button key={q} className="chip" onClick={() => send(q, 'quick')}>{q}</button>)}</div>
-          <form className="compose" onSubmit={(e) => { e.preventDefault(); send(text); }}>
+          {quick.length > 0 && <div className="scroll-x" aria-label="Быстрые сообщения">
+            {quick.map((q) => <button key={q} type="button" className="chip" onClick={() => send(q, 'quick')}>{q}</button>)}
+          </div>}
+          <form className="compose" onSubmit={(e) => { e.preventDefault(); void send(text); }}>
             <input className="field" placeholder="Сообщение" value={text} onChange={(e) => setText(e.target.value)} maxLength={2000} />
             <button className="btn small" disabled={!text.trim()}>➤</button>
           </form>

@@ -114,7 +114,7 @@ export function Home() {
       <div className="stack home-services">
         <span className="label">Все услуги</span>
         {Object.entries(SERVICES).map(([id, s]) => (
-          <button key={id} className="linkrow" onClick={() => go(`new/${id}`)}>
+          <button key={id} className="linkrow" onClick={() => go(`new/${id}?via=sos`)}>
             <span><b>{s.name}</b><small>{fill(SERVICE_PRICE[id] ?? s.hint)}</small></span><span aria-hidden="true">›</span>
           </button>
         ))}
@@ -164,33 +164,50 @@ export function Sos() {
       <Back to="" />
       <div className="client-section-hero client-section-hero-sos">
         <h1>SOS · Нужна помощь?</h1>
-        <div className="sub">Сначала выберите, кто вам нужен. Остальные вопросы появятся только после выбора.</div>
+        <div className="sub">Выберите одно направление помощи. Если после первого этапа потребуется эвакуатор или СТО, продолжить можно из той же заявки.</div>
       </div>
-      <div className="stack">
-        <button className="linkrow primary" aria-expanded={choice === 'master'} onClick={() => setChoice(choice === 'master' ? null : 'master')}>
-          <span><b>Выездной мастер</b><small>Специалист приедет к вашему грузовику</small></span><span aria-hidden="true">›</span>
-        </button>
-        <button className="linkrow" onClick={() => go('new/tow')}>
-          <span><b>Эвакуатор</b><small>Перевезти грузовик в нужное место</small></span><span aria-hidden="true">›</span>
-        </button>
-        <button className="linkrow" onClick={() => go('services')}>
-          <span><b>СТО грузовых автомобилей</b><small>Найти сервис и записаться на ремонт</small></span><span aria-hidden="true">›</span>
-        </button>
-        <button className="linkrow" onClick={() => go('consult')}>
-          <span><b>Консультация по телефону</b><small>Связаться с диагностом без выезда</small></span><span aria-hidden="true">›</span>
-        </button>
-      </div>
-      {choice === 'master' && (
-        <section className="card">
-          <b>Какой мастер нужен?</b>
-          <span className="note">Если не знаете причину поломки, выберите диагноста.</span>
-          <div className="stack">
-            {masterServices.map((id) => (
-              <button key={id} className="linkrow" onClick={() => go(`new/${id}`)}>
-                <span><b>{SERVICES[id].name}</b><small>{SERVICES[id].hint}</small></span><span aria-hidden="true">›</span>
-              </button>
-            ))}
-          </div>
+      {choice === null ? (
+        <div className="client-sos-choices" role="group" aria-label="Выберите направление SOS">
+          <button type="button" className="linkrow primary" onClick={() => setChoice('master')}>
+            <span><b>Выездной мастер</b><small>Электрика, диагностика, пневматика, автономные отопители и шиномонтаж</small></span>
+            <span aria-hidden="true">›</span>
+          </button>
+          <button type="button" className="linkrow" onClick={() => setChoice('tow')}>
+            <span><b>Эвакуатор для грузовика</b><small>Если машина не может продолжать движение</small></span><span aria-hidden="true">›</span>
+          </button>
+          <button type="button" className="linkrow" onClick={() => setChoice('sto')}>
+            <span><b>Грузовой сервис (СТО)</b><small>Стационарный ремонт, обслуживание и запись на сервис</small></span><span aria-hidden="true">›</span>
+          </button>
+        </div>
+      ) : (
+        <section className="card stack client-sos-selected" aria-live="polite">
+          <button type="button" className="btn ghost small" onClick={() => setChoice(null)}>← Выбрать другое направление</button>
+          {choice === 'master' ? (
+            <>
+              <h2>Какой выездной мастер нужен?</h2>
+              <span className="note">Выберите одну специализацию. После выбора откроется оформление заявки, остальные направления не будут добавляться автоматически.</span>
+              <div className="client-sos-master-services">
+                {masterServices.map((id) => (
+                  <button key={id} type="button" className="linkrow" onClick={() => go(`new/${id}`)}>
+                    <span><b>{SERVICES[id].name}</b><small>{SERVICES[id].hint}</small></span>
+                    <span aria-hidden="true">›</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : choice === 'tow' ? (
+            <>
+              <h2>Эвакуатор для грузовика</h2>
+              <p className="note">Укажете тип техники, её местоположение и куда нужно перевезти грузовик. Эвакуаторщики предложат цену, вы сможете выбрать исполнителя.</p>
+              <button type="button" className="btn" onClick={() => go('new/tow?via=sos')}>Оформить вызов эвакуатора</button>
+            </>
+          ) : (
+            <>
+              <h2>Грузовой сервис (СТО)</h2>
+              <p className="note">Посмотрите доступные сервисы и выберите место для стационарного ремонта или обслуживания.</p>
+              <button type="button" className="btn" onClick={() => go('services')}>Найти грузовой сервис</button>
+            </>
+          )}
         </section>
       )}
       <MyPlace />
@@ -365,13 +382,16 @@ function SelfOrderWarning({ me }: { me: any }) {
 export function NewOrder({ service }: { service: string }) {
   const params = new URLSearchParams(location.hash.split('?')[1] ?? '');
   const sos = SYMPTOMS.find((p) => p.id === params.get('sos'));
+  const fromSos = !!sos || params.get('via') === 'sos';
   const sym = sos ?? SYMPTOMS.find((p) => p.id === params.get('p'));
   const fromConsult = params.get('from');
+  const continueFrom = params.get('continueFrom');
   const { me } = useMe();
   const { busy, run } = useAction();
   const pricing = useLoad(() => get('/api/pricing'), []);
   const vehicles = useLoad(() => get('/api/vehicles'), []);
   const consult = useLoad(() => (fromConsult ? get(`/api/orders/${fromConsult}`) : Promise.resolve(null)), [fromConsult]);
+  const previousStage = useLoad(() => (continueFrom ? get(`/api/orders/${continueFrom}`) : Promise.resolve(null)), [continueFrom]);
   const [agree, setAgree] = useState(false);
 
   const [zoneId, setZoneId] = useState('spb');
@@ -406,6 +426,18 @@ export function NewOrder({ service }: { service: string }) {
     if (c.description && !description) setDescription(c.description);
     if (!c.vehicle && c.brand) { setVehicleId(''); setCar({ brand: c.brand, model: c.model ?? '', year: c.year ? String(c.year) : '' }); }
   }, [consult.data]); // eslint-disable-line
+  // Continue the same incident without retyping the truck, problem and pickup.
+  // The new tow price remains entirely separate from the completed repair bill.
+  useEffect(() => {
+    const prev = previousStage.data;
+    if (!continueFrom || !prev) return;
+    if (prev.vehicleId) setVehicleId(prev.vehicleId);
+    else if (prev.brand) { setVehicleId(''); setCar({ brand: prev.brand, model: prev.model ?? '', year: prev.year ? String(prev.year) : '' }); }
+    setDescription(prev.description || 'Эвакуация после выездного ремонта');
+    if (prev.address) setAddress(prev.address);
+    if (prev.lat != null && prev.lng != null) { setGeo({ lat: prev.lat, lng: prev.lng }); setGeoState('ok'); }
+    if (prev.zoneId) setZoneId(prev.zoneId);
+  }, [continueFrom, previousStage.data]); // eslint-disable-line
   useEffect(() => {
     if (night === null) return;
     post('/api/pricing/estimate', { service, tier, zoneId, night, group }).then(setEst).catch(() => setEst(null));
@@ -428,11 +460,11 @@ export function NewOrder({ service }: { service: string }) {
 
   async function submit() {
     const r = await run(() => post('/api/orders', {
-      service, isSos: !!sos, problem: sos?.id, description: description || undefined, address: address || undefined,
+      service, isSos: fromSos, problem: sos?.id, description: description || undefined, address: address || undefined,
       lat: geo?.lat, lng: geo?.lng, zoneId, tier: service === 'tow' ? undefined : tier, vehicleId: vehicleId || undefined,
       ...carBody(vehicleId, car), groupTrip: groupAllowed && group, night: night ?? undefined, paymentMethod: method,
       ...(isTow ? { destination: destination || undefined, cargo, loaded, driverOnSite } : {}),
-      fromConsult: fromConsult || undefined,
+      fromConsult: fromConsult || undefined, continueFrom: continueFrom || undefined,
       site: isTow || !Object.keys(site).length ? undefined : { ...site, meet: site.meet || undefined, time: site.time || undefined },
     }));
     if (!r) return;
@@ -456,12 +488,20 @@ export function NewOrder({ service }: { service: string }) {
     !agree && { id: 'f-agree', name: 'согласие с суммами' },
   ].filter(Boolean) as { id: string; name: string }[];
 
-  if (!pricing.data) return <main><Loading error={pricing.error} /></main>;
+  if (!pricing.data || (continueFrom && !previousStage.data))
+    return <main><Loading error={pricing.error || previousStage.error} /></main>;
   const s = SERVICES[service];
 
   return (
     <main>
-      <Back to={fromConsult ? `order/${fromConsult}` : sos ? 'sos' : ''} />
+      <Back to={continueFrom ? `order/${continueFrom}` : fromConsult ? `order/${fromConsult}` : fromSos ? 'sos' : ''} />
+      {continueFrom && previousStage.data && (
+        <section className="card hi" aria-label="Продолжение помощи по грузовику">
+          <b>Продолжение обращения №{previousStage.data.caseSummary?.stages?.[0]?.number ?? previousStage.data.number}</b>
+          <span className="note">Предыдущий этап завершён. {SERVICES[previousStage.data.service]?.name ?? 'Мастер'}: {rub(previousStage.data.money.total)}. Эта сумма уже относится к предыдущему этапу и не включена в цену эвакуации.</span>
+          <span className="note">Сейчас отдельно рассчитаем эвакуатор, затем вы выберете исполнителя. Общий итог будет показан в карточке обращения.</span>
+        </section>
+      )}
       <div>
         <h1>{sym ? sym.name : s?.name ?? 'Заявка'}</h1>
         <div className="sub">{sos ? `${s?.name} · срочный вызов` : sym ? s?.name : s?.hint}</div>
@@ -649,13 +689,14 @@ export function Orders({ as }: { as: 'client' | 'performer' }) {
       {as === 'performer' && <HistoryTabs tab={tab} setTab={setTab} />}
       {as === 'client' && (
         <div className="scroll-x" role="tablist">
-          {([['now', `Сейчас${list.data ? ` · ${list.data.filter(live).length}` : ''}`], ['my', 'Мои мастера'], ['hist', 'История'], ['black', 'Чёрный список']] as const).map(([k, n]) => (
+          {([['now', `Выезды${list.data ? ` · ${list.data.filter(live).length}` : ''}`], ['my', 'Мои мастера'], ['hist', 'История'], ['black', 'Чёрный список']] as const).map(([k, n]) => (
             <button key={k} className="chip" role="tab" aria-pressed={ctab === k} onClick={() => setCtab(k)}>{n}</button>
           ))}
         </div>
       )}
-      {as === 'client' && ctab === 'now' && <BookingRows live />}
+      {as === 'client' && ctab === 'now' && <BookingRows live heading="Активные записи на грузовой сервис (СТО)" />}
       {as === 'client' && ctab === 'hist' && list.data && <TaskArchive orders={list.data.filter((o: any) => !live(o))} />}
+      {as === 'client' && ctab === 'now' && <div className="between"><b>Выездные заявки · {list.data?.filter(live).length ?? '…'}</b><span className="note">Мастера и эвакуаторы</span></div>}
       {as === 'client' && (ctab === 'my' || ctab === 'black') ? <MyPerformers black={ctab === 'black'} /> :
       as === 'client' && ctab === 'hist' ? null : !list.data ? <Loading error={list.error} /> : !shown!.length ? <div className="empty">{as === 'client' && ctab === 'now' ? 'Выездов сейчас нет' : 'Выездов пока нет'}</div> : (
         <div className="rows">
@@ -1003,7 +1044,9 @@ function MastersNearby({ service, geo, brand }: { service: string; geo: { lat: n
 function TaskArchive({ orders }: { orders: any[] }) {
   const b = useLoad(() => get('/api/bookings'), []);
   const bookings = ((b.data ?? []) as any[]).filter((x) => ['closed', 'disputed', 'cancelled', 'declined', 'invoiced'].includes(x.status) || x.fromOrderId);
-  const root = (o: any) => o.consult_of ?? o.id;
+  // Keep all steps of the same roadside incident in one history card.
+  // Consultation-origin chains remain compatible with their existing discount logic.
+  const root = (o: any) => o.case_root_id ?? o.consult_of ?? o.id;
   const groups = new Map<string, { orders: any[]; bookings: any[] }>();
   for (const o of [...orders].sort((x, y) => +new Date(x.created_at) - +new Date(y.created_at))) {
     const k = root(o);
@@ -1049,7 +1092,7 @@ function TaskArchive({ orders }: { orders: any[] }) {
           </div>
         );
       })}
-      {loose.length > 0 && <BookingRows live={false} />}
+      {loose.length > 0 && <BookingRows live={false} ids={loose.map((b) => b.id)} heading="Прочие закрытые записи на СТО" />}
     </div>
   );
 }
