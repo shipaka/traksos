@@ -47,7 +47,7 @@ export function Stats() {
       </div>
 
       <Table title="По этапам услуг · каждый мастер, эвакуатор и СТО отдельно" head={['Услуга', 'Этапов', 'Готово', 'Средний чек']}
-        rows={d.byService.map((r: any) => [SERVICES[r.service]?.name ?? r.service, r.created, r.completed, r.avg_check ? rub(r.avg_check) : '—'])} />
+        rows={d.byService.map((r: any) => [r.service === 'sto' ? 'Грузовой сервис (СТО)' : SERVICES[r.service]?.name ?? r.service, r.created, r.completed, r.avg_check ? rub(r.avg_check) : '—'])} />
       <Table title="Где не хватает исполнителей" head={['Зона', 'Заявок', 'Никто не взял']}
         rows={d.zones.map((r: any) => [r.zone_id, r.created, r.no_performer])} />
       <Table title="Спрос по маркам" head={['Машина', 'Заявок', 'Никто не взял', 'Средний год']}
