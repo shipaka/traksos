@@ -393,7 +393,7 @@ await sto.close();
 // Совмещённый аккаунт: оба кабинета назначаются без модератора и открываются через меню.
 const both = await mk();
 await login(both, '+79993334456', 'hybrid');
-await both.waitForURL(/#\\/work/);
+await both.waitForURL(new RegExp('work'));
 await both.goto(BASE + '/#/work');
 await checkCabinetMenu(both, ['Моя СТО — стационарный ремонт', 'Профиль исполнителя']);
 await shot(both, '21-hybrid-master');
