@@ -4,9 +4,11 @@ import { RoadsideMap } from './roadsideMap.tsx';
 
 /** Real client home. Approved visual system: sunset road + branded Scania + vivid
  * service illustrations + LIVE order, with no fictional ETA, route, rating or map. */
-export function VisualClientHome({ me, live, help }: {
+export function VisualClientHome({ me, live, ordersLoaded, ordersError, help }: {
   me: { name?: string | null; company_name?: string | null; roles?: string[] } | null;
   live: any[];
+  ordersLoaded: boolean;
+  ordersError: string | null;
   help: ReactNode;
 }) {
   const current = live[0];
@@ -79,10 +81,17 @@ export function VisualClientHome({ me, live, help }: {
                 </div>
               ) : (
                 <div className="card desktop-empty-orders">
+                  {!ordersLoaded && <div role="status" className="tracksos-order-unavailable">
+                    <b>{ordersError ? 'Не удалось проверить активные заявки' : 'Проверяем ваши заявки…'}</b>
+                    <p>{ordersError ? 'Проверьте соединение и обновите страницу. Данные заявок не удалены.' : 'Загружаем настоящие статусы с сервера TrackSOS.'}</p>
+                    {ordersError && <a href="#/orders" className="tracksos-live-open">Открыть список заявок ›</a>}
+                  </div>}
+                  {ordersLoaded && <>
                   <span className="tracksos-empty-icon" aria-hidden="true">✓</span>
                   <b>Сейчас нет активных заявок</b>
                   <p>Когда понадобится помощь, здесь появится статус обращения и связь с исполнителем.</p>
                   <a href="#/orders" className="tracksos-live-open">Моя история заявок ›</a>
+                  </>}
                 </div>
               )}
               {live.length > 1 && <a className="tracksos-more-orders" href="#/orders">Другие активные заявки: {live.length - 1} →</a>}
