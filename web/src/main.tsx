@@ -384,6 +384,18 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               <a className="desktop-nav-link" href="#/offer/privacy"><span>▣</span><span>Персональные данные</span></a>
             </>}
           </nav>
+          {!me && <aside className="track-sidebar-app" aria-label="Мобильное приложение TrackSOS">
+            <span className="track-sidebar-app-glow" aria-hidden="true" />
+            <span className="track-sidebar-app-phone" aria-hidden="true">
+              <img src="/tracksos-approved-scania-r520.webp" alt="" loading="lazy" />
+              <small>TrackSOS</small>
+            </span>
+            <span className="track-sidebar-app-copy">
+              <b>TrackSOS в телефоне</b>
+              <small>Заявки и связь с мастером в одном месте</small>
+              <span className="track-sidebar-app-soon">Скоро в RuStore</span>
+            </span>
+          </aside>}
           <div className="desktop-sidebar-bottom"><strong>TRACKSOS 24/7</strong><span>Помощь грузовикам</span><small>Санкт-Петербург и Ленинградская область</small></div>
         </aside>
         <div className="desktop-content">
