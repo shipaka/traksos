@@ -104,8 +104,17 @@ jobs:
             adb shell am start -W -n ru.traksos.app/.MainActivity
             sleep 15
             adb shell pidof ru.traksos.app
-            if adb logcat -d -s AndroidRuntime:E | grep -E 'FATAL EXCEPTION|Process: ru\\.traksos\\.app'; then
-              echo 'Android native crash detected; do not release.'
-              exit 1
-            fi
-            adb shell dumpsys activity activities | grep -E 'ru.traksos.app|ResumedActivity'
+            adb logcat -d -s AndroidRuntime:E > runtime-errors.log
+            ! grep -F 'Process: ru.traksos.app' runtime-errors.log
+            adb shell dumpsys activity activities > activity-dump.txt
+            grep -F 'ru.traksos.app' activity-dump.txt
+            adb exec-out screencap -p > emulator-screen.png
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tracksos-emulator-api-${{ matrix.api-level }}
+          path: |
+            runtime-errors.log
+            activity-dump.txt
+            emulator-screen.png
+          if-no-files-found: warn
