@@ -197,6 +197,14 @@ test('warranty rework: original executor fixes for free, 12 staff retries still 
     assert.equal((await f.t.api('POST',`/api/admin/warranty-remedies/${id}/record-expense`,
       {amountKopecks:40000,bankReference:'REWORK-123456',
        transferredAt:f.t.clock.now().toISOString()},f.admin.token)).status,409);
+    assert.equal((await f.t.api('POST',`/api/warranty-remedies/${id}/respond`,
+      {accept:true},f.performer.token)).status,409,'performer cannot begin before client consent');
+    assert.equal((await f.t.api('POST',`/api/warranty-remedies/${id}/client-approval`,
+      {approve:true},f.stranger.token)).status,403);
+    const consent=ok(await f.t.api('POST',`/api/warranty-remedies/${id}/client-approval`,
+      {approve:true},f.client.token));
+    assert.ok(consent.clientApprovedAt);
+    assert.equal(consent.clientChargeKopecks,0);
     assert.equal(ok(await f.t.api('POST',`/api/warranty-remedies/${id}/respond`,
       {accept:true},f.performer.token)).status,'accepted');
     const report=ok(await f.t.api('POST',`/api/warranty-remedies/${id}/report`,
@@ -257,6 +265,10 @@ test('warranty alternative: bank transfer proof is recorded once from platform o
     const originalLedger=await f.t.db.query<any>(
       'select id,account,amount,performer_id,kind from ledger_entries order by id');
     const originalPayouts=await f.t.db.query<any>('select id,performer_id,amount,status from payouts order by id');
+    assert.equal((await f.t.api('POST',`/api/warranty-remedies/${id}/respond`,
+      {accept:true},alternative.token)).status,409,'alternative also waits for client consent');
+    ok(await f.t.api('POST',`/api/warranty-remedies/${id}/client-approval`,
+      {approve:true},f.client.token));
     ok(await f.t.api('POST',`/api/warranty-remedies/${id}/respond`,
       {accept:true},alternative.token));
     ok(await f.t.api('POST',`/api/warranty-remedies/${id}/report`,
