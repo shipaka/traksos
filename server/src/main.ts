@@ -58,6 +58,12 @@ const timer = setInterval(() => {
   app.orders.tick().catch((e) => console.error('[tick]', e));
   app.auction.tick().catch((e) => console.error('[auction]', e));
 }, 2_000);
+// First human response deadline, one durable overdue notification at 60 min.
+// Database row locks and event uniqueness protect multi-instance operation.
+const supportSlaTimer = setInterval(() => {
+  app.support.tickSla().catch((e) => console.error('[support-sla]', e));
+}, 30_000);
+void app.support.tickSla().catch((e) => console.error('[support-sla]', e));
 // Отложенное удаление личных данных и очистка истёкших IP/телефонных
 // лимитов: хранить эти технические идентификаторы бессрочно не нужно.
 const housekeeping = async () => {
