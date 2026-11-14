@@ -77,7 +77,34 @@ try {
       await page.getByRole('button',{name:'Начать выезд'}).last().click();
       await page.getByRole('button',{name:'Финансы и выплаты'}).click();
       await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
-    }else if(id==='owner'||id==='inspection'||id==='moderator'||id==='master_service'){
+    }else if(id==='owner'){
+      await page.getByRole('main',{name:'Тестовый кабинет: Владелец автопарка'}).waitFor();
+      await page.getByRole('button',{name:'Водители'}).click();
+      await page.getByRole('textbox',{name:'Имя водителя'}).fill('Тестовый водитель');
+      await page.getByRole('button',{name:'Закрепить водителя'}).click();
+      await page.getByRole('button',{name:'Обслуживание и заявки'}).click();
+      await page.getByRole('textbox',{name:'Неисправность или услуга'}).fill('Диагностика двигателя');
+      await page.getByRole('button',{name:'Создать тестовую заявку'}).click();
+      await page.getByRole('button',{name:'Расходы'}).click();
+      await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
+    }else if(id==='inspection'){
+      await page.getByRole('main',{name:'Тестовый кабинет: Оператор техосмотра'}).waitFor();
+      await page.getByRole('button',{name:'Назначить осмотр'}).click();
+      await page.getByRole('button',{name:'Зафиксировать результат'}).click();
+      await page.getByRole('button',{name:'Подготовить образец карты'}).click();
+      await page.getByText('Образец карты · №401').waitFor();
+      await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
+    }else if(id==='moderator'){
+      await page.getByRole('main',{name:'Тестовый кабинет: Модератор'}).waitFor();
+      await page.getByRole('button',{name:'Взять на проверку'}).click();
+      await page.getByRole('button',{name:'Одобрить'}).click();
+      await page.getByRole('button',{name:'История решений'}).first().click();
+      await page.getByText('Решение: Одобрено',{exact:false}).waitFor();
+      await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
+    }else if(id==='master_service'){
+      await page.getByRole('button',{name:'Моя СТО'}).click();
+      await page.getByRole('link',{name:'Открыть полный тестовый кабинет СТО'}).waitFor();
+      await page.getByRole('button',{name:'Вернуться к выездным вызовам'}).click();
       await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
     }else if(id==='insurer'){
       await page.getByRole('main',{name:'Тестовый кабинет: Страховой партнёр'}).waitFor();
