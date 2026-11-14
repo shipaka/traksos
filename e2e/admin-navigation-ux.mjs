@@ -12,7 +12,7 @@ const sections = [
   ['dispatch','Распределение'],['demand','Проблемные заявки'],
   ['support','Обращения'],['search','Поиск'],['people','Все люди'],
   ['verify','Проверка'],['bases','Рембазы'],['vehicleServices','Страхование и ТО'],
-  ['shop','Магазин'],['payments','Деньги'],['offers','Оферты'],
+  ['payments','Деньги'],['offers','Оферты'],
   ['announcements','Объявления и комиссии'],['stats','Статистика'],
   ['flagged','Подозрительное'],['settings','Настройки'],
 ];
@@ -60,17 +60,17 @@ try {
     await checkLayout('dashboard');
     await page.screenshot({path:'e2e/shots/admin-ux/initial-'+width+'.png',fullPage:true});
     await openNav();
-    if(await navigation.locator('.admin-nav-item').count()!==18)
+    if(await navigation.locator('.admin-nav-item').count()!==17)
       throw Error(width+'px: missing navigation section(s)');
     const search = navigation.getByRole('searchbox',{name:'Поиск раздела администрации'});
-    await search.fill('магазин');
+    await search.fill('страхование');
     if(await navigation.locator('.admin-nav-item').count()!==1)
       throw Error(width+'px: section filtering does not work');
-    await navigation.getByRole('button',{name:'Магазин',exact:true}).click();
-    await page.waitForURL(/#\/admin\/section\/shop$/);
-    await page.locator('.admin-stage-head h2').getByText('Магазин',{exact:true}).waitFor();
-    await checkLayout('shop after search');
-    await page.screenshot({path:'e2e/shots/admin-ux/shop-'+width+'.png',fullPage:true});
+    await navigation.getByRole('button',{name:'Страхование и ТО',exact:true}).click();
+    await page.waitForURL(/#\/admin\/section\/vehicleServices$/);
+    await page.locator('.admin-stage-head h2').getByText('Страхование и ТО',{exact:true}).waitFor();
+    await checkLayout('insurance after search');
+    await page.screenshot({path:'e2e/shots/admin-ux/insurance-'+width+'.png',fullPage:true});
     // Every control must navigate to its own deep-linkable section, not a single text strip.
     for(const [id,name] of sections) {
       await openNav();
@@ -89,5 +89,5 @@ try {
     await checkLayout('deep link');
     await context.close();
   }
-  console.log('Admin: all 18 sections, search, real deep links, responsive layout and screenshots OK');
+  console.log('Admin: all 17 sections, search, real deep links, responsive layout and screenshots OK');
 }finally{await browser.close();}
