@@ -61,11 +61,11 @@ export function VisualClientHome({ me, live, help }: {
             </div>
             <div className="desktop-active-orders">
               {current ? (
-                <a className="tracksos-live-order" href={`#/order/${current.id}`}>
+                <div className="tracksos-live-order">
                   <span className="tracksos-order-number">Заявка №{current.number ?? current.id?.slice(0,8)}</span>
                   <strong>{SERVICES[current.service]?.name ?? 'Дорожная помощь'}</strong>
                   <span className="tracksos-order-location">{current.address ?? 'Откройте заявку для просмотра адреса'}</span>
-                  {Number.isFinite(current.lat) && Number.isFinite(current.lng) && <div className="tracksos-order-real-map" onClick={e=>e.preventDefault()}>
+                  {Number.isFinite(current.lat) && Number.isFinite(current.lng) && <div className="tracksos-order-real-map">
                     <RoadsideMap point={{lat: Number(current.lat), lng: Number(current.lng)}} kind="request" address={current.address ?? undefined} />
                   </div>}
                   <div className="tracksos-progress" aria-label={`Статус: ${status}`}>
@@ -75,8 +75,8 @@ export function VisualClientHome({ me, live, help }: {
                         <small>{label}</small>
                       </span>)}
                   </div>
-                  <span className="tracksos-live-open">Открыть заявку и связь с исполнителем <b aria-hidden="true">↗</b></span>
-                </a>
+                  <a href={`#/order/${current.id}`} className="tracksos-live-open">Открыть заявку и связь с исполнителем <b aria-hidden="true">↗</b></a>
+                </div>
               ) : (
                 <div className="card desktop-empty-orders">
                   <span className="tracksos-empty-icon" aria-hidden="true">✓</span>
