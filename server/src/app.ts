@@ -36,6 +36,7 @@ import { ShopCatalogService } from './services/shopCatalog.ts';
 import { ModerationService } from './services/moderation.ts';
 import { WarrantyClaimsService } from './services/warranty.ts';
 import { WarrantyRemediationService } from './services/warrantyRemediation.ts';
+import { WarrantyRecourseService } from './services/warrantyRecourse.ts';
 import { checkAppealToken } from './services/auth.ts';
 import { normalizePhone, sha256 } from './util.ts';
 import { Raw } from './http/router.ts';
@@ -94,6 +95,7 @@ export function createApp(d: Deps) {
   const moderation = new ModerationService(d.db, notifier, reviews, now, d.sms);
   const warranty = new WarrantyClaimsService(d.db, notifier, now);
   const warrantyRemediation = new WarrantyRemediationService(d.db, notifier, now);
+  const warrantyRecourse = new WarrantyRecourseService(d.db, notifier, now);
   // Споры — в очередь модератора: из суммы заявки, из сверки работ, из ремонта в сервисе
   orders.onDispute = (p) => moderation.open({ kind: 'dispute', title: p.title, text: p.text, openedBy: p.userId, targetId: p.targetId, orderId: p.orderId, priority: 1 });
   support.onDispute = async (p) => {
@@ -252,6 +254,51 @@ export function createApp(d: Deps) {
     }),c.body);
     return warrantyRemediation.recordPlatformExpense(c.user,c.params.id,p);
   });
+
+  // Legal/financial recourse: documentation and voluntary receipts ONLY.
+  // Never linked to automatic payouts, holds, fines or third-party balances.
+  r.get('/api/admin/warranty-finance/summary', ['admin'],
+    (c: AuthedCtx) => warrantyRecourse.financialSummary(c.user));
+  r.get('/api/warranty-recourse', true, (c: AuthedCtx) =>
+    warrantyRecourse.mine(c.user));
+  r.get('/api/warranty-recourse/:id', true, (c: AuthedCtx) =>
+    warrantyRecourse.view(c.user,c.params.id));
+  r.post('/api/admin/warranty-expenses/:expenseId/recourse', ['admin'],
+    (c: AuthedCtx) => {
+      const p=parse(z.object({
+        amountKopecks:money.positive().max(100_000_000),
+        contractualBasis:z.string().trim().min(20).max(2000),
+        evidenceSummary:z.string().trim().min(20).max(2000),
+      }),c.body);
+      return warrantyRecourse.open(c.user,c.params.expenseId,p);
+    });
+  r.post('/api/warranty-recourse/:id/respond', true, (c: AuthedCtx) => {
+    const p=parse(z.object({
+      position:z.enum(['acknowledged','contested']),
+      note:z.string().trim().min(20).max(2000),
+    }),c.body);
+    return warrantyRecourse.respond(c.user,c.params.id,p.position,p.note);
+  });
+  r.post('/api/admin/warranty-recourse/:id/review', staff,
+    (c: AuthedCtx) => {
+      const p=parse(z.object({
+        outcome:z.enum(['documented_for_review','insufficient_basis','external_legal_review']),
+        note:z.string().trim().min(20).max(2000),
+      }),c.body);
+      return warrantyRecourse.review(c.user,c.params.id,p.outcome,p.note);
+    });
+  r.post('/api/admin/warranty-recourse/:id/withdraw', ['admin'],
+    (c: AuthedCtx) => warrantyRecourse.withdraw(c.user,c.params.id,
+      parse(z.object({note:z.string().trim().min(20).max(2000)}),c.body).note));
+  r.post('/api/admin/warranty-recourse/:id/record-received', ['admin'],
+    (c: AuthedCtx) => {
+      const p=parse(z.object({
+        amountKopecks:money.positive().max(100_000_000),
+        bankReference:z.string().trim().min(5).max(120),
+        receivedAt:z.string().datetime({offset:true}),
+      }),c.body);
+      return warrantyRecourse.recordReceived(c.user,c.params.id,p);
+    });
 
   r.get('/api/support/topics', false, () => TOPICS);
   r.get('/api/support', true, (c: AuthedCtx) => support.mine(c.user));
@@ -1140,7 +1187,7 @@ export function createApp(d: Deps) {
     }
   }
 
-  return { handle, hub, auth, settings, orders, payments, auction, documents, admin, support, warranty, warrantyRemediation, profiles, chat, reviews, offers, notifier, privacy, ops, router: r };
+  return { handle, hub, auth, settings, orders, payments, auction, documents, admin, support, warranty, warrantyRemediation, warrantyRecourse, profiles, chat, reviews, offers, notifier, privacy, ops, router: r };
 }
 
 export type App = ReturnType<typeof createApp>;
