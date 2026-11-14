@@ -606,3 +606,20 @@
   .guest-app:has(.track-guest-tabbar) .desktop-content{padding-bottom:80px;}
 }
 @media(min-width:900px){.guest-app .track-guest-tabbar{display:none;}}
+
+
+/* Real order-coordinate map: compact, never a fabricated route or ETA. */
+.tracksos-order-real-map{min-width:0;margin:4px 0 8px;}
+.tracksos-order-real-map .roadside-map{border-radius:14px;border-color:#237eaf;box-shadow:none;}
+.tracksos-order-real-map .roadside-map-head{padding:9px 11px;}
+.tracksos-order-real-map .roadside-map-title{gap:7px;}
+.tracksos-order-real-map .roadside-map-title b{font-size:12px;}
+.tracksos-order-real-map .roadside-map-title small{font-size:10px;}
+.tracksos-order-real-map .roadside-map-symbol{width:28px;height:28px;border-radius:9px;font-size:16px;}
+.tracksos-order-real-map .roadside-map-viewport{min-height:135px!important;max-height:175px;aspect-ratio:2.25!important;}
+.tracksos-order-real-map .roadside-map-overlay{left:7px;bottom:7px;padding:5px 7px;min-height:25px;font-size:10px;}
+.tracksos-order-real-map .roadside-map-foot{padding:8px 10px;min-height:42px;}
+.tracksos-order-real-map .roadside-map-foot a{font-size:10px;}
+@media(max-width:420px){
+ .tracksos-order-real-map .roadside-map-viewport{min-height:132px!important;}
+}
