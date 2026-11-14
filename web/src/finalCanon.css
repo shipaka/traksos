@@ -878,3 +878,32 @@
   background:#18ddf4;
   pointer-events:none;
 }
+
+
+/* Premium mobile navigation uses crisp scalable vector symbols on all devices. */
+.tabbar a .ic,
+.track-guest-tabbar a > span[aria-hidden="true"] {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  line-height:1;
+}
+.tabbar .ic svg,
+.track-guest-tabbar a > span[aria-hidden="true"] svg {
+  display:block;
+  width:20px;
+  height:20px;
+  flex:none;
+  color:inherit;
+  stroke:currentColor;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .tabbar a .ic svg,
+  .track-guest-tabbar a > span[aria-hidden="true"] svg {
+    transition:transform .18s ease;
+  }
+  .tabbar a:active .ic svg,
+  .track-guest-tabbar a:active > span[aria-hidden="true"] svg {
+    transform:scale(.91);
+  }
+}
