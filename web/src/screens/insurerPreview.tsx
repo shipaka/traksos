@@ -62,6 +62,7 @@ export function InsurerPreviewPage({section,sub,id}:{section?:string;sub?:string
     if(sub==='request'&&id)return <InsuranceThread requestId={id}/>;
     return <ClientInsuranceDesk/>;
   }
+  if(section==='inspections')return <InsurerCabinet inspectionOnly/>;
   if(section==='insurance'){
     if(sub==='request'&&id)return <InsuranceThread requestId={id}/>;
     if(sub==='queue')return <InsurerCabinet section={id}/>;
