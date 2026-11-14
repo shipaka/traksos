@@ -81,10 +81,26 @@ export class StatsService {
                 count(*) filter (where status='no_performer')::int as no_performer, round(avg(year))::int as avg_year
            from orders where created_at >= $1 group by 1, 2 order by created desc limit 30`, p),
     ]);
+    // An incident may contain repair, tow and workshop stages. Count the
+    // customer incident ONCE, while byService above still counts every stage.
+    const incidents = (await this.db.one<{ total: number; multistage: number; stages: number }>(
+      `with roots as (
+         select id from orders where case_root_id is null and created_at >= $1
+       ), grouped as (
+         select r.id as root_id, count(s.id)::int as stage_count
+           from roots r join orders s on s.id=r.id or s.case_root_id=r.id
+          group by r.id
+       )
+       select count(*)::int as total,
+              count(*) filter (where stage_count > 1)::int as multistage,
+              coalesce(sum(stage_count),0)::int as stages
+         from grouped`, [since]
+    ))!;
     const t = totals!;
     const closed = t.completed + t.cancelled + t.no_performer;
     return {
       days, since,
+      incidents: { ...incidents, multistageShare: incidents.total ? Math.round(incidents.multistage * 1000 / incidents.total) / 1000 : 0 },
       totals: t,
       rates: {
         completion: closed ? round(t.completed / closed) : null,
