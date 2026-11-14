@@ -725,15 +725,18 @@ export class OrdersService {
 
   async list(user: AuthUser, scope: 'client' | 'performer', status?: string) {
     const where = scope === 'performer' ? 'o.performer_id = $1' : user.owner_id ? 'o.created_by = $1' : '(o.client_id = $1 or o.created_by = $1)';
-    return this.db.query(
+    const items = await this.db.query<any>(
       `select o.id, o.number, o.status, o.service, o.is_sos, o.problem, o.description, o.address, o.brand, o.estimate, o.work_amount, o.call_out_amount,
-              o.client_fee_pct, o.payment_method, o.created_at, o.completed_at, o.consult_of,
+              o.client_fee_pct, o.discount_amount, o.payment_method, o.created_at, o.completed_at, o.consult_of,
               o.case_root_id, o.continuation_of, o.result, o.result_note, o.vehicle_id,
               v.brand as v_brand, v.model as v_model, v.year as v_year, v.plate as v_plate,
               (select coalesce(company_name, name) from users where id=o.client_id) as client_name
          from orders o left join vehicles v on v.id=o.vehicle_id where ${where} ${status ? 'and o.status = $2' : ''} order by o.created_at desc limit 100`,
       status ? [user.id, status] : [user.id],
     );
+    // The archive and the order detail must use the same final price formula.
+    // Do not recalculate totals from just call_out_amount + work_amount on the client.
+    return items.map((order: any) => ({ ...order, money: this.money(order) }));
   }
 
   /**
