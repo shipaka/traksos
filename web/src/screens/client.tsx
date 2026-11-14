@@ -20,16 +20,10 @@ export function usePrices() {
   return { pricing: p, fill };
 }
 
-const SERVICE_PRICE: Record<string, string> = {
-  electric: 'выезд от {eco} + час работы', diag: 'со сканером · выезд от {pro}', air: 'выезд от {eco}', autonomy: 'выезд от {eco}',
-  tyre: 'выезд по прайсу мастера', tow: 'торги в ценовом коридоре · от {tow}', consult: '{consult} · голос и чат с мастером, без выезда',
-};
-
 export function Home() {
   const { me } = useMe();
   const active = useLoad(() => get('/api/orders'), [], (e) => e.type === 'order');
   const live = (active.data ?? []).filter((o: any) => !['completed', 'cancelled'].includes(o.status));
-  const { fill } = usePrices();
   return (
     <main className="client-home">
       <section className="desktop-hero" aria-label="Помощь грузовому транспорту">
@@ -40,7 +34,7 @@ export function Home() {
           <div className="launch-region" role="note">Зона запуска: Санкт-Петербург и Ленинградская область. В других регионах выездные услуги пока недоступны.</div>
           <div className="desktop-hero-buttons">
             <a className="desktop-primary-action" href="#/sos">🚨 SOS · Нужна помощь</a>
-            <a className="desktop-outline-action" href="#/new/diag">+ Создать заявку</a>
+            <a className="desktop-outline-action" href="#/orders">Мои заявки</a>
           </div>
         </div>
         <div className="client-hero-art" aria-label="Фирменная Scania R520 TrackSOS на дороге">
@@ -61,8 +55,8 @@ export function Home() {
         <section className="desktop-home-main">
           <div className="mobile-home-heading">
             <span className="mobile-home-kicker">TRACKSOS · ВАША ПОМОЩЬ В ДОРОГЕ</span>
-            <h1>{me?.name ? `${me.name}, что случилось?` : 'Что случилось?'}</h1>
-            <div className="sub">Выберите проблему — подскажем, к кому обратиться. Работаем в Санкт-Петербурге и Ленинградской области.</div>
+            <h1>{me?.name ? `${me.name}, нужна помощь?` : 'Нужна помощь?'}</h1>
+            <div className="sub">Выберите направление помощи. Причину неисправности можно описать позже, без лишних переключателей.</div>
           </div>
           <div className="desktop-section-heading"><h2>Мои активные заявки</h2><a href="#/orders">Все заявки →</a></div>
           <div className="desktop-active-orders">
@@ -77,8 +71,7 @@ export function Home() {
               </a>
             ))}
           </div>
-          <div className="desktop-section-heading"><h2>Какая помощь требуется?</h2></div>
-          <SymptomPicker sos={false} />
+          <HelpDirections />
           <LiveStrip who="client" />
         </section>
         <aside className="desktop-home-aside">
@@ -111,88 +104,69 @@ export function Home() {
         </aside>
       </div>
 
-      <div className="stack home-services">
-        <span className="label">Все услуги</span>
-        {Object.entries(SERVICES).map(([id, s]) => (
-          <button key={id} className="linkrow" onClick={() => go(`new/${id}`)}>
-            <span><b>{s.name}</b><small>{fill(SERVICE_PRICE[id] ?? s.hint)}</small></span><span aria-hidden="true">›</span>
-          </button>
-        ))}
-        <button className="linkrow mobile-services-link" onClick={() => go('services')}>
-          <span><b>СТО и ремонт</b><small>Сервисы-партнёры, запись и статус ремонта</small></span><span aria-hidden="true">›</span>
-        </button>
-      </div>
     </main>
   );
 }
 
-/** Сетка поломок + карточка «Что делать» с вариантами и ценами */
-function SymptomPicker({ sos }: { sos: boolean }) {
-  const [sel, setSel] = useState(SYMPTOMS[0].id);
-  const { fill } = usePrices();
-  const s = SYMPTOMS.find((x) => x.id === sel)!;
+/** One agreed customer decision. First choose WHO can help; ask for specifics only on the next step. */
+function HelpDirections() {
+  const [showSpecialties, setShowSpecialties] = useState(false);
+  const masterServices = ['electric', 'diag', 'air', 'autonomy', 'tyre'] as const;
   return (
-    <>
-      <div className="grid2">
-        {SYMPTOMS.map((x) => (
-          <button key={x.id} className="opt" style={{ minHeight: 76 }} aria-pressed={sel === x.id} onClick={() => setSel(x.id)}>
-            <b>{x.name}</b><small>{x.sub}</small>
-          </button>
-        ))}
+    <section className="client-help-directions" aria-label="Направления помощи">
+      <h2>Кто вам нужен?</h2>
+      <p className="client-directions-lead">Выберите нужный вид помощи. Причину поломки и детали расскажете в заявке.</p>
+      <div className="client-direction-grid">
+        <button type="button" className="client-direction-card main-direction"
+          aria-expanded={showSpecialties} aria-controls="master-specializations"
+          onClick={() => setShowSpecialties(open => !open)}>
+          <span className="client-direction-symbol" aria-hidden="true">⚒</span>
+          <span className="client-direction-copy"><b>Выездной мастер</b><small>Ремонт и диагностика грузовика на месте</small></span>
+          <span className="client-direction-arrow" aria-hidden="true">{showSpecialties ? '−' : '›'}</span>
+        </button>
+        <a className="client-direction-card" href="#/new/tow">
+          <span className="client-direction-symbol" aria-hidden="true">↗</span>
+          <span className="client-direction-copy"><b>Эвакуатор</b><small>Перевезти грузовик в нужное место</small></span>
+          <span className="client-direction-arrow" aria-hidden="true">›</span>
+        </a>
+        <a className="client-direction-card" href="#/services">
+          <span className="client-direction-symbol" aria-hidden="true">▣</span>
+          <span className="client-direction-copy"><b>СТО грузовых автомобилей</b><small>Найти сервис и записаться на ремонт</small></span>
+          <span className="client-direction-arrow" aria-hidden="true">›</span>
+        </a>
+        <a className="client-direction-card" href="#/consult">
+          <span className="client-direction-symbol" aria-hidden="true">◉</span>
+          <span className="client-direction-copy"><b>Консультация по телефону</b><small>Помощь специалиста без выезда</small></span>
+          <span className="client-direction-arrow" aria-hidden="true">›</span>
+        </a>
       </div>
-      <div className="card hi">
-        <span className="label" style={{ color: 'var(--accent)' }}>Что делать · {s.name}</span>
-        <span className="note" style={{ color: 'var(--fg-2)' }}>{s.note}</span>
-        <div className="stack">
-          {s.opts.map((o, i) => (
-            <button key={o.to + i} className={`linkrow ${i === 0 ? 'primary' : ''}`}
-              onClick={() => go(`new/${o.to}?${sos && o.to !== 'consult' ? 'sos' : 'p'}=${s.id}`)}>
-              <span><b>{o.name}</b><small>{fill(o.hint)}</small></span><span aria-hidden="true">›</span>
-            </button>
-          ))}
-        </div>
-      </div>
-    </>
+      {showSpecialties && (
+        <section id="master-specializations" className="client-specializations" aria-label="Специализация выездного мастера">
+          <h3>Какой специалист вам нужен?</h3>
+          <p>Не знаете причину? Выберите диагностику — определять поломку заранее не требуется.</p>
+          <div className="client-specialization-grid">
+            {masterServices.map(id => (
+              <a key={id} href={`#/new/${id}`} className="client-specialization-card">
+                <b>{SERVICES[id].name}</b><small>{SERVICES[id].hint}</small>
+                <span aria-hidden="true">›</span>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+    </section>
   );
 }
 
 export function Sos() {
-  const [choice, setChoice] = useState<'master' | 'tow' | 'sto' | null>(null);
-  const masterServices = ['electric', 'diag', 'air', 'autonomy', 'tyre'];
   return (
     <main className="client-sos-page">
       <Back to="" />
       <div className="client-section-hero client-section-hero-sos">
         <h1>SOS · Нужна помощь?</h1>
-        <div className="sub">Сначала выберите, кто вам нужен. Остальные вопросы появятся только после выбора.</div>
+        <div className="sub">Сначала выберите направление помощи. Остальные вопросы появятся только после выбора.</div>
       </div>
-      <div className="stack">
-        <button className="linkrow primary" aria-expanded={choice === 'master'} onClick={() => setChoice(choice === 'master' ? null : 'master')}>
-          <span><b>Выездной мастер</b><small>Специалист приедет к вашему грузовику</small></span><span aria-hidden="true">›</span>
-        </button>
-        <button className="linkrow" onClick={() => go('new/tow')}>
-          <span><b>Эвакуатор</b><small>Перевезти грузовик в нужное место</small></span><span aria-hidden="true">›</span>
-        </button>
-        <button className="linkrow" onClick={() => go('services')}>
-          <span><b>СТО грузовых автомобилей</b><small>Найти сервис и записаться на ремонт</small></span><span aria-hidden="true">›</span>
-        </button>
-        <button className="linkrow" onClick={() => go('consult')}>
-          <span><b>Консультация по телефону</b><small>Связаться с диагностом без выезда</small></span><span aria-hidden="true">›</span>
-        </button>
-      </div>
-      {choice === 'master' && (
-        <section className="card">
-          <b>Какой мастер нужен?</b>
-          <span className="note">Если не знаете причину поломки, выберите диагноста.</span>
-          <div className="stack">
-            {masterServices.map((id) => (
-              <button key={id} className="linkrow" onClick={() => go(`new/${id}`)}>
-                <span><b>{SERVICES[id].name}</b><small>{SERVICES[id].hint}</small></span><span aria-hidden="true">›</span>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
+      <HelpDirections />
       <MyPlace />
       <LiveStrip who="client" />
     </main>
