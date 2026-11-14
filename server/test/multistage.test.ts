@@ -39,6 +39,8 @@ test('one SOS incident has independently priced stages; duplicate and foreign co
   const beforeTow = ok(await t.api('GET', `/api/orders/${id}`, undefined, client.token));
   assert.equal(beforeTow.canContinueWithTow, true);
   const repairCost = beforeTow.money.total;
+  const history = ok(await t.api('GET', '/api/orders?as=client', undefined, client.token));
+  assert.equal(history.find((o: any) => o.id === id).money.total, repairCost, 'archive total must equal the exact order total');
 
   const linked = ok(await t.api('POST', '/api/orders', next, client.token)).order;
   assert.equal(linked.continuationOf, id);
