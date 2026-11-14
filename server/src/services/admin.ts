@@ -12,6 +12,7 @@ import { config } from '../config.ts';
 import { cancelSplit, pct, type CancelStage } from '../domain/money.ts';
 import type { SettingsService } from './settings.ts';
 import { rub } from '../util.ts';
+import { createHash } from 'node:crypto';
 
 export class AdminService {
   constructor(
@@ -75,41 +76,169 @@ export class AdminService {
    *   platform  — площадка возвращает из своего сбора и вознаграждения;
    *   performer — удерживается у исполнителя (из невыплаченного или в долг).
    */
-  async refund(admin: AuthUser, paymentId: string, p: { amount: number; from: 'platform' | 'performer'; reason: string }) {
-    const pay = await this.db.one(`select p.*, o.client_id, o.created_by, o.performer_id, o.number from payments p join orders o on o.id=p.order_id where p.id=$1`, [paymentId]);
-    if (!pay) throw notFound('Платёж не найден');
-    if (!['captured', 'partially_refunded'].includes(pay.status)) throw conflict('not_refundable', 'Вернуть можно только списанный платёж');
-    const left = pay.total - pay.refunded_amount;
-    if (!Number.isInteger(p.amount) || p.amount <= 0 || p.amount > left) throw bad('bad_amount', `Можно вернуть от 1 коп. до ${rub(left)}`);
-    if (p.from === 'performer' && !pay.performer_id) throw bad('no_performer', 'В заявке нет исполнителя');
+  async refund(admin: AuthUser, paymentId: string,
+    p: { amount: number; from: 'platform' | 'performer'; reason: string }, requestKey?: string) {
+    // A repeated HTTP request needs the SAME provider operation, even when
+    // another administrator clicks the same action at exactly the same time.
+    // Clients may send Idempotency-Key for deliberately distinct operations.
+    const key = requestKey ?? createHash('sha256')
+      .update(JSON.stringify([paymentId, p.amount, p.from, p.reason])).digest('hex');
+    if (!key || key.length > 128) throw bad('bad_idempotency_key');
 
-    if (pay.provider_payment_id && pay.method !== 'invoice') {
-      const r = await this.payments.provider.refund(pay.provider_payment_id, p.amount, `refund:${paymentId}:${pay.refunded_amount + p.amount}`);
-      if (r.status === 'failed') throw conflict('refund_failed', 'Платёжный сервис отклонил возврат');
-    }
-    await this.db.tx(async (q) => {
-      const total = pay.refunded_amount + p.amount;
-      await q.query(`update payments set refunded_amount=$2, status=$3, updated_at=now() where id=$1`,
-        [paymentId, total, total >= pay.total ? 'refunded' : 'partially_refunded']);
-      const entries = [{ account: 'client', performerId: null as string | null, amount: p.amount, kind: 'refund', note: p.reason }];
-      if (p.from === 'platform') entries.push({ account: 'platform', performerId: null, amount: -p.amount, kind: 'refund', note: p.reason });
-      else {
-        entries.push({ account: 'performer', performerId: pay.performer_id, amount: -p.amount, kind: 'refund_charge', note: p.reason });
-        // Если выплата по этой заявке ещё не ушла — уменьшаем её
-        await q.query(`update payouts set amount = greatest(0, amount - $2) where order_id=$1 and status='pending'`, [pay.order_id, p.amount]);
+    const claim = await this.db.tx(async q => {
+      const pay = await q.one<any>(
+        `select p.*, o.client_id, o.created_by, o.performer_id, o.number
+           from payments p join orders o on o.id=p.order_id
+          where p.id=$1 for update of p`, [paymentId]);
+      if (!pay) throw notFound('Платёж не найден');
+      const existing = await q.one<any>(
+        'select * from payment_refund_requests where payment_id=$1 and idempotency_key=$2',
+        [paymentId, key]);
+      if (existing) {
+        if (existing.amount !== p.amount || existing.source_account !== p.from || existing.reason !== p.reason)
+          throw conflict('idempotency_conflict', 'Ключ уже использован с другими реквизитами');
+        return { pay, attempt: existing, created: false };
       }
-      for (const e of entries) {
-        await q.query(`insert into ledger_entries(order_id, payment_id, account, performer_id, amount, kind, note) values ($1,$2,$3,$4,$5,$6,$7)`,
-          [pay.order_id, paymentId, e.account, e.performerId, e.amount, e.kind, e.note]);
-      }
-      await this.orders.event(q, pay.order_id, admin.id, 'refund', { paymentId, amount: p.amount, from: p.from, reason: p.reason });
-      await this.audit(q, admin, 'payment.refund', paymentId, p);
+      if (!['captured', 'partially_refunded'].includes(pay.status))
+        throw conflict('not_refundable', 'Вернуть можно только списанный платёж');
+      if (!Number.isInteger(p.amount) || p.amount <= 0 || p.amount > pay.total - pay.refunded_amount)
+        throw bad('bad_amount', `Можно вернуть от 1 коп. до ${rub(pay.total - pay.refunded_amount)}`);
+      if (p.from === 'performer' && !pay.performer_id)
+        throw bad('no_performer', 'В заявке нет исполнителя');
+      const unresolved = await q.one(
+        `select id from payment_refund_requests where payment_id=$1
+          and status in ('processing','pending','needs_review') limit 1`, [paymentId]);
+      if (unresolved) throw conflict('refund_processing', 'Другой возврат ещё проверяется');
+      const attempt = (await q.one<any>(
+        `insert into payment_refund_requests
+          (payment_id, requested_by, idempotency_key, amount, source_account, reason)
+          values ($1,$2,$3,$4,$5,$6) returning *`,
+        [paymentId, admin.id, key, p.amount, p.from, p.reason]))!;
+      return { pay, attempt, created: true };
     });
-    await this.notifier.notify([pay.client_id, pay.created_by], { type: 'order', orderId: pay.order_id, status: 'refund' },
-      { kind: 'normal', title: 'Возврат денег', body: `Заявка №${pay.number}: возвращаем ${rub(p.amount)}. ${p.reason}`, data: { orderId: pay.order_id } });
-    if (p.from === 'performer') {
-      await this.notifier.notify([pay.performer_id], { type: 'balance' },
-        { kind: 'normal', title: 'Удержание по заявке', body: `№${pay.number}: ${rub(p.amount)} — ${p.reason}`, data: { orderId: pay.order_id } });
+
+    if (!claim.created) {
+      if (claim.attempt.status === 'succeeded') return this.payments.forOrder(admin, claim.pay.order_id);
+      if (claim.attempt.status === 'failed') throw conflict('refund_failed', 'Возврат был отклонён');
+      throw conflict('refund_processing', 'Возврат уже отправлен и ожидает проверки');
+    }
+
+    let response: { id: string; status: 'succeeded' | 'pending' | 'failed' } | null = null;
+    try {
+      if (claim.pay.provider_payment_id && claim.pay.method !== 'invoice')
+        response = await this.payments.provider.refund(
+          claim.pay.provider_payment_id, p.amount, `refund:${claim.attempt.id}`);
+    } catch (_error) {
+      // The bank may have accepted the operation before the connection broke.
+      // A retry (even with another request key) must not send it again.
+      await this.db.query(
+        `update payment_refund_requests set status='needs_review', updated_at=now()
+          where id=$1 and status='processing'`, [claim.attempt.id]);
+      await this.audit(this.db, admin, 'payment.refund_unknown', paymentId,
+        { refundId: claim.attempt.id, action: 'provider_reconciliation_required' });
+      throw conflict('refund_unknown', 'Ответ банка неизвестен. Возврат требует сверки.');
+    }
+
+    if (response?.status === 'failed') {
+      await this.db.query(
+        `update payment_refund_requests set status='failed',
+          provider_refund_id=$2, resolved_at=now(), updated_at=now() where id=$1`,
+        [claim.attempt.id, response.id]);
+      throw conflict('refund_failed', 'Платёжный сервис отклонил возврат');
+    }
+    if (response) await this.db.query(
+      `update payment_refund_requests set provider_refund_id=$2,
+         status=$3, updated_at=now() where id=$1`,
+      [claim.attempt.id, response.id, response.status === 'pending' ? 'pending' : 'processing']);
+    if (response?.status === 'pending')
+      throw conflict('refund_pending', 'Возврат отправлен в банк, ждём подтверждения');
+    return this.completeRefund(admin, paymentId, claim.attempt.id);
+  }
+
+  async reconcileRefund(admin: AuthUser, paymentId: string, refundId: string) {
+    const attempt = await this.db.one<any>(
+      'select * from payment_refund_requests where id=$1 and payment_id=$2',
+      [refundId, paymentId]);
+    if (!attempt) throw notFound('Запрос возврата не найден');
+    if (attempt.status === 'succeeded') return this.payments.forOrder(admin, paymentId === attempt.payment_id
+      ? (await this.db.one<any>('select order_id from payments where id=$1', [paymentId]))!.order_id : '');
+    if (attempt.status === 'failed') throw conflict('refund_failed', 'Возврат отклонён');
+    if (!attempt.provider_refund_id)
+      throw conflict('refund_unknown', 'Нет подтверждения банка — требуется ручная сверка');
+    let result;
+    try {
+      result = await this.payments.provider.getRefund(attempt.provider_refund_id);
+    } catch {
+      throw conflict('refund_unknown', 'Не удалось уточнить состояние возврата у банка');
+    }
+    if (result.status === 'pending') throw conflict('refund_pending', 'Банк ещё обрабатывает возврат');
+    if (result.status === 'failed') {
+      await this.db.query(
+        `update payment_refund_requests set status='failed',
+          resolved_at=now(), updated_at=now() where id=$1 and status<>'succeeded'`, [refundId]);
+      throw conflict('refund_failed', 'Банк отклонил возврат');
+    }
+    return this.completeRefund(admin, paymentId, refundId);
+  }
+
+  private async completeRefund(admin: AuthUser, paymentId: string, refundId: string) {
+    const committed = await this.db.tx(async q => {
+      const pay = await q.one<any>(
+        `select p.*, o.client_id, o.created_by, o.performer_id, o.number
+           from payments p join orders o on o.id=p.order_id
+          where p.id=$1 for update of p`, [paymentId]);
+      if (!pay) throw notFound('Платёж не найден');
+      const attempt = await q.one<any>(
+        'select * from payment_refund_requests where id=$1 and payment_id=$2 for update',
+        [refundId, paymentId]);
+      if (!attempt) throw notFound('Запрос возврата не найден');
+      if (attempt.status === 'succeeded') return { pay, changed: false, attempt };
+      if (attempt.status === 'failed' || attempt.status === 'needs_review')
+        throw conflict('refund_unknown', 'Требуется сверка состояния возврата');
+      const total = pay.refunded_amount + attempt.amount;
+      if (total > pay.total) throw conflict('refund_exceeds_total', 'Сумма возвратов выше оплаты');
+      if (!['captured', 'partially_refunded'].includes(pay.status))
+        throw conflict('not_refundable', 'Платёж нельзя вернуть');
+      await q.query(
+        `update payments set refunded_amount=$2, status=$3, updated_at=now() where id=$1`,
+        [paymentId, total, total === pay.total ? 'refunded' : 'partially_refunded']);
+      const p = { amount: attempt.amount, from: attempt.source_account, reason: attempt.reason };
+      const entries = [
+        { account: 'client', performerId: null as string | null, amount: p.amount, kind: 'refund', note: p.reason },
+        p.from === 'platform'
+          ? { account: 'platform', performerId: null, amount: -p.amount, kind: 'refund', note: p.reason }
+          : { account: 'performer', performerId: pay.performer_id, amount: -p.amount, kind: 'refund_charge', note: p.reason },
+      ];
+      if (p.from === 'performer')
+        await q.query(
+          `update payouts set amount=greatest(0,amount-$2)
+             where order_id=$1 and status='pending'`, [pay.order_id, p.amount]);
+      for (const entry of entries) await q.query(
+        `insert into ledger_entries(order_id, payment_id, account, performer_id, amount, kind, note)
+           values ($1,$2,$3,$4,$5,$6,$7)`,
+        [pay.order_id, paymentId, entry.account, entry.performerId, entry.amount, entry.kind, entry.note]);
+      await this.orders.event(q, pay.order_id, admin.id, 'refund',
+        { paymentId, refundId, amount: p.amount, from: p.from, reason: p.reason });
+      await this.audit(q, admin, 'payment.refund', paymentId,
+        { ...p, refundId });
+      await q.query(
+        `update payment_refund_requests set status='succeeded',
+          resolved_at=now(), updated_at=now() where id=$1`, [refundId]);
+      return { pay, changed: true, attempt };
+    });
+    const pay = committed.pay;
+    const a = committed.attempt;
+    if (committed.changed) {
+      await this.notifier.notify([pay.client_id, pay.created_by],
+        { type: 'order', orderId: pay.order_id, status: 'refund' },
+        { kind: 'normal', title: 'Возврат денег',
+          body: `Заявка №${pay.number}: возвращаем ${rub(a.amount)}. ${a.reason}`,
+          data: { orderId: pay.order_id } });
+      if (a.source_account === 'performer')
+        await this.notifier.notify([pay.performer_id], { type: 'balance' },
+          { kind: 'normal', title: 'Удержание по заявке',
+            body: `№${pay.number}: ${rub(a.amount)} — ${a.reason}`,
+            data: { orderId: pay.order_id } });
     }
     return this.payments.forOrder(admin, pay.order_id);
   }
