@@ -654,3 +654,20 @@
 .app.role-client .client-direction-grid.expanded>.main-direction .client-direction-copy{
   max-width:70%;
 }
+
+
+/* Approved cinematic blend: the portrait Scania source is preserved with
+   object-fit:contain; soften the hard photo rectangle against the road scene.
+   A mask changes only edge transparency, never the truck's aspect ratio. */
+.guest-app .public-landing .public-hero-visual,
+.app.role-client .tracksos-visual-home .track-road-art img{
+  -webkit-mask-image:radial-gradient(ellipse 72% 74% at 50% 52%,#000 47%,rgba(0,0,0,.96) 58%,rgba(0,0,0,.64) 70%,transparent 85%);
+  mask-image:radial-gradient(ellipse 72% 74% at 50% 52%,#000 47%,rgba(0,0,0,.96) 58%,rgba(0,0,0,.64) 70%,transparent 85%);
+}
+@media(max-width:899px){
+  .guest-app .public-landing .public-hero-visual,
+  .app.role-client .tracksos-visual-home .track-road-art img{
+    -webkit-mask-image:radial-gradient(ellipse 75% 80% at 50% 50%,#000 54%,rgba(0,0,0,.82) 72%,transparent 88%);
+    mask-image:radial-gradient(ellipse 75% 80% at 50% 50%,#000 54%,rgba(0,0,0,.82) 72%,transparent 88%);
+  }
+}
