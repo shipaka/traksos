@@ -1,0 +1,98 @@
+/* TrackSOS — final visual correction for the real premium role workspaces.
+   Keep the approved, locally hosted Scania artwork; no vector/emoji truck substitutes.
+   This layer is cosmetic and is imported AFTER the existing role + client themes. */
+
+/* The earlier generic decoration adds a square cartoon van on top of the
+   photorealistic Scania in the master's working dashboard. Remove that overlay. */
+.app.role-performer .work-command-hero::after {
+  content: none !important;
+  background-image: none !important;
+}
+.app.role-performer .work-command-hero {
+  background:
+    radial-gradient(ellipse at 82% 12%, rgba(61, 212, 234, .15), transparent 49%),
+    linear-gradient(125deg, #091e34 5%, #133c59 75%, #102b44) !important;
+  border-color: #4b88a2;
+}
+.app.role-performer .work-command-art {
+  z-index: 0;
+  right: 1.5%;
+  bottom: 2%;
+  width: min(49%, 580px);
+  height: 92%;
+  opacity: .94;
+  background-image: url('../public/tracksos-approved-scania-r520.webp');
+  background-size: contain;
+  background-position: right bottom;
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 14px 20px rgba(0, 9, 22, .39));
+}
+.app.role-performer .work-command-copy { position: relative; z-index: 2; }
+.app.role-performer .work-command-verification { display: inline-block; }
+
+/* A restrained interaction system shared by all authenticated cabinets.
+   Never animate layout sizing, hide controls, or add fake numerical indicators. */
+.app[class*="role-"] .desktop-content a:is(.desktop-quick-card, .desktop-aside-card, .client-dashboard-hubs > a),
+.app[class*="role-"] .desktop-content :is(.linkrow, .client-sos-choice, .client-sos-specialty, .opt, .step-card),
+.app[class*="role-"] .desktop-content :is(.btn, button.chip) {
+  transition: background-color .16s ease, border-color .16s ease,
+    box-shadow .16s ease, transform .16s ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .app[class*="role-"] .desktop-content a:is(.desktop-quick-card, .desktop-aside-card):hover,
+  .app[class*="role-"] .desktop-content a.client-dashboard-hubs:hover,
+  .app[class*="role-"] .desktop-content :is(.client-sos-choice, .client-sos-specialty, .linkrow):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px rgba(0, 14, 31, .22);
+  }
+}
+.app[class*="role-"] :is(a, button, input, select, textarea):focus-visible {
+  outline: 2px solid #81f1fa;
+  outline-offset: 3px;
+}
+.app[class*="role-"] .desktop-content :is(.client-sos-choice, .client-sos-specialty) {
+  min-width: 0;
+}
+.app[class*="role-"] .desktop-content :is(.client-sos-choice, .client-sos-specialty) :is(b, small) {
+  overflow-wrap: anywhere;
+}
+/* Ensure the original truck remains visible in the mobile / APK WebView,
+   while the real status, menu and interaction buttons stay readable. */
+@media (max-width: 899px) {
+  .app.role-performer .work-command-hero {
+    padding: 22px 18px 142px;
+    min-height: 0;
+    border-radius: 21px;
+  }
+  .app.role-performer .work-command-art {
+    width: min(82%, 340px);
+    height: 150px;
+    right: 0;
+    bottom: 0;
+    opacity: .88;
+  }
+  .app.role-performer .work-command-copy {
+    max-width: 100%;
+  }
+  .app.role-performer .work-command-hero p {
+    max-width: 100%;
+  }
+  .app.role-performer .work-command-tags {
+    max-width: 100%;
+  }
+  .app.role-client .client-dashboard .client-hero-scania {
+    object-fit: contain;
+  }
+}
+@media (max-width: 360px) {
+  .app.role-performer .work-command-art { width: 86%; height: 130px; }
+  .app.role-performer .work-command-hero { padding-bottom: 128px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app[class*="role-"] .desktop-content a,
+  .app[class*="role-"] .desktop-content button,
+  .app[class*="role-"] .desktop-content :is(.linkrow, .opt, .step-card) {
+    transition: none !important;
+    animation: none !important;
+  }
+}
