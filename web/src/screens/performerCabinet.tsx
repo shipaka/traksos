@@ -90,7 +90,7 @@ function PerformerOnboarding() {
     if (await run(() => put('/api/performer/profile', body), 'Профиль сохранён — теперь фото для проверки')) { await reload(); go('work/docs'); }
   }
   return (
-    <main>
+    <main className="performer-onboarding">
       <div><h1>Станьте исполнителем</h1><div className="sub">Четыре коротких шага. Марки, цены и остальное настроите потом в профиле.</div></div>
       <div className="step-card">
         <div className="step-head"><span className="step-n">1</span><b>Кто вы</b></div>
