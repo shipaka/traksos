@@ -44,7 +44,7 @@ function HelpDirections() {
           <span className="client-direction-copy"><b>Выездной мастер</b><small>Ремонт и диагностика грузовика на месте</small></span>
           <span className="client-direction-arrow" aria-hidden="true">{showSpecialties ? '−' : '›'}</span>
         </button>
-        {!showSpecialties && <a className="client-direction-card" href="#/new/tow">
+        {!showSpecialties && <><a className="client-direction-card" href="#/new/tow">
           <span className="client-direction-symbol" aria-hidden="true">↗</span>
           <span className="client-direction-copy"><b>Эвакуатор</b><small>Перевезти грузовик в нужное место</small></span>
           <span className="client-direction-arrow" aria-hidden="true">›</span>
@@ -58,7 +58,7 @@ function HelpDirections() {
           <span className="client-direction-symbol" aria-hidden="true">◉</span>
           <span className="client-direction-copy"><b>Консультация по телефону</b><small>Помощь специалиста без выезда</small></span>
           <span className="client-direction-arrow" aria-hidden="true">›</span>
-        </a>}
+        </a></>}
       </div>
       {showSpecialties && (
         <section id="master-specializations" className="client-specializations" aria-label="Специализация выездного мастера">
