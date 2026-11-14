@@ -47,7 +47,11 @@ try {
           body:document.body.scrollWidth,
           missing:document.querySelector('main')?.textContent?.includes('Такой страницы нет'),
           failed:document.body.textContent?.includes('Не удалось открыть раздел'),
-          nav:document.querySelectorAll('.account-menu nav a[href^="#/"]').length
+          nav:document.querySelectorAll('.account-menu nav a[href^="#/"]').length,
+          overflowElements:[...document.querySelectorAll('body *')]
+            .filter(el=>el.getBoundingClientRect().right>document.documentElement.clientWidth+3)
+            .slice(0,8).map(el=>({tag:el.tagName,className:String(el.className).slice(0,80),
+              width:Math.round(el.getBoundingClientRect().width),right:Math.round(el.getBoundingClientRect().right)}))
         }));
         if(report.scroll>report.width+3 || report.body>report.width+3)
           throw Error(entry.name+' '+width+'px '+where+': horizontal overflow '+JSON.stringify(report));
