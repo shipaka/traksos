@@ -78,7 +78,16 @@ function PerformerOnboarding() {
   const canTow = !!me?.roles.includes('tow');
   const canMaster = !!me?.roles.includes('master');
   const [name, setName] = useState(me?.name ?? '');
-  const [spec, setSpec] = useState<string[]>(['electric']);
+  const [spec, setSpec] = useState<string[]>(() => {
+    // Apply the specializations chosen at partner sign-up, but validate ids.
+    try {
+      const picked = JSON.parse(sessionStorage.getItem('traksos.masterSpecialties') || 'null');
+      const valid = Array.isArray(picked)
+        ? picked.filter((id): id is string => typeof id === 'string' && SPECIALTIES.some(s => s.id === id))
+        : [];
+      return valid.length ? [...new Set<string>(valid)] : ['electric'];
+    } catch { return ['electric']; }
+  });
   const [car, setCar] = useState({ brand: '', color: '', plate: '' });
   const [taxStatus, setTax] = useState('');
   const [inn, setInn] = useState('');
@@ -87,7 +96,10 @@ function PerformerOnboarding() {
     const body: any = { kind, name: name || undefined, taxStatus: taxStatus || null, inn: inn || null,
       cars: car.brand && car.plate ? [car] : [], car: car.brand && car.plate ? car : null };
     if (!isTow) body.specialties = spec;
-    if (await run(() => put('/api/performer/profile', body), 'Профиль сохранён — теперь фото для проверки')) { await reload(); go('work/docs'); }
+    if (await run(() => put('/api/performer/profile', body), 'Профиль сохранён — теперь фото для проверки')) {
+      try { sessionStorage.removeItem('traksos.masterSpecialties'); } catch {}
+      await reload(); go('work/docs');
+    }
   }
   return (
     <main className="performer-onboarding">
