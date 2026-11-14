@@ -488,7 +488,7 @@
   font-size:12px;line-height:1.55;
 }
 .app.role-client .client-orders-page>h1,
-.app.role-client .account-profile-page>h1{
+.app[class*="role-"] .account-profile-page>h1{
   position:relative;
   padding:24px 24px 24px 29px;
   margin:0 0 2px;
@@ -499,7 +499,7 @@
   box-shadow:0 10px 26px #0003;
 }
 .app.role-client .client-orders-page>h1::before,
-.app.role-client .account-profile-page>h1::before{
+.app[class*="role-"] .account-profile-page>h1::before{
   content:"";position:absolute;left:0;top:16px;bottom:16px;
   width:4px;background:linear-gradient(#82ebf3,#eb499c);
   border-radius:10px;
@@ -517,10 +517,10 @@
   min-height:70px;border:1px solid #447391;border-radius:15px;
   background:linear-gradient(145deg,#173e58,#102f46);
 }
-.app.role-client .account-profile-page>.card{
+.app[class*="role-"] .account-profile-page>.card{
   background:linear-gradient(140deg,#163b56,#102940);
 }
-.app.role-client .account-profile-page>form.stack{
+.app[class*="role-"] .account-profile-page>form.stack{
   padding:clamp(15px,2.5vw,23px);
   background:#0f2b44;
   border:1px solid #396782;
@@ -540,8 +540,8 @@
   }
   .app.role-client .client-sos-page>.stack>.linkrow b{font-size:14px;}
   .app.role-client .client-orders-page>h1,
-  .app.role-client .account-profile-page>h1{padding:19px 19px 19px 23px;border-radius:16px;}
-  .app.role-client .account-profile-page>form.stack{padding:16px;}
+  .app[class*="role-"] .account-profile-page>h1{padding:19px 19px 19px 23px;border-radius:16px;}
+  .app[class*="role-"] .account-profile-page>form.stack{padding:16px;}
 }
 
 
