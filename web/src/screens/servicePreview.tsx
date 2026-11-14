@@ -3,7 +3,7 @@ import {resetServicePreview,servicePreviewHref} from '../demo/servicePreviewApi.
 
 export function ServicePreviewBar(){
   return <div className="service-preview-admin-bar" role="banner" aria-label="Панель администратора в тестовом кабинете">
-    <div className="service-preview-admin-identity"><strong>TRACKSOS · АДМИНИСТРАТОР</strong>
+    <div className="service-preview-admin-identity"><strong>TRAKSOS · АДМИНИСТРАТОР</strong>
       <span>Тестовый режим СТО · данные вымышленные</span></div>
     <div className="service-preview-admin-actions">
       <a href="#/admin/test-center">← Назад к выбору кабинетов</a>

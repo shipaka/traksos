@@ -20,7 +20,7 @@ try {
     });
     await page.goto(BASE+'/#/register');
     if(wrongChoice==='Я мастер') await page.getByRole('button',{name:'Я мастер'}).click();
-    await page.getByRole('heading',{name:wrongChoice==='Я мастер'?'Работать с ТракSOS':'Регистрация в ТракSOS'}).waitFor();
+    await page.getByRole('heading',{name:wrongChoice==='Я мастер'?'Работать с TrakSOS':'Регистрация в TrakSOS'}).waitFor();
     if(wrongChoice==='Я мастер') await page.getByRole('button',{name:'Я мастер'}).waitFor();
     await page.locator('input[type=tel]').fill('+79990000444');
     await page.locator('input[type=checkbox]').check();

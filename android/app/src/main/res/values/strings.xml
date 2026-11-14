@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">ТракSOS</string>
+    <string name="app_name">TrakSOS</string>
     <string name="channel_calls">Заявки как звонок</string>
     <string name="channel_calls_desc">Входящие заявки и SOS: звук, вибрация и экран поверх блокировки</string>
     <string name="channel_general">Статусы и чат</string>
@@ -12,7 +12,7 @@
     <string name="no_connection">Нет связи с сервером. Проверьте интернет — страница обновится сама.</string>
     <string name="retry">Повторить</string>
     <string name="server_timeout">Сервер не отвечает. Проверьте интернет или адрес сервера.</string>
-    <string name="server_not_traksos">По этому адресу пока нет сервера ТракSOS. Для проверки укажите адрес тестового стенда.</string>
+    <string name="server_not_traksos">По этому адресу пока нет сервера TrakSOS. Для проверки укажите адрес тестового стенда.</string>
     <string name="server_error">Сервер ответил ошибкой %1$d. Попробуйте позже или укажите другой адрес.</string>
     <string name="server_address">Адрес сервера</string>
     <string name="server_save">Открыть этот адрес</string>

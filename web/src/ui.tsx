@@ -174,7 +174,7 @@ export function VehicleFields({ value, onChange }: { value: VehicleValue; onChan
   );
 }
 
-// «Сейчас в ТракSOS» — просто факт, не кнопка: сколько на линии и сколько заявок за сутки. Обновляется раз в минуту.
+// «Сейчас в TrakSOS» — просто факт, не кнопка: сколько на линии и сколько заявок за сутки. Обновляется раз в минуту.
 export function LiveStrip({ who }: { who: 'client' | 'master' | 'tow' }) {
   const [d, setD] = useState<any>(null);
   useEffect(() => {
@@ -195,9 +195,9 @@ export function LiveStrip({ who }: { who: 'client' | 'master' | 'tow' }) {
     `выполнено ${d.done_24h}`,
   ];
   return (
-    <div className="live-strip" aria-label="Сейчас в ТракSOS">
+    <div className="live-strip" aria-label="Сейчас в TrakSOS">
       <span className="live-dot" />
-      <span>Сейчас в ТракSOS: {items.join(' · ')}</span>
+      <span>Сейчас в TrakSOS: {items.join(' · ')}</span>
     </div>
   );
 }

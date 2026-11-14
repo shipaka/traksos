@@ -9,7 +9,7 @@ async function clickCabinetLink(page, name) {
   await page.locator('.account-menu > summary').click();
   await page.locator('.account-menu nav').getByRole('link', { name, exact: true }).click();
 }
-async function checkCabinetMenu(page, expectedLinks) {
+async function checkCabinetMenu(page, expectedLinks, { shopTab = true } = {}) {
   const summary = page.locator('.account-menu > summary');
   await summary.waitFor();
   if (!(await summary.isVisible())) throw new Error('Cabinet menu is not visible');
@@ -21,7 +21,8 @@ async function checkCabinetMenu(page, expectedLinks) {
     if (!href || !href.startsWith('#/')) throw new Error('Invalid cabinet route for ' + label);
   }
   await summary.click();
-  const shop = page.locator('.tabbar').getByRole('link', { name: 'Магазин' });
+  if (!shopTab) return; // Admin, insurer, inspection and moderator use role-specific navigation.
+  const shop = page.locator('.tabbar').locator('a[href="#/shop"]');
   try {
     await shop.waitFor({ state: 'visible', timeout: 10000 });
   } catch {
@@ -36,7 +37,7 @@ async function checkCabinetMenu(page, expectedLinks) {
 async function assertDashboardTheme(page, role) {
   const result = await page.evaluate(() => {
     const app = document.querySelector('.app');
-    const card = document.querySelector('.card');
+    const card = document.querySelector('.card') ?? document.querySelector('.client-dashboard .desktop-hero');
     if (!app || !card) return null;
     const css = getComputedStyle(app);
     return {
@@ -79,14 +80,14 @@ const mk = async () => {
   return page;
 };
 
-// how: 'help' — кнопка «Помогите», 'login' — вход по номеру, иначе текст роли в «Хочу работать с ТракSOS»
+// how: 'help' — кнопка «Помогите», 'login' — вход по номеру, иначе текст роли в «Хочу работать с TrakSOS»
 async function login(page, phoneNum, how) {
   await page.goto(BASE + '/#/login');
   if (how === 'help') await page.getByRole('button', { name: /Помогите/ }).click();
   else if (how === 'login') await page.getByRole('button', { name: 'Войти по номеру' }).click();
   else { await page.getByRole('button', { name: /Хочу работать/ }).click(); await page.getByRole('button', { name: how }).click(); }
   await page.locator('input[type=tel]').fill(phoneNum);
-  const password = 'TrackSOS-Test-2026!';
+  const password = 'TrakSOS-Test-2026!';
   if (how === 'login') {
     await page.locator('input[type=password]').fill(password);
     await page.getByRole('button', { name: 'Войти', exact: true }).click();
@@ -102,7 +103,7 @@ async function login(page, phoneNum, how) {
 
 // Админ — через API
 const c = await api('POST', '/api/auth/code', { phone: '+79990000001' });
-const admin = await api('POST', '/api/auth/verify', { phone: '+79990000001', code: c.devCode, password: 'TrackSOS-Test-2026!' });
+const admin = await api('POST', '/api/auth/verify', { phone: '+79990000001', code: c.devCode, password: 'TrakSOS-Test-2026!' });
 
 // Мастер
 const m = await mk();
@@ -142,8 +143,10 @@ await shot(a, '01c-admin-verify');
 await a.getByRole('button', { name: 'Одобрить' }).click();
 await a.getByText('Очередь пуста').waitFor();
 await m.goto(BASE + '/#/work');
-await m.getByRole('button', { name: /^Свободен/ }).waitFor({ timeout: 10000 });
-await m.getByRole('button', { name: /^Свободен/ }).click();
+const lineStatus = m.getByRole('button', { name: /Статус ·/ });
+await lineStatus.waitFor({ timeout: 10000 });
+await lineStatus.click();
+await m.getByRole('button', { name: 'Свободен', exact: false }).click();
 await m.getByText(/Геолокация включена/).waitFor();
 await assertDashboardTheme(m, 'master');
 await checkCabinetMenu(m, ['Профиль исполнителя', 'Финансы и выплаты', 'Проверка и документы', 'История заявок', 'Оферта']);
@@ -155,15 +158,17 @@ await login(k, '+79991112233', 'help');
 // «Помогите» — после кода сразу экран SOS
 await k.waitForURL(/#\/sos/);
 await k.goto(BASE + '/#/');
-await k.getByText('Что случилось?').first().waitFor();
+await k.locator('.client-dashboard .desktop-quick-card').first().waitFor();
 await assertDashboardTheme(k, 'client');
 await checkCabinetMenu(k, ['История заявок', 'Мой гараж', 'Мой автопарк', 'Оферта', 'Профиль и настройки']);
 await shot(k, '03-client-home');
-await k.getByRole('link', { name: /SOS/ }).first().click();
-await k.getByRole('button', { name: /Не заводится/ }).click();
-await k.getByRole('button', { name: /Электрик или диагност на выезд/ }).click();
-await k.getByRole('button', { name: /Вызвать сейчас/ }).click(); // рано: подсветит, чего не хватает
+// Home and SOS share the approved direction-first flow.
+await k.locator('.client-dashboard .desktop-quick-card').first().click();
+await k.getByRole('button', { name: /Выездной мастер/ }).click();
+await k.getByRole('link', { name: /Электрик/ }).first().click();
+await k.getByRole('button', { name: /Вызвать мастера/ }).click(); // рано: подсветит, чего не хватает
 await k.getByText('Осталось:').waitFor();
+await k.locator('textarea').first().fill('Требуется диагностика электрики');
 await k.locator('select[aria-label="Марка"]').selectOption('Scania');
 await k.locator('select[aria-label="Модель"]').selectOption('R-серия');
 await k.locator('select[aria-label="Год выпуска"]').selectOption('2012');
@@ -172,7 +177,7 @@ await k.getByRole('button', { name: /Тосно/ }).click();
 await k.getByText('Проверьте перед вызовом').waitFor();
 await k.locator('.agree input').check();
 await shot(k, '04-client-new-order');
-await k.getByRole('button', { name: 'Вызвать сейчас' }).click();
+await k.getByRole('button', { name: 'Вызвать мастера' }).click();
 await k.waitForURL(/order\//);
 await k.locator('.radar').waitFor();
 await k.waitForTimeout(1500);
@@ -212,7 +217,7 @@ await m.getByText('[номер скрыт]').first().waitFor({ timeout: 10000 })
 await m.locator('button.btn', { hasText: 'Выехал' }).click();
 await m.locator('button.btn:not([disabled])', { hasText: 'Я на месте' }).waitFor();
 await m.locator('button.btn', { hasText: 'Я на месте' }).click();
-await m.getByRole('button', { name: 'Начал работу' }).click();
+await m.getByRole('button', { name: 'Начать работу' }).click();
 // Сумму за работу считает таймер; мастер добавляет только расходники строкой
 await m.getByText(/Работа · 1 ч ×/).waitFor();
 await m.getByRole('button', { name: '+ Расходники' }).click();
@@ -241,7 +246,7 @@ await a.goto(BASE + '/#/admin');
 await a.getByRole('button', { name: 'Распределение' }).click();
 await a.getByText('Сначала заявки нам').waitFor();
 await assertDashboardTheme(a, 'admin');
-await checkCabinetMenu(a, ['Управление магазином', 'Деньги и выплаты', 'Настройки площадки', 'Модерация — очередь']);
+await checkCabinetMenu(a, ['Все заявки', 'Деньги и выплаты', 'Настройки площадки', 'Модерация — очередь'], { shopTab: false });
 await shot(a, '12-admin-dispatch');
 await a.getByRole('button', { name: 'Деньги', exact: true }).click();
 await a.getByText('Способы оплаты').waitFor();
@@ -249,7 +254,7 @@ await shot(a, '13-admin-payments');
 
 // Переходы между кабинетами: из админки в клиента и обратно, «Назад» ведёт в свой список
 await clickCabinetLink(a, 'Кабинет клиента');
-await a.getByText('Что случилось?').first().waitFor();
+await a.locator('.client-dashboard .desktop-quick-card').first().waitFor();
 await clickCabinetLink(a, 'Профиль и настройки');
 await a.getByRole('button', { name: 'Кабинет администратора' }).click();
 await a.getByText('Администратор').first().waitFor();

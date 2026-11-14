@@ -1,0 +1,137 @@
+/* Approved 14.11 TrakSOS: four genuinely pictorial service tiles.
+   Images are separate optimized bundle assets cropped from the approved visual.
+   Interactive labels, URLs, and permissions remain actual DOM elements. */
+
+.guest-app .public-landing .public-service-van::after,
+.app.role-client .client-direction-grid>.client-direction-card:nth-child(1)::after{
+  background-image:url('../public/tracksos-photo-master.webp')!important;
+}
+
+
+.guest-app .public-landing .public-service-tow::after,
+.app.role-client .client-direction-grid>.client-direction-card:nth-child(2)::after{
+  background-image:url('../public/tracksos-photo-tow.webp')!important;
+}
+
+
+.guest-app .public-landing .public-service-sto::after,
+.app.role-client .client-direction-grid>.client-direction-card:nth-child(3)::after{
+  background-image:url('../public/tracksos-photo-sto.webp')!important;
+}
+
+
+.guest-app .public-landing .public-service-consult::after,
+.app.role-client .client-direction-grid>.client-direction-card:nth-child(4)::after{
+  background-image:url('../public/tracksos-photo-consult.webp')!important;
+}
+
+@media(min-width:900px){
+ .guest-app .public-landing .public-service-tile,
+ .app.role-client .tracksos-visual-home .client-direction-grid>.client-direction-card,
+ .app.role-client .client-sos-page .client-direction-grid>.client-direction-card{
+   min-height:205px!important;overflow:hidden;isolation:isolate;position:relative;
+   border-color:#277cae!important;
+   background:linear-gradient(135deg,#0d3657,#061d34)!important;
+   box-shadow:inset 0 0 19px #2c95d71d,0 9px 24px #0007!important;
+ }
+ .guest-app .public-landing .public-service-tile::after,
+ .app.role-client .client-direction-grid>.client-direction-card::after{
+   content:"";position:absolute;z-index:0;
+   inset:0 0 0 auto!important;
+   width:83%!important;height:100%!important;
+   background-position:right center!important;
+   background-repeat:no-repeat!important;
+   background-size:contain!important;
+   opacity:1!important;filter:saturate(1.15) contrast(1.05);
+   transform:none;
+   -webkit-mask-image:linear-gradient(90deg,transparent 1%,#000 39%,#000 100%);
+   mask-image:linear-gradient(90deg,transparent 1%,#000 39%,#000 100%);
+ }
+ .guest-app .public-landing .public-service-tile::before,
+ .app.role-client .client-direction-grid>.client-direction-card::before{
+   content:"";position:absolute;z-index:1;pointer-events:none;
+   inset:0!important;
+   background:linear-gradient(90deg,rgba(4,23,40,.93),rgba(4,21,38,.58) 40%,rgba(4,21,38,.05) 86%)!important;
+ }
+ .guest-app .public-landing .public-service-tile :is(b,small,.public-service-icon),
+ .app.role-client .client-direction-grid>.client-direction-card :is(.client-direction-symbol,.client-direction-copy){
+   position:relative;z-index:2;
+   text-shadow:0 2px 9px #000d;
+ }
+ .guest-app .public-landing .public-service-tile b,
+ .guest-app .public-landing .public-service-tile small,
+ .app.role-client .client-direction-grid>.client-direction-card .client-direction-copy{
+   max-width:55%!important;overflow-wrap:normal;
+ }
+ .app.role-client .client-direction-grid>.client-direction-card .client-direction-copy b{
+   font-size:clamp(15px,1.5vw,20px)!important;
+ }
+ .app.role-client .client-direction-grid>.client-direction-card .client-direction-copy small{
+   font-size:11px!important;color:#d2e8f6;
+ }
+ .guest-app .public-landing .public-service-tile .public-service-arrow,
+ .app.role-client .client-direction-grid>.client-direction-card .client-direction-arrow{
+   position:absolute;z-index:3;
+   background:linear-gradient(130deg,#135b87,#0b2c50);
+   color:#b1f9ff;box-shadow:0 0 11px #20c6ff50;
+ }
+ .guest-app .public-landing .public-service-tile:hover::after,
+ .app.role-client .client-direction-grid>.client-direction-card:hover::after{
+   transform:scale(1.06);
+ }
+}
+@media(max-width:899px){
+ .guest-app .public-landing .public-service-tile,
+ .app.role-client .tracksos-visual-home .client-direction-grid>.client-direction-card,
+ .app.role-client .client-sos-page .client-direction-grid>.client-direction-card{
+   min-height:215px!important;isolation:isolate;overflow:hidden;
+   background:linear-gradient(150deg,#123d5e,#051d36)!important;
+ }
+ .guest-app .public-landing .public-service-tile::after,
+ .app.role-client .client-direction-grid>.client-direction-card::after{
+   content:"";position:absolute;z-index:0;
+   inset:0 0 auto 0!important;
+   top:0!important;bottom:auto!important;right:0!important;
+   width:100%!important;height:64%!important;
+   background-position:center top!important;
+   background-size:100% auto!important;
+   background-repeat:no-repeat!important;
+   opacity:1!important;filter:saturate(1.13);
+   -webkit-mask-image:none;mask-image:none;
+   transform:none!important;
+ }
+ .guest-app .public-landing .public-service-tile::before,
+ .app.role-client .client-direction-grid>.client-direction-card::before{
+   content:"";position:absolute;z-index:1;
+   inset:28% 0 0!important;
+   background:linear-gradient(0deg,#061729 9%,rgba(4,23,42,.98) 46%,rgba(4,23,42,.78) 63%,transparent 100%)!important;
+   pointer-events:none;
+ }
+ .guest-app .public-landing .public-service-tile :is(b,small,.public-service-icon),
+ .app.role-client .client-direction-grid>.client-direction-card :is(.client-direction-symbol,.client-direction-copy){
+   position:relative;z-index:2;
+   max-width:100%!important;
+   text-shadow:0 2px 7px #000d;
+ }
+ .guest-app .public-landing .public-service-tile b,
+ .app.role-client .client-direction-grid>.client-direction-card .client-direction-copy b{
+   font-size:clamp(13px,3.6vw,15px)!important;
+   line-height:1.15!important;
+ }
+ .guest-app .public-landing .public-service-tile small,
+ .app.role-client .client-direction-grid>.client-direction-card .client-direction-copy small{
+   font-size:10px!important;line-height:1.25!important;
+   color:#c9e1f2!important;
+ }
+ .app.role-client .client-direction-grid.expanded>.client-direction-card.main-direction{
+   min-height:98px!important;
+ }
+ .app.role-client .client-direction-grid.expanded>.client-direction-card.main-direction::after{
+   width:42%!important;height:100%!important;inset:0 0 0 auto!important;
+   background-size:cover!important;opacity:.56!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ .guest-app .public-landing .public-service-tile::after,
+ .app.role-client .client-direction-grid>.client-direction-card::after{transition:none!important;}
+}

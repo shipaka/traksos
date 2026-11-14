@@ -57,8 +57,8 @@ export function Shop() {
   const count = Object.values(cart).reduce((a, b) => a + b, 0);
   const add = (id: string) => setCart({ ...cart, [id]: (cart[id] ?? 0) + 1 });
   if (!d.enabled) return (
-    <main>
-      <div><h1>Магазин</h1></div>
+    <main className="track-shop-home">
+      <div className="track-shop-hero"><span className="track-shop-eyebrow">TRAKSOS · ЗАПЧАСТИ ДЛЯ ГРУЗОВИКОВ</span><h1>Каталог запчастей</h1><p>Оригиналы, проверенные аналоги и история заказов вашей техники.</p><span className="track-shop-gear" aria-hidden="true"/></div>
       <div className="card hi" style={{ alignItems: 'center', textAlign: 'center', padding: '32px 20px' }}>
         <span style={{ fontSize: 40 }} aria-hidden="true">🛒</span>
         <b style={{ fontSize: 20 }}>{d.closedTitle}</b>
@@ -71,7 +71,8 @@ export function Shop() {
   const groups = (d.categoryGroups ?? []) as { id: string; title: string; categories: string[] }[];
   const items: any[] = search.data?.items ?? [];
   return (
-    <main>
+    <main className="track-shop-home">
+      <div className="track-shop-hero"><span className="track-shop-eyebrow">TRAKSOS · ЗАПЧАСТИ ДЛЯ ГРУЗОВИКОВ</span><h1>Найдём нужную деталь</h1><p>Удобный поиск по названию и артикулу, наличие, аналоги и история покупок.</p><span className="track-shop-gear" aria-hidden="true"/></div>
       <div className="between" style={{ alignItems: 'flex-start' }}>
         <div><h1>Магазин</h1><div className="sub">{d.note}</div></div>
         <button className="bell" aria-label={`Корзина, товаров: ${count}`} onClick={() => go('shop/cart')} style={{ position: 'relative' }}>

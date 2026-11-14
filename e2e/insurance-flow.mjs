@@ -1,4 +1,4 @@
-// TrackSOS insurance/inspection partner workflow. Local CI only; synthetic accounts.
+// TrakSOS insurance/inspection partner workflow. Local CI only; synthetic accounts.
 import { chromium, devices } from 'playwright';
 import { mkdir } from 'node:fs/promises';
 const BASE = process.env.BASE_URL ?? 'http://localhost:8080';
@@ -36,7 +36,7 @@ const [owner,partner,outsider]=await Promise.all([
   register('+79990000652','insurer'),
   register('+79990000653','owner')
 ]);
-const admin=await api('POST','/api/auth/login',{phone:'+79990000001',password:'TrackSOS-Test-2026!'});
+const admin=await api('POST','/api/auth/login',{phone:'+79990000001',password:'TrakSOS-Test-2026!'});
 assert(admin.user.roles.includes('admin'),'Admin role not present');
 const policy=await api('GET','/api/admin/insurance-access',undefined,admin.token);
 assert(policy.registrationOpen===false,'Insurer registration must be closed by default');
@@ -77,7 +77,7 @@ const browser=await chromium.launch();
 try{
   for(const item of [
     {name:'owner',token:owner.token,hash:'#/garage',heading:'Мой гараж',expected:'Страхование и техосмотр'},
-    {name:'insurer',token:partner.token,hash:'#/insurance',heading:'Кабинет страховщика',expected:'Полис оформлен'},
+    {name:'insurer',token:partner.token,hash:'#/insurance',heading:'Страхование',expected:'Полис оформлен'},
     {name:'admin',token:admin.token,hash:'#/admin',heading:'Администратор',expected:'Страхование и ТО'}
   ]){
     const context=await browser.newContext({...devices['Pixel 7'],deviceScaleFactor:1,locale:'ru-RU'});
@@ -89,11 +89,14 @@ try{
     await page.getByRole('heading',{name:item.heading}).waitFor();
     await acceptPendingOffers(page,item.token);
     if(item.name==='insurer') await page.getByRole('button',{name:'Все',exact:true}).click();
-    await page.getByText(item.expected,{exact:false}).first().waitFor();
+    if(item.name!=='admin') await page.getByText(item.expected,{exact:false}).first().waitFor();
     if(item.name==='admin') {
-      await page.getByRole('button',{name:'Страхование и ТО'}).click();
+      await page.getByRole('button',{name:/Разделы управления/}).click();
+      await page.getByRole('navigation',{name:'Разделы администрации'})
+        .getByRole('button',{name:'Страхование и ТО'}).click();
       await page.getByRole('link',{name:'Управлять регистрацией страховых агентов'}).click();
-      await page.getByText('Страховые партнёры',{exact:true}).waitFor();
+      await page.getByRole('button',{name:/Страховые агенты/}).click();
+       await page.getByText('Страховые партнёры',{exact:true}).waitFor();
       await page.getByRole('button',{name:/Регистрация новых партнёров закрыта/}).waitFor();
     }
     if(item.name==='owner')await page.getByText('Страхование и техосмотр',{exact:false}).first().click();
@@ -110,9 +113,13 @@ try{
   await acceptPendingOffers(clientPage,owner.token);
   await clientPage.getByRole('heading',{name:'Заявка на страхование грузовика'}).waitFor();
   await clientPage.locator('select').first().selectOption(partner.user.id);
+  await clientPage.getByRole('button',{name:'Продолжить'}).click();
   await clientPage.getByLabel('Фамилия').fill('Иванов');
   await clientPage.getByLabel('Имя',{exact:true}).fill('Иван');
+  await clientPage.getByRole('button',{name:'Продолжить'}).click();
+  await clientPage.getByLabel('Автомобиль из гаража (необязательно)').selectOption(truck.id);
   await clientPage.getByLabel('VIN / номер рамы *').fill('XLRTE47XS0E123456');
+  await clientPage.getByRole('button',{name:'Продолжить'}).click();
   await clientPage.locator('input[type=checkbox]').last().check();
   await clientPage.screenshot({path:OUT+'/client-application.png',fullPage:true});
   await clientPage.getByRole('button',{name:'Отправить заявку страховому агенту'}).click();
@@ -146,7 +153,7 @@ try{
   await agentPage.locator('input[type=date]').fill('2030-12-31');
   await agentPage.locator('input[type=file]').setInputFiles({
     name:'policy.pdf',mimeType:'application/pdf',
-    buffer:Buffer.from('%PDF-1.4\n'+'TrackSOS synthetic test '.repeat(20)),
+    buffer:Buffer.from('%PDF-1.4\n'+'TrakSOS synthetic test '.repeat(20)),
   });
   await agentPage.getByRole('button',{name:'Отправить готовый полис клиенту'}).click();
   await agentPage.getByText('Готовый страховой полис').first().waitFor();

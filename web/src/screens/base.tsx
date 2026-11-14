@@ -4,6 +4,7 @@ import { get, post, put, rub, fmtTime } from '../api.ts';
 import { BRANDS, FEE_PURPOSE, PLACES } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '../ui.tsx';
 import { WorkerNotices } from './ops.tsx';
+import { RoadsideMap } from './roadsideMap.tsx';
 import { inServicePreview, servicePreviewPath, servicePreviewHref, previewServiceApi } from '../demo/servicePreviewApi.ts';
 // The same working STО components are used for both real accounts and the isolated admin preview.
 const baseGet=(url:string)=>inServicePreview()?previewServiceApi('GET',url):get(url);
@@ -27,7 +28,7 @@ const TONE: Record<string, string> = {
   new: 'accent', clarify: 'warn', declined: 'bad', expected: 'accent', arrived: 'accent', diagnostics: 'accent', in_work: 'accent',
   waiting_part: 'warn', agreeing: 'warn', ready: 'good', invoiced: 'good', closed: '', disputed: 'bad', cancelled: '',
 };
-const POP: Record<string, string> = { top: 'Обращаются чаще всех', often: 'Обращаются часто', rare: 'Обращаются реже', new: 'Новый на ТракSOS' };
+const POP: Record<string, string> = { top: 'Обращаются чаще всех', often: 'Обращаются часто', rare: 'Обращаются реже', new: 'Новый на TrakSOS' };
 
 const query = () => new URLSearchParams(location.hash.split('?')[1] ?? '');
 const mskDay = (shift = 0) => new Date(Date.now() + 3 * 3600_000 + shift * 86400_000).toISOString().slice(0, 10);
@@ -38,7 +39,7 @@ const isBookingEvent = (e: any) => e.type === 'booking';
 
 // ═══════════════════════ Кабинет рембазы ═══════════════════════
 
-/** Счёт рембазы: по желанию погасить баллами часть комиссии ТракSOS (не больше половины) */
+/** Счёт рембазы: по желанию погасить баллами часть комиссии TrakSOS (не больше половины) */
 function InvoicePoints({ amount, value, onChange }: { amount: number | null; value: number | null; onChange: (v: number | null) => void }) {
   const a = useLoad(() => (amount ? baseGet(`/api/base/points?amount=${amount}`) : Promise.resolve(null)), [amount]);
   const max: number = a.data?.max ?? 0;
@@ -62,10 +63,10 @@ export function BaseHome() {
   const { center, groups } = cab.data;
   // Новая рембаза: на главной — что будет дальше, сама карточка — во вкладке «Карточка»
   if (!center) return (
-    <main className="base-workspace">{!preview&&<WorkerNotices audience="service" />}
-      <div>
+    <main className="base-workspace service-onboarding">{!preview&&<WorkerNotices audience="service" />}
+      <div className="base-onboarding-hero">
         <h1>Подключите рембазу</h1>
-        <div className="sub">Три шага — и клиенты ТракSOS начнут записываться к вам, а мастера советовать вас после диагностики</div>
+        <div className="sub">Три шага — и клиенты TrakSOS начнут записываться к вам, а мастера советовать вас после диагностики</div>
       </div>
       <div className="card col">
         <b>1. Заполните карточку сервиса</b>
@@ -86,7 +87,7 @@ export function BaseHome() {
   return (
     <main className="base-workspace">{!preview&&<WorkerNotices audience="service" />}
       <section className="base-command-hero">
-        <span className="base-command-eyebrow">TRACKSOS · КАБИНЕТ СЕРВИСНОГО ПАРТНЁРА</span>
+        <span className="base-command-eyebrow">TRAKSOS · КАБИНЕТ СЕРВИСНОГО ПАРТНЁРА</span>
         <h1>Рембаза «{center.name}»</h1>
         <p>{center.address} · {center.hours}</p>
         <div className="base-command-actions">
@@ -102,7 +103,7 @@ export function BaseHome() {
       </div>
       {center.verification !== 'approved' && (
         <div className="banner warn col">
-          <b>{center.verification === 'rejected' ? 'Проверка не пройдена' : 'Пройдите проверку ТракSOS'}</b>
+          <b>{center.verification === 'rejected' ? 'Проверка не пройдена' : 'Пройдите проверку TrakSOS'}</b>
           <span className="note">ИНН компании, вывеска и въезд, ремзона, ответственное лицо. Пока проверка не пройдена, клиенты вас на карте не видят.</span>
           <a className="btn ghost small" href="#/support/new">Написать модератору</a>
         </div>
@@ -176,7 +177,7 @@ function RequestCard({ b, onDone }: { b: any; onDone: () => void }) {
         <dt>Когда</dt><dd>{fmtDay(b.whenDay)}{b.whenTime ? `, к ${b.whenTime}` : ''}</dd>
         <dt>Как приедет</dt><dd>{b.arrival === 'tow' ? 'На эвакуаторе' : 'Своим ходом'}</dd>
         <dt>Клиент</dt><dd>{b.client?.name}{b.client?.rating ? ` · ★ ${b.client.rating.toFixed(1)}` : ''}</dd>
-        {b.fromOrder && <><dt>Откуда</dt><dd>По совету мастера ТракSOS</dd></>}
+        {b.fromOrder && <><dt>Откуда</dt><dd>По совету мастера TrakSOS</dd></>}
       </dl>
       {b.comment && <span className="note">«{b.comment}»</span>}
       {b.status === 'clarify' && <span className="note">Вы спросили: «{b.clarifyQ}» — ждём ответа клиента</span>}
@@ -277,7 +278,7 @@ export function BaseCar({ id }: { id: string }) {
           </div>
           {d.fromOrder && (d.stillHereDue
             ? <div className="banner warn col"><b>По совету мастера · в ремонте {d.daysInRepair} дн.</b><span className="note">Раз в неделю отметьте: машина ещё у вас?</span><button className="btn small" disabled={busy} onClick={() => act('still-here', {}, 'Отмечено: ещё в ремонте, продлено на 7 дней')}>Да, ещё у нас</button></div>
-            : <span className="note">Клиент пришёл по совету мастера — скидка клиенту и бонус мастеру из комиссии ТракSOS, ваша выручка не меняется.</span>)}
+            : <span className="note">Клиент пришёл по совету мастера — скидка клиенту и бонус мастеру из комиссии TrakSOS, ваша выручка не меняется.</span>)}
         </div>
       )}
 
@@ -321,8 +322,8 @@ export function BaseCar({ id }: { id: string }) {
           <b>{d.status === 'closed' ? 'Клиент подтвердил работы' : d.status === 'disputed' ? 'Клиент не согласен — модератор свяжется с обеими сторонами' : 'Агентский счёт сформирован · ждём сверки клиента'}</b>
           <dl className="kv">
             <dt>Работы</dt><dd>{d.works.length} поз. · {rub(d.amount)}</dd>
-            <dt>Комиссия ТракSOS</dt><dd>− {rub(d.commission)}</dd>
-            {d.discount > 0 && <><dt>Скидка клиенту</dt><dd>{rub(d.discount)} — из комиссии ТракSOS</dd></>}
+            <dt>Комиссия TrakSOS</dt><dd>− {rub(d.commission)}</dd>
+            {d.discount > 0 && <><dt>Скидка клиенту</dt><dd>{rub(d.discount)} — из комиссии TrakSOS</dd></>}
             <dt>Вам к выплате</dt><dd><b>{rub(d.payout)}</b></dd>
           </dl>
           <span className="note">{FEE_PURPOSE}</span>
@@ -332,7 +333,7 @@ export function BaseCar({ id }: { id: string }) {
 
       {d.history.length > 0 && (
         <div className="card">
-          <span className="label">История машины на ТракSOS — ваши работы и чужие, без сумм</span>
+          <span className="label">История машины на TrakSOS — ваши работы и чужие, без сумм</span>
           <ol className="tl">{d.history.map((h: any, i: number) => <li key={i}><i className="ok" /><b>{h.what}</b><small>{fmtTime(h.at)} · {h.who}</small></li>)}</ol>
         </div>
       )}
@@ -347,6 +348,8 @@ export function BaseSetup() {
   const { busy, run } = useAction();
   const [f, setF] = useState<any>(null);
   const [day, setDay] = useState('');
+  const [gpsStatus, setGpsStatus] = useState<'idle'|'loading'|'ok'|'error'>('idle');
+  const [gpsError, setGpsError] = useState('');
   useEffect(() => {
     if (!cab.data || f) return;
     const c = cab.data.center;
@@ -361,7 +364,25 @@ export function BaseSetup() {
     if (await run(() => basePut('/api/base', body), first ? 'Карточка сохранена — осталось пройти проверку' : 'Карточка сервиса сохранена')) { await reload(); go(servicePreviewPath('base')); }
   }
   function locate() {
-    navigator.geolocation?.getCurrentPosition((p) => setF((x: any) => ({ ...x, lat: p.coords.latitude, lng: p.coords.longitude })), () => {}, { timeout: 8000 });
+    if(inServicePreview())return; // Never read a real device's GPS in a demonstration account.
+    if(!navigator.geolocation){
+      setGpsError('Геолокация недоступна в этом браузере. Проверьте разрешения или откройте сайт по HTTPS.');
+      setGpsStatus('error');return;
+    }
+    setGpsError('');setGpsStatus('loading');
+    navigator.geolocation.getCurrentPosition(
+      p=>{
+        setF((x:any)=>({...x,lat:p.coords.latitude,lng:p.coords.longitude}));
+        setGpsStatus('ok');
+      },
+      error=>{
+        setGpsStatus('error');
+        setGpsError(error.code===1?'Доступ к геолокации запрещён. Разрешите определение местоположения для TrakSOS.':
+          error.code===3?'Не удалось определить точку вовремя. Попробуйте снова рядом с въездом.':
+          'Не удалось получить GPS. Проверьте соединение и разрешения устройства.');
+      },
+      {enableHighAccuracy:true,timeout:12000,maximumAge:0}
+    );
   }
   return (
     <main>
@@ -372,8 +393,19 @@ export function BaseSetup() {
       </div>
       <div className="card">
         <Field label="Название"><input className="field" value={f.name} onChange={(e) => set('name', e.target.value)} placeholder="Например, Шушары-Трак" /></Field>
-        <Field label="Адрес въезда"><input className="field" value={f.address} onChange={(e) => set('address', e.target.value)} placeholder="Шушары, Московское ш., 50" /></Field>
-        <button type="button" className="btn ghost small" onClick={locate}>{f.lat ? `Место на карте отмечено · ${f.lat.toFixed(3)}, ${f.lng.toFixed(3)}` : 'Отметить место по GPS — вы сейчас на базе'}</button>
+        <Field label="Фактический адрес въезда на СТО"><input className="field" value={f.address} onChange={(e) => set('address', e.target.value)} placeholder="Шушары, Московское ш., 50" /></Field>
+        <span className="note">Укажите место, куда водитель действительно привезёт грузовик, а не юридический адрес компании.</span>
+        <button type="button" className="btn ghost small" onClick={locate} disabled={gpsStatus==='loading'||inServicePreview()}>
+          {inServicePreview()?'GPS отключён в тестовом кабинете':
+           gpsStatus==='loading'?'Определяем координаты…':
+           Number.isFinite(f.lat)&&Number.isFinite(f.lng)?`GPS: ${f.lat.toFixed(4)}, ${f.lng.toFixed(4)} · Обновить`:
+           'Я нахожусь на базе — отметить точку по GPS'}
+        </button>
+        {gpsStatus==='error'&&<span className="err" role="alert">{gpsError}</span>}
+        {gpsStatus==='ok'&&<span className="note" role="status">Точка получена. Проверьте, что отметка стоит у въезда на территорию СТО.</span>}
+        <RoadsideMap kind="service"
+          point={Number.isFinite(f.lat)&&Number.isFinite(f.lng)?{lat:f.lat,lng:f.lng}:null}
+          address={f.address} synthetic={inServicePreview()}/>
         <div className="grid2">
           <Field label="Часы работы"><input className="field" value={f.hours} onChange={(e) => set('hours', e.target.value)} /></Field>
           <Field label="ИНН компании"><input className="field" inputMode="numeric" value={f.inn} onChange={(e) => set('inn', e.target.value.replace(/\D/g, '').slice(0, 12))} /></Field>
@@ -466,7 +498,7 @@ export function ServicesList() {
       <Back to="" label="Главная" />
       <div>
         <h1>Найти рембазу</h1>
-        <div className="sub">Только ремзоны, с которыми ТракSOS договорился лично. Цену сервис скажет после осмотра.</div>
+        <div className="sub">Только ремзоны, с которыми TrakSOS договорился лично. Цену сервис скажет после осмотра.</div>
       </div>
       {from && <div className="banner col"><b>По совету мастера — скидка в сервисе</b><span className="note">Запишитесь отсюда — скидка применится в счёте сама.</span></div>}
 
@@ -786,7 +818,7 @@ export function RecommendService({ order, onDone }: { order: any; onDone: (o: an
   return (
     <div className="card">
       <b>Посоветовать сервис-партнёр</b>
-      <span className="note">Клиенту — скидка в сервисе, вам — бонус, когда сервис отметит «Машина готова». Из комиссии ТракSOS.</span>
+      <span className="note">Клиенту — скидка в сервисе, вам — бонус, когда сервис отметит «Машина готова». Из комиссии TrakSOS.</span>
       {!list.data ? <Loading error={list.error} /> : !list.data.length ? <span className="note">Рядом пока нет сервисов-партнёров.</span> : list.data.slice(0, 6).map((c: any) => (
         <button key={c.id} className="linkrow" disabled={busy} onClick={async () => { const r = await run(() => post(`/api/orders/${order.id}/recommend-service`, { centerId: c.id }), 'Клиенту отправлено'); if (r) onDone(r); }}>
           <span><b>{c.name}</b><small>{c.address}{c.distanceKm != null ? ` · ${c.distanceKm} км` : ''}{c.rating ? ` · ★ ${c.rating.toFixed(1)}` : ''}</small></span><span aria-hidden="true">›</span>
@@ -848,13 +880,13 @@ export function BaseMoney() {
         <div className="sum"><span>Ждёт сверки клиента</span><span>{rub(s.awaiting)}</span></div>
         {s.disputed > 0 && <div className="sum"><span>В споре</span><span>{rub(s.disputed)}</span></div>}
         <div className="sum"><span>Уже выплачено</span><span>{rub(s.paid)}</span></div>
-        <span className="note">Деньги приходят после того, как клиент сверит работы. ТракSOS работает как агент: отчёт агента и акт — раз в месяц.</span>
+        <span className="note">Деньги приходят после того, как клиент сверит работы. TrakSOS работает как агент: отчёт агента и акт — раз в месяц.</span>
       </div>
 
       <details className="card">
         <summary><b>Комиссия и баллы</b></summary>
         <div className="stack" style={{ marginTop: 8, gap: 6 }}>
-          <span className="note">Комиссия ТракSOS — {rule.pct}% с работ по клиентам ТракSOS, но не больше {rub(rule.max)} за один счёт. Клиенту по совету мастера — скидка {rule.referralPct}% из комиссии, ваша выручка не меняется.</span>
+          <span className="note">Комиссия TrakSOS — {rule.pct}% с работ по клиентам TrakSOS, но не больше {rub(rule.max)} за один счёт. Клиенту по совету мастера — скидка {rule.referralPct}% из комиссии, ваша выручка не меняется.</span>
           <span className="note">{FEE_PURPOSE}</span>
           {pts.data && <div className="between"><span>Баллы за приглашения: <b>{Math.round(pts.data.balance / 100).toLocaleString('ru-RU')}</b>{s.points ? ` · уже погашено ${rub(s.points)}` : ''}</span><a href="#/invite" className="note">Пригласить →</a></div>}
           <span className="note">Баллами можно погасить до {pts.data?.rules?.spendCapPct ?? 50}% комиссии — галочкой при выставлении счёта.</span>
@@ -869,7 +901,7 @@ export function BaseMoney() {
               <summary className="between" style={{ cursor: 'pointer' }}><span style={{ textTransform: 'capitalize' }}>{monthName(x.month)} · {x.count} сч.</span><b>{rub(x.payout)}</b></summary>
               <div className="sum"><span>Работы по счетам</span><span>{rub(x.amount)}</span></div>
               {x.discount > 0 && <div className="sum"><span>Скидки клиентам (из комиссии)</span><span>{rub(x.discount)}</span></div>}
-              <div className="sum"><span>Комиссия ТракSOS</span><span>−{rub(x.commission)}</span></div>
+              <div className="sum"><span>Комиссия TrakSOS</span><span>−{rub(x.commission)}</span></div>
               {x.points > 0 && <div className="sum"><span>Комиссии погашено баллами</span><span>{rub(x.points)}</span></div>}
               <div className="sum total"><span>Вам</span><span>{rub(x.payout)}</span></div>
             </details>
@@ -897,7 +929,7 @@ export function BaseMoney() {
                 <span className="note">Работы: {x.works.join(', ') || '—'}</span>
                 <div className="sum"><span>Сумма работ</span><span>{rub(x.amount)}</span></div>
                 {x.discount > 0 && <div className="sum"><span>Скидка клиенту по совету мастера</span><span>из комиссии</span></div>}
-                <div className="sum"><span>Комиссия ТракSOS</span><span>−{rub(x.commissionFull)}</span></div>
+                <div className="sum"><span>Комиссия TrakSOS</span><span>−{rub(x.commissionFull)}</span></div>
                 {x.points > 0 && <div className="sum"><span>…из них погашено баллами</span><span>+{rub(x.points)}</span></div>}
                 <div className="sum total"><span>Вам</span><span>{rub(x.payout)}</span></div>
                 {x.paidOutAt && <span className="note">Выплачено {fmtDay(x.paidOutAt)}</span>}

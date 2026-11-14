@@ -171,7 +171,7 @@ export function Notifications() {
         <div className="rows">{list.data.items.map((n: any) => (
           <button key={n.id} className="list-item" style={{ width: '100%', background: n.read_at ? 'transparent' : 'var(--accent-soft)', border: 0, textAlign: 'left', color: 'inherit' }} onClick={() => open(n)}>
             <div className="stack" style={{ gap: 2 }}>
-              <b style={{ fontSize: 14 }}>{n.title ?? 'ТракSOS'}</b>
+              <b style={{ fontSize: 14 }}>{n.title ?? 'TrakSOS'}</b>
               <span style={{ fontSize: 14 }}>{n.body}</span>
               <span className="note">{fmtTime(n.created_at)}</span>
             </div>

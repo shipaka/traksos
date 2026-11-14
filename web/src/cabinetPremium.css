@@ -1,0 +1,950 @@
+/* TrakSOS — unified premium cabinet finish.
+   Visual-only layer over the approved palette. Only signed-in real screens.
+   Keep public landing, server, API, and accepted Scania artwork unchanged. */
+.app[class*="role-"]{
+  --premium-ink:#f5faff;
+  --premium-muted:#b9d4e6;
+  --premium-edge:#3b6684;
+  --premium-deep:#0a2238;
+  --premium-card:#12314c;
+  --premium-cyan:#80eaf6;
+  --premium-pink:#f582bb;
+}
+.app[class*="role-"] .desktop-content>main{
+  min-width:0;
+}
+.app[class*="role-"] .desktop-content>main:not(.public-home){
+  --line:#325673;
+}
+.app[class*="role-"] .desktop-content>main:not(.public-home)>h1,
+.app[class*="role-"] .desktop-content>main:not(.public-home)>div>h1{
+  font-size:clamp(25px,3vw,37px);
+  letter-spacing:-.035em;
+  line-height:1.16;
+  text-wrap:balance;
+}
+.app[class*="role-"] .desktop-content>main:not(.public-home)>h1{
+  margin-block:4px 3px;
+}
+.app[class*="role-"] .desktop-content>main:not(.public-home) .empty{
+  border:1px dashed #446c88;
+  border-radius:18px;
+  padding:clamp(22px,3vw,34px);
+  background:radial-gradient(ellipse at 100% 0,rgba(65,190,225,.08),transparent 52%),#0d283f;
+  color:#c7deef;
+  line-height:1.55;
+}
+.app[class*="role-"] .desktop-content>main:not(.public-home) .card:not(.flat){
+  border-radius:19px;
+  box-shadow:0 9px 24px rgba(0,10,24,.15);
+}
+.app[class*="role-"] .desktop-content>main:not(.public-home) .card.hi{
+  border-color:#58bfd9;
+  background:linear-gradient(145deg,#163e59,#0e293e);
+}
+.app[class*="role-"] .desktop-content>main:not(.public-home) .card .note,
+.app[class*="role-"] .desktop-content>main:not(.public-home) .card .sub{
+  line-height:1.55;
+}
+.app[class*="role-"] .desktop-content>main:not(.public-home) :is(.linkrow,.opt,.step-card){
+  transition:border-color .16s,box-shadow .16s,background .16s;
+}
+.app[class*="role-"] .desktop-content>main:not(.public-home) .linkrow:focus-visible,
+.app[class*="role-"] .desktop-content>main:not(.public-home) .opt:focus-visible,
+.app[class*="role-"] .desktop-content>main:not(.public-home) .field:focus-visible{
+  outline:2px solid #83f0fa;
+  outline-offset:3px;
+}
+.app[class*="role-"] .desktop-content>main:not(.public-home) .banner{
+  border-radius:15px;
+  line-height:1.5;
+}
+.app[class*="role-"] .desktop-content>main:not(.public-home) .tile-value{
+  font-variant-numeric:tabular-nums;
+  letter-spacing:-.045em;
+}
+.app[class*="role-"] .desktop-content>main:not(.public-home) .grid2,
+.app[class*="role-"] .desktop-content>main:not(.public-home) .grid3{
+  min-width:0;
+}
+.app[class*="role-"] .desktop-content>main:not(.public-home) :is(input.field,textarea.field,select.field){
+  min-height:44px;
+  border-radius:11px;
+}
+
+/* Customer: carry the real branded vehicle and visual atmosphere INSIDE the app.
+   Artwork always uses contain, so the truck is not cropped. */
+.app.role-client .client-home{
+  gap:clamp(15px,2vw,24px);
+}
+@media(min-width:900px){
+  .app.role-client .desktop-content .client-home .desktop-hero{
+    min-height:365px;
+    padding:clamp(34px,4.1vw,58px);
+    border:1px solid #447c92;
+    border-radius:26px;
+    background:
+      radial-gradient(ellipse at 79% 25%,rgba(31,191,228,.22),transparent 45%),
+      radial-gradient(ellipse at 12% 100%,rgba(243,36,132,.18),transparent 50%),
+      linear-gradient(112deg,#081b30 2%,#12334b 72%,#15435c);
+    box-shadow:0 22px 50px rgba(0,9,28,.25);
+  }
+  .app.role-client .client-home .desktop-hero::after{content:none;}
+  .app.role-client .client-home .client-hero-art{
+    position:absolute;z-index:0;pointer-events:none;
+    inset:6% 1% 3% auto;width:48%;
+    display:flex;align-items:center;justify-content:flex-end;
+    filter:drop-shadow(0 18px 17px rgba(0,4,16,.35));
+  }
+  .app.role-client .client-home .client-hero-art img{
+    display:block;width:100%;height:100%;
+    object-fit:contain;object-position:right center;
+  }
+  .app.role-client .client-home .desktop-hero-copy{
+    position:relative;
+    z-index:1;
+    max-width:min(600px,62%);
+  }
+  .app.role-client .client-home .desktop-hero-copy h1{
+    font-size:clamp(35px,3.7vw,55px);
+    letter-spacing:-.055em;
+    line-height:1.06;
+  }
+  .app.role-client .client-home .desktop-hero-copy h1 span{color:#fb86bd;}
+  .app.role-client .client-home .desktop-hero p{
+    color:#d6e8f2;
+    max-width:475px;
+  }
+  .app.role-client .client-home .desktop-eyebrow{
+    color:#80eaf6;
+    font-weight:850;
+    letter-spacing:.14em;
+  }
+  .app.role-client .client-home .desktop-primary-action{
+    background:linear-gradient(115deg,#d81874,#f03c8f);
+    border:1px solid #fd72b4;
+    color:#fff;
+    box-shadow:0 10px 22px #5e163f77;
+    border-radius:13px;
+  }
+  .app.role-client .client-home .desktop-outline-action{
+    border:1px solid #6495ae;
+    background:rgba(11,41,61,.77);
+    border-radius:13px;
+  }
+  .app.role-client .desktop-content .desktop-quick-links{
+    gap:13px;
+  }
+  .app.role-client .desktop-content .desktop-quick-card{
+    min-height:100px;
+    background:linear-gradient(135deg,#163b57,#102941);
+    border:1px solid #3e6784;
+    color:#f5fbff;
+    border-radius:18px;
+    box-shadow:0 10px 25px #0002;
+  }
+  .app.role-client .desktop-content .desktop-quick-card b{color:#f3fcff;}
+  .app.role-client .desktop-content .desktop-quick-card small{color:#b9d3e5;font-size:12px;}
+  .app.role-client .desktop-content .desktop-quick-icon{
+    background:linear-gradient(145deg,#175778,#1b3b5b);
+    border:1px solid #427894;
+    color:#8debf5;
+  }
+  .app.role-client .client-home .desktop-empty-orders{
+    background:radial-gradient(ellipse at 95% 10%,#1b61774a,transparent 48%),#102d46;
+    border:1px dashed #4a7b97;
+    border-radius:18px;
+    color:#c8e1ee;
+    min-height:95px;
+    display:flex;align-items:center;
+  }
+  .app.role-client .client-home .desktop-aside-card{
+    background:linear-gradient(145deg,#153b57,#102940);
+    border:1px solid #3b6884;
+    border-radius:19px;
+    box-shadow:0 12px 25px #0003;
+  }
+  .app.role-client .client-home .desktop-aside-card h2{color:#f6fbff;}
+  .app.role-client .client-home .desktop-aside-card p{color:#c0d9e9;}
+  .app.role-client .client-home .desktop-aside-symbol{color:#88eaf7;}
+  .app.role-client .client-home .desktop-aside-cta,
+  .app.role-client .client-home .desktop-section-heading a{color:#8ceef7;}
+  .app.role-client .client-home .desktop-section-heading h2{color:#f4fbff;}
+  .app.role-client .desktop-content .home-services .linkrow{
+    background:linear-gradient(138deg,#143a55,#0d2941);
+    border:1px solid #3c6a86;
+    border-radius:17px;
+  }
+  .app.role-client .client-home .opt{
+    border:1px solid #396884;
+    border-radius:17px;
+    background:linear-gradient(140deg,#133750,#102942);
+  }
+  .app.role-client .client-home .opt[aria-pressed=true]{
+    border-color:#84e4f0;
+    box-shadow:inset 3px 0 #74e2ef;
+    background:linear-gradient(135deg,#194c66,#133551);
+  }
+}
+@media(min-width:900px) and (max-width:1190px){
+  .app.role-client .client-home .client-hero-art{
+    width:51%;right:0;opacity:.78;
+  }
+  .app.role-client .client-home .desktop-hero-copy{max-width:67%;}
+}
+@media(max-width:899px){
+  .app.role-client .client-home .client-hero-art{display:none;}
+}
+@media(max-width:899px){
+  .app.role-client .client-home .mobile-home-heading{
+    position:relative;isolation:isolate;overflow:hidden;
+    display:flex;flex-direction:column;justify-content:flex-start;
+    min-height:0;padding:21px 19px 20px;
+    border:1px solid #427792;border-radius:23px;
+    background:
+      radial-gradient(ellipse at 78% 83%,rgba(52,216,245,.2),transparent 51%),
+      radial-gradient(ellipse at 15% 0,rgba(226,44,131,.13),transparent 50%),
+      linear-gradient(150deg,#09223a,#123c55 70%,#102c46);
+    box-shadow:0 16px 32px rgba(0,9,26,.27);
+  }
+  .app.role-client .client-home .mobile-home-heading::after{
+    content:none; /* The approved truck already appears in the mobile home hero: no duplicate vehicle. */
+  }
+  .app.role-client .client-home .mobile-home-kicker{
+    color:#81eaf6;font-size:10px;font-weight:900;
+    letter-spacing:.15em;
+    margin-bottom:10px;
+  }
+  .app.role-client .client-home .mobile-home-heading h1{
+    color:#fff;
+    font-size:clamp(26px,7.2vw,34px);
+    letter-spacing:-.04em;
+    line-height:1.13;
+    margin:0 0 9px;
+  }
+  .app.role-client .client-home .mobile-home-heading .sub{
+    max-width:390px;color:#d0e5f1;line-height:1.5;
+    font-size:12px;
+  }
+}
+
+/* The executor's REAL working line: one glance for status, next job, priority. */
+.work-live-dashboard{
+  width:100%;
+  max-width:1370px;
+  margin-inline:auto;
+  min-width:0;
+}
+.work-command-hero{
+  position:relative;isolation:isolate;overflow:hidden;
+  min-height:230px;display:flex;align-items:center;
+  border:1px solid #477d98;border-radius:25px;
+  padding:clamp(24px,3.7vw,46px);
+  background:radial-gradient(ellipse at 83% 15%,#34cfe62a,transparent 46%),
+    radial-gradient(ellipse at 8% 90%,#e82b8a2b,transparent 49%),
+    linear-gradient(122deg,#0b2239,#16405a 70%,#112f4b);
+  box-shadow:0 17px 37px #0004;
+}
+.work-command-copy{position:relative;z-index:1;max-width:650px;min-width:0;}
+.work-command-kicker{
+  display:block;color:#80eaf6;font-weight:900;
+  font-size:11px;letter-spacing:.14em;margin-bottom:13px;
+}
+.work-command-hero h1{
+  font-size:clamp(29px,3.8vw,44px);
+  color:white;
+  letter-spacing:-.05em;
+  line-height:1.1;margin:0 0 13px;
+}
+.work-command-hero p{
+  margin:0;max-width:510px;color:#cce0ef;
+  font-size:clamp(12px,1.3vw,14px);
+  line-height:1.55;
+}
+.work-command-tags{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:21px;}
+.work-command-status{
+  display:inline-flex;align-items:center;gap:8px;
+  border:1px solid #638ba1;border-radius:50px;
+  padding:9px 13px;background:rgba(7,28,45,.78);
+  font-size:12px;font-weight:800;color:#f4fbff;
+}
+.work-command-status .dot{flex:0 0 auto;}
+.work-command-verification{color:#aee5f3;font-size:12px;font-weight:650;}
+.work-command-art{
+  position:absolute;
+  z-index:0;
+  right:1%;bottom:1%;
+  width:43%;height:95%;
+  background:url('../public/tracksos-approved-scania-r520.webp') right bottom / contain no-repeat;
+  opacity:.9;
+  filter:drop-shadow(0 12px 15px #0007);
+  pointer-events:none;
+}
+.work-live-dashboard>.stack .card.hi,
+.work-live-dashboard>.card.hi{
+  border:1px solid #57cce0;
+  background:linear-gradient(140deg,#184763,#0e2e48);
+}
+.work-live-dashboard>.stack>.label{font-size:12px;letter-spacing:.09em;}
+.work-live-dashboard .card .linkrow{min-height:58px;}
+.work-live-dashboard .card .sum{gap:12px;align-items:baseline;}
+.work-live-dashboard>.btn.ghost{align-self:flex-start;}
+/* Related real partner workspaces use the same tangible surface language. */
+.base-workspace .base-command-hero,
+.app.role-insurer .cabinet-heading,
+.app.role-insurer .insurer-workspace-hero{
+  box-shadow:0 18px 41px rgba(0,10,27,.27);
+}
+.base-workspace>.grid3 .tile{
+  border:1px solid #42718c;
+  border-radius:17px;
+  background:linear-gradient(135deg,#18425a,#0e2b43);
+  padding:clamp(13px,2vw,20px);
+}
+.base-workspace>.grid3 .tile .tile-value{
+  font-size:clamp(24px,3vw,35px);
+  color:#fff;
+}
+.app[class*="role-"] .insurer-workspace .card,
+.app[class*="role-"] .fleet-workspace .card{
+  overflow-wrap:anywhere;
+}
+/* Avoid image overlap and oversized stacked panels on phones. */
+@media(max-width:899px){
+  .work-command-hero{min-height:214px;padding:22px 18px 112px;border-radius:21px;align-items:flex-start;}
+  .work-command-art{right:0;bottom:0;width:68%;height:122px;opacity:.56;}
+  .work-command-copy{max-width:100%;}
+  .work-command-hero h1{font-size:clamp(25px,7vw,33px);}
+  .work-command-hero p{font-size:12px;max-width:90%;}
+  .work-command-tags{margin-top:13px;gap:7px;}
+  .work-command-status{font-size:11px;padding:8px 10px;}
+  .work-command-verification{font-size:11px;}
+  .app[class*="role-"] .desktop-content>main:not(.public-home) .card:not(.flat){
+    box-shadow:0 7px 18px #0003;
+  }
+}
+@media(max-width:380px){
+  .app.role-client .client-home .mobile-home-heading{padding:18px 16px;}
+  .work-command-art{opacity:.45;}
+}
+@media(prefers-reduced-motion:reduce){
+  .app[class*="role-"] .desktop-content>main:not(.public-home) :is(.linkrow,.opt,.step-card){transition:none;}
+}
+
+/* New real partner onboarding: make required actions legible, never ghosted. */
+.base-workspace.service-onboarding{
+  gap:14px;
+}
+.base-workspace.service-onboarding>.base-onboarding-hero{
+  position:relative;overflow:hidden;
+  min-height:180px;display:flex;flex-direction:column;justify-content:center;
+  padding:clamp(22px,3vw,34px);
+  border:1px solid #487793;border-radius:23px;
+  background:linear-gradient(92deg,#0a223a 5%,rgba(8,32,52,.9) 57%,rgba(8,32,52,.2)),
+    url('../public/tracksos-approved-scania-r520.webp') right center / contain no-repeat #0b2b42;
+  box-shadow:0 14px 32px #0003;
+}
+.base-workspace.service-onboarding>.base-onboarding-hero h1{
+  position:relative;z-index:1;max-width:500px;
+  font-size:clamp(25px,3.1vw,38px);color:#fff;letter-spacing:-.04em;
+}
+.base-workspace.service-onboarding>.base-onboarding-hero .sub{
+  position:relative;z-index:1;max-width:440px;
+  color:#cde4f1;line-height:1.55;
+}
+.base-workspace.service-onboarding>.card{
+  min-height:122px;
+  border:1px solid #3e718c;
+  border-radius:18px;
+  padding:21px;
+  background:linear-gradient(145deg,#163b55,#102b43);
+  box-shadow:0 11px 23px #0002;
+}
+.base-workspace.service-onboarding>.card b{
+  color:#f4fbff;font-size:16px;line-height:1.35;
+}
+.base-workspace.service-onboarding>.card .note{color:#bad6e7;}
+.base-workspace.service-onboarding>.card .btn{align-self:flex-start;}
+.performer-onboarding{
+  width:100%;max-width:1140px;margin:0 auto;
+}
+.performer-onboarding>div:first-of-type{
+  position:relative;isolation:isolate;overflow:hidden;
+  min-height:175px;display:flex;flex-direction:column;justify-content:center;
+  padding:clamp(22px,3vw,38px);
+  border:1px solid #4a7894;border-radius:23px;
+  background:radial-gradient(ellipse at 90% 25%,#29d0eb2e,transparent 47%),
+    linear-gradient(125deg,#09223b,#173b56);
+  box-shadow:0 16px 31px #0003;
+}
+.performer-onboarding>div:first-of-type::after{
+  content:"";position:absolute;z-index:-1;
+  width:42%;inset:0 0 0 auto;
+  background:url('../public/tracksos-approved-scania-r520.webp') right center / contain no-repeat;
+  opacity:.75;
+}
+.performer-onboarding>div:first-of-type h1{
+  color:#fff;letter-spacing:-.04em;font-size:clamp(25px,3.5vw,39px);
+}
+.performer-onboarding>div:first-of-type .sub{
+  color:#c7dfee;max-width:540px;line-height:1.6;
+}
+.performer-onboarding>.step-card{
+  border:1px solid #43718d;border-radius:18px;
+  background:linear-gradient(140deg,#153952,#0e293f);
+  padding:clamp(16px,2.3vw,23px);
+  box-shadow:0 10px 22px #0002;
+}
+.performer-onboarding .step-head b{font-size:15px;color:#fff;}
+.performer-onboarding .step-n{
+  box-shadow:0 0 0 3px #55d8ec25;
+}
+@media(max-width:899px){
+  .base-workspace.service-onboarding>.base-onboarding-hero{
+    min-height:155px;padding:20px 18px;
+    background:linear-gradient(90deg,#09233c,#153851);
+  }
+  .base-workspace.service-onboarding>.card{
+    min-height:0;padding:17px;
+  }
+  .performer-onboarding>div:first-of-type{
+    min-height:155px;padding:21px 18px;
+  }
+  .performer-onboarding>div:first-of-type::after{
+    opacity:.19;width:55%;
+  }
+}
+
+/* Premium CUSTOMER journeys beyond the landing: same language on every real page. */
+.app.role-client :is(.client-sos-page,.client-garage-page,.client-orders-page,.account-profile-page){
+  width:100%;
+  max-width:1330px;
+  min-width:0;
+  margin-inline:auto;
+}
+.client-section-hero{
+  position:relative;isolation:isolate;overflow:hidden;
+  display:flex;flex-direction:column;justify-content:center;
+  min-height:180px;padding:clamp(22px,3vw,40px);
+  background:radial-gradient(ellipse at 95% 20%,rgba(63,225,242,.19),transparent 45%),
+    linear-gradient(130deg,#0a263f,#173d59);
+  border:1px solid #417694;border-radius:23px;
+  box-shadow:0 16px 35px #0004;
+}
+.client-section-hero h1{
+  position:relative;z-index:1;
+  font-size:clamp(27px,3.2vw,40px);
+  letter-spacing:-.045em;line-height:1.14;
+  color:#fff;margin:0 0 10px;
+}
+.client-section-hero .sub{
+  position:relative;z-index:1;max-width:550px;
+  font-size:13px;line-height:1.6;color:#cfe3ef;
+}
+.client-section-hero-garage{
+  min-height:200px;
+  background:linear-gradient(93deg,#0b253d 0%,#10324c 58%,rgba(13,43,64,.68) 100%);
+}
+.client-section-hero-garage::after{
+  content:"";pointer-events:none;z-index:0;
+  position:absolute;inset:7px 5% 7px 57%;
+  background:url('../public/tracksos-approved-scania-r520.webp') right center / contain no-repeat;
+  opacity:.78;
+}
+.client-section-hero-garage h1,.client-section-hero-garage .sub{max-width:52%;}
+.client-section-hero-sos{
+  min-height:169px;
+  border-color:#bc5083;
+  background:radial-gradient(circle at 85% 50%,rgba(241,53,145,.22),transparent 46%),
+    radial-gradient(ellipse at 20% 100%,rgba(59,204,233,.21),transparent 60%),
+    linear-gradient(130deg,#111e3b,#223757);
+}
+.client-section-hero-sos::after{
+  content:"SOS";position:absolute;right:7%;top:15%;
+  font-weight:900;letter-spacing:-.09em;
+  font-size:clamp(62px,11vw,146px);color:#f183bc;
+  opacity:.16;pointer-events:none;
+}
+.client-sos-page>.stack{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:13px;
+}
+.app.role-client .client-sos-page>.stack>.linkrow{
+  min-height:106px;
+  padding:clamp(15px,2.5vw,24px);
+  align-items:center;
+  border:1px solid #416f8b;
+  border-radius:18px;
+  background:linear-gradient(145deg,#163e59,#0e2942);
+  box-shadow:0 10px 22px #0002;
+}
+.app.role-client .client-sos-page>.stack>.linkrow:first-child{
+  border-color:#a4588b;
+  background:radial-gradient(ellipse at 100% 0,rgba(234,51,145,.18),transparent 56%),
+    linear-gradient(135deg,#4f204a,#15374f);
+}
+.app.role-client .client-sos-page>.stack>.linkrow b{
+  font-size:16px;
+  line-height:1.3;
+}
+.app.role-client .client-sos-page>.stack>.linkrow small{
+  font-size:12px;line-height:1.55;
+}
+.app.role-client .client-orders-page>h1,
+.app[class*="role-"] .account-profile-page>h1{
+  position:relative;
+  padding:24px 24px 24px 29px;
+  margin:0 0 2px;
+  border:1px solid #416e88;
+  border-radius:19px;
+  background:radial-gradient(ellipse at 100% 0,#35d2ee22,transparent 55%),
+    linear-gradient(135deg,#12354f,#0d2b44);
+  box-shadow:0 10px 26px #0003;
+}
+.app.role-client .client-orders-page>h1::before,
+.app[class*="role-"] .account-profile-page>h1::before{
+  content:"";position:absolute;left:0;top:16px;bottom:16px;
+  width:4px;background:linear-gradient(#82ebf3,#eb499c);
+  border-radius:10px;
+}
+.app.role-client .client-orders-page>.scroll-x{
+  padding-block:7px;
+}
+.app.role-client .client-orders-page .rows>.list-item,
+.app.role-client .client-garage-page>.card{
+  border:1px solid #3d6a87;border-radius:17px;
+  background:linear-gradient(145deg,#143a54,#0d2a42);
+  box-shadow:0 7px 20px #0002;
+}
+.app.role-client .client-garage-page>.linkrow{
+  min-height:70px;border:1px solid #447391;border-radius:15px;
+  background:linear-gradient(145deg,#173e58,#102f46);
+}
+.app[class*="role-"] .account-profile-page>.card{
+  background:linear-gradient(140deg,#163b56,#102940);
+}
+.app[class*="role-"] .account-profile-page>form.stack{
+  padding:clamp(15px,2.5vw,23px);
+  background:#0f2b44;
+  border:1px solid #396782;
+  border-radius:19px;
+}
+@media(max-width:899px){
+  .client-section-hero{min-height:141px;padding:21px 17px;border-radius:19px;}
+  .client-section-hero h1{font-size:clamp(26px,7vw,33px);}
+  .client-section-hero .sub{font-size:12px;max-width:100%;}
+  .client-section-hero-garage{min-height:156px;}
+  .client-section-hero-garage h1,.client-section-hero-garage .sub{max-width:76%;}
+  .client-section-hero-garage::after{inset:0 -15% 0 52%;opacity:.24;}
+  .client-section-hero-sos::after{font-size:90px;right:3%;opacity:.08;}
+  .client-sos-page>.stack{grid-template-columns:1fr;gap:9px;}
+  .app.role-client .client-sos-page>.stack>.linkrow{
+    min-height:79px;padding:14px 16px;
+  }
+  .app.role-client .client-sos-page>.stack>.linkrow b{font-size:14px;}
+  .app.role-client .client-orders-page>h1,
+  .app[class*="role-"] .account-profile-page>h1{padding:19px 19px 19px 23px;border-radius:16px;}
+  .app[class*="role-"] .account-profile-page>form.stack{padding:16px;}
+}
+
+
+/* One explicit account-mode control; staff-only links stay out of a master menu. */
+.app:not(.guest-app) .cabinet-role-switch{
+  display:inline-flex;align-items:center;gap:3px;flex:0 0 auto;
+  border:1px solid #3d718e;border-radius:12px;padding:3px;
+  background:#102f46;
+}
+.app:not(.guest-app) .cabinet-role-switch a{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:36px;padding:6px 10px;border-radius:9px;
+  color:#c1dcea;text-decoration:none;font-size:12px;font-weight:750;
+  white-space:nowrap;
+}
+.app:not(.guest-app) .cabinet-role-switch a[aria-current="page"]{
+  background:#236385;color:#fff;box-shadow:0 2px 9px #0004;
+}
+.app:not(.guest-app) .cabinet-role-switch a:focus-visible,
+.app:not(.guest-app) .account-menu-logout:focus-visible{
+  outline:2px solid #80eaf6;outline-offset:2px;
+}
+.app:not(.guest-app) .account-menu nav .account-menu-logout{
+  display:block;width:100%;min-height:44px;flex-shrink:0;
+  text-align:left;margin-top:8px;padding:10px 12px;
+  border:1px solid #ad5273;border-radius:9px;
+  color:#ffe4ef;background:#5c223a;cursor:pointer;
+  font:inherit;font-size:14px;font-weight:750;
+}
+.app:not(.guest-app) .account-menu nav .account-menu-logout:hover{
+  background:#74304a;border-color:#ef87af;
+}
+@media(max-width:520px){
+  .app:not(.guest-app) .cabinet-role-switch a{
+    padding:6px 7px;font-size:10px;min-height:34px;
+  }
+  .app:not(.guest-app) .cabinet-role-switch{gap:1px;padding:2px;}
+}
+
+
+/* Owner review 14 Nov: the approved Scania artwork is a real image, not a
+   cover-sized decoration. Make every pixel of the source visible. */
+.app.role-client .client-home .client-hero-art{
+  display:flex;align-items:center;justify-content:center;
+  min-width:0;overflow:hidden;border-radius:17px;
+  background:radial-gradient(ellipse at 55% 50%,rgba(64,185,219,.15),transparent 72%);
+}
+.app.role-client .client-home .client-hero-art img{
+  display:block;width:100%;height:100%;max-width:100%;
+  object-fit:contain;object-position:center;
+  filter:drop-shadow(0 12px 16px rgba(0,6,20,.28));
+}
+@media(min-width:900px){
+  .app.role-client .desktop-content .client-home .desktop-hero{
+    display:grid;grid-template-columns:minmax(0,1.18fr) minmax(250px,.82fr);
+    align-items:center;gap:clamp(12px,2.1vw,25px);
+  }
+  .app.role-client .client-home .desktop-hero::after{content:none;}
+  .app.role-client .client-home .desktop-hero-copy{
+    max-width:100%;min-width:0;
+  }
+  .app.role-client .client-home .client-hero-art{
+    width:100%;height:clamp(250px,24vw,334px);justify-self:end;
+  }
+  .app.role-client .client-home .client-hero-art img{
+    object-position:center right;
+  }
+  .app.role-client .client-home .desktop-home-aside{gap:14px;}
+  .app.role-client .desktop-home-aside .desktop-journey-card{
+    padding:clamp(18px,1.8vw,24px);
+  }
+  .app.role-client .desktop-home-aside .desktop-aside-kicker{
+    font-size:10px;letter-spacing:.14em;font-weight:850;color:#75e4f4;
+  }
+  .app.role-client .desktop-home-aside .desktop-journey-card h2{
+    margin:7px 0 9px;line-height:1.26;
+  }
+  .app.role-client .desktop-home-aside .desktop-journey-links{
+    display:flex;flex-direction:column;gap:7px;margin-top:13px;
+  }
+  .app.role-client .desktop-home-aside .desktop-journey-links a{
+    position:relative;display:flex;flex-direction:column;gap:4px;
+    min-height:59px;padding:11px 30px 11px 12px;text-decoration:none;
+    border:1px solid #426f8d;border-radius:11px;
+    background:linear-gradient(125deg,#1a415c,#112e48);color:#f0faff;
+  }
+  .app.role-client .desktop-home-aside .desktop-journey-links a b{
+    font-size:12px;line-height:1.3;
+  }
+  .app.role-client .desktop-home-aside .desktop-journey-links a small{
+    color:#b5d6e7;font-size:11px;line-height:1.35;
+  }
+  .app.role-client .desktop-home-aside .desktop-journey-links a span{
+    position:absolute;right:12px;top:50%;transform:translateY(-50%);
+    font-size:19px;color:#82e8f5;
+  }
+  .app.role-client .desktop-home-aside .desktop-journey-links a:hover,
+  .app.role-client .desktop-home-aside .desktop-journey-links a:focus-visible{
+    border-color:#85e8f3;background:#205171;outline-offset:2px;
+  }
+}
+@media(min-width:900px) and (max-width:1190px){
+  .app.role-client .desktop-content .client-home .desktop-hero{
+    grid-template-columns:minmax(0,1fr) minmax(175px,.65fr);
+  }
+  .app.role-client .client-home .client-hero-art{height:260px;}
+}
+@media(max-width:899px){
+  .app.role-client .desktop-content .client-home .desktop-hero{
+    display:flex;flex-direction:column;align-items:stretch;
+    gap:12px;padding:19px 17px 16px;min-height:0;
+    border:1px solid #447c92;border-radius:22px;
+    background:radial-gradient(circle at 70% 80%,rgba(38,197,226,.2),transparent 60%),
+      linear-gradient(140deg,#081c31,#123b54);
+    box-shadow:0 14px 31px rgba(0,9,28,.25);
+  }
+  .app.role-client .client-home .desktop-hero::after{content:none;}
+  .app.role-client .client-home .desktop-hero-copy{max-width:100%;min-width:0;}
+  .app.role-client .client-home .desktop-hero-copy h1{
+    font-size:clamp(26px,7.1vw,36px);line-height:1.12;margin:10px 0;
+  }
+  .app.role-client .client-home .desktop-hero-copy p{font-size:12px;line-height:1.48;}
+  .app.role-client .client-home .desktop-hero-buttons{
+    display:flex;flex-wrap:wrap;gap:8px;margin-top:15px;
+  }
+  /* SOS already has one permanent, prominent bottom-tab entry on mobile. */
+  .app.role-client .client-home .desktop-hero-buttons .desktop-primary-action{
+    display:none;
+  }
+  .app.role-client .client-home .desktop-hero-buttons .desktop-outline-action{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:100%;min-height:44px;padding:9px 12px;
+    border-radius:12px;border:1px solid #f589bd;
+    background:linear-gradient(120deg,#ed187d,#c90e68);
+    box-shadow:0 8px 22px rgba(155,9,77,.25);
+    font-size:13px;font-weight:850;text-decoration:none;color:#fff;
+  }
+  .app.role-client .client-home .client-hero-art{
+    width:100%;height:clamp(170px,56vw,245px);
+  }
+}
+@media(max-width:360px){
+  .app.role-client .client-home .client-hero-art{height:176px;}
+}
+@media(prefers-reduced-motion:reduce){
+  .app.role-client .desktop-home-aside .desktop-journey-links a{transition:none;}
+}
+
+
+/* TrakSOS motion language — native CSS, no remote fonts, videos or JS libraries.
+   Ambient depth for desktop, tactile direction cards on small screens. */
+.client-help-directions{position:relative;min-width:0;isolation:isolate;}
+.client-help-directions>h2{
+  margin:0 0 6px;color:#f5fbff;font-size:clamp(22px,2.5vw,31px);
+  line-height:1.15;letter-spacing:-.04em;
+}
+.client-help-directions .client-directions-lead{
+  font-size:13px;line-height:1.5;color:#b9d4e8;margin:0 0 15px;
+}
+.client-direction-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;}
+.client-direction-card{
+  position:relative;isolation:isolate;overflow:hidden;
+  display:flex;align-items:center;gap:15px;text-align:left;
+  min-width:0;min-height:122px;width:100%;
+  padding:20px;border:1px solid #3b6e8c;border-radius:20px;
+  background:radial-gradient(circle at 100% 0,rgba(62,215,236,.09),transparent 54%),
+    linear-gradient(137deg,#163b56,#0e293f);
+  box-shadow:0 12px 24px rgba(0,8,24,.16);
+  color:#f6faff;text-decoration:none;font:inherit;cursor:pointer;
+  transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease,background .22s ease;
+  animation:ts-cabinet-enter .34s both;
+}
+.client-direction-card:nth-child(2){animation-delay:.05s}
+.client-direction-card:nth-child(3){animation-delay:.10s}
+.client-direction-card:nth-child(4){animation-delay:.15s}
+.client-direction-card.main-direction{
+  border-color:#6b84a6;
+  background:radial-gradient(circle at 100% 0,rgba(229,61,153,.21),transparent 54%),
+    linear-gradient(137deg,#203856,#112c48);
+}
+.client-direction-card::before{
+  content:"";position:absolute;inset:0 0 auto 0;height:2px;z-index:-1;
+  background:linear-gradient(90deg,transparent,#60dcea 36%,#ee5ea6 70%,transparent);
+  transform:scaleX(0);opacity:0;
+  transition:transform .28s,opacity .28s;
+}
+.client-direction-symbol{
+  flex:0 0 auto;display:grid;place-items:center;
+  width:54px;height:54px;border-radius:17px;
+  color:#8aedf5;font-size:28px;font-weight:750;
+  border:1px solid rgba(96,226,243,.22);
+  background:linear-gradient(150deg,#194c68,#153550);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 7px 17px #0002;
+  transition:transform .24s,box-shadow .24s;
+}
+.client-direction-card.main-direction .client-direction-symbol{
+  color:#ff9ccd;background:linear-gradient(145deg,#65315c,#1b3a59);
+}
+.client-direction-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;}
+.client-direction-copy b{font-size:clamp(15px,1.4vw,18px);line-height:1.25;letter-spacing:-.02em;}
+.client-direction-copy small{color:#b7d2e3;font-size:12px;line-height:1.45;}
+.client-direction-arrow{flex-shrink:0;color:#89e9f3;font-size:25px;}
+.client-direction-card:hover,.client-direction-card:focus-visible,
+.client-direction-card[aria-expanded="true"]{
+  transform:translateY(-3px);border-color:#82e5f0;
+  box-shadow:0 17px 32px rgba(0,8,22,.30),0 0 22px rgba(85,202,233,.10);
+}
+.client-direction-card:hover::before,.client-direction-card:focus-visible::before,
+.client-direction-card[aria-expanded="true"]::before{transform:scaleX(1);opacity:1;}
+.client-direction-card:hover .client-direction-symbol,
+.client-direction-card:focus-visible .client-direction-symbol{
+  transform:scale(1.07);box-shadow:0 0 17px rgba(71,214,239,.22);
+}
+.client-direction-card:focus-visible,.client-specialization-card:focus-visible{
+  outline:2px solid #92f2fb;outline-offset:3px;
+}
+.client-specializations{
+  border:1px solid #4e7f99;border-radius:20px;padding:20px;
+  margin-top:13px;background:linear-gradient(135deg,#173b54,#0c293f);
+  box-shadow:0 14px 33px #0002;
+  animation:ts-cabinet-enter .29s both;
+}
+.client-specializations h3{margin:0 0 7px;color:#fff;font-size:19px;}
+.client-specializations p{color:#bfdae8;font-size:12px;margin:0 0 13px;line-height:1.5;}
+.client-specialization-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;}
+.client-specialization-card{
+  position:relative;min-width:0;display:flex;flex-direction:column;gap:5px;
+  padding:14px 31px 14px 14px;min-height:73px;text-decoration:none;
+  border:1px solid #436c85;border-radius:13px;
+  background:#12334c;color:#f3fbff;
+  transition:border-color .18s,background .18s,transform .18s;
+}
+.client-specialization-card b{font-size:13px;line-height:1.3;}
+.client-specialization-card small{font-size:11px;color:#b2d1e1;line-height:1.4;}
+.client-specialization-card>span{position:absolute;right:13px;top:35%;font-size:21px;color:#82e8f5;}
+.client-specialization-card:hover{transform:translateY(-2px);background:#1a4764;border-color:#6bd7e8;}
+@keyframes ts-cabinet-enter{
+  from{opacity:0;transform:translate3d(0,9px,0)}
+  to{opacity:1;transform:translate3d(0,0,0)}
+}
+@keyframes ts-ambient-pulse{
+  0%,100%{opacity:.28;transform:scale(1) translate3d(0,0,0)}
+  50%{opacity:.55;transform:scale(1.06) translate3d(-1%,1%,0)}
+}
+@keyframes ts-sos-breathe{
+  0%,84%,100%{box-shadow:0 8px 22px rgba(155,9,77,.25)}
+  90%{box-shadow:0 8px 25px rgba(226,38,124,.46),0 0 0 5px rgba(241,73,147,.13)}
+}
+@media(min-width:900px){
+  .app.role-client .desktop-content>main.client-home{max-width:1500px;}
+  .app.role-client .client-home .desktop-home-columns{
+    grid-template-columns:minmax(0,1.75fr) minmax(260px,.85fr);
+    gap:clamp(15px,2vw,28px);
+  }
+  .app.role-client .client-home .desktop-home-aside{
+    position:relative;isolation:isolate;
+  }
+  .app.role-client .client-home .desktop-hero::before{
+    content:"";position:absolute;z-index:0;inset:-30% -15% -30% 50%;
+    background:radial-gradient(ellipse at 70% 48%,rgba(47,189,225,.25),transparent 53%);
+    animation:ts-ambient-pulse 12s ease-in-out infinite;pointer-events:none;
+  }
+  .app.role-client .client-home .client-hero-art{position:relative;z-index:1;}
+  .app.role-client .client-home .desktop-hero-copy{position:relative;z-index:1;}
+  .app[class*="role-"] .desktop-layout{
+    background-image:radial-gradient(ellipse at 88% 18%,rgba(42,170,210,.05),transparent 32%),
+      radial-gradient(ellipse at 26% 89%,rgba(209,41,122,.045),transparent 41%);
+  }
+}
+@media(max-width:899px){
+  .client-help-directions>h2{font-size:23px;}
+  .client-direction-grid{grid-template-columns:1fr;gap:10px;}
+  .client-direction-card{min-height:84px;padding:13px 15px;gap:13px;border-radius:16px;}
+  .client-direction-symbol{width:46px;height:46px;border-radius:13px;font-size:23px;}
+  .client-direction-copy{gap:4px;}
+  .client-direction-copy b{font-size:15px;}
+  .client-direction-copy small{font-size:11px;}
+  .client-specializations{padding:15px;border-radius:16px;}
+  .client-specialization-grid{grid-template-columns:1fr;}
+  .app.role-client .tabbar .sosTab{
+    animation:ts-sos-breathe 8s ease-out infinite;
+  }
+}
+@media(prefers-reduced-data:reduce){
+  .client-direction-card,.client-specializations,
+  .app.role-client .client-home .desktop-hero::before,.app.role-client .tabbar .sosTab{
+    animation:none!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .client-direction-card,.client-specializations,
+  .app.role-client .client-home .desktop-hero::before,.app.role-client .tabbar .sosTab{
+    animation:none!important;
+  }
+  .client-direction-card,.client-direction-card::before,.client-direction-symbol,
+  .client-specialization-card{transition:none!important;}
+  .client-direction-card:hover,.client-direction-card:focus-visible,
+  .client-specialization-card:hover{transform:none!important;}
+}
+
+
+/* Approved Scania review: a previous background layer also painted the truck
+   underneath the actual photo. Keep exactly one full-size image on both widths. */
+.app.role-client .desktop-content > .client-home > .desktop-hero{
+  background-image:
+    radial-gradient(ellipse at 79% 20%,rgba(34,179,214,.16),transparent 56%),
+    linear-gradient(125deg,#081b30,#12334b 73%,#102d46) !important;
+  background-color:#0b2740;
+}
+@media(min-width:900px){
+  .app.role-client .desktop-content > .client-home > .desktop-hero{
+    display:grid !important;
+    grid-template-columns:minmax(0,1.2fr) minmax(270px,.8fr);
+  }
+  .app.role-client .desktop-content > .client-home > .desktop-hero > .client-hero-art{
+    min-width:0;max-width:100%;overflow:hidden;
+  }
+  .app.role-client .desktop-content > .client-home > .desktop-hero > .client-hero-art img{
+    max-width:100%;object-fit:contain;object-position:center right;
+  }
+}
+@media(max-width:899px){
+  .app.role-client .desktop-content > .client-home > .desktop-hero{
+    display:flex !important;
+    flex-direction:column;
+  }
+  .app.role-client .desktop-content > .client-home > .desktop-hero > .client-hero-art{
+    max-width:100%;overflow:hidden;
+  }
+}
+
+
+/* Light shared motion and atmosphere across every real signed-in role. */
+@keyframes ts-workspace-reveal{
+  from{opacity:.72;transform:translate3d(0,7px,0)}
+  to{opacity:1;transform:translate3d(0,0,0)}
+}
+.app[class*="role-"] .desktop-content>main:not(.public-home){
+  animation:ts-workspace-reveal .30s ease-out both;
+}
+.app[class*="role-"] :is(.card:not(.flat),.linkrow,.desktop-quick-card){
+  transition:transform .20s ease,border-color .20s ease,box-shadow .20s ease;
+}
+@media(hover:hover) and (pointer:fine){
+  .app[class*="role-"] :is(.card:not(.flat):not(.hi),.desktop-quick-card):hover{
+    transform:translateY(-2px);
+    box-shadow:0 15px 32px rgba(0,8,25,.23);
+  }
+}
+@media(min-width:1100px){
+  .app[class*="role-"] .desktop-content{
+    background-image:
+      radial-gradient(ellipse at 95% 14%,rgba(63,209,231,.06),transparent 42%),
+      radial-gradient(ellipse at 25% 91%,rgba(245,65,145,.04),transparent 41%);
+  }
+  .app[class*="role-"] .desktop-content>main:not(.public-home){max-width:1450px;}
+}
+@media(prefers-reduced-motion:reduce){
+  .app[class*="role-"] .desktop-content>main:not(.public-home){animation:none!important;}
+  .app[class*="role-"] :is(.card:not(.flat),.linkrow,.desktop-quick-card){transition:none!important;}
+  .app[class*="role-"] :is(.card:not(.flat):not(.hi),.desktop-quick-card):hover{transform:none!important;}
+}
+@media(prefers-reduced-data:reduce){
+  .app[class*="role-"] .desktop-content>main:not(.public-home){animation:none!important;}
+}
+
+/* One SOS entry on mobile: the permanent bottom action owns that affordance. */
+@media(max-width:899px){
+  .app.role-client .desktop-content > .client-home > .desktop-hero .desktop-primary-action{
+    display:none !important;
+  }
+}
+
+
+/* Tactile touch feedback; no extra assets or network requests. */
+.client-direction-card:active,.client-specialization-card:active{
+  transform:scale(.985);filter:brightness(1.14);
+}
+@media(max-width:899px){
+  .app.role-client .tabbar a:active,.app.role-client .account-menu>summary:active{
+    filter:brightness(1.18);
+  }
+}
+@keyframes ts-hero-lighttrail{
+  0%,100%{opacity:.15;transform:translate3d(-12%,0,0)}
+  50%{opacity:.42;transform:translate3d(13%,0,0)}
+}
+@media(min-width:900px){
+  .app.role-client .client-home .client-hero-art{
+    position:relative;isolation:isolate;
+  }
+  .app.role-client .client-home .client-hero-art::before{
+    content:"";position:absolute;inset:18% 3% 10%;z-index:-1;
+    background:radial-gradient(ellipse at center,rgba(74,217,244,.20),transparent 68%);
+    animation:ts-hero-lighttrail 13s ease-in-out infinite;
+    pointer-events:none;
+  }
+}
+@media(prefers-reduced-motion:reduce),(prefers-reduced-data:reduce){
+  .app.role-client .client-home .client-hero-art::before{animation:none!important;}
+  .client-direction-card:active,.client-specialization-card:active{transform:none;filter:none;}
+}

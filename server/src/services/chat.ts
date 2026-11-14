@@ -47,7 +47,7 @@ export class ChatService {
         where m.order_id=$1 and m.sender_id is not null and m.sender_id not in (o.client_id, o.created_by) and m.sender_id is distinct from o.performer_id`, [orderId]);
     const ticket = await this.db.one('select 1 from support_tickets where order_id=$1 limit 1', [orderId]);
     const participants = people.map((p) => ({ who: p.who, name: p.name, you: p.id === user.id }));
-    if ((support?.n ?? 0) > 0 || ticket) participants.push({ who: 'support', name: 'Поддержка ТракSOS', you: false });
+    if ((support?.n ?? 0) > 0 || ticket) participants.push({ who: 'support', name: 'Поддержка TrakSOS', you: false });
     return { messages: msgs, participants, quickReplies: order.service === 'consult' ? CONSULT_QUICK_REPLIES : QUICK_REPLIES };
   }
 

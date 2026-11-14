@@ -83,9 +83,11 @@ test('неверный id в адресе — 404, а не ошибка серв
   assert.equal((await t.api('GET', '/api/orders/не-uuid', undefined, client.token)).status, 404);
   assert.equal((await t.api('GET', '/api/mod/cases/undefined', undefined, admin.token)).status, 404);
   const l = ok(await t.api('GET', '/api/legal'));
-  assert.equal(l.brand, 'ТракSOS');
+  assert.equal(l.brand, 'TrakSOS');
   ok(await t.api('PUT', '/api/admin/settings/legal', { entity: 'ИП Тестов Т. Т.', inn: '780000000000' }, admin.token));
   assert.equal(ok(await t.api('GET', '/api/legal')).entity, 'ИП Тестов Т. Т.');
+  ok(await t.api('PUT', '/api/admin/settings/legal', { brand: 'InvalidBrand' }, admin.token));
+  assert.equal(ok(await t.api('GET', '/api/legal')).brand, 'TrakSOS');
 });
 
 test('мастера рядом до вызова: сколько на линии и кто ближе — без контактов', async () => {

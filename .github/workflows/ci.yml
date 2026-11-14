@@ -50,6 +50,8 @@ jobs:
           cp deploy/.env.example deploy/.env
           trap 'rm -f deploy/.env' EXIT
           DB_PASSWORD=ci-only-check APP_SECRET=ci-only-check docker compose --env-file deploy/.env.example -f deploy/docker-compose.yml config --quiet
+      - name: Проверка единого бренда TrakSOS
+        run: node scripts/verify-brand.mjs
       - name: Сервер — типы
         run: npm run typecheck
       - name: Сервер — тесты
@@ -64,10 +66,14 @@ jobs:
           psql -h 127.0.0.1 -U postgres -c 'create database traksos'
           DATABASE_URL=postgres://postgres@127.0.0.1:5432/traksos ADMIN_PHONES=+79990000001 MODERATOR_PHONES=+79990000147 npm -w server start &
           until curl -s localhost:8080/api/health >/dev/null; do sleep 1; done
+          node e2e/public-shots.mjs e2e/shots
           node e2e/ui-smoke.mjs
+          node e2e/public-service-routing.mjs
+          node e2e/header-search.mjs
           node e2e/public-shots.mjs e2e/shots
           SHOTS_DIR=e2e/shots/public node e2e/public-layout.mjs
           node e2e/offline.mjs
+          SHOTS_DIR=e2e/shots/premium-unified-client node e2e/premium-unified-client.mjs
           node e2e/flow.mjs e2e/shots
           node e2e/admin-ops.mjs e2e/shots
           SHOTS_DIR=e2e/shots/roles node e2e/role-matrix.mjs
@@ -77,6 +83,11 @@ jobs:
           node e2e/admin-master-switch.mjs
           node e2e/staff-security.mjs
           node e2e/cabinet-navigation-audit.mjs
+          node e2e/admin-navigation-ux.mjs
+          node e2e/cabinet-visual-sweep.mjs
+          node e2e/cabinet-logout-and-shop.mjs
+          node e2e/approved-truck-hero.mjs
+          node e2e/visual-text-geometry.mjs
           node e2e/preview-login.mjs
       - name: Снимки экранов каждой проверяемой версии
         if: always()
@@ -90,7 +101,7 @@ jobs:
       - name: Предрелизный отчёт — даже после ошибки
         if: always()
         run: |
-          echo '### TrackSOS — контроль версии' >> "$GITHUB_STEP_SUMMARY"
+          echo '### TrakSOS — контроль версии' >> "$GITHUB_STEP_SUMMARY"
           echo "- Commit: \`$GITHUB_SHA\`" >> "$GITHUB_STEP_SUMMARY"
           echo '- Проверены: Docker Compose, бэкапы, типы, сервер, веб, дизайн, браузер и офлайн.' >> "$GITHUB_STEP_SUMMARY"
           echo '- Любая ошибка в шагах выше запрещает считать сборку готовой.' >> "$GITHUB_STEP_SUMMARY"
@@ -99,7 +110,7 @@ jobs:
       - name: Ночной итог проверки
         if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         run: |
-          echo '### Ночной контроль TrackSOS' >> "$GITHUB_STEP_SUMMARY"
+          echo '### Ночной контроль TrakSOS' >> "$GITHUB_STEP_SUMMARY"
           echo '- Проверки HTML/CSS/JS, API, офлайн-режима и тестовых сценариев.' >> "$GITHUB_STEP_SUMMARY"
           echo '- Снимки реальной веб-страницы находятся во вложении screens.' >> "$GITHUB_STEP_SUMMARY"
           echo '- Этот процесс не меняет приложение и не публикует его в RuStore.' >> "$GITHUB_STEP_SUMMARY"

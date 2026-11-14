@@ -1,9 +1,16 @@
 import { useState } from 'react';
+import { InsurerTrainingCabinet } from './insurerTrainingCabinet.tsx';
+import { CustomerTrainingCabinet } from './customerTrainingCabinet.tsx';
+import { PerformerTrainingCabinet } from './performerTrainingCabinet.tsx';
+import { FleetTrainingCabinet } from './fleetTrainingCabinet.tsx';
+import { InspectionTrainingCabinet } from './inspectionTrainingCabinet.tsx';
+import { ModeratorTrainingCabinet } from './moderatorTrainingCabinet.tsx';
+import { MasterServiceTrainingCabinet } from './masterServiceTrainingCabinet.tsx';
 
 // Admin-only DEMONSTRATION. This file deliberately has no API imports or fetch:
 // even realistic-looking actions never touch real accounts, jobs, SMS or money.
 type DemoRole = 'client'|'owner'|'driver'|'master'|'tow'|'service'|
-  'master_service'|'insurer'|'moderator'|'admin';
+  'master_service'|'insurer'|'inspection'|'moderator'|'admin';
 type Section = 'overview'|'tasks'|'profile'|'history';
 type Ticket = {id:number;title:string;status:'Новая'|'В работе'|'Завершена'|'Отменена'};
 type RoleInfo = {
@@ -53,13 +60,18 @@ const DEMO_ROLES:RoleInfo[] = [
     profile:'Компания и документы',history:'История полисов',task:'Подготовить страховое предложение',
     metrics:['1','2','1'],activity:['Получена заявка на оформление полиса','Документы ожидают проверки'],
     features:[['◇','Обращения','Запросы клиентов и автопарков'],['▤','Документы','Сведения о технике и страхователе'],['◉','Статусы','Сроки, ответы и напоминания']]},
+  {id:'inspection',icon:'▣',label:'Оператор техосмотра',subtitle:'Диагностические карты, осмотры и расчёты',
+    headline:'Технический осмотр транспорта',section:'Заявки на техосмотр',action:'Открыть осмотр',
+    profile:'Оператор и документы',history:'История техосмотров',task:'Провести технический осмотр тягача',
+    metrics:['1','2','1'],activity:['Получена заявка на техосмотр','Диагностическая карта ожидает оформления'],
+    features:[['▣','Осмотры','Очередь назначенных транспортных средств'],['▤','Документы','Результаты и диагностические карты'],['₽','Финансы','Начисления и выплаты оператора']]},
   {id:'moderator',icon:'⚑',label:'Модератор',subtitle:'Споры и проверка партнёров',
-    headline:'Контроль качества TrackSOS',section:'Очередь модерации',action:'Открыть обращение',
+    headline:'Контроль качества TrakSOS',section:'Очередь модерации',action:'Открыть обращение',
     profile:'Мой профиль',history:'Журнал решений',task:'Рассмотреть жалобу на услугу',
     metrics:['1','3','2'],activity:['Поступило обращение пользователя','Проверка документов ожидает решения'],
     features:[['⚑','Обращения','Разбор конфликтных ситуаций'],['✓','Проверки','Документы мастеров и СТО'],['◈','Решения','История модерации и контроль']]},
   {id:'admin',icon:'▦',label:'Администратор',subtitle:'Управление площадкой и аналитика',
-    headline:'Центр управления TrackSOS',section:'Операционная очередь',action:'Открыть событие',
+    headline:'Центр управления TrakSOS',section:'Операционная очередь',action:'Открыть событие',
     profile:'Настройки площадки',history:'История событий',task:'Проверить работу площадки',
     metrics:['1','4','2'],activity:['Новый запрос на проверку','Тестовый магазин остаётся закрытым'],
     features:[['▦','Работа сервиса','Контроль заявок и партнёров'],['▤','Магазин','Подготовка грузовых запчастей'],['▥','Статистика','Нагрузка и динамика заявок']]},
@@ -78,7 +90,7 @@ export function AdminTestCenter({roleId}:{roleId?:string}) {
   const role=DEMO_ROLES.find(r=>r.id===roleId);
   if(!role) return <main className="sandbox-root stack" aria-label="Тестовый центр администратора">
     <section className="sandbox-intro">
-      <span className="sandbox-eyebrow">TRACKSOS · ЗАКРЫТЫЙ ДЕМОНСТРАЦИОННЫЙ РЕЖИМ</span>
+      <span className="sandbox-eyebrow">TRAKSOS · ЗАКРЫТЫЙ ДЕМОНСТРАЦИОННЫЙ РЕЖИМ</span>
       <h1>Тестирование кабинетов</h1>
       <p>Выберите роль: откроется отдельный рабочий экран с собственным меню, разделами и возвратом к списку.</p>
       <a className="btn ghost small" href="#/admin">← Вернуться в админку</a>
@@ -94,6 +106,13 @@ export function AdminTestCenter({roleId}:{roleId?:string}) {
       </a>)}
     </div>
   </main>;
+  if(role.id==='insurer')return <InsurerTrainingCabinet/>;
+  if(role.id==='client'||role.id==='driver')return <CustomerTrainingCabinet driver={role.id==='driver'}/>;
+  if(role.id==='master'||role.id==='tow')return <PerformerTrainingCabinet tow={role.id==='tow'}/>;
+  if(role.id==='owner')return <FleetTrainingCabinet/>;
+  if(role.id==='inspection')return <InspectionTrainingCabinet/>;
+  if(role.id==='moderator')return <ModeratorTrainingCabinet/>;
+  if(role.id==='master_service')return <MasterServiceTrainingCabinet/>;
   return <SandboxCabinet key={role.id} role={role}/>;
 }
 
@@ -124,7 +143,7 @@ function SandboxCabinet({role}:{role:RoleInfo}) {
     </div>
     <section className="sandbox-hero">
       <div className="sandbox-hero-art" aria-hidden="true"><span>{role.icon}</span><i/><i/><i/></div>
-      <span className="sandbox-eyebrow">TRACKSOS · {role.label.toUpperCase()}</span>
+      <span className="sandbox-eyebrow">TRAKSOS · {role.label.toUpperCase()}</span>
       <h1>{role.headline}</h1>
       <p>{role.subtitle} · Интерактивная песочница без реальных действий.</p>
       <div className="row">

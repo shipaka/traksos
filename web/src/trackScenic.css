@@ -1,0 +1,114 @@
+/* Source of truth for the TrakSOS hero: the owner-approved Scania
+   sunset-road photograph, shipped locally. Not the old portrait truck and
+   not a drawn road. This stylesheet intentionally loads last. */
+.app.role-client .tracksos-visual-home .track-road-hero,
+.guest-app .public-landing .public-brand-hero{
+  background:#061d34!important;
+  border-color:#2d8cc4!important;
+  isolation:isolate;
+}
+.app.role-client .tracksos-visual-home .track-road-hero::before,
+.guest-app .public-landing .public-brand-hero::before{
+  content:"";position:absolute;inset:-7px;z-index:0;pointer-events:none;
+  background:linear-gradient(90deg,transparent 0%,rgba(5,19,37,.25) 38%,rgba(5,19,37,.94) 88%),
+    url('../public/tracksos-approved-scenic-hero.webp') center/cover no-repeat!important;
+  filter:blur(16px) saturate(1.15) brightness(.73)!important;
+  transform:scale(1.04)!important;
+  -webkit-mask-image:none!important;mask-image:none!important;
+}
+.app.role-client .tracksos-visual-home .track-road-hero::after,
+.guest-app .public-landing .public-brand-hero::after{
+  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(90deg,rgba(3,18,35,.10),transparent 29%,rgba(3,18,35,.18) 43%,rgba(3,18,35,.73) 66%,#051b32ba 100%)!important;
+}
+.app.role-client .tracksos-visual-home .track-road-copy,
+.guest-app .public-landing .public-hero-copy{position:relative!important;z-index:3!important;}
+.app.role-client .tracksos-visual-home .track-road-art{position:relative;z-index:2!important;}
+.app.role-client .tracksos-visual-home .track-road-art::before{
+  content:"";position:absolute;inset:0!important;
+  background:url('../public/tracksos-approved-scenic-hero.webp') center/cover no-repeat!important;
+  filter:blur(17px) brightness(.66)!important;opacity:.55!important;z-index:0!important;
+  -webkit-mask-image:radial-gradient(ellipse,#000 45%,transparent 92%)!important;
+  mask-image:radial-gradient(ellipse,#000 45%,transparent 92%)!important;
+}
+.app.role-client .tracksos-visual-home .track-road-art img{
+  position:relative;z-index:2!important;
+  display:block;max-width:100%;max-height:100%;
+  object-fit:contain!important;object-position:center!important;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 7%,#000 92%,transparent 100%)!important;
+  mask-image:linear-gradient(90deg,transparent 0%,#000 7%,#000 92%,transparent 100%)!important;
+  filter:drop-shadow(0 14px 23px #000b) saturate(1.07)!important;
+}
+/* Guest and signed-in screens now reuse the SAME real photography. */
+.guest-app .public-landing .public-hero-visual::before{
+  content:"";position:absolute;inset:0!important;
+  background:url('../public/tracksos-approved-scenic-hero.webp') center/cover no-repeat!important;
+  filter:blur(16px) brightness(.59)!important;opacity:.52!important;
+}
+.guest-app .public-landing .public-hero-visual::after{
+  content:"";position:absolute;inset:0!important;
+  background:url('../public/tracksos-approved-scenic-hero.webp') center/contain no-repeat!important;
+  filter:drop-shadow(0 15px 20px #000a) saturate(1.06)!important;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 9%,#000 88%,transparent 100%)!important;
+  mask-image:linear-gradient(90deg,transparent 0%,#000 9%,#000 88%,transparent 100%)!important;
+}
+@media(min-width:900px){
+  .guest-app .public-landing .public-hero-visual,
+  .app.role-client .tracksos-visual-home .track-road-art{
+    overflow:visible!important;
+  }
+  .guest-app .public-landing .public-brand-hero{min-height:365px!important;}
+  .guest-app .public-landing .public-hero-visual{
+    width:49%!important;opacity:1!important;
+    -webkit-mask-image:none!important;mask-image:none!important;
+  }
+  .app.role-client .tracksos-visual-home .track-road-hero{min-height:391px!important;}
+  .app.role-client .tracksos-visual-home .track-road-art{height:332px!important;}
+}
+@media(max-width:899px){
+  .app.role-client .tracksos-visual-home .track-road-hero,
+  .guest-app .public-landing .public-brand-hero{
+    display:flex!important;flex-direction:column!important;align-items:stretch!important;
+    min-height:0!important;padding:8px 14px 16px!important;
+  }
+  .app.role-client .tracksos-visual-home .track-road-hero::before,
+  .guest-app .public-landing .public-brand-hero::before{
+    inset:0 0 auto 0!important;height:56%!important;
+    background:url('../public/tracksos-approved-scenic-hero.webp') center top/cover no-repeat!important;
+    filter:blur(11px) brightness(.62)!important;
+    opacity:.9!important;transform:none!important;
+  }
+  .app.role-client .tracksos-visual-home .track-road-hero::after,
+  .guest-app .public-landing .public-brand-hero::after{
+    background:linear-gradient(180deg,transparent 12%,rgba(3,18,35,.09) 31%,#061b31bd 53%,transparent 82%)!important;
+    z-index:0!important;
+  }
+  .app.role-client .tracksos-visual-home .track-road-art,
+  .guest-app .public-landing .public-hero-visual{
+    position:relative!important;order:0!important;inset:auto!important;
+    width:100%!important;height:clamp(175px,53vw,235px)!important;
+    flex:0 0 auto!important;margin:0 auto 4px!important;
+    -webkit-mask-image:none!important;mask-image:none!important;
+  }
+  .app.role-client .tracksos-visual-home .track-road-art img{
+    width:100%!important;height:100%!important;
+    object-fit:contain!important;
+  }
+  .guest-app .public-landing .public-hero-visual{
+    display:block!important;
+    background:url('../public/tracksos-approved-scenic-hero.webp') center/contain no-repeat!important;
+    opacity:1!important;z-index:2!important;
+  }
+  .guest-app .public-landing .public-hero-visual::after,
+  .guest-app .public-landing .public-hero-visual::before{display:none!important;}
+  .app.role-client .tracksos-visual-home .track-road-art::before{opacity:.3!important;}
+  .app.role-client .tracksos-visual-home .track-road-copy,
+  .guest-app .public-landing .public-hero-copy{
+    order:1!important;grid-column:auto!important;
+    width:100%!important;padding:0!important;z-index:3!important;
+  }
+  .app.role-client .tracksos-visual-home .track-road-copy h1,
+  .guest-app .public-landing .public-brand-hero h1{
+    margin:5px 0 9px!important;font-size:clamp(25px,6.2vw,34px)!important;
+  }
+}

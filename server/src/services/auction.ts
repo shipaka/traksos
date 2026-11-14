@@ -212,7 +212,7 @@ export class AuctionService {
         { kind: 'normal', title: 'Исполнитель назначен', body: res.o.service === 'consult' ? 'Мастер на связи — он позвонит или напишет в чат' : `Выбрали лучшего из откликов: выезд ${rub(res.f.price)}, подача ~${res.f.eta_minutes} мин`, data: { orderId } });
     }
     await this.orders.systemMessage(orderId, res.o.service === 'consult'
-      ? `Мастер на связи: консультация ${rub(res.f.price)}. Он позвонит через ТракSOS или напишет здесь.`
+      ? `Мастер на связи: консультация ${rub(res.f.price)}. Он позвонит через TrakSOS или напишет здесь.`
       : `Исполнитель выбран: выезд ${rub(res.f.price)}, подача ~${res.f.eta_minutes} мин. Чат открыт.`);
     return user ? this.orders.view(user, orderId) : null;
   }

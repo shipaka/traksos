@@ -1,4 +1,4 @@
-// Nightly and push-time gate: approved TrackSOS identity is not replaced silently.
+// Nightly and push-time gate: approved TrakSOS identity is not replaced silently.
 // This only verifies invariants; visual fidelity is additionally checked via screenshots.
 import { readFile, stat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
@@ -11,11 +11,25 @@ function expect(ok, description) {
 }
 const LOCKED_ASSETS = {
   // Exact approved images. Deliberate asset changes require a new owner-approved baseline.
-  'web/public/tracksos-approved-truck.webp': 'a6013f354586e669',
-  // Exact crop of the original approved Scania R520 reference (no UI baked in).
-  'web/public/tracksos-approved-scania-r520.webp': 'f72c2075c44e46a7',
+  'web/public/tracksos-approved-truck.webp': '9193ebd1312c2d2e',
+  // New 14 November branded high-resolution portrait with correct Scania grille and TrakSOS trailer.
+  'web/public/tracksos-approved-scania-r520.webp': '8f5161004a18746f',
   'web/public/tracksos-approved-map.webp': '994097c8c01b2c80',
-  'android/app/src/main/res/drawable-nodpi/splash_truck.webp': '5217954dcb773ecf',
+  // The ONLY final desktop design uses the truck crop and service visuals from owner's last PNG.
+  'web/public/traksos-final-hero.webp': 'bfce4ea62b859d80',
+  'web/public/traksos-final-insurance.webp': '6cbcba4d541f4ddc',
+  'web/public/traksos-final-parts.webp': '0531cbfd715179c3',
+  'android/app/src/main/res/mipmap-mdpi/ic_launcher.png': '08149a1f4aea8b62',
+  'android/app/src/main/res/mipmap-hdpi/ic_launcher.png': '371bbc4c29e4f9a5',
+  'android/app/src/main/res/mipmap-xhdpi/ic_launcher.png': '78e3982186506d31',
+  'android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png': '683d9f561cf1cca3',
+  'android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png': '6080014e8594b6b9',
+  'web/public/tracksos-photo-master.webp': 'ba0572aa5c6341ef',
+  'web/public/tracksos-photo-tow.webp': '1fdb913351585040',
+  'web/public/tracksos-photo-sto.webp': '48e638e981108763',
+  'web/public/tracksos-photo-consult.webp': 'c59634316748dde8',
+  'web/public/tracksos-approved-scenic-hero.webp': '9193ebd1312c2d2e',
+  'android/app/src/main/res/drawable-nodpi/splash_truck.webp': '75bfacfcdf8c0673',
 };
 async function asset(path, minBytes = 5000) {
   try {
@@ -30,6 +44,7 @@ async function asset(path, minBytes = 5000) {
   } catch { expect(false, path + ' is present'); }
 }
 const landing = await read('web/src/screens/login.tsx');
+const finalCss = await read('web/src/finalCanon.css');
 const css = await read('web/src/styles.css');
 const shell = await read('web/src/main.tsx');
 const demo = await read('web/src/screens/adminTestCenter.tsx');
@@ -47,7 +62,21 @@ const native = await read('android/app/src/main/java/ru/traksos/app/MainActivity
 await asset('web/public/tracksos-approved-truck.webp', 15000);
 await asset('web/public/tracksos-approved-scania-r520.webp', 40000);
 await asset('web/public/tracksos-approved-map.webp', 15000);
+await asset('web/public/traksos-final-hero.webp', 100000);
+await asset('web/public/traksos-final-insurance.webp', 25000);
+await asset('web/public/traksos-final-parts.webp', 25000);
+await asset('web/public/tracksos-photo-master.webp', 30000);
+await asset('web/public/tracksos-photo-tow.webp', 30000);
+await asset('web/public/tracksos-photo-sto.webp', 30000);
+await asset('web/public/tracksos-photo-consult.webp', 30000);
+await asset('web/public/tracksos-approved-scenic-hero.webp', 50000);
 await asset('android/app/src/main/res/drawable-nodpi/splash_truck.webp', 2000);
+await asset('android/app/src/main/res/mipmap-mdpi/ic_launcher.png', 1200);
+await asset('android/app/src/main/res/mipmap-hdpi/ic_launcher.png', 1800);
+await asset('android/app/src/main/res/mipmap-xhdpi/ic_launcher.png', 2500);
+await asset('android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png', 3500);
+await asset('android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png', 5000);
+expect((await read('web/public/icon.svg')).trim() === (await read('branding/tracksos-rustore-icon.svg')).trim(), 'website favicon equals approved TrakSOS neon brand icon');
 expect(css.includes("url('../public/tracksos-approved-scania-r520.webp')"), 'public hero uses approved Scania R520 crop');
 expect(landing.includes('src="/tracksos-approved-scania-r520.webp"'), 'app teaser uses same approved Scania R520');
 expect(css.includes("url('../public/tracksos-approved-map.webp')"), 'public demo map is a bundled image');
@@ -56,6 +85,27 @@ expect(landing.includes('public-map-static'), 'public map does not depend on net
 expect(!landing.includes('openstreetmap.org/export/embed'), 'no third-party iframe is required for offline public map');
 expect(landing.includes('Демонстрационная карта'), 'demo map is explicitly labelled');
 expect(landing.includes('Санкт-Петербург и Ленинградская область'), 'launch region is shown');
+expect(shell.includes("import './finalCanon.css';"), 'the only final design layer is loaded by the real app');
+expect(shell.includes('guest-site-nav'), 'the guest PC has horizontal navigation, not an alternative sidebar');
+expect(finalCss.includes("url('../public/traksos-final-hero.webp')"), 'the final PC truck image is displayed by live CSS');
+expect(finalCss.includes('grid-template-columns:repeat(6,minmax(0,1fr))'), 'six photographic service cards in desktop row');
+const finalServices = [
+  "['tow', '↗', 'Эвакуация'",
+  "['van', '⚒', 'Выездной мастер'",
+  "['sto', '▣', 'СТО и сервисы'",
+  "['insurance', '◇', 'Страхование'",
+  "['parts', '⚙', 'Запчасти'",
+  "['consult', '☏', 'Консультации'",
+];
+let previous = -1;
+for (const item of finalServices) {
+  const index = landing.indexOf(item);
+  expect(index > previous, 'six single-canon service cards are present and ordered: '+item);
+  previous = index;
+}
+try { await stat('web/public/approved-desktop.html'); expect(false, 'superseded static demo was deleted'); }
+catch { console.log('OK: superseded static HTML mockup not present'); }
+
 expect(shell.includes('guest-header-actions'), 'public header provides sign-in and registration');
 expect(landing.includes('Выбор кабинета при регистрации'), 'registration exposes a complete public account chooser');
 for(const name of ['Я мастер','Я эвакуаторщик','Я рембаза (сервис)','Мастер и своя СТО','Я представитель страховой компании',
@@ -77,4 +127,4 @@ for (const word of ['Аптека', 'Химчистка', 'Авиабилеты'
 if (failures.length) {
   console.error('Approved design gate: ' + failures.length + ' failure(s).');
   process.exitCode = 1;
-} else console.log('Approved TrackSOS design gate: all invariants passed.');
+} else console.log('Approved TrakSOS design gate: all invariants passed.');

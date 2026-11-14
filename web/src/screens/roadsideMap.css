@@ -1,0 +1,72 @@
+/* Roadside map: only verified order coordinates, never decorative fake pins. */
+.roadside-map{display:flex;flex-direction:column;gap:0;min-width:0;overflow:hidden;
+  border:1px solid #386b87;border-radius:22px;
+  background:linear-gradient(125deg,#0e2c46,#0b2039);
+  box-shadow:0 14px 30px rgba(0,7,24,.19);}
+.roadside-map-head{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  min-width:0;padding:17px 18px;
+  background:radial-gradient(ellipse at 85% 10%,#4ec9e61e,transparent 65%),linear-gradient(110deg,#173e56,#0d2b42);}
+.roadside-map-title{display:flex;align-items:center;gap:12px;min-width:0;}
+.roadside-map-title>div{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.roadside-map-title b{color:#f4fbff;font-size:16px;line-height:1.25;}
+.roadside-map-title small{color:#b6d4e4;font-size:11px;line-height:1.4;}
+.roadside-map-symbol{display:grid;place-items:center;flex:none;width:39px;height:39px;
+  font-size:23px;color:#a3eff5;border:1px solid #4e869e;border-radius:13px;background:#225674;}
+.roadside-map-badge{flex:none;padding:6px 9px;border:1px solid #75dce3;border-radius:8px;
+  font-size:10px;font-weight:900;letter-spacing:.12em;color:#85e5ee;}
+.roadside-map-viewport{position:relative;min-height:245px;aspect-ratio:16/7.4;
+  background:radial-gradient(ellipse at 45% 55%,#20516d,#09243d);}
+.roadside-map-viewport iframe{position:absolute;inset:0;border:0;width:100%;height:100%;
+  filter:saturate(.8) contrast(1.05);}
+.roadside-map-viewport.is-empty{background:
+  repeating-linear-gradient(90deg,transparent 0 67px,#58b5d010 68px 69px),
+  repeating-linear-gradient(0deg,transparent 0 67px,#58b5d010 68px 69px),
+  radial-gradient(circle at 75% 34%,#35c4da22,transparent 45%),linear-gradient(140deg,#122f48,#0b2338);}
+.roadside-map-empty{position:absolute;inset:0;display:flex;flex-direction:column;
+  justify-content:center;align-items:center;gap:8px;padding:22px;text-align:center;}
+.roadside-map-empty>span{font-size:50px;color:#89ddeb;line-height:1;}
+.roadside-map-empty b{font-size:17px;color:#f1faff;}
+.roadside-map-empty small{font-size:12px;color:#c1d7e4;max-width:350px;line-height:1.5;}
+.roadside-map-overlay{position:absolute;left:14px;bottom:14px;display:flex;align-items:center;
+  gap:8px;max-width:calc(100% - 28px);min-height:33px;padding:7px 11px;
+  color:#f7fdff;font-size:11px;font-weight:800;line-height:1.35;border:1px solid #5685a2;
+  border-radius:11px;background:#0a2a42e8;box-shadow:0 4px 12px #0006;}
+.roadside-map-dot{width:10px;height:10px;flex:none;border-radius:50%;background:#56e4ee;
+  box-shadow:0 0 0 4px #52d8e535;}
+.roadside-map-foot{min-height:52px;display:flex;justify-content:space-between;
+  align-items:center;flex-wrap:wrap;gap:10px;padding:11px 17px;}
+.roadside-map-foot>span{color:#b7d8e9;font-size:11px;overflow-wrap:anywhere;}
+.roadside-map-foot>a{color:#74e6ee;font-weight:800;font-size:12px;text-decoration:none;}
+.roadside-map-foot>a:hover{text-decoration:underline;}
+@media(max-width:700px){.roadside-map-viewport{aspect-ratio:auto;min-height:250px;}
+  .roadside-map-head{padding:15px 13px;}.roadside-map-title b{font-size:14px;}
+  .roadside-map-foot{padding:12px 13px;}.roadside-map-foot>a{width:100%;}
+}
+
+/* Tracking status must never imply a stale coordinate is live. */
+.roadside-performer-card{gap:15px;}
+.roadside-performer-card>.roadside-map{margin:3px -1px;border-radius:18px;}
+.roadside-tracking-status{
+  display:grid;grid-template-columns:12px minmax(0,1fr);column-gap:9px;row-gap:3px;
+  padding:12px 14px;border:1px solid #456c83;border-radius:14px;
+  background:linear-gradient(110deg,#123c52,#0d2940);
+}
+.roadside-tracking-status>span{grid-row:1/3;align-self:center;color:#6ae5ea;font-size:15px;}
+.roadside-tracking-status>b{font-size:13px;color:#e5f7fb;}
+.roadside-tracking-status>small{font-size:11px;line-height:1.5;color:#afccde;}
+.roadside-eta{
+  display:flex;flex-direction:column;gap:5px;padding:13px 15px;
+  border:1px solid #4c8998;border-radius:14px;background:#164755;
+}
+.roadside-eta>b{font-size:15px;color:#f4fcff;}
+.roadside-eta>small{font-size:11px;line-height:1.45;color:#c0e4ec;}
+@media(max-width:700px){
+  .roadside-performer-card>.roadside-map{margin:0;}
+  .roadside-tracking-status{padding:11px;}
+}
+
+.roadside-location-share{display:flex;flex-direction:column;gap:5px;min-width:0;
+  padding:13px 16px;border:1px solid #43848f;border-radius:15px;
+  background:linear-gradient(130deg,#143c51,#0c2d43);}
+.roadside-location-share>b{color:#e5fbff;font-size:13px;}
+.roadside-location-share>.note{color:#b1d9e7;font-size:12px;line-height:1.4;}

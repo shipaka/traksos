@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { get, post, rub, onEvent } from '../api.ts';
 import { useAction, useToast } from '../ui.tsx';
+import { RoadsideMap } from './roadsideMap.tsx';
 
 const SORTS = [
   { id: 'recommended', name: 'Рекомендуем' },
@@ -50,6 +51,9 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
 
   return (
     <div className="stack" style={{ gap: 14 }}>
+      {d.service !== 'consult' && <RoadsideMap
+        point={Number.isFinite(d.lat)&&Number.isFinite(d.lng)?{lat:d.lat,lng:d.lng}:null}
+        address={d.address} synthetic={String(d.id).startsWith('demo-')} />}
       <div className="card search-card">
         <Radar dots={Math.min(d.search?.candidates ?? 0, 8)} hits={offers.length} />
         <div className="stack" style={{ gap: 4, textAlign: 'center' }}>
@@ -80,7 +84,7 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
                     <div className="stack" style={{ gap: 2 }}>
                       <b>{o.name ?? 'Исполнитель'}</b>
                       <span className="note">
-                        {o.rating && o.rating_count >= 3 ? `★ ${o.rating.toFixed(1)} · ${o.rating_count} ${plural(o.rating_count, 'отзыв', 'отзыва', 'отзывов')}` : 'Новый на ТракSOS'}
+                        {o.rating && o.rating_count >= 3 ? `★ ${o.rating.toFixed(1)} · ${o.rating_count} ${plural(o.rating_count, 'отзыв', 'отзыва', 'отзывов')}` : 'Новый на TrakSOS'}
                         {o.completed ? ` · ${o.completed} ${plural(o.completed, 'выезд', 'выезда', 'выездов')}` : ''}
                       </span>
                     </div>

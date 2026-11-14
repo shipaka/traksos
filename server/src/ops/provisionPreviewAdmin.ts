@@ -35,7 +35,7 @@ try {
       throw new Error('Refusing to modify an existing account: preview bootstrap requires an empty user database');
     const record = await q.one<{ id: string }>(
       `insert into users(phone,roles,name,registration_kind,password_hash,admin_preview_until)
-         values ($1,array['admin','master'],'Администратор TrackSOS','master',$2,$3)
+         values ($1,array['admin','master'],'Администратор TrakSOS','master',$2,$3)
          returning id`,
       [phone, passwordHash, expiresAt],
     );

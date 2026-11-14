@@ -8,7 +8,7 @@ const TZ = `'Europe/Moscow'`;
 export class StatsService {
   constructor(private db: Db, private now: () => Date) {}
 
-  /** Короткая сводка «Сейчас в ТракSOS» — видят все: сколько исполнителей на линии и заявок за сутки */
+  /** Короткая сводка «Сейчас в TrakSOS» — видят все: сколько исполнителей на линии и заявок за сутки */
   async live() {
     const since = new Date(this.now().getTime() - 86_400_000);
     return this.db.one(

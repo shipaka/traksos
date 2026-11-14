@@ -1,4 +1,4 @@
-// TrackSOS website: offline static shell, never offline private or transactional data.
+// TrakSOS website: offline static shell, never offline private or transactional data.
 // The build injects a content-derived cache version and an exact allowlist of public assets.
 const CACHE_NAME = __CACHE_NAME__;
 const STATIC_PATHS = new Set(__STATIC_PATHS__);

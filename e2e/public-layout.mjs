@@ -39,11 +39,11 @@ async function run(width, height, mobile) {
   const suffix = width + 'x' + height;
   try {
     await page.goto(BASE + '/#/', { waitUntil: 'domcontentloaded' });
-    await page.getByRole('heading', { name: /Помощь.*грузовику/i }).waitFor();
-    check(await page.getByRole('button', { name: 'SOS · Нужна помощь' }).isVisible(), 'SOS not visible');
+    await page.getByRole('heading', { name: /TrakSOS.*помощь.*в пути/i }).waitFor();
+    check(await page.getByRole('button', { name: 'Вызвать помощь (SOS)' }).isVisible(), 'SOS not visible');
     check(await page.getByRole('button', { name: 'Как это работает?' }).isVisible(), 'How it works not visible');
     const image = await page.locator('.public-hero-visual').evaluate(async el => {
-      const bg = getComputedStyle(el).backgroundImage;
+      const bg = [getComputedStyle(el).backgroundImage, getComputedStyle(el,'::after').backgroundImage].join(' | ');
       const match = bg.match(/url\(["']?([^"')]+)["']?\)/);
       if (!match) return { ok: false, bg };
       const img = new Image();
@@ -59,20 +59,35 @@ async function run(width, height, mobile) {
         const actions = document.querySelector('.public-actions')?.getBoundingClientRect();
         if (!visual || !paragraph || !actions) return null;
         return { pictureTop: visual.top, pictureBottom: visual.bottom,
-          paragraphBottom: paragraph.bottom, actionsTop: actions.top, pictureWidth: visual.width };
+          paragraphTop: paragraph.top, actionsTop: actions.top, pictureWidth: visual.width };
       });
       check(heroGeometry && heroGeometry.pictureWidth >= width * .75,
         suffix + ': picture shrunk into a narrow column: ' + JSON.stringify(heroGeometry));
-      check(heroGeometry.paragraphBottom <= heroGeometry.pictureTop + 2,
-        suffix + ': hero description overlaps photo: ' + JSON.stringify(heroGeometry));
-      check(heroGeometry.actionsTop >= heroGeometry.pictureBottom - 2,
-        suffix + ': hero buttons overlap photo: ' + JSON.stringify(heroGeometry));
+      check(heroGeometry.pictureBottom <= heroGeometry.paragraphTop + 2,
+        suffix + ': approved artwork must be above description on mobile: ' + JSON.stringify(heroGeometry));
+      check(heroGeometry.actionsTop >= heroGeometry.paragraphTop - 2,
+        suffix + ': hero buttons overlap title or artwork: ' + JSON.stringify(heroGeometry));
     }
     await verifyPage(page, suffix + ':home');
+    if (mobile && width <= 430) {
+      const nav = page.locator('.track-guest-tabbar');
+      const navCount = await nav.locator('a').count();
+      const vectorCount = await nav.locator('a svg[aria-hidden="true"]').count();
+      check(navCount === 5 && vectorCount === 5,
+        suffix + ': all five mobile guest tabs must use visible vector icons, got ' + navCount + '/' + vectorCount);
+    }
+    // All six approved photographic services must remain in their exact order.
+    const services = page.locator('.public-service-tiles > button');
+    check(await services.count() === 6, suffix + ': six approved service cards required');
+    const labels = await services.locator('b').allTextContents();
+    check(JSON.stringify(labels) === JSON.stringify([
+      'Эвакуация', 'Выездной мастер', 'СТО и сервисы',
+      'Страхование', 'Запчасти', 'Консультации'
+    ]), suffix + ': service card order changed: ' + JSON.stringify(labels));
     await page.screenshot({ path: OUT + '/home-' + suffix + '.png', fullPage: true });
 
     await page.goto(BASE + '/#/register');
-    await page.getByRole('heading', { name: /Регистрация в ТракSOS/ }).waitFor();
+    await page.getByRole('heading', { name: /Регистрация в TrakSOS/ }).waitFor();
     check(await page.getByRole('button', { name: 'Владелец / автопарк' }).isVisible(), 'Owner option missing');
     const driver = page.getByRole('button', { name: 'Водитель автопарка' });
     check(await driver.isVisible(), 'Driver option missing');
@@ -83,7 +98,7 @@ async function run(width, height, mobile) {
     await page.screenshot({ path: OUT + '/register-' + suffix + '.png', fullPage: true });
 
     await page.goto(BASE + '/#/join');
-    await page.getByRole('heading', { name: 'Работать с ТракSOS' }).waitFor();
+    await page.getByRole('heading', { name: 'Работать с TrakSOS' }).waitFor();
     for (const name of [
       'Я мастер', 'Я эвакуаторщик', 'Я рембаза (сервис)',
       'Мастер и своя СТО', 'Я представитель страховой компании'
@@ -96,6 +111,56 @@ async function run(width, height, mobile) {
     check(await page.locator('input[type=password]').isVisible(), 'Password login unavailable');
     await verifyPage(page, suffix + ':login');
     await page.screenshot({ path: OUT + '/login-' + suffix + '.png', fullPage: true });
+
+    // Guest auth return/re-entry regression for the approved final design.
+    const mainTitle = page.getByRole('heading', { name: /TrakSOS.*помощь.*в пути/i });
+    const returnedHome = async (context) => {
+      await mainTitle.waitFor();
+      check(new URL(page.url()).hash === '#/', context + ': stale auth URL after Back');
+    };
+    await page.getByRole('button', { name: 'Назад', exact: true }).click();
+    await returnedHome('login');
+    await page.getByRole('link', { name: 'Войти', exact: true }).click();
+    await page.locator('input[type=password]').waitFor();
+    await page.getByRole('button', { name: 'Забыли пароль?' }).click();
+    await page.getByRole('heading', { name: 'Восстановить пароль' }).waitFor();
+    await page.getByRole('button', { name: 'Назад', exact: true }).click();
+    await returnedHome('reset');
+    await page.getByRole('link', { name: 'Войти', exact: true }).click();
+    await page.locator('input[type=password]').waitFor();
+    await page.getByRole('link', { name: 'Зарегистрироваться', exact: true }).click();
+    await page.getByRole('heading', { name: 'Регистрация в TrakSOS' }).waitFor();
+    await page.getByRole('button', { name: 'Назад', exact: true }).click();
+    await returnedHome('register');
+    await page.getByRole('link', { name: 'Зарегистрироваться', exact: true }).click();
+    await page.getByRole('heading', { name: 'Регистрация в TrakSOS' }).waitFor();
+    await page.getByRole('button', { name: 'Я мастер' }).click();
+    await page.getByRole('heading', { name: 'Работать с TrakSOS' }).waitFor();
+    await page.getByRole('button', { name: 'Назад к выбору кабинета' }).click();
+    await page.getByRole('heading', { name: 'Регистрация в TrakSOS' }).waitFor();
+    await page.getByRole('button', { name: 'Назад', exact: true }).click();
+    await returnedHome('register->partner->register');
+
+    await page.goto(BASE + '/#/join');
+    await page.getByRole('heading', { name: 'Работать с TrakSOS' }).waitFor();
+    await page.getByRole('button', { name: 'Назад', exact: true }).click();
+    await returnedHome('join');
+    await page.getByRole('link', { name: 'Войти', exact: true }).click();
+    await page.locator('input[type=password]').waitFor();
+
+    // Regression: "Услуги" must return to the landing from the login form.
+    if (width >= 900) {
+      await page.locator('.guest-site-nav').getByRole('link', { name: 'Услуги' }).click();
+      await page.locator('.public-service-tiles').waitFor();
+      await page.waitForFunction(() => {
+        const target = document.getElementById('public-services');
+        const rect = target?.getBoundingClientRect();
+        return !!rect && rect.top >= -100 && rect.top <= 160;
+      }, null, {timeout: 4000});
+      check(await page.locator('.public-service-tiles > button').count() === 6,
+        suffix + ': services navigation lost the approved landing cards');
+      await verifyPage(page, suffix + ':services-return');
+    }
     check(errors.length === 0, 'JS exceptions: ' + errors.join(' | '));
   } catch (e) {
     failures.push({ viewport: suffix, error: e.message });

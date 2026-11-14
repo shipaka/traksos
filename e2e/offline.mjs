@@ -1,4 +1,4 @@
-// TrackSOS public web offline test: the UI shell must work on slow/absent internet,
+// TrakSOS public web offline test: the UI shell must work on slow/absent internet,
 // but /api/* MUST fail offline instead of serving stale user data.
 import { chromium } from 'playwright';
 

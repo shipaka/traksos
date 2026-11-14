@@ -16,7 +16,7 @@ export class PrivacyService {
     return { deleteRequestedAt: at, deleteAt: at ? new Date(new Date(at).getTime() + GRACE_DAYS * 86400_000) : null, graceDays: GRACE_DAYS };
   }
 
-  /** Всё, что ТракSOS хранит о человеке, одним файлом */
+  /** Всё, что TrakSOS хранит о человеке, одним файлом */
   async export(user: AuthUser) {
     const id = user.id;
     const q = (sql: string) => this.db.query(sql, [id]);

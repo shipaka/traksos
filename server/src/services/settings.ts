@@ -15,6 +15,8 @@ export class SettingsService {
         merged[r.key] = { ...merged[r.key], ...r.value };
       }
     }
+    // Brand identity is immutable even when old admin settings exist in the database.
+    merged.legal.brand = 'TrakSOS';
     this.cache = { at: Date.now(), value: merged };
     return merged;
   }
@@ -27,6 +29,7 @@ export class SettingsService {
     if (!(key in defaultSettings)) throw new Error(`Нет такой настройки: ${key}`);
     const current = (await this.db.one<{ value: any }>('select value from settings where key=$1', [key]))?.value ?? {};
     const value = { ...current, ...patch };
+    if (key === 'legal') (value as { brand?: string }).brand = 'TrakSOS';
     await this.db.query(
       `insert into settings(key, value, updated_by) values ($1,$2,$3)
        on conflict (key) do update set value = excluded.value, updated_at = now(), updated_by = excluded.updated_by`,

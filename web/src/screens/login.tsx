@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { post, setToken, connectWs, ApiError } from '../api.ts';
-import { useAction, useMe, useToast, Field } from '../ui.tsx';
+import { useAction, useMe, useToast, Field, go } from '../ui.tsx';
 
 function PublicDemoMapBackdrop() {
   // The public demonstration map is a bundled, immutable asset.
@@ -28,6 +28,7 @@ export function homeFor(roles: string[], intent: Intent): string {
   if (roles.includes('admin')) return '#/as/admin';
   if (roles.includes('moderator')) return '#/as/moderator';
   if (roles.includes('insurer')) return '#/insurance';
+  if (roles.includes('inspection_operator')) return '#/inspections';
   if (roles.includes('client') || roles.includes('driver')) return '#/as/client';
   if (performer) return '#/as/performer';
   if (roles.includes('service')) return '#/as/service';
@@ -49,9 +50,37 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const [insurerOnly, setInsurerOnly] = useState(false);
   const [agree, setAgree] = useState(false);
   const toast = useToast();
+  // The desktop "Услуги" link also works when opened from the sign-in form.
+  // The destination is a real section, never a second/legacy landing page.
+  useEffect(() => {
+    if (intent) return;
+    let pending = false;
+    try {
+      pending = sessionStorage.getItem('traksos.scrollPublicServices') === '1';
+      sessionStorage.removeItem('traksos.scrollPublicServices');
+    } catch { /* private browsing */ }
+    if (!pending) return;
+    const frame = requestAnimationFrame(() => {
+      document.getElementById('public-services')?.scrollIntoView({ behavior: 'auto', block: 'start' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [intent]);
+  // Store only the navigation choice from the public tile, never client data.
+  const chooseGuestAction = (choice: string, next: Intent = 'help') => {
+    try { sessionStorage.setItem('traksos.pendingLandingAction', choice); } catch { /* private browsing */ }
+    setIntent(next);
+  };
   const [appealToken, setAppealToken] = useState<string | null>(null);
   const [appealText, setAppealText] = useState('');
   const [appealSent, setAppealSent] = useState(false);
+
+  // A routed auth form must clear its URL as well as local state on Back.
+  // Otherwise the guest header links to #/login, #/register or #/join
+  // have no effect after a previous visit to the same unchanged hash.
+  const backToPublic = () => {
+    setIntent(null);
+    if (entry) go('');
+  };
 
   async function sendCode() {
     setInsurerOnly(false);
@@ -100,11 +129,23 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
       let qr: string | null = null;
       try { qr = sessionStorage.getItem('traksos.qr'); } catch { /* */ }
       const roles: string[] = r.user?.roles ?? [];
+      const customer = roles.includes('client') || roles.includes('driver');
+      let pending: string | null = null;
+      try {
+        pending = sessionStorage.getItem('traksos.pendingLandingAction');
+        sessionStorage.removeItem('traksos.pendingLandingAction');
+      } catch { /* private browsing */ }
+      const selectedDestination: string | undefined = customer ? ({
+        van: '#/sos/master', tow: '#/new/tow', sto: '#/services',
+        consult: '#/new/consult', insurance: '#/insurance/request/new',
+        parts: '#/shop', inspection: '#/garage'
+      } as Record<string,string>)[pending ?? ''] : undefined;
       // Dual-role admins may choose a preferred workspace on their own device.
       // A new master registration still goes to the profile first.
       const preferredMode = (() => { try { return localStorage.getItem('traksos.mode'); } catch { return null; } })();
       const isAdminMaster = roles.includes('admin') && roles.includes('master');
       location.hash = qr ? '#/qr/' + qr
+        : selectedDestination && intent !== 'join' ? selectedDestination
         : intent === 'join' && role === 'insurer' ? '#/insurance'
         : intent === 'join' && role === 'service' ? '#/as/service'
         : intent === 'join' ? '#/work/profile'
@@ -113,7 +154,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   }
 
   const needAgree = !['login', 'reset'].includes(intent ?? '') || !!driver; // водитель по QR — обычно новый номер, согласие сразу
-  const title = intent === 'reset' ? 'Восстановить пароль' : intent === 'help' ? 'Помощь на дороге' : intent === 'join' ? 'Работать с ТракSOS' : intent === 'register' ? 'Регистрация в ТракSOS' : 'Вход по номеру телефона';
+  const title = intent === 'reset' ? 'Восстановить пароль' : intent === 'help' ? 'Помощь на дороге' : intent === 'join' ? 'Работать с TrakSOS' : intent === 'register' ? 'Регистрация в TrakSOS' : 'Вход по номеру телефона';
   const sub = intent === 'reset' ? 'Отправим один SMS-код для смены пароля.' : intent === 'help' ? 'Подтвердите номер — и сразу к заявке. Мастер позвонит на него.'
     : intent === 'join' ? 'Выберите, кем подключаетесь. После входа заполните профиль — проверим и откроем заявки.'
     : intent === 'register' ? 'Укажите номер телефона. Если аккаунта ещё нет, создадим его после подтверждения SMS-кодом.'  : 'Вход по паролю, без SMS. Если забыли пароль — восстановите доступ.'; // legacy description
@@ -127,11 +168,17 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
 
       <section className="public-hero public-brand-hero" aria-labelledby="public-main-title">
         <div className="public-hero-copy">
-          <span className="public-eyebrow">ТРАКSOS · ПОМОЩЬ ГРУЗОВОМУ ТРАНСПОРТУ</span>
-          <h1 id="public-main-title">Помощь <em>грузовику</em> в дороге — рядом с вами</h1>
-          <p>Выездные мастера, диагностика, шиномонтаж, эвакуация и проверенные СТО-партнёры. Услуги для грузового транспорта в Санкт-Петербурге и Ленинградской области.</p>
+          <span className="public-eyebrow">ЕДИНАЯ ПЛАТФОРМА ДЛЯ ГРУЗОВОГО ТРАНСПОРТА</span>
+          <h1 id="public-main-title"><em>Trak<b>SOS</b></em> — помощь<br/>в пути и полный сервис<br/>для грузовиков и прицепов</h1>
+          <p>Эвакуация · Выездной мастер · Ремонт и ТО · Запчасти<br/>Страхование · Техосмотры · Консультации 24/7</p>
+          <div className="public-track-benefits" aria-label="Преимущества TrakSOS">
+            <span><i aria-hidden="true">ϟ</i>Быстрое обращение</span>
+            <span><i aria-hidden="true">✓</i>Проверка исполнителей</span>
+            <span><i aria-hidden="true">⌖</i>Санкт-Петербург и Ленобласть</span>
+            <span><i aria-hidden="true">▤</i>Работа с юрлицами</span>
+          </div>
           <div className="public-actions">
-            <button type="button" className="public-button public-button-sos" onClick={() => setIntent('help')}>SOS · Нужна помощь</button>
+            <button type="button" className="public-button public-button-sos" onClick={() => { try { sessionStorage.removeItem('traksos.pendingLandingAction'); } catch {} setIntent('help'); }}>Вызвать помощь (SOS)</button>
             <button type="button" className="public-button public-button-outline" onClick={() => document.getElementById('public-how')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>Как это работает?</button>
           </div>
 
@@ -142,41 +189,33 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
 
       <div className="public-content-grid">
         <section className="public-real-services" id="public-services">
-          <div className="public-section-head"><span className="public-section-kicker">НАША ПОМОЩЬ</span><h2>Что умеет ТракSOS</h2></div>
+          <div className="public-section-head public-services-a11y-title"><span className="public-section-kicker">ПОМОЩЬ ГРУЗОВИКАМ</span><h2>Все услуги TrakSOS</h2></div>
           <div className="public-service-tiles">
             {([
-              ['⚡', 'Электрик', 'Проводка, свет, запуск'],
-              ['▣', 'Диагностика', 'Ошибки и поиск неисправности'],
-              ['◉', 'Пневматика и тормоза', 'Воздушная система, ABS/EBS'],
-              ['≋', 'Автономные отопители', 'Диагностика и ремонт'],
-              ['◎', 'Шиномонтаж', 'Колёса и проколы'],
-              ['↗', 'Эвакуация', 'Помощь грузовику не на ходу'],
-              ['☎', 'Консультация', 'Совет мастера по телефону'],
-              ['⚙', 'СТО-партнёры', 'Сервис и ремонт на базе'],
-            ] as const).map(([icon, name, hint]) => (
-              <button type="button" className="public-service-tile" key={name} onClick={() => setIntent('help')}>
+              ['tow', '↗', 'Эвакуация', 'Быстрая и безопасная доставка в сервис'],
+              ['van', '⚒', 'Выездной мастер', 'Ремонт на месте, без простоя'],
+              ['sto', '▣', 'СТО и сервисы', 'Ремонт, ТО, диагностика, шиномонтаж'],
+              ['insurance', '◇', 'Страхование', 'ОСАГО, КАСКО, груз и ответственность'],
+              ['parts', '⚙', 'Запчасти', 'Оригиналы и аналоги для грузовиков'],
+              ['consult', '☏', 'Консультации', 'Эксперты по технике и сервису'],
+            ] as const).map(([id,icon,name,hint]) => (
+              <button type="button" className={`public-service-tile public-service-${id}`}
+                key={name} onClick={() => chooseGuestAction(id, id === 'insurance' || id === 'parts' ? 'register' : 'help')}>
                 <span className="public-service-icon" aria-hidden="true">{icon}</span>
-                <b>{name}</b><small>{hint}</small>
+                <b>{name}</b><small>{hint}</small><span className="public-service-arrow" aria-hidden="true">›</span>
               </button>
             ))}
           </div>
         </section>
 
-        <section className="public-demo-map" id="public-map" aria-label="Как выглядит карта помощи">
-          <div className="public-section-head"><span className="public-section-kicker">ЗОНА ОБСЛУЖИВАНИЯ</span><h2>Рядом с вами</h2></div>
-          <div className="public-map-wrap">
-            <PublicDemoMapBackdrop />
 
-          </div>
-          <div className="public-map-legend"><span><i className="service"/>СТО</span><span><i className="master"/>Мастер</span><span><i className="tow"/>Эвакуация</span></div>
-          <p className="public-demo-warning">Демонстрационная карта: точки условные и не означают доступность исполнителей. Реальные данные доступны пользователю после входа.</p>
-        </section>
+
 
         {!(window as any).TrakSOSNative && <aside className="public-app-card">
-          <div className="public-section-kicker">ТРАКSOS В ТЕЛЕФОНЕ</div>
-          <h2>Мобильное приложение <em>ТракSOS</em></h2>
+          <div className="public-section-kicker">TRAKSOS В ТЕЛЕФОНЕ</div>
+          <h2>Мобильное приложение <em>TrakSOS</em></h2>
           <div className="public-app-phone" aria-hidden="true">
-            <span className="public-app-logo">Трак<b>SOS</b></span>
+            <span className="public-app-logo">Trak<b>SOS</b></span>
             <img className="public-app-phone-truck" src="/tracksos-approved-scania-r520.webp" alt="" loading="lazy" />
             <span>Помощь грузовику<br/>в дороге</span>
           </div>
@@ -187,11 +226,41 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
       </div>
 
       <section className="public-why-strip" aria-label="Преимущества сервиса">
-        <div><span>◎</span><b>Наш регион</b><small>Санкт-Петербург и Ленобласть</small></div>
-        <div><span>◈</span><b>Подключение партнёров</b><small>Проверка мастеров и СТО</small></div>
-        <div><span>⚡</span><b>Дорожная помощь</b><small>Заявка через единый сервис</small></div>
-        <div><span>☏</span><b>Связь и консультации</b><small>Помощь в выборе специалиста</small></div>
+        <div><span>⚡</span><b>Быстрая помощь</b><small>Оформление обращения онлайн</small></div>
+        <div><span>◇</span><b>Проверенные партнёры</b><small>Мастера, СТО, эвакуаторы</small></div>
+        <div><span>▱</span><b>Всё в одном месте</b><small>Сервисы, запчасти, страхование</small></div>
+        <div><span>☆</span><b>Выгодные условия</b><small>Для водителей и автопарков</small></div>
       </section>
+      <div className="public-track-extras">
+        <button type="button" className="public-track-insurance" onClick={() => chooseGuestAction('insurance','register')}>
+          <span className="public-track-insurance-art" aria-hidden="true" />
+          <span><b>Страхование грузового транспорта</b>
+          <small>ОСАГО, КАСКО, груз, ответственность — заявка через TrakSOS</small></span>
+          <strong>Оформить заявку →</strong>
+        </button>
+        <div className="public-track-extras-grid">
+          <button type="button" className="public-track-extra public-track-parts" onClick={() => chooseGuestAction('parts','register')}>
+            <span className="public-track-extra-art" aria-hidden="true"/><b>Запчасти</b><small>Оригиналы и проверенные аналоги</small><span aria-hidden="true">›</span>
+          </button>
+          <button type="button" className="public-track-extra public-track-inspection" onClick={() => chooseGuestAction('inspection','register')}>
+            <span className="public-track-extra-art" aria-hidden="true"/><b>Техосмотр</b><small>Заявка на осмотр транспорта</small><span aria-hidden="true">›</span>
+          </button>
+          <button type="button" className="public-track-extra public-track-guide" onClick={() => document.getElementById('public-how')?.scrollIntoView({behavior:'smooth'})}>
+            <span className="public-track-extra-art" aria-hidden="true"/><b>Полезное</b><small>Как работает сервис</small><span aria-hidden="true">›</span>
+          </button>
+        </div>
+      </div>
+
+
+        <section className="public-demo-map" id="public-map" aria-label="Как выглядит карта помощи">
+          <div className="public-section-head"><span className="public-section-kicker">ЗОНА ОБСЛУЖИВАНИЯ</span><h2>Рядом с вами</h2></div>
+          <div className="public-map-wrap">
+            <PublicDemoMapBackdrop />
+
+          </div>
+          <div className="public-map-legend"><span><i className="service"/>СТО</span><span><i className="master"/>Мастер</span><span><i className="tow"/>Эвакуация</span></div>
+          <p className="public-demo-warning">Демонстрационная карта: точки условные и не означают доступность исполнителей. Реальные данные доступны пользователю после входа.</p>
+        </section>
       <section className="public-bottom-row public-information-row" id="public-how">
         <div className="public-how">
           <span className="public-section-kicker">ПОНЯТНЫЙ ПРОЦЕСС</span>
@@ -204,7 +273,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         </div>
         <div className="public-partner">
           <span className="public-section-kicker">ДЛЯ МАСТЕРОВ И СТО</span>
-          <h2>Станьте партнёром ТракSOS</h2>
+          <h2>Станьте партнёром TrakSOS</h2>
           <p>Подключайте свой сервис и работайте с заявками через отдельный кабинет.</p>
           <button type="button" className="public-button public-button-partner" onClick={() => setIntent('join')}>Подключиться →</button>
         </div>
@@ -214,11 +283,12 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   );
 
   return (
-    <main>
+    <main className="auth-desktop-layout">
+      <section className="auth-desktop-form">
       {intent === 'login' && step === 'phone' && <div className="auth-entry-options" aria-label="Варианты входа">
         <button type="button" onClick={() => setIntent('help')}>Помогите — нужна помощь</button>
         <button type="button" onClick={() => setIntent('login')}>Войти по номеру</button>
-        <button type="button" onClick={() => setIntent('join')}>Хочу работать с ТракSOS</button>
+        <button type="button" onClick={() => setIntent('join')}>Хочу работать с TrakSOS</button>
       </div>}
       <div>
         <h1>{title}</h1>
@@ -240,28 +310,28 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <Field label="Пароль"><input className="field" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} /></Field>
           <button className="btn" disabled={busy || password.length === 0}>Войти</button>
           <button type="button" className="btn ghost" onClick={() => { setIntent('reset'); setStep('phone'); }}>Забыли пароль?</button>
-          <button type="button" className="btn ghost" onClick={() => setIntent(null)}>Назад</button>
+          <button type="button" className="btn ghost" onClick={backToPublic}>Назад</button>
         </form>
       ) : step === 'phone' ? (
         <form className="stack" onSubmit={(e) => { e.preventDefault(); sendCode(); }}>
           {intent === 'register' && <div className="stack" role="group" aria-label="Выбор кабинета при регистрации">
-            <span className="label">Кем вы будете работать в ТракSOS?</span>
+            <span className="label">Как вы пользуетесь TrakSOS?</span>
             <span className="note">Выберите подходящий кабинет. Для клиента и исполнителя используются разные рабочие разделы.</span>
             <div className="grid2">
               <button type="button" className="seg" aria-pressed={customerType === 'owner'} onClick={() => setCustomerType('owner')}>Владелец / автопарк</button>
               <button type="button" className="seg" aria-pressed={customerType === 'driver'} onClick={() => setCustomerType('driver')}>Водитель автопарка</button>
             </div>
             {customerType === 'driver' && <span className="note">После входа владелец сможет привязать вас к своей машине по приглашению или QR-коду.</span>}
-            <span className="label">Работа с ТракSOS — отдельные кабинеты</span>
-            <div className="grid2" role="group" aria-label="Кабинеты исполнителей и партнёров">
-              {JOIN_ROLES.map((r) => (
-                <button key={r.id} type="button" className="seg"
-                  onClick={() => { setCameFromRegister(true); setRole(r.id); setIntent('join'); }}>
-                  {r.name}
+            <span className="label">Или подключитесь как партнёр</span>
+            <div className="stack">
+              {JOIN_ROLES.map(r => (
+                <button key={r.id} type="button" className="opt" onClick={() => {
+                  setRole(r.id); setCameFromRegister(true); setIntent('join'); setStep('phone');
+                }}>
+                  <b>{r.name}</b><small>{r.hint}</small>
                 </button>
               ))}
             </div>
-            <span className="note">Администратор и модератор получают служебные права только после отдельной проверки. Для совмещения с работой мастера выберите «Я мастер».</span>
           </div>}
           {intent === 'help' && <div className="stack" role="group" aria-label="Тип клиента">
             <span className="label">Как вы пользуетесь транспортом?</span>
@@ -298,7 +368,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
             onClick={() => {
               if (intent === 'join' && cameFromRegister) {
                 setStep('phone'); setIntent('register'); setCameFromRegister(false);
-              } else setIntent(null);
+              } else backToPublic();
             }}>{intent === 'join' && cameFromRegister ? 'Назад к выбору кабинета' : 'Назад'}</button>}
         </form>
       ) : (
@@ -315,6 +385,15 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <button type="button" className="btn ghost" onClick={() => { setStep('phone'); setCode(''); setInsurerOnly(false); }}>Другой номер</button>
         </form>
       )}
+      </section>
+      <aside className="auth-desktop-showcase" aria-label="О сервисе TrakSOS">
+        <div className="auth-desktop-showcase-photo" aria-hidden="true" />
+        <div className="auth-desktop-showcase-copy">
+          <span>TRAKSOS · ПОМОЩЬ ГРУЗОВОМУ ТРАНСПОРТУ</span>
+          <h2>Помощь на дороге, когда она нужна</h2>
+          <p>Выездные мастера, эвакуация и СТО грузовых автомобилей — в одном сервисе.</p>
+        </div>
+      </aside>
     </main>
   );
 }

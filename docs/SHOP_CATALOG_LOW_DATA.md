@@ -1,4 +1,4 @@
-# TrackSOS Shop — catalog, fleet purchases and low-data mode
+# TrakSOS Shop — catalog, fleet purchases and low-data mode
 
 ## Release lock (do not change)
 
@@ -39,7 +39,7 @@ The old `GET /api/shop` and `GET /api/shop/orders` endpoints are retained for ol
 
 ## Internal Autokontinent procurement mapping (not a live integration)
 
-- Admins can assign a preferred supplier article and supplier brand to a TrackSOS product, with a source note and evidence-verified flag.
+- Admins can assign a preferred supplier article and supplier brand to a TrakSOS product, with a source note and evidence-verified flag.
 - Stored separately in `shop_supplier_refs`. Values are never joined into `GET /api/shop`, search results, local article index, customer orders or Android static assets.
 - `GET/PUT/DELETE /api/admin/shop/products/:id/supplier` and `GET /api/admin/shop/supplier/status` require the administrator role.
 - The status always reports `connected: false`, `liveOffers: false` and `automaticOrders: false` until an authorized, tested provider integration is implemented. Saving a supplier SKU does not activate purchases.
@@ -47,7 +47,7 @@ The old `GET /api/shop` and `GET /api/shop/orders` endpoints are retained for ol
 
 ## Bulk reference import (no prices, no auto-publishing)
 
-- The admin-only `Справочник` tab accepts UTF-8 CSV/TSV exported from authorized heavy-truck or trailer catalog data. Columns: `бренд;артикул;название;категория;синонимы` (English headers are accepted too). Column `категория` can be a TrackSOS key or the exact Russian label.
+- The admin-only `Справочник` tab accepts UTF-8 CSV/TSV exported from authorized heavy-truck or trailer catalog data. Columns: `бренд;артикул;название;категория;синонимы` (English headers are accepted too). Column `категория` can be a TrakSOS key or the exact Russian label.
 - Import is explicitly gated by a recorded data-source note and the administrator's rights confirmation. This is **not** a substitute for the actual licensing agreement; import only data the business is entitled to use.
 - First use `Проверить перед загрузкой`. No data is changed during dry-run. Then `Загрузить на проверку` sends at most 150 records per request, up to 200 accepted by the server. Each request is atomic. Repeated imports use a normalized brand/article key and do not duplicate rows. Changing source/metadata revokes prior review.
 - Imported records reside in `shop_catalog_entries`, **not** `shop_products`. They have **no price, stock or order button**. Newly staged rows default to `reviewed=false`, and must be checked manually before eventual display.

@@ -14,7 +14,7 @@ async function request(path, body, token, expected) {
 const adminPhone = '+79990000001';
 const moderatorPhone = '+79990000147';
 const ordinaryPhone = '+79990000141';
-const credentials = {phone: adminPhone, password:'TrackSOS-Test-2026!'};
+const credentials = {phone: adminPhone, password:'TrakSOS-Test-2026!'};
 const owner = await request('/api/auth/login', credentials, null, 200);
 if (!owner.user.roles.includes('admin')) throw Error('Admin test fixture absent');
 const ordinary = await request('/api/auth/login',

@@ -44,6 +44,13 @@ try {
       await page.goto(BASE + '/' + entry.url, { waitUntil: 'domcontentloaded' });
       await page.locator('.app').waitFor();
       await page.locator('.account-menu > summary').waitFor();
+      const mobileNav = page.locator('.tabbar');
+      if (await mobileNav.count()) {
+        const linkCount = await mobileNav.locator('a').count();
+        const svgCount = await mobileNav.locator('a .ic svg[aria-hidden="true"]').count();
+        if (!linkCount || svgCount !== linkCount)
+          throw new Error('Premium role navigation icons missing: ' + svgCount + '/' + linkCount);
+      }
       const widths = await page.evaluate(() => ({
         viewport: document.documentElement.clientWidth,
         content: document.documentElement.scrollWidth
@@ -73,9 +80,22 @@ try {
       }
       if (entry.name === 'insurer') {
         await page.goto(BASE + '/#/insurance', { waitUntil: 'domcontentloaded' });
-        await page.getByRole('heading', { name: 'Кабинет страховщика' }).waitFor();
+        await page.getByRole('heading', { name: 'Страхование', exact: true }).waitFor();
         await page.getByText(/Назначенных заявок пока нет/).waitFor();
-        await page.getByRole('link', { name: /Помощь, условия и настройки/ }).waitFor();
+        await page.getByRole('button', { name: 'Общее', exact: true }).waitFor();
+        // Partner sub-workspaces must behave as full usable pages, not decorative tabs.
+        await page.getByRole('button', { name: 'Техосмотры', exact: true }).click();
+        await page.getByRole('heading', { name: 'Техосмотры', exact: true }).waitFor();
+        if (await page.getByRole('button', { name: 'Техосмотры', exact: true }).getAttribute('aria-pressed') !== 'true')
+          throw new Error('Inspection workspace tab not selected');
+        await page.screenshot({ path: OUT + '/insurer-inspections.png', fullPage: true });
+        await page.getByRole('button', { name: 'Финансы', exact: true }).click();
+        await page.getByRole('heading', { name: 'Финансы', exact: true }).waitFor();
+        await page.screenshot({ path: OUT + '/insurer-finance.png', fullPage: true });
+        await page.getByRole('button', { name: 'Общее', exact: true }).click();
+        await page.getByRole('link', { name: 'Помощь и инструкции' }).click();
+        if (!(await page.evaluate(() => location.hash)).startsWith('#/help'))
+          throw new Error('Partner help link is broken');
       }
       if (entry.name === 'driver') {
         await page.goto(BASE + '/#/fleet', { waitUntil: 'domcontentloaded' });

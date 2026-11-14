@@ -28,15 +28,25 @@ export function Work() {
   });
 
   return (
-    <main>
+    <main className="work-live-dashboard">
       <WorkerNotices />
+      <section className="work-command-hero" aria-label="Рабочий стол исполнителя">
+        <div className="work-command-copy">
+          <span className="work-command-kicker">TRAKSOS · {p.kind === 'tow' ? 'ЭВАКУАЦИЯ' : 'ВЫЕЗДНАЯ ПОМОЩЬ'}</span>
+          <h1>{me?.name || (p.kind === 'tow' ? 'Водитель эвакуатора' : 'Выездной специалист')}</h1>
+          <p>{active.length
+            ? 'Сейчас у вас активных заявок: ' + active.length + '. Откройте нужную карточку ниже — там текущий этап и дальнейшие действия.'
+            : online ? 'Вы на линии. Новые заявки, предложения и рабочие уведомления появятся на этом экране.'
+              : 'Ваш рабочий стол. Выберите статус доступности ниже, чтобы управлять приёмом заявок.'}</p>
+          <div className="work-command-tags">
+            <span className="work-command-status"><span className={'dot ' + (online ? 'on' : '')} />{LINE[p.line_status] ?? 'Статус не указан'}</span>
+            <span className="work-command-verification">{p.verification === 'approved' ? '✓ Профиль проверен' : p.verification === 'rejected' ? 'Требуется исправление профиля' : 'Проверка профиля ещё не завершена'}</span>
+          </div>
+        </div>
+        <div className="work-command-art" aria-hidden="true" />
+      </section>
       <LiveStrip who={p.kind === 'tow' ? 'tow' : 'master'} />
       {online && p.verification === 'approved' && <Nearby />}
-      <div className="between">
-        <h1>{me?.name ?? 'Кабинет'}</h1>
-        <span className="pill"><span className={`dot ${online ? 'on' : ''}`} /> {LINE[p.line_status]}</span>
-      </div>
-
       {p.verification !== 'approved' ? (
         <div className="card hi">
           <b>{p.verification === 'rejected' ? 'Проверка не пройдена' : p.submitted_at ? 'Профиль на проверке' : 'Пройдите проверку'}</b>
@@ -83,7 +93,7 @@ export function Work() {
           <div className="sum"><span>К выплате</span><span>{rub(balance.data.to_pay)}</span></div>
           <div className="sum"><span>Долг по комиссии с наличных</span><span>{rub(balance.data.cash_debt)}</span></div>
           {balance.data.paused && <span className="err">Долг больше {rub(balance.data.cashDebtLimit)} — новые заявки на паузе до оплаты.</span>}
-          <span className="note">ТракSOS работает как агент: отчёт агента и акт — раз в месяц.</span>
+          <span className="note">TrakSOS работает как агент: отчёт агента и акт — раз в месяц.</span>
         </div>
       )}
       <button className="btn ghost" onClick={() => go('work/me/money')}>Финансы · все операции</button>
@@ -95,36 +105,41 @@ const BREAKS: [number, string][] = [[15, '15 мин'], [30, '30 мин'], [60, '
 
 /** Статус на линии, как в демо: Свободен / На звонке / Перерыв / Не на линии — и что сейчас по графику */
 function LineCard({ p, busy, setLine, online }: { p: any; busy: boolean; setLine: (s: string, until?: string) => void; online: boolean }) {
+  const [open, setOpen] = useState(false);
   const [breakOpen, setBreakOpen] = useState(false);
   const sl = scheduleSlot(p.schedule, new Date(), p.off_schedule_until);
   const onJob = p.line_status === 'on_job';
-  const st: [string, string, string][] = [
-    ['online', 'Свободен', 'Заявки приходят вам как звонок'],
+  const statuses: [string, string, string][] = [
+    ['online', 'Свободен', 'Принимать новые заявки'],
     ['on_call', 'На звонке', 'Видны клиентам, но ниже в очереди'],
-    ['offline', 'Не на линии', 'Заявки идут другим'],
+    ['offline', 'Не на линии', 'Не получать новые заявки'],
   ];
+  const current = onJob ? 'На выезде' : p.line_status === 'busy' ? 'Перерыв' : statuses.find(([id]) => id === p.line_status)?.[1] ?? LINE[p.line_status] ?? 'Статус';
+  const choose = (id: string, until?: string) => { setLine(id, until); setOpen(false); setBreakOpen(false); };
   return (
     <div className="card">
-      <div className="between"><b>Статус на линии</b>{onJob && <span className="pill warn">На выезде</span>}</div>
-      <div className="stack" style={{ gap: 6 }}>
-        {st.map(([id, name, hint]) => (
-          <button key={id} className="opt" aria-pressed={p.line_status === id} disabled={busy || onJob} onClick={() => setLine(id)}>
-            <b>{name}</b><small>{hint}</small>
+      <button type="button" className="linkrow" aria-expanded={open} aria-controls="performer-line-options" disabled={busy || onJob} onClick={() => { setOpen(!open); setBreakOpen(false); }}>
+        <span><b>Статус · {current}</b><small>{onJob ? 'Во время выезда статус изменить нельзя' : 'Нажмите, чтобы изменить доступность'}</small></span>
+        <span aria-hidden="true">{open ? '⌃' : '⌄'}</span>
+      </button>
+      {open && !onJob && (
+        <div id="performer-line-options" className="stack" style={{ gap: 6 }}>
+          {statuses.map(([id, name, hint]) => (
+            <button key={id} className="opt" aria-pressed={p.line_status === id} disabled={busy} onClick={() => choose(id)}>
+              <b>{name}</b><small>{hint}</small>
+            </button>
+          ))}
+          <button className="opt" aria-pressed={p.line_status === 'busy'} disabled={busy} onClick={() => setBreakOpen(!breakOpen)}>
+            <b>Перерыв{p.line_status === 'busy' && p.busy_until ? ` · до ${new Date(p.busy_until).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}` : ''}</b>
+            <small>Выберите длительность перерыва</small>
           </button>
-        ))}
-        <button className="opt" aria-pressed={p.line_status === 'busy'} disabled={busy || onJob} onClick={() => setBreakOpen(!breakOpen)}>
-          <b>Перерыв{p.line_status === 'busy' && p.busy_until ? ` · до ${new Date(p.busy_until).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}` : ''}</b>
-          <small>Обед, заправка — заявки не приходят, по таймеру снова «Свободен»</small>
-        </button>
-        {breakOpen && (
-          <div className="grid4">{BREAKS.map(([m, l]) => (
-            <button key={m} className="seg" style={{ fontSize: 13 }} disabled={busy} onClick={() => { setBreakOpen(false); setLine('busy', new Date(Date.now() + m * 60_000).toISOString()); }}>{l}</button>
-          ))}</div>
-        )}
-      </div>
-      <ScheduleNote p={p} sl={sl} />
+          {breakOpen && <div className="grid4">{BREAKS.map(([m, label]) => (
+            <button key={m} className="seg" disabled={busy} onClick={() => choose('busy', new Date(Date.now() + m * 60_000).toISOString())}>{label}</button>
+          ))}</div>}
+          <span className="note">Три пропущенных вызова подряд — статус автоматически станет «Не на линии».</span>
+        </div>
+      )}
       <SearchSettingsLink p={p} />
-      <span className="note">Три пропущенных вызова подряд — статус сам станет «Не на линии».</span>
       {online && <LocationSharing />}
     </div>
   );
@@ -168,9 +183,12 @@ export function scheduleSlot(s: any, now: Date, offUntil?: string | null): 'work
 }
 
 /** Отправляем координаты раз в 30 секунд, пока экран открыт (в приложении — и в фоне) */
-function LocationSharing() {
+export function LocationSharing() {
   const [state, setState] = useState<'wait' | 'ok' | 'off'>('wait');
+  const demo=location.hash.startsWith('#/admin/test-center/');
   useEffect(() => {
+    // A test role must NEVER request the administrator's physical GPS location.
+    if(demo)return;
     if (!navigator.geolocation) { setState('off'); return; }
     let last = 0;
     const id = navigator.geolocation.watchPosition(
@@ -184,7 +202,8 @@ function LocationSharing() {
       { enableHighAccuracy: false, maximumAge: 60_000 },
     );
     return () => navigator.geolocation.clearWatch(id);
-  }, []);
+  }, [demo]);
+  if(demo)return <span className="note">Тестовый режим: GPS устройства отключён, заявки и координаты только вымышленные.</span>;
   return <span className="note">{state === 'ok' ? '✓ Геолокация включена — заявки рядом приходят вам первыми' : state === 'off' ? 'Геолокация выключена — без неё подбор хуже. Разрешите доступ к местоположению.' : 'Определяю место…'}</span>;
 }
 

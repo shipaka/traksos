@@ -49,17 +49,60 @@ export class VehicleServiceRequests {
        order by r.created_at desc`, [vehicleId, owner, kinds]);
   }
 
-  async create(user: AuthUser, vehicleId: string, kind: VehicleServiceKind, comment?: string,
+  async create(user: AuthUser, vehicleId: string | undefined, kind: VehicleServiceKind, comment?: string,
     insurance?: {agentId:string; details:{ applicant:{firstName:string;lastName:string;middleName?:string}; vehicle:Record<string,string>; consentAt?:string}}) {
     const owner = user.owner_id ?? user.id;
-    const v = await this.db.one<any>(
-      'select id, driver_id from vehicles where id=$1 and owner_id=$2', [vehicleId, owner]);
-    if (!v || (user.owner_id && v.driver_id !== user.id)) throw notFound('Машина не найдена');
-    // Serialize creation with driver assignment and permissions changes.
+    if (!vehicleId && (!insurance || kind !== 'insurance')) throw bad('bad_vehicle', 'Выберите автомобиль');
+    // Lock the owner before duplicate lookup: simultaneous insurance submissions cannot create two identical cars.
     return this.db.tx(async (q) => {
+      let resolvedId = vehicleId;
+      if (!resolvedId) {
+        if (user.owner_id) throw forbidden('Добавить автомобиль в парк может только владелец');
+        await q.one('select id from users where id=$1 for update', [owner]);
+        const v = insurance!.details.vehicle;
+        const plate = v.plate.trim().toUpperCase().replace(/\s+/g, '');
+        const vin = v.vin.trim().toUpperCase().replace(/\s+/g, '');
+        const matches = await q.query<{id:string;brand:string;model:string;year:number;plate:string|null;vin:string|null}>(
+          `select id,brand,model,year,plate,vin from vehicles where owner_id=$1
+           and (upper(regexp_replace(coalesce(plate,''),'[[:space:]]+','','g'))=$2
+             or upper(regexp_replace(coalesce(vin,''),'[[:space:]]+','','g'))=$3)`,
+          [owner,plate,vin]);
+        // VIN and plate are independent identifiers. Never silently merge records if they disagree.
+        if (matches.length > 1 || (matches.length === 1 && (
+          matches[0].brand.trim().toLowerCase() !== v.brand.trim().toLowerCase() ||
+          (matches[0].model ?? '').trim().toLowerCase() !== v.model.trim().toLowerCase() ||
+          Number(matches[0].year) !== Number(v.year) ||
+          (!!matches[0].vin && matches[0].vin.trim().toUpperCase() !== vin) ||
+          (!!matches[0].plate && matches[0].plate.trim().toUpperCase().replace(/\s+/g,'') !== plate)
+        ))) throw bad('vehicle_conflict', 'VIN или госномер уже зарегистрирован с другими данными. Проверьте автомобиль.');
+        if (matches.length === 1) {
+          resolvedId = matches[0].id;
+          // Legacy garage entries can lack VIN. Fill it only when no other value exists.
+          if (!matches[0].vin) await q.query('update vehicles set vin=$2 where id=$1 and vin is null', [resolvedId,vin]);
+        } else {
+          const created = await q.one<{id:string}>(
+            `insert into vehicles(owner_id,brand,model,year,plate,trailer_plate,vin)
+             values ($1,$2,$3,$4,$5,$6,$7) returning id`,
+            [owner,v.brand.trim(),v.model.trim(),Number(v.year),v.plate.trim(),v.trailerPlate?.trim() || null,vin]);
+          resolvedId = created!.id;
+        }
+      }
       const locked = await q.one<any>(
-        'select id, driver_id from vehicles where id=$1 and owner_id=$2 for update', [vehicleId, owner]);
+        'select id, driver_id, brand, model, year, plate, vin from vehicles where id=$1 and owner_id=$2 for update', [resolvedId, owner]);
       if (!locked || (user.owner_id && locked.driver_id !== user.id)) throw notFound('Машина не найдена');
+      if (insurance && vehicleId) {
+        // A selected garage record must not be paired with an unrelated VIN or registration.
+        const supplied = insurance.details.vehicle;
+        const norm = (value: unknown) => String(value ?? '').trim().toUpperCase().replace(/\\s+/g, '');
+        if (norm(locked.brand) !== norm(supplied.brand) ||
+            (locked.model && norm(locked.model) !== norm(supplied.model)) ||
+            (locked.year && Number(locked.year) !== Number(supplied.year)) ||
+            (locked.plate && norm(locked.plate) !== norm(supplied.plate)) ||
+            (locked.vin && norm(locked.vin) !== norm(supplied.vin))) {
+          throw bad('vehicle_conflict', 'Данные заявки не совпадают с выбранным автомобилем. Проверьте VIN, номер и характеристики.');
+        }
+        // Do not overwrite missing VIN from unverified client text: insurer must verify documents.
+      }
       if (user.owner_id) {
         const settings = await q.one<any>('select fleet from users where id=$1', [owner]);
         if (settings?.fleet?.allow?.[kind] !== true) throw forbidden('Владелец не разрешил эту услугу');
@@ -68,7 +111,7 @@ export class VehicleServiceRequests {
         `select id from vehicle_service_requests
          where owner_id=$1 and vehicle_id=$2 and kind=$3
            and status in ('submitted','in_review','need_documents','sent_to_partner')
-         limit 1`, [owner, vehicleId, kind]);
+         limit 1`, [owner, resolvedId, kind]);
       if (active) throw bad('duplicate_request', 'По этой машине уже есть активная заявка на эту услугу');
       if (insurance) {
         if (kind !== 'insurance') throw bad('invalid_kind', 'Агент выбирается только для страхования');
@@ -81,11 +124,11 @@ export class VehicleServiceRequests {
           `insert into vehicle_service_requests(owner_id, requested_by, vehicle_id, kind, comment,
              assigned_to,status,insurance_stage,insurance_details)
            values ($1,$2,$3,$4,$5,$6::uuid,'sent_to_partner','received',$7::jsonb) returning *`,
-          [owner,user.id,vehicleId,kind,comment??null,insurance.agentId,JSON.stringify(insurance.details)])
+          [owner,user.id,resolvedId,kind,comment??null,insurance.agentId,JSON.stringify(insurance.details)])
         : await q.one<any>(
           `insert into vehicle_service_requests(owner_id, requested_by, vehicle_id, kind, comment)
            values ($1,$2,$3,$4,$5) returning *`,
-          [owner,user.id,vehicleId,kind,comment??null]);
+          [owner,user.id,resolvedId,kind,comment??null]);
       if (!created) throw notFound('Не удалось создать заявку');
       if(insurance)await q.query(`insert into insurance_thread_messages(request_id,sender_id,kind,body)
          values ($1,$2,'status','Заявка получена страховым агентом')`,[created.id,user.id]);
@@ -203,6 +246,13 @@ export class VehicleServiceRequests {
     });
   }
 
+  async inspectionPartners(staff: AuthUser) {
+    if (!staff.roles?.some(role=>['admin','moderator'].includes(role))) throw forbidden('Нет доступа');
+    return this.db.query<{id:string;name:string|null}>(
+      `select id,name from users where roles && '{insurer,inspection_operator}'::text[]
+       and status='active' order by name,id`);
+  }
+
   async insurers(staff: AuthUser) {
     if (!staff.roles?.some((role: string) => ['admin', 'moderator'].includes(role))) throw forbidden('Нет доступа');
     return this.db.query<{ id: string; name: string | null }>(
@@ -219,10 +269,63 @@ export class VehicleServiceRequests {
        order by r.created_at desc limit 100`, [user.id]);
   }
 
+  async assignInspection(staff: AuthUser, requestId: string, partnerId: string) {
+    if (!staff.roles?.some(role => ['admin','moderator'].includes(role))) throw forbidden('Нет доступа');
+    return this.db.tx(async q => {
+      const partner = await q.one<{id:string}>(
+        `select id from users where id=$1 and roles && '{insurer,inspection_operator}'::text[] and status='active'`, [partnerId]);
+      if (!partner) throw notFound('Партнёр техосмотра не найден');
+      const request = await q.one<any>(
+        `update vehicle_service_requests set assigned_to=$3, status='sent_to_partner', updated_at=now()
+         where id=$1 and kind='inspection' and status in ('submitted','in_review')
+           and exists(select 1 from users where id=$2 and roles && '{admin,moderator}'::text[])
+         returning *`, [requestId,staff.id,partnerId]);
+      if (!request) throw bad('inspection_not_assignable','Техосмотр нельзя назначить на этом этапе');
+      await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
+        [staff.id,'inspection.assign',requestId,{partnerId}]);
+      return request;
+    });
+  }
+
+  async updateInspection(user: AuthUser, requestId: string, status: 'completed'|'rejected', note?: string) {
+    if (!user.roles?.some(role=>['insurer','inspection_operator'].includes(role))) throw forbidden('Нет доступа');
+    return this.db.tx(async q => {
+      const current = await q.one<any>(
+        'select * from vehicle_service_requests where id=$1 for update', [requestId]);
+      if (!current || current.kind !== 'inspection' || current.assigned_to !== user.id)
+        throw notFound('Назначенный техосмотр не найден');
+      if (current.status !== 'sent_to_partner')
+        throw bad('invalid_status','Техосмотр уже обработан или ещё не передан партнёру');
+      if (status === 'rejected' && !note?.trim())
+        throw bad('missing_status_reason','Укажите причину отказа');
+      const updated = await q.one<any>(
+        `update vehicle_service_requests set status=$2, staff_note=$3, updated_at=now()
+         where id=$1 and kind='inspection' and assigned_to=$4 returning *`,
+        [requestId,status,note?.trim()||null,user.id]);
+      await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
+        [user.id,'inspection.status',requestId,{status,note:note?.trim()||null}]);
+      return updated;
+    });
+  }
+
+  async inspectionQueue(user: AuthUser) {
+    if (!user.roles?.some(role=>['insurer','inspection_operator'].includes(role))) throw forbidden('Нет доступа');
+    // Only inspections assigned to this partner; insurance data never leaks into this workspace.
+    return this.db.query(
+      `select r.id, r.kind, r.status, r.comment, r.staff_note, r.created_at, r.updated_at,
+              v.brand, v.model, v.plate
+       from vehicle_service_requests r join vehicles v on v.id=r.vehicle_id
+       where r.kind='inspection' and r.assigned_to=$1
+       order by r.created_at desc limit 100`, [user.id]);
+  }
+
   async queue(staff: AuthUser, kind?: VehicleServiceKind) {
     if (!staff.roles?.some((role: string) => ['admin', 'moderator'].includes(role))) throw forbidden('Нет доступа');
     return this.db.query(
-      `select r.*, v.brand, v.model, v.plate from vehicle_service_requests r
+      `select r.*, v.brand, v.model, v.plate,
+              exists(select 1 from partner_finance_entries p
+                     where p.request_id=r.id and p.entry_type='accrual') as has_partner_accrual
+       from vehicle_service_requests r
        join vehicles v on v.id=r.vehicle_id
        where ($1::text is null or r.kind=$1) order by r.created_at desc limit 200`, [kind ?? null]);
   }
