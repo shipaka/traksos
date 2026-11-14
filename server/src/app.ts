@@ -902,7 +902,12 @@ export function createApp(d: Deps) {
   r.get('/api/admin/search', ['admin'], (c: AuthedCtx) => admin.search(c.query.get('q') ?? ''));
   r.post('/api/admin/payments/:id/refund', ['admin'], (c: AuthedCtx) => admin.refund(c.user, c.params.id, parse(z.object({
     amount: money.positive(), from: z.enum(['platform', 'performer']), reason: z.string().min(3).max(300),
-  }), c.body)));
+  }), c.body), typeof c.headers['idempotency-key'] === 'string' ? c.headers['idempotency-key'] : undefined));
+  r.get('/api/admin/payments/:id/refunds', ['admin'], (c: AuthedCtx) => d.db.query(
+    `select id, amount, source_account, reason, status, provider_refund_id, created_at, resolved_at
+       from payment_refund_requests where payment_id=$1 order by created_at`, [c.params.id]));
+  r.post('/api/admin/payments/:id/refunds/:refundId/reconcile', ['admin'],
+    (c: AuthedCtx) => admin.reconcileRefund(c.user, c.params.id, c.params.refundId));
   r.post('/api/admin/performers/:id/adjust', ['admin'], (c: AuthedCtx) => admin.adjust(c.user, c.params.id, parse(z.object({
     amount: z.number().int(), reason: z.string().min(3).max(300), orderId: z.string().uuid().optional(),
   }), c.body)));
