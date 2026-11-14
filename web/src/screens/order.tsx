@@ -106,16 +106,20 @@ function CaseStages({ d }: { d: any }) {
   const summary = d.caseSummary;
   if (!summary?.multiStage) return null;
   const rows = summary.stages as any[];
-  const closed = rows.filter((s) => s.status === 'completed');
-  const active = rows.filter((s) => !['completed', 'cancelled', 'no_performer'].includes(s.status));
+  const workshops = (summary.serviceBookings ?? []) as any[];
+  const count = rows.length + workshops.length;
+  const closed = rows.filter((s) => s.status === 'completed').length
+    + workshops.filter((b) => b.status === 'closed').length;
+  const active = rows.filter((s) => !['completed', 'cancelled', 'no_performer'].includes(s.status)).length
+    + workshops.filter((b) => !['closed', 'cancelled', 'declined'].includes(b.status)).length;
   return (
     <section className="card stack case-journey" aria-label="Этапы одного обращения">
       <div className="between" style={{ alignItems: 'flex-start' }}>
         <div className="stack" style={{ gap: 5 }}>
-          <b>Одно обращение · {rows.length} этапа</b>
+          <b>Одно обращение · {count} этапов</b>
           <span className="note">Каждый этап имеет своего исполнителя, расчёт и подтверждение. Предыдущие суммы не входят в новые торги.</span>
         </div>
-        <span className="pill accent">{active.length ? 'Помощь продолжается' : 'Этапы завершены'}</span>
+        <span className="pill accent">{active ? 'Помощь продолжается' : 'Этапы завершены'}</span>
       </div>
       <ol className="case-stage-list">
         {rows.map((step, index) => (
@@ -129,12 +133,22 @@ function CaseStages({ d }: { d: any }) {
             <b>{step.status === 'completed' ? rub(step.money.total) : 'Сумма этапа ещё не подтверждена'}</b>
           </li>
         ))}
+        {workshops.map((b, i) => (
+          <li key={b.id} className={b.status === 'closed' ? 'is-done' : ''}>
+            <div className="stack" style={{ gap: 4 }}>
+              <span className="note">Этап {rows.length + i + 1} · №{b.number}</span>
+              <a href={`#/booking/${b.id}`}><b>Грузовой сервис (СТО)</b></a>
+              <span className="note">{b.status === 'closed' ? 'Ремонт подтверждён' : 'Запись и работы в сервисе'}</span>
+            </div>
+            <b>{b.confirmedTotal != null ? rub(b.confirmedTotal) : 'Счёт СТО ещё не подтверждён'}</b>
+          </li>
+        ))}
       </ol>
       <div className="sum total">
-        <span>Подтверждено по обращению · {closed.length} из {rows.length} этапов</span>
+        <span>Подтверждено по обращению · {closed} из {count} этапов</span>
         <b>{rub(summary.confirmedTotal)}</b>
       </div>
-      {active.length > 0 && <span className="note">Новый этап рассчитывается отдельно. Его итог появится здесь после подтверждения клиентом.</span>}
+      {active > 0 && <span className="note">Новый этап рассчитывается отдельно. Его итог появится здесь после подтверждения клиентом.</span>}
     </section>
   );
 }
