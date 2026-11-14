@@ -52,6 +52,7 @@ try {
     ['client','Клиент'],['owner','Владелец / автопарк'],['driver','Водитель автопарка'],
     ['master','Выездной мастер'],['tow','Эвакуаторщик'],['service','Рембаза / СТО'],
     ['master_service','Мастер и своя СТО'],['insurer','Страховой партнёр'],
+    ['inspection','Оператор техосмотра'],
     ['moderator','Модератор'],['admin','Администратор'],
   ]){
     await page.locator('a.sandbox-role-card[href="#/admin/test-center/'+id+'"]').click();
@@ -60,6 +61,65 @@ try {
       await page.getByRole('button',{name:'Готовы принять'}).first().click();
       await page.getByRole('button',{name:'Отправить клиенту'}).click();
       await page.locator('.service-preview-admin-bar a[href="#/admin/test-center"]').click();
+    }else if(id==='client'||id==='driver'){
+      await page.getByRole('main',{name:'Тестовый кабинет: '+label}).waitFor();
+      await page.getByRole('button',{name:'Эвакуатор'}).click();
+      await page.getByRole('textbox',{name:'Что случилось?'}).fill('Не запускается двигатель');
+      await page.getByRole('button',{name:'Создать тестовую заявку'}).click();
+      await page.getByRole('button',{name:'Исполнитель выехал'}).last().click();
+      await page.getByRole('button',{name:'История',exact:true}).click();
+      await page.getByRole('button',{name:'Помощь на дороге'}).click();
+      await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
+    }else if(id==='master'||id==='tow'){
+      await page.getByRole('main',{name:'Тестовый кабинет: '+label}).waitFor();
+      await page.getByRole('button',{name:'Выйти на линию'}).click();
+      await page.getByRole('button',{name:'Принять вызов'}).click();
+      await page.getByRole('button',{name:'Начать выезд'}).last().click();
+      await page.getByRole('button',{name:'Финансы',exact:true}).click();
+      await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
+    }else if(id==='owner'){
+      await page.getByRole('main',{name:'Тестовый кабинет: Владелец автопарка'}).waitFor();
+      await page.getByRole('button',{name:'Водители'}).click();
+      await page.getByRole('textbox',{name:'Имя водителя'}).fill('Тестовый водитель');
+      await page.getByRole('button',{name:'Закрепить водителя'}).click();
+      await page.getByRole('button',{name:'Обслуживание и заявки'}).click();
+      await page.getByRole('textbox',{name:'Неисправность или услуга'}).fill('Диагностика двигателя');
+      await page.getByRole('button',{name:'Создать тестовую заявку'}).click();
+      await page.getByRole('button',{name:'Расходы'}).click();
+      await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
+    }else if(id==='inspection'){
+      await page.getByRole('main',{name:'Тестовый кабинет: Оператор техосмотра'}).waitFor();
+      await page.getByRole('button',{name:'Назначить осмотр'}).click();
+      await page.getByRole('button',{name:'Зафиксировать результат'}).click();
+      await page.getByRole('button',{name:'Подготовить образец карты'}).click();
+      await page.getByText('Образец карты · №401').waitFor();
+      await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
+    }else if(id==='moderator'){
+      await page.getByRole('main',{name:'Тестовый кабинет: Модератор'}).waitFor();
+      await page.getByRole('button',{name:'Взять на проверку'}).click();
+      await page.getByRole('button',{name:'Одобрить'}).click();
+      await page.getByRole('button',{name:'История решений'}).first().click();
+      await page.getByText('Решение: Одобрено',{exact:false}).waitFor();
+      await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
+    }else if(id==='master_service'){
+      await page.getByRole('button',{name:'Моя СТО'}).click();
+      await page.getByRole('link',{name:'Открыть полный тестовый кабинет СТО'}).waitFor();
+      await page.getByRole('button',{name:'Вернуться к выездным вызовам'}).click();
+      await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
+    }else if(id==='insurer'){
+      await page.getByRole('main',{name:'Тестовый кабинет: Страховой партнёр'}).waitFor();
+      await page.getByRole('button',{name:'Принять в работу'}).click();
+      await page.getByRole('button',{name:'Отправить предложение'}).click();
+      await page.getByRole('button',{name:'Документы и полисы'}).click();
+      await page.getByRole('button',{name:'Прикрепить образец полиса'}).click();
+      await page.getByRole('button',{name:'Финансы',exact:true}).click();
+      await page.getByRole('heading',{name:'Финансы страхования и техосмотров'}).waitFor();
+      await page.getByRole('button',{name:'Техосмотры',exact:true}).click();
+      await page.getByRole('button',{name:'Назначить техосмотр'}).click();
+      await page.getByRole('button',{name:'Зафиксировать осмотр'}).click();
+      await page.getByRole('button',{name:'Подготовить образец диагностической карты'}).click();
+      await page.getByText('Подготовлен только демонстрационный образец',{exact:false}).waitFor();
+      await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
     }else{
       await page.getByRole('main',{name:'Тестовый кабинет: '+label}).waitFor();
       // Other roles remain in existing isolated demo until their full real-cabinet upgrade.

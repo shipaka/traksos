@@ -49,7 +49,9 @@ export function Home() {
         <a href="#/garage" className="desktop-quick-card"><span className="desktop-quick-icon">▣</span><span><b>Мой гараж</b><small>Автомобили и сведения о технике</small></span><span aria-hidden="true">›</span></a>
         <a href="#/orders" className="desktop-quick-card"><span className="desktop-quick-icon">☷</span><span><b>Мои заявки</b><small>История и статусы работ</small></span><span aria-hidden="true">›</span></a>
         <a href="#/services" className="desktop-quick-card"><span className="desktop-quick-icon">⚙</span><span><b>СТО и ремонт</b><small>Сервисы-партнёры и запись</small></span><span aria-hidden="true">›</span></a>
-        <a href="#/fleet" className="desktop-quick-card"><span className="desktop-quick-icon">▤</span><span><b>Мой парк</b><small>Транспорт и водители компании</small></span><span aria-hidden="true">›</span></a>
+        {!me?.owner_id && !me?.roles.includes('driver')
+          ? <a href="#/fleet" className="desktop-quick-card"><span className="desktop-quick-icon">▤</span><span><b>Мой парк</b><small>Транспорт и водители компании</small></span><span aria-hidden="true">›</span></a>
+          : <a href="#/support" className="desktop-quick-card"><span className="desktop-quick-icon">?</span><span><b>Моя поддержка</b><small>Обращения и помощь водителю</small></span><span aria-hidden="true">›</span></a>}
       </section>
 
       <div className="desktop-home-columns">
@@ -132,14 +134,42 @@ function SymptomPicker({ sos }: { sos: boolean }) {
 }
 
 export function Sos() {
+  const [choice, setChoice] = useState<'master' | 'tow' | 'sto' | null>(null);
+  const masterServices = ['electric', 'diag', 'air', 'autonomy', 'tyre'];
   return (
     <main>
       <Back to="" />
       <div>
-        <h1>SOS · что случилось?</h1>
-        <div className="sub">Срочный вызов: заявка уйдёт свободным мастерам рядом. Ошиблись с поломкой — мастер перенаправит.</div>
+        <h1>SOS · Нужна помощь?</h1>
+        <div className="sub">Сначала выберите, кто вам нужен. Остальные вопросы появятся только после выбора.</div>
       </div>
-      <SymptomPicker sos />
+      <div className="stack">
+        <button className="linkrow primary" aria-expanded={choice === 'master'} onClick={() => setChoice(choice === 'master' ? null : 'master')}>
+          <span><b>Выездной мастер</b><small>Специалист приедет к вашему грузовику</small></span><span aria-hidden="true">›</span>
+        </button>
+        <button className="linkrow" onClick={() => go('new/tow')}>
+          <span><b>Эвакуатор</b><small>Перевезти грузовик в нужное место</small></span><span aria-hidden="true">›</span>
+        </button>
+        <button className="linkrow" onClick={() => go('services')}>
+          <span><b>СТО грузовых автомобилей</b><small>Найти сервис и записаться на ремонт</small></span><span aria-hidden="true">›</span>
+        </button>
+        <button className="linkrow" onClick={() => go('consult')}>
+          <span><b>Консультация по телефону</b><small>Связаться с диагностом без выезда</small></span><span aria-hidden="true">›</span>
+        </button>
+      </div>
+      {choice === 'master' && (
+        <section className="card">
+          <b>Какой мастер нужен?</b>
+          <span className="note">Если не знаете причину поломки, выберите диагноста.</span>
+          <div className="stack">
+            {masterServices.map((id) => (
+              <button key={id} className="linkrow" onClick={() => go(`new/${id}`)}>
+                <span><b>{SERVICES[id].name}</b><small>{SERVICES[id].hint}</small></span><span aria-hidden="true">›</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
       <MyPlace />
       <LiveStrip who="client" />
     </main>

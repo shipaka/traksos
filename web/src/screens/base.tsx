@@ -4,6 +4,7 @@ import { get, post, put, rub, fmtTime } from '../api.ts';
 import { BRANDS, FEE_PURPOSE, PLACES } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '../ui.tsx';
 import { WorkerNotices } from './ops.tsx';
+import { RoadsideMap } from './roadsideMap.tsx';
 import { inServicePreview, servicePreviewPath, servicePreviewHref, previewServiceApi } from '../demo/servicePreviewApi.ts';
 // The same working STО components are used for both real accounts and the isolated admin preview.
 const baseGet=(url:string)=>inServicePreview()?previewServiceApi('GET',url):get(url);
@@ -347,6 +348,8 @@ export function BaseSetup() {
   const { busy, run } = useAction();
   const [f, setF] = useState<any>(null);
   const [day, setDay] = useState('');
+  const [gpsStatus, setGpsStatus] = useState<'idle'|'loading'|'ok'|'error'>('idle');
+  const [gpsError, setGpsError] = useState('');
   useEffect(() => {
     if (!cab.data || f) return;
     const c = cab.data.center;
@@ -361,7 +364,25 @@ export function BaseSetup() {
     if (await run(() => basePut('/api/base', body), first ? 'Карточка сохранена — осталось пройти проверку' : 'Карточка сервиса сохранена')) { await reload(); go(servicePreviewPath('base')); }
   }
   function locate() {
-    navigator.geolocation?.getCurrentPosition((p) => setF((x: any) => ({ ...x, lat: p.coords.latitude, lng: p.coords.longitude })), () => {}, { timeout: 8000 });
+    if(inServicePreview())return; // Never read a real device's GPS in a demonstration account.
+    if(!navigator.geolocation){
+      setGpsError('Геолокация недоступна в этом браузере. Проверьте разрешения или откройте сайт по HTTPS.');
+      setGpsStatus('error');return;
+    }
+    setGpsError('');setGpsStatus('loading');
+    navigator.geolocation.getCurrentPosition(
+      p=>{
+        setF((x:any)=>({...x,lat:p.coords.latitude,lng:p.coords.longitude}));
+        setGpsStatus('ok');
+      },
+      error=>{
+        setGpsStatus('error');
+        setGpsError(error.code===1?'Доступ к геолокации запрещён. Разрешите определение местоположения для TrackSOS.':
+          error.code===3?'Не удалось определить точку вовремя. Попробуйте снова рядом с въездом.':
+          'Не удалось получить GPS. Проверьте соединение и разрешения устройства.');
+      },
+      {enableHighAccuracy:true,timeout:12000,maximumAge:0}
+    );
   }
   return (
     <main>
@@ -372,8 +393,19 @@ export function BaseSetup() {
       </div>
       <div className="card">
         <Field label="Название"><input className="field" value={f.name} onChange={(e) => set('name', e.target.value)} placeholder="Например, Шушары-Трак" /></Field>
-        <Field label="Адрес въезда"><input className="field" value={f.address} onChange={(e) => set('address', e.target.value)} placeholder="Шушары, Московское ш., 50" /></Field>
-        <button type="button" className="btn ghost small" onClick={locate}>{f.lat ? `Место на карте отмечено · ${f.lat.toFixed(3)}, ${f.lng.toFixed(3)}` : 'Отметить место по GPS — вы сейчас на базе'}</button>
+        <Field label="Фактический адрес въезда на СТО"><input className="field" value={f.address} onChange={(e) => set('address', e.target.value)} placeholder="Шушары, Московское ш., 50" /></Field>
+        <span className="note">Укажите место, куда водитель действительно привезёт грузовик, а не юридический адрес компании.</span>
+        <button type="button" className="btn ghost small" onClick={locate} disabled={gpsStatus==='loading'||inServicePreview()}>
+          {inServicePreview()?'GPS отключён в тестовом кабинете':
+           gpsStatus==='loading'?'Определяем координаты…':
+           Number.isFinite(f.lat)&&Number.isFinite(f.lng)?`GPS: ${f.lat.toFixed(4)}, ${f.lng.toFixed(4)} · Обновить`:
+           'Я нахожусь на базе — отметить точку по GPS'}
+        </button>
+        {gpsStatus==='error'&&<span className="err" role="alert">{gpsError}</span>}
+        {gpsStatus==='ok'&&<span className="note" role="status">Точка получена. Проверьте, что отметка стоит у въезда на территорию СТО.</span>}
+        <RoadsideMap kind="service"
+          point={Number.isFinite(f.lat)&&Number.isFinite(f.lng)?{lat:f.lat,lng:f.lng}:null}
+          address={f.address} synthetic={inServicePreview()}/>
         <div className="grid2">
           <Field label="Часы работы"><input className="field" value={f.hours} onChange={(e) => set('hours', e.target.value)} /></Field>
           <Field label="ИНН компании"><input className="field" inputMode="numeric" value={f.inn} onChange={(e) => set('inn', e.target.value.replace(/\D/g, '').slice(0, 12))} /></Field>

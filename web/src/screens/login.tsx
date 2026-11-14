@@ -28,6 +28,7 @@ export function homeFor(roles: string[], intent: Intent): string {
   if (roles.includes('admin')) return '#/as/admin';
   if (roles.includes('moderator')) return '#/as/moderator';
   if (roles.includes('insurer')) return '#/insurance';
+  if (roles.includes('inspection_operator')) return '#/inspections';
   if (roles.includes('client') || roles.includes('driver')) return '#/as/client';
   if (performer) return '#/as/performer';
   if (roles.includes('service')) return '#/as/service';
@@ -214,7 +215,8 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   );
 
   return (
-    <main>
+    <main className="auth-desktop-layout">
+      <section className="auth-desktop-form">
       {intent === 'login' && step === 'phone' && <div className="auth-entry-options" aria-label="Варианты входа">
         <button type="button" onClick={() => setIntent('help')}>Помогите — нужна помощь</button>
         <button type="button" onClick={() => setIntent('login')}>Войти по номеру</button>
@@ -245,23 +247,23 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
       ) : step === 'phone' ? (
         <form className="stack" onSubmit={(e) => { e.preventDefault(); sendCode(); }}>
           {intent === 'register' && <div className="stack" role="group" aria-label="Выбор кабинета при регистрации">
-            <span className="label">Кем вы будете работать в ТракSOS?</span>
+            <span className="label">Как вы пользуетесь ТракSOS?</span>
             <span className="note">Выберите подходящий кабинет. Для клиента и исполнителя используются разные рабочие разделы.</span>
             <div className="grid2">
               <button type="button" className="seg" aria-pressed={customerType === 'owner'} onClick={() => setCustomerType('owner')}>Владелец / автопарк</button>
               <button type="button" className="seg" aria-pressed={customerType === 'driver'} onClick={() => setCustomerType('driver')}>Водитель автопарка</button>
             </div>
             {customerType === 'driver' && <span className="note">После входа владелец сможет привязать вас к своей машине по приглашению или QR-коду.</span>}
-            <span className="label">Работа с ТракSOS — отдельные кабинеты</span>
-            <div className="grid2" role="group" aria-label="Кабинеты исполнителей и партнёров">
-              {JOIN_ROLES.map((r) => (
-                <button key={r.id} type="button" className="seg"
-                  onClick={() => { setCameFromRegister(true); setRole(r.id); setIntent('join'); }}>
-                  {r.name}
+            <span className="label">Или подключитесь как партнёр</span>
+            <div className="stack">
+              {JOIN_ROLES.map(r => (
+                <button key={r.id} type="button" className="opt" onClick={() => {
+                  setRole(r.id); setCameFromRegister(true); setIntent('join'); setStep('phone');
+                }}>
+                  <b>{r.name}</b><small>{r.hint}</small>
                 </button>
               ))}
             </div>
-            <span className="note">Администратор и модератор получают служебные права только после отдельной проверки. Для совмещения с работой мастера выберите «Я мастер».</span>
           </div>}
           {intent === 'help' && <div className="stack" role="group" aria-label="Тип клиента">
             <span className="label">Как вы пользуетесь транспортом?</span>
@@ -315,6 +317,15 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <button type="button" className="btn ghost" onClick={() => { setStep('phone'); setCode(''); setInsurerOnly(false); }}>Другой номер</button>
         </form>
       )}
+      </section>
+      <aside className="auth-desktop-showcase" aria-label="О сервисе ТракSOS">
+        <div className="auth-desktop-showcase-photo" aria-hidden="true" />
+        <div className="auth-desktop-showcase-copy">
+          <span>ТРАКSOS · ПОМОЩЬ ГРУЗОВОМУ ТРАНСПОРТУ</span>
+          <h2>Помощь на дороге, когда она нужна</h2>
+          <p>Выездные мастера, эвакуация и СТО грузовых автомобилей — в одном сервисе.</p>
+        </div>
+      </aside>
     </main>
   );
 }

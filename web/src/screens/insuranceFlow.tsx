@@ -33,6 +33,9 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
   const agents=useLoad(()=>get<{id:string;name:string}[]>('/api/insurance/agents'),[]);
   const vehicles=useLoad(()=>get<any[]>('/api/vehicles'),[]);
   const [agentId,setAgentId]=useState('');
+  const [step,setStep]=useState(0);
+  const [selectedVehicleId,setSelectedVehicleId]=useState(vehicleId);
+  const [showVehicleDetails,setShowVehicleDetails]=useState(false);
   const [applicant,setApplicant]=useState({lastName:'',firstName:'',middleName:''});
   const [truck,setTruck]=useState<Record<VehicleKey,string>>(emptyVehicle);
   const [comment,setComment]=useState('');
@@ -43,23 +46,38 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
     const words=me.name.trim().split(/\s+/);
     if(words.length>=2)setApplicant({lastName:words[0]||'',firstName:words[1]||'',middleName:words.slice(2).join(' ')});
   },[me?.name]);
-  const vehicle=(vehicles.data??[]).find(v=>v.id===vehicleId);
+  const vehicle=(vehicles.data??[]).find(v=>v.id===selectedVehicleId);
   useEffect(()=>{
-    if(!vehicle)return;
-    setTruck(old=>({...old,brand:vehicle.brand??'',model:vehicle.model??'',
-      year:String(vehicle.year??''),plate:vehicle.plate??'',trailerPlate:vehicle.trailer_plate??''}));
+    // Switching vehicles must not leak fields from the previously selected truck.
+    if(!vehicle){setTruck(emptyVehicle());return;}
+    setTruck({...emptyVehicle(),
+      brand:String(vehicle.brand??''),model:String(vehicle.model??''),
+      year:String(vehicle.year??''),plate:String(vehicle.plate??''),
+      vin:String(vehicle.vin??vehicle.vin_code??''),
+      trailerPlate:String(vehicle.trailer_plate??'')});
   },[vehicle?.id]);
   const fill=(key:VehicleKey,value:string)=>setTruck(prev=>({...prev,[key]:value}));
+  const nextStep=()=>{
+    if(step===0&&!agentId){window.alert('Выберите страхового агента');return;}
+    if(step===1&&(!applicant.firstName.trim()||!applicant.lastName.trim())){
+      window.alert('Укажите имя и фамилию страхователя');return;
+    }
+    if(step===2&&(!truck.brand.trim()||!truck.model.trim()||!truck.plate.trim()||
+      !/^\d{4}$/.test(truck.year)||truck.vin.trim().length<11)){
+      window.alert('Заполните марку, модель, год, номер и VIN автомобиля');return;
+    }
+    setStep(v=>Math.min(3,v+1));
+  };
   const submit=async(e:React.FormEvent)=>{
     e.preventDefault();
-    if(!agentId||!vehicleId||!applicant.lastName.trim()||!applicant.firstName.trim()||
+    if(!agentId||!applicant.lastName.trim()||!applicant.firstName.trim()||
       !truck.brand.trim()||!truck.model.trim()||!truck.plate.trim()||
       !/^\d{4}$/.test(truck.year)||truck.vin.trim().length<11||!consent){
       window.alert('Выберите агента и заполните все обязательные данные страхователя и грузовика.');
       return;
     }
     const result=await run(()=>post<{id:string}>('/api/vehicle-service-requests',{
-      kind:'insurance',vehicleId,comment,
+      kind:'insurance',...(selectedVehicleId?{vehicleId:selectedVehicleId}:{}),comment,
       insurance:{agentId,consentToPartner:true,details:{applicant,vehicle:truck}},
     }),'Заявка отправлена выбранному страховому агенту');
     if(result)go('insurance/request/'+result.id);
@@ -72,9 +90,14 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
     </section>
     <div className="banner" role="note">Страховой агент оформляет документы вручную. Расчёт и выпуск полиса через API страховой компании пока не подключены.</div>
     {(!vehicles.data||!agents.data)?<Loading error={vehicles.error||agents.error}/>:
-    !vehicle?<div className="empty">Транспорт не найден в вашем гараже. Сначала добавьте машину.</div>:
-    <form className="stack" onSubmit={submit}>
-      <section className="card stack">
+    <form className="stack" onSubmit={submit} noValidate>
+      <nav className="insurance-step-navigation" aria-label="Этапы страховой заявки">
+        {['Агент','Страхователь','Автомобиль','Отправка'].map((label,index)=><button
+          type="button" key={label} className={'btn ghost'+(step===index?' active':'')}
+          aria-current={step===index?'step':undefined} disabled={index>step}
+          onClick={()=>setStep(index)}>{index+1}. {label}</button>)}
+      </nav>
+      {step===0&&<section className="card stack">
         <span className="insurance-step-title">01 · Кому отправить</span><h2>Страховой агент</h2>
         <label>Выберите партнёра
           <select className="field" value={agentId} onChange={e=>setAgentId(e.target.value)} required>
@@ -83,8 +106,8 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
           </select>
         </label>
         {agents.data.length===0&&<span className="note">Пока нет доступных страховых агентов. Администратор должен подключить партнёра.</span>}
-      </section>
-      <section className="card stack">
+      </section>}
+      {step===1&&<section className="card stack">
         <span className="insurance-step-title">02 · Кто страхует</span><h2>Страхователь</h2>
         <p className="note">Данные из профиля подставлены автоматически, если были заполнены. Проверьте написание перед отправкой.</p>
         <div className="insurance-field-grid">
@@ -93,18 +116,35 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
               required={key!=='middleName'} value={applicant[key]}
               onChange={e=>setApplicant(a=>({...a,[key]:e.target.value}))}/></label>)}
         </div>
-      </section>
-      <section className="card stack">
+      </section>}
+      {step===2&&<section className="card stack">
         <span className="insurance-step-title">03 · Что страхуем</span><h2>Грузовой автомобиль</h2>
-        <p className="note">Все данные перечислены отдельными полями. Сведения из гаража можно проверить и дополнить. Для конкретной страховой компании агент может запросить дополнительные документы.</p>
+        <label>Автомобиль из гаража (необязательно)
+          <select className="field" value={selectedVehicleId} onChange={e=>setSelectedVehicleId(e.target.value)}>
+            <option value="">Новый автомобиль — заполню данные ниже</option>
+            {vehicles.data.map(v=><option key={v.id} value={v.id}>
+              {[v.brand,v.model,v.year,v.plate,v.vin ? 'VIN '+String(v.vin).slice(-6) : ''].filter(Boolean).join(' · ')}
+            </option>)}
+          </select>
+        </label>
+        {!selectedVehicleId&&<p className="note">Заполните данные ниже. Если автомобиль ещё не сохранён, система проверит совпадения и добавит его в гараж при отправке заявки.</p>}
+        <p className="note">Данные выбранного автомобиля подставляются автоматически. Проверьте VIN и обязательные сведения.</p>
         <div className="insurance-field-grid">
-          {VEHICLE_FIELDS.map(([key,label])=><label key={key}>{label}
+          {VEHICLE_FIELDS.filter(([,label])=>label.endsWith('*')).map(([key,label])=><label key={key}>{label}
             <input className="field" value={truck[key]} maxLength={120} required={label.endsWith('*')}
               inputMode={key==='year'?'numeric':'text'} onChange={e=>fill(key,e.target.value)} />
           </label>)}
         </div>
-      </section>
-      <section className="card stack">
+        <button className="btn ghost" type="button" aria-expanded={showVehicleDetails} onClick={()=>setShowVehicleDetails(v=>!v)}>
+          {showVehicleDetails?'Скрыть дополнительные сведения':'Дополнительные сведения об автомобиле'}
+        </button>
+        {showVehicleDetails&&<div className="insurance-field-grid">
+          {VEHICLE_FIELDS.filter(([,label])=>!label.endsWith('*')).map(([key,label])=>
+            <label key={key}>{label}<input className="field" value={truck[key]} maxLength={120}
+              onChange={e=>fill(key,e.target.value)}/></label>)}
+        </div>}
+      </section>}
+      {step===3&&<section className="card stack">
         <span className="insurance-step-title">04 · Дополнительно</span>
         <label>Комментарий или пожелания
           <textarea className="field" value={comment} maxLength={2000} onChange={e=>setComment(e.target.value)}
@@ -114,7 +154,12 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
         <button className="btn insurance-main-action" type="submit" disabled={busy||!agents.data.length||!consent}>
           Отправить заявку страховому агенту
         </button>
-      </section>
+      </section>}
+      {step<3&&<div className="insurance-wizard-actions">
+        {step>0&&<button type="button" className="btn ghost" onClick={()=>setStep(v=>v-1)}>Назад</button>}
+        <button type="button" className="btn insurance-main-action" onClick={nextStep}>Продолжить</button>
+      </div>}
+      {step===3&&<button type="button" className="btn ghost" onClick={()=>setStep(2)}>Вернуться к автомобилю</button>}
     </form>}
   </main>;
 }
@@ -124,6 +169,7 @@ export function InsuranceThread({requestId}:{requestId:string}){
   const source=useLoad(()=>get<CaseData>('/api/insurance/requests/'+requestId),
     [requestId],e=>e.type==='vehicle_service'&&e.requestId===requestId);
   const [message,setMessage]=useState('');
+  const [chatExpanded,setChatExpanded]=useState(false);
   const [drafts,setDrafts]=useState([{company:'',product:'',price:'',description:'',coverage:''}]);
   const [choice,setChoice]=useState('');
   const [expiresOn,setExpiresOn]=useState('');
@@ -195,13 +241,7 @@ export function InsuranceThread({requestId}:{requestId:string}){
         </div>
       </section>}
       <div className="insurance-conversation">
-        <section className="insurance-conversation-feed card stack" aria-label="Переписка по страховой заявке">
-          <div className="between"><h2>Переписка</h2><span className="pill">{d.messages.length} сообщений</span></div>
-          {d.messages.length===0&&<div className="empty">Заявка получена. Напишите агенту вопрос.</div>}
-          {d.messages.map(m=><div key={m.id} className={'insurance-message '+(m.sender==='you'?'mine':'')}>
-            <small>{m.sender==='you'?'Вы':m.sender==='agent'?'Страховой агент':'Система'} · {fmtTime(m.created_at)}</small>
-            <div>{m.body}</div>
-          </div>)}
+        <section className="insurance-conversation-feed card stack" aria-label="Страховая сделка">
           {d.proposals.length>0&&<div className="insurance-offers">
             <h3>Предложения страховых компаний · {d.proposals.length}</h3>
             <p className="note">Окончательные условия и цена уточняются агентом перед выдачей полиса.</p>
@@ -226,6 +266,19 @@ export function InsuranceThread({requestId}:{requestId:string}){
             <span>Агент прикрепил итоговый PDF. Документ доступен в этой переписке.</span>
             <button type="button" className="btn" onClick={download}>Скачать PDF-полис</button>
           </div>}
+          <section className="insurance-chat-panel stack" aria-label="Уточнения по заявке">
+            <button type="button" className="btn ghost" aria-expanded={chatExpanded}
+              onClick={()=>setChatExpanded(v=>!v)}>
+              {chatExpanded?'Скрыть переписку':'Показать переписку'} · {d.messages.length}
+            </button>
+            {chatExpanded&&<>
+              {d.messages.length===0&&<div className="empty">Сообщений пока нет.</div>}
+              {d.messages.map(m=><div key={m.id} className={'insurance-message '+(m.sender==='you'?'mine':'')}>
+                <small>{m.sender==='you'?'Вы':m.sender==='agent'?'Страховой агент':'Система'} · {fmtTime(m.created_at)}</small>
+                <div>{m.body}</div>
+              </div>)}
+            </>}
+          </section>
           <div className="insurance-chat-editor">
             <label>Сообщение агенту / клиенту
               <textarea className="field" maxLength={2000} rows={3} value={message}

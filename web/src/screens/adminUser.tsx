@@ -6,7 +6,7 @@ import { STATUS, SERVICES, LINE } from '../dict.ts';
 import { useLoad, useAction, Loading, Back, RubInput, go } from '../ui.tsx';
 
 const ROLE_NAMES: Record<string, string> = {
-  client: 'Клиент', driver: 'Водитель', master: 'Мастер', tow: 'Эвакуатор', service: 'Сервис / рембаза', moderator: 'Модератор', admin: 'Админ',
+  client: 'Клиент', driver: 'Водитель', master: 'Мастер', tow: 'Эвакуатор', service: 'Сервис / рембаза', insurer: 'Страховой партнёр', inspection_operator: 'Оператор техосмотра', moderator: 'Модератор', admin: 'Админ',
 };
 const TABS = [
   ['profile', 'Профиль и цена'], ['orders', 'Заявки'], ['cars', 'Машины'], ['performer', 'Исполнитель'],
@@ -104,11 +104,17 @@ function ProfileTab({ c, reload }: { c: any; reload: () => void }) {
 
       <div className="card">
         <b>Роли</b>
+        <span className="note">Оператор техосмотра видит только назначенные техосмотры и свои финансовые операции по ним. Страховой партнёр может работать с обоими направлениями.</span>
         <div className="row">{Object.entries(ROLE_NAMES).map(([r, n]) => (
           <button key={r} className="chip" aria-pressed={roles.includes(r)} onClick={() => setRoles(roles.includes(r) ? roles.filter((x) => x !== r) : [...roles, r])}>{n}</button>
         ))}</div>
-        <button className="btn small" disabled={busy || !roles.length || roles.join() === u.roles.join()} onClick={() =>
-          act(() => post(`/api/admin/users/${u.id}/roles`, { roles }), 'Роли сохранены')}>Сохранить роли</button>
+        <button className="btn small" disabled={busy || !roles.length || roles.join() === u.roles.join()} onClick={() => {
+          if (roles.includes('inspection_operator') && roles.some(r => ['client','driver','master','tow','service'].includes(r))) {
+            window.alert('Роль оператора техосмотра нельзя совмещать с клиентскими и ремонтными ролями.'); return;
+          }
+          if (!window.confirm('Сохранить новые роли пользователя?')) return;
+          act(() => post(`/api/admin/users/${u.id}/roles`, { roles }), 'Роли сохранены');
+        }}>Сохранить роли</button>
       </div>
 
       <div className="card">

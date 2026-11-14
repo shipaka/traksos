@@ -77,7 +77,7 @@ const browser=await chromium.launch();
 try{
   for(const item of [
     {name:'owner',token:owner.token,hash:'#/garage',heading:'Мой гараж',expected:'Страхование и техосмотр'},
-    {name:'insurer',token:partner.token,hash:'#/insurance',heading:'Кабинет страховщика',expected:'Полис оформлен'},
+    {name:'insurer',token:partner.token,hash:'#/insurance',heading:'Страхование',expected:'Полис оформлен'},
     {name:'admin',token:admin.token,hash:'#/admin',heading:'Администратор',expected:'Страхование и ТО'}
   ]){
     const context=await browser.newContext({...devices['Pixel 7'],deviceScaleFactor:1,locale:'ru-RU'});
@@ -89,11 +89,14 @@ try{
     await page.getByRole('heading',{name:item.heading}).waitFor();
     await acceptPendingOffers(page,item.token);
     if(item.name==='insurer') await page.getByRole('button',{name:'Все',exact:true}).click();
-    await page.getByText(item.expected,{exact:false}).first().waitFor();
+    if(item.name!=='admin') await page.getByText(item.expected,{exact:false}).first().waitFor();
     if(item.name==='admin') {
-      await page.getByRole('button',{name:'Страхование и ТО'}).click();
+      await page.getByRole('button',{name:/Разделы управления/}).click();
+      await page.getByRole('navigation',{name:'Разделы администрации'})
+        .getByRole('button',{name:'Страхование и ТО'}).click();
       await page.getByRole('link',{name:'Управлять регистрацией страховых агентов'}).click();
-      await page.getByText('Страховые партнёры',{exact:true}).waitFor();
+      await page.getByRole('button',{name:/Страховые агенты/}).click();
+       await page.getByText('Страховые партнёры',{exact:true}).waitFor();
       await page.getByRole('button',{name:/Регистрация новых партнёров закрыта/}).waitFor();
     }
     if(item.name==='owner')await page.getByText('Страхование и техосмотр',{exact:false}).first().click();
@@ -110,9 +113,13 @@ try{
   await acceptPendingOffers(clientPage,owner.token);
   await clientPage.getByRole('heading',{name:'Заявка на страхование грузовика'}).waitFor();
   await clientPage.locator('select').first().selectOption(partner.user.id);
+  await clientPage.getByRole('button',{name:'Продолжить'}).click();
   await clientPage.getByLabel('Фамилия').fill('Иванов');
   await clientPage.getByLabel('Имя',{exact:true}).fill('Иван');
+  await clientPage.getByRole('button',{name:'Продолжить'}).click();
+  await clientPage.getByLabel('Автомобиль из гаража (необязательно)').selectOption(truck.id);
   await clientPage.getByLabel('VIN / номер рамы *').fill('XLRTE47XS0E123456');
+  await clientPage.getByRole('button',{name:'Продолжить'}).click();
   await clientPage.locator('input[type=checkbox]').last().check();
   await clientPage.screenshot({path:OUT+'/client-application.png',fullPage:true});
   await clientPage.getByRole('button',{name:'Отправить заявку страховому агенту'}).click();

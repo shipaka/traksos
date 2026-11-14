@@ -1,8 +1,9 @@
+import '../adminExperience.css';
 import { AdminServices } from './base.tsx';
 import { ModQueue } from './moderation.tsx';
 import { AdminSummary } from './adminSummary.tsx';
-import { AdminShop } from './shop.tsx';
 import { AdminSettings } from './adminSettings.tsx';
+import { AdminShopCatalog } from './shopCatalogAdmin.tsx';
 import { useState } from 'react';
 import { useEffect } from 'react';
 import { SupportQueue } from './support.tsx';
@@ -13,49 +14,141 @@ import { get, post, put, rub, fmtPhone, fmtTime, authedImage } from '../api.ts';
 import { STATUS, SERVICES, LINE } from '../dict.ts';
 import { useLoad, useAction, Loading } from '../ui.tsx';
 
-type AdminSection = 'stats' | 'search' | 'support' | 'verify' | 'people' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'shop' | 'settings' | 'demand' | 'announcements' | 'vehicleServices';
-const ADMIN_SECTIONS: AdminSection[] = ['stats','search','support','verify','people','orders','dispatch','payments','offers','flagged','bases','queue','summary','shop','settings','demand','announcements','vehicleServices'];
+type AdminSection = 'shop' | 'stats' | 'search' | 'support' | 'verify' | 'people' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'settings' | 'demand' | 'announcements' | 'vehicleServices';
+type AdminNavItem = { id: AdminSection; name: string; description: string; symbol: string };
+const ADMIN_GROUPS: { name: string; items: AdminNavItem[] }[] = [
+  { name: 'Операционная работа', items: [
+    { id: 'queue', name: 'Модерация', description: 'Очередь проверок и обращений', symbol: '01' },
+    { id: 'summary', name: 'Сводка', description: 'Общее состояние платформы', symbol: '02' },
+    { id: 'orders', name: 'Заявки', description: 'Работы и статусы исполнения', symbol: '03' },
+    { id: 'dispatch', name: 'Распределение', description: 'Назначения и управление вызовами', symbol: '04' },
+    { id: 'demand', name: 'Проблемные заявки', description: 'Найти и устранить задержки', symbol: '05' },
+    { id: 'support', name: 'Обращения', description: 'Поддержка пользователей и партнёров', symbol: '06' },
+  ] },
+  { name: 'Люди и партнёры', items: [
+    { id: 'search', name: 'Поиск', description: 'Люди, заявки и история', symbol: '07' },
+    { id: 'people', name: 'Все люди', description: 'Пользователи и их права', symbol: '08' },
+    { id: 'verify', name: 'Проверка', description: 'Документы и допуск исполнителей', symbol: '09' },
+    { id: 'bases', name: 'Рембазы', description: 'Партнёрские станции ремонта', symbol: '10' },
+    { id: 'vehicleServices', name: 'Страхование и ТО', description: 'Заявки и контроль партнёров', symbol: '11' },
+    { id: 'shop', name: 'Магазин', description: 'Справочник грузовых запчастей, загрузка и проверка', symbol: '12' },
+  ] },
+  { name: 'Финансы и документы', items: [
+    { id: 'payments', name: 'Деньги', description: 'Комиссии, отчёты и выплаты', symbol: '13' },
+    { id: 'offers', name: 'Оферты', description: 'Документы для пользователей', symbol: '14' },
+    { id: 'announcements', name: 'Объявления и комиссии', description: 'Оповещения и условия работы', symbol: '15' },
+  ] },
+  { name: 'Контроль платформы', items: [
+    { id: 'stats', name: 'Статистика', description: 'Реальные показатели сервиса', symbol: '16' },
+    { id: 'flagged', name: 'Подозрительное', description: 'Сигналы и проверки безопасности', symbol: '17' },
+    { id: 'settings', name: 'Настройки', description: 'Параметры платформы и доступы', symbol: '18' },
+  ] },
+];
+const ADMIN_SECTIONS: AdminSection[] = ADMIN_GROUPS.flatMap(group => group.items.map(item => item.id));
+
 export function Admin({ initialSection }: { initialSection?: string }) {
   const [tab, setTab] = useState<AdminSection>(() =>
     ADMIN_SECTIONS.includes(initialSection as AdminSection) ? initialSection as AdminSection : 'queue');
+  const [navOpen, setNavOpen] = useState(false);
+  const [filter, setFilter] = useState('');
+  const selected = ADMIN_GROUPS.flatMap(group => group.items).find(item => item.id === tab)!;
+  const search = filter.trim().toLocaleLowerCase('ru-RU');
+  const groups = ADMIN_GROUPS.map(group => ({...group, items: group.items.filter(item =>
+    !search || (item.name + ' ' + item.description).toLocaleLowerCase('ru-RU').includes(search))
+  })).filter(group => group.items.length > 0);
+  const navigate = (id: AdminSection) => {
+    // Route changes already remount Admin with a fresh initialSection in main.tsx.
+    // Do not render a temporary tab before changing the hash: fast input would be
+    // detached during that second mount (admin search losing what was typed).
+    setNavOpen(false);
+    location.hash = '#/admin/section/' + id;
+  };
   return (
     <main className="admin-workspace">
       <section className="admin-command-hero">
         <div className="admin-command-art" aria-hidden="true"><span>◈</span><i/><i/><i/></div>
         <span className="admin-command-eyebrow">TRACKSOS · ОПЕРАЦИОННЫЙ ЦЕНТР</span>
         <h1>Администратор</h1>
-        <p>Заявки, партнёры, страхование, магазин и качество сервиса — в одном рабочем пространстве.</p>
+        <p>Заявки, партнёры, страхование, финансы и качество сервиса — в одном рабочем пространстве.</p>
         <div className="admin-command-actions">
-          <button type="button" className="btn" onClick={()=>setTab('summary')}>Открыть общую сводку</button>
+          <button type="button" className="btn" onClick={() => navigate('summary')}>Открыть общую сводку</button>
           <a className="btn ghost" href="#/admin/test-center">Тестирование всех кабинетов (без реальных действий)</a>
         </div>
       </section>
-      <div className="scroll-x admin-section-tabs">
-        {([['queue', 'Модерация'], ['summary', 'Сводка'], ['shop', 'Магазин'], ['vehicleServices', 'Страхование и ТО'], ['stats', 'Статистика'], ['demand', 'Проблемные заявки'], ['announcements', 'Объявления и комиссии'], ['search', 'Поиск'], ['support', 'Обращения'], ['verify', 'Проверка'], ['bases', 'Рембазы'], ['orders', 'Заявки'], ['people', 'Все люди'], ['payments', 'Деньги'], ['dispatch', 'Распределение'], ['offers', 'Оферты'], ['flagged', 'Подозрительное'], ['settings', 'Настройки']] as const).map(([id, n]) => (
-          <button key={id} className="chip" aria-pressed={tab === id} onClick={() => setTab(id)}>{n}</button>
-        ))}
+      <div className="admin-shell">
+        <button type="button" className="admin-nav-toggle" aria-controls="admin-section-navigation"
+          aria-expanded={navOpen} onClick={() => setNavOpen(open => !open)}>
+          <span><small>Разделы управления</small><b>{selected.name}</b></span>
+          <span aria-hidden="true">{navOpen ? '−' : '+'}</span>
+        </button>
+        <nav id="admin-section-navigation" className={'admin-navigation' + (navOpen ? ' expanded' : '')}
+          aria-label="Разделы администрации">
+          <div className="admin-nav-intro"><b>Управление TrackSOS</b><span>Все рабочие инструменты в одном месте</span></div>
+          <label className="admin-nav-search"><span className="label">Быстрый поиск раздела</span>
+            <input className="field" type="search" placeholder="Например, заявки или страхование"
+              aria-label="Поиск раздела администрации" value={filter} onChange={event => setFilter(event.target.value)} />
+          </label>
+          {groups.map(group => <section className="admin-nav-group" key={group.name}>
+            <h2>{group.name}</h2>
+            {group.items.map(item => <button key={item.id} type="button"
+              className={'admin-nav-item' + (tab === item.id ? ' active' : '')}
+              aria-label={item.name} aria-current={tab === item.id ? 'page' : undefined}
+              onClick={() => navigate(item.id)}>
+              <span className="admin-nav-symbol" aria-hidden="true">{item.symbol}</span>
+              <span className="admin-nav-item-copy"><b>{item.name}</b><small>{item.description}</small></span>
+              <span className="admin-nav-chevron" aria-hidden="true">›</span>
+            </button>)}
+          </section>)}
+          {groups.length === 0 && <p className="admin-nav-no-results">Ничего не найдено. Попробуйте другое слово.</p>}
+          <a className="admin-nav-preview" href="#/admin/test-center">
+            <span className="admin-nav-preview-icon" aria-hidden="true">▣</span>
+            <span><b>Проверить кабинеты ролей</b><small>Отдельная безопасная тестовая среда</small></span>
+            <span aria-hidden="true">›</span>
+          </a>
+        </nav>
+        <section className="admin-stage" aria-label={'Рабочий раздел: ' + selected.name}>
+          <header className="admin-stage-head">
+            <span className="admin-stage-kicker">РАБОЧИЙ РАЗДЕЛ · TRACKSOS</span>
+            <h2>{selected.name}</h2>
+            <p>{selected.description}</p>
+          </header>
+          <div className="admin-stage-content">
+            {tab === 'stats' && <Stats />}
+            {tab === 'demand' && <OpsDashboard />}
+            {tab === 'announcements' && <WorkerCommunications />}
+            {tab === 'search' && <Search />}
+            {tab === 'support' && <SupportQueue />}
+            {tab === 'verify' && <Verify />}
+            {tab === 'bases' && <AdminServices />}
+            {tab === 'queue' && <ModQueue />}
+            {tab === 'summary' && <AdminSummary />}
+            {tab === 'vehicleServices' && <>
+              <a className="btn ghost small" href="#/admin/section/settings">Управлять регистрацией страховых агентов</a>
+              <VehicleServicesQueue />
+            </>}
+            {tab === 'shop' && <AdminShopCatalog />}
+            {tab === 'settings' && <AdminSettings />}
+            {tab === 'offers' && <Offers />}
+            {tab === 'people' && <People />}
+            {tab === 'orders' && <AllOrders />}
+            {tab === 'dispatch' && <Dispatch />}
+            {tab === 'payments' && <Payments />}
+            {tab === 'flagged' && <Flagged />}
+          </div>
+          <div className="admin-mobile-quick">
+            <div className="admin-mobile-quick-heading"><b>Быстрые переходы</b><small>Частые задачи администратора</small></div>
+            <div className="admin-mobile-quick-grid">
+              {(['verify','dispatch','payments','search','offers','support','stats'] as AdminSection[]).map(id => {
+                const item = ADMIN_GROUPS.flatMap(group => group.items).find(entry => entry.id === id)!;
+                return <button type="button" key={id} aria-label={item.name}
+                  className="admin-mobile-quick-item" onClick={() => navigate(id)}>
+                  <span aria-hidden="true">{item.symbol}</span><b>{item.name}</b><i aria-hidden="true">›</i>
+                </button>;
+              })}
+            </div>
+          </div>
+        </section>
       </div>
-      {tab === 'stats' && <Stats />}
-      {tab === 'demand' && <OpsDashboard />}
-      {tab === 'announcements' && <WorkerCommunications />}
-      {tab === 'search' && <Search />}
-      {tab === 'support' && <SupportQueue />}
-      {tab === 'verify' && <Verify />}
-      {tab === 'bases' && <AdminServices />}
-      {tab === 'queue' && <ModQueue />}
-      {tab === 'summary' && <AdminSummary />}
-      {tab === 'shop' && <AdminShop />}
-      {tab === 'vehicleServices' && <>
-        <a className="btn ghost small" href="#/admin/section/settings">Управлять регистрацией страховых агентов</a>
-        <VehicleServicesQueue />
-      </>}
-      {tab === 'settings' && <AdminSettings />}
-      {tab === 'offers' && <Offers />}
-      {tab === 'people' && <People />}
-      {tab === 'orders' && <AllOrders />}
-      {tab === 'dispatch' && <Dispatch />}
-      {tab === 'payments' && <Payments />}
-      {tab === 'flagged' && <Flagged />}
     </main>
   );
 }

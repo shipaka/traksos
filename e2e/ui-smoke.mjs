@@ -51,7 +51,7 @@ try {
 
     // Main SOS action: it must open a real number-confirmation form.
     await page.getByRole('button', { name: /SOS · Нужна помощь/ }).click();
-    await page.getByRole('heading', { name: 'Помощь на дороге' }).waitFor();
+    await page.getByRole('heading', { name: 'Помощь на дороге', exact: true }).waitFor();
 
     // Header entry points must work on every tested phone/desktop viewport.
     await page.goto(BASE + '/#/login');

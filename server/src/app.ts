@@ -27,6 +27,7 @@ import { OnsiteService } from './services/onsite.ts';
 import { ServiceCenters } from './services/service.ts';
 import { FleetService } from './services/fleet.ts';
 import { VehicleServiceRequests } from './services/vehicleServiceRequests.ts';
+import { PartnerFinance } from './services/partnerFinance.ts';
 import { InsuranceQuoteFlow } from './services/insuranceQuoteFlow.ts';
 import { PrivacyService } from './services/privacy.ts';
 import { StandingService } from './services/standing.ts';
@@ -50,7 +51,7 @@ export interface Deps {
 }
 
 const money = z.number().int().nonnegative();
-const ROLES = ['client', 'driver', 'master', 'tow', 'service', 'moderator', 'admin'];
+const ROLES = ['client', 'driver', 'master', 'tow', 'service', 'insurer', 'inspection_operator', 'moderator', 'admin'];
 
 export function createApp(d: Deps) {
   const now = d.now ?? (() => new Date());
@@ -82,6 +83,7 @@ export function createApp(d: Deps) {
   centers.referral = referral;
   const fleet = new FleetService(d.db, notifier, orders);
   const vehicleRequests = new VehicleServiceRequests(d.db);
+  const partnerFinance = new PartnerFinance(d.db);
   const insuranceFlow = new InsuranceQuoteFlow(d.db);
   const privacy = new PrivacyService(d.db, notifier, now);
   const standing = new StandingService(d.db, now, settings);
@@ -524,7 +526,7 @@ export function createApp(d: Deps) {
   }).strict();
   r.post('/api/vehicle-service-requests', true, async (c: AuthedCtx) => {
     const b = parse(z.object({
-      vehicleId: z.string().uuid(), kind: vehicleRequestKind, comment: z.string().max(2000).optional(),
+      vehicleId: z.string().uuid().optional(), kind: vehicleRequestKind, comment: z.string().max(2000).optional(),
       insurance: z.object({
         agentId:z.string().uuid(),
         consentToPartner:z.literal(true),
@@ -538,7 +540,7 @@ export function createApp(d: Deps) {
     const created = await vehicleRequests.create(c.user,b.vehicleId,b.kind,b.comment,b.insurance ? {...b.insurance,details:{...b.insurance.details,consentAt:new Date().toISOString()}} : undefined);
     const recipients = await vehicleRequests.recipients(created!);
     if(b.insurance) recipients.push(b.insurance.agentId);
-    notifier.live(recipients,{type:'vehicle_service',vehicleId:b.vehicleId,requestId:created?.id});
+    notifier.live(recipients,{type:'vehicle_service',vehicleId:created?.vehicle_id,requestId:created?.id});
     return created;
   });
   // Quotation and PDF workflow: real insured customer vs designated agent, never automatic insurer API calls.
@@ -609,6 +611,45 @@ export function createApp(d: Deps) {
     return request;
   });
   r.get('/api/insurer/requests', ['insurer'], (c: AuthedCtx) => vehicleRequests.insurerQueue(c.user));
+  r.get('/api/admin/inspection-partners', ['admin','moderator'], (c: AuthedCtx) => vehicleRequests.inspectionPartners(c.user));
+  r.get('/api/insurer/inspections', ['insurer','inspection_operator'], (c: AuthedCtx) => vehicleRequests.inspectionQueue(c.user));
+  r.get('/api/insurer/finance', ['insurer','inspection_operator'], (c: AuthedCtx) => partnerFinance.mine(c.user));
+  r.post('/api/admin/partner-finance/accruals', ['admin'], (c: AuthedCtx) => {
+    const b=parse(z.object({requestId:z.string().uuid(),amountKopecks:z.number().int().positive().safe(),note:z.string().trim().min(3).max(1000)}),c.body);
+    return partnerFinance.recordAccrual(c.user,b.requestId,b.amountKopecks,b.note);
+  });
+
+  r.post('/api/admin/partner-finance/reversals', ['admin'], (c: AuthedCtx) => {
+    const b=parse(z.object({
+      requestId:z.string().uuid(),amountKopecks:z.number().int().positive().safe(),
+      reason:z.string().trim().min(3).max(1000)
+    }),c.body);
+    return partnerFinance.recordReversal(c.user,b.requestId,b.amountKopecks,b.reason);
+  });
+
+  r.post('/api/admin/partner-finance/payouts', ['admin'], (c: AuthedCtx) => {
+    const b=parse(z.object({
+      requestId:z.string().uuid(),amountKopecks:z.number().int().positive().safe(),
+      reference:z.string().trim().min(3).max(1000)
+    }),c.body);
+    return partnerFinance.recordPayout(c.user,b.requestId,b.amountKopecks,b.reference);
+  });
+
+  r.patch('/api/insurer/inspections/:id', ['insurer','inspection_operator'], async (c: AuthedCtx) => {
+    const b = parse(z.object({status:z.enum(['completed','rejected']),note:z.string().max(2000).optional()}),c.body);
+    const updated = await vehicleRequests.updateInspection(c.user,c.params.id,b.status,b.note);
+    notifier.live(await vehicleRequests.recipients(updated),
+      {type:'vehicle_service',requestId:updated.id,vehicleId:updated.vehicle_id,status:updated.status});
+    return updated;
+  });
+
+  r.post('/api/admin/vehicle-service-requests/:id/assign-inspection', staff, async (c: AuthedCtx) => {
+    const b = parse(z.object({ partnerId: z.string().uuid() }), c.body);
+    const request = await vehicleRequests.assignInspection(c.user,c.params.id,b.partnerId);
+    notifier.live([b.partnerId],{type:'vehicle_service',requestId:request.id,vehicleId:request.vehicle_id});
+    return request;
+  });
+
   r.patch('/api/insurer/requests/:id', ['insurer'], async (c: AuthedCtx) => {
     const b = parse(z.object({ status: z.enum(['completed', 'rejected']), note: z.string().max(2000).optional(),
       policyExpiresOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }), c.body);
