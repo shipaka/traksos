@@ -1213,3 +1213,13 @@
 @media(prefers-reduced-motion:reduce){
   .guest-app .public-landing .public-benefit{transition:none!important}
 }
+
+/* Silent web bootstrap. The Android launcher covers this with approved seasonal artwork. */
+.traksos-start-loading{display:grid;place-items:center;overflow:hidden;background:#061426;color:transparent}
+.traksos-start-loading-line{position:relative;display:block;width:min(230px,62vw);height:4px;
+  overflow:hidden;border-radius:99px;background:#18516a;box-shadow:0 0 15px #0fddfa43}
+.traksos-start-loading-line:after{content:"";position:absolute;left:-45%;width:45%;height:100%;
+  background:linear-gradient(90deg,transparent,#19ddf6,#ff3298,transparent);
+  animation:tracksosLineProgress 1.65s ease-in-out infinite}
+@keyframes tracksosLineProgress{from{left:-45%}to{left:105%}}
+@media(prefers-reduced-motion:reduce){.traksos-start-loading-line:after{animation:none;left:28%}}
