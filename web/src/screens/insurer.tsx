@@ -58,7 +58,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
   return (
     <main className="cabinet-page">
       <header className="cabinet-heading">
-        <span className="label">TRACKSOS · Партнёрский кабинет</span>
+        <span className="label">TRAKSOS · Партнёрский кабинет</span>
         <h1>{workspace==='insurance'?'Страхование':workspace==='inspection'?'Техосмотры':workspace==='finance'?'Финансы':'Общие настройки'}</h1>
       </header>
       <nav className="partner-workspaces" aria-label="Разделы кабинета партнёра">
@@ -135,7 +135,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
         <a className="linkrow" href="#/offer/privacy">Обработка персональных данных</a>
       </section>}
       {workspace==='insurance'&&!inspectionOnly&&<>
-      <div className="sub">Только страховые заявки, переданные вам TrackSOS. Остальные автомобили и сведения о клиентах недоступны.</div>
+      <div className="sub">Только страховые заявки, переданные вам TrakSOS. Остальные автомобили и сведения о клиентах недоступны.</div>
       {!rows ? <div className="empty">{requests.error ? `Не удалось загрузить: ${requests.error}` : 'Загружаем заявки…'}</div>
         : !rows.length ? <InsurerEmptyState onRefresh={requests.reload} />
         : <div className="stack">
@@ -169,7 +169,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
                 <span className="note">{r.plate || 'Без номера'} · Подана {fmtTime(r.created_at)}</span>
                 {r.comment && <span className="note">Комментарий клиента: {r.comment}</span>}
                 {r.insurance_stage && <div className="insurance-agent-preview">
-                  <b>Заявка через TrackSOS · {({
+                  <b>Заявка через TrakSOS · {({
                     received:'Получено',preparing:'Готовятся варианты',
                     offers_sent:'Клиент выбирает предложение',
                     selected:'Клиент выбрал полис',processing:'Оформляется вручную',

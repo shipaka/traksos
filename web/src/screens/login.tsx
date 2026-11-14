@@ -131,7 +131,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   }
 
   const needAgree = !['login', 'reset'].includes(intent ?? '') || !!driver; // водитель по QR — обычно новый номер, согласие сразу
-  const title = intent === 'reset' ? 'Восстановить пароль' : intent === 'help' ? 'Помощь на дороге' : intent === 'join' ? 'Работать с ТракSOS' : intent === 'register' ? 'Регистрация в ТракSOS' : 'Вход по номеру телефона';
+  const title = intent === 'reset' ? 'Восстановить пароль' : intent === 'help' ? 'Помощь на дороге' : intent === 'join' ? 'Работать с TrakSOS' : intent === 'register' ? 'Регистрация в TrakSOS' : 'Вход по номеру телефона';
   const sub = intent === 'reset' ? 'Отправим один SMS-код для смены пароля.' : intent === 'help' ? 'Подтвердите номер — и сразу к заявке. Мастер позвонит на него.'
     : intent === 'join' ? 'Выберите, кем подключаетесь. После входа заполните профиль — проверим и откроем заявки.'
     : intent === 'register' ? 'Укажите номер телефона. Если аккаунта ещё нет, создадим его после подтверждения SMS-кодом.'  : 'Вход по паролю, без SMS. Если забыли пароль — восстановите доступ.'; // legacy description
@@ -145,10 +145,10 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
 
       <section className="public-hero public-brand-hero" aria-labelledby="public-main-title">
         <div className="public-hero-copy">
-          <span className="public-eyebrow">ТРАКSOS · ПОМОЩЬ ГРУЗОВОМУ ТРАНСПОРТУ</span>
+          <span className="public-eyebrow">TRAKSOS · ПОМОЩЬ ГРУЗОВОМУ ТРАНСПОРТУ</span>
           <h1 id="public-main-title">Помощь грузовикам <em>в любой ситуации 24/7</em></h1>
           <p>Выездные специалисты, эвакуаторы, грузовые СТО и консультации. Все направления помощи — на одном экране.</p>
-          <div className="public-track-benefits" aria-label="Преимущества TrackSOS">
+          <div className="public-track-benefits" aria-label="Преимущества TrakSOS">
             <span><i aria-hidden="true">ϟ</i>Быстрое обращение</span>
             <span><i aria-hidden="true">✓</i>Проверка исполнителей</span>
             <span><i aria-hidden="true">⌖</i>Санкт-Петербург и Ленобласть</span>
@@ -200,7 +200,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         <button type="button" className="public-track-insurance" onClick={() => chooseGuestAction('insurance','register')}>
           <span className="public-track-insurance-art" aria-hidden="true" />
           <span><b>Страхование грузового транспорта</b>
-          <small>ОСАГО, КАСКО, груз, ответственность — заявка через TrackSOS</small></span>
+          <small>ОСАГО, КАСКО, груз, ответственность — заявка через TrakSOS</small></span>
           <strong>Оформить заявку →</strong>
         </button>
         <div className="public-track-extras-grid">
@@ -216,8 +216,8 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         </div>
       </div>
         {!(window as any).TrakSOSNative && <aside className="public-app-card">
-          <div className="public-section-kicker">ТРАКSOS В ТЕЛЕФОНЕ</div>
-          <h2>Мобильное приложение <em>ТракSOS</em></h2>
+          <div className="public-section-kicker">TRAKSOS В ТЕЛЕФОНЕ</div>
+          <h2>Мобильное приложение <em>TrakSOS</em></h2>
           <div className="public-app-phone" aria-hidden="true">
             <span className="public-app-logo">Трак<b>SOS</b></span>
             <img className="public-app-phone-truck" src="/tracksos-approved-scania-r520.webp" alt="" loading="lazy" />
@@ -245,7 +245,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         </div>
         <div className="public-partner">
           <span className="public-section-kicker">ДЛЯ МАСТЕРОВ И СТО</span>
-          <h2>Станьте партнёром ТракSOS</h2>
+          <h2>Станьте партнёром TrakSOS</h2>
           <p>Подключайте свой сервис и работайте с заявками через отдельный кабинет.</p>
           <button type="button" className="public-button public-button-partner" onClick={() => setIntent('join')}>Подключиться →</button>
         </div>
@@ -260,7 +260,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
       {intent === 'login' && step === 'phone' && <div className="auth-entry-options" aria-label="Варианты входа">
         <button type="button" onClick={() => setIntent('help')}>Помогите — нужна помощь</button>
         <button type="button" onClick={() => setIntent('login')}>Войти по номеру</button>
-        <button type="button" onClick={() => setIntent('join')}>Хочу работать с ТракSOS</button>
+        <button type="button" onClick={() => setIntent('join')}>Хочу работать с TrakSOS</button>
       </div>}
       <div>
         <h1>{title}</h1>
@@ -287,7 +287,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
       ) : step === 'phone' ? (
         <form className="stack" onSubmit={(e) => { e.preventDefault(); sendCode(); }}>
           {intent === 'register' && <div className="stack" role="group" aria-label="Выбор кабинета при регистрации">
-            <span className="label">Как вы пользуетесь ТракSOS?</span>
+            <span className="label">Как вы пользуетесь TrakSOS?</span>
             <span className="note">Выберите подходящий кабинет. Для клиента и исполнителя используются разные рабочие разделы.</span>
             <div className="grid2">
               <button type="button" className="seg" aria-pressed={customerType === 'owner'} onClick={() => setCustomerType('owner')}>Владелец / автопарк</button>
@@ -358,10 +358,10 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         </form>
       )}
       </section>
-      <aside className="auth-desktop-showcase" aria-label="О сервисе ТракSOS">
+      <aside className="auth-desktop-showcase" aria-label="О сервисе TrakSOS">
         <div className="auth-desktop-showcase-photo" aria-hidden="true" />
         <div className="auth-desktop-showcase-copy">
-          <span>ТРАКSOS · ПОМОЩЬ ГРУЗОВОМУ ТРАНСПОРТУ</span>
+          <span>TRAKSOS · ПОМОЩЬ ГРУЗОВОМУ ТРАНСПОРТУ</span>
           <h2>Помощь на дороге, когда она нужна</h2>
           <p>Выездные мастера, эвакуация и СТО грузовых автомобилей — в одном сервисе.</p>
         </div>

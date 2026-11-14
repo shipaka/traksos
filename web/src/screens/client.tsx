@@ -28,7 +28,7 @@ export function Home() {
     <main className="client-home client-dashboard">
       <section className="desktop-hero" aria-label="Помощь грузовому транспорту">
         <div className="desktop-hero-copy">
-          <span className="desktop-eyebrow">ТРАКSOS · САНКТ-ПЕТЕРБУРГ И ЛЕНОБЛАСТЬ</span>
+          <span className="desktop-eyebrow">TRAKSOS · САНКТ-ПЕТЕРБУРГ И ЛЕНОБЛАСТЬ</span>
           <h1>Помощь грузовикам в пути <span>24/7</span></h1>
           <p>Выездной мастер, эвакуатор, грузовые СТО и консультации. Заявки, страхование и запчасти — в одном кабинете.</p>
           <div className="desktop-hero-buttons">
@@ -66,7 +66,7 @@ export function Home() {
               </a>
             ))}
           </div>
-          <div className="desktop-section-heading"><h2>Сервисы ТракSOS</h2></div>
+          <div className="desktop-section-heading"><h2>Сервисы TrakSOS</h2></div>
           <section className="client-dashboard-hubs" aria-label="Разделы кабинета">
             <a href="#/garage"><span className="client-dashboard-hub-icon">◇</span><b>Страхование и техосмотр</b><small>Документы и оформление для вашей техники</small><em>К автомобилям →</em></a>
             <a href="#/shop"><span className="client-dashboard-hub-icon">▧</span><b>Грузовые запчасти</b><small>Поиск, аналоги и история покупок. Магазин пока закрыт</small><em>Открыть раздел →</em></a>
@@ -109,7 +109,7 @@ export function Sos() {
     <main className="client-sos-directions">
       <Back to="" />
       <div className="client-sos-intro">
-        <span className="label">ТРАКSOS · СРОЧНАЯ ПОМОЩЬ</span>
+        <span className="label">TRAKSOS · СРОЧНАЯ ПОМОЩЬ</span>
         <h1>Помощь в дороге</h1>
         <p>Выберите направление. Затем укажете машину, местоположение и детали заявки.</p>
       </div>
@@ -254,7 +254,7 @@ export function Consult() {
       <div className="card">
         <b>Как это работает</b>
         <ol className="howto">
-          <li>Мастер берёт заявку и связывается с вами через ТракSOS: звонок и чат, вся переписка сохраняется.</li>
+          <li>Мастер берёт заявку и связывается с вами через TrakSOS: звонок и чат, вся переписка сохраняется.</li>
           <li>В конце мастер оставляет подсказку: что подозревает и насколько уверен.</li>
           <li>Вы нажимаете «Вопрос решён» — или «Нужен выезд»: подсказка перейдёт мастеру на выезде, а вам скидка.</li>
           <li>Консультация — предварительное мнение, а не диагностика. Деньги вернём, только если помощи не было: мастер не ответил или бросил разговор.</li>
@@ -264,7 +264,7 @@ export function Consult() {
 
       <label className={`agree card ${tried && !agree ? 'missing' : ''}`} id="f-agree">
         <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
-        <span>Согласен со стоимостью {rub(c.price)} и <a href="#/offer/client">офертой ТракSOS</a></span>
+        <span>Согласен со стоимостью {rub(c.price)} и <a href="#/offer/client">офертой TrakSOS</a></span>
       </label>
       <CallBar busy={busy} missing={missingC} price={rub(c.price)} label={`Заказать консультацию · ${rub(c.price)}`}
         onGo={() => { setTried(true); if (missingC.length) jump(missingC[0].id); else submit(); }} />
@@ -574,7 +574,7 @@ export function NewOrder({ service }: { service: string }) {
             : 'Мастера рядом откликнутся по этой цене или со своей — вы выберете. Работу мастер назовёт на месте, и без вашего «Да» ничего не начнётся.'}</span>
           <label className="agree">
             <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
-            <span>Согласен с суммами и <a href="#/offer/client">офертой ТракSOS</a>{me?.company_name ? `: вызов от имени ${me.company_name}` : ''}. Отказ платить за выполненную работу взыскивается по оферте.</span>
+            <span>Согласен с суммами и <a href="#/offer/client">офертой TrakSOS</a>{me?.company_name ? `: вызов от имени ${me.company_name}` : ''}. Отказ платить за выполненную работу взыскивается по оферте.</span>
           </label>
         </div>
       )}
@@ -845,12 +845,12 @@ export function Profile() {
             if (native.setAppLockEnabled(value)) setAppLock(value);
             else window.alert('Чтобы включить защиту, настройте отпечаток пальца или код блокировки телефона.');
           }} />
-          <span>Разблокировать ТракSOS отпечатком или PIN телефона</span>
+          <span>Разблокировать TrakSOS отпечатком или PIN телефона</span>
         </label>
         <span className="note">При возвращении в приложение после перерыва. Статус «На линии» и входящие вызовы не отключаются.</span>
       </div>}
       <a href="#/invite" className="card" style={{ textDecoration: 'none', color: 'inherit', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span><b>🎁 Пригласить и получать баллы</b><small className="note" style={{ display: 'block' }}>Баллы гасят сбор и комиссию ТракSOS</small></span><span>›</span>
+        <span><b>🎁 Пригласить и получать баллы</b><small className="note" style={{ display: 'block' }}>Баллы гасят сбор и комиссию TrakSOS</small></span><span>›</span>
       </a>
       <div className="card">
         <dl className="kv">
@@ -947,7 +947,7 @@ function MastersNearby({ service, geo, brand }: { service: string; geo: { lat: n
           {m.callOut != null && <span className="pill">{rub(m.callOut)}</span>}
         </div>
       )) : <span className="note">Свободных рядом сейчас нет — заявка уйдёт в торги, мастера откликнутся, когда освободятся.</span>}
-      <span className="note">✓ — прошёл проверку ТракSOS. Порядок — по вашему приоритету; он же будет первым в списке откликов.</span>
+      <span className="note">✓ — прошёл проверку TrakSOS. Порядок — по вашему приоритету; он же будет первым в списке откликов.</span>
     </div>
   );
 }

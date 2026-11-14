@@ -47,7 +47,7 @@ class ScreenErrorBoundary extends Component<
   state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
   componentDidCatch(error: Error) {
-    console.error('[TrackSOS] Section failed to render:', error);
+    console.error('[TrakSOS] Section failed to render:', error);
   }
   render() {
     if (!this.state.failed) return this.props.children;
@@ -153,13 +153,13 @@ function App() {
     if (e.type === 'order' && e.status === 'accepted' && modeRef.current !== 'performer' && !location.hash.startsWith('#/work')) toast('Исполнитель найден');
   }), [reload, toast]);
 
-  if (!ready) return <div className="traksos-start-loading" role="status">Загружаем TrackSOS…</div>;
+  if (!ready) return <div className="traksos-start-loading" role="status">Загружаем TrakSOS…</div>;
   // Ссылка-приглашение: запоминаем код, вход — как обычно
   if (route[0] === 'r' && route[1]) { try { localStorage.setItem('traksos.ref', route[1].toUpperCase()); } catch { /* */ } }
   if (!me) {
     return (
       <MeCtx.Provider value={{ me: null, reload, mode: 'client', setMode }}>
-        <Shell mode="client" me={null}>{route[0] === 'offer' ? <OfferPage audience={route[1] ?? 'client'} /> : route[0] === 'qr' && route[1] ? <QrJoin code={route[1]} /> : route[0] === 'rules' ? <Rules /> : route[0] === 'help' ? <Help /> : <>{route[0] === 'r' && <div className="banner good" style={{ margin: '12px 16px 0' }}><span>Вас пригласили в ТракSOS — после входа на счёт придут подарочные баллы.</span></div>}<Login key={route[0] ?? 'public'} entry={route[0] === 'login' ? 'login' : route[0] === 'register' ? 'register' : route[0] === 'join' ? 'join' : undefined} /></>}</Shell>
+        <Shell mode="client" me={null}>{route[0] === 'offer' ? <OfferPage audience={route[1] ?? 'client'} /> : route[0] === 'qr' && route[1] ? <QrJoin code={route[1]} /> : route[0] === 'rules' ? <Rules /> : route[0] === 'help' ? <Help /> : <>{route[0] === 'r' && <div className="banner good" style={{ margin: '12px 16px 0' }}><span>Вас пригласили в TrakSOS — после входа на счёт придут подарочные баллы.</span></div>}<Login key={route[0] ?? 'public'} entry={route[0] === 'login' ? 'login' : route[0] === 'register' ? 'register' : route[0] === 'join' ? 'join' : undefined} /></>}</Shell>
       </MeCtx.Provider>
     );
   }
@@ -355,7 +355,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       <NetworkStatus />
       <div className="desktop-layout">
         <aside className="desktop-sidebar" aria-label="Навигация по сайту">
-          <div className="desktop-sidebar-title">{me ? 'Рабочий кабинет' : 'ТракSOS · помощь в дороге'}</div>
+          <div className="desktop-sidebar-title">{me ? 'Рабочий кабинет' : 'TrakSOS · помощь в дороге'}</div>
           <nav className="desktop-nav">
             {me ? <>
               {(mode === 'client'
@@ -390,19 +390,19 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               <a className="desktop-nav-link" href="#/offer/privacy"><span>▣</span><span>Персональные данные</span></a>
             </>}
           </nav>
-          {!me && <aside className="track-sidebar-app" aria-label="Мобильное приложение TrackSOS">
+          {!me && <aside className="track-sidebar-app" aria-label="Мобильное приложение TrakSOS">
             <span className="track-sidebar-app-glow" aria-hidden="true" />
             <span className="track-sidebar-app-phone" aria-hidden="true">
               <img src="/tracksos-approved-scania-r520.webp" alt="" loading="lazy" />
-              <small>TrackSOS</small>
+              <small>TrakSOS</small>
             </span>
             <span className="track-sidebar-app-copy">
-              <b>TrackSOS в телефоне</b>
+              <b>TrakSOS в телефоне</b>
               <small>Заявки и связь с мастером в одном месте</small>
               <span className="track-sidebar-app-soon">Скоро в RuStore</span>
             </span>
           </aside>}
-          <div className="desktop-sidebar-bottom"><strong>TRACKSOS 24/7</strong><span>Помощь грузовикам</span><small>Санкт-Петербург и Ленинградская область</small></div>
+          <div className="desktop-sidebar-bottom"><strong>TRAKSOS 24/7</strong><span>Помощь грузовикам</span><small>Санкт-Петербург и Ленинградская область</small></div>
         </aside>
         <div className="desktop-content">
           {children}
@@ -410,7 +410,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         </div>
       </div>
       {!me && !route[0] && (
-        <nav className="track-guest-tabbar" aria-label="Основные разделы TrackSOS">
+        <nav className="track-guest-tabbar" aria-label="Основные разделы TrakSOS">
           <a href="#/" className="active" aria-current="page"><span aria-hidden="true">⌂</span>Главная</a>
           <a href="#/login"><span aria-hidden="true">☷</span>Заявки</a>
           <a href="#/login" className="help"><span aria-hidden="true">✚</span>Помощь</a>
@@ -476,7 +476,7 @@ function SiteFooter() {
       <span className="row note" style={{ gap: 12 }}>
         <a href="#/offer/client">Оферта</a><a href="#/offer/privacy">Персональные данные</a><a href="#/rules">Правила площадки</a>
       </span>
-      <span className="note">© {new Date().getFullYear()} {l?.brand ?? 'ТракSOS'}</span>
+      <span className="note">© {new Date().getFullYear()} {l?.brand ?? 'TrakSOS'}</span>
     </footer>
   );
 }

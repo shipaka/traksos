@@ -271,7 +271,7 @@ function Money({ d }: { d: any }) {
       {proposed && <><div className="hr" /><div className="sum total"><span>Итого</span><span>{rub(m.total)}</span></div></>}
       {d.service !== 'tow' && d.estimate?.hour != null && !proposed && <span className="note">{billingRule(d.billingStep)}</span>}
       <span className="note">
-        {d.paymentMethod === 'cash' ? 'Оплата мастеру на месте. Сумму подтверждаете в приложении.' : d.paymentMethod === 'online' ? 'Оплата через ТракSOS, мастеру — после подтверждения.' : 'Оплата по счёту на компанию.'}
+        {d.paymentMethod === 'cash' ? 'Оплата мастеру на месте. Сумму подтверждаете в приложении.' : d.paymentMethod === 'online' ? 'Оплата через TrakSOS, мастеру — после подтверждения.' : 'Оплата по счёту на компанию.'}
       </span>
       {d.result && <span className="pill">{RESULTS[d.result]}{d.resultNote ? ` · ${d.resultNote}` : ''}</span>}
     </div>
@@ -549,7 +549,7 @@ function ClientTab({ id, canEdit }: { id: string; canEdit: boolean }) {
             {h.result_note && <small style={{ color: 'var(--fg)' }}>{h.result_note}</small>}
           </div></li>
         ))}</ol>
-      ) : <span className="note">По этой машине ещё ничего не делали через ТракSOS.</span>}
+      ) : <span className="note">По этой машине ещё ничего не делали через TrakSOS.</span>}
 
       {canEdit && (
         <button className={`seg ${c.blocked ? '' : ''}`} aria-pressed={c.blocked} disabled={busy} onClick={async () => {
@@ -625,7 +625,7 @@ function ConsultClient({ d }: { d: any }) {
         <b>{st === 'completed' ? 'Консультация завершена' : st === 'awaiting_confirmation' ? 'Мастер закончил разговор' : 'Мастер на связи'}</b>
         <span className={`pill ${st === 'accepted' ? 'good' : ''}`}>{st === 'accepted' ? 'на связи' : st === 'completed' ? 'в архиве' : 'ждёт вас'}</span>
       </div>
-      {st === 'accepted' && <span className="note">Мастер позвонит через ТракSOS или напишет в чат ниже. Номера скрыты с обеих сторон. Опишите, что видите, пришлите фото, если попросит.</span>}
+      {st === 'accepted' && <span className="note">Мастер позвонит через TrakSOS или напишет в чат ниже. Номера скрыты с обеих сторон. Опишите, что видите, пришлите фото, если попросит.</span>}
       {d.consultHint && (
         <div className="card flat" style={{ gap: 4 }}>
           <span className="label">Мнение мастера по телефону</span>
