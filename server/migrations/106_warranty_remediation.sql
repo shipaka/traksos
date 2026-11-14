@@ -11,11 +11,12 @@ create table warranty_rework_jobs (
   funding_source text not null check (funding_source in ('performer_in_kind','platform')),
   budget_kopecks integer not null check (budget_kopecks between 0 and 100000000),
   status text not null default 'offered' check (status in
-    ('offered','accepted','declined','reported_done','client_confirmed')),
+    ('offered','accepted','declined','client_declined','reported_done','client_confirmed')),
   task_description text not null check (char_length(task_description) between 10 and 2000),
   report text,
   authorized_by uuid not null references users(id),
   authorized_at timestamptz not null default now(),
+  client_approved_at timestamptz,
   accepted_at timestamptz,
   reported_at timestamptz,
   confirmed_at timestamptz,
@@ -28,7 +29,7 @@ create table warranty_rework_jobs (
 -- A declined offer can be replaced following explicit new review, but an
 -- accepted or completed remedy must never be duplicated by two clicks.
 create unique index warranty_rework_active_claim on warranty_rework_jobs(claim_id)
- where status<>'declined';
+ where status not in ('declined','client_declined');
 create index warranty_rework_performer on warranty_rework_jobs(performer_id,status);
 create index warranty_rework_case on warranty_rework_jobs(case_root_id,authorized_at);
 
@@ -36,7 +37,7 @@ create table warranty_rework_events (
   id bigserial primary key,
   job_id uuid not null references warranty_rework_jobs(id),
   actor_id uuid references users(id),
-  event text not null check (event in ('offered','accepted','declined','reported_done','client_confirmed','expense_recorded')),
+  event text not null check (event in ('offered','client_approved','client_declined','accepted','declined','reported_done','client_confirmed','expense_recorded')),
   data jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
 );
