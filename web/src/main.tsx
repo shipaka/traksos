@@ -68,6 +68,29 @@ class ScreenErrorBoundary extends Component<
 type Mode = 'client' | 'performer' | 'admin' | 'moderator' | 'service' | 'insurer' | 'inspection';
 const PERFORMER_ROLES = ['master', 'tow', 'service'];
 
+/** Consistent vector icons for the same mobile navigation on web and Android WebView. */
+function NavGlyph({ glyph }: { glyph: string }) {
+  return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+    strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    {glyph === '⌂' ? <><path d="m3 10 9-7 9 7v10H3z" /><path d="M9 20v-7h6v7" /></>
+    : glyph === '☷' || glyph === '☰' ? <><path d="M8 6h13M8 12h13M8 18h13" /><path d="M3 6h1M3 12h1M3 18h1" /></>
+    : glyph === '✚' ? <><circle cx="12" cy="12" r="9" /><path d="M12 7v10M7 12h10" /></>
+    : glyph === '⚙' ? <><circle cx="12" cy="12" r="3.1" /><path d="M12 2v3m0 14v3M2 12h3m14 0h3M4.9 4.9 7 7m10 10 2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1" /></>
+    : glyph === '◉' ? <><circle cx="12" cy="8" r="3.5" /><path d="M4.5 20c.8-3.6 3.4-5.4 7.5-5.4s6.7 1.8 7.5 5.4" /><circle cx="12" cy="12" r="10" opacity=".4" /></>
+    : glyph === '▣' ? <><rect x="6" y="3" width="12" height="18" rx="2" /><path d="M9 8h6M9 12h6m-6 4h4" /></>
+    : glyph === '▦' ? <><rect x="3" y="3" width="8" height="8" rx="1" /><rect x="13" y="3" width="8" height="8" rx="1" /><rect x="3" y="13" width="8" height="8" rx="1" /><rect x="13" y="13" width="8" height="8" rx="1" /></>
+    : glyph === '▤' ? <><path d="M4 21V6l8-4 8 4v15M2 21h20" /><path d="M8 9h2m4 0h2M8 13h2m4 0h2M10 21v-4h4v4" /></>
+    : glyph === '⚑' ? <><path d="M5 22V3m0 1c5-3 9 3 15 0v11c-6 3-10-3-15 0" /></>
+    : glyph === '⚡' ? <path d="M13 2 4 13h7l-1 9 10-12h-7z" />
+    : glyph === '🛍' ? <><path d="M4 8h16l-1.5 13h-13z" /><path d="M9 9V6a3 3 0 0 1 6 0v3" /></>
+    : glyph === '?' ? <><circle cx="12" cy="12" r="10" /><path d="M9 9a3 3 0 0 1 6 1c0 2-3 2-3 4m0 3h.01" /></>
+    : glyph === '◇' ? <><path d="m12 2 8 4v6c0 5-3.7 8-8 10-4.3-2-8-5-8-10V6z" /><path d="m8 12 2.5 2.5L16 9" /></>
+    : glyph === '₽' ? <><path d="M7 21V3h6a5 5 0 0 1 0 10H7M4 17h12" /></>
+    : <circle cx="12" cy="12" r="4" />}
+  </svg>;
+}
+
+
 function App() {
   const route = useRoute();
   const toast = useToast();
@@ -429,18 +452,18 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       </div>
       {!me && !route[0] && (
         <nav className="track-guest-tabbar" aria-label="Основные разделы TrakSOS">
-          <a href="#/" className="active" aria-current="page"><span aria-hidden="true">⌂</span>Главная</a>
-          <a href="#/login"><span aria-hidden="true">☷</span>Заявки</a>
-          <a href="#/login" className="help"><span aria-hidden="true">✚</span>Помощь</a>
-          <a href="#/register" onClick={() => { try { sessionStorage.setItem("traksos.pendingLandingAction","parts"); } catch {} }}><span aria-hidden="true">⚙</span>Запчасти</a>
-          <a href="#/login"><span aria-hidden="true">◉</span>Войти</a>
+          <a href="#/" className="active" aria-current="page"><span aria-hidden="true"><NavGlyph glyph="⌂" /></span>Главная</a>
+          <a href="#/login"><span aria-hidden="true"><NavGlyph glyph="☷" /></span>Заявки</a>
+          <a href="#/login" className="help"><span aria-hidden="true"><NavGlyph glyph="✚" /></span>Помощь</a>
+          <a href="#/register" onClick={() => { try { sessionStorage.setItem("traksos.pendingLandingAction","parts"); } catch {} }}><span aria-hidden="true"><NavGlyph glyph="⚙" /></span>Запчасти</a>
+          <a href="#/login"><span aria-hidden="true"><NavGlyph glyph="◉" /></span>Войти</a>
         </nav>
       )}
       {tabs.length > 0 && !(route[0] === 'work' && ['profile', 'docs'].includes(route[1] ?? '')) && !(route[0] === 'base' && route[1] === 'me') && (
         <nav className="tabbar">
           {tabs.map(([href, ic, name]) => (
             <a key={href} href={sandboxHref(href)} className={`${here === href || (href !== '/' && here.startsWith(href + '/') && href !== '/work' && href !== '/base') ? 'on' : ''} ${href === '/sos' ? 'sosTab' : ''}`}>
-              {href === '/sos' ? <><span className="ic">✚</span>{name}</> : <><span className="ic">{ic}</span>{name}</>}
+              {href === '/sos' ? <><span className="ic"><NavGlyph glyph="✚" /></span>{name}</> : <><span className="ic"><NavGlyph glyph={ic} /></span>{name}</>}
             </a>
           ))}
         </nav>
