@@ -5,6 +5,7 @@ import './trackPolish.css';
 import './trackSearch.css';
 import './trackReference.css';
 import './trackPhotos.css';
+import './trackMatch.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
@@ -311,7 +312,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   return (
     <div className={`app ${me ? "role-"+mode : "guest-app"}`}>
       <header className="top">
-        <span className="logo">Трак<b>SOS</b></span>
+        <span className="logo">Track<b>SOS</b></span>
         {me && mode === 'client' && <nav className="track-top-shortcuts" aria-label="Быстрый доступ">
           <a href="#/">Главная</a><a href="#/orders">Заявки</a><a href="#/sos">Помощь в дороге</a><a href="#/shop">Запчасти</a>
         </nav>}
@@ -464,7 +465,7 @@ function SiteFooter() {
           <button className="btn ghost small" onClick={() => { try { localStorage.setItem('traksos.cookie', '1'); } catch { /* */ } setCookieOk(true); }}>Понятно</button>
         </div>
       )}
-      <span className="logo">Трак<b>SOS</b></span>
+      <span className="logo">Track<b>SOS</b></span>
       <span className="note">{l?.tagline}</span>
       {req && <span className="note">{req}</span>}
       {l?.address && <span className="note">{l.address}</span>}
