@@ -242,7 +242,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       ? [['/moderation', '⚑', 'Модерация'], ['/support', '?', 'Обращения']]
     : mode === 'admin'
       ? [['/admin', '▦', 'Управление'], ['/admin/test-center', '▧', 'Кабинеты'], ['/admin/section/queue', '⚑', 'Модерация']]
-      : [['/', '🔧', 'Услуги'], ['/sos', '!', 'SOS'], ['/orders', '☰', 'Заявки'], ['/shop', '🛍', 'Магазин']];
+      : [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '!', 'Помощь'], ['/shop', '▧', 'Запчасти'], ['/profile', '◉', 'Кабинет']];
   // Все дополнительные функции доступны в шапке, даже когда они не в нижних вкладках.
   // Не показываем чужие роли и не создаём несуществующие страницы.
   const accountLinks: [string, string][] = mode === 'performer'
@@ -371,7 +371,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         <nav className="tabbar">
           {tabs.map(([href, ic, name]) => (
             <a key={href} href={sandboxHref(href)} className={`${here === href || (href !== '/' && here.startsWith(href + '/') && href !== '/work' && href !== '/base') ? 'on' : ''} ${href === '/sos' ? 'sosTab' : ''}`}>
-              {href === '/sos' ? <span className="sosDot">SOS</span> : <><span className="ic">{ic}</span>{name}</>}
+              {href === '/sos' ? <><span className="sosDot">SOS</span><span>Помощь</span></> : <><span className="ic">{ic}</span>{name}</>}
             </a>
           ))}
         </nav>
