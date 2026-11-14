@@ -907,3 +907,101 @@
     transform:scale(.91);
   }
 }
+
+
+/* TrakSOS approved header: functional icon-only search in the idle state.
+   The existing accessible search input and real section results remain intact.
+   This is a visual override; no route or business logic changes. */
+.guest-app:has(.public-landing) .track-site-search {
+  display:block !important;
+  position:relative;
+  z-index:85;
+  flex:0 0 44px !important;
+  width:44px !important;
+  height:44px;
+  min-width:44px !important;
+  max-width:44px !important;
+  margin:0 !important;
+}
+.guest-app:has(.public-landing) .track-site-search-wrap {
+  display:flex;
+  align-items:center;
+  width:44px;
+  min-height:44px;
+  padding:0 9px;
+  gap:8px;
+  overflow:hidden;
+  border-radius:50%;
+  cursor:pointer;
+  background:transparent;
+  box-shadow:none;
+}
+.guest-app:has(.public-landing) .track-site-search-icon {
+  display:block;
+  flex:0 0 24px;
+  font-size:25px;
+  text-align:center;
+}
+.guest-app:has(.public-landing) .track-site-search-shortcut {
+  display:none !important;
+}
+.guest-app:has(.public-landing) .track-site-search-wrap input[type="search"] {
+  flex:0 0 0;
+  width:0;
+  min-width:0;
+  opacity:0;
+  pointer-events:none;
+}
+.guest-app:has(.public-landing) .track-site-search:focus-within {
+  z-index:120;
+}
+.guest-app:has(.public-landing) .track-site-search:focus-within .track-site-search-wrap {
+  position:absolute;
+  top:0;
+  right:0;
+  z-index:121;
+  width:min(390px, calc(100vw - 24px));
+  padding:0 12px;
+  border-radius:12px;
+  overflow:visible;
+  background:linear-gradient(95deg,#0b2c46,#103650);
+  box-shadow:0 12px 30px #0009;
+}
+.guest-app:has(.public-landing) .track-site-search:focus-within .track-site-search-wrap input[type="search"] {
+  flex:1 1 auto;
+  width:100%;
+  min-width:0;
+  opacity:1;
+  pointer-events:auto;
+}
+.guest-app:has(.public-landing) .track-site-search-results {
+  left:auto;
+  right:0;
+  z-index:122;
+  width:min(390px, calc(100vw - 24px));
+}
+@media(max-width:899px) {
+  .guest-app:has(.public-landing) .top {
+    display:grid !important;
+    grid-template-columns:auto minmax(0, 1fr) 44px;
+    align-items:center !important;
+    column-gap:10px !important;
+    row-gap:16px !important;
+  }
+  .guest-app:has(.public-landing) .top .logo {
+    grid-column:1;
+    grid-row:1;
+  }
+  .guest-app:has(.public-landing) .track-site-search {
+    grid-column:3;
+    grid-row:1;
+    order:unset !important;
+  }
+  .guest-app:has(.public-landing) .top > .row {
+    grid-column:1 / -1;
+    grid-row:2;
+    min-width:0;
+    width:100%;
+    justify-content:flex-end;
+  }
+}
