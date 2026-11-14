@@ -233,6 +233,9 @@ export function createApp(d: Deps) {
     }),c.body);
     return warrantyRemediation.offer(c.user,c.params.id,p);
   });
+  r.post('/api/warranty-remedies/:id/client-approval', true, (c: AuthedCtx) =>
+    warrantyRemediation.clientApproval(c.user,c.params.id,
+      parse(z.object({approve:z.boolean()}),c.body).approve));
   r.post('/api/warranty-remedies/:id/respond', performerRoles, (c: AuthedCtx) =>
     warrantyRemediation.respond(c.user,c.params.id,
       parse(z.object({accept:z.boolean()}),c.body).accept));
