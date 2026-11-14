@@ -1,4 +1,4 @@
-// Actual Chromium geometry gate for the approved TrackSOS visual design.
+// Actual Chromium geometry gate for the approved TrakSOS visual design.
 // Guards against labels spilling out of illustrated tiles and fake/cropped
 // app visuals across phone and desktop sizes. Uses local CI fixture only.
 import { chromium } from 'playwright';

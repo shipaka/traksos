@@ -30,7 +30,7 @@ try{
     const page=await context.newPage();
     await page.goto(BASE+'/#/');
     await page.locator(css).click();
-    await page.getByRole('heading',{name:'Регистрация в ТракSOS'}).waitFor();
+    await page.getByRole('heading',{name:'Регистрация в TrakSOS'}).waitFor();
     const saved=await page.evaluate(()=>sessionStorage.getItem('traksos.pendingLandingAction'));
     if(saved!==destination)throw Error(css+' destination was lost: '+saved);
     await context.close();
@@ -38,7 +38,7 @@ try{
   const context=await browser.newContext({viewport:{width:390,height:844},locale:'ru-RU'});
   const page=await context.newPage();
   await page.goto(BASE+'/#/');
-  await page.getByRole('navigation',{name:'Основные разделы TrackSOS'})
+  await page.getByRole('navigation',{name:'Основные разделы TrakSOS'})
     .getByRole('link',{name:'Запчасти'}).click();
   await page.waitForURL(/#\/register$/);
   const nav=await page.evaluate(()=>sessionStorage.getItem('traksos.pendingLandingAction'));

@@ -72,7 +72,7 @@ async function run(width, height, mobile) {
     await page.screenshot({ path: OUT + '/home-' + suffix + '.png', fullPage: true });
 
     await page.goto(BASE + '/#/register');
-    await page.getByRole('heading', { name: /Регистрация в ТракSOS/ }).waitFor();
+    await page.getByRole('heading', { name: /Регистрация в TrakSOS/ }).waitFor();
     check(await page.getByRole('button', { name: 'Владелец / автопарк' }).isVisible(), 'Owner option missing');
     const driver = page.getByRole('button', { name: 'Водитель автопарка' });
     check(await driver.isVisible(), 'Driver option missing');
@@ -83,7 +83,7 @@ async function run(width, height, mobile) {
     await page.screenshot({ path: OUT + '/register-' + suffix + '.png', fullPage: true });
 
     await page.goto(BASE + '/#/join');
-    await page.getByRole('heading', { name: 'Работать с ТракSOS' }).waitFor();
+    await page.getByRole('heading', { name: 'Работать с TrakSOS' }).waitFor();
     for (const name of [
       'Я мастер', 'Я эвакуаторщик', 'Я рембаза (сервис)',
       'Мастер и своя СТО', 'Я представитель страховой компании'

@@ -1,4 +1,4 @@
-// TrackSOS: smoke-test the public interface in an actual Chromium browser.
+// TrakSOS: smoke-test the public interface in an actual Chromium browser.
 // This complements the code/design gate with working clicks and responsive layout.
 import { chromium } from 'playwright';
 
@@ -57,7 +57,7 @@ try {
     await page.goto(BASE + '/#/login');
     await page.getByRole('heading', { name: 'Вход по номеру телефона' }).waitFor();
     await page.goto(BASE + '/#/register');
-    await page.getByRole('heading', { name: 'Регистрация в ТракSOS' }).waitFor();
+    await page.getByRole('heading', { name: 'Регистрация в TrakSOS' }).waitFor();
     for (const label of ['Владелец / автопарк', 'Водитель автопарка',
       'Я мастер', 'Я эвакуаторщик', 'Я рембаза (сервис)',
       'Мастер и своя СТО', 'Я представитель страховой компании']) {
@@ -70,11 +70,11 @@ try {
       'Я рембаза (сервис)', 'Мастер и своя СТО',
       'Я представитель страховой компании']) {
       await page.getByRole('button', { name: label }).click();
-      await page.getByRole('heading', { name: 'Работать с ТракSOS' }).waitFor();
+      await page.getByRole('heading', { name: 'Работать с TrakSOS' }).waitFor();
       assert(await page.getByRole('button', { name: label }).getAttribute('aria-pressed') === 'true',
         width + 'px: registration category not selected: ' + label);
       await page.getByRole('button', { name: 'Назад к выбору кабинета' }).click();
-      await page.getByRole('heading', { name: 'Регистрация в ТракSOS' }).waitFor();
+      await page.getByRole('heading', { name: 'Регистрация в TrakSOS' }).waitFor();
     }
     assert(errors.length === 0, width + 'px: browser errors: ' + errors.join('; '));
     console.log('OK: viewport ' + width + 'px, 4 directions, approved assets, SOS/login/register, no overflow');
