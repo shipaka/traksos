@@ -50,6 +50,11 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const [insurerOnly, setInsurerOnly] = useState(false);
   const [agree, setAgree] = useState(false);
   const toast = useToast();
+  // Store only the navigation choice from the public tile, never client data.
+  const chooseGuestAction = (choice: string, next: Intent = 'help') => {
+    try { sessionStorage.setItem('traksos.pendingLandingAction', choice); } catch { /* private browsing */ }
+    setIntent(next);
+  };
   const [appealToken, setAppealToken] = useState<string | null>(null);
   const [appealText, setAppealText] = useState('');
   const [appealSent, setAppealSent] = useState(false);
@@ -101,11 +106,23 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
       let qr: string | null = null;
       try { qr = sessionStorage.getItem('traksos.qr'); } catch { /* */ }
       const roles: string[] = r.user?.roles ?? [];
+      const customer = roles.includes('client') || roles.includes('driver');
+      let pending: string | null = null;
+      try {
+        pending = sessionStorage.getItem('traksos.pendingLandingAction');
+        sessionStorage.removeItem('traksos.pendingLandingAction');
+      } catch { /* private browsing */ }
+      const selectedDestination: string | undefined = customer ? ({
+        van: '#/sos/master', tow: '#/new/tow', sto: '#/services',
+        consult: '#/new/consult', insurance: '#/insurance/request/new',
+        parts: '#/shop', inspection: '#/garage'
+      } as Record<string,string>)[pending ?? ''] : undefined;
       // Dual-role admins may choose a preferred workspace on their own device.
       // A new master registration still goes to the profile first.
       const preferredMode = (() => { try { return localStorage.getItem('traksos.mode'); } catch { return null; } })();
       const isAdminMaster = roles.includes('admin') && roles.includes('master');
       location.hash = qr ? '#/qr/' + qr
+        : selectedDestination && intent !== 'join' ? selectedDestination
         : intent === 'join' && role === 'insurer' ? '#/insurance'
         : intent === 'join' && role === 'service' ? '#/as/service'
         : intent === 'join' ? '#/work/profile'
@@ -138,7 +155,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
             <span><i aria-hidden="true">▤</i>Работа с юрлицами</span>
           </div>
           <div className="public-actions">
-            <button type="button" className="public-button public-button-sos" onClick={() => setIntent('help')}>SOS · Нужна помощь</button>
+            <button type="button" className="public-button public-button-sos" onClick={() => { try { sessionStorage.removeItem('traksos.pendingLandingAction'); } catch {} setIntent('help'); }}>SOS · Нужна помощь</button>
             <button type="button" className="public-button public-button-outline" onClick={() => document.getElementById('public-how')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>Как это работает?</button>
           </div>
 
@@ -158,7 +175,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
               ['consult', '☏', 'Консультация специалиста', 'Помощь по телефону'],
             ] as const).map(([id,icon,name,hint]) => (
               <button type="button" className={`public-service-tile public-service-${id}`}
-                key={name} onClick={() => setIntent('help')}>
+                key={name} onClick={() => chooseGuestAction(id)}>
                 <span className="public-service-icon" aria-hidden="true">{icon}</span>
                 <b>{name}</b><small>{hint}</small><span className="public-service-arrow" aria-hidden="true">›</span>
               </button>
@@ -191,17 +208,17 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
       </div>
 
       <div className="public-track-extras">
-        <button type="button" className="public-track-insurance" onClick={() => setIntent('register')}>
+        <button type="button" className="public-track-insurance" onClick={() => chooseGuestAction('insurance','register')}>
           <span className="public-track-insurance-art" aria-hidden="true" />
           <span><b>Страхование грузового транспорта</b>
           <small>ОСАГО, КАСКО, груз, ответственность — заявка через TrackSOS</small></span>
           <strong>Оформить заявку →</strong>
         </button>
         <div className="public-track-extras-grid">
-          <button type="button" className="public-track-extra public-track-parts" onClick={() => setIntent('register')}>
+          <button type="button" className="public-track-extra public-track-parts" onClick={() => chooseGuestAction('parts','register')}>
             <span className="public-track-extra-art" aria-hidden="true"/><b>Запчасти</b><small>Оригиналы и проверенные аналоги</small><span aria-hidden="true">›</span>
           </button>
-          <button type="button" className="public-track-extra public-track-inspection" onClick={() => setIntent('register')}>
+          <button type="button" className="public-track-extra public-track-inspection" onClick={() => chooseGuestAction('inspection','register')}>
             <span className="public-track-extra-art" aria-hidden="true"/><b>Техосмотр</b><small>Заявка на осмотр транспорта</small><span aria-hidden="true">›</span>
           </button>
           <button type="button" className="public-track-extra public-track-guide" onClick={() => document.getElementById('public-how')?.scrollIntoView({behavior:'smooth'})}>
