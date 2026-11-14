@@ -19,11 +19,11 @@ const LOCKED_ASSETS = {
   'web/public/traksos-final-hero.webp': 'bfce4ea62b859d80',
   'web/public/traksos-final-insurance.webp': '6cbcba4d541f4ddc',
   'web/public/traksos-final-parts.webp': '0531cbfd715179c3',
-  'android/app/src/main/res/mipmap-mdpi/ic_launcher.png': '08149a1f4aea8b62',
-  'android/app/src/main/res/mipmap-hdpi/ic_launcher.png': '371bbc4c29e4f9a5',
-  'android/app/src/main/res/mipmap-xhdpi/ic_launcher.png': '78e3982186506d31',
-  'android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png': '683d9f561cf1cca3',
-  'android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png': '6080014e8594b6b9',
+  'android/app/src/main/res/mipmap-mdpi/ic_launcher.png': '8325d8040b7a14f1',
+  'android/app/src/main/res/mipmap-hdpi/ic_launcher.png': '934c4448c5a758fd',
+  'android/app/src/main/res/mipmap-xhdpi/ic_launcher.png': '5022fec38cc1898d',
+  'android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png': '22456b8817e2a561',
+  'android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png': '70c666ed8cb09e6cb9',
   'web/public/tracksos-photo-master.webp': 'ba0572aa5c6341ef',
   'web/public/tracksos-photo-tow.webp': '1fdb913351585040',
   'web/public/tracksos-photo-sto.webp': '48e638e981108763',
@@ -77,7 +77,15 @@ await asset('android/app/src/main/res/mipmap-hdpi/ic_launcher.png', 1800);
 await asset('android/app/src/main/res/mipmap-xhdpi/ic_launcher.png', 2500);
 await asset('android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png', 3500);
 await asset('android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png', 5000);
-expect((await read('web/public/icon.svg')).trim() === (await read('branding/tracksos-rustore-icon.svg')).trim(), 'website favicon equals approved TrakSOS neon brand icon');
+await asset('web/public/icon-192.png', 5000);
+await asset('web/public/icon-512.png', 25000);
+await asset('branding/tracksos-rustore-icon.png', 25000);
+expect(createHash('sha256').update(await readFile('web/public/icon-512.png')).digest('hex') ===
+       createHash('sha256').update(await readFile('branding/tracksos-rustore-icon.png')).digest('hex'),
+  'RuStore and PWA 512 use the same owner-approved cinematic icon');
+expect((await read('web/index.html')).includes('icon-192.png') &&
+       (await read('web/public/manifest.webmanifest')).includes('icon-512.png'),
+  'browser favicon and PWA manifest use approved raster artwork');
 expect(css.includes("url('../public/tracksos-approved-scania-r520.webp')"), 'public hero uses approved Scania R520 crop');
 expect(landing.includes('src="/tracksos-approved-scania-r520.webp"'), 'app teaser uses same approved Scania R520');
 expect(css.includes("url('../public/tracksos-approved-map.webp')"), 'public demo map is a bundled image');
