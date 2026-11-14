@@ -749,7 +749,7 @@ export function createApp(d: Deps) {
     return centers.book(c.user, c.params.id, parse(z.object({
     vehicleId: z.string().uuid().nullable().optional(), need: z.string().max(20), day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
     time: z.string().max(20).nullable().optional(), arrival: z.enum(['self', 'tow']).default('self'), comment: z.string().max(500).nullable().optional(),
-    fromOrderId: z.string().uuid().nullable().optional(),
+    fromOrderId: z.string().uuid().nullable().optional(), caseOrderId: z.string().uuid().nullable().optional(),
   }), c.body));
   });
   r.get('/api/bookings', true, (c: AuthedCtx) => centers.myBookings(c.user));
