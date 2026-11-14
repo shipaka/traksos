@@ -527,6 +527,20 @@ test('recourse: voluntary acknowledged payment is attested once and is capped by
     assert.equal(got.recoveredKopecks,100000);
     assert.equal(got.remainingProposedKopecks,0);
     assert.equal(got.claimIsNotEnforceableDebt,true);
+    const finance=ok(await f.t.api('GET','/api/admin/warranty-finance/summary',
+      undefined,f.admin.token));
+    assert.equal(finance.actualPlatformExpenseKopecks,'120000');
+    assert.equal(finance.authorizedAlternativeBudgetKopecks,'150000');
+    assert.equal(finance.proposedRecourseKopecks,'100000');
+    assert.equal(finance.receivedVoluntaryRecoveryKopecks,'100000');
+    assert.equal(finance.netPlatformWarrantyCashOutflowKopecks,'20000');
+    assert.equal(finance.contractualGuaranteeReserveKopecks,null,
+      'no invented reserve rate in platform finance');
+    assert.equal(finance.reservePolicy,'not_approved');
+    assert.equal((await f.t.api('GET','/api/admin/warranty-finance/summary',
+      undefined,f.performer.token)).status,403);
+    assert.equal((await f.t.api('GET','/api/admin/warranty-finance/summary',
+      undefined,f.client.token)).status,403);
     assert.ok(!JSON.stringify(got).includes(proof.bankReference),
       'bank receipt reference is admin-only even in event timeline');
     const adminView=ok(await f.t.api('GET',`/api/warranty-recourse/${claim.id}`,
