@@ -6,7 +6,7 @@ if(!['localhost','127.0.0.1'].includes(new URL(BASE).hostname))
   throw Error('Insurance restriction UI smoke is restricted to localhost');
 const browser=await chromium.launch();
 try {
-  for (const wrongChoice of ['Владелец / автопарк','Я мастер']) {
+  for (const wrongChoice of ['Владелец / автопарк','Мастер']) {
     const ctx=await browser.newContext({viewport:{width:390,height:844},locale:'ru-RU'});
     const page=await ctx.newPage();
     const errors=[];
@@ -18,18 +18,21 @@ try {
         body:JSON.stringify({error:'insurer_only',message:
           'Этот номер закреплён за страховым агентом. Доступна только регистрация в страховом кабинете.'})});
     });
-    await page.goto(BASE+'/#/register');
-    if(wrongChoice==='Я мастер') await page.getByRole('button',{name:'Я мастер'}).click();
-    await page.getByRole('heading',{name:wrongChoice==='Я мастер'?'Работать с TrakSOS':'Регистрация в TrakSOS'}).waitFor();
-    if(wrongChoice==='Я мастер') await page.getByRole('button',{name:'Я мастер'}).waitFor();
+    const master=wrongChoice==='Мастер';
+    await page.goto(BASE+(master?' /#/join':'/#/register').trim());
+    await page.getByRole('heading',{name:master?'Работать с TrakSOS':'Регистрация в TrakSOS'}).waitFor();
+    if(master){
+      await page.getByRole('button',{name:'Мастер',exact:true}).click();
+      await page.getByRole('button',{name:'Электрик',exact:true}).click();
+    } else await page.getByRole('button',{name:'Владелец / автопарк',exact:true}).click();
     await page.locator('input[type=tel]').fill('+79990000444');
     await page.locator('input[type=checkbox]').check();
     await page.getByRole('button',{name:'Получить код'}).click();
     await page.getByRole('alert').getByText('Для этого номера доступен только страховой кабинет').waitFor();
-    if(requests.length!==1 || requests[0].accountType!==(wrongChoice==='Я мастер'?'master':'owner'))
+    if(requests.length!==1 || requests[0].accountType!==(master?'master':'owner'))
       throw Error('Wrong accountType was sent in SMS request '+JSON.stringify(requests));
     await page.getByRole('button',{name:'Перейти к регистрации страхового агента'}).click();
-    const insurerChoice=page.getByRole('button',{name:'Я представитель страховой компании'});
+    const insurerChoice=page.getByRole('button',{name:'Страховой агент',exact:true});
     await insurerChoice.waitFor();
     if(await insurerChoice.getAttribute('aria-pressed')!=='true')
       throw Error('The insurance-only suggestion did not choose the insurer role');
