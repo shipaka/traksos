@@ -693,3 +693,155 @@
 @media(prefers-reduced-motion:reduce){
   .app.role-client .desktop-home-aside .desktop-journey-links a{transition:none;}
 }
+
+
+/* TrackSOS motion language — native CSS, no remote fonts, videos or JS libraries.
+   Ambient depth for desktop, tactile direction cards on small screens. */
+.client-help-directions{position:relative;min-width:0;isolation:isolate;}
+.client-help-directions>h2{
+  margin:0 0 6px;color:#f5fbff;font-size:clamp(22px,2.5vw,31px);
+  line-height:1.15;letter-spacing:-.04em;
+}
+.client-help-directions .client-directions-lead{
+  font-size:13px;line-height:1.5;color:#b9d4e8;margin:0 0 15px;
+}
+.client-direction-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;}
+.client-direction-card{
+  position:relative;isolation:isolate;overflow:hidden;
+  display:flex;align-items:center;gap:15px;text-align:left;
+  min-width:0;min-height:122px;width:100%;
+  padding:20px;border:1px solid #3b6e8c;border-radius:20px;
+  background:radial-gradient(circle at 100% 0,rgba(62,215,236,.09),transparent 54%),
+    linear-gradient(137deg,#163b56,#0e293f);
+  box-shadow:0 12px 24px rgba(0,8,24,.16);
+  color:#f6faff;text-decoration:none;font:inherit;cursor:pointer;
+  transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease,background .22s ease;
+  animation:ts-cabinet-enter .34s both;
+}
+.client-direction-card:nth-child(2){animation-delay:.05s}
+.client-direction-card:nth-child(3){animation-delay:.10s}
+.client-direction-card:nth-child(4){animation-delay:.15s}
+.client-direction-card.main-direction{
+  border-color:#6b84a6;
+  background:radial-gradient(circle at 100% 0,rgba(229,61,153,.21),transparent 54%),
+    linear-gradient(137deg,#203856,#112c48);
+}
+.client-direction-card::before{
+  content:"";position:absolute;inset:0 0 auto 0;height:2px;z-index:-1;
+  background:linear-gradient(90deg,transparent,#60dcea 36%,#ee5ea6 70%,transparent);
+  transform:scaleX(0);opacity:0;
+  transition:transform .28s,opacity .28s;
+}
+.client-direction-symbol{
+  flex:0 0 auto;display:grid;place-items:center;
+  width:54px;height:54px;border-radius:17px;
+  color:#8aedf5;font-size:28px;font-weight:750;
+  border:1px solid rgba(96,226,243,.22);
+  background:linear-gradient(150deg,#194c68,#153550);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 7px 17px #0002;
+  transition:transform .24s,box-shadow .24s;
+}
+.client-direction-card.main-direction .client-direction-symbol{
+  color:#ff9ccd;background:linear-gradient(145deg,#65315c,#1b3a59);
+}
+.client-direction-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;}
+.client-direction-copy b{font-size:clamp(15px,1.4vw,18px);line-height:1.25;letter-spacing:-.02em;}
+.client-direction-copy small{color:#b7d2e3;font-size:12px;line-height:1.45;}
+.client-direction-arrow{flex-shrink:0;color:#89e9f3;font-size:25px;}
+.client-direction-card:hover,.client-direction-card:focus-visible,
+.client-direction-card[aria-expanded="true"]{
+  transform:translateY(-3px);border-color:#82e5f0;
+  box-shadow:0 17px 32px rgba(0,8,22,.30),0 0 22px rgba(85,202,233,.10);
+}
+.client-direction-card:hover::before,.client-direction-card:focus-visible::before,
+.client-direction-card[aria-expanded="true"]::before{transform:scaleX(1);opacity:1;}
+.client-direction-card:hover .client-direction-symbol,
+.client-direction-card:focus-visible .client-direction-symbol{
+  transform:scale(1.07);box-shadow:0 0 17px rgba(71,214,239,.22);
+}
+.client-direction-card:focus-visible,.client-specialization-card:focus-visible{
+  outline:2px solid #92f2fb;outline-offset:3px;
+}
+.client-specializations{
+  border:1px solid #4e7f99;border-radius:20px;padding:20px;
+  margin-top:13px;background:linear-gradient(135deg,#173b54,#0c293f);
+  box-shadow:0 14px 33px #0002;
+  animation:ts-cabinet-enter .29s both;
+}
+.client-specializations h3{margin:0 0 7px;color:#fff;font-size:19px;}
+.client-specializations p{color:#bfdae8;font-size:12px;margin:0 0 13px;line-height:1.5;}
+.client-specialization-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;}
+.client-specialization-card{
+  position:relative;min-width:0;display:flex;flex-direction:column;gap:5px;
+  padding:14px 31px 14px 14px;min-height:73px;text-decoration:none;
+  border:1px solid #436c85;border-radius:13px;
+  background:#12334c;color:#f3fbff;
+  transition:border-color .18s,background .18s,transform .18s;
+}
+.client-specialization-card b{font-size:13px;line-height:1.3;}
+.client-specialization-card small{font-size:11px;color:#b2d1e1;line-height:1.4;}
+.client-specialization-card>span{position:absolute;right:13px;top:35%;font-size:21px;color:#82e8f5;}
+.client-specialization-card:hover{transform:translateY(-2px);background:#1a4764;border-color:#6bd7e8;}
+@keyframes ts-cabinet-enter{
+  from{opacity:0;transform:translate3d(0,9px,0)}
+  to{opacity:1;transform:translate3d(0,0,0)}
+}
+@keyframes ts-ambient-pulse{
+  0%,100%{opacity:.28;transform:scale(1) translate3d(0,0,0)}
+  50%{opacity:.55;transform:scale(1.06) translate3d(-1%,1%,0)}
+}
+@keyframes ts-sos-breathe{
+  0%,84%,100%{box-shadow:0 8px 22px rgba(155,9,77,.25)}
+  90%{box-shadow:0 8px 25px rgba(226,38,124,.46),0 0 0 5px rgba(241,73,147,.13)}
+}
+@media(min-width:900px){
+  .app.role-client .desktop-content>main.client-home{max-width:1500px;}
+  .app.role-client .client-home .desktop-home-columns{
+    grid-template-columns:minmax(0,1.75fr) minmax(260px,.85fr);
+    gap:clamp(15px,2vw,28px);
+  }
+  .app.role-client .client-home .desktop-home-aside{
+    position:relative;isolation:isolate;
+  }
+  .app.role-client .client-home .desktop-hero::before{
+    content:"";position:absolute;z-index:0;inset:-30% -15% -30% 50%;
+    background:radial-gradient(ellipse at 70% 48%,rgba(47,189,225,.25),transparent 53%);
+    animation:ts-ambient-pulse 12s ease-in-out infinite;pointer-events:none;
+  }
+  .app.role-client .client-home .client-hero-art{position:relative;z-index:1;}
+  .app.role-client .client-home .desktop-hero-copy{position:relative;z-index:1;}
+  .app[class*="role-"] .desktop-layout{
+    background-image:radial-gradient(ellipse at 88% 18%,rgba(42,170,210,.05),transparent 32%),
+      radial-gradient(ellipse at 26% 89%,rgba(209,41,122,.045),transparent 41%);
+  }
+}
+@media(max-width:899px){
+  .client-help-directions>h2{font-size:23px;}
+  .client-direction-grid{grid-template-columns:1fr;gap:10px;}
+  .client-direction-card{min-height:84px;padding:13px 15px;gap:13px;border-radius:16px;}
+  .client-direction-symbol{width:46px;height:46px;border-radius:13px;font-size:23px;}
+  .client-direction-copy{gap:4px;}
+  .client-direction-copy b{font-size:15px;}
+  .client-direction-copy small{font-size:11px;}
+  .client-specializations{padding:15px;border-radius:16px;}
+  .client-specialization-grid{grid-template-columns:1fr;}
+  .app.role-client .tabbar .sosTab{
+    animation:ts-sos-breathe 8s ease-out infinite;
+  }
+}
+@media(prefers-reduced-data:reduce){
+  .client-direction-card,.client-specializations,
+  .app.role-client .client-home .desktop-hero::before,.app.role-client .tabbar .sosTab{
+    animation:none!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .client-direction-card,.client-specializations,
+  .app.role-client .client-home .desktop-hero::before,.app.role-client .tabbar .sosTab{
+    animation:none!important;
+  }
+  .client-direction-card,.client-direction-card::before,.client-direction-symbol,
+  .client-specialization-card{transition:none!important;}
+  .client-direction-card:hover,.client-direction-card:focus-visible,
+  .client-specialization-card:hover{transform:none!important;}
+}
