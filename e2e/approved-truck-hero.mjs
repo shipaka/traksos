@@ -87,6 +87,8 @@ try{
     await master.click();
     if(await master.getAttribute('aria-expanded')!=='true')
       throw Error(width+'px: master specialties did not expand');
+    if(await directions.count()!==1)
+      throw Error(width+'px: unrelated directions must hide after choosing master');
     if(await page.locator('.client-specialization-card').count()!==5)
       throw Error(width+'px: five master specializations missing');
     await page.emulateMedia({reducedMotion:'reduce'});
