@@ -194,9 +194,10 @@ class MainActivity : AppCompatActivity() {
             insets
         }
         root.addView(web, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
-        startupOverlay = createStartupOverlay()
+        startupOverlay = SeasonalStartupOverlay.build(this)
         root.addView(startupOverlay, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
         setContentView(root)
+        SeasonalStartupOverlay.refreshFromYandex(this, startupOverlay)
 
         web.settings.apply {
             javaScriptEnabled = true
@@ -372,76 +373,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
-    /** Лёгкая заставка: показывается ТОЛЬКО пока WebView загружает и проверяет сайт.
-     * Дизайн ориентирован на согласованный первый splash-концепт:
-     * navy + magenta, логотип и индикатор, без лишних запросов к серверу.
-     * Локальный ресурс splash_truck.webp — адаптация грузовика из утверждённого референса,
-     * доступна без интернета. Логотип и индикатор рисуются нативно поверх фотографии.
-     */
-    private fun createStartupOverlay(): View {
-        val screen = FrameLayout(this)
-        screen.background = GradientDrawable(
-            GradientDrawable.Orientation.TL_BR,
-            intArrayOf(Color.rgb(4, 19, 36), Color.rgb(9, 33, 60), Color.rgb(30, 17, 43))
-        )
-        val density = resources.displayMetrics.density
-        val art = ImageView(this)
-        art.setImageResource(R.drawable.splash_truck)
-        art.scaleType = ImageView.ScaleType.CENTER_CROP
-        art.contentDescription = "Брендированный грузовик TrakSOS в Санкт-Петербурге"
-        val artParams = FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT,
-            (resources.displayMetrics.heightPixels * 0.56f).toInt(),
-            Gravity.BOTTOM
-        )
-        artParams.bottomMargin = (63 * density).toInt()
-        screen.addView(art, artParams)
-
-        val stack = LinearLayout(this)
-        stack.orientation = LinearLayout.VERTICAL
-        stack.gravity = Gravity.CENTER_HORIZONTAL
-        val container = FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT
-        )
-        container.gravity = Gravity.TOP
-        container.topMargin = (resources.displayMetrics.heightPixels * 0.12f).toInt()
-        container.leftMargin = (28 * density).toInt()
-        container.rightMargin = container.leftMargin
-
-        val title = TextView(this)
-        val brand = SpannableString("TrakSOS")
-        brand.setSpan(ForegroundColorSpan(Color.rgb(0, 215, 235)), 5, 8, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        title.text = brand
-        title.textSize = 37f
-        title.typeface = Typeface.create("sans-serif-black", Typeface.BOLD_ITALIC)
-        title.setTextColor(Color.WHITE)
-        title.gravity = Gravity.CENTER
-        stack.addView(title)
-
-        val subtitle = TextView(this)
-        subtitle.text = "Помощь грузовику в дороге"
-        subtitle.textSize = 16f
-        subtitle.setTextColor(Color.rgb(208, 224, 240))
-        subtitle.gravity = Gravity.CENTER
-        val subLayout = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-        subLayout.topMargin = (14 * resources.displayMetrics.density).toInt()
-        stack.addView(subtitle, subLayout)
-
-        val progress = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal)
-        progress.isIndeterminate = true
-        progress.progressTintList = ColorStateList.valueOf(Color.rgb(255, 27, 121))
-        progress.indeterminateTintList = ColorStateList.valueOf(Color.rgb(255, 27, 121))
-        val progressLayout = LinearLayout.LayoutParams((185 * resources.displayMetrics.density).toInt(), (5 * resources.displayMetrics.density).toInt())
-        progressLayout.gravity = Gravity.CENTER
-        screen.addView(stack, container)
-        val progressAtBottom = FrameLayout.LayoutParams(
-            (190 * density).toInt(), (5 * density).toInt(), Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-        )
-        progressAtBottom.bottomMargin = (38 * density).toInt()
-        screen.addView(progress, progressAtBottom)
-        return screen
-    }
 
     private fun hideStartupOverlay() {
         startupOverlay?.visibility = View.GONE
