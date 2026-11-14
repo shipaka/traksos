@@ -150,8 +150,12 @@ test('СТО как этап SOS после эвакуации: связь ес�
   // Isolate the workshop continuation contract after delivery. The tow stage
   // has its own bill; workshop pricing must never be merged into the tow bid.
   await t.db.query(`update orders set status='completed', completed_at=now() where id=$1`, [tow.id]);
-  const bookingBody = { vehicleId, need: 'electric', day: today(), arrival: 'tow', caseOrderId: tow.id };
+  // Intentionally omit vehicleId: the booking must still use the exact truck
+  // from the completed tow, even if the customer skips the garage selector.
+  const bookingBody = { need: 'electric', day: today(), arrival: 'tow', caseOrderId: tow.id };
   const b = ok(await t.api('POST', `/api/services/${centerId}/book`, bookingBody, client.token));
+  assert.equal(b.vehicleId, vehicleId);
+  assert.equal(b.vehicle.brand, 'DAF');
   assert.equal(b.caseRootId, tow.id);
   assert.equal(b.fromOrder, false, 'case continuation is NOT a master referral');
   assert.equal((await t.api('POST', `/api/services/${centerId}/book`, bookingBody, client.token)).body.error, 'continuation_exists');
