@@ -37,8 +37,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: npm
-      - run: npm ci
+      - run: npm install --no-audit --no-fund
       - name: Create disposable test database
         run: psql -h 127.0.0.1 -U postgres -c "create database traksos_load_test"
       - name: Exactly 200 real isolated accounts and mixed simultaneous workflows
