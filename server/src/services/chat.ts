@@ -17,10 +17,12 @@ export const QUICK_REPLIES = [
 
 export function quickRepliesFor(service: string, status: string, actor: string | null): string[] {
   if (['completed', 'cancelled', 'no_performer'].includes(status) || !actor || actor === 'admin') return [];
-  if (service === 'consult') return CONSULT_QUICK_REPLIES;
+  // Once the specialist has finished, only confirmation-related prompts
+  // remain, including after a *telephone* consultation.
   if (status === 'awaiting_confirmation') return actor === 'client'
     ? ['Есть вопрос по сумме', 'Позвоните мне через приложение']
     : ['Проверьте, пожалуйста, сумму', 'Позвоните мне через приложение'];
+  if (service === 'consult') return CONSULT_QUICK_REPLIES;
   if (actor === 'performer') return ['accepted', 'en_route'].includes(status)
     ? ['Буду через 10 минут', 'Задерживаюсь, извините', 'Позвоните мне через приложение']
     : ['Нет связи, пишите сюда', 'Позвоните мне через приложение'];
@@ -68,7 +70,7 @@ export class ChatService {
     const o = await this.orders.mustSee(user, orderId);
     const actor = this.orders.actorOf(user, o);
     if (!actor) throw bad('not_participant', 'Писать могут только участники заявки');
-    if (['completed', 'cancelled'].includes(o.status))
+    if (['completed', 'cancelled', 'no_performer'].includes(o.status))
       throw conflict('chat_closed', 'Диалог завершён. История доступна для просмотра, новое сообщение отправить нельзя');
     const text = body.trim().slice(0, 2000);
     if (!text) throw bad('empty', 'Пустое сообщение');
@@ -81,7 +83,7 @@ export class ChatService {
     const m = await this.db.one(
       `insert into chat_messages(order_id, sender_id, kind, body, masked, flagged)
        select o.id, $2, $3, $4, $5, $6 from orders o
-       where o.id=$1 and o.status not in ('completed', 'cancelled')
+       where o.id=$1 and o.status not in ('completed', 'cancelled', 'no_performer')
        for update of o
        returning id::int as id, order_id, sender_id, kind, body, masked, created_at`,
       [orderId, user.id, kind, safe, masked, flagged],

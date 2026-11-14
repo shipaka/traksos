@@ -642,3 +642,24 @@
   .case-stage-list>li{align-items:flex-start;flex-direction:column;}
   .case-stage-list>li>b{max-width:none;text-align:left;}
 }
+
+/* SOS selected route must remain a vertical conversation on PC as well.
+   It is also a direct .stack child and must not inherit the two-column
+   SOS shortcut grid from earlier global styles. */
+.app.role-client .client-sos-page>.client-sos-selected{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:14px;
+  width:100%;
+}
+.app.role-client .client-sos-selected>.client-sos-master-services{
+  display:grid;
+  width:100%;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+}
+@media(max-width:899px){
+  .app.role-client .client-sos-selected>.client-sos-master-services{
+    grid-template-columns:minmax(0,1fr);
+  }
+}

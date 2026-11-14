@@ -39,6 +39,8 @@ test('one SOS incident has independently priced stages; duplicate and foreign co
   const beforeTow = ok(await t.api('GET', `/api/orders/${id}`, undefined, client.token));
   assert.equal(beforeTow.canContinueWithTow, true);
   const repairCost = beforeTow.money.total;
+  const history = ok(await t.api('GET', '/api/orders?as=client', undefined, client.token));
+  assert.equal(history.find((o: any) => o.id === id).money.total, repairCost, 'archive total must equal the exact order total');
 
   const linked = ok(await t.api('POST', '/api/orders', next, client.token)).order;
   assert.equal(linked.continuationOf, id);
@@ -56,4 +58,15 @@ test('one SOS incident has independently priced stages; duplicate and foreign co
   assert.equal(source.caseSummary.stages[1].id, linked.id);
   assert.equal(source.caseSummary.confirmedTotal, repairCost);
   assert.equal((await t.api('GET', `/api/orders/${id}`, undefined, outsider.token)).status, 403);
+});
+
+test('when no performer accepted, chat stays read-only even via direct API', async () => {
+  const attempt = ok(await t.api('POST', '/api/orders', {
+    service: 'electric', zoneId: 'spb', description: 'Нужна проверка электрооборудования',
+    brand: 'DAF', paymentMethod: 'cash',
+  }, client.token)).order;
+  await t.db.query(`update orders set status='no_performer' where id=$1`, [attempt.id]);
+  const chat = ok(await t.api('GET', `/api/orders/${attempt.id}/messages`, undefined, client.token));
+  assert.deepEqual(chat.quickReplies, []);
+  assert.equal((await t.api('POST', `/api/orders/${attempt.id}/messages`, { body: 'Слишком поздно' }, client.token)).body.error, 'chat_closed');
 });
