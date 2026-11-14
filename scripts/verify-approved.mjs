@@ -15,6 +15,11 @@ const LOCKED_ASSETS = {
   // New 14 November branded high-resolution portrait with correct Scania grille and TrakSOS trailer.
   'web/public/tracksos-approved-scania-r520.webp': '8f5161004a18746f',
   'web/public/tracksos-approved-map.webp': '994097c8c01b2c80',
+  'android/app/src/main/res/mipmap-mdpi/ic_launcher.png': '08149a1f4aea8b62',
+  'android/app/src/main/res/mipmap-hdpi/ic_launcher.png': '371bbc4c29e4f9a5',
+  'android/app/src/main/res/mipmap-xhdpi/ic_launcher.png': '78e3982186506d31',
+  'android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png': '683d9f561cf1cca3',
+  'android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png': '6080014e8594b6b9',
   'web/public/tracksos-photo-master.webp': 'ba0572aa5c6341ef',
   'web/public/tracksos-photo-tow.webp': '1fdb913351585040',
   'web/public/tracksos-photo-sto.webp': '48e638e981108763',
@@ -58,6 +63,12 @@ await asset('web/public/tracksos-photo-sto.webp', 30000);
 await asset('web/public/tracksos-photo-consult.webp', 30000);
 await asset('web/public/tracksos-approved-scenic-hero.webp', 50000);
 await asset('android/app/src/main/res/drawable-nodpi/splash_truck.webp', 2000);
+await asset('android/app/src/main/res/mipmap-mdpi/ic_launcher.png', 1200);
+await asset('android/app/src/main/res/mipmap-hdpi/ic_launcher.png', 1800);
+await asset('android/app/src/main/res/mipmap-xhdpi/ic_launcher.png', 2500);
+await asset('android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png', 3500);
+await asset('android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png', 5000);
+expect((await read('web/public/icon.svg')).trim() === (await read('branding/tracksos-rustore-icon.svg')).trim(), 'website favicon equals approved TrakSOS neon brand icon');
 expect(css.includes("url('../public/tracksos-approved-scania-r520.webp')"), 'public hero uses approved Scania R520 crop');
 expect(landing.includes('src="/tracksos-approved-scania-r520.webp"'), 'app teaser uses same approved Scania R520');
 expect(css.includes("url('../public/tracksos-approved-map.webp')"), 'public demo map is a bundled image');
