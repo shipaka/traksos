@@ -122,6 +122,11 @@ export function Sos() {
               <span aria-hidden="true">↗</span>
             </button>
           ))}
+          <a href="#/new/consult" className="client-sos-consult-link">
+            <span className="client-sos-choice-icon" aria-hidden="true">☏</span>
+            <span><b>Консультация</b><small>Помощь специалиста по телефону, без выезда</small></span>
+            <span aria-hidden="true">↗</span>
+          </a>
         </section>
       ) : (
         <section className="client-sos-selected">
@@ -149,7 +154,7 @@ export function Sos() {
           </>}
         </section>
       )}
-      <div className="client-sos-secondary"><span>Не знаете, кто нужен?</span><a href="#/new/consult">Консультация по телефону →</a></div>
+      {direction && <div className="client-sos-secondary"><span>Не знаете, кто нужен?</span><a href="#/new/consult">Консультация по телефону →</a></div>}
       <MyPlace />
     </main>
   );
