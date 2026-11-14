@@ -62,6 +62,9 @@ for (const [width,height] of [[390,844],[1440,900]]) {
     }));
     if (state.scrollWidth>state.width+3)throw Error('Dashboard horizontal overflow: '+JSON.stringify(state));
     if (errors.length)throw Error('Dashboard JS error: '+errors.join(' | '));
+    // Footer cookie consent scrolls the document; reset so viewport screenshots start at the real top.
+    await page.evaluate(()=>{window.scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0;});
+    await page.waitForTimeout(120);
     await page.screenshot({path:OUT+'/client-dashboard-'+width+'-viewport.png',fullPage:false});
     await page.screenshot({path:OUT+'/client-dashboard-'+width+'.png',fullPage:true});
 
