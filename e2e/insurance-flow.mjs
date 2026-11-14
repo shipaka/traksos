@@ -116,10 +116,10 @@ try{
   await clientPage.getByRole('button',{name:'Продолжить'}).click();
   await clientPage.getByLabel('Фамилия').fill('Иванов');
   await clientPage.getByLabel('Имя',{exact:true}).fill('Иван');
+  await clientPage.getByRole('button',{name:'Продолжить'}).click();
   await clientPage.getByLabel('VIN / номер рамы *').fill('XLRTE47XS0E123456');
   await clientPage.getByRole('button',{name:'Продолжить'}).click();
   await clientPage.locator('input[type=checkbox]').last().check();
-  await clientPage.getByRole('button',{name:'Продолжить'}).click();
   await clientPage.screenshot({path:OUT+'/client-application.png',fullPage:true});
   await clientPage.getByRole('button',{name:'Отправить заявку страховому агенту'}).click();
   await clientPage.waitForURL(/#\/insurance\/request\/[0-9a-f-]{36}$/,{timeout:15000});
