@@ -345,7 +345,8 @@ export function createApp(d: Deps) {
       meet: z.string().max(60).optional(), state: z.enum(['free', 'loading', 'other_work']).optional(),
       when: z.enum(['now', 'today', 'tomorrow']).optional(), time: z.string().max(20).optional(),
     }).optional(),
-  }), c.body));
+  }), c.body), typeof c.headers['idempotency-key'] === 'string'
+      ? c.headers['idempotency-key'] : undefined);
   });
   r.get('/api/performer/standing', performerRoles, (c: AuthedCtx) => standing.standing(c.user));
   r.get('/api/performer/nearby', performerRoles, (c: AuthedCtx) => standing.nearby(c.user));
