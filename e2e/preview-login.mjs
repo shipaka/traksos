@@ -72,7 +72,7 @@ try {
         await page.getByRole('button',{name:'Моя СТО',exact:true}).click();
         await page.getByRole('link',{name:'Открыть полный тестовый кабинет СТО'}).waitFor();
         await page.screenshot({path:'e2e/shots/sandbox/'+id+'-'+width+'.png',fullPage:true});
-        await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
+        await page.getByRole('link',{name:'← Все кабинеты'}).first().click();
       } else {
         const cabinetLabel=id==='owner'?'Владелец автопарка':label;
         await page.getByRole('main',{name:'Тестовый кабинет: '+cabinetLabel}).waitFor();
