@@ -117,6 +117,7 @@ try{
   await clientPage.getByLabel('Фамилия').fill('Иванов');
   await clientPage.getByLabel('Имя',{exact:true}).fill('Иван');
   await clientPage.getByRole('button',{name:'Продолжить'}).click();
+  await clientPage.getByLabel('Автомобиль из гаража (необязательно)').selectOption(truck.id);
   await clientPage.getByLabel('VIN / номер рамы *').fill('XLRTE47XS0E123456');
   await clientPage.getByRole('button',{name:'Продолжить'}).click();
   await clientPage.locator('input[type=checkbox]').last().check();
