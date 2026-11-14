@@ -974,7 +974,7 @@ export function createApp(d: Deps) {
     }
   }
 
-  return { handle, hub, auth, settings, orders, payments, auction, documents, admin, profiles, chat, reviews, offers, notifier, privacy, ops, router: r };
+  return { handle, hub, auth, settings, orders, payments, auction, documents, admin, support, profiles, chat, reviews, offers, notifier, privacy, ops, router: r };
 }
 
 export type App = ReturnType<typeof createApp>;
