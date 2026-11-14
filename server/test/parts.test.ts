@@ -86,6 +86,8 @@ test('неверный id в адресе — 404, а не ошибка серв
   assert.equal(l.brand, 'TrakSOS');
   ok(await t.api('PUT', '/api/admin/settings/legal', { entity: 'ИП Тестов Т. Т.', inn: '780000000000' }, admin.token));
   assert.equal(ok(await t.api('GET', '/api/legal')).entity, 'ИП Тестов Т. Т.');
+  ok(await t.api('PUT', '/api/admin/settings/legal', { brand: 'InvalidBrand' }, admin.token));
+  assert.equal(ok(await t.api('GET', '/api/legal')).brand, 'TrakSOS');
 });
 
 test('мастера рядом до вызова: сколько на линии и кто ближе — без контактов', async () => {
