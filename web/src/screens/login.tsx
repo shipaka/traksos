@@ -332,8 +332,10 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           </div>}
           {intent === 'join' && <div className="stack">
             {JOIN_ROLES.map((r) => (
-              <button key={r.id} type="button" className="opt" aria-pressed={role === r.id} onClick={() => setRole(r.id)}>
-                <b>{r.name}</b><small>{r.hint}</small>
+              <button key={r.id} type="button" className="opt" aria-pressed={role === r.id}
+                aria-label={r.name} aria-describedby={'join-role-hint-' + r.id}
+                onClick={() => setRole(r.id)}>
+                <b>{r.name}</b><small id={'join-role-hint-' + r.id}>{r.hint}</small>
               </button>
             ))}
             {role === 'master' && <div className="guest-master-specialties" role="group" aria-label="Специализация мастера">
