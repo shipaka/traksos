@@ -76,10 +76,7 @@ const DEMO_ROLES:RoleInfo[] = [
     metrics:['1','4','2'],activity:['Новый запрос на проверку','Тестовый магазин остаётся закрытым'],
     features:[['▦','Работа сервиса','Контроль заявок и партнёров'],['▤','Магазин','Подготовка грузовых запчастей'],['▥','Статистика','Нагрузка и динамика заявок']]},
 ];
-// Operator opens a full, isolated inspection workspace instead of the compact training mock.
-const rolePath = (id:DemoRole)=>id==='inspection'
-  ? '#/admin/test-center/insurer/inspections'
-  : '#/admin/test-center/'+id;
+const rolePath = (id:DemoRole)=>'#/admin/test-center/'+id;
 const initialTickets=(r:RoleInfo):Ticket[]=>[
   {id:1,title:r.task,status:'Новая'},
   {id:2,title:'Контроль: '+r.section,status:'В работе'},
