@@ -394,7 +394,7 @@ export class ServiceCenters {
     if (p.caseOrderId && p.fromOrderId) throw bad('bad_link', 'Выберите одно продолжение обращения');
     let caseRootId: string | null = null;
     if (p.caseOrderId) {
-      const previous = await this.db.one<any>('select id, case_root_id, client_id, created_by, vehicle_id, status, result, service from orders where id=$1', [p.caseOrderId]);
+      const previous = await this.db.one<any>('select id, case_root_id, client_id, created_by, vehicle_id, brand, model, year, status, result, service from orders where id=$1', [p.caseOrderId]);
       if (!previous || previous.client_id !== clientId || (user.owner_id && previous.created_by !== user.id))
         throw forbidden('Продолжить можно только собственное обращение');
       if (previous.status !== 'completed' ||
@@ -402,6 +402,21 @@ export class ServiceCenters {
         throw conflict('stage_not_ready', 'Сначала завершите текущий этап помощи');
       if (previous.vehicle_id && p.vehicleId && previous.vehicle_id !== p.vehicleId)
         throw bad('different_vehicle', 'Запись должна относиться к тому же грузовику');
+      if (!previous.vehicle_id && p.vehicleId)
+        throw bad('different_vehicle', 'Для продолжения используйте грузовик из исходного обращения');
+      if (previous.vehicle_id && !p.vehicleId) {
+        // Link the exact same garage vehicle, even if the user never reopened the picker.
+        const v = await this.db.one<any>('select * from vehicles where id=$1 and owner_id=$2', [previous.vehicle_id, clientId]);
+        if (!v || (user.owner_id && v.driver_id !== user.id))
+          throw forbidden('Машина этого обращения недоступна для записи');
+        p = { ...p, vehicleId: previous.vehicle_id };
+        vehicle = { brand: v.brand, model: v.model, year: v.year, plate: v.plate, trailerPlate: v.trailer_plate };
+      }
+      if (!previous.vehicle_id) {
+        // Incidents created before the truck was added to a garage still retain
+        // the brand/model/year snapshot in the following workshop booking.
+        vehicle = { brand: previous.brand ?? null, model: previous.model ?? null, year: previous.year ?? null };
+      }
       caseRootId = previous.case_root_id ?? previous.id;
     }
     let fromOrderId: string | null = null;
