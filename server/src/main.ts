@@ -94,6 +94,7 @@ for (const sig of ['SIGINT', 'SIGTERM'] as const) {
     clearInterval(timer);
     clearInterval(hourly);
     clearInterval(captureTimer);
+    clearInterval(supportSlaTimer);
     server.close();
     await db.close();
     process.exit(0);
