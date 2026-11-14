@@ -1,0 +1,683 @@
+/* FINAL TrakSOS CANON — approved owner's single desktop 1672x941 PNG.
+   This layer must remain LAST. It styles real, clickable DOM controls; it is
+   never a pasted screenshot or a replacement for role business logic. */
+
+.guest-app:has(.public-landing) {
+  max-width:none !important;
+  width:100% !important;
+  background:#06182b;
+}
+.guest-app:has(.public-landing) .desktop-layout {
+  display:block !important;
+  width:100% !important;
+  max-width:none !important;
+}
+.guest-app:has(.public-landing) .desktop-sidebar {
+  display:none !important; /* final desktop uses a HORIZONTAL PUBLIC NAV */
+}
+.guest-app:has(.public-landing) .desktop-content {
+  margin:0 !important;
+  width:100% !important;
+  max-width:none !important;
+  padding:0 !important;
+}
+.guest-app:has(.public-landing) .desktop-content > main.public-landing {
+  width:100% !important;
+  max-width:none !important;
+  padding:0 12px 45px !important;
+  margin:0 !important;
+  background:#07192d;
+}
+.guest-app:has(.public-landing) .top {
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:clamp(8px,1.1vw,19px) !important;
+  padding:12px clamp(16px,3vw,64px) !important;
+  min-height:70px !important;
+  width:100% !important;
+  background:#051729 !important;
+  border-bottom:1px solid #234768 !important;
+}
+.guest-app:has(.public-landing) .top .logo {
+  flex:0 0 auto;
+  font-weight:900;
+  font-size:clamp(24px,2.45vw,38px) !important;
+  line-height:1;
+  font-style:italic;
+  font-family:Arial,system-ui,sans-serif !important;
+  color:#fff;
+  letter-spacing:-.065em;
+  white-space:nowrap;
+  margin-right:clamp(4px,1.1vw,17px);
+}
+.guest-app:has(.public-landing) .top .logo b {
+  color:#12d8fa !important;
+}
+.guest-app .guest-site-nav {
+  display:flex;
+  align-items:center;
+  gap:clamp(10px,1.45vw,25px);
+  min-width:0;
+  flex:1 1 auto;
+}
+.guest-app .guest-site-nav a {
+  color:#f0f7ff;
+  font-size:clamp(11px,.93vw,15px);
+  font-weight:700;
+  text-decoration:none;
+  white-space:nowrap;
+  padding:7px 0;
+  border-bottom:2px solid transparent;
+  transition:color .18s ease,border-color .18s ease;
+}
+.guest-app .guest-site-nav a:hover,
+.guest-app .guest-site-nav a:focus-visible {
+  color:#3de8fb;
+  border-color:#3de8fb;
+}
+.guest-app:has(.public-landing) .track-site-search {
+  flex:0 1 145px !important;
+  min-width:64px !important;
+  max-width:170px;
+  margin:0 !important;
+}
+.guest-app:has(.public-landing) .track-site-search input {
+  font-size:11px !important;
+}
+.guest-app:has(.public-landing) .guest-header-actions {
+  display:flex !important;
+  align-items:center;
+  gap:10px;
+  white-space:nowrap;
+}
+.guest-app:has(.public-landing) .guest-header-actions a {
+  border-radius:12px !important;
+  padding:10px 15px !important;
+  font-weight:750 !important;
+  font-size:13px !important;
+}
+.guest-app:has(.public-landing) .guest-header-actions a.register {
+  background:#0dd8f0 !important;
+  color:#052137 !important;
+  border-color:#37f2ff !important;
+}
+.guest-app .public-landing .public-landing-head {display:none !important;}
+
+/* One uninterrupted cinematic desktop hero: copy on left, approved
+   photographic, correctly branded real truck on right, no clipping. */
+.guest-app .public-landing .public-brand-hero {
+  display:flex !important;
+  align-items:center !important;
+  position:relative;
+  isolation:isolate;
+  min-height:clamp(365px,29vw,460px) !important;
+  padding:34px clamp(28px,4vw,70px) !important;
+  border-radius:0 0 8px 8px !important;
+  border:0 !important;
+  background:
+    radial-gradient(ellipse at 74% 35%,rgba(26,143,216,.20),transparent 52%),
+    linear-gradient(100deg,#031325 0%,#0b2a47 70%,#091829 100%) !important;
+  box-shadow:inset 0 -28px 44px rgba(0,8,26,.28) !important;
+  overflow:hidden;
+}
+.guest-app .public-landing .public-brand-hero::before,
+.guest-app .public-landing .public-brand-hero::after {
+  display:none !important;
+  content:none !important;
+}
+.guest-app .public-landing .public-hero-visual {
+  display:block !important;
+  position:absolute !important;
+  z-index:1 !important;
+  inset:0 0 0 auto !important;
+  width:68% !important;
+  height:100% !important;
+  margin:0 !important;
+  opacity:1 !important;
+  background:url('../public/traksos-final-hero.webp') right center/contain no-repeat !important;
+  filter:none !important;
+  overflow:visible !important;
+  pointer-events:none;
+  mask-image:none !important;
+  -webkit-mask-image:none !important;
+}
+.guest-app .public-landing .public-hero-visual::before,
+.guest-app .public-landing .public-hero-visual::after{
+  content:none !important;
+  display:none !important;
+}
+.guest-app .public-landing .public-hero-copy {
+  width:51% !important;
+  max-width:680px !important;
+  min-width:0 !important;
+  padding:0 !important;
+  z-index:3 !important;
+  background:linear-gradient(90deg,#05182cf5 0%,rgba(5,24,43,.8) 75%,transparent 100%);
+}
+.guest-app .public-landing .public-eyebrow {
+  display:block;
+  border-left:4px solid #02dafa;
+  padding-left:12px;
+  color:#ecf7ff !important;
+  font-size:clamp(10px,1vw,14px) !important;
+  letter-spacing:.04em;
+  font-weight:800;
+}
+.guest-app .public-landing .public-brand-hero h1 {
+  display:block !important;
+  max-width:660px !important;
+  margin:17px 0 15px !important;
+  color:#fff !important;
+  font-size:clamp(27px,2.55vw,42px) !important;
+  line-height:1.14 !important;
+  letter-spacing:-.035em;
+  font-weight:900 !important;
+  text-shadow:0 2px 15px rgba(1,9,23,.75);
+}
+.guest-app .public-landing .public-brand-hero h1 em {
+  color:#fff !important;
+  font-style:normal !important;
+}
+.guest-app .public-landing .public-brand-hero h1 em b {
+  color:#0fd6f5 !important;
+}
+.guest-app .public-landing .public-hero-copy > p {
+  color:#dce8f1 !important;
+  max-width:610px !important;
+  font-size:clamp(12px,1.12vw,17px) !important;
+  line-height:1.6 !important;
+  margin:0 !important;
+  text-shadow:0 2px 6px #000b;
+}
+.guest-app .public-landing .public-track-benefits {display:none !important;}
+.guest-app .public-landing .public-actions {
+  display:flex !important;
+  flex-wrap:wrap;
+  gap:13px !important;
+  margin:24px 0 0 !important;
+}
+.guest-app .public-landing .public-button {
+  min-height:51px !important;
+  border-radius:12px !important;
+  padding:12px 22px !important;
+  font-weight:800;
+  font-size:clamp(12px,1vw,15px);
+  transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
+}
+.guest-app .public-landing .public-button:hover {transform:translateY(-2px);}
+.guest-app .public-landing .public-button-sos {
+  background:#03d6ef !important;
+  color:#032338 !important;
+  border:1px solid #5ff4ff !important;
+  box-shadow:0 10px 25px #0016276b !important;
+}
+.guest-app .public-landing .public-button-outline {
+  background:rgba(5,20,40,.62) !important;
+  color:white !important;
+  border:1px solid #dcebf8 !important;
+}
+.guest-app .public-landing .public-hero-caption{
+  font-size:10px !important;
+  color:#a3c2d5 !important;
+  margin-top:14px !important;
+}
+
+/* Six REAL entry points in one row, plus the Android/RuStore teaser on the right. */
+.guest-app .public-landing .public-content-grid {
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) minmax(238px,18.2vw) !important;
+  gap:13px !important;
+  align-items:stretch !important;
+  margin:12px 0 0 !important;
+  padding:0 !important;
+}
+.guest-app .public-landing .public-real-services {
+  grid-column:1 !important;
+  grid-row:1 !important;
+  width:100% !important;
+  min-width:0;
+  margin:0 !important;
+  padding:0 !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
+.guest-app .public-landing .public-services-a11y-title {
+  position:absolute !important;
+  width:1px !important;
+  height:1px !important;
+  overflow:hidden !important;
+  clip-path:inset(50%) !important;
+  white-space:nowrap !important;
+}
+.guest-app .public-landing .public-service-tiles {
+  display:grid !important;
+  grid-template-columns:repeat(6,minmax(0,1fr)) !important;
+  gap:10px !important;
+  width:100%;
+  height:100%;
+}
+.guest-app .public-landing .public-service-tile {
+  position:relative !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:flex-start !important;
+  justify-content:flex-end !important;
+  min-width:0 !important;
+  min-height:258px !important;
+  height:100% !important;
+  gap:7px !important;
+  padding:12px 11px 14px !important;
+  overflow:hidden !important;
+  isolation:isolate;
+  background:#0c2942 !important;
+  border:1px solid #2c5677 !important;
+  border-radius:14px !important;
+  box-shadow:0 11px 25px #0006 !important;
+  text-align:left;
+  cursor:pointer;
+  transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease;
+}
+.guest-app .public-landing .public-service-tile::after {
+  content:"" !important;
+  display:block !important;
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  background-size:cover !important;
+  background-position:center top !important;
+  background-repeat:no-repeat !important;
+  opacity:1 !important;
+  z-index:0 !important;
+  filter:none !important;
+  transform:none !important;
+  mask-image:none !important;
+  -webkit-mask-image:none !important;
+  pointer-events:none;
+}
+.guest-app .public-landing .public-service-tile::before {
+  content:"" !important;
+  display:block !important;
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  z-index:1 !important;
+  background:linear-gradient(0deg,rgba(3,16,33,.96),rgba(5,23,41,.55) 42%,rgba(5,23,41,.05) 75%) !important;
+  pointer-events:none;
+}
+.guest-app .public-landing .public-service-insurance::after {
+  background-image:url('../public/traksos-final-insurance.webp') !important;
+}
+.guest-app .public-landing .public-service-parts::after {
+  background-image:url('../public/traksos-final-parts.webp') !important;
+}
+.guest-app .public-landing .public-service-tile :is(.public-service-icon,b,small,.public-service-arrow) {
+  position:relative !important;
+  z-index:2 !important;
+  color:#fff;
+  text-shadow:0 2px 7px rgba(0,4,16,.88);
+  transform:none !important;
+}
+.guest-app .public-landing .public-service-tile .public-service-icon {
+  display:block !important;
+  position:relative !important;
+  inset:auto !important;
+  width:27px !important;
+  height:27px !important;
+  min-height:0 !important;
+  font-size:22px !important;
+  color:#d6f5ff !important;
+  background:none !important;
+  margin:0 !important;
+}
+.guest-app .public-landing .public-service-tile b {
+  display:block !important;
+  width:100% !important;
+  max-width:100% !important;
+  min-height:0 !important;
+  margin:0 !important;
+  font-size:clamp(13px,1.12vw,19px) !important;
+  font-weight:900 !important;
+  line-height:1.13 !important;
+  letter-spacing:-.025em !important;
+}
+.guest-app .public-landing .public-service-tile small {
+  display:block !important;
+  width:100% !important;
+  max-width:100% !important;
+  color:#e0eefa !important;
+  font-size:clamp(9px,.73vw,12px) !important;
+  line-height:1.35 !important;
+  margin:0 !important;
+}
+.guest-app .public-landing .public-service-tile .public-service-arrow {
+  position:absolute !important;
+  top:auto !important;
+  left:auto !important;
+  right:8px !important;
+  bottom:9px !important;
+  display:grid !important;
+  place-items:center;
+  width:26px !important;
+  height:26px !important;
+  border-radius:50% !important;
+  background:rgba(20,82,118,.78) !important;
+  color:#e7fbff !important;
+  font-size:19px !important;
+}
+@media (hover:hover) and (pointer:fine){
+  .guest-app .public-landing .public-service-tile:hover {
+    transform:translateY(-4px) !important;
+    border-color:#37dff9 !important;
+    box-shadow:0 16px 31px #0008,0 0 18px #15c9fd45 !important;
+  }
+}
+.guest-app .public-landing .public-app-card {
+  display:flex !important;
+  position:relative;
+  grid-column:2 !important;
+  grid-row:1 !important;
+  flex-direction:column !important;
+  align-items:flex-start !important;
+  justify-content:center !important;
+  min-width:0 !important;
+  min-height:258px !important;
+  margin:0 !important;
+  padding:20px 115px 17px 15px !important;
+  border:1px solid #06d7eb !important;
+  border-radius:18px !important;
+  background:linear-gradient(140deg,#03101e 10%,#07233c 85%) !important;
+  box-shadow:inset 0 0 26px #037b991c,0 10px 27px #0006 !important;
+  overflow:hidden !important;
+  gap:9px !important;
+}
+.guest-app .public-landing .public-app-card .public-section-kicker {
+  display:none !important;
+}
+.guest-app .public-landing .public-app-card h2 {
+  display:block !important;
+  font-size:clamp(14px,1.3vw,21px) !important;
+  line-height:1.25 !important;
+  margin:0 !important;
+  font-weight:800;
+  color:#fff;
+  min-width:100% !important;
+}
+.guest-app .public-landing .public-app-card h2 em{
+  display:block;
+  font-size:clamp(20px,1.7vw,28px);
+  color:#e9fcff !important;
+  font-style:normal;
+}
+.guest-app .public-landing .public-app-card p {
+  display:block !important;
+  max-width:none !important;
+  font-size:11px !important;
+  color:#d3e2ef !important;
+  line-height:1.38 !important;
+  margin:0 !important;
+}
+.guest-app .public-landing .public-app-card .public-app-phone {
+  display:flex !important;
+  position:absolute !important;
+  top:12px !important;
+  bottom:12px !important;
+  right:10px !important;
+  left:auto !important;
+  width:97px !important;
+  height:auto !important;
+  max-height:none !important;
+  min-height:0 !important;
+  margin:0 !important;
+  padding:7px 5px !important;
+  transform:rotate(-3deg);
+  border:3px solid #1f8eb8 !important;
+  border-radius:15px !important;
+  background:linear-gradient(180deg,#07152c,#104164) !important;
+  box-shadow:0 6px 21px #0009,0 0 14px #08bff84a !important;
+  overflow:hidden !important;
+}
+.guest-app .public-landing .public-app-card .public-app-phone-truck{
+  display:block !important;
+  max-width:100% !important;
+  height:55% !important;
+  object-fit:contain !important;
+}
+.guest-app .public-landing .public-app-card .public-app-logo{
+  font-size:12px !important;
+  color:#fff;
+}
+.guest-app .public-landing .public-app-card .public-rustore-soon{
+  display:inline-block !important;
+  margin:4px 0 0 !important;
+  color:#9beaff !important;
+  font-size:11px !important;
+}
+.guest-app .public-landing .public-app-card > small{
+  color:#a6c9d9 !important;
+  font-size:9px !important;
+  line-height:1.3 !important;
+}
+
+/* Four succinct benefits exactly under cards, before secondary workflows. */
+.guest-app .public-landing .public-why-strip {
+  display:grid !important;
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  gap:22px !important;
+  padding:24px 16px 28px !important;
+  margin:0 !important;
+  background:#071a2e !important;
+  border:0 !important;
+}
+.guest-app .public-landing .public-why-strip > div {
+  display:grid !important;
+  grid-template-columns:48px minmax(0,1fr);
+  column-gap:12px;
+  align-items:center;
+  background:none !important;
+  border:0 !important;
+  box-shadow:none !important;
+  min-width:0;
+}
+.guest-app .public-landing .public-why-strip > div > span {
+  grid-row:1/3;
+  grid-column:1;
+  color:#08d9fa;
+  font-size:36px !important;
+  width:46px !important;
+}
+.guest-app .public-landing .public-why-strip > div > b {
+  grid-column:2;
+  font-size:14px !important;
+  color:#fff !important;
+}
+.guest-app .public-landing .public-why-strip > div > small {
+  grid-column:2;
+  font-size:11px !important;
+  color:#a9c4d8 !important;
+}
+.guest-app .public-landing .public-track-extras,
+.guest-app .public-landing .public-demo-map {
+  margin-top:28px !important;
+}
+.guest-app .public-landing .public-demo-map{
+  max-width:100% !important;
+  min-width:0 !important;
+  grid-column:auto !important;
+  grid-row:auto !important;
+}
+
+/* Smaller desktops: keep readable cards instead of six microscopic tiles. */
+@media (min-width:900px) and (max-width:1200px) {
+  .guest-app .guest-site-nav {gap:10px !important;}
+  .guest-app:has(.public-landing) .top {padding:10px 16px !important;}
+  .guest-app .public-landing .public-service-tiles {
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  }
+  .guest-app .public-landing .public-app-card {min-height:540px !important;}
+  .guest-app .public-landing .public-content-grid{
+    grid-template-columns:minmax(0,1fr) 250px !important;
+  }
+  .guest-app .public-landing .public-service-tile{min-height:265px !important;}
+}
+@media (max-width:899px) {
+  .guest-app:has(.public-landing) .top {
+    min-height:59px !important;
+    flex-wrap:wrap !important;
+    padding:10px 12px !important;
+    row-gap:7px !important;
+  }
+  .guest-app:has(.public-landing) .top .logo {font-size:29px !important;}
+  .guest-app .guest-site-nav{display:none !important;}
+  .guest-app:has(.public-landing) .guest-header-actions{margin-left:auto;}
+  .guest-app:has(.public-landing) .guest-header-actions a {
+    font-size:11px !important;
+    padding:7px 9px !important;
+    border-radius:9px !important;
+  }
+  .guest-app:has(.public-landing) .track-site-search {
+    order:4;
+    flex:1 1 100% !important;
+    max-width:none !important;
+    width:100% !important;
+    min-width:0 !important;
+  }
+  .guest-app:has(.public-landing) .desktop-content > main.public-landing {
+    padding:0 10px 70px !important;
+  }
+  .guest-app .public-landing .public-brand-hero {
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:stretch !important;
+    padding:12px 13px 20px !important;
+    min-height:0 !important;
+    border-radius:0 0 16px 16px !important;
+    gap:4px !important;
+  }
+  .guest-app .public-landing .public-hero-visual {
+    display:block !important;
+    position:relative !important;
+    inset:auto !important;
+    order:0 !important;
+    width:100% !important;
+    max-width:100% !important;
+    height:auto !important;
+    aspect-ratio:2.1 !important;
+    flex:none !important;
+    margin:0 auto !important;
+    background:url('../public/traksos-final-hero.webp') center/contain no-repeat !important;
+  }
+  .guest-app .public-landing .public-hero-copy {
+    order:1 !important;
+    width:100% !important;
+    max-width:100% !important;
+    padding:7px 2px 0 !important;
+    background:none !important;
+  }
+  .guest-app .public-landing .public-eyebrow {
+    font-size:9px !important;
+    padding-left:8px !important;
+  }
+  .guest-app .public-landing .public-brand-hero h1 {
+    font-size:clamp(23px,6.8vw,35px) !important;
+    margin:11px 0 11px !important;
+    line-height:1.15 !important;
+  }
+  .guest-app .public-landing .public-hero-copy > p {
+    font-size:12px !important;
+    line-height:1.45 !important;
+  }
+  .guest-app .public-landing .public-actions{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) minmax(0,.84fr);
+    gap:8px !important;
+    margin-top:16px !important;
+  }
+  .guest-app .public-landing .public-button{
+    padding:10px 9px !important;
+    min-height:45px !important;
+    font-size:11px !important;
+    border-radius:10px !important;
+  }
+  .guest-app .public-landing .public-hero-caption{
+    margin:11px 0 0 !important;
+    font-size:9px !important;
+  }
+  .guest-app .public-landing .public-content-grid {
+    display:flex !important;
+    flex-direction:column !important;
+    gap:12px !important;
+    margin-top:12px !important;
+  }
+  .guest-app .public-landing .public-real-services {width:100% !important;}
+  .guest-app .public-landing .public-service-tiles{
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:9px !important;
+  }
+  .guest-app .public-landing .public-service-tile{
+    height:auto !important;
+    min-height:207px !important;
+    padding:10px 11px 13px !important;
+    gap:5px !important;
+  }
+  .guest-app .public-landing .public-service-tile b{
+    font-size:clamp(13px,3.5vw,17px) !important;
+  }
+  .guest-app .public-landing .public-service-tile small{
+    font-size:10px !important;
+    line-height:1.25 !important;
+  }
+  .guest-app .public-landing .public-service-tile .public-service-arrow{
+    right:7px !important;bottom:8px !important;
+    width:23px !important;height:23px !important;
+  }
+  .guest-app .public-landing .public-app-card{
+    width:100% !important;
+    min-height:184px !important;
+    padding:18px 128px 16px 14px !important;
+    margin:0 !important;
+  }
+  .guest-app .public-landing .public-app-card .public-app-phone{
+    width:106px !important;
+    top:11px !important;
+    bottom:11px !important;
+  }
+  .guest-app .public-landing .public-app-card h2{
+    font-size:17px !important;
+  }
+  .guest-app .public-landing .public-why-strip{
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:16px 10px !important;
+    padding:20px 4px 26px !important;
+  }
+  .guest-app .public-landing .public-why-strip > div{
+    grid-template-columns:30px minmax(0,1fr);
+    gap:4px 7px;
+  }
+  .guest-app .public-landing .public-why-strip > div > span{
+    font-size:25px !important;width:30px !important;
+  }
+  .guest-app .public-landing .public-why-strip > div > b{
+    font-size:12px !important;
+  }
+  .guest-app .public-landing .public-why-strip > div > small{
+    font-size:10px !important;
+  }
+}
+@media(max-width:350px){
+  .guest-app .public-landing .public-hero-visual{aspect-ratio:1.98!important;}
+  .guest-app .public-landing .public-app-card{padding-right:104px !important;}
+  .guest-app .public-landing .public-app-card .public-app-phone{width:90px !important;}
+}
+@media(prefers-reduced-motion:reduce){
+  .guest-app .guest-site-nav a,
+  .guest-app .public-landing :is(.public-button,.public-service-tile){
+    transition:none !important;
+    transform:none !important;
+  }
+}
