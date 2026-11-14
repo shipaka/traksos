@@ -925,7 +925,7 @@ async function patchMe(body: unknown) {
   return patch('/api/me', body);
 }
 
-async function logout() {
+export async function logout() {
   const { post, setToken, disconnectWs } = await import('../api.ts');
   try {
     await post('/api/auth/logout');
