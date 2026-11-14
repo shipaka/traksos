@@ -319,6 +319,14 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         {me && mode === 'client' && <nav className="track-top-shortcuts" aria-label="Быстрый доступ">
           <a href="#/">Главная</a><a href="#/orders">Заявки</a><a href="#/sos">Помощь в дороге</a><a href="#/shop">Запчасти</a>
         </nav>}
+        {!me && <nav className="guest-site-nav" aria-label="Разделы TrakSOS">
+          <a href="#/" onClick={e => { e.preventDefault(); document.getElementById('public-services')?.scrollIntoView({behavior:'smooth',block:'start'}); }}>Услуги</a>
+          <a href="#/register" onClick={() => { try { sessionStorage.setItem('traksos.pendingLandingAction','insurance'); } catch {} }}>Страхование</a>
+          <a href="#/register" onClick={() => { try { sessionStorage.setItem('traksos.pendingLandingAction','parts'); } catch {} }}>Запчасти</a>
+          <a href="#/register" onClick={() => { try { sessionStorage.setItem('traksos.pendingLandingAction','sto'); } catch {} }}>СТО и сервисы</a>
+          <a href="#/register" onClick={() => { try { sessionStorage.setItem('traksos.pendingLandingAction','consult'); } catch {} }}>Консультации</a>
+          <a href="#/join">Для бизнеса</a>
+        </nav>}
         <SiteQuickSearch authenticated={!!me} />
         <div className="row" style={{ flexWrap: 'nowrap' }}>
           {!me && <div className="guest-header-actions"><a href="#/login">Войти</a><a href="#/register" className="register">Зарегистрироваться</a></div>}
