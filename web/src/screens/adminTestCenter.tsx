@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { InsurerTrainingCabinet } from './insurerTrainingCabinet.tsx';
 
 // Admin-only DEMONSTRATION. This file deliberately has no API imports or fetch:
 // even realistic-looking actions never touch real accounts, jobs, SMS or money.
@@ -99,6 +100,7 @@ export function AdminTestCenter({roleId}:{roleId?:string}) {
       </a>)}
     </div>
   </main>;
+  if(role.id==='insurer')return <InsurerTrainingCabinet/>;
   return <SandboxCabinet key={role.id} role={role}/>;
 }
 
