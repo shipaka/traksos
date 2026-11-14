@@ -109,7 +109,7 @@ try {
         await page.screenshot({path:'e2e/shots/cabinet-ux/client-sos-master-'+width+'.png',fullPage:true});
       }
       if (entry.name === 'admin') {
-        const rolesToReview=['client','owner','driver','master','tow','master_service','service','insurer','moderator','admin'];
+        const rolesToReview=['client','owner','driver','master','tow','master_service','service','insurer','inspection','moderator','admin'];
         for(const previewRole of rolesToReview) {
           await page.goto(BASE+'/#/admin/test-center/'+previewRole,{waitUntil:'domcontentloaded'});
           await page.locator(previewRole==='service'?'.service-preview-admin-bar':'.role-preview-bar').waitFor();
