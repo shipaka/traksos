@@ -704,3 +704,83 @@
     transform: none !important;
   }
 }
+
+/* Partner insurance and inspection modes: one premium workspace treatment. */
+.app:is(.role-insurer,.role-inspection) .partner-workspaces {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;
+  width:100%;
+  min-width:0;
+  padding:9px;
+  margin:14px 0 21px;
+  border:1px solid #386883;
+  border-radius:18px;
+  background:linear-gradient(125deg,#102d46,#081e33);
+  box-shadow:0 12px 29px rgba(1,10,24,.19);
+}
+.app:is(.role-insurer,.role-inspection) .partner-workspaces .btn {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-width:0;
+  min-height:55px;
+  padding:10px 8px;
+  font-size:13px;
+  line-height:1.3;
+  font-weight:750;
+  text-align:center;
+  color:#c9deea;
+  border:1px solid transparent;
+  border-radius:12px;
+  background:rgba(20,58,82,.48);
+  transition:background .18s ease,border-color .18s ease,box-shadow .18s ease;
+}
+.app:is(.role-insurer,.role-inspection) .partner-workspaces .btn[aria-pressed="true"] {
+  color:#f5fcff;
+  border-color:#60dced;
+  background:linear-gradient(135deg,#166282,#154462);
+  box-shadow:inset 0 -3px #63e3f0,0 5px 15px rgba(9,192,224,.13);
+}
+.app:is(.role-insurer,.role-inspection) .partner-workspaces .btn:focus-visible,
+.app:is(.role-insurer,.role-inspection) .cabinet-page :is(a,button,summary):focus-visible {
+  outline:2px solid #85edf7;
+  outline-offset:3px;
+}
+.app.role-inspection .cabinet-page {
+  width:100%;
+  min-width:0;
+  max-width:1360px;
+  margin:0 auto;
+  padding:12px 0 40px;
+}
+.app.role-inspection .cabinet-heading h1 {
+  font-size:clamp(25px,3.6vw,39px);
+  letter-spacing:-.04em;
+  color:#fff;
+}
+.app.role-inspection .cabinet-metrics .card {
+  min-height:117px;
+  border:1px solid #426781;
+  border-radius:18px;
+  background:linear-gradient(135deg,#163951,#102c46);
+  box-shadow:0 9px 23px #0003;
+}
+.app.role-inspection .cabinet-metrics .tile-value {
+  font-size:clamp(24px,3.4vw,36px);
+  color:#f4fbff;
+}
+@media(max-width:560px) {
+  .app:is(.role-insurer,.role-inspection) .partner-workspaces {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .app:is(.role-insurer,.role-inspection) .partner-workspaces .btn {
+    min-height:51px;
+    font-size:12px;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  .app:is(.role-insurer,.role-inspection) .partner-workspaces .btn {
+    transition:none;
+  }
+}
