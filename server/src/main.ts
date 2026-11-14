@@ -85,6 +85,7 @@ for (const sig of ['SIGINT', 'SIGTERM'] as const) {
   process.on(sig, async () => {
     clearInterval(timer);
     clearInterval(hourly);
+    clearInterval(captureTimer);
     server.close();
     await db.close();
     process.exit(0);
