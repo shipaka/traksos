@@ -543,3 +543,40 @@
   .app.role-client .account-profile-page>h1{padding:19px 19px 19px 23px;border-radius:16px;}
   .app.role-client .account-profile-page>form.stack{padding:16px;}
 }
+
+
+/* One explicit account-mode control; staff-only links stay out of a master menu. */
+.app:not(.guest-app) .cabinet-role-switch{
+  display:inline-flex;align-items:center;gap:3px;flex:0 0 auto;
+  border:1px solid #3d718e;border-radius:12px;padding:3px;
+  background:#102f46;
+}
+.app:not(.guest-app) .cabinet-role-switch a{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:36px;padding:6px 10px;border-radius:9px;
+  color:#c1dcea;text-decoration:none;font-size:12px;font-weight:750;
+  white-space:nowrap;
+}
+.app:not(.guest-app) .cabinet-role-switch a[aria-current="page"]{
+  background:#236385;color:#fff;box-shadow:0 2px 9px #0004;
+}
+.app:not(.guest-app) .cabinet-role-switch a:focus-visible,
+.app:not(.guest-app) .account-menu-logout:focus-visible{
+  outline:2px solid #80eaf6;outline-offset:2px;
+}
+.app:not(.guest-app) .account-menu nav .account-menu-logout{
+  display:block;width:100%;min-height:44px;flex-shrink:0;
+  text-align:left;margin-top:8px;padding:10px 12px;
+  border:1px solid #ad5273;border-radius:9px;
+  color:#ffe4ef;background:#5c223a;cursor:pointer;
+  font:inherit;font-size:14px;font-weight:750;
+}
+.app:not(.guest-app) .account-menu nav .account-menu-logout:hover{
+  background:#74304a;border-color:#ef87af;
+}
+@media(max-width:520px){
+  .app:not(.guest-app) .cabinet-role-switch a{
+    padding:6px 7px;font-size:10px;min-height:34px;
+  }
+  .app:not(.guest-app) .cabinet-role-switch{gap:1px;padding:2px;}
+}
