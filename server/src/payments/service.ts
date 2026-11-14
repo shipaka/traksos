@@ -294,7 +294,7 @@ export class PaymentsService implements PaymentHooks {
     if (!Number.isInteger(total) || total <= 0) throw new Error('Invalid work payment');
     const previous = await q.one('select id from payments where order_id=$1 and kind=$2', [order.id, 'work']);
     if (previous) throw new Error('Work payment already exists');
-    const key = ${order.id}:work:1;
+    const key = `${order.id}:work:1`;
     const pay = await q.one<{ id: string }>(
       `insert into payments(order_id,kind,method,amount,client_fee,total,provider,idempotency_key)
        values ($1,'work',$2,$3,$4,$5,$6,$7) returning id`,
