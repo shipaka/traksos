@@ -57,6 +57,7 @@ export function Home() {
       <div className="desktop-home-columns">
         <section className="desktop-home-main">
           <div className="mobile-home-heading">
+            <span className="mobile-home-kicker">TRACKSOS · ВАША ПОМОЩЬ В ДОРОГЕ</span>
             <h1>{me?.name ? `${me.name}, что случилось?` : 'Что случилось?'}</h1>
             <div className="sub">Выберите проблему — подскажем, к кому обратиться. Работаем в Санкт-Петербурге и Ленинградской области.</div>
           </div>
