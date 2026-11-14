@@ -321,7 +321,7 @@ export class PaymentsService implements PaymentHooks {
   private async flagCaptureForReview(intentId: string, reason: string) {
     await this.db.query(
       `update payment_capture_intents set status='needs_review',last_error=$2,
-         updated_at=now() where id=$1 and status<>'settled'`,
+         checked_at=now(),updated_at=now() where id=$1 and status<>'settled'`,
       [intentId, reason.slice(0, 500)]);
   }
 
@@ -351,7 +351,11 @@ export class PaymentsService implements PaymentHooks {
   async reconcileCaptures(limit = 40) {
     const items = await this.db.query<{ id: string; order_id: string; status: string }>(
       `select id,order_id,status from payment_capture_intents
-        where status in ('prepared','sending','needs_review') order by created_at limit $1`,
+        where status='prepared' or
+          (status in ('sending','needs_review') and
+           (checked_at is null or checked_at < now() - interval '60 seconds'))
+        order by case when status='prepared' then 0 else 1 end,
+                 coalesce(checked_at,created_at) limit $1`,
       [Math.max(1, Math.min(100, limit))]);
     const results = [];
     for (const item of items) {
