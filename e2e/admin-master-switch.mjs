@@ -113,6 +113,12 @@ try {
       await page.getByRole('button',{name:'Документы и полисы'}).click();
       await page.getByRole('button',{name:'Прикрепить образец полиса'}).click();
       await page.getByRole('button',{name:'Финансы',exact:true}).click();
+      await page.getByRole('heading',{name:'Финансы страхования и техосмотров'}).waitFor();
+      await page.getByRole('button',{name:'Техосмотры',exact:true}).click();
+      await page.getByRole('button',{name:'Назначить техосмотр'}).click();
+      await page.getByRole('button',{name:'Зафиксировать осмотр'}).click();
+      await page.getByRole('button',{name:'Подготовить образец диагностической карты'}).click();
+      await page.getByText('Подготовлен только демонстрационный образец',{exact:false}).waitFor();
       await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
     }else{
       await page.getByRole('main',{name:'Тестовый кабинет: '+label}).waitFor();
