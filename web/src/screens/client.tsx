@@ -83,7 +83,7 @@ export function Sos() {
     <main className="client-sos-page">
       <Back to="" />
       <div className="client-section-hero client-section-hero-sos">
-        <h1>SOS · Нужна помощь?</h1>
+        <h1>Помощь в дороге</h1>
         <div className="sub">Сначала выберите направление помощи. Остальные вопросы появятся только после выбора.</div>
       </div>
       <HelpDirections />
