@@ -1062,7 +1062,8 @@ function TaskArchive({ orders }: { orders: any[] }) {
   }
   const list = [...groups.values()].sort((x, y) => +new Date(y.orders[y.orders.length - 1].created_at) - +new Date(x.orders[x.orders.length - 1].created_at));
   if (!list.length && !loose.length) return <div className="empty">Здесь появятся прошлые задачи: консультация, выезды и ремонт по одной поломке — вместе.</div>;
-  const sum = (o: any) => o.status === 'completed' ? (o.call_out_amount ?? 0) + (o.work_amount ?? 0) : 0;
+  // The backend applies the same fees, discounts and rounded amounts as the order detail.
+  const sum = (o: any) => o.status === 'completed' ? (o.money?.total ?? 0) : 0;
   return (
     <div className="stack">
       <span className="note">Одна поломка — одна задача: консультация, выезды, эвакуатор и сервис по ней собраны вместе.</span>
