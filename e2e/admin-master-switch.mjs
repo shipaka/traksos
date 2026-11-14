@@ -61,6 +61,15 @@ try {
       await page.getByRole('button',{name:'Готовы принять'}).first().click();
       await page.getByRole('button',{name:'Отправить клиенту'}).click();
       await page.locator('.service-preview-admin-bar a[href="#/admin/test-center"]').click();
+    }else if(id==='client'||id==='driver'){
+      await page.getByRole('main',{name:'Тестовый кабинет: '+label}).waitFor();
+      await page.getByRole('button',{name:'Эвакуатор'}).click();
+      await page.getByRole('textbox',{name:'Что случилось?'}).fill('Не запускается двигатель');
+      await page.getByRole('button',{name:'Создать тестовую заявку'}).click();
+      await page.getByRole('button',{name:'Исполнитель выехал'}).last().click();
+      await page.getByRole('button',{name:'История',exact:true}).click();
+      await page.getByRole('button',{name:'Помощь на дороге'}).click();
+      await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
     }else if(id==='insurer'){
       await page.getByRole('main',{name:'Тестовый кабинет: Страховой партнёр'}).waitFor();
       await page.getByRole('button',{name:'Принять в работу'}).click();
