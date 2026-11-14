@@ -1,5 +1,6 @@
 import './styles.css';
 import './cabinetPremium.css';
+import './trackVisual.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
@@ -249,7 +250,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       ? [['/moderation', '▦', 'Рабочий стол'], ['/admin/section/queue', '⚑', 'Проверки'], ['/support', '?', 'Обращения']]
     : mode === 'admin'
       ? [['/admin', '▦', 'Рабочий стол'], ['/admin/section/orders', '☰', 'Заявки'], ['/admin/section/support', '?', 'Обращения']]
-      : [['/', '⌂', 'Рабочий стол'], ['/sos', '!', 'SOS'], ['/shop', '🛍', 'Магазин']];
+      : [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь'], ['/shop', '⚙', 'Запчасти'], ['/profile', '◉', 'Профиль']];
   // Все дополнительные функции доступны в шапке, даже когда они не в нижних вкладках.
   // Не показываем чужие роли и не создаём несуществующие страницы.
   const accountLinks: [string, string][] = mode === 'performer'
@@ -345,7 +346,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           <nav className="desktop-nav">
             {me ? <>
               {(mode === 'client'
-                ? [...tabs, ['/garage', '▭', 'Гараж']]
+                ? [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь в дороге'], ['/shop', '⚙', 'Запчасти'], ['/garage', '▣', 'Мой транспорт'], ['/insurance/request/new', '◇', 'Страхование'], ['/services', '▤', 'Грузовые СТО']]
                 : mode === 'performer'
                   ? [...tabs, ['/work/me', '◉', 'Профиль'], ...(me.roles.includes('service') ? [['/base', '▤', 'Моя СТО']] : [])]
                   : mode === 'service'
@@ -354,12 +355,12 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                       ? [...tabs, ['/profile', '◉', 'Аккаунт']]
                       : mode === 'moderator' ? [...tabs, ['/profile', '◉', 'Аккаунт']]
                       : [...tabs, ['/as/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]).map(([href, ic, name]) => (
-                <a key={href} href={sandboxHref(href)} className={`desktop-nav-link ${here === href || (href !== '/' && here.startsWith(href + '/')) ? 'active' : ''} ${href === '/sos' ? 'desktop-nav-sos' : ''}`}>
+                <a key={href} href={sandboxHref(href)} className={`desktop-nav-link ${here === href || (href !== '/' && here.startsWith(href + '/')) ? 'active' : ''} ${href === '/sos' ? 'desktop-nav-sos' : ''}` }>
                   <span aria-hidden="true">{ic}</span><span>{name}</span>
                 </a>
               ))}
               {mode === 'client' && <>
-                <div className="desktop-sidebar-title desktop-nav-section">Дополнительно</div>
+                <div className="desktop-sidebar-title desktop-nav-section">Мой кабинет</div>
                 {([...(me && !me.owner_id && !me.roles.includes('driver') ? [['/fleet','▣','Мой парк']] as [string,string,string][] : []),['/support','?','Поддержка'],['/profile','◉','Профиль']] as [string,string,string][]).map(([href, ic, name]) => (
                   <a key={href} href={sandboxHref(href)} className={`desktop-nav-link ${here === href || here.startsWith(href + '/') ? 'active' : ''}`}>
                     <span aria-hidden="true">{ic}</span><span>{name}</span>
@@ -373,7 +374,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               <a className="desktop-nav-link" href="#/offer/privacy"><span>▣</span><span>Персональные данные</span></a>
             </>}
           </nav>
-          <div className="desktop-sidebar-bottom">Помощь грузовому транспорту<br />Санкт-Петербург и Ленинградская область</div>
+          <div className="desktop-sidebar-bottom"><strong>TRACKSOS 24/7</strong><span>Помощь грузовикам</span><small>Санкт-Петербург и Ленинградская область</small></div>
         </aside>
         <div className="desktop-content">
           {children}
@@ -384,7 +385,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         <nav className="tabbar">
           {tabs.map(([href, ic, name]) => (
             <a key={href} href={sandboxHref(href)} className={`${here === href || (href !== '/' && here.startsWith(href + '/') && href !== '/work' && href !== '/base') ? 'on' : ''} ${href === '/sos' ? 'sosTab' : ''}`}>
-              {href === '/sos' ? <span className="sosDot">SOS</span> : <><span className="ic">{ic}</span>{name}</>}
+              {href === '/sos' ? <><span className="ic">✚</span>{name}</> : <><span className="ic">{ic}</span>{name}</>}
             </a>
           ))}
         </nav>
