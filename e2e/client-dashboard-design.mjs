@@ -41,6 +41,11 @@ for (const [width,height] of [[390,844],[1440,900]]) {
       await dialog.getByRole('button',{name:'Принимаю'}).click();
       await dialog.waitFor({state:'detached',timeout:10000});
     }
+    // A real interaction accepts the synthetic test user's cookie notice.
+    const cookieButton=page.getByRole('button',{name:'Понятно'});
+    if (await cookieButton.isVisible()) await cookieButton.click();
+    // Wait for the real offer-accepted toast to disappear before taking clean screenshots.
+    await page.locator('.toast').waitFor({state:'hidden',timeout:15000});
     if (!await page.locator('.client-hero-scania').isVisible())throw Error('Scania hero invisible');
     const photo=await page.locator('.client-hero-scania').evaluate(el=>({
       loaded:el.complete && el.naturalWidth>100 && el.naturalHeight>100,
@@ -57,12 +62,14 @@ for (const [width,height] of [[390,844],[1440,900]]) {
     }));
     if (state.scrollWidth>state.width+3)throw Error('Dashboard horizontal overflow: '+JSON.stringify(state));
     if (errors.length)throw Error('Dashboard JS error: '+errors.join(' | '));
+    await page.screenshot({path:OUT+'/client-dashboard-'+width+'-viewport.png',fullPage:false});
     await page.screenshot({path:OUT+'/client-dashboard-'+width+'.png',fullPage:true});
 
     await page.goto(BASE+'/#/sos',{waitUntil:'domcontentloaded'});
     await page.locator('.client-sos-directions').waitFor({timeout:12000});
     if (await page.locator('.client-sos-choice').count()!==3)
       throw Error('SOS must show three directions, no old symptom grid');
+    await page.screenshot({path:OUT+'/client-sos-'+width+'-viewport.png',fullPage:false});
     await page.screenshot({path:OUT+'/client-sos-'+width+'.png',fullPage:true});
     await page.getByRole('button',{name:/Выездной мастер/}).click();
     if (await page.locator('.client-sos-specialty').count()!==5)
