@@ -131,7 +131,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
       {workspace==='common'&&<section className="card stack">
         <h2>Общие разделы партнёра</h2>
         <a className="linkrow" href="#/profile">Профиль и настройки</a>
-        <a className="linkrow" href="#/menu">Помощь и настройки аккаунта</a>
+        <a className="linkrow" href="#/help">Помощь и инструкции</a>
         <a className="linkrow" href="#/offer/privacy">Обработка персональных данных</a>
       </section>}
       {workspace==='insurance'&&!inspectionOnly&&<>
