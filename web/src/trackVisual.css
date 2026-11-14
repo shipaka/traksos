@@ -640,3 +640,17 @@
   border-radius:7px;
   background:linear-gradient(90deg,rgba(5,20,38,.77),rgba(5,20,38,.1));
 }
+
+
+/* Once a master is chosen, the alternative directions disappear (approved UX).
+   Clicking the selected master again returns to all four choices. */
+.app.role-client .client-direction-grid.expanded{grid-template-columns:1fr!important;}
+.app.role-client .client-direction-grid.expanded>.main-direction{
+  min-height:94px;flex-direction:row;align-items:center;justify-content:flex-start;
+}
+.app.role-client .client-direction-grid.expanded>.main-direction::after{
+  height:100%;width:35%;right:0;opacity:.52;
+}
+.app.role-client .client-direction-grid.expanded>.main-direction .client-direction-copy{
+  max-width:70%;
+}
