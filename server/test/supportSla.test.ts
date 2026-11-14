@@ -1,6 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { setup, ok } from './helpers.ts';
+// Staff accounts are phone-allowlisted even in tests. Set the fixture before
+// helpers imports the application configuration.
+process.env.MODERATOR_PHONES = '+79995554446';
+const { setup, ok } = await import('./helpers.ts');
 
 test('support SLA: moderator-first, 60:00 escalation once, late and timely human replies', { timeout: 60000 }, async () => {
   const t = await setup();
