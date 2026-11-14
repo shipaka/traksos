@@ -111,18 +111,36 @@ export class AdminService {
       if (unresolved) throw conflict('refund_processing', 'Другой возврат ещё проверяется');
       const attempt = (await q.one<any>(
         `insert into payment_refund_requests
-          (payment_id, requested_by, idempotency_key, amount, source_account, reason)
-          values ($1,$2,$3,$4,$5,$6) returning *`,
-        [paymentId, admin.id, key, p.amount, p.from, p.reason]))!;
+          (payment_id, requested_by, idempotency_key, amount, source_account, reason, status)
+          values ($1,$2,$3,$4,$5,$6,$7) returning *`,
+        [paymentId, admin.id, key, p.amount, p.from, p.reason,
+          pay.method === 'invoice' ? 'pending_manual_refund' : 'processing']))!;
+      if (pay.method === 'invoice') {
+        await this.audit(q, admin, 'payment.invoice_refund_requested', paymentId,
+          { refundId: attempt.id, amount: p.amount, sourceAccount: p.from, reason: p.reason });
+      }
       return { pay, attempt, created: true };
     });
 
+    // An invoice refund is NOT a provider refund. No transfer or accounting
+    // is allowed until an administrator confirms a real outgoing bank payment.
+    if (claim.attempt.status === 'pending_manual_refund') {
+      return {
+        refundId: claim.attempt.id, paymentId, status: 'pending_manual_refund',
+        amount: claim.attempt.amount, sourceAccount: claim.attempt.source_account,
+        reason: claim.attempt.reason,
+      };
+    }
     if (!claim.created) {
       if (claim.attempt.status === 'succeeded') return this.payments.forOrder(admin, claim.pay.order_id);
       if (claim.attempt.status === 'failed') throw conflict('refund_failed', 'Возврат был отклонён');
       throw conflict('refund_processing', 'Возврат уже отправлен и ожидает проверки');
     }
 
+    if (claim.pay.method === 'invoice') {
+      // A legacy non-manual state must not be auto-completed either.
+      throw conflict('manual_refund_required', 'Возврат по счёту требует подтверждения банковского перевода');
+    }
     let response: { id: string; status: 'succeeded' | 'pending' | 'failed' } | null = null;
     try {
       if (claim.pay.provider_payment_id && claim.pay.method !== 'invoice')
@@ -166,6 +184,9 @@ export class AdminService {
       return this.payments.forOrder(admin, pay.order_id);
     }
     if (attempt.status === 'failed') throw conflict('refund_failed', 'Возврат отклонён');
+    if (attempt.status === 'pending_manual_refund' ||
+        (await this.db.one<{ method: string }>('select method from payments where id=$1', [paymentId]))?.method === 'invoice')
+      throw conflict('manual_refund_required', 'Возврат по счёту подтверждается отдельно после банковского перевода');
     if (!attempt.provider_refund_id)
       throw conflict('refund_unknown', 'Нет подтверждения банка — требуется ручная сверка');
     let result;
@@ -184,7 +205,20 @@ export class AdminService {
     return this.completeRefund(admin, paymentId, refundId);
   }
 
-  private async completeRefund(admin: AuthUser, paymentId: string, refundId: string) {
+  /** Explicit bank-transfer attestation. The POST action means money has actually left the bank. */
+  async confirmInvoiceRefund(admin: AuthUser, paymentId: string, refundId: string,
+    proof: { transferReference: string; transferredAt: string; confirmedTransfer: true }) {
+    if (proof.confirmedTransfer !== true) throw bad('bank_transfer_not_confirmed');
+    const transferred = new Date(proof.transferredAt);
+    if (!Number.isFinite(transferred.getTime()) || transferred.getTime() > Date.now() + 300_000)
+      throw bad('bad_transfer_date', 'Дата банковского перевода недействительна');
+    return this.completeRefund(admin, paymentId, refundId, {
+      reference: proof.transferReference.trim(), transferredAt: transferred.toISOString(),
+    });
+  }
+
+  private async completeRefund(admin: AuthUser, paymentId: string, refundId: string,
+    bankProof?: { reference: string; transferredAt: string }) {
     const committed = await this.db.tx(async q => {
       const pay = await q.one<any>(
         `select p.*, o.client_id, o.created_by, o.performer_id, o.number
@@ -195,7 +229,19 @@ export class AdminService {
         'select * from payment_refund_requests where id=$1 and payment_id=$2 for update',
         [refundId, paymentId]);
       if (!attempt) throw notFound('Запрос возврата не найден');
-      if (attempt.status === 'succeeded') return { pay, changed: false, attempt };
+      if (attempt.status === 'succeeded') {
+        if (bankProof && (pay.method !== 'invoice' ||
+            attempt.bank_transfer_reference !== bankProof.reference ||
+            new Date(attempt.bank_transferred_at).toISOString() !== bankProof.transferredAt))
+          throw conflict('confirmation_conflict', 'Другая банковская операция уже подтверждена для возврата');
+        return { pay, changed: false, attempt };
+      }
+      if (pay.method === 'invoice') {
+        if (!bankProof || attempt.status !== 'pending_manual_refund')
+          throw conflict('manual_refund_required', 'Нужно подтвердить фактический перевод по банковскому счёту');
+      } else if (bankProof || attempt.status === 'pending_manual_refund') {
+        throw conflict('not_invoice', 'Для онлайн-возврата требуется подтверждение платёжного провайдера');
+      }
       if (attempt.status === 'failed' || attempt.status === 'needs_review')
         throw conflict('refund_unknown', 'Требуется сверка состояния возврата');
       const total = pay.refunded_amount + attempt.amount;
@@ -223,10 +269,18 @@ export class AdminService {
       await this.orders.event(q, pay.order_id, admin.id, 'refund',
         { paymentId, refundId, amount: p.amount, from: p.from, reason: p.reason });
       await this.audit(q, admin, 'payment.refund', paymentId,
-        { ...p, refundId });
+        { ...p, refundId, bankTransferReference: bankProof?.reference ?? null });
+      if (bankProof) {
+        await this.audit(q, admin, 'payment.invoice_refund_confirmed', paymentId,
+          { refundId, transferReference: bankProof.reference, transferredAt: bankProof.transferredAt });
+      }
       await q.query(
         `update payment_refund_requests set status='succeeded',
-          resolved_at=now(), updated_at=now() where id=$1`, [refundId]);
+           bank_transfer_reference=$2, bank_transferred_at=$3,
+           bank_confirmed_by=$4, bank_confirmed_at=case when $4::uuid is null then null else now() end,
+           resolved_at=now(), updated_at=now() where id=$1`,
+        [refundId, bankProof?.reference ?? null, bankProof?.transferredAt ?? null,
+          bankProof ? admin.id : null]);
       return { pay, changed: true, attempt };
     });
     const pay = committed.pay;
@@ -235,7 +289,7 @@ export class AdminService {
       await this.notifier.notify([pay.client_id, pay.created_by],
         { type: 'order', orderId: pay.order_id, status: 'refund' },
         { kind: 'normal', title: 'Возврат денег',
-          body: `Заявка №${pay.number}: возвращаем ${rub(a.amount)}. ${a.reason}`,
+          body: `Заявка №${pay.number}: возврат ${rub(a.amount)} подтверждён. ${a.reason}`,
           data: { orderId: pay.order_id } });
       if (a.source_account === 'performer')
         await this.notifier.notify([pay.performer_id], { type: 'balance' },

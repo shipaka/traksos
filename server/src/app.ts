@@ -904,8 +904,19 @@ export function createApp(d: Deps) {
     amount: money.positive(), from: z.enum(['platform', 'performer']), reason: z.string().min(3).max(300),
   }), c.body), typeof c.headers['idempotency-key'] === 'string' ? c.headers['idempotency-key'] : undefined));
   r.get('/api/admin/payments/:id/refunds', ['admin'], (c: AuthedCtx) => d.db.query(
-    `select id, amount, source_account, reason, status, provider_refund_id, created_at, resolved_at
+    `select id, amount, source_account, reason, status, provider_refund_id,
+            bank_transfer_reference, bank_transferred_at, bank_confirmed_by, bank_confirmed_at,
+            created_at, resolved_at
        from payment_refund_requests where payment_id=$1 order by created_at`, [c.params.id]));
+  // Separate, explicit act: admin attests that the outgoing bank transfer
+  // has ALREADY been executed. Does not initiate any transfer.
+  r.post('/api/admin/payments/:id/refunds/:refundId/confirm-bank-transfer', ['admin'],
+    (c: AuthedCtx) => admin.confirmInvoiceRefund(c.user, c.params.id, c.params.refundId,
+      parse(z.object({
+        transferReference: z.string().trim().min(3).max(120),
+        transferredAt: z.string().datetime({ offset: true }),
+        confirmedTransfer: z.literal(true),
+      }), c.body)));
   r.post('/api/admin/payments/:id/refunds/:refundId/reconcile', ['admin'],
     (c: AuthedCtx) => admin.reconcileRefund(c.user, c.params.id, c.params.refundId));
   r.post('/api/admin/performers/:id/adjust', ['admin'], (c: AuthedCtx) => admin.adjust(c.user, c.params.id, parse(z.object({
