@@ -95,7 +95,7 @@ export class StatsService {
           group by r.id
        ), standalone as (
          select count(*)::int as n from service_bookings
-          where from_order_id is null and created_at >= $1
+          where from_order_id is null and case_root_id is null and created_at >= $1
        )
        select ((select count(*) from grouped) + (select n from standalone))::int as total,
               (select count(*) from grouped where stage_count > 1)::int as multistage,
@@ -104,7 +104,7 @@ export class StatsService {
     const workshopStats = await this.db.one<{ service: string; created: number; completed: number; avg_check: number }>(
       `select 'sto' as service, count(*)::int as created,
               count(*) filter (where status='closed')::int as completed,
-              coalesce(avg(amount - discount) filter (where status='closed' and amount is not null),0)::int as avg_check
+              coalesce(avg(amount - coalesce(discount,0)) filter (where status='closed' and amount is not null),0)::int as avg_check
          from service_bookings where created_at >= $1`, [since]);
     const t = totals!;
     const closed = t.completed + t.cancelled + t.no_performer;
