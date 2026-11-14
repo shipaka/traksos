@@ -229,7 +229,13 @@ export class AdminService {
         'select * from payment_refund_requests where id=$1 and payment_id=$2 for update',
         [refundId, paymentId]);
       if (!attempt) throw notFound('Запрос возврата не найден');
-      if (attempt.status === 'succeeded') return { pay, changed: false, attempt };
+      if (attempt.status === 'succeeded') {
+        if (bankProof && (pay.method !== 'invoice' ||
+            attempt.bank_transfer_reference !== bankProof.reference ||
+            new Date(attempt.bank_transferred_at).toISOString() !== bankProof.transferredAt))
+          throw conflict('confirmation_conflict', 'Другая банковская операция уже подтверждена для возврата');
+        return { pay, changed: false, attempt };
+      }
       if (pay.method === 'invoice') {
         if (!bankProof || attempt.status !== 'pending_manual_refund')
           throw conflict('manual_refund_required', 'Нужно подтвердить фактический перевод по банковскому счёту');
