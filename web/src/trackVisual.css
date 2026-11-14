@@ -194,7 +194,7 @@
 .tracksos-live-open{color:#8beeff;display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:11px;background:#0b354f;font-weight:800;font-size:12px;}
 .tracksos-empty-icon{width:40px;height:40px;border:1px solid #55d6ef;border-radius:50%;display:grid;place-items:center;color:#80f5cf;}
 .app.role-client .tracksos-visual-home .desktop-empty-orders{display:flex;flex-direction:column;gap:10px;
-  border:1px solid #2d607d!important;background:#0b2943!important;color:#e4f5fd;padding:16px;}
+  border:1px solid #2d607d!important;background:linear-gradient(145deg,#113b59,#0b2943)!important;color:#e4f5fd;padding:16px;}
 .tracksos-empty-orders p,.tracksos-visual-home .desktop-empty-orders p{margin:0;font-size:12px;color:#a5cbdc;line-height:1.5;}
 .tracksos-more-orders{color:#78e6f7;font-size:12px;text-decoration:none;margin-top:10px;}
 .app.role-client .tracksos-visual-home .tracksos-primary-help{
