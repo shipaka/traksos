@@ -72,12 +72,20 @@ const housekeeping = async () => {
 };
 const hourly = setInterval(() => { void housekeeping(); }, 3_600_000);
 
+// Recover durable capture-intents after restart or an ambiguous bank response.
+// Never repeat a previously sent capture: reconciliation uses provider GET.
+const captureReconcile = () => app.payments.reconcileCaptures()
+  .catch((e) => console.error('[capture-reconciliation]', e));
+const captureTimer = setInterval(() => { void captureReconcile(); }, 30_000);
+void captureReconcile();
+
 server.listen(config.port, () => console.log(`ТракSOS API: http://localhost:${config.port} (БД: ${db.driver})`));
 
 for (const sig of ['SIGINT', 'SIGTERM'] as const) {
   process.on(sig, async () => {
     clearInterval(timer);
     clearInterval(hourly);
+    clearInterval(captureTimer);
     server.close();
     await db.close();
     process.exit(0);

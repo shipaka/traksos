@@ -100,7 +100,9 @@ export class PaymentsService implements PaymentHooks {
       await this.notifier.notify([order.client_id, order.created_by], { type: 'payment', orderId: order.id, url: p.confirmation_url },
         { kind: 'normal', title: 'Оплатите работу', body: `Заявка №${order.number}: ${rub(p.total)}`, data: { orderId: order.id } });
     } else {
-      await this.finalizeOnline(order.id, q);
+      // Save the capture intent in the same transaction as client confirmation.
+      // Actual bank IO must happen only after the order transaction commits.
+      await this.prepareOnlineSettlement(order.id, q);
     }
   }
 
@@ -204,12 +206,20 @@ export class PaymentsService implements PaymentHooks {
           (['failed', 'cancelled'].includes(current.status) && !['failed', 'cancelled'].includes(status)))
         return { changed: false, dispatch: false, failedOrder: null as any };
 
+      // An independent captured webhook may race our own capture/reconciliation.
+      // Accounting MUST be driven by the durable intent, not by this raw event.
+      if (current.kind === 'call_out' && current.status === 'held' && status === 'captured') {
+        const intent = await q.one<{ id: string }>(
+          "select id from payment_capture_intents where payment_id=$1 and status<>'settled'", [current.id]);
+        if (intent) return { changed: false, dispatch: false, failedOrder: null as any };
+      }
       await q.query('update payments set status=$2, updated_at=now() where id=$1', [current.id, status]);
       await this.orders.event(q, current.order_id, null, `payment_${current.kind}_${status}`,
         { paymentId: current.id, total: current.total });
       if (current.kind === 'work' && status === 'captured') {
-        // Transaction and lock are shared with settlement/ledger/payout.
-        await this.finalizeOnline(current.order_id, q);
+        // The work payment has settled, but the held call-out still needs an
+        // external capture. Only persist the intent while holding DB locks.
+        await this.prepareOnlineSettlement(current.order_id, q);
       }
       let failedOrder: any = null;
       if (current.kind === 'call_out' && (status === 'cancelled' || status === 'failed')) {
@@ -223,6 +233,12 @@ export class PaymentsService implements PaymentHooks {
 
     // Never start dispatch or push live notifications from a transaction that
     // might roll back. Only the successful transition performs these effects.
+    if (pay.kind === 'work' && status === 'captured') {
+      // This fast path preserves normal UX; a crashed process is repaired by
+      // the periodic reconciliation worker using the same durable intent.
+      await this.processCaptureForOrder(pay.order_id).catch((e) =>
+        console.error('[capture-fast-path]', e));
+    }
     if (changed.dispatch) await this.orders.startDispatch(pay.order_id);
     if (changed.failedOrder) {
       const o = changed.failedOrder;
@@ -234,21 +250,156 @@ export class PaymentsService implements PaymentHooks {
     return { changed: changed.changed };
   }
 
-  /** Всё оплачено: списываем замороженный выезд, разносим по счетам, ставим выплату */
+  /** Persist the bank capture plan in the order/webhook transaction, without IO. */
+  private async prepareOnlineSettlement(orderId: string, q: Queryable) {
+    const order = (await q.one<any>('select * from orders where id=$1', [orderId]))!;
+    const callOutPay = await q.one<any>(
+      `select * from payments where order_id=$1 and kind='call_out' and status='held' for update`,
+      [orderId]);
+    if (!callOutPay) {
+      // Payment was either already handled (legacy/zero call-out) or does not
+      // exist. Preserve the historical immediate-accounting case.
+      await this.finalizeOnline(orderId, q);
+      return;
+    }
+    if (!callOutPay.provider_payment_id) throw new Error('Held payment has no provider reference');
+    const workTotal = (order.work_amount ?? 0) + pct(order.work_amount ?? 0, Number(order.client_fee_pct));
+    const discountOnCallOut = Math.max(0, Number(order.discount_amount ?? 0) - workTotal);
+    const actual: number = order.call_out_amount ?? callOutPay.amount;
+    const fee = pct(actual, Number(order.client_fee_pct)) - discountOnCallOut;
+    const total = actual + fee;
+    if (!Number.isInteger(total) || total < 0 || total > callOutPay.total)
+      throw new Error('Invalid frozen payment capture amount');
+    const previous = await q.one<any>(
+      'select * from payment_capture_intents where order_id=$1 for update', [orderId]);
+    if (previous) {
+      if (previous.payment_id !== callOutPay.id || previous.total !== total)
+        throw new Error('Capture intent conflicts with previously committed amount');
+      return;
+    }
+    await q.query(
+      `insert into payment_capture_intents(order_id,payment_id,provider_payment_id,amount,client_fee,total)
+       values ($1,$2,$3,$4,$5,$6)`,
+      [orderId, callOutPay.id, callOutPay.provider_payment_id, actual, fee, total]);
+  }
+
+  /** Claim an unsent intent once, then contact the provider WITHOUT a DB lock. */
+  async processCaptureForOrder(orderId: string): Promise<string | null> {
+    const intent = await this.db.tx(async q => {
+      const row = await q.one<any>(
+        "select * from payment_capture_intents where order_id=$1 and status='prepared' for update",
+        [orderId]);
+      if (!row) return null;
+      await q.query(
+        `update payment_capture_intents set status='sending', attempts=attempts+1,
+         attempted_at=now(), updated_at=now() where id=$1`, [row.id]);
+      return row;
+    });
+    if (!intent) return null;
+    try {
+      const result = await this.provider.capture(intent.provider_payment_id, intent.total);
+      if (result.status !== 'captured') {
+        await this.flagCaptureForReview(intent.id, `capture response: ${result.status}`);
+        return 'needs_review';
+      }
+      const verified = await this.provider.getPayment(intent.provider_payment_id);
+      if (verified.status !== 'captured' || verified.total !== intent.total) {
+        await this.flagCaptureForReview(intent.id,
+          `capture check: status=${verified.status}, total=${verified.total}, expected=${intent.total}`);
+        return 'needs_review';
+      }
+      await this.settleCaptureIntent(intent.id);
+      return 'settled';
+    } catch (error) {
+      // The bank may have captured the money before the response was lost.
+      // NEVER issue a second capture from this branch or on a timer.
+      await this.flagCaptureForReview(intent.id, (error as Error).message);
+      return 'needs_review';
+    }
+  }
+
+  private async flagCaptureForReview(intentId: string, reason: string) {
+    await this.db.query(
+      `update payment_capture_intents set status='needs_review',last_error=$2,
+         checked_at=now(),updated_at=now() where id=$1 and status<>'settled'`,
+      [intentId, reason.slice(0, 500)]);
+  }
+
+  /** Reconciliation NEVER transfers funds: GET provider status, then settle locally. */
+  async reconcileCapture(intentId: string): Promise<string> {
+    const intent = await this.db.one<any>(
+      'select * from payment_capture_intents where id=$1', [intentId]);
+    if (!intent) throw notFound('Запрос списания не найден');
+    if (intent.status === 'settled') return 'settled';
+    if (intent.status === 'prepared') return 'prepared';
+    try {
+      const verified = await this.provider.getPayment(intent.provider_payment_id);
+      if (verified.status !== 'captured' || verified.total !== intent.total) {
+        await this.flagCaptureForReview(intent.id,
+          `bank reconciliation: status=${verified.status}, total=${verified.total}, expected=${intent.total}`);
+        return 'needs_review';
+      }
+      await this.settleCaptureIntent(intent.id);
+      return 'settled';
+    } catch (error) {
+      await this.flagCaptureForReview(intent.id, (error as Error).message);
+      return 'needs_review';
+    }
+  }
+
+  /** Durable worker: prepared operations are sent once; unknown ones only GET. */
+  async reconcileCaptures(limit = 40) {
+    const items = await this.db.query<{ id: string; order_id: string; status: string }>(
+      `select id,order_id,status from payment_capture_intents
+        where status='prepared' or
+          (status in ('sending','needs_review') and
+           (checked_at is null or checked_at < now() - interval '60 seconds'))
+        order by case when status='prepared' then 0 else 1 end,
+                 coalesce(checked_at,created_at) limit $1`,
+      [Math.max(1, Math.min(100, limit))]);
+    const results = [];
+    for (const item of items) {
+      try {
+        const status = item.status === 'prepared'
+          ? await this.processCaptureForOrder(item.order_id)
+          : await this.reconcileCapture(item.id);
+        results.push({ id: item.id, status: status ?? 'claimed_elsewhere' });
+      } catch (error) {
+        console.error('[capture-reconciliation]', item.id, error);
+        results.push({ id: item.id, status: 'needs_review' });
+      }
+    }
+    return results;
+  }
+
+  /** Single atomic accounting transition after verified capture. */
+  private async settleCaptureIntent(intentId: string) {
+    await this.db.tx(async q => {
+      const intent = await q.one<any>(
+        'select * from payment_capture_intents where id=$1 for update', [intentId]);
+      if (!intent || intent.status === 'settled') return;
+      if (!['sending','needs_review'].includes(intent.status))
+        throw new Error('Capture was never submitted');
+      const pay = await q.one<any>('select * from payments where id=$1 for update', [intent.payment_id]);
+      if (!pay || pay.order_id !== intent.order_id || pay.kind !== 'call_out' || pay.status !== 'held')
+        throw new Error('Held call-out state changed before capture accounting');
+      await q.query(
+        `update payments set status='captured',amount=$2,client_fee=$3,total=$4,
+         updated_at=now() where id=$1`,
+        [pay.id, intent.amount, intent.client_fee, intent.total]);
+      await this.finalizeOnline(intent.order_id, q);
+      await q.query(
+        `update payment_capture_intents set status='settled',settled_at=now(),
+         last_error=null,checked_at=now(),updated_at=now() where id=$1`, [intent.id]);
+    });
+  }
+
+  /** Pure database accounting; the provider has already confirmed the capture. */
   private async finalizeOnline(orderId: string, q: Queryable) {
     const order = (await q.one('select * from orders where id=$1', [orderId]))!;
-    const callOutPay = await q.one(`select * from payments where order_id=$1 and kind='call_out' and status='held'`, [orderId]);
-    const m0 = this.orders.money(order);
-    const workTotal = m0.work + pct(m0.work, Number(order.client_fee_pct));
-    const discountOnCallOut = Math.max(0, m0.discount - workTotal);
-    if (callOutPay) {
-      const actual: number = order.call_out_amount ?? callOutPay.amount;
-      const fee = pct(actual, Number(order.client_fee_pct)) - discountOnCallOut;
-      await this.provider.capture(callOutPay.provider_payment_id, actual + fee);
-      // Разморозка лишнего — не возврат: просто списываем меньше, чем было заморожено
-      await q.query(`update payments set status='captured', amount=$2, client_fee=$3, total=$4, updated_at=now() where id=$1`,
-        [callOutPay.id, actual, fee, actual + fee]);
-    }
+    const stillHeld = await q.one(
+      `select id from payments where order_id=$1 and kind='call_out' and status='held'`, [orderId]);
+    if (stillHeld) throw new Error('Cannot book earnings before a held call-out is captured');
     const m = this.orders.money(order);
     const perf = await q.one<{ is_priority: boolean }>('select is_priority from performer_profiles where user_id=$1', [order.performer_id]);
     const fees = await this.settings.get('fees');
