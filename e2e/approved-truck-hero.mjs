@@ -107,20 +107,23 @@ try{
     await publicPage.locator('.public-landing .public-hero-visual').waitFor();
     const art=await publicPage.locator('.public-landing .public-hero-visual')
       .evaluate(async el=>{
-        const css=getComputedStyle(el);
-        const photoImage=css.backgroundImage;
-        const photoSize=css.backgroundSize;
         const rect=el.getBoundingClientRect();
-        const url=photoImage.match(/url\(["']?([^"')]+)["']?\)/)?.[1];
-        const image=url?new Image():null;
-        if(image){image.src=url;await image.decode().catch(()=>{});}
-        return {photoSize,photoImage,visible:rect.width>100&&rect.height>100,
-          loaded:!!image&&image.naturalWidth>0};
+        const layers=[el,'::after'].map(p=>{
+          const cs=getComputedStyle(el,p===el?undefined:p);
+          return {size:cs.backgroundSize,image:cs.backgroundImage};
+        });
+        const layer=layers.find(p=>p.image.includes('tracksos-approved-scania-r520'));
+        const url=layer?.image.match(/url\(["']?([^"')]+)["']?\)/)?.[1];
+        const photo=url?new Image():null;
+        if(photo){photo.src=url;await photo.decode().catch(()=>{});}
+        return {
+          visible:rect.width>100&&rect.height>100,
+          layers,loaded:!!photo&&photo.naturalWidth>0,
+          uncropped:!!layer&&layer.size.split(',').some(v=>v.trim()==='contain')
+        };
       });
-    if(!art.visible || !art.loaded ||
-      !art.photoSize.split(',').some(v=>v.trim()==='contain') ||
-      !art.photoImage.includes('tracksos-approved-scania-r520'))
-      throw Error(width+'px public approved Scania photo must be visible, loaded and uncropped: '+JSON.stringify(art));
+    if(!art.visible || !art.loaded || !art.uncropped)
+      throw Error(width+'px public Scania must actually load, remain uncropped and be visible: '+JSON.stringify(art));
     await publicPage.waitForTimeout(450);
     await publicPage.screenshot({path:'e2e/shots/approved-truck/public-'+width+'.png',fullPage:true});
     await guest.close();
