@@ -63,7 +63,7 @@ export function BaseHome() {
   const { center, groups } = cab.data;
   // Новая рембаза: на главной — что будет дальше, сама карточка — во вкладке «Карточка»
   if (!center) return (
-    <main className="base-workspace">{!preview&&<WorkerNotices audience="service" />}
+    <main className="base-workspace service-onboarding">{!preview&&<WorkerNotices audience="service" />}
       <div>
         <h1>Подключите рембазу</h1>
         <div className="sub">Три шага — и клиенты ТракSOS начнут записываться к вам, а мастера советовать вас после диагностики</div>
