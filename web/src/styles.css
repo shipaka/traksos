@@ -1726,3 +1726,122 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
 @media(max-width:520px){.insurer-empty-intro{grid-template-columns:1fr;gap:10px;}
  .insurer-empty-symbol{width:63px;height:63px;font-size:40px;}
  .insurer-workflow-step{padding:12px;min-height:165px;}}
+
+
+/* Client dashboard 2026-11-14: the real authenticated React UI, not a static mockup.
+   Uses the approved Scania asset and live /api/orders, with no fabricated data. */
+.app.role-client .client-dashboard{gap:18px;max-width:1450px;min-width:0;}
+.app.role-client .client-dashboard .desktop-hero{
+  display:flex!important;position:relative;isolation:isolate;align-items:center;
+  min-height:315px;overflow:hidden;padding:clamp(23px,3.5vw,43px);
+  border-radius:23px;border:1px solid #42728a;
+  background:radial-gradient(ellipse at 85% 27%,rgba(31,190,225,.25),transparent 48%),
+    radial-gradient(ellipse at 10% 100%,rgba(241,30,130,.16),transparent 46%),
+    linear-gradient(105deg,#07182d 5%,#0b304e 75%,#12233f);
+  box-shadow:0 19px 48px rgba(0,4,17,.27);
+}
+.app.role-client .client-dashboard .desktop-hero::before{
+  content:'';position:absolute;inset:0;z-index:0;
+  background:linear-gradient(90deg,rgba(3,15,30,.73),rgba(5,25,44,.46) 62%,rgba(5,21,41,.03));
+  pointer-events:none;
+}
+.app.role-client .client-dashboard .desktop-hero-copy{position:relative;z-index:2;width:62%;max-width:620px;}
+.app.role-client .client-dashboard .desktop-eyebrow{color:#6feaf5;font-size:10px;letter-spacing:.16em;font-weight:900;}
+.app.role-client .client-dashboard .desktop-hero h1{
+  font-size:clamp(27px,3.2vw,43px);line-height:1.15;color:#fff;margin:14px 0 13px;
+  letter-spacing:-.035em;
+}
+.app.role-client .client-dashboard .desktop-hero h1 span{color:#78ecfb;}
+.app.role-client .client-dashboard .desktop-hero p{font-size:clamp(12px,1.3vw,15px);color:#d4e9f4;line-height:1.65;max-width:460px;margin:0;}
+.app.role-client .client-dashboard .desktop-hero-buttons{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px;}
+.app.role-client .client-dashboard .desktop-primary-action,
+.app.role-client .client-dashboard .desktop-outline-action{display:inline-flex;align-items:center;justify-content:center;
+  min-height:49px;border-radius:12px;padding:10px 16px;font-size:13px;font-weight:850;text-decoration:none;}
+.app.role-client .client-dashboard .desktop-primary-action{background:linear-gradient(115deg,#f91a83,#cb1469);color:#fff;
+  box-shadow:0 9px 22px rgba(232,23,114,.28);}
+.app.role-client .client-dashboard .desktop-outline-action{background:#0b304bba;border:1px solid #5d96b0;color:#fff;}
+.app.role-client .client-dashboard .launch-region{margin-top:16px;color:#a8cbdc;font-size:11px;}
+.app.role-client .client-dashboard .client-hero-scania{position:absolute;z-index:1;right:0;bottom:0;
+  width:51%;height:100%;object-fit:contain;object-position:right center;
+  filter:drop-shadow(0 15px 25px rgba(0,0,0,.27));}
+.app.role-client .client-dashboard .desktop-quick-links{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;}
+.app.role-client .client-dashboard .desktop-quick-card{display:flex!important;align-items:flex-start;gap:11px;
+  min-height:150px;padding:20px 15px;border-radius:19px;
+  background:radial-gradient(circle at 100% 0,rgba(60,214,237,.11),transparent 52%),linear-gradient(145deg,#123651,#0c263e);
+  border:1px solid #356781;color:#f2fbff;box-shadow:0 9px 26px rgba(0,9,27,.18);}
+.app.role-client .client-dashboard .desktop-quick-card:hover{transform:translateY(-3px);border-color:#65dbef;}
+.app.role-client .client-dashboard .desktop-quick-card:nth-child(2){background:radial-gradient(circle at 100% 0,rgba(240,56,147,.16),transparent 51%),linear-gradient(145deg,#173651,#15263e);}
+.app.role-client .client-dashboard .desktop-quick-card:nth-child(3){background:linear-gradient(140deg,#153c5b,#0d263f);}
+.app.role-client .client-dashboard .desktop-quick-icon{display:grid;place-items:center;width:43px;height:43px;
+  flex:0 0 43px;border-radius:13px;background:#174d69;color:#73f1ff;font-size:22px;}
+.app.role-client .client-dashboard .desktop-quick-card:nth-child(2) .desktop-quick-icon{background:#552847;color:#ff90c3;}
+.app.role-client .client-dashboard .desktop-quick-card>span:nth-child(2){flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;}
+.app.role-client .client-dashboard .desktop-quick-card b{font-size:14px;line-height:1.35;color:#fff;}
+.app.role-client .client-dashboard .desktop-quick-card small{font-size:11px;line-height:1.55;color:#b4cfe0;}
+.app.role-client .client-dashboard .desktop-quick-card>span:last-child{font-size:16px;color:#6ce6f5;}
+.app.role-client .client-dashboard .desktop-home-columns{display:grid;grid-template-columns:minmax(0,1.85fr) minmax(245px,.8fr);
+  gap:17px;align-items:start;}
+.app.role-client .client-dashboard .desktop-home-main{display:flex;flex-direction:column;gap:14px;min-width:0;}
+.app.role-client .client-dashboard .desktop-home-aside{display:flex;flex-direction:column;gap:14px;}
+.app.role-client .client-dashboard .desktop-section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.app.role-client .client-dashboard .desktop-section-heading h2{font-size:19px;color:#eff9ff;}
+.app.role-client .client-dashboard .desktop-section-heading a{color:#61ddea;font-size:12px;text-decoration:none;}
+.app.role-client .client-dashboard .mobile-home-heading{display:none;}
+.app.role-client .client-dashboard .desktop-active-orders{display:flex;flex-direction:column;gap:10px;}
+.app.role-client .client-dashboard .desktop-active-orders .card{border:1px solid #426f89!important;border-radius:15px;}
+.app.role-client .client-dashboard .desktop-empty-orders{border-radius:16px;padding:20px;border:1px solid #345d79;
+  background:linear-gradient(130deg,#12324d,#0c253c);color:#bfdaea;font-size:13px;line-height:1.6;}
+.app.role-client .client-dashboard .client-dashboard-hubs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;}
+.app.role-client .client-dashboard .client-dashboard-hubs>a{display:flex;flex-direction:column;gap:8px;min-height:170px;
+  padding:18px;text-decoration:none;color:#edfaff;min-width:0;border:1px solid #315a78;border-radius:18px;
+  background:linear-gradient(145deg,#112e48,#10243b);box-shadow:0 9px 23px rgba(0,9,25,.13);}
+.app.role-client .client-dashboard .client-dashboard-hubs>a:hover{border-color:#57d3e9;transform:translateY(-2px);}
+.app.role-client .client-dashboard .client-dashboard-hub-icon{display:grid;place-items:center;border-radius:12px;
+  width:41px;height:41px;background:#1b4a64;color:#81eff9;font-size:25px;}
+.app.role-client .client-dashboard .client-dashboard-hubs b{font-size:14px;line-height:1.35;color:#fff;}
+.app.role-client .client-dashboard .client-dashboard-hubs small{color:#a9c9db;font-size:11px;line-height:1.5;}
+.app.role-client .client-dashboard .client-dashboard-hubs em{margin-top:auto;font-size:11px;
+  font-weight:800;font-style:normal;color:#5fdfec;}
+.app.role-client .client-dashboard .desktop-aside-card{border-radius:17px;padding:20px;
+  background:linear-gradient(140deg,#123651,#0c263e);border:1px solid #396783;}
+.app.role-client .client-dashboard .desktop-aside-card h2{color:#f5fdff;}
+.app.role-client .client-dashboard .desktop-aside-card p{color:#b8d1df;}
+.app.role-client .client-dashboard .home-services{display:none!important;}
+@media(max-width:1240px) and (min-width:900px){
+  .app.role-client .client-dashboard .desktop-quick-links{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .app.role-client .client-dashboard .desktop-quick-card{min-height:115px;}
+  .app.role-client .client-dashboard .desktop-home-columns{grid-template-columns:minmax(0,1fr);}
+  .app.role-client .client-dashboard .desktop-home-aside{display:none;}
+}
+@media(max-width:899px){
+  .app.role-client .client-dashboard{padding-top:12px;gap:14px;}
+  .app.role-client .client-dashboard .desktop-hero{min-height:325px;padding:21px 19px 15px;align-items:flex-start;}
+  .app.role-client .client-dashboard .desktop-hero-copy{width:100%;max-width:none;}
+  .app.role-client .client-dashboard .desktop-hero h1{font-size:clamp(23px,6.2vw,30px);max-width:320px;}
+  .app.role-client .client-dashboard .desktop-hero p{font-size:12px;max-width:300px;}
+  .app.role-client .client-dashboard .client-hero-scania{width:78%;height:48%;right:-3%;bottom:-2%;object-position:right bottom;opacity:.95;}
+  .app.role-client .client-dashboard .desktop-hero::before{background:linear-gradient(180deg,rgba(4,18,32,.45),rgba(4,18,32,.3) 45%,transparent);}
+  .app.role-client .client-dashboard .desktop-hero-buttons{margin-top:14px;gap:8px;}
+  .app.role-client .client-dashboard .desktop-primary-action,.app.role-client .client-dashboard .desktop-outline-action{min-height:42px;font-size:11px;padding:9px 10px;}
+  .app.role-client .client-dashboard .launch-region{display:none;}
+  .app.role-client .client-dashboard .desktop-quick-links{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;}
+  .app.role-client .client-dashboard .desktop-quick-card{min-height:166px;padding:14px 12px;display:flex!important;flex-direction:column;gap:9px;}
+  .app.role-client .client-dashboard .desktop-quick-icon{width:39px;height:39px;flex-basis:39px;font-size:21px;}
+  .app.role-client .client-dashboard .desktop-quick-card b{font-size:12px;}
+  .app.role-client .client-dashboard .desktop-quick-card small{font-size:10px;}
+  .app.role-client .client-dashboard .desktop-quick-card>span:last-child{display:none;}
+  .app.role-client .client-dashboard .desktop-home-columns{display:flex;flex-direction:column;gap:17px;}
+  .app.role-client .client-dashboard .desktop-home-main{display:flex;width:100%;}
+  .app.role-client .client-dashboard .desktop-home-aside{display:none;}
+  .app.role-client .client-dashboard .desktop-section-heading h2{font-size:18px;}
+  .app.role-client .client-dashboard .client-dashboard-hubs{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .app.role-client .client-dashboard .client-dashboard-hubs>a{padding:14px;min-height:168px;}
+  .app.role-client .client-dashboard .client-dashboard-hubs b{font-size:12px;}
+  .app.role-client .client-dashboard .client-dashboard-hubs small{font-size:10px;}
+  .app.role-client .tabbar a{font-size:10px;}
+  .app.role-client .tabbar{width:min(430px,calc(100% - 20px));}
+}
+@media(max-width:365px){
+  .app.role-client .client-dashboard .desktop-quick-links{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .app.role-client .client-dashboard .client-dashboard-hubs{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
