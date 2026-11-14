@@ -28,7 +28,8 @@ export type DemoOrder={id:string;number:number;created_at:string;createdAt:strin
  year:number;plate:string;vehicle:any;vehicleId:string;zoneId:string;lat:number;lng:number;
  paymentMethod:'cash';is_sos:boolean;isSos:boolean;night:boolean;tier:string;
  estimate:any;money:any;site:any;actions:string[];bill:any;points:any;result:string;
- assigned:boolean;offerPrice:number|null;messages:any[];limits:any};
+ assigned:boolean;offerPrice:number|null;messages:any[];limits:any;
+ caseRootId?:string|null;continuationOf?:string|null;resultNote?:string|null};
 let modCases:any[]=[
  {id:'demo-mod-1',number:801,kind:'dispute',kindName:'Спор',title:'Спор по стоимости диагностики',
   text:'Клиент просит проверить расхождение в стоимости работы.',createdAt:stamp(),
@@ -78,7 +79,21 @@ const offerOf=(o:DemoOrder)=>o.offerPrice==null?[]:[{
 }];
 const viewOrder=(o:DemoOrder)=>{
  const actor=isWorker()?'performer':isCustomer()?'client':'admin';
+ const rootId=o.caseRootId??o.id;
+ const steps=orders.filter(x=>x.id===rootId || x.caseRootId===rootId)
+   .sort((a,b)=>a.number-b.number);
+ const caseRows=steps.map(x=>({
+   id:x.id,number:x.number,service:x.service,status:x.status,
+   result:x.result,resultNote:x.resultNote??null,money:clone(x.money),
+ }));
+ const confirmedTotal=steps.filter(x=>x.status==='completed')
+   .reduce((sum,x)=>sum+Number(x.money.total??0),0);
+ const canContinueWithTow=actor==='client'&&o.status==='completed'&&o.service!=='tow'&&
+   ['cause_found','not_found'].includes(o.result)&&
+   !steps.some(x=>x.continuationOf===o.id && x.status!=='cancelled');
  return {...clone(o),you:actor,owner_id:'demo-customer',
+  caseRootId:rootId,continuationOf:o.continuationOf??null,canContinueWithTow,
+  caseSummary:{rootId,stages:caseRows,serviceBookings:[],confirmedTotal,multiStage:steps.length>1},
   performer:o.assigned?{id:'demo-performer',name:workerName(),rating:4.9,rating_count:78,
    car:{brand:who()==='tow'?'MAN':'Volkswagen',plate:'Т111ТТ78'}}:null,
   client:{id:'demo-customer',name:'Демо · Клиент',company_name:'Демо Транспорт',rating:5},
