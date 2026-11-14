@@ -85,7 +85,8 @@ export class MockProvider implements PaymentProvider {
   }
   async getPayment(id: string) {
     const p = this.payments.get(id)!;
-    return { id, status: p.status, total: p.total };
+    // A partial capture reduces the held amount; mirror bank's current settled sum.
+    return { id, status: p.status, total: p.status === 'captured' ? p.captured : p.total };
   }
   async payout(p: PayoutInput) {
     this.payouts.push(p);
