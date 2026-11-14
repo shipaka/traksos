@@ -167,6 +167,7 @@ await k.getByRole('button', { name: /Выездной мастер/ }).click();
 await k.getByRole('link', { name: /Электрик/ }).first().click();
 await k.getByRole('button', { name: /Вызвать мастера/ }).click(); // рано: подсветит, чего не хватает
 await k.getByText('Осталось:').waitFor();
+await k.locator('textarea').first().fill('Требуется диагностика электрики');
 await k.locator('select[aria-label="Марка"]').selectOption('Scania');
 await k.locator('select[aria-label="Модель"]').selectOption('R-серия');
 await k.locator('select[aria-label="Год выпуска"]').selectOption('2012');
