@@ -151,6 +151,7 @@ class MainActivity : AppCompatActivity() {
     private var startupOverlay: View? = null
     // Keep the agreed seasonal scene on screen long enough to notice.
     private var startupShownAt = 0L
+    private var debugUiReadyLogged = false
     private val startupMinimumVisibleMs = 3_500L
     private var fileUploadCallback: ValueCallback<Array<Uri>>? = null
     private val filePicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -255,7 +256,17 @@ class MainActivity : AppCompatActivity() {
                         // Errors still dismiss it immediately in showOffline().
                         val shown = SystemClock.elapsedRealtime() - startupShownAt
                         val remaining = (startupMinimumVisibleMs - shown).coerceAtLeast(0L)
-                        startupOverlay?.postDelayed({ if (!failed) hideStartupOverlay() }, remaining)
+                        startupOverlay?.postDelayed({
+                            if (!failed) {
+                                val wasVisible = startupOverlay?.visibility == View.VISIBLE
+                                hideStartupOverlay()
+                                if (BuildConfig.DEBUG && wasVisible) {
+                                    android.util.Log.i("TrakSOSRuntime",
+                                        "SPLASH_VISIBLE_MS=" + (SystemClock.elapsedRealtime() - startupShownAt))
+                                }
+                            }
+                        }, remaining)
+                        checkDebugRenderedUi()
                     } else showOffline(getString(R.string.server_not_traksos))
                 }
             }
@@ -382,6 +393,23 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
+    /** CI-only proof that React rendered a public screen, not merely static HTML.
+     * Never logs a user profile, token, or backend response. */
+    private fun checkDebugRenderedUi(attempt: Int = 0) {
+        if (!BuildConfig.DEBUG || debugUiReadyLogged || failed || !::web.isInitialized) return
+        web.evaluateJavascript(
+            "!!(document.querySelector('main.public-landing .public-brand-hero') && " +
+                "document.querySelector('.public-actions button'))"
+        ) { rendered ->
+            if (rendered == "true") {
+                debugUiReadyLogged = true
+                android.util.Log.i("TrakSOSRuntime", "GUEST_UI_RENDERED")
+            } else if (attempt < 120 && !failed && !debugUiReadyLogged) {
+                web.postDelayed({ checkDebugRenderedUi(attempt + 1) }, 500L)
+            }
+        }
+    }
 
     private fun hideStartupOverlay() {
         startupOverlay?.visibility = View.GONE
