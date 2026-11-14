@@ -381,3 +381,169 @@
 @media(prefers-reduced-motion:reduce){
   .tracksos-primary-help,.tracksos-option,.tracksos-insurance-strip,.public-service-tile,.public-track-extra{transition:none!important;}
 }
+
+
+/* Cohesive premium interiors: same illuminated glass language for every role,
+   without inventing data, changing forms or affecting permissions. */
+@media(min-width:900px){
+  .app[class*="role-"] .desktop-content{
+    background:radial-gradient(ellipse at 92% 5%,#103f6266,transparent 35%),
+      linear-gradient(155deg,#06192d,#09243b 65%,#07182c);
+    color:#eaf7fe;
+  }
+  .app[class*="role-"] .desktop-content>main:not(.client-home):not(.public-landing){
+    max-width:1480px;padding:24px 12px 70px;
+  }
+}
+.app[class*="role-"] .desktop-content .card,
+.app[class*="role-"] .desktop-content .linkrow,
+.app[class*="role-"] .desktop-content .step-card,
+.app[class*="role-"] .desktop-content .opt{
+  background:linear-gradient(145deg,#153b59,#0b263f);
+  color:#eef9ff;border:1px solid #315b79;
+  box-shadow:inset 0 1px 0 #ffffff0a,0 9px 19px #0004;
+}
+.app[class*="role-"] .desktop-content .card.hi{
+  border-color:#3ecae9;background:linear-gradient(135deg,#164665,#0a2945);
+}
+.app[class*="role-"] .desktop-content .card b,
+.app[class*="role-"] .desktop-content .card h2,
+.app[class*="role-"] .desktop-content .linkrow b,
+.app[class*="role-"] .desktop-content .step-card b,
+.app[class*="role-"] .desktop-content .opt b{color:#f3fbff;}
+.app[class*="role-"] .desktop-content :is(.card,.linkrow,.step-card,.opt) :is(.note,.sub,small,.label){
+  color:#b3d3e5;
+}
+.app[class*="role-"] .desktop-content>main>h1{color:#f5fcff;}
+.app[class*="role-"] .desktop-content :is(.field,input,select,textarea){
+  background:#eaf5fb;color:#14283d;border-color:#92b9ce;
+}
+.app[class*="role-"] .desktop-content :is(.field,input,select,textarea):focus-visible{
+  outline:2px solid #5ce9f6;outline-offset:1px;
+}
+.app[class*="role-"] .desktop-content :is(.btn:not(.ghost),.linkrow.primary){
+  background:linear-gradient(115deg,#18b2dc,#0483b9);
+  color:#fff;border-color:#5ae1f0;box-shadow:0 4px 18px #06baf73b;
+}
+.app[class*="role-"] .desktop-content .btn.ghost{
+  background:#103a59;color:#e6faff;border-color:#367ca0;
+}
+.app[class*="role-"] .desktop-content :is(.btn,.chip):focus-visible,
+.app[class*="role-"] .desktop-content a:focus-visible{
+  outline:2px solid #79f4ff;outline-offset:3px;
+}
+.app[class*="role-"] .desktop-content :is(.chip,.pill){
+  border-color:#437692;background:#133750;color:#def3ff;
+}
+.app[class*="role-"] .desktop-content .site-footer{color:#85acc7;border-color:#204363;}
+.app[class*="role-"] .desktop-content .site-footer :is(.note,.row a,.logo){color:#a9c9dd;}
+/* Role-specific imagery stays decorative and cannot be mistaken for live KPIs. */
+.app.role-performer .work-command-hero,
+.app.role-service .base-command-hero,
+.app.role-service .base-onboarding-hero,
+.app.role-insurer .cabinet-page>.cabinet-heading,
+.app.role-inspection .cabinet-page>.cabinet-heading,
+.app.role-client .client-garage-page>.client-section-hero,
+.app.role-client .insurance-workflow-hero{
+  position:relative;isolation:isolate;overflow:hidden;
+  min-height:185px;border:1px solid #387da6;border-radius:21px;
+  background:linear-gradient(100deg,#092138ef,#0b3158c9),
+    url('/tracksos-road-atmosphere.svg') center/cover no-repeat;
+  color:#f1fbff;box-shadow:0 15px 30px #0006;
+}
+.app.role-performer .work-command-hero::after,
+.app.role-service .base-command-hero::after,
+.app.role-service .base-onboarding-hero::after,
+.app.role-insurer .cabinet-page>.cabinet-heading::after,
+.app.role-inspection .cabinet-page>.cabinet-heading::after,
+.app.role-client .client-garage-page>.client-section-hero::after,
+.app.role-client .insurance-workflow-hero::after{
+  content:"";position:absolute;inset:0 0 0 auto;z-index:0;pointer-events:none;
+  width:42%;opacity:.60;background-position:center right;background-size:contain;background-repeat:no-repeat;
+  background-image:url('/tracksos-visual-van.svg');
+}
+.app.role-performer .work-command-hero::after{background-image:url('/tracksos-visual-van.svg');}
+.app.role-service :is(.base-command-hero,.base-onboarding-hero)::after{background-image:url('/tracksos-visual-sto.svg');}
+.app.role-insurer .cabinet-page>.cabinet-heading::after{background-image:url('/tracksos-visual-insurance.svg');}
+.app.role-inspection .cabinet-page>.cabinet-heading::after{background-image:url('/tracksos-visual-inspection.svg');}
+.app.role-client .client-garage-page>.client-section-hero::after{background-image:url('/tracksos-approved-scania-r520.webp');}
+.app.role-client .insurance-workflow-hero::after{background-image:url('/tracksos-visual-insurance.svg');}
+.app.role-performer .work-command-hero>*,
+.app.role-service .base-command-hero>*,
+.app.role-service .base-onboarding-hero>*,
+.app.role-insurer .cabinet-page>.cabinet-heading>*,
+.app.role-inspection .cabinet-page>.cabinet-heading>*{
+  position:relative;z-index:1;
+}
+.app.role-insurer .cabinet-page>.cabinet-heading,
+.app.role-inspection .cabinet-page>.cabinet-heading{padding:30px 31px;display:flex;flex-direction:column;justify-content:center;}
+.app.role-insurer .cabinet-page>.cabinet-heading h1,
+.app.role-inspection .cabinet-page>.cabinet-heading h1{color:#fff;}
+.app.role-insurer .cabinet-page>.cabinet-heading .label,
+.app.role-inspection .cabinet-page>.cabinet-heading .label{color:#9be9fa;}
+.app.role-insurer .partner-workspaces,
+.app.role-inspection .partner-workspaces{
+  padding:8px;border:1px solid #285c80;border-radius:16px;
+  background:linear-gradient(130deg,#0c2a43,#0b3a5a);
+}
+.app.role-insurer .partner-workspaces .btn.active,
+.app.role-inspection .partner-workspaces .btn.active{
+  border-color:#68e7f5;color:#fff;background:#16638c;box-shadow:0 0 13px #0fe7f737;
+}
+.app.role-client .client-garage-page>.client-section-hero{padding:28px 30px;}
+.app.role-client .client-garage-page>.client-section-hero>*,
+.app.role-client .insurance-workflow-hero>*{position:relative;z-index:1;}
+.app.role-client .client-garage-page>.client-section-hero h1{color:#fff;}
+.app.role-client .client-garage-page>.client-section-hero .sub{color:#c7dfeb;max-width:65%;}
+.app.role-client .insurance-workflow-hero{padding:27px 30px;}
+.app.role-client .insurance-workflow-hero p{color:#d5edfb;max-width:60%;}
+/* Parts catalog: large hero with the gear artwork from the approved concept. */
+.track-shop-home .track-shop-hero{
+  position:relative;isolation:isolate;overflow:hidden;min-height:195px;
+  display:flex;flex-direction:column;justify-content:center;
+  padding:30px 35% 26px 30px;border:1px solid #3287b5;border-radius:21px;
+  color:#fff;background:linear-gradient(105deg,#071d35ee,#0c3559d9),
+    url('/tracksos-road-atmosphere.svg') center/cover no-repeat;
+  box-shadow:0 12px 28px #0005;
+}
+.track-shop-hero>h1{font-size:clamp(24px,2.7vw,34px);margin:5px 0 8px;color:#fff!important;}
+.track-shop-hero>p{font-size:13px;line-height:1.5;color:#c5e4f1;max-width:480px;margin:0;}
+.track-shop-eyebrow{font-size:10px;letter-spacing:.12em;color:#79eeff;font-weight:850;}
+.track-shop-gear{
+  position:absolute;right:5px;inset-block:0;width:36%;
+  background:url('/tracksos-visual-parts.svg') center/contain no-repeat;
+}
+/* Global subtle interactions — no external JavaScript or streamed animations. */
+@media(hover:hover){
+  .app[class*="role-"] .desktop-content :is(.card,.linkrow,.step-card,.tracksos-option):hover{
+    border-color:#50b9db;box-shadow:0 12px 28px #0007,0 0 16px #0cf0f012;
+  }
+}
+.track-top-shortcuts{display:none;}
+@media(min-width:1180px){
+  .app.role-client .track-top-shortcuts{display:flex;align-items:center;gap:5px;margin-inline:auto;}
+  .track-top-shortcuts a{color:#bddced;text-decoration:none;padding:10px 12px;border-radius:11px;font-size:12px;font-weight:750;}
+  .track-top-shortcuts a:hover,.track-top-shortcuts a:focus-visible{
+    background:#0e4162;color:#fff;box-shadow:0 0 12px #23c7eb40;
+  }
+}
+.app .desktop-sidebar-bottom{display:flex;flex-direction:column;gap:7px;font-size:11px;}
+.app .desktop-sidebar-bottom strong{font-size:14px;color:#61e4fa;letter-spacing:.08em;}
+.app .desktop-sidebar-bottom small{font-size:11px;line-height:1.45;color:#8cb6cc;}
+@media(max-width:899px){
+  .app[class*="role-"] .desktop-content{
+    background:linear-gradient(160deg,#06182d,#0b2f4d);color:#e4f5fe;
+  }
+  .track-shop-home .track-shop-hero{padding:23px 30% 22px 18px;min-height:151px;border-radius:16px;}
+  .track-shop-hero>p{font-size:11px;}
+  .app.role-insurer .cabinet-page>.cabinet-heading,
+  .app.role-inspection .cabinet-page>.cabinet-heading{padding:19px;min-height:135px;}
+  .app.role-insurer .cabinet-page>.cabinet-heading::after,
+  .app.role-inspection .cabinet-page>.cabinet-heading::after{width:32%;opacity:.3;}
+  .app.role-client .client-garage-page>.client-section-hero{padding:21px;min-height:150px;}
+  .app.role-client .client-garage-page>.client-section-hero::after{opacity:.25;}
+  .app.role-client .insurance-workflow-hero{padding:21px;min-height:160px;}
+}
+@media(prefers-reduced-motion:reduce){
+  .app[class*="role-"] .desktop-content :is(.card,.linkrow,.step-card,.tracksos-option){transition:none!important;}
+}
