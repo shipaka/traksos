@@ -506,44 +506,6 @@ export class PaymentsService implements PaymentHooks {
     return results;
   }
 
-  private async createProviderPayment(q: Queryable, order: any, kind: 'call_out' | 'work', amount: number, capture: boolean, discount = 0) {
-    const p = await this.settings.get('payments');
-    const fee = pct(amount, Number(order.client_fee_pct));
-    const total = amount + fee - discount;
-    const n = (await q.one<{ c: number }>('select count(*)::int c from payments where order_id=$1 and kind=$2', [order.id, kind]))!.c;
-    const key = `${order.id}:${kind}:${n + 1}`;
-    const row = await q.one(
-      `insert into payments(order_id, kind, method, amount, client_fee, total, provider, idempotency_key)
-       values ($1,$2,$3,$4,$5,$6,$7,$8) returning *`,
-      [order.id, kind, p.defaultMethod, amount, fee, total, this.provider.name, key],
-    );
-    let receipt: unknown;
-    if (p.sendReceipts) {
-      const client = await q.one<{ phone: string }>('select phone from users where id=$1', [order.client_id]);
-      const perf = order.performer_id
-        ? await q.one<{ name: string; inn: string }>('select u.name, p.inn from users u join performer_profiles p on p.user_id=u.id where u.id=$1', [order.performer_id])
-        : null;
-      receipt = agentReceipt({
-        customerPhone: client!.phone,
-        items: [
-          { description: kind === 'call_out' ? 'Выезд мастера' : 'Работы по заявке', amount, supplier: perf?.inn ? { name: perf.name, inn: perf.inn } : undefined },
-          ...(fee ? [{ description: 'Сервисный сбор ТракSOS', amount: fee }] : []),
-        ],
-      });
-    }
-    const r = await this.provider.createPayment({
-      total, capture, method: p.defaultMethod, idempotencyKey: key,
-      description: `ТракSOS, заявка №${order.number}: ${kind === 'call_out' ? 'выезд' : 'работа'}`,
-      returnUrl: `${config.publicUrl}/orders/${order.id}`,
-      metadata: { orderId: order.id, paymentId: row!.id, kind },
-      receipt,
-    });
-    return q.one(
-      `update payments set provider_payment_id=$2, status=$3, confirmation_url=$4, updated_at=now() where id=$1 returning *`,
-      [row!.id, r.id, STATUS_MAP[r.status] === 'created' ? 'pending' : STATUS_MAP[r.status], r.confirmationUrl],
-    ) as Promise<any>;
-  }
-
   /** Уведомление от платёжного сервиса. Статус перепроверяем запросом к сервису. */
   async handleWebhook(body: any) {
     const ev = this.provider.parseWebhook(body);
