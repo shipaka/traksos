@@ -1,7 +1,7 @@
 {
   "name": "traksos",
   "private": true,
-  "description": "ТракSOS — маркетплейс выездной помощи грузовикам, СПб и ЛО",
+  "description": "TrakSOS — маркетплейс выездной помощи грузовикам, СПб и ЛО",
   "workspaces": [
     "server",
     "web"

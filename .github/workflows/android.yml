@@ -15,6 +15,7 @@ on:
       - 'web/public/**'
       - 'web/index.html'
       - 'web/build.mjs'
+      - 'scripts/verify-brand.mjs'
       - 'web/sw.template.js'
       - '.github/workflows/android.yml'
   workflow_dispatch:
@@ -54,6 +55,7 @@ jobs:
           API_URL: ""
         run: |
           npm install
+          node scripts/verify-brand.mjs
           npm -w web run build
           mkdir -p android/app/src/main/assets/www
           cp -a web/dist/. android/app/src/main/assets/www/
@@ -109,7 +111,7 @@ jobs:
       - name: Итог ночной сборки
         if: always() && github.event_name == 'schedule'
         run: |
-          echo '### Ночная сборка TrackSOS для Android' >> "$GITHUB_STEP_SUMMARY"
+          echo '### Ночная сборка TrakSOS для Android' >> "$GITHUB_STEP_SUMMARY"
           echo '- Встроен полный публичный интерфейс из web/dist.' >> "$GITHUB_STEP_SUMMARY"
           echo '- Проверена комплектация APK и утверждённые изображения.' >> "$GITHUB_STEP_SUMMARY"
           echo '- APK только в Artifacts, НЕ отправляется автоматически в RuStore.' >> "$GITHUB_STEP_SUMMARY"

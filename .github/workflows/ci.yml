@@ -50,6 +50,8 @@ jobs:
           cp deploy/.env.example deploy/.env
           trap 'rm -f deploy/.env' EXIT
           DB_PASSWORD=ci-only-check APP_SECRET=ci-only-check docker compose --env-file deploy/.env.example -f deploy/docker-compose.yml config --quiet
+      - name: Проверка единого бренда TrakSOS
+        run: node scripts/verify-brand.mjs
       - name: Сервер — типы
         run: npm run typecheck
       - name: Сервер — тесты

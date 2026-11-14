@@ -9,6 +9,7 @@ on:
       - 'web/**'
       - 'server/**'
       - 'scripts/verify-approved.mjs'
+      - 'scripts/verify-brand.mjs'
       - '.github/workflows/android-pr-check.yml'
   workflow_dispatch:
 
@@ -42,6 +43,7 @@ jobs:
       - name: Assemble exact PR web assets
         run: |
           npm install
+          node scripts/verify-brand.mjs
           npm -w web run build
           node scripts/verify-approved.mjs
           mkdir -p android/app/src/main/assets/www
