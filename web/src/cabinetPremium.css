@@ -876,3 +876,38 @@
     max-width:100%;overflow:hidden;
   }
 }
+
+
+/* Light shared motion and atmosphere across every real signed-in role. */
+@keyframes ts-workspace-reveal{
+  from{opacity:.72;transform:translate3d(0,7px,0)}
+  to{opacity:1;transform:translate3d(0,0,0)}
+}
+.app[class*="role-"] .desktop-content>main:not(.public-home){
+  animation:ts-workspace-reveal .30s ease-out both;
+}
+.app[class*="role-"] :is(.card:not(.flat),.linkrow,.desktop-quick-card){
+  transition:transform .20s ease,border-color .20s ease,box-shadow .20s ease;
+}
+@media(hover:hover) and (pointer:fine){
+  .app[class*="role-"] :is(.card:not(.flat):not(.hi),.desktop-quick-card):hover{
+    transform:translateY(-2px);
+    box-shadow:0 15px 32px rgba(0,8,25,.23);
+  }
+}
+@media(min-width:1100px){
+  .app[class*="role-"] .desktop-content{
+    background-image:
+      radial-gradient(ellipse at 95% 14%,rgba(63,209,231,.06),transparent 42%),
+      radial-gradient(ellipse at 25% 91%,rgba(245,65,145,.04),transparent 41%);
+  }
+  .app[class*="role-"] .desktop-content>main:not(.public-home){max-width:1450px;}
+}
+@media(prefers-reduced-motion:reduce){
+  .app[class*="role-"] .desktop-content>main:not(.public-home){animation:none!important;}
+  .app[class*="role-"] :is(.card:not(.flat),.linkrow,.desktop-quick-card){transition:none!important;}
+  .app[class*="role-"] :is(.card:not(.flat):not(.hi),.desktop-quick-card):hover{transform:none!important;}
+}
+@media(prefers-reduced-data:reduce){
+  .app[class*="role-"] .desktop-content>main:not(.public-home){animation:none!important;}
+}
