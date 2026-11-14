@@ -623,3 +623,20 @@
 @media(max-width:420px){
  .tracksos-order-real-map .roadside-map-viewport{min-height:132px!important;}
 }
+
+
+/* Real-browser review: service art must not obscure titles on narrow screens. */
+.guest-app .public-landing .public-service-tile::before{
+  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(90deg,rgba(4,21,38,.96) 0%,
+    rgba(6,26,46,.81) 37%,rgba(7,27,45,.22) 76%,transparent 100%);
+}
+.guest-app .public-landing .public-service-tile :is(.public-service-icon,b,small){
+  position:relative;z-index:2;
+}
+.guest-app .public-landing .public-service-tile .public-service-arrow{z-index:3;}
+.app.role-client .client-direction-card>.client-direction-copy{
+  padding:5px 6px 5px 0;
+  border-radius:7px;
+  background:linear-gradient(90deg,rgba(5,20,38,.77),rgba(5,20,38,.1));
+}
