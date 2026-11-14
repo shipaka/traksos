@@ -28,7 +28,7 @@
   margin:0 !important;
   background:#07192d;
 }
-.guest-app:has(.public-landing) .top {
+.guest-app .top {
   display:flex !important;
   align-items:center !important;
   justify-content:space-between !important;
@@ -39,7 +39,7 @@
   background:#051729 !important;
   border-bottom:1px solid #234768 !important;
 }
-.guest-app:has(.public-landing) .top .logo {
+.guest-app .top .logo {
   flex:0 0 auto;
   font-weight:900;
   font-size:clamp(24px,2.45vw,38px) !important;
@@ -51,7 +51,7 @@
   white-space:nowrap;
   margin-right:clamp(4px,1.1vw,17px);
 }
-.guest-app:has(.public-landing) .top .logo b {
+.guest-app .top .logo b {
   color:#12d8fa !important;
 }
 .guest-app .guest-site-nav {
@@ -76,28 +76,28 @@
   color:#3de8fb;
   border-color:#3de8fb;
 }
-.guest-app:has(.public-landing) .track-site-search {
+.guest-app .track-site-search {
   flex:0 1 145px !important;
   min-width:64px !important;
   max-width:170px;
   margin:0 !important;
 }
-.guest-app:has(.public-landing) .track-site-search input {
+.guest-app .track-site-search input {
   font-size:11px !important;
 }
-.guest-app:has(.public-landing) .guest-header-actions {
+.guest-app .guest-header-actions {
   display:flex !important;
   align-items:center;
   gap:10px;
   white-space:nowrap;
 }
-.guest-app:has(.public-landing) .guest-header-actions a {
+.guest-app .guest-header-actions a {
   border-radius:12px !important;
   padding:10px 15px !important;
   font-weight:750 !important;
   font-size:13px !important;
 }
-.guest-app:has(.public-landing) .guest-header-actions a.register {
+.guest-app .guest-header-actions a.register {
   background:#0dd8f0 !important;
   color:#052137 !important;
   border-color:#37f2ff !important;
@@ -513,7 +513,7 @@
 /* Smaller desktops: keep readable cards instead of six microscopic tiles. */
 @media (min-width:900px) and (max-width:1200px) {
   .guest-app .guest-site-nav {gap:10px !important;}
-  .guest-app:has(.public-landing) .top {padding:10px 16px !important;}
+  .guest-app .top {padding:10px 16px !important;}
   .guest-app .public-landing .public-service-tiles {
     grid-template-columns:repeat(3,minmax(0,1fr)) !important;
   }
@@ -524,21 +524,21 @@
   .guest-app .public-landing .public-service-tile{min-height:265px !important;}
 }
 @media (max-width:899px) {
-  .guest-app:has(.public-landing) .top {
+  .guest-app .top {
     min-height:59px !important;
     flex-wrap:wrap !important;
     padding:10px 12px !important;
     row-gap:7px !important;
   }
-  .guest-app:has(.public-landing) .top .logo {font-size:29px !important;}
+  .guest-app .top .logo {font-size:29px !important;}
   .guest-app .guest-site-nav{display:none !important;}
-  .guest-app:has(.public-landing) .guest-header-actions{margin-left:auto;}
-  .guest-app:has(.public-landing) .guest-header-actions a {
+  .guest-app .guest-header-actions{margin-left:auto;}
+  .guest-app .guest-header-actions a {
     font-size:11px !important;
     padding:7px 9px !important;
     border-radius:9px !important;
   }
-  .guest-app:has(.public-landing) .track-site-search {
+  .guest-app .track-site-search {
     order:4;
     flex:1 1 100% !important;
     max-width:none !important;
@@ -850,11 +850,11 @@
 
 
 /* Approved wordmark detail: cyan and magenta strokes visible in owner's PNG. */
-.guest-app:has(.public-landing) .top .logo {
+.guest-app .top .logo {
   position:relative;
   isolation:isolate;
 }
-.guest-app:has(.public-landing) .top .logo::after {
+.guest-app .top .logo::after {
   content:"";
   position:absolute;
   left:5%;
@@ -866,7 +866,7 @@
   background:linear-gradient(90deg,transparent 0%,#0ad9eb 8%,#0ad9eb 32%,#ed168c 38%,#ed168c 95%,transparent);
   pointer-events:none;
 }
-.guest-app:has(.public-landing) .top .logo::before {
+.guest-app .top .logo::before {
   content:"";
   position:absolute;
   left:6%;
@@ -912,7 +912,7 @@
 /* TrakSOS approved header: functional icon-only search in the idle state.
    The existing accessible search input and real section results remain intact.
    This is a visual override; no route or business logic changes. */
-.guest-app:has(.public-landing) .track-site-search {
+.guest-app .track-site-search {
   display:block !important;
   position:relative;
   z-index:85;
@@ -923,7 +923,7 @@
   max-width:44px !important;
   margin:0 !important;
 }
-.guest-app:has(.public-landing) .track-site-search-wrap {
+.guest-app .track-site-search-wrap {
   display:flex;
   align-items:center;
   width:44px;
@@ -936,26 +936,26 @@
   background:transparent;
   box-shadow:none;
 }
-.guest-app:has(.public-landing) .track-site-search-icon {
+.guest-app .track-site-search-icon {
   display:block;
   flex:0 0 24px;
   font-size:25px;
   text-align:center;
 }
-.guest-app:has(.public-landing) .track-site-search-shortcut {
+.guest-app .track-site-search-shortcut {
   display:none !important;
 }
-.guest-app:has(.public-landing) .track-site-search-wrap input[type="search"] {
+.guest-app .track-site-search-wrap input[type="search"] {
   flex:0 0 0;
   width:0;
   min-width:0;
   opacity:0;
   pointer-events:none;
 }
-.guest-app:has(.public-landing) .track-site-search:focus-within {
+.guest-app .track-site-search:focus-within {
   z-index:120;
 }
-.guest-app:has(.public-landing) .track-site-search:focus-within .track-site-search-wrap {
+.guest-app .track-site-search:focus-within .track-site-search-wrap {
   position:absolute;
   top:0;
   right:0;
@@ -967,42 +967,63 @@
   background:linear-gradient(95deg,#0b2c46,#103650);
   box-shadow:0 12px 30px #0009;
 }
-.guest-app:has(.public-landing) .track-site-search:focus-within .track-site-search-wrap input[type="search"] {
+.guest-app .track-site-search:focus-within .track-site-search-wrap input[type="search"] {
   flex:1 1 auto;
   width:100%;
   min-width:0;
   opacity:1;
   pointer-events:auto;
 }
-.guest-app:has(.public-landing) .track-site-search-results {
+.guest-app .track-site-search-results {
   left:auto;
   right:0;
   z-index:122;
   width:min(390px, calc(100vw - 24px));
 }
 @media(max-width:899px) {
-  .guest-app:has(.public-landing) .top {
+  .guest-app .top {
     display:grid !important;
     grid-template-columns:auto minmax(0, 1fr) 44px;
     align-items:center !important;
     column-gap:10px !important;
     row-gap:16px !important;
   }
-  .guest-app:has(.public-landing) .top .logo {
+  .guest-app .top .logo {
     grid-column:1;
     grid-row:1;
   }
-  .guest-app:has(.public-landing) .track-site-search {
+  .guest-app .track-site-search {
     grid-column:3;
     grid-row:1;
     order:unset !important;
   }
-  .guest-app:has(.public-landing) .top > .row {
+  .guest-app .top > .row {
     grid-column:1 / -1;
     grid-row:2;
     min-width:0;
     width:100%;
     justify-content:flex-end;
+  }
+}
+
+
+/* Public header is persistent across landing, company, offers, previews and auth.
+   At laptop widths give the navigation its own row instead of letting the
+   search field cover the last links. Keep links genuinely pointer-clickable. */
+@media (min-width:900px) and (max-width:1279px) {
+  .guest-app .top {
+    display:grid !important;
+    grid-template-columns:auto minmax(0,1fr) 44px auto;
+    gap:8px 12px !important;
+  }
+  .guest-app .top .logo {grid-column:1;grid-row:1}
+  .guest-app .track-site-search {grid-column:3;grid-row:1}
+  .guest-app .top > .row {grid-column:4;grid-row:1;min-width:0}
+  .guest-app .guest-site-nav {
+    grid-column:1/-1;grid-row:2;
+    justify-content:space-between;
+    min-width:0;
+    gap:8px !important;
   }
 }
 
@@ -1038,10 +1059,10 @@
 .guest-app .guest-site-nav .guest-business-link {
   font-size:clamp(11px,.9vw,14px);font-weight:750;padding:7px 0;white-space:nowrap;
 }
-.guest-app:has(.public-landing) .guest-site-nav{gap:clamp(7px,1.05vw,15px)!important}
+.guest-app .guest-site-nav{gap:clamp(7px,1.05vw,15px)!important}
 .guest-app .guest-site-nav .guest-nav-group > summary:focus-visible{outline:3px solid #72edfa}
 @media (min-width:900px) and (max-width:1140px) {
-  .guest-app:has(.public-landing) .top {padding:10px 12px!important;gap:8px!important}
+  .guest-app .top {padding:10px 12px!important;gap:8px!important}
   .guest-app .guest-site-nav{gap:7px!important}
   .guest-app .guest-site-nav .guest-nav-group > summary,
   .guest-app .guest-site-nav .guest-business-link{font-size:10px!important}
