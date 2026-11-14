@@ -22,7 +22,7 @@ async function checkCabinetMenu(page, expectedLinks, { shopTab = true } = {}) {
   }
   await summary.click();
   if (!shopTab) return; // Admin, insurer, inspection and moderator use role-specific navigation.
-  const shop = page.locator('.tabbar').getByRole('link', { name: 'Магазин' });
+  const shop = page.locator('.tabbar').locator('a[href="#/shop"]');
   try {
     await shop.waitFor({ state: 'visible', timeout: 10000 });
   } catch {
