@@ -25,9 +25,23 @@ done
 # Capture artifacts even on failure. Native app still gets a strict error gate.
 adb logcat -d -s AndroidRuntime:E > runtime-errors.log || true
 adb shell dumpsys activity activities > activity-dump.txt || true
-adb exec-out screencap -p > emulator-screen.png || true
+# A DOM-ready WebView can still be black at the compositor. Wait briefly
+# for the actual screenshot to contain nonuniform guest artwork and controls.
+screen_ok=0
+for frame in 1 2 3 4; do
+  adb exec-out screencap -p > emulator-screen.png || true
+  if python3 scripts/verify-android-screen.py emulator-screen.png; then
+    screen_ok=1
+    break
+  fi
+  sleep 3
+done
 if timeout 30s adb shell uiautomator dump /sdcard/traksos-window.xml >/dev/null 2>&1; then
   adb exec-out cat /sdcard/traksos-window.xml > emulator-ui.xml || true
+fi
+if [ "$screen_ok" -ne 1 ]; then
+  echo 'FAIL: screenshot did not show a visibly rendered TrakSOS guest page'
+  exit 1
 fi
 if [ "$ready" -ne 1 ]; then
   echo 'FAIL: real React guest interface and splash dismissal not both observed'
