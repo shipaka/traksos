@@ -108,6 +108,22 @@ try {
         await page.waitForTimeout(450);
         await page.screenshot({path:'e2e/shots/cabinet-ux/client-sos-master-'+width+'.png',fullPage:true});
       }
+      if (entry.name === 'admin') {
+        const rolesToReview=['client','owner','driver','master','tow','master_service','service','insurer','moderator','admin'];
+        for(const previewRole of rolesToReview) {
+          await page.goto(BASE+'/#/admin/test-center/'+previewRole,{waitUntil:'domcontentloaded'});
+          await page.locator(previewRole==='service'?'.service-preview-admin-bar':'.role-preview-bar').waitFor();
+          await verify('preview-'+previewRole);
+          await page.waitForTimeout(450);
+          await page.screenshot({path:'e2e/shots/cabinet-ux/preview-'+previewRole+'-'+width+'.png',fullPage:true});
+          if(previewRole==='insurer'){
+            await page.goto(BASE+'/#/admin/test-center/insurer/client');
+            await page.getByRole('heading',{name:'Страхование вашего автопарка'}).waitFor();
+            await page.waitForTimeout(450);
+            await page.screenshot({path:'e2e/shots/cabinet-ux/preview-insurer-client-'+width+'.png',fullPage:true});
+          }
+        }
+      }
       await context.close();
     }
   }
