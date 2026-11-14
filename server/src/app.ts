@@ -919,6 +919,16 @@ export function createApp(d: Deps) {
       }), c.body)));
   r.post('/api/admin/payments/:id/refunds/:refundId/reconcile', ['admin'],
     (c: AuthedCtx) => admin.reconcileRefund(c.user, c.params.id, c.params.refundId));
+  // Read-only reconciliation of bank capture intents; no resend/refund/payment
+  // can be initiated from these admin routes.
+  r.get('/api/admin/payment-captures', ['admin'], () => d.db.query(
+    `select i.id, i.order_id, i.payment_id, o.number as order_number,
+            i.amount,i.client_fee,i.total,i.status,i.attempts,i.last_error,
+            i.attempted_at,i.checked_at,i.settled_at,i.created_at
+       from payment_capture_intents i join orders o on o.id=i.order_id
+       where i.status<>'settled' order by i.created_at desc limit 200`));
+  r.post('/api/admin/payment-captures/:id/reconcile', ['admin'], (c: AuthedCtx) =>
+    payments.reconcileCapture(parse(z.string().uuid(), c.params.id)));
   r.post('/api/admin/performers/:id/adjust', ['admin'], (c: AuthedCtx) => admin.adjust(c.user, c.params.id, parse(z.object({
     amount: z.number().int(), reason: z.string().min(3).max(300), orderId: z.string().uuid().optional(),
   }), c.body)));
