@@ -50,7 +50,9 @@ try {
     }, account.token);
     try {
       await page.goto(BASE + '/#/', {waitUntil: 'domcontentloaded'});
-      await page.locator('.client-dashboard').waitFor({timeout: 20000});
+      await page.locator('.app').waitFor({timeout: 20000});
+      // Capture any initial legal/onboarding gate for diagnostic visual review.
+      await page.screenshot({path: OUT + '/initial-' + width + '.png'});
 
       // Synthetic owner explicitly accepts only synthetic local test documents.
       for (let attempt = 0; attempt < 6; attempt++) {
@@ -66,6 +68,8 @@ try {
       const cookie = page.getByRole('button', {name: 'Понятно'});
       if (await cookie.isVisible().catch(() => false)) await cookie.click();
       await page.waitForTimeout(200);
+      console.log('visual entry route ' + width + 'px: ' + await page.evaluate(() => location.hash));
+      await page.locator('.client-dashboard').waitFor({timeout: 20000});
       const truck = await page.locator('.client-hero-scania').evaluate(img => ({
         loaded: img.complete && img.naturalWidth > 100,
         fit: getComputedStyle(img).objectFit,
