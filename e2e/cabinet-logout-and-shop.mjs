@@ -32,7 +32,7 @@ try{
     await ctx.close();
   }
   for(const role of [
-    {name:'admin',phone:'+79990000001',password:'TrackSOS-Test-2026!',home:'#/admin',mode:'admin'},
+    {name:'admin',phone:'+79990000001',password:'TrakSOS-Test-2026!',home:'#/admin',mode:'admin'},
     {name:'insurer',phone:'+79990000145',password:'Test-Role-Only-2026!',home:'#/insurance',mode:'insurer'}
   ]){
     const token=await login(role.phone,role.password);

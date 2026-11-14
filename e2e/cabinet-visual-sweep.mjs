@@ -10,13 +10,13 @@ if (!['127.0.0.1','localhost'].includes(new URL(BASE).hostname))
 const roles = [
   {name:'owner',phone:'+79990000141',password:'Test-Role-Only-2026!',mode:'client',home:'#/',inner:'#/garage'},
   {name:'driver',phone:'+79990000142',password:'Test-Role-Only-2026!',mode:'client',home:'#/',inner:'#/orders'},
-  {name:'master',phone:'+79992223344',password:'TrackSOS-Test-2026!',mode:'performer',home:'#/work',inner:'#/work/me'},
+  {name:'master',phone:'+79992223344',password:'TrakSOS-Test-2026!',mode:'performer',home:'#/work',inner:'#/work/me'},
   {name:'tow',phone:'+79990000143',password:'Test-Role-Only-2026!',mode:'performer',home:'#/work',inner:'#/work/jobs'},
   {name:'service',phone:'+79990000144',password:'Test-Role-Only-2026!',mode:'service',home:'#/base',inner:'#/base/me'},
   {name:'master_service',phone:'+79990000146',password:'Test-Role-Only-2026!',mode:'service',home:'#/base',inner:'#/base/money'},
   {name:'insurer',phone:'+79990000145',password:'Test-Role-Only-2026!',mode:'insurer',home:'#/insurance',inner:'#/profile'},
   {name:'moderator',phone:'+79990000147',password:'Test-Role-Only-2026!',mode:'moderator',home:'#/moderation',inner:'#/profile'},
-  {name:'admin',phone:'+79990000001',password:'TrackSOS-Test-2026!',mode:'admin',home:'#/admin',inner:'#/admin/section/orders'},
+  {name:'admin',phone:'+79990000001',password:'TrakSOS-Test-2026!',mode:'admin',home:'#/admin',inner:'#/admin/section/orders'},
 ];
 await mkdir('e2e/shots/cabinet-ux',{recursive:true});
 const browser=await chromium.launch();

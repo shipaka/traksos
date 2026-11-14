@@ -20,7 +20,7 @@ try {
 } finally { await db.end(); }
 const login = await fetch(BASE+'/api/auth/login',{
   method:'POST',headers:{'content-type':'application/json'},
-  body:JSON.stringify({phone:'+79990000001',password:'TrackSOS-Test-2026!'})
+  body:JSON.stringify({phone:'+79990000001',password:'TrakSOS-Test-2026!'})
 });
 if (!login.ok) throw new Error('Admin/master login failed: '+login.status);
 const {token,user} = await login.json();

@@ -80,14 +80,14 @@ const mk = async () => {
   return page;
 };
 
-// how: 'help' — кнопка «Помогите», 'login' — вход по номеру, иначе текст роли в «Хочу работать с ТракSOS»
+// how: 'help' — кнопка «Помогите», 'login' — вход по номеру, иначе текст роли в «Хочу работать с TrakSOS»
 async function login(page, phoneNum, how) {
   await page.goto(BASE + '/#/login');
   if (how === 'help') await page.getByRole('button', { name: /Помогите/ }).click();
   else if (how === 'login') await page.getByRole('button', { name: 'Войти по номеру' }).click();
   else { await page.getByRole('button', { name: /Хочу работать/ }).click(); await page.getByRole('button', { name: how }).click(); }
   await page.locator('input[type=tel]').fill(phoneNum);
-  const password = 'TrackSOS-Test-2026!';
+  const password = 'TrakSOS-Test-2026!';
   if (how === 'login') {
     await page.locator('input[type=password]').fill(password);
     await page.getByRole('button', { name: 'Войти', exact: true }).click();
@@ -103,7 +103,7 @@ async function login(page, phoneNum, how) {
 
 // Админ — через API
 const c = await api('POST', '/api/auth/code', { phone: '+79990000001' });
-const admin = await api('POST', '/api/auth/verify', { phone: '+79990000001', code: c.devCode, password: 'TrackSOS-Test-2026!' });
+const admin = await api('POST', '/api/auth/verify', { phone: '+79990000001', code: c.devCode, password: 'TrakSOS-Test-2026!' });
 
 // Мастер
 const m = await mk();
@@ -254,7 +254,7 @@ await shot(a, '13-admin-payments');
 
 // Переходы между кабинетами: из админки в клиента и обратно, «Назад» ведёт в свой список
 await clickCabinetLink(a, 'Кабинет клиента');
-await a.getByRole('heading', { name: 'Кто вам нужен?' }).first().waitFor();
+await a.locator('.client-dashboard .desktop-quick-card').first().waitFor();
 await clickCabinetLink(a, 'Профиль и настройки');
 await a.getByRole('button', { name: 'Кабинет администратора' }).click();
 await a.getByText('Администратор').first().waitFor();

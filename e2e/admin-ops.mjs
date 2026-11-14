@@ -8,7 +8,7 @@ const OUT = process.argv[2] ?? 'e2e/shots';
 await mkdir(OUT, {recursive:true});
 const r = await fetch(BASE+'/api/auth/login', {
   method:'POST',headers:{'content-type':'application/json'},
-  body:JSON.stringify({phone:'+79990000001',password:'TrackSOS-Test-2026!'}),
+  body:JSON.stringify({phone:'+79990000001',password:'TrakSOS-Test-2026!'}),
 });
 if(!r.ok)throw new Error('Admin test login failed with HTTP '+r.status);
 const {token}=await r.json();
