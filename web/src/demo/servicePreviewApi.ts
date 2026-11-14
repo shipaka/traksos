@@ -6,11 +6,14 @@ import { ApiError } from '../api.ts';
 export const SERVICE_PREVIEW_ROOT = 'admin/test-center/service';
 export function inServicePreview() {
   const hash = location.hash.replace(/^#\/?/,'');
-  return hash===SERVICE_PREVIEW_ROOT || hash.startsWith(SERVICE_PREVIEW_ROOT+'/');
+  const combined='admin/test-center/master_service/base';
+  return hash===SERVICE_PREVIEW_ROOT||hash.startsWith(SERVICE_PREVIEW_ROOT+'/')||
+    hash===combined||hash.startsWith(combined+'/');
 }
 export function servicePreviewPath(path:string) {
   const clean=path.replace(/^\/+/, '');
-  return inServicePreview()? SERVICE_PREVIEW_ROOT+'/'+clean:clean;
+  const combined=location.hash.includes('/admin/test-center/master_service/base');
+  return inServicePreview()?(combined?'admin/test-center/master_service/':SERVICE_PREVIEW_ROOT+'/')+clean:clean;
 }
 export function servicePreviewHref(path:string){return '#/'+servicePreviewPath(path);}
 type RecordItem = {[k:string]:any};
