@@ -26,33 +26,57 @@ export class SupportService {
       const e = await this.db.one<{ id: number; order_id: string | null }>(
         `select id, order_id from ledger_entries where id=$1 and performer_id=$2`, [p.ledgerEntryId, user.id]);
       if (!e) throw notFound('Операция не найдена');
-      const existing = await this.db.one('select id from support_tickets where user_id=$1 and ledger_entry_id=$2 and status=$3', [user.id, e.id, 'open']);
-      if (existing) {
-        await this.post(user, existing.id, text);
-        return this.thread(user, existing.id);
+      // A repeated tap, browser retry or a second app instance may race with
+      // the first request. The existence check and INSERT must be serialized.
+      const result = await this.db.tx(async (q) => {
+        await q.query('select pg_advisory_xact_lock(hashtext($1))', ['support:ledger:' + user.id + ':' + e.id]);
+        const existing = await q.one<{ id: string }>(
+          'select id from support_tickets where user_id=$1 and ledger_entry_id=$2 and status=$3',
+          [user.id, e.id, 'open']);
+        if (existing) return { id: existing.id, number: 0, created: false };
+        const created = await q.one<{ id: string; number: number }>(
+          `insert into support_tickets(user_id, order_id, topic, ledger_entry_id) values ($1,$2,$3,$4) returning id, number`,
+          [user.id, e.order_id, p.topic.slice(0, 80), e.id]);
+        return { id: created!.id, number: created!.number, created: true };
+      });
+      if (!result.created) {
+        await this.post(user, result.id, text);
+        return this.thread(user, result.id);
       }
-      const t = await this.db.one(
-        `insert into support_tickets(user_id, order_id, topic, ledger_entry_id) values ($1,$2,$3,$4) returning id, number`,
-        [user.id, e.order_id, p.topic.slice(0, 80), e.id]);
+      const t = result;
       await this.db.query(`insert into support_messages(ticket_id, sender_id, body) values ($1,$2,$3)`, [t!.id, user.id, maskPhones(text).text]);
       await this.notifier.notify(await this.staffIds(), { type: 'support', ticketId: t!.id }, {
         kind: 'normal', title: `Обращение №${t!.number}: вопрос по операции`, body: `${user.name ?? user.phone}: ${text.slice(0, 100)}`, data: { ticketId: t!.id },
       });
       return this.thread(user, t!.id);
     }
+    let uniqueTicket: { id: string; number: number } | null = null;
     if (p.orderId) {
       const o = await this.orders.mustSee(user, p.orderId);
       if (!this.orders.actorOf(user, o)) throw forbidden('Позвать поддержку могут участники заявки');
       number = o.number;
-      // По одной заявке у человека одно открытое обращение — новое сообщение уходит в него
-      const existing = await this.db.one('select id from support_tickets where user_id=$1 and order_id=$2 and status=$3', [user.id, p.orderId, 'open']);
-      if (existing) {
-        await this.post(user, existing.id, text);
-        return this.thread(user, existing.id);
+      // One open thread per customer + order. All concurrent requests serialize
+      // before the SELECT/INSERT; no silent duplicate conversations are created.
+      const result = await this.db.tx(async (q) => {
+        await q.query('select pg_advisory_xact_lock(hashtext($1))', ['support:order:' + user.id + ':' + p.orderId]);
+        const existing = await q.one<{ id: string }>(
+          'select id from support_tickets where user_id=$1 and order_id=$2 and status=$3',
+          [user.id, p.orderId, 'open']);
+        if (existing) return { id: existing.id, number: 0, created: false };
+        const created = await q.one<{ id: string; number: number }>(
+          `insert into support_tickets(user_id, order_id, topic) values ($1,$2,$3) returning id, number`,
+          [user.id, p.orderId, p.topic.slice(0, 80)]);
+        return { id: created!.id, number: created!.number, created: true };
+      });
+      if (!result.created) {
+        await this.post(user, result.id, text);
+        return this.thread(user, result.id);
       }
+      uniqueTicket = { id: result.id, number: result.number };
     }
-    const t = await this.db.one(
-      `insert into support_tickets(user_id, order_id, topic) values ($1,$2,$3) returning id, number`, [user.id, p.orderId ?? null, p.topic.slice(0, 80)]);
+    const t = uniqueTicket ?? await this.db.one<{ id: string; number: number }>(
+      `insert into support_tickets(user_id, order_id, topic) values ($1,$2,$3) returning id, number`,
+      [user.id, null, p.topic.slice(0, 80)]);
     await this.db.query(`insert into support_messages(ticket_id, sender_id, body) values ($1,$2,$3)`, [t!.id, user.id, maskPhones(text).text]);
     if (p.orderId) {
       await this.orders.event(this.db, p.orderId, user.id, 'support_called', { ticket: t!.number, topic: p.topic });
