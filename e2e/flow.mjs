@@ -37,7 +37,7 @@ async function checkCabinetMenu(page, expectedLinks, { shopTab = true } = {}) {
 async function assertDashboardTheme(page, role) {
   const result = await page.evaluate(() => {
     const app = document.querySelector('.app');
-    const card = document.querySelector('.card');
+    const card = document.querySelector('.card') ?? document.querySelector('.client-dashboard .desktop-hero');
     if (!app || !card) return null;
     const css = getComputedStyle(app);
     return {
