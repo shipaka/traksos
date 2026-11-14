@@ -11,7 +11,7 @@ async function session(term, select, expectedHash){
   page.on('pageerror',err=>errors.push(err.message));
   try{
     await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
-    await page.getByRole('heading',{name:/Помощь грузовикам/}).waitFor();
+    await page.getByRole('heading',{name:/TrakSOS.*помощь/}).waitFor();
     const search=page.getByRole('searchbox',{name:'Поиск разделов и услуг'});
     await search.fill(term);
     const options=page.locator('#track-search-list');

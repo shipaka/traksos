@@ -75,7 +75,7 @@ try {
       const cs = getComputedStyle(el);
       const layer = getComputedStyle(el, '::after');
       const picture = [cs.backgroundImage, layer.backgroundImage]
-        .find(x => x.includes('tracksos-approved-scenic-hero'));
+        .find(x => x.includes('traksos-final-hero'));
       const visible = el.getBoundingClientRect().width > 100 && el.getBoundingClientRect().height > 100;
       return {visible, picture, fit: [cs.backgroundSize, layer.backgroundSize].join(',')};
     });

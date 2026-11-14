@@ -49,7 +49,7 @@ try{
    await publicPage.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
    await publicPage.locator('.public-service-tile').first().waitFor();
    const pub=await cssAudit(publicPage,'.public-landing .public-service-tile',width);
-   assert(pub.count===4&&pub.issues.length===0,width+'px public layout: '+JSON.stringify(pub));
+   assert(pub.count===6&&pub.issues.length===0,width+'px public layout: '+JSON.stringify(pub));
    await publicPage.screenshot({path:out+'/public-'+width+'.png',fullPage:true});
    await guest.close();
    const ctx=await browser.newContext({viewport:{width,height:900},locale:'ru-RU'});

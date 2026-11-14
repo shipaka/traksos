@@ -34,23 +34,23 @@ try {
       width + 'px: horizontal overflow ' + data.scrollWidth + '/' + data.clientWidth);
     assert(data.loginCount === 1 && data.registerCount === 1,
       width + 'px: duplicated/missing login or registration buttons');
-    assert(data.serviceTiles === 4, width + 'px: unexpected public services count');
-    assert(data.heroCss?.includes('tracksos-approved-scenic-hero'),
+    assert(data.serviceTiles === 6, width + 'px: unexpected public services count');
+    assert(data.heroCss?.includes('traksos-final-hero'),
       width + 'px: approved truck artwork is not displayed');
     assert(data.mapCss?.includes('tracksos-approved-map'),
       width + 'px: approved regional map is not displayed');
 
-    for (const name of ['tracksos-approved-scenic-hero.webp','tracksos-approved-map.webp']) {
+    for (const name of ['traksos-final-hero.webp','tracksos-approved-map.webp']) {
       const check = await page.evaluate(async (asset) => {
         const res = await fetch('/' + asset);
         const blob = await res.blob();
-        return res.ok && blob.type.startsWith('image/') && blob.size > (asset.includes('scenic-hero') ? 4000 : 10_000);
+        return res.ok && blob.type.startsWith('image/') && blob.size > (asset.includes('final-hero') ? 60000 : 10_000);
       }, name);
       assert(check, width + 'px: approved image cannot be loaded: ' + name);
     }
 
     // Main SOS action: it must open a real number-confirmation form.
-    await page.getByRole('button', { name: 'Помощь в дороге' }).click();
+    await page.getByRole('button', { name: 'Вызвать помощь (SOS)' }).click();
     await page.getByRole('heading', { name: 'Помощь на дороге', exact: true }).waitFor();
 
     // Header entry points must work on every tested phone/desktop viewport.
@@ -77,7 +77,7 @@ try {
       await page.getByRole('heading', { name: 'Регистрация в TrakSOS' }).waitFor();
     }
     assert(errors.length === 0, width + 'px: browser errors: ' + errors.join('; '));
-    console.log('OK: viewport ' + width + 'px, 4 directions, approved assets, SOS/login/register, no overflow');
+    console.log('OK: viewport ' + width + 'px, 6 cards, approved single-reference assets, SOS/login/register, no overflow');
     await context.close();
   }
 } finally {

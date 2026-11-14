@@ -39,8 +39,8 @@ async function run(width, height, mobile) {
   const suffix = width + 'x' + height;
   try {
     await page.goto(BASE + '/#/', { waitUntil: 'domcontentloaded' });
-    await page.getByRole('heading', { name: /Помощь грузовикам.*24\/7/i }).waitFor();
-    check(await page.getByRole('button', { name: 'Помощь в дороге' }).isVisible(), 'SOS not visible');
+    await page.getByRole('heading', { name: /TrakSOS.*помощь.*в пути/i }).waitFor();
+    check(await page.getByRole('button', { name: 'Вызвать помощь (SOS)' }).isVisible(), 'SOS not visible');
     check(await page.getByRole('button', { name: 'Как это работает?' }).isVisible(), 'How it works not visible');
     const image = await page.locator('.public-hero-visual').evaluate(async el => {
       const bg = [getComputedStyle(el).backgroundImage, getComputedStyle(el,'::after').backgroundImage].join(' | ');

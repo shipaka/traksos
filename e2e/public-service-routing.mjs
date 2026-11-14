@@ -13,8 +13,8 @@ try{
     const page=await context.newPage();
     await page.goto(BASE+'/#/');
     await page.getByRole('button',{name:new RegExp({
-      van:'Выездной мастер',tow:'Эвакуатор',sto:'СТО грузовых автомобилей',
-      consult:'Консультация специалиста'
+      van:'Выездной мастер',tow:'Эвакуация',sto:'СТО и сервисы',
+      consult:'Консультации'
     }[id])}).click();
     await page.getByRole('heading',{name:'Помощь на дороге'}).waitFor();
     const saved=await page.evaluate(()=>sessionStorage.getItem('traksos.pendingLandingAction'));
