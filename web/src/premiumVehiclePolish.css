@@ -441,3 +441,69 @@
     transition:none !important;transform:none !important;
   }
 }
+
+
+/* NOV14 ADMIN WORKSPACE — same cinematic real-truck vocabulary as the
+   approved client reference, without decorative square vehicle artwork. */
+.app.role-admin .admin-workspace .admin-command-hero {
+  min-height: 315px;
+  padding: clamp(24px, 3vw, 36px);
+  border-radius: 24px;
+  border-color: rgba(87, 195, 235, .65);
+  background:
+    radial-gradient(ellipse at 83% 90%, rgba(29, 180, 240, .20), transparent 54%),
+    linear-gradient(115deg, #07192e, #0c2e4d 70%, #11243c);
+  box-shadow: 0 17px 38px rgba(0, 9, 25, .3);
+}
+.app.role-admin .admin-workspace .admin-command-hero::before {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 55%;
+  background: url('../public/tracksos-approved-scenic-hero.webp') right center/contain no-repeat;
+  pointer-events: none;
+  z-index: 0;
+  opacity: .90;
+}
+.app.role-admin .admin-workspace .admin-command-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #07192e 0%, rgba(7,25,46,.88) 35%, transparent 72%);
+  pointer-events: none;
+  z-index: 0;
+}
+.app.role-admin .admin-workspace .admin-command-art { display: none !important; }
+.app.role-admin .admin-workspace .admin-command-hero > :is(h1,p,.admin-command-eyebrow,.admin-command-actions) {
+  position: relative;
+  z-index: 2;
+}
+@media (min-width: 950px) {
+  .app.role-admin .admin-command-hero p { max-width: 50%; }
+  .app.role-admin .admin-command-actions {
+    max-width: 52%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+@media (max-width: 949px) {
+  .app.role-admin .admin-workspace .admin-command-hero {
+    padding: 22px 18px 186px;
+    min-height: 0;
+  }
+  .app.role-admin .admin-workspace .admin-command-hero::before {
+    top: auto;
+    bottom: 0;
+    width: 100%;
+    height: 176px;
+    background-position: center bottom;
+  }
+  .app.role-admin .admin-workspace .admin-command-hero::after {
+    background: linear-gradient(180deg, rgba(4,18,36,.3), transparent 57%);
+  }
+  .app.role-admin .admin-workspace .admin-command-hero .admin-command-actions {
+    gap: 9px;
+  }
+}
