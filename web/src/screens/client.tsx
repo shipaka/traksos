@@ -138,9 +138,9 @@ export function Sos() {
   const [choice, setChoice] = useState<'master' | 'tow' | 'sto' | null>(null);
   const masterServices = ['electric', 'diag', 'air', 'autonomy', 'tyre'];
   return (
-    <main>
+    <main className="client-sos-page">
       <Back to="" />
-      <div>
+      <div className="client-section-hero client-section-hero-sos">
         <h1>SOS · Нужна помощь?</h1>
         <div className="sub">Сначала выберите, кто вам нужен. Остальные вопросы появятся только после выбора.</div>
       </div>
@@ -622,7 +622,7 @@ export function Orders({ as }: { as: 'client' | 'performer' }) {
   const live = (o: any) => !['completed', 'cancelled', 'no_performer'].includes(o.status);
   const shown = as === 'performer' ? list.data : (list.data ?? []).filter((o: any) => ctab === 'now' ? live(o) : !live(o));
   return (
-    <main>
+    <main className={as === 'performer' ? 'performer-orders-page' : 'client-orders-page'}>
       <h1>{as === 'performer' ? 'История' : 'Заявки'}</h1>
       {as === 'performer' && <HistoryTabs tab={tab} setTab={setTab} />}
       {as === 'client' && (
@@ -739,8 +739,8 @@ export function Garage() {
   }
 
   return (
-    <main>
-      <div>
+    <main className="client-garage-page">
+      <div className="client-section-hero client-section-hero-garage">
         <h1>Мой гараж</h1>
         <div className="sub">Машина сохраняется один раз и выбирается одним нажатием во всех заявках.</div>
       </div>
@@ -860,7 +860,7 @@ export function Profile() {
   const isPerformer = me.roles.some((r) => r === 'master' || r === 'tow');
   const isCustomer = me.roles.some((r) => r === 'client' || r === 'driver');
   return (
-    <main>
+    <main className="account-profile-page">
       <h1>Профиль</h1>
       {native.isApp && <div className="card">
         <b>Быстрый безопасный вход</b>
