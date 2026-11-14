@@ -30,6 +30,7 @@ export interface PaymentProvider {
   cancel(id: string): Promise<{ status: ProviderStatus }>;
   refund(id: string, amount: number, idempotencyKey: string): Promise<{ id: string; status: 'succeeded' | 'pending' | 'failed' }>;
   getPayment(id: string): Promise<{ id: string; status: ProviderStatus; total: number }>;
+  getRefund(id: string): Promise<{ id: string; status: 'succeeded' | 'pending' | 'failed' }>;
   /** Выплата исполнителю; null — выплаты через этот сервис не настроены, платим вручную */
   payout(p: PayoutInput): Promise<{ id: string; status: 'pending' | 'paid' | 'failed'; receiptIssued: boolean } | null>;
   /** Разбор уведомления; статус всё равно перепроверяем через getPayment */
@@ -42,6 +43,7 @@ export class MockProvider implements PaymentProvider {
   private seq = 0;
   payments = new Map<string, { id: string; status: ProviderStatus; total: number; captured: number; refunded: number }>();
   payouts: PayoutInput[] = [];
+  refunds = new Map<string, { id: string; status: 'succeeded' | 'pending' | 'failed'; paymentId: string; amount: number }>();
   constructor(private publicUrl: string) {}
 
   async createPayment(p: CreatePaymentInput) {
@@ -66,10 +68,20 @@ export class MockProvider implements PaymentProvider {
     p.status = 'cancelled';
     return { status: p.status };
   }
-  async refund(id: string, amount: number) {
-    const p = this.payments.get(id)!;
+  async refund(id: string, amount: number, key: string) {
+    const existing = this.refunds.get(key);
+    if (existing) return { id: existing.id, status: existing.status };
+    const p = this.payments.get(id);
+    if (!p) throw new Error('mock: нет платежа ' + id);
     p.refunded += amount;
-    return { id: `${id}_r${p.refunded}`, status: 'succeeded' as const };
+    const result = { id: `${id}_r${p.refunded}`, status: 'succeeded' as const, paymentId: id, amount };
+    this.refunds.set(key, result);
+    return { id: result.id, status: result.status };
+  }
+  async getRefund(id: string) {
+    const r = [...this.refunds.values()].find(x => x.id === id);
+    if (!r) throw new Error('mock: нет возврата ' + id);
+    return { id: r.id, status: r.status };
   }
   async getPayment(id: string) {
     const p = this.payments.get(id)!;
