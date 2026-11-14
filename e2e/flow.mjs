@@ -34,7 +34,7 @@ async function checkCabinetMenu(page, expectedLinks) {
 async function assertDashboardTheme(page, role) {
   const result = await page.evaluate(() => {
     const app = document.querySelector('.app');
-    const card = document.querySelector('.card');
+    const card = document.querySelector('.card, .desktop-hero, .desktop-quick-card');
     if (!app || !card) return null;
     const css = getComputedStyle(app);
     return {
