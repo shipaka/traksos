@@ -1,4 +1,4 @@
-// Browser smoke for the actual owner demo path: phone + 10 digits -> admin -> ten role previews.
+// Browser smoke for the actual owner demo path: phone + 10 digits -> admin -> eleven role previews.
 // Local CI ONLY. Does not create users, touch production, send SMS or change approved design.
 import { chromium } from 'playwright';
 import pg from 'pg';
@@ -50,7 +50,7 @@ try {
       ['client','Клиент'],['owner','Владелец / автопарк'],['driver','Водитель автопарка'],
       ['master','Выездной мастер'],['tow','Эвакуаторщик'],['service','Рембаза / СТО'],
       ['master_service','Мастер и своя СТО'],['insurer','Страховой партнёр'],
-      ['moderator','Модератор'],['admin','Администратор'],
+      ['inspection','Оператор техосмотра'],['moderator','Модератор'],['admin','Администратор'],
     ]) {
       const link=page.locator('a.sandbox-role-card[href="#/admin/test-center/'+id+'"]');
       await link.click();
@@ -67,11 +67,40 @@ try {
         await page.getByRole('heading',{name:/Scania/}).waitFor();
         await page.getByRole('button',{name:'Машина приехала'}).click();
         await page.locator('.service-preview-admin-bar a[href="#/admin/test-center"]').click();
-      } else {
-        await page.getByRole('main',{name:'Тестовый кабинет: '+label}).waitFor();
+      } else if(id==='master_service'){
+        // Combined role opens the master workspace, then the separately isolated service entry.
+        await page.getByRole('button',{name:'Моя СТО',exact:true}).click();
+        await page.getByRole('link',{name:'Открыть полный тестовый кабинет СТО'}).waitFor();
         await page.screenshot({path:'e2e/shots/sandbox/'+id+'-'+width+'.png',fullPage:true});
-        await page.locator('.sandbox-nav button').nth(1).click();
-        await page.getByRole('button',{name:'Создать тестовую заявку'}).waitFor();
+        await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
+      } else {
+        const cabinetLabel=id==='owner'?'Владелец автопарка':label;
+        await page.getByRole('main',{name:'Тестовый кабинет: '+cabinetLabel}).waitFor();
+        await page.screenshot({path:'e2e/shots/sandbox/'+id+'-'+width+'.png',fullPage:true});
+        // Each role has its own real navigation. The old shared "create request" selector
+        // was invalid for fleet, master, insurer and inspection workspaces.
+        if(id==='client'||id==='driver'){
+          await page.getByRole('button',{name:'История',exact:true}).click();
+          await page.getByRole('button',{name:'Помощь на дороге',exact:true}).waitFor();
+        }else if(id==='owner'){
+          await page.getByRole('button',{name:'Водители',exact:true}).click();
+          await page.getByRole('textbox',{name:'Имя водителя'}).waitFor();
+        }else if(id==='master'||id==='tow'){
+          await page.getByRole('button',{name:'Мои выезды',exact:true}).click();
+          await page.getByRole('button',{name:'Начать выезд'}).waitFor();
+        }else if(id==='insurer'){
+          await page.getByRole('button',{name:'Документы и полисы',exact:true}).click();
+          await page.getByRole('heading',{name:'Документы и полисы'}).waitFor();
+        }else if(id==='inspection'){
+          await page.getByRole('button',{name:'Расписание',exact:true}).click();
+          await page.getByRole('heading',{name:'Расписание осмотров'}).waitFor();
+        }else if(id==='moderator'){
+          await page.getByRole('button',{name:'Жалобы и обращения',exact:true}).click();
+          await page.getByRole('heading',{name:'Жалобы и обращения'}).waitFor();
+        }else{
+          await page.locator('.sandbox-nav button').nth(1).click();
+          await page.getByRole('button',{name:'Создать тестовую заявку'}).waitFor();
+        }
         await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
       }
       await page.getByRole('heading',{name:'Тестирование кабинетов'}).waitFor();
@@ -101,7 +130,7 @@ try {
     body:JSON.stringify({phone,password:code}),
   });
   if (relog.status !== 401) throw new Error('Expired preview code allowed a fresh sign-in');
-  console.log('Preview admin login (mobile + desktop), 10 roles, expiry and token revocation: OK');
+  console.log('Preview admin login (mobile + desktop), 11 roles, expiry and token revocation: OK');
 } finally {
   if (browser) await browser.close();
   await db.query('update users set password_hash=$1,admin_preview_until=$2 where id=$3',
