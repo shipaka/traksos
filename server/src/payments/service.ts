@@ -191,20 +191,47 @@ export class PaymentsService implements PaymentHooks {
   }
 
   private async sync(pay: any, status: string) {
-    if (pay.status === status) return { changed: false };
-    await this.db.query('update payments set status=$2, updated_at=now() where id=$1', [pay.id, status]);
-    await this.orders.event(this.db, pay.order_id, null, `payment_${pay.kind}_${status}`, { paymentId: pay.id, total: pay.total });
-    if (pay.kind === 'call_out' && status === 'held') {
-      await this.orders.startDispatch(pay.order_id);
-    } else if (pay.kind === 'work' && status === 'captured') {
-      await this.db.tx((q) => this.finalizeOnline(pay.order_id, q));
-    } else if (pay.kind === 'call_out' && (status === 'cancelled' || status === 'failed')) {
-      const o = await this.db.one(`update orders set status='cancelled', cancelled_at=now(), cancel_reason='Оплата выезда не прошла'
-                                    where id=$1 and status='searching' and dispatch_started_at is null returning *`, [pay.order_id]);
-      if (o) await this.notifier.notify([o.client_id, o.created_by], { type: 'order', orderId: o.id, status: 'cancelled' },
-        { kind: 'normal', title: 'Оплата не прошла', body: `Заявка №${o.number} не отправлена исполнителям`, data: { orderId: o.id } });
+    // Webhooks can arrive simultaneously, out of order, or multiple times.
+    // Serialize the status transition AND its accounting under the payment
+    // row lock. In particular, 'captured' must never create two payouts.
+    const changed = await this.db.tx(async q => {
+      const current = await q.one<any>('select * from payments where id=$1 for update', [pay.id]);
+      if (!current) throw notFound('Платёж не найден');
+      if (current.status === status) return { changed: false, dispatch: false, failedOrder: null as any };
+      // A delayed provider poll must not regress settled or refunded money.
+      if (['refunded', 'partially_refunded'].includes(current.status) ||
+          (current.status === 'captured' && status !== 'captured') ||
+          (['failed', 'cancelled'].includes(current.status) && !['failed', 'cancelled'].includes(status)))
+        return { changed: false, dispatch: false, failedOrder: null as any };
+
+      await q.query('update payments set status=$2, updated_at=now() where id=$1', [current.id, status]);
+      await this.orders.event(q, current.order_id, null, `payment_${current.kind}_${status}`,
+        { paymentId: current.id, total: current.total });
+      if (current.kind === 'work' && status === 'captured') {
+        // Transaction and lock are shared with settlement/ledger/payout.
+        await this.finalizeOnline(current.order_id, q);
+      }
+      let failedOrder: any = null;
+      if (current.kind === 'call_out' && (status === 'cancelled' || status === 'failed')) {
+        failedOrder = await q.one(
+          `update orders set status='cancelled', cancelled_at=now(), cancel_reason='Оплата выезда не прошла'
+             where id=$1 and status='searching' and dispatch_started_at is null returning *`,
+          [current.order_id]);
+      }
+      return { changed: true, dispatch: current.kind === 'call_out' && status === 'held', failedOrder };
+    });
+
+    // Never start dispatch or push live notifications from a transaction that
+    // might roll back. Only the successful transition performs these effects.
+    if (changed.dispatch) await this.orders.startDispatch(pay.order_id);
+    if (changed.failedOrder) {
+      const o = changed.failedOrder;
+      await this.notifier.notify([o.client_id, o.created_by],
+        { type: 'order', orderId: o.id, status: 'cancelled' },
+        { kind: 'normal', title: 'Оплата не прошла', body: `Заявка №${o.number} не отправлена исполнителям`,
+          data: { orderId: o.id } });
     }
-    return { changed: true };
+    return { changed: changed.changed };
   }
 
   /** Всё оплачено: списываем замороженный выезд, разносим по счетам, ставим выплату */
