@@ -6,11 +6,10 @@ import assert from 'node:assert/strict';
 import {randomBytes} from 'node:crypto';
 import {performance} from 'node:perf_hooks';
 import {mkdir,writeFile} from 'node:fs/promises';
-import {sha256} from '../src/util.ts';
-
-// Staff access is phone-allowlisted even in a test database.
+// Staff access must be configured BEFORE the application config module loads.
 const staffPhone='+79994000197';
 process.env.MODERATOR_PHONES=staffPhone;
+const {sha256}=await import('../src/util.ts');
 const {setup,ok}=await import('./helpers.ts');
 type Account={id:string;phone:string;token:string;role:string};
 type ApiResult={status:number;body:any};
