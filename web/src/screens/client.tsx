@@ -25,7 +25,7 @@ export function Home() {
   const { me } = useMe();
   const active = useLoad(() => get('/api/orders'), [], (e) => e.type === 'order');
   const live = (active.data ?? []).filter((o: any) => !['completed', 'cancelled'].includes(o.status));
-  return <VisualClientHome me={me} live={live} help={<HelpDirections />} />;
+  return <VisualClientHome me={me} live={live} ordersLoaded={active.data !== null} ordersError={active.error} help={<HelpDirections />} />;
 }
 
 /** One agreed customer decision. First choose WHO can help; ask for specifics only on the next step. */
