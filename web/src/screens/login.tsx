@@ -129,8 +129,14 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
       <section className="public-hero public-brand-hero" aria-labelledby="public-main-title">
         <div className="public-hero-copy">
           <span className="public-eyebrow">ТРАКSOS · ПОМОЩЬ ГРУЗОВОМУ ТРАНСПОРТУ</span>
-          <h1 id="public-main-title">Помощь <em>грузовику</em> в дороге — рядом с вами</h1>
-          <p>Выездные мастера, диагностика, шиномонтаж, эвакуация и проверенные СТО-партнёры. Услуги для грузового транспорта в Санкт-Петербурге и Ленинградской области.</p>
+          <h1 id="public-main-title">Помощь грузовикам <em>в любой ситуации 24/7</em></h1>
+          <p>Выездные специалисты, эвакуаторы, грузовые СТО и консультации. Все направления помощи — на одном экране.</p>
+          <div className="public-track-benefits" aria-label="Преимущества TrackSOS">
+            <span><i aria-hidden="true">ϟ</i>Быстрое обращение</span>
+            <span><i aria-hidden="true">✓</i>Проверка исполнителей</span>
+            <span><i aria-hidden="true">⌖</i>Санкт-Петербург и Ленобласть</span>
+            <span><i aria-hidden="true">▤</i>Работа с юрлицами</span>
+          </div>
           <div className="public-actions">
             <button type="button" className="public-button public-button-sos" onClick={() => setIntent('help')}>SOS · Нужна помощь</button>
             <button type="button" className="public-button public-button-outline" onClick={() => document.getElementById('public-how')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>Как это работает?</button>
@@ -143,21 +149,18 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
 
       <div className="public-content-grid">
         <section className="public-real-services" id="public-services">
-          <div className="public-section-head"><span className="public-section-kicker">НАША ПОМОЩЬ</span><h2>Что умеет ТракSOS</h2></div>
+          <div className="public-section-head"><span className="public-section-kicker">ПОМОЩЬ ГРУЗОВИКАМ</span><h2>Чем вам помочь?</h2></div>
           <div className="public-service-tiles">
             {([
-              ['⚡', 'Электрик', 'Проводка, свет, запуск'],
-              ['▣', 'Диагностика', 'Ошибки и поиск неисправности'],
-              ['◉', 'Пневматика и тормоза', 'Воздушная система, ABS/EBS'],
-              ['≋', 'Автономные отопители', 'Диагностика и ремонт'],
-              ['◎', 'Шиномонтаж', 'Колёса и проколы'],
-              ['↗', 'Эвакуация', 'Помощь грузовику не на ходу'],
-              ['☎', 'Консультация', 'Совет мастера по телефону'],
-              ['⚙', 'СТО-партнёры', 'Сервис и ремонт на базе'],
-            ] as const).map(([icon, name, hint]) => (
-              <button type="button" className="public-service-tile" key={name} onClick={() => setIntent('help')}>
+              ['van', '⚒', 'Выездной мастер', 'Ремонт и диагностика на месте'],
+              ['tow', '↗', 'Эвакуатор', 'Перевозка грузовика и прицепа'],
+              ['sto', '▣', 'СТО грузовых автомобилей', 'Ремонт, обслуживание и запись'],
+              ['consult', '☏', 'Консультация специалиста', 'Помощь по телефону'],
+            ] as const).map(([id,icon,name,hint]) => (
+              <button type="button" className={`public-service-tile public-service-${id}`}
+                key={name} onClick={() => setIntent('help')}>
                 <span className="public-service-icon" aria-hidden="true">{icon}</span>
-                <b>{name}</b><small>{hint}</small>
+                <b>{name}</b><small>{hint}</small><span className="public-service-arrow" aria-hidden="true">›</span>
               </button>
             ))}
           </div>
@@ -187,6 +190,25 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         </aside>}
       </div>
 
+      <div className="public-track-extras">
+        <button type="button" className="public-track-insurance" onClick={() => setIntent('register')}>
+          <span className="public-track-insurance-art" aria-hidden="true" />
+          <span><b>Страхование грузового транспорта</b>
+          <small>ОСАГО, КАСКО, груз, ответственность — заявка через TrackSOS</small></span>
+          <strong>Оформить заявку →</strong>
+        </button>
+        <div className="public-track-extras-grid">
+          <button type="button" className="public-track-extra public-track-parts" onClick={() => setIntent('register')}>
+            <span className="public-track-extra-art" aria-hidden="true"/><b>Запчасти</b><small>Оригиналы и проверенные аналоги</small><span aria-hidden="true">›</span>
+          </button>
+          <button type="button" className="public-track-extra public-track-inspection" onClick={() => setIntent('register')}>
+            <span className="public-track-extra-art" aria-hidden="true"/><b>Техосмотр</b><small>Заявка на осмотр транспорта</small><span aria-hidden="true">›</span>
+          </button>
+          <button type="button" className="public-track-extra public-track-guide" onClick={() => document.getElementById('public-how')?.scrollIntoView({behavior:'smooth'})}>
+            <span className="public-track-extra-art" aria-hidden="true"/><b>Полезное</b><small>Как работает сервис</small><span aria-hidden="true">›</span>
+          </button>
+        </div>
+      </div>
       <section className="public-why-strip" aria-label="Преимущества сервиса">
         <div><span>◎</span><b>Наш регион</b><small>Санкт-Петербург и Ленобласть</small></div>
         <div><span>◈</span><b>Подключение партнёров</b><small>Проверка мастеров и СТО</small></div>
