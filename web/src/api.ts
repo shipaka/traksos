@@ -21,10 +21,37 @@ export class ApiError extends Error {
   constructor(public status: number, public code: string, message: string, public data?: any) { super(message); }
 }
 
+// One SOS form = one request key, surviving timeouts and page reloads.
+// Changing fields after an uncertain send does not silently create a second
+// paid call-out: server rejects a changed payload for the original key.
+function pendingOrderKey() {
+  const path = location.hash.split('?')[0];
+  const storageKey = 'traksos.pendingOrderRequest';
+  try {
+    const old = JSON.parse(sessionStorage.getItem(storageKey) ?? 'null');
+    if (old?.path === path && old?.key && Date.now()-old.createdAt < 7*86_400_000)
+      return old.key as string;
+  } catch { /* private browsing */ }
+  const random = globalThis.crypto?.randomUUID?.() ??
+    `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  const key = 'order-' + random;
+  try { sessionStorage.setItem(storageKey, JSON.stringify({path,key,createdAt:Date.now()})); }
+  catch { /* private browsing */ }
+  return key;
+}
+function clearPendingOrderKey(key: string) {
+  try {
+    const stored=JSON.parse(sessionStorage.getItem('traksos.pendingOrderRequest')??'null');
+    if (stored?.key===key) sessionStorage.removeItem('traksos.pendingOrderRequest');
+  } catch { /* private browsing */ }
+}
+
 export async function api<T = any>(method: string, path: string, body?: unknown): Promise<T> {
   // Fake roles use only in-memory data, never live calls. /api/me refreshes the real admin session.
   if(currentPreviewRole() && path.startsWith('/api/') && !(method === 'GET' && path.split('?')[0] === '/api/me'))
     return rolePreviewApi(method,path,body) as Promise<T>;
+  const orderKey = method === 'POST' && path === '/api/orders'
+    ? pendingOrderKey() : null;
   let r: Response;
   try {
     // Bounded waits are crucial on unstable mobile data. Never retry writes silently.
@@ -34,7 +61,8 @@ export async function api<T = any>(method: string, path: string, body?: unknown)
     try {
       r = await fetch(API_URL + path, {
         method,
-        headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
+        headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}),
+          ...(orderKey ? { 'idempotency-key': orderKey } : {}) },
         body: body === undefined ? undefined : JSON.stringify(body),
         cache: 'no-store',
         signal: timeout.signal,
@@ -53,6 +81,7 @@ export async function api<T = any>(method: string, path: string, body?: unknown)
     location.hash = '#/login';
   }
   if (!r.ok) throw new ApiError(r.status, j?.error ?? 'error', j?.message ?? 'Ошибка', j?.data);
+  if (orderKey && j?.order?.id) clearPendingOrderKey(orderKey);
   return j as T;
 }
 
