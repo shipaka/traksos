@@ -10,6 +10,7 @@ import { createPush } from './providers/push.ts';
 import { MockProvider } from './payments/provider.ts';
 import { YooKassaProvider } from './payments/yookassa.ts';
 import { staticHandler } from './http/static.ts';
+import { PublicWeatherService } from './services/publicWeather.ts';
 
 const db = await createDb(config.databaseUrl);
 const applied = await migrate(db);
@@ -22,8 +23,26 @@ const payments = config.payments.provider === 'yookassa'
 const app = createApp({ db, sms: createSms(), push: createPush(), payments });
 
 const serveWeb = staticHandler(config.webRoot);
+const publicWeather = new PublicWeatherService();
 const server = http.createServer((req, res) => {
   const p = (req.url ?? '/').split('?')[0];
+  if (p === '/api/public/weather' && (req.method === 'GET' || req.method === 'HEAD')) {
+    // Lightweight public endpoint: never expose the Yandex key, raw upstream response or device location.
+    void publicWeather.current().then(observation => {
+      if (res.destroyed) return;
+      res.statusCode = observation ? 200 : 503;
+      res.setHeader('content-type', 'application/json; charset=utf-8');
+      res.setHeader('cache-control', 'public, max-age=60');
+      res.setHeader('x-content-type-options', 'nosniff');
+      res.end(req.method === 'HEAD' ? undefined : JSON.stringify(observation ?? { available: false }));
+    }).catch(() => {
+      if (res.destroyed) return;
+      res.statusCode = 503;
+      res.setHeader('content-type', 'application/json; charset=utf-8');
+      res.end(req.method === 'HEAD' ? undefined : '{"available":false}');
+    });
+    return;
+  }
   if (p.startsWith('/api/') || req.method !== 'GET' && req.method !== 'HEAD') return void app.handle(req, res);
   return void serveWeb(req, res);
 });
