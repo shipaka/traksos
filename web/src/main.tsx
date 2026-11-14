@@ -321,7 +321,16 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           <a href="#/">Главная</a><a href="#/orders">Заявки</a><a href="#/sos">Помощь в дороге</a><a href="#/shop">Запчасти</a>
         </nav>}
         {!me && <nav className="guest-site-nav" aria-label="Разделы TrakSOS">
-          <a href="#/" onClick={e => { e.preventDefault(); document.getElementById('public-services')?.scrollIntoView({behavior:'smooth',block:'start'}); }}>Услуги</a>
+          <a href="#/" onClick={e => {
+            const services = document.getElementById('public-services');
+            if (services) {
+              e.preventDefault();
+              services.scrollIntoView({behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start'});
+            } else {
+              // From login/registration the landing must open first; its effect handles the scroll.
+              try { sessionStorage.setItem('traksos.scrollPublicServices', '1'); } catch { /* private browsing */ }
+            }
+          }}>Услуги</a>
           <a href="#/register" onClick={() => { try { sessionStorage.setItem('traksos.pendingLandingAction','insurance'); } catch {} }}>Страхование</a>
           <a href="#/register" onClick={() => { try { sessionStorage.setItem('traksos.pendingLandingAction','parts'); } catch {} }}>Запчасти</a>
           <a href="#/register" onClick={() => { try { sessionStorage.setItem('traksos.pendingLandingAction','sto'); } catch {} }}>СТО и сервисы</a>
