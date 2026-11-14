@@ -104,6 +104,8 @@ test('полный путь: SOS → приоритетный отказался
   assert.ok(!msg.body.includes('123-45-67'));
   ok(await t.api('POST', `/api/orders/${id}/messages`, { body: 'Жду у машины', kind: 'quick' }, client.token));
   const chat = ok(await t.api('GET', `/api/orders/${id}/messages`, undefined, client.token));
+  assert.ok(!chat.quickReplies.includes('Я на месте'), 'arrival is an order transition, not a chat shortcut');
+  assert.equal((await t.api('POST', `/api/orders/${id}/messages`, { body: 'Я на месте', kind: 'quick' }, master.token)).body.error, 'invalid_quick_reply');
   assert.ok(chat.messages.some((m: any) => m.sender_role === 'system'));
   assert.equal(chat.messages.filter((m: any) => m.sender_role === 'performer').length, 1);
   assert.equal(ok(await t.api('GET', '/api/admin/chat/flagged', undefined, admin.token)).length, 1);
@@ -135,6 +137,11 @@ test('полный путь: SOS → приоритетный отказался
   assert.equal((await t.api('POST', `/api/orders/${id}/confirm`, { total: 924_000 }, client.token)).body.error, 'amount_changed');
   const done = ok(await t.api('POST', `/api/orders/${id}/confirm`, { total: 861_000 }, client.token));
   assert.equal(done.status, 'completed');
+  const closedChat = ok(await t.api('GET', `/api/orders/${id}/messages`, undefined, client.token));
+  assert.deepEqual(closedChat.quickReplies, [], 'completed orders have no quick replies');
+  assert.ok(closedChat.messages.some((m: any) => m.kind === 'system'), 'chat history remains readable');
+  assert.equal((await t.api('POST', `/api/orders/${id}/messages`, { body: 'Я на месте', kind: 'quick' }, master.token)).body.error, 'chat_closed');
+  assert.equal((await t.api('POST', `/api/orders/${id}/messages`, { body: 'Позднее сообщение' }, client.token)).body.error, 'chat_closed');
 
   // Наличные: мастер должен площадке сбор + 5% (41 000 + 41 000)
   const bal = ok(await t.api('GET', '/api/performer/balance', undefined, master.token));
