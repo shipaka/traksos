@@ -3,6 +3,7 @@ package ru.traksos.app
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.NotificationManager
+import android.app.KeyguardManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -66,10 +67,29 @@ class MainActivity : AppCompatActivity() {
     fun appLockEnabled(): Boolean = appLockPrefs.getBoolean("enabled", false)
 
     fun setAppLockEnabled(value: Boolean): Boolean {
-        if (value && BiometricManager.from(this).canAuthenticate(allowedAuthenticators) != BiometricManager.BIOMETRIC_SUCCESS)
-            return false
+        if (value) {
+            // Combined strong biometrics + system PIN is unsupported on Android 10 and older.
+            val available = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                BiometricManager.from(this).canAuthenticate(allowedAuthenticators) == BiometricManager.BIOMETRIC_SUCCESS
+            } else {
+                (getSystemService(KEYGUARD_SERVICE) as KeyguardManager).isDeviceSecure
+            }
+            if (!available) return false
+        }
         appLockPrefs.edit().putBoolean("enabled", value).apply()
         return true
+    }
+
+    private val credentialLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        unlockInProgress = false
+        if (result.resultCode == RESULT_OK) completeAppUnlock()
+    }
+
+    private fun completeAppUnlock() {
+        unlockInProgress = false
+        lockCover?.let { appRoot.removeView(it) }
+        lockCover = null
+        foreground = true
     }
 
     private fun requireAppUnlock() {
@@ -98,14 +118,22 @@ class MainActivity : AppCompatActivity() {
     private fun requestAppUnlock() {
         if (unlockInProgress || lockCover == null) return
         unlockInProgress = true
+        lockCover?.setOnClickListener { requestAppUnlock() }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            // Use the OS-protected lock-screen credential on Android 7–10.
+            // AndroidX rejects BIOMETRIC_STRONG | DEVICE_CREDENTIAL on Android 9–10.
+            val keyguard = getSystemService(KEYGUARD_SERVICE) as KeyguardManager
+            val intent = keyguard.createConfirmDeviceCredentialIntent(
+                "Разблокировать TrakSOS", "Подтвердите код или пароль телефона")
+            if (intent == null) { unlockInProgress = false; return }
+            try { credentialLauncher.launch(intent) } catch (_: Exception) { unlockInProgress = false }
+            return
+        }
         val prompt = BiometricPrompt(this, ContextCompat.getMainExecutor(this),
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
-                    unlockInProgress = false
-                    lockCover?.let { appRoot.removeView(it) }
-                    lockCover = null
-                    foreground = true
+                    completeAppUnlock()
                 }
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                     super.onAuthenticationError(errorCode, errString)
@@ -113,7 +141,6 @@ class MainActivity : AppCompatActivity() {
                     // No access to the WebView when cancelled: tap the cover to retry.
                 }
             })
-        lockCover?.setOnClickListener { requestAppUnlock() }
         prompt.authenticate(BiometricPrompt.PromptInfo.Builder()
             .setTitle("Разблокировать TrakSOS")
             .setSubtitle("Отпечаток пальца или код блокировки телефона")
@@ -384,7 +411,7 @@ class MainActivity : AppCompatActivity() {
 
         val title = TextView(this)
         val brand = SpannableString("TrakSOS")
-        brand.setSpan(ForegroundColorSpan(Color.rgb(254, 28, 122)), 5, 8, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        brand.setSpan(ForegroundColorSpan(Color.rgb(0, 215, 235)), 5, 8, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         title.text = brand
         title.textSize = 37f
         title.typeface = Typeface.create("sans-serif-black", Typeface.BOLD_ITALIC)
@@ -437,7 +464,7 @@ class MainActivity : AppCompatActivity() {
             p{line-height:1.55;color:#c9d9eb}button{background:#ef146a;color:white;width:100%;border:1px solid #ff74b0;
             border-radius:14px;padding:16px;font-size:17px;font-weight:700;margin-top:22px}
             small{color:#acbfd4;display:block;margin-top:15px;line-height:1.4}
-            </style></head><body><main><h1>Track<em>SOS</em></h1>
+            </style></head><body><main><h1>Trak<em>SOS</em></h1>
             <p>Нет связи с сервером TrakSOS. Проверьте интернет и попробуйте снова.</p>
             <button onclick="TrakSOSNative.retry()">Повторить подключение</button>
             <small>$safeReason</small></main></body></html>
@@ -448,20 +475,20 @@ class MainActivity : AppCompatActivity() {
         val q = { t: String -> JSONObject.quote(t) }
         val html = """
         <html lang="ru"><head><meta name="viewport" content="width=device-width,initial-scale=1"><meta charset="utf-8">
-        <style>*{box-sizing:border-box}body{margin:0;background:#15171a;color:#f4f4f2;font-family:Arial,sans-serif}
-        header{padding:20px;background:#202327;display:flex;justify-content:space-between;align-items:center}
-        strong.logo{font-size:24px;color:#ff761c}.badge{font-size:11px;color:#a8adb2}
+        <style>*{box-sizing:border-box}body{margin:0;background:#061426;color:#f4faff;font-family:Arial,sans-serif}
+        header{padding:20px;background:#0c223e;display:flex;justify-content:space-between;align-items:center}
+        strong.logo{font-size:24px;color:#00cceb}.badge{font-size:11px;color:#a8adb2}
         main{padding:18px 18px 85px}.alert,.card{border-radius:14px;padding:16px;margin-bottom:14px}
-        .alert{background:#35291d;border:1px solid #86603a;font-size:13px;line-height:1.5}
-        .card{background:#25292e;border:1px solid #363b41}h2{margin:22px 0 12px}
+        .alert{background:#12344d;border:1px solid #09b9d0;font-size:13px;line-height:1.5}
+        .card{background:#0d2948;border:1px solid #276482}h2{margin:22px 0 12px}
         p{font-size:14px;color:#b5bac0;line-height:1.5}
-        button.action{padding:13px;border:0;border-radius:12px;background:#ff771c;color:#171717;font-weight:bold;width:100%;font-size:15px}
-        button.secondary{padding:13px;border:1px solid #ff771c;border-radius:12px;background:none;color:#ff8f43;width:100%}
+        button.action{padding:13px;border:0;border-radius:12px;background:#00cceb;color:#171717;font-weight:bold;width:100%;font-size:15px}
+        button.secondary{padding:13px;border:1px solid #00cceb;border-radius:12px;background:none;color:#00cceb;width:100%}
         .page{display:none}.page.active{display:block}
-        nav{position:fixed;bottom:0;display:flex;width:100%;background:#202327;border-top:1px solid #41454a}
+        nav{position:fixed;bottom:0;display:flex;width:100%;background:#0c223e;border-top:1px solid #286581}
         nav button{flex:1;padding:17px 0;background:none;border:0;color:#b5bac0;font-size:12px}
-        nav button.active{color:#ff8f43;font-weight:bold}
-        input{width:100%;padding:14px;border:1px solid #454b51;border-radius:10px;background:#15171a;color:white;margin-bottom:12px}
+        nav button.active{color:#00cceb;font-weight:bold}
+        input{width:100%;padding:14px;border:1px solid #276482;border-radius:10px;background:#061426;color:white;margin-bottom:12px}
         </style></head><body><header><strong class="logo">TrakSOS</strong><span class="badge">АВТОНОМНОЕ ДЕМО</span></header>
         <main><div class="alert">Сервер TrakSOS ещё не запущен. Это демонстрация интерфейса: реальные вызовы, заявки, вход и загрузка документов отключены.</div>
         <section class="page active" id="home"><h2>Помощь грузовику</h2>
