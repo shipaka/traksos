@@ -32,7 +32,7 @@ export function VisualClientHome({ me, live, ordersLoaded, ordersError, help }: 
           </div>
         </div>
         <div className="client-hero-art track-road-art">
-          <img src="/tracksos-approved-scania-r520.webp"
+          <img src="/tracksos-approved-scenic-hero.webp"
             alt="Грузовик Scania R520 TrackSOS на дороге" loading="eager" decoding="async"/>
         </div>
       </section>
