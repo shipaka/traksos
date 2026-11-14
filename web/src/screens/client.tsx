@@ -136,17 +136,68 @@ function SymptomPicker({ sos }: { sos: boolean }) {
   );
 }
 
+
 export function Sos() {
+  const [direction, setDirection] = useState<'master' | 'tow' | 'service' | null>(null);
+  const options = [
+    { id: 'master', name: 'Выездной мастер', icon: '⚡', detail: 'Электрик, диагност, пневматика, отопители, шиномонтаж' },
+    { id: 'tow', name: 'Эвакуатор', icon: '↗', detail: 'Тягач, прицеп или сцепка — перевозка и подача' },
+    { id: 'service', name: 'Грузовая СТО', icon: '▤', detail: 'Найти сервис, записаться, согласовать ремонт' },
+  ] as const;
+  const specialties = [
+    { href: '#/new/electric?sos=light', icon: '⚡', name: 'Электрик', note: 'Проводка, запуск, освещение' },
+    { href: '#/new/diag?sos=error', icon: '▣', name: 'Диагност', note: 'Ошибки ЭБУ, аварийный режим' },
+    { href: '#/new/air?sos=air', icon: '◉', name: 'Пневматика и тормоза', note: 'ABS/EBS, воздух, тормоза' },
+    { href: '#/new/autonomy?sos=heater', icon: '≋', name: 'Автономные отопители', note: 'Отопитель, печка' },
+    { href: '#/new/tyre?sos=wheel', icon: '◎', name: 'Шиномонтаж', note: 'Колесо и проколы' },
+  ];
+  const chosen = options.find((item) => item.id === direction);
   return (
-    <main>
+    <main className="client-sos-directions">
       <Back to="" />
-      <div>
-        <h1>SOS · что случилось?</h1>
-        <div className="sub">Срочный вызов: заявка уйдёт свободным мастерам рядом. Ошиблись с поломкой — мастер перенаправит.</div>
+      <div className="client-sos-intro">
+        <span className="label">ТРАКSOS · СРОЧНАЯ ПОМОЩЬ</span>
+        <h1>Помощь в дороге</h1>
+        <p>Выберите направление. Затем укажете машину, местоположение и детали заявки.</p>
       </div>
-      <SymptomPicker sos />
+      {!direction ? (
+        <section className="client-sos-choices" aria-label="Направление помощи">
+          {options.map((item) => (
+            <button key={item.id} type="button" className="client-sos-choice" onClick={() => setDirection(item.id)}>
+              <span className="client-sos-choice-icon" aria-hidden="true">{item.icon}</span>
+              <span><b>{item.name}</b><small>{item.detail}</small></span>
+              <span aria-hidden="true">↗</span>
+            </button>
+          ))}
+        </section>
+      ) : (
+        <section className="client-sos-selected">
+          <div className="client-sos-selected-header">
+            <div><span className="label">ВЫБРАНО НАПРАВЛЕНИЕ</span><h2>{chosen?.name}</h2></div>
+            <button type="button" className="chip" onClick={() => setDirection(null)}>Изменить</button>
+          </div>
+          {direction === 'master' ? <>
+            <p className="note">Выберите специализацию. Описание поломки можно будет уточнить своими словами.</p>
+            <div className="client-sos-specialties">
+              {specialties.map((item) => (
+                <a key={item.href} href={item.href} className="client-sos-specialty">
+                  <span className="client-sos-specialty-icon" aria-hidden="true">{item.icon}</span>
+                  <span><b>{item.name}</b><small>{item.note}</small></span>
+                  <span aria-hidden="true">↗</span>
+                </a>
+              ))}
+            </div>
+          </> : direction === 'tow' ? <>
+            <p className="note">Для эвакуации укажете тип машины или сцепки, откуда и куда её везти.</p>
+            <a className="btn" href="#/new/tow?sos=accident">Оформить вызов эвакуатора →</a>
+          </> : <>
+            <p className="note">В каталоге грузовых СТО выберите подходящий сервис и отправьте запрос на запись.</p>
+            <a className="btn" href="#/services">Выбрать СТО →</a>
+          </>}
+        </section>
+      )}
+      <div className="client-sos-secondary"><span>Не знаете, кто нужен?</span><a href="#/new/consult">Консультация по телефону →</a></div>
       <MyPlace />
-      <LiveStrip who="client" />
     </main>
   );
 }
