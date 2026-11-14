@@ -58,6 +58,13 @@ const timer = setInterval(() => {
   app.orders.tick().catch((e) => console.error('[tick]', e));
   app.auction.tick().catch((e) => console.error('[auction]', e));
 }, 2_000);
+
+// Escalation survives restart because the database, not this timer, owns state.
+// Use a separate cadence so it cannot slow SOS dispatch polling.
+const supportSlaTimer = setInterval(() => {
+  app.support.tickSla().catch((e) => console.error('[support-sla]', e));
+}, 30_000);
+void app.support.tickSla().catch((e) => console.error('[support-sla]', e));
 // Отложенное удаление личных данных и очистка истёкших IP/телефонных
 // лимитов: хранить эти технические идентификаторы бессрочно не нужно.
 const housekeeping = async () => {
@@ -77,6 +84,7 @@ server.listen(config.port, () => console.log(`ТракSOS API: http://localhost:
 for (const sig of ['SIGINT', 'SIGTERM'] as const) {
   process.on(sig, async () => {
     clearInterval(timer);
+    clearInterval(supportSlaTimer);
     clearInterval(hourly);
     server.close();
     await db.close();
