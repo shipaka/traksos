@@ -491,9 +491,35 @@ export class PaymentsService implements PaymentHooks {
   async handleWebhook(body: any) {
     const ev = this.provider.parseWebhook(body);
     if (!ev) throw bad('bad_webhook');
-    const pay = await this.db.one('select * from payments where provider_payment_id=$1', [ev.providerPaymentId]);
-    if (!pay) throw notFound('Платёж не найден');
+    // Even on a successful bank creation, our first HTTP response might have
+    // disappeared before provider_payment_id was saved in PostgreSQL.
     const actual = await this.provider.getPayment(ev.providerPaymentId);
+    let pay = await this.db.one<any>(
+      'select * from payments where provider_payment_id=$1', [ev.providerPaymentId]);
+    if (!pay && actual.metadata?.kind === 'work' && actual.metadata.paymentId) {
+      const paymentId = actual.metadata.paymentId;
+      const intent = await this.db.one<any>(
+        'select * from payment_create_intents where payment_id=$1', [paymentId]);
+      if (!intent || !intent.first_sent_at ||
+          intent.order_id !== actual.metadata.orderId ||
+          intent.request.metadata.paymentId !== paymentId ||
+          intent.request.total !== actual.total)
+        throw notFound('Банковский платёж не совпадает с сохранённым намерением');
+      const result = await this.bindWorkPayment(paymentId, {
+        id:actual.id,status:actual.status,confirmationUrl:actual.confirmationUrl ?? null,
+      });
+      pay = result.pay;
+      if (result.changed) {
+        const order = await this.db.one<any>(
+          'select id,number,client_id,created_by from orders where id=$1', [intent.order_id]);
+        if (order) await this.notifier.notify([order.client_id,order.created_by],
+          {type:'payment',orderId:order.id,url:actual.confirmationUrl ?? null},
+          {kind:'normal',title:'Оплатите работу',
+            body:`Заявка №${order.number}: ${rub(intent.request.total)}`,
+            data:{orderId:order.id}}).catch(e=>console.error('[orphan-work-notification]',e));
+      }
+    }
+    if (!pay) throw notFound('Платёж не найден');
     return this.sync(pay, STATUS_MAP[actual.status]);
   }
 
