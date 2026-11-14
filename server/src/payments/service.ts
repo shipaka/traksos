@@ -261,6 +261,8 @@ export class PaymentsService implements PaymentHooks {
   // Выплаты и долги -------------------------------------------------------
 
   async runPayouts(admin: AuthUser | null) {
+    // Read a shortlist only. An item in this snapshot is NOT authorization to
+    // send money: another administrator, scheduler or process may claim it.
     const list = await this.db.query(
       `select po.*, p.tax_status, p.inn from payouts po join performer_profiles p on p.user_id = po.performer_id
         where po.status='pending' order by po.created_at limit 100`);
@@ -270,40 +272,85 @@ export class PaymentsService implements PaymentHooks {
         results.push({ id: po.id, status: 'skipped', reason: 'нет статуса самозанятого или ИП' });
         continue;
       }
-      // Списания и удержания больше начислений — сначала гасим долг, выплату не отправляем
-      if ((await this.balance(po.performer_id)).to_pay < po.amount) {
-        results.push({ id: po.id, status: 'skipped', reason: 'есть удержания — баланс меньше выплаты' });
-        continue;
-      }
       if (po.amount === 0) {
-        await this.db.query(`update payouts set status='paid', paid_at=now(), receipt_status='not_required' where id=$1`, [po.id]);
-        results.push({ id: po.id, status: 'paid' });
+        const done = await this.db.one(
+          `update payouts set status='paid', paid_at=now(), receipt_status='not_required'
+             where id=$1 and status='pending' returning id`, [po.id]);
+        if (done) results.push({ id: po.id, status: 'paid' });
         continue;
       }
-      const r = await this.provider.payout({
-        amount: po.amount, idempotencyKey: `payout:${po.id}`,
-        description: `ТракSOS: выплата по заявке`, metadata: { payoutId: po.id, orderId: po.order_id },
-        performer: { id: po.performer_id, taxStatus: po.tax_status, inn: po.inn },
+
+      // Atomic payout reservation. A row lock on the performer serializes
+      // different pending payouts against the same available balance. A payout
+      // in 'processing' reserves its amount until reconciled or paid.
+      const claimed = await this.db.tx(async q => {
+        await q.query('select id from users where id=$1 for update', [po.performer_id]);
+        const current = await q.one<{ id: string; amount: number }>(
+          `select id, amount from payouts where id=$1 and status='pending' for update`, [po.id]);
+        if (!current) return false;
+        const amounts = await q.one<{ available: string; reserved: string }>(
+          `select
+             (select coalesce(sum(amount),0)::text from ledger_entries
+                where account='performer' and performer_id=$1
+                  and kind in ('earning','payout','adjustment','refund_charge','points')) as available,
+             (select coalesce(sum(amount),0)::text from payouts
+                where performer_id=$1 and status='processing') as reserved`,
+          [po.performer_id]);
+        if (BigInt(amounts?.available ?? '0') - BigInt(amounts?.reserved ?? '0') < BigInt(current.amount))
+          return false;
+        await q.query(`update payouts set status='processing' where id=$1 and status='pending'`, [po.id]);
+        return true;
       });
-      if (!r) {
+      if (!claimed) {
+        results.push({ id: po.id, status: 'skipped', reason: 'другая операция уже обрабатывается или не хватает остатка' });
+        continue;
+      }
+
+      // Do not roll this claim back on an UNKNOWN network response. The
+      // provider may have paid already. Re-running payouts must not resend it.
+      let transfer;
+      try {
+        transfer = await this.provider.payout({
+          amount: po.amount, idempotencyKey: `payout:${po.id}`,
+          description: 'ТракSOS: выплата по заявке',
+          metadata: { payoutId: po.id, orderId: po.order_id },
+          performer: { id: po.performer_id, taxStatus: po.tax_status, inn: po.inn },
+        });
+      } catch (error) {
+        await this.db.query(
+          `insert into audit_log(actor_id, action, target, data)
+            values ($1,'payout.unknown_status',$2,$3)`,
+          [admin?.id ?? null, po.id, { action: 'manual_provider_reconciliation_required' }]);
+        throw error;
+      }
+      if (!transfer) {
+        // No provider was configured, so no external money movement occurred.
+        await this.db.query(
+          `update payouts set status='pending' where id=$1 and status='processing'`, [po.id]);
         results.push({ id: po.id, status: 'manual' });
         continue;
       }
-      await this.db.query(
-        `update payouts set status=$2, provider_payout_id=$3, paid_at = case when $2='paid' then now() end,
-           receipt_status = $4 where id=$1`,
-        [po.id, r.status === 'paid' ? 'paid' : r.status === 'failed' ? 'failed' : 'processing', r.id,
-          po.tax_status === 'self_employed' ? (r.receiptIssued ? 'issued' : 'pending') : 'not_required'],
-      );
-      if (r.status === 'paid') {
-        await this.ledger(this.db, po.order_id, null, [
-          { account: 'performer', performerId: po.performer_id, amount: -po.amount, kind: 'payout' },
-          { account: 'payout', amount: po.amount, kind: 'payout' },
-        ]);
-      }
-      results.push({ id: po.id, status: r.status });
+      await this.db.tx(async q => {
+        const updated = await q.one(
+          `update payouts set status=$2, provider_payout_id=$3,
+              paid_at=case when $2='paid' then now() else null end,
+              receipt_status=$4 where id=$1 and status='processing' returning id`,
+          [po.id, transfer.status === 'paid' ? 'paid' : transfer.status === 'failed' ? 'failed' : 'processing',
+            transfer.id, po.tax_status === 'self_employed'
+              ? (transfer.receiptIssued ? 'issued' : 'pending') : 'not_required']);
+        if (!updated) throw new Error('Payout claim was lost before provider reconciliation');
+        if (transfer.status === 'paid') {
+          await this.ledger(q, po.order_id, null, [
+            { account: 'performer', performerId: po.performer_id, amount: -po.amount, kind: 'payout' },
+            { account: 'payout', amount: po.amount, kind: 'payout' },
+          ]);
+        }
+      });
+      results.push({ id: po.id, status: transfer.status });
     }
-    if (admin) await this.db.query('insert into audit_log(actor_id, action, data) values ($1,$2,$3)', [admin.id, 'payouts.run', { count: results.length }]);
+    if (admin) await this.db.query(
+      'insert into audit_log(actor_id, action, data) values ($1,$2,$3)',
+      [admin.id, 'payouts.run', { count: results.length }]);
     return results;
   }
 
