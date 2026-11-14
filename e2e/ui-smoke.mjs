@@ -34,7 +34,7 @@ try {
       width + 'px: horizontal overflow ' + data.scrollWidth + '/' + data.clientWidth);
     assert(data.loginCount === 1 && data.registerCount === 1,
       width + 'px: duplicated/missing login or registration buttons');
-    assert(data.serviceTiles === 8, width + 'px: unexpected public services count');
+    assert(data.serviceTiles === 4, width + 'px: unexpected public services count');
     assert(data.heroCss?.includes('tracksos-approved-scania-r520'),
       width + 'px: approved truck artwork is not displayed');
     assert(data.mapCss?.includes('tracksos-approved-map'),
@@ -77,7 +77,7 @@ try {
       await page.getByRole('heading', { name: 'Регистрация в ТракSOS' }).waitFor();
     }
     assert(errors.length === 0, width + 'px: browser errors: ' + errors.join('; '));
-    console.log('OK: viewport ' + width + 'px, 8 services, approved assets, SOS/login/register, no overflow');
+    console.log('OK: viewport ' + width + 'px, 4 directions, approved assets, SOS/login/register, no overflow');
     await context.close();
   }
 } finally {
