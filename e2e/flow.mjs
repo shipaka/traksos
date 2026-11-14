@@ -21,17 +21,15 @@ async function checkCabinetMenu(page, expectedLinks) {
     if (!href || !href.startsWith('#/')) throw new Error('Invalid cabinet route for ' + label);
   }
   await summary.click();
-  const shop = page.locator('.tabbar').getByRole('link', { name: 'Магазин' });
-  try {
-    await shop.waitFor({ state: 'visible', timeout: 10000 });
-  } catch {
-    throw new Error('Shop tab must be visible for every account: ' + JSON.stringify({
-      url: page.url(),
-      tabbar: await page.locator('.tabbar').count(),
-      links: await page.locator('.tabbar a').allTextContents(),
-      menu: await page.locator('.account-menu nav a').allTextContents(),
-    }));
-  }
+  // Mobile tabs belong to the active role. The shop is intentionally NOT
+  // forced into every staff/insurer/service cabinet.
+  const tabs = page.locator('.tabbar a');
+  if (await tabs.count() < 2) throw new Error(
+    'Mobile role navigation is incomplete: ' + JSON.stringify({
+      url: page.url(), links: await tabs.allTextContents()
+    })
+  );
+
 }
 async function assertDashboardTheme(page, role) {
   const result = await page.evaluate(() => {
@@ -155,13 +153,13 @@ await login(k, '+79991112233', 'help');
 // «Помогите» — после кода сразу экран SOS
 await k.waitForURL(/#\/sos/);
 await k.goto(BASE + '/#/');
-await k.getByText('Что случилось?').first().waitFor();
+await k.getByRole('heading', { name: /Помощь в дороге/ }).first().waitFor();
 await assertDashboardTheme(k, 'client');
 await checkCabinetMenu(k, ['История заявок', 'Мой гараж', 'Мой автопарк', 'Оферта', 'Профиль и настройки']);
 await shot(k, '03-client-home');
 await k.getByRole('link', { name: /SOS/ }).first().click();
-await k.getByRole('button', { name: /Не заводится/ }).click();
-await k.getByRole('button', { name: /Электрик или диагност на выезд/ }).click();
+await k.getByRole('button', { name: /Выездной мастер/ }).click();
+await k.getByRole('link', { name: /Электрик/ }).last().click();
 await k.getByRole('button', { name: /Вызвать сейчас/ }).click(); // рано: подсветит, чего не хватает
 await k.getByText('Осталось:').waitFor();
 await k.locator('select[aria-label="Марка"]').selectOption('Scania');
@@ -249,7 +247,7 @@ await shot(a, '13-admin-payments');
 
 // Переходы между кабинетами: из админки в клиента и обратно, «Назад» ведёт в свой список
 await clickCabinetLink(a, 'Кабинет клиента');
-await a.getByText('Что случилось?').first().waitFor();
+await a.getByRole('heading', { name: /Помощь в дороге/ }).first().waitFor();
 await clickCabinetLink(a, 'Профиль и настройки');
 await a.getByRole('button', { name: 'Кабинет администратора' }).click();
 await a.getByText('Администратор').first().waitFor();
