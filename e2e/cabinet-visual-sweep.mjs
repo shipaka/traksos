@@ -75,6 +75,17 @@ try {
       await page.waitForTimeout(450);
       await verify('inner-stable');
       await page.screenshot({path:'e2e/shots/cabinet-ux/'+entry.name+'-inner-'+width+'.png',fullPage:true});
+      if (entry.name === 'master') {
+        await page.goto(BASE+'/#/work/filter');
+        await page.getByRole('heading',{name:'Настройки заявок'}).waitFor();
+        await page.getByRole('button',{name:'Оснащение'}).click();
+        await page.getByRole('button',{name:/Предохранители/}).waitFor();
+        if (await page.locator('.chip',{hasText:'Грузовой домкрат'}).count())
+          throw Error('Electric master must not show tyre-only equipment in the main selection');
+        await verify('master-request-settings');
+        await page.waitForTimeout(450);
+        await page.screenshot({path:'e2e/shots/cabinet-ux/master-settings-'+width+'.png',fullPage:true});
+      }
       await context.close();
     }
   }
