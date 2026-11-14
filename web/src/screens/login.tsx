@@ -274,7 +274,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <span className="public-section-kicker">ДЛЯ МАСТЕРОВ И СТО</span>
           <h2>Станьте партнёром TrakSOS</h2>
           <p>Подключайте свой сервис и работайте с заявками через отдельный кабинет.</p>
-          <button type="button" className="public-button public-button-partner" onClick={() => setIntent('join')}>Подключиться →</button>
+          <button type="button" className="public-button public-button-partner" onClick={() => go('join')}>Подключиться →</button>
         </div>
       </section>
 
@@ -286,7 +286,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
       <section className="auth-desktop-form">
       {intent === 'login' && step === 'phone' && <div className="auth-entry-options" aria-label="Варианты входа">
         <button type="button" onClick={() => setIntent('login')}>Войти по номеру</button>
-        <button type="button" onClick={() => setIntent('join')}>Хочу работать с TrakSOS</button>
+        <button type="button" onClick={() => go('join')}>Хочу работать с TrakSOS</button>
       </div>}
       <div>
         <h1>{title}</h1>
