@@ -6,6 +6,7 @@ import './trackSearch.css';
 import './trackReference.css';
 import './trackPhotos.css';
 import './trackMatch.css';
+import './trackScenic.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
