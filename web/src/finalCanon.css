@@ -847,3 +847,34 @@
     letter-spacing:-.02em;
   }
 }
+
+
+/* Approved wordmark detail: cyan and magenta strokes visible in owner's PNG. */
+.guest-app:has(.public-landing) .top .logo {
+  position:relative;
+  isolation:isolate;
+}
+.guest-app:has(.public-landing) .top .logo::after {
+  content:"";
+  position:absolute;
+  left:5%;
+  right:0;
+  bottom:-7px;
+  height:4px;
+  border-radius:100%;
+  transform:skewX(-27deg) rotate(-1.5deg);
+  background:linear-gradient(90deg,transparent 0%,#0ad9eb 8%,#0ad9eb 32%,#ed168c 38%,#ed168c 95%,transparent);
+  pointer-events:none;
+}
+.guest-app:has(.public-landing) .top .logo::before {
+  content:"";
+  position:absolute;
+  left:6%;
+  width:33%;
+  bottom:-10px;
+  height:2px;
+  border-radius:100%;
+  transform:skewX(-32deg) rotate(-3deg);
+  background:#18ddf4;
+  pointer-events:none;
+}
