@@ -76,6 +76,7 @@ export function onEvent(fn: Listener) {
 }
 
 export function connectWs() {
+  if (currentPreviewRole()) { disconnectWs(); return; }
   if (!token || !navigator.onLine || (ws && ws.readyState <= 1)) return;
   closedByUs = false;
   const base = API_URL || location.origin;
@@ -103,6 +104,12 @@ export function disconnectWs() {
 
 window.addEventListener('online', () => {
   if (token) connectWs();
+});
+window.addEventListener('hashchange', () => {
+  // A real admin WS may exist before entering a synthetic account. Close it
+  // immediately so no private notifications arrive inside the training UI.
+  if (currentPreviewRole()) disconnectWs();
+  else if (token) connectWs();
 });
 window.addEventListener('offline', () => {
   // Avoid reconnect churn and cellular battery usage when disconnected.
@@ -134,6 +141,7 @@ export function fmtTime(iso: string) {
 
 /** Картинка, которую отдают только с токеном (фото документов) → адрес для <img> */
 export async function authedImage(path: string) {
+  if (currentPreviewRole()) throw new ApiError(403,'preview_blocked','Реальные документы и фотографии недоступны в тестовом кабинете');
   const r = await fetch(API_URL + path, { headers: token ? { authorization: `Bearer ${token}` } : {} });
   if (!r.ok) throw new ApiError(r.status, 'image', 'Не удалось загрузить фото');
   return URL.createObjectURL(await r.blob());
