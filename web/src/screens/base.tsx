@@ -789,12 +789,15 @@ export function BookingPage({ id }: { id: string }) {
 }
 
 /** Строки записей в сервис — в «Заявках» клиента */
-export function BookingRows({ live }: { live: boolean }) {
+export function BookingRows({ live, ids, heading }: { live: boolean; ids?: string[]; heading?: string }) {
   const l = useLoad(() => get('/api/bookings'), [], isBookingEvent);
-  const rows = (l.data ?? []).filter((b: any) => live === !['closed', 'declined', 'cancelled'].includes(b.status));
+  const rows = (l.data ?? []).filter((b: any) =>
+    live === !['closed', 'declined', 'cancelled'].includes(b.status) && (!ids || ids.includes(b.id)));
   if (!rows.length) return null;
   return (
-    <div className="rows">
+    <div className="stack" aria-label={heading ?? 'Записи на грузовой сервис'}>
+      {heading && <div className="between"><b>{heading}</b><span className="pill">{rows.length}</span></div>}
+      <div className="rows">
       {rows.map((b: any) => (
         <a key={b.id} href={`#/booking/${b.id}`} className="list-item">
           <div className="stack" style={{ gap: 2 }}>
@@ -804,6 +807,7 @@ export function BookingRows({ live }: { live: boolean }) {
           <span className={`pill ${TONE[b.status]}`}>{b.statusName}</span>
         </a>
       ))}
+      </div>
     </div>
   );
 }
