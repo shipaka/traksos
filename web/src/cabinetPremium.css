@@ -911,3 +911,10 @@
 @media(prefers-reduced-data:reduce){
   .app[class*="role-"] .desktop-content>main:not(.public-home){animation:none!important;}
 }
+
+/* One SOS entry on mobile: the permanent bottom action owns that affordance. */
+@media(max-width:899px){
+  .app.role-client .desktop-content > .client-home > .desktop-hero .desktop-primary-action{
+    display:none !important;
+  }
+}
