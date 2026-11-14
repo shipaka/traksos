@@ -64,7 +64,7 @@ export function BaseHome() {
   // Новая рембаза: на главной — что будет дальше, сама карточка — во вкладке «Карточка»
   if (!center) return (
     <main className="base-workspace service-onboarding">{!preview&&<WorkerNotices audience="service" />}
-      <div>
+      <div className="base-onboarding-hero">
         <h1>Подключите рембазу</h1>
         <div className="sub">Три шага — и клиенты ТракSOS начнут записываться к вам, а мастера советовать вас после диагностики</div>
       </div>
