@@ -193,18 +193,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <p className="public-demo-warning">Демонстрационная карта: точки условные и не означают доступность исполнителей. Реальные данные доступны пользователю после входа.</p>
         </section>
 
-        {!(window as any).TrakSOSNative && <aside className="public-app-card">
-          <div className="public-section-kicker">ТРАКSOS В ТЕЛЕФОНЕ</div>
-          <h2>Мобильное приложение <em>ТракSOS</em></h2>
-          <div className="public-app-phone" aria-hidden="true">
-            <span className="public-app-logo">Трак<b>SOS</b></span>
-            <img className="public-app-phone-truck" src="/tracksos-approved-scania-r520.webp" alt="" loading="lazy" />
-            <span>Помощь грузовику<br/>в дороге</span>
-          </div>
-          <p>Заявки, специалисты, документы и связь с мастером — в одном приложении.</p>
-          <span className="public-rustore-soon">Скоро в RuStore</span>
-          <small>Ссылка на скачивание появится после публикации приложения.</small>
-        </aside>}
+
       </div>
 
       <div className="public-track-extras">
@@ -226,6 +215,18 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           </button>
         </div>
       </div>
+        {!(window as any).TrakSOSNative && <aside className="public-app-card">
+          <div className="public-section-kicker">ТРАКSOS В ТЕЛЕФОНЕ</div>
+          <h2>Мобильное приложение <em>ТракSOS</em></h2>
+          <div className="public-app-phone" aria-hidden="true">
+            <span className="public-app-logo">Трак<b>SOS</b></span>
+            <img className="public-app-phone-truck" src="/tracksos-approved-scania-r520.webp" alt="" loading="lazy" />
+            <span>Помощь грузовику<br/>в дороге</span>
+          </div>
+          <p>Заявки, специалисты, документы и связь с мастером — в одном приложении.</p>
+          <span className="public-rustore-soon">Скоро в RuStore</span>
+          <small>Ссылка на скачивание появится после публикации приложения.</small>
+        </aside>}
       <section className="public-why-strip" aria-label="Преимущества сервиса">
         <div><span>◎</span><b>Наш регион</b><small>Санкт-Петербург и Ленобласть</small></div>
         <div><span>◈</span><b>Подключение партнёров</b><small>Проверка мастеров и СТО</small></div>
