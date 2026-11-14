@@ -46,6 +46,26 @@ test('12 parallel payout runs deliver exactly one provider payout and balanced l
  assert.equal(balance.to_pay,0,'performer balance is not paid twice');
 });
 
+test('two distinct payouts for one worker cannot overdraw the shared balance',{timeout:60000},async()=>{
+ const first=await createPayout(100000);
+ const second=await createPayout(100000);
+ // There is 200000 earned, but a 100000 manual adjustment left only 100000.
+ await t.db.query(
+   "insert into ledger_entries(account,performer_id,amount,kind) values ('performer',$1,-100000,'adjustment'),('platform',null,100000,'adjustment')",
+   [worker.id]);
+ const result=await Promise.all(Array.from({length:12},()=>t.api('POST','/api/admin/payouts/run',{},admin.token)));
+ assert.ok(result.every(x=>x.status===200));
+ const rows=await t.db.query<{id:string;status:string}>(
+   'select id,status from payouts where id=any($1::uuid[])',[ [first.id,second.id] ]);
+ assert.equal(rows.filter(x=>x.status==='paid').length,1,
+   'two different payout jobs must reserve from the same balance');
+ assert.equal(rows.filter(x=>x.status==='pending').length,1);
+ assert.equal(t.payments.payouts.filter(x=>[first.id,second.id].includes(x.metadata.payoutId)).length,1,
+   'external provider should receive at most the available funds');
+ const balance=ok(await t.api('GET','/api/performer/balance',undefined,worker.token));
+ assert.equal(balance.to_pay,0);
+});
+
 test('unknown provider response is quarantined; retries do not reissue payout',{timeout:60000},async()=>{
  const p=await createPayout();
  const provider=t.payments;
