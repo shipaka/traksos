@@ -27,7 +27,10 @@ const cssAudit=async(page,selector,width)=>page.evaluate(({selector,width})=>{
        issues.push('unreadable title '+i+': '+getComputedStyle(el).fontSize);
    }
    const icon=getComputedStyle(card,'::after').backgroundImage;
+   const expected=['master','tow','sto','consult'][i];
    if(!icon||icon==='none')issues.push('missing illustration '+i);
+   if(expected&&!icon.includes('tracksos-photo-'+expected))
+     issues.push('reference photo mismatch '+i+': expected '+expected+', found '+icon);
  }
  const doc=document.documentElement;
  if(doc.scrollWidth>doc.clientWidth+3)
