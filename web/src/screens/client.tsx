@@ -689,13 +689,14 @@ export function Orders({ as }: { as: 'client' | 'performer' }) {
       {as === 'performer' && <HistoryTabs tab={tab} setTab={setTab} />}
       {as === 'client' && (
         <div className="scroll-x" role="tablist">
-          {([['now', `Сейчас${list.data ? ` · ${list.data.filter(live).length}` : ''}`], ['my', 'Мои мастера'], ['hist', 'История'], ['black', 'Чёрный список']] as const).map(([k, n]) => (
+          {([['now', `Выезды${list.data ? ` · ${list.data.filter(live).length}` : ''}`], ['my', 'Мои мастера'], ['hist', 'История'], ['black', 'Чёрный список']] as const).map(([k, n]) => (
             <button key={k} className="chip" role="tab" aria-pressed={ctab === k} onClick={() => setCtab(k)}>{n}</button>
           ))}
         </div>
       )}
-      {as === 'client' && ctab === 'now' && <BookingRows live />}
+      {as === 'client' && ctab === 'now' && <BookingRows live heading="Активные записи на грузовой сервис (СТО)" />}
       {as === 'client' && ctab === 'hist' && list.data && <TaskArchive orders={list.data.filter((o: any) => !live(o))} />}
+      {as === 'client' && ctab === 'now' && <div className="between"><b>Выездные заявки · {list.data?.filter(live).length ?? '…'}</b><span className="note">Мастера и эвакуаторы</span></div>}
       {as === 'client' && (ctab === 'my' || ctab === 'black') ? <MyPerformers black={ctab === 'black'} /> :
       as === 'client' && ctab === 'hist' ? null : !list.data ? <Loading error={list.error} /> : !shown!.length ? <div className="empty">{as === 'client' && ctab === 'now' ? 'Выездов сейчас нет' : 'Выездов пока нет'}</div> : (
         <div className="rows">
@@ -1091,7 +1092,7 @@ function TaskArchive({ orders }: { orders: any[] }) {
           </div>
         );
       })}
-      {loose.length > 0 && <BookingRows live={false} />}
+      {loose.length > 0 && <BookingRows live={false} ids={loose.map((b) => b.id)} heading="Прочие закрытые записи на СТО" />}
     </div>
   );
 }
