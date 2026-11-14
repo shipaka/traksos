@@ -206,3 +206,68 @@ test('concurrent duplicate support notifications do not create multiple tickets 
  const messages=await t.db.one<{total:number}>('select count(*)::int as total from support_messages where ticket_id=$1',[saved[0].id]);
  assert.equal(messages?.total,12,'all 12 messages must be preserved in the one conversation');
 });
+
+
+test('one cash settlement and 12-way SOS continuation race reconcile across client, master and admin', {timeout:180_000},async()=>{
+ const customer=account('client',72),worker=account('master',0);
+ const order=ok(await t.api('POST','/api/orders',{
+   service:'electric',zoneId:'spb',brand:'Scania',
+   address:'Тестовая парковка Санкт-Петербург',paymentMethod:'cash',
+   description:'Электрика не работает, нужна помощь',
+ },customer.token)).order;
+ const id=order.id as string;
+ const bid=ok(await t.api('POST','/api/orders/'+id+'/offers',{},worker.token));
+ assert.ok(bid);
+ const offers=ok(await t.api('GET','/api/orders/'+id+'/offers',undefined,customer.token));
+ const own=offers.offers.find((x:any)=>x.performer_id===worker.id);
+ assert.ok(own,'eligible verified master offer is visible to customer');
+ ok(await t.api('POST','/api/orders/'+id+'/offers/'+own.id+'/choose',{},customer.token));
+ ok(await t.api('POST','/api/orders/'+id+'/step',{action:'arrive'},worker.token));
+ ok(await t.api('POST','/api/orders/'+id+'/amount',{
+   result:'cause_found',note:'На дороге заменить генератор невозможно, нужен эвакуатор',
+   extras:[{name:'Диагностика проводки',amount:150000}],
+ },worker.token));
+ const total=ok(await t.api('GET','/api/orders/'+id,undefined,customer.token)).money.total;
+ const confirms=await burst('12 simultaneous cash confirmations of same invoice',
+   Array.from({length:12},()=>({who:customer,method:'POST',path:'/api/orders/'+id+'/confirm',body:{total}})));
+ assert.equal(confirms.filter(x=>x.status===200).length,1,'the same cash bill must be committed once');
+ assert.ok(confirms.every(x=>[200,409].includes(x.status)),'concurrent loser must receive a clean conflict');
+ const confirmed=ok(await t.api('GET','/api/orders/'+id,undefined,customer.token));
+ assert.equal(confirmed.status,'completed');
+ assert.equal(confirmed.money.total,total);
+ const workerView=ok(await t.api('GET','/api/orders/'+id,undefined,worker.token));
+ assert.equal(workerView.money.total,total,'customer and master see the same agreed price');
+ const balance=ok(await t.api('GET','/api/performer/balance',undefined,worker.token));
+ assert.ok(balance.cash_debt>0,'cash commission owed to TrackSOS is visible to the worker');
+ const ledger=await t.db.query('select sum(amount)::int as balance from ledger_entries where order_id=$1',[id]);
+ assert.equal(ledger[0].balance,0,'cash commission double-entry balances');
+ assert.equal((await t.db.one<{n:number}>(
+   "select count(*)::int as n from ledger_entries where order_id=$1 and kind='cash_commission'",[id]))!.n,2,
+   'cash commission recorded once in exactly two balanced ledger entries');
+
+ const payload={
+   service:'tow',isSos:true,zoneId:'spb',brand:'Scania',
+   address:'Тестовая парковка Санкт-Петербург',destination:'Грузовое СТО на эвакуаторе',
+   cargo:'tractor',loaded:'empty',paymentMethod:'cash',continueFrom:id,
+ };
+ const followups=await burst('12 simultaneous attempts to add tow to one finished repair',
+   Array.from({length:12},()=>({who:customer,method:'POST',path:'/api/orders',body:payload})));
+ assert.equal(followups.filter(x=>x.status===200).length,1,'only one tow leg may be created');
+ assert.ok(followups.every(x=>[200,409].includes(x.status)),'duplicate legs must be rejected predictably');
+ const tow=followups.find(x=>x.status===200)!.body.order;
+ const joined=ok(await t.api('GET','/api/orders/'+tow.id,undefined,customer.token));
+ assert.equal(joined.continuationOf,id);
+ assert.equal(joined.caseSummary.stages.length,2);
+ assert.equal(joined.caseSummary.confirmedTotal,total);
+ assert.equal(ok(await t.api('GET','/api/orders/'+id,undefined,customer.token)).canContinueWithTow,false);
+ const stats=ok(await t.api('GET','/api/admin/stats?days=30',undefined,admin.token));
+ const count=(await t.db.one<{n:number}>('select count(*)::int as n from orders'))!.n;
+ assert.equal(stats.totals.created,count,'all individual service legs counted in service volume');
+ assert.equal(stats.incidents.total,count-1,'one two-leg incident counts once as customer case');
+ assert.ok(stats.incidents.multistage>=1);
+ const history=ok(await t.api('GET','/api/orders?as=client',undefined,customer.token));
+ assert.equal(history.find((x:any)=>x.id===id).money.total,total);
+ const unbalanced=await t.db.query(
+   'select order_id,sum(amount)::bigint as balance from ledger_entries where order_id is not null group by order_id having sum(amount)<>0');
+ assert.deepEqual(unbalanced,[],'the ledger remains balanced after concurrent confirmations and tow creation');
+});
