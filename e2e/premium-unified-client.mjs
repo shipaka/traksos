@@ -43,7 +43,9 @@ try {
     });
     const page = await context.newPage();
     const errors = [];
+    const consoleErrors = [];
     page.on('pageerror', e => errors.push(e.message));
+    page.on('console', e => { if (e.type() === 'error') consoleErrors.push(e.text()); });
     await page.addInitScript(token => {
       localStorage.setItem('traksos.token', token);
       localStorage.setItem('traksos.mode', 'client');
@@ -53,6 +55,7 @@ try {
       await page.locator('.app').waitFor({timeout: 20000});
       // Capture any initial legal/onboarding gate for diagnostic visual review.
       await page.screenshot({path: OUT + '/initial-' + width + '.png'});
+      console.log('initial visual diagnostics '+width+'px: '+JSON.stringify({errors,consoleErrors}).slice(0,4500));
 
       // Synthetic owner explicitly accepts only synthetic local test documents.
       for (let attempt = 0; attempt < 6; attempt++) {
