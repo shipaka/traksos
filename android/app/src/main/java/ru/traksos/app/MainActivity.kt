@@ -286,7 +286,7 @@ class MainActivity : AppCompatActivity() {
                 if (BuildConfig.DEBUG &&
                     consoleMessage?.messageLevel() == android.webkit.ConsoleMessage.MessageLevel.ERROR) {
                     android.util.Log.w("TrakSOSRuntime",
-                        "JS_ERROR=" + (consoleMessage.message()?.take(280) ?: "unknown"))
+                        "JS_ERROR=" + (consoleMessage?.message()?.take(280) ?: "unknown"))
                 }
                 return super.onConsoleMessage(consoleMessage)
             }
