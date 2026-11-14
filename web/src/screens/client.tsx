@@ -43,6 +43,9 @@ export function Home() {
             <a className="desktop-outline-action" href="#/new/diag">+ Создать заявку</a>
           </div>
         </div>
+        <div className="client-hero-art" aria-label="Фирменная Scania R520 TrackSOS на дороге">
+          <img src="/tracksos-approved-scania-r520.webp" alt="Грузовик Scania R520 TrackSOS на дороге" loading="eager" decoding="async" />
+        </div>
       </section>
 
       <section className="desktop-quick-links" aria-label="Быстрый доступ">
@@ -57,6 +60,7 @@ export function Home() {
       <div className="desktop-home-columns">
         <section className="desktop-home-main">
           <div className="mobile-home-heading">
+            <span className="mobile-home-kicker">TRACKSOS · ВАША ПОМОЩЬ В ДОРОГЕ</span>
             <h1>{me?.name ? `${me.name}, что случилось?` : 'Что случилось?'}</h1>
             <div className="sub">Выберите проблему — подскажем, к кому обратиться. Работаем в Санкт-Петербурге и Ленинградской области.</div>
           </div>
@@ -85,6 +89,25 @@ export function Home() {
             <a href="#/sos" className="desktop-aside-cta">Перейти к SOS →</a>
           </div>
           <div className="desktop-aside-card"><h2>Ваш кабинет</h2><p>Профиль и уведомления доступны в личном кабинете.</p><a href="#/profile" className="desktop-aside-cta">Открыть профиль →</a></div>
+          <section className="desktop-aside-card desktop-journey-card" aria-label="Быстрые действия с транспортом">
+            <span className="desktop-aside-kicker">ВАШИ ИНСТРУМЕНТЫ</span>
+            <h2>Техника и заявки</h2>
+            <p>Не нужно искать нужный раздел — всё, что связано с вашим транспортом, рядом.</p>
+            <div className="desktop-journey-links">
+              <a href="#/garage"><b>Гараж и автомобили</b><small>Ваш транспорт и документы</small><span aria-hidden="true">›</span></a>
+              <a href="#/orders"><b>История обращений</b><small>Работы, статусы и детали заявок</small><span aria-hidden="true">›</span></a>
+              <a href="#/services"><b>СТО и ремонт</b><small>Сервисы и запись</small><span aria-hidden="true">›</span></a>
+            </div>
+          </section>
+          <section className="desktop-aside-card desktop-journey-card" aria-label="Поддержка и информация">
+            <span className="desktop-aside-kicker">ВСЕГДА ПОД РУКОЙ</span>
+            <h2>Помощь и информация</h2>
+            <div className="desktop-journey-links">
+              <a href="#/notifications"><b>Уведомления</b><small>Изменения по заявкам</small><span aria-hidden="true">›</span></a>
+              <a href="#/support"><b>Связаться с поддержкой</b><small>Обращения и вопросы</small><span aria-hidden="true">›</span></a>
+              <a href="#/help"><b>Как работает TrackSOS</b><small>Ответы на частые вопросы</small><span aria-hidden="true">›</span></a>
+            </div>
+          </section>
         </aside>
       </div>
 
@@ -137,9 +160,9 @@ export function Sos() {
   const [choice, setChoice] = useState<'master' | 'tow' | 'sto' | null>(null);
   const masterServices = ['electric', 'diag', 'air', 'autonomy', 'tyre'];
   return (
-    <main>
+    <main className="client-sos-page">
       <Back to="" />
-      <div>
+      <div className="client-section-hero client-section-hero-sos">
         <h1>SOS · Нужна помощь?</h1>
         <div className="sub">Сначала выберите, кто вам нужен. Остальные вопросы появятся только после выбора.</div>
       </div>
@@ -621,7 +644,7 @@ export function Orders({ as }: { as: 'client' | 'performer' }) {
   const live = (o: any) => !['completed', 'cancelled', 'no_performer'].includes(o.status);
   const shown = as === 'performer' ? list.data : (list.data ?? []).filter((o: any) => ctab === 'now' ? live(o) : !live(o));
   return (
-    <main>
+    <main className={as === 'performer' ? 'performer-orders-page' : 'client-orders-page'}>
       <h1>{as === 'performer' ? 'История' : 'Заявки'}</h1>
       {as === 'performer' && <HistoryTabs tab={tab} setTab={setTab} />}
       {as === 'client' && (
@@ -738,8 +761,8 @@ export function Garage() {
   }
 
   return (
-    <main>
-      <div>
+    <main className="client-garage-page">
+      <div className="client-section-hero client-section-hero-garage">
         <h1>Мой гараж</h1>
         <div className="sub">Машина сохраняется один раз и выбирается одним нажатием во всех заявках.</div>
       </div>
@@ -859,7 +882,7 @@ export function Profile() {
   const isPerformer = me.roles.some((r) => r === 'master' || r === 'tow');
   const isCustomer = me.roles.some((r) => r === 'client' || r === 'driver');
   return (
-    <main>
+    <main className="account-profile-page">
       <h1>Профиль</h1>
       {native.isApp && <div className="card">
         <b>Быстрый безопасный вход</b>
@@ -924,7 +947,7 @@ async function patchMe(body: unknown) {
   return patch('/api/me', body);
 }
 
-async function logout() {
+export async function logout() {
   const { post, setToken, disconnectWs } = await import('../api.ts');
   try {
     await post('/api/auth/logout');

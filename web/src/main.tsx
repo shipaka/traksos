@@ -1,4 +1,5 @@
 import './styles.css';
+import './cabinetPremium.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
@@ -7,7 +8,7 @@ import { native } from './native.ts';
 import { Login } from './screens/login.tsx';
 import { Invite } from './screens/invite.tsx';
 import { PerformerHub, ScheduleSection, AboutSection, PhoneSection, CarsSection, TaxSection, MoneySection, FilterSection, LevelSection } from './screens/performerCabinet.tsx';
-import { Consult, Home, Sos, NewOrder, Orders, Garage, Profile } from './screens/client.tsx';
+import { Consult, Home, Sos, NewOrder, Orders, Garage, Profile, logout } from './screens/client.tsx';
 import { Order } from './screens/order.tsx';
 import { Work,  IncomingCall } from './screens/performer.tsx';
 import { Admin } from './screens/admin.tsx';
@@ -202,7 +203,9 @@ function App() {
     case 'insurance': screen = b === 'request' ? (route[2] === 'new' ? <InsuranceApplication vehicleId={route[3]??''} /> : <InsuranceThread requestId={route[2]??''} />) : isInsurer ? <InsurerCabinet /> : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
     case 'help': screen = <Help />; break;
     case 'rules': screen = <Rules />; break;
-    case 'shop': screen = b === 'cart' ? <ShopCart /> : b === 'history' ? <ShopHistory vehicleId={route[2]} /> : <Shop />; break;
+    case 'shop': screen = ((effMode === 'client' && isCustomer) || (effMode === 'performer' && isPerformer) || (effMode === 'service' && isService))
+      ? (b === 'cart' ? <ShopCart /> : b === 'history' ? <ShopHistory vehicleId={route[2]} /> : <Shop />)
+      : <main><div className="empty">Магазин доступен в клиентском кабинете или кабинете исполнителя.</div></main>; break;
     case 'privacy': screen = <Privacy />; break;
     case 'qr': screen = <QrJoin code={b} />; break;
     case 'appeal': screen = <Appeal />; break;
@@ -246,7 +249,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       ? [['/moderation', '▦', 'Рабочий стол'], ['/admin/section/queue', '⚑', 'Проверки'], ['/support', '?', 'Обращения']]
     : mode === 'admin'
       ? [['/admin', '▦', 'Рабочий стол'], ['/admin/section/orders', '☰', 'Заявки'], ['/admin/section/support', '?', 'Обращения']]
-      : [['/', '🔧', 'Услуги'], ['/sos', '!', 'SOS'], ['/orders', '☰', 'Заявки'], ['/shop', '🛍', 'Магазин']];
+      : [['/', '⌂', 'Рабочий стол'], ['/sos', '!', 'SOS'], ['/shop', '🛍', 'Магазин']];
   // Все дополнительные функции доступны в шапке, даже когда они не в нижних вкладках.
   // Не показываем чужие роли и не создаём несуществующие страницы.
   const accountLinks: [string, string][] = mode === 'performer'
@@ -278,7 +281,6 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/admin/section/people', 'Пользователи'],
          ['/admin/section/verify', 'Проверка исполнителей'],
          ['/admin/section/bases', 'СТО и рембазы'],
-         ['/admin/section/shop', 'Управление магазином'],
          ['/admin/section/payments', 'Деньги и выплаты'],
          ['/admin/section/stats', 'Статистика'],
          ['/admin/section/demand', 'Проблемные и невыполненные заявки'],
@@ -311,22 +313,27 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {me && mode === 'moderator' && <span className="pill accent">модерация</span>}
           {me && mode === 'insurer' && <span className="pill accent">страхование</span>}
           {me && mode === 'service' && <span className="pill accent">рембаза</span>}
+          {me && !serviceSandbox && me.roles.some(r => r === 'master' || r === 'tow') && me.roles.some(r => r === 'admin' || r === 'moderator') &&
+            <nav className="cabinet-role-switch" aria-label="Режим кабинета">
+              <a href="#/as/performer" aria-label="Выездной мастер" aria-current={mode === 'performer' ? 'page' : undefined}>Мастер</a>
+              {me.roles.includes('admin')
+                ? <a href="#/as/admin" aria-label="Администратор" aria-current={mode === 'admin' ? 'page' : undefined}>Админ</a>
+                : <a href="#/as/moderator" aria-label="Модератор" aria-current={mode === 'moderator' ? 'page' : undefined}>Модер.</a>}
+            </nav>}
           {me && !serviceSandbox && <a href="#/help" className="bell" aria-label="Справка">?</a>}
           {me && !serviceSandbox && <Bell />}
           {me && <details className="account-menu" key={here}>
             <summary aria-label="Открыть меню кабинета">☰ <span>Меню</span></summary>
             <nav aria-label="Все разделы кабинета">
-              {me && me.roles.some(r => r === 'master' || r === 'tow') && me.roles.some(r => r === 'admin' || r === 'moderator') && <>
-                <span className="account-menu-heading">Переключить кабинет</span>
-                {me.roles.includes('admin') && <a href="#/as/admin" aria-current={mode === 'admin' ? 'page' : undefined}>Администратор</a>}
-                {!me.roles.includes('admin') && me.roles.includes('moderator') && <a href="#/as/moderator" aria-current={mode === 'moderator' ? 'page' : undefined}>Модератор</a>}
-                <a href={me.roles.includes('admin') ? '#/admin/section/queue' : '#/moderation'}>Модерация — очередь</a>
-                <a href="#/as/performer" aria-current={mode === 'performer' ? 'page' : undefined}>Выездной мастер</a>
-              </>}
               <span className="account-menu-heading">Мой кабинет</span>
               {accountLinks.map(([href, label]) => <a key={href} href={sandboxHref(href)}>{label}</a>)}
               <span className="account-menu-heading">Помощь и документы</span>
               {helpLinks.map(([href, label]) => <a key={href} href={sandboxHref(href)}>{label}</a>)}
+              {!serviceSandbox && <button type="button" className="account-menu-logout" onClick={() => {
+                if (me.roles.some(r => r === 'master' || r === 'tow') &&
+                  !window.confirm('При выходе из аккаунта статус «На линии» отключится. Просто сверните приложение, если хотите продолжать получать заявки. Выйти?')) return;
+                void logout();
+              }}>Выйти из аккаунта</button>}
             </nav>
           </details>}
         </div>

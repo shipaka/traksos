@@ -34,12 +34,14 @@ try {
   await page.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','admin')},token);
   await page.goto(BASE+'/#/admin');
   await page.getByRole('heading',{name:'Администратор'}).waitFor();
-  await page.locator('.account-menu > summary').click();
-  const nav=page.getByRole('navigation',{name:'Все разделы кабинета'});
-  await nav.getByRole('link',{name:'Выездной мастер'}).click();
+  const modeSwitch=page.getByRole('navigation',{name:'Режим кабинета'});
+  await modeSwitch.getByRole('link',{name:'Выездной мастер'}).click();
   await page.waitForURL(/#\/work/);
   await page.locator('.account-menu > summary').click();
-  await nav.getByRole('link',{name:'Администратор'}).click();
+  const masterMenu=page.getByRole('navigation',{name:'Все разделы кабинета'});
+  if(await masterMenu.locator('a[href^="#/admin"]').count()) throw Error('Master mode exposes admin links');
+  await page.locator('.account-menu > summary').click();
+  await modeSwitch.getByRole('link',{name:'Администратор'}).click();
   await page.waitForURL(/#\/admin/);
   // One admin-only sandbox opens every simulated cabin with ZERO API writes.
   await page.goto(BASE+'/#/admin/test-center');
@@ -173,12 +175,14 @@ try {
   }, moderator.token);
   await page.goto(BASE+'/#/moderation');
   await page.getByRole('heading',{name:'Модерация'}).waitFor();
-  await page.locator('.account-menu > summary').click();
-  const nav = page.getByRole('navigation',{name:'Все разделы кабинета'});
-  await nav.getByRole('link',{name:'Выездной мастер'}).click();
+  const modeSwitch=page.getByRole('navigation',{name:'Режим кабинета'});
+  await modeSwitch.getByRole('link',{name:'Выездной мастер'}).click();
   await page.waitForURL(/#\/work/);
   await page.locator('.account-menu > summary').click();
-  await nav.getByRole('link',{name:'Модератор'}).click();
+  if(await page.getByRole('navigation',{name:'Все разделы кабинета'}).locator('a[href^="#/admin"]').count())
+    throw Error('Moderator/master test: leaked admin links into master mode');
+  await page.locator('.account-menu > summary').click();
+  await modeSwitch.getByRole('link',{name:'Модератор'}).click();
   await page.waitForURL(/#\/moderation/);
   await page.goto(BASE+'/#/admin');
   await page.getByRole('heading',{name:'Модерация'}).waitFor();

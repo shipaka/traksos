@@ -57,6 +57,11 @@ try {
       }
       await page.goto(BASE+'/'+entry.home,{waitUntil:'domcontentloaded'});
       await verify('home');
+      // Screenshots are for owner visual approval, not an in-flight transition:
+      // animations on signed-in cards start at 40% opacity (ts-appear, 280ms).
+      // Capture the fully rendered state after that finite reveal.
+      await page.waitForTimeout(450);
+      await verify('home-stable');
       await page.screenshot({path:'e2e/shots/cabinet-ux/'+entry.name+'-home-'+width+'.png',fullPage:true});
       // Simulate a real user opening the cabinet menu and following a safe inner page.
       await page.locator('.account-menu > summary').click();
@@ -67,6 +72,8 @@ try {
       await inner.click();
       await page.waitForURL(url => url.hash === entry.inner);
       await verify('inner');
+      await page.waitForTimeout(450);
+      await verify('inner-stable');
       await page.screenshot({path:'e2e/shots/cabinet-ux/'+entry.name+'-inner-'+width+'.png',fullPage:true});
       await context.close();
     }
