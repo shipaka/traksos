@@ -49,6 +49,7 @@ export interface PaymentHooks {
   onCreated(order: any): Promise<{ confirmationUrl?: string; holdRequired: boolean }>;
   onConfirmed(order: any, q: Queryable): Promise<void>;
   processCaptureForOrder(orderId: string): Promise<string | null>;
+  processWorkPaymentForOrder(orderId: string): Promise<string | null>;
   processCancellationForOrder(orderId: string): Promise<string | null>;
   onCancelled(order: any, stage: string, q: Queryable): Promise<void>;
   assertMethodAllowed(method: string): Promise<void>;
