@@ -65,7 +65,7 @@ export class PaymentsService implements PaymentHooks {
       'select status from orders where id=$1', [order.id]);
     // A late HTTP reply must NOT redirect a cancelled SOS into payment.
     return { holdRequired: true,
-      confirmationUrl: current?.status === 'cancelled' ? null : pay?.confirmation_url ?? undefined };
+      confirmationUrl: current?.status === 'cancelled' ? undefined : pay?.confirmation_url ?? undefined };
   }
 
   async onConfirmed(order: any, q: Queryable) {
