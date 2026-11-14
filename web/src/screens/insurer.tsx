@@ -2,18 +2,20 @@
 import { useState } from 'react';
 import { get, patch, fmtTime } from '../api.ts';
 import { useLoad, useAction } from '../ui.tsx';
+import { insurerPreviewActive,previewGet,previewPatch,insurerPreviewRequestHref,PREVIEW_CLIENT } from '../demo/insurerPreviewApi.ts';
 
 const labels: Record<string, string> = {
   sent_to_partner: 'Ждёт оформления', completed: 'Полис оформлен', rejected: 'Отказ',
 };
-export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}={}) {
+export function InsurerCabinet({inspectionOnly=false,section}:{inspectionOnly?:boolean;section?:string}={}) {
+  const preview = insurerPreviewActive();
   const [workspace,setWorkspace]=useState<'insurance'|'inspection'|'finance'|'common'>(inspectionOnly?'inspection':'insurance');
-  const finance=useLoad(()=>get<{entries:{id:string;kind:string;entry_type:string;amount_kopecks:string;note:string|null;created_at:string}[];totals:{kind:string;accrued:string;paid:string;balance:string}[]}>('/api/insurer/finance'),[]);
+  const finance=useLoad(()=>preview ? Promise.resolve({entries:[],totals:[]}) : get<{entries:{id:string;kind:string;entry_type:string;amount_kopecks:string;note:string|null;created_at:string}[];totals:{kind:string;accrued:string;paid:string;balance:string}[]}>('/api/insurer/finance'),[preview]);
   const money=(value:string|number)=>new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB'}).format(Number(value)/100);
-  const inspections=useLoad(()=>get<any[]>('/api/insurer/inspections'),[],
-    event=>event.type==='vehicle_service');
-  const requests = useLoad(() => inspectionOnly ? Promise.resolve([]) : get('/api/insurer/requests'), [],
-    (event) => event.type === 'vehicle_service');
+  const inspections=useLoad(()=>preview ? Promise.resolve([] as any[]) : get<any[]>('/api/insurer/inspections'),[preview],
+    event=>!preview&&event.type==='vehicle_service');
+  const requests = useLoad<any[]>(() => inspectionOnly ? Promise.resolve([]) : preview ? previewGet<any[]>('/api/insurer/requests') : get<any[]>('/api/insurer/requests'), [inspectionOnly,preview],
+    (event) => !preview && event.type === 'vehicle_service');
   const { busy, run } = useAction();
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [inspectionNotes,setInspectionNotes]=useState<Record<string,string>>({});
@@ -33,7 +35,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
       return;
     }
     if(inspectionOnly)return;
-    const result = await run(() => patch(`/api/insurer/requests/${id}`, {
+    const result = await run(() => (preview ? previewPatch : patch)(`/api/insurer/requests/${id}`, {
       status, note: note || undefined,
       policyExpiresOn: status === 'completed' ? policyExpiresOn : undefined,
     }), 'Заявка обновлена');
@@ -51,16 +53,22 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
   }
   const rows: any[] | undefined = requests.data;
   const visible = (rows ?? []).filter((r) => {
+    if (section && !['queue','all'].includes(section) && r.insurance_stage !== section) return false;
     if (filter === 'pending' && r.status !== 'sent_to_partner') return false;
     if (filter === 'done' && r.status === 'sent_to_partner') return false;
     return [r.brand, r.model, r.plate, r.comment].some((value) => String(value ?? '').toLocaleLowerCase('ru-RU').includes(search.trim().toLocaleLowerCase('ru-RU')));
   });
   return (
-    <main className="cabinet-page">
-      <header className="cabinet-heading">
+    <main className="cabinet-page insurer-workspace stack">
+      <header className="cabinet-heading insurer-workspace-hero">
         <span className="label">TRACKSOS · Партнёрский кабинет</span>
         <h1>{workspace==='insurance'?'Страхование':workspace==='inspection'?'Техосмотры':workspace==='finance'?'Финансы':'Общие настройки'}</h1>
       </header>
+      {preview && <div className="banner" role="note">
+        <b>Тестовый кабинет страховщика · вымышленные данные</b>
+        <span className="note">Здесь можно пройти весь путь оформления без отправки заявок компаниям и без реального списания денег.</span>
+        <a className="btn small" href={PREVIEW_CLIENT}>Открыть кабинет клиента и подать тестовую заявку</a>
+      </div>}
       <nav className="partner-workspaces" aria-label="Разделы кабинета партнёра">
         {([['insurance','Страховки'],['inspection','Техосмотры'],['finance','Финансы'],['common','Общее']] as const)
           .filter(([key])=>!inspectionOnly||key!=='insurance')
@@ -176,7 +184,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
                     policy_sent:'PDF-полис отправлен'
                   } as Record<string,string>)[r.insurance_stage] ?? 'В обработке'}</b>
                   <p className="note">ФИО, сведения о грузовике, предложения и переписка открываются в рабочем деле.</p>
-                  <a className="btn" href={`#/insurance/request/${r.id}`}>Открыть страховую заявку и чат →</a>
+                  <a className="btn" href={preview ? insurerPreviewRequestHref(r.id) : `#/insurance/request/${r.id}`}>Открыть страховую заявку и чат →</a>
                 </div>}
                 {r.staff_note && <span className="note">Последний ответ: {r.staff_note}</span>}
                 {r.policy_expires_on && <span className="note">Срок полиса: {String(r.policy_expires_on).slice(0, 10)}</span>}
