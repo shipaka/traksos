@@ -392,13 +392,22 @@ function PerformerActions({ d, onDone }: { d: any; onDone: () => void }) {
           <div className="hr" />
           <div className="sum total"><span>За работу итого</span><span>{rub(bill.total)}</span></div>
           <span className="note">Плюс выезд {rub(d.money.callOut)}{d.money.clientFee ? ' и сервисный сбор' : ''}. Клиент увидит каждую строку.</span>
-          <div className="stack">
-            {Object.entries(RESULTS).map(([k, v]) => (
-              <button key={k} type="button" className="opt" aria-pressed={result === k} onClick={() => setResult(k)}><b>{v}</b></button>
-            ))}
-          </div>
-          <input className="field" placeholder="Что сделали — одной строкой" value={note} onChange={(e) => setNote(e.target.value)} maxLength={300} />
-          <button className="btn" disabled={busy} onClick={() =>
+          {d.service === 'tow' ? (
+            <div className="banner good"><span>Этап эвакуации: грузовик доставлен. Дальше клиент сможет продолжить обращение записью в СТО.</span></div>
+          ) : (
+            <div className="stack">
+              {(['solved', 'cause_found', 'not_found'] as const).map((k) => (
+                <button key={k} type="button" className="opt" aria-pressed={result === k} onClick={() => setResult(k)}><b>{RESULTS[k]}</b></button>
+              ))}
+            </div>
+          )}
+          <input className="field"
+            placeholder={result !== 'solved' && d.service !== 'tow' ? 'Почему невозможно выполнить работу на дороге?' : 'Что сделали — одной строкой'}
+            value={note} onChange={(e) => setNote(e.target.value)} maxLength={300} />
+          {d.service !== 'tow' && result !== 'solved' && (
+            <span className="note">Укажите конкретную причину (минимум 10 символов). Клиент увидит её до выбора эвакуатора или СТО.</span>
+          )}
+          <button className="btn" disabled={busy || (d.service !== 'tow' && result !== 'solved' && note.trim().length < 10)} onClick={() =>
             run(() => post(`/api/orders/${d.id}/amount`, { extras: cleanExtras, result, note: note || undefined }), 'Клиенту отправлено на подтверждение').then((r) => r && onDone())}>
             {d.status === 'awaiting_confirmation' ? 'Исправить сумму' : 'Отправить клиенту'}
           </button>
@@ -644,7 +653,10 @@ function ConfirmAmount({ d, onDone }: { d: any; onDone: () => void }) {
     <div className="card hi">
       <b>К оплате: {rub(d.money.total)}</b>
       <span className="note">Разбивка — в карточке «Сумма» выше.</span>
-      <span className="note">Выезд и время — по цене, о которой договорились до вызова. Оспорить можно только расходники и запчасти — и только если работа сделана. {d.paymentMethod === 'cash' ? 'Деньги отдайте мастеру.' : ''}</span>
+      <span className="note">{['cause_found','not_found'].includes(d.result)
+        ? 'Мастер сообщил, что неисправность на месте не устранена. Проверьте фактически оказанные услуги, выезд, диагностику и расходники. Если не согласны с объёмом работ или суммой, выберите «Не согласен» — подключим поддержку.'
+        : 'Выезд и время — по цене, о которой договорились до вызова. Если не согласны с перечнем работ или расходниками, можно открыть спор.'
+      } {d.paymentMethod === 'cash' ? 'При подтверждении наличные оплачиваются исполнителю.' : ''}</span>
       {mode === null && pmax > 0 && (
         <div className="card flat" style={{ gap: 6 }}>
           <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}><input type="checkbox" checked={usePts} onChange={(e) => setUsePts(e.target.checked)} style={{ marginTop: 3 }} />
