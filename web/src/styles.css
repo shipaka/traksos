@@ -1815,11 +1815,11 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
 }
 @media(max-width:899px){
   .app.role-client .client-dashboard{padding-top:12px;gap:14px;}
-  .app.role-client .client-dashboard .desktop-hero{min-height:325px;padding:21px 19px 15px;align-items:flex-start;}
+  .app.role-client .client-dashboard .desktop-hero{min-height:460px;padding:21px 19px 15px;align-items:flex-start;}
   .app.role-client .client-dashboard .desktop-hero-copy{width:100%;max-width:none;}
   .app.role-client .client-dashboard .desktop-hero h1{font-size:clamp(23px,6.2vw,30px);max-width:320px;}
   .app.role-client .client-dashboard .desktop-hero p{font-size:12px;max-width:300px;}
-  .app.role-client .client-dashboard .client-hero-scania{width:78%;height:48%;right:-3%;bottom:-2%;object-position:right bottom;opacity:.95;}
+  .app.role-client .client-dashboard .client-hero-scania{width:80%;height:43%;right:0;bottom:0;object-position:right bottom;object-fit:contain;opacity:1;}
   .app.role-client .client-dashboard .desktop-hero::before{background:linear-gradient(180deg,rgba(4,18,32,.45),rgba(4,18,32,.3) 45%,transparent);}
   .app.role-client .client-dashboard .desktop-hero-buttons{margin-top:14px;gap:8px;}
   .app.role-client .client-dashboard .desktop-primary-action,.app.role-client .client-dashboard .desktop-outline-action{min-height:42px;font-size:11px;padding:9px 10px;}
@@ -1891,3 +1891,9 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
  .client-sos-specialties{grid-template-columns:1fr;}
  .client-sos-selected-header h2{font-size:18px;}
 }
+
+/* Prevent browser/default link underlines in the four large functional tiles. */
+.app.role-client .client-dashboard .desktop-quick-card,
+.app.role-client .client-dashboard .desktop-quick-card *,
+.app.role-client .client-dashboard .client-dashboard-hubs>a,
+.app.role-client .client-dashboard .client-dashboard-hubs>a * { text-decoration:none!important; }
