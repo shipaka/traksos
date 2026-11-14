@@ -64,6 +64,7 @@ jobs:
           for asset in index.html app.js app.css tracksos-approved-scania-r520.webp; do
             unzip -Z1 "$APK" | grep -Fx "assets/www/$asset"
           done
+          grep -F '"applicationId": "ru.traksos.app.preview"' android/app/build/outputs/apk/debug/output-metadata.json
           sha256sum "$APK"
           echo '### Android PR smoke' >> "$GITHUB_STEP_SUMMARY"
           echo '- Built debug APK, without release signing credentials.' >> "$GITHUB_STEP_SUMMARY"
@@ -101,13 +102,13 @@ jobs:
           script: |
             adb install -r apk/app-debug.apk
             adb logcat -c
-            adb shell am start -W -n ru.traksos.app/.MainActivity
+            adb shell am start -W -n ru.traksos.app.preview/ru.traksos.app.MainActivity
             sleep 15
-            adb shell pidof ru.traksos.app
+            adb shell pidof ru.traksos.app.preview
             adb logcat -d -s AndroidRuntime:E > runtime-errors.log
-            ! grep -F 'Process: ru.traksos.app' runtime-errors.log
+            ! grep -F 'Process: ru.traksos.app.preview' runtime-errors.log
             adb shell dumpsys activity activities > activity-dump.txt
-            grep -F 'ru.traksos.app' activity-dump.txt
+            grep -F 'ru.traksos.app.preview' activity-dump.txt
             adb exec-out screencap -p > emulator-screen.png
       - uses: actions/upload-artifact@v4
         if: always()
