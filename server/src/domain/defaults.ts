@@ -5,7 +5,7 @@
 export const defaultSettings = {
   /** Реквизиты площадки — в подвале каждой страницы и в документах. Заполняет админ. */
   legal: {
-    brand: 'ТракSOS',
+    brand: 'TrakSOS',
     entity: '',
     inn: '',
     ogrn: '',
@@ -107,11 +107,11 @@ export const defaultSettings = {
     cashChargesClientFee: true,
     /** Первый месяц без комиссии (до этой даты включительно) */
     freeUntil: null as string | null,
-    /** Рембаза: комиссия с работ по клиентам ТракSOS, % — но не больше serviceCommissionMax за один счёт */
+    /** Рембаза: комиссия с работ по клиентам TrakSOS, % — но не больше serviceCommissionMax за один счёт */
     serviceCommissionPct: 5,
     /** Потолок комиссии рембазы за один счёт, копейки (5 000 ₽) */
     serviceCommissionMax: 500_000,
-    /** Скидка клиенту в сервисе по совету мастера, % — из комиссии ТракSOS */
+    /** Скидка клиенту в сервисе по совету мастера, % — из комиссии TrakSOS */
     serviceReferralDiscountPct: 1,
   },
   referral: {

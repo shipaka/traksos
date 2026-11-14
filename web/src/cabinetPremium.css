@@ -1,4 +1,4 @@
-/* TrackSOS — unified premium cabinet finish.
+/* TrakSOS — unified premium cabinet finish.
    Visual-only layer over the approved palette. Only signed-in real screens.
    Keep public landing, server, API, and accepted Scania artwork unchanged. */
 .app[class*="role-"]{
@@ -695,7 +695,7 @@
 }
 
 
-/* TrackSOS motion language — native CSS, no remote fonts, videos or JS libraries.
+/* TrakSOS motion language — native CSS, no remote fonts, videos or JS libraries.
    Ambient depth for desktop, tactile direction cards on small screens. */
 .client-help-directions{position:relative;min-width:0;isolation:isolate;}
 .client-help-directions>h2{

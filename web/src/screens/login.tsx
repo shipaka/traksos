@@ -219,7 +219,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <div className="public-section-kicker">TRAKSOS В ТЕЛЕФОНЕ</div>
           <h2>Мобильное приложение <em>TrakSOS</em></h2>
           <div className="public-app-phone" aria-hidden="true">
-            <span className="public-app-logo">Трак<b>SOS</b></span>
+            <span className="public-app-logo">Trak<b>SOS</b></span>
             <img className="public-app-phone-truck" src="/tracksos-approved-scania-r520.webp" alt="" loading="lazy" />
             <span>Помощь грузовику<br/>в дороге</span>
           </div>

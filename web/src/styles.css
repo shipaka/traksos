@@ -199,7 +199,7 @@ select.field { appearance: none; }
 .callbar-in .note { text-align: center; }
 .btn.pending { background: var(--surface-3); color: var(--fg); }
 
-/* «Сейчас в ТракSOS»: тихая строка-факт, не кнопка */
+/* «Сейчас в TrakSOS»: тихая строка-факт, не кнопка */
 .live-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; padding: 8px 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); font-size: 12.5px; color: var(--muted); user-select: none; }
 .live-strip b { color: var(--fg); font-variant-numeric: tabular-nums; }
 .live-dot { width: 8px; height: 8px; border-radius: 4px; background: var(--good); box-shadow: 0 0 0 3px var(--good-soft); }
@@ -511,7 +511,7 @@ select.field { appearance: none; }
 @media (min-width: 900px) { .client-home .home-services .mobile-services-link { display: none; } }
 
 
-/* Final approved public TrackSOS experience — independent of the signed-in work dashboard.
+/* Final approved public TrakSOS experience — independent of the signed-in work dashboard.
    References: approved desktop composite #2, mobile public screenshot, RuStore only. */
 .guest-app{--public-ink:#f7f9ff;--public-pink:#fa176e;--public-cyan:#13d8ef;background:linear-gradient(150deg,#071424,#0b2541 62%,#071321);color:var(--public-ink);}
 .guest-app .top{background:#06182b;border-bottom:1px solid #203851;color:white;}
@@ -692,7 +692,7 @@ select.field { appearance: none; }
 
 
 /* ================================================================
-   TRACKSOS / SIGNED-IN WORKSPACES — DESIGN SYSTEM v2
+   TRAKSOS / SIGNED-IN WORKSPACES — DESIGN SYSTEM v2
    Approved navy / cyan / magenta identity, preserving all existing
    routes and state. No network fonts, remote decorations or images.
    ================================================================ */
@@ -1113,7 +1113,7 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
   .public-landing .public-hero-visual { bottom: 26%; }
 }
 
-/* TRACKSOS / CABINET EXPERIENCE — additive polish, keeping approved dark/cyan/pink palette.
+/* TRAKSOS / CABINET EXPERIENCE — additive polish, keeping approved dark/cyan/pink palette.
    Every preview route is an independent page; no effect on real accounts or server state. */
 .sandbox-root{width:100%;min-width:0;max-width:1300px;margin:0 auto;padding:12px 0 28px;animation:ts-appear .28s ease-out both;}
 .sandbox-root *{box-sizing:border-box;}
@@ -1592,7 +1592,7 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
 .insurance-client-hero{background:radial-gradient(ellipse at 87% 25%,rgba(63,236,242,.2),transparent 47%),
   radial-gradient(circle at 12% 90%,rgba(234,44,135,.15),transparent 44%),
   linear-gradient(115deg,#0c2540,#123c5b);}
-/* Clear customer-facing final price: agent's price + TrackSOS fee, never silently bundled. */
+/* Clear customer-facing final price: agent's price + TrakSOS fee, never silently bundled. */
 .insurance-price-details{display:flex;flex-direction:column;gap:9px;padding:13px;border-radius:13px;
   background:#0b2940;border:1px solid #386a83;}
 .insurance-price-details span{display:flex;justify-content:space-between;align-items:start;
