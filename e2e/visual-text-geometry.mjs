@@ -28,9 +28,11 @@ const cssAudit=async(page,selector,width)=>page.evaluate(({selector,width})=>{
    }
    const layer=getComputedStyle(card,'::after').backgroundImage;
    const icon=layer&&layer!=='none'?layer:getComputedStyle(card).backgroundImage;
-   const expected=['master','tow','sto','consult'][i];
+   const expected=(selector.includes('public-landing')
+     ? ['tracksos-photo-tow','tracksos-photo-master','tracksos-photo-sto','traksos-final-insurance','traksos-final-parts','tracksos-photo-consult']
+     : ['tracksos-photo-master','tracksos-photo-tow','tracksos-photo-sto','tracksos-photo-consult'])[i];
    if(!icon||icon==='none')issues.push('missing illustration '+i);
-   if(expected&&!icon.includes('tracksos-photo-'+expected))
+   if(expected&&!icon.includes(expected))
      issues.push('reference photo mismatch '+i+': expected '+expected+', found '+icon);
  }
  const doc=document.documentElement;
