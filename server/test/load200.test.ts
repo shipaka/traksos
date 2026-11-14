@@ -8,6 +8,7 @@ import {performance} from 'node:perf_hooks';
 import {mkdir,writeFile} from 'node:fs/promises';
 // Staff access must be configured BEFORE the application config module loads.
 const staffPhone='+79994000197';
+process.env.ADMIN_PHONES='+79990000001';
 process.env.MODERATOR_PHONES=staffPhone;
 const {sha256}=await import('../src/util.ts');
 const {setup,ok}=await import('./helpers.ts');
