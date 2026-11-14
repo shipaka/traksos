@@ -148,17 +148,11 @@ internal object SeasonalStartupOverlay {
         val bottom = LinearLayout(ctx)
         bottom.gravity = Gravity.CENTER
         bottom.orientation = LinearLayout.VERTICAL
-        bottom.addView(TextView(ctx).apply {
-            text = "Загрузка приложения…"
-            textSize = 16f
-            gravity = Gravity.CENTER
-            setTextColor(Color.WHITE)
-        })
         bottom.addView(ProgressBar(ctx,null,android.R.attr.progressBarStyleHorizontal).apply {
             isIndeterminate = true
             indeterminateTintList = ColorStateList.valueOf(0xFFFF158A.toInt())
             progressTintList = ColorStateList.valueOf(0xFFFF158A.toInt())
-        },LinearLayout.LayoutParams(-1,dp(ctx,5)).apply { topMargin = dp(ctx,14) })
+        },LinearLayout.LayoutParams(-1,dp(ctx,5)))
         root.addView(bottom,FrameLayout.LayoutParams(-1,-2,Gravity.BOTTOM).apply {
             leftMargin = dp(ctx,34)
             rightMargin = dp(ctx,34)
