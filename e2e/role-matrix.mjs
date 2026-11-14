@@ -76,6 +76,19 @@ try {
         await page.getByRole('heading', { name: 'Страхование', exact: true }).waitFor();
         await page.getByText(/Назначенных заявок пока нет/).waitFor();
         await page.getByRole('button', { name: 'Общее', exact: true }).waitFor();
+        // Partner sub-workspaces must behave as full usable pages, not decorative tabs.
+        await page.getByRole('button', { name: 'Техосмотры', exact: true }).click();
+        await page.getByRole('heading', { name: 'Техосмотры', exact: true }).waitFor();
+        if (await page.getByRole('button', { name: 'Техосмотры', exact: true }).getAttribute('aria-pressed') !== 'true')
+          throw new Error('Inspection workspace tab not selected');
+        await page.screenshot({ path: OUT + '/insurer-inspections.png', fullPage: true });
+        await page.getByRole('button', { name: 'Финансы', exact: true }).click();
+        await page.getByRole('heading', { name: 'Финансы', exact: true }).waitFor();
+        await page.screenshot({ path: OUT + '/insurer-finance.png', fullPage: true });
+        await page.getByRole('button', { name: 'Общее', exact: true }).click();
+        await page.getByRole('link', { name: 'Помощь и инструкции' }).click();
+        if (!(await page.evaluate(() => location.hash)).startsWith('#/help'))
+          throw new Error('Partner help link is broken');
       }
       if (entry.name === 'driver') {
         await page.goto(BASE + '/#/fleet', { waitUntil: 'domcontentloaded' });
