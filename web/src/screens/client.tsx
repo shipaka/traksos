@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { get, post, put, del, rub, fmtTime, fmtPhone } from '../api.ts';
-import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF, QUICK_WHAT, ON_SITE, seriesHint } from '../dict.ts';
+import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF, ON_SITE, seriesHint } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFields, LiveStrip, type VehicleValue } from '../ui.tsx';
 import { BookingRows } from './base.tsx';
 import { DriverRules } from './fleet.tsx';
@@ -424,7 +424,7 @@ export function NewOrder({ service }: { service: string }) {
   };
   const missing = [
     !need.car && { id: 'f-car', name: 'марка машины' },
-    !need.what && { id: 'f-what', name: 'что случилось' },
+    !need.what && { id: 'f-what', name: 'описание задачи' },
     !need.where && { id: 'f-where', name: 'где машина' },
     !need.tow && { id: 'f-tow', name: 'куда везти' },
     !agree && { id: 'f-agree', name: 'согласие с суммами' },
@@ -469,17 +469,9 @@ export function NewOrder({ service }: { service: string }) {
         {!vehicleId && <span className="note">Марка — обязательно, модель и год — по желанию: так подберём мастера, который знает вашу машину.</span>}
       </Step>
 
-      <Step n={2} id="f-what" title="Что случилось" req done={need.what} missing={tried && !need.what}>
-        {QUICK_WHAT[service] && (
-          <div className="row" style={{ gap: 6 }}>
-            {QUICK_WHAT[service].map((q) => {
-              const on = description.toLowerCase().includes(q.toLowerCase());
-              return <button key={q} type="button" className="chip" aria-pressed={on} onClick={() => setDescription(on ? description.replace(new RegExp(`(,\\s*)?${q.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')}`, 'i'), '').replace(/^,\s*/, '') : description.trim() ? `${description.trim()}, ${q}` : q)}>{q}</button>;
-            })}
-          </div>
-        )}
-        <textarea className="field" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Например: не заводится, стартер щёлкает, приборка гаснет" />
-        <span className="note">{need.what ? '✓ Хватит, чтобы мастер понял, что брать с собой' : `Хотя бы пару слов — ещё ${MIN_WHAT - description.trim().length} симв.`}</span>
+      <Step n={2} id="f-what" title="Задача для специалиста" req done={need.what} missing={tried && !need.what}>
+        <textarea className="field" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Коротко опишите, какая помощь нужна. Если причина неизвестна, так и напишите." />
+        <span className="note">{need.what ? '✓ Хватит, чтобы специалист понял задачу' : `Хотя бы пару слов — ещё ${MIN_WHAT - description.trim().length} симв.`}</span>
       </Step>
 
       <Step n={3} id="f-where" title={isTow ? 'Откуда забрать' : 'Где машина'} req done={need.where} missing={tried && !need.where}>
