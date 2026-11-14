@@ -35,6 +35,7 @@ import { ShopService } from './services/shop.ts';
 import { ShopCatalogService } from './services/shopCatalog.ts';
 import { ModerationService } from './services/moderation.ts';
 import { WarrantyClaimsService } from './services/warranty.ts';
+import { WarrantyRemediationService } from './services/warrantyRemediation.ts';
 import { checkAppealToken } from './services/auth.ts';
 import { normalizePhone, sha256 } from './util.ts';
 import { Raw } from './http/router.ts';
@@ -92,6 +93,7 @@ export function createApp(d: Deps) {
   const partCatalog = new ShopCatalogService(d.db, settings);
   const moderation = new ModerationService(d.db, notifier, reviews, now, d.sms);
   const warranty = new WarrantyClaimsService(d.db, notifier, now);
+  const warrantyRemediation = new WarrantyRemediationService(d.db, notifier, now);
   // Споры — в очередь модератора: из суммы заявки, из сверки работ, из ремонта в сервисе
   orders.onDispute = (p) => moderation.open({ kind: 'dispute', title: p.title, text: p.text, openedBy: p.userId, targetId: p.targetId, orderId: p.orderId, priority: 1 });
   support.onDispute = async (p) => {
@@ -217,6 +219,38 @@ export function createApp(d: Deps) {
       note:z.string().trim().min(20).max(3000),
     }),c.body);
     return warranty.decide(c.user,c.params.id,p.decision,p.note);
+  });
+
+  // Nonbillable corrective work is distinct from a paid SOS order.
+  r.get('/api/warranty-claims/:id/remedies', true,
+    (c: AuthedCtx) => warrantyRemediation.forClaim(c.user,c.params.id));
+  r.get('/api/warranty-remedies/:id', true,
+    (c: AuthedCtx) => warrantyRemediation.view(c.user,c.params.id));
+  r.post('/api/admin/warranty-claims/:id/remedies', ['admin'], (c: AuthedCtx) => {
+    const p=parse(z.object({
+      performerId:z.string().uuid(),budgetKopecks:money.max(100_000_000),
+      task:z.string().trim().min(10).max(2000),
+    }),c.body);
+    return warrantyRemediation.offer(c.user,c.params.id,p);
+  });
+  r.post('/api/warranty-remedies/:id/client-approval', true, (c: AuthedCtx) =>
+    warrantyRemediation.clientApproval(c.user,c.params.id,
+      parse(z.object({approve:z.boolean()}),c.body).approve));
+  r.post('/api/warranty-remedies/:id/respond', performerRoles, (c: AuthedCtx) =>
+    warrantyRemediation.respond(c.user,c.params.id,
+      parse(z.object({accept:z.boolean()}),c.body).accept));
+  r.post('/api/warranty-remedies/:id/report', performerRoles, (c: AuthedCtx) =>
+    warrantyRemediation.reportDone(c.user,c.params.id,
+      parse(z.object({report:z.string().trim().min(10).max(2000)}),c.body).report));
+  r.post('/api/warranty-remedies/:id/confirm', true, (c: AuthedCtx) =>
+    warrantyRemediation.clientConfirm(c.user,c.params.id));
+  r.post('/api/admin/warranty-remedies/:id/record-expense', ['admin'], (c: AuthedCtx) => {
+    const p=parse(z.object({
+      amountKopecks:money.positive().max(100_000_000),
+      bankReference:z.string().trim().min(5).max(120),
+      transferredAt:z.string().datetime({offset:true}),
+    }),c.body);
+    return warrantyRemediation.recordPlatformExpense(c.user,c.params.id,p);
   });
 
   r.get('/api/support/topics', false, () => TOPICS);
@@ -1106,7 +1140,7 @@ export function createApp(d: Deps) {
     }
   }
 
-  return { handle, hub, auth, settings, orders, payments, auction, documents, admin, support, warranty, profiles, chat, reviews, offers, notifier, privacy, ops, router: r };
+  return { handle, hub, auth, settings, orders, payments, auction, documents, admin, support, warranty, warrantyRemediation, profiles, chat, reviews, offers, notifier, privacy, ops, router: r };
 }
 
 export type App = ReturnType<typeof createApp>;
