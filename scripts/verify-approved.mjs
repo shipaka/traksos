@@ -23,7 +23,7 @@ const LOCKED_ASSETS = {
   'android/app/src/main/res/mipmap-hdpi/ic_launcher.png': '934c4448c5a758fd',
   'android/app/src/main/res/mipmap-xhdpi/ic_launcher.png': '5022fec38cc1898d',
   'android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png': '22456b8817e2a561',
-  'android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png': '70c666ed8cb09e6cb9',
+  'android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png': '70c666ed8cb09e6c',
   'web/public/tracksos-photo-master.webp': 'ba0572aa5c6341ef',
   'web/public/tracksos-photo-tow.webp': '1fdb913351585040',
   'web/public/tracksos-photo-sto.webp': '48e638e981108763',
