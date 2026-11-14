@@ -40,8 +40,8 @@ async function run(width, height, mobile) {
   try {
     await page.goto(BASE + '/#/', { waitUntil: 'domcontentloaded' });
     await page.getByRole('heading', { name: /TrakSOS.*помощь.*в пути/i }).waitFor();
-    check(await page.getByRole('button', { name: 'Вызвать помощь (SOS)' }).isVisible(), 'SOS not visible');
-    check(await page.getByRole('button', { name: 'Как это работает?' }).isVisible(), 'How it works not visible');
+    check(await page.locator('.public-actions').getByRole('button', { name: 'Войти', exact: true }).isVisible(), 'Hero login is not visible');
+    check(await page.locator('.public-actions').getByRole('button', { name: 'Регистрация', exact: true }).isVisible(), 'Hero registration is not visible');
     const image = await page.locator('.public-hero-visual').evaluate(async el => {
       const bg = [getComputedStyle(el).backgroundImage, getComputedStyle(el,'::after').backgroundImage].join(' | ');
       const match = bg.match(/url\(["']?([^"')]+)["']?\)/);
@@ -73,11 +73,14 @@ async function run(width, height, mobile) {
       const nav = page.locator('.track-guest-tabbar');
       const navCount = await nav.locator('a').count();
       const vectorCount = await nav.locator('a svg[aria-hidden="true"]').count();
-      check(navCount === 5 && vectorCount === 5,
-        suffix + ': all five mobile guest tabs must use visible vector icons, got ' + navCount + '/' + vectorCount);
+      check(navCount === 4 && vectorCount === 4,
+        suffix + ': all four authorized guest tabs must have vector icons, got ' + navCount + '/' + vectorCount);
+      for(const forbidden of ['Заявки','Помощь','Запчасти']) {
+        check(!(await nav.getByText(forbidden,{exact:true}).count()), suffix + ': protected tab visible before sign-in: '+forbidden);
+      }
     }
     // All six approved photographic services must remain in their exact order.
-    const services = page.locator('.public-service-tiles > button');
+    const services = page.locator('.public-service-tiles > a');
     check(await services.count() === 6, suffix + ': six approved service cards required');
     const labels = await services.locator('b').allTextContents();
     check(JSON.stringify(labels) === JSON.stringify([
@@ -99,10 +102,13 @@ async function run(width, height, mobile) {
 
     await page.goto(BASE + '/#/join');
     await page.getByRole('heading', { name: 'Работать с TrakSOS' }).waitFor();
-    for (const name of [
-      'Я мастер', 'Я эвакуаторщик', 'Я рембаза (сервис)',
-      'Мастер и своя СТО', 'Я представитель страховой компании'
-    ]) check(await page.getByRole('button', { name: new RegExp(name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) }).isVisible(), 'Missing performer category: ' + name);
+    for (const name of ['Мастер', 'Эвакуаторщик', 'СТО', 'Страховой агент']) {
+      check(await page.getByRole('button', { name: new RegExp('^'+name) }).isVisible(), 'Missing partner category: ' + name);
+    }
+    check(await page.locator('.auth-desktop-form .opt').count() === 4,
+      suffix + ': partner registration must offer exactly 4 roles');
+    check(await page.getByRole('button',{name:'Автономщик',exact:true}).isVisible(),
+      suffix + ': specialization is not available for master');
     await verifyPage(page, suffix + ':join');
     await page.screenshot({ path: OUT + '/join-' + suffix + '.png', fullPage: true });
 
@@ -120,13 +126,13 @@ async function run(width, height, mobile) {
     };
     await page.getByRole('button', { name: 'Назад', exact: true }).click();
     await returnedHome('login');
-    await page.getByRole('link', { name: 'Войти', exact: true }).click();
+    await page.locator('.guest-header-actions').getByRole('link', { name: 'Войти', exact: true }).click();
     await page.locator('input[type=password]').waitFor();
     await page.getByRole('button', { name: 'Забыли пароль?' }).click();
     await page.getByRole('heading', { name: 'Восстановить пароль' }).waitFor();
     await page.getByRole('button', { name: 'Назад', exact: true }).click();
     await returnedHome('reset');
-    await page.getByRole('link', { name: 'Войти', exact: true }).click();
+    await page.locator('.guest-header-actions').getByRole('link', { name: 'Войти', exact: true }).click();
     await page.locator('input[type=password]').waitFor();
     await page.getByRole('link', { name: 'Зарегистрироваться', exact: true }).click();
     await page.getByRole('heading', { name: 'Регистрация в TrakSOS' }).waitFor();
@@ -134,32 +140,32 @@ async function run(width, height, mobile) {
     await returnedHome('register');
     await page.getByRole('link', { name: 'Зарегистрироваться', exact: true }).click();
     await page.getByRole('heading', { name: 'Регистрация в TrakSOS' }).waitFor();
-    await page.getByRole('button', { name: 'Я мастер' }).click();
-    await page.getByRole('heading', { name: 'Работать с TrakSOS' }).waitFor();
-    await page.getByRole('button', { name: 'Назад к выбору кабинета' }).click();
-    await page.getByRole('heading', { name: 'Регистрация в TrakSOS' }).waitFor();
+    check(await page.getByRole('button', { name: 'Мастер', exact: true }).count()===0,
+      suffix + ': partner registration must be separate from clients');
     await page.getByRole('button', { name: 'Назад', exact: true }).click();
-    await returnedHome('register->partner->register');
+    await returnedHome('register-without-partners');
 
     await page.goto(BASE + '/#/join');
     await page.getByRole('heading', { name: 'Работать с TrakSOS' }).waitFor();
     await page.getByRole('button', { name: 'Назад', exact: true }).click();
     await returnedHome('join');
-    await page.getByRole('link', { name: 'Войти', exact: true }).click();
+    await page.locator('.guest-header-actions').getByRole('link', { name: 'Войти', exact: true }).click();
     await page.locator('input[type=password]').waitFor();
 
-    // Regression: "Услуги" must return to the landing from the login form.
+    // The desktop header shows a real expandable catalogue, not a dead link.
     if (width >= 900) {
-      await page.locator('.guest-site-nav').getByRole('link', { name: 'Услуги' }).click();
-      await page.locator('.public-service-tiles').waitFor();
-      await page.waitForFunction(() => {
-        const target = document.getElementById('public-services');
-        const rect = target?.getBoundingClientRect();
-        return !!rect && rect.top >= -100 && rect.top <= 160;
-      }, null, {timeout: 4000});
-      check(await page.locator('.public-service-tiles > button').count() === 6,
-        suffix + ': services navigation lost the approved landing cards');
-      await verifyPage(page, suffix + ':services-return');
+      await page.goto(BASE + '/#/');
+      const catalogue = page.locator('.guest-site-nav .guest-nav-group').first();
+      await catalogue.locator('summary').click();
+      await catalogue.locator('a[href="#/explore/van"]').click();
+      await page.getByRole('heading', { name: 'Выездной мастер' }).waitFor();
+      await verifyPage(page, suffix + ':catalogue');
+    } else {
+      await page.goto(BASE + '/#/');
+      await page.locator('.guest-mobile-catalog > summary').click();
+      await page.getByRole('navigation',{name:'Каталог услуг TrakSOS'}).getByRole('link',{name:'Компания'}).click();
+      await page.getByRole('heading',{name:'Компания TrakSOS'}).waitFor();
+      await verifyPage(page, suffix + ':company');
     }
     check(errors.length === 0, 'JS exceptions: ' + errors.join(' | '));
   } catch (e) {
