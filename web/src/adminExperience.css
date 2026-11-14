@@ -1,4 +1,4 @@
-/* TrackSOS working cabinet: focused administration navigation.
+/* TrakSOS working cabinet: focused administration navigation.
    Scoped to the real admin workspace. No public landing or API changes. */
 .admin-workspace .admin-shell{
   display:grid;grid-template-columns:minmax(232px,275px) minmax(0,1fr);
@@ -244,7 +244,7 @@
   .app.role-performer .desktop-content main > .card .opt[aria-pressed]{transition:none;}
 }
 
-/* The approved TrackSOS truck artwork ties inside cabinets to the public brand.
+/* The approved TrakSOS truck artwork ties inside cabinets to the public brand.
    NO unapproved stock images, fake demand or extra downloads. */
 .app.role-admin .admin-command-hero .admin-command-art{
   width:min(44%,460px);opacity:1;border-radius:0 22px 22px 0;

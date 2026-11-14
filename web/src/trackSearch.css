@@ -1,4 +1,4 @@
-/* Functional search in the approved TrackSOS PC header. Local section index only. */
+/* Functional search in the approved TrakSOS PC header. Local section index only. */
 .track-site-search{position:relative;z-index:65;flex:0 1 340px;min-width:155px;margin:0 clamp(8px,1.5vw,24px);font-size:13px;}
 .track-site-search-wrap{display:flex;align-items:center;gap:8px;border:1px solid #376b91;
   min-height:40px;padding:0 10px 0 12px;border-radius:12px;cursor:text;
