@@ -538,6 +538,53 @@ export class PaymentsService implements PaymentHooks {
     return results;
   }
 
+  /** A customer can cancel a SOS while the provider's original create POST is
+   *  still in flight. Once the original hold becomes identifiable, plan and
+   *  execute the cancellation exactly once. Never reissue an uncertain cancel.
+   */
+  async finishCancelledHold(orderId: string): Promise<'skipped' | 'deferred' | 'cancelled'> {
+    const prepared = await this.db.tx(async q => {
+      const order = await q.one<any>('select * from orders where id=$1 for update', [orderId]);
+      if (!order || order.status !== 'cancelled') return false;
+      const pay = await q.one<any>(
+        "select * from payments where order_id=$1 and kind='call_out' for update", [orderId]);
+      if (!pay || !['pending','held'].includes(pay.status) || !pay.provider_payment_id)
+        return false;
+      if (await q.one('select id from payment_cancel_intents where order_id=$1', [orderId]))
+        return true;
+      // All search/no_performer/awaiting_owner cancellations are free under
+      // the existing tariff. Never charge an unassigned performer.
+      await this.onCancelled(order, order.cancel_stage ?? 'searching', q);
+      return true;
+    });
+    if (!prepared) return 'skipped';
+    const result = await this.processCancellationForOrder(orderId);
+    return result === 'needs_review' ? 'deferred' : 'cancelled';
+  }
+
+  /** Restart-safe scan closes the gap if the process dies after bank binding
+   *  but before the deferred cancellation was durably created.
+   */
+  async reconcileCancelledHolds(limit = 40) {
+    const items = await this.db.query<{id:string}>(
+      `select o.id from orders o join payments p on p.order_id=o.id
+         where o.status='cancelled' and p.kind='call_out'
+           and p.status in ('pending','held') and p.provider_payment_id is not null
+           and not exists (select 1 from payment_cancel_intents i where i.order_id=o.id)
+         order by o.cancelled_at limit $1`,
+      [Math.max(1,Math.min(100,limit))]);
+    const result = [];
+    for (const item of items) {
+      try {
+        result.push({orderId:item.id,status:await this.finishCancelledHold(item.id)});
+      } catch (error) {
+        console.error('[cancelled-hold-recovery]',item.id,error);
+        result.push({orderId:item.id,status:'deferred'});
+      }
+    }
+    return result;
+  }
+
   /** Уведомление от платёжного сервиса. Статус перепроверяем запросом к сервису. */
   async handleWebhook(body: any) {
     const ev = this.provider.parseWebhook(body);
@@ -563,10 +610,10 @@ export class PaymentsService implements PaymentHooks {
       pay = result.pay;
       if (result.changed) {
         const order = await this.db.one<any>(
-          'select id,number,client_id,created_by from orders where id=$1', [intent.order_id]);
+          'select id,number,client_id,created_by,status from orders where id=$1', [intent.order_id]);
         if (order) this.notifier.live([order.client_id,order.created_by],
           {type:'payment',orderId:order.id});
-        if (order) await this.notifier.notify([order.client_id,order.created_by],
+        if (order && order.status !== 'cancelled') await this.notifier.notify([order.client_id,order.created_by],
           {type:'payment',orderId:order.id,url:actual.confirmationUrl ?? null},
           {kind:'normal',title:intent.request.metadata.kind==='work'
             ? 'Оплатите работу' : 'Подтвердите оплату выезда',
@@ -575,7 +622,9 @@ export class PaymentsService implements PaymentHooks {
       }
     }
     if (!pay) throw notFound('Платёж не найден');
-    return this.sync(pay, STATUS_MAP[actual.status]);
+    const synced = await this.sync(pay, STATUS_MAP[actual.status]);
+    if (pay.kind === 'call_out') await this.finishCancelledHold(pay.order_id);
+    return synced;
   }
 
   private async sync(pay: any, status: string) {
