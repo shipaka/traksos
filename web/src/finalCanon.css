@@ -784,3 +784,29 @@
     transition:none;
   }
 }
+
+
+/* Partner dashboard metrics: responsive density matching premium client cards. */
+.app:is(.role-insurer,.role-inspection) .cabinet-metrics {
+  display:grid !important;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px !important;
+  align-items:stretch;
+  min-width:0;
+}
+.app:is(.role-insurer,.role-inspection) .cabinet-metrics > .card {
+  min-width:0;
+}
+@media(max-width:600px) {
+  .app:is(.role-insurer,.role-inspection) .cabinet-metrics {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:9px !important;
+  }
+  .app:is(.role-insurer,.role-inspection) .cabinet-metrics > .card:nth-child(3):last-child {
+    grid-column:1 / -1;
+  }
+  .app:is(.role-insurer,.role-inspection) .cabinet-metrics > .card {
+    min-height:105px;
+    padding:14px 13px;
+  }
+}
