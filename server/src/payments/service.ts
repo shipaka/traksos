@@ -61,7 +61,11 @@ export class PaymentsService implements PaymentHooks {
     await this.processCallOutPaymentForOrder(order.id);
     const pay = await this.db.one<{ confirmation_url: string | null }>(
       "select confirmation_url from payments where order_id=$1 and kind='call_out'", [order.id]);
-    return { holdRequired: true, confirmationUrl: pay?.confirmation_url ?? undefined };
+    const current = await this.db.one<{status:string}>(
+      'select status from orders where id=$1', [order.id]);
+    // A late HTTP reply must NOT redirect a cancelled SOS into payment.
+    return { holdRequired: true,
+      confirmationUrl: current?.status === 'cancelled' ? null : pay?.confirmation_url ?? undefined };
   }
 
   async onConfirmed(order: any, q: Queryable) {
