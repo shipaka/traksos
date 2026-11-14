@@ -342,6 +342,20 @@ test('warranty rework: client can refuse proposed remedy, and appeal freezes dis
     assert.equal((await f.t.api('POST',
       `/api/warranty-remedies/${offered.id}/respond`,
       {accept:true},f.performer.token)).status,409);
+    const revised=ok(await f.t.api('POST',
+      `/api/admin/warranty-claims/${claim.id}/remedies`,
+      {performerId:f.performer.id,budgetKopecks:0,
+        task:'Предлагаем новый согласуемый с клиентом бесплатный выезд и диагностику'},
+      f.admin.token));
+    assert.notEqual(revised.id,offered.id,'declined job remains immutable; new proposal is separate');
+    assert.equal(revised.status,'offered');
+    assert.equal(revised.clientApprovedAt,null,'no implicit consent to revised proposal');
+    assert.equal((await f.t.api('POST',
+      `/api/warranty-remedies/${revised.id}/respond`,
+      {accept:true},f.performer.token)).status,409,
+      'revised offer is never accepted by the client automatically');
+    assert.equal((await f.t.db.query('select id from warranty_rework_jobs where claim_id=$1',
+      [claim.id])).length,2);
     assert.equal((await f.t.db.query('select * from warranty_platform_expenses')).length,0);
     assert.equal((await f.t.db.query('select * from orders where continuation_of=$1',[f.id])).length,0);
     // A second case also demonstrates that an appeal suspends execution even
