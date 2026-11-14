@@ -69,6 +69,14 @@ async function run(width, height, mobile) {
         suffix + ': hero buttons overlap title or artwork: ' + JSON.stringify(heroGeometry));
     }
     await verifyPage(page, suffix + ':home');
+    // All six approved photographic services must remain in their exact order.
+    const services = page.locator('.public-service-tiles > button');
+    check(await services.count() === 6, suffix + ': six approved service cards required');
+    const labels = await services.locator('b').allTextContents();
+    check(JSON.stringify(labels) === JSON.stringify([
+      'Эвакуация', 'Выездной мастер', 'СТО и сервисы',
+      'Страхование', 'Запчасти', 'Консультации'
+    ]), suffix + ': service card order changed: ' + JSON.stringify(labels));
     await page.screenshot({ path: OUT + '/home-' + suffix + '.png', fullPage: true });
 
     await page.goto(BASE + '/#/register');
@@ -96,6 +104,20 @@ async function run(width, height, mobile) {
     check(await page.locator('input[type=password]').isVisible(), 'Password login unavailable');
     await verifyPage(page, suffix + ':login');
     await page.screenshot({ path: OUT + '/login-' + suffix + '.png', fullPage: true });
+
+    // Regression: "Услуги" must return to the landing from the login form.
+    if (width >= 900) {
+      await page.locator('.guest-site-nav').getByRole('link', { name: 'Услуги' }).click();
+      await page.locator('.public-service-tiles').waitFor();
+      await page.waitForFunction(() => {
+        const target = document.getElementById('public-services');
+        const rect = target?.getBoundingClientRect();
+        return !!rect && rect.top >= -100 && rect.top <= 160;
+      }, null, {timeout: 4000});
+      check(await page.locator('.public-service-tiles > button').count() === 6,
+        suffix + ': services navigation lost the approved landing cards');
+      await verifyPage(page, suffix + ':services-return');
+    }
     check(errors.length === 0, 'JS exceptions: ' + errors.join(' | '));
   } catch (e) {
     failures.push({ viewport: suffix, error: e.message });
