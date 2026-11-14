@@ -30,15 +30,15 @@ export function Home() {
       <section className="desktop-hero" aria-label="Помощь грузовому транспорту">
         <div className="desktop-hero-copy">
           <span className="desktop-eyebrow">ТРАКSOS · САНКТ-ПЕТЕРБУРГ И ЛЕНОБЛАСТЬ</span>
-          <h1>Помощь в дороге. <span>Всё в одном месте.</span></h1>
-          <p>Вызывайте специалиста, выбирайте СТО и следите за работой в едином кабинете.</p>
+          <h1>Помощь грузовикам в пути <span>24/7</span></h1>
+          <p>Выездной мастер, эвакуатор, грузовые СТО и консультации. Заявки, страхование и запчасти — в одном кабинете.</p>
           <div className="desktop-hero-buttons">
             <a className="desktop-primary-action" href="#/sos">SOS · Помощь в дороге ↗</a>
             <a className="desktop-outline-action" href="#/orders">Мои заявки</a>
           </div>
           <div className="launch-region" role="note">Зона запуска: Санкт-Петербург и Ленинградская область</div>
         </div>
-        <img className="client-hero-scania" src="/tracksos-approved-scania-r520.webp" alt="Фирменный тягач Scania R520" loading="eager" />
+        <img className="client-hero-scania" src="/tracksos-approved-scenic-hero.webp" alt="Реалистичный грузовой тягач Scania на дороге в закатном свете" loading="eager" />
       </section>
 
       <section className="desktop-quick-links" aria-label="Выберите помощь">
