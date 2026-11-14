@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { SERVICES, STATUS } from '../dict.ts';
+import { RoadsideMap } from './roadsideMap.tsx';
 
 /** Real client home. Approved visual system: sunset road + branded Scania + vivid
  * service illustrations + LIVE order, with no fictional ETA, route, rating or map. */
@@ -64,6 +65,9 @@ export function VisualClientHome({ me, live, help }: {
                   <span className="tracksos-order-number">Заявка №{current.number ?? current.id?.slice(0,8)}</span>
                   <strong>{SERVICES[current.service]?.name ?? 'Дорожная помощь'}</strong>
                   <span className="tracksos-order-location">{current.address ?? 'Откройте заявку для просмотра адреса'}</span>
+                  {Number.isFinite(current.lat) && Number.isFinite(current.lng) && <div className="tracksos-order-real-map" onClick={e=>e.preventDefault()}>
+                    <RoadsideMap point={{lat: Number(current.lat), lng: Number(current.lng)}} kind="request" address={current.address ?? undefined} />
+                  </div>}
                   <div className="tracksos-progress" aria-label={`Статус: ${status}`}>
                     {['Принята','Исполнитель','В пути','На месте'].map((label,i)=>
                       <span key={label} className={i <= progress ? 'reached' : ''}>
