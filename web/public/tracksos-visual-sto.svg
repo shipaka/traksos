@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 580 330" role="img"><defs>
+<linearGradient id="night" x2="1" y2="1"><stop stop-color="#0b2a4a"/><stop offset=".65" stop-color="#0f395b"/><stop offset="1" stop-color="#061829"/></linearGradient>
+<linearGradient id="metal" x2=".1" y2="0" x1=".9" y1="1"><stop stop-color="#e1effa"/><stop offset=".48" stop-color="#638ca7"/><stop offset="1" stop-color="#183e5a"/></linearGradient>
+<linearGradient id="glass" x2=".9" y2="1"><stop stop-color="#6ee8f4"/><stop offset="1" stop-color="#063553"/></linearGradient>
+<linearGradient id="lamp" x2="1" y2="0"><stop stop-color="#ffc578"/><stop offset="1" stop-color="#f46717"/></linearGradient>
+<filter id="glow"><feGaussianBlur stdDeviation="9"/></filter>
+<filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="12" stdDeviation="11" flood-color="#000c"/></filter>
+</defs><ellipse cx="310" cy="285" rx="250" ry="26" fill="#04cbee" opacity=".16" filter="url(#glow)"/><path d="M0 288 580 280" stroke="#54d6ff" stroke-width="2" opacity=".3"/><g filter="url(#shadow)">
+<path d="M70 124 293 73 504 121 V260 H70Z" fill="url(#metal)" stroke="#8bdef5" stroke-width="3"/>
+<path d="M59 128 293 63 515 126" stroke="#82dcef" stroke-width="11" fill="none"/>
+<rect x="108" y="144" width="148" height="118" fill="#0c2338" stroke="#57b6d7" stroke-width="6"/>
+<rect x="286" y="144" width="176" height="118" fill="#0b263c" stroke="#57b6d7" stroke-width="6"/>
+<path d="M116 177 H251 M116 213 H251 M294 177 H454 M294 213 H454" stroke="#5b91ae" stroke-width="5"/>
+<path d="M302 219 314 182 H399 L431 212 V246 H297Z" fill="#86b3cb" stroke="#b6e8ff" stroke-width="2"/>
+<path d="M318 186 H394 L416 210 H313Z" fill="#103d5d"/>
+<circle cx="333" cy="246" r="21" fill="#081623" stroke="#6aacc4" stroke-width="5"/>
+<circle cx="402" cy="246" r="21" fill="#081623" stroke="#6aacc4" stroke-width="5"/>
+<rect x="212" y="94" width="168" height="37" rx="7" fill="#0b3a61" stroke="#80eafa" stroke-width="3"/>
+<text x="296" y="120" font-size="28" text-anchor="middle" fill="#befdff" font-family="sans-serif" font-weight="900">СТО</text>
+<path d="M70 262 H505" stroke="#ffc45b" stroke-width="7"/>
+</g></svg>
