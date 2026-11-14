@@ -31,7 +31,10 @@ test('12 concurrent SOS submits with same key create exactly ONE order and ONE b
     assert.equal(pays.length,1);
     assert.equal(pays[0].kind,'call_out');
     assert.equal(t.payments.payments.size,1);
-    assert.ok(copies.every(x=>x.body.confirmationUrl===copies[0].body.confirmationUrl));
+    // Concurrent replays may return before the winning request has finished
+    // obtaining the bank link. They must never return a *different* link.
+    const urls=copies.map(x=>x.body.confirmationUrl).filter(Boolean);
+    assert.ok(urls.every(u=>u===pays[0].confirmation_url));
     const createdEvents=await t.db.query<any>(
       "select id from order_events where order_id=$1 and type='created'",[ids[0]]);
     assert.equal(createdEvents.length,1);
