@@ -810,3 +810,40 @@
     padding:14px 13px;
   }
 }
+
+
+/* Admin mobile: moderation tabs remain readable instead of clipping off-screen. */
+@media(max-width:600px) {
+  .app.role-admin .admin-stage-content .scroll-x[role="tablist"],
+  .app.role-moderator .scroll-x[role="tablist"] {
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px;
+    width:100%;
+    min-width:0;
+    overflow:visible !important;
+  }
+  .app.role-admin .admin-stage-content .scroll-x[role="tablist"] > .chip,
+  .app.role-moderator .scroll-x[role="tablist"] > .chip {
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    white-space:normal;
+    text-align:center;
+    min-width:0;
+    min-height:44px;
+    padding:9px 7px;
+    line-height:1.3;
+  }
+}
+@media(max-width:420px) {
+  .app.role-admin .admin-mobile-quick-item {
+    grid-template-columns:22px minmax(0,1fr) 8px;
+    gap:5px;
+    padding:9px 7px;
+  }
+  .app.role-admin .admin-mobile-quick-item b {
+    font-size:11px;
+    letter-spacing:-.02em;
+  }
+}
