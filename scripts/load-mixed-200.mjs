@@ -64,14 +64,16 @@ async function createUsers() {
    brands:{Scania:'excellent',DAF:'good'},taxStatus:'self_employed',inn:'780000000001'
   });
   await request(admin,'POST','/api/admin/performers/'+x.id+'/verify',{decision:'approved'});
-  await request(x,'POST','/api/performer/location',{lat:59.933+(i%5)*.001,lng:30.335});
+  x.location={lat:59.82+(i%9)*.028,lng:30.12+Math.floor(i/9)*.16};
+  await request(x,'POST','/api/performer/location',x.location);
   await request(x,'POST','/api/performer/line',{lineStatus:'online'});
  }
  for(let i=0;i<tows.length;i++){
   const x=tows[i];
   await request(x,'PUT','/api/performer/profile',{name:'Нагрузочный эвакуатор '+i,kind:'tow',prepMinutes:15});
   await request(admin,'POST','/api/admin/performers/'+x.id+'/verify',{decision:'approved'});
-  await request(x,'POST','/api/performer/location',{lat:59.933+(i%5)*.001,lng:30.335});
+  x.location={lat:59.83+(i%5)*.035,lng:30.16+Math.floor(i/5)*.19};
+  await request(x,'POST','/api/performer/location',x.location);
   await request(x,'POST','/api/performer/line',{lineStatus:'online'});
  }
  for(let i=0;i<services.length;i++){
@@ -119,7 +121,9 @@ async function ordersFlow(){
  const jobs=await Promise.all(Array.from({length:40},(_,i)=>{
   const client=clients[i],tow=i>=32;
   return request(client,'POST','/api/orders',{
-   service:tow?'tow':'electric',zoneId:'spb',lat:59.934,lng:30.335,brand:'Scania',
+   service:tow?'tow':'electric',zoneId:'spb',
+   lat:(tow?tows[i-32]:masters[i]).location.lat,
+   lng:(tow?tows[i-32]:masters[i]).location.lng,brand:'Scania',
    description:'Тест нагрузки: '+(tow?'эвакуация':'электрика')+' '+i,
    ...(tow?{destination:'Сервис на Софийской',cargo:'tractor',loaded:'empty',driverOnSite:true}:{})
   },200,'POST /api/orders × 40').then(z=>({client,worker:tow?tows[i-32]:masters[i],orderId:z.order.id,tow}));
@@ -131,10 +135,16 @@ async function ordersFlow(){
   assert.equal(v.id,j.orderId);
  }));
  await request(clients[100],'GET','/api/orders/'+jobs[0].orderId,undefined,403,'foreign private order denied');
- // Worker offers are independent. Concurrent selection must never double-book the worker.
- await Promise.all(jobs.map(async j=>{
-  await request(j.worker,'POST','/api/orders/'+j.orderId+'/offers',{},200,'POST /api/orders/:id/offers × 40');
- }));
+ // Server decides which nearby workers can bid. Never bypass dispatch authorization.
+ // Each proposed worker is at the order location, so should be invited.
+ const invitations=await Promise.all(jobs.map(j=>t.db.query(
+   "select performer_id from order_dispatch where order_id=$1 and status='bidding'",[j.orderId])));
+ jobs.forEach((j,i)=>assert.ok(invitations[i].some(d=>d.performer_id===j.worker.id),
+   'The nearest verified worker did not receive this dispatched order'));
+ const offerResults=await Promise.allSettled(jobs.map(j=>request(j.worker,'POST',
+   '/api/orders/'+j.orderId+'/offers',{},200,'POST /api/orders/:id/offers × 40')));
+ const problems=offerResults.filter(x=>x.status==='rejected');
+ assert.deepEqual(problems,[],'One of the invited workers failed to offer');
  for(const j of jobs){
   const proposals=await request(j.client,'GET','/api/orders/'+j.orderId+'/offers');
   const mine=proposals.offers.find(x=>x.performer_id===j.worker.id);
