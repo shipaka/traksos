@@ -112,7 +112,7 @@ try {
       await page.getByRole('button',{name:'Отправить предложение'}).click();
       await page.getByRole('button',{name:'Документы и полисы'}).click();
       await page.getByRole('button',{name:'Прикрепить образец полиса'}).click();
-      await page.getByRole('button',{name:'Финансы'}).click();
+      await page.getByRole('button',{name:'Финансы',exact:true}).click();
       await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
     }else{
       await page.getByRole('main',{name:'Тестовый кабинет: '+label}).waitFor();
