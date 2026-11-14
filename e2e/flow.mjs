@@ -157,6 +157,18 @@ const k = await mk();
 await login(k, '+79991112233', 'help');
 // «Помогите» — после кода сразу экран SOS
 await k.waitForURL(/#\/sos/);
+// SOS accepts one direction; specializations belong under master.
+await k.locator('.client-sos-choices button').first().waitFor();
+if (await k.locator('.client-sos-choices button').count() !== 3) throw new Error('SOS directions count');
+await k.getByRole('button', {name:/Выездной мастер/}).click();
+await k.locator('.client-sos-master-services').getByRole('button', {name:/Шиномонтаж/}).waitFor();
+if (await k.locator('.client-sos-choices').count()) throw new Error('SOS mixed directions');
+await k.getByRole('button', {name:/Выбрать другое направление/}).click();
+await k.getByRole('button', {name:/Эвакуатор для грузовика/}).click();
+await k.getByRole('button', {name:/Оформить вызов эвакуатора/}).waitFor();
+await k.getByRole('button', {name:/Выбрать другое направление/}).click();
+await k.getByRole('button', {name:/Грузовой сервис/}).click();
+await k.getByRole('button', {name:/Найти грузовой сервис/}).waitFor();
 await k.goto(BASE + '/#/');
 await k.getByText('Что случилось?').first().waitFor();
 await assertDashboardTheme(k, 'client');
