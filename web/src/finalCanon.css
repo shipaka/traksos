@@ -1244,3 +1244,40 @@
   animation:tracksosLineProgress 1.65s ease-in-out infinite}
 @keyframes tracksosLineProgress{from{left:-45%}to{left:105%}}
 @media(prefers-reduced-motion:reduce){.traksos-start-loading-line:after{animation:none;left:28%}}
+
+
+/* One explicit first registration choice, without a fifth partner role or
+   customer roles inside the partner form. Shared by desktop and Android WebView. */
+.guest-app .guest-signup-kind {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1.55fr);
+  gap:8px;
+  margin-bottom:12px;
+  min-width:0;
+}
+.guest-app .guest-signup-kind a {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:46px;
+  padding:9px 11px;
+  border:1px solid #2c6786;
+  border-radius:12px;
+  background:linear-gradient(125deg,#09253c,#0b314a);
+  color:#d5eaf5;
+  font-size:12px;
+  font-weight:850;
+  text-decoration:none;
+  text-align:center;
+  line-height:1.35;
+}
+.guest-app .guest-signup-kind a[aria-current="page"] {
+  background:linear-gradient(125deg,#0d6079,#0b3b62);
+  border-color:#56ddec;
+  color:#fff;
+  box-shadow:inset 0 0 0 1px #36d8ee25,0 0 15px #0bd8ea25;
+}
+.guest-app .guest-signup-kind a:focus-visible {
+  outline:3px solid #66ecff;
+  outline-offset:3px;
+}
