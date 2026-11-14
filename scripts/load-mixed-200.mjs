@@ -227,7 +227,11 @@ async function insuranceFlow(){
    brand:'Scania',model:'R520',year:2019,plate:'В'+String(100+i)+'ВВ78'
   });
   const truck={brand:'Scania',model:'R520',year:'2019',plate:'В'+String(100+i)+'ВВ78',
-   vin:'YS2R4X20001234567',category:'N3',bodyType:'Тягач'};
+   vin:'YS2R4X20001234567',category:'N3',bodyType:'Седельный тягач',
+   chassisNumber:'CH-12345',engineNumber:'DC13-9876',enginePower:'520',
+   maximumMass:'19000',emptyMass:'8600',registrationCertificate:'78AB012345',
+   registrationRegion:'Санкт-Петербург',trailerPlate:'В888ВВ78',
+   usage:'Междугородные грузовые перевозки'};
   const result=await request(client,'POST','/api/vehicle-service-requests',{
    vehicleId:vehicle.id,kind:'insurance',comment:'Тестовый запрос '+i,
    insurance:{agentId:agent.id,consentToPartner:true,
