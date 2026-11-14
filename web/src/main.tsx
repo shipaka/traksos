@@ -3,7 +3,7 @@ import './fullRolePreview.css';
 import './cabinetPremium.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
-import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
+import { get, post, getToken, connectWs, disconnectWs, API_URL, onEvent, ApiError } from './api.ts';
 import { MeCtx, ToastProvider, useRoute, useToast, type Me } from './ui.tsx';
 import { native } from './native.ts';
 import { Login } from './screens/login.tsx';
@@ -126,8 +126,10 @@ function App() {
     if (m === 'client' || m === 'performer' || m === 'admin' || m === 'moderator' || m === 'service' || m === 'insurer' || m === 'inspection') setMode(m);
     location.replace('#/' + (m === 'performer' ? 'work' : m === 'admin' ? 'admin' : m === 'moderator' ? 'moderation' : m === 'service' ? 'base' : m === 'insurer' ? 'insurance' : m === 'inspection' ? 'inspections' : ''));
   }, [route.join('/')]); // eslint-disable-line
+  const adminPreviewOpen = !!me?.roles.includes('admin') && route[0] === 'admin' && route[1] === 'test-center';
   useEffect(() => {
     if (!ready) return; // Keep the native token until the initial auth check finishes.
+    if (adminPreviewOpen) { disconnectWs(); return; } // Synthetic roles must not receive real events or push registration.
     if (!me) {
       // Logout/revoked session must also clear the token held by the Android native bridge.
       native.setSession(API_URL || location.origin, null);
@@ -136,7 +138,7 @@ function App() {
     connectWs();
     native.setSession(API_URL || location.origin, getToken());
     native.registerPush((token) => post('/api/me/push-token', { provider: 'rustore', token }));
-  }, [ready, me?.id]); // eslint-disable-line
+  }, [ready, me?.id, adminPreviewOpen]); // eslint-disable-line
   const modeRef = useRef(mode);
   modeRef.current = mode;
   useEffect(() => onEvent((e) => {
