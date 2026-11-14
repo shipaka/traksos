@@ -61,6 +61,14 @@ try {
       await page.getByRole('button',{name:'Готовы принять'}).first().click();
       await page.getByRole('button',{name:'Отправить клиенту'}).click();
       await page.locator('.service-preview-admin-bar a[href="#/admin/test-center"]').click();
+    }else if(id==='insurer'){
+      await page.getByRole('main',{name:'Тестовый кабинет: Страховой партнёр'}).waitFor();
+      await page.getByRole('button',{name:'Принять в работу'}).click();
+      await page.getByRole('button',{name:'Отправить предложение'}).click();
+      await page.getByRole('button',{name:'Документы и полисы'}).click();
+      await page.getByRole('button',{name:'Прикрепить образец полиса'}).click();
+      await page.getByRole('button',{name:'Финансы'}).click();
+      await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
     }else{
       await page.getByRole('main',{name:'Тестовый кабинет: '+label}).waitFor();
       // Other roles remain in existing isolated demo until their full real-cabinet upgrade.
