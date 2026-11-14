@@ -13,7 +13,7 @@ import type { Db, Queryable } from '../db/index.ts';
 import type { SettingsService } from '../services/settings.ts';
 import type { Notifier } from '../services/notify.ts';
 import type { OrdersService, PaymentHooks } from '../services/orders.ts';
-import type { PaymentProvider, ProviderStatus } from './provider.ts';
+import type { CreatePaymentInput, PaymentProvider, ProviderStatus } from './provider.ts';
 import { HttpError, bad, notFound, type AuthUser } from '../http/router.ts';
 import { cancelSplit, commissionPct, pct, split, type CancelStage } from '../domain/money.ts';
 import { agentReceipt } from './yookassa.ts';
@@ -57,8 +57,15 @@ export class PaymentsService implements PaymentHooks {
     // при списании берём фактическую сумму, остаток вернётся клиенту сам.
     const d = await this.settings.get('dispatch');
     const ceil = roundTo((order.estimate.callOut as number) * d.offerCeil, 5_000);
-    const pay = await this.createProviderPayment(this.db, order, 'call_out', ceil, false);
-    return { holdRequired: true, confirmationUrl: pay.confirmation_url };
+    await this.prepareCallOutPayment(order, ceil);
+    await this.processCallOutPaymentForOrder(order.id);
+    const pay = await this.db.one<{ confirmation_url: string | null }>(
+      "select confirmation_url from payments where order_id=$1 and kind='call_out'", [order.id]);
+    const current = await this.db.one<{status:string}>(
+      'select status from orders where id=$1', [order.id]);
+    // A late HTTP reply must NOT redirect a cancelled SOS into payment.
+    return { holdRequired: true,
+      confirmationUrl: current?.status === 'cancelled' ? undefined : pay?.confirmation_url ?? undefined };
   }
 
   async onConfirmed(order: any, q: Queryable) {
@@ -96,132 +103,747 @@ export class PaymentsService implements PaymentHooks {
     // online: выезд уже заморожен, работу списываем сразу (скидка сначала уменьшает оплату работы)
     const workTotal = m.work + pct(m.work, Number(order.client_fee_pct));
     if (m.work > 0 && workTotal - Math.min(m.discount, workTotal) > 0) {
-      const p = await this.createProviderPayment(q, order, 'work', m.work, true, Math.min(m.discount, workTotal));
-      await this.notifier.notify([order.client_id, order.created_by], { type: 'payment', orderId: order.id, url: p.confirmation_url },
-        { kind: 'normal', title: 'Оплатите работу', body: `Заявка №${order.number}: ${rub(p.total)}`, data: { orderId: order.id } });
+      // The bank call happens only AFTER this order transaction commits.
+      await this.prepareWorkPayment(order, q, m.work, Math.min(m.discount, workTotal));
     } else {
-      await this.finalizeOnline(order.id, q);
+      // Save the capture intent in the same transaction as client confirmation.
+      // Actual bank IO must happen only after the order transaction commits.
+      await this.prepareOnlineSettlement(order.id, q);
     }
   }
 
+  /** Build a cancellation bank plan inside the order's transaction. No IO. */
   async onCancelled(order: any, stage: string, q: Queryable) {
     if (order.payment_method !== 'online') return;
-    const pay = await q.one(`select * from payments where order_id=$1 and kind='call_out' and status in ('pending','held')`, [order.id]);
+    const pay = await q.one<any>(
+      `select * from payments where order_id=$1 and kind='call_out'
+         and status in ('created','pending','held') for update`, [order.id]);
     if (!pay) return;
-    if (pay.status === 'pending') {
-      await this.provider.cancel(pay.provider_payment_id).catch(() => {});
-      await q.query(`update payments set status='cancelled', updated_at=now() where id=$1`, [pay.id]);
+    if (!pay.provider_payment_id) {
+      // A cancelled request that has NEVER reached the bank must not be sent
+      // later by the periodic work-payment creation worker. A request that
+      // has already been sent may have created real bank money; leave its
+      // immutable key intact for safe reconciliation and deferred cancellation.
+      const creation = await q.one<any>(
+        'select * from payment_create_intents where payment_id=$1 for update', [pay.id]);
+      if (creation && creation.status === 'prepared' && !creation.first_sent_at) {
+        await q.query(
+          "update payment_create_intents set status='abandoned',updated_at=now() where id=$1",
+          [creation.id]);
+        await q.query(
+          "update payments set status='cancelled',updated_at=now() where id=$1",
+          [pay.id]);
+      }
       return;
     }
-    const scale = (await this.settings.get('cancel')).scale;
-    const base: number = order.call_out_amount ?? order.estimate.callOut;
-    const c = cancelSplit(scale, stage as CancelStage, base, pct(base, Number(order.client_fee_pct)));
-    const keep = c.toPerformer + c.platformKeeps;
-    c.refund = pay.total - keep; // замороженный потолок минус удержанное
-    if (keep === 0) {
-      await this.provider.cancel(pay.provider_payment_id);
-      await q.query(`update payments set status='cancelled', updated_at=now() where id=$1`, [pay.id]);
-      return;
+    if (pay.status === 'created') return; // bank binding still pending
+    if (await q.one('select id from payment_cancel_intents where order_id=$1', [order.id]))
+      return; // repeated reconciliation must never schedule two bank actions
+
+
+    let toPerformer = 0, platformKeeps = 0, commission = 0, keep = 0;
+    // A not-yet-held payment can only be cancelled, never captured.
+    if (pay.status === 'held') {
+      const scale = (await this.settings.get('cancel')).scale;
+      const base: number = order.call_out_amount ?? order.estimate.callOut;
+      const amounts = cancelSplit(scale, stage as CancelStage, base,
+        pct(base, Number(order.client_fee_pct)));
+      toPerformer = amounts.toPerformer;
+      platformKeeps = amounts.platformKeeps;
+      keep = toPerformer + platformKeeps;
+      if (keep > 0) {
+        if (!order.performer_id) throw new Error('Cannot charge cancellation with no performer');
+        const fees = await this.settings.get('fees');
+        const perf = await q.one<{ is_priority: boolean }>(
+          'select is_priority from performer_profiles where user_id=$1', [order.performer_id]);
+        commission = pct(toPerformer,
+          commissionPct(fees, { isPriority: !!perf?.is_priority,
+            overridePct: order.commission_pct_override == null ? null : Number(order.commission_pct_override) }));
+      }
     }
-    await this.provider.capture(pay.provider_payment_id, keep);
-    await q.query(`update payments set status=$2, refunded_amount=$3, updated_at=now() where id=$1`,
-      [pay.id, c.refund > 0 ? 'partially_refunded' : 'captured', c.refund]);
-    const fees = await this.settings.get('fees');
-    const perf = await q.one<{ is_priority: boolean }>('select is_priority from performer_profiles where user_id=$1', [order.performer_id]);
-    const commission = pct(c.toPerformer, commissionPct(fees, { isPriority: !!perf?.is_priority, overridePct: order.commission_pct_override == null ? null : Number(order.commission_pct_override) }));
-    await this.ledger(q, order.id, pay.id, [
-      { account: 'client', amount: -keep, kind: 'payment', note: `Отмена (${stage}): удержано ${rub(keep)}, возврат ${rub(c.refund)}` },
-      { account: 'performer', performerId: order.performer_id, amount: c.toPerformer - commission, kind: 'earning' },
-      { account: 'platform', amount: c.platformKeeps + commission, kind: 'fee' },
-    ]);
-    if (c.toPerformer > 0) {
-      await q.query(`insert into payouts(order_id, performer_id, amount, commission, provider) values ($1,$2,$3,$4,$5)`,
-        [order.id, order.performer_id, c.toPerformer - commission, commission, this.provider.name]);
+    if (keep < 0 || keep > pay.total) throw new Error('Cancellation exceeds held amount');
+    await q.query(
+      `insert into payment_cancel_intents(
+         order_id,payment_id,provider_payment_id,action,stage,amount_to_capture,
+         refunded_amount,to_performer,platform_keeps,commission)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+      [order.id, pay.id, pay.provider_payment_id, keep > 0 ? 'capture' : 'cancel',
+        stage, keep, keep > 0 ? pay.total - keep : 0, toPerformer, platformKeeps, commission]);
+  }
+
+  /** Only claim a durable, never-sent cancellation intent for bank IO. */
+  async processCancellationForOrder(orderId: string): Promise<string | null> {
+    const intent = await this.db.tx(async q => {
+      const row = await q.one<any>(
+        "select * from payment_cancel_intents where order_id=$1 and status='prepared' for update",
+        [orderId]);
+      if (!row) return null;
+      await q.query(
+        `update payment_cancel_intents set status='sending',attempts=attempts+1,
+          attempted_at=now(),updated_at=now() where id=$1`, [row.id]);
+      return row;
+    });
+    if (!intent) return null;
+    try {
+      const response = intent.action === 'capture'
+        ? await this.provider.capture(intent.provider_payment_id, intent.amount_to_capture)
+        : await this.provider.cancel(intent.provider_payment_id);
+      const expectedStatus = intent.action === 'capture' ? 'captured' : 'cancelled';
+      if (response.status !== expectedStatus) {
+        await this.flagCancellationForReview(intent.id, `bank action response: ${response.status}`);
+        return 'needs_review';
+      }
+      const verified = await this.provider.getPayment(intent.provider_payment_id);
+      if (verified.status !== expectedStatus ||
+        (intent.action === 'capture' && verified.total !== intent.amount_to_capture)) {
+        await this.flagCancellationForReview(intent.id,
+          `bank amount/status: ${verified.status}/${verified.total}`);
+        return 'needs_review';
+      }
+      await this.settleCancellationIntent(intent.id);
+      return 'settled';
+    } catch (error) {
+      // The bank may have completed the operation: do not auto-resend.
+      await this.flagCancellationForReview(intent.id, (error as Error).message);
+      return 'needs_review';
     }
+  }
+
+  private async flagCancellationForReview(intentId: string, reason: string) {
+    await this.db.query(
+      `update payment_cancel_intents set status='needs_review', last_error=$2,
+          checked_at=now(),updated_at=now() where id=$1 and status<>'settled'`,
+      [intentId, reason.slice(0, 500)]);
+  }
+
+  /** Provider GET only; this endpoint NEVER sends a second cancel/capture. */
+  async reconcileCancellation(intentId: string) {
+    const intent = await this.db.one<any>(
+      'select * from payment_cancel_intents where id=$1', [intentId]);
+    if (!intent) throw notFound('Отмена платежа не найдена');
+    if (intent.status === 'settled') return 'settled';
+    if (intent.status === 'prepared') return 'prepared';
+    try {
+      const verified = await this.provider.getPayment(intent.provider_payment_id);
+      const expectedStatus = intent.action === 'capture' ? 'captured' : 'cancelled';
+      if (verified.status !== expectedStatus ||
+        (intent.action === 'capture' && verified.total !== intent.amount_to_capture)) {
+        await this.flagCancellationForReview(intent.id,
+          `reconciliation: status=${verified.status}, total=${verified.total}`);
+        return 'needs_review';
+      }
+      await this.settleCancellationIntent(intent.id);
+      return 'settled';
+    } catch (error) {
+      await this.flagCancellationForReview(intent.id, (error as Error).message);
+      return 'needs_review';
+    }
+  }
+
+  /** Restart-safe; unsent actions may run once, uncertain actions use GET only. */
+  async reconcileCancellations(limit = 40) {
+    const items = await this.db.query<{ id: string; order_id: string; status: string }>(
+      `select id,order_id,status from payment_cancel_intents
+         where status='prepared' or
+           (status in ('sending','needs_review') and
+             (checked_at is null or checked_at < now() - interval '60 seconds'))
+         order by case when status='prepared' then 0 else 1 end,
+                  coalesce(checked_at,created_at) limit $1`,
+      [Math.max(1, Math.min(100, limit))]);
+    const results = [];
+    for (const item of items) {
+      try {
+        const status = item.status === 'prepared'
+          ? await this.processCancellationForOrder(item.order_id)
+          : await this.reconcileCancellation(item.id);
+        results.push({ id: item.id, status: status ?? 'claimed_elsewhere' });
+      } catch (error) {
+        console.error('[cancel-reconciliation]', item.id, error);
+        results.push({ id: item.id, status: 'needs_review' });
+      }
+    }
+    return results;
+  }
+
+  /** Exactly-once local accounting after confirmed bank cancellation/capture. */
+  private async settleCancellationIntent(intentId: string) {
+    await this.db.tx(async q => {
+      const intent = await q.one<any>(
+        'select * from payment_cancel_intents where id=$1 for update', [intentId]);
+      if (!intent || intent.status === 'settled') return;
+      if (!['sending','needs_review'].includes(intent.status))
+        throw new Error('Cancellation not submitted to provider');
+      const pay = await q.one<any>(
+        'select * from payments where id=$1 for update', [intent.payment_id]);
+      if (!pay || pay.order_id !== intent.order_id || pay.kind !== 'call_out' ||
+        !['pending','held'].includes(pay.status))
+        throw new Error('Payment state changed before cancellation settlement');
+      if (intent.action === 'cancel') {
+        await q.query(
+          `update payments set status='cancelled', updated_at=now() where id=$1`,
+          [pay.id]);
+      } else {
+        if (pay.status !== 'held') throw new Error('Cannot capture unheld payment');
+        const order = (await q.one<any>('select * from orders where id=$1', [intent.order_id]))!;
+        await q.query(
+          `update payments set status=$2,refunded_amount=$3,updated_at=now() where id=$1`,
+          [pay.id, intent.refunded_amount > 0 ? 'partially_refunded' : 'captured',
+            intent.refunded_amount]);
+        await this.ledger(q, intent.order_id, pay.id, [
+          { account: 'client', amount: -intent.amount_to_capture, kind: 'payment',
+            note: `Отмена (${intent.stage}): удержано ${rub(intent.amount_to_capture)},
+              возврат ${rub(intent.refunded_amount)}` },
+          { account: 'performer', performerId: order.performer_id,
+            amount: intent.to_performer - intent.commission, kind: 'earning' },
+          { account: 'platform', amount: intent.platform_keeps + intent.commission, kind: 'fee' },
+        ]);
+        if (intent.to_performer > 0) {
+          await q.query(
+            `insert into payouts(order_id,performer_id,amount,commission,provider)
+               values ($1,$2,$3,$4,$5)`,
+            [intent.order_id, order.performer_id,
+              intent.to_performer - intent.commission, intent.commission, this.provider.name]);
+        }
+      }
+      await q.query(
+        `update payment_cancel_intents set status='settled',settled_at=now(),
+           last_error=null,checked_at=now(),updated_at=now() where id=$1`, [intent.id]);
+    });
   }
 
   // Платежи ---------------------------------------------------------------
 
-  private async createProviderPayment(q: Queryable, order: any, kind: 'call_out' | 'work', amount: number, capture: boolean, discount = 0) {
-    const p = await this.settings.get('payments');
+  /** Persist call-out hold BEFORE contacting the bank; preserving original price. */
+  private async prepareCallOutPayment(order: any, amount: number) {
+    return this.db.tx(async q => {
+      // Serialize a hold being prepared against an immediate SOS cancellation.
+      // If the customer already cancelled, never create an external request.
+      const active = await q.one<{status:string}>(
+        'select status from orders where id=$1 for update', [order.id]);
+      if (active?.status !== 'searching') return null;
+      const present = await q.one<{id:string}>(
+        "select id from payments where order_id=$1 and kind='call_out' for update", [order.id]);
+      if (present) return present;
+      const cfg = await this.settings.get('payments');
+      const fee = pct(amount,Number(order.client_fee_pct));
+      const total = amount + fee;
+      if (!Number.isInteger(total) || total<=0) throw new Error('Invalid call-out hold');
+      const key=`${order.id}:call_out:1`;
+      const pay = await q.one<{id:string}>(
+        `insert into payments(order_id,kind,method,amount,client_fee,total,provider,idempotency_key)
+         values($1,'call_out',$2,$3,$4,$5,$6,$7) returning id`,
+        [order.id,cfg.defaultMethod,amount,fee,total,this.provider.name,key]);
+      if (!pay) throw new Error('Could not persist call-out hold');
+      let receipt:unknown;
+      if (cfg.sendReceipts) {
+        const client = await q.one<{phone:string}>(
+          'select phone from users where id=$1', [order.client_id]);
+        const worker = order.performer_id ? await q.one<{name:string;inn:string}>(
+          'select u.name,p.inn from users u join performer_profiles p on p.user_id=u.id where u.id=$1',
+          [order.performer_id]) : null;
+        receipt=agentReceipt({customerPhone:client!.phone,items:[
+          {description:'Выезд мастера',amount,
+            supplier:worker?.inn?{name:worker.name,inn:worker.inn}:undefined},
+          ...(fee?[{description:'Сервисный сбор TrakSOS',amount:fee}]:[]),
+        ]});
+      }
+      const request:CreatePaymentInput={
+        total,capture:false,method:cfg.defaultMethod,idempotencyKey:key,
+        description:`TrakSOS, заявка №${order.number}: выезд`,
+        returnUrl:`${config.publicUrl}/orders/${order.id}`,
+        metadata:{orderId:order.id,paymentId:pay.id,kind:'call_out'},receipt,
+      };
+      await q.query('insert into payment_create_intents(payment_id,order_id,request) values ($1,$2,$3::jsonb)',
+        [pay.id,order.id,JSON.stringify(request)]);
+      return pay;
+    });
+  }
+
+  /** Called after the intent commit; safe same-key replay on later recovery. */
+  async processCallOutPaymentForOrder(orderId:string) {
+    const pay=await this.db.one<{id:string}>(
+      `select p.id from payments p join payment_create_intents i on i.payment_id=p.id
+        where p.order_id=$1 and p.kind='call_out' and i.status='prepared'`,[orderId]);
+    return pay ? this.sendWorkPayment(pay.id,false) : null;
+  }
+
+  /** Write an immutable request to PostgreSQL while confirming the order. */
+  private async prepareWorkPayment(order: any, q: Queryable, amount: number, discount: number) {
+    const cfg = await this.settings.get('payments');
     const fee = pct(amount, Number(order.client_fee_pct));
     const total = amount + fee - discount;
-    const n = (await q.one<{ c: number }>('select count(*)::int c from payments where order_id=$1 and kind=$2', [order.id, kind]))!.c;
-    const key = `${order.id}:${kind}:${n + 1}`;
-    const row = await q.one(
-      `insert into payments(order_id, kind, method, amount, client_fee, total, provider, idempotency_key)
-       values ($1,$2,$3,$4,$5,$6,$7,$8) returning *`,
-      [order.id, kind, p.defaultMethod, amount, fee, total, this.provider.name, key],
-    );
+    if (!Number.isInteger(total) || total <= 0) throw new Error('Invalid work payment');
+    const previous = await q.one('select id from payments where order_id=$1 and kind=$2', [order.id, 'work']);
+    if (previous) throw new Error('Work payment already exists');
+    const key = `${order.id}:work:1`;
+    const pay = await q.one<{ id: string }>(
+      `insert into payments(order_id,kind,method,amount,client_fee,total,provider,idempotency_key)
+       values ($1,'work',$2,$3,$4,$5,$6,$7) returning id`,
+      [order.id,cfg.defaultMethod,amount,fee,total,this.provider.name,key]);
+    if (!pay) throw new Error('Could not persist payment');
     let receipt: unknown;
-    if (p.sendReceipts) {
-      const client = await q.one<{ phone: string }>('select phone from users where id=$1', [order.client_id]);
-      const perf = order.performer_id
-        ? await q.one<{ name: string; inn: string }>('select u.name, p.inn from users u join performer_profiles p on p.user_id=u.id where u.id=$1', [order.performer_id])
-        : null;
-      receipt = agentReceipt({
-        customerPhone: client!.phone,
-        items: [
-          { description: kind === 'call_out' ? 'Выезд мастера' : 'Работы по заявке', amount, supplier: perf?.inn ? { name: perf.name, inn: perf.inn } : undefined },
-          ...(fee ? [{ description: 'Сервисный сбор TrakSOS', amount: fee }] : []),
-        ],
-      });
+    if (cfg.sendReceipts) {
+      const client = await q.one<{phone:string}>('select phone from users where id=$1', [order.client_id]);
+      const worker = order.performer_id
+        ? await q.one<{name:string;inn:string}>(
+          'select u.name,p.inn from users u join performer_profiles p on p.user_id=u.id where u.id=$1',
+          [order.performer_id]) : null;
+      receipt = agentReceipt({ customerPhone:client!.phone, items:[
+        { description:'Работы по заявке', amount,
+          supplier:worker?.inn ? {name:worker.name,inn:worker.inn} : undefined },
+        ...(fee ? [{description:'Сервисный сбор TrakSOS',amount:fee}]:[]),
+      ]});
     }
-    const r = await this.provider.createPayment({
-      total, capture, method: p.defaultMethod, idempotencyKey: key,
-      description: `TrakSOS, заявка №${order.number}: ${kind === 'call_out' ? 'выезд' : 'работа'}`,
-      returnUrl: `${config.publicUrl}/orders/${order.id}`,
-      metadata: { orderId: order.id, paymentId: row!.id, kind },
-      receipt,
+    const request: CreatePaymentInput = {
+      total,capture:true,method:cfg.defaultMethod,idempotencyKey:key,
+      description:`TrakSOS, заявка №${order.number}: работа`,
+      returnUrl:`${config.publicUrl}/orders/${order.id}`,
+      metadata:{orderId:order.id,paymentId:pay.id,kind:'work'}, receipt,
+    };
+    await q.query(
+      'insert into payment_create_intents(payment_id,order_id,request) values($1,$2,$3::jsonb)',
+      [pay.id,order.id,JSON.stringify(request)]);
+  }
+
+  /** Immutable key/payload may be replayed only within YooKassa's 24h window. */
+  private async claimWorkCreation(paymentId: string, recovery: boolean) {
+    return this.db.tx(async q => {
+      const intent = await q.one<any>(
+        'select * from payment_create_intents where payment_id=$1 for update', [paymentId]);
+      if (!intent || intent.status === 'ready' || intent.status === 'abandoned') return null;
+      if (intent.first_sent_at) {
+        if (!recovery) return null;
+        const check = await q.one<{safe:boolean;cool:boolean}>(
+          `select first_sent_at > now() - interval '23 hours' as safe,
+                  last_attempt_at < now() - interval '60 seconds' as cool
+             from payment_create_intents where id=$1`, [intent.id]);
+        if (!check?.safe) {
+          await q.query(
+            "update payment_create_intents set status='needs_review',last_error='Replay window expired; bank verification required',checked_at=now() where id=$1",
+            [intent.id]);
+          return null;
+        }
+        if (!check.cool) return null;
+      }
+      await q.query(
+        `update payment_create_intents set status='sending',attempts=attempts+1,
+          first_sent_at=coalesce(first_sent_at,now()),last_attempt_at=now(),
+          updated_at=now() where id=$1`, [intent.id]);
+      return intent;
     });
-    return q.one(
-      `update payments set provider_payment_id=$2, status=$3, confirmation_url=$4, updated_at=now() where id=$1 returning *`,
-      [row!.id, r.id, STATUS_MAP[r.status] === 'created' ? 'pending' : STATUS_MAP[r.status], r.confirmationUrl],
-    ) as Promise<any>;
+  }
+
+  private async markWorkCreationUnknown(id: string, error: unknown) {
+    await this.db.query(
+      `update payment_create_intents set status='needs_review',last_error=$2,
+        checked_at=now(),updated_at=now() where payment_id=$1 and status<>'ready'`,
+      [id,String(error instanceof Error ? error.message : error).slice(0,400)]);
+  }
+
+  /** Bind a verified external payment, including a webhook that beat the response. */
+  private async bindWorkPayment(paymentId: string, result: {
+    id:string; status:ProviderStatus; confirmationUrl:string|null;
+  }) {
+    return this.db.tx(async q => {
+      const intent = await q.one<any>(
+        'select * from payment_create_intents where payment_id=$1 for update', [paymentId]);
+      if (!intent) throw new Error('Missing work payment creation intent');
+      const pay = await q.one<any>('select * from payments where id=$1 for update', [paymentId]);
+      if (!pay || pay.kind!==intent.request.metadata.kind || pay.order_id!==intent.order_id ||
+          pay.idempotency_key!==intent.request.idempotencyKey || pay.total!==intent.request.total)
+        throw new Error('Work payment and intent disagree');
+      if (pay.provider_payment_id && pay.provider_payment_id!==result.id)
+        throw new Error('Conflicting external payment id');
+      if (intent.status==='abandoned') throw new Error('Abandoned bank request cannot be rebound');
+      if (intent.status==='ready') return {changed:false,pay};
+      const updated = await q.one<any>(
+        `update payments set provider_payment_id=$2,
+          confirmation_url=coalesce(confirmation_url,$3),
+          status=case when status='created' then 'pending' else status end,
+          updated_at=now() where id=$1 returning *`,
+        [paymentId,result.id,result.confirmationUrl]);
+      await q.query(
+        "update payment_create_intents set status='ready',completed_at=now(),last_error=null,checked_at=now(),updated_at=now() where id=$1",
+        [intent.id]);
+      return {changed:true,pay:updated};
+    });
+  }
+
+  private async sendWorkPayment(paymentId: string, recovery: boolean) {
+    const intent = await this.claimWorkCreation(paymentId,recovery);
+    if (!intent) return 'not_claimed';
+    try {
+      const req = intent.request as CreatePaymentInput;
+      const response = await this.provider.createPayment(req);
+      const verify = await this.provider.getPayment(response.id);
+      if (verify.id!==response.id || verify.total!==req.total ||
+          (verify.metadata && (verify.metadata.paymentId!==paymentId ||
+            verify.metadata.orderId!==intent.order_id || verify.metadata.kind!==req.metadata.kind)))
+        throw new Error('Bank creation response does not match saved request');
+      const result = await this.bindWorkPayment(paymentId,response);
+      if (result.changed) {
+        const o = await this.db.one<any>(
+          'select id,number,client_id,created_by,status from orders where id=$1', [intent.order_id]);
+        // Work payments always need a payment notification. The first call-out
+        // URL is returned to the caller; only late recovery needs push.
+        const needsPush = o?.status !== 'cancelled' &&
+          (req.metadata.kind === 'work' || intent.attempts > 1);
+        if (o) this.notifier.live([o.client_id,o.created_by],
+          {type:'payment',orderId:o.id});
+        if (o && needsPush) await this.notifier.notify([o.client_id,o.created_by],
+          {type:'payment',orderId:o.id,url:response.confirmationUrl},
+          {kind:'normal',title:req.metadata.kind==='work' ? 'Оплатите работу' : 'Подтвердите оплату выезда',
+            body:`Заявка №${o.number}: ${rub(req.total)}`,data:{orderId:o.id}})
+          .catch(e=>console.error('[payment-create-push]',e));
+      }
+      if (verify.status!=='pending') await this.sync(result.pay,STATUS_MAP[verify.status]);
+      // The bank's create reply may arrive AFTER the customer has cancelled.
+      // Do not dispatch; schedule a distinct cancellation and verify the bank.
+      if (req.metadata.kind === 'call_out')
+        await this.finishCancelledHold(intent.order_id);
+      return 'ready';
+    } catch (error) {
+      await this.markWorkCreationUnknown(paymentId,error);
+      return 'needs_review';
+    }
+  }
+
+  /** Called only AFTER the order transaction has committed. */
+  async processWorkPaymentForOrder(orderId: string) {
+    const pay = await this.db.one<{id:string}>(
+      `select p.id from payments p join payment_create_intents i on i.payment_id=p.id
+        where p.order_id=$1 and p.kind='work' and i.status='prepared'`, [orderId]);
+    return pay ? this.sendWorkPayment(pay.id,false) : null;
+  }
+
+  async reconcileWorkPayment(paymentId: string) {
+    const intent = await this.db.one<any>(
+      'select * from payment_create_intents where payment_id=$1', [paymentId]);
+    if (!intent) throw notFound('Запрос создания платежа не найден');
+    if (intent.status==='abandoned') return 'abandoned';
+    if (intent.status==='ready') return 'ready';
+    return this.sendWorkPayment(paymentId,true);
+  }
+
+  async reconcileWorkCreations(limit=40) {
+    const queue = await this.db.query<{payment_id:string;status:string}>(
+      `select payment_id,status from payment_create_intents where status='prepared'
+        or (status in ('sending','needs_review') and
+            (checked_at is null or checked_at < now()-interval '60 seconds'))
+        order by case when status='prepared' then 0 else 1 end,
+                 coalesce(checked_at,created_at) limit $1`,
+      [Math.max(1,Math.min(100,limit))]);
+    const results = [];
+    for (const item of queue) {
+      try { results.push({paymentId:item.payment_id,
+        status:await this.sendWorkPayment(item.payment_id,item.status!=='prepared')}); }
+      catch (e) { console.error('[work-payment-create]',item.payment_id,e); }
+    }
+    return results;
+  }
+
+  /** A customer can cancel a SOS while the provider's original create POST is
+   *  still in flight. Once the original hold becomes identifiable, plan and
+   *  execute the cancellation exactly once. Never reissue an uncertain cancel.
+   */
+  async finishCancelledHold(orderId: string): Promise<'skipped' | 'deferred' | 'cancelled'> {
+    const prepared = await this.db.tx(async q => {
+      const order = await q.one<any>('select * from orders where id=$1 for update', [orderId]);
+      if (!order || order.status !== 'cancelled') return false;
+      const pay = await q.one<any>(
+        "select * from payments where order_id=$1 and kind='call_out' for update", [orderId]);
+      if (!pay || !['pending','held'].includes(pay.status) || !pay.provider_payment_id)
+        return false;
+      if (await q.one('select id from payment_cancel_intents where order_id=$1', [orderId]))
+        return true;
+      // All search/no_performer/awaiting_owner cancellations are free under
+      // the existing tariff. Never charge an unassigned performer.
+      await this.onCancelled(order, order.cancel_stage ?? 'searching', q);
+      return true;
+    });
+    if (!prepared) return 'skipped';
+    const result = await this.processCancellationForOrder(orderId);
+    return result === 'needs_review' ? 'deferred' : 'cancelled';
+  }
+
+  /** Restart-safe scan closes the gap if the process dies after bank binding
+   *  but before the deferred cancellation was durably created.
+   */
+  async reconcileCancelledHolds(limit = 40) {
+    const items = await this.db.query<{id:string}>(
+      `select o.id from orders o join payments p on p.order_id=o.id
+         where o.status='cancelled' and p.kind='call_out'
+           and p.status in ('pending','held') and p.provider_payment_id is not null
+           and not exists (select 1 from payment_cancel_intents i where i.order_id=o.id)
+         order by o.cancelled_at limit $1`,
+      [Math.max(1,Math.min(100,limit))]);
+    const result = [];
+    for (const item of items) {
+      try {
+        result.push({orderId:item.id,status:await this.finishCancelledHold(item.id)});
+      } catch (error) {
+        console.error('[cancelled-hold-recovery]',item.id,error);
+        result.push({orderId:item.id,status:'deferred'});
+      }
+    }
+    return result;
   }
 
   /** Уведомление от платёжного сервиса. Статус перепроверяем запросом к сервису. */
   async handleWebhook(body: any) {
     const ev = this.provider.parseWebhook(body);
     if (!ev) throw bad('bad_webhook');
-    const pay = await this.db.one('select * from payments where provider_payment_id=$1', [ev.providerPaymentId]);
-    if (!pay) throw notFound('Платёж не найден');
+    // Even on a successful bank creation, our first HTTP response might have
+    // disappeared before provider_payment_id was saved in PostgreSQL.
     const actual = await this.provider.getPayment(ev.providerPaymentId);
-    return this.sync(pay, STATUS_MAP[actual.status]);
+    let pay = await this.db.one<any>(
+      'select * from payments where provider_payment_id=$1', [ev.providerPaymentId]);
+    if (!pay && ['work','call_out'].includes(actual.metadata?.kind ?? '') && actual.metadata?.paymentId) {
+      const paymentId = actual.metadata.paymentId;
+      const intent = await this.db.one<any>(
+        'select * from payment_create_intents where payment_id=$1', [paymentId]);
+      if (!intent || !intent.first_sent_at ||
+          intent.order_id !== actual.metadata.orderId ||
+          intent.request.metadata.paymentId !== paymentId ||
+          intent.request.metadata.kind !== actual.metadata.kind ||
+          intent.request.total !== actual.total)
+        throw notFound('Банковский платёж не совпадает с сохранённым намерением');
+      const result = await this.bindWorkPayment(paymentId, {
+        id:actual.id,status:actual.status,confirmationUrl:actual.confirmationUrl ?? null,
+      });
+      pay = result.pay;
+      if (result.changed) {
+        const order = await this.db.one<any>(
+          'select id,number,client_id,created_by,status from orders where id=$1', [intent.order_id]);
+        if (order) this.notifier.live([order.client_id,order.created_by],
+          {type:'payment',orderId:order.id});
+        if (order && order.status !== 'cancelled') await this.notifier.notify([order.client_id,order.created_by],
+          {type:'payment',orderId:order.id,url:actual.confirmationUrl ?? null},
+          {kind:'normal',title:intent.request.metadata.kind==='work'
+            ? 'Оплатите работу' : 'Подтвердите оплату выезда',
+            body:`Заявка №${order.number}: ${rub(intent.request.total)}`,
+            data:{orderId:order.id}}).catch(e=>console.error('[orphan-payment-notification]',e));
+      }
+    }
+    if (!pay) throw notFound('Платёж не найден');
+    const synced = await this.sync(pay, STATUS_MAP[actual.status]);
+    if (pay.kind === 'call_out') await this.finishCancelledHold(pay.order_id);
+    return synced;
   }
 
   private async sync(pay: any, status: string) {
-    if (pay.status === status) return { changed: false };
-    await this.db.query('update payments set status=$2, updated_at=now() where id=$1', [pay.id, status]);
-    await this.orders.event(this.db, pay.order_id, null, `payment_${pay.kind}_${status}`, { paymentId: pay.id, total: pay.total });
-    if (pay.kind === 'call_out' && status === 'held') {
-      await this.orders.startDispatch(pay.order_id);
-    } else if (pay.kind === 'work' && status === 'captured') {
-      await this.db.tx((q) => this.finalizeOnline(pay.order_id, q));
-    } else if (pay.kind === 'call_out' && (status === 'cancelled' || status === 'failed')) {
-      const o = await this.db.one(`update orders set status='cancelled', cancelled_at=now(), cancel_reason='Оплата выезда не прошла'
-                                    where id=$1 and status='searching' and dispatch_started_at is null returning *`, [pay.order_id]);
-      if (o) await this.notifier.notify([o.client_id, o.created_by], { type: 'order', orderId: o.id, status: 'cancelled' },
-        { kind: 'normal', title: 'Оплата не прошла', body: `Заявка №${o.number} не отправлена исполнителям`, data: { orderId: o.id } });
+    // Webhooks can arrive simultaneously, out of order, or multiple times.
+    // Serialize the status transition AND its accounting under the payment
+    // row lock. In particular, 'captured' must never create two payouts.
+    const changed = await this.db.tx(async q => {
+      const current = await q.one<any>('select * from payments where id=$1 for update', [pay.id]);
+      if (!current) throw notFound('Платёж не найден');
+      if (current.status === status) return { changed: false, dispatch: false, failedOrder: null as any };
+      // A delayed provider poll must not regress settled or refunded money.
+      if (['refunded', 'partially_refunded'].includes(current.status) ||
+          (current.status === 'captured' && status !== 'captured') ||
+          (['failed', 'cancelled'].includes(current.status) && !['failed', 'cancelled'].includes(status)))
+        return { changed: false, dispatch: false, failedOrder: null as any };
+
+      // An independent captured webhook may race our own capture/reconciliation.
+      // Accounting MUST be driven by the durable intent, not by this raw event.
+      if (current.kind === 'call_out' && current.status === 'held' && status === 'captured') {
+        const intent = await q.one<{ id: string }>(
+          "select id from payment_capture_intents where payment_id=$1 and status<>'settled'", [current.id]);
+        if (intent) return { changed: false, dispatch: false, failedOrder: null as any };
+      }
+      if (current.kind === 'call_out' && ['captured','cancelled','failed'].includes(status)) {
+        const cancelIntent = await q.one<{ id: string }>(
+          "select id from payment_cancel_intents where payment_id=$1 and status<>'settled'", [current.id]);
+        if (cancelIntent) return { changed: false, dispatch: false, failedOrder: null as any };
+      }
+      await q.query('update payments set status=$2, updated_at=now() where id=$1', [current.id, status]);
+      await this.orders.event(q, current.order_id, null, `payment_${current.kind}_${status}`,
+        { paymentId: current.id, total: current.total });
+      if (current.kind === 'work' && status === 'captured') {
+        // The work payment has settled, but the held call-out still needs an
+        // external capture. Only persist the intent while holding DB locks.
+        await this.prepareOnlineSettlement(current.order_id, q);
+      }
+      let failedOrder: any = null;
+      if (current.kind === 'call_out' && (status === 'cancelled' || status === 'failed')) {
+        failedOrder = await q.one(
+          `update orders set status='cancelled', cancelled_at=now(), cancel_reason='Оплата выезда не прошла'
+             where id=$1 and status='searching' and dispatch_started_at is null returning *`,
+          [current.order_id]);
+      }
+      return { changed: true, dispatch: current.kind === 'call_out' && status === 'held', failedOrder };
+    });
+
+    // Never start dispatch or push live notifications from a transaction that
+    // might roll back. Only the successful transition performs these effects.
+    if (pay.kind === 'work' && status === 'captured') {
+      // This fast path preserves normal UX; a crashed process is repaired by
+      // the periodic reconciliation worker using the same durable intent.
+      await this.processCaptureForOrder(pay.order_id).catch((e) =>
+        console.error('[capture-fast-path]', e));
     }
-    return { changed: true };
+    if (changed.dispatch) await this.orders.startDispatch(pay.order_id);
+    if (changed.failedOrder) {
+      const o = changed.failedOrder;
+      await this.notifier.notify([o.client_id, o.created_by],
+        { type: 'order', orderId: o.id, status: 'cancelled' },
+        { kind: 'normal', title: 'Оплата не прошла', body: `Заявка №${o.number} не отправлена исполнителям`,
+          data: { orderId: o.id } });
+    }
+    return { changed: changed.changed };
   }
 
-  /** Всё оплачено: списываем замороженный выезд, разносим по счетам, ставим выплату */
+  /** Persist the bank capture plan in the order/webhook transaction, without IO. */
+  private async prepareOnlineSettlement(orderId: string, q: Queryable) {
+    const order = (await q.one<any>('select * from orders where id=$1', [orderId]))!;
+    const callOutPay = await q.one<any>(
+      `select * from payments where order_id=$1 and kind='call_out' and status='held' for update`,
+      [orderId]);
+    if (!callOutPay) {
+      // Payment was either already handled (legacy/zero call-out) or does not
+      // exist. Preserve the historical immediate-accounting case.
+      await this.finalizeOnline(orderId, q);
+      return;
+    }
+    if (!callOutPay.provider_payment_id) throw new Error('Held payment has no provider reference');
+    const workTotal = (order.work_amount ?? 0) + pct(order.work_amount ?? 0, Number(order.client_fee_pct));
+    const discountOnCallOut = Math.max(0, Number(order.discount_amount ?? 0) - workTotal);
+    const actual: number = order.call_out_amount ?? callOutPay.amount;
+    const fee = pct(actual, Number(order.client_fee_pct)) - discountOnCallOut;
+    const total = actual + fee;
+    if (!Number.isInteger(total) || total < 0 || total > callOutPay.total)
+      throw new Error('Invalid frozen payment capture amount');
+    const previous = await q.one<any>(
+      'select * from payment_capture_intents where order_id=$1 for update', [orderId]);
+    if (previous) {
+      if (previous.payment_id !== callOutPay.id || previous.total !== total)
+        throw new Error('Capture intent conflicts with previously committed amount');
+      return;
+    }
+    await q.query(
+      `insert into payment_capture_intents(order_id,payment_id,provider_payment_id,amount,client_fee,total)
+       values ($1,$2,$3,$4,$5,$6)`,
+      [orderId, callOutPay.id, callOutPay.provider_payment_id, actual, fee, total]);
+  }
+
+  /** Claim an unsent intent once, then contact the provider WITHOUT a DB lock. */
+  async processCaptureForOrder(orderId: string): Promise<string | null> {
+    const intent = await this.db.tx(async q => {
+      const row = await q.one<any>(
+        "select * from payment_capture_intents where order_id=$1 and status='prepared' for update",
+        [orderId]);
+      if (!row) return null;
+      await q.query(
+        `update payment_capture_intents set status='sending', attempts=attempts+1,
+         attempted_at=now(), updated_at=now() where id=$1`, [row.id]);
+      return row;
+    });
+    if (!intent) return null;
+    try {
+      const result = await this.provider.capture(intent.provider_payment_id, intent.total);
+      if (result.status !== 'captured') {
+        await this.flagCaptureForReview(intent.id, `capture response: ${result.status}`);
+        return 'needs_review';
+      }
+      const verified = await this.provider.getPayment(intent.provider_payment_id);
+      if (verified.status !== 'captured' || verified.total !== intent.total) {
+        await this.flagCaptureForReview(intent.id,
+          `capture check: status=${verified.status}, total=${verified.total}, expected=${intent.total}`);
+        return 'needs_review';
+      }
+      await this.settleCaptureIntent(intent.id);
+      return 'settled';
+    } catch (error) {
+      // The bank may have captured the money before the response was lost.
+      // NEVER issue a second capture from this branch or on a timer.
+      await this.flagCaptureForReview(intent.id, (error as Error).message);
+      return 'needs_review';
+    }
+  }
+
+  private async flagCaptureForReview(intentId: string, reason: string) {
+    await this.db.query(
+      `update payment_capture_intents set status='needs_review',last_error=$2,
+         checked_at=now(),updated_at=now() where id=$1 and status<>'settled'`,
+      [intentId, reason.slice(0, 500)]);
+  }
+
+  /** Reconciliation NEVER transfers funds: GET provider status, then settle locally. */
+  async reconcileCapture(intentId: string): Promise<string> {
+    const intent = await this.db.one<any>(
+      'select * from payment_capture_intents where id=$1', [intentId]);
+    if (!intent) throw notFound('Запрос списания не найден');
+    if (intent.status === 'settled') return 'settled';
+    if (intent.status === 'prepared') return 'prepared';
+    try {
+      const verified = await this.provider.getPayment(intent.provider_payment_id);
+      if (verified.status !== 'captured' || verified.total !== intent.total) {
+        await this.flagCaptureForReview(intent.id,
+          `bank reconciliation: status=${verified.status}, total=${verified.total}, expected=${intent.total}`);
+        return 'needs_review';
+      }
+      await this.settleCaptureIntent(intent.id);
+      return 'settled';
+    } catch (error) {
+      await this.flagCaptureForReview(intent.id, (error as Error).message);
+      return 'needs_review';
+    }
+  }
+
+  /** Durable worker: prepared operations are sent once; unknown ones only GET. */
+  async reconcileCaptures(limit = 40) {
+    const items = await this.db.query<{ id: string; order_id: string; status: string }>(
+      `select id,order_id,status from payment_capture_intents
+        where status='prepared' or
+          (status in ('sending','needs_review') and
+           (checked_at is null or checked_at < now() - interval '60 seconds'))
+        order by case when status='prepared' then 0 else 1 end,
+                 coalesce(checked_at,created_at) limit $1`,
+      [Math.max(1, Math.min(100, limit))]);
+    const results = [];
+    for (const item of items) {
+      try {
+        const status = item.status === 'prepared'
+          ? await this.processCaptureForOrder(item.order_id)
+          : await this.reconcileCapture(item.id);
+        results.push({ id: item.id, status: status ?? 'claimed_elsewhere' });
+      } catch (error) {
+        console.error('[capture-reconciliation]', item.id, error);
+        results.push({ id: item.id, status: 'needs_review' });
+      }
+    }
+    return results;
+  }
+
+  /** Single atomic accounting transition after verified capture. */
+  private async settleCaptureIntent(intentId: string) {
+    await this.db.tx(async q => {
+      const intent = await q.one<any>(
+        'select * from payment_capture_intents where id=$1 for update', [intentId]);
+      if (!intent || intent.status === 'settled') return;
+      if (!['sending','needs_review'].includes(intent.status))
+        throw new Error('Capture was never submitted');
+      const pay = await q.one<any>('select * from payments where id=$1 for update', [intent.payment_id]);
+      if (!pay || pay.order_id !== intent.order_id || pay.kind !== 'call_out' || pay.status !== 'held')
+        throw new Error('Held call-out state changed before capture accounting');
+      await q.query(
+        `update payments set status='captured',amount=$2,client_fee=$3,total=$4,
+         updated_at=now() where id=$1`,
+        [pay.id, intent.amount, intent.client_fee, intent.total]);
+      await this.finalizeOnline(intent.order_id, q);
+      await q.query(
+        `update payment_capture_intents set status='settled',settled_at=now(),
+         last_error=null,checked_at=now(),updated_at=now() where id=$1`, [intent.id]);
+    });
+  }
+
+  /** Pure database accounting; the provider has already confirmed the capture. */
   private async finalizeOnline(orderId: string, q: Queryable) {
     const order = (await q.one('select * from orders where id=$1', [orderId]))!;
-    const callOutPay = await q.one(`select * from payments where order_id=$1 and kind='call_out' and status='held'`, [orderId]);
-    const m0 = this.orders.money(order);
-    const workTotal = m0.work + pct(m0.work, Number(order.client_fee_pct));
-    const discountOnCallOut = Math.max(0, m0.discount - workTotal);
-    if (callOutPay) {
-      const actual: number = order.call_out_amount ?? callOutPay.amount;
-      const fee = pct(actual, Number(order.client_fee_pct)) - discountOnCallOut;
-      await this.provider.capture(callOutPay.provider_payment_id, actual + fee);
-      // Разморозка лишнего — не возврат: просто списываем меньше, чем было заморожено
-      await q.query(`update payments set status='captured', amount=$2, client_fee=$3, total=$4, updated_at=now() where id=$1`,
-        [callOutPay.id, actual, fee, actual + fee]);
-    }
+    const stillHeld = await q.one(
+      `select id from payments where order_id=$1 and kind='call_out' and status='held'`, [orderId]);
+    if (stillHeld) throw new Error('Cannot book earnings before a held call-out is captured');
     const m = this.orders.money(order);
     const perf = await q.one<{ is_priority: boolean }>('select is_priority from performer_profiles where user_id=$1', [order.performer_id]);
     const fees = await this.settings.get('fees');
@@ -261,6 +883,8 @@ export class PaymentsService implements PaymentHooks {
   // Выплаты и долги -------------------------------------------------------
 
   async runPayouts(admin: AuthUser | null) {
+    // Read a shortlist only. An item in this snapshot is NOT authorization to
+    // send money: another administrator, scheduler or process may claim it.
     const list = await this.db.query(
       `select po.*, p.tax_status, p.inn from payouts po join performer_profiles p on p.user_id = po.performer_id
         where po.status='pending' order by po.created_at limit 100`);
@@ -270,40 +894,85 @@ export class PaymentsService implements PaymentHooks {
         results.push({ id: po.id, status: 'skipped', reason: 'нет статуса самозанятого или ИП' });
         continue;
       }
-      // Списания и удержания больше начислений — сначала гасим долг, выплату не отправляем
-      if ((await this.balance(po.performer_id)).to_pay < po.amount) {
-        results.push({ id: po.id, status: 'skipped', reason: 'есть удержания — баланс меньше выплаты' });
-        continue;
-      }
       if (po.amount === 0) {
-        await this.db.query(`update payouts set status='paid', paid_at=now(), receipt_status='not_required' where id=$1`, [po.id]);
-        results.push({ id: po.id, status: 'paid' });
+        const done = await this.db.one(
+          `update payouts set status='paid', paid_at=now(), receipt_status='not_required'
+             where id=$1 and status='pending' returning id`, [po.id]);
+        if (done) results.push({ id: po.id, status: 'paid' });
         continue;
       }
-      const r = await this.provider.payout({
-        amount: po.amount, idempotencyKey: `payout:${po.id}`,
-        description: `TrakSOS: выплата по заявке`, metadata: { payoutId: po.id, orderId: po.order_id },
-        performer: { id: po.performer_id, taxStatus: po.tax_status, inn: po.inn },
+
+      // Atomic payout reservation. A row lock on the performer serializes
+      // different pending payouts against the same available balance. A payout
+      // in 'processing' reserves its amount until reconciled or paid.
+      const claimed = await this.db.tx(async q => {
+        await q.query('select id from users where id=$1 for update', [po.performer_id]);
+        const current = await q.one<{ id: string; amount: number }>(
+          `select id, amount from payouts where id=$1 and status='pending' for update`, [po.id]);
+        if (!current) return false;
+        const amounts = await q.one<{ available: string; reserved: string }>(
+          `select
+             (select coalesce(sum(amount),0)::text from ledger_entries
+                where account='performer' and performer_id=$1
+                  and kind in ('earning','payout','adjustment','refund_charge','points')) as available,
+             (select coalesce(sum(amount),0)::text from payouts
+                where performer_id=$1 and status='processing') as reserved`,
+          [po.performer_id]);
+        if (BigInt(amounts?.available ?? '0') - BigInt(amounts?.reserved ?? '0') < BigInt(current.amount))
+          return false;
+        await q.query(`update payouts set status='processing' where id=$1 and status='pending'`, [po.id]);
+        return true;
       });
-      if (!r) {
+      if (!claimed) {
+        results.push({ id: po.id, status: 'skipped', reason: 'другая операция уже обрабатывается или не хватает остатка' });
+        continue;
+      }
+
+      // Do not roll this claim back on an UNKNOWN network response. The
+      // provider may have paid already. Re-running payouts must not resend it.
+      let transfer;
+      try {
+        transfer = await this.provider.payout({
+          amount: po.amount, idempotencyKey: `payout:${po.id}`,
+          description: 'TrakSOS: выплата по заявке',
+          metadata: { payoutId: po.id, orderId: po.order_id },
+          performer: { id: po.performer_id, taxStatus: po.tax_status, inn: po.inn },
+        });
+      } catch (error) {
+        await this.db.query(
+          `insert into audit_log(actor_id, action, target, data)
+            values ($1,'payout.unknown_status',$2,$3)`,
+          [admin?.id ?? null, po.id, { action: 'manual_provider_reconciliation_required' }]);
+        throw error;
+      }
+      if (!transfer) {
+        // No provider was configured, so no external money movement occurred.
+        await this.db.query(
+          `update payouts set status='pending' where id=$1 and status='processing'`, [po.id]);
         results.push({ id: po.id, status: 'manual' });
         continue;
       }
-      await this.db.query(
-        `update payouts set status=$2, provider_payout_id=$3, paid_at = case when $2='paid' then now() end,
-           receipt_status = $4 where id=$1`,
-        [po.id, r.status === 'paid' ? 'paid' : r.status === 'failed' ? 'failed' : 'processing', r.id,
-          po.tax_status === 'self_employed' ? (r.receiptIssued ? 'issued' : 'pending') : 'not_required'],
-      );
-      if (r.status === 'paid') {
-        await this.ledger(this.db, po.order_id, null, [
-          { account: 'performer', performerId: po.performer_id, amount: -po.amount, kind: 'payout' },
-          { account: 'payout', amount: po.amount, kind: 'payout' },
-        ]);
-      }
-      results.push({ id: po.id, status: r.status });
+      await this.db.tx(async q => {
+        const updated = await q.one(
+          `update payouts set status=$2, provider_payout_id=$3,
+              paid_at=case when $2='paid' then now() else null end,
+              receipt_status=$4 where id=$1 and status='processing' returning id`,
+          [po.id, transfer.status === 'paid' ? 'paid' : transfer.status === 'failed' ? 'failed' : 'processing',
+            transfer.id, po.tax_status === 'self_employed'
+              ? (transfer.receiptIssued ? 'issued' : 'pending') : 'not_required']);
+        if (!updated) throw new Error('Payout claim was lost before provider reconciliation');
+        if (transfer.status === 'paid') {
+          await this.ledger(q, po.order_id, null, [
+            { account: 'performer', performerId: po.performer_id, amount: -po.amount, kind: 'payout' },
+            { account: 'payout', amount: po.amount, kind: 'payout' },
+          ]);
+        }
+      });
+      results.push({ id: po.id, status: transfer.status });
     }
-    if (admin) await this.db.query('insert into audit_log(actor_id, action, data) values ($1,$2,$3)', [admin.id, 'payouts.run', { count: results.length }]);
+    if (admin) await this.db.query(
+      'insert into audit_log(actor_id, action, data) values ($1,$2,$3)',
+      [admin.id, 'payouts.run', { count: results.length }]);
     return results;
   }
 
@@ -362,8 +1031,11 @@ export class PaymentsService implements PaymentHooks {
   async forOrder(user: AuthUser, orderId: string) {
     await this.orders.mustSee(user, orderId);
     return this.db.query(
-      `select id, kind, method, amount, client_fee, total, status, confirmation_url, refunded_amount, created_at
-         from payments where order_id=$1 order by created_at`, [orderId]);
+      `select p.id,p.kind,p.method,p.amount,p.client_fee,p.total,p.status,
+              case when o.status='cancelled' then null else p.confirmation_url end as confirmation_url,
+              p.refunded_amount,p.created_at
+         from payments p join orders o on o.id=p.order_id
+         where p.order_id=$1 order by p.created_at`, [orderId]);
   }
 
   async ledger(q: Queryable, orderId: string | null, paymentId: string | null,

@@ -16,28 +16,45 @@ const KIND_NAME: Record<string, string> = { dispute: 'Спор', appeal: 'Обж
 export class ModerationService {
   constructor(private db: Db, private notifier: Notifier, private reviews: ReviewsService, private now: () => Date, private sms?: SmsProvider) {}
 
-  private async staff() {
+  private async staff(linkedSupportTicket = false) {
+    // A support-linked dispute belongs to the moderator during the first
+    // 60 minutes. Admin receives the separate one-time overdue alert.
+    if (linkedSupportTicket) {
+      const moderators = await this.db.query<{ id: string }>(
+        `select id from users where roles && '{moderator}'::text[]`);
+      if (moderators.length) return moderators.map(r => r.id);
+      return (await this.db.query<{ id: string }>(
+        `select id from users where roles && '{admin}'::text[]`)).map(r => r.id);
+    }
     return (await this.db.query<{ id: string }>(`select id from users where roles && '{admin,moderator}'::text[]`)).map((r) => r.id);
   }
 
   async open(p: { kind: 'dispute' | 'appeal' | 'review'; title: string; text?: string | null; openedBy?: string | null; targetId?: string | null;
     orderId?: string | null; bookingId?: string | null; reviewId?: string | null; ticketId?: string | null; priority?: number }) {
-    // Один открытый случай на предмет — повторный сигнал дописывается к нему
-    const same = await this.db.one<{ id: string }>(
-      `select id from mod_cases where status='open' and kind=$1 and opened_by is not distinct from $2
-         and order_id is not distinct from $3 and booking_id is not distinct from $4 and review_id is not distinct from $5`,
-      [p.kind, p.openedBy ?? null, p.orderId ?? null, p.bookingId ?? null, p.reviewId ?? null]);
-    if (same) {
-      if (p.text) await this.db.query(`update mod_cases set text = coalesce(text || E'\\n— ', '') || $2 where id=$1`, [same.id, p.text]);
-      return same.id;
-    }
-    const c = await this.db.one<{ id: string; number: number }>(
-      `insert into mod_cases(kind, title, text, opened_by, target_id, order_id, booking_id, review_id, ticket_id, priority)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning id, number`,
-      [p.kind, p.title, p.text ?? null, p.openedBy ?? null, p.targetId ?? null, p.orderId ?? null, p.bookingId ?? null, p.reviewId ?? null, p.ticketId ?? null, p.priority ?? 2]);
-    await this.notifier.notify(await this.staff(), { type: 'mod_case', caseId: c!.id },
-      { kind: 'normal', title: `${KIND_NAME[p.kind]} №${c!.number}`, body: p.title, data: { caseId: c!.id } });
-    return c!.id;
+    // The open-case lookup and insert must be atomic. A burst from the same
+    // customer (or duplicate webhook) must not create multiple moderation cases.
+    // Advisory transaction lock works across all Node processes sharing PostgreSQL.
+    const key = JSON.stringify([p.kind,p.openedBy ?? null,p.orderId ?? null,p.bookingId ?? null,p.reviewId ?? null]);
+    const result = await this.db.tx(async q => {
+      await q.query('select pg_advisory_xact_lock(hashtext($1))', ['mod_case:' + key]);
+      const same = await q.one<{ id: string }>(
+        `select id from mod_cases where status='open' and kind=$1 and opened_by is not distinct from $2
+           and order_id is not distinct from $3 and booking_id is not distinct from $4 and review_id is not distinct from $5`,
+        [p.kind, p.openedBy ?? null, p.orderId ?? null, p.bookingId ?? null, p.reviewId ?? null]);
+      if (same) {
+        if (p.text) await q.query(`update mod_cases set text = coalesce(text || E'\\n— ', '') || $2 where id=$1`, [same.id, p.text]);
+        return { id: same.id, number: 0, created: false };
+      }
+      const created = await q.one<{ id: string; number: number }>(
+        `insert into mod_cases(kind, title, text, opened_by, target_id, order_id, booking_id, review_id, ticket_id, priority)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning id, number`,
+        [p.kind, p.title, p.text ?? null, p.openedBy ?? null, p.targetId ?? null, p.orderId ?? null, p.bookingId ?? null, p.reviewId ?? null, p.ticketId ?? null, p.priority ?? 2]);
+      return { id: created!.id, number: created!.number, created: true };
+    });
+    if (result.created)
+      await this.notifier.notify(await this.staff(!!p.ticketId), { type: 'mod_case', caseId: result.id },
+        { kind: 'normal', title: `${KIND_NAME[p.kind]} №${result.number}`, body: p.title, data: { caseId: result.id } });
+    return result.id;
   }
 
   /** Исполнитель или клиент: «Оспорить нарушение или блокировку» — открыто всегда */

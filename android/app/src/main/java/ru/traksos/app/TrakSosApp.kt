@@ -39,7 +39,8 @@ class TrakSosApp : Application() {
             enableVibration(true)
             vibrationPattern = longArrayOf(0, 800, 400, 800, 400, 800)
             lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
-            setBypassDnd(true)
+            // DND bypass is permitted only after the user grants policy access.
+            if (nm.isNotificationPolicyAccessGranted) setBypassDnd(true)
         }
         val general = NotificationChannel(CHANNEL_GENERAL, getString(R.string.channel_general), NotificationManager.IMPORTANCE_DEFAULT).apply {
             description = getString(R.string.channel_general_desc)

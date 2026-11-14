@@ -34,6 +34,9 @@ import { StandingService } from './services/standing.ts';
 import { ShopService } from './services/shop.ts';
 import { ShopCatalogService } from './services/shopCatalog.ts';
 import { ModerationService } from './services/moderation.ts';
+import { WarrantyClaimsService } from './services/warranty.ts';
+import { WarrantyRemediationService } from './services/warrantyRemediation.ts';
+import { WarrantyRecourseService } from './services/warrantyRecourse.ts';
 import { checkAppealToken } from './services/auth.ts';
 import { normalizePhone, sha256 } from './util.ts';
 import { Raw } from './http/router.ts';
@@ -90,6 +93,9 @@ export function createApp(d: Deps) {
   const shop = new ShopService(d.db, notifier, settings);
   const partCatalog = new ShopCatalogService(d.db, settings);
   const moderation = new ModerationService(d.db, notifier, reviews, now, d.sms);
+  const warranty = new WarrantyClaimsService(d.db, notifier, now);
+  const warrantyRemediation = new WarrantyRemediationService(d.db, notifier, now);
+  const warrantyRecourse = new WarrantyRecourseService(d.db, notifier, now);
   // Споры — в очередь модератора: из суммы заявки, из сверки работ, из ремонта в сервисе
   orders.onDispute = (p) => moderation.open({ kind: 'dispute', title: p.title, text: p.text, openedBy: p.userId, targetId: p.targetId, orderId: p.orderId, priority: 1 });
   support.onDispute = async (p) => {
@@ -178,6 +184,122 @@ export function createApp(d: Deps) {
     return { ok: true };
   });
   // Поддержка
+  // Warranty is separate from a price dispute. No payment, replacement
+  // order or performer penalty is triggered by filing or by a staff finding.
+  r.get('/api/warranty-claims', true, (c: AuthedCtx) => warranty.mine(c.user));
+  r.post('/api/orders/:id/warranty-claims', true, (c: AuthedCtx) => {
+    const p=parse(z.object({
+      defect:z.string().trim().min(10).max(2000),
+      requestedRemedy:z.enum(['rework','alternative','partial_refund','full_refund','assessment']),
+      evidence:z.string().trim().max(2000).optional(),
+    }),c.body);
+    return warranty.open(c.user,c.params.id,p);
+  });
+  r.get('/api/warranty-claims/:id', true, (c: AuthedCtx) =>
+    warranty.view(c.user,c.params.id));
+  r.post('/api/warranty-claims/:id/evidence', true, (c: AuthedCtx) =>
+    warranty.addEvidence(c.user,c.params.id,
+      parse(z.object({note:z.string().trim().min(5).max(2000)}),c.body).note));
+  r.post('/api/warranty-claims/:id/respond', true, (c: AuthedCtx) => {
+    const p=parse(z.object({
+      position:z.enum(['offer_rework','contest_fault','needs_evidence','unavailable']),
+      note:z.string().trim().min(10).max(2000),
+    }),c.body);
+    return warranty.respond(c.user,c.params.id,p.position,p.note);
+  });
+  r.post('/api/warranty-claims/:id/appeal', true, (c: AuthedCtx) =>
+    warranty.appeal(c.user,c.params.id,
+      parse(z.object({reason:z.string().trim().min(20).max(2000)}),c.body).reason));
+  r.get('/api/admin/warranty-claims', staff, (c: AuthedCtx) =>
+    warranty.queue(c.user,c.query.get('status')??undefined));
+  r.post('/api/admin/warranty-claims/:id/review', staff, (c: AuthedCtx) =>
+    warranty.beginReview(c.user,c.params.id));
+  r.post('/api/admin/warranty-claims/:id/decide', staff, (c: AuthedCtx) => {
+    const p=parse(z.object({
+      decision:z.enum(['not_fault','repair_by_original','repair_by_alternative',
+        'partial_refund','full_refund','needs_external_review']),
+      note:z.string().trim().min(20).max(3000),
+    }),c.body);
+    return warranty.decide(c.user,c.params.id,p.decision,p.note);
+  });
+
+  // Nonbillable corrective work is distinct from a paid SOS order.
+  r.get('/api/warranty-claims/:id/remedies', true,
+    (c: AuthedCtx) => warrantyRemediation.forClaim(c.user,c.params.id));
+  r.get('/api/warranty-remedies/:id', true,
+    (c: AuthedCtx) => warrantyRemediation.view(c.user,c.params.id));
+  r.post('/api/admin/warranty-claims/:id/remedies', ['admin'], (c: AuthedCtx) => {
+    const p=parse(z.object({
+      performerId:z.string().uuid(),budgetKopecks:money.max(100_000_000),
+      task:z.string().trim().min(10).max(2000),
+    }),c.body);
+    return warrantyRemediation.offer(c.user,c.params.id,p);
+  });
+  r.post('/api/warranty-remedies/:id/client-approval', true, (c: AuthedCtx) =>
+    warrantyRemediation.clientApproval(c.user,c.params.id,
+      parse(z.object({approve:z.boolean()}),c.body).approve));
+  r.post('/api/warranty-remedies/:id/respond', performerRoles, (c: AuthedCtx) =>
+    warrantyRemediation.respond(c.user,c.params.id,
+      parse(z.object({accept:z.boolean()}),c.body).accept));
+  r.post('/api/warranty-remedies/:id/report', performerRoles, (c: AuthedCtx) =>
+    warrantyRemediation.reportDone(c.user,c.params.id,
+      parse(z.object({report:z.string().trim().min(10).max(2000)}),c.body).report));
+  r.post('/api/warranty-remedies/:id/confirm', true, (c: AuthedCtx) =>
+    warrantyRemediation.clientConfirm(c.user,c.params.id));
+  r.post('/api/admin/warranty-remedies/:id/record-expense', ['admin'], (c: AuthedCtx) => {
+    const p=parse(z.object({
+      amountKopecks:money.positive().max(100_000_000),
+      bankReference:z.string().trim().min(5).max(120),
+      transferredAt:z.string().datetime({offset:true}),
+    }),c.body);
+    return warrantyRemediation.recordPlatformExpense(c.user,c.params.id,p);
+  });
+
+  // Legal/financial recourse: documentation and voluntary receipts ONLY.
+  // Never linked to automatic payouts, holds, fines or third-party balances.
+  r.get('/api/admin/warranty-finance/summary', ['admin'],
+    (c: AuthedCtx) => warrantyRecourse.financialSummary(c.user));
+  r.get('/api/warranty-recourse', true, (c: AuthedCtx) =>
+    warrantyRecourse.mine(c.user));
+  r.get('/api/warranty-recourse/:id', true, (c: AuthedCtx) =>
+    warrantyRecourse.view(c.user,c.params.id));
+  r.post('/api/admin/warranty-expenses/:expenseId/recourse', ['admin'],
+    (c: AuthedCtx) => {
+      const p=parse(z.object({
+        amountKopecks:money.positive().max(100_000_000),
+        contractualBasis:z.string().trim().min(20).max(2000),
+        evidenceSummary:z.string().trim().min(20).max(2000),
+      }),c.body);
+      return warrantyRecourse.open(c.user,c.params.expenseId,p);
+    });
+  r.post('/api/warranty-recourse/:id/respond', true, (c: AuthedCtx) => {
+    const p=parse(z.object({
+      position:z.enum(['acknowledged','contested']),
+      note:z.string().trim().min(20).max(2000),
+    }),c.body);
+    return warrantyRecourse.respond(c.user,c.params.id,p.position,p.note);
+  });
+  r.post('/api/admin/warranty-recourse/:id/review', staff,
+    (c: AuthedCtx) => {
+      const p=parse(z.object({
+        outcome:z.enum(['documented_for_review','insufficient_basis','external_legal_review']),
+        note:z.string().trim().min(20).max(2000),
+      }),c.body);
+      return warrantyRecourse.review(c.user,c.params.id,p.outcome,p.note);
+    });
+  r.post('/api/admin/warranty-recourse/:id/withdraw', ['admin'],
+    (c: AuthedCtx) => warrantyRecourse.withdraw(c.user,c.params.id,
+      parse(z.object({note:z.string().trim().min(20).max(2000)}),c.body).note));
+  r.post('/api/admin/warranty-recourse/:id/record-received', ['admin'],
+    (c: AuthedCtx) => {
+      const p=parse(z.object({
+        amountKopecks:money.positive().max(100_000_000),
+        bankReference:z.string().trim().min(5).max(120),
+        receivedAt:z.string().datetime({offset:true}),
+      }),c.body);
+      return warrantyRecourse.recordReceived(c.user,c.params.id,p);
+    });
+
   r.get('/api/support/topics', false, () => TOPICS);
   r.get('/api/support', true, (c: AuthedCtx) => support.mine(c.user));
   r.post('/api/support', true, (c: AuthedCtx) => support.open(c.user, parse(z.object({
@@ -339,12 +461,14 @@ export function createApp(d: Deps) {
     groupTrip: z.boolean().optional(), night: z.boolean().optional(), paymentMethod: z.enum(['cash', 'online', 'invoice']).optional(),
     destination: z.string().max(300).optional(), cargo: z.enum(['tractor', 'semitrailer', 'coupling', 'truck12', 'bus', 'special']).optional(),
     loaded: z.enum(['empty', 'loaded', 'adr']).optional(), driverOnSite: z.boolean().optional(), fromConsult: z.string().uuid().optional(),
+    continueFrom: z.string().uuid().optional(),
     site: z.object({
       place: z.enum(['parking', 'yard', 'plant', 'road']).optional(), pass: z.enum(['none', 'onsite', 'ahead']).optional(),
       meet: z.string().max(60).optional(), state: z.enum(['free', 'loading', 'other_work']).optional(),
       when: z.enum(['now', 'today', 'tomorrow']).optional(), time: z.string().max(20).optional(),
     }).optional(),
-  }), c.body));
+  }), c.body), typeof c.headers['idempotency-key'] === 'string'
+      ? c.headers['idempotency-key'] : undefined);
   });
   r.get('/api/performer/standing', performerRoles, (c: AuthedCtx) => standing.standing(c.user));
   r.get('/api/performer/nearby', performerRoles, (c: AuthedCtx) => standing.nearby(c.user));
@@ -748,7 +872,7 @@ export function createApp(d: Deps) {
     return centers.book(c.user, c.params.id, parse(z.object({
     vehicleId: z.string().uuid().nullable().optional(), need: z.string().max(20), day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
     time: z.string().max(20).nullable().optional(), arrival: z.enum(['self', 'tow']).default('self'), comment: z.string().max(500).nullable().optional(),
-    fromOrderId: z.string().uuid().nullable().optional(),
+    fromOrderId: z.string().uuid().nullable().optional(), caseOrderId: z.string().uuid().nullable().optional(),
   }), c.body));
   });
   r.get('/api/bookings', true, (c: AuthedCtx) => centers.myBookings(c.user));
@@ -901,7 +1025,55 @@ export function createApp(d: Deps) {
   r.get('/api/admin/search', ['admin'], (c: AuthedCtx) => admin.search(c.query.get('q') ?? ''));
   r.post('/api/admin/payments/:id/refund', ['admin'], (c: AuthedCtx) => admin.refund(c.user, c.params.id, parse(z.object({
     amount: money.positive(), from: z.enum(['platform', 'performer']), reason: z.string().min(3).max(300),
-  }), c.body)));
+  }), c.body), typeof c.headers['idempotency-key'] === 'string' ? c.headers['idempotency-key'] : undefined));
+  r.get('/api/admin/payments/:id/refunds', ['admin'], (c: AuthedCtx) => d.db.query(
+    `select id, amount, source_account, reason, status, provider_refund_id,
+            bank_transfer_reference, bank_transferred_at, bank_confirmed_by, bank_confirmed_at,
+            created_at, resolved_at
+       from payment_refund_requests where payment_id=$1 order by created_at`, [c.params.id]));
+  // Separate, explicit act: admin attests that the outgoing bank transfer
+  // has ALREADY been executed. Does not initiate any transfer.
+  r.post('/api/admin/payments/:id/refunds/:refundId/confirm-bank-transfer', ['admin'],
+    (c: AuthedCtx) => admin.confirmInvoiceRefund(c.user, c.params.id, c.params.refundId,
+      parse(z.object({
+        transferReference: z.string().trim().min(3).max(120),
+        transferredAt: z.string().datetime({ offset: true }),
+        confirmedTransfer: z.literal(true),
+      }), c.body)));
+  r.post('/api/admin/payments/:id/refunds/:refundId/reconcile', ['admin'],
+    (c: AuthedCtx) => admin.reconcileRefund(c.user, c.params.id, c.params.refundId));
+  // Read-only reconciliation of bank capture intents; no resend/refund/payment
+  // can be initiated from these admin routes.
+  r.get('/api/admin/payment-captures', ['admin'], () => d.db.query(
+    `select i.id, i.order_id, i.payment_id, o.number as order_number,
+            i.amount,i.client_fee,i.total,i.status,i.attempts,i.last_error,
+            i.attempted_at,i.checked_at,i.settled_at,i.created_at
+       from payment_capture_intents i join orders o on o.id=i.order_id
+       where i.status<>'settled' order by i.created_at desc limit 200`));
+  r.post('/api/admin/payment-captures/:id/reconcile', ['admin'], (c: AuthedCtx) =>
+    payments.reconcileCapture(parse(z.string().uuid(), c.params.id)));
+  r.get('/api/admin/payment-cancellations', ['admin'], () => d.db.query(
+    `select i.id,i.order_id,i.payment_id,o.number as order_number,
+            i.action,i.stage,i.amount_to_capture,i.refunded_amount,
+            i.status,i.attempts,i.last_error,i.attempted_at,i.checked_at,i.created_at
+       from payment_cancel_intents i join orders o on o.id=i.order_id
+       where i.status<>'settled' order by i.created_at desc limit 200`));
+  // GET-only bank reconciliation; this action cannot resend capture/cancel.
+  r.post('/api/admin/payment-cancellations/:id/reconcile', ['admin'], (c: AuthedCtx) =>
+    payments.reconcileCancellation(parse(z.string().uuid(), c.params.id)));
+  // Creation reconciliation only replays the exact immutable YooKassa key
+  // within a 23h window; expired cases require manual bank inspection.
+  r.get('/api/admin/payment-creations', ['admin'], () => d.db.query(
+    `select i.id,i.payment_id,i.order_id,o.number as order_number,
+            i.status,i.attempts,i.first_sent_at,i.last_attempt_at,
+            i.last_error,i.created_at,p.total,p.provider_payment_id
+       from payment_create_intents i
+       join payments p on p.id=i.payment_id
+       join orders o on o.id=i.order_id
+       where i.status<>'ready' order by i.created_at desc limit 200`));
+  r.post('/api/admin/payment-creations/:paymentId/reconcile', ['admin'],
+    (c: AuthedCtx) => payments.reconcileWorkPayment(
+      parse(z.string().uuid(), c.params.paymentId)));
   r.post('/api/admin/performers/:id/adjust', ['admin'], (c: AuthedCtx) => admin.adjust(c.user, c.params.id, parse(z.object({
     amount: z.number().int(), reason: z.string().min(3).max(300), orderId: z.string().uuid().optional(),
   }), c.body)));
@@ -1015,7 +1187,7 @@ export function createApp(d: Deps) {
     }
   }
 
-  return { handle, hub, auth, settings, orders, payments, auction, documents, admin, profiles, chat, reviews, offers, notifier, privacy, ops, router: r };
+  return { handle, hub, auth, settings, orders, payments, auction, documents, admin, support, warranty, warrantyRemediation, warrantyRecourse, profiles, chat, reviews, offers, notifier, privacy, ops, router: r };
 }
 
 export type App = ReturnType<typeof createApp>;

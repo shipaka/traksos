@@ -67,9 +67,17 @@ export class YooKassaProvider implements PaymentProvider {
     return { id: j.id, status: j.status === 'succeeded' ? 'succeeded' as const : j.status === 'canceled' ? 'failed' as const : 'pending' as const };
   }
 
+  async getRefund(id: string) {
+    const j = await this.call(`/refunds/${encodeURIComponent(id)}`, undefined);
+    return { id: j.id, status: j.status === 'succeeded' ? 'succeeded' as const
+      : j.status === 'canceled' ? 'failed' as const : 'pending' as const };
+  }
+
   async getPayment(id: string) {
     const j = await this.call(`/payments/${id}`, undefined);
-    return { id: j.id, status: mapStatus(j.status), total: fromValue(j.amount) };
+    return { id: j.id, status: mapStatus(j.status), total: fromValue(j.amount),
+      metadata: j.metadata as Record<string,string> | undefined,
+      confirmationUrl: j.confirmation?.confirmation_url ?? null };
   }
 
   async payout(p: PayoutInput) {
