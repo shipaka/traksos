@@ -11,6 +11,7 @@ on:
       - 'scripts/verify-approved.mjs'
       - 'scripts/verify-brand.mjs'
       - 'scripts/android-pr-runtime-smoke.sh'
+      - 'scripts/verify-android-screen.py'
       - '.github/workflows/android-pr-check.yml'
   workflow_dispatch:
 
