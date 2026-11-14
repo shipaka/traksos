@@ -141,9 +141,7 @@ async function run(width, height, mobile) {
     await page.getByRole('button', { name: 'Назад', exact: true }).click();
     await returnedHome('register->partner->register');
 
-    await page.getByRole('link', { name: 'Для бизнеса', exact: true }).first().click().catch(async () => {
-      await page.goto(BASE + '/#/join');
-    });
+    await page.goto(BASE + '/#/join');
     await page.getByRole('heading', { name: 'Работать с TrakSOS' }).waitFor();
     await page.getByRole('button', { name: 'Назад', exact: true }).click();
     await returnedHome('join');
