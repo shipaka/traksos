@@ -5,3 +5,6 @@ alter table service_bookings
 create index if not exists service_bookings_case_root_idx
   on service_bookings(case_root_id, created_at)
   where case_root_id is not null;
+create unique index if not exists service_bookings_one_open_case_idx
+  on service_bookings(case_root_id)
+  where case_root_id is not null and status not in ('closed', 'cancelled', 'declined');
