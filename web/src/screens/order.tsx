@@ -947,7 +947,7 @@ function Chat({ id, status }: { id: string; status: string }) {
   );
   return (
     <div className="card">
-      <button type="button" onClick={() => setOpen(false)} className="between" style={{ background: 'none', border: 0, padding: 0, color: 'inherit', cursor: 'pointer' }}><b>Чат по заявке</b><span className="note">свернуть ▴</span></button>
+      <button type="button" onClick={() => setOpen(false)} className="between" style={{ background: 'none', border: 0, padding: 0, color: 'inherit', cursor: 'pointer' }}><b>{closed ? 'История диалога' : 'Чат по заявке'}</b><span className="note">свернуть ▴</span></button>
       {people.length > 0 && <span className="note">В чате: {people.map((p) => p.you ? 'вы' : `${({ owner: 'владелец', driver: 'водитель', performer: 'исполнитель', support: '' } as Record<string, string>)[p.who]} ${p.name ?? ''}`.trim()).join(', ')}. Номера скрыты.</span>}
       <div className="msgs" ref={box}>
         {msgs.length === 0 && <span className="note">Сообщений пока нет</span>}
