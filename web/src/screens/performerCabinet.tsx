@@ -53,7 +53,7 @@ export function PerformerHub() {
   ];
   return (
     <main className="performer-workspace stack">
-      <section className="internal-role-hero internal-role-hero-performer"><span>TRACKSOS · ВЫЕЗДНОЙ СПЕЦИАЛИСТ</span><h1>Профиль</h1><p>Всё по разделам — откройте нужный.</p><a className="btn" href="#/work">← На линию и к заявкам</a></section>
+      <section className="internal-role-hero internal-role-hero-performer"><span>TRAKSOS · ВЫЕЗДНОЙ СПЕЦИАЛИСТ</span><h1>Профиль</h1><p>Всё по разделам — откройте нужный.</p><a className="btn" href="#/work">← На линию и к заявкам</a></section>
       <section className="performer-live-insights" aria-label="Обзор профиля исполнителя">
         <div><span>Моя техника</span><strong>{cars.length}</strong><small>{p.kind==='tow'?'эвакуаторов':'автомобилей'}</small></div>
         <div><span>Проверка</span><strong className="performer-verify">{p.verification==='approved'?'✓':p.verification==='rejected'?'!':'…'}</strong>
@@ -157,7 +157,7 @@ export function PhoneSection() {
       <h1>Телефон и вход</h1>
       <div className="card">
         <dl className="kv"><dt>Номер</dt><dd>{fmtPhone(me!.phone)}</dd></dl>
-        <span className="note">Вход — по этому номеру и коду из SMS. Клиенты ваш номер не видят: звонки идут через ТракSOS.</span>
+        <span className="note">Вход — по этому номеру и коду из SMS. Клиенты ваш номер не видят: звонки идут через TrakSOS.</span>
       </div>
       <a className="btn ghost" href="#/support/new">Сменить номер — через поддержку</a>
       <span className="note">Номер меняем только после проверки, что это вы: на нём ваши выплаты и рейтинг.</span>
@@ -309,7 +309,7 @@ export function TaxSection() {
       <h1>Налоговый статус</h1>
       <div className="card">
         <TaxInputs taxStatus={taxStatus} inn={inn} onChange={(t, i) => { setTax(t); setInn(i); }} />
-        <span className="note">Самозанятый выдаёт чек в «Мой налог» на наличные сам. По безналу чеки и отчёт агента формирует ТракSOS — раз в месяц.</span>
+        <span className="note">Самозанятый выдаёт чек в «Мой налог» на наличные сам. По безналу чеки и отчёт агента формирует TrakSOS — раз в месяц.</span>
       </div>
       <button className="btn" disabled={busy || !taxStatus || inn.length !== 12} onClick={() => save({ taxStatus, inn })}>Сохранить</button>
     </main>
@@ -320,11 +320,11 @@ export function TaxSection() {
 
 /** Что за операция — простыми словами */
 const KIND: Record<string, [string, string]> = {
-  earning: ['Начислено за заявку', 'Сумма работы и выезда за вычетом комиссии ТракSOS'],
+  earning: ['Начислено за заявку', 'Сумма работы и выезда за вычетом комиссии TrakSOS'],
   payout: ['Выплата вам', 'Перевод на ваш счёт'],
   adjustment: ['Корректировка', 'Начисление или списание администратором — причина в комментарии'],
   refund_charge: ['Удержание за возврат', 'Клиенту вернули деньги по заявке — ваша доля удержана'],
-  cash_commission: ['Комиссия с наличных', 'Клиент заплатил вам наличными — комиссия ТракSOS к оплате'],
+  cash_commission: ['Комиссия с наличных', 'Клиент заплатил вам наличными — комиссия TrakSOS к оплате'],
   cash_commission_paid: ['Комиссия оплачена', 'Долг по комиссии с наличных погашен — деньгами или баллами, см. комментарий'],
   points: ['Комиссия оплачена баллами', 'Баллы за приглашения погасили часть комиссии — эти деньги ваши'],
 };
@@ -370,7 +370,7 @@ export function MoneySection() {
           <div className="sum"><span>Уже выплачено</span><span>{rub(balance.data.paid)}</span></div>
           <div className="sum"><span>Долг по комиссии с наличных</span><span>{rub(balance.data.cash_debt)}</span></div>
           {balance.data.paused && <span className="err">Долг больше {rub(balance.data.cashDebtLimit)} — новые заявки на паузе до оплаты.</span>}
-          <span className="note">ТракSOS работает как агент: отчёт агента и акт — раз в месяц.</span>
+          <span className="note">TrakSOS работает как агент: отчёт агента и акт — раз в месяц.</span>
           <span className="note">{FEE_PURPOSE}</span>
           <a className="note" href="#/invite">Баллы за приглашения гасят до половины комиссии →</a>
         </div>

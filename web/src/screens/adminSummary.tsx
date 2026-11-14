@@ -59,7 +59,7 @@ export function AdminSummary() {
       {tab === 'money' && (
         <div className="tiles">
           <Tile label="Оплачено клиентами за месяц" value={rub(d.money.paidMonth)} hint="онлайн, за вычетом возвратов" />
-          <Tile label="Доход ТракSOS за месяц" value={rub(d.money.platformMonth)} hint="сборы и комиссии" />
+          <Tile label="Доход TrakSOS за месяц" value={rub(d.money.platformMonth)} hint="сборы и комиссии" />
           <Tile label="К выплате исполнителям" value={rub(d.money.toPayout)} />
           <Tile label="Заморожено" value={rub(d.money.frozen)} hint="выезды до приезда" />
           <Tile label="Ждут подтверждения суммы" value={d.money.awaitingConfirmation} />

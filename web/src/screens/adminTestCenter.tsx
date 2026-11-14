@@ -66,12 +66,12 @@ const DEMO_ROLES:RoleInfo[] = [
     metrics:['1','2','1'],activity:['Получена заявка на техосмотр','Диагностическая карта ожидает оформления'],
     features:[['▣','Осмотры','Очередь назначенных транспортных средств'],['▤','Документы','Результаты и диагностические карты'],['₽','Финансы','Начисления и выплаты оператора']]},
   {id:'moderator',icon:'⚑',label:'Модератор',subtitle:'Споры и проверка партнёров',
-    headline:'Контроль качества TrackSOS',section:'Очередь модерации',action:'Открыть обращение',
+    headline:'Контроль качества TrakSOS',section:'Очередь модерации',action:'Открыть обращение',
     profile:'Мой профиль',history:'Журнал решений',task:'Рассмотреть жалобу на услугу',
     metrics:['1','3','2'],activity:['Поступило обращение пользователя','Проверка документов ожидает решения'],
     features:[['⚑','Обращения','Разбор конфликтных ситуаций'],['✓','Проверки','Документы мастеров и СТО'],['◈','Решения','История модерации и контроль']]},
   {id:'admin',icon:'▦',label:'Администратор',subtitle:'Управление площадкой и аналитика',
-    headline:'Центр управления TrackSOS',section:'Операционная очередь',action:'Открыть событие',
+    headline:'Центр управления TrakSOS',section:'Операционная очередь',action:'Открыть событие',
     profile:'Настройки площадки',history:'История событий',task:'Проверить работу площадки',
     metrics:['1','4','2'],activity:['Новый запрос на проверку','Тестовый магазин остаётся закрытым'],
     features:[['▦','Работа сервиса','Контроль заявок и партнёров'],['▤','Магазин','Подготовка грузовых запчастей'],['▥','Статистика','Нагрузка и динамика заявок']]},
@@ -90,7 +90,7 @@ export function AdminTestCenter({roleId}:{roleId?:string}) {
   const role=DEMO_ROLES.find(r=>r.id===roleId);
   if(!role) return <main className="sandbox-root stack" aria-label="Тестовый центр администратора">
     <section className="sandbox-intro">
-      <span className="sandbox-eyebrow">TRACKSOS · ЗАКРЫТЫЙ ДЕМОНСТРАЦИОННЫЙ РЕЖИМ</span>
+      <span className="sandbox-eyebrow">TRAKSOS · ЗАКРЫТЫЙ ДЕМОНСТРАЦИОННЫЙ РЕЖИМ</span>
       <h1>Тестирование кабинетов</h1>
       <p>Выберите роль: откроется отдельный рабочий экран с собственным меню, разделами и возвратом к списку.</p>
       <a className="btn ghost small" href="#/admin">← Вернуться в админку</a>
@@ -143,7 +143,7 @@ function SandboxCabinet({role}:{role:RoleInfo}) {
     </div>
     <section className="sandbox-hero">
       <div className="sandbox-hero-art" aria-hidden="true"><span>{role.icon}</span><i/><i/><i/></div>
-      <span className="sandbox-eyebrow">TRACKSOS · {role.label.toUpperCase()}</span>
+      <span className="sandbox-eyebrow">TRAKSOS · {role.label.toUpperCase()}</span>
       <h1>{role.headline}</h1>
       <p>{role.subtitle} · Интерактивная песочница без реальных действий.</p>
       <div className="row">

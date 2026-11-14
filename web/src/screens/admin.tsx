@@ -65,7 +65,7 @@ export function Admin({ initialSection }: { initialSection?: string }) {
     <main className="admin-workspace">
       <section className="admin-command-hero">
         <div className="admin-command-art" aria-hidden="true"><span>◈</span><i/><i/><i/></div>
-        <span className="admin-command-eyebrow">TRACKSOS · ОПЕРАЦИОННЫЙ ЦЕНТР</span>
+        <span className="admin-command-eyebrow">TRAKSOS · ОПЕРАЦИОННЫЙ ЦЕНТР</span>
         <h1>Администратор</h1>
         <p>Заявки, партнёры, страхование, финансы и качество сервиса — в одном рабочем пространстве.</p>
         <div className="admin-command-actions">
@@ -81,7 +81,7 @@ export function Admin({ initialSection }: { initialSection?: string }) {
         </button>
         <nav id="admin-section-navigation" className={'admin-navigation' + (navOpen ? ' expanded' : '')}
           aria-label="Разделы администрации">
-          <div className="admin-nav-intro"><b>Управление TrackSOS</b><span>Все рабочие инструменты в одном месте</span></div>
+          <div className="admin-nav-intro"><b>Управление TrakSOS</b><span>Все рабочие инструменты в одном месте</span></div>
           <label className="admin-nav-search"><span className="label">Быстрый поиск раздела</span>
             <input className="field" type="search" placeholder="Например, заявки или страхование"
               aria-label="Поиск раздела администрации" value={filter} onChange={event => setFilter(event.target.value)} />
@@ -106,7 +106,7 @@ export function Admin({ initialSection }: { initialSection?: string }) {
         </nav>
         <section className="admin-stage" aria-label={'Рабочий раздел: ' + selected.name}>
           <header className="admin-stage-head">
-            <span className="admin-stage-kicker">РАБОЧИЙ РАЗДЕЛ · TRACKSOS</span>
+            <span className="admin-stage-kicker">РАБОЧИЙ РАЗДЕЛ · TRAKSOS</span>
             <h2>{selected.name}</h2>
             <p>{selected.description}</p>
           </header>
@@ -209,7 +209,7 @@ function Payments() {
     <div className="stack">
       <div className="card">
         <b>Способы оплаты</b>
-        <span className="note">Агентская схема: ТракSOS принимает деньги за исполнителя и перечисляет ему за вычетом вознаграждения. Безнал и счета включайте после проверки оферты юристом и бухгалтером.</span>
+        <span className="note">Агентская схема: TrakSOS принимает деньги за исполнителя и перечисляет ему за вычетом вознаграждения. Безнал и счета включайте после проверки оферты юристом и бухгалтером.</span>
         {([['cash', 'Наличные мастеру на месте'], ['online', 'СБП и карта в приложении'], ['invoice', 'Счёт для компаний']] as const).map(([k, n]) => (
           <button key={k} className="opt" aria-pressed={!!p[k]} disabled={busy} onClick={() => toggle(k, !p[k])}>
             <div className="between"><b>{n}</b><span className={`pill ${p[k] ? 'good' : ''}`}>{p[k] ? 'Включено' : 'Выключено'}</span></div>

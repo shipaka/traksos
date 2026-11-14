@@ -32,7 +32,7 @@ export function Work() {
       <WorkerNotices />
       <section className="work-command-hero" aria-label="Рабочий стол исполнителя">
         <div className="work-command-copy">
-          <span className="work-command-kicker">TRACKSOS · {p.kind === 'tow' ? 'ЭВАКУАЦИЯ' : 'ВЫЕЗДНАЯ ПОМОЩЬ'}</span>
+          <span className="work-command-kicker">TRAKSOS · {p.kind === 'tow' ? 'ЭВАКУАЦИЯ' : 'ВЫЕЗДНАЯ ПОМОЩЬ'}</span>
           <h1>{me?.name || (p.kind === 'tow' ? 'Водитель эвакуатора' : 'Выездной специалист')}</h1>
           <p>{active.length
             ? 'Сейчас у вас активных заявок: ' + active.length + '. Откройте нужную карточку ниже — там текущий этап и дальнейшие действия.'
@@ -93,7 +93,7 @@ export function Work() {
           <div className="sum"><span>К выплате</span><span>{rub(balance.data.to_pay)}</span></div>
           <div className="sum"><span>Долг по комиссии с наличных</span><span>{rub(balance.data.cash_debt)}</span></div>
           {balance.data.paused && <span className="err">Долг больше {rub(balance.data.cashDebtLimit)} — новые заявки на паузе до оплаты.</span>}
-          <span className="note">ТракSOS работает как агент: отчёт агента и акт — раз в месяц.</span>
+          <span className="note">TrakSOS работает как агент: отчёт агента и акт — раз в месяц.</span>
         </div>
       )}
       <button className="btn ghost" onClick={() => go('work/me/money')}>Финансы · все операции</button>
