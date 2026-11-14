@@ -145,7 +145,8 @@ function LineCard({ p, busy, setLine, online }: { p: any; busy: boolean; setLine
   );
 }
 
-/** «Настройки поиска» — как вы ищете клиентов на линии: услуги, марки, цены. От них — кому и в каком порядке звоним. */
+/** Settings page, not a collapsed advanced-search form. Skills and brands
+ * affect dispatch; inventory and prices are shown separately. */
 function SearchSettingsLink({ p }: { p: any }) {
   const top = Object.entries(p.brands ?? {}).filter(([, v]) => v === 'excellent').map(([k]) => k);
   const off = Object.entries(p.brands ?? {}).filter(([, v]) => v === 'refuse').length;
@@ -154,7 +155,7 @@ function SearchSettingsLink({ p }: { p: any }) {
       top.length ? `отлично: ${top.join(', ')}` : '', off ? `не берусь: ${off}` : ''].filter(Boolean).join(' · ');
   return (
     <button className="linkrow" onClick={() => go('work/filter')}>
-      <span><b>Расширенный поиск</b><small>{sub || 'услуги, марки и цены — от них зависит, какие заявки придут первыми'}</small></span><span aria-hidden="true">›</span>
+      <span><b>Настройки заявок</b><small>{sub || 'Какие вызовы принимать, с чем выезжаете и по каким тарифам'}</small></span><span aria-hidden="true">›</span>
     </button>
   );
 }
