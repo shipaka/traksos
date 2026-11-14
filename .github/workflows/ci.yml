@@ -58,6 +58,8 @@ jobs:
         run: npm -w web run build
       - name: Сверка утверждённого дизайна и комплектации
         run: node scripts/verify-approved.mjs
+      - name: Учебная страховая цепочка · роли, предложения, оплата и PDF
+        run: node --import tsx e2e/insurer-preview-state.mjs
       - name: Сквозной сценарий в браузере и контроль интерактивности
         run: |
           npx playwright install --with-deps chromium
@@ -75,12 +77,15 @@ jobs:
           node e2e/insurance-locked-ui.mjs
           node e2e/moderator-permission-check.mjs
           node e2e/admin-master-switch.mjs
+          node e2e/full-role-preview.mjs
+          node e2e/prepare-staff-fixtures.mjs
           node e2e/staff-security.mjs
           node e2e/cabinet-navigation-audit.mjs
           node e2e/admin-navigation-ux.mjs
           node e2e/cabinet-visual-sweep.mjs
           node e2e/cabinet-logout-and-shop.mjs
           node e2e/preview-login.mjs
+          node e2e/preview-admin-secure-v2.mjs
       - name: Снимки экранов каждой проверяемой версии
         if: always()
         uses: actions/upload-artifact@v4
