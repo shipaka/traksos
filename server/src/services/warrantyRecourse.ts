@@ -87,6 +87,43 @@ export class WarrantyRecourseService {
     };
   }
 
+  /** Read-only gross exposure report. No guarantee reserve rate is assumed:
+   *  budget approval, outgoing cash and voluntary recovery are separate facts.
+   */
+  async financialSummary(user: AuthUser) {
+    if (!admin(user)) throw forbidden('Финансовую сводку видит администратор');
+    const totals = await this.db.one<any>(`
+      select
+        (select count(*)::text from warranty_claims) as claim_count,
+        (select count(*)::text from warranty_rework_jobs
+          where status not in ('declined','client_declined')) as active_job_count,
+        (select coalesce(sum(budget_kopecks),0)::text from warranty_rework_jobs
+          where funding_source='platform'
+            and status not in ('declined','client_declined')) as approved_alternative_budget,
+        (select coalesce(sum(amount_kopecks),0)::text from warranty_platform_expenses)
+          as completed_platform_expense,
+        (select coalesce(sum(proposed_amount_kopecks),0)::text from warranty_recourse_cases
+          where status<>'withdrawn') as proposed_recourse,
+        (select coalesce(sum(amount_kopecks),0)::text from warranty_recourse_receipts)
+          as received_voluntary_recovery
+    `);
+    const paid=BigInt(totals?.completed_platform_expense ?? '0');
+    const recovered=BigInt(totals?.received_voluntary_recovery ?? '0');
+    return {
+      claimsCount:Number(totals?.claim_count??0),
+      activeCorrectiveJobs:Number(totals?.active_job_count??0),
+      authorizedAlternativeBudgetKopecks:totals?.approved_alternative_budget??'0',
+      actualPlatformExpenseKopecks:paid.toString(),
+      proposedRecourseKopecks:totals?.proposed_recourse??'0',
+      receivedVoluntaryRecoveryKopecks:recovered.toString(),
+      netPlatformWarrantyCashOutflowKopecks:(paid-recovered).toString(),
+      contractualGuaranteeReserveKopecks:null,
+      reservePolicy:'not_approved',
+      availablePlatformCashKopecks:null,
+      note:'A proposed recourse is not a bank balance, legally established debt or automatic performer deduction.',
+    };
+  }
+
   async mine(user: AuthUser) {
     return this.db.query(
       `select id,expense_id,warranty_claim_id,proposed_amount_kopecks,status,opened_at
