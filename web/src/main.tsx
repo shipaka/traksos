@@ -373,8 +373,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
             </> : <>
               <a className="desktop-nav-link active" href="#/"><span>⌂</span><span>Главная</span></a>
               <a className="desktop-nav-link" href="#/login"><span>☷</span><span>Заявки · вход</span></a>
-              <a className="desktop-nav-link" href="#/login"><span>◇</span><span>Страхование</span></a>
-              <a className="desktop-nav-link" href="#/register"><span>⚙</span><span>Запчасти</span></a>
+              <a className="desktop-nav-link" href="#/register" onClick={() => { try { sessionStorage.setItem("traksos.pendingLandingAction","insurance"); } catch {} }}><span>◇</span><span>Страхование</span></a>
+              <a className="desktop-nav-link" href="#/register" onClick={() => { try { sessionStorage.setItem("traksos.pendingLandingAction","parts"); } catch {} }}><span>⚙</span><span>Запчасти</span></a>
               <a className="desktop-nav-link" href="#/help"><span>?</span><span>Как это работает</span></a>
               <a className="desktop-nav-link" href="#/rules"><span>▤</span><span>Правила площадки</span></a>
               <a className="desktop-nav-link" href="#/offer/privacy"><span>▣</span><span>Персональные данные</span></a>
@@ -392,7 +392,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           <a href="#/" className="active" aria-current="page"><span aria-hidden="true">⌂</span>Главная</a>
           <a href="#/login"><span aria-hidden="true">☷</span>Заявки</a>
           <a href="#/login" className="help"><span aria-hidden="true">✚</span>Помощь</a>
-          <a href="#/register"><span aria-hidden="true">⚙</span>Запчасти</a>
+          <a href="#/register" onClick={() => { try { sessionStorage.setItem("traksos.pendingLandingAction","parts"); } catch {} }}><span aria-hidden="true">⚙</span>Запчасти</a>
           <a href="#/login"><span aria-hidden="true">◉</span>Войти</a>
         </nav>
       )}
