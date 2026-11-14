@@ -105,10 +105,15 @@ try{
     const publicPage=await guest.newPage();
     await publicPage.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
     await publicPage.locator('.public-landing .public-hero-visual').waitFor();
-    const style=await publicPage.locator('.public-landing .public-hero-visual')
-      .evaluate(el=>getComputedStyle(el).backgroundSize);
-    if(!style.split(',').some(v=>v.trim()==='contain'))
-      throw Error(width+'px public approved truck artwork is not contained: '+style);
+    const art=await publicPage.locator('.public-landing .public-hero-visual')
+      .evaluate(el=>({
+        baseSize:getComputedStyle(el).backgroundSize,
+        photoSize:getComputedStyle(el,'::after').backgroundSize,
+        photoImage:getComputedStyle(el,'::after').backgroundImage
+      }));
+    if(![art.baseSize,art.photoSize].some(size=>size.split(',').some(v=>v.trim()==='contain'))
+      || !art.photoImage.includes('tracksos-approved-scania-r520'))
+      throw Error(width+'px public approved Scania photo must be visible and uncropped: '+JSON.stringify(art));
     await publicPage.waitForTimeout(450);
     await publicPage.screenshot({path:'e2e/shots/approved-truck/public-'+width+'.png',fullPage:true});
     await guest.close();
