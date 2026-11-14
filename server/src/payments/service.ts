@@ -457,6 +457,8 @@ export class PaymentsService implements PaymentHooks {
         // Work payments always need a payment notification. The first call-out
         // URL is returned to the caller; only late recovery needs push.
         const needsPush = req.metadata.kind === 'work' || intent.attempts > 1;
+        if (o) this.notifier.live([o.client_id,o.created_by],
+          {type:'payment',orderId:o.id});
         if (o && needsPush) await this.notifier.notify([o.client_id,o.created_by],
           {type:'payment',orderId:o.id,url:response.confirmationUrl},
           {kind:'normal',title:req.metadata.kind==='work' ? 'Оплатите работу' : 'Подтвердите оплату выезда',
@@ -568,6 +570,8 @@ export class PaymentsService implements PaymentHooks {
       if (result.changed) {
         const order = await this.db.one<any>(
           'select id,number,client_id,created_by from orders where id=$1', [intent.order_id]);
+        if (order) this.notifier.live([order.client_id,order.created_by],
+          {type:'payment',orderId:order.id});
         if (order) await this.notifier.notify([order.client_id,order.created_by],
           {type:'payment',orderId:order.id,url:actual.confirmationUrl ?? null},
           {kind:'normal',title:intent.request.metadata.kind==='work'
