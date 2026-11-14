@@ -34,6 +34,7 @@ import { StandingService } from './services/standing.ts';
 import { ShopService } from './services/shop.ts';
 import { ShopCatalogService } from './services/shopCatalog.ts';
 import { ModerationService } from './services/moderation.ts';
+import { WarrantyClaimsService } from './services/warranty.ts';
 import { checkAppealToken } from './services/auth.ts';
 import { normalizePhone, sha256 } from './util.ts';
 import { Raw } from './http/router.ts';
@@ -90,6 +91,7 @@ export function createApp(d: Deps) {
   const shop = new ShopService(d.db, notifier, settings);
   const partCatalog = new ShopCatalogService(d.db, settings);
   const moderation = new ModerationService(d.db, notifier, reviews, now, d.sms);
+  const warranty = new WarrantyClaimsService(d.db, notifier, now);
   // Споры — в очередь модератора: из суммы заявки, из сверки работ, из ремонта в сервисе
   orders.onDispute = (p) => moderation.open({ kind: 'dispute', title: p.title, text: p.text, openedBy: p.userId, targetId: p.targetId, orderId: p.orderId, priority: 1 });
   support.onDispute = async (p) => {
@@ -178,6 +180,45 @@ export function createApp(d: Deps) {
     return { ok: true };
   });
   // Поддержка
+  // Warranty is separate from a price dispute. No payment, replacement
+  // order or performer penalty is triggered by filing or by a staff finding.
+  r.get('/api/warranty-claims', true, (c: AuthedCtx) => warranty.mine(c.user));
+  r.post('/api/orders/:id/warranty-claims', true, (c: AuthedCtx) => {
+    const p=parse(z.object({
+      defect:z.string().trim().min(10).max(2000),
+      requestedRemedy:z.enum(['rework','alternative','partial_refund','full_refund','assessment']),
+      evidence:z.string().trim().max(2000).optional(),
+    }),c.body);
+    return warranty.open(c.user,c.params.id,p);
+  });
+  r.get('/api/warranty-claims/:id', true, (c: AuthedCtx) =>
+    warranty.view(c.user,c.params.id));
+  r.post('/api/warranty-claims/:id/evidence', true, (c: AuthedCtx) =>
+    warranty.addEvidence(c.user,c.params.id,
+      parse(z.object({note:z.string().trim().min(5).max(2000)}),c.body).note));
+  r.post('/api/warranty-claims/:id/respond', true, (c: AuthedCtx) => {
+    const p=parse(z.object({
+      position:z.enum(['offer_rework','contest_fault','needs_evidence','unavailable']),
+      note:z.string().trim().min(10).max(2000),
+    }),c.body);
+    return warranty.respond(c.user,c.params.id,p.position,p.note);
+  });
+  r.post('/api/warranty-claims/:id/appeal', true, (c: AuthedCtx) =>
+    warranty.appeal(c.user,c.params.id,
+      parse(z.object({reason:z.string().trim().min(20).max(2000)}),c.body).reason));
+  r.get('/api/admin/warranty-claims', staff, (c: AuthedCtx) =>
+    warranty.queue(c.user,c.query.get('status')??undefined));
+  r.post('/api/admin/warranty-claims/:id/review', staff, (c: AuthedCtx) =>
+    warranty.beginReview(c.user,c.params.id));
+  r.post('/api/admin/warranty-claims/:id/decide', staff, (c: AuthedCtx) => {
+    const p=parse(z.object({
+      decision:z.enum(['not_fault','repair_by_original','repair_by_alternative',
+        'partial_refund','full_refund','needs_external_review']),
+      note:z.string().trim().min(20).max(3000),
+    }),c.body);
+    return warranty.decide(c.user,c.params.id,p.decision,p.note);
+  });
+
   r.get('/api/support/topics', false, () => TOPICS);
   r.get('/api/support', true, (c: AuthedCtx) => support.mine(c.user));
   r.post('/api/support', true, (c: AuthedCtx) => support.open(c.user, parse(z.object({
@@ -1065,7 +1106,7 @@ export function createApp(d: Deps) {
     }
   }
 
-  return { handle, hub, auth, settings, orders, payments, auction, documents, admin, support, profiles, chat, reviews, offers, notifier, privacy, ops, router: r };
+  return { handle, hub, auth, settings, orders, payments, auction, documents, admin, support, warranty, profiles, chat, reviews, offers, notifier, privacy, ops, router: r };
 }
 
 export type App = ReturnType<typeof createApp>;
