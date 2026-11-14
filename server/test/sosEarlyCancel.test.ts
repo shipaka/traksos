@@ -155,3 +155,39 @@ test('SOS: no_performer allows free cancellation; retry and late offers cannot r
       "select id from order_events where order_id=$1 and type='cancelled'",[orderId])).length,1);
   } finally {await t.close();}
 });
+
+
+test('SOS: pending bank hold can be cancelled for free and no payment link remains', {timeout:60000}, async()=>{
+  const t=await setup();
+  try{
+    const {client}=await enableOnline(t);
+    const stranger=await t.login('+79998886668');
+    const created=ok(await t.api('POST','/api/orders',
+      {service:'electric',isSos:true,zoneId:'spb',paymentMethod:'online'},client.token));
+    assert.ok(created.confirmationUrl,'original hold link exists');
+    const orderId=created.order.id;
+    const searching=ok(await t.api('GET',`/api/orders/${orderId}`,undefined,client.token));
+    assert.equal(searching.status,'searching');
+    assert.ok(searching.actions.includes('cancel'),'cancel is available from first moment of SOS');
+    assert.equal((await t.api('POST',`/api/orders/${orderId}/cancel`,
+      {reason:'Посторонний клиент'},stranger.token)).status,403);
+    const cancelled=ok(await t.api('POST',`/api/orders/${orderId}/cancel`,
+      {reason:'Нажал случайно'},client.token));
+    assert.equal(cancelled.status,'cancelled');
+    assert.equal(cancelled.cancelStage,'searching');
+    const pay=await t.db.one<any>(
+      "select * from payments where order_id=$1 and kind='call_out'",[orderId]);
+    assert.equal(pay.status,'cancelled');
+    const plan=await t.db.one<any>(
+      'select * from payment_cancel_intents where order_id=$1',[orderId]);
+    assert.equal(plan.action,'cancel');
+    assert.equal(plan.status,'settled');
+    assert.equal(plan.amount_to_capture,0);
+    const list=ok(await t.api('GET',`/api/orders/${orderId}/payments`,undefined,client.token));
+    assert.equal(list.length,1);
+    assert.equal(list[0].confirmation_url,null,'no obsolete bank button after cancellation');
+    assert.equal((await t.db.query('select id from payouts where order_id=$1',[orderId])).length,0);
+    assert.equal((await t.db.query('select id from ledger_entries where order_id=$1',[orderId])).length,0);
+    assert.equal((await t.db.query('select id from order_dispatch where order_id=$1',[orderId])).length,0);
+  } finally {await t.close();}
+});
