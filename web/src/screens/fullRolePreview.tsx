@@ -58,6 +58,7 @@ export function RolePreviewBar({role}:{role:Role}){
      {role==='insurer'&&<>
        <a href={previewLink('insurer')}>Вид страховщика</a>
        <a href={previewLink('insurer','client')}>Вид клиента</a>
+       <a href={previewLink('insurer','inspections')}>Техосмотры</a>
      </>}
      <a href="#/admin/test-center">Все кабинеты</a>
      <a href="#/admin">В админку</a>
