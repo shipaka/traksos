@@ -44,6 +44,13 @@ try {
       await page.goto(BASE + '/' + entry.url, { waitUntil: 'domcontentloaded' });
       await page.locator('.app').waitFor();
       await page.locator('.account-menu > summary').waitFor();
+      const mobileNav = page.locator('.tabbar');
+      if (await mobileNav.count()) {
+        const linkCount = await mobileNav.locator('a').count();
+        const svgCount = await mobileNav.locator('a .ic svg[aria-hidden="true"]').count();
+        if (!linkCount || svgCount !== linkCount)
+          throw new Error('Premium role navigation icons missing: ' + svgCount + '/' + linkCount);
+      }
       const widths = await page.evaluate(() => ({
         viewport: document.documentElement.clientWidth,
         content: document.documentElement.scrollWidth
