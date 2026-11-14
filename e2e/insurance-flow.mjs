@@ -95,7 +95,8 @@ try{
       await page.getByRole('navigation',{name:'Разделы администрации'})
         .getByRole('button',{name:'Страхование и ТО'}).click();
       await page.getByRole('link',{name:'Управлять регистрацией страховых агентов'}).click();
-      await page.getByText('Страховые партнёры',{exact:true}).waitFor();
+      await page.getByRole('button',{name:/Страховые агенты/}).click();
+       await page.getByText('Страховые партнёры',{exact:true}).waitFor();
       await page.getByRole('button',{name:/Регистрация новых партнёров закрыта/}).waitFor();
     }
     if(item.name==='owner')await page.getByText('Страхование и техосмотр',{exact:false}).first().click();
