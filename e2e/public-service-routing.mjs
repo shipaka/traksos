@@ -25,10 +25,11 @@ try {
       await card.getByText('Далее').waitFor();
       await card.click();
       await page.waitForURL(new RegExp('#/explore/'+id+'$'));
-      await page.getByRole('heading',{name: /.+/}).first().waitFor();
+      await page.locator('.guest-explore-hero h1').waitFor({state:'visible'});
       const saved=await page.evaluate(()=>sessionStorage.getItem('traksos.pendingLandingAction'));
       if(saved!==id)throw Error(id+': selected service lost: '+saved);
       const next=page.locator('.guest-explore-cta');
+      await next.waitFor({state:'visible'});
       if(await next.count()!==1)throw Error(id+': missing registration CTA');
       if(await next.getAttribute('href')!==(id==='parts'?'#/login':'#/register'))throw Error(id+': wrong registration destination');
     }
