@@ -100,16 +100,47 @@ jobs:
           target: google_apis
           arch: x86_64
           script: |
+            set -eu
             adb install -r apk/app-debug.apk
             adb logcat -c
             adb shell am start -W -n ru.traksos.app.preview/ru.traksos.app.MainActivity
-            sleep 15
-            adb shell pidof ru.traksos.app.preview
+            # A running process is not proof that the actual React homepage appeared.
+            # Wait for the debug-only, privacy-safe native WebView DOM readiness log.
+            ready=0
+            for attempt in $(seq 1 75); do
+              adb logcat -d -s TrakSOSRuntime:I > runtime-ready.log
+              if grep -Fq GUEST_UI_RENDERED runtime-ready.log && grep -Fq SPLASH_VISIBLE_MS= runtime-ready.log; then
+                ready=1
+                break
+              fi
+              sleep 2
+            done
             adb logcat -d -s AndroidRuntime:E > runtime-errors.log
-            ! grep -F 'Process: ru.traksos.app.preview' runtime-errors.log
             adb shell dumpsys activity activities > activity-dump.txt
-            grep -F 'ru.traksos.app.preview' activity-dump.txt
             adb exec-out screencap -p > emulator-screen.png
+            # Screen hierarchy helps detect Android System UI ANR dialogs which
+            # previously passed process-only checks. Keep it for visual QA.
+            if timeout 30s adb shell uiautomator dump /sdcard/traksos-window.xml >/dev/null 2>&1; then
+              adb exec-out cat /sdcard/traksos-window.xml > emulator-ui.xml || true
+            fi
+            if [ "$ready" -ne 1 ]; then
+              echo 'FAIL: real guest React interface or splash dismissal not observed'
+              tail -n 30 runtime-ready.log
+              exit 1
+            fi
+            visible_ms=$(sed -n 's/.*SPLASH_VISIBLE_MS=\([0-9][0-9]*\).*/\1/p' runtime-ready.log | tail -1)
+            if [ -z "$visible_ms" ] || [ "$visible_ms" -lt 3500 ]; then
+              echo "FAIL: startup artwork was visible for only ${visible_ms:-unknown} ms"
+              exit 1
+            fi
+            adb shell pidof ru.traksos.app.preview
+            ! grep -F 'Process: ru.traksos.app.preview' runtime-errors.log
+            grep -F 'ru.traksos.app.preview' activity-dump.txt
+            if [ -s emulator-ui.xml ] && grep -Eiq "System UI isn.t responding|App isn.t responding" emulator-ui.xml; then
+              echo 'FAIL: Android unresponsive-system dialog covers the application'
+              exit 1
+            fi
+            echo "PASS: rendered TrakSOS guest interface after ${visible_ms}ms seasonal splash"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -118,4 +149,6 @@ jobs:
             runtime-errors.log
             activity-dump.txt
             emulator-screen.png
+            emulator-ui.xml
+            runtime-ready.log
           if-no-files-found: warn
