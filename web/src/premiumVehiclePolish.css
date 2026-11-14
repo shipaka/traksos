@@ -231,7 +231,7 @@
   height: 100% !important;
   max-width: none !important;
   object-fit: contain !important;
-  object-position: right bottom !important;
+  object-position: right center !important;
   opacity: 1 !important;
   border-radius: 0 !important;
   filter: drop-shadow(0 12px 25px rgba(0, 9, 24, .28));
