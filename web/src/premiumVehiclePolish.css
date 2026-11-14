@@ -323,3 +323,11 @@
     transform: none !important;
   }
 }
+
+
+/* NOV14 SINGLE DESKTOP NAVIGATION — use the real left cabinet menu,
+   not a duplicated top link bar on desktop. Keep search, alerts and mode menu. */
+@media (min-width: 900px) {
+  .app.role-client .top .track-top-shortcuts { display: none !important; }
+  .app.role-client .top .site-quick-search { margin-left: auto; }
+}
