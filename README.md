@@ -1,4 +1,4 @@
-# ТракSOS
+# TrakSOS
 
 > **Продолжение проекта в новом чате и обновление Timeweb:** [NEXT_CHAT_TRACKSOS.md](NEXT_CHAT_TRACKSOS.md) · [пошаговая инструкция сервера](deploy/SERVER_UPDATE_NEXT_CHAT.md). Сначала проверьте текущий SHA `main` и CI. Магазин остаётся закрытым до отдельного разрешения владельца.
 
