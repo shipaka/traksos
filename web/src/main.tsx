@@ -387,6 +387,15 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           <SiteFooter />
         </div>
       </div>
+      {!me && !route[0] && (
+        <nav className="track-guest-tabbar" aria-label="Основные разделы TrackSOS">
+          <a href="#/" className="active" aria-current="page"><span aria-hidden="true">⌂</span>Главная</a>
+          <a href="#/login"><span aria-hidden="true">☷</span>Заявки</a>
+          <a href="#/login" className="help"><span aria-hidden="true">✚</span>Помощь</a>
+          <a href="#/register"><span aria-hidden="true">⚙</span>Запчасти</a>
+          <a href="#/login"><span aria-hidden="true">◉</span>Войти</a>
+        </nav>
+      )}
       {tabs.length > 0 && !(route[0] === 'work' && ['profile', 'docs'].includes(route[1] ?? '')) && !(route[0] === 'base' && route[1] === 'me') && (
         <nav className="tabbar">
           {tabs.map(([href, ic, name]) => (
