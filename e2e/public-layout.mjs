@@ -112,6 +112,44 @@ async function run(width, height, mobile) {
     await verifyPage(page, suffix + ':login');
     await page.screenshot({ path: OUT + '/login-' + suffix + '.png', fullPage: true });
 
+    // Guest auth return/re-entry regression for the approved final design.
+    const mainTitle = page.getByRole('heading', { name: /TrakSOS.*помощь.*в пути/i });
+    const returnedHome = async (context) => {
+      await mainTitle.waitFor();
+      check(new URL(page.url()).hash === '#/', context + ': stale auth URL after Back');
+    };
+    await page.getByRole('button', { name: 'Назад', exact: true }).click();
+    await returnedHome('login');
+    await page.getByRole('link', { name: 'Войти', exact: true }).click();
+    await page.locator('input[type=password]').waitFor();
+    await page.getByRole('button', { name: 'Забыли пароль?' }).click();
+    await page.getByRole('heading', { name: 'Восстановить пароль' }).waitFor();
+    await page.getByRole('button', { name: 'Назад', exact: true }).click();
+    await returnedHome('reset');
+    await page.getByRole('link', { name: 'Войти', exact: true }).click();
+    await page.locator('input[type=password]').waitFor();
+    await page.getByRole('link', { name: 'Зарегистрироваться', exact: true }).click();
+    await page.getByRole('heading', { name: 'Регистрация в TrakSOS' }).waitFor();
+    await page.getByRole('button', { name: 'Назад', exact: true }).click();
+    await returnedHome('register');
+    await page.getByRole('link', { name: 'Зарегистрироваться', exact: true }).click();
+    await page.getByRole('heading', { name: 'Регистрация в TrakSOS' }).waitFor();
+    await page.getByRole('button', { name: 'Я мастер' }).click();
+    await page.getByRole('heading', { name: 'Работать с TrakSOS' }).waitFor();
+    await page.getByRole('button', { name: 'Назад к выбору кабинета' }).click();
+    await page.getByRole('heading', { name: 'Регистрация в TrakSOS' }).waitFor();
+    await page.getByRole('button', { name: 'Назад', exact: true }).click();
+    await returnedHome('register->partner->register');
+
+    await page.getByRole('link', { name: 'Для бизнеса', exact: true }).first().click().catch(async () => {
+      await page.goto(BASE + '/#/join');
+    });
+    await page.getByRole('heading', { name: 'Работать с TrakSOS' }).waitFor();
+    await page.getByRole('button', { name: 'Назад', exact: true }).click();
+    await returnedHome('join');
+    await page.getByRole('link', { name: 'Войти', exact: true }).click();
+    await page.locator('input[type=password]').waitFor();
+
     // Regression: "Услуги" must return to the landing from the login form.
     if (width >= 900) {
       await page.locator('.guest-site-nav').getByRole('link', { name: 'Услуги' }).click();
