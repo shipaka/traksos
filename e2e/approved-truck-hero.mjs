@@ -69,6 +69,12 @@ try{
       throw Error(width+'px approved truck image missing or cropped by CSS: '+JSON.stringify(check));
     if(!check.hero||!check.art||check.art.left<check.hero.left-2||check.art.right>check.hero.right+2)
       throw Error(width+'px image panel overflows hero: '+JSON.stringify(check));
+    if(check.heroBackground?.includes('url('))
+      throw Error(width+'px duplicated background truck image: '+JSON.stringify(check));
+    if(width>=900 && check.heroDisplay!=='grid')
+      throw Error(width+'px desktop hero grid is missing: '+JSON.stringify(check));
+    if(width<900 && check.firstActionDisplay!=='none')
+      throw Error(width+'px SOS is duplicated inside customer hero: '+JSON.stringify(check));
     if(check.pageWidth>check.viewport+3)
       throw Error(width+'px horizontal overflow: '+JSON.stringify(check));
     if(width>=900 && (!check.asideVisible||check.asideCards<4))
