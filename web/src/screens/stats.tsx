@@ -21,7 +21,9 @@ export function Stats() {
       <div className="scroll-x">{[7, 30, 90].map((n) => <button key={n} className="chip" aria-pressed={days === n} onClick={() => setDays(n)}>{n} дней</button>)}</div>
 
       <div className="tiles">
-        <Tile label="Заявок" value={String(d.totals.created)} hint={`SOS ${d.totals.sos} · ночью ${d.totals.night}`} />
+        <Tile label="Обращений" value={String(d.incidents?.total ?? d.totals.created)} hint="Каждое обращение считается один раз" />
+        <Tile label="Многоэтапных" value={String(d.incidents?.multistage ?? 0)} hint={`Доля ${pct(d.incidents?.multistageShare ?? 0)} · помощь в несколько этапов`} />
+        <Tile label="Этапов услуг" value={String(d.incidents?.stages ?? d.totals.created)} hint={`SOS-этапов ${d.totals.sos} · ночных ${d.totals.night}`} />
         <Tile label="Дошли до конца" value={pct(d.rates.completion)} hint={`${d.totals.completed} из закрытых`} />
         <Tile label="Никто не взял" value={pct(d.rates.noPerformer)} hint={`${d.totals.no_performer} заявок`} warn={(d.rates.noPerformer ?? 0) > 0.2} />
         <Tile label="Ответ за 5 минут" value={pct(d.rates.accepted5min)} hint={d.speed.acceptMedianMin != null ? `медиана ${d.speed.acceptMedianMin} мин` : 'нет данных'} />
@@ -44,7 +46,7 @@ export function Stats() {
         <div className="sum"><span>Открытых обращений</span><span>{d.people.support_open}</span></div>
       </div>
 
-      <Table title="По услугам" head={['Услуга', 'Заявок', 'Готово', 'Средний чек']}
+      <Table title="По этапам услуг · каждый мастер, эвакуатор и СТО отдельно" head={['Услуга', 'Этапов', 'Готово', 'Средний чек']}
         rows={d.byService.map((r: any) => [SERVICES[r.service]?.name ?? r.service, r.created, r.completed, r.avg_check ? rub(r.avg_check) : '—'])} />
       <Table title="Где не хватает исполнителей" head={['Зона', 'Заявок', 'Никто не взял']}
         rows={d.zones.map((r: any) => [r.zone_id, r.created, r.no_performer])} />
