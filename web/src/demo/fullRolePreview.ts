@@ -267,6 +267,10 @@ export async function rolePreviewApi(method:string, path:string, body:any={}):Pr
    if(method==='POST'&&action==='amount'){
      forceRole(isWorker());if(!['arrived','working','awaiting_confirmation'].includes(o.status))
        return err('Сначала начните работу');
+     if(['cause_found','not_found'].includes(body.result) && String(body.note??'').trim().length<10)
+       return err('Укажите причину невозможности ремонта на дороге');
+     o.result=body.result??o.result;
+     o.resultNote=String(body.note??'').trim()||null;
      o.status='awaiting_confirmation';o.bill.extras=clone(body.extras??[]);
      o.bill.total=o.money.total+o.bill.extras.reduce((sum:number,x:any)=>sum+x.amount,0);
      o.money.total=o.bill.total;update(o);return {ok:true};
@@ -288,6 +292,8 @@ export async function rolePreviewApi(method:string, path:string, body:any={}):Pr
      forceRole(isWorker());o.status='searching';o.assigned=false;o.offerPrice=null;update(o);return {ok:true};
    }
    if(method==='POST'&&action==='messages'){
+     if(['completed','cancelled','no_performer'].includes(o.status))
+       return err('Диалог завершён. Сообщения доступны только для просмотра');
      if(!String(body.body??'').trim())return err('Введите сообщение');
      const msg={id:++mid,order_id:o.id,kind:body.kind??'text',body:String(body.body).slice(0,2000),
        sender_id:myId(),sender_role:isWorker()?'performer':'client',sender_name:isWorker()?workerName():'Клиент',
