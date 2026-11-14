@@ -19,7 +19,7 @@ try {
       const hero = document.querySelector('.public-hero-visual');
       const map = document.querySelector('.public-map-static');
       const header = document.querySelector('.guest-header-actions');
-      const heroCss = hero && getComputedStyle(hero).backgroundImage;
+      const heroCss = hero && [getComputedStyle(hero).backgroundImage, getComputedStyle(hero,'::after').backgroundImage].join(' | ');
       const mapCss = map && getComputedStyle(map).backgroundImage;
       return {
         scrollWidth: document.documentElement.scrollWidth,
