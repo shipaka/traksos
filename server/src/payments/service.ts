@@ -1031,8 +1031,11 @@ export class PaymentsService implements PaymentHooks {
   async forOrder(user: AuthUser, orderId: string) {
     await this.orders.mustSee(user, orderId);
     return this.db.query(
-      `select id, kind, method, amount, client_fee, total, status, confirmation_url, refunded_amount, created_at
-         from payments where order_id=$1 order by created_at`, [orderId]);
+      `select p.id,p.kind,p.method,p.amount,p.client_fee,p.total,p.status,
+              case when o.status='cancelled' then null else p.confirmation_url end as confirmation_url,
+              p.refunded_amount,p.created_at
+         from payments p join orders o on o.id=p.order_id
+         where p.order_id=$1 order by p.created_at`, [orderId]);
   }
 
   async ledger(q: Queryable, orderId: string | null, paymentId: string | null,
