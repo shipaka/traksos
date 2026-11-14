@@ -661,12 +661,24 @@ export class OrdersService {
                   call_out_amount, work_amount, client_fee_pct, discount_amount
              from orders where id=$1 or case_root_id=$1 order by created_at, number`, [caseRootId])
       : [];
+    const caseBookings = actor === 'client' || actor === 'admin'
+      ? await this.db.query<any>(
+          `select b.id, b.number, b.status, b.need, b.amount, b.discount, b.from_order_id
+             from service_bookings b join orders step on step.id=b.from_order_id
+            where step.id=$1 or step.case_root_id=$1
+            order by b.created_at, b.number`, [caseRootId])
+      : [];
+    const caseServiceStages = caseBookings.map((b: any) => ({
+      id: b.id, number: b.number, status: b.status, need: b.need,
+      confirmedTotal: b.status === 'closed' ? Math.max(0, Number(b.amount ?? 0) - Number(b.discount ?? 0)) : null,
+    }));
     const caseSteps = caseRows.map((step: any) => ({
       id: step.id, number: step.number, service: step.service, status: step.status,
       result: step.result, resultNote: step.result_note, money: this.money(step),
     }));
     const caseConfirmedTotal = caseRows.filter((step: any) => step.status === 'completed')
-      .reduce((sum: number, step: any) => sum + this.money(step).total, 0);
+      .reduce((sum: number, step: any) => sum + this.money(step).total, 0)
+      + caseServiceStages.reduce((sum: number, stage: any) => sum + (stage.confirmedTotal ?? 0), 0);
     const search = o.status === 'searching'
       ? await this.db.one<{ candidates: number; offers: number }>(
           `select (select count(*)::int from order_dispatch where order_id=$1 and status in ('bidding','ringing','queued')) as candidates,
@@ -687,7 +699,11 @@ export class OrdersService {
       site: o.site, workStartedAt: o.work_started_at ?? null, waitRate: performer?.wait_rate ?? null, ownerNote: o.owner_note ?? null, partMode: o.part_mode ?? null, waitStartedAt: o.wait_started_at ?? null, waitMinutes: o.wait_minutes ?? 0,
       consultHint: o.consult_hint, consultOf: o.consult_of,
       continuationOf: o.continuation_of ?? null, caseRootId,
-      caseSummary: { rootId: caseRootId, stages: caseSteps, confirmedTotal: caseConfirmedTotal, multiStage: caseSteps.length > 1 },
+      caseSummary: {
+        rootId: caseRootId, stages: caseSteps, serviceBookings: caseServiceStages,
+        confirmedTotal: caseConfirmedTotal,
+        multiStage: caseSteps.length + caseServiceStages.length > 1,
+      },
       canContinueWithTow: actor === 'client' && o.status === 'completed' &&
         o.service !== 'tow' && ['cause_found', 'not_found'].includes(o.result) &&
         !caseRows.some((step: any) => step.continuation_of === o.id && step.status !== 'cancelled'),
