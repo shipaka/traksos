@@ -307,3 +307,71 @@ test('warranty alternative: bank transfer proof is recorded once from platform o
     assert.equal((await f.t.db.query('select id from orders where continuation_of=$1',[f.id])).length,0);
   }finally{await f.t.close();}
 });
+
+
+test('warranty rework: client can refuse proposed remedy, and appeal freezes disputed work',
+ {timeout:60000},async()=>{
+  const f=await completedRepair();
+  try{
+    const claim=ok(await f.t.api('POST',`/api/orders/${f.id}/warranty-claims`,
+      {defect:'Поломка генератора возникла снова после заявленного исправления',
+       requestedRemedy:'full_refund'},f.client.token));
+    ok(await f.t.api('POST',`/api/admin/warranty-claims/${claim.id}/decide`,
+      {decision:'repair_by_original',
+       note:'Модератор предложил бесплатное повторное исправление вместо запроса на возврат'},
+      f.admin.token));
+    const offered=ok(await f.t.api('POST',
+      `/api/admin/warranty-claims/${claim.id}/remedies`,
+      {performerId:f.performer.id,budgetKopecks:0,
+       task:'Повторный ремонт с проверкой проводки и контактов'},
+      f.admin.token));
+    assert.equal(offered.clientChargeKopecks,0);
+    const declined=ok(await f.t.api('POST',
+      `/api/warranty-remedies/${offered.id}/client-approval`,
+      {approve:false},f.client.token));
+    assert.equal(declined.status,'client_declined');
+    assert.equal((await f.t.api('POST',
+      `/api/warranty-remedies/${offered.id}/respond`,
+      {accept:true},f.performer.token)).status,409);
+    assert.equal((await f.t.db.query('select * from warranty_platform_expenses')).length,0);
+    assert.equal((await f.t.db.query('select * from orders where continuation_of=$1',[f.id])).length,0);
+    // A second case also demonstrates that an appeal suspends execution even
+    // after client approval. No charge or payout may slip through the old finding.
+  }finally{await f.t.close();}
+});
+
+test('warranty rework: an appealed verdict freezes executor until independent review',
+ {timeout:60000},async()=>{
+  const f=await completedRepair();
+  try{
+    const claim=ok(await f.t.api('POST',`/api/orders/${f.id}/warranty-claims`,
+      {defect:'После ремонта повторно возникает отказ электрической сети',
+       requestedRemedy:'rework'},f.client.token));
+    ok(await f.t.api('POST',`/api/admin/warranty-claims/${claim.id}/decide`,
+      {decision:'repair_by_original',
+       note:'Принято решение о бесплатном исправлении недостатка исходным исполнителем'},
+      f.admin.token));
+    const offered=ok(await f.t.api('POST',
+      `/api/admin/warranty-claims/${claim.id}/remedies`,
+      {performerId:f.performer.id,budgetKopecks:0,
+       task:'Исправить повторную проблему электрической сети бесплатно'},
+      f.admin.token));
+    ok(await f.t.api('POST',`/api/warranty-remedies/${offered.id}/client-approval`,
+      {approve:true},f.client.token));
+    ok(await f.t.api('POST',`/api/warranty-remedies/${offered.id}/respond`,
+      {accept:true},f.performer.token));
+    ok(await f.t.api('POST',`/api/warranty-claims/${claim.id}/appeal`,
+      {reason:'Исполнитель оспаривает причины возникновения повторной неисправности'},
+      f.performer.token));
+    assert.equal((await f.t.api('POST',`/api/warranty-remedies/${offered.id}/report`,
+      {report:'Я починил, подтверждайте немедленно'},f.performer.token)).status,409);
+    ok(await f.t.api('POST',`/api/admin/warranty-claims/${claim.id}/decide`,
+      {decision:'needs_external_review',
+       note:'Проводим независимую экспертизу по жалобе вместо ранее согласованного исправления'},
+      f.reviewer.token));
+    assert.equal((await f.t.api('POST',`/api/warranty-remedies/${offered.id}/report`,
+      {report:'Работы якобы выполнены после пересмотра претензии'},f.performer.token)).status,409);
+    assert.equal((await f.t.db.query('select id from warranty_platform_expenses')).length,0);
+    assert.equal((await f.t.db.query('select id from payouts where order_id=$1',[f.id])).length,0);
+  }finally{await f.t.close();}
+});
