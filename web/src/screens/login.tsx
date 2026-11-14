@@ -146,7 +146,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
       <section className="public-hero public-brand-hero" aria-labelledby="public-main-title">
         <div className="public-hero-copy">
           <span className="public-eyebrow">ЕДИНАЯ ПЛАТФОРМА ДЛЯ ГРУЗОВОГО ТРАНСПОРТА</span>
-          <h1 id="public-main-title"><em>TrakSOS</em> — помощь<br/>в пути и полный сервис<br/>для грузовиков и прицепов</h1>
+          <h1 id="public-main-title"><em>Trak<b>SOS</b></em> — помощь<br/>в пути и полный сервис<br/>для грузовиков и прицепов</h1>
           <p>Эвакуация · Выездной мастер · Ремонт и ТО · Запчасти<br/>Страхование · Техосмотры · Консультации 24/7</p>
           <div className="public-track-benefits" aria-label="Преимущества TrakSOS">
             <span><i aria-hidden="true">ϟ</i>Быстрое обращение</span>
