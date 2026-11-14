@@ -39,7 +39,7 @@ async function run(width, height, mobile) {
   const suffix = width + 'x' + height;
   try {
     await page.goto(BASE + '/#/', { waitUntil: 'domcontentloaded' });
-    await page.getByRole('heading', { name: /Помощь.*грузовику/i }).waitFor();
+    await page.getByRole('heading', { name: /Помощь грузовикам.*24\/7/i }).waitFor();
     check(await page.getByRole('button', { name: 'SOS · Нужна помощь' }).isVisible(), 'SOS not visible');
     check(await page.getByRole('button', { name: 'Как это работает?' }).isVisible(), 'How it works not visible');
     const image = await page.locator('.public-hero-visual').evaluate(async el => {
@@ -59,14 +59,14 @@ async function run(width, height, mobile) {
         const actions = document.querySelector('.public-actions')?.getBoundingClientRect();
         if (!visual || !paragraph || !actions) return null;
         return { pictureTop: visual.top, pictureBottom: visual.bottom,
-          paragraphBottom: paragraph.bottom, actionsTop: actions.top, pictureWidth: visual.width };
+          paragraphTop: paragraph.top, actionsTop: actions.top, pictureWidth: visual.width };
       });
       check(heroGeometry && heroGeometry.pictureWidth >= width * .75,
         suffix + ': picture shrunk into a narrow column: ' + JSON.stringify(heroGeometry));
-      check(heroGeometry.paragraphBottom <= heroGeometry.pictureTop + 2,
-        suffix + ': hero description overlaps photo: ' + JSON.stringify(heroGeometry));
-      check(heroGeometry.actionsTop >= heroGeometry.pictureBottom - 2,
-        suffix + ': hero buttons overlap photo: ' + JSON.stringify(heroGeometry));
+      check(heroGeometry.pictureBottom <= heroGeometry.paragraphTop + 2,
+        suffix + ': approved artwork must be above description on mobile: ' + JSON.stringify(heroGeometry));
+      check(heroGeometry.actionsTop >= heroGeometry.paragraphTop - 2,
+        suffix + ': hero buttons overlap title or artwork: ' + JSON.stringify(heroGeometry));
     }
     await verifyPage(page, suffix + ':home');
     await page.screenshot({ path: OUT + '/home-' + suffix + '.png', fullPage: true });
