@@ -91,7 +91,7 @@ export class StatsService {
                 (count(distinct s.id) + count(distinct b.id))::int as stage_count
            from roots r
            join orders s on s.id=r.id or s.case_root_id=r.id
-           left join service_bookings b on b.from_order_id=s.id
+           left join service_bookings b on b.from_order_id=s.id or b.case_root_id=r.id
           group by r.id
        ), standalone as (
          select count(*)::int as n from service_bookings
