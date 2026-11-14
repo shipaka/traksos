@@ -72,7 +72,7 @@ const housekeeping = async () => {
 };
 const hourly = setInterval(() => { void housekeeping(); }, 3_600_000);
 
-server.listen(config.port, () => console.log(`ТракSOS API: http://localhost:${config.port} (БД: ${db.driver})`));
+server.listen(config.port, () => console.log(`TrakSOS API: http://localhost:${config.port} (БД: ${db.driver})`));
 
 for (const sig of ['SIGINT', 'SIGTERM'] as const) {
   process.on(sig, async () => {

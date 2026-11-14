@@ -1,4 +1,4 @@
-// Nightly and push-time gate: approved TrackSOS identity is not replaced silently.
+// Nightly and push-time gate: approved TrakSOS identity is not replaced silently.
 // This only verifies invariants; visual fidelity is additionally checked via screenshots.
 import { readFile, stat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
@@ -77,4 +77,4 @@ for (const word of ['Аптека', 'Химчистка', 'Авиабилеты'
 if (failures.length) {
   console.error('Approved design gate: ' + failures.length + ' failure(s).');
   process.exitCode = 1;
-} else console.log('Approved TrackSOS design gate: all invariants passed.');
+} else console.log('Approved TrakSOS design gate: all invariants passed.');

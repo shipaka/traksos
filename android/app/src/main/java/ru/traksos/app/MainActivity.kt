@@ -51,7 +51,7 @@ import org.json.JSONObject
 import ru.rustore.sdk.pushclient.RuStorePushClient
 import java.lang.ref.WeakReference
 
-/** Оболочка: сайт ТракSOS в WebView + мост для пушей и вызовов */
+/** Оболочка: сайт TrakSOS в WebView + мост для пушей и вызовов */
 class MainActivity : AppCompatActivity() {
     private lateinit var web: WebView
     private lateinit var appRoot: FrameLayout
@@ -78,10 +78,10 @@ class MainActivity : AppCompatActivity() {
             setBackgroundColor(Color.rgb(5, 23, 41))
             isClickable = true
             isFocusable = true
-            contentDescription = "ТракSOS заблокирован. Разблокируйте устройство."
+            contentDescription = "TrakSOS заблокирован. Разблокируйте устройство."
         }
         val label = TextView(this).apply {
-            text = "ТракSOS\\nРазблокируйте приложение"
+            text = "TrakSOS\\nРазблокируйте приложение"
             textSize = 21f
             setTextColor(Color.WHITE)
             gravity = Gravity.CENTER
@@ -115,7 +115,7 @@ class MainActivity : AppCompatActivity() {
             })
         lockCover?.setOnClickListener { requestAppUnlock() }
         prompt.authenticate(BiometricPrompt.PromptInfo.Builder()
-            .setTitle("Разблокировать ТракSOS")
+            .setTitle("Разблокировать TrakSOS")
             .setSubtitle("Отпечаток пальца или код блокировки телефона")
             .setAllowedAuthenticators(allowedAuthenticators)
             .build())
@@ -140,7 +140,7 @@ class MainActivity : AppCompatActivity() {
     }
     private var geoCallback: GeolocationPermissions.Callback? = null
     private var geoOrigin: String? = null
-    /** Страница не отозвалась как сайт ТракSOS — через 20 секунд покажем экран ошибки вместо белого */
+    /** Страница не отозвалась как сайт TrakSOS — через 20 секунд покажем экран ошибки вместо белого */
     private var failed = false
     private val watchdog = Runnable { showOffline(getString(R.string.server_timeout)) }
 
@@ -362,7 +362,7 @@ class MainActivity : AppCompatActivity() {
         val art = ImageView(this)
         art.setImageResource(R.drawable.splash_truck)
         art.scaleType = ImageView.ScaleType.CENTER_CROP
-        art.contentDescription = "Брендированный грузовик TrackSOS в Санкт-Петербурге"
+        art.contentDescription = "Брендированный грузовик TrakSOS в Санкт-Петербурге"
         val artParams = FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT,
             (resources.displayMetrics.heightPixels * 0.56f).toInt(),
@@ -383,7 +383,7 @@ class MainActivity : AppCompatActivity() {
         container.rightMargin = container.leftMargin
 
         val title = TextView(this)
-        val brand = SpannableString("TrackSOS")
+        val brand = SpannableString("TrakSOS")
         brand.setSpan(ForegroundColorSpan(Color.rgb(254, 28, 122)), 5, 8, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         title.text = brand
         title.textSize = 37f
@@ -438,7 +438,7 @@ class MainActivity : AppCompatActivity() {
             border-radius:14px;padding:16px;font-size:17px;font-weight:700;margin-top:22px}
             small{color:#acbfd4;display:block;margin-top:15px;line-height:1.4}
             </style></head><body><main><h1>Track<em>SOS</em></h1>
-            <p>Нет связи с сервером TrackSOS. Проверьте интернет и попробуйте снова.</p>
+            <p>Нет связи с сервером TrakSOS. Проверьте интернет и попробуйте снова.</p>
             <button onclick="TrakSOSNative.retry()">Повторить подключение</button>
             <small>$safeReason</small></main></body></html>
             """.trimIndent()
@@ -462,8 +462,8 @@ class MainActivity : AppCompatActivity() {
         nav button{flex:1;padding:17px 0;background:none;border:0;color:#b5bac0;font-size:12px}
         nav button.active{color:#ff8f43;font-weight:bold}
         input{width:100%;padding:14px;border:1px solid #454b51;border-radius:10px;background:#15171a;color:white;margin-bottom:12px}
-        </style></head><body><header><strong class="logo">ТракSOS</strong><span class="badge">АВТОНОМНОЕ ДЕМО</span></header>
-        <main><div class="alert">Сервер TrackSOS ещё не запущен. Это демонстрация интерфейса: реальные вызовы, заявки, вход и загрузка документов отключены.</div>
+        </style></head><body><header><strong class="logo">TrakSOS</strong><span class="badge">АВТОНОМНОЕ ДЕМО</span></header>
+        <main><div class="alert">Сервер TrakSOS ещё не запущен. Это демонстрация интерфейса: реальные вызовы, заявки, вход и загрузка документов отключены.</div>
         <section class="page active" id="home"><h2>Помощь грузовику</h2>
         <div class="card"><b>🚨 Срочная помощь</b><p>Вызов специалиста при поломке на дороге.</p><button class="action" onclick="show('sos')">Открыть SOS</button></div>
         <div class="card"><b>🔧 Выездной мастер</b><p>Электрик, диагностика и ремонт на месте.</p><button class="secondary" onclick="show('orders')">Заявки</button></div>

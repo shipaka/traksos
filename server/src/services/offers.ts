@@ -106,7 +106,7 @@ export class OffersService {
     const ids = (await this.db.query<{ id: string }>(who)).map((r) => r.id);
     const when = eff.getTime() <= this.now().getTime() + 60_000 ? 'с сегодняшнего дня' : `с ${eff.toLocaleDateString('ru-RU')}`;
     await this.notifier.notify(ids, { type: 'offer', offerId: offer!.id, audience: p.audience }, {
-      kind: 'normal', title: 'Меняются условия ТракSOS',
+      kind: 'normal', title: 'Меняются условия TrakSOS',
       body: `${AUDIENCE_NAMES[p.audience]}, редакция ${p.version} — действует ${when}. ${p.summary ?? ''}`.trim(),
       data: { offerId: offer!.id },
     });

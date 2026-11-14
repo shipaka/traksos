@@ -98,7 +98,7 @@ jobs:
       - name: Предрелизный отчёт — даже после ошибки
         if: always()
         run: |
-          echo '### TrackSOS — контроль версии' >> "$GITHUB_STEP_SUMMARY"
+          echo '### TrakSOS — контроль версии' >> "$GITHUB_STEP_SUMMARY"
           echo "- Commit: \`$GITHUB_SHA\`" >> "$GITHUB_STEP_SUMMARY"
           echo '- Проверены: Docker Compose, бэкапы, типы, сервер, веб, дизайн, браузер и офлайн.' >> "$GITHUB_STEP_SUMMARY"
           echo '- Любая ошибка в шагах выше запрещает считать сборку готовой.' >> "$GITHUB_STEP_SUMMARY"
@@ -107,7 +107,7 @@ jobs:
       - name: Ночной итог проверки
         if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         run: |
-          echo '### Ночной контроль TrackSOS' >> "$GITHUB_STEP_SUMMARY"
+          echo '### Ночной контроль TrakSOS' >> "$GITHUB_STEP_SUMMARY"
           echo '- Проверки HTML/CSS/JS, API, офлайн-режима и тестовых сценариев.' >> "$GITHUB_STEP_SUMMARY"
           echo '- Снимки реальной веб-страницы находятся во вложении screens.' >> "$GITHUB_STEP_SUMMARY"
           echo '- Этот процесс не меняет приложение и не публикует его в RuStore.' >> "$GITHUB_STEP_SUMMARY"
