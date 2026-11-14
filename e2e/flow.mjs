@@ -158,14 +158,13 @@ await login(k, '+79991112233', 'help');
 // «Помогите» — после кода сразу экран SOS
 await k.waitForURL(/#\/sos/);
 await k.goto(BASE + '/#/');
-await k.getByText('Что случилось?').first().waitFor();
+await k.getByRole('heading', { name: 'Кто вам нужен?' }).first().waitFor();
 await assertDashboardTheme(k, 'client');
 await checkCabinetMenu(k, ['История заявок', 'Мой гараж', 'Мой автопарк', 'Оферта', 'Профиль и настройки']);
 await shot(k, '03-client-home');
-// The home symptom picker leads directly to the service form; the SOS tab
-// is a separate choice-first flow and must not be mixed into this scenario.
-await k.getByRole('button', { name: /Не заводится/ }).click();
-await k.getByRole('button', { name: /Электрик или диагност на выезд/ }).click();
+// Home and SOS share the approved direction-first flow.
+await k.getByRole('button', { name: /Выездной мастер/ }).click();
+await k.getByRole('link', { name: /Электрик/ }).first().click();
 await k.getByRole('button', { name: /Вызвать мастера/ }).click(); // рано: подсветит, чего не хватает
 await k.getByText('Осталось:').waitFor();
 await k.locator('select[aria-label="Марка"]').selectOption('Scania');
@@ -253,7 +252,7 @@ await shot(a, '13-admin-payments');
 
 // Переходы между кабинетами: из админки в клиента и обратно, «Назад» ведёт в свой список
 await clickCabinetLink(a, 'Кабинет клиента');
-await a.getByText('Что случилось?').first().waitFor();
+await a.getByRole('heading', { name: 'Кто вам нужен?' }).first().waitFor();
 await clickCabinetLink(a, 'Профиль и настройки');
 await a.getByRole('button', { name: 'Кабинет администратора' }).click();
 await a.getByText('Администратор').first().waitFor();
