@@ -60,12 +60,20 @@ const estimate=(input:any)=>({
  hour:input?.service==='tow'||input?.service==='consult'?null:220000,
  step:30,night:!!input?.night,group:!!input?.group,km:0,roadKm:0,
 });
+let demoInspections=[
+  {id:'demo-inspection-1',brand:'Scania',model:'R520',plate:'А123АА78',status:'sent_to_partner',
+   comment:'Учебная заявка: проверка тягача',staff_note:null,created_at:stamp()},
+  {id:'demo-inspection-2',brand:'DAF',model:'XF',plate:'М555ММ78',status:'completed',
+   comment:'Образец пройденного осмотра',staff_note:'Осмотр выполнен — диагностическая карта здесь не выпускается',created_at:stamp()},
+];
 let orders:DemoOrder[]=[];
 const defaultFleet=()=>({mode:'approve',perOrder:null as number|null,perMonth:null as number|null,
  allow:{repair:true,tow:true,consult:true,service:true,shop:false,insurance:true,inspection:true}});
 let fleetSettings=defaultFleet();
 const findOrder=(id:string)=>orders.find(o=>o.id===id)??err('Заявка не найдена');
-export function resetFullPreview(){orders=[];counter=100;mid=100;vehicles.splice(2);fleetSettings=defaultFleet();modCases.forEach(x=>{x.status='open';x.decisionName=null;x.decisionNote=null;x.decidedAt=null;x.log=[];});}
+export function resetFullPreview(){orders=[];counter=100;mid=100;vehicles.splice(2);fleetSettings=defaultFleet();
+ demoInspections=demoInspections.map(x=>({...x,status:x.id==='demo-inspection-1'?'sent_to_partner':'completed',staff_note:x.id==='demo-inspection-1'?null:'Осмотр выполнен — диагностическая карта здесь не выпускается'}));
+ modCases.forEach(x=>{x.status='open';x.decisionName=null;x.decisionNote=null;x.decidedAt=null;x.log=[];});}
 const who=()=>currentPreviewRole();
 const isWorker=()=>['master','tow','master_service'].includes(who()??'');
 const isCustomer=()=>['client','owner','driver'].includes(who()??'');
@@ -199,6 +207,23 @@ export async function rolePreviewApi(method:string, path:string, body:any={}):Pr
  if(method==='GET'&&p==='/api/my-performers')return [];
  if(method==='GET'&&p==='/api/me/referral')return {balance:0,rules:{spendCapPct:50}};
  if(method==='GET'&&p==='/api/performer/profile')return {ok:true};
+ if(method==='GET'&&p==='/api/insurer/inspections'){
+   forceRole(who()==='inspection');
+   return clone(demoInspections);
+ }
+ if(method==='PATCH'&&p.startsWith('/api/insurer/inspections/')){
+   forceRole(who()==='inspection');
+   const id=p.split('/')[4],record=demoInspections.find(x=>x.id===id);
+   if(!record)return err('Тестовый техосмотр не найден');
+   if(record.status!=='sent_to_partner')return err('Техосмотр уже обработан');
+   if(!['completed','rejected'].includes(body.status))return err('Недоступный результат');
+   if(body.status==='rejected'&&String(body.note??'').trim().length<3)
+     return err('Укажите причину отказа');
+   record.status=body.status;record.staff_note=String(body.note??'').trim()||'Работа отмечена выполненной в учебном режиме';
+   window.dispatchEvent(new CustomEvent('traksos-sandbox-inspection-change',{detail:{id}}));
+   return clone(record);
+ }
+ if(method==='GET'&&p==='/api/insurer/finance')return {entries:[],totals:[]};
  if(method==='GET'&&p==='/api/insurer/requests')return [];
  if(method==='GET'&&p==='/api/mod/cases'){
   const counts={dispute:modCases.filter(x=>x.kind==='dispute'&&x.status==='open').length,
