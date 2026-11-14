@@ -69,6 +69,13 @@ async function run(width, height, mobile) {
         suffix + ': hero buttons overlap title or artwork: ' + JSON.stringify(heroGeometry));
     }
     await verifyPage(page, suffix + ':home');
+    if (mobile && width <= 430) {
+      const nav = page.locator('.track-guest-tabbar');
+      const navCount = await nav.locator('a').count();
+      const vectorCount = await nav.locator('a svg[aria-hidden="true"]').count();
+      check(navCount === 5 && vectorCount === 5,
+        suffix + ': all five mobile guest tabs must use visible vector icons, got ' + navCount + '/' + vectorCount);
+    }
     // All six approved photographic services must remain in their exact order.
     const services = page.locator('.public-service-tiles > button');
     check(await services.count() === 6, suffix + ': six approved service cards required');
