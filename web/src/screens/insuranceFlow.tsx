@@ -63,7 +63,7 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
       window.alert('Укажите имя и фамилию страхователя');return;
     }
     if(step===2&&(!truck.brand.trim()||!truck.model.trim()||!truck.plate.trim()||
-      !/^\\d{4}$/.test(truck.year)||truck.vin.trim().length<11)){
+      !/^\d{4}$/.test(truck.year)||truck.vin.trim().length<11)){
       window.alert('Заполните марку, модель, год, номер и VIN автомобиля');return;
     }
     setStep(v=>Math.min(3,v+1));
