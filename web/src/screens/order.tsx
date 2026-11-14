@@ -65,6 +65,15 @@ export function Order({ id }: { id: string }) {
       {d.service === 'tow' && !isPerformer && d.you !== 'candidate' && d.destination && <TowInfo d={d} />}
 
       {d.you !== 'candidate' && d.status !== 'searching' && <Money d={d} />}
+      {(d.you === 'client' || d.you === 'admin') && <CaseStages d={d} />}
+      {d.you === 'client' && d.canContinueWithTow && (
+        <section className="card hi" aria-label="Продолжить помощь после мастера">
+          <b>Поломку не удалось устранить на дороге</b>
+          <span className="note">Этап с мастером завершён, его сумма зафиксирована отдельно. Если машина не может ехать дальше, продолжите это же обращение вызовом эвакуатора.</span>
+          {d.resultNote && <span className="note">Комментарий мастера: {d.resultNote}</span>}
+          <a className="btn" href={`#/new/tow?continueFrom=${encodeURIComponent(d.id)}`}>Продолжить обращение · вызвать эвакуатор</a>
+        </section>
+      )}
 
       {d.you === 'admin' && <AdminPanel d={d} onDone={o.reload} />}
       {(d.you === 'client' || d.you === 'admin') && d.paymentMethod !== 'cash' && <PaymentsList id={id} admin={d.you === 'admin'} />}
@@ -88,6 +97,45 @@ export function Order({ id }: { id: string }) {
       {!done && d.actions.includes('cancel') && !isPerformer && !(isConsult && d.status === 'awaiting_confirmation') && <Cancel id={id} status={d.status} consult={isConsult} onDone={o.reload} />}
       {d.status === 'cancelled' && <div className="card"><b>Заявка отменена</b><span className="note">{d.cancelReason}</span></div>}
     </main>
+  );
+}
+
+/** One incident, separate contracts. An active tow estimate is NEVER added
+ * to an already confirmed repair, and is not billed as part of that repair. */
+function CaseStages({ d }: { d: any }) {
+  const summary = d.caseSummary;
+  if (!summary?.multiStage) return null;
+  const rows = summary.stages as any[];
+  const closed = rows.filter((s) => s.status === 'completed');
+  const active = rows.filter((s) => !['completed', 'cancelled', 'no_performer'].includes(s.status));
+  return (
+    <section className="card stack case-journey" aria-label="Этапы одного обращения">
+      <div className="between" style={{ alignItems: 'flex-start' }}>
+        <div className="stack" style={{ gap: 5 }}>
+          <b>Одно обращение · {rows.length} этапа</b>
+          <span className="note">Каждый этап имеет своего исполнителя, расчёт и подтверждение. Предыдущие суммы не входят в новые торги.</span>
+        </div>
+        <span className="pill accent">{active.length ? 'Помощь продолжается' : 'Этапы завершены'}</span>
+      </div>
+      <ol className="case-stage-list">
+        {rows.map((step, index) => (
+          <li key={step.id} className={step.status === 'completed' ? 'is-done' : ''}>
+            <div className="stack" style={{ gap: 4 }}>
+              <span className="note">Этап {index + 1} · №{step.number}</span>
+              <a href={`#/order/${step.id}`}><b>{SERVICES[step.service]?.name ?? step.service}</b></a>
+              <span className="note">{STATUS[step.status]?.name ?? step.status}</span>
+              {step.resultNote && <span className="note">Результат: {step.resultNote}</span>}
+            </div>
+            <b>{step.status === 'completed' ? rub(step.money.total) : 'Сумма этапа ещё не подтверждена'}</b>
+          </li>
+        ))}
+      </ol>
+      <div className="sum total">
+        <span>Подтверждено по обращению · {closed.length} из {rows.length} этапов</span>
+        <b>{rub(summary.confirmedTotal)}</b>
+      </div>
+      {active.length > 0 && <span className="note">Новый этап рассчитывается отдельно. Его итог появится здесь после подтверждения клиентом.</span>}
+    </section>
   );
 }
 
