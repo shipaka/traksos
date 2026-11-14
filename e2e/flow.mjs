@@ -163,6 +163,7 @@ await assertDashboardTheme(k, 'client');
 await checkCabinetMenu(k, ['История заявок', 'Мой гараж', 'Мой автопарк', 'Оферта', 'Профиль и настройки']);
 await shot(k, '03-client-home');
 // Home and SOS share the approved direction-first flow.
+await k.locator('.client-dashboard .desktop-quick-card').first().click();
 await k.getByRole('button', { name: /Выездной мастер/ }).click();
 await k.getByRole('link', { name: /Электрик/ }).first().click();
 await k.getByRole('button', { name: /Вызвать мастера/ }).click(); // рано: подсветит, чего не хватает
