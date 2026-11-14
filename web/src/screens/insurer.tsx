@@ -3,16 +3,18 @@ import { useState } from 'react';
 import { get, patch, fmtTime } from '../api.ts';
 import { useLoad, useAction } from '../ui.tsx';
 import { insurerPreviewActive,previewGet,previewPatch,insurerPreviewRequestHref,PREVIEW_CLIENT } from '../demo/insurerPreviewApi.ts';
+import {currentPreviewRole} from '../demo/fullRolePreview.ts';
 
 const labels: Record<string, string> = {
   sent_to_partner: 'Ждёт оформления', completed: 'Полис оформлен', rejected: 'Отказ',
 };
 export function InsurerCabinet({inspectionOnly=false,section}:{inspectionOnly?:boolean;section?:string}={}) {
-  const preview = insurerPreviewActive();
+  const inspectorPreview = currentPreviewRole()==='inspection';
+  const preview = insurerPreviewActive() || inspectorPreview;
   const [workspace,setWorkspace]=useState<'insurance'|'inspection'|'finance'|'common'>(inspectionOnly?'inspection':'insurance');
   const finance=useLoad(()=>preview ? Promise.resolve({entries:[],totals:[]}) : get<{entries:{id:string;kind:string;entry_type:string;amount_kopecks:string;note:string|null;created_at:string}[];totals:{kind:string;accrued:string;paid:string;balance:string}[]}>('/api/insurer/finance'),[preview]);
   const money=(value:string|number)=>new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB'}).format(Number(value)/100);
-  const inspections=useLoad(()=>preview ? Promise.resolve([] as any[]) : get<any[]>('/api/insurer/inspections'),[preview],
+  const inspections=useLoad(()=>inspectorPreview || !preview ? get<any[]>('/api/insurer/inspections') : Promise.resolve([] as any[]),[preview,inspectorPreview],
     event=>!preview&&event.type==='vehicle_service');
   const requests = useLoad<any[]>(() => inspectionOnly ? Promise.resolve([]) : preview ? previewGet<any[]>('/api/insurer/requests') : get<any[]>('/api/insurer/requests'), [inspectionOnly,preview],
     (event) => !preview && event.type === 'vehicle_service');
@@ -65,9 +67,9 @@ export function InsurerCabinet({inspectionOnly=false,section}:{inspectionOnly?:b
         <h1>{workspace==='insurance'?'Страхование':workspace==='inspection'?'Техосмотры':workspace==='finance'?'Финансы':'Общие настройки'}</h1>
       </header>
       {preview && <div className="banner" role="note">
-        <b>Тестовый кабинет страховщика · вымышленные данные</b>
-        <span className="note">Здесь можно пройти весь путь оформления без отправки заявок компаниям и без реального списания денег.</span>
-        <a className="btn small" href={PREVIEW_CLIENT}>Открыть кабинет клиента и подать тестовую заявку</a>
+        <b>{inspectorPreview?'Учебный кабинет оператора техосмотра':'Тестовый кабинет страховщика'} · вымышленные данные</b>
+        <span className="note">Результаты фиксируются только в демонстрации. Настоящие диагностические карты, полисы и платежи не создаются.</span>
+        {!inspectorPreview&&<a className="btn small" href={PREVIEW_CLIENT}>Открыть кабинет клиента и подать тестовую заявку</a>}
       </div>}
       <nav className="partner-workspaces" aria-label="Разделы кабинета партнёра">
         {([['insurance','Страховки'],['inspection','Техосмотры'],['finance','Финансы'],['common','Общее']] as const)
