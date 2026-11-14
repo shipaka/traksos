@@ -10,6 +10,7 @@ export type PublicWeather = {
   description: string;
   temperatureC: number;
   observedAt: string;
+  observedEpochSeconds: number;
   fetchedAt: string;
   attribution: 'Яндекс Погода';
   attributionUrl: 'https://yandex.ru/pogoda/saint-petersburg';
@@ -56,6 +57,7 @@ export function parseYandexWeather(data: unknown, fetchedMs: number): PublicWeat
     ...result,
     temperatureC: Math.round(fact.temp),
     observedAt: new Date(observationMs).toISOString(),
+    observedEpochSeconds: fact.obs_time,
     fetchedAt: new Date(fetchedMs).toISOString(),
     attribution: 'Яндекс Погода',
     attributionUrl: 'https://yandex.ru/pogoda/saint-petersburg'
