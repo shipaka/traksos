@@ -1,8 +1,9 @@
 import './styles.css';
+import './fullRolePreview.css';
 import './cabinetPremium.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
-import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
+import { get, post, getToken, connectWs, disconnectWs, API_URL, onEvent, ApiError } from './api.ts';
 import { MeCtx, ToastProvider, useRoute, useToast, type Me } from './ui.tsx';
 import { native } from './native.ts';
 import { Login } from './screens/login.tsx';
@@ -25,6 +26,8 @@ import { ModCase, Appeal, MyReviews } from './screens/moderation.tsx';
 import { ModeratorDesk } from './screens/moderatorDesk.tsx';
 import { AdminTestCenter } from './screens/adminTestCenter.tsx';
 import { ServicePreviewBar,ServicePreviewPage } from './screens/servicePreview.tsx';
+import { FullRolePreviewPage,RolePreviewBar,handlePreviewClick,previewMode,previewIdentity } from './screens/fullRolePreview.tsx';
+import { previewLink,PREVIEW_ROLES,type Role } from './demo/fullRolePreview.ts';
 import { SupportList, SupportNew, SupportThread, Notifications, useUnread } from './screens/support.tsx';
 import { InsurerCabinet } from './screens/insurer.tsx';
 import { InsuranceApplication,InsuranceThread } from './screens/insuranceFlow.tsx';
@@ -123,8 +126,10 @@ function App() {
     if (m === 'client' || m === 'performer' || m === 'admin' || m === 'moderator' || m === 'service' || m === 'insurer' || m === 'inspection') setMode(m);
     location.replace('#/' + (m === 'performer' ? 'work' : m === 'admin' ? 'admin' : m === 'moderator' ? 'moderation' : m === 'service' ? 'base' : m === 'insurer' ? 'insurance' : m === 'inspection' ? 'inspections' : ''));
   }, [route.join('/')]); // eslint-disable-line
+  const adminPreviewOpen = !!me?.roles.includes('admin') && route[0] === 'admin' && route[1] === 'test-center';
   useEffect(() => {
     if (!ready) return; // Keep the native token until the initial auth check finishes.
+    if (adminPreviewOpen) { disconnectWs(); return; } // Synthetic roles must not receive real events or push registration.
     if (!me) {
       // Logout/revoked session must also clear the token held by the Android native bridge.
       native.setSession(API_URL || location.origin, null);
@@ -133,7 +138,7 @@ function App() {
     connectWs();
     native.setSession(API_URL || location.origin, getToken());
     native.registerPush((token) => post('/api/me/push-token', { provider: 'rustore', token }));
-  }, [ready, me?.id]); // eslint-disable-line
+  }, [ready, me?.id, adminPreviewOpen]); // eslint-disable-line
   const modeRef = useRef(mode);
   modeRef.current = mode;
   useEffect(() => onEvent((e) => {
@@ -160,6 +165,8 @@ function App() {
   const isCustomer = me.roles.some((r) => r === 'client' || r === 'driver');
   const isAdmin = me.roles.includes('admin');
   const serviceSandbox = isAdmin && a === 'admin' && b === 'test-center' && route[2] === 'service';
+  const fullRole: Role | null = isAdmin && a === 'admin' && b === 'test-center' && PREVIEW_ROLES.includes(route[2] as Role) ? route[2] as Role : null;
+  const insurerClientSandbox = fullRole === 'insurer' && route[3] === 'client';
   const isModerator = me.roles.includes('moderator') || isAdmin;
   const isStaff = isModerator;
   const isService = me.roles.includes('service');
@@ -173,7 +180,7 @@ function App() {
     : mode === 'performer' ? isPerformer : mode === 'service' ? isService
     : isCustomer || isStaff;
   const allowedMode: Mode = permitted ? mode : fallback;
-  const effMode: Mode = serviceSandbox ? 'service' : a === 'work' && isPerformer ? 'performer'
+  const effMode: Mode = insurerClientSandbox ? 'client' : fullRole ? previewMode(fullRole) : serviceSandbox ? 'service' : a === 'work' && isPerformer ? 'performer'
     : a === 'admin' && isAdmin ? 'admin' : a === 'moderation' && isModerator ? 'moderator'
     : a === 'base' && isService ? 'service' : a === 'insurance' && isInsurer ? 'insurer' : a === 'inspections' && (isInspection||isInsurer) ? 'inspection' : allowedMode;
 
@@ -210,7 +217,7 @@ function App() {
     case 'qr': screen = <QrJoin code={b} />; break;
     case 'appeal': screen = <Appeal />; break;
     case 'reviews': screen = <MyReviews />; break;
-    case 'admin': screen = !isStaff ? <Home /> : b === 'case' && route[2] ? <ModCase id={route[2]} /> : !isAdmin ? <ModeratorDesk /> : b === 'test-center' ? (serviceSandbox ? <ServicePreviewPage section={route[3]} sub={route[4]} id={route[5]} /> : <AdminTestCenter roleId={route[2]} />) : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : <Admin key={b === 'section' ? route[2] : 'summary'} initialSection={b === 'section' ? route[2] : undefined} />; break;
+    case 'admin': screen = !isStaff ? <Home /> : b === 'case' && route[2] ? <ModCase id={route[2]} /> : !isAdmin ? <ModeratorDesk /> : b === 'test-center' ? (serviceSandbox ? <ServicePreviewPage section={route[3]} sub={route[4]} id={route[5]} /> : fullRole ? <FullRolePreviewPage role={fullRole} parts={route.slice(3)} /> : <AdminTestCenter roleId={route[2]} />) : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : <Admin key={b === 'section' ? route[2] : 'summary'} initialSection={b === 'section' ? route[2] : undefined} />; break;
     case 'moderation': screen = isModerator ? <ModeratorDesk /> : <Home />; break;
     case 'offer': screen = <OfferPage audience={b ?? 'client'} />; break;
     case 'support': screen = b === 'new' ? <SupportNew /> : b ? <SupportThread id={b} /> : <SupportList />; break;
@@ -218,11 +225,13 @@ function App() {
     default: screen = <main><div className="empty">Такой страницы нет</div></main>;
   }
 
+  const renderedMe: Me = fullRole ? previewIdentity(me,fullRole) : serviceSandbox ? {...me,roles:['service'],name:'Тестовый сервис'} : me;
   return (
-    <MeCtx.Provider value={{ me, reload, mode: effMode, setMode }}>
+    <MeCtx.Provider value={{ me: renderedMe, reload, mode: effMode, setMode }}>
       <ScreenErrorBoundary key={route.join('/')}>
         {serviceSandbox && <ServicePreviewBar />}
-        <Shell mode={effMode} me={serviceSandbox ? {...me,roles:['service'],name:'Тестовый сервис'} : me}>{screen}</Shell>
+        {fullRole && <RolePreviewBar role={fullRole} />}
+        <Shell mode={effMode} me={renderedMe} previewRole={fullRole}>{screen}</Shell>
         {!(a === 'admin' && b === 'test-center' && isAdmin) && <IncomingCall />}
         {!(a === 'admin' && b === 'test-center' && isAdmin) && <OfferGate />}
       </ScreenErrorBoundary>
@@ -230,11 +239,18 @@ function App() {
   );
 }
 
-function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: React.ReactNode }) {
+function Shell({ mode, me, children, previewRole = null }: { mode: Mode; me: Me | null; children: React.ReactNode; previewRole?: Role | null }) {
   const route = useRoute();
   const serviceSandbox = route[0]==='admin'&&route[1]==='test-center'&&route[2]==='service';
-  const here = serviceSandbox ? '/'+(route.slice(3).join('/')||'base') : '/'+route.join('/');
-  const sandboxHref=(href:string)=>serviceSandbox?'#/admin/test-center/service'+(href==='/base'||href.startsWith('/base/')?href:'/unavailable'):'#'+href;
+  const fullRole = previewRole;
+  const here = fullRole ? fullRole === 'insurer'
+    ? route[3] === 'client' ? '/' : '/insurance'+(route.slice(4).length ? '/'+route.slice(4).join('/') : '')
+    : '/'+(route.slice(3).join('/') || (['master','tow','master_service'].includes(fullRole) ? 'work' : ''))
+    : serviceSandbox ? '/'+(route.slice(3).join('/')||'base') : '/'+route.join('/');
+  const sandboxHref=(href:string)=>fullRole ? fullRole === 'insurer'
+    ? (route[3] === 'client' ? previewLink('insurer','client') : previewLink('insurer',href === '/insurance'||href.startsWith('/insurance/') ? href : 'unavailable'))
+    : previewLink(fullRole, href === '/as/client' ? '' : href)
+    : serviceSandbox?'#/admin/test-center/service'+(href==='/base'||href.startsWith('/base/')?href:'/unavailable'):'#'+href;
   // На телефоне оставляем только рабочие действия. Все прежние маршруты
   // сохраняются через меню; компьютерная боковая навигация остаётся полной.
   const tabs: [string, string, string][] = !me ? [] : mode === 'performer'
@@ -303,7 +319,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     ['/offer/privacy', 'Политика персональных данных'],
     ['/privacy', 'Мои персональные данные']];
   return (
-    <div className={`app ${me ? "role-"+mode : "guest-app"}`}>
+    <div className={`app ${me ? "role-"+mode : "guest-app"}`} onClickCapture={fullRole ? handlePreviewClick : undefined}>
       <header className="top">
         <span className="logo">Трак<b>SOS</b></span>
         <div className="row" style={{ flexWrap: 'nowrap' }}>
@@ -313,15 +329,15 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {me && mode === 'moderator' && <span className="pill accent">модерация</span>}
           {me && mode === 'insurer' && <span className="pill accent">страхование</span>}
           {me && mode === 'service' && <span className="pill accent">рембаза</span>}
-          {me && !serviceSandbox && me.roles.some(r => r === 'master' || r === 'tow') && me.roles.some(r => r === 'admin' || r === 'moderator') &&
+          {me && !serviceSandbox && !fullRole && me.roles.some(r => r === 'master' || r === 'tow') && me.roles.some(r => r === 'admin' || r === 'moderator') &&
             <nav className="cabinet-role-switch" aria-label="Режим кабинета">
               <a href="#/as/performer" aria-label="Выездной мастер" aria-current={mode === 'performer' ? 'page' : undefined}>Мастер</a>
               {me.roles.includes('admin')
                 ? <a href="#/as/admin" aria-label="Администратор" aria-current={mode === 'admin' ? 'page' : undefined}>Админ</a>
                 : <a href="#/as/moderator" aria-label="Модератор" aria-current={mode === 'moderator' ? 'page' : undefined}>Модер.</a>}
             </nav>}
-          {me && !serviceSandbox && <a href="#/help" className="bell" aria-label="Справка">?</a>}
-          {me && !serviceSandbox && <Bell />}
+          {me && !serviceSandbox && !fullRole && <a href="#/help" className="bell" aria-label="Справка">?</a>}
+          {me && !serviceSandbox && !fullRole && <Bell />}
           {me && <details className="account-menu" key={here}>
             <summary aria-label="Открыть меню кабинета">☰ <span>Меню</span></summary>
             <nav aria-label="Все разделы кабинета">
@@ -329,7 +345,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               {accountLinks.map(([href, label]) => <a key={href} href={sandboxHref(href)}>{label}</a>)}
               <span className="account-menu-heading">Помощь и документы</span>
               {helpLinks.map(([href, label]) => <a key={href} href={sandboxHref(href)}>{label}</a>)}
-              {!serviceSandbox && <button type="button" className="account-menu-logout" onClick={() => {
+              {!serviceSandbox && !fullRole && <button type="button" className="account-menu-logout" onClick={() => {
                 if (me.roles.some(r => r === 'master' || r === 'tow') &&
                   !window.confirm('При выходе из аккаунта статус «На линии» отключится. Просто сверните приложение, если хотите продолжать получать заявки. Выйти?')) return;
                 void logout();

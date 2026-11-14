@@ -1,4 +1,5 @@
 // Связь с сервером: HTTP + WebSocket. Токен хранится в localStorage (в Android — тоже, внутри WebView).
+import {currentPreviewRole,rolePreviewApi} from './demo/fullRolePreview.ts';
 
 declare const __API_URL__: string;
 export const API_URL = (window as any).TRAKSOS_API ?? (__API_URL__ || '');
@@ -21,6 +22,9 @@ export class ApiError extends Error {
 }
 
 export async function api<T = any>(method: string, path: string, body?: unknown): Promise<T> {
+  // Fake roles use only in-memory data, never live calls. /api/me refreshes the real admin session.
+  if(currentPreviewRole() && path.startsWith('/api/') && !(method === 'GET' && path.split('?')[0] === '/api/me'))
+    return rolePreviewApi(method,path,body) as Promise<T>;
   let r: Response;
   try {
     // Bounded waits are crucial on unstable mobile data. Never retry writes silently.
@@ -72,6 +76,7 @@ export function onEvent(fn: Listener) {
 }
 
 export function connectWs() {
+  if (currentPreviewRole()) { disconnectWs(); return; }
   if (!token || !navigator.onLine || (ws && ws.readyState <= 1)) return;
   closedByUs = false;
   const base = API_URL || location.origin;
@@ -99,6 +104,12 @@ export function disconnectWs() {
 
 window.addEventListener('online', () => {
   if (token) connectWs();
+});
+window.addEventListener('hashchange', () => {
+  // A real admin WS may exist before entering a synthetic account. Close it
+  // immediately so no private notifications arrive inside the training UI.
+  if (currentPreviewRole()) disconnectWs();
+  else if (token) connectWs();
 });
 window.addEventListener('offline', () => {
   // Avoid reconnect churn and cellular battery usage when disconnected.
@@ -130,6 +141,7 @@ export function fmtTime(iso: string) {
 
 /** Картинка, которую отдают только с токеном (фото документов) → адрес для <img> */
 export async function authedImage(path: string) {
+  if (currentPreviewRole()) throw new ApiError(403,'preview_blocked','Реальные документы и фотографии недоступны в тестовом кабинете');
   const r = await fetch(API_URL + path, { headers: token ? { authorization: `Bearer ${token}` } : {} });
   if (!r.ok) throw new ApiError(r.status, 'image', 'Не удалось загрузить фото');
   return URL.createObjectURL(await r.blob());
