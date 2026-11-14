@@ -81,7 +81,7 @@ export function Order({ id }: { id: string }) {
       )}
       {d.status === 'completed' && <Review id={id} you={d.you} />}
 
-      {d.status !== 'searching' && d.status !== 'no_performer' && <Chat id={id} disabled={d.status === 'cancelled'} />}
+      {d.status !== 'searching' && d.status !== 'no_performer' && <Chat id={id} status={d.status} />}
       </>}
 
       {d.you !== 'admin' && d.you !== 'candidate' && <a className="btn ghost" href={`#/support/new?order=${d.id}`}>Позвать поддержку</a>}
@@ -819,7 +819,8 @@ function WorksCheck({ id }: { id: string }) {
 
 // Чат -----------------------------------------------------------------------
 
-function Chat({ id, disabled }: { id: string; disabled: boolean }) {
+function Chat({ id, status }: { id: string; status: string }) {
+  const closed = status === 'completed' || status === 'cancelled';
   const { me } = useMe();
   const toast = useToast();
   const [msgs, setMsgs] = useState<any[]>([]);
@@ -837,7 +838,7 @@ function Chat({ id, disabled }: { id: string; disabled: boolean }) {
       if (e.type === 'chat' && e.message.order_id === id) setMsgs((m) => (m.some((x) => x.id === e.message.id) ? m : [...m, e.message]));
     });
     return () => { alive = false; off(); };
-  }, [id]);
+  }, [id, status]);
   useEffect(() => { box.current?.scrollTo(0, box.current.scrollHeight); }, [msgs.length, open]);
   useEffect(() => { if (open) setSeen(msgs.length); }, [open, msgs.length]);
 
@@ -856,7 +857,7 @@ function Chat({ id, disabled }: { id: string; disabled: boolean }) {
   const fresh = msgs.slice(seen).filter((m) => m.sender_id && m.sender_id !== me?.id && m.kind !== 'system').length;
   if (!open) return (
     <button type="button" className="card" onClick={() => setOpen(true)} style={{ textAlign: 'left', cursor: 'pointer', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-      <b>💬 Чат по заявке</b>
+      <b>{closed ? '💬 История диалога' : '💬 Чат по заявке'}</b>
       <span className="row" style={{ gap: 6 }}>
         {fresh > 0 && <span className="pill warn">новых: {fresh}</span>}
         <span className="note">{msgs.length ? `${msgs.length} сообщ.` : 'открыть'} ▾</span>
@@ -880,10 +881,21 @@ function Chat({ id, disabled }: { id: string; disabled: boolean }) {
           );
         })}
       </div>
-      {!disabled && (
+      {closed ? (
+        <div className="stack" aria-label="Завершённый диалог">
+          <div className="banner good" role="status">
+            Переписка завершена. Сообщения сохранены в истории заявки, отправка новых сообщений недоступна.
+          </div>
+          <button type="button" className="btn ghost small" onClick={() => setOpen(false)}>
+            Завершить диалог
+          </button>
+        </div>
+      ) : (
         <>
-          <div className="scroll-x">{quick.map((q) => <button key={q} className="chip" onClick={() => send(q, 'quick')}>{q}</button>)}</div>
-          <form className="compose" onSubmit={(e) => { e.preventDefault(); send(text); }}>
+          {quick.length > 0 && <div className="scroll-x" aria-label="Быстрые сообщения">
+            {quick.map((q) => <button key={q} type="button" className="chip" onClick={() => send(q, 'quick')}>{q}</button>)}
+          </div>}
+          <form className="compose" onSubmit={(e) => { e.preventDefault(); void send(text); }}>
             <input className="field" placeholder="Сообщение" value={text} onChange={(e) => setText(e.target.value)} maxLength={2000} />
             <button className="btn small" disabled={!text.trim()}>➤</button>
           </form>
