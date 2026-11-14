@@ -1043,7 +1043,9 @@ function MastersNearby({ service, geo, brand }: { service: string; geo: { lat: n
 function TaskArchive({ orders }: { orders: any[] }) {
   const b = useLoad(() => get('/api/bookings'), []);
   const bookings = ((b.data ?? []) as any[]).filter((x) => ['closed', 'disputed', 'cancelled', 'declined', 'invoiced'].includes(x.status) || x.fromOrderId);
-  const root = (o: any) => o.consult_of ?? o.id;
+  // Keep all steps of the same roadside incident in one history card.
+  // Consultation-origin chains remain compatible with their existing discount logic.
+  const root = (o: any) => o.case_root_id ?? o.consult_of ?? o.id;
   const groups = new Map<string, { orders: any[]; bookings: any[] }>();
   for (const o of [...orders].sort((x, y) => +new Date(x.created_at) - +new Date(y.created_at))) {
     const k = root(o);
