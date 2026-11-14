@@ -539,6 +539,10 @@ export class OrdersService {
       await this.payments.onConfirmed({ ...o, status: to, discount_amount: Number(o.discount_amount ?? 0) + used }, q);
       await this.referral?.afterOrder(q, { ...o, status: to }, m.amount);
     });
+    // The order and capture-intent transaction MUST commit before bank IO.
+    // A transport failure leaves the durable intent for manual/provider reconciliation.
+    await this.payments.processCaptureForOrder(orderId)
+      .catch((e) => console.error('[order-capture]', e));
     await this.systemMessage(orderId, `Сумма ${rub(m.total - used)} подтверждена${used ? ` (бонусами и баллами ${rub(used)})` : ''}. Оставьте отзыв друг о друге.`);
     await this.notifier.notify([o.performer_id], { type: 'order', orderId, status: to },
       { kind: 'normal', title: 'Сумма подтверждена', body: `Заявка №${o.number}: ${rub(m.total)}`, data: { orderId } });
