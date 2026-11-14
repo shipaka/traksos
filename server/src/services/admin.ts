@@ -341,6 +341,8 @@ export class AdminService {
         await this.payments.onConfirmed(upd, q);
         await this.audit(q, admin, 'order.resolve', orderId, p);
       });
+      await this.payments.processCaptureForOrder(orderId)
+        .catch((e) => console.error('[admin-resolve-capture]', e));
       const m = this.orders.money({ ...o, work_amount: p.workAmount });
       await this.orders.systemMessage(orderId, `Поддержка закрыла заявку: итог ${rub(m.total)}. ${p.reason}`);
       await this.notifier.notify([o.client_id, o.created_by, o.performer_id], { type: 'order', orderId, status: 'completed' },
