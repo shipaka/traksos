@@ -56,7 +56,11 @@ export class WarrantyRemediationService {
       reportedAt:j.reported_at,confirmedAt:j.confirmed_at,
       expenseRecorded:!!expense,
       expense:isAdmin(user)?expense:null,
-      events:events.map(e=>({event:e.event,data:e.data,
+      // Bank references belong only in the admin's financial proof view.
+      // The common event timeline must not leak them to the client or workers.
+      events:events.map(e=>({event:e.event,
+        data:e.event==='expense_recorded'&&!isAdmin(user)
+          ? {amountKopecks:e.data?.amountKopecks} : e.data,
         actorId:e.actor_id,createdAt:e.created_at}))};
   }
   async forClaim(user:AuthUser,claimId:string){
