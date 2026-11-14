@@ -75,6 +75,13 @@ export function Order({ id }: { id: string }) {
         </section>
       )}
 
+      {d.you === 'client' && d.service === 'tow' && d.status === 'completed' && (
+        <section className="card hi" aria-label="Продолжить обращение в СТО">
+          <b>Грузовик доставлен · нужна запись в сервис?</b>
+          <span className="note">Вы можете продолжить это же обращение стационарным ремонтом. Счёт эвакуаторщика уже отделён; сервис назовёт стоимость только после осмотра.</span>
+          <a className="btn" href={`#/services?case=${encodeURIComponent(d.id)}`}>Продолжить обращение · выбрать грузовой сервис</a>
+        </section>
+      )}
       {d.you === 'admin' && <AdminPanel d={d} onDone={o.reload} />}
       {(d.you === 'client' || d.you === 'admin') && d.paymentMethod !== 'cash' && <PaymentsList id={id} admin={d.you === 'admin'} />}
       {isPerformer && (isConsult ? <ConsultFinish d={d} onDone={o.reload} /> : <PerformerActions d={d} onDone={o.reload} />)}
