@@ -28,15 +28,25 @@ export function Work() {
   });
 
   return (
-    <main>
+    <main className="work-live-dashboard">
       <WorkerNotices />
+      <section className="work-command-hero" aria-label="Рабочий стол исполнителя">
+        <div className="work-command-copy">
+          <span className="work-command-kicker">TRACKSOS · {p.kind === 'tow' ? 'ЭВАКУАЦИЯ' : 'ВЫЕЗДНАЯ ПОМОЩЬ'}</span>
+          <h1>{me?.name || (p.kind === 'tow' ? 'Водитель эвакуатора' : 'Выездной специалист')}</h1>
+          <p>{active.length
+            ? 'Сейчас у вас активных заявок: ' + active.length + '. Откройте нужную карточку ниже — там текущий этап и дальнейшие действия.'
+            : online ? 'Вы на линии. Новые заявки, предложения и рабочие уведомления появятся на этом экране.'
+              : 'Ваш рабочий стол. Выберите статус доступности ниже, чтобы управлять приёмом заявок.'}</p>
+          <div className="work-command-tags">
+            <span className="work-command-status"><span className={'dot ' + (online ? 'on' : '')} />{LINE[p.line_status] ?? 'Статус не указан'}</span>
+            <span className="work-command-verification">{p.verification === 'approved' ? '✓ Профиль проверен' : p.verification === 'rejected' ? 'Требуется исправление профиля' : 'Проверка профиля ещё не завершена'}</span>
+          </div>
+        </div>
+        <div className="work-command-art" aria-hidden="true" />
+      </section>
       <LiveStrip who={p.kind === 'tow' ? 'tow' : 'master'} />
       {online && p.verification === 'approved' && <Nearby />}
-      <div className="between">
-        <h1>{me?.name ?? 'Кабинет'}</h1>
-        <span className="pill"><span className={`dot ${online ? 'on' : ''}`} /> {LINE[p.line_status]}</span>
-      </div>
-
       {p.verification !== 'approved' ? (
         <div className="card hi">
           <b>{p.verification === 'rejected' ? 'Проверка не пройдена' : p.submitted_at ? 'Профиль на проверке' : 'Пройдите проверку'}</b>
