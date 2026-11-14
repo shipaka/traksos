@@ -1,4 +1,4 @@
-// TrackSOS insurance/inspection partner workflow. Local CI only; synthetic accounts.
+// TrakSOS insurance/inspection partner workflow. Local CI only; synthetic accounts.
 import { chromium, devices } from 'playwright';
 import { mkdir } from 'node:fs/promises';
 const BASE = process.env.BASE_URL ?? 'http://localhost:8080';
@@ -36,7 +36,7 @@ const [owner,partner,outsider]=await Promise.all([
   register('+79990000652','insurer'),
   register('+79990000653','owner')
 ]);
-const admin=await api('POST','/api/auth/login',{phone:'+79990000001',password:'TrackSOS-Test-2026!'});
+const admin=await api('POST','/api/auth/login',{phone:'+79990000001',password:'TrakSOS-Test-2026!'});
 assert(admin.user.roles.includes('admin'),'Admin role not present');
 const policy=await api('GET','/api/admin/insurance-access',undefined,admin.token);
 assert(policy.registrationOpen===false,'Insurer registration must be closed by default');
@@ -153,7 +153,7 @@ try{
   await agentPage.locator('input[type=date]').fill('2030-12-31');
   await agentPage.locator('input[type=file]').setInputFiles({
     name:'policy.pdf',mimeType:'application/pdf',
-    buffer:Buffer.from('%PDF-1.4\n'+'TrackSOS synthetic test '.repeat(20)),
+    buffer:Buffer.from('%PDF-1.4\n'+'TrakSOS synthetic test '.repeat(20)),
   });
   await agentPage.getByRole('button',{name:'Отправить готовый полис клиенту'}).click();
   await agentPage.getByText('Готовый страховой полис').first().waitFor();
