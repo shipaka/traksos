@@ -145,9 +145,9 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
 
       <section className="public-hero public-brand-hero" aria-labelledby="public-main-title">
         <div className="public-hero-copy">
-          <span className="public-eyebrow">TRAKSOS · ПОМОЩЬ ГРУЗОВОМУ ТРАНСПОРТУ</span>
-          <h1 id="public-main-title">Помощь грузовикам <em>в любой ситуации 24/7</em></h1>
-          <p>Выездные специалисты, эвакуаторы, грузовые СТО и консультации. Все направления помощи — на одном экране.</p>
+          <span className="public-eyebrow">ЕДИНАЯ ПЛАТФОРМА ДЛЯ ГРУЗОВОГО ТРАНСПОРТА</span>
+          <h1 id="public-main-title"><em>TrakSOS</em> — помощь<br/>в пути и полный сервис<br/>для грузовиков и прицепов</h1>
+          <p>Эвакуация · Выездной мастер · Ремонт и ТО · Запчасти<br/>Страхование · Техосмотры · Консультации 24/7</p>
           <div className="public-track-benefits" aria-label="Преимущества TrakSOS">
             <span><i aria-hidden="true">ϟ</i>Быстрое обращение</span>
             <span><i aria-hidden="true">✓</i>Проверка исполнителей</span>
@@ -155,7 +155,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
             <span><i aria-hidden="true">▤</i>Работа с юрлицами</span>
           </div>
           <div className="public-actions">
-            <button type="button" className="public-button public-button-sos" onClick={() => { try { sessionStorage.removeItem('traksos.pendingLandingAction'); } catch {} setIntent('help'); }}>Помощь в дороге</button>
+            <button type="button" className="public-button public-button-sos" onClick={() => { try { sessionStorage.removeItem('traksos.pendingLandingAction'); } catch {} setIntent('help'); }}>Вызвать помощь (SOS)</button>
             <button type="button" className="public-button public-button-outline" onClick={() => document.getElementById('public-how')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>Как это работает?</button>
           </div>
 
@@ -166,16 +166,18 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
 
       <div className="public-content-grid">
         <section className="public-real-services" id="public-services">
-          <div className="public-section-head"><span className="public-section-kicker">ПОМОЩЬ ГРУЗОВИКАМ</span><h2>Чем вам помочь?</h2></div>
+          <div className="public-section-head public-services-a11y-title"><span className="public-section-kicker">ПОМОЩЬ ГРУЗОВИКАМ</span><h2>Все услуги TrakSOS</h2></div>
           <div className="public-service-tiles">
             {([
-              ['van', '⚒', 'Выездной мастер', 'Ремонт и диагностика на месте'],
-              ['tow', '↗', 'Эвакуатор', 'Перевозка грузовика и прицепа'],
-              ['sto', '▣', 'СТО грузовых автомобилей', 'Ремонт, обслуживание и запись'],
-              ['consult', '☏', 'Консультация специалиста', 'Помощь по телефону'],
+              ['tow', '↗', 'Эвакуация', 'Быстрая и безопасная доставка в сервис'],
+              ['van', '⚒', 'Выездной мастер', 'Ремонт на месте, без простоя'],
+              ['sto', '▣', 'СТО и сервисы', 'Ремонт, ТО, диагностика, шиномонтаж'],
+              ['insurance', '◇', 'Страхование', 'ОСАГО, КАСКО, груз и ответственность'],
+              ['parts', '⚙', 'Запчасти', 'Оригиналы и аналоги для грузовиков'],
+              ['consult', '☏', 'Консультации', 'Эксперты по технике и сервису'],
             ] as const).map(([id,icon,name,hint]) => (
               <button type="button" className={`public-service-tile public-service-${id}`}
-                key={name} onClick={() => chooseGuestAction(id)}>
+                key={name} onClick={() => chooseGuestAction(id, id === 'insurance' || id === 'parts' ? 'register' : 'help')}>
                 <span className="public-service-icon" aria-hidden="true">{icon}</span>
                 <b>{name}</b><small>{hint}</small><span className="public-service-arrow" aria-hidden="true">›</span>
               </button>
@@ -183,19 +185,29 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           </div>
         </section>
 
-        <section className="public-demo-map" id="public-map" aria-label="Как выглядит карта помощи">
-          <div className="public-section-head"><span className="public-section-kicker">ЗОНА ОБСЛУЖИВАНИЯ</span><h2>Рядом с вами</h2></div>
-          <div className="public-map-wrap">
-            <PublicDemoMapBackdrop />
 
+
+
+        {!(window as any).TrakSOSNative && <aside className="public-app-card">
+          <div className="public-section-kicker">TRAKSOS В ТЕЛЕФОНЕ</div>
+          <h2>Мобильное приложение <em>TrakSOS</em></h2>
+          <div className="public-app-phone" aria-hidden="true">
+            <span className="public-app-logo">Trak<b>SOS</b></span>
+            <img className="public-app-phone-truck" src="/tracksos-approved-scania-r520.webp" alt="" loading="lazy" />
+            <span>Помощь грузовику<br/>в дороге</span>
           </div>
-          <div className="public-map-legend"><span><i className="service"/>СТО</span><span><i className="master"/>Мастер</span><span><i className="tow"/>Эвакуация</span></div>
-          <p className="public-demo-warning">Демонстрационная карта: точки условные и не означают доступность исполнителей. Реальные данные доступны пользователю после входа.</p>
-        </section>
-
-
+          <p>Заявки, специалисты, документы и связь с мастером — в одном приложении.</p>
+          <span className="public-rustore-soon">Скоро в RuStore</span>
+          <small>Ссылка на скачивание появится после публикации приложения.</small>
+        </aside>}
       </div>
 
+      <section className="public-why-strip" aria-label="Преимущества сервиса">
+        <div><span>⚡</span><b>Быстрая помощь</b><small>Оформление обращения онлайн</small></div>
+        <div><span>◇</span><b>Проверенные партнёры</b><small>Мастера, СТО, эвакуаторы</small></div>
+        <div><span>▱</span><b>Всё в одном месте</b><small>Сервисы, запчасти, страхование</small></div>
+        <div><span>☆</span><b>Выгодные условия</b><small>Для водителей и автопарков</small></div>
+      </section>
       <div className="public-track-extras">
         <button type="button" className="public-track-insurance" onClick={() => chooseGuestAction('insurance','register')}>
           <span className="public-track-insurance-art" aria-hidden="true" />
@@ -215,24 +227,17 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           </button>
         </div>
       </div>
-        {!(window as any).TrakSOSNative && <aside className="public-app-card">
-          <div className="public-section-kicker">TRAKSOS В ТЕЛЕФОНЕ</div>
-          <h2>Мобильное приложение <em>TrakSOS</em></h2>
-          <div className="public-app-phone" aria-hidden="true">
-            <span className="public-app-logo">Trak<b>SOS</b></span>
-            <img className="public-app-phone-truck" src="/tracksos-approved-scania-r520.webp" alt="" loading="lazy" />
-            <span>Помощь грузовику<br/>в дороге</span>
+
+
+        <section className="public-demo-map" id="public-map" aria-label="Как выглядит карта помощи">
+          <div className="public-section-head"><span className="public-section-kicker">ЗОНА ОБСЛУЖИВАНИЯ</span><h2>Рядом с вами</h2></div>
+          <div className="public-map-wrap">
+            <PublicDemoMapBackdrop />
+
           </div>
-          <p>Заявки, специалисты, документы и связь с мастером — в одном приложении.</p>
-          <span className="public-rustore-soon">Скоро в RuStore</span>
-          <small>Ссылка на скачивание появится после публикации приложения.</small>
-        </aside>}
-      <section className="public-why-strip" aria-label="Преимущества сервиса">
-        <div><span>◎</span><b>Наш регион</b><small>Санкт-Петербург и Ленобласть</small></div>
-        <div><span>◈</span><b>Подключение партнёров</b><small>Проверка мастеров и СТО</small></div>
-        <div><span>⚡</span><b>Дорожная помощь</b><small>Заявка через единый сервис</small></div>
-        <div><span>☏</span><b>Связь и консультации</b><small>Помощь в выборе специалиста</small></div>
-      </section>
+          <div className="public-map-legend"><span><i className="service"/>СТО</span><span><i className="master"/>Мастер</span><span><i className="tow"/>Эвакуация</span></div>
+          <p className="public-demo-warning">Демонстрационная карта: точки условные и не означают доступность исполнителей. Реальные данные доступны пользователю после входа.</p>
+        </section>
       <section className="public-bottom-row public-information-row" id="public-how">
         <div className="public-how">
           <span className="public-section-kicker">ПОНЯТНЫЙ ПРОЦЕСС</span>
