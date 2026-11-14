@@ -2,7 +2,7 @@
    Images are separate optimized bundle assets cropped from the approved visual.
    Interactive labels, URLs, and permissions remain actual DOM elements. */
 
-.guest-app .public-landing .public-service-master::after,
+.guest-app .public-landing .public-service-van::after,
 .app.role-client .client-direction-grid>.client-direction-card:nth-child(1)::after{
   background-image:url('../public/tracksos-photo-master.webp')!important;
 }
