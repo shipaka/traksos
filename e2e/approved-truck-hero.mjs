@@ -79,6 +79,16 @@ try{
       throw Error(width+'px horizontal overflow: '+JSON.stringify(check));
     if(width>=900 && (!check.asideVisible||check.asideCards<4))
       throw Error(width+'px useful right column not filled: '+JSON.stringify(check));
+    const directions=page.locator('.client-help-directions .client-direction-card');
+    if(await directions.count()!==4)throw Error(width+'px: expected exactly four help directions');
+    if(await page.locator('.client-help-directions .opt').count())
+      throw Error(width+'px: obsolete symptom switcher returned');
+    const master=page.getByRole('button',{name:/Выездной мастер/});
+    await master.click();
+    if(await master.getAttribute('aria-expanded')!=='true')
+      throw Error(width+'px: master specialties did not expand');
+    if(await page.locator('.client-specialization-card').count()!==5)
+      throw Error(width+'px: five master specializations missing');
     if(errors.length)throw Error(width+'px JS error: '+errors.join('; '));
     await context.close();
 
