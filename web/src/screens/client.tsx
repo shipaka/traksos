@@ -30,13 +30,13 @@ export function Home() {
 
 /** One agreed customer decision. First choose WHO can help; ask for specifics only on the next step. */
 function HelpDirections() {
-  const [showSpecialties, setShowSpecialties] = useState(false);
+  const [showSpecialties, setShowSpecialties] = useState(() => location.hash.startsWith('#/sos/master'));
   const masterServices = ['electric', 'diag', 'air', 'autonomy', 'tyre'] as const;
   return (
     <section className="client-help-directions" aria-label="Направления помощи">
       <h2>Кто вам нужен?</h2>
       <p className="client-directions-lead">Выберите нужный вид помощи. Причину поломки и детали расскажете в заявке.</p>
-      <div className="client-direction-grid">
+      <div className={`client-direction-grid${showSpecialties ? " expanded" : ""}`}>
         <button type="button" className="client-direction-card main-direction"
           aria-expanded={showSpecialties} aria-controls="master-specializations"
           onClick={() => setShowSpecialties(open => !open)}>
@@ -44,7 +44,7 @@ function HelpDirections() {
           <span className="client-direction-copy"><b>Выездной мастер</b><small>Ремонт и диагностика грузовика на месте</small></span>
           <span className="client-direction-arrow" aria-hidden="true">{showSpecialties ? '−' : '›'}</span>
         </button>
-        <a className="client-direction-card" href="#/new/tow">
+        {!showSpecialties && <a className="client-direction-card" href="#/new/tow">
           <span className="client-direction-symbol" aria-hidden="true">↗</span>
           <span className="client-direction-copy"><b>Эвакуатор</b><small>Перевезти грузовик в нужное место</small></span>
           <span className="client-direction-arrow" aria-hidden="true">›</span>
@@ -54,11 +54,11 @@ function HelpDirections() {
           <span className="client-direction-copy"><b>СТО грузовых автомобилей</b><small>Найти сервис и записаться на ремонт</small></span>
           <span className="client-direction-arrow" aria-hidden="true">›</span>
         </a>
-        <a className="client-direction-card" href="#/consult">
+        <a className="client-direction-card" href="#/new/consult">
           <span className="client-direction-symbol" aria-hidden="true">◉</span>
           <span className="client-direction-copy"><b>Консультация по телефону</b><small>Помощь специалиста без выезда</small></span>
           <span className="client-direction-arrow" aria-hidden="true">›</span>
-        </a>
+        </a>}
       </div>
       {showSpecialties && (
         <section id="master-specializations" className="client-specializations" aria-label="Специализация выездного мастера">
