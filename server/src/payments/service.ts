@@ -356,6 +356,11 @@ export class PaymentsService implements PaymentHooks {
           "select id from payment_capture_intents where payment_id=$1 and status<>'settled'", [current.id]);
         if (intent) return { changed: false, dispatch: false, failedOrder: null as any };
       }
+      if (current.kind === 'call_out' && ['captured','cancelled','failed'].includes(status)) {
+        const cancelIntent = await q.one<{ id: string }>(
+          "select id from payment_cancel_intents where payment_id=$1 and status<>'settled'", [current.id]);
+        if (cancelIntent) return { changed: false, dispatch: false, failedOrder: null as any };
+      }
       await q.query('update payments set status=$2, updated_at=now() where id=$1', [current.id, status]);
       await this.orders.event(q, current.order_id, null, `payment_${current.kind}_${status}`,
         { paymentId: current.id, total: current.total });
