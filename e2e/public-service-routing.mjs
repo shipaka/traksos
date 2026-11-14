@@ -61,7 +61,13 @@ try {
     await page.getByRole('button',{name:'Водитель автопарка'}).waitFor();
     if(await page.getByRole('button',{name:'Мастер',exact:true}).count())throw Error('Partner listed in client registration');
 
-    await page.goto(BASE+'/#/join');
+    const registrationKind=page.getByRole('navigation',{name:'Тип регистрации'});
+    await registrationKind.getByRole('link',{name:'Клиент',exact:true}).waitFor();
+    await registrationKind.getByRole('link',{name:'Зарегистрироваться как партнёр'}).click();
+    await page.waitForURL(/#\\/join$/);
+    await page.getByRole('heading',{name:'Работать с TrakSOS'}).waitFor();
+    if(await registrationKind.getByRole('link',{name:'Зарегистрироваться как партнёр'}).getAttribute('aria-current')!=='page')
+      throw Error('Partner registration tab is not selected');
     for(const label of ['Мастер','Эвакуаторщик','СТО','Страховой агент'])
       await page.getByRole('button',{name:new RegExp('^'+label)}).waitFor();
     if(await page.locator('.auth-desktop-form .opt').count()!==4)throw Error('Partner categories must be exactly four');
