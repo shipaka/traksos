@@ -671,3 +671,165 @@
     mask-image:radial-gradient(ellipse 75% 80% at 50% 50%,#000 54%,rgba(0,0,0,.82) 72%,transparent 88%);
   }
 }
+
+
+/* Visual QA: use the approved expressive composition, not compact text overlays.
+   Tested at 320, 390 and 1440px. No service behavior/permissions altered. */
+@media(min-width:900px){
+  .app.role-client .tracksos-visual-home .tracksos-dashboard-aside>.tracksos-account-actions{
+    display:none!important; /* already available in permanent navigation */
+  }
+  .app.role-client .tracksos-visual-home .tracksos-dashboard-columns{
+    align-items:start;gap:16px;grid-template-columns:minmax(0,1.75fr) minmax(280px,.92fr);
+  }
+  .app.role-client .tracksos-visual-home .client-direction-card{min-height:195px;}
+  .app.role-client .tracksos-visual-home .tracksos-quick-options{
+    width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;
+  }
+  .app.role-client .tracksos-visual-home .tracksos-option{
+    min-height:130px;justify-content:center;gap:6px;
+    padding:15px 13px 15px 37%;
+  }
+  .app.role-client .tracksos-visual-home .tracksos-option-art{
+    width:42%;height:100%;opacity:.95;
+  }
+  .app.role-client .tracksos-visual-home .tracksos-option span b{
+    font-size:clamp(15px,1.5vw,20px);line-height:1.2;
+  }
+  .app.role-client .tracksos-visual-home .tracksos-option small{
+    font-size:11px;line-height:1.4;
+  }
+  .guest-app .public-landing .public-app-card {
+    display:grid!important;
+    grid-template-columns:minmax(0,1.2fr) 140px minmax(0,1.2fr)!important;
+    grid-template-rows:auto auto auto;gap:9px 16px;
+    align-items:center;min-height:190px;padding:18px 24px!important;
+  }
+  .guest-app .public-landing .public-app-card .public-section-kicker{grid-column:1;grid-row:1;}
+  .guest-app .public-landing .public-app-card h2{grid-column:1;grid-row:2;}
+  .guest-app .public-landing .public-app-card .public-app-phone{
+    grid-column:2;grid-row:1/4;width:110px;height:151px;min-height:151px;
+    transform:rotate(-5deg);margin-inline:auto;
+  }
+  .guest-app .public-landing .public-app-card p{grid-column:3;grid-row:1;font-size:13px;}
+  .guest-app .public-landing .public-app-card .public-rustore-soon{
+    grid-column:3;grid-row:2;align-self:center;max-width:280px;
+  }
+  .guest-app .public-landing .public-app-card>small{grid-column:3;grid-row:3;}
+}
+@media(max-width:899px){
+  .app.role-client .tracksos-visual-home .track-road-art,
+  .guest-app .public-landing .public-hero-visual {
+    width:100%!important;height:clamp(230px,73vw,315px)!important;
+    background-size:contain!important;
+  }
+  .app.role-client .tracksos-visual-home .track-road-art img{
+    object-fit:contain!important;object-position:center!important;
+  }
+  .app.role-client .tracksos-visual-home .client-direction-card,
+  .guest-app .public-landing .public-service-tile{
+    position:relative;
+    min-height:217px!important;
+    padding:111px 12px 14px!important;
+    display:flex;flex-direction:column;
+    justify-content:flex-end!important;align-items:flex-start!important;
+    gap:3px!important;
+  }
+  .app.role-client .tracksos-visual-home .client-direction-card::after,
+  .guest-app .public-landing .public-service-tile::after{
+    width:100%!important;height:64%!important;
+    right:0!important;top:0!important;bottom:auto!important;
+    background-position:center top!important;
+    background-size:contain!important;
+    opacity:.93!important;transform:none!important;
+  }
+  .app.role-client .tracksos-visual-home .client-direction-card::before,
+  .guest-app .public-landing .public-service-tile::before{
+    content:"";position:absolute;z-index:1;inset:32% 0 0!important;pointer-events:none;
+    background:linear-gradient(to top,rgba(3,17,31,.99) 0%,rgba(4,20,35,.97) 42%,rgba(4,20,35,.65) 72%,transparent 100%)!important;
+  }
+  .app.role-client .tracksos-visual-home .client-direction-card>.client-direction-symbol,
+  .guest-app .public-landing .public-service-tile>.public-service-icon{
+    position:relative;z-index:2;
+    width:27px!important;height:27px!important;min-height:27px!important;
+    flex:0 0 27px!important;display:grid;place-items:center;
+    margin:0 0 2px!important;font-size:16px!important;
+  }
+  .app.role-client .tracksos-visual-home .client-direction-card>.client-direction-copy{
+    display:flex;flex-direction:column;gap:2px;
+    position:relative;z-index:2;width:100%!important;max-width:100%!important;
+    background:none!important;padding:0!important;
+    text-shadow:0 1px 7px #000e;overflow-wrap:normal;
+  }
+  .guest-app .public-landing .public-service-tile>b,
+  .guest-app .public-landing .public-service-tile>small{
+    display:block;position:relative;z-index:2;
+    width:100%!important;max-width:100%!important;
+    padding:0!important;margin:0!important;
+    background:none!important;overflow-wrap:normal;text-shadow:0 1px 7px #000e;
+  }
+  .app.role-client .tracksos-visual-home .client-direction-card>.client-direction-copy b,
+  .guest-app .public-landing .public-service-tile>b{
+    color:#fff!important;font-size:clamp(13px,3.8vw,16px)!important;
+    line-height:1.18!important;text-wrap:pretty;
+  }
+  .app.role-client .tracksos-visual-home .client-direction-card>.client-direction-copy small,
+  .guest-app .public-landing .public-service-tile>small{
+    color:#d5e9f5!important;font-size:10px!important;line-height:1.28!important;
+  }
+  .app.role-client .tracksos-visual-home .client-direction-card>.client-direction-arrow,
+  .guest-app .public-landing .public-service-tile>.public-service-arrow {
+    position:absolute!important;right:10px!important;top:10px!important;bottom:auto!important;
+    transform:scale(.85);z-index:3;
+  }
+  /* The expanded master selector is one horizontal strip; the three
+     alternative directions remain removed, as agreed. */
+  .app.role-client .tracksos-visual-home .client-direction-grid.expanded>.main-direction{
+    min-height:90px!important;padding:12px!important;
+    flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;
+  }
+  .app.role-client .tracksos-visual-home .client-direction-grid.expanded>.main-direction::after{
+    width:36%!important;height:100%!important;opacity:.35!important;
+  }
+  .app.role-client .tracksos-visual-home .client-direction-grid.expanded>.main-direction::before{
+    inset:0!important;
+  }
+  .app.role-client .tracksos-visual-home .client-direction-grid.expanded>.main-direction>.client-direction-copy{
+    width:auto!important;max-width:74%!important;
+  }
+  .app.role-client .tracksos-visual-home .tracksos-quick-options{
+    display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;
+  }
+  .app.role-client .tracksos-visual-home .tracksos-option{
+    min-height:179px!important;
+    padding:89px 9px 11px!important;
+    display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;gap:4px;
+  }
+  .app.role-client .tracksos-visual-home .tracksos-option-art{
+    width:100%!important;height:90px!important;top:0!important;left:0!important;
+    opacity:1!important;
+  }
+  .app.role-client .tracksos-visual-home .tracksos-option span b{
+    display:block;font-size:13px!important;line-height:1.17;
+  }
+  .app.role-client .tracksos-visual-home .tracksos-option small{
+    font-size:10px!important;line-height:1.2;overflow-wrap:anywhere;
+  }
+  .guest-app .public-landing .public-app-card{
+    display:grid!important;grid-template-columns:minmax(0,1fr) minmax(96px,115px)!important;
+    gap:7px!important;min-height:165px!important;padding:14px!important;
+  }
+  .guest-app .public-landing .public-app-card :is(.public-section-kicker,h2,p,.public-rustore-soon,small){
+    grid-column:1!important;min-width:0;
+  }
+  .guest-app .public-landing .public-app-phone{
+    grid-column:2!important;grid-row:1/6!important;
+    height:145px!important;min-height:145px!important;max-width:108px;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+ .guest-app .public-landing .public-service-tile,
+ .app.role-client .tracksos-visual-home .client-direction-card{
+    animation:none!important;transition:none!important;
+  }
+}
