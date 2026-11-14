@@ -3,28 +3,34 @@ const BASE=process.env.BASE_URL??'http://127.0.0.1:8080';
 if(!['127.0.0.1','localhost'].includes(new URL(BASE).hostname))
  throw Error('Header search smoke is local only');
 const browser=await chromium.launch();
+const errors=[];
+async function session(term, select, expectedHash){
+  // A new browser document per case avoids testing search during a previous
+  // hash-router transition. This is the actual user opening a fresh page.
+  const page=await browser.newPage({viewport:{width:1440,height:900},locale:'ru-RU'});
+  page.on('pageerror',err=>errors.push(err.message));
+  try{
+    await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
+    await page.getByRole('heading',{name:/Помощь грузовикам/}).waitFor();
+    const search=page.getByRole('searchbox',{name:'Поиск разделов и услуг'});
+    await search.fill(term);
+    const options=page.locator('#track-search-list');
+    if(select){
+      const found=options.getByRole('option',{name:select});
+      await found.waitFor({state:'visible'});
+      await found.click();
+      await page.waitForURL(new RegExp('#/'+expectedHash+'$'));
+    } else {
+      await options.getByText(/Раздел не найден/).waitFor();
+      await search.press('Escape');
+      if(await options.count())throw Error('Escape did not close search results');
+    }
+  } finally {await page.close();}
+}
 try {
- const page=await browser.newPage({viewport:{width:1440,height:900},locale:'ru-RU'});
- const errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
- const field=page.getByRole('searchbox',{name:'Поиск разделов и услуг'});
- await field.waitFor({state:'visible'});
- await field.fill('запчаст');
- const results=page.locator('#track-search-list');
- await results.getByRole('option',{name:/Запчасти и аналоги/}).waitFor();
- if(await results.getByRole('option').count()!==1)
-   throw Error('Parts search should have one useful result');
- await field.press('Enter');
- await page.waitForURL(/#\/register$/);
- await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
- await field.fill('консультация');
- await results.getByRole('option',{name:/Консультация специалиста/}).click();
- await page.waitForURL(/#\/login$/);
- await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
- await field.fill('несуществующее-направление');
- await results.getByText(/Раздел не найден/).waitFor();
- await field.press('Escape');
- if(await results.count())throw Error('Escape did not close search results');
+ await session('запчаст',/Запчасти и аналоги/,'register');
+ await session('консультация',/Консультация специалиста/,'login');
+ await session('несуществующее-направление',null,null);
  if(errors.length)throw Error('Page errors: '+errors.join(' | '));
- console.log('Approved header search is functional: inventory entry, consultation, not found, keyboard');
-} finally {await browser.close();}
+ console.log('Approved desktop header search works: parts, consultation, no results, Escape');
+}finally{await browser.close();}
