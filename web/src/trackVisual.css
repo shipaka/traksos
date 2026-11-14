@@ -1,0 +1,835 @@
+/* TrackSOS — owner-approved 14 Nov 2026 visual direction.
+   Actual interactive UI, not a screenshot pasted into the app.
+   The same design language on public, client and working role pages.
+   All 3D illustrations are bundled SVGs; Scania is the approved local WebP. */
+
+.app,.guest-app{--tv-cyan:#32e6fc;--tv-blue:#087db6;--tv-border:#356c96;--tv-pink:#f24fa7;}
+.app .top{background:linear-gradient(112deg,#06182d,#071d33 72%,#092b45);border-bottom:1px solid #184e75;box-shadow:0 4px 22px #0003;}
+.app .top .logo{color:#fff;font-weight:900;letter-spacing:-1.4px;font-style:italic;}
+.app .top .logo b{color:#10dff8;}
+.app .guest-header-actions a.register{background:linear-gradient(120deg,#06d4ed,#13aaf8);color:#041625;box-shadow:0 0 17px #1de5f45d;border:1px solid #60ecf9;}
+.app .bell{border-radius:13px;box-shadow:0 0 12px #1fe3fb18;}
+.app .account-menu summary{border:1px solid #3a7397;border-radius:12px;box-shadow:0 5px 18px #0003;}
+@media(min-width:900px){
+  body:has(.tracksos-visual-home),body:has(.public-landing){padding:0;background:#041326;}
+  .app .desktop-sidebar{background:linear-gradient(180deg,#061a30,#09223c 54%,#031226);border-right:1px solid #1e5278;}
+  .app .desktop-nav-link{min-height:47px;color:#d0e2f2;gap:13px;transition:background .18s,box-shadow .18s,color .18s,transform .18s;}
+  .app .desktop-nav-link:hover{background:#12456b;color:#fff;transform:translateX(2px);}
+  .app .desktop-nav-link.active{background:linear-gradient(95deg,#0b5fa1,#092d50);border:1px solid #21b5fa;box-shadow:0 0 15px #02b8fa4d,inset 0 0 14px #008df548;color:#fff;}
+  .app .desktop-sidebar-title{color:#8db8d3;}
+  .app .desktop-sidebar-bottom{border-top:1px solid #235477;color:#90bfd8;}
+  .app .desktop-content{padding:0 clamp(12px,1.5vw,25px);max-width:calc(100% - 260px);}
+  .app .desktop-content>main.client-home{width:100%;max-width:none!important;padding:12px 0 65px;}
+  .app .desktop-content>main.public-landing{max-width:none!important;width:100%;padding:12px 0 55px;}
+}
+@media(min-width:900px) and (max-width:1100px){
+  .app .desktop-content{max-width:calc(100% - 220px);}
+}
+
+/* Cinematic hero: illustrated local road atmosphere, uncut real Scania.
+   Scene occupies the WHOLE panel, not just one tiny standalone image card. */
+.app.role-client .tracksos-visual-home .track-road-hero,
+.guest-app .public-landing .public-brand-hero{
+  position:relative;isolation:isolate;overflow:hidden;
+  min-height:385px;border:1px solid #337eae;border-radius:22px;
+  background:linear-gradient(110deg,#071a32,#133350 55%,#0c2949);
+  box-shadow:0 16px 40px #0008;
+}
+.app.role-client .tracksos-visual-home .track-road-hero::before,
+.guest-app .public-landing .public-brand-hero::before{
+  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:linear-gradient(90deg,rgba(3,18,33,.02) 0%,rgba(5,19,36,.10) 43%,rgba(3,17,33,.84) 80%),
+    url('../public/tracksos-road-atmosphere.svg') center/cover no-repeat;
+  animation:none;
+}
+.app.role-client .tracksos-visual-home .track-road-hero::after{
+  content:"";position:absolute;z-index:0;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,transparent 73%,rgba(1,15,28,.6));
+}
+.app.role-client .tracksos-visual-home .track-road-hero{
+  display:grid;grid-template-columns:minmax(0,47%) minmax(0,53%);
+  align-items:center;gap:0;padding:26px;
+}
+.app.role-client .tracksos-visual-home .track-road-art{
+  grid-column:1;grid-row:1;position:relative;inset:auto;
+  height:320px;width:100%;max-width:100%;overflow:visible;z-index:1;
+  display:flex;align-items:center;justify-content:flex-start;
+  background:none;box-shadow:none;
+}
+.app.role-client .tracksos-visual-home .track-road-art img{
+  width:100%;height:100%;object-fit:contain;object-position:center left;
+  filter:drop-shadow(0 16px 21px #0008);
+}
+.app.role-client .tracksos-visual-home .track-road-copy{
+  grid-column:2;grid-row:1;max-width:100%;width:100%;z-index:2;
+  padding:6px 10px 5px 12px;
+}
+.app.role-client .tracksos-visual-home .track-road-copy h1{
+  font-size:clamp(28px,3vw,48px);line-height:1.08;
+  letter-spacing:-.042em;margin:10px 0 12px;color:#fff;
+}
+.app.role-client .tracksos-visual-home .track-road-copy h1 span{
+  color:#54eaff;text-shadow:0 0 16px #1cbcff4a;
+}
+.app.role-client .tracksos-visual-home .track-road-copy>p{
+  max-width:500px;font-size:14px;line-height:1.55;color:#d6eaf7;
+}
+.app.role-client .tracksos-visual-home .track-road-copy .desktop-eyebrow{
+  color:#9beaf7;letter-spacing:.13em;font-size:10px;
+}
+.track-hero-features,.public-track-benefits{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:11px;margin-top:19px;
+}
+.track-hero-features>span,.public-track-benefits>span{
+  display:flex;align-items:center;gap:10px;
+  min-width:0;color:#e7f7ff;font-size:11px;line-height:1.4;
+}
+.track-hero-features i,.public-track-benefits i{
+  display:grid;place-items:center;flex:0 0 36px;height:36px;
+  border:1px solid #397fa3;border-radius:12px;font:900 21px system-ui;
+  color:#51edfa;background:linear-gradient(135deg,#123e5d,#06233c);
+  box-shadow:0 0 15px #0bbafa26;
+}
+.app.role-client .tracksos-visual-home .desktop-hero-buttons{display:none!important;}
+/* Live dashboard — practical left service region and real orders on right. */
+.app.role-client .tracksos-visual-home .tracksos-dashboard-columns{
+  display:grid;grid-template-columns:minmax(0,1.75fr) minmax(300px,.90fr);
+  gap:clamp(12px,1.2vw,21px);align-items:start;
+}
+.app.role-client .tracksos-visual-home .tracksos-dashboard-services{
+  display:flex;min-width:0;flex-direction:column;gap:15px;
+}
+.app.role-client .tracksos-visual-home .client-help-directions>h2{
+  font-size:clamp(23px,2.5vw,31px);color:#fff;
+  letter-spacing:-.035em;margin:0 0 4px;
+}
+.app.role-client .tracksos-visual-home .client-directions-lead{font-size:12px;margin:0 0 12px;}
+.app.role-client .tracksos-visual-home .client-direction-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;}
+.app.role-client .tracksos-visual-home .client-direction-card,
+.app.role-client .client-sos-page .client-direction-card{
+  min-height:183px;border-radius:19px;
+  display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;
+  padding:20px 16px;border:1px solid #318ac2;text-align:left;
+  color:#fff;background:radial-gradient(ellipse at 100% 7%,#155a82,transparent 55%),linear-gradient(145deg,#102e4a,#062139);
+  box-shadow:inset 0 0 26px #008eda12,0 9px 23px #0005;
+}
+.app.role-client .tracksos-visual-home .client-direction-card::after,
+.app.role-client .client-sos-page .client-direction-card::after{
+  content:"";position:absolute;right:-10px;bottom:-5px;
+  width:80%;height:98%;pointer-events:none;
+  opacity:.92;background-position:right bottom;background-size:contain;background-repeat:no-repeat;
+  transition:transform .35s ease,filter .35s ease;
+}
+.app.role-client .client-direction-card:nth-child(1)::after{background-image:url('../public/tracksos-visual-van.svg');}
+.app.role-client .client-direction-card:nth-child(2)::after{background-image:url('../public/tracksos-visual-tow.svg');}
+.app.role-client .client-direction-card:nth-child(3)::after{background-image:url('../public/tracksos-visual-sto.svg');}
+.app.role-client .client-direction-card:nth-child(4)::after{background-image:url('../public/tracksos-visual-consult.svg');}
+.app.role-client .client-direction-card:hover::after{transform:scale(1.06) translateY(-3px);filter:brightness(1.1);}
+.app.role-client .client-direction-card>.client-direction-symbol{position:relative;z-index:1;
+  width:35px;height:35px;min-height:35px;font-size:18px;border-radius:10px;
+  background:linear-gradient(130deg,#0f547a,#07314b);color:#6deffc;
+}
+.app.role-client .client-direction-card>.client-direction-copy{z-index:1;position:relative;
+  max-width:60%;gap:5px;text-shadow:0 2px 6px #04182c;
+}
+.app.role-client .client-direction-card>.client-direction-copy b{font-size:clamp(15px,1.45vw,20px);line-height:1.16;color:#fff;}
+.app.role-client .client-direction-card>.client-direction-copy small{font-size:11px;line-height:1.32;color:#c9e3f3;}
+.app.role-client .client-direction-card>.client-direction-arrow{
+  position:absolute;z-index:3;bottom:14px;right:13px;
+  border-radius:100px;width:34px;height:34px;display:grid;place-items:center;
+  font-size:22px;background:linear-gradient(145deg,#19658d,#0b2d51);
+  border:1px solid #3a91c3;box-shadow:0 4px 12px #0008;color:#b7fbff;
+}
+.app.role-client .tracksos-visual-home .client-direction-card.main-direction{border-color:#34b8ed;}
+
+/* Smaller but equally visual links for parts, vehicle inspection and guidance. */
+.tracksos-quick-options,.public-track-extras-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;min-width:0;}
+.tracksos-option,.public-track-extra{
+  position:relative;overflow:hidden;min-height:102px;
+  display:flex;flex-direction:column;justify-content:end;gap:4px;
+  padding:15px 15px 13px 39%;text-decoration:none;text-align:left;
+  color:#effaff;border:1px solid #357eb0;border-radius:16px;
+  background:linear-gradient(140deg,#144464,#082642);
+  box-shadow:0 8px 20px #0004;
+}
+.tracksos-option>b,.tracksos-option span b,.public-track-extra b{color:#f9fcff;font-size:15px;line-height:1.17;}
+.tracksos-option small,.public-track-extra small{color:#b6d4e6;font-size:10px;line-height:1.3;}
+.tracksos-option-art,.public-track-extra-art{
+  position:absolute;left:0;bottom:0;width:48%;height:100%;
+  background-position:center;background-repeat:no-repeat;background-size:contain;
+}
+.tracksos-option-parts .tracksos-option-art,.public-track-parts .public-track-extra-art{background-image:url('../public/tracksos-visual-parts.svg');}
+.tracksos-option-inspection .tracksos-option-art,.public-track-inspection .public-track-extra-art{background-image:url('../public/tracksos-visual-inspection.svg');}
+.tracksos-option-guide .tracksos-option-art,.public-track-guide .public-track-extra-art{background-image:url('../public/tracksos-visual-guide.svg');}
+.tracksos-option>span:last-child,.public-track-extra>span:last-child{position:absolute;right:12px;top:9px;color:#6beaff;font-size:22px;}
+
+/* True order state, no invented ETA or cartoon location. */
+.app.role-client .tracksos-visual-home .tracksos-dashboard-aside{
+  display:flex;flex-direction:column;gap:13px;min-width:0;
+}
+.app.role-client .tracksos-visual-home .desktop-aside-card{
+  border-radius:18px;padding:18px;
+  background:linear-gradient(155deg,#103656,#08233b);
+  border:1px solid #3179aa;box-shadow:inset 0 1px 0 #64dfff13,0 12px 28px #0006;
+}
+.tracksos-live-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:14px;}
+.tracksos-live-head h2{flex:1;margin:0!important;font-size:17px!important;color:#fff;}
+.tracksos-live-icon{color:#4de9ff;font-size:26px;text-shadow:0 0 16px #1bdafb88;}
+.tracksos-status{padding:5px 10px;background:#114d70;color:#9dffea;font-size:11px;border-radius:12px;border:1px solid #2b849d;}
+.tracksos-live-order{display:flex;flex-direction:column;gap:9px;color:#fff;text-decoration:none;min-width:0;}
+.tracksos-order-number,.tracksos-order-location{color:#a8cfe5;font-size:12px;}
+.tracksos-live-order strong{font-size:16px;line-height:1.3;}
+.tracksos-progress{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin:11px 0;}
+.tracksos-progress>span{display:flex;align-items:center;flex-direction:column;gap:8px;text-align:center;min-width:0;position:relative;color:#83a3bb;}
+.tracksos-progress>span:before{content:"";position:absolute;top:14px;left:-50%;right:50%;height:3px;background:#234968;}
+.tracksos-progress>span:first-child:before{display:none;}
+.tracksos-progress>span.reached{color:#eafaff;}
+.tracksos-progress>span.reached:before{background:#35eec8;}
+.tracksos-stage-dot{position:relative;z-index:1;display:grid;place-items:center;
+  border-radius:50%;width:30px;height:30px;background:#12263c;border:2px solid #51728e;
+  font-size:12px;font-weight:850;color:#a9c9e0;}
+.tracksos-progress>span.reached .tracksos-stage-dot{background:#075b71;border-color:#39eac8;color:#fff;box-shadow:0 0 15px #39eac845;}
+.tracksos-progress small{font-size:10px;}
+.tracksos-live-open{color:#8beeff;display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:11px;background:#0b354f;font-weight:800;font-size:12px;}
+.tracksos-empty-icon{width:40px;height:40px;border:1px solid #55d6ef;border-radius:50%;display:grid;place-items:center;color:#80f5cf;}
+.app.role-client .tracksos-visual-home .desktop-empty-orders{display:flex;flex-direction:column;gap:10px;
+  border:1px solid #2d607d!important;background:linear-gradient(145deg,#113b59,#0b2943)!important;color:#e4f5fd;padding:16px;}
+.tracksos-empty-orders p,.tracksos-visual-home .desktop-empty-orders p{margin:0;font-size:12px;color:#a5cbdc;line-height:1.5;}
+.tracksos-more-orders{color:#78e6f7;font-size:12px;text-decoration:none;margin-top:10px;}
+.app.role-client .tracksos-visual-home .tracksos-primary-help{
+  display:flex;align-items:center;gap:12px;text-decoration:none;
+  background:linear-gradient(100deg,#082e50,#0e5f8c)!important;
+  border-color:#2cd4f4!important;box-shadow:0 0 23px #00cbfa35,0 9px 23px #0005;
+  transition:filter .22s,transform .22s;
+}
+.tracksos-primary-help:hover{filter:brightness(1.13);transform:translateY(-2px);}
+.tracksos-primary-help-symbol{display:grid;place-items:center;width:50px;height:50px;flex:0 0 50px;
+  border:1px solid #78faff;border-radius:15px;color:#c7fbff;font-size:30px;background:#0d87a07a;}
+.tracksos-primary-help>span:nth-child(2){display:flex;flex:1;flex-direction:column;gap:5px;}
+.tracksos-primary-help b{color:#fff;font-size:18px;}
+.tracksos-primary-help small{color:#ccedfc;font-size:11px;line-height:1.35;}
+.tracksos-primary-help-arrow{font-size:29px;color:#9cf7ff;}
+.tracksos-account-actions{display:flex;flex-direction:column;gap:7px;}
+.tracksos-account-actions h2{color:#f4fcff!important;margin:0 0 6px!important;font-size:17px!important;}
+.tracksos-account-actions a{display:flex;align-items:center;gap:7px;
+  color:#e6f7ff;text-decoration:none;border:1px solid #2f5f7b;border-radius:9px;
+  padding:10px 12px;font-size:12px;background:#133d58;}
+.tracksos-account-actions a>b{margin-left:auto;font-size:19px;color:#8ce8f8;}
+.tracksos-account-actions p{color:#9fcce0;font-size:12px;line-height:1.4;margin:0;}
+/* Insurance acts as a broad visual panel, not a tiny text link. */
+.tracksos-insurance-strip,.public-track-insurance{
+  min-height:122px;display:flex;align-items:center;gap:20px;
+  position:relative;overflow:hidden;padding:17px 22px 17px 210px;
+  text-decoration:none;text-align:left;color:#fff;
+  border:1px solid #3194cc;border-radius:18px;
+  background:linear-gradient(95deg,#0c385d,#0b2747 70%,#074569);
+  box-shadow:0 11px 26px #0005;
+}
+.tracksos-insurance-art,.public-track-insurance-art{position:absolute;left:20px;top:0;bottom:0;width:175px;
+  background:url('../public/tracksos-visual-insurance.svg') center/contain no-repeat;}
+.tracksos-insurance-strip>span:nth-child(2),.public-track-insurance>span:nth-child(2){flex:1;display:flex;flex-direction:column;gap:8px;}
+.tracksos-insurance-strip b,.public-track-insurance b{font-size:clamp(18px,2vw,28px);color:#fff;line-height:1.17;}
+.tracksos-insurance-strip small,.public-track-insurance small{color:#c8dfef;font-size:12px;line-height:1.45;}
+.tracksos-insurance-strip>strong,.public-track-insurance>strong{
+  flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  background:linear-gradient(115deg,#08d5ed,#1baaff);border:1px solid #83f7ff;
+  border-radius:30px;color:#06223a;font-size:13px;padding:12px 19px;
+  box-shadow:0 0 22px #00d5f97d;
+}
+.tracksos-insurance-strip:hover,.public-track-insurance:hover{border-color:#76f3fa;filter:brightness(1.08);}
+.tracksos-visual-home .tracksos-mobile-intro{display:none!important;}
+
+/* Public guest entrance uses EXACTLY the same cinematic system, but never
+   pretends the anonymous visitor has a live order or contractor ETA. */
+.guest-app .public-landing .public-brand-hero{
+  display:grid;grid-template-columns:minmax(0,47%) minmax(0,53%);padding:30px;
+  min-height:390px;align-items:center;
+}
+.guest-app .public-landing .public-hero-visual{
+  inset:12px 55% 12px 0;width:48%;height:auto;
+  background:url('../public/tracksos-approved-scania-r520.webp') center / contain no-repeat;
+  opacity:1;z-index:1;pointer-events:none;
+}
+.guest-app .public-landing .public-hero-copy{
+  grid-column:2;position:relative;z-index:2;width:100%;padding:6px 10px 5px 12px;
+  margin:0;max-width:100%;
+}
+.guest-app .public-landing .public-brand-hero h1{
+  font-size:clamp(30px,3vw,48px);line-height:1.1;color:#fff;margin:12px 0;letter-spacing:-.04em;
+}
+.guest-app .public-landing .public-brand-hero h1 em{color:#5cf2ff;}
+.guest-app .public-landing .public-hero-copy>p{font-size:14px;color:#d7effa;}
+.guest-app .public-landing .public-track-benefits{margin-top:16px;}
+.guest-app .public-landing .public-hero-caption{font-size:11px;max-width:560px;color:#a6d2e7;margin-top:12px;}
+.guest-app .public-landing .public-actions{margin-top:15px;}
+.guest-app .public-landing .public-button-sos{background:linear-gradient(105deg,#ee228c,#c20d72);border-color:#f577c0;box-shadow:0 0 18px #ed1b8f3d;}
+.guest-app .public-landing .public-content-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,.8fr);gap:13px;align-items:start;}
+.guest-app .public-landing .public-real-services{grid-column:1;grid-row:1;background:transparent!important;padding:5px 0!important;border:0!important;box-shadow:none!important;}
+.guest-app .public-landing .public-section-head h2{font-size:clamp(22px,2.2vw,31px);color:#fff;}
+.guest-app .public-landing .public-service-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.guest-app .public-landing .public-service-tile{
+  min-width:0;min-height:168px;position:relative;overflow:hidden;
+  display:flex;flex-direction:column;justify-content:end;align-items:flex-start;
+  padding:16px;border:1px solid #2d88ba;border-radius:18px;
+  background:linear-gradient(145deg,#133a56,#06223e)!important;
+  box-shadow:0 10px 20px #0005;color:#fff;
+}
+.guest-app .public-landing .public-service-tile::after{
+  content:"";position:absolute;z-index:0;right:-8px;bottom:-5px;
+  height:98%;width:80%;background-position:right bottom;background-repeat:no-repeat;background-size:contain;
+}
+.guest-app .public-landing .public-service-van::after{background-image:url('../public/tracksos-visual-van.svg');}
+.guest-app .public-landing .public-service-tow::after{background-image:url('../public/tracksos-visual-tow.svg');}
+.guest-app .public-landing .public-service-sto::after{background-image:url('../public/tracksos-visual-sto.svg');}
+.guest-app .public-landing .public-service-consult::after{background-image:url('../public/tracksos-visual-consult.svg');}
+.guest-app .public-landing .public-service-icon,
+.guest-app .public-landing .public-service-tile b,
+.guest-app .public-landing .public-service-tile small{z-index:1;position:relative;max-width:59%;text-shadow:0 2px 5px #06192c;}
+.guest-app .public-landing .public-service-icon{color:#9efbff;font-size:21px;}
+.guest-app .public-landing .public-service-tile b{font-size:clamp(14px,1.4vw,20px);line-height:1.15;}
+.guest-app .public-landing .public-service-tile small{font-size:11px;color:#c7dfea;line-height:1.4;}
+.guest-app .public-landing .public-service-arrow{z-index:2;position:absolute;right:12px;bottom:11px;width:32px;height:32px;
+  display:grid;place-items:center;border-radius:50%;font-size:23px;color:#85eeff;
+  background:#0a3959;border:1px solid #50bce6;}
+.guest-app .public-landing .public-demo-map{grid-column:2;grid-row:1;min-width:0;}
+.guest-app .public-landing .public-app-card{grid-column:1/-1;grid-row:2;flex-direction:row;align-items:center;flex-wrap:wrap;justify-content:space-between;}
+.guest-app .public-landing .public-app-phone{width:110px;min-height:138px;order:2;}
+.guest-app .public-landing .public-track-extras{display:flex;flex-direction:column;gap:12px;}
+.guest-app .public-landing .public-track-insurance{width:100%;cursor:pointer;font:inherit;}
+.guest-app .public-landing .public-track-extra{cursor:pointer;min-width:0;font:inherit;}
+.guest-app .public-landing .public-track-extras-grid{gap:13px;}
+/* Never disguise a generated illustration as an actual map/location. */
+.guest-app .public-landing .public-demo-warning{font-size:11px;line-height:1.6;color:#b0c8dc;}
+
+@media(min-width:900px) and (max-width:1190px){
+  .app.role-client .tracksos-visual-home .tracksos-dashboard-columns{grid-template-columns:minmax(0,1.48fr) minmax(255px,.9fr);}
+  .app.role-client .client-direction-card>.client-direction-copy{max-width:68%;}
+  .tracksos-option,.public-track-extra{padding-left:22%;min-height:117px;}
+  .tracksos-option-art,.public-track-extra-art{opacity:.45;}
+}
+@media(max-width:899px){
+  .app.role-client .tracksos-visual-home .track-road-hero,
+  .guest-app .public-landing .public-brand-hero{
+    display:flex;flex-direction:column;align-items:stretch;gap:0;min-height:0;
+    padding:0 15px 18px;border-radius:18px;margin:0;
+  }
+  .app.role-client .tracksos-visual-home .track-road-art,
+  .guest-app .public-landing .public-hero-visual{
+    order:0;position:relative;display:block;inset:auto!important;
+    width:100%;height:clamp(185px,53vw,280px);
+    background-size:contain;background-position:center;
+    margin:0 auto;grid-column:auto;grid-row:auto;z-index:1;
+  }
+  .app.role-client .tracksos-visual-home .track-road-art img{
+    width:100%;height:100%;object-fit:contain;object-position:center;
+  }
+  .app.role-client .tracksos-visual-home .track-road-copy,
+  .guest-app .public-landing .public-hero-copy{
+    order:1;width:100%;padding:2px 0 0;grid-column:auto;grid-row:auto;z-index:2;
+  }
+  .app.role-client .tracksos-visual-home .track-road-copy h1,
+  .guest-app .public-landing .public-brand-hero h1{font-size:clamp(23px,5.6vw,34px);margin:5px 0 9px;}
+  .app.role-client .tracksos-visual-home .track-road-copy>p,
+  .guest-app .public-landing .public-hero-copy>p{font-size:12px;line-height:1.45;}
+  .app.role-client .tracksos-visual-home .track-road-copy .desktop-eyebrow{font-size:9px;}
+  .track-hero-features,.public-track-benefits{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px;}
+  .track-hero-features>span,.public-track-benefits>span{font-size:10px;gap:6px;}
+  .track-hero-features i,.public-track-benefits i{width:29px;height:29px;flex-basis:29px;font-size:17px;border-radius:9px;}
+  .app.role-client .tracksos-visual-home .tracksos-dashboard-columns{display:flex;flex-direction:column;gap:16px;}
+  .app.role-client .tracksos-visual-home .tracksos-dashboard-aside{order:0;display:flex!important;width:100%;gap:10px;}
+  .app.role-client .tracksos-visual-home .tracksos-dashboard-services{order:1;width:100%;display:flex;gap:11px;}
+  .app.role-client .tracksos-visual-home .desktop-aside-card{padding:15px;}
+  .app.role-client .tracksos-visual-home .tracksos-account-actions{display:none;}
+  .app.role-client .tracksos-visual-home .client-direction-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;}
+  .app.role-client .tracksos-visual-home .client-direction-card{
+    padding:11px;min-height:155px;border-radius:16px;
+  }
+  .app.role-client .tracksos-visual-home .client-direction-card>.client-direction-copy{max-width:75%;gap:3px;}
+  .app.role-client .tracksos-visual-home .client-direction-card>.client-direction-copy b{font-size:13px;}
+  .app.role-client .tracksos-visual-home .client-direction-card>.client-direction-copy small{font-size:10px;}
+  .app.role-client .tracksos-visual-home .client-direction-card::after{width:90%;opacity:.7;right:-25px;}
+  .app.role-client .tracksos-visual-home .client-direction-card>.client-direction-symbol{width:27px;height:27px;font-size:16px;min-height:27px;}
+  .tracksos-quick-options,.public-track-extras-grid{gap:8px;}
+  .tracksos-option,.public-track-extra{padding:61px 8px 11px;min-height:138px;border-radius:14px;}
+  .tracksos-option-art,.public-track-extra-art{top:0;left:0;height:66px;width:100%;background-position:center;}
+  .tracksos-option span b,.public-track-extra b{font-size:12px;}
+  .tracksos-option small,.public-track-extra small{font-size:10px;}
+  .tracksos-insurance-strip,.public-track-insurance{min-height:100px;padding:12px 11px 12px 90px;gap:6px;flex-wrap:wrap;}
+  .tracksos-insurance-art,.public-track-insurance-art{width:80px;left:5px;}
+  .tracksos-insurance-strip b,.public-track-insurance b{font-size:16px;}
+  .tracksos-insurance-strip small,.public-track-insurance small{font-size:10px;}
+  .tracksos-insurance-strip>strong,.public-track-insurance>strong{font-size:10px;padding:8px 11px;box-shadow:none;}
+  .guest-app .public-landing .public-content-grid{display:flex;flex-direction:column;gap:12px;}
+  .guest-app .public-landing .public-real-services,.guest-app .public-landing .public-demo-map{width:100%;}
+  .guest-app .public-landing .public-service-tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;}
+  .guest-app .public-landing .public-service-tile{min-height:152px;padding:12px;border-radius:14px;}
+  .guest-app .public-landing .public-service-tile b{font-size:13px;max-width:70%;}
+  .guest-app .public-landing .public-service-tile small{font-size:10px;max-width:67%;}
+  .guest-app .public-landing .public-service-tile::after{width:91%;right:-18px;opacity:.73;}
+  .guest-app .public-landing .public-app-card{width:100%;}
+  .guest-app .public-landing .public-hero-visual{background-size:contain;}
+  .app.role-client .tabbar{background:#071e35ee;border:1px solid #235f86;border-radius:18px;box-shadow:0 6px 24px #0009;}
+  .app.role-client .tabbar a{font-size:10px;min-width:0;}
+}
+@media(max-width:375px){
+  .app.role-client .tracksos-visual-home .client-direction-card>.client-direction-copy{max-width:83%;}
+  .app.role-client .tracksos-visual-home .client-direction-card>.client-direction-copy b{font-size:12px;}
+  .app.role-client .tracksos-visual-home .client-direction-card::after{opacity:.47;}
+  .tracksos-insurance-strip>strong,.public-track-insurance>strong{margin-left:0;}
+}
+@media(prefers-reduced-motion:reduce){
+  .tracksos-primary-help,.tracksos-option,.tracksos-insurance-strip,.public-service-tile,.public-track-extra{transition:none!important;}
+}
+
+
+/* Cohesive premium interiors: same illuminated glass language for every role,
+   without inventing data, changing forms or affecting permissions. */
+@media(min-width:900px){
+  .app[class*="role-"] .desktop-content{
+    background:radial-gradient(ellipse at 92% 5%,#103f6266,transparent 35%),
+      linear-gradient(155deg,#06192d,#09243b 65%,#07182c);
+    color:#eaf7fe;
+  }
+  .app[class*="role-"] .desktop-content>main:not(.client-home):not(.public-landing){
+    max-width:1480px;padding:24px 12px 70px;
+  }
+}
+.app[class*="role-"] .desktop-content .card,
+.app[class*="role-"] .desktop-content .linkrow,
+.app[class*="role-"] .desktop-content .step-card,
+.app[class*="role-"] .desktop-content .opt{
+  background:linear-gradient(145deg,#153b59,#0b263f);
+  color:#eef9ff;border:1px solid #315b79;
+  box-shadow:inset 0 1px 0 #ffffff0a,0 9px 19px #0004;
+}
+.app[class*="role-"] .desktop-content .card.hi{
+  border-color:#3ecae9;background:linear-gradient(135deg,#164665,#0a2945);
+}
+.app[class*="role-"] .desktop-content .card b,
+.app[class*="role-"] .desktop-content .card h2,
+.app[class*="role-"] .desktop-content .linkrow b,
+.app[class*="role-"] .desktop-content .step-card b,
+.app[class*="role-"] .desktop-content .opt b{color:#f3fbff;}
+.app[class*="role-"] .desktop-content :is(.card,.linkrow,.step-card,.opt) :is(.note,.sub,small,.label){
+  color:#b3d3e5;
+}
+.app[class*="role-"] .desktop-content>main>h1{color:#f5fcff;}
+.app[class*="role-"] .desktop-content :is(.field,input,select,textarea){
+  background:#eaf5fb;color:#14283d;border-color:#92b9ce;
+}
+.app[class*="role-"] .desktop-content :is(.field,input,select,textarea):focus-visible{
+  outline:2px solid #5ce9f6;outline-offset:1px;
+}
+.app[class*="role-"] .desktop-content :is(.btn:not(.ghost),.linkrow.primary){
+  background:linear-gradient(115deg,#18b2dc,#0483b9);
+  color:#fff;border-color:#5ae1f0;box-shadow:0 4px 18px #06baf73b;
+}
+.app[class*="role-"] .desktop-content .btn.ghost{
+  background:#103a59;color:#e6faff;border-color:#367ca0;
+}
+.app[class*="role-"] .desktop-content :is(.btn,.chip):focus-visible,
+.app[class*="role-"] .desktop-content a:focus-visible{
+  outline:2px solid #79f4ff;outline-offset:3px;
+}
+.app[class*="role-"] .desktop-content :is(.chip,.pill){
+  border-color:#437692;background:#133750;color:#def3ff;
+}
+.app[class*="role-"] .desktop-content .site-footer{color:#85acc7;border-color:#204363;}
+.app[class*="role-"] .desktop-content .site-footer :is(.note,.row a,.logo){color:#a9c9dd;}
+/* Role-specific imagery stays decorative and cannot be mistaken for live KPIs. */
+.app.role-performer .work-command-hero,
+.app.role-service .base-command-hero,
+.app.role-service .base-onboarding-hero,
+.app.role-insurer .cabinet-page>.cabinet-heading,
+.app.role-inspection .cabinet-page>.cabinet-heading,
+.app.role-client .client-garage-page>.client-section-hero,
+.app.role-client .insurance-workflow-hero{
+  position:relative;isolation:isolate;overflow:hidden;
+  min-height:185px;border:1px solid #387da6;border-radius:21px;
+  background:linear-gradient(100deg,#092138ef,#0b3158c9),
+    url('../public/tracksos-road-atmosphere.svg') center/cover no-repeat;
+  color:#f1fbff;box-shadow:0 15px 30px #0006;
+}
+.app.role-performer .work-command-hero::after,
+.app.role-service .base-command-hero::after,
+.app.role-service .base-onboarding-hero::after,
+.app.role-insurer .cabinet-page>.cabinet-heading::after,
+.app.role-inspection .cabinet-page>.cabinet-heading::after,
+.app.role-client .client-garage-page>.client-section-hero::after,
+.app.role-client .insurance-workflow-hero::after{
+  content:"";position:absolute;inset:0 0 0 auto;z-index:0;pointer-events:none;
+  width:42%;opacity:.60;background-position:center right;background-size:contain;background-repeat:no-repeat;
+  background-image:url('../public/tracksos-visual-van.svg');
+}
+.app.role-performer .work-command-hero::after{background-image:url('../public/tracksos-visual-van.svg');}
+.app.role-service :is(.base-command-hero,.base-onboarding-hero)::after{background-image:url('../public/tracksos-visual-sto.svg');}
+.app.role-insurer .cabinet-page>.cabinet-heading::after{background-image:url('../public/tracksos-visual-insurance.svg');}
+.app.role-inspection .cabinet-page>.cabinet-heading::after{background-image:url('../public/tracksos-visual-inspection.svg');}
+.app.role-client .client-garage-page>.client-section-hero::after{background-image:url('../public/tracksos-approved-scania-r520.webp');}
+.app.role-client .insurance-workflow-hero::after{background-image:url('../public/tracksos-visual-insurance.svg');}
+.app.role-performer .work-command-hero>*,
+.app.role-service .base-command-hero>*,
+.app.role-service .base-onboarding-hero>*,
+.app.role-insurer .cabinet-page>.cabinet-heading>*,
+.app.role-inspection .cabinet-page>.cabinet-heading>*{
+  position:relative;z-index:1;
+}
+.app.role-insurer .cabinet-page>.cabinet-heading,
+.app.role-inspection .cabinet-page>.cabinet-heading{padding:30px 31px;display:flex;flex-direction:column;justify-content:center;}
+.app.role-insurer .cabinet-page>.cabinet-heading h1,
+.app.role-inspection .cabinet-page>.cabinet-heading h1{color:#fff;}
+.app.role-insurer .cabinet-page>.cabinet-heading .label,
+.app.role-inspection .cabinet-page>.cabinet-heading .label{color:#9be9fa;}
+.app.role-insurer .partner-workspaces,
+.app.role-inspection .partner-workspaces{
+  padding:8px;border:1px solid #285c80;border-radius:16px;
+  background:linear-gradient(130deg,#0c2a43,#0b3a5a);
+}
+.app.role-insurer .partner-workspaces .btn.active,
+.app.role-inspection .partner-workspaces .btn.active{
+  border-color:#68e7f5;color:#fff;background:#16638c;box-shadow:0 0 13px #0fe7f737;
+}
+.app.role-client .client-garage-page>.client-section-hero{padding:28px 30px;}
+.app.role-client .client-garage-page>.client-section-hero>*,
+.app.role-client .insurance-workflow-hero>*{position:relative;z-index:1;}
+.app.role-client .client-garage-page>.client-section-hero h1{color:#fff;}
+.app.role-client .client-garage-page>.client-section-hero .sub{color:#c7dfeb;max-width:65%;}
+.app.role-client .insurance-workflow-hero{padding:27px 30px;}
+.app.role-client .insurance-workflow-hero p{color:#d5edfb;max-width:60%;}
+/* Parts catalog: large hero with the gear artwork from the approved concept. */
+.track-shop-home .track-shop-hero{
+  position:relative;isolation:isolate;overflow:hidden;min-height:195px;
+  display:flex;flex-direction:column;justify-content:center;
+  padding:30px 35% 26px 30px;border:1px solid #3287b5;border-radius:21px;
+  color:#fff;background:linear-gradient(105deg,#071d35ee,#0c3559d9),
+    url('../public/tracksos-road-atmosphere.svg') center/cover no-repeat;
+  box-shadow:0 12px 28px #0005;
+}
+.track-shop-hero>h1{font-size:clamp(24px,2.7vw,34px);margin:5px 0 8px;color:#fff!important;}
+.track-shop-hero>p{font-size:13px;line-height:1.5;color:#c5e4f1;max-width:480px;margin:0;}
+.track-shop-eyebrow{font-size:10px;letter-spacing:.12em;color:#79eeff;font-weight:850;}
+.track-shop-gear{
+  position:absolute;right:5px;inset-block:0;width:36%;
+  background:url('../public/tracksos-visual-parts.svg') center/contain no-repeat;
+}
+/* Global subtle interactions — no external JavaScript or streamed animations. */
+@media(hover:hover){
+  .app[class*="role-"] .desktop-content :is(.card,.linkrow,.step-card,.tracksos-option):hover{
+    border-color:#50b9db;box-shadow:0 12px 28px #0007,0 0 16px #0cf0f012;
+  }
+}
+.track-top-shortcuts{display:none;}
+@media(min-width:1180px){
+  .app.role-client .track-top-shortcuts{display:flex;align-items:center;gap:5px;margin-inline:auto;}
+  .track-top-shortcuts a{color:#bddced;text-decoration:none;padding:10px 12px;border-radius:11px;font-size:12px;font-weight:750;}
+  .track-top-shortcuts a:hover,.track-top-shortcuts a:focus-visible{
+    background:#0e4162;color:#fff;box-shadow:0 0 12px #23c7eb40;
+  }
+}
+.app .desktop-sidebar-bottom{display:flex;flex-direction:column;gap:7px;font-size:11px;}
+.app .desktop-sidebar-bottom strong{font-size:14px;color:#61e4fa;letter-spacing:.08em;}
+.app .desktop-sidebar-bottom small{font-size:11px;line-height:1.45;color:#8cb6cc;}
+@media(max-width:899px){
+  .app[class*="role-"] .desktop-content{
+    background:linear-gradient(160deg,#06182d,#0b2f4d);color:#e4f5fe;
+  }
+  .track-shop-home .track-shop-hero{padding:23px 30% 22px 18px;min-height:151px;border-radius:16px;}
+  .track-shop-hero>p{font-size:11px;}
+  .app.role-insurer .cabinet-page>.cabinet-heading,
+  .app.role-inspection .cabinet-page>.cabinet-heading{padding:19px;min-height:135px;}
+  .app.role-insurer .cabinet-page>.cabinet-heading::after,
+  .app.role-inspection .cabinet-page>.cabinet-heading::after{width:32%;opacity:.3;}
+  .app.role-client .client-garage-page>.client-section-hero{padding:21px;min-height:150px;}
+  .app.role-client .client-garage-page>.client-section-hero::after{opacity:.25;}
+  .app.role-client .insurance-workflow-hero{padding:21px;min-height:160px;}
+}
+@media(prefers-reduced-motion:reduce){
+  .app[class*="role-"] .desktop-content :is(.card,.linkrow,.step-card,.tracksos-option){transition:none!important;}
+}
+
+
+/* Reference screenshot: the public DESKTOP also has a permanent dark sidebar.
+   Previous guest theme hid it, leaving a large dead blank area on the right. */
+@media(min-width:900px){
+  body:has(.guest-app){padding:0!important;background:#041326!important;}
+  .app.guest-app{max-width:none!important;width:100%!important;margin:0!important;min-width:0;}
+  .guest-app .desktop-layout{display:flex!important;align-items:stretch;gap:0;width:100%;}
+  .guest-app .desktop-sidebar{
+    display:flex!important;flex-direction:column;flex:0 0 238px!important;
+    width:238px!important;min-width:0;position:sticky;
+    top:68px;height:calc(100vh - 68px);overflow-y:auto;
+    padding:22px 12px;margin:0;border:0;border-right:1px solid #185477;
+    background:linear-gradient(180deg,#05182c,#08213b 55%,#031324);border-radius:0;
+  }
+  .guest-app .desktop-sidebar-title{color:#79bad6;letter-spacing:.09em;}
+  .guest-app .desktop-nav{gap:8px;}
+  .guest-app .desktop-nav-link{font-weight:750;font-size:14px;min-height:48px;
+    border:1px solid transparent;border-radius:13px;}
+  .guest-app .desktop-nav-link:first-child{
+    border-color:#12a9fa;background:linear-gradient(90deg,#135cb0,#092c62);
+    box-shadow:0 0 17px #009efb69,inset 0 0 14px #15bfff31;
+  }
+  .guest-app .desktop-content{
+    max-width:calc(100% - 238px)!important;width:calc(100% - 238px)!important;
+    min-width:0;flex:1;padding:0 14px!important;box-sizing:border-box;
+  }
+  .guest-app .desktop-content>main.public-landing{
+    max-width:none!important;width:100%!important;margin:0;
+    padding:12px 0 45px!important;box-sizing:border-box;
+  }
+  .guest-app .desktop-content .site-footer{max-width:100%!important;margin:0;}
+  .guest-app .public-landing .public-brand-hero{min-height:340px;}
+  .guest-app .public-landing .public-content-grid{gap:14px;}
+}
+@media(min-width:900px) and (max-width:1120px){
+  .guest-app .desktop-sidebar{flex-basis:200px!important;width:200px!important;}
+  .guest-app .desktop-content{max-width:calc(100% - 200px)!important;width:calc(100% - 200px)!important;}
+  .guest-app .public-landing .public-service-tile{min-height:145px;}
+}
+@media(max-width:899px){
+  .guest-app .track-guest-tabbar{
+    position:fixed;z-index:99;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));
+    border-radius:17px;border:1px solid #27749e;
+    display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1px;
+    padding:6px;background:#071c31f2;box-shadow:0 4px 22px #000b;backdrop-filter:blur(12px);
+  }
+  .guest-app .track-guest-tabbar a{
+    min-width:0;min-height:49px;display:flex;align-items:center;justify-content:center;
+    gap:3px;flex-direction:column;color:#c9dff0;text-decoration:none;font-size:9px;
+    text-align:center;line-height:1.2;border-radius:10px;
+  }
+  .guest-app .track-guest-tabbar a>span{font-size:20px;font-weight:850;line-height:1;}
+  .guest-app .track-guest-tabbar a.active{background:#125482;border:1px solid #26c5ed;color:#fff;}
+  .guest-app .track-guest-tabbar a.help{color:#91f6ff;}
+  .guest-app .track-guest-tabbar a:focus-visible{outline:2px solid #83faff;outline-offset:1px;}
+  .guest-app:has(.track-guest-tabbar) .desktop-content{padding-bottom:80px;}
+}
+@media(min-width:900px){.guest-app .track-guest-tabbar{display:none;}}
+
+
+/* Real order-coordinate map: compact, never a fabricated route or ETA. */
+.tracksos-order-real-map{min-width:0;margin:4px 0 8px;}
+.tracksos-order-real-map .roadside-map{border-radius:14px;border-color:#237eaf;box-shadow:none;}
+.tracksos-order-real-map .roadside-map-head{padding:9px 11px;}
+.tracksos-order-real-map .roadside-map-title{gap:7px;}
+.tracksos-order-real-map .roadside-map-title b{font-size:12px;}
+.tracksos-order-real-map .roadside-map-title small{font-size:10px;}
+.tracksos-order-real-map .roadside-map-symbol{width:28px;height:28px;border-radius:9px;font-size:16px;}
+.tracksos-order-real-map .roadside-map-viewport{min-height:135px!important;max-height:175px;aspect-ratio:2.25!important;}
+.tracksos-order-real-map .roadside-map-overlay{left:7px;bottom:7px;padding:5px 7px;min-height:25px;font-size:10px;}
+.tracksos-order-real-map .roadside-map-foot{padding:8px 10px;min-height:42px;}
+.tracksos-order-real-map .roadside-map-foot a{font-size:10px;}
+@media(max-width:420px){
+ .tracksos-order-real-map .roadside-map-viewport{min-height:132px!important;}
+}
+
+
+/* Real-browser review: service art must not obscure titles on narrow screens. */
+.guest-app .public-landing .public-service-tile::before{
+  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(90deg,rgba(4,21,38,.96) 0%,
+    rgba(6,26,46,.81) 37%,rgba(7,27,45,.22) 76%,transparent 100%);
+}
+.guest-app .public-landing .public-service-tile :is(.public-service-icon,b,small){
+  position:relative;z-index:2;
+}
+.guest-app .public-landing .public-service-tile .public-service-arrow{z-index:3;}
+.app.role-client .client-direction-card>.client-direction-copy{
+  padding:5px 6px 5px 0;
+  border-radius:7px;
+  background:linear-gradient(90deg,rgba(5,20,38,.77),rgba(5,20,38,.1));
+}
+
+
+/* Once a master is chosen, the alternative directions disappear (approved UX).
+   Clicking the selected master again returns to all four choices. */
+.app.role-client .client-direction-grid.expanded{grid-template-columns:1fr!important;}
+.app.role-client .client-direction-grid.expanded>.main-direction{
+  min-height:94px;flex-direction:row;align-items:center;justify-content:flex-start;
+}
+.app.role-client .client-direction-grid.expanded>.main-direction::after{
+  height:100%;width:35%;right:0;opacity:.52;
+}
+.app.role-client .client-direction-grid.expanded>.main-direction .client-direction-copy{
+  max-width:70%;
+}
+
+
+/* Approved cinematic blend: the portrait Scania source is preserved with
+   object-fit:contain; soften the hard photo rectangle against the road scene.
+   A mask changes only edge transparency, never the truck's aspect ratio. */
+.guest-app .public-landing .public-hero-visual,
+.app.role-client .tracksos-visual-home .track-road-art img{
+  -webkit-mask-image:radial-gradient(ellipse 72% 74% at 50% 52%,#000 47%,rgba(0,0,0,.96) 58%,rgba(0,0,0,.64) 70%,transparent 85%);
+  mask-image:radial-gradient(ellipse 72% 74% at 50% 52%,#000 47%,rgba(0,0,0,.96) 58%,rgba(0,0,0,.64) 70%,transparent 85%);
+}
+@media(max-width:899px){
+  .guest-app .public-landing .public-hero-visual,
+  .app.role-client .tracksos-visual-home .track-road-art img{
+    -webkit-mask-image:radial-gradient(ellipse 75% 80% at 50% 50%,#000 54%,rgba(0,0,0,.82) 72%,transparent 88%);
+    mask-image:radial-gradient(ellipse 75% 80% at 50% 50%,#000 54%,rgba(0,0,0,.82) 72%,transparent 88%);
+  }
+}
+
+
+/* Visual QA: use the approved expressive composition, not compact text overlays.
+   Tested at 320, 390 and 1440px. No service behavior/permissions altered. */
+@media(min-width:900px){
+  .app.role-client .tracksos-visual-home .tracksos-dashboard-aside>.tracksos-account-actions{
+    display:none!important; /* already available in permanent navigation */
+  }
+  .app.role-client .tracksos-visual-home .tracksos-dashboard-columns{
+    align-items:start;gap:16px;grid-template-columns:minmax(0,1.75fr) minmax(280px,.92fr);
+  }
+  .app.role-client .tracksos-visual-home .client-direction-card{min-height:195px;}
+  .app.role-client .tracksos-visual-home .tracksos-quick-options{
+    width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;
+  }
+  .app.role-client .tracksos-visual-home .tracksos-option{
+    min-height:130px;justify-content:center;gap:6px;
+    padding:15px 13px 15px 37%;
+  }
+  .app.role-client .tracksos-visual-home .tracksos-option-art{
+    width:42%;height:100%;opacity:.95;
+  }
+  .app.role-client .tracksos-visual-home .tracksos-option span b{
+    font-size:clamp(15px,1.5vw,20px);line-height:1.2;
+  }
+  .app.role-client .tracksos-visual-home .tracksos-option small{
+    font-size:11px;line-height:1.4;
+  }
+  .guest-app .public-landing .public-app-card {
+    display:grid!important;
+    grid-template-columns:minmax(0,1.2fr) 140px minmax(0,1.2fr)!important;
+    grid-template-rows:auto auto auto;gap:9px 16px;
+    align-items:center;min-height:190px;padding:18px 24px!important;
+  }
+  .guest-app .public-landing .public-app-card .public-section-kicker{grid-column:1;grid-row:1;}
+  .guest-app .public-landing .public-app-card h2{grid-column:1;grid-row:2;}
+  .guest-app .public-landing .public-app-card .public-app-phone{
+    grid-column:2;grid-row:1/4;width:110px;height:151px;min-height:151px;
+    transform:rotate(-5deg);margin-inline:auto;
+  }
+  .guest-app .public-landing .public-app-card p{grid-column:3;grid-row:1;font-size:13px;}
+  .guest-app .public-landing .public-app-card .public-rustore-soon{
+    grid-column:3;grid-row:2;align-self:center;max-width:280px;
+  }
+  .guest-app .public-landing .public-app-card>small{grid-column:3;grid-row:3;}
+}
+@media(max-width:899px){
+  .app.role-client .tracksos-visual-home .track-road-art,
+  .guest-app .public-landing .public-hero-visual {
+    width:100%!important;height:clamp(230px,73vw,315px)!important;
+    background-size:contain!important;
+  }
+  .app.role-client .tracksos-visual-home .track-road-art img{
+    object-fit:contain!important;object-position:center!important;
+  }
+  .app.role-client .tracksos-visual-home .client-direction-card,
+  .guest-app .public-landing .public-service-tile{
+    position:relative;
+    min-height:217px!important;
+    padding:111px 12px 14px!important;
+    display:flex;flex-direction:column;
+    justify-content:flex-end!important;align-items:flex-start!important;
+    gap:3px!important;
+  }
+  .app.role-client .tracksos-visual-home .client-direction-card::after,
+  .guest-app .public-landing .public-service-tile::after{
+    width:100%!important;height:64%!important;
+    right:0!important;top:0!important;bottom:auto!important;
+    background-position:center top!important;
+    background-size:contain!important;
+    opacity:.93!important;transform:none!important;
+  }
+  .app.role-client .tracksos-visual-home .client-direction-card::before,
+  .guest-app .public-landing .public-service-tile::before{
+    content:"";position:absolute;z-index:1;inset:32% 0 0!important;pointer-events:none;
+    background:linear-gradient(to top,rgba(3,17,31,.99) 0%,rgba(4,20,35,.97) 42%,rgba(4,20,35,.65) 72%,transparent 100%)!important;
+  }
+  .app.role-client .tracksos-visual-home .client-direction-card>.client-direction-symbol,
+  .guest-app .public-landing .public-service-tile>.public-service-icon{
+    position:relative;z-index:2;
+    width:27px!important;height:27px!important;min-height:27px!important;
+    flex:0 0 27px!important;display:grid;place-items:center;
+    margin:0 0 2px!important;font-size:16px!important;
+  }
+  .app.role-client .tracksos-visual-home .client-direction-card>.client-direction-copy{
+    display:flex;flex-direction:column;gap:2px;
+    position:relative;z-index:2;width:100%!important;max-width:100%!important;
+    background:none!important;padding:0!important;
+    text-shadow:0 1px 7px #000e;overflow-wrap:normal;
+  }
+  .guest-app .public-landing .public-service-tile>b,
+  .guest-app .public-landing .public-service-tile>small{
+    display:block;position:relative;z-index:2;
+    width:100%!important;max-width:100%!important;
+    padding:0!important;margin:0!important;
+    background:none!important;overflow-wrap:normal;text-shadow:0 1px 7px #000e;
+  }
+  .app.role-client .tracksos-visual-home .client-direction-card>.client-direction-copy b,
+  .guest-app .public-landing .public-service-tile>b{
+    color:#fff!important;font-size:clamp(13px,3.8vw,16px)!important;
+    line-height:1.18!important;text-wrap:pretty;
+  }
+  .app.role-client .tracksos-visual-home .client-direction-card>.client-direction-copy small,
+  .guest-app .public-landing .public-service-tile>small{
+    color:#d5e9f5!important;font-size:10px!important;line-height:1.28!important;
+  }
+  .app.role-client .tracksos-visual-home .client-direction-card>.client-direction-arrow,
+  .guest-app .public-landing .public-service-tile>.public-service-arrow {
+    position:absolute!important;right:10px!important;top:10px!important;bottom:auto!important;
+    transform:scale(.85);z-index:3;
+  }
+  /* The expanded master selector is one horizontal strip; the three
+     alternative directions remain removed, as agreed. */
+  .app.role-client .tracksos-visual-home .client-direction-grid.expanded>.main-direction{
+    min-height:90px!important;padding:12px!important;
+    flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;
+  }
+  .app.role-client .tracksos-visual-home .client-direction-grid.expanded>.main-direction::after{
+    width:36%!important;height:100%!important;opacity:.35!important;
+  }
+  .app.role-client .tracksos-visual-home .client-direction-grid.expanded>.main-direction::before{
+    inset:0!important;
+  }
+  .app.role-client .tracksos-visual-home .client-direction-grid.expanded>.main-direction>.client-direction-copy{
+    width:auto!important;max-width:74%!important;
+  }
+  .app.role-client .tracksos-visual-home .tracksos-quick-options{
+    display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;
+  }
+  .app.role-client .tracksos-visual-home .tracksos-option{
+    min-height:179px!important;
+    padding:89px 9px 11px!important;
+    display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;gap:4px;
+  }
+  .app.role-client .tracksos-visual-home .tracksos-option-art{
+    width:100%!important;height:90px!important;top:0!important;left:0!important;
+    opacity:1!important;
+  }
+  .app.role-client .tracksos-visual-home .tracksos-option span b{
+    display:block;font-size:13px!important;line-height:1.17;
+  }
+  .app.role-client .tracksos-visual-home .tracksos-option small{
+    font-size:10px!important;line-height:1.2;overflow-wrap:anywhere;
+  }
+  .guest-app .public-landing .public-app-card{
+    display:grid!important;grid-template-columns:minmax(0,1fr) minmax(96px,115px)!important;
+    gap:7px!important;min-height:165px!important;padding:14px!important;
+  }
+  .guest-app .public-landing .public-app-card :is(.public-section-kicker,h2,p,.public-rustore-soon,small){
+    grid-column:1!important;min-width:0;
+  }
+  .guest-app .public-landing .public-app-phone{
+    grid-column:2!important;grid-row:1/6!important;
+    height:145px!important;min-height:145px!important;max-width:108px;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+ .guest-app .public-landing .public-service-tile,
+ .app.role-client .tracksos-visual-home .client-direction-card{
+    animation:none!important;transition:none!important;
+  }
+}

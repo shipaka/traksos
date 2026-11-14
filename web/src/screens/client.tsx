@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { get, post, put, del, rub, fmtTime, fmtPhone } from '../api.ts';
-import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF, QUICK_WHAT, ON_SITE, seriesHint } from '../dict.ts';
+import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF, ON_SITE, seriesHint } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFields, LiveStrip, type VehicleValue } from '../ui.tsx';
 import { BookingRows } from './base.tsx';
 import { DriverRules } from './fleet.tsx';
 import { VehicleServiceApplication, VehicleServiceHistory } from './vehicleServices.tsx';
 import { native } from '../native.ts';
+import { VisualClientHome } from './visualClientHome.tsx';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
 
@@ -20,156 +21,72 @@ export function usePrices() {
   return { pricing: p, fill };
 }
 
-const SERVICE_PRICE: Record<string, string> = {
-  electric: 'выезд от {eco} + час работы', diag: 'со сканером · выезд от {pro}', air: 'выезд от {eco}', autonomy: 'выезд от {eco}',
-  tyre: 'выезд по прайсу мастера', tow: 'торги в ценовом коридоре · от {tow}', consult: '{consult} · голос и чат с мастером, без выезда',
-};
-
 export function Home() {
   const { me } = useMe();
   const active = useLoad(() => get('/api/orders'), [], (e) => e.type === 'order');
   const live = (active.data ?? []).filter((o: any) => !['completed', 'cancelled'].includes(o.status));
-  const { fill } = usePrices();
+  return <VisualClientHome me={me} live={live} ordersLoaded={active.data !== null} ordersError={active.error} help={<HelpDirections />} />;
+}
+
+/** One agreed customer decision. First choose WHO can help; ask for specifics only on the next step. */
+function HelpDirections() {
+  const [showSpecialties, setShowSpecialties] = useState(() => location.hash.startsWith('#/sos/master'));
+  const masterServices = ['electric', 'diag', 'air', 'autonomy', 'tyre'] as const;
   return (
-    <main className="client-home">
-      <section className="desktop-hero" aria-label="Помощь грузовому транспорту">
-        <div className="desktop-hero-copy">
-          <span className="desktop-eyebrow">ТракSOS · Санкт-Петербург и Ленобласть</span>
-          <h1>Помощь в дороге <span>для грузовиков</span></h1>
-          <p>Мастера, диагностика и эвакуация грузовиков в Санкт-Петербурге и Ленинградской области — от заявки до завершения работ в одном сервисе.</p>
-          <div className="launch-region" role="note">Зона запуска: Санкт-Петербург и Ленинградская область. В других регионах выездные услуги пока недоступны.</div>
-          <div className="desktop-hero-buttons">
-            <a className="desktop-primary-action" href="#/sos">🚨 SOS · Нужна помощь</a>
-            <a className="desktop-outline-action" href="#/new/diag">+ Создать заявку</a>
-          </div>
-        </div>
-      </section>
-
-      <section className="desktop-quick-links" aria-label="Быстрый доступ">
-        <a href="#/garage" className="desktop-quick-card"><span className="desktop-quick-icon">▣</span><span><b>Мой гараж</b><small>Автомобили и сведения о технике</small></span><span aria-hidden="true">›</span></a>
-        <a href="#/orders" className="desktop-quick-card"><span className="desktop-quick-icon">☷</span><span><b>Мои заявки</b><small>История и статусы работ</small></span><span aria-hidden="true">›</span></a>
-        <a href="#/services" className="desktop-quick-card"><span className="desktop-quick-icon">⚙</span><span><b>СТО и ремонт</b><small>Сервисы-партнёры и запись</small></span><span aria-hidden="true">›</span></a>
-        {!me?.owner_id && !me?.roles.includes('driver')
-          ? <a href="#/fleet" className="desktop-quick-card"><span className="desktop-quick-icon">▤</span><span><b>Мой парк</b><small>Транспорт и водители компании</small></span><span aria-hidden="true">›</span></a>
-          : <a href="#/support" className="desktop-quick-card"><span className="desktop-quick-icon">?</span><span><b>Моя поддержка</b><small>Обращения и помощь водителю</small></span><span aria-hidden="true">›</span></a>}
-      </section>
-
-      <div className="desktop-home-columns">
-        <section className="desktop-home-main">
-          <div className="mobile-home-heading">
-            <h1>{me?.name ? `${me.name}, что случилось?` : 'Что случилось?'}</h1>
-            <div className="sub">Выберите проблему — подскажем, к кому обратиться. Работаем в Санкт-Петербурге и Ленинградской области.</div>
-          </div>
-          <div className="desktop-section-heading"><h2>Мои активные заявки</h2><a href="#/orders">Все заявки →</a></div>
-          <div className="desktop-active-orders">
-            {live.length === 0 && <div className="desktop-empty-orders">Сейчас нет активных заявок. Если помощь нужна срочно, используйте кнопку SOS.</div>}
-            {live.map((o: any) => (
-              <a key={o.id} href={`#/order/${o.id}`} className="card hi" style={{ textDecoration: 'none', color: 'inherit' }}>
-                <div className="between">
-                  <b>Заявка №{o.number} · {SERVICES[o.service]?.name ?? o.service}</b>
-                  <span className={`pill ${STATUS[o.status]?.tone}`}>{STATUS[o.status]?.name}</span>
-                </div>
-                <span className="note">{o.service === 'consult' ? 'по телефону' : o.address ?? o.estimate?.zoneName} · открыть →</span>
+    <section className="client-help-directions" aria-label="Направления помощи">
+      <h2>Кто вам нужен?</h2>
+      <p className="client-directions-lead">Выберите нужный вид помощи. Причину поломки и детали расскажете в заявке.</p>
+      <div className={`client-direction-grid${showSpecialties ? " expanded" : ""}`}>
+        <button type="button" className="client-direction-card main-direction"
+          aria-expanded={showSpecialties} aria-controls="master-specializations"
+          onClick={() => setShowSpecialties(open => !open)}>
+          <span className="client-direction-symbol" aria-hidden="true">⚒</span>
+          <span className="client-direction-copy"><b>Выездной мастер</b><small>Ремонт и диагностика грузовика на месте</small></span>
+          <span className="client-direction-arrow" aria-hidden="true">{showSpecialties ? '−' : '›'}</span>
+        </button>
+        {!showSpecialties && <><a className="client-direction-card" href="#/new/tow">
+          <span className="client-direction-symbol" aria-hidden="true">↗</span>
+          <span className="client-direction-copy"><b>Эвакуатор</b><small>Перевезти грузовик в нужное место</small></span>
+          <span className="client-direction-arrow" aria-hidden="true">›</span>
+        </a>
+        <a className="client-direction-card" href="#/services">
+          <span className="client-direction-symbol" aria-hidden="true">▣</span>
+          <span className="client-direction-copy"><b>СТО грузовых автомобилей</b><small>Найти сервис и записаться на ремонт</small></span>
+          <span className="client-direction-arrow" aria-hidden="true">›</span>
+        </a>
+        <a className="client-direction-card" href="#/new/consult">
+          <span className="client-direction-symbol" aria-hidden="true">◉</span>
+          <span className="client-direction-copy"><b>Консультация по телефону</b><small>Помощь специалиста без выезда</small></span>
+          <span className="client-direction-arrow" aria-hidden="true">›</span>
+        </a></>}
+      </div>
+      {showSpecialties && (
+        <section id="master-specializations" className="client-specializations" aria-label="Специализация выездного мастера">
+          <h3>Какой специалист вам нужен?</h3>
+          <p>Не знаете причину? Выберите диагностику — определять поломку заранее не требуется.</p>
+          <div className="client-specialization-grid">
+            {masterServices.map(id => (
+              <a key={id} href={`#/new/${id}`} className="client-specialization-card">
+                <b>{SERVICES[id].name}</b><small>{SERVICES[id].hint}</small>
+                <span aria-hidden="true">›</span>
               </a>
-            ))}
-          </div>
-          <div className="desktop-section-heading"><h2>Какая помощь требуется?</h2></div>
-          <SymptomPicker sos={false} />
-          <LiveStrip who="client" />
-        </section>
-        <aside className="desktop-home-aside">
-          <div className="desktop-aside-card">
-            <div className="desktop-aside-symbol">24/7</div>
-            <h2>Поддержка в дороге</h2>
-            <p>Экстренный вызов мастера или эвакуатора, консультация и поиск сервиса.</p>
-            <a href="#/sos" className="desktop-aside-cta">Перейти к SOS →</a>
-          </div>
-          <div className="desktop-aside-card"><h2>Ваш кабинет</h2><p>Профиль и уведомления доступны в личном кабинете.</p><a href="#/profile" className="desktop-aside-cta">Открыть профиль →</a></div>
-        </aside>
-      </div>
-
-      <div className="stack home-services">
-        <span className="label">Все услуги</span>
-        {Object.entries(SERVICES).map(([id, s]) => (
-          <button key={id} className="linkrow" onClick={() => go(`new/${id}`)}>
-            <span><b>{s.name}</b><small>{fill(SERVICE_PRICE[id] ?? s.hint)}</small></span><span aria-hidden="true">›</span>
-          </button>
-        ))}
-        <button className="linkrow mobile-services-link" onClick={() => go('services')}>
-          <span><b>СТО и ремонт</b><small>Сервисы-партнёры, запись и статус ремонта</small></span><span aria-hidden="true">›</span>
-        </button>
-      </div>
-    </main>
-  );
-}
-
-/** Сетка поломок + карточка «Что делать» с вариантами и ценами */
-function SymptomPicker({ sos }: { sos: boolean }) {
-  const [sel, setSel] = useState(SYMPTOMS[0].id);
-  const { fill } = usePrices();
-  const s = SYMPTOMS.find((x) => x.id === sel)!;
-  return (
-    <>
-      <div className="grid2">
-        {SYMPTOMS.map((x) => (
-          <button key={x.id} className="opt" style={{ minHeight: 76 }} aria-pressed={sel === x.id} onClick={() => setSel(x.id)}>
-            <b>{x.name}</b><small>{x.sub}</small>
-          </button>
-        ))}
-      </div>
-      <div className="card hi">
-        <span className="label" style={{ color: 'var(--accent)' }}>Что делать · {s.name}</span>
-        <span className="note" style={{ color: 'var(--fg-2)' }}>{s.note}</span>
-        <div className="stack">
-          {s.opts.map((o, i) => (
-            <button key={o.to + i} className={`linkrow ${i === 0 ? 'primary' : ''}`}
-              onClick={() => go(`new/${o.to}?${sos && o.to !== 'consult' ? 'sos' : 'p'}=${s.id}`)}>
-              <span><b>{o.name}</b><small>{fill(o.hint)}</small></span><span aria-hidden="true">›</span>
-            </button>
-          ))}
-        </div>
-      </div>
-    </>
-  );
-}
-
-export function Sos() {
-  const [choice, setChoice] = useState<'master' | 'tow' | 'sto' | null>(null);
-  const masterServices = ['electric', 'diag', 'air', 'autonomy', 'tyre'];
-  return (
-    <main>
-      <Back to="" />
-      <div>
-        <h1>SOS · Нужна помощь?</h1>
-        <div className="sub">Сначала выберите, кто вам нужен. Остальные вопросы появятся только после выбора.</div>
-      </div>
-      <div className="stack">
-        <button className="linkrow primary" aria-expanded={choice === 'master'} onClick={() => setChoice(choice === 'master' ? null : 'master')}>
-          <span><b>Выездной мастер</b><small>Специалист приедет к вашему грузовику</small></span><span aria-hidden="true">›</span>
-        </button>
-        <button className="linkrow" onClick={() => go('new/tow')}>
-          <span><b>Эвакуатор</b><small>Перевезти грузовик в нужное место</small></span><span aria-hidden="true">›</span>
-        </button>
-        <button className="linkrow" onClick={() => go('services')}>
-          <span><b>СТО грузовых автомобилей</b><small>Найти сервис и записаться на ремонт</small></span><span aria-hidden="true">›</span>
-        </button>
-        <button className="linkrow" onClick={() => go('consult')}>
-          <span><b>Консультация по телефону</b><small>Связаться с диагностом без выезда</small></span><span aria-hidden="true">›</span>
-        </button>
-      </div>
-      {choice === 'master' && (
-        <section className="card">
-          <b>Какой мастер нужен?</b>
-          <span className="note">Если не знаете причину поломки, выберите диагноста.</span>
-          <div className="stack">
-            {masterServices.map((id) => (
-              <button key={id} className="linkrow" onClick={() => go(`new/${id}`)}>
-                <span><b>{SERVICES[id].name}</b><small>{SERVICES[id].hint}</small></span><span aria-hidden="true">›</span>
-              </button>
             ))}
           </div>
         </section>
       )}
+    </section>
+  );
+}
+
+export function Sos() {
+  return (
+    <main className="client-sos-page">
+      <Back to="" />
+      <div className="client-section-hero client-section-hero-sos">
+        <h1>Помощь в дороге</h1>
+        <div className="sub">Сначала выберите направление помощи. Остальные вопросы появятся только после выбора.</div>
+      </div>
+      <HelpDirections />
       <MyPlace />
       <LiveStrip who="client" />
     </main>
@@ -427,7 +344,7 @@ export function NewOrder({ service }: { service: string }) {
   };
   const missing = [
     !need.car && { id: 'f-car', name: 'марка машины' },
-    !need.what && { id: 'f-what', name: 'что случилось' },
+    !need.what && { id: 'f-what', name: 'описание задачи' },
     !need.where && { id: 'f-where', name: 'где машина' },
     !need.tow && { id: 'f-tow', name: 'куда везти' },
     !agree && { id: 'f-agree', name: 'согласие с суммами' },
@@ -472,17 +389,9 @@ export function NewOrder({ service }: { service: string }) {
         {!vehicleId && <span className="note">Марка — обязательно, модель и год — по желанию: так подберём мастера, который знает вашу машину.</span>}
       </Step>
 
-      <Step n={2} id="f-what" title="Что случилось" req done={need.what} missing={tried && !need.what}>
-        {QUICK_WHAT[service] && (
-          <div className="row" style={{ gap: 6 }}>
-            {QUICK_WHAT[service].map((q) => {
-              const on = description.toLowerCase().includes(q.toLowerCase());
-              return <button key={q} type="button" className="chip" aria-pressed={on} onClick={() => setDescription(on ? description.replace(new RegExp(`(,\\s*)?${q.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')}`, 'i'), '').replace(/^,\s*/, '') : description.trim() ? `${description.trim()}, ${q}` : q)}>{q}</button>;
-            })}
-          </div>
-        )}
-        <textarea className="field" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Например: не заводится, стартер щёлкает, приборка гаснет" />
-        <span className="note">{need.what ? '✓ Хватит, чтобы мастер понял, что брать с собой' : `Хотя бы пару слов — ещё ${MIN_WHAT - description.trim().length} симв.`}</span>
+      <Step n={2} id="f-what" title="Задача для специалиста" req done={need.what} missing={tried && !need.what}>
+        <textarea className="field" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Коротко опишите, какая помощь нужна. Если причина неизвестна, так и напишите." />
+        <span className="note">{need.what ? '✓ Хватит, чтобы специалист понял задачу' : `Хотя бы пару слов — ещё ${MIN_WHAT - description.trim().length} симв.`}</span>
       </Step>
 
       <Step n={3} id="f-where" title={isTow ? 'Откуда забрать' : 'Где машина'} req done={need.where} missing={tried && !need.where}>
@@ -621,7 +530,7 @@ export function Orders({ as }: { as: 'client' | 'performer' }) {
   const live = (o: any) => !['completed', 'cancelled', 'no_performer'].includes(o.status);
   const shown = as === 'performer' ? list.data : (list.data ?? []).filter((o: any) => ctab === 'now' ? live(o) : !live(o));
   return (
-    <main>
+    <main className={as === 'performer' ? 'performer-orders-page' : 'client-orders-page'}>
       <h1>{as === 'performer' ? 'История' : 'Заявки'}</h1>
       {as === 'performer' && <HistoryTabs tab={tab} setTab={setTab} />}
       {as === 'client' && (
@@ -738,8 +647,8 @@ export function Garage() {
   }
 
   return (
-    <main>
-      <div>
+    <main className="client-garage-page">
+      <div className="client-section-hero client-section-hero-garage">
         <h1>Мой гараж</h1>
         <div className="sub">Машина сохраняется один раз и выбирается одним нажатием во всех заявках.</div>
       </div>
@@ -859,7 +768,7 @@ export function Profile() {
   const isPerformer = me.roles.some((r) => r === 'master' || r === 'tow');
   const isCustomer = me.roles.some((r) => r === 'client' || r === 'driver');
   return (
-    <main>
+    <main className="account-profile-page">
       <h1>Профиль</h1>
       {native.isApp && <div className="card">
         <b>Быстрый безопасный вход</b>
@@ -924,7 +833,7 @@ async function patchMe(body: unknown) {
   return patch('/api/me', body);
 }
 
-async function logout() {
+export async function logout() {
   const { post, setToken, disconnectWs } = await import('../api.ts');
   try {
     await post('/api/auth/logout');

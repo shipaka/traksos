@@ -22,7 +22,7 @@ async function checkCabinetMenu(page, expectedLinks, { shopTab = true } = {}) {
   }
   await summary.click();
   if (!shopTab) return; // Admin, insurer, inspection and moderator use role-specific navigation.
-  const shop = page.locator('.tabbar').getByRole('link', { name: 'Магазин' });
+  const shop = page.locator('.tabbar').locator('a[href="#/shop"]');
   try {
     await shop.waitFor({ state: 'visible', timeout: 10000 });
   } catch {
@@ -158,16 +158,16 @@ await login(k, '+79991112233', 'help');
 // «Помогите» — после кода сразу экран SOS
 await k.waitForURL(/#\/sos/);
 await k.goto(BASE + '/#/');
-await k.getByText('Что случилось?').first().waitFor();
+await k.getByRole('heading', { name: 'Кто вам нужен?' }).first().waitFor();
 await assertDashboardTheme(k, 'client');
 await checkCabinetMenu(k, ['История заявок', 'Мой гараж', 'Мой автопарк', 'Оферта', 'Профиль и настройки']);
 await shot(k, '03-client-home');
-// The home symptom picker leads directly to the service form; the SOS tab
-// is a separate choice-first flow and must not be mixed into this scenario.
-await k.getByRole('button', { name: /Не заводится/ }).click();
-await k.getByRole('button', { name: /Электрик или диагност на выезд/ }).click();
+// Home and SOS share the approved direction-first flow.
+await k.getByRole('button', { name: /Выездной мастер/ }).click();
+await k.getByRole('link', { name: /Электрик/ }).first().click();
 await k.getByRole('button', { name: /Вызвать мастера/ }).click(); // рано: подсветит, чего не хватает
 await k.getByText('Осталось:').waitFor();
+await k.locator('textarea').first().fill('Требуется диагностика электрики');
 await k.locator('select[aria-label="Марка"]').selectOption('Scania');
 await k.locator('select[aria-label="Модель"]').selectOption('R-серия');
 await k.locator('select[aria-label="Год выпуска"]').selectOption('2012');
@@ -245,7 +245,7 @@ await a.goto(BASE + '/#/admin');
 await a.getByRole('button', { name: 'Распределение' }).click();
 await a.getByText('Сначала заявки нам').waitFor();
 await assertDashboardTheme(a, 'admin');
-await checkCabinetMenu(a, ['Управление магазином', 'Деньги и выплаты', 'Настройки площадки', 'Модерация — очередь'], { shopTab: false });
+await checkCabinetMenu(a, ['Все заявки', 'Деньги и выплаты', 'Настройки площадки', 'Модерация — очередь'], { shopTab: false });
 await shot(a, '12-admin-dispatch');
 await a.getByRole('button', { name: 'Деньги', exact: true }).click();
 await a.getByText('Способы оплаты').waitFor();
@@ -253,7 +253,7 @@ await shot(a, '13-admin-payments');
 
 // Переходы между кабинетами: из админки в клиента и обратно, «Назад» ведёт в свой список
 await clickCabinetLink(a, 'Кабинет клиента');
-await a.getByText('Что случилось?').first().waitFor();
+await a.getByRole('heading', { name: 'Кто вам нужен?' }).first().waitFor();
 await clickCabinetLink(a, 'Профиль и настройки');
 await a.getByRole('button', { name: 'Кабинет администратора' }).click();
 await a.getByText('Администратор').first().waitFor();

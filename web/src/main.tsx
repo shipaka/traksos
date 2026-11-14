@@ -1,13 +1,22 @@
 import './styles.css';
+import './cabinetPremium.css';
+import './trackVisual.css';
+import './trackPolish.css';
+import './trackSearch.css';
+import './trackReference.css';
+import './trackPhotos.css';
+import './trackMatch.css';
+import './trackScenic.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
 import { MeCtx, ToastProvider, useRoute, useToast, type Me } from './ui.tsx';
 import { native } from './native.ts';
 import { Login } from './screens/login.tsx';
+import { SiteQuickSearch } from './screens/siteQuickSearch.tsx';
 import { Invite } from './screens/invite.tsx';
 import { PerformerHub, ScheduleSection, AboutSection, PhoneSection, CarsSection, TaxSection, MoneySection, FilterSection, LevelSection } from './screens/performerCabinet.tsx';
-import { Consult, Home, Sos, NewOrder, Orders, Garage, Profile } from './screens/client.tsx';
+import { Consult, Home, Sos, NewOrder, Orders, Garage, Profile, logout } from './screens/client.tsx';
 import { Order } from './screens/order.tsx';
 import { Work,  IncomingCall } from './screens/performer.tsx';
 import { Admin } from './screens/admin.tsx';
@@ -202,7 +211,9 @@ function App() {
     case 'insurance': screen = b === 'request' ? (route[2] === 'new' ? <InsuranceApplication vehicleId={route[3]??''} /> : <InsuranceThread requestId={route[2]??''} />) : isInsurer ? <InsurerCabinet /> : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
     case 'help': screen = <Help />; break;
     case 'rules': screen = <Rules />; break;
-    case 'shop': screen = b === 'cart' ? <ShopCart /> : b === 'history' ? <ShopHistory vehicleId={route[2]} /> : <Shop />; break;
+    case 'shop': screen = ((effMode === 'client' && isCustomer) || (effMode === 'performer' && isPerformer) || (effMode === 'service' && isService))
+      ? (b === 'cart' ? <ShopCart /> : b === 'history' ? <ShopHistory vehicleId={route[2]} /> : <Shop />)
+      : <main><div className="empty">Магазин доступен в клиентском кабинете или кабинете исполнителя.</div></main>; break;
     case 'privacy': screen = <Privacy />; break;
     case 'qr': screen = <QrJoin code={b} />; break;
     case 'appeal': screen = <Appeal />; break;
@@ -246,7 +257,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       ? [['/moderation', '▦', 'Рабочий стол'], ['/admin/section/queue', '⚑', 'Проверки'], ['/support', '?', 'Обращения']]
     : mode === 'admin'
       ? [['/admin', '▦', 'Рабочий стол'], ['/admin/section/orders', '☰', 'Заявки'], ['/admin/section/support', '?', 'Обращения']]
-      : [['/', '🔧', 'Услуги'], ['/sos', '!', 'SOS'], ['/orders', '☰', 'Заявки'], ['/shop', '🛍', 'Магазин']];
+      : [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь'], ['/shop', '⚙', 'Запчасти'], ['/profile', '◉', 'Профиль']];
   // Все дополнительные функции доступны в шапке, даже когда они не в нижних вкладках.
   // Не показываем чужие роли и не создаём несуществующие страницы.
   const accountLinks: [string, string][] = mode === 'performer'
@@ -278,7 +289,6 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/admin/section/people', 'Пользователи'],
          ['/admin/section/verify', 'Проверка исполнителей'],
          ['/admin/section/bases', 'СТО и рембазы'],
-         ['/admin/section/shop', 'Управление магазином'],
          ['/admin/section/payments', 'Деньги и выплаты'],
          ['/admin/section/stats', 'Статистика'],
          ['/admin/section/demand', 'Проблемные и невыполненные заявки'],
@@ -303,7 +313,11 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   return (
     <div className={`app ${me ? "role-"+mode : "guest-app"}`}>
       <header className="top">
-        <span className="logo">Трак<b>SOS</b></span>
+        <span className="logo">Track<b>SOS</b></span>
+        {me && mode === 'client' && <nav className="track-top-shortcuts" aria-label="Быстрый доступ">
+          <a href="#/">Главная</a><a href="#/orders">Заявки</a><a href="#/sos">Помощь в дороге</a><a href="#/shop">Запчасти</a>
+        </nav>}
+        <SiteQuickSearch authenticated={!!me} />
         <div className="row" style={{ flexWrap: 'nowrap' }}>
           {!me && <div className="guest-header-actions"><a href="#/login">Войти</a><a href="#/register" className="register">Зарегистрироваться</a></div>}
           {me && mode === 'performer' && <span className="pill accent">исполнитель</span>}
@@ -311,22 +325,27 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {me && mode === 'moderator' && <span className="pill accent">модерация</span>}
           {me && mode === 'insurer' && <span className="pill accent">страхование</span>}
           {me && mode === 'service' && <span className="pill accent">рембаза</span>}
+          {me && !serviceSandbox && me.roles.some(r => r === 'master' || r === 'tow') && me.roles.some(r => r === 'admin' || r === 'moderator') &&
+            <nav className="cabinet-role-switch" aria-label="Режим кабинета">
+              <a href="#/as/performer" aria-label="Выездной мастер" aria-current={mode === 'performer' ? 'page' : undefined}>Мастер</a>
+              {me.roles.includes('admin')
+                ? <a href="#/as/admin" aria-label="Администратор" aria-current={mode === 'admin' ? 'page' : undefined}>Админ</a>
+                : <a href="#/as/moderator" aria-label="Модератор" aria-current={mode === 'moderator' ? 'page' : undefined}>Модер.</a>}
+            </nav>}
           {me && !serviceSandbox && <a href="#/help" className="bell" aria-label="Справка">?</a>}
           {me && !serviceSandbox && <Bell />}
           {me && <details className="account-menu" key={here}>
             <summary aria-label="Открыть меню кабинета">☰ <span>Меню</span></summary>
             <nav aria-label="Все разделы кабинета">
-              {me && me.roles.some(r => r === 'master' || r === 'tow') && me.roles.some(r => r === 'admin' || r === 'moderator') && <>
-                <span className="account-menu-heading">Переключить кабинет</span>
-                {me.roles.includes('admin') && <a href="#/as/admin" aria-current={mode === 'admin' ? 'page' : undefined}>Администратор</a>}
-                {!me.roles.includes('admin') && me.roles.includes('moderator') && <a href="#/as/moderator" aria-current={mode === 'moderator' ? 'page' : undefined}>Модератор</a>}
-                <a href={me.roles.includes('admin') ? '#/admin/section/queue' : '#/moderation'}>Модерация — очередь</a>
-                <a href="#/as/performer" aria-current={mode === 'performer' ? 'page' : undefined}>Выездной мастер</a>
-              </>}
               <span className="account-menu-heading">Мой кабинет</span>
               {accountLinks.map(([href, label]) => <a key={href} href={sandboxHref(href)}>{label}</a>)}
               <span className="account-menu-heading">Помощь и документы</span>
               {helpLinks.map(([href, label]) => <a key={href} href={sandboxHref(href)}>{label}</a>)}
+              {!serviceSandbox && <button type="button" className="account-menu-logout" onClick={() => {
+                if (me.roles.some(r => r === 'master' || r === 'tow') &&
+                  !window.confirm('При выходе из аккаунта статус «На линии» отключится. Просто сверните приложение, если хотите продолжать получать заявки. Выйти?')) return;
+                void logout();
+              }}>Выйти из аккаунта</button>}
             </nav>
           </details>}
         </div>
@@ -338,7 +357,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           <nav className="desktop-nav">
             {me ? <>
               {(mode === 'client'
-                ? [...tabs, ['/garage', '▭', 'Гараж']]
+                ? [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь в дороге'], ['/shop', '⚙', 'Запчасти'], ['/garage', '▣', 'Мой транспорт'], ['/insurance/request/new', '◇', 'Страхование'], ['/services', '▤', 'Грузовые СТО']]
                 : mode === 'performer'
                   ? [...tabs, ['/work/me', '◉', 'Профиль'], ...(me.roles.includes('service') ? [['/base', '▤', 'Моя СТО']] : [])]
                   : mode === 'service'
@@ -352,7 +371,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                 </a>
               ))}
               {mode === 'client' && <>
-                <div className="desktop-sidebar-title desktop-nav-section">Дополнительно</div>
+                <div className="desktop-sidebar-title desktop-nav-section">Мой кабинет</div>
                 {([...(me && !me.owner_id && !me.roles.includes('driver') ? [['/fleet','▣','Мой парк']] as [string,string,string][] : []),['/support','?','Поддержка'],['/profile','◉','Профиль']] as [string,string,string][]).map(([href, ic, name]) => (
                   <a key={href} href={sandboxHref(href)} className={`desktop-nav-link ${here === href || here.startsWith(href + '/') ? 'active' : ''}`}>
                     <span aria-hidden="true">{ic}</span><span>{name}</span>
@@ -361,23 +380,47 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               </>}
             </> : <>
               <a className="desktop-nav-link active" href="#/"><span>⌂</span><span>Главная</span></a>
+              <a className="desktop-nav-link" href="#/login"><span>☷</span><span>Заявки · вход</span></a>
+              <a className="desktop-nav-link" href="#/register" onClick={() => { try { sessionStorage.setItem("traksos.pendingLandingAction","insurance"); } catch {} }}><span>◇</span><span>Страхование</span></a>
+              <a className="desktop-nav-link" href="#/register" onClick={() => { try { sessionStorage.setItem("traksos.pendingLandingAction","parts"); } catch {} }}><span>⚙</span><span>Запчасти</span></a>
               <a className="desktop-nav-link" href="#/help"><span>?</span><span>Как это работает</span></a>
               <a className="desktop-nav-link" href="#/rules"><span>▤</span><span>Правила площадки</span></a>
               <a className="desktop-nav-link" href="#/offer/privacy"><span>▣</span><span>Персональные данные</span></a>
             </>}
           </nav>
-          <div className="desktop-sidebar-bottom">Помощь грузовому транспорту<br />Санкт-Петербург и Ленинградская область</div>
+          {!me && <aside className="track-sidebar-app" aria-label="Мобильное приложение TrackSOS">
+            <span className="track-sidebar-app-glow" aria-hidden="true" />
+            <span className="track-sidebar-app-phone" aria-hidden="true">
+              <img src="/tracksos-approved-scania-r520.webp" alt="" loading="lazy" />
+              <small>TrackSOS</small>
+            </span>
+            <span className="track-sidebar-app-copy">
+              <b>TrackSOS в телефоне</b>
+              <small>Заявки и связь с мастером в одном месте</small>
+              <span className="track-sidebar-app-soon">Скоро в RuStore</span>
+            </span>
+          </aside>}
+          <div className="desktop-sidebar-bottom"><strong>TRACKSOS 24/7</strong><span>Помощь грузовикам</span><small>Санкт-Петербург и Ленинградская область</small></div>
         </aside>
         <div className="desktop-content">
           {children}
           <SiteFooter />
         </div>
       </div>
+      {!me && !route[0] && (
+        <nav className="track-guest-tabbar" aria-label="Основные разделы TrackSOS">
+          <a href="#/" className="active" aria-current="page"><span aria-hidden="true">⌂</span>Главная</a>
+          <a href="#/login"><span aria-hidden="true">☷</span>Заявки</a>
+          <a href="#/login" className="help"><span aria-hidden="true">✚</span>Помощь</a>
+          <a href="#/register" onClick={() => { try { sessionStorage.setItem("traksos.pendingLandingAction","parts"); } catch {} }}><span aria-hidden="true">⚙</span>Запчасти</a>
+          <a href="#/login"><span aria-hidden="true">◉</span>Войти</a>
+        </nav>
+      )}
       {tabs.length > 0 && !(route[0] === 'work' && ['profile', 'docs'].includes(route[1] ?? '')) && !(route[0] === 'base' && route[1] === 'me') && (
         <nav className="tabbar">
           {tabs.map(([href, ic, name]) => (
             <a key={href} href={sandboxHref(href)} className={`${here === href || (href !== '/' && here.startsWith(href + '/') && href !== '/work' && href !== '/base') ? 'on' : ''} ${href === '/sos' ? 'sosTab' : ''}`}>
-              {href === '/sos' ? <span className="sosDot">SOS</span> : <><span className="ic">{ic}</span>{name}</>}
+              {href === '/sos' ? <><span className="ic">✚</span>{name}</> : <><span className="ic">{ic}</span>{name}</>}
             </a>
           ))}
         </nav>
@@ -423,7 +466,7 @@ function SiteFooter() {
           <button className="btn ghost small" onClick={() => { try { localStorage.setItem('traksos.cookie', '1'); } catch { /* */ } setCookieOk(true); }}>Понятно</button>
         </div>
       )}
-      <span className="logo">Трак<b>SOS</b></span>
+      <span className="logo">Track<b>SOS</b></span>
       <span className="note">{l?.tagline}</span>
       {req && <span className="note">{req}</span>}
       {l?.address && <span className="note">{l.address}</span>}

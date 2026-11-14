@@ -3,7 +3,6 @@ import { AdminServices } from './base.tsx';
 import { ModQueue } from './moderation.tsx';
 import { AdminSummary } from './adminSummary.tsx';
 import { AdminSettings } from './adminSettings.tsx';
-import { AdminShopCatalog } from './shopCatalogAdmin.tsx';
 import { useState } from 'react';
 import { useEffect } from 'react';
 import { SupportQueue } from './support.tsx';
@@ -14,7 +13,7 @@ import { get, post, put, rub, fmtPhone, fmtTime, authedImage } from '../api.ts';
 import { STATUS, SERVICES, LINE } from '../dict.ts';
 import { useLoad, useAction, Loading } from '../ui.tsx';
 
-type AdminSection = 'shop' | 'stats' | 'search' | 'support' | 'verify' | 'people' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'settings' | 'demand' | 'announcements' | 'vehicleServices';
+type AdminSection = 'stats' | 'search' | 'support' | 'verify' | 'people' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'settings' | 'demand' | 'announcements' | 'vehicleServices';
 type AdminNavItem = { id: AdminSection; name: string; description: string; symbol: string };
 const ADMIN_GROUPS: { name: string; items: AdminNavItem[] }[] = [
   { name: 'Операционная работа', items: [
@@ -31,17 +30,16 @@ const ADMIN_GROUPS: { name: string; items: AdminNavItem[] }[] = [
     { id: 'verify', name: 'Проверка', description: 'Документы и допуск исполнителей', symbol: '09' },
     { id: 'bases', name: 'Рембазы', description: 'Партнёрские станции ремонта', symbol: '10' },
     { id: 'vehicleServices', name: 'Страхование и ТО', description: 'Заявки и контроль партнёров', symbol: '11' },
-    { id: 'shop', name: 'Магазин', description: 'Справочник грузовых запчастей, загрузка и проверка', symbol: '12' },
   ] },
   { name: 'Финансы и документы', items: [
-    { id: 'payments', name: 'Деньги', description: 'Комиссии, отчёты и выплаты', symbol: '13' },
-    { id: 'offers', name: 'Оферты', description: 'Документы для пользователей', symbol: '14' },
-    { id: 'announcements', name: 'Объявления и комиссии', description: 'Оповещения и условия работы', symbol: '15' },
+    { id: 'payments', name: 'Деньги', description: 'Комиссии, отчёты и выплаты', symbol: '12' },
+    { id: 'offers', name: 'Оферты', description: 'Документы для пользователей', symbol: '13' },
+    { id: 'announcements', name: 'Объявления и комиссии', description: 'Оповещения и условия работы', symbol: '14' },
   ] },
   { name: 'Контроль платформы', items: [
-    { id: 'stats', name: 'Статистика', description: 'Реальные показатели сервиса', symbol: '16' },
-    { id: 'flagged', name: 'Подозрительное', description: 'Сигналы и проверки безопасности', symbol: '17' },
-    { id: 'settings', name: 'Настройки', description: 'Параметры платформы и доступы', symbol: '18' },
+    { id: 'stats', name: 'Статистика', description: 'Реальные показатели сервиса', symbol: '15' },
+    { id: 'flagged', name: 'Подозрительное', description: 'Сигналы и проверки безопасности', symbol: '16' },
+    { id: 'settings', name: 'Настройки', description: 'Параметры платформы и доступы', symbol: '17' },
   ] },
 ];
 const ADMIN_SECTIONS: AdminSection[] = ADMIN_GROUPS.flatMap(group => group.items.map(item => item.id));
@@ -126,7 +124,6 @@ export function Admin({ initialSection }: { initialSection?: string }) {
               <a className="btn ghost small" href="#/admin/section/settings">Управлять регистрацией страховых агентов</a>
               <VehicleServicesQueue />
             </>}
-            {tab === 'shop' && <AdminShopCatalog />}
             {tab === 'settings' && <AdminSettings />}
             {tab === 'offers' && <Offers />}
             {tab === 'people' && <People />}

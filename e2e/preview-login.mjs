@@ -59,6 +59,8 @@ try {
         await page.getByRole('heading',{name:/Рембаза/}).waitFor();
         await page.locator('.service-preview-admin-bar').waitFor();
         await page.getByRole('button',{name:'Готовы принять'}).first().waitFor();
+        // Wait for ts-appear cards and route transitions before taking owner-review screenshots.
+        await page.waitForTimeout(450);
         await page.screenshot({path:'e2e/shots/sandbox/'+id+'-'+width+'.png',fullPage:true});
         await page.getByRole('button',{name:'Готовы принять'}).first().click();
         await page.getByRole('button',{name:'Отправить клиенту'}).first().click();
@@ -71,11 +73,15 @@ try {
         // Combined role opens the master workspace, then the separately isolated service entry.
         await page.getByRole('button',{name:'Моя СТО',exact:true}).click();
         await page.getByRole('link',{name:'Открыть полный тестовый кабинет СТО'}).waitFor();
+        // Wait for ts-appear cards and route transitions before taking owner-review screenshots.
+        await page.waitForTimeout(450);
         await page.screenshot({path:'e2e/shots/sandbox/'+id+'-'+width+'.png',fullPage:true});
         await page.getByRole('link',{name:'← Все кабинеты'}).first().click();
       } else {
         const cabinetLabel=id==='owner'?'Владелец автопарка':label;
         await page.getByRole('main',{name:'Тестовый кабинет: '+cabinetLabel}).waitFor();
+        // Wait for ts-appear cards and route transitions before taking owner-review screenshots.
+        await page.waitForTimeout(450);
         await page.screenshot({path:'e2e/shots/sandbox/'+id+'-'+width+'.png',fullPage:true});
         // Each role has its own real navigation. The old shared "create request" selector
         // was invalid for fleet, master, insurer and inspection workspaces.
