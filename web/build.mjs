@@ -9,7 +9,9 @@ const opts = {
   bundle: true,
   outfile: 'dist/app.js',
   format: 'esm',
-  target: ['es2020', 'chrome80'],
+  // Android 10 Google-API images can ship WebView 74 without Play updates.
+  // Keep syntax within that engine's baseline; esbuild downlevels newer JS.
+  target: ['es2018', 'chrome69'],
   minify: !watch,
   sourcemap: watch ? 'inline' : false,
   jsx: 'automatic',
