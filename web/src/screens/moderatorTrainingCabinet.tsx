@@ -21,7 +21,7 @@ export function ModeratorTrainingCabinet(){
   const visible=cases.filter(c=>tab==='appeals'?c.kind!=='Проверка документов':tab==='decisions'?['Одобрено','Отклонено'].includes(c.status):true);
   return <main className="sandbox-root sandbox-cabinet stack" aria-label="Тестовый кабинет: Модератор">
     <div className="sandbox-breadcrumb"><a href="#/admin/test-center">← Назад к выбору кабинетов</a><span className="pill accent">ТЕСТОВЫЙ РЕЖИМ</span></div>
-    <section className="sandbox-hero"><span className="sandbox-eyebrow">TRACKSOS · МОДЕРАЦИЯ</span><h1>Центр проверки и обращений</h1><p>Документы исполнителей, жалобы, спорные отзывы и история решений в безопасном режиме.</p>
+    <section className="sandbox-hero"><span className="sandbox-eyebrow">TRAKSOS · МОДЕРАЦИЯ</span><h1>Центр проверки и обращений</h1><p>Документы исполнителей, жалобы, спорные отзывы и история решений в безопасном режиме.</p>
       <div className="row"><button className="btn" type="button" onClick={()=>setTab('queue')}>Открыть очередь</button><button className="btn ghost" type="button" onClick={()=>setTab('decisions')}>История решений</button></div>
     </section>
     <div className="banner" role="note"><b>АДМИНИСТРАТОР · ДЕМОНСТРАЦИЯ</b><span>Ни один пользователь не блокируется. Настоящие документы и жалобы не изменяются.</span></div>

@@ -85,7 +85,7 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
   return <main className="insurance-workflow stack">
     <a className="insurance-back" href="#/garage">← Мой гараж</a>
     <section className="insurance-workflow-hero">
-      <span>TRACKSOS · СТРАХОВАНИЕ</span><h1>Заявка на страхование грузовика</h1>
+      <span>TRAKSOS · СТРАХОВАНИЕ</span><h1>Заявка на страхование грузовика</h1>
       <p>Выберите агента, проверьте свои данные и сведения о технике. Предложения и готовый полис придут в переписку по этой заявке.</p>
     </section>
     <div className="banner" role="note">Страховой агент оформляет документы вручную. Расчёт и выпуск полиса через API страховой компании пока не подключены.</div>
@@ -223,7 +223,7 @@ export function InsuranceThread({requestId}:{requestId:string}){
     {!d?<Loading error={source.error}/>:
     <>
       <section className="insurance-workflow-hero">
-        <span>TRACKSOS · СТРАХОВАЯ ПЕРЕПИСКА</span>
+        <span>TRAKSOS · СТРАХОВАЯ ПЕРЕПИСКА</span>
         <h1>{r?.brand} {r?.model} · {r?.plate}</h1>
         <div className="insurance-stage"><b>{insuranceStatus(stage)}</b><span>{r?.agent_name}</span></div>
         <p>Все этапы согласования, цены и готовый полис находятся здесь. Оформление страховой компанией выполняется агентом вручную.</p>
@@ -306,7 +306,7 @@ export function InsuranceThread({requestId}:{requestId:string}){
           </section>}
           {isAgent&&stage==='preparing'&&<section className="card stack">
             <b>Предложения от страховых компаний</b>
-            <p className="note">Можно отправить от 1 до 20 вариантов. Расчёт проводится агентом вне TrackSOS.</p>
+            <p className="note">Можно отправить от 1 до 20 вариантов. Расчёт проводится агентом вне TrakSOS.</p>
             {drafts.map((o,i)=><div className="insurance-quote-editor stack" key={i}>
               <b>Предложение {i+1}</b>
               {([['company','Страховая компания'],['product','Название полиса'],['price','Стоимость, ₽'],

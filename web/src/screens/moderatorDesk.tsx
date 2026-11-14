@@ -14,7 +14,7 @@ export function ModeratorDesk() {
     ['flagged', 'Подозрительные сообщения'],
   ];
   return <main className="moderator-workspace stack">
-    <section className="internal-role-hero internal-role-hero-moderator"><span>TRACKSOS · КАЧЕСТВО И БЕЗОПАСНОСТЬ</span><h1>Модерация</h1>
+    <section className="internal-role-hero internal-role-hero-moderator"><span>TRAKSOS · КАЧЕСТВО И БЕЗОПАСНОСТЬ</span><h1>Модерация</h1>
     <p>Рабочая очередь площадки. Финансы, статистика, тарифы и настройки здесь недоступны.</p></section>
     <div className="moderator-action-grid" aria-label="Быстрый доступ к рабочим очередям">
       {options.map(([key,name],i)=><button type="button" key={key}

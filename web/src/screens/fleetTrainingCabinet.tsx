@@ -25,7 +25,7 @@ export function FleetTrainingCabinet(){
   const add=()=>{if(!issue.trim()){setNotice('Опишите неисправность или услугу.');return;}setRequests(a=>[{id:Math.max(...a.map(r=>r.id),300)+1,truckId:selected,kind:issue.trim().slice(0,120),state:'Новая'},...a]);setIssue('');setNotice('Тестовая заявка создана без обращения к серверу.');};
   return <main className="sandbox-root sandbox-cabinet stack" aria-label="Тестовый кабинет: Владелец автопарка">
     <div className="sandbox-breadcrumb"><a href="#/admin/test-center">← Назад к выбору кабинетов</a><span className="pill accent">ТЕСТОВЫЙ РЕЖИМ</span></div>
-    <section className="sandbox-hero"><span className="sandbox-eyebrow">TRACKSOS · ВЛАДЕЛЕЦ АВТОПАРКА</span><h1>Мой автопарк</h1>
+    <section className="sandbox-hero"><span className="sandbox-eyebrow">TRAKSOS · ВЛАДЕЛЕЦ АВТОПАРКА</span><h1>Мой автопарк</h1>
       <p>Грузовики, водители, заявки и обслуживание техники · безопасный демонстрационный кабинет.</p>
       <div className="row"><button className="btn" type="button" onClick={()=>setTab('fleet')}>Управлять транспортом</button><button className="btn ghost" type="button" onClick={()=>setTab('requests')}>Заявки ({active.length})</button></div>
     </section>

@@ -20,7 +20,7 @@ export function InspectionTrainingCabinet(){
   const change=(patch:Partial<Visit>)=>{setVisits(v=>v.map(x=>x.id===selected?{...x,...patch}:x));setNotice('Изменение выполнено только в тестовом кабинете.');};
   return <main className="sandbox-root sandbox-cabinet stack" aria-label="Тестовый кабинет: Оператор техосмотра">
     <div className="sandbox-breadcrumb"><a href="#/admin/test-center">← Назад к выбору кабинетов</a><span className="pill accent">ТЕСТОВЫЙ РЕЖИМ</span></div>
-    <section className="sandbox-hero"><span className="sandbox-eyebrow">TRACKSOS · ОПЕРАТОР ТЕХОСМОТРА</span><h1>Технический осмотр транспорта</h1><p>Очередь, расписание, результаты и диагностические карты в изолированном тренажёре.</p>
+    <section className="sandbox-hero"><span className="sandbox-eyebrow">TRAKSOS · ОПЕРАТОР ТЕХОСМОТРА</span><h1>Технический осмотр транспорта</h1><p>Очередь, расписание, результаты и диагностические карты в изолированном тренажёре.</p>
       <div className="row"><button className="btn" type="button" onClick={()=>setTab('queue')}>Открыть очередь</button><button className="btn ghost" type="button" onClick={()=>setTab('cards')}>Диагностические карты</button></div>
     </section>
     <div className="banner" role="note"><b>АДМИНИСТРАТОР · ДЕМОНСТРАЦИЯ</b><span>Настоящие диагностические карты, ЕАИСТО, платежи и документы не создаются.</span></div>

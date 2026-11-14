@@ -19,7 +19,7 @@ export function PerformerTrainingCabinet({tow=false}:{tow?:boolean}){
   const newJobs=jobs.filter(j=>j.status==='Новая');
   return <main className="sandbox-root sandbox-cabinet stack" aria-label={'Тестовый кабинет: '+(tow?'Эвакуаторщик':'Выездной мастер')}>
     <div className="sandbox-breadcrumb"><a href="#/admin/test-center">← Назад к выбору кабинетов</a><span className="pill accent">ТЕСТОВЫЙ РЕЖИМ</span></div>
-    <section className="sandbox-hero"><span className="sandbox-eyebrow">TRACKSOS · {tow?'ЭВАКУАТОР':'ВЫЕЗДНОЙ МАСТЕР'}</span>
+    <section className="sandbox-hero"><span className="sandbox-eyebrow">TRAKSOS · {tow?'ЭВАКУАТОР':'ВЫЕЗДНОЙ МАСТЕР'}</span>
       <h1>{tow?'Диспетчерская эвакуации':'Ваша рабочая смена'}</h1><p>Входящие вызовы, этапы выезда, история и расчёты в безопасном демонстрационном режиме.</p>
       <div className="row"><button className="btn" type="button" onClick={()=>setOnline(v=>!v)}>{online?'На линии · Отключиться':'Выйти на линию'}</button><button className="btn ghost" type="button" onClick={()=>setTab('active')}>Активные выезды ({active.length})</button></div>
     </section>

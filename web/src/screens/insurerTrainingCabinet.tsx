@@ -21,7 +21,7 @@ export function InsurerTrainingCabinet(){
   const nav:[Tab,string][]=[['queue','Страховки'],['inspection','Техосмотры'],['documents','Документы и полисы'],['finance','Финансы'],['company','Компания']];
   return <main className="sandbox-root sandbox-cabinet stack" aria-label="Тестовый кабинет: Страховой партнёр">
     <div className="sandbox-breadcrumb"><a href="#/admin/test-center">← Назад к выбору кабинетов</a><span className="pill accent">ТЕСТОВЫЙ РЕЖИМ</span></div>
-    <section className="sandbox-hero"><span className="sandbox-eyebrow">TRACKSOS · СТРАХОВОЙ ПАРТНЁР</span>
+    <section className="sandbox-hero"><span className="sandbox-eyebrow">TRAKSOS · СТРАХОВОЙ ПАРТНЁР</span>
       <h1>{tab==='inspection'?'Техосмотры грузового транспорта':'Страхование и техосмотры'}</h1><p>Два отдельных рабочих направления: страховые предложения и технические осмотры, документы и расчёты · без настоящих операций.</p>
       <div className="row"><button className="btn" type="button" onClick={()=>setTab('queue')}>Открыть заявки</button>
       <button className="btn ghost" type="button" onClick={()=>setTab('inspection')}>Перейти к техосмотрам</button><button className="btn ghost" type="button" onClick={()=>setTab('finance')}>Мои финансы</button></div>

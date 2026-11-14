@@ -18,7 +18,7 @@ export function CustomerTrainingCabinet({driver=false}:{driver?:boolean}){
   const create=()=>{if(!problem.trim()){setNote('Опишите проблему с грузовиком.');return;}setJobs(a=>[{id:Math.max(...a.map(j=>j.id),100)+1,kind:service+': '+problem.trim().slice(0,80),vehicle,status:'Ожидает'},...a]);setProblem('');setPage('requests');setNote('Демонстрационная заявка создана без обращения к серверу.');};
   return <main className="sandbox-root sandbox-cabinet stack" aria-label={'Тестовый кабинет: '+(driver?'Водитель автопарка':'Клиент')}>
     <div className="sandbox-breadcrumb"><a href="#/admin/test-center">← Назад к выбору кабинетов</a><span className="pill accent">ТЕСТОВЫЙ РЕЖИМ</span></div>
-    <section className="sandbox-hero"><span className="sandbox-eyebrow">TRACKSOS · {driver?'ВОДИТЕЛЬ':'КЛИЕНТ'}</span>
+    <section className="sandbox-hero"><span className="sandbox-eyebrow">TRAKSOS · {driver?'ВОДИТЕЛЬ':'КЛИЕНТ'}</span>
       <h1>{driver?'Помощь в каждом рейсе':'Помощь грузовику — рядом'}</h1><p>Вызов помощи, транспорт, заявки и история · изолированный интерактивный кабинет.</p>
       <div className="row"><button className="btn" type="button" onClick={()=>setPage('road')}>Вызвать помощь</button><button className="btn ghost" type="button" onClick={()=>setPage('requests')}>Мои заявки ({active.length})</button></div>
     </section>
