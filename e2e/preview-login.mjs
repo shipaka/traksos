@@ -90,7 +90,7 @@ try {
           await page.getByRole('button',{name:'Начать выезд'}).waitFor();
         }else if(id==='insurer'){
           await page.getByRole('button',{name:'Документы и полисы',exact:true}).click();
-          await page.getByRole('heading',{name:'Документы и полисы'}).waitFor();
+          await page.getByRole('heading',{name:'Полисы и документы'}).waitFor();
         }else if(id==='inspection'){
           await page.getByRole('button',{name:'Расписание',exact:true}).click();
           await page.getByRole('heading',{name:'Расписание осмотров'}).waitFor();
