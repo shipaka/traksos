@@ -938,6 +938,19 @@ export function createApp(d: Deps) {
   // GET-only bank reconciliation; this action cannot resend capture/cancel.
   r.post('/api/admin/payment-cancellations/:id/reconcile', ['admin'], (c: AuthedCtx) =>
     payments.reconcileCancellation(parse(z.string().uuid(), c.params.id)));
+  // Creation reconciliation only replays the exact immutable YooKassa key
+  // within a 23h window; expired cases require manual bank inspection.
+  r.get('/api/admin/payment-creations', ['admin'], () => d.db.query(
+    `select i.id,i.payment_id,i.order_id,o.number as order_number,
+            i.status,i.attempts,i.first_sent_at,i.last_attempt_at,
+            i.last_error,i.created_at,p.total,p.provider_payment_id
+       from payment_create_intents i
+       join payments p on p.id=i.payment_id
+       join orders o on o.id=i.order_id
+       where i.status<>'ready' order by i.created_at desc limit 200`));
+  r.post('/api/admin/payment-creations/:paymentId/reconcile', ['admin'],
+    (c: AuthedCtx) => payments.reconcileWorkPayment(
+      parse(z.string().uuid(), c.params.paymentId)));
   r.post('/api/admin/performers/:id/adjust', ['admin'], (c: AuthedCtx) => admin.adjust(c.user, c.params.id, parse(z.object({
     amount: z.number().int(), reason: z.string().min(3).max(300), orderId: z.string().uuid().optional(),
   }), c.body)));

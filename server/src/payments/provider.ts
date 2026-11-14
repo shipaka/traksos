@@ -29,7 +29,7 @@ export interface PaymentProvider {
   capture(id: string, amount?: number): Promise<{ status: ProviderStatus }>;
   cancel(id: string): Promise<{ status: ProviderStatus }>;
   refund(id: string, amount: number, idempotencyKey: string): Promise<{ id: string; status: 'succeeded' | 'pending' | 'failed' }>;
-  getPayment(id: string): Promise<{ id: string; status: ProviderStatus; total: number }>;
+  getPayment(id: string): Promise<{ id: string; status: ProviderStatus; total: number; metadata?: Record<string, string>; confirmationUrl?: string | null }>;
   getRefund(id: string): Promise<{ id: string; status: 'succeeded' | 'pending' | 'failed' }>;
   /** Выплата исполнителю; null — выплаты через этот сервис не настроены, платим вручную */
   payout(p: PayoutInput): Promise<{ id: string; status: 'pending' | 'paid' | 'failed'; receiptIssued: boolean } | null>;
@@ -41,15 +41,27 @@ export interface PaymentProvider {
 export class MockProvider implements PaymentProvider {
   name = 'mock';
   private seq = 0;
-  payments = new Map<string, { id: string; status: ProviderStatus; total: number; captured: number; refunded: number }>();
+  payments = new Map<string, { id: string; status: ProviderStatus; total: number; captured: number; refunded: number; metadata: Record<string,string>; confirmationUrl: string }>();
+  private creations = new Map<string, { id: string; input: string }>();
   payouts: PayoutInput[] = [];
   refunds = new Map<string, { id: string; status: 'succeeded' | 'pending' | 'failed'; paymentId: string; amount: number }>();
   constructor(private publicUrl: string) {}
 
   async createPayment(p: CreatePaymentInput) {
+    const input = JSON.stringify(p);
+    const previous = this.creations.get(p.idempotencyKey);
+    if (previous) {
+      if (previous.input !== input) throw new Error('mock: same bank key used with different request');
+      const original = this.payments.get(previous.id)!;
+      return { id:original.id, status:original.status,
+        confirmationUrl:original.confirmationUrl };
+    }
     const id = `mock_${++this.seq}_${Date.now().toString(36)}`;
-    this.payments.set(id, { id, status: 'pending', total: p.total, captured: 0, refunded: 0 });
-    return { id, status: 'pending' as const, confirmationUrl: `${this.publicUrl}/api/dev/mock-pay/${id}` };
+    const confirmationUrl = `${this.publicUrl}/api/dev/mock-pay/${id}`;
+    this.payments.set(id, { id, status:'pending', total:p.total, captured:0, refunded:0,
+      metadata:p.metadata, confirmationUrl });
+    this.creations.set(p.idempotencyKey,{id,input});
+    return { id, status:'pending' as const, confirmationUrl };
   }
   simulate(id: string, status: ProviderStatus) {
     const p = this.payments.get(id);
@@ -86,7 +98,8 @@ export class MockProvider implements PaymentProvider {
   async getPayment(id: string) {
     const p = this.payments.get(id)!;
     // A partial capture reduces the held amount; mirror bank's current settled sum.
-    return { id, status: p.status, total: p.status === 'captured' ? p.captured : p.total };
+    return { id, status: p.status, total: p.status === 'captured' ? p.captured : p.total,
+      metadata:p.metadata,confirmationUrl:p.confirmationUrl };
   }
   async payout(p: PayoutInput) {
     this.payouts.push(p);

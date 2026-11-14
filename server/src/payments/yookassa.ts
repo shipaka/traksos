@@ -75,7 +75,9 @@ export class YooKassaProvider implements PaymentProvider {
 
   async getPayment(id: string) {
     const j = await this.call(`/payments/${id}`, undefined);
-    return { id: j.id, status: mapStatus(j.status), total: fromValue(j.amount) };
+    return { id: j.id, status: mapStatus(j.status), total: fromValue(j.amount),
+      metadata: j.metadata as Record<string,string> | undefined,
+      confirmationUrl: j.confirmation?.confirmation_url ?? null };
   }
 
   async payout(p: PayoutInput) {

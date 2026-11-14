@@ -13,7 +13,7 @@ import type { Db, Queryable } from '../db/index.ts';
 import type { SettingsService } from '../services/settings.ts';
 import type { Notifier } from '../services/notify.ts';
 import type { OrdersService, PaymentHooks } from '../services/orders.ts';
-import type { PaymentProvider, ProviderStatus } from './provider.ts';
+import type { CreatePaymentInput, PaymentProvider, ProviderStatus } from './provider.ts';
 import { HttpError, bad, notFound, type AuthUser } from '../http/router.ts';
 import { cancelSplit, commissionPct, pct, split, type CancelStage } from '../domain/money.ts';
 import { agentReceipt } from './yookassa.ts';
@@ -96,9 +96,8 @@ export class PaymentsService implements PaymentHooks {
     // online: выезд уже заморожен, работу списываем сразу (скидка сначала уменьшает оплату работы)
     const workTotal = m.work + pct(m.work, Number(order.client_fee_pct));
     if (m.work > 0 && workTotal - Math.min(m.discount, workTotal) > 0) {
-      const p = await this.createProviderPayment(q, order, 'work', m.work, true, Math.min(m.discount, workTotal));
-      await this.notifier.notify([order.client_id, order.created_by], { type: 'payment', orderId: order.id, url: p.confirmation_url },
-        { kind: 'normal', title: 'Оплатите работу', body: `Заявка №${order.number}: ${rub(p.total)}`, data: { orderId: order.id } });
+      // The bank call happens only AFTER this order transaction commits.
+      await this.prepareWorkPayment(order, q, m.work, Math.min(m.discount, workTotal));
     } else {
       // Save the capture intent in the same transaction as client confirmation.
       // Actual bank IO must happen only after the order transaction commits.
@@ -287,6 +286,169 @@ export class PaymentsService implements PaymentHooks {
 
   // Платежи ---------------------------------------------------------------
 
+  /** Write an immutable request to PostgreSQL while confirming the order. */
+  private async prepareWorkPayment(order: any, q: Queryable, amount: number, discount: number) {
+    const cfg = await this.settings.get('payments');
+    const fee = pct(amount, Number(order.client_fee_pct));
+    const total = amount + fee - discount;
+    if (!Number.isInteger(total) || total <= 0) throw new Error('Invalid work payment');
+    const previous = await q.one('select id from payments where order_id=$1 and kind=$2', [order.id, 'work']);
+    if (previous) throw new Error('Work payment already exists');
+    const key = `${order.id}:work:1`;
+    const pay = await q.one<{ id: string }>(
+      `insert into payments(order_id,kind,method,amount,client_fee,total,provider,idempotency_key)
+       values ($1,'work',$2,$3,$4,$5,$6,$7) returning id`,
+      [order.id,cfg.defaultMethod,amount,fee,total,this.provider.name,key]);
+    if (!pay) throw new Error('Could not persist payment');
+    let receipt: unknown;
+    if (cfg.sendReceipts) {
+      const client = await q.one<{phone:string}>('select phone from users where id=$1', [order.client_id]);
+      const worker = order.performer_id
+        ? await q.one<{name:string;inn:string}>(
+          'select u.name,p.inn from users u join performer_profiles p on p.user_id=u.id where u.id=$1',
+          [order.performer_id]) : null;
+      receipt = agentReceipt({ customerPhone:client!.phone, items:[
+        { description:'Работы по заявке', amount,
+          supplier:worker?.inn ? {name:worker.name,inn:worker.inn} : undefined },
+        ...(fee ? [{description:'Сервисный сбор ТракSOS',amount:fee}]:[]),
+      ]});
+    }
+    const request: CreatePaymentInput = {
+      total,capture:true,method:cfg.defaultMethod,idempotencyKey:key,
+      description:`ТракSOS, заявка №${order.number}: работа`,
+      returnUrl:`${config.publicUrl}/orders/${order.id}`,
+      metadata:{orderId:order.id,paymentId:pay.id,kind:'work'}, receipt,
+    };
+    await q.query(
+      'insert into payment_create_intents(payment_id,order_id,request) values($1,$2,$3::jsonb)',
+      [pay.id,order.id,JSON.stringify(request)]);
+  }
+
+  /** Immutable key/payload may be replayed only within YooKassa's 24h window. */
+  private async claimWorkCreation(paymentId: string, recovery: boolean) {
+    return this.db.tx(async q => {
+      const intent = await q.one<any>(
+        'select * from payment_create_intents where payment_id=$1 for update', [paymentId]);
+      if (!intent || intent.status === 'ready') return null;
+      if (intent.first_sent_at) {
+        if (!recovery) return null;
+        const check = await q.one<{safe:boolean;cool:boolean}>(
+          `select first_sent_at > now() - interval '23 hours' as safe,
+                  last_attempt_at < now() - interval '60 seconds' as cool
+             from payment_create_intents where id=$1`, [intent.id]);
+        if (!check?.safe) {
+          await q.query(
+            "update payment_create_intents set status='needs_review',last_error='Replay window expired; bank verification required',checked_at=now() where id=$1",
+            [intent.id]);
+          return null;
+        }
+        if (!check.cool) return null;
+      }
+      await q.query(
+        `update payment_create_intents set status='sending',attempts=attempts+1,
+          first_sent_at=coalesce(first_sent_at,now()),last_attempt_at=now(),
+          updated_at=now() where id=$1`, [intent.id]);
+      return intent;
+    });
+  }
+
+  private async markWorkCreationUnknown(id: string, error: unknown) {
+    await this.db.query(
+      `update payment_create_intents set status='needs_review',last_error=$2,
+        checked_at=now(),updated_at=now() where payment_id=$1 and status<>'ready'`,
+      [id,String(error instanceof Error ? error.message : error).slice(0,400)]);
+  }
+
+  /** Bind a verified external payment, including a webhook that beat the response. */
+  private async bindWorkPayment(paymentId: string, result: {
+    id:string; status:ProviderStatus; confirmationUrl:string|null;
+  }) {
+    return this.db.tx(async q => {
+      const intent = await q.one<any>(
+        'select * from payment_create_intents where payment_id=$1 for update', [paymentId]);
+      if (!intent) throw new Error('Missing work payment creation intent');
+      const pay = await q.one<any>('select * from payments where id=$1 for update', [paymentId]);
+      if (!pay || pay.kind!=='work' || pay.order_id!==intent.order_id ||
+          pay.idempotency_key!==intent.request.idempotencyKey || pay.total!==intent.request.total)
+        throw new Error('Work payment and intent disagree');
+      if (pay.provider_payment_id && pay.provider_payment_id!==result.id)
+        throw new Error('Conflicting external payment id');
+      if (intent.status==='ready') return {changed:false,pay};
+      const updated = await q.one<any>(
+        `update payments set provider_payment_id=$2,
+          confirmation_url=coalesce(confirmation_url,$3),
+          status=case when status='created' then 'pending' else status end,
+          updated_at=now() where id=$1 returning *`,
+        [paymentId,result.id,result.confirmationUrl]);
+      await q.query(
+        "update payment_create_intents set status='ready',completed_at=now(),last_error=null,checked_at=now(),updated_at=now() where id=$1",
+        [intent.id]);
+      return {changed:true,pay:updated};
+    });
+  }
+
+  private async sendWorkPayment(paymentId: string, recovery: boolean) {
+    const intent = await this.claimWorkCreation(paymentId,recovery);
+    if (!intent) return 'not_claimed';
+    try {
+      const req = intent.request as CreatePaymentInput;
+      const response = await this.provider.createPayment(req);
+      const verify = await this.provider.getPayment(response.id);
+      if (verify.id!==response.id || verify.total!==req.total ||
+          (verify.metadata && (verify.metadata.paymentId!==paymentId ||
+            verify.metadata.orderId!==intent.order_id || verify.metadata.kind!=='work')))
+        throw new Error('Bank creation response does not match saved request');
+      const result = await this.bindWorkPayment(paymentId,response);
+      if (result.changed) {
+        const o = await this.db.one<any>(
+          'select id,number,client_id,created_by from orders where id=$1', [intent.order_id]);
+        if (o) await this.notifier.notify([o.client_id,o.created_by],
+          {type:'payment',orderId:o.id,url:response.confirmationUrl},
+          {kind:'normal',title:'Оплатите работу',
+            body:`Заявка №${o.number}: ${rub(req.total)}`,data:{orderId:o.id}})
+          .catch(e=>console.error('[work-payment-push]',e));
+      }
+      if (verify.status!=='pending') await this.sync(result.pay,STATUS_MAP[verify.status]);
+      return 'ready';
+    } catch (error) {
+      await this.markWorkCreationUnknown(paymentId,error);
+      return 'needs_review';
+    }
+  }
+
+  /** Called only AFTER the order transaction has committed. */
+  async processWorkPaymentForOrder(orderId: string) {
+    const pay = await this.db.one<{id:string}>(
+      `select p.id from payments p join payment_create_intents i on i.payment_id=p.id
+        where p.order_id=$1 and p.kind='work' and i.status='prepared'`, [orderId]);
+    return pay ? this.sendWorkPayment(pay.id,false) : null;
+  }
+
+  async reconcileWorkPayment(paymentId: string) {
+    const intent = await this.db.one<any>(
+      'select * from payment_create_intents where payment_id=$1', [paymentId]);
+    if (!intent) throw notFound('Запрос создания платежа не найден');
+    if (intent.status==='ready') return 'ready';
+    return this.sendWorkPayment(paymentId,true);
+  }
+
+  async reconcileWorkCreations(limit=40) {
+    const queue = await this.db.query<{payment_id:string;status:string}>(
+      `select payment_id,status from payment_create_intents where status='prepared'
+        or (status in ('sending','needs_review') and
+            (checked_at is null or checked_at < now()-interval '60 seconds'))
+        order by case when status='prepared' then 0 else 1 end,
+                 coalesce(checked_at,created_at) limit $1`,
+      [Math.max(1,Math.min(100,limit))]);
+    const results = [];
+    for (const item of queue) {
+      try { results.push({paymentId:item.payment_id,
+        status:await this.sendWorkPayment(item.payment_id,item.status!=='prepared')}); }
+      catch (e) { console.error('[work-payment-create]',item.payment_id,e); }
+    }
+    return results;
+  }
+
   private async createProviderPayment(q: Queryable, order: any, kind: 'call_out' | 'work', amount: number, capture: boolean, discount = 0) {
     const p = await this.settings.get('payments');
     const fee = pct(amount, Number(order.client_fee_pct));
@@ -329,9 +491,35 @@ export class PaymentsService implements PaymentHooks {
   async handleWebhook(body: any) {
     const ev = this.provider.parseWebhook(body);
     if (!ev) throw bad('bad_webhook');
-    const pay = await this.db.one('select * from payments where provider_payment_id=$1', [ev.providerPaymentId]);
-    if (!pay) throw notFound('Платёж не найден');
+    // Even on a successful bank creation, our first HTTP response might have
+    // disappeared before provider_payment_id was saved in PostgreSQL.
     const actual = await this.provider.getPayment(ev.providerPaymentId);
+    let pay = await this.db.one<any>(
+      'select * from payments where provider_payment_id=$1', [ev.providerPaymentId]);
+    if (!pay && actual.metadata?.kind === 'work' && actual.metadata.paymentId) {
+      const paymentId = actual.metadata.paymentId;
+      const intent = await this.db.one<any>(
+        'select * from payment_create_intents where payment_id=$1', [paymentId]);
+      if (!intent || !intent.first_sent_at ||
+          intent.order_id !== actual.metadata.orderId ||
+          intent.request.metadata.paymentId !== paymentId ||
+          intent.request.total !== actual.total)
+        throw notFound('Банковский платёж не совпадает с сохранённым намерением');
+      const result = await this.bindWorkPayment(paymentId, {
+        id:actual.id,status:actual.status,confirmationUrl:actual.confirmationUrl ?? null,
+      });
+      pay = result.pay;
+      if (result.changed) {
+        const order = await this.db.one<any>(
+          'select id,number,client_id,created_by from orders where id=$1', [intent.order_id]);
+        if (order) await this.notifier.notify([order.client_id,order.created_by],
+          {type:'payment',orderId:order.id,url:actual.confirmationUrl ?? null},
+          {kind:'normal',title:'Оплатите работу',
+            body:`Заявка №${order.number}: ${rub(intent.request.total)}`,
+            data:{orderId:order.id}}).catch(e=>console.error('[orphan-work-notification]',e));
+      }
+    }
+    if (!pay) throw notFound('Платёж не найден');
     return this.sync(pay, STATUS_MAP[actual.status]);
   }
 
