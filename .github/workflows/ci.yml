@@ -71,6 +71,7 @@ jobs:
           node e2e/flow.mjs e2e/shots
           node e2e/admin-ops.mjs e2e/shots
           SHOTS_DIR=e2e/shots/roles node e2e/role-matrix.mjs
+          SHOTS_DIR=e2e/shots/client-real node e2e/client-dashboard-design.mjs
           SHOTS_DIR=e2e/shots/insurance node e2e/insurance-flow.mjs
           node e2e/insurance-locked-ui.mjs
           node e2e/moderator-permission-check.mjs
