@@ -40,20 +40,6 @@ export function VisualClientHome({ me, live, ordersLoaded, ordersError, help }: 
       <div className="tracksos-dashboard-columns">
         <section className="tracksos-dashboard-services desktop-home-main" aria-label="Услуги TrackSOS">
           {help}
-          <div className="tracksos-quick-options" aria-label="Дополнительные возможности">
-            <a href="#/shop" className="tracksos-option tracksos-option-parts">
-              <span className="tracksos-option-art" aria-hidden="true"/>
-              <span><b>Запчасти для грузовиков</b><small>Каталог, аналоги и история покупок</small></span><span aria-hidden="true">›</span>
-            </a>
-            <a href="#/garage" className="tracksos-option tracksos-option-inspection">
-              <span className="tracksos-option-art" aria-hidden="true"/>
-              <span><b>Техосмотр</b><small>Ваша техника и заявки на осмотр</small></span><span aria-hidden="true">›</span>
-            </a>
-            <a href="#/help" className="tracksos-option tracksos-option-guide">
-              <span className="tracksos-option-art" aria-hidden="true"/>
-              <span><b>Полезное</b><small>Справочники, инструкции и помощь</small></span><span aria-hidden="true">›</span>
-            </a>
-          </div>
         </section>
         <aside className="desktop-home-aside tracksos-dashboard-aside" aria-label="Мои заявки и быстрые действия">
           <section className="desktop-aside-card tracksos-live-card" aria-label="Активная заявка">
@@ -122,6 +108,20 @@ export function VisualClientHome({ me, live, ordersLoaded, ordersError, help }: 
           <small>ОСАГО, КАСКО, груз, ответственность — заявка страховому агенту</small></span>
         <strong>Подобрать страхование <span aria-hidden="true">→</span></strong>
       </a>
+          <div className="tracksos-quick-options" aria-label="Дополнительные возможности">
+            <a href="#/shop" className="tracksos-option tracksos-option-parts">
+              <span className="tracksos-option-art" aria-hidden="true"/>
+              <span><b>Запчасти</b><small>Каталог и аналоги</small></span><span aria-hidden="true">›</span>
+            </a>
+            <a href="#/garage" className="tracksos-option tracksos-option-inspection">
+              <span className="tracksos-option-art" aria-hidden="true"/>
+              <span><b>Техосмотр</b><small>Запись на осмотр</small></span><span aria-hidden="true">›</span>
+            </a>
+            <a href="#/help" className="tracksos-option tracksos-option-guide">
+              <span className="tracksos-option-art" aria-hidden="true"/>
+              <span><b>Полезное</b><small>Справочники и схемы</small></span><span aria-hidden="true">›</span>
+            </a>
+          </div>
       <div className="mobile-home-heading tracksos-mobile-intro">
         <span className="mobile-home-kicker">TRACKSOS · ВАШИ ВОЗМОЖНОСТИ</span>
         <h2>Помощь и сервисы в одном месте</h2>
