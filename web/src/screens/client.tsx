@@ -31,25 +31,26 @@ export function Home() {
   const live = (active.data ?? []).filter((o: any) => !['completed', 'cancelled'].includes(o.status));
   const { fill } = usePrices();
   return (
-    <main className="client-home">
+    <main className="client-home client-dashboard">
       <section className="desktop-hero" aria-label="Помощь грузовому транспорту">
         <div className="desktop-hero-copy">
-          <span className="desktop-eyebrow">ТракSOS · Санкт-Петербург и Ленобласть</span>
-          <h1>Помощь в дороге <span>для грузовиков</span></h1>
-          <p>Мастера, диагностика и эвакуация грузовиков в Санкт-Петербурге и Ленинградской области — от заявки до завершения работ в одном сервисе.</p>
-          <div className="launch-region" role="note">Зона запуска: Санкт-Петербург и Ленинградская область. В других регионах выездные услуги пока недоступны.</div>
+          <span className="desktop-eyebrow">ТРАКSOS · САНКТ-ПЕТЕРБУРГ И ЛЕНОБЛАСТЬ</span>
+          <h1>Помощь в дороге. <span>Всё в одном месте.</span></h1>
+          <p>Вызывайте специалиста, выбирайте СТО и следите за работой в едином кабинете.</p>
           <div className="desktop-hero-buttons">
-            <a className="desktop-primary-action" href="#/sos">🚨 SOS · Нужна помощь</a>
-            <a className="desktop-outline-action" href="#/new/diag">+ Создать заявку</a>
+            <a className="desktop-primary-action" href="#/sos">SOS · Помощь в дороге ↗</a>
+            <a className="desktop-outline-action" href="#/orders">Мои заявки</a>
           </div>
+          <div className="launch-region" role="note">Зона запуска: Санкт-Петербург и Ленинградская область</div>
         </div>
+        <img className="client-hero-scania" src="/tracksos-approved-scania-r520.webp" alt="Фирменный тягач Scania R520" loading="eager" />
       </section>
 
-      <section className="desktop-quick-links" aria-label="Быстрый доступ">
-        <a href="#/garage" className="desktop-quick-card"><span className="desktop-quick-icon">▣</span><span><b>Мой гараж</b><small>Автомобили и сведения о технике</small></span><span aria-hidden="true">›</span></a>
-        <a href="#/orders" className="desktop-quick-card"><span className="desktop-quick-icon">☷</span><span><b>Мои заявки</b><small>История и статусы работ</small></span><span aria-hidden="true">›</span></a>
-        <a href="#/services" className="desktop-quick-card"><span className="desktop-quick-icon">⚙</span><span><b>СТО и ремонт</b><small>Сервисы-партнёры и запись</small></span><span aria-hidden="true">›</span></a>
-        <a href="#/fleet" className="desktop-quick-card"><span className="desktop-quick-icon">▤</span><span><b>Мой парк</b><small>Транспорт и водители компании</small></span><span aria-hidden="true">›</span></a>
+      <section className="desktop-quick-links" aria-label="Выберите помощь">
+        <a href="#/sos" className="desktop-quick-card"><span className="desktop-quick-icon">⚡</span><span><b>Выездной мастер</b><small>Электрика, диагностика, пневматика, шиномонтаж</small></span><span aria-hidden="true">↗</span></a>
+        <a href="#/new/tow" className="desktop-quick-card"><span className="desktop-quick-icon">↗</span><span><b>Эвакуатор</b><small>Тягач, полуприцеп или сцепка</small></span><span aria-hidden="true">↗</span></a>
+        <a href="#/services" className="desktop-quick-card"><span className="desktop-quick-icon">▤</span><span><b>СТО грузовых автомобилей</b><small>Выбор сервиса и запись на ремонт</small></span><span aria-hidden="true">↗</span></a>
+        <a href="#/new/consult" className="desktop-quick-card"><span className="desktop-quick-icon">☎</span><span><b>Консультация по телефону</b><small>Обсудить проблему со специалистом</small></span><span aria-hidden="true">↗</span></a>
       </section>
 
       <div className="desktop-home-columns">
@@ -60,7 +61,7 @@ export function Home() {
           </div>
           <div className="desktop-section-heading"><h2>Мои активные заявки</h2><a href="#/orders">Все заявки →</a></div>
           <div className="desktop-active-orders">
-            {live.length === 0 && <div className="desktop-empty-orders">Сейчас нет активных заявок. Если помощь нужна срочно, используйте кнопку SOS.</div>}
+            {active.error ? <div className="desktop-empty-orders">Не удалось загрузить заявки. <a href="#/orders">Открыть раздел</a></div> : !active.data ? <div className="desktop-empty-orders">Загружаем заявки…</div> : live.length === 0 ? <div className="desktop-empty-orders">Сейчас нет активных заявок. Когда вы вызовете помощь, её статус появится здесь.</div> : null}
             {live.map((o: any) => (
               <a key={o.id} href={`#/order/${o.id}`} className="card hi" style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div className="between">
@@ -71,9 +72,13 @@ export function Home() {
               </a>
             ))}
           </div>
-          <div className="desktop-section-heading"><h2>Какая помощь требуется?</h2></div>
-          <SymptomPicker sos={false} />
-          <LiveStrip who="client" />
+          <div className="desktop-section-heading"><h2>Сервисы ТракSOS</h2></div>
+          <section className="client-dashboard-hubs" aria-label="Разделы кабинета">
+            <a href="#/garage"><span className="client-dashboard-hub-icon">◇</span><b>Страхование и техосмотр</b><small>Документы и оформление для вашей техники</small><em>К автомобилям →</em></a>
+            <a href="#/shop"><span className="client-dashboard-hub-icon">▧</span><b>Грузовые запчасти</b><small>Поиск, аналоги и история покупок. Магазин пока закрыт</small><em>Открыть раздел →</em></a>
+            <a href="#/garage"><span className="client-dashboard-hub-icon">▤</span><b>Мой транспорт</b><small>Грузовики, прицепы и история обслуживания</small><em>Мой гараж →</em></a>
+            <a href="#/support"><span className="client-dashboard-hub-icon">☏</span><b>Поддержка</b><small>Обращения и помощь по вашим заявкам</small><em>Написать →</em></a>
+          </section>
         </section>
         <aside className="desktop-home-aside">
           <div className="desktop-aside-card">
