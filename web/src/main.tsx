@@ -320,7 +320,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                 ? <a href="#/as/admin" aria-label="Администратор" aria-current={mode === 'admin' ? 'page' : undefined}>Админ</a>
                 : <a href="#/as/moderator" aria-label="Модератор" aria-current={mode === 'moderator' ? 'page' : undefined}>Модер.</a>}
             </nav>}
-          {me && !serviceSandbox && <a href="#/help" className="bell" aria-label="Справка">?</a>
+          {me && !serviceSandbox && <a href="#/help" className="bell" aria-label="Справка">?</a>}
           {me && !serviceSandbox && <Bell />}
           {me && <details className="account-menu" key={here}>
             <summary aria-label="Открыть меню кабинета">☰ <span>Меню</span></summary>
