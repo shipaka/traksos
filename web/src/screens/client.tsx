@@ -25,7 +25,6 @@ export function Home() {
   const { me } = useMe();
   const active = useLoad(() => get('/api/orders'), [], (e) => e.type === 'order');
   const live = (active.data ?? []).filter((o: any) => !['completed', 'cancelled'].includes(o.status));
-  const { fill } = usePrices();
   return (
     <main className="client-home client-dashboard">
       <section className="desktop-hero" aria-label="Помощь грузовому транспорту">
@@ -87,17 +86,6 @@ export function Home() {
         </aside>
       </div>
 
-      <div className="stack home-services">
-        <span className="label">Все услуги</span>
-        {Object.entries(SERVICES).map(([id, s]) => (
-          <button key={id} className="linkrow" onClick={() => go(`new/${id}`)}>
-            <span><b>{s.name}</b><small>{fill(SERVICE_PRICE[id] ?? s.hint)}</small></span><span aria-hidden="true">›</span>
-          </button>
-        ))}
-        <button className="linkrow mobile-services-link" onClick={() => go('services')}>
-          <span><b>СТО и ремонт</b><small>Сервисы-партнёры, запись и статус ремонта</small></span><span aria-hidden="true">›</span>
-        </button>
-      </div>
     </main>
   );
 }
