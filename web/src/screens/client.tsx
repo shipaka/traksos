@@ -114,7 +114,7 @@ export function Home() {
       <div className="stack home-services">
         <span className="label">Все услуги</span>
         {Object.entries(SERVICES).map(([id, s]) => (
-          <button key={id} className="linkrow" onClick={() => go(`new/${id}`)}>
+          <button key={id} className="linkrow" onClick={() => go(`new/${id}?via=sos`)}>
             <span><b>{s.name}</b><small>{fill(SERVICE_PRICE[id] ?? s.hint)}</small></span><span aria-hidden="true">›</span>
           </button>
         ))}
@@ -199,7 +199,7 @@ export function Sos() {
             <>
               <h2>Эвакуатор для грузовика</h2>
               <p className="note">Укажете тип техники, её местоположение и куда нужно перевезти грузовик. Эвакуаторщики предложат цену, вы сможете выбрать исполнителя.</p>
-              <button type="button" className="btn" onClick={() => go('new/tow')}>Оформить вызов эвакуатора</button>
+              <button type="button" className="btn" onClick={() => go('new/tow?via=sos')}>Оформить вызов эвакуатора</button>
             </>
           ) : (
             <>
@@ -382,6 +382,7 @@ function SelfOrderWarning({ me }: { me: any }) {
 export function NewOrder({ service }: { service: string }) {
   const params = new URLSearchParams(location.hash.split('?')[1] ?? '');
   const sos = SYMPTOMS.find((p) => p.id === params.get('sos'));
+  const fromSos = !!sos || params.get('via') === 'sos';
   const sym = sos ?? SYMPTOMS.find((p) => p.id === params.get('p'));
   const fromConsult = params.get('from');
   const continueFrom = params.get('continueFrom');
@@ -459,7 +460,7 @@ export function NewOrder({ service }: { service: string }) {
 
   async function submit() {
     const r = await run(() => post('/api/orders', {
-      service, isSos: !!sos, problem: sos?.id, description: description || undefined, address: address || undefined,
+      service, isSos: fromSos, problem: sos?.id, description: description || undefined, address: address || undefined,
       lat: geo?.lat, lng: geo?.lng, zoneId, tier: service === 'tow' ? undefined : tier, vehicleId: vehicleId || undefined,
       ...carBody(vehicleId, car), groupTrip: groupAllowed && group, night: night ?? undefined, paymentMethod: method,
       ...(isTow ? { destination: destination || undefined, cargo, loaded, driverOnSite } : {}),
@@ -493,7 +494,7 @@ export function NewOrder({ service }: { service: string }) {
 
   return (
     <main>
-      <Back to={continueFrom ? `order/${continueFrom}` : fromConsult ? `order/${fromConsult}` : sos ? 'sos' : ''} />
+      <Back to={continueFrom ? `order/${continueFrom}` : fromConsult ? `order/${fromConsult}` : fromSos ? 'sos' : ''} />
       {continueFrom && previousStage.data && (
         <section className="card hi" aria-label="Продолжение помощи по грузовику">
           <b>Продолжение обращения №{previousStage.data.caseSummary?.stages?.[0]?.number ?? previousStage.data.number}</b>
