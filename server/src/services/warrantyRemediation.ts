@@ -98,7 +98,7 @@ export class WarrantyRemediationService {
          (!original&&(!Number.isInteger(p.budgetKopecks)||p.budgetKopecks<1||p.budgetKopecks>100_000_000)))
         throw bad('warranty_budget','Для исходного исполнителя сумма ноль, для альтернативного нужен утверждённый лимит');
       const old=await q.one<any>(
-        "select * from warranty_rework_jobs where claim_id=$1 and status<>'declined' for update",[claimId]);
+        "select * from warranty_rework_jobs where claim_id=$1 and status not in ('declined','client_declined') for update",[claimId]);
       if(old){
         if(old.performer_id===p.performerId&&old.budget_kopecks===p.budgetKopecks&&old.task_description===task)
           return {id:old.id,created:false};
