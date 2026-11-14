@@ -70,6 +70,13 @@ try {
       await page.getByRole('button',{name:'История',exact:true}).click();
       await page.getByRole('button',{name:'Помощь на дороге'}).click();
       await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
+    }else if(id==='master'||id==='tow'){
+      await page.getByRole('main',{name:'Тестовый кабинет: '+label}).waitFor();
+      await page.getByRole('button',{name:'Выйти на линию'}).click();
+      await page.getByRole('button',{name:'Принять вызов'}).click();
+      await page.getByRole('button',{name:'Начать выезд'}).last().click();
+      await page.getByRole('button',{name:'Финансы и выплаты'}).click();
+      await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
     }else if(id==='insurer'){
       await page.getByRole('main',{name:'Тестовый кабинет: Страховой партнёр'}).waitFor();
       await page.getByRole('button',{name:'Принять в работу'}).click();
