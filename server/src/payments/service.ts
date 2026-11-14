@@ -113,9 +113,29 @@ export class PaymentsService implements PaymentHooks {
     if (order.payment_method !== 'online') return;
     const pay = await q.one<any>(
       `select * from payments where order_id=$1 and kind='call_out'
-         and status in ('pending','held') for update`, [order.id]);
+         and status in ('created','pending','held') for update`, [order.id]);
     if (!pay) return;
-    if (!pay.provider_payment_id) throw new Error('Cancelled payment has no provider id');
+    if (!pay.provider_payment_id) {
+      // A cancelled request that has NEVER reached the bank must not be sent
+      // later by the periodic work-payment creation worker. A request that
+      // has already been sent may have created real bank money; leave its
+      // immutable key intact for safe reconciliation and deferred cancellation.
+      const creation = await q.one<any>(
+        'select * from payment_create_intents where payment_id=$1 for update', [pay.id]);
+      if (creation && creation.status === 'prepared' && !creation.first_sent_at) {
+        await q.query(
+          "update payment_create_intents set status='abandoned',updated_at=now() where id=$1",
+          [creation.id]);
+        await q.query(
+          "update payments set status='cancelled',updated_at=now() where id=$1",
+          [pay.id]);
+      }
+      return;
+    }
+    if (pay.status === 'created') return; // bank binding still pending
+    if (await q.one('select id from payment_cancel_intents where order_id=$1', [order.id]))
+      return; // repeated reconciliation must never schedule two bank actions
+
 
     let toPerformer = 0, platformKeeps = 0, commission = 0, keep = 0;
     // A not-yet-held payment can only be cancelled, never captured.
@@ -292,6 +312,11 @@ export class PaymentsService implements PaymentHooks {
   /** Persist call-out hold BEFORE contacting the bank; preserving original price. */
   private async prepareCallOutPayment(order: any, amount: number) {
     return this.db.tx(async q => {
+      // Serialize a hold being prepared against an immediate SOS cancellation.
+      // If the customer already cancelled, never create an external request.
+      const active = await q.one<{status:string}>(
+        'select status from orders where id=$1 for update', [order.id]);
+      if (active?.status !== 'searching') return null;
       const present = await q.one<{id:string}>(
         "select id from payments where order_id=$1 and kind='call_out' for update", [order.id]);
       if (present) return present;
@@ -381,7 +406,7 @@ export class PaymentsService implements PaymentHooks {
     return this.db.tx(async q => {
       const intent = await q.one<any>(
         'select * from payment_create_intents where payment_id=$1 for update', [paymentId]);
-      if (!intent || intent.status === 'ready') return null;
+      if (!intent || intent.status === 'ready' || intent.status === 'abandoned') return null;
       if (intent.first_sent_at) {
         if (!recovery) return null;
         const check = await q.one<{safe:boolean;cool:boolean}>(
@@ -425,6 +450,7 @@ export class PaymentsService implements PaymentHooks {
         throw new Error('Work payment and intent disagree');
       if (pay.provider_payment_id && pay.provider_payment_id!==result.id)
         throw new Error('Conflicting external payment id');
+      if (intent.status==='abandoned') throw new Error('Abandoned bank request cannot be rebound');
       if (intent.status==='ready') return {changed:false,pay};
       const updated = await q.one<any>(
         `update payments set provider_payment_id=$2,
@@ -453,10 +479,11 @@ export class PaymentsService implements PaymentHooks {
       const result = await this.bindWorkPayment(paymentId,response);
       if (result.changed) {
         const o = await this.db.one<any>(
-          'select id,number,client_id,created_by from orders where id=$1', [intent.order_id]);
+          'select id,number,client_id,created_by,status from orders where id=$1', [intent.order_id]);
         // Work payments always need a payment notification. The first call-out
         // URL is returned to the caller; only late recovery needs push.
-        const needsPush = req.metadata.kind === 'work' || intent.attempts > 1;
+        const needsPush = o?.status !== 'cancelled' &&
+          (req.metadata.kind === 'work' || intent.attempts > 1);
         if (o) this.notifier.live([o.client_id,o.created_by],
           {type:'payment',orderId:o.id});
         if (o && needsPush) await this.notifier.notify([o.client_id,o.created_by],
@@ -466,6 +493,10 @@ export class PaymentsService implements PaymentHooks {
           .catch(e=>console.error('[payment-create-push]',e));
       }
       if (verify.status!=='pending') await this.sync(result.pay,STATUS_MAP[verify.status]);
+      // The bank's create reply may arrive AFTER the customer has cancelled.
+      // Do not dispatch; schedule a distinct cancellation and verify the bank.
+      if (req.metadata.kind === 'call_out')
+        await this.finishCancelledHold(intent.order_id);
       return 'ready';
     } catch (error) {
       await this.markWorkCreationUnknown(paymentId,error);
@@ -485,6 +516,7 @@ export class PaymentsService implements PaymentHooks {
     const intent = await this.db.one<any>(
       'select * from payment_create_intents where payment_id=$1', [paymentId]);
     if (!intent) throw notFound('Запрос создания платежа не найден');
+    if (intent.status==='abandoned') return 'abandoned';
     if (intent.status==='ready') return 'ready';
     return this.sendWorkPayment(paymentId,true);
   }
