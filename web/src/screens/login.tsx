@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { post, setToken, connectWs, ApiError } from '../api.ts';
-import { useAction, useMe, useToast, Field } from '../ui.tsx';
+import { useAction, useMe, useToast, Field, go } from '../ui.tsx';
 
 function PublicDemoMapBackdrop() {
   // The public demonstration map is a bundled, immutable asset.
@@ -52,6 +52,13 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const [appealToken, setAppealToken] = useState<string | null>(null);
   const [appealText, setAppealText] = useState('');
   const [appealSent, setAppealSent] = useState(false);
+
+  // Closing an auth entry must also leave its URL. Otherwise the guest header's
+  // same-hash link cannot open login/register/join again after "Назад".
+  const backToPublic = () => {
+    setIntent(null);
+    if (entry) go('');
+  };
 
   async function sendCode() {
     setInsurerOnly(false);
@@ -240,7 +247,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <Field label="Пароль"><input className="field" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} /></Field>
           <button className="btn" disabled={busy || password.length === 0}>Войти</button>
           <button type="button" className="btn ghost" onClick={() => { setIntent('reset'); setStep('phone'); }}>Забыли пароль?</button>
-          <button type="button" className="btn ghost" onClick={() => setIntent(null)}>Назад</button>
+          <button type="button" className="btn ghost" onClick={backToPublic}>Назад</button>
         </form>
       ) : step === 'phone' ? (
         <form className="stack" onSubmit={(e) => { e.preventDefault(); sendCode(); }}>
@@ -298,7 +305,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
             onClick={() => {
               if (intent === 'join' && cameFromRegister) {
                 setStep('phone'); setIntent('register'); setCameFromRegister(false);
-              } else setIntent(null);
+              } else backToPublic();
             }}>{intent === 'join' && cameFromRegister ? 'Назад к выбору кабинета' : 'Назад'}</button>}
         </form>
       ) : (
