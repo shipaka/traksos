@@ -160,8 +160,11 @@ export class AdminService {
       'select * from payment_refund_requests where id=$1 and payment_id=$2',
       [refundId, paymentId]);
     if (!attempt) throw notFound('Запрос возврата не найден');
-    if (attempt.status === 'succeeded') return this.payments.forOrder(admin, paymentId === attempt.payment_id
-      ? (await this.db.one<any>('select order_id from payments where id=$1', [paymentId]))!.order_id : '');
+    if (attempt.status === 'succeeded') {
+      const pay = await this.db.one<any>('select order_id from payments where id=$1', [paymentId]);
+      if (!pay) throw notFound('Платёж не найден');
+      return this.payments.forOrder(admin, pay.order_id);
+    }
     if (attempt.status === 'failed') throw conflict('refund_failed', 'Возврат отклонён');
     if (!attempt.provider_refund_id)
       throw conflict('refund_unknown', 'Нет подтверждения банка — требуется ручная сверка');
