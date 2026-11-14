@@ -189,7 +189,7 @@ export class ShopService {
     return {
       supplier: 'autokontinent', connected: false, liveOffers: false, automaticOrders: false,
       mapped: counts?.mapped ?? 0, verified: counts?.verified ?? 0,
-      message: 'Артикулы готовятся внутри TrackSOS. API поставщика не подключён.',
+      message: 'Артикулы готовятся внутри TrakSOS. API поставщика не подключён.',
     };
   }
 

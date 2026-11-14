@@ -137,7 +137,7 @@ export class ModerationService {
     // Обжалование блокировки: человек не может войти — решение уходит по SMS
     if (c.kind === 'appeal' && c.title === 'Оспорить блокировку' && c.target_id && this.sms) {
       const u = await this.db.one<{ phone: string }>('select phone from users where id=$1', [c.target_id]);
-      if (u && u.phone.startsWith('+')) await this.sms.send(u.phone, `ТракSOS: ${decision === 'upheld' ? 'блокировка снята — можно входить' : 'блокировка остаётся'}${note?.trim() ? `. ${note.trim().slice(0, 100)}` : ''}`);
+      if (u && u.phone.startsWith('+')) await this.sms.send(u.phone, `TrakSOS: ${decision === 'upheld' ? 'блокировка снята — можно входить' : 'блокировка остаётся'}${note?.trim() ? `. ${note.trim().slice(0, 100)}` : ''}`);
     }
     await this.notifier.notify(parties, { type: 'mod_case', caseId: id },
       { kind: 'normal', title: `Решение модератора по случаю №${c.number}`, body: text, data: { caseId: id } });

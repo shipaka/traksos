@@ -161,7 +161,7 @@ export class ServiceCenters {
     return { ...v, center: { id: b.center_id, name: b.center_name, address: b.center_address }, mine: asService, history: asService && b.vehicle_id ? await this.carHistory(b.vehicle_id, b.id) : [] };
   }
 
-  /** Вся история машины на ТракSOS для сервиса — чужие работы тоже, без сумм */
+  /** Вся история машины на TrakSOS для сервиса — чужие работы тоже, без сумм */
   private async carHistory(vehicleId: string, except: string) {
     const orders = await this.db.query(
       `select o.service, o.problem, o.description, o.result, o.completed_at as at, 'mobile' as src from orders o
@@ -170,7 +170,7 @@ export class ServiceCenters {
       `select b.need, b.works, b.closed_at as at, c.name as center from service_bookings b join service_centers c on c.id=b.center_id
         where b.vehicle_id=$1 and b.status='closed' and b.id<>$2 order by b.closed_at desc limit 30`, [vehicleId, except]);
     return [
-      ...orders.map((o: any) => ({ at: o.at, what: o.problem || o.description || o.service, who: 'Выездной мастер ТракSOS' })),
+      ...orders.map((o: any) => ({ at: o.at, what: o.problem || o.description || o.service, who: 'Выездной мастер TrakSOS' })),
       ...bookings.map((b: any) => ({ at: b.at, what: (b.works?.length ? b.works.join(', ') : NEEDS[b.need]) as string, who: `Рембаза «${b.center}»` })),
     ].sort((a, b) => +new Date(b.at) - +new Date(a.at));
   }
@@ -241,14 +241,14 @@ export class ServiceCenters {
     return this.booking(user, id);
   }
 
-  /** Агентский счёт: клиент платит через ТракSOS, сервису — за вычетом комиссии; скидка по совету мастера — из комиссии */
+  /** Агентский счёт: клиент платит через TrakSOS, сервису — за вычетом комиссии; скидка по совету мастера — из комиссии */
   async invoice(user: AuthUser, id: string, amount: number, points = 0) {
     const { b } = await this.mineBooking(user, id);
     if (b.status !== 'ready') throw conflict('bad_status', 'Сначала «Машина готова»');
     const fees = await this.settings.get('fees');
     let commission = Math.min(Math.round(amount * fees.serviceCommissionPct / 100), fees.serviceCommissionMax ?? Infinity);
     const discount = b.from_order_id ? Math.min(commission, Math.round(amount * fees.serviceReferralDiscountPct / 100)) : 0;
-    // Баллы рембазы гасят до половины комиссии, что остаётся ТракSOS после скидки
+    // Баллы рембазы гасят до половины комиссии, что остаётся TrakSOS после скидки
     const pts = this.referral ? await this.referral.spendServiceCommission(this.db, user.id, commission - discount, id, b.number, points) : 0;
     commission -= pts;
     await this.db.query(
