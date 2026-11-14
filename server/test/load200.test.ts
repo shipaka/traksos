@@ -245,6 +245,22 @@ test('one cash settlement and 12-way SOS continuation race reconcile across clie
    "select count(*)::int as n from ledger_entries where order_id=$1 and kind='cash_commission'",[id]))!.n,2,
    'cash commission recorded once in exactly two balanced ledger entries');
 
+ const financialEntry=await t.db.one<{id:number}>(
+   "select id::int as id from ledger_entries where order_id=$1 and performer_id=$2 and account='performer' limit 1",
+   [id,worker.id]);
+ assert.ok(financialEntry,'worker cash-commission posting must be available to dispute');
+ const repeats=await burst('12 concurrent questions about same commission posting',
+   Array.from({length:12},(_,i)=>({who:worker,method:'POST',path:'/api/support',
+     body:{topic:'Проблема с оплатой',text:'Проверка комиссии, сообщение '+i,
+       ledgerEntryId:financialEntry!.id}})));
+ assert.ok(repeats.every(x=>x.status===200));
+ assert.equal(new Set(repeats.map(x=>x.body.id)).size,1,
+   'one payment entry should produce only one support thread');
+ const financeThreadId=repeats[0].body.id;
+ const messages=await t.db.one<{n:number}>(
+   "select count(*)::int as n from support_messages where ticket_id=$1",[financeThreadId]);
+ assert.equal(messages?.n,12,'all 12 financial questions survive concurrent retries');
+
  const payload={
    service:'tow',isSos:true,zoneId:'spb',brand:'Scania',
    address:'Тестовая парковка Санкт-Петербург',destination:'Грузовое СТО на эвакуаторе',
@@ -270,4 +286,22 @@ test('one cash settlement and 12-way SOS continuation race reconcile across clie
  const unbalanced=await t.db.query(
    'select order_id,sum(amount)::bigint as balance from ledger_entries where order_id is not null group by order_id having sum(amount)<>0');
  assert.deepEqual(unbalanced,[],'the ledger remains balanced after concurrent confirmations and tow creation');
+});
+
+
+test('12 simultaneous appeals create one moderator case containing all reports', {timeout:120_000},async()=>{
+ const customer=account('client',81);
+ const results=await burst('12 concurrent appeals by same customer',
+   Array.from({length:12},(_,i)=>({who:customer,method:'POST',path:'/api/appeals',
+     body:{text:'Прошу проверить действия исполнителя: повторная жалоба №'+i}})));
+ assert.ok(results.every(x=>x.status===200),'each report should be accepted');
+ const ids=results.map(x=>x.body.id as string);
+ assert.equal(new Set(ids).size,1,'there can be only one open moderation case per subject');
+ const rows=await t.db.query<{id:string;text:string}>(
+   "select id,text from mod_cases where kind='appeal' and opened_by=$1 and status='open'",[customer.id]);
+ assert.equal(rows.length,1,'duplicate appeal cases must never flood the moderator');
+ for(let i=0;i<12;i++)
+   assert.ok(rows[0].text.includes('№'+i),'moderator must see every repeated submission');
+ const queue=ok(await t.api('GET','/api/mod/cases',undefined,moderator.token));
+ assert.ok(queue.items.some((item:any)=>item.id===ids[0]));
 });
