@@ -167,9 +167,10 @@ class MainActivity : AppCompatActivity() {
             insets
         }
         root.addView(web, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
-        startupOverlay = createStartupOverlay()
+        startupOverlay = SeasonalStartupOverlay.build(this)
         root.addView(startupOverlay, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
         setContentView(root)
+        SeasonalStartupOverlay.refreshFromYandex(this, startupOverlay)
 
         web.settings.apply {
             javaScriptEnabled = true
