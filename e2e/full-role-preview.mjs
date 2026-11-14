@@ -55,7 +55,7 @@ try{
   await page.goto(BASE+'/#/admin/test-center/master/order/'+orderId);
   await page.getByRole('button',{name:'Выехал'}).click();
   await page.getByRole('button',{name:'Я на месте'}).click();
-  await page.getByRole('button',{name:'Начал работу'}).click();
+  await page.getByRole('button',{name:'Начать работу'}).click();
   await page.screenshot({path:'e2e/shots/full-role/master-on-job-'+width+'.png',fullPage:true});
   await page.getByLabel('Выбрать тестовый кабинет').selectOption('client');
   await page.goto(BASE+'/#/admin/test-center/client/order/'+orderId);
