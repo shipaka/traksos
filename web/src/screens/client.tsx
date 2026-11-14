@@ -384,11 +384,13 @@ export function NewOrder({ service }: { service: string }) {
   const sos = SYMPTOMS.find((p) => p.id === params.get('sos'));
   const sym = sos ?? SYMPTOMS.find((p) => p.id === params.get('p'));
   const fromConsult = params.get('from');
+  const continueFrom = params.get('continueFrom');
   const { me } = useMe();
   const { busy, run } = useAction();
   const pricing = useLoad(() => get('/api/pricing'), []);
   const vehicles = useLoad(() => get('/api/vehicles'), []);
   const consult = useLoad(() => (fromConsult ? get(`/api/orders/${fromConsult}`) : Promise.resolve(null)), [fromConsult]);
+  const previousStage = useLoad(() => (continueFrom ? get(`/api/orders/${continueFrom}`) : Promise.resolve(null)), [continueFrom]);
   const [agree, setAgree] = useState(false);
 
   const [zoneId, setZoneId] = useState('spb');
@@ -423,6 +425,18 @@ export function NewOrder({ service }: { service: string }) {
     if (c.description && !description) setDescription(c.description);
     if (!c.vehicle && c.brand) { setVehicleId(''); setCar({ brand: c.brand, model: c.model ?? '', year: c.year ? String(c.year) : '' }); }
   }, [consult.data]); // eslint-disable-line
+  // Continue the same incident without retyping the truck, problem and pickup.
+  // The new tow price remains entirely separate from the completed repair bill.
+  useEffect(() => {
+    const prev = previousStage.data;
+    if (!continueFrom || !prev) return;
+    if (prev.vehicleId) setVehicleId(prev.vehicleId);
+    else if (prev.brand) { setVehicleId(''); setCar({ brand: prev.brand, model: prev.model ?? '', year: prev.year ? String(prev.year) : '' }); }
+    setDescription(prev.description || 'Эвакуация после выездного ремонта');
+    if (prev.address) setAddress(prev.address);
+    if (prev.lat != null && prev.lng != null) { setGeo({ lat: prev.lat, lng: prev.lng }); setGeoState('ok'); }
+    if (prev.zoneId) setZoneId(prev.zoneId);
+  }, [continueFrom, previousStage.data]); // eslint-disable-line
   useEffect(() => {
     if (night === null) return;
     post('/api/pricing/estimate', { service, tier, zoneId, night, group }).then(setEst).catch(() => setEst(null));
@@ -449,7 +463,7 @@ export function NewOrder({ service }: { service: string }) {
       lat: geo?.lat, lng: geo?.lng, zoneId, tier: service === 'tow' ? undefined : tier, vehicleId: vehicleId || undefined,
       ...carBody(vehicleId, car), groupTrip: groupAllowed && group, night: night ?? undefined, paymentMethod: method,
       ...(isTow ? { destination: destination || undefined, cargo, loaded, driverOnSite } : {}),
-      fromConsult: fromConsult || undefined,
+      fromConsult: fromConsult || undefined, continueFrom: continueFrom || undefined,
       site: isTow || !Object.keys(site).length ? undefined : { ...site, meet: site.meet || undefined, time: site.time || undefined },
     }));
     if (!r) return;
@@ -473,12 +487,20 @@ export function NewOrder({ service }: { service: string }) {
     !agree && { id: 'f-agree', name: 'согласие с суммами' },
   ].filter(Boolean) as { id: string; name: string }[];
 
-  if (!pricing.data) return <main><Loading error={pricing.error} /></main>;
+  if (!pricing.data || (continueFrom && !previousStage.data))
+    return <main><Loading error={pricing.error || previousStage.error} /></main>;
   const s = SERVICES[service];
 
   return (
     <main>
-      <Back to={fromConsult ? `order/${fromConsult}` : sos ? 'sos' : ''} />
+      <Back to={continueFrom ? `order/${continueFrom}` : fromConsult ? `order/${fromConsult}` : sos ? 'sos' : ''} />
+      {continueFrom && previousStage.data && (
+        <section className="card hi" aria-label="Продолжение помощи по грузовику">
+          <b>Продолжение обращения №{previousStage.data.caseSummary?.stages?.[0]?.number ?? previousStage.data.number}</b>
+          <span className="note">Предыдущий этап завершён. {SERVICES[previousStage.data.service]?.name ?? 'Мастер'}: {rub(previousStage.data.money.total)}. Эта сумма уже относится к предыдущему этапу и не включена в цену эвакуации.</span>
+          <span className="note">Сейчас отдельно рассчитаем эвакуатор, затем вы выберете исполнителя. Общий итог будет показан в карточке обращения.</span>
+        </section>
+      )}
       <div>
         <h1>{sym ? sym.name : s?.name ?? 'Заявка'}</h1>
         <div className="sub">{sos ? `${s?.name} · срочный вызов` : sym ? s?.name : s?.hint}</div>
