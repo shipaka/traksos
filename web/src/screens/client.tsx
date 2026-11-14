@@ -164,33 +164,50 @@ export function Sos() {
       <Back to="" />
       <div className="client-section-hero client-section-hero-sos">
         <h1>SOS · Нужна помощь?</h1>
-        <div className="sub">Сначала выберите, кто вам нужен. Остальные вопросы появятся только после выбора.</div>
+        <div className="sub">Выберите одно направление помощи. Если после первого этапа потребуется эвакуатор или СТО, продолжить можно из той же заявки.</div>
       </div>
-      <div className="stack">
-        <button className="linkrow primary" aria-expanded={choice === 'master'} onClick={() => setChoice(choice === 'master' ? null : 'master')}>
-          <span><b>Выездной мастер</b><small>Специалист приедет к вашему грузовику</small></span><span aria-hidden="true">›</span>
-        </button>
-        <button className="linkrow" onClick={() => go('new/tow')}>
-          <span><b>Эвакуатор</b><small>Перевезти грузовик в нужное место</small></span><span aria-hidden="true">›</span>
-        </button>
-        <button className="linkrow" onClick={() => go('services')}>
-          <span><b>СТО грузовых автомобилей</b><small>Найти сервис и записаться на ремонт</small></span><span aria-hidden="true">›</span>
-        </button>
-        <button className="linkrow" onClick={() => go('consult')}>
-          <span><b>Консультация по телефону</b><small>Связаться с диагностом без выезда</small></span><span aria-hidden="true">›</span>
-        </button>
-      </div>
-      {choice === 'master' && (
-        <section className="card">
-          <b>Какой мастер нужен?</b>
-          <span className="note">Если не знаете причину поломки, выберите диагноста.</span>
-          <div className="stack">
-            {masterServices.map((id) => (
-              <button key={id} className="linkrow" onClick={() => go(`new/${id}`)}>
-                <span><b>{SERVICES[id].name}</b><small>{SERVICES[id].hint}</small></span><span aria-hidden="true">›</span>
-              </button>
-            ))}
-          </div>
+      {choice === null ? (
+        <div className="client-sos-choices" role="group" aria-label="Выберите направление SOS">
+          <button type="button" className="linkrow primary" onClick={() => setChoice('master')}>
+            <span><b>Выездной мастер</b><small>Электрика, диагностика, пневматика, автономные отопители и шиномонтаж</small></span>
+            <span aria-hidden="true">›</span>
+          </button>
+          <button type="button" className="linkrow" onClick={() => setChoice('tow')}>
+            <span><b>Эвакуатор для грузовика</b><small>Если машина не может продолжать движение</small></span><span aria-hidden="true">›</span>
+          </button>
+          <button type="button" className="linkrow" onClick={() => setChoice('sto')}>
+            <span><b>Грузовой сервис (СТО)</b><small>Стационарный ремонт, обслуживание и запись на сервис</small></span><span aria-hidden="true">›</span>
+          </button>
+        </div>
+      ) : (
+        <section className="card stack client-sos-selected" aria-live="polite">
+          <button type="button" className="btn ghost small" onClick={() => setChoice(null)}>← Выбрать другое направление</button>
+          {choice === 'master' ? (
+            <>
+              <h2>Какой выездной мастер нужен?</h2>
+              <span className="note">Выберите одну специализацию. После выбора откроется оформление заявки, остальные направления не будут добавляться автоматически.</span>
+              <div className="client-sos-master-services">
+                {masterServices.map((id) => (
+                  <button key={id} type="button" className="linkrow" onClick={() => go(`new/${id}`)}>
+                    <span><b>{SERVICES[id].name}</b><small>{SERVICES[id].hint}</small></span>
+                    <span aria-hidden="true">›</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : choice === 'tow' ? (
+            <>
+              <h2>Эвакуатор для грузовика</h2>
+              <p className="note">Укажете тип техники, её местоположение и куда нужно перевезти грузовик. Эвакуаторщики предложат цену, вы сможете выбрать исполнителя.</p>
+              <button type="button" className="btn" onClick={() => go('new/tow')}>Оформить вызов эвакуатора</button>
+            </>
+          ) : (
+            <>
+              <h2>Грузовой сервис (СТО)</h2>
+              <p className="note">Посмотрите доступные сервисы и выберите место для стационарного ремонта или обслуживания.</p>
+              <button type="button" className="btn" onClick={() => go('services')}>Найти грузовой сервис</button>
+            </>
+          )}
         </section>
       )}
       <MyPlace />
