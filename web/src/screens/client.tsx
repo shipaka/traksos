@@ -452,7 +452,7 @@ export function NewOrder({ service }: { service: string }) {
       { enableHighAccuracy: true, timeout: 15_000 },
     );
   }
-  useEffect(locate, []);
+  useEffect(() => { if (!continueFrom) locate(); }, [continueFrom]); // eslint-disable-line
 
   const zone = pricing.data?.zones.find((z: any) => z.id === zoneId);
   const groupAllowed = service !== 'tow' && (zone?.km ?? 0) > 30;
