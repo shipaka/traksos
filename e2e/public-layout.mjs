@@ -40,7 +40,7 @@ async function run(width, height, mobile) {
   try {
     await page.goto(BASE + '/#/', { waitUntil: 'domcontentloaded' });
     await page.getByRole('heading', { name: /Помощь грузовикам.*24\/7/i }).waitFor();
-    check(await page.getByRole('button', { name: 'SOS · Нужна помощь' }).isVisible(), 'SOS not visible');
+    check(await page.getByRole('button', { name: 'Помощь в дороге' }).isVisible(), 'SOS not visible');
     check(await page.getByRole('button', { name: 'Как это работает?' }).isVisible(), 'How it works not visible');
     const image = await page.locator('.public-hero-visual').evaluate(async el => {
       const bg = getComputedStyle(el).backgroundImage;
