@@ -39,7 +39,7 @@
 .guest-app .public-landing .public-brand-hero::before{
   content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
   background:linear-gradient(90deg,rgba(3,18,33,.02) 0%,rgba(5,19,36,.10) 43%,rgba(3,17,33,.84) 80%),
-    url('/tracksos-road-atmosphere.svg') center/cover no-repeat;
+    url('../public/tracksos-road-atmosphere.svg') center/cover no-repeat;
   animation:none;
 }
 .app.role-client .tracksos-visual-home .track-road-hero::after{
@@ -121,10 +121,10 @@
   opacity:.92;background-position:right bottom;background-size:contain;background-repeat:no-repeat;
   transition:transform .35s ease,filter .35s ease;
 }
-.app.role-client .client-direction-card:nth-child(1)::after{background-image:url('/tracksos-visual-van.svg');}
-.app.role-client .client-direction-card:nth-child(2)::after{background-image:url('/tracksos-visual-tow.svg');}
-.app.role-client .client-direction-card:nth-child(3)::after{background-image:url('/tracksos-visual-sto.svg');}
-.app.role-client .client-direction-card:nth-child(4)::after{background-image:url('/tracksos-visual-consult.svg');}
+.app.role-client .client-direction-card:nth-child(1)::after{background-image:url('../public/tracksos-visual-van.svg');}
+.app.role-client .client-direction-card:nth-child(2)::after{background-image:url('../public/tracksos-visual-tow.svg');}
+.app.role-client .client-direction-card:nth-child(3)::after{background-image:url('../public/tracksos-visual-sto.svg');}
+.app.role-client .client-direction-card:nth-child(4)::after{background-image:url('../public/tracksos-visual-consult.svg');}
 .app.role-client .client-direction-card:hover::after{transform:scale(1.06) translateY(-3px);filter:brightness(1.1);}
 .app.role-client .client-direction-card>.client-direction-symbol{position:relative;z-index:1;
   width:35px;height:35px;min-height:35px;font-size:18px;border-radius:10px;
@@ -159,9 +159,9 @@
   position:absolute;left:0;bottom:0;width:48%;height:100%;
   background-position:center;background-repeat:no-repeat;background-size:contain;
 }
-.tracksos-option-parts .tracksos-option-art,.public-track-parts .public-track-extra-art{background-image:url('/tracksos-visual-parts.svg');}
-.tracksos-option-inspection .tracksos-option-art,.public-track-inspection .public-track-extra-art{background-image:url('/tracksos-visual-inspection.svg');}
-.tracksos-option-guide .tracksos-option-art,.public-track-guide .public-track-extra-art{background-image:url('/tracksos-visual-guide.svg');}
+.tracksos-option-parts .tracksos-option-art,.public-track-parts .public-track-extra-art{background-image:url('../public/tracksos-visual-parts.svg');}
+.tracksos-option-inspection .tracksos-option-art,.public-track-inspection .public-track-extra-art{background-image:url('../public/tracksos-visual-inspection.svg');}
+.tracksos-option-guide .tracksos-option-art,.public-track-guide .public-track-extra-art{background-image:url('../public/tracksos-visual-guide.svg');}
 .tracksos-option>span:last-child,.public-track-extra>span:last-child{position:absolute;right:12px;top:9px;color:#6beaff;font-size:22px;}
 
 /* True order state, no invented ETA or cartoon location. */
@@ -227,7 +227,7 @@
   box-shadow:0 11px 26px #0005;
 }
 .tracksos-insurance-art,.public-track-insurance-art{position:absolute;left:20px;top:0;bottom:0;width:175px;
-  background:url('/tracksos-visual-insurance.svg') center/contain no-repeat;}
+  background:url('../public/tracksos-visual-insurance.svg') center/contain no-repeat;}
 .tracksos-insurance-strip>span:nth-child(2),.public-track-insurance>span:nth-child(2){flex:1;display:flex;flex-direction:column;gap:8px;}
 .tracksos-insurance-strip b,.public-track-insurance b{font-size:clamp(18px,2vw,28px);color:#fff;line-height:1.17;}
 .tracksos-insurance-strip small,.public-track-insurance small{color:#c8dfef;font-size:12px;line-height:1.45;}
@@ -248,7 +248,7 @@
 }
 .guest-app .public-landing .public-hero-visual{
   inset:12px 55% 12px 0;width:48%;height:auto;
-  background:url('/tracksos-approved-scania-r520.webp') center / contain no-repeat;
+  background:url('../public/tracksos-approved-scania-r520.webp') center / contain no-repeat;
   opacity:1;z-index:1;pointer-events:none;
 }
 .guest-app .public-landing .public-hero-copy{
@@ -279,10 +279,10 @@
   content:"";position:absolute;z-index:0;right:-8px;bottom:-5px;
   height:98%;width:80%;background-position:right bottom;background-repeat:no-repeat;background-size:contain;
 }
-.guest-app .public-landing .public-service-van::after{background-image:url('/tracksos-visual-van.svg');}
-.guest-app .public-landing .public-service-tow::after{background-image:url('/tracksos-visual-tow.svg');}
-.guest-app .public-landing .public-service-sto::after{background-image:url('/tracksos-visual-sto.svg');}
-.guest-app .public-landing .public-service-consult::after{background-image:url('/tracksos-visual-consult.svg');}
+.guest-app .public-landing .public-service-van::after{background-image:url('../public/tracksos-visual-van.svg');}
+.guest-app .public-landing .public-service-tow::after{background-image:url('../public/tracksos-visual-tow.svg');}
+.guest-app .public-landing .public-service-sto::after{background-image:url('../public/tracksos-visual-sto.svg');}
+.guest-app .public-landing .public-service-consult::after{background-image:url('../public/tracksos-visual-consult.svg');}
 .guest-app .public-landing .public-service-icon,
 .guest-app .public-landing .public-service-tile b,
 .guest-app .public-landing .public-service-tile small{z-index:1;position:relative;max-width:59%;text-shadow:0 2px 5px #06192c;}
@@ -448,7 +448,7 @@
   position:relative;isolation:isolate;overflow:hidden;
   min-height:185px;border:1px solid #387da6;border-radius:21px;
   background:linear-gradient(100deg,#092138ef,#0b3158c9),
-    url('/tracksos-road-atmosphere.svg') center/cover no-repeat;
+    url('../public/tracksos-road-atmosphere.svg') center/cover no-repeat;
   color:#f1fbff;box-shadow:0 15px 30px #0006;
 }
 .app.role-performer .work-command-hero::after,
@@ -460,14 +460,14 @@
 .app.role-client .insurance-workflow-hero::after{
   content:"";position:absolute;inset:0 0 0 auto;z-index:0;pointer-events:none;
   width:42%;opacity:.60;background-position:center right;background-size:contain;background-repeat:no-repeat;
-  background-image:url('/tracksos-visual-van.svg');
+  background-image:url('../public/tracksos-visual-van.svg');
 }
-.app.role-performer .work-command-hero::after{background-image:url('/tracksos-visual-van.svg');}
-.app.role-service :is(.base-command-hero,.base-onboarding-hero)::after{background-image:url('/tracksos-visual-sto.svg');}
-.app.role-insurer .cabinet-page>.cabinet-heading::after{background-image:url('/tracksos-visual-insurance.svg');}
-.app.role-inspection .cabinet-page>.cabinet-heading::after{background-image:url('/tracksos-visual-inspection.svg');}
-.app.role-client .client-garage-page>.client-section-hero::after{background-image:url('/tracksos-approved-scania-r520.webp');}
-.app.role-client .insurance-workflow-hero::after{background-image:url('/tracksos-visual-insurance.svg');}
+.app.role-performer .work-command-hero::after{background-image:url('../public/tracksos-visual-van.svg');}
+.app.role-service :is(.base-command-hero,.base-onboarding-hero)::after{background-image:url('../public/tracksos-visual-sto.svg');}
+.app.role-insurer .cabinet-page>.cabinet-heading::after{background-image:url('../public/tracksos-visual-insurance.svg');}
+.app.role-inspection .cabinet-page>.cabinet-heading::after{background-image:url('../public/tracksos-visual-inspection.svg');}
+.app.role-client .client-garage-page>.client-section-hero::after{background-image:url('../public/tracksos-approved-scania-r520.webp');}
+.app.role-client .insurance-workflow-hero::after{background-image:url('../public/tracksos-visual-insurance.svg');}
 .app.role-performer .work-command-hero>*,
 .app.role-service .base-command-hero>*,
 .app.role-service .base-onboarding-hero>*,
@@ -503,7 +503,7 @@
   display:flex;flex-direction:column;justify-content:center;
   padding:30px 35% 26px 30px;border:1px solid #3287b5;border-radius:21px;
   color:#fff;background:linear-gradient(105deg,#071d35ee,#0c3559d9),
-    url('/tracksos-road-atmosphere.svg') center/cover no-repeat;
+    url('../public/tracksos-road-atmosphere.svg') center/cover no-repeat;
   box-shadow:0 12px 28px #0005;
 }
 .track-shop-hero>h1{font-size:clamp(24px,2.7vw,34px);margin:5px 0 8px;color:#fff!important;}
@@ -511,7 +511,7 @@
 .track-shop-eyebrow{font-size:10px;letter-spacing:.12em;color:#79eeff;font-weight:850;}
 .track-shop-gear{
   position:absolute;right:5px;inset-block:0;width:36%;
-  background:url('/tracksos-visual-parts.svg') center/contain no-repeat;
+  background:url('../public/tracksos-visual-parts.svg') center/contain no-repeat;
 }
 /* Global subtle interactions — no external JavaScript or streamed animations. */
 @media(hover:hover){
