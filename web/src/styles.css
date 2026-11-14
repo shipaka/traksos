@@ -1757,3 +1757,14 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
 .partner-workspaces .btn{min-width:0;white-space:normal;padding:.85rem .4rem;text-align:center}
 .partner-workspaces .btn.active{font-weight:750;border-color:var(--accent,#e48c39)}
 @media(max-width:560px){.partner-workspaces{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* Approved public Scania photo: show the source as a whole, road included.
+   A cover-sized background cropped the tractor unit/trailer in narrow panels. */
+@media(min-width:900px){
+  .public-landing .public-hero-visual{
+    background-size:contain;
+    background-position:center right;
+    background-repeat:no-repeat;
+  }
+}
