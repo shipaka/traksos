@@ -668,9 +668,20 @@
     font-size:clamp(26px,7.1vw,36px);line-height:1.12;margin:10px 0;
   }
   .app.role-client .client-home .desktop-hero-copy p{font-size:12px;line-height:1.48;}
-  .app.role-client .client-home .desktop-hero-buttons{gap:8px;margin-top:15px;}
-  .app.role-client .client-home :is(.desktop-primary-action,.desktop-outline-action){
-    padding:9px 12px;min-height:44px;font-size:12px;flex:1 1 135px;
+  .app.role-client .client-home .desktop-hero-buttons{
+    display:flex;flex-wrap:wrap;gap:8px;margin-top:15px;
+  }
+  /* SOS already has one permanent, prominent bottom-tab entry on mobile. */
+  .app.role-client .client-home .desktop-hero-buttons .desktop-primary-action{
+    display:none;
+  }
+  .app.role-client .client-home .desktop-hero-buttons .desktop-outline-action{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:100%;min-height:44px;padding:9px 12px;
+    border-radius:12px;border:1px solid #f589bd;
+    background:linear-gradient(120deg,#ed187d,#c90e68);
+    box-shadow:0 8px 22px rgba(155,9,77,.25);
+    font-size:13px;font-weight:850;text-decoration:none;color:#fff;
   }
   .app.role-client .client-home .client-hero-art{
     width:100%;height:clamp(170px,56vw,245px);
