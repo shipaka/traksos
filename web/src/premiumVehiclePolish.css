@@ -14,8 +14,9 @@
     linear-gradient(125deg, #091e34 5%, #133c59 75%, #102b44) !important;
   border-color: #4b88a2;
 }
-.app.role-performer .work-command-art {
-  z-index: 0;
+.app.role-performer .work-command-hero > .work-command-art {
+  position: absolute !important;
+  z-index: 0 !important;
   right: 1.5%;
   bottom: 2%;
   width: min(49%, 580px);
@@ -66,7 +67,7 @@
   }
   .app.role-performer .work-command-art {
     width: min(82%, 340px);
-    height: 150px;
+    height: 154px;
     right: 0;
     bottom: 0;
     opacity: .88;
