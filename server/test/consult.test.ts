@@ -50,6 +50,8 @@ test('консультация: подсказка обязательна, «В�
   assert.equal(f.money.total, 70_000);
   const done = ok(await t.api('POST', `/api/orders/${id}/confirm`, { total: 70_000 }, client.token));
   assert.equal(done.status, 'completed');
+  assert.deepEqual(ok(await t.api('GET', `/api/orders/${id}/messages`, undefined, client.token)).quickReplies, []);
+  assert.equal((await t.api('POST', `/api/orders/${id}/messages`, { body: 'После завершения' }, master.token)).body.error, 'chat_closed');
 });
 
 test('консультация → выезд: подсказка у мастера, скидка 200 ₽ один раз', async () => {
