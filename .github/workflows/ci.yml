@@ -65,6 +65,7 @@ jobs:
           DATABASE_URL=postgres://postgres@127.0.0.1:5432/traksos ADMIN_PHONES=+79990000001 MODERATOR_PHONES=+79990000147 npm -w server start &
           until curl -s localhost:8080/api/health >/dev/null; do sleep 1; done
           node e2e/ui-smoke.mjs
+          node e2e/public-service-routing.mjs
           node e2e/public-shots.mjs e2e/shots
           SHOTS_DIR=e2e/shots/public node e2e/public-layout.mjs
           node e2e/offline.mjs
