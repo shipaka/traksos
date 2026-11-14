@@ -77,7 +77,7 @@ function NavGlyph({ glyph }: { glyph: string }) {
     strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     {glyph === '⌂' ? <><path d="m3 10 9-7 9 7v10H3z" /><path d="M9 20v-7h6v7" /></>
     : glyph === '☷' || glyph === '☰' ? <><path d="M8 6h13M8 12h13M8 18h13" /><path d="M3 6h1M3 12h1M3 18h1" /></>
-    : glyph === '✚' ? <><circle cx="12" cy="12" r="9" /><path d="M12 7v10M7 12h10" /></>
+    : glyph === '✚' || glyph === '＋' ? <><circle cx="12" cy="12" r="9" /><path d="M12 7v10M7 12h10" /></>
     : glyph === '⚙' ? <><circle cx="12" cy="12" r="3.1" /><path d="M12 2v3m0 14v3M2 12h3m14 0h3M4.9 4.9 7 7m10 10 2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1" /></>
     : glyph === '◉' ? <><circle cx="12" cy="8" r="3.5" /><path d="M4.5 20c.8-3.6 3.4-5.4 7.5-5.4s6.7 1.8 7.5 5.4" /><circle cx="12" cy="12" r="10" opacity=".4" /></>
     : glyph === '▣' ? <><rect x="6" y="3" width="12" height="18" rx="2" /><path d="M9 8h6M9 12h6m-6 4h4" /></>
