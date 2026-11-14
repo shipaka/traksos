@@ -32,6 +32,11 @@ export class WarrantyRemediationService {
     if(!job)throw notFound('Гарантийный выезд не найден');
     return job;
   }
+  private currentDecision(j:any){
+    const expected=j.funding_source==='platform'?'repair_by_alternative':'repair_by_original';
+    if(j.claim_status!=='decision_recorded'||j.decision!==expected)
+      throw conflict('warranty_decision_changed','Из-за обжалования или изменения решения исправление приостановлено');
+  }
   private canRead(u:AuthUser,j:any){
     return isStaff(u)||[j.client_id,j.filed_by,j.performer_id,j.original_performer_id].includes(u.id);
   }
@@ -47,7 +52,7 @@ export class WarrantyRemediationService {
       originalPerformerId:j.original_performer_id,fundingSource:j.funding_source,
       authorizedBudgetKopecks:j.budget_kopecks,clientChargeKopecks:0,
       status:j.status,task:j.task_description,report:j.report,
-      authorizedAt:j.authorized_at,acceptedAt:j.accepted_at,
+      authorizedAt:j.authorized_at,clientApprovedAt:j.client_approved_at,acceptedAt:j.accepted_at,
       reportedAt:j.reported_at,confirmedAt:j.confirmed_at,
       expenseRecorded:!!expense,
       expense:isAdmin(user)?expense:null,
@@ -130,10 +135,39 @@ export class WarrantyRemediationService {
     }
     return this.view(user,result.id);
   }
+  /** The client must agree to the specific proposed remedy BEFORE the
+   *  assigned performer is allowed to start. A refund request is never
+   *  silently converted into a repair.
+   */
+  async clientApproval(user:AuthUser,id:string,approve:boolean){
+    await this.db.tx(async q=>{
+      const j=await this.load(id,q,true);
+      if(![j.client_id,j.filed_by].includes(user.id))throw forbidden();
+      this.currentDecision(j);
+      if(j.status==='client_declined'&&!approve)return;
+      if(j.client_approved_at&&approve)return;
+      if(j.status!=='offered'||j.client_approved_at)
+        throw conflict('warranty_client_approval_closed','Способ исправления уже согласован или отклонён');
+      if(approve){
+        await q.query('update warranty_rework_jobs set client_approved_at=$2,updated_at=$2 where id=$1',
+          [id,this.now()]);
+        await this.event(q,id,user.id,'client_approved',{clientChargeKopecks:0});
+      }else{
+        await q.query("update warranty_rework_jobs set status='client_declined',updated_at=$2 where id=$1",
+          [id,this.now()]);
+        await this.event(q,id,user.id,'client_declined',{});
+      }
+    });
+    return this.view(user,id);
+  }
+
   async respond(user:AuthUser,id:string,accept:boolean){
     await this.db.tx(async q=>{
       const j=await this.load(id,q,true);
       if(j.performer_id!==user.id)throw forbidden('Ответить может назначенный исполнитель');
+      this.currentDecision(j);
+      if(accept&&!j.client_approved_at)
+        throw conflict('warranty_client_approval_needed','Клиент ещё не согласовал способ исправления');
       const status=accept?'accepted':'declined';
       if(j.status===status)return;
       if(j.status!=='offered')throw conflict('warranty_job_state','Предложение уже обработано');
@@ -148,6 +182,7 @@ export class WarrantyRemediationService {
     await this.db.tx(async q=>{
       const j=await this.load(id,q,true);
       if(j.performer_id!==user.id)throw forbidden();
+      this.currentDecision(j);
       if(j.status==='reported_done'&&j.report===text)return;
       if(j.status!=='accepted')throw conflict('warranty_job_state','Работа ещё не принята или уже подтверждена');
       await q.query(
@@ -161,6 +196,7 @@ export class WarrantyRemediationService {
     await this.db.tx(async q=>{
       const j=await this.load(id,q,true);
       if(![j.client_id,j.filed_by].includes(user.id))throw forbidden();
+      this.currentDecision(j);
       if(j.status==='client_confirmed')return;
       if(j.status!=='reported_done')throw conflict('warranty_job_state','Исполнитель ещё не сообщил об исправлении');
       await q.query(
@@ -185,6 +221,7 @@ export class WarrantyRemediationService {
       throw bad('bank_proof','Некорректная дата фактического перевода');
     const result=await this.db.tx(async q=>{
       const j=await this.load(id,q,true);
+      this.currentDecision(j);
       if(j.status!=='client_confirmed'||j.funding_source!=='platform')
         throw conflict('warranty_not_payable','Расход площадки возможен только после принятой альтернативной помощи');
       if(!Number.isInteger(p.amountKopecks)||p.amountKopecks<=0||
