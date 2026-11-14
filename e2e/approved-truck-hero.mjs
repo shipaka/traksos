@@ -89,6 +89,13 @@ try{
       throw Error(width+'px: master specialties did not expand');
     if(await page.locator('.client-specialization-card').count()!==5)
       throw Error(width+'px: five master specializations missing');
+    await page.emulateMedia({reducedMotion:'reduce'});
+    const motion=await directions.first().evaluate(el=>getComputedStyle(el).animationName);
+    if(motion!=='none')throw Error(width+'px: reduced motion preference not respected: '+motion);
+    await page.getByRole('link',{name:/Диагност/}).first().click();
+    await page.locator('#f-what textarea').waitFor({state:'visible'});
+    if(await page.locator('#f-what button.chip').count()!==0)
+      throw Error(width+'px: old fault-reason preset chips still appear inside the order');
     if(errors.length)throw Error(width+'px JS error: '+errors.join('; '));
     await context.close();
 
