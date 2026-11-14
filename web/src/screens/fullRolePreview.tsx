@@ -12,27 +12,29 @@ import {ModCase} from './moderation.tsx';
 import {BaseHome,BaseCar,BaseMoney,BaseSetup} from './base.tsx';
 import {Admin} from './admin.tsx';
 import {InsurerPreviewPage} from './insurerPreview.tsx';
+import {InsurerCabinet} from './insurer.tsx';
 import type {Me} from '../ui.tsx';
 import {currentPreviewRole,previewLink,resetFullPreview,PREVIEW_ROLES,type Role} from '../demo/fullRolePreview.ts';
 
 const names:Record<Role,string>={client:'Клиент',owner:'Владелец автопарка',driver:'Водитель',
  master:'Выездной мастер',tow:'Эвакуаторщик',master_service:'Мастер + СТО',insurer:'Страховой партнёр',
- moderator:'Модератор',admin:'Администратор'};
-const kinds:Record<Role,'client'|'performer'|'insurer'|'moderator'|'admin'>={
+ inspection:'Оператор техосмотра',moderator:'Модератор',admin:'Администратор'};
+const kinds:Record<Role,'client'|'performer'|'insurer'|'inspection'|'moderator'|'admin'>={
  client:'client',owner:'client',driver:'client',master:'performer',
- tow:'performer',master_service:'performer',insurer:'insurer',moderator:'moderator',admin:'admin'};
+ tow:'performer',master_service:'performer',insurer:'insurer',inspection:'inspection',moderator:'moderator',admin:'admin'};
 export function previewMode(role:Role){return kinds[role];}
 export function previewIdentity(admin:Me,role:Role):Me{
  const insuranceClient=role==='insurer'&&location.hash.includes('/insurer/client');
  const master=['master','tow','master_service'].includes(role);
  const person=role==='owner'?'Демо · Владелец автопарка':role==='driver'?'Демо · Водитель':
  role==='tow'?'Демо · Эвакуаторщик':role==='master'?'Демо · Выездной мастер':
- role==='master_service'?'Демо · Мастер и СТО':role==='insurer'?(insuranceClient?'Демо · Клиент':'Демо · Страховой партнёр'):role==='moderator'?'Демо · Модератор':
+ role==='master_service'?'Демо · Мастер и СТО':role==='insurer'?(insuranceClient?'Демо · Клиент':'Демо · Страховой партнёр'):
+ role==='inspection'?'Демо · Оператор техосмотра':role==='moderator'?'Демо · Модератор':
  role==='admin'?'Демо · Администратор':'Демо · Клиент';
  return {...admin,id:master?'demo-performer':'demo-customer',name:person,
   phone:'+70000000000',owner_id:role==='driver'?'demo-customer':null,
   roles:role==='insurer'?(insuranceClient?['client']:['insurer']):role==='master_service'?['master','service']:
-   role==='owner'?['client']:role==='driver'?['driver']:
+   role==='inspection'?['inspection_operator']:role==='owner'?['client']:role==='driver'?['driver']:
    role==='master'?['master']:role==='tow'?['tow']:
    role==='moderator'?['moderator']:role==='admin'?['admin']:['client'],
   company_name:role==='owner'?'Демо Транспорт':null,
@@ -90,6 +92,7 @@ function DisabledArea({role}:{role:Role}){
 export function FullRolePreviewPage({role,parts}:{role:Role;parts:string[]}){
  const [a,b,c]=parts;
  if(role==='insurer')return <InsurerPreviewPage section={a} sub={b} id={c}/>;
+ if(role==='inspection')return <InsurerCabinet inspectionOnly/>;
  const worker=['master','tow','master_service'].includes(role);
  const client=['client','owner','driver'].includes(role);
  if(client){
