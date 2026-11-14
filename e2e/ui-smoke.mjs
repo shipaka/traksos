@@ -49,35 +49,40 @@ try {
       assert(check, width + 'px: approved image cannot be loaded: ' + name);
     }
 
-    // Main SOS action: it must open a real number-confirmation form.
-    await page.getByRole('button', { name: 'Вызвать помощь (SOS)' }).click();
-    await page.getByRole('heading', { name: 'Помощь на дороге', exact: true }).waitFor();
-
-    // Header entry points must work on every tested phone/desktop viewport.
-    await page.goto(BASE + '/#/login');
+    // Two approved hero CTAs: login and client registration, no forced SOS flow.
+    await page.locator('.public-actions').getByRole('button', { name: 'Войти', exact: true }).click();
     await page.getByRole('heading', { name: 'Вход по номеру телефона' }).waitFor();
-    await page.goto(BASE + '/#/register');
+    assert(await page.getByText('Помогите — нужна помощь').count() === 0,
+      width + 'px: legacy help button is still displayed');
+    await page.goto(BASE + '/#/');
+    await page.locator('.public-actions').getByRole('button', { name: 'Регистрация', exact: true }).click();
     await page.getByRole('heading', { name: 'Регистрация в TrakSOS' }).waitFor();
-    for (const label of ['Владелец / автопарк', 'Водитель автопарка',
-      'Я мастер', 'Я эвакуаторщик', 'Я рембаза (сервис)',
-      'Мастер и своя СТО', 'Я представитель страховой компании']) {
-      assert(await page.getByRole('button', { name: label }).isVisible(),
-        width + 'px: missing registration category: ' + label);
+    for (const name of ['Владелец / автопарк','Водитель автопарка']) {
+      assert(await page.getByRole('button', { name }).isVisible(),
+        width + 'px: client registration missing '+name);
     }
-    // Every publicly offered provider cabinet must work from /register,
-    // not only via the separate /join link.
-    for (const label of ['Я мастер', 'Я эвакуаторщик',
-      'Я рембаза (сервис)', 'Мастер и своя СТО',
-      'Я представитель страховой компании']) {
-      await page.getByRole('button', { name: label }).click();
-      await page.getByRole('heading', { name: 'Работать с TrakSOS' }).waitFor();
-      assert(await page.getByRole('button', { name: label }).getAttribute('aria-pressed') === 'true',
-        width + 'px: registration category not selected: ' + label);
-      await page.getByRole('button', { name: 'Назад к выбору кабинета' }).click();
-      await page.getByRole('heading', { name: 'Регистрация в TrakSOS' }).waitFor();
+    assert(await page.getByRole('button', {name:'Мастер',exact:true}).count()===0,
+      width+'px: partners must not be presented in client registration');
+
+    await page.goto(BASE + '/#/join');
+    await page.getByRole('heading', { name: 'Работать с TrakSOS' }).waitFor();
+    const partner = ['Мастер','Эвакуаторщик','СТО','Страховой агент'];
+    assert(await page.locator('.auth-desktop-form .opt').count()===4,
+      width+'px: partner registration must have exactly 4 categories');
+    for (const name of partner) {
+      assert(await page.getByRole('button', {name:new RegExp('^'+name)}).isVisible(),
+        width+'px: partner category missing '+name);
     }
+    for (const name of ['Электрик','Автономщик']) {
+      assert(await page.getByRole('button', {name,exact:true}).isVisible(),
+        width+'px: master specialization missing '+name);
+    }
+    await page.goto(BASE + '/#/company');
+    await page.getByRole('heading', {name:'Компания TrakSOS'}).waitFor();
+    await page.goto(BASE + '/#/offers');
+    await page.getByRole('heading', {name:'Оферты и документы'}).waitFor();
     assert(errors.length === 0, width + 'px: browser errors: ' + errors.join('; '));
-    console.log('OK: viewport ' + width + 'px, 6 cards, approved single-reference assets, SOS/login/register, no overflow');
+    console.log('OK: viewport ' + width + 'px, 6 cards, Company/Offers, 4 partner roles, no overflow');
     await context.close();
   }
 } finally {
