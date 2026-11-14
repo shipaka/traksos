@@ -353,7 +353,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           </Field>
           {insurerOnly && <div className="card stack" role="alert">
             <b>Для этого номера доступен только страховой кабинет</b>
-            <span className="note">Выберите регистрацию «Я представитель страховой компании». Другой тип аккаунта на этот номер создать нельзя.</span>
+            <span className="note">Выберите роль «Страховой агент» в разделе «Для бизнеса». Другой тип аккаунта на этот номер создать нельзя.</span>
             <button className="btn" type="button" onClick={() => {
               setStep('phone'); setRole('insurer'); setIntent('join'); setInsurerOnly(false);
             }}>Перейти к регистрации страхового агента</button>
