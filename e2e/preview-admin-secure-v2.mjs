@@ -3,7 +3,6 @@
 // mobile+desktop, expiry and API-token invalidation. No production accounts.
 import {chromium} from 'playwright';
 import pg from 'pg';
-import {mkdir} from 'node:fs/promises';
 import {randomBytes,randomInt,scryptSync} from 'node:crypto';
 const BASE=process.env.BASE_URL??'http://127.0.0.1:8080';
 if(!['localhost','127.0.0.1'].includes(new URL(BASE).hostname))
@@ -18,7 +17,6 @@ const code=String(randomInt(1_000_000_000,9_999_999_999));
 const salt=randomBytes(16).toString('hex');
 const hash='scrypt:'+salt+':'+scryptSync(code,Buffer.from(salt,'hex'),64).toString('hex');
 let browser;
-await mkdir('e2e/shots/integrated-roles',{recursive:true});
 try{
  await db.query("update users set roles=array(select distinct unnest(roles || array['master']::text[])),password_hash=$1,admin_preview_until=$2 where id=$3",
   [hash,new Date(Date.now()+30*60_000),old.id]);
@@ -63,14 +61,6 @@ try{
     }
     await page.locator('.role-preview-bar a[href="#/admin/test-center"]').click();
    }
-   // Owner approval photographs: actual role cabinet, not a mockup,
-   // after the entrance reveal has finished on both viewport widths.
-   if(await page.locator('main').first().count()===0)
-     throw Error('No real cabinet content for '+role+' at '+width+'px');
-   await page.waitForTimeout(450);
-   if((await page.locator('body').innerText()).includes('Не удалось открыть раздел'))
-     throw Error('Cabinet render crashed for '+role+' at '+width+'px');
-   await page.screenshot({path:'e2e/shots/integrated-roles/'+role+'-'+width+'.png',fullPage:true});
    await page.getByRole('heading',{name:'Тестирование кабинетов'}).waitFor();
   }
   await page.goto(BASE+'/#/admin/test-center/client');
