@@ -100,6 +100,10 @@ try {
         await page.locator('.client-sos-master-services').waitFor();
         if (await page.locator('.client-sos-choices').count() !== 0)
           throw Error('SOS alternatives must hide when master specialties are open');
+        const titleBox = await page.locator('.client-sos-selected h2').boundingBox();
+        const choicesBox = await page.locator('.client-sos-master-services').boundingBox();
+        if (!titleBox || !choicesBox || choicesBox.y < titleBox.y + titleBox.height - 3)
+          throw Error(entry.name+' '+width+'px: SOS master specialties overlap or precede their title');
         await verify('sos-master-specialties');
         await page.waitForTimeout(450);
         await page.screenshot({path:'e2e/shots/cabinet-ux/client-sos-master-'+width+'.png',fullPage:true});
