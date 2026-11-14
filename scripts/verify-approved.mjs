@@ -15,6 +15,10 @@ const LOCKED_ASSETS = {
   // New 14 November branded high-resolution portrait with correct Scania grille and TrakSOS trailer.
   'web/public/tracksos-approved-scania-r520.webp': '8f5161004a18746f',
   'web/public/tracksos-approved-map.webp': '994097c8c01b2c80',
+  'web/public/tracksos-photo-master.webp': 'ba0572aa5c6341ef',
+  'web/public/tracksos-photo-tow.webp': '1fdb913351585040',
+  'web/public/tracksos-photo-sto.webp': '48e638e981108763',
+  'web/public/tracksos-photo-consult.webp': 'c59634316748dde8',
   'web/public/tracksos-approved-scenic-hero.webp': '9193ebd1312c2d2e',
   'android/app/src/main/res/drawable-nodpi/splash_truck.webp': '75bfacfcdf8c0673',
 };
@@ -48,6 +52,10 @@ const native = await read('android/app/src/main/java/ru/traksos/app/MainActivity
 await asset('web/public/tracksos-approved-truck.webp', 15000);
 await asset('web/public/tracksos-approved-scania-r520.webp', 40000);
 await asset('web/public/tracksos-approved-map.webp', 15000);
+await asset('web/public/tracksos-photo-master.webp', 30000);
+await asset('web/public/tracksos-photo-tow.webp', 30000);
+await asset('web/public/tracksos-photo-sto.webp', 30000);
+await asset('web/public/tracksos-photo-consult.webp', 30000);
 await asset('web/public/tracksos-approved-scenic-hero.webp', 50000);
 await asset('android/app/src/main/res/drawable-nodpi/splash_truck.webp', 2000);
 expect(css.includes("url('../public/tracksos-approved-scania-r520.webp')"), 'public hero uses approved Scania R520 crop');
