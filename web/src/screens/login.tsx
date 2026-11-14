@@ -288,6 +288,10 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         <button type="button" onClick={() => setIntent('login')}>Войти по номеру</button>
         <button type="button" onClick={() => go('join')}>Хочу работать с TrakSOS</button>
       </div>}
+      {(intent === 'register' || intent === 'join') && step === 'phone' && <nav className="guest-signup-kind" aria-label="Тип регистрации">
+        <a href="#/register" aria-current={intent === 'register' ? 'page' : undefined}>Клиент</a>
+        <a href="#/join" aria-current={intent === 'join' ? 'page' : undefined}>Зарегистрироваться как партнёр</a>
+      </nav>}
       <div>
         <h1>{title}</h1>
         <div className="sub">{sub}</div>
