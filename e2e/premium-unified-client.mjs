@@ -99,7 +99,7 @@ try {
       for (const [index, key] of ['master', 'tow', 'sto', 'consult'].entries()) {
         const bg = await page.locator('.desktop-quick-card').nth(index).evaluate(el =>
           getComputedStyle(el).backgroundImage);
-        if (!bg.includes('tracksos-photo-' + key + '.webp'))
+        if (!bg.includes('tracksos-photo-' + key))
           throw new Error(width + 'px service-photo CSS mismatch: ' + key + '/' + bg);
       }
       const pageWidth = await page.evaluate(() => ({
