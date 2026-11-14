@@ -307,6 +307,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     <div className={`app ${me ? "role-"+mode : "guest-app"}`}>
       <header className="top">
         <span className="logo">Трак<b>SOS</b></span>
+        {me && mode === 'client' && <nav className="track-top-shortcuts" aria-label="Быстрый доступ">
+          <a href="#/">Главная</a><a href="#/orders">Заявки</a><a href="#/sos">Помощь в дороге</a><a href="#/shop">Запчасти</a>
+        </nav>}
         <div className="row" style={{ flexWrap: 'nowrap' }}>
           {!me && <div className="guest-header-actions"><a href="#/login">Войти</a><a href="#/register" className="register">Зарегистрироваться</a></div>}
           {me && mode === 'performer' && <span className="pill accent">исполнитель</span>}
@@ -355,7 +358,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                       ? [...tabs, ['/profile', '◉', 'Аккаунт']]
                       : mode === 'moderator' ? [...tabs, ['/profile', '◉', 'Аккаунт']]
                       : [...tabs, ['/as/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]).map(([href, ic, name]) => (
-                <a key={href} href={sandboxHref(href)} className={`desktop-nav-link ${here === href || (href !== '/' && here.startsWith(href + '/')) ? 'active' : ''} ${href === '/sos' ? 'desktop-nav-sos' : ''}` }>
+                <a key={href} href={sandboxHref(href)} className={`desktop-nav-link ${here === href || (href !== '/' && here.startsWith(href + '/')) ? 'active' : ''} ${href === '/sos' ? 'desktop-nav-sos' : ''}`}>
                   <span aria-hidden="true">{ic}</span><span>{name}</span>
                 </a>
               ))}
@@ -369,6 +372,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               </>}
             </> : <>
               <a className="desktop-nav-link active" href="#/"><span>⌂</span><span>Главная</span></a>
+              <a className="desktop-nav-link" href="#/login"><span>☷</span><span>Заявки · вход</span></a>
+              <a className="desktop-nav-link" href="#/login"><span>◇</span><span>Страхование</span></a>
+              <a className="desktop-nav-link" href="#/register"><span>⚙</span><span>Запчасти</span></a>
               <a className="desktop-nav-link" href="#/help"><span>?</span><span>Как это работает</span></a>
               <a className="desktop-nav-link" href="#/rules"><span>▤</span><span>Правила площадки</span></a>
               <a className="desktop-nav-link" href="#/offer/privacy"><span>▣</span><span>Персональные данные</span></a>
