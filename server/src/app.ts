@@ -929,6 +929,15 @@ export function createApp(d: Deps) {
        where i.status<>'settled' order by i.created_at desc limit 200`));
   r.post('/api/admin/payment-captures/:id/reconcile', ['admin'], (c: AuthedCtx) =>
     payments.reconcileCapture(parse(z.string().uuid(), c.params.id)));
+  r.get('/api/admin/payment-cancellations', ['admin'], () => d.db.query(
+    `select i.id,i.order_id,i.payment_id,o.number as order_number,
+            i.action,i.stage,i.amount_to_capture,i.refunded_amount,
+            i.status,i.attempts,i.last_error,i.attempted_at,i.checked_at,i.created_at
+       from payment_cancel_intents i join orders o on o.id=i.order_id
+       where i.status<>'settled' order by i.created_at desc limit 200`));
+  // GET-only bank reconciliation; this action cannot resend capture/cancel.
+  r.post('/api/admin/payment-cancellations/:id/reconcile', ['admin'], (c: AuthedCtx) =>
+    payments.reconcileCancellation(parse(z.string().uuid(), c.params.id)));
   r.post('/api/admin/performers/:id/adjust', ['admin'], (c: AuthedCtx) => admin.adjust(c.user, c.params.id, parse(z.object({
     amount: z.number().int(), reason: z.string().min(3).max(300), orderId: z.string().uuid().optional(),
   }), c.body)));

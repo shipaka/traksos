@@ -49,6 +49,7 @@ export interface PaymentHooks {
   onCreated(order: any): Promise<{ confirmationUrl?: string; holdRequired: boolean }>;
   onConfirmed(order: any, q: Queryable): Promise<void>;
   processCaptureForOrder(orderId: string): Promise<string | null>;
+  processCancellationForOrder(orderId: string): Promise<string | null>;
   onCancelled(order: any, stage: string, q: Queryable): Promise<void>;
   assertMethodAllowed(method: string): Promise<void>;
 }
@@ -593,6 +594,9 @@ export class OrdersService {
       await this.event(q, orderId, user.id, 'cancelled', { reason, stage, ...splitInfo });
       await this.payments.onCancelled({ ...o, status: 'cancelled' }, stage, q);
     });
+    // Cancellation's provider operation runs strictly after this transaction.
+    await this.payments.processCancellationForOrder(orderId)
+      .catch((e) => console.error('[cancel-bank-action]', e));
     this.notifier.live(invited, { type: 'order', orderId, status: 'cancelled' });
     await this.systemMessage(orderId, `Заявка отменена: ${reason}`);
     await this.notifier.notify([o.client_id, o.created_by, o.performer_id].filter((x) => x !== user.id), { type: 'order', orderId, status: 'cancelled' },

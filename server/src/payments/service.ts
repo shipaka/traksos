@@ -106,40 +106,183 @@ export class PaymentsService implements PaymentHooks {
     }
   }
 
+  /** Build a cancellation bank plan inside the order's transaction. No IO. */
   async onCancelled(order: any, stage: string, q: Queryable) {
     if (order.payment_method !== 'online') return;
-    const pay = await q.one(`select * from payments where order_id=$1 and kind='call_out' and status in ('pending','held')`, [order.id]);
+    const pay = await q.one<any>(
+      `select * from payments where order_id=$1 and kind='call_out'
+         and status in ('pending','held') for update`, [order.id]);
     if (!pay) return;
-    if (pay.status === 'pending') {
-      await this.provider.cancel(pay.provider_payment_id).catch(() => {});
-      await q.query(`update payments set status='cancelled', updated_at=now() where id=$1`, [pay.id]);
-      return;
+    if (!pay.provider_payment_id) throw new Error('Cancelled payment has no provider id');
+
+    let toPerformer = 0, platformKeeps = 0, commission = 0, keep = 0;
+    // A not-yet-held payment can only be cancelled, never captured.
+    if (pay.status === 'held') {
+      const scale = (await this.settings.get('cancel')).scale;
+      const base: number = order.call_out_amount ?? order.estimate.callOut;
+      const amounts = cancelSplit(scale, stage as CancelStage, base,
+        pct(base, Number(order.client_fee_pct)));
+      toPerformer = amounts.toPerformer;
+      platformKeeps = amounts.platformKeeps;
+      keep = toPerformer + platformKeeps;
+      if (keep > 0) {
+        if (!order.performer_id) throw new Error('Cannot charge cancellation with no performer');
+        const fees = await this.settings.get('fees');
+        const perf = await q.one<{ is_priority: boolean }>(
+          'select is_priority from performer_profiles where user_id=$1', [order.performer_id]);
+        commission = pct(toPerformer,
+          commissionPct(fees, { isPriority: !!perf?.is_priority,
+            overridePct: order.commission_pct_override == null ? null : Number(order.commission_pct_override) }));
+      }
     }
-    const scale = (await this.settings.get('cancel')).scale;
-    const base: number = order.call_out_amount ?? order.estimate.callOut;
-    const c = cancelSplit(scale, stage as CancelStage, base, pct(base, Number(order.client_fee_pct)));
-    const keep = c.toPerformer + c.platformKeeps;
-    c.refund = pay.total - keep; // замороженный потолок минус удержанное
-    if (keep === 0) {
-      await this.provider.cancel(pay.provider_payment_id);
-      await q.query(`update payments set status='cancelled', updated_at=now() where id=$1`, [pay.id]);
-      return;
+    if (keep < 0 || keep > pay.total) throw new Error('Cancellation exceeds held amount');
+    await q.query(
+      `insert into payment_cancel_intents(
+         order_id,payment_id,provider_payment_id,action,stage,amount_to_capture,
+         refunded_amount,to_performer,platform_keeps,commission)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+      [order.id, pay.id, pay.provider_payment_id, keep > 0 ? 'capture' : 'cancel',
+        stage, keep, keep > 0 ? pay.total - keep : 0, toPerformer, platformKeeps, commission]);
+  }
+
+  /** Only claim a durable, never-sent cancellation intent for bank IO. */
+  async processCancellationForOrder(orderId: string): Promise<string | null> {
+    const intent = await this.db.tx(async q => {
+      const row = await q.one<any>(
+        "select * from payment_cancel_intents where order_id=$1 and status='prepared' for update",
+        [orderId]);
+      if (!row) return null;
+      await q.query(
+        `update payment_cancel_intents set status='sending',attempts=attempts+1,
+          attempted_at=now(),updated_at=now() where id=$1`, [row.id]);
+      return row;
+    });
+    if (!intent) return null;
+    try {
+      const response = intent.action === 'capture'
+        ? await this.provider.capture(intent.provider_payment_id, intent.amount_to_capture)
+        : await this.provider.cancel(intent.provider_payment_id);
+      const expectedStatus = intent.action === 'capture' ? 'captured' : 'cancelled';
+      if (response.status !== expectedStatus) {
+        await this.flagCancellationForReview(intent.id, `bank action response: ${response.status}`);
+        return 'needs_review';
+      }
+      const verified = await this.provider.getPayment(intent.provider_payment_id);
+      if (verified.status !== expectedStatus ||
+        (intent.action === 'capture' && verified.total !== intent.amount_to_capture)) {
+        await this.flagCancellationForReview(intent.id,
+          `bank amount/status: ${verified.status}/${verified.total}`);
+        return 'needs_review';
+      }
+      await this.settleCancellationIntent(intent.id);
+      return 'settled';
+    } catch (error) {
+      // The bank may have completed the operation: do not auto-resend.
+      await this.flagCancellationForReview(intent.id, (error as Error).message);
+      return 'needs_review';
     }
-    await this.provider.capture(pay.provider_payment_id, keep);
-    await q.query(`update payments set status=$2, refunded_amount=$3, updated_at=now() where id=$1`,
-      [pay.id, c.refund > 0 ? 'partially_refunded' : 'captured', c.refund]);
-    const fees = await this.settings.get('fees');
-    const perf = await q.one<{ is_priority: boolean }>('select is_priority from performer_profiles where user_id=$1', [order.performer_id]);
-    const commission = pct(c.toPerformer, commissionPct(fees, { isPriority: !!perf?.is_priority, overridePct: order.commission_pct_override == null ? null : Number(order.commission_pct_override) }));
-    await this.ledger(q, order.id, pay.id, [
-      { account: 'client', amount: -keep, kind: 'payment', note: `Отмена (${stage}): удержано ${rub(keep)}, возврат ${rub(c.refund)}` },
-      { account: 'performer', performerId: order.performer_id, amount: c.toPerformer - commission, kind: 'earning' },
-      { account: 'platform', amount: c.platformKeeps + commission, kind: 'fee' },
-    ]);
-    if (c.toPerformer > 0) {
-      await q.query(`insert into payouts(order_id, performer_id, amount, commission, provider) values ($1,$2,$3,$4,$5)`,
-        [order.id, order.performer_id, c.toPerformer - commission, commission, this.provider.name]);
+  }
+
+  private async flagCancellationForReview(intentId: string, reason: string) {
+    await this.db.query(
+      `update payment_cancel_intents set status='needs_review', last_error=$2,
+          checked_at=now(),updated_at=now() where id=$1 and status<>'settled'`,
+      [intentId, reason.slice(0, 500)]);
+  }
+
+  /** Provider GET only; this endpoint NEVER sends a second cancel/capture. */
+  async reconcileCancellation(intentId: string) {
+    const intent = await this.db.one<any>(
+      'select * from payment_cancel_intents where id=$1', [intentId]);
+    if (!intent) throw notFound('Отмена платежа не найдена');
+    if (intent.status === 'settled') return 'settled';
+    if (intent.status === 'prepared') return 'prepared';
+    try {
+      const verified = await this.provider.getPayment(intent.provider_payment_id);
+      const expectedStatus = intent.action === 'capture' ? 'captured' : 'cancelled';
+      if (verified.status !== expectedStatus ||
+        (intent.action === 'capture' && verified.total !== intent.amount_to_capture)) {
+        await this.flagCancellationForReview(intent.id,
+          `reconciliation: status=${verified.status}, total=${verified.total}`);
+        return 'needs_review';
+      }
+      await this.settleCancellationIntent(intent.id);
+      return 'settled';
+    } catch (error) {
+      await this.flagCancellationForReview(intent.id, (error as Error).message);
+      return 'needs_review';
     }
+  }
+
+  /** Restart-safe; unsent actions may run once, uncertain actions use GET only. */
+  async reconcileCancellations(limit = 40) {
+    const items = await this.db.query<{ id: string; order_id: string; status: string }>(
+      `select id,order_id,status from payment_cancel_intents
+         where status='prepared' or
+           (status in ('sending','needs_review') and
+             (checked_at is null or checked_at < now() - interval '60 seconds'))
+         order by case when status='prepared' then 0 else 1 end,
+                  coalesce(checked_at,created_at) limit $1`,
+      [Math.max(1, Math.min(100, limit))]);
+    const results = [];
+    for (const item of items) {
+      try {
+        const status = item.status === 'prepared'
+          ? await this.processCancellationForOrder(item.order_id)
+          : await this.reconcileCancellation(item.id);
+        results.push({ id: item.id, status: status ?? 'claimed_elsewhere' });
+      } catch (error) {
+        console.error('[cancel-reconciliation]', item.id, error);
+        results.push({ id: item.id, status: 'needs_review' });
+      }
+    }
+    return results;
+  }
+
+  /** Exactly-once local accounting after confirmed bank cancellation/capture. */
+  private async settleCancellationIntent(intentId: string) {
+    await this.db.tx(async q => {
+      const intent = await q.one<any>(
+        'select * from payment_cancel_intents where id=$1 for update', [intentId]);
+      if (!intent || intent.status === 'settled') return;
+      if (!['sending','needs_review'].includes(intent.status))
+        throw new Error('Cancellation not submitted to provider');
+      const pay = await q.one<any>(
+        'select * from payments where id=$1 for update', [intent.payment_id]);
+      if (!pay || pay.order_id !== intent.order_id || pay.kind !== 'call_out' ||
+        !['pending','held'].includes(pay.status))
+        throw new Error('Payment state changed before cancellation settlement');
+      if (intent.action === 'cancel') {
+        await q.query(
+          `update payments set status='cancelled', updated_at=now() where id=$1`,
+          [pay.id]);
+      } else {
+        if (pay.status !== 'held') throw new Error('Cannot capture unheld payment');
+        const order = (await q.one<any>('select * from orders where id=$1', [intent.order_id]))!;
+        await q.query(
+          `update payments set status=$2,refunded_amount=$3,updated_at=now() where id=$1`,
+          [pay.id, intent.refunded_amount > 0 ? 'partially_refunded' : 'captured',
+            intent.refunded_amount]);
+        await this.ledger(q, intent.order_id, pay.id, [
+          { account: 'client', amount: -intent.amount_to_capture, kind: 'payment',
+            note: `Отмена (${intent.stage}): удержано ${rub(intent.amount_to_capture)},
+              возврат ${rub(intent.refunded_amount)}` },
+          { account: 'performer', performerId: order.performer_id,
+            amount: intent.to_performer - intent.commission, kind: 'earning' },
+          { account: 'platform', amount: intent.platform_keeps + intent.commission, kind: 'fee' },
+        ]);
+        if (intent.to_performer > 0) {
+          await q.query(
+            `insert into payouts(order_id,performer_id,amount,commission,provider)
+               values ($1,$2,$3,$4,$5)`,
+            [intent.order_id, order.performer_id,
+              intent.to_performer - intent.commission, intent.commission, this.provider.name]);
+        }
+      }
+      await q.query(
+        `update payment_cancel_intents set status='settled',settled_at=now(),
+           last_error=null,checked_at=now(),updated_at=now() where id=$1`, [intent.id]);
+    });
   }
 
   // Платежи ---------------------------------------------------------------
@@ -212,6 +355,11 @@ export class PaymentsService implements PaymentHooks {
         const intent = await q.one<{ id: string }>(
           "select id from payment_capture_intents where payment_id=$1 and status<>'settled'", [current.id]);
         if (intent) return { changed: false, dispatch: false, failedOrder: null as any };
+      }
+      if (current.kind === 'call_out' && ['captured','cancelled','failed'].includes(status)) {
+        const cancelIntent = await q.one<{ id: string }>(
+          "select id from payment_cancel_intents where payment_id=$1 and status<>'settled'", [current.id]);
+        if (cancelIntent) return { changed: false, dispatch: false, failedOrder: null as any };
       }
       await q.query('update payments set status=$2, updated_at=now() where id=$1', [current.id, status]);
       await this.orders.event(q, current.order_id, null, `payment_${current.kind}_${status}`,

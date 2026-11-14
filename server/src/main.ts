@@ -74,8 +74,10 @@ const hourly = setInterval(() => { void housekeeping(); }, 3_600_000);
 
 // Recover durable capture-intents after restart or an ambiguous bank response.
 // Never repeat a previously sent capture: reconciliation uses provider GET.
-const captureReconcile = () => app.payments.reconcileCaptures()
-  .catch((e) => console.error('[capture-reconciliation]', e));
+const captureReconcile = () => Promise.all([
+  app.payments.reconcileCaptures(),
+  app.payments.reconcileCancellations(),
+]).catch((e) => console.error('[payment-reconciliation]', e));
 const captureTimer = setInterval(() => { void captureReconcile(); }, 30_000);
 void captureReconcile();
 
