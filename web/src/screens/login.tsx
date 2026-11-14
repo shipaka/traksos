@@ -155,7 +155,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
             <span><i aria-hidden="true">▤</i>Работа с юрлицами</span>
           </div>
           <div className="public-actions">
-            <button type="button" className="public-button public-button-sos" onClick={() => { try { sessionStorage.removeItem('traksos.pendingLandingAction'); } catch {} setIntent('help'); }}>SOS · Нужна помощь</button>
+            <button type="button" className="public-button public-button-sos" onClick={() => { try { sessionStorage.removeItem('traksos.pendingLandingAction'); } catch {} setIntent('help'); }}>Помощь в дороге</button>
             <button type="button" className="public-button public-button-outline" onClick={() => document.getElementById('public-how')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>Как это работает?</button>
           </div>
 
