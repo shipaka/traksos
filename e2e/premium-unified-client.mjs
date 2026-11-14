@@ -84,6 +84,24 @@ try {
       const hubs = await page.locator('.client-dashboard-hubs > a').count();
       if (cards !== 4 || hubs !== 4)
         throw new Error(width + 'px wrong card counts: ' + cards + '/' + hubs);
+      // Confirm actual high-resolution bundled photos load, not only CSS URLs.
+      const photoDetails = await page.evaluate(async () => {
+        const keys = ['master', 'tow', 'sto', 'consult'];
+        return await Promise.all(keys.map(async key => {
+          const img = new Image();
+          img.src = '/tracksos-photo-' + key + '.webp';
+          await img.decode();
+          return { key, w: img.naturalWidth, h: img.naturalHeight };
+        }));
+      });
+      if (photoDetails.some(p => p.w < 700 || p.h < 480))
+        throw new Error(width + 'px service-photo quality/availability: ' + JSON.stringify(photoDetails));
+      for (const [index, key] of ['master', 'tow', 'sto', 'consult'].entries()) {
+        const bg = await page.locator('.desktop-quick-card').nth(index).evaluate(el =>
+          getComputedStyle(el).backgroundImage);
+        if (!bg.includes('tracksos-photo-' + key + '.webp'))
+          throw new Error(width + 'px service-photo CSS mismatch: ' + key + '/' + bg);
+      }
       const pageWidth = await page.evaluate(() => ({
         viewport: document.documentElement.clientWidth,
         content: document.documentElement.scrollWidth
