@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type { Db, Queryable } from '../db/index.ts';
 import type { SettingsService } from './settings.ts';
 import type { Notifier } from './notify.ts';
@@ -70,8 +71,28 @@ export class OrdersService {
 
   // Создание ---------------------------------------------------------------
 
-  async create(user: AuthUser, i: CreateOrderInput) {
+  async create(user: AuthUser, i: CreateOrderInput, idempotencyKey?: string) {
     if (!SERVICES.includes(i.service)) throw bad('bad_service', 'Неизвестная услуга');
+    const requestKey = idempotencyKey?.trim() || null;
+    if (requestKey && !/^[A-Za-z0-9._:-]{8,100}$/.test(requestKey))
+      throw bad('bad_idempotency_key', 'Недопустимый ключ повторной заявки');
+    const requestHash = requestKey
+      ? createHash('sha256').update(JSON.stringify(i)).digest('hex') : null;
+    const reuse = async (existing: { id: string; create_request_hash: string | null }) => {
+      if (!requestHash || existing.create_request_hash !== requestHash)
+        throw conflict('idempotency_conflict',
+          'Для изменённой заявки требуется новый ключ отправки');
+      const pay = await this.db.one<{ confirmation_url: string | null }>(
+        "select confirmation_url from payments where order_id=$1 and kind='call_out'", [existing.id]);
+      return { order: await this.view(user, existing.id),
+        confirmationUrl: pay?.confirmation_url ?? null };
+    };
+    if (requestKey) {
+      const previous = await this.db.one<{id:string;create_request_hash:string|null}>(
+        'select id,create_request_hash from orders where created_by=$1 and create_request_key=$2',
+        [user.id,requestKey]);
+      if (previous) return reuse(previous);
+    }
     const all = await this.settings.all();
     const method = i.paymentMethod ?? 'cash';
     await this.payments.assertMethodAllowed(method);
@@ -138,23 +159,33 @@ export class OrdersService {
 
     // Водитель парка: что ему можно и до какой суммы. SOS — всегда, без подтверждения.
     const gate = user.owner_id && !i.isSos ? await this.fleetGate(user, i.service, est.callOut) : null;
+    let reused = false;
     const order = await this.db.one(
       `insert into orders(client_id, created_by, vehicle_id, service, is_sos, problem, description, address, lat, lng,
           zone_id, night, group_trip, tier, brand, estimate, payment_method, client_fee_pct, destination, cargo, loaded, driver_on_site,
           consult_of, discount_amount, discount_reason, model, year, site, status, owner_note,
-          commission_pct_override, commission_campaign_id, case_root_id, continuation_of)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34) returning *`,
+          commission_pct_override, commission_campaign_id, case_root_id, continuation_of,
+          create_request_key,create_request_hash)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36) returning *`,
       [clientId, user.id, i.vehicleId ?? null, i.service, !!i.isSos, i.problem ?? null, i.description ?? null, isConsult ? null : i.address ?? null,
         isConsult ? null : i.lat ?? null, isConsult ? null : i.lng ?? null, est.zoneId, night, est.group, tier, brand, est, method, feePct,
         i.destination ?? null, i.cargo ?? null, i.loaded ?? null, i.driverOnSite ?? null,
         consultOf, discount, discount ? CONSULT_DISCOUNT : null, model, year, isConsult ? null : i.site ?? null,
         gate ? 'awaiting_owner' : 'searching', gate, campaign?.commission_pct ?? null, campaign?.id ?? null,
-        previous ? (previous.case_root_id ?? previous.id) : null, previous?.id ?? null],
-    ).catch((e: any) => {
+        previous ? (previous.case_root_id ?? previous.id) : null, previous?.id ?? null,
+        requestKey,requestHash],
+    ).catch(async (e: any) => {
+      if (e?.code === '23505' && e?.constraint === 'orders_create_key_unique') {
+        const prior = await this.db.one<any>(
+          'select * from orders where created_by=$1 and create_request_key=$2',
+          [user.id,requestKey]);
+        if (prior) { reused = true; return prior; }
+      }
       if (e?.code === '23505' && e?.constraint === 'orders_one_live_continuation_idx')
         throw conflict('continuation_exists', 'Этап уже оформлен: откройте его из обращения');
       throw e;
     });
+    if (reused) return reuse(order!);
     await this.event(this.db, order!.id, user.id, 'created', { estimate: est, sos: !!i.isSos, continuationOf: previous?.id ?? null });
 
     if (gate) {

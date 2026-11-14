@@ -57,8 +57,11 @@ export class PaymentsService implements PaymentHooks {
     // при списании берём фактическую сумму, остаток вернётся клиенту сам.
     const d = await this.settings.get('dispatch');
     const ceil = roundTo((order.estimate.callOut as number) * d.offerCeil, 5_000);
-    const pay = await this.createProviderPayment(this.db, order, 'call_out', ceil, false);
-    return { holdRequired: true, confirmationUrl: pay.confirmation_url };
+    await this.prepareCallOutPayment(order, ceil);
+    await this.processCallOutPaymentForOrder(order.id);
+    const pay = await this.db.one<{ confirmation_url: string | null }>(
+      "select confirmation_url from payments where order_id=$1 and kind='call_out'", [order.id]);
+    return { holdRequired: true, confirmationUrl: pay?.confirmation_url ?? undefined };
   }
 
   async onConfirmed(order: any, q: Queryable) {
@@ -286,6 +289,55 @@ export class PaymentsService implements PaymentHooks {
 
   // Платежи ---------------------------------------------------------------
 
+  /** Persist call-out hold BEFORE contacting the bank; preserving original price. */
+  private async prepareCallOutPayment(order: any, amount: number) {
+    return this.db.tx(async q => {
+      const present = await q.one<{id:string}>(
+        "select id from payments where order_id=$1 and kind='call_out' for update", [order.id]);
+      if (present) return present;
+      const cfg = await this.settings.get('payments');
+      const fee = pct(amount,Number(order.client_fee_pct));
+      const total = amount + fee;
+      if (!Number.isInteger(total) || total<=0) throw new Error('Invalid call-out hold');
+      const key=`${order.id}:call_out:1`;
+      const pay = await q.one<{id:string}>(
+        `insert into payments(order_id,kind,method,amount,client_fee,total,provider,idempotency_key)
+         values($1,'call_out',$2,$3,$4,$5,$6,$7) returning id`,
+        [order.id,cfg.defaultMethod,amount,fee,total,this.provider.name,key]);
+      if (!pay) throw new Error('Could not persist call-out hold');
+      let receipt:unknown;
+      if (cfg.sendReceipts) {
+        const client = await q.one<{phone:string}>(
+          'select phone from users where id=$1', [order.client_id]);
+        const worker = order.performer_id ? await q.one<{name:string;inn:string}>(
+          'select u.name,p.inn from users u join performer_profiles p on p.user_id=u.id where u.id=$1',
+          [order.performer_id]) : null;
+        receipt=agentReceipt({customerPhone:client!.phone,items:[
+          {description:'Выезд мастера',amount,
+            supplier:worker?.inn?{name:worker.name,inn:worker.inn}:undefined},
+          ...(fee?[{description:'Сервисный сбор ТракSOS',amount:fee}]:[]),
+        ]});
+      }
+      const request:CreatePaymentInput={
+        total,capture:false,method:cfg.defaultMethod,idempotencyKey:key,
+        description:`ТракSOS, заявка №${order.number}: выезд`,
+        returnUrl:`${config.publicUrl}/orders/${order.id}`,
+        metadata:{orderId:order.id,paymentId:pay.id,kind:'call_out'},receipt,
+      };
+      await q.query('insert into payment_create_intents(payment_id,order_id,request) values ($1,$2,$3::jsonb)',
+        [pay.id,order.id,JSON.stringify(request)]);
+      return pay;
+    });
+  }
+
+  /** Called after the intent commit; safe same-key replay on later recovery. */
+  async processCallOutPaymentForOrder(orderId:string) {
+    const pay=await this.db.one<{id:string}>(
+      `select p.id from payments p join payment_create_intents i on i.payment_id=p.id
+        where p.order_id=$1 and p.kind='call_out' and i.status='prepared'`,[orderId]);
+    return pay ? this.sendWorkPayment(pay.id,false) : null;
+  }
+
   /** Write an immutable request to PostgreSQL while confirming the order. */
   private async prepareWorkPayment(order: any, q: Queryable, amount: number, discount: number) {
     const cfg = await this.settings.get('payments');
@@ -368,7 +420,7 @@ export class PaymentsService implements PaymentHooks {
         'select * from payment_create_intents where payment_id=$1 for update', [paymentId]);
       if (!intent) throw new Error('Missing work payment creation intent');
       const pay = await q.one<any>('select * from payments where id=$1 for update', [paymentId]);
-      if (!pay || pay.kind!=='work' || pay.order_id!==intent.order_id ||
+      if (!pay || pay.kind!==intent.request.metadata.kind || pay.order_id!==intent.order_id ||
           pay.idempotency_key!==intent.request.idempotencyKey || pay.total!==intent.request.total)
         throw new Error('Work payment and intent disagree');
       if (pay.provider_payment_id && pay.provider_payment_id!==result.id)
@@ -396,17 +448,22 @@ export class PaymentsService implements PaymentHooks {
       const verify = await this.provider.getPayment(response.id);
       if (verify.id!==response.id || verify.total!==req.total ||
           (verify.metadata && (verify.metadata.paymentId!==paymentId ||
-            verify.metadata.orderId!==intent.order_id || verify.metadata.kind!=='work')))
+            verify.metadata.orderId!==intent.order_id || verify.metadata.kind!==req.metadata.kind)))
         throw new Error('Bank creation response does not match saved request');
       const result = await this.bindWorkPayment(paymentId,response);
       if (result.changed) {
         const o = await this.db.one<any>(
           'select id,number,client_id,created_by from orders where id=$1', [intent.order_id]);
-        if (o) await this.notifier.notify([o.client_id,o.created_by],
+        // Work payments always need a payment notification. The first call-out
+        // URL is returned to the caller; only late recovery needs push.
+        const needsPush = req.metadata.kind === 'work' || intent.attempts > 1;
+        if (o) this.notifier.live([o.client_id,o.created_by],
+          {type:'payment',orderId:o.id});
+        if (o && needsPush) await this.notifier.notify([o.client_id,o.created_by],
           {type:'payment',orderId:o.id,url:response.confirmationUrl},
-          {kind:'normal',title:'Оплатите работу',
+          {kind:'normal',title:req.metadata.kind==='work' ? 'Оплатите работу' : 'Подтвердите оплату выезда',
             body:`Заявка №${o.number}: ${rub(req.total)}`,data:{orderId:o.id}})
-          .catch(e=>console.error('[work-payment-push]',e));
+          .catch(e=>console.error('[payment-create-push]',e));
       }
       if (verify.status!=='pending') await this.sync(result.pay,STATUS_MAP[verify.status]);
       return 'ready';
@@ -449,44 +506,6 @@ export class PaymentsService implements PaymentHooks {
     return results;
   }
 
-  private async createProviderPayment(q: Queryable, order: any, kind: 'call_out' | 'work', amount: number, capture: boolean, discount = 0) {
-    const p = await this.settings.get('payments');
-    const fee = pct(amount, Number(order.client_fee_pct));
-    const total = amount + fee - discount;
-    const n = (await q.one<{ c: number }>('select count(*)::int c from payments where order_id=$1 and kind=$2', [order.id, kind]))!.c;
-    const key = `${order.id}:${kind}:${n + 1}`;
-    const row = await q.one(
-      `insert into payments(order_id, kind, method, amount, client_fee, total, provider, idempotency_key)
-       values ($1,$2,$3,$4,$5,$6,$7,$8) returning *`,
-      [order.id, kind, p.defaultMethod, amount, fee, total, this.provider.name, key],
-    );
-    let receipt: unknown;
-    if (p.sendReceipts) {
-      const client = await q.one<{ phone: string }>('select phone from users where id=$1', [order.client_id]);
-      const perf = order.performer_id
-        ? await q.one<{ name: string; inn: string }>('select u.name, p.inn from users u join performer_profiles p on p.user_id=u.id where u.id=$1', [order.performer_id])
-        : null;
-      receipt = agentReceipt({
-        customerPhone: client!.phone,
-        items: [
-          { description: kind === 'call_out' ? 'Выезд мастера' : 'Работы по заявке', amount, supplier: perf?.inn ? { name: perf.name, inn: perf.inn } : undefined },
-          ...(fee ? [{ description: 'Сервисный сбор ТракSOS', amount: fee }] : []),
-        ],
-      });
-    }
-    const r = await this.provider.createPayment({
-      total, capture, method: p.defaultMethod, idempotencyKey: key,
-      description: `ТракSOS, заявка №${order.number}: ${kind === 'call_out' ? 'выезд' : 'работа'}`,
-      returnUrl: `${config.publicUrl}/orders/${order.id}`,
-      metadata: { orderId: order.id, paymentId: row!.id, kind },
-      receipt,
-    });
-    return q.one(
-      `update payments set provider_payment_id=$2, status=$3, confirmation_url=$4, updated_at=now() where id=$1 returning *`,
-      [row!.id, r.id, STATUS_MAP[r.status] === 'created' ? 'pending' : STATUS_MAP[r.status], r.confirmationUrl],
-    ) as Promise<any>;
-  }
-
   /** Уведомление от платёжного сервиса. Статус перепроверяем запросом к сервису. */
   async handleWebhook(body: any) {
     const ev = this.provider.parseWebhook(body);
@@ -496,13 +515,14 @@ export class PaymentsService implements PaymentHooks {
     const actual = await this.provider.getPayment(ev.providerPaymentId);
     let pay = await this.db.one<any>(
       'select * from payments where provider_payment_id=$1', [ev.providerPaymentId]);
-    if (!pay && actual.metadata?.kind === 'work' && actual.metadata.paymentId) {
+    if (!pay && ['work','call_out'].includes(actual.metadata?.kind ?? '') && actual.metadata?.paymentId) {
       const paymentId = actual.metadata.paymentId;
       const intent = await this.db.one<any>(
         'select * from payment_create_intents where payment_id=$1', [paymentId]);
       if (!intent || !intent.first_sent_at ||
           intent.order_id !== actual.metadata.orderId ||
           intent.request.metadata.paymentId !== paymentId ||
+          intent.request.metadata.kind !== actual.metadata.kind ||
           intent.request.total !== actual.total)
         throw notFound('Банковский платёж не совпадает с сохранённым намерением');
       const result = await this.bindWorkPayment(paymentId, {
@@ -512,11 +532,14 @@ export class PaymentsService implements PaymentHooks {
       if (result.changed) {
         const order = await this.db.one<any>(
           'select id,number,client_id,created_by from orders where id=$1', [intent.order_id]);
+        if (order) this.notifier.live([order.client_id,order.created_by],
+          {type:'payment',orderId:order.id});
         if (order) await this.notifier.notify([order.client_id,order.created_by],
           {type:'payment',orderId:order.id,url:actual.confirmationUrl ?? null},
-          {kind:'normal',title:'Оплатите работу',
+          {kind:'normal',title:intent.request.metadata.kind==='work'
+            ? 'Оплатите работу' : 'Подтвердите оплату выезда',
             body:`Заявка №${order.number}: ${rub(intent.request.total)}`,
-            data:{orderId:order.id}}).catch(e=>console.error('[orphan-work-notification]',e));
+            data:{orderId:order.id}}).catch(e=>console.error('[orphan-payment-notification]',e));
       }
     }
     if (!pay) throw notFound('Платёж не найден');

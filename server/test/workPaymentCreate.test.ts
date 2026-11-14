@@ -37,7 +37,7 @@ async function fixture() {
     return t.db.one<any>(
       `select i.*,p.status as payment_status,p.provider_payment_id,p.total as payment_total
         from payment_create_intents i join payments p on p.id=i.payment_id
-        where i.order_id=$1`,[id]);
+        where i.order_id=$1 and p.kind='work'`,[id]);
   }
   return {t,admin,client,master,orderBeforeConfirmation,confirm,state};
 }
