@@ -2,17 +2,32 @@ import type { Db } from '../db/index.ts';
 import type { SettingsService } from './settings.ts';
 import type { Notifier } from './notify.ts';
 import type { OrdersService } from './orders.ts';
-import { bad, type AuthUser } from '../http/router.ts';
+import { bad, conflict, type AuthUser } from '../http/router.ts';
 import { maskPhones } from '../util.ts';
 
+// Text-only shortcuts. «Я на месте» changes the order status; it must never be
+// offered as a chat message (especially after completion).
 export const QUICK_REPLIES = [
-  'Я на месте',
   'Буду через 10 минут',
   'Нет связи, пишите сюда',
   'Задерживаюсь, извините',
   'Жду у машины',
   'Позвоните мне через приложение',
 ];
+
+export function quickRepliesFor(service: string, status: string, actor: string | null): string[] {
+  if (['completed', 'cancelled', 'no_performer'].includes(status) || !actor || actor === 'admin') return [];
+  // Once the specialist has finished, only confirmation-related prompts
+  // remain, including after a *telephone* consultation.
+  if (status === 'awaiting_confirmation') return actor === 'client'
+    ? ['Есть вопрос по сумме', 'Позвоните мне через приложение']
+    : ['Проверьте, пожалуйста, сумму', 'Позвоните мне через приложение'];
+  if (service === 'consult') return CONSULT_QUICK_REPLIES;
+  if (actor === 'performer') return ['accepted', 'en_route'].includes(status)
+    ? ['Буду через 10 минут', 'Задерживаюсь, извините', 'Позвоните мне через приложение']
+    : ['Нет связи, пишите сюда', 'Позвоните мне через приложение'];
+  return ['Жду у машины', 'Нет связи, пишите сюда', 'Позвоните мне через приложение'];
+}
 
 /** Консультация — разговор по телефону: «на месте» и «буду через 10 минут» тут ни к чему */
 export const CONSULT_QUICK_REPLIES = [
@@ -48,23 +63,34 @@ export class ChatService {
     const ticket = await this.db.one('select 1 from support_tickets where order_id=$1 limit 1', [orderId]);
     const participants = people.map((p) => ({ who: p.who, name: p.name, you: p.id === user.id }));
     if ((support?.n ?? 0) > 0 || ticket) participants.push({ who: 'support', name: 'Поддержка TrakSOS', you: false });
-    return { messages: msgs, participants, quickReplies: order.service === 'consult' ? CONSULT_QUICK_REPLIES : QUICK_REPLIES };
+    return { messages: msgs, participants, quickReplies: quickRepliesFor(order.service, order.status, this.orders.actorOf(user, order)) };
   }
 
   async post(user: AuthUser, orderId: string, body: string, kind: 'text' | 'quick' = 'text') {
     const o = await this.orders.mustSee(user, orderId);
-    if (!this.orders.actorOf(user, o)) throw bad('not_participant', 'Писать могут только участники заявки');
+    const actor = this.orders.actorOf(user, o);
+    if (!actor) throw bad('not_participant', 'Писать могут только участники заявки');
+    if (['completed', 'cancelled', 'no_performer'].includes(o.status))
+      throw conflict('chat_closed', 'Диалог завершён. История доступна для просмотра, новое сообщение отправить нельзя');
     const text = body.trim().slice(0, 2000);
     if (!text) throw bad('empty', 'Пустое сообщение');
+    if (kind === 'quick' && !quickRepliesFor(o.service, o.status, actor).includes(text))
+      throw bad('invalid_quick_reply', 'Этот быстрый ответ недоступен на текущем этапе заявки');
     const { text: safe, masked } = maskPhones(text);
     const words = (await this.settings.get('chat')).suspiciousWords;
     const lower = safe.toLowerCase();
     const flagged = masked || words.some((w) => lower.includes(w));
     const m = await this.db.one(
-      `insert into chat_messages(order_id, sender_id, kind, body, masked, flagged) values ($1,$2,$3,$4,$5,$6)
+      `insert into chat_messages(order_id, sender_id, kind, body, masked, flagged)
+       select o.id, $2, $3, $4, $5, $6 from orders o
+       where o.id=$1 and o.status not in ('completed', 'cancelled', 'no_performer')
+       for update of o
        returning id::int as id, order_id, sender_id, kind, body, masked, created_at`,
       [orderId, user.id, kind, safe, masked, flagged],
     );
+    // The locked order row is rechecked when a concurrent confirmation commits.
+    // Never insert a message after an order has become terminal.
+    if (!m) throw conflict('chat_closed', 'Диалог завершён. Новые сообщения недоступны');
     const message = { ...m, sender_name: user.name };
     const ids = await this.orders.participants(orderId);
     this.notifier.live(ids, { type: 'chat', message });

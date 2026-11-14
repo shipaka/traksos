@@ -86,6 +86,125 @@ test('возврат: частичный за счёт площадки и за 
   await ledgerZero();
 });
 
+test('12 одновременных webhook: один платёж и один комплект проводок', async () => {
+  const id = await orderToConfirm('online', 70_000);
+  ok(await t.api('POST', `/api/orders/${id}/confirm`, {}, client.token));
+  const pay = (await t.db.one<{ provider_payment_id: string }>(
+    "select provider_payment_id from payments where order_id=$1 and kind='work'", [id]))!;
+  t.payments.simulate(pay.provider_payment_id, 'captured');
+  const replies = await Promise.all(Array.from({ length: 12 }, () =>
+    t.api('POST', '/api/payments/webhook', { paymentId: pay.provider_payment_id })));
+  assert.ok(replies.every(r => r.status === 200), JSON.stringify(replies));
+  assert.equal(replies.filter(r => r.body.changed).length, 1);
+  const payouts = await t.db.query('select id from payouts where order_id=$1', [id]);
+  assert.equal(payouts.length, 1, 'повтор не создаёт вторую выплату');
+  const paid = await t.db.query("select id from order_events where order_id=$1 and type='paid'", [id]);
+  assert.equal(paid.length, 1, 'оплата подтверждена один раз');
+  const ledger = await t.db.query<{ kind: string }>('select kind from ledger_entries where order_id=$1', [id]);
+  assert.equal(ledger.filter(x => x.kind === 'payment').length, 1);
+  assert.equal(ledger.filter(x => x.kind === 'earning').length, 1);
+  await ledgerZero();
+  const again = ok(await t.api('POST', '/api/payments/webhook', { paymentId: pay.provider_payment_id }));
+  assert.equal(again.changed, false);
+});
+
+test('12 одинаковых возвратов не списывают деньги дважды', async () => {
+  const id = await orderToConfirm('online', 90_000);
+  ok(await t.api('POST', `/api/orders/${id}/confirm`, {}, client.token));
+  const work = (await t.db.one<any>(
+    "select * from payments where order_id=$1 and kind='work'", [id]))!;
+  ok(await t.api('POST', `/api/dev/mock-pay/${work.provider_payment_id}`));
+  const request = { amount: 10_000, from: 'platform', reason: 'Повторное нажатие возврата' };
+  const url = `/api/admin/payments/${work.id}/refund`;
+  const replies = await Promise.all(Array.from({ length: 12 }, () =>
+    t.api('POST', url, request, admin.token)));
+  assert.ok(replies.every(r => [200, 409].includes(r.status)), JSON.stringify(replies));
+  const paid = (await t.db.one<any>('select * from payments where id=$1', [work.id]))!;
+  assert.equal(paid.refunded_amount, request.amount);
+  assert.equal(t.payments.payments.get(work.provider_payment_id)?.refunded, request.amount);
+  assert.equal((await t.db.query(
+    'select id from payment_refund_requests where payment_id=$1', [work.id])).length, 1);
+  assert.equal((await t.db.query(
+    "select id from ledger_entries where payment_id=$1 and kind='refund'", [work.id])).length, 2);
+  const replay = await t.api('POST', url, request, admin.token);
+  assert.equal(replay.status, 200, 'успешный повтор возвращает уже записанный результат');
+  await ledgerZero();
+});
+
+test('потерянный ответ о возврате оставляет деньги на сверке', async () => {
+  const id = await orderToConfirm('online', 80_000);
+  ok(await t.api('POST', `/api/orders/${id}/confirm`, {}, client.token));
+  const work = (await t.db.one<any>(
+    "select * from payments where order_id=$1 and kind='work'", [id]))!;
+  ok(await t.api('POST', `/api/dev/mock-pay/${work.provider_payment_id}`));
+  const original = t.payments.refund.bind(t.payments);
+  let attempts = 0;
+  t.payments.refund = async (paymentId, amount, key) => {
+    if (paymentId === work.provider_payment_id) {
+      attempts++;
+      throw new Error('transport timeout');
+    }
+    return original(paymentId, amount, key);
+  };
+  try {
+    const url = `/api/admin/payments/${work.id}/refund`;
+    const request = { amount: 5_000, from: 'platform', reason: 'Сеть оборвалась во время возврата' };
+    const first = await t.api('POST', url, request, admin.token);
+    assert.equal(first.body.error, 'refund_unknown');
+    const second = await t.api('POST', url, request, admin.token);
+    assert.equal(second.body.error, 'refund_processing');
+    assert.equal(attempts, 1, 'повтор не вызывает второй перевод');
+    const refs = ok(await t.api('GET', `/api/admin/payments/${work.id}/refunds`, undefined, admin.token));
+    assert.equal(refs[0].status, 'needs_review');
+    assert.equal((await t.db.one<any>('select refunded_amount from payments where id=$1',[work.id]))!.refunded_amount, 0);
+    assert.equal((await t.db.query(
+      "select id from ledger_entries where payment_id=$1 and kind='refund'", [work.id])).length, 0);
+  } finally {
+    t.payments.refund = original;
+  }
+});
+
+test('отложенный банковский возврат проводится только после сверки', async () => {
+  const id = await orderToConfirm('online', 60_000);
+  ok(await t.api('POST', `/api/orders/${id}/confirm`, {}, client.token));
+  const work = (await t.db.one<any>(
+    "select * from payments where order_id=$1 and kind='work'", [id]))!;
+  ok(await t.api('POST', `/api/dev/mock-pay/${work.provider_payment_id}`));
+  const original = t.payments.refund.bind(t.payments);
+  t.payments.refund = async (paymentId, amount, key) => {
+    const r = await original(paymentId, amount, key);
+    t.payments.refunds.get(key)!.status = 'pending';
+    return { id: r.id, status: 'pending' as const };
+  };
+  try {
+    const request = { amount: 7_000, from: 'platform', reason: 'Долгое подтверждение банка' };
+    const url = `/api/admin/payments/${work.id}/refund`;
+    const first = await t.api('POST', url, request, admin.token);
+    assert.equal(first.body.error, 'refund_pending');
+    const list = ok(await t.api('GET',
+      `/api/admin/payments/${work.id}/refunds`, undefined, admin.token));
+    assert.equal(list[0].status, 'pending');
+    assert.equal((await t.db.one<any>(
+      'select refunded_amount from payments where id=$1', [work.id]))!.refunded_amount, 0);
+    t.payments.refunds.get(`refund:${list[0].id}`)!.status = 'succeeded';
+    const reconcileUrl = `/api/admin/payments/${work.id}/refunds/${list[0].id}/reconcile`;
+    ok(await t.api('POST', reconcileUrl, {}, admin.token));
+    ok(await t.api('POST', reconcileUrl, {}, admin.token));
+    assert.equal((await t.db.one<any>(
+      'select refunded_amount from payments where id=$1', [work.id]))!.refunded_amount, 7_000);
+    assert.equal((await t.db.query(
+      "select id from ledger_entries where payment_id=$1 and kind='refund'", [work.id])).length, 2);
+    const stale = ok(await t.api('POST', '/api/payments/webhook',
+      { paymentId: work.provider_payment_id }));
+    assert.equal(stale.changed, false, 'позднее уведомление не сбрасывает refund');
+    assert.equal((await t.db.one<any>(
+      'select status from payments where id=$1', [work.id]))!.status, 'partially_refunded');
+    await ledgerZero();
+  } finally {
+    t.payments.refund = original;
+  }
+});
+
 test('начисление и списание мастеру; выплата не уходит, пока удержания больше начислений', async () => {
   const b0 = ok(await t.api('GET', '/api/performer/balance', undefined, master.token)).to_pay;
   ok(await t.api('POST', `/api/admin/performers/${master.id}/adjust`, { amount: 20_000, reason: 'Компенсация за простой' }, admin.token));
