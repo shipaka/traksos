@@ -84,6 +84,7 @@ const captureReconcile = () => Promise.all([
   app.payments.reconcileCaptures(),
   app.payments.reconcileCancellations(),
   app.payments.reconcileWorkCreations(),
+  app.payments.reconcileCancelledHolds(),
 ]).catch((e) => console.error('[payment-reconciliation]', e));
 const captureTimer = setInterval(() => { void captureReconcile(); }, 30_000);
 void captureReconcile();
