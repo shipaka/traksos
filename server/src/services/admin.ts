@@ -367,6 +367,8 @@ export class AdminService {
         // Наличные: если исполнителю положена часть выезда — это он получит на месте; иначе ничего
         await this.audit(q, admin, 'order.resolve', orderId, { ...p, stage });
       });
+      await this.payments.processCancellationForOrder(orderId)
+        .catch((e) => console.error('[admin-resolve-cancel]', e));
       this.notifier.live(invited, { type: 'order', orderId, status: 'cancelled' });
       await this.orders.systemMessage(orderId, `Поддержка отменила заявку: ${p.reason}`);
       await this.notifier.notify([o.client_id, o.created_by, o.performer_id], { type: 'order', orderId, status: 'cancelled' },
