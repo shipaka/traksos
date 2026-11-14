@@ -664,8 +664,8 @@ export class OrdersService {
     const caseBookings = actor === 'client' || actor === 'admin'
       ? await this.db.query<any>(
           `select b.id, b.number, b.status, b.need, b.amount, b.discount, b.from_order_id
-             from service_bookings b join orders step on step.id=b.from_order_id
-            where step.id=$1 or step.case_root_id=$1
+             from service_bookings b left join orders step on step.id=b.from_order_id
+            where b.case_root_id=$1 or step.id=$1 or step.case_root_id=$1
             order by b.created_at, b.number`, [caseRootId])
       : [];
     const caseServiceStages = caseBookings.map((b: any) => ({
