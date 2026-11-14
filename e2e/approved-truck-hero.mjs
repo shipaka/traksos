@@ -73,8 +73,8 @@ try{
       throw Error(width+'px duplicated background truck image: '+JSON.stringify(check));
     if(width>=900 && check.heroDisplay!=='grid')
       throw Error(width+'px desktop hero grid is missing: '+JSON.stringify(check));
-    if(width<900 && check.firstActionDisplay!=='none')
-      throw Error(width+'px SOS is duplicated inside customer hero: '+JSON.stringify(check));
+    if(width<900 && await page.locator('.tracksos-dashboard-aside .tracksos-primary-help').count()!==1)
+      throw Error(width+'px central roadside help action missing');
     if(check.pageWidth>check.viewport+3)
       throw Error(width+'px horizontal overflow: '+JSON.stringify(check));
     if(width>=900 && (!check.asideVisible||check.asideCards<4))
