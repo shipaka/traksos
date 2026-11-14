@@ -60,6 +60,8 @@ jobs:
         run: node scripts/verify-approved.mjs
       - name: Учебная страховая цепочка · роли, предложения, оплата и PDF
         run: node --import tsx e2e/insurer-preview-state.mjs
+      - name: Учебная цепочка SOS · мастер → эвакуатор и отдельные счета
+        run: node --import tsx e2e/multistage-preview-state.mjs
       - name: Сквозной сценарий в браузере и контроль интерактивности
         run: |
           npx playwright install --with-deps chromium
