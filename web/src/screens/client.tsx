@@ -452,7 +452,7 @@ export function NewOrder({ service }: { service: string }) {
       { enableHighAccuracy: true, timeout: 15_000 },
     );
   }
-  useEffect(locate, []);
+  useEffect(() => { if (!continueFrom) locate(); }, [continueFrom]); // eslint-disable-line
 
   const zone = pricing.data?.zones.find((z: any) => z.id === zoneId);
   const groupAllowed = service !== 'tow' && (zone?.km ?? 0) > 30;
@@ -1055,8 +1055,10 @@ function TaskArchive({ orders }: { orders: any[] }) {
   }
   const loose: any[] = [];
   for (const bk of bookings) {
-    const o = bk.fromOrderId && orders.find((x) => x.id === bk.fromOrderId);
-    if (o && groups.has(root(o))) groups.get(root(o))!.bookings.push(bk); else loose.push(bk);
+    const prior = bk.fromOrderId && orders.find((x) => x.id === bk.fromOrderId);
+    const incident = bk.caseRootId ?? (prior ? root(prior) : null);
+    if (incident && groups.has(incident)) groups.get(incident)!.bookings.push(bk);
+    else loose.push(bk);
   }
   const list = [...groups.values()].sort((x, y) => +new Date(y.orders[y.orders.length - 1].created_at) - +new Date(x.orders[x.orders.length - 1].created_at));
   if (!list.length && !loose.length) return <div className="empty">Здесь появятся прошлые задачи: консультация, выезды и ремонт по одной поломке — вместе.</div>;

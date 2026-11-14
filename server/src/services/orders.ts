@@ -467,6 +467,8 @@ export class OrdersService {
     const o = await this.mustBePerformer(user, orderId);
     if (o.service === 'consult') throw bad('consult_fixed', 'Цена консультации фиксированная. Закройте её с подсказкой.');
     const to = transition(o.status, 'propose_amount', 'performer');
+    if (['cause_found', 'not_found'].includes(p.result ?? '') && (p.note?.trim().length ?? 0) < 10)
+      throw bad('result_reason_required', 'Напишите, почему неисправность нельзя устранить на месте (не меньше 10 символов)');
     const extras = (p.extras ?? []).map((x) => ({ name: x.name.trim(), amount: x.amount })).filter((x) => x.name && x.amount > 0);
     if (extras.some((x) => !Number.isInteger(x.amount))) throw bad('bad_amount', 'Сумма — целое число копеек');
     const bill = await this.billFor(o, extras);

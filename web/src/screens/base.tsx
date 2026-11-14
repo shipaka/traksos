@@ -496,7 +496,7 @@ export function ServicesList() {
 
   return (
     <main>
-      <Back to="" label="Главная" />
+      <Back to={caseOrder ? `order/${caseOrder}` : from ? `order/${from}` : ''} label={caseOrder || from ? 'К заявке' : 'Главная'} />
       <div>
         <h1>Найти рембазу</h1>
         <div className="sub">Только ремзоны, с которыми ТракSOS договорился лично. Цену сервис скажет после осмотра.</div>
@@ -604,7 +604,7 @@ export function CenterPage({ id }: { id: string }) {
   const staffInv = Object.entries(d.staff ?? {}).filter(([, v]) => v === 'invite').map(([k]) => NEEDS[k]).filter(Boolean);
   return (
     <main>
-      <Back to="services" label="Сервисы" />
+      <Back to={caseOrder ? `services?case=${encodeURIComponent(caseOrder)}` : from ? `services?from=${encodeURIComponent(from)}` : 'services'} label="Сервисы" />
       <div>
         <h1>{d.name}</h1>
         <div className="sub">{d.address} · {d.hours}{d.distanceKm != null ? ` · до вас ${d.distanceKm} км` : ''}</div>
@@ -647,6 +647,7 @@ export function BookForm({ id }: { id: string }) {
   const cars = useLoad(() => get('/api/vehicles'), []);
   const from = query().get('from');
   const caseOrder = query().get('case');
+  const linkedOrder = useLoad(() => caseOrder ? get(`/api/orders/${caseOrder}`) : Promise.resolve(null), [caseOrder]);
   const { busy, run } = useAction();
   const [vehicleId, setVehicle] = useState('');
   const [need, setNeed] = useState(query().get('need') ?? '');
@@ -654,7 +655,12 @@ export function BookForm({ id }: { id: string }) {
   const [time, setTime] = useState('');
   const [arrival, setArrival] = useState<'self' | 'tow'>('self');
   const [comment, setComment] = useState('');
-  useEffect(() => { if (cars.data?.length && !vehicleId) setVehicle(cars.data[0].id); }, [cars.data]); // eslint-disable-line
+  // A workshop continuation must keep the vehicle from the same incident,
+  // rather than silently selecting the first unrelated truck in the garage.
+  useEffect(() => {
+    if (caseOrder && linkedOrder.data?.vehicleId) setVehicle(linkedOrder.data.vehicleId);
+    else if (cars.data?.length && !vehicleId && !caseOrder) setVehicle(cars.data[0].id);
+  }, [cars.data, linkedOrder.data?.vehicleId, caseOrder]); // eslint-disable-line
   if (!c.data) return <main><Back to={`services/${id}`} label="Сервис" /><Loading error={c.error} /></main>;
   const d = c.data;
   const needs = Object.entries(NEEDS).filter(([k]) => k === 'other' || (d.staff?.[k] && d.staff[k] !== 'none'));
@@ -664,7 +670,7 @@ export function BookForm({ id }: { id: string }) {
   }
   return (
     <main>
-      <Back to={`services/${id}`} label={d.name} />
+      <Back to={`services/${id}${caseOrder ? `?case=${encodeURIComponent(caseOrder)}` : from ? `?from=${encodeURIComponent(from)}` : ''}`} label={d.name} />
       <div><h1>Запись в сервис</h1><div className="sub">Рембаза «{d.name}» · {d.address}</div></div>
       <div className="card">
         <Field label="Машина" group>
