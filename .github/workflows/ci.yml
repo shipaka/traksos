@@ -82,6 +82,7 @@ jobs:
           node e2e/cabinet-visual-sweep.mjs
           node e2e/cabinet-logout-and-shop.mjs
           node e2e/approved-truck-hero.mjs
+          node e2e/visual-text-geometry.mjs
           node e2e/preview-login.mjs
       - name: Снимки экранов каждой проверяемой версии
         if: always()
