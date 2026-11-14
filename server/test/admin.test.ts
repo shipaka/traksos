@@ -108,6 +108,62 @@ test('12 одновременных webhook: один платёж и один �
   assert.equal(again.changed, false);
 });
 
+test('12 одинаковых возвратов не списывают деньги дважды', async () => {
+  const id = await orderToConfirm('online', 90_000);
+  ok(await t.api('POST', `/api/orders/${id}/confirm`, {}, client.token));
+  const work = (await t.db.one<any>(
+    "select * from payments where order_id=$1 and kind='work'", [id]))!;
+  ok(await t.api('POST', `/api/dev/mock-pay/${work.provider_payment_id}`));
+  const request = { amount: 10_000, from: 'platform', reason: 'Повторное нажатие возврата' };
+  const url = `/api/admin/payments/${work.id}/refund`;
+  const replies = await Promise.all(Array.from({ length: 12 }, () =>
+    t.api('POST', url, request, admin.token)));
+  assert.ok(replies.every(r => [200, 409].includes(r.status)), JSON.stringify(replies));
+  const paid = (await t.db.one<any>('select * from payments where id=$1', [work.id]))!;
+  assert.equal(paid.refunded_amount, request.amount);
+  assert.equal(t.payments.payments.get(work.provider_payment_id)?.refunded, request.amount);
+  assert.equal((await t.db.query(
+    'select id from payment_refund_requests where payment_id=$1', [work.id])).length, 1);
+  assert.equal((await t.db.query(
+    "select id from ledger_entries where payment_id=$1 and kind='refund'", [work.id])).length, 2);
+  const replay = await t.api('POST', url, request, admin.token);
+  assert.equal(replay.status, 200, 'успешный повтор возвращает уже записанный результат');
+  await ledgerZero();
+});
+
+test('потерянный ответ о возврате оставляет деньги на сверке', async () => {
+  const id = await orderToConfirm('online', 80_000);
+  ok(await t.api('POST', `/api/orders/${id}/confirm`, {}, client.token));
+  const work = (await t.db.one<any>(
+    "select * from payments where order_id=$1 and kind='work'", [id]))!;
+  ok(await t.api('POST', `/api/dev/mock-pay/${work.provider_payment_id}`));
+  const original = t.payments.refund.bind(t.payments);
+  let attempts = 0;
+  t.payments.refund = async (paymentId, amount, key) => {
+    if (paymentId === work.provider_payment_id) {
+      attempts++;
+      throw new Error('transport timeout');
+    }
+    return original(paymentId, amount, key);
+  };
+  try {
+    const url = `/api/admin/payments/${work.id}/refund`;
+    const request = { amount: 5_000, from: 'platform', reason: 'Сеть оборвалась во время возврата' };
+    const first = await t.api('POST', url, request, admin.token);
+    assert.equal(first.body.error, 'refund_unknown');
+    const second = await t.api('POST', url, request, admin.token);
+    assert.equal(second.body.error, 'refund_processing');
+    assert.equal(attempts, 1, 'повтор не вызывает второй перевод');
+    const refs = ok(await t.api('GET', `/api/admin/payments/${work.id}/refunds`, undefined, admin.token));
+    assert.equal(refs[0].status, 'needs_review');
+    assert.equal((await t.db.one<any>('select refunded_amount from payments where id=$1',[work.id]))!.refunded_amount, 0);
+    assert.equal((await t.db.query(
+      "select id from ledger_entries where payment_id=$1 and kind='refund'", [work.id])).length, 0);
+  } finally {
+    t.payments.refund = original;
+  }
+});
+
 test('начисление и списание мастеру; выплата не уходит, пока удержания больше начислений', async () => {
   const b0 = ok(await t.api('GET', '/api/performer/balance', undefined, master.token)).to_pay;
   ok(await t.api('POST', `/api/admin/performers/${master.id}/adjust`, { amount: 20_000, reason: 'Компенсация за простой' }, admin.token));
