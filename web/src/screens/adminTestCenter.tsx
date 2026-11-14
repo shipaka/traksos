@@ -5,6 +5,7 @@ import { PerformerTrainingCabinet } from './performerTrainingCabinet.tsx';
 import { FleetTrainingCabinet } from './fleetTrainingCabinet.tsx';
 import { InspectionTrainingCabinet } from './inspectionTrainingCabinet.tsx';
 import { ModeratorTrainingCabinet } from './moderatorTrainingCabinet.tsx';
+import { MasterServiceTrainingCabinet } from './masterServiceTrainingCabinet.tsx';
 
 // Admin-only DEMONSTRATION. This file deliberately has no API imports or fetch:
 // even realistic-looking actions never touch real accounts, jobs, SMS or money.
@@ -111,6 +112,7 @@ export function AdminTestCenter({roleId}:{roleId?:string}) {
   if(role.id==='owner')return <FleetTrainingCabinet/>;
   if(role.id==='inspection')return <InspectionTrainingCabinet/>;
   if(role.id==='moderator')return <ModeratorTrainingCabinet/>;
+  if(role.id==='master_service')return <MasterServiceTrainingCabinet/>;
   return <SandboxCabinet key={role.id} role={role}/>;
 }
 
