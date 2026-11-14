@@ -86,6 +86,28 @@ test('возврат: частичный за счёт площадки и за 
   await ledgerZero();
 });
 
+test('12 одновременных webhook: один платёж и один комплект проводок', async () => {
+  const id = await orderToConfirm('online', 70_000);
+  ok(await t.api('POST', `/api/orders/${id}/confirm`, {}, client.token));
+  const pay = (await t.db.one<{ provider_payment_id: string }>(
+    "select provider_payment_id from payments where order_id=$1 and kind='work'", [id]))!;
+  t.payments.simulate(pay.provider_payment_id, 'captured');
+  const replies = await Promise.all(Array.from({ length: 12 }, () =>
+    t.api('POST', '/api/payments/webhook', { paymentId: pay.provider_payment_id })));
+  assert.ok(replies.every(r => r.status === 200), JSON.stringify(replies));
+  assert.equal(replies.filter(r => r.body.changed).length, 1);
+  const payouts = await t.db.query('select id from payouts where order_id=$1', [id]);
+  assert.equal(payouts.length, 1, 'повтор не создаёт вторую выплату');
+  const paid = await t.db.query("select id from order_events where order_id=$1 and type='paid'", [id]);
+  assert.equal(paid.length, 1, 'оплата подтверждена один раз');
+  const ledger = await t.db.query<{ kind: string }>('select kind from ledger_entries where order_id=$1', [id]);
+  assert.equal(ledger.filter(x => x.kind === 'payment').length, 1);
+  assert.equal(ledger.filter(x => x.kind === 'earning').length, 1);
+  await ledgerZero();
+  const again = ok(await t.api('POST', '/api/payments/webhook', { paymentId: pay.provider_payment_id }));
+  assert.equal(again.changed, false);
+});
+
 test('начисление и списание мастеру; выплата не уходит, пока удержания больше начислений', async () => {
   const b0 = ok(await t.api('GET', '/api/performer/balance', undefined, master.token)).to_pay;
   ok(await t.api('POST', `/api/admin/performers/${master.id}/adjust`, { amount: 20_000, reason: 'Компенсация за простой' }, admin.token));
