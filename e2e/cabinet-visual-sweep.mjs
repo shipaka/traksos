@@ -86,6 +86,24 @@ try {
         await page.waitForTimeout(450);
         await page.screenshot({path:'e2e/shots/cabinet-ux/master-settings-'+width+'.png',fullPage:true});
       }
+      // The owner reviews the *actual* SOS selector and nested specialties,
+      // not a mockup. Capture both tested viewport widths.
+      if (entry.name === 'owner') {
+        await page.goto(BASE+'/#/sos',{waitUntil:'domcontentloaded'});
+        await page.locator('.client-sos-choices').waitFor();
+        if (await page.locator('.client-sos-choices button').count() !== 3)
+          throw Error('SOS must contain exactly three assistance directions');
+        await verify('sos-directions');
+        await page.waitForTimeout(450);
+        await page.screenshot({path:'e2e/shots/cabinet-ux/client-sos-directions-'+width+'.png',fullPage:true});
+        await page.getByRole('button',{name:/Выездной мастер/}).click();
+        await page.locator('.client-sos-master-services').waitFor();
+        if (await page.locator('.client-sos-choices').count() !== 0)
+          throw Error('SOS alternatives must hide when master specialties are open');
+        await verify('sos-master-specialties');
+        await page.waitForTimeout(450);
+        await page.screenshot({path:'e2e/shots/cabinet-ux/client-sos-master-'+width+'.png',fullPage:true});
+      }
       await context.close();
     }
   }
