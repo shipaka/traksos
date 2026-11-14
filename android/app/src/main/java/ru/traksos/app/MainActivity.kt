@@ -149,6 +149,9 @@ class MainActivity : AppCompatActivity() {
     }
     private lateinit var bundledAssets: WebViewAssetLoader
     private var startupOverlay: View? = null
+    // Keep the agreed seasonal scene on screen long enough to notice.
+    private var startupShownAt = 0L
+    private val startupMinimumVisibleMs = 3_500L
     private var fileUploadCallback: ValueCallback<Array<Uri>>? = null
     private val filePicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val data = result.data
@@ -195,6 +198,7 @@ class MainActivity : AppCompatActivity() {
         }
         root.addView(web, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
         startupOverlay = SeasonalStartupOverlay.build(this)
+        startupShownAt = SystemClock.elapsedRealtime()
         root.addView(startupOverlay, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
         setContentView(root)
         SeasonalStartupOverlay.refreshFromYandex(this, startupOverlay)
@@ -246,8 +250,13 @@ class MainActivity : AppCompatActivity() {
                 // По адресу может отвечать что угодно (пустой домен, заглушка) — проверяем, что это наш сайт
                 // Предупреждение Codespaces «Вы собираетесь получить доступ к порту…» — пропускаем, там кнопка «Продолжить»
                 view.evaluateJavascript("!!document.querySelector('meta[name=traksos-app]') || document.title.indexOf('Codespaces') === 0") { ok ->
-                    if (ok == "true") hideStartupOverlay()
-                    else showOffline(getString(R.string.server_not_traksos))
+                    if (ok == "true") {
+                        // Page is ready, but avoid flashing the approved weather artwork.
+                        // Errors still dismiss it immediately in showOffline().
+                        val shown = SystemClock.elapsedRealtime() - startupShownAt
+                        val remaining = (startupMinimumVisibleMs - shown).coerceAtLeast(0L)
+                        startupOverlay?.postDelayed({ if (!failed) hideStartupOverlay() }, remaining)
+                    } else showOffline(getString(R.string.server_not_traksos))
                 }
             }
             override fun onReceivedError(view: WebView, req: WebResourceRequest, err: WebResourceError) {
