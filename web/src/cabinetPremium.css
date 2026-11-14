@@ -845,3 +845,34 @@
   .client-direction-card:hover,.client-direction-card:focus-visible,
   .client-specialization-card:hover{transform:none!important;}
 }
+
+
+/* Approved Scania review: a previous background layer also painted the truck
+   underneath the actual photo. Keep exactly one full-size image on both widths. */
+.app.role-client .desktop-content > .client-home > .desktop-hero{
+  background-image:
+    radial-gradient(ellipse at 79% 20%,rgba(34,179,214,.16),transparent 56%),
+    linear-gradient(125deg,#081b30,#12334b 73%,#102d46) !important;
+  background-color:#0b2740;
+}
+@media(min-width:900px){
+  .app.role-client .desktop-content > .client-home > .desktop-hero{
+    display:grid !important;
+    grid-template-columns:minmax(0,1.2fr) minmax(270px,.8fr);
+  }
+  .app.role-client .desktop-content > .client-home > .desktop-hero > .client-hero-art{
+    min-width:0;max-width:100%;overflow:hidden;
+  }
+  .app.role-client .desktop-content > .client-home > .desktop-hero > .client-hero-art img{
+    max-width:100%;object-fit:contain;object-position:center right;
+  }
+}
+@media(max-width:899px){
+  .app.role-client .desktop-content > .client-home > .desktop-hero{
+    display:flex !important;
+    flex-direction:column;
+  }
+  .app.role-client .desktop-content > .client-home > .desktop-hero > .client-hero-art{
+    max-width:100%;overflow:hidden;
+  }
+}
