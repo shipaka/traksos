@@ -43,6 +43,9 @@ export function Home() {
             <a className="desktop-outline-action" href="#/new/diag">+ Создать заявку</a>
           </div>
         </div>
+        <div className="client-hero-art" aria-label="Фирменная Scania R520 TrackSOS на дороге">
+          <img src="/tracksos-approved-scania-r520.webp" alt="Грузовик Scania R520 TrackSOS на дороге" loading="eager" decoding="async" />
+        </div>
       </section>
 
       <section className="desktop-quick-links" aria-label="Быстрый доступ">
@@ -86,6 +89,25 @@ export function Home() {
             <a href="#/sos" className="desktop-aside-cta">Перейти к SOS →</a>
           </div>
           <div className="desktop-aside-card"><h2>Ваш кабинет</h2><p>Профиль и уведомления доступны в личном кабинете.</p><a href="#/profile" className="desktop-aside-cta">Открыть профиль →</a></div>
+          <section className="desktop-aside-card desktop-journey-card" aria-label="Быстрые действия с транспортом">
+            <span className="desktop-aside-kicker">ВАШИ ИНСТРУМЕНТЫ</span>
+            <h2>Техника и заявки</h2>
+            <p>Не нужно искать нужный раздел — всё, что связано с вашим транспортом, рядом.</p>
+            <div className="desktop-journey-links">
+              <a href="#/garage"><b>Гараж и автомобили</b><small>Ваш транспорт и документы</small><span aria-hidden="true">›</span></a>
+              <a href="#/orders"><b>История обращений</b><small>Работы, статусы и детали заявок</small><span aria-hidden="true">›</span></a>
+              <a href="#/services"><b>СТО и ремонт</b><small>Сервисы и запись</small><span aria-hidden="true">›</span></a>
+            </div>
+          </section>
+          <section className="desktop-aside-card desktop-journey-card" aria-label="Поддержка и информация">
+            <span className="desktop-aside-kicker">ВСЕГДА ПОД РУКОЙ</span>
+            <h2>Помощь и информация</h2>
+            <div className="desktop-journey-links">
+              <a href="#/notifications"><b>Уведомления</b><small>Изменения по заявкам</small><span aria-hidden="true">›</span></a>
+              <a href="#/support"><b>Связаться с поддержкой</b><small>Обращения и вопросы</small><span aria-hidden="true">›</span></a>
+              <a href="#/help"><b>Как работает TrackSOS</b><small>Ответы на частые вопросы</small><span aria-hidden="true">›</span></a>
+            </div>
+          </section>
         </aside>
       </div>
 
