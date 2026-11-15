@@ -1,4 +1,6 @@
 import './styles.css';
+import './reducedMotion.css';
+if (localStorage.getItem('traksos.reduceMotion') === '1') document.documentElement.classList.add('traksos-reduced-motion');
 import './cabinetPremium.css';
 import './trackVisual.css';
 import './trackPolish.css';
