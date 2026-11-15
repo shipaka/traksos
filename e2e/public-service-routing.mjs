@@ -33,7 +33,62 @@ try {
       if(await next.count()!==1)throw Error(id+': missing registration CTA');
       if(await next.getAttribute('href')!==(id==='parts'?'#/login':'#/register'))throw Error(id+': wrong registration destination');
     }
+    // Three lower tiles have real information pages, not blind registration.
+    for(const [selector,destination,heading] of [
+      ['.public-track-parts','parts','Запчасти'],
+      ['.public-track-inspection','inspection','Техосмотр грузового транспорта'],
+      ['.public-track-guide','guide','Как работает TrakSOS'],
+    ]) {
+      await page.goto(BASE+'/#/');
+      await page.locator(selector).click();
+      await page.waitForURL('**/#/explore/'+destination);
+      await page.getByRole('heading',{name:heading,exact:destination!=='parts'}).waitFor();
+      if(!await page.locator('.guest-explore-section').count())
+        throw Error(destination+': no informational content behind landing tile');
+    }
     await page.goto(BASE+'/#/');
+    await page.locator('.public-track-insurance').click();
+    await page.waitForURL('**/#/register');
+    await page.getByRole('heading',{name:'Регистрация в TrakSOS'}).waitFor();
+    if(await page.evaluate(()=>sessionStorage.getItem('traksos.pendingLandingAction'))!=='insurance')
+      throw Error('Insurance request intent lost while opening registration');
+
+    // The hero controls must actually change photographs and selected dot.
+    await page.goto(BASE+'/#/');
+    const bgImage=()=>page.locator('.public-hero-visual').evaluate(el=>getComputedStyle(el).backgroundImage);
+    const firstPhoto=await bgImage();
+    if(await page.locator('.public-hero-dots button').count()!==3)throw Error('Hero must show three selectable photographs');
+    await page.getByRole('button',{name:'Следующее фото'}).click();
+    const secondPhoto=await bgImage();
+    if(!secondPhoto.includes('tracksos-approved-scenic-hero') || secondPhoto===firstPhoto)
+      throw Error('Hero next arrow does not change photograph: '+secondPhoto);
+    if(await page.locator('.public-hero-dot[aria-pressed="true"]').count()!==1)
+      throw Error('Hero active dot state not updated');
+    await page.getByRole('button',{name:'Следующее фото'}).click();
+    const thirdPhoto=await bgImage();
+    if(!thirdPhoto.includes('tracksos-approved-scania-r520') || thirdPhoto===secondPhoto)
+      throw Error('Hero next arrow does not show third photograph');
+    await page.getByRole('button',{name:'Предыдущее фото'}).click();
+    if(await bgImage()!==secondPhoto)throw Error('Hero previous arrow did not reverse photograph');
+    await page.getByRole('button',{name:/Показать фото 1:/}).click();
+    if(await bgImage()!==firstPhoto)throw Error('Hero dot did not select original photograph');
+
+    // Benefit cards use recognizable vector artwork, no unexplained square glyph.
+    if(await page.locator('.public-benefit-verified svg').count()!==1 ||
+       await page.locator('.public-benefit-unified svg').count()!==1)
+      throw Error('Second and third benefit illustrations are not vectors');
+    if(width<900) {
+      for(const tile of ['parts','inspection','guide']) {
+        const geometry=await page.locator('.public-track-'+tile).evaluate(el=>{
+          const art=el.querySelector('.public-track-extra-art')?.getBoundingClientRect();
+          const label=el.querySelector('b')?.getBoundingClientRect();
+          return art&&label ? {artBottom:art.bottom,labelTop:label.top} : null;
+        });
+        if(!geometry || geometry.artBottom>geometry.labelTop+3)
+          throw Error('Art overlaps text in '+tile+': '+JSON.stringify(geometry));
+      }
+    }
+
     const map=page.locator('.public-map-static-link');
     if(!(await map.getAttribute('href')).includes('yandex.ru/maps/'))throw Error('Static map is not linked to Yandex Maps');
     if(!(await map.getAttribute('target'))?.includes('_blank'))throw Error('Map must open an external tab');

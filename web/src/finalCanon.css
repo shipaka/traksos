@@ -1281,3 +1281,108 @@
   outline:3px solid #66ecff;
   outline-offset:3px;
 }
+
+
+/* Public landing: functional Scania photographs; keep the approved first frame. */
+.guest-app .public-landing .public-hero-visual.public-hero-slide-road {
+  background-image:url('../public/tracksos-approved-scenic-hero.webp')!important;
+  background-position:center center!important;
+  background-size:contain!important;
+}
+.guest-app .public-landing .public-hero-visual.public-hero-slide-truck {
+  background-image:url('../public/tracksos-approved-scania-r520.webp')!important;
+  background-position:center center!important;
+  background-size:contain!important;
+}
+.guest-app .public-landing .public-hero-carousel {
+  position:absolute;z-index:5;right:14px;bottom:14px;
+  display:flex;align-items:center;gap:7px;padding:5px 7px 5px 12px;
+  border-radius:999px;border:1px solid #397896;
+  background:rgba(4,19,37,.94);box-shadow:0 6px 21px #0009;
+}
+.guest-app .public-landing .public-hero-dots {display:flex;align-items:center;gap:6px;margin-right:4px}
+.guest-app .public-landing .public-hero-dot {
+  display:block;width:8px;height:8px;padding:0;min-width:8px;border:0;
+  border-radius:50%;background:#6d839b;cursor:pointer;
+}
+.guest-app .public-landing .public-hero-dot.active {
+  background:#14e4f5;box-shadow:0 0 10px #00dfff9c;
+}
+.guest-app .public-landing :is(.public-hero-prev,.public-hero-next) {
+  display:grid;place-items:center;width:26px;height:26px;padding:0;
+  border:1px solid #7190a6;border-radius:50%;background:#07172d;
+  color:#e7faff;font-size:21px;line-height:1;cursor:pointer;
+}
+.guest-app .public-landing .public-hero-carousel button:focus-visible{
+  outline:2px solid #70f1ff;outline-offset:3px;
+}
+.guest-app .public-landing .public-hero-slide-status{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
+}
+
+/* Real vector illustrations instead of unsupported square/glyph characters. */
+.guest-app .public-landing .public-benefit-icon svg{
+  display:block;width:65%;height:65%;overflow:visible;
+  stroke:currentColor;filter:drop-shadow(0 0 4px #13dcf070);
+}
+
+/* Secondary tiles: the artwork has its own reserved area, never over the label. */
+.guest-app .public-landing .public-track-insurance,
+.guest-app .public-landing .public-track-extra{
+  text-decoration:none!important;color:#f5fbff!important;
+}
+.guest-app .public-landing .public-track-extras-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;
+}
+.guest-app .public-landing .public-track-extra{
+  position:relative;display:flex!important;flex-direction:column;
+  justify-content:center!important;align-items:flex-start;
+  min-width:0;min-height:120px!important;gap:5px;
+  padding:17px 18px 17px 38%!important;overflow:hidden;
+}
+.guest-app .public-landing .public-track-extra-art{
+  position:absolute!important;inset:10px auto 10px 10px!important;
+  width:34%!important;height:auto!important;
+  background-position:center!important;background-size:contain!important;
+  background-repeat:no-repeat!important;opacity:.9!important;pointer-events:none;
+}
+.guest-app .public-landing .public-track-extra :is(b,small){
+  position:relative;z-index:2;min-width:0;max-width:100%;
+}
+.guest-app .public-landing .public-track-extra>span:last-child {
+  z-index:3;top:7px;right:9px;pointer-events:none;
+}
+@media(max-width:899px) {
+  .guest-app .public-landing .public-hero-carousel{
+    right:10px;bottom:10px;gap:6px;padding:5px 7px;
+  }
+  .guest-app .public-landing .public-track-extras-grid {gap:8px}
+  .guest-app .public-landing .public-track-extra{
+    min-height:156px!important;
+    padding:88px 9px 11px!important;
+    justify-content:flex-end!important;
+    gap:4px!important;
+  }
+  .guest-app .public-landing .public-track-extra-art{
+    inset:7px 6px auto 6px!important;
+    width:calc(100% - 12px)!important;height:76px!important;
+    background-size:contain!important;background-position:center!important;
+    opacity:.94!important;
+  }
+  .guest-app .public-landing .public-track-extra b {
+    font-size:clamp(11px,3.1vw,14px)!important;
+    line-height:1.2!important;
+  }
+  .guest-app .public-landing .public-track-extra small{
+    font-size:clamp(9px,2.3vw,11px)!important;
+    line-height:1.24!important;
+  }
+}
+@media(max-width:350px){
+  .guest-app .public-landing .public-track-extra{padding-left:6px!important;padding-right:6px!important}
+  .guest-app .public-landing .public-track-extras-grid{gap:6px}
+}
+@media(prefers-reduced-motion:reduce){
+  .guest-app .public-landing .public-hero-carousel button{transition:none!important}
+}
