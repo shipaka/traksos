@@ -12,6 +12,8 @@ docker compose version >/dev/null 2>&1 || fail "Docker Compose unavailable"
 [[ -z "$(git status --porcelain --untracked-files=no)" ]] || fail "Tracked local changes detected. Resolve them before release."
 [[ -f deploy/.env ]] || fail "deploy/.env missing (server secrets were NOT created or modified)"
 [[ -f deploy/docker-compose.yml ]] || fail "Compose file missing"
+# Baked into the same release image for both prod and isolated test instances.
+export TRAKSOS_RELEASE_REV="$(git rev-parse HEAD)"
 cd deploy
 docker compose config --quiet || fail "Invalid Compose configuration"
 # Release lock: refuse to update while the approved shop is unexpectedly open.
@@ -58,4 +60,28 @@ echo "OK: application API answers /api/health inside the container."
 bash ./verify-shop-closed.sh || fail "Shop lock guard failed after deployment; investigate without restoring over live data"
 docker compose ps
 echo "Release finished. Verify the public site from a browser and run: bash deploy/doctor.sh (from project root)."
+# Optional sandbox uses the SAME locally built image as production. Never
+# build a second frontend for tests. If sandbox is not provisioned, leave it off.
+if [[ -f .env.sandbox && -f docker-compose.sandbox.yml && -n "${SANDBOX_URL:-}" ]]; then
+  sandbox_id="$(docker compose -f docker-compose.yml -f docker-compose.sandbox.yml --profile sandbox ps -q sandbox-app)"
+  if [[ -n "$sandbox_id" && "$(docker inspect -f '{{.State.Running}}' "$sandbox_id" 2>/dev/null)" == true ]]; then
+    echo "Updating isolated test app from the very same image ..."
+    docker compose -f docker-compose.yml -f docker-compose.sandbox.yml --profile sandbox up -d --no-deps sandbox-app ||
+      fail "Production updated; sandbox restart failed. Fix sandbox before role testing."
+    matched=0
+    for attempt in $(seq 1 30); do
+      if docker compose -f docker-compose.yml -f docker-compose.sandbox.yml --profile sandbox exec -T sandbox-app \
+         node -e "fetch('http://127.0.0.1:8080/api/health').then(async r=>{const j=await r.json();process.exit(r.ok&&j.db&&j.sandbox&&j.buildRevision===process.env.TRAKSOS_BUILD_REV?0:1)}).catch(()=>process.exit(1))" >/dev/null 2>&1; then
+        matched=1
+        break
+      fi
+      sleep 2
+    done
+    [[ "$matched" == 1 ]] ||
+      fail "Production updated; sandbox health/version mismatch. Test role access disabled until fixed."
+    echo "Sandbox and production now run the same release commit: $TRAKSOS_RELEASE_REV"
+  else
+    echo "Sandbox is configured but not yet running; no simulated user data was touched."
+  fi
+fi
 echo "SMS provider, admin account and Android push still require separate live checks."
