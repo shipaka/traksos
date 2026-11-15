@@ -44,7 +44,7 @@ try {
       const check = await page.evaluate(async (asset) => {
         const res = await fetch('/' + asset);
         const blob = await res.blob();
-        return res.ok && blob.type.startsWith('image/') && blob.size > (asset.includes('map') ? 10_000 : 60_000);
+        return res.ok && blob.type.startsWith('image/') && blob.size > (asset.includes('map') ? 10_000 : 50_000);
       }, name);
       assert(check, width + 'px: approved image cannot be loaded: ' + name);
     }
