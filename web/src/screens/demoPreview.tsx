@@ -38,7 +38,7 @@ export function DemoPreviewGate({ roleId }: {roleId?:string}) {
 
   const unlock=async(e:FormEvent<HTMLFormElement>)=>{
     e.preventDefault();
-    if(busy || !/^\\d{10}$/.test(code))return;
+    if(busy || !/^\d{10}$/.test(code))return;
     setBusy(true);setError('');
     try {
       const result=await demoRequest('/api/public/demo/unlock',{code});
@@ -78,7 +78,7 @@ export function DemoPreviewGate({ roleId }: {roleId?:string}) {
       <input id="operator-demo-code" className="field" type="password" inputMode="numeric"
         autoComplete="off" pattern="[0-9]{10}" maxLength={10}
         placeholder="10 цифр" required value={code}
-        onChange={e=>setCode(e.target.value.replace(/\\D/g,'').slice(0,10))} />
+        onChange={e=>setCode(e.target.value.replace(/\D/g,'').slice(0,10))} />
       {error&&<div className="banner bad" role="alert">{error}</div>}
       <button type="submit" className="btn" disabled={busy||code.length!==10}>{busy?'Проверяем…':'Открыть тестовые кабинеты'}</button>
       <a href="#/" className="btn ghost small">← На главную</a>
