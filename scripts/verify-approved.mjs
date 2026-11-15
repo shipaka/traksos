@@ -49,6 +49,9 @@ const finalCss = await read('web/src/finalCanon.css');
 const css = await read('web/src/styles.css');
 const shell = await read('web/src/main.tsx');
 const demo = await read('web/src/screens/adminTestCenter.tsx');
+const serviceDemo = await read('web/src/demo/servicePreviewApi.ts');
+expect(!/\bstructuredClone\s*\(/.test(serviceDemo),
+  'Android 10 WebView starts without unavailable structuredClone in admin demo module');
 expect(shell.includes("const serviceSandbox = isAdmin && a === 'admin' && b === 'test-center' && route[2] === 'service'") &&
   shell.includes("b === 'test-center' ? (serviceSandbox ? <ServicePreviewPage section={route[3]} sub={route[4]} id={route[5]} /> : <AdminTestCenter roleId={route[2]} />)"),
   'admin-only test center and genuine, isolated service role are routed explicitly');
