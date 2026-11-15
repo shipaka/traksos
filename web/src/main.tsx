@@ -368,7 +368,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         {!me && !isAuthEntry && <nav className="guest-site-nav" aria-label="Разделы TrakSOS">
           {TOP_CATALOGUE.map(group => <details key={group.title} className="guest-nav-group"
             open={openGuestGroup === group.title}
-            onMouseEnter={() => { if (window.matchMedia('(hover: hover)').matches) setOpenGuestGroup(group.title); }}
+            onMouseEnter={() => { if (window.matchMedia('(hover: hover)').matches && openGuestGroup && openGuestGroup !== group.title) setOpenGuestGroup(group.title); }}
             onMouseLeave={() => setOpenGuestGroup(current => current === group.title ? null : current)}
             onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpenGuestGroup(null); }}
             onKeyDown={event => { if (event.key === 'Escape') { setOpenGuestGroup(null); (event.currentTarget.querySelector('summary') as HTMLElement | null)?.focus(); event.preventDefault(); } }}>
