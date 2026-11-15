@@ -103,6 +103,20 @@ export class DocumentsService {
     return this.mine(user);
   }
 
+  /** Voluntary verification: remove all confidential images and revoke verification. */
+  async deleteConfidential(user: AuthUser) {
+    await this.db.tx(async (q) => {
+      await q.query('delete from documents where user_id=$1', [user.id]);
+      await q.query(`update performer_profiles
+        set verification='pending', verification_note=null, verified_at=null, submitted_at=null,
+            line_status=case when line_status='on_job' then line_status else 'offline' end
+        where user_id=$1`, [user.id]);
+      await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
+        [user.id, 'privacy.confidential_documents_deleted', user.id, {}]);
+    });
+    return { ok: true };
+  }
+
   /** Файл: владельцу — всегда, модератору — с записью в журнал */
   async file(user: AuthUser, id: string) {
     const row = await this.db.one('select * from documents where id=$1', [id]);
