@@ -30,6 +30,25 @@ const JOIN_ROLES = [
   { id: 'insurer', name: 'Страховой агент', hint: 'Оформление полисов и страховых заявок' },
 ] as const;
 type JoinRole = (typeof JOIN_ROLES)[number]['id'];
+const PARTNER_SHOWCASES: Record<JoinRole,{tag:string;title:string;description:string;imageLabel:string}> = {
+  tow: {tag:'01 · ЭВАКУАТОРЩИК',title:'Эвакуация тяжёлой техники',
+    description:'Принимайте заявки на эвакуацию грузовиков, планируйте выезды и контролируйте выполнение заказов.',
+    imageLabel:'Утверждённая кинематографичная иллюстрация эвакуатора TrakSOS — вариант 1'},
+  master: {tag:'04 · ВЫЕЗДНОЙ МАСТЕР',title:'Ваши навыки востребованы',
+    description:'Заявки по специализациям, диагностика транспорта и удобный рабочий кабинет выездного мастера.',
+    imageLabel:'Утверждённая иллюстрация мастера с цифровым кабинетом TrakSOS — вариант 4'},
+  service: {tag:'05 · СТО И СЕРВИС',title:'Новые клиенты для вашей СТО',
+    description:'Онлайн-запись, обращения клиентов и управление грузовым сервисом.',
+    imageLabel:'Утверждённая иллюстрация сервисного центра TrakSOS — вариант 5'},
+  insurer: {tag:'07 · СТРАХОВОЙ АГЕНТ',title:'Страхование грузового транспорта',
+    description:'Оформление страховых обращений, документы и работа с заявками в одном месте.',
+    imageLabel:'Утверждённая иллюстрация страхового агента TrakSOS — вариант 7'},
+};
+const DEFAULT_PARTNER_SHOWCASE = {tag:'TRAKSOS · ПАРТНЁРСКАЯ ПЛАТФОРМА',
+  title:'Выберите направление и станьте партнёром',
+  description:'Мастера, эвакуаторы, СТО и страховые специалисты работают в единой системе.',
+  imageLabel:'Грузовой автомобиль Scania — общий баннер партнёрской регистрации TrakSOS'};
+
 type Intent = 'help' | 'login' | 'register' | 'join' | 'reset';
 
 /** Куда вести после входа: по ролям из ответа сервера */
@@ -57,7 +76,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
   const [devCode, setDevCode] = useState<string | null>(null);
-  const [role, setRole] = useState<JoinRole>('master');
+  const [role, setRole] = useState<JoinRole | null>(null);
   const [customerType, setCustomerType] = useState<'owner' | 'driver'>('owner');
   const [specialties, setSpecialties] = useState<string[]>([]);
   const [specialtiesOpen, setSpecialtiesOpen] = useState(true);
@@ -92,6 +111,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   };
 
   async function sendCode() {
+    if (intent === 'join' && !role) return;
     setInsurerOnly(false);
     const r = await run(async () => {
       try {
@@ -108,6 +128,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
     }
   }
   async function verify() {
+    if (intent === 'join' && !role) return;
     if (intent === 'login') {
       const login = await run(() => post('/api/auth/login', { phone, password, device: navigator.userAgent.slice(0, 200) }), null);
       if (login) await signedIn(login);
@@ -165,6 +186,8 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         : homeFor(roles, intent ?? 'login');
   }
 
+  const partnerShowcase = intent === 'join' && role ? PARTNER_SHOWCASES[role] : DEFAULT_PARTNER_SHOWCASE;
+  const partnerShowcaseKey = intent === 'join' ? (role ?? 'intro') : 'intro';
   const needAgree = !['login', 'reset'].includes(intent ?? '') || !!driver; // водитель по QR — обычно новый номер, согласие сразу
   const title = intent === 'reset' ? 'Восстановить пароль' : intent === 'help' ? 'Помощь на дороге' : intent === 'join' ? 'Работать с TrakSOS' : intent === 'register' ? 'Регистрация в TrakSOS' : 'Вход по номеру телефона';
   const sub = intent === 'reset' ? 'Отправим один SMS-код для смены пароля.' : intent === 'help' ? 'Подтвердите номер — и сразу к заявке. Мастер позвонит на него.'
@@ -384,6 +407,12 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
               </button>
             ))}
             </div>
+            <div className={'guest-partner-mobile-preview partner-art-'+partnerShowcaseKey}
+              role="img" aria-label={partnerShowcase.imageLabel}>
+              <div className="guest-partner-mobile-preview-copy">
+                <b>{partnerShowcase.tag}</b><span>{partnerShowcase.title}</span>
+              </div>
+            </div>
             {role === 'master' && <details className="guest-master-specialties" open={specialtiesOpen}>
               <summary onClick={event => { event.preventDefault(); setSpecialtiesOpen(v => !v); }}>
                 Специализации мастера · выбрано: {specialties.length} <span aria-hidden="true">⌄</span>
@@ -411,7 +440,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
             <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} style={{ marginTop: 3 }} />
             <span>Согласен с {intent === 'join' ? <a href="#/offer/performer" target="_blank" rel="noreferrer">агентским договором</a> : <a href="#/offer/client" target="_blank" rel="noreferrer">офертой</a>} и на <a href="#/offer/privacy" target="_blank" rel="noreferrer">обработку персональных данных</a></span>
           </label>}
-          <button className="btn" disabled={busy || (needAgree && !agree) || phone.replace(/\D/g, '').length < 11 || (intent === 'join' && role === 'master' && specialties.length === 0)}>Получить код</button>
+          <button className="btn" disabled={busy || (needAgree && !agree) || phone.replace(/\D/g, '').length < 11 || (intent === 'join' && (!role || (role === 'master' && specialties.length === 0)))}>Получить код</button>
           {intent !== 'login' && <button type="button" className="btn ghost" onClick={() => { setIntent('login'); setStep('phone'); setCode(''); }}>Уже есть аккаунт? Войти по паролю</button>}
           {!driver && <button type="button" className="btn ghost" onClick={backToPublic}>Назад</button>}
         </form>
@@ -430,13 +459,16 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         </form>
       )}
       </section>
-      <aside className="auth-desktop-showcase" aria-label="О сервисе TrakSOS">
-        <div className="auth-desktop-showcase-photo" aria-hidden="true" />
-        <div className="auth-desktop-showcase-copy">
-          <span>TRAKSOS · ПОМОЩЬ ГРУЗОВОМУ ТРАНСПОРТУ</span>
-          <h2>Помощь на дороге, когда она нужна</h2>
-          <p>Выездные мастера, эвакуация и СТО грузовых автомобилей — в одном сервисе.</p>
+      <aside className={'auth-desktop-showcase partner-showcase partner-art-'+partnerShowcaseKey}
+        aria-label="Иллюстрация выбранного направления партнёрства TrakSOS">
+        <div key={'visual-'+partnerShowcaseKey} className="auth-desktop-showcase-photo"
+          role="img" aria-label={partnerShowcase.imageLabel}/>
+        <div className="auth-desktop-showcase-copy" aria-live="polite" aria-atomic="true">
+          <span>{partnerShowcase.tag}</span>
+          <h2>{partnerShowcase.title}</h2>
+          <p>{partnerShowcase.description}</p>
         </div>
+        <span className="partner-showcase-footnote">Кинематографичная иллюстрация возможностей TrakSOS</span>
       </aside>
     </main>
   );
