@@ -1,0 +1,53 @@
+# Optional sandbox overlay. Never run it against production data.
+# Same immutable image as production; separate Postgres volume and two
+# SANDBOX-ONLY networks. The sandbox app does NOT join production's network.
+# Bring up with:
+# docker compose -f docker-compose.yml -f docker-compose.sandbox.yml --profile sandbox up -d sandbox-db sandbox-app
+services:
+  sandbox-db:
+    profiles: [sandbox]
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: traksos_sandbox
+      POSTGRES_USER: sandbox_user
+      POSTGRES_PASSWORD: ${SANDBOX_DB_PASSWORD:?set a DIFFERENT sandbox DB password}
+    volumes:
+      - sandbox_db:/var/lib/postgresql/data
+    networks: [sandbox_private]
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U sandbox_user -d traksos_sandbox"]
+      interval: 5s
+      retries: 15
+
+  sandbox-app:
+    profiles: [sandbox]
+    image: ghcr.io/shipaka/traksos:latest
+    restart: unless-stopped
+    env_file: .env.sandbox
+    environment:
+      NODE_ENV: production
+      SANDBOX_INSTANCE: "true"
+      DATABASE_URL: postgres://sandbox_user:${SANDBOX_DB_PASSWORD:?set SANDBOX_DB_PASSWORD}@sandbox-db:5432/traksos_sandbox
+      PUBLIC_URL: https://${SANDBOX_DOMAIN:?set SANDBOX_DOMAIN}
+      CORS_ORIGINS: https://${SANDBOX_DOMAIN:?set SANDBOX_DOMAIN}
+      PORT: "8080"
+      SMS_PROVIDER: log
+      PUSH_PROVIDER: log
+      PAYMENT_PROVIDER: mock
+      ADMIN_PHONES: "+79000000001"
+      MODERATOR_PHONES: "+79000000005"
+      YANDEX_WEATHER_API_KEY: ""
+    depends_on:
+      sandbox-db:
+        condition: service_healthy
+    networks: [sandbox_private,sandbox_public]
+
+networks:
+  sandbox_private:
+    internal: true
+  sandbox_public:
+    internal: true
+
+volumes:
+  sandbox_db:
