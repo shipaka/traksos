@@ -20,7 +20,10 @@ services:
 
   app:
     image: ghcr.io/shipaka/traksos:latest
-    build: ..
+    build:
+      context: ..
+      args:
+        BUILD_REV: ${TRAKSOS_RELEASE_REV:-unknown}
     restart: unless-stopped
     depends_on:
       db:
