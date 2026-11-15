@@ -135,7 +135,7 @@
   height:100% !important;
   margin:0 !important;
   opacity:1 !important;
-  background:url('../public/traksos-final-hero.webp') right center/contain no-repeat !important;
+  background:url('../public/tracksos-approved-scenic-hero.webp') right center/contain no-repeat !important;
   filter:none !important;
   overflow:visible !important;
   pointer-events:none;
@@ -568,7 +568,7 @@
     aspect-ratio:2.1 !important;
     flex:none !important;
     margin:0 auto !important;
-    background:url('../public/traksos-final-hero.webp') center/contain no-repeat !important;
+    background:url('../public/tracksos-approved-scenic-hero.webp') center/contain no-repeat !important;
   }
   .guest-app .public-landing .public-hero-copy {
     order:1 !important;
