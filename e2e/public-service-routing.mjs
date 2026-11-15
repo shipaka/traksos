@@ -48,8 +48,10 @@ try {
     }
     await page.goto(BASE+'/#/');
     await page.locator('.public-track-insurance').click();
-    await page.waitForURL('**/#/explore/insurance');
-    await page.getByRole('heading',{name:'Страхование'}).waitFor();
+    await page.waitForURL('**/#/register');
+    await page.getByRole('heading',{name:'Регистрация в TrakSOS'}).waitFor();
+    if(await page.evaluate(()=>sessionStorage.getItem('traksos.pendingLandingAction'))!=='insurance')
+      throw Error('Insurance request intent lost while opening registration');
 
     // The hero controls must actually change photographs and selected dot.
     await page.goto(BASE+'/#/');
