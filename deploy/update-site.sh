@@ -64,7 +64,7 @@ echo "Replacing only the app service (no volume deletion, no compose down) ..."
 docker compose up -d --no-deps app || fail "App restart failed. Check docker compose logs app"
 ready=0
 for attempt in $(seq 1 30); do
-  if docker compose exec -T app node -e "fetch('http://127.0.0.1:8080/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))" >/dev/null 2>&1; then
+  if docker compose exec -T app node -e "fetch('http://127.0.0.1:8080/api/health').then(async r=>{const j=await r.json();process.exit(r.ok&&j.db&&!j.sandbox&&j.buildRevision===process.env.TRAKSOS_BUILD_REV?0:1)}).catch(()=>process.exit(1))" >/dev/null 2>&1; then
     ready=1
     break
   fi
@@ -76,7 +76,7 @@ if [[ "$ready" != 1 ]]; then
   docker compose ps
   exit 1
 fi
-echo "OK: application API answers /api/health inside the container."
+echo "OK: production database, non-sandbox mode and release revision verified."
 # Check the same immutable shop constraint after application migrations/startup.
 bash ./verify-shop-closed.sh || fail "Shop lock guard failed after deployment; investigate without restoring over live data"
 docker compose ps
