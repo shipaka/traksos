@@ -113,7 +113,7 @@ export function createApp(d: Deps) {
   const performerRoles = ['master', 'tow', 'service'];
 
   // Служебное ----------------------------------------------------------------
-  r.get('/api/health', false, async () => ({ ok: true, db: (await d.db.one('select 1 as ok'))?.ok === 1, time: now() }));
+  r.get('/api/health', false, async () => ({ ok: true, db: (await d.db.one('select 1 as ok'))?.ok === 1, time: now(), sandbox: config.sandboxInstance, buildRevision: config.buildRevision }));
 
   // Isolated fake-data demo access: NEVER returns a real auth token or AuthUser.
   // Codes are issued only by the explicitly confirmed SSH utility on the VPS.
@@ -131,12 +131,31 @@ export function createApp(d: Deps) {
   // Full-fidelity sandbox: independent deployment/database, but exactly the
   // same production handlers and React screens. This is NOT an impersonation on
   // the primary database. The single-use handoff contains no real user records.
-  r.get('/api/admin/sandbox/status', ['admin'], () => ({
-    enabled: !config.sandboxInstance && !!config.sandboxUrl && config.sandboxSharedSecret.length >= 32,
-  }));
-  r.post('/api/admin/sandbox/ticket', ['admin'], (c: AuthedCtx) => {
-    if (config.sandboxInstance || !config.sandboxUrl || config.sandboxSharedSecret.length < 32)
-      throw new HttpError(503, 'sandbox_not_configured', 'Полноценный тестовый сервер пока не подключён');
+  const sandboxStatus = async () => {
+    if (config.sandboxInstance || !config.sandboxUrl || config.sandboxSharedSecret.length < 32 ||
+        (isProd && config.buildRevision === 'unknown'))
+      return { enabled: false, reason: 'Тестовый сервер ещё не настроен' };
+    try {
+      // Real-time server-to-server parity check: both instances must run the
+      // same immutable image revision, not merely similar-looking screens.
+      const response = await fetch(config.sandboxUrl + '/api/health', {
+        method:'GET', cache:'no-store', signal:AbortSignal.timeout(4000),
+      });
+      const remote = await response.json() as any;
+      if (!response.ok || remote?.ok !== true || remote?.db !== true || remote?.sandbox !== true)
+        return { enabled:false, reason:'Тестовый сервер или его отдельная база недоступны' };
+      if (remote.buildRevision !== config.buildRevision)
+        return { enabled:false, reason:'Рабочий и тестовый серверы используют разные версии приложения' };
+      return { enabled:true, buildRevision:config.buildRevision };
+    } catch {
+      return { enabled:false, reason:'Тестовый сервер сейчас недоступен' };
+    }
+  };
+  r.get('/api/admin/sandbox/status', ['admin'], sandboxStatus);
+  r.post('/api/admin/sandbox/ticket', ['admin'], async (c: AuthedCtx) => {
+    const status = await sandboxStatus();
+    if (!status.enabled)
+      throw new HttpError(503, 'sandbox_not_ready', status.reason ?? 'Полноценный тестовый сервер пока не подключён');
     const b = parse(z.object({ role: z.enum(SANDBOX_ROLES) }), c.body);
     const ticket = issueSandboxTicket(b.role, config.sandboxSharedSecret, now().getTime(), config.publicUrl + '/#/admin/test-center');
     return { entryUrl: config.sandboxUrl + '/#/sandbox-enter?ticket=' + encodeURIComponent(ticket), role: b.role };
