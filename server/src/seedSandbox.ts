@@ -3,8 +3,14 @@
 import type { Db } from './db/index.ts';
 import { seed } from './seed.ts';
 import { SANDBOX_USER_PHONE } from './services/sandboxTickets.ts';
+import { config } from './config.ts';
+import { createDb } from './db/index.ts';
+import { migrate } from './db/migrate.ts';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 
 export async function seedSandbox(db: Db) {
+  if (!config.sandboxInstance) throw new Error('Refusing to seed outside SANDBOX_INSTANCE');
   await seed(db);
   const upsert = async (phone: string, roles: string[], name: string) => {
     const u = await db.one<{id:string}>(`insert into users(phone,roles,name) values ($1,$2::text[],$3)
@@ -26,4 +32,16 @@ export async function seedSandbox(db: Db) {
     on conflict (owner_id) do nothing`, [combined]);
   await upsert(SANDBOX_USER_PHONE.insurer, ['insurer'], 'Демо · страховой партнёр');
   await upsert(SANDBOX_USER_PHONE.inspection, ['inspection_operator'], 'Демо · техосмотр');
+}
+
+if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+  if (!config.sandboxInstance) throw new Error('Refusing to seed outside SANDBOX_INSTANCE');
+  const db = await createDb(config.databaseUrl);
+  try {
+    await migrate(db);
+    await seedSandbox(db);
+    console.log('Отдельная тестовая база подготовлена');
+  } finally {
+    await db.close();
+  }
 }
