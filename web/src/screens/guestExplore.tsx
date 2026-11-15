@@ -10,6 +10,62 @@ export function GuestExplore({ id, itemKey }: {id: string; itemKey?: string}) {
   const service = isService ? CATALOGUE[tile.id] : null;
   const serviceId = (tile?.id || 'van') as ServiceId;
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'auto' }); }, [id, itemKey]);
+  if (id === 'inspection') {
+    return <main className="guest-explore guest-explore-inspection">
+      <a className="guest-explore-back" href="#/">← На главную</a>
+      <section className="guest-explore-hero">
+        <span className="guest-explore-eyebrow">TRAKSOS · ИНФОРМАЦИЯ ДЛЯ ВЛАДЕЛЬЦЕВ ГРУЗОВОГО ТРАНСПОРТА</span>
+        <span className="guest-explore-glyph" aria-hidden="true">✓</span>
+        <h1>Техосмотр грузового транспорта</h1>
+        <p>Информация о техническом осмотре грузовиков и прицепов. Узнайте, что потребуется для обращения, и войдите в TrakSOS для работы с данными своего транспорта.</p>
+        <div className="guest-explore-actions">
+          <a className="guest-explore-cta" href="#/login" onClick={() => rememberGuestService('inspection')}>Войти в кабинет</a>
+          <a className="guest-explore-secondary" href="#/register" onClick={() => rememberGuestService('inspection')}>Зарегистрироваться</a>
+        </div>
+      </section>
+      <section className="guest-explore-section">
+        <h2>Что нужно подготовить</h2>
+        <div className="guest-explore-service-grid">
+          <div className="guest-explore-item"><span aria-hidden="true">✓</span><strong>Данные грузовика или прицепа</strong></div>
+          <div className="guest-explore-item"><span aria-hidden="true">✓</span><strong>Документы на транспорт</strong></div>
+          <div className="guest-explore-item"><span aria-hidden="true">✓</span><strong>Контакты и удобный регион</strong></div>
+        </div>
+        <p className="guest-explore-note">Это информационная страница. Наличие станции, запись и оформление диагностической карты не подтверждаются до проверки доступности услуги — здесь нет фиктивной записи или готового документа.</p>
+      </section>
+    </main>;
+  }
+  if (id === 'guide') {
+    return <main className="guest-explore guest-explore-guide">
+      <a className="guest-explore-back" href="#/">← На главную</a>
+      <section className="guest-explore-hero">
+        <span className="guest-explore-eyebrow">TRAKSOS · ПОЛЕЗНОЕ</span>
+        <span className="guest-explore-glyph" aria-hidden="true">?</span>
+        <h1>Как работает TrakSOS</h1>
+        <p>Выберите нужную помощь грузовику, узнайте порядок обращения и откройте соответствующий раздел. Для оформления реальной заявки нужен личный кабинет.</p>
+        <div className="guest-explore-actions">
+          <a className="guest-explore-cta" href="#/explore/van">Выбрать услугу</a>
+          <a className="guest-explore-secondary" href="#/login">Войти</a>
+        </div>
+      </section>
+      <section className="guest-explore-section">
+        <h2>Три шага к помощи</h2>
+        <div className="guest-explore-service-grid">
+          <div className="guest-explore-item"><span>01</span><strong>Опишите проблему, транспорт и место</strong></div>
+          <div className="guest-explore-item"><span>02</span><strong>Ознакомьтесь с доступными предложениями</strong></div>
+          <div className="guest-explore-item"><span>03</span><strong>Следите за статусом заявки в кабинете</strong></div>
+        </div>
+      </section>
+      <section className="guest-explore-section">
+        <h2>Разделы сервиса</h2>
+        <div className="guest-explore-service-grid">
+          {SERVICE_TILES.map(item => <a href={'#/explore/' + item.id} className="guest-explore-item" key={item.id} onClick={() => rememberGuestService(item.id)}>
+            <span aria-hidden="true">{item.icon}</span><strong>{item.title}</strong><span aria-hidden="true">›</span>
+          </a>)}
+        </div>
+        <p className="guest-explore-note">Доступность исполнителей, запчастей и страховых предложений зависит от региона и состояния подключённых услуг.</p>
+      </section>
+    </main>;
+  }
   if (!tile || !service) {
     return <main className="guest-explore"><section className="guest-explore-hero">
       <h1>Раздел не найден</h1><p>Вернитесь к каталогу услуг TrakSOS.</p><a className="guest-explore-cta" href="#/">На главную</a>
