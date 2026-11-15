@@ -95,7 +95,7 @@ function FullFidelityRoleLauncher({role}:{role:RoleInfo}) {
     let active=true;
     void get<{enabled:boolean}>('/api/admin/sandbox/status')
       .then(status => {
-        if (!status.enabled) throw new Error('Полноценный тестовый сервер ещё не подключён.');
+        if (!status.enabled) throw new Error((status as any).reason || 'Полноценный тестовый сервер ещё не подключён.');
         return post<{entryUrl:string}>('/api/admin/sandbox/ticket', {role:role.id});
       }).then(result => {
         if (!active) return;
