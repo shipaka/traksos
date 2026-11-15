@@ -303,9 +303,10 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
             <a className="public-map-static-link" href="https://yandex.ru/maps/2/saint-petersburg/?ll=30.314130%2C59.938630&z=10"
               target="_blank" rel="noopener noreferrer" aria-label="Открыть этот район в Яндекс Картах">
               <PublicDemoMapBackdrop />
-              <span className="public-map-open-link">Открыть в Яндекс Картах ↗</span>
             </a>
           </div>
+          <a className="public-map-open-link" href="https://yandex.ru/maps/2/saint-petersburg/?ll=30.314130%2C59.938630&z=10"
+            target="_blank" rel="noopener noreferrer">Открыть в Яндекс Картах ↗</a>
           <div className="public-map-legend"><span><i className="service"/>СТО</span><span><i className="master"/>Мастер</span><span><i className="tow"/>Эвакуация</span></div>
           <p className="public-demo-warning"><strong>Пример расположения услуг.</strong> Значки условные: это не реальные исполнители и не их доступность. Нажмите на карту, чтобы открыть Санкт-Петербург в Яндекс Картах.</p>
         </section>
