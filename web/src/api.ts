@@ -53,7 +53,7 @@ export async function api<T = any>(method: string, path: string, body?: unknown)
     setToken(null);
     location.hash = '#/login';
   }
-  if (!r.ok) throw new ApiError(r.status, j?.error ?? 'error', j?.message ?? 'Ошибка', j?.data);
+  if (!r.ok) throw new ApiError(r.status, j?.error ?? 'error', j?.message ?? 'Ошибка', { ...(j?.data ?? {}), requestId: j?.requestId ?? r.headers.get('x-request-id') });
   return j as T;
 }
 
