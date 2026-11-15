@@ -126,8 +126,15 @@ async function run(width, height, mobile, nativePreview = false) {
       suffix + ': all partner roles must use photographic cards');
     check(await page.getByRole('navigation',{name:'Тип регистрации'}).count() === 0,
       suffix + ': partner page repeats client registration tab');
+    const partnerImage=page.locator(mobile ? '.guest-partner-mobile-preview' : '.auth-desktop-showcase-photo');
+    if(await partnerImage.isVisible())
+      check((await partnerImage.evaluate(el=>getComputedStyle(el).backgroundImage)).includes('tracksos-approved-scania-r520'),
+        suffix + ': partner signup must start with the neutral Scania artwork');
+    check(await page.locator('.guest-partner-role[aria-pressed="true"]').count()===0,
+      suffix + ': default partner role must not be preselected');
+    await page.getByRole('button',{name:'Мастер',exact:true}).click();
     check(await page.getByRole('button',{name:'Автономщик',exact:true}).isVisible(),
-      suffix + ': specialization is not available for master');
+      suffix + ': specializations not visible after selecting master');
     await verifyPage(page, suffix + ':join');
     await page.screenshot({ path: OUT + '/join-' + suffix + '.png', fullPage: true });
 

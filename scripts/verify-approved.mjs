@@ -28,6 +28,12 @@ const LOCKED_ASSETS = {
   'web/public/tracksos-photo-tow.webp': '1fdb913351585040',
   'web/public/tracksos-photo-sto.webp': '48e638e981108763',
   'web/public/tracksos-photo-consult.webp': 'c59634316748dde8',
+  'web/public/tracksos-hero-rescue-hq.webp': '763702ee90df9466',
+  'web/public/tracksos-hero-service-hq.webp': '494a472962520285',
+  'web/public/tracksos-partner-tow-approved.webp': '05fe81a6c55c5621',
+  'web/public/tracksos-partner-master-approved.webp': 'a6af5a54938a79b7',
+  'web/public/tracksos-partner-sto-approved.webp': '2f2830a773e5c50c',
+  'web/public/tracksos-partner-insurer-approved.webp': '875b2a3031882b8f',
   'web/public/tracksos-approved-scenic-hero.webp': '9193ebd1312c2d2e',
   'android/app/src/main/res/drawable-nodpi/splash_truck.webp': '75bfacfcdf8c0673',
 };
@@ -74,6 +80,12 @@ await asset('web/public/tracksos-photo-tow.webp', 30000);
 await asset('web/public/tracksos-photo-sto.webp', 30000);
 await asset('web/public/tracksos-photo-consult.webp', 30000);
 await asset('web/public/tracksos-approved-scenic-hero.webp', 50000);
+await asset('web/public/tracksos-hero-rescue-hq.webp', 300000);
+await asset('web/public/tracksos-hero-service-hq.webp', 300000);
+await asset('web/public/tracksos-partner-tow-approved.webp', 200000);
+await asset('web/public/tracksos-partner-master-approved.webp', 200000);
+await asset('web/public/tracksos-partner-sto-approved.webp', 200000);
+await asset('web/public/tracksos-partner-insurer-approved.webp', 200000);
 await asset('android/app/src/main/res/drawable-nodpi/splash_truck.webp', 2000);
 await asset('android/app/src/main/res/mipmap-mdpi/ic_launcher.png', 1200);
 await asset('android/app/src/main/res/mipmap-hdpi/ic_launcher.png', 1800);
@@ -101,6 +113,15 @@ expect(landing.includes('Санкт-Петербург и Ленинградск
 expect(shell.includes("import './finalCanon.css';"), 'the only final design layer is loaded by the real app');
 expect(shell.includes('guest-site-nav'), 'the guest PC has horizontal navigation, not an alternative sidebar');
 expect(finalCss.includes('public-hero-slide-approved') && finalCss.includes("url('../public/tracksos-approved-scenic-hero.webp')"), 'the final guest hero uses the approved full Scania photo without baked controls');
+expect(finalCss.includes("url('../public/tracksos-hero-rescue-hq.webp')") &&
+  finalCss.includes("url('../public/tracksos-hero-service-hq.webp')"),
+  'second and third homepage slides use separate high-resolution cinematic assets');
+for (const suffix of ['tow','master','sto','insurer']) {
+  expect(finalCss.includes("tracksos-partner-" + suffix + "-approved.webp"),
+    'selected partner illustration for '+suffix+' remains local to TrakSOS');
+}
+expect(landing.includes("const [role, setRole] = useState<JoinRole | null>(null)"),
+  'partner role is chosen explicitly so opening illustration starts on Scania');
 expect(finalCss.includes('grid-template-columns:repeat(6,minmax(0,1fr))'), 'six photographic service cards in desktop row');
 const finalServices = [
   "{ id: 'tow', icon: '↗', title: 'Эвакуация'",

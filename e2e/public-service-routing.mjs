@@ -72,7 +72,7 @@ try {
     const secondPhoto=await bgImage();
     await page.getByRole('heading',{name:/Эвакуация грузовиков/}).waitFor();
     await page.getByRole('button',{name:'Узнать об эвакуации'}).waitFor();
-    if(!secondPhoto.includes('tracksos-photo-tow') || secondPhoto===firstPhoto)
+    if(!secondPhoto.includes('tracksos-hero-rescue-hq') || secondPhoto===firstPhoto)
       throw Error('Hero next arrow does not change photograph: '+secondPhoto);
     if(await page.locator('.public-hero-dot[aria-pressed="true"]').count()!==1)
       throw Error('Hero active dot state not updated');
@@ -80,7 +80,7 @@ try {
     const thirdPhoto=await bgImage();
     await page.getByRole('heading',{name:/Ремонт и запись в СТО/}).waitFor();
     await page.getByRole('button',{name:'Узнать о СТО'}).waitFor();
-    if(!thirdPhoto.includes('tracksos-photo-sto') || thirdPhoto===secondPhoto)
+    if(!thirdPhoto.includes('tracksos-hero-service-hq') || thirdPhoto===secondPhoto)
       throw Error('Hero next arrow does not show third photograph');
     await page.getByRole('button',{name:'Предыдущее фото'}).click();
     if(await bgImage()!==secondPhoto)throw Error('Hero previous arrow did not reverse photograph');
@@ -164,6 +164,33 @@ try {
     for(const label of ['Мастер','Эвакуаторщик','СТО','Страховой агент'])
       await page.getByRole('button',{name:new RegExp('^'+label)}).waitFor();
     if(await page.locator('.auth-desktop-form .opt').count()!==4)throw Error('Partner categories must be exactly four');
+    // No role is forced on initial opening; the fixed right-side image is Scania.
+    const showcaseImage=width>=900?'.auth-desktop-showcase-photo':'.guest-partner-mobile-preview';
+    const visual=page.locator(showcaseImage);
+    await visual.waitFor();
+    const photo=()=>visual.evaluate(el=>getComputedStyle(el).backgroundImage);
+    if(!(await photo()).includes('tracksos-approved-scania-r520'))
+      throw Error('Partner page must initially display the generic Scania hero');
+    const fixedPosition=width>=900 ? await page.locator('.partner-showcase').evaluate(el=>{
+      const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};
+    }) : null;
+    for(const [roleName,asset] of [
+      ['Эвакуаторщик','tracksos-partner-tow-approved'],
+      ['Мастер','tracksos-partner-master-approved'],
+      ['СТО','tracksos-partner-sto-approved'],
+      ['Страховой агент','tracksos-partner-insurer-approved'],
+    ]){
+      await page.getByRole('button',{name:roleName,exact:true}).click();
+      if(!(await photo()).includes(asset))throw Error('Wrong cinematic showcase when choosing '+roleName);
+      if(width>=900 && fixedPosition) {
+        const next=await page.locator('.partner-showcase').evaluate(el=>{
+          const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};
+        });
+        if(Math.abs(next.x-fixedPosition.x)>3 || Math.abs(next.width-fixedPosition.width)>3 ||
+           Math.abs(next.height-fixedPosition.height)>3)
+          throw Error('Desktop partner illustration shifts layout when switching '+roleName+': '+JSON.stringify({fixedPosition,next}));
+      }
+    }
     await page.getByRole('button',{name:/^Мастер/}).click();
     for(const specialty of ['Электрик','Автономщик']){
       const button=page.getByRole('button',{name:specialty,exact:true});
