@@ -85,12 +85,12 @@ try {
       throw Error(width + 'px public editorial Scania hero does not fill the banner or uses baked controls: ' + JSON.stringify(info));
     await p.getByRole('button',{name:'Следующее фото'}).click();
     const rescuePhoto=await art.evaluate(el=>getComputedStyle(el).backgroundImage);
-    if(!rescuePhoto.includes('tracksos-photo-tow') ||
+    if(!rescuePhoto.includes('tracksos-hero-rescue-hq') ||
        !await p.getByRole('heading',{name:/Эвакуация грузовиков/}).count())
       throw Error(width+'px: tow scene must change both photograph and headline');
     await p.getByRole('button',{name:'Следующее фото'}).click();
     const stoPhoto=await art.evaluate(el=>getComputedStyle(el).backgroundImage);
-    if(!stoPhoto.includes('tracksos-photo-sto') ||
+    if(!stoPhoto.includes('tracksos-hero-service-hq') ||
        !await p.getByRole('heading',{name:/Ремонт и запись в СТО/}).count())
       throw Error(width+'px: STO scene must change both photograph and headline');
     await p.getByRole('button',{name:/Показать фото 1:/}).click();
