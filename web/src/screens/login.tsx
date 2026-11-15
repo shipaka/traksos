@@ -60,6 +60,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const [role, setRole] = useState<JoinRole>('master');
   const [customerType, setCustomerType] = useState<'owner' | 'driver'>('owner');
   const [specialties, setSpecialties] = useState<string[]>([]);
+  const [specialtiesOpen, setSpecialtiesOpen] = useState(true);
   const [insurerOnly, setInsurerOnly] = useState(false);
   const [agree, setAgree] = useState(false);
   const toast = useToast();
@@ -373,15 +374,19 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
             {customerType === 'driver' && <span className="note">После входа владелец сможет привязать вас к своей машине по приглашению или QR-коду.</span>}
           </div>}
           {intent === 'join' && <div className="stack">
+            <div className="guest-partner-roles">
             {JOIN_ROLES.map((r) => (
-              <button key={r.id} type="button" className="opt" aria-pressed={role === r.id}
+              <button key={r.id} type="button" className={'opt guest-partner-role guest-partner-role-' + r.id} aria-pressed={role === r.id}
                 aria-label={r.name} aria-describedby={'join-role-hint-' + r.id}
                 onClick={() => setRole(r.id)}>
                 <b>{r.name}</b><small id={'join-role-hint-' + r.id}>{r.hint}</small>
               </button>
             ))}
-            {role === 'master' && <details className="guest-master-specialties" open={specialties.length === 0}>
-              <summary>Специализации мастера · выбрано: {specialties.length}</summary>
+            </div>
+            {role === 'master' && <details className="guest-master-specialties" open={specialtiesOpen}>
+              <summary onClick={event => { event.preventDefault(); setSpecialtiesOpen(v => !v); }}>
+                Специализации мастера · выбрано: {specialties.length} <span aria-hidden="true">⌄</span>
+              </summary>
               <span className="label">Можно выбрать несколько вариантов</span>
               <div className="guest-master-specialties-grid">
                 {MASTER_SPECIALTIES.map(item => <button key={item.id} type="button" className="seg"
