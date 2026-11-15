@@ -43,6 +43,7 @@ export function Fleet() {
   const [s, setS] = useState<any>(null);
   const [edo, setEdo] = useState({ edoOperator: '', edoId: '' });
   const [qrFor, setQrFor] = useState<string | null>(null);
+  const [expandedCar, setExpandedCar] = useState<string | null>(null);
   useEffect(() => {
     if (!f.data || s) return;
     setS(f.data.settings);
@@ -93,11 +94,29 @@ export function Fleet() {
         <span className="label">Машины</span>
         {!d.cars.length && <div className="empty">Машин пока нет — добавьте в гараже.</div>}
         {d.cars.map((c: any) => (
-          <div key={c.id} className="card">
+          <div key={c.id} className="card fleet-vehicle-card">
+            <div className="fleet-vehicle-media">
+              <img src={c.brand === 'Scania' && /R\\s?520/i.test(c.model ?? '')
+                ? '/tracksos-approved-scania-r520.webp' : '/tracksos-hero-service-hq.webp'}
+                alt={c.brand === 'Scania' && /R\\s?520/i.test(c.model ?? '')
+                  ? 'Scania R520 · фотография тягача' : 'Грузовой сервис · тематическая фотография, не снимок конкретной машины'}
+                loading="lazy" />
+              <div className="fleet-vehicle-title">
+                <span>ТЕХНИКА АВТОПАРКА</span>
+                <h2>{c.brand} {c.model ?? ''}</h2>
+                <p>{c.year ? c.year + ' год · ' : ''}{c.plate ?? 'Госномер не добавлен'}</p>
+              </div>
+            </div>
             <div className="between"><b>{c.brand} {c.model ?? ''}</b><span className="pill">{c.plate ?? 'без номера'}</span></div>
             {c.driver ? (
               <span className="note">Водитель {c.driver.name ?? c.driver.phone} · доступ с {c.driver.since ? fmtTime(c.driver.since) : '—'} · в этом месяце {rub(c.driver.monthSpent)} <span className="pill good">Активен</span></span>
             ) : <span className="note">Водитель не назначен — он войдёт сам по QR-наклейке.</span>}
+            <button type="button" className="fleet-vehicle-open" aria-expanded={expandedCar===c.id}
+              onClick={() => setExpandedCar(expandedCar===c.id?null:c.id)}>
+              <span>{expandedCar===c.id?'Свернуть карточку':'Открыть машину: характеристики, история, запчасти'}</span>
+              <span aria-hidden="true">{expandedCar===c.id?'⌃':'›'}</span>
+            </button>
+            {expandedCar===c.id && <FleetVehicleDetails car={c} />}
             <div className="row">
               <button className="btn ghost small" onClick={() => setQrFor(qrFor === c.id ? null : c.id)}>{qrFor === c.id ? 'Скрыть наклейку' : 'QR-наклейка'}</button>
               <button className="btn ghost small" disabled={busy} onClick={async () => {
@@ -152,6 +171,50 @@ export function Fleet() {
       </div>
     </main>
   );
+}
+
+
+// Detailed vehicle workspace reuses the same real history endpoint as the
+// client's garage. No invented repairs, prices or fictional model photos.
+function FleetVehicleDetails({ car }: { car:any }) {
+  const [tab,setTab]=useState<'spec'|'history'|'parts'>('spec');
+  const history=useLoad(()=>get(`/api/vehicles/${car.id}/history`),[car.id],
+    e=>e.type==='order'||e.type==='fleet');
+  const tabs: Array<['spec'|'history'|'parts',string]>=[
+    ['spec','Характеристики'],['history','История ремонтов'],['parts','Запчасти'],
+  ];
+  return <section className="fleet-vehicle-detail" aria-label={'Карточка '+car.brand+' '+(car.model||'')}>
+    <nav className="fleet-detail-tabs" aria-label="Разделы машины">
+      {tabs.map(([id,name])=><button key={id} type="button" className="chip"
+        aria-pressed={tab===id} onClick={()=>setTab(id)}>{name}</button>)}
+    </nav>
+    {tab==='spec'&&<div className="fleet-vehicle-spec">
+      <div><span>Марка</span><b>{car.brand}</b></div>
+      <div><span>Модель</span><b>{car.model||'Не заполнена'}</b></div>
+      <div><span>Год выпуска</span><b>{car.year||'Не указан'}</b></div>
+      <div><span>Госномер</span><b>{car.plate||'Не указан'}</b></div>
+      <div><span>Водитель</span><b>{car.driver?.name||'Не назначен'}</b></div>
+      <div><span>Полуприцеп</span><b>{car.trailerPlate||'Не указан'}</b></div>
+      <p className="note">Марку, модель и год выбирают в «Моём гараже». Важные технические сведения должны подтверждаться по документам автомобиля.</p>
+      <a className="btn ghost small" href="#/garage">Мой гараж · изменить транспорт</a>
+    </div>}
+    {tab==='history'&&<div className="fleet-repair-history stack">
+      {!history.data?<Loading error={history.error}/>:history.data.items.length===0
+        ?<div className="empty">По этой машине пока нет обращений.</div>
+        :history.data.items.map((o:any)=><a key={o.id} className="fleet-history-entry" href={o.kind==='service'?`#/booking/${o.id}`:`#/order/${o.id}`}>
+          <span className="fleet-history-date">{fmtTime(o.created_at)}</span>
+          <b>{o.kind==='service'?'Ремонт на СТО':SERVICES[o.service]?.name||'Помощь на дороге'} · {o.status}</b>
+          {o.description&&<span>{o.description}</span>}
+          {o.result_note&&<small>Комментарий мастера: {o.result_note}</small>}
+          <small>Открыть запись →</small>
+        </a>)}
+    </div>}
+    {tab==='parts'&&<div className="fleet-vehicle-spec">
+      <b>История покупок и запчастей</b>
+      <p className="note">Покупки из TrackSOS привязываются к этой машине. Для полной истории переходите в журнал — реальные записи без придуманных товаров.</p>
+      <a className="btn" href={`#/shop/history/${car.id}`}>Открыть историю запчастей →</a>
+    </div>}
+  </section>;
 }
 
 function Sticker({ car }: { car: any }) {
