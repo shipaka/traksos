@@ -204,7 +204,7 @@ function App() {
   const isPerformer = me.roles.some((r) => r === 'master' || r === 'tow');
   const isCustomer = me.roles.some((r) => r === 'client' || r === 'driver');
   const isAdmin = me.roles.includes('admin');
-  const serviceSandbox = isAdmin && a === 'admin' && b === 'test-center' && route[2] === 'service';
+  const serviceSandbox = isAdmin && a === 'admin' && b === 'test-center' && route[2] === 'service' && route.length > 3;
   const isModerator = me.roles.includes('moderator') || isAdmin;
   const isStaff = isModerator;
   const isService = me.roles.includes('service');
