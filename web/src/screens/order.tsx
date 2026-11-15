@@ -208,8 +208,22 @@ function ClientCard({ d }: { d: any }) {
         {d.description && <><dt>Что случилось</dt><dd>{d.description}</dd></>}
         {d.site && <><dt>Условия</dt><dd><SitePills site={d.site} /></dd></>}
       </dl>
-      {d.lat != null && d.service !== 'consult' && (
-        <a className="btn ghost" target="_blank" rel="noreferrer" href={`https://yandex.ru/maps/?rtext=~${d.lat},${d.lng}&rtt=auto`}>Маршрут в Яндекс Картах</a>
+      {Number.isFinite(Number(d.lat)) && Number.isFinite(Number(d.lng)) && d.lat != null && d.lng != null && d.service !== 'consult' && (
+        <div className="stack" aria-label="Точка назначения">
+          <div className="note">Точная точка на карте · широта, долгота</div>
+          <strong style={{ fontVariantNumeric: 'tabular-nums' }}>{Number(d.lat).toFixed(6)}, {Number(d.lng).toFixed(6)}</strong>
+          <div className="row" style={{ flexWrap: 'wrap' }}>
+            <a className="btn ghost" target="_blank" rel="noreferrer"
+              href={`https://yandex.ru/maps/?rtext=~${Number(d.lat)},${Number(d.lng)}&rtt=auto`}>Маршрут в Яндекс Картах</a>
+            <a className="btn ghost" href={`geo:${Number(d.lat)},${Number(d.lng)}?q=${Number(d.lat)},${Number(d.lng)}`}>Другой навигатор</a>
+            <button type="button" className="btn ghost"
+              onClick={() => navigator.clipboard.writeText(`${Number(d.lat).toFixed(6)}, ${Number(d.lng).toFixed(6)}`)
+                .catch(() => window.prompt('Скопируйте координаты:', `${Number(d.lat).toFixed(6)}, ${Number(d.lng).toFixed(6)}`))}>
+              Скопировать координаты
+            </button>
+          </div>
+          <span className="note">Для промзон ориентируйтесь на точку, даже если у объекта нет почтового адреса.</span>
+        </div>
       )}
     </div>
   );
