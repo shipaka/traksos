@@ -61,7 +61,7 @@ try {
     // The default path now launches the real isolated cabinet, not the legacy
     // in-page simulator. CI has no separate sandbox origin or credentials;
     // verify the launcher and explicitly enter the legacy training fallback.
-    await page.getByRole('heading',{name:label,exact:true}).waitFor();
+    await page.getByRole('heading',{name:id==='driver'?'Сотрудник автопарка':label,exact:true}).waitFor();
     await page.getByRole('button',{name:'Открыть старый учебный тренажёр'}).click();
     if(id==='service'){
       await page.getByRole('heading',{name:/Рембаза/}).waitFor();
