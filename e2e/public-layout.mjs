@@ -28,15 +28,22 @@ async function verifyPage(page, label) {
   results.push({ label, ...layout });
 }
 
-async function run(width, height, mobile) {
+async function run(width, height, mobile, nativePreview = false) {
   const context = await browser.newContext({
     viewport: { width, height }, deviceScaleFactor: 1, isMobile: mobile,
     hasTouch: mobile, locale: 'ru-RU'
   });
   const page = await context.newPage();
+  if (nativePreview) await page.addInitScript(() => {
+    window.TrakSOSNative = {
+      isApp: () => true, setSession: () => {}, pushToken: () => '',
+      performerOnline: () => {}, appLockEnabled: () => false,
+      setAppLockEnabled: () => false
+    };
+  });
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
-  const suffix = width + 'x' + height;
+  const suffix = width + 'x' + height + (nativePreview ? '-android-webview' : '');
   try {
     await page.goto(BASE + '/#/', { waitUntil: 'domcontentloaded' });
     await page.getByRole('heading', { name: /TrakSOS.*помощь.*в пути/i }).waitFor();
@@ -192,6 +199,9 @@ try {
     [320, 720, true], [360, 780, true], [390, 844, true], [430, 932, true],
     [768, 1024, true], [1024, 768, false], [1440, 900, false]
   ]) await run(w, h, mobile);
+  // Same React/CSS inside Android WebView bridge: finger targets, navigation
+  // and hero copy must remain consistent with mobile Chrome.
+  await run(390, 844, true, true);
 } finally {
   await browser.close();
 }
