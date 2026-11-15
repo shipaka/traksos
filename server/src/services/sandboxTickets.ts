@@ -61,7 +61,10 @@ export async function exchangeSandboxTicket(ticket: string, secret: string, db: 
       !/^[a-zA-Z0-9_-]{43}$/.test(segments[1])) throw forbidden();
   const expected = signature(segments[0], secret);
   const actual = Buffer.from(segments[1], 'base64url');
-  if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) throw forbidden();
+  // Reject non-canonical base64url encodings: different trailing characters can
+  // decode to identical HMAC bytes when unused pad bits are ignored.
+  if (actual.toString('base64url') !== segments[1] ||
+      actual.length !== expected.length || !timingSafeEqual(actual, expected)) throw forbidden();
 
   let p: any;
   try { p = JSON.parse(Buffer.from(segments[0], 'base64url').toString('utf8')); }
