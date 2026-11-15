@@ -1386,3 +1386,245 @@
 @media(prefers-reduced-motion:reduce){
   .guest-app .public-landing .public-hero-carousel button{transition:none!important}
 }
+
+
+/* #82 — ONE editorial hero per slide: full-bleed art and readable copy.
+   Never use traksos-final-hero.webp here: it has fake arrows baked into pixels. */
+.guest-app .public-landing .public-brand-hero {
+  position:relative!important;
+  isolation:isolate!important;
+  display:flex!important;
+  align-items:center!important;
+  flex-direction:row!important;
+  min-height:clamp(425px,35vw,550px)!important;
+  padding:clamp(24px,3.2vw,58px)!important;
+  background:#06192e!important;
+  border:1px solid #2e7597!important;
+  border-radius:20px!important;
+  overflow:hidden!important;
+}
+.guest-app .public-landing .public-brand-hero::before {
+  content:""!important;
+  display:block!important;
+  position:absolute!important;inset:0!important;z-index:2!important;
+  pointer-events:none!important;
+  background:linear-gradient(90deg,#041629f9 0%,#061c32ee 22%,#071f38cb 39%,#0620393d 67%,#03172a18 100%)!important;
+  filter:none!important;transform:none!important;
+}
+.guest-app .public-landing .public-brand-hero::after {
+  content:none!important;display:none!important;
+}
+.guest-app .public-landing .public-hero-visual {
+  display:block!important;position:absolute!important;
+  inset:0!important;width:100%!important;height:100%!important;
+  max-width:none!important;margin:0!important;
+  background-repeat:no-repeat!important;background-size:cover!important;
+  background-position:center center!important;
+  opacity:1!important;filter:none!important;z-index:1!important;
+  aspect-ratio:auto!important;pointer-events:none!important;
+  transform:none!important;
+}
+.guest-app .public-landing .public-hero-visual.public-hero-slide-approved{
+  background-image:url('../public/tracksos-approved-scenic-hero.webp')!important;
+  background-position:center center!important;
+}
+.guest-app .public-landing .public-hero-visual.public-hero-slide-rescue{
+  background-image:url('../public/tracksos-photo-tow.webp')!important;
+  background-position:center 52%!important;
+}
+.guest-app .public-landing .public-hero-visual.public-hero-slide-service{
+  background-image:url('../public/tracksos-photo-sto.webp')!important;
+  background-position:center center!important;
+}
+.guest-app .public-landing .public-hero-copy{
+  position:relative!important;z-index:3!important;
+  order:0!important;width:min(55%,690px)!important;
+  max-width:690px!important;min-width:0!important;
+  margin:0!important;padding:0!important;
+  background:none!important;
+}
+.guest-app .public-landing .public-hero-copy > p{
+  max-width:550px!important;
+}
+.guest-app .public-landing .public-hero-carousel{
+  position:absolute!important;z-index:6!important;
+  right:clamp(10px,2vw,28px)!important;bottom:clamp(10px,1.8vw,24px)!important;
+  padding:7px 9px!important;gap:8px!important;
+  background:rgba(5,22,39,.92)!important;
+  border-radius:999px!important;
+}
+.guest-app .public-landing :is(.public-hero-prev,.public-hero-next){
+  min-width:44px!important;width:44px!important;height:44px!important;
+  font-size:26px!important;touch-action:manipulation;
+}
+.guest-app .public-landing .public-hero-dot{
+  width:16px!important;height:16px!important;min-width:16px!important;
+  border:3px solid #263b57!important;
+  touch-action:manipulation;
+}
+.guest-app .public-landing .public-hero-dots{gap:9px!important}
+.guest-app .public-landing .public-hero-visual,
+.guest-app .public-landing .public-hero-copy > :is(h1,p,.public-hero-caption){
+  animation:ts-slide-enter .36s ease both;
+}
+@keyframes ts-slide-enter {
+  from{opacity:.65;transform:translateY(6px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* Compact regional illustration, next to the process, not a stretched map. */
+.guest-app .public-landing .public-location-process-grid{
+  display:grid!important;
+  grid-template-columns:minmax(0,1.08fr) minmax(320px,.92fr)!important;
+  grid-template-areas:"process map" "partner map";
+  align-items:stretch;gap:14px;
+  margin-top:24px!important;
+}
+.guest-app .public-landing .public-location-process-grid > .public-how {
+  grid-area:process;min-width:0;
+  padding:20px;border:1px solid #34526e;border-radius:16px;
+  background:linear-gradient(155deg,#102c46,#0a1d33);
+}
+.guest-app .public-landing .public-location-process-grid > .public-partner{
+  grid-area:partner;min-width:0;
+  padding:20px;border:1px solid #34526e;border-radius:16px;
+  background:linear-gradient(155deg,#102c46,#0a1d33);
+}
+.guest-app .public-landing .public-location-process-grid > .public-demo-map{
+  grid-area:map;align-self:stretch;min-width:0;
+  margin:0!important;padding:16px!important;
+  max-width:650px!important;width:100%;
+  background:linear-gradient(160deg,#102c46,#091c32)!important;
+}
+.guest-app .public-landing .public-location-process-grid .public-map-wrap{
+  height:auto!important;aspect-ratio:625/285!important;min-height:0!important;
+  max-height:300px!important;border-radius:11px;
+  background:#061a2f;
+}
+.guest-app .public-landing .public-location-process-grid .public-map-static{
+  background-image:url('../public/tracksos-approved-map.webp')!important;
+  background-position:center center!important;
+  background-size:contain!important;
+  background-repeat:no-repeat!important;
+  background-color:#061c33!important;
+}
+.guest-app .public-landing .public-location-process-grid .public-map-open-link{
+  min-height:44px;display:flex;align-items:center;justify-content:center;
+  text-align:center;
+}
+.guest-app .public-landing .public-location-process-grid .public-steps{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;
+}
+.guest-app .public-landing .public-location-process-grid .public-how h2,
+.guest-app .public-landing .public-location-process-grid .public-partner h2{
+  margin:10px 0 17px;color:#fff;font-size:clamp(20px,1.7vw,26px);
+}
+
+/* Desktop dropdown panel touches the trigger's pointer area: no 8px dead gap. */
+.guest-app .guest-site-nav .guest-nav-dropdown{
+  top:100%!important;padding-top:14px!important;z-index:200!important;
+}
+.guest-app .guest-site-nav .guest-nav-group summary{touch-action:manipulation}
+
+/* On auth pages remove marketing actions; retain legal destinations without clutter. */
+.guest-app .guest-auth-links{display:flex;align-items:center;gap:clamp(8px,1.4vw,22px);flex-wrap:wrap}
+.guest-app .guest-auth-links a{
+  display:inline-flex;align-items:center;
+  min-height:44px;padding:8px 5px;color:#e6f7fe;
+  text-decoration:none;font-size:13px;font-weight:750;
+}
+.guest-app .guest-auth-links a:hover,
+.guest-app .guest-auth-links a:focus-visible{color:#31e8f8;outline-color:#31e8f8}
+
+/* Partner selection: four photographic, finger-friendly, keyboard-friendly cards. */
+.guest-app .guest-partner-roles{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;
+}
+.guest-app .guest-partner-roles .guest-partner-role{
+  display:flex!important;position:relative!important;isolation:isolate;
+  min-width:0;min-height:160px!important;
+  padding:18px!important;align-items:flex-start!important;justify-content:end!important;
+  flex-direction:column!important;gap:6px!important;
+  overflow:hidden;border:1px solid #32799d!important;
+  border-radius:16px!important;color:#fff!important;
+  background-color:#081d33!important;background-size:cover!important;
+  background-position:center center!important;
+  text-align:left!important;
+}
+.guest-app .guest-partner-roles .guest-partner-role::before{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:linear-gradient(180deg,rgba(4,16,29,.08),rgba(4,16,29,.70) 48%,#06172cf5);
+}
+.guest-app .guest-partner-role-master{background-image:url('../public/tracksos-photo-master.webp')!important}
+.guest-app .guest-partner-role-tow{background-image:url('../public/tracksos-photo-tow.webp')!important}
+.guest-app .guest-partner-role-service{background-image:url('../public/tracksos-photo-sto.webp')!important}
+.guest-app .guest-partner-role-insurer{background-image:url('../public/traksos-final-insurance.webp')!important}
+.guest-app .guest-partner-roles .guest-partner-role b{font-size:clamp(15px,1.4vw,19px);text-shadow:0 2px 7px #000}
+.guest-app .guest-partner-roles .guest-partner-role small{color:#d7eaf5;font-size:12px;line-height:1.35;text-shadow:0 2px 6px #000}
+.guest-app .guest-partner-roles .guest-partner-role[aria-pressed=true]{
+  border-color:#35ebf3!important;
+  box-shadow:0 0 0 2px #35ebf3,0 10px 23px #0005!important;
+}
+.guest-app .guest-partner-role:focus-visible{outline:3px solid #7ff8ff;outline-offset:3px}
+.guest-app .guest-master-specialties > summary{
+  min-height:44px;display:flex;align-items:center;justify-content:space-between;
+  color:#effaff;font-weight:800;cursor:pointer;list-style:none;
+}
+.guest-app .guest-master-specialties > summary::-webkit-details-marker{display:none}
+.guest-app .guest-master-specialties-grid button{min-height:44px!important}
+@media(max-width:899px){
+  .guest-app .public-landing .public-brand-hero{
+    display:flex!important;flex-direction:column!important;
+    align-items:stretch!important;justify-content:flex-start!important;
+    min-height:590px!important;padding:25px 17px 78px!important;
+    margin:0!important;border-radius:16px!important;
+  }
+  .guest-app .public-landing .public-brand-hero::before{
+    background:linear-gradient(180deg,#04182cfb 0%,#051a30f5 25%,#061c32bb 48%,#081b2d2c 69%,#071a2ef2 100%)!important;
+  }
+  .guest-app .public-landing .public-hero-visual{
+    position:absolute!important;inset:0!important;order:0!important;
+    width:100%!important;height:100%!important;
+    background-size:cover!important;background-position:64% center!important;
+  }
+  .guest-app .public-landing .public-hero-copy{
+    width:100%!important;max-width:none!important;z-index:3!important;
+    order:1!important;padding:0!important;background:none!important;
+  }
+  .guest-app .public-landing .public-brand-hero h1{
+    font-size:clamp(25px,6vw,36px)!important;line-height:1.12!important;
+    max-width:570px!important;
+  }
+  .guest-app .public-landing .public-hero-copy > p{font-size:12px!important;max-width:520px!important}
+  .guest-app .public-landing .public-hero-carousel{
+    left:auto!important;right:12px!important;bottom:12px!important;
+    padding:5px 7px!important;gap:7px!important;
+  }
+  .guest-app .public-landing .public-location-process-grid{
+    grid-template-columns:minmax(0,1fr)!important;
+    grid-template-areas:"process" "map" "partner";gap:12px;
+  }
+  .guest-app .public-landing .public-location-process-grid > .public-demo-map{
+    max-width:650px!important;margin:0 auto!important;
+  }
+  .guest-app .guest-auth-links{
+    width:100%;justify-content:center;gap:8px;
+  }
+  .guest-app .guest-auth-links a{font-size:11px;min-height:44px;padding:8px}
+  .guest-app .guest-partner-roles .guest-partner-role{min-height:140px!important;padding:12px!important}
+  .guest-app .guest-partner-roles .guest-partner-role small{font-size:11px}
+}
+@media(max-width:390px){
+  .guest-app .public-landing .public-brand-hero{min-height:640px!important}
+  .guest-app .public-landing .public-location-process-grid .public-steps{
+    grid-template-columns:minmax(0,1fr);gap:11px;
+  }
+  .guest-app .guest-partner-roles{gap:8px}
+  .guest-app .guest-partner-roles .guest-partner-role{min-height:150px!important;padding:10px!important}
+  .guest-app .guest-partner-roles .guest-partner-role b{font-size:14px}
+  .guest-app .guest-auth-links a{font-size:10px;padding:6px}
+}
+@media(prefers-reduced-motion:reduce){
+  .guest-app .public-landing .public-hero-visual,
+  .guest-app .public-landing .public-hero-copy > :is(h1,p,.public-hero-caption){animation:none!important}
+}
