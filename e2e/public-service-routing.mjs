@@ -94,6 +94,16 @@ try {
     if(!(await map.getAttribute('target'))?.includes('_blank'))throw Error('Map must open an external tab');
     await page.getByText('Пример расположения услуг.',{exact:false}).waitFor();
 
+    // Temporary demo cannot be entered or impersonate an admin without the VPS code.
+    await page.goto(BASE+'/#/preview');
+    await page.getByRole('heading',{name:'Проверка тестовых кабинетов'}).waitFor();
+    if(await page.locator('.sandbox-role-card').count())
+      throw Error('Anonymous visitor bypassed the PC preview code');
+    await page.goto(BASE+'/#/admin/test-center');
+    await page.getByRole('heading',{name:'Проверка тестовых кабинетов'}).waitFor();
+    if(await page.locator('.sandbox-role-card').count())
+      throw Error('Anonymous visitor entered admin test center directly');
+
     await page.goto(BASE+'/#/company');
     await page.getByRole('heading',{name:'Компания TrakSOS'}).waitFor();
     await page.goto(BASE+'/#/offers');

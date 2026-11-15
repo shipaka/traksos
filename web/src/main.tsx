@@ -17,6 +17,7 @@ import { MeCtx, ToastProvider, useRoute, useToast, type Me } from './ui.tsx';
 import { native } from './native.ts';
 import { Login } from './screens/login.tsx';
 import { GuestExplore } from './screens/guestExplore.tsx';
+import { DemoPreviewGate } from './screens/demoPreview.tsx';
 import { GuestCompany, GuestOffers } from './screens/guestInfo.tsx';
 import { TOP_CATALOGUE, SERVICE_TILES, CATALOGUE, rememberGuestService } from './guestCatalog.ts';
 import { SiteQuickSearch } from './screens/siteQuickSearch.tsx';
@@ -186,7 +187,7 @@ function App() {
   if (!me) {
     return (
       <MeCtx.Provider value={{ me: null, reload, mode: 'client', setMode }}>
-        <Shell mode="client" me={null}>{route[0] === 'offer' ? <OfferPage audience={route[1] ?? 'client'} /> : route[0] === 'qr' && route[1] ? <QrJoin code={route[1]} /> : route[0] === 'rules' ? <Rules /> : route[0] === 'help' ? <Help /> : route[0] === 'explore' ? <GuestExplore id={route[1] || ''} itemKey={route[2]} /> : route[0] === 'company' ? <GuestCompany /> : route[0] === 'offers' ? <GuestOffers /> : <>{route[0] === 'r' && <div className="banner good" style={{ margin: '12px 16px 0' }}><span>Вас пригласили в TrakSOS — после входа на счёт придут подарочные баллы.</span></div>}<Login key={route[0] ?? 'public'} entry={route[0] === 'login' ? 'login' : route[0] === 'register' ? 'register' : route[0] === 'join' ? 'join' : undefined} /></>}</Shell>
+        <Shell mode="client" me={null}>{(route[0] === 'admin' && route[1] === 'test-center') || route[0] === 'preview' ? <DemoPreviewGate roleId={route[0]==='admin' ? route[2] : undefined} /> : route[0] === 'offer' ? <OfferPage audience={route[1] ?? 'client'} /> : route[0] === 'qr' && route[1] ? <QrJoin code={route[1]} /> : route[0] === 'rules' ? <Rules /> : route[0] === 'help' ? <Help /> : route[0] === 'explore' ? <GuestExplore id={route[1] || ''} itemKey={route[2]} /> : route[0] === 'company' ? <GuestCompany /> : route[0] === 'offers' ? <GuestOffers /> : <>{route[0] === 'r' && <div className="banner good" style={{ margin: '12px 16px 0' }}><span>Вас пригласили в TrakSOS — после входа на счёт придут подарочные баллы.</span></div>}<Login key={route[0] ?? 'public'} entry={route[0] === 'login' ? 'login' : route[0] === 'register' ? 'register' : route[0] === 'join' ? 'join' : undefined} /></>}</Shell>
       </MeCtx.Provider>
     );
   }

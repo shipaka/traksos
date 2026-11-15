@@ -11,6 +11,7 @@ import { MockProvider } from './payments/provider.ts';
 import { SettingsService } from './services/settings.ts';
 import { Notifier } from './services/notify.ts';
 import { AuthService, SELF_ROLES } from './services/auth.ts';
+import { OperatorDemoAccess } from './services/operatorDemo.ts';
 import { ReferralService } from './services/referral.ts';
 import { ProfilesService } from './services/profiles.ts';
 import { OrdersService } from './services/orders.ts';
@@ -62,6 +63,7 @@ export function createApp(d: Deps) {
   const settings = new SettingsService(d.db);
   const notifier = new Notifier(d.db, hub, d.push);
   const auth = new AuthService(d.db, d.sms, now, settings);
+  const operatorDemo = new OperatorDemoAccess(d.db, now);
   const profiles = new ProfilesService(d.db, settings, now);
   const orders = new OrdersService(d.db, settings, notifier, now);
   const payments = new PaymentsService(d.db, settings, d.payments, notifier, orders);
@@ -111,6 +113,19 @@ export function createApp(d: Deps) {
 
   // Служебное ----------------------------------------------------------------
   r.get('/api/health', false, async () => ({ ok: true, db: (await d.db.one('select 1 as ok'))?.ok === 1, time: now() }));
+
+  // Isolated fake-data demo access: NEVER returns a real auth token or AuthUser.
+  // Codes are issued only by the explicitly confirmed SSH utility on the VPS.
+  r.post('/api/public/demo/unlock', false, async (c: Ctx) => {
+    const body = parse(z.object({ code:z.string().length(10) }), c.body);
+    return operatorDemo.redeem(body.code);
+  });
+  r.post('/api/public/demo/check', false, async (c: Ctx) => {
+    const body = parse(z.object({ token:z.string().min(1).max(128) }), c.body);
+    if (!await operatorDemo.verify(body.token))
+      throw new HttpError(401, 'demo_expired', 'Временный доступ истёк. Создайте новый код через SSH.');
+    return { ok:true };
+  });
 
   // Вход ---------------------------------------------------------------------
   r.post('/api/auth/code', false, (c: Ctx) => {
