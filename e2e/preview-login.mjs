@@ -82,7 +82,7 @@ try {
         await page.screenshot({path:'e2e/shots/sandbox/'+id+'-'+width+'.png',fullPage:true});
         await page.getByRole('link',{name:'← Все кабинеты'}).first().click();
       } else {
-        const cabinetLabel=id==='owner'?'Владелец автопарка':label;
+        const cabinetLabel=id==='owner'?'Владелец автопарка':id==='driver'?'Водитель автопарка':label;
         await page.getByRole('main',{name:'Тестовый кабинет: '+cabinetLabel}).waitFor();
         // Wait for ts-appear cards and route transitions before taking owner-review screenshots.
         await page.waitForTimeout(450);
