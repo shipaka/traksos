@@ -1679,3 +1679,52 @@
   .profile-accordion-options{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:9px}
   .profile-brand-check{min-height:48px;padding:8px;font-size:11px}
 }
+
+/* #82 — screenshot QA: map title unobstructed; align process and map as peers. */
+.guest-app .public-landing .public-location-process-grid{
+  grid-template-areas:"process map" "partner partner"!important;
+  align-items:start!important;
+}
+.guest-app .public-landing .public-location-process-grid > .public-how,
+.guest-app .public-landing .public-location-process-grid > .public-demo-map{
+  height:100%;align-self:stretch!important;
+}
+.guest-app .public-landing .public-location-process-grid > .public-partner{
+  width:100%;max-width:none;
+}
+.guest-app .public-landing .public-location-process-grid .public-map-open-link{
+  display:inline-flex!important;align-items:center;justify-content:center;
+  position:static!important;right:auto!important;bottom:auto!important;
+  margin:10px 0 4px!important;max-width:100%;
+  padding:9px 16px!important;min-height:44px!important;
+  font-size:12px!important;background:linear-gradient(110deg,#0a4566,#0b2942)!important;
+  color:#e8faff!important;text-decoration:none!important;border-radius:11px;
+  border:1px solid #3bb3d5!important;
+}
+.guest-app .public-landing .public-map-open-link:focus-visible{
+  outline:3px solid #65eefa;outline-offset:3px;
+}
+/* Laptop widths cannot fit five top groups, documents, search and auth in one row. */
+@media(min-width:900px) and (max-width:1599px){
+  .guest-app .top:has(.guest-site-nav){
+    display:grid!important;
+    grid-template-columns:auto minmax(0,1fr) 50px auto!important;
+    gap:8px 13px!important;
+  }
+  .guest-app .top:has(.guest-site-nav) .logo{grid-column:1;grid-row:1}
+  .guest-app .top:has(.guest-site-nav) .track-site-search{grid-column:3;grid-row:1}
+  .guest-app .top:has(.guest-site-nav)>.row{grid-column:4;grid-row:1}
+  .guest-app .top:has(.guest-site-nav) .guest-site-nav{
+    grid-column:1/-1;grid-row:2;
+    justify-content:space-between;gap:10px!important;
+  }
+}
+@media(max-width:899px){
+  .guest-app .public-landing .public-location-process-grid{
+    grid-template-areas:"process" "map" "partner"!important;
+  }
+  /* Keep carousel above the Android/browser sticky bottom tabbar. */
+  .guest-app .public-landing .public-hero-carousel{
+    bottom:86px!important;right:12px!important;
+  }
+}
