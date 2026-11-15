@@ -1728,3 +1728,30 @@
     bottom:86px!important;right:12px!important;
   }
 }
+
+/* #82 final desktop screenshot QA: text must remain legible over role photos,
+   including unselected cards and both non-disabled auth actions. */
+.guest-app .auth-desktop-form .guest-partner-roles .guest-partner-role {
+  opacity:1!important;filter:none!important;color:#f6fbff!important;
+}
+.guest-app .auth-desktop-form .guest-partner-roles .guest-partner-role::before {
+  z-index:0!important;
+  background:linear-gradient(180deg,rgba(3,13,25,.07) 0%,rgba(3,14,28,.48) 42%,rgba(3,15,30,.97) 100%)!important;
+}
+.guest-app .auth-desktop-form .guest-partner-roles .guest-partner-role b,
+.guest-app .auth-desktop-form .guest-partner-roles .guest-partner-role small {
+  position:relative!important;z-index:2!important;
+  opacity:1!important;color:#f6fbff!important;
+  -webkit-text-fill-color:#f6fbff!important;
+  text-shadow:0 2px 7px #000,0 0 12px #000!important;
+}
+.guest-app .auth-desktop-form .btn.ghost:not(:disabled) {
+  color:#eaf7ff!important;
+  -webkit-text-fill-color:#eaf7ff!important;
+  border-color:#5482a4!important;
+  background:#10334e!important;
+  opacity:1!important;
+}
+.guest-app .auth-desktop-form .btn.ghost:not(:disabled):focus-visible{
+  outline:3px solid #5ce7f4;outline-offset:2px;
+}
