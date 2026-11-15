@@ -18,6 +18,7 @@ import { native } from './native.ts';
 import { Login } from './screens/login.tsx';
 import { GuestExplore } from './screens/guestExplore.tsx';
 import { DemoPreviewGate } from './screens/demoPreview.tsx';
+import { SandboxEnter, SandboxModeBar } from './screens/isolatedSandbox.tsx';
 import { GuestCompany, GuestOffers } from './screens/guestInfo.tsx';
 import { TOP_CATALOGUE, SERVICE_TILES, CATALOGUE, rememberGuestService } from './guestCatalog.ts';
 import { SiteQuickSearch } from './screens/siteQuickSearch.tsx';
@@ -182,6 +183,10 @@ function App() {
   }), [reload, toast]);
 
   if (!ready) return <div className="traksos-start-loading" role="status" aria-label="Загрузка"><span className="traksos-start-loading-line" aria-hidden="true" /></div>;
+  // Handoff takes place on the separate sandbox origin. The ticket is not a
+  // production login and never reaches normal application API endpoints.
+  if (route[0] === 'sandbox-enter') return <SandboxEnter />;
+
   // Ссылка-приглашение: запоминаем код, вход — как обычно
   if (route[0] === 'r' && route[1]) { try { localStorage.setItem('traksos.ref', route[1].toUpperCase()); } catch { /* */ } }
   if (!me) {
@@ -248,7 +253,7 @@ function App() {
     case 'qr': screen = <QrJoin code={b} />; break;
     case 'appeal': screen = <Appeal />; break;
     case 'reviews': screen = <MyReviews />; break;
-    case 'admin': screen = !isStaff ? <Home /> : b === 'case' && route[2] ? <ModCase id={route[2]} /> : !isAdmin ? <ModeratorDesk /> : b === 'test-center' ? (serviceSandbox ? <ServicePreviewPage section={route[3]} sub={route[4]} id={route[5]} /> : <AdminTestCenter roleId={route[2]} />) : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : <Admin key={b === 'section' ? route[2] : 'summary'} initialSection={b === 'section' ? route[2] : undefined} />; break;
+    case 'admin': screen = !isStaff ? <Home /> : b === 'case' && route[2] ? <ModCase id={route[2]} /> : !isAdmin ? <ModeratorDesk /> : b === 'test-center' ? (serviceSandbox ? <ServicePreviewPage section={route[3]} sub={route[4]} id={route[5]} /> : <AdminTestCenter roleId={route[2]} fullFidelity />) : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : <Admin key={b === 'section' ? route[2] : 'summary'} initialSection={b === 'section' ? route[2] : undefined} />; break;
     case 'moderation': screen = isModerator ? <ModeratorDesk /> : <Home />; break;
     case 'offer': screen = <OfferPage audience={b ?? 'client'} />; break;
     case 'support': screen = b === 'new' ? <SupportNew /> : b ? <SupportThread id={b} /> : <SupportList />; break;
@@ -259,6 +264,7 @@ function App() {
   return (
     <MeCtx.Provider value={{ me, reload, mode: effMode, setMode }}>
       <ScreenErrorBoundary key={route.join('/')}>
+        <SandboxModeBar />
         {serviceSandbox && <ServicePreviewBar />}
         <Shell mode={effMode} me={serviceSandbox ? {...me,roles:['service'],name:'Тестовый сервис'} : me}>{screen}</Shell>
         {!(a === 'admin' && b === 'test-center' && isAdmin) && <IncomingCall />}
