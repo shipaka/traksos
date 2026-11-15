@@ -1,4 +1,4 @@
-# Optional sandbox overlay. Never run it against production data.
+# Required pre-production sandbox overlay. Never run it against production data.
 # Same immutable image as production; separate Postgres volume and two
 # SANDBOX-ONLY networks. The sandbox app does NOT join production's network.
 # Bring up with:
