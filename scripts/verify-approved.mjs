@@ -100,7 +100,7 @@ expect(landing.includes('yandex.ru/maps/'), 'guest static map opens real Yandex 
 expect(landing.includes('Санкт-Петербург и Ленинградская область'), 'launch region is shown');
 expect(shell.includes("import './finalCanon.css';"), 'the only final design layer is loaded by the real app');
 expect(shell.includes('guest-site-nav'), 'the guest PC has horizontal navigation, not an alternative sidebar');
-expect(finalCss.includes("url('../public/traksos-final-hero.webp')"), 'the final PC truck image is displayed by live CSS');
+expect(finalCss.includes('public-hero-slide-approved') && finalCss.includes("url('../public/tracksos-approved-scenic-hero.webp')"), 'the final guest hero uses the approved full Scania photo without baked controls');
 expect(finalCss.includes('grid-template-columns:repeat(6,minmax(0,1fr))'), 'six photographic service cards in desktop row');
 const finalServices = [
   "{ id: 'tow', icon: '↗', title: 'Эвакуация'",
