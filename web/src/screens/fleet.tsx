@@ -211,7 +211,7 @@ function FleetVehicleDetails({ car }: { car:any }) {
     </div>}
     {tab==='parts'&&<div className="fleet-vehicle-spec">
       <b>История покупок и запчастей</b>
-      <p className="note">Покупки из TrackSOS привязываются к этой машине. Для полной истории переходите в журнал — реальные записи без придуманных товаров.</p>
+      <p className="note">Покупки из TrakSOS привязываются к этой машине. Для полной истории переходите в журнал — реальные записи без придуманных товаров.</p>
       <a className="btn" href={`#/shop/history/${car.id}`}>Открыть историю запчастей →</a>
     </div>}
   </section>;
