@@ -47,7 +47,7 @@ try {
     await previewLink.click();
     await page.getByRole('heading',{name:'Тестирование кабинетов'}).waitFor();
     for (const [id,label] of [
-      ['client','Клиент'],['owner','Владелец / автопарк'],['driver','Водитель автопарка'],
+      ['client','Клиент'],['owner','Владелец / автопарк'],['driver','Сотрудник автопарка'],
       ['master','Выездной мастер'],['tow','Эвакуаторщик'],['service','Рембаза / СТО'],
       ['master_service','Мастер и своя СТО'],['insurer','Страховой партнёр'],
       ['inspection','Оператор техосмотра'],['moderator','Модератор'],['admin','Администратор'],
@@ -55,6 +55,10 @@ try {
       const link=page.locator('a.sandbox-role-card[href="#/admin/test-center/'+id+'"]');
       await link.click();
       await page.waitForURL('**/#/admin/test-center/'+id);
+      // Legacy training exercises remain available explicitly while the
+      // full-fidelity, separate-database sandbox is not provisioned in CI.
+      // Do not silently pretend these older screens are production-equivalent.
+      await page.getByRole('button',{name:'Открыть старый учебный тренажёр'}).click();
       if(id==='service'){
         await page.getByRole('heading',{name:/Рембаза/}).waitFor();
         await page.locator('.service-preview-admin-bar').waitFor();
