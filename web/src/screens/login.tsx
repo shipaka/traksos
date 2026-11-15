@@ -252,12 +252,12 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         <article className="public-benefit public-benefit-value"><span className="public-benefit-icon">%</span><b>Выгодные условия</b><small>Для водителей и автопарков</small></article>
       </section>
       <div className="public-track-extras">
-        <a href="#/explore/insurance" className="public-track-insurance" onClick={() => rememberGuestService('insurance')}>
+        <button type="button" className="public-track-insurance" onClick={() => { rememberGuestService('insurance'); go('register'); }}>
           <span className="public-track-insurance-art" aria-hidden="true" />
           <span><b>Страхование грузового транспорта</b>
           <small>ОСАГО, КАСКО, груз, ответственность — заявка через TrakSOS</small></span>
-          <strong>Подробнее →</strong>
-        </a>
+          <strong>Оформить заявку →</strong>
+        </button>
         <div className="public-track-extras-grid">
           <a href="#/explore/parts" className="public-track-extra public-track-parts" onClick={() => rememberGuestService('parts')}>
             <span className="public-track-extra-art" aria-hidden="true"/><b>Запчасти</b><small>Оригиналы и проверенные аналоги</small><span aria-hidden="true">›</span>
