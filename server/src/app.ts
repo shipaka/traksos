@@ -12,6 +12,7 @@ import { SettingsService } from './services/settings.ts';
 import { Notifier } from './services/notify.ts';
 import { AuthService, SELF_ROLES } from './services/auth.ts';
 import { OperatorDemoAccess } from './services/operatorDemo.ts';
+import { SANDBOX_ROLES, issueSandboxTicket, exchangeSandboxTicket } from './services/sandboxTickets.ts';
 import { ReferralService } from './services/referral.ts';
 import { ProfilesService } from './services/profiles.ts';
 import { OrdersService } from './services/orders.ts';
@@ -125,6 +126,26 @@ export function createApp(d: Deps) {
     if (!await operatorDemo.verify(body.token))
       throw new HttpError(401, 'demo_expired', 'Временный доступ истёк. Создайте новый код через SSH.');
     return { ok:true };
+  });
+
+  // Full-fidelity sandbox: independent deployment/database, but exactly the
+  // same production handlers and React screens. This is NOT an impersonation on
+  // the primary database. The single-use handoff contains no real user records.
+  r.get('/api/admin/sandbox/status', ['admin'], () => ({
+    enabled: !config.sandboxInstance && !!config.sandboxUrl && config.sandboxSharedSecret.length >= 32,
+  }));
+  r.post('/api/admin/sandbox/ticket', ['admin'], (c: AuthedCtx) => {
+    if (config.sandboxInstance || !config.sandboxUrl || config.sandboxSharedSecret.length < 32)
+      throw new HttpError(503, 'sandbox_not_configured', 'Полноценный тестовый сервер пока не подключён');
+    const b = parse(z.object({ role: z.enum(SANDBOX_ROLES) }), c.body);
+    const ticket = issueSandboxTicket(b.role, config.sandboxSharedSecret, now().getTime());
+    return { entryUrl: config.sandboxUrl + '/#/sandbox-enter?ticket=' + encodeURIComponent(ticket), role: b.role };
+  });
+  r.post('/api/sandbox/exchange', false, async (c: Ctx) => {
+    // This endpoint must NEVER issue sessions on the primary database.
+    if (!config.sandboxInstance) throw notFound();
+    const b = parse(z.object({ ticket: z.string().min(20).max(1300) }), c.body);
+    return exchangeSandboxTicket(b.ticket, config.sandboxSharedSecret, d.db, now().getTime());
   });
 
   // Вход ---------------------------------------------------------------------
