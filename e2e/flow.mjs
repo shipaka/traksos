@@ -147,7 +147,17 @@ await m.getByText('На проверке у модератора').waitFor();
 const a = await mk();
 await login(a, '+79990000001', 'login');
 // Админ входит по номеру — сразу в админку, без выбора роли
-await a.waitForURL(/#\/admin/);
+try {
+  await a.waitForURL(/#\\/admin(?:\\/|$)/, { timeout: 15000 });
+} catch (error) {
+  const diagnostics = {
+    url: a.url(),
+    loginError: await a.locator('[role="alert"], .error, .banner.bad').allTextContents(),
+    visibleText: (await a.locator('body').innerText()).slice(0, 1800),
+    pageErrors: errors.slice(-10),
+  };
+  throw new Error('Admin login did not reach the dashboard: ' + JSON.stringify(diagnostics), { cause: error });
+}
 await a.getByRole('button', { name: 'Проверка', exact: true }).click();
 await a.getByText('Отправил').waitFor();
 for (let i = 0; i < n; i++) {
