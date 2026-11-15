@@ -55,8 +55,11 @@ let center:RecordItem={
   brands:['Scania','DAF','MAN','Volvo'],conditions:['parking','pit','night'],
   accepts:['quick','day'],closedDays:[],
 };
-let bookings=original.map(x=>structuredClone(x));
-const clone=<T>(x:T):T=>structuredClone(x);
+// This isolated admin training data is plain JSON. Avoid structuredClone here:
+// Android 10's stock WebView (Chrome 74) lacks it, and this module is imported
+// during app startup even when the user is not in the admin test center.
+const clone=<T>(x:T):T=>JSON.parse(JSON.stringify(x)) as T;
+let bookings=original.map(x=>clone(x));
 const labels:Record<string,string>={
   new:'Новая заявка',clarify:'Уточняем детали',expected:'Ожидаем',arrived:'Машина приехала',
   diagnostics:'Диагностика',in_work:'В работе',waiting_part:'Ждём запчасть',

@@ -6,3 +6,8 @@ e2e
 .git
 deploy/.env
 deploy/backups
+**/.env
+**/.env.*
+!**/.env.example
+**/coverage
+**/e2e/shots

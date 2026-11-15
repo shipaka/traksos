@@ -37,6 +37,12 @@ android {
     }
 
     buildTypes {
+        // CI debug APK is a separate app: avoid signature conflicts with installed TrakSOS.
+        // Production and RuStore builds KEEP ru.traksos.app and require their original signing key.
+        debug {
+            applicationIdSuffix = ".preview"
+            versionNameSuffix = "-preview"
+        }
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")

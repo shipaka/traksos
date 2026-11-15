@@ -15,7 +15,11 @@ ENV NODE_ENV=production PORT=8080 WEB_ROOT=/app/web/dist
 COPY package.json ./
 COPY server/package.json server/
 RUN npm install -w server --omit=dev && npm cache clean --force
-COPY server server
+# Ship only code required by the running API (not tests, fixtures or seed data).
+# Migrations are required at startup, and tsconfig preserves TSX options.
+COPY server/src server/src
+COPY server/migrations server/migrations
+COPY server/tsconfig.json server/tsconfig.json
 COPY --from=build /app/web/dist web/dist
 USER node
 EXPOSE 8080

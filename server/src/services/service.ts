@@ -129,7 +129,8 @@ export class ServiceCenters {
       commission: as === 'service' ? b.commission : undefined, points: as === 'service' ? b.points ?? 0 : undefined, paidOutAt: as === 'service' ? b.paid_out_at ?? null : undefined,
       payout: as === 'service' && b.amount != null ? b.amount - b.commission : undefined,
       toPay: b.amount != null ? b.amount - b.discount : null,
-      fromOrder: !!b.from_order_id, fromOrderId: as === 'client' ? b.from_order_id : undefined, arrivedAt: b.arrived_at, readyAt: b.ready_at, createdAt: b.created_at,
+      fromOrder: !!b.from_order_id, fromOrderId: as === 'client' ? b.from_order_id : undefined,
+      caseRootId: as === 'client' ? b.case_root_id ?? null : undefined, arrivedAt: b.arrived_at, readyAt: b.ready_at, createdAt: b.created_at,
       daysInRepair: b.arrived_at ? Math.max(1, Math.ceil((this.now().getTime() - new Date(b.arrived_at).getTime()) / 86400_000)) : null,
       stillHereDue: as === 'service' && repair && !!b.from_order_id && new Date(b.still_here_at ?? b.arrived_at ?? b.created_at).getTime() < weekAgo,
       client: as === 'service' ? { name: b.company_name || b.client_name || 'Клиент', rating: b.client_rating } : undefined,
@@ -370,7 +371,7 @@ export class ServiceCenters {
     return { ...c, reviews: reviews };
   }
 
-  async book(user: AuthUser, centerId: string, p: { vehicleId?: string | null; need: string; day: string; time?: string | null; arrival: 'self' | 'tow'; comment?: string | null; fromOrderId?: string | null }) {
+  async book(user: AuthUser, centerId: string, p: { vehicleId?: string | null; need: string; day: string; time?: string | null; arrival: 'self' | 'tow'; comment?: string | null; fromOrderId?: string | null; caseOrderId?: string | null }) {
     const c = await this.db.one(`select * from service_centers where id=$1 and verification='approved' and not paused`, [centerId]);
     if (!c) throw notFound('Сервис не найден');
     if (c.owner_id === user.id) throw bad('self', 'Это ваш сервис');
@@ -388,15 +389,50 @@ export class ServiceCenters {
       if (!v || (user.owner_id && v.driver_id !== user.id)) throw notFound('Машина не найдена');
       vehicle = { brand: v.brand, model: v.model, year: v.year, plate: v.plate, trailerPlate: v.trailer_plate };
     }
+    // A case link is NOT a referral. Do not use from_order_id for tow->STO
+    // or the old workshop referral discount would be applied incorrectly.
+    if (p.caseOrderId && p.fromOrderId) throw bad('bad_link', 'Выберите одно продолжение обращения');
+    let caseRootId: string | null = null;
+    if (p.caseOrderId) {
+      const previous = await this.db.one<any>('select id, case_root_id, client_id, created_by, vehicle_id, brand, model, year, status, result, service from orders where id=$1', [p.caseOrderId]);
+      if (!previous || previous.client_id !== clientId || (user.owner_id && previous.created_by !== user.id))
+        throw forbidden('Продолжить можно только собственное обращение');
+      if (previous.status !== 'completed' ||
+          !(previous.service === 'tow' || ['cause_found','not_found'].includes(previous.result)))
+        throw conflict('stage_not_ready', 'Сначала завершите текущий этап помощи');
+      if (previous.vehicle_id && p.vehicleId && previous.vehicle_id !== p.vehicleId)
+        throw bad('different_vehicle', 'Запись должна относиться к тому же грузовику');
+      if (!previous.vehicle_id && p.vehicleId)
+        throw bad('different_vehicle', 'Для продолжения используйте грузовик из исходного обращения');
+      if (previous.vehicle_id && !p.vehicleId) {
+        // Link the exact same garage vehicle, even if the user never reopened the picker.
+        const v = await this.db.one<any>('select * from vehicles where id=$1 and owner_id=$2', [previous.vehicle_id, clientId]);
+        if (!v || (user.owner_id && v.driver_id !== user.id))
+          throw forbidden('Машина этого обращения недоступна для записи');
+        p = { ...p, vehicleId: previous.vehicle_id };
+        vehicle = { brand: v.brand, model: v.model, year: v.year, plate: v.plate, trailerPlate: v.trailer_plate };
+      }
+      if (!previous.vehicle_id) {
+        // Incidents created before the truck was added to a garage still retain
+        // the brand/model/year snapshot in the following workshop booking.
+        vehicle = { brand: previous.brand ?? null, model: previous.model ?? null, year: previous.year ?? null };
+      }
+      caseRootId = previous.case_root_id ?? previous.id;
+    }
     let fromOrderId: string | null = null;
     if (p.fromOrderId) {
       const o = await this.db.one('select id from orders where id=$1 and client_id=$2', [p.fromOrderId, clientId]);
       fromOrderId = o?.id ?? null;
     }
     const b = await this.db.one(
-      `insert into service_bookings(center_id, client_id, created_by, vehicle_id, vehicle, need, when_day, when_time, arrival, comment, from_order_id)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) returning *`,
-      [centerId, clientId, user.id, p.vehicleId ?? null, vehicle, p.need, p.day, p.time?.trim() || null, p.arrival, p.comment?.trim() || null, fromOrderId]) as any;
+      `insert into service_bookings(center_id, client_id, created_by, vehicle_id, vehicle, need, when_day, when_time, arrival, comment, from_order_id, case_root_id)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) returning *`,
+      [centerId, clientId, user.id, p.vehicleId ?? null, vehicle, p.need, p.day, p.time?.trim() || null, p.arrival, p.comment?.trim() || null, fromOrderId, caseRootId]
+    ).catch((e: any) => {
+      if (e?.code === '23505' && e?.constraint === 'service_bookings_one_open_case_idx')
+        throw conflict('continuation_exists', 'В этом обращении уже есть незакрытая запись на СТО');
+      throw e;
+    }) as any;
     await this.notifier.notify([c.owner_id], { type: 'booking', bookingId: b.id, status: 'new' },
       { kind: 'normal', title: 'Новый запрос в сервис', body: `${NEEDS[p.need]} · ${vehicle.brand ?? 'машина'} ${vehicle.plate ?? ''} · ${fmtDay(p.day)}${p.time ? `, к ${p.time}` : ''}`, data: { bookingId: b.id } });
     return this.booking(user, b.id);

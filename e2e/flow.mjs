@@ -80,15 +80,30 @@ const mk = async () => {
   return page;
 };
 
-// how: 'help' — кнопка «Помогите», 'login' — вход по номеру, иначе текст роли в «Хочу работать с TrakSOS»
+// Exercise the three public flows without restoring removed registration roles.
 async function login(page, phoneNum, how) {
-  await page.goto(BASE + '/#/login');
-  if (how === 'help') await page.getByRole('button', { name: /Помогите/ }).click();
-  else if (how === 'login') await page.getByRole('button', { name: 'Войти по номеру' }).click();
-  else { await page.getByRole('button', { name: /Хочу работать/ }).click(); await page.getByRole('button', { name: how }).click(); }
-  await page.locator('input[type=tel]').fill(phoneNum);
   const password = 'TrakSOS-Test-2026!';
-  if (how === 'login') {
+  if (how === 'hybrid') {
+    // Legacy combined role is still valid in backend, but is not a fifth public choice.
+    const c = await api('POST', '/api/auth/code', { phone: phoneNum, accountType: 'master_service' });
+    if (!c.devCode) throw Error('Test code unavailable for combined role');
+    const v = await api('POST', '/api/auth/verify', {
+      phone: phoneNum, code: c.devCode, password, role:'master', accountType:'master_service'
+    });
+    if (!v.token) throw Error('Combined role registration rejected: '+JSON.stringify(v));
+    await page.goto(BASE + '/#/login');
+  } else if (how === 'client') {
+    await page.goto(BASE + '/#/explore/van');
+    await page.locator('.guest-explore-cta').click();
+  } else if (how === 'login') {
+    await page.goto(BASE + '/#/login');
+  } else {
+    await page.goto(BASE + '/#/join');
+    await page.getByRole('button', { name: how, exact: true }).click();
+    if (how === 'Мастер') await page.getByRole('button', { name: 'Электрик', exact:true }).click();
+  }
+  await page.locator('input[type=tel]').fill(phoneNum);
+  if (how === 'login' || how === 'hybrid') {
     await page.locator('input[type=password]').fill(password);
     await page.getByRole('button', { name: 'Войти', exact: true }).click();
     return;
@@ -107,7 +122,7 @@ const admin = await api('POST', '/api/auth/verify', { phone: '+79990000001', cod
 
 // Мастер
 const m = await mk();
-await login(m, '+79992223344', 'Я мастер');
+await login(m, '+79992223344', 'Мастер');
 await m.waitForURL(/work\/profile/);
 await m.locator('input[placeholder="Имя, как увидят клиенты"]').fill('Иван');
 await m.getByRole('button', { name: 'Самозанятый' }).click();
@@ -154,8 +169,8 @@ await shot(m, '02-master-online');
 
 // Клиент
 const k = await mk();
-await login(k, '+79991112233', 'help');
-// «Помогите» — после кода сразу экран SOS
+await login(k, '+79991112233', 'client');
+// Регистрация после выбора выездной помощи открывает нужный раздел SOS.
 await k.waitForURL(/#\/sos/);
 await k.goto(BASE + '/#/');
 await k.locator('.client-dashboard .desktop-quick-card').first().waitFor();
@@ -366,7 +381,7 @@ await k.getByText('Поддержка ответила', { exact: false }).first
 
 // СТО: реальный вход и проверка доступности разделов без прокрутки главного экрана.
 const sto = await mk();
-await login(sto, '+79993334455', 'Я рембаза (сервис)');
+await login(sto, '+79993334455', 'СТО');
 await sto.waitForURL(/#\/base/);
 await checkCabinetMenu(sto, ['Заявки и история ремонтов', 'Карточка СТО', 'Финансы', 'Оферта']);
 await shot(sto, '19-service-cabinet');
@@ -377,8 +392,8 @@ await sto.close();
 
 // Совмещённый аккаунт: оба кабинета назначаются без модератора и открываются через меню.
 const both = await mk();
-await login(both, '+79993334456', 'Мастер и своя СТО');
-await both.waitForURL(/work.profile/);
+await login(both, '+79993334456', 'hybrid');
+await both.waitForURL(new RegExp('work'));
 await both.goto(BASE + '/#/work');
 await checkCabinetMenu(both, ['Моя СТО — стационарный ремонт', 'Профиль исполнителя']);
 await shot(both, '21-hybrid-master');

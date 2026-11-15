@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type { Db, Queryable } from '../db/index.ts';
 import type { SettingsService } from './settings.ts';
 import type { Notifier } from './notify.ts';
@@ -37,6 +38,8 @@ export interface CreateOrderInput {
   site?: { place?: string; pass?: string; meet?: string; state?: string; when?: string; time?: string };
   /** Выезд после консультации: подсказка мастера переходит в заявку, клиенту — скидка */
   fromConsult?: string;
+  /** Следующий самостоятельный этап того же обращения. */
+  continueFrom?: string;
 }
 
 /** Подсказка мастера после консультации */
@@ -46,6 +49,9 @@ export interface ConsultHint { hints: string[]; confidence: 'sure' | 'likely' | 
 export interface PaymentHooks {
   onCreated(order: any): Promise<{ confirmationUrl?: string; holdRequired: boolean }>;
   onConfirmed(order: any, q: Queryable): Promise<void>;
+  processCaptureForOrder(orderId: string): Promise<string | null>;
+  processWorkPaymentForOrder(orderId: string): Promise<string | null>;
+  processCancellationForOrder(orderId: string): Promise<string | null>;
   onCancelled(order: any, stage: string, q: Queryable): Promise<void>;
   assertMethodAllowed(method: string): Promise<void>;
 }
@@ -65,13 +71,52 @@ export class OrdersService {
 
   // Создание ---------------------------------------------------------------
 
-  async create(user: AuthUser, i: CreateOrderInput) {
+  async create(user: AuthUser, i: CreateOrderInput, idempotencyKey?: string) {
     if (!SERVICES.includes(i.service)) throw bad('bad_service', 'Неизвестная услуга');
+    const requestKey = idempotencyKey?.trim() || null;
+    if (requestKey && !/^[A-Za-z0-9._:-]{8,100}$/.test(requestKey))
+      throw bad('bad_idempotency_key', 'Недопустимый ключ повторной заявки');
+    const requestHash = requestKey
+      ? createHash('sha256').update(JSON.stringify(i)).digest('hex') : null;
+    const reuse = async (existing: { id: string; create_request_hash: string | null }) => {
+      if (!requestHash || existing.create_request_hash !== requestHash)
+        throw conflict('idempotency_conflict',
+          'Для изменённой заявки требуется новый ключ отправки');
+      const pay = await this.db.one<{ confirmation_url: string | null }>(
+        "select confirmation_url from payments where order_id=$1 and kind='call_out'", [existing.id]);
+      return { order: await this.view(user, existing.id),
+        confirmationUrl: pay?.confirmation_url ?? null };
+    };
+    if (requestKey) {
+      const previous = await this.db.one<{id:string;create_request_hash:string|null}>(
+        'select id,create_request_hash from orders where created_by=$1 and create_request_key=$2',
+        [user.id,requestKey]);
+      if (previous) return reuse(previous);
+    }
     const all = await this.settings.all();
     const method = i.paymentMethod ?? 'cash';
     await this.payments.assertMethodAllowed(method);
 
     const clientId = user.owner_id ?? user.id;
+    // Previous stage must be closed; never mix its price into the next auction.
+    let previous: any = null;
+    if (i.continueFrom) {
+      if (i.fromConsult || i.service !== 'tow')
+        throw bad('bad_continuation', 'Сейчас можно продолжить выезд мастера вызовом эвакуатора');
+      previous = await this.db.one<any>('select * from orders where id=$1', [i.continueFrom]);
+      if (!previous || previous.client_id !== clientId || (user.owner_id && previous.created_by !== user.id))
+        throw forbidden('Продолжить можно только собственное обращение');
+      if (previous.status !== 'completed' || !['cause_found', 'not_found'].includes(previous.result) || previous.service === 'tow')
+        throw conflict('stage_not_ready', 'Предыдущий этап не завершён или не требует эвакуации');
+      const existing = await this.db.one('select id from orders where continuation_of=$1 and status<>$2', [previous.id, 'cancelled']);
+      if (existing) throw conflict('continuation_exists', 'Следующий этап этого обращения уже оформлен');
+      if (previous.vehicle_id && i.vehicleId && previous.vehicle_id !== i.vehicleId)
+        throw bad('different_vehicle', 'Продолжение относится к тому же грузовику');
+      i = { ...i, isSos: true, vehicleId: previous.vehicle_id ?? i.vehicleId,
+        brand: previous.brand ?? i.brand, model: previous.model ?? i.model, year: previous.year ?? i.year,
+        address: i.address || previous.address, lat: i.lat ?? previous.lat, lng: i.lng ?? previous.lng,
+        description: i.description || previous.description || 'Эвакуация после выездного ремонта' };
+    }
     let brand = i.brand ?? null;
     let model = i.model ?? null;
     let year = i.year ?? null;
@@ -114,19 +159,34 @@ export class OrdersService {
 
     // Водитель парка: что ему можно и до какой суммы. SOS — всегда, без подтверждения.
     const gate = user.owner_id && !i.isSos ? await this.fleetGate(user, i.service, est.callOut) : null;
+    let reused = false;
     const order = await this.db.one(
       `insert into orders(client_id, created_by, vehicle_id, service, is_sos, problem, description, address, lat, lng,
           zone_id, night, group_trip, tier, brand, estimate, payment_method, client_fee_pct, destination, cargo, loaded, driver_on_site,
           consult_of, discount_amount, discount_reason, model, year, site, status, owner_note,
-          commission_pct_override, commission_campaign_id)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32) returning *`,
+          commission_pct_override, commission_campaign_id, case_root_id, continuation_of,
+          create_request_key,create_request_hash)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36) returning *`,
       [clientId, user.id, i.vehicleId ?? null, i.service, !!i.isSos, i.problem ?? null, i.description ?? null, isConsult ? null : i.address ?? null,
         isConsult ? null : i.lat ?? null, isConsult ? null : i.lng ?? null, est.zoneId, night, est.group, tier, brand, est, method, feePct,
         i.destination ?? null, i.cargo ?? null, i.loaded ?? null, i.driverOnSite ?? null,
         consultOf, discount, discount ? CONSULT_DISCOUNT : null, model, year, isConsult ? null : i.site ?? null,
-        gate ? 'awaiting_owner' : 'searching', gate, campaign?.commission_pct ?? null, campaign?.id ?? null],
-    );
-    await this.event(this.db, order!.id, user.id, 'created', { estimate: est, sos: !!i.isSos });
+        gate ? 'awaiting_owner' : 'searching', gate, campaign?.commission_pct ?? null, campaign?.id ?? null,
+        previous ? (previous.case_root_id ?? previous.id) : null, previous?.id ?? null,
+        requestKey,requestHash],
+    ).catch(async (e: any) => {
+      if (e?.code === '23505' && e?.constraint === 'orders_create_key_unique') {
+        const prior = await this.db.one<any>(
+          'select * from orders where created_by=$1 and create_request_key=$2',
+          [user.id,requestKey]);
+        if (prior) { reused = true; return prior; }
+      }
+      if (e?.code === '23505' && e?.constraint === 'orders_one_live_continuation_idx')
+        throw conflict('continuation_exists', 'Этап уже оформлен: откройте его из обращения');
+      throw e;
+    });
+    if (reused) return reuse(order!);
+    await this.event(this.db, order!.id, user.id, 'created', { estimate: est, sos: !!i.isSos, continuationOf: previous?.id ?? null });
 
     if (gate) {
       await this.event(this.db, order!.id, user.id, 'owner_approval_requested', { reason: gate });
@@ -441,6 +501,8 @@ export class OrdersService {
     const o = await this.mustBePerformer(user, orderId);
     if (o.service === 'consult') throw bad('consult_fixed', 'Цена консультации фиксированная. Закройте её с подсказкой.');
     const to = transition(o.status, 'propose_amount', 'performer');
+    if (['cause_found', 'not_found'].includes(p.result ?? '') && (p.note?.trim().length ?? 0) < 10)
+      throw bad('result_reason_required', 'Напишите, почему неисправность нельзя устранить на месте (не меньше 10 символов)');
     const extras = (p.extras ?? []).map((x) => ({ name: x.name.trim(), amount: x.amount })).filter((x) => x.name && x.amount > 0);
     if (extras.some((x) => !Number.isInteger(x.amount))) throw bad('bad_amount', 'Сумма — целое число копеек');
     const bill = await this.billFor(o, extras);
@@ -510,6 +572,12 @@ export class OrdersService {
       await this.payments.onConfirmed({ ...o, status: to, discount_amount: Number(o.discount_amount ?? 0) + used }, q);
       await this.referral?.afterOrder(q, { ...o, status: to }, m.amount);
     });
+    // The order and capture-intent transaction MUST commit before bank IO.
+    // A transport failure leaves the durable intent for manual/provider reconciliation.
+    await this.payments.processWorkPaymentForOrder(orderId)
+      .catch((e) => console.error('[order-work-payment-create]', e));
+    await this.payments.processCaptureForOrder(orderId)
+      .catch((e) => console.error('[order-capture]', e));
     await this.systemMessage(orderId, `Сумма ${rub(m.total - used)} подтверждена${used ? ` (бонусами и баллами ${rub(used)})` : ''}. Оставьте отзыв друг о друге.`);
     await this.notifier.notify([o.performer_id], { type: 'order', orderId, status: to },
       { kind: 'normal', title: 'Сумма подтверждена', body: `Заявка №${o.number}: ${rub(m.total)}`, data: { orderId } });
@@ -560,6 +628,9 @@ export class OrdersService {
       await this.event(q, orderId, user.id, 'cancelled', { reason, stage, ...splitInfo });
       await this.payments.onCancelled({ ...o, status: 'cancelled' }, stage, q);
     });
+    // Cancellation's provider operation runs strictly after this transaction.
+    await this.payments.processCancellationForOrder(orderId)
+      .catch((e) => console.error('[cancel-bank-action]', e));
     this.notifier.live(invited, { type: 'order', orderId, status: 'cancelled' });
     await this.systemMessage(orderId, `Заявка отменена: ${reason}`);
     await this.notifier.notify([o.client_id, o.created_by, o.performer_id].filter((x) => x !== user.id), { type: 'order', orderId, status: 'cancelled' },
@@ -626,6 +697,33 @@ export class OrdersService {
       : null;
     const vehicle = o.vehicle_id ? await this.db.one('select brand, model, year, plate, trailer_plate from vehicles where id=$1', [o.vehicle_id]) : null;
     const events = actor ? await this.db.query('select type, data, actor_id, created_at from order_events where order_id=$1 order by id', [orderId]) : [];
+    const caseRootId = o.case_root_id ?? o.id;
+    // The combined customer invoice is visible to the customer/admin only:
+    // a performer sees exclusively the price of their own contract.
+    const caseRows = actor === 'client' || actor === 'admin'
+      ? await this.db.query<any>(
+          `select id, number, status, service, result, result_note, continuation_of, estimate,
+                  call_out_amount, work_amount, client_fee_pct, discount_amount
+             from orders where id=$1 or case_root_id=$1 order by created_at, number`, [caseRootId])
+      : [];
+    const caseBookings = actor === 'client' || actor === 'admin'
+      ? await this.db.query<any>(
+          `select b.id, b.number, b.status, b.need, b.amount, b.discount, b.from_order_id
+             from service_bookings b left join orders step on step.id=b.from_order_id
+            where b.case_root_id=$1 or step.id=$1 or step.case_root_id=$1
+            order by b.created_at, b.number`, [caseRootId])
+      : [];
+    const caseServiceStages = caseBookings.map((b: any) => ({
+      id: b.id, number: b.number, status: b.status, need: b.need,
+      confirmedTotal: b.status === 'closed' ? Math.max(0, Number(b.amount ?? 0) - Number(b.discount ?? 0)) : null,
+    }));
+    const caseSteps = caseRows.map((step: any) => ({
+      id: step.id, number: step.number, service: step.service, status: step.status,
+      result: step.result, resultNote: step.result_note, money: this.money(step),
+    }));
+    const caseConfirmedTotal = caseRows.filter((step: any) => step.status === 'completed')
+      .reduce((sum: number, step: any) => sum + this.money(step).total, 0)
+      + caseServiceStages.reduce((sum: number, stage: any) => sum + (stage.confirmedTotal ?? 0), 0);
     const search = o.status === 'searching'
       ? await this.db.one<{ candidates: number; offers: number }>(
           `select (select count(*)::int from order_dispatch where order_id=$1 and status in ('bidding','ringing','queued')) as candidates,
@@ -635,7 +733,7 @@ export class OrdersService {
       id: o.id, number: o.number, status: o.status as OrderStatus, statusLabel: statusLabels[o.status as OrderStatus],
       service: o.service, isSos: o.is_sos, problem: o.problem, description: o.description,
       address: o.address, lat: o.lat, lng: o.lng, zoneId: o.zone_id, night: o.night, groupTrip: o.group_trip, tier: o.tier,
-      brand: o.brand, model: o.model, year: o.year, vehicle, estimate: o.estimate, paymentMethod: o.payment_method,
+      brand: o.brand, model: o.model, year: o.year, vehicleId: o.vehicle_id, vehicle, estimate: o.estimate, paymentMethod: o.payment_method,
       auction: o.status === 'searching' && !!o.auction_until, auctionUntil: o.auction_until, autoPick: o.auto_pick, search,
       limits: o.status === 'searching' ? this.auction.limits(o, (await this.settings.get('dispatch'))) : null,
       destination: o.destination, cargo: o.cargo, loaded: o.loaded, driverOnSite: o.driver_on_site, discountReason: o.discount_reason,
@@ -644,7 +742,17 @@ export class OrdersService {
       points: actor === 'client' && o.status === 'awaiting_confirmation' && this.referral ? await this.referral.available(o.client_id, this.money(o).clientFee) : null,
       bill: o.bill ?? null, billingStep: Number((await this.settings.get('pricing')).billingStepMinutes ?? 60),
       site: o.site, workStartedAt: o.work_started_at ?? null, waitRate: performer?.wait_rate ?? null, ownerNote: o.owner_note ?? null, partMode: o.part_mode ?? null, waitStartedAt: o.wait_started_at ?? null, waitMinutes: o.wait_minutes ?? 0,
-      consultHint: o.consult_hint, consultOf: o.consult_of, siteFlags: o.site_flags ?? [], lateMinutes: o.late_minutes ?? 0, hintCheck: o.hint_check,
+      consultHint: o.consult_hint, consultOf: o.consult_of,
+      continuationOf: o.continuation_of ?? null, caseRootId,
+      caseSummary: {
+        rootId: caseRootId, stages: caseSteps, serviceBookings: caseServiceStages,
+        confirmedTotal: caseConfirmedTotal,
+        multiStage: caseSteps.length + caseServiceStages.length > 1,
+      },
+      canContinueWithTow: actor === 'client' && o.status === 'completed' &&
+        o.service !== 'tow' && ['cause_found', 'not_found'].includes(o.result) &&
+        !caseRows.some((step: any) => step.continuation_of === o.id && step.status !== 'cancelled'),
+      siteFlags: o.site_flags ?? [], lateMinutes: o.late_minutes ?? 0, hintCheck: o.hint_check,
       consultFrom: o.consult_of ? await this.db.one(`select o.number, o.consult_hint as hint, u.name as performer_name from orders o
           left join users u on u.id=o.performer_id where o.id=$1`, [o.consult_of]) : null,
       recommendedCenter: o.recommended_center_id ? await this.db.one(`select id, name, address from service_centers where id=$1`, [o.recommended_center_id]) : null,
@@ -660,14 +768,18 @@ export class OrdersService {
 
   async list(user: AuthUser, scope: 'client' | 'performer', status?: string) {
     const where = scope === 'performer' ? 'o.performer_id = $1' : user.owner_id ? 'o.created_by = $1' : '(o.client_id = $1 or o.created_by = $1)';
-    return this.db.query(
+    const items = await this.db.query<any>(
       `select o.id, o.number, o.status, o.service, o.is_sos, o.problem, o.description, o.address, o.brand, o.estimate, o.work_amount, o.call_out_amount,
-              o.client_fee_pct, o.payment_method, o.created_at, o.completed_at, o.consult_of, o.vehicle_id,
+              o.client_fee_pct, o.discount_amount, o.payment_method, o.created_at, o.completed_at, o.consult_of,
+              o.case_root_id, o.continuation_of, o.result, o.result_note, o.vehicle_id,
               v.brand as v_brand, v.model as v_model, v.year as v_year, v.plate as v_plate,
               (select coalesce(company_name, name) from users where id=o.client_id) as client_name
          from orders o left join vehicles v on v.id=o.vehicle_id where ${where} ${status ? 'and o.status = $2' : ''} order by o.created_at desc limit 100`,
       status ? [user.id, status] : [user.id],
     );
+    // The archive and the order detail must use the same final price formula.
+    // Do not recalculate totals from just call_out_amount + work_amount on the client.
+    return items.map((order: any) => ({ ...order, money: this.money(order) }));
   }
 
   /**

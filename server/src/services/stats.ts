@@ -81,10 +81,36 @@ export class StatsService {
                 count(*) filter (where status='no_performer')::int as no_performer, round(avg(year))::int as avg_year
            from orders where created_at >= $1 group by 1, 2 order by created desc limit 30`, p),
     ]);
+    // An incident may contain repair, tow and workshop stages. Count the
+    // customer incident ONCE, while byService above still counts every stage.
+    const incidents = (await this.db.one<{ total: number; multistage: number; stages: number }>(
+      `with roots as (
+         select id from orders where case_root_id is null and created_at >= $1
+       ), grouped as (
+         select r.id as root_id,
+                (count(distinct s.id) + count(distinct b.id))::int as stage_count
+           from roots r
+           join orders s on s.id=r.id or s.case_root_id=r.id
+           left join service_bookings b on b.from_order_id=s.id or b.case_root_id=r.id
+          group by r.id
+       ), standalone as (
+         select count(*)::int as n from service_bookings
+          where from_order_id is null and case_root_id is null and created_at >= $1
+       )
+       select ((select count(*) from grouped) + (select n from standalone))::int as total,
+              (select count(*) from grouped where stage_count > 1)::int as multistage,
+              (coalesce((select sum(stage_count) from grouped),0) + (select n from standalone))::int as stages`, [since]
+    ))!;
+    const workshopStats = await this.db.one<{ service: string; created: number; completed: number; avg_check: number }>(
+      `select 'sto' as service, count(*)::int as created,
+              count(*) filter (where status='closed')::int as completed,
+              coalesce(avg(amount - coalesce(discount,0)) filter (where status='closed' and amount is not null),0)::int as avg_check
+         from service_bookings where created_at >= $1`, [since]);
     const t = totals!;
     const closed = t.completed + t.cancelled + t.no_performer;
     return {
       days, since,
+      incidents: { ...incidents, multistageShare: incidents.total ? Math.round(incidents.multistage * 1000 / incidents.total) / 1000 : 0 },
       totals: t,
       rates: {
         completion: closed ? round(t.completed / closed) : null,
@@ -96,7 +122,9 @@ export class StatsService {
         acceptMedianMin: speed!.accept_median_s == null ? null : Math.round(Number(speed!.accept_median_s) / 6) / 10,
         arriveMedianMin: speed!.arrive_median_s == null ? null : Math.round(Number(speed!.arrive_median_s) / 60),
       },
-      money: money!, people: people!, byDay, byService, cancels, top, zones, brands,
+      money: money!, people: people!, byDay,
+      byService: workshopStats?.created ? [...byService, workshopStats] : byService,
+      cancels, top, zones, brands,
     };
   }
 

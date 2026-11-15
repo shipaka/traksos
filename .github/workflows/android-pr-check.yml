@@ -10,6 +10,8 @@ on:
       - 'server/**'
       - 'scripts/verify-approved.mjs'
       - 'scripts/verify-brand.mjs'
+      - 'scripts/android-pr-runtime-smoke.sh'
+      - 'scripts/verify-android-screen.py'
       - '.github/workflows/android-pr-check.yml'
   workflow_dispatch:
 
@@ -64,6 +66,7 @@ jobs:
           for asset in index.html app.js app.css tracksos-approved-scania-r520.webp; do
             unzip -Z1 "$APK" | grep -Fx "assets/www/$asset"
           done
+          grep -F '"applicationId": "ru.traksos.app.preview"' android/app/build/outputs/apk/debug/output-metadata.json
           sha256sum "$APK"
           echo '### Android PR smoke' >> "$GITHUB_STEP_SUMMARY"
           echo '- Built debug APK, without release signing credentials.' >> "$GITHUB_STEP_SUMMARY"
@@ -76,3 +79,52 @@ jobs:
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 7
           if-no-files-found: error
+
+  # A successful Gradle build does not prove that the app opens on a device.
+  # Launch the exact uploaded APK under Android 10 and Android 15, collect native crash logs.
+  runtime-launch:
+    needs: debug-apk
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: [29, 35]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Diagnose and enable KVM when available
+        run: |
+          if [ -c /dev/kvm ]; then
+            echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+            sudo udevadm control --reload-rules || true
+            sudo udevadm trigger --name-match=kvm || true
+            if [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
+              echo 'KVM acceleration is available'
+            else
+              echo '::warning::KVM exists but is not accessible; using software emulator'
+            fi
+          else
+            echo '::warning::This GitHub runner has no /dev/kvm; using software emulator'
+          fi
+      - uses: actions/download-artifact@v4
+        with:
+          name: tracksos-pr-debug-apk
+          path: apk
+      - name: Boot emulator, launch APK and fail on native crash
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          target: google_apis
+          arch: x86_64
+          script: bash scripts/android-pr-runtime-smoke.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tracksos-emulator-api-${{ matrix.api-level }}
+          path: |
+            runtime-errors.log
+            activity-dump.txt
+            emulator-screen.png
+            emulator-ui.xml
+            runtime-ready.log
+          if-no-files-found: warn

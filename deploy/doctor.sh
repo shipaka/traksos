@@ -34,6 +34,18 @@ if [[ -n "$app" ]]; then
   [[ "$env_result" == *admin_configured* ]] && pass "Admin phone list configured (value hidden)" || flag "ADMIN_PHONES missing"
   [[ "$env_result" == *sms_real* ]] && pass "SMS provider selected: SMS.ru" || flag "SMS provider is not SMS.ru; registration and password recovery are not ready for public use"
   [[ "$env_result" == *payments_real* ]] && info "Real payments configured; verify legal/financial rollout approval" || info "Payments are not in live mode"
+  # Android seasonal splash uses only our backend weather proxy.
+  # Never reveal the Yandex API credential in diagnostic output.
+  if docker exec "$app" sh -c 'test -n "${YANDEX_WEATHER_API_KEY:-}"' >/dev/null 2>&1; then
+    pass "Yandex Weather API key is configured (value hidden)"
+    if docker compose exec -T app node -e "fetch('http://127.0.0.1:8080/api/public/weather', { signal: AbortSignal.timeout(5000) }).then(async r => { const d = await r.json().catch(() => null); process.exit(r.ok && d?.source === 'yandex' && d?.location === 'Санкт-Петербург' ? 0 : 1); }).catch(() => process.exit(1))" >/dev/null 2>&1; then
+      pass "Yandex real weather proxy returns a valid Saint Petersburg observation"
+    else
+      flag "Yandex real weather endpoint unavailable; Android will use seasonal fallback"
+    fi
+  else
+    flag "YANDEX_WEATHER_API_KEY missing; Android will use seasonal fallback"
+  fi
 fi
 
 # Database query returns counts only, not personal data. No DB password is read or printed.

@@ -10,6 +10,7 @@ import { createPush } from './providers/push.ts';
 import { MockProvider } from './payments/provider.ts';
 import { YooKassaProvider } from './payments/yookassa.ts';
 import { staticHandler } from './http/static.ts';
+import { PublicWeatherService } from './services/publicWeather.ts';
 
 const db = await createDb(config.databaseUrl);
 const applied = await migrate(db);
@@ -22,8 +23,26 @@ const payments = config.payments.provider === 'yookassa'
 const app = createApp({ db, sms: createSms(), push: createPush(), payments });
 
 const serveWeb = staticHandler(config.webRoot);
+const publicWeather = new PublicWeatherService();
 const server = http.createServer((req, res) => {
   const p = (req.url ?? '/').split('?')[0];
+  if (p === '/api/public/weather' && (req.method === 'GET' || req.method === 'HEAD')) {
+    // Lightweight public endpoint: never expose the Yandex key, raw upstream response or device location.
+    void publicWeather.current().then(observation => {
+      if (res.destroyed) return;
+      res.statusCode = observation ? 200 : 503;
+      res.setHeader('content-type', 'application/json; charset=utf-8');
+      res.setHeader('cache-control', 'public, max-age=60');
+      res.setHeader('x-content-type-options', 'nosniff');
+      res.end(req.method === 'HEAD' ? undefined : JSON.stringify(observation ?? { available: false }));
+    }).catch(() => {
+      if (res.destroyed) return;
+      res.statusCode = 503;
+      res.setHeader('content-type', 'application/json; charset=utf-8');
+      res.end(req.method === 'HEAD' ? undefined : '{"available":false}');
+    });
+    return;
+  }
   if (p.startsWith('/api/') || req.method !== 'GET' && req.method !== 'HEAD') return void app.handle(req, res);
   return void serveWeb(req, res);
 });
@@ -58,6 +77,12 @@ const timer = setInterval(() => {
   app.orders.tick().catch((e) => console.error('[tick]', e));
   app.auction.tick().catch((e) => console.error('[auction]', e));
 }, 2_000);
+// First human response deadline, one durable overdue notification at 60 min.
+// Database row locks and event uniqueness protect multi-instance operation.
+const supportSlaTimer = setInterval(() => {
+  app.support.tickSla().catch((e) => console.error('[support-sla]', e));
+}, 30_000);
+void app.support.tickSla().catch((e) => console.error('[support-sla]', e));
 // Отложенное удаление личных данных и очистка истёкших IP/телефонных
 // лимитов: хранить эти технические идентификаторы бессрочно не нужно.
 const housekeeping = async () => {
@@ -72,12 +97,25 @@ const housekeeping = async () => {
 };
 const hourly = setInterval(() => { void housekeeping(); }, 3_600_000);
 
+// Recover durable capture-intents after restart or an ambiguous bank response.
+// Never repeat a previously sent capture: reconciliation uses provider GET.
+const captureReconcile = () => Promise.all([
+  app.payments.reconcileCaptures(),
+  app.payments.reconcileCancellations(),
+  app.payments.reconcileWorkCreations(),
+  app.payments.reconcileCancelledHolds(),
+]).catch((e) => console.error('[payment-reconciliation]', e));
+const captureTimer = setInterval(() => { void captureReconcile(); }, 30_000);
+void captureReconcile();
+
 server.listen(config.port, () => console.log(`TrakSOS API: http://localhost:${config.port} (БД: ${db.driver})`));
 
 for (const sig of ['SIGINT', 'SIGTERM'] as const) {
   process.on(sig, async () => {
     clearInterval(timer);
     clearInterval(hourly);
+    clearInterval(captureTimer);
+    clearInterval(supportSlaTimer);
     server.close();
     await db.close();
     process.exit(0);

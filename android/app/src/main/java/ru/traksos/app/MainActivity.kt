@@ -3,6 +3,7 @@ package ru.traksos.app
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.NotificationManager
+import android.app.KeyguardManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -66,10 +67,29 @@ class MainActivity : AppCompatActivity() {
     fun appLockEnabled(): Boolean = appLockPrefs.getBoolean("enabled", false)
 
     fun setAppLockEnabled(value: Boolean): Boolean {
-        if (value && BiometricManager.from(this).canAuthenticate(allowedAuthenticators) != BiometricManager.BIOMETRIC_SUCCESS)
-            return false
+        if (value) {
+            // Combined strong biometrics + system PIN is unsupported on Android 10 and older.
+            val available = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                BiometricManager.from(this).canAuthenticate(allowedAuthenticators) == BiometricManager.BIOMETRIC_SUCCESS
+            } else {
+                (getSystemService(KEYGUARD_SERVICE) as KeyguardManager).isDeviceSecure
+            }
+            if (!available) return false
+        }
         appLockPrefs.edit().putBoolean("enabled", value).apply()
         return true
+    }
+
+    private val credentialLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        unlockInProgress = false
+        if (result.resultCode == RESULT_OK) completeAppUnlock()
+    }
+
+    private fun completeAppUnlock() {
+        unlockInProgress = false
+        lockCover?.let { appRoot.removeView(it) }
+        lockCover = null
+        foreground = true
     }
 
     private fun requireAppUnlock() {
@@ -98,14 +118,22 @@ class MainActivity : AppCompatActivity() {
     private fun requestAppUnlock() {
         if (unlockInProgress || lockCover == null) return
         unlockInProgress = true
+        lockCover?.setOnClickListener { requestAppUnlock() }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            // Use the OS-protected lock-screen credential on Android 7–10.
+            // AndroidX rejects BIOMETRIC_STRONG | DEVICE_CREDENTIAL on Android 9–10.
+            val keyguard = getSystemService(KEYGUARD_SERVICE) as KeyguardManager
+            val intent = keyguard.createConfirmDeviceCredentialIntent(
+                "Разблокировать TrakSOS", "Подтвердите код или пароль телефона")
+            if (intent == null) { unlockInProgress = false; return }
+            try { credentialLauncher.launch(intent) } catch (_: Exception) { unlockInProgress = false }
+            return
+        }
         val prompt = BiometricPrompt(this, ContextCompat.getMainExecutor(this),
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
-                    unlockInProgress = false
-                    lockCover?.let { appRoot.removeView(it) }
-                    lockCover = null
-                    foreground = true
+                    completeAppUnlock()
                 }
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                     super.onAuthenticationError(errorCode, errString)
@@ -113,7 +141,6 @@ class MainActivity : AppCompatActivity() {
                     // No access to the WebView when cancelled: tap the cover to retry.
                 }
             })
-        lockCover?.setOnClickListener { requestAppUnlock() }
         prompt.authenticate(BiometricPrompt.PromptInfo.Builder()
             .setTitle("Разблокировать TrakSOS")
             .setSubtitle("Отпечаток пальца или код блокировки телефона")
@@ -122,6 +149,10 @@ class MainActivity : AppCompatActivity() {
     }
     private lateinit var bundledAssets: WebViewAssetLoader
     private var startupOverlay: View? = null
+    // Keep the agreed seasonal scene on screen long enough to notice.
+    private var startupShownAt = 0L
+    private var debugUiReadyLogged = false
+    private val startupMinimumVisibleMs = 3_500L
     private var fileUploadCallback: ValueCallback<Array<Uri>>? = null
     private val filePicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val data = result.data
@@ -154,6 +185,10 @@ class MainActivity : AppCompatActivity() {
             .addPathHandler("/", BundledWeb(this))
             .build()
         web = WebView(this)
+        if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val pkg = WebView.getCurrentWebViewPackage()
+            android.util.Log.i("TrakSOSRuntime", "WEBVIEW_VERSION=" + (pkg?.versionName ?: "unknown"))
+        }
         val root = FrameLayout(this)
         appRoot = root
         // Android 15 enforces edge-to-edge. The web header must not sit behind
@@ -167,9 +202,11 @@ class MainActivity : AppCompatActivity() {
             insets
         }
         root.addView(web, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
-        startupOverlay = createStartupOverlay()
+        startupOverlay = SeasonalStartupOverlay.build(this)
+        startupShownAt = SystemClock.elapsedRealtime()
         root.addView(startupOverlay, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
         setContentView(root)
+        SeasonalStartupOverlay.refreshFromYandex(this, startupOverlay)
 
         web.settings.apply {
             javaScriptEnabled = true
@@ -218,8 +255,23 @@ class MainActivity : AppCompatActivity() {
                 // По адресу может отвечать что угодно (пустой домен, заглушка) — проверяем, что это наш сайт
                 // Предупреждение Codespaces «Вы собираетесь получить доступ к порту…» — пропускаем, там кнопка «Продолжить»
                 view.evaluateJavascript("!!document.querySelector('meta[name=traksos-app]') || document.title.indexOf('Codespaces') === 0") { ok ->
-                    if (ok == "true") hideStartupOverlay()
-                    else showOffline(getString(R.string.server_not_traksos))
+                    if (ok == "true") {
+                        // Page is ready, but avoid flashing the approved weather artwork.
+                        // Errors still dismiss it immediately in showOffline().
+                        val shown = SystemClock.elapsedRealtime() - startupShownAt
+                        val remaining = (startupMinimumVisibleMs - shown).coerceAtLeast(0L)
+                        startupOverlay?.postDelayed({
+                            if (!failed) {
+                                val wasVisible = startupOverlay?.visibility == View.VISIBLE
+                                hideStartupOverlay()
+                                if (BuildConfig.DEBUG && wasVisible) {
+                                    android.util.Log.i("TrakSOSRuntime",
+                                        "SPLASH_VISIBLE_MS=" + (SystemClock.elapsedRealtime() - startupShownAt))
+                                }
+                            }
+                        }, remaining)
+                        checkDebugRenderedUi()
+                    } else showOffline(getString(R.string.server_not_traksos))
                 }
             }
             override fun onReceivedError(view: WebView, req: WebResourceRequest, err: WebResourceError) {
@@ -230,6 +282,14 @@ class MainActivity : AppCompatActivity() {
             }
         }
         web.webChromeClient = object : WebChromeClient() {
+            override fun onConsoleMessage(consoleMessage: android.webkit.ConsoleMessage?): Boolean {
+                if (BuildConfig.DEBUG &&
+                    consoleMessage?.messageLevel() == android.webkit.ConsoleMessage.MessageLevel.ERROR) {
+                    android.util.Log.w("TrakSOSRuntime",
+                        "JS_ERROR=" + (consoleMessage?.message()?.take(280) ?: "unknown"))
+                }
+                return super.onConsoleMessage(consoleMessage)
+            }
             override fun onShowFileChooser(
                 view: WebView?,
                 filePathCallback: ValueCallback<Array<Uri>>?,
@@ -346,74 +406,21 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    /** Лёгкая заставка: показывается ТОЛЬКО пока WebView загружает и проверяет сайт.
-     * Дизайн ориентирован на согласованный первый splash-концепт:
-     * navy + magenta, логотип и индикатор, без лишних запросов к серверу.
-     * Локальный ресурс splash_truck.webp — адаптация грузовика из утверждённого референса,
-     * доступна без интернета. Логотип и индикатор рисуются нативно поверх фотографии.
-     */
-    private fun createStartupOverlay(): View {
-        val screen = FrameLayout(this)
-        screen.background = GradientDrawable(
-            GradientDrawable.Orientation.TL_BR,
-            intArrayOf(Color.rgb(4, 19, 36), Color.rgb(9, 33, 60), Color.rgb(30, 17, 43))
-        )
-        val density = resources.displayMetrics.density
-        val art = ImageView(this)
-        art.setImageResource(R.drawable.splash_truck)
-        art.scaleType = ImageView.ScaleType.CENTER_CROP
-        art.contentDescription = "Брендированный грузовик TrakSOS в Санкт-Петербурге"
-        val artParams = FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT,
-            (resources.displayMetrics.heightPixels * 0.56f).toInt(),
-            Gravity.BOTTOM
-        )
-        artParams.bottomMargin = (63 * density).toInt()
-        screen.addView(art, artParams)
-
-        val stack = LinearLayout(this)
-        stack.orientation = LinearLayout.VERTICAL
-        stack.gravity = Gravity.CENTER_HORIZONTAL
-        val container = FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT
-        )
-        container.gravity = Gravity.TOP
-        container.topMargin = (resources.displayMetrics.heightPixels * 0.12f).toInt()
-        container.leftMargin = (28 * density).toInt()
-        container.rightMargin = container.leftMargin
-
-        val title = TextView(this)
-        val brand = SpannableString("TrakSOS")
-        brand.setSpan(ForegroundColorSpan(Color.rgb(254, 28, 122)), 5, 8, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        title.text = brand
-        title.textSize = 37f
-        title.typeface = Typeface.create("sans-serif-black", Typeface.BOLD_ITALIC)
-        title.setTextColor(Color.WHITE)
-        title.gravity = Gravity.CENTER
-        stack.addView(title)
-
-        val subtitle = TextView(this)
-        subtitle.text = "Помощь грузовику в дороге"
-        subtitle.textSize = 16f
-        subtitle.setTextColor(Color.rgb(208, 224, 240))
-        subtitle.gravity = Gravity.CENTER
-        val subLayout = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-        subLayout.topMargin = (14 * resources.displayMetrics.density).toInt()
-        stack.addView(subtitle, subLayout)
-
-        val progress = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal)
-        progress.isIndeterminate = true
-        progress.progressTintList = ColorStateList.valueOf(Color.rgb(255, 27, 121))
-        progress.indeterminateTintList = ColorStateList.valueOf(Color.rgb(255, 27, 121))
-        val progressLayout = LinearLayout.LayoutParams((185 * resources.displayMetrics.density).toInt(), (5 * resources.displayMetrics.density).toInt())
-        progressLayout.gravity = Gravity.CENTER
-        screen.addView(stack, container)
-        val progressAtBottom = FrameLayout.LayoutParams(
-            (190 * density).toInt(), (5 * density).toInt(), Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-        )
-        progressAtBottom.bottomMargin = (38 * density).toInt()
-        screen.addView(progress, progressAtBottom)
-        return screen
+    /** CI-only proof that React rendered a public screen, not merely static HTML.
+     * Never logs a user profile, token, or backend response. */
+    private fun checkDebugRenderedUi(attempt: Int = 0) {
+        if (!BuildConfig.DEBUG || debugUiReadyLogged || failed || !::web.isInitialized) return
+        web.evaluateJavascript(
+            "!!(document.querySelector('main.public-landing .public-brand-hero') && " +
+                "document.querySelector('.public-actions button'))"
+        ) { rendered ->
+            if (rendered == "true") {
+                debugUiReadyLogged = true
+                android.util.Log.i("TrakSOSRuntime", "GUEST_UI_RENDERED")
+            } else if (attempt < 120 && !failed && !debugUiReadyLogged) {
+                web.postDelayed({ checkDebugRenderedUi(attempt + 1) }, 500L)
+            }
+        }
     }
 
     private fun hideStartupOverlay() {
@@ -437,7 +444,7 @@ class MainActivity : AppCompatActivity() {
             p{line-height:1.55;color:#c9d9eb}button{background:#ef146a;color:white;width:100%;border:1px solid #ff74b0;
             border-radius:14px;padding:16px;font-size:17px;font-weight:700;margin-top:22px}
             small{color:#acbfd4;display:block;margin-top:15px;line-height:1.4}
-            </style></head><body><main><h1>Track<em>SOS</em></h1>
+            </style></head><body><main><h1>Trak<em>SOS</em></h1>
             <p>Нет связи с сервером TrakSOS. Проверьте интернет и попробуйте снова.</p>
             <button onclick="TrakSOSNative.retry()">Повторить подключение</button>
             <small>$safeReason</small></main></body></html>
@@ -448,20 +455,20 @@ class MainActivity : AppCompatActivity() {
         val q = { t: String -> JSONObject.quote(t) }
         val html = """
         <html lang="ru"><head><meta name="viewport" content="width=device-width,initial-scale=1"><meta charset="utf-8">
-        <style>*{box-sizing:border-box}body{margin:0;background:#15171a;color:#f4f4f2;font-family:Arial,sans-serif}
-        header{padding:20px;background:#202327;display:flex;justify-content:space-between;align-items:center}
-        strong.logo{font-size:24px;color:#ff761c}.badge{font-size:11px;color:#a8adb2}
+        <style>*{box-sizing:border-box}body{margin:0;background:#061426;color:#f4faff;font-family:Arial,sans-serif}
+        header{padding:20px;background:#0c223e;display:flex;justify-content:space-between;align-items:center}
+        strong.logo{font-size:24px;color:#00cceb}.badge{font-size:11px;color:#a8adb2}
         main{padding:18px 18px 85px}.alert,.card{border-radius:14px;padding:16px;margin-bottom:14px}
-        .alert{background:#35291d;border:1px solid #86603a;font-size:13px;line-height:1.5}
-        .card{background:#25292e;border:1px solid #363b41}h2{margin:22px 0 12px}
+        .alert{background:#12344d;border:1px solid #09b9d0;font-size:13px;line-height:1.5}
+        .card{background:#0d2948;border:1px solid #276482}h2{margin:22px 0 12px}
         p{font-size:14px;color:#b5bac0;line-height:1.5}
-        button.action{padding:13px;border:0;border-radius:12px;background:#ff771c;color:#171717;font-weight:bold;width:100%;font-size:15px}
-        button.secondary{padding:13px;border:1px solid #ff771c;border-radius:12px;background:none;color:#ff8f43;width:100%}
+        button.action{padding:13px;border:0;border-radius:12px;background:#00cceb;color:#171717;font-weight:bold;width:100%;font-size:15px}
+        button.secondary{padding:13px;border:1px solid #00cceb;border-radius:12px;background:none;color:#00cceb;width:100%}
         .page{display:none}.page.active{display:block}
-        nav{position:fixed;bottom:0;display:flex;width:100%;background:#202327;border-top:1px solid #41454a}
+        nav{position:fixed;bottom:0;display:flex;width:100%;background:#0c223e;border-top:1px solid #286581}
         nav button{flex:1;padding:17px 0;background:none;border:0;color:#b5bac0;font-size:12px}
-        nav button.active{color:#ff8f43;font-weight:bold}
-        input{width:100%;padding:14px;border:1px solid #454b51;border-radius:10px;background:#15171a;color:white;margin-bottom:12px}
+        nav button.active{color:#00cceb;font-weight:bold}
+        input{width:100%;padding:14px;border:1px solid #276482;border-radius:10px;background:#061426;color:white;margin-bottom:12px}
         </style></head><body><header><strong class="logo">TrakSOS</strong><span class="badge">АВТОНОМНОЕ ДЕМО</span></header>
         <main><div class="alert">Сервер TrakSOS ещё не запущен. Это демонстрация интерфейса: реальные вызовы, заявки, вход и загрузка документов отключены.</div>
         <section class="page active" id="home"><h2>Помощь грузовику</h2>

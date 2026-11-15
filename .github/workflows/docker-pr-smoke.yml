@@ -1,0 +1,30 @@
+name: Docker pull-request smoke
+
+on:
+  pull_request:
+    paths:
+      - 'Dockerfile'
+      - '.dockerignore'
+      - '.github/workflows/docker-pr-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  container-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build isolated candidate image (never publish)
+        run: docker build -t traksos-pr-smoke .
+      - name: Verify runtime inputs, migration loader, and absence of tests
+        run: |
+          docker run --rm --entrypoint sh traksos-pr-smoke -ec '
+            test -f server/src/main.ts
+            test -f server/tsconfig.json
+            test -d server/migrations
+            test ! -d server/test
+            test -f web/dist/index.html
+            node --import tsx -e "import(\"./server/src/db/migrate.ts\").then(() => console.log(\"migration loader ok\"))"
+          '

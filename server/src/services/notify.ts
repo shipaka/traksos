@@ -14,7 +14,6 @@ export class Notifier {
   async notify(userIds: (string | null | undefined)[], event: Record<string, unknown>, msg: PushMessage) {
     const ids = [...new Set(userIds.filter(Boolean) as string[])];
     if (!ids.length) return;
-    this.hub.send(ids, event);
     if (msg.kind !== 'call') {
       for (const id of ids) {
         await this.db.query('insert into notifications(user_id, kind, title, body, data) values ($1,$2,$3,$4,$5)', [
@@ -22,6 +21,14 @@ export class Notifier {
         ]);
       }
     }
+    await this.deliverStored(ids, event, msg);
+  }
+
+  /** Delivery of an alert already persisted atomically in the database. */
+  async deliverStored(userIds: (string | null | undefined)[], event: Record<string, unknown>, msg: PushMessage) {
+    const ids = [...new Set(userIds.filter(Boolean) as string[])];
+    if (!ids.length) return;
+    this.hub.send(ids, event);
     const tokens = await this.db.query<{ provider: string; token: string }>(
       `select distinct p.provider, p.token from push_tokens p
          left join sessions s on s.token_hash=p.session_token_hash and s.expires_at > now()

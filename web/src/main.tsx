@@ -16,6 +16,9 @@ import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './ap
 import { MeCtx, ToastProvider, useRoute, useToast, type Me } from './ui.tsx';
 import { native } from './native.ts';
 import { Login } from './screens/login.tsx';
+import { GuestExplore } from './screens/guestExplore.tsx';
+import { GuestCompany, GuestOffers } from './screens/guestInfo.tsx';
+import { TOP_CATALOGUE, SERVICE_TILES, CATALOGUE, rememberGuestService } from './guestCatalog.ts';
 import { SiteQuickSearch } from './screens/siteQuickSearch.tsx';
 import { Invite } from './screens/invite.tsx';
 import { PerformerHub, ScheduleSection, AboutSection, PhoneSection, CarsSection, TaxSection, MoneySection, FilterSection, LevelSection } from './screens/performerCabinet.tsx';
@@ -74,7 +77,7 @@ function NavGlyph({ glyph }: { glyph: string }) {
     strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     {glyph === '⌂' ? <><path d="m3 10 9-7 9 7v10H3z" /><path d="M9 20v-7h6v7" /></>
     : glyph === '☷' || glyph === '☰' ? <><path d="M8 6h13M8 12h13M8 18h13" /><path d="M3 6h1M3 12h1M3 18h1" /></>
-    : glyph === '✚' ? <><circle cx="12" cy="12" r="9" /><path d="M12 7v10M7 12h10" /></>
+    : glyph === '✚' || glyph === '＋' ? <><circle cx="12" cy="12" r="9" /><path d="M12 7v10M7 12h10" /></>
     : glyph === '⚙' ? <><circle cx="12" cy="12" r="3.1" /><path d="M12 2v3m0 14v3M2 12h3m14 0h3M4.9 4.9 7 7m10 10 2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1" /></>
     : glyph === '◉' ? <><circle cx="12" cy="8" r="3.5" /><path d="M4.5 20c.8-3.6 3.4-5.4 7.5-5.4s6.7 1.8 7.5 5.4" /><circle cx="12" cy="12" r="10" opacity=".4" /></>
     : glyph === '▣' ? <><rect x="6" y="3" width="12" height="18" rx="2" /><path d="M9 8h6M9 12h6m-6 4h4" /></>
@@ -177,13 +180,13 @@ function App() {
     if (e.type === 'order' && e.status === 'accepted' && modeRef.current !== 'performer' && !location.hash.startsWith('#/work')) toast('Исполнитель найден');
   }), [reload, toast]);
 
-  if (!ready) return <div className="traksos-start-loading" role="status">Загружаем TrakSOS…</div>;
+  if (!ready) return <div className="traksos-start-loading" role="status" aria-label="Загрузка"><span className="traksos-start-loading-line" aria-hidden="true" /></div>;
   // Ссылка-приглашение: запоминаем код, вход — как обычно
   if (route[0] === 'r' && route[1]) { try { localStorage.setItem('traksos.ref', route[1].toUpperCase()); } catch { /* */ } }
   if (!me) {
     return (
       <MeCtx.Provider value={{ me: null, reload, mode: 'client', setMode }}>
-        <Shell mode="client" me={null}>{route[0] === 'offer' ? <OfferPage audience={route[1] ?? 'client'} /> : route[0] === 'qr' && route[1] ? <QrJoin code={route[1]} /> : route[0] === 'rules' ? <Rules /> : route[0] === 'help' ? <Help /> : <>{route[0] === 'r' && <div className="banner good" style={{ margin: '12px 16px 0' }}><span>Вас пригласили в TrakSOS — после входа на счёт придут подарочные баллы.</span></div>}<Login key={route[0] ?? 'public'} entry={route[0] === 'login' ? 'login' : route[0] === 'register' ? 'register' : route[0] === 'join' ? 'join' : undefined} /></>}</Shell>
+        <Shell mode="client" me={null}>{route[0] === 'offer' ? <OfferPage audience={route[1] ?? 'client'} /> : route[0] === 'qr' && route[1] ? <QrJoin code={route[1]} /> : route[0] === 'rules' ? <Rules /> : route[0] === 'help' ? <Help /> : route[0] === 'explore' ? <GuestExplore id={route[1] || ''} itemKey={route[2]} /> : route[0] === 'company' ? <GuestCompany /> : route[0] === 'offers' ? <GuestOffers /> : <>{route[0] === 'r' && <div className="banner good" style={{ margin: '12px 16px 0' }}><span>Вас пригласили в TrakSOS — после входа на счёт придут подарочные баллы.</span></div>}<Login key={route[0] ?? 'public'} entry={route[0] === 'login' ? 'login' : route[0] === 'register' ? 'register' : route[0] === 'join' ? 'join' : undefined} /></>}</Shell>
       </MeCtx.Provider>
     );
   }
@@ -344,22 +347,43 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           <a href="#/">Главная</a><a href="#/orders">Заявки</a><a href="#/sos">Помощь в дороге</a><a href="#/shop">Запчасти</a>
         </nav>}
         {!me && <nav className="guest-site-nav" aria-label="Разделы TrakSOS">
-          <a href="#/" onClick={e => {
-            const services = document.getElementById('public-services');
-            if (services) {
-              e.preventDefault();
-              services.scrollIntoView({behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start'});
-            } else {
-              // From login/registration the landing must open first; its effect handles the scroll.
-              try { sessionStorage.setItem('traksos.scrollPublicServices', '1'); } catch { /* private browsing */ }
-            }
-          }}>Услуги</a>
-          <a href="#/register" onClick={() => { try { sessionStorage.setItem('traksos.pendingLandingAction','insurance'); } catch {} }}>Страхование</a>
-          <a href="#/register" onClick={() => { try { sessionStorage.setItem('traksos.pendingLandingAction','parts'); } catch {} }}>Запчасти</a>
-          <a href="#/register" onClick={() => { try { sessionStorage.setItem('traksos.pendingLandingAction','sto'); } catch {} }}>СТО и сервисы</a>
-          <a href="#/register" onClick={() => { try { sessionStorage.setItem('traksos.pendingLandingAction','consult'); } catch {} }}>Консультации</a>
-          <a href="#/join">Для бизнеса</a>
+          {TOP_CATALOGUE.map(group => <details key={group.title} className="guest-nav-group">
+            <summary>{group.title}<span aria-hidden="true">⌄</span></summary>
+            <div className="guest-nav-dropdown">
+              {group.serviceIds.flatMap(id => (group.serviceIds.length > 1
+                ? [{label: SERVICE_TILES.find(tile => tile.id === id)?.title || id, key: ''}]
+                : CATALOGUE[id].services).map(item => (
+                <a key={id + ':' + item.key}
+                  href={id === 'parts' ? '#/login' : '#/explore/' + id + (item.key ? '/' + item.key : '')}
+                  onClick={() => rememberGuestService(id, item.key || undefined)}>
+                  {item.label}
+                </a>
+              )))}
+              <span className="guest-nav-hint">{group.title === 'Запчасти' ? 'Магазин доступен после входа' : 'Описание и регистрация'}</span>
+            </div>
+          </details>)}
+          <a href="#/join" className="guest-business-link">Для бизнеса</a>
+          <a href="#/company" className="guest-business-link">Компания</a>
+          <a href="#/offers" className="guest-business-link">Оферты</a>
         </nav>}
+        {!me && <details className="guest-mobile-catalog">
+          <summary>Каталог услуг <span aria-hidden="true">⌄</span></summary>
+          <nav aria-label="Каталог услуг TrakSOS">
+            {TOP_CATALOGUE.map(group => <details key={group.title}>
+              <summary>{group.title}</summary>
+              <div>
+                {group.serviceIds.flatMap(id => (group.serviceIds.length > 1
+                  ? [{label: SERVICE_TILES.find(tile => tile.id === id)?.title || id, key: ''}]
+                  : CATALOGUE[id].services).map(item => <a key={id + ':' + item.key}
+                    href={id === 'parts' ? '#/login' : '#/explore/' + id + (item.key ? '/' + item.key : '')}
+                    onClick={() => rememberGuestService(id, item.key || undefined)}>{item.label}</a>))}
+              </div>
+            </details>)}
+            <a href="#/join" className="guest-mobile-business">Для бизнеса · регистрация партнёра</a>
+            <a href="#/company" className="guest-mobile-business">Компания</a>
+            <a href="#/offers" className="guest-mobile-business">Оферты</a>
+          </nav>
+        </details>}
         <SiteQuickSearch authenticated={!!me} />
         <div className="row" style={{ flexWrap: 'nowrap' }}>
           {!me && <div className="guest-header-actions"><a href="#/login">Войти</a><a href="#/register" className="register">Зарегистрироваться</a></div>}
@@ -423,13 +447,14 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               </>}
             </> : <>
               <a className="desktop-nav-link active" href="#/"><span>⌂</span><span>Главная</span></a>
-              <a className="desktop-nav-link" href="#/login"><span>☷</span><span>Заявки · вход</span></a>
-              <a className="desktop-nav-link" href="#/register" onClick={() => { try { sessionStorage.setItem("traksos.pendingLandingAction","insurance"); } catch {} }}><span>◇</span><span>Страхование</span></a>
-              <a className="desktop-nav-link" href="#/register" onClick={() => { try { sessionStorage.setItem("traksos.pendingLandingAction","parts"); } catch {} }}><span>⚙</span><span>Запчасти</span></a>
-              <a className="desktop-nav-link" href="#/help"><span>?</span><span>Как это работает</span></a>
+              <a className="desktop-nav-link" href="#/explore/van"><span>⚒</span><span>Все услуги</span></a>
+              <a className="desktop-nav-link" href="#/login"><span>◉</span><span>Войти</span></a>
+              <a className="desktop-nav-link" href="#/register"><span>＋</span><span>Регистрация клиента</span></a>
+              <a className="desktop-nav-link" href="#/join"><span>▣</span><span>Для бизнеса</span></a>
+              <a className="desktop-nav-link" href="#/company"><span>ⓘ</span><span>Компания</span></a>
+              <a className="desktop-nav-link" href="#/offers"><span>▤</span><span>Оферты</span></a>
               <a className="desktop-nav-link" href="#/rules"><span>▤</span><span>Правила площадки</span></a>
-              <a className="desktop-nav-link" href="#/offer/privacy"><span>▣</span><span>Персональные данные</span></a>
-            </>}
+                        </>}
           </nav>
           {!me && <aside className="track-sidebar-app" aria-label="Мобильное приложение TrakSOS">
             <span className="track-sidebar-app-glow" aria-hidden="true" />
@@ -451,12 +476,12 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         </div>
       </div>
       {!me && !route[0] && (
-        <nav className="track-guest-tabbar" aria-label="Основные разделы TrakSOS">
+        <nav className="track-guest-tabbar" aria-label="Гостевая навигация TrakSOS">
           <a href="#/" className="active" aria-current="page"><span aria-hidden="true"><NavGlyph glyph="⌂" /></span>Главная</a>
-          <a href="#/login"><span aria-hidden="true"><NavGlyph glyph="☷" /></span>Заявки</a>
-          <a href="#/login" className="help"><span aria-hidden="true"><NavGlyph glyph="✚" /></span>Помощь</a>
-          <a href="#/register" onClick={() => { try { sessionStorage.setItem("traksos.pendingLandingAction","parts"); } catch {} }}><span aria-hidden="true"><NavGlyph glyph="⚙" /></span>Запчасти</a>
+          <a href="#/" onClick={e => { e.preventDefault(); document.getElementById('public-services')?.scrollIntoView({behavior:'smooth',block:'start'}); }}>
+            <span aria-hidden="true"><NavGlyph glyph="▤" /></span>Услуги</a>
           <a href="#/login"><span aria-hidden="true"><NavGlyph glyph="◉" /></span>Войти</a>
+          <a href="#/register"><span aria-hidden="true"><NavGlyph glyph="＋" /></span>Регистрация</a>
         </nav>
       )}
       {tabs.length > 0 && !(route[0] === 'work' && ['profile', 'docs'].includes(route[1] ?? '')) && !(route[0] === 'base' && route[1] === 'me') && (
@@ -515,7 +540,7 @@ function SiteFooter() {
       {l?.address && <span className="note">{l.address}</span>}
       {contacts && <span className="note">Поддержка: {contacts}</span>}
       <span className="row note" style={{ gap: 12 }}>
-        <a href="#/offer/client">Оферта</a><a href="#/offer/privacy">Персональные данные</a><a href="#/rules">Правила площадки</a>
+        <a href="#/company">Компания</a><a href="#/offers">Оферты</a><a href="#/offer/privacy">Персональные данные</a><a href="#/rules">Правила площадки</a>
       </span>
       <span className="note">© {new Date().getFullYear()} {l?.brand ?? 'TrakSOS'}</span>
     </footer>

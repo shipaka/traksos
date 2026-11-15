@@ -139,3 +139,35 @@ test('финансы рембазы: к выплате после сверки �
   assert.equal(m1.summary.toPay, m0.summary.toPay - due[0].payout);
   assert.equal((await t.api('GET', '/api/base/money', undefined, client.token)).status, 403);
 });
+
+
+test('СТО как этап SOS после эвакуации: связь есть, скидка по совету мастера не начисляется', async () => {
+  const tow = ok(await t.api('POST', '/api/orders', {
+    service: 'tow', isSos: true, zoneId: 'spb', vehicleId,
+    description: 'Грузовик не на ходу, после эвакуации нужен ремонт',
+    destination: 'Грузовой сервис в Санкт-Петербурге', cargo: 'tractor',
+  }, client.token)).order;
+  // Isolate the workshop continuation contract after delivery. The tow stage
+  // has its own bill; workshop pricing must never be merged into the tow bid.
+  await t.db.query(`update orders set status='completed', completed_at=now() where id=$1`, [tow.id]);
+  // Intentionally omit vehicleId: the booking must still use the exact truck
+  // from the completed tow, even if the customer skips the garage selector.
+  const bookingBody = { need: 'electric', day: today(), arrival: 'tow', caseOrderId: tow.id };
+  const b = ok(await t.api('POST', `/api/services/${centerId}/book`, bookingBody, client.token));
+  assert.equal(b.vehicleId, vehicleId);
+  assert.equal(b.vehicle.brand, 'DAF');
+  assert.equal(b.caseRootId, tow.id);
+  assert.equal(b.fromOrder, false, 'case continuation is NOT a master referral');
+  assert.equal((await t.api('POST', `/api/services/${centerId}/book`, bookingBody, client.token)).body.error, 'continuation_exists');
+  ok(await t.api('POST', `/api/base/bookings/${b.id}/respond`, { action: 'accept' }, base.token));
+  ok(await t.api('POST', `/api/base/bookings/${b.id}/status`, { status: 'arrived' }, base.token));
+  ok(await t.api('POST', `/api/base/bookings/${b.id}/ready`, { works: ['Электрика'] }, base.token));
+  const inv = ok(await t.api('POST', `/api/base/bookings/${b.id}/invoice`, { amount: 2_000_000 }, base.token));
+  assert.equal(inv.discount, 0, 'no referral discount without a recommendation');
+  ok(await t.api('POST', `/api/bookings/${b.id}/confirm`, { agree: true, stars: 5 }, client.token));
+  const view = ok(await t.api('GET', `/api/orders/${tow.id}`, undefined, client.token));
+  assert.equal(view.caseSummary.multiStage, true);
+  assert.equal(view.caseSummary.serviceBookings.length, 1);
+  assert.equal(view.caseSummary.serviceBookings[0].confirmedTotal, 2_000_000);
+  assert.equal(view.caseSummary.confirmedTotal, view.money.total + 2_000_000);
+});
