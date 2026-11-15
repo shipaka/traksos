@@ -16,7 +16,7 @@ export class OperatorDemoAccess {
   constructor(private db: Db, private now: () => Date = () => new Date()) {}
 
   async redeem(pin: string) {
-    if (!/^\\d{10}$/.test(pin)) throw new HttpError(401, 'demo_bad_code', 'Неверный или устаревший код.');
+    if (!/^\d{10}$/.test(pin)) throw new HttpError(401, 'demo_bad_code', 'Неверный или устаревший код.');
     const now = this.now();
     const result = await this.db.tx(async q => {
       // A single row lock prevents concurrent guesses from bypassing the limit.
