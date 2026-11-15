@@ -140,7 +140,9 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         const login = await post('/api/auth/login', { phone, password, device: navigator.userAgent.slice(0, 200) });
         await signedIn(login);
       } catch (e) {
-        setLoginError(e instanceof ApiError ? e.message : 'Не удалось завершить вход. Проверьте соединение и повторите попытку.');
+        setLoginError(e instanceof ApiError
+          ? e.message + (e.data?.requestId ? ' · Код обращения: ' + e.data.requestId : '')
+          : 'Не удалось завершить вход. Проверьте соединение и повторите попытку.');
       }
       return;
     }
