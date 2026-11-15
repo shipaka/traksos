@@ -512,6 +512,7 @@ export function createApp(d: Deps) {
     kind: z.string().max(20), dataUrl: z.string().max(7_000_000), takenAt: z.string().datetime().optional(),
   }), c.body)));
   r.post('/api/performer/documents/submit', true, (c: AuthedCtx) => documents.submit(c.user));
+  r.delete('/api/performer/documents/confidential', true, (c: AuthedCtx) => documents.deleteConfidential(c.user));
   r.get('/api/documents/:id/file', true, async (c: AuthedCtx) => {
     const f = await documents.file(c.user, c.params.id);
     return new Raw(f.mime, f.body);
