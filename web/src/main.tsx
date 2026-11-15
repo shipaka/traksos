@@ -170,6 +170,8 @@ function App() {
       return;
     }
     connectWs();
+    // A sandbox role must never be linked to the device's production push token.
+    if (sessionStorage.getItem('traksos.sandboxMode') === '1') return;
     native.setSession(API_URL || location.origin, getToken());
     native.registerPush((token) => post('/api/me/push-token', { provider: 'rustore', token }));
   }, [ready, me?.id]); // eslint-disable-line
