@@ -6,6 +6,7 @@ import { native } from '../native.ts';
 import { OfferForm } from './search.tsx';
 import { WorkerNotices } from './ops.tsx';
 import { useToast } from '../ui.tsx';
+import { VerifiedBadge } from '../verifiedBadge.tsx';
 
 // Линия: статус, геолокация, входящие ---------------------------------------
 
@@ -40,19 +41,19 @@ export function Work() {
               : 'Ваш рабочий стол. Выберите статус доступности ниже, чтобы управлять приёмом заявок.'}</p>
           <div className="work-command-tags">
             <span className="work-command-status"><span className={'dot ' + (online ? 'on' : '')} />{LINE[p.line_status] ?? 'Статус не указан'}</span>
-            <span className="work-command-verification">{p.verification === 'approved' ? '✓ Профиль проверен' : p.verification === 'rejected' ? 'Требуется исправление профиля' : 'Проверка профиля ещё не завершена'}</span>
+            {p.verification === 'approved' ? <VerifiedBadge verified kind={p.kind === 'tow' ? 'tow' : 'specialist'} /> : <button type="button" className="traksos-verify-invite" onClick={() => go('work/docs')}>◇ Подтвердить профиль · узнать преимущества ›</button>}
           </div>
         </div>
         <div className="work-command-art" aria-hidden="true" />
       </section>
       <LiveStrip who={p.kind === 'tow' ? 'tow' : 'master'} />
-      {online && p.verification === 'approved' && <Nearby />}
+      {online && <Nearby />}
       {p.verification !== 'approved' ? (
         <div className="card hi">
           <b>{p.verification === 'rejected' ? 'Проверка не пройдена' : p.submitted_at ? 'Профиль на проверке' : 'Пройдите проверку'}</b>
           <span className="note">{p.verification === 'rejected' ? (p.verification_note ?? 'Исправьте данные и отправьте ещё раз.')
-            : p.submitted_at ? 'Обычно до 24 часов. Пока проверяем, заявки не приходят.'
-            : 'Снимите паспорт, селфи с паспортом и машину — без проверки заявки не приходят. Это 3 минуты.'}</span>
+            : p.submitted_at ? 'Обычно до 24 часов. Проверка добровольная и повышает доверие клиентов.'
+            : 'Проверка добровольная: подтверждённый профиль получает заметный значок и преимущество среди подходящих исполнителей.'}</span>
           <button className="btn" onClick={() => go('work/docs')}>{p.submitted_at ? 'Мои фото' : 'Снять фото'}</button>
         </div>
       ) : (
