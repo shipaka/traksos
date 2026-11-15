@@ -35,16 +35,16 @@ try {
     assert(data.loginCount === 1 && data.registerCount === 1,
       width + 'px: duplicated/missing login or registration buttons');
     assert(data.serviceTiles === 6, width + 'px: unexpected public services count');
-    assert(data.heroCss?.includes('traksos-final-hero'),
-      width + 'px: approved truck artwork is not displayed');
+    assert(data.heroCss?.includes('tracksos-approved-scenic-hero') && !data.heroCss.includes('traksos-final-hero'),
+      width + 'px: full approved Scania photo without baked carousel controls is not displayed');
     assert(data.mapCss?.includes('tracksos-approved-map'),
       width + 'px: approved regional map is not displayed');
 
-    for (const name of ['traksos-final-hero.webp','tracksos-approved-map.webp']) {
+    for (const name of ['tracksos-approved-scenic-hero.webp','tracksos-photo-tow.webp','tracksos-photo-sto.webp','tracksos-approved-map.webp']) {
       const check = await page.evaluate(async (asset) => {
         const res = await fetch('/' + asset);
         const blob = await res.blob();
-        return res.ok && blob.type.startsWith('image/') && blob.size > (asset.includes('final-hero') ? 60000 : 10_000);
+        return res.ok && blob.type.startsWith('image/') && blob.size > (asset.includes('map') ? 10_000 : 60_000);
       }, name);
       assert(check, width + 'px: approved image cannot be loaded: ' + name);
     }
