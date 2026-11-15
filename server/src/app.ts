@@ -138,7 +138,7 @@ export function createApp(d: Deps) {
     if (config.sandboxInstance || !config.sandboxUrl || config.sandboxSharedSecret.length < 32)
       throw new HttpError(503, 'sandbox_not_configured', 'Полноценный тестовый сервер пока не подключён');
     const b = parse(z.object({ role: z.enum(SANDBOX_ROLES) }), c.body);
-    const ticket = issueSandboxTicket(b.role, config.sandboxSharedSecret, now().getTime());
+    const ticket = issueSandboxTicket(b.role, config.sandboxSharedSecret, now().getTime(), config.publicUrl + '/#/admin/test-center');
     return { entryUrl: config.sandboxUrl + '/#/sandbox-enter?ticket=' + encodeURIComponent(ticket), role: b.role };
   });
   r.post('/api/sandbox/exchange', false, async (c: Ctx) => {
@@ -150,15 +150,18 @@ export function createApp(d: Deps) {
 
   // Вход ---------------------------------------------------------------------
   r.post('/api/auth/code', false, (c: Ctx) => {
+    if (config.sandboxInstance) throw new HttpError(403, 'sandbox_auth_disabled', 'Тестовые пользователи входят только через администратора');
     const b = parse(z.object({ phone: z.string(), purpose: z.enum(['register','reset']).optional(),
       accountType: z.enum(['owner','driver','master','tow','service','master_service','insurer']).optional() }), c.body);
     return auth.requestCode(b.phone, c.ip, b.purpose ?? 'register', b.accountType);
   });
   r.post('/api/auth/login', false, (c: Ctx) => {
+    if (config.sandboxInstance) throw new HttpError(403, 'sandbox_auth_disabled', 'Тестовые пользователи входят только через администратора');
     const b = parse(z.object({ phone: z.string(), password: z.string().min(1).max(128), device: z.string().max(200).optional() }), c.body);
     return auth.loginPassword(b.phone, b.password, b.device, c.ip);
   });
   r.post('/api/auth/verify', false, async (c: Ctx) => {
+    if (config.sandboxInstance) throw new HttpError(403, 'sandbox_auth_disabled', 'Тестовые пользователи входят только через администратора');
     const b = parse(z.object({ phone: z.string(), code: z.string().min(4).max(6), role: z.enum(SELF_ROLES).optional(),
       device: z.string().max(200).optional(), accountType: z.enum(['owner','driver','master','tow','service','master_service','insurer']).optional(),
       password: z.string().max(128).optional(), purpose: z.enum(['register','reset']).optional(),
