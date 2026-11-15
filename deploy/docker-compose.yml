@@ -19,7 +19,7 @@ services:
       retries: 10
 
   app:
-    image: ghcr.io/shipaka/traksos:latest
+    image: ghcr.io/shipaka/traksos:${TRAKSOS_RELEASE_REV:-latest}
     build:
       context: ..
       args:
