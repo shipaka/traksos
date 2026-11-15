@@ -208,7 +208,7 @@ function ClientCard({ d }: { d: any }) {
         {d.description && <><dt>Что случилось</dt><dd>{d.description}</dd></>}
         {d.site && <><dt>Условия</dt><dd><SitePills site={d.site} /></dd></>}
       </dl>
-      {Number.isFinite(Number(d.lat)) && Number.isFinite(Number(d.lng)) && d.lat != null && d.lng != null && d.service !== 'consult' && (
+      {d.lat != null && d.lng != null && Number.isFinite(Number(d.lat)) && Number.isFinite(Number(d.lng)) && Math.abs(Number(d.lat)) <= 90 && Math.abs(Number(d.lng)) <= 180 && d.service !== 'consult' && (
         <div className="stack" aria-label="Точка назначения">
           <div className="note">Точная точка на карте · широта, долгота</div>
           <strong style={{ fontVariantNumeric: 'tabular-nums' }}>{Number(d.lat).toFixed(6)}, {Number(d.lng).toFixed(6)}</strong>
@@ -217,8 +217,15 @@ function ClientCard({ d }: { d: any }) {
               href={`https://yandex.ru/maps/?rtext=~${Number(d.lat)},${Number(d.lng)}&rtt=auto`}>Маршрут в Яндекс Картах</a>
             <a className="btn ghost" href={`geo:${Number(d.lat)},${Number(d.lng)}?q=${Number(d.lat)},${Number(d.lng)}`}>Другой навигатор</a>
             <button type="button" className="btn ghost"
-              onClick={() => navigator.clipboard.writeText(`${Number(d.lat).toFixed(6)}, ${Number(d.lng).toFixed(6)}`)
-                .catch(() => window.prompt('Скопируйте координаты:', `${Number(d.lat).toFixed(6)}, ${Number(d.lng).toFixed(6)}`))}>
+              onClick={() => {
+                const coordinates = `${Number(d.lat).toFixed(6)}, ${Number(d.lng).toFixed(6)}`;
+                if (!navigator.clipboard?.writeText) {
+                  window.prompt('Скопируйте координаты:', coordinates);
+                  return;
+                }
+                navigator.clipboard.writeText(coordinates)
+                  .catch(() => window.prompt('Скопируйте координаты:', coordinates));
+              }}>
               Скопировать координаты
             </button>
           </div>
