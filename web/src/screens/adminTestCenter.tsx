@@ -112,7 +112,7 @@ function FullFidelityRoleLauncher({role}:{role:RoleInfo}) {
     <p className="note">Рабочие компоненты TrakSOS открываются на отдельном адресе с тестовыми аккаунтами, базой и платёжным имитатором. Снимки, карта, меню и кнопки — из того же приложения.</p>
     <div className="row">
       <a className="btn ghost" href="#/admin/test-center">← Выбор кабинета</a>
-      <button type="button" className="btn ghost" onClick={()=>setFallback(true)}>Открыть старый учебный тренажёр</button>
+      <button type="button" className="btn ghost" onClick={()=>{if(role.id==='service')location.hash='#/admin/test-center/service/base';else setFallback(true);}}>Открыть старый учебный тренажёр</button>
     </div>
   </main>;
 }
