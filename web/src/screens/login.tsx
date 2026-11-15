@@ -132,7 +132,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
     if (intent === 'join' && !role) return;
     if (intent === 'login') {
       setLoginError('');
-      if (!/^\\+7[0-9]{10}$/.test('+7' + phone.replace(/\\D/g, '').slice(-10)) || phone.replace(/\\D/g, '').length !== 11) {
+      if (!/^\+7[0-9]{10}$/.test('+7' + phone.replace(/\D/g, '').slice(-10)) || phone.replace(/\D/g, '').length !== 11) {
         setLoginError('Введите номер телефона полностью: +7 и 10 цифр.');
         return;
       }
