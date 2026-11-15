@@ -96,9 +96,9 @@ export function Fleet() {
         {d.cars.map((c: any) => (
           <div key={c.id} className="card fleet-vehicle-card">
             <div className="fleet-vehicle-media">
-              <img src={c.brand === 'Scania' && /R\\s?520/i.test(c.model ?? '')
+              <img src={c.brand === 'Scania' && /R\s?520/i.test(c.model ?? '')
                 ? '/tracksos-approved-scania-r520.webp' : '/tracksos-hero-service-hq.webp'}
-                alt={c.brand === 'Scania' && /R\\s?520/i.test(c.model ?? '')
+                alt={c.brand === 'Scania' && /R\s?520/i.test(c.model ?? '')
                   ? 'Scania R520 · фотография тягача' : 'Грузовой сервис · тематическая фотография, не снимок конкретной машины'}
                 loading="lazy" />
               <div className="fleet-vehicle-title">
