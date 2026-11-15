@@ -1,4 +1,5 @@
 import { RecommendService } from './base.tsx';
+import { DestinationCard } from './DestinationCard.tsx';
 import { useEffect, useRef, useState } from 'react';
 import { get, post, rub, fmtTime } from '../api.ts';
 import { SERVICES, STATUS, STEPS, STEP_NAMES, RESULTS, CONSULT_HINTS, CONSULT_CONF } from '../dict.ts';
@@ -208,30 +209,7 @@ function ClientCard({ d }: { d: any }) {
         {d.description && <><dt>Что случилось</dt><dd>{d.description}</dd></>}
         {d.site && <><dt>Условия</dt><dd><SitePills site={d.site} /></dd></>}
       </dl>
-      {d.lat != null && d.lng != null && Number.isFinite(Number(d.lat)) && Number.isFinite(Number(d.lng)) && Math.abs(Number(d.lat)) <= 90 && Math.abs(Number(d.lng)) <= 180 && d.service !== 'consult' && (
-        <div className="stack" aria-label="Точка назначения">
-          <div className="note">Точная точка на карте · широта, долгота</div>
-          <strong style={{ fontVariantNumeric: 'tabular-nums' }}>{Number(d.lat).toFixed(6)}, {Number(d.lng).toFixed(6)}</strong>
-          <div className="row" style={{ flexWrap: 'wrap' }}>
-            <a className="btn ghost" target="_blank" rel="noreferrer"
-              href={`https://yandex.ru/maps/?rtext=~${Number(d.lat)},${Number(d.lng)}&rtt=auto`}>Маршрут в Яндекс Картах</a>
-            <a className="btn ghost" href={`geo:${Number(d.lat)},${Number(d.lng)}?q=${Number(d.lat)},${Number(d.lng)}`}>Другой навигатор</a>
-            <button type="button" className="btn ghost"
-              onClick={() => {
-                const coordinates = `${Number(d.lat).toFixed(6)}, ${Number(d.lng).toFixed(6)}`;
-                if (!navigator.clipboard?.writeText) {
-                  window.prompt('Скопируйте координаты:', coordinates);
-                  return;
-                }
-                navigator.clipboard.writeText(coordinates)
-                  .catch(() => window.prompt('Скопируйте координаты:', coordinates));
-              }}>
-              Скопировать координаты
-            </button>
-          </div>
-          <span className="note">Для промзон ориентируйтесь на точку, даже если у объекта нет почтового адреса.</span>
-        </div>
-      )}
+      {d.service !== 'consult' && <DestinationCard point={{ lat: d.lat, lng: d.lng, address: d.address }} />}
     </div>
   );
 }
