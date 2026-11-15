@@ -1429,12 +1429,12 @@
   background-position:center center!important;
 }
 .guest-app .public-landing .public-hero-visual.public-hero-slide-rescue{
-  background-image:url('../public/tracksos-photo-tow.webp')!important;
-  background-position:center 52%!important;
+  background-image:url('../public/tracksos-hero-rescue-hq.webp')!important;
+  background-position:59% center!important;
 }
 .guest-app .public-landing .public-hero-visual.public-hero-slide-service{
-  background-image:url('../public/tracksos-photo-sto.webp')!important;
-  background-position:center center!important;
+  background-image:url('../public/tracksos-hero-service-hq.webp')!important;
+  background-position:62% center!important;
 }
 .guest-app .public-landing .public-hero-copy{
   position:relative!important;z-index:3!important;
@@ -1754,4 +1754,107 @@
 }
 .guest-app .auth-desktop-form .btn.ghost:not(:disabled):focus-visible{
   outline:3px solid #5ce7f4;outline-offset:2px;
+}
+
+
+/* #82: user-approved numbered partner artwork; no third-party image host.
+   The same four source images render consistently in desktop + mobile webview. */
+.guest-app .partner-art-intro{--partner-art:url('../public/tracksos-approved-scania-r520.webp')}
+.guest-app .partner-art-tow{--partner-art:url('../public/tracksos-partner-tow-approved.webp')}
+.guest-app .partner-art-master{--partner-art:url('../public/tracksos-partner-master-approved.webp')}
+.guest-app .partner-art-service{--partner-art:url('../public/tracksos-partner-sto-approved.webp')}
+.guest-app .partner-art-insurer{--partner-art:url('../public/tracksos-partner-insurer-approved.webp')}
+.guest-app .guest-partner-mobile-preview{display:none}
+@media(min-width:900px){
+  .guest-app .auth-desktop-layout{
+    align-items:start!important;
+  }
+  .guest-app .auth-desktop-layout>.auth-desktop-showcase.partner-showcase{
+    position:sticky!important;
+    top:clamp(76px,10vh,116px)!important;
+    align-self:start!important;
+    display:flex!important;flex-direction:column!important;
+    height:clamp(540px,calc(100vh - 165px),750px)!important;
+    min-height:540px!important;
+    max-height:none!important;
+    padding:clamp(12px,1.6vw,20px)!important;
+    gap:12px!important;
+    overflow:hidden!important;
+    isolation:isolate!important;
+    border-radius:22px!important;
+    border:1px solid #39799c!important;
+    background:linear-gradient(160deg,#0b2c44,#07172d)!important;
+    box-shadow:0 18px 40px #0005!important;
+  }
+  .guest-app .partner-showcase::after{display:none!important;content:none!important}
+  .guest-app .partner-showcase .auth-desktop-showcase-photo{
+    display:block!important;
+    position:relative!important;inset:auto!important;
+    flex:0 0 auto!important;width:100%!important;
+    aspect-ratio:4 / 3!important;
+    max-height:min(55vh,515px)!important;
+    border:1px solid #397c9d;border-radius:16px;
+    background-image:var(--partner-art)!important;
+    background-position:center center!important;
+    background-size:contain!important;background-repeat:no-repeat!important;
+    background-color:#07192f!important;
+    box-shadow:0 12px 35px #0008;
+    animation:ts-partner-art-in .28s ease both;
+  }
+  .guest-app .partner-art-intro .auth-desktop-showcase-photo{
+    background-size:cover!important;
+  }
+  .guest-app .partner-showcase .auth-desktop-showcase-copy{
+    display:flex;flex:1 1 auto;flex-direction:column;
+    justify-content:center;min-height:0;max-width:none!important;
+    padding:clamp(8px,1.4vw,18px)!important;
+    z-index:2!important;
+  }
+  .guest-app .partner-showcase .auth-desktop-showcase-copy span{
+    color:#38dce9!important;letter-spacing:1.3px!important;font-size:11px!important;
+  }
+  .guest-app .partner-showcase .auth-desktop-showcase-copy h2{
+    color:#f5fbff!important;
+    font-size:clamp(20px,2vw,31px)!important;
+    line-height:1.14!important;margin:10px 0!important;
+  }
+  .guest-app .partner-showcase .auth-desktop-showcase-copy p{
+    color:#c9e6f3!important;line-height:1.48!important;
+    font-size:clamp(12px,1vw,14px)!important;margin:0!important;
+  }
+  .guest-app .partner-showcase .partner-showcase-footnote{
+    flex:0 0 auto;display:block;margin:0 12px 2px;
+    font-size:10px;line-height:1.25;color:#8caebe;
+  }
+}
+@keyframes ts-partner-art-in{
+  from{opacity:.55;transform:scale(1.012)}
+  to{opacity:1;transform:scale(1)}
+}
+@media(max-width:899px){
+  .guest-app .guest-partner-mobile-preview{
+    display:flex;align-items:flex-end;position:relative;isolation:isolate;
+    min-height:154px;max-height:205px;aspect-ratio:2 / 1;
+    width:100%;border-radius:14px;overflow:hidden;
+    border:1px solid #367c9b;background-color:#081c30;
+    background-image:var(--partner-art);
+    background-position:center 48%;background-size:cover;background-repeat:no-repeat;
+    box-shadow:0 8px 22px #0005;
+  }
+  .guest-app .guest-partner-mobile-preview::before{
+    content:"";position:absolute;inset:0;z-index:-1;
+    background:linear-gradient(180deg,transparent 24%,rgba(2,13,29,.42) 52%,rgba(2,13,29,.96) 100%);
+  }
+  .guest-app .guest-partner-mobile-preview-copy{
+    display:flex;flex-direction:column;gap:4px;padding:13px 16px;
+    color:#e8faff;text-shadow:0 2px 7px #000;
+  }
+  .guest-app .guest-partner-mobile-preview-copy b{font-size:10px;color:#50eaf5;letter-spacing:.8px}
+  .guest-app .guest-partner-mobile-preview-copy span{font-size:clamp(15px,4vw,21px);font-weight:850}
+}
+@media(max-width:400px){
+  .guest-app .guest-partner-mobile-preview{min-height:140px}
+}
+@media(prefers-reduced-motion:reduce){
+  .guest-app .partner-showcase .auth-desktop-showcase-photo{animation:none!important}
 }
