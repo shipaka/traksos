@@ -113,6 +113,36 @@ export function createApp(d: Deps) {
   const staff = ['admin', 'moderator'];
   const performerRoles = ['master', 'tow', 'service'];
 
+  // Privacy-minimal operational journal. Read/download is restricted to administrators.
+  // Retention is enforced on each write and read (also when no separate cron is running).
+  const purgeDiagnostics = async () => {
+    await d.db.query("delete from diagnostic_events where occurred_at < now() - interval '30 days'");
+  };
+  r.get('/api/admin/diagnostics', ['admin'], async (c: AuthedCtx) => {
+    await purgeDiagnostics();
+    const status = c.query.get('status');
+    const category = c.query.get('category');
+    const since = c.query.get('since');
+    const until = c.query.get('until');
+    const requestId = c.query.get('requestId');
+    const limit = Math.min(1000, Math.max(1, Number(c.query.get('limit')) || 200));
+    const rows = await d.db.query(
+      `select request_id, occurred_at, category, method, path, status, code
+       from diagnostic_events
+       where ($1::integer is null or status=$1)
+         and ($2::text is null or category=$2)
+         and ($3::timestamptz is null or occurred_at >= $3)
+         and ($4::timestamptz is null or occurred_at <= $4)
+         and ($5::uuid is null or request_id=$5)
+       order by occurred_at desc limit $6`,
+      [status && /^\\d{3}$/.test(status) ? Number(status) : null,
+       category && ['http_server_error','auth_login_rejected'].includes(category) ? category : null,
+       since && !Number.isNaN(Date.parse(since)) ? since : null,
+       until && !Number.isNaN(Date.parse(until)) ? until : null,
+       requestId && /^[0-9a-f-]{36}$/i.test(requestId) ? requestId : null, limit]);
+    return { rows, retentionDays: 30 };
+  });
+
   // Служебное ----------------------------------------------------------------
   r.get('/api/health', false, async () => ({ ok: true, db: (await d.db.one('select 1 as ok'))?.ok === 1, time: now(), sandbox: config.sandboxInstance, buildRevision: config.buildRevision }));
 
@@ -1246,8 +1276,19 @@ export function createApp(d: Deps) {
       // Structured, privacy-minimal diagnostics are available through Docker's log driver.
       // Never log the request body, phone, password, SMS code, auth header or query string.
       if (status >= 500 || (url.pathname === '/api/auth/login' && status >= 400)) {
+        const category = status >= 500 ? 'http_server_error' : 'auth_login_rejected';
+        // Do not block the HTTP response if the diagnostics store is unavailable.
+        try {
+          await d.db.query(
+            'insert into diagnostic_events(request_id, category, method, path, status, code) values ($1,$2,$3,$4,$5,$6)',
+            [requestId, category, req.method ?? 'GET', url.pathname, status,
+             typeof body?.error === 'string' ? body.error.slice(0, 100) : 'error']);
+          await purgeDiagnostics();
+        } catch (logError) {
+          console.error('[diagnostics_storage_unavailable]', logError instanceof Error ? logError.name : 'unknown');
+        }
         console.error(JSON.stringify({
-          event: status >= 500 ? 'http_server_error' : 'auth_login_rejected',
+          event: category,
           requestId, at: new Date().toISOString(), method: req.method,
           path: url.pathname, status, code: typeof body?.error === 'string' ? body.error : 'error',
           ...(status >= 500 ? { errorType: e instanceof Error ? e.name : 'UnknownError' } : {}),
