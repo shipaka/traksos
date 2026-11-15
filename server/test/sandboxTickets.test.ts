@@ -19,6 +19,18 @@ test('sandbox ticket: real isolated DB account, single-use, expiry and no role e
       () => exchangeSandboxTicket(ticket.replace(/.$/,'x'), SHARED_SECRET, t.db, at+500),
       (e:any)=>e.status===403,
     );
+    // A final base64url character can change only ignored padding bits.
+    // Such aliases must be rejected even when they decode to the same HMAC.
+    const [payload, mac] = ticket.split('.');
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+    const last = alphabet.indexOf(mac.at(-1)!);
+    const alias = mac.slice(0,-1) + alphabet[last ^ 1];
+    assert.equal(Buffer.from(alias,'base64url').toString('hex'), Buffer.from(mac,'base64url').toString('hex'));
+    await assert.rejects(
+      () => exchangeSandboxTicket(payload+'.'+alias, SHARED_SECRET, t.db, at+500),
+      (e:any)=>e.status===403,
+      'non-canonical signature encoding must never be accepted',
+    );
     await assert.rejects(
       () => exchangeSandboxTicket(ticket,'wrong-secret'.repeat(5),t.db,at+500),
       (e:any)=>e.status===403,
