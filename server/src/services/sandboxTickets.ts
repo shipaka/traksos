@@ -45,11 +45,11 @@ function signature(payload: string, secret: string): Buffer {
 }
 const forbidden = () => new HttpError(403, 'sandbox_access_denied', 'Доступ к тестовому кабинету не подтверждён');
 
-export function issueSandboxTicket(role: SandboxRole, secret: string, now = Date.now()): string {
+export function issueSandboxTicket(role: SandboxRole, secret: string, now = Date.now(), returnUrl = ''): string {
   if (!secret || secret.length < 32 || !SANDBOX_ROLES.includes(role)) throw forbidden();
   const payload = Buffer.from(JSON.stringify({
     v: 1, aud: 'traksos-isolated-sandbox', role,
-    exp: now + 45_000, nonce: randomBytes(24).toString('hex'),
+    exp: now + 45_000, nonce: randomBytes(24).toString('hex'), returnUrl,
   })).toString('base64url');
   return payload + '.' + signature(payload, secret).toString('base64url');
 }
@@ -90,5 +90,6 @@ export async function exchangeSandboxTicket(ticket: string, secret: string, db: 
     ]);
     return token;
   });
-  return { token: result, role, landing: SANDBOX_LANDING[role], sandbox: true };
+  return { token: result, role, landing: SANDBOX_LANDING[role], sandbox: true,
+    returnUrl: typeof p.returnUrl === 'string' && /^https:\/\//.test(p.returnUrl) ? p.returnUrl : undefined };
 }
