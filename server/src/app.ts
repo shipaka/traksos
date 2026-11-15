@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { randomUUID } from 'node:crypto';
 import { isIP } from 'node:net';
 import { z } from 'zod';
 import type { Db } from './db/index.ts';
@@ -1207,11 +1208,13 @@ export function createApp(d: Deps) {
 
   // Обработчик HTTP ------------------------------------------------------------
   async function handle(req: http.IncomingMessage, res: http.ServerResponse) {
+    const requestId = randomUUID();
     const origin = req.headers.origin;
-    const cors: Record<string, string> = {};
+    const cors: Record<string, string> = { 'x-request-id': requestId };
     if (origin && (config.corsOrigins.includes('*') || config.corsOrigins.includes(origin))) {
       cors['access-control-allow-origin'] = origin;
       cors['access-control-allow-headers'] = 'authorization, content-type';
+      cors['access-control-expose-headers'] = 'x-request-id';
       cors['access-control-allow-methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS';
       cors['vary'] = 'origin';
     }
@@ -1240,8 +1243,17 @@ export function createApp(d: Deps) {
       send(res, 200, out === undefined ? { ok: true } : out, cors);
     } catch (e) {
       const { status, body } = errorBody(e);
-      if (status >= 500) console.error(e);
-      send(res, status, body, cors);
+      // Structured, privacy-minimal diagnostics are available through Docker's log driver.
+      // Never log the request body, phone, password, SMS code, auth header or query string.
+      if (status >= 500 || (url.pathname === '/api/auth/login' && status >= 400)) {
+        console.error(JSON.stringify({
+          event: status >= 500 ? 'http_server_error' : 'auth_login_rejected',
+          requestId, at: new Date().toISOString(), method: req.method,
+          path: url.pathname, status, code: typeof body?.error === 'string' ? body.error : 'error',
+          ...(status >= 500 ? { errorType: e instanceof Error ? e.name : 'UnknownError' } : {}),
+        }));
+      }
+      send(res, status, { ...body, requestId }, cors);
     }
   }
 
