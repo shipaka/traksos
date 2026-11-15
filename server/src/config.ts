@@ -15,7 +15,7 @@ export const config = {
   publicUrl: env.PUBLIC_URL ?? 'http://localhost:8080',
   /** Full-fidelity role preview runs on another origin AND another PostgreSQL database. */
   sandboxInstance: env.SANDBOX_INSTANCE === 'true',
-  sandboxUrl: (env.SANDBOX_URL ?? '').replace(/\\/+$/, ''),
+  sandboxUrl: (env.SANDBOX_URL ?? '').replace(/\/+$/, ''),
   sandboxSharedSecret: env.SANDBOX_SHARED_SECRET ?? '',
 
   /** Собранное веб-приложение */
@@ -59,7 +59,7 @@ if (isProd && config.secret === 'dev-secret-change-me') {
 // Refuse to start the sandbox unless it is physically separate from production.
 // The sandbox never contacts SMS.ru, RuStore Push or a real payment provider.
 if (config.sandboxInstance) {
-  const dbName = new URL(config.databaseUrl).pathname.replace(/^\\//, '').toLowerCase();
+  const dbName = new URL(config.databaseUrl).pathname.replace(/^\//, '').toLowerCase();
   if (!dbName.includes('sandbox') || !env.DATABASE_URL)
     throw new Error('SANDBOX_INSTANCE requires its own explicit *sandbox* PostgreSQL database');
   if (config.sms.provider !== 'log' || config.push.provider !== 'log' ||
