@@ -93,6 +93,8 @@ const housekeeping = async () => {
       .catch((e) => console.error('[sms-quota-cleanup]', e)),
     db.query("delete from auth_login_attempts where window_start < now() - interval '24 hours'")
       .catch((e) => console.error('[login-quota-cleanup]', e)),
+    db.query("delete from diagnostic_events where occurred_at < now() - interval '30 days'")
+      .catch((e) => console.error('[diagnostics-cleanup]', e)),
   ]);
 };
 const hourly = setInterval(() => { void housekeeping(); }, 3_600_000);
