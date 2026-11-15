@@ -5,6 +5,7 @@ import { BRANDS, FEE_PURPOSE, PLACES } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '../ui.tsx';
 import { WorkerNotices } from './ops.tsx';
 import { RoadsideMap } from './roadsideMap.tsx';
+import { DestinationCard } from './DestinationCard.tsx';
 import { VerifiedBadge } from '../verifiedBadge.tsx';
 import { inServicePreview, servicePreviewPath, servicePreviewHref, previewServiceApi } from '../demo/servicePreviewApi.ts';
 // The same working STО components are used for both real accounts and the isolated admin preview.
@@ -638,7 +639,7 @@ export function CenterPage({ id }: { id: string }) {
         <button className="btn ghost" onClick={() => prefillOrder('tow', { destination: `${d.name}, ${d.address}` })}>Везти сюда эвакуатором</button>
         <button className="btn ghost" onClick={() => prefillOrder('electric', { address: `${d.name}, ${d.address}` })}>Вызвать мастера сюда</button>
       </div>
-      {d.lat != null && <a className="btn ghost" target="_blank" rel="noreferrer" href={`https://yandex.ru/maps/?rtext=~${d.lat},${d.lng}&rtt=auto`}>Маршрут в навигаторе</a>}
+      <DestinationCard point={{ lat: d.lat, lng: d.lng, name: d.name, address: d.address }} title="Как добраться до СТО" />
       <div className="stack">
         <span className="label">Отзывы · сначала подробные</span>
         {d.reviews.length ? d.reviews.map((r: any, i: number) => (
