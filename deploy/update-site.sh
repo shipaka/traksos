@@ -39,6 +39,27 @@ echo "Checked out revision: $(git -C "$ROOT" rev-parse --short HEAD)"
 # Building before recreating the app ensures a compile error cannot stop the old site.
 echo "Building new app image ..."
 docker compose build app || fail "Build failed. Existing app still running."
+# Validate the exact release image in sandbox BEFORE replacing production.
+[[ -f .env.sandbox && -f docker-compose.sandbox.yml ]] ||
+  fail "Sandbox not configured. Production unchanged."
+sandbox_compose=(docker compose -f docker-compose.yml -f docker-compose.sandbox.yml --profile sandbox)
+sandbox_id="$("${sandbox_compose[@]}" ps -q sandbox-app)"
+[[ -n "$sandbox_id" && "$(docker inspect -f '{{.State.Running}}' "$sandbox_id" 2>/dev/null)" == true ]] ||
+  fail "Sandbox not running. Production unchanged."
+echo "Testing release image on isolated sandbox ..."
+"${sandbox_compose[@]}" up -d --no-deps sandbox-app ||
+  fail "Sandbox update failed. Production unchanged."
+sandbox_ready=0
+for attempt in $(seq 1 30); do
+  if "${sandbox_compose[@]}" exec -T sandbox-app node -e "fetch('http://127.0.0.1:8080/api/health').then(async r=>{const j=await r.json();process.exit(r.ok&&j.db&&j.sandbox&&j.buildRevision===process.env.TRAKSOS_BUILD_REV?0:1)}).catch(()=>process.exit(1))" >/dev/null 2>&1; then
+    sandbox_ready=1
+    break
+  fi
+  sleep 2
+done
+[[ "$sandbox_ready" == 1 ]] ||
+  fail "Sandbox health/revision mismatch. Production unchanged."
+echo "Sandbox release checks passed."
 echo "Replacing only the app service (no volume deletion, no compose down) ..."
 docker compose up -d --no-deps app || fail "App restart failed. Check docker compose logs app"
 ready=0
@@ -60,28 +81,4 @@ echo "OK: application API answers /api/health inside the container."
 bash ./verify-shop-closed.sh || fail "Shop lock guard failed after deployment; investigate without restoring over live data"
 docker compose ps
 echo "Release finished. Verify the public site from a browser and run: bash deploy/doctor.sh (from project root)."
-# Optional sandbox uses the SAME locally built image as production. Never
-# build a second frontend for tests. If sandbox is not provisioned, leave it off.
-if [[ -f .env.sandbox && -f docker-compose.sandbox.yml && -n "${SANDBOX_URL:-}" ]]; then
-  sandbox_id="$(docker compose -f docker-compose.yml -f docker-compose.sandbox.yml --profile sandbox ps -q sandbox-app)"
-  if [[ -n "$sandbox_id" && "$(docker inspect -f '{{.State.Running}}' "$sandbox_id" 2>/dev/null)" == true ]]; then
-    echo "Updating isolated test app from the very same image ..."
-    docker compose -f docker-compose.yml -f docker-compose.sandbox.yml --profile sandbox up -d --no-deps sandbox-app ||
-      fail "Production updated; sandbox restart failed. Fix sandbox before role testing."
-    matched=0
-    for attempt in $(seq 1 30); do
-      if docker compose -f docker-compose.yml -f docker-compose.sandbox.yml --profile sandbox exec -T sandbox-app \
-         node -e "fetch('http://127.0.0.1:8080/api/health').then(async r=>{const j=await r.json();process.exit(r.ok&&j.db&&j.sandbox&&j.buildRevision===process.env.TRAKSOS_BUILD_REV?0:1)}).catch(()=>process.exit(1))" >/dev/null 2>&1; then
-        matched=1
-        break
-      fi
-      sleep 2
-    done
-    [[ "$matched" == 1 ]] ||
-      fail "Production updated; sandbox health/version mismatch. Test role access disabled until fixed."
-    echo "Sandbox and production now run the same release commit: $TRAKSOS_RELEASE_REV"
-  else
-    echo "Sandbox is configured but not yet running; no simulated user data was touched."
-  fi
-fi
 echo "SMS provider, admin account and Android push still require separate live checks."
