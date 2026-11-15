@@ -58,11 +58,20 @@ const demo = await read('web/src/screens/adminTestCenter.tsx');
 const serviceDemo = await read('web/src/demo/servicePreviewApi.ts');
 expect(!/\bstructuredClone\s*\(/.test(serviceDemo),
   'Android 10 WebView starts without unavailable structuredClone in admin demo module');
-expect(shell.includes("const serviceSandbox = isAdmin && a === 'admin' && b === 'test-center' && route[2] === 'service'") &&
-  shell.includes("b === 'test-center' ? (serviceSandbox ? <ServicePreviewPage section={route[3]} sub={route[4]} id={route[5]} /> : <AdminTestCenter roleId={route[2]} />)"),
-  'admin-only test center and genuine, isolated service role are routed explicitly');
-expect(!demo.includes("from '../api.ts'") && !demo.includes('fetch(') && !demo.includes('XMLHttpRequest'),
-  'sandbox performs no real API traffic or requests');
+expect(shell.includes("const serviceSandbox = isAdmin && a === 'admin' && b === 'test-center' && route[2] === 'service' && route.length > 3") &&
+  shell.includes("b === 'test-center' ? (serviceSandbox ? <ServicePreviewPage section={route[3]} sub={route[4]} id={route[5]} /> : <AdminTestCenter roleId={route[2]} fullFidelity />)"),
+  'admin-only test center launches full-fidelity real cabinet, with explicit legacy service fallback');
+expect(demo.includes("'/api/admin/sandbox/status'") &&
+  demo.includes("'/api/admin/sandbox/ticket'") &&
+  demo.includes('FullFidelityRoleLauncher') &&
+  !demo.includes('XMLHttpRequest'),
+  'isolated role handoff only uses admin-only sandbox authorization endpoints');
+const oldTraining = await Promise.all([
+  'customerTrainingCabinet.tsx','fleetTrainingCabinet.tsx','performerTrainingCabinet.tsx',
+].map(name=>read('web/src/screens/'+name)));
+expect(oldTraining.every(src=>!src.includes("from '../api.ts'") && !src.includes('fetch(') &&
+  !src.includes('XMLHttpRequest')),
+  'old legacy training screens remain local-only, with no live production API calls');
 for(const role of ['client','owner','driver','master','tow','service','master_service','insurer','moderator','admin']) {
   expect(demo.includes("id:'"+role+"'"), 'safe demo role exists: '+role);
 }
