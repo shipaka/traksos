@@ -299,7 +299,12 @@ function PerformerActions({ d, onDone }: { d: any; onDone: () => void }) {
       {['accepted', 'en_route'].includes(d.status) && <LateButtons d={d} onDone={onDone} />}
       {['arrived', 'working', 'awaiting_confirmation'].includes(d.status) && <SiteFlags d={d} onDone={onDone} />}
       {d.service !== 'tow' && ['arrived', 'working', 'awaiting_confirmation'].includes(d.status) && <RecommendService order={d} onDone={onDone} />}
-      {d.status === 'en_route' && <button className="btn" disabled={busy} onClick={() => step('arrive', 'Клиент видит, что вы на месте')}>Я на месте</button>}
+      {d.status === 'en_route' && <div className="card stack">
+        <b>Подтверждение прибытия</b>
+        <span className="note">Нажимайте только после фактического прибытия к согласованной точке. Сейчас отметка отправляется исполнителем вручную и не является GPS-подтверждением.</span>
+        <span className="note">После отметки «На месте» может начаться учёт оплачиваемого времени по действующим условиям заявки. Если въезд через КПП затруднён, сообщите клиенту в чате до подтверждения.</span>
+        <button className="btn" disabled={busy} onClick={() => step('arrive', 'Клиент получил вашу отметку о прибытии')}>Подтвердить: я на месте</button>
+      </div>}
       {d.status === 'arrived' && <button className="btn" disabled={busy} onClick={() => step('start_work', 'Работа началась')}>Начать работу</button>}
 
       {['working', 'awaiting_confirmation'].includes(d.status) && (
