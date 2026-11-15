@@ -20,7 +20,8 @@ export const DOC_KINDS: Record<string, { name: string; hint: string; camera: 'en
 
 export function requiredKinds(p: { kind?: string; specialties?: string[]; tier?: string }) {
   if (p.kind === 'tow') return ['passport', 'selfie', 'tow_front', 'tow_side', 'sts'];
-  const base = ['passport', 'selfie', 'car_front', 'car_side'];
+  // A master needs one vehicle photo from the front; tow operators retain their own checks.
+  const base = ['passport', 'selfie', 'car_front'];
   if (p.tier === 'pro' || p.specialties?.includes('diag')) base.push('equipment');
   return base;
 }
