@@ -9,7 +9,7 @@ test('operator demo: single-use access stays outside real authentication',async(
     const pin='9271048356';
     await t.db.query(
       `insert into operator_demo_grant(id,pin_hash,expires_at)
-       values (1,$1,now()+interval '4 hours')`,[demoPinHash(pin)],
+       values (1,$1,$2)`,[demoPinHash(pin),new Date(t.clock.now().getTime()+4*60*60_000)],
     );
     assert.equal((await t.api('POST','/api/public/demo/unlock',{code:'1111111111'})).status,401);
     const success=await t.api('POST','/api/public/demo/unlock',{code:pin});
@@ -33,7 +33,7 @@ test('operator demo: eight guesses lock code and expired grants fail closed',asy
     const pin='8930154672';
     await t.db.query(
       `insert into operator_demo_grant(id,pin_hash,expires_at)
-       values(1,$1,now()+interval '4 hours')`,[demoPinHash(pin)],
+       values(1,$1,$2)`,[demoPinHash(pin),new Date(t.clock.now().getTime()+4*60*60_000)],
     );
     for(let n=0;n<8;n++)
       assert.equal((await t.api('POST','/api/public/demo/unlock',{code:'0000000000'})).status,401);
