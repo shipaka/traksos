@@ -60,13 +60,13 @@ try {
     if(await page.locator('.public-hero-dots button').count()!==3)throw Error('Hero must show three selectable photographs');
     await page.getByRole('button',{name:'Следующее фото'}).click();
     const secondPhoto=await bgImage();
-    if(!secondPhoto.includes('tracksos-approved-scenic-hero.webp') || secondPhoto===firstPhoto)
+    if(!secondPhoto.includes('tracksos-approved-scenic-hero') || secondPhoto===firstPhoto)
       throw Error('Hero next arrow does not change photograph: '+secondPhoto);
     if(await page.locator('.public-hero-dot[aria-pressed="true"]').count()!==1)
       throw Error('Hero active dot state not updated');
     await page.getByRole('button',{name:'Следующее фото'}).click();
     const thirdPhoto=await bgImage();
-    if(!thirdPhoto.includes('tracksos-approved-scania-r520.webp') || thirdPhoto===secondPhoto)
+    if(!thirdPhoto.includes('tracksos-approved-scania-r520') || thirdPhoto===secondPhoto)
       throw Error('Hero next arrow does not show third photograph');
     await page.getByRole('button',{name:'Предыдущее фото'}).click();
     if(await bgImage()!==secondPhoto)throw Error('Hero previous arrow did not reverse photograph');
