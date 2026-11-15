@@ -185,7 +185,9 @@ export function scheduleSlot(s: any, now: Date, offUntil?: string | null): 'work
 /** Отправляем координаты раз в 30 секунд, пока экран открыт (в приложении — и в фоне) */
 export function LocationSharing() {
   const [state, setState] = useState<'wait' | 'ok' | 'off'>('wait');
-  const demo=location.hash.startsWith('#/admin/test-center/');
+  let sandbox=false;
+  try {sandbox=sessionStorage.getItem('traksos.sandboxMode')==='1';}catch{/* */ }
+  const demo=sandbox||location.hash.startsWith('#/admin/test-center/');
   useEffect(() => {
     // A test role must NEVER request the administrator's physical GPS location.
     if(demo)return;
