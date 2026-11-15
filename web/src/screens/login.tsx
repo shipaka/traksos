@@ -4,9 +4,15 @@ import { useAction, useMe, useToast, Field, go } from '../ui.tsx';
 import { SERVICE_TILES, MASTER_SPECIALTIES, rememberGuestService } from '../guestCatalog.ts';
 
 const HERO_SLIDES = [
-  { id: 'approved', label: 'Панорамная Scania TrakSOS' },
-  { id: 'road', label: 'Грузовик Scania на дороге' },
-  { id: 'truck', label: 'Scania R520 крупным планом' },
+  { id: 'approved', label: 'Единая платформа TrakSOS', eyebrow: 'ЕДИНАЯ ПЛАТФОРМА ДЛЯ ГРУЗОВОГО ТРАНСПОРТА',
+    description: 'Эвакуация · Выездной мастер · Ремонт и ТО · Запчасти · Страхование · Техосмотры · Консультации',
+    caption: 'Зона запуска: Санкт-Петербург и Ленинградская область. В других регионах выездные услуги пока недоступны.' },
+  { id: 'rescue', label: 'Эвакуация грузового транспорта', eyebrow: 'TRAKSOS · ПОМОЩЬ НА ДОРОГЕ',
+    description: 'Нужен эвакуатор? Опишите технику и маршрут, ознакомьтесь с предложениями исполнителей в личном кабинете.',
+    caption: 'Наличие исполнителя и условия выезда зависят от региона и выбранной заявки.' },
+  { id: 'service', label: 'Грузовые СТО и запись на ремонт', eyebrow: 'TRAKSOS · РЕМОНТ И ТЕХНИЧЕСКОЕ ОБСЛУЖИВАНИЕ',
+    description: 'Ищите грузовые СТО, планируйте ремонт и обслуживание, следите за обращениями и историей работ.',
+    caption: 'Запись доступна после входа при наличии подключённых станций.' },
 ] as const;
 
 function PublicDemoMapBackdrop() {
@@ -54,6 +60,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const [role, setRole] = useState<JoinRole>('master');
   const [customerType, setCustomerType] = useState<'owner' | 'driver'>('owner');
   const [specialties, setSpecialties] = useState<string[]>([]);
+  const [specialtiesOpen, setSpecialtiesOpen] = useState(true);
   const [insurerOnly, setInsurerOnly] = useState(false);
   const [agree, setAgree] = useState(false);
   const toast = useToast();
@@ -173,9 +180,13 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
 
       <section className="public-hero public-brand-hero" aria-labelledby="public-main-title">
         <div className="public-hero-copy">
-          <span className="public-eyebrow">ЕДИНАЯ ПЛАТФОРМА ДЛЯ ГРУЗОВОГО ТРАНСПОРТА</span>
-          <h1 id="public-main-title"><em>Trak<b>SOS</b></em> — помощь<br/>в пути и полный сервис<br/>для грузовиков и прицепов</h1>
-          <p>Эвакуация · Выездной мастер · Ремонт и ТО · Запчасти<br/>Страхование · Техосмотры · Консультации 24/7</p>
+          <span className="public-eyebrow">{HERO_SLIDES[heroSlide].eyebrow}</span>
+          <h1 id="public-main-title" key={'title-'+heroSlide}>
+            {heroSlide === 0 ? <><em>Trak<b>SOS</b></em> — помощь<br/>в пути и полный сервис<br/>для грузовиков и прицепов</>
+            : heroSlide === 1 ? <>Эвакуация грузовиков<br/>и помощь в пути<br/>с <em>Trak<b>SOS</b></em></>
+            : <>Ремонт и запись в СТО<br/>для грузового транспорта<br/>с <em>Trak<b>SOS</b></em></>}
+          </h1>
+          <p key={'description-'+heroSlide}>{HERO_SLIDES[heroSlide].description}</p>
           <div className="public-track-benefits" aria-label="Преимущества TrakSOS">
             <span><i aria-hidden="true">ϟ</i>Быстрое обращение</span>
             <span><i aria-hidden="true">✓</i>Проверка исполнителей</span>
@@ -183,13 +194,16 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
             <span><i aria-hidden="true">▤</i>Работа с юрлицами</span>
           </div>
           <div className="public-actions">
-            <button type="button" className="public-button public-button-sos" onClick={() => go('login')}>Войти</button>
+            <button type="button" className="public-button public-button-sos"
+              onClick={() => heroSlide === 0 ? go('login') : go(heroSlide === 1 ? 'explore/tow' : 'explore/sto')}>
+              {heroSlide === 0 ? 'Войти' : heroSlide === 1 ? 'Узнать об эвакуации' : 'Узнать о СТО'}
+            </button>
             <button type="button" className="public-button public-button-outline" onClick={() => go('register')}>Регистрация</button>
           </div>
 
-          <div className="public-hero-caption">Зона запуска: Санкт-Петербург и Ленинградская область. В других регионах выездные услуги пока недоступны.</div>
+          <div className="public-hero-caption" key={'caption-'+heroSlide}>{HERO_SLIDES[heroSlide].caption}</div>
         </div>
-        <div className={'public-hero-visual public-hero-slide-' + HERO_SLIDES[heroSlide].id} aria-hidden="true" />
+        <div key={'slide-art-'+HERO_SLIDES[heroSlide].id} className={'public-hero-visual public-hero-slide-' + HERO_SLIDES[heroSlide].id} aria-hidden="true" />
         <div className="public-hero-carousel" role="group" aria-label="Фотографии TrakSOS">
           <div className="public-hero-dots">
             {HERO_SLIDES.map((slide, index) => <button key={slide.id} type="button"
@@ -272,19 +286,8 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
       </div>
 
 
-        <section className="public-demo-map" id="public-map" aria-label="Как выглядит карта помощи">
-          <div className="public-section-head"><span className="public-section-kicker">ЗОНА ОБСЛУЖИВАНИЯ</span><h2>Рядом с вами</h2></div>
-          <div className="public-map-wrap">
-            <a className="public-map-static-link" href="https://yandex.ru/maps/2/saint-petersburg/?ll=30.314130%2C59.938630&z=10"
-              target="_blank" rel="noopener noreferrer" aria-label="Открыть этот район в Яндекс Картах">
-              <PublicDemoMapBackdrop />
-              <span className="public-map-open-link">Открыть в Яндекс Картах ↗</span>
-            </a>
-          </div>
-          <div className="public-map-legend"><span><i className="service"/>СТО</span><span><i className="master"/>Мастер</span><span><i className="tow"/>Эвакуация</span></div>
-          <p className="public-demo-warning"><strong>Пример расположения услуг.</strong> Значки условные: это не реальные исполнители и не их доступность. Нажмите на карту, чтобы открыть Санкт-Петербург в Яндекс Картах.</p>
-        </section>
-      <section className="public-bottom-row public-information-row" id="public-how">
+
+      <div className="public-location-process-grid" id="public-how">
         <div className="public-how">
           <span className="public-section-kicker">ПОНЯТНЫЙ ПРОЦЕСС</span>
           <h2>Как получить помощь</h2>
@@ -294,13 +297,26 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
             <div><span>03</span><b>Следите за заявкой</b><small>Статус и связь с мастером</small></div>
           </div>
         </div>
+        <section className="public-demo-map" id="public-map" aria-label="Как выглядит карта помощи">
+          <div className="public-section-head"><span className="public-section-kicker">ЗОНА ОБСЛУЖИВАНИЯ</span><h2>Рядом с вами</h2></div>
+          <div className="public-map-wrap">
+            <a className="public-map-static-link" href="https://yandex.ru/maps/2/saint-petersburg/?ll=30.314130%2C59.938630&z=10"
+              target="_blank" rel="noopener noreferrer" aria-label="Открыть этот район в Яндекс Картах">
+              <PublicDemoMapBackdrop />
+            </a>
+          </div>
+          <a className="public-map-open-link" href="https://yandex.ru/maps/2/saint-petersburg/?ll=30.314130%2C59.938630&z=10"
+            target="_blank" rel="noopener noreferrer">Открыть в Яндекс Картах ↗</a>
+          <div className="public-map-legend"><span><i className="service"/>СТО</span><span><i className="master"/>Мастер</span><span><i className="tow"/>Эвакуация</span></div>
+          <p className="public-demo-warning"><strong>Пример расположения услуг.</strong> Значки условные: это не реальные исполнители и не их доступность. Нажмите на карту, чтобы открыть Санкт-Петербург в Яндекс Картах.</p>
+        </section>
         <div className="public-partner">
           <span className="public-section-kicker">ДЛЯ МАСТЕРОВ И СТО</span>
           <h2>Станьте партнёром TrakSOS</h2>
           <p>Подключайте свой сервис и работайте с заявками через отдельный кабинет.</p>
           <button type="button" className="public-button public-button-partner" onClick={() => go('join')}>Подключиться →</button>
         </div>
-      </section>
+      </div>
 
     </main>
   );
@@ -312,7 +328,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         <button type="button" onClick={() => setIntent('login')}>Войти по номеру</button>
         <button type="button" onClick={() => go('join')}>Хочу работать с TrakSOS</button>
       </div>}
-      {(intent === 'register' || intent === 'join') && step === 'phone' && <nav className="guest-signup-kind" aria-label="Тип регистрации">
+      {intent === 'register' && step === 'phone' && <nav className="guest-signup-kind" aria-label="Тип регистрации">
         <a href="#/register" aria-current={intent === 'register' ? 'page' : undefined}>Клиент</a>
         <a href="#/join" aria-current={intent === 'join' ? 'page' : undefined}>Зарегистрироваться как партнёр</a>
       </nav>}
@@ -348,7 +364,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
               <button type="button" className="seg" aria-pressed={customerType === 'driver'} onClick={() => setCustomerType('driver')}>Водитель автопарка</button>
             </div>
             {customerType === 'driver' && <span className="note">После входа владелец сможет привязать вас к своей машине по приглашению или QR-коду.</span>}
-            <span className="note">Для регистрации мастера, эвакуаторщика, СТО или страхового агента откройте «Для бизнеса».</span>
+            <span className="note">Для регистрации мастера, эвакуаторщика, СТО или страхового агента откройте «Для партнёров».</span>
           </div>}
           {intent === 'help' && <div className="stack" role="group" aria-label="Тип клиента">
             <span className="label">Как вы пользуетесь транспортом?</span>
@@ -359,29 +375,34 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
             {customerType === 'driver' && <span className="note">После входа владелец сможет привязать вас к своей машине по приглашению или QR-коду.</span>}
           </div>}
           {intent === 'join' && <div className="stack">
+            <div className="guest-partner-roles">
             {JOIN_ROLES.map((r) => (
-              <button key={r.id} type="button" className="opt" aria-pressed={role === r.id}
+              <button key={r.id} type="button" className={'opt guest-partner-role guest-partner-role-' + r.id} aria-pressed={role === r.id}
                 aria-label={r.name} aria-describedby={'join-role-hint-' + r.id}
                 onClick={() => setRole(r.id)}>
                 <b>{r.name}</b><small id={'join-role-hint-' + r.id}>{r.hint}</small>
               </button>
             ))}
-            {role === 'master' && <div className="guest-master-specialties" role="group" aria-label="Специализация мастера">
-              <span className="label">Выберите свою специализацию</span>
+            </div>
+            {role === 'master' && <details className="guest-master-specialties" open={specialtiesOpen}>
+              <summary onClick={event => { event.preventDefault(); setSpecialtiesOpen(v => !v); }}>
+                Специализации мастера · выбрано: {specialties.length} <span aria-hidden="true">⌄</span>
+              </summary>
+              <span className="label">Можно выбрать несколько вариантов</span>
               <div className="guest-master-specialties-grid">
                 {MASTER_SPECIALTIES.map(item => <button key={item.id} type="button" className="seg"
                   aria-pressed={specialties.includes(item.id)}
                   onClick={() => setSpecialties(current => current.includes(item.id)
                     ? current.filter(id => id !== item.id) : [...current,item.id])}>{item.name}</button>)}
               </div>
-            </div>}
+            </details>}
           </div>}
           <Field label="Телефон">
             <input className="field" type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => { setPhone(e.target.value); setInsurerOnly(false); }} />
           </Field>
           {insurerOnly && <div className="card stack" role="alert">
             <b>Для этого номера доступен только страховой кабинет</b>
-            <span className="note">Выберите роль «Страховой агент» в разделе «Для бизнеса». Другой тип аккаунта на этот номер создать нельзя.</span>
+            <span className="note">Выберите роль «Страховой агент» в разделе «Для партнёров». Другой тип аккаунта на этот номер создать нельзя.</span>
             <button className="btn" type="button" onClick={() => {
               setStep('phone'); setRole('insurer'); setIntent('join'); setInsurerOnly(false);
             }}>Перейти к регистрации страхового агента</button>

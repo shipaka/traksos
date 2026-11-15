@@ -71,20 +71,33 @@ try {
     await p.goto(BASE + '/#/', {waitUntil:'domcontentloaded'});
     const art = p.locator('.public-landing .public-hero-visual');
     await art.waitFor();
-    const info = await art.evaluate(async el => {
+    const info = await art.evaluate(el => {
       const cs = getComputedStyle(el);
-      const layer = getComputedStyle(el, '::after');
-      const picture = [cs.backgroundImage, layer.backgroundImage]
-        .find(x => x.includes('traksos-final-hero'));
-      const visible = el.getBoundingClientRect().width > 100 && el.getBoundingClientRect().height > 100;
-      return {visible, picture, fit: [cs.backgroundSize, layer.backgroundSize].join(',')};
+      const bounds = el.getBoundingClientRect();
+      const hero = el.closest('.public-brand-hero')?.getBoundingClientRect();
+      return {photo:cs.backgroundImage, fit:cs.backgroundSize,
+        visible:bounds.width>100&&bounds.height>100,
+        fullBleed:!!hero&&Math.abs(hero.width-bounds.width)<3&&Math.abs(hero.height-bounds.height)<3};
     });
-    if (!info.visible || !info.picture || !info.fit.includes('contain'))
-      throw Error(width + 'px public Scania artwork missing or cropped: ' + JSON.stringify(info));
+    if (!info.visible || !info.fullBleed ||
+        !info.photo.includes('tracksos-approved-scenic-hero') ||
+        info.photo.includes('traksos-final-hero'))
+      throw Error(width + 'px public editorial Scania hero does not fill the banner or uses baked controls: ' + JSON.stringify(info));
+    await p.getByRole('button',{name:'Следующее фото'}).click();
+    const rescuePhoto=await art.evaluate(el=>getComputedStyle(el).backgroundImage);
+    if(!rescuePhoto.includes('tracksos-photo-tow') ||
+       !await p.getByRole('heading',{name:/Эвакуация грузовиков/}).count())
+      throw Error(width+'px: tow scene must change both photograph and headline');
+    await p.getByRole('button',{name:'Следующее фото'}).click();
+    const stoPhoto=await art.evaluate(el=>getComputedStyle(el).backgroundImage);
+    if(!stoPhoto.includes('tracksos-photo-sto') ||
+       !await p.getByRole('heading',{name:/Ремонт и запись в СТО/}).count())
+      throw Error(width+'px: STO scene must change both photograph and headline');
+    await p.getByRole('button',{name:/Показать фото 1:/}).click();
     await p.screenshot({path:'e2e/shots/approved-truck/public-' + width + '.png',fullPage:true});
     await guest.close();
   }
 } finally {
   await browser.close();
 }
-console.log('Verified real Nov 14 photo cards, full-image hero, SOS branching and public art at 390 and 1440px');
+console.log('Verified client Scania photo, real full-bleed three-scene guest hero, SOS and public photo cards at 390 and 1440px');

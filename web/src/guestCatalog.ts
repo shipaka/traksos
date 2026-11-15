@@ -38,9 +38,9 @@ export const CATALOGUE: Record<ServiceId,{
   sto: {
     description:'Грузовые станции технического обслуживания и запись на ремонт.',
     services: [
-      {label:'Ремонт грузовиков',key:'repair'}, {label:'Техническое обслуживание',key:'maintenance'},
+      {label:'Запись в СТО',key:'booking'}, {label:'Ремонт грузовиков',key:'repair'}, {label:'Техническое обслуживание',key:'maintenance'},
       {label:'Компьютерная диагностика',key:'diagnostics'}, {label:'Ремонт прицепов',key:'trailer'},
-      {label:'Шиномонтаж',key:'tyre'}, {label:'Запись в СТО',key:'booking'},
+      {label:'Шиномонтаж',key:'tyre'},
     ],
     client:['Поиск и запись в СТО','История обслуживания','Документы и счета','Запчасти для ремонта'],
     provider:['Календарь записей','Рабочие заявки и ремонты','Раздел финансов','Магазин запчастей'],
@@ -69,9 +69,8 @@ export const CATALOGUE: Record<ServiceId,{
   consult: {
     description:'Технические консультации по проблемам грузового автомобиля и прицепа.',
     services: [
-      {label:'Электрика и проводка',key:'electric'}, {label:'Ошибки и диагностика',key:'diag'},
-      {label:'Тормоза и пневматика',key:'air'}, {label:'Автономные отопители',key:'autonomy'},
-      {label:'Двигатель и запуск',key:'engine'}, {label:'Помощь с выбором специалиста',key:'choice'},
+      {label:'Консультация по ошибкам и диагностике',key:'diag'},
+      {label:'Помощь в выборе специалиста',key:'choice'},
     ],
     client:['Заявка на консультацию','Описание неисправности','Связь со специалистом','История рекомендаций'],
     provider:['Входящие консультации','История обращений','Финансовый раздел','Рабочий график'],
@@ -79,7 +78,7 @@ export const CATALOGUE: Record<ServiceId,{
 };
 
 export const TOP_CATALOGUE: { title: string; serviceIds: ServiceId[]; direct?: boolean }[] = [
-  { title:'Услуги', serviceIds:['tow','van','sto','insurance','parts','consult'] },
+  { title:'Помощь в дороге', serviceIds:['tow','van'] },
   { title:'Страхование', serviceIds:['insurance'] },
   { title:'Запчасти', serviceIds:['parts'], direct:true },
   { title:'СТО и сервисы', serviceIds:['sto'] },

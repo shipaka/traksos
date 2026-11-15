@@ -72,7 +72,7 @@ export function GuestExplore({ id, itemKey }: {id: string; itemKey?: string}) {
     </section></main>;
   }
   const selected = service.services.find(x => x.key === itemKey);
-  const next = serviceId === 'parts' ? '#/login' : '#/register';
+  const next = '#/register';
   return <main className={'guest-explore guest-explore-' + serviceId}>
     <a className="guest-explore-back" href="#/">← Все услуги TrakSOS</a>
     <section className="guest-explore-hero">
@@ -82,11 +82,11 @@ export function GuestExplore({ id, itemKey }: {id: string; itemKey?: string}) {
       <p>{service.description}</p>
       <div className="guest-explore-actions">
         <a className="guest-explore-cta" href={next} onClick={() => rememberGuestService(serviceId, selected?.key)}>
-          {serviceId === 'parts' ? 'Войти и открыть магазин' : 'Зарегистрироваться'}
+          Зарегистрироваться
         </a>
-        <a className="guest-explore-secondary" href={serviceId === 'parts' ? '#/register' : '#/login'}
+        <a className="guest-explore-secondary" href="#/login"
           onClick={() => rememberGuestService(serviceId, selected?.key)}>
-          {serviceId === 'parts' ? 'Нет аккаунта? Регистрация' : 'Уже есть аккаунт? Войти'}
+          Уже есть аккаунт? Войти
         </a>
       </div>
     </section>
@@ -95,13 +95,13 @@ export function GuestExplore({ id, itemKey }: {id: string; itemKey?: string}) {
       <div className="guest-explore-service-grid">
         {service.services.map(item => <a
           key={item.key}
-          href={serviceId === 'parts' ? '#/login' : '#/explore/' + serviceId + '/' + item.key}
+          href={'#/explore/' + serviceId + '/' + item.key}
           className={'guest-explore-item' + (selected?.key === item.key ? ' selected' : '')}
           onClick={() => rememberGuestService(serviceId, item.key)}>
           <span aria-hidden="true">✦</span><strong>{item.label}</strong><span aria-hidden="true">›</span>
         </a>)}
       </div>
-      {serviceId === 'parts' && <p className="guest-explore-note">Выберите категорию — для просмотра магазина откроется вход в TrakSOS.</p>}
+      {serviceId === 'parts' && <p className="guest-explore-note">Выберите категорию, узнайте о возможностях магазина, затем войдите или зарегистрируйтесь для работы с заказами.</p>}
     </section>
     <section className="guest-explore-section">
       <h2>Что внутри личного кабинета</h2>

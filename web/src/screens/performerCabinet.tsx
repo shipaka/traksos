@@ -453,11 +453,13 @@ export function FilterSection() {
   }));
   const [x, setX] = useState<any>(() => ({ prepay: 'low', stock: [], takes: [], ...(p?.extras ?? {}) }));
   const [tab, setTab] = useState<string>(p?.kind === 'tow' ? 'take' : 'services');
+  const [brandPickerOpen,setBrandPickerOpen] = useState(false);
   if (!p) return <PerformerOnboarding />;
   const set = (patch: Partial<typeof f>) => setF({ ...f, ...patch });
   const isTow = p.kind === 'tow';
   const corridor = pricing.data?.tiers;
-  const tuned = Object.values(f.brands).filter((v) => v !== 'good').length;
+  const selectedBrands = BRANDS.filter(b => b !== 'Прочие' && Object.prototype.hasOwnProperty.call(f.brands,b));
+  const tuned = selectedBrands.length;
   const body = () => isTow
     ? { kmRate: f.kmRate, prepMinutes: f.prepMinutes }
     : { specialties: f.specialties, brands: f.brands, tier: f.tier, callOutPrice: f.callOutPrice, hourPrice: f.hourPrice, kmRate: f.kmRate, acceptsGroup: f.acceptsGroup };
@@ -524,11 +526,21 @@ export function FilterSection() {
 
       {cur === 'services' && (
         <div className="card">
-          <b>Что делаете</b>
-          <div className="row">{SPECIALTIES.map((s) => (
-            <button key={s.id} type="button" className="chip" aria-pressed={f.specialties.includes(s.id)}
-              onClick={() => set({ specialties: f.specialties.includes(s.id) ? f.specialties.filter((x) => x !== s.id) : [...f.specialties, s.id] })}>{s.name}</button>
-          ))}</div>
+          <details className="profile-accordion">
+            <summary>Специализации · выбрано: {f.specialties.length} <span aria-hidden="true">⌄</span></summary>
+            <div className="profile-accordion-options">
+              {SPECIALTIES.map(item=><label key={item.id} className="profile-brand-check">
+                <input type="checkbox" checked={f.specialties.includes(item.id)}
+                  onChange={()=>set({specialties:f.specialties.includes(item.id)
+                    ? f.specialties.filter(x=>x!==item.id) : [...f.specialties,item.id]})}/>
+                <span>{item.name}</span>
+              </label>)}
+            </div>
+          </details>
+          <div className="profile-selected-tags">
+            {SPECIALTIES.filter(item=>f.specialties.includes(item.id)).map(item=>
+              <span className="profile-selected-tag" key={item.id}>{item.name}</span>)}
+          </div>
           <b>Уровень</b>
           <div className="grid3">
             {(['eco', 'comfort', 'pro'] as const).map((t) => (
@@ -543,18 +555,42 @@ export function FilterSection() {
 
       {cur === 'brands' && (
         <div className="card">
-          <b>Как работаете с марками</b>
-          <span className="note">По умолчанию — «Хорошо». «Не берусь» — такие заявки не придут, «Отлично» — придут вам первыми.</span>
-          <div className="rows">
-            {BRANDS.filter((b) => b !== 'Прочие').map((b) => (
-              <div key={b} className="brand-row">
+          <b>Знакомые марки грузовиков</b>
+          <span className="note">Отметьте марки галочками. Потом раскройте выбранную марку, чтобы указать свой уровень знаний. Сохраняется в существующем профиле исполнителя.</span>
+          <details className="profile-accordion" open={brandPickerOpen}>
+            <summary onClick={event=>{event.preventDefault();setBrandPickerOpen(v=>!v);}}>
+              Выбрать марки · отмечено: {selectedBrands.length} <span aria-hidden="true">⌄</span>
+            </summary>
+            <div className="profile-accordion-options">
+              {BRANDS.filter(b=>b!=='Прочие').map(b=><label key={b} className="profile-brand-check">
+                <input type="checkbox" checked={selectedBrands.includes(b)}
+                  onChange={e=>{
+                    const brands={...f.brands};
+                    if(e.target.checked)brands[b]='good';
+                    else delete brands[b];
+                    set({brands});
+                  }}/>
                 <span>{b}</span>
-                <select className="field" value={f.brands[b] ?? 'good'} onChange={(e) => set({ brands: { ...f.brands, [b]: e.target.value } })}>
-                  {BRAND_LEVELS.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+              </label>)}
+            </div>
+          </details>
+          <div className="profile-brand-selected">
+            {!selectedBrands.length && <span className="note">Марки пока не выбраны — раскройте список сверху.</span>}
+            {selectedBrands.map(b=><details key={b} className="profile-brand-entry">
+              <summary><b>{b}</b>
+                <span>{BRAND_LEVELS.find(x=>x.id===f.brands[b])?.name ?? 'Хорошо'}</span><span aria-hidden="true">⌄</span>
+              </summary>
+              <label className="profile-brand-level">Уровень знаний
+                <select className="field" aria-label={'Уровень знаний '+b}
+                  value={f.brands[b]??'good'} onChange={e=>set({brands:{...f.brands,[b]:e.target.value}})}>
+                  {BRAND_LEVELS.map(level=><option key={level.id} value={level.id}>{level.name}</option>)}
                 </select>
-              </div>
-            ))}
+              </label>
+              <button type="button" className="btn ghost small"
+                onClick={()=>{const brands={...f.brands};delete brands[b];set({brands});}}>Убрать марку</button>
+            </details>)}
           </div>
+          <span className="note">Марки без индивидуальной оценки сохраняют прежние правила подбора. Оценка «Не берусь» исключает такие заявки; «Отлично» повышает приоритет.</span>
         </div>
       )}
 

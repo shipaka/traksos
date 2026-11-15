@@ -270,6 +270,24 @@ function App() {
 
 function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: React.ReactNode }) {
   const route = useRoute();
+  const [openGuestGroup, setOpenGuestGroup] = useState<string | null>(null);
+  const [mobileCatalogOpen, setMobileCatalogOpen] = useState(false);
+  const [mobileGroupOpen, setMobileGroupOpen] = useState<string | null>(null);
+  const isAuthEntry = !me && ['login', 'register', 'join', 'reset'].includes(route[0] ?? '');
+  useEffect(() => {
+    setOpenGuestGroup(null);
+    setMobileCatalogOpen(false);
+    setMobileGroupOpen(null);
+  }, [route.join('/')]);
+  useEffect(() => {
+    if (!openGuestGroup) return;
+    const outside = (event: PointerEvent) => {
+      if (!(event.target as Element | null)?.closest?.('.guest-site-nav .guest-nav-group'))
+        setOpenGuestGroup(null);
+    };
+    document.addEventListener('pointerdown', outside);
+    return () => document.removeEventListener('pointerdown', outside);
+  }, [openGuestGroup]);
   const serviceSandbox = route[0]==='admin'&&route[1]==='test-center'&&route[2]==='service';
   const here = serviceSandbox ? '/'+(route.slice(3).join('/')||'base') : '/'+route.join('/');
   const sandboxHref=(href:string)=>serviceSandbox?'#/admin/test-center/service'+(href==='/base'||href.startsWith('/base/')?href:'/unavailable'):'#'+href;
@@ -347,47 +365,59 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         {me && mode === 'client' && <nav className="track-top-shortcuts" aria-label="Быстрый доступ">
           <a href="#/">Главная</a><a href="#/orders">Заявки</a><a href="#/sos">Помощь в дороге</a><a href="#/shop">Запчасти</a>
         </nav>}
-        {!me && <nav className="guest-site-nav" aria-label="Разделы TrakSOS">
-          {TOP_CATALOGUE.map(group => <details key={group.title} className="guest-nav-group">
-            <summary>{group.title}<span aria-hidden="true">⌄</span></summary>
+        {!me && !isAuthEntry && <nav className="guest-site-nav" aria-label="Разделы TrakSOS">
+          {TOP_CATALOGUE.map(group => <details key={group.title} className="guest-nav-group"
+            open={openGuestGroup === group.title}
+            onMouseEnter={() => { if (window.matchMedia('(hover: hover)').matches && openGuestGroup && openGuestGroup !== group.title) setOpenGuestGroup(group.title); }}
+            onMouseLeave={() => setOpenGuestGroup(current => current === group.title ? null : current)}
+            onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpenGuestGroup(null); }}
+            onKeyDown={event => { if (event.key === 'Escape') { setOpenGuestGroup(null); (event.currentTarget.querySelector('summary') as HTMLElement | null)?.focus(); event.preventDefault(); } }}>
+            <summary aria-expanded={openGuestGroup === group.title}
+              onClick={event => { event.preventDefault(); setOpenGuestGroup(current => current === group.title ? null : group.title); }}>
+              {group.title}<span aria-hidden="true">⌄</span></summary>
             <div className="guest-nav-dropdown">
               {group.serviceIds.flatMap(id => (group.serviceIds.length > 1
                 ? [{label: SERVICE_TILES.find(tile => tile.id === id)?.title || id, key: ''}]
                 : CATALOGUE[id].services).map(item => (
                 <a key={id + ':' + item.key}
-                  href={id === 'parts' ? '#/login' : '#/explore/' + id + (item.key ? '/' + item.key : '')}
-                  onClick={() => rememberGuestService(id, item.key || undefined)}>
+                  href={'#/explore/' + id + (item.key ? '/' + item.key : '')}
+                  onClick={() => { rememberGuestService(id, item.key || undefined); setOpenGuestGroup(null); }}>
                   {item.label}
                 </a>
               )))}
               <span className="guest-nav-hint">{group.title === 'Запчасти' ? 'Магазин доступен после входа' : 'Описание и регистрация'}</span>
             </div>
           </details>)}
-          <a href="#/join" className="guest-business-link">Для бизнеса</a>
+          <a href="#/join" className="guest-business-link">Для партнёров</a>
           <a href="#/company" className="guest-business-link">Компания</a>
           <a href="#/offers" className="guest-business-link">Оферты</a>
         </nav>}
-        {!me && <details className="guest-mobile-catalog">
-          <summary>Каталог услуг <span aria-hidden="true">⌄</span></summary>
+        {!me && isAuthEntry && <nav className="guest-auth-links" aria-label="О компании и документах">
+          <a href="#/">Главная</a><a href="#/company">Компания</a>
+          <a href="#/offers">Оферты</a><a href="#/offer/privacy">Документы</a>
+        </nav>}
+        {!me && !isAuthEntry && <details className="guest-mobile-catalog" open={mobileCatalogOpen}>
+          <summary onClick={event => { event.preventDefault(); setMobileCatalogOpen(v => !v); setMobileGroupOpen(null); }}>
+            Каталог услуг <span aria-hidden="true">⌄</span></summary>
           <nav aria-label="Каталог услуг TrakSOS">
-            {TOP_CATALOGUE.map(group => <details key={group.title}>
-              <summary>{group.title}</summary>
+            {TOP_CATALOGUE.map(group => <details key={group.title} open={mobileGroupOpen === group.title}>
+              <summary onClick={event => { event.preventDefault(); setMobileGroupOpen(current => current === group.title ? null : group.title); }}>{group.title}</summary>
               <div>
                 {group.serviceIds.flatMap(id => (group.serviceIds.length > 1
                   ? [{label: SERVICE_TILES.find(tile => tile.id === id)?.title || id, key: ''}]
                   : CATALOGUE[id].services).map(item => <a key={id + ':' + item.key}
-                    href={id === 'parts' ? '#/login' : '#/explore/' + id + (item.key ? '/' + item.key : '')}
-                    onClick={() => rememberGuestService(id, item.key || undefined)}>{item.label}</a>))}
+                    href={'#/explore/' + id + (item.key ? '/' + item.key : '')}
+                    onClick={() => { rememberGuestService(id, item.key || undefined); setMobileCatalogOpen(false); setMobileGroupOpen(null); }}>{item.label}</a>))}
               </div>
             </details>)}
-            <a href="#/join" className="guest-mobile-business">Для бизнеса · регистрация партнёра</a>
+            <a href="#/join" className="guest-mobile-business">Для партнёров · регистрация</a>
             <a href="#/company" className="guest-mobile-business">Компания</a>
             <a href="#/offers" className="guest-mobile-business">Оферты</a>
           </nav>
         </details>}
-        <SiteQuickSearch authenticated={!!me} />
+        {!isAuthEntry && <SiteQuickSearch authenticated={!!me} />}
         <div className="row" style={{ flexWrap: 'nowrap' }}>
-          {!me && <div className="guest-header-actions"><a href="#/login">Войти</a><a href="#/register" className="register">Зарегистрироваться</a></div>}
+          {!me && !isAuthEntry && <div className="guest-header-actions"><a href="#/login">Войти</a><a href="#/register" className="register">Зарегистрироваться</a></div>}
           {me && mode === 'performer' && <span className="pill accent">исполнитель</span>}
           {me && mode === 'admin' && <span className="pill accent">админ</span>}
           {me && mode === 'moderator' && <span className="pill accent">модерация</span>}
@@ -421,7 +451,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       <NetworkStatus />
       <div className="desktop-layout">
         <aside className="desktop-sidebar" aria-label="Навигация по сайту">
-          <div className="desktop-sidebar-title">{me ? 'Рабочий кабинет' : 'TrakSOS · помощь в дороге'}</div>
+          <div className="desktop-sidebar-title">{me ? 'Рабочий кабинет' : isAuthEntry ? 'TrakSOS · вход и документы' : 'TrakSOS · помощь в дороге'}</div>
           <nav className="desktop-nav">
             {me ? <>
               {(mode === 'client'
@@ -446,15 +476,20 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                   </a>
                 ))}
               </>}
+            </> : isAuthEntry ? <>
+              <a className="desktop-nav-link" href="#/"><span>⌂</span><span>Главная</span></a>
+              <a className="desktop-nav-link" href="#/company"><span>ⓘ</span><span>Компания</span></a>
+              <a className="desktop-nav-link" href="#/offers"><span>▤</span><span>Оферты</span></a>
+              <a className="desktop-nav-link" href="#/offer/privacy"><span>▣</span><span>Документы</span></a>
             </> : <>
               <a className="desktop-nav-link active" href="#/"><span>⌂</span><span>Главная</span></a>
               <a className="desktop-nav-link" href="#/explore/van"><span>⚒</span><span>Все услуги</span></a>
               <a className="desktop-nav-link" href="#/login"><span>◉</span><span>Войти</span></a>
               <a className="desktop-nav-link" href="#/register"><span>＋</span><span>Регистрация клиента</span></a>
-              <a className="desktop-nav-link" href="#/join"><span>▣</span><span>Для бизнеса</span></a>
+              <a className="desktop-nav-link" href="#/join"><span>▣</span><span>Для партнёров</span></a>
               <a className="desktop-nav-link" href="#/company"><span>ⓘ</span><span>Компания</span></a>
               <a className="desktop-nav-link" href="#/offers"><span>▤</span><span>Оферты</span></a>
-              <a className="desktop-nav-link" href="#/rules"><span>▤</span><span>Правила площадки</span></a>
+              <a className="desktop-nav-link" href="#/offer/privacy"><span>▣</span><span>Документы</span></a>
                         </>}
           </nav>
           {!me && <aside className="track-sidebar-app" aria-label="Мобильное приложение TrakSOS">

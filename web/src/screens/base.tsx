@@ -433,9 +433,20 @@ export function BaseSetup() {
       <div className="card">
         <b>Условия</b>
         <div className="row">{Object.entries(CONDITIONS).map(([k, n]) => <button key={k} type="button" className="chip" aria-pressed={f.conditions.includes(k)} onClick={() => set('conditions', toggle(f.conditions, k))}>{n}</button>)}</div>
-        <b>Марки</b>
-        <div className="row">{BRANDS.filter((x) => x !== 'Прочие').map((m) => <button key={m} type="button" className="chip" aria-pressed={f.brands.includes(m)} onClick={() => set('brands', toggle(f.brands, m))}>{m}</button>)}</div>
-        <span className="note">Клиенту с этой маркой вас покажут выше.</span>
+        <details className="profile-accordion">
+          <summary>Марки транспорта, которые принимаем · выбрано: {f.brands.length} <span aria-hidden="true">⌄</span></summary>
+          <div className="profile-accordion-options">
+            {BRANDS.filter(m => m !== 'Прочие').map(m => <label key={m} className="profile-brand-check">
+              <input type="checkbox" checked={f.brands.includes(m)}
+                onChange={() => set('brands', toggle(f.brands,m))} />
+              <span>{m}</span>
+            </label>)}
+          </div>
+        </details>
+        <div className="profile-selected-tags">
+          {f.brands.map((m:string) => <span key={m} className="profile-selected-tag">{m}</span>)}
+        </div>
+        <span className="note">Отметьте марки, с которыми работает ваша СТО. Изменения сохраняются в существующей карточке сервиса.</span>
       </div>
       <div className="card">
         <b>Не работаем в эти дни</b>

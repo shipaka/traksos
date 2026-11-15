@@ -28,15 +28,22 @@ async function verifyPage(page, label) {
   results.push({ label, ...layout });
 }
 
-async function run(width, height, mobile) {
+async function run(width, height, mobile, nativePreview = false) {
   const context = await browser.newContext({
     viewport: { width, height }, deviceScaleFactor: 1, isMobile: mobile,
     hasTouch: mobile, locale: 'ru-RU'
   });
   const page = await context.newPage();
+  if (nativePreview) await page.addInitScript(() => {
+    window.TrakSOSNative = {
+      isApp: () => true, setSession: () => {}, pushToken: () => '',
+      performerOnline: () => {}, appLockEnabled: () => false,
+      setAppLockEnabled: () => false
+    };
+  });
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
-  const suffix = width + 'x' + height;
+  const suffix = width + 'x' + height + (nativePreview ? '-android-webview' : '');
   try {
     await page.goto(BASE + '/#/', { waitUntil: 'domcontentloaded' });
     await page.getByRole('heading', { name: /TrakSOS.*помощь.*в пути/i }).waitFor();
@@ -54,19 +61,27 @@ async function run(width, height, mobile) {
     check(image.ok, 'Hero image failed to load: ' + JSON.stringify(image));
     if (mobile && width <= 430) {
       const heroGeometry = await page.evaluate(() => {
+        const hero = document.querySelector('.public-brand-hero')?.getBoundingClientRect();
         const visual = document.querySelector('.public-hero-visual')?.getBoundingClientRect();
+        const copy = document.querySelector('.public-hero-copy')?.getBoundingClientRect();
         const paragraph = document.querySelector('.public-hero-copy > p')?.getBoundingClientRect();
         const actions = document.querySelector('.public-actions')?.getBoundingClientRect();
-        if (!visual || !paragraph || !actions) return null;
-        return { pictureTop: visual.top, pictureBottom: visual.bottom,
-          paragraphTop: paragraph.top, actionsTop: actions.top, pictureWidth: visual.width };
+        const carousel = document.querySelector('.public-hero-carousel')?.getBoundingClientRect();
+        if (!hero || !visual || !paragraph || !actions || !carousel || !copy) return null;
+        return {heroWidth:hero.width,heroHeight:hero.height,
+          pictureWidth:visual.width,pictureHeight:visual.height,
+          paragraphTop:paragraph.top,actionsTop:actions.top,copyBottom:copy.bottom,
+          carouselTop:carousel.top,carouselHeight:carousel.height };
       });
-      check(heroGeometry && heroGeometry.pictureWidth >= width * .75,
-        suffix + ': picture shrunk into a narrow column: ' + JSON.stringify(heroGeometry));
-      check(heroGeometry.pictureBottom <= heroGeometry.paragraphTop + 2,
-        suffix + ': approved artwork must be above description on mobile: ' + JSON.stringify(heroGeometry));
-      check(heroGeometry.actionsTop >= heroGeometry.paragraphTop - 2,
-        suffix + ': hero buttons overlap title or artwork: ' + JSON.stringify(heroGeometry));
+      check(heroGeometry && Math.abs(heroGeometry.heroWidth-heroGeometry.pictureWidth)<3 &&
+        Math.abs(heroGeometry.heroHeight-heroGeometry.pictureHeight)<3,
+        suffix + ': artwork must cover the entire banner behind copy: ' + JSON.stringify(heroGeometry));
+      check(heroGeometry.actionsTop >= heroGeometry.paragraphTop-2,
+        suffix + ': banner actions overlap its paragraph: ' + JSON.stringify(heroGeometry));
+      check(heroGeometry.copyBottom < heroGeometry.carouselTop-2,
+        suffix + ': carousel controls overlap text and actions: ' + JSON.stringify(heroGeometry));
+      check(heroGeometry.carouselHeight>=44,
+        suffix + ': hero carousel too small for touch: '+JSON.stringify(heroGeometry));
     }
     await verifyPage(page, suffix + ':home');
     if (mobile && width <= 430) {
@@ -107,6 +122,10 @@ async function run(width, height, mobile) {
     }
     check(await page.locator('.auth-desktop-form .opt').count() === 4,
       suffix + ': partner registration must offer exactly 4 roles');
+    check(await page.locator('.guest-partner-role').count() === 4,
+      suffix + ': all partner roles must use photographic cards');
+    check(await page.getByRole('navigation',{name:'Тип регистрации'}).count() === 0,
+      suffix + ': partner page repeats client registration tab');
     check(await page.getByRole('button',{name:'Автономщик',exact:true}).isVisible(),
       suffix + ': specialization is not available for master');
     await verifyPage(page, suffix + ':join');
@@ -134,7 +153,8 @@ async function run(width, height, mobile) {
     await returnedHome('reset');
     await page.locator('.guest-header-actions').getByRole('link', { name: 'Войти', exact: true }).click();
     await page.locator('input[type=password]').waitFor();
-    await page.getByRole('link', { name: 'Зарегистрироваться', exact: true }).click();
+    await page.goto(BASE + '/#/');
+    await page.locator('.guest-header-actions').getByRole('link', { name: 'Зарегистрироваться', exact: true }).click();
     await page.getByRole('heading', { name: 'Регистрация в TrakSOS' }).waitFor();
     await page.getByRole('button', { name: 'Назад', exact: true }).click();
     await returnedHome('register');
@@ -179,6 +199,9 @@ try {
     [320, 720, true], [360, 780, true], [390, 844, true], [430, 932, true],
     [768, 1024, true], [1024, 768, false], [1440, 900, false]
   ]) await run(w, h, mobile);
+  // Same React/CSS inside Android WebView bridge: finger targets, navigation
+  // and hero copy must remain consistent with mobile Chrome.
+  await run(390, 844, true, true);
 } finally {
   await browser.close();
 }
