@@ -3,6 +3,12 @@ import { post, setToken, connectWs, ApiError } from '../api.ts';
 import { useAction, useMe, useToast, Field, go } from '../ui.tsx';
 import { SERVICE_TILES, MASTER_SPECIALTIES, rememberGuestService } from '../guestCatalog.ts';
 
+const HERO_SLIDES = [
+  { id: 'approved', label: 'Панорамная Scania TrakSOS' },
+  { id: 'road', label: 'Грузовик Scania на дороге' },
+  { id: 'truck', label: 'Scania R520 крупным планом' },
+] as const;
+
 function PublicDemoMapBackdrop() {
   // The public demonstration map is a bundled, immutable asset.
   // It is never replaced with text because of network quality.
@@ -39,6 +45,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const { reload } = useMe();
   const { busy, run } = useAction();
   const [intent, setIntent] = useState<Intent | null>(driver ? 'login' : entry ?? null);
+  const [heroSlide, setHeroSlide] = useState(0);
   const [phone, setPhone] = useState('+7 ');
   const [step, setStep] = useState<'phone' | 'code'>('phone');
   const [code, setCode] = useState('');
@@ -65,11 +72,6 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
     });
     return () => cancelAnimationFrame(frame);
   }, [intent]);
-  // Store only the navigation choice from the public tile, never client data.
-  const chooseGuestAction = (choice: string, next: 'login'|'register' = 'register') => {
-    try { sessionStorage.setItem('traksos.pendingLandingAction', choice); } catch { /* private browsing */ }
-    go(next);
-  };
   const [appealToken, setAppealToken] = useState<string | null>(null);
   const [appealText, setAppealText] = useState('');
   const [appealSent, setAppealSent] = useState(false);
@@ -187,7 +189,21 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
 
           <div className="public-hero-caption">Зона запуска: Санкт-Петербург и Ленинградская область. В других регионах выездные услуги пока недоступны.</div>
         </div>
-        <div className="public-hero-visual" aria-hidden="true" />
+        <div className={'public-hero-visual public-hero-slide-' + HERO_SLIDES[heroSlide].id} aria-hidden="true" />
+        <div className="public-hero-carousel" role="group" aria-label="Фотографии TrakSOS">
+          <div className="public-hero-dots">
+            {HERO_SLIDES.map((slide, index) => <button key={slide.id} type="button"
+              className={'public-hero-dot' + (heroSlide === index ? ' active' : '')}
+              aria-label={'Показать фото ' + (index + 1) + ': ' + slide.label}
+              aria-pressed={heroSlide === index}
+              onClick={() => setHeroSlide(index)} />)}
+          </div>
+          <button type="button" className="public-hero-prev" aria-label="Предыдущее фото"
+            onClick={() => setHeroSlide((heroSlide + HERO_SLIDES.length - 1) % HERO_SLIDES.length)}>‹</button>
+          <button type="button" className="public-hero-next" aria-label="Следующее фото"
+            onClick={() => setHeroSlide((heroSlide + 1) % HERO_SLIDES.length)}>›</button>
+          <span className="public-hero-slide-status" role="status">{HERO_SLIDES[heroSlide].label}</span>
+        </div>
       </section>
 
       <div className="public-content-grid">
@@ -223,27 +239,35 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
 
       <section className="public-why-strip" aria-label="Преимущества сервиса">
         <article className="public-benefit public-benefit-speed"><span className="public-benefit-icon">⚡</span><b>Быстрая помощь</b><small>Обращение можно оформить онлайн</small></article>
-        <article className="public-benefit public-benefit-verified"><span className="public-benefit-icon">✧</span><b>Проверенные партнёры</b><small>Проверка мастеров, СТО и эвакуаторов</small></article>
-        <article className="public-benefit public-benefit-unified"><span className="public-benefit-icon">▣</span><b>Всё в одном месте</b><small>Помощь, запчасти и страхование</small></article>
+        <article className="public-benefit public-benefit-verified"><span className="public-benefit-icon">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M24 4 39 10v12c0 10-6 17-15 22C15 39 9 32 9 22V10Z" />
+            <path d="m17 24 5 5 10-11" />
+          </svg></span><b>Проверенные партнёры</b><small>Проверка мастеров, СТО и эвакуаторов</small></article>
+        <article className="public-benefit public-benefit-unified"><span className="public-benefit-icon">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="24" cy="12" r="6" /><circle cx="11" cy="34" r="6" /><circle cx="37" cy="34" r="6" />
+            <path d="m21 18-7 10m13-10 7 10M18 34h12" />
+          </svg></span><b>Всё в одном месте</b><small>Помощь, запчасти и страхование</small></article>
         <article className="public-benefit public-benefit-value"><span className="public-benefit-icon">%</span><b>Выгодные условия</b><small>Для водителей и автопарков</small></article>
       </section>
       <div className="public-track-extras">
-        <button type="button" className="public-track-insurance" onClick={() => chooseGuestAction('insurance','register')}>
+        <a href="#/explore/insurance" className="public-track-insurance" onClick={() => rememberGuestService('insurance')}>
           <span className="public-track-insurance-art" aria-hidden="true" />
           <span><b>Страхование грузового транспорта</b>
           <small>ОСАГО, КАСКО, груз, ответственность — заявка через TrakSOS</small></span>
-          <strong>Оформить заявку →</strong>
-        </button>
+          <strong>Подробнее →</strong>
+        </a>
         <div className="public-track-extras-grid">
-          <button type="button" className="public-track-extra public-track-parts" onClick={() => chooseGuestAction('parts','register')}>
+          <a href="#/explore/parts" className="public-track-extra public-track-parts" onClick={() => rememberGuestService('parts')}>
             <span className="public-track-extra-art" aria-hidden="true"/><b>Запчасти</b><small>Оригиналы и проверенные аналоги</small><span aria-hidden="true">›</span>
-          </button>
-          <button type="button" className="public-track-extra public-track-inspection" onClick={() => chooseGuestAction('inspection','register')}>
-            <span className="public-track-extra-art" aria-hidden="true"/><b>Техосмотр</b><small>Заявка на осмотр транспорта</small><span aria-hidden="true">›</span>
-          </button>
-          <button type="button" className="public-track-extra public-track-guide" onClick={() => document.getElementById('public-how')?.scrollIntoView({behavior:'smooth'})}>
+          </a>
+          <a href="#/explore/inspection" className="public-track-extra public-track-inspection" onClick={() => rememberGuestService('inspection')}>
+            <span className="public-track-extra-art" aria-hidden="true"/><b>Техосмотр</b><small>Информация и доступные варианты</small><span aria-hidden="true">›</span>
+          </a>
+          <a href="#/explore/guide" className="public-track-extra public-track-guide">
             <span className="public-track-extra-art" aria-hidden="true"/><b>Полезное</b><small>Как работает сервис</small><span aria-hidden="true">›</span>
-          </button>
+          </a>
         </div>
       </div>
 
