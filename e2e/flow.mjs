@@ -148,7 +148,7 @@ const a = await mk();
 await login(a, '+79990000001', 'login');
 // Админ входит по номеру — сразу в админку, без выбора роли
 try {
-  await a.waitForURL(/#\\/admin(?:\\/|$)/, { timeout: 15000 });
+  await a.waitForURL(/#\/admin(?:\/|$)/, { timeout: 15000 });
 } catch (error) {
   const diagnostics = {
     url: a.url(),
