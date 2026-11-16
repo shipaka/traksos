@@ -45,6 +45,23 @@ export function Home() {
         <img className="client-hero-scania" src="/tracksos-approved-scenic-hero.webp" alt="Реалистичный грузовой тягач Scania на дороге в закатном свете" loading="eager" />
       </section>
 
+      {insuranceInProgress.length>0&&(()=>{
+        const urgent=insuranceInProgress.find(r =>
+          insurancePresentation(r.insurance_stage,r.status).tone==='action') ?? insuranceInProgress[0];
+        const state=insurancePresentation(urgent.insurance_stage,urgent.status);
+        return <section className="client-insurance-mobile-quick" aria-label="Быстрый статус страховой заявки">
+          <a className={'client-insurance-mobile-strip tone-'+state.tone}
+            href={urgent.insurance_stage?`#/insurance/request/${urgent.id}`:'#/garage'}>
+            <span className="client-insurance-mobile-icon" aria-hidden="true">◇</span>
+            <span className="client-insurance-mobile-info">
+              <span className="client-insurance-mobile-eyebrow">СТРАХОВАНИЕ · {urgent.brand} {urgent.model??''}</span>
+              <strong>{state.label}</strong>
+              <small>{state.next}</small>
+            </span>
+            <span className="client-insurance-mobile-arrow" aria-hidden="true">›</span>
+          </a>
+        </section>;
+      })()}
       <section className="desktop-quick-links" aria-label="Выберите помощь">
         <a href="#/sos" className="desktop-quick-card"><span className="desktop-quick-icon">⚡</span><span><b>Выездной мастер</b><small>Электрика, диагностика, пневматика, шиномонтаж</small></span><span aria-hidden="true">↗</span></a>
         <a href="#/new/tow" className="desktop-quick-card"><span className="desktop-quick-icon">↗</span><span><b>Эвакуатор</b><small>Тягач, полуприцеп или сцепка</small></span><span aria-hidden="true">↗</span></a>
@@ -74,7 +91,7 @@ export function Home() {
           {insuranceInProgress.length>0&&<section className="client-insurance-home stack" aria-label="Мои активные страховые заявки">
             <div className="client-insurance-home-heading">
               <span><span className="insurance-step-title">TRAKSOS · СТРАХОВАНИЕ</span>
-                <h2>Страховые заявки в работе</h2>
+                <h2>Активные страховые заявки</h2>
               </span>
               <a href="#/garage">Все страховки →</a>
             </div>
