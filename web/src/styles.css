@@ -1796,3 +1796,31 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
     background-repeat:no-repeat;
   }
 }
+
+/* Guest-only one-time preview chrome. This flag is intentionally not the global
+   .pill.accent class, which the compact mobile role header hides by default. */
+.app.operator-demo-app .operator-demo-badge {
+  display:inline-flex;
+  flex:0 0 auto;
+  align-items:center;
+  border:1px solid #3189a4;
+  border-radius:10px;
+  padding:6px 10px;
+  font-size:11px;
+  font-weight:850;
+  letter-spacing:.045em;
+  background:rgba(25,169,199,.12);
+  color:#8cedfa;
+  white-space:nowrap;
+}
+@media(max-width:560px) {
+  .app.operator-demo-app .top {
+    gap:8px;
+    flex-wrap:wrap;
+    padding:10px 8px;
+  }
+  .app.operator-demo-app .operator-demo-badge {
+    font-size:10px;
+    padding:5px 8px;
+  }
+}
