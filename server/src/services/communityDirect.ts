@@ -209,6 +209,22 @@ export function registerCommunityDirectRoutes(r:Router,db:Db,notifier:Notifier){
       const prev=await q.one<{moderation_state:string}>(
         'select moderation_state from community_dm_messages where id=$1 for update',[c.params.id]);
       if(!prev)throw notFound('Сообщение не найдено');
+      if(b.status==='published'&&prev.moderation_state!=='published'){
+        // An earlier pending message must not appear after one driver blocks
+        // the other, or after either role/account is revoked.
+        const eligible=await q.one<{id:string}>(
+          "select t.id from community_dm_threads t "+
+          "join users a on a.id=t.user_a join users b on b.id=t.user_b "+
+          "where t.id=$1 and t.status='accepted' "+
+          "and a.status='active' and a.deleted_at is null and 'driver'=any(a.roles) "+
+          "and b.status='active' and b.deleted_at is null and 'driver'=any(b.roles) "+
+          "and not exists(select 1 from community_user_blocks x "+
+          "where (x.blocker_id=t.user_a and x.blocked_id=t.user_b) "+
+          "or (x.blocker_id=t.user_b and x.blocked_id=t.user_a))",
+          [item.thread_id]);
+        if(!eligible)throw conflict('conversation_unavailable',
+          'Нельзя публиковать сообщение после блокировки или отзыва доступа');
+      }
       let message:{id:string;moderation_state:string};
       if(prev.moderation_state!==b.status){
         const row=await q.one<{id:string;moderation_state:string}>(
@@ -226,9 +242,18 @@ export function registerCommunityDirectRoutes(r:Router,db:Db,notifier:Notifier){
       return {message,threadId:item.thread_id,modified:prev.moderation_state!==b.status};
     });
     if(result.modified){
-      const participants=await db.one<{user_a:string;user_b:string}>(
-        'select user_a,user_b from community_dm_threads where id=$1',[result.threadId]);
-      if(participants)notifier.live([participants.user_a,participants.user_b],{
+      // No WebSocket hint to deleted or revoked driver accounts. For a
+      // publication, blocking additionally suppresses unsolicited delivery.
+      const recipients=await db.query<{id:string}>(
+        "select u.id from community_dm_threads t "+
+        "join users u on u.id=t.user_a or u.id=t.user_b "+
+        "where t.id=$1 and u.status='active' and u.deleted_at is null "+
+        "and 'driver'=any(u.roles) "+
+        "and ($2::text='hidden' or not exists(select 1 from community_user_blocks b "+
+        "where (b.blocker_id=t.user_a and b.blocked_id=t.user_b) "+
+        "or (b.blocker_id=t.user_b and b.blocked_id=t.user_a)))",
+        [result.threadId,result.message.moderation_state]);
+      notifier.live(recipients.map(x=>x.id),{
         type:'community_direct_moderation',threadId:result.threadId});
     }
     return result.message;
