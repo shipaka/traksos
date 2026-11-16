@@ -300,6 +300,21 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     document.addEventListener('pointerdown', outside);
     return () => document.removeEventListener('pointerdown', outside);
   }, [openGuestGroup]);
+  // Guest demo is deliberately isolated from the public registration shell.
+  // This preserves the one-time PIN flow and never grants an admin session.
+  const isOperatorDemo = !me && (route[0] === 'preview' ||
+    (route[0] === 'admin' && route[1] === 'test-center'));
+  if (isOperatorDemo) return (
+    <div className="app operator-demo-app">
+      <header className="top">
+        <span className="logo">Trak<b>SOS</b></span>
+        <span className="pill accent">ТЕСТОВЫЙ РЕЖИМ</span>
+      </header>
+      <div className="operator-demo-content" style={{width:'100%', maxWidth:1440, margin:'0 auto'}}>
+        {children}
+      </div>
+    </div>
+  );
   const serviceSandbox = route[0]==='admin'&&route[1]==='test-center'&&route[2]==='service'&&route.length>3;
   const here = serviceSandbox ? '/'+(route.slice(3).join('/')||'base') : '/'+route.join('/');
   const sandboxHref=(href:string)=>serviceSandbox?'#/admin/test-center/service'+(href==='/base'||href.startsWith('/base/')?href:'/unavailable'):'#'+href;
