@@ -102,8 +102,12 @@ function PerformerOnboarding() {
     }
   }
   return (
-    <main className="performer-onboarding">
-      <div><h1>Станьте исполнителем</h1><div className="sub">Четыре коротких шага. Марки, цены и остальное настроите потом в профиле.</div></div>
+    <main className={`performer-onboarding ${isTow ? 'performer-onboarding-tow' : 'performer-onboarding-master'}`}>
+      <section className="performer-onboarding-scene" aria-label={isTow ? 'Подключение эвакуаторщика' : 'Подключение выездного мастера'}>
+        <span className="performer-onboarding-kicker">TrakSOS · {isTow ? 'ЭВАКУАЦИЯ' : 'ВЫЕЗДНАЯ ПОМОЩЬ'}</span>
+        <h1>Станьте исполнителем</h1>
+        <div className="sub">Четыре коротких шага. Марки, цены и остальное настроите потом в профиле.</div>
+      </section>
       <div className="step-card">
         <div className="step-head"><span className="step-n">1</span><b>Кто вы</b></div>
         <div className="grid2">
