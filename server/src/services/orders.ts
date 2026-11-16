@@ -716,6 +716,7 @@ export class OrdersService {
           toPerformer: cancelEvent.data.toPerformer,
           platformKeeps: cancelEvent.data.platformKeeps,
           refund: cancelEvent.data.refund,
+          stageEvidence: cancelEvent.data.stageEvidence ?? null,
         }
       : null;
     // Payment truth comes from the payment ledger, not the cancellation estimate.
