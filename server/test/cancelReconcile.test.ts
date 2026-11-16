@@ -64,6 +64,18 @@ test('bank cancellation capture is reconciled once after response loss and 12 pa
       const pay = await t.db.one<any>('select * from payments where id=$1', [payment.id]);
       assert.equal(pay.status, 'partially_refunded');
       assert.equal(pay.total - pay.refunded_amount, attempt.amount_to_capture);
+      // The client can audit the original cancellation tier and the bank
+      // result separately; the performer cannot inspect client bank details.
+      const clientView = ok(await t.api('GET', `/api/orders/${id}`, undefined, client.token));
+      assert.equal(clientView.cancelBreakdown.stage, 'accepted');
+      assert.equal(clientView.cancelBreakdown.share, 0.25);
+      assert.equal(clientView.cancellationPayment.paymentStatus, 'partially_refunded');
+      assert.equal(clientView.cancellationPayment.operationStatus, 'settled');
+      assert.equal(clientView.cancellationPayment.amountToCapture, attempt.amount_to_capture);
+      assert.equal(clientView.cancellationPayment.refundedAmount, attempt.refunded_amount);
+      const performerView = ok(await t.api('GET', `/api/orders/${id}`, undefined, worker.token));
+      assert.equal(performerView.cancellationPayment, null);
+
       assert.equal((await t.db.one<{ total: string }>(
         'select coalesce(sum(amount),0)::text total from ledger_entries where order_id=$1',
         [id]))?.total, '0');
