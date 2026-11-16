@@ -72,6 +72,7 @@ export function Admin({ initialSection }: { initialSection?: string }) {
         <p>Заявки, партнёры, страхование, финансы и качество сервиса — в одном рабочем пространстве.</p>
         <div className="admin-command-actions">
           <button type="button" className="btn" onClick={() => navigate('summary')}>Открыть общую сводку</button>
+          <button type="button" className="btn ghost" onClick={() => navigate('access')}>Добавить номер / передать проблему разработчику</button>
           <a className="btn ghost" href="#/admin/test-center">Тестирование всех кабинетов (без реальных действий)</a>
         </div>
       </section>
@@ -138,7 +139,7 @@ export function Admin({ initialSection }: { initialSection?: string }) {
           <div className="admin-mobile-quick">
             <div className="admin-mobile-quick-heading"><b>Быстрые переходы</b><small>Частые задачи администратора</small></div>
             <div className="admin-mobile-quick-grid">
-              {(['verify','dispatch','payments','search','offers','support','stats'] as AdminSection[]).map(id => {
+              {(['access','verify','dispatch','payments','search','offers','support','stats'] as AdminSection[]).map(id => {
                 const item = ADMIN_GROUPS.flatMap(group => group.items).find(entry => entry.id === id)!;
                 return <button type="button" key={id} aria-label={item.name}
                   className="admin-mobile-quick-item" onClick={() => navigate(id)}>
