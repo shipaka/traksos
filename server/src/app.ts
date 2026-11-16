@@ -506,6 +506,7 @@ export function createApp(d: Deps) {
     const day = z.boolean();
     return profiles.setSchedule(c.user.id, parse(z.object({
       on: z.boolean(), from: t, to: t, phoneTo: t,
+      timeZone: z.string().min(3).max(80).refine(v=>{try{new Intl.DateTimeFormat('en',{timeZone:v});return true}catch{return false}},'Неверный часовой пояс').optional(),
       days: z.object({ mon: day, tue: day, wed: day, thu: day, fri: day, sat: day, sun: day }),
     }), c.body));
   });
