@@ -92,12 +92,16 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
     const courierProfile=await db.one<{active:boolean}>('select active from shop_couriers where user_id=$1',[b.courierId]);
     if(!courierProfile?.active)throw notFound('Курьер не активен');
     const run=await db.tx(async q=>{
-      const orders=await q.query<{id:string;status:string;delivery:string;verified:boolean}>(
-        "select so.id,so.status,so.delivery,(ac.shop_order_id is not null) as verified "+
+      const orders=await q.query<{id:string;status:string;delivery:string;verified:boolean;supplier_status:string|null}>(
+        "select so.id,so.status,so.delivery,(ac.shop_order_id is not null) as verified,ev.status as supplier_status "+
         "from shop_orders so left join shop_delivery_address_checks ac on ac.shop_order_id=so.id "+
+        "left join lateral(select status from shop_supplier_order_events e where e.shop_order_id=so.id "+
+        "order by e.event_time desc,e.id desc limit 1) ev on true "+
         "where so.id=any($1::uuid[]) for update of so",[b.orderIds]);
       if(orders.length!==b.orderIds.length || orders.some(x=>x.status!=='ready'||x.delivery!=='delivery'||!x.verified))
         throw conflict('orders_not_ready','Нужны собранные заказы с проверенными адресами Санкт-Петербурга');
+      if(orders.some(x=>x.supplier_status==='cancelled'))
+        throw conflict('supplier_cancelled','Поставщик отменил заказ. Проверьте причину и наличие, прежде чем создавать рейс.');
       const result=await q.one<Run>(
         "insert into shop_courier_runs(courier_id,created_by,pickup_address) values($1,$2,$3) returning *",
         [b.courierId,c.user.id,b.pickupAddress]);
@@ -168,7 +172,10 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
         "update shop_orders so set status='shipped',updated_at=now() from shop_courier_stops st "+
         "where st.shop_order_id=so.id and st.run_id=$1 and so.status='ready' returning so.id",[run.id]);
       if(r.length!==stats.total)throw conflict('order_status_changed','Статус одного из заказов изменился');
-      await q.query("update shop_courier_runs set status='delivering',departed_at=now() where id=$1",[run.id]);
+      const first=await q.one<{id:string}>(
+        'select id from shop_courier_stops where run_id=$1 order by seq limit 1',[run.id]);
+      await q.query("update shop_courier_runs set status='delivering',departed_at=now(),active_stop_id=$2 where id=$1",
+        [run.id,first?.id??null]);
       return r;
     });
     for(const x of affected)await alert(db,notifier,x.id,'Курьер выехал со склада');
@@ -180,7 +187,8 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
     const stopId=parse(id,c.params.stopId);
     const row=await db.one<{shop_order_id:string}>(
       "update shop_courier_stops set status='at_door',arrived_at=now() "+
-      "where id=$1 and run_id=$2 and status='collected' returning shop_order_id",[stopId,run.id]);
+      "where id=$1 and run_id=$2 and status='collected' and "+
+      "exists(select 1 from shop_courier_runs r where r.id=$2 and r.active_stop_id=$1) returning shop_order_id",[stopId,run.id]);
     if(!row)throw conflict('invalid_stop','Остановка недоступна');
     await alert(db,notifier,row.shop_order_id,'Курьер прибыл по адресу; подтвердите получение в TrakSOS');
     return {status:'at_door'};
@@ -204,8 +212,12 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
       const remaining=await q.one<{n:number}>(
         "select count(*)::int as n from shop_courier_stops where run_id=$1 and status<>'delivered'",[row.run_id]);
       if(remaining?.n===0) {
-        await q.query("update shop_courier_runs set status='completed',completed_at=now() where id=$1",[row.run_id]);
+        await q.query("update shop_courier_runs set status='completed',completed_at=now(),active_stop_id=null where id=$1",[row.run_id]);
         await q.query('delete from shop_courier_live_positions where run_id=$1',[row.run_id]);
+      } else {
+        const next=await q.one<{id:string}>(
+          "select id from shop_courier_stops where run_id=$1 and status='collected' order by seq limit 1",[row.run_id]);
+        await q.query('update shop_courier_runs set active_stop_id=$2 where id=$1',[row.run_id,next?.id??null]);
       }
       return {status:'done'};
     });
@@ -238,13 +250,15 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
   });
   r.get('/api/shop/orders/:id/courier',true,async(c:AuthedCtx)=>{
     const orderId=parse(id,c.params.id);
-    const row=await db.one<{client_id:string;created_by:string;status:string;stop_status:string;run_id:string}>(
-      "select o.client_id,o.created_by,r.status,s.status as stop_status,r.id as run_id "+
+    const row=await db.one<{client_id:string;created_by:string;status:string;stop_status:string;run_id:string;leg_active:boolean}>(
+      "select o.client_id,o.created_by,r.status,s.status as stop_status,r.id as run_id, "+
+      "(r.active_stop_id=s.id) as leg_active "+
       "from shop_orders o join shop_courier_stops s on s.shop_order_id=o.id "+
       "join shop_courier_runs r on r.id=s.run_id where o.id=$1",[orderId]);
     if(!row || (row.client_id!==c.user.id && row.created_by!==c.user.id))
       throw notFound('Доставка не найдена');
-    const live=row.status==='delivering' && ['collected','at_door'].includes(row.stop_status);
+    const live=row.status==='delivering' && row.leg_active &&
+      ['collected','at_door'].includes(row.stop_status);
     const position=live?await db.one<{lat:number;lng:number;accuracy_m:number;updated_at:Date}>(
       "select lat,lng,accuracy_m,updated_at from shop_courier_live_positions "+
       "where run_id=$1 and updated_at>now()-interval '2 minutes'",[row.run_id]):null;
