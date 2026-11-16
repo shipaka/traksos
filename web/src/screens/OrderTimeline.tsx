@@ -1,0 +1,55 @@
+import { fmtTime } from '../api.ts';
+
+const LABELS: Record<string, string> = {
+  created: 'Заявка создана',
+  owner_approval_requested: 'Запрошено подтверждение владельца',
+  owner_approved: 'Владелец подтвердил заявку',
+  owner_rejected: 'Владелец отклонил заявку',
+  dispatch_started: 'Начался поиск исполнителя',
+  ringing: 'Исполнителю отправлен вызов',
+  accepted: 'Исполнитель принял заявку',
+  depart: 'Исполнитель отметил выезд',
+  arrive: 'Исполнитель отметил прибытие',
+  start_work: 'Исполнитель отметил начало работы',
+  amount_proposed: 'Исполнитель предложил итоговую стоимость',
+  amount_confirmed: 'Стоимость подтверждена',
+  amount_disputed: 'Открыт спор по стоимости',
+  consult_finished: 'Консультация завершена',
+  cancelled: 'Заявка отменена',
+  retry: 'Поиск исполнителя запущен повторно',
+  performer_dropped: 'Исполнитель отказался от выезда',
+};
+type Event = { type: string; created_at: string; actor_id?: string | null; data?: unknown };
+export function OrderTimeline({ events, createdAt, acceptedAt, arrivedAt, completedAt, isAdmin }: {
+  events?: Event[]; createdAt?: string; acceptedAt?: string | null;
+  arrivedAt?: string | null; completedAt?: string | null; isAdmin: boolean;
+}) {
+  const entries = (events ?? []).filter(e => Object.hasOwn(LABELS, e.type))
+    .map(e => ({ label: LABELS[e.type], at: e.created_at, source: 'event' }));
+  // Legacy orders may have timestamps but no corresponding event.
+  // Do not fabricate a button press: clearly identify stored status timestamps.
+  const legacy = [
+    { label: 'Заявка создана', at: createdAt, event: 'created' },
+    { label: 'Заявка принята исполнителем', at: acceptedAt, event: 'accepted' },
+    { label: 'Зафиксировано прибытие', at: arrivedAt, event: 'arrive' },
+    { label: 'Зафиксировано завершение', at: completedAt, event: 'completed' },
+  ];
+  for (const item of legacy) {
+    if (item.at && !(events ?? []).some(e => e.type === item.event)) {
+      entries.push({ label: item.label + ' · время из статуса', at: item.at, source: 'status' });
+    }
+  }
+  entries.sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
+  return <section className="card stack" aria-label="Хронология этапов заявки">
+    <div className="between"><b>Хронология заявки</b><span className="pill">Время сервера</span></div>
+    <p className="note">Когда этап был зафиксирован системой. Нажатие кнопки и фактическое прибытие — разные вещи; спорные события требуют проверки.</p>
+    {!entries.length ? <p className="note">Событий пока нет.</p> :
+      <ol className="tl">{entries.map((entry, index) => <li key={index}>
+        <i className={index === entries.length - 1 ? 'now' : 'ok'}/>
+        <div><b>{entry.label}</b>
+          <small style={{display:'block'}}>{fmtTime(entry.at)} · {new Date(entry.at).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit',second:'2-digit'})}</small>
+          {isAdmin && entry.source === 'status' && <small>Восстановлено из сохранённого статуса</small>}
+        </div>
+      </li>)}</ol>}
+  </section>;
+}
