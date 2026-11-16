@@ -32,6 +32,20 @@ const newCase=(extra:Record<string,unknown>={})=>({
  diagnosticContext:'Проверили напряжение и соединение массы, причина не установлена.',...extra
 });
 
+test('closed professional club seed grants only matching specializations',async()=>{
+ const writerRooms=ok(await t.api('GET','/api/community/rooms',undefined,writer.token)).rooms;
+ assert.ok(writerRooms.some((x:any)=>x.slug==='electric-pro'));
+ assert.ok(writerRooms.some((x:any)=>x.slug==='diag-pro'));
+ assert.ok(!writerRooms.some((x:any)=>x.slug==='tow-pro'));
+ assert.ok(!writerRooms.some((x:any)=>x.slug==='service-pro'));
+ const driverRooms=ok(await t.api('GET','/api/community/rooms',undefined,outsider.token)).rooms;
+ for(const slug of ['diag-pro','pneumatic-pro','engine-pro','autonomy-pro','tow-pro','service-pro']){
+   assert.ok(!driverRooms.some((x:any)=>x.slug===slug),
+     'drivers must not enumerate specialist-only club '+slug);
+ }
+ assert.ok(driverRooms.some((x:any)=>x.slug==='drivers-russia'));
+});
+
 test('structured case visibility, search and idempotency',async()=>{
  const api='/api/community/pro-cases';
  assert.equal((await t.api('GET',api+'/rooms/'+roomId,undefined,client.token)).status,404);
