@@ -44,8 +44,12 @@ export class ShopRegionService {
     const selected=await this.selected(user);
     if(selected?.city_code!=='spb') throw conflict('shop_region_unavailable',BLOCKED);
   }
+  async requireWhenOpen(user:AuthUser) {
+    const settings=await this.settings.get('shop');
+    if(settings.enabled)await this.requireAvailable(user);
+  }
   async requireCheckout(user:AuthUser,delivery:string,address:string|null|undefined){
-    await this.requireAvailable(user);
+    await this.requireWhenOpen(user);
     if(delivery==='delivery') {
       if(!address?.trim())return; // let existing 400 need_address rule surface
       if(!addressDeclaredInSpb(address))throw conflict('delivery_outside_region',
