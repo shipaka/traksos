@@ -27,6 +27,12 @@ function addressOutside(address:string):boolean {
   const text=address.trim().toLocaleLowerCase('ru-RU').replace(/ё/g,'е');
   const normalized=text.replace(/^россия\s*,?\s*/u,'').replace(/^(?:рф|российская федерация)\s*,?\s*/u,'')
     .replace(/^г(?:ород|\.)?\s+/u,'');
+  // A clearly named *other* federal subject cannot use the local KAD tariff.
+  // This only rejects explicit contradictions; it is not a countrywide geocoder.
+  const federalSubject=normalized.split(/[,;]/u,1)[0].trim();
+  const isOtherSubject=/^(?:республика\s+[\p{L}\s-]+|[\p{L}-]+\s+(?:область|край)|[\p{L}\s-]+\s+автономный\s+округ)$/u.test(federalSubject)
+    && federalSubject!=='ленинградская область';
+  if(isOtherSubject)return true;
   return otherCities.some(name=>normalized===name||normalized.startsWith(name+',')||
     normalized.startsWith(name+' г.')||normalized.startsWith(name+' улица ')||
     normalized.startsWith(name+' ул.'));
