@@ -45,6 +45,10 @@ test('courier role admin-only, not self-registering or regular cargo carrier',as
  const me=ok(await t.api('GET','/api/me',undefined,driver.token));
  assert.ok(me.roles.includes('courier'));
  assert.ok(!me.roles.includes('master') && !me.roles.includes('driver'));
+ const courierProfile=ok(await t.api('GET','/api/courier/profile',undefined,driver.token));
+ assert.equal(courierProfile.displayName,'Курьер тест');
+ assert.equal(courierProfile.locationConsent,false);
+ assert.equal((await t.api('GET','/api/courier/profile',undefined,client1.token)).status,403);
 });
 
 test('dispatch requires verified SPb delivery addresses and never assigns unverified goods',async()=>{
@@ -96,6 +100,11 @@ test('dispatch requires verified SPb delivery addresses and never assigns unveri
  const info=ok(await t.api('GET','/api/courier/runs/'+runId,undefined,driver.token));
  stops=info.stops;
  assert.equal(stops.length,2);
+ assert.equal(info.activeStopId,null,'до выезда нет активной остановки');
+ assert.equal(stops[0].items[0].name,'Позиция тестовой доставки');
+ assert.equal(stops[0].items[0].qty,1);
+ assert.ok(!('price' in stops[0].items[0])&&!('inStock' in stops[0].items[0]),
+   'курьеру виден товар и количество, не розничная цена и закупка');
  assert.equal((await t.api('GET','/api/courier/runs/'+runId,undefined,client1.token)).status,403);
  assert.equal((await t.api('GET','/api/courier/runs/'+runId,undefined,outsider.token)).status,403);
  assert.equal((await t.api('GET','/api/shop/orders/'+order2+'/courier',undefined,client1.token)).status,404);
@@ -105,6 +114,7 @@ test('courier consent + stop-by-stop GPS, customer signs handoff, last fix is er
  ok(await t.api('POST','/api/courier/runs/'+runId+'/accept',{},driver.token));
  for(const stop of stops)ok(await t.api('POST','/api/courier/runs/'+runId+'/stops/'+stop.id+'/collect',{},driver.token));
  ok(await t.api('POST','/api/courier/runs/'+runId+'/start',{},driver.token));
+ assert.equal(ok(await t.api('GET','/api/courier/runs/'+runId,undefined,driver.token)).activeStopId,stops[0].id);
  assert.equal((await t.api('PUT','/api/courier/runs/'+runId+'/position',{
    lat:59.9,lng:30.3,accuracyMeters:20},driver.token)).status,403);
  ok(await t.api('PUT','/api/courier/location-consent',{enabled:true},driver.token));
@@ -121,6 +131,10 @@ test('courier consent + stop-by-stop GPS, customer signs handoff, last fix is er
  assert.equal((await t.api('POST','/api/shop/orders/'+order1+'/confirm-delivery',
    {},client2.token)).status,404);
  ok(await t.api('POST','/api/shop/orders/'+order1+'/confirm-delivery',{},client1.token));
+ const secondLeg=ok(await t.api('GET','/api/courier/runs/'+runId,undefined,driver.token));
+ assert.equal(secondLeg.activeStopId,stops[1].id);
+ assert.equal(secondLeg.stops[0].recipientName,null,'после вручения имя прежнего получателя больше не раскрывается');
+ assert.equal(secondLeg.stops[0].address,null,'адрес прежнего получателя скрыт');
  one=ok(await t.api('GET','/api/shop/orders/'+order1+'/courier',undefined,client1.token));
  two=ok(await t.api('GET','/api/shop/orders/'+order2+'/courier',undefined,client2.token));
  assert.equal(one.live,false);
