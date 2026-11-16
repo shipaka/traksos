@@ -41,6 +41,7 @@ import { ShopCatalogService } from './services/shopCatalog.ts';
 import { ModerationService } from './services/moderation.ts';
 import { registerCommunityRoutes } from './services/community.ts';
 import { registerCommunityDirectRoutes } from './services/communityDirect.ts';
+import { registerCommunityRoadRoutes } from './services/communityRoad.ts';
 import { registerKnowledgeOrderRoutes } from './services/communityKnowledgeOrder.ts';
 import { WarrantyClaimsService } from './services/warranty.ts';
 import { WarrantyRemediationService } from './services/warrantyRemediation.ts';
@@ -120,6 +121,7 @@ export function createApp(d: Deps) {
   // Isolated community rooms, nickname moderation and professional knowledge ACL.
   registerCommunityRoutes(r, d.db, notifier);
   registerCommunityDirectRoutes(r, d.db, notifier);
+  registerCommunityRoadRoutes(r, d.db, notifier);
   registerKnowledgeOrderRoutes(r, d.db);
   const staff = ['admin', 'moderator'];
   const performerRoles = ['master', 'tow', 'service'];
