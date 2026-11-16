@@ -31,17 +31,20 @@ export function AdminRouteMap({ orderId }: { orderId: string }) {
   return <section className="card stack" aria-label="Карта истории GPS исполнителя">
     <div className="between"><b>Маршрут исполнителя · №{route.data.number}</b><span className="pill">Только администратор</span></div>
     <p className="note">Принятых GPS-точек: {points.length}. Первая: {fmtTime(first.received_at)}. Последняя: {fmtTime(last.received_at)}.</p>
-    <div style={{position:'relative',height:360,borderRadius:14,overflow:'hidden',background:'#152638'}}>
-      <iframe title="Карта OpenStreetMap с историей GPS" src={url} loading="lazy" referrerPolicy="no-referrer"
+    <div style={{height:360,borderRadius:14,overflow:'hidden',background:'#152638'}}>
+      <iframe title="Карта OpenStreetMap района движения" src={url} loading="lazy" referrerPolicy="no-referrer"
         style={{width:'100%',height:'100%',border:0}}/>
-      <svg viewBox="0 0 1000 600" preserveAspectRatio="none" aria-hidden="true"
-        style={{position:'absolute',inset:0,width:'100%',height:'100%',pointerEvents:'none'}}>
-        <path d={trace} fill="none" stroke="#16c9f5" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
-        <circle cx={x(first)} cy={y(first)} r="11" fill="#1bc98e" stroke="#fff" strokeWidth="3"/>
-        <circle cx={x(last)} cy={y(last)} r="11" fill="#ffb34b" stroke="#fff" strokeWidth="3"/>
-      </svg>
     </div>
-    <p className="note">Зелёная точка — начало, оранжевая — последняя. Линия соединяет полученные координаты, а не проверенный дорожный маршрут. При изменении масштаба карты линия может не совпадать с подложкой.</p>
+    <div className="stack" style={{gap:6}}>
+      <b>История движения · схема по принятым точкам</b>
+      <svg viewBox="0 0 1000 600" role="img" aria-label="Траектория GPS с начальной и последней точкой"
+        style={{width:'100%',height:'auto',maxHeight:290,borderRadius:12,background:'#142437'}}>
+        <path d={trace} fill="none" stroke="#16c9f5" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
+        <circle cx={x(first)} cy={y(first)} r="12" fill="#1bc98e" stroke="#fff" strokeWidth="3"/>
+        <circle cx={x(last)} cy={y(last)} r="12" fill="#ffb34b" stroke="#fff" strokeWidth="3"/>
+      </svg>
+      <p className="note">Зелёная точка — начало, оранжевая — последняя. Схема показывает последовательность принятых GPS-точек отдельно от интерактивной карты: масштабирование карты не искажает линию. Это не доказательство дорожного маршрута или прибытия.</p>
+    </div>
     <a href={external} target="_blank" rel="noopener noreferrer">Открыть последнюю точку в OpenStreetMap ↗</a>
   </section>;
 }
