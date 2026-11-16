@@ -200,7 +200,7 @@ function CandidateView({ d, onDone }: { d: any; onDone: () => void }) {
 
 function Steps({ status, service, events = [], createdAt }: { status: string; service: string; events?: Array<{type:string;created_at:string}>; createdAt?: string }) {
   const names = service === 'tow' ? TOW_STEP_NAMES : STEP_NAMES;
-  const sequence = STEPS.filter(s => s !== 'searching');
+  const sequence = STEPS;
   const current = sequence.indexOf(status);
   const finished = status === 'completed';
   const active = finished ? sequence.length - 1 : Math.max(0, current);
