@@ -15,4 +15,9 @@ if ! grep -Eq '^OK \([0-9]+ tests?\)' pin-test.log; then
   echo "FAIL: no successful AndroidKeystore PIN tests reported"
   exit 1
 fi
-echo "PASS: native PIN/Keystore tests ran on Android emulator"
+# The actual Android PIN card, rendered by the instrumented app (not a mockup).
+adb exec-out run-as ru.traksos.app.preview cat cache/cinematic-pin-preview.png \
+  > cinematic-pin-preview.png
+test -s cinematic-pin-preview.png
+echo "PASS: native PIN/Keystore tests and real cinematic lock screenshot"
+
