@@ -354,6 +354,7 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
         "where id=$1 and run_id=$2 and status in ('collected','at_door') returning shop_order_id",
         [stopId,run.id,reason]);
       if(!failure)throw conflict('invalid_stop','Остановка уже обработана');
+      await q.query('delete from shop_delivery_handoffs where stop_id=$1',[stopId]);
       await recordDelivery(q,failure.shop_order_id,run.id,'failed',c.user.id);
       const nextStatus=await advanceRun(q,run.id);
       await q.query('insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4)',
@@ -426,11 +427,12 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
       if(target.status!=='at_door'||target.run_status!=='delivering'||
         target.active_stop_id!==target.stop_id)
         throw conflict('not_at_door','Курьер должен прибыть к текущему получателю');
-      const prev=await q.one<{issued_at:Date;verified_at:Date|null}>(
-        'select issued_at,verified_at from shop_delivery_handoffs where stop_id=$1 for update',
+      const prev=await q.one<{cooldown:boolean;verified_at:Date|null}>(
+        "select (issued_at>now()-interval '30 seconds') as cooldown,verified_at "+
+        'from shop_delivery_handoffs where stop_id=$1 for update',
         [target.stop_id]);
       if(prev?.verified_at)throw conflict('already_verified','Код уже проверен курьером');
-      if(prev?.issued_at&&Date.now()-new Date(prev.issued_at).getTime()<30_000)
+      if(prev?.cooldown)
         throw conflict('retry_later','Повторный код можно запросить через 30 секунд');
       const issued=await q.one<{expires_at:Date}>(
         "insert into shop_delivery_handoffs(stop_id,code_salt,code_hash,issued_at,expires_at,attempts) "+
@@ -462,14 +464,14 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
       if(!current||current.status!=='at_door'||current.run_status!=='delivering'||
         current.active_stop_id!==stopId)
         throw conflict('not_active_stop','Код можно проверять только у текущего получателя');
-      const proof=await q.one<{code_salt:string;code_hash:string;expires_at:Date;
+      const proof=await q.one<{code_salt:string;code_hash:string;expired:boolean;
         attempts:number;verified_at:Date|null}>(
-        'select code_salt,code_hash,expires_at,attempts,verified_at '+
+        'select code_salt,code_hash,(expires_at<=now()) as expired,attempts,verified_at '+ 
         'from shop_delivery_handoffs where stop_id=$1 for update',[stopId]);
       if(!proof)return {ok:false,reason:'Клиент ещё не создал код передачи'};
       if(proof.verified_at)return {ok:false,reason:'Код уже использован'};
       if(proof.attempts>=5)return {ok:false,reason:'Попытки исчерпаны. Клиент должен создать новый код'};
-      if(new Date(proof.expires_at).getTime()<=Date.now())
+      if(proof.expired)
         return {ok:false,reason:'Код истёк. Клиент должен создать новый'};
       const received=scryptSync(input.code,proof.code_salt,32);
       const expected=Buffer.from(proof.code_hash,'hex');
@@ -510,6 +512,7 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
       if(!stop)throw conflict('handoff_unconfirmed','Нужны прибытие курьера и проверенный одноразовый код получателя');
       await q.query("update shop_orders set status='done',updated_at=now() where id=$1",[orderId]);
       await recordDelivery(q,orderId,row.run_id,'delivered',c.user.id);
+      await q.query('delete from shop_delivery_handoffs where stop_id=$1',[stop.id]);
       await advanceRun(q,row.run_id);
       return {status:'done'};
     });
