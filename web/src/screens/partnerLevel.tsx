@@ -16,7 +16,9 @@ type LevelResponse={
     reasons:string[];manualReviewRequired:boolean};
   privileges:{priorityDispatch:boolean;reducedCommission:boolean;
     acceleratedPayout:boolean;note:string};
-  appeal:{id:string;message:string;created_at:string}|null;automaticDemotion:boolean;
+  appeal:{id:string;message:string;created_at:string}|null;
+  lastAppeal:{id:string;message:string;status:string;resolution:string|null;
+    created_at:string;resolved_at:string|null}|null;automaticDemotion:boolean;
 };
 export function PartnerLevelView(){
   const {me}=useMe(),account=useLoad<LevelResponse>(()=>get('/api/partner/level'),[me?.id]);
@@ -69,6 +71,10 @@ export function PartnerLevelView(){
       </section>
       <section className="card stack">
         <h2>Оспорить или уточнить уровень</h2>
+        {d.lastAppeal?.status==='resolved'&&d.lastAppeal.resolution&&
+          <div role="status"><b>Ответ на прошлое обращение:</b> {d.lastAppeal.resolution}
+            <p className="note">Рассмотрено: {d.lastAppeal.resolved_at?fmtTime(d.lastAppeal.resolved_at):'дата не указана'}</p>
+          </div>}
         {d.appeal?<p role="status">Обращение уже находится на рассмотрении: {d.appeal.message}</p>:
           <form className="stack" onSubmit={async e=>{
             e.preventDefault();const result=await run(()=>post('/api/partner/level/appeal',{message:appeal.trim()}),'Обращение отправлено');
