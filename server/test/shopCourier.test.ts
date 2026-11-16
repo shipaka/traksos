@@ -201,3 +201,59 @@ test('new supplier cancellation after route approval blocks courier acceptance a
  assert.equal(removed.releasedOrders,1);
  assert.equal((await t.api('GET','/api/courier/runs/'+route.id,undefined,driver.token)).status,404);
 });
+
+
+test('failed delivery cannot be marked delivered; warehouse return releases order for a new run without fake refund',async()=>{
+ const order=ok(await t.api('POST','/api/shop/orders',{
+   items:[{productId:itemId,qty:1}],delivery:'delivery',
+   address:'Санкт-Петербург, тестовая улица 13'},client1.token)).id;
+ ok(await t.api('POST','/api/admin/shop/orders/'+order+'/status',{status:'confirmed'},admin.token));
+ ok(await t.api('POST','/api/admin/shop/orders/'+order+'/status',{status:'ready'},admin.token));
+ ok(await t.api('POST','/api/admin/shop/delivery-addresses/'+order+'/verify',{
+   cityCode:'spb',evidence:'Проверили адрес пятого заказа для повторной доставки'
+ },admin.token));
+ const newRun=ok(await t.api('POST','/api/admin/shop/courier-runs',{
+   courierId:driver.id,pickupAddress:'Санкт-Петербург, центральный склад 1',orderIds:[order]
+ },admin.token));
+ ok(await t.api('PUT','/api/admin/shop/courier-runs/'+newRun.id+'/budget',{
+   courierPayKopecks:1000,fuelKopecks:1000,packingKopecks:300,
+   acquiringKopecks:300,taxesKopecks:300,otherKopecks:300,
+   note:'Полная смета возвратного рейса с запасом под неудачное вручение'
+ },admin.token));
+ ok(await t.api('POST','/api/admin/shop/courier-runs/'+newRun.id+'/approve-dispatch',
+   {},admin.token));
+ const stop=ok(await t.api('GET','/api/courier/runs/'+newRun.id,undefined,driver.token)).stops[0];
+ ok(await t.api('POST','/api/courier/runs/'+newRun.id+'/accept',{},driver.token));
+ ok(await t.api('POST','/api/courier/runs/'+newRun.id+'/stops/'+stop.id+'/collect',{},driver.token));
+ ok(await t.api('POST','/api/courier/runs/'+newRun.id+'/start',{},driver.token));
+ const failed=ok(await t.api('POST',
+   '/api/courier/runs/'+newRun.id+'/stops/'+stop.id+'/report-failure',{
+     reason:'Получатель не открыл складские ворота и не отвечает на звонки'
+   },driver.token));
+ assert.equal(failed.status,'failed');
+ assert.equal(failed.runStatus,'returning');
+ assert.equal((await t.api('POST','/api/shop/orders/'+order+'/confirm-delivery',
+   {},client1.token)).status,409,'клиент не подтверждает не состоявшуюся доставку');
+ assert.equal((await t.api('POST','/api/courier/runs/'+newRun.id+'/stops/'+stop.id+'/arrive',
+   {},driver.token)).status,409,'после неудачного вручения нет фиктивного прибытия');
+ const visible=ok(await t.api('GET','/api/shop/orders/'+order+'/courier',undefined,client1.token));
+ assert.equal(visible.status,'failed');
+ assert.equal(visible.live,false);
+ assert.equal((await t.api('POST','/api/admin/shop/courier-runs/'+newRun.id+'/cancel',{
+   reason:'Попытка тихой отмены при наличии не возвращённой посылки'},admin.token)).status,409);
+ assert.equal((await t.api('POST','/api/admin/shop/courier-runs/'+newRun.id+'/confirm-warehouse-return',{
+   evidence:'Короткая подпись'},admin.token)).status,400);
+ const result=ok(await t.api('POST','/api/admin/shop/courier-runs/'+newRun.id+'/confirm-warehouse-return',{
+   evidence:'Посылка возвращена физически на склад, номер пломбы и состав сверены кладовщиком'
+ },admin.token));
+ assert.equal(result.returnedCount,1);
+ assert.equal(result.refundAutomaticallyCompleted,false);
+ assert.equal(ok(await t.api('GET','/api/shop/orders',undefined,client1.token))
+   .find((x:any)=>x.id===order).status,'ready');
+ const newAssignment=ok(await t.api('POST','/api/admin/shop/courier-runs',{
+   courierId:driver.id,pickupAddress:'Санкт-Петербург, центральный склад 1',orderIds:[order]
+ },admin.token));
+ assert.ok(newAssignment.id!==newRun.id,'повторный рейс возможен после подтверждения возврата');
+ assert.equal((await t.api('POST','/api/admin/shop/courier-runs/'+newRun.id+'/confirm-warehouse-return',{
+   evidence:'Повторное неподтверждённое действие на закрытом рейсе'},admin.token)).status,409);
+});
