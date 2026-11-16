@@ -2,6 +2,7 @@ import {useState} from 'react';
 import {get,post,fmtTime} from '../api.ts';
 import {useAction,useLoad,useMe} from '../ui.tsx';
 import './techBase.css';
+import {TechReferenceShelf} from './techReferenceShelf.tsx';
 
 type Entry={id:string;title:string;make:string;model:string|null;model_year:number|null;
  subsystem:string;source_url:string|null;created_at:string};
@@ -146,19 +147,21 @@ export function TechnicalBase(){
  const {me}=useMe();
  const admin=Boolean(me?.roles.includes('admin'));
  const professional=Boolean(me?.roles.some(r=>['master','tow','service'].includes(r)));
- const [tab,setTab]=useState<'search'|'propose'|'review'>('search');
+ const [tab,setTab]=useState<'sources'|'search'|'propose'|'review'>('sources');
  if(!professional&&!admin)return <main className="tech-shell"><h1>ТехБаза</h1><p>Раздел доступен только подтверждённым специалистам.</p></main>;
  return <main className="tech-shell">
   <header className="tech-head">
    <div><span className="note">TRAKSOS · ПРОФЕССИОНАЛЬНАЯ БАЗА</span><h1>ТехБаза</h1>
-    <p>Проверенные решения по грузовикам и прицепам. Закрыто для покупателей и гостей.</p></div>
+    <p>Открытые лицензированные схемы и официальные источники отдельно от проверенных практических решений. Только для подтверждённых специалистов.</p></div>
    <a href="#/" className="btn ghost">В кабинет</a>
   </header>
   <nav className="tech-tabs" aria-label="ТехБаза">
-   <button aria-current={tab==='search'?'page':undefined} onClick={()=>setTab('search')}>Поиск решений</button>
+   <button aria-current={tab==='sources'?'page':undefined} onClick={()=>setTab('sources')}>Схемы и источники</button>
+   <button aria-current={tab==='search'?'page':undefined} onClick={()=>setTab('search')}>Проверенные решения</button>
    {professional&&<button aria-current={tab==='propose'?'page':undefined} onClick={()=>setTab('propose')}>Мои материалы</button>}
    {admin&&<button aria-current={tab==='review'?'page':undefined} onClick={()=>setTab('review')}>Проверка материалов</button>}
   </nav>
+  {tab==='sources'&&<TechReferenceShelf/>}
   {tab==='search'&&<ApprovedKnowledge/>}
   {tab==='propose'&&professional&&<ProposeKnowledge/>}
   {tab==='review'&&admin&&<AdminKnowledgeQueue/>}
