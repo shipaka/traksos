@@ -99,6 +99,13 @@ test('colleague reply, chosen solution and author-only double-review proposal',a
  const endpoint='/api/community/pro-cases';
  const made=ok(await t.api('POST',endpoint,newCase(),writer.token));
  const id=made.case.id;
+ const hint=t.app.hub.log.find((e:any)=>e.userId===peer.id&&
+   e.event.type==='community_technical_case'&&e.event.caseId===id);
+ assert.ok(hint,'active verified club members get a live case hint');
+ for(const secret of ['symptoms','body','phone','lat','lng','orderId','vin'])
+   assert.equal(secret in hint.event,false);
+ assert.ok(!t.app.hub.log.some((e:any)=>e.userId===outsider.id&&
+   e.event.type==='community_technical_case'&&e.event.caseId===id));
  const reply={clientNonce:randomUUID(),body:'Проверьте питание EBS, разъёмы, массу и диагностику по заводской схеме без догадок о распиновке.'};
  const replyUrl=endpoint+'/'+id+'/replies';
  const sent=ok(await t.api('POST',replyUrl,reply,peer.token));
@@ -112,6 +119,10 @@ test('colleague reply, chosen solution and author-only double-review proposal',a
  const solution=ok(await t.api('POST',endpoint+'/'+id+'/resolve',{replyId:sent.id},writer.token));
  assert.equal(solution.status,'resolved');
  assert.equal(solution.accepted_reply_id,sent.id);
+ assert.equal(ok(await t.api('POST',endpoint+'/'+id+'/resolve',
+   {replyId:sent.id},writer.token)).accepted_reply_id,sent.id);
+ assert.equal((await t.api('POST',endpoint+'/'+id+'/resolve',
+   {replyId:null},writer.token)).status,409,'author cannot silently change an accepted answer');
  assert.equal((await t.api('POST',replyUrl,{clientNonce:randomUUID(),
    body:'Нельзя добавить ответ после закрытия вопроса'},peer.token)).status,409);
  assert.equal(ok(await t.api('POST',replyUrl,reply,peer.token)).id,sent.id);
