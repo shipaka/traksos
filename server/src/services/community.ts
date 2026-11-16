@@ -232,9 +232,15 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
       const count=await q.one<{n:number}>(`select count(*)::int as n from community_messages
         where sender_id=$1 and created_at>now()-interval '15 seconds'`,[c.user.id]);
       if((count?.n ?? 0)>=5) throw new HttpError(429,'slow_down','Слишком много сообщений. Попробуйте позже');
+      // Per-room lock ensures new-message events are committed in cursor order,
+      // even when two different drivers send simultaneously.
+      await q.one('select id from community_rooms where id=$1 for update',[room.id]);
       const message=await q.one<any>(`insert into community_messages(room_id,sender_id,body,client_nonce,moderation_state)
         values($1,$2,$3,$4,$5) returning id::text as id,room_id,body,moderation_state,created_at`,
         [room.id,c.user.id,b.text,b.clientNonce,pending?'pending':'published']);
+      if(message?.moderation_state==='published')await q.query(
+        `insert into community_room_moderation_events(room_id,message_id,previous_state,moderation_state)
+          values($1,$2,'created','published')`,[room.id,message.id]);
       return {message,created:true};
     });
     const saved=messageInsert.message;
