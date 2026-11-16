@@ -77,12 +77,12 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
   r.put('/api/community/me', true, async (c: AuthedCtx) => {
     const b = parse(z.object({
       nickname: nickSchema,
-      cityLabel: z.string().trim().min(2).max(80).nullable().optional(),
+      cityLabel: z.string().trim().min(2).max(80).regex(/^[\\p{L}\\p{M} .'-]{2,80}$/u).nullable().optional(),
       shareCity: z.boolean().default(false),
     }), c.body);
     if (phonePattern.test(b.nickname) || contactPattern.test(b.nickname) || profanity.test(b.nickname))
       throw bad('nickname_rejected','Этот псевдоним недопустим');
-    if (b.cityLabel && (phonePattern.test(b.cityLabel) || contactPattern.test(b.cityLabel)))
+    if (b.cityLabel && (phonePattern.test(b.cityLabel) || contactPattern.test(b.cityLabel) || /(?:улиц|проспект|квартир|дом\\s|house|street)/iu.test(b.cityLabel)))
       throw bad('city_rejected','Укажите только населённый пункт');
     await ensureNick(db,c.user);
     try {
@@ -141,7 +141,7 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
     if (!/^\d{1,16}$/.test(afterStr)) throw bad('cursor','Некорректный курсор');
     const after = Number(afterStr);
     if (!Number.isSafeInteger(after)) throw bad('cursor','Некорректный курсор');
-    const limit = Math.min(100,Math.max(1,Number(c.query.get('limit')) || 50));
+    const limit = Math.min(100,Math.max(1,Math.trunc(Number(c.query.get('limit')) || 50)));
     const rows = await db.query<{
       id:string; body:string; created_at:Date; moderation_state:string;
       sender_id:string; nickname:string|null; public_city:string|null;
@@ -277,7 +277,7 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
     await requireKnowledgeAccess(db,c.user);
     const id=parse(roomIdSchema,c.params.id);
     const article=await db.one(`select id,title,make,model,model_year,subsystem,description,
-      source_url,rights_basis,rights_reference,created_at,updated_at
+      source_url,rights_basis,created_at,updated_at
       from community_knowledge where id=$1 and rights_review='approved' and technical_review='approved'`,[id]);
     if(!article) throw notFound('Материал не найден');
     return article;
