@@ -308,7 +308,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     <div className="app operator-demo-app">
       <header className="top">
         <span className="logo">Trak<b>SOS</b></span>
-        <span className="pill accent">ТЕСТОВЫЙ РЕЖИМ</span>
+        <span className="operator-demo-badge">ТЕСТОВЫЙ РЕЖИМ</span>
       </header>
       <div className="operator-demo-content" style={{width:'100%', maxWidth:1440, margin:'0 auto'}}>
         {children}
