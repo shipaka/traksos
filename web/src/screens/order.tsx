@@ -737,7 +737,12 @@ function Cancel({ id, status, consult, onDone }: { id: string; status: string; c
   return (
     <div className="card">
       <b>Отменить заявку?</b>
-      {status !== 'searching' && !consult && <span className="note">Мастер уже принял заявку: если он в пути, часть выезда уходит ему — по шкале отмены в правилах.</span>}
+      {!consult && <div className="stack">
+        <b>Условия отмены выезда</b>
+        <span className="note">До назначения исполнителя — 0% стоимости выезда. Принял заявку, но не выехал — 25%. Выехал, но не достиг половины маршрута — 50%. Проехал половину маршрута или прибыл — 100%.</span>
+        <span className="note">Процент применяется к согласованной стоимости выезда. Сервисный сбор и возврат предоплаты рассчитываются отдельно по условиям заявки. Если GPS не позволяет достоверно определить этап, расчёт может потребовать проверки.</span>
+        <span className="note">Это правила, а не окончательная сумма списания. Итог зависит от подтверждённого этапа на момент отмены; сведения о платеже и возврате будут доступны в заявке.</span>
+      </div>}
       {status !== 'searching' && consult && <span className="note">Если мастер не вышел на связь — отменяйте, деньги не спишутся.</span>}
       <div className="scroll-x">{reasons.map((r) => <button key={r} className="chip" aria-pressed={reason === r} onClick={() => setReason(r)}>{r}</button>)}</div>
       <button className="btn bad" disabled={busy || !reason} onClick={() => run(() => post(`/api/orders/${id}/cancel`, { reason }), 'Заявка отменена').then((r) => r && onDone())}>Отменить</button>
