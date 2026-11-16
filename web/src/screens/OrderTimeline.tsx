@@ -25,7 +25,7 @@ export function OrderTimeline({ events, createdAt, acceptedAt, arrivedAt, comple
   events?: Event[]; createdAt?: string; acceptedAt?: string | null;
   arrivedAt?: string | null; completedAt?: string | null; isAdmin: boolean;
 }) {
-  const entries = (events ?? []).filter(e => e && Object.prototype.hasOwnProperty.call(LABELS, e.type) &&
+  const entries = (events ?? []).filter(e => e && typeof e.type === 'string' && Object.prototype.hasOwnProperty.call(LABELS, e.type) &&
     typeof e.created_at === 'string' && !Number.isNaN(Date.parse(e.created_at)))
     .map(e => ({ label: LABELS[e.type], at: e.created_at, source: 'event' }));
   // Legacy orders may have timestamps but no corresponding event.
