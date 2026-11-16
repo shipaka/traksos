@@ -81,4 +81,23 @@ test('supplier events are visible in customer order but do not silently cancel/r
  const orders=ok(await t.api('GET','/api/shop/orders',undefined,client.token));
  assert.equal(orders.find((x:any)=>x.id===orderId).status,'new');
  assert.equal((await t.api('GET',path,undefined,other.token)).status,403);
+ const issue=ok(await t.api('GET',path,undefined,admin.token)).issue;
+ assert.equal(issue.needs_review,true);
+ const review='/api/admin/shop/orders/'+orderId+'/supplier-issues/resolve';
+ assert.equal((await t.api('POST',review,{
+   resolution:'supplier_reconfirmed',
+   evidence:'Проверили письмо дистрибьютора, нового подтверждения пока нет'
+ },admin.token)).status,409,'невозможно снять блокировку без нового статуса поставщика');
+ ok(await t.api('POST',path,{
+   status:'partner_accepted',rawStatus:'Подтверждён',
+   sourceEvidence:'Новое ручное подтверждение от оператора Автоконтинента',
+   eventTime:new Date(date.getTime()+3000).toISOString()
+ },admin.token));
+ const fixed=ok(await t.api('POST',review,{
+   resolution:'supplier_reconfirmed',
+   evidence:'Поставщик повторно подтвердил заказ, менеджер сверил номер и наличие'
+ },admin.token));
+ assert.equal(fixed.resolved,true);
+ assert.equal(fixed.refundAutomaticallyConfirmed,false);
+
 });
