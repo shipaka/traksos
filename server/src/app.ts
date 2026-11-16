@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { isIP } from 'node:net';
 import { z } from 'zod';
 import type { Db } from './db/index.ts';
-import { Router, parse, readBody, send, errorBody, forbidden, bad, notFound, HttpError, type Ctx, type AuthedCtx } from './http/router.ts';
+import { Router, parse, readBody, send, errorBody, forbidden, bad, conflict, notFound, HttpError, type Ctx, type AuthedCtx } from './http/router.ts';
 import { Hub } from './realtime/hub.ts';
 import type { SmsProvider } from './providers/sms.ts';
 import type { PushProvider } from './providers/push.ts';
