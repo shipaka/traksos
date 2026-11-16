@@ -21,7 +21,7 @@ function ApprovedKnowledge(){
  const result=useLoad<{articles:Entry[]}>(()=>get(
    '/api/community/knowledge?make='+encodeURIComponent(filters.make)+
    '&subsystem='+encodeURIComponent(filters.system)),[filters.make,filters.system]);
- const detail=useLoad<Detail>(()=>get('/api/community/knowledge/'+selected),[selected]);
+ const detail=useLoad<Detail|null>(()=>selected?get('/api/community/knowledge/'+selected):Promise.resolve(null),[selected]);
  return <section className="tech-section">
   <form className="tech-filters" onSubmit={e=>{e.preventDefault();setFilters({make:make.trim(),system:system.trim()})}}>
    <label>Марка <input className="field" value={make} maxLength={80} onChange={e=>setMake(e.target.value)} placeholder="Scania"/></label>
