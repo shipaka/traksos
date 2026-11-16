@@ -8,7 +8,11 @@ const knownOutside=[
   {name:'Калининград',lat:54.7104,lng:20.4522,address:'Калининград, проспект Мира 1'},
   {name:'Владивосток',lat:43.1155,lng:131.8855,address:'Владивосток, Океанский проспект 1'},
   {name:'Ижевск',lat:56.8527,lng:53.2115,address:'Ижевск, улица Пушкинская 1'},
-  {name:'Псков',lat:57.8194,lng:28.3318,address:'Псков, Октябрьский проспект 1'}
+  {name:'Псков',lat:57.8194,lng:28.3318,address:'Псков, Октябрьский проспект 1'},
+  // Coordinates are deliberately inside the broad legacy box: a declared other
+  // Russian federal subject must still override a misleading/spoofed GPS point.
+  {name:'Республика Карелия',lat:61.7849,lng:34.3469,address:'Республика Карелия, Петрозаводск, проспект Ленина 1'},
+  {name:'Приморский край',lat:59.9343,lng:30.3351,address:'Приморский край, Владивосток, улица Светланская 1'}
 ];
 test('pure region safety never turns KAD prices into a federal price',()=>{
   for(const x of knownOutside){
@@ -24,6 +28,8 @@ test('pure region safety never turns KAD prices into a federal price',()=>{
   assert.equal(checkLegacyPricingLocation({lat:91,lng:20}),'outside');
   assert.equal(checkLegacyPricingLocation({lat:59.93}),'outside');
   assert.equal(checkLegacyPricingLocation({}),'unknown');
+  assert.notEqual(checkLegacyPricingLocation({address:'Ленинградская область, Гатчина, Соборная 1'}),'outside',
+    'do not treat the supported federal subject as remote');
   const unknown=legacyPricingWarning({});
   assert.equal(unknown.manualConfirmationRequired,true);
   assert.equal(unknown.validatedByGeocoder,false);
