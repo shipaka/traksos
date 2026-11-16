@@ -39,6 +39,14 @@ test('GPS history is scoped to an en-route order and rejects impossible jumps', 
       'select lat,lng from performer_profiles where user_id=$1', [worker.id]);
     assert.equal(Number(livePosition.lat), 59.934401);
     assert.equal(Number(livePosition.lng), 30.335201);
+    // Concurrent requests must not bypass the per-performer lock and create
+    // multiple durable route samples inside one throttling window.
+    const concurrent = await Promise.all(Array.from({ length: 8 }, () =>
+      t.api('POST', '/api/performer/location',
+        { lat: 59.934401, lng: 30.335201 }, worker.token)));
+    assert.ok(concurrent.every(reply => reply.status === 200));
+    assert.equal((await t.db.query(
+      'select id from performer_route_samples where order_id=$1 and accepted=true', [id])).length, 1);
     const rejected = ok(await t.api('POST', '/api/performer/location',
       { lat: 55.7558, lng: 37.6173 }, worker.token));
     assert.equal(rejected.accepted, false);
