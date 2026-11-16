@@ -206,7 +206,8 @@ function Steps({ status, service, events = [], createdAt }: { status: string; se
   const active = finished ? sequence.length - 1 : Math.max(0, current);
   const progress = finished ? 100 : current < 0 ? 0 : Math.round(active / Math.max(1, sequence.length - 1) * 100);
   const stopped = status === 'cancelled' || status === 'no_performer';
-  const showProgress = !stopped;
+  const awaitingOwner = status === 'awaiting_owner';
+  const showProgress = !stopped && !awaitingOwner;
   const stageEvent: Record<string, string[]> = { accepted: ['accepted'], en_route: ['depart'], arrived: ['arrive'], working: ['start_work'], awaiting_confirmation: ['amount_proposed'], completed: ['amount_confirmed', 'completed', 'confirm'] };
   const stageTime = (step: string) => {
     const candidates = events.filter(e => (stageEvent[step] ?? []).includes(e.type));
@@ -231,7 +232,7 @@ function Steps({ status, service, events = [], createdAt }: { status: string; se
         <p>{finished ? 'Все этапы завершены' : status === 'cancelled' ? 'Дальнейшее выполнение остановлено'
           : 'Этапы обновляются по мере действий участников заявки'}</p>
       </div>
-      <span className="cinematic-status-counter" aria-label={showProgress ? `Прогресс ${progress}%` : "Выполнение остановлено"}>{showProgress ? <>{progress}<small>%</small></> : "—"}</span>
+      <span className="cinematic-status-counter" aria-label={showProgress ? `Прогресс ${progress}%` : awaitingOwner ? "Ожидается решение владельца" : "Выполнение остановлено"}>{showProgress ? <>{progress}<small>%</small></> : "—"}</span>
     </header>
     {showProgress && <div className="cinematic-status-meter" role="progressbar" aria-label="Прогресс этапов заявки"
       aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
@@ -239,8 +240,8 @@ function Steps({ status, service, events = [], createdAt }: { status: string; se
     </div>}
     <ol className="cinematic-status-steps">
       {sequence.map((step, index) => {
-        const done = finished || (!stopped && current >= 0 && index < current);
-        const now = !finished && !stopped && current === index;
+        const done = finished || (!stopped && !awaitingOwner && current >= 0 && index < current);
+        const now = !finished && !stopped && !awaitingOwner && current === index;
         return <li key={step} className={done ? 'is-done' : now ? 'is-current' : 'is-next'}
           aria-current={now ? 'step' : undefined}>
           <span className="cinematic-status-node" aria-hidden="true">{done ? '✓' : String(index + 1).padStart(2, '0')}</span>
@@ -250,6 +251,7 @@ function Steps({ status, service, events = [], createdAt }: { status: string; se
         </li>;
       })}
     </ol>
+    {awaitingOwner && <p className="cinematic-status-stop">Поиск исполнителя ещё не начался: ожидаем подтверждения владельца транспорта.</p>}
     {stopped && <p className="cinematic-status-stop">{status === 'cancelled' ? 'Выполнение остановлено. Причина и время отмены — в журнале ниже.' : 'Поиск завершился без исполнителя. История попыток сохранена в журнале.'}</p>}
     <p className="cinematic-status-footnote">Статусы отражают зафиксированные действия. Подтверждение GPS, КПП и расчёт оплаты проверяются отдельно.</p>
   </section>;
