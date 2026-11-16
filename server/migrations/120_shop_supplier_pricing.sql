@@ -72,3 +72,17 @@ create table if not exists shop_supplier_order_issues (
  resolved_by uuid references users(id) on delete set null,
  created_at timestamptz not null default now()
 );
+
+-- Cost snapshots are recorded at checkout, not inferred later from a changed
+-- procurement price. Missing supplier cost stays UNKNOWN, never zero.
+create table if not exists shop_order_cost_snapshots (
+ shop_order_id uuid not null references shop_orders(id) on delete cascade,
+ product_id uuid not null references shop_products(id),
+ qty integer not null check (qty>0),
+ purchase_unit_kopecks bigint not null check (purchase_unit_kopecks>0),
+ retail_unit_kopecks bigint not null check (retail_unit_kopecks>=0),
+ target_markup_bps integer not null,
+ captured_at timestamptz not null default now(),
+ primary key(shop_order_id,product_id)
+);
+create index if not exists shop_order_cost_snapshots_product on shop_order_cost_snapshots(product_id);
