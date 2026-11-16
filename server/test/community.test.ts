@@ -55,6 +55,10 @@ test('messages: retry idempotence, moderation, cursor, no phone/PII leak',async(
   const first=ok(await t.api('POST',path,{text:'Всем привет, кто на М10?',clientNonce:nonce},driver.token));
   const second=ok(await t.api('POST',path,{text:'Всем привет, кто на М10?',clientNonce:nonce},driver.token));
   assert.equal(first.id,second.id);
+  const retransmissions=await Promise.all(Array.from({length:4},()=>t.api('POST',path,{text:'Всем привет, кто на М10?',clientNonce:nonce},driver.token)));
+  for(const retransmission of retransmissions)assert.equal(ok(retransmission).id,first.id);
+  const physical=await t.db.query('select id from community_messages where sender_id=$1 and client_nonce=$2',[driver.id,nonce]);
+  assert.equal(physical.length,1,'the same mobile message must be persisted only once');
   assert.equal((await t.api('POST',path,{text:'Другая фраза',clientNonce:nonce},driver.token)).status,409);
   assert.equal((await t.api('POST',path,{text:'Мой номер +7 999 111-22-33',clientNonce:randomUUID()},driver.token)).status,400);
   const pending=ok(await t.api('POST',path,{text:'блядь, ошибка на панели',clientNonce:randomUUID()},driver.token));
