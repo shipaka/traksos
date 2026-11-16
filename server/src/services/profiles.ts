@@ -177,6 +177,11 @@ export class ProfilesService {
       if (!plausibleGpsStep(prior, { lat, lng }, now)) return false;
       await q.query('update performer_profiles set lat=$2,lng=$3,location_at=$4 where user_id=$1',
         [userId, lat, lng, now]);
+      // Persist only while a job is in progress. Keep an order-scoped audit
+      // trail, not a general history of the performer's movements.
+      await q.query(`insert into performer_route_samples(order_id,performer_id,lat,lng,received_at)
+        select id,$1,$2,$3,$4 from orders
+        where performer_id=$1 and status='en_route'`, [userId, lat, lng, now]);
       return true;
     });
   }
