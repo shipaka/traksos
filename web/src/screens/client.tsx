@@ -268,6 +268,7 @@ export function Consult() {
   const c = pricing.consult ?? { price: 70_000, backDiscount: 20_000, backHours: 48 };
 
   async function submit() {
+    if(!zoneId || !est || est.regionValidation?.available===false)return;
     const r = await run(() => post('/api/orders', {
       service: 'consult', problem: sym?.id, description: description.trim() || undefined,
       vehicleId: vehicleId || undefined, ...carBody(vehicleId, car), paymentMethod: 'cash',
@@ -385,7 +386,8 @@ export function NewOrder({ service }: { service: string }) {
   const consult = useLoad(() => (fromConsult ? get(`/api/orders/${fromConsult}`) : Promise.resolve(null)), [fromConsult]);
   const [agree, setAgree] = useState(false);
 
-  const [zoneId, setZoneId] = useState('spb');
+  // A national visitor must deliberately choose the legacy local pricing zone.
+  const [zoneId, setZoneId] = useState(service==='consult'?'spb':'');
   const [tier, setTier] = useState<'eco' | 'comfort' | 'pro'>(service === 'diag' ? 'pro' : 'eco');
   const [night, setNight] = useState<boolean | null>(null);
   const [group, setGroup] = useState(false);
@@ -398,6 +400,8 @@ export function NewOrder({ service }: { service: string }) {
   const [geoState, setGeoState] = useState<'idle' | 'wait' | 'ok' | 'fail'>('idle');
   const [method, setMethod] = useState<'cash' | 'online' | 'invoice'>('cash');
   const [est, setEst] = useState<any>(null);
+  const [quoteError,setQuoteError]=useState<string|null>(null);
+  const [quoteAddress,setQuoteAddress]=useState('');
   const [destination, setDestination] = useState(prefill.destination ?? '');
   const [cargo, setCargo] = useState<'tractor' | 'semitrailer' | 'coupling' | 'truck12' | 'bus' | 'special'>('tractor');
   const [loaded, setLoaded] = useState<'empty' | 'loaded' | 'adr'>('empty');
@@ -417,10 +421,20 @@ export function NewOrder({ service }: { service: string }) {
     if (c.description && !description) setDescription(c.description);
     if (!c.vehicle && c.brand) { setVehicleId(''); setCar({ brand: c.brand, model: c.model ?? '', year: c.year ? String(c.year) : '' }); }
   }, [consult.data]); // eslint-disable-line
+  useEffect(()=>{
+    const t=window.setTimeout(()=>setQuoteAddress(address.trim()),350);
+    return ()=>window.clearTimeout(t);
+  },[address]);
   useEffect(() => {
-    if (night === null) return;
-    post('/api/pricing/estimate', { service, tier, zoneId, night, group }).then(setEst).catch(() => setEst(null));
-  }, [service, tier, zoneId, night, group]);
+    let alive=true;
+    if(night===null||!zoneId){setEst(null);setQuoteError(null);return}
+    setEst(null);setQuoteError(null);
+    post('/api/pricing/estimate', {service,tier,zoneId,night,group,
+      address:quoteAddress||undefined,lat:geo?.lat,lng:geo?.lng})
+      .then(x=>{if(alive)setEst(x)})
+      .catch(()=>{if(alive){setEst(null);setQuoteError('Для выбранного местоположения тариф СПб/ЛО не подтверждён. Проверьте адрес и зону. Нельзя отправить заказ по цене другого региона.')}})
+    return ()=>{alive=false};
+  }, [service, tier, zoneId, night, group, quoteAddress,geo?.lat,geo?.lng]);
 
   function locate() {
     if (!navigator.geolocation) return setGeoState('fail');
@@ -431,7 +445,7 @@ export function NewOrder({ service }: { service: string }) {
       { enableHighAccuracy: true, timeout: 15_000 },
     );
   }
-  useEffect(locate, []);
+  // GPS is permission-based: do not prompt automatically when opening SOS.
 
   const zone = pricing.data?.zones.find((z: any) => z.id === zoneId);
   const groupAllowed = service !== 'tow' && (zone?.km ?? 0) > 30;
@@ -463,6 +477,8 @@ export function NewOrder({ service }: { service: string }) {
     !need.car && { id: 'f-car', name: 'марка машины' },
     !need.what && { id: 'f-what', name: 'описание задачи' },
     !need.where && { id: 'f-where', name: 'где машина' },
+    !zoneId && { id: 'f-where', name: 'тарифная зона СПб/ЛО' },
+    !est && { id: 'f-where', name: 'подтверждённый предварительный расчёт' },
     !need.tow && { id: 'f-tow', name: 'куда везти' },
     !agree && { id: 'f-agree', name: 'согласие с суммами' },
   ].filter(Boolean) as { id: string; name: string }[];
@@ -517,8 +533,14 @@ export function NewOrder({ service }: { service: string }) {
           {geoState === 'ok' ? '✓ Точка на карте определена — адрес можно не писать' : geoState === 'wait' ? 'Определяю место…' : geoState === 'fail'
             ? <>Не удалось определить место — напишите адрес. <button type="button" className="chip" style={{ minHeight: 30 }} onClick={locate}>Ещё раз</button></> : null}
         </span>
-        <span className="label">Зона — от неё цена выезда</span>
-        <Chips value={zoneId} onChange={setZoneId} options={pricing.data.zones.map((z: any) => ({ id: z.id, name: z.km > 30 ? `${z.name} · ${z.km} км` : z.name }))} />
+        <button type="button" className="btn ghost small" disabled={geoState==='wait'} onClick={locate}>
+          {geoState==='ok'?'Обновить GPS-точку':'Определить местоположение по GPS'}
+        </button>
+        <span className="note">Сейчас для автоматического расчёта доступны тарифы Санкт-Петербурга и Ленинградской области. Для остальных регионов ещё нет подтверждённой цены — нельзя применять расценки КАД.</span>
+        <span className="label">Тарифная зона — выберите осознанно</span>
+        <Chips value={zoneId} onChange={v=>{setZoneId(v);setAgree(false)}} options={pricing.data.zones.map((z: any) => ({ id: z.id, name: z.km > 30 ? `${z.name} · ${z.km} км` : z.name }))} />
+        {quoteError&&<div className="banner warn" role="alert">{quoteError}</div>}
+        {est?.regionValidation?.message&&<div className="note" role="status">{est.regionValidation.message}</div>
         <div className="grid2">
           <button type="button" className="seg" aria-pressed={!night} onClick={() => setNight(false)}>Днём</button>
           <button type="button" className="seg" aria-pressed={!!night} onClick={() => setNight(true)}>Ночь 22–7</button>
