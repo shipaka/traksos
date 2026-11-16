@@ -438,9 +438,10 @@
   .insurance-mobile-stage-map[open] .insurance-mobile-stage-chevron {transform:rotate(180deg);}
   .insurance-mobile-stage-progress {
     display:grid;
+    width:100%;
     grid-template-columns:repeat(6,minmax(0,1fr));
     gap:5px;
-    padding:0 18px 16px;
+    padding:5px 0 0;
   }
   .insurance-mobile-stage-progress span {
     height:4px;
