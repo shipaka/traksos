@@ -31,7 +31,7 @@ export function Work() {
   return (
     <main className="work-live-dashboard">
       <WorkerNotices />
-      <section className="work-command-hero" aria-label="Рабочий стол исполнителя">
+      <section className={`work-command-hero ${p.kind === 'tow' ? 'work-command-hero-tow' : 'work-command-hero-master'}`} aria-label="Рабочий стол исполнителя">
         <div className="work-command-copy">
           <span className="work-command-kicker">TRAKSOS · {p.kind === 'tow' ? 'ЭВАКУАЦИЯ' : 'ВЫЕЗДНАЯ ПОМОЩЬ'}</span>
           <h1>{me?.name || (p.kind === 'tow' ? 'Водитель эвакуатора' : 'Выездной специалист')}</h1>

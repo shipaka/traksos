@@ -53,7 +53,7 @@ export function PerformerHub() {
   ];
   return (
     <main className="performer-workspace stack">
-      <section className="internal-role-hero internal-role-hero-performer"><span>TRAKSOS · ВЫЕЗДНОЙ СПЕЦИАЛИСТ</span><h1>Профиль</h1><p>Всё по разделам — откройте нужный.</p><a className="btn" href="#/work">← На линию и к заявкам</a></section>
+      <section className={`internal-role-hero internal-role-hero-performer ${p.kind === 'tow' ? 'internal-role-hero-tow' : 'internal-role-hero-master'}`}><span>TRAKSOS · ${p.kind === 'tow' ? 'ЭВАКУАЦИЯ' : 'ВЫЕЗДНОЙ СПЕЦИАЛИСТ'}</span><h1>Профиль</h1><p>Всё по разделам — откройте нужный.</p><a className="btn" href="#/work">← На линию и к заявкам</a></section>
       <section className="performer-live-insights" aria-label="Обзор профиля исполнителя">
         <div><span>Моя техника</span><strong>{cars.length}</strong><small>{p.kind==='tow'?'эвакуаторов':'автомобилей'}</small></div>
         <div><span>Проверка</span><strong className="performer-verify">{p.verification==='approved'?'✓':p.verification==='rejected'?'!':'…'}</strong>
@@ -102,8 +102,12 @@ function PerformerOnboarding() {
     }
   }
   return (
-    <main className="performer-onboarding">
-      <div><h1>Станьте исполнителем</h1><div className="sub">Четыре коротких шага. Марки, цены и остальное настроите потом в профиле.</div></div>
+    <main className={`performer-onboarding ${isTow ? 'performer-onboarding-tow' : 'performer-onboarding-master'}`}>
+      <section className="performer-onboarding-scene" aria-label={isTow ? 'Подключение эвакуаторщика' : 'Подключение выездного мастера'}>
+        <span className="performer-onboarding-kicker">TrakSOS · {isTow ? 'ЭВАКУАЦИЯ' : 'ВЫЕЗДНАЯ ПОМОЩЬ'}</span>
+        <h1>Станьте исполнителем</h1>
+        <div className="sub">Четыре коротких шага. Марки, цены и остальное настроите потом в профиле.</div>
+      </section>
       <div className="step-card">
         <div className="step-head"><span className="step-n">1</span><b>Кто вы</b></div>
         <div className="grid2">
