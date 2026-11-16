@@ -21,7 +21,7 @@ const unsafeText=[
   /\b[A-HJ-NPR-Z0-9]{17}\b/u,
   /(?:t\.me|wa\.me|telegram\.me|https?:\/\/)/iu,
   /\b\d{1,2}\.\d{5,}\s*[,;]\s*\d{1,3}\.\d{5,}\b/u,
-  /\b[АВЕКМНОРСТУХABEKMHOPCTYX]\d{3}[АВЕКМНОРСТУХABEKMHOPCTYX]{2}\d{2,3}\b/iu,
+  /(?<![\p{L}\p{N}])[АВЕКМНОРСТУХABEKMHOPCTYX]\d{3}[АВЕКМНОРСТУХABEKMHOPCTYX]{2}\d{2,3}(?![\p{L}\p{N}])/iu,
 ];
 function safeText(value:string){
   if(unsafeText.some(x=>x.test(value)))
