@@ -142,6 +142,27 @@ test('courier consent + stop-by-stop GPS, customer signs handoff, last fix is er
  ok(await t.api('POST','/api/courier/runs/'+runId+'/stops/'+stops[0].id+'/arrive',{},driver.token));
  assert.equal((await t.api('POST','/api/shop/orders/'+order1+'/confirm-delivery',
    {},client2.token)).status,404);
+ assert.equal((await t.api('POST','/api/shop/orders/'+order1+'/confirm-delivery',
+   {},client1.token)).status,409,'arrival alone cannot prove handoff');
+ assert.equal((await t.api('POST','/api/shop/orders/'+order1+'/delivery-code',
+   {},client2.token)).status,404,'other buyer cannot issue the code');
+ const firstCode=ok(await t.api('POST','/api/shop/orders/'+order1+'/delivery-code',{},client1.token));
+ assert.match(firstCode.code,/^\d{6}$/);
+ assert.equal((await t.api('POST','/api/courier/runs/'+runId+'/stops/'+stops[1].id+
+   '/verify-handoff',{code:firstCode.code},driver.token)).status,409);
+ assert.equal((await t.api('POST','/api/courier/runs/'+runId+'/stops/'+stops[0].id+
+   '/verify-handoff',{code:'wrong'},driver.token)).status,400);
+ assert.equal((await t.api('POST','/api/courier/runs/'+runId+'/stops/'+stops[0].id+
+   '/verify-handoff',{code:firstCode.code==='999999'?'000000':'999999'},driver.token)).status,409);
+ const proof=await t.db.one<{attempts:number;code_hash:string}>(
+   'select attempts,code_hash from shop_delivery_handoffs where stop_id=$1',[stops[0].id]);
+ assert.equal(proof?.attempts,1,'wrong code must consume one attempt even if the API returns 409');
+ assert.ok(proof?.code_hash&&proof.code_hash!==firstCode.code,'raw code must not persist');
+ ok(await t.api('POST','/api/courier/runs/'+runId+'/stops/'+stops[0].id+
+   '/verify-handoff',{code:firstCode.code},driver.token));
+ assert.equal((await t.api('POST','/api/courier/runs/'+runId+'/stops/'+stops[0].id+
+   '/verify-handoff',{code:firstCode.code},driver.token)).status,409,'code cannot be reused');
+ assert.equal(ok(await t.api('GET','/api/shop/orders/'+order1+'/courier',undefined,client1.token)).handoffVerified,true);
  ok(await t.api('POST','/api/shop/orders/'+order1+'/confirm-delivery',{},client1.token));
  const secondLeg=ok(await t.api('GET','/api/courier/runs/'+runId,undefined,driver.token));
  assert.equal(secondLeg.activeStopId,stops[1].id);
@@ -163,6 +184,10 @@ test('courier consent + stop-by-stop GPS, customer signs handoff, last fix is er
    undefined,client2.token)).live,false);
  ok(await t.api('PUT','/api/courier/location-consent',{enabled:true},driver.token));
  ok(await t.api('POST','/api/courier/runs/'+runId+'/stops/'+stops[1].id+'/arrive',{},driver.token));
+ assert.equal((await t.api('POST','/api/shop/orders/'+order2+'/confirm-delivery',{},client2.token)).status,409);
+ const secondCode=ok(await t.api('POST','/api/shop/orders/'+order2+'/delivery-code',{},client2.token));
+ ok(await t.api('POST','/api/courier/runs/'+runId+'/stops/'+stops[1].id+
+   '/verify-handoff',{code:secondCode.code},driver.token));
  ok(await t.api('POST','/api/shop/orders/'+order2+'/confirm-delivery',{},client2.token));
  two=ok(await t.api('GET','/api/shop/orders/'+order2+'/courier',undefined,client2.token));
  assert.equal(two.live,false);
