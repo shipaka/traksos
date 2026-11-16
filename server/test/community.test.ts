@@ -59,6 +59,14 @@ test('messages: retry idempotence, moderation, cursor, no phone/PII leak',async(
   assert.equal((await t.api('POST',path,{text:'Мой номер +7 999 111-22-33',clientNonce:randomUUID()},driver.token)).status,400);
   const pending=ok(await t.api('POST',path,{text:'блядь, ошибка на панели',clientNonce:randomUUID()},driver.token));
   assert.equal(pending.status,'pending');
+  const latest=ok(await t.api('GET',
+    `/api/community/rooms/${driverRoom}/messages?recent=1&limit=1`,undefined,driver.token));
+  assert.equal(latest.messages.length,1,'мобильный чат загружает последнюю страницу');
+  assert.equal(latest.messages[0].id,pending.id);
+  assert.equal(latest.nextCursor,pending.id);
+  const incremental=ok(await t.api('GET',
+    `/api/community/rooms/${driverRoom}/messages?after=${latest.nextCursor}`,undefined,driver.token));
+  assert.equal(incremental.messages.length,0,'новые события через курсор не повторяют предыдущие');
   const viewed=ok(await t.api('GET',`/api/community/rooms/${driverRoom}/messages?after=0`,undefined,driver.token));
   assert.equal(viewed.messages.length,2);
   assert.ok(viewed.messages.every((m:any)=>m.isMine));
