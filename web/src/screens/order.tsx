@@ -219,6 +219,9 @@ function Steps({ status, service, events = [], createdAt }: { status: string; se
     : status === 'arrived' ? 'Исполнитель на месте'
     : status === 'working' ? 'Работа выполняется'
     : status === 'accepted' ? 'Исполнитель назначен'
+    : status === 'searching' ? 'Ищем исполнителя'
+    : status === 'awaiting_owner' ? 'Ожидаем подтверждения владельца'
+    : status === 'awaiting_confirmation' ? 'Ожидаем подтверждения стоимости'
     : 'Ход выполнения заявки';
   return <section className="cinematic-status" aria-label="Этапы выполнения заявки">
     <div className="cinematic-status-glow" aria-hidden="true" />
