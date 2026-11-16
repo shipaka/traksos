@@ -38,6 +38,7 @@ import { PrivacyService } from './services/privacy.ts';
 import { StandingService } from './services/standing.ts';
 import { ShopService } from './services/shop.ts';
 import { registerShopCourierRoutes } from './services/shopCourier.ts';
+import { registerShopMerchandisingRoutes } from './services/shopMerchandising.ts';
 import { ShopCatalogService } from './services/shopCatalog.ts';
 import { ModerationService } from './services/moderation.ts';
 import { registerCommunityRoutes } from './services/community.ts';
@@ -599,6 +600,7 @@ export function createApp(d: Deps) {
   // The legacy full catalog endpoint remains for older APK versions. New clients
   // request light configuration then load only one page of products at a time.
   registerShopCourierRoutes(r, d.db, notifier);
+  registerShopMerchandisingRoutes(r, d.db, notifier);
   r.get('/api/shop', true, (c: AuthedCtx) => shop.catalog(c.query.get('light') === '1'));
   r.get('/api/shop/search', true, (c: AuthedCtx) => shop.search(
     c.query.get('q') ?? '', c.query.get('category') ?? '',
