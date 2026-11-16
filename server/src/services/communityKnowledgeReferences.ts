@@ -85,6 +85,17 @@ export function registerKnowledgeReferenceRoutes(r:Router,db:Db){
         :'Общая учебная иллюстрация без точной модификации ТС. Для ремонта требуется оригинальная схема по VIN.'};
   });
 
+  // Administration needs to see withdrawn records too, otherwise takedown
+  // could never be reversed after an error or completed rights inspection.
+  r.get('/api/admin/community/knowledge/references',['admin'],async()=>{
+    const sources=await db.query<TechReference & {
+      technical_review_note:string|null;technically_reviewed_at:string|null
+    }>(
+      `select ${referenceSelect},technical_review_note,technically_reviewed_at,active
+       from community_knowledge_sources order by active desc,updated_at desc,slug limit 100`);
+    return {sources,requiresDocumentedHumanReview:true};
+  });
+
   // Editorial takedown/technical review applies ONLY to our reference records,
   // never mirrors or modifies an external author's content.
   r.post('/api/admin/community/knowledge/references/:id/review',['admin'],
