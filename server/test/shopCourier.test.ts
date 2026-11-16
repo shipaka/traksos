@@ -141,6 +141,12 @@ test('courier consent + stop-by-stop GPS, customer signs handoff, last fix is er
  two=ok(await t.api('GET','/api/shop/orders/'+order2+'/courier',undefined,client2.token));
  assert.equal(two.live,false);
  assert.equal((await t.db.query('select * from shop_courier_live_positions where run_id=$1',[runId])).length,0);
+ const history=ok(await t.api('GET','/api/shop/orders/'+order1+'/delivery-history',undefined,client1.token)).events;
+ assert.equal(history[0].status,'planned');
+ assert.equal(history[history.length-1].status,'delivered');
+ assert.ok(history.some((x:any)=>x.status==='arrived'));
+ assert.equal((await t.api('GET','/api/shop/orders/'+order2+'/delivery-history',undefined,client1.token)).status,404,
+   'другой покупатель не видит чужой трек доставки');
 });
 
 
@@ -262,6 +268,12 @@ test('failed delivery cannot be marked delivered; warehouse return releases orde
    courierId:driver.id,pickupAddress:'Санкт-Петербург, центральный склад 1',orderIds:[order]
  },admin.token));
  assert.ok(newAssignment.id!==newRun.id,'повторный рейс возможен после подтверждения возврата');
+ const deliveryHistory=ok(await t.api('GET','/api/shop/orders/'+order+'/delivery-history',undefined,client1.token)).events;
+ assert.deepEqual(deliveryHistory.filter((x:any)=>['failed','returned','route_cancelled'].includes(x.status))
+   .map((x:any)=>x.status),['failed','returned'],'история не пропадает после удаления остановки');
+ assert.equal(deliveryHistory[deliveryHistory.length-1].status,'planned',
+   'повторный маршрут фиксируется в той же истории исходного заказа');
+ assert.equal((await t.api('GET','/api/shop/orders/'+order+'/delivery-history',undefined,client2.token)).status,404);
  assert.equal((await t.api('POST','/api/admin/shop/courier-runs/'+newRun.id+'/confirm-warehouse-return',{
    evidence:'Повторное неподтверждённое действие на закрытом рейсе'},admin.token)).status,409);
 });
