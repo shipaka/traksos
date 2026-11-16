@@ -40,6 +40,7 @@ import { Fleet, QrJoin } from './screens/fleet.tsx';
 import { Help } from './screens/help.tsx';
 import { Rules } from './screens/rules.tsx';
 import { Shop, ShopCart, ShopHistory } from './screens/shop.tsx';
+import { DriverAir } from './screens/driverAir.tsx';
 import { Privacy } from './screens/privacy.tsx';
 import { ModCase, Appeal, MyReviews } from './screens/moderation.tsx';
 import { ModeratorDesk } from './screens/moderatorDesk.tsx';
@@ -235,6 +236,7 @@ function App() {
     case 'order': screen = <Order id={b} />; break;
     case 'orders': screen = isCustomer ? <Orders as="client" /> : <main><div className="empty">Нет доступа к клиентским заявкам</div></main>; break;
     case 'garage': screen = isCustomer ? <Garage /> : <main><div className="empty">Нет доступа к гаражу</div></main>; break;
+    case 'air': screen = me.roles.includes('driver') ? <DriverAir /> : <main><div className="empty">Водительский Эфир доступен только водителям.</div></main>; break;
     case 'profile': screen = <Profile />; break;
     case 'invite': screen = <Invite />; break;
     case 'r': screen = <Invite />; break;
@@ -332,7 +334,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       ? [['/moderation', '▦', 'Рабочий стол'], ['/admin/section/queue', '⚑', 'Проверки'], ['/support', '?', 'Обращения']]
     : mode === 'admin'
       ? [['/admin', '▦', 'Рабочий стол'], ['/admin/section/orders', '☰', 'Заявки'], ['/admin/section/support', '?', 'Обращения']]
-      : [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь'], ['/shop', '⚙', 'Запчасти'], ['/profile', '◉', 'Профиль']];
+      : me.roles.includes('driver')
+        ? [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь'], ['/air', '◉', 'Эфир'], ['/profile', '◉', 'Профиль']]
+        : [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь'], ['/shop', '⚙', 'Запчасти'], ['/profile', '◉', 'Профиль']];
   // Все дополнительные функции доступны в шапке, даже когда они не в нижних вкладках.
   // Не показываем чужие роли и не создаём несуществующие страницы.
   const accountLinks: [string, string][] = mode === 'performer'
@@ -378,6 +382,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     : [['/orders', 'История заявок'], ['/garage', 'Мой гараж'],
        ...(!me?.owner_id && !me?.roles.includes('driver') ? [['/fleet', 'Мой автопарк']] as [string,string][] : []),
        ['/services', 'СТО и запись'],
+       ...(me?.roles.includes('driver') ? [['/air', 'Водительский Эфир и личные чаты'], ['/shop', 'Магазин запчастей']] as [string,string][] : []),
        ['/reviews', 'Мои отзывы'], ['/invite', 'Пригласить друга'],
        ['/profile', 'Профиль и настройки']];
   const helpLinks: [string, string][] = [
@@ -417,6 +422,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
             </div>
           </details>)}
           <a href="#/join" className="guest-business-link">Для партнёров</a>
+          <a href="#/login" className="guest-business-link">Сообщество</a>
           <a href="#/company" className="guest-business-link">Компания</a>
           <a href="#/offers" className="guest-business-link">Оферты</a>
         </nav>}
