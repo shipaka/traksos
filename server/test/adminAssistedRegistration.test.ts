@@ -32,7 +32,7 @@ test('admin creates new role-specific account without a password/session; invite
   const inviteCode = ok(await t.api('POST', '/api/auth/code', { phone, purpose: 'reset' }));
   const activated = ok(await t.api('POST', '/api/auth/verify', {
     phone, code: inviteCode.devCode, purpose: 'reset',
-    accountType: 'owner', role: 'client', password: 'NewPassword12345!',
+    role: 'client', password: 'NewPassword12345!',
   }));
   assert.equal(activated.user.id, account.user.id);
   assert.deepEqual(activated.user.roles, ['master', 'service'], 'SMS activation cannot change assigned roles');
