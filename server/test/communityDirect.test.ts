@@ -60,6 +60,13 @@ test('DM: idempotency, contacts and profanity moderation, peer isolation, report
   assert.ok(!('phone' in peer.messages[0]));
   const owner=ok(await t.api('GET',url+'?after=0',undefined,driverA.token));
   assert.equal(owner.messages.length,2);
+  const latest=ok(await t.api('GET',url+'?recent=1&limit=1',undefined,driverA.token));
+  assert.equal(latest.messages.length,1);
+  assert.equal(latest.messages[0].id,flagged.id,
+    'личные сообщения на телефоне открываются с последних, включая ожидающие модерации свои');
+  assert.equal(latest.nextCursor,flagged.id);
+  assert.equal(ok(await t.api('GET',url+'?after='+latest.nextCursor,undefined,driverA.token))
+    .messages.length,0);
   assert.equal((await t.api('POST','/api/community/direct/messages/'+msg.id+'/report',{reason:'Не по теме'},outsider.token)).status,404);
   ok(await t.api('POST','/api/community/direct/messages/'+msg.id+'/report',{reason:'Не по теме'},driverB.token));
   const queue=ok(await t.api('GET','/api/admin/community/direct/moderation',undefined,admin.token));
