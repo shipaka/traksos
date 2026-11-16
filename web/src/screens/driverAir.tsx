@@ -7,6 +7,7 @@ import { NearbyHelp } from './nearbyHelp.tsx';
 type AirProfile={nickname:string;city_label:string|null;share_city:boolean;public_city:string|null};
 type AirRoom={id:string;slug:string;title:string;kind:string;audience:string;locality:string|null;joined:boolean};
 type AirMessage={id:string;nickname:string;body:string;public_city:string|null;isMine:boolean;created_at:string;moderation_state:string};
+type AirModerationChange={id:string;revision:string;moderation_state:'published'|'hidden';message?:AirMessage};
 type AirThread={id:string;status:string;peerNickname:string;direction:'outgoing'|'incoming';blocked:boolean};
 type RoadEvent={id:string;nickname:string;category:string;description:string;locality:string|null;expires_at:string;moderation_state:string;verifiedByRoadServices:boolean};
 const roadLabels:Record<string,string>={
@@ -31,10 +32,13 @@ function useAirMessages(endpoint:string|null){
   const [loading,setLoading]=useState(true);
   const [revision,setRevision]=useState(0);
   const cursor=useRef('0');
+  const moderationCursor=useRef('0');
   useEffect(()=>{
     let alive=true,fetching=false;
-    cursor.current='0';setMessages([]);setError(null);setLoading(true);
+    cursor.current='0';moderationCursor.current='0';
+    setMessages([]);setError(null);setLoading(true);
     if(!endpoint){setLoading(false);return;}
+    const moderationUrl=endpoint.replace(/\/messages$/,'/moderation-events');
     const load=async(initial=false)=>{
       if(fetching||document.visibilityState==='hidden')return;
       if(!navigator.onLine){
@@ -44,10 +48,35 @@ function useAirMessages(endpoint:string|null){
       fetching=true;
       try{
         const query=initial?'?recent=1&limit=50':('?after='+encodeURIComponent(cursor.current)+'&limit=50');
-        const d=await get<{messages:AirMessage[];nextCursor:string}>(endpoint+query);
+        const d=await get<{messages:AirMessage[];nextCursor:string;moderationCursor?:string}>(endpoint+query);
         if(!alive)return;
         setMessages(curr=>initial?d.messages:appendMessages(curr,d.messages));
         cursor.current=d.nextCursor;
+        if(initial){
+          // This watermark was captured BEFORE the recent messages were read.
+          // Any moderation committed during the initial load is replayed safely.
+          moderationCursor.current=d.moderationCursor??'0';
+        }else{
+          // Publication/hiding updates are independent of the message-id cursor.
+          // Fetch bounded pages, keeping memory usage fixed on weak mobile links.
+          for(let page=0;page<5;page++){
+            const previous=moderationCursor.current;
+            const updates=await get<{
+              changes:AirModerationChange[];nextCursor:string;hasMore:boolean
+            }>(moderationUrl+'?after='+encodeURIComponent(previous)+'&limit=100');
+            if(!alive)return;
+            moderationCursor.current=updates.nextCursor;
+            if(updates.changes.length)setMessages(curr=>{
+              let next=curr;
+              for(const event of updates.changes){
+                if(event.moderation_state==='hidden')next=next.filter(m=>m.id!==event.id);
+                else if(event.message)next=appendMessages(next,[event.message]);
+              }
+              return next;
+            });
+            if(!updates.hasMore||updates.nextCursor===previous)break;
+          }
+        }
         setError(null);
       }catch(e){if(alive)setError(safeError(e))}
       finally{fetching=false;if(alive)setLoading(false)}
@@ -57,7 +86,9 @@ function useAirMessages(endpoint:string|null){
     const reconnect=()=>{void load()};
     const visible=()=>{if(document.visibilityState==='visible')void load()};
     const unsubscribe=onEvent((e:any)=>{
-      if(['community_message','community_direct_message','connection_restored'].includes(e.type))void load();
+      if(['community_message','community_direct_message',
+          'community_moderation','community_direct_moderation','connection_restored'].includes(e.type))
+        void load();
     });
     window.addEventListener('online',reconnect);
     document.addEventListener('visibilitychange',visible);
@@ -67,7 +98,8 @@ function useAirMessages(endpoint:string|null){
       document.removeEventListener('visibilitychange',visible);
     };
   },[endpoint,revision]);
-  return {messages,loading,error,reload:()=>setRevision(x=>x+1),append:(m:AirMessage)=>setMessages(curr=>appendMessages(curr,[m]))};
+  return {messages,loading,error,reload:()=>setRevision(x=>x+1),
+    append:(m:AirMessage)=>setMessages(curr=>appendMessages(curr,[m]))};
 }
 function MessageStream({endpoint,canWrite,placeholder}:{
   endpoint:string|null;canWrite:boolean;placeholder:string
