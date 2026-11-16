@@ -209,9 +209,11 @@ function Steps({ status, service, events = [], createdAt }: { status: string; se
   const awaitingOwner = status === 'awaiting_owner';
   const showProgress = !stopped && !awaitingOwner;
   const stageEvent: Record<string, string[]> = { accepted: ['accepted'], en_route: ['depart'], arrived: ['arrive'], working: ['start_work'], awaiting_confirmation: ['amount_proposed'], completed: ['amount_confirmed', 'completed', 'confirm'] };
+  // A request can be created while owner approval is pending: creation time is not dispatch time.
   const stageTime = (step: string) => {
     const candidates = events.filter(e => (stageEvent[step] ?? []).includes(e.type));
-    const at = step === 'searching' ? createdAt : candidates[candidates.length - 1]?.created_at;
+    const searchEvents = events.filter(e => e.type === 'dispatch_started' || e.type === 'retry');
+    const at = step === 'searching' ? searchEvents[searchEvents.length - 1]?.created_at : candidates[candidates.length - 1]?.created_at;
     if (!at || Number.isNaN(Date.parse(at))) return null;
     return new Intl.DateTimeFormat('ru-RU', {hour:'2-digit', minute:'2-digit', second:'2-digit'}).format(new Date(at));
   };
