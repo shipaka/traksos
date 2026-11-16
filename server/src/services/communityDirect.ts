@@ -127,8 +127,9 @@ export function registerCommunityDirectRoutes(r:Router,db:Db,notifier:Notifier){
       "join community_dm_messages m on m.id=e.message_id "+
       "left join community_profiles p on p.user_id=m.sender_id "+
       "where e.thread_id=$1 and e.id>$2::bigint order by e.id limit $3",
-      [t.id,after,limit]);
-    const changes=rows.flatMap(e=>{
+      [t.id,after,limit+1]);
+    const page=rows.slice(0,limit);
+    const changes=page.flatMap(e=>{
       if(e.moderation_state==='published'){
         if(e.current_state!=='published')return [];
         return [{revision:e.revision,id:e.id,moderation_state:'published',
@@ -140,7 +141,7 @@ export function registerCommunityDirectRoutes(r:Router,db:Db,notifier:Notifier){
     });
     const epoch=await db.one<{sync_epoch:string}>(
       'select event_epoch::text as sync_epoch from community_dm_threads where id=$1',[t.id]);
-    return {changes,nextCursor:rows.at(-1)?.revision??after,hasMore:rows.length>=limit,
+    return {changes,nextCursor:page.at(-1)?.revision??after,hasMore:rows.length>limit,
       syncEpoch:epoch?.sync_epoch??'0'};
   });
   r.post('/api/community/direct/:id/messages',true,async(c:AuthedCtx)=>{
