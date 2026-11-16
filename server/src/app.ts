@@ -1212,6 +1212,21 @@ export function createApp(d: Deps) {
     await audit(c.user.id, 'performer.priority', c.params.id, b);
     return { ok: true };
   });
+  // Sensitive route history: administrator only, bounded result and retention.
+  // Never expose these coordinates through the regular client order response.
+  r.get('/api/admin/orders/:id/route', ['admin'], async (c: AuthedCtx) => {
+    const order = await d.db.one<{ id: string; number: number; performer_id: string | null }>(
+      'select id,number,performer_id from orders where id=$1', [c.params.id]);
+    if (!order) throw notFound('Заявка не найдена');
+    const points = await d.db.query<{ lat: number; lng: number; received_at: Date }>(
+      `select lat,lng,received_at from (
+         select lat,lng,received_at,id from performer_route_samples
+         where order_id=$1 and received_at >= now() - interval '30 days'
+         order by received_at desc,id desc limit 1000
+       ) samples order by received_at,id`, [order.id]);
+    return { orderId: order.id, number: order.number, points,
+      disclaimer: 'GPS points are unverified observations, not proof of arrival or distance' };
+  });
   r.get('/api/admin/orders', ['admin'], (c: AuthedCtx) => d.db.query(
     `select o.id, o.number, o.status, o.service, o.is_sos, o.address, o.created_at, o.payment_method,
             o.call_out_amount, o.work_amount, c.phone as client_phone, p.name as performer_name
