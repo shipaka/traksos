@@ -106,10 +106,12 @@ test('DM moderation changes are delivered behind the message cursor only to part
   ok(await t.api('POST','/api/admin/community/direct/messages/'+late.id+'/moderate',
     {status:'published'},admin.token));
   const published=ok(await t.api('GET',route+'/moderation-events?after='+checkpoint,undefined,driverA.token));
-  assert.equal(published.changes.length,1);
-  assert.equal(published.changes[0].id,late.id);
-  assert.equal(published.changes[0].message.body,'сука, стою в пробке уже час');
-  assert.equal('sender_id' in published.changes[0].message,false);
+  const approved=published.changes.filter((x:any)=>x.id===late.id);
+  assert.equal(approved.length,1,'late approval survives the higher message-ID cursor');
+  assert.ok(published.changes.some((x:any)=>x.id===later.id),
+    'new messages are also delivered on the ordered event stream');
+  assert.equal(approved[0].message.body,'сука, стою в пробке уже час');
+  assert.equal('sender_id' in approved[0].message,false);
   assert.equal(ok(await t.api('GET',route+'/messages?after='+later.id,undefined,driverA.token))
     .messages.length,0,'normal message cursor misses the delayed approval');
 
