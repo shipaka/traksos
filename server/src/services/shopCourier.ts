@@ -15,11 +15,11 @@ async function courier(db:Db,user:AuthUser) {
   if(!p?.active)throw forbidden('Доступ курьера не подтверждён');
   return p;
 }
-type Run={id:string;courier_id:string;status:string;pickup_address:string;city_code:string};
+type Run={id:string;courier_id:string;status:string;pickup_address:string;city_code:string;dispatch_approved_at:Date|null};
 async function myRun(db:Db,c:AuthedCtx) {
   await courier(db,c.user);
   const run=await db.one<Run>('select * from shop_courier_runs where id=$1',[parse(id,c.params.id)]);
-  if(!run || run.courier_id!==c.user.id)throw notFound('Маршрут не найден');
+  if(!run || run.courier_id!==c.user.id || !run.dispatch_approved_at)throw notFound('Маршрут не найден');
   return run;
 }
 async function runSummary(db:Db,run:Run) {
@@ -114,7 +114,7 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
         [c.user.id,'shop.courier_run_created',result.id,{stops:b.orderIds.length}]);
       return result;
     });
-    notifier.live([b.courierId],{type:'courier_route_assigned',runId:run.id});
+    // The courier will be notified only after an admin approves the route economics.
     return {id:run.id,status:run.status,stops:b.orderIds.length};
   });
   r.get('/api/admin/shop/courier-runs',['admin'],async()=>{
@@ -127,7 +127,7 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
   r.get('/api/courier/runs',true,async(c:AuthedCtx)=>{
     await courier(db,c.user);
     const rows=await db.query<Run>(
-      "select * from shop_courier_runs where courier_id=$1 and status in ('planned','accepted','collecting','delivering') "+
+      "select * from shop_courier_runs where courier_id=$1 and dispatch_approved_at is not null and status in ('planned','accepted','collecting','delivering') "+
       "order by created_at desc limit 10",[c.user.id]);
     return {runs:rows.map(x=>({id:x.id,status:x.status,cityCode:x.city_code,stopCount:null}))};
   });
