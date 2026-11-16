@@ -223,7 +223,7 @@ internal object CinematicAppLock {
             orientation = LinearLayout.VERTICAL
             addView(group, LinearLayout.LayoutParams(-1, -2))
         }
-        scrolling.addView(center, ScrollView.LayoutParams(-1, -1))
+        scrolling.addView(center, FrameLayout.LayoutParams(-1, -2))
         cover.addView(scrolling, FrameLayout.LayoutParams(-1, -1))
         if (Build.VERSION.SDK_INT >= 26 && ValueAnimator.areAnimatorsEnabled()) {
             group.alpha = .05f
