@@ -93,12 +93,16 @@ export function registerCommunityDirectRoutes(r:Router,db:Db,notifier:Notifier){
     const t=await mustThread(db,c);
     if(t.status!=='accepted')throw forbidden('Дождитесь подтверждения переписки');
     const p=cursor(c);
+    const recent=c.query.get('recent')==='1';
     const rows=await db.query<{id:string;body:string;created_at:Date;sender_id:string;moderation_state:string;nickname:string}>(
       "select m.id::text as id,m.body,m.created_at,m.sender_id,m.moderation_state,coalesce(p.nickname,'Участник') as nickname "+
       "from community_dm_messages m left join community_profiles p on p.user_id=m.sender_id "+
-      "where m.thread_id=$1 and m.id>$2 and (m.moderation_state='published' or (m.moderation_state='pending' and m.sender_id=$3)) order by m.id limit $4",
-      [t.id,p.after,c.user.id,p.limit]);
-    return {messages:rows.map(({sender_id,...m})=>({...m,isMine:sender_id===c.user.id})),nextCursor:rows.at(-1)?.id??p.after};
+      "where m.thread_id=$1 and ($5::boolean or m.id>$2) "+
+      "and (m.moderation_state='published' or (m.moderation_state='pending' and m.sender_id=$3)) "+
+      "order by m.id "+(recent?'desc':'asc')+" limit $4",
+      [t.id,p.after,c.user.id,p.limit,recent]);
+    const sorted=recent?rows.reverse():rows;
+    return {messages:sorted.map(({sender_id,...m})=>({...m,isMine:sender_id===c.user.id})),nextCursor:sorted.at(-1)?.id??p.after};
   });
   r.post('/api/community/direct/:id/messages',true,async(c:AuthedCtx)=>{
     const t=await mustThread(db,c);
