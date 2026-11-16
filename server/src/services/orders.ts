@@ -4,7 +4,7 @@ import type { SettingsService } from './settings.ts';
 import type { Notifier } from './notify.ts';
 import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { estimate, isNight, billWork, type Tier, type Extra } from '../domain/pricing.ts';
-import {checkLegacyPricingLocation,legacyPricingWarning} from '../domain/pricingRegion.ts';
+import {checkLegacyPricingLocation,legacyPricingWarning,legacyTariffZoneMismatch} from '../domain/pricingRegion.ts';
 import { rankCandidates, performerKindFor, type Candidate } from '../domain/dispatch.ts';
 import { transition, canDo, statusLabels, type Action, type Actor, type OrderStatus } from '../domain/orderState.ts';
 import { cancelStage, cancelSplit, pct } from '../domain/money.ts';
@@ -135,6 +135,11 @@ export class OrdersService {
     })==='outside'){
       throw conflict('outside_legacy_tariff_region',
         'Нельзя оформить выезд по тарифам СПб/ЛО за их пределами. В вашем регионе нужен подтверждённый местный тариф. Заявку и оплату не создавали.');
+    }
+    if(!isConsult){
+      const zoneMismatch=legacyTariffZoneMismatch({address:i.address},i.zoneId);
+      if(zoneMismatch)throw conflict('mismatched_legacy_tariff_zone',
+        'Указанный населённый пункт не соответствует выбранной зоне выезда СПб/ЛО. Выберите правильную зону, прежде чем подтверждать цену.');
     }
     const night = isConsult ? false : i.night ?? isNight(all.pricing, this.now());
     const tier = i.tier ?? 'eco';
