@@ -711,6 +711,20 @@ export class OrdersService {
           refund: cancelEvent.data.refund,
         }
       : null;
+    // Payment truth comes from the payment ledger, not the cancellation estimate.
+    // Do not expose provider identifiers or bank internals to the performer.
+    const cancellationPayment = o.status === 'cancelled' && (actor === 'client' || actor === 'admin')
+      ? await this.db.one<any>(
+          `select p.status as payment_status, p.total as payment_total,
+                  p.refunded_amount as refunded_amount,
+                  c.status as operation_status, c.action as operation_action,
+                  c.amount_to_capture as amount_to_capture,
+                  c.refunded_amount as planned_refund
+             from payments p
+             left join payment_cancel_intents c on c.payment_id=p.id
+            where p.order_id=$1 and p.kind='call_out'
+            order by p.created_at desc limit 1`, [orderId])
+      : null;
     const caseRootId = o.case_root_id ?? o.id;
     // The combined customer invoice is visible to the customer/admin only:
     // a performer sees exclusively the price of their own contract.
@@ -773,7 +787,15 @@ export class OrdersService {
       followUps: o.service === 'consult' ? await this.db.query(`select id, number, service, status from orders where consult_of=$1 order by created_at`, [o.id]) : [],
       consultBack: o.service === 'consult' ? (await this.settings.get('pricing')).consult : null,
       cancelReason: o.cancel_reason, cancelStage: o.cancel_stage,
-      cancelBreakdown,
+      cancelBreakdown, cancellationPayment: cancellationPayment ? {
+        paymentStatus: cancellationPayment.payment_status,
+        paymentTotal: cancellationPayment.payment_total,
+        refundedAmount: cancellationPayment.refunded_amount,
+        operationStatus: cancellationPayment.operation_status,
+        operationAction: cancellationPayment.operation_action,
+        amountToCapture: cancellationPayment.amount_to_capture,
+        plannedRefund: cancellationPayment.planned_refund,
+      } : null,
       createdAt: o.created_at, acceptedAt: o.accepted_at, arrivedAt: o.arrived_at, completedAt: o.completed_at,
       performer, client, events,
       you: actor ?? 'candidate',
