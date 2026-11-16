@@ -1,5 +1,7 @@
 import {z} from 'zod';
 import type {Db} from '../db/index.ts';
+import type {Notifier} from './notify.ts';
+import {roomLiveRecipients} from './community.ts';
 import type {Router,AuthUser,AuthedCtx} from '../http/router.ts';
 import {parse,bad,forbidden,notFound,conflict,HttpError} from '../http/router.ts';
 
@@ -92,7 +94,14 @@ function publicCase(row:CaseRow & {nickname?:string|null},userId:string){
     isAuthor:author_id===userId,
     hasKnowledgeProposal:Boolean(knowledge_proposal_id)};
 }
-export function registerProfessionalCasesRoutes(r:Router,db:Db){
+export function registerProfessionalCasesRoutes(r:Router,db:Db,notifier:Notifier){
+  const notify=async(roomId:string,from:string,caseId:string,kind:string)=>{
+    const room=await db.one<ProRoom>(
+      'select id,active,audience,specialty from community_rooms where id=$1',[roomId]);
+    if(!room?.active)return;
+    const users=await roomLiveRecipients(db,room,from);
+    notifier.live(users,{type:'community_technical_case',roomId,caseId,kind});
+  };
   // Preview never exposes an order identifier to the professional room.
   r.get('/api/community/pro-cases/order-preview/:id',true,async(c:AuthedCtx)=>{
     const id=parse(uid,c.params.id);
@@ -167,6 +176,7 @@ export function registerProfessionalCasesRoutes(r:Router,db:Db){
       if(!record)throw new Error('case insert returned no row');
       return {record,created:true};
     });
+    if(result.created)await notify(b.roomId,c.user.id,result.record.id,'created');
     return {case:publicCase(result.record,c.user.id),created:result.created,
       sharingNotice:'В клубе публикуются только технические сведения без идентификаторов заказа и клиента'};
   });
@@ -214,6 +224,7 @@ export function registerProfessionalCasesRoutes(r:Router,db:Db){
         [row.id,c.user.id,b.clientNonce,b.body]);
       return {id:saved!.id,created:true};
     });
+    if(result.created)await notify(row.room_id,c.user.id,row.id,'reply');
     return {id:result.id,created:result.created};
   });
   r.post('/api/community/pro-cases/:id/resolve',true,async(c:AuthedCtx)=>{
@@ -221,8 +232,14 @@ export function registerProfessionalCasesRoutes(r:Router,db:Db){
     if(row.author_id!==c.user.id&&!c.user.roles.includes('admin'))
       throw forbidden('Только автор вопроса может выбрать решение');
     const b=parse(z.object({replyId:z.string().regex(/^\d{1,16}$/).nullable().optional()}),c.body);
-    return db.tx(async q=>{
-      await q.one('select id from community_technical_cases where id=$1 for update',[row.id]);
+    const result=await db.tx(async q=>{
+      const current=await q.one<{status:string;accepted_reply_id:string|null}>(
+        'select status,accepted_reply_id::text as accepted_reply_id from community_technical_cases where id=$1 for update',[row.id]);
+      if(current?.status==='resolved'){
+        if(current.accepted_reply_id!==(b.replyId??null))
+          throw conflict('already_resolved','Выбранное решение уже зафиксировано автором');
+        return {id:row.id,status:'resolved',accepted_reply_id:current.accepted_reply_id,resolved_at:row.resolved_at,modified:false};
+      }
       if(b.replyId){
         if(!await q.one('select 1 from community_technical_case_replies where case_id=$1 and id=$2',
           [row.id,b.replyId]))throw bad('reply_not_found','Ответ не принадлежит этому вопросу');
@@ -230,8 +247,11 @@ export function registerProfessionalCasesRoutes(r:Router,db:Db){
       return q.one(`update community_technical_cases
         set status='resolved',accepted_reply_id=$2,resolved_at=coalesce(resolved_at,now()),
           updated_at=now() where id=$1
-        returning id,status,accepted_reply_id,resolved_at`,[row.id,b.replyId??null]);
+        returning id,status,accepted_reply_id,resolved_at`,[row.id,b.replyId??null]).then(r=>({...r!,modified:true}));
     });
+    if(result.modified)await notify(row.room_id,c.user.id,row.id,'resolved');
+    const {modified,...response}=result;
+    return response;
   });
   r.post('/api/community/pro-cases/:id/propose-knowledge',true,async(c:AuthedCtx)=>{
     const row=await openCase(db,c,true);
