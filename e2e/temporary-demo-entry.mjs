@@ -34,6 +34,10 @@ try {
     try {
       await page.goto(BASE+'/#/preview');
       await page.getByRole('heading',{name:'Проверка тестовых кабинетов'}).waitFor();
+      await page.locator('.operator-demo-app').waitFor();
+      await page.getByText('ТЕСТОВЫЙ РЕЖИМ',{exact:true}).waitFor();
+      if(await page.locator('.guest-header-actions, .guest-site-nav, .guest-mobile-business').count())
+        throw Error(width+': public guest navigation leaked into private demo preview');
       if(await page.locator('input[type="tel"]').count())
         throw Error(width+': guest preview incorrectly requests a phone number');
       if(await page.locator('.sandbox-role-card').count())
