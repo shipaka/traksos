@@ -153,8 +153,6 @@ select.field { appearance: none; }
   body:has(.callbar-in) .toast{
     bottom:calc(max(12px,env(safe-area-inset-bottom)) + 212px);
   }
-  /* Incoming emergency calls take precedence over transient messages. */
-  body:has(.call) .toast{visibility:hidden;}
 }
 
 .dot { width: 9px; height: 9px; border-radius: 5px; display: inline-block; background: #5A5F66; }
