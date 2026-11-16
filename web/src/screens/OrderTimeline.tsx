@@ -1,5 +1,3 @@
-import { fmtTime } from '../api.ts';
-
 const LABELS: Record<string, string> = {
   created: 'Заявка создана',
   owner_approval_requested: 'Запрошено подтверждение владельца',
@@ -15,6 +13,9 @@ const LABELS: Record<string, string> = {
   amount_confirmed: 'Стоимость подтверждена',
   amount_disputed: 'Открыт спор по стоимости',
   consult_finished: 'Консультация завершена',
+  completed: 'Заявка завершена',
+  finish: 'Исполнитель отметил завершение работы',
+  confirm: 'Клиент подтвердил завершение',
   cancelled: 'Заявка отменена',
   retry: 'Поиск исполнителя запущен повторно',
   performer_dropped: 'Исполнитель отказался от выезда',
@@ -24,7 +25,7 @@ export function OrderTimeline({ events, createdAt, acceptedAt, arrivedAt, comple
   events?: Event[]; createdAt?: string; acceptedAt?: string | null;
   arrivedAt?: string | null; completedAt?: string | null; isAdmin: boolean;
 }) {
-  const entries = (events ?? []).filter(e => Object.hasOwn(LABELS, e.type))
+  const entries = (events ?? []).filter(e => Object.prototype.hasOwnProperty.call(LABELS, e.type))
     .map(e => ({ label: LABELS[e.type], at: e.created_at, source: 'event' }));
   // Legacy orders may have timestamps but no corresponding event.
   // Do not fabricate a button press: clearly identify stored status timestamps.
@@ -40,6 +41,12 @@ export function OrderTimeline({ events, createdAt, acceptedAt, arrivedAt, comple
     }
   }
   entries.sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
+  const timeLabel = (at: string) => {
+    const d = new Date(at);
+    return Number.isNaN(d.getTime()) ? 'Время не определено' :
+      new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(d);
+  };
   return <section className="card stack" aria-label="Хронология этапов заявки">
     <div className="between"><b>Хронология заявки</b><span className="pill">Время сервера</span></div>
     <p className="note">Когда этап был зафиксирован системой. Нажатие кнопки и фактическое прибытие — разные вещи; спорные события требуют проверки.</p>
@@ -47,7 +54,7 @@ export function OrderTimeline({ events, createdAt, acceptedAt, arrivedAt, comple
       <ol className="tl">{entries.map((entry, index) => <li key={index}>
         <i className={index === entries.length - 1 ? 'now' : 'ok'}/>
         <div><b>{entry.label}</b>
-          <small style={{display:'block'}}>{fmtTime(entry.at)} · {new Date(entry.at).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit',second:'2-digit'})}</small>
+          <small style={{display:'block'}}>{timeLabel(entry.at)}</small>
           {isAdmin && entry.source === 'status' && <small>Восстановлено из сохранённого статуса</small>}
         </div>
       </li>)}</ol>}
