@@ -84,8 +84,8 @@ internal object CinematicAppLock {
         cover.addView(photo, FrameLayout.LayoutParams(-1, -1))
         cover.addView(View(ctx).apply {
             background = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                intArrayOf(0xDD031224.toInt(), 0x95041324.toInt(),
-                    0xE4051226.toInt(), 0xFE05131F.toInt()))
+                intArrayOf(0x87031224.toInt(), 0x56041324.toInt(),
+                    0xB9051226.toInt(), 0xF005131F.toInt()))
         }, FrameLayout.LayoutParams(-1, -1))
 
         val group = LinearLayout(ctx).apply {
@@ -94,7 +94,7 @@ internal object CinematicAppLock {
             val h = dp(ctx, 21)
             setPadding(h, dp(ctx, 18), h, dp(ctx, 20))
             background = GradientDrawable(GradientDrawable.Orientation.TL_BR,
-                intArrayOf(0xEF071C30.toInt(), 0xF208223A.toInt())).apply {
+                intArrayOf(0xDB071C30.toInt(), 0xE708223A.toInt())).apply {
                 cornerRadius = dp(ctx, 25).toFloat()
                 setStroke(dp(ctx, 1).coerceAtLeast(1), 0x9952CCEF.toInt())
             }
