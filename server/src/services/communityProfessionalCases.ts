@@ -5,7 +5,7 @@ import {parse,bad,forbidden,notFound,conflict,HttpError} from '../http/router.ts
 
 type ProRoom={id:string;active:boolean;audience:string;specialty:string|null};
 type CaseRow={
-  id:string;room_id:string;author_id:string;status:string;make:string|null;
+  id:string;room_id:string;author_id:string;client_nonce:string;status:string;make:string|null;
   model:string|null;model_year:number|null;subsystem:string;symptoms:string;
   dtc_codes:string[];diagnostic_context:string|null;origin:string;
   accepted_reply_id:string|null;knowledge_proposal_id:string|null;
