@@ -1,7 +1,7 @@
 import {test,before,after} from 'node:test';
 import assert from 'node:assert/strict';
 import {setup,ok,type T} from './helpers.ts';
-import {checkLegacyPricingLocation,legacyPricingWarning} from '../src/domain/pricingRegion.ts';
+import {checkLegacyPricingLocation,legacyPricingWarning,legacyTariffZoneMismatch} from '../src/domain/pricingRegion.ts';
 
 const knownOutside=[
   {name:'Москва',lat:55.7558,lng:37.6173,address:'Москва, Тверская 1'},
@@ -29,6 +29,18 @@ test('pure region safety never turns KAD prices into a federal price',()=>{
   assert.equal(unknown.validatedByGeocoder,false);
   assert.equal(unknown.available,true);
   assert.equal(legacyPricingWarning({address:'Москва, дом 1'}).available,false);
+});
+test('named local town cannot silently use a different legacy tariff zone',()=>{
+  const place={address:'Ленинградская область, г. Гатчина, улица Соборная 1'};
+  assert.deepEqual(legacyTariffZoneMismatch(place,'spb'),{place:'гатчина',expectedZoneId:'gat'});
+  assert.deepEqual(legacyTariffZoneMismatch({address:'Россия, Выборг, Советская 1'},'kad30'),
+    {place:'выборг',expectedZoneId:'vyb'});
+  assert.equal(legacyTariffZoneMismatch(place,'gat'),null);
+  assert.equal(legacyTariffZoneMismatch({address:'Выборгское шоссе, Санкт-Петербург'},'spb'),null,
+    'a street named after a city must not be treated as that city');
+  assert.equal(legacyTariffZoneMismatch({address:'Санкт-Петербург, Лиговский 1'},'spb'),null);
+  assert.equal(legacyTariffZoneMismatch({},'spb'),null,
+    'without evidence this helper cannot claim a tariff is valid');
 });
 let t:T,customer:any,admin:any;
 before(async()=>{
@@ -80,4 +92,24 @@ test('clearly outside locations cannot create orders or bank holds, including di
   assert.equal(local.order.estimate.regionValidation.tariffScope,'Санкт-Петербург и Ленинградская область');
   assert.equal(local.order.estimate.regionValidation.validatedByGeocoder,false,
     'a regional bounding box is not genuine geocoding');
+});
+
+test('an explicitly named outlying town is not charged at the KAD tariff',async()=>{
+  const mismatched={service:'electric',tier:'eco',zoneId:'spb',
+    address:'Ленинградская область, г. Гатчина, улица Соборная 1'};
+  const rejected=await t.api('POST','/api/pricing/estimate',mismatched);
+  assert.equal(rejected.status,409);
+  assert.equal(rejected.body.error,'mismatched_legacy_tariff_zone');
+  const correct=ok(await t.api('POST','/api/pricing/estimate',{...mismatched,zoneId:'gat'}));
+  assert.equal(correct.zoneId,'gat');
+  assert.equal(correct.regionValidation.validatedByGeocoder,false);
+  const countBefore=(await t.db.query('select id from orders where created_by=$1',[customer.id])).length;
+  const paymentsBefore=t.payments.payments.size;
+  const attempt=await t.api('POST','/api/orders',{
+    ...mismatched,paymentMethod:'online',description:'Ремонт на месте',isSos:true
+  },customer.token);
+  assert.equal(attempt.status,409);
+  assert.equal(attempt.body.error,'mismatched_legacy_tariff_zone');
+  assert.equal((await t.db.query('select id from orders where created_by=$1',[customer.id])).length,countBefore);
+  assert.equal(t.payments.payments.size,paymentsBefore,'no new bank hold for misleading zone');
 });
