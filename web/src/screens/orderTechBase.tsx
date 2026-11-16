@@ -3,6 +3,7 @@ import {get} from '../api.ts';
 import {useLoad} from '../ui.tsx';
 import './techBase.css';
 import {TechReferenceShelf} from './techReferenceShelf.tsx';
+import {ProfessionalCases} from './professionalCases.tsx';
 
 type Article={id:string;title:string;make:string;model:string|null;
  model_year:number|null;subsystem:string;source_url:string|null};
@@ -64,6 +65,7 @@ export function OrderTechBase({orderId}:{orderId:string}){
     </div>
   </section>}
   {data.data&&context?.brand&&<TechReferenceShelf initialMake={context.brand} compact/>}
+  {data.data&&<ProfessionalCases orderId={orderId}/>} 
   <a href="#/techbase" className="btn ghost">Открыть общий поиск ТехБазы</a>
  </main>;
 }
