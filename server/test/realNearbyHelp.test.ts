@@ -115,3 +115,21 @@ test('STO with no explicitly confirmed local timezone never advertises itself as
   // The same known workshop must not magically appear 1500+ kilometres away.
   assert.deepEqual(ok(await query(driver,{lat:59.94,lng:30.3,accuracyMeters:30})).cards,[]);
 });
+
+
+test('workshop booking compares date to facility local calendar, not Moscow default',async()=>{
+  t.clock.set('2026-11-30T20:30:00Z'); // Nov 30 23:30 Moscow but Dec 1 06:30 Vladivostok
+  ok(await t.api('PUT','/api/base',{timeZone:'Asia/Vladivostok',closedDays:['2026-12-01']},workshop.token));
+  const endpoint='/api/services/'+centerId+'/book';
+  assert.equal((await t.api('POST',endpoint,{
+    need:'electric',day:'2026-11-30',arrival:'self'
+  },client.token)).status,400,'yesterday in Vladivostok cannot be booked');
+  assert.equal((await t.api('POST',endpoint,{
+    need:'electric',day:'2026-12-01',arrival:'self'
+  },client.token)).status,400,'center-defined day off is respected in its region');
+  ok(await t.api('PUT','/api/base',{closedDays:[]},workshop.token));
+  const booked=ok(await t.api('POST',endpoint,{
+    need:'electric',day:'2026-12-01',arrival:'self'
+  },client.token));
+  assert.equal(booked.status,'new');
+});
