@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { Db } from '../db/index.ts';
 import type { Router, AuthedCtx, AuthUser } from '../http/router.ts';
-import { parse, bad, conflict, forbidden, notFound } from '../http/router.ts';
+import { parse, bad, conflict, forbidden, notFound, HttpError } from '../http/router.ts';
 import type { Notifier } from './notify.ts';
 
 /**
@@ -22,7 +22,7 @@ const clientNonce = z.string().uuid();
 const textSchema = z.string().trim().min(1).max(2000);
 const phonePattern = /(?:\+?\d[\s().-]*){10,}/u;
 const contactPattern = /(?:[\w.+-]+@[\w.-]+\.[a-z]{2,}|(?:t\.me|wa\.me|telegram\.me)\/)/iu;
-const profanity = /(?:\b(?:бляд|сука|хуй|пизд|ебан|ёбан|fuck)\w*|пиздец)/iu;
+const profanity = /(?:бляд|сука|хуй|пизд|ебан|ёбан|fuck)/iu;
 
 async function verifiedProfile(db: Db, user: AuthUser) {
   if (!professional(user)) return null;
@@ -169,11 +169,12 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
       }
       const count=await q.one<{n:number}>(`select count(*)::int as n from community_messages
         where sender_id=$1 and created_at>now()-interval '15 seconds'`,[c.user.id]);
-      if((count?.n ?? 0)>=5) throw new (await import('../http/router.ts')).HttpError(429,'slow_down','Слишком много сообщений. Попробуйте позже');
+      if((count?.n ?? 0)>=5) throw new HttpError(429,'slow_down','Слишком много сообщений. Попробуйте позже');
       return q.one<any>(`insert into community_messages(room_id,sender_id,body,client_nonce,moderation_state)
         values($1,$2,$3,$4,$5) returning id::text as id,room_id,body,moderation_state,created_at`,
         [room.id,c.user.id,b.text,b.clientNonce,pending?'pending':'published']);
     });
+    if(!saved) throw new Error('community message insert did not return a row');
     if(saved.moderation_state==='published') {
       const members=await db.query<{user_id:string}>(`select user_id from community_memberships where room_id=$1 and user_id<>$2 limit 2000`,
         [room.id,c.user.id]);
