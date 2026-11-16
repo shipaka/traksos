@@ -78,6 +78,11 @@ try {
       await navigation.getByRole('button',{name,exact:true}).click();
       await page.waitForURL(new RegExp('#/admin/section/'+id+'$'));
       await page.locator('.admin-stage-head h2').getByText(name,{exact:true}).waitFor();
+      if(id==='access') {
+        await page.getByRole('heading',{name:'Зарегистрировать человека вручную'}).waitFor();
+        await page.getByRole('button',{name:'Создать учётную запись'}).waitFor();
+        await page.getByRole('button',{name:'Создать обращение разработчику'}).waitFor();
+      }
       await checkLayout(id);
       if(['queue','summary','payments','vehicleServices','stats','settings'].includes(id))
         await page.screenshot({path:'e2e/shots/admin-ux/'+id+'-'+width+'.png',fullPage:true});
