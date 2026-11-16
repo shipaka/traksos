@@ -621,12 +621,23 @@ export class OrdersService {
       await q.query(`update order_dispatch set status='cancelled' where order_id=$1 and status in ('queued','ringing','bidding')`, [orderId]);
       await q.query(`update bids set status='withdrawn' where order_id=$1 and status='active'`, [orderId]);
       if (o.performer_id) await q.query(`update performer_profiles set line_status='online' where user_id=$1 and line_status='on_job'`, [o.performer_id]);
+      // Preserve an audit summary of accepted samples available at the
+      // moment of cancellation, without disclosing raw coordinates to clients.
+      // A count alone is not evidence of travelled road distance.
+      const gpsAudit = o.status === 'en_route'
+        ? await q.one<any>(`select count(*)::int as samples,
+            min(received_at) as first_at, max(received_at) as last_at
+            from performer_route_samples where order_id=$1`, [orderId])
+        : null;
       // Persist why the financial tier was selected. An en-route order has
       // no verified route-progress evidence yet, regardless of the last GPS.
       // This record is for disputes and audit, not a claim of GPS verification.
       const stageEvidence = o.status === 'en_route'
         ? { source: 'status_only', gpsVerified: false, routeHalfVerified: false,
-            note: 'No timestamped, validated route progress available' }
+            sampleCount: Number(gpsAudit?.samples ?? 0),
+            firstSampleAt: gpsAudit?.first_at ?? null,
+            lastSampleAt: gpsAudit?.last_at ?? null,
+            note: 'GPS samples are not verified route progress' }
         : o.status === 'arrived'
           ? { source: 'performer_arrival_action', gpsVerified: false,
               routeHalfVerified: false, note: 'Arrival was manually declared' }
