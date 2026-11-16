@@ -38,6 +38,10 @@ test('en-route cancellation never escalates to 100 percent from an unverified GP
       `insert into performer_route_samples(order_id,performer_id,lat,lng,accepted)
        values($1,$2,59.9,30.3,true),($1,$3,59.9,30.3,false),($1,$3,59.9,30.3,true)`,
       [id, otherWorker.id, worker.id]);
+    await t.db.query(
+      `insert into performer_route_samples(order_id,performer_id,lat,lng,accepted,received_at)
+       values($1,$2,59.9,30.3,true,now() - interval '31 days')`,
+      [id, worker.id]);
     const cancelled = ok(await t.api('POST', `/api/orders/${id}/cancel`,
       { reason: 'Передумал' }, client.token));
     assert.equal(cancelled.cancelStage, 'en_route_first_half');
