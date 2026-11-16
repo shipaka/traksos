@@ -315,12 +315,18 @@ class MainActivity : AppCompatActivity() {
             onBiometric = { requestAppUnlock() },
             onRecovery = { confirmAccountRecovery() }
         )
-        appRoot.addView(cover, FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
+        val coverParams = FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
+        // On cold start the approved seasonal splash must remain visible for
+        // >=3.5 s. Insert the native lock *under* the splash, but *above*
+        // WebView, so no personal cabinet can flash before authentication.
+        val splashVisible = startupOverlay?.visibility == View.VISIBLE
+        if (splashVisible) appRoot.addView(cover, 1, coverParams)
+        else appRoot.addView(cover, coverParams)
         lockCover = cover
         // Call notifications remain handled natively while the WebView is covered.
         foreground = false
-        requestAppUnlock()
+        if (!splashVisible) requestAppUnlock()
     }
 
     private fun requestAppUnlock() {
@@ -666,8 +672,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun hideStartupOverlay() {
+        val hadSplash = startupOverlay != null
         startupOverlay?.visibility = View.GONE
         startupOverlay = null
+        // The unlock sheet is already under the splash; launch biometrics only
+        // after the seasonal scene has finished, not while it is covering UI.
+        if (hadSplash && lockCover != null) requestAppUnlock()
     }
 
     /** Экран ошибки: что случилось, «Повторить» и поле адреса сервера (для тестового стенда) */
