@@ -147,11 +147,17 @@
   .app.role-moderator .internal-role-hero-moderator::after{opacity:.13}
 }
 @media(prefers-reduced-motion:reduce),(prefers-reduced-data:reduce){
-  .app[class*="role-"] .work-command-hero::before,
-  .app[class*="role-"] :is(.work-command-art,.base-command-hero::after,.base-onboarding-hero::after,.cabinet-heading::after,.admin-command-art){
+  .app.role-performer .work-command-hero::before,
+  .app.role-performer .work-command-art,
+  .app.role-service .base-command-hero::after,
+  .app.role-service .base-onboarding-hero::after,
+  .app.role-insurer .cabinet-page>.cabinet-heading::after,
+  .app.role-admin .admin-command-art{
     animation:none!important;transition:none!important;
   }
 }
-html.traksos-reduced-motion .app[class*="role-"] :is(.work-command-hero::before,.work-command-art,.admin-command-art){
+html.traksos-reduced-motion .app.role-performer .work-command-hero::before,
+html.traksos-reduced-motion .app.role-performer .work-command-art,
+html.traksos-reduced-motion .app.role-admin .admin-command-art{
   animation:none!important;transition:none!important;
 }
