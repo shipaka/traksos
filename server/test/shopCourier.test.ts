@@ -65,6 +65,10 @@ test('dispatch requires verified SPb delivery addresses and never assigns unveri
    courierId:driver.id,pickupAddress:'Санкт-Петербург, тестовый склад 1',orderIds:[order1,order2]
  },admin.token));
  runId=run.id;
+ assert.equal((await t.api('POST','/api/admin/shop/courier-runs',{
+   courierId:driver.id,pickupAddress:'Санкт-Петербург, тестовый склад 1',
+   orderIds:[order1]
+ },admin.token)).status,409,'нельзя создать второй рейс для одного курьера');
  assert.equal((await t.api('GET','/api/courier/runs/'+runId,undefined,driver.token)).status,404,
    'неутверждённый рейс курьеру не доступен');
  assert.equal((await t.api('POST','/api/courier/runs/'+runId+'/accept',{},driver.token)).status,404);
@@ -232,6 +236,10 @@ test('failed delivery cannot be marked delivered; warehouse return releases orde
    },driver.token));
  assert.equal(failed.status,'failed');
  assert.equal(failed.runStatus,'returning');
+ assert.equal((await t.api('POST','/api/admin/shop/courier-runs',{
+   courierId:driver.id,pickupAddress:'Санкт-Петербург, центральный склад 1',
+   orderIds:[order]
+ },admin.token)).status,409,'в период возврата курьер занят');
  assert.equal((await t.api('POST','/api/shop/orders/'+order+'/confirm-delivery',
    {},client1.token)).status,409,'клиент не подтверждает не состоявшуюся доставку');
  assert.equal((await t.api('POST','/api/courier/runs/'+newRun.id+'/stops/'+stop.id+'/arrive',
