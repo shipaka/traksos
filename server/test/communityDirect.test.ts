@@ -188,3 +188,46 @@ test('DM privacy export and account deletion erase direct history and blocks',as
   assert.equal((await t.db.query('select * from community_dm_threads where id=$1',[person.id])).length,0);
   assert.equal((await t.db.query('select * from community_dm_messages where sender_id=$1',[driverA.id])).length,0);
 });
+
+
+test('a 620-event private thread backlog resumes without exposing it to a third driver',async()=>{
+  const a=await t.login('+79995670991','driver');
+  const b=await t.login('+79995670992','driver');
+  ok(await t.api('PUT','/api/community/me',{nickname:'OfflineRoad_A',shareCity:false},a.token));
+  ok(await t.api('PUT','/api/community/me',{nickname:'OfflineRoad_B',shareCity:false},b.token));
+  const invite=ok(await t.api('POST','/api/community/direct/request',
+    {nickname:'OfflineRoad_B'},a.token));
+  ok(await t.api('POST','/api/community/direct/'+invite.id+'/decision',
+    {decision:'accept'},b.token));
+  const route='/api/community/direct/'+invite.id;
+  const inserted=await t.db.query<{id:string}>(`
+    with msgs as (
+      insert into community_dm_messages(thread_id,sender_id,body,client_nonce,moderation_state)
+      select $1,$2,'Личная история восстановления '||n,gen_random_uuid(),'published'
+      from generate_series(1,620) as n
+      returning id
+    )
+    insert into community_dm_moderation_events(thread_id,message_id,previous_state,moderation_state)
+    select $1,id,'created','published' from msgs order by id returning id::text as id`,
+    [invite.id,a.id]);
+  assert.equal(inserted.length,620);
+  const first=ok(await t.api('GET',route+'/messages?recent=1&limit=50',undefined,b.token));
+  assert.equal(first.messages.length,50);
+  const blocked=await t.api('GET',route+'/moderation-events?after=0',undefined,outsider.token);
+  assert.equal(blocked.status,404);
+  let after='0',count=0,pages=0;
+  while(true){
+    pages++;
+    assert.ok(pages<=8);
+    const feed=ok(await t.api('GET',route+'/moderation-events?after='+after+'&limit=100',
+      undefined,b.token));
+    count+=feed.changes.length;
+    assert.ok(feed.changes.every((e:any)=>e.message&&e.message.public_city===null));
+    assert.ok(feed.changes.every((e:any)=>!('sender_id' in e.message)));
+    if(!feed.hasMore)break;
+    assert.ok(BigInt(feed.nextCursor)>BigInt(after));
+    after=feed.nextCursor;
+  }
+  assert.equal(count,620);
+  assert.equal(pages,7);
+});
