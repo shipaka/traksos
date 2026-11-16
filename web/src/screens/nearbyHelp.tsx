@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {get,fmtTime} from '../api.ts';
+import {post,fmtTime} from '../api.ts';
 import './nearbyHelp.css';
 
 type Kind='master'|'tow'|'service';
@@ -28,11 +28,10 @@ export function NearbyHelp(){
        setBusy(false);return;
      }
      try{
-       const q=new URLSearchParams({
-         lat:String(p.coords.latitude),lng:String(p.coords.longitude),
-         accuracyMeters:String(accuracy)
-       });
-       setResult(await get<Availability>('/api/community/nearby-help?'+q.toString()));
+       // POST body avoids precise GPS coordinates leaking into URLs or reverse-proxy access logs.
+       setResult(await post<Availability>('/api/community/nearby-help',{
+         lat:p.coords.latitude,lng:p.coords.longitude,accuracyMeters:accuracy
+       }));
      }catch(e){
        setError(e instanceof Error?e.message:'Не удалось проверить доступность партнёров.');
      }finally{setBusy(false)}
