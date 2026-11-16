@@ -455,8 +455,8 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
     if(!o||(o.client_id!==c.user.id&&o.created_by!==c.user.id))
       throw notFound('Заказ не найден');
     const events=await db.query<{id:string;status:DeliveryPhase;event_time:Date}>(
-      'select id::text as id,status,event_time from shop_delivery_events '+
-      'where shop_order_id=$1 order by id desc limit 100',[orderId]);
+      'select e.id::text as id,e.status,e.event_time from shop_delivery_events e '+
+      'where e.shop_order_id=$1 order by e.id desc limit 100',[orderId]);
     return {events:events.reverse().map(x=>({
       id:x.id,status:x.status,at:x.event_time,
       title:DELIVERY_MESSAGES[x.status]
