@@ -38,7 +38,16 @@ function appendMessages(existing:AirMessage[],next:AirMessage[],recentApprovals:
   return tail.sort((a,b)=>BigInt(a.id)<BigInt(b.id)?-1:BigInt(a.id)>BigInt(b.id)?1:0);
 }
 
-/** Only a small tail is in memory; messages are never persisted to localStorage. */
+function reconcileAirChanges(existing:AirMessage[],changes:AirModerationChange[],highlights:ReadonlySet<string>){
+  const byId=new Map(existing.map(m=>[m.id,m]));
+  for(const change of changes){
+    if(change.moderation_state==='hidden')byId.delete(change.id);
+    else if(change.message)byId.set(change.id,change.message);
+  }
+  return appendMessages([], [...byId.values()],highlights);
+}
+
+/** Never persist message text on the device; catch up via a bounded, ordered event feed. */
 function useAirMessages(endpoint:string|null){
   const [messages,setMessages]=useState<AirMessage[]>([]);
   const [error,setError]=useState<string|null>(null);
@@ -49,6 +58,7 @@ function useAirMessages(endpoint:string|null){
   const recentApprovals=useRef<Set<string>>(new Set());
   useEffect(()=>{
     let alive=true,fetching=false,initialized=false;
+    let continuation:number|null=null;
     cursor.current='0';moderationCursor.current='0';recentApprovals.current.clear();
     setMessages([]);setError(null);setLoading(true);
     if(!endpoint){setLoading(false);return;}
@@ -60,49 +70,58 @@ function useAirMessages(endpoint:string|null){
         if(alive){setLoading(false);setError('Нет соединения. Сообщения не кэшируются на устройстве; обновим их после восстановления интернета.')}
         return;
       }
+      if(continuation!==null){window.clearTimeout(continuation);continuation=null;}
       fetching=true;
+      let stillBacklogged=false;
       try{
+        // A message-ID poll remains for backward compatibility; all new
+        // publication and moderation changes are also delivered in event order.
         const query=initial?'?recent=1&limit=50':('?after='+encodeURIComponent(cursor.current)+'&limit=50');
         const d=await get<{messages:AirMessage[];nextCursor:string;moderationCursor?:string}>(endpoint+query);
         if(!alive)return;
-        setMessages(curr=>initial?d.messages:appendMessages(curr,d.messages,recentApprovals.current));
+        setMessages(curr=>initial?d.messages:appendMessages(curr,d.messages,new Set(recentApprovals.current)));
         cursor.current=d.nextCursor;
         if(initial){
           initialized=true;
-          // This watermark was captured BEFORE the recent messages were read.
-          // Any moderation committed during the initial load is replayed safely.
+          // Taken by the server BEFORE the snapshot; changes during the request
+          // are replayed, rather than silently skipping a concurrent approval.
           moderationCursor.current=d.moderationCursor??'0';
-        }else{
-          // Publication/hiding updates are independent of the message-id cursor.
-          // Fetch bounded pages, keeping memory usage fixed on weak mobile links.
-          for(let page=0;page<5;page++){
-            const previous=moderationCursor.current;
-            const updates=await get<{
-              changes:AirModerationChange[];nextCursor:string;hasMore:boolean
-            }>(moderationUrl+'?after='+encodeURIComponent(previous)+'&limit=100');
-            if(!alive)return;
-            moderationCursor.current=updates.nextCursor;
-            if(updates.changes.length)setMessages(curr=>{
-              let next=curr;
-              for(const event of updates.changes){
-                if(event.moderation_state==='hidden'){
-                  recentApprovals.current.delete(event.id);
-                  next=next.filter(m=>m.id!==event.id);
-                }else if(event.message){
-                  recentApprovals.current.add(event.id);
-                  if(recentApprovals.current.size>10)
-                    recentApprovals.current.delete(recentApprovals.current.values().next().value!);
-                  next=appendMessages(next,[event.message],recentApprovals.current);
-                }
+        }
+        // Drain up to 300 events per turn, then yield for 250ms and continue.
+        // Unlike a fixed 500-event cap, long offline periods eventually catch
+        // up without blocking input, loading unbounded history or retry storms.
+        for(let page=0;page<3;page++){
+          const previous=moderationCursor.current;
+          const updates=await get<{
+            changes:AirModerationChange[];nextCursor:string;hasMore:boolean
+          }>(moderationUrl+'?after='+encodeURIComponent(previous)+'&limit=100');
+          if(!alive)return;
+          moderationCursor.current=updates.nextCursor;
+          if(updates.changes.length){
+            const highlights=recentApprovals.current;
+            for(const event of updates.changes){
+              if(event.moderation_state==='hidden')highlights.delete(event.id);
+              else if(event.message){
+                highlights.delete(event.id);highlights.add(event.id);
+                while(highlights.size>10)
+                  highlights.delete(highlights.values().next().value!);
               }
-              return next;
-            });
-            if(!updates.hasMore||updates.nextCursor===previous)break;
+            }
+            const visibleHighlights=new Set(highlights);
+            setMessages(curr=>reconcileAirChanges(curr,updates.changes,visibleHighlights));
           }
+          stillBacklogged=updates.hasMore&&updates.nextCursor!==previous;
+          if(!stillBacklogged)break;
         }
         setError(null);
-      }catch(e){if(alive)setError(safeError(e))}
-      finally{fetching=false;if(alive)setLoading(false)}
+      }catch(e){if(alive)setError(safeError(e));stillBacklogged=false;}
+      finally{
+        fetching=false;
+        if(alive)setLoading(false);
+        if(alive&&stillBacklogged&&document.visibilityState==='visible'){
+          continuation=window.setTimeout(()=>{continuation=null;void load();},250);
+        }
+      }
     };
     void load(true);
     const timer=window.setInterval(()=>{if(document.visibilityState==='visible')void load()},12000);
@@ -116,13 +135,15 @@ function useAirMessages(endpoint:string|null){
     window.addEventListener('online',reconnect);
     document.addEventListener('visibilitychange',visible);
     return ()=>{
-      alive=false;window.clearInterval(timer);unsubscribe();
+      alive=false;window.clearInterval(timer);
+      if(continuation!==null)window.clearTimeout(continuation);
+      unsubscribe();
       window.removeEventListener('online',reconnect);
       document.removeEventListener('visibilitychange',visible);
     };
   },[endpoint,revision]);
   return {messages,loading,error,reload:()=>setRevision(x=>x+1),
-    append:(m:AirMessage)=>setMessages(curr=>appendMessages(curr,[m],recentApprovals.current))};
+    append:(m:AirMessage)=>setMessages(curr=>appendMessages(curr,[m],new Set(recentApprovals.current)))};
 }
 function MessageStream({endpoint,canWrite,placeholder}:{
   endpoint:string|null;canWrite:boolean;placeholder:string
