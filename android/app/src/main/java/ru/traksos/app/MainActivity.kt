@@ -167,29 +167,6 @@ class MainActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    private fun showPinUnlock() {
-        if (lockCover == null) return
-        pinDialog("Введите PIN TrakSOS", recover = true) { digits ->
-            when (AppPinStore.verify(this, digits)) {
-                AppPinStore.Check.OK -> {
-                    completeAppUnlock()
-                    true
-                }
-                AppPinStore.Check.WRONG -> false
-                AppPinStore.Check.COOLDOWN -> {
-                    android.widget.Toast.makeText(this,
-                        "Временная защита: повторите через ${AppPinStore.waitSeconds(this)} сек.",
-                        android.widget.Toast.LENGTH_LONG).show()
-                    true // dismiss while cooldown; lock cover remains visible
-                }
-                AppPinStore.Check.RELOGIN -> {
-                    confirmAccountRecovery()
-                    true
-                }
-            }
-        }
-    }
-
     /** Setup or rotation is offered only on a confirmed, signed-in device. */
     fun setupAppPin() {
         if (Session.token(this) == null || activeAccountId.isNullOrBlank()) return
@@ -224,8 +201,8 @@ class MainActivity : AppCompatActivity() {
                     android.widget.Toast.makeText(this, "Не удалось защитить PIN. Повторите настройку.", android.widget.Toast.LENGTH_LONG).show()
                     return@pinDialog false
                 }
-                // Optional fingerprint is enabled only if the OS has enrolled biometrics.
-                if (biometricAvailable()) setAppLockEnabled(true)
+                // Fingerprint is strictly opt-in under Profile → Security.
+                // Never enable it merely because the device has enrolled a finger.
                 emit("appPinChanged", mapOf("enabled" to "true"))
                 android.widget.Toast.makeText(this, "Быстрый вход настроен", android.widget.Toast.LENGTH_SHORT).show()
                 true
@@ -326,7 +303,15 @@ class MainActivity : AppCompatActivity() {
         val cover = CinematicAppLock.build(this,
             pin = appPinEnabled(),
             fingerprint = appLockEnabled() && biometricAvailable(),
-            onPin = { showPinUnlock() },
+            onPinEntered = { digits ->
+                val result = AppPinStore.verify(this, digits)
+                when (result) {
+                    AppPinStore.Check.OK -> completeAppUnlock()
+                    AppPinStore.Check.RELOGIN -> confirmAccountRecovery()
+                    else -> Unit
+                }
+                result
+            },
             onBiometric = { requestAppUnlock() },
             onRecovery = { confirmAccountRecovery() }
         )
@@ -341,10 +326,8 @@ class MainActivity : AppCompatActivity() {
     private fun requestAppUnlock() {
         if (unlockInProgress || lockCover == null) return
         if (appPinEnabled()) {
-            if (!appLockEnabled() || !biometricAvailable()) {
-                showPinUnlock()
-                return
-            }
+            // Native keypad is already visible under the optional fingerprint prompt.
+            if (!appLockEnabled() || !biometricAvailable()) return
             unlockInProgress = true
             val prompt = BiometricPrompt(this, ContextCompat.getMainExecutor(this),
                 object : BiometricPrompt.AuthenticationCallback() {
@@ -355,7 +338,7 @@ class MainActivity : AppCompatActivity() {
                     override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                         super.onAuthenticationError(errorCode, errString)
                         unlockInProgress = false
-                        if (lockCover != null) showPinUnlock()
+                        // Leave the cinematic four-dot keypad available; no second modal.
                     }
                 })
             prompt.authenticate(BiometricPrompt.PromptInfo.Builder()
