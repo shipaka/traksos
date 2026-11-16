@@ -204,6 +204,7 @@ function Steps({ status, service, events = [] }: { status: string; service: stri
   const current = sequence.indexOf(status);
   const finished = status === 'completed';
   const active = finished ? sequence.length - 1 : Math.max(0, current);
+  // Percentage measures workflow stages only, not work performed, time or distance.
   const progress = finished ? 100 : current < 0 ? 0 : Math.round(active / Math.max(1, sequence.length - 1) * 100);
   const stopped = status === 'cancelled' || status === 'no_performer';
   const awaitingOwner = status === 'awaiting_owner';
@@ -238,9 +239,9 @@ function Steps({ status, service, events = [] }: { status: string; service: stri
         <p>{finished ? 'Все этапы завершены' : status === 'cancelled' ? 'Дальнейшее выполнение остановлено'
           : 'Этапы обновляются по мере действий участников заявки'}</p>
       </div>
-      <span className="cinematic-status-counter" aria-label={showProgress ? `Прогресс ${progress}%` : awaitingOwner ? "Ожидается решение владельца" : "Выполнение остановлено"}>{showProgress ? <>{progress}<small>%</small></> : "—"}</span>
+      <span className="cinematic-status-counter" aria-label={showProgress ? `Пройдено этапов: ${finished ? sequence.length : Math.max(0, current)} из ${sequence.length}` : awaitingOwner ? "Ожидается решение владельца" : "Выполнение остановлено"}>{showProgress ? <>{progress}<small>%</small></> : "—"}</span>
     </header>
-    {showProgress && <div className="cinematic-status-meter" role="progressbar" aria-label="Прогресс этапов заявки"
+    {showProgress && <div className="cinematic-status-meter" role="progressbar" aria-label="Положение в последовательности этапов заявки"
       aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
       <span style={{width:`${progress}%`}}/>
     </div>}
@@ -263,7 +264,7 @@ function Steps({ status, service, events = [] }: { status: string; service: stri
     </ol>
     {awaitingOwner && <p className="cinematic-status-stop">Поиск исполнителя ещё не начался: ожидаем подтверждения владельца транспорта.</p>}
     {stopped && <p className="cinematic-status-stop">{status === 'cancelled' ? 'Выполнение остановлено. Причина и время отмены — в журнале ниже.' : 'Поиск завершился без исполнителя. История попыток сохранена в журнале.'}</p>}
-    <p className="cinematic-status-footnote">Статусы отражают зафиксированные действия. Подтверждение GPS, КПП и расчёт оплаты проверяются отдельно.</p>
+    <p className="cinematic-status-footnote">Процент показывает положение в последовательности этапов, а не объём выполненной работы или оставшееся время. Статусы отражают зафиксированные действия; GPS, КПП и расчёт оплаты проверяются отдельно.</p>
   </section>;
 }
 
