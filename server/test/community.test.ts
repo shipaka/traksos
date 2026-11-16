@@ -130,6 +130,21 @@ test('room moderation changes reach readers after message cursor and remove hidd
   const afterHidden=ok(await t.api('GET',room+'/messages?recent=1',undefined,viewer.token));
   assert.ok(!afterHidden.messages.some((m:any)=>m.id===later.id));
   assert.ok(afterHidden.messages.some((m:any)=>m.id===late.id));
+
+  // Pending -> hidden was never public: advance the change cursor without
+  // exposing the existence or body of the rejected message to other drivers.
+  const neverPublic=ok(await t.api('POST',room+'/messages',
+    {text:'сука, скрыть без публикации',clientNonce:randomUUID()},author.token));
+  const receiverCursor=removal.nextCursor;
+  ok(await t.api('POST','/api/admin/community/messages/'+neverPublic.id+'/moderate',
+    {status:'hidden'},admin.token));
+  const invisible=ok(await t.api('GET',
+    room+'/moderation-events?after='+receiverCursor,undefined,viewer.token));
+  assert.deepEqual(invisible.changes,[]);
+  assert.notEqual(invisible.nextCursor,receiverCursor,'cursor advances through private events');
+  const ownEvent=ok(await t.api('GET',
+    room+'/moderation-events?after='+receiverCursor,undefined,author.token));
+  assert.ok(ownEvent.changes.some((x:any)=>x.id===neverPublic.id&&x.moderation_state==='hidden'));
   assert.equal((await t.api('GET',room+'/moderation-events?after=wrong',undefined,viewer.token)).status,400);
 });
 
