@@ -1,0 +1,9 @@
+# Enable only AFTER sandbox-app and SANDBOX_PUBLIC network are ready
+# and the domain points at this VPS. Merge with existing Caddyfile and reload Caddy.
+# This host is separate from the production site.
+sandbox.traksos.ru {
+    encode gzip
+    reverse_proxy sandbox-app:8080
+    header Referrer-Policy no-referrer
+    header X-Robots-Tag "noindex, nofollow"
+}

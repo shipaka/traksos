@@ -10,6 +10,8 @@ COPY web web
 RUN npm -w web run build
 
 FROM node:22-alpine
+ARG BUILD_REV=unknown
+ENV TRAKSOS_BUILD_REV=$BUILD_REV
 WORKDIR /app
 ENV NODE_ENV=production PORT=8080 WEB_ROOT=/app/web/dist
 COPY package.json ./

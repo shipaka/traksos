@@ -12,6 +12,8 @@ docker compose version >/dev/null 2>&1 || fail "Docker Compose unavailable"
 [[ -z "$(git status --porcelain --untracked-files=no)" ]] || fail "Tracked local changes detected. Resolve them before release."
 [[ -f deploy/.env ]] || fail "deploy/.env missing (server secrets were NOT created or modified)"
 [[ -f deploy/docker-compose.yml ]] || fail "Compose file missing"
+# Baked into the same release image for both prod and isolated test instances.
+export TRAKSOS_RELEASE_REV="$(git rev-parse HEAD)"
 cd deploy
 docker compose config --quiet || fail "Invalid Compose configuration"
 # Release lock: refuse to update while the approved shop is unexpectedly open.
@@ -37,11 +39,32 @@ echo "Checked out revision: $(git -C "$ROOT" rev-parse --short HEAD)"
 # Building before recreating the app ensures a compile error cannot stop the old site.
 echo "Building new app image ..."
 docker compose build app || fail "Build failed. Existing app still running."
+# Validate the exact release image in sandbox BEFORE replacing production.
+[[ -f .env.sandbox && -f docker-compose.sandbox.yml ]] ||
+  fail "Sandbox not configured. Production unchanged."
+sandbox_compose=(docker compose -f docker-compose.yml -f docker-compose.sandbox.yml --profile sandbox)
+sandbox_id="$("${sandbox_compose[@]}" ps -q sandbox-app)"
+[[ -n "$sandbox_id" && "$(docker inspect -f '{{.State.Running}}' "$sandbox_id" 2>/dev/null)" == true ]] ||
+  fail "Sandbox not running. Production unchanged."
+echo "Testing release image on isolated sandbox ..."
+"${sandbox_compose[@]}" up -d --no-deps sandbox-app ||
+  fail "Sandbox update failed. Production unchanged."
+sandbox_ready=0
+for attempt in $(seq 1 30); do
+  if "${sandbox_compose[@]}" exec -T sandbox-app node -e "fetch('http://127.0.0.1:8080/api/health').then(async r=>{const j=await r.json();process.exit(r.ok&&j.db&&j.sandbox&&j.buildRevision===process.env.TRAKSOS_BUILD_REV?0:1)}).catch(()=>process.exit(1))" >/dev/null 2>&1; then
+    sandbox_ready=1
+    break
+  fi
+  sleep 2
+done
+[[ "$sandbox_ready" == 1 ]] ||
+  fail "Sandbox health/revision mismatch. Production unchanged."
+echo "Sandbox release checks passed."
 echo "Replacing only the app service (no volume deletion, no compose down) ..."
 docker compose up -d --no-deps app || fail "App restart failed. Check docker compose logs app"
 ready=0
 for attempt in $(seq 1 30); do
-  if docker compose exec -T app node -e "fetch('http://127.0.0.1:8080/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))" >/dev/null 2>&1; then
+  if docker compose exec -T app node -e "fetch('http://127.0.0.1:8080/api/health').then(async r=>{const j=await r.json();process.exit(r.ok&&j.db&&!j.sandbox&&j.buildRevision===process.env.TRAKSOS_BUILD_REV?0:1)}).catch(()=>process.exit(1))" >/dev/null 2>&1; then
     ready=1
     break
   fi
@@ -53,7 +76,7 @@ if [[ "$ready" != 1 ]]; then
   docker compose ps
   exit 1
 fi
-echo "OK: application API answers /api/health inside the container."
+echo "OK: production database, non-sandbox mode and release revision verified."
 # Check the same immutable shop constraint after application migrations/startup.
 bash ./verify-shop-closed.sh || fail "Shop lock guard failed after deployment; investigate without restoring over live data"
 docker compose ps

@@ -1,4 +1,6 @@
+import './orderCinematic.css';
 import { RecommendService } from './base.tsx';
+import { DestinationCard } from './DestinationCard.tsx';
 import { useEffect, useRef, useState } from 'react';
 import { get, post, rub, fmtTime } from '../api.ts';
 import { SERVICES, STATUS, STEPS, STEP_NAMES, RESULTS, CONSULT_HINTS, CONSULT_CONF } from '../dict.ts';
@@ -7,6 +9,8 @@ import { useLoad, useAction, useMe, Loading, Back, RubInput, Field, useToast, Ve
 import { onEvent } from '../api.ts';
 import { Search, OfferForm } from './search.tsx';
 import { RoadsideMap } from './roadsideMap.tsx';
+import { AdminRouteMap } from './AdminRouteMap.tsx';
+import { OrderTimeline } from './OrderTimeline.tsx';
 import { LocationSharing } from './performer.tsx';
 import { RefundForm, payStatus } from './adminUser.tsx';
 
@@ -55,7 +59,7 @@ export function Order({ id }: { id: string }) {
       {d.status === 'searching' && (d.you === 'client' || d.you === 'admin') && <Search d={d} onChosen={o.reload} />}
       {d.you === 'candidate' && <CandidateView d={d} onDone={o.reload} />}
 
-      {!isConsult && !['cancelled', 'no_performer', 'searching', 'awaiting_owner'].includes(d.status) && <Steps status={d.status} service={d.service} />}
+      {!isConsult && d.you !== 'candidate' && <Steps status={d.status} service={d.service} events={d.events} />}
       {isConsult && !isPerformer && d.you !== 'candidate' && <ConsultClient d={d} />}
       {d.consultFrom?.hint && <ConsultHintCard from={d.consultFrom} />}
       {d.status === 'no_performer' && !isPerformer && <Retry id={id} onDone={o.reload} />}
@@ -67,6 +71,10 @@ export function Order({ id }: { id: string }) {
       {d.you !== 'candidate' && d.status !== 'searching' && <Money d={d} />}
 
       {d.you === 'admin' && <AdminPanel d={d} onDone={o.reload} />}
+      {d.you === 'admin' && !isConsult && <AdminRouteMap orderId={id} />}
+      {(d.you === 'client' || d.you === 'admin') && <OrderTimeline
+        events={d.events} createdAt={d.createdAt} acceptedAt={d.acceptedAt}
+        arrivedAt={d.arrivedAt} completedAt={d.completedAt} isAdmin={d.you === 'admin'} />}
       {(d.you === 'client' || d.you === 'admin') && d.paymentMethod !== 'cash' && <PaymentsList id={id} admin={d.you === 'admin'} />}
       {isPerformer && (isConsult ? <ConsultFinish d={d} onDone={o.reload} /> : <PerformerActions d={d} onDone={o.reload} />)}
       {!isPerformer && ['arrived', 'working'].includes(d.status) && d.service !== 'consult' && <WorkInProgress d={d} />}
@@ -86,7 +94,48 @@ export function Order({ id }: { id: string }) {
 
       {d.you !== 'admin' && d.you !== 'candidate' && <a className="btn ghost" href={`#/support/new?order=${d.id}`}>Позвать поддержку</a>}
       {!done && d.actions.includes('cancel') && !isPerformer && !(isConsult && d.status === 'awaiting_confirmation') && <Cancel id={id} status={d.status} consult={isConsult} onDone={o.reload} />}
-      {d.status === 'cancelled' && <div className="card"><b>Заявка отменена</b><span className="note">{d.cancelReason}</span></div>}
+      {d.status === 'cancelled' && <div className="card stack">
+        <b>Заявка отменена</b>
+        <span className="note">{d.cancelReason}</span>
+        {d.cancelBreakdown && <div className="stack">
+          <b>Расчёт отмены</b>
+          <div className="between"><span>Этап</span><b>{({
+            searching: 'До назначения', accepted: 'Принята, до выезда',
+            en_route_first_half: 'Первая половина маршрута',
+            en_route_second_half: 'Вторая половина маршрута',
+            arrived: 'На месте', performer_fault: 'По вине исполнителя',
+          } as Record<string, string>)[d.cancelBreakdown.stage] ?? 'По условиям заявки'}</b></div>
+          <div className="between"><span>Удержание</span><b>{Math.round(Number(d.cancelBreakdown.share) * 100)}%</b></div>
+          <div className="between"><span>Исполнителю за выезд</span><b>{rub(d.cancelBreakdown.toPerformer)}</b></div>
+          <div className="between"><span>Сервисный сбор удержан</span><b>{rub(d.cancelBreakdown.platformKeeps)}</b></div>
+          <div className="between"><span>Расчётный возврат</span><b>{rub(d.cancelBreakdown.refund)}</b></div>
+          {d.cancelBreakdown.stageEvidence && <span className="note">Основание этапа: {d.cancelBreakdown.stageEvidence.source === 'performer_arrival_action'
+            ? 'исполнитель самостоятельно отметил прибытие; GPS-подтверждения нет'
+            : d.cancelBreakdown.stageEvidence.source === 'status_only'
+              ? 'статус «в пути»; прохождение половины маршрута по GPS не подтверждено'
+              : 'текущий статус заявки; GPS-подтверждения нет'}.</span>}
+          <span className="note">Расчётный возврат — не подтверждение банковского возврата.</span>
+        {d.cancellationPayment && <div className="stack">
+          <b>Состояние оплаты и возврата</b>
+          <div className="between"><span>Платёж</span><b>{({
+            created: 'Создаётся', pending: 'Ожидает подтверждения',
+            held: 'Средства зарезервированы', captured: 'Оплачен',
+            cancelled: 'Отменён банком', refunded: 'Возвращён',
+            partially_refunded: 'Частично удержан',
+          } as Record<string, string>)[d.cancellationPayment.paymentStatus] ?? 'Проверяется'}</b></div>
+          {d.cancellationPayment.operationStatus && <div className="between"><span>Банковская операция</span><b>{({
+            prepared: 'Подготовлена', sending: 'В обработке',
+            needs_review: 'Нужна проверка администратором',
+            settled: 'Подтверждена банком',
+          } as Record<string, string>)[d.cancellationPayment.operationStatus] ?? 'Проверяется'}</b></div>}
+          {d.cancellationPayment.operationStatus === 'settled' && d.cancellationPayment.operationAction === 'capture' &&
+            <div className="between"><span>Фактически удержано</span><b>{rub(d.cancellationPayment.amountToCapture)}</b></div>}
+          {d.cancellationPayment.operationStatus === 'settled' && d.cancellationPayment.refundedAmount > 0 &&
+            <div className="between"><span>Не удержано из резерва</span><b>{rub(d.cancellationPayment.refundedAmount)}</b></div>}
+          <span className="note">Если средства были только зарезервированы, не удержанная сумма освобождается банком. Срок доступности зависит от банка.</span>
+        </div>}
+        </div>}
+      </div>}
     </main>
   );
 }
@@ -149,19 +198,75 @@ function CandidateView({ d, onDone }: { d: any; onDone: () => void }) {
   );
 }
 
-function Steps({ status, service }: { status: string; service: string }) {
-  const idx = STEPS.indexOf(status);
+function Steps({ status, service, events = [] }: { status: string; service: string; events?: Array<{type:string;created_at:string}> }) {
   const names = service === 'tow' ? TOW_STEP_NAMES : STEP_NAMES;
-  return (
-    <ol className="steps card">
-      {STEPS.filter((s) => s !== 'searching').map((s, i, arr) => (
-        <li key={s} className={i + 1 < idx || status === 'completed' ? 'done' : i + 1 === idx ? 'now' : ''}>
-          <div className="rail"><span className="d" />{i < arr.length - 1 && <span className="ln" />}</div>
-          <span className="tx">{names[s]}</span>
-        </li>
-      ))}
+  const sequence = STEPS;
+  const current = sequence.indexOf(status);
+  const finished = status === 'completed';
+  const active = finished ? sequence.length - 1 : Math.max(0, current);
+  // Percentage measures workflow stages only, not work performed, time or distance.
+  const progress = finished ? 100 : current < 0 ? 0 : Math.round(active / Math.max(1, sequence.length - 1) * 100);
+  const stopped = status === 'cancelled' || status === 'no_performer';
+  const awaitingOwner = status === 'awaiting_owner';
+  const showProgress = !stopped && !awaitingOwner;
+  const stageEvent: Record<string, string[]> = { accepted: ['accepted'], en_route: ['depart'], arrived: ['arrive'], working: ['start_work'], awaiting_confirmation: ['amount_proposed'], completed: ['amount_confirmed', 'completed', 'confirm'] };
+  // Keep repeated dispatch attempts separate; creation is not evidence of dispatch.
+  // Prefer the latest dispatch attempt by server timestamp, not array ordering.
+  const orderedEvents = [...events].filter(e => e && typeof e.created_at === 'string' && !Number.isNaN(Date.parse(e.created_at)))
+    .sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at));
+  const lastRetry = orderedEvents.reduce((index, e, i) => e.type === 'retry' ? i : index, -1);
+  const cycle = lastRetry >= 0 ? orderedEvents.slice(lastRetry) : orderedEvents;
+  const stageTime = (step: string) => {
+    const eventTypes = step === 'searching' ? ['dispatch_started', 'retry'] : (stageEvent[step] ?? []);
+    const matches = cycle.filter(e => eventTypes.includes(e.type));
+    const at = matches[matches.length - 1]?.created_at;
+    if (!at) return null;
+    return new Intl.DateTimeFormat('ru-RU', {hour:'2-digit', minute:'2-digit', second:'2-digit'}).format(new Date(at));
+  };
+  const heading = finished ? 'Заявка выполнена' : status === 'cancelled' ? 'Заявка отменена' : status === 'no_performer' ? 'Исполнитель не найден'
+    : status === 'en_route' ? 'Исполнитель в пути'
+    : status === 'arrived' ? 'Исполнитель на месте'
+    : status === 'working' ? 'Работа выполняется'
+    : status === 'accepted' ? 'Исполнитель назначен'
+    : status === 'searching' ? 'Ищем исполнителя'
+    : status === 'awaiting_owner' ? 'Ожидаем подтверждения владельца'
+    : status === 'awaiting_confirmation' ? 'Ожидаем подтверждения стоимости'
+    : 'Ход выполнения заявки';
+  return <section className="cinematic-status" aria-label="Этапы выполнения заявки">
+    <div className="cinematic-status-glow" aria-hidden="true" />
+    <header className="cinematic-status-header">
+      <div><span className="cinematic-status-eyebrow">TRAKSOS · LIVE STATUS</span>
+        <h2>{heading}</h2>
+        <p>{finished ? 'Все этапы завершены' : status === 'cancelled' ? 'Дальнейшее выполнение остановлено'
+          : 'Этапы обновляются по мере действий участников заявки'}</p>
+      </div>
+      <span className="cinematic-status-counter" aria-label={showProgress ? `Пройдено этапов: ${finished ? sequence.length : Math.max(0, current)} из ${sequence.length}` : awaitingOwner ? "Ожидается решение владельца" : "Выполнение остановлено"}>{showProgress ? <>{progress}<small>%</small></> : "—"}</span>
+    </header>
+    {showProgress && <div className="cinematic-status-meter" role="progressbar" aria-label="Положение в последовательности этапов заявки"
+      aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+      <span style={{width:`${progress}%`}}/>
+    </div>}
+    <ol className="cinematic-status-steps">
+      {sequence.map((step, index) => {
+        // Cancelled/expired orders retain only milestones proven by their event log.
+        const eventTypes = step === 'searching' ? ['dispatch_started', 'retry'] : (stageEvent[step] ?? []);
+        const recorded = eventTypes.some(type => cycle.some(e => e.type === type));
+        const done = finished || (stopped ? recorded : !awaitingOwner && current >= 0 && index < current);
+        const now = !finished && !stopped && !awaitingOwner && current === index;
+        const recordedTime = stageTime(step);
+        return <li key={step} className={done ? 'is-done' : now ? 'is-current' : 'is-next'}
+          aria-current={now ? 'step' : undefined}>
+          <span className="cinematic-status-node" aria-hidden="true">{done ? '✓' : String(index + 1).padStart(2, '0')}</span>
+          <span className="cinematic-status-step-label">{names[step] ?? step}</span>
+          {recordedTime && <small className="cinematic-status-stage-time">{recordedTime}</small>}
+          {now && <span className="cinematic-status-live"><i/>Сейчас</span>}
+        </li>;
+      })}
     </ol>
-  );
+    {awaitingOwner && <p className="cinematic-status-stop">Поиск исполнителя ещё не начался: ожидаем подтверждения владельца транспорта.</p>}
+    {stopped && <p className="cinematic-status-stop">{status === 'cancelled' ? 'Выполнение остановлено. Доступные события и время отмены показаны в журнале ниже.' : 'Поиск завершился без исполнителя. Доступные события поиска показаны в журнале ниже.'}</p>}
+    <p className="cinematic-status-footnote">Процент показывает положение в последовательности этапов, а не объём выполненной работы или оставшееся время. Статусы отражают зафиксированные действия; GPS, КПП и расчёт оплаты проверяются отдельно.</p>
+  </section>;
 }
 
 function PerformerCard({p,pos,consult,to,moving}:{
@@ -208,9 +313,7 @@ function ClientCard({ d }: { d: any }) {
         {d.description && <><dt>Что случилось</dt><dd>{d.description}</dd></>}
         {d.site && <><dt>Условия</dt><dd><SitePills site={d.site} /></dd></>}
       </dl>
-      {d.lat != null && d.service !== 'consult' && (
-        <a className="btn ghost" target="_blank" rel="noreferrer" href={`https://yandex.ru/maps/?rtext=~${d.lat},${d.lng}&rtt=auto`}>Маршрут в Яндекс Картах</a>
-      )}
+      {d.service !== 'consult' && <DestinationCard point={{ lat: d.lat, lng: d.lng, address: d.address }} />}
     </div>
   );
 }
@@ -300,7 +403,12 @@ function PerformerActions({ d, onDone }: { d: any; onDone: () => void }) {
       {['accepted', 'en_route'].includes(d.status) && <LateButtons d={d} onDone={onDone} />}
       {['arrived', 'working', 'awaiting_confirmation'].includes(d.status) && <SiteFlags d={d} onDone={onDone} />}
       {d.service !== 'tow' && ['arrived', 'working', 'awaiting_confirmation'].includes(d.status) && <RecommendService order={d} onDone={onDone} />}
-      {d.status === 'en_route' && <button className="btn" disabled={busy} onClick={() => step('arrive', 'Клиент видит, что вы на месте')}>Я на месте</button>}
+      {d.status === 'en_route' && <div className="card stack">
+        <b>Подтверждение прибытия</b>
+        <span className="note">Нажимайте только после фактического прибытия к согласованной точке. Сейчас отметка отправляется исполнителем вручную и не является GPS-подтверждением.</span>
+        <span className="note">После отметки «На месте» может начаться учёт оплачиваемого времени по действующим условиям заявки. Если въезд через КПП затруднён, сообщите клиенту в чате до подтверждения.</span>
+        <button className="btn" disabled={busy} onClick={() => step('arrive', 'Клиент получил вашу отметку о прибытии')}>Подтвердить: я на месте</button>
+      </div>}
       {d.status === 'arrived' && <button className="btn" disabled={busy} onClick={() => step('start_work', 'Работа началась')}>Начать работу</button>}
 
       {['working', 'awaiting_confirmation'].includes(d.status) && (
@@ -733,7 +841,12 @@ function Cancel({ id, status, consult, onDone }: { id: string; status: string; c
   return (
     <div className="card">
       <b>Отменить заявку?</b>
-      {status !== 'searching' && !consult && <span className="note">Мастер уже принял заявку: если он в пути, часть выезда уходит ему — по шкале отмены в правилах.</span>}
+      {!consult && <div className="stack">
+        <b>Условия отмены выезда</b>
+        <span className="note">До назначения исполнителя — 0% стоимости выезда. Принял заявку, но не выехал — 25%. Выехал, но не достиг половины маршрута — 50%. Проехал половину маршрута или прибыл — 100%.</span>
+        <span className="note">Процент применяется к согласованной стоимости выезда. Сервисный сбор и возврат предоплаты рассчитываются отдельно по условиям заявки. Если GPS не позволяет достоверно определить этап, расчёт может потребовать проверки.</span>
+        <span className="note">Это правила, а не окончательная сумма списания. Итог зависит от подтверждённого этапа на момент отмены; сведения о платеже и возврате будут доступны в заявке.</span>
+      </div>}
       {status !== 'searching' && consult && <span className="note">Если мастер не вышел на связь — отменяйте, деньги не спишутся.</span>}
       <div className="scroll-x">{reasons.map((r) => <button key={r} className="chip" aria-pressed={reason === r} onClick={() => setReason(r)}>{r}</button>)}</div>
       <button className="btn bad" disabled={busy || !reason} onClick={() => run(() => post(`/api/orders/${id}/cancel`, { reason }), 'Заявка отменена').then((r) => r && onDone())}>Отменить</button>
