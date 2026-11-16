@@ -9,7 +9,7 @@ const id=z.string().uuid();
 const isAdmin=(u:AuthUser)=>u.roles.includes('admin');
 function admin(u:AuthUser){if(!isAdmin(u))throw forbidden();}
 async function courier(db:Db,user:AuthUser) {
-  if(!user.roles.includes('courier'))throw forbidden('Кабинет доступен только курьерам TrackSOS');
+  if(!user.roles.includes('courier'))throw forbidden('Кабинет доступен только курьерам TrakSOS');
   const p=await db.one<{user_id:string;active:boolean;location_consent:boolean}>(
     'select user_id,active,location_consent from shop_couriers where user_id=$1',[user.id]);
   if(!p?.active)throw forbidden('Доступ курьера не подтверждён');
@@ -182,7 +182,7 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
       "update shop_courier_stops set status='at_door',arrived_at=now() "+
       "where id=$1 and run_id=$2 and status='collected' returning shop_order_id",[stopId,run.id]);
     if(!row)throw conflict('invalid_stop','Остановка недоступна');
-    await alert(db,notifier,row.shop_order_id,'Курьер прибыл по адресу; подтвердите получение в TrackSOS');
+    await alert(db,notifier,row.shop_order_id,'Курьер прибыл по адресу; подтвердите получение в TrakSOS');
     return {status:'at_door'};
   });
   r.post('/api/shop/orders/:id/confirm-delivery',true,async(c:AuthedCtx)=>{
