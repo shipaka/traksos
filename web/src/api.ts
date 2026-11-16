@@ -11,7 +11,11 @@ const store = {
 let token: string | null = store.get('traksos.token');
 export const getToken = () => token;
 export function setToken(t: string | null) {
-  if (token !== t) store.set('traksos.offlineIdentity', null);
+  if (token !== t) {
+    // A login switch/logout must never leave an old user's WS connection open.
+    disconnectWs();
+    store.set('traksos.offlineIdentity', null);
+  }
   token = t;
   store.set('traksos.token', t);
 }
@@ -70,7 +74,7 @@ const listeners = new Set<Listener>();
 let ws: WebSocket | null = null;
 let retry = 0;
 let closedByUs = false;
-let wsConnecting = false;
+let wsConnectingGeneration: number | null = null;
 let wsGeneration = 0;
 let wsRetryTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -88,11 +92,11 @@ function scheduleWsRetry() {
 }
 
 export function connectWs() {
-  if (!token || !navigator.onLine || wsConnecting || (ws && ws.readyState <= 1)) return;
+  if (!token || !navigator.onLine || wsConnectingGeneration===wsGeneration || (ws && ws.readyState <= 1)) return;
   closedByUs=false;
   const sessionToken=token;
   const generation=wsGeneration;
-  wsConnecting=true;
+  wsConnectingGeneration=generation;
   // A short-lived one-use ticket replaces putting the 90-day bearer token
   // in /ws URLs, which reverse proxies might log.
   void post<{ticket:string}>('/api/auth/realtime-ticket').then(({ticket})=>{
@@ -125,7 +129,7 @@ export function connectWs() {
   }).catch(()=>{
     if(generation===wsGeneration)scheduleWsRetry();
   }).finally(()=>{
-    wsConnecting=false;
+    if(wsConnectingGeneration===generation)wsConnectingGeneration=null;
   });
 }
 
