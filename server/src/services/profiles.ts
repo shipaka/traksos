@@ -3,6 +3,7 @@ import type { SettingsService } from './settings.ts';
 import { bad, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { slot, endOfMoscowDay, validSchedule, type Schedule } from '../domain/schedule.ts';
 import { normalizePhone } from '../util.ts';
+import { plausibleGpsStep } from '../domain/geo.ts';
 import { assertRoleExtension } from '../domain/roles.ts';
 
 export interface PerformerInput {
@@ -163,8 +164,21 @@ export class ProfilesService {
   /** Подключается из app.ts: снять исполнителя со всех торгов и звонков */
   onUnavailable?: (userId: string) => Promise<void>;
 
-  async setLocation(userId: string, lat: number, lng: number) {
-    await this.db.query('update performer_profiles set lat=$2, lng=$3, location_at=now() where user_id=$1', [userId, lat, lng]);
+  async setLocation(userId: string, lat: number, lng: number): Promise<boolean> {
+    return this.db.tx(async q => {
+      // Lock the previous point to prevent simultaneous updates from bypassing
+      // the jump filter. Server receive time, not client clock, is authoritative.
+      const previous = await q.one<any>(
+        'select lat,lng,location_at from performer_profiles where user_id=$1 for update', [userId]);
+      if (!previous) return false;
+      const now = new Date();
+      const prior = previous.lat == null || previous.lng == null || !previous.location_at
+        ? null : { lat: Number(previous.lat), lng: Number(previous.lng), at: previous.location_at };
+      if (!plausibleGpsStep(prior, { lat, lng }, now)) return false;
+      await q.query('update performer_profiles set lat=$2,lng=$3,location_at=$4 where user_id=$1',
+        [userId, lat, lng, now]);
+      return true;
+    });
   }
 
   // Машины -------------------------------------------------------------------
