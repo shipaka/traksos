@@ -1,11 +1,11 @@
-import {useEffect} from 'react';
+import {useEffect,useState} from 'react';
 import {get,post,fmtTime} from '../api.ts';
 import {useAction,useLoad} from '../ui.tsx';
 
 type Tracking={
   status:string;runStatus:string|null;live:boolean;
   location:{lat:number;lng:number;accuracyMeters:number;updatedAt:string}|null;
-  etaMinutes:null;
+  etaMinutes:null;handoffVerified:boolean;
 };
 type Event={id:string;status:string;at:string;title:string};
 type Timeline={events:Event[]};
@@ -21,6 +21,9 @@ export function CustomerCourierTracking({orderId,onChanged}:{
   const position=useLoad<Tracking>(()=>get('/api/shop/orders/'+orderId+'/courier'),[orderId]);
   const history=useLoad<Timeline>(()=>get('/api/shop/orders/'+orderId+'/delivery-history'),[orderId]);
   const {busy,run}=useAction();
+  const [handoffCode,setHandoffCode]=useState<string|null>(null);
+  const [codeExpiry,setCodeExpiry]=useState<string|null>(null);
+  useEffect(()=>{setHandoffCode(null);setCodeExpiry(null)},[orderId]);
   useEffect(()=>{
     const timer=window.setInterval(()=>{
       if(!navigator.onLine||document.visibilityState==='hidden')return;
@@ -45,12 +48,28 @@ export function CustomerCourierTracking({orderId,onChanged}:{
           target="_blank" rel="noopener noreferrer">Посмотреть последнюю точку на карте</a>
       </>:<p className="note">Актуальная GPS-точка сейчас недоступна. Мы не подменяем её прогнозом или точками других получателей.</p>}
       {d.status==='at_door'&&<div className="stack">
-        <p>Курьер сообщил о прибытии. Подтверждайте получение только после фактической передачи и проверки посылки.</p>
-        <button className="btn" disabled={busy} onClick={async()=>{
-          const result=await run(()=>post('/api/shop/orders/'+orderId+'/confirm-delivery',{}),
-            'Получение подтверждено');
-          if(result){await position.reload();await history.reload();onChanged()}
-        }}>Товар действительно получен</button>
+        <p>Курьер прибыл. Сначала сверьте состав посылки, затем покажите курьеру шестизначный одноразовый код. Он действует 10 минут и не отправляется по SMS.</p>
+        {!d.handoffVerified&&<>
+          <button className="btn ghost" disabled={busy} onClick={async()=>{
+            const created=await run(()=>post<{code:string;expiresAt:string}>(
+              '/api/shop/orders/'+orderId+'/delivery-code',{}),'Код выдачи создан');
+            if(created){setHandoffCode(created.code);setCodeExpiry(created.expiresAt)}
+          }}>{handoffCode?'Создать другой код':'Показать код выдачи'}</button>
+          {handoffCode&&<div className="card stack" aria-label="Одноразовый код выдачи">
+            <b style={{fontSize:'clamp(1.7rem,7vw,3rem)',letterSpacing:'.14em',fontVariantNumeric:'tabular-nums'}}>{handoffCode}</b>
+            <p className="note">Сообщите этот код только своему курьеру при передаче посылки.
+              {codeExpiry?' Код истекает: '+fmtTime(codeExpiry)+'.':''} При повторном запросе старый код не работает.</p>
+          </div>}
+          <p className="note">После проверки кода курьером здесь появится возможность подтвердить фактическое получение. Если код исчез после перезагрузки, запросите новый.</p>
+        </>}
+        {d.handoffVerified&&<>
+          <p className="note" role="status">Код передачи успешно проверен курьером. Если товар ещё не передан или состав не совпадает — не подтверждайте получение.</p>
+          <button className="btn" disabled={busy} onClick={async()=>{
+            const result=await run(()=>post('/api/shop/orders/'+orderId+'/confirm-delivery',{}),
+              'Получение подтверждено');
+            if(result){setHandoffCode(null);await position.reload();await history.reload();onChanged()}
+          }}>Товар действительно получен</button>
+        </>}
       </div>}
     </>}
     <h4>История доставки</h4>
