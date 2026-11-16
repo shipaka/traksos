@@ -27,7 +27,15 @@ export function AdminRouteMap({ orderId }: { orderId: string }) {
   const yTop = mercator(north), yBottom = mercator(south);
   const x = (p: RoutePoint) => ((Number(p.lng) - west) / (east - west)) * 1000;
   const y = (p: RoutePoint) => ((yTop - mercator(Number(p.lat))) / (yTop - yBottom)) * 600;
-  const trace = points.map((p, i) => `${i ? 'L' : 'M'}${x(p).toFixed(2)},${y(p).toFixed(2)}`).join(' ');
+  // Gaps in telemetry are not evidence of travel along a straight line.
+  // Start a new segment when samples are more than 15 minutes apart.
+  const gapThresholdMs = 15 * 60 * 1000;
+  const gapCount = points.slice(1).filter((p, i) =>
+    Date.parse(p.received_at) - Date.parse(points[i].received_at) > gapThresholdMs).length;
+  const trace = points.map((p, i) => {
+    const gap = i > 0 && Date.parse(p.received_at) - Date.parse(points[i - 1].received_at) > gapThresholdMs;
+    return `${i === 0 || gap ? 'M' : 'L'}${x(p).toFixed(2)},${y(p).toFixed(2)}`;
+  }).join(' ');
   const first = points[0], last = points[points.length - 1];
   const bbox = [west,south,east,north].map(v=>v.toFixed(6)).join(',');
   const url = 'https://www.openstreetmap.org/export/embed.html?bbox=' + bbox + '&layer=mapnik';
@@ -36,7 +44,7 @@ export function AdminRouteMap({ orderId }: { orderId: string }) {
     Number(last.lat).toFixed(6) + '/' + Number(last.lng).toFixed(6);
   return <section className="card stack" aria-label="Карта истории GPS исполнителя">
     <div className="between"><b>Маршрут исполнителя · №{route.data.number}</b><span className="pill">Только администратор</span></div>
-    <p className="note">Принятых GPS-точек: {points.length}. Первая: {fmtTime(first.received_at)}. Последняя: {fmtTime(last.received_at)}.</p>
+    <p className="note">Принятых GPS-точек: {points.length}. Разрывов телеметрии более 15 минут: {gapCount}. Первая: {fmtTime(first.received_at)}. Последняя: {fmtTime(last.received_at)}.</p>
     <div style={{height:360,borderRadius:14,overflow:'hidden',background:'#152638'}}>
       <iframe title="Карта OpenStreetMap района движения" src={url} loading="lazy" referrerPolicy="no-referrer"
         style={{width:'100%',height:'100%',border:0}}/>
@@ -49,7 +57,7 @@ export function AdminRouteMap({ orderId }: { orderId: string }) {
         <circle cx={x(first)} cy={y(first)} r="12" fill="#1bc98e" stroke="#fff" strokeWidth="3"/>
         <circle cx={x(last)} cy={y(last)} r="12" fill="#ffb34b" stroke="#fff" strokeWidth="3"/>
       </svg>
-      <p className="note">Зелёная точка — начало, оранжевая — последняя. Схема показывает последовательность принятых GPS-точек отдельно от интерактивной карты: масштабирование карты не искажает линию. Это не доказательство дорожного маршрута или прибытия.</p>
+      <p className="note">Зелёная точка — начало, оранжевая — последняя. Схема показывает последовательность принятых GPS-точек отдельно от интерактивной карты. При перерыве телеметрии более 15 минут линия прерывается, а не изображает неподтверждённое движение. Это не доказательство дорожного маршрута или прибытия.</p>
     </div>
     <a href={external} target="_blank" rel="noopener noreferrer">Открыть последнюю точку в OpenStreetMap ↗</a>
   </section>;
