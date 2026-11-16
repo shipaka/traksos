@@ -119,6 +119,9 @@ export class PrivacyService {
         await q.query('delete from community_knowledge where author_id=$1', [id]);
         await q.query('update community_knowledge set rights_reviewer=null where rights_reviewer=$1', [id]);
         await q.query('update community_knowledge set technical_reviewer=null where technical_reviewer=$1', [id]);
+        // The open-source review shelf stores editor attribution only for audit;
+        // do not preserve its user reference after scheduled account erasure.
+        await q.query('update community_knowledge_sources set technical_reviewer=null where technical_reviewer=$1',[id]);
         await q.query('delete from community_profiles where user_id=$1', [id]);
         await q.query(`update performer_profiles set inn=null, cars='[]', car=null, paused=true where user_id=$1`, [id]);
         // The performer update above creates a final presence trigger event;
