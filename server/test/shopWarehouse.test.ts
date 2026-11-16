@@ -87,7 +87,7 @@ test('correct SKU and counted quantity enable warehouse release, changes invalid
   await t.db.query('update shop_orders set items=$2::jsonb where id=$1',[orderId,JSON.stringify(changed)]);
   assert.equal(ok(await t.api('GET',path,undefined,admin.token)).ready,false,
     'a supplier SKU substitution after scan invalidates packing readiness');
-  await t.db.query('update shop_orders set items=$2::jsonb where id=$1',[orderId,original!.items]);
+  await t.db.query('update shop_orders set items=$2::jsonb where id=$1',[orderId,JSON.stringify(original!.items)]);
   assert.equal(ok(await t.api('GET',path,undefined,admin.token)).ready,true);
   const manual=ok(await t.api('POST',url,{
     lineIndex:0,article:'EBS-7701',quantity:2,method:'manual',
