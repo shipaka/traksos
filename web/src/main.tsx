@@ -349,7 +349,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
        ['/work/me/money', 'Финансы и выплаты'], ['/work/me/tax', 'Налоговый статус'],
        ['/work/me/level', 'Рейтинг и уровень'], ['/work/docs', 'Проверка и документы'],
        ['/reviews', 'Отзывы'], ['/invite', 'Пригласить партнёра'],
-       ['/work/jobs', 'История заявок'], ['/profile', 'Аккаунт'], ['/security', 'Безопасность']]
+       ['/work/jobs', 'История заявок'], ['/profile', 'Аккаунт']]
     : mode === 'service'
       ? [...(me?.roles.some(r => r === 'master' || r === 'tow') ? [['/work', 'Выездной мастер — заявки']] as [string, string][] : []),
          ['/base', 'Заявки и история ремонтов'], ['/base/me', 'Карточка СТО'],
