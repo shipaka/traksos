@@ -134,3 +134,34 @@ test('colleague reply, chosen solution and author-only double-review proposal',a
  assert.equal((await t.api('GET','/api/community/knowledge/'+saved.id,
    undefined,writer.token)).status,404);
 });
+
+test('privacy export covers professional questions, and erasure removes accepted peer replies',async()=>{
+ const own=ok(await t.api('POST','/api/community/pro-cases',newCase(),writer.token));
+ const written=ok(await t.api('POST','/api/community/pro-cases/'+own.case.id+'/replies',{
+   clientNonce:randomUUID(),body:'Авторская диагностическая гипотеза без VIN, контактов или сторонних источников.'
+ },peer.token));
+ ok(await t.api('POST','/api/community/pro-cases/'+own.case.id+'/resolve',
+   {replyId:written.id},writer.token));
+ const peerIdentity={id:peer.id,phone:'+79995671102',roles:['master'],status:'active',
+   name:null,owner_id:null};
+ const before=await t.app.privacy.export(peerIdentity);
+ assert.ok(before.professionalTechnicalReplies.some((m:any)=>m.body.includes('Авторская диагностическая')));
+ await t.app.privacy.requestDelete(peerIdentity);
+ t.clock.advance(31*86400);
+ assert.equal(await t.app.privacy.processDeletions(),1);
+ const linked=await t.db.one<{accepted_reply_id:string|null}>(
+   'select accepted_reply_id from community_technical_cases where id=$1',[own.case.id]);
+ assert.equal(linked?.accepted_reply_id,null,
+   'accepted peer reply is unlinked, not kept as retained personal information');
+ assert.equal((await t.db.query(
+   'select 1 from community_technical_case_replies where author_id=$1',[peer.id])).length,0);
+ const writerIdentity={id:writer.id,phone:'+79995671101',roles:['master'],status:'active',
+   name:null,owner_id:null};
+ const authorArchive=await t.app.privacy.export(writerIdentity);
+ assert.ok(authorArchive.professionalTechnicalCases.some((x:any)=>x.symptoms===symptoms));
+ await t.app.privacy.requestDelete(writerIdentity);
+ t.clock.advance(31*86400);
+ assert.equal(await t.app.privacy.processDeletions(),1);
+ assert.equal((await t.db.query('select 1 from community_technical_cases where author_id=$1',
+   [writer.id])).length,0);
+});
