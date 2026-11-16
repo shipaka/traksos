@@ -60,12 +60,15 @@ export function ProfessionalCases({orderId}:{orderId?:string}){
  const list=useLoad<{cases:Case[];hasMore:boolean;page:number}>(
    ()=>roomId?get('/api/community/pro-cases/rooms/'+roomId+
      '?page='+page+'&status='+encodeURIComponent(status)+'&q='+encodeURIComponent(query))
-     :Promise.resolve({cases:[],hasMore:false,page:0}),[roomId,page,status,query]);
+     :Promise.resolve({cases:[],hasMore:false,page:0}),[roomId,page,status,query],
+   e=>e.type==='community_technical_case'&&e.roomId===roomId);
  const selectedCase=useLoad<Case|null>(
-   ()=>selected?get('/api/community/pro-cases/'+selected):Promise.resolve(null),[selected]);
+   ()=>selected?get('/api/community/pro-cases/'+selected):Promise.resolve(null),[selected],e=>e.type==='community_technical_case'&&e.caseId===selected);
  const replies=useLoad<{replies:Reply[];nextCursor:string;hasMore:boolean}>(
    ()=>selected?get('/api/community/pro-cases/'+selected+'/replies?after='+replyAfter)
-     :Promise.resolve({replies:[],nextCursor:'0',hasMore:false}),[selected,replyAfter]);
+     :Promise.resolve({replies:[],nextCursor:'0',hasMore:false}),[selected,replyAfter],
+   e=>e.type==='community_technical_case'&&e.caseId===selected&&
+     (e.kind==='reply'||e.kind==='resolved'));
  const join=async()=>{
    if(!room)return;
    const result=await run(()=>post('/api/community/rooms/'+room.id+'/join',{}),
