@@ -71,3 +71,20 @@ test('moving away prevents further buying but preserves previous purchases and s
  assert.ok(ok(await t.api('GET','/api/shop/orders',undefined,petersburg.token)).some((x:any)=>x.id===paidOrderId));
  assert.ok(ok(await t.api('GET','/api/shop/history',undefined,petersburg.token)).items.some((x:any)=>x.id===paidOrderId));
 });
+
+
+test('explicit non-SPb choice shows regional restriction even when the whole store is closed',async()=>{
+ ok(await t.api('PUT','/api/admin/settings/shop',{enabled:false},admin.token));
+ const outside=ok(await t.api('GET','/api/shop',undefined,region.token));
+ assert.equal(outside.enabled,false);
+ assert.match(outside.closedTitle,/недоступен в вашем регионе/);
+ assert.equal(outside.region.city,'Ижевск');
+ const unchanged=ok(await t.api('GET','/api/shop',undefined,petersburg.token));
+ assert.match(unchanged.closedTitle,/недоступен в вашем регионе/,
+   'customer who changed away from SPb should still see regional restriction');
+ ok(await t.api('PUT','/api/admin/settings/shop',{enabled:true},admin.token));
+ const spb=ok(await t.api('PUT','/api/shop/region',{city:'Санкт-Петербург'},petersburg.token));
+ assert.equal(spb.available,true);
+ const reopened=ok(await t.api('GET','/api/shop',undefined,petersburg.token));
+ assert.equal(reopened.enabled,true);
+});
