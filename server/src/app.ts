@@ -140,7 +140,7 @@ export function createApp(d: Deps) {
   registerCommunityRoadRoutes(r, d.db, notifier);
   registerRealNearbyHelpRoutes(r,d.db,now);
   registerKnowledgeOrderRoutes(r, d.db);
-  registerProfessionalCasesRoutes(r,d.db);
+  registerProfessionalCasesRoutes(r,d.db,notifier);
   const staff = ['admin', 'moderator'];
   const performerRoles = ['master', 'tow', 'service'];
 
