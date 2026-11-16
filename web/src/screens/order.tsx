@@ -217,10 +217,10 @@ function Steps({ status, service, events = [] }: { status: string; service: stri
   const lastRetry = orderedEvents.reduce((index, e, i) => e.type === 'retry' ? i : index, -1);
   const cycle = lastRetry >= 0 ? orderedEvents.slice(lastRetry) : orderedEvents;
   const stageTime = (step: string) => {
-    const stageEvents = cycle.filter(e => (stageEvent[step] ?? []).includes(e.type));
-    const searchEvents = cycle.filter(e => e.type === 'dispatch_started' || e.type === 'retry');
-    const at = step === 'searching' ? searchEvents[searchEvents.length - 1]?.created_at : stageEvents[stageEvents.length - 1]?.created_at;
-    if (!at || Number.isNaN(Date.parse(at))) return null;
+    const eventTypes = step === 'searching' ? ['dispatch_started', 'retry'] : (stageEvent[step] ?? []);
+    const matches = cycle.filter(e => eventTypes.includes(e.type));
+    const at = matches[matches.length - 1]?.created_at;
+    if (!at) return null;
     return new Intl.DateTimeFormat('ru-RU', {hour:'2-digit', minute:'2-digit', second:'2-digit'}).format(new Date(at));
   };
   const heading = finished ? 'Заявка выполнена' : status === 'cancelled' ? 'Заявка отменена' : status === 'no_performer' ? 'Исполнитель не найден'
