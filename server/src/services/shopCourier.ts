@@ -218,6 +218,8 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
         const next=await q.one<{id:string}>(
           "select id from shop_courier_stops where run_id=$1 and status='collected' order by seq limit 1",[row.run_id]);
         await q.query('update shop_courier_runs set active_stop_id=$2 where id=$1',[row.run_id,next?.id??null]);
+        // Do not show the last recipient's coordinates to the next customer.
+        await q.query('delete from shop_courier_live_positions where run_id=$1',[row.run_id]);
       }
       return {status:'done'};
     });
