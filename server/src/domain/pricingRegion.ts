@@ -59,6 +59,31 @@ export function checkLegacyPricingLocation(input:KnownLocation):LocationCheck {
     normalized.startsWith(name+' ул.'))return 'outside';
   return 'unknown';
 }
+/**
+ * Explicit local town names are stronger evidence than the wide lat/lng box.
+ * This still does NOT determine whether a street is inside the actual tariff polygon.
+ * Only refuse an obviously wrong self-selected price zone, never silently re-price.
+ */
+const namedLegacyZones=[
+  {place:'гатчина',zoneId:'gat'},
+  {place:'тосно',zoneId:'tos'},
+  {place:'выборг',zoneId:'vyb'},
+  {place:'луга',zoneId:'lug'},
+  {place:'кириши',zoneId:'kir'},
+  {place:'усть-луга',zoneId:'ust'}
+] as const;
+function startsWithNamedPlace(address:string,place:string){
+  return address===place||(address.startsWith(place)&&/^[,;.\\s№\\d]/u.test(address.slice(place.length)));
+}
+export function legacyTariffZoneMismatch(input:KnownLocation,zoneId:string){
+  let address=input.address?.trim().toLocaleLowerCase('ru-RU').replace(/ё/g,'е')??'';
+  address=address.replace(/^(?:россия|рф|российская федерация)\\s*,?\\s*/u,'')
+    .replace(/^(?:ленинградская область|ленинградская обл\\.?|ленобласть|ло)\\s*,?\\s*/u,'')
+    .replace(/^(?:г\\.?|город)\\s+/u,'');
+  const found=namedLegacyZones.find(({place})=>startsWithNamedPlace(address,place));
+  return found && found.zoneId!==zoneId ? {place:found.place,expectedZoneId:found.zoneId} : null;
+}
+
 export function legacyPricingWarning(input:KnownLocation){
   const status=checkLegacyPricingLocation(input);
   return {
