@@ -966,6 +966,7 @@ export function createApp(d: Deps) {
     name: z.string().min(2).max(120).optional(), address: z.string().min(3).max(300).optional(),
     lat: z.number().min(-90).max(90).nullable().optional(), lng: z.number().min(-180).max(180).nullable().optional(),
     hours: z.string().max(60).optional(), inn: z.string().max(12).nullable().optional(),
+    timeZone: z.string().trim().min(3).max(80).refine(value=>{try {new Intl.DateTimeFormat('en',{timeZone:value});return true;}catch{return false;}},'Укажите действительный часовой пояс').optional(),
     brands: z.array(z.string().max(40)).max(40).optional(),
     staff: z.record(z.string().max(20), z.enum(['own', 'invite', 'none'])).optional(),
     conditions: z.array(z.enum(['parking', 'pit', 'lift', 'night'])).max(4).optional(),
