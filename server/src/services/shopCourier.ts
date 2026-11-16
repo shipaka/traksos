@@ -5,6 +5,7 @@ import type { Router, AuthedCtx, AuthUser } from '../http/router.ts';
 import { parse, bad, forbidden, notFound, conflict, HttpError } from '../http/router.ts';
 import type { Notifier } from './notify.ts';
 import { addressDeclaredInSpb } from './shopRegion.ts';
+import { warehouseProgress } from './shopWarehouse.ts';
 
 /** Only an admin can grant a courier entitlement; no public courier signup. */
 const id=z.string().uuid();
@@ -18,7 +19,7 @@ async function courier(db:Db,user:AuthUser) {
   return p;
 }
 type Run={id:string;courier_id:string;status:string;pickup_address:string;city_code:string;
-  active_stop_id:string|null;dispatch_approved_at:Date|null};
+  active_stop_id:string|null;dispatch_approved_at:Date|null;packing_required:boolean};
 async function myRun(db:Db,c:AuthedCtx) {
   await courier(db,c.user);
   const run=await db.one<Run>('select * from shop_courier_runs where id=$1',[parse(id,c.params.id)]);
@@ -34,6 +35,7 @@ async function runSummary(db:Db,run:Run) {
     "join shop_orders so on so.id=st.shop_order_id join users u on u.id=so.client_id "+
     "where st.run_id=$1 order by st.seq",[run.id]);
   return {id:run.id,status:run.status,cityCode:run.city_code,pickupAddress:run.pickup_address,
+    packingRequired:run.packing_required,
     activeStopId:run.active_stop_id,
     stops:stops.map(x=>({id:x.id,seq:x.seq,status:x.status,orderNumber:x.number,
        handoffVerified:Boolean(x.handoff_verified),
@@ -152,7 +154,7 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
   });
   r.post('/api/admin/shop/courier-runs',['admin'],async(c:AuthedCtx)=>{
     const b=parse(z.object({courierId:id,pickupAddress:z.string().trim().min(10).max(300),
-      orderIds:z.array(id).min(1).max(50)}),c.body);
+      orderIds:z.array(id).min(1).max(50),packingRequired:z.boolean().default(false)}),c.body);
     if(new Set(b.orderIds).size!==b.orderIds.length)throw bad('duplicate_orders','Заказ повторяется в маршруте');
     if(!addressDeclaredInSpb(b.pickupAddress))
       throw conflict('warehouse_outside_region','Склад отправления должен быть подтверждён в Санкт-Петербурге');
@@ -182,8 +184,8 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
         [b.orderIds]);
       if(assigned)throw conflict('order_already_assigned','Один из заказов уже находится в другом курьерском рейсе');
       const result=await q.one<Run>(
-        "insert into shop_courier_runs(courier_id,created_by,pickup_address) values($1,$2,$3) returning *",
-        [b.courierId,c.user.id,b.pickupAddress]);
+        "insert into shop_courier_runs(courier_id,created_by,pickup_address,packing_required) values($1,$2,$3,$4) returning *",
+        [b.courierId,c.user.id,b.pickupAddress,b.packingRequired]);
       if(!result)throw new Error('Courier run insert failed');
       for(let i=0;i<b.orderIds.length;i++) {
         await q.query('insert into shop_courier_stops(run_id,shop_order_id,seq) values($1,$2,$3)',
@@ -191,11 +193,11 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
         await recordDelivery(q,b.orderIds[i],result.id,'planned',c.user.id);
       }
       await q.query('insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4)',
-        [c.user.id,'shop.courier_run_created',result.id,{stops:b.orderIds.length}]);
+        [c.user.id,'shop.courier_run_created',result.id,{stops:b.orderIds.length,packingRequired:b.packingRequired}]);
       return result;
     });
     // The courier will be notified only after an admin approves the route economics.
-    return {id:run.id,status:run.status,stops:b.orderIds.length};
+    return {id:run.id,status:run.status,stops:b.orderIds.length,packingRequired:b.packingRequired};
   });
   // Cancel a planned route only BEFORE anyone collects a parcel. Do not
   // silently erase completed/ongoing delivery movements or financial records.
@@ -284,6 +286,13 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
         'where st.id=$1 and i.needs_review=true',[stopId]);
       if(issue)throw conflict('supplier_issue_open',
         'Поставщик отменил или приостановил заказ. Сверьте наличие с диспетчером');
+      if(run.packing_required){
+        const packing=await warehouseProgress(q,run.id);
+        const thisParcel=packing.stops.find(x=>x.id===stopId);
+        if(!thisParcel?.lines.length||thisParcel.lines.some(x=>!x.verified))
+          throw conflict('packing_incomplete',
+            'Состав посылки изменился или не был полностью сверен на складе');
+      }
       await q.query("update shop_courier_stops set status='collected',collected_at=now() where id=$1",[stopId]);
       const order=await q.one<{shop_order_id:string}>(
         'select shop_order_id from shop_courier_stops where id=$1',[stopId]);
