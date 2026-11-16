@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { get, post, put, fmtTime, onEvent } from '../api.ts';
+import { ApiError, get, post, put, fmtTime, onEvent } from '../api.ts';
 import { useAction, useLoad, useMe } from '../ui.tsx';
 import './driverAir.css';
 import { NearbyHelp } from './nearbyHelp.tsx';
@@ -58,6 +58,7 @@ function useAirMessages(endpoint:string|null){
   const recentApprovals=useRef<Set<string>>(new Set());
   useEffect(()=>{
     let alive=true,fetching=false,initialized=false;
+    let syncEpoch:string|null=null;
     let continuation:number|null=null;
     cursor.current='0';moderationCursor.current='0';recentApprovals.current.clear();
     setMessages([]);setError(null);setLoading(true);
@@ -72,17 +73,25 @@ function useAirMessages(endpoint:string|null){
       }
       if(continuation!==null){window.clearTimeout(continuation);continuation=null;}
       fetching=true;
-      let stillBacklogged=false;
+      let stillBacklogged=false,resync=false;
+      const restart=()=>{
+        initialized=false;syncEpoch=null;
+        cursor.current='0';moderationCursor.current='0';recentApprovals.current.clear();
+        setMessages([]);setLoading(true);resync=true;
+      };
       try{
         // A message-ID poll remains for backward compatibility; all new
         // publication and moderation changes are also delivered in event order.
         const query=initial?'?recent=1&limit=50':('?after='+encodeURIComponent(cursor.current)+'&limit=50');
-        const d=await get<{messages:AirMessage[];nextCursor:string;moderationCursor?:string}>(endpoint+query);
+        const d=await get<{messages:AirMessage[];nextCursor:string;moderationCursor?:string;syncEpoch?:string}>(endpoint+query);
         if(!alive)return;
+        if(!initial&&syncEpoch!==null&&d.syncEpoch!==syncEpoch){
+          restart();return;
+        }
         setMessages(curr=>initial?d.messages:appendMessages(curr,d.messages,new Set(recentApprovals.current)));
         cursor.current=d.nextCursor;
         if(initial){
-          initialized=true;
+          initialized=true;syncEpoch=d.syncEpoch??'0';
           // Taken by the server BEFORE the snapshot; changes during the request
           // are replayed, rather than silently skipping a concurrent approval.
           moderationCursor.current=d.moderationCursor??'0';
@@ -93,9 +102,14 @@ function useAirMessages(endpoint:string|null){
         for(let page=0;page<3;page++){
           const previous=moderationCursor.current;
           const updates=await get<{
-            changes:AirModerationChange[];nextCursor:string;hasMore:boolean
+            changes:AirModerationChange[];nextCursor:string;hasMore:boolean;syncEpoch?:string
           }>(moderationUrl+'?after='+encodeURIComponent(previous)+'&limit=100');
           if(!alive)return;
+          if(updates.syncEpoch!==syncEpoch){
+            // The server pruned events or erased a user's messages. A stale
+            // in-memory tail is unsafe: replace it with a new authorized snapshot.
+            restart();break;
+          }
           moderationCursor.current=updates.nextCursor;
           if(updates.changes.length){
             const highlights=recentApprovals.current;
@@ -114,11 +128,23 @@ function useAirMessages(endpoint:string|null){
           if(!stillBacklogged)break;
         }
         setError(null);
-      }catch(e){if(alive)setError(safeError(e));stillBacklogged=false;}
+      }catch(e){
+        if(alive){
+          if(e instanceof ApiError&&(e.status===403||e.status===404)){
+            // Revoked roles, deleted DM threads and private-room access may
+            // never leave the previous messages visible in this WebView.
+            initialized=false;syncEpoch=null;
+            cursor.current='0';moderationCursor.current='0';recentApprovals.current.clear();
+            setMessages([]);
+          }
+          setError(safeError(e));
+        }
+        stillBacklogged=false;
+      }
       finally{
         fetching=false;
         if(alive)setLoading(false);
-        if(alive&&stillBacklogged&&document.visibilityState==='visible'){
+        if(alive&&(stillBacklogged||resync)&&document.visibilityState==='visible'){
           continuation=window.setTimeout(()=>{continuation=null;void load();},250);
         }
       }
