@@ -34,7 +34,12 @@ async function run(){
   await Promise.all(drivers.map(u=>t.api('POST',route+'/join',{},u.token).then(ok)));
   const wsOrigin=t.base.replace(/^http/,'ws');
   const open=async(index)=>{
-    const ws=new WebSocket(wsOrigin+'/ws?token='+encodeURIComponent(drivers[index].token));
+    // Real one-use handshake path: never pass the long-lived session bearer in
+    // a WebSocket URL, even in the disposable CI environment.
+    const issued=ok(await t.api('POST','/api/auth/realtime-ticket',{},
+      drivers[index].token));
+    assert.equal(issued.expiresInSeconds,30);
+    const ws=new WebSocket(wsOrigin+'/ws?ticket='+encodeURIComponent(issued.ticket));
     sockets.push(ws);
     let hello=false;
     ws.on('message',(data)=>{
