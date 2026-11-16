@@ -28,10 +28,10 @@
   animation:ts-cinema-emerge .55s ease-out both;
 }
 .app.role-performer .work-command-hero-master .work-command-art{
-  background-image:url('/tracksos-partner-master-approved.webp');
+  background-image:url('../public/tracksos-partner-master-approved.webp');
 }
 .app.role-performer .work-command-hero-tow .work-command-art{
-  background-image:url('/tracksos-partner-tow-approved.webp');
+  background-image:url('../public/tracksos-partner-tow-approved.webp');
 }
 .app.role-performer .work-command-copy{
   max-width:min(640px,68%);text-shadow:0 3px 16px #0008;
@@ -52,7 +52,7 @@
   border-color:#5c8e9d;
 }
 .app.role-service :is(.base-command-hero,.base-onboarding-hero)::after{
-  content:"";background-image:url('/tracksos-partner-sto-approved.webp') !important;
+  content:"";background-image:url('../public/tracksos-partner-sto-approved.webp') !important;
   background-size:contain;background-position:right center;background-repeat:no-repeat;
   inset:0 0 0 auto;width:45%;height:100%;opacity:.74;
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 25%);
@@ -66,7 +66,7 @@
   border-color:#5098b0;
 }
 .app.role-insurer .cabinet-page>.cabinet-heading::after{
-  content:"";background-image:url('/tracksos-partner-insurer-approved.webp') !important;
+  content:"";background-image:url('../public/tracksos-partner-insurer-approved.webp') !important;
   background-repeat:no-repeat;background-position:center right;background-size:contain;
   inset:0 0 0 auto;width:44%;height:100%;opacity:.78;
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 34%);
@@ -92,7 +92,7 @@
     linear-gradient(115deg,#061726,#102c47 68%,#113652)!important;
 }
 .app.role-admin .admin-command-art{
-  background:url('/tracksos-approved-map.webp') center right / contain no-repeat;
+  background:url('../public/tracksos-approved-map.webp') center right / contain no-repeat;
   opacity:.42;width:min(48%,450px);
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 29%);
   mask-image:linear-gradient(90deg,transparent,#000 29%);
@@ -109,7 +109,7 @@
 }
 .app.role-moderator .internal-role-hero-moderator::after{
   content:"";position:absolute;transform:none;top:0;right:0;bottom:0;width:39%;height:100%;
-  background:url('/tracksos-approved-map.webp') center right / contain no-repeat;
+  background:url('../public/tracksos-approved-map.webp') center right / contain no-repeat;
   opacity:.29;-webkit-mask-image:linear-gradient(90deg,transparent,#000 50%);
   mask-image:linear-gradient(90deg,transparent,#000 50%);
 }
