@@ -7,7 +7,7 @@ type Entry={id:string;title:string;make:string;model:string|null;model_year:numb
  subsystem:string;source_url:string|null;created_at:string};
 type Detail=Entry&{description:string;rights_basis:string;updated_at:string};
 type Draft={id:string;title:string;rights_review:string;technical_review:string;created_at:string};
-type ReviewEntry=Entry&{rights_basis:string;rights_reference:string|null;
+type ReviewEntry=Entry&{description:string;rights_basis:string;rights_reference:string|null;
  rights_review:string;technical_review:string;author_nickname:string|null};
 const reviewLabel:Record<string,string>={pending:'Проверяется',approved:'Подтверждено',rejected:'Отклонено'};
 const rights:Record<string,string>={
@@ -121,6 +121,7 @@ function AdminKnowledgeQueue(){
   {queue.data?.articles.map(a=><article key={a.id} className="tech-review">
     <h3>{a.title}</h3>
     <p>{a.make} {a.model??''} {a.model_year??''} · {a.subsystem}</p>
+    <p className="tech-description">{a.description}</p>
     <p>Автор: {a.author_nickname??'Участник'} · Основание: {rights[a.rights_basis]??a.rights_basis}</p>
     {a.source_url&&<a href={a.source_url} rel="noopener noreferrer" target="_blank">Проверить источник</a>}
     <p className="note">Заявленные права: {a.rights_reference??'Документы не представлены'}</p>
