@@ -477,13 +477,16 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
   });
   r.get('/api/shop/orders/:id/courier',true,async(c:AuthedCtx)=>{
     const orderId=parse(id,c.params.id);
+    const owner=await db.one<{client_id:string;created_by:string}>(
+      'select client_id,created_by from shop_orders where id=$1',[orderId]);
+    if(!owner||(owner.client_id!==c.user.id&&owner.created_by!==c.user.id))
+      throw notFound('Доставка не найдена');
     const row=await db.one<{client_id:string;created_by:string;status:string;stop_status:string;run_id:string;leg_active:boolean}>(
       "select o.client_id,o.created_by,r.status,s.status as stop_status,r.id as run_id, "+
       "(r.active_stop_id=s.id) as leg_active "+
       "from shop_orders o join shop_courier_stops s on s.shop_order_id=o.id "+
       "join shop_courier_runs r on r.id=s.run_id where o.id=$1",[orderId]);
-    if(!row || (row.client_id!==c.user.id && row.created_by!==c.user.id))
-      throw notFound('Доставка не найдена');
+    if(!row)return {status:'awaiting_assignment',runStatus:null,location:null,live:false,etaMinutes:null};
     const live=row.status==='delivering' && row.leg_active &&
       ['collected','at_door'].includes(row.stop_status);
     const position=live?await db.one<{lat:number;lng:number;accuracy_m:number;updated_at:Date}>(
