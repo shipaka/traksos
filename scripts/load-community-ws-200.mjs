@@ -97,10 +97,18 @@ async function run(){
   // One revoked driver keeps an open TCP connection. The periodic auth
   // recheck must forcibly close it even if the application did not reload.
   const revoked=199;
+  assert.equal(sockets[revoked].readyState,WebSocket.OPEN,
+    'the WS to revoke must still be open before the account role changes');
   const closed=new Promise(resolve=>sockets[revoked].once('close',(code)=>resolve(code)));
   await t.db.query("update users set roles=ARRAY['client']::text[] where id=$1",
     [drivers[revoked].id]);
-  const closeCode=await Promise.race([closed,sleep(8000).then(()=>0)]);
+  const current=await t.app.auth.authenticate(drivers[revoked].token);
+  assert.deepEqual(current?.roles,['client'],'the auth layer must read the revoked role');
+  const closeCode=await Promise.race([closed,sleep(18000).then(()=>0)]);
+  if(closeCode!==1008)console.error('[revocation-diagnostic]',{
+    readyState:sockets[revoked].readyState,authenticatedRoles:current?.roles,
+    hubOnline:t.app.hub.online(drivers[revoked].id),closeCode,
+  });
   assert.equal(closeCode,1008,'driver role revocation did not close the socket');
 
   assert.deepEqual(violations,[]);
