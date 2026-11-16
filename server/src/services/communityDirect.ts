@@ -162,6 +162,11 @@ export function registerCommunityDirectRoutes(r:Router,db:Db,notifier:Notifier){
       const message=await q.one<{id:string;thread_id:string;body:string;moderation_state:string;created_at:Date}>(
         'insert into community_dm_messages(thread_id,sender_id,body,client_nonce,moderation_state) values($1,$2,$3,$4,$5) returning id::text as id,thread_id,body,moderation_state,created_at',
         [t.id,c.user.id,b.text,b.clientNonce,abuse.test(b.text)||contacts.test(b.text)?'pending':'published']);
+      // The SELECT FOR UPDATE OF t above serializes publications per direct
+      // thread, so an older event cannot commit behind a newer cursor.
+      if(message?.moderation_state==='published')await q.query(
+        "insert into community_dm_moderation_events(thread_id,message_id,previous_state,moderation_state) values($1,$2,'created','published')",
+        [t.id,message.id]);
       return {message,created:true};
     });
     const saved=messageInsert.message;
