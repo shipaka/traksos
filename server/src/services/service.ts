@@ -7,6 +7,7 @@ import type { Notifier } from './notify.ts';
 import type { SettingsService } from './settings.ts';
 import type { SupportService } from './support.ts';
 import { haversineKm } from '../domain/geo.ts';
+import { localNow } from '../domain/schedule.ts';
 import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
 
 export const NEEDS: Record<string, string> = {
@@ -24,14 +25,22 @@ export const WORKS = ['Диагностика', 'Электрика', 'Пнев�
 export const DECLINE = ['Нет такого специалиста', 'Нет мест', 'Не работаем с этой маркой'];
 
 const msk = (d: Date) => new Date(d.getTime() + 3 * 3600_000).toISOString().slice(0, 10);
+function localDate(at:Date,timeZone:string) {
+  const parts=new Intl.DateTimeFormat('en-GB',{timeZone,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(at);
+  const v=(n:string)=>parts.find(x=>x.type===n)?.value??'';
+  return v('year')+'-'+v('month')+'-'+v('day');
+}
+function centerClosedToday(c:{closed_days?:Array<string|Date>;time_zone?:string|null},at:Date) {
+  const today=c.time_zone?localDate(at,c.time_zone):msk(at);
+  return (c.closed_days??[]).some(d=>(d instanceof Date?d.toISOString().slice(0,10):String(d).slice(0,10))===today);
+}
 /** Открыто ли сейчас по строке часов: «08:00–21:00», «22:00–06:00», «круглосуточно», «24/7» */
-export function openAt(hours: string | null | undefined, at: Date): boolean | null {
+export function openAt(hours: string | null | undefined, at: Date,timeZone='Europe/Moscow'): boolean | null {
   if (!hours) return null;
   if (/кругл|24\s*\/\s*7|24 ч/i.test(hours)) return true;
   const m = hours.match(/(\d{1,2})[:.](\d{2})\s*[–—-]\s*(\d{1,2})[:.](\d{2})/);
   if (!m) return null;
-  const t = new Date(at.getTime() + 3 * 3600_000);
-  const now = t.getUTCHours() * 60 + t.getUTCMinutes();
+  const now = localNow(at,timeZone).minutes;
   const a = +m[1] * 60 + +m[2], b = +m[3] * 60 + +m[4];
   return a <= b ? now >= a && now < b : now >= a || now < b;
 }
@@ -107,7 +116,7 @@ export class ServiceCenters {
     const rt = await this.db.one<{ r: number | null; n: number }>(
       `select round(avg(review_stars)::numeric, 1)::float as r, count(review_stars)::int as n from service_bookings where center_id=$1`, [c.id]);
     return {
-      center: { ...c, closedToday: (c.closed_days ?? []).some((d: any) => msk(new Date(d)) === today), confirmDue, rating: rt?.r ?? null, reviews: rt?.n ?? 0 },
+      center: { ...c, closedToday: c.time_zone ? centerClosedToday(c,this.now()) : null, confirmDue, rating: rt?.r ?? null, reviews: rt?.n ?? 0 },
       groups: {
         requests: rows.filter((b) => ['new', 'clarify'].includes(b.status)).map(view),
         expected: rows.filter((b) => b.status === 'expected').map(view),
@@ -345,7 +354,6 @@ export class ServiceCenters {
               (select round(avg(review_stars)::numeric, 1)::float from service_bookings b where b.center_id=c.id and review_stars is not null) as rating,
               (select count(*)::int from service_bookings b where b.center_id=c.id and review_stars is not null) as reviews_n
          from service_centers c where c.verification='approved' and not c.paused`);
-    const today = msk(this.now());
     const max = Math.max(1, ...rows.map((r: any) => r.closed_n));
     return rows
       .filter((c: any) => !p.need || c.staff?.[p.need] !== 'none')
@@ -354,7 +362,7 @@ export class ServiceCenters {
         conditions: c.conditions, accepts: c.accepts, rating: c.rating, reviews: c.reviews_n, load: c.load_n,
         popularity: c.closed_n === 0 ? 'new' : c.closed_n / max > 0.66 ? 'top' : c.closed_n / max > 0.33 ? 'often' : 'rare',
         closedToday: (c.closed_days ?? []).some((d: any) => msk(new Date(d)) === today),
-        openNow: (c.closed_days ?? []).some((d: any) => msk(new Date(d)) === today) ? false : openAt(c.hours, this.now()),
+        openNow: !c.time_zone ? null : centerClosedToday(c,this.now()) ? false : openAt(c.hours,this.now(),c.time_zone),
         knowsBrand: p.brand ? (c.brands ?? []).includes(p.brand) : null,
         distanceKm: p.lat != null && p.lng != null && c.lat != null && c.lng != null ? Math.round(haversineKm({ lat: p.lat, lng: p.lng }, { lat: c.lat, lng: c.lng }) * 10) / 10 : null,
       }))
