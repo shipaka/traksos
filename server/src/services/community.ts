@@ -154,6 +154,8 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
     const recent=c.query.get('recent')==='1';
     // Capture the event watermark BEFORE the message snapshot. Changes committed
     // during the snapshot are replayed (and deduplicated) rather than lost.
+    const epoch=await db.one<{sync_epoch:string}>(
+      'select event_epoch::text as sync_epoch from community_rooms where id=$1',[room.id]);
     const watermark=await db.one<{cursor:string}>(
       "select coalesce(max(id),0)::text as cursor from community_room_moderation_events where room_id=$1",[room.id]);
     const rows = await db.query<{
@@ -169,7 +171,7 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
        [room.id,afterStr,c.user.id,isStaff(c.user),limit,recent]);
     const sorted=recent?rows.reverse():rows;
     return {messages:sorted.map(({sender_id,...m})=>({...m,isMine:sender_id===c.user.id})),
-      nextCursor:sorted.length?sorted[sorted.length-1].id:afterStr,moderationCursor:watermark?.cursor??'0'};
+      nextCursor:sorted.length?sorted[sorted.length-1].id:afterStr,moderationCursor:watermark?.cursor??'0',syncEpoch:epoch?.sync_epoch??'0'};
   });
 
   // Separate publication-state cursor. A moderated message can have an older
@@ -205,7 +207,10 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
       if(e.previous_state!=='published'&&e.sender_id!==c.user.id&&!isStaff(c.user))return [];
       return [{revision:e.revision,id:e.id,moderation_state:'hidden'}];
     });
-    return {changes,nextCursor:events.at(-1)?.revision??after,hasMore:events.length>=limit};
+    const epoch=await db.one<{sync_epoch:string}>(
+      'select event_epoch::text as sync_epoch from community_rooms where id=$1',[room.id]);
+    return {changes,nextCursor:events.at(-1)?.revision??after,hasMore:events.length>=limit,
+      syncEpoch:epoch?.sync_epoch??'0'};
   });
 
   r.post('/api/community/rooms/:id/messages', true, async (c: AuthedCtx) => {
