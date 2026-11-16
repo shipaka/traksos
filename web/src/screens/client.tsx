@@ -33,14 +33,14 @@ export function Home() {
     <main className="client-home client-dashboard">
       <section className="desktop-hero" aria-label="Помощь грузовому транспорту">
         <div className="desktop-hero-copy">
-          <span className="desktop-eyebrow">TRAKSOS · САНКТ-ПЕТЕРБУРГ И ЛЕНОБЛАСТЬ</span>
+          <span className="desktop-eyebrow">TRAKSOS · ЦИФРОВОЙ СЕРВИС ПО ВСЕЙ РОССИИ</span>
           <h1>Помощь грузовикам в пути <span>24/7</span></h1>
           <p>Выездной мастер, эвакуатор, грузовые СТО и консультации. Заявки, страхование и запчасти — в одном кабинете.</p>
           <div className="desktop-hero-buttons">
             <a className="desktop-primary-action" href="#/sos">SOS · Помощь в дороге ↗</a>
             <a className="desktop-outline-action" href="#/orders">Мои заявки</a>
           </div>
-          <div className="launch-region" role="note">Зона запуска: Санкт-Петербург и Ленинградская область</div>
+          <div className="launch-region" role="note">Выберите регион заявки — доступность исполнителей проверим отдельно</div>
         </div>
         <img className="client-hero-scania" src="/tracksos-approved-scenic-hero.webp" alt="Реалистичный грузовой тягач Scania на дороге в закатном свете" loading="eager" />
       </section>
@@ -73,7 +73,7 @@ export function Home() {
         <section className="desktop-home-main">
           <div className="mobile-home-heading">
             <h1>{me?.name ? `${me.name}, что случилось?` : 'Что случилось?'}</h1>
-            <div className="sub">Выберите проблему — подскажем, к кому обратиться. Работаем в Санкт-Петербурге и Ленинградской области.</div>
+            <div className="sub">Выберите проблему — подскажем, к кому обратиться. Наличие мастеров и СТО зависит от вашего региона.</div>
           </div>
           <div className="desktop-section-heading"><h2>Мои активные заявки</h2><a href="#/orders">Все заявки →</a></div>
           <div className="desktop-active-orders">
