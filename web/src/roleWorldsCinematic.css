@@ -1,0 +1,157 @@
+/* TrakSOS cinematic workspaces. An additive layer over the ONE approved design canon.
+   All photography already exists in web/public and ships inside the APK.
+   Only signed-in role heroes are changed; never fake prices, requests or KPIs. */
+.app[class*="role-"]{--ts-cinema-glow:#47d8eb42}
+.app.role-performer{--ts-cinema-glow:#39cdee52}
+.app.role-service{--ts-cinema-glow:#e59f4b38}
+.app.role-insurer{--ts-cinema-glow:#60ddf14c}
+.app.role-inspection{--ts-cinema-glow:#a8ccf038}
+.app.role-admin{--ts-cinema-glow:#26c1ee40}
+.app.role-moderator{--ts-cinema-glow:#af8cff37}
+
+/* The performer hero is a real master/tow-specific approved photo, not a toy van SVG. */
+.app.role-performer .work-command-hero{
+  background:radial-gradient(ellipse at 15% 8%,#32c0d42b,transparent 50%),
+    linear-gradient(115deg,#071629 2%,#12374e 62%,#0c263c 100%) !important;
+  border-color:#5b94b3;
+}
+.app.role-performer .work-command-hero::after{
+  content:none!important;
+}
+.app.role-performer .work-command-hero-master .work-command-art,
+.app.role-performer .work-command-hero-tow .work-command-art{
+  right:0;bottom:0;width:46%;height:100%;opacity:.84;
+  background-repeat:no-repeat;background-position:center right;background-size:contain;
+  filter:drop-shadow(0 17px 25px #00111cbb);
+  -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 23%,#000 100%);
+  mask-image:linear-gradient(90deg,transparent 0%,#000 23%,#000 100%);
+  animation:ts-cinema-emerge .55s ease-out both;
+}
+.app.role-performer .work-command-hero-master .work-command-art{
+  background-image:url('/tracksos-partner-master-approved.webp');
+}
+.app.role-performer .work-command-hero-tow .work-command-art{
+  background-image:url('/tracksos-partner-tow-approved.webp');
+}
+.app.role-performer .work-command-copy{
+  max-width:min(640px,68%);text-shadow:0 3px 16px #0008;
+}
+.app.role-performer .work-command-hero::before{
+  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:linear-gradient(105deg,transparent 42%,#9ceeff12 52%,transparent 65%);
+  animation:ts-cinema-light-pass 14s ease-in-out infinite alternate;
+}
+.app.role-performer .work-command-status .dot.on{
+  box-shadow:0 0 16px #39e9c2;
+}
+
+/* STO is the warmth of a real repair bay, not a generic gear symbol. */
+.app.role-service :is(.base-command-hero,.base-onboarding-hero){
+  background:linear-gradient(105deg,#08192ced,#092a40df 58%,#12445685),
+    radial-gradient(ellipse at 90% 75%,#faac4b40,transparent 52%) !important;
+  border-color:#5c8e9d;
+}
+.app.role-service :is(.base-command-hero,.base-onboarding-hero)::after{
+  content:"";background-image:url('/tracksos-partner-sto-approved.webp') !important;
+  background-size:contain;background-position:right center;background-repeat:no-repeat;
+  inset:0 0 0 auto;width:45%;height:100%;opacity:.74;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 25%);
+  mask-image:linear-gradient(90deg,transparent,#000 25%);
+  animation:ts-cinema-emerge .55s ease-out both;
+}
+
+/* Insurance: a real partner photograph and polished next-action navigation. */
+.app.role-insurer .cabinet-page>.cabinet-heading{
+  background:linear-gradient(115deg,#071629f5,#0c304adf 65%,#23435b78) !important;
+  border-color:#5098b0;
+}
+.app.role-insurer .cabinet-page>.cabinet-heading::after{
+  content:"";background-image:url('/tracksos-partner-insurer-approved.webp') !important;
+  background-repeat:no-repeat;background-position:center right;background-size:contain;
+  inset:0 0 0 auto;width:44%;height:100%;opacity:.78;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 34%);
+  mask-image:linear-gradient(90deg,transparent,#000 34%);
+  animation:ts-cinema-emerge .55s ease-out both;
+}
+.app.role-inspection .cabinet-page>.cabinet-heading{
+  background:radial-gradient(ellipse at 85% 75%,#6ad3e026,transparent 44%),
+    linear-gradient(120deg,#07182b,#12344d)!important;
+}
+.app:is(.role-insurer,.role-inspection) .partner-workspaces{
+  box-shadow:0 12px 32px #0004,inset 0 1px #e3f9ff12;
+}
+.app:is(.role-insurer,.role-inspection) .partner-workspaces .btn.active{
+  box-shadow:0 6px 20px #35d1f13a;
+}
+
+/* Administration: a restrained geographic command center with the real approved map.
+   Decorative map never invents live points; all counters remain server-driven. */
+.app.role-admin .admin-command-hero{
+  border-color:#428fa6;
+  background:radial-gradient(ellipse at 80% 15%,#1b92b13c,transparent 54%),
+    linear-gradient(115deg,#061726,#102c47 68%,#113652)!important;
+}
+.app.role-admin .admin-command-art{
+  background:url('/tracksos-approved-map.webp') center right / contain no-repeat;
+  opacity:.42;width:min(48%,450px);
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 29%);
+  mask-image:linear-gradient(90deg,transparent,#000 29%);
+  animation:ts-cinema-emerge .7s ease-out both;
+}
+.app.role-admin .admin-command-art>span{font-size:75px;opacity:.5}
+.app.role-admin .admin-command-art i{opacity:.3}
+
+/* Moderator: a calmer violet-blue signal room rather than a plain dashboard. */
+.app.role-moderator .internal-role-hero-moderator{
+  background:radial-gradient(ellipse at 90% 13%,#b1a1f327,transparent 54%),
+    linear-gradient(105deg,#09182c,#182e52 75%,#181e37) !important;
+  border-color:#716fa3;overflow:hidden;
+}
+.app.role-moderator .internal-role-hero-moderator::after{
+  content:"";position:absolute;transform:none;top:0;right:0;bottom:0;width:39%;height:100%;
+  background:url('/tracksos-approved-map.webp') center right / contain no-repeat;
+  opacity:.29;-webkit-mask-image:linear-gradient(90deg,transparent,#000 50%);
+  mask-image:linear-gradient(90deg,transparent,#000 50%);
+}
+
+/* A live cab should respond softly to action, not animate critically sensitive details. */
+.app[class*="role-"] :is(.work-command-hero,.base-command-hero,.admin-command-hero,.internal-role-hero-moderator,.cabinet-page>.cabinet-heading){
+  box-shadow:0 18px 45px #0006,inset 0 1px #e6fbff1b;
+}
+.app[class*="role-"] :is(.work-command-hero,.base-command-hero,.admin-command-hero,.internal-role-hero-moderator,.cabinet-page>.cabinet-heading) :is(h1,h2,p,.btn,a,button){
+  position:relative;z-index:2;
+}
+
+/* Subtle tactile feedback where hovering is actually possible.
+   No transforms on live order cards, pay buttons, or incoming SOS screens. */
+@media(hover:hover) and (pointer:fine){
+  .app:is(.role-service,.role-insurer,.role-inspection,.role-moderator,.role-admin)
+  .desktop-content :is(.linkrow,.tile):not(.hi):hover{
+    border-color:#65c4de;box-shadow:0 13px 26px #0005;
+  }
+}
+@keyframes ts-cinema-emerge{from{opacity:.15;transform:translate3d(14px,4px,0)}to{transform:translate3d(0,0,0)}}
+@keyframes ts-cinema-light-pass{from{opacity:.34;transform:translateX(-11%)}to{opacity:.68;transform:translateX(10%)}}
+@media(max-width:900px){
+  .app.role-performer .work-command-copy{max-width:100%}
+  .app.role-performer .work-command-hero-master .work-command-art,
+  .app.role-performer .work-command-hero-tow .work-command-art{
+    right:0;bottom:0;width:60%;height:124px;opacity:.52;
+    background-position:bottom right;
+  }
+  .app.role-service :is(.base-command-hero,.base-onboarding-hero)::after{
+    width:47%;opacity:.22;
+  }
+  .app.role-insurer .cabinet-page>.cabinet-heading::after{opacity:.22;width:44%}
+  .app.role-admin .admin-command-art{opacity:.19;width:55%}
+  .app.role-moderator .internal-role-hero-moderator::after{opacity:.13}
+}
+@media(prefers-reduced-motion:reduce),(prefers-reduced-data:reduce){
+  .app[class*="role-"] .work-command-hero::before,
+  .app[class*="role-"] :is(.work-command-art,.base-command-hero::after,.base-onboarding-hero::after,.cabinet-heading::after,.admin-command-art){
+    animation:none!important;transition:none!important;
+  }
+}
+html.traksos-reduced-motion .app[class*="role-"] :is(.work-command-hero::before,.work-command-art,.admin-command-art){
+  animation:none!important;transition:none!important;
+}
