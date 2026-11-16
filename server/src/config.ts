@@ -24,11 +24,6 @@ export const config = {
   /** Exactly one initial insurance agent's phone. Stored only in VPS .env. */
   insurerPrimaryPhone: env.INSURER_PRIMARY_PHONE ?? '',
 
-  // Optional private notification endpoint. Never send personal report text to this channel.
-  developerReports: {
-    webhookUrl: env.DEVELOPER_REPORT_WEBHOOK_URL ?? '',
-    webhookSecret: env.DEVELOPER_REPORT_WEBHOOK_SECRET ?? '',
-  },
   sms: {
     /** log — код пишется в лог и возвращается в ответе (только не в production); smsru — SMS.ru */
     provider: (env.SMS_PROVIDER ?? 'log') as 'log' | 'smsru',

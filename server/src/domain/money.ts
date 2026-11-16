@@ -50,7 +50,13 @@ export function cancelStage(
   if (status === 'searching' || status === 'no_performer' || status === 'awaiting_owner') return 'searching';
   if (status === 'accepted') return 'accepted';
   if (status === 'en_route') {
-    if (opts.startKm && opts.leftKm != null && opts.startKm > 0) {
+    // A missing, stale or invalid GPS estimate must never trigger the 100% tier.
+    // startKm is the dispatch estimate; leftKm is a straight-line distance, NOT
+    // a verified travelled route. This remains a conservative interim heuristic
+    // until the per-order GPS evidence and route-progress model is implemented.
+    if (opts.startKm != null && opts.leftKm != null &&
+        Number.isFinite(opts.startKm) && Number.isFinite(opts.leftKm) &&
+        opts.startKm > 0 && opts.leftKm >= 0) {
       return opts.leftKm <= opts.startKm / 2 ? 'en_route_second_half' : 'en_route_first_half';
     }
     return 'en_route_first_half';

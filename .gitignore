@@ -9,3 +9,5 @@ android/.gradle/
 web/dist/
 e2e/shots/
 e2e/e2e/
+deploy/.env.sandbox
+deploy/sandbox.env

@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { get, patch, fmtTime } from '../api.ts';
 import { useLoad, useAction } from '../ui.tsx';
-import { insurancePresentation, insuranceQueueGroup } from '../insurancePresentation.ts';
 
 const labels: Record<string, string> = {
   sent_to_partner: 'Ждёт оформления', completed: 'Полис оформлен', rejected: 'Отказ',
@@ -20,7 +19,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
   const [inspectionNotes,setInspectionNotes]=useState<Record<string,string>>({});
   const [inspectionView,setInspectionView]=useState<'active'|'history'>('active');
   const [expires, setExpires] = useState<Record<string, string>>({});
-  const [filter, setFilter] = useState<'action' | 'active' | 'all' | 'closed'>('action');
+  const [filter, setFilter] = useState<'pending' | 'all' | 'done'>('pending');
   const [search, setSearch] = useState('');
   async function update(id: string, status: 'completed' | 'rejected') {
     const note = (notes[id] ?? '').trim();
@@ -52,7 +51,8 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
   }
   const rows: any[] | undefined = requests.data;
   const visible = (rows ?? []).filter((r) => {
-    if (filter !== 'all' && insuranceQueueGroup(r.insurance_stage, r.status) !== filter) return false;
+    if (filter === 'pending' && r.status !== 'sent_to_partner') return false;
+    if (filter === 'done' && r.status === 'sent_to_partner') return false;
     return [r.brand, r.model, r.plate, r.comment].some((value) => String(value ?? '').toLocaleLowerCase('ru-RU').includes(search.trim().toLocaleLowerCase('ru-RU')));
   });
   return (
@@ -139,15 +139,14 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
       {!rows ? <div className="empty">{requests.error ? `Не удалось загрузить: ${requests.error}` : 'Загружаем заявки…'}</div>
         : !rows.length ? <InsurerEmptyState onRefresh={requests.reload} />
         : <div className="stack">
-          <div className="cabinet-metrics insurer-insurance-metrics">
+          <div className="cabinet-metrics">
             <div className="card tile"><span className="label">Всего назначено</span><b className="tile-value">{rows.length}</b></div>
-            <div className="card tile"><span className="label">Требуют действий</span><b className="tile-value">{rows.filter((r) => insuranceQueueGroup(r.insurance_stage,r.status)==='action').length}</b></div>
-            <div className="card tile"><span className="label">В работе</span><b className="tile-value">{rows.filter((r) => insuranceQueueGroup(r.insurance_stage,r.status)==='active').length}</b></div>
-            <div className="card tile"><span className="label">Закрыто</span><b className="tile-value">{rows.filter((r) => insuranceQueueGroup(r.insurance_stage,r.status)==='closed').length}</b></div>
+            <div className="card tile"><span className="label">Ожидают решения</span><b className="tile-value">{rows.filter((r) => r.status === 'sent_to_partner').length}</b></div>
+            <div className="card tile"><span className="label">Завершено</span><b className="tile-value">{rows.filter((r) => r.status !== 'sent_to_partner').length}</b></div>
           </div>
           <div className="web-case-toolbar">
             <div className="row" role="group" aria-label="Фильтр страховых заявок">
-              {([['action', 'Требуют действий'], ['active', 'В работе'], ['all', 'Все'], ['closed', 'Закрытые']] as const).map(([key, title]) => (
+              {([['pending', 'Ожидают решения'], ['all', 'Все'], ['done', 'Завершённые']] as const).map(([key, title]) => (
                 <button key={key} type="button" className="chip" aria-pressed={filter === key} onClick={() => setFilter(key)}>{title}</button>
               ))}
             </div>
@@ -158,28 +157,25 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
             </label>
           </div>
           <span className="label">Показано заявок: {visible.length}</span>
-          {!visible.length && <div className="empty">{filter==='action'?'Нет заявок, требующих действий. Новые обращения появятся здесь.':filter==='active'?'Нет заявок в работе.':'По выбранным фильтрам заявок нет.'}</div>}
+          {!visible.length && <div className="empty">По выбранным фильтрам заявок нет.</div>}
           <div className="web-insurance-grid">
-          {visible.map((r) => {
-            const state=insurancePresentation(r.insurance_stage,r.status,'partner');
-            return <details key={r.id} className={'card insurer-case-card tone-'+state.tone}>
-              <summary className="insurer-case-summary">
-                <span className="insurer-case-summary-main">
-                  <span className="insurance-step-title">СТРАХОВОЕ ДЕЛО · {r.plate || 'БЕЗ НОМЕРА'}</span>
-                  <strong>{r.brand} {r.model ?? ''}</strong>
-                  <span className="insurer-case-next">{state.next}</span>
-                  <small>Поступила {fmtTime(r.created_at)} · нажмите для подробностей</small>
-                </span>
-                <span className={'insurer-case-state tone-'+state.tone}>
-                  <span className="insurer-case-state-dot" aria-hidden="true">●</span><span>{state.label}</span>
-                </span>
+          {visible.map((r) => (
+            <details key={r.id} className="card">
+              <summary className="between">
+                <b>{r.brand} {r.model ?? ''}</b>
+                <span className="pill">{labels[r.status] ?? r.status}</span>
               </summary>
               <div className="stack">
                 <span className="note">{r.plate || 'Без номера'} · Подана {fmtTime(r.created_at)}</span>
                 {r.comment && <span className="note">Комментарий клиента: {r.comment}</span>}
                 {r.insurance_stage && <div className="insurance-agent-preview">
-                  <b>Следующий шаг: {state.next}</b>
-                  <p className="note">{state.detail} ФИО, сведения о грузовике, предложения и переписка открываются в рабочем деле.</p>
+                  <b>Заявка через TrakSOS · {({
+                    received:'Получено',preparing:'Готовятся варианты',
+                    offers_sent:'Клиент выбирает предложение',
+                    selected:'Клиент выбрал полис',processing:'Оформляется вручную',
+                    policy_sent:'PDF-полис отправлен'
+                  } as Record<string,string>)[r.insurance_stage] ?? 'В обработке'}</b>
+                  <p className="note">ФИО, сведения о грузовике, предложения и переписка открываются в рабочем деле.</p>
                   <a className="btn" href={`#/insurance/request/${r.id}`}>Открыть страховую заявку и чат →</a>
                 </div>}
                 {r.staff_note && <span className="note">Последний ответ: {r.staff_note}</span>}
@@ -199,8 +195,8 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
                   </div>
                 </>}
               </div>
-            </details>;
-          })}
+            </details>
+          ))}
           </div>
         </div>}
       </>}

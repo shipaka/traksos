@@ -20,7 +20,8 @@ export const DOC_KINDS: Record<string, { name: string; hint: string; camera: 'en
 
 export function requiredKinds(p: { kind?: string; specialties?: string[]; tier?: string }) {
   if (p.kind === 'tow') return ['passport', 'selfie', 'tow_front', 'tow_side', 'sts'];
-  const base = ['passport', 'selfie', 'car_front', 'car_side'];
+  // A master needs one vehicle photo from the front; tow operators retain their own checks.
+  const base = ['passport', 'selfie', 'car_front'];
   if (p.tier === 'pro' || p.specialties?.includes('diag')) base.push('equipment');
   return base;
 }
@@ -100,6 +101,20 @@ export class DocumentsService {
     await this.notifier.notify(staff, { type: 'verification_queue', userId: user.id },
       { kind: 'normal', title: 'Новый исполнитель на проверке', body: `${user.name ?? user.phone} отправил документы`, data: { userId: user.id } });
     return this.mine(user);
+  }
+
+  /** Voluntary verification: remove all confidential images and revoke verification. */
+  async deleteConfidential(user: AuthUser) {
+    await this.db.tx(async (q) => {
+      await q.query('delete from documents where user_id=$1', [user.id]);
+      await q.query(`update performer_profiles
+        set verification='pending', verification_note=null, verified_at=null, submitted_at=null,
+            line_status=case when line_status='on_job' then line_status else 'offline' end
+        where user_id=$1`, [user.id]);
+      await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
+        [user.id, 'privacy.confidential_documents_deleted', user.id, {}]);
+    });
+    return { ok: true };
   }
 
   /** Файл: владельцу — всегда, модератору — с записью в журнал */

@@ -5,6 +5,8 @@ import { BRANDS, FEE_PURPOSE, PLACES } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '../ui.tsx';
 import { WorkerNotices } from './ops.tsx';
 import { RoadsideMap } from './roadsideMap.tsx';
+import { DestinationCard } from './DestinationCard.tsx';
+import { VerifiedBadge } from '../verifiedBadge.tsx';
 import { inServicePreview, servicePreviewPath, servicePreviewHref, previewServiceApi } from '../demo/servicePreviewApi.ts';
 // The same working STО components are used for both real accounts and the isolated admin preview.
 const baseGet=(url:string)=>inServicePreview()?previewServiceApi('GET',url):get(url);
@@ -98,7 +100,7 @@ export function BaseHome() {
       </section>
       <div className="row" style={{ gap: 6 }}>
         <span className="pill">{center.rating ? `★ ${center.rating.toFixed(1)} · ${center.reviews} отзывов` : 'отзывов пока нет'}</span>
-        {center.verification === 'approved' && <span className="pill good">проверен</span>}
+        <VerifiedBadge verified={center.verification === 'approved'} kind="service" compact />
         <span className="pill">сейчас машин: {groups.repair.length} · ожидаем: {groups.expected.length}</span>
       </div>
       {center.verification !== 'approved' && (
@@ -509,7 +511,7 @@ export function ServicesList() {
       <Back to="" label="Главная" />
       <div>
         <h1>Найти рембазу</h1>
-        <div className="sub">Только ремзоны, с которыми TrakSOS договорился лично. Цену сервис скажет после осмотра.</div>
+        <div className="sub">Каталог грузовых СТО. Проверка и партнёрство отмечаются отдельно; сведения о сторонних сервисах могут требовать уточнения.</div>
       </div>
       {from && <div className="banner col"><b>По совету мастера — скидка в сервисе</b><span className="note">Запишитесь отсюда — скидка применится в счёте сама.</span></div>}
 
@@ -584,6 +586,7 @@ export function ServicesList() {
                   {c.distanceKm != null && <b style={{ fontFamily: 'var(--display)', whiteSpace: 'nowrap' }}>{c.distanceKm} км</b>}
                 </div>
                 <div className="row" style={{ gap: 4 }}>
+                  {c.verification === 'approved' && <VerifiedBadge verified kind="service" compact />}
                   {c.rating ? <span className="pill good">★ {c.rating.toFixed(1)} · {c.reviews}</span> : <span className="pill">новый</span>}
                   {c.paused ? <span className="pill warn">приём закрыт</span> : c.openNow === true ? <span className="pill good">открыто · {c.hours}</span> : c.openNow === false ? <span className="pill">закрыто · {c.hours}</span> : <span className="pill">{c.hours}</span>}
                   {c.load ? <span className="pill">машин: {c.load}</span> : <span className="pill good">свободно</span>}
@@ -620,6 +623,7 @@ export function CenterPage({ id }: { id: string }) {
       <div className="card">
         <dl className="kv">
           <dt>Рейтинг</dt><dd>{d.rating ? `★ ${d.rating.toFixed(1)} · ${d.reviews} отзывов` : 'отзывов пока нет'}</dd>
+          {d.verification === 'approved' && <><dt>Проверка</dt><dd><VerifiedBadge verified kind="service" /></dd></>}
           <dt>Принимают</dt><dd>{d.accepts.map((a: string) => ACCEPTS[a]?.[0]).join(' · ') || '—'}</dd>
           {d.brands?.length > 0 && <><dt>Марки</dt><dd>{d.brands.join(', ')}</dd></>}
           {staffOwn.length > 0 && <><dt>Есть у них</dt><dd>{staffOwn.join(', ')}</dd></>}
@@ -635,7 +639,7 @@ export function CenterPage({ id }: { id: string }) {
         <button className="btn ghost" onClick={() => prefillOrder('tow', { destination: `${d.name}, ${d.address}` })}>Везти сюда эвакуатором</button>
         <button className="btn ghost" onClick={() => prefillOrder('electric', { address: `${d.name}, ${d.address}` })}>Вызвать мастера сюда</button>
       </div>
-      {d.lat != null && <a className="btn ghost" target="_blank" rel="noreferrer" href={`https://yandex.ru/maps/?rtext=~${d.lat},${d.lng}&rtt=auto`}>Маршрут в навигаторе</a>}
+      <DestinationCard point={{ lat: d.lat, lng: d.lng, name: d.name, address: d.address }} title="Как добраться до СТО" />
       <div className="stack">
         <span className="label">Отзывы · сначала подробные</span>
         {d.reviews.length ? d.reviews.map((r: any, i: number) => (

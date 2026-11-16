@@ -7,7 +7,6 @@ import { estimate, isNight, billWork, type Tier, type Extra } from '../domain/pr
 import { rankCandidates, performerKindFor, type Candidate } from '../domain/dispatch.ts';
 import { transition, canDo, statusLabels, type Action, type Actor, type OrderStatus } from '../domain/orderState.ts';
 import { cancelStage, cancelSplit, pct } from '../domain/money.ts';
-import { haversineKm } from '../domain/geo.ts';
 import { slot } from '../domain/schedule.ts';
 import { rub } from '../util.ts';
 import type { AuctionService } from './auction.ts';
@@ -604,15 +603,12 @@ export class OrdersService {
     if (actor === 'performer') throw bad('use_drop', 'Исполнитель отказывается от заявки кнопкой «Не смогу приехать»');
     if (!actor) throw forbidden();
     transition(o.status, 'cancel', actor);
-    let leftKm: number | null = null;
-    if (o.status === 'en_route' && o.lat != null) {
-      const p = await this.db.one('select lat, lng from performer_profiles where user_id=$1', [o.performer_id]);
-      if (p?.lat != null) leftKm = haversineKm({ lat: o.lat, lng: o.lng }, { lat: p.lat, lng: p.lng });
-    }
-    const d = o.performer_id
-      ? await this.db.one<{ distance_km: number | null }>('select distance_km from order_dispatch where order_id=$1 and performer_id=$2', [orderId, o.performer_id])
-      : null;
-    const stage = cancelStage(o.status, { startKm: d?.distance_km ?? null, leftKm });
+    // Fail closed on the 100% halfway tier: the current location endpoint stores
+    // only the last point, and dispatch distance is not a verified travelled route.
+    // Comparing those two numbers can jump straight to 100% after a GPS glitch.
+    // Until timestamped route evidence is available, en-route cancellations use
+    // the conservative 50% tier; explicitly confirmed arrival remains 100%.
+    const stage = cancelStage(o.status);
     const scale = (await this.settings.get('cancel')).scale;
     const m = this.money(o);
     const splitInfo = cancelSplit(scale, stage, m.callOut, pct(m.callOut, Number(o.client_fee_pct)));
@@ -625,7 +621,29 @@ export class OrdersService {
       await q.query(`update order_dispatch set status='cancelled' where order_id=$1 and status in ('queued','ringing','bidding')`, [orderId]);
       await q.query(`update bids set status='withdrawn' where order_id=$1 and status='active'`, [orderId]);
       if (o.performer_id) await q.query(`update performer_profiles set line_status='online' where user_id=$1 and line_status='on_job'`, [o.performer_id]);
-      await this.event(q, orderId, user.id, 'cancelled', { reason, stage, ...splitInfo });
+      // Preserve an audit summary of accepted samples available at the
+      // moment of cancellation, without disclosing raw coordinates to clients.
+      // A count alone is not evidence of travelled road distance.
+      const gpsAudit = o.status === 'en_route'
+        ? await q.one<any>(`select count(*)::int as samples,
+            min(received_at) as first_at, max(received_at) as last_at
+            from performer_route_samples where order_id=$1 and performer_id=$2 and accepted=true and received_at >= now() - interval '30 days'`, [orderId, o.performer_id])
+        : null;
+      // Persist why the financial tier was selected. An en-route order has
+      // no verified route-progress evidence yet, regardless of the last GPS.
+      // This record is for disputes and audit, not a claim of GPS verification.
+      const stageEvidence = o.status === 'en_route'
+        ? { source: 'status_only', gpsVerified: false, routeHalfVerified: false,
+            sampleCount: Number(gpsAudit?.samples ?? 0),
+            firstSampleAt: gpsAudit?.first_at ?? null,
+            lastSampleAt: gpsAudit?.last_at ?? null,
+            note: 'GPS samples are not verified route progress' }
+        : o.status === 'arrived'
+          ? { source: 'performer_arrival_action', gpsVerified: false,
+              routeHalfVerified: false, note: 'Arrival was manually declared' }
+          : { source: 'order_status', gpsVerified: false, routeHalfVerified: false };
+      await this.event(q, orderId, user.id, 'cancelled',
+        { reason, stage, ...splitInfo, stageEvidence });
       await this.payments.onCancelled({ ...o, status: 'cancelled' }, stage, q);
     });
     // Cancellation's provider operation runs strictly after this transaction.
@@ -697,6 +715,35 @@ export class OrdersService {
       : null;
     const vehicle = o.vehicle_id ? await this.db.one('select brand, model, year, plate, trailer_plate from vehicles where id=$1', [o.vehicle_id]) : null;
     const events = actor ? await this.db.query('select type, data, actor_id, created_at from order_events where order_id=$1 order by id', [orderId]) : [];
+    // Cancellation terms are snapshotted in the immutable order event at the
+    // moment of cancellation. Never recompute them from today's admin tariffs.
+    const cancelEvent = o.status === 'cancelled'
+      ? [...events].reverse().find((event: any) => event.type === 'cancelled')
+      : null;
+    const cancelBreakdown = cancelEvent?.data && typeof cancelEvent.data === 'object'
+      ? {
+          stage: cancelEvent.data.stage,
+          share: cancelEvent.data.share,
+          toPerformer: cancelEvent.data.toPerformer,
+          platformKeeps: cancelEvent.data.platformKeeps,
+          refund: cancelEvent.data.refund,
+          stageEvidence: cancelEvent.data.stageEvidence ?? null,
+        }
+      : null;
+    // Payment truth comes from the payment ledger, not the cancellation estimate.
+    // Do not expose provider identifiers or bank internals to the performer.
+    const cancellationPayment = o.status === 'cancelled' && (actor === 'client' || actor === 'admin')
+      ? await this.db.one<any>(
+          `select p.status as payment_status, p.total as payment_total,
+                  p.refunded_amount as refunded_amount,
+                  c.status as operation_status, c.action as operation_action,
+                  c.amount_to_capture as amount_to_capture,
+                  c.refunded_amount as planned_refund
+             from payments p
+             left join payment_cancel_intents c on c.payment_id=p.id
+            where p.order_id=$1 and p.kind='call_out'
+            order by p.created_at desc limit 1`, [orderId])
+      : null;
     const caseRootId = o.case_root_id ?? o.id;
     // The combined customer invoice is visible to the customer/admin only:
     // a performer sees exclusively the price of their own contract.
@@ -759,6 +806,15 @@ export class OrdersService {
       followUps: o.service === 'consult' ? await this.db.query(`select id, number, service, status from orders where consult_of=$1 order by created_at`, [o.id]) : [],
       consultBack: o.service === 'consult' ? (await this.settings.get('pricing')).consult : null,
       cancelReason: o.cancel_reason, cancelStage: o.cancel_stage,
+      cancelBreakdown, cancellationPayment: cancellationPayment ? {
+        paymentStatus: cancellationPayment.payment_status,
+        paymentTotal: cancellationPayment.payment_total,
+        refundedAmount: cancellationPayment.refunded_amount,
+        operationStatus: cancellationPayment.operation_status,
+        operationAction: cancellationPayment.operation_action,
+        amountToCapture: cancellationPayment.amount_to_capture,
+        plannedRefund: cancellationPayment.planned_refund,
+      } : null,
       createdAt: o.created_at, acceptedAt: o.accepted_at, arrivedAt: o.arrived_at, completedAt: o.completed_at,
       performer, client, events,
       you: actor ?? 'candidate',

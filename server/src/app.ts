@@ -21,8 +21,6 @@ import { OffersService } from './services/offers.ts';
 import { AuctionService } from './services/auction.ts';
 import { DocumentsService } from './services/documents.ts';
 import { AdminService } from './services/admin.ts';
-import { AdminAccessService, MANUAL_ROLES, REPORT_CATEGORIES } from './services/adminAccess.ts';
-import { DeveloperReportDelivery } from './services/developerReportDelivery.ts';
 import { SupportService, TOPICS } from './services/support.ts';
 import { StatsService } from './services/stats.ts';
 import { OpsService } from './services/ops.ts';
@@ -79,8 +77,6 @@ export function createApp(d: Deps) {
   const offers = new OffersService(d.db, notifier, now);
   const documents = new DocumentsService(d.db, notifier, settings, now);
   const admin = new AdminService(d.db, notifier, orders, payments, profiles, settings, now);
-  const adminAccess = new AdminAccessService(d.db);
-  const developerReportDelivery = new DeveloperReportDelivery(d.db);
   const support = new SupportService(d.db, notifier, orders, now);
   const stats = new StatsService(d.db, now);
   const ops = new OpsService(d.db, now);
@@ -1030,24 +1026,6 @@ export function createApp(d: Deps) {
     }
     return settings.set(c.params.key as any, c.body ?? {}, c.user.id);
   });
-  // Отдельная регистрация по решению администратора: роли задаются им,
-  // но пароль и владение телефоном подтверждает сам пользователь через SMS.
-  r.post('/api/admin/users/manual', ['admin'], (c: AuthedCtx) =>
-    adminAccess.register(c.user, parse(z.object({
-      phone: z.string().min(1).max(40), name: z.string().max(120).optional(),
-      roles: z.array(z.enum(MANUAL_ROLES)).min(1).max(3),
-      reason: z.string().trim().min(10).max(500),
-    }).strict(), c.body)));
-  // Внутренняя очередь: не отправлять персональные данные в публичный GitHub.
-  r.post('/api/admin/developer-reports', ['admin'], (c: AuthedCtx) =>
-    adminAccess.fileReport(c.user, parse(z.object({
-      phone: z.string().max(40).optional(), userId: z.string().uuid().optional(),
-      category: z.enum(REPORT_CATEGORIES), details: z.string().trim().min(10).max(3000),
-    }).strict(), c.body)));
-  r.get('/api/admin/developer-reports', ['admin'], async () =>
-    (await adminAccess.listReports()).map(report => ({ ...report, delivery_configured: developerReportDelivery.enabled })));
-  r.post('/api/admin/developer-reports/:id/resolve', ['admin'], (c: AuthedCtx) =>
-    adminAccess.resolveReport(c.user, c.params.id));
   r.get('/api/admin/users', ['admin'], (c: AuthedCtx) => {
     const q = `%${(c.query.get('q') ?? '').replace(/[%_]/g, '')}%`;
     return d.db.query(
@@ -1224,7 +1202,7 @@ export function createApp(d: Deps) {
     }
   }
 
-  return { handle, hub, auth, settings, orders, payments, auction, documents, admin, support, developerReportDelivery, warranty, warrantyRemediation, warrantyRecourse, profiles, chat, reviews, offers, notifier, privacy, ops, router: r };
+  return { handle, hub, auth, settings, orders, payments, auction, documents, admin, support, warranty, warrantyRemediation, warrantyRecourse, profiles, chat, reviews, offers, notifier, privacy, ops, router: r };
 }
 
 export type App = ReturnType<typeof createApp>;

@@ -6,7 +6,6 @@ import { BookingRows } from './base.tsx';
 import { DriverRules } from './fleet.tsx';
 import { VehicleServiceApplication, VehicleServiceHistory } from './vehicleServices.tsx';
 import { native } from '../native.ts';
-import { insurancePresentation, isOpenInsuranceRequest } from '../insurancePresentation.ts';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
 
@@ -24,10 +23,6 @@ export function usePrices() {
 export function Home() {
   const { me } = useMe();
   const active = useLoad(() => get('/api/orders'), [], (e) => e.type === 'order');
-  const services = useLoad(() => get<any[]>('/api/vehicle-service-requests'), [],
-    e => e.type === 'vehicle_service' || e.type === 'connection_restored');
-  const insuranceInProgress = (services.data ?? []).filter(r =>
-    r.kind === 'insurance' && isOpenInsuranceRequest(r.status));
   const live = (active.data ?? []).filter((o: any) => !['completed', 'cancelled'].includes(o.status));
   return (
     <main className="client-home client-dashboard">
@@ -45,23 +40,6 @@ export function Home() {
         <img className="client-hero-scania" src="/tracksos-approved-scenic-hero.webp" alt="Реалистичный грузовой тягач Scania на дороге в закатном свете" loading="eager" />
       </section>
 
-      {insuranceInProgress.length>0&&(()=>{
-        const urgent=insuranceInProgress.find(r =>
-          insurancePresentation(r.insurance_stage,r.status).tone==='action') ?? insuranceInProgress[0];
-        const state=insurancePresentation(urgent.insurance_stage,urgent.status);
-        return <section className="client-insurance-mobile-quick" aria-label="Быстрый статус страховой заявки">
-          <a className={'client-insurance-mobile-strip tone-'+state.tone}
-            href={urgent.insurance_stage?`#/insurance/request/${urgent.id}`:'#/garage'}>
-            <span className="client-insurance-mobile-icon" aria-hidden="true">◇</span>
-            <span className="client-insurance-mobile-info">
-              <span className="client-insurance-mobile-eyebrow">СТРАХОВАНИЕ · {urgent.brand} {urgent.model??''}</span>
-              <strong>{state.label}</strong>
-              <small>{state.next}</small>
-            </span>
-            <span className="client-insurance-mobile-arrow" aria-hidden="true">›</span>
-          </a>
-        </section>;
-      })()}
       <section className="desktop-quick-links" aria-label="Выберите помощь">
         <a href="#/sos" className="desktop-quick-card"><span className="desktop-quick-icon">⚡</span><span><b>Выездной мастер</b><small>Электрика, диагностика, пневматика, шиномонтаж</small></span><span aria-hidden="true">↗</span></a>
         <a href="#/new/tow" className="desktop-quick-card"><span className="desktop-quick-icon">↗</span><span><b>Эвакуатор</b><small>Тягач, полуприцеп или сцепка</small></span><span aria-hidden="true">↗</span></a>
@@ -77,7 +55,7 @@ export function Home() {
           </div>
           <div className="desktop-section-heading"><h2>Мои активные заявки</h2><a href="#/orders">Все заявки →</a></div>
           <div className="desktop-active-orders">
-            {active.error ? <div className="desktop-empty-orders">Не удалось загрузить заявки. <a href="#/orders">Открыть раздел</a></div> : !active.data ? <div className="desktop-empty-orders">Загружаем заявки…</div> : live.length === 0 ? <div className="desktop-empty-orders">Сейчас нет активных выездов и консультаций. Страховые заявки показываются отдельно ниже.</div> : null}
+            {active.error ? <div className="desktop-empty-orders">Не удалось загрузить заявки. <a href="#/orders">Открыть раздел</a></div> : !active.data ? <div className="desktop-empty-orders">Загружаем заявки…</div> : live.length === 0 ? <div className="desktop-empty-orders">Сейчас нет активных заявок. Когда вы вызовете помощь, её статус появится здесь.</div> : null}
             {live.map((o: any) => (
               <a key={o.id} href={`#/order/${o.id}`} className="card hi" style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div className="between">
@@ -88,29 +66,6 @@ export function Home() {
               </a>
             ))}
           </div>
-          {insuranceInProgress.length>0&&<section className="client-insurance-home stack" aria-label="Мои активные страховые заявки">
-            <div className="client-insurance-home-heading">
-              <span><span className="insurance-step-title">TRAKSOS · СТРАХОВАНИЕ</span>
-                <h2>Активные страховые заявки</h2>
-              </span>
-              <a href="#/garage">Все страховки →</a>
-            </div>
-            <div className="client-insurance-home-list">
-              {insuranceInProgress.slice(0,3).map(r=>{
-                const state=insurancePresentation(r.insurance_stage,r.status);
-                return <a key={r.id} className={'client-insurance-home-card tone-'+state.tone}
-                  href={r.insurance_stage?`#/insurance/request/${r.id}`:'#/garage'}>
-                  <span className="client-insurance-home-vehicle">{r.brand} {r.model??''} · {r.plate||'номер не указан'}</span>
-                  <strong>{state.label}</strong>
-                  <span className="client-insurance-home-next">{state.next}</span>
-                  <span className="client-insurance-home-open">Открыть заявку →</span>
-                </a>;
-              })}
-            </div>
-            {insuranceInProgress.length>3&&<span className="note">
-              Ещё {insuranceInProgress.length-3} активных заявок — в разделе «Мой транспорт»
-            </span>}
-          </section>}
           <div className="desktop-section-heading"><h2>Сервисы TrakSOS</h2></div>
           <section className="client-dashboard-hubs" aria-label="Разделы кабинета">
             <a href="#/garage"><span className="client-dashboard-hub-icon">◇</span><b>Страхование и техосмотр</b><small>Документы и оформление для вашей техники</small><em>К автомобилям →</em></a>

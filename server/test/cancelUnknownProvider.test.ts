@@ -34,6 +34,13 @@ test('cancel before bank hold: unknown provider response requires GET-only recon
       assert.equal(await t.app.payments.reconcileCancellation(intent.id),'settled');
       assert.equal(calls,1);
       assert.equal((await t.db.one<any>('select status from payments where id=$1',[pay.id])).status,'cancelled');
+      const clientView=ok(await t.api('GET',`/api/orders/${id}`,undefined,client.token));
+      assert.equal(clientView.cancelBreakdown.stage,'searching');
+      assert.equal(clientView.cancelBreakdown.share,0);
+      assert.equal(clientView.cancellationPayment.paymentStatus,'cancelled');
+      assert.equal(clientView.cancellationPayment.operationAction,'cancel');
+      assert.equal(clientView.cancellationPayment.operationStatus,'settled');
+
       assert.equal((await t.db.query('select id from ledger_entries where order_id=$1',[id])).length,0);
     } finally { t.payments.cancel=real; }
   } finally { await t.close(); }

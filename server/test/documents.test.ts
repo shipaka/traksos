@@ -22,7 +22,7 @@ after(() => t.close());
 
 test('без фото одобрить нельзя; список нужного зависит от специальности', async () => {
   const st = ok(await t.api('GET', '/api/performer/documents', undefined, master.token));
-  assert.deepEqual(st.required.map((r: any) => r.kind), ['passport', 'selfie', 'car_front', 'car_side', 'equipment'], 'диагносту — ещё оборудование');
+  assert.deepEqual(st.required.map((r: any) => r.kind), ['passport', 'selfie', 'car_front', 'equipment'], 'диагносту — ещё оборудование, фото автомобиля только спереди');
   assert.equal(st.complete, false);
   assert.equal((await t.api('POST', '/api/performer/documents/submit', {}, master.token)).body.error, 'incomplete');
   assert.equal((await t.api('POST', `/api/admin/performers/${master.id}/verify`, { decision: 'approved' }, admin.token)).body.error, 'docs_missing');
@@ -31,7 +31,7 @@ test('без фото одобрить нельзя; список нужного
 test('загрузка, шифрование, доступ: владелец и модератор видят, остальные — нет; просмотр модератором в журнале', async () => {
   const shared = randomBytes(20_000);
   const ids: Record<string, string> = {};
-  for (const kind of ['passport', 'selfie', 'car_front', 'car_side', 'equipment']) {
+  for (const kind of ['passport', 'selfie', 'car_front', 'equipment']) {
     ids[kind] = ok(await t.api('POST', '/api/performer/documents', { kind, dataUrl: photo(kind === 'car_front' ? shared : undefined), takenAt: t.clock.now().toISOString() }, master.token)).id;
   }
   // В базе — не исходное фото
@@ -63,12 +63,12 @@ test('загрузка, шифрование, доступ: владелец и 
   const newId = ok(await t.api('POST', '/api/performer/documents', { kind: 'car_front', dataUrl: photo() }, master.token)).id;
 
   // Приняли всё — одобряем; исполнитель может выйти на линию
-  for (const id of [ids.passport, ids.selfie, ids.car_side, ids.equipment, newId]) ok(await t.api('POST', `/api/admin/documents/${id}`, { status: 'approved' }, admin.token));
+  for (const id of [ids.passport, ids.selfie, ids.equipment, newId]) ok(await t.api('POST', `/api/admin/documents/${id}`, { status: 'approved' }, admin.token));
   ok(await t.api('POST', `/api/admin/performers/${master.id}/verify`, { decision: 'approved' }, admin.token));
   ok(await t.api('POST', '/api/performer/line', { lineStatus: 'online' }, master.token));
 
   // Сменил машину — снова на проверку и с линии не пропадает, но новые заявки ждут одобрения
-  ok(await t.api('POST', '/api/performer/documents', { kind: 'car_side', dataUrl: photo() }, master.token));
+  ok(await t.api('POST', '/api/performer/documents', { kind: 'car_front', dataUrl: photo() }, master.token));
   assert.equal(ok(await t.api('GET', '/api/performer/profile', undefined, master.token)).verification, 'pending');
 });
 

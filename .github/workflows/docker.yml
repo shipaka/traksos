@@ -41,6 +41,8 @@ jobs:
         with:
           context: .
           push: true
+          build-args: |
+            BUILD_REV=${{ github.event.workflow_run.head_sha }}
           tags: |
             ghcr.io/${{ github.repository }}:latest
             ghcr.io/${{ github.repository }}:${{ github.event.workflow_run.head_sha }}

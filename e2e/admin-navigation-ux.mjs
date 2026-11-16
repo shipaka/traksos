@@ -11,7 +11,6 @@ const sections = [
   ['queue','Модерация'],['summary','Сводка'],['orders','Заявки'],
   ['dispatch','Распределение'],['demand','Проблемные заявки'],
   ['support','Обращения'],['search','Поиск'],['people','Все люди'],
-  ['access','Регистрация и доступы'],
   ['verify','Проверка'],['bases','Рембазы'],['vehicleServices','Страхование и ТО'],
   ['payments','Деньги'],['offers','Оферты'],
   ['announcements','Объявления и комиссии'],['stats','Статистика'],
@@ -61,7 +60,7 @@ try {
     await checkLayout('dashboard');
     await page.screenshot({path:'e2e/shots/admin-ux/initial-'+width+'.png',fullPage:true});
     await openNav();
-    if(await navigation.locator('.admin-nav-item').count()!==sections.length)
+    if(await navigation.locator('.admin-nav-item').count()!==17)
       throw Error(width+'px: missing navigation section(s)');
     const search = navigation.getByRole('searchbox',{name:'Поиск раздела администрации'});
     await search.fill('страхование');
@@ -78,11 +77,6 @@ try {
       await navigation.getByRole('button',{name,exact:true}).click();
       await page.waitForURL(new RegExp('#/admin/section/'+id+'$'));
       await page.locator('.admin-stage-head h2').getByText(name,{exact:true}).waitFor();
-      if(id==='access') {
-        await page.getByRole('heading',{name:'Зарегистрировать человека вручную'}).waitFor();
-        await page.getByRole('button',{name:'Создать учётную запись'}).waitFor();
-        await page.getByRole('button',{name:'Создать обращение разработчику'}).waitFor();
-      }
       await checkLayout(id);
       if(['queue','summary','payments','vehicleServices','stats','settings'].includes(id))
         await page.screenshot({path:'e2e/shots/admin-ux/'+id+'-'+width+'.png',fullPage:true});
@@ -95,5 +89,5 @@ try {
     await checkLayout('deep link');
     await context.close();
   }
-  console.log('Admin: all '+sections.length+' sections, search, real deep links, responsive layout and screenshots OK');
+  console.log('Admin: all 17 sections, search, real deep links, responsive layout and screenshots OK');
 }finally{await browser.close();}

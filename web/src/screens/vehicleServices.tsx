@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { get, post, patch, fmtTime } from '../api.ts';
 import { useLoad, useAction, useMe } from '../ui.tsx';
-import { insurancePresentation } from '../insurancePresentation.ts';
 
 /** Оформление заявки для владельца или водителя с разрешением владельца. */
 export function VehicleServiceApplication({ vehicleId, onCreated }: { vehicleId: string; onCreated: () => void }) {
@@ -49,7 +48,6 @@ export function VehicleServiceHistory({ id, isDriver, refreshVersion }: { id: st
     (event) => event.type === 'connection_restored' || (event.type === 'vehicle_service' && event.vehicleId === id));
   const items = history.data as any[] | undefined;
   const { busy, run } = useAction();
-  const activeInsurance = (items ?? []).filter(r => r.kind === 'insurance' && !['completed','cancelled','rejected'].includes(r.status));
   const [renewing, setRenewing] = useState<string | null>(null);
   const [expiry, setExpiry] = useState('');
   if (!items) return history.error ? <div className="note">Не удалось загрузить историю услуг: {history.error}</div> : null;
@@ -70,49 +68,19 @@ export function VehicleServiceHistory({ id, isDriver, refreshVersion }: { id: st
   return (
     <div className="stack">
       <button type="button" className="linkrow" aria-expanded={open} onClick={() => setOpen(!open)}>
-        <span><b>Страхование и техосмотр · {items.length}</b>
-          <small>{activeInsurance.length>0
-            ? 'Активных страховых заявок: '+activeInsurance.length+' · отслеживайте этапы ниже'
-            : 'Заявки, статусы и сроки полисов'}</small></span>
+        <span><b>Страхование и техосмотр · {items.length}</b><small>Заявки, статусы и сроки полисов</small></span>
         <span aria-hidden="true">{open ? '˄' : '˅'}</span>
       </button>
-      {!open&&activeInsurance.length>0&&<section className="insurance-garage-active stack" aria-label="Активные страховые заявки">
-        {activeInsurance.slice(0,2).map(r=>{
-          const state=insurancePresentation(r.insurance_stage,r.status);
-          return <article className={'insurance-garage-live tone-'+state.tone} key={r.id}>
-            <div className="insurance-garage-live-head">
-              <span className="insurance-step-title">МОЯ СТРАХОВКА · АКТИВНАЯ ЗАЯВКА</span>
-              <span className="insurance-garage-pulse" aria-hidden="true">●</span>
-            </div>
-            <strong>{state.label}</strong>
-            <p>{state.detail}</p>
-            <span className="insurance-live-next">{state.next}</span>
-            <div className="insurance-garage-live-foot">
-              <small>Отправлена {fmtTime(r.created_at)}</small>
-              {r.insurance_stage&&<a className="btn small" href={`#/insurance/request/${r.id}`}>
-                Открыть заявку и предложения →</a>}
-            </div>
-          </article>;
-        })}
-        {activeInsurance.length>2&&<span className="note">
-          Ещё {activeInsurance.length-2} активных страховых заявок · откройте всю историю выше
-        </span>}
-      </section>}
       {open && <div className="stack">
         {items.length === 0 && <span className="note">Пока нет заявок на страхование и техосмотр. После подачи они появятся здесь вместе с историей изменений.</span>}
         {items.map((r: any) => (
-          <div key={r.id} className={'insurance-garage-history-item'+(r.kind==='insurance'?' insurance-garage-history-policy':'')}>
-            <div className="insurance-garage-history-head">
-              <b>{r.kind === 'insurance' ? 'Страхование' : 'Техосмотр'}</b>
-              <span className={'pill '+(['completed'].includes(r.status)?'good':
-                ['rejected','cancelled'].includes(r.status)?'bad':'accent')}>
-                {r.kind==='insurance'?insurancePresentation(r.insurance_stage,r.status).label:(labels[r.status]??r.status)}
-              </span>
-            </div>
+          <div key={r.id} className="note">
+            <b>{r.kind === 'insurance' ? 'Страхование' : 'Техосмотр'}</b>
+            {' · '}{labels[r.status] ?? r.status}
             {' · Подана '}{fmtTime(r.created_at)}
             {r.updated_at && <span> · Обновлена {fmtTime(r.updated_at)}</span>}
             {r.policy_expires_on && <span> · Действует до {String(r.policy_expires_on).slice(0, 10)}</span>}
-            <div>{r.kind==='insurance'?insurancePresentation(r.insurance_stage,r.status).detail:(statusHelp[r.status]??'Статус уточняется.')}</div>
+            <div>{statusHelp[r.status] ?? 'Статус уточняется.'}</div>
             {r.staff_note && <div><b>Комментарий специалиста:</b> {r.staff_note}</div>}
             {r.kind === 'insurance' && r.insurance_stage && <a className="btn ghost small"
               href={`#/insurance/request/${r.id}`}>Открыть страховую переписку и предложения →</a>}
