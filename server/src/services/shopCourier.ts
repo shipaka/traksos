@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import {randomBytes,randomInt,scryptSync,timingSafeEqual} from 'node:crypto';
 import type { Db, Queryable } from '../db/index.ts';
 import type { Router, AuthedCtx, AuthUser } from '../http/router.ts';
 import { parse, bad, forbidden, notFound, conflict, HttpError } from '../http/router.ts';
@@ -28,12 +29,14 @@ async function myRun(db:Db,c:AuthedCtx) {
 async function runSummary(db:Db,run:Run) {
   const stops=await db.query<any>(
     "select st.id,st.seq,st.status,so.id as shop_order_id,so.number,so.items,so.address,so.comment, "+
-    "u.name as recipient_name from shop_courier_stops st "+
+    "u.name as recipient_name,(h.verified_at is not null) as handoff_verified from shop_courier_stops st "+
+    "left join shop_delivery_handoffs h on h.stop_id=st.id "+ 
     "join shop_orders so on so.id=st.shop_order_id join users u on u.id=so.client_id "+
     "where st.run_id=$1 order by st.seq",[run.id]);
   return {id:run.id,status:run.status,cityCode:run.city_code,pickupAddress:run.pickup_address,
     activeStopId:run.active_stop_id,
     stops:stops.map(x=>({id:x.id,seq:x.seq,status:x.status,orderNumber:x.number,
+       handoffVerified:Boolean(x.handoff_verified),
       recipientName:['delivered','failed'].includes(x.status)?null:(x.recipient_name??'Получатель'),
       address:['delivered','failed'].includes(x.status)?null:x.address,
       items:Array.isArray(x.items)?x.items.map((item:any)=>({
@@ -72,7 +75,7 @@ async function advanceRun(q:Queryable,runId:string){
 }
 
 type DeliveryPhase='planned'|'accepted'|'collected'|'dispatched'|'arrived'|
-  'delivered'|'failed'|'returned'|'route_cancelled';
+  'handoff_verified'|'delivered'|'failed'|'returned'|'route_cancelled';
 async function recordDelivery(q:Queryable,orderId:string,runId:string,
   status:DeliveryPhase,actorId:string){
   await q.query(
@@ -85,6 +88,7 @@ const DELIVERY_MESSAGES:Record<DeliveryPhase,string>={
   collected:'Посылка забрана на складе',
   dispatched:'Курьер выехал со склада',
   arrived:'Курьер прибыл к получателю',
+  handoff_verified:'Код передачи посылки проверен',
   delivered:'Получение подтверждено',
   failed:'Не удалось вручить посылку; диспетчер уточнит дальнейшие действия',
   returned:'Посылка возвращена на склад',
@@ -401,6 +405,91 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
       refundAutomaticallyCompleted:false};
   });
 
+  /** A fresh code is created only by the buyer, only at the currently active
+   * arrival stop. The raw six digits are returned ONCE, never logged or stored.
+   * Re-issue invalidates earlier tokens; 30-second cooldown blocks harassment. */
+  r.post('/api/shop/orders/:id/delivery-code',true,async(c:AuthedCtx)=>{
+    const orderId=parse(id,c.params.id);
+    const code=String(randomInt(0,1_000_000)).padStart(6,'0');
+    const salt=randomBytes(16).toString('hex');
+    const hash=scryptSync(code,salt,32).toString('hex');
+    const result=await db.tx(async q=>{
+      const target=await q.one<{stop_id:string;client_id:string;created_by:string;status:string;
+        run_status:string;active_stop_id:string|null}>(
+        "select st.id as stop_id,so.client_id,so.created_by,st.status,"+
+        "r.status as run_status,r.active_stop_id from shop_orders so "+
+        "join shop_courier_stops st on st.shop_order_id=so.id "+
+        "join shop_courier_runs r on r.id=st.run_id "+
+        "where so.id=$1 for update of st",[orderId]);
+      if(!target||(target.client_id!==c.user.id&&target.created_by!==c.user.id))
+        throw notFound('Заказ не найден');
+      if(target.status!=='at_door'||target.run_status!=='delivering'||
+        target.active_stop_id!==target.stop_id)
+        throw conflict('not_at_door','Курьер должен прибыть к текущему получателю');
+      const prev=await q.one<{issued_at:Date;verified_at:Date|null}>(
+        'select issued_at,verified_at from shop_delivery_handoffs where stop_id=$1 for update',
+        [target.stop_id]);
+      if(prev?.verified_at)throw conflict('already_verified','Код уже проверен курьером');
+      if(prev?.issued_at&&Date.now()-new Date(prev.issued_at).getTime()<30_000)
+        throw conflict('retry_later','Повторный код можно запросить через 30 секунд');
+      const issued=await q.one<{expires_at:Date}>(
+        "insert into shop_delivery_handoffs(stop_id,code_salt,code_hash,issued_at,expires_at,attempts) "+
+        "values($1,$2,$3,now(),now()+interval '10 minutes',0) "+
+        "on conflict(stop_id) do update set code_salt=excluded.code_salt,"+
+        "code_hash=excluded.code_hash,issued_at=excluded.issued_at,"+
+        "expires_at=excluded.expires_at,attempts=0,verified_at=null,verified_by=null "+
+        "returning expires_at",
+        [target.stop_id,salt,hash]);
+      return {expiresAt:issued?.expires_at};
+    });
+    return {code,expiresAt:result.expiresAt,validMinutes:10,
+      warning:'Показывайте код только курьеру при фактической передаче вашей посылки'};
+  });
+
+  /** Courier must be at the active stop. A wrong guess is permanently counted
+   * in its own committed transaction (throwing from tx would roll it back). */
+  r.post('/api/courier/runs/:id/stops/:stopId/verify-handoff',true,async(c:AuthedCtx)=>{
+    const run=await myRun(db,c);
+    const stopId=parse(id,c.params.stopId);
+    const input=parse(z.object({code:z.string().regex(/^\d{6}$/)}),c.body);
+    const result=await db.tx(async q=>{
+      const current=await q.one<{shop_order_id:string;status:string;run_status:string;
+        active_stop_id:string|null}>(
+        "select st.shop_order_id,st.status,r.status as run_status,r.active_stop_id "+
+        "from shop_courier_stops st join shop_courier_runs r on r.id=st.run_id "+
+        "where st.id=$1 and st.run_id=$2 for update of st",
+        [stopId,run.id]);
+      if(!current||current.status!=='at_door'||current.run_status!=='delivering'||
+        current.active_stop_id!==stopId)
+        throw conflict('not_active_stop','Код можно проверять только у текущего получателя');
+      const proof=await q.one<{code_salt:string;code_hash:string;expires_at:Date;
+        attempts:number;verified_at:Date|null}>(
+        'select code_salt,code_hash,expires_at,attempts,verified_at '+
+        'from shop_delivery_handoffs where stop_id=$1 for update',[stopId]);
+      if(!proof)return {ok:false,reason:'Клиент ещё не создал код передачи'};
+      if(proof.verified_at)return {ok:false,reason:'Код уже использован'};
+      if(proof.attempts>=5)return {ok:false,reason:'Попытки исчерпаны. Клиент должен создать новый код'};
+      if(new Date(proof.expires_at).getTime()<=Date.now())
+        return {ok:false,reason:'Код истёк. Клиент должен создать новый'};
+      const received=scryptSync(input.code,proof.code_salt,32);
+      const expected=Buffer.from(proof.code_hash,'hex');
+      const valid=expected.length===received.length&&timingSafeEqual(expected,received);
+      if(!valid){
+        await q.query('update shop_delivery_handoffs set attempts=attempts+1 where stop_id=$1',[stopId]);
+        return {ok:false,reason:'Неверный код передачи'};
+      }
+      await q.query(
+        'update shop_delivery_handoffs set verified_at=now(),verified_by=$2 where stop_id=$1',
+        [stopId,c.user.id]);
+      await recordDelivery(q,current.shop_order_id,run.id,'handoff_verified',c.user.id);
+      return {ok:true,orderId:current.shop_order_id};
+    });
+    if(!result.ok)throw conflict('handoff_code_rejected',result.reason);
+    await alert(db,notifier,result.orderId!,
+      'Код посылки проверен курьером. Подтвердите получение только после осмотра товара.');
+    return {verified:true,requiresBuyerConfirmation:true};
+  });
+
   r.post('/api/shop/orders/:id/confirm-delivery',true,async(c:AuthedCtx)=>{
     const orderId=parse(id,c.params.id);
     const result=await db.tx(async q=>{
@@ -414,8 +503,11 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
       if(row.status!=='shipped')throw conflict('invalid_state','Заказ ещё не доставлен');
       const stop=await q.one<{id:string}>(
         "update shop_courier_stops set status='delivered',delivered_at=now() "+
-        "where shop_order_id=$1 and status='at_door' returning id",[orderId]);
-      if(!stop)throw conflict('handoff_unconfirmed','Курьер должен отметить прибытие');
+        "where shop_order_id=$1 and status='at_door' "+
+         "and exists(select 1 from shop_delivery_handoffs h "+
+         "where h.stop_id=shop_courier_stops.id and h.verified_at is not null) "+
+         "returning id",[orderId]);
+      if(!stop)throw conflict('handoff_unconfirmed','Нужны прибытие курьера и проверенный одноразовый код получателя');
       await q.query("update shop_orders set status='done',updated_at=now() where id=$1",[orderId]);
       await recordDelivery(q,orderId,row.run_id,'delivered',c.user.id);
       await advanceRun(q,row.run_id);
@@ -481,19 +573,19 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
       'select client_id,created_by from shop_orders where id=$1',[orderId]);
     if(!owner||(owner.client_id!==c.user.id&&owner.created_by!==c.user.id))
       throw notFound('Доставка не найдена');
-    const row=await db.one<{client_id:string;created_by:string;status:string;stop_status:string;run_id:string;leg_active:boolean}>(
-      "select o.client_id,o.created_by,r.status,s.status as stop_status,r.id as run_id, "+
+    const row=await db.one<{client_id:string;created_by:string;status:string;stop_status:string;run_id:string;leg_active:boolean;handoff_verified:boolean}>(
+      "select o.client_id,o.created_by,r.status,s.status as stop_status,r.id as run_id, \n       (exists(select 1 from shop_delivery_handoffs h where h.stop_id=s.id and h.verified_at is not null)) as handoff_verified, "+
       "(r.active_stop_id=s.id) as leg_active "+
       "from shop_orders o join shop_courier_stops s on s.shop_order_id=o.id "+
       "join shop_courier_runs r on r.id=s.run_id where o.id=$1",[orderId]);
-    if(!row)return {status:'awaiting_assignment',runStatus:null,location:null,live:false,etaMinutes:null};
+    if(!row)return {status:'awaiting_assignment',runStatus:null,location:null,live:false,etaMinutes:null,handoffVerified:false};
     const live=row.status==='delivering' && row.leg_active &&
       ['collected','at_door'].includes(row.stop_status);
     const position=live?await db.one<{lat:number;lng:number;accuracy_m:number;updated_at:Date}>(
       "select lat,lng,accuracy_m,updated_at from shop_courier_live_positions "+
       "where run_id=$1 and updated_at>now()-interval '2 minutes'",[row.run_id]):null;
     // No other customers, route stop list, courier private phone or off-duty locations.
-    return {status:row.stop_status,runStatus:row.status,
+    return {status:row.stop_status,runStatus:row.status,handoffVerified:Boolean(row.handoff_verified),
       location:position?{lat:position.lat,lng:position.lng,accuracyMeters:position.accuracy_m,
         updatedAt:position.updated_at}:null,
       live:Boolean(position),etaMinutes:null};
