@@ -12,6 +12,7 @@ before(async()=>{
  client1=await t.login('+79993332221');
  client2=await t.login('+79993332222');
  outsider=await t.login('+79993332223');
+ for(const u of [client1,client2])ok(await t.api('PUT','/api/shop/region',{city:'Санкт-Петербург'},u.token));
  ok(await t.api('PUT','/api/admin/settings/shop',{enabled:true,delivery:true},admin.token));
  const item=ok(await t.api('POST','/api/admin/shop/products',{
    name:'Позиция тестовой доставки',category:'sensors',price:110000,stock:5
