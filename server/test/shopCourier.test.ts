@@ -186,8 +186,22 @@ test('courier consent + stop-by-stop GPS, customer signs handoff, last fix is er
  ok(await t.api('POST','/api/courier/runs/'+runId+'/stops/'+stops[1].id+'/arrive',{},driver.token));
  assert.equal((await t.api('POST','/api/shop/orders/'+order2+'/confirm-delivery',{},client2.token)).status,409);
  const secondCode=ok(await t.api('POST','/api/shop/orders/'+order2+'/delivery-code',{},client2.token));
- ok(await t.api('POST','/api/courier/runs/'+runId+'/stops/'+stops[1].id+
-   '/verify-handoff',{code:secondCode.code},driver.token));
+ assert.equal((await t.api('POST','/api/shop/orders/'+order2+'/delivery-code',{},client2.token)).status,409,
+   'new buyer PIN must not be reissued immediately');
+ const verifySecond='/api/courier/runs/'+runId+'/stops/'+stops[1].id+'/verify-handoff';
+ const incorrect=secondCode.code==='000000'?'999999':'000000';
+ for(let i=0;i<5;i++)assert.equal(
+   (await t.api('POST',verifySecond,{code:incorrect},driver.token)).status,409);
+ assert.equal((await t.api('POST',verifySecond,{code:secondCode.code},driver.token)).status,409,
+   'even correct PIN is locked out after five invalid tries');
+ assert.equal((await t.db.one<{attempts:number}>('select attempts from shop_delivery_handoffs where stop_id=$1',
+   [stops[1].id]))?.attempts,5);
+ await t.db.query("update shop_delivery_handoffs set issued_at=now()-interval '31 seconds' where stop_id=$1",
+   [stops[1].id]);
+ const replacement=ok(await t.api('POST','/api/shop/orders/'+order2+'/delivery-code',{},client2.token));
+ assert.equal((await t.db.one<{attempts:number}>('select attempts from shop_delivery_handoffs where stop_id=$1',
+   [stops[1].id]))?.attempts,0,'new PIN resets attempt counter');
+ ok(await t.api('POST',verifySecond,{code:replacement.code},driver.token));
  ok(await t.api('POST','/api/shop/orders/'+order2+'/confirm-delivery',{},client2.token));
  two=ok(await t.api('GET','/api/shop/orders/'+order2+'/courier',undefined,client2.token));
  assert.equal(two.live,false);
