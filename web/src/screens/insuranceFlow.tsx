@@ -1,6 +1,7 @@
 import {useEffect,useMemo,useState} from 'react';
 import {API_URL,fmtTime,get,getToken,post,rub} from '../api.ts';
 import {go,useAction,useLoad,useMe,Loading} from '../ui.tsx';
+import { INSURANCE_STAGES, insurancePresentation, insuranceStepIndex } from '../insurancePresentation.ts';
 
 const VEHICLE_FIELDS=[
   ['brand','Марка *'],['model','Модель *'],['year','Год выпуска *'],
@@ -178,6 +179,8 @@ export function InsuranceThread({requestId}:{requestId:string}){
   const stage=r?.insurance_stage||'';
   const selected=d?.proposals.find(p=>p.id===r?.insurance_choice_id);
   const isAgent=!!d?.isPartner;
+  const status=insurancePresentation(stage,r?.status,isAgent?'partner':'client');
+  const activeIndex=insuranceStepIndex(stage);
   const notify=()=>source.reload();
   const send=async()=>{
     const m=message.trim();if(!m)return;
@@ -225,12 +228,26 @@ export function InsuranceThread({requestId}:{requestId:string}){
       <section className="insurance-workflow-hero">
         <span>TRAKSOS · СТРАХОВАЯ ПЕРЕПИСКА</span>
         <h1>{r?.brand} {r?.model} · {r?.plate}</h1>
-        <div className="insurance-stage"><b>{insuranceStatus(stage)}</b><span>{r?.agent_name}</span></div>
-        <p>Все этапы согласования, цены и готовый полис находятся здесь. Оформление страховой компанией выполняется агентом вручную.</p>
+        <div className={'insurance-live-status tone-'+status.tone} aria-live="polite">
+          <span className="insurance-live-orb" aria-hidden="true">{status.tone==='done'?'✓':status.tone==='action'?'!':'◉'}</span>
+          <div className="insurance-live-copy">
+            <span className="insurance-live-kicker">ТЕКУЩИЙ ЭТАП · {isAgent?'КАБИНЕТ СТРАХОВЩИКА':'МОЯ СТРАХОВКА'}</span>
+            <strong>{status.label}</strong>
+            <p>{status.detail}</p>
+            <span className="insurance-live-next">{status.next}</span>
+          </div>
+        </div>
+        <p className="insurance-hero-footnote">Страховой агент: {r?.agent_name||'назначенный партнёр'} · Все предложения, уточнения и полис находятся в этом деле. Расчёт и выпуск полиса пока выполняются вручную.</p>
       </section>
-      {isAgent&&d.isPartner&&r?.insurance_details&&<section className="card stack">
-        <span className="insurance-step-title">ДАННЫЕ ЗАЯВИТЕЛЯ</span>
-        <h2>Анкета для оформления</h2>
+      {isAgent&&d.isPartner&&r?.insurance_details&&<details className="card insurance-applicant-dossier">
+        <summary className="insurance-dossier-toggle">
+          <span className="insurance-dossier-symbol" aria-hidden="true">▤</span>
+          <span><span className="insurance-step-title">ДАННЫЕ ЗАЯВИТЕЛЯ</span>
+            <strong>Анкета для оформления</strong>
+            <small>ФИО, VIN и сведения о грузовике · открыть досье</small>
+          </span>
+          <span className="insurance-dossier-chevron" aria-hidden="true">⌄</span>
+        </summary>
         <div className="insurance-field-grid">
           <div><b>Страхователь</b><p>{[
             r.insurance_details.applicant?.lastName,r.insurance_details.applicant?.firstName,
@@ -239,7 +256,7 @@ export function InsuranceThread({requestId}:{requestId:string}){
             <div key={key}><b>{VEHICLE_FIELDS.find(([k])=>k===key)?.[1]||key}</b>
               <p>{String(value)}</p></div>)}
         </div>
-      </section>}
+      </details>}
       <div className="insurance-conversation">
         <section className="insurance-conversation-feed card stack" aria-label="Страховая сделка">
           {d.proposals.length>0&&<div className="insurance-offers">
@@ -291,9 +308,13 @@ export function InsuranceThread({requestId}:{requestId:string}){
         <aside className="insurance-conversation-tools stack">
           <section className="card stack">
             <span className="insurance-step-title">ЭТАП ЗАЯВКИ</span><h3>{insuranceStatus(stage)}</h3>
-            <div className="insurance-progress">
-              {['received','preparing','offers_sent','selected','processing','policy_sent'].map((s,i)=>
-                <div className={s===stage?'current':''} key={s}><span>{i+1}</span>{stepLabels[s]}</div>)}
+            <div className="insurance-progress" role="list" aria-label="Путь страховой заявки">
+              {INSURANCE_STAGES.map((s,i)=>
+                <div className={i===activeIndex?'current':i<activeIndex?'complete':'upcoming'}
+                  key={s} role="listitem" aria-current={s===stage?'step':undefined}>
+                  <span aria-hidden="true">{i<activeIndex?'✓':i+1}</span>
+                  <span>{stepLabels[s]}</span>
+                </div>)}
             </div>
           </section>
           {isAgent&&['received','selected'].includes(stage)&&<section className="card stack">
