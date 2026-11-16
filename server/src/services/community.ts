@@ -96,10 +96,12 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
   });
 
   r.get('/api/community/rooms', true, async (c: AuthedCtx) => {
-    const [rooms,profile] = await Promise.all([
+    const [rooms,profile,subscriptions] = await Promise.all([
       db.query<Room>('select * from community_rooms where active=true order by created_at,id limit 200'),
       verifiedProfile(db,c.user),
+      db.query<{room_id:string}>('select room_id from community_memberships where user_id=$1',[c.user.id]),
     ]);
+    const joined = new Set(subscriptions.map(x=>x.room_id));
     return { rooms: rooms.filter(room => {
       // Synchronous equivalent of roomAllowed for filtering (verification already queried).
       if (isStaff(c.user) || room.audience === 'all') return true;
@@ -109,7 +111,7 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
         || (room.specialty === 'service' && profile.kind === 'service')
         || profile.specialties.includes(room.specialty);
     }).map(({id,slug,title,kind,audience,locality_label}) =>
-      ({id,slug,title,kind,audience,locality:locality_label})) };
+      ({id,slug,title,kind,audience,locality:locality_label,joined:joined.has(id)})) };
   });
 
   r.post('/api/admin/community/rooms', ['admin'], async (c: AuthedCtx) => {
@@ -134,6 +136,11 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
     await db.query(`insert into community_memberships(room_id,user_id) values($1,$2)
       on conflict do nothing`,[room.id,c.user.id]);
     return { joined:true,roomId:room.id };
+  });
+  r.post('/api/community/rooms/:id/leave', true, async (c: AuthedCtx) => {
+    const room = await mustRoom(db,c);
+    await db.query('delete from community_memberships where room_id=$1 and user_id=$2',[room.id,c.user.id]);
+    return {joined:false,roomId:room.id};
   });
   r.get('/api/community/rooms/:id/messages', true, async (c: AuthedCtx) => {
     const room = await mustRoom(db,c);
