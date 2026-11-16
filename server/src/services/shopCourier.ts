@@ -290,17 +290,30 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
     return {enabled:b.enabled};
   });
   r.put('/api/courier/runs/:id/position',true,async(c:AuthedCtx)=>{
-    const profile=await courier(db,c.user);
+    // Check courier identity first; the permission and live-run state are
+    // revalidated under row locks to avoid a race with revoked GPS consent.
+    await courier(db,c.user);
     const run=await myRun(db,c);
-    if(run.status!=='delivering'||!profile.location_consent)
-      throw forbidden('GPS доступен только с согласия во время доставки');
-    const b=parse(z.object({lat:z.number().min(-90).max(90),
-      lng:z.number().min(-180).max(180),accuracyMeters:z.number().int().min(1).max(500)}),c.body);
-    const updated=await db.one<{updated_at:Date}>(
-      "insert into shop_courier_live_positions(run_id,lat,lng,accuracy_m) values($1,$2,$3,$4) "+
-      "on conflict(run_id) do update set lat=excluded.lat,lng=excluded.lng,accuracy_m=excluded.accuracy_m,updated_at=now() "+
-      "where shop_courier_live_positions.updated_at < now()-interval '15 seconds' returning updated_at",
-      [run.id,b.lat,b.lng,b.accuracyMeters]);
+    const b=parse(z.object({
+      lat:z.number().min(-90).max(90),
+      lng:z.number().min(-180).max(180),
+      accuracyMeters:z.number().int().min(1).max(500)
+    }),c.body);
+    const updated=await db.tx(async q=>{
+      const profile=await q.one<{active:boolean;location_consent:boolean}>(
+        'select active,location_consent from shop_couriers where user_id=$1 for update',[c.user.id]);
+      if(!profile?.active || !profile.location_consent)
+        throw forbidden('GPS отключён: требуется отдельное согласие курьера');
+      const current=await q.one<{status:string;active_stop_id:string|null}>(
+        'select status,active_stop_id from shop_courier_runs where id=$1 for update',[run.id]);
+      if(current?.status!=='delivering'||!current.active_stop_id)
+        throw forbidden('Координаты доступны только во время активной доставки');
+      return q.one<{updated_at:Date}>(
+        "insert into shop_courier_live_positions(run_id,lat,lng,accuracy_m) values($1,$2,$3,$4) "+
+        "on conflict(run_id) do update set lat=excluded.lat,lng=excluded.lng,accuracy_m=excluded.accuracy_m,updated_at=now() "+
+        "where shop_courier_live_positions.updated_at < now()-interval '15 seconds' returning updated_at",
+        [run.id,b.lat,b.lng,b.accuracyMeters]);
+    });
     return {updated:Boolean(updated),updatedAt:updated?.updated_at??null};
   });
   r.get('/api/shop/orders/:id/courier',true,async(c:AuthedCtx)=>{
