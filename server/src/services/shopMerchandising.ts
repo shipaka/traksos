@@ -146,6 +146,42 @@ export function registerShopMerchandisingRoutes(r:Router,db:Db,notifier:Notifier
       newlyRecorded:result.created};
   });
 
+  // Manual exception resolution is separate from order cancellation/refund.
+  // A new positive supplier confirmation must exist before route dispatch is unblocked.
+  r.post('/api/admin/shop/orders/:id/supplier-issues/resolve',['admin'],async(c:AuthedCtx)=>{
+    const orderId=parse(uuid,c.params.id);
+    const b=parse(z.object({
+      resolution:z.enum(['supplier_reconfirmed','order_cancelled','refund_completed']),
+      evidence:z.string().trim().min(20).max(1000)
+    }),c.body);
+    const result=await db.tx(async q=>{
+      const row=await q.one<{id:string;status:string}>(
+        'select id,status from shop_orders where id=$1 for update',[orderId]);
+      if(!row)throw notFound('Заказ не найден');
+      const issue=await q.one<{issue_kind:string;needs_review:boolean}>(
+        'select issue_kind,needs_review from shop_supplier_order_issues where shop_order_id=$1 for update',[orderId]);
+      if(!issue?.needs_review)throw conflict('no_pending_issue','Нет открытого разбирательства');
+      if(b.resolution==='supplier_reconfirmed'){
+        const latest=await q.one<{status:Stage}>(
+          'select status from shop_supplier_order_events where shop_order_id=$1 order by event_time desc,id desc limit 1',
+          [orderId]);
+        if(!latest || latest.status==='cancelled' || latest.status==='unknown')
+          throw conflict('supplier_not_reconfirmed',
+            'Для возобновления отправки необходимо отдельно зафиксировать новое подтверждение поставщика');
+      }
+      if(b.resolution!=='supplier_reconfirmed' && row.status!=='cancelled')
+        throw conflict('order_not_cancelled',
+          'Для завершения разбирательства по отмене сначала оформите отмену заказа клиенту');
+      await q.query('update shop_supplier_order_issues set needs_review=false,resolved_at=now(),resolved_by=$2,details=$3 where shop_order_id=$1',
+        [orderId,c.user.id,b.evidence]);
+      await q.query('insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4)',
+        [c.user.id,'shop.supplier_issue_resolved',orderId,
+          {resolution:b.resolution,evidence:b.evidence}]);
+      return {resolved:true,resolution:b.resolution,refundAutomaticallyConfirmed:false};
+    });
+    return result;
+  });
+
   r.get('/api/admin/shop/orders/:id/supplier-events',['admin'],async(c:AuthedCtx)=>{
     const orderId=parse(uuid,c.params.id);
     const o=await db.one('select id from shop_orders where id=$1',[orderId]);
