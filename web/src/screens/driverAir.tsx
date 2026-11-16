@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, put, fmtTime, onEvent } from '../api.ts';
 import { useAction, useLoad, useMe } from '../ui.tsx';
 import './driverAir.css';
+import { NearbyHelp } from './nearbyHelp.tsx';
 
 type AirProfile={nickname:string;city_label:string|null;share_city:boolean;public_city:string|null};
 type AirRoom={id:string;slug:string;title:string;kind:string;audience:string;locality:string|null;joined:boolean};
@@ -257,7 +258,7 @@ export function DriverAir(){
   const profile=useLoad<AirProfile>(()=>get('/api/community/me'),[me?.id]);
   const rooms=useLoad<{rooms:AirRoom[]}>(()=>get('/api/community/rooms'),[me?.id]);
   const [roomId,setRoomId]=useState<string|null>(null);
-  const [view,setView]=useState<'rooms'|'direct'|'profile'>('rooms');
+  const [view,setView]=useState<'rooms'|'direct'|'profile'|'help'>('rooms');
   const [roomPane,setRoomPane]=useState<'chat'|'road'>('chat');
   const [sending,setSending]=useState(false);
   const {run}=useAction();
@@ -292,10 +293,12 @@ export function DriverAir(){
       <button type="button" aria-current={view==='rooms'?'page':undefined} onClick={()=>setView('rooms')}>Эфир и города</button>
       <button type="button" aria-current={view==='direct'?'page':undefined} onClick={()=>setView('direct')}>Личные чаты</button>
       <button type="button" aria-current={view==='profile'?'page':undefined} onClick={()=>setView('profile')}>Мой позывной</button>
+      <button type="button" aria-current={view==='help'?'page':undefined} onClick={()=>setView('help')}>Помощь рядом</button>
     </nav>
     {view==='profile'&&(profile.data?<AirProfileSettings profile={profile.data} onSaved={profile.reload}/>:
       <p role="status">{profile.error??'Загружаю…'}</p>)}
     {view==='direct'&&<DirectMessages/>}
+    {view==='help'&&<NearbyHelp/>}
     {view==='rooms'&&<div className="air-layout">
       <aside className="air-channel-list">
         <h2>Комнаты</h2>
