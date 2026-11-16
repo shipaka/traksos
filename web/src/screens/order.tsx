@@ -102,6 +102,11 @@ export function Order({ id }: { id: string }) {
           <div className="between"><span>Исполнителю за выезд</span><b>{rub(d.cancelBreakdown.toPerformer)}</b></div>
           <div className="between"><span>Сервисный сбор удержан</span><b>{rub(d.cancelBreakdown.platformKeeps)}</b></div>
           <div className="between"><span>Расчётный возврат</span><b>{rub(d.cancelBreakdown.refund)}</b></div>
+          {d.cancelBreakdown.stageEvidence && <span className="note">Основание этапа: {d.cancelBreakdown.stageEvidence.source === 'performer_arrival_action'
+            ? 'исполнитель самостоятельно отметил прибытие; GPS-подтверждения нет'
+            : d.cancelBreakdown.stageEvidence.source === 'status_only'
+              ? 'статус «в пути»; прохождение половины маршрута по GPS не подтверждено'
+              : 'текущий статус заявки; GPS-подтверждения нет'}.</span>}
           <span className="note">Расчётный возврат — не подтверждение банковского возврата.</span>
         {d.cancellationPayment && <div className="stack">
           <b>Состояние оплаты и возврата</b>
