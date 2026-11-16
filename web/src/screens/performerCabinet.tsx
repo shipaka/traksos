@@ -53,7 +53,7 @@ export function PerformerHub() {
   ];
   return (
     <main className="performer-workspace stack">
-      <section className="internal-role-hero internal-role-hero-performer"><span>TRAKSOS · ВЫЕЗДНОЙ СПЕЦИАЛИСТ</span><h1>Профиль</h1><p>Всё по разделам — откройте нужный.</p><a className="btn" href="#/work">← На линию и к заявкам</a></section>
+      <section className={`internal-role-hero internal-role-hero-performer ${p.kind === 'tow' ? 'internal-role-hero-tow' : 'internal-role-hero-master'}`}><span>TRAKSOS · ${p.kind === 'tow' ? 'ЭВАКУАЦИЯ' : 'ВЫЕЗДНОЙ СПЕЦИАЛИСТ'}</span><h1>Профиль</h1><p>Всё по разделам — откройте нужный.</p><a className="btn" href="#/work">← На линию и к заявкам</a></section>
       <section className="performer-live-insights" aria-label="Обзор профиля исполнителя">
         <div><span>Моя техника</span><strong>{cars.length}</strong><small>{p.kind==='tow'?'эвакуаторов':'автомобилей'}</small></div>
         <div><span>Проверка</span><strong className="performer-verify">{p.verification==='approved'?'✓':p.verification==='rejected'?'!':'…'}</strong>
