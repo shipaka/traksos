@@ -42,6 +42,7 @@ import { Rules } from './screens/rules.tsx';
 import { Shop, ShopCart, ShopHistory } from './screens/shop.tsx';
 import { DriverAir } from './screens/driverAir.tsx';
 import { TechnicalBase } from './screens/technicalBase.tsx';
+import { OrderTechBase } from './screens/orderTechBase.tsx';
 import { Privacy } from './screens/privacy.tsx';
 import { ModCase, Appeal, MyReviews } from './screens/moderation.tsx';
 import { ModeratorDesk } from './screens/moderatorDesk.tsx';
@@ -238,7 +239,9 @@ function App() {
     case 'orders': screen = isCustomer ? <Orders as="client" /> : <main><div className="empty">Нет доступа к клиентским заявкам</div></main>; break;
     case 'garage': screen = isCustomer ? <Garage /> : <main><div className="empty">Нет доступа к гаражу</div></main>; break;
     case 'air': screen = me.roles.includes('driver') ? <DriverAir /> : <main><div className="empty">Водительский Эфир доступен только водителям.</div></main>; break;
-    case 'techbase': screen = me.roles.some(r => ['master','tow','service','admin'].includes(r)) ? <TechnicalBase /> : <main><div className="empty">ТехБаза доступна только подтверждённым специалистам.</div></main>; break;
+    case 'techbase': screen = me.roles.some(r => ['master','tow','service','admin'].includes(r))
+      ? b==='order' && route[2] ? <OrderTechBase orderId={route[2]}/> : <TechnicalBase />
+      : <main><div className="empty">ТехБаза доступна только подтверждённым специалистам.</div></main>; break;
     case 'profile': screen = <Profile />; break;
     case 'invite': screen = <Invite />; break;
     case 'r': screen = <Invite />; break;
