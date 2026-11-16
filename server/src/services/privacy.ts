@@ -34,6 +34,11 @@ export class PrivacyService {
       performerProfile: await this.db.one(`select kind, specialties, brands, tax_status, inn, cars, schedule, updated_at from performer_profiles where user_id=$1`, [id]),
       serviceBookings: await q('select number, need, status, when_day, works, amount, created_at from service_bookings where client_id=$1 or created_by=$1'),
       support: await q('select t.number, t.topic, t.status, t.created_at from support_tickets t where t.user_id=$1'),
+      communityProfile: await this.db.one('select nickname,city_label,share_city,created_at from community_profiles where user_id=$1',[id]),
+      communityMessages: await q('select room_id,body,moderation_state,created_at from community_messages where sender_id=$1 order by created_at desc'),
+      communityRooms: await q('select room_id,joined_at from community_memberships where user_id=$1'),
+      communityReports: await q('select message_id,reason,status,created_at from community_reports where reporter_id=$1'),
+      knowledgeContributions: await q('select title,make,model,model_year,subsystem,description,source_url,rights_basis,rights_review,technical_review,created_at from community_knowledge where author_id=$1'),
       notifications: await q('select title, body, created_at from notifications where user_id=$1 order by created_at desc limit 500'),
     };
   }
@@ -68,6 +73,16 @@ export class PrivacyService {
         await q.query('delete from push_tokens where user_id=$1', [id]);
         await q.query('update vehicles set driver_id=null where driver_id=$1', [id]);
         await q.query('delete from notifications where user_id=$1', [id]);
+        // Community is not an accounting record: erase pseudonym, city, messages,
+        // subscriptions, reports and proposed/licensed-by-user materials on deletion.
+        // Review attribution is severed without affecting another author's work.
+        await q.query('delete from community_reports where reporter_id=$1', [id]);
+        await q.query('delete from community_messages where sender_id=$1', [id]);
+        await q.query('delete from community_memberships where user_id=$1', [id]);
+        await q.query('delete from community_knowledge where author_id=$1', [id]);
+        await q.query('update community_knowledge set rights_reviewer=null where rights_reviewer=$1', [id]);
+        await q.query('update community_knowledge set technical_reviewer=null where technical_reviewer=$1', [id]);
+        await q.query('delete from community_profiles where user_id=$1', [id]);
         await q.query(`update performer_profiles set inn=null, cars='[]', car=null, paused=true where user_id=$1`, [id]);
         await q.query('insert into audit_log(actor_id, action, target, data) values (null,$1,$2,$3)', ['privacy.deleted', id, {}]);
       });
