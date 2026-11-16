@@ -135,7 +135,7 @@ export class ProfilesService {
          off_schedule_until = case when $2::text = 'online' then $5::timestamptz when $2::text = 'offline' then null else off_schedule_until end,
          paused = coalesce($4::boolean, paused), missed_in_row = case when $2::text = 'online' then 0 else missed_in_row end, updated_at = now()
        where user_id=$1`,
-      [userId, s.lineStatus ?? null, s.busyUntil ?? null, s.paused ?? null, outside ? endOfMoscowDay(this.now()) : null],
+      [userId, s.lineStatus ?? null, s.busyUntil ?? null, s.paused ?? null, outside ? endOfMoscowDay(this.now(),p.schedule?.timeZone??'Europe/Moscow') : null],
     );
     // Ушёл с линии или на паузу — убираем из звонков и торгов
     if (s.lineStatus === 'offline' || s.lineStatus === 'busy' || s.paused === true) await this.onUnavailable?.(userId);
