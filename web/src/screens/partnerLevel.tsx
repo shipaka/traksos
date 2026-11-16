@@ -20,8 +20,20 @@ type LevelResponse={
   lastAppeal:{id:string;message:string;status:string;resolution:string|null;
     created_at:string;resolved_at:string|null}|null;automaticDemotion:boolean;
 };
+type ActivityWeek={
+  weekStart:string;declaredAvailableHours:number;personallyOffered:number;
+  completedFromOffers:number;offersWhileDeclaredOnline:number
+};
+type ActivityReport={
+  weeks:ActivityWeek[];partialHistory:boolean;sampleSufficient:boolean;
+  total:{personallyOffered:number;completedFromOffers:number;
+    declaredAvailableHours:number;offersWhileDeclaredOnline:number};
+  note:string;availabilityCaveat:string;comparisonCaveat:string;
+  changesLevel:boolean;changesDispatch:boolean;changesCommission:boolean;
+};
 export function PartnerLevelView(){
   const {me}=useMe(),account=useLoad<LevelResponse>(()=>get('/api/partner/level'),[me?.id]);
+  const activity=useLoad<ActivityReport>(()=>get('/api/partner/activity'),[me?.id]);
   const {busy,run}=useAction();
   const [appeal,setAppeal]=useState('');
   const d=account.data;
@@ -62,6 +74,41 @@ export function PartnerLevelView(){
         <p className="note">{d.metrics.opportunityDefinition}. {d.metrics.availabilityDefinition}.</p>
         {d.metrics.partialHistory&&<p className="note">Измерение времени на линии началось недавно; прошлые часы не записаны и не используются против вас.</p>}
         {d.recommendation.confidence==='limited'&&<p className="note">Выборка слишком мала для уверенного статистического вывода.</p>}
+      </section>
+      <section className="card stack" aria-label="Фактические предложения по неделям">
+        <h2>Активность и реальные предложения по неделям</h2>
+        {activity.error&&<p role="alert">{activity.error}
+          <button className="btn ghost" type="button" onClick={activity.reload}>Повторить</button>
+        </p>}
+        {!activity.data&&!activity.error&&<p className="note">Сверяем историю личных предложений…</p>}
+        {activity.data&&<>
+          <p>За 90 дней: лично предложено {activity.data.total.personallyOffered} заявок,
+            завершено из них {activity.data.total.completedFromOffers}.
+            По записям смен статусов на линии: {activity.data.total.declaredAvailableHours.toFixed(1)} ч.</p>
+          <div style={{overflowX:'auto'}}>
+            <table style={{width:'100%',borderCollapse:'collapse'}}>
+              <thead><tr>
+                <th scope="col">Неделя</th>
+                <th scope="col">Личные предложения</th>
+                <th scope="col">Завершено</th>
+                <th scope="col">Заявленные часы онлайн</th>
+              </tr></thead>
+              <tbody>{activity.data.weeks.map(w=><tr key={w.weekStart}>
+                <th scope="row" style={{textAlign:'left'}}>{w.weekStart}</th>
+                <td>{w.personallyOffered}</td>
+                <td>{w.completedFromOffers}</td>
+                <td>{w.declaredAvailableHours.toFixed(1)} ч</td>
+              </tr>)}</tbody>
+            </table>
+          </div>
+          <p className="note">{activity.data.note}</p>
+          <p className="note">{activity.data.availabilityCaveat}</p>
+          <p className="note">{activity.data.comparisonCaveat}</p>
+          {activity.data.partialHistory&&<p className="note">Учёт смен статусов начат недавно.
+            Неизвестные прошлые часы нельзя использовать против исполнителя.</p>}
+          {!activity.data.sampleSufficient&&<p className="note">
+            Личных предложений недостаточно для уверенного статистического сравнения.</p>}
+        </>}
       </section>
       <section className="card stack">
         <h2>Рекомендация к рассмотрению: {names[d.recommendation.candidate]}</h2>
