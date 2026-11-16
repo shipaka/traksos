@@ -57,22 +57,29 @@ try {
       }));
       if (widths.content > widths.viewport + 2) throw new Error('Horizontal overflow ' + JSON.stringify(widths));
       await page.screenshot({ path: OUT + '/' + entry.name + '.png', fullPage: true });
-      // Real partner onboarding must have the CORRECT role photograph, remain
-      // usable on a narrow Pixel viewport, and never let bottom tabs obscure CTA.
+      // The role can already have a verified profile because earlier CI suites
+      // create a real synthetic performer on the same dev phone. Both states
+      // must show the correct approved photo; never assume first-time onboarding.
       if (entry.name === 'tow' || entry.name === 'master') {
         await page.goto(BASE + '/#/work/me', { waitUntil: 'domcontentloaded' });
-        const scene = page.locator('.performer-onboarding-' + entry.name + ' .performer-onboarding-scene');
-        await scene.waitFor();
+        const onboarding = page.locator('.performer-onboarding-' + entry.name + ' .performer-onboarding-scene');
+        const profile = page.locator('.internal-role-hero-' + entry.name);
+        await page.locator('.performer-onboarding-scene, .internal-role-hero-' + entry.name).first().waitFor();
+        const firstRun = (await onboarding.count()) > 0;
+        const scene = firstRun ? onboarding : profile;
         const expectedPhoto = 'tracksos-partner-' + entry.name + '-approved.webp';
         const scenePhoto = await scene.evaluate(el => getComputedStyle(el, '::after').backgroundImage);
-        // Bundler fingerprints the CSS image URL; the source/public URL stays stable.
-        if (!scenePhoto.includes(expectedPhoto.slice(0, -5))) throw new Error(entry.name + ' onboarding photo missing: ' + scenePhoto);
+        // The bundler content-hashes the CSS URL but the public asset path is stable.
+        if (!scenePhoto.includes(expectedPhoto.slice(0, -5)))
+          throw new Error(entry.name + ' role photograph missing: ' + scenePhoto);
         const asset = await page.request.get(BASE + '/' + expectedPhoto);
         if (asset.status() !== 200 || !(asset.headers()['content-type'] ?? '').includes('image'))
-          throw new Error('Bundled onboarding photo does not load: ' + expectedPhoto);
-        await page.getByPlaceholder('Имя, как увидят клиенты').fill('Тестовый специалист');
-        await page.getByRole('button', { name: 'Дальше — фото для проверки' }).click({ trial: true });
-        await page.screenshot({ path: OUT + '/cinematic-onboarding-' + entry.name + '.png', fullPage: true });
+          throw new Error('Bundled role photo does not load: ' + expectedPhoto);
+        if (firstRun) {
+          await page.getByPlaceholder('Имя, как увидят клиенты').fill('Тестовый специалист');
+          await page.getByRole('button', { name: 'Дальше — фото для проверки' }).click({ trial: true });
+        }
+        await page.screenshot({ path: OUT + '/cinematic-' + (firstRun ? 'onboarding-' : 'profile-') + entry.name + '.png', fullPage: true });
       }
       // Every real role uses the SAME security screen, not fake cabinet copies.
       await page.goto(BASE + '/#/security', { waitUntil: 'domcontentloaded' });
