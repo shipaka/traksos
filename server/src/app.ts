@@ -47,6 +47,7 @@ import { ModerationService } from './services/moderation.ts';
 import { registerCommunityRoutes } from './services/community.ts';
 import { registerCommunityDirectRoutes } from './services/communityDirect.ts';
 import { registerCommunityRoadRoutes } from './services/communityRoad.ts';
+import { registerRealNearbyHelpRoutes } from './services/realNearbyHelp.ts';
 import { registerKnowledgeOrderRoutes } from './services/communityKnowledgeOrder.ts';
 import { WarrantyClaimsService } from './services/warranty.ts';
 import { WarrantyRemediationService } from './services/warrantyRemediation.ts';
@@ -129,6 +130,7 @@ export function createApp(d: Deps) {
   registerCommunityRoutes(r, d.db, notifier);
   registerCommunityDirectRoutes(r, d.db, notifier);
   registerCommunityRoadRoutes(r, d.db, notifier);
+  registerRealNearbyHelpRoutes(r,d.db,now);
   registerKnowledgeOrderRoutes(r, d.db);
   const staff = ['admin', 'moderator'];
   const performerRoles = ['master', 'tow', 'service'];
