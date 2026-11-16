@@ -212,7 +212,7 @@ function Steps({ status, service, events = [] }: { status: string; service: stri
   const stageEvent: Record<string, string[]> = { accepted: ['accepted'], en_route: ['depart'], arrived: ['arrive'], working: ['start_work'], awaiting_confirmation: ['amount_proposed'], completed: ['amount_confirmed', 'completed', 'confirm'] };
   // Keep repeated dispatch attempts separate; creation is not evidence of dispatch.
   // Prefer the latest dispatch attempt by server timestamp, not array ordering.
-  const orderedEvents = [...events].filter(e => typeof e.created_at === 'string' && !Number.isNaN(Date.parse(e.created_at)))
+  const orderedEvents = [...events].filter(e => e && typeof e.created_at === 'string' && !Number.isNaN(Date.parse(e.created_at)))
     .sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at));
   const lastRetry = orderedEvents.reduce((index, e, i) => e.type === 'retry' ? i : index, -1);
   const cycle = lastRetry >= 0 ? orderedEvents.slice(lastRetry) : orderedEvents;
