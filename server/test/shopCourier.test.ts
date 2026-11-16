@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {setup,ok,type T} from './helpers.ts';
 
 let t:T,admin:any,driver:any,client1:any,client2:any,outsider:any;
-let order1:string,order2:string,runId:string,stops:any[];
+let order1:string,order2:string,runId:string,itemId:string,stops:any[];
 
 before(async()=>{
  t=await setup();
@@ -14,18 +14,18 @@ before(async()=>{
  outsider=await t.login('+79993332223');
  for(const u of [client1,client2])ok(await t.api('PUT','/api/shop/region',{city:'Санкт-Петербург'},u.token));
  ok(await t.api('PUT','/api/admin/settings/shop',{enabled:true,delivery:true},admin.token));
- const item=ok(await t.api('POST','/api/admin/shop/products',{
+ itemId=ok(await t.api('POST','/api/admin/shop/products',{
    name:'Позиция тестовой доставки',category:'sensors',price:110000,stock:5
  },admin.token)).id;
- ok(await t.api('PUT','/api/admin/shop/products/'+item+'/costing',{
+ ok(await t.api('PUT','/api/admin/shop/products/'+itemId+'/costing',{
    purchaseCostKopecks:50000,markupBps:3000,
    costSourceNote:'Тестовый подтверждённый закупочный счёт дистрибьютора'
  },admin.token));
  order1=ok(await t.api('POST','/api/shop/orders',{
-   items:[{productId:item,qty:1}],delivery:'delivery',address:'Санкт-Петербург, тестовая улица 1'
+   items:[{productId:itemId,qty:1}],delivery:'delivery',address:'Санкт-Петербург, тестовая улица 1'
  },client1.token)).id;
  order2=ok(await t.api('POST','/api/shop/orders',{
-   items:[{productId:item,qty:1}],delivery:'delivery',address:'Санкт-Петербург, тестовая улица 2'
+   items:[{productId:itemId,qty:1}],delivery:'delivery',address:'Санкт-Петербург, тестовая улица 2'
  },client2.token)).id;
  for(const oid of [order1,order2]){
    ok(await t.api('POST','/api/admin/shop/orders/'+oid+'/status',{status:'confirmed'},admin.token));
@@ -130,4 +130,67 @@ test('courier consent + stop-by-stop GPS, customer signs handoff, last fix is er
  two=ok(await t.api('GET','/api/shop/orders/'+order2+'/courier',undefined,client2.token));
  assert.equal(two.live,false);
  assert.equal((await t.db.query('select * from shop_courier_live_positions where run_id=$1',[runId])).length,0);
+});
+
+
+test('admin cannot overwrite orders in courier route; cancelled planned route releases reservations safely',async()=>{
+ const third=ok(await t.api('POST','/api/shop/orders',{
+   items:[{productId:itemId,qty:1}],delivery:'delivery',
+   address:'Санкт-Петербург, тестовая улица 11'},client1.token)).id;
+ ok(await t.api('POST','/api/admin/shop/orders/'+third+'/status',{status:'confirmed'},admin.token));
+ ok(await t.api('POST','/api/admin/shop/orders/'+third+'/status',{status:'ready'},admin.token));
+ ok(await t.api('POST','/api/admin/shop/delivery-addresses/'+third+'/verify',{
+   cityCode:'spb',evidence:'Адрес в СПб подтверждён оператором склада'
+ },admin.token));
+ const created=ok(await t.api('POST','/api/admin/shop/courier-runs',{
+   courierId:driver.id,pickupAddress:'Санкт-Петербург, склад тестовый, 1',orderIds:[third]
+ },admin.token));
+ assert.equal((await t.api('POST','/api/admin/shop/orders/'+third+'/status',
+   {status:'cancelled',note:'Покупатель просил отменить'},admin.token)).status,409);
+ assert.equal((await t.api('POST','/api/admin/shop/courier-runs/'+created.id+'/cancel',
+   {reason:'коротко'},admin.token)).status,400);
+ const cancelled=ok(await t.api('POST','/api/admin/shop/courier-runs/'+created.id+'/cancel',
+   {reason:'Клиент отменил заявку до назначения курьера и забора груза'},admin.token));
+ assert.equal(cancelled.releasedOrders,1);
+ assert.equal(cancelled.status,'cancelled');
+ assert.equal((await t.api('POST','/api/admin/shop/courier-runs/'+created.id+'/cancel',
+   {reason:'Повторная попытка отменить уже отменённый курьерский маршрут'},admin.token)).status,409);
+ const finished=ok(await t.api('POST','/api/admin/shop/orders/'+third+'/status',
+   {status:'cancelled',note:'По просьбе клиента'},admin.token));
+ assert.equal(finished.status,'cancelled');
+ assert.equal((await t.api('POST','/api/admin/shop/orders/'+third+'/status',
+   {status:'cancelled'},admin.token)).status,409);
+});
+
+test('new supplier cancellation after route approval blocks courier acceptance and pickup',async()=>{
+ const fourth=ok(await t.api('POST','/api/shop/orders',{
+   items:[{productId:itemId,qty:1}],delivery:'delivery',
+   address:'Санкт-Петербург, тестовая улица 12'},client2.token)).id;
+ ok(await t.api('POST','/api/admin/shop/orders/'+fourth+'/status',{status:'confirmed'},admin.token));
+ ok(await t.api('POST','/api/admin/shop/orders/'+fourth+'/status',{status:'ready'},admin.token));
+ ok(await t.api('POST','/api/admin/shop/delivery-addresses/'+fourth+'/verify',{
+   cityCode:'spb',evidence:'Ручная сверка адреса четвёртого заказа в Санкт-Петербурге'
+ },admin.token));
+ const route=ok(await t.api('POST','/api/admin/shop/courier-runs',{
+   courierId:driver.id,pickupAddress:'Санкт-Петербург, склад тестовый, 1',
+   orderIds:[fourth]
+ },admin.token));
+ ok(await t.api('PUT','/api/admin/shop/courier-runs/'+route.id+'/budget',{
+   courierPayKopecks:1000,fuelKopecks:1000,packingKopecks:300,
+   acquiringKopecks:300,taxesKopecks:300,otherKopecks:300,
+   note:'Обоснованная смета короткого тестового маршрута'
+ },admin.token));
+ ok(await t.api('POST','/api/admin/shop/courier-runs/'+route.id+'/approve-dispatch',
+   {},admin.token));
+ ok(await t.api('POST','/api/admin/shop/orders/'+fourth+'/supplier-events',{
+   status:'cancelled',rawStatus:'Отмена без объяснения причин',
+   eventTime:new Date().toISOString(),
+   sourceEvidence:'Сверили отмену на стороне поставщика: причина не указана'
+ },admin.token));
+ assert.equal((await t.api('POST','/api/courier/runs/'+route.id+'/accept',
+   {},driver.token)).status,409);
+ const removed=ok(await t.api('POST','/api/admin/shop/courier-runs/'+route.id+'/cancel',
+   {reason:'Автоконтинент отменил заказ до передачи курьеру, маршрут расформирован'},admin.token));
+ assert.equal(removed.releasedOrders,1);
+ assert.equal((await t.api('GET','/api/courier/runs/'+route.id,undefined,driver.token)).status,404);
 });
