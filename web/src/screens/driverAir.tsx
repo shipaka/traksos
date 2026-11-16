@@ -69,9 +69,10 @@ function MessageStream({endpoint,canWrite,placeholder}:{
 }){
   const {messages,loading,error,reload}=useAirMessages(endpoint);
   const [draft,setDraft]=useState('');
+  const [reportId,setReportId]=useState<string|null>(null);
   const {busy,run}=useAction();
   const bottom=useRef<HTMLDivElement>(null);
-  useEffect(()=>{bottom.current?.scrollIntoView({block:'nearest',behavior:'instant'})},[endpoint,messages.length]);
+  useEffect(()=>{bottom.current?.scrollIntoView({block:'nearest',behavior:'auto'})},[endpoint,messages.length]);
   const send=async()=>{
     const text=draft.trim();if(!text||!endpoint||busy||!canWrite)return;
     const sent=await run(()=>post(endpoint,{text,clientNonce:uuid()}),'Сообщение отправлено');
@@ -90,6 +91,21 @@ function MessageStream({endpoint,canWrite,placeholder}:{
         </div>
         <p>{m.body}</p>
         {m.moderation_state==='pending'&&<small>Проверяется модератором</small>}
+      {!m.isMine&&m.moderation_state==='published'&&<div className="air-moderation">
+        {reportId===m.id?<span>
+          <button className="btn ghost small" disabled={busy} onClick={async()=>{
+            const api=endpoint?.includes('/direct/')?
+              '/api/community/direct/messages/'+m.id+'/report':
+              '/api/community/messages/'+m.id+'/report';
+            if(api){
+              const sent=await run(()=>post(api,{reason:'Прошу проверить сообщение на нарушение правил общения'}),'Жалоба отправлена');
+              if(sent)setReportId(null);
+            }
+          }}>Подтвердить жалобу</button>
+          <button className="btn ghost small" onClick={()=>setReportId(null)}>Отмена</button>
+        </span>:
+        <button className="btn ghost small" type="button" onClick={()=>setReportId(m.id)}>Пожаловаться</button>}
+      </div>}
       </article>)}
       <div ref={bottom}/>
     </div>
@@ -158,6 +174,12 @@ function RoadEvents({roomId,joined}: {roomId:string;joined:boolean}){
       <strong>{roadLabels[e.category]??'Информация'} · {e.locality??'Регион не указан'}</strong>
       <p>{e.description}</p>
       <small>{e.nickname} · до {fmtTime(e.expires_at)} · {e.moderation_state==='pending'?'На модерации':'Сообщение участника'}</small>
+      {!e.isMine&&e.moderation_state==='published'&&<button className="btn ghost small" onClick={async()=>{
+        const reported=await run(()=>post('/api/community/road-events/'+e.id+'/report',{
+          reason:'Прошу проверить актуальность или содержание дорожного сообщения'
+        }),'Жалоба отправлена');
+        if(reported)await list.reload();
+      }}>Пожаловаться</button>}
     </article>)}
     {joined&&<form className="air-road-form" onSubmit={async e=>{
       e.preventDefault();
