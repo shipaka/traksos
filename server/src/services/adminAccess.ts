@@ -92,7 +92,8 @@ export class AdminAccessService {
   listReports() {
     return this.db.query(
       `select r.id, r.phone, r.category, r.details, r.status, r.user_id, r.created_at,
-              r.resolved_at, u.name as user_name
+              r.resolved_at, r.delivery_sent_at, r.delivery_attempts, r.delivery_next_at,
+              r.delivery_last_error, u.name as user_name
          from admin_developer_reports r left join users u on u.id=r.user_id
         order by case when r.status='queued' then 0 else 1 end, r.created_at desc limit 100`);
   }
