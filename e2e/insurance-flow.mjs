@@ -128,6 +128,11 @@ try{
   assert(requestId&&requestId!==truck.id,'New insurance dossier was not opened');
   await clientPage.getByText('Заявка отправлена страховому агенту',{exact:true}).waitFor();
   await clientPage.screenshot({path:OUT+'/client-sent-status.png',fullPage:true});
+  // The MAIN customer dashboard must not hide the newly submitted request.
+  await clientPage.goto(BASE+'/#/');
+  const homeInsurance=clientPage.getByRole('region',{name:'Мои активные страховые заявки'});
+  await homeInsurance.getByText('Заявка отправлена страховому агенту',{exact:true}).waitFor();
+  await clientPage.screenshot({path:OUT+'/client-home-insurance-submitted.png',fullPage:true});
   // A submitted insurance request must be visible WITHOUT expanding garage history.
   await clientPage.goto(BASE+'/#/garage');
   const activeInsurance=clientPage.getByRole('region',{name:'Активные страховые заявки'});
@@ -143,19 +148,33 @@ try{
   await inboxPage.goto(BASE+'/#/insurance');
   await acceptPendingOffers(inboxPage,partner.token);
   await inboxPage.getByText('Получена новая заявка',{exact:true}).waitFor();
+  await inboxPage.getByRole('button',{name:'Требуют действий'}).waitFor();
   await inboxPage.screenshot({path:OUT+'/insurer-desktop-incoming.png',fullPage:true});
-  await inboxContext.close();
+  await inboxPage.getByRole('button',{name:'В работе',exact:true}).click();
+  await inboxPage.getByText('Нет заявок в работе.',{exact:true}).waitFor();
   await api('POST','/api/insurance/requests/'+requestId+'/accept',{},partner.token);
   const one={company:'Страховая А',product:'ОСАГО грузовика',premiumKopecks:3250000,
     description:'Цена агентом рассчитана вручную',coverage:'Условия согласовываются'};
   await api('POST','/api/insurance/requests/'+requestId+'/offers',
     {offers:[one,{...one,company:'Страховая Б',premiumKopecks:3560000}]},partner.token);
+  await inboxPage.reload();
+  await inboxPage.getByRole('button',{name:'В работе',exact:true}).click();
+  await inboxPage.getByText('Предложения отправлены клиенту',{exact:true}).waitFor();
+  await inboxPage.screenshot({path:OUT+'/insurer-desktop-working.png',fullPage:true});
+  await inboxContext.close();
   await clientPage.reload();
   await clientPage.getByRole('heading',{name:/DAF XF/}).waitFor();
   await clientPage.getByText('Страховая А',{exact:true}).waitFor();
   await clientPage.getByText('Страховая Б',{exact:true}).waitFor();
   await clientPage.getByText('Предложения готовы — выберите вариант',{exact:true}).waitFor();
   await clientPage.screenshot({path:OUT+'/client-offers.png',fullPage:true});
+  // After the agent's quote arrives, the homepage must explicitly call for choice.
+  await clientPage.goto(BASE+'/#/');
+  await clientPage.getByRole('region',{name:'Мои активные страховые заявки'})
+    .getByText('Предложения готовы — выберите вариант',{exact:true}).waitFor();
+  await clientPage.screenshot({path:OUT+'/client-home-offers-ready.png',fullPage:true});
+  await clientPage.goto(BASE+'/#/insurance/request/'+requestId);
+  await clientPage.getByText('Предложения готовы — выберите вариант',{exact:true}).waitFor();
   await clientPage.getByRole('button',{name:'Выбрать',exact:true}).first().click();
   await clientPage.getByRole('button',{name:'Оформить выбранный вариант'}).click();
   await clientPage.getByText('Клиент выбрал предложение').first().waitFor();

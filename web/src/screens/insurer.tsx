@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { get, patch, fmtTime } from '../api.ts';
 import { useLoad, useAction } from '../ui.tsx';
-import { insurancePresentation } from '../insurancePresentation.ts';
+import { insurancePresentation, insuranceQueueGroup } from '../insurancePresentation.ts';
 
 const labels: Record<string, string> = {
   sent_to_partner: 'Ждёт оформления', completed: 'Полис оформлен', rejected: 'Отказ',
@@ -20,7 +20,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
   const [inspectionNotes,setInspectionNotes]=useState<Record<string,string>>({});
   const [inspectionView,setInspectionView]=useState<'active'|'history'>('active');
   const [expires, setExpires] = useState<Record<string, string>>({});
-  const [filter, setFilter] = useState<'pending' | 'all' | 'done'>('pending');
+  const [filter, setFilter] = useState<'action' | 'active' | 'all' | 'closed'>('action');
   const [search, setSearch] = useState('');
   async function update(id: string, status: 'completed' | 'rejected') {
     const note = (notes[id] ?? '').trim();
@@ -52,8 +52,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
   }
   const rows: any[] | undefined = requests.data;
   const visible = (rows ?? []).filter((r) => {
-    if (filter === 'pending' && r.status !== 'sent_to_partner') return false;
-    if (filter === 'done' && r.status === 'sent_to_partner') return false;
+    if (filter !== 'all' && insuranceQueueGroup(r.insurance_stage, r.status) !== filter) return false;
     return [r.brand, r.model, r.plate, r.comment].some((value) => String(value ?? '').toLocaleLowerCase('ru-RU').includes(search.trim().toLocaleLowerCase('ru-RU')));
   });
   return (
@@ -142,13 +141,13 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
         : <div className="stack">
           <div className="cabinet-metrics insurer-insurance-metrics">
             <div className="card tile"><span className="label">Всего назначено</span><b className="tile-value">{rows.length}</b></div>
-            <div className="card tile"><span className="label">Новые заявки</span><b className="tile-value">{rows.filter((r) => r.status === 'sent_to_partner' && (!r.insurance_stage||r.insurance_stage==='received')).length}</b></div>
-            <div className="card tile"><span className="label">В работе</span><b className="tile-value">{rows.filter((r) => r.status === 'sent_to_partner' && !!r.insurance_stage && r.insurance_stage!=='received').length}</b></div>
-            <div className="card tile"><span className="label">Завершено</span><b className="tile-value">{rows.filter((r) => r.status === 'completed').length}</b></div>
+            <div className="card tile"><span className="label">Требуют действий</span><b className="tile-value">{rows.filter((r) => insuranceQueueGroup(r.insurance_stage,r.status)==='action').length}</b></div>
+            <div className="card tile"><span className="label">В работе</span><b className="tile-value">{rows.filter((r) => insuranceQueueGroup(r.insurance_stage,r.status)==='active').length}</b></div>
+            <div className="card tile"><span className="label">Закрыто</span><b className="tile-value">{rows.filter((r) => insuranceQueueGroup(r.insurance_stage,r.status)==='closed').length}</b></div>
           </div>
           <div className="web-case-toolbar">
             <div className="row" role="group" aria-label="Фильтр страховых заявок">
-              {([['pending', 'Ожидают решения'], ['all', 'Все'], ['done', 'Завершённые']] as const).map(([key, title]) => (
+              {([['action', 'Требуют действий'], ['active', 'В работе'], ['all', 'Все'], ['closed', 'Закрытые']] as const).map(([key, title]) => (
                 <button key={key} type="button" className="chip" aria-pressed={filter === key} onClick={() => setFilter(key)}>{title}</button>
               ))}
             </div>
@@ -159,7 +158,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
             </label>
           </div>
           <span className="label">Показано заявок: {visible.length}</span>
-          {!visible.length && <div className="empty">По выбранным фильтрам заявок нет.</div>}
+          {!visible.length && <div className="empty">{filter==='action'?'Нет заявок, требующих действий. Новые обращения появятся здесь.':filter==='active'?'Нет заявок в работе.':'По выбранным фильтрам заявок нет.'}</div>}
           <div className="web-insurance-grid">
           {visible.map((r) => {
             const state=insurancePresentation(r.insurance_stage,r.status,'partner');
