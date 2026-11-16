@@ -73,13 +73,13 @@ const namedLegacyZones=[
   {place:'усть-луга',zoneId:'ust'}
 ] as const;
 function startsWithNamedPlace(address:string,place:string){
-  return address===place||(address.startsWith(place)&&/^[,;.\\s№\\d]/u.test(address.slice(place.length)));
+  return address===place||(address.startsWith(place)&&/^[,;.\s№\d]/u.test(address.slice(place.length)));
 }
 export function legacyTariffZoneMismatch(input:KnownLocation,zoneId:string){
   let address=input.address?.trim().toLocaleLowerCase('ru-RU').replace(/ё/g,'е')??'';
-  address=address.replace(/^(?:россия|рф|российская федерация)\\s*,?\\s*/u,'')
-    .replace(/^(?:ленинградская область|ленинградская обл\\.?|ленобласть|ло)\\s*,?\\s*/u,'')
-    .replace(/^(?:г\\.?|город)\\s+/u,'');
+  address=address.replace(/^(?:россия|рф|российская федерация)\s*,?\s*/u,'')
+    .replace(/^(?:ленинградская область|ленинградская обл\.?|ленобласть|ло)\s*,?\s*/u,'')
+    .replace(/^(?:г\.?|город)\s+/u,'');
   const found=namedLegacyZones.find(({place})=>startsWithNamedPlace(address,place));
   return found && found.zoneId!==zoneId ? {place:found.place,expectedZoneId:found.zoneId} : null;
 }
