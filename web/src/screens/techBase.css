@@ -20,6 +20,10 @@
 .tech-list small,.tech-draft span,.tech-draft small,.tech-footer-note{opacity:.75;font-size:.86rem}
 .tech-article,.tech-review{border:1px solid var(--line,#526076);border-radius:12px;padding:18px;overflow-wrap:anywhere}
 .tech-description{white-space:pre-wrap;line-height:1.55}
+.tech-reference-preview{display:block;width:100%;max-width:560px;max-height:400px;object-fit:contain;border-radius:10px;background:#ffffff;padding:8px;margin:10px auto}
+.tech-warning{border-left:3px solid var(--accent,#62cce8);padding:8px 12px;line-height:1.5;margin:8px 0}
+.tech-list .tech-actions{align-items:center;justify-content:space-between}
+.tech-list button:disabled{opacity:.45;cursor:not-allowed}
 .tech-review{display:flex;flex-direction:column;gap:10px}
 .tech-review h3,.tech-review p{margin:0}
 .tech-review label{display:flex;flex-direction:column;gap:5px}
