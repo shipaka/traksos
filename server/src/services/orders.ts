@@ -697,6 +697,20 @@ export class OrdersService {
       : null;
     const vehicle = o.vehicle_id ? await this.db.one('select brand, model, year, plate, trailer_plate from vehicles where id=$1', [o.vehicle_id]) : null;
     const events = actor ? await this.db.query('select type, data, actor_id, created_at from order_events where order_id=$1 order by id', [orderId]) : [];
+    // Cancellation terms are snapshotted in the immutable order event at the
+    // moment of cancellation. Never recompute them from today's admin tariffs.
+    const cancelEvent = o.status === 'cancelled'
+      ? [...events].reverse().find((event: any) => event.type === 'cancelled')
+      : null;
+    const cancelBreakdown = cancelEvent?.data && typeof cancelEvent.data === 'object'
+      ? {
+          stage: cancelEvent.data.stage,
+          share: cancelEvent.data.share,
+          toPerformer: cancelEvent.data.toPerformer,
+          platformKeeps: cancelEvent.data.platformKeeps,
+          refund: cancelEvent.data.refund,
+        }
+      : null;
     const caseRootId = o.case_root_id ?? o.id;
     // The combined customer invoice is visible to the customer/admin only:
     // a performer sees exclusively the price of their own contract.
@@ -759,6 +773,7 @@ export class OrdersService {
       followUps: o.service === 'consult' ? await this.db.query(`select id, number, service, status from orders where consult_of=$1 order by created_at`, [o.id]) : [],
       consultBack: o.service === 'consult' ? (await this.settings.get('pricing')).consult : null,
       cancelReason: o.cancel_reason, cancelStage: o.cancel_stage,
+      cancelBreakdown,
       createdAt: o.created_at, acceptedAt: o.accepted_at, arrivedAt: o.arrived_at, completedAt: o.completed_at,
       performer, client, events,
       you: actor ?? 'candidate',
