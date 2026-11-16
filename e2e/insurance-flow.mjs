@@ -124,6 +124,22 @@ try{
   await clientPage.screenshot({path:OUT+'/client-application.png',fullPage:true});
   await clientPage.getByRole('button',{name:'Отправить заявку страховому агенту'}).click();
   await clientPage.waitForURL(/#\/insurance\/request\/[0-9a-f-]{36}$/,{timeout:15000});
+  // The temporary success message is visible on the phone, yet never hides
+  // the approved brand header or covers fixed bottom navigation actions.
+  const successToast=clientPage.locator('.toast');
+  await successToast.getByText('Заявка отправлена выбранному страховому агенту').waitFor();
+  const toastRect=await successToast.boundingBox();
+  const headerRect=await clientPage.locator('header.top').boundingBox();
+  const navRect=await clientPage.locator('.tabbar').boundingBox();
+  const viewport=clientPage.viewportSize();
+  assert(!!toastRect&&!!headerRect&&!!viewport,'Mobile toast/header must be measurable');
+  assert(toastRect.y >= headerRect.y+headerRect.height+6,
+    'Mobile toast covers the TrakSOS header and logo');
+  assert(toastRect.y+toastRect.height <= viewport.height-6,
+    'Mobile toast falls outside the visible device viewport');
+  if(navRect)assert(toastRect.y+toastRect.height <= navRect.y-6,
+    'Mobile toast covers a bottom navigation action');
+  await clientPage.screenshot({path:OUT+'/client-submit-toast-mobile.png',fullPage:false});
   const requestId=clientPage.url().split('/').pop();
   assert(requestId&&requestId!==truck.id,'New insurance dossier was not opened');
   await clientPage.getByText('Заявка отправлена страховому агенту',{exact:true}).waitFor();
