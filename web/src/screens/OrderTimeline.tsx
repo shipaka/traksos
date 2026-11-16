@@ -33,11 +33,13 @@ export function OrderTimeline({ events, createdAt, acceptedAt, arrivedAt, comple
     { label: 'Заявка создана', at: createdAt, event: 'created' },
     { label: 'Заявка принята исполнителем', at: acceptedAt, event: 'accepted' },
     { label: 'Зафиксировано прибытие', at: arrivedAt, event: 'arrive' },
-    { label: 'Зафиксировано завершение', at: completedAt, event: 'completed' },
+    { label: 'Заявка завершена · время из статуса', at: completedAt, event: 'amount_confirmed' },
   ];
   for (const item of legacy) {
-    if (item.at && !(events ?? []).some(e => e.type === item.event)) {
-      entries.push({ label: item.label + ' · время из статуса', at: item.at, source: 'status' });
+    const matching = item.event === 'amount_confirmed'
+      ? ['amount_confirmed', 'completed', 'confirm'] : [item.event];
+    if (item.at && !(events ?? []).some(e => matching.includes(e.type))) {
+      entries.push({ label: item.label.includes('время из статуса') ? item.label : item.label + ' · время из статуса', at: item.at, source: 'status' });
     }
   }
   entries.sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
