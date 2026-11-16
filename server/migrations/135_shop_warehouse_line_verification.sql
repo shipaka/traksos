@@ -11,7 +11,7 @@ create table if not exists shop_warehouse_line_checks (
   checked_qty int not null check(checked_qty>0),
   method text not null check(method in ('scanner','manual')),
   manual_reason text,
-  checked_by uuid not null references users(id),
+  checked_by uuid references users(id) on delete set null,
   checked_at timestamptz not null default now(),
   primary key(stop_id,line_index),
   constraint manual_packing_reason check(
