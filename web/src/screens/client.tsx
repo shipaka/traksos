@@ -384,7 +384,7 @@ export function NewOrder({ service }: { service: string }) {
   const pricing = useLoad(() => get('/api/pricing'), []);
   const vehicles = useLoad(() => get('/api/vehicles'), []);
   const consult = useLoad(() => (fromConsult ? get(`/api/orders/${fromConsult}`) : Promise.resolve(null)), [fromConsult]);
-  const [agree, setAgree] = useState(false);
+  const [agreedQuoteKey, setAgreedQuoteKey] = useState<string | null>(null);
 
   // A national visitor must deliberately choose the legacy local pricing zone.
   const [zoneId, setZoneId] = useState(service==='consult'?'spb':'');
@@ -399,7 +399,7 @@ export function NewOrder({ service }: { service: string }) {
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [geoState, setGeoState] = useState<'idle' | 'wait' | 'ok' | 'fail'>('idle');
   const [method, setMethod] = useState<'cash' | 'online' | 'invoice'>('cash');
-  const [est, setEst] = useState<any>(null);
+  const [quote, setQuote] = useState<{ key: string; value: any } | null>(null);
   const [quoteError,setQuoteError]=useState<string|null>(null);
   const [quoteAddress,setQuoteAddress]=useState('');
   const [destination, setDestination] = useState(prefill.destination ?? '');
@@ -407,6 +407,12 @@ export function NewOrder({ service }: { service: string }) {
   const [loaded, setLoaded] = useState<'empty' | 'loaded' | 'adr'>('empty');
   const [driverOnSite, setDriverOnSite] = useState(true);
   const isTow = service === 'tow';
+  // Price and customer consent apply to these exact parameters, not a stale quote.
+  const quoteKey = JSON.stringify([service,tier,zoneId,night,group,address.trim(),geo?.lat ?? null,geo?.lng ?? null]);
+  const est = quote?.key === quoteKey ? quote.value : null;
+  const agree = Boolean(est && agreedQuoteKey === quoteKey);
+  const setAgree = (checked: boolean) => setAgreedQuoteKey(checked ? quoteKey : null);
+  useEffect(() => { setAgreedQuoteKey(null); }, [quoteKey]);
 
   useEffect(() => {
     if (pricing.data && night === null) setNight(pricing.data.nightNow);
@@ -427,12 +433,12 @@ export function NewOrder({ service }: { service: string }) {
   },[address]);
   useEffect(() => {
     let alive=true;
-    if(night===null||!zoneId){setEst(null);setQuoteError(null);return}
-    setEst(null);setQuoteError(null);
+    if(night===null||!zoneId){setQuote(null);setQuoteError(null);return}
+    setQuote(null);setQuoteError(null);
     post('/api/pricing/estimate', {service,tier,zoneId,night,group,
       address:quoteAddress||undefined,lat:geo?.lat,lng:geo?.lng})
-      .then(x=>{if(alive)setEst(x)})
-      .catch(()=>{if(alive){setEst(null);setQuoteError('Для выбранного местоположения тариф СПб/ЛО не подтверждён. Проверьте адрес и зону. Нельзя отправить заказ по цене другого региона.')}})
+      .then(x=>{if(alive)setQuote({key:quoteKey,value:x})})
+      .catch(()=>{if(alive){setQuote(null);setQuoteError('Для выбранного местоположения тариф СПб/ЛО не подтверждён. Проверьте адрес и зону. Нельзя отправить заказ по цене другого региона.')}})
     return ()=>{alive=false};
   }, [service, tier, zoneId, night, group, quoteAddress,geo?.lat,geo?.lng]);
 
@@ -452,6 +458,8 @@ export function NewOrder({ service }: { service: string }) {
   const methods = pricing.data?.payments;
 
   async function submit() {
+    // Defensive guard even if the CallBar is invoked during a debounced update.
+    if(!zoneId || !est || !agree)return;
     const r = await run(() => post('/api/orders', {
       service, isSos: !!sos, problem: sos?.id, description: description || undefined, address: address || undefined,
       lat: geo?.lat, lng: geo?.lng, zoneId, tier: service === 'tow' ? undefined : tier, vehicleId: vehicleId || undefined,
