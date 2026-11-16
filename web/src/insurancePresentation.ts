@@ -85,3 +85,25 @@ export function insurancePresentation(
 export function insuranceStepIndex(stage: string | null | undefined): number {
   return INSURANCE_STAGES.indexOf(stage as InsuranceStage);
 }
+
+
+/**
+ * Presentation-only queue grouping. Distinguishes items awaiting the agent's
+ * decision from items already in process, without changing persisted statuses.
+ * Legacy non-threaded partner cases remain actionable.
+ */
+export type InsuranceQueueGroup = 'action' | 'active' | 'closed';
+export function insuranceQueueGroup(
+  stage: string | null | undefined,
+  status: string | null | undefined,
+): InsuranceQueueGroup {
+  if (status === 'completed' || status === 'rejected' || status === 'cancelled')
+    return 'closed';
+  if (stage === 'received' || stage === 'selected' || !stage)
+    return 'action';
+  return 'active';
+}
+
+export function isOpenInsuranceRequest(status: string | null | undefined): boolean {
+  return status !== 'completed' && status !== 'rejected' && status !== 'cancelled';
+}
