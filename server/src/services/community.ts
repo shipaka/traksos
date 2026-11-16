@@ -68,6 +68,31 @@ async function requireKnowledgeAccess(db: Db, u: AuthUser) {
   if (p?.verification !== 'approved') throw forbidden('ТехБаза доступна только подтверждённым специалистам');
 }
 
+// Live hints must obey exactly the same audience rules as reading a room.
+// Payloads contain no text, but even a private room ID must not be sent to
+// someone whose professional verification or driver role was revoked.
+async function roomLiveRecipients(db:Db,room:Room,exceptId:string|null=null){
+  const rows=await db.query<{user_id:string}>(`select cm.user_id from community_memberships cm
+      join users u on u.id=cm.user_id
+      left join performer_profiles p on p.user_id=u.id
+      where cm.room_id=$1 and ($2::uuid is null or cm.user_id<>$2::uuid)
+        and u.status='active' and u.deleted_at is null
+        and (
+          'admin'=any(u.roles) or 'moderator'=any(u.roles)
+          or $3::text='all'
+          or ($3::text='driver' and 'driver'=any(u.roles))
+          or ($3::text='professional' and p.verification='approved'
+            and ('master'=any(u.roles) or 'tow'=any(u.roles) or 'service'=any(u.roles))
+            and ($4::text is null
+              or ($4='tow' and p.kind='tow')
+              or ($4='service' and p.kind='service')
+              or $4=any(p.specialties)))
+        )
+      order by cm.user_id limit 2000`,
+    [room.id,exceptId,room.audience,room.specialty]);
+  return rows.map(x=>x.user_id);
+}
+
 export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
   r.get('/api/community/me', true, async (c: AuthedCtx) => {
     await ensureNick(db,c.user);
@@ -253,25 +278,8 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
     if(!saved) throw new Error('community message insert did not return a row');
     // Idempotent mobile retries must never produce fresh notifications for an old message.
     if(messageInsert.created && saved.moderation_state==='published') {
-      // Recheck room access at delivery time: revoked professional roles must not
-      // continue receiving private-club events from stale subscriptions.
-      const members=await db.query<{user_id:string}>(`select cm.user_id from community_memberships cm
-        join users u on u.id=cm.user_id
-        left join performer_profiles p on p.user_id=u.id
-        where cm.room_id=$1 and cm.user_id<>$2 and u.status='active'
-          and (
-            'admin'=any(u.roles) or 'moderator'=any(u.roles)
-            or $3::text='all'
-            or ($3::text='driver' and 'driver'=any(u.roles))
-            or ($3::text='professional' and p.verification='approved'
-                and ('master'=any(u.roles) or 'tow'=any(u.roles) or 'service'=any(u.roles))
-                and ($4::text is null
-                  or ($4='tow' and p.kind='tow')
-                  or ($4='service' and p.kind='service')
-                  or $4=any(p.specialties)))
-          ) limit 2000`,
-        [room.id,c.user.id,room.audience,room.specialty]);
-      notifier.live(members.map(x=>x.user_id),{type:'community_message',roomId:room.id,id:saved.id});
+      const members=await roomLiveRecipients(db,room,c.user.id);
+      notifier.live(members,{type:'community_message',roomId:room.id,id:saved.id});
     }
     return { id:saved.id,roomId:room.id,createdAt:saved.created_at,
       status:saved.moderation_state,moderationNotice: pending?'Сообщение ожидает проверки':null };
@@ -326,11 +334,13 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
       return {changed,roomId:target.room_id,modified:previous.moderation_state!==status};
     });
     if(result.modified){
-      // The live signal only triggers authorized recipients to refresh their
-      // own ACL-checked change feed; never broadcast message text or IDs.
-      const members=await db.query<{user_id:string}>(
-        "select user_id from community_memberships where room_id=$1 limit 2000",[result.roomId]);
-      notifier.live(members.map(m=>m.user_id),{type:'community_moderation',roomId:result.roomId});
+      // The live signal never names the moderated message and is sent only to
+      // subscribers CURRENTLY allowed to enter the room.
+      const room=await db.one<Room>('select * from community_rooms where id=$1',[result.roomId]);
+      if(room){
+        const members=await roomLiveRecipients(db,room);
+        notifier.live(members,{type:'community_moderation',roomId:room.id});
+      }
     }
     return result.changed;
   });
