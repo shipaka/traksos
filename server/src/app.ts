@@ -36,6 +36,7 @@ import { PartnerFinance } from './services/partnerFinance.ts';
 import { InsuranceQuoteFlow } from './services/insuranceQuoteFlow.ts';
 import { PrivacyService } from './services/privacy.ts';
 import { StandingService } from './services/standing.ts';
+import { registerPartnerLevelRoutes } from './services/partnerLevels.ts';
 import { ShopService } from './services/shop.ts';
 import { registerShopCourierRoutes } from './services/shopCourier.ts';
 import { registerShopCourierEconomicsRoutes } from './services/shopCourierEconomics.ts';
@@ -123,6 +124,7 @@ export function createApp(d: Deps) {
   centers.onDispute = (p) => moderation.open({ kind: 'dispute', title: p.title, text: p.text, openedBy: p.userId, targetId: p.targetId, bookingId: p.bookingId, ticketId: p.ticketId, priority: 1 });
 
   const r = new Router();
+  registerPartnerLevelRoutes(r, d.db, now);
   // Isolated community rooms, nickname moderation and professional knowledge ACL.
   registerCommunityRoutes(r, d.db, notifier);
   registerCommunityDirectRoutes(r, d.db, notifier);
