@@ -172,6 +172,7 @@ function App() {
     if (m === 'client' || m === 'performer' || m === 'admin' || m === 'moderator' || m === 'service' || m === 'insurer' || m === 'inspection' || m === 'courier') setMode(m);
     location.replace('#/' + (m === 'performer' ? 'work' : m === 'admin' ? 'admin' : m === 'moderator' ? 'moderation' : m === 'service' ? 'base' : m === 'insurer' ? 'insurance' : m === 'inspection' ? 'inspections' : m === 'courier' ? 'courier' : ''));
   }, [route.join('/')]); // eslint-disable-line
+  const activeSessionToken = getToken();
   useEffect(() => {
     if (!ready) return; // Keep the native token until the initial auth check finishes.
     if (!me) {
@@ -184,7 +185,7 @@ function App() {
     if (sessionStorage.getItem('traksos.sandboxMode') === '1') return;
     native.setSession(API_URL || location.origin, getToken());
     native.registerPush((token) => post('/api/me/push-token', { provider: 'rustore', token }));
-  }, [ready, me?.id]); // eslint-disable-line
+  }, [ready, me?.id, activeSessionToken]); // eslint-disable-line
   const modeRef = useRef(mode);
   modeRef.current = mode;
   useEffect(() => onEvent((e) => {
