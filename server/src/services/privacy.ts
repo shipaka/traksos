@@ -109,6 +109,11 @@ export class PrivacyService {
         await q.query('delete from community_dm_reports where reporter_id=$1', [id]);
         await q.query('delete from community_dm_threads where user_a=$1 or user_b=$1', [id]);
         await q.query('delete from community_reports where reporter_id=$1', [id]);
+        // Erasing a message also cascades its publication events. Invalidate
+        // every affected room's event cursor BEFORE removal, so other drivers
+        // cannot keep stale text in their live in-memory chat.
+        await q.query(`update community_rooms set event_epoch=event_epoch+1
+          where id in (select distinct room_id from community_messages where sender_id=$1)`,[id]);
         await q.query('delete from community_messages where sender_id=$1', [id]);
         await q.query('delete from community_memberships where user_id=$1', [id]);
         await q.query('delete from community_knowledge where author_id=$1', [id]);
