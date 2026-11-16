@@ -76,6 +76,8 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
     const o=await db.one<{delivery:string;status:string;address:string|null}>(
       'select delivery,status,address from shop_orders where id=$1',[shopOrderId]);
     if(!o || o.delivery!=='delivery' || !o.address)throw notFound('Заказ с адресной доставкой не найден');
+    if(!addressDeclaredInSpb(o.address))
+      throw conflict('delivery_outside_region','Курьерская доставка доступна только по адресам Санкт-Петербурга');
     if(!['confirmed','ready'].includes(o.status))throw conflict('not_ready','Адрес подтверждается после согласования заказа');
     await db.query("insert into shop_delivery_address_checks(shop_order_id,city_code,reviewed_by,review_note,lat,lng) "+
       "values($1,$2,$3,$4,$5,$6) on conflict(shop_order_id) do update set "+
