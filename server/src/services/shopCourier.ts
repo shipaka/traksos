@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { Db } from '../db/index.ts';
+import type { Db, Queryable } from '../db/index.ts';
 import type { Router, AuthedCtx, AuthUser } from '../http/router.ts';
 import { parse, bad, forbidden, notFound, conflict, HttpError } from '../http/router.ts';
 import type { Notifier } from './notify.ts';
@@ -20,7 +20,8 @@ type Run={id:string;courier_id:string;status:string;pickup_address:string;city_c
 async function myRun(db:Db,c:AuthedCtx) {
   await courier(db,c.user);
   const run=await db.one<Run>('select * from shop_courier_runs where id=$1',[parse(id,c.params.id)]);
-  if(!run || run.courier_id!==c.user.id || !run.dispatch_approved_at)throw notFound('Маршрут не найден');
+  if(!run || run.courier_id!==c.user.id || !run.dispatch_approved_at ||
+    ['completed','cancelled'].includes(run.status))throw notFound('Маршрут не найден');
   return run;
 }
 async function runSummary(db:Db,run:Run) {
@@ -31,8 +32,9 @@ async function runSummary(db:Db,run:Run) {
     "where st.run_id=$1 order by st.seq",[run.id]);
   return {id:run.id,status:run.status,cityCode:run.city_code,pickupAddress:run.pickup_address,
     stops:stops.map(x=>({id:x.id,seq:x.seq,status:x.status,orderNumber:x.number,
-      recipientName:x.recipient_name??'Получатель',address:x.address,
-      items:x.items,comment:x.comment??null}))};
+      recipientName:['delivered','failed'].includes(x.status)?null:(x.recipient_name??'Получатель'),
+      address:['delivered','failed'].includes(x.status)?null:x.address,
+      items:x.items,comment:['delivered','failed'].includes(x.status)?null:(x.comment??null)}))};
 }
 async function alert(db:Db,notify:Notifier,shopOrderId:string,body:string) {
   const row=await db.one<{client_id:string;created_by:string;number:number}>(
@@ -41,6 +43,29 @@ async function alert(db:Db,notify:Notifier,shopOrderId:string,body:string) {
   await notify.notify([row.client_id,row.created_by],{type:'shop',shopOrderId},
     {kind:'normal',title:'Доставка заказа №'+row.number,body,data:{shopOrderId}});
 }
+/** Advance to the next client without disclosing the previous GPS fix.
+ * A failed stop leaves the route in "returning" until warehouse receipt. */
+async function advanceRun(q:Queryable,runId:string){
+  const state=await q.one<{pending:number;failed:number}>(
+    "select count(*) filter(where status in ('collected','at_door','awaiting_pickup'))::int as pending,"+
+    "count(*) filter(where status='failed')::int as failed "+
+    "from shop_courier_stops where run_id=$1",[runId]);
+  await q.query('delete from shop_courier_live_positions where run_id=$1',[runId]);
+  if((state?.pending??0)===0){
+    const status=(state?.failed??0)>0?'returning':'completed';
+    await q.query(
+      'update shop_courier_runs set status=$2,active_stop_id=null,'+
+      "completed_at=case when $2='completed' then now() else completed_at end where id=$1",
+      [runId,status]);
+    return status;
+  }
+  const next=await q.one<{id:string}>(
+    "select id from shop_courier_stops where run_id=$1 and status in ('collected','at_door') "+
+    "order by seq limit 1",[runId]);
+  await q.query('update shop_courier_runs set active_stop_id=$2 where id=$1',[runId,next?.id??null]);
+  return 'delivering';
+}
+
 export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
   r.post('/api/admin/shop/couriers',['admin'],async(c:AuthedCtx)=>{
     const b=parse(z.object({userId:id,displayName:z.string().trim().min(2).max(80),
@@ -163,7 +188,7 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
   r.get('/api/courier/runs',true,async(c:AuthedCtx)=>{
     await courier(db,c.user);
     const rows=await db.query<Run>(
-      "select * from shop_courier_runs where courier_id=$1 and dispatch_approved_at is not null and status in ('planned','accepted','collecting','delivering') "+
+      "select * from shop_courier_runs where courier_id=$1 and dispatch_approved_at is not null and status in ('planned','accepted','collecting','delivering','returning') "+
       "order by created_at desc limit 10",[c.user.id]);
     return {runs:rows.map(x=>({id:x.id,status:x.status,cityCode:x.city_code,stopCount:null}))};
   });
@@ -246,6 +271,68 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
     await alert(db,notifier,row.shop_order_id,'Курьер прибыл по адресу; подтвердите получение в TrakSOS');
     return {status:'at_door'};
   });
+  r.post('/api/courier/runs/:id/stops/:stopId/report-failure',true,async(c:AuthedCtx)=>{
+    const run=await myRun(db,c);
+    const stopId=parse(id,c.params.stopId);
+    const {reason}=parse(z.object({reason:z.string().trim().min(20).max(500)}),c.body);
+    const result=await db.tx(async q=>{
+      const current=await q.one<{id:string;status:string;active_stop_id:string|null}>(
+        'select id,status,active_stop_id from shop_courier_runs where id=$1 for update',[run.id]);
+      if(current?.status!=='delivering'||current.active_stop_id!==stopId)
+        throw conflict('invalid_stop','Действие разрешено только на текущей остановке');
+      const failure=await q.one<{shop_order_id:string}>(
+        "update shop_courier_stops set status='failed',failed_reason=$3 "+
+        "where id=$1 and run_id=$2 and status in ('collected','at_door') returning shop_order_id",
+        [stopId,run.id,reason]);
+      if(!failure)throw conflict('invalid_stop','Остановка уже обработана');
+      const nextStatus=await advanceRun(q,run.id);
+      await q.query('insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4)',
+        [c.user.id,'shop.courier_handoff_failed',failure.shop_order_id,
+          {routeId:run.id,stopId,reason}]);
+      return {status:'failed',runStatus:nextStatus,orderId:failure.shop_order_id};
+    });
+    await alert(db,notifier,result.orderId,
+      'Курьер не смог вручить заказ. Диспетчер уточнит доставку или возврат.');
+    return {status:result.status,runStatus:result.runStatus,
+      message:'Товар остаётся у курьера до подтверждённого возврата на склад'};
+  });
+
+  r.post('/api/admin/shop/courier-runs/:id/confirm-warehouse-return',['admin'],async(c:AuthedCtx)=>{
+    const routeId=parse(id,c.params.id);
+    const {evidence}=parse(z.object({evidence:z.string().trim().min(25).max(1000)}),c.body);
+    const result=await db.tx(async q=>{
+      const run=await q.one<Run>(
+        'select * from shop_courier_runs where id=$1 for update',[routeId]);
+      if(!run)throw notFound('Рейс не найден');
+      if(run.status!=='returning')
+        throw conflict('return_not_ready','Нельзя подтвердить возврат до завершения объезда');
+      const failed=await q.query<{id:string;shop_order_id:string}>(
+        "select id,shop_order_id from shop_courier_stops where run_id=$1 and status='failed' for update",
+        [routeId]);
+      if(failed.length===0)throw conflict('no_failed_parcels','Нет посылок для возврата');
+      const orders=await q.query<{id:string}>(
+        "update shop_orders o set status='ready',updated_at=now() "+
+        "from shop_courier_stops st where st.shop_order_id=o.id and st.run_id=$1 "+
+        "and st.status='failed' and o.status='shipped' returning o.id",[routeId]);
+      if(orders.length!==failed.length)
+        throw conflict('order_status_changed','Статусы заказов нужно сверить вручную');
+      // Preserve the parcels' entire history in the restricted audit trail;
+      // remove the unique order assignment so a second delivery can be planned.
+      await q.query("delete from shop_courier_stops where run_id=$1 and status='failed'",[routeId]);
+      await q.query("update shop_courier_runs set status='completed',completed_at=now(),"+
+        "active_stop_id=null where id=$1",[routeId]);
+      await q.query('delete from shop_courier_live_positions where run_id=$1',[routeId]);
+      await q.query('insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4)',
+        [c.user.id,'shop.courier_warehouse_return_confirmed',routeId,
+          {orderIds:orders.map(x=>x.id),evidence}]);
+      return {status:'completed',returnedOrders:orders.map(x=>x.id)};
+    });
+    for(const orderId of result.returnedOrders)
+      await alert(db,notifier,orderId,'Неудачная доставка завершена возвратом на склад. Новый способ получения будет согласован отдельно.');
+    return {status:result.status,returnedCount:result.returnedOrders.length,
+      refundAutomaticallyCompleted:false};
+  });
+
   r.post('/api/shop/orders/:id/confirm-delivery',true,async(c:AuthedCtx)=>{
     const orderId=parse(id,c.params.id);
     const result=await db.tx(async q=>{
@@ -262,18 +349,7 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
         "where shop_order_id=$1 and status='at_door' returning id",[orderId]);
       if(!stop)throw conflict('handoff_unconfirmed','Курьер должен отметить прибытие');
       await q.query("update shop_orders set status='done',updated_at=now() where id=$1",[orderId]);
-      const remaining=await q.one<{n:number}>(
-        "select count(*)::int as n from shop_courier_stops where run_id=$1 and status<>'delivered'",[row.run_id]);
-      if(remaining?.n===0) {
-        await q.query("update shop_courier_runs set status='completed',completed_at=now(),active_stop_id=null where id=$1",[row.run_id]);
-        await q.query('delete from shop_courier_live_positions where run_id=$1',[row.run_id]);
-      } else {
-        const next=await q.one<{id:string}>(
-          "select id from shop_courier_stops where run_id=$1 and status='collected' order by seq limit 1",[row.run_id]);
-        await q.query('update shop_courier_runs set active_stop_id=$2 where id=$1',[row.run_id,next?.id??null]);
-        // Do not show the last recipient's coordinates to the next customer.
-        await q.query('delete from shop_courier_live_positions where run_id=$1',[row.run_id]);
-      }
+      await advanceRun(q,row.run_id);
       return {status:'done'};
     });
     await alert(db,notifier,orderId,'Получение подтверждено');
