@@ -59,7 +59,7 @@ export function Order({ id }: { id: string }) {
       {d.status === 'searching' && (d.you === 'client' || d.you === 'admin') && <Search d={d} onChosen={o.reload} />}
       {d.you === 'candidate' && <CandidateView d={d} onDone={o.reload} />}
 
-      {!isConsult && !['cancelled', 'no_performer', 'searching', 'awaiting_owner'].includes(d.status) && <Steps status={d.status} service={d.service} events={d.events} createdAt={d.createdAt} />}
+      {!isConsult && d.you !== 'candidate' && <Steps status={d.status} service={d.service} events={d.events} createdAt={d.createdAt} />}
       {isConsult && !isPerformer && d.you !== 'candidate' && <ConsultClient d={d} />}
       {d.consultFrom?.hint && <ConsultHintCard from={d.consultFrom} />}
       {d.status === 'no_performer' && !isPerformer && <Retry id={id} onDone={o.reload} />}
