@@ -194,8 +194,9 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
        join community_messages m on m.id=e.message_id
        left join community_profiles p on p.user_id=m.sender_id
        where e.room_id=$1 and e.id>$2::bigint order by e.id limit $3`,
-       [room.id,after,limit]);
-    const changes=events.flatMap(e=>{
+       [room.id,after,limit+1]);
+    const page=events.slice(0,limit);
+    const changes=page.flatMap(e=>{
       if(e.moderation_state==='published'){
         // Do not resurrect text that has subsequently been hidden.
         if(e.current_state!=='published')return [];
@@ -209,7 +210,7 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
     });
     const epoch=await db.one<{sync_epoch:string}>(
       'select event_epoch::text as sync_epoch from community_rooms where id=$1',[room.id]);
-    return {changes,nextCursor:events.at(-1)?.revision??after,hasMore:events.length>=limit,
+    return {changes,nextCursor:page.at(-1)?.revision??after,hasMore:events.length>limit,
       syncEpoch:epoch?.sync_epoch??'0'};
   });
 
