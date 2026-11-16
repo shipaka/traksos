@@ -1,0 +1,28 @@
+.tech-shell{width:min(1180px,100%);margin:auto;padding:clamp(12px,3vw,30px);display:flex;flex-direction:column;gap:15px}
+.tech-head{display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}
+.tech-head h1{font-size:clamp(1.6rem,3vw,2.3rem);margin:5px 0}
+.tech-head p{max-width:65ch}
+.tech-tabs,.tech-actions{display:flex;gap:8px;flex-wrap:wrap}
+.tech-tabs button{border:1px solid var(--line,#526076);background:transparent;color:inherit;padding:12px 14px;border-radius:12px;font:inherit;cursor:pointer}
+.tech-tabs button[aria-current=page]{border-color:var(--accent,#62cce8);font-weight:700;background:color-mix(in srgb,var(--accent,#62cce8) 16%,transparent)}
+.tech-section{border-radius:18px;border:1px solid var(--line,#526076);padding:clamp(12px,2vw,20px);display:flex;flex-direction:column;gap:15px;min-width:0}
+.tech-section h2{font-size:1.2rem;margin:0}
+.tech-filters,.tech-form{display:flex;flex-wrap:wrap;gap:10px}
+.tech-filters label,.tech-form label{min-width:180px;flex:1;display:flex;flex-direction:column;gap:6px}
+.tech-form{flex-direction:column;max-width:760px}
+.tech-form label{flex:auto}
+.tech-filters button{align-self:flex-end}
+.tech-result-layout{display:grid;grid-template-columns:minmax(200px,34%) minmax(0,1fr);gap:14px}
+.tech-list{display:flex;flex-direction:column;gap:7px;min-width:0}
+.tech-list button,.tech-draft{display:flex;flex-direction:column;align-items:flex-start;gap:6px;border-radius:12px;padding:12px;background:transparent;color:inherit;border:1px solid var(--line,#526076);font:inherit;text-align:left}
+.tech-list button{cursor:pointer}
+.tech-list button[aria-current=page]{border-color:var(--accent,#62cce8);background:color-mix(in srgb,var(--accent,#62cce8) 13%,transparent)}
+.tech-list small,.tech-draft span,.tech-draft small,.tech-footer-note{opacity:.75;font-size:.86rem}
+.tech-article,.tech-review{border:1px solid var(--line,#526076);border-radius:12px;padding:18px;overflow-wrap:anywhere}
+.tech-description{white-space:pre-wrap;line-height:1.55}
+.tech-review{display:flex;flex-direction:column;gap:10px}
+.tech-review h3,.tech-review p{margin:0}
+.tech-review label{display:flex;flex-direction:column;gap:5px}
+.tech-empty{padding:26px 12px;text-align:center;opacity:.75}
+.tech-shell :is(button,input,textarea,select,a):focus-visible{outline:3px solid var(--accent,#62cce8);outline-offset:3px}
+@media(max-width:700px){.tech-result-layout{grid-template-columns:minmax(0,1fr)}.tech-shell{padding:12px}.tech-article,.tech-review{padding:12px}}
