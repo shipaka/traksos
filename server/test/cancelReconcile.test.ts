@@ -36,10 +36,12 @@ test('en-route cancellation never escalates to 100 percent from an unverified GP
     assert.equal(cancelled.cancelStage, 'en_route_first_half');
     assert.equal(cancelled.cancelBreakdown.stage, 'en_route_first_half');
     assert.equal(cancelled.cancelBreakdown.share, 0.5);
-    assert.deepEqual(cancelled.cancelBreakdown.stageEvidence, {
-      source: 'status_only', gpsVerified: false, routeHalfVerified: false,
-      note: 'No timestamped, validated route progress available',
-    });
+    assert.equal(cancelled.cancelBreakdown.stageEvidence.source, 'status_only');
+    assert.equal(cancelled.cancelBreakdown.stageEvidence.gpsVerified, false);
+    assert.equal(cancelled.cancelBreakdown.stageEvidence.routeHalfVerified, false);
+    assert.equal(typeof cancelled.cancelBreakdown.stageEvidence.sampleCount, 'number');
+    assert.ok(cancelled.cancelBreakdown.stageEvidence.sampleCount >= 0);
+    assert.equal(cancelled.cancelBreakdown.stageEvidence.note, 'GPS samples are not verified route progress');
     const audit = await t.db.one<any>(
       "select data from order_events where order_id=$1 and type='cancelled' order by id desc limit 1", [id]);
     assert.equal(audit.data.stageEvidence.gpsVerified, false);
