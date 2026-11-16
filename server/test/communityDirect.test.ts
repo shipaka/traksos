@@ -26,6 +26,14 @@ test('DM: client cannot list/invite, driver invitation requires consent and send
   const request=ok(await t.api('POST','/api/community/direct/request',{nickname:'Scania_88'},driverA.token));
   assert.equal(request.status,'pending');
   assert.equal(request.direction,'outgoing');
+  // Retries (including concurrent taps on a weak mobile network) reuse one invite.
+  const retries=await Promise.all(Array.from({length:4},()=>t.api('POST','/api/community/direct/request',{nickname:'Scania_88'},driverA.token)));
+  for(const retry of retries){
+    assert.equal(ok(retry).id,request.id);
+    assert.equal(ok(retry).status,'pending');
+  }
+  const incomingThreads=ok(await t.api('GET','/api/community/direct',undefined,driverB.token)).threads;
+  assert.equal(incomingThreads.filter((thread:any)=>thread.id===request.id).length,1);
   assert.equal((await t.api('GET','/api/community/direct/'+request.id+'/messages',undefined,driverA.token)).status,403);
   assert.equal((await t.api('POST','/api/community/direct/'+request.id+'/decision',{decision:'accept'},driverA.token)).status,403);
   assert.equal((await t.api('GET','/api/community/direct/'+request.id+'/messages',undefined,outsider.token)).status,404);
