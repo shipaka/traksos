@@ -12,7 +12,7 @@ const {attachRealtimeGateway}=await import('../server/src/realtime/gateway.ts');
 const t=await setup();
 const gateway=attachRealtimeGateway(t.server,t.app,t.db,{reauthEveryMs:1500});
 const started=performance.now();
-const sockets=[],received=Array.from({length:200},()=>0);
+const sockets=Array.from({length:200},()=>null),received=Array.from({length:200},()=>0);
 const violations=[];
 const sleep=(ms)=>new Promise(resolve=>setTimeout(resolve,ms));
 async function waitFor(predicate,message,maxMs=15000){
@@ -40,7 +40,8 @@ async function run(){
       drivers[index].token));
     assert.equal(issued.expiresInSeconds,30);
     const ws=new WebSocket(wsOrigin+'/ws?ticket='+encodeURIComponent(issued.ticket));
-    sockets.push(ws);
+    // Ticket HTTP responses arrive out of order: bind by driver index, not push order.
+    sockets[index]=ws;
     let hello=false;
     ws.on('message',(data)=>{
       let event;
@@ -124,7 +125,7 @@ async function run(){
 }
 try{await run()}catch(e){console.error('[community-ws-load]',e);process.exitCode=1}
 finally{
-  for(const ws of sockets)ws.terminate();
+  for(const ws of sockets)ws?.terminate();
   await new Promise(resolve=>gateway.close(resolve));
   await t.close();
 }
