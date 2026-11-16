@@ -105,6 +105,8 @@ const housekeeping = async () => {
     // 30 days, not indefinitely. Future legal holds need a separate policy.
     db.query("delete from performer_route_samples where received_at < now() - interval '30 days'")
       .catch((e) => console.error('[gps-history-cleanup]', e)),
+    db.query("delete from community_road_events where expires_at < now() - interval '7 days'")
+      .catch((e) => console.error('[road-event-cleanup]', e)),
   ]);
 };
 const hourly = setInterval(() => { void housekeeping(); }, 3_600_000);
