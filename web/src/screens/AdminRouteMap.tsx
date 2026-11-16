@@ -33,12 +33,22 @@ export function AdminRouteMap({ orderId }: { orderId: string }) {
     minLng = Math.min(minLng, p.lng);
     maxLng = Math.max(maxLng, p.lng);
   }
+  // Longitudes wrap at ±180°. Keep a date-line crossing local on the schematic.
+  const crossesDateLine = maxLng - minLng > 180;
+  const projectedLng = (p: RoutePoint) => crossesDateLine && p.lng < 0 ? p.lng + 360 : p.lng;
+  if (crossesDateLine) {
+    minLng = Infinity; maxLng = -Infinity;
+    for (const p of points) {
+      minLng = Math.min(minLng, projectedLng(p));
+      maxLng = Math.max(maxLng, projectedLng(p));
+    }
+  }
   const padLat = Math.max(0.004, (maxLat - minLat) * 0.2);
   const padLng = Math.max(0.007, (maxLng - minLng) * 0.2);
   const south = Math.max(-85, minLat - padLat), north = Math.min(85, maxLat + padLat);
   const west = Math.max(-180, minLng - padLng), east = Math.min(180, maxLng + padLng);
   const yTop = mercator(north), yBottom = mercator(south);
-  const x = (p: RoutePoint) => ((Number(p.lng) - west) / (east - west)) * 1000;
+  const x = (p: RoutePoint) => ((projectedLng(p) - west) / (east - west)) * 1000;
   const y = (p: RoutePoint) => ((yTop - mercator(Number(p.lat))) / (yTop - yBottom)) * 600;
   // Never draw a continuous path across missing telemetry or physically
   // implausible jumps. Neither the diagram nor GPS samples prove a road route.
@@ -59,7 +69,11 @@ export function AdminRouteMap({ orderId }: { orderId: string }) {
     return `${i === 0 || gap ? 'M' : 'L'}${x(p).toFixed(2)},${y(p).toFixed(2)}`;
   }).join(' ');
   const first = points[0], last = points[points.length - 1];
-  const bbox = [west,south,east,north].map(v=>v.toFixed(6)).join(',');
+  // A bbox across the date line is not reliably supported by the OSM embed.
+  const bbox = (crossesDateLine
+    ? [Math.max(-180, last.lng - 0.02), Math.max(-85, last.lat - 0.015),
+      Math.min(180, last.lng + 0.02), Math.min(85, last.lat + 0.015)]
+    : [west, south, east, north]).map(v => v.toFixed(6)).join(',');
   const url = 'https://www.openstreetmap.org/export/embed.html?bbox=' + bbox + '&layer=mapnik';
   const external = 'https://www.openstreetmap.org/?mlat=' + Number(last.lat).toFixed(6) +
     '&mlon=' + Number(last.lng).toFixed(6) + '#map=15/' +
@@ -67,6 +81,7 @@ export function AdminRouteMap({ orderId }: { orderId: string }) {
   return <section className="card stack" aria-label="Карта истории GPS исполнителя">
     <div className="between"><b>Маршрут исполнителя · №{route.data.number}</b><span className="pill">Только администратор</span></div>
     <p className="note">Принятых GPS-точек: {points.length}. Разрывов маршрута (паузы, скачки GPS): {gapCount}. Сумма прямых отрезков между достоверно последовательными точками: {straightLineKm.toFixed(1)} км (не дорожный пробег). Первая: {fmtTime(first.received_at)}. Последняя: {fmtTime(last.received_at)}.</p>
+    {crossesDateLine && <p className="note">Маршрут пересекает линию перемены дат: карта показывает район последней точки, а схема ниже — всю траекторию.</p>}
     <div style={{height:360,borderRadius:14,overflow:'hidden',background:'#152638'}}>
       <iframe title="Карта OpenStreetMap района движения" src={url} loading="lazy" referrerPolicy="no-referrer"
         style={{width:'100%',height:'100%',border:0}}/>
