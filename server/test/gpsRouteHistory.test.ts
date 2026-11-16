@@ -56,6 +56,6 @@ test('GPS history is scoped to an en-route order and rejects impossible jumps', 
       undefined, admin.token)).status, 404);
     ok(await t.api('POST', `/api/orders/${id}/cancel`, { reason: 'Отмена' }, client.token));
     await t.api('POST', '/api/performer/location', { lat: 59.9345, lng: 30.3353 }, worker.token);
-    assert.equal((await t.db.query('select id from performer_route_samples where order_id=$1', [id])).length, 1);
+    assert.equal((await t.db.query('select id from performer_route_samples where order_id=$1 and accepted=true', [id])).length, 1);
   } finally { await t.close(); }
 });
