@@ -46,14 +46,14 @@ export function registerCommunityDirectRoutes(r:Router,db:Db,notifier:Notifier){
     const dest=await findPeer(db,b.nickname);
     if(!dest || dest.id===c.user.id || await blocked(db,c.user.id,dest.id))throw notFound('Пользователь не найден');
     await ensureAlias(db,c.user);
-    const [a,z]=[c.user.id,dest.id].sort();
+    const [a,recipient]=[c.user.id,dest.id].sort();
     const t=await db.tx(async q=>{
-      await q.query('select pg_advisory_xact_lock(hashtext($1))',[a+':'+z]);
-      const prior=await q.one<Thread>('select * from community_dm_threads where user_a=$1 and user_b=$2',[a,z]);
+      await q.query('select pg_advisory_xact_lock(hashtext($1))',[a+':'+recipient]);
+      const prior=await q.one<Thread>('select * from community_dm_threads where user_a=$1 and user_b=$2',[a,recipient]);
       if(prior)return prior;
       const count=await q.one<{n:number}>("select count(*)::int as n from community_dm_threads where initiated_by=$1 and created_at>now()-interval '24 hours'",[c.user.id]);
       if((count?.n??0)>=5)throw new HttpError(429,'invite_limit','Слишком много приглашений');
-      return q.one<Thread>('insert into community_dm_threads(user_a,user_b,initiated_by) values($1,$2,$3) returning *',[a,z,c.user.id]);
+      return q.one<Thread>('insert into community_dm_threads(user_a,user_b,initiated_by) values($1,$2,$3) returning *',[a,recipient,c.user.id]);
     });
     if(!t)throw new Error('Missing direct thread');
     if(t.initiated_by===c.user.id && t.status==='pending')notifier.live([dest.id],{type:'community_direct_invite',threadId:t.id});
