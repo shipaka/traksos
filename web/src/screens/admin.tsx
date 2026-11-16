@@ -3,6 +3,7 @@ import { AdminServices } from './base.tsx';
 import { ModQueue } from './moderation.tsx';
 import { AdminSummary } from './adminSummary.tsx';
 import { AdminSettings } from './adminSettings.tsx';
+import { AdminAccountAccess } from './adminAccountAccess.tsx';
 import { useState } from 'react';
 import { useEffect } from 'react';
 import { SupportQueue } from './support.tsx';
@@ -13,7 +14,7 @@ import { get, post, put, rub, fmtPhone, fmtTime, authedImage } from '../api.ts';
 import { STATUS, SERVICES, LINE } from '../dict.ts';
 import { useLoad, useAction, Loading } from '../ui.tsx';
 
-type AdminSection = 'stats' | 'search' | 'support' | 'verify' | 'people' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'settings' | 'demand' | 'announcements' | 'vehicleServices';
+type AdminSection = 'stats' | 'search' | 'support' | 'verify' | 'people' | 'access' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'settings' | 'demand' | 'announcements' | 'vehicleServices';
 type AdminNavItem = { id: AdminSection; name: string; description: string; symbol: string };
 const ADMIN_GROUPS: { name: string; items: AdminNavItem[] }[] = [
   { name: 'Операционная работа', items: [
@@ -27,6 +28,7 @@ const ADMIN_GROUPS: { name: string; items: AdminNavItem[] }[] = [
   { name: 'Люди и партнёры', items: [
     { id: 'search', name: 'Поиск', description: 'Люди, заявки и история', symbol: '07' },
     { id: 'people', name: 'Все люди', description: 'Пользователи и их права', symbol: '08' },
+    { id: 'access', name: 'Регистрация и доступы', description: 'Создать учётную запись, выбрать роли и передать проблему разработчику', symbol: '08+' },
     { id: 'verify', name: 'Проверка', description: 'Документы и допуск исполнителей', symbol: '09' },
     { id: 'bases', name: 'Рембазы', description: 'Партнёрские станции ремонта', symbol: '10' },
     { id: 'vehicleServices', name: 'Страхование и ТО', description: 'Заявки и контроль партнёров', symbol: '11' },
@@ -70,6 +72,7 @@ export function Admin({ initialSection }: { initialSection?: string }) {
         <p>Заявки, партнёры, страхование, финансы и качество сервиса — в одном рабочем пространстве.</p>
         <div className="admin-command-actions">
           <button type="button" className="btn" onClick={() => navigate('summary')}>Открыть общую сводку</button>
+          <button type="button" className="btn ghost" onClick={() => navigate('access')}>Добавить номер / передать проблему разработчику</button>
           <a className="btn ghost" href="#/admin/test-center">Тестирование всех кабинетов (без реальных действий)</a>
         </div>
       </section>
@@ -127,6 +130,7 @@ export function Admin({ initialSection }: { initialSection?: string }) {
             {tab === 'settings' && <AdminSettings />}
             {tab === 'offers' && <Offers />}
             {tab === 'people' && <People />}
+            {tab === 'access' && <AdminAccountAccess />}
             {tab === 'orders' && <AllOrders />}
             {tab === 'dispatch' && <Dispatch />}
             {tab === 'payments' && <Payments />}
@@ -135,7 +139,7 @@ export function Admin({ initialSection }: { initialSection?: string }) {
           <div className="admin-mobile-quick">
             <div className="admin-mobile-quick-heading"><b>Быстрые переходы</b><small>Частые задачи администратора</small></div>
             <div className="admin-mobile-quick-grid">
-              {(['verify','dispatch','payments','search','offers','support','stats'] as AdminSection[]).map(id => {
+              {(['access','verify','dispatch','payments','search','offers','support','stats'] as AdminSection[]).map(id => {
                 const item = ADMIN_GROUPS.flatMap(group => group.items).find(entry => entry.id === id)!;
                 return <button type="button" key={id} aria-label={item.name}
                   className="admin-mobile-quick-item" onClick={() => navigate(id)}>
@@ -157,6 +161,7 @@ function People() {
   const act = (path: string, body: unknown, text: string) => run(() => post(path, body), text).then((r) => r && list.reload());
   return (
     <div className="stack">
+      <a className="btn ghost small" href="#/admin/section/access">+ Создать пользователя / сообщить разработчику</a>
       <input className="field" placeholder="Телефон или имя" value={q} onChange={(e) => setQ(e.target.value)} />
       {!list.data ? <Loading error={list.error} /> : list.data.map((u: any) => (
         <div key={u.id} className="card">
