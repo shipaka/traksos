@@ -1,4 +1,5 @@
 import {useState} from 'react';
+import {CourierWarehouseCheck} from './courierWarehouse.tsx';
 import {get,post,put} from '../api.ts';
 import {useAction,useLoad,Back} from '../ui.tsx';
 
@@ -31,6 +32,7 @@ export function CourierAdmin(){
  const [vehicle,setVehicle]=useState('');
  const [verifyOrder,setVerifyOrder]=useState(''),[verifyEvidence,setVerifyEvidence]=useState('');
  const [courierId,setCourierId]=useState(''),[warehouse,setWarehouse]=useState(''),[orders,setOrders]=useState('');
+ const [packingRequired,setPackingRequired]=useState(false);
  const [selected,setSelected]=useState('');
  const economics=useLoad<Economics|null>(()=>selected?get('/api/admin/shop/courier-runs/'+selected+'/economics'):Promise.resolve(null),[selected]);
  const [budget,setBudget]=useState(zeros),[budgetNote,setBudgetNote]=useState('');
@@ -93,7 +95,7 @@ export function CourierAdmin(){
      <form className="stack" onSubmit={async e=>{
        e.preventDefault();const orderIds=orders.split(/[,;\s]+/).map(x=>x.trim()).filter(Boolean);
        const saved=await run(()=>post('/api/admin/shop/courier-runs',{
-         courierId:courierId.trim(),pickupAddress:warehouse.trim(),orderIds
+         courierId:courierId.trim(),pickupAddress:warehouse.trim(),orderIds,packingRequired
        }),'План рейса сформирован');
        if(saved){setOrders('');setSelected(saved.id);await runs.reload();await economics.reload();}
      }}>
@@ -101,6 +103,12 @@ export function CourierAdmin(){
        <label>Адрес склада <input className="field" value={warehouse} onChange={e=>setWarehouse(e.target.value)} minLength={10} required placeholder="Санкт-Петербург, …"/></label>
        <label>ID готовых заказов по порядку <textarea className="field" value={orders} onChange={e=>setOrders(e.target.value)}
          rows={4} placeholder="Каждый UUID на новой строке" required/></label>
+       <label className="row">
+         <input type="checkbox" checked={packingRequired}
+           onChange={e=>setPackingRequired(e.target.checked)}/>
+         Обязательная складская сверка артикула и количества перед выдачей курьеру
+       </label>
+       <p className="note">Если включить проверку, отправка рейса и забор посылки невозможны до подтверждения всех строк состава. Это не проверка оригинальности деталей.</p>
        <button className="btn" disabled={busy||!courierId||warehouse.trim().length<10||!orders.trim()} type="submit">
          Создать маршрут без отправки курьеру
        </button>
@@ -118,6 +126,7 @@ export function CourierAdmin(){
      </div>
      {chosen&&<>
        <p className="note">Рейс {chosen.id} · {chosen.status}</p>
+       <CourierWarehouseCheck key={selected} runId={selected}/>
        {economics.error&&<p role="alert">{economics.error} <button onClick={economics.reload}>Обновить</button></p>}
        {economics.data&&<div className="card stack">
          <h3>Расчёт рейса</h3>
