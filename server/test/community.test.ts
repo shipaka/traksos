@@ -111,6 +111,8 @@ test('room moderation changes reach readers after message cursor and remove hidd
   for(const approval of approvals)assert.equal(ok(approval).moderation_state,'published');
   const feed=ok(await t.api('GET',room+'/moderation-events?after='+before,undefined,viewer.token));
   const added=feed.changes.filter((x:any)=>x.id===late.id && x.moderation_state==='published');
+  assert.ok(feed.changes.some((x:any)=>x.id===later.id),
+    'published messages are delivered on the commit-ordered stream too');
   assert.equal(added.length,1,'concurrent moderation emits only one publication event');
   assert.equal(added[0].message.body,'сука, тяжёлый ремонт на трассе');
   assert.equal(added[0].message.isMine,false);
