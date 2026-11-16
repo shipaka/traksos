@@ -87,6 +87,52 @@ test('messages: retry idempotence, moderation, cursor, no phone/PII leak',async(
   assert.equal((await t.api('GET',`/api/community/rooms/${driverRoom}/messages?after=not-number`,undefined,driver.token)).status,400);
 });
 
+test('room moderation changes reach readers after message cursor and remove hidden text',async()=>{
+  const author=await t.login('+79994440311','driver');
+  const viewer=await t.login('+79994440312','driver');
+  const room='/api/community/rooms/'+driverRoom;
+  ok(await t.api('POST',room+'/join',{},author.token));
+  const late=ok(await t.api('POST',room+'/messages',
+    {text:'сука, тяжёлый ремонт на трассе',clientNonce:randomUUID()},author.token));
+  assert.equal(late.status,'pending');
+  const initially=ok(await t.api('GET',room+'/messages?recent=1',undefined,viewer.token));
+  const before=initially.moderationCursor;
+  assert.equal(initially.messages.some((m:any)=>m.id===late.id),false);
+  const later=ok(await t.api('POST',room+'/messages',
+    {text:'Проверка дорожного чата',clientNonce:randomUUID()},author.token));
+  const newMessages=ok(await t.api('GET',room+'/messages?after='+late.id,undefined,viewer.token));
+  assert.ok(newMessages.messages.some((m:any)=>m.id===later.id));
+  assert.equal(newMessages.messages.some((m:any)=>m.id===late.id),false);
+  assert.equal((await t.api('GET',room+'/moderation-events',undefined,client.token)).status,404,
+    'non-driver must not read a driver-room change feed');
+
+  const approvals=await Promise.all(Array.from({length:2},()=>t.api('POST',
+    '/api/admin/community/messages/'+late.id+'/moderate',{status:'published'},admin.token)));
+  for(const approval of approvals)assert.equal(ok(approval).moderation_state,'published');
+  const feed=ok(await t.api('GET',room+'/moderation-events?after='+before,undefined,viewer.token));
+  const added=feed.changes.filter((x:any)=>x.id===late.id && x.moderation_state==='published');
+  assert.equal(added.length,1,'concurrent moderation emits only one publication event');
+  assert.equal(added[0].message.body,'сука, тяжёлый ремонт на трассе');
+  assert.equal(added[0].message.isMine,false);
+  assert.equal('sender_id' in added[0].message,false);
+  assert.equal('phone' in added[0].message,false);
+  const missed=ok(await t.api('GET',room+'/messages?after='+later.id,undefined,viewer.token));
+  assert.ok(!missed.messages.some((m:any)=>m.id===late.id),
+    'message ID cursor alone skips delayed approvals');
+
+  ok(await t.api('POST','/api/admin/community/messages/'+later.id+'/moderate',
+    {status:'hidden'},admin.token));
+  const removal=ok(await t.api('GET',
+    room+'/moderation-events?after='+feed.nextCursor,undefined,viewer.token));
+  assert.ok(removal.changes.some((x:any)=>x.id===later.id&&x.moderation_state==='hidden'));
+  assert.ok(removal.changes.every((x:any)=>!('body' in x)),
+    'a tombstone must not leak hidden message content');
+  const afterHidden=ok(await t.api('GET',room+'/messages?recent=1',undefined,viewer.token));
+  assert.ok(!afterHidden.messages.some((m:any)=>m.id===later.id));
+  assert.ok(afterHidden.messages.some((m:any)=>m.id===late.id));
+  assert.equal((await t.api('GET',room+'/moderation-events?after=wrong',undefined,viewer.token)).status,400);
+});
+
 test('technical metadata never published until rights AND tech reviewed, and only professional',async()=>{
   assert.equal((await t.api('GET','/api/community/knowledge',undefined,client.token)).status,403);
   const proposed=ok(await t.api('POST','/api/community/knowledge/propose',{
