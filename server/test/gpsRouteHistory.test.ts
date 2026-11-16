@@ -64,9 +64,19 @@ test('GPS history is scoped to an en-route order and rejects impossible jumps', 
     assert.equal(adminRoute.points[0].received_at != null, true);
     assert.equal((await t.api('GET', '/api/admin/orders/00000000-0000-0000-0000-000000000000/route',
       undefined, admin.token)).status, 404);
+    // Advance the last persisted sample without waiting in real time: after
+    // the 10-second cooldown, the next valid update must create a new sample.
+    await t.db.query(
+      `update performer_route_samples set received_at=now() - interval '11 seconds'
+       where order_id=$1 and accepted=true`, [id]);
+    const resumed = ok(await t.api('POST', '/api/performer/location',
+      { lat: 59.934402, lng: 30.335202 }, worker.token));
+    assert.notEqual(resumed.accepted, false);
+    assert.equal((await t.db.query(
+      'select id from performer_route_samples where order_id=$1 and accepted=true', [id])).length, 2);
     ok(await t.api('POST', `/api/orders/${id}/cancel`, { reason: 'Отмена' }, client.token));
     await t.api('POST', '/api/performer/location', { lat: 59.9345, lng: 30.3353 }, worker.token);
-    assert.equal((await t.db.query('select id from performer_route_samples where order_id=$1 and accepted=true', [id])).length, 1);
+    assert.equal((await t.db.query('select id from performer_route_samples where order_id=$1 and accepted=true', [id])).length, 2);
     // Retention and response bounds are security guarantees, not merely UI limits.
     // Bulk insert avoids simulating 1000 individual GPS HTTP requests.
     await t.db.query(
