@@ -627,7 +627,7 @@ export class OrdersService {
       const gpsAudit = o.status === 'en_route'
         ? await q.one<any>(`select count(*)::int as samples,
             min(received_at) as first_at, max(received_at) as last_at
-            from performer_route_samples where order_id=$1`, [orderId])
+            from performer_route_samples where order_id=$1 and performer_id=$2 and accepted=true`, [orderId, o.performer_id])
         : null;
       // Persist why the financial tier was selected. An en-route order has
       // no verified route-progress evidence yet, regardless of the last GPS.
