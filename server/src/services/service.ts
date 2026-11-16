@@ -109,14 +109,14 @@ export class ServiceCenters {
          from service_bookings b join users u on u.id=b.client_id
         where b.center_id=$1 and (b.status not in ('closed','declined','cancelled') or b.updated_at > now() - interval '30 days')
         order by b.created_at desc`, [c.id]);
-    const today = msk(this.now());
+
     const weekAgo = this.now().getTime() - 7 * 86400_000;
     const view = (b: any) => this.bookingView(b, 'service', weekAgo);
     const confirmDue = !c.accepts_confirmed_at || new Date(c.accepts_confirmed_at).getTime() < weekAgo;
     const rt = await this.db.one<{ r: number | null; n: number }>(
       `select round(avg(review_stars)::numeric, 1)::float as r, count(review_stars)::int as n from service_bookings where center_id=$1`, [c.id]);
     return {
-      center: { ...c, closedToday: c.time_zone ? centerClosedToday(c,this.now()) : null, confirmDue, rating: rt?.r ?? null, reviews: rt?.n ?? 0 },
+      center: { ...c, closedToday: centerClosedToday(c,this.now()), confirmDue, rating: rt?.r ?? null, reviews: rt?.n ?? 0 },
       groups: {
         requests: rows.filter((b) => ['new', 'clarify'].includes(b.status)).map(view),
         expected: rows.filter((b) => b.status === 'expected').map(view),
@@ -384,8 +384,11 @@ export class ServiceCenters {
     if (!c) throw notFound('Сервис не найден');
     if (c.owner_id === user.id) throw bad('self', 'Это ваш сервис');
     if (!(p.need in NEEDS)) throw bad('bad_need', 'Что нужно?');
-    if (p.day < msk(this.now())) throw bad('past', 'Выберите сегодня или позже');
-    if ((c.closed_days ?? []).some((d: any) => msk(new Date(d)) === p.day)) throw bad('closed', 'В этот день сервис не работает');
+    const centerToday=c.time_zone?localDate(this.now(),c.time_zone):msk(this.now());
+    if (p.day < centerToday) throw bad('past', 'Выберите сегодня или позже');
+    if ((c.closed_days ?? []).some((d: string|Date) =>
+      (d instanceof Date?d.toISOString().slice(0,10):String(d).slice(0,10))===p.day))
+      throw bad('closed', 'В этот день сервис не работает');
     const clientId = user.owner_id ?? user.id;
     if (user.owner_id) {
       const f = (await this.db.one<any>('select fleet from users where id=$1', [user.owner_id]))?.fleet;
