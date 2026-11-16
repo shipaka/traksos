@@ -3,7 +3,7 @@ import {post,fmtTime} from '../api.ts';
 import './nearbyHelp.css';
 
 type Kind='master'|'tow'|'service';
-type Provider={id?:string;name:string;distanceKm:number;detail:string};
+type Provider={id?:string;name:string;distanceBand:string;detail:string};
 type Card={kind:Kind;title:string;count:number;capabilities:string[];providers:Provider[];note:string;action:string};
 type Availability={radiusKm:number;checkedAt:string;accuracyMeters:number;cards:Card[];
   hasMatches:boolean;noMatchesText:string;disclaimer:string};
@@ -70,7 +70,7 @@ export function NearbyHelp(){
          <div className="real-nearby-providers">
            {card.providers.map((p,i)=><div key={p.id??String(i)} className="real-nearby-provider">
              <b>{p.name}</b><small>{p.detail}</small>
-             <small>Примерно {p.distanceKm.toFixed(1)} км по прямой</small>
+             <small>Расстояние по прямой: {p.distanceBand}</small>
              {card.kind==='service'&&p.id&&<a href={'#/services/'+p.id} className="btn ghost small">
                Посмотреть СТО и запросить запись
              </a>}
