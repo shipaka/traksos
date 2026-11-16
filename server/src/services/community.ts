@@ -176,8 +176,24 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
     });
     if(!saved) throw new Error('community message insert did not return a row');
     if(saved.moderation_state==='published') {
-      const members=await db.query<{user_id:string}>(`select user_id from community_memberships where room_id=$1 and user_id<>$2 limit 2000`,
-        [room.id,c.user.id]);
+      // Recheck room access at delivery time: revoked professional roles must not
+      // continue receiving private-club events from stale subscriptions.
+      const members=await db.query<{user_id:string}>(`select cm.user_id from community_memberships cm
+        join users u on u.id=cm.user_id
+        left join performer_profiles p on p.user_id=u.id
+        where cm.room_id=$1 and cm.user_id<>$2 and u.status='active'
+          and (
+            'admin'=any(u.roles) or 'moderator'=any(u.roles)
+            or $3::text='all'
+            or ($3::text='driver' and 'driver'=any(u.roles))
+            or ($3::text='professional' and p.verification='approved'
+                and ('master'=any(u.roles) or 'tow'=any(u.roles) or 'service'=any(u.roles))
+                and ($4::text is null
+                  or ($4='tow' and p.kind='tow')
+                  or ($4='service' and p.kind='service')
+                  or $4=any(p.specialties)))
+          ) limit 2000`,
+        [room.id,c.user.id,room.audience,room.specialty]);
       notifier.live(members.map(x=>x.user_id),{type:'community_message',roomId:room.id,id:saved.id});
     }
     return { id:saved.id,roomId:room.id,createdAt:saved.created_at,
@@ -275,8 +291,10 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
     const column=b.scope==='rights'?'rights_review':'technical_review';
     const reviewer=b.scope==='rights'?'rights_reviewer':'technical_reviewer';
     const result=await db.one(`update community_knowledge set ${column}=$2,${reviewer}=$3,
-      rights_reference=case when $4::text is not null then $4 else rights_reference end,updated_at=now()
-      where id=$1 returning id,rights_review,technical_review`,[id,b.decision,c.user.id,b.reference??null]);
+      rights_reference=case when $5::boolean and $4::text is not null then $4 else rights_reference end,
+      technical_review_note=case when not $5::boolean and $4::text is not null then $4 else technical_review_note end,
+      updated_at=now() where id=$1 returning id,rights_review,technical_review`,
+      [id,b.decision,c.user.id,b.reference??null,b.scope==='rights']);
     await db.query('insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4)',
       [c.user.id,'community.knowledge_review',id,b]);
     return result;
