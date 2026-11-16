@@ -4,6 +4,8 @@
 
 export type Day = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
 export interface Schedule {
+  /** Time zone of the worker, independently of Moscow or the customer's location. */
+  timeZone?: string;
   on: boolean;
   days: Record<Day, boolean>;
   from: string; // 'HH:MM' — начало выездов
@@ -21,18 +23,20 @@ export const defaultSchedule: Schedule = {
 
 const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + (m || 0); };
 
-/** День недели и минуты от полуночи по Москве */
-export function moscowNow(now: Date) {
-  const parts = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Moscow', weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(now);
+/** День недели и минуты от полуночи по часовому поясу исполнителя. */
+export function localNow(now: Date, timeZone = 'Europe/Moscow') {
+  const parts = new Intl.DateTimeFormat('en-GB', { timeZone, weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(now);
   const get = (t: string) => parts.find((p) => p.type === t)!.value;
   const day = get('weekday').toLowerCase().slice(0, 3) as Day;
   return { day, minutes: Number(get('hour')) * 60 + Number(get('minute')) };
 }
 
+export function moscowNow(now: Date) {return localNow(now,'Europe/Moscow');}
+
 export function slot(s: Schedule | null | undefined, now: Date, offScheduleUntil?: Date | string | null): Slot {
   if (!s || !s.on) return 'work';
   if (offScheduleUntil && new Date(offScheduleUntil) > now) return 'work';
-  const { day, minutes } = moscowNow(now);
+  const { day, minutes } = localNow(now,s.timeZone??'Europe/Moscow');
   if (!s.days[day]) return 'off';
   const from = toMin(s.from), to = toMin(s.to), phoneTo = Math.max(toMin(s.phoneTo || s.to), to);
   if (minutes >= from && minutes < to) return 'work';
@@ -41,8 +45,8 @@ export function slot(s: Schedule | null | undefined, now: Date, offScheduleUntil
 }
 
 /** Конец текущих суток по Москве — до этого момента действует ручной выход на линию вне графика */
-export function endOfMoscowDay(now: Date) {
-  const { minutes } = moscowNow(now);
+export function endOfMoscowDay(now: Date,timeZone = 'Europe/Moscow') {
+  const { minutes } = localNow(now,timeZone);
   return new Date(now.getTime() + (24 * 60 - minutes) * 60_000 - now.getSeconds() * 1000);
 }
 
