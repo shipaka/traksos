@@ -17,6 +17,10 @@ before(async()=>{
  const item=ok(await t.api('POST','/api/admin/shop/products',{
    name:'Позиция тестовой доставки',category:'sensors',price:110000,stock:5
  },admin.token)).id;
+ ok(await t.api('PUT','/api/admin/shop/products/'+item+'/costing',{
+   purchaseCostKopecks:50000,markupBps:3000,
+   costSourceNote:'Тестовый подтверждённый закупочный счёт дистрибьютора'
+ },admin.token));
  order1=ok(await t.api('POST','/api/shop/orders',{
    items:[{productId:item,qty:1}],delivery:'delivery',address:'Санкт-Петербург, тестовая улица 1'
  },client1.token)).id;
@@ -61,6 +65,30 @@ test('dispatch requires verified SPb delivery addresses and never assigns unveri
    courierId:driver.id,pickupAddress:'Санкт-Петербург, тестовый склад 1',orderIds:[order1,order2]
  },admin.token));
  runId=run.id;
+ assert.equal((await t.api('GET','/api/courier/runs/'+runId,undefined,driver.token)).status,404,
+   'неутверждённый рейс курьеру не доступен');
+ assert.equal((await t.api('POST','/api/courier/runs/'+runId+'/accept',{},driver.token)).status,404);
+ const budgetPath='/api/admin/shop/courier-runs/'+runId+'/budget';
+ assert.equal((await t.api('POST','/api/admin/shop/courier-runs/'+runId+'/approve-dispatch',{},admin.token)).status,409,
+   'без проверенной сметы рейс не выпускается');
+ let forecast=ok(await t.api('PUT',budgetPath,{
+   courierPayKopecks:300000,fuelKopecks:20000,packingKopecks:2000,
+   acquiringKopecks:3000,taxesKopecks:3000,otherKopecks:1000,
+   note:'Пессимистичный бюджет тестового рейса до оптимизации'
+ },admin.token));
+ assert.equal(forecast.profitable,false);
+ assert.equal((await t.api('POST','/api/admin/shop/courier-runs/'+runId+'/approve-dispatch',
+   {},admin.token)).status,409,'убыточный рейс не отправляется без явного решения');
+ forecast=ok(await t.api('PUT',budgetPath,{
+   courierPayKopecks:40000,fuelKopecks:20000,packingKopecks:2000,
+   acquiringKopecks:3000,taxesKopecks:3000,otherKopecks:1000,
+   note:'Расчёт на два заказа и общий рейс, затраты проверены'
+ },admin.token));
+ assert.equal(forecast.profitable,true);
+ assert.equal(forecast.platformCommissionBookedKopecks,0,
+   'потенциальные 5% не включаются в прибыль запчастей');
+ ok(await t.api('POST','/api/admin/shop/courier-runs/'+runId+'/approve-dispatch',
+   {},admin.token));
  const info=ok(await t.api('GET','/api/courier/runs/'+runId,undefined,driver.token));
  stops=info.stops;
  assert.equal(stops.length,2);
