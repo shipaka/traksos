@@ -95,6 +95,10 @@ const housekeeping = async () => {
       .catch((e) => console.error('[login-quota-cleanup]', e)),
     db.query("delete from diagnostic_events where occurred_at < now() - interval '30 days'")
       .catch((e) => console.error('[diagnostics-cleanup]', e)),
+    // GPS coordinates are sensitive; retain the minimal route evidence for
+    // 30 days, not indefinitely. Future legal holds need a separate policy.
+    db.query("delete from performer_route_samples where received_at < now() - interval '30 days'")
+      .catch((e) => console.error('[gps-history-cleanup]', e)),
   ]);
 };
 const hourly = setInterval(() => { void housekeeping(); }, 3_600_000);
