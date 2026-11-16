@@ -42,6 +42,11 @@ test('GPS history is scoped to an en-route order and rejects impossible jumps', 
     assert.equal((await t.api('GET', path, undefined, client.token)).status, 403);
     assert.equal((await t.api('GET', path, undefined, worker.token)).status, 403);
     assert.equal((await t.api('GET', path)).status, 401);
+    // Rejected telemetry must never appear in the admin's evidence timeline,
+    // even if a legacy writer or an import leaves it in the table.
+    await t.db.query(
+      'insert into performer_route_samples(order_id,performer_id,lat,lng,accepted) values($1,$2,$3,$4,false)',
+      [id, worker.id, 59.9350, 30.3360]);
     const adminRoute = ok(await t.api('GET', path, undefined, admin.token));
     assert.equal(adminRoute.orderId, id);
     assert.equal(adminRoute.points.length, 1);
