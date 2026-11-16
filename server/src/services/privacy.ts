@@ -62,7 +62,7 @@ export class PrivacyService {
     if (busy?.n) throw conflict('active_orders', 'Сначала завершите или отмените открытые заявки');
     const courierBusy=await this.db.one<{n:number}>(
       "select count(*)::int as n from shop_courier_runs where courier_id=$1 "+
-      "and status in ('planned','accepted','collecting','delivering')",[user.id]);
+      "and status in ('planned','accepted','collecting','delivering','returning')",[user.id]);
     if(courierBusy?.n)throw conflict('active_courier_route','Завершите или передайте курьерский рейс перед удалением аккаунта');
     await this.db.query('update users set delete_requested_at=coalesce(delete_requested_at, $2) where id=$1', [user.id, this.now()]);
     await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [user.id, 'privacy.delete_requested', user.id, {}]);
