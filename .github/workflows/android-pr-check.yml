@@ -139,4 +139,5 @@ jobs:
             emulator-ui.xml
             runtime-ready.log
             pin-test.log
+            cinematic-pin-preview.png
           if-no-files-found: warn
