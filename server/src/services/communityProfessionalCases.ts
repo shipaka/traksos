@@ -87,7 +87,7 @@ const mainSchema=z.object({
 type CreateCase=z.infer<typeof mainSchema>;
 
 function publicCase(row:CaseRow & {nickname?:string|null},userId:string){
-  const {author_id,knowledge_proposal_id,...visible}=row;
+  const {author_id,knowledge_proposal_id,client_nonce,...visible}=row;
   return {...visible,nickname:row.nickname??'Участник',
     isAuthor:author_id===userId,
     hasKnowledgeProposal:Boolean(knowledge_proposal_id)};
@@ -96,6 +96,11 @@ export function registerProfessionalCasesRoutes(r:Router,db:Db){
   // Preview never exposes an order identifier to the professional room.
   r.get('/api/community/pro-cases/order-preview/:id',true,async(c:AuthedCtx)=>{
     const id=parse(uid,c.params.id);
+    if(!c.user.roles.some(r=>['master','tow','service'].includes(r)))
+      throw forbidden('Только назначенному специалисту');
+    const profile=await db.one<{verification:string}>(
+      'select verification from performer_profiles where user_id=$1',[c.user.id]);
+    if(profile?.verification!=='approved')throw forbidden('Только подтверждённому специалисту');
     return orderPreview(db,c.user,id);
   });
   r.get('/api/community/pro-cases/rooms/:id',true,async(c:AuthedCtx)=>{
@@ -105,6 +110,7 @@ export function registerProfessionalCasesRoutes(r:Router,db:Db){
     if(!Number.isSafeInteger(page)||page<0||page>100)
       throw bad('page','Недопустимая страница');
     const system=(c.query.get('subsystem')??'').trim().slice(0,80);
+    const q=(c.query.get('q')??'').trim().slice(0,80);
     const status=c.query.get('status')??'';
     if(status&&!['open','resolved'].includes(status))throw bad('status','Недопустимый статус');
     const found=await db.query<CaseRow & {nickname:string|null}>(`
@@ -112,8 +118,11 @@ export function registerProfessionalCasesRoutes(r:Router,db:Db){
       left join community_profiles p on p.user_id=t.author_id
       where t.room_id=$1 and ($2::text='' or lower(t.subsystem)=lower($2))
         and ($3::text='' or t.status=$3)
+        and ($5::text='' or position(lower($5) in
+          lower(coalesce(t.make,'')||' '||coalesce(t.model,'')||' '||
+          t.subsystem||' '||t.symptoms||' '||array_to_string(t.dtc_codes,' ')))>0)
       order by t.created_at desc,t.id desc limit 21 offset $4`,
-      [roomId,system,status,page*20]);
+      [roomId,system,status,page*20,q]);
     return {cases:found.slice(0,20).map(row=>publicCase(row,c.user.id)),
       page,hasMore:found.length>20};
   });
@@ -178,7 +187,6 @@ export function registerProfessionalCasesRoutes(r:Router,db:Db){
   });
   r.post('/api/community/pro-cases/:id/replies',true,async(c:AuthedCtx)=>{
     const row=await openCase(db,c,true);
-    if(row.status!=='open')throw conflict('case_resolved','Вопрос закрыт автором');
     const b=parse(z.object({clientNonce:nonce,body:z.string().trim().min(10).max(2000)}),c.body);
     safeText(b.body);
     const result=await db.tx(async q=>{
@@ -191,6 +199,7 @@ export function registerProfessionalCasesRoutes(r:Router,db:Db){
           throw conflict('nonce_reused','Этот идентификатор уже использован для другого ответа');
         return {id:previous.id,created:false};
       }
+      if(row.status!=='open')throw conflict('case_resolved','Вопрос закрыт автором');
       const recent=await q.one<{n:number}>(`
         select count(*)::int as n from community_technical_case_replies
         where author_id=$1 and created_at>now()-interval '1 minute'`,[c.user.id]);
