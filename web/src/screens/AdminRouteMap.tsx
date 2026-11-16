@@ -102,6 +102,26 @@ export function AdminRouteMap({ orderId }: { orderId: string }) {
       </svg>
       <p className="note">Зелёная точка — начало, оранжевая — последняя. Схема показывает последовательность принятых GPS-точек отдельно от интерактивной карты. При перерыве более 15 минут, одинаковых временных отметках или скачке координат быстрее 180 км/ч линия прерывается: неподтверждённое движение не дорисовывается. Это не доказательство дорожного маршрута или прибытия.</p>
     </div>
+    <details className="card">
+      <summary>Журнал GPS-точек · последние 20 записей</summary>
+      <p className="note">Показаны серверные времена получения координат. Разрывы отмечены отдельно; журнал не подтверждает прибытие и не заменяет проверку подлинности GPS.</p>
+      <div style={{overflowX:'auto'}}>
+        <table style={{width:'100%',textAlign:'left',fontSize:13}}>
+          <thead><tr><th>Время</th><th>Широта</th><th>Долгота</th><th>Связь с предыдущей</th></tr></thead>
+          <tbody>{points.slice(-20).map((point, index) => {
+            const originalIndex = points.length - Math.min(points.length, 20) + index;
+            const hasPrevious = originalIndex > 0;
+            const interrupted = hasPrevious && breaksSegment(points[originalIndex - 1], point);
+            return <tr key={originalIndex}>
+              <td>{fmtTime(point.received_at)}</td>
+              <td>{point.lat.toFixed(6)}</td>
+              <td>{point.lng.toFixed(6)}</td>
+              <td>{!hasPrevious ? 'Начало' : interrupted ? 'Разрыв / скачок' : 'Последовательно'}</td>
+            </tr>;
+          })}</tbody>
+        </table>
+      </div>
+    </details>
     <a href={external} target="_blank" rel="noopener noreferrer">Открыть последнюю точку в OpenStreetMap ↗</a>
   </section>;
 }
