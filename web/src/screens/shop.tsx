@@ -195,6 +195,11 @@ function MyShopOrders({ orders, reload, canOrder }: { orders: any[]; reload: () 
         <div key={o.id} className="card">
           <div className="between"><b>Заказ №{o.number} · {rub(o.total)}</b><span className={`pill ${STATUS_TONE[o.status]}`}>{o.statusName}</span></div>
           <span className="note">{fmtTime(o.createdAt)} · {DELIVERY[o.delivery]}{o.address ? `: ${o.address}` : ''}</span>
+          {o.supplierProgress && <span className="note" role="status">
+            Поставка: <b>{o.supplierProgress.display}</b>
+            {o.supplierProgress.updatedAt ? ` · проверено ${fmtTime(o.supplierProgress.updatedAt)}` : ''}
+            {o.supplierProgress.status === 'cancelled' && ' · Служба поддержки уточняет ситуацию; возврат не считается завершённым автоматически.'}
+          </span>}
           {o.vehicle && <span className="note">Для: {[o.vehicle.brand, o.vehicle.model, o.vehicle.plate].filter(Boolean).join(' ')}</span>}
           {o.items.map((i: any) => <div key={i.productId} className="stack" style={{ gap: 6 }}>
             <span className="note">{i.name}{i.article ? ` · ${i.article}` : ''} × {i.qty}</span>
