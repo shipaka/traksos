@@ -66,7 +66,7 @@ try {
         const expectedPhoto = 'tracksos-partner-' + entry.name + '-approved.webp';
         const scenePhoto = await scene.evaluate(el => getComputedStyle(el, '::after').backgroundImage);
         // Bundler fingerprints the CSS image URL; the source/public URL stays stable.
-        if (!scenePhoto.includes(expectedPhoto.replace(/\\.webp$/, ''))) throw new Error(entry.name + ' onboarding photo missing: ' + scenePhoto);
+        if (!scenePhoto.includes(expectedPhoto.slice(0, -5))) throw new Error(entry.name + ' onboarding photo missing: ' + scenePhoto);
         const asset = await page.request.get(BASE + '/' + expectedPhoto);
         if (asset.status() !== 200 || !(asset.headers()['content-type'] ?? '').includes('image'))
           throw new Error('Bundled onboarding photo does not load: ' + expectedPhoto);
