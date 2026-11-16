@@ -136,7 +136,7 @@ export function registerCommunityDirectRoutes(r:Router,db:Db,notifier:Notifier){
       if(e.previous_state!=='published'&&e.sender_id!==c.user.id)return [];
       return [{revision:e.revision,id:e.id,moderation_state:'hidden'}];
     });
-    return {changes,nextCursor:rows.at(-1)?.revision??after};
+    return {changes,nextCursor:rows.at(-1)?.revision??after,hasMore:rows.length>=limit};
   });
   r.post('/api/community/direct/:id/messages',true,async(c:AuthedCtx)=>{
     const t=await mustThread(db,c);
