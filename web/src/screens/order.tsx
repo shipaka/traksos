@@ -212,7 +212,8 @@ function Steps({ status, service, events = [] }: { status: string; service: stri
   const stageEvent: Record<string, string[]> = { accepted: ['accepted'], en_route: ['depart'], arrived: ['arrive'], working: ['start_work'], awaiting_confirmation: ['amount_proposed'], completed: ['amount_confirmed', 'completed', 'confirm'] };
   // Keep repeated dispatch attempts separate; creation is not evidence of dispatch.
   // Prefer the latest dispatch attempt by server timestamp, not array ordering.
-  const orderedEvents = [...events].sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at));
+  const orderedEvents = [...events].filter(e => typeof e.created_at === 'string' && !Number.isNaN(Date.parse(e.created_at)))
+    .sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at));
   const lastRetry = orderedEvents.reduce((index, e, i) => e.type === 'retry' ? i : index, -1);
   const cycle = lastRetry >= 0 ? orderedEvents.slice(lastRetry) : orderedEvents;
   const stageTime = (step: string) => {
@@ -263,7 +264,7 @@ function Steps({ status, service, events = [] }: { status: string; service: stri
       })}
     </ol>
     {awaitingOwner && <p className="cinematic-status-stop">Поиск исполнителя ещё не начался: ожидаем подтверждения владельца транспорта.</p>}
-    {stopped && <p className="cinematic-status-stop">{status === 'cancelled' ? 'Выполнение остановлено. Причина и время отмены — в журнале ниже.' : 'Поиск завершился без исполнителя. История попыток сохранена в журнале.'}</p>}
+    {stopped && <p className="cinematic-status-stop">{status === 'cancelled' ? 'Выполнение остановлено. Доступные события и время отмены показаны в журнале ниже.' : 'Поиск завершился без исполнителя. Доступные события поиска показаны в журнале ниже.'}</p>}
     <p className="cinematic-status-footnote">Процент показывает положение в последовательности этапов, а не объём выполненной работы или оставшееся время. Статусы отражают зафиксированные действия; GPS, КПП и расчёт оплаты проверяются отдельно.</p>
   </section>;
 }
