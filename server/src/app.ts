@@ -1221,7 +1221,7 @@ export function createApp(d: Deps) {
     const points = await d.db.query<{ lat: number; lng: number; received_at: Date }>(
       `select lat,lng,received_at from (
          select lat,lng,received_at,id from performer_route_samples
-         where order_id=$1 and received_at >= now() - interval '30 days'
+         where order_id=$1 and accepted = true and received_at >= now() - interval '30 days'
          order by received_at desc,id desc limit 1000
        ) samples order by received_at,id`, [order.id]);
     return { orderId: order.id, number: order.number, points,
