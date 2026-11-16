@@ -36,6 +36,7 @@ export class PrivacyService {
       support: await q('select t.number, t.topic, t.status, t.created_at from support_tickets t where t.user_id=$1'),
       shopSelectedRegion: await this.db.one('select city_label,selected_at from shop_customer_regions where user_id=$1',[id]),
       shopPurchases: await q('select number,status,items,goods_total,delivery,delivery_price,total,address,created_at,updated_at from shop_orders where client_id=$1 or created_by=$1'),
+      shopDeliveryHistory: await q('select e.shop_order_id,e.status,e.event_time from shop_delivery_events e join shop_orders o on o.id=e.shop_order_id where o.client_id=$1 or o.created_by=$1 order by e.event_time'),
       shopSupplierHistory: await q('select o.number as order_number,e.status,e.event_time,e.cancellation_reason from shop_supplier_order_events e join shop_orders o on o.id=e.shop_order_id where o.client_id=$1 or o.created_by=$1 order by e.event_time'),
       courierProfile: await this.db.one('select display_name,vehicle_label,active,location_consent,created_at from shop_couriers where user_id=$1',[id]),
       courierRuns: await q('select id,status,created_at,accepted_at,departed_at,completed_at from shop_courier_runs where courier_id=$1'),
