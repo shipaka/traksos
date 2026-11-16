@@ -34,6 +34,11 @@ export class PrivacyService {
       performerProfile: await this.db.one(`select kind, specialties, brands, tax_status, inn, cars, schedule, updated_at from performer_profiles where user_id=$1`, [id]),
       serviceBookings: await q('select number, need, status, when_day, works, amount, created_at from service_bookings where client_id=$1 or created_by=$1'),
       support: await q('select t.number, t.topic, t.status, t.created_at from support_tickets t where t.user_id=$1'),
+      shopPurchases: await q('select number,status,items,goods_total,delivery,delivery_price,total,address,created_at,updated_at from shop_orders where client_id=$1 or created_by=$1'),
+      shopSupplierHistory: await q('select o.number as order_number,e.status,e.event_time,e.cancellation_reason from shop_supplier_order_events e join shop_orders o on o.id=e.shop_order_id where o.client_id=$1 or o.created_by=$1 order by e.event_time'),
+      courierProfile: await this.db.one('select display_name,vehicle_label,active,location_consent,created_at from shop_couriers where user_id=$1',[id]),
+      courierRuns: await q('select id,status,created_at,accepted_at,departed_at,completed_at from shop_courier_runs where courier_id=$1'),
+      courierCurrentLocations: await q('select p.lat,p.lng,p.accuracy_m,p.updated_at from shop_courier_live_positions p join shop_courier_runs r on r.id=p.run_id where r.courier_id=$1'),
       communityRoadEvents: await q('select room_id,category,locality,description,moderation_state,created_at,expires_at from community_road_events where author_id=$1'),
       communityRoadReports: await q('select event_id,reason,status,created_at from community_road_event_reports where reporter_id=$1'),
       directThreads: await q("select id,status,created_at,updated_at from community_dm_threads where user_a=$1 or user_b=$1"),
@@ -54,6 +59,10 @@ export class PrivacyService {
       `select count(*)::int as n from orders where (client_id=$1 or created_by=$1 or performer_id=$1)
          and status in ('awaiting_owner','searching','accepted','en_route','arrived','working','awaiting_confirmation')`, [user.id]);
     if (busy?.n) throw conflict('active_orders', 'Сначала завершите или отмените открытые заявки');
+    const courierBusy=await this.db.one<{n:number}>(
+      "select count(*)::int as n from shop_courier_runs where courier_id=$1 "+
+      "and status in ('planned','accepted','collecting','delivering')",[user.id]);
+    if(courierBusy?.n)throw conflict('active_courier_route','Завершите или передайте курьерский рейс перед удалением аккаунта');
     await this.db.query('update users set delete_requested_at=coalesce(delete_requested_at, $2) where id=$1', [user.id, this.now()]);
     await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [user.id, 'privacy.delete_requested', user.id, {}]);
     const staff = (await this.db.query<{ id: string }>(`select id from users where roles && '{admin}'::text[]`)).map((r) => r.id);
@@ -76,6 +85,10 @@ export class PrivacyService {
         await q.query(`update users set phone='deleted-' || id, name=null, company_name=null, company_inn=null, edo_operator=null, edo_id=null,
                          status='blocked', deleted_at=$2, owner_id=null where id=$1`, [id, this.now()]);
         await q.query('delete from sessions where user_id=$1', [id]);
+        // Courier accounting runs remain for statutory records but the precise
+        // live location and personal display name are erased on account deletion.
+        await q.query('delete from shop_courier_live_positions where run_id in (select id from shop_courier_runs where courier_id=$1)',[id]);
+        await q.query("update shop_couriers set display_name='Обезличенный курьер',vehicle_label=null,active=false,location_consent=false,updated_at=now() where user_id=$1",[id]);
         await q.query('delete from push_tokens where user_id=$1', [id]);
         await q.query('update vehicles set driver_id=null where driver_id=$1', [id]);
         await q.query('delete from notifications where user_id=$1', [id]);
