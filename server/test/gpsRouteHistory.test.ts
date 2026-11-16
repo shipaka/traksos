@@ -37,6 +37,18 @@ test('GPS history is scoped to an en-route order and rejects impossible jumps', 
       'select lat,lng from performer_route_samples where order_id=$1 order by id', [id]);
     assert.equal(points.length, 1);
     assert.equal(Number(points[0].lat), 59.9344);
+    // Route history must never leak to the client, performer, or anonymous users.
+    const path = `/api/admin/orders/${id}/route`;
+    assert.equal((await t.api('GET', path, undefined, client.token)).status, 403);
+    assert.equal((await t.api('GET', path, undefined, worker.token)).status, 403);
+    assert.equal((await t.api('GET', path)).status, 401);
+    const adminRoute = ok(await t.api('GET', path, undefined, admin.token));
+    assert.equal(adminRoute.orderId, id);
+    assert.equal(adminRoute.points.length, 1);
+    assert.equal(Number(adminRoute.points[0].lat), 59.9344);
+    assert.equal(adminRoute.points[0].received_at != null, true);
+    assert.equal((await t.api('GET', '/api/admin/orders/00000000-0000-0000-0000-000000000000/route',
+      undefined, admin.token)).status, 404);
     ok(await t.api('POST', `/api/orders/${id}/cancel`, { reason: 'Отмена' }, client.token));
     await t.api('POST', '/api/performer/location', { lat: 59.9345, lng: 30.3353 }, worker.token);
     assert.equal((await t.db.query('select id from performer_route_samples where order_id=$1', [id])).length, 1);
