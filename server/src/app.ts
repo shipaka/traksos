@@ -51,6 +51,7 @@ import { registerRealNearbyHelpRoutes } from './services/realNearbyHelp.ts';
 import {legacyTariffScope,legacyPricingWarning,legacyTariffZoneMismatch} from './domain/pricingRegion.ts';
 import { registerKnowledgeOrderRoutes } from './services/communityKnowledgeOrder.ts';
 import { registerKnowledgeReferenceRoutes } from './services/communityKnowledgeReferences.ts';
+import { registerProfessionalCasesRoutes } from './services/communityProfessionalCases.ts';
 import { WarrantyClaimsService } from './services/warranty.ts';
 import { WarrantyRemediationService } from './services/warrantyRemediation.ts';
 import { WarrantyRecourseService } from './services/warrantyRecourse.ts';
@@ -136,6 +137,7 @@ export function createApp(d: Deps) {
   registerCommunityRoadRoutes(r, d.db, notifier);
   registerRealNearbyHelpRoutes(r,d.db,now);
   registerKnowledgeOrderRoutes(r, d.db);
+  registerProfessionalCasesRoutes(r,d.db);
   const staff = ['admin', 'moderator'];
   const performerRoles = ['master', 'tow', 'service'];
 
