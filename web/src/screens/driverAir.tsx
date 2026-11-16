@@ -35,7 +35,11 @@ function useAirMessages(endpoint:string|null){
     cursor.current='0';setMessages([]);setError(null);setLoading(true);
     if(!endpoint){setLoading(false);return;}
     const load=async(initial=false)=>{
-      if(fetching || document.visibilityState==='hidden' || !navigator.onLine)return;
+      if(fetching||document.visibilityState==='hidden')return;
+      if(!navigator.onLine){
+        if(alive){setLoading(false);setError('Нет соединения. Сообщения не кэшируются на устройстве; обновим их после восстановления интернета.')}
+        return;
+      }
       fetching=true;
       try{
         const query=initial?'?recent=1&limit=50':('?after='+encodeURIComponent(cursor.current)+'&limit=50');
