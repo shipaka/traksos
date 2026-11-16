@@ -28,7 +28,7 @@ export function registerCommunityRoadRoutes(r:Router,db:Db,notifier:Notifier) {
       "select e.id,e.category,e.description,e.locality,e.created_at,e.expires_at,e.moderation_state,e.author_id, "+
       "coalesce(p.nickname,'Участник') as nickname from community_road_events e "+
       "left join community_profiles p on p.user_id=e.author_id "+
-      "where e.room_id=$1 and e.expires_at>now() and (e.moderation_state='published' or e.author_id=$2) "+
+      "where e.room_id=$1 and e.expires_at>now() and (e.moderation_state='published' or (e.moderation_state='pending' and e.author_id=$2)) "+
       "order by e.created_at desc limit 100",[group.id,c.user.id]);
     return {events:rows.map(({author_id,...x})=>({...x,isMine:author_id===c.user.id,
       verifiedByRoadServices:false}))};
