@@ -248,11 +248,12 @@ function Steps({ status, service, events = [] }: { status: string; service: stri
       {sequence.map((step, index) => {
         const done = finished || (!stopped && !awaitingOwner && current >= 0 && index < current);
         const now = !finished && !stopped && !awaitingOwner && current === index;
+        const recordedTime = stageTime(step);
         return <li key={step} className={done ? 'is-done' : now ? 'is-current' : 'is-next'}
           aria-current={now ? 'step' : undefined}>
           <span className="cinematic-status-node" aria-hidden="true">{done ? '✓' : String(index + 1).padStart(2, '0')}</span>
           <span className="cinematic-status-step-label">{names[step] ?? step}</span>
-          {stageTime(step) && <small className="cinematic-status-stage-time">{stageTime(step)}</small>}
+          {recordedTime && <small className="cinematic-status-stage-time">{recordedTime}</small>}
           {now && <span className="cinematic-status-live"><i/>Сейчас</span>}
         </li>;
       })}
