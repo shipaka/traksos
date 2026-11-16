@@ -5,7 +5,7 @@ import type { AuthService } from '../services/auth.ts';
 import type { Hub } from './hub.ts';
 import { bearer } from '../app.ts';
 
-type RealtimeAuth = Pick<AuthService,'authenticate'>;
+type RealtimeAuth = Pick<AuthService,'authenticate'|'consumeRealtimeTicket'|'authenticateRealtimeSession'>;
 export type RealtimeGatewayDependencies = { auth:RealtimeAuth; hub:Hub };
 export type RealtimeGatewayOptions = { reauthEveryMs?:number; pingEveryMs?:number };
 
@@ -24,12 +24,25 @@ export function attachRealtimeGateway(server:http.Server,app:RealtimeGatewayDepe
   const reauthEveryMs=options.reauthEveryMs??30_000;
   server.on('upgrade',(req,socket,head)=>{
     void (async()=>{
-      const pathname=new URL(req.url??'/', 'http://x').pathname;
-      if(pathname!=='/ws')return socket.destroy();
-      const token=bearer(req);
-      if(!token)return socket.destroy();
-      const user=await app.auth.authenticate(token);
-      if(!user)return socket.destroy();
+      const url=new URL(req.url??'/', 'http://x');
+      if(url.pathname!=='/ws')return socket.destroy();
+      // New clients exchange their bearer for a single-use 30-second ticket.
+      // Legacy raw-token clients remain temporarily supported during rollout.
+      let access;
+      if(url.searchParams.has('ticket')){
+        const ticket=url.searchParams.get('ticket')??'';
+        const session=await app.auth.consumeRealtimeTicket(ticket);
+        if(!session)return socket.destroy();
+        access={user:session.user,
+          validate:()=>app.auth.authenticateRealtimeSession(session.sessionHash)};
+      }else{
+        const token=bearer(req);
+        if(!token)return socket.destroy();
+        const user=await app.auth.authenticate(token);
+        if(!user)return socket.destroy();
+        access={user,validate:()=>app.auth.authenticate(token)};
+      }
+      const user=access.user;
       const roles=[...user.roles].sort().join('|');
       const previewUntil=user.roles.includes('admin')
         ? (await db.one<{admin_preview_until:Date|null}>(
@@ -41,7 +54,7 @@ export function attachRealtimeGateway(server:http.Server,app:RealtimeGatewayDepe
         const ping=setInterval(()=>{if(ws.readyState===1)ws.ping()},pingEveryMs);
         const recheck=setInterval(()=>{
           if(ws.readyState!==1)return;
-          void app.auth.authenticate(token).then(current=>{
+          void access.validate().then(current=>{
             if(!current||current.id!==user.id||[...current.roles].sort().join('|')!==roles)
               ws.close(1008,'Access changed');
           }).catch(()=>ws.close(1008,'Authentication unavailable'));
