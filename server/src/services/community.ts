@@ -300,7 +300,7 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
   });
   r.get('/api/admin/community/knowledge/review-queue',['admin'],async()=>{
     const articles=await db.query(
-      "select k.id,k.title,k.make,k.model,k.model_year,k.subsystem,k.source_url,"+
+      "select k.id,k.title,k.make,k.model,k.model_year,k.subsystem,k.description,k.source_url,"+
       "k.rights_basis,k.rights_reference,k.rights_review,k.technical_review,k.created_at,"+
       "p.nickname as author_nickname from community_knowledge k "+
       "left join community_profiles p on p.user_id=k.author_id "+
