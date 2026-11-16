@@ -96,33 +96,54 @@ export function registerShopMerchandisingRoutes(r:Router,db:Db,notifier:Notifier
       'select id,status,client_id,created_by,number from shop_orders where id=$1',[orderId]);
     if(!o)throw notFound('Заказ не найден');
     const result=await db.tx(async q=>{
-      // Manual events can be retried without duplication when the operator supplies
-      // an external event identifier; they never masquerade as API-sourced.
-      const saved=await q.one<{id:string;status:Stage;event_time:Date}>(
+      const prior=b.eventExternalId ? await q.one<{id:string;status:Stage;raw_status:string}>(
+        "select id::text as id,status,raw_status from shop_supplier_order_events "+
+        "where shop_order_id=$1 and source='manual' and event_external_id=$2",
+        [orderId,b.eventExternalId]) : null;
+      if(prior) {
+        if(prior.status!==b.status || prior.raw_status!==b.rawStatus)
+          throw conflict('event_id_reused','Идентификатор события уже использован с другими данными');
+        return {id:prior.id,status:prior.status,created:false};
+      }
+      const saved=await q.one<{id:string;status:Stage}>(
         "insert into shop_supplier_order_events(shop_order_id,external_order_ref,status,raw_status,"+
         "event_time,source,source_evidence,cancellation_reason,event_external_id,recorded_by) "+
         "values($1,$2,$3,$4,$5,'manual',$6,$7,$8,$9) "+
         "on conflict (shop_order_id,source,event_external_id) where event_external_id is not null "+
-        "do update set id=shop_supplier_order_events.id "+
-        "returning id::text as id,status,event_time",
+        "do nothing returning id::text as id,status",
         [orderId,b.supplierOrderRef??null,b.status,b.rawStatus,b.eventTime,
           b.sourceEvidence,b.cancellationReason??null,b.eventExternalId??null,c.user.id]);
-      if(b.status==='cancelled')await q.query(
+      if(!saved) {
+        const retry=await q.one<{id:string;status:Stage}>(
+          "select id::text as id,status from shop_supplier_order_events "+
+          "where shop_order_id=$1 and source='manual' and event_external_id=$2",[orderId,b.eventExternalId??null]);
+        if(!retry)throw new Error('Missing supplier event after conflicting insert');
+        return {id:retry.id,status:retry.status,created:false};
+      }
+      // Supplier status is a chronology; an older cancellation may arrive late.
+      // Escalate only when it is the latest known event.
+      const latest=await q.one<{id:string}>(
+        "select id::text as id from shop_supplier_order_events "+
+        "where shop_order_id=$1 order by event_time desc,id desc limit 1",[orderId]);
+      if(b.status==='cancelled' && latest?.id===saved.id)await q.query(
         "insert into shop_supplier_order_issues(shop_order_id,issue_kind,details) values($1,'supplier_cancelled',$2) "+
         "on conflict(shop_order_id) do update set needs_review=true,issue_kind='supplier_cancelled',"+
         "details=excluded.details,resolved_at=null,resolved_by=null",
         [orderId,b.cancellationReason??'Поставщик не указал причину отмены']);
       await q.query('insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4)',
         [c.user.id,'shop.supplier_event_recorded',orderId,
-          {eventId:saved?.id??null,status:b.status,reasonProvided:Boolean(b.cancellationReason)}]);
-      return saved;
+          {eventId:saved.id,status:b.status,reasonProvided:Boolean(b.cancellationReason)}]);
+      return {id:saved.id,status:saved.status,created:true};
     });
-    await notifier.notify([o.client_id,o.created_by],
-      {type:'shop_supplier_update',shopOrderId:orderId},
-      {kind:'normal',title:'Заказ №'+o.number+': информация о поставке',
-        body:STAGES[b.status],data:{shopOrderId:orderId}});
-    return {id:result?.id,status:b.status,displayStatus:STAGES[b.status],
-      reasonProvided:Boolean(b.cancellationReason),orderStatusChanged:false,refundConfirmed:false};
+    if(result.created) {
+      await notifier.notify([o.client_id,o.created_by],
+        {type:'shop_supplier_update',shopOrderId:orderId},
+        {kind:'normal',title:'Заказ №'+o.number+': информация о поставке',
+          body:STAGES[result.status],data:{shopOrderId:orderId}});
+    }
+    return {id:result.id,status:result.status,displayStatus:STAGES[result.status],
+      reasonProvided:Boolean(b.cancellationReason),orderStatusChanged:false,refundConfirmed:false,
+      newlyRecorded:result.created};
   });
 
   r.get('/api/admin/shop/orders/:id/supplier-events',['admin'],async(c:AuthedCtx)=>{
