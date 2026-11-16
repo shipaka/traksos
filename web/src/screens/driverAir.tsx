@@ -16,13 +16,26 @@ const roadLabels:Record<string,string>={
 };
 const uuid=()=>crypto.randomUUID();
 const safeError=(e:unknown)=>e instanceof Error?e.message:'Не удалось обновить данные. Проверьте интернет.';
-function appendMessages(existing:AirMessage[],next:AirMessage[]){
+function appendMessages(existing:AirMessage[],next:AirMessage[],recentApprovals:ReadonlySet<string>=new Set()){
   const byId=new Map(existing.map(m=>[m.id,m]));
   next.forEach(m=>byId.set(m.id,m));
-  return [...byId.values()].sort((a,b)=>{
+  const sorted=[...byId.values()].sort((a,b)=>{
     const aa=BigInt(a.id),bb=BigInt(b.id);
     return aa<bb?-1:aa>bb?1:0;
-  }).slice(-160);
+  });
+  if(sorted.length<=160)return sorted;
+  const tail=sorted.slice(-160);
+  const visible=new Set(tail.map(m=>m.id));
+  // Reserve at most 10 slots for delayed approvals, even when their original
+  // message ID is older than the current 160-message window.
+  for(const approved of sorted.filter(m=>recentApprovals.has(m.id)&&!visible.has(m.id)).slice(-10)){
+    const victim=tail.findIndex(m=>!recentApprovals.has(m.id));
+    if(victim<0)break;
+    visible.delete(tail[victim].id);
+    tail.splice(victim,1);
+    tail.push(approved);visible.add(approved.id);
+  }
+  return tail.sort((a,b)=>BigInt(a.id)<BigInt(b.id)?-1:BigInt(a.id)>BigInt(b.id)?1:0);
 }
 
 /** Only a small tail is in memory; messages are never persisted to localStorage. */
@@ -33,13 +46,15 @@ function useAirMessages(endpoint:string|null){
   const [revision,setRevision]=useState(0);
   const cursor=useRef('0');
   const moderationCursor=useRef('0');
+  const recentApprovals=useRef<Set<string>>(new Set());
   useEffect(()=>{
-    let alive=true,fetching=false;
-    cursor.current='0';moderationCursor.current='0';
+    let alive=true,fetching=false,initialized=false;
+    cursor.current='0';moderationCursor.current='0';recentApprovals.current.clear();
     setMessages([]);setError(null);setLoading(true);
     if(!endpoint){setLoading(false);return;}
     const moderationUrl=endpoint.replace(/\/messages$/,'/moderation-events');
     const load=async(initial=false)=>{
+      if(!initialized)initial=true;
       if(fetching||document.visibilityState==='hidden')return;
       if(!navigator.onLine){
         if(alive){setLoading(false);setError('Нет соединения. Сообщения не кэшируются на устройстве; обновим их после восстановления интернета.')}
@@ -50,9 +65,10 @@ function useAirMessages(endpoint:string|null){
         const query=initial?'?recent=1&limit=50':('?after='+encodeURIComponent(cursor.current)+'&limit=50');
         const d=await get<{messages:AirMessage[];nextCursor:string;moderationCursor?:string}>(endpoint+query);
         if(!alive)return;
-        setMessages(curr=>initial?d.messages:appendMessages(curr,d.messages));
+        setMessages(curr=>initial?d.messages:appendMessages(curr,d.messages,recentApprovals.current));
         cursor.current=d.nextCursor;
         if(initial){
+          initialized=true;
           // This watermark was captured BEFORE the recent messages were read.
           // Any moderation committed during the initial load is replayed safely.
           moderationCursor.current=d.moderationCursor??'0';
@@ -69,8 +85,15 @@ function useAirMessages(endpoint:string|null){
             if(updates.changes.length)setMessages(curr=>{
               let next=curr;
               for(const event of updates.changes){
-                if(event.moderation_state==='hidden')next=next.filter(m=>m.id!==event.id);
-                else if(event.message)next=appendMessages(next,[event.message]);
+                if(event.moderation_state==='hidden'){
+                  recentApprovals.current.delete(event.id);
+                  next=next.filter(m=>m.id!==event.id);
+                }else if(event.message){
+                  recentApprovals.current.add(event.id);
+                  if(recentApprovals.current.size>10)
+                    recentApprovals.current.delete(recentApprovals.current.values().next().value!);
+                  next=appendMessages(next,[event.message],recentApprovals.current);
+                }
               }
               return next;
             });
@@ -99,7 +122,7 @@ function useAirMessages(endpoint:string|null){
     };
   },[endpoint,revision]);
   return {messages,loading,error,reload:()=>setRevision(x=>x+1),
-    append:(m:AirMessage)=>setMessages(curr=>appendMessages(curr,[m]))};
+    append:(m:AirMessage)=>setMessages(curr=>appendMessages(curr,[m],recentApprovals.current))};
 }
 function MessageStream({endpoint,canWrite,placeholder}:{
   endpoint:string|null;canWrite:boolean;placeholder:string
