@@ -87,6 +87,42 @@ test('DM: idempotency, contacts and profanity moderation, peer isolation, report
   assert.equal((await t.api('GET','/api/admin/community/direct/moderation',undefined,driverA.token)).status,403);
 });
 
+test('DM moderation changes are delivered behind the message cursor only to participants',async()=>{
+  const tid=ok(await t.api('GET','/api/community/direct',undefined,driverA.token)).threads[0].id;
+  const route='/api/community/direct/'+tid;
+  const late=ok(await t.api('POST',route+'/messages',
+    {text:'сука, стою в пробке уже час',clientNonce:randomUUID()},driverB.token));
+  assert.equal(late.status,'pending');
+  const first=ok(await t.api('GET',route+'/messages?recent=1',undefined,driverA.token));
+  const checkpoint=first.moderationCursor;
+  const later=ok(await t.api('POST',route+'/messages',
+    {text:'Движение открыто, спасибо',clientNonce:randomUUID()},driverB.token));
+  assert.equal(later.status,'published');
+  const current=ok(await t.api('GET',route+'/messages?after='+late.id,undefined,driverA.token));
+  assert.ok(current.messages.some((x:any)=>x.id===later.id));
+  assert.equal((await t.api('GET',route+'/moderation-events?after='+checkpoint,undefined,outsider.token)).status,404);
+  assert.equal((await t.api('GET',route+'/moderation-events',undefined,customer.token)).status,403);
+
+  ok(await t.api('POST','/api/admin/community/direct/messages/'+late.id+'/moderate',
+    {status:'published'},admin.token));
+  const published=ok(await t.api('GET',route+'/moderation-events?after='+checkpoint,undefined,driverA.token));
+  assert.equal(published.changes.length,1);
+  assert.equal(published.changes[0].id,late.id);
+  assert.equal(published.changes[0].message.body,'сука, стою в пробке уже час');
+  assert.equal('sender_id' in published.changes[0].message,false);
+  assert.equal(ok(await t.api('GET',route+'/messages?after='+later.id,undefined,driverA.token))
+    .messages.length,0,'normal message cursor misses the delayed approval');
+
+  ok(await t.api('POST','/api/admin/community/direct/messages/'+later.id+'/moderate',
+    {status:'hidden'},admin.token));
+  const removed=ok(await t.api('GET',route+'/moderation-events?after='+published.nextCursor,undefined,driverA.token));
+  assert.deepEqual(removed.changes.map((x:any)=>({id:x.id,state:x.moderation_state})),
+    [{id:later.id,state:'hidden'}]);
+  assert.equal('body' in removed.changes[0],false);
+  assert.ok(!ok(await t.api('GET',route+'/messages?recent=1',undefined,driverA.token))
+    .messages.some((x:any)=>x.id===later.id));
+});
+
 test('DM: blocking prevents new messages without destroying earlier conversation',async()=>{
   const tid=ok(await t.api('GET','/api/community/direct',undefined,driverA.token)).threads[0].id;
   ok(await t.api('POST','/api/community/direct/blocks',{nickname:'Volvo_77',blocked:true},driverB.token));
