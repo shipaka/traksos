@@ -16,7 +16,7 @@ const isStaff = (u: AuthUser) => u.roles.some(r => r === 'admin' || r === 'moder
 const professional = (u: AuthUser) => u.roles.some(r => ['master','tow','service'].includes(r));
 const nickSchema = z.string().trim().min(3).max(24)
   .regex(/^[\p{L}][\p{L}\p{N}_-]{2,23}$/u, 'Только буквы, цифры, дефис и подчёркивание')
-  .refine(n => !/(?:track\s?sos|admin|support|модератор|админ|поддержка)/iu.test(n), 'Служебные имена недоступны');
+  .refine(n => !/(?:track\s?sos|traksos|admin|support|модератор|админ|поддержка)/iu.test(n), 'Служебные имена недоступны');
 const roomIdSchema = z.string().uuid();
 const clientNonce = z.string().uuid();
 const textSchema = z.string().trim().min(1).max(2000);
@@ -77,7 +77,7 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
   r.put('/api/community/me', true, async (c: AuthedCtx) => {
     const b = parse(z.object({
       nickname: nickSchema,
-      cityLabel: z.string().trim().min(2).max(80).regex(/^[\\p{L}\\p{M} .'-]{2,80}$/u).nullable().optional(),
+      cityLabel: z.string().trim().min(2).max(80).regex(/^[\p{L}\p{M} .'-]{2,80}$/u).nullable().optional(),
       shareCity: z.boolean().default(false),
     }), c.body);
     if (phonePattern.test(b.nickname) || contactPattern.test(b.nickname) || profanity.test(b.nickname))
