@@ -57,6 +57,22 @@ try {
       }));
       if (widths.content > widths.viewport + 2) throw new Error('Horizontal overflow ' + JSON.stringify(widths));
       await page.screenshot({ path: OUT + '/' + entry.name + '.png', fullPage: true });
+      // Real partner onboarding must have the CORRECT role photograph, remain
+      // usable on a narrow Pixel viewport, and never let bottom tabs obscure CTA.
+      if (entry.name === 'tow' || entry.name === 'master') {
+        await page.goto(BASE + '/#/work/me', { waitUntil: 'domcontentloaded' });
+        const scene = page.locator('.performer-onboarding-' + entry.name + ' .performer-onboarding-scene');
+        await scene.waitFor();
+        const expectedPhoto = 'tracksos-partner-' + entry.name + '-approved.webp';
+        const scenePhoto = await scene.evaluate(el => getComputedStyle(el, '::after').backgroundImage);
+        if (!scenePhoto.includes(expectedPhoto)) throw new Error(entry.name + ' onboarding photo missing: ' + scenePhoto);
+        const asset = await page.request.get(BASE + '/' + expectedPhoto);
+        if (asset.status() !== 200 || !(asset.headers()['content-type'] ?? '').includes('image'))
+          throw new Error('Bundled onboarding photo does not load: ' + expectedPhoto);
+        await page.getByPlaceholder('Имя, как увидят клиенты').fill('Тестовый специалист');
+        await page.getByRole('button', { name: 'Дальше — фото для проверки' }).click({ trial: true });
+        await page.screenshot({ path: OUT + '/cinematic-onboarding-' + entry.name + '.png', fullPage: true });
+      }
       // Every real role uses the SAME security screen, not fake cabinet copies.
       await page.goto(BASE + '/#/security', { waitUntil: 'domcontentloaded' });
       await page.getByRole('heading', { name: 'Безопасность и вход' }).waitFor();
