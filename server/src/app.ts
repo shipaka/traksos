@@ -50,6 +50,7 @@ import { registerCommunityRoadRoutes } from './services/communityRoad.ts';
 import { registerRealNearbyHelpRoutes } from './services/realNearbyHelp.ts';
 import {legacyTariffScope,legacyPricingWarning,legacyTariffZoneMismatch} from './domain/pricingRegion.ts';
 import { registerKnowledgeOrderRoutes } from './services/communityKnowledgeOrder.ts';
+import { registerKnowledgeReferenceRoutes } from './services/communityKnowledgeReferences.ts';
 import { WarrantyClaimsService } from './services/warranty.ts';
 import { WarrantyRemediationService } from './services/warrantyRemediation.ts';
 import { WarrantyRecourseService } from './services/warrantyRecourse.ts';
@@ -127,6 +128,8 @@ export function createApp(d: Deps) {
 
   const r = new Router();
   registerPartnerLevelRoutes(r, d.db, now);
+  // Put /knowledge/references before /knowledge/:id in Router's first-match order.
+  registerKnowledgeReferenceRoutes(r,d.db);
   // Isolated community rooms, nickname moderation and professional knowledge ACL.
   registerCommunityRoutes(r, d.db, notifier);
   registerCommunityDirectRoutes(r, d.db, notifier);
