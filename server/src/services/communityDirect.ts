@@ -98,6 +98,9 @@ export function registerCommunityDirectRoutes(r:Router,db:Db,notifier:Notifier){
     if(t.status!=='accepted')throw forbidden('Дождитесь подтверждения переписки');
     const p=cursor(c);
     const recent=c.query.get('recent')==='1';
+    // Take moderation watermark before loading messages; catch later commits.
+    const watermark=await db.one<{cursor:string}>(
+      "select coalesce(max(id),0)::text as cursor from community_dm_moderation_events where thread_id=$1",[t.id]);
     const rows=await db.query<{id:string;body:string;created_at:Date;sender_id:string;moderation_state:string;nickname:string}>(
       "select m.id::text as id,m.body,m.created_at,m.sender_id,m.moderation_state,coalesce(p.nickname,'Участник') as nickname "+
       "from community_dm_messages m left join community_profiles p on p.user_id=m.sender_id "+
@@ -106,7 +109,34 @@ export function registerCommunityDirectRoutes(r:Router,db:Db,notifier:Notifier){
       "order by m.id "+(recent?'desc':'asc')+" limit $4",
       [t.id,p.after,c.user.id,p.limit,recent]);
     const sorted=recent?rows.reverse():rows;
-    return {messages:sorted.map(({sender_id,...m})=>({...m,isMine:sender_id===c.user.id})),nextCursor:sorted.at(-1)?.id??p.after};
+    return {messages:sorted.map(({sender_id,...m})=>({...m,isMine:sender_id===c.user.id})),nextCursor:sorted.at(-1)?.id??p.after,moderationCursor:watermark?.cursor??'0'};
+  });
+  r.get('/api/community/direct/:id/moderation-events',true,async(c:AuthedCtx)=>{
+    const t=await mustThread(db,c);
+    if(t.status!=='accepted')throw forbidden('Диалог не подтверждён');
+    const {after,limit}=cursor(c);
+    const rows=await db.query<{
+      revision:string;id:string;moderation_state:string;previous_state:string;
+      current_state:string;sender_id:string;body:string;created_at:Date;nickname:string;
+    }>("select e.id::text as revision,e.message_id::text as id,e.moderation_state,"+
+      "e.previous_state,m.moderation_state as current_state,m.sender_id,m.body,"+
+      "m.created_at,coalesce(p.nickname,'Участник') as nickname "+
+      "from community_dm_moderation_events e "+
+      "join community_dm_messages m on m.id=e.message_id "+
+      "left join community_profiles p on p.user_id=m.sender_id "+
+      "where e.thread_id=$1 and e.id>$2::bigint order by e.id limit $3",
+      [t.id,after,limit]);
+    const changes=rows.flatMap(e=>{
+      if(e.moderation_state==='published'){
+        if(e.current_state!=='published')return [];
+        return [{revision:e.revision,id:e.id,moderation_state:'published',
+          message:{id:e.id,body:e.body,nickname:e.nickname,public_city:null,
+            isMine:e.sender_id===c.user.id,created_at:e.created_at,moderation_state:'published'}}];
+      }
+      if(e.previous_state!=='published'&&e.sender_id!==c.user.id)return [];
+      return [{revision:e.revision,id:e.id,moderation_state:'hidden'}];
+    });
+    return {changes,nextCursor:rows.at(-1)?.revision??after};
   });
   r.post('/api/community/direct/:id/messages',true,async(c:AuthedCtx)=>{
     const t=await mustThread(db,c);
@@ -159,10 +189,37 @@ export function registerCommunityDirectRoutes(r:Router,db:Db,notifier:Notifier){
   r.post('/api/admin/community/direct/messages/:id/moderate',['admin','moderator'],async(c:AuthedCtx)=>{
     if(!/^\d{1,16}$/.test(c.params.id))throw notFound('Сообщение не найдено');
     const b=parse(z.object({status:z.enum(['published','hidden'])}),c.body);
-    const m=await db.one('update community_dm_messages set moderation_state=$2 where id=$1 returning id::text as id,moderation_state',[c.params.id,b.status]);
-    if(!m)throw notFound('Сообщение не найдено');
-    await db.query("update community_dm_reports set status='reviewed' where message_id=$1",[c.params.id]);
-    await db.query('insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4)',[c.user.id,'community.direct_moderate',c.params.id,{status:b.status}]);
-    return m;
+    const result=await db.tx(async q=>{
+      const item=await q.one<{thread_id:string}>(
+        'select thread_id from community_dm_messages where id=$1',[c.params.id]);
+      if(!item)throw notFound('Сообщение не найдено');
+      // Lock thread before appending events: event IDs follow transaction commit order.
+      await q.one('select id from community_dm_threads where id=$1 for update',[item.thread_id]);
+      const prev=await q.one<{moderation_state:string}>(
+        'select moderation_state from community_dm_messages where id=$1 for update',[c.params.id]);
+      if(!prev)throw notFound('Сообщение не найдено');
+      let message:{id:string;moderation_state:string};
+      if(prev.moderation_state!==b.status){
+        const row=await q.one<{id:string;moderation_state:string}>(
+          'update community_dm_messages set moderation_state=$2 where id=$1 returning id::text as id,moderation_state',
+          [c.params.id,b.status]);
+        if(!row)throw notFound('Сообщение не найдено');
+        message=row;
+        await q.query(`insert into community_dm_moderation_events
+          (thread_id,message_id,previous_state,moderation_state) values($1,$2,$3,$4)`,
+          [item.thread_id,c.params.id,prev.moderation_state,b.status]);
+      }else message={id:c.params.id,moderation_state:b.status};
+      await q.query("update community_dm_reports set status='reviewed' where message_id=$1",[c.params.id]);
+      await q.query('insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4)',
+        [c.user.id,'community.direct_moderate',c.params.id,{status:b.status,previous:prev.moderation_state}]);
+      return {message,threadId:item.thread_id,modified:prev.moderation_state!==b.status};
+    });
+    if(result.modified){
+      const participants=await db.one<{user_a:string;user_b:string}>(
+        'select user_a,user_b from community_dm_threads where id=$1',[result.threadId]);
+      if(participants)notifier.live([participants.user_a,participants.user_b],{
+        type:'community_direct_moderation',threadId:result.threadId});
+    }
+    return result.message;
   });
 }
