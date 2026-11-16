@@ -356,3 +356,116 @@
     outline:2px solid #82eaf2;outline-offset:3px;
   }
 }
+
+
+/* Mobile insurance case: the ACTIVE agent form must appear before the
+   optional full six-stage explanation. No changes to insurance workflow. */
+.insurance-workflow .insurance-mobile-stage-map { display:none; }
+@media(max-width:1000px){
+  .insurance-workflow .insurance-desktop-stage-map {display:none;}
+  .insurance-workflow .insurance-mobile-stage-map {
+    display:block;
+    order:20;
+    overflow:hidden;
+    min-width:0;
+    padding:0!important;
+    border:1px solid #376b87;
+    background:linear-gradient(135deg,#123650,#0b2842);
+    border-radius:18px;
+  }
+  .insurance-workflow .insurance-conversation-tools>section:not(.insurance-desktop-stage-map) {
+    order:0;
+    min-width:0;
+    border-color:#3f7391;
+    background:linear-gradient(135deg,#153d59,#0c2a45);
+  }
+  .insurance-workflow .insurance-conversation-tools>section:not(.insurance-desktop-stage-map)>b:first-child {
+    font-size:clamp(15px,3.7vw,19px);
+    line-height:1.35;
+    color:#f4fbff;
+  }
+  .insurance-workflow .insurance-conversation-tools>section:not(.insurance-desktop-stage-map) .btn:not(.ghost) {
+    min-height:46px;
+    font-weight:850;
+    white-space:normal;
+  }
+  .insurance-mobile-stage-summary {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:15px;
+    min-height:79px;
+    padding:16px 18px 11px;
+    cursor:pointer;
+    list-style:none;
+    color:#f7fcff;
+  }
+  .insurance-mobile-stage-summary::-webkit-details-marker {display:none;}
+  .insurance-mobile-stage-summary:focus-visible {
+    outline:2px solid #73e4f0;
+    outline-offset:-3px;
+    border-radius:16px;
+  }
+  .insurance-mobile-stage-copy {
+    flex:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+  }
+  .insurance-mobile-stage-copy strong {
+    font-size:clamp(12px,3.3vw,15px);
+    line-height:1.4;
+    overflow-wrap:anywhere;
+    color:#f5fcff;
+  }
+  .insurance-mobile-stage-copy small {
+    font-size:11px;
+    line-height:1.35;
+    color:#9cc9db;
+  }
+  .insurance-mobile-stage-chevron {
+    display:grid;
+    place-items:center;
+    width:29px;
+    height:29px;
+    flex:0 0 29px;
+    border:1px solid #3f8199;
+    border-radius:9px;
+    color:#7ce4ee;
+    transition:transform .18s ease;
+  }
+  .insurance-mobile-stage-map[open] .insurance-mobile-stage-chevron {transform:rotate(180deg);}
+  .insurance-mobile-stage-progress {
+    display:grid;
+    grid-template-columns:repeat(6,minmax(0,1fr));
+    gap:5px;
+    padding:0 18px 16px;
+  }
+  .insurance-mobile-stage-progress span {
+    height:4px;
+    border-radius:3px;
+    background:#365b72;
+  }
+  .insurance-mobile-stage-progress span.complete {
+    background:linear-gradient(90deg,#268c99,#65dbcb);
+  }
+  .insurance-mobile-stage-progress span.current {
+    background:#7feaf3;
+    box-shadow:0 0 8px #4addec55;
+  }
+  .insurance-mobile-stage-expanded {
+    padding:14px 18px 16px;
+    border-top:1px solid #2e5a76;
+  }
+  .insurance-workflow .insurance-mobile-stage-expanded .insurance-progress {
+    margin:0;
+  }
+  .insurance-workflow .insurance-mobile-stage-expanded .insurance-progress>div {
+    min-height:35px;
+    padding-bottom:7px;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .insurance-mobile-stage-chevron {transition:none;}
+}
