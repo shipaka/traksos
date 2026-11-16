@@ -6,9 +6,15 @@ const mercator = (lat: number) => Math.log(Math.tan(Math.PI / 4 + lat * Math.PI 
 export function AdminRouteMap({ orderId }: { orderId: string }) {
   const route = useLoad(() => get(`/api/admin/orders/${orderId}/route`), [orderId]);
   if (!route.data) return <section className="card"><b>Карта GPS-маршрута · только администратор</b><Loading error={route.error}/></section>;
-  const points: RoutePoint[] = (route.data.points ?? []).filter((p: RoutePoint) =>
-    Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng)) &&
-    Math.abs(Number(p.lat)) <= 85 && Math.abs(Number(p.lng)) <= 180);
+  // Never connect samples with missing coordinates or timestamps: a zero coerced
+  // from null would falsely place a performer near the Gulf of Guinea.
+  const points: RoutePoint[] = (Array.isArray(route.data.points) ? route.data.points : [])
+    .filter((p: RoutePoint | null) => p != null &&
+      typeof p.lat === 'number' && Number.isFinite(p.lat) &&
+      typeof p.lng === 'number' && Number.isFinite(p.lng) &&
+      Math.abs(p.lat) <= 85 && Math.abs(p.lng) <= 180 &&
+      typeof p.received_at === 'string' && !Number.isNaN(Date.parse(p.received_at)))
+    .sort((a: RoutePoint, b: RoutePoint) => Date.parse(a.received_at) - Date.parse(b.received_at));
   if (!points.length) return <section className="card"><b>Карта GPS-маршрута</b><p className="note">Точек по этой заявке пока нет или истёк срок хранения (30 дней).</p></section>;
   const minLat = Math.min(...points.map(p => Number(p.lat)));
   const maxLat = Math.max(...points.map(p => Number(p.lat)));
