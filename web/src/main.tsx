@@ -14,6 +14,7 @@ import './premiumVehiclePolish.css';
 import './finalCanon.css';
 // Insurance-only refinement follows the approved global visual canon.
 import './insurancePremiumStates.css';
+import './securityCinematic.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
@@ -41,6 +42,7 @@ import { Help } from './screens/help.tsx';
 import { Rules } from './screens/rules.tsx';
 import { Shop, ShopCart, ShopHistory } from './screens/shop.tsx';
 import { Privacy } from './screens/privacy.tsx';
+import { Security } from './screens/security.tsx';
 import { ModCase, Appeal, MyReviews } from './screens/moderation.tsx';
 import { ModeratorDesk } from './screens/moderatorDesk.tsx';
 import { AdminTestCenter } from './screens/adminTestCenter.tsx';
@@ -170,12 +172,14 @@ function App() {
     if (!ready) return; // Keep the native token until the initial auth check finishes.
     if (!me) {
       // Logout/revoked session must also clear the token held by the Android native bridge.
+      native.setAccountId(null);
       native.setSession(API_URL || location.origin, null);
       return;
     }
     connectWs();
     // A sandbox role must never be linked to the device's production push token.
     if (sessionStorage.getItem('traksos.sandboxMode') === '1') return;
+    native.setAccountId(me.id);
     native.setSession(API_URL || location.origin, getToken());
     native.registerPush((token) => post('/api/me/push-token', { provider: 'rustore', token }));
   }, [ready, me?.id]); // eslint-disable-line
@@ -198,7 +202,7 @@ function App() {
   if (!me) {
     return (
       <MeCtx.Provider value={{ me: null, reload, mode: 'client', setMode }}>
-        <Shell mode="client" me={null}>{(route[0] === 'admin' && route[1] === 'test-center') || route[0] === 'preview' ? <DemoPreviewGate roleId={route[0]==='admin' ? route[2] : undefined} /> : route[0] === 'offer' ? <OfferPage audience={route[1] ?? 'client'} /> : route[0] === 'qr' && route[1] ? <QrJoin code={route[1]} /> : route[0] === 'rules' ? <Rules /> : route[0] === 'help' ? <Help /> : route[0] === 'explore' ? <GuestExplore id={route[1] || ''} itemKey={route[2]} /> : route[0] === 'company' ? <GuestCompany /> : route[0] === 'offers' ? <GuestOffers /> : <>{route[0] === 'r' && <div className="banner good" style={{ margin: '12px 16px 0' }}><span>Вас пригласили в TrakSOS — после входа на счёт придут подарочные баллы.</span></div>}<Login key={route[0] ?? 'public'} entry={route[0] === 'login' ? 'login' : route[0] === 'register' ? 'register' : route[0] === 'join' ? 'join' : route[0] === 'activate' ? 'activate' : undefined} /></>}</Shell>
+        <Shell mode="client" me={null}>{(route[0] === 'admin' && route[1] === 'test-center') || route[0] === 'preview' ? <DemoPreviewGate roleId={route[0]==='admin' ? route[2] : undefined} /> : route[0] === 'offer' ? <OfferPage audience={route[1] ?? 'client'} /> : route[0] === 'qr' && route[1] ? <QrJoin code={route[1]} /> : route[0] === 'rules' ? <Rules /> : route[0] === 'help' ? <Help /> : route[0] === 'explore' ? <GuestExplore id={route[1] || ''} itemKey={route[2]} /> : route[0] === 'company' ? <GuestCompany /> : route[0] === 'offers' ? <GuestOffers /> : <>{route[0] === 'r' && <div className="banner good" style={{ margin: '12px 16px 0' }}><span>Вас пригласили в TrakSOS — после входа на счёт придут подарочные баллы.</span></div>}<Login key={route[0] ?? 'public'} entry={route[0] === 'login' ? 'login' : route[0] === 'register' ? 'register' : route[0] === 'join' ? 'join' : route[0] === 'activate' ? 'activate' : route[0] === 'reset' ? 'reset' : undefined} /></>}</Shell>
       </MeCtx.Provider>
     );
   }
@@ -236,6 +240,8 @@ function App() {
     case 'orders': screen = isCustomer ? <Orders as="client" /> : <main><div className="empty">Нет доступа к клиентским заявкам</div></main>; break;
     case 'garage': screen = isCustomer ? <Garage /> : <main><div className="empty">Нет доступа к гаражу</div></main>; break;
     case 'profile': screen = <Profile />; break;
+    case 'security': screen = <Security />; break;
+    case 'reset': screen = <Login entry="reset" />; break;
     case 'invite': screen = <Invite />; break;
     case 'r': screen = <Invite />; break;
     case 'work':
@@ -338,23 +344,23 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   const accountLinks: [string, string][] = mode === 'performer'
     ? [...(me?.roles.includes('service') ? [['/base', 'Моя СТО — стационарный ремонт']] as [string, string][] : []),
        ['/work/me', 'Профиль исполнителя'], ['/work/me/about', 'Личные сведения'],
-       ['/work/me/phone', 'Телефон и вход'], ['/work/me/cars', 'Автомобили'],
+       ['/work/me/phone', 'Телефон и вход'], ['/security', 'Безопасность и быстрый вход'], ['/work/me/cars', 'Автомобили'],
        ['/work/me/schedule', 'График работы'], ['/work/filter', 'Фильтры заявок'],
        ['/work/me/money', 'Финансы и выплаты'], ['/work/me/tax', 'Налоговый статус'],
        ['/work/me/level', 'Рейтинг и уровень'], ['/work/docs', 'Проверка и документы'],
        ['/reviews', 'Отзывы'], ['/invite', 'Пригласить партнёра'],
-       ['/work/jobs', 'История заявок'], ['/profile', 'Аккаунт']]
+       ['/work/jobs', 'История заявок'], ['/profile', 'Аккаунт'], ['/security', 'Безопасность']]
     : mode === 'service'
       ? [...(me?.roles.some(r => r === 'master' || r === 'tow') ? [['/work', 'Выездной мастер — заявки']] as [string, string][] : []),
          ['/base', 'Заявки и история ремонтов'], ['/base/me', 'Карточка СТО'],
-         ['/base/money', 'Финансы'], ['/profile', 'Аккаунт'],
+         ['/base/money', 'Финансы'], ['/profile', 'Аккаунт'], ['/security', 'Безопасность'],
          ['/invite', 'Пригласить партнёра']]
     : mode === 'inspection'
-      ? [['/inspections', 'Кабинет техосмотра'], ['/profile', 'Аккаунт']]
+      ? [['/inspections', 'Кабинет техосмотра'], ['/profile', 'Аккаунт'], ['/security', 'Безопасность']]
     : mode === 'insurer'
-      ? [['/insurance', 'Кабинет страхового партнёра'], ['/profile', 'Аккаунт']]
+      ? [['/insurance', 'Кабинет страхового партнёра'], ['/profile', 'Аккаунт'], ['/security', 'Безопасность']]
     : mode === 'moderator'
-      ? [['/moderation', 'Очередь модерации'], ['/support', 'Поддержка'], ['/profile', 'Аккаунт']]
+      ? [['/moderation', 'Очередь модерации'], ['/support', 'Поддержка'], ['/profile', 'Аккаунт'], ['/security', 'Безопасность']]
     : mode === 'admin'
       ? [['/admin/test-center', 'Тестирование всех кабинетов'],
          ['/admin/section/queue', 'Модерация — очередь'],
@@ -374,12 +380,12 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/admin/section/offers', 'Оферты площадки'],
          ['/admin/section/flagged', 'Подозрительные действия'],
          ['/admin/section/settings', 'Настройки площадки'],
-         ['/profile', 'Аккаунт'], ['/as/client', 'Кабинет клиента']]
+         ['/profile', 'Аккаунт'], ['/security', 'Безопасность'], ['/as/client', 'Кабинет клиента']]
     : [['/orders', 'История заявок'], ['/garage', 'Мой гараж'],
        ...(!me?.owner_id && !me?.roles.includes('driver') ? [['/fleet', 'Мой автопарк']] as [string,string][] : []),
        ['/services', 'СТО и запись'],
        ['/reviews', 'Мои отзывы'], ['/invite', 'Пригласить друга'],
-       ['/profile', 'Профиль и настройки']];
+       ['/profile', 'Профиль и настройки'], ['/security', 'Безопасность']];
   const helpLinks: [string, string][] = [
     ['/support', 'Поддержка'], ['/notifications', 'Уведомления'],
     ['/help', 'Помощь и подсказки'], ['/rules', 'Правила площадки'],
