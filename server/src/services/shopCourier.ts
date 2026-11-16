@@ -87,6 +87,14 @@ const DELIVERY_MESSAGES:Record<DeliveryPhase,string>={
 };
 
 export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
+  r.get('/api/courier/profile',true,async(c:AuthedCtx)=>{
+    await courier(db,c.user);
+    const profile=await db.one<{display_name:string;vehicle_label:string|null;active:boolean;location_consent:boolean}>(
+      'select display_name,vehicle_label,active,location_consent from shop_couriers where user_id=$1',[c.user.id]);
+    return {displayName:profile?.display_name??'Курьер',vehicleLabel:profile?.vehicle_label??null,
+      active:true,locationConsent:profile?.location_consent??false,
+      gpsNote:'Передача координат доступна только в активной доставке и требует отдельного согласия'};
+  });
   r.post('/api/admin/shop/couriers',['admin'],async(c:AuthedCtx)=>{
     const b=parse(z.object({userId:id,displayName:z.string().trim().min(2).max(80),
       vehicleLabel:z.string().trim().max(100).optional()}),c.body);
