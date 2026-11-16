@@ -210,8 +210,10 @@ function Steps({ status, service, events = [] }: { status: string; service: stri
   const showProgress = !stopped && !awaitingOwner;
   const stageEvent: Record<string, string[]> = { accepted: ['accepted'], en_route: ['depart'], arrived: ['arrive'], working: ['start_work'], awaiting_confirmation: ['amount_proposed'], completed: ['amount_confirmed', 'completed', 'confirm'] };
   // Keep repeated dispatch attempts separate; creation is not evidence of dispatch.
-  const lastRetry = events.reduce((index, e, i) => e.type === 'retry' ? i : index, -1);
-  const cycle = lastRetry >= 0 ? events.slice(lastRetry) : events;
+  // Prefer the latest dispatch attempt by server timestamp, not array ordering.
+  const orderedEvents = [...events].sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at));
+  const lastRetry = orderedEvents.reduce((index, e, i) => e.type === 'retry' ? i : index, -1);
+  const cycle = lastRetry >= 0 ? orderedEvents.slice(lastRetry) : orderedEvents;
   const stageTime = (step: string) => {
     const stageEvents = cycle.filter(e => (stageEvent[step] ?? []).includes(e.type));
     const searchEvents = cycle.filter(e => e.type === 'dispatch_started' || e.type === 'retry');
