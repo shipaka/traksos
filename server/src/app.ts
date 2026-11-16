@@ -246,6 +246,11 @@ export function createApp(d: Deps) {
     if (b.acceptOffers) await offers.acceptCurrent(r.user as any, c.ip);
     return r;
   });
+  // The browser obtains a 30-second single-use WebSocket ticket through a
+  // normal authenticated POST. The 90-day session token never enters the WS URL.
+  r.post('/api/auth/realtime-ticket',true,(c:AuthedCtx)=>
+    auth.issueRealtimeTicket(bearer(c.req)!));
+
   r.post('/api/auth/logout', true, async (c: AuthedCtx) => {
     // Closing/minimizing the app never calls logout and never changes availability.
     // Explicit sign-out must not leave a performer discoverable without any call token.
