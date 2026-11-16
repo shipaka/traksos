@@ -41,6 +41,9 @@ export class PrivacyService {
       courierProfile: await this.db.one('select display_name,vehicle_label,active,location_consent,created_at from shop_couriers where user_id=$1',[id]),
       courierRuns: await q('select id,status,created_at,accepted_at,departed_at,completed_at from shop_courier_runs where courier_id=$1'),
       courierCurrentLocations: await q('select p.lat,p.lng,p.accuracy_m,p.updated_at from shop_courier_live_positions p join shop_courier_runs r on r.id=p.run_id where r.courier_id=$1'),
+      partnerLevels: await q('select level,reason,created_at,review_due_at,current from partner_level_decisions where user_id=$1 order by created_at'),
+      partnerLevelAppeals: await q('select message,status,resolution,created_at,resolved_at from partner_level_appeals where user_id=$1 order by created_at'),
+      partnerPresenceHistory: await q('select line_status,paused,observed_at from partner_presence_events where user_id=$1 order by observed_at'),
       communityRoadEvents: await q('select room_id,category,locality,description,moderation_state,created_at,expires_at from community_road_events where author_id=$1'),
       communityRoadReports: await q('select event_id,reason,status,created_at from community_road_event_reports where reporter_id=$1'),
       directThreads: await q("select id,status,created_at,updated_at from community_dm_threads where user_a=$1 or user_b=$1"),
@@ -113,6 +116,11 @@ export class PrivacyService {
         await q.query('update community_knowledge set technical_reviewer=null where technical_reviewer=$1', [id]);
         await q.query('delete from community_profiles where user_id=$1', [id]);
         await q.query(`update performer_profiles set inn=null, cars='[]', car=null, paused=true where user_id=$1`, [id]);
+        // The performer update above creates a final presence trigger event;
+        // erase it only AFTER anonymisation to avoid reintroducing location/availability history.
+        await q.query('delete from partner_level_appeals where user_id=$1',[id]);
+        await q.query('delete from partner_level_decisions where user_id=$1',[id]);
+        await q.query('delete from partner_presence_events where user_id=$1',[id]);
         await q.query('insert into audit_log(actor_id, action, target, data) values (null,$1,$2,$3)', ['privacy.deleted', id, {}]);
       });
     }
