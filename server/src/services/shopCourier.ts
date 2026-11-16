@@ -120,6 +120,39 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
     // The courier will be notified only after an admin approves the route economics.
     return {id:run.id,status:run.status,stops:b.orderIds.length};
   });
+  // Cancel a planned route only BEFORE anyone collects a parcel. Do not
+  // silently erase completed/ongoing delivery movements or financial records.
+  r.post('/api/admin/shop/courier-runs/:id/cancel',['admin'],async(c:AuthedCtx)=>{
+    const routeId=parse(id,c.params.id);
+    const {reason}=parse(z.object({reason:z.string().trim().min(20).max(700)}),c.body);
+    const result=await db.tx(async q=>{
+      const run=await q.one<Run>(
+        'select * from shop_courier_runs where id=$1 for update',[routeId]);
+      if(!run)throw notFound('Рейс не найден');
+      if(run.status!=='planned')
+        throw conflict('run_already_started',
+          'Рейс уже принят или выполняется: необходима отдельная процедура возврата со склада');
+      const stops=await q.query<{shop_order_id:string;status:string}>(
+        'select shop_order_id,status from shop_courier_stops where run_id=$1 order by seq for update',[routeId]);
+      if(stops.some(x=>x.status!=='awaiting_pickup'))
+        throw conflict('parcel_already_collected','Нельзя аннулировать рейс после забора товаров');
+      await q.query('delete from shop_courier_live_positions where run_id=$1',[routeId]);
+      await q.query('delete from shop_courier_stops where run_id=$1',[routeId]);
+      await q.query(
+        "update shop_courier_runs set status='cancelled',cancelled_at=now(),cancelled_by=$2,"+
+        "cancellation_reason=$3,active_stop_id=null,dispatch_approved_at=null "+
+        "where id=$1",[routeId,c.user.id,reason]);
+      await q.query('insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4)',
+        [c.user.id,'shop.courier_route_cancelled',routeId,
+          {reason,orderIds:stops.map(x=>x.shop_order_id)}]);
+      return {id:routeId,status:'cancelled',releasedOrders:stops.length,
+        courierId:run.courier_id,wasApproved:Boolean(run.dispatch_approved_at)};
+    });
+    if(result.wasApproved)
+      notifier.live([result.courierId],{type:'courier_route_cancelled',runId:routeId});
+    return {id:result.id,status:result.status,releasedOrders:result.releasedOrders};
+  });
+
   r.get('/api/admin/shop/courier-runs',['admin'],async()=>{
     return {runs:await db.query(
       "select r.id,r.courier_id,p.display_name as courier_name,r.status,r.created_at, "+
@@ -137,6 +170,12 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
   r.get('/api/courier/runs/:id',true,async(c:AuthedCtx)=>runSummary(db,await myRun(db,c)));
   r.post('/api/courier/runs/:id/accept',true,async(c:AuthedCtx)=>{
     const run=await myRun(db,c);
+    const issues=await db.one<{n:number}>(
+      "select count(*)::int as n from shop_courier_stops st "+
+      "join shop_supplier_order_issues i on i.shop_order_id=st.shop_order_id "+
+      "where st.run_id=$1 and i.needs_review=true",[run.id]);
+    if((issues?.n??0)>0)
+      throw conflict('supplier_issue_open','Есть новое разбирательство поставщика. Дождитесь решения диспетчера');
     const updated=await db.one('update shop_courier_runs set status=$2,accepted_at=now() where id=$1 and status=$3 returning id,status',
       [run.id,'accepted','planned']);
     if(!updated)throw conflict('invalid_state','Маршрут уже принят или завершён');
@@ -155,6 +194,11 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
       const r=await q.one("select so.status from shop_courier_stops st join shop_orders so on so.id=st.shop_order_id where st.id=$1",
         [stopId]) as {status:string}|null;
       if(r?.status!=='ready')throw conflict('order_status_changed','Заказ нельзя забирать до согласования');
+      const issue=await q.one('select 1 from shop_supplier_order_issues i '+
+        'join shop_courier_stops st on st.shop_order_id=i.shop_order_id '+
+        'where st.id=$1 and i.needs_review=true',[stopId]);
+      if(issue)throw conflict('supplier_issue_open',
+        'Поставщик отменил или приостановил заказ. Сверьте наличие с диспетчером');
       await q.query("update shop_courier_stops set status='collected',collected_at=now() where id=$1",[stopId]);
       await q.query("update shop_courier_runs set status='collecting' where id=$1 and status='accepted'",[run.id]);
       return {status:'collected'};
@@ -171,6 +215,12 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
         "from shop_courier_stops where run_id=$1",[run.id]);
       if(!stats?.total || stats.total!==stats.ready)
         throw conflict('pickup_incomplete','Проверьте все пакеты перед выездом');
+      const unverified=await q.one<{n:number}>(
+        "select count(*)::int as n from shop_courier_stops st "+
+        "join shop_supplier_order_issues i on i.shop_order_id=st.shop_order_id "+
+        "where st.run_id=$1 and i.needs_review=true",[run.id]);
+      if((unverified?.n??0)>0)
+        throw conflict('supplier_issue_open','Один из заказов отменён поставщиком. Выезд приостановлен');
       const r=await q.query<{id:string}>(
         "update shop_orders so set status='shipped',updated_at=now() from shop_courier_stops st "+
         "where st.shop_order_id=so.id and st.run_id=$1 and so.status='ready' returning so.id",[run.id]);
