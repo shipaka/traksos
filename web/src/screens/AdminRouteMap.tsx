@@ -1,7 +1,7 @@
 import { get, fmtTime } from '../api.ts';
 import { useLoad, Loading } from '../ui.tsx';
 
-type RoutePoint = { lat: number; lng: number; received_at: string };
+type RoutePoint = { lat: number; lng: number; received_at: string; performer_id: string };
 const mercator = (lat: number) => Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360));
 const distanceKm = (a: RoutePoint, b: RoutePoint) => {
   const radians = Math.PI / 180;
@@ -21,6 +21,7 @@ export function AdminRouteMap({ orderId }: { orderId: string }) {
       typeof p.lat === 'number' && Number.isFinite(p.lat) &&
       typeof p.lng === 'number' && Number.isFinite(p.lng) &&
       Math.abs(p.lat) <= 85 && Math.abs(p.lng) <= 180 &&
+      typeof p.performer_id === 'string' && p.performer_id.length > 0 &&
       typeof p.received_at === 'string' && !Number.isNaN(Date.parse(p.received_at)))
     .sort((a: RoutePoint, b: RoutePoint) => Date.parse(a.received_at) - Date.parse(b.received_at));
   if (!points.length) return <section className="card"><b>Карта GPS-маршрута</b><p className="note">Точек по этой заявке пока нет или истёк срок хранения (30 дней).</p></section>;
@@ -61,7 +62,7 @@ export function AdminRouteMap({ orderId }: { orderId: string }) {
   const gapThresholdMs = 15 * 60 * 1000;
   const breaksSegment = (a: RoutePoint, b: RoutePoint) => {
     const elapsedMs = Date.parse(b.received_at) - Date.parse(a.received_at);
-    return elapsedMs <= 0 || elapsedMs > gapThresholdMs ||
+    return a.performer_id !== b.performer_id || elapsedMs <= 0 || elapsedMs > gapThresholdMs ||
       distanceKm(a, b) / (elapsedMs / 3_600_000) > 180;
   };
   let gapCount = 0;
@@ -86,7 +87,7 @@ export function AdminRouteMap({ orderId }: { orderId: string }) {
     Number(last.lat).toFixed(6) + '/' + Number(last.lng).toFixed(6);
   return <section className="card stack" aria-label="Карта истории GPS исполнителя">
     <div className="between"><b>Маршрут исполнителя · №{route.data.number}</b><span className="pill">Только администратор</span></div>
-    <p className="note">Принятых GPS-точек: {points.length}. Разрывов маршрута (паузы, скачки GPS): {gapCount}. Сумма прямых отрезков между достоверно последовательными точками: {straightLineKm.toFixed(1)} км (не дорожный пробег). Первая: {fmtTime(first.received_at)}. Последняя: {fmtTime(last.received_at)}.</p>
+    <p className="note">Принятых GPS-точек: {points.length}. Разрывов маршрута (смена исполнителя, паузы, скачки GPS): {gapCount}. Сумма прямых отрезков между достоверно последовательными точками: {straightLineKm.toFixed(1)} км (не дорожный пробег). Первая: {fmtTime(first.received_at)}. Последняя: {fmtTime(last.received_at)}.</p>
     {crossesDateLine && <p className="note">Маршрут пересекает линию перемены дат: карта показывает район последней точки, а схема ниже — всю траекторию.</p>}
     <div style={{height:360,borderRadius:14,overflow:'hidden',background:'#152638'}}>
       <iframe title="Карта OpenStreetMap района движения" src={url} loading="lazy" referrerPolicy="no-referrer"
@@ -100,14 +101,14 @@ export function AdminRouteMap({ orderId }: { orderId: string }) {
         <circle cx={x(first)} cy={y(first)} r="12" fill="#1bc98e" stroke="#fff" strokeWidth="3"/>
         <circle cx={x(last)} cy={y(last)} r="12" fill="#ffb34b" stroke="#fff" strokeWidth="3"/>
       </svg>
-      <p className="note">Зелёная точка — начало, оранжевая — последняя. Схема показывает последовательность принятых GPS-точек отдельно от интерактивной карты. При перерыве более 15 минут, одинаковых временных отметках или скачке координат быстрее 180 км/ч линия прерывается: неподтверждённое движение не дорисовывается. Это не доказательство дорожного маршрута или прибытия.</p>
+      <p className="note">Зелёная точка — начало, оранжевая — последняя. Схема показывает последовательность принятых GPS-точек отдельно от интерактивной карты. При смене исполнителя, перерыве более 15 минут, одинаковых временных отметках или скачке координат быстрее 180 км/ч линия прерывается: неподтверждённое движение не дорисовывается. Это не доказательство дорожного маршрута или прибытия.</p>
     </div>
     <details className="card">
       <summary>Журнал GPS-точек · последние 20 записей</summary>
       <p className="note">Показаны серверные времена получения координат. Разрывы отмечены отдельно; журнал не подтверждает прибытие и не заменяет проверку подлинности GPS.</p>
       <div style={{overflowX:'auto'}}>
         <table style={{width:'100%',textAlign:'left',fontSize:13}}>
-          <thead><tr><th>Время</th><th>Широта</th><th>Долгота</th><th>Связь с предыдущей</th><th>Карта</th></tr></thead>
+          <thead><tr><th>Время</th><th>Широта</th><th>Долгота</th><th>Исполнитель</th><th>Связь с предыдущей</th><th>Карта</th></tr></thead>
           <tbody>{points.slice(-20).map((point, index) => {
             const originalIndex = points.length - Math.min(points.length, 20) + index;
             const hasPrevious = originalIndex > 0;
@@ -116,6 +117,7 @@ export function AdminRouteMap({ orderId }: { orderId: string }) {
               <td>{fmtTime(point.received_at)}</td>
               <td>{point.lat.toFixed(6)}</td>
               <td>{point.lng.toFixed(6)}</td>
+              <td title={point.performer_id}>{point.performer_id.slice(0, 8)}…</td>
               <td>{!hasPrevious ? 'Начало' : interrupted ? 'Разрыв / скачок' : 'Последовательно'}</td>
               <td><a href={`https://www.openstreetmap.org/?mlat=${point.lat.toFixed(6)}&mlon=${point.lng.toFixed(6)}#map=16/${point.lat.toFixed(6)}/${point.lng.toFixed(6)}`}
                 target="_blank" rel="noopener noreferrer" aria-label={`Открыть GPS-точку ${originalIndex + 1} на карте`}>На карте</a></td>
