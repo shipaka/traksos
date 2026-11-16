@@ -179,9 +179,17 @@ export class ProfilesService {
         [userId, lat, lng, now]);
       // Persist only while a job is in progress. Keep an order-scoped audit
       // trail, not a general history of the performer's movements.
+      // Location updates remain live, but cap persisted audit sampling to one
+      // point per order per 10 seconds. The profile row lock above serializes
+      // concurrent requests from the same performer and prevents burst inserts.
       await q.query(`insert into performer_route_samples(order_id,performer_id,lat,lng,received_at)
-        select id,$1,$2,$3,$4 from orders
-        where performer_id=$1 and status='en_route'`, [userId, lat, lng, now]);
+        select o.id,$1,$2,$3,$4 from orders o
+        where o.performer_id=$1 and o.status='en_route'
+          and not exists (
+            select 1 from performer_route_samples s
+            where s.order_id=o.id and s.performer_id=$1 and s.accepted=true
+              and s.received_at > $4::timestamptz - interval '10 seconds'
+          )`, [userId, lat, lng, now]);
       return true;
     });
   }
