@@ -16,7 +16,7 @@ function cityCode(name:string):'spb'|'other' {
 }
 // Fail closed until a geocoder confirms a local delivery address.
 // "Московская область, Санкт-Петербургское шоссе" is NOT Saint Petersburg.
-function addressDeclaredInSpb(address:string) {
+export function addressDeclaredInSpb(address:string) {
   return /^\s*(?:г\.?\s*)?(?:санкт[\s-]?петербург|спб)(?=[\s,.;№\d]|$)/iu.test(address);
 }
 export class ShopRegionService {
