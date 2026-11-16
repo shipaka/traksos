@@ -26,7 +26,7 @@ export function PartnerLevelView(){
   return <main className="stack" style={{width:'min(940px,100%)',margin:'auto',padding:'clamp(12px,3vw,24px)',gap:16}}>
     <Back to="work/me" label="Рабочий кабинет"/>
     <header><span className="note">TRAKSOS · ПРОФЕССИОНАЛЬНОЕ СООБЩЕСТВО</span>
-      <h1>TrackSOS Партнёр</h1>
+      <h1>TrakSOS Партнёр</h1>
       <p>Три уровня, справедливые даже там, где мало заявок. Реальный спрос и качество важнее абсолютного количества работ.</p>
     </header>
     {account.error&&<div className="banner warn" role="alert">{account.error} <button type="button" onClick={account.reload}>Повторить</button></div>}
@@ -65,7 +65,7 @@ export function PartnerLevelView(){
         <h2>Рекомендация к рассмотрению: {names[d.recommendation.candidate]}</h2>
         <p>Это ориентир для ручного решения, а не автоматический рейтинг, штраф или изменение комиссии.</p>
         {d.recommendation.reasons.map((reason,i)=><p key={i} className="note">— {reason}</p>)}
-        <p className="note">Мастера не обязаны работать исключительно с TrackSOS. Отсутствие повторного заказа само по себе ничего не доказывает.</p>
+        <p className="note">Мастера не обязаны работать исключительно с TrakSOS. Отсутствие повторного заказа само по себе ничего не доказывает.</p>
       </section>
       <section className="card stack">
         <h2>Оспорить или уточнить уровень</h2>
@@ -95,7 +95,7 @@ export function PartnerLevelAdmin(){
   const [answers,setAnswers]=useState<Record<string,string>>({});
   return <main className="stack" style={{width:'min(980px,100%)',padding:20,margin:'auto',gap:16}}>
     <Back to="admin" label="Админка"/>
-    <h1>TrackSOS Партнёр · проверка уровней</h1>
+    <h1>TrakSOS Партнёр · проверка уровней</h1>
     <p className="note">Повышение и понижение выполняются только администратором с причиной. Ни комиссия, ни порядок распределения заявок от этого пока не меняются. Не делайте выводы по абсолютному числу заказов в малом городе.</p>
     {queue.error&&<p role="alert">{queue.error} <button onClick={queue.reload}>Повторить</button></p>}
     <section className="card stack">
