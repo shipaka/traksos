@@ -23,8 +23,18 @@ const otherCities=[
   'белгород','тамбов','тольятти','симферополь','севастополь','архангельск',
   'норильск','махачкала','ульяновск','томск','чита','благовещенск'
 ];
+function addressOutside(address:string):boolean {
+  const text=address.trim().toLocaleLowerCase('ru-RU').replace(/ё/g,'е');
+  const normalized=text.replace(/^россия\s*,?\s*/u,'').replace(/^(?:рф|российская федерация)\s*,?\s*/u,'')
+    .replace(/^г(?:ород|\.)?\s+/u,'');
+  return otherCities.some(name=>normalized===name||normalized.startsWith(name+',')||
+    normalized.startsWith(name+' г.')||normalized.startsWith(name+' улица ')||
+    normalized.startsWith(name+' ул.'));
+}
 export function checkLegacyPricingLocation(input:KnownLocation):LocationCheck {
   const {lat,lng}=input;
+  // Prefer to reject contradictions rather than trust a spoofed in-zone coordinate.
+  if(input.address?.trim()&&addressOutside(input.address))return 'outside';
   if(lat!=null||lng!=null){
     if(lat==null||lng==null||!Number.isFinite(lat)||!Number.isFinite(lng)||
       lat< -90||lat>90||lng< -180||lng>180)return 'outside';
