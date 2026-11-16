@@ -51,6 +51,7 @@ test('GPS history is scoped to an en-route order and rejects impossible jumps', 
     assert.equal(adminRoute.orderId, id);
     assert.equal(adminRoute.points.length, 1);
     assert.equal(Number(adminRoute.points[0].lat), 59.9344);
+    assert.equal(adminRoute.points[0].performer_id, worker.id);
     assert.equal(adminRoute.points[0].received_at != null, true);
     assert.equal((await t.api('GET', '/api/admin/orders/00000000-0000-0000-0000-000000000000/route',
       undefined, admin.token)).status, 404);
