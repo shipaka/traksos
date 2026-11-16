@@ -9,6 +9,7 @@ import type { PaymentsService } from '../payments/service.ts';
 import type { ProfilesService } from './profiles.ts';
 import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { config } from '../config.ts';
+import { validateRoles } from '../domain/roles.ts';
 import { cancelSplit, pct, type CancelStage } from '../domain/money.ts';
 import type { SettingsService } from './settings.ts';
 import { rub } from '../util.ts';
@@ -458,6 +459,10 @@ export class AdminService {
       throw bad('incompatible_roles','Страховой партнёр не совмещается с клиентом или ремонтным исполнителем');
     if (roles.includes('admin') && roles.includes('moderator'))
       throw bad('incompatible_staff_roles', 'Администратор и модератор — разные уровни доступа');
+    // The pre-existing manual role editor must enforce the same compatibility
+    // rules as registration: no client + performer or tow + master/service.
+    if (new Set(roles).size !== roles.length) throw bad('duplicate_roles', 'Роли не должны повторяться');
+    validateRoles([], roles.filter(role => role !== 'admin' && role !== 'moderator'));
     await this.db.tx(async q => {
       await q.query('update users set roles=$2 where id=$1', [userId, roles]);
       // Any previous sessions must lose old privileges immediately.
