@@ -157,7 +157,7 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
        case when p.share_city then p.city_label else null end as public_city
        from community_messages m left join community_profiles p on p.user_id=m.sender_id
        where m.room_id=$1 and m.id>$2 and
-        (m.moderation_state='published' or m.sender_id=$3 or $4::boolean)
+        (m.moderation_state='published' or (m.moderation_state='pending' and m.sender_id=$3) or $4::boolean)
        order by m.id limit $5`,
        [room.id,afterStr,c.user.id,isStaff(c.user),limit]);
     return { messages: rows.map(({sender_id,...m})=>({...m,isMine:sender_id===c.user.id})),
