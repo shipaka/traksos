@@ -354,13 +354,23 @@ export class ShopService {
     const where = filters.join(' and ');
     const take = 20;
     const rows = await this.db.query<any>(
-      `select o.*,ev.status as supplier_status,ev.event_time as supplier_status_at from shop_orders o
-       left join lateral (select status,event_time from shop_supplier_order_events e
-         where e.shop_order_id=o.id order by e.event_time desc,e.id desc limit 1) ev on true
-       where ${where.split(' and ').map(x=>x.replace(/\bclient_id=/g,'o.client_id=').replace(/\bcreated_by=/g,'o.created_by=').replace(/\bvehicle_id=/g,'o.vehicle_id=')).join(' and ')}
-       order by o.created_at desc,o.id desc
-       limit ${params.length + 1} offset ${params.length + 2}`, [...params, take + 1, safePage * take]);
-    return { items: rows.slice(0, take).map((o: any) => this.orderView(o)), hasMore: rows.length > take, page: safePage };
+      `select * from shop_orders where ${where} order by created_at desc,id desc
+       limit $${params.length + 1} offset $${params.length + 2}`,
+       [...params,take + 1,safePage*take]);
+    const pageRows=rows.slice(0,take);
+    const states=pageRows.length ? await this.db.query<{
+      shop_order_id:string;status:string;event_time:Date
+    }>(`select distinct on (shop_order_id) shop_order_id,status,event_time
+       from shop_supplier_order_events where shop_order_id=any($1::uuid[])
+       order by shop_order_id,event_time desc,id desc`,
+       [pageRows.map((o:any)=>o.id)]) : [];
+    const stateByOrder=new Map(states.map(x=>[x.shop_order_id,x]));
+    return { items:pageRows.map((o:any)=>{
+      const current=stateByOrder.get(o.id);
+      return this.orderView({...o,supplier_status:current?.status??null,
+        supplier_status_at:current?.event_time??null});
+    }),hasMore:rows.length>take,page:safePage };
+
   }
 
   // ——— Клиент: заказ ———
