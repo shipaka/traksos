@@ -25,7 +25,8 @@ export function OrderTimeline({ events, createdAt, acceptedAt, arrivedAt, comple
   events?: Event[]; createdAt?: string; acceptedAt?: string | null;
   arrivedAt?: string | null; completedAt?: string | null; isAdmin: boolean;
 }) {
-  const entries = (events ?? []).filter(e => Object.prototype.hasOwnProperty.call(LABELS, e.type))
+  const entries = (events ?? []).filter(e => Object.prototype.hasOwnProperty.call(LABELS, e.type) &&
+    typeof e.created_at === 'string' && !Number.isNaN(Date.parse(e.created_at)))
     .map(e => ({ label: LABELS[e.type], at: e.created_at, source: 'event' }));
   // Legacy orders may have timestamps but no corresponding event.
   // Do not fabricate a button press: clearly identify stored status timestamps.
@@ -38,7 +39,8 @@ export function OrderTimeline({ events, createdAt, acceptedAt, arrivedAt, comple
   for (const item of legacy) {
     const matching = item.event === 'amount_confirmed'
       ? ['amount_confirmed', 'completed', 'confirm'] : [item.event];
-    if (item.at && !(events ?? []).some(e => matching.includes(e.type))) {
+    if (item.at && !Number.isNaN(Date.parse(item.at)) && !(events ?? []).some(e => matching.includes(e.type) &&
+      typeof e.created_at === 'string' && !Number.isNaN(Date.parse(e.created_at)))) {
       entries.push({ label: item.label.includes('время из статуса') ? item.label : item.label + ' · время из статуса', at: item.at, source: 'status' });
     }
   }
@@ -50,8 +52,8 @@ export function OrderTimeline({ events, createdAt, acceptedAt, arrivedAt, comple
         hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(d);
   };
   return <section className="card stack" aria-label="Хронология этапов заявки">
-    <div className="between"><b>Хронология заявки</b><span className="pill">Время сервера</span></div>
-    <p className="note">Когда этап был зафиксирован системой. Нажатие кнопки и фактическое прибытие — разные вещи; спорные события требуют проверки.</p>
+    <div className="between"><b>Хронология заявки</b><span className="pill">Серверные отметки</span></div>
+    <p className="note">Время записано сервером и показано в часовом поясе устройства. Нажатие кнопки и фактическое прибытие — разные вещи; спорные события требуют проверки.</p>
     {!entries.length ? <p className="note">Событий пока нет.</p> :
       <ol className="tl">{entries.map((entry, index) => <li key={index}>
         <i className={index === entries.length - 1 ? 'now' : 'ok'}/>
