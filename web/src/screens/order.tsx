@@ -209,12 +209,10 @@ function Steps({ status, service, events = [] }: { status: string; service: stri
   const awaitingOwner = status === 'awaiting_owner';
   const showProgress = !stopped && !awaitingOwner;
   const stageEvent: Record<string, string[]> = { accepted: ['accepted'], en_route: ['depart'], arrived: ['arrive'], working: ['start_work'], awaiting_confirmation: ['amount_proposed'], completed: ['amount_confirmed', 'completed', 'confirm'] };
-  // A request can be created while owner approval is pending: creation time is not dispatch time.
+  // Keep repeated dispatch attempts separate; creation is not evidence of dispatch.
+  const lastRetry = events.reduce((index, e, i) => e.type === 'retry' ? i : index, -1);
+  const cycle = lastRetry >= 0 ? events.slice(lastRetry) : events;
   const stageTime = (step: string) => {
-    // A repeated search or a new performer assignment must not borrow timestamps
-    // from the previous attempt. Keep the current dispatch cycle separate.
-    const lastRetry = events.reduce((index, e, i) => e.type === 'retry' ? i : index, -1);
-    const cycle = lastRetry >= 0 ? events.slice(lastRetry) : events;
     const stageEvents = cycle.filter(e => (stageEvent[step] ?? []).includes(e.type));
     const searchEvents = cycle.filter(e => e.type === 'dispatch_started' || e.type === 'retry');
     const at = step === 'searching' ? searchEvents[searchEvents.length - 1]?.created_at : stageEvents[stageEvents.length - 1]?.created_at;
@@ -247,7 +245,8 @@ function Steps({ status, service, events = [] }: { status: string; service: stri
     <ol className="cinematic-status-steps">
       {sequence.map((step, index) => {
         // Cancelled/expired orders retain only milestones proven by their event log.
-        const recorded = (stageEvent[step] ?? []).some(type => events.some(e => e.type === type));
+        const eventTypes = step === 'searching' ? ['dispatch_started', 'retry'] : (stageEvent[step] ?? []);
+        const recorded = eventTypes.some(type => cycle.some(e => e.type === type));
         const done = finished || (stopped ? recorded : !awaitingOwner && current >= 0 && index < current);
         const now = !finished && !stopped && !awaitingOwner && current === index;
         const recordedTime = stageTime(step);
