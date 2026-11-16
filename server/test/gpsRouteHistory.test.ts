@@ -57,5 +57,22 @@ test('GPS history is scoped to an en-route order and rejects impossible jumps', 
     ok(await t.api('POST', `/api/orders/${id}/cancel`, { reason: 'Отмена' }, client.token));
     await t.api('POST', '/api/performer/location', { lat: 59.9345, lng: 30.3353 }, worker.token);
     assert.equal((await t.db.query('select id from performer_route_samples where order_id=$1 and accepted=true', [id])).length, 1);
+    // Retention and response bounds are security guarantees, not merely UI limits.
+    // Bulk insert avoids simulating 1000 individual GPS HTTP requests.
+    await t.db.query(
+      `insert into performer_route_samples(order_id,performer_id,lat,lng,received_at,accepted)
+       select $1,$2,59.93,30.33,now() - (g || ' seconds')::interval,true
+       from generate_series(1,1005) as g`,
+      [id, worker.id]);
+    await t.db.query(
+      `insert into performer_route_samples(order_id,performer_id,lat,lng,received_at,accepted)
+       values($1,$2,59.93,30.33,now() - interval '31 days',true)`,
+      [id, worker.id]);
+    const boundedRoute = ok(await t.api('GET', path, undefined, admin.token));
+    assert.equal(boundedRoute.points.length, 1000);
+    const times = boundedRoute.points.map((p: { received_at: string }) => Date.parse(p.received_at));
+    assert.ok(times.every((time: number) => time >= Date.now() - 30 * 24 * 60 * 60 * 1000 - 5000));
+    assert.ok(times.every((time: number, i: number) => i === 0 || time >= times[i - 1]));
+
   } finally { await t.close(); }
 });
