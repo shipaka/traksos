@@ -245,6 +245,11 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
         and ($2::text='' or lower(subsystem)=lower($2))
       order by created_at desc limit 100`,[make,subsystem]) };
   });
+  r.get('/api/community/knowledge/mine', true, async (c: AuthedCtx) => {
+    await requireKnowledgeAccess(db,c.user);
+    return {articles:await db.query(`select id,title,rights_review,technical_review,created_at
+      from community_knowledge where author_id=$1 order by created_at desc limit 100`,[c.user.id])};
+  });
   r.get('/api/community/knowledge/:id', true, async (c: AuthedCtx) => {
     await requireKnowledgeAccess(db,c.user);
     const id=parse(roomIdSchema,c.params.id);
@@ -253,11 +258,6 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
       from community_knowledge where id=$1 and rights_review='approved' and technical_review='approved'`,[id]);
     if(!article) throw notFound('Материал не найден');
     return article;
-  });
-  r.get('/api/community/knowledge/mine', true, async (c: AuthedCtx) => {
-    await requireKnowledgeAccess(db,c.user);
-    return {articles:await db.query(`select id,title,rights_review,technical_review,created_at
-      from community_knowledge where author_id=$1 order by created_at desc limit 100`,[c.user.id])};
   });
   r.post('/api/admin/community/knowledge/:id/review', ['admin'], async (c: AuthedCtx) => {
     const id=parse(roomIdSchema,c.params.id);
