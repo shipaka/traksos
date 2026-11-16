@@ -102,7 +102,26 @@ export function Order({ id }: { id: string }) {
           <div className="between"><span>Исполнителю за выезд</span><b>{rub(d.cancelBreakdown.toPerformer)}</b></div>
           <div className="between"><span>Сервисный сбор удержан</span><b>{rub(d.cancelBreakdown.platformKeeps)}</b></div>
           <div className="between"><span>Расчётный возврат</span><b>{rub(d.cancelBreakdown.refund)}</b></div>
-          <span className="note">Это расчёт по условиям отмены, а не подтверждение фактического банковского возврата. Статус платежа и возврата проверяйте отдельно.</span>
+          <span className="note">Расчётный возврат — не подтверждение банковского возврата.</span>
+        {d.cancellationPayment && <div className="stack">
+          <b>Состояние оплаты и возврата</b>
+          <div className="between"><span>Платёж</span><b>{({
+            created: 'Создаётся', pending: 'Ожидает подтверждения',
+            held: 'Средства зарезервированы', captured: 'Оплачен',
+            cancelled: 'Отменён банком', refunded: 'Возвращён',
+            partially_refunded: 'Частично удержан',
+          } as Record<string, string>)[d.cancellationPayment.paymentStatus] ?? 'Проверяется'}</b></div>
+          {d.cancellationPayment.operationStatus && <div className="between"><span>Банковская операция</span><b>{({
+            prepared: 'Подготовлена', sending: 'В обработке',
+            needs_review: 'Нужна проверка администратором',
+            settled: 'Подтверждена банком',
+          } as Record<string, string>)[d.cancellationPayment.operationStatus] ?? 'Проверяется'}</b></div>}
+          {d.cancellationPayment.operationStatus === 'settled' && d.cancellationPayment.operationAction === 'capture' &&
+            <div className="between"><span>Фактически удержано</span><b>{rub(d.cancellationPayment.amountToCapture)}</b></div>}
+          {d.cancellationPayment.operationStatus === 'settled' && d.cancellationPayment.refundedAmount > 0 &&
+            <div className="between"><span>Не удержано из резерва</span><b>{rub(d.cancellationPayment.refundedAmount)}</b></div>}
+          <span className="note">Если средства были только зарезервированы, не удержанная сумма освобождается банком. Срок доступности зависит от банка.</span>
+        </div>}
         </div>}
       </div>}
     </main>
