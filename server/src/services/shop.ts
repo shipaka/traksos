@@ -483,21 +483,40 @@ export class ShopService {
   }
 
   async setStatus(actor: AuthUser | null, id: string, status: string, note?: string) {
-    const o = await this.db.one<any>('select * from shop_orders where id=$1', [id]);
-    if (!o) throw notFound('Заказ не найден');
-    if (!(NEXT[o.status] ?? []).includes(status)) throw conflict('bad_status', `Из «${SHOP_STATUS[o.status]}» в «${SHOP_STATUS[status] ?? status}» нельзя`);
-    await this.db.tx(async (q) => {
-      if (status === 'cancelled') {
-        // Вернуть зарезервированное на склад
-        for (const it of o.items) if (it.inStock) await q.query('update shop_products set stock = coalesce(stock, 0) + $2 where id=$1', [it.productId, it.qty]);
+    // Lock inside the transaction. Two requests must not both restock the same
+    // cancelled order or overwrite a courier's legitimate fulfillment state.
+    const updated=await this.db.tx(async q=>{
+      const o=await q.one<any>('select * from shop_orders where id=$1 for update',[id]);
+      if(!o)throw notFound('Заказ не найден');
+      if(!(NEXT[o.status]??[]).includes(status))
+        throw conflict('bad_status',`Из «${SHOP_STATUS[o.status]}» в «${SHOP_STATUS[status]??status}» нельзя`);
+      const assigned=await q.one<{run_id:string;run_status:string}>(
+        "select st.run_id,r.status as run_status from shop_courier_stops st "+
+        "join shop_courier_runs r on r.id=st.run_id where st.shop_order_id=$1 "+
+        "and r.status in ('planned','accepted','collecting','delivering') limit 1",[id]);
+      if(assigned)
+        throw conflict('courier_route_assigned',
+          'Заказ закреплён за курьерским рейсом. Сначала отмените несостоявшийся рейс либо оформите возврат через диспетчера');
+      if(status==='cancelled'){
+        // Restore reserved stock once; the row-level lock and status transition
+        // protect against two concurrent cancellation requests.
+        for(const item of o.items)if(item.inStock)
+          await q.query('update shop_products set stock=coalesce(stock,0)+$2 where id=$1',
+            [item.productId,item.qty]);
       }
-      await q.query(`update shop_orders set status=$2, cancel_reason = case when $2='cancelled' then $3 else cancel_reason end,
-                       admin_note = case when $2<>'cancelled' and $3::text is not null then $3 else admin_note end, updated_at=now() where id=$1`, [id, status, note?.trim() || null]);
-      await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [actor?.id ?? o.created_by, 'shop.status', id, { status, note }]);
+      const row=await q.one<any>(
+        "update shop_orders set status=$2,cancel_reason=case when $2='cancelled' then $3 else cancel_reason end,"+
+        "admin_note=case when $2<>'cancelled' and $3::text is not null then $3 else admin_note end,"+
+        "updated_at=now() where id=$1 returning *",[id,status,note?.trim()||null]);
+      await q.query('insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4)',
+        [actor?.id??o.created_by,'shop.status',id,{status,note}]);
+      return row;
     });
-    if (actor) await this.notifier.notify([o.client_id, o.created_by], { type: 'shop', shopOrderId: id },
-      { kind: 'normal', title: `Заказ в магазине №${o.number}: ${SHOP_STATUS[status].toLowerCase()}`, body: note?.trim() || (status === 'ready' ? 'Можно забирать' : ''), data: { shopOrderId: id } });
-    const r = await this.db.one('select * from shop_orders where id=$1', [id]);
-    return this.orderView(r);
+    if(actor)await this.notifier.notify([updated.client_id,updated.created_by],
+      {type:'shop',shopOrderId:id},
+      {kind:'normal',title:`Заказ в магазине №${updated.number}: ${SHOP_STATUS[status].toLowerCase()}`,
+        body:note?.trim()||(status==='ready'?'Можно забирать':''),
+        data:{shopOrderId:id}});
+    return this.orderView(updated);
   }
 }
