@@ -43,6 +43,7 @@ import { Shop, ShopCart, ShopHistory } from './screens/shop.tsx';
 import { DriverAir } from './screens/driverAir.tsx';
 import { TechnicalBase } from './screens/technicalBase.tsx';
 import { OrderTechBase } from './screens/orderTechBase.tsx';
+import { PartnerLevelView, PartnerLevelAdmin } from './screens/partnerLevel.tsx';
 import { Privacy } from './screens/privacy.tsx';
 import { ModCase, Appeal, MyReviews } from './screens/moderation.tsx';
 import { ModeratorDesk } from './screens/moderatorDesk.tsx';
@@ -239,6 +240,7 @@ function App() {
     case 'orders': screen = isCustomer ? <Orders as="client" /> : <main><div className="empty">Нет доступа к клиентским заявкам</div></main>; break;
     case 'garage': screen = isCustomer ? <Garage /> : <main><div className="empty">Нет доступа к гаражу</div></main>; break;
     case 'air': screen = me.roles.includes('driver') ? <DriverAir /> : <main><div className="empty">Водительский Эфир доступен только водителям.</div></main>; break;
+    case 'partner': screen = b==='admin' && isAdmin ? <PartnerLevelAdmin /> : (isPerformer||isService) ? <PartnerLevelView /> : <main><div className="empty">Партнёрская программа только для специалистов.</div></main>; break;
     case 'techbase': screen = me.roles.some(r => ['master','tow','service','admin'].includes(r))
       ? b==='order' && route[2] ? <OrderTechBase orderId={route[2]}/> : <TechnicalBase />
       : <main><div className="empty">ТехБаза доступна только подтверждённым специалистам.</div></main>; break;
@@ -352,11 +354,11 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
        ['/work/me/money', 'Финансы и выплаты'], ['/work/me/tax', 'Налоговый статус'],
        ['/work/me/level', 'Рейтинг и уровень'], ['/work/docs', 'Проверка и документы'],
        ['/reviews', 'Отзывы'], ['/invite', 'Пригласить партнёра'],
-       ['/work/jobs', 'История заявок'], ['/techbase', 'Профессиональная ТехБаза'], ['/profile', 'Аккаунт']]
+       ['/work/jobs', 'История заявок'], ['/partner', 'TrackSOS Партнёр · привилегии и обжалование'], ['/techbase', 'Профессиональная ТехБаза'], ['/profile', 'Аккаунт']]
     : mode === 'service'
       ? [...(me?.roles.some(r => r === 'master' || r === 'tow') ? [['/work', 'Выездной мастер — заявки']] as [string, string][] : []),
          ['/base', 'Заявки и история ремонтов'], ['/base/me', 'Карточка СТО'],
-         ['/base/money', 'Финансы'], ['/techbase', 'Профессиональная ТехБаза'], ['/profile', 'Аккаунт'],
+         ['/base/money', 'Финансы'], ['/partner', 'TrackSOS Партнёр'], ['/techbase', 'Профессиональная ТехБаза'], ['/profile', 'Аккаунт'],
          ['/invite', 'Пригласить партнёра']]
     : mode === 'inspection'
       ? [['/inspections', 'Кабинет техосмотра'], ['/profile', 'Аккаунт']]
@@ -374,6 +376,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/admin/section/access', 'Регистрация и доступы'],
          ['/admin/section/verify', 'Проверка исполнителей'],
          ['/techbase', 'Проверка материалов ТехБазы'],
+         ['/partner/admin', 'TrackSOS Партнёр · уровни и обращения'],
          ['/admin/section/bases', 'СТО и рембазы'],
          ['/admin/section/payments', 'Деньги и выплаты'],
          ['/admin/section/stats', 'Статистика'],
