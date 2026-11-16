@@ -97,8 +97,9 @@ export function registerKnowledgeReferenceRoutes(r:Router,db:Db){
       const row=await db.one<{source_kind:string;rights_verified_on:Date|null}>(
         'select source_kind,rights_verified_on from community_knowledge_sources where id=$1',[id]);
       if(!row)throw notFound('Источник не найден');
-      if(b.status==='portal_link' && row.source_kind!=='manufacturer_portal')
-        throw bad('invalid_source_status','Статус официального портала доступен только для ссылок на производителя');
+      if((b.status==='portal_link') !== (row.source_kind==='manufacturer_portal')
+        && b.status!=='withdrawn')
+        throw bad('invalid_source_status','Статус источника не соответствует его типу');
       if(b.status==='expert_approved' && (row.source_kind==='manufacturer_portal'||!row.rights_verified_on))
         throw bad('rights_unverified','Нужна подтверждённая лицензия и внешний эксперт для оценки иллюстрации');
       const result=await db.tx(async q=>{
