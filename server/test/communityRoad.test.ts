@@ -11,6 +11,7 @@ before(async()=>{
   client=await t.login('+79994330003');
   room=ok(await t.api('GET','/api/community/rooms',undefined,first.token)).rooms.find((x:any)=>x.slug==='drivers-russia').id;
   ok(await t.api('PUT','/api/community/me',{nickname:'Daf_78',shareCity:false},first.token));
+  ok(await t.api('POST','/api/community/rooms/'+room+'/join',{},first.token));
 });
 after(()=>t.close());
 
