@@ -24,10 +24,15 @@ export function AdminRouteMap({ orderId }: { orderId: string }) {
       typeof p.received_at === 'string' && !Number.isNaN(Date.parse(p.received_at)))
     .sort((a: RoutePoint, b: RoutePoint) => Date.parse(a.received_at) - Date.parse(b.received_at));
   if (!points.length) return <section className="card"><b>Карта GPS-маршрута</b><p className="note">Точек по этой заявке пока нет или истёк срок хранения (30 дней).</p></section>;
-  const minLat = Math.min(...points.map(p => Number(p.lat)));
-  const maxLat = Math.max(...points.map(p => Number(p.lat)));
-  const minLng = Math.min(...points.map(p => Number(p.lng)));
-  const maxLng = Math.max(...points.map(p => Number(p.lng)));
+  // A malformed or unexpectedly large API response must not overflow the
+  // JavaScript argument stack or freeze the administrator's dashboard.
+  let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
+  for (const p of points) {
+    minLat = Math.min(minLat, p.lat);
+    maxLat = Math.max(maxLat, p.lat);
+    minLng = Math.min(minLng, p.lng);
+    maxLng = Math.max(maxLng, p.lng);
+  }
   const padLat = Math.max(0.004, (maxLat - minLat) * 0.2);
   const padLng = Math.max(0.007, (maxLng - minLng) * 0.2);
   const south = Math.max(-85, minLat - padLat), north = Math.min(85, maxLat + padLat);
