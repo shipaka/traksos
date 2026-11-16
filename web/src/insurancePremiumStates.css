@@ -309,3 +309,50 @@
   .client-insurance-home-card{transition:none!important;}
   .client-insurance-home-card:hover{transform:none;}
 }
+
+
+/* Compact real insurance update above service tiles on PHONES only.
+   The approved cinematic hero is unchanged, not covered by a sticky overlay. */
+.client-insurance-mobile-quick {display:none;}
+@media(max-width:899px){
+  .client-insurance-mobile-quick {display:block;min-width:0;}
+  .client-insurance-mobile-strip {
+    --state:#7ee5ed;--state-bg:rgba(50,185,215,.16);
+    position:relative;display:flex;align-items:center;min-width:0;
+    gap:12px;padding:14px;border-radius:17px;
+    border:1px solid color-mix(in srgb,var(--state) 55%,#296186);
+    background:radial-gradient(ellipse at 100% 0%,var(--state-bg),transparent 60%),
+      linear-gradient(125deg,#123551,#0c2841);
+    text-decoration:none!important;color:#f5fdff!important;
+    box-shadow:0 12px 27px #0011254f;
+  }
+  .client-insurance-mobile-strip.tone-action{--state:#ffd08e;--state-bg:rgba(248,164,67,.12);}
+  .client-insurance-mobile-strip.tone-working{--state:#90caff;--state-bg:rgba(60,128,226,.16);}
+  .client-insurance-mobile-strip.tone-alert{--state:#ff9b9b;--state-bg:rgba(219,86,93,.16);}
+  .client-insurance-mobile-strip.tone-done{--state:#8ce6c4;--state-bg:rgba(42,182,142,.15);}
+  .client-insurance-mobile-icon {
+    flex:0 0 42px;width:42px;height:42px;border-radius:13px;
+    display:grid;place-items:center;font-size:25px;
+    border:1px solid color-mix(in srgb,var(--state) 44%,#1f496b);
+    color:var(--state);background:var(--state-bg);
+  }
+  .client-insurance-mobile-info {display:flex;flex-direction:column;gap:3px;min-width:0;flex:1;}
+  .client-insurance-mobile-eyebrow{
+    color:var(--state);font-size:10px;letter-spacing:.045em;font-weight:850;
+    overflow-wrap:anywhere;
+  }
+  .client-insurance-mobile-info strong {
+    font-size:clamp(13px,3.5vw,16px);
+    color:#fff;line-height:1.3;overflow-wrap:anywhere;
+  }
+  .client-insurance-mobile-info small{
+    color:#b5d7e8;font-size:11px;line-height:1.4;
+    overflow-wrap:anywhere;
+  }
+  .client-insurance-mobile-arrow {
+    color:var(--state);font-size:28px;line-height:1;font-weight:800;
+  }
+  .client-insurance-mobile-strip:focus-visible {
+    outline:2px solid #82eaf2;outline-offset:3px;
+  }
+}
