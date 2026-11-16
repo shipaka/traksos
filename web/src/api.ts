@@ -82,7 +82,12 @@ export function connectWs() {
   const base = API_URL || location.origin;
   const url = base.replace(/^http/, 'ws') + '/ws?token=' + encodeURIComponent(token);
   ws = new WebSocket(url);
-  ws.onopen = () => { retry = 0; };
+  ws.onopen = () => {
+    retry = 0;
+    // Reconcile unread publications immediately after a mobile network drop.
+    // Live WebSocket events only carry hints, not persistent message content.
+    listeners.forEach(l=>l({type:'connection_restored'}));
+  };
   ws.onmessage = (m) => {
     let e: any;
     try { e = JSON.parse(m.data); } catch { return; }
