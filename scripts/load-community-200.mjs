@@ -58,9 +58,9 @@ async function run(){
   const replayWallMs=Math.round(performance.now()-replayStart);
   for(let i=0;i<sent.length;i++)assert.equal(replay[i].id,sent[i].id);
 
-  const saved=await t.db.query<{n:number}>(
+  const saved=await t.db.query(
     'select count(*)::int as n from community_messages where room_id=$1',[room.id]);
-  const events=await t.db.query<{n:number}>(
+  const events=await t.db.query(
     'select count(*)::int as n from community_room_moderation_events where room_id=$1',[room.id]);
   assert.equal(saved[0].n,200,'each driver persisted exactly one message');
   assert.equal(events[0].n,200,'each public message produced exactly one event');
