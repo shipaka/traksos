@@ -78,8 +78,9 @@ export class PartnerLevelsService{
         'select verification,kind,specialties from performer_profiles where user_id=$1',[user.id]),
       this.db.one<{level:Level;reason:string;review_due_at:Date;created_at:Date}>(
         'select level,reason,review_due_at,created_at from partner_level_decisions where user_id=$1 and current=true',[user.id]),
-      this.db.one('select id,message,created_at from partner_level_appeals where user_id=$1 and status=$2',
-        [user.id,'open']),
+      this.db.one<{id:string;message:string;status:string;resolution:string|null;created_at:Date;resolved_at:Date|null}>(
+        'select id,message,status,resolution,created_at,resolved_at from partner_level_appeals '+
+        'where user_id=$1 order by created_at desc limit 1',[user.id]),
       this.metrics(user.id)
     ]);
     if(!profile)throw notFound('Профиль исполнителя не найден');
@@ -98,7 +99,8 @@ export class PartnerLevelsService{
       recommendation:suggestPartnerLevel(counts,profile.verification==='approved'),
       privileges:{priorityDispatch:false,reducedCommission:false,acceleratedPayout:false,
         note:'Права и комиссии ещё не активированы; уровень информационный'},
-      appeal,automaticDemotion:false
+      appeal:appeal?.status==='open'?appeal:null,
+      lastAppeal:appeal??null,automaticDemotion:false
     };
   }
   async appeal(user:AuthUser,message:string){
