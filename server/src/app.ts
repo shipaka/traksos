@@ -38,6 +38,7 @@ import { PrivacyService } from './services/privacy.ts';
 import { StandingService } from './services/standing.ts';
 import { ShopService } from './services/shop.ts';
 import { registerShopCourierRoutes } from './services/shopCourier.ts';
+import { registerShopCourierEconomicsRoutes } from './services/shopCourierEconomics.ts';
 import { ShopRegionService, registerShopRegionRoutes } from './services/shopRegion.ts';
 import { registerShopMerchandisingRoutes } from './services/shopMerchandising.ts';
 import { ShopCatalogService } from './services/shopCatalog.ts';
@@ -603,6 +604,7 @@ export function createApp(d: Deps) {
   // request light configuration then load only one page of products at a time.
   registerShopRegionRoutes(r, shopRegion);
   registerShopCourierRoutes(r, d.db, notifier);
+  registerShopCourierEconomicsRoutes(r, d.db, notifier);
   registerShopMerchandisingRoutes(r, d.db, notifier);
   r.get('/api/shop', true, (c: AuthedCtx) => shopRegion.catalog(c.user, shop, c.query.get('light') === '1'));
   r.get('/api/shop/search', true, async (c: AuthedCtx) => {
