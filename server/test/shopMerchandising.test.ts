@@ -8,6 +8,7 @@ before(async()=>{
  admin=await t.login('+79990000001');
  client=await t.login('+79993331111');
  other=await t.login('+79993331112');
+ ok(await t.api('PUT','/api/shop/region',{city:'Санкт-Петербург'},client.token));
  ok(await t.api('PUT','/api/admin/settings/shop',{enabled:true,delivery:true},admin.token));
  productId=ok(await t.api('POST','/api/admin/shop/products',
    {name:'Тестовый датчик давления',category:'sensors',price:100_000,stock:10},admin.token)).id;
