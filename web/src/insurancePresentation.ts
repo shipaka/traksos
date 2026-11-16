@@ -73,6 +73,12 @@ export function insurancePresentation(
     return generic[serviceStatus];
   if (insuranceStage && INSURANCE_STAGES.includes(insuranceStage as InsuranceStage))
     return (audience === 'partner' ? partner : client)[insuranceStage as InsuranceStage];
+  // Legacy manually assigned requests don't have a multi-step insurance stage.
+  // Keep their historical business labels while making the partner's next action clear.
+  if (audience === 'partner' && serviceStatus === 'completed')
+    return {...generic.completed,label:'Полис оформлен'};
+  if (audience === 'partner' && serviceStatus === 'sent_to_partner')
+    return {label:'Новая заявка ожидает решения',detail:'Откройте заявку, проверьте документы и определите следующий шаг.',tone:'action',next:'Рассмотрите поступившую заявку'};
   return generic[serviceStatus || 'submitted'] ?? generic.submitted;
 }
 
