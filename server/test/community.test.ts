@@ -213,3 +213,64 @@ test('privacy export includes new community data; scheduled erasure purges nickn
   assert.equal((await t.db.query('select * from community_memberships where user_id=$1',[driver.id])).length,0);
   assert.equal((await t.db.one('select status from users where id=$1',[driver.id]))?.status,'blocked');
 });
+
+
+test('a 650-event room backlog can be resumed page by page with no skipped publications',async()=>{
+  const author=await t.login('+79994440991','driver');
+  const reader=await t.login('+79994440992','driver');
+  const created=ok(await t.api('POST','/api/admin/community/rooms',{
+    slug:'air-backlog-test',title:'Тест большого Эфира',kind:'route',audience:'driver'
+  },admin.token));
+  const path='/api/community/rooms/'+created.id;
+  // Bulk-insert on the isolated test database; no 15-second user quota bypass
+  // exists in production API. Event ledger is ordered inside one DB statement.
+  const inserted=await t.db.query<{id:string}>(`
+    with msgs as (
+      insert into community_messages(room_id,sender_id,body,client_nonce,moderation_state)
+      select $1,$2,'Тест восстановления эфира '||n,gen_random_uuid(),'published'
+      from generate_series(1,650) as n
+      returning id
+    )
+    insert into community_room_moderation_events(room_id,message_id,previous_state,moderation_state)
+    select $1,id,'created','published' from msgs order by id returning id::text as id`,
+    [created.id,author.id]);
+  assert.equal(inserted.length,650);
+  const snapshot=ok(await t.api('GET',path+'/messages?recent=1&limit=50',undefined,reader.token));
+  assert.equal(snapshot.messages.length,50,'mobile initial snapshot stays bounded');
+  assert.ok(BigInt(snapshot.moderationCursor)>0n);
+  let after='0',seen=0,pages=0;
+  const allRevisions=new Set<string>();
+  while(true){
+    pages++;
+    assert.ok(pages<=10,'650 events should drain in seven bounded API pages');
+    const feed=ok(await t.api('GET',
+      path+'/moderation-events?after='+after+'&limit=100',undefined,reader.token));
+    assert.ok(feed.changes.length<=100);
+    for(const event of feed.changes){
+      assert.equal(event.moderation_state,'published');
+      assert.ok(!('sender_id' in event.message));
+      assert.ok(!('phone' in event.message));
+      assert.ok(BigInt(event.revision)>BigInt(after));
+      assert.ok(!allRevisions.has(event.revision),'event revision must never repeat');
+      allRevisions.add(event.revision);
+    }
+    seen+=feed.changes.length;
+    if(!feed.hasMore)break;
+    assert.ok(BigInt(feed.nextCursor)>BigInt(after));
+    after=feed.nextCursor;
+  }
+  assert.equal(seen,650);
+  assert.equal(pages,7);
+  // A removal after reconnect must still appear after the last backlog cursor.
+  const one=await t.db.one<{id:string}>(
+    'select id::text as id from community_messages where room_id=$1 order by id limit 1',[created.id]);
+  assert.ok(one);
+  const last=ok(await t.api('GET',
+    path+'/moderation-events?after='+after+'&limit=100',undefined,reader.token)).nextCursor;
+  ok(await t.api('POST','/api/admin/community/messages/'+one!.id+'/moderate',
+    {status:'hidden'},admin.token));
+  const removed=ok(await t.api('GET',
+    path+'/moderation-events?after='+last,undefined,reader.token));
+  assert.ok(removed.changes.some((e:any)=>e.id===one!.id&&e.moderation_state==='hidden'));
+  assert.ok(removed.changes.every((e:any)=>!('body' in e)));
+});
