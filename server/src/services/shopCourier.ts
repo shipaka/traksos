@@ -3,6 +3,7 @@ import type { Db } from '../db/index.ts';
 import type { Router, AuthedCtx, AuthUser } from '../http/router.ts';
 import { parse, bad, forbidden, notFound, conflict, HttpError } from '../http/router.ts';
 import type { Notifier } from './notify.ts';
+import { addressDeclaredInSpb } from './shopRegion.ts';
 
 /** Only an admin can grant a courier entitlement; no public courier signup. */
 const id=z.string().uuid();
