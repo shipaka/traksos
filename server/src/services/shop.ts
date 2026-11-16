@@ -95,6 +95,18 @@ export class ShopService {
   async saveProduct(actor: AuthUser, id: string | null, p: ProductInput) {
     if (p.category && !SHOP_CATEGORIES[p.category]) throw bad('bad_category', 'Нет такой категории');
     const photo = p.photoDataUrl ? this.decodePhoto(p.photoDataUrl) : null;
+    // A verified purchase cost is binding: a casual manual price edit cannot
+    // bypass the approved >=30% markup (or a documented admin exception).
+    if (id && p.price != null) {
+      const cost = await this.db.one<{purchase_cost_kopecks:number;markup_bps:number}>(
+        'select purchase_cost_kopecks::integer,markup_bps from shop_product_costing where product_id=$1',[id]);
+      if (cost) {
+        const floor = Math.ceil(cost.purchase_cost_kopecks*(10000+cost.markup_bps)/10000);
+        if (p.price < floor)throw conflict('price_below_approved_markup',
+          'Цена ниже подтверждённой наценки. Изменение закупки и исключения оформляются в калькуляторе себестоимости.');
+      }
+    }
+
     let row: any;
     if (!id) {
       if (!p.name?.trim() || p.price == null) throw bad('need_name', 'Укажите название и цену');
@@ -342,8 +354,12 @@ export class ShopService {
     const where = filters.join(' and ');
     const take = 20;
     const rows = await this.db.query<any>(
-      `select * from shop_orders where ${where} order by created_at desc, id desc
-       limit $${params.length + 1} offset $${params.length + 2}`, [...params, take + 1, safePage * take]);
+      `select o.*,ev.status as supplier_status,ev.event_time as supplier_status_at from shop_orders o
+       left join lateral (select status,event_time from shop_supplier_order_events e
+         where e.shop_order_id=o.id order by e.event_time desc,e.id desc limit 1) ev on true
+       where ${where.split(' and ').map(x=>x.replace(/\bclient_id=/g,'o.client_id=').replace(/\bcreated_by=/g,'o.created_by=').replace(/\bvehicle_id=/g,'o.vehicle_id=')).join(' and ')}
+       order by o.created_at desc,o.id desc
+       limit ${params.length + 1} offset ${params.length + 2}`, [...params, take + 1, safePage * take]);
     return { items: rows.slice(0, take).map((o: any) => this.orderView(o)), hasMore: rows.length > take, page: safePage };
   }
 
@@ -390,6 +406,18 @@ export class ShopService {
         `insert into shop_orders(client_id, created_by, items, goods_total, delivery, delivery_price, total, address, order_id, payment, comment, vehicle_id, vehicle_snapshot)
          values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) returning *`,
         [clientId, user.id, JSON.stringify(items), goods, p.delivery, dprice, goods + dprice, p.address?.trim() || null, linkOrder, p.payment ?? 'on_receipt', p.comment?.trim() || null, vehicle?.id ?? null, vehicle ? JSON.stringify({ brand: vehicle.brand, model: vehicle.model, plate: vehicle.plate, trailerPlate: vehicle.trailer_plate }) : null]);
+      // Immutable per-item purchase-cost snapshot for route profitability;
+      // unknown costs stay unknown and never become a fictional zero.
+      const confirmed = await q.query<{product_id:string;purchase_cost_kopecks:number;markup_bps:number}>(
+        'select product_id,purchase_cost_kopecks::integer,markup_bps from shop_product_costing where product_id=any($1::uuid[])',
+        [[...want.keys()]]);
+      const known = new Map(confirmed.map(x=>[x.product_id,x]));
+      for (const it of items) {
+        const cost = known.get(it.productId);
+        if (!cost) continue;
+        await q.query('insert into shop_order_cost_snapshots(shop_order_id,product_id,qty,purchase_unit_kopecks,retail_unit_kopecks,target_markup_bps) values($1,$2,$3,$4,$5,$6)',
+          [row.id,it.productId,it.qty,cost.purchase_cost_kopecks,it.price,cost.markup_bps]);
+      }
       return row;
     }).then(async (row: any) => {
       const staff = (await this.db.query<{ id: string }>(`select id from users where roles && '{admin}'::text[]`)).map((r) => r.id);
@@ -403,13 +431,27 @@ export class ShopService {
     return {
       id: o.id, number: o.number, status: o.status, statusName: SHOP_STATUS[o.status], items: o.items, goodsTotal: o.goods_total, delivery: o.delivery,
       deliveryPrice: o.delivery_price, total: o.total, address: o.address, orderId: o.order_id, payment: o.payment, comment: o.comment,
-      adminNote: o.admin_note, cancelReason: o.cancel_reason, vehicleId: o.vehicle_id ?? null, vehicle: o.vehicle_snapshot ?? null, createdAt: o.created_at, updatedAt: o.updated_at,
+      adminNote: o.admin_note, cancelReason: o.cancel_reason,
+      supplierProgress: o.supplier_status ? {
+        status: o.supplier_status, updatedAt: o.supplier_status_at,
+        display: {
+          requested:'Ожидаем подтверждения',accepted:'Принят поставщиком',
+          processing:'Заказ обрабатывается',partner_accepted:'Поставщик подтвердил заказ',
+          awaiting_assembly:'Ожидает сборки',assembling:'Собирается',
+          assembled:'Собран поставщиком',dispatched:'Передан на наш склад',
+          cancelled:'Поставщик отменил заказ — уточняем причину',unknown:'Уточняем статус'
+        }[o.supplier_status as string] ?? 'Уточняем статус'
+      } : null,
+      vehicleId: o.vehicle_id ?? null, vehicle: o.vehicle_snapshot ?? null, createdAt: o.created_at, updatedAt: o.updated_at,
     };
   }
 
   async myOrders(user: AuthUser) {
     const rows = await this.db.query(
-      `select * from shop_orders where client_id=$1 ${user.owner_id ? 'and created_by=$2' : ''} order by created_at desc limit 50`,
+      `select o.*,ev.status as supplier_status,ev.event_time as supplier_status_at from shop_orders o
+       left join lateral (select status,event_time from shop_supplier_order_events e
+        where e.shop_order_id=o.id order by e.event_time desc,e.id desc limit 1) ev on true
+       where o.client_id=$1 ${user.owner_id ? 'and o.created_by=$2' : ''} order by o.created_at desc limit 50`,
       user.owner_id ? [user.owner_id, user.id] : [user.id]);
     return rows.map((o) => this.orderView(o));
   }
