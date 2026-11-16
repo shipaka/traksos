@@ -31,6 +31,13 @@ test('en-route cancellation never escalates to 100 percent from an unverified GP
     }
     await t.db.query('update order_dispatch set distance_km=100 where order_id=$1 and performer_id=$2',
       [id, worker.id]);
+    // A rejected sample and another worker's legacy sample must not inflate
+    // the cancellation audit, even if present in the same order history.
+    const otherWorker = await t.login('+79998885573', 'master');
+    await t.db.query(
+      `insert into performer_route_samples(order_id,performer_id,lat,lng,accepted)
+       values($1,$2,59.9,30.3,true),($1,$3,59.9,30.3,false),($1,$3,59.9,30.3,true)`,
+      [id, otherWorker.id, worker.id]);
     const cancelled = ok(await t.api('POST', `/api/orders/${id}/cancel`,
       { reason: 'Передумал' }, client.token));
     assert.equal(cancelled.cancelStage, 'en_route_first_half');
@@ -40,7 +47,7 @@ test('en-route cancellation never escalates to 100 percent from an unverified GP
     assert.equal(cancelled.cancelBreakdown.stageEvidence.gpsVerified, false);
     assert.equal(cancelled.cancelBreakdown.stageEvidence.routeHalfVerified, false);
     assert.equal(typeof cancelled.cancelBreakdown.stageEvidence.sampleCount, 'number');
-    assert.ok(cancelled.cancelBreakdown.stageEvidence.sampleCount >= 0);
+    assert.equal(cancelled.cancelBreakdown.stageEvidence.sampleCount, 1);
     assert.equal(cancelled.cancelBreakdown.stageEvidence.note, 'GPS samples are not verified route progress');
     const audit = await t.db.one<any>(
       "select data from order_events where order_id=$1 and type='cancelled' order by id desc limit 1", [id]);
