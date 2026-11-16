@@ -114,7 +114,7 @@ export function registerCommunityDirectRoutes(r:Router,db:Db,notifier:Notifier){
     const b=parse(z.object({text:body,clientNonce:uuid}),c.body);
     if(numbers.test(b.text))throw bad('contacts_forbidden','Публикация номеров запрещена');
     await ensureAlias(db,c.user);
-    const saved=await db.tx(async q=>{
+    const messageInsert=await db.tx(async q=>{
       await q.query('select pg_advisory_xact_lock(hashtext($1))',['dm:'+c.user.id]);
       const allowed=await q.one("select t.id from community_dm_threads t join users a on a.id=t.user_a join users b on b.id=t.user_b "+
         "where t.id=$1 and t.status='accepted' and a.status='active' and b.status='active' and 'driver'=any(a.roles) and 'driver'=any(b.roles) "+
@@ -125,16 +125,19 @@ export function registerCommunityDirectRoutes(r:Router,db:Db,notifier:Notifier){
         [c.user.id,b.clientNonce]);
       if(prev){
         if(prev.thread_id!==t.id||prev.body!==b.text)throw conflict('nonce_reused','Идентификатор уже использован');
-        return prev;
+        return {message:prev,created:false};
       }
       const quota=await q.one<{n:number}>("select count(*)::int as n from community_dm_messages where sender_id=$1 and created_at>now()-interval '15 seconds'",[c.user.id]);
       if((quota?.n??0)>=5)throw new HttpError(429,'slow_down','Подождите перед отправкой');
-      return q.one<{id:string;thread_id:string;body:string;moderation_state:string;created_at:Date}>(
+      const message=await q.one<{id:string;thread_id:string;body:string;moderation_state:string;created_at:Date}>(
         'insert into community_dm_messages(thread_id,sender_id,body,client_nonce,moderation_state) values($1,$2,$3,$4,$5) returning id::text as id,thread_id,body,moderation_state,created_at',
         [t.id,c.user.id,b.text,b.clientNonce,abuse.test(b.text)||contacts.test(b.text)?'pending':'published']);
+      return {message,created:true};
     });
+    const saved=messageInsert.message;
     if(!saved)throw new Error('Failed to store private message');
-    if(saved.moderation_state==='published' && !await blocked(db,t.user_a,t.user_b))
+    // A repeated network request must not notify the other driver again.
+    if(messageInsert.created && saved.moderation_state==='published' && !await blocked(db,t.user_a,t.user_b))
       notifier.live([other(t,c.user.id)],{type:'community_direct_message',threadId:t.id,id:saved.id});
     return {id:saved.id,status:saved.moderation_state,createdAt:saved.created_at};
   });
