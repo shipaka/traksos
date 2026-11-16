@@ -34,6 +34,18 @@ before(async()=>{
 });
 after(()=>t.close());
 
+test('buyer tracking starts with an honest awaiting-assignment state; other buyers get 404',async()=>{
+ const own=ok(await t.api('GET','/api/shop/orders/'+order1+'/courier',undefined,client1.token));
+ assert.equal(own.status,'awaiting_assignment');
+ assert.equal(own.live,false);
+ assert.equal(own.location,null);
+ assert.equal(own.etaMinutes,null);
+ assert.equal((await t.api('GET','/api/shop/orders/'+order2+'/courier',undefined,client1.token)).status,404);
+ assert.equal((await t.api('GET','/api/shop/orders/'+order1+'/courier',undefined,outsider.token)).status,404);
+ const timeline=ok(await t.api('GET','/api/shop/orders/'+order1+'/delivery-history',undefined,client1.token));
+ assert.deepEqual(timeline.events,[]);
+});
+
 test('courier role admin-only, not self-registering or regular cargo carrier',async()=>{
  assert.equal((await t.api('GET','/api/courier/runs',undefined,driver.token)).status,403);
  assert.equal((await t.api('POST','/api/admin/shop/couriers',
