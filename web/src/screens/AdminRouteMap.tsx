@@ -48,7 +48,12 @@ export function AdminRouteMap({ orderId }: { orderId: string }) {
     return elapsedMs <= 0 || elapsedMs > gapThresholdMs ||
       distanceKm(a, b) / (elapsedMs / 3_600_000) > 180;
   };
-  const gapCount = points.slice(1).filter((p, i) => breaksSegment(points[i], p)).length;
+  let gapCount = 0;
+  let straightLineKm = 0;
+  for (let i = 1; i < points.length; i++) {
+    if (breaksSegment(points[i - 1], points[i])) gapCount++;
+    else straightLineKm += distanceKm(points[i - 1], points[i]);
+  }
   const trace = points.map((p, i) => {
     const gap = i > 0 && breaksSegment(points[i - 1], p);
     return `${i === 0 || gap ? 'M' : 'L'}${x(p).toFixed(2)},${y(p).toFixed(2)}`;
@@ -61,7 +66,7 @@ export function AdminRouteMap({ orderId }: { orderId: string }) {
     Number(last.lat).toFixed(6) + '/' + Number(last.lng).toFixed(6);
   return <section className="card stack" aria-label="Карта истории GPS исполнителя">
     <div className="between"><b>Маршрут исполнителя · №{route.data.number}</b><span className="pill">Только администратор</span></div>
-    <p className="note">Принятых GPS-точек: {points.length}. Разрывов маршрута (паузы, скачки GPS): {gapCount}. Первая: {fmtTime(first.received_at)}. Последняя: {fmtTime(last.received_at)}.</p>
+    <p className="note">Принятых GPS-точек: {points.length}. Разрывов маршрута (паузы, скачки GPS): {gapCount}. Сумма прямых отрезков между достоверно последовательными точками: {straightLineKm.toFixed(1)} км (не дорожный пробег). Первая: {fmtTime(first.received_at)}. Последняя: {fmtTime(last.received_at)}.</p>
     <div style={{height:360,borderRadius:14,overflow:'hidden',background:'#152638'}}>
       <iframe title="Карта OpenStreetMap района движения" src={url} loading="lazy" referrerPolicy="no-referrer"
         style={{width:'100%',height:'100%',border:0}}/>
