@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { get, post, fmtPhone } from '../api.ts';
 import { useAction, useLoad, useToast } from '../ui.tsx';
 
@@ -32,6 +32,12 @@ export function AdminAccountAccess() {
   const { busy, run } = useAction();
   const toast = useToast();
   const reports = useLoad<DevReport[]>(() => get('/api/admin/developer-reports'), []);
+  // Deliveries happen on the server even if this screen remains open. Refresh
+  // only this lightweight list; clean up the timer when leaving the admin tab.
+  useEffect(() => {
+    const timer = window.setInterval(() => { void reports.reload(); }, 15_000);
+    return () => window.clearInterval(timer);
+  }, [reports.reload]);
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
   const [roles, setRoles] = useState<string[]>(['client']);
@@ -146,11 +152,11 @@ export function AdminAccountAccess() {
       : reports.data.map(report => <div key={report.id} className="card stack">
         <div className="between">
           <b>{REPORT_TOPICS.find(x => x.value === report.category)?.label ?? report.category}</b>
-          <span className={'pill ' + (report.status === 'resolved' ? 'good' : '')}>{report.status === 'resolved' ? 'Решено' : 'Ждёт передачи'}</span>
+          <span className={'pill ' + (report.status === 'resolved' ? 'good' : '')}>{report.status === 'resolved' ? 'Решено' : report.delivery_sent_at ? 'В работе' : 'Открыто'}</span>
         </div>
         <span className="note">{new Date(report.created_at).toLocaleString('ru-RU')}{report.phone ? ' · ' + fmtPhone(report.phone) : ''}</span>
         <span className="note" role="status">
-          {report.delivery_sent_at ? 'Уведомление разработчику доставлено'
+          {report.delivery_sent_at ? 'Уведомление принято закрытым каналом'
             : !report.delivery_configured ? 'Канал не подключён — обращение хранится внутри TrakSOS'
             : report.status === 'resolved' ? 'Закрыто без внешнего уведомления'
             : report.delivery_attempts > 0 ? 'Повторная отправка запланирована'
