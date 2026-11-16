@@ -621,7 +621,18 @@ export class OrdersService {
       await q.query(`update order_dispatch set status='cancelled' where order_id=$1 and status in ('queued','ringing','bidding')`, [orderId]);
       await q.query(`update bids set status='withdrawn' where order_id=$1 and status='active'`, [orderId]);
       if (o.performer_id) await q.query(`update performer_profiles set line_status='online' where user_id=$1 and line_status='on_job'`, [o.performer_id]);
-      await this.event(q, orderId, user.id, 'cancelled', { reason, stage, ...splitInfo });
+      // Persist why the financial tier was selected. An en-route order has
+      // no verified route-progress evidence yet, regardless of the last GPS.
+      // This record is for disputes and audit, not a claim of GPS verification.
+      const stageEvidence = o.status === 'en_route'
+        ? { source: 'status_only', gpsVerified: false, routeHalfVerified: false,
+            note: 'No timestamped, validated route progress available' }
+        : o.status === 'arrived'
+          ? { source: 'performer_arrival_action', gpsVerified: false,
+              routeHalfVerified: false, note: 'Arrival was manually declared' }
+          : { source: 'order_status', gpsVerified: false, routeHalfVerified: false };
+      await this.event(q, orderId, user.id, 'cancelled',
+        { reason, stage, ...splitInfo, stageEvidence });
       await this.payments.onCancelled({ ...o, status: 'cancelled' }, stage, q);
     });
     // Cancellation's provider operation runs strictly after this transaction.
