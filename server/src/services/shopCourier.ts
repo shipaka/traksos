@@ -34,7 +34,10 @@ async function runSummary(db:Db,run:Run) {
     stops:stops.map(x=>({id:x.id,seq:x.seq,status:x.status,orderNumber:x.number,
       recipientName:['delivered','failed'].includes(x.status)?null:(x.recipient_name??'Получатель'),
       address:['delivered','failed'].includes(x.status)?null:x.address,
-      items:x.items,comment:['delivered','failed'].includes(x.status)?null:(x.comment??null)}))};
+      items:Array.isArray(x.items)?x.items.map((item:any)=>({
+        name:String(item.name??'Товар'),brand:item.brand??null,article:item.article??null,
+        qty:Number(item.qty??0)
+      })):[],comment:['delivered','failed'].includes(x.status)?null:(x.comment??null)}))};
 }
 async function alert(db:Db,notify:Notifier,shopOrderId:string,body:string) {
   const row=await db.one<{client_id:string;created_by:string;number:number}>(
