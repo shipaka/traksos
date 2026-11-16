@@ -149,6 +149,12 @@ select.field { appearance: none; }
     box-shadow:0 14px 30px rgba(0,9,27,.5),inset 0 1px 0 rgba(255,255,255,.07);
     pointer-events:none;
   }
+  /* Roadside SOS order screens use a second fixed action bar. */
+  body:has(.callbar-in) .toast{
+    bottom:calc(max(12px,env(safe-area-inset-bottom)) + 212px);
+  }
+  /* Incoming emergency calls take precedence over transient messages. */
+  body:has(.call) .toast{visibility:hidden;}
 }
 
 .dot { width: 9px; height: 9px; border-radius: 5px; display: inline-block; background: #5A5F66; }
