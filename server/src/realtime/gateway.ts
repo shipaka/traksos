@@ -52,12 +52,19 @@ export function attachRealtimeGateway(server:http.Server,app:RealtimeGatewayDepe
         app.hub.add(user.id,ws);
         ws.send(JSON.stringify({type:'hello',userId:user.id}));
         const ping=setInterval(()=>{if(ws.readyState===1)ws.ping()},pingEveryMs);
+        let validating=false;
         const recheck=setInterval(()=>{
-          if(ws.readyState!==1)return;
+          if(ws.readyState!==1||validating)return;
+          validating=true;
+          // Never queue overlapping auth checks for a stalled PostgreSQL pool:
+          // 200 connected drivers must not multiply background DB load.
           void access.validate().then(current=>{
+            if(ws.readyState!==1)return;
             if(!current||current.id!==user.id||[...current.roles].sort().join('|')!==roles)
               ws.close(1008,'Access changed');
-          }).catch(()=>ws.close(1008,'Authentication unavailable'));
+          }).catch(()=>{
+            if(ws.readyState===1)ws.close(1008,'Authentication unavailable');
+          }).finally(()=>{validating=false});
         },reauthEveryMs);
         // Administrator sandbox sessions must not survive preview expiry.
         const previewTimer=previewUntil
