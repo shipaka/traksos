@@ -69,15 +69,12 @@ export function workshopOpenNow(w:Pick<Workshop,'time_zone'|'hours'|'closed_days
  * The existing SOS dispatch independently rechecks eligibility when booked.
  */
 export function registerRealNearbyHelpRoutes(r:Router,db:Db,now:()=>Date){
-  r.get('/api/community/nearby-help',['driver'],async(c:AuthedCtx)=>{
+  r.post('/api/community/nearby-help',['driver'],async(c:AuthedCtx)=>{
     const args=parse(z.object({
-      lat:z.coerce.number().min(-90).max(90),
-      lng:z.coerce.number().min(-180).max(180),
-      accuracyMeters:z.coerce.number().int().min(1).max(accuracyLimit)
-    }),{
-      lat:c.query.get('lat')??undefined,lng:c.query.get('lng')??undefined,
-      accuracyMeters:c.query.get('accuracyMeters')??undefined
-    });
+      lat:z.number().min(-90).max(90),
+      lng:z.number().min(-180).max(180),
+      accuracyMeters:z.number().int().min(1).max(accuracyLimit)
+    }),c.body);
     // Precision of a location fix limits whether any location-specific advertising is truthful.
     const checkedAt=now();
     const maxLat=radiusKm/111.2,maxLng=Math.min(180,radiusKm/(111.2*Math.max(0.15,Math.cos(args.lat*Math.PI/180))));
@@ -121,7 +118,8 @@ export function registerRealNearbyHelpRoutes(r:Router,db:Db,now:()=>Date){
         action:'#/sos'}
     ];
     const cards:Card[]=types.flatMap(({kind,title,which,note,action})=>{
-      const found=eligible.filter(x=>which(x.p));
+      const found=eligible.filter(x=>which(x.p)&&
+        (x.p.kind!=='master'||(x.p.specialties??[]).some(sp=>sp!=='consult')));
       if(!found.length)return [];
       const skills=[...new Set(found.flatMap(x=>
         x.p.kind==='tow'?['Эвакуация']:
