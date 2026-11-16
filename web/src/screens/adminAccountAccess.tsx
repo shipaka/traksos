@@ -24,7 +24,9 @@ const REPORT_TOPICS = [
 type ReportTopic = typeof REPORT_TOPICS[number]['value'];
 type AccountResult = { user: { id: string; phone: string; name: string | null; roles: string[] }; activation: 'sms_reset' };
 type DevReport = { id: string; user_id: string | null; phone: string | null; category: string;
-  details: string; status: string; created_at: string; user_name: string | null };
+  details: string; status: string; created_at: string; user_name: string | null;
+  delivery_configured: boolean; delivery_sent_at: string | null; delivery_attempts: number;
+  delivery_next_at: string; delivery_last_error: string | null };
 
 export function AdminAccountAccess() {
   const { busy, run } = useAction();
@@ -58,7 +60,7 @@ export function AdminAccountAccess() {
       setLastReport(result.id);
       setDetails('');
       reports.reload();
-      toast('Сохранено во внутренней очереди для разработчика');
+      toast('Обращение сохранено. Если канал подключён, уведомление отправится автоматически.');
     }
   }
 
@@ -134,7 +136,7 @@ export function AdminAccountAccess() {
         Создать обращение разработчику
       </button>
       {lastReport && <span className="note" role="status">Внутреннее обращение № {lastReport} сохранено в очереди.</span>}
-      <span className="note">Сейчас обращения сохраняются во внутренней очереди. Автоматическая отправка в почту или GitHub пока не настроена. Для передачи используйте кнопку «Скопировать» и закрытый канал — не размещайте телефоны в публичных задачах.</span>
+      <span className="note">Обращения надёжно сохраняются в админке. При наличии настроенного закрытого HTTPS-канала сервер сам передаёт разработчику только номер обращения и категорию — без телефона, паролей и описания проблемы. Без подключения канала пользуйтесь копированием в закрытый чат.</span>
     </div>
 
     <div className="card stack">
@@ -147,6 +149,15 @@ export function AdminAccountAccess() {
           <span className={'pill ' + (report.status === 'resolved' ? 'good' : '')}>{report.status === 'resolved' ? 'Решено' : 'Ждёт передачи'}</span>
         </div>
         <span className="note">{new Date(report.created_at).toLocaleString('ru-RU')}{report.phone ? ' · ' + fmtPhone(report.phone) : ''}</span>
+        <span className="note" role="status">
+          {report.delivery_sent_at ? 'Уведомление разработчику доставлено'
+            : !report.delivery_configured ? 'Канал не подключён — обращение хранится внутри TrakSOS'
+            : report.status === 'resolved' ? 'Закрыто без внешнего уведомления'
+            : report.delivery_attempts > 0 ? 'Повторная отправка запланирована'
+            : 'Ожидает автоматической отправки'}
+          {report.delivery_configured && !report.delivery_sent_at && report.delivery_attempts > 0
+            ? ' · попыток: ' + report.delivery_attempts : ''}
+        </span>
         <span style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{report.details}</span>
         <div className="row">
           <button type="button" className="btn ghost small" onClick={() => copyReport(report)}>Скопировать для разработчика</button>
