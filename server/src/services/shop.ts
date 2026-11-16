@@ -493,7 +493,7 @@ export class ShopService {
       const assigned=await q.one<{run_id:string;run_status:string}>(
         "select st.run_id,r.status as run_status from shop_courier_stops st "+
         "join shop_courier_runs r on r.id=st.run_id where st.shop_order_id=$1 "+
-        "and r.status in ('planned','accepted','collecting','delivering') limit 1",[id]);
+        "and r.status in ('planned','accepted','collecting','delivering','returning') limit 1",[id]);
       if(assigned)
         throw conflict('courier_route_assigned',
           'Заказ закреплён за курьерским рейсом. Сначала отмените несостоявшийся рейс либо оформите возврат через диспетчера');
