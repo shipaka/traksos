@@ -53,6 +53,8 @@ create table if not exists community_reports (
  unique(message_id,reporter_id)
 );
 
+create index if not exists community_reports_reporter on community_reports(reporter_id);
+
 create table if not exists community_knowledge (
  id uuid primary key default gen_random_uuid(),
  author_id uuid not null references users(id),
@@ -73,6 +75,9 @@ create table if not exists community_knowledge (
  created_at timestamptz not null default now(),
  updated_at timestamptz not null default now()
 );
+create index if not exists community_knowledge_author on community_knowledge(author_id);
+create index if not exists community_knowledge_rights_reviewer on community_knowledge(rights_reviewer) where rights_reviewer is not null;
+create index if not exists community_knowledge_technical_reviewer on community_knowledge(technical_reviewer) where technical_reviewer is not null;
 create index if not exists community_knowledge_search on community_knowledge(lower(make),lower(subsystem),model_year) where rights_review='approved' and technical_review='approved';
 
 -- Only real initial nationwide rooms; do NOT advertise hundreds of empty cities or routes.
