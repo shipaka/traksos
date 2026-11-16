@@ -107,7 +107,7 @@ export function AdminRouteMap({ orderId }: { orderId: string }) {
       <p className="note">Показаны серверные времена получения координат. Разрывы отмечены отдельно; журнал не подтверждает прибытие и не заменяет проверку подлинности GPS.</p>
       <div style={{overflowX:'auto'}}>
         <table style={{width:'100%',textAlign:'left',fontSize:13}}>
-          <thead><tr><th>Время</th><th>Широта</th><th>Долгота</th><th>Связь с предыдущей</th></tr></thead>
+          <thead><tr><th>Время</th><th>Широта</th><th>Долгота</th><th>Связь с предыдущей</th><th>Карта</th></tr></thead>
           <tbody>{points.slice(-20).map((point, index) => {
             const originalIndex = points.length - Math.min(points.length, 20) + index;
             const hasPrevious = originalIndex > 0;
@@ -117,6 +117,8 @@ export function AdminRouteMap({ orderId }: { orderId: string }) {
               <td>{point.lat.toFixed(6)}</td>
               <td>{point.lng.toFixed(6)}</td>
               <td>{!hasPrevious ? 'Начало' : interrupted ? 'Разрыв / скачок' : 'Последовательно'}</td>
+              <td><a href={`https://www.openstreetmap.org/?mlat=${point.lat.toFixed(6)}&mlon=${point.lng.toFixed(6)}#map=16/${point.lat.toFixed(6)}/${point.lng.toFixed(6)}`}
+                target="_blank" rel="noopener noreferrer" aria-label={`Открыть GPS-точку ${originalIndex + 1} на карте`}>На карте</a></td>
             </tr>;
           })}</tbody>
         </table>
