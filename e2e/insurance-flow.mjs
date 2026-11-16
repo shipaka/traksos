@@ -193,7 +193,7 @@ try{
   await clientPage.getByText('Предложения готовы — выберите вариант',{exact:true}).waitFor();
   await clientPage.getByRole('button',{name:'Выбрать',exact:true}).first().click();
   await clientPage.getByRole('button',{name:'Оформить выбранный вариант'}).click();
-  await clientPage.getByText('Клиент выбрал предложение').first().waitFor();
+  await clientPage.locator('.insurance-live-status').getByText('Вы выбрали страховое предложение',{exact:true}).waitFor();
   const agentCtx=await browser.newContext({...devices['Pixel 7'],deviceScaleFactor:1,locale:'ru-RU'});
   const agentPage=await agentCtx.newPage();
   await agentPage.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','insurer')},partner.token);
@@ -201,10 +201,29 @@ try{
   await acceptPendingOffers(agentPage,partner.token);
   await agentPage.getByRole('heading',{name:/DAF XF/}).waitFor();
   await agentPage.getByText('Анкета для оформления').waitFor();
+  // The working action is immediately available before a long progress list
+  // on a real narrow-screen insurer workspace.
+  const mobileStages=agentPage.locator('.insurance-mobile-stage-map');
+  await mobileStages.waitFor();
+  assert(!(await agentPage.locator('.insurance-desktop-stage-map').isVisible()),
+    'Desktop stage map should be hidden on a phone');
+  const actionCard=agentPage.locator('.insurance-conversation-tools>section:not(.insurance-desktop-stage-map)').first();
+  const actionBounds=await actionCard.boundingBox();
+  const stagesBounds=await mobileStages.boundingBox();
+  assert(actionBounds&&stagesBounds&&actionBounds.y<stagesBounds.y,
+    'Agent must see the immediate next action before the full timeline');
+  assert(!(await mobileStages.getAttribute('open')),
+    'Expanded timeline must not consume the first phone screen by default');
+  await agentPage.screenshot({path:OUT+'/agent-mobile-action-ready.png',fullPage:true});
+  await mobileStages.locator('summary').click();
+  await mobileStages.locator('.insurance-progress').waitFor();
+  await mobileStages.locator('summary').click();
   await agentPage.locator('.insurance-dossier-toggle').click();
   await agentPage.getByText('XLRTE47XS0E123456',{exact:true}).waitFor();
   await agentPage.screenshot({path:OUT+'/agent-dossier.png',fullPage:true});
   await agentPage.getByRole('button',{name:'Принято в работу'}).click();
+  await agentPage.getByRole('button',{name:'Отправить готовый полис клиенту'}).waitFor();
+  await agentPage.screenshot({path:OUT+'/agent-mobile-policy-action.png',fullPage:true});
   await agentPage.locator('input[type=date]').fill('2030-12-31');
   await agentPage.locator('input[type=file]').setInputFiles({
     name:'policy.pdf',mimeType:'application/pdf',

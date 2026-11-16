@@ -165,6 +165,17 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
   </main>;
 }
 
+function InsuranceStageTimeline({ stage, activeIndex }: { stage: string; activeIndex: number }) {
+  return <div className="insurance-progress" role="list" aria-label="Путь страховой заявки">
+    {INSURANCE_STAGES.map((step,i)=>
+      <div className={i===activeIndex?'current':i<activeIndex?'complete':'upcoming'}
+        key={step} role="listitem" aria-current={step===stage?'step':undefined}>
+        <span aria-hidden="true">{i<activeIndex?'✓':i+1}</span>
+        <span>{stepLabels[step]}</span>
+      </div>)}
+  </div>;
+}
+
 export function InsuranceThread({requestId}:{requestId:string}){
   const {me}=useMe();const {busy,run}=useAction();
   const source=useLoad(()=>get<CaseData>('/api/insurance/requests/'+requestId),
@@ -306,17 +317,27 @@ export function InsuranceThread({requestId}:{requestId:string}){
           </div>
         </section>
         <aside className="insurance-conversation-tools stack">
-          <section className="card stack">
+          <section className="card stack insurance-desktop-stage-map">
             <span className="insurance-step-title">ЭТАП ЗАЯВКИ</span><h3>{insuranceStatus(stage)}</h3>
-            <div className="insurance-progress" role="list" aria-label="Путь страховой заявки">
-              {INSURANCE_STAGES.map((s,i)=>
-                <div className={i===activeIndex?'current':i<activeIndex?'complete':'upcoming'}
-                  key={s} role="listitem" aria-current={s===stage?'step':undefined}>
-                  <span aria-hidden="true">{i<activeIndex?'✓':i+1}</span>
-                  <span>{stepLabels[s]}</span>
-                </div>)}
-            </div>
+            <InsuranceStageTimeline stage={stage} activeIndex={activeIndex}/>
           </section>
+          <details className="card insurance-mobile-stage-map">
+            <summary className="insurance-mobile-stage-summary">
+              <span className="insurance-mobile-stage-copy">
+                <span className="insurance-step-title">ПУТЬ СТРАХОВОЙ ЗАЯВКИ</span>
+                <strong>{activeIndex>=0?`Этап ${activeIndex+1} из ${INSURANCE_STAGES.length}`:'Этап уточняется'} · {insuranceStatus(stage)}</strong>
+                <small>Показать все этапы и дальнейшие шаги</small>
+                <span className="insurance-mobile-stage-progress" aria-hidden="true">
+                  {INSURANCE_STAGES.map((step,i)=><span key={step} className={
+                    i===activeIndex?'current':i<activeIndex?'complete':'upcoming'}/>)}
+                </span>
+              </span>
+              <span className="insurance-mobile-stage-chevron" aria-hidden="true">⌄</span>
+            </summary>
+            <div className="insurance-mobile-stage-expanded">
+              <InsuranceStageTimeline stage={stage} activeIndex={activeIndex}/>
+            </div>
+          </details>
           {isAgent&&['received','selected'].includes(stage)&&<section className="card stack">
             <b>Следующий шаг</b>
             <p className="note">{stage==='received'?'Вы получили заявку. Примите её для подготовки предложений.':
