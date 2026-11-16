@@ -9,7 +9,8 @@
     "migrate": "tsx src/db/migrate.ts",
     "test": "node --import tsx --test --test-concurrency=1 test/*.test.ts",
     "typecheck": "tsc --noEmit",
-    "seed": "tsx src/seed.ts"
+    "seed": "tsx src/seed.ts",
+    "seed:sandbox": "tsx src/seedSandbox.ts"
   },
   "dependencies": {
     "pg": "^8.13.1",

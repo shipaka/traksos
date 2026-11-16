@@ -876,6 +876,12 @@ export function Profile() {
   const [company, setCompany] = useState(me?.company_name ?? '');
   const [inn, setInn] = useState(me?.company_inn ?? '');
   const [appLock, setAppLock] = useState(() => native.appLockEnabled());
+  const [reducedMotion, setReducedMotion] = useState(() => localStorage.getItem('traksos.reduceMotion') === '1');
+  const toggleMotion = (enabled: boolean) => {
+    setReducedMotion(enabled);
+    localStorage.setItem('traksos.reduceMotion', enabled ? '1' : '0');
+    document.documentElement.classList.toggle('traksos-reduced-motion', enabled);
+  };
   if (!me) return null;
   const isPerformer = me.roles.some((r) => r === 'master' || r === 'tow');
   const isCustomer = me.roles.some((r) => r === 'client' || r === 'driver');
@@ -918,6 +924,14 @@ export function Profile() {
         )}
         <button className="btn" disabled={busy}>Сохранить</button>
       </form>
+      <div className="card stack">
+        <b>Настройки приложения</b>
+        <label className="row">
+          <input type="checkbox" checked={reducedMotion} onChange={e => toggleMotion(e.target.checked)} />
+          <span>Уменьшить анимацию</span>
+        </label>
+        <span className="note">Уменьшает эффекты и движения интерфейса на слабых устройствах.</span>
+      </div>
       <div className="stack">
         {isCustomer && mode !== 'client' && <button className="btn ghost" onClick={() => go('as/client')}>Кабинет клиента</button>}
         {isPerformer && mode !== 'performer' && <button className="btn ghost" onClick={() => go('as/performer')}>Кабинет исполнителя</button>}
@@ -927,7 +941,7 @@ export function Profile() {
         {me.roles.some((r) => r === 'admin' || r === 'moderator') && mode !== 'admin' && <button className="btn ghost" onClick={() => go('as/admin')}>Кабинет администратора</button>}
         <button className="btn ghost" onClick={() => go('support')}>Поддержка</button>
         <button className="btn ghost" onClick={() => go('help')}>Справка: как всё устроено</button>
-        <button className="btn ghost" onClick={() => go('privacy')}>Персональные данные</button>
+        <button className="btn ghost" onClick={() => go('privacy')}>Персональные данные и удаление аккаунта</button>
         <button className="btn ghost" onClick={() => go('reviews')}>Отзывы обо мне</button>
         <button className="btn ghost" onClick={() => go('appeal')}>Оспорить нарушение или блокировку</button>
         <button className="btn bad" onClick={() => {

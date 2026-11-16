@@ -15,7 +15,7 @@ const sections = [
   ['verify','Проверка'],['bases','Рембазы'],['vehicleServices','Страхование и ТО'],
   ['payments','Деньги'],['offers','Оферты'],
   ['announcements','Объявления и комиссии'],['stats','Статистика'],
-  ['flagged','Подозрительное'],['settings','Настройки'],
+  ['flagged','Подозрительное'],['diagnostics','Журнал ошибок'],['settings','Настройки'],
 ];
 const login = await fetch(BASE+'/api/auth/login',{
   method:'POST',headers:{'content-type':'application/json'},

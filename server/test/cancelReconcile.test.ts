@@ -2,6 +2,66 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, ok } from './helpers.ts';
 
+test('en-route cancellation never escalates to 100 percent from an unverified GPS point', { timeout: 60000 }, async () => {
+  const t = await setup();
+  try {
+    const admin = await t.login('+79990000001');
+    const client = await t.login('+79998885571');
+    const worker = await t.login('+79998885572', 'master');
+    ok(await t.api('PUT', '/api/performer/profile', {
+      kind: 'master', name: 'Исполнитель с GPS',
+      specialties: ['electric'], taxStatus: 'self_employed', inn: '780000000556',
+    }, worker.token));
+    ok(await t.api('POST', `/api/admin/performers/${worker.id}/verify`,
+      { decision: 'approved' }, admin.token));
+    ok(await t.api('POST', '/api/performer/line', { lineStatus: 'online' }, worker.token));
+    const created = ok(await t.api('POST', '/api/orders',
+      { service: 'electric', zoneId: 'spb', paymentMethod: 'cash' }, client.token));
+    const id = created.order.id;
+    ok(await t.api('POST', `/api/orders/${id}/offers`, {}, worker.token));
+    const bids = ok(await t.api('GET', `/api/orders/${id}/offers`, undefined, client.token));
+    ok(await t.api('POST', `/api/orders/${id}/offers/${bids.offers[0].id}/choose`, {}, client.token));
+    ok(await t.api('POST', `/api/orders/${id}/step`, { action: 'depart' }, worker.token));
+    // A forged/stale last position at the client location used to look like
+    // the second half of the route. It is not evidence of travel progress.
+    const order = await t.db.one<any>('select lat,lng from orders where id=$1', [id]);
+    if (order.lat != null && order.lng != null) {
+      await t.db.query('update performer_profiles set lat=$2,lng=$3,location_at=now() where user_id=$1',
+        [worker.id, order.lat, order.lng]);
+    }
+    await t.db.query('update order_dispatch set distance_km=100 where order_id=$1 and performer_id=$2',
+      [id, worker.id]);
+    // A rejected sample and another worker's legacy sample must not inflate
+    // the cancellation audit, even if present in the same order history.
+    const otherWorker = await t.login('+79998885573', 'master');
+    await t.db.query(
+      `insert into performer_route_samples(order_id,performer_id,lat,lng,accepted)
+       values($1,$2,59.9,30.3,true),($1,$3,59.9,30.3,false),($1,$3,59.9,30.3,true)`,
+      [id, otherWorker.id, worker.id]);
+    await t.db.query(
+      `insert into performer_route_samples(order_id,performer_id,lat,lng,accepted,received_at)
+       values($1,$2,59.9,30.3,true,now() - interval '31 days')`,
+      [id, worker.id]);
+    const cancelled = ok(await t.api('POST', `/api/orders/${id}/cancel`,
+      { reason: 'Передумал' }, client.token));
+    assert.equal(cancelled.cancelStage, 'en_route_first_half');
+    assert.equal(cancelled.cancelBreakdown.stage, 'en_route_first_half');
+    assert.equal(cancelled.cancelBreakdown.share, 0.5);
+    assert.equal(cancelled.cancelBreakdown.stageEvidence.source, 'status_only');
+    assert.equal(cancelled.cancelBreakdown.stageEvidence.gpsVerified, false);
+    assert.equal(cancelled.cancelBreakdown.stageEvidence.routeHalfVerified, false);
+    assert.equal(typeof cancelled.cancelBreakdown.stageEvidence.sampleCount, 'number');
+    assert.equal(cancelled.cancelBreakdown.stageEvidence.sampleCount, 1);
+    assert.equal(cancelled.cancelBreakdown.stageEvidence.note, 'GPS samples are not verified route progress');
+    const audit = await t.db.one<any>(
+      "select data from order_events where order_id=$1 and type='cancelled' order by id desc limit 1", [id]);
+    assert.equal(audit.data.stageEvidence.gpsVerified, false);
+    assert.equal(audit.data.stageEvidence.routeHalfVerified, false);
+    assert.equal((await t.db.one<any>('select cancel_stage from orders where id=$1', [id])).cancel_stage,
+      'en_route_first_half');
+  } finally { await t.close(); }
+});
+
 test('bank cancellation capture is reconciled once after response loss and 12 parallel retries', { timeout: 60000 }, async () => {
   const t = await setup();
   try {
@@ -64,6 +124,18 @@ test('bank cancellation capture is reconciled once after response loss and 12 pa
       const pay = await t.db.one<any>('select * from payments where id=$1', [payment.id]);
       assert.equal(pay.status, 'partially_refunded');
       assert.equal(pay.total - pay.refunded_amount, attempt.amount_to_capture);
+      // The client can audit the original cancellation tier and the bank
+      // result separately; the performer cannot inspect client bank details.
+      const clientView = ok(await t.api('GET', `/api/orders/${id}`, undefined, client.token));
+      assert.equal(clientView.cancelBreakdown.stage, 'accepted');
+      assert.equal(clientView.cancelBreakdown.share, 0.25);
+      assert.equal(clientView.cancellationPayment.paymentStatus, 'partially_refunded');
+      assert.equal(clientView.cancellationPayment.operationStatus, 'settled');
+      assert.equal(clientView.cancellationPayment.amountToCapture, attempt.amount_to_capture);
+      assert.equal(clientView.cancellationPayment.refundedAmount, attempt.refunded_amount);
+      const performerView = ok(await t.api('GET', `/api/orders/${id}`, undefined, worker.token));
+      assert.equal(performerView.cancellationPayment, null);
+
       assert.equal((await t.db.one<{ total: string }>(
         'select coalesce(sum(amount),0)::text total from ledger_entries where order_id=$1',
         [id]))?.total, '0');

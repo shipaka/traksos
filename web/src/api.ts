@@ -21,6 +21,11 @@ export class ApiError extends Error {
 }
 
 export async function api<T = any>(method: string, path: string, body?: unknown): Promise<T> {
+  // The sandbox is the exact same frontend served from another origin.
+  // Fail closed if a bundle was accidentally built with a remote production API.
+  if (sessionStorage.getItem('traksos.sandboxMode') === '1' &&
+      new URL(API_URL || location.origin, location.origin).origin !== location.origin)
+    throw new ApiError(403, 'sandbox_wrong_origin', 'Тестовые запросы не могут обращаться к другому серверу');
   let r: Response;
   try {
     // Bounded waits are crucial on unstable mobile data. Never retry writes silently.
@@ -48,7 +53,7 @@ export async function api<T = any>(method: string, path: string, body?: unknown)
     setToken(null);
     location.hash = '#/login';
   }
-  if (!r.ok) throw new ApiError(r.status, j?.error ?? 'error', j?.message ?? 'Ошибка', j?.data);
+  if (!r.ok) throw new ApiError(r.status, j?.error ?? 'error', j?.message ?? 'Ошибка', { ...(j?.data ?? {}), requestId: j?.requestId ?? r.headers.get('x-request-id') });
   return j as T;
 }
 

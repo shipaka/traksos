@@ -1,7 +1,7 @@
 // Фото для проверки исполнителя: снимаем камерой, видим статус каждого, отправляем модератору.
 
 import { useEffect, useState } from 'react';
-import { get, post, authedImage, compressImage } from '../api.ts';
+import { get, post, del, authedImage, compressImage } from '../api.ts';
 import { useLoad, useAction, useMe, Loading, Back, go } from '../ui.tsx';
 
 export function Documents() {
@@ -18,7 +18,7 @@ export function Documents() {
       <Back to="work" />
       <div>
         <h1>Проверка</h1>
-        <div className="sub">Снимите камерой прямо сейчас — фото из галереи модератор может не принять. Фото видят только вы и модератор, хранятся зашифрованными.</div>
+        <div className="sub">Подтверждение личности добровольное. Подтверждённые мастера получают отметку доверия. Фото доступны вам и модераторам, хранятся зашифрованными.</div>
       </div>
 
       {d.verification === 'approved' && <div className="card"><b>✓ Проверка пройдена</b><span className="note">Если смените машину — переснимите её, профиль уйдёт на повторную проверку.</span></div>}
@@ -35,6 +35,15 @@ export function Documents() {
           if (await run(() => post('/api/performer/documents/submit'), 'Отправлено на проверку')) { st.reload(); reloadMe(); }
         }}>{waiting ? 'Отправить ещё раз' : 'Отправить на проверку'}</button>
       )}
+      <div className="card stack">
+        <b>Конфиденциальные данные</b>
+        <span className="note">Можно удалить фотографии паспорта, селфи и транспорта. Подтверждение будет отозвано, аккаунт останется.</span>
+        <button className="btn bad" disabled={busy} onClick={async () => {
+          if (!confirm('Удалить все фотографии проверки? Статус подтверждения будет снят.')) return;
+          const result = await run(() => del('/api/performer/documents/confidential'), 'Фотографии удалены');
+          if (result) { await st.reload(); await reloadMe(); }
+        }}>Удалить конфиденциальные данные</button>
+      </div>
       <button className="btn ghost" onClick={() => go('work')}>В кабинет</button>
     </main>
   );

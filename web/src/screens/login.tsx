@@ -75,6 +75,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const [step, setStep] = useState<'phone' | 'code'>('phone');
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
   const [devCode, setDevCode] = useState<string | null>(null);
   const [role, setRole] = useState<JoinRole | null>(null);
   const [customerType, setCustomerType] = useState<'owner' | 'driver'>('owner');
@@ -130,8 +131,19 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   async function verify() {
     if (intent === 'join' && !role) return;
     if (intent === 'login') {
-      const login = await run(() => post('/api/auth/login', { phone, password, device: navigator.userAgent.slice(0, 200) }), null);
-      if (login) await signedIn(login);
+      setLoginError('');
+      if (!/^\+7[0-9]{10}$/.test('+7' + phone.replace(/\D/g, '').slice(-10)) || phone.replace(/\D/g, '').length !== 11) {
+        setLoginError('Введите номер телефона полностью: +7 и 10 цифр.');
+        return;
+      }
+      try {
+        const login = await post('/api/auth/login', { phone, password, device: navigator.userAgent.slice(0, 200) });
+        await signedIn(login);
+      } catch (e) {
+        setLoginError(e instanceof ApiError
+          ? e.message + (e.data?.requestId ? ' · Код обращения: ' + e.data.requestId : '')
+          : 'Не удалось завершить вход. Проверьте соединение и повторите попытку.');
+      }
       return;
     }
     const r = await run(async () => {
@@ -371,8 +383,9 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         </div>
       ) : intent === 'login' ? (
         <form className="stack" onSubmit={(e) => { e.preventDefault(); verify(); }}>
-          <Field label="Телефон"><input className="field" type="tel" autoComplete="username" value={phone} onChange={(e) => setPhone(e.target.value)} /></Field>
-          <Field label="Пароль"><input className="field" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} /></Field>
+          <Field label="Телефон"><input className="field" type="tel" autoComplete="username" value={phone} onChange={(e) => { setPhone(e.target.value); setLoginError(''); }} /></Field>
+          <Field label="Пароль"><input className="field" type="password" autoComplete="current-password" value={password} onChange={(e) => { setPassword(e.target.value); setLoginError(''); }} /></Field>
+          {loginError && <div role="alert" className="card" style={{ borderColor: 'var(--danger, #e25b69)' }}>{loginError}</div>}
           <button className="btn" disabled={busy || password.length === 0}>Войти</button>
           <button type="button" className="btn ghost" onClick={() => { setIntent('reset'); setStep('phone'); }}>Забыли пароль?</button>
           <button type="button" className="btn ghost" onClick={backToPublic}>Назад</button>

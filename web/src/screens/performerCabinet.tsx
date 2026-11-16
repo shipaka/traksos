@@ -481,7 +481,7 @@ export function FilterSection() {
   return (
     <main>
       <Back to="work" label="Линия" />
-      <div><h1>Расширенный поиск</h1><div className="sub">Как вы ищете клиентов на линии: что берёте, с какими марками и по какой цене. По этому вас и ранжируют.</div></div>
+      <div><h1>Настройки заявок</h1><div className="sub">Укажите услуги, марки, оснащение и тарифы. Эти настройки учитываются при подборе подходящих заявок; это не отдельный поиск клиентов.</div></div>
       <div className="scroll-x">{tabs.map(([id, n]) => <button key={id} className="chip" aria-pressed={cur === id} onClick={() => setTab(id)}>{n}</button>)}</div>
 
       {cur === 'stock' && (

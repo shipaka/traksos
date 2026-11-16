@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { randomUUID } from 'node:crypto';
 import { isIP } from 'node:net';
 import { z } from 'zod';
 import type { Db } from './db/index.ts';
@@ -12,6 +13,7 @@ import { SettingsService } from './services/settings.ts';
 import { Notifier } from './services/notify.ts';
 import { AuthService, SELF_ROLES } from './services/auth.ts';
 import { OperatorDemoAccess } from './services/operatorDemo.ts';
+import { SANDBOX_ROLES, issueSandboxTicket, exchangeSandboxTicket } from './services/sandboxTickets.ts';
 import { ReferralService } from './services/referral.ts';
 import { ProfilesService } from './services/profiles.ts';
 import { OrdersService } from './services/orders.ts';
@@ -115,8 +117,38 @@ export function createApp(d: Deps) {
   const staff = ['admin', 'moderator'];
   const performerRoles = ['master', 'tow', 'service'];
 
+  // Privacy-minimal operational journal. Read/download is restricted to administrators.
+  // Retention is enforced on each write and read (also when no separate cron is running).
+  const purgeDiagnostics = async () => {
+    await d.db.query("delete from diagnostic_events where occurred_at < now() - interval '30 days'");
+  };
+  r.get('/api/admin/diagnostics', ['admin'], async (c: AuthedCtx) => {
+    await purgeDiagnostics();
+    const status = c.query.get('status');
+    const category = c.query.get('category');
+    const since = c.query.get('since');
+    const until = c.query.get('until');
+    const requestId = c.query.get('requestId');
+    const limit = Math.min(1000, Math.max(1, Number(c.query.get('limit')) || 200));
+    const rows = await d.db.query(
+      `select request_id, occurred_at, category, method, path, status, code
+       from diagnostic_events
+       where ($1::integer is null or status=$1)
+         and ($2::text is null or category=$2)
+         and ($3::timestamptz is null or occurred_at >= $3)
+         and ($4::timestamptz is null or occurred_at <= $4)
+         and ($5::uuid is null or request_id=$5)
+       order by occurred_at desc limit $6`,
+      [status && /^\\d{3}$/.test(status) ? Number(status) : null,
+       category && ['http_server_error','auth_login_rejected'].includes(category) ? category : null,
+       since && !Number.isNaN(Date.parse(since)) ? since : null,
+       until && !Number.isNaN(Date.parse(until)) ? until : null,
+       requestId && /^[0-9a-f-]{36}$/i.test(requestId) ? requestId : null, limit]);
+    return { rows, retentionDays: 30 };
+  });
+
   // Служебное ----------------------------------------------------------------
-  r.get('/api/health', false, async () => ({ ok: true, db: (await d.db.one('select 1 as ok'))?.ok === 1, time: now() }));
+  r.get('/api/health', false, async () => ({ ok: true, db: (await d.db.one('select 1 as ok'))?.ok === 1, time: now(), sandbox: config.sandboxInstance, buildRevision: config.buildRevision }));
 
   // Isolated fake-data demo access: NEVER returns a real auth token or AuthUser.
   // Codes are issued only by the explicitly confirmed SSH utility on the VPS.
@@ -131,17 +163,59 @@ export function createApp(d: Deps) {
     return { ok:true };
   });
 
+  // Full-fidelity sandbox: independent deployment/database, but exactly the
+  // same production handlers and React screens. This is NOT an impersonation on
+  // the primary database. The single-use handoff contains no real user records.
+  const sandboxStatus = async () => {
+    if (config.sandboxInstance || !config.sandboxUrl || config.sandboxSharedSecret.length < 32 ||
+        (isProd && config.buildRevision === 'unknown'))
+      return { enabled: false, reason: 'Тестовый сервер ещё не настроен' };
+    try {
+      // Real-time server-to-server parity check: both instances must run the
+      // same immutable image revision, not merely similar-looking screens.
+      const response = await fetch(config.sandboxUrl + '/api/health', {
+        method:'GET', cache:'no-store', signal:AbortSignal.timeout(4000),
+      });
+      const remote = await response.json() as any;
+      if (!response.ok || remote?.ok !== true || remote?.db !== true || remote?.sandbox !== true)
+        return { enabled:false, reason:'Тестовый сервер или его отдельная база недоступны' };
+      if (remote.buildRevision !== config.buildRevision)
+        return { enabled:false, reason:'Рабочий и тестовый серверы используют разные версии приложения' };
+      return { enabled:true, buildRevision:config.buildRevision };
+    } catch {
+      return { enabled:false, reason:'Тестовый сервер сейчас недоступен' };
+    }
+  };
+  r.get('/api/admin/sandbox/status', ['admin'], sandboxStatus);
+  r.post('/api/admin/sandbox/ticket', ['admin'], async (c: AuthedCtx) => {
+    const status = await sandboxStatus();
+    if (!status.enabled)
+      throw new HttpError(503, 'sandbox_not_ready', status.reason ?? 'Полноценный тестовый сервер пока не подключён');
+    const b = parse(z.object({ role: z.enum(SANDBOX_ROLES) }), c.body);
+    const ticket = issueSandboxTicket(b.role, config.sandboxSharedSecret, now().getTime(), config.publicUrl + '/#/admin/test-center');
+    return { entryUrl: config.sandboxUrl + '/#/sandbox-enter?ticket=' + encodeURIComponent(ticket), role: b.role };
+  });
+  r.post('/api/sandbox/exchange', false, async (c: Ctx) => {
+    // This endpoint must NEVER issue sessions on the primary database.
+    if (!config.sandboxInstance) throw notFound();
+    const b = parse(z.object({ ticket: z.string().min(20).max(1300) }), c.body);
+    return exchangeSandboxTicket(b.ticket, config.sandboxSharedSecret, d.db, now().getTime());
+  });
+
   // Вход ---------------------------------------------------------------------
   r.post('/api/auth/code', false, (c: Ctx) => {
+    if (config.sandboxInstance) throw new HttpError(403, 'sandbox_auth_disabled', 'Тестовые пользователи входят только через администратора');
     const b = parse(z.object({ phone: z.string(), purpose: z.enum(['register','reset']).optional(),
       accountType: z.enum(['owner','driver','master','tow','service','master_service','insurer']).optional() }), c.body);
     return auth.requestCode(b.phone, c.ip, b.purpose ?? 'register', b.accountType);
   });
   r.post('/api/auth/login', false, (c: Ctx) => {
+    if (config.sandboxInstance) throw new HttpError(403, 'sandbox_auth_disabled', 'Тестовые пользователи входят только через администратора');
     const b = parse(z.object({ phone: z.string(), password: z.string().min(1).max(128), device: z.string().max(200).optional() }), c.body);
     return auth.loginPassword(b.phone, b.password, b.device, c.ip);
   });
   r.post('/api/auth/verify', false, async (c: Ctx) => {
+    if (config.sandboxInstance) throw new HttpError(403, 'sandbox_auth_disabled', 'Тестовые пользователи входят только через администратора');
     const b = parse(z.object({ phone: z.string(), code: z.string().min(4).max(6), role: z.enum(SELF_ROLES).optional(),
       device: z.string().max(200).optional(), accountType: z.enum(['owner','driver','master','tow','service','master_service','insurer']).optional(),
       password: z.string().max(128).optional(), purpose: z.enum(['register','reset']).optional(),
@@ -429,8 +503,9 @@ export function createApp(d: Deps) {
   });
   r.post('/api/performer/location', performerRoles, async (c: AuthedCtx) => {
     const b = parse(z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) }), c.body);
-    await profiles.setLocation(c.user.id, b.lat, b.lng);
-    // Клиенту в заявке — живая точка исполнителя
+    const accepted = await profiles.setLocation(c.user.id, b.lat, b.lng);
+    if (!accepted) return { ok: true, accepted: false };
+    // Клиенту в заявке — только точка, прошедшая проверку скачков
     const active = await d.db.query<{ id: string; client_id: string; created_by: string }>(
       `select id, client_id, created_by from orders where performer_id=$1 and status in ('accepted','en_route')`, [c.user.id]);
     for (const o of active) hub.send([o.client_id, o.created_by], { type: 'performer_location', orderId: o.id, lat: b.lat, lng: b.lng });
@@ -442,6 +517,7 @@ export function createApp(d: Deps) {
     kind: z.string().max(20), dataUrl: z.string().max(7_000_000), takenAt: z.string().datetime().optional(),
   }), c.body)));
   r.post('/api/performer/documents/submit', true, (c: AuthedCtx) => documents.submit(c.user));
+  r.delete('/api/performer/documents/confidential', true, (c: AuthedCtx) => documents.deleteConfidential(c.user));
   r.get('/api/documents/:id/file', true, async (c: AuthedCtx) => {
     const f = await documents.file(c.user, c.params.id);
     return new Raw(f.mime, f.body);
@@ -1158,6 +1234,21 @@ export function createApp(d: Deps) {
     await audit(c.user.id, 'performer.priority', c.params.id, b);
     return { ok: true };
   });
+  // Sensitive route history: administrator only, bounded result and retention.
+  // Never expose these coordinates through the regular client order response.
+  r.get('/api/admin/orders/:id/route', ['admin'], async (c: AuthedCtx) => {
+    const order = await d.db.one<{ id: string; number: number; performer_id: string | null }>(
+      'select id,number,performer_id from orders where id=$1', [c.params.id]);
+    if (!order) throw notFound('Заявка не найдена');
+    const points = await d.db.query<{ lat: number; lng: number; received_at: Date; performer_id: string }>(
+      `select lat,lng,received_at,performer_id from (
+         select lat,lng,received_at,performer_id,id from performer_route_samples
+         where order_id=$1 and accepted = true and received_at >= now() - interval '30 days'
+         order by received_at desc,id desc limit 1000
+       ) samples order by received_at,id`, [order.id]);
+    return { orderId: order.id, number: order.number, points,
+      disclaimer: 'GPS points are unverified observations, not proof of arrival or distance' };
+  });
   r.get('/api/admin/orders', ['admin'], (c: AuthedCtx) => d.db.query(
     `select o.id, o.number, o.status, o.service, o.is_sos, o.address, o.created_at, o.payment_method,
             o.call_out_amount, o.work_amount, c.phone as client_phone, p.name as performer_name
@@ -1186,11 +1277,13 @@ export function createApp(d: Deps) {
 
   // Обработчик HTTP ------------------------------------------------------------
   async function handle(req: http.IncomingMessage, res: http.ServerResponse) {
+    const requestId = randomUUID();
     const origin = req.headers.origin;
-    const cors: Record<string, string> = {};
+    const cors: Record<string, string> = { 'x-request-id': requestId };
     if (origin && (config.corsOrigins.includes('*') || config.corsOrigins.includes(origin))) {
       cors['access-control-allow-origin'] = origin;
       cors['access-control-allow-headers'] = 'authorization, content-type';
+      cors['access-control-expose-headers'] = 'x-request-id';
       cors['access-control-allow-methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS';
       cors['vary'] = 'origin';
     }
@@ -1219,8 +1312,28 @@ export function createApp(d: Deps) {
       send(res, 200, out === undefined ? { ok: true } : out, cors);
     } catch (e) {
       const { status, body } = errorBody(e);
-      if (status >= 500) console.error(e);
-      send(res, status, body, cors);
+      // Structured, privacy-minimal diagnostics are available through Docker's log driver.
+      // Never log the request body, phone, password, SMS code, auth header or query string.
+      if (status >= 500 || (url.pathname === '/api/auth/login' && status >= 400)) {
+        const category = status >= 500 ? 'http_server_error' : 'auth_login_rejected';
+        // Do not block the HTTP response if the diagnostics store is unavailable.
+        try {
+          await d.db.query(
+            'insert into diagnostic_events(request_id, category, method, path, status, code) values ($1,$2,$3,$4,$5,$6)',
+            [requestId, category, req.method ?? 'GET', url.pathname, status,
+             typeof body?.error === 'string' ? body.error.slice(0, 100) : 'error']);
+          await purgeDiagnostics();
+        } catch (logError) {
+          console.error('[diagnostics_storage_unavailable]', logError instanceof Error ? logError.name : 'unknown');
+        }
+        console.error(JSON.stringify({
+          event: category,
+          requestId, at: new Date().toISOString(), method: req.method,
+          path: url.pathname, status, code: typeof body?.error === 'string' ? body.error : 'error',
+          ...(status >= 500 ? { errorType: e instanceof Error ? e.name : 'UnknownError' } : {}),
+        }));
+      }
+      send(res, status, { ...body, requestId }, cors);
     }
   }
 

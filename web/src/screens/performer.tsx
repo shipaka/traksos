@@ -6,6 +6,7 @@ import { native } from '../native.ts';
 import { OfferForm } from './search.tsx';
 import { WorkerNotices } from './ops.tsx';
 import { useToast } from '../ui.tsx';
+import { VerifiedBadge } from '../verifiedBadge.tsx';
 
 // Линия: статус, геолокация, входящие ---------------------------------------
 
@@ -40,19 +41,19 @@ export function Work() {
               : 'Ваш рабочий стол. Выберите статус доступности ниже, чтобы управлять приёмом заявок.'}</p>
           <div className="work-command-tags">
             <span className="work-command-status"><span className={'dot ' + (online ? 'on' : '')} />{LINE[p.line_status] ?? 'Статус не указан'}</span>
-            <span className="work-command-verification">{p.verification === 'approved' ? '✓ Профиль проверен' : p.verification === 'rejected' ? 'Требуется исправление профиля' : 'Проверка профиля ещё не завершена'}</span>
+            {p.verification === 'approved' ? <VerifiedBadge verified kind={p.kind === 'tow' ? 'tow' : 'specialist'} /> : <button type="button" className="traksos-verify-invite" onClick={() => go('work/docs')}>◇ Подтвердить профиль · узнать преимущества ›</button>}
           </div>
         </div>
         <div className="work-command-art" aria-hidden="true" />
       </section>
       <LiveStrip who={p.kind === 'tow' ? 'tow' : 'master'} />
-      {online && p.verification === 'approved' && <Nearby />}
+      {online && <Nearby />}
       {p.verification !== 'approved' ? (
         <div className="card hi">
           <b>{p.verification === 'rejected' ? 'Проверка не пройдена' : p.submitted_at ? 'Профиль на проверке' : 'Пройдите проверку'}</b>
           <span className="note">{p.verification === 'rejected' ? (p.verification_note ?? 'Исправьте данные и отправьте ещё раз.')
-            : p.submitted_at ? 'Обычно до 24 часов. Пока проверяем, заявки не приходят.'
-            : 'Снимите паспорт, селфи с паспортом и машину — без проверки заявки не приходят. Это 3 минуты.'}</span>
+            : p.submitted_at ? 'Обычно до 24 часов. Проверка добровольная и повышает доверие клиентов.'
+            : 'Проверка добровольная: подтверждённый профиль получает заметный значок и преимущество среди подходящих исполнителей.'}</span>
           <button className="btn" onClick={() => go('work/docs')}>{p.submitted_at ? 'Мои фото' : 'Снять фото'}</button>
         </div>
       ) : (
@@ -145,7 +146,7 @@ function LineCard({ p, busy, setLine, online }: { p: any; busy: boolean; setLine
   );
 }
 
-/** «Настройки поиска» — как вы ищете клиентов на линии: услуги, марки, цены. От них — кому и в каком порядке звоним. */
+/** Настройки заявок: выбираемые услуги, марки, оснащение и тарифы. Не выдавать их за самостоятельный поиск. */
 function SearchSettingsLink({ p }: { p: any }) {
   const top = Object.entries(p.brands ?? {}).filter(([, v]) => v === 'excellent').map(([k]) => k);
   const off = Object.entries(p.brands ?? {}).filter(([, v]) => v === 'refuse').length;
@@ -154,7 +155,7 @@ function SearchSettingsLink({ p }: { p: any }) {
       top.length ? `отлично: ${top.join(', ')}` : '', off ? `не берусь: ${off}` : ''].filter(Boolean).join(' · ');
   return (
     <button className="linkrow" onClick={() => go('work/filter')}>
-      <span><b>Расширенный поиск</b><small>{sub || 'услуги, марки и цены — от них зависит, какие заявки придут первыми'}</small></span><span aria-hidden="true">›</span>
+      <span><b>Настройки заявок</b><small>{sub || 'Какие заявки принимать, с чем выезжаете и по каким тарифам'}</small></span><span aria-hidden="true">›</span>
     </button>
   );
 }
@@ -185,7 +186,9 @@ export function scheduleSlot(s: any, now: Date, offUntil?: string | null): 'work
 /** Отправляем координаты раз в 30 секунд, пока экран открыт (в приложении — и в фоне) */
 export function LocationSharing() {
   const [state, setState] = useState<'wait' | 'ok' | 'off'>('wait');
-  const demo=location.hash.startsWith('#/admin/test-center/');
+  let sandbox=false;
+  try {sandbox=sessionStorage.getItem('traksos.sandboxMode')==='1';}catch{/* */ }
+  const demo=sandbox||location.hash.startsWith('#/admin/test-center/');
   useEffect(() => {
     // A test role must NEVER request the administrator's physical GPS location.
     if(demo)return;

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { get, post } from '../api.ts';
 import { InsurerTrainingCabinet } from './insurerTrainingCabinet.tsx';
 import { CustomerTrainingCabinet } from './customerTrainingCabinet.tsx';
 import { PerformerTrainingCabinet } from './performerTrainingCabinet.tsx';
@@ -30,9 +31,9 @@ const DEMO_ROLES:RoleInfo[] = [
     profile:'Мой автопарк',history:'История обслуживания',task:'Ремонт тягача Scania',
     metrics:['1','3','1'],activity:['Грузовик закреплён за водителем','Доступна история ремонта'],
     features:[['▤','Транспорт','Машины, прицепы и полуприцепы'],['♙','Водители','Назначения и доступы'],['◈','История затрат','Работы по каждой машине']]},
-  {id:'driver',icon:'◉',label:'Водитель автопарка',subtitle:'Закреплённый грузовик и рейс',
-    headline:'Поддержка в каждом рейсе',section:'Заявки в пути',action:'Вызвать помощь',
-    profile:'Мой рейс и машина',history:'История вызовов',task:'Помощь на трассе',
+  {id:'driver',icon:'◉',label:'Сотрудник автопарка',subtitle:'Ограниченный доступ к закреплённой технике',
+    headline:'Помощь закреплённой технике',section:'Заявки в пути',action:'Вызвать помощь',
+    profile:'Моя закреплённая машина',history:'История вызовов',task:'Помощь на трассе',
     metrics:['1','1','0'],activity:['Машина закреплена за водителем','Доступен вызов SOS'],
     features:[['▤','Мой грузовик','Данные назначенной техники'],['✚','Помощь SOS','Вызов мастера или эвакуатора'],['⌁','Статус заявки','От вызова до завершения']]},
   {id:'master',icon:'⚡',label:'Выездной мастер',subtitle:'Линия, выезды и выплаты',
@@ -86,17 +87,48 @@ function iconLabel(role:RoleInfo, section:Section):string {
   return section==='tasks'?role.section:section==='profile'?role.profile:section==='history'?role.history:copy[section];
 }
 
-export function AdminTestCenter({roleId}:{roleId?:string}) {
+/** Real screens, real domain logic, separate instance and completely independent database. */
+function FullFidelityRoleLauncher({role}:{role:RoleInfo}) {
+  const [message,setMessage]=useState('Проверяем доступ к изолированной тестовой базе…');
+  const [fallback,setFallback]=useState(false);
+  useEffect(() => {
+    let active=true;
+    void get<{enabled:boolean}>('/api/admin/sandbox/status')
+      .then(status => {
+        if (!status.enabled) throw new Error((status as any).reason || 'Полноценный тестовый сервер ещё не подключён.');
+        return post<{entryUrl:string}>('/api/admin/sandbox/ticket', {role:role.id});
+      }).then(result => {
+        if (!active) return;
+        if (!result?.entryUrl || !result.entryUrl.startsWith('https://'))
+          throw new Error('Не удалось сформировать защищённый тестовый вход.');
+        location.assign(result.entryUrl);
+      }).catch(e => {if(active)setMessage(e instanceof Error?e.message:'Ошибка доступа к тестовому серверу');});
+    return () => {active=false;};
+  },[role.id]);
+  if(fallback) return <AdminTestCenter roleId={role.id} />;
+  return <main className="sandbox-root stack" style={{maxWidth:720,margin:'28px auto'}}>
+    <span className="pill accent">ТОЧНАЯ КОПИЯ РАБОЧЕГО КАБИНЕТА</span>
+    <h1>{role.label}</h1><p>{message}</p>
+    <p className="note">Рабочие компоненты TrakSOS открываются на отдельном адресе с тестовыми аккаунтами, базой и платёжным имитатором. Снимки, карта, меню и кнопки — из того же приложения.</p>
+    <div className="row">
+      <a className="btn ghost" href="#/admin/test-center">← Выбор кабинета</a>
+      <button type="button" className="btn ghost" onClick={()=>{if(role.id==='service')location.hash='#/admin/test-center/service/base';else setFallback(true);}}>Открыть старый учебный тренажёр</button>
+    </div>
+  </main>;
+}
+
+export function AdminTestCenter({roleId,fullFidelity=false}:{roleId?:string;fullFidelity?:boolean}) {
   const role=DEMO_ROLES.find(r=>r.id===roleId);
+  if(role && fullFidelity)return <FullFidelityRoleLauncher role={role}/>;
   if(!role) return <main className="sandbox-root stack" aria-label="Тестовый центр администратора">
     <section className="sandbox-intro">
       <span className="sandbox-eyebrow">TRAKSOS · ЗАКРЫТЫЙ ДЕМОНСТРАЦИОННЫЙ РЕЖИМ</span>
       <h1>Тестирование кабинетов</h1>
-      <p>Выберите роль: откроется отдельный рабочий экран с собственным меню, разделами и возвратом к списку.</p>
+      <p>{fullFidelity?'Выберите роль: откроется настоящий рабочий кабинет с тем же дизайном и логикой, но отдельной базой данных.':'Выберите роль: откроется отдельный учебный экран с собственным меню и возвратом к списку.'}</p>
       <a className="btn ghost small" href="#/admin">← Вернуться в админку</a>
     </section>
     <div className="banner" role="note"><b>ТЕСТОВЫЙ РЕЖИМ · НЕ РЕАЛЬНЫЕ АККАУНТЫ</b>
-      <span>Данные и действия вымышленные. Настоящие заявки, платежи, SMS и заказы магазинa не создаются.</span>
+      <span>{fullFidelity?'Для проверки используется отдельный тестовый сервер без доступа к реальным клиентам, SMS и платежам. Если сервер ещё не подключён, откроется пояснение, а не поддельный реальный кабинет.':'Учебный режим: вымышленные действия, реальные заявки и платежи не создаются.'}</span>
     </div>
     <div className="sandbox-role-grid" role="group" aria-label="Выбор тестового кабинета">
       {DEMO_ROLES.map(r=><a key={r.id} className="sandbox-role-card" href={rolePath(r.id)}>

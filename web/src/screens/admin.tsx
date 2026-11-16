@@ -3,6 +3,7 @@ import { AdminServices } from './base.tsx';
 import { ModQueue } from './moderation.tsx';
 import { AdminSummary } from './adminSummary.tsx';
 import { AdminSettings } from './adminSettings.tsx';
+import { AdminDiagnostics } from './adminDiagnostics.tsx';
 import { AdminAccountAccess } from './adminAccountAccess.tsx';
 import { useState } from 'react';
 import { useEffect } from 'react';
@@ -14,7 +15,7 @@ import { get, post, put, rub, fmtPhone, fmtTime, authedImage } from '../api.ts';
 import { STATUS, SERVICES, LINE } from '../dict.ts';
 import { useLoad, useAction, Loading } from '../ui.tsx';
 
-type AdminSection = 'stats' | 'search' | 'support' | 'verify' | 'people' | 'access' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'settings' | 'demand' | 'announcements' | 'vehicleServices';
+type AdminSection = 'stats' | 'search' | 'support' | 'verify' | 'people' | 'access' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'settings' | 'demand' | 'announcements' | 'vehicleServices' | 'diagnostics';
 type AdminNavItem = { id: AdminSection; name: string; description: string; symbol: string };
 const ADMIN_GROUPS: { name: string; items: AdminNavItem[] }[] = [
   { name: 'Операционная работа', items: [
@@ -41,6 +42,7 @@ const ADMIN_GROUPS: { name: string; items: AdminNavItem[] }[] = [
   { name: 'Контроль платформы', items: [
     { id: 'stats', name: 'Статистика', description: 'Реальные показатели сервиса', symbol: '15' },
     { id: 'flagged', name: 'Подозрительное', description: 'Сигналы и проверки безопасности', symbol: '16' },
+    { id: 'diagnostics', name: 'Журнал ошибок', description: 'Сбои, фильтры и выгрузка CSV', symbol: '18' },
     { id: 'settings', name: 'Настройки', description: 'Параметры платформы и доступы', symbol: '17' },
   ] },
 ];
@@ -135,6 +137,7 @@ export function Admin({ initialSection }: { initialSection?: string }) {
             {tab === 'dispatch' && <Dispatch />}
             {tab === 'payments' && <Payments />}
             {tab === 'flagged' && <Flagged />}
+            {tab === 'diagnostics' && <AdminDiagnostics />}
           </div>
           <div className="admin-mobile-quick">
             <div className="admin-mobile-quick-heading"><b>Быстрые переходы</b><small>Частые задачи администратора</small></div>
