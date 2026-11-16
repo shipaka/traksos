@@ -354,11 +354,11 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
        ['/work/me/money', 'Финансы и выплаты'], ['/work/me/tax', 'Налоговый статус'],
        ['/work/me/level', 'Рейтинг и уровень'], ['/work/docs', 'Проверка и документы'],
        ['/reviews', 'Отзывы'], ['/invite', 'Пригласить партнёра'],
-       ['/work/jobs', 'История заявок'], ['/partner', 'TrackSOS Партнёр · привилегии и обжалование'], ['/techbase', 'Профессиональная ТехБаза'], ['/profile', 'Аккаунт']]
+       ['/work/jobs', 'История заявок'], ['/partner', 'TrakSOS Партнёр · привилегии и обжалование'], ['/techbase', 'Профессиональная ТехБаза'], ['/profile', 'Аккаунт']]
     : mode === 'service'
       ? [...(me?.roles.some(r => r === 'master' || r === 'tow') ? [['/work', 'Выездной мастер — заявки']] as [string, string][] : []),
          ['/base', 'Заявки и история ремонтов'], ['/base/me', 'Карточка СТО'],
-         ['/base/money', 'Финансы'], ['/partner', 'TrackSOS Партнёр'], ['/techbase', 'Профессиональная ТехБаза'], ['/profile', 'Аккаунт'],
+         ['/base/money', 'Финансы'], ['/partner', 'TrakSOS Партнёр'], ['/techbase', 'Профессиональная ТехБаза'], ['/profile', 'Аккаунт'],
          ['/invite', 'Пригласить партнёра']]
     : mode === 'inspection'
       ? [['/inspections', 'Кабинет техосмотра'], ['/profile', 'Аккаунт']]
@@ -376,7 +376,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/admin/section/access', 'Регистрация и доступы'],
          ['/admin/section/verify', 'Проверка исполнителей'],
          ['/techbase', 'Проверка материалов ТехБазы'],
-         ['/partner/admin', 'TrackSOS Партнёр · уровни и обращения'],
+         ['/partner/admin', 'TrakSOS Партнёр · уровни и обращения'],
          ['/admin/section/bases', 'СТО и рембазы'],
          ['/admin/section/payments', 'Деньги и выплаты'],
          ['/admin/section/stats', 'Статистика'],
