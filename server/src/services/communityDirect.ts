@@ -99,6 +99,8 @@ export function registerCommunityDirectRoutes(r:Router,db:Db,notifier:Notifier){
     const p=cursor(c);
     const recent=c.query.get('recent')==='1';
     // Take moderation watermark before loading messages; catch later commits.
+    const epoch=await db.one<{sync_epoch:string}>(
+      'select event_epoch::text as sync_epoch from community_dm_threads where id=$1',[t.id]);
     const watermark=await db.one<{cursor:string}>(
       "select coalesce(max(id),0)::text as cursor from community_dm_moderation_events where thread_id=$1",[t.id]);
     const rows=await db.query<{id:string;body:string;created_at:Date;sender_id:string;moderation_state:string;nickname:string}>(
@@ -109,7 +111,7 @@ export function registerCommunityDirectRoutes(r:Router,db:Db,notifier:Notifier){
       "order by m.id "+(recent?'desc':'asc')+" limit $4",
       [t.id,p.after,c.user.id,p.limit,recent]);
     const sorted=recent?rows.reverse():rows;
-    return {messages:sorted.map(({sender_id,...m})=>({...m,isMine:sender_id===c.user.id})),nextCursor:sorted.at(-1)?.id??p.after,moderationCursor:watermark?.cursor??'0'};
+    return {messages:sorted.map(({sender_id,...m})=>({...m,isMine:sender_id===c.user.id})),nextCursor:sorted.at(-1)?.id??p.after,moderationCursor:watermark?.cursor??'0',syncEpoch:epoch?.sync_epoch??'0'};
   });
   r.get('/api/community/direct/:id/moderation-events',true,async(c:AuthedCtx)=>{
     const t=await mustThread(db,c);
@@ -136,7 +138,10 @@ export function registerCommunityDirectRoutes(r:Router,db:Db,notifier:Notifier){
       if(e.previous_state!=='published'&&e.sender_id!==c.user.id)return [];
       return [{revision:e.revision,id:e.id,moderation_state:'hidden'}];
     });
-    return {changes,nextCursor:rows.at(-1)?.revision??after,hasMore:rows.length>=limit};
+    const epoch=await db.one<{sync_epoch:string}>(
+      'select event_epoch::text as sync_epoch from community_dm_threads where id=$1',[t.id]);
+    return {changes,nextCursor:rows.at(-1)?.revision??after,hasMore:rows.length>=limit,
+      syncEpoch:epoch?.sync_epoch??'0'};
   });
   r.post('/api/community/direct/:id/messages',true,async(c:AuthedCtx)=>{
     const t=await mustThread(db,c);
