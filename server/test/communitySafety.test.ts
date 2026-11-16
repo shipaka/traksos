@@ -70,3 +70,40 @@ test('driver role revocation closes old DM history even with an existing token',
     assert.equal((await t.api('GET','/api/community/direct',undefined,recipient.token)).status,403);
   }finally{await t.close()}
 });
+
+test('blocking a driver also prevents late publication of already pending DMs',async()=>{
+  const t=await setup();
+  try{
+    const admin=await t.login('+79990000001');
+    const sender=await t.login('+79994990121','driver');
+    const recipient=await t.login('+79994990122','driver');
+    ok(await t.api('PUT','/api/community/me',{nickname:'DelayedBlock_A'},sender.token));
+    ok(await t.api('PUT','/api/community/me',{nickname:'DelayedBlock_B'},recipient.token));
+    const invite=ok(await t.api('POST','/api/community/direct/request',
+      {nickname:'DelayedBlock_B'},sender.token));
+    ok(await t.api('POST','/api/community/direct/'+invite.id+'/decision',
+      {decision:'accept'},recipient.token));
+    const path='/api/community/direct/'+invite.id;
+    const pending=ok(await t.api('POST',path+'/messages',{
+      text:'сука, сообщение ожидает проверки',clientNonce:randomUUID()
+    },sender.token));
+    assert.equal(pending.status,'pending');
+    ok(await t.api('POST','/api/community/direct/blocks',{
+      nickname:'DelayedBlock_A',blocked:true
+    },recipient.token));
+    t.app.hub.log.length=0;
+    const approval=await t.api('POST','/api/admin/community/direct/messages/'+pending.id+'/moderate',
+      {status:'published'},admin.token);
+    assert.equal(approval.status,409,'moderation must not override a later peer block');
+    assert.equal(approval.body.error,'conversation_unavailable');
+    assert.equal((await t.db.one<{moderation_state:string}>(
+      'select moderation_state from community_dm_messages where id=$1',[pending.id]))?.moderation_state,'pending');
+    const recipientHistory=ok(await t.api('GET',path+'/messages?recent=1',undefined,recipient.token));
+    assert.ok(!recipientHistory.messages.some((m:any)=>m.id===pending.id));
+    ok(await t.api('POST','/api/admin/community/direct/messages/'+pending.id+'/moderate',
+      {status:'hidden'},admin.token));
+    assert.ok(!t.app.hub.log.some((x:any)=>x.userId===recipient.id&&
+      x.event.type==='community_direct_moderation'&&x.event.text),
+      'a moderation signal must never contain private content');
+  }finally{await t.close()}
+});
