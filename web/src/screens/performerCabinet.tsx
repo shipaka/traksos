@@ -255,6 +255,26 @@ export function ScheduleSection() {
       <Back to="work/me" label="Профиль" />
       <div><h1>Распорядок</h1><div className="sub">По нему решаем, звонить ли вам. Кончилось рабочее время — статус сам станет «Не на линии», пока вы не выйдете на линию вручную.</div></div>
       <VacationToggle />
+      <div className="card">
+        <b>Ваш часовой пояс</b>
+        <p className="note">Нужен для правильного времени выездов во всех регионах России. Часовой пояс не определяется по IP и не показывает вашу геолокацию в Эфире.</p>
+        <select className="field" value={s.timeZone??''} onChange={e=>setS({...s,timeZone:e.target.value||undefined})}>
+          <option value="">Не указан — текущий старый график считается по Москве</option>
+          <option value="Europe/Kaliningrad">Калининград (UTC+2)</option>
+          <option value="Europe/Moscow">Москва / Санкт-Петербург (UTC+3)</option>
+          <option value="Europe/Samara">Самара (UTC+4)</option>
+          <option value="Asia/Yekaterinburg">Екатеринбург (UTC+5)</option>
+          <option value="Asia/Omsk">Омск (UTC+6)</option>
+          <option value="Asia/Novosibirsk">Новосибирск (UTC+7)</option>
+          <option value="Asia/Krasnoyarsk">Красноярск (UTC+7)</option>
+          <option value="Asia/Irkutsk">Иркутск (UTC+8)</option>
+          <option value="Asia/Yakutsk">Якутск (UTC+9)</option>
+          <option value="Asia/Vladivostok">Владивосток (UTC+10)</option>
+          <option value="Asia/Sakhalin">Сахалин (UTC+11)</option>
+          <option value="Asia/Magadan">Магадан (UTC+11)</option>
+          <option value="Asia/Kamchatka">Камчатка (UTC+12)</option>
+        </select>
+      </div>
       <button className="opt" aria-pressed={s.on} onClick={() => setS({ ...s, on: !s.on })}>
         <b>{s.on ? '✓ Работаю по графику' : 'Без графика'}</b><small>{s.on ? 'Заявки — только в рабочие дни и часы' : 'Заявки идут всегда, пока вы на линии'}</small>
       </button>
