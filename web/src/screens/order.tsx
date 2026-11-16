@@ -59,7 +59,7 @@ export function Order({ id }: { id: string }) {
       {d.status === 'searching' && (d.you === 'client' || d.you === 'admin') && <Search d={d} onChosen={o.reload} />}
       {d.you === 'candidate' && <CandidateView d={d} onDone={o.reload} />}
 
-      {!isConsult && !['cancelled', 'no_performer', 'searching', 'awaiting_owner'].includes(d.status) && <Steps status={d.status} service={d.service} />}
+      {!isConsult && !['cancelled', 'no_performer', 'searching', 'awaiting_owner'].includes(d.status) && <Steps status={d.status} service={d.service} events={d.events} createdAt={d.createdAt} />}
       {isConsult && !isPerformer && d.you !== 'candidate' && <ConsultClient d={d} />}
       {d.consultFrom?.hint && <ConsultHintCard from={d.consultFrom} />}
       {d.status === 'no_performer' && !isPerformer && <Retry id={id} onDone={o.reload} />}
@@ -198,14 +198,22 @@ function CandidateView({ d, onDone }: { d: any; onDone: () => void }) {
   );
 }
 
-function Steps({ status, service }: { status: string; service: string }) {
+function Steps({ status, service, events = [], createdAt }: { status: string; service: string; events?: Array<{type:string;created_at:string}>; createdAt?: string }) {
   const names = service === 'tow' ? TOW_STEP_NAMES : STEP_NAMES;
   const sequence = STEPS.filter(s => s !== 'searching');
   const current = sequence.indexOf(status);
   const finished = status === 'completed';
   const active = finished ? sequence.length - 1 : Math.max(0, current);
   const progress = finished ? 100 : current < 0 ? 0 : Math.round(active / Math.max(1, sequence.length - 1) * 100);
-  const heading = finished ? 'Заявка выполнена' : status === 'cancelled' ? 'Заявка отменена'
+  const stopped = status === 'cancelled' || status === 'no_performer';
+  const stageEvent: Record<string, string[]> = { accepted: ['accepted'], en_route: ['depart'], arrived: ['arrive'], working: ['start_work'], awaiting_confirmation: ['amount_proposed'], completed: ['amount_confirmed', 'completed', 'confirm'] };
+  const stageTime = (step: string) => {
+    const candidates = events.filter(e => (stageEvent[step] ?? []).includes(e.type));
+    const at = step === 'searching' ? createdAt : candidates[candidates.length - 1]?.created_at;
+    if (!at || Number.isNaN(Date.parse(at))) return null;
+    return new Intl.DateTimeFormat('ru-RU', {hour:'2-digit', minute:'2-digit', second:'2-digit'}).format(new Date(at));
+  };
+  const heading = finished ? 'Заявка выполнена' : status === 'cancelled' ? 'Заявка отменена' : status === 'no_performer' ? 'Исполнитель не найден'
     : status === 'en_route' ? 'Исполнитель в пути'
     : status === 'arrived' ? 'Исполнитель на месте'
     : status === 'working' ? 'Работа выполняется'
@@ -228,15 +236,17 @@ function Steps({ status, service }: { status: string; service: string }) {
     <ol className="cinematic-status-steps">
       {sequence.map((step, index) => {
         const done = finished || (current >= 0 && index < current);
-        const now = !finished && current === index;
+        const now = !finished && !stopped && current === index;
         return <li key={step} className={done ? 'is-done' : now ? 'is-current' : 'is-next'}
           aria-current={now ? 'step' : undefined}>
           <span className="cinematic-status-node" aria-hidden="true">{done ? '✓' : String(index + 1).padStart(2, '0')}</span>
           <span className="cinematic-status-step-label">{names[step] ?? step}</span>
+          {stageTime(step) && <small className="cinematic-status-stage-time">{stageTime(step)}</small>}
           {now && <span className="cinematic-status-live"><i/>Сейчас</span>}
         </li>;
       })}
     </ol>
+    {stopped && <p className="cinematic-status-stop">{status === 'cancelled' ? 'Выполнение остановлено. Причина и время отмены — в журнале ниже.' : 'Поиск завершился без исполнителя. История попыток сохранена в журнале.'}</p>}
     <p className="cinematic-status-footnote">Статусы отражают зафиксированные действия. Подтверждение GPS, КПП и расчёт оплаты проверяются отдельно.</p>
   </section>;
 }
