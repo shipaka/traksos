@@ -69,6 +69,7 @@ create table if not exists community_knowledge (
  technical_review text not null default 'pending' check (technical_review in ('pending','approved','rejected')),
  rights_reviewer uuid references users(id),
  technical_reviewer uuid references users(id),
+ technical_review_note text,
  created_at timestamptz not null default now(),
  updated_at timestamptz not null default now()
 );
