@@ -49,7 +49,7 @@ const DEFAULT_PARTNER_SHOWCASE = {tag:'TRAKSOS · ПАРТНЁРСКАЯ ПЛА�
   description:'Мастера, эвакуаторы, СТО и страховые специалисты работают в единой системе.',
   imageLabel:'Грузовой автомобиль Scania — общий баннер партнёрской регистрации TrakSOS'};
 
-type Intent = 'help' | 'login' | 'register' | 'join' | 'reset';
+type Intent = 'help' | 'login' | 'register' | 'join' | 'reset' | 'activate';
 
 /** Куда вести после входа: по ролям из ответа сервера */
 export function homeFor(roles: string[], intent: Intent): string {
@@ -115,7 +115,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
     setInsurerOnly(false);
     const r = await run(async () => {
       try {
-        return await post('/api/auth/code', { phone, purpose: intent === 'reset' ? 'reset' : 'register',
+        return await post('/api/auth/code', { phone, purpose: intent === 'reset' || intent === 'activate' ? 'reset' : 'register',
           accountType: intent === 'join' ? role : intent === 'register' || intent === 'help' ? customerType : undefined });
       } catch (e) {
         if (e instanceof ApiError && e.code === 'insurer_only') setInsurerOnly(true);
@@ -139,7 +139,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         return await post('/api/auth/verify', { phone, code,
           role: intent === 'join' ? role : undefined,
           accountType: intent === 'join' ? role : intent === 'register' || intent === 'help' ? customerType : undefined,
-          purpose: intent === 'reset' ? 'reset' : 'register', password,
+          purpose: intent === 'reset' || intent === 'activate' ? 'reset' : 'register', password,
           ref: (() => { try { return localStorage.getItem('traksos.ref') ?? undefined; } catch { return undefined; } })(), device: navigator.userAgent.slice(0, 200), acceptOffers: agree });
       } catch (e) {
         // Заблокирован — показываем форму обжалования, номер уже подтверждён кодом
@@ -189,8 +189,8 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const partnerShowcase = intent === 'join' && role ? PARTNER_SHOWCASES[role] : DEFAULT_PARTNER_SHOWCASE;
   const partnerShowcaseKey = intent === 'join' ? (role ?? 'intro') : 'intro';
   const needAgree = !['login', 'reset'].includes(intent ?? '') || !!driver; // водитель по QR — обычно новый номер, согласие сразу
-  const title = intent === 'reset' ? 'Восстановить пароль' : intent === 'help' ? 'Помощь на дороге' : intent === 'join' ? 'Работать с TrakSOS' : intent === 'register' ? 'Регистрация в TrakSOS' : 'Вход по номеру телефона';
-  const sub = intent === 'reset' ? 'Отправим один SMS-код для смены пароля.' : intent === 'help' ? 'Подтвердите номер — и сразу к заявке. Мастер позвонит на него.'
+  const title = intent === 'activate' ? 'Активировать созданный администратором аккаунт' : intent === 'reset' ? 'Восстановить пароль' : intent === 'help' ? 'Помощь на дороге' : intent === 'join' ? 'Работать с TrakSOS' : intent === 'register' ? 'Регистрация в TrakSOS' : 'Вход по номеру телефона';
+  const sub = intent === 'activate' ? 'Администратор уже назначил ваш кабинет. Подтвердите свой номер SMS-кодом и задайте личный пароль. Роли изменить при активации нельзя.' : intent === 'reset' ? 'Отправим один SMS-код для смены пароля.' : intent === 'help' ? 'Подтвердите номер — и сразу к заявке. Мастер позвонит на него.'
     : intent === 'join' ? 'Выберите, кем подключаетесь. После входа заполните профиль — проверим и откроем заявки.'
     : intent === 'register' ? 'Укажите номер телефона. Если аккаунта ещё нет, создадим его после подтверждения SMS-кодом.'  : 'Вход по паролю, без SMS. Если забыли пароль — восстановите доступ.'; // legacy description
 
@@ -438,7 +438,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           </div>}
           {needAgree && <label className="row note" style={{ flexWrap: 'nowrap', alignItems: 'flex-start' }}>
             <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} style={{ marginTop: 3 }} />
-            <span>Согласен с {intent === 'join' ? <a href="#/offer/performer" target="_blank" rel="noreferrer">агентским договором</a> : <a href="#/offer/client" target="_blank" rel="noreferrer">офертой</a>} и на <a href="#/offer/privacy" target="_blank" rel="noreferrer">обработку персональных данных</a></span>
+            <span>{intent === 'activate' ? 'Согласен на ' : <>Согласен с {intent === 'join' ? <a href="#/offer/performer" target="_blank" rel="noreferrer">агентским договором</a> : <a href="#/offer/client" target="_blank" rel="noreferrer">офертой</a>} и на </>}<a href="#/offer/privacy" target="_blank" rel="noreferrer">обработку персональных данных</a></span>
           </label>}
           <button className="btn" disabled={busy || (needAgree && !agree) || phone.replace(/\D/g, '').length < 11 || (intent === 'join' && (!role || (role === 'master' && specialties.length === 0)))}>Получить код</button>
           {intent !== 'login' && <button type="button" className="btn ghost" onClick={() => { setIntent('login'); setStep('phone'); setCode(''); }}>Уже есть аккаунт? Войти по паролю</button>}
@@ -450,10 +450,10 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
             <input className="field" inputMode="numeric" autoComplete="one-time-code" autoFocus maxLength={6} value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} style={{ fontSize: 24, letterSpacing: 8, textAlign: 'center' }} />
           </Field>
-          <Field label={intent === 'reset' ? 'Новый пароль' : 'Придумайте пароль (минимум 10 символов)'}>
+          <Field label={intent === 'reset' || intent === 'activate' ? 'Новый пароль' : 'Придумайте пароль (минимум 10 символов)'}>
             <input className="field" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={10} />
           </Field>
-          <button className="btn" disabled={busy || code.length < 4 || password.length < 10}>{intent === 'reset' ? 'Изменить пароль' : 'Зарегистрироваться'}</button>
+          <button className="btn" disabled={busy || code.length < 4 || password.length < 10}>{intent === 'reset' ? 'Изменить пароль' : intent === 'activate' ? 'Активировать аккаунт' : 'Зарегистрироваться'}</button>
           {insurerOnly && <button type="button" className="btn" onClick={() => { setStep('phone'); setCode(''); setRole('insurer'); setIntent('join'); setInsurerOnly(false); }}>Перейти к страховому кабинету</button>}
           <button type="button" className="btn ghost" onClick={() => { setStep('phone'); setCode(''); setInsurerOnly(false); }}>Другой номер</button>
         </form>
