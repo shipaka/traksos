@@ -83,6 +83,12 @@ const supportSlaTimer = setInterval(() => {
   app.support.tickSla().catch((e) => console.error('[support-sla]', e));
 }, 30_000);
 void app.support.tickSla().catch((e) => console.error('[support-sla]', e));
+// Background delivery is durable across restarts. Missing webhook config keeps reports
+// in the internal admin queue; it never silently sends personal data externally.
+const developerDeliveryTimer = setInterval(() => {
+  void app.developerReportDelivery.tick().catch(() => console.error('[developer-delivery] retry scheduled'));
+}, 30_000);
+void app.developerReportDelivery.tick().catch(() => console.error('[developer-delivery] retry scheduled'));
 // Отложенное удаление личных данных и очистка истёкших IP/телефонных
 // лимитов: хранить эти технические идентификаторы бессрочно не нужно.
 const housekeeping = async () => {
@@ -116,6 +122,7 @@ for (const sig of ['SIGINT', 'SIGTERM'] as const) {
     clearInterval(hourly);
     clearInterval(captureTimer);
     clearInterval(supportSlaTimer);
+    clearInterval(developerDeliveryTimer);
     server.close();
     await db.close();
     process.exit(0);
