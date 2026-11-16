@@ -532,7 +532,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               <span className="track-sidebar-app-soon">Скоро в RuStore</span>
             </span>
           </aside>}
-          <div className="desktop-sidebar-bottom"><strong>TRAKSOS 24/7</strong><span>Помощь грузовикам</span><small>Санкт-Петербург и Ленинградская область</small></div>
+          <div className="desktop-sidebar-bottom"><strong>TRAKSOS 24/7</strong><span>Помощь грузовикам</span><small>Единая платформа для всей России</small></div>
         </aside>
         <div className="desktop-content">
           {children}
