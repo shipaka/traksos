@@ -1,0 +1,22 @@
+.real-nearby{display:flex;flex-direction:column;gap:15px;max-width:100%;padding:clamp(12px,3vw,24px);overflow-wrap:anywhere}
+.real-nearby-head h2{font-size:clamp(1.2rem,3vw,1.7rem);margin:0 0 8px}
+.real-nearby-head p{max-width:70ch;margin:0;opacity:.87}
+.real-nearby>.btn{align-self:flex-start;min-height:44px}
+.real-nearby-error{border:1px solid var(--danger,#b74f63);border-radius:12px;padding:12px}
+.real-nearby-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:14px}
+.real-nearby-card{border:1px solid var(--line,#53667e);border-radius:18px;padding:15px;display:flex;flex-direction:column;gap:10px;min-width:0;background:linear-gradient(144deg,color-mix(in srgb,var(--accent,#62cce8) 7%,transparent),transparent 68%)}
+.real-nearby-card-head{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.real-nearby-card h3{font-size:1.08rem;margin:0}
+.real-nearby-tags{display:flex;gap:6px;flex-wrap:wrap}
+.real-nearby-tags span{padding:5px 9px;border:1px solid var(--line,#53667e);border-radius:999px;font-size:.82rem}
+.real-nearby-providers{display:flex;flex-direction:column;gap:8px}
+.real-nearby-provider{padding:12px;border:1px solid var(--line,#53667e);border-radius:12px;display:flex;flex-direction:column;gap:4px}
+.real-nearby-provider small{opacity:.74}
+.real-nearby-card>.btn{margin-top:auto;text-align:center}
+.real-nearby-empty{border:1px dashed var(--line,#53667e);padding:20px;border-radius:16px;display:flex;flex-direction:column;gap:10px}
+.real-nearby-empty p{margin:0}
+.real-nearby-empty>.btn{align-self:flex-start}
+.real-nearby-safety{font-size:.86rem;opacity:.7}
+.real-nearby :is(button,a):focus-visible{outline:3px solid var(--accent,#62cce8);outline-offset:3px}
+@media(max-width:620px){.real-nearby{padding:12px}.real-nearby>.btn,.real-nearby-empty>.btn{width:100%;text-align:center}.real-nearby-card{padding:12px}.real-nearby-cards{grid-template-columns:minmax(0,1fr)}}
+@media(prefers-reduced-motion:reduce){.real-nearby *{animation:none!important;transition:none!important}}
