@@ -22,6 +22,12 @@
 .tech-description{white-space:pre-wrap;line-height:1.55}
 .tech-reference-preview{display:block;width:100%;max-width:560px;max-height:400px;object-fit:contain;border-radius:10px;background:#ffffff;padding:8px;margin:10px auto}
 .tech-warning{border-left:3px solid var(--accent,#62cce8);padding:8px 12px;line-height:1.5;margin:8px 0}
+.tech-consent{display:flex!important;flex-direction:row!important;align-items:flex-start;gap:10px;max-width:720px}
+.tech-consent input{margin-top:5px}
+.tech-article .tech-draft{margin:10px 0;max-width:100%}
+.tech-article h3,.tech-article h4{margin:12px 0}
+.tech-article textarea{width:100%;box-sizing:border-box}
+.tech-section .tech-result-layout{min-width:0}
 .tech-list .tech-actions{align-items:center;justify-content:space-between}
 .tech-list button:disabled{opacity:.45;cursor:not-allowed}
 .tech-review{display:flex;flex-direction:column;gap:10px}
