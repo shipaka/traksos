@@ -173,6 +173,6 @@ export function registerShopMerchandisingRoutes(r:Router,db:Db,notifier:Notifier
       completePurchaseCostSnapshot:complete,
       courierAndProcessingCostsIncluded:false,
       profitVerified:false,
-      note:'Доход по торговой наценке и комиссия TrackSOS учитываются отдельно. Без затрат на доставку, налогов, возвратов и фактического способа начисления комиссии прибыль не подтверждена.'};
+      note:'Доход по торговой наценке и комиссия TrakSOS учитываются отдельно. Без затрат на доставку, налогов, возвратов и фактического способа начисления комиссии прибыль не подтверждена.'};
   });
 }
