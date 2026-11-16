@@ -30,6 +30,15 @@ test('GPS history is scoped to an en-route order and rejects impossible jumps', 
     const accepted = ok(await t.api('POST', '/api/performer/location',
       { lat: 59.9344, lng: 30.3352 }, worker.token));
     assert.notEqual(accepted.accepted, false);
+    // Bursty but plausible updates still refresh the live location without
+    // filling the durable GPS audit with near-duplicate samples.
+    const burst = ok(await t.api('POST', '/api/performer/location',
+      { lat: 59.934401, lng: 30.335201 }, worker.token));
+    assert.notEqual(burst.accepted, false);
+    const livePosition = await t.db.one<any>(
+      'select lat,lng from performer_profiles where user_id=$1', [worker.id]);
+    assert.equal(Number(livePosition.lat), 59.934401);
+    assert.equal(Number(livePosition.lng), 30.335201);
     const rejected = ok(await t.api('POST', '/api/performer/location',
       { lat: 55.7558, lng: 37.6173 }, worker.token));
     assert.equal(rejected.accepted, false);
