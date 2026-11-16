@@ -67,6 +67,11 @@ export function Home() {
         <a href="#/new/tow" className="desktop-quick-card"><span className="desktop-quick-icon">↗</span><span><b>Эвакуатор</b><small>Тягач, полуприцеп или сцепка</small></span><span aria-hidden="true">↗</span></a>
         <a href="#/services" className="desktop-quick-card"><span className="desktop-quick-icon">▤</span><span><b>СТО грузовых автомобилей</b><small>Выбор сервиса и запись на ремонт</small></span><span aria-hidden="true">↗</span></a>
         <a href="#/new/consult" className="desktop-quick-card"><span className="desktop-quick-icon">☎</span><span><b>Консультация по телефону</b><small>Обсудить проблему со специалистом</small></span><span aria-hidden="true">↗</span></a>
+        {me?.roles.includes('driver')&&<a href="#/air" className="desktop-quick-card">
+          <span className="desktop-quick-icon">☷</span>
+          <span><b>Водительский Эфир</b><small>Общение с коллегами, дорожные сообщения и личные чаты</small></span>
+          <span aria-hidden="true">↗</span>
+        </a>}
       </section>
 
       <div className="desktop-home-columns">
