@@ -1,0 +1,83 @@
+import {test,before,after} from 'node:test';
+import assert from 'node:assert/strict';
+import {setup,ok,type T} from './helpers.ts';
+import {checkLegacyPricingLocation,legacyPricingWarning} from '../src/domain/pricingRegion.ts';
+
+const knownOutside=[
+  {name:'Москва',lat:55.7558,lng:37.6173,address:'Москва, Тверская 1'},
+  {name:'Калининград',lat:54.7104,lng:20.4522,address:'Калининград, проспект Мира 1'},
+  {name:'Владивосток',lat:43.1155,lng:131.8855,address:'Владивосток, Океанский проспект 1'},
+  {name:'Ижевск',lat:56.8527,lng:53.2115,address:'Ижевск, улица Пушкинская 1'},
+  {name:'Псков',lat:57.8194,lng:28.3318,address:'Псков, Октябрьский проспект 1'}
+];
+test('pure region safety never turns KAD prices into a federal price',()=>{
+  for(const x of knownOutside){
+    assert.equal(checkLegacyPricingLocation(x),'outside',x.name);
+    assert.equal(checkLegacyPricingLocation({address:x.address}),'outside',x.name);
+  }
+  assert.equal(checkLegacyPricingLocation({lat:59.9343,lng:30.3351,address:'Санкт-Петербург, Лиговский 1'}),'possible');
+  assert.equal(checkLegacyPricingLocation({lat:58.7376,lng:29.8453,address:'Луга, улица Смоленская 2'}),'possible');
+  assert.equal(checkLegacyPricingLocation({address:'Санкт-Петербургское шоссе, 1'}),'unknown',
+    'street name is not a geocoder');
+  assert.equal(checkLegacyPricingLocation({address:'Москва, Тверская 1',
+    lat:59.93,lng:30.3}),'outside','contradictory address cannot be excused by fake GPS');
+  assert.equal(checkLegacyPricingLocation({lat:91,lng:20}),'outside');
+  assert.equal(checkLegacyPricingLocation({lat:59.93}),'outside');
+  assert.equal(checkLegacyPricingLocation({}),'unknown');
+  const unknown=legacyPricingWarning({});
+  assert.equal(unknown.manualConfirmationRequired,true);
+  assert.equal(unknown.validatedByGeocoder,false);
+  assert.equal(unknown.available,true);
+  assert.equal(legacyPricingWarning({address:'Москва, дом 1'}).available,false);
+});
+let t:T,customer:any,admin:any;
+before(async()=>{
+  t=await setup();
+  customer=await t.login('+79996667771');
+  admin=await t.login('+79990000001');
+});
+after(()=>t.close());
+test('public estimates reject far-away GPS and explicit other cities without inventing fares',async()=>{
+  const route='/api/pricing/estimate';
+  const base={service:'electric',zoneId:'spb',tier:'eco'};
+  for(const location of knownOutside){
+    const reply=await t.api('POST',route,{...base,...location});
+    assert.equal(reply.status,409,JSON.stringify(location));
+    assert.equal(reply.body.error,'outside_legacy_tariff_region');
+    const adr=await t.api('POST',route,{...base,address:location.address});
+    assert.equal(adr.status,409);
+  }
+  const local=ok(await t.api('POST',route,{...base,address:'Санкт-Петербург, Невский проспект 1'}));
+  assert.ok(local.callOut>0);
+  assert.equal(local.regionValidation.validatedByGeocoder,false);
+  const blind=ok(await t.api('POST',route,base));
+  assert.equal(blind.regionValidation.status,'unknown');
+  assert.equal(blind.regionValidation.manualConfirmationRequired,true);
+  const phone=ok(await t.api('POST',route,{service:'consult',zoneId:'spb',address:'Калининград'}));
+  assert.equal(phone.consult,true,'remote consultation is independent of region');
+  assert.equal(phone.regionValidation,null);
+});
+test('clearly outside locations cannot create orders or bank holds, including direct API call',async()=>{
+  ok(await t.api('PUT','/api/admin/settings/payments',{online:true},admin.token));
+  for(const location of knownOutside){
+    const result=await t.api('POST','/api/orders',{
+      service:'electric',isSos:true,zoneId:'spb',
+      paymentMethod:'online',description:'Проблема с тормозами',...location
+    },customer.token);
+    assert.equal(result.status,409,JSON.stringify(location));
+    assert.equal(result.body.error,'outside_legacy_tariff_region');
+  }
+  const after=await t.db.query('select id from orders where created_by=$1',[customer.id]);
+  assert.equal(after.length,0,'no order is entered before real pricing');
+  assert.equal((await t.db.query('select id from payments')).length,0,'no bank payment / hold');
+  assert.equal((await t.db.query('select id from order_dispatch')).length,0,'no dispatch invitations');
+  assert.equal(t.payments.payments.size,0,'external provider never called');
+  const local=ok(await t.api('POST','/api/orders',{
+    service:'electric',zoneId:'spb',address:'Санкт-Петербург, Невский проспект 1',
+    lat:59.9343,lng:30.3351,paymentMethod:'cash',
+    description:'Проблема с тормозами'
+  },customer.token));
+  assert.equal(local.order.estimate.regionValidation.tariffScope,'Санкт-Петербург и Ленинградская область');
+  assert.equal(local.order.estimate.regionValidation.validatedByGeocoder,false,
+    'a regional bounding box is not genuine geocoding');
+});
