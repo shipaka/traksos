@@ -206,6 +206,7 @@ function Steps({ status, service, events = [], createdAt }: { status: string; se
   const active = finished ? sequence.length - 1 : Math.max(0, current);
   const progress = finished ? 100 : current < 0 ? 0 : Math.round(active / Math.max(1, sequence.length - 1) * 100);
   const stopped = status === 'cancelled' || status === 'no_performer';
+  const showProgress = !stopped;
   const stageEvent: Record<string, string[]> = { accepted: ['accepted'], en_route: ['depart'], arrived: ['arrive'], working: ['start_work'], awaiting_confirmation: ['amount_proposed'], completed: ['amount_confirmed', 'completed', 'confirm'] };
   const stageTime = (step: string) => {
     const candidates = events.filter(e => (stageEvent[step] ?? []).includes(e.type));
@@ -227,15 +228,15 @@ function Steps({ status, service, events = [], createdAt }: { status: string; se
         <p>{finished ? 'Все этапы завершены' : status === 'cancelled' ? 'Дальнейшее выполнение остановлено'
           : 'Этапы обновляются по мере действий участников заявки'}</p>
       </div>
-      <span className="cinematic-status-counter" aria-label={`Прогресс ${progress}%`}>{progress}<small>%</small></span>
+      <span className="cinematic-status-counter" aria-label={showProgress ? `Прогресс ${progress}%` : "Выполнение остановлено"}>{showProgress ? <>{progress}<small>%</small></> : "—"}</span>
     </header>
-    <div className="cinematic-status-meter" role="progressbar" aria-label="Прогресс этапов заявки"
+    {showProgress && <div className="cinematic-status-meter" role="progressbar" aria-label="Прогресс этапов заявки"
       aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
       <span style={{width:`${progress}%`}}/>
-    </div>
+    </div>}
     <ol className="cinematic-status-steps">
       {sequence.map((step, index) => {
-        const done = finished || (current >= 0 && index < current);
+        const done = finished || (!stopped && current >= 0 && index < current);
         const now = !finished && !stopped && current === index;
         return <li key={step} className={done ? 'is-done' : now ? 'is-current' : 'is-next'}
           aria-current={now ? 'step' : undefined}>
