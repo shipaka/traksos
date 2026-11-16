@@ -25,6 +25,37 @@ function Thumb({ p, size = 56 }: { p: any; size?: number }) {
     : <div aria-hidden="true" style={{ width: size, height: size, borderRadius: 12, background: 'var(--bg-2)', display: 'grid', placeItems: 'center', flex: 'none', fontSize: 22 }}>🔧</div>;
 }
 
+/** Storefront city is selected explicitly, never guessed from the visitor's IP. */
+function ShopCityControl({ city, reload }: {city: string | null; reload: () => void}) {
+  const [value,setValue]=useState(city ?? '');
+  const [editing,setEditing]=useState(!city);
+  const {busy,run}=useAction();
+  useEffect(()=>{setValue(city ?? '');},[city]);
+  const submit=async()=>{
+    const chosen=value.trim();
+    if(!chosen)return;
+    const changed=await run(()=>put('/api/shop/region',{city:chosen}),null);
+    if(changed){setEditing(false);reload();}
+  };
+  return <div className="card stack" style={{gap:10}} aria-label="Город магазина">
+    <div className="between">
+      <b>Город покупки</b>
+      {city&&!editing&&<button type="button" className="btn ghost small" onClick={()=>setEditing(true)}>Изменить</button>}
+    </div>
+    {city&&!editing&&<span className="note">{city}</span>}
+    {editing&&<>
+      <label className="note" htmlFor="shop-region-city">Укажите город получения или самовывоза</label>
+      <input id="shop-region-city" className="field" type="text" autoComplete="address-level2"
+        placeholder="Например, Санкт-Петербург или Ижевск" maxLength={80}
+        value={value} onChange={(e)=>setValue(e.target.value)}/>
+      <button className="btn" type="button" disabled={busy||value.trim().length<2} onClick={submit}>
+        {busy?'Проверяем…':'Проверить доступность'}
+      </button>
+    </>}
+    <span className="note">Сейчас магазин обслуживает только Санкт-Петербург. Этот выбор не меняет город Эфира и не передаёт геолокацию.</span>
+  </div>;
+}
+
 export function Shop() {
   const c = useLoad(() => get('/api/shop?light=1'), []);
   const [cart, setCart] = useCart();
@@ -64,6 +95,7 @@ export function Shop() {
         <b style={{ fontSize: 20 }}>{d.closedTitle}</b>
         <span className="note">{d.closedText}</span>
       </div>
+      <ShopCityControl city={d.region?.city??null} reload={c.reload}/>
       <a className="linkrow" href="#/shop/history"><span><b>История покупок</b><small>Просмотреть предыдущие заказы</small></span><span aria-hidden="true">›</span></a>
     </main>
   );
@@ -73,6 +105,7 @@ export function Shop() {
   return (
     <main className="track-shop-home">
       <div className="track-shop-hero"><span className="track-shop-eyebrow">TRAKSOS · ЗАПЧАСТИ ДЛЯ ГРУЗОВИКОВ</span><h1>Найдём нужную деталь</h1><p>Удобный поиск по названию и артикулу, наличие, аналоги и история покупок.</p><span className="track-shop-gear" aria-hidden="true"/></div>
+      <ShopCityControl city={d.region?.city??null} reload={c.reload}/>
       <div className="between" style={{ alignItems: 'flex-start' }}>
         <div><h1>Магазин</h1><div className="sub">{d.note}</div></div>
         <button className="bell" aria-label={`Корзина, товаров: ${count}`} onClick={() => go('shop/cart')} style={{ position: 'relative' }}>
