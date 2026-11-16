@@ -86,6 +86,8 @@ const housekeeping = async () => {
       .catch((e) => console.error('[gps-history-cleanup]', e)),
     db.query("delete from community_road_events where expires_at < now() - interval '7 days'")
       .catch((e) => console.error('[road-event-cleanup]', e)),
+    db.query('delete from realtime_ws_tickets where expires_at<now()')
+      .catch((e)=>console.error('[realtime-tickets-cleanup]',e)),
     pruneCommunityEvents(db).catch((e) => console.error('[community-events-cleanup]', e)),
   ]);
 };
