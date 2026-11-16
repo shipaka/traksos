@@ -38,6 +38,7 @@ import { PrivacyService } from './services/privacy.ts';
 import { StandingService } from './services/standing.ts';
 import { ShopService } from './services/shop.ts';
 import { registerShopCourierRoutes } from './services/shopCourier.ts';
+import { ShopRegionService, registerShopRegionRoutes } from './services/shopRegion.ts';
 import { registerShopMerchandisingRoutes } from './services/shopMerchandising.ts';
 import { ShopCatalogService } from './services/shopCatalog.ts';
 import { ModerationService } from './services/moderation.ts';
@@ -105,6 +106,7 @@ export function createApp(d: Deps) {
   const privacy = new PrivacyService(d.db, notifier, now);
   const standing = new StandingService(d.db, now, settings);
   const shop = new ShopService(d.db, notifier, settings);
+  const shopRegion = new ShopRegionService(d.db, settings);
   const partCatalog = new ShopCatalogService(d.db, settings);
   const moderation = new ModerationService(d.db, notifier, reviews, now, d.sms);
   const warranty = new WarrantyClaimsService(d.db, notifier, now);
@@ -599,30 +601,39 @@ export function createApp(d: Deps) {
   r.get('/api/legal', false, () => settings.get('legal'));
   // The legacy full catalog endpoint remains for older APK versions. New clients
   // request light configuration then load only one page of products at a time.
+  registerShopRegionRoutes(r, shopRegion);
   registerShopCourierRoutes(r, d.db, notifier);
   registerShopMerchandisingRoutes(r, d.db, notifier);
-  r.get('/api/shop', true, (c: AuthedCtx) => shop.catalog(c.query.get('light') === '1'));
-  r.get('/api/shop/search', true, (c: AuthedCtx) => shop.search(
-    c.query.get('q') ?? '', c.query.get('category') ?? '',
-    Number(c.query.get('page') ?? '0'), Number(c.query.get('limit') ?? '24')));
+  r.get('/api/shop', true, (c: AuthedCtx) => shopRegion.catalog(c.user, shop, c.query.get('light') === '1'));
+  r.get('/api/shop/search', true, async (c: AuthedCtx) => {
+    await shopRegion.requireWhenOpen(c.user);
+    return shop.search(c.query.get('q') ?? '', c.query.get('category') ?? '',
+      Number(c.query.get('page') ?? '0'), Number(c.query.get('limit') ?? '24'));
+  });
   r.get('/api/shop/selection', true, (c: AuthedCtx) => {
     const raw = c.query.get('ids') ?? '';
     const ids = raw.split(',').filter(Boolean).slice(0, 50);
     if (ids.some((id) => !z.string().uuid().safeParse(id).success)) throw bad('bad_ids', 'Неверный артикул товара');
-    return shop.selection(ids);
+    return shopRegion.requireWhenOpen(c.user).then(() => shop.selection(ids));
   });
-  r.get('/api/shop/index/manifest', true, () => shop.indexManifest());
+  r.get('/api/shop/index/manifest', true, async (c: AuthedCtx) => {
+    await shopRegion.requireWhenOpen(c.user);
+    return shop.indexManifest();
+  });
   r.get('/api/shop/index/page', true, (c: AuthedCtx) => {
     const after = c.query.get('after');
     if (after && !z.string().uuid().safeParse(after).success) throw bad('bad_cursor', 'Некорректный курсор');
-    return shop.indexPage(after, Number(c.query.get('limit') ?? '750'));
+    return shopRegion.requireWhenOpen(c.user).then(() => shop.indexPage(after, Number(c.query.get('limit') ?? '750')));
   });
   r.get('/api/shop/index/changes', true, (c: AuthedCtx) => {
     const after = c.query.get('after') ?? '0';
     if (!/^\d{1,19}$/.test(after)) throw bad('bad_cursor', 'Неверная версия справочника');
-    return shop.indexChanges(after, Number(c.query.get('limit') ?? '750'));
+    return shopRegion.requireWhenOpen(c.user).then(() => shop.indexChanges(after, Number(c.query.get('limit') ?? '750')));
   });
-  r.get('/api/shop/products/:id/analogs', true, (c: AuthedCtx) => shop.alternatives(c.params.id));
+  r.get('/api/shop/products/:id/analogs', true, async (c: AuthedCtx) => {
+    await shopRegion.requireWhenOpen(c.user);
+    return shop.alternatives(c.params.id);
+  });
   r.post('/api/admin/shop/products/:id/analogs', ['admin'], (c: AuthedCtx) => {
     const b = parse(z.object({
       analogId: z.string().uuid(), source: z.string().min(3).max(300), verified: z.boolean().default(false),
@@ -672,12 +683,16 @@ export function createApp(d: Deps) {
     return shop.history(c.user, vehicleId, Number(c.query.get('page') ?? '0'));
   });
   r.get('/api/shop/products/:id/photo', false, async (c: Ctx) => { const f = await shop.photo(c.params.id); return new Raw(f.mime, f.body, { 'cache-control': 'public, max-age=86400' }); });
-  r.post('/api/shop/orders', true, (c: AuthedCtx) => shop.order(c.user, parse(z.object({
+  r.post('/api/shop/orders', true, async (c: AuthedCtx) => {
+    const input = parse(z.object({
     items: z.array(z.object({ productId: z.string().uuid(), qty: z.number().int().min(1).max(99) })).min(1).max(50),
     delivery: z.enum(['pickup', 'delivery', 'master']), address: z.string().max(300).nullable().optional(), orderId: z.string().uuid().nullable().optional(),
     payment: z.enum(['on_receipt', 'invoice']).optional(), comment: z.string().max(500).nullable().optional(),
     vehicleId: z.string().uuid().nullable().optional(),
-  }), c.body)));
+  }), c.body);
+    await shopRegion.requireCheckout(c.user, input.delivery, input.address);
+    return shop.order(c.user, input);
+  });
   r.get('/api/shop/orders', true, (c: AuthedCtx) => shop.myOrders(c.user));
   r.post('/api/shop/orders/:id/cancel', true, (c: AuthedCtx) => shop.cancelMine(c.user, c.params.id));
   // Autokontinent purchase identifiers: strictly admin-only; there is no supplier API connection yet.
