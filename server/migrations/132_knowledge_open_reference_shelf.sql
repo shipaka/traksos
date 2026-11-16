@@ -22,6 +22,9 @@ create table if not exists community_knowledge_sources (
   technical_status text not null default 'illustrative'
     check (technical_status in ('illustrative','portal_link','expert_approved','withdrawn')),
   active boolean not null default true,
+  technical_reviewer uuid references users(id),
+  technical_review_note text,
+  technically_reviewed_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint knowledge_source_coverage check
@@ -29,7 +32,7 @@ create table if not exists community_knowledge_sources (
   constraint knowledge_source_portal check
     ((source_kind='manufacturer_portal' and coverage='manufacturer'
       and preview_url is null and license_code='LINK_ONLY'
-      and technical_status='portal_link')
+      and technical_status in ('portal_link','withdrawn'))
       or (source_kind<>'manufacturer_portal' and coverage='generic'
         and license_code<>'LINK_ONLY' and technical_status<>'portal_link'))
 );
