@@ -244,6 +244,19 @@ export function createApp(d: Deps) {
     return { ok: true };
   });
 
+  // A lost local PIN may require switching back to password/SMS without
+  // changing the manually selected performer line status or releasing jobs.
+  // This endpoint revokes ONLY the current session; it never toggles presence.
+  r.post('/api/auth/recover-local-lock', true, async (c: AuthedCtx) => {
+    const token = bearer(c.req)!;
+    const sessionHash = sha256(token);
+    await d.db.query(
+      'delete from push_tokens where user_id=$1 and (session_token_hash=$2 or session_token_hash is null)',
+      [c.user.id, sessionHash]);
+    await auth.logout(token);
+    return { ok: true };
+  });
+
   // Профиль ------------------------------------------------------------------
   r.get('/api/me', true, (c: AuthedCtx) => profiles.me(c.user));
   r.patch('/api/me', true, async (c: AuthedCtx) => {

@@ -5,7 +5,6 @@ import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFiel
 import { BookingRows } from './base.tsx';
 import { DriverRules } from './fleet.tsx';
 import { VehicleServiceApplication, VehicleServiceHistory } from './vehicleServices.tsx';
-import { native } from '../native.ts';
 import { insurancePresentation, isOpenInsuranceRequest } from '../insurancePresentation.ts';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
@@ -875,7 +874,7 @@ export function Profile() {
   const [name, setName] = useState(me?.name ?? '');
   const [company, setCompany] = useState(me?.company_name ?? '');
   const [inn, setInn] = useState(me?.company_inn ?? '');
-  const [appLock, setAppLock] = useState(() => native.appLockEnabled());
+  // Fast local PIN/biometrics live in one shared section for every role.
   const [reducedMotion, setReducedMotion] = useState(() => localStorage.getItem('traksos.reduceMotion') === '1');
   const toggleMotion = (enabled: boolean) => {
     setReducedMotion(enabled);
@@ -888,18 +887,11 @@ export function Profile() {
   return (
     <main className="account-profile-page">
       <h1>Профиль</h1>
-      {native.isApp && <div className="card">
-        <b>Быстрый безопасный вход</b>
-        <label className="row" style={{ alignItems: 'center' }}>
-          <input type="checkbox" checked={appLock} onChange={(e) => {
-            const value = e.target.checked;
-            if (native.setAppLockEnabled(value)) setAppLock(value);
-            else window.alert('Чтобы включить защиту, настройте отпечаток пальца или код блокировки телефона.');
-          }} />
-          <span>Разблокировать TrakSOS отпечатком или PIN телефона</span>
-        </label>
-        <span className="note">При возвращении в приложение после перерыва. Статус «На линии» и входящие вызовы не отключаются.</span>
-      </div>}
+      <a href="#/security" className="ts-profile-security-link" aria-label="Открыть раздел Безопасность и вход">
+        <span aria-hidden="true" className="ts-profile-security-emblem">◈</span>
+        <span><b>Безопасность и вход</b><small>PIN из 4 цифр, отпечаток, пароль, восстановление и доверенные сеансы</small></span>
+        <span aria-hidden="true">›</span>
+      </a>
       <a href="#/invite" className="card" style={{ textDecoration: 'none', color: 'inherit', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <span><b>🎁 Пригласить и получать баллы</b><small className="note" style={{ display: 'block' }}>Баллы гасят сбор и комиссию TrakSOS</small></span><span>›</span>
       </a>

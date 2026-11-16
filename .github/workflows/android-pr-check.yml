@@ -11,6 +11,7 @@ on:
       - 'scripts/verify-approved.mjs'
       - 'scripts/verify-brand.mjs'
       - 'scripts/android-pr-runtime-smoke.sh'
+      - 'scripts/android-pin-instrumentation.sh'
       - 'scripts/verify-android-screen.py'
       - '.github/workflows/android-pr-check.yml'
   workflow_dispatch:
@@ -57,7 +58,7 @@ jobs:
 
       - name: Build debug APK without release credentials
         working-directory: android
-        run: gradle --no-daemon assembleDebug
+        run: gradle --no-daemon assembleDebug assembleDebugAndroidTest
 
       - name: Check bundled pages and installed package metadata
         run: |
@@ -77,6 +78,12 @@ jobs:
         with:
           name: tracksos-pr-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tracksos-pr-pin-tests
+          path: android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
           retention-days: 7
           if-no-files-found: error
 
@@ -110,13 +117,17 @@ jobs:
         with:
           name: tracksos-pr-debug-apk
           path: apk
-      - name: Boot emulator, launch APK and fail on native crash
+      - uses: actions/download-artifact@v4
+        with:
+          name: tracksos-pr-pin-tests
+          path: apk-test
+      - name: Boot emulator, launch APK, and verify the native PIN with AndroidKeystore
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
           target: google_apis
           arch: x86_64
-          script: bash scripts/android-pr-runtime-smoke.sh
+          script: bash scripts/android-pr-runtime-smoke.sh && bash scripts/android-pin-instrumentation.sh
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -127,4 +138,6 @@ jobs:
             emulator-screen.png
             emulator-ui.xml
             runtime-ready.log
+            pin-test.log
+            cinematic-pin-preview.png
           if-no-files-found: warn

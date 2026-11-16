@@ -11,6 +11,8 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.content.res.ColorStateList
+import android.text.InputFilter
+import android.text.InputType
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
@@ -21,6 +23,7 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.ImageView
+import android.widget.EditText
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -62,6 +65,11 @@ class MainActivity : AppCompatActivity() {
     private val appLockPrefs by lazy { getSharedPreferences("traksos_app_security", MODE_PRIVATE) }
     private val allowedAuthenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG or
         BiometricManager.Authenticators.DEVICE_CREDENTIAL
+    private var activeAccountId: String? = null
+
+    fun appPinEnabled(): Boolean = AppPinStore.enabled(this)
+    private fun biometricAvailable() = BiometricManager.from(this)
+        .canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS
 
     /** Fast unlock only protects foreground UI. It does not log out a worker or change line status. */
     fun appLockEnabled(): Boolean = appLockPrefs.getBoolean("enabled", false)
@@ -92,36 +100,265 @@ class MainActivity : AppCompatActivity() {
         foreground = true
     }
 
-    private fun requireAppUnlock() {
-        if (lockCover != null || unlockInProgress || !appLockEnabled() || Session.token(this) == null) return
-        val cover = FrameLayout(this).apply {
-            setBackgroundColor(Color.rgb(5, 23, 41))
-            isClickable = true
-            isFocusable = true
-            contentDescription = "TrakSOS заблокирован. Разблокируйте устройство."
+    /** A native dialog keeps the PIN out of WebView and JavaScript entirely. */
+    private fun pinDialog(title: String, recover: Boolean = false, onEntered: (String) -> Boolean) {
+        val input = EditText(this).apply {
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
+            filters = arrayOf(InputFilter.LengthFilter(4))
+            textSize = 24f
+            textAlignment = View.TEXT_ALIGNMENT_CENTER
+            contentDescription = "Четыре цифры PIN-кода TrakSOS"
         }
-        val label = TextView(this).apply {
-            text = "TrakSOS\\nРазблокируйте приложение"
-            textSize = 21f
+        input.apply {
+            letterSpacing = .4f
             setTextColor(Color.WHITE)
-            gravity = Gravity.CENTER
+            setHintTextColor(0xFFAACCDC.toInt())
+            setPadding(16, 24, 16, 24)
+            background = GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                intArrayOf(0xFF123B57.toInt(), 0xFF092035.toInt())).apply {
+                cornerRadius = 18 * resources.displayMetrics.density
+                setStroke((resources.displayMetrics.density).toInt().coerceAtLeast(1),
+                    0xFF46CDE8.toInt())
+            }
         }
-        cover.addView(label, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
-        appRoot.addView(cover, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
+        val holder = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            val pad = (24 * resources.displayMetrics.density).toInt()
+            setPadding(pad, pad / 2, pad, 0)
+            addView(TextView(this@MainActivity).apply {
+                text = "◈  ЗАЩИЩЁННЫЙ ВХОД"
+                textSize = 11f
+                letterSpacing = .15f
+                setTextColor(0xFF75E0EF.toInt())
+                gravity = Gravity.CENTER
+            }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = pad / 2 })
+            addView(input)
+        }
+        val builder = AlertDialog.Builder(this)
+            .setTitle(title)
+            .setView(holder)
+            .setPositiveButton("Продолжить", null)
+            .setNegativeButton("Отмена", null)
+        if (recover) builder.setNeutralButton("Забыли PIN?") { _, _ -> confirmAccountRecovery() }
+        val dialog = builder.create()
+        dialog.setOnShowListener {
+            dialog.window?.setBackgroundDrawable(
+                GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                    intArrayOf(0xFF0A243F.toInt(), 0xFF051527.toInt())).apply {
+                    cornerRadius = 24 * resources.displayMetrics.density
+                    setStroke(resources.displayMetrics.density.toInt().coerceAtLeast(1),
+                        0xFF4B9CB4.toInt())
+                }
+            )
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val digits = input.text.toString()
+                if (digits.length != 4 || digits.any { !it.isDigit() }) {
+                    input.error = "Нужны ровно четыре цифры"
+                } else if (onEntered(digits)) {
+                    dialog.dismiss()
+                } else {
+                    input.text?.clear()
+                    if (input.error == null) input.error = "Проверьте код"
+                }
+            }
+            input.requestFocus()
+            dialog.window?.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE)
+        }
+        dialog.show()
+    }
+
+    /** Setup or rotation is offered only on a confirmed, signed-in device. */
+    fun setupAppPin() {
+        if (Session.token(this) == null || activeAccountId.isNullOrBlank()) return
+        if (AppPinStore.enabled(this)) {
+            pinDialog("Текущий PIN TrakSOS") { entered ->
+                when (AppPinStore.verify(this, entered)) {
+                    AppPinStore.Check.OK -> {
+                        showNewPinSetup()
+                        true
+                    }
+                    AppPinStore.Check.COOLDOWN -> {
+                        android.widget.Toast.makeText(this, "Слишком много попыток. Попробуйте позднее.", android.widget.Toast.LENGTH_LONG).show()
+                        true
+                    }
+                    AppPinStore.Check.RELOGIN -> {
+                        confirmAccountRecovery()
+                        true
+                    }
+                    else -> false
+                }
+            }
+        } else showNewPinSetup()
+    }
+
+    private fun showNewPinSetup() {
+        pinDialog("Создайте PIN из 4 цифр") { first ->
+            pinDialog("Повторите PIN") { repeated ->
+                if (repeated != first) return@pinDialog false
+                val account = activeAccountId
+                if (account == null || Session.token(this) == null ||
+                    !AppPinStore.create(this, repeated, account)) {
+                    android.widget.Toast.makeText(this, "Не удалось защитить PIN. Повторите настройку.", android.widget.Toast.LENGTH_LONG).show()
+                    return@pinDialog false
+                }
+                // Fingerprint is strictly opt-in under Profile → Security.
+                // Never enable it merely because the device has enrolled a finger.
+                emit("appPinChanged", mapOf("enabled" to "true"))
+                android.widget.Toast.makeText(this, "Быстрый вход настроен", android.widget.Toast.LENGTH_SHORT).show()
+                true
+            }
+            true
+        }
+    }
+
+    fun removeAppPin() {
+        if (!AppPinStore.enabled(this)) return
+        pinDialog("PIN для отключения быстрого входа") { digits ->
+            when (AppPinStore.verify(this, digits)) {
+                AppPinStore.Check.OK -> {
+                    AppPinStore.clear(this)
+                    appLockPrefs.edit().putBoolean("enabled", false).apply()
+                    emit("appPinChanged", mapOf("enabled" to "false"))
+                    true
+                }
+                AppPinStore.Check.RELOGIN -> { confirmAccountRecovery(); true }
+                AppPinStore.Check.COOLDOWN -> {
+                    android.widget.Toast.makeText(this, "Повторите позднее", android.widget.Toast.LENGTH_SHORT).show()
+                    true
+                }
+                else -> false
+            }
+        }
+    }
+
+    private fun confirmAccountRecovery() {
+        AlertDialog.Builder(this)
+            .setTitle("Восстановить доступ?")
+            .setMessage("Чтобы сбросить PIN на этом устройстве, понадобится пароль TrakSOS. Если пароль забыт, его можно восстановить по SMS. Текущая сессия будет закрыта.")
+            .setPositiveButton("Перейти ко входу") { _, _ -> recoverWithAccountPassword() }
+            .setNegativeButton("Остаться", null)
+            .show()
+    }
+
+    private fun recoverWithAccountPassword() {
+        // Do not clear the local lock until the server confirms revocation.
+        // A forgotten PIN is not a reason to remove a technician from the line.
+        // If offline, keep the cover and retry after connectivity returns.
+        Session.post(this, "/api/auth/recover-local-lock") { ok, code ->
+            runOnUiThread {
+                // 401 proves the old token is already invalid and safe to forget.
+                if (!ok && code != 401) {
+                    android.widget.Toast.makeText(this,
+                        "Для восстановления требуется интернет. Проверьте соединение и повторите.",
+                        android.widget.Toast.LENGTH_LONG).show()
+                    return@runOnUiThread
+                }
+                AppPinStore.clear(this)
+                appLockPrefs.edit().putBoolean("enabled", false).apply()
+                Session.save(this, Session.server(this), null)
+                activeAccountId = null
+                emit("appPinChanged", mapOf("enabled" to "false"))
+                web.evaluateJavascript(
+                    "localStorage.removeItem('traksos.token');localStorage.removeItem('traksos.offlineIdentity');location.replace('#/login');location.reload();",
+                    null
+                )
+                completeAppUnlock()
+            }
+        }
+    }
+
+    /** Persist only the account identity so one person's PIN cannot open another's session. */
+    fun onWebSession(apiUrl: String, token: String?, accountId: String?) {
+        val hadToken = Session.token(this)
+        Session.save(this, apiUrl, token)
+        if (token.isNullOrEmpty()) {
+            activeAccountId = null
+            return
+        }
+        if (!accountId.isNullOrBlank()) {
+            if (AppPinStore.enabled(this) && AppPinStore.owner(this) != accountId) {
+                AppPinStore.clear(this)
+                appLockPrefs.edit().putBoolean("enabled", false).apply()
+            }
+            activeAccountId = accountId
+        }
+        if (hadToken == null && !AppPinStore.enabled(this) &&
+            !appLockPrefs.getBoolean("pinPrompted", false)) {
+            appLockPrefs.edit().putBoolean("pinPrompted", true).apply()
+            web.postDelayed({
+                if (!isFinishing && Session.token(this) != null && !AppPinStore.enabled(this)) {
+                    AlertDialog.Builder(this)
+                        .setTitle("Вход без постоянного пароля")
+                        .setMessage("Создайте PIN из 4 цифр. В следующий раз вы сможете открыть TrakSOS по PIN или отпечатку, не входя заново.")
+                        .setPositiveButton("Создать PIN") { _, _ -> setupAppPin() }
+                        .setNegativeButton("Позже", null).show()
+                }
+            }, 4_200L)
+        }
+    }
+
+    private fun requireAppUnlock() {
+        if (lockCover != null || unlockInProgress ||
+            (!appLockEnabled() && !appPinEnabled()) || Session.token(this) == null) return
+        val cover = CinematicAppLock.build(this,
+            pin = appPinEnabled(),
+            fingerprint = appLockEnabled() && biometricAvailable(),
+            onPinEntered = { digits ->
+                val result = AppPinStore.verify(this, digits)
+                when (result) {
+                    AppPinStore.Check.OK -> completeAppUnlock()
+                    AppPinStore.Check.RELOGIN -> confirmAccountRecovery()
+                    else -> Unit
+                }
+                result
+            },
+            onBiometric = { requestAppUnlock() },
+            onRecovery = { confirmAccountRecovery() }
+        )
+        val coverParams = FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
+        // On cold start the approved seasonal splash must remain visible for
+        // >=3.5 s. Insert the native lock *under* the splash, but *above*
+        // WebView, so no personal cabinet can flash before authentication.
+        val splashVisible = startupOverlay?.visibility == View.VISIBLE
+        if (splashVisible) appRoot.addView(cover, 1, coverParams)
+        else appRoot.addView(cover, coverParams)
         lockCover = cover
-        // Treat the covered WebView as background for incoming-call notifications.
-        // A ringing job must not get stuck invisibly behind the unlock screen.
+        // Call notifications remain handled natively while the WebView is covered.
         foreground = false
-        requestAppUnlock()
+        if (!splashVisible) requestAppUnlock()
     }
 
     private fun requestAppUnlock() {
         if (unlockInProgress || lockCover == null) return
+        if (appPinEnabled()) {
+            // Native keypad is already visible under the optional fingerprint prompt.
+            if (!appLockEnabled() || !biometricAvailable()) return
+            unlockInProgress = true
+            val prompt = BiometricPrompt(this, ContextCompat.getMainExecutor(this),
+                object : BiometricPrompt.AuthenticationCallback() {
+                    override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                        super.onAuthenticationSucceeded(result)
+                        completeAppUnlock()
+                    }
+                    override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                        super.onAuthenticationError(errorCode, errString)
+                        unlockInProgress = false
+                        // Leave the cinematic four-dot keypad available; no second modal.
+                    }
+                })
+            prompt.authenticate(BiometricPrompt.PromptInfo.Builder()
+                .setTitle("Открыть TrakSOS")
+                .setSubtitle("Отпечаток или PIN TrakSOS")
+                .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
+                .setNegativeButtonText("Ввести PIN")
+                .build())
+            return
+        }
+        // Preserve the already-shipped device-credential lock for existing users.
+        if (!appLockEnabled()) return
         unlockInProgress = true
-        lockCover?.setOnClickListener { requestAppUnlock() }
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-            // Use the OS-protected lock-screen credential on Android 7–10.
-            // AndroidX rejects BIOMETRIC_STRONG | DEVICE_CREDENTIAL on Android 9–10.
             val keyguard = getSystemService(KEYGUARD_SERVICE) as KeyguardManager
             val intent = keyguard.createConfirmDeviceCredentialIntent(
                 "Разблокировать TrakSOS", "Подтвердите код или пароль телефона")
@@ -138,7 +375,6 @@ class MainActivity : AppCompatActivity() {
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                     super.onAuthenticationError(errorCode, errString)
                     unlockInProgress = false
-                    // No access to the WebView when cancelled: tap the cover to retry.
                 }
             })
         prompt.authenticate(BiometricPrompt.PromptInfo.Builder()
@@ -185,6 +421,10 @@ class MainActivity : AppCompatActivity() {
             .addPathHandler("/", BundledWeb(this))
             .build()
         web = WebView(this)
+        // Android Autofill/credential managers may offer to save the account password
+        // at the user's choice. TrakSOS never stores a plaintext password itself.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            web.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_YES
         if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val pkg = WebView.getCurrentWebViewPackage()
             android.util.Log.i("TrakSOSRuntime", "WEBVIEW_VERSION=" + (pkg?.versionName ?: "unknown"))
@@ -345,7 +585,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         foreground = true
         val elapsed = SystemClock.elapsedRealtime()
-        if (appLockEnabled() && Session.token(this) != null &&
+        if ((appLockEnabled() || appPinEnabled()) && Session.token(this) != null &&
             (pausedAt == 0L || elapsed - pausedAt > 20_000L)) requireAppUnlock()
         if (lockCover != null) foreground = false
     }
@@ -366,6 +606,14 @@ class MainActivity : AppCompatActivity() {
     /** Открыть сайт заново — после «Повторить» или смены адреса сервера */
     fun reload() = web.post {
         web.loadUrl(urlFor(null))
+    }
+
+    /** Explicit login CTA in the unsigned demonstration APK.
+     * Release already opens the official website with a working guest login. */
+    fun openLoginFromDemo() {
+        if (!BuildConfig.DEBUG) return
+        if (Session.setServer(this, BuildConfig.APP_URL))
+            web.post { web.loadUrl(urlFor("login")) }
     }
 
     private fun urlFor(path: String?) = Session.server(this).trimEnd('/') + "/" + (path?.let { "#/$it" } ?: "")
@@ -424,8 +672,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun hideStartupOverlay() {
+        val hadSplash = startupOverlay != null
         startupOverlay?.visibility = View.GONE
         startupOverlay = null
+        // The unlock sheet is already under the splash; launch biometrics only
+        // after the seasonal scene has finished, not while it is covering UI.
+        if (hadSplash && lockCover != null) requestAppUnlock()
     }
 
     /** Экран ошибки: что случилось, «Повторить» и поле адреса сервера (для тестового стенда) */
@@ -470,7 +722,9 @@ class MainActivity : AppCompatActivity() {
         nav button.active{color:#00cceb;font-weight:bold}
         input{width:100%;padding:14px;border:1px solid #276482;border-radius:10px;background:#061426;color:white;margin-bottom:12px}
         </style></head><body><header><strong class="logo">TrakSOS</strong><span class="badge">АВТОНОМНОЕ ДЕМО</span></header>
-        <main><div class="alert">Сервер TrakSOS ещё не запущен. Это демонстрация интерфейса: реальные вызовы, заявки, вход и загрузка документов отключены.</div>
+        <main><div class="alert">Это автономное демо: реальные заявки, вход и отправка документов здесь отключены. Чтобы войти в свой аккаунт, откройте подключение к официальному серверу TrakSOS.</div>
+         <button class="action" onclick="TrakSOSNative.openLogin()">Войти в TrakSOS</button>
+         <p style="margin:10px 0 20px">Нужен интернет и доступность официального сайта. Если он недоступен — демо остаётся на устройстве.</p>
         <section class="page active" id="home"><h2>Помощь грузовику</h2>
         <div class="card"><b>🚨 Срочная помощь</b><p>Вызов специалиста при поломке на дороге.</p><button class="action" onclick="show('sos')">Открыть SOS</button></div>
         <div class="card"><b>🔧 Выездной мастер</b><p>Электрик, диагностика и ремонт на месте.</p><button class="secondary" onclick="show('orders')">Заявки</button></div>
@@ -521,6 +775,9 @@ class WebBridge(private val activity: MainActivity) {
     @JavascriptInterface
     fun retry() = activity.reload()
 
+    @JavascriptInterface
+    fun openLogin() = activity.openLoginFromDemo()
+
     /** Экран ошибки: другой адрес сервера (тестовый стенд). Пусто — адрес по умолчанию. */
     @JavascriptInterface
     fun setServer(url: String) {
@@ -540,9 +797,27 @@ class WebBridge(private val activity: MainActivity) {
     /** Страница передаёт токен входа: нужен для «Беру» с экрана блокировки и отправки токена пушей */
     @JavascriptInterface
     fun setSession(apiUrl: String, token: String?) {
-        Session.save(activity, apiUrl, token?.takeIf { it.isNotEmpty() })
-        if (!token.isNullOrEmpty()) activity.runOnUiThread { activity.askNotifications() }
+        activity.runOnUiThread {
+            activity.onWebSession(apiUrl, token?.takeIf { it.isNotEmpty() }, pendingAccountId)
+            if (!token.isNullOrEmpty()) activity.askNotifications()
+        }
     }
+
+    private var pendingAccountId: String? = null
+
+    @JavascriptInterface
+    fun setAccountId(accountId: String?) {
+        pendingAccountId = accountId?.takeIf { it.length in 4..80 && it.matches(Regex("^[a-zA-Z0-9-]+$")) }
+    }
+
+    @JavascriptInterface
+    fun appPinEnabled(): Boolean = activity.appPinEnabled()
+
+    @JavascriptInterface
+    fun setupAppPin() { activity.runOnUiThread { activity.setupAppPin() } }
+
+    @JavascriptInterface
+    fun removeAppPin() { activity.runOnUiThread { activity.removeAppPin() } }
 
     /** Токен RuStore Push (может быть пустым, пока не пришёл) */
     @JavascriptInterface

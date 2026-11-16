@@ -15,6 +15,7 @@ android {
 
     defaultConfig {
         applicationId = "ru.traksos.app"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         minSdk = 24
         targetSdk = 35
         versionCode = versionCodeEnv
@@ -68,6 +69,8 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.webkit:webkit:1.12.1")
     implementation("androidx.biometric:biometric:1.1.0")
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
     // RuStore Push — https://www.rustore.ru/help/sdk/push-notifications/kotlin-java
     implementation("ru.rustore.sdk:pushclient:7.5.0")
 }
