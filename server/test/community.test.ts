@@ -91,6 +91,9 @@ test('technical metadata never published until rights AND tech reviewed, and onl
     rightsBasis:'own',rightsReference:'Материал специалиста, ожидает проверки',
   },master.token));
   assert.equal(proposed.rights_review,'pending');
+  const rightsQueue=ok(await t.api('GET','/api/admin/community/knowledge/review-queue',undefined,admin.token));
+  assert.ok(rightsQueue.articles.some((x:any)=>x.id===proposed.id));
+  assert.equal((await t.api('GET','/api/admin/community/knowledge/review-queue',undefined,master.token)).status,403);
   assert.equal(ok(await t.api('GET','/api/community/knowledge',undefined,master.token)).articles.length,0);
   assert.equal((await t.api('GET',`/api/community/knowledge/${proposed.id}`,undefined,master.token)).status,404);
   assert.equal((await t.api('POST',`/api/admin/community/knowledge/${proposed.id}/review`,{
