@@ -45,6 +45,7 @@ import { TechnicalBase } from './screens/technicalBase.tsx';
 import { OrderTechBase } from './screens/orderTechBase.tsx';
 import { PartnerLevelView, PartnerLevelAdmin } from './screens/partnerLevel.tsx';
 import { CourierHome } from './screens/courier.tsx';
+import { CourierAdmin } from './screens/courierAdmin.tsx';
 import { Privacy } from './screens/privacy.tsx';
 import { ModCase, Appeal, MyReviews } from './screens/moderation.tsx';
 import { ModeratorDesk } from './screens/moderatorDesk.tsx';
@@ -241,7 +242,7 @@ function App() {
     case 'order': screen = <Order id={b} />; break;
     case 'orders': screen = isCustomer ? <Orders as="client" /> : <main><div className="empty">Нет доступа к клиентским заявкам</div></main>; break;
     case 'garage': screen = isCustomer ? <Garage /> : <main><div className="empty">Нет доступа к гаражу</div></main>; break;
-    case 'courier': screen = isCourier ? <CourierHome /> : <main><div className="empty">Кабинет доступен только курьерам, которых назначил администратор.</div></main>; break;
+    case 'courier': screen = b==='admin' && isAdmin ? <CourierAdmin /> : isCourier ? <CourierHome /> : <main><div className="empty">Кабинет доступен только курьерам, которых назначил администратор.</div></main>; break;
     case 'air': screen = me.roles.includes('driver') ? <DriverAir /> : <main><div className="empty">Водительский Эфир доступен только водителям.</div></main>; break;
     case 'partner': screen = b==='admin' && isAdmin ? <PartnerLevelAdmin /> : (isPerformer||isService) ? <PartnerLevelView /> : <main><div className="empty">Партнёрская программа только для специалистов.</div></main>; break;
     case 'techbase': screen = me.roles.some(r => ['master','tow','service','admin'].includes(r))
@@ -384,6 +385,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/admin/section/verify', 'Проверка исполнителей'],
          ['/techbase', 'Проверка материалов ТехБазы'],
          ['/partner/admin', 'TrakSOS Партнёр · уровни и обращения'],
+         ['/courier/admin', 'Курьерская доставка · маршруты и склад'],
          ['/admin/section/bases', 'СТО и рембазы'],
          ['/admin/section/payments', 'Деньги и выплаты'],
          ['/admin/section/stats', 'Статистика'],
