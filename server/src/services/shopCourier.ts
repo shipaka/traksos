@@ -117,9 +117,19 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
     const b=parse(z.object({courierId:id,pickupAddress:z.string().trim().min(10).max(300),
       orderIds:z.array(id).min(1).max(50)}),c.body);
     if(new Set(b.orderIds).size!==b.orderIds.length)throw bad('duplicate_orders','Заказ повторяется в маршруте');
+    if(!addressDeclaredInSpb(b.pickupAddress))
+      throw conflict('warehouse_outside_region','Склад отправления должен быть подтверждён в Санкт-Петербурге');
     const courierProfile=await db.one<{active:boolean}>('select active from shop_couriers where user_id=$1',[b.courierId]);
     if(!courierProfile?.active)throw notFound('Курьер не активен');
     const run=await db.tx(async q=>{
+      // Serialize planning per courier. One driver cannot pick up a second
+      // route while the previous parcels are being returned to warehouse.
+      await q.query('select pg_advisory_xact_lock(hashtext($1))',['shop-courier:'+b.courierId]);
+      const busy=await q.one<{id:string}>(
+        "select id from shop_courier_runs where courier_id=$1 "+
+        "and status in ('planned','accepted','collecting','delivering','returning') limit 1",
+        [b.courierId]);
+      if(busy)throw conflict('courier_busy','У курьера есть незакрытый маршрут, включая возврат на склад');
       const orders=await q.query<{id:string;status:string;delivery:string;verified:boolean;supplier_status:string|null}>(
         "select so.id,so.status,so.delivery,(ac.shop_order_id is not null) as verified,ev.status as supplier_status "+
         "from shop_orders so left join shop_delivery_address_checks ac on ac.shop_order_id=so.id "+
@@ -130,6 +140,10 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
         throw conflict('orders_not_ready','Нужны собранные заказы с проверенными адресами Санкт-Петербурга');
       if(orders.some(x=>x.supplier_status==='cancelled'))
         throw conflict('supplier_cancelled','Поставщик отменил заказ. Проверьте причину и наличие, прежде чем создавать рейс.');
+      const assigned=await q.one<{shop_order_id:string}>(
+        'select shop_order_id from shop_courier_stops where shop_order_id=any($1::uuid[]) limit 1',
+        [b.orderIds]);
+      if(assigned)throw conflict('order_already_assigned','Один из заказов уже находится в другом курьерском рейсе');
       const result=await q.one<Run>(
         "insert into shop_courier_runs(courier_id,created_by,pickup_address) values($1,$2,$3) returning *",
         [b.courierId,c.user.id,b.pickupAddress]);
