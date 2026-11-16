@@ -9,7 +9,7 @@ type Run={id:string;status:string;cityCode:string;pickupAddress:string;
 type RunList={runs:Array<{id:string;status:string;cityCode:string}>};
 type Parcel={name:string;brand:string|null;article:string|null;qty:number};
 type Stop={id:string;seq:number;status:string;orderNumber:number;recipientName:string|null;
-  address:string|null;items:Parcel[];comment:string|null};
+  address:string|null;items:Parcel[];comment:string|null;handoffVerified:boolean};
 const statusText:Record<string,string>={
   planned:'Ожидает принятия',accepted:'Принят',collecting:'Забираем со склада',
   delivering:'Доставляем клиентам',returning:'Возврат на склад',
@@ -40,6 +40,8 @@ export function CourierHome(){
  const {run,busy}=useAction();
  const [failureId,setFailureId]=useState<string|null>(null);
  const [reason,setReason]=useState('');
+ const [handoffCode,setHandoffCode]=useState('');
+ const [handoffStopId,setHandoffStopId]=useState<string|null>(null);
  const [gpsOn,setGpsOn]=useState(false);
  const [gpsError,setGpsError]=useState<string|null>(null);
  const watch=useRef<number|null>(null);
@@ -119,7 +121,7 @@ export function CourierHome(){
    {list.data&&list.data.runs.length>0&&<div className="courier-layout">
      <nav className="courier-runs" aria-label="Мои рейсы">
        {list.data.runs.map(r=><button key={r.id} type="button" aria-current={selected===r.id?'page':undefined}
-         onClick={()=>{setGpsOn(false);setSelected(r.id);setFailureId(null)}}>
+         onClick={()=>{setGpsOn(false);setSelected(r.id);setFailureId(null);setHandoffStopId(null);setHandoffCode('')}}>
          <b>Рейс {r.id.slice(0,8)}</b><small>{statusText[r.status]??r.status}</small>
        </button>)}
      </nav>
@@ -185,8 +187,27 @@ export function CourierHome(){
                    onClick={()=>void action('/api/courier/runs/'+current.id+'/stops/'+st.id+'/arrive','Прибытие отмечено')}>
                    Я у получателя
                  </button>}
-               {current.status==='delivering'&&st.status==='at_door'&&
-                 <p className="note">Ожидаем подтверждения получения клиентом в его кабинете.</p>}
+               {current.status==='delivering'&&current.activeStopId===st.id&&st.status==='at_door'&&
+                 <div className="stack" style={{width:'100%',gap:9}}>
+                   {st.handoffVerified?<p className="note">Код клиента проверен. Теперь покупатель должен самостоятельно подтвердить получение посылки в своём кабинете.</p>:
+                   <>
+                     <p className="note">Попросите у клиента одноразовый код из истории его заказа. Код виден только покупателю после вашего прибытия, не запрашивайте его до передачи товара.</p>
+                     <form className="stack" onSubmit={async e=>{
+                       e.preventDefault();
+                       const verified=await run(()=>post('/api/courier/runs/'+current.id+'/stops/'+st.id+
+                         '/verify-handoff',{code:handoffCode}),'Код передачи проверен');
+                       if(verified){setHandoffCode('');setHandoffStopId(null);await detail.reload();await list.reload()}
+                     }}>
+                       <label>Код получателя (6 цифр)
+                         <input className="field" type="text" inputMode="numeric" pattern="[0-9]{6}"
+                           autoComplete="one-time-code" maxLength={6} value={handoffStopId===st.id?handoffCode:''}
+                           onChange={e=>{setHandoffStopId(st.id);setHandoffCode(e.target.value.replace(/\D/g,'').slice(0,6))}}
+                           placeholder="000000"/>
+                       </label>
+                       <button className="btn" type="submit" disabled={busy||handoffStopId!==st.id||handoffCode.length!==6}>Проверить код передачи</button>
+                     </form>
+                   </>}
+                 </div>} 
                {current.status==='delivering'&&current.activeStopId===st.id&&['collected','at_door'].includes(st.status)&&
                  <button className="btn ghost" type="button" onClick={()=>{setFailureId(st.id);setReason('')}}>
                    Не удалось вручить
