@@ -2,6 +2,7 @@ import {useState} from 'react';
 import {get} from '../api.ts';
 import {useLoad} from '../ui.tsx';
 import './techBase.css';
+import {TechReferenceShelf} from './techReferenceShelf.tsx';
 
 type Article={id:string;title:string;make:string;model:string|null;
  model_year:number|null;subsystem:string;source_url:string|null};
@@ -62,6 +63,7 @@ export function OrderTechBase({orderId}:{orderId:string}){
       </article>}
     </div>
   </section>}
+  {data.data&&context?.brand&&<TechReferenceShelf initialMake={context.brand} compact/>}
   <a href="#/techbase" className="btn ghost">Открыть общий поиск ТехБазы</a>
  </main>;
 }
