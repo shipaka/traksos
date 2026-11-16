@@ -5,6 +5,7 @@ import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '.
 import { syncOfflineParts, searchOfflineParts } from '../shopOffline.ts';
 import { syncOfflineReferences, searchOfflineReferences } from '../shopReferenceOffline.ts';
 import { AdminShopCatalog } from './shopCatalogAdmin.tsx';
+import { CustomerCourierTracking } from './courierTracking.tsx';
 
 const CART_KEY = 'traksos.cart';
 type Cart = Record<string, number>;
@@ -220,6 +221,7 @@ function MyShopOrders({ orders, reload, canOrder }: { orders: any[]; reload: () 
   const { busy, run } = useAction();
   const [cart, setCart] = useCart();
   const [openAnalog, setOpenAnalog] = useState<string | null>(null);
+  const [openTracking, setOpenTracking] = useState<string | null>(null);
   const addItem = (id: string, qty = 1) => setCart({ ...cart, [id]: Math.min(99, (cart[id] ?? 0) + qty) });
   return (
     <div className="stack">
@@ -245,6 +247,13 @@ function MyShopOrders({ orders, reload, canOrder }: { orders: any[]; reload: () 
           {o.adminNote && <span>{o.adminNote}</span>}
           {o.cancelReason && <span className="note">Отменён: {o.cancelReason}</span>}
           {o.status === 'new' && <button className="btn ghost small" disabled={busy} onClick={async () => { if (await run(() => post(`/api/shop/orders/${o.id}/cancel`), 'Заказ отменён')) reload(); }}>Отменить</button>}
+          {o.delivery === 'delivery' && <section className="stack" aria-label={'Доставка заказа №' + o.number}>
+            <button type="button" className="btn ghost small" aria-expanded={openTracking === o.id}
+              onClick={() => setOpenTracking(openTracking === o.id ? null : o.id)}>
+              {openTracking === o.id ? 'Свернуть отслеживание' : 'Отследить курьера и историю доставки'}
+            </button>
+            {openTracking === o.id && <CustomerCourierTracking orderId={o.id} onChanged={reload} />}
+          </section>}
         </div>
       ))}
     </div>
