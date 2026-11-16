@@ -120,3 +120,18 @@ test('only admin can create regional rooms; server enforces membership and repor
   const queue=ok(await t.api('GET','/api/admin/community/moderation',undefined,admin.token));
   assert.ok(queue.reports.some((x:any)=>x.message_id===msg.id));
 });
+
+test('privacy export includes new community data; scheduled erasure purges nickname and posts',async()=>{
+  const identity={id:driver.id,phone:'+79994440002',roles:['driver'],status:'active',name:null,owner_id:null};
+  const archive=await t.app.privacy.export(identity);
+  assert.equal(archive.communityProfile.nickname,'VolvoDriver_78');
+  assert.ok(archive.communityMessages.length>=1);
+  assert.ok(archive.communityRooms.length>=1);
+  await t.app.privacy.requestDelete(identity);
+  t.clock.advance(31*86400);
+  assert.equal(await t.app.privacy.processDeletions(),1);
+  assert.equal((await t.db.query('select * from community_profiles where user_id=$1',[driver.id])).length,0);
+  assert.equal((await t.db.query('select * from community_messages where sender_id=$1',[driver.id])).length,0);
+  assert.equal((await t.db.query('select * from community_memberships where user_id=$1',[driver.id])).length,0);
+  assert.equal((await t.db.one('select status from users where id=$1',[driver.id]))?.status,'blocked');
+});
