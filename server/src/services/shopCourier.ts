@@ -16,7 +16,8 @@ async function courier(db:Db,user:AuthUser) {
   if(!p?.active)throw forbidden('Доступ курьера не подтверждён');
   return p;
 }
-type Run={id:string;courier_id:string;status:string;pickup_address:string;city_code:string;dispatch_approved_at:Date|null};
+type Run={id:string;courier_id:string;status:string;pickup_address:string;city_code:string;
+  active_stop_id:string|null;dispatch_approved_at:Date|null};
 async function myRun(db:Db,c:AuthedCtx) {
   await courier(db,c.user);
   const run=await db.one<Run>('select * from shop_courier_runs where id=$1',[parse(id,c.params.id)]);
@@ -31,6 +32,7 @@ async function runSummary(db:Db,run:Run) {
     "join shop_orders so on so.id=st.shop_order_id join users u on u.id=so.client_id "+
     "where st.run_id=$1 order by st.seq",[run.id]);
   return {id:run.id,status:run.status,cityCode:run.city_code,pickupAddress:run.pickup_address,
+    activeStopId:run.active_stop_id,
     stops:stops.map(x=>({id:x.id,seq:x.seq,status:x.status,orderNumber:x.number,
       recipientName:['delivered','failed'].includes(x.status)?null:(x.recipient_name??'Получатель'),
       address:['delivered','failed'].includes(x.status)?null:x.address,
