@@ -1218,9 +1218,9 @@ export function createApp(d: Deps) {
     const order = await d.db.one<{ id: string; number: number; performer_id: string | null }>(
       'select id,number,performer_id from orders where id=$1', [c.params.id]);
     if (!order) throw notFound('Заявка не найдена');
-    const points = await d.db.query<{ lat: number; lng: number; received_at: Date }>(
-      `select lat,lng,received_at from (
-         select lat,lng,received_at,id from performer_route_samples
+    const points = await d.db.query<{ lat: number; lng: number; received_at: Date; performer_id: string }>(
+      `select lat,lng,received_at,performer_id from (
+         select lat,lng,received_at,performer_id,id from performer_route_samples
          where order_id=$1 and accepted = true and received_at >= now() - interval '30 days'
          order by received_at desc,id desc limit 1000
        ) samples order by received_at,id`, [order.id]);
