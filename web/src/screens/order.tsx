@@ -87,7 +87,24 @@ export function Order({ id }: { id: string }) {
 
       {d.you !== 'admin' && d.you !== 'candidate' && <a className="btn ghost" href={`#/support/new?order=${d.id}`}>Позвать поддержку</a>}
       {!done && d.actions.includes('cancel') && !isPerformer && !(isConsult && d.status === 'awaiting_confirmation') && <Cancel id={id} status={d.status} consult={isConsult} onDone={o.reload} />}
-      {d.status === 'cancelled' && <div className="card"><b>Заявка отменена</b><span className="note">{d.cancelReason}</span></div>}
+      {d.status === 'cancelled' && <div className="card stack">
+        <b>Заявка отменена</b>
+        <span className="note">{d.cancelReason}</span>
+        {d.cancelBreakdown && <div className="stack">
+          <b>Расчёт отмены</b>
+          <div className="between"><span>Этап</span><b>{({
+            searching: 'До назначения', accepted: 'Принята, до выезда',
+            en_route_first_half: 'Первая половина маршрута',
+            en_route_second_half: 'Вторая половина маршрута',
+            arrived: 'На месте', performer_fault: 'По вине исполнителя',
+          } as Record<string, string>)[d.cancelBreakdown.stage] ?? 'По условиям заявки'}</b></div>
+          <div className="between"><span>Удержание</span><b>{Math.round(Number(d.cancelBreakdown.share) * 100)}%</b></div>
+          <div className="between"><span>Исполнителю за выезд</span><b>{rub(d.cancelBreakdown.toPerformer)}</b></div>
+          <div className="between"><span>Сервисный сбор удержан</span><b>{rub(d.cancelBreakdown.platformKeeps)}</b></div>
+          <div className="between"><span>Расчётный возврат</span><b>{rub(d.cancelBreakdown.refund)}</b></div>
+          <span className="note">Это расчёт по условиям отмены, а не подтверждение фактического банковского возврата. Статус платежа и возврата проверяйте отдельно.</span>
+        </div>}
+      </div>}
     </main>
   );
 }
