@@ -71,7 +71,7 @@ async function requireKnowledgeAccess(db: Db, u: AuthUser) {
 // Live hints must obey exactly the same audience rules as reading a room.
 // Payloads contain no text, but even a private room ID must not be sent to
 // someone whose professional verification or driver role was revoked.
-async function roomLiveRecipients(db:Db,room:Room,exceptId:string|null=null){
+export async function roomLiveRecipients(db:Db,room:Room,exceptId:string|null=null){
   const rows=await db.query<{user_id:string}>(`select cm.user_id from community_memberships cm
       join users u on u.id=cm.user_id
       left join performer_profiles p on p.user_id=u.id
