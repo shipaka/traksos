@@ -118,7 +118,10 @@ expect(landing.includes('public-map-static'), 'public map does not depend on net
 expect(!landing.includes('openstreetmap.org/export/embed'), 'no third-party iframe is required for offline public map');
 expect(landing.includes('Пример расположения услуг.'), 'demo map explicitly labels fictional service markers');
 expect(landing.includes('yandex.ru/maps/'), 'guest static map opens real Yandex Maps on click');
-expect(landing.includes('Санкт-Петербург и Ленинградская область'), 'launch region is shown');
+// Federal product positioning supersedes the original local launch copy.
+expect(landing.includes('Единая платформа для России'), 'federal brand positioning is visible');
+expect(landing.includes('Реальная доступность выездных специалистов'), 'local availability is stated honestly');
+expect(!landing.includes('Санкт-Петербург и Ленинградская область'), 'obsolete local marketing copy was removed');
 expect(shell.includes("import './finalCanon.css';"), 'the only final design layer is loaded by the real app');
 expect(shell.includes('guest-site-nav'), 'the guest PC has horizontal navigation, not an alternative sidebar');
 expect(finalCss.includes('public-hero-slide-approved') && finalCss.includes("url('../public/tracksos-approved-scenic-hero.webp')"), 'the final guest hero uses the approved full Scania photo without baked controls');
