@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { get, patch, fmtTime } from '../api.ts';
 import { useLoad, useAction } from '../ui.tsx';
+import { insurancePresentation } from '../insurancePresentation.ts';
 
 const labels: Record<string, string> = {
   sent_to_partner: 'Ждёт оформления', completed: 'Полис оформлен', rejected: 'Отказ',
@@ -139,10 +140,11 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
       {!rows ? <div className="empty">{requests.error ? `Не удалось загрузить: ${requests.error}` : 'Загружаем заявки…'}</div>
         : !rows.length ? <InsurerEmptyState onRefresh={requests.reload} />
         : <div className="stack">
-          <div className="cabinet-metrics">
+          <div className="cabinet-metrics insurer-insurance-metrics">
             <div className="card tile"><span className="label">Всего назначено</span><b className="tile-value">{rows.length}</b></div>
-            <div className="card tile"><span className="label">Ожидают решения</span><b className="tile-value">{rows.filter((r) => r.status === 'sent_to_partner').length}</b></div>
-            <div className="card tile"><span className="label">Завершено</span><b className="tile-value">{rows.filter((r) => r.status !== 'sent_to_partner').length}</b></div>
+            <div className="card tile"><span className="label">Новые заявки</span><b className="tile-value">{rows.filter((r) => r.status === 'sent_to_partner' && (!r.insurance_stage||r.insurance_stage==='received')).length}</b></div>
+            <div className="card tile"><span className="label">В работе</span><b className="tile-value">{rows.filter((r) => r.status === 'sent_to_partner' && !!r.insurance_stage && r.insurance_stage!=='received').length}</b></div>
+            <div className="card tile"><span className="label">Завершено</span><b className="tile-value">{rows.filter((r) => r.status === 'completed').length}</b></div>
           </div>
           <div className="web-case-toolbar">
             <div className="row" role="group" aria-label="Фильтр страховых заявок">
@@ -159,23 +161,26 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
           <span className="label">Показано заявок: {visible.length}</span>
           {!visible.length && <div className="empty">По выбранным фильтрам заявок нет.</div>}
           <div className="web-insurance-grid">
-          {visible.map((r) => (
-            <details key={r.id} className="card">
-              <summary className="between">
-                <b>{r.brand} {r.model ?? ''}</b>
-                <span className="pill">{labels[r.status] ?? r.status}</span>
+          {visible.map((r) => {
+            const state=insurancePresentation(r.insurance_stage,r.status,'partner');
+            return <details key={r.id} className={'card insurer-case-card tone-'+state.tone}>
+              <summary className="insurer-case-summary">
+                <span className="insurer-case-summary-main">
+                  <span className="insurance-step-title">СТРАХОВОЕ ДЕЛО · {r.plate || 'БЕЗ НОМЕРА'}</span>
+                  <strong>{r.brand} {r.model ?? ''}</strong>
+                  <span className="insurer-case-next">{state.next}</span>
+                  <small>Поступила {fmtTime(r.created_at)} · нажмите для подробностей</small>
+                </span>
+                <span className={'insurer-case-state tone-'+state.tone}>
+                  <span className="insurer-case-state-dot" aria-hidden="true">●</span>{state.label}
+                </span>
               </summary>
               <div className="stack">
                 <span className="note">{r.plate || 'Без номера'} · Подана {fmtTime(r.created_at)}</span>
                 {r.comment && <span className="note">Комментарий клиента: {r.comment}</span>}
                 {r.insurance_stage && <div className="insurance-agent-preview">
-                  <b>Заявка через TrakSOS · {({
-                    received:'Получено',preparing:'Готовятся варианты',
-                    offers_sent:'Клиент выбирает предложение',
-                    selected:'Клиент выбрал полис',processing:'Оформляется вручную',
-                    policy_sent:'PDF-полис отправлен'
-                  } as Record<string,string>)[r.insurance_stage] ?? 'В обработке'}</b>
-                  <p className="note">ФИО, сведения о грузовике, предложения и переписка открываются в рабочем деле.</p>
+                  <b>{state.label}</b>
+                  <p className="note">{state.detail} ФИО, сведения о грузовике, предложения и переписка открываются в рабочем деле.</p>
                   <a className="btn" href={`#/insurance/request/${r.id}`}>Открыть страховую заявку и чат →</a>
                 </div>}
                 {r.staff_note && <span className="note">Последний ответ: {r.staff_note}</span>}
@@ -195,8 +200,8 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
                   </div>
                 </>}
               </div>
-            </details>
-          ))}
+            </details>;
+          })}
           </div>
         </div>}
       </>}
