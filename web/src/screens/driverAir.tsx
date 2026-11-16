@@ -150,14 +150,21 @@ function MessageStream({endpoint,canWrite,placeholder}:{
 }){
   const {messages,loading,error,reload}=useAirMessages(endpoint);
   const [draft,setDraft]=useState('');
+  // Keep one idempotency nonce per unchanged draft until its delivery is known.
+  // A dropped HTTP response must not create two messages when retried manually.
+  const pendingSend=useRef<{endpoint:string;text:string;nonce:string}|null>(null);
   const [reportId,setReportId]=useState<string|null>(null);
   const {busy,run}=useAction();
   const bottom=useRef<HTMLDivElement>(null);
+  useEffect(()=>{pendingSend.current=null;setDraft('');setReportId(null);},[endpoint]);
   useEffect(()=>{bottom.current?.scrollIntoView({block:'nearest',behavior:'auto'})},[endpoint,messages.length]);
   const send=async()=>{
     const text=draft.trim();if(!text||!endpoint||busy||!canWrite)return;
-    const sent=await run(()=>post(endpoint,{text,clientNonce:uuid()}),'Сообщение отправлено');
-    if(sent){setDraft('');reload()}
+    const previous=pendingSend.current;
+    const nonce=previous?.endpoint===endpoint&&previous.text===text?previous.nonce:uuid();
+    pendingSend.current={endpoint,text,nonce};
+    const sent=await run(()=>post(endpoint,{text,clientNonce:nonce}),'Сообщение отправлено');
+    if(sent){pendingSend.current=null;setDraft('');reload()}
   };
   return <div className="air-conversation">
     <div className="air-message-list" role="log" aria-label="Сообщения" aria-live="polite">
@@ -194,7 +201,7 @@ function MessageStream({endpoint,canWrite,placeholder}:{
       <label className="sr-only" htmlFor="air-message">Текст сообщения</label>
       <textarea id="air-message" className="field" rows={2} maxLength={2000}
         placeholder={canWrite?placeholder:'Присоединитесь к чату, чтобы писать'}
-        value={draft} disabled={!canWrite||busy} onChange={e=>setDraft(e.target.value)}
+        value={draft} disabled={!canWrite||busy} onChange={e=>{pendingSend.current=null;setDraft(e.target.value)}}
         onKeyDown={e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();void send()}}}/>
       <button className="btn" type="submit" disabled={!canWrite||busy||!draft.trim()}>
         {busy?'Отправка…':'Отправить'}
