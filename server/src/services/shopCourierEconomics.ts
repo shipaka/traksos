@@ -3,6 +3,7 @@ import type { Db } from '../db/index.ts';
 import type { Router, AuthedCtx } from '../http/router.ts';
 import { parse, conflict, notFound } from '../http/router.ts';
 import type { Notifier } from './notify.ts';
+import { warehouseProgress } from './shopWarehouse.ts';
 
 const uuid=z.string().uuid();
 const cost=z.number().int().min(0).max(1_000_000_000);
@@ -12,7 +13,7 @@ const budgetSchema=z.object({
   note:z.string().trim().min(10).max(1000),
 });
 type QueryDb=Pick<Db,'one'|'query'>;
-type Run={id:string;status:string;courier_id:string;dispatch_approved_at:Date|null};
+type Run={id:string;status:string;courier_id:string;dispatch_approved_at:Date|null;packing_required:boolean};
 type Line={id:string;items:any[];goods_total:number;delivery_price:number;status:string};
 type Snapshot={shop_order_id:string;product_id:string;qty:number;purchase_unit_kopecks:number};
 type Budget={courier_pay_kopecks:number;fuel_kopecks:number;packing_kopecks:number;
@@ -108,6 +109,12 @@ export function registerShopCourierEconomicsRoutes(r:Router,db:Db,notifier:Notif
       if(run.status!=='planned'||run.dispatch_approved_at)
         throw conflict('run_already_approved','Маршрут уже утверждён или выполняется');
       await q.query('select o.id from shop_orders o join shop_courier_stops s on s.shop_order_id=o.id where s.run_id=$1 for update of o',[id]);
+      if(run.packing_required){
+        const packing=await warehouseProgress(q,id);
+        if(!packing.ready)
+          throw conflict('packing_incomplete',
+            'Нельзя отправить рейс: склад не сверил все артикулы и количества');
+      }
       const stats=await economics(q,id);
       if(!stats.canApprove||stats.routeContributionKopecks==null)
         throw conflict('route_economics_incomplete',
