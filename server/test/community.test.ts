@@ -124,7 +124,7 @@ test('only admin can create regional rooms; server enforces membership and repor
 test('privacy export includes new community data; scheduled erasure purges nickname and posts',async()=>{
   const identity={id:driver.id,phone:'+79994440002',roles:['driver'],status:'active',name:null,owner_id:null};
   const archive=await t.app.privacy.export(identity);
-  assert.equal(archive.communityProfile.nickname,'VolvoDriver_78');
+  assert.equal(archive.communityProfile?.nickname,'VolvoDriver_78');
   assert.ok(archive.communityMessages.length>=1);
   assert.ok(archive.communityRooms.length>=1);
   await t.app.privacy.requestDelete(identity);
