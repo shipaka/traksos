@@ -499,8 +499,9 @@ export function createApp(d: Deps) {
   });
   r.post('/api/performer/location', performerRoles, async (c: AuthedCtx) => {
     const b = parse(z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) }), c.body);
-    await profiles.setLocation(c.user.id, b.lat, b.lng);
-    // Клиенту в заявке — живая точка исполнителя
+    const accepted = await profiles.setLocation(c.user.id, b.lat, b.lng);
+    if (!accepted) return { ok: true, accepted: false };
+    // Клиенту в заявке — только точка, прошедшая проверку скачков
     const active = await d.db.query<{ id: string; client_id: string; created_by: string }>(
       `select id, client_id, created_by from orders where performer_id=$1 and status in ('accepted','en_route')`, [c.user.id]);
     for (const o of active) hub.send([o.client_id, o.created_by], { type: 'performer_location', orderId: o.id, lat: b.lat, lng: b.lng });
