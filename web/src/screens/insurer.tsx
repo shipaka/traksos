@@ -172,14 +172,14 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
                   <small>Поступила {fmtTime(r.created_at)} · нажмите для подробностей</small>
                 </span>
                 <span className={'insurer-case-state tone-'+state.tone}>
-                  <span className="insurer-case-state-dot" aria-hidden="true">●</span>{state.label}
+                  <span className="insurer-case-state-dot" aria-hidden="true">●</span><span>{state.label}</span>
                 </span>
               </summary>
               <div className="stack">
                 <span className="note">{r.plate || 'Без номера'} · Подана {fmtTime(r.created_at)}</span>
                 {r.comment && <span className="note">Комментарий клиента: {r.comment}</span>}
                 {r.insurance_stage && <div className="insurance-agent-preview">
-                  <b>{state.label}</b>
+                  <b>Следующий шаг: {state.next}</b>
                   <p className="note">{state.detail} ФИО, сведения о грузовике, предложения и переписка открываются в рабочем деле.</p>
                   <a className="btn" href={`#/insurance/request/${r.id}`}>Открыть страховую заявку и чат →</a>
                 </div>}
