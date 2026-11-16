@@ -1,6 +1,9 @@
 package ru.traksos.app
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import java.io.File
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
@@ -96,6 +99,39 @@ class AppPinStoreTest {
             assertEquals("0123", received)
             assertNotNull(locate(cover, "Неверный PIN. Попробуйте снова."))
         }
+    }
+
+    /** Actual native view (with the APK's seasonal photo), not a mockup. */
+    @Test fun renderCinematicKeypadForVisualReview() {
+        val instrument = InstrumentationRegistry.getInstrumentation()
+        val coverHolder = arrayOfNulls<View>(1)
+        instrument.runOnMainSync {
+            coverHolder[0] = CinematicAppLock.build(ctx,
+                pin = true, fingerprint = true,
+                onPinEntered = { AppPinStore.Check.WRONG },
+                onBiometric = {}, onRecovery = {})
+            val view = coverHolder[0]!!
+            val density = ctx.resources.displayMetrics.density
+            val width = (390f * density).toInt()
+            val height = (844f * density).toInt()
+            view.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY))
+            view.layout(0, 0, width, height)
+        }
+        // Allow the actual 450ms entry animation to settle before capturing.
+        Thread.sleep(650)
+        instrument.runOnMainSync {
+            val view = coverHolder[0]!!
+            val bitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(bitmap)
+            view.draw(canvas)
+            File(ctx.cacheDir, "cinematic-pin-preview.png").outputStream().use {
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
+            }
+            bitmap.recycle()
+        }
+        val file = File(ctx.cacheDir, "cinematic-pin-preview.png")
+        assertTrue("Native PIN preview must be nonempty", file.length() > 30_000)
     }
 
 }
