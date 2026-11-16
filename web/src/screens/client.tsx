@@ -409,7 +409,7 @@ export function NewOrder({ service }: { service: string }) {
   const isTow = service === 'tow';
   // Price and customer consent apply to these exact parameters, not a stale quote.
   const quoteKey = JSON.stringify([service,tier,zoneId,night,group,address.trim(),geo?.lat ?? null,geo?.lng ?? null]);
-  const est = quote?.key === quoteKey ? quote.value : null;
+  const est = quoteAddress === address.trim() && quote?.key === quoteKey ? quote.value : null;
   const agree = Boolean(est && agreedQuoteKey === quoteKey);
   const setAgree = (checked: boolean) => setAgreedQuoteKey(checked ? quoteKey : null);
   useEffect(() => { setAgreedQuoteKey(null); }, [quoteKey]);
@@ -433,14 +433,14 @@ export function NewOrder({ service }: { service: string }) {
   },[address]);
   useEffect(() => {
     let alive=true;
-    if(night===null||!zoneId){setQuote(null);setQuoteError(null);return}
+    if(night===null||!zoneId||quoteAddress!==address.trim()){setQuote(null);setQuoteError(null);return}
     setQuote(null);setQuoteError(null);
     post('/api/pricing/estimate', {service,tier,zoneId,night,group,
       address:quoteAddress||undefined,lat:geo?.lat,lng:geo?.lng})
       .then(x=>{if(alive)setQuote({key:quoteKey,value:x})})
       .catch(()=>{if(alive){setQuote(null);setQuoteError('Для выбранного местоположения тариф СПб/ЛО не подтверждён. Проверьте адрес и зону. Нельзя отправить заказ по цене другого региона.')}})
     return ()=>{alive=false};
-  }, [service, tier, zoneId, night, group, quoteAddress,geo?.lat,geo?.lng]);
+  }, [service, tier, zoneId, night, group, quoteAddress,geo?.lat,geo?.lng,quoteKey]);
 
   function locate() {
     if (!navigator.geolocation) return setGeoState('fail');
