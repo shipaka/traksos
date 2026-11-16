@@ -355,14 +355,15 @@ export function BaseSetup() {
   useEffect(() => {
     if (!cab.data || f) return;
     const c = cab.data.center;
-    setF(c ? { name: c.name, address: c.address, hours: c.hours, inn: c.inn ?? '', lat: c.lat, lng: c.lng, brands: c.brands, staff: c.staff, conditions: c.conditions, accepts: c.accepts, closedDays: (c.closed_days ?? []).map((x: string) => x.slice(0, 10)), paused: c.paused }
-      : { name: '', address: '', hours: '08:00–20:00', inn: '', lat: null, lng: null, brands: [], staff: { electric: 'own' }, conditions: ['parking'], accepts: ['quick', 'day'], closedDays: [], paused: false });
+    setF(c ? { name: c.name, address: c.address, hours: c.hours, timeZone: c.time_zone ?? '', inn: c.inn ?? '', lat: c.lat, lng: c.lng, brands: c.brands, staff: c.staff, conditions: c.conditions, accepts: c.accepts, closedDays: (c.closed_days ?? []).map((x: string) => x.slice(0, 10)), paused: c.paused }
+      : { name: '', address: '', hours: '08:00–20:00', timeZone: '', inn: '', lat: null, lng: null, brands: [], staff: { electric: 'own' }, conditions: ['parking'], accepts: ['quick', 'day'], closedDays: [], paused: false });
   }, [cab.data]); // eslint-disable-line
   if (!f) return <main><Loading error={cab.error} /></main>;
   const first = !cab.data?.center;
   const set = (k: string, v: any) => setF({ ...f, [k]: v });
   async function save() {
-    const body = { ...f, inn: f.inn || null, closedDays: f.closedDays.filter((d: string) => d >= mskDay()) };
+    const body = { ...f, inn: f.inn || null, timeZone: f.timeZone?.trim() || undefined,
+      closedDays: f.closedDays.filter((d: string) => d >= mskDay()) };
     if (await run(() => basePut('/api/base', body), first ? 'Карточка сохранена — осталось пройти проверку' : 'Карточка сервиса сохранена')) { await reload(); go(servicePreviewPath('base')); }
   }
   function locate() {
@@ -410,6 +411,24 @@ export function BaseSetup() {
           address={f.address} synthetic={inServicePreview()}/>
         <div className="grid2">
           <Field label="Часы работы"><input className="field" value={f.hours} onChange={(e) => set('hours', e.target.value)} /></Field>
+          <Field label="Часовой пояс СТО">
+            <select className="field" value={f.timeZone??''} onChange={e=>set('timeZone',e.target.value)}>
+              <option value="">Не определён — не показывать как работающую рядом</option>
+              <option value="Europe/Kaliningrad">Калининград (UTC+2)</option>
+              <option value="Europe/Moscow">Москва, Санкт-Петербург (UTC+3)</option>
+              <option value="Europe/Samara">Самара (UTC+4)</option>
+              <option value="Asia/Yekaterinburg">Екатеринбург (UTC+5)</option>
+              <option value="Asia/Omsk">Омск (UTC+6)</option>
+              <option value="Asia/Novosibirsk">Новосибирск (UTC+7)</option>
+              <option value="Asia/Krasnoyarsk">Красноярск (UTC+7)</option>
+              <option value="Asia/Irkutsk">Иркутск (UTC+8)</option>
+              <option value="Asia/Yakutsk">Якутск (UTC+9)</option>
+              <option value="Asia/Vladivostok">Владивосток (UTC+10)</option>
+              <option value="Asia/Magadan">Магадан (UTC+11)</option>
+              <option value="Asia/Sakhalin">Сахалин (UTC+11)</option>
+              <option value="Asia/Kamchatka">Камчатка (UTC+12)</option>
+            </select>
+          </Field>
           <Field label="ИНН компании"><input className="field" inputMode="numeric" value={f.inn} onChange={(e) => set('inn', e.target.value.replace(/\D/g, '').slice(0, 12))} /></Field>
         </div>
       </div>
