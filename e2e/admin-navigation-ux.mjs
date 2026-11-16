@@ -14,7 +14,7 @@ const sections = [
   ['verify','Проверка'],['bases','Рембазы'],['vehicleServices','Страхование и ТО'],
   ['payments','Деньги'],['offers','Оферты'],
   ['announcements','Объявления и комиссии'],['stats','Статистика'],
-  ['flagged','Подозрительное'],['settings','Настройки'],
+  ['flagged','Подозрительное'],['diagnostics','Журнал ошибок'],['settings','Настройки'],
 ];
 const login = await fetch(BASE+'/api/auth/login',{
   method:'POST',headers:{'content-type':'application/json'},
@@ -60,7 +60,7 @@ try {
     await checkLayout('dashboard');
     await page.screenshot({path:'e2e/shots/admin-ux/initial-'+width+'.png',fullPage:true});
     await openNav();
-    if(await navigation.locator('.admin-nav-item').count()!==17)
+    if(await navigation.locator('.admin-nav-item').count()!==sections.length)
       throw Error(width+'px: missing navigation section(s)');
     const search = navigation.getByRole('searchbox',{name:'Поиск раздела администрации'});
     await search.fill('страхование');
@@ -89,5 +89,5 @@ try {
     await checkLayout('deep link');
     await context.close();
   }
-  console.log('Admin: all 17 sections, search, real deep links, responsive layout and screenshots OK');
+  console.log('Admin: all '+sections.length+' sections, search, real deep links, responsive layout and screenshots OK');
 }finally{await browser.close();}
