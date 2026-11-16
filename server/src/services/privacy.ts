@@ -34,6 +34,10 @@ export class PrivacyService {
       performerProfile: await this.db.one(`select kind, specialties, brands, tax_status, inn, cars, schedule, updated_at from performer_profiles where user_id=$1`, [id]),
       serviceBookings: await q('select number, need, status, when_day, works, amount, created_at from service_bookings where client_id=$1 or created_by=$1'),
       support: await q('select t.number, t.topic, t.status, t.created_at from support_tickets t where t.user_id=$1'),
+      directThreads: await q("select id,status,created_at,updated_at from community_dm_threads where user_a=$1 or user_b=$1"),
+      directMessages: await q("select m.thread_id,m.body,m.moderation_state,m.created_at from community_dm_messages m join community_dm_threads t on t.id=m.thread_id where (t.user_a=$1 or t.user_b=$1) and m.sender_id=$1 order by m.created_at"),
+      directBlocks: await q('select blocked_id,created_at from community_user_blocks where blocker_id=$1'),
+      directMessageReports: await q('select message_id,reason,status,created_at from community_dm_reports where reporter_id=$1'),
       communityProfile: await this.db.one('select nickname,city_label,share_city,created_at from community_profiles where user_id=$1',[id]),
       communityMessages: await q('select room_id,body,moderation_state,created_at from community_messages where sender_id=$1 order by created_at desc'),
       communityRooms: await q('select room_id,joined_at from community_memberships where user_id=$1'),
@@ -76,6 +80,11 @@ export class PrivacyService {
         // Community is not an accounting record: erase pseudonym, city, messages,
         // subscriptions, reports and proposed/licensed-by-user materials on deletion.
         // Review attribution is severed without affecting another author's work.
+        // Delete private threads, not just the alias, to avoid retaining DMs after account erasure.
+        // This removes the thread for both parties; a retention/legal hold needs a separate process.
+        await q.query('delete from community_user_blocks where blocker_id=$1 or blocked_id=$1', [id]);
+        await q.query('delete from community_dm_reports where reporter_id=$1', [id]);
+        await q.query('delete from community_dm_threads where user_a=$1 or user_b=$1', [id]);
         await q.query('delete from community_reports where reporter_id=$1', [id]);
         await q.query('delete from community_messages where sender_id=$1', [id]);
         await q.query('delete from community_memberships where user_id=$1', [id]);
