@@ -7,7 +7,6 @@ import { estimate, isNight, billWork, type Tier, type Extra } from '../domain/pr
 import { rankCandidates, performerKindFor, type Candidate } from '../domain/dispatch.ts';
 import { transition, canDo, statusLabels, type Action, type Actor, type OrderStatus } from '../domain/orderState.ts';
 import { cancelStage, cancelSplit, pct } from '../domain/money.ts';
-import { haversineKm } from '../domain/geo.ts';
 import { slot } from '../domain/schedule.ts';
 import { rub } from '../util.ts';
 import type { AuctionService } from './auction.ts';
@@ -604,15 +603,12 @@ export class OrdersService {
     if (actor === 'performer') throw bad('use_drop', 'Исполнитель отказывается от заявки кнопкой «Не смогу приехать»');
     if (!actor) throw forbidden();
     transition(o.status, 'cancel', actor);
-    let leftKm: number | null = null;
-    if (o.status === 'en_route' && o.lat != null) {
-      const p = await this.db.one('select lat, lng from performer_profiles where user_id=$1', [o.performer_id]);
-      if (p?.lat != null) leftKm = haversineKm({ lat: o.lat, lng: o.lng }, { lat: p.lat, lng: p.lng });
-    }
-    const d = o.performer_id
-      ? await this.db.one<{ distance_km: number | null }>('select distance_km from order_dispatch where order_id=$1 and performer_id=$2', [orderId, o.performer_id])
-      : null;
-    const stage = cancelStage(o.status, { startKm: d?.distance_km ?? null, leftKm });
+    // Fail closed on the 100% halfway tier: the current location endpoint stores
+    // only the last point, and dispatch distance is not a verified travelled route.
+    // Comparing those two numbers can jump straight to 100% after a GPS glitch.
+    // Until timestamped route evidence is available, en-route cancellations use
+    // the conservative 50% tier; explicitly confirmed arrival remains 100%.
+    const stage = cancelStage(o.status);
     const scale = (await this.settings.get('cancel')).scale;
     const m = this.money(o);
     const splitInfo = cancelSplit(scale, stage, m.callOut, pct(m.callOut, Number(o.client_fee_pct)));
