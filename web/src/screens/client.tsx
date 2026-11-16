@@ -540,7 +540,7 @@ export function NewOrder({ service }: { service: string }) {
         <span className="label">Тарифная зона — выберите осознанно</span>
         <Chips value={zoneId} onChange={v=>{setZoneId(v);setAgree(false)}} options={pricing.data.zones.map((z: any) => ({ id: z.id, name: z.km > 30 ? `${z.name} · ${z.km} км` : z.name }))} />
         {quoteError&&<div className="banner warn" role="alert">{quoteError}</div>}
-        {est?.regionValidation?.message&&<div className="note" role="status">{est.regionValidation.message}</div>
+        {est?.regionValidation?.message&&<div className="note" role="status">{est.regionValidation.message}</div>}
         <div className="grid2">
           <button type="button" className="seg" aria-pressed={!night} onClick={() => setNight(false)}>Днём</button>
           <button type="button" className="seg" aria-pressed={!!night} onClick={() => setNight(true)}>Ночь 22–7</button>
