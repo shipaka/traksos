@@ -1,6 +1,9 @@
 package ru.traksos.app
 
 import android.content.Context
+import android.view.View
+import android.view.ViewGroup
+import android.widget.TextView
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.After
@@ -63,4 +66,36 @@ class AppPinStoreTest {
         assertEquals(AppPinStore.Check.WRONG, AppPinStore.verify(ctx, "1234"))
         assertEquals(AppPinStore.Check.OK, AppPinStore.verify(ctx, "6543"))
     }
+    /** Even without biometrics or internet the native screen has a working keypad. */
+    @Test fun cinematicKeypadAcceptsFourDigitsWithoutWebViewOrKeyboard() {
+        val instrument = InstrumentationRegistry.getInstrumentation()
+        var received: String? = null
+        fun locate(v: View, value: String): TextView? {
+            if (v is TextView && v.text.toString() == value) return v
+            if (v is ViewGroup) for (i in 0 until v.childCount) {
+                val hit = locate(v.getChildAt(i), value)
+                if (hit != null) return hit
+            }
+            return null
+        }
+        instrument.runOnMainSync {
+            val cover = CinematicAppLock.build(
+                ctx, pin = true, fingerprint = false,
+                onPinEntered = { received = it; AppPinStore.Check.WRONG },
+                onBiometric = { fail("Unexpected biometrics") },
+                onRecovery = { fail("Unexpected recovery") }
+            )
+            assertNotNull(locate(cover, "С возвращением"))
+            assertNotNull(locate(cover, "Введите четыре цифры"))
+            assertNotNull(locate(cover, "Забыли PIN?"))
+            for (digit in "0123") {
+                val button = locate(cover, digit.toString())
+                assertNotNull("Missing keypad button $digit", button)
+                button!!.performClick()
+            }
+            assertEquals("0123", received)
+            assertNotNull(locate(cover, "Неверный PIN. Попробуйте снова."))
+        }
+    }
+
 }
