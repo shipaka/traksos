@@ -31,8 +31,8 @@ export function OrderTimeline({ events, createdAt, acceptedAt, arrivedAt, comple
   // Legacy orders may have timestamps but no corresponding event.
   // Do not fabricate a button press: clearly identify stored status timestamps.
   const legacy = [
-    { label: 'Заявка создана', at: createdAt, event: 'created' },
-    { label: 'Заявка принята исполнителем', at: acceptedAt, event: 'accepted' },
+    { label: 'Время создания из статуса', at: createdAt, event: 'created' },
+    { label: 'Время принятия из статуса', at: acceptedAt, event: 'accepted' },
     { label: 'Время прибытия из статуса', at: arrivedAt, event: 'arrive' },
     { label: 'Время завершения из статуса', at: completedAt, event: 'amount_confirmed' },
   ];
