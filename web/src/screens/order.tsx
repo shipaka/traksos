@@ -9,6 +9,7 @@ import { onEvent } from '../api.ts';
 import { Search, OfferForm } from './search.tsx';
 import { RoadsideMap } from './roadsideMap.tsx';
 import { AdminRouteMap } from './AdminRouteMap.tsx';
+import { OrderTimeline } from './OrderTimeline.tsx';
 import { LocationSharing } from './performer.tsx';
 import { RefundForm, payStatus } from './adminUser.tsx';
 
@@ -70,6 +71,9 @@ export function Order({ id }: { id: string }) {
 
       {d.you === 'admin' && <AdminPanel d={d} onDone={o.reload} />}
       {d.you === 'admin' && !isConsult && <AdminRouteMap orderId={id} />}
+      {(d.you === 'client' || d.you === 'admin') && <OrderTimeline
+        events={d.events} createdAt={d.createdAt} acceptedAt={d.acceptedAt}
+        arrivedAt={d.arrivedAt} completedAt={d.completedAt} isAdmin={d.you === 'admin'} />}
       {(d.you === 'client' || d.you === 'admin') && d.paymentMethod !== 'cash' && <PaymentsList id={id} admin={d.you === 'admin'} />}
       {isPerformer && (isConsult ? <ConsultFinish d={d} onDone={o.reload} /> : <PerformerActions d={d} onDone={o.reload} />)}
       {!isPerformer && ['arrived', 'working'].includes(d.status) && d.service !== 'consult' && <WorkInProgress d={d} />}
