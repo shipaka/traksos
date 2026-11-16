@@ -107,3 +107,20 @@ test('presence history begins at observation, no artificial prior online hours',
   assert.ok(v.metrics.offered===0);
   assert.equal(v.metrics.opportunityDefinition.includes('персонально'),true);
 });
+
+
+test('privacy export and scheduled erasure include tier, appeal and availability without rebuilding deleted presence',async()=>{
+  const identity={id:master.id,phone:'+79998881102',roles:['master'],status:'active',
+    name:null,owner_id:null};
+  const exportData=await t.app.privacy.export(identity);
+  assert.ok(exportData.partnerLevels.some((x:any)=>x.level==='active'));
+  assert.ok(exportData.partnerLevelAppeals.length>=1);
+  assert.ok(exportData.partnerPresenceHistory.length>=1);
+  await t.app.privacy.requestDelete(identity);
+  t.clock.advance(31*86400);
+  assert.equal(await t.app.privacy.processDeletions(),1);
+  assert.equal((await t.db.query('select 1 from partner_level_decisions where user_id=$1',[master.id])).length,0);
+  assert.equal((await t.db.query('select 1 from partner_level_appeals where user_id=$1',[master.id])).length,0);
+  assert.equal((await t.db.query('select 1 from partner_presence_events where user_id=$1',[master.id])).length,0,
+    'last paused=true trigger must not resurrect deleted presence');
+});
