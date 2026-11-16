@@ -48,7 +48,7 @@ import { registerCommunityRoutes } from './services/community.ts';
 import { registerCommunityDirectRoutes } from './services/communityDirect.ts';
 import { registerCommunityRoadRoutes } from './services/communityRoad.ts';
 import { registerRealNearbyHelpRoutes } from './services/realNearbyHelp.ts';
-import {legacyTariffScope,legacyPricingWarning} from './domain/pricingRegion.ts';
+import {legacyTariffScope,legacyPricingWarning,legacyTariffZoneMismatch} from './domain/pricingRegion.ts';
 import { registerKnowledgeOrderRoutes } from './services/communityKnowledgeOrder.ts';
 import { WarrantyClaimsService } from './services/warranty.ts';
 import { WarrantyRemediationService } from './services/warrantyRemediation.ts';
@@ -564,6 +564,9 @@ export function createApp(d: Deps) {
       const scope=legacyPricingWarning({address:b.address,lat:b.lat,lng:b.lng});
       if(b.service!=='consult'&&!scope.available)
         throw conflict('outside_legacy_tariff_region',scope.message);
+      const mismatch=b.service==='consult'?null:legacyTariffZoneMismatch({address:b.address},b.zoneId);
+      if(mismatch)throw conflict('mismatched_legacy_tariff_zone',
+        'Указанный населённый пункт не соответствует выбранной зоне тарифа СПб/ЛО. Выберите верную зону.');
       const quote=estimate(p, { ...b, night: b.night ?? isNight(p, now()) });
       return {...quote,regionValidation:b.service==='consult'?null:scope};
     } catch (e) {
