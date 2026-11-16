@@ -84,6 +84,14 @@
   color:#85a5ba;background:#0d2a40;border:1px solid #355b73;
   font-size:11px;font-weight:900;
 }
+.insurance-workflow .insurance-progress>div>span:nth-child(2) {
+  /* The original progress CSS sizes every span as the numbered circle.
+     Restore a real text column for the description instead of a 26px badge. */
+  display:block;width:auto;height:auto;min-width:0;flex:1;
+  border:0;border-radius:0;background:transparent;padding:0;
+  box-shadow:none;color:inherit;font-size:12px;line-height:1.45;
+  font-weight:inherit;overflow-wrap:normal;
+}
 .insurance-workflow .insurance-progress>div.complete {color:#c8f3e9;}
 .insurance-workflow .insurance-progress>div.complete>span:first-child {
   border-color:#4bb99e;background:#124e4e;color:#afffe4;
