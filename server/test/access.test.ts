@@ -29,6 +29,7 @@ before(async () => {
   ok(await t.api('POST', `/api/admin/services/${c.center.id}/verify`, { decision: 'approved' }, admin.token));
   const day = new Date(t.clock.now().getTime() + 3 * 3600_000).toISOString().slice(0, 10);
   ids.booking = ok(await t.api('POST', `/api/services/${c.center.id}/book`, { vehicleId: ids.vehicle, need: 'electric', day, arrival: 'self' }, owner.token)).id;
+  ok(await t.api('PUT','/api/shop/region',{city:'Санкт-Петербург'},owner.token));
   ok(await t.api('PUT', '/api/admin/settings/shop', { enabled: true }, admin.token));
   const p = ok(await t.api('POST', '/api/admin/shop/products', { name: 'Розетка', price: 1000, stock: 5 }, admin.token));
   ids.shop = ok(await t.api('POST', '/api/shop/orders', { items: [{ productId: p.id, qty: 1 }], delivery: 'pickup' }, owner.token)).id;
