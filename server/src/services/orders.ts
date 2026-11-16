@@ -4,6 +4,7 @@ import type { SettingsService } from './settings.ts';
 import type { Notifier } from './notify.ts';
 import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { estimate, isNight, billWork, type Tier, type Extra } from '../domain/pricing.ts';
+import {checkLegacyPricingLocation,legacyPricingWarning} from '../domain/pricingRegion.ts';
 import { rankCandidates, performerKindFor, type Candidate } from '../domain/dispatch.ts';
 import { transition, canDo, statusLabels, type Action, type Actor, type OrderStatus } from '../domain/orderState.ts';
 import { cancelStage, cancelSplit, pct } from '../domain/money.ts';
@@ -129,9 +130,21 @@ export class OrdersService {
       year = year ?? v.year;
     }
     const isConsult = i.service === 'consult';
+    if(!isConsult && checkLegacyPricingLocation({
+      address:i.address,lat:i.lat,lng:i.lng
+    })==='outside'){
+      throw conflict('outside_legacy_tariff_region',
+        'Нельзя оформить выезд по тарифам СПб/ЛО за их пределами. В вашем регионе нужен подтверждённый местный тариф. Заявку и оплату не создавали.');
+    }
     const night = isConsult ? false : i.night ?? isNight(all.pricing, this.now());
     const tier = i.tier ?? 'eco';
     const est = estimate(all.pricing, { service: i.service, tier, zoneId: i.zoneId, night, group: !isConsult && !!i.groupTrip });
+    // Historic local quotes stay compatible; metadata makes the limits visible
+    // to the buyer and to the dispatched professional for NEW orders only.
+    const quotation= isConsult ? est : {
+      ...est,
+      regionValidation:legacyPricingWarning({address:i.address,lat:i.lat,lng:i.lng})
+    };
     const defaultFee = method === 'cash' ? (all.fees.cashChargesClientFee ? all.fees.clientFeePct : 0) : all.fees.clientFeePct;
     // Персональный сбор клиента (назначает администратор) важнее общего. Консультация — фиксированная цена, сбор уже внутри.
     const personal = await this.db.one<{ fee_pct_override: string | null }>('select fee_pct_override from users where id=$1', [clientId]);
@@ -167,7 +180,7 @@ export class OrdersService {
           create_request_key,create_request_hash)
        values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36) returning *`,
       [clientId, user.id, i.vehicleId ?? null, i.service, !!i.isSos, i.problem ?? null, i.description ?? null, isConsult ? null : i.address ?? null,
-        isConsult ? null : i.lat ?? null, isConsult ? null : i.lng ?? null, est.zoneId, night, est.group, tier, brand, est, method, feePct,
+        isConsult ? null : i.lat ?? null, isConsult ? null : i.lng ?? null, est.zoneId, night, est.group, tier, brand, quotation, method, feePct,
         i.destination ?? null, i.cargo ?? null, i.loaded ?? null, i.driverOnSite ?? null,
         consultOf, discount, discount ? CONSULT_DISCOUNT : null, model, year, isConsult ? null : i.site ?? null,
         gate ? 'awaiting_owner' : 'searching', gate, campaign?.commission_pct ?? null, campaign?.id ?? null,
@@ -185,7 +198,7 @@ export class OrdersService {
       throw e;
     });
     if (reused) return reuse(order!);
-    await this.event(this.db, order!.id, user.id, 'created', { estimate: est, sos: !!i.isSos, continuationOf: previous?.id ?? null });
+    await this.event(this.db, order!.id, user.id, 'created', { estimate: quotation, sos: !!i.isSos, continuationOf: previous?.id ?? null });
 
     if (gate) {
       await this.event(this.db, order!.id, user.id, 'owner_approval_requested', { reason: gate });
