@@ -166,6 +166,11 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
 
   r.post('/api/community/rooms/:id/messages', true, async (c: AuthedCtx) => {
     const room = await mustRoom(db,c);
+    if (!isStaff(c.user)) {
+      const membership=await db.one('select 1 from community_memberships where room_id=$1 and user_id=$2',
+        [room.id,c.user.id]);
+      if(!membership) throw forbidden('Чтобы написать в чат, присоединитесь к нему');
+    }
     const b = parse(z.object({ text:textSchema,clientNonce }),c.body);
     if (phonePattern.test(b.text)) throw bad('contacts_forbidden','Номера телефонов нельзя публиковать в Эфире');
     const pending = profanity.test(b.text) || contactPattern.test(b.text);
