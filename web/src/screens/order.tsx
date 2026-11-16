@@ -48,6 +48,12 @@ export function Order({ id }: { id: string }) {
       </div>
 
       {isPerformer && ['accepted','en_route','arrived','working'].includes(d.status)
+        && <div className="card" role="region" aria-label="Технические материалы по заявке">
+          <b>ТехБаза по этой машине</b>
+          <p className="note">Доступ к проверенным схемам и инструкциям по марке, году и системе. Личные данные клиента не передаются в клуб.</p>
+          <a className="btn ghost" href={'#/techbase/order/'+id}>Найти технические материалы</a>
+        </div>}
+      {isPerformer && ['accepted','en_route','arrived','working'].includes(d.status)
         && !location.hash.startsWith('#/admin/test-center') &&
         <section className="roadside-location-share" aria-label="Передача GPS при выезде">
           <b>GPS во время выезда</b>
