@@ -361,7 +361,7 @@ export class ServiceCenters {
         id: c.id, name: c.name, address: c.address, lat: c.lat, lng: c.lng, hours: c.hours, brands: c.brands, staff: c.staff,
         conditions: c.conditions, accepts: c.accepts, rating: c.rating, reviews: c.reviews_n, load: c.load_n,
         popularity: c.closed_n === 0 ? 'new' : c.closed_n / max > 0.66 ? 'top' : c.closed_n / max > 0.33 ? 'often' : 'rare',
-        closedToday: (c.closed_days ?? []).some((d: any) => msk(new Date(d)) === today),
+        closedToday: c.time_zone ? centerClosedToday(c,this.now()) : null,
         openNow: !c.time_zone ? null : centerClosedToday(c,this.now()) ? false : openAt(c.hours,this.now(),c.time_zone),
         knowsBrand: p.brand ? (c.brands ?? []).includes(p.brand) : null,
         distanceKm: p.lat != null && p.lng != null && c.lat != null && c.lng != null ? Math.round(haversineKm({ lat: p.lat, lng: p.lng }, { lat: c.lat, lng: c.lng }) * 10) / 10 : null,
