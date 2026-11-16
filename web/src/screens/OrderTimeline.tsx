@@ -25,7 +25,7 @@ export function OrderTimeline({ events, createdAt, acceptedAt, arrivedAt, comple
   events?: Event[]; createdAt?: string; acceptedAt?: string | null;
   arrivedAt?: string | null; completedAt?: string | null; isAdmin: boolean;
 }) {
-  const entries = (events ?? []).filter(e => Object.prototype.hasOwnProperty.call(LABELS, e.type) &&
+  const entries = (events ?? []).filter(e => e && Object.prototype.hasOwnProperty.call(LABELS, e.type) &&
     typeof e.created_at === 'string' && !Number.isNaN(Date.parse(e.created_at)))
     .map(e => ({ label: LABELS[e.type], at: e.created_at, source: 'event' }));
   // Legacy orders may have timestamps but no corresponding event.
@@ -39,12 +39,13 @@ export function OrderTimeline({ events, createdAt, acceptedAt, arrivedAt, comple
   for (const item of legacy) {
     const matching = item.event === 'amount_confirmed'
       ? ['amount_confirmed', 'completed', 'confirm'] : [item.event];
-    if (item.at && !Number.isNaN(Date.parse(item.at)) && !(events ?? []).some(e => matching.includes(e.type) &&
+    if (item.at && !Number.isNaN(Date.parse(item.at)) && !(events ?? []).some(e => e && matching.includes(e.type) &&
       typeof e.created_at === 'string' && !Number.isNaN(Date.parse(e.created_at)))) {
       entries.push({ label: item.label.includes('время из статуса') ? item.label : item.label + ' · время из статуса', at: item.at, source: 'status' });
     }
   }
-  entries.sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
+  // Stable ordering preserves server event order when timestamps are equal.
+  entries.sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
   const timeLabel = (at: string) => {
     const d = new Date(at);
     return Number.isNaN(d.getTime()) ? 'Время не определено' :
