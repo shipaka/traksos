@@ -1,3 +1,4 @@
+import './orderCinematic.css';
 import { RecommendService } from './base.tsx';
 import { DestinationCard } from './DestinationCard.tsx';
 import { useEffect, useRef, useState } from 'react';
@@ -198,18 +199,46 @@ function CandidateView({ d, onDone }: { d: any; onDone: () => void }) {
 }
 
 function Steps({ status, service }: { status: string; service: string }) {
-  const idx = STEPS.indexOf(status);
   const names = service === 'tow' ? TOW_STEP_NAMES : STEP_NAMES;
-  return (
-    <ol className="steps card">
-      {STEPS.filter((s) => s !== 'searching').map((s, i, arr) => (
-        <li key={s} className={i + 1 < idx || status === 'completed' ? 'done' : i + 1 === idx ? 'now' : ''}>
-          <div className="rail"><span className="d" />{i < arr.length - 1 && <span className="ln" />}</div>
-          <span className="tx">{names[s]}</span>
-        </li>
-      ))}
+  const sequence = STEPS.filter(s => s !== 'searching');
+  const current = sequence.indexOf(status);
+  const finished = status === 'completed';
+  const active = finished ? sequence.length - 1 : Math.max(0, current);
+  const progress = finished ? 100 : current < 0 ? 0 : Math.round(active / Math.max(1, sequence.length - 1) * 100);
+  const heading = finished ? 'Заявка выполнена' : status === 'cancelled' ? 'Заявка отменена'
+    : status === 'en_route' ? 'Исполнитель в пути'
+    : status === 'arrived' ? 'Исполнитель на месте'
+    : status === 'working' ? 'Работа выполняется'
+    : status === 'accepted' ? 'Исполнитель назначен'
+    : 'Ход выполнения заявки';
+  return <section className="cinematic-status" aria-label="Этапы выполнения заявки">
+    <div className="cinematic-status-glow" aria-hidden="true" />
+    <header className="cinematic-status-header">
+      <div><span className="cinematic-status-eyebrow">TRAKSOS · LIVE STATUS</span>
+        <h2>{heading}</h2>
+        <p>{finished ? 'Все этапы завершены' : status === 'cancelled' ? 'Дальнейшее выполнение остановлено'
+          : 'Этапы обновляются по мере действий участников заявки'}</p>
+      </div>
+      <span className="cinematic-status-counter" aria-label={`Прогресс ${progress}%`}>{progress}<small>%</small></span>
+    </header>
+    <div className="cinematic-status-meter" role="progressbar" aria-label="Прогресс этапов заявки"
+      aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+      <span style={{width:`${progress}%`}}/>
+    </div>
+    <ol className="cinematic-status-steps">
+      {sequence.map((step, index) => {
+        const done = finished || (current >= 0 && index < current);
+        const now = !finished && current === index;
+        return <li key={step} className={done ? 'is-done' : now ? 'is-current' : 'is-next'}
+          aria-current={now ? 'step' : undefined}>
+          <span className="cinematic-status-node" aria-hidden="true">{done ? '✓' : String(index + 1).padStart(2, '0')}</span>
+          <span className="cinematic-status-step-label">{names[step] ?? step}</span>
+          {now && <span className="cinematic-status-live"><i/>Сейчас</span>}
+        </li>;
+      })}
     </ol>
-  );
+    <p className="cinematic-status-footnote">Статусы отражают зафиксированные действия. Подтверждение GPS, КПП и расчёт оплаты проверяются отдельно.</p>
+  </section>;
 }
 
 function PerformerCard({p,pos,consult,to,moving}:{
