@@ -28,9 +28,12 @@ const capabilities:Record<string,string>={
 };
 type Card={
   kind:ServiceKind;title:string;count:number;capabilities:string[];
-  providers:Array<{name:string;distanceKm:number;id?:string;detail:string}>;
+  providers:Array<{name:string;distanceBand:string;id?:string;detail:string}>;
   note:string;action:string;
 };
+function distanceBand(km:number) {
+  return km<=10?'до 10 км':km<=25?'10–25 км':'25–50 км';
+}
 function near(lat:number,lng:number,c:{lat:number|null;lng:number|null}){
   if(c.lat==null||c.lng==null||!Number.isFinite(c.lat)||!Number.isFinite(c.lng))return null;
   const distance=haversineKm({lat,lng},{lat:c.lat,lng:c.lng});
@@ -131,7 +134,7 @@ export function registerRealNearbyHelpRoutes(r:Router,db:Db,now:()=>Date){
       return [{kind,title,count:found.length,capabilities:skills,
         providers:found.slice(0,3).map(x=>({
           name:x.p.name?.trim().split(/\s+/)[0]??(kind==='tow'?'Эвакуатор':'Специалист'),
-          distanceKm:x.distance,
+          distanceBand:distanceBand(x.distance),
           detail:x.p.kind==='tow'?'Эвакуация':
             x.p.kind==='ecu'?'Электронные блоки':
             (x.p.specialties??[]).filter(t=>t!=='consult').map(t=>capabilities[t]??t).join(', ')
@@ -149,7 +152,7 @@ export function registerRealNearbyHelpRoutes(r:Router,db:Db,now:()=>Date){
         .filter(([_,value])=>value==='own')
         .map(([k])=>capabilities[k]??k)))],
       providers:workshops.slice(0,3).map(x=>({
-        id:x.w.id,name:x.w.name,distanceKm:x.distance,detail:'Открыто по местному расписанию · приём по запросу'
+        id:x.w.id,name:x.w.name,distanceBand:distanceBand(x.distance),detail:'Открыто по местному расписанию · приём по запросу'
       })),
       note:'Реальные подтверждённые СТО, открытые по своему местному времени. Свободное место и запись уточняются.',
       action:'#/services'
