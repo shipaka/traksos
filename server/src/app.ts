@@ -48,6 +48,7 @@ import { registerCommunityRoutes } from './services/community.ts';
 import { registerCommunityDirectRoutes } from './services/communityDirect.ts';
 import { registerCommunityRoadRoutes } from './services/communityRoad.ts';
 import { registerRealNearbyHelpRoutes } from './services/realNearbyHelp.ts';
+import {legacyTariffScope,legacyPricingWarning} from './domain/pricingRegion.ts';
 import { registerKnowledgeOrderRoutes } from './services/communityKnowledgeOrder.ts';
 import { WarrantyClaimsService } from './services/warranty.ts';
 import { WarrantyRemediationService } from './services/warrantyRemediation.ts';
@@ -547,18 +548,26 @@ export function createApp(d: Deps) {
   // Цены ---------------------------------------------------------------------
   r.get('/api/pricing', false, async () => {
     const all = await settings.all();
-    return { zones: all.pricing.zones, tiers: all.pricing.tiers, consult: all.pricing.consult, towBase: all.pricing.towBase, nightNow: isNight(all.pricing, now()), payments: await payments.methods(),
+    return { tariffScope:legacyTariffScope, zones: all.pricing.zones, tiers: all.pricing.tiers, consult: all.pricing.consult, towBase: all.pricing.towBase, nightNow: isNight(all.pricing, now()), payments: await payments.methods(),
       clientFeePct: all.fees.clientFeePct, reviewTags: REVIEW_TAGS, cancelScale: all.cancel.scale,
       serviceCommissionPct: all.fees.serviceCommissionPct, serviceCommissionMax: all.fees.serviceCommissionMax, serviceReferralDiscountPct: all.fees.serviceReferralDiscountPct, performerCommissionPct: all.fees.performerCommissionPct,
       billingStep: Number(all.pricing.billingStepMinutes ?? 60) };
   });
   r.post('/api/pricing/estimate', false, async (c: Ctx) => {
     const b = parse(z.object({ service: z.string(), tier: z.enum(['eco', 'comfort', 'pro']).default('eco'), zoneId: z.string(),
-      night: z.boolean().optional(), group: z.boolean().default(false) }), c.body);
+      night: z.boolean().optional(), group: z.boolean().default(false),
+      address:z.string().max(300).optional(),
+      lat:z.number().min(-90).max(90).optional(),
+      lng:z.number().min(-180).max(180).optional() }), c.body);
     const p = await settings.get('pricing');
     try {
-      return estimate(p, { ...b, night: b.night ?? isNight(p, now()) });
+      const scope=legacyPricingWarning({address:b.address,lat:b.lat,lng:b.lng});
+      if(b.service!=='consult'&&!scope.available)
+        throw conflict('outside_legacy_tariff_region',scope.message);
+      const quote=estimate(p, { ...b, night: b.night ?? isNight(p, now()) });
+      return {...quote,regionValidation:b.service==='consult'?null:scope};
     } catch (e) {
+      if(e instanceof HttpError)throw e;
       throw bad('bad_zone', (e as Error).message);
     }
   });
