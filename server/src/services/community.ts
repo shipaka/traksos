@@ -179,7 +179,7 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
     if (phonePattern.test(b.text)) throw bad('contacts_forbidden','Номера телефонов нельзя публиковать в Эфире');
     const pending = profanity.test(b.text) || contactPattern.test(b.text);
     await ensureNick(db,c.user);
-    const saved = await db.tx(async q => {
+    const messageInsert = await db.tx(async q => {
       // Serialize messages from one account: duplicate retries and 15s quota are atomic.
       await q.query('select pg_advisory_xact_lock(hashtext($1::text))',[c.user.id]);
       const prior=await q.one<any>('select id::text as id,room_id,body,moderation_state,created_at from community_messages where sender_id=$1 and client_nonce=$2',
@@ -187,17 +187,20 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
       if(prior) {
         if(prior.room_id!==room.id || prior.body!==b.text)
           throw conflict('nonce_reused','Этот идентификатор уже использован для другого сообщения');
-        return prior;
+        return {message:prior,created:false};
       }
       const count=await q.one<{n:number}>(`select count(*)::int as n from community_messages
         where sender_id=$1 and created_at>now()-interval '15 seconds'`,[c.user.id]);
       if((count?.n ?? 0)>=5) throw new HttpError(429,'slow_down','Слишком много сообщений. Попробуйте позже');
-      return q.one<any>(`insert into community_messages(room_id,sender_id,body,client_nonce,moderation_state)
+      const message=await q.one<any>(`insert into community_messages(room_id,sender_id,body,client_nonce,moderation_state)
         values($1,$2,$3,$4,$5) returning id::text as id,room_id,body,moderation_state,created_at`,
         [room.id,c.user.id,b.text,b.clientNonce,pending?'pending':'published']);
+      return {message,created:true};
     });
+    const saved=messageInsert.message;
     if(!saved) throw new Error('community message insert did not return a row');
-    if(saved.moderation_state==='published') {
+    // Idempotent mobile retries must never produce fresh notifications for an old message.
+    if(messageInsert.created && saved.moderation_state==='published') {
       // Recheck room access at delivery time: revoked professional roles must not
       // continue receiving private-club events from stale subscriptions.
       const members=await db.query<{user_id:string}>(`select cm.user_id from community_memberships cm
