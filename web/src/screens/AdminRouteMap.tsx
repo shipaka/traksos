@@ -12,7 +12,7 @@ const distanceKm = (a: RoutePoint, b: RoutePoint) => {
   return 6371 * 2 * Math.asin(Math.min(1, Math.sqrt(h)));
 };
 export function AdminRouteMap({ orderId }: { orderId: string }) {
-  const route = useLoad(() => get(`/api/admin/orders/${orderId}/route`), [orderId]);
+  const route = useLoad(() => get(`/api/admin/orders/${encodeURIComponent(orderId)}/route`), [orderId]);
   if (!route.data) return <section className="card"><b>Карта GPS-маршрута · только администратор</b><Loading error={route.error}/></section>;
   // Never connect samples with missing coordinates or timestamps: a zero coerced
   // from null would falsely place a performer near the Gulf of Guinea.
