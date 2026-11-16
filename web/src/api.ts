@@ -70,50 +70,81 @@ const listeners = new Set<Listener>();
 let ws: WebSocket | null = null;
 let retry = 0;
 let closedByUs = false;
+let wsConnecting = false;
+let wsGeneration = 0;
+let wsRetryTimer: ReturnType<typeof setTimeout> | null = null;
 
 export function onEvent(fn: Listener) {
   listeners.add(fn);
   return () => { listeners.delete(fn); };
 }
+function scheduleWsRetry() {
+  if(closedByUs || !token || !navigator.onLine || wsRetryTimer !== null)return;
+  retry=Math.min(retry+1,6);
+  wsRetryTimer=setTimeout(()=>{
+    wsRetryTimer=null;
+    connectWs();
+  },500*2**retry);
+}
 
 export function connectWs() {
-  if (!token || !navigator.onLine || (ws && ws.readyState <= 1)) return;
-  closedByUs = false;
-  const base = API_URL || location.origin;
-  const url = base.replace(/^http/, 'ws') + '/ws?token=' + encodeURIComponent(token);
-  ws = new WebSocket(url);
-  ws.onopen = () => {
-    retry = 0;
-    // Reconcile unread publications immediately after a mobile network drop.
-    // Live WebSocket events only carry hints, not persistent message content.
-    listeners.forEach(l=>l({type:'connection_restored'}));
-  };
-  ws.onmessage = (m) => {
-    let e: any;
-    try { e = JSON.parse(m.data); } catch { return; }
-    listeners.forEach((l) => l(e));
-  };
-  ws.onclose = () => {
-    ws = null;
-    if (closedByUs || !token || !navigator.onLine) return;
-    retry = Math.min(retry + 1, 6);
-    setTimeout(connectWs, 500 * 2 ** retry);
-  };
+  if (!token || !navigator.onLine || wsConnecting || (ws && ws.readyState <= 1)) return;
+  closedByUs=false;
+  const sessionToken=token;
+  const generation=wsGeneration;
+  wsConnecting=true;
+  // A short-lived one-use ticket replaces putting the 90-day bearer token
+  // in /ws URLs, which reverse proxies might log.
+  void post<{ticket:string}>('/api/auth/realtime-ticket').then(({ticket})=>{
+    if(closedByUs || generation!==wsGeneration || token!==sessionToken || !navigator.onLine)return;
+    const base=API_URL || location.origin;
+    const url=base.replace(/^http/,'ws')+'/ws?ticket='+encodeURIComponent(ticket);
+    const socket=new WebSocket(url);
+    ws=socket;
+    socket.onopen=()=>{
+      if(closedByUs || generation!==wsGeneration || token!==sessionToken){
+        socket.close();return;
+      }
+      retry=0;
+      if(wsRetryTimer!==null){clearTimeout(wsRetryTimer);wsRetryTimer=null;}
+      // Do not wait 12 seconds to reconcile an offline Air backlog.
+      listeners.forEach(l=>l({type:'connection_restored'}));
+    };
+    socket.onmessage=(m)=>{
+      if(generation!==wsGeneration || token!==sessionToken)return;
+      let e:any;
+      try{e=JSON.parse(m.data);}catch{return;}
+      listeners.forEach(l=>l(e));
+    };
+    socket.onclose=()=>{
+      if(ws===socket)ws=null;
+      if(generation!==wsGeneration)return;
+      scheduleWsRetry();
+    };
+    socket.onerror=()=>{ /* onclose schedules a bounded reconnect */ };
+  }).catch(()=>{
+    if(generation===wsGeneration)scheduleWsRetry();
+  }).finally(()=>{
+    wsConnecting=false;
+  });
 }
 
 export function disconnectWs() {
-  closedByUs = true;
+  wsGeneration++;
+  closedByUs=true;
+  if(wsRetryTimer!==null){clearTimeout(wsRetryTimer);wsRetryTimer=null;}
   ws?.close();
-  ws = null;
+  ws=null;
 }
 
-window.addEventListener('online', () => {
-  if (token) connectWs();
+window.addEventListener('online',()=>{
+  if(token)connectWs();
 });
-window.addEventListener('offline', () => {
-  // Avoid reconnect churn and cellular battery usage when disconnected.
+window.addEventListener('offline',()=>{
+  // Prevent cellular battery use and reconnect storms while disconnected.
   ws?.close();
-  ws = null;
+  ws=null;
+  if(wsRetryTimer!==null){clearTimeout(wsRetryTimer);wsRetryTimer=null;}
 });
 
 
