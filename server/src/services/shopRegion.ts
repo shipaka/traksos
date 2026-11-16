@@ -75,7 +75,7 @@ export class ShopRegionService {
 export function registerShopRegionRoutes(r:Router,regions:ShopRegionService) {
   r.get('/api/shop/region',true,(c:AuthedCtx)=>regions.current(c.user));
   r.put('/api/shop/region',true,(c:AuthedCtx)=>{
-    const {city}=parse(z.object({city}),c.body);
-    return regions.choose(c.user,city);
+    const {city:cityName}=parse(z.object({city}),c.body);
+    return regions.choose(c.user,cityName);
   });
 }
