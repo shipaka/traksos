@@ -395,9 +395,10 @@ export class ShopService {
     }
     let linkOrder: string | null = null;
     if (p.delivery === 'master') {
-      const o = await this.db.one<{ id: string }>(
-        `select id from orders where id=$1 and (client_id=$2 or created_by=$3) and status in ('accepted','en_route','arrived','working')`, [p.orderId ?? null, clientId, user.id]);
+      const o = await this.db.one<{ id: string; zone_id:string }>(
+        `select id,zone_id from orders where id=$1 and (client_id=$2 or created_by=$3) and status in ('accepted','en_route','arrived','working')`, [p.orderId ?? null, clientId, user.id]);
       if (!o) throw bad('need_order', 'Передать с мастером можно только по открытой заявке, пока мастер не приехал или работает');
+      if(o.zone_id!=='spb')throw conflict('shop_region_unavailable','Магазин пока работает только в Санкт-Петербурге');
       linkOrder = o.id;
     }
     return this.db.tx(async (q) => {
