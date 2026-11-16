@@ -125,6 +125,13 @@ test('courier consent + stop-by-stop GPS, customer signs handoff, last fix is er
    lat:59.8,lng:30.4,accuracyMeters:15},driver.token));
  two=ok(await t.api('GET','/api/shop/orders/'+order2+'/courier',undefined,client2.token));
  assert.equal(two.live,true);
+ ok(await t.api('PUT','/api/courier/location-consent',{enabled:false},driver.token));
+ assert.equal((await t.api('PUT','/api/courier/runs/'+runId+'/position',{
+   lat:59.8,lng:30.4,accuracyMeters:15},driver.token)).status,403,
+   'после отзыва согласия координаты повторно записывать нельзя');
+ assert.equal(ok(await t.api('GET','/api/shop/orders/'+order2+'/courier',
+   undefined,client2.token)).live,false);
+ ok(await t.api('PUT','/api/courier/location-consent',{enabled:true},driver.token));
  ok(await t.api('POST','/api/courier/runs/'+runId+'/stops/'+stops[1].id+'/arrive',{},driver.token));
  ok(await t.api('POST','/api/shop/orders/'+order2+'/confirm-delivery',{},client2.token));
  two=ok(await t.api('GET','/api/shop/orders/'+order2+'/courier',undefined,client2.token));
