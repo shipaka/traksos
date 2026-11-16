@@ -37,6 +37,7 @@ import { InsuranceQuoteFlow } from './services/insuranceQuoteFlow.ts';
 import { PrivacyService } from './services/privacy.ts';
 import { StandingService } from './services/standing.ts';
 import { registerPartnerLevelRoutes } from './services/partnerLevels.ts';
+import { registerPartnerActivityRoutes } from './services/partnerActivity.ts';
 import { ShopService } from './services/shop.ts';
 import { registerShopCourierRoutes } from './services/shopCourier.ts';
 import { registerShopCourierEconomicsRoutes } from './services/shopCourierEconomics.ts';
@@ -129,6 +130,7 @@ export function createApp(d: Deps) {
 
   const r = new Router();
   registerPartnerLevelRoutes(r, d.db, now);
+  registerPartnerActivityRoutes(r,d.db,now);
   // Put /knowledge/references before /knowledge/:id in Router's first-match order.
   registerKnowledgeReferenceRoutes(r,d.db);
   // Isolated community rooms, nickname moderation and professional knowledge ACL.
