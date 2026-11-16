@@ -80,11 +80,12 @@ test('approved masters, tow trucks and local-time workshop appear with factual c
   assert.deepEqual(found.cards[0].capabilities,['Электрика','Диагностика']);
   assert.equal(found.cards[1].providers[0].detail,'Эвакуация');
   assert.equal(found.cards[2].providers[0].id,centerId);
-  assert.ok(found.cards[2].providers[0].distanceKm<10);
+  assert.equal(found.cards[2].providers[0].distanceBand,'до 10 км');
   assert.ok(!JSON.stringify(found).includes(master.id),'worker personal ID not exposed');
   assert.ok(!JSON.stringify(found).includes(tow.id),'worker personal ID not exposed');
   assert.ok(!JSON.stringify(found).includes('780000001234'),'worker tax ID not exposed');
   assert.ok(!('lat' in found.cards[2].providers[0])&&!('lng' in found.cards[2].providers[0]));
+  assert.ok(!('distanceKm' in found.cards[0].providers[0]),'precise worker distance must not enable triangulation');
 });
 
 test('going offline, busy, holiday or stale GPS removes advertisements immediately',async()=>{
