@@ -59,8 +59,10 @@ export class ShopRegionService {
   async catalog(user:AuthUser,shop:ShopService,light:boolean) {
     const selection=await this.current(user);
     const settings=await this.settings.get('shop');
-    if(!settings.enabled) return {...await shop.catalog(light),region:selection};
-    if(!selection.available) return {
+    // A buyer who explicitly selected an unsupported city must ALWAYS see the
+    // regional restriction, even while the global SPb storefront is closed.
+    // Without any chosen city, preserve the legacy global "opening soon" banner.
+    if(!selection.available && (settings.enabled || selection.selected)) return {
       enabled:false,closedTitle:BLOCKED,
       closedText:'Магазин запчастей пока работает только в Санкт-Петербурге. Выберите город, чтобы проверить доступность.',
       note:'Покупки и доставка в других регионах пока не принимаются.',
