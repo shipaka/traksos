@@ -1,0 +1,52 @@
+name: Driver Air same-room load (200 writers)
+
+on:
+  pull_request:
+    paths:
+      - 'server/**'
+      - 'scripts/load-community-200.mjs'
+      - '.github/workflows/community-200.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  community-200:
+    name: 200 real drivers / one room / isolated database
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/traksos_community_load
+      PGPASSWORD: postgres
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - name: Create isolated database (never shared with production)
+        run: psql -h 127.0.0.1 -U postgres -c "create database traksos_community_load"
+      - name: Send/retry 200 real driver messages and reconcile 200 publication events
+        run: node --import tsx scripts/load-community-200.mjs
+      - name: Save latency and correctness report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: driver-air-200-load-report
+          path: test-results/community-load-200.json
+          if-no-files-found: ignore
+          retention-days: 14
