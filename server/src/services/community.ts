@@ -42,10 +42,16 @@ async function roomAllowed(user: AuthUser, room: Room, profile: Awaited<ReturnTy
 }
 async function ensureNick(db: Db, user: AuthUser) {
   // No additional registration: assign a neutral pseudonym upon first use.
-  await db.query(
-    `insert into community_profiles(user_id,nickname)
-     values($1, 'Участник_' || left(replace($1::text,'-',''),12))
-     on conflict (user_id) do nothing`, [user.id]);
+  const nickname = 'Участник_' + user.id.replace(/-/g, '').slice(0, 12);
+  try {
+    await db.query(
+      `insert into community_profiles(user_id,nickname) values($1,$2)
+       on conflict (user_id) do nothing`, [user.id,nickname]);
+  } catch (error: any) {
+    // Do not log identifiers, SQL values or profile data.
+    console.error('[community_nickname_initialization_failed]', error?.code ?? 'unknown', error?.constraint ?? '');
+    throw error;
+  }
 }
 async function mustRoom(db: Db, c: AuthedCtx) {
   const id = parse(roomIdSchema, c.params.id);
