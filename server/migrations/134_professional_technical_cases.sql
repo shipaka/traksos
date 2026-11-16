@@ -16,6 +16,7 @@ create table if not exists community_technical_cases (
   origin text not null default 'manual' check (origin in ('manual','order_preview')),
   status text not null default 'open' check (status in ('open','resolved')),
   accepted_reply_id bigint,
+  knowledge_proposal_id uuid references community_knowledge(id) on delete set null,
   resolved_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
