@@ -66,3 +66,7 @@ create table if not exists shop_courier_live_positions (
  accuracy_m integer not null check (accuracy_m between 1 and 500),
  updated_at timestamptz not null default now()
 );
+
+-- Select ONE recipient leg: otherwise all recipients in a route would see
+-- the courier's exact location while visiting somebody else.
+alter table shop_courier_runs add column if not exists active_stop_id uuid references shop_courier_stops(id) on delete set null;
