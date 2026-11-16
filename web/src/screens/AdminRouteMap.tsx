@@ -46,7 +46,9 @@ export function AdminRouteMap({ orderId }: { orderId: string }) {
   const padLat = Math.max(0.004, (maxLat - minLat) * 0.2);
   const padLng = Math.max(0.007, (maxLng - minLng) * 0.2);
   const south = Math.max(-85, minLat - padLat), north = Math.min(85, maxLat + padLat);
-  const west = Math.max(-180, minLng - padLng), east = Math.min(180, maxLng + padLng);
+  // The SVG uses unwrapped longitude (which may exceed 180); only the
+  // embedded OSM map needs geographic coordinates in the [-180, 180] range.
+  const west = minLng - padLng, east = maxLng + padLng;
   const yTop = mercator(north), yBottom = mercator(south);
   const x = (p: RoutePoint) => ((projectedLng(p) - west) / (east - west)) * 1000;
   const y = (p: RoutePoint) => ((yTop - mercator(Number(p.lat))) / (yTop - yBottom)) * 600;
@@ -73,7 +75,7 @@ export function AdminRouteMap({ orderId }: { orderId: string }) {
   const bbox = (crossesDateLine
     ? [Math.max(-180, last.lng - 0.02), Math.max(-85, last.lat - 0.015),
       Math.min(180, last.lng + 0.02), Math.min(85, last.lat + 0.015)]
-    : [west, south, east, north]).map(v => v.toFixed(6)).join(',');
+    : [Math.max(-180, west), south, Math.min(180, east), north]).map(v => v.toFixed(6)).join(',');
   const url = 'https://www.openstreetmap.org/export/embed.html?bbox=' + bbox + '&layer=mapnik';
   const external = 'https://www.openstreetmap.org/?mlat=' + Number(last.lat).toFixed(6) +
     '&mlon=' + Number(last.lng).toFixed(6) + '#map=15/' +
