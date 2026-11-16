@@ -5,7 +5,7 @@ import { parse, bad, conflict, forbidden, notFound, HttpError } from '../http/ro
 import type { Notifier } from './notify.ts';
 
 /**
- * TrackSOS community backend. Isolated from the private, order-scoped ChatService.
+ * TrakSOS community backend. Isolated from the private, order-scoped ChatService.
  * No GPS, private phone or account name is selected into community responses.
  * Media upload, private messages and smart service suggestions are deliberately
  * NOT exposed until their security/availability checks are implemented.
