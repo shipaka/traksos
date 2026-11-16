@@ -39,6 +39,7 @@ import { StandingService } from './services/standing.ts';
 import { ShopService } from './services/shop.ts';
 import { ShopCatalogService } from './services/shopCatalog.ts';
 import { ModerationService } from './services/moderation.ts';
+import { registerCommunityRoutes } from './services/community.ts';
 import { WarrantyClaimsService } from './services/warranty.ts';
 import { WarrantyRemediationService } from './services/warrantyRemediation.ts';
 import { WarrantyRecourseService } from './services/warrantyRecourse.ts';
@@ -114,6 +115,8 @@ export function createApp(d: Deps) {
   centers.onDispute = (p) => moderation.open({ kind: 'dispute', title: p.title, text: p.text, openedBy: p.userId, targetId: p.targetId, bookingId: p.bookingId, ticketId: p.ticketId, priority: 1 });
 
   const r = new Router();
+  // Isolated community rooms, nickname moderation and professional knowledge ACL.
+  registerCommunityRoutes(r, d.db, notifier);
   const staff = ['admin', 'moderator'];
   const performerRoles = ['master', 'tow', 'service'];
 
