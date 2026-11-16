@@ -246,7 +246,9 @@ function Steps({ status, service, events = [] }: { status: string; service: stri
     </div>}
     <ol className="cinematic-status-steps">
       {sequence.map((step, index) => {
-        const done = finished || (!stopped && !awaitingOwner && current >= 0 && index < current);
+        // Cancelled/expired orders retain only milestones proven by their event log.
+        const recorded = (stageEvent[step] ?? []).some(type => events.some(e => e.type === type));
+        const done = finished || (stopped ? recorded : !awaitingOwner && current >= 0 && index < current);
         const now = !finished && !stopped && !awaitingOwner && current === index;
         const recordedTime = stageTime(step);
         return <li key={step} className={done ? 'is-done' : now ? 'is-current' : 'is-next'}
