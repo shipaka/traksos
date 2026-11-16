@@ -55,6 +55,9 @@ export class PrivacyService {
       communityRooms: await q('select room_id,joined_at from community_memberships where user_id=$1'),
       communityReports: await q('select message_id,reason,status,created_at from community_reports where reporter_id=$1'),
       knowledgeContributions: await q('select title,make,model,model_year,subsystem,description,source_url,rights_basis,rights_review,technical_review,created_at from community_knowledge where author_id=$1'),
+      professionalTechnicalCases: await q('select room_id,make,model,model_year,subsystem,symptoms,dtc_codes,diagnostic_context,status,created_at,resolved_at from community_technical_cases where author_id=$1 order by created_at'),
+      professionalTechnicalReplies: await q('select case_id,body,created_at from community_technical_case_replies where author_id=$1 order by created_at'),
+      warehouseChecksPerformed: await q('select line_index,checked_article,checked_qty,method,manual_reason,checked_at from shop_warehouse_line_checks where checked_by=$1 order by checked_at'),
       notifications: await q('select title, body, created_at from notifications where user_id=$1 order by created_at desc limit 500'),
     };
   }
@@ -115,6 +118,14 @@ export class PrivacyService {
         await q.query(`update community_rooms set event_epoch=event_epoch+1
           where id in (select distinct room_id from community_messages where sender_id=$1)`,[id]);
         await q.query('delete from community_messages where sender_id=$1', [id]);
+        // A deleted expert may have an accepted answer on someone else's
+        // technical case. Drop that link first to respect the composite FK;
+        // then erase their own replies and cases, including copied symptoms.
+        await q.query(`update community_technical_cases set accepted_reply_id=null
+          where accepted_reply_id in
+            (select id from community_technical_case_replies where author_id=$1)`,[id]);
+        await q.query('delete from community_technical_case_replies where author_id=$1',[id]);
+        await q.query('delete from community_technical_cases where author_id=$1',[id]);
         await q.query('delete from community_memberships where user_id=$1', [id]);
         await q.query('delete from community_knowledge where author_id=$1', [id]);
         await q.query('update community_knowledge set rights_reviewer=null where rights_reviewer=$1', [id]);
@@ -122,6 +133,9 @@ export class PrivacyService {
         // The open-source review shelf stores editor attribution only for audit;
         // do not preserve its user reference after scheduled account erasure.
         await q.query('update community_knowledge_sources set technical_reviewer=null where technical_reviewer=$1',[id]);
+        // Preserve non-personal warehouse reconciliation, sever the editor's
+        // user reference once the deletion grace period ends.
+        await q.query('update shop_warehouse_line_checks set checked_by=null where checked_by=$1',[id]);
         await q.query('delete from community_profiles where user_id=$1', [id]);
         await q.query(`update performer_profiles set inn=null, cars='[]', car=null, paused=true where user_id=$1`, [id]);
         // The performer update above creates a final presence trigger event;
