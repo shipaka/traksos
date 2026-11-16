@@ -4,7 +4,8 @@ import {useAction,useLoad,useMe,Back} from '../ui.tsx';
 import './courier.css';
 
 type CourierProfile={displayName:string;vehicleLabel:string|null;locationConsent:boolean;gpsNote:string};
-type Run={id:string;status:string;cityCode:string;pickupAddress:string;stops:Stop[]};
+type Run={id:string;status:string;cityCode:string;pickupAddress:string;
+  activeStopId:string|null;stops:Stop[]};
 type RunList={runs:Array<{id:string;status:string;cityCode:string}>};
 type Parcel={name:string;brand:string|null;article:string|null;qty:number};
 type Stop={id:string;seq:number;status:string;orderNumber:number;recipientName:string|null;
@@ -179,14 +180,14 @@ export function CourierHome(){
                  </button>}
                {current.status==='delivering'&&['collected','at_door'].includes(st.status)&&
                  <Navigate address={st.address} label="Открыть навигацию к заказу"/>}
-               {current.status==='delivering'&&st.status==='collected'&&
+               {current.status==='delivering'&&current.activeStopId===st.id&&st.status==='collected'&&
                  <button className="btn" disabled={busy}
                    onClick={()=>void action('/api/courier/runs/'+current.id+'/stops/'+st.id+'/arrive','Прибытие отмечено')}>
                    Я у получателя
                  </button>}
                {current.status==='delivering'&&st.status==='at_door'&&
                  <p className="note">Ожидаем подтверждения получения клиентом в его кабинете.</p>}
-               {current.status==='delivering'&&['collected','at_door'].includes(st.status)&&
+               {current.status==='delivering'&&current.activeStopId===st.id&&['collected','at_door'].includes(st.status)&&
                  <button className="btn ghost" type="button" onClick={()=>{setFailureId(st.id);setReason('')}}>
                    Не удалось вручить
                  </button>}
