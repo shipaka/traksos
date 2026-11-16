@@ -149,6 +149,9 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
     const after = Number(afterStr);
     if (!Number.isSafeInteger(after)) throw bad('cursor','Некорректный курсор');
     const limit = Math.min(100,Math.max(1,Math.trunc(Number(c.query.get('limit')) || 50)));
+    // Mobile chat opens the last page, not the oldest 50 messages.
+    // The normal after-cursor remains ascending for incremental updates.
+    const recent=c.query.get('recent')==='1';
     const rows = await db.query<{
       id:string; body:string; created_at:Date; moderation_state:string;
       sender_id:string; nickname:string|null; public_city:string|null;
@@ -156,12 +159,13 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
        coalesce(p.nickname,'Участник') as nickname,
        case when p.share_city then p.city_label else null end as public_city
        from community_messages m left join community_profiles p on p.user_id=m.sender_id
-       where m.room_id=$1 and m.id>$2 and
+       where m.room_id=$1 and (${recent?'true':'m.id>$2'}) and
         (m.moderation_state='published' or (m.moderation_state='pending' and m.sender_id=$3) or $4::boolean)
-       order by m.id limit $5`,
+       order by m.id ${recent?'desc':'asc'} limit $5`,
        [room.id,afterStr,c.user.id,isStaff(c.user),limit]);
-    return { messages: rows.map(({sender_id,...m})=>({...m,isMine:sender_id===c.user.id})),
-      nextCursor:rows.length ? rows[rows.length-1].id : afterStr };
+    const sorted=recent?rows.reverse():rows;
+    return {messages:sorted.map(({sender_id,...m})=>({...m,isMine:sender_id===c.user.id})),
+      nextCursor:sorted.length?sorted[sorted.length-1].id:afterStr};
   });
 
   r.post('/api/community/rooms/:id/messages', true, async (c: AuthedCtx) => {
