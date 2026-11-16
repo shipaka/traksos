@@ -126,8 +126,25 @@ try{
   await clientPage.waitForURL(/#\/insurance\/request\/[0-9a-f-]{36}$/,{timeout:15000});
   const requestId=clientPage.url().split('/').pop();
   assert(requestId&&requestId!==truck.id,'New insurance dossier was not opened');
+  await clientPage.getByText('Заявка отправлена страховому агенту',{exact:true}).waitFor();
+  await clientPage.screenshot({path:OUT+'/client-sent-status.png',fullPage:true});
+  // A submitted insurance request must be visible WITHOUT expanding garage history.
+  await clientPage.goto(BASE+'/#/garage');
+  const activeInsurance=clientPage.getByRole('region',{name:'Активные страховые заявки'});
+  await activeInsurance.getByText('Заявка отправлена страховому агенту',{exact:true}).waitFor();
+  await clientPage.screenshot({path:OUT+'/client-garage-active-insurance.png',fullPage:true});
+  await clientPage.goto(BASE+'/#/insurance/request/'+requestId);
+  await clientPage.getByText('Заявка отправлена страховому агенту',{exact:true}).waitFor();
   const incoming=await api('GET','/api/insurance/requests/'+requestId,undefined,partner.token);
   assert(incoming.request.insurance_stage==='received','Agent did not receive insurance dossier');
+  const inboxContext=await browser.newContext({viewport:{width:1440,height:900},deviceScaleFactor:1,locale:'ru-RU'});
+  const inboxPage=await inboxContext.newPage();
+  await inboxPage.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','insurer')},partner.token);
+  await inboxPage.goto(BASE+'/#/insurance');
+  await acceptPendingOffers(inboxPage,partner.token);
+  await inboxPage.getByText('Получена новая заявка',{exact:true}).waitFor();
+  await inboxPage.screenshot({path:OUT+'/insurer-desktop-incoming.png',fullPage:true});
+  await inboxContext.close();
   await api('POST','/api/insurance/requests/'+requestId+'/accept',{},partner.token);
   const one={company:'Страховая А',product:'ОСАГО грузовика',premiumKopecks:3250000,
     description:'Цена агентом рассчитана вручную',coverage:'Условия согласовываются'};
@@ -137,6 +154,7 @@ try{
   await clientPage.getByRole('heading',{name:/DAF XF/}).waitFor();
   await clientPage.getByText('Страховая А',{exact:true}).waitFor();
   await clientPage.getByText('Страховая Б',{exact:true}).waitFor();
+  await clientPage.getByText('Предложения готовы — выберите вариант',{exact:true}).waitFor();
   await clientPage.screenshot({path:OUT+'/client-offers.png',fullPage:true});
   await clientPage.getByRole('button',{name:'Выбрать',exact:true}).first().click();
   await clientPage.getByRole('button',{name:'Оформить выбранный вариант'}).click();
@@ -148,6 +166,8 @@ try{
   await acceptPendingOffers(agentPage,partner.token);
   await agentPage.getByRole('heading',{name:/DAF XF/}).waitFor();
   await agentPage.getByText('Анкета для оформления').waitFor();
+  await agentPage.locator('.insurance-dossier-toggle').click();
+  await agentPage.getByText('XLRTE47XS0E123456',{exact:true}).waitFor();
   await agentPage.screenshot({path:OUT+'/agent-dossier.png',fullPage:true});
   await agentPage.getByRole('button',{name:'Принято в работу'}).click();
   await agentPage.locator('input[type=date]').fill('2030-12-31');
