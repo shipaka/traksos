@@ -57,6 +57,10 @@ test('DM: idempotency, contacts and profanity moderation, peer isolation, report
   const msg=ok(await t.api('POST',url,{text:'Привет, есть информация по стоянке?',clientNonce:id},driverA.token));
   assert.equal(msg.status,'published');
   assert.equal(ok(await t.api('POST',url,{text:'Привет, есть информация по стоянке?',clientNonce:id},driverA.token)).id,msg.id);
+  const repeats=await Promise.all(Array.from({length:4},()=>t.api('POST',url,{text:'Привет, есть информация по стоянке?',clientNonce:id},driverA.token)));
+  for(const repeat of repeats)assert.equal(ok(repeat).id,msg.id);
+  const stored=await t.db.query('select id from community_dm_messages where sender_id=$1 and client_nonce=$2',[driverA.id,id]);
+  assert.equal(stored.length,1,'a retried private message must be stored only once');
   assert.equal((await t.api('POST',url,{text:'Другой текст',clientNonce:id},driverA.token)).status,409);
   assert.equal((await t.api('POST',url,{text:'Мой номер +7 999 111-22-33',clientNonce:randomUUID()},driverA.token)).status,400);
   const flagged=ok(await t.api('POST',url,{text:'Это пиздец, просто стою',clientNonce:randomUUID()},driverA.token));
