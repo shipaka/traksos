@@ -1,0 +1,52 @@
+name: Driver Air 200 real WebSocket connections
+
+on:
+  pull_request:
+    paths:
+      - 'server/**'
+      - 'scripts/load-community-ws-200.mjs'
+      - '.github/workflows/community-ws-200.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  realtime-200:
+    name: 200 authenticated WS / one room / private payload checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/traksos_ws_load
+      PGPASSWORD: postgres
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - name: Create isolated database
+        run: psql -h 127.0.0.1 -U postgres -c "create database traksos_ws_load"
+      - name: 200 real connections, 3980 event hints, no duplicates, access revocation
+        run: node --import tsx scripts/load-community-ws-200.mjs
+      - name: Upload event-delivery and latency report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: air-200-websockets-report
+          path: test-results/community-ws-200.json
+          if-no-files-found: ignore
+          retention-days: 14
