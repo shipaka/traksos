@@ -34,6 +34,7 @@ export class PrivacyService {
       performerProfile: await this.db.one(`select kind, specialties, brands, tax_status, inn, cars, schedule, updated_at from performer_profiles where user_id=$1`, [id]),
       serviceBookings: await q('select number, need, status, when_day, works, amount, created_at from service_bookings where client_id=$1 or created_by=$1'),
       support: await q('select t.number, t.topic, t.status, t.created_at from support_tickets t where t.user_id=$1'),
+      shopSelectedRegion: await this.db.one('select city_label,selected_at from shop_customer_regions where user_id=$1',[id]),
       shopPurchases: await q('select number,status,items,goods_total,delivery,delivery_price,total,address,created_at,updated_at from shop_orders where client_id=$1 or created_by=$1'),
       shopSupplierHistory: await q('select o.number as order_number,e.status,e.event_time,e.cancellation_reason from shop_supplier_order_events e join shop_orders o on o.id=e.shop_order_id where o.client_id=$1 or o.created_by=$1 order by e.event_time'),
       courierProfile: await this.db.one('select display_name,vehicle_label,active,location_consent,created_at from shop_couriers where user_id=$1',[id]),
@@ -84,6 +85,7 @@ export class PrivacyService {
       await this.db.tx(async (q) => {
         await q.query(`update users set phone='deleted-' || id, name=null, company_name=null, company_inn=null, edo_operator=null, edo_id=null,
                          status='blocked', deleted_at=$2, owner_id=null where id=$1`, [id, this.now()]);
+        await q.query('delete from shop_customer_regions where user_id=$1',[id]);
         await q.query('delete from sessions where user_id=$1', [id]);
         // Courier accounting runs remain for statutory records but the precise
         // live location and personal display name are erased on account deletion.
