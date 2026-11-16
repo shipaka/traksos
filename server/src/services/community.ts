@@ -152,6 +152,10 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
     // Mobile chat opens the last page, not the oldest 50 messages.
     // The normal after-cursor remains ascending for incremental updates.
     const recent=c.query.get('recent')==='1';
+    // Capture the event watermark BEFORE the message snapshot. Changes committed
+    // during the snapshot are replayed (and deduplicated) rather than lost.
+    const watermark=await db.one<{cursor:string}>(
+      "select coalesce(max(id),0)::text as cursor from community_room_moderation_events where room_id=$1",[room.id]);
     const rows = await db.query<{
       id:string; body:string; created_at:Date; moderation_state:string;
       sender_id:string; nickname:string|null; public_city:string|null;
@@ -165,7 +169,43 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
        [room.id,afterStr,c.user.id,isStaff(c.user),limit,recent]);
     const sorted=recent?rows.reverse():rows;
     return {messages:sorted.map(({sender_id,...m})=>({...m,isMine:sender_id===c.user.id})),
-      nextCursor:sorted.length?sorted[sorted.length-1].id:afterStr};
+      nextCursor:sorted.length?sorted[sorted.length-1].id:afterStr,moderationCursor:watermark?.cursor??'0'};
+  });
+
+  // Separate publication-state cursor. A moderated message can have an older
+  // message ID than the reader's after-cursor, so polling only /messages loses it.
+  r.get('/api/community/rooms/:id/moderation-events',true,async(c:AuthedCtx)=>{
+    const room=await mustRoom(db,c);
+    const after=c.query.get('after')??'0';
+    if(!/^\d{1,16}$/.test(after)||!Number.isSafeInteger(Number(after)))
+      throw bad('cursor','Некорректный курсор');
+    const limit=Math.min(100,Math.max(1,Math.trunc(Number(c.query.get('limit'))||50)));
+    const events=await db.query<{
+      revision:string;id:string;moderation_state:string;previous_state:string;
+      current_state:string;sender_id:string;body:string;created_at:Date;
+      nickname:string;public_city:string|null;
+    }>(`select e.id::text as revision,e.message_id::text as id,e.moderation_state,
+       e.previous_state,m.moderation_state as current_state,m.sender_id,m.body,
+       m.created_at,coalesce(p.nickname,'Участник') as nickname,
+       case when p.share_city then p.city_label else null end as public_city
+       from community_room_moderation_events e
+       join community_messages m on m.id=e.message_id
+       left join community_profiles p on p.user_id=m.sender_id
+       where e.room_id=$1 and e.id>$2::bigint order by e.id limit $3`,
+       [room.id,after,limit]);
+    const changes=events.flatMap(e=>{
+      if(e.moderation_state==='published'){
+        // Do not resurrect text that has subsequently been hidden.
+        if(e.current_state!=='published')return [];
+        return [{revision:e.revision,id:e.id,moderation_state:'published',
+          message:{id:e.id,body:e.body,nickname:e.nickname,public_city:e.public_city,
+            isMine:e.sender_id===c.user.id,created_at:e.created_at,moderation_state:'published'}}];
+      }
+      // A pending -> hidden message was never public: do not leak its existence.
+      if(e.previous_state!=='published'&&e.sender_id!==c.user.id&&!isStaff(c.user))return [];
+      return [{revision:e.revision,id:e.id,moderation_state:'hidden'}];
+    });
+    return {changes,nextCursor:events.at(-1)?.revision??after};
   });
 
   r.post('/api/community/rooms/:id/messages', true, async (c: AuthedCtx) => {
@@ -247,13 +287,40 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
   r.post('/api/admin/community/messages/:id/moderate', ['admin','moderator'], async (c: AuthedCtx) => {
     if (!/^\d{1,16}$/.test(c.params.id)) throw notFound('Сообщение не найдено');
     const {status}=parse(z.object({status:z.enum(['published','hidden'])}),c.body);
-    const changed=await db.one(`update community_messages set moderation_state=$2 where id=$1
-      returning id::text as id,moderation_state`,[c.params.id,status]);
-    if(!changed) throw notFound('Сообщение не найдено');
-    await db.query('update community_reports set status=\'reviewed\' where message_id=$1',[c.params.id]);
-    await db.query('insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4)',
-      [c.user.id,'community.message_moderate',c.params.id,{status}]);
-    return changed;
+    const result=await db.tx(async q=>{
+      const target=await q.one<{room_id:string}>(
+        'select room_id from community_messages where id=$1',[c.params.id]);
+      if(!target)throw notFound('Сообщение не найдено');
+      // Lock the parent room to serialize moderation event sequence with commit
+      // order, preventing a higher cursor from skipping a late commit.
+      await q.one('select id from community_rooms where id=$1 for update',[target.room_id]);
+      const previous=await q.one<{moderation_state:string}>(
+        'select moderation_state from community_messages where id=$1 for update',[c.params.id]);
+      if(!previous)throw notFound('Сообщение не найдено');
+      let changed:{id:string;moderation_state:string};
+      if(previous.moderation_state!==status){
+        const row=await q.one<{id:string;moderation_state:string}>(
+          'update community_messages set moderation_state=$2 where id=$1 returning id::text as id,moderation_state',
+          [c.params.id,status]);
+        if(!row)throw notFound('Сообщение не найдено');
+        changed=row;
+        await q.query(`insert into community_room_moderation_events
+          (room_id,message_id,previous_state,moderation_state) values($1,$2,$3,$4)`,
+          [target.room_id,c.params.id,previous.moderation_state,status]);
+      }else changed={id:c.params.id,moderation_state:status};
+      await q.query("update community_reports set status='reviewed' where message_id=$1",[c.params.id]);
+      await q.query('insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4)',
+        [c.user.id,'community.message_moderate',c.params.id,{status,previous:previous.moderation_state}]);
+      return {changed,roomId:target.room_id,modified:previous.moderation_state!==status};
+    });
+    if(result.modified){
+      // The live signal only triggers authorized recipients to refresh their
+      // own ACL-checked change feed; never broadcast message text or IDs.
+      const members=await db.query<{user_id:string}>(
+        "select user_id from community_memberships where room_id=$1 limit 2000",[result.roomId]);
+      notifier.live(members.map(m=>m.user_id),{type:'community_moderation',roomId:result.roomId});
+    }
+    return result.changed;
   });
 
   // TechBase: metadata first, NEVER accept unreviewed copied OEM files for public serving.
