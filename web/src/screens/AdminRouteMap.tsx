@@ -33,15 +33,19 @@ export function AdminRouteMap({ orderId }: { orderId: string }) {
     minLng = Math.min(minLng, p.lng);
     maxLng = Math.max(maxLng, p.lng);
   }
-  // Longitudes wrap at ±180°. Keep a date-line crossing local on the schematic.
-  const crossesDateLine = maxLng - minLng > 180;
+  // Only unwrap the date line when doing so actually shortens the span.
+  // A route covering widely separated longitudes must not be misclassified.
+  let wrappedMin = Infinity, wrappedMax = -Infinity;
+  for (const p of points) {
+    const lng = p.lng < 0 ? p.lng + 360 : p.lng;
+    wrappedMin = Math.min(wrappedMin, lng);
+    wrappedMax = Math.max(wrappedMax, lng);
+  }
+  const crossesDateLine = wrappedMax - wrappedMin < maxLng - minLng;
   const projectedLng = (p: RoutePoint) => crossesDateLine && p.lng < 0 ? p.lng + 360 : p.lng;
   if (crossesDateLine) {
-    minLng = Infinity; maxLng = -Infinity;
-    for (const p of points) {
-      minLng = Math.min(minLng, projectedLng(p));
-      maxLng = Math.max(maxLng, projectedLng(p));
-    }
+    minLng = wrappedMin;
+    maxLng = wrappedMax;
   }
   const padLat = Math.max(0.004, (maxLat - minLat) * 0.2);
   const padLng = Math.max(0.007, (maxLng - minLng) * 0.2);
