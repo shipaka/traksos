@@ -64,7 +64,7 @@ export function AdminAccountAccess() {
 
   async function copyReport(report: DevReport) {
     const message = [
-      'TrackSOS — техническое обращение', 'Номер: ' + report.id,
+      'TrakSOS — техническое обращение', 'Номер: ' + report.id,
       'Категория: ' + report.category,
       report.phone ? 'Телефон: ' + report.phone : '',
       'Описание: ' + report.details,
