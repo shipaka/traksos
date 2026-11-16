@@ -327,13 +327,13 @@ export function InsuranceThread({requestId}:{requestId:string}){
                 <span className="insurance-step-title">ПУТЬ СТРАХОВОЙ ЗАЯВКИ</span>
                 <strong>{activeIndex>=0?`Этап ${activeIndex+1} из ${INSURANCE_STAGES.length}`:'Этап уточняется'} · {insuranceStatus(stage)}</strong>
                 <small>Показать все этапы и дальнейшие шаги</small>
+                <span className="insurance-mobile-stage-progress" aria-hidden="true">
+                  {INSURANCE_STAGES.map((step,i)=><span key={step} className={
+                    i===activeIndex?'current':i<activeIndex?'complete':'upcoming'}/>)}
+                </span>
               </span>
               <span className="insurance-mobile-stage-chevron" aria-hidden="true">⌄</span>
             </summary>
-            <div className="insurance-mobile-stage-progress" aria-hidden="true">
-              {INSURANCE_STAGES.map((step,i)=><span key={step} className={
-                i===activeIndex?'current':i<activeIndex?'complete':'upcoming'}/>)}
-            </div>
             <div className="insurance-mobile-stage-expanded">
               <InsuranceStageTimeline stage={stage} activeIndex={activeIndex}/>
             </div>
