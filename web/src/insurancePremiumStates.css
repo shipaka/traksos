@@ -227,3 +227,85 @@
   .insurance-dossier-chevron,.insurer-case-card{transition:none!important;}
   .insurance-workflow .insurance-progress>div.current>span:first-child{box-shadow:none;}
 }
+
+
+/* Live insurance service cases on the customer's MAIN dashboard. Read from
+   /api/vehicle-service-requests, never from synthetic homepage demo numbers. */
+.client-insurance-home {
+  gap:13px;padding:16px;
+  border:1px solid #326782;border-radius:21px;
+  background:
+    radial-gradient(ellipse at 85% 5%,rgba(44,207,228,.12),transparent 46%),
+    linear-gradient(125deg,#0a243d,#0b2b46);
+  box-shadow:0 15px 34px rgba(0,15,35,.23);
+  min-width:0;
+}
+.client-insurance-home-heading {
+  display:flex;justify-content:space-between;align-items:center;
+  gap:12px;flex-wrap:wrap;
+}
+.client-insurance-home-heading h2 {
+  margin:5px 0 0!important;color:#f2fbff!important;
+  font-size:clamp(17px,2vw,22px)!important;letter-spacing:-.025em;
+}
+.client-insurance-home-heading a {
+  font-size:12px!important;font-weight:800;
+  color:#77e5f2!important;text-decoration:none;
+}
+.client-insurance-home-list {
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));
+  gap:11px;min-width:0;
+}
+.client-insurance-home-card {
+  --state:#6bdeef;--state-bg:rgba(42,198,216,.13);
+  display:flex;flex-direction:column;align-items:flex-start;
+  position:relative;min-width:0;gap:10px;
+  padding:18px 18px 17px;border-radius:16px;
+  border:1px solid color-mix(in srgb,var(--state) 42%,#285779);
+  color:#f6fbff!important;text-decoration:none!important;
+  background:radial-gradient(ellipse at 100% 0,var(--state-bg),transparent 60%),#102e48;
+  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;
+}
+.client-insurance-home-card.tone-working{--state:#90caff;--state-bg:rgba(46,117,213,.14);}
+.client-insurance-home-card.tone-action{--state:#ffc981;--state-bg:rgba(239,165,66,.13);}
+.client-insurance-home-card.tone-done{--state:#8be6bf;--state-bg:rgba(47,178,122,.13);}
+.client-insurance-home-card.tone-alert{--state:#ffabab;--state-bg:rgba(225,94,100,.13);}
+.client-insurance-home-card:before {
+  content:"";width:3px;position:absolute;left:0;top:15px;bottom:15px;
+  border-radius:0 4px 4px 0;background:var(--state);
+}
+.client-insurance-home-vehicle {
+  font-size:11px;font-weight:700;color:#b3cedf;
+  overflow-wrap:anywhere;
+}
+.client-insurance-home-card strong {
+  font-size:clamp(16px,1.6vw,19px);line-height:1.28;
+  font-weight:850;letter-spacing:-.02em;overflow-wrap:anywhere;
+}
+.client-insurance-home-next {
+  color:var(--state);font-size:12px;font-weight:750;
+  line-height:1.45;overflow-wrap:anywhere;
+}
+.client-insurance-home-open {
+  margin-top:auto;display:inline-flex;align-items:center;
+  gap:6px;font-weight:850;font-size:12px;
+  padding:9px 0 0;color:#f6fdff;
+}
+.client-insurance-home-card:focus-visible {
+  outline:2px solid #87ebfa;outline-offset:3px;
+}
+@media(hover:hover) {
+  .client-insurance-home-card:hover {
+    transform:translateY(-2px);border-color:var(--state);
+    box-shadow:0 14px 24px #00102077;
+  }
+}
+@media(max-width:560px){
+  .client-insurance-home{padding:13px;border-radius:17px;}
+  .client-insurance-home-list{grid-template-columns:1fr;}
+  .client-insurance-home-card{padding:15px;}
+}
+@media(prefers-reduced-motion:reduce){
+  .client-insurance-home-card{transition:none!important;}
+  .client-insurance-home-card:hover{transform:none;}
+}
