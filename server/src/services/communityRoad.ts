@@ -35,6 +35,8 @@ export function registerCommunityRoadRoutes(r:Router,db:Db,notifier:Notifier) {
   });
   r.post('/api/community/rooms/:id/road-events',true,async(c:AuthedCtx)=>{
     const group=await room(db,c);
+    const joined=await db.one('select 1 from community_memberships where room_id=$1 and user_id=$2',[group.id,c.user.id]);
+    if(!joined)throw forbidden('Сначала присоединитесь к водительскому чату');
     const b=parse(z.object({
       category:z.enum(['traffic','parking','roadworks','weather','question']),
       description:z.string().trim().min(10).max(500),
