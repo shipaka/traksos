@@ -4,6 +4,7 @@ import {useAction,useLoad,useMe} from '../ui.tsx';
 import './techBase.css';
 import {TechReferenceShelf} from './techReferenceShelf.tsx';
 import {AdminTechReferences} from './adminTechReferences.tsx';
+import {ProfessionalCases} from './professionalCases.tsx';
 
 type Entry={id:string;title:string;make:string;model:string|null;model_year:number|null;
  subsystem:string;source_url:string|null;created_at:string};
@@ -148,7 +149,7 @@ export function TechnicalBase(){
  const {me}=useMe();
  const admin=Boolean(me?.roles.includes('admin'));
  const professional=Boolean(me?.roles.some(r=>['master','tow','service'].includes(r)));
- const [tab,setTab]=useState<'sources'|'search'|'propose'|'review'|'source-review'>('sources');
+ const [tab,setTab]=useState<'sources'|'search'|'cases'|'propose'|'review'|'source-review'>('sources');
  if(!professional&&!admin)return <main className="tech-shell"><h1>ТехБаза</h1><p>Раздел доступен только подтверждённым специалистам.</p></main>;
  return <main className="tech-shell">
   <header className="tech-head">
@@ -159,6 +160,7 @@ export function TechnicalBase(){
   <nav className="tech-tabs" aria-label="ТехБаза">
    <button aria-current={tab==='sources'?'page':undefined} onClick={()=>setTab('sources')}>Схемы и источники</button>
    <button aria-current={tab==='search'?'page':undefined} onClick={()=>setTab('search')}>Проверенные решения</button>
+   {professional&&<button aria-current={tab==='cases'?'page':undefined} onClick={()=>setTab('cases')}>Советы коллег</button>}
    {professional&&<button aria-current={tab==='propose'?'page':undefined} onClick={()=>setTab('propose')}>Мои материалы</button>}
    {admin&&<button aria-current={tab==='review'?'page':undefined} onClick={()=>setTab('review')}>Проверка материалов</button>}
    {admin&&<button aria-current={tab==='source-review'?'page':undefined}
@@ -166,6 +168,7 @@ export function TechnicalBase(){
   </nav>
   {tab==='sources'&&<TechReferenceShelf/>}
   {tab==='search'&&<ApprovedKnowledge/>}
+  {tab==='cases'&&professional&&<ProfessionalCases/>}
   {tab==='propose'&&professional&&<ProposeKnowledge/>}
   {tab==='review'&&admin&&<AdminKnowledgeQueue/>}
   {tab==='source-review'&&admin&&<AdminTechReferences/>}
