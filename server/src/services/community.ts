@@ -205,7 +205,7 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
       if(e.previous_state!=='published'&&e.sender_id!==c.user.id&&!isStaff(c.user))return [];
       return [{revision:e.revision,id:e.id,moderation_state:'hidden'}];
     });
-    return {changes,nextCursor:events.at(-1)?.revision??after};
+    return {changes,nextCursor:events.at(-1)?.revision??after,hasMore:events.length>=limit};
   });
 
   r.post('/api/community/rooms/:id/messages', true, async (c: AuthedCtx) => {
