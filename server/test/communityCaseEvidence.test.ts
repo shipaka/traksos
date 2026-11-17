@@ -51,11 +51,19 @@ test('club evidence links require professional ACL, official HTTPS host and two 
    'https://127.0.0.1/private',
    'https://www.zf.com:8443/doc',
    'https://www.zf.com/manual#token',
+   'https://www.zf.com/manual?vin=test',
+   'https://www.zf.com/guide/WDB12345678901234',
    'javascript:alert(1)'
   ];
   for(const url of invalid)assert.equal((await t.api('POST',path,{
     ...source,sourceUrl:url,clientNonce:randomUUID()
   },author.token)).status,400,'must reject unsafe external reference '+url);
+  assert.equal((await t.api('POST',path,{
+    ...source,clientNonce:randomUUID(),rightsNote:'Контакт специалиста: +7 999 111 22 33, передал заводскую инструкцию лично.'
+  },author.token)).status,400,'private phone number must never enter club evidence');
+  assert.equal((await t.api('POST',path,{
+    ...source,clientNonce:randomUUID(),applicabilityNote:'На месте находится грузовик 59.934280,30.335099, сверьте по адресу.'
+  },author.token)).status,400,'exact coordinates must never enter club evidence');
   const created=ok(await t.api('POST',path,source,author.token));
   assert.equal(created.created,true);
   assert.equal(created.published,false);
