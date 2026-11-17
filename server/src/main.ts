@@ -1,9 +1,8 @@
 import http from 'node:http';
-import { WebSocketServer } from 'ws';
 import { config } from './config.ts';
 import { createDb } from './db/index.ts';
 import { migrate } from './db/migrate.ts';
-import { createApp, bearer } from './app.ts';
+import { createApp } from './app.ts';
 import { createSms } from './providers/sms.ts';
 import { sendInsuranceReminders } from './services/insuranceReminders.ts';
 import { createPush } from './providers/push.ts';
@@ -11,6 +10,7 @@ import { MockProvider } from './payments/provider.ts';
 import { YooKassaProvider } from './payments/yookassa.ts';
 import { staticHandler } from './http/static.ts';
 import { PublicWeatherService } from './services/publicWeather.ts';
+import { attachRealtimeGateway } from './realtime/gateway.ts';
 
 const db = await createDb(config.databaseUrl);
 const applied = await migrate(db);
@@ -47,30 +47,9 @@ const server = http.createServer((req, res) => {
   return void serveWeb(req, res);
 });
 
-// WebSocket: /ws?token=... — статусы, чат, входящие вызовы
-const wss = new WebSocketServer({ noServer: true });
-server.on('upgrade', async (req, socket, head) => {
-  if (!req.url?.startsWith('/ws')) return socket.destroy();
-  const user = await app.auth.authenticate(bearer(req));
-  if (!user) return socket.destroy();
-  const previewUntil = user.roles.includes('admin')
-    ? (await db.one<{ admin_preview_until: Date | null }>('select admin_preview_until from users where id=$1', [user.id]))?.admin_preview_until ?? null
-    : null;
-  wss.handleUpgrade(req, socket, head, (ws) => {
-    app.hub.add(user.id, ws);
-    ws.send(JSON.stringify({ type: 'hello', userId: user.id }));
-    const ping = setInterval(() => ws.readyState === 1 && ws.ping(), 25_000);
-    // A preview login must not keep receiving staff notifications after expiry.
-    const previewTimer = previewUntil
-      ? setTimeout(() => ws.close(1008, 'Preview expired'), Math.max(0, new Date(previewUntil).getTime() - Date.now()))
-      : null;
-    ws.on('close', () => {
-      clearInterval(ping);
-      if (previewTimer) clearTimeout(previewTimer);
-      app.hub.remove(user.id, ws);
-    });
-  });
-});
+// Both existing APKs and new one-use-ticket clients remain compatible.
+// Legacy URL token support is a *temporary* release gate tracked by #115.
+attachRealtimeGateway(server,app,db);
 
 // Очередь вызовов: истёкшие → следующему
 const timer = setInterval(() => {
@@ -99,6 +78,8 @@ const housekeeping = async () => {
       .catch((e) => console.error('[sms-quota-cleanup]', e)),
     db.query("delete from auth_login_attempts where window_start < now() - interval '24 hours'")
       .catch((e) => console.error('[login-quota-cleanup]', e)),
+    db.query("delete from realtime_ws_tickets where expires_at < now() - interval '1 minute'")
+      .catch((e) => console.error('[ws-ticket-cleanup]', e)),
     db.query("delete from diagnostic_events where occurred_at < now() - interval '30 days'")
       .catch((e) => console.error('[diagnostics-cleanup]', e)),
     // GPS coordinates are sensitive; retain the minimal route evidence for
