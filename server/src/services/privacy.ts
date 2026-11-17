@@ -57,6 +57,7 @@ export class PrivacyService {
       communityProfile: await this.db.one('select nickname,city_label,share_city,created_at from community_profiles where user_id=$1',[id]),
       communityMessages: await q('select room_id,body,moderation_state,created_at from community_messages where sender_id=$1 order by created_at desc'),
       communityRooms: await q('select room_id,joined_at from community_memberships where user_id=$1'),
+      driverAirParticipation: await this.db.one('select enabled,updated_at from community_driver_optins where user_id=$1',[id]),
       communityNotificationPreferences: await this.db.one('select dm_invites,dm_messages,case_replies,quiet_enabled,quiet_start_minute,quiet_end_minute,quiet_timezone,updated_at from community_notification_preferences where user_id=$1',[id]),
       communityRoomMutes: await q('select room_id,muted,updated_at from community_notification_room_mutes where user_id=$1'),
       communityThreadMutes: await q('select thread_id,muted,updated_at from community_notification_thread_mutes where user_id=$1'),
@@ -151,6 +152,7 @@ export class PrivacyService {
         await q.query('delete from community_notification_thread_mutes where user_id=$1',[id]);
         await q.query('delete from community_notification_cooldowns where user_id=$1',[id]);
         await q.query('delete from community_memberships where user_id=$1', [id]);
+        await q.query('delete from community_driver_optins where user_id=$1',[id]);
         await q.query('delete from community_knowledge where author_id=$1', [id]);
         await q.query('update community_knowledge set rights_reviewer=null where rights_reviewer=$1', [id]);
         await q.query('update community_knowledge set technical_reviewer=null where technical_reviewer=$1', [id]);
