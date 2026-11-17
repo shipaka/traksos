@@ -38,6 +38,7 @@ import { OfferGate, OfferPage } from './screens/offers.tsx';
 import { AdminUser } from './screens/adminUser.tsx';
 import { BaseHome, BaseCar, BaseSetup, BaseMoney, AdminServicePayouts, ServicesList, CenterPage, BookForm, BookingPage } from './screens/base.tsx';
 import { Fleet, QrJoin } from './screens/fleet.tsx';
+import { VehicleKnowledge } from './screens/VehicleKnowledge.tsx';
 import { Help } from './screens/help.tsx';
 import { Rules } from './screens/rules.tsx';
 import { Shop, ShopCart, ShopHistory } from './screens/shop.tsx';
@@ -244,6 +245,7 @@ function App() {
     case 'order': screen = <Order id={b} />; break;
     case 'orders': screen = isCustomer ? <Orders as="client" /> : <main><div className="empty">Нет доступа к клиентским заявкам</div></main>; break;
     case 'garage': screen = isCustomer ? <Garage /> : <main><div className="empty">Нет доступа к гаражу</div></main>; break;
+    case 'vehicle-tech': screen = <VehicleKnowledge />; break;
     case 'courier': screen = b==='admin' && isAdmin ? <CourierAdmin /> : isCourier ? <CourierHome /> : <main><div className="empty">Кабинет доступен только курьерам, которых назначил администратор.</div></main>; break;
     case 'air': screen = me.roles.some(r=>r==='driver'||r==='client') ? <DriverAir /> : <main><div className="empty">Водительский Эфир доступен водителям и владельцам транспорта.</div></main>; break;
     case 'partner': screen = b==='admin' && isAdmin ? <PartnerLevelAdmin /> : (isPerformer||isService) ? <PartnerLevelView /> : <main><div className="empty">Партнёрская программа только для специалистов.</div></main>; break;
