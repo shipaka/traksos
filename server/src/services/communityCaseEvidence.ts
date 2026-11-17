@@ -49,6 +49,10 @@ export function safeEvidenceUrl(value:string){
      !officialHosts.has(u.hostname.toLowerCase())||u.hash||
      Boolean(u.search)||u.pathname.includes('\\'))
     throw bad('source_host','Принимаются только HTTPS-ссылки проверенных официальных каталогов и Wikimedia Commons без параметров доступа');
+  const decodedPath=decodeURIComponent(u.pathname);
+  if(/\\b[A-HJ-NPR-Z0-9]{17}\\b/i.test(decodedPath)||
+     /(?:\\+?\\d[\\s().-]*){10,}/u.test(decodedPath))
+    throw bad('sensitive_source_path','Ссылка не должна содержать VIN или телефон');
   if(u.toString().length>1200)
     throw bad('source_url','Слишком длинная ссылка');
   return u.toString();
@@ -86,6 +90,7 @@ export function registerProfessionalEvidenceRoutes(r:Router,db:Db){
   r.post('/api/community/pro-cases/:id/evidence',true,async(c:AuthedCtx)=>{
     const item=await openCase(db,c,true);
     const b=parse(input,c.body);
+    [b.title,b.documentRevision,b.rightsNote,b.applicabilityNote].forEach(safeText);
     const url=safeEvidenceUrl(b.sourceUrl);
     const res=await db.tx(async q=>{
       await q.query('select pg_advisory_xact_lock(hashtext($1))',
