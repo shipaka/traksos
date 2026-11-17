@@ -167,3 +167,60 @@
 .app.role-client .client-dashboard .desktop-quick-card *,
 .app.role-client .client-dashboard .client-dashboard-hubs>a,
 .app.role-client .client-dashboard .client-dashboard-hubs>a * { text-decoration:none!important; }
+
+/* 17.11 client-first: SOS and Air have equal first-view entry priority.
+   Air is not a fifth repair/service card: that keeps the four approved photo
+   categories stable while placing daily community above them. */
+.app.role-client .client-dashboard .desktop-air-action{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  min-width:174px;min-height:49px;padding:9px 13px;border-radius:13px;
+  border:1px solid rgba(112,236,244,.8);
+  background:radial-gradient(circle at 90% 10%,rgba(77,232,240,.25),transparent 65%),
+    linear-gradient(115deg,#11516a,#12334e);
+  color:#ebffff;text-decoration:none;
+  box-shadow:0 9px 22px rgba(0,23,47,.3);
+  font-size:12px;line-height:1.3;
+  transition:border-color .2s ease,transform .2s ease;
+}
+.app.role-client .client-dashboard .desktop-air-action-signal{
+  flex:0 0 26px;display:grid;place-items:center;
+  width:26px;height:26px;border-radius:50%;
+  color:#89f1fa;background:rgba(10,38,57,.64);font-size:21px;
+}
+.app.role-client .client-dashboard .desktop-air-action>span:last-child{
+  display:flex;flex-direction:column;gap:3px;min-width:0;
+}
+.app.role-client .client-dashboard .desktop-air-action b{color:#f4ffff;font-size:12px;}
+.app.role-client .client-dashboard .desktop-air-action small{color:#b5ebf3;font-size:10px;}
+.app.role-client .client-dashboard .desktop-air-action:focus-visible{
+  outline:3px solid #eec866;outline-offset:3px;
+}
+@media(hover:hover) and (pointer:fine){
+  .app.role-client .client-dashboard .desktop-air-action:hover{
+    border-color:#e2ffff;transform:translateY(-2px);
+  }
+}
+@media(max-width:500px){
+  .app.role-client .client-dashboard .desktop-hero-buttons{
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+  }
+  .app.role-client .client-dashboard .desktop-primary-action,
+  .app.role-client .client-dashboard .desktop-air-action{
+    min-width:0;min-height:61px;padding:8px 9px;
+    font-size:11px;line-height:1.3;
+  }
+  .app.role-client .client-dashboard .desktop-air-action{gap:6px;}
+  .app.role-client .client-dashboard .desktop-air-action-signal{
+    width:20px;height:20px;flex-basis:20px;font-size:16px;
+  }
+  .app.role-client .client-dashboard .desktop-air-action b{font-size:11px;}
+  .app.role-client .client-dashboard .desktop-air-action small{font-size:9px;}
+  .app.role-client .client-dashboard .desktop-outline-action{
+    grid-column:1/-1;justify-self:start;min-height:31px;
+    padding:5px 10px;font-size:11px;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .app.role-client .client-dashboard .desktop-air-action{transition:none;}
+  .app.role-client .client-dashboard .desktop-air-action:hover{transform:none;}
+}
