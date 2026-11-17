@@ -247,7 +247,7 @@ function CarInputs({ car, onChange, tow }: { car: { brand: string; color?: strin
             .map(p=><RecoveryPhotoTile key={p.sourcePage} photo={p}/>)}
         </div>}
         {car.brand&&<small className="note">Выбрано: {car.brand}. Фото надстройки, её паспорт и допустимую массу необходимо подтвердить отдельно.</small>}
-      </section>:<input className="field" placeholder="Марка и модель служебной машины" value={car.brand}
+      </section>:<input className="field" placeholder="Марка: Lada Largus" value={car.brand}
         onChange={(e) => onChange({ ...car, brand: e.target.value })}/>}
       <div className="grid2">
         <input className="field" placeholder="Цвет" value={car.color ?? ''} onChange={(e) => onChange({ ...car, color: e.target.value })} />
