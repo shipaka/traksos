@@ -89,6 +89,10 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
                   <div className="between" style={{ alignItems: 'flex-start' }}>
                     <div className="stack" style={{ gap: 2 }}>
                       <b>{o.name ?? 'Исполнитель'}</b>
+                      {o.performer_kind==='ecu'&&o.performer_verification==='approved'&&
+                        <span className="pill accent" aria-label="Подтверждённая квалификация ЭБУ">
+                          {o.partner_level==='priority'?'Эксперт по ЭБУ':o.partner_level==='active'?'Проверенный специалист':'Профиль ЭБУ проверен'}
+                        </span>}
                       <span className="note">
                         {o.rating && o.rating_count >= 3 ? `★ ${o.rating.toFixed(1)} · ${o.rating_count} ${plural(o.rating_count, 'отзыв', 'отзыва', 'отзывов')}` : 'Новый на TrakSOS'}
                         {o.completed ? ` · ${o.completed} ${plural(o.completed, 'выезд', 'выезда', 'выездов')}` : ''}
@@ -108,7 +112,7 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
                   {o.extras?.stock?.length > 0 && d.service !== 'consult' && <span className="note">С собой: {o.extras.stock.join(', ')}</span>}
                   {(o.extras?.weekendPct || o.extras?.nightPct || o.extras?.waitRate) && d.service !== 'consult' ? <span className="note">Наценки мастера: {[o.extras.weekendPct && `выходные +${o.extras.weekendPct}%`, o.extras.nightPct && `ночь +${o.extras.nightPct}%`, o.extras.waitRate && `ожидание ${rub(o.extras.waitRate)}/ч`].filter(Boolean).join(' · ')}</span> : null}
                   {o.extras?.prepay === 'always' && <span className="note" style={{ color: 'var(--warn)' }}>Берёт предоплату за работу</span>}
-                  {o.car && d.service !== 'consult' && <span className="note">Приедет на: {o.car.brand}{o.car.color ? `, ${o.car.color}` : ''}</span>}
+                  {o.car && d.service !== 'consult' && o.performer_kind!=='ecu' && <span className="note">Приедет на: {o.car.brand}{o.car.color ? `, ${o.car.color}` : ''}</span>}
                   <button className="btn small" style={{ width: '100%' }} disabled={busy} onClick={() => choose(o.id)}>Выбрать за {rub(o.price)}</button>
                 </div>
               );
