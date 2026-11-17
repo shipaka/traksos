@@ -1,4 +1,4 @@
-.air-shell{width:min(1180px,100%);margin:0 auto;padding:clamp(12px,2.5vw,30px);display:flex;flex-direction:column;gap:16px;min-height:70dvh}
+.air-shell{box-sizing:border-box;min-width:0;max-width:100%;width:min(1180px,100%);margin:0 auto;padding:clamp(12px,2.5vw,30px);display:flex;flex-direction:column;gap:16px;min-height:70dvh}
 .air-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
 .air-heading h1{font-size:clamp(1.6rem,3vw,2.4rem);line-height:1.15;margin:6px 0}
 .air-heading p{max-width:65ch;margin:0;opacity:.83}
