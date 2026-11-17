@@ -160,6 +160,95 @@ test('colleague reply, chosen solution and author-only double-review proposal',a
    undefined,writer.token)).status,404);
 });
 
+test('moderator hides unsafe advice, revokes accepted solution and audits restoration',async()=>{
+ const endpoint='/api/community/pro-cases';
+ const created=ok(await t.api('POST',endpoint,newCase(),writer.token));
+ const id=created.case.id;
+ const answer=ok(await t.api('POST',endpoint+'/'+id+'/replies',{
+   clientNonce:randomUUID(),body:'Гипотетический технический ответ, который позже оказался небезопасным.'
+ },peer.token));
+ const reportUrl=endpoint+'/'+id+'/report';
+ assert.equal((await t.api('POST',reportUrl,{replyId:answer.id,
+   reason:'Данный совет может повредить тормозную систему'},outsider.token)).status,404);
+ assert.equal((await t.api('POST',reportUrl,{
+   replyId:'99999999',reason:'Ответ не существует в этом клубе'
+ },writer.token)).status,404);
+ assert.equal((await t.api('POST',reportUrl,{
+   replyId:answer.id,reason:'Сам автор не вправе жаловаться на собственный совет'
+ },peer.token)).status,400);
+ assert.equal(ok(await t.api('POST',reportUrl,{
+   replyId:answer.id,reason:'Опасная рекомендация по ремонту EBS'
+ },writer.token)).reported,true);
+ assert.equal(ok(await t.api('POST',reportUrl,{
+   replyId:answer.id,reason:'Опасная рекомендация по ремонту EBS'
+ },writer.token)).duplicate,true);
+ assert.equal(ok(await t.api('POST',reportUrl,{
+   replyId:answer.id,reason:'Риск неверной диагностики тормозной системы'
+ },admin.token)).reported,true);
+ ok(await t.api('POST',endpoint+'/'+id+'/resolve',{replyId:answer.id},writer.token));
+ const moderation='/api/admin/community/pro-cases/reports';
+ assert.equal((await t.api('GET',moderation,undefined,writer.token)).status,403);
+ const reports=ok(await t.api('GET',moderation,undefined,admin.token)).reports;
+ assert.ok(!reports.some((x:any)=>'reporter_id' in x ||'author_id' in x));
+ const first=reports.find((x:any)=>x.case_id===id&&x.reply_id===answer.id);
+ assert.ok(first);
+ const reviewed=ok(await t.api('POST',moderation+'/'+first.id+'/review',{
+   decision:'hide',note:'Проверено модератором: совет может быть опасен для тормозов'
+ },admin.token));
+ assert.equal(reviewed.reviewed,true);
+ assert.equal((await t.api('POST',moderation+'/'+first.id+'/review',{
+   decision:'dismiss',note:'Повторное решение на рассмотренную жалобу запрещено'
+ },admin.token)).status,409);
+ assert.equal(ok(await t.api('GET',endpoint+'/'+id+'/replies',undefined,writer.token))
+   .replies.length,0,'hidden technical answer must disappear');
+ assert.equal(ok(await t.api('GET',endpoint+'/'+id,undefined,writer.token))
+   .accepted_reply_id,null,'accepted solution is revoked upon hiding');
+ const remaining=ok(await t.api('GET',moderation,undefined,admin.token)).reports;
+ const second=remaining.find((x:any)=>x.case_id===id&&x.reply_id===answer.id);
+ assert.ok(second);
+ ok(await t.api('POST',moderation+'/'+second.id+'/review',{
+   decision:'restore',note:'Повторная ручная экспертиза подтверждает право вернуть совет в закрытый клуб'
+ },admin.token));
+ assert.equal(ok(await t.api('GET',endpoint+'/'+id+'/replies',undefined,writer.token))
+   .replies.length,1,'restored answer is visible after review');
+ assert.equal(ok(await t.api('GET',endpoint+'/'+id,undefined,writer.token))
+   .accepted_reply_id,null,'restoration cannot silently reinstate a previously withdrawn solution');
+ const audits=await t.db.query<{action:string}>(
+   "select action from audit_log where action='community.technical_report_review'");
+ assert.ok(audits.length>=2);
+});
+
+test('hiding a reported case removes it from discovery and resets linked knowledge approval',async()=>{
+ const endpoint='/api/community/pro-cases';
+ const created=ok(await t.api('POST',endpoint,newCase(),writer.token));
+ const id=created.case.id;
+ ok(await t.api('POST',endpoint+'/'+id+'/resolve',{replyId:null},writer.token));
+ const draft=ok(await t.api('POST',endpoint+'/'+id+'/propose-knowledge',{
+   title:'Условное решение для диагностической карты',
+   authorNotes:'Мой технический анализ по официальному руководству, требует проверки на правомерность и применимость.',
+   rightsConfirmation:true
+ },writer.token));
+ await t.db.query(
+   "update community_knowledge set rights_review='approved',technical_review='approved' where id=$1",
+   [draft.id]);
+ ok(await t.api('POST',endpoint+'/'+id+'/report',{
+   reason:'Проверить безопасность инструкций по тормозной системе'
+ },peer.token));
+ const reports=ok(await t.api('GET','/api/admin/community/pro-cases/reports',
+   undefined,admin.token)).reports;
+ const report=reports.find((x:any)=>x.case_id===id&&x.reply_id===null);
+ assert.ok(report);
+ ok(await t.api('POST','/api/admin/community/pro-cases/reports/'+report.id+'/review',{
+   decision:'hide',note:'Техническая экспертиза выявила риск применения неподтверждённой схемы'
+ },admin.token));
+ assert.equal((await t.api('GET',endpoint+'/'+id,undefined,writer.token)).status,404);
+ const list=ok(await t.api('GET',endpoint+'/rooms/'+roomId,undefined,writer.token));
+ assert.ok(!list.cases.some((x:any)=>x.id===id));
+ const checked=await t.db.one<{technical_review:string}>(
+   'select technical_review from community_knowledge where id=$1',[draft.id]);
+ assert.equal(checked?.technical_review,'pending',
+   'an unsafe case cannot leave its derived TechBase material approved');
+});
 test('privacy export covers professional questions, and erasure removes accepted peer replies',async()=>{
  const own=ok(await t.api('POST','/api/community/pro-cases',newCase(),writer.token));
  const written=ok(await t.api('POST','/api/community/pro-cases/'+own.case.id+'/replies',{
