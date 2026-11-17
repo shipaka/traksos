@@ -2,10 +2,11 @@ import { readFile } from 'node:fs/promises';
 import type { AuthUser } from '../http/router.ts';
 import { bad, forbidden } from '../http/router.ts';
 import { normalizeAlias, type VehicleCategory } from '../domain/vehicleReference.ts';
+import { vehicleOwnerShelf } from './vehicleOwnerShelf.ts';
 
 // Pin one legally reusable open-data release. The archived upstream licence
 // and FULL upstream notices ship alongside this JSON and must appear in the UI.
-export type DirectoryCategory = Exclude<VehicleCategory, 'trailer'>;
+export type DirectoryCategory = VehicleCategory;
 type MakeRow = [key: string, name: string, categories: DirectoryCategory[]];
 type ModelRow = [category: DirectoryCategory, makeKey: string, modelKey: string, name: string];
 interface DirectoryFile {
@@ -44,8 +45,8 @@ async function dataset() {
   return cached;
 }
 const NON_PUBLIC_SERVICE_CATEGORY: DirectoryCategory[] = ['passenger', 'van'];
-const TRUCK_CATEGORIES: DirectoryCategory[] = ['truck', 'van', 'bus'];
-const ALL_CATEGORIES: DirectoryCategory[] = ['passenger', 'truck', 'van', 'bus'];
+const TRUCK_CATEGORIES: DirectoryCategory[] = ['truck', 'trailer', 'van', 'bus'];
+const ALL_CATEGORIES: DirectoryCategory[] = ['passenger', 'truck', 'trailer', 'van', 'bus'];
 export type CatalogPurpose = 'garage' | 'master' | 'tow' | 'service' | 'insurance' | 'parts' | 'admin';
 export function categoriesForActor(user: AuthUser, purpose: CatalogPurpose, masterHeavy = false): DirectoryCategory[] {
   if (!user || user.status !== 'active') throw forbidden('Требуется действующий аккаунт');
@@ -61,7 +62,8 @@ export function categoriesForActor(user: AuthUser, purpose: CatalogPurpose, mast
     throw forbidden('Недостаточно прав');
   if (purpose === 'parts' && !hasAny('client', 'driver', 'master', 'service'))
     throw forbidden('Недостаточно прав');
-  if (purpose === 'garage' || purpose === 'tow') return TRUCK_CATEGORIES;
+  if (purpose === 'tow') return ['truck']; // Recovery vehicle rigs only; never all trucks or trailers.
+  if (purpose === 'garage') return TRUCK_CATEGORIES;
   if (purpose === 'master') return masterHeavy ? ALL_CATEGORIES : NON_PUBLIC_SERVICE_CATEGORY;
   return ALL_CATEGORIES;
 }
@@ -80,17 +82,31 @@ export function publishedAttribution() {
 }
 export class PublicVehicleDirectory {
   async metadata() {
-    const d = await dataset();
+    const [d,shelf] = await Promise.all([dataset(),vehicleOwnerShelf()]);
     return { source: d.dataset, version: d.sourceVersion, sourceBlobSha: d.sourceBlobSha,
-      count: d.models.length, brandCount: d.makes.length, categories: ALL_CATEGORIES,
-      attribution: publishedAttribution() };
+      count: d.models.length+shelf.rows.length, brandCount: d.makes.length,
+      supplementalCount:shelf.rows.length,recoveryOnlyCount:shelf.recovery.length,
+      categories: ALL_CATEGORIES,
+      supplementalNotice:shelf.notice,attribution: publishedAttribution() };
   }
   async makes(user: AuthUser, purpose: CatalogPurpose, q = '', masterHeavy = false, category?: DirectoryCategory) {
     if (category && !categoriesForActor(user,purpose,masterHeavy).includes(category))
       throw forbidden('Категория недоступна для этой роли');
     const categories = categoriesForActor(user, purpose, masterHeavy);
-    const data = await dataset(), term = limitSearch(q);
-    const makes = data.makes.flatMap(([key, name, available]) => categories
+    const [data,shelf] = await Promise.all([dataset(),vehicleOwnerShelf()]);
+    const term = limitSearch(q);
+    const allMakes:MakeRow[] = purpose==='tow'
+      ? shelf.recovery.reduce<MakeRow[]>((out,r)=> {
+          if (!out.some(m=>m[0]===r.makeKey)) out.push([r.makeKey,r.make,['truck']]);
+          return out;
+        },[])
+      : [...data.makes];
+    if(purpose!=='tow') for(const r of shelf.rows){
+      const found=allMakes.find(m=>m[0]===r.makeKey);
+      if(found){if(!found[2].includes(r.category))found[2]=[...found[2],r.category];}
+      else allMakes.push([r.makeKey,r.make,[r.category]]);
+    }
+    const makes = allMakes.flatMap(([key, name, available]) => categories
       .filter((cat) => available.includes(cat) && (!category || cat===category))
       .map((category) => ({ key, name, category })))
       .filter((x) => !term || normalizeAlias(x.name).includes(term) || normalizeAlias(x.key).includes(term))
@@ -102,12 +118,21 @@ export class PublicVehicleDirectory {
     category: DirectoryCategory, makeKey: string, q = '', masterHeavy = false) {
     const allowed = categoriesForActor(user, purpose, masterHeavy);
     if (!allowed.includes(category)) throw forbidden('Категория транспорта недоступна для этой роли');
-    const data = await dataset(), term = limitSearch(q);
-    const make = data.makes.find((row) => row[0] === makeKey && row[2].includes(category));
-    if (!make) throw bad('catalog_make_unknown', 'Марка отсутствует в подтверждённом каталоге');
-    const matches = data.models.filter((m) => m[0] === category && m[1] === makeKey &&
+    const [data,shelf] = await Promise.all([dataset(),vehicleOwnerShelf()]);
+    const term = limitSearch(q);
+    const supplement = purpose==='tow'
+      ? shelf.recovery.map(r=>['truck',r.makeKey,r.modelKey,r.model] as ModelRow)
+      : shelf.rows.map(r=>[r.category,r.makeKey,r.modelKey,r.model] as ModelRow);
+    const allModels=purpose==='tow'?supplement:[...data.models,...supplement];
+    const knownMake=purpose==='tow'?shelf.recovery.some(r=>r.makeKey===makeKey)
+      : data.makes.some(r=>r[0]===makeKey&&r[2].includes(category))
+        || shelf.rows.some(r=>r.makeKey===makeKey&&r.category===category);
+    if (!knownMake) throw bad('catalog_make_unknown', 'Марка отсутствует в подтверждённом каталоге');
+    const matches = allModels.filter((m) => m[0] === category && m[1] === makeKey &&
       (!term || normalizeAlias(m[3]).includes(term) || normalizeAlias(m[2]).includes(term)));
-    return { make: { key: make[0], name: make[1], category },
+    const knownDisplay=purpose==='tow'?shelf.recovery.find(r=>r.makeKey===makeKey)?.make:
+      data.makes.find(r=>r[0]===makeKey)?.[1]??shelf.rows.find(r=>r.makeKey===makeKey)?.make;
+    return { make: { key: makeKey, name: knownDisplay??makeKey, category },
       items: matches.slice(0, 200).map((m) => ({ key: m[2], name: m[3], yearFrom: null, yearTo: null })),
       total: matches.length, hasMore: matches.length > 200,
       yearsUnverified: true, attribution: publishedAttribution() };
@@ -136,7 +161,11 @@ export class PublicVehicleDirectory {
     };
   }
   async resolve(category: DirectoryCategory, makeKey: string, modelKey: string) {
-    const d = await dataset();
+    const [d,shelf] = await Promise.all([dataset(),vehicleOwnerShelf()]);
+    const manual = shelf.rows.find(r=>r.category===category&&r.makeKey===makeKey&&r.modelKey===modelKey);
+    if(manual)return {category,brandKey:makeKey,modelKey,brand:manual.make,model:manual.model,
+      source:'verified_manufacturer_name',sourceVersion:shelf.version,
+      yearsVerified:false,partsFitmentVerified:false};
     const make = d.makes.find((m) => m[0] === makeKey && m[2].includes(category));
     const model = d.models.find((m) => m[0] === category && m[1] === makeKey && m[2] === modelKey);
     if (!make || !model) throw bad('catalog_selection_unknown', 'Выберите марку и модель из подтверждённого каталога');
