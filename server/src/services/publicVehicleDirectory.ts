@@ -100,7 +100,7 @@ export class PublicVehicleDirectory {
           if (!out.some(m=>m[0]===r.makeKey)) out.push([r.makeKey,r.make,['truck']]);
           return out;
         },[])
-      : [...data.makes];
+      : data.makes.map(([key,name,types])=>[key,name,[...types]] as MakeRow);
     if(purpose!=='tow') for(const r of shelf.rows){
       const found=allMakes.find(m=>m[0]===r.makeKey);
       if(found){if(!found[2].includes(r.category))found[2]=[...found[2],r.category];}
