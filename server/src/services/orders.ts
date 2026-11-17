@@ -23,6 +23,7 @@ export interface CreateOrderInput {
   lng?: number;
   zoneId: string;
   regionId?: ServiceRegion;
+  city?: string;
   tier?: Tier;
   vehicleId?: string;
   brand?: string;
