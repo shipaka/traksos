@@ -1,0 +1,46 @@
+/* Only the stationary ECU request form: preserve the accepted visual canon
+ * while allowing long professional names, badges and prices at 320px.
+ * Never hide overflow; every input, label and action stays usable.
+ */
+@media(max-width:380px){
+  .ecu-intake,
+  .ecu-intake > *,
+  .ecu-intake .step-card,
+  .ecu-intake .card{
+    min-width:0;
+    max-width:100%;
+  }
+  .ecu-intake .step-head{
+    min-width:0;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .ecu-intake .step-head > b{
+    min-width:0;
+    flex:1 1 125px;
+    overflow-wrap:anywhere;
+  }
+  .ecu-intake .step-head > .pill{
+    flex:0 1 auto;
+    max-width:100%;
+  }
+  .ecu-intake .card .between{
+    flex-wrap:wrap;
+    min-width:0;
+    align-items:flex-start;
+  }
+  .ecu-intake .card .between > *{
+    min-width:0;
+    max-width:100%;
+    overflow-wrap:anywhere;
+  }
+  .ecu-intake .card .between > .btn{
+    flex:0 1 auto;
+    width:auto;
+    max-width:100%;
+  }
+  .ecu-intake :is(.field,input,select,textarea){
+    min-width:0;
+    max-width:100%;
+  }
+}
