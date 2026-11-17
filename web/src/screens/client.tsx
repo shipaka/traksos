@@ -39,6 +39,11 @@ export function Home() {
           <p>Выездной мастер, эвакуатор, грузовые СТО и консультации. Заявки, страхование и запчасти — в одном кабинете.</p>
           <div className="desktop-hero-buttons">
             <a className="desktop-primary-action" href="#/sos">SOS · Помощь в дороге ↗</a>
+            {me?.roles.some(r=>r==='driver'||r==='client')&&<a href="#/air"
+              className="desktop-air-action" aria-label="Водительский Эфир — маршруты, города и общение с коллегами">
+              <span className="desktop-air-action-signal" aria-hidden="true">◉</span>
+              <span><b>Водительский Эфир</b><small>Маршруты · города · коллеги</small></span>
+            </a>}
             <a className="desktop-outline-action" href="#/orders">Мои заявки</a>
           </div>
           <div className="launch-region" role="note">Выберите регион заявки — доступность исполнителей проверим отдельно</div>
@@ -68,11 +73,6 @@ export function Home() {
         <a href="#/new/tow" className="desktop-quick-card"><span className="desktop-quick-icon">↗</span><span><b>Эвакуатор</b><small>Тягач, полуприцеп или сцепка</small></span><span aria-hidden="true">↗</span></a>
         <a href="#/services" className="desktop-quick-card"><span className="desktop-quick-icon">▤</span><span><b>СТО грузовых автомобилей</b><small>Выбор сервиса и запись на ремонт</small></span><span aria-hidden="true">↗</span></a>
         <a href="#/new/consult" className="desktop-quick-card"><span className="desktop-quick-icon">☎</span><span><b>Консультация по телефону</b><small>Обсудить проблему со специалистом</small></span><span aria-hidden="true">↗</span></a>
-        {me?.roles.some(r=>r==='driver'||r==='client')&&<a href="#/air" className="desktop-quick-card">
-          <span className="desktop-quick-icon">☷</span>
-          <span><b>Водительский Эфир</b><small>Общение с коллегами, дорожные сообщения и личные чаты</small></span>
-          <span aria-hidden="true">↗</span>
-        </a>}
       </section>
 
       <EcuDiscovery place="home" />
