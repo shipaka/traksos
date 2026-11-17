@@ -91,7 +91,7 @@ test('полная доказательная цепочка, идемпотен
   assert.deepEqual(before.missing,[]);assert.deepEqual(before.problems,[]);
   assert.equal(before.status,'requires_reconciliation','проверка не выдумывается автоматически');
   assert.equal((await t.api('POST',root+'/cases/'+c+'/review',
-    {kind:'accountant_approved',note:'TEST'},admin.token)).status,409);
+    {kind:'accountant_approved',note:'Проверка бухгалтером TEST'},admin.token)).status,409);
   ok(await t.api('POST',root+'/cases/'+c+'/review',{kind:'verified',note:'Документы проверены тестом'},admin.token));
   const r=ok(await t.api('GET',root+'/cases/'+c,undefined,admin.token));
   assert.equal(r.status,'verified');

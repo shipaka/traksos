@@ -70,7 +70,10 @@ export function reconcileCase(c: any, allocations: any[], events: any[], reviews
   if (!purchase.length) missing.push('Нет первичного документа фактической закупки');
   if (purchase.length && !verifiedPurchase) missing.push('Первичные документы не прошли ручную проверку');
   if (deliveredQty !== amount(c.quantity)) missing.push('Количество закупки не подтверждено полностью');
-  if (isAgent && purchaseAmount !== expected) problems.push('Фактическая закупка отличается от согласованного возмещения');
+  // Partial/missing primary documents mean 'awaiting_docs', not an invented discrepancy.
+  // Compare contracted reimbursement only once the full purchase quantity is evidenced.
+  if (isAgent && verifiedPurchase && deliveredQty === amount(c.quantity) && purchaseAmount !== expected)
+    problems.push('Фактическая закупка отличается от согласованного возмещения');
   if (purchase.some(a => amount(a.vat_amount) > amount(a.amount))) problems.push('НДС превышает сумму строки');
   if (isAgent && c.mandate_accepted_at && purchase.some(a =>
       Date.parse(a.issued_at) < Date.parse(c.mandate_accepted_at))) {
