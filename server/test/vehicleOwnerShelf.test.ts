@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { PublicVehicleDirectory } from '../src/services/publicVehicleDirectory.ts';
-import { publicVehicleCard,vehicleOwnerShelf } from '../src/services/vehicleOwnerShelf.ts';
+import { publicVehicleCard,publicRecoveryGallery,vehicleOwnerShelf } from '../src/services/vehicleOwnerShelf.ts';
 import { VehicleTechnicalLibrary } from '../src/services/vehicleTechnicalLibrary.ts';
 import { setup } from './helpers.ts';
 
@@ -55,6 +55,12 @@ test('owner images have credits, manuals are link-only and no repair instruction
   const koegel=await publicVehicleCard('trailer','koegel','cargo');
   assert.ok(koegel.photo?.caption.includes('Kögel'));
 });
+test('recovery photo examples are licensed and never claim specific chassis identity',async()=>{
+  const shelf=await publicRecoveryGallery();
+  assert.equal(shelf.modelMatch,'not_verified');
+  assert.ok(shelf.items.some(x=>x.makeKey==='scania'));
+  assert.ok(shelf.items.every(x=>x.licenseUrl&&x.author&&x.sourcePage&&!x.specificModelVerified));
+});
 test('professional technical library denies tow, driver and admin-only even by API',async()=>{
   const db:any={one:async()=>({verification:'approved'}),query:async()=>[]};
   const library=new VehicleTechnicalLibrary(db);
@@ -80,5 +86,12 @@ test('new trailer entry persists with license-keyed model, owner book is safe; s
     assert.equal(view.body.repairSchematicsIncluded,false);
     assert.ok(view.body.manuals.some((x:any)=>x.url.includes('krone-trailer.com')));
     assert.equal((await t.api('GET','/api/vehicles/'+created.body.id+'/history',undefined,other.token)).status,404);
+    const denied=await t.api('GET','/api/vehicle-reference/recovery-gallery',undefined,owner.token);
+    assert.equal(denied.status,403,'owner must not enumerate specialist-only tow picker');
+    const unknownPhoto=await t.api('GET',
+      '/api/vehicle-reference/public-card?category=truck&brandKey=renault&modelKey=not-a-model',
+      undefined,owner.token);
+    assert.equal(unknownPhoto.status,400);
+
   }finally{await t.close()}
 });
