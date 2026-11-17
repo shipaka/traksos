@@ -432,7 +432,6 @@ export function DriverAir(){
             <div><h2>{active.title}</h2>
               <span className="note">{active.locality??'Комната без геопривязки'} · Псевдонимы участников, без точного GPS</span></div>
             <div className="row">
-              {active.joined&&<CommunityMuteToggle key={active.id} id={active.id} kind="room"/>}
               <button className="btn ghost" type="button" disabled={sending}
                 onClick={()=>void changeMembership(!active.joined)}>
               {active.joined?'Покинуть':'Присоединиться'}
