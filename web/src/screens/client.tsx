@@ -379,16 +379,18 @@ export function NewOrder({ service }: { service: string }) {
   const sos = SYMPTOMS.find((p) => p.id === params.get('sos'));
   const sym = sos ?? SYMPTOMS.find((p) => p.id === params.get('p'));
   const fromConsult = params.get('from');
+  const additionalTo = service==='ecu'?params.get('additionalTo'):null;
   const { me } = useMe();
   const { busy, run } = useAction();
   const pricing = useLoad(() => get('/api/pricing'), []);
   const vehicles = useLoad(() => get('/api/vehicles'), []);
   const consult = useLoad(() => (fromConsult ? get(`/api/orders/${fromConsult}`) : Promise.resolve(null)), [fromConsult]);
+  const related = useLoad(()=>additionalTo?get('/api/orders/'+additionalTo):Promise.resolve(null),[additionalTo]);
   const [agreedQuoteKey, setAgreedQuoteKey] = useState<string | null>(null);
 
   // A national visitor must deliberately choose the legacy local pricing zone.
   const [zoneId, setZoneId] = useState(service==='consult'?'spb':'');
-  const [tier, setTier] = useState<'eco' | 'comfort' | 'pro'>(service === 'diag' ? 'pro' : 'eco');
+  const [tier, setTier] = useState<'eco' | 'comfort' | 'pro'>(service === 'diag'||service==='ecu' ? 'pro' : 'eco');
   const [night, setNight] = useState<boolean | null>(null);
   const [group, setGroup] = useState(false);
   const [vehicleId, setVehicleId] = useState<string>('');
@@ -420,6 +422,22 @@ export function NewOrder({ service }: { service: string }) {
   useEffect(() => {
     if (vehicles.data?.length && !vehicleId) setVehicleId(vehicles.data[0].id);
   }, [vehicles.data]); // eslint-disable-line
+  // Related ECU service is separately priced but must use the same vehicle.
+  useEffect(()=>{
+    const parent=related.data;
+    if(!parent||!additionalTo)return;
+    if(parent.zoneId)setZoneId(parent.zoneId);
+    if(parent.vehicleId)setVehicleId(parent.vehicleId);
+    else if(parent.brand){
+      setVehicleId('');
+      setCar({brand:parent.brand,model:parent.model??'',
+        year:parent.year?String(parent.year):''});
+    }
+    if(parent.address)setAddress(parent.address);
+    if(Number.isFinite(parent.lat)&&Number.isFinite(parent.lng))
+      setGeo({lat:parent.lat,lng:parent.lng});
+    if(!description)setDescription('Дополнительная диагностика ЭБУ после заявки №'+parent.number);
+  },[related.data,additionalTo]); // eslint-disable-line
   // Выезд после консультации: та же машина и описание
   useEffect(() => {
     const c = consult.data;
@@ -459,13 +477,14 @@ export function NewOrder({ service }: { service: string }) {
 
   async function submit() {
     // Defensive guard even if the CallBar is invoked during a debounced update.
-    if(!zoneId || !est || !agree)return;
+    if(!zoneId || !est || !agree||(additionalTo&&!related.data))return;
     const r = await run(() => post('/api/orders', {
       service, isSos: !!sos, problem: sos?.id, description: description || undefined, address: address || undefined,
       lat: geo?.lat, lng: geo?.lng, zoneId, tier: service === 'tow' ? undefined : tier, vehicleId: vehicleId || undefined,
       ...carBody(vehicleId, car), groupTrip: groupAllowed && group, night: night ?? undefined, paymentMethod: method,
       ...(isTow ? { destination: destination || undefined, cargo, loaded, driverOnSite } : {}),
       fromConsult: fromConsult || undefined,
+      additionalTo:additionalTo||undefined,
       site: isTow || !Object.keys(site).length ? undefined : { ...site, meet: site.meet || undefined, time: site.time || undefined },
     }));
     if (!r) return;
@@ -482,6 +501,7 @@ export function NewOrder({ service }: { service: string }) {
     tow: !isTow || destination.trim().length >= 3,
   };
   const missing = [
+    !!additionalTo&&!related.data && {id:'f-car',name:'исходная заявка'},
     !need.car && { id: 'f-car', name: 'марка машины' },
     !need.what && { id: 'f-what', name: 'описание задачи' },
     !need.where && { id: 'f-where', name: 'где машина' },
@@ -496,16 +516,26 @@ export function NewOrder({ service }: { service: string }) {
 
   return (
     <main>
-      <Back to={fromConsult ? `order/${fromConsult}` : sos ? 'sos' : ''} />
+      <Back to={additionalTo?`order/${additionalTo}`:fromConsult ? `order/${fromConsult}` : sos ? 'sos' : ''} />
       <div>
         <h1>{sym ? sym.name : s?.name ?? 'Заявка'}</h1>
         <div className="sub">{sos ? `${s?.name} · срочный вызов` : sym ? s?.name : s?.hint}</div>
       </div>
       <SelfOrderWarning me={me} />
       <DriverRules />
-      {!isTow && !sos && (
+      {additionalTo&&<section className="card stack" aria-label="Дополнительная заявка по ЭБУ">
+        <strong>Дополнительный специалист в этом же обращении</strong>
+        {related.error?<p role="alert">Не удалось проверить первую заявку: {related.error}</p>:
+          related.data?<p className="note">
+            Первая заявка №{related.data.number} · {SERVICES[related.data.service]?.name??related.data.service}.
+            Автомобиль и тарифная зона должны совпадать.
+            ЭБУ получит отдельную заявку, со своей ценой, исполнителем, статусами и оплатой.
+            После подтверждения клиент увидит оба этапа в общей истории.
+          </p>:<p className="note">Проверяю доступ к первоначальной заявке…</p>}
+      </section>}
+      {!additionalTo&&!isTow && !sos && (
         <div className="scroll-x" role="tablist" aria-label="Какой мастер нужен">
-          {(['electric', 'air', 'autonomy', 'tyre', 'diag'] as const).map((k) => (
+          {(['electric', 'air', 'autonomy', 'tyre', 'diag', 'ecu'] as const).map((k) => (
             <button key={k} type="button" className="chip" role="tab" aria-pressed={service === k} onClick={() => { if (k !== service) go(`new/${k}${location.hash.includes('?') ? '?' + location.hash.split('?')[1] : ''}`); }}>{SERVICES[k].name}</button>
           ))}
         </div>
@@ -520,7 +550,8 @@ export function NewOrder({ service }: { service: string }) {
 
       <Step n={1} id="f-car" title="Машина" req done={need.car} missing={tried && !need.car}>
         {vehicles.data?.length ? (
-          <select className="field" value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
+          <select className="field" value={vehicleId} disabled={!!additionalTo}
+            onChange={(e) => setVehicleId(e.target.value)}>
             {vehicles.data.map((v: any) => <option key={v.id} value={v.id}>{v.brand} {v.model ?? ''} {v.year ?? ''} {v.plate ?? ''}</option>)}
             <option value="">Другая машина</option>
           </select>
