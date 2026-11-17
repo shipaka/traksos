@@ -173,7 +173,11 @@ export function registerProfessionalCasesRoutes(r:Router,db:Db,notifier:Notifier
       try{await access(db,c.user,row.room_id);cases.push({
         id:row.id,roomId:row.room_id,status:row.status,subsystem:row.subsystem,
         make:row.make,model:row.model,modelYear:row.model_year,createdAt:row.created_at
-      })}catch{/* membership or professional verification may have been revoked */}
+      })}catch(error){
+        // Losing club access hides the private link. Database or programming
+        // errors must surface as failures rather than a misleading empty list.
+        if(!(error instanceof HttpError)||![403,404].includes(error.status))throw error;
+      }
     }
     return {cases,privateOrderContext:true,createsOrder:false};
   });
