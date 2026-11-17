@@ -1,0 +1,62 @@
+/* TrakSOS private-access visual language. Fully local CSS: no extra downloads. */
+.ts-security-page{width:min(1140px,100%);margin:0 auto;padding:clamp(16px,3vw,30px) clamp(14px,3vw,30px) 70px;display:grid;gap:20px;color:var(--fg,#ecf7ff)}
+.ts-security-page *{box-sizing:border-box}
+.ts-security-back{color:#9fe5f7;text-decoration:none;font-weight:700;font-size:14px;width:max-content}
+.ts-security-back:hover{text-decoration:underline}
+.ts-security-hero{position:relative;isolation:isolate;overflow:hidden;min-height:280px;border-radius:28px;padding:clamp(22px,5vw,48px);border:1px solid #467da3;display:flex;align-items:center;background:radial-gradient(ellipse 65% 80% at 83% 88%,#155372 0,transparent 75%),linear-gradient(116deg,#04111e 2%,#0b3150 48%,#111b33 100%);box-shadow:0 25px 60px #0007,inset 0 1px #ffffff24}
+.ts-security-hero:before{position:absolute;content:"";width:85%;height:60%;right:-18%;bottom:-27%;border-top:2px solid #52daed88;transform:rotate(-13deg);border-radius:100%;box-shadow:0 -15px 45px #07b8e333;z-index:-1}
+.ts-security-hero:after{position:absolute;content:"";width:34%;height:145%;right:13%;top:-27%;background:linear-gradient(100deg,transparent 30%,#ffffff06 50%,transparent 70%);transform:rotate(19deg);animation:ts-security-sweep 11s ease-in-out infinite alternate;pointer-events:none}
+.ts-security-glow{position:absolute;inset:auto -7% -78% auto;width:76%;aspect-ratio:1;background:radial-gradient(circle,#18b6dd45 0,transparent 66%);filter:blur(12px);animation:ts-security-breathe 6s ease-in-out infinite alternate;pointer-events:none}
+.ts-security-hero-copy{z-index:1;position:relative;max-width:690px}
+.ts-security-eyebrow{letter-spacing:.25em;color:#a4edff;font-size:11px;font-weight:800}
+.ts-security-shield{font-size:32px;color:#41d9ea;text-shadow:0 0 24px #2ed7ee55;display:block;margin:10px 0}
+.ts-security-hero h1{font-size:clamp(29px,4.5vw,49px);font-weight:900;letter-spacing:-.045em;line-height:1.07;color:#fff;margin:8px 0 13px;text-shadow:0 6px 30px #0007}
+.ts-security-hero p{font-size:clamp(14px,1.8vw,17px);line-height:1.65;color:#d5e9f5;max-width:560px;margin:0 0 18px}
+.ts-security-status{width:max-content;display:flex;align-items:center;gap:9px;font-size:12px;letter-spacing:.04em;color:#dff9f4;background:#0b443f99;border:1px solid #25c9ad66;border-radius:999px;padding:8px 13px}
+.ts-security-pulse{height:9px;width:9px;border-radius:50%;background:#3be3b3;box-shadow:0 0 12px #5efed3;animation:ts-security-breathe 3s ease-in-out infinite alternate}
+.ts-security-route{position:absolute;right:4%;bottom:4%;width:37%;height:58%;pointer-events:none;transform:rotate(-8deg);opacity:.45}
+.ts-security-route span{position:absolute;display:block;right:0;bottom:0;height:2px;border-radius:10px;background:linear-gradient(90deg,transparent,#5cd8f0,transparent);box-shadow:0 0 24px #37d8f0}
+.ts-security-route span:nth-child(1){width:100%;transform:translateY(-34px) rotate(-9deg)}
+.ts-security-route span:nth-child(2){width:80%;transform:translateY(-66px) rotate(-11deg);opacity:.6}
+.ts-security-route span:nth-child(3){width:90%;transform:translateY(-95px) rotate(-13deg);opacity:.4}
+.ts-security-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.ts-security-panel{position:relative;overflow:hidden;border-radius:23px;padding:clamp(20px,3vw,27px);background:linear-gradient(135deg,#0e2940f5,#0b1c30f5);border:1px solid #365b75;box-shadow:0 8px 25px #0004,inset 0 1px #ffffff10;display:flex;flex-direction:column;gap:15px;transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}
+.ts-security-panel:hover{transform:translateY(-2px);border-color:#58b3d6;box-shadow:0 16px 32px #0005,0 0 30px #0dc3e10c}
+.ts-security-panel:before{content:"";position:absolute;top:0;left:0;width:100%;height:1px;background:linear-gradient(90deg,transparent,#62d5f277,transparent)}
+.ts-security-panel-head{display:flex;gap:13px;align-items:flex-start}
+.ts-security-panel-head h2{font-size:clamp(18px,2vw,22px);line-height:1.25;color:#f5fcff;margin:0 0 8px}
+.ts-security-panel-head p{font-size:13px;line-height:1.55;color:#b3c9da;margin:0}
+.ts-security-panel-icon{display:grid;place-items:center;flex-shrink:0;width:42px;height:42px;border-radius:12px;background:#123b5c;color:#6de4fa;font-size:25px;box-shadow:inset 0 0 0 1px #3db6d34d}
+.ts-security-state{display:flex;gap:12px;justify-content:space-between;align-items:center;border-radius:14px;background:#061a2d80;border:1px solid #3c78994d;padding:14px 16px}
+.ts-security-state span{font-size:13px;color:#acc9d8}
+.ts-security-state b{font-size:13px;color:#c5f8ff;text-align:right}
+.ts-security-actions{display:flex;flex-wrap:wrap;gap:8px}
+.ts-security-actions>*{flex:1;min-width:150px}
+.ts-security-panel>.btn{align-self:flex-start}
+.ts-security-panel .btn{border-radius:13px}
+.ts-security-switch{display:flex;align-items:flex-start;gap:12px;padding:9px 1px;cursor:pointer}
+.ts-security-switch input{width:20px;height:20px;accent-color:#35d3e7;margin:2px 0 0;flex-shrink:0}
+.ts-security-switch span{display:grid;gap:4px}
+.ts-security-switch b{font-size:14px;color:#eefaff}
+.ts-security-switch small{font-size:12px;line-height:1.5;color:#b1cadb}
+.ts-security-fine{font-size:13px;line-height:1.65;color:#b1cadb;margin:0}
+.ts-security-feedback{padding:13px 16px;border-radius:12px;color:#c1f4ff;background:#14394b;border:1px solid #4ba7be}
+.ts-security-footer{font-size:12px;text-align:center;color:#83a7b9;line-height:1.5;margin:0}
+@keyframes ts-security-breathe{from{opacity:.55;transform:scale(.96)}to{opacity:1;transform:scale(1.07)}}
+@keyframes ts-security-sweep{from{transform:rotate(19deg) translateX(-50%)}to{transform:rotate(19deg) translateX(50%)}}
+@media(max-width:720px){.ts-security-grid{grid-template-columns:1fr}.ts-security-page{padding-bottom:98px}.ts-security-hero{min-height:265px;border-radius:22px}.ts-security-route{width:55%;opacity:.23}.ts-security-panel{border-radius:19px}}
+@media(hover:none){.ts-security-panel:hover{transform:none}}
+@media(prefers-reduced-motion:reduce){.ts-security-page *,.ts-security-page *:before,.ts-security-page *:after{animation:none!important;transition:none!important}}
+html.traksos-reduced-motion .ts-security-page *{animation:none!important;transition:none!important}
+
+/* Same security entry appears in every role's shared profile. */
+.ts-profile-security-link{position:relative;display:flex;align-items:center;gap:14px;text-decoration:none;color:#e7f9ff!important;padding:19px;border-radius:20px;background:radial-gradient(circle at 100% 0%,#1d769b50,transparent 45%),linear-gradient(135deg,#112e48,#071a2d);border:1px solid #4a91ad;box-shadow:0 10px 26px #0004;transition:transform .2s ease,border-color .2s ease}
+.ts-profile-security-link:hover{transform:translateY(-2px);border-color:#77ddec}
+.ts-profile-security-link:focus-visible{outline:2px solid #6eebf4;outline-offset:3px}
+.ts-profile-security-link>span:nth-child(2){display:grid;gap:5px;min-width:0;flex:1}
+.ts-profile-security-link b{font-size:17px}
+.ts-profile-security-link small{font-size:12px;line-height:1.5;color:#b5d1df}
+.ts-profile-security-link>span:last-child{font-size:25px;color:#9ceef6}
+.ts-profile-security-emblem{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,#12516e,#113149);box-shadow:inset 0 0 0 1px #61d9ed7d;display:grid;place-items:center;color:#7eeefa;font-size:28px;flex-shrink:0}
+html.traksos-reduced-motion .ts-profile-security-link{transition:none}
+@media(prefers-reduced-motion:reduce){.ts-profile-security-link{transition:none}}

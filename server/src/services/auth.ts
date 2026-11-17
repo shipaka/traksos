@@ -248,14 +248,27 @@ export class AuthService {
 
   async authenticate(token: string | null | undefined): Promise<AuthUser | null> {
     if (!token) return null;
-    const u = await this.db.one<AuthUser>(
-      `select u.id, u.phone, u.name, u.roles, u.status, u.owner_id
+    const hash = sha256(token);
+    const row = await this.db.one<AuthUser & { session_expires_at: Date }>(
+      `select u.id, u.phone, u.name, u.roles, u.status, u.owner_id,
+              s.expires_at as session_expires_at
          from sessions s join users u on u.id = s.user_id
         where s.token_hash = $1 and s.expires_at > now()
           and (u.admin_preview_until is null or u.admin_preview_until > now())`,
-      [sha256(token)],
+      [hash],
     );
-    if (!u || u.status !== 'active' || !staffRoleAllowed(u.phone, u.roles)) return null;
+    if (!row || row.status !== 'active' || !staffRoleAllowed(row.phone, row.roles)) return null;
+    const { session_expires_at, ...u } = row;
+    // A session renews after >=24 hours of active use, not every HTTP request.
+    // Therefore the idle limit is ~90 days, even for a browser reopened monthly.
+    // The IP address is deliberately not an identity factor.
+    const renewBelowMs = 89 * 86_400_000;
+    if (new Date(session_expires_at).getTime() - this.now().getTime() < renewBelowMs) {
+      await this.db.query(
+        "update sessions set expires_at=now()+interval '90 days' where token_hash=$1 and expires_at>now() and expires_at<now()+interval '89 days'",
+        [hash],
+      );
+    }
     return u;
   }
 

@@ -57,6 +57,16 @@ try {
       }));
       if (widths.content > widths.viewport + 2) throw new Error('Horizontal overflow ' + JSON.stringify(widths));
       await page.screenshot({ path: OUT + '/' + entry.name + '.png', fullPage: true });
+      // Every real role uses the SAME security screen, not fake cabinet copies.
+      await page.goto(BASE + '/#/security', { waitUntil: 'domcontentloaded' });
+      await page.getByRole('heading', { name: 'Безопасность и вход' }).waitFor();
+      await page.getByRole('heading', { name: 'Пароль и восстановление' }).waitFor();
+      await page.getByText('90 дней без активности').waitFor();
+      const securityWidth = await page.evaluate(() => ({
+        content: document.documentElement.scrollWidth, viewport: document.documentElement.clientWidth
+      }));
+      if (securityWidth.content > securityWidth.viewport + 2) throw new Error('Security overflow ' + JSON.stringify(securityWidth));
+      await page.screenshot({ path: OUT + '/security-' + entry.name + '.png', fullPage: true });
       // UI hiding is insufficient: ensure the server refuses direct privileged API access.
       for (const endpoint of ['/api/admin/summary', '/api/admin/users', '/api/admin/settings']) {
         const resp = await fetch(BASE + endpoint, {

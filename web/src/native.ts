@@ -6,6 +6,10 @@ type CallAction = (orderId: string, action: 'accept' | 'decline', handled: boole
 const bridge = (window as any).TrakSOSNative as undefined | {
   isApp(): boolean;
   setSession(apiUrl: string, token: string | null): void;
+  setAccountId?(accountId: string | null): void;
+  appPinEnabled?(): boolean;
+  setupAppPin?(): void;
+  removeAppPin?(): void;
   pushToken(): string;
   performerOnline(): void;
   appLockEnabled(): boolean;
@@ -46,6 +50,16 @@ export const native = {
   setAppLockEnabled(enabled: boolean): boolean {
     try { return bridge?.setAppLockEnabled?.(enabled) === true; } catch { return false; }
   },
+
+  /** Keep PIN account-scoped; never transmit its digits or hash to the web view. */
+  setAccountId(accountId: string | null) {
+    try { bridge?.setAccountId?.(accountId); } catch { /* older Android build */ }
+  },
+  appPinEnabled(): boolean {
+    try { return bridge?.appPinEnabled?.() === true; } catch { return false; }
+  },
+  setupAppPin() { bridge?.setupAppPin?.(); },
+  removeAppPin() { bridge?.removeAppPin?.(); },
 
   /** Ответ на вызов из уведомления или экрана блокировки (уже отправлен приложением — handled) */
   onCallAction(fn: CallAction) {
