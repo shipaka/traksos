@@ -117,7 +117,7 @@ export class OrdersService {
       if (!station) throw bad('ecu_station_unavailable','Выбранная мастерская пока не принимает заявки');
       i = {...i,isSos:false,zoneId:'ecu_station',regionId:undefined,
         paymentMethod:'cash',night:false,groupTrip:false,
-        site:{ecuSpecialistId:i.ecuSpecialistId}};
+        site:{...(i.site??{}),ecuSpecialistId:i.ecuSpecialistId}};
     }
     const method = i.paymentMethod ?? 'cash';
     await this.payments.assertMethodAllowed(method);
