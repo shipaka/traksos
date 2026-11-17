@@ -1,6 +1,6 @@
 import type { Db } from '../db/index.ts';
 import type { SettingsService } from './settings.ts';
-import { bad, forbidden, notFound, type AuthUser } from '../http/router.ts';
+import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { slot, endOfMoscowDay, validSchedule, type Schedule } from '../domain/schedule.ts';
 import { normalizePhone } from '../util.ts';
 import { plausibleGpsStep } from '../domain/geo.ts';
