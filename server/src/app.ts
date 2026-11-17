@@ -50,6 +50,7 @@ import { PaymentsService } from './payments/service.ts';
 import { estimate, isNight } from './domain/pricing.ts';
 import { assertRegionalTariff, CoverageError, REGIONAL_COVERAGE_NOTE } from './domain/regionalCoverage.ts';
 import { defaultSettings } from './domain/defaults.ts';
+import { validStages, type VerifiedRoadEta } from './domain/progressiveSos.ts';
 import { config, isProd } from './config.ts';
 
 export interface Deps {
@@ -58,6 +59,8 @@ export interface Deps {
   push: PushProvider;
   payments: PaymentProvider;
   now?: () => Date;
+  /** Server-controlled route ETA, never supplied by a performer or a client. */
+  verifiedRoadEta?: VerifiedRoadEta;
 }
 
 const money = z.number().int().nonnegative();
@@ -74,7 +77,7 @@ export function createApp(d: Deps) {
   const orders = new OrdersService(d.db, settings, notifier, now);
   const payments = new PaymentsService(d.db, settings, d.payments, notifier, orders);
   orders.payments = payments;
-  const auction = new AuctionService(d.db, settings, notifier, orders, now);
+  const auction = new AuctionService(d.db, settings, notifier, orders, now, d.verifiedRoadEta);
   orders.auction = auction;
   profiles.onUnavailable = async (userId) => orders.afterRelease(await orders.release(d.db, userId, null));
   const chat = new ChatService(d.db, settings, notifier, orders);
@@ -1122,6 +1125,21 @@ export function createApp(d: Deps) {
   r.get('/api/admin/settings', ['admin'], () => settings.all());
   r.put('/api/admin/settings/:key', ['admin'], (c: AuthedCtx) => {
     if (!(c.params.key in defaultSettings)) throw notFound('Нет такой настройки');
+    if (c.params.key === 'dispatch' && c.body?.sosProgressive !== undefined) {
+      const policy=parse(z.object({
+        enabled:z.boolean(),
+        stages:z.array(z.object({
+          radiusKm:z.number().int().min(1).max(220),
+          maxRoadEtaMinutes:z.number().int().min(5).max(180),
+          waitSeconds:z.number().int().min(10).max(900),
+        }).strict()).max(5),
+      }).strict(),c.body.sosProgressive);
+      if (policy.stages.length>0 && !validStages(policy.stages))
+        throw bad('invalid_sos_stages','Этапы должны иметь возрастающие ограничения радиуса и дорожного ETA');
+      if (policy.enabled && (!validStages(policy.stages)||!auction.roadEta))
+        throw bad('road_eta_not_ready','Для включения этапов нужны согласованные пределы и серверный маршрутизатор');
+      return settings.set('dispatch',{...c.body,sosProgressive:policy},c.user.id);
+    }
     if (c.params.key === 'insurancePartners') {
       const input = parse(z.object({ registrationOpen: z.boolean() }).strict(), c.body);
       if (input.registrationOpen && !config.insurerPrimaryPhone)
