@@ -84,6 +84,9 @@ export function validateEvidenceEvent(event: Omit<EvidenceEvent, 'line_id' | 'pa
       !Number.isSafeInteger(event.vat_kopecks) || event.vat_kopecks < 0 ||
       !Number.isSafeInteger(event.quantity) || event.quantity < 0)
     throw new Error('amount_quantity_invalid');
+  if (event.document_total_kopecks != null &&
+      (!Number.isSafeInteger(event.document_total_kopecks) || event.document_total_kopecks < 0))
+    throw new Error('document_total_invalid');
   if (Number.isNaN(Date.parse(event.occurred_at))) throw new Error('event_date_invalid');
   if (event.amount_kopecks === 0 && monetary.includes(event.kind) && event.kind !== 'output_vat_assessed')
     throw new Error('amount_required');
@@ -118,6 +121,13 @@ export function reviewEvidenceLine(
   const facts = nonApproval(timeline);
   const eventDigest = digest([line.snapshot_hash, ...facts.map((e) => e.payload_hash).sort()]);
   const findings: string[] = [];
+  // A manually typed receipt is not a verified bank movement. A verified source
+  // also needs an external primary reference before accountant approval.
+  const cashKinds: EvidenceEventKind[] = ['customer_receipt', 'customer_refund', 'supplier_payment', 'supplier_refund'];
+  if (facts.some((e) => cashKinds.includes(e.kind) && e.source !== 'accountant_verified'))
+    findings.push('unverified_money_event');
+  if (facts.some((e) => cashKinds.includes(e.kind) && !e.reference?.trim()))
+    findings.push('money_event_missing_external_reference');
   const docs = facts.filter((e) => e.kind === 'supplier_document');
   const verifiedDocs = docs.filter((e) => e.source === 'accountant_verified' && e.reference && e.document_hash);
   const purchasedQty = verifiedDocs.reduce((a, e) => a + e.quantity, 0);

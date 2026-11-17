@@ -28,7 +28,9 @@ function event(key: string, kind: EvidenceEvent['kind'], changes: Partial<Eviden
   return {
     line_id: 'L', external_key: key, kind, component: null, amount_kopecks: 0,
     vat_kopecks: 0, quantity: 0, source: 'accountant_verified',
-    reference: null, document_hash: null, document_total_kopecks: null,
+    reference: ['customer_receipt', 'customer_refund', 'supplier_payment', 'supplier_refund'].includes(kind)
+      ? 'BANK-' + key : null,
+    document_hash: null, document_total_kopecks: null,
     occurred_at: date, metadata: {}, payload_hash: digest([key, kind]),
     ...changes,
   };
@@ -112,6 +114,17 @@ test('one supplier original can be allocated across two lines only if exact tota
   const bad = reviewEvidenceLine(line(), multi, { [docHash]: 1000000 });
   assert.ok(!good.findings.includes('supplier_document_allocation_mismatch'));
   assert.ok(bad.findings.includes('supplier_document_allocation_mismatch'));
+});
+test('manual receipts and receipts without external proof block approval', () => {
+  const manual = happy().map((e) => e.kind === 'customer_receipt' && e.component === 'agent_fee'
+    ? { ...e, source: 'manual_unverified' as const } : e);
+  const r = reviewEvidenceLine(line(), manual, { [docHash]: 1000000 });
+  assert.ok(r.findings.includes('unverified_money_event'));
+  assert.equal(r.potentialTaxRevenueKopecks, null);
+  const noProof = happy().map((e) => e.kind === 'supplier_payment'
+    ? { ...e, reference: null } : e);
+  assert.ok(reviewEvidenceLine(line(), noProof, { [docHash]: 1000000 })
+    .findings.includes('money_event_missing_external_reference'));
 });
 test('cash refunds are split by component, no hidden recategorization', () => {
   const ev = [...happy(),

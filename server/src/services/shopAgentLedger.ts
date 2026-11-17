@@ -84,6 +84,8 @@ function validateNewLine(input: NewEvidenceLine) {
     throw bad('ledger_fee_over_total', 'Сумма согласованных комиссий больше суммы заказа');
   if (input.operationKind === 'own_inventory_sale' && (agent || platform))
     throw bad('ledger_own_sale_fees', 'Собственная продажа не может быть записана как агентское вознаграждение');
+  if ([total, agent, platform].some((v) => v > 10_000_000_000))
+    throw bad('ledger_money_limit', 'Сумма строки выше допустимого лимита: разбейте операцию');
   if (input.mandateAcceptedAt) iso(input.mandateAcceptedAt);
   if (input.offerHash && !/^[0-9a-f]{64}$/i.test(input.offerHash))
     throw bad('ledger_offer_digest', 'Хеш принятой оферты должен быть SHA-256');
@@ -143,6 +145,9 @@ function canonicalEvent(input: NewEvidenceEvent) {
   };
   if (item.external_key.length < 3 || item.external_key.length > 160)
     throw bad('ledger_external_key', 'Неверный ключ события');
+  if (item.amount_kopecks > 10_000_000_000 || item.document_total_kopecks != null &&
+      item.document_total_kopecks > 10_000_000_000)
+    throw bad('ledger_money_limit', 'Сумма события превышает допустимый лимит');
   if (!['manual_unverified','accountant_verified','system'].includes(item.source))
     throw bad('ledger_source', 'Неверный источник');
   if (item.document_hash && !/^[0-9a-f]{64}$/i.test(item.document_hash))
@@ -406,14 +411,18 @@ export class ShopAgentEvidenceLedger {
     ].map(safeCsvCell).join(';'));
     const csv = '\uFEFF' + [headers.map(safeCsvCell).join(';'), ...body].join('\r\n') + '\r\n';
     const hash = digest({ csv, report });
-    const snapshot = await this.db.one<{ id: string }>(
-      'insert into shop_agent_evidence_exports ' +
-      '(from_utc,to_utc,filter_inn,digest_sha256,report_json,row_count,created_by) ' +
-      'values ($1,$2,$3,$4,$5,$6,$7) returning id',
-      [report.period.fromUtc, report.period.toUtc, customerInn || null,
-        hash, report, report.rowCount, actor.id]);
-    await audit(this.db, actor, 'shop.agent_csv_exported', snapshot?.id ?? hash,
-      { digest: hash, rows: report.rowCount, period: report.period });
-    return { csv, digest: hash, snapshotId: snapshot?.id ?? null, period: report.period, rows: report.rowCount };
+    const snapshotId = await this.db.tx(async (q) => {
+      const snapshot = await q.one<{ id: string }>(
+        'insert into shop_agent_evidence_exports ' +
+        '(from_utc,to_utc,filter_inn,digest_sha256,report_json,row_count,created_by) ' +
+        'values ($1,$2,$3,$4,$5,$6,$7) returning id',
+        [report.period.fromUtc, report.period.toUtc, customerInn || null,
+          hash, report, report.rowCount, actor.id]);
+      if (!snapshot) throw conflict('ledger_export_failed', 'Не удалось сохранить снимок отчёта');
+      await audit(q, actor, 'shop.agent_csv_exported', snapshot.id,
+        { digest: hash, rows: report.rowCount, period: report.period });
+      return snapshot.id;
+    });
+    return { csv, digest: hash, snapshotId, period: report.period, rows: report.rowCount };
   }
 }
