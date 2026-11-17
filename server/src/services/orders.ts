@@ -4,6 +4,7 @@ import type { SettingsService } from './settings.ts';
 import type { Notifier } from './notify.ts';
 import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { estimate, isNight, billWork, type Tier, type Extra } from '../domain/pricing.ts';
+import { assertRegionalTariff, CoverageError, type ServiceRegion } from '../domain/regionalCoverage.ts';
 import { rankCandidates, performerKindFor, type Candidate } from '../domain/dispatch.ts';
 import { transition, canDo, statusLabels, type Action, type Actor, type OrderStatus } from '../domain/orderState.ts';
 import { cancelStage, cancelSplit, pct } from '../domain/money.ts';
@@ -21,6 +22,7 @@ export interface CreateOrderInput {
   lat?: number;
   lng?: number;
   zoneId: string;
+  regionId?: ServiceRegion;
   tier?: Tier;
   vehicleId?: string;
   brand?: string;
@@ -128,6 +130,10 @@ export class OrdersService {
       model = model ?? v.model;
       year = year ?? v.year;
     }
+    // Critical: validate the declared location independently of the price zone,
+    // before INSERT, bank hold, owner approval or dispatch. Never guess by IP.
+    try { assertRegionalTariff(i, true); }
+    catch (e) { if (e instanceof CoverageError) throw bad(e.code, e.message); throw e; }
     const isConsult = i.service === 'consult';
     const night = isConsult ? false : i.night ?? isNight(all.pricing, this.now());
     const tier = i.tier ?? 'eco';
@@ -164,15 +170,15 @@ export class OrdersService {
           zone_id, night, group_trip, tier, brand, estimate, payment_method, client_fee_pct, destination, cargo, loaded, driver_on_site,
           consult_of, discount_amount, discount_reason, model, year, site, status, owner_note,
           commission_pct_override, commission_campaign_id, case_root_id, continuation_of,
-          create_request_key,create_request_hash)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36) returning *`,
+          create_request_key,create_request_hash,location_region)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37) returning *`,
       [clientId, user.id, i.vehicleId ?? null, i.service, !!i.isSos, i.problem ?? null, i.description ?? null, isConsult ? null : i.address ?? null,
         isConsult ? null : i.lat ?? null, isConsult ? null : i.lng ?? null, est.zoneId, night, est.group, tier, brand, est, method, feePct,
         i.destination ?? null, i.cargo ?? null, i.loaded ?? null, i.driverOnSite ?? null,
         consultOf, discount, discount ? CONSULT_DISCOUNT : null, model, year, isConsult ? null : i.site ?? null,
         gate ? 'awaiting_owner' : 'searching', gate, campaign?.commission_pct ?? null, campaign?.id ?? null,
         previous ? (previous.case_root_id ?? previous.id) : null, previous?.id ?? null,
-        requestKey,requestHash],
+        requestKey,requestHash, isConsult ? null : i.regionId],
     ).catch(async (e: any) => {
       if (e?.code === '23505' && e?.constraint === 'orders_create_key_unique') {
         const prior = await this.db.one<any>(
@@ -198,6 +204,21 @@ export class OrdersService {
 
   /** Заявка пошла в работу: оплата (холд) и вызов исполнителей */
   async launch(user: AuthUser, order: any) {
+    // Owner-approved requests can launch later. Recheck the frozen location
+    // snapshot before creating a bank hold. Do not reprice legacy orders with
+    // a NULL region: their agreed amounts/cancellations remain unchanged.
+    if (order.location_region != null) {
+      try {
+        assertRegionalTariff({
+          service: order.service, regionId: order.location_region,
+          zoneId: order.zone_id, address: order.address,
+          lat: order.lat, lng: order.lng,
+        }, true);
+      } catch (e) {
+        if (e instanceof CoverageError) throw bad(e.code, e.message);
+        throw e;
+      }
+    }
     const pay = await this.payments.onCreated(order);
     if (!pay.holdRequired) await this.startDispatch(order!.id);
     return { order: await this.view(user, order!.id), confirmationUrl: pay.confirmationUrl ?? null };
