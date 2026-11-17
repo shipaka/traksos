@@ -411,9 +411,20 @@ export function NewOrder({ service }: { service: string }) {
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [geoState, setGeoState] = useState<'idle' | 'wait' | 'ok' | 'fail'>('idle');
   const [method, setMethod] = useState<'cash' | 'online' | 'invoice'>('cash');
-  const [quote, setQuote] = useState<{ key: string; value: any } | null>(null);
-  const [quoteError,setQuoteError]=useState<string|null>(null);
-  const [quoteAddress,setQuoteAddress]=useState('');
+  const [est, setEst] = useState<any>(null);
+  // Consent is bound to the exact displayed provisional quote and all
+  // order inputs. Any edit invalidates it synchronously, before a network
+  // request or an effect can run.
+  const agreementKey = JSON.stringify({
+    service, tier, regionId, zoneId, night, group, address:address.trim(),
+    latitude:geo?.lat??null, longitude:geo?.lng??null,
+    vehicleId, car, description, paymentMethod:method, additionalTo,
+    estimate:est?{callOut:est.callOut,hour:est.hour,night:est.night,
+      zoneId:est.zoneId,regionId:est.regionId,provisional:est.provisional}:null
+  });
+  const agree = Boolean(est && agreedQuoteKey === agreementKey);
+  const setAgree = (checked:boolean) =>
+    setAgreedQuoteKey(checked && est ? agreementKey : null);
   const [destination, setDestination] = useState(prefill.destination ?? '');
   const [cargo, setCargo] = useState<'tractor' | 'semitrailer' | 'coupling' | 'truck12' | 'bus' | 'special'>('tractor');
   const [loaded, setLoaded] = useState<'empty' | 'loaded' | 'adr'>('empty');
@@ -453,10 +464,6 @@ export function NewOrder({ service }: { service: string }) {
     if (c.description && !description) setDescription(c.description);
     if (!c.vehicle && c.brand) { setVehicleId(''); setCar({ brand: c.brand, model: c.model ?? '', year: c.year ? String(c.year) : '' }); }
   }, [consult.data]); // eslint-disable-line
-  useEffect(()=>{
-    const t=window.setTimeout(()=>setQuoteAddress(address.trim()),350);
-    return ()=>window.clearTimeout(t);
-  },[address]);
   useEffect(() => {
     // Cancel stale previews when the declared region, address or GPS changes.
     // A delayed response must never restore an older SPb estimate.
