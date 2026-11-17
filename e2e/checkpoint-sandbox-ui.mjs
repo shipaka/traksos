@@ -51,7 +51,7 @@ await api('POST','/api/admin/performers/'+worker.id+'/verify',
   {decision:'approved'},admin.token);
 await api('POST','/api/performer/line',{lineStatus:'online'},worker.token);
 const order=await api('POST','/api/orders',{
-  service:'electric',zoneId:'spb',paymentMethod:'cash',
+  service:'electric',zoneId:'spb',regionId:'spb',paymentMethod:'cash',
   lat:59.9343,lng:30.3351,
 },client.token);
 const id=order.order.id;
