@@ -199,6 +199,29 @@ export function registerProfessionalCasesRoutes(r:Router,db:Db,notifier:Notifier
     const inputs=[b.symptoms,b.diagnosticContext??'',b.make??'',b.model??'',b.subsystem];
     inputs.forEach(safeText);
     const uniqueCodes=[...new Set(b.dtcCodes)];
+    // A retry can arrive after the underlying repair was closed. Check the
+    // already-authorized club case nonce *before* requiring an active order
+    // preview: a lost HTTP response must not turn into a duplicate question.
+    const existing=await db.one<CaseRow>(
+      'select * from community_technical_cases where author_id=$1 and client_nonce=$2',
+      [c.user.id,b.clientNonce]);
+    if(existing){
+      if(existing.room_id!==b.roomId||existing.symptoms!==b.symptoms||
+         existing.subsystem!==b.subsystem||
+         existing.diagnostic_context!==(b.diagnosticContext??null)||
+         JSON.stringify(existing.dtc_codes)!==JSON.stringify(uniqueCodes)||
+         (!b.orderId&&(existing.make!==(safeMeta(b.make)||null)||
+           existing.model!==(safeMeta(b.model)||null)||
+           existing.model_year!==(b.modelYear??null))))
+        throw conflict('nonce_reused','Идентификатор относится к другому техническому вопросу');
+      const link=await db.one<{order_id:string}>(
+        'select order_id from community_technical_case_order_links where case_id=$1',
+        [existing.id]);
+      if((link?.order_id??null)!==(b.orderId??null))
+        throw conflict('nonce_reused','Технический вопрос привязан к другому заказу');
+      return {case:publicCase(existing,c.user.id),created:false,
+        sharingNotice:'В клубе публикуются только технические сведения без идентификаторов заказа и клиента'};
+    }
     const fromOrder=b.orderId?await orderPreview(db,c.user,b.orderId):null;
     const make=fromOrder?.make??safeMeta(b.make);
     const model=fromOrder?.model??safeMeta(b.model);
@@ -211,7 +234,12 @@ export function registerProfessionalCasesRoutes(r:Router,db:Db,notifier:Notifier
         [c.user.id,b.clientNonce]);
       if(previous){
         if(previous.room_id!==b.roomId||previous.symptoms!==b.symptoms||
-          previous.subsystem!==b.subsystem)
+          previous.subsystem!==b.subsystem||
+          previous.diagnostic_context!==(b.diagnosticContext??null)||
+          JSON.stringify(previous.dtc_codes)!==JSON.stringify(uniqueCodes)||
+          (!b.orderId&&(previous.make!==(safeMeta(b.make)||null)||
+            previous.model!==(safeMeta(b.model)||null)||
+            previous.model_year!==(b.modelYear??null))))
           throw conflict('nonce_reused','Этот идентификатор уже занят другим вопросом');
         // A reconnect/retry must never silently rebind a club case to a
         // different customer's private order (or turn a manual case into one).
