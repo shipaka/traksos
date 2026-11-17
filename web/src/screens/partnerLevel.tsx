@@ -198,7 +198,7 @@ export function PartnerLevelAdmin(){
         if(!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)return;
         const saved=await run(()=>put('/api/admin/ecu/stations/'+stationId,{
           name:stationName.trim(),address:stationAddress.trim(),lat,lng,
-          published:stationPublished,reason:stationReason.trim()
+          published:stationPublished,consentConfirmed:stationConsent,reason:stationReason.trim()
         }),'Точка сохранена в журнале администратора');
         if(saved){await stations.reload();setStationId('');setStationReason('');setStationConsent(false)}
       }}>
