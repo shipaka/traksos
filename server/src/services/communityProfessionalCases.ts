@@ -361,6 +361,7 @@ export function registerProfessionalCasesRoutes(r:Router,db:Db,notifier:Notifier
         'moderation');
       return {id:outcome.id,decision:outcome.decision,reviewed:true};
     });
+  });
   r.post('/api/community/pro-cases/:id/propose-knowledge',true,async(c:AuthedCtx)=>{
     const row=await openCase(db,c,true);
     if(row.author_id!==c.user.id)throw forbidden('Только автор может передать свой текст на проверку');
