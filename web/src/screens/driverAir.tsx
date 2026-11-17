@@ -4,6 +4,7 @@ import { useAction, useLoad, useMe } from '../ui.tsx';
 import './driverAir.css';
 import { NearbyHelp } from './nearbyHelp.tsx';
 import {CommunityNotificationSettings,CommunityMuteToggle} from './communityNotificationSettings.tsx';
+import {readAirDraft,writeAirDraft,clearAirDraft} from './airDraft.ts';
 
 type AirProfile={nickname:string;city_label:string|null;share_city:boolean;public_city:string|null};
 type AirRoom={id:string;slug:string;title:string;kind:string;audience:string;locality:string|null;joined:boolean};
@@ -172,26 +173,51 @@ function useAirMessages(endpoint:string|null){
   return {messages,loading,error,reload:()=>setRevision(x=>x+1),
     append:(m:AirMessage)=>setMessages(curr=>appendMessages(curr,[m],new Set(recentApprovals.current)))};
 }
-function MessageStream({endpoint,canWrite,placeholder}:{
-  endpoint:string|null;canWrite:boolean;placeholder:string
+function MessageStream({endpoint,canWrite,placeholder,ownerId}:{
+  endpoint:string|null;canWrite:boolean;placeholder:string;ownerId:string|null
 }){
   const {messages,loading,error,reload}=useAirMessages(endpoint);
   const [draft,setDraft]=useState('');
+  const [rememberDraft,setRememberDraft]=useState(false);
   // Keep one idempotency nonce per unchanged draft until its delivery is known.
   // A dropped HTTP response must not create two messages when retried manually.
   const pendingSend=useRef<{endpoint:string;text:string;nonce:string}|null>(null);
   const [reportId,setReportId]=useState<string|null>(null);
   const {busy,run}=useAction();
   const bottom=useRef<HTMLDivElement>(null);
-  useEffect(()=>{pendingSend.current=null;setDraft('');setReportId(null);},[endpoint]);
+  useEffect(()=>{
+    pendingSend.current=null;setDraft('');setReportId(null);setRememberDraft(false);
+    if(!endpoint||!ownerId)return;
+    try{
+      const saved=readAirDraft(window.sessionStorage,ownerId,endpoint);
+      setRememberDraft(saved.enabled);setDraft(saved.text);
+      if(saved.nonce)pendingSend.current={endpoint,text:saved.text.trim(),nonce:saved.nonce};
+    }catch{/* Session storage unavailable; chat remains usable without persistence. */}
+  },[endpoint,ownerId]);
+  const updateDraft=(value:string)=>{
+    pendingSend.current=null;setDraft(value);
+    if(rememberDraft&&endpoint&&ownerId)
+      writeAirDraft(window.sessionStorage,ownerId,endpoint,value);
+  };
+  const remember=(enabled:boolean)=>{
+    if(!endpoint||!ownerId)return;
+    if(!enabled)clearAirDraft(window.sessionStorage,ownerId,endpoint);
+    else writeAirDraft(window.sessionStorage,ownerId,endpoint,draft);
+    setRememberDraft(enabled);
+  };
   useEffect(()=>{bottom.current?.scrollIntoView({block:'nearest',behavior:'auto'})},[endpoint,messages.length]);
   const send=async()=>{
     const text=draft.trim();if(!text||!endpoint||busy||!canWrite)return;
     const previous=pendingSend.current;
     const nonce=previous?.endpoint===endpoint&&previous.text===text?previous.nonce:uuid();
     pendingSend.current={endpoint,text,nonce};
+    if(rememberDraft&&ownerId)writeAirDraft(window.sessionStorage,ownerId,endpoint,draft,Date.now(),nonce);
     const sent=await run(()=>post(endpoint,{text,clientNonce:nonce}),'Сообщение отправлено');
-    if(sent){pendingSend.current=null;setDraft('');reload()}
+    if(sent){
+      pendingSend.current=null;setDraft('');
+      if(ownerId)clearAirDraft(window.sessionStorage,ownerId,endpoint);
+      reload();
+    }
   };
   return <div className="air-conversation">
     <div className="air-message-list" role="log" aria-label="Сообщения" aria-live="polite">
@@ -228,8 +254,13 @@ function MessageStream({endpoint,canWrite,placeholder}:{
       <label className="sr-only" htmlFor="air-message">Текст сообщения</label>
       <textarea id="air-message" className="field" rows={2} maxLength={2000}
         placeholder={canWrite?placeholder:'Присоединитесь к чату, чтобы писать'}
-        value={draft} disabled={!canWrite||busy} onChange={e=>{pendingSend.current=null;setDraft(e.target.value)}}
+        value={draft} disabled={!canWrite||busy} onChange={e=>updateDraft(e.target.value)}
         onKeyDown={e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();void send()}}}/>
+      <label className="air-checkbox">
+        <input type="checkbox" checked={rememberDraft} disabled={!ownerId}
+          onChange={e=>remember(e.target.checked)}/>
+        Запомнить мой черновик в этой вкладке на срок до 24 часов
+      </label>
       <button className="btn" type="submit" disabled={!canWrite||busy||!draft.trim()}>
         {busy?'Отправка…':'Отправить'}
       </button>
@@ -317,6 +348,7 @@ function RoadEvents({roomId,joined}: {roomId:string;joined:boolean}){
   </section>;
 }
 function DirectMessages(){
+  const {me}=useMe();
   const threads=useLoad<{threads:AirThread[]}>(()=>get('/api/community/direct'),[],
     (e:any)=>String(e.type).startsWith('community_direct'));
   const [peer,setPeer]=useState('');
@@ -360,7 +392,7 @@ function DirectMessages(){
         </div>
       </div>
       <MessageStream key={choice.id} endpoint={'/api/community/direct/'+choice.id+'/messages'}
-        canWrite placeholder="Личное сообщение…"/>
+        ownerId={me?.id??null} canWrite placeholder="Личное сообщение…"/>
     </section>}
   </div>;
 }
@@ -443,6 +475,7 @@ export function DriverAir(){
             {active.audience==='driver'&&<button type="button" aria-pressed={roomPane==='road'} onClick={()=>setRoomPane('road')}>Дорожная обстановка</button>}
           </div>
           {roomPane==='chat'&&<MessageStream key={active.id+':'+active.joined}
+            ownerId={me?.id??null}
             endpoint={'/api/community/rooms/'+active.id+'/messages'} canWrite={active.joined}
             placeholder="Напишите сообщение коллегам…"/>}
           {roomPane==='road'&&active.audience==='driver'&&<RoadEvents key={active.id} roomId={active.id} joined={active.joined}/>}
