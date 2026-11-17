@@ -31,6 +31,7 @@ create index if not exists shop_agent_ledger_lines_client_idx
 
 create table if not exists shop_agent_ledger_events (
   id uuid primary key default gen_random_uuid(),
+  event_seq bigint generated always as identity unique, -- ingestion order
   line_id uuid not null references shop_agent_ledger_lines(id) on delete restrict,
   event_key text not null unique check (length(event_key) between 1 and 160),
   event_kind text not null check (event_kind in (

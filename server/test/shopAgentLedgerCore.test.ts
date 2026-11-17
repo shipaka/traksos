@@ -217,3 +217,19 @@ test('duplicate import key is idempotent, conflicting payload rejected', async (
   await assert.rejects(svc.appendEvent(admin, { ...event, amountKopecks: 6000 }),
     (err: any) => err.status === 409 && err.code === 'ledger_idempotency_conflict');
 });
+
+test('a later correction invalidates an accountant approval even if backdated', () => {
+  const entries = evidence();
+  entries.push(e('accountant_approval', 0, {
+    sourceKind: 'accountant_attested', evidenceHash: hash,
+    occurredAt: '2026-11-18T12:00:00Z',
+  }));
+  assert.equal(assessLine(line, entries).status, 'accountant_approved');
+  entries.push(e('customer_refund', 100, { occurredAt: '2026-11-17T10:00:00Z' }));
+  assert.equal(assessLine(line, entries).status, 'verified');
+});
+test('empty register can never masquerade as a signed tax package', () => {
+  const report = buildRegister([], [], { kind: 'month', from: '2026-11-17' });
+  assert.equal(report.rows.length, 0);
+  assert.equal(report.blockedForTaxPackage, true);
+});

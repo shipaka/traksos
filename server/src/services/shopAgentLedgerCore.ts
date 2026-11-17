@@ -255,8 +255,12 @@ export function assessLine(line: LedgerLine, allEntries: readonly LedgerEntry[])
     t.reimbursement_agreed < 0 || t.procurement_fee_agreed < 0 || t.platform_fee_agreed < 0) {
     mismatch('negative_balance', 'Corrected balances cannot be negative');
   }
-  const approved = entries.some((e) => e.kind === 'accountant_approval' &&
-    e.sourceKind === 'accountant_attested' && !!e.evidenceHash);
+  // Approval covers only the evidence state at signing time.
+  // Later imports or corrections invalidate it, including backdated entries.
+  // Events must be supplied in immutable ingestion sequence.
+  const lastEvent = entries[entries.length - 1];
+  const approved = lastEvent?.kind === 'accountant_approval' &&
+    lastEvent.sourceKind === 'accountant_attested' && !!lastEvent.evidenceHash;
   const status: LineStatus = findings.some((f) => f.severity === 'mismatch')
     ? 'requires_reconciliation'
     : findings.length ? 'awaiting_docs'
@@ -380,7 +384,7 @@ export function buildRegister(lines: readonly LedgerLine[], entries: readonly Le
     period: bounds, rows, totals, confirmedTaxableRevenue, unverifiedTaxableRevenue,
     byOrganization: [...groups.values()].sort((a, b) =>
       a.clientOrganizationId.localeCompare(b.clientOrganizationId)),
-    blockedForTaxPackage: rows.some((r) => r.status !== 'accountant_approved'),
+    blockedForTaxPackage: rows.length === 0 || rows.some((r) => r.status !== 'accountant_approved'),
     note: 'Internal evidence register only; not a USN declaration, tax return, KUDiR or legally approved tax calculation.',
   };
 }

@@ -153,7 +153,7 @@ export class ShopAgentLedger {
       }
       if (e.kind === 'accountant_approval') {
         const history = await q.query<any>(
-          'select * from shop_agent_ledger_events where line_id=$1 order by occurred_at,id',
+          'select * from shop_agent_ledger_events where line_id=$1 order by event_seq',
           [e.lineId]);
         const current = assessLine(lineFromDb(lineRow), history.map(eventFromDb));
         if (current.findings.length) throw conflict('ledger_unverified', 'Cannot approve a ledger line with open findings');
@@ -188,7 +188,7 @@ export class ShopAgentLedger {
       'select * from shop_agent_ledger_lines where id=$1', [lineId]);
     if (!lineRow) throw notFound('Ledger line not found');
     const entries = (await this.db.query<any>(
-      'select * from shop_agent_ledger_events where line_id=$1 order by occurred_at,id',
+      'select * from shop_agent_ledger_events where line_id=$1 order by event_seq',
       [lineId])).map(eventFromDb);
     const line = lineFromDb(lineRow);
     const assessment = assessLine(line, entries);
@@ -219,7 +219,7 @@ export class ShopAgentLedger {
     if (lines.length) {
       const data = await this.db.query<any>(
         'select * from shop_agent_ledger_events ' +
-        'where line_id=any($1::uuid[]) and occurred_at<$2 order by occurred_at,id limit 500001',
+        'where line_id=any($1::uuid[]) and occurred_at<$2 order by event_seq limit 500001',
         [lines.map((x) => x.id), bounds.toUtcExclusive]);
       if (data.length > 500000) throw conflict('ledger_report_too_large', 'Too many evidence events');
       entries = data.map(eventFromDb);
