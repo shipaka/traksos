@@ -260,7 +260,7 @@ export function registerProfessionalCasesRoutes(r:Router,db:Db,notifier:Notifier
   r.post('/api/community/pro-cases/:id/report',true,async(c:AuthedCtx)=>{
     const row=await openCase(db,c);
     const b=parse(z.object({
-      replyId:z.string().regex(/^\\d{1,16}$/).nullable().optional(),
+      replyId:z.string().regex(/^\d{1,16}$/).nullable().optional(),
       reason:z.string().trim().min(10).max(500)
     }),c.body);
     let author=row.author_id;
@@ -301,7 +301,7 @@ export function registerProfessionalCasesRoutes(r:Router,db:Db,notifier:Notifier
   r.post('/api/admin/community/pro-cases/reports/:id/review',
     ['admin','moderator'],async(c:AuthedCtx)=>{
       const reportId=c.params.id;
-      if(!/^\\d{1,16}$/.test(reportId))throw notFound('Жалоба не найдена');
+      if(!/^\d{1,16}$/.test(reportId))throw notFound('Жалоба не найдена');
       const b=parse(z.object({
         decision:z.enum(['dismiss','hide','restore']),
         note:z.string().trim().min(15).max(1000)
