@@ -164,7 +164,7 @@ export function TechnicalEvidenceReviewQueue(){
       {e.needsRightsReview&&!isAdmin&&<p className="note">
         Проверку прав выполняет администратор. Модератор видит материал
         для координации, но не может подтверждать лицензию.
-      </p>
+      </p>}
       <label>Решение
         <select className="field" value={decisions[e.id]??'rejected'}
           onChange={x=>setDecisions(v=>({...v,[e.id]:
