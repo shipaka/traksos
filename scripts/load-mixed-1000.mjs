@@ -75,6 +75,16 @@ try{
   "else array['electric','diag']::text[] end,"+
   "'{\"Scania\":\"good\"}'::jsonb,'approved','online',59.94,30.34 "+
   "from users where 'master'=any(roles) or 'tow'=any(roles)");
+ // One explicitly selected, verified and publication-consented ECU workshop.
+ // Do not invoke an old generic SOS ECU flow just to pad the stress test.
+ const ecuExpert=accounts.find(x=>x.role==='master');
+ assert.ok(ecuExpert,'load fixture must provide a specialist');
+ await t.db.query(
+  "update performer_profiles set kind='ecu', "+
+  "extras=jsonb_build_object('ecuStation',$2::jsonb) where user_id=$1",
+  [ecuExpert.id,JSON.stringify({name:'Нагрузочная мастерская ЭБУ',
+   address:'Санкт-Петербург, тестовая мастерская',
+   lat:59.94,lng:30.34,published:true,publicationConsentConfirmed:true})]);
  const overview=await measure('1000 parallel identity reads',accounts.map(user=>({
   user,method:'GET',path:'/api/me'
  })));
@@ -97,7 +107,8 @@ try{
  const orderRequests=await measure('120 parallel customer incident submissions',
   clients.slice(0,120).map((user,i)=>({
    user,method:'POST',path:'/api/orders',body:{
-    service:i%12===0?'ecu':'electric',zoneId:'spb',brand:'Scania',
+    service:i%12===0?'ecu':'electric',zoneId:i%12===0?'ecu_station':'spb',
+    ecuSpecialistId:i%12===0?ecuExpert.id:undefined,brand:'Scania',
     lat:59.94,lng:30.34,address:'Санкт-Петербург, тестовая парковка',
     paymentMethod:'cash',description:'Нагрузочная заявка '+i
    }
