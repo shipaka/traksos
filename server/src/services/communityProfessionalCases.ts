@@ -68,7 +68,8 @@ export async function openCase(db:Db,c:AuthedCtx,write=false){
 }
 async function orderPreview(db:Db,user:AuthUser,orderId:string){
   const row=await db.one<{performer_id:string|null;status:string;make:string|null;model:string|null;year:number|null;service:string}>(
-    "select o.performer_id,o.status,coalesce(v.brand,o.brand) as make,v.model,v.year,o.service "+
+    "select o.performer_id,o.status,coalesce(v.brand,o.brand) as make, "+
+    "coalesce(v.model,o.model) as model,coalesce(v.year,o.year) as year,o.service "+
     "from orders o left join vehicles v on v.id=o.vehicle_id where o.id=$1",[orderId]);
   if(!row||row.performer_id!==user.id||
     ['completed','cancelled','canceled','rejected'].includes(row.status))
