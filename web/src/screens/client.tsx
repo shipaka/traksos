@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { get, post, put, del, rub, fmtTime, fmtPhone } from '../api.ts';
+import { useEffect, useRef, useState } from 'react';
+import { get, post, put, del, rub, fmtTime, fmtPhone, postOrderIdempotent } from '../api.ts';
 import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF, ON_SITE, seriesHint } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFields, LiveStrip, type VehicleValue } from '../ui.tsx';
 import { BookingRows } from './base.tsx';
@@ -385,6 +385,7 @@ export function NewOrder({ service }: { service: string }) {
   const additionalTo = service==='ecu'?params.get('additionalTo'):null;
   const { me } = useMe();
   const { busy, run } = useAction();
+  const submittedRequest=useRef<{body:string;key:string}|null>(null);
   const pricing = useLoad(() => get('/api/pricing'), []);
   const vehicles = useLoad(() => get('/api/vehicles'), []);
   const consult = useLoad(() => (fromConsult ? get(`/api/orders/${fromConsult}`) : Promise.resolve(null)), [fromConsult]);
@@ -483,7 +484,7 @@ export function NewOrder({ service }: { service: string }) {
   async function submit() {
     // Defensive guard even if the CallBar is invoked during a debounced update.
     if(!zoneId || !est || !agree||(additionalTo&&(!related.data||zoneId!==related.data.zoneId)))return;
-    const r = await run(() => post('/api/orders', {
+    const payload = {
       service, isSos: !!sos, problem: sos?.id, description: description || undefined, address: address || undefined,
       lat: geo?.lat, lng: geo?.lng, zoneId, tier: service === 'tow' ? undefined : tier, vehicleId: vehicleId || undefined,
       ...carBody(vehicleId, car), groupTrip: groupAllowed && group, night: night ?? undefined, paymentMethod: method,
@@ -491,7 +492,14 @@ export function NewOrder({ service }: { service: string }) {
       fromConsult: fromConsult || undefined,
       additionalTo:additionalTo||undefined,
       site: isTow || !Object.keys(site).length ? undefined : { ...site, meet: site.meet || undefined, time: site.time || undefined },
-    }));
+    };
+    // The server may accept an order before mobile data drops.
+    // A user-triggered retry sends the identical idempotency key.
+    const serialized=JSON.stringify(payload);
+    if(!submittedRequest.current||submittedRequest.current.body!==serialized)
+      submittedRequest.current={body:serialized,key:crypto.randomUUID()};
+    const key=submittedRequest.current.key;
+    const r = await run(() => postOrderIdempotent(payload,key));
     if (!r) return;
     if (r.confirmationUrl) location.href = r.confirmationUrl;
     else go(`order/${r.order.id}`);
