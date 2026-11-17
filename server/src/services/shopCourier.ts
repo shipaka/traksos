@@ -6,6 +6,7 @@ import { parse, bad, forbidden, notFound, conflict, HttpError } from '../http/ro
 import type { Notifier } from './notify.ts';
 import { addressDeclaredInSpb } from './shopRegion.ts';
 import { warehouseProgress } from './shopWarehouse.ts';
+import {supplierReceiptReadiness} from './shopSupplierReceiving.ts';
 
 /** Only an admin can grant a courier entitlement; no public courier signup. */
 const id=z.string().uuid();
@@ -19,7 +20,8 @@ async function courier(db:Db,user:AuthUser) {
   return p;
 }
 type Run={id:string;courier_id:string;status:string;pickup_address:string;city_code:string;
-  active_stop_id:string|null;dispatch_approved_at:Date|null;packing_required:boolean};
+  active_stop_id:string|null;dispatch_approved_at:Date|null;packing_required:boolean;
+  supplier_receipt_required:boolean};
 async function myRun(db:Db,c:AuthedCtx) {
   await courier(db,c.user);
   const run=await db.one<Run>('select * from shop_courier_runs where id=$1',[parse(id,c.params.id)]);
@@ -266,6 +268,13 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
       "where st.run_id=$1 and i.needs_review=true",[run.id]);
     if((issues?.n??0)>0)
       throw conflict('supplier_issue_open','Есть новое разбирательство поставщика. Дождитесь решения диспетчера');
+    if(run.supplier_receipt_required){
+      const stops=await db.query<{shop_order_id:string}>(
+        'select shop_order_id from shop_courier_stops where run_id=$1',[run.id]);
+      if(!stops.length||!(await Promise.all(stops.map(x=>
+          supplierReceiptReadiness(db,x.shop_order_id)))).every(x=>x.ready))
+        throw conflict('supplier_receipt_incomplete','Не все запчасти физически приняты от поставщика');
+    }
     const updated=await db.tx(async q=>{
       const saved=await q.one('update shop_courier_runs set status=$2,accepted_at=now() where id=$1 and status=$3 returning id,status',
         [run.id,'accepted','planned']);
@@ -295,6 +304,13 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
         'where st.id=$1 and i.needs_review=true',[stopId]);
       if(issue)throw conflict('supplier_issue_open',
         'Поставщик отменил или приостановил заказ. Сверьте наличие с диспетчером');
+      if(run.supplier_receipt_required){
+        const orderId=await q.one<{shop_order_id:string}>(
+          'select shop_order_id from shop_courier_stops where id=$1',[stopId]);
+        if(!orderId||(await supplierReceiptReadiness(q,orderId.shop_order_id)).ready===false)
+          throw conflict('supplier_receipt_incomplete',
+            'Документ физической приёмки поставщика не подтверждает полное количество');
+      }
       if(run.packing_required){
         const packing=await warehouseProgress(q,run.id);
         const thisParcel=packing.stops.find(x=>x.id===stopId);
