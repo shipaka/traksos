@@ -7,7 +7,7 @@ import { PublicVehicleDirectory, type CatalogPurpose } from '../services/publicV
 import { VehicleMissingQueue } from '../services/vehicleMissingQueue.ts';
 import { VehicleTechnicalLibrary } from '../services/vehicleTechnicalLibrary.ts';
 import { VehicleHelpAvailability } from '../services/vehicleHelpAvailability.ts';
-import { publicVehicleCard } from '../services/vehicleOwnerShelf.ts';
+import { publicVehicleCard, publicRecoveryGallery } from '../services/vehicleOwnerShelf.ts';
 
 const purpose = z.enum(['garage','master','tow','service','insurance','parts','admin']);
 const category = z.enum(['passenger','truck','trailer','van','bus']);
@@ -37,6 +37,11 @@ export function registerVehicleReferenceRoutes(
   r.get('/api/vehicle-reference/truck-evidence',true,(c:AuthedCtx)=>
     dir.truckEvidence(c.user,readPurpose(c),c.query.get('brandKey')??'',
       c.query.get('modelKey')??''));
+
+  r.get('/api/vehicle-reference/recovery-gallery',true,async(c:AuthedCtx)=>{
+    await dir.makes(c.user,'tow','',false,'truck'); // Server-side role gate, not UI-only.
+    return publicRecoveryGallery();
+  });
 
   r.get('/api/vehicle-reference/public-card',true,async(c:AuthedCtx)=>{
     const cat=parse(category,c.query.get('category'));
