@@ -225,6 +225,63 @@ test('real database: client plan, pass decision, GPS evidence, manual review, pr
       ...input,requestKey:'checkpoint-002',lat:59.935,
     });
     assert.equal(changed.version,2);
+
+    // Relational invariant: every proof/consent/decision must belong to the
+    // SAME real order and SAME real performer as its immutable checkpoint.
+    // Valid UUIDs that belong to an unrelated order must still be rejected.
+    const unrelatedOrder=ok(await t.api('POST','/api/orders',
+      {service:'consult'},client.token)).order.id;
+    const expectWrongScope=(work:Promise<unknown>) =>
+      assert.rejects(work,(e:any)=>e.code==='23503');
+
+    await expectWrongScope(t.db.query(
+      'insert into checkpoint_gps_consent_events ' +
+      '(plan_id,order_id,performer_id,event_key,request_hash,action,' +
+      'duration_minutes,expires_at) values($1,$2,$3,$4,repeat(\'a\',64),' +
+      '\'granted\',60,now()+interval \'60 minutes\')',
+      [p.planId,unrelatedOrder,worker.id,'mismatched-consent-001'],
+    ));
+    await expectWrongScope(t.db.query(
+      'insert into checkpoint_arrival_attempts ' +
+      '(plan_id,order_id,performer_id,request_key,request_hash,outcome,' +
+      'evaluation,sample_digest,sample_count) ' +
+      'values($1,$2,$3,$4,repeat(\'a\',64),\'needs_review\',' +
+      '\'{}\'::jsonb,repeat(\'b\',64),0)',
+      [p.planId,unrelatedOrder,worker.id,'mismatched-arrival-001'],
+    ));
+    await expectWrongScope(t.db.query(
+      'insert into checkpoint_arrival_decisions ' +
+      '(attempt_id,order_id,decision,explanation,decided_by) ' +
+      'values($1,$2,\'insufficient\',$3,$4)',
+      [first.id,unrelatedOrder,
+        'Неправильная привязка к чужому заказу запрещена базой данных.',
+        client.id],
+    ));
+    await expectWrongScope(t.db.query(
+      'insert into performer_route_samples ' +
+      '(order_id,performer_id,lat,lng,checkpoint_consent,' +
+      'checkpoint_plan_id,checkpoint_consent_seq) ' +
+      'values($1,$2,59.9343,30.3351,true,$3,$4)',
+      [id,admin.id,p.planId,granted.eventId],
+    ));
+    await expectWrongScope(t.db.query(
+      'insert into checkpoint_evidence_plans ' +
+      '(order_id,performer_id,plan_key,version,supersedes_id,' +
+      'checkpoint_lat,checkpoint_lng,radius_m,requires_pass,' +
+      'approved_by,request_hash) ' +
+      'values($1,$2,$3,1,$4,59.935,30.336,200,false,$5,repeat(\'c\',64))',
+      [unrelatedOrder,worker.id,'cross-order-version-001',p.planId,client.id],
+    ));
+    const integrity = await t.db.query<any>(
+      "select conname,convalidated from pg_constraint " +
+      "where conname in ('checkpoint_supersedes_same_order_fk'," +
+      "'checkpoint_consent_scope_fk','checkpoint_attempt_scope_fk'," +
+      "'checkpoint_decision_scope_fk','checkpoint_route_consent_scope_fk')",
+    );
+    assert.equal(integrity.length,5);
+    assert.ok(integrity.every(row=>row.convalidated===false),
+      'Existing evidence is NOT silently certified by a migration');
+
     const newGrant=await service.gpsConsent(w,id,{
       eventKey:'direct-consent-grant-003',planId:changed.planId,
       action:'granted',durationMinutes:60,
