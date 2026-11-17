@@ -1,5 +1,6 @@
 import {useEffect,useRef,useState} from 'react';
 import {get,post,fmtTime} from '../api.ts';
+import {newOrderRequestKey} from '../orderRequestKey.ts';
 import {useAction,useLoad,useMe} from '../ui.tsx';
 import './techBase.css';
 import {CommunityMuteToggle} from './communityNotificationSettings.tsx';
@@ -17,7 +18,7 @@ type LinkedCase={id:string;roomId:string;status:string;subsystem:string;
 type Preview={make:string|null;model:string|null;modelYear:number|null;
  subsystem:string|null;note:string};
 type Reply={id:string;body:string;nickname:string;created_at:string;isMine:boolean;accepted:boolean};
-const uuid=()=>crypto.randomUUID();
+const uuid=()=>newOrderRequestKey();
 const emptyCase={make:'',model:'',year:'',system:'',symptoms:'',codes:'',context:''};
 
 /**
