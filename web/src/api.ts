@@ -75,17 +75,7 @@ export const post = <T = any>(p: string, b: unknown = {}) => api<T>('POST', p, b
 export const postOrderIdempotent = <T = any>(b: unknown, key: string) =>
   api<T>('POST', '/api/orders', b, { 'idempotency-key': key });
 
-/** Cryptographically random RFC 4122 v4 request ID. Android 10's older
- * WebView supports getRandomValues but may not expose crypto.randomUUID().
- * Never fall back to Math.random for a financial order's retry key. */
-export function newOrderRequestKey(): string {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  bytes[6] = (bytes[6] & 15) | 64;
-  bytes[8] = (bytes[8] & 63) | 128;
-  const h = Array.from(bytes, n => n.toString(16).padStart(2, '0')).join('');
-  return h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20);
-}
+export { newOrderRequestKey } from './orderRequestKey.ts';
 export const put = <T = any>(p: string, b: unknown = {}) => api<T>('PUT', p, b);
 export const patch = <T = any>(p: string, b: unknown = {}) => api<T>('PATCH', p, b);
 export const del = <T = any>(p: string) => api<T>('DELETE', p);
