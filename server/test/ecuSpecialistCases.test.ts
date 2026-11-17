@@ -73,10 +73,14 @@ test('linked ECU order keeps distinct payment/performer/status and client-only c
   assert.equal(second.order.year,2010);
   assert.equal(second.order.you,'client');
   const paymentRecords=await t.db.query<{order_id:string}>(
-    'select order_id from payments where order_id=any($1::uuid[])',[first,second.order.id]);
+    'select order_id from payments where order_id=any($1::uuid[])',[[first,second.order.id]]);
   assert.ok(!paymentRecords.some(row=>!([first,second.order.id] as string[]).includes(row.order_id)));
+  // Dispatch may immediately mark this test order as no_performer: make it
+  // an active ECU stage before asserting duplicate prevention. A truly failed
+  // dispatch is intentionally eligible for a fresh, explicit retry.
+  await t.db.query("update orders set status='searching' where id=$1",[second.order.id]);
   assert.equal((await t.api('POST','/api/orders',addition,client.token)).status,409,
-    'one parent cannot silently create two concurrent ECU charges');
+    'one parent cannot silently create two concurrent live ECU charges');
   const source=ok(await t.api('GET','/api/orders/'+first,undefined,client.token));
   assert.equal(source.caseSummary.stages.length,2);
   assert.equal(source.caseSummary.separateContracts,true);
@@ -154,6 +158,9 @@ test('fleet driver cannot read owner-created ECU charges within a shared case',a
     address:'Санкт-Петербург, тестовая ремонтная площадка 22'
   };
   const child=ok(await t.api('POST','/api/orders',additional,owner.token)).order;
+  // Prove that the private active-stage flag works, independent of whether
+  // any expert happens to be online during this deterministic unit test.
+  await t.db.query("update orders set status='searching' where id=$1",[child.id]);
   const ownerView=ok(await t.api('GET','/api/orders/'+root,undefined,owner.token));
   const driverView=ok(await t.api('GET','/api/orders/'+root,undefined,driver.token));
   assert.equal(ownerView.caseSummary.stages.length,2);
