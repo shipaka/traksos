@@ -119,6 +119,11 @@ export class AuctionService {
     const lim = this.limits(order, all.dispatch);
     const ring = new Date(this.now().getTime() + Math.min(ms, all.dispatch.ringSeconds * 1000)).toISOString();
     for (const r of invited) {
+      // The customer may cancel while routes/push payloads are prepared.
+      // Never send a new call for an already-cancelled or finished request.
+      if (!(await this.db.one(
+        "select 1 from orders where id=$1 and status='searching'",
+        [orderId]))) break;
       await this.notifier.notify([r.user_id], {
         type: 'auction', orderId, number: order.number, service: order.service, sos: order.is_sos, problem: order.problem,
         description: order.description, address: order.address, destination: order.destination, cargo: order.cargo,
