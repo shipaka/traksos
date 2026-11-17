@@ -56,6 +56,7 @@ import { ShopCatalogService } from './services/shopCatalog.ts';
 import { ModerationService } from './services/moderation.ts';
 import { registerCommunityRoutes } from './services/community.ts';
 import { registerOwnerExperienceRoutes } from './services/ownerExperience.ts';
+import { registerOwnerVehicleCostsRoutes } from './services/ownerVehicleCosts.ts';
 import { registerCommunityDirectRoutes } from './services/communityDirect.ts';
 import { CommunityNotifications,registerCommunityNotificationRoutes } from './services/communityNotifications.ts';
 import { registerCommunityRoadRoutes } from './services/communityRoad.ts';
@@ -153,6 +154,7 @@ export function createApp(d: Deps) {
   // Isolated community rooms, nickname moderation and professional knowledge ACL.
   registerCommunityRoutes(r, d.db, notifier);
   registerOwnerExperienceRoutes(r,d.db);
+  registerOwnerVehicleCostsRoutes(r,d.db);
   registerCommunityDirectRoutes(r, d.db, notifier, communityNotifications);
   registerCommunityNotificationRoutes(r,d.db,communityNotifications);
   registerCommunityRoadRoutes(r, d.db, notifier);
