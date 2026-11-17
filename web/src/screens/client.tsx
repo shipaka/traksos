@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { get, post, put, del, rub, fmtTime, fmtPhone, postOrderIdempotent } from '../api.ts';
+import { get, post, put, del, rub, fmtTime, fmtPhone, postOrderIdempotent, newOrderRequestKey } from '../api.ts';
 import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF, ON_SITE, seriesHint } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFields, LiveStrip, type VehicleValue } from '../ui.tsx';
 import { BookingRows } from './base.tsx';
@@ -497,7 +497,7 @@ export function NewOrder({ service }: { service: string }) {
     // A user-triggered retry sends the identical idempotency key.
     const serialized=JSON.stringify(payload);
     if(!submittedRequest.current||submittedRequest.current.body!==serialized)
-      submittedRequest.current={body:serialized,key:crypto.randomUUID()};
+      submittedRequest.current={body:serialized,key:newOrderRequestKey()};
     const key=submittedRequest.current.key;
     const r = await run(() => postOrderIdempotent(payload,key));
     if (!r) return;
