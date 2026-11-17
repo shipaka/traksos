@@ -43,6 +43,7 @@ import { Help } from './screens/help.tsx';
 import { Rules } from './screens/rules.tsx';
 import { Shop, ShopCart, ShopHistory } from './screens/shop.tsx';
 import { DriverAir } from './screens/driverAir.tsx';
+import { OwnerExperience, OwnerExperienceModeration } from './screens/ownerExperience.tsx';
 import { TechnicalBase } from './screens/technicalBase.tsx';
 import { OrderTechBase } from './screens/orderTechBase.tsx';
 import { PartnerLevelView, PartnerLevelAdmin } from './screens/partnerLevel.tsx';
@@ -248,6 +249,7 @@ function App() {
     case 'vehicle-tech': screen = <VehicleKnowledge />; break;
     case 'courier': screen = b==='admin' && isAdmin ? <CourierAdmin /> : isCourier ? <CourierHome /> : <main><div className="empty">Кабинет доступен только курьерам, которых назначил администратор.</div></main>; break;
     case 'air': screen = me.roles.some(r=>r==='driver'||r==='client') ? <DriverAir /> : <main><div className="empty">Водительский Эфир доступен водителям и владельцам транспорта.</div></main>; break;
+    case 'experience': screen = b==='admin' && isAdmin ? <OwnerExperienceModeration /> : isCustomer ? <OwnerExperience vehicleId={b==='vehicle'?route[2]:undefined}/> : <main><div className="empty">Нет доступа к разделу.</div></main>; break;
     case 'partner': screen = b==='admin' && isAdmin ? <PartnerLevelAdmin /> : (isPerformer||isService) ? <PartnerLevelView /> : <main><div className="empty">Партнёрская программа только для специалистов.</div></main>; break;
     case 'techbase': screen = me.roles.some(r => r==='master'||r==='service'||r==='admin')
       ? b==='order' && route[2] && me.roles.some(r=>r==='master'||r==='service')
@@ -391,6 +393,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/admin/section/access', 'Регистрация и доступы'],
          ['/admin/section/verify', 'Проверка исполнителей'],
          ['/techbase', 'Проверка материалов ТехБазы'],
+          ['/experience/admin', 'Опыт эксплуатации · проверка публикаций'],
          ['/partner/admin', 'TrakSOS Партнёр · уровни и обращения'],
          ['/courier/admin', 'Курьерская доставка · маршруты и склад'],
          ['/admin/section/bases', 'СТО и рембазы'],
