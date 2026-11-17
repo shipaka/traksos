@@ -14,7 +14,8 @@ export function registerKnowledgeOrderRoutes(r:Router,db:Db) {
       throw forbidden('Справочник предназначен для подтверждённых исполнителей');
     // Deliberately omit VIN, license plate, customer address, phone and coordinates.
     const order=await db.one<{performer_id:string|null;service:string;vehicle_brand:string|null;model:string|null;year:number|null}>(
-      'select o.performer_id,o.service,coalesce(v.brand,o.brand) as vehicle_brand,v.model,v.year from orders o '+
+      'select o.performer_id,o.service,coalesce(v.brand,o.brand) as vehicle_brand,'+
+      'coalesce(v.model,o.model) as model,coalesce(v.year,o.year) as year from orders o '+
       'left join vehicles v on v.id=o.vehicle_id where o.id=$1',[orderId]);
     if(!order || (!staff && order.performer_id!==c.user.id))throw notFound('Заявка не найдена');
     const make=order.vehicle_brand?.trim()??'';
