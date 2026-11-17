@@ -137,16 +137,20 @@ try {
       if (await page.locator('.client-sos-specialty').count() !== 5)
         throw new Error(width + 'px expected 5 master specialties');
       await page.screenshot({path:OUT + '/specialties-' + width + '.png',fullPage:true});
-      const ecuFromSos = page.locator('.ecu-discovery--sos a[href="#/new/ecu"]');
-      if (!await ecuFromSos.isVisible())
-        throw new Error(width + 'px: ECU missing inside the master specialty selection');
-      await ecuFromSos.click();
+      // Stationary ECU is a dedicated customer service, not emergency SOS.
+      if(await page.locator('.ecu-discovery--sos').count())
+        throw new Error(width+'px: stationary ECU wrongly appears in SOS');
+      await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
+      const ecuFromHome=page.locator('.ecu-discovery--home a[href="#/new/ecu"]');
+      await ecuFromHome.waitFor({timeout:15000});
+      await ecuFromHome.click();
       await page.waitForURL(/#\/new\/ecu(?:\?|$)/,{timeout:12000});
       await page.getByRole('heading',{name:'Специалист по ЭБУ',exact:true}).waitFor({timeout:15000});
       await page.locator('#f-car').waitFor({timeout:15000});
       await page.locator('#f-what').waitFor();
-      await page.locator('#f-where').waitFor();
-      await page.locator('#f-agree').waitFor();
+      await page.locator('#f-ecu-station').waitFor();
+      if(await page.locator('#f-agree input[type="checkbox"]').count())
+        throw new Error(width+'px: ECU cannot be prepriced before diagnostics');
       const ecuFormWidth=await page.evaluate(()=>({
         viewport:document.documentElement.clientWidth,
         content:document.documentElement.scrollWidth
@@ -155,7 +159,7 @@ try {
         throw new Error(width+'px ECU order form overflow: '+JSON.stringify(ecuFormWidth));
       await page.screenshot({path:OUT+'/ecu-form-'+width+'.png',fullPage:true});
       if (errors.length) throw new Error(width + 'px browser exception: ' + errors.join('; '));
-      console.log('PASS premium client '+width+'px: Scania, SOS+Air, 4 services, ECU live form, 3 SOS, 5 master specialties, no overflow');
+      console.log('PASS premium client '+width+'px: Scania, SOS+Air, 4 services, independent ECU station form, 3 SOS, 5 roadside specialties, no overflow');
     } finally {
       await context.close();
     }
