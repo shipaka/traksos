@@ -1056,7 +1056,12 @@ export function createApp(d: Deps) {
   r.post('/api/base/bookings/:id/status', ['service'], (c: AuthedCtx) => centers.setStatus(c.user, c.params.id, parse(z.object({ status: z.string().max(20) }), c.body).status));
   r.post('/api/base/bookings/:id/note', ['service'], (c: AuthedCtx) => centers.note(c.user, c.params.id, parse(z.object({ text: z.string().max(500).optional(), notesPublic: z.boolean().optional() }), c.body)));
   r.post('/api/base/bookings/:id/still-here', ['service'], (c: AuthedCtx) => centers.stillHere(c.user, c.params.id));
-  r.post('/api/base/bookings/:id/ready', ['service'], (c: AuthedCtx) => centers.ready(c.user, c.params.id, parse(z.object({ works: z.array(z.string().max(80)).max(20) }), c.body).works));
+  r.post('/api/base/bookings/:id/ready', ['service'], (c: AuthedCtx) => {
+    const b=parse(z.object({works:z.array(z.string().max(80)).max(20),
+      warrantyDays:z.union([z.literal(7),z.literal(14),z.literal(30),z.null()]).optional(),
+      warrantyWork:z.string().trim().max(300).optional()}),c.body);
+    return centers.ready(c.user,c.params.id,b.works,b.warrantyDays??null,b.warrantyWork);
+  });
   r.post('/api/base/bookings/:id/invoice', ['service'], (c: AuthedCtx) => { const b = parse(z.object({ amount: z.number().int().min(100).max(100_000_000), points: money.optional() }), c.body); return centers.invoice(c.user, c.params.id, b.amount, b.points ?? 0); });
   // Сколько баллов рембаза может погасить в счёте на сумму amount
   r.get('/api/base/points', ['service'], async (c: AuthedCtx) => { const fees = await settings.get('fees'); const amount = Number(c.query.get('amount') ?? 0) || 0; const commission = Math.min(Math.round(amount * fees.serviceCommissionPct / 100), fees.serviceCommissionMax); return referral.available(c.user.id, commission); });
@@ -1108,6 +1113,8 @@ export function createApp(d: Deps) {
     // Суммы за работу здесь нет — её считает таймер. Только расходники и запчасти, каждая строкой
     extras: z.array(z.object({ name: z.string().min(2).max(60), amount: money })).max(10).optional(),
     result: z.enum(['solved', 'cause_found', 'not_found']).optional(), note: z.string().max(300).optional(),
+    warrantyDays: z.union([z.literal(7),z.literal(14),z.literal(30),z.null()]).optional(),
+    warrantyWork: z.string().trim().max(300).optional(),
   }), c.body)));
   // Неоплата: клиент отказывается платить — сообщает мастер или сам клиент. Сразу поддержка и случай модератору.
   // not_done — клиент: работа не выполнена (причина обязательна); refuse — клиент отказывается без причины
