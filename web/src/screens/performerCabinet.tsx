@@ -1,7 +1,7 @@
 // Кабинет исполнителя по разделам: профиль — отдельно, фильтр заявок — отдельно, деньги — отдельно.
 // Каждый раздел — своя короткая страница со своей кнопкой «Сохранить», ничего не листается до конца.
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { get, put, post, rub, fmtTime, fmtPhone } from '../api.ts';
 import { BRANDS, BRAND_LEVELS, SERVICES } from '../dict.ts';
 import { FEE_PURPOSE } from '../dict.ts';
@@ -179,10 +179,55 @@ export function PhoneSection() {
 
 // Машины ----------------------------------------------------------------------
 
+type RecoveryMake={key:string;name:string};
+type RecoveryModel={key:string;name:string};
 function CarInputs({ car, onChange, tow }: { car: { brand: string; color?: string; plate: string }; onChange: (c: any) => void; tow?: boolean }) {
+  const [makes,setMakes]=useState<RecoveryMake[]>([]);
+  const [models,setModels]=useState<RecoveryModel[]>([]);
+  const [makeKey,setMakeKey]=useState('');
+  const [modelKey,setModelKey]=useState('');
+  const [lookupError,setLookupError]=useState('');
+  useEffect(()=>{
+    if(!tow)return;
+    let live=true;
+    get<{items:RecoveryMake[]}>('/api/vehicle-reference/makes?purpose=tow&category=truck')
+      .then(r=>{if(live){setMakes(r.items);setLookupError('')}})
+      .catch(()=>{if(live)setLookupError('Справочник эвакуаторов пока недоступен')});
+    return()=>{live=false};
+  },[tow]);
+  useEffect(()=>{
+    if(!tow||!makeKey){setModels([]);return}
+    let live=true;
+    get<{items:RecoveryModel[]}>('/api/vehicle-reference/models?purpose=tow&category=truck&brandKey='+encodeURIComponent(makeKey))
+      .then(r=>{if(live){setModels(r.items);setLookupError('')}})
+      .catch(()=>{if(live){setModels([]);setLookupError('Не удалось загрузить список эвакуаторов')}});
+    return()=>{live=false};
+  },[tow,makeKey]);
+  const chooseRecovery=(next:string)=>{
+    setModelKey(next);
+    const make=makes.find(x=>x.key===makeKey),model=models.find(x=>x.key===next);
+    // The legacy performer API accepts only a compact display name, not catalog keys.
+    onChange({...car,brand:make&&model?(make.name+' '+model.name.split(' — ')[0]).slice(0,50):''});
+  };
   return (
     <>
-      <input className="field" placeholder={tow ? 'Марка эвакуатора: MAN TGS' : 'Марка: Lada Largus'} value={car.brand} onChange={(e) => onChange({ ...car, brand: e.target.value })} />
+      {tow?<section className="stack" aria-label="Подтверждённые тяжёлые эвакуаторы">
+        <small className="note">Только документированные машины с эвакуаторной надстройкой. Само шасси грузовика не означает, что это эвакуатор.</small>
+        <select className="field" aria-label="Производитель эвакуатора" value={makeKey} onChange={e=>{
+          setMakeKey(e.target.value);setModelKey('');onChange({...car,brand:''});
+        }}>
+          <option value="">Выберите производителя эвакуатора</option>
+          {makes.map(x=><option key={x.key} value={x.key}>{x.name}</option>)}
+        </select>
+        {makeKey&&<select className="field" aria-label="Модель тяжёлого эвакуатора" value={modelKey}
+          onChange={e=>chooseRecovery(e.target.value)}>
+          <option value="">Выберите подтверждённую модель</option>
+          {models.map(x=><option key={x.key} value={x.key}>{x.name}</option>)}
+        </select>}
+        {lookupError&&<small className="note" role="alert">{lookupError}. Если вашей модели нет, запросите её добавление через администратора.</small>}
+        {car.brand&&<small className="note">Выбрано: {car.brand}. Фото надстройки, её паспорт и допустимую массу необходимо подтвердить отдельно.</small>}
+      </section>:<input className="field" placeholder="Марка и модель служебной машины" value={car.brand}
+        onChange={(e) => onChange({ ...car, brand: e.target.value })}/>}
       <div className="grid2">
         <input className="field" placeholder="Цвет" value={car.color ?? ''} onChange={(e) => onChange({ ...car, color: e.target.value })} />
         <input className="field" placeholder="Госномер" value={car.plate} onChange={(e) => onChange({ ...car, plate: e.target.value.toUpperCase() })} />
