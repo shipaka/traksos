@@ -134,3 +134,37 @@ test('declined ECU recommendation remains non-chargeable and cannot be processed
     [sourceId])).length,0);
  }finally{await t.close()}
 });
+
+test('fleet driver cannot read owner-created ECU charges within a shared case',async()=>{
+ const t=await setup();
+ try{
+  const owner=await t.login('+79994620021','client');
+  const driver=await t.login('+79994620022','driver');
+  const master=await t.login('+79994620023','master');
+  // Driver belongs to the fleet; the order is owned by the fleet but created
+  // by the driver. This must not expose unrelated follow-up contracts.
+  await t.db.query('update users set owner_id=$2 where id=$1',[driver.id,owner.id]);
+  const root=await createSource(t,driver.token);
+  await t.db.query("update orders set performer_id=$2,status='accepted' where id=$1",
+    [root,master.id]);
+  const additional={
+    service:'ecu',zoneId:'spb',tier:'pro',paymentMethod:'cash',
+    additionalTo:root,
+    description:'Отдельная диагностика и ремонт ЭБУ для машины из парка',
+    address:'Санкт-Петербург, тестовая ремонтная площадка 22'
+  };
+  const child=ok(await t.api('POST','/api/orders',additional,owner.token)).order;
+  const ownerView=ok(await t.api('GET','/api/orders/'+root,undefined,owner.token));
+  const driverView=ok(await t.api('GET','/api/orders/'+root,undefined,driver.token));
+  assert.equal(ownerView.caseSummary.stages.length,2);
+  assert.equal(driverView.caseSummary.stages.length,1);
+  assert.equal(driverView.caseSummary.stages[0].id,root);
+  assert.equal(driverView.hasActiveEcuAddition,true,
+    'private boolean can prevent duplicate order without leaking owner-created work');
+  assert.equal((await t.api('GET','/api/orders/'+child.id,
+    undefined,driver.token)).status,403);
+  assert.ok(!JSON.stringify(driverView.caseSummary).includes(child.id));
+  assert.equal((await t.api('POST','/api/orders',additional,driver.token)).status,409,
+    'server prevents duplicate charges across driver and owner account');
+ }finally{await t.close()}
+});
