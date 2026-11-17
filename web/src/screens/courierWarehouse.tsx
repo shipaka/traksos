@@ -96,7 +96,7 @@ export function CourierWarehouseCheck({runId}:{runId:string}){
      {p.openDiscrepancies>0&&<p role="alert" className="note">
        Отправка рейса и выдача посылок заблокированы до новой физической
        сверки каждой проблемной строки и документированного закрытия расхождений.
-     </p>
+     </p>}
      <p className="note">{p.warning}</p>
      {p.stops.map(stop=><article key={stop.id} className="card stack">
        <h4>Заказ №{stop.orderNumber}</h4>
