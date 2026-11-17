@@ -501,7 +501,7 @@
       "title": "Grunwald — руководства по эксплуатации",
       "url": "https://grunwald.ru/services-financing/warranty/",
       "requiresVin": false,
-      "languageNote": "Оригинальные руководства производителя, проверьте модель."
+      "languageNote": "Раздел «Руководства по эксплуатации»: для шторного, контейнеровоза и самосвального полуприцепа доступны отдельные документы. Выберите свой тип."
     },
     {
       "category": "trailer",
@@ -511,6 +511,36 @@
       "url": "https://www.cargobull.com/en-ov/services/trailer-services/my-cargobull",
       "requiresVin": true,
       "languageNote": "Для документов конкретного полуприцепа может потребоваться личный кабинет."
+    },
+    {
+      "category": "truck",
+      "makeKey": "renault",
+      "modelKeys": [],
+      "title": "Renault Trucks — Driver Guide",
+      "url": "https://driverguide.renault-trucks.com/",
+      "requiresVin": true,
+      "languageNote": "Подбор по номеру шасси. Старые серии и регионы могут отсутствовать: не заменяйте руководство по Premium документом от T-Series."
+    },
+    {
+      "category": "truck",
+      "makeKey": "mercedes-benz",
+      "modelKeys": [],
+      "title": "Mercedes-Benz Trucks — руководство по эксплуатации",
+      "url": "https://bb-portal.mercedes-benz-trucks.com/en/GLOBAL/lastkraftwagen/technik-und-informationen/auswahl/betriebsanleitungen",
+      "requiresVin": false,
+      "languageNote": "Выберите Actros/Arocs, модель, рынок и год. Только эксплуатационная инструкция, не схемы ремонта."
+    },
+    {
+      "category": "truck",
+      "makeKey": "kamaz",
+      "modelKeys": [
+        "54901",
+        "54902"
+      ],
+      "title": "КАМАЗ — официальный портал эксплуатационной документации",
+      "url": "https://guide.kamaz.ru/",
+      "requiresVin": false,
+      "languageNote": "Выберите поколение K5 и модификацию автомобиля. Документы других версий нельзя использовать без проверки комплектации."
     }
   ],
   "recoveryMedia": [
