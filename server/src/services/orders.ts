@@ -637,23 +637,32 @@ export class OrdersService {
 
   /** Мастер закрывает выезд. Сумму за работу он не вводит: она идёт по таймеру и цене часа, о которой договорились заранее.
    *  Сверху — только расходники и запчасти отдельными строками, клиент видит каждую. */
-  async proposeAmount(user: AuthUser, orderId: string, p: { extras?: Extra[]; result?: 'solved' | 'cause_found' | 'not_found'; note?: string }) {
+  async proposeAmount(user: AuthUser, orderId: string, p: {
+    extras?: Extra[]; result?: 'solved' | 'cause_found' | 'not_found';
+    note?: string; warrantyDays?:7|14|30|null; warrantyWork?:string
+  }) {
     const o = await this.mustBePerformer(user, orderId);
     if (o.service === 'consult') throw bad('consult_fixed', 'Цена консультации фиксированная. Закройте её с подсказкой.');
     const to = transition(o.status, 'propose_amount', 'performer');
     if (['cause_found', 'not_found'].includes(p.result ?? '') && (p.note?.trim().length ?? 0) < 10)
       throw bad('result_reason_required', 'Напишите, почему неисправность нельзя устранить на месте (не меньше 10 символов)');
+    const warrantyDays=p.warrantyDays??null;
+    const warrantyWork=(p.warrantyWork??p.note??'').trim();
+    if(warrantyDays!==null&&warrantyWork.length<5)
+      throw bad('warranty_work_required','Для гарантии напишите, что именно выполнено (не менее 5 символов)');
     const extras = (p.extras ?? []).map((x) => ({ name: x.name.trim(), amount: x.amount })).filter((x) => x.name && x.amount > 0);
     if (extras.some((x) => !Number.isInteger(x.amount))) throw bad('bad_amount', 'Сумма — целое число копеек');
     const bill = await this.billFor(o, extras);
     await this.guarded(this.db,
       `update orders set status=$2, work_amount=$3, bill=$9, amount_proposed_at=$6, amount_confirmed_at=null,
          wait_minutes=$10, wait_started_at=null,
-         result=coalesce($4,result), result_note=coalesce($5,result_note) where id=$1 and status=$7 and performer_id=$8`,
-      [orderId, to, bill.total, p.result ?? null, p.note ?? null, this.now(), o.status, user.id, bill, bill.waitMinutes],
+         result=coalesce($4,result), result_note=coalesce($5,result_note),
+         warranty_days=$11, warranty_work_summary=$12
+         where id=$1 and status=$7 and performer_id=$8`,
+      [orderId, to, bill.total, p.result ?? null, p.note ?? null, this.now(), o.status, user.id, bill, bill.waitMinutes,warrantyDays,warrantyWork||null],
     );
     const m = this.money({ ...o, work_amount: bill.total });
-    await this.event(this.db, orderId, user.id, 'amount_proposed', { workAmount: bill.total, total: m.total, result: p.result, bill });
+    await this.event(this.db, orderId, user.id, 'amount_proposed', { workAmount: bill.total, total: m.total, result: p.result, bill,warrantyDays,warrantyWork });
     const parts = [
       bill.units ? `работа ${hoursText(bill.units, bill.step)} × ${rub(bill.hour!)}/ч = ${rub(bill.time)}` : null,
       bill.wait ? `ожидание ${bill.waitMinutes} мин ${rub(bill.wait)}` : null,
@@ -743,7 +752,8 @@ export class OrdersService {
       const pts = this.referral ? await this.referral.spendClientFee(q, o, m.clientFee, points) : 0;
       used += pts;
       // Подтверждаем ровно ту сумму, что видел клиент: если мастер успел её поменять — конфликт
-      await this.guarded(q, `update orders set status=$2, amount_confirmed_at=$3, completed_at=$3
+      await this.guarded(q, `update orders set status=$2, amount_confirmed_at=$3, completed_at=$3,
+          warranty_started_at=case when warranty_days is not null then $3 else null end
           where id=$1 and status='awaiting_confirmation' and work_amount is not distinct from $4 and performer_id=$5`,
         [orderId, to, this.now(), o.work_amount, o.performer_id]);
       await q.query(`update performer_profiles set line_status='online' where user_id=$1 and line_status='on_job'`, [o.performer_id]);
@@ -997,6 +1007,7 @@ export class OrdersService {
       service: o.service, isSos: o.is_sos, problem: o.problem, description: o.description,
       address: o.address, lat: o.lat, lng: o.lng, zoneId: o.zone_id, night: o.night, groupTrip: o.group_trip, tier: o.tier,
       brand: o.brand, model: o.model, year: o.year, vehicleId: o.vehicle_id, vehicle, estimate: o.estimate, paymentMethod: o.payment_method,
+      warrantyDays:o.warranty_days??null,warrantyWork:o.warranty_work_summary??null,warrantyStartedAt:o.warranty_started_at??null,
       auction: o.status === 'searching' && !!o.auction_until, auctionUntil: o.auction_until, autoPick: o.auto_pick, search, searchStage,
       limits: o.status === 'searching' ? this.auction.limits(o, (await this.settings.get('dispatch'))) : null,
       destination: o.destination, cargo: o.cargo, loaded: o.loaded, driverOnSite: o.driver_on_site, discountReason: o.discount_reason,
