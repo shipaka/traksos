@@ -15,9 +15,32 @@ type EcuJob={
 type EcuOffer={
   order_id:string;service:string;is_sos:boolean;brand:string|null;
   address:string|null;description:string|null;distance_km:number|null;
-  limits:any;my_price?:number;additional_to?:string|null
+  limits:any;my_price?:number;is_linked_stage?:boolean
 };
 const inProgress=new Set(['accepted','en_route','arrived','working','awaiting_confirmation']);
+
+function EcuJobCard({job}:{job:EcuJob}){
+  return <a href={'#/order/'+job.id} className="card hi stack"
+    style={{textDecoration:'none',color:'inherit'}}>
+    <b>№{job.number} · {SERVICES[job.service]?.name??'ЭБУ'}</b>
+    <span>{job.brand??'Грузовой транспорт'} · {STATUS[job.status]?.name??job.status}</span>
+    {job.additional_to&&<span className="note">Дополнительная работа к заявке
+      {job.parent_number?' №'+job.parent_number:''}. Договор и оплата отдельные.</span>}
+    <span className="note">{job.address??'Адрес уточняется'} · Открыть заявку</span>
+  </a>;
+}
+function EcuOfferCard({offer,onDone}:{offer:EcuOffer;onDone:()=>void}){
+  return <article className="card stack">
+    <b>{offer.is_sos?'SOS · ':''}ЭБУ · {offer.brand??'грузовой транспорт'}</b>
+    {offer.is_linked_stage&&<span className="note">Дополнительный этап ремонта. Финансы
+      и переписка другого исполнителя не доступны.</span>}
+    {offer.description&&<p className="note">{offer.description}</p>}
+    <p className="note">{offer.address??'Место уточняется'}
+      {offer.distance_km!=null?' · '+offer.distance_km.toFixed(1)+' км':''}</p>
+    <OfferForm orderId={offer.order_id} limits={offer.limits} myPrice={offer.my_price}
+      onDone={onDone}/>
+  </article>;
+}
 /**
  * A specialized desk, not a new auth role. Existing verified performer.kind
  * 'ecu' is dispatched by the same order system and uses its own contracts.
@@ -41,6 +64,11 @@ export function EcuDesk(){
     profile.line_status==='on_job';
   const active=(jobs.data??[]).filter(o=>inProgress.has(o.status));
   const past=(jobs.data??[]).filter(o=>!inProgress.has(o.status));
+  const standalone=active.filter(o=>!o.additional_to);
+  const additional=active.filter(o=>Boolean(o.additional_to));
+  const ecuOffers=(offers.data??[]).filter(o=>o.service==='ecu');
+  const standaloneOffers=ecuOffers.filter(o=>!o.is_linked_stage);
+  const linkedOffers=ecuOffers.filter(o=>Boolean(o.is_linked_stage));
   const change=async(status:'online'|'on_call'|'offline')=>{
     const ok=await run(()=>post('/api/performer/line',{lineStatus:status}),
       status==='offline'?'Приём новых заявок остановлен':'Доступность изменена');
@@ -90,30 +118,29 @@ export function EcuDesk(){
       {jobs.data&&active.length===0&&<p className="card note">
         Пока активных заявок нет. После назначения появится отдельная карточка.
       </p>}
-      {active.map(job=><a key={job.id} href={'#/order/'+job.id}
-        className="card hi stack" style={{textDecoration:'none',color:'inherit'}}>
-        <b>№{job.number} · {SERVICES[job.service]?.name??'ЭБУ'}</b>
-        <span>{job.brand??'Грузовой транспорт'} · {STATUS[job.status]?.name??job.status}</span>
-        {job.additional_to&&<span className="note">Дополнительная работа к заявке
-          {job.parent_number?' №'+job.parent_number:''}. Ваш заказ и оплата самостоятельны.</span>}
-        <span className="note">{job.address??'Адрес уточняется'} · Открыть заявку</span>
-      </a>)}
+      {active.length>0&&<>
+        <h3>Самостоятельные заказы ЭБУ · {standalone.length}</h3>
+        {standalone.length===0&&<p className="note">Сейчас самостоятельных заказов нет.</p>}
+        {standalone.map(job=><EcuJobCard key={job.id} job={job}/>)}
+        <h3>Дополнительные этапы ремонта · {additional.length}</h3>
+        {additional.length===0&&<p className="note">Дополнительных работ пока нет.</p>}
+        {additional.map(job=><EcuJobCard key={job.id} job={job}/>)}
+      </>}
     </section>
 
     <section className="stack" aria-label="Новые предложения">
       <h2>Новые предложения</h2>
       {offers.error&&<p role="alert">{offers.error}
         <button type="button" className="btn ghost" onClick={offers.reload}>Повторить</button></p>}
-      {offers.data?.length===0&&<p className="note">Пока предложений нет.</p>}
-      {(offers.data??[]).filter(o=>o.service==='ecu').map(o=><article
-        key={o.order_id} className="card stack">
-        <b>{o.is_sos?'SOS · ':''}ЭБУ · {o.brand??'грузовой транспорт'}</b>
-        {o.description&&<p className="note">{o.description}</p>}
-        <p className="note">{o.address??'Место уточняется'}
-          {o.distance_km!=null?' · '+o.distance_km.toFixed(1)+' км':''}</p>
-        <OfferForm orderId={o.order_id} limits={o.limits} myPrice={o.my_price}
-          onDone={offers.reload}/>
-      </article>)}
+      {offers.data&&ecuOffers.length===0&&<p className="note">Пока предложений нет.</p>}
+      {ecuOffers.length>0&&<>
+        <h3>Самостоятельные заказы · {standaloneOffers.length}</h3>
+        {standaloneOffers.map(o=><EcuOfferCard key={o.order_id} offer={o}
+          onDone={offers.reload}/>)}
+        <h3>Дополнительные работы · {linkedOffers.length}</h3>
+        {linkedOffers.map(o=><EcuOfferCard key={o.order_id} offer={o}
+          onDone={offers.reload}/>)}
+      </>}
     </section>
 
     <section className="card stack" aria-label="Результаты и действия">
