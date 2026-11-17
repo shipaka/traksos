@@ -60,19 +60,23 @@ create table if not exists checkpoint_arrival_attempts (
   explanation text,
   outcome text not null check(outcome in ('candidate','needs_review')),
   evaluation jsonb not null,
-  sample_digest char(64) not null check (sample_digest ~ '^[a-f0-9]{64}
+  sample_digest char(64) not null check (sample_digest ~ '^[a-f0-9]{64}$'),
+  sample_count integer not null check(sample_count between 0 and 200),
+  gps_consent_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  unique(plan_id,request_key),
+  check (jsonb_typeof(evaluation)='object')
+);
 create index if not exists checkpoint_attempts_order_recent
   on checkpoint_arrival_attempts(order_id,created_at desc);
 create index if not exists checkpoint_attempts_plan_recent
   on checkpoint_arrival_attempts(plan_id,created_at desc);
 
--- GPS samples contain precise location. Keep them separate from durable
--- decision/audit records so they can be purged after a finite retention window.
--- 30 days is a conservative DRAFT; legal basis and dispute holds must be
--- approved before connecting live location capture.
+-- Raw GPS snapshots have an independently purgeable retention period.
+-- A signed legal-hold/dispute policy is required before production activation.
 create table if not exists checkpoint_arrival_sample_snapshots (
   attempt_id uuid primary key references checkpoint_arrival_attempts(id) on delete cascade,
-  sample_snapshot jsonb not null check(jsonb_typeof(sample_snapshot)='array'),
+  sample_snapshot jsonb not null check (jsonb_typeof(sample_snapshot)='array'),
   expires_at timestamptz not null default (now() + interval '30 days')
 );
 create index if not exists checkpoint_arrival_snapshots_expiry
@@ -107,48 +111,6 @@ create trigger checkpoint_attempts_immutable before update or delete on checkpoi
 for each row execute function checkpoint_evidence_immutable();
 create trigger checkpoint_decisions_immutable before update or delete on checkpoint_arrival_decisions
 for each row execute function checkpoint_evidence_immutable();
--- Snapshot rows may be permanently DELETED on expiry for privacy, but never
--- modified to forge evidence. The append-only summary survives the purge.
+-- Delete expired precise GPS, but never rewrite the stored snapshot.
 create trigger checkpoint_snapshots_immutable before update on checkpoint_arrival_sample_snapshots
-for each row execute function checkpoint_evidence_immutable();
-),
-  sample_count integer not null check(sample_count between 0 and 200),
-  gps_consent_at timestamptz not null default now(), -- explicit consent for this single evidence attempt
-  created_at timestamptz not null default now(),
-  unique(plan_id,request_key),
-  check (jsonb_typeof(evaluation)='object')
-);
-create index if not exists checkpoint_attempts_order_recent
-  on checkpoint_arrival_attempts(order_id,created_at desc);
-create index if not exists checkpoint_attempts_plan_recent
-  on checkpoint_arrival_attempts(plan_id,created_at desc);
-
--- Explicit human disposition; still does NOT start paid time or mutate an
--- existing order status. One decision per attempt to prevent contradictory
--- "proof"; mistakes require a separate documented dispute mechanism.
-create table if not exists checkpoint_arrival_decisions (
-  id uuid primary key default gen_random_uuid(),
-  attempt_id uuid not null unique references checkpoint_arrival_attempts(id) on delete restrict,
-  order_id uuid not null references orders(id) on delete cascade,
-  decision text not null check(decision in ('corroborated','insufficient')),
-  explanation text not null check(char_length(explanation) between 20 and 2000),
-  decided_by uuid not null references users(id),
-  decided_at timestamptz not null default now()
-);
-create index if not exists checkpoint_decisions_order
-  on checkpoint_arrival_decisions(order_id,decided_at desc);
-
--- Evidence is append-only; pass review and later changes are separate events.
-create or replace function checkpoint_evidence_immutable()
-returns trigger language plpgsql as $$
-begin
-  raise exception 'Checkpoint evidence is immutable; append a new case/event instead';
-end $$;
-create trigger checkpoint_plans_immutable before update or delete on checkpoint_evidence_plans
-for each row execute function checkpoint_evidence_immutable();
-create trigger checkpoint_reviews_immutable before update or delete on checkpoint_pass_reviews
-for each row execute function checkpoint_evidence_immutable();
-create trigger checkpoint_attempts_immutable before update or delete on checkpoint_arrival_attempts
-for each row execute function checkpoint_evidence_immutable();
-create trigger checkpoint_decisions_immutable before update or delete on checkpoint_arrival_decisions
 for each row execute function checkpoint_evidence_immutable();
