@@ -2,7 +2,8 @@
 .air-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
 .air-heading h1{font-size:clamp(1.6rem,3vw,2.4rem);line-height:1.15;margin:6px 0}
 .air-heading p{max-width:65ch;margin:0;opacity:.83}
-.air-tabs,.air-pane-tabs{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:thin}
+.air-tabs,.air-pane-tabs{box-sizing:border-box;display:flex;min-width:0;max-width:100%;width:100%;gap:6px;overflow-x:auto;overflow-y:hidden;padding:2px 0 8px;scrollbar-width:thin;overscroll-behavior-x:contain}
+.air-tabs>button,.air-pane-tabs>button{flex:0 0 auto}
 .air-tabs button,.air-pane-tabs button{border-radius:13px;border:1px solid var(--line,#506078);
 background:transparent;color:inherit;font:inherit;padding:11px 14px;white-space:nowrap;cursor:pointer}
 .air-tabs button[aria-current=page],.air-pane-tabs button[aria-pressed=true]{background:color-mix(in srgb,var(--accent,#62cce8) 19%,transparent);border-color:var(--accent,#62cce8);font-weight:700}
