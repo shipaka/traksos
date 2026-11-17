@@ -9,7 +9,7 @@ const numeric=z.string().regex(/^\d{1,16}$/);
 const reasons=z.string().trim().min(30).max(1500);
 type AppealReport={
   id:string;case_id:string;reply_id:string|null;decision:string|null;
-  status:string;reviewed_by:string|null;reviewed_at:Date|null;
+  status:string;reviewed_by:string|null;reviewed_at:Date|null;reporter_id:string;
   room_id:string;case_author:string;reply_author:string|null;
   case_state:string;reply_state:string|null
 };
@@ -18,7 +18,7 @@ export function registerProfessionalCaseAppeals(r:Router,db:Db,notifier:Notifier
   async function reportDetails(reportId:string){
     const row=await db.one<AppealReport>(`
       select x.id::text as id,x.case_id,x.reply_id::text as reply_id,
-        x.decision,x.status,x.reviewed_by,x.reviewed_at,t.room_id,
+        x.decision,x.status,x.reviewed_by,x.reviewed_at,x.reporter_id,t.room_id,
         t.author_id as case_author,r.author_id as reply_author,
         t.moderation_state as case_state,r.moderation_state as reply_state
       from community_technical_case_reports x
@@ -113,14 +113,14 @@ export function registerProfessionalCaseAppeals(r:Router,db:Db,notifier:Notifier
       const b=parse(z.object({decision:z.enum(['upheld','overturned']),
         note:z.string().trim().min(15).max(1500)}),c.body);
       const outcome=await db.tx(async q=>{
-        const a=await q.one<{id:string;report_id:string;case_id:string;status:string}>(
-          'select id::text as id,report_id::text as report_id,case_id,status '+
+        const a=await q.one<{id:string;report_id:string;case_id:string;appellant_id:string;status:string}>(
+          'select id::text as id,report_id::text as report_id,case_id,appellant_id,status '+
           'from community_technical_case_appeals where id=$1 for update',[id]);
         if(!a)throw notFound('Обжалование не найдено');
         if(a.status!=='pending')throw conflict('appeal_reviewed','Обжалование уже рассмотрено');
         const r=await q.one<AppealReport>(`
           select x.id::text as id,x.case_id,x.reply_id::text as reply_id,
-            x.decision,x.status,x.reviewed_by,x.reviewed_at,
+            x.decision,x.status,x.reviewed_by,x.reviewed_at,x.reporter_id,
             t.room_id,t.author_id as case_author,y.author_id as reply_author,
             t.moderation_state as case_state,y.moderation_state as reply_state
           from community_technical_case_reports x
@@ -128,7 +128,7 @@ export function registerProfessionalCaseAppeals(r:Router,db:Db,notifier:Notifier
           left join community_technical_case_replies y on y.id=x.reply_id
           where x.id=$1`,[a.report_id]);
         if(!r)throw notFound('Решение по жалобе не найдено');
-        if(r.reviewed_by===c.user.id)
+        if(r.reviewed_by===c.user.id||r.reporter_id===c.user.id||a.appellant_id===c.user.id)
           throw conflict('independent_review_required',
             'Пересматривать собственное решение должен другой модератор или администратор');
         const parent=await q.one<{knowledge_proposal_id:string|null}>(
