@@ -1,6 +1,7 @@
 import {z} from 'zod';
 import type {Db} from '../db/index.ts';
 import type {Notifier} from './notify.ts';
+import type {CommunityNotifications} from './communityNotifications.ts';
 import {roomLiveRecipients} from './community.ts';
 import type {Router,AuthUser,AuthedCtx} from '../http/router.ts';
 import {parse,bad,forbidden,notFound,conflict,HttpError} from '../http/router.ts';
@@ -95,12 +96,22 @@ function publicCase(row:CaseRow & {nickname?:string|null},userId:string){
     isAuthor:author_id===userId,
     hasKnowledgeProposal:Boolean(knowledge_proposal_id)};
 }
-export function registerProfessionalCasesRoutes(r:Router,db:Db,notifier:Notifier){
+export function registerProfessionalCasesRoutes(r:Router,db:Db,notifier:Notifier,alerts:CommunityNotifications){
   const notify=async(roomId:string,from:string,caseId:string,kind:string)=>{
     const room=await db.one<ProRoom>(
       'select id,active,audience,specialty from community_rooms where id=$1',[roomId]);
     if(!room?.active)return;
     const users=await roomLiveRecipients(db,room,from);
+    if(kind==='reply'){
+      const caseRow=await db.one<{author_id:string}>(
+        'select author_id from community_technical_cases where id=$1',[caseId]);
+      if(caseRow&&users.includes(caseRow.author_id)){
+        notifier.live(users.filter(id=>id!==caseRow.author_id),
+          {type:'community_technical_case',roomId,caseId,kind});
+        await alerts.caseReply(caseRow.author_id,roomId,caseId);
+        return;
+      }
+    }
     notifier.live(users,{type:'community_technical_case',roomId,caseId,kind});
   };
   // Preview never exposes an order identifier to the professional room.
