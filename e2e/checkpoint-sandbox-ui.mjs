@@ -5,6 +5,7 @@
  */
 import { chromium, devices } from 'playwright';
 import assert from 'node:assert/strict';
+import { randomBytes } from 'node:crypto';
 import { mkdir } from 'node:fs/promises';
 
 const BASE=process.env.BASE_URL ?? 'http://127.0.0.1:8080';
@@ -35,6 +36,17 @@ await api('PUT','/api/performer/profile',{
   kind:'master',name:'Checkpoint sandbox test worker',specialties:['electric'],
   taxStatus:'self_employed',inn:'780000000557',
 },worker.token);
+// CI-only synthetic photos, reviewed by the admin through the real,
+ // unchanged verification workflow before this actor can receive work.
+for (const kind of ['passport','selfie','car_front']) {
+  const bytes=Buffer.concat([Buffer.from([0xff,0xd8,0xff]),randomBytes(20_000)]);
+  const saved=await api('POST','/api/performer/documents',{
+    kind,dataUrl:'data:image/jpeg;base64,'+bytes.toString('base64'),
+  },worker.token);
+  await api('POST','/api/admin/documents/'+saved.id,
+    {status:'approved'},admin.token);
+}
+await api('POST','/api/performer/documents/submit',{},worker.token);
 await api('POST','/api/admin/performers/'+worker.id+'/verify',
   {decision:'approved'},admin.token);
 await api('POST','/api/performer/line',{lineStatus:'online'},worker.token);
