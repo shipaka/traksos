@@ -5,6 +5,7 @@ import { slot, endOfMoscowDay, validSchedule, type Schedule } from '../domain/sc
 import { normalizePhone } from '../util.ts';
 import { plausibleGpsStep } from '../domain/geo.ts';
 import { assertRoleExtension } from '../domain/roles.ts';
+import { isVerifiedRecoveryUnitLabel } from './vehicleOwnerShelf.ts';
 
 export interface PerformerInput {
   kind: 'master' | 'tow' | 'service' | 'ecu';
@@ -67,6 +68,14 @@ export class ProfilesService {
     inRange(p.hourPrice, corridor.hourMin, corridor.hourMax, 'Час работы');
     if (p.inn && !/^\d{12}$/.test(p.inn)) throw bad('bad_inn', 'ИНН физлица или ИП — 12 цифр');
     if (p.cars && p.cars.length > 3) throw bad('too_many_cars', 'Не больше трёх машин');
+    if(p.kind==='tow'){
+      const selected=[...(p.cars??[]),...(p.car?[p.car]:[])];
+      for(const car of selected){
+        if(!car.brand||!await isVerifiedRecoveryUnitLabel(car.brand))
+          throw bad('unverified_recovery_vehicle',
+            'Для эвакуаторщика доступны только подтверждённые эвакуаторные надстройки. Запросите добавление своей модификации у администратора.');
+      }
+    }
     if (p.car && p.cars && !p.cars.some((c) => c.plate === p.car!.plate)) throw bad('bad_car', 'Выберите машину из своего списка');
 
     const role = p.kind === 'ecu' ? 'master' : p.kind;
