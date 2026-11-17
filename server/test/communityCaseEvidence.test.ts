@@ -51,6 +51,7 @@ test('club evidence links require professional ACL, official HTTPS host and two 
    'https://127.0.0.1/private',
    'https://www.zf.com:8443/doc',
    'https://www.zf.com/manual#token',
+   'https://www.zf.com/%ZZ',
    'https://www.zf.com/manual?vin=test',
    'https://www.zf.com/guide/WDB12345678901234',
    'javascript:alert(1)'
