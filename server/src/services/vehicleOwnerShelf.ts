@@ -17,9 +17,11 @@ type Guide = {
   category:ShelfCategory;makeKey:string;modelKeys:string[];title:string;
   url:string;requiresVin:boolean;languageNote:string;
 };
+type RecoveryPhoto = {makeKey:string;file:string;author:string;license:string;licenseUrl:string;
+  caption:string;specificModelVerified:false;sourcePage:string};
 type Data = {
   version:string;status:string;notice:string;rows:ShelfRow[];recovery:RecoveryRow[];
-  media:Photo[];guides:Guide[];
+  recoveryMedia:RecoveryPhoto[];media:Photo[];guides:Guide[];
 };
 let pending:Promise<Data>|undefined;
 export function vehicleOwnerShelf() {
@@ -61,4 +63,14 @@ export async function publicVehicleCard(category:string,makeKey:string,modelKey:
     noVehicleSpecificFuseLayout:true,
     repairSchematicsIncluded:false
   };
+}
+
+/** Illustrations of tow-truck BODY TYPES, intentionally not linked as photos of the chosen model. */
+export async function publicRecoveryGallery() {
+  const d=await vehicleOwnerShelf();
+  return {scope:'recovery_category_examples',modelMatch:'not_verified',
+    notice:'Примеры реально существующих эвакуаторов. Это НЕ фотографии выбранной модификации: подтверждайте фото шасси, надстройку, VIN и паспорт грузоподъёмности.',
+    items:d.recoveryMedia.map(p=>({makeKey:p.makeKey,src:commonsPreview(p.file),sourcePage:p.sourcePage,
+      caption:p.caption,author:p.author,license:p.license,licenseUrl:p.licenseUrl,
+      specificModelVerified:false}))};
 }
