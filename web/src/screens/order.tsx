@@ -820,7 +820,7 @@ function ConfirmAmount({ d, onDone }: { d: any; onDone: () => void }) {
         </div>
       )}
       {mode === null && <>
-        <button className="btn good" disabled={busy||(d.service==='ecu'&&!ecuAccepted)} onClick={() => send('confirm', { total: d.money.total, points: spend, proposalVersion:d.amountProposalVersion??undefined }, 'Сумма подтверждена')}>Подтверждаю {rub(d.money.total - spend)}{spend ? ' с баллами' : ''}</button>
+        <button className="btn good" disabled={busy||(d.service==='ecu'&&!ecuAccepted)} onClick={() => send('confirm', { total: d.money.total, points: spend, proposalVersion:d.amountProposalVersion??undefined, ecuConsent:d.service==='ecu'?ecuAccepted:undefined }, 'Сумма подтверждена')}>Подтверждаю {rub(d.money.total - spend)}{spend ? ' с баллами' : ''}</button>
         <button className="btn ghost" onClick={() => setMode('menu')}>Не согласен</button>
       </>}
       {mode === 'menu' && <div className="stack">
@@ -842,7 +842,7 @@ function ConfirmAmount({ d, onDone }: { d: any; onDone: () => void }) {
         <span className="note">По <a href="#/offer/client" target="_blank" rel="noreferrer">оферте</a> выезд и время работы по согласованной цене оплачиваются, если работа выполнена. Отказ платить за выполненную работу — нарушение договора: долг могут взыскать по закону, а аккаунт — заблокировать до оплаты.</span>
         <span className="note">Если работа не сделана — выберите «Работа не выполнена» и укажите причину.</span>
         <button className="btn" onClick={() => setMode('not_done')}>Работа не выполнена — указать причину</button>
-        <button className="btn good" disabled={busy||(d.service==='ecu'&&!ecuAccepted)} onClick={() => send('confirm', { total: d.money.total, points: spend, proposalVersion:d.amountProposalVersion??undefined }, 'Сумма подтверждена')}>Подтвердить {rub(d.money.total - spend)}</button>
+        <button className="btn good" disabled={busy||(d.service==='ecu'&&!ecuAccepted)} onClick={() => send('confirm', { total: d.money.total, points: spend, proposalVersion:d.amountProposalVersion??undefined, ecuConsent:d.service==='ecu'?ecuAccepted:undefined }, 'Сумма подтверждена')}>Подтвердить {rub(d.money.total - spend)}</button>
         <button className="btn bad small" disabled={busy} onClick={() => send('nonpayment', { kind: 'refuse' }, 'Поддержка подключена')}>Всё равно отказываюсь — позвать поддержку</button>
       </div>}
     </div>
