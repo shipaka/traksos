@@ -114,9 +114,6 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
-        with:
-          accept-android-sdk-licenses: true
       # The public Android SDK mirror may close a large system-image download
       # mid-stream (Premature EOF). Prepare with bounded retries BEFORE trying
       # to boot. An image-download failure must not be reported as an APK crash.
@@ -125,9 +122,18 @@ jobs:
           API_LEVEL: ${{ matrix.api-level }}
         shell: bash
         run: |
-          yes | sdkmanager --licenses > /dev/null 2>&1 || true
+          # GitHub ubuntu runner ships the official Android cmdline-tools
+          # already; avoid third-party setup actions which reinstall the
+          # removed legacy 'tools' package and fail before APK launch.
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            echo "::error::Preinstalled Android sdkmanager missing at $SDKMANAGER"
+            exit 1
+          fi
+          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
           for attempt in 1 2 3; do
-            if sdkmanager --install "system-images;android-${API_LEVEL};google_apis;x86_64" --channel=0 > sdk-image-install.log 2>&1; then
+            if "$SDKMANAGER" --install "system-images;android-${API_LEVEL};google_apis;x86_64" --channel=0 > sdk-image-install.log 2>&1; then
               echo "Android system image ${API_LEVEL} installed on attempt ${attempt}"
               exit 0
             fi
