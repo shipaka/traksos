@@ -386,6 +386,7 @@ export function NewOrder({ service }: { service: string }) {
   const { me } = useMe();
   const { busy, run } = useAction();
   const submittedRequest=useRef<{body:string;key:string}|null>(null);
+  const [submissionUncertain,setSubmissionUncertain]=useState(false);
   const pricing = useLoad(() => get('/api/pricing'), []);
   const vehicles = useLoad(() => get('/api/vehicles'), []);
   const consult = useLoad(() => (fromConsult ? get(`/api/orders/${fromConsult}`) : Promise.resolve(null)), [fromConsult]);
@@ -500,7 +501,8 @@ export function NewOrder({ service }: { service: string }) {
       submittedRequest.current={body:serialized,key:newOrderRequestKey()};
     const key=submittedRequest.current.key;
     const r = await run(() => postOrderIdempotent(payload,key));
-    if (!r) return;
+    if (!r){setSubmissionUncertain(true);return;}
+    setSubmissionUncertain(false);
     if (r.confirmationUrl) location.href = r.confirmationUrl;
     else go(`order/${r.order.id}`);
   }
@@ -535,6 +537,11 @@ export function NewOrder({ service }: { service: string }) {
         <div className="sub">{sos ? `${s?.name} · срочный вызов` : sym ? s?.name : s?.hint}</div>
       </div>
       <SelfOrderWarning me={me} />
+      {submissionUncertain&&<div className="banner warn" role="alert">
+        Если ответ потерялся из-за связи, заявка могла быть оформлена.
+        Перед изменением формы проверьте <a href="#/orders">Мои заявки</a>.
+        Повтор отправки без изменения условий использует прежний ключ и не создаёт второй заказ.
+      </div>}
       <DriverRules />
       {additionalTo&&<section className="card stack" aria-label="Дополнительная заявка по ЭБУ">
         <strong>Дополнительный специалист в этом же обращении</strong>
