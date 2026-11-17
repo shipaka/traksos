@@ -4,6 +4,7 @@ import {useLoad} from '../ui.tsx';
 import './techBase.css';
 import {TechReferenceShelf} from './techReferenceShelf.tsx';
 import {ProfessionalCases} from './professionalCases.tsx';
+import {TechnicalApplicability} from './technicalApplicability.tsx';
 
 type Article={id:string;title:string;make:string;model:string|null;
  model_year:number|null;subsystem:string;source_url:string|null};
@@ -60,6 +61,10 @@ export function OrderTechBase({orderId}:{orderId:string}){
             {detail.data.source_url&&<a href={detail.data.source_url} target="_blank" rel="noopener noreferrer">
               Открыть разрешённый источник</a>}
             <p className="note">Обязательно проверьте VIN, комплектацию, двигатель и соответствие схемы реальному автомобилю.</p>
+            <TechnicalApplicability key={detail.data.id} articleId={detail.data.id}
+              initialMake={context?.brand??detail.data.make}
+              initialModel={context?.model??detail.data.model??''}
+              initialYear={context?.year??detail.data.model_year}/>
           </>}
       </article>}
     </div>
