@@ -65,9 +65,14 @@ async function mustRoom(db: Db, c: AuthedCtx) {
   return room;
 }
 async function requireKnowledgeAccess(db: Db, u: AuthUser) {
-  if (isStaff(u)) return;
+  // Professional repair content is not part of the driver/tow club.
+  // Admins moderate through separate /api/admin/community/knowledge routes;
+  // no staff bypass grants the professional reading API.
+  if(!u.roles.some(r=>r==='master'||r==='service'))
+    throw forbidden('Библиотека ремонта доступна только мастерам и СТО');
   const p = await verifiedProfile(db,u);
-  if (p?.verification !== 'approved') throw forbidden('ТехБаза доступна только подтверждённым специалистам');
+  if(p?.verification !== 'approved' || !['master','service','ecu'].includes(p.kind))
+    throw forbidden('Необходим подтверждённый профиль мастера или СТО');
 }
 
 // Live hints must obey exactly the same audience rules as reading a room.

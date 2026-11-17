@@ -44,23 +44,21 @@ function safeMeta(value:string|null|undefined){
 async function access(db:Db,u:AuthUser,roomId:string,write=false){
   const room=await db.one<ProRoom>('select id,active,audience,specialty from community_rooms where id=$1',[roomId]);
   if(!room||room.audience!=='professional'||!room.active)throw notFound('Клуб не найден');
-  const staff=u.roles.includes('admin')||u.roles.includes('moderator');
-  if(!staff){
-    if(!u.roles.some(r=>['master','tow','service'].includes(r)))
-      throw notFound('Клуб не найден');
-    const p=await db.one<{kind:string;verification:string;specialties:string[]}>(
-      'select kind,verification,specialties from performer_profiles where user_id=$1',[u.id]);
-    if(p?.verification!=='approved'||!p||
-      (room.specialty!==null &&
-        !(room.specialty==='tow'&&p.kind==='tow') &&
-        !(room.specialty==='service'&&p.kind==='service') &&
-        !(room.specialty==='ecu'&&(p.kind==='ecu'||p.specialties.includes('ecu'))) &&
-        !p.specialties.includes(room.specialty)))
-      throw notFound('Клуб не найден');
-    if(write&&!await db.one(
-      'select 1 from community_memberships where room_id=$1 and user_id=$2',[roomId,u.id]))
-      throw forbidden('Сначала присоединитесь к профессиональному клубу');
-  }
+  // Repair cases are distinct from recovery-operator chat rooms and moderation.
+  // Do not reveal that professional repair cases exist to tow, drivers or staff-only users.
+  if(!u.roles.some(r=>r==='master'||r==='service'))
+    throw notFound('Клуб не найден');
+  const p=await db.one<{kind:string;verification:string;specialties:string[]}>(
+    'select kind,verification,specialties from performer_profiles where user_id=$1',[u.id]);
+  if(!p||p.verification!=='approved'||!['master','service','ecu'].includes(p.kind)||
+    (room.specialty!==null &&
+      !(room.specialty==='service'&&p.kind==='service') &&
+      !(room.specialty==='ecu'&&(p.kind==='ecu'||p.specialties.includes('ecu'))) &&
+      !p.specialties.includes(room.specialty)))
+    throw notFound('Клуб не найден');
+  if(write&&!await db.one(
+    'select 1 from community_memberships where room_id=$1 and user_id=$2',[roomId,u.id]))
+    throw forbidden('Сначала присоединитесь к профессиональному клубу');
   return room;
 }
 export async function openCase(db:Db,c:AuthedCtx,write=false){
@@ -123,7 +121,7 @@ export function registerProfessionalCasesRoutes(r:Router,db:Db,notifier:Notifier
   // Preview never exposes an order identifier to the professional room.
   r.get('/api/community/pro-cases/order-preview/:id',true,async(c:AuthedCtx)=>{
     const id=parse(uid,c.params.id);
-    if(!c.user.roles.some(r=>['master','tow','service'].includes(r)))
+    if(!c.user.roles.some(r=>['master','service'].includes(r)))
       throw forbidden('Только назначенному специалисту');
     const profile=await db.one<{verification:string}>(
       'select verification from performer_profiles where user_id=$1',[c.user.id]);
@@ -157,7 +155,7 @@ export function registerProfessionalCasesRoutes(r:Router,db:Db,notifier:Notifier
   // were drafted from their order. Never expose this mapping to club members.
   r.get('/api/community/pro-cases/for-order/:id',true,async(c:AuthedCtx)=>{
     const orderId=parse(uid,c.params.id);
-    if(!c.user.roles.some(role=>['master','tow','service'].includes(role)))
+    if(!c.user.roles.some(role=>['master','service'].includes(role)))
       throw forbidden('Связанные технические вопросы доступны только назначенному специалисту');
     const profile=await db.one<{verification:string}>(
       'select verification from performer_profiles where user_id=$1',[c.user.id]);

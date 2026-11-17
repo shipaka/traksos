@@ -16,13 +16,12 @@ export type TechReference = {
 };
 
 export async function requireTechBaseAccess(db:Db,c:AuthedCtx){
-  if(c.user.roles.includes('admin')||c.user.roles.includes('moderator'))return;
-  if(!c.user.roles.some(x=>['master','tow','service'].includes(x)))
-    throw forbidden('Технические материалы доступны только подтверждённым специалистам');
-  const p=await db.one<{verification:string}>(
-    'select verification from performer_profiles where user_id=$1',[c.user.id]);
-  if(p?.verification!=='approved')
-    throw forbidden('Технические материалы доступны только подтверждённым специалистам');
+  if(!c.user.roles.some(x=>x==='master'||x==='service'))
+    throw forbidden('Материалы ремонта доступны только мастерам и СТО');
+  const p=await db.one<{kind:string;verification:string}>(
+    'select kind,verification from performer_profiles where user_id=$1',[c.user.id]);
+  if(p?.verification!=='approved'||!['master','service','ecu'].includes(p.kind))
+    throw forbidden('Требуется подтверждённый профиль мастера или СТО');
 }
 
 const referenceSelect=`id,slug,title,source_kind,coverage,make,model,subsystem,

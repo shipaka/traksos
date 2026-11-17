@@ -247,10 +247,12 @@ function App() {
     case 'courier': screen = b==='admin' && isAdmin ? <CourierAdmin /> : isCourier ? <CourierHome /> : <main><div className="empty">Кабинет доступен только курьерам, которых назначил администратор.</div></main>; break;
     case 'air': screen = me.roles.some(r=>r==='driver'||r==='client') ? <DriverAir /> : <main><div className="empty">Водительский Эфир доступен водителям и владельцам транспорта.</div></main>; break;
     case 'partner': screen = b==='admin' && isAdmin ? <PartnerLevelAdmin /> : (isPerformer||isService) ? <PartnerLevelView /> : <main><div className="empty">Партнёрская программа только для специалистов.</div></main>; break;
-    case 'techbase': screen = me.roles.some(r => ['master','tow','service','admin'].includes(r))
-      ? b==='order' && route[2] ? <OrderTechBase orderId={route[2]}/>
-        : b==='cases' ? <TechnicalBase initialTab="cases" initialRoomSlug={route[2]}/> : <TechnicalBase />
-      : <main><div className="empty">ТехБаза доступна только подтверждённым специалистам.</div></main>; break;
+    case 'techbase': screen = me.roles.some(r => r==='master'||r==='service'||r==='admin')
+      ? b==='order' && route[2] && me.roles.some(r=>r==='master'||r==='service')
+        ? <OrderTechBase orderId={route[2]}/>
+        : b==='cases' && me.roles.some(r=>r==='master'||r==='service')
+          ? <TechnicalBase initialTab="cases" initialRoomSlug={route[2]}/> : <TechnicalBase />
+      : <main><div className="empty">Нет доступа к разделу.</div></main>; break;
     case 'profile': screen = <Profile />; break;
     case 'invite': screen = <Invite />; break;
     case 'r': screen = <Invite />; break;
@@ -365,7 +367,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
        ['/work/me/money', 'Финансы и выплаты'], ['/work/me/tax', 'Налоговый статус'],
        ['/work/me/level', 'Рейтинг и уровень'], ['/work/docs', 'Проверка и документы'],
        ['/reviews', 'Отзывы'], ['/invite', 'Пригласить партнёра'],
-       ['/work/jobs', 'История заявок'], ['/partner', 'TrakSOS Партнёр · привилегии и обжалование'], ['/techbase', 'Профессиональная ТехБаза'], ['/profile', 'Аккаунт']]
+       ['/work/jobs', 'История заявок'], ['/partner', 'TrakSOS Партнёр · привилегии и обжалование'], ...(me?.roles.some(r=>r==='master'||r==='service') ? [['/techbase', 'Профессиональная ТехБаза']] as [string,string][] : []), ['/profile', 'Аккаунт']]
     : mode === 'service'
       ? [...(me?.roles.some(r => r === 'master' || r === 'tow') ? [['/work', 'Выездной мастер — заявки']] as [string, string][] : []),
          ['/base', 'Заявки и история ремонтов'], ['/base/me', 'Карточка СТО'],

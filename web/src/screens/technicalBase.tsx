@@ -156,9 +156,9 @@ function AdminKnowledgeQueue(){
 export function TechnicalBase({initialTab='sources',initialRoomSlug}:{initialTab?:'sources'|'cases';initialRoomSlug?:string}={}){
  const {me}=useMe();
  const admin=Boolean(me?.roles.includes('admin'));
- const professional=Boolean(me?.roles.some(r=>['master','tow','service'].includes(r)));
- const [tab,setTab]=useState<'sources'|'search'|'cases'|'propose'|'review'|'source-review'|'case-reports'|'appeals'|'appeal-review'|'variants'|'notifications'|'evidence'>(initialTab);
- if(!professional&&!admin)return <main className="tech-shell"><h1>ТехБаза</h1><p>Раздел доступен только подтверждённым специалистам.</p></main>;
+ const professional=Boolean(me?.roles.some(r=>r==='master'||r==='service'));
+ const [tab,setTab]=useState<'sources'|'search'|'cases'|'propose'|'review'|'source-review'|'case-reports'|'appeals'|'appeal-review'|'variants'|'notifications'|'evidence'>(!professional&&admin?'review':initialTab);
+ if(!professional&&!admin)return <main className="tech-shell"><p>Нет доступа к разделу.</p></main>;
  return <main className="tech-shell">
   <header className="tech-head">
    <div><span className="note">TRAKSOS · ПРОФЕССИОНАЛЬНАЯ БАЗА</span><h1>ТехБаза</h1>
@@ -166,8 +166,8 @@ export function TechnicalBase({initialTab='sources',initialRoomSlug}:{initialTab
    <a href="#/" className="btn ghost">В кабинет</a>
   </header>
   <nav className="tech-tabs" aria-label="ТехБаза">
-   <button aria-current={tab==='sources'?'page':undefined} onClick={()=>setTab('sources')}>Схемы и источники</button>
-   <button aria-current={tab==='search'?'page':undefined} onClick={()=>setTab('search')}>Проверенные решения</button>
+   {professional&&<button aria-current={tab==='sources'?'page':undefined} onClick={()=>setTab('sources')}>Схемы и источники</button>}
+   {professional&&<button aria-current={tab==='search'?'page':undefined} onClick={()=>setTab('search')}>Проверенные решения</button>}
    {professional&&<button aria-current={tab==='cases'?'page':undefined} onClick={()=>setTab('cases')}>Советы коллег</button>}
    {professional&&<button aria-current={tab==='notifications'?'page':undefined} onClick={()=>setTab('notifications')}>Уведомления</button>}
    {professional&&<button aria-current={tab==='appeals'?'page':undefined} onClick={()=>setTab('appeals')}>Мои обжалования</button>}
@@ -181,8 +181,8 @@ export function TechnicalBase({initialTab='sources',initialRoomSlug}:{initialTab
    {admin&&<button aria-current={tab==='source-review'?'page':undefined}
       onClick={()=>setTab('source-review')}>Контроль источников</button>}
   </nav>
-  {tab==='sources'&&<TechReferenceShelf/>}
-  {tab==='search'&&<ApprovedKnowledge/>}
+  {tab==='sources'&&professional&&<TechReferenceShelf/>}
+  {tab==='search'&&professional&&<ApprovedKnowledge/>}
   {tab==='cases'&&professional&&<ProfessionalCases initialRoomSlug={initialRoomSlug}/>}
   {tab==='appeals'&&professional&&<MyTechnicalAppeals/>}
   {tab==='notifications'&&professional&&<CommunityNotificationSettings professional/>}
