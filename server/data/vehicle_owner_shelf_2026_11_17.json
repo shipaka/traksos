@@ -442,7 +442,7 @@
       "match": "family",
       "label": "Kögel Cargo Rail, иллюстрация шторного полуприцепа",
       "file": "Kögel Euro Trailer Cargo Rail.jpg",
-      "author": "Koegel Trailer",
+      "author": "Kögel",
       "license": "CC BY-SA 4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
       "checkedOn": "2026-11-17"
@@ -511,6 +511,28 @@
       "url": "https://www.cargobull.com/en-ov/services/trailer-services/my-cargobull",
       "requiresVin": true,
       "languageNote": "Для документов конкретного полуприцепа может потребоваться личный кабинет."
+    }
+  ],
+  "recoveryMedia": [
+    {
+      "makeKey": "scania",
+      "file": "Scania tow truck with Boniface Hinaus Haapanen.jpg",
+      "author": "Antti Leppänen",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "caption": "Реальный тяжёлый эвакуатор Scania с надстройкой Boniface; не выбранная модель R580",
+      "specificModelVerified": false,
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Scania_tow_truck_with_Boniface_Hinaus_Haapanen.jpg"
+    },
+    {
+      "makeKey": "mercedes-benz",
+      "file": "Mercedes-Benz Arocs 3351 Bleikart (1).jpg",
+      "author": "Reise Reise",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "caption": "Реальный эвакуатор Mercedes-Benz Arocs 3351 с надстройкой; не модели 4551/4163",
+      "specificModelVerified": false,
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Mercedes-Benz_Arocs_3351_Bleikart_(1).jpg"
     }
   ]
 }
