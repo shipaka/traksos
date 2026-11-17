@@ -1,5 +1,6 @@
 import {useState} from 'react';
 import {get,post,fmtTime} from '../api.ts';
+import {newOrderRequestKey} from '../orderRequestKey.ts';
 import {useAction,useLoad,useMe} from '../ui.tsx';
 
 type Evidence={
@@ -16,7 +17,7 @@ const empty={
   title:'',sourceUrl:'',documentRevision:'',mediaKind:'manual' as const,
   rightsNote:'',applicabilityNote:''
 };
-const uuid=()=>crypto.randomUUID();
+const uuid=()=>newOrderRequestKey();
 const reviewLabel=(state:string)=>state==='approved'?'подтверждено':
   state==='rejected'?'отклонено':'на проверке';
 
