@@ -14,6 +14,7 @@ import { Notifier } from './services/notify.ts';
 import { AuthService, SELF_ROLES } from './services/auth.ts';
 import { OperatorDemoAccess } from './services/operatorDemo.ts';
 import { SANDBOX_ROLES, issueSandboxTicket, exchangeSandboxTicket } from './services/sandboxTickets.ts';
+import { SANDBOX_HANDOFF_PROTOCOL, assessSandboxPeerHealth } from './services/sandboxCompatibility.ts';
 import { ReferralService } from './services/referral.ts';
 import { ProfilesService } from './services/profiles.ts';
 import { OrdersService } from './services/orders.ts';
@@ -148,7 +149,7 @@ export function createApp(d: Deps) {
   });
 
   // Служебное ----------------------------------------------------------------
-  r.get('/api/health', false, async () => ({ ok: true, db: (await d.db.one('select 1 as ok'))?.ok === 1, time: now(), sandbox: config.sandboxInstance, buildRevision: config.buildRevision }));
+  r.get('/api/health', false, async () => ({ ok: true, db: (await d.db.one('select 1 as ok'))?.ok === 1, time: now(), sandbox: config.sandboxInstance, buildRevision: config.buildRevision, sandboxHandoffVersion: SANDBOX_HANDOFF_PROTOCOL }));
 
   // Isolated fake-data demo access: NEVER returns a real auth token or AuthUser.
   // Codes are issued only by the explicitly confirmed SSH utility on the VPS.
@@ -171,17 +172,14 @@ export function createApp(d: Deps) {
         (isProd && config.buildRevision === 'unknown'))
       return { enabled: false, reason: 'Тестовый сервер ещё не настроен' };
     try {
-      // Real-time server-to-server parity check: both instances must run the
-      // same immutable image revision, not merely similar-looking screens.
+      // Allow sandbox to move ahead of production only when the stable, signed
+      // one-time ticket protocol matches and the isolated DB is healthy.
       const response = await fetch(config.sandboxUrl + '/api/health', {
         method:'GET', cache:'no-store', signal:AbortSignal.timeout(4000),
       });
-      const remote = await response.json() as any;
-      if (!response.ok || remote?.ok !== true || remote?.db !== true || remote?.sandbox !== true)
+      if (!response.ok)
         return { enabled:false, reason:'Тестовый сервер или его отдельная база недоступны' };
-      if (remote.buildRevision !== config.buildRevision)
-        return { enabled:false, reason:'Рабочий и тестовый серверы используют разные версии приложения' };
-      return { enabled:true, buildRevision:config.buildRevision };
+      return assessSandboxPeerHealth(await response.json(), config.buildRevision);
     } catch {
       return { enabled:false, reason:'Тестовый сервер сейчас недоступен' };
     }
