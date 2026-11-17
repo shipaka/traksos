@@ -78,6 +78,8 @@ jobs:
           node e2e/offline.mjs
           SHOTS_DIR=e2e/shots/premium-unified-client node e2e/premium-unified-client.mjs
           node e2e/flow.mjs e2e/shots
+          node e2e/archived-order-chat.mjs e2e/shots
+          node e2e/client-order-sections.mjs e2e/shots
           node e2e/admin-ops.mjs e2e/shots
           SHOTS_DIR=e2e/shots/roles node e2e/role-matrix.mjs
           SHOTS_DIR=e2e/shots/insurance node e2e/insurance-flow.mjs
