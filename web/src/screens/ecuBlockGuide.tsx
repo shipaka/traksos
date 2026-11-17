@@ -1,4 +1,5 @@
 import {useMemo,useState} from 'react';
+import './ecuBlockGuide.css';
 
 /** Curated acronym *glossary*, not a VIN-level fitment catalog.
  * Entries are authored summaries, links point to original documentation only.
