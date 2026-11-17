@@ -21,7 +21,15 @@ const topics:Topic[]=[
  {key:'road',title:'Рейсы и дороги'}
 ];
 const topicName=(id:string)=>topics.find(x=>x.key===id)?.title??id;
-function uid(){return crypto.randomUUID();}
+function uid(){
+  // Android WebView supports crypto.getRandomValues on HTTPS, even before randomUUID.
+  const bytes=new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  bytes[6]=(bytes[6]&15)|64;
+  bytes[8]=(bytes[8]&63)|128;
+  const h=Array.from(bytes,x=>x.toString(16).padStart(2,'0')).join('');
+  return [h.slice(0,8),h.slice(8,12),h.slice(12,16),h.slice(16,20),h.slice(20)].join('-');
+}
 const initialVehicle:VehicleValue={brand:'',model:'',year:''};
 
 function ExperienceCard({item,onChanged}:{item:Article;onChanged:()=>void}){
