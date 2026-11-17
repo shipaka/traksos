@@ -13,6 +13,7 @@ import { AdminRouteMap } from './AdminRouteMap.tsx';
 import { OrderTimeline } from './OrderTimeline.tsx';
 import { EcuReferralPanel } from './ecuReferralPanel.tsx';
 import { LocationSharing } from './performer.tsx';
+import {EcuRelatedOrders} from './ecuRelatedOrders.tsx';
 import { RefundForm, payStatus } from './adminUser.tsx';
 
 export function Order({ id }: { id: string }) {
@@ -48,6 +49,7 @@ export function Order({ id }: { id: string }) {
         <span className={`pill ${STATUS[d.status]?.tone}`}>{isConsult && d.status === 'accepted' ? 'На связи' : isConsult && d.status === 'awaiting_confirmation' ? 'Ждём «Вопрос решён»' : STATUS[d.status]?.name}</span>
       </div>
 
+      <EcuRelatedOrders order={d}/>
       {isPerformer && ['accepted','en_route','arrived','working'].includes(d.status)
         && <div className="card" role="region" aria-label="Технические материалы по заявке">
           <b>ТехБаза по этой машине</b>
