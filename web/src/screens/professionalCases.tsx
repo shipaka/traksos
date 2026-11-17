@@ -12,6 +12,8 @@ type Case={
  diagnostic_context:string|null;origin:string;nickname:string;isAuthor:boolean;
  hasKnowledgeProposal:boolean;accepted_reply_id:string|null;created_at:string;
 };
+type LinkedCase={id:string;roomId:string;status:string;subsystem:string;
+ make:string|null;model:string|null;modelYear:number|null;createdAt:string};
 type Preview={make:string|null;model:string|null;modelYear:number|null;
  subsystem:string|null;note:string};
 type Reply={id:string;body:string;nickname:string;created_at:string;isMine:boolean;accepted:boolean};
@@ -25,6 +27,7 @@ const emptyCase={make:'',model:'',year:'',system:'',symptoms:'',codes:'',context
 export function ProfessionalCases({orderId}:{orderId?:string}){
  const {me}=useMe();
  const [roomId,setRoomId]=useState<string|null>(null);
+ const [pendingLinked,setPendingLinked]=useState<{id:string;roomId:string}|null>(null);
  const [selected,setSelected]=useState<string|null>(null);
  const [page,setPage]=useState(0);
  const [status,setStatus]=useState('');
@@ -51,6 +54,9 @@ export function ProfessionalCases({orderId}:{orderId?:string}){
  const room=clubs.find(c=>c.id===roomId)??null;
  const preview=useLoad<Preview|null>(
    ()=>orderId?get('/api/community/pro-cases/order-preview/'+orderId):Promise.resolve(null),[orderId]);
+ const privateLinks=useLoad<{cases:LinkedCase[]}>(
+   ()=>orderId?get('/api/community/pro-cases/for-order/'+orderId):Promise.resolve({cases:[]}),
+   [orderId],e=>e.type==='community_technical_case');
  useEffect(()=>{
    if(!preview.data||!orderId)return;
    setForm(x=>({...x,make:preview.data?.make??'',
@@ -61,6 +67,14 @@ export function ProfessionalCases({orderId}:{orderId?:string}){
  useEffect(()=>{
    setSelected(null);setPage(0);setReplyAfter('0');replyPending.current=null;
  },[roomId]);
+ useEffect(()=>{
+   if(pendingLinked&&pendingLinked.roomId===roomId){
+     setSelected(pendingLinked.id);
+     setReplyAfter('0');
+     setShowComposer(false);
+     setPendingLinked(null);
+   }
+ },[roomId,pendingLinked]);
  const list=useLoad<{cases:Case[];hasMore:boolean;page:number}>(
    ()=>roomId?get('/api/community/pro-cases/rooms/'+roomId+
      '?page='+page+'&status='+encodeURIComponent(status)+'&q='+encodeURIComponent(query))
@@ -94,7 +108,7 @@ export function ProfessionalCases({orderId}:{orderId?:string}){
      'Технический вопрос опубликован в закрытом клубе');
    if(result){
      setSelected(result.case.id);setShowComposer(false);
-     setForm(emptyCase);setConfirmShare(false);await list.reload();
+     setForm(emptyCase);setConfirmShare(false);await list.reload();await privateLinks.reload();
    }
  };
  const sendReply=async()=>{
@@ -134,6 +148,27 @@ export function ProfessionalCases({orderId}:{orderId?:string}){
    <p className="note">Структурированные вопросы по технике, разбор симптомов и решения
       специалистов. Только подтверждённые мастера, эвакуаторы и СТО своей специализации.
       Закрытые материалы не копируются в открытый Эфир.</p>
+   {orderId&&<div className="tech-draft" aria-label="Личные связи с техническими вопросами">
+     <strong>Вопросы коллегам по этой заявке</strong>
+     <p className="note">Связь с номером заказа хранится только в вашем рабочем кабинете.
+       Другим участникам клуба доступны лишь опубликованные технические сведения,
+       без данных клиента. Ответы коллег не подтверждают техническую применимость.</p>
+     {privateLinks.error?<p role="alert">Не удалось загрузить свои вопросы: {privateLinks.error}
+       <button type="button" className="btn ghost" onClick={()=>void privateLinks.reload()}>Повторить</button>
+     </p>:!privateLinks.data?<p className="note">Проверяю ваши вопросы…</p>:
+       privateLinks.data.cases.length===0?<p className="note">По этой заявке ещё нет вопросов коллегам.</p>:
+       <div className="tech-actions">
+         {privateLinks.data.cases.map(item=><button type="button" key={item.id}
+           className="btn ghost"
+           onClick={()=>{setPendingLinked({id:item.id,roomId:item.roomId});setRoomId(item.roomId)}}>
+           {item.subsystem} · {item.status==='resolved'?'Решён':'Обсуждается'}
+         </button>)}
+       </div>}
+     <p className="note">Если коллеги рекомендуют отдельного специалиста по ЭБУ,
+       откройте исходную заявку и передайте клиенту рекомендацию. Заказ и оплата
+       не создаются из клуба автоматически.</p>
+     <a className="btn ghost" href={'#/order/'+orderId}>Вернуться к заявке</a>
+   </div>}
    {rooms.error&&<p role="alert">{rooms.error}</p>}
    <div className="tech-filters">
      <label>Профессиональный клуб
