@@ -116,8 +116,7 @@ export class OrdersService {
         .includes(additionalParent.status))
         throw conflict('source_order_not_started',
           'Для подключения специалиста дождитесь принятия первой заявки');
-      if(additionalParent.vehicle_id&&i.vehicleId&&
-        additionalParent.vehicle_id!==i.vehicleId)
+      if(i.vehicleId&&additionalParent.vehicle_id!==i.vehicleId)
         throw bad('different_vehicle','Связанные работы выполняются по одному автомобилю');
       if(additionalParent.brand&&i.brand&&
         additionalParent.brand.toLowerCase()!==i.brand.toLowerCase())
