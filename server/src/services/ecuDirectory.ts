@@ -18,7 +18,7 @@ export function registerEcuDirectoryRoutes(r:Router,db:Db){
       "join users u on u.id=p.user_id "+
       "left join partner_level_decisions d on d.user_id=p.user_id and d.current=true "+
       "where p.kind='ecu' and p.verification='approved' and u.status='active' "+
-      "and p.extras #>> '{ecuStation,published}'='true' "+
+      "and p.extras #>> '{ecuStation,published}'='true' and p.extras #>> '{ecuStation,publicationConsentConfirmed}'='true' "+
       "order by u.name nulls last,p.user_id limit 100");
     const stations=rows.map(row=>{
       const s=row.station||{};
@@ -41,21 +41,26 @@ export function registerEcuDirectoryRoutes(r:Router,db:Db){
     const b=parse(z.object({name:z.string().trim().min(2).max(120),
       address:z.string().trim().min(8).max(300),
       lat:z.number().min(-90).max(90),lng:z.number().min(-180).max(180),
-      published:z.boolean(),reason:z.string().trim().min(20).max(500)}),c.body);
+      published:z.boolean(),consentConfirmed:z.boolean().default(false),
+      reason:z.string().trim().min(20).max(500)}),c.body);
     return db.tx(async q=>{
       const p=await q.one<{verification:string}>(
         "select verification from performer_profiles where user_id=$1 and kind='ecu' for update",[id]);
       if(!p)throw notFound('Специалист ЭБУ не найден');
+      if(b.published&&!b.consentConfirmed)
+        throw bad('ecu_no_publication_consent','Подтвердите согласие владельца мастерской на публикацию рабочего адреса');
       if(b.published&&p.verification!=='approved')
         throw conflict('ecu_not_verified','Публикация доступна только после проверки профиля');
-      const station={name:b.name,address:b.address,lat:b.lat,lng:b.lng,published:b.published};
+      const station={name:b.name,address:b.address,lat:b.lat,lng:b.lng,
+        published:b.published,publicationConsentConfirmed:b.published&&b.consentConfirmed,
+        reviewedBy:c.user.id,reviewedAt:new Date().toISOString()};
       await q.query(
         "update performer_profiles set extras=jsonb_set(coalesce(extras,'{}'::jsonb),"+
         "'{ecuStation}',$2::jsonb,true),updated_at=now() where user_id=$1",
         [id,JSON.stringify(station)]);
       await q.query(
         "insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4)",
-        [c.user.id,'ecu.station_approved',id,{published:b.published,reason:b.reason}]);
+        [c.user.id,'ecu.station_approved',id,{published:b.published,consentConfirmed:b.consentConfirmed,reason:b.reason}]);
       return {id,station};
     });
   });
