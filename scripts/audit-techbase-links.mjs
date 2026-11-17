@@ -5,7 +5,9 @@
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {URL} from 'node:url';
 
-const sql=await readFile('server/migrations/133_knowledge_open_reference_seed.sql','utf8');
+const files=['server/migrations/133_knowledge_open_reference_seed.sql',
+  'server/migrations/140_techbase_ebs_manufacturer_portals.sql'];
+const sql=(await Promise.all(files.map(path=>readFile(path,'utf8')))).join('\n');
 const records=sql.split('\n').map(s=>s.trim()).filter(s=>s.startsWith("('"));
 const items=records.map(row=>{
   const slug=row.match(/^\('([^']+)'/u)?.[1];
@@ -15,14 +17,14 @@ const items=records.map(row=>{
   const url=new URL(source);
   const hosts=['commons.wikimedia.org','bodybuilder.scania.com',
     'bodybuilder.renault-trucks.com','www.volvotrucks.ca','www.man.eu',
-    'rmi.daf.com'];
+    'rmi.daf.com','www.zf.com','truckservices.knorr-bremse.com','www.haldex.com'];
   if(url.protocol!=='https:'||!hosts.includes(url.hostname)||
      url.username||url.password)
     throw new Error('Unapproved remote host or embedded credentials: '+slug);
   return {slug,sourceUrl:source,license};
 });
-if(items.length!==17||new Set(items.map(i=>i.slug)).size!==17)
-  throw new Error('Expected exactly 17 uniquely identified source records');
+if(items.length!==20||new Set(items.map(i=>i.slug)).size!==20)
+  throw new Error('Expected exactly 20 uniquely identified source records');
 
 const timeout=8000;
 async function probe(url,method){
