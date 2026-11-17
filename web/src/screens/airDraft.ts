@@ -16,25 +16,27 @@ export function readAirDraft(storage:DraftStorage,userId:string,endpoint:string,
   const key=keyFor(userId,endpoint);
   try{
     const raw=storage.getItem(key);
-    if(!raw)return {enabled:false,text:''};
-    const value=JSON.parse(raw) as {expires:number;enabled:boolean;text:string};
+    if(!raw)return {enabled:false,text:'',nonce:null};
+    const value=JSON.parse(raw) as {expires:number;enabled:boolean;text:string;nonce?:string};
     if(value.enabled!==true||typeof value.expires!=='number'||
        value.expires<=now||value.expires>now+AIR_DRAFT_TTL_MS||
        typeof value.text!=='string'||value.text.length>2000){
-      storage.removeItem(key);return {enabled:false,text:''};
+      storage.removeItem(key);return {enabled:false,text:'',nonce:null};
     }
-    return {enabled:true,text:value.text};
+    return {enabled:true,text:value.text,nonce:typeof value.nonce==='string'&&
+      /^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i.test(value.nonce)
+      ?value.nonce:null};
   }catch{
     try{storage.removeItem(key)}catch{}
-    return {enabled:false,text:''};
+    return {enabled:false,text:'',nonce:null};
   }
 }
 export function writeAirDraft(storage:DraftStorage,userId:string,endpoint:string,text:string,
-  now=Date.now()){
+  now=Date.now(),nonce:string|null=null){
   if(text.length>2000)return false;
   try{
     storage.setItem(keyFor(userId,endpoint),JSON.stringify({
-      enabled:true,text,expires:now+AIR_DRAFT_TTL_MS
+      enabled:true,text,expires:now+AIR_DRAFT_TTL_MS,nonce
     }));
     return true;
   }catch{return false}
