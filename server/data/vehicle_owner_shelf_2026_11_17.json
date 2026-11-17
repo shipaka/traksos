@@ -446,6 +446,42 @@
       "license": "CC BY-SA 4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
       "checkedOn": "2026-11-17"
+    },
+    {
+      "category": "trailer",
+      "makeKey": "krone",
+      "modelKey": "cool-liner",
+      "match": "family",
+      "label": "KRONE Cool Liner, пример рефрижераторного полуприцепа",
+      "file": "Csm 20b04004 Krone-Cool-Liner 96beb9ffbf.jpg",
+      "author": "Hermann Beusing, Werlte / Bernard Krone Holding",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "checkedOn": "2026-11-17"
+    },
+    {
+      "category": "trailer",
+      "makeKey": "krone",
+      "modelKey": "box-liner",
+      "match": "family",
+      "label": "KRONE Box Liner, демонстрационное шасси контейнеровоза",
+      "file": "Krone Box Liner chassis for container transport.Spielvogel 2.JPG",
+      "author": "Spielvogel",
+      "license": "CC0 1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "checkedOn": "2026-11-17"
+    },
+    {
+      "category": "trailer",
+      "makeKey": "schmitz-cargobull",
+      "modelKey": "s-ko-cool",
+      "match": "family",
+      "label": "Schmitz Cool & Fresh, пример рефрижераторного полуприцепа; серия S.KO COOL не подтверждена",
+      "file": "Schmitz Cool & Fresh.jpg",
+      "author": "Midnight Runner",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "checkedOn": "2026-11-17"
     }
   ],
   "guides": [
