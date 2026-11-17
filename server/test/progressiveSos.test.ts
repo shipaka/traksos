@@ -14,9 +14,10 @@ test('SOS stage limits are monotonic, bounded and never assume straight-line roa
   assert.equal(validStages([{radiusKm:200,maxRoadEtaMinutes:400,waitSeconds:8}]),false);
   assert.equal(validStages([stages[1],stages[0]]),false);
   assert.equal(validStages([{...stages[0]},{...stages[1],maxRoadEtaMinutes:44}]),false);
-  assert.equal(policyFor({is_sos:true,service:'electric'}, {enabled:false,stages},true),null);
-  assert.equal(policyFor({is_sos:true,service:'consult'},{enabled:true,stages},true),null);
-  assert.equal(policyFor({is_sos:true,service:'electric'},{enabled:true,stages},false),null);
+  assert.equal(policyFor({is_sos:true,service:'electric'}, {enabled:false,stages}),null);
+  assert.equal(policyFor({is_sos:true,service:'consult'},{enabled:true,stages}),null);
+  assert.deepEqual(policyFor({is_sos:true,service:'electric'},{enabled:true,stages}),stages,
+    'route outage must keep the restrictive stages rather than fall back to 220km');
   const from={lat:59.99,lng:30.32},to={lat:59.94,lng:30.34};
   assert.equal(await withinStage(stages[0],from,to,5,5,async()=>15),null,
     'even fast route is outside 2km first ring');
