@@ -135,6 +135,7 @@ export class ServiceCenters {
       whenDay: b.when_day, whenTime: b.when_time, acceptTime: b.accept_time, arrival: b.arrival, comment: b.comment,
       vehicle: b.vehicle, vehicleId: b.vehicle_id, clarifyQ: b.clarify_q, clientAnswer: b.client_answer, declineReason: b.decline_reason,
       notes, notesPublic: b.notes_public, works: b.works, amount: b.amount, discount: b.discount,
+      warrantyDays:b.warranty_days??null,warrantyWork:b.warranty_work_summary??null,warrantyStartedAt:b.warranty_started_at??null,
       commission: as === 'service' ? b.commission : undefined, points: as === 'service' ? b.points ?? 0 : undefined, paidOutAt: as === 'service' ? b.paid_out_at ?? null : undefined,
       payout: as === 'service' && b.amount != null ? b.amount - b.commission : undefined,
       toPay: b.amount != null ? b.amount - b.discount : null,
@@ -241,12 +242,19 @@ export class ServiceCenters {
   }
 
   /** «Машина готова» — галочками, что делали */
-  async ready(user: AuthUser, id: string, works: string[]) {
+  async ready(user: AuthUser, id: string, works: string[], warrantyDays:7|14|30|null=null, warrantyWork?:string) {
     const { b } = await this.mineBooking(user, id);
     if (!(REPAIR_STATUSES as readonly string[]).includes(b.status)) throw conflict('bad_status', 'Сначала отметьте, что машина приехала');
     const clean = [...new Set(works.map((w) => w.trim()).filter(Boolean))].slice(0, 20);
     if (!clean.length) throw bad('no_works', 'Отметьте, что делали');
-    await this.db.query(`update service_bookings set status='ready', works=$2, ready_at=now(), updated_at=now() where id=$1`, [id, clean]);
+    const summary=(warrantyWork??clean.join(', ')).trim().slice(0,300);
+    if(warrantyDays!==null&&summary.length<5)
+      throw bad('warranty_work_required','Для гарантии укажите выполненную работу');
+    await this.db.query(`update service_bookings
+      set status='ready', works=$2,warranty_days=$3,warranty_work_summary=$4,
+      ready_at=now(),updated_at=now()
+      where id=$1 and status in ('arrived','diagnostics','in_work','waiting_part','agreeing')`,
+      [id,clean,warrantyDays,summary||null]);
     await this.tell({ ...b, status: 'ready' }, 'Машина готова', `Сделано: ${clean.join(', ')}`);
     return this.booking(user, id);
   }
@@ -489,7 +497,8 @@ export class ServiceCenters {
     if (b.status !== 'invoiced') throw conflict('bad_status', 'Счёта ещё нет');
     if (p.agree) {
       await this.db.query(
-        `update service_bookings set status='closed', closed_at=now(), review_stars=$2, review_text=$3, updated_at=now() where id=$1`,
+        `update service_bookings set status='closed', closed_at=now(), warranty_started_at=case when warranty_days is not null then now() else null end,
+          review_stars=$2, review_text=$3, updated_at=now() where id=$1`,
         [id, p.stars ?? null, p.text?.trim() || null]);
       await this.referral?.afterBookingClosed(b.owner_id, id);
       await this.notifier.notify([b.owner_id], { type: 'booking', bookingId: id, status: 'closed' },
