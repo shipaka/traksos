@@ -9,6 +9,7 @@ import { VehicleOwnerGuide } from './VehicleOwnerGuide.tsx';
 import { VehicleOwnerExpenses } from './VehicleOwnerExpenses.tsx';
 import { native } from '../native.ts';
 import { EcuDiscovery } from './ecuDiscovery.tsx';
+import { EcuBlockGuide } from './ecuBlockGuide.tsx';
 import { insurancePresentation, isOpenInsuranceRequest } from '../insurancePresentation.ts';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
@@ -429,7 +430,7 @@ export function NewOrder({ service }: { service: string }) {
   const [cargo, setCargo] = useState<'tractor' | 'semitrailer' | 'coupling' | 'truck12' | 'bus' | 'special'>('tractor');
   const [loaded, setLoaded] = useState<'empty' | 'loaded' | 'adr'>('empty');
   const [driverOnSite, setDriverOnSite] = useState(true);
-  const [site, setSite] = useState<{ place?: string; pass?: string; meet?: string; state?: string; when?: string; time?: string }>({});
+  const [site, setSite] = useState<{ place?: string; pass?: string; meet?: string; state?: string; when?: string; time?: string; ecuBlockCode?: string; ecuBlockNote?: string }>({});
   const isTow = service === 'tow';
   const isConsult = service === 'consult';
 
@@ -608,6 +609,14 @@ export function NewOrder({ service }: { service: string }) {
       <Step n={2} id="f-what" title="Задача для специалиста" req done={need.what} missing={tried && !need.what}>
         <textarea className="field" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Коротко опишите, какая помощь нужна. Если причина неизвестна, так и напишите." />
         <span className="note">{need.what ? '✓ Хватит, чтобы специалист понял задачу' : `Хотя бы пару слов — ещё ${MIN_WHAT - description.trim().length} симв.`}</span>
+        {service==='ecu'&&<>
+          <EcuBlockGuide make={vehicles.data?.find((v:any)=>v.id===vehicleId)?.brand??car.brand}
+            selected={site.ecuBlockCode??'unknown'}
+            onSelect={code=>setSite(old=>({...old,ecuBlockCode:code}))}/>
+          <textarea className="field" maxLength={500} value={site.ecuBlockNote??''}
+            onChange={e=>setSite(old=>({...old,ecuBlockNote:e.target.value}))}
+            placeholder="Если блок не определён — симптомы, ошибка сканера, что уже проверяли"/>
+        </>}
       </Step>
 
       <Step n={3} id="f-where" title={isTow ? 'Откуда забрать' : 'Где машина'} req done={need.where} missing={tried && !need.where}>

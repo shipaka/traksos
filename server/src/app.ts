@@ -642,6 +642,7 @@ export function createApp(d: Deps) {
     site: z.object({
       place: z.enum(['parking', 'yard', 'plant', 'road']).optional(), pass: z.enum(['none', 'onsite', 'ahead']).optional(),
       meet: z.string().max(60).optional(), state: z.enum(['free', 'loading', 'other_work']).optional(),
+      ecuBlockCode:z.string().trim().max(32).optional(),ecuBlockNote:z.string().trim().max(500).optional(),
       when: z.enum(['now', 'today', 'tomorrow']).optional(), time: z.string().max(20).optional(),
     }).optional(),
   }), c.body), typeof c.headers['idempotency-key'] === 'string'

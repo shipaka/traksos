@@ -9,6 +9,7 @@ import {MyTechnicalAppeals,TechnicalAppealsQueue} from './technicalCaseAppeals.t
 import {TechnicalApplicability,AdminTechnicalApplicability} from './technicalApplicability.tsx';
 import {CommunityNotificationSettings} from './communityNotificationSettings.tsx';
 import {TechnicalCaseReportQueue} from './technicalCaseReportQueue.tsx';
+import {EcuBlockGuide} from './ecuBlockGuide.tsx';
 import {TechnicalEvidenceReviewQueue} from './technicalEvidence.tsx';
 
 type Entry={id:string;title:string;make:string;model:string|null;model_year:number|null;
@@ -157,7 +158,7 @@ export function TechnicalBase({initialTab='sources',initialRoomSlug}:{initialTab
  const {me}=useMe();
  const admin=Boolean(me?.roles.includes('admin'));
  const professional=Boolean(me?.roles.some(r=>r==='master'||r==='service'));
- const [tab,setTab]=useState<'sources'|'search'|'cases'|'propose'|'review'|'source-review'|'case-reports'|'appeals'|'appeal-review'|'variants'|'notifications'|'evidence'>(!professional&&admin?'review':initialTab);
+ const [tab,setTab]=useState<'sources'|'search'|'cases'|'propose'|'review'|'source-review'|'case-reports'|'appeals'|'appeal-review'|'variants'|'notifications'|'evidence'|'blocks'>(!professional&&admin?'review':initialTab);
  if(!professional&&!admin)return <main className="tech-shell"><p>Нет доступа к разделу.</p></main>;
  return <main className="tech-shell">
   <header className="tech-head">
@@ -169,6 +170,7 @@ export function TechnicalBase({initialTab='sources',initialRoomSlug}:{initialTab
    {professional&&<button aria-current={tab==='sources'?'page':undefined} onClick={()=>setTab('sources')}>Схемы и источники</button>}
    {professional&&<button aria-current={tab==='search'?'page':undefined} onClick={()=>setTab('search')}>Проверенные решения</button>}
    {professional&&<button aria-current={tab==='cases'?'page':undefined} onClick={()=>setTab('cases')}>Советы коллег</button>}
+   {(professional||admin)&&<button aria-current={tab==='blocks'?'page':undefined} onClick={()=>setTab('blocks')}>Коды блоков ЭБУ</button>}
    {professional&&<button aria-current={tab==='notifications'?'page':undefined} onClick={()=>setTab('notifications')}>Уведомления</button>}
    {professional&&<button aria-current={tab==='appeals'?'page':undefined} onClick={()=>setTab('appeals')}>Мои обжалования</button>}
    {professional&&<button aria-current={tab==='propose'?'page':undefined} onClick={()=>setTab('propose')}>Мои материалы</button>}
@@ -184,6 +186,7 @@ export function TechnicalBase({initialTab='sources',initialRoomSlug}:{initialTab
   {tab==='sources'&&professional&&<TechReferenceShelf/>}
   {tab==='search'&&professional&&<ApprovedKnowledge/>}
   {tab==='cases'&&professional&&<ProfessionalCases initialRoomSlug={initialRoomSlug}/>}
+  {tab==='blocks'&&(professional||admin)&&<EcuBlockGuide/>}
   {tab==='appeals'&&professional&&<MyTechnicalAppeals/>}
   {tab==='notifications'&&professional&&<CommunityNotificationSettings professional/>}
   {tab==='propose'&&professional&&<ProposeKnowledge/>}
