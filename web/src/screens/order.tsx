@@ -780,7 +780,9 @@ function ClientTab({ id, canEdit }: { id: string; canEdit: boolean }) {
 
 function ConfirmAmount({ d, onDone }: { d: any; onDone: () => void }) {
   const { busy, run } = useAction();
-  const [mode, setMode] = useState<null | 'menu' | 'extras' | 'not_done' | 'refuse'>(null);
+  const [mode, setMode] = useState<null | 'menu' | 'extras' | 'not_done' | 'refuse' | 'price'>(null);
+  const [ecuAccepted,setEcuAccepted]=useState(false);
+  useEffect(()=>setEcuAccepted(false),[d.amountProposalVersion]);
   const [reason, setReason] = useState('');
   const b = d.bill;
   // Баллы — по желанию: галочка и сколько списать (не больше половины сбора и остатка)
@@ -793,7 +795,13 @@ function ConfirmAmount({ d, onDone }: { d: any; onDone: () => void }) {
     <div className="card hi">
       <b>К оплате: {rub(d.money.total)}</b>
       <span className="note">Разбивка — в карточке «Сумма» выше.</span>
-      <span className="note">Выезд и время — по цене, о которой договорились до вызова. Оспорить можно только расходники и запчасти — и только если работа сделана. {d.paymentMethod === 'cash' ? 'Деньги отдайте мастеру.' : ''}</span>
+      <span className="note">{d.service==='ecu'
+        ? 'ЭБУ: окончательная сумма предложена после выполненной диагностики или ремонта. Изучите работу и цену перед согласием.'
+        : <>Выезд и время — по цене, о которой договорились до вызова. Оспорить можно только расходники и запчасти — и только если работа сделана. {d.paymentMethod === 'cash' ? 'Деньги отдайте мастеру.' : ''}</>}</span>
+      {d.service==='ecu'&&mode===null&&<label className="agree">
+        <input type="checkbox" checked={ecuAccepted} onChange={e=>setEcuAccepted(e.target.checked)}/>
+        <span>Подтверждаю именно эту итоговую цену {rub(d.money.total)} и описание работ.</span>
+      </label>}
       {mode === null && pmax > 0 && (
         <div className="card flat" style={{ gap: 6 }}>
           <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}><input type="checkbox" checked={usePts} onChange={(e) => setUsePts(e.target.checked)} style={{ marginTop: 3 }} />
@@ -802,20 +810,21 @@ function ConfirmAmount({ d, onDone }: { d: any; onDone: () => void }) {
         </div>
       )}
       {mode === null && <>
-        <button className="btn good" disabled={busy} onClick={() => send('confirm', { total: d.money.total, points: spend, proposalVersion:d.amountProposalVersion??undefined }, 'Сумма подтверждена')}>Подтверждаю {rub(d.money.total - spend)}{spend ? ' с баллами' : ''}</button>
+        <button className="btn good" disabled={busy||(d.service==='ecu'&&!ecuAccepted)} onClick={() => send('confirm', { total: d.money.total, points: spend, proposalVersion:d.amountProposalVersion??undefined }, 'Сумма подтверждена')}>Подтверждаю {rub(d.money.total - spend)}{spend ? ' с баллами' : ''}</button>
         <button className="btn ghost" onClick={() => setMode('menu')}>Не согласен</button>
       </>}
       {mode === 'menu' && <div className="stack">
+        {d.service==='ecu'&&<button className="opt" onClick={()=>setMode('price')}><b>Не согласен с итоговой суммой ЭБУ</b><small>Укажите причину, автоматического списания нет.</small></button>}
         {b?.extras?.length > 0 && <button className="opt" onClick={() => setMode('extras')}><b>Не согласен с расходниками</b><small>Работа сделана, но строки за материалы и запчасти — не те. Мастер исправит их, время не пересчитывается.</small></button>}
         <button className="opt" onClick={() => setMode('not_done')}><b>Работа не выполнена</b><small>Поломка осталась или сделано не то. Подключим поддержку — разберёмся по чату и фото.</small></button>
         <button className="opt" onClick={() => setMode('refuse')}><b>Не буду платить</b><small>Без причины</small></button>
         <button className="btn ghost small" onClick={() => setMode(null)}>Назад</button>
       </div>}
-      {(mode === 'extras' || mode === 'not_done') && <>
-        <textarea className="field" placeholder={mode === 'extras' ? 'Какая строка не так и почему' : 'Что не сделано: поломка осталась, сделали не то…'} value={reason} onChange={(e) => setReason(e.target.value)} maxLength={500} />
-        <button className="btn bad" disabled={busy || reason.trim().length < 5} onClick={() => mode === 'extras'
+      {(mode === 'extras' || mode === 'not_done' || mode === 'price') && <>
+        <textarea className="field" placeholder={mode === 'extras' ? 'Какая строка не так и почему' : mode === 'price' ? 'Почему не согласны с суммой ЭБУ' : 'Что не сделано: поломка осталась, сделали не то…'} value={reason} onChange={(e) => setReason(e.target.value)} maxLength={500} />
+        <button className="btn bad" disabled={busy || reason.trim().length < 5} onClick={() => mode === 'extras' || mode === 'price'
           ? send('dispute', { reason }, 'Мастер получил ваше сообщение')
-          : send('nonpayment', { kind: 'not_done', reason }, 'Поддержка подключена')}>{mode === 'extras' ? 'Отправить мастеру' : 'Позвать поддержку'}</button>
+          : send('nonpayment', { kind: 'not_done', reason }, 'Поддержка подключена')}>{mode === 'extras' || mode === 'price' ? 'Оспорить сумму' : 'Позвать поддержку'}</button>
         <button className="btn ghost small" onClick={() => setMode('menu')}>Назад</button>
       </>}
       {mode === 'refuse' && <div className="banner warn col">
@@ -823,7 +832,7 @@ function ConfirmAmount({ d, onDone }: { d: any; onDone: () => void }) {
         <span className="note">По <a href="#/offer/client" target="_blank" rel="noreferrer">оферте</a> выезд и время работы по согласованной цене оплачиваются, если работа выполнена. Отказ платить за выполненную работу — нарушение договора: долг могут взыскать по закону, а аккаунт — заблокировать до оплаты.</span>
         <span className="note">Если работа не сделана — выберите «Работа не выполнена» и укажите причину.</span>
         <button className="btn" onClick={() => setMode('not_done')}>Работа не выполнена — указать причину</button>
-        <button className="btn good" disabled={busy} onClick={() => send('confirm', { total: d.money.total, points: spend, proposalVersion:d.amountProposalVersion??undefined }, 'Сумма подтверждена')}>Подтвердить {rub(d.money.total - spend)}</button>
+        <button className="btn good" disabled={busy||(d.service==='ecu'&&!ecuAccepted)} onClick={() => send('confirm', { total: d.money.total, points: spend, proposalVersion:d.amountProposalVersion??undefined }, 'Сумма подтверждена')}>Подтвердить {rub(d.money.total - spend)}</button>
         <button className="btn bad small" disabled={busy} onClick={() => send('nonpayment', { kind: 'refuse' }, 'Поддержка подключена')}>Всё равно отказываюсь — позвать поддержку</button>
       </div>}
     </div>
