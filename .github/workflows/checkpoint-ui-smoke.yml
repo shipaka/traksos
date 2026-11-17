@@ -34,7 +34,6 @@ jobs:
       DATABASE_URL: postgres://postgres@127.0.0.1:5432/traksos_checkpoint_ci
       ADMIN_PHONES: "+79990000001"
       CHECKPOINT_EVIDENCE_API_ENABLED: "true"
-      SANDBOX_INSTANCE: "true"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
