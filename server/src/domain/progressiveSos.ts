@@ -33,10 +33,12 @@ export function validStages(stages:unknown): stages is SosSearchStage[] {
   return true;
 }
 
-export function policyFor(order:{is_sos?:boolean;service?:string},policy:SosSearchPolicy|undefined,
-  hasVerifiedEta:boolean):SosSearchStage[] | null {
+export function policyFor(order:{is_sos?:boolean;service?:string},policy:SosSearchPolicy|undefined):SosSearchStage[] | null {
+  // A previously approved policy must remain fail-closed if the routing
+  // connector disappears after a restart: no router -> no automatic invites,
+  // NEVER silently resume the old 220-km geometric fallback.
   if (!order.is_sos || order.service==='consult' || !policy?.enabled ||
-      !hasVerifiedEta || !validStages(policy.stages)) return null;
+      !validStages(policy.stages)) return null;
   return policy.stages;
 }
 
