@@ -112,7 +112,7 @@ export class OrdersService {
       const station = await this.db.one(
         "select 1 from performer_profiles p join users u on u.id=p.user_id "+
         "where p.user_id=$1 and p.kind='ecu' and p.verification='approved' "+
-        "and u.status='active' and p.extras #>> '{ecuStation,published}'='true'",
+        "and u.status='active' and p.extras #>> '{ecuStation,published}'='true' and p.extras #>> '{ecuStation,publicationConsentConfirmed}'='true'",
         [i.ecuSpecialistId]);
       if (!station) throw bad('ecu_station_unavailable','Выбранная мастерская пока не принимает заявки');
       i = {...i,isSos:false,zoneId:'ecu_station',regionId:undefined,
