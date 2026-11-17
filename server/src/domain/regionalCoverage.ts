@@ -40,7 +40,7 @@ const SPB_PATTERN = /(?:санкт[-\s]?петербург|спб|\bspb\b|с[.]?
 const LO_PATTERN = /(?:ленинградск\S*\s+област|\bленобласт\S*)/i;
 // Explicit incompatible locations: fail closed even when the user/client also
 // supplies a spoofed Petersburg point. This is NOT a nationwide geocoder.
-const OTHER_PATTERN = /(?:^|[\\s,])(?:москва|москвы|москве|москву|москвой|калининград(?:а|е|ом)?|владивосток(?:а|е|ом)?|новосибирск(?:а|е|ом)?|екатеринбург(?:а|е|ом)?|краснодар(?:а|е|ом)?|хабаровск(?:а|е|ом)?|казань|казани)(?=$|[\\s,.])|(?:московск\\S*\\s+област|приморск\\S*\\s+край|калининградск\\S*\\s+област)/i;
+const OTHER_PATTERN = /(?:^|[\s,])(?:москва|москвы|москве|москву|москвой|калининград(?:а|е|ом)?|владивосток(?:а|е|ом)?|новосибирск(?:а|е|ом)?|екатеринбург(?:а|е|ом)?|краснодар(?:а|е|ом)?|хабаровск(?:а|е|ом)?|казань|казани)(?=$|[\s,.])|(?:московск\S*\s+област|приморск\S*\s+край|калининградск\S*\s+област)/i;
 const SPB_CENTER = {lat:59.934, lng:30.315};
 
 function inside(lat:number,lng:number,range:{south:number;north:number;west:number;east:number}) {
