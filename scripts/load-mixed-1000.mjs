@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {randomBytes} from 'node:crypto';
 import {performance} from 'node:perf_hooks';
 import {mkdir,writeFile} from 'node:fs/promises';
-process.env.MODERATOR_PHONES='+79997599998';
+process.env.MODERATOR_PHONES='+79997500998';
 const {sha256}=await import('../server/src/util.ts');
 const {setup,ok}=await import('../server/test/helpers.ts');
 const start=performance.now(),measurements=[],errors=[];
@@ -76,7 +76,7 @@ try{
   user,method:'GET',path:'/api/me'
  })));
  for(const result of overview){
-  assert.equal(result.response.status,200);
+  assert.equal(result.response.status,200,'identity denied: '+result.user.role+' '+JSON.stringify(result.response.body));
   assert.equal(result.response.body.id,result.user.id,
    'cross-account identity disclosure');
  }

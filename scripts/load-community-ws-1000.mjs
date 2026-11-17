@@ -113,7 +113,7 @@ async function run(){
   assert.equal(closeCode,1008,'driver role revocation did not close the socket');
 
   assert.deepEqual(violations,[]);
-  const report={scenario:'200_authenticated_websockets_one_room',
+  const report={scenario:'1000_authenticated_websockets_one_room',
     liveConnections:1000,publishedMessages:20,expectedHints:19980,receivedHints:afterFirst,
     duplicateHints:0,roleRevocationCloseCode:closeCode,
     openWallMs,sendWallMs,durationMs:Math.round(performance.now()-started),

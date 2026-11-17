@@ -21,9 +21,9 @@ async function request(user,method,path,body,label=method+' '+path.split('?')[0]
   const start=performance.now();
   const r=await t.api(method,path,body,user?.token);
   measurements.push({label,ms:performance.now()-start,status:r.status});
-  if(r.status!==1000){
+  if(r.status!==200){
     errors.push({label,status:r.status,error:r.body?.error??'http_error'});
-    assert.equal(r.status,1000,label+': HTTP '+r.status);
+    assert.equal(r.status,200,label+': HTTP '+r.status);
   }
   return r.body;
 }
