@@ -395,6 +395,7 @@ export function NewOrder({ service }: { service: string }) {
   const consult = useLoad(() => (fromConsult ? get(`/api/orders/${fromConsult}`) : Promise.resolve(null)), [fromConsult]);
   const related = useLoad(()=>additionalTo?get('/api/orders/'+additionalTo):Promise.resolve(null),[additionalTo]);
   const [agreedQuoteKey, setAgreedQuoteKey] = useState<string | null>(null);
+  const [ecuSpecialistId,setEcuSpecialistId]=useState('');
 
   // A region is not a tariff zone. Neither GPS nor IP must silently assign
   // the Petersburg call-out price to another part of the country.
@@ -433,6 +434,10 @@ export function NewOrder({ service }: { service: string }) {
   const [site, setSite] = useState<{ place?: string; pass?: string; meet?: string; state?: string; when?: string; time?: string; ecuBlockCode?: string; ecuBlockNote?: string }>({});
   const isTow = service === 'tow';
   const isConsult = service === 'consult';
+  const isEcu = service === 'ecu';
+  const ecuStations=useLoad<{stations:Array<{id:string;name:string;address:string;lat:number;lng:number;level:string;distanceKm:number|null}>}>(
+    ()=>isEcu?get('/api/ecu/stations'+(geo?('?lat='+encodeURIComponent(geo.lat)+'&lng='+encodeURIComponent(geo.lng)):''))
+      :Promise.resolve({stations:[]}),[isEcu,geo?.lat,geo?.lng]);
 
   useEffect(() => {
     if (pricing.data && night === null) setNight(pricing.data.nightNow);
@@ -471,7 +476,7 @@ export function NewOrder({ service }: { service: string }) {
     let active = true;
     setEst(null);
     setCoverageError('');
-    if (night === null || (!isConsult && (!regionId || regionId === 'other' || !zoneId))) return;
+    if (isEcu || night === null || (!isConsult && (!regionId || regionId === 'other' || !zoneId))) return;
     const timer = window.setTimeout(() => {
       post('/api/pricing/estimate', {
         service, tier, regionId: regionId || undefined, zoneId: zoneId || 'phone',
@@ -506,10 +511,11 @@ export function NewOrder({ service }: { service: string }) {
 
   async function submit() {
     // Defensive guard even if the CallBar is invoked during a debounced update.
-    if(!zoneId || !est || !agree||(additionalTo&&(!related.data||zoneId!==related.data.zoneId)))return;
+    if(isEcu ? !ecuSpecialistId : (!zoneId || !est || !agree||(additionalTo&&(!related.data||zoneId!==related.data.zoneId))))return;
     const payload = {
-      service, isSos: !!sos, problem: sos?.id, description: description || undefined, address: address || undefined,
-      lat: geo?.lat, lng: geo?.lng, regionId: regionId || undefined, zoneId: zoneId || 'phone',
+      service, isSos: isEcu ? false : !!sos, problem: sos?.id, description: description || undefined, address: address || undefined,
+      ...(isEcu?{ecuSpecialistId}:{}),
+      lat: geo?.lat, lng: geo?.lng, regionId: isEcu?undefined:regionId || undefined, zoneId: isEcu?'ecu_station':zoneId || 'phone',
       tier: service === 'tow' ? undefined : tier, vehicleId: vehicleId || undefined,
       ...carBody(vehicleId, car), groupTrip: groupAllowed && group, night: night ?? undefined, paymentMethod: method,
       ...(isTow ? { destination: destination || undefined, cargo, loaded, driverOnSite } : {}),
@@ -534,21 +540,22 @@ export function NewOrder({ service }: { service: string }) {
   const need = {
     car: !!vehicleId || car.brand.trim().length >= 2,
     what: description.trim().length >= MIN_WHAT,
-    where: geoState === 'ok' || address.trim().length >= 3,
+    where: isEcu || geoState === 'ok' || address.trim().length >= 3,
     tow: !isTow || destination.trim().length >= 3,
   };
   const missing = [
-    !isConsult && !regionId && { id: 'f-where', name: 'регион' },
-    !isConsult && regionId !== 'other' && !zoneId && { id: 'f-where', name: 'тарифная зона' },
-    !isConsult && regionId === 'other' && { id: 'f-where', name: 'индивидуальное согласование региона' },
-    !est && { id: 'f-where', name: 'проверенная предварительная смета' },
+    !isConsult && !isEcu && !regionId && { id: 'f-where', name: 'регион' },
+    !isConsult && !isEcu && regionId !== 'other' && !zoneId && { id: 'f-where', name: 'тарифная зона' },
+    !isConsult && !isEcu && regionId === 'other' && { id: 'f-where', name: 'индивидуальное согласование региона' },
+    !isEcu && !est && { id: 'f-where', name: 'проверенная предварительная смета' },
     !need.car && { id: 'f-car', name: 'марка машины' },
     !need.what && { id: 'f-what', name: 'описание задачи' },
     !need.where && { id: 'f-where', name: 'где машина' },
-    !zoneId && { id: 'f-where', name: 'тарифная зона СПб/ЛО' },
-    !est && { id: 'f-where', name: 'подтверждённый предварительный расчёт' },
+    !isEcu && !zoneId && { id: 'f-where', name: 'тарифная зона СПб/ЛО' },
+    !isEcu && !est && { id: 'f-where', name: 'подтверждённый предварительный расчёт' },
     !need.tow && { id: 'f-tow', name: 'куда везти' },
-    !agree && { id: 'f-agree', name: 'согласие с суммами' },
+    !isEcu && !agree && { id: 'f-agree', name: 'согласие с суммами' },
+    isEcu && !ecuSpecialistId && {id:'f-ecu-station',name:'стационарный специалист ЭБУ'},
   ].filter(Boolean) as { id: string; name: string }[];
 
   if (!pricing.data) return <main><Loading error={pricing.error} /></main>;
@@ -619,7 +626,7 @@ export function NewOrder({ service }: { service: string }) {
         </>}
       </Step>
 
-      <Step n={3} id="f-where" title={isTow ? 'Откуда забрать' : 'Где машина'} req done={need.where} missing={tried && !need.where}>
+      {!isEcu&&<Step n={3} id="f-where" title={isTow ? 'Откуда забрать' : 'Где машина'} req done={need.where} missing={tried && !need.where}>
         <input className="field" placeholder="Адрес: регион, населённый пункт, улица или км трассы" value={address} onChange={(e) => setAddress(e.target.value)} />
         <div className="row">
           <button type="button" className="chip" onClick={locate} disabled={geoState === 'wait'}>
@@ -674,9 +681,23 @@ export function NewOrder({ service }: { service: string }) {
             <small>Мастер едет к нескольким машинам рядом — вы платите 70% выезда. Может быть дольше.</small>
           </button>
         )}
-      </Step>
-
-      {!isTow && (
+      </Step>}
+      {isEcu&&<Step n={3} id="f-ecu-station" title="Стационарный специалист ЭБУ" req
+        done={!!ecuSpecialistId} missing={tried&&!ecuSpecialistId}>
+        <p className="note">Это не SOS и не выезд. Выберите конкретную проверенную мастерскую: показываем специалистов по всей стране, независимо от обычного радиуса выезда.</p>
+        {ecuStations.error&&<p role="alert">{ecuStations.error}</p>}
+        {!ecuStations.data&&!ecuStations.error&&<p className="note">Загружаю доступные мастерские…</p>}
+        {ecuStations.data?.stations.length===0&&<p className="note">Пока нет опубликованных проверенных мастерских. Запрос нельзя отправить без выбранного получателя.</p>}
+        {(ecuStations.data?.stations??[]).map(s=><div className="card flat stack" key={s.id}>
+          <div className="between"><b>{s.name}</b><span className="pill">{s.level==='priority'?'Эксперт по ЭБУ':s.level==='active'?'Проверенный специалист':'Проверенный профиль'}</span></div>
+          <span className="note">{s.address}{s.distanceKm!=null?' · по прямой около '+s.distanceKm+' км':''}</span>
+          <div className="row">
+            <button className="btn ghost" type="button" aria-pressed={ecuSpecialistId===s.id} onClick={()=>setEcuSpecialistId(s.id)}>{ecuSpecialistId===s.id?'Выбран специалист':'Выбрать мастерскую'}</button>
+            <a className="btn ghost" href={'https://yandex.ru/maps/?pt='+encodeURIComponent(s.lng+','+s.lat)+'&z=10&l=map'} target="_blank" rel="noopener noreferrer">Точка на карте</a>
+          </div>
+        </div>)}
+      </Step>}
+      {!isTow && !isEcu && (
         <Step n={4} id="f-site" title="Место и условия" done>
           <div className="grid4">{([['parking', 'Парковка'], ['yard', 'Стоянка'], ['plant', 'Завод'], ['road', 'Трасса']] as const).map(([k, n]) => (
             <button key={k} type="button" className="seg" style={{ fontSize: 13, padding: 0 }} aria-pressed={site.place === k} onClick={() => setSite({ ...site, place: site.place === k ? undefined : k })}>{n}</button>
@@ -704,7 +725,7 @@ export function NewOrder({ service }: { service: string }) {
         </Step>
       )}
 
-      {!isTow && ON_SITE[service] && (
+      {!isTow && !isEcu && ON_SITE[service] && (
         <details className="card">
           <summary><b>Что {SERVICES[service].name.toLowerCase()} сделает на месте, а что нет</b></summary>
           <div className="stack" style={{ gap: 4, marginTop: 8 }}>
@@ -714,9 +735,9 @@ export function NewOrder({ service }: { service: string }) {
           </div>
         </details>
       )}
-      {!isTow && regionId !== 'other' && <MastersNearby service={service} geo={geo} brand={vehicles.data?.find((v: any) => v.id === vehicleId)?.brand ?? car.brand} />}
+      {!isTow && !isEcu && regionId !== 'other' && <MastersNearby service={service} geo={geo} brand={vehicles.data?.find((v: any) => v.id === vehicleId)?.brand ?? car.brand} />}
 
-      {isTow ? (
+      {isEcu?null:isTow ? (
         <Step n={4} id="f-tow" title="Куда и что везём" req done={need.tow} missing={tried && !need.tow}>
           <input className="field" placeholder="Куда везти: сервис, стоянка, адрес" value={destination} onChange={(e) => setDestination(e.target.value)} />
           <Chips value={cargo} onChange={setCargo} options={[{ id: 'tractor', name: 'Тягач' }, { id: 'semitrailer', name: 'Полуприцеп' }, { id: 'coupling', name: 'Сцепка целиком' }, { id: 'truck12', name: 'Грузовик до 12 т' }, { id: 'bus', name: 'Автобус' }, { id: 'special', name: 'Спецтехника' }]} />
@@ -738,7 +759,7 @@ export function NewOrder({ service }: { service: string }) {
         </Step>
       )}
 
-      {regionId !== 'other' && <Step n={isTow ? 5 : 6} id="f-pay" title="Оплата" done>
+      {!isEcu && regionId !== 'other' && <Step n={isTow ? 5 : 6} id="f-pay" title="Оплата" done>
         <div className="grid2">
           <button type="button" className="seg" aria-pressed={method === 'cash'} onClick={() => setMethod('cash')}>Мастеру на месте</button>
           <button type="button" className="seg" aria-pressed={method === 'online'} disabled={!methods?.online} onClick={() => setMethod('online')}>СБП / карта</button>
@@ -748,7 +769,7 @@ export function NewOrder({ service }: { service: string }) {
         {method === 'online' && <span className="note">Выезд оплачивается сейчас и замораживается. Мастеру деньги уйдут после того, как вы подтвердите работу.</span>}
       </Step>}
 
-      {service==='ecu'&&!est&&<div className="card flat stack" id="f-agree" role="status">
+      {false&&service==='ecu'&&!est&&<div className="card flat stack" id="f-agree" role="status">
         <span className="label">7 · Подтверждение стоимости ЭБУ</span>
         <p className="note">
           Сначала укажите местоположение и осознанно выберите тарифную зону.
@@ -758,7 +779,7 @@ export function NewOrder({ service }: { service: string }) {
           До получения расчёта согласие с суммой недоступно — заявку и оплату не создаём.
         </p>
       </div>}
-      {est && (
+      {!isEcu && est && (
         <div className={`card hi ${tried && !agree ? 'missing' : ''}`} id="f-agree">
           {est.provisional && <div role="note" className="banner warn">
             {est.coverageNote || 'Предварительная смета. Проверим фактический адрес и согласуем стоимость до выезда.'}
@@ -787,9 +808,12 @@ export function NewOrder({ service }: { service: string }) {
         </div>
       )}
 
-      {regionId !== 'other' && <CallBar busy={busy} missing={missing}
-        price={est ? `предварительно: ${isTow ? 'перевозка' : 'выезд'} ${rub(est.callOut)}` : ''}
-        label={isTow ? 'Вызвать эвакуатор' : 'Вызвать мастера'}
+      {isEcu&&<div className="card hi stack"><b>Смета и сроки — после изучения блока</b>
+        <p className="note">Предварительная оценка может быть невозможна. Диагностика и запчасти оплачиваются только после отдельного согласования конкретных условий. Заявка действует 7 дней; при необходимости специалист может попросить продление на 3 дня.</p>
+      </div>}
+      {(isEcu||regionId !== 'other') && <CallBar busy={busy} missing={missing}
+        price={isEcu?'Цена по отдельному согласованию':est ? `предварительно: ${isTow ? 'перевозка' : 'выезд'} ${rub(est.callOut)}` : ''}
+        label={isEcu?'Отправить запрос выбранной мастерской':isTow ? 'Вызвать эвакуатор' : 'Вызвать мастера'}
         onGo={() => { setTried(true); if (missing.length) jump(missing[0].id); else submit(); }} />}
     </main>
   );
