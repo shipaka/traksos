@@ -57,6 +57,19 @@ function ShopCityControl({ city, reload }: {city: string | null; reload: () => v
   </div>;
 }
 
+function ShopVehicleContext(){
+  const params=new URLSearchParams(window.location.hash.split('?')[1]??'');
+  const brand=(params.get('brand')??'').slice(0,100);
+  const model=(params.get('model')??'').slice(0,120);
+  const label=[brand,model].filter(Boolean).join(' ');
+  if(!label)return null;
+  return <div className="card stack" style={{gap:6}}>
+    <b>Справка по технике: {label}</b>
+    <small className="note">Название техники передано из «Опыта эксплуатации». Выбирайте детали по артикулу и проверяйте применяемость по VIN, агрегату и комплектации — совпадение модели не означает совместимость.</small>
+    <a href="#/experience" className="btn ghost small">К опыту эксплуатации</a>
+  </div>;
+}
+
 export function Shop() {
   const c = useLoad(() => get('/api/shop?light=1'), []);
   const [cart, setCart] = useCart();
@@ -91,6 +104,7 @@ export function Shop() {
   if (!d.enabled) return (
     <main className="track-shop-home">
       <div className="track-shop-hero"><span className="track-shop-eyebrow">TRAKSOS · ЗАПЧАСТИ ДЛЯ ГРУЗОВИКОВ</span><h1>Каталог запчастей</h1><p>Оригиналы, проверенные аналоги и история заказов вашей техники.</p><span className="track-shop-gear" aria-hidden="true"/></div>
+       <ShopVehicleContext/>
       <div className="card hi" style={{ alignItems: 'center', textAlign: 'center', padding: '32px 20px' }}>
         <span style={{ fontSize: 40 }} aria-hidden="true">🛒</span>
         <b style={{ fontSize: 20 }}>{d.closedTitle}</b>
@@ -106,6 +120,7 @@ export function Shop() {
   return (
     <main className="track-shop-home">
       <div className="track-shop-hero"><span className="track-shop-eyebrow">TRAKSOS · ЗАПЧАСТИ ДЛЯ ГРУЗОВИКОВ</span><h1>Найдём нужную деталь</h1><p>Удобный поиск по названию и артикулу, наличие, аналоги и история покупок.</p><span className="track-shop-gear" aria-hidden="true"/></div>
+       <ShopVehicleContext/>
       <ShopCityControl city={d.region?.city??null} reload={c.reload}/>
       <div className="between" style={{ alignItems: 'flex-start' }}>
         <div><h1>Магазин</h1><div className="sub">{d.note}</div></div>
