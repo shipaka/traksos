@@ -155,8 +155,17 @@ try {
         viewport:document.documentElement.clientWidth,
         content:document.documentElement.scrollWidth
       }));
-      if(ecuFormWidth.content>ecuFormWidth.viewport+3)
-        throw new Error(width+'px ECU order form overflow: '+JSON.stringify(ecuFormWidth));
+      if(ecuFormWidth.content>ecuFormWidth.viewport+3){
+        const offenders=await page.evaluate(()=>[...document.querySelectorAll('.ecu-intake *')]
+          .map(el=>({el,rect:el.getBoundingClientRect()}))
+          .filter(({rect})=>rect.width>0&&(rect.right>document.documentElement.clientWidth+2||rect.left< -2))
+          .slice(0,12).map(({el,rect})=>({
+            tag:el.tagName,klass:el.className,left:Math.round(rect.left),right:Math.round(rect.right),
+            text:(el.textContent??'').trim().slice(0,70)
+          })));
+        throw new Error(width+'px ECU order form overflow: '+
+          JSON.stringify({size:ecuFormWidth,offenders}));
+      }
       await page.screenshot({path:OUT+'/ecu-form-'+width+'.png',fullPage:true});
       if (errors.length) throw new Error(width + 'px browser exception: ' + errors.join('; '));
       console.log('PASS premium client '+width+'px: Scania, SOS+Air, 4 services, independent ECU station form, 3 SOS, 5 roadside specialties, no overflow');
