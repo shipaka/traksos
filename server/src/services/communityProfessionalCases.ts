@@ -26,7 +26,7 @@ const unsafeText=[
   /\b\d{1,2}\.\d{5,}\s*[,;]\s*\d{1,3}\.\d{5,}\b/u,
   /(?<![\p{L}\p{N}])[АВЕКМНОРСТУХABEKMHOPCTYX]\d{3}[АВЕКМНОРСТУХABEKMHOPCTYX]{2}\d{2,3}(?![\p{L}\p{N}])/iu,
 ];
-function safeText(value:string){
+export function safeText(value:string){
   if(unsafeText.some(x=>x.test(value)))
     throw bad('sensitive_technical_text',
       'Уберите VIN, телефоны, госномера, ссылки и точные координаты. Коллегам нужны только технические признаки неисправности');
