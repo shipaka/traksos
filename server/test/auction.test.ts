@@ -109,7 +109,7 @@ test('переключатель «Сначала нам» выключен — 
 
 test('эвакуатор: торги с подачей «сборы + дорога», куда везти и что везём', async () => {
   const o = ok(await t.api('POST', '/api/orders', {
-    service: 'tow', zoneId: 'kad30', address: 'КАД, 72-й км', destination: 'Шушары-Трак', cargo: 'coupling', loaded: 'loaded', driverOnSite: true,
+    service: 'tow', zoneId: 'kad30', address: 'Ленинградская область, КАД, 72-й км', destination: 'Шушары-Трак', cargo: 'coupling', loaded: 'loaded', driverOnSite: true,
   }, client.token)).order;
   assert.equal(o.destination, 'Шушары-Трак');
   assert.deepEqual(kinds(tow.id, 'auction').at(-1), o.id);

@@ -538,11 +538,10 @@ function AskAbout({ entryId, onDone, onCancel }: { entryId: number; onDone: (tic
 // Фильтр заявок ---------------------------------------------------------------
 
 export function FilterSection() {
-  const { me } = useMe();
+  const { me, reload } = useMe();
   const p = me?.performer;
   const pricing = useLoad(() => get('/api/pricing'), []);
-  const { busy, save } = useSave();
-  const { run } = useAction();
+  const { busy, run } = useAction();
   const [f, setF] = useState(() => ({
     specialties: (p?.specialties ?? ['electric']) as string[],
     brands: (p?.brands ?? {}) as Record<string, string>,
@@ -578,21 +577,29 @@ export function FilterSection() {
   const num = (k: string, ph: string, label: string) => (
     <Field label={label}><input className="field" inputMode="numeric" placeholder={ph} value={x[k] ?? ''} onChange={(e) => setX({ ...x, [k]: e.target.value === '' ? '' : Number(e.target.value.replace(/\D/g, '')) })} /></Field>
   );
-  const STOCK = ['Розетка прицепа 15-конт.', 'Перекидка', 'Адаптер 15/7', 'Предохранители', 'Лампы 24V', 'Клеммы АКБ', 'Пусковое устройство', 'Сканер под марку'];
+  const STOCK_GROUPS = [
+    { title: 'Электрика и диагностика', items: ['Предохранители', 'Лампы 24V', 'Клеммы АКБ', 'Пусковое устройство', 'Сканер под марку'] },
+    { title: 'Прицеп и соединения', items: ['Розетка прицепа 15-конт.', 'Перекидка', 'Адаптер 15/7'] },
+  ];
+  const stockGroups = f.specialties.some(v => ['electric', 'diag'].includes(v))
+    ? STOCK_GROUPS : [...STOCK_GROUPS].reverse();
   const TAKES: [string, string][] = [['tractor', 'Тягач'], ['semitrailer', 'Полуприцеп'], ['coupling', 'Сцепка целиком'], ['truck12', 'Грузовик до 12 т'], ['bus', 'Автобус'], ['special', 'Спецтехника']];
   return (
     <main>
       <Back to="work" label="Линия" />
-      <div><h1>Настройки заявок</h1><div className="sub">Укажите услуги, марки, оснащение и тарифы. Эти настройки учитываются при подборе подходящих заявок; это не отдельный поиск клиентов.</div></div>
+      <div><h1>Настройки заявок</h1><div className="sub">Выберите, какие заявки получать. Специализации, марки и тип груза влияют на подбор; оснащение, отдельные условия и цены сохраняются в профиле, но сами по себе не повышают очередь.</div></div>
       <div className="scroll-x">{tabs.map(([id, n]) => <button key={id} className="chip" aria-pressed={cur === id} onClick={() => setTab(id)}>{n}</button>)}</div>
 
       {cur === 'stock' && (
         <div className="card">
           <b>Что всегда есть в машине</b>
-          <div className="row">{STOCK.map((t) => (
-            <button key={t} type="button" className="chip" aria-pressed={x.stock.includes(t)} onClick={() => setX({ ...x, stock: x.stock.includes(t) ? x.stock.filter((y: string) => y !== t) : [...x.stock, t] })}>{x.stock.includes(t) ? '✓ ' : ''}{t}</button>
-          ))}</div>
-          <span className="note">Клиент видит это в вашем отклике. Если нужна, например, розетка 15-конт., выше в списке те, у кого она с собой.</span>
+          {stockGroups.map(group => <div className="stack" key={group.title} role="group" aria-label={group.title}>
+            <b>{group.title}</b>
+            <div className="row">{group.items.map((t) => (
+              <button key={t} type="button" className="chip" aria-pressed={x.stock.includes(t)} onClick={() => setX({ ...x, stock: x.stock.includes(t) ? x.stock.filter((y: string) => y !== t) : [...x.stock, t] })}>{x.stock.includes(t) ? '✓ ' : ''}{t}</button>
+            ))}</div>
+          </div>)}
+          <span className="note">Это справка об оснащении для клиента. Сейчас наличие инструмента не меняет очередь автоматического подбора.</span>
         </div>
       )}
 
@@ -608,6 +615,7 @@ export function FilterSection() {
             <button key={k} type="button" className="seg" aria-pressed={x.towType === k} onClick={() => setX({ ...x, towType: k })}>{n}</button>
           ))}</div>
           {num('maxMass', 'Например, 20', 'Максимальная масса, т')}
+          <span className="note">Тип эвакуатора и ограничение массы пока служат описанием возможностей; автоматический отбор использует отмеченные виды груза, но не проверяет массу.</span>
         </div>
       )}
 
@@ -708,31 +716,36 @@ export function FilterSection() {
           <Field label="За КАД, ₽ за км" hint="Считается расстояние × 1,5 — дорога туда и половина обратно.">
             <RubInput value={f.kmRate} onChange={(v) => set({ kmRate: v })} placeholder={isTow ? '110 ₽' : '50 ₽'} />
           </Field>
-          <b>Наценки · видны клиенту до вызова</b>
+          <b>Дополнительные условия</b>
+          <span className="note">Наценки и условия сохраняются в профиле. Они не прибавляются автоматически к цене заявки и не влияют на очередность выбора. Стоимость дополнительных работ согласовывается отдельно.</span>
           <div className="grid2">
             {num('weekendPct', '0', 'Выходные, %')}
             {num('nightPct', '0', 'Ночь 22–7, %')}
             {num('holidayPct', '0', 'Праздники, %')}
             {num('waitRate', 'например 900', 'Ожидание, ₽/ч')}
           </div>
-          <span className="note">В выходные и праздники мастеров мало — клиенты это понимают, наценка честная. Ожидание — пока клиент ездит за запчастью или занят своими делами.</span>
+          <span className="note">Время ожидания и возможные надбавки — ориентиры для последующего согласования. Система не списывает их автоматически.</span>
           {!isTow && (
             <>
               <b>Предоплата за работу</b>
               <div className="grid3">{([['never', 'Не беру'], ['low', 'Только ненадёжные'], ['always', 'Всегда']] as const).map(([k, n]) => (
                 <button key={k} type="button" className="seg" style={{ fontSize: 12.5 }} aria-pressed={x.prepay === k} onClick={() => setX({ ...x, prepay: k })}>{n}</button>
               ))}</div>
-              <span className="note">{x.prepay === 'always' ? 'Риск неоплаты минимальный, но заявок будет меньше.' : x.prepay === 'never' ? 'Заявок больше, риск неоплаты выше.' : 'Обычным клиентам — без предоплаты, ненадёжным — с ней.'}</span>
+              <span className="note">Пожелание по предоплате сохраняется в профиле. Автоматическое удержание по этому переключателю не выполняется; условия согласовываются в заявке.</span>
             </>
           )}
         </div>
       )}
 
-      <button className="btn" disabled={busy || (!isTow && !f.specialties.length) || (isTow && cur === 'prep' && !x.prepAck)} onClick={async () => {
-        const e = extrasBody();
-        Object.keys(e).forEach((k) => e[k] === undefined && delete e[k]);
-        if (await run(() => put('/api/performer/extras', e))) await save(body(), 'Поиск настроен — заявки подберём по нему');
-      }}>Сохранить</button>
+      <button className="btn" disabled={busy || (!isTow && !f.specialties.length) || (isTow && !x.prepAck)} onClick={async () => {
+        const extras = extrasBody();
+        Object.keys(extras).forEach((k) => extras[k] === undefined && delete extras[k]);
+        const result = await run(
+          () => put('/api/performer/request-settings', { profile: { kind: p.kind, ...body() }, extras }),
+          'Настройки заявок сохранены',
+        );
+        if (result) await reload();
+      }}>Сохранить всё</button>
     </main>
   );
 }

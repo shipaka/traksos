@@ -1,0 +1,77 @@
+name: "TrackSOS — проверка сервера и песочницы"
+
+on:
+  # Four read-only VPS/HTTPS checks per day, outside the top of the hour.
+  # UTC: 03:23, 09:23, 15:23, 21:23 (Moscow: 06:23, 12:23, 18:23, 00:23).
+  schedule:
+    - cron: '23 3,9,15,21 * * *'
+  workflow_dispatch:
+    inputs:
+      include_server:
+        description: "Проверить контейнеры на VPS через ограниченный SSH-доступ (после настройки ключа)"
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: traksos-observe
+  cancel-in-progress: false
+
+jobs:
+  public-health:
+    name: Public HTTPS health (no SSH)
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Check published health endpoints (never modify data)
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          failed=0
+          for domain in traksos.ru sandbox.traksos.ru; do
+            if code="$(curl --proto '=https' --tlsv1.2 --silent --show-error \
+              --location --max-time 15 --output /dev/null \
+              --write-out '%{http_code}' "https://${domain}/api/health")"; then
+              printf '%s: HTTP %s\n' "$domain" "$code"
+              if [[ "$code" != "200" ]]; then failed=1; fi
+            else
+              printf '%s: HTTPS request failed\n' "$domain"
+              failed=1
+            fi
+          done
+          exit "$failed"
+
+  server-health:
+    name: VPS containers (restricted read-only command)
+    if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || inputs.include_server) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Read sanitized VPS diagnostics over pinned SSH host key
+        shell: bash
+        env:
+          SSH_HOST: ${{ secrets.TRAKSOS_MONITOR_HOST }}
+          SSH_PORT: ${{ secrets.TRAKSOS_MONITOR_PORT }}
+          SSH_PRIVATE_KEY: ${{ secrets.TRAKSOS_MONITOR_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.TRAKSOS_MONITOR_KNOWN_HOSTS }}
+        run: |
+          set -Eeuo pipefail
+          if [[ -z "${SSH_HOST:-}" || -z "${SSH_PRIVATE_KEY:-}" || -z "${SSH_KNOWN_HOSTS:-}" ]]; then
+            echo "BLOCKED: configure monitor SSH secrets following deploy/automation/README.md."
+            exit 1
+          fi
+          dir="$(mktemp -d)"
+          trap 'rm -rf "$dir"' EXIT
+          chmod 700 "$dir"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$dir/key"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$dir/known_hosts"
+          chmod 600 "$dir/key" "$dir/known_hosts"
+          ssh -T -o BatchMode=yes -o ConnectTimeout=15 \
+            -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$dir/known_hosts" \
+            -o IdentitiesOnly=yes \
+            -i "$dir/key" -p "${SSH_PORT:-22}" \
+            "traksos-monitor@${SSH_HOST}" health

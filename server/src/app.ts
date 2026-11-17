@@ -14,6 +14,7 @@ import { Notifier } from './services/notify.ts';
 import { AuthService, SELF_ROLES } from './services/auth.ts';
 import { OperatorDemoAccess } from './services/operatorDemo.ts';
 import { SANDBOX_ROLES, issueSandboxTicket, exchangeSandboxTicket } from './services/sandboxTickets.ts';
+import { SANDBOX_HANDOFF_PROTOCOL, assessSandboxPeerHealth } from './services/sandboxCompatibility.ts';
 import { ReferralService } from './services/referral.ts';
 import { ProfilesService } from './services/profiles.ts';
 import { OrdersService } from './services/orders.ts';
@@ -76,7 +77,9 @@ import { normalizePhone, sha256 } from './util.ts';
 import { Raw } from './http/router.ts';
 import { PaymentsService } from './payments/service.ts';
 import { estimate, isNight } from './domain/pricing.ts';
+import { assertRegionalTariff, CoverageError, REGIONAL_COVERAGE_NOTE } from './domain/regionalCoverage.ts';
 import { defaultSettings } from './domain/defaults.ts';
+import { validStages, type VerifiedRoadEta } from './domain/progressiveSos.ts';
 import { config, isProd } from './config.ts';
 
 export interface Deps {
@@ -85,6 +88,8 @@ export interface Deps {
   push: PushProvider;
   payments: PaymentProvider;
   now?: () => Date;
+  /** Server-controlled route ETA, never supplied by a performer or a client. */
+  verifiedRoadEta?: VerifiedRoadEta;
 }
 
 const money = z.number().int().nonnegative();
@@ -102,7 +107,7 @@ export function createApp(d: Deps) {
   const orders = new OrdersService(d.db, settings, notifier, now);
   const payments = new PaymentsService(d.db, settings, d.payments, notifier, orders);
   orders.payments = payments;
-  const auction = new AuctionService(d.db, settings, notifier, orders, now);
+  const auction = new AuctionService(d.db, settings, notifier, orders, now, d.verifiedRoadEta);
   orders.auction = auction;
   profiles.onUnavailable = async (userId) => orders.afterRelease(await orders.release(d.db, userId, null));
   const chat = new ChatService(d.db, settings, notifier, orders);
@@ -198,7 +203,7 @@ export function createApp(d: Deps) {
   });
 
   // Служебное ----------------------------------------------------------------
-  r.get('/api/health', false, async () => ({ ok: true, db: (await d.db.one('select 1 as ok'))?.ok === 1, time: now(), sandbox: config.sandboxInstance, buildRevision: config.buildRevision }));
+  r.get('/api/health', false, async () => ({ ok: true, db: (await d.db.one('select 1 as ok'))?.ok === 1, time: now(), sandbox: config.sandboxInstance, buildRevision: config.buildRevision, sandboxHandoffVersion: SANDBOX_HANDOFF_PROTOCOL }));
 
   // Isolated fake-data demo access: NEVER returns a real auth token or AuthUser.
   // Codes are issued only by the explicitly confirmed SSH utility on the VPS.
@@ -221,17 +226,14 @@ export function createApp(d: Deps) {
         (isProd && config.buildRevision === 'unknown'))
       return { enabled: false, reason: 'Тестовый сервер ещё не настроен' };
     try {
-      // Real-time server-to-server parity check: both instances must run the
-      // same immutable image revision, not merely similar-looking screens.
+      // Allow sandbox to move ahead of production only when the stable, signed
+      // one-time ticket protocol matches and the isolated DB is healthy.
       const response = await fetch(config.sandboxUrl + '/api/health', {
         method:'GET', cache:'no-store', signal:AbortSignal.timeout(4000),
       });
-      const remote = await response.json() as any;
-      if (!response.ok || remote?.ok !== true || remote?.db !== true || remote?.sandbox !== true)
+      if (!response.ok)
         return { enabled:false, reason:'Тестовый сервер или его отдельная база недоступны' };
-      if (remote.buildRevision !== config.buildRevision)
-        return { enabled:false, reason:'Рабочий и тестовый серверы используют разные версии приложения' };
-      return { enabled:true, buildRevision:config.buildRevision };
+      return assessSandboxPeerHealth(await response.json(), config.buildRevision);
     } catch {
       return { enabled:false, reason:'Тестовый сервер сейчас недоступен' };
     }
@@ -277,9 +279,9 @@ export function createApp(d: Deps) {
     if (b.acceptOffers) await offers.acceptCurrent(r.user as any, c.ip);
     return r;
   });
-  // The browser obtains a 30-second single-use WebSocket ticket through a
-  // normal authenticated POST. The 90-day session token never enters the WS URL.
-  r.post('/api/auth/realtime-ticket',true,(c:AuthedCtx)=>
+  // Short-lived one-use WebSocket ticket: long-lived login token stays in a
+  // regular authorized POST header, never in the /ws URL of current clients.
+  r.post('/api/auth/realtime-ticket', true, (c: AuthedCtx) =>
     auth.issueRealtimeTicket(bearer(c.req)!));
 
   r.post('/api/auth/logout', true, async (c: AuthedCtx) => {
@@ -519,8 +521,8 @@ export function createApp(d: Deps) {
 
   // Исполнитель --------------------------------------------------------------
   const brandLevel = z.enum(['excellent', 'good', 'last_resort', 'refuse']);
-  r.get('/api/performer/profile', true, (c: AuthedCtx) => profiles.performer(c.user.id));
-  r.put('/api/performer/profile', true, (c: AuthedCtx) => profiles.upsertPerformer(c.user, parse(z.object({
+  // Same contracts for the legacy single-section APIs and the atomic screen save.
+  const performerProfileSchema = z.object({
     kind: z.enum(['master', 'tow', 'service', 'ecu']), name: z.string().min(1).max(100).optional(),
     specialties: z.array(z.enum(['electric', 'diag', 'air', 'autonomy', 'tyre', 'consult'])).max(10).optional(),
     brands: z.record(z.string().max(40), brandLevel).optional(), tier: z.enum(['eco', 'comfort', 'pro']).optional(),
@@ -528,8 +530,8 @@ export function createApp(d: Deps) {
     acceptsGroup: z.boolean().optional(), taxStatus: z.enum(['self_employed', 'ip']).nullish(), inn: z.string().nullish(),
     car: z.object({ brand: z.string().max(50), color: z.string().max(30).optional(), plate: z.string().max(15) }).nullish(),
     cars: z.array(z.object({ brand: z.string().min(1).max(50), color: z.string().max(30).optional(), plate: z.string().min(1).max(15) })).max(3).optional(),
-  }), c.body)));
-  r.put('/api/performer/extras', performerRoles, (c: AuthedCtx) => profiles.setExtras(c.user.id, parse(z.object({
+  });
+  const performerExtrasSchema = z.object({
     weekendPct: z.number().int().min(0).max(100).optional(), nightPct: z.number().int().min(0).max(100).optional(),
     holidayPct: z.number().int().min(0).max(100).optional(), waitRate: z.number().int().min(0).max(1_000_000).optional(),
     prepay: z.enum(['never', 'low', 'always']).optional(), vacation: z.boolean().optional(),
@@ -539,7 +541,21 @@ export function createApp(d: Deps) {
     ring: z.boolean().optional(),
     // Баллы: гасить ли ими комиссию и сколько максимум с одной заявки (копейки, null — сколько можно)
     pointsAuto: z.boolean().optional(), pointsMax: money.nullable().optional(),
-  }), c.body)));
+  });
+  r.get('/api/performer/profile', true, (c: AuthedCtx) => profiles.performer(c.user.id));
+  r.put('/api/performer/profile', true, (c: AuthedCtx) =>
+    profiles.upsertPerformer(c.user, parse(performerProfileSchema, c.body)));
+  r.put('/api/performer/extras', performerRoles, (c: AuthedCtx) =>
+    profiles.setExtras(c.user.id, parse(performerExtrasSchema, c.body)));
+  // Profile matching and its presentation/conditions now commit in one transaction.
+  // A failure to save either half must roll back the entire request.
+  r.put('/api/performer/request-settings', performerRoles, (c: AuthedCtx) => {
+    const body = parse(z.object({
+      profile: performerProfileSchema,
+      extras: performerExtrasSchema,
+    }).strict(), c.body);
+    return profiles.upsertPerformer(c.user, body.profile, body.extras);
+  });
   r.put('/api/performer/schedule', performerRoles, (c: AuthedCtx) => {
     const t = z.string().regex(/^\d{2}:\d{2}$/);
     const day = z.boolean();
@@ -591,22 +607,17 @@ export function createApp(d: Deps) {
   });
   r.post('/api/pricing/estimate', false, async (c: Ctx) => {
     const b = parse(z.object({ service: z.string(), tier: z.enum(['eco', 'comfort', 'pro']).default('eco'), zoneId: z.string(),
-      night: z.boolean().optional(), group: z.boolean().default(false),
-      address:z.string().max(300).optional(),
-      lat:z.number().min(-90).max(90).optional(),
-      lng:z.number().min(-180).max(180).optional() }), c.body);
+      regionId: z.enum(['spb', 'lo', 'other']).optional(), city: z.string().max(120).optional(),
+      address: z.string().max(300).optional(), lat: z.number().optional(), lng: z.number().optional(),
+      night: z.boolean().optional(), group: z.boolean().default(false) }), c.body);
     const p = await settings.get('pricing');
     try {
-      const scope=legacyPricingWarning({address:b.address,lat:b.lat,lng:b.lng});
-      if(b.service!=='consult'&&!scope.available)
-        throw conflict('outside_legacy_tariff_region',scope.message);
-      const mismatch=b.service==='consult'?null:legacyTariffZoneMismatch({address:b.address},b.zoneId);
-      if(mismatch)throw conflict('mismatched_legacy_tariff_zone',
-        'Указанный населённый пункт не соответствует выбранной зоне тарифа СПб/ЛО. Выберите верную зону.');
-      const quote=estimate(p, { ...b, night: b.night ?? isNight(p, now()) });
-      return {...quote,regionValidation:b.service==='consult'?null:scope};
+      assertRegionalTariff(b);
+      const price = estimate(p, { ...b, night: b.night ?? isNight(p, now()) });
+      return { ...price, provisional: b.service !== 'consult',
+        coverageNote: b.service === 'consult' ? null : REGIONAL_COVERAGE_NOTE };
     } catch (e) {
-      if(e instanceof HttpError)throw e;
+      if (e instanceof CoverageError) throw bad(e.code, e.message);
       throw bad('bad_zone', (e as Error).message);
     }
   });
@@ -617,7 +628,7 @@ export function createApp(d: Deps) {
     await offers.requireClient(c.user);
     return orders.create(c.user, parse(z.object({
     service: z.string(), isSos: z.boolean().optional(), problem: z.string().max(40).optional(), description: z.string().max(1000).optional(),
-    address: z.string().max(300).optional(), lat: z.number().optional(), lng: z.number().optional(), zoneId: z.string().default('spb'),
+    address: z.string().max(300).optional(), lat: z.number().optional(), lng: z.number().optional(), zoneId: z.string().default('phone'), regionId: z.enum(['spb', 'lo', 'other']).optional(), city: z.string().max(120).optional(),
     tier: z.enum(['eco', 'comfort', 'pro']).optional(), vehicleId: z.string().uuid().optional(), brand: z.string().max(40).optional(),
     model: z.string().max(40).optional(), year: z.number().int().min(1950).max(2100).optional(),
     groupTrip: z.boolean().optional(), night: z.boolean().optional(), paymentMethod: z.enum(['cash', 'online', 'invoice']).optional(),
@@ -1191,6 +1202,21 @@ export function createApp(d: Deps) {
   r.get('/api/admin/settings', ['admin'], () => settings.all());
   r.put('/api/admin/settings/:key', ['admin'], (c: AuthedCtx) => {
     if (!(c.params.key in defaultSettings)) throw notFound('Нет такой настройки');
+    if (c.params.key === 'dispatch' && c.body?.sosProgressive !== undefined) {
+      const policy=parse(z.object({
+        enabled:z.boolean(),
+        stages:z.array(z.object({
+          radiusKm:z.number().int().min(1).max(220),
+          maxRoadEtaMinutes:z.number().int().min(5).max(180),
+          waitSeconds:z.number().int().min(10).max(900),
+        }).strict()).max(5),
+      }).strict(),c.body.sosProgressive);
+      if (policy.stages.length>0 && !validStages(policy.stages))
+        throw bad('invalid_sos_stages','Этапы должны иметь возрастающие ограничения радиуса и дорожного ETA');
+      if (policy.enabled && (!validStages(policy.stages)||!auction.roadEta))
+        throw bad('road_eta_not_ready','Для включения этапов нужны согласованные пределы и серверный маршрутизатор');
+      return settings.set('dispatch',{...c.body,sosProgressive:policy},c.user.id);
+    }
     if (c.params.key === 'insurancePartners') {
       const input = parse(z.object({ registrationOpen: z.boolean() }).strict(), c.body);
       if (input.registrationOpen && !config.insurerPrimaryPhone)
@@ -1407,8 +1433,13 @@ export function createApp(d: Deps) {
       const { status, body } = errorBody(e);
       // Structured, privacy-minimal diagnostics are available through Docker's log driver.
       // Never log the request body, phone, password, SMS code, auth header or query string.
-      if (status >= 500 || (url.pathname === '/api/auth/login' && status >= 400)) {
-        const category = status >= 500 ? 'http_server_error' : 'auth_login_rejected';
+      // Registration failures are as important as login failures: a rejected
+      // SMS request leaves users on the phone step. Record request ID/status
+      // only; never the phone, message body, password or verification code.
+      const authFailure = (url.pathname === '/api/auth/login' || url.pathname === '/api/auth/code') && status >= 400;
+      if (status >= 500 || authFailure) {
+        const category = status >= 500 ? 'http_server_error'
+          : url.pathname === '/api/auth/code' ? 'auth_sms_request_rejected' : 'auth_login_rejected';
         // Do not block the HTTP response if the diagnostics store is unavailable.
         try {
           await d.db.query(

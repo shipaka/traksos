@@ -10,7 +10,6 @@ import { MockProvider } from './payments/provider.ts';
 import { YooKassaProvider } from './payments/yookassa.ts';
 import { staticHandler } from './http/static.ts';
 import { PublicWeatherService } from './services/publicWeather.ts';
-import { pruneCommunityEvents } from './services/communityEventRetention.ts';
 import { attachRealtimeGateway } from './realtime/gateway.ts';
 
 const db = await createDb(config.databaseUrl);
@@ -48,7 +47,8 @@ const server = http.createServer((req, res) => {
   return void serveWeb(req, res);
 });
 
-// Authenticated realtime events, with periodic session/role revocation checks.
+// Both existing APKs and new one-use-ticket clients remain compatible.
+// Legacy URL token support is a *temporary* release gate tracked by #115.
 attachRealtimeGateway(server,app,db);
 
 // Очередь вызовов: истёкшие → следующему
@@ -78,6 +78,8 @@ const housekeeping = async () => {
       .catch((e) => console.error('[sms-quota-cleanup]', e)),
     db.query("delete from auth_login_attempts where window_start < now() - interval '24 hours'")
       .catch((e) => console.error('[login-quota-cleanup]', e)),
+    db.query("delete from realtime_ws_tickets where expires_at < now() - interval '1 minute'")
+      .catch((e) => console.error('[ws-ticket-cleanup]', e)),
     db.query("delete from diagnostic_events where occurred_at < now() - interval '30 days'")
       .catch((e) => console.error('[diagnostics-cleanup]', e)),
     // GPS coordinates are sensitive; retain the minimal route evidence for

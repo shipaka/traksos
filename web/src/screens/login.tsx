@@ -51,6 +51,14 @@ const DEFAULT_PARTNER_SHOWCASE = {tag:'TRAKSOS · ПАРТНЁРСКАЯ ПЛА�
 
 type Intent = 'help' | 'login' | 'register' | 'join' | 'reset' | 'activate';
 
+// Do not lose the server's useful error when an SMS request is rejected.
+// The request ID is diagnostic only: no phone, password or code is logged.
+function authErrorMessage(error: unknown, fallback: string): string {
+  if (!(error instanceof ApiError)) return fallback;
+  const requestId = error.data?.requestId;
+  return error.message + (typeof requestId === 'string' && requestId ? ' · Код обращения: ' + requestId : '');
+}
+
 /** Куда вести после входа: по ролям из ответа сервера */
 export function homeFor(roles: string[], intent: Intent): string {
   if (intent === 'help') return '#/sos';
@@ -76,6 +84,9 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [codeError, setCodeError] = useState('');
+  const [codeStatus, setCodeStatus] = useState('');
+  const [loginBusy, setLoginBusy] = useState(false);
   const [devCode, setDevCode] = useState<string | null>(null);
   const [role, setRole] = useState<JoinRole | null>(null);
   const [customerType, setCustomerType] = useState<'owner' | 'driver'>('owner');
@@ -112,37 +123,68 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   };
 
   async function sendCode() {
-    if (intent === 'join' && !role) return;
+    if (busy) return;
+    setCodeError('');
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length !== 11 || !/^[78]/.test(digits)) {
+      setCodeError('Введите номер полностью: +7 и 10 цифр.');
+      return;
+    }
+    if (needAgree && !agree) {
+      setCodeError('Для продолжения подтвердите согласие с условиями и обработкой данных.');
+      return;
+    }
+    if (intent === 'join' && !role) {
+      setCodeError('Выберите, кем хотите работать с TrakSOS.');
+      return;
+    }
+    if (intent === 'join' && role === 'master' && specialties.length === 0) {
+      setCodeError('Выберите хотя бы одну специализацию мастера.');
+      return;
+    }
     setInsurerOnly(false);
+    setCodeStatus('Проверяем номер и отправляем SMS…');
     const r = await run(async () => {
       try {
         return await post('/api/auth/code', { phone, purpose: intent === 'reset' || intent === 'activate' ? 'reset' : 'register',
           accountType: intent === 'join' ? role : intent === 'register' || intent === 'help' ? customerType : undefined });
       } catch (e) {
         if (e instanceof ApiError && e.code === 'insurer_only') setInsurerOnly(true);
+        setCodeError(authErrorMessage(e, 'Не удалось связаться с сервером. Проверьте интернет и повторите попытку.'));
         throw e;
       }
-    }, 'Код отправлен');
-    if (r) {
+    }, null);
+    setCodeStatus('');
+    if (r?.sent === true) {
       setDevCode(r.devCode ?? null);
       setStep('code');
+      setCodeError('');
+    } else if (r) {
+      setCodeError('Сервер не подтвердил отправку кода. Повторите попытку позже.');
     }
   }
   async function verify() {
     if (intent === 'join' && !role) return;
     if (intent === 'login') {
+      if (loginBusy) return;
       setLoginError('');
-      if (!/^\+7[0-9]{10}$/.test('+7' + phone.replace(/\D/g, '').slice(-10)) || phone.replace(/\D/g, '').length !== 11) {
+      const digits = phone.replace(/\D/g, '');
+      if (digits.length !== 11 || !/^[78]/.test(digits)) {
         setLoginError('Введите номер телефона полностью: +7 и 10 цифр.');
         return;
       }
+      if (!password) {
+        setLoginError('Введите пароль. Если забыли его, нажмите «Забыли пароль?».');
+        return;
+      }
+      setLoginBusy(true);
       try {
         const login = await post('/api/auth/login', { phone, password, device: navigator.userAgent.slice(0, 200) });
         await signedIn(login);
       } catch (e) {
-        setLoginError(e instanceof ApiError
-          ? e.message + (e.data?.requestId ? ' · Код обращения: ' + e.data.requestId : '')
-          : 'Не удалось завершить вход. Проверьте соединение и повторите попытку.');
+        setLoginError(authErrorMessage(e, 'Не удалось завершить вход. Проверьте соединение и повторите попытку.'));
+      } finally {
+        setLoginBusy(false);
       }
       return;
     }
@@ -386,7 +428,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <Field label="Телефон"><input className="field" type="tel" autoComplete="username" value={phone} onChange={(e) => { setPhone(e.target.value); setLoginError(''); }} /></Field>
           <Field label="Пароль"><input className="field" type="password" autoComplete="current-password" value={password} onChange={(e) => { setPassword(e.target.value); setLoginError(''); }} /></Field>
           {loginError && <div role="alert" className="card" style={{ borderColor: 'var(--danger, #e25b69)' }}>{loginError}</div>}
-          <button className="btn" disabled={busy || password.length === 0}>Войти</button>
+          <button className="btn" disabled={loginBusy}>{loginBusy ? 'Входим…' : 'Войти'}</button>
           <button type="button" className="btn ghost" onClick={() => { setIntent('reset'); setStep('phone'); }}>Забыли пароль?</button>
           <button type="button" className="btn ghost" onClick={backToPublic}>Назад</button>
         </form>
@@ -440,7 +482,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
             </details>}
           </div>}
           <Field label="Телефон">
-            <input className="field" type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => { setPhone(e.target.value); setInsurerOnly(false); }} />
+            <input className="field" type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => { setPhone(e.target.value); setInsurerOnly(false); setCodeError(''); }} />
           </Field>
           {insurerOnly && <div className="card stack" role="alert">
             <b>Для этого номера доступен только страховой кабинет</b>
@@ -453,7 +495,9 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
             <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} style={{ marginTop: 3 }} />
             <span>{intent === 'activate' ? 'Согласен на ' : <>Согласен с {intent === 'join' ? <a href="#/offer/performer" target="_blank" rel="noreferrer">агентским договором</a> : <a href="#/offer/client" target="_blank" rel="noreferrer">офертой</a>} и на </>}<a href="#/offer/privacy" target="_blank" rel="noreferrer">обработку персональных данных</a></span>
           </label>}
-          <button className="btn" disabled={busy || (needAgree && !agree) || phone.replace(/\D/g, '').length < 11 || (intent === 'join' && (!role || (role === 'master' && specialties.length === 0)))}>Получить код</button>
+          {codeError && <div className="card" role="alert" style={{ borderColor: 'var(--danger, #e25b69)' }}>{codeError}</div>}
+          {codeStatus && <div className="note" role="status">{codeStatus}</div>}
+          <button className="btn" disabled={busy}>{busy ? 'Отправляем…' : 'Получить код'}</button>
           {intent !== 'login' && <button type="button" className="btn ghost" onClick={() => { setIntent('login'); setStep('phone'); setCode(''); }}>Уже есть аккаунт? Войти по паролю</button>}
           {!driver && <button type="button" className="btn ghost" onClick={backToPublic}>Назад</button>}
         </form>

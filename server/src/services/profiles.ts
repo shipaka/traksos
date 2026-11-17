@@ -59,7 +59,7 @@ export class ProfilesService {
     return p;
   }
 
-  async upsertPerformer(user: AuthUser, p: PerformerInput) {
+  async upsertPerformer(user: AuthUser, p: PerformerInput, extras?: Record<string, unknown>) {
     const corridor = (await this.settings.get('pricing')).corridor;
     const inRange = (v: number | null | undefined, min: number, max: number, label: string) => {
       if (v != null && (v < min || v > max)) throw bad('price_out_of_corridor', `${label}: от ${min / 100} до ${max / 100} ₽`);
@@ -78,6 +78,13 @@ export class ProfilesService {
     }
     if (p.car && p.cars && !p.cars.some((c) => c.plate === p.car!.plate)) throw bad('bad_car', 'Выберите машину из своего списка');
 
+    if (extras !== undefined) {
+      const current = await this.performer(user.id);
+      if (!current || current.kind !== p.kind)
+        throw bad('bad_profile_kind', 'Настраивать заявки можно только в своём кабинете исполнителя');
+      if (current.kind === 'tow' && extras.prepAck === false)
+        throw bad('need_ack', 'Отметьте, что отвечаете за время на сборы');
+    }
     const role = p.kind === 'ecu' ? 'master' : p.kind;
     const userRoles = (await this.db.one<{ roles: string[] }>('select roles from users where id=$1', [user.id]))?.roles ?? user.roles;
     assertRoleExtension(userRoles, role);
@@ -129,6 +136,12 @@ export class ProfilesService {
           p.kmRate ?? null, p.prepMinutes ?? null, p.acceptsGroup ?? null, p.taxStatus ?? null, p.inn ?? null,
           p.car ?? (p.cars?.length ? p.cars[0] : null), p.cars ? JSON.stringify(p.cars) : null],
       );
+      if (extras !== undefined) {
+        await q.query(
+          'update performer_profiles set extras = extras || $2::jsonb, updated_at=now() where user_id=$1',
+          [user.id, JSON.stringify(extras)],
+        );
+      }
     });
     return this.performer(user.id);
   }

@@ -14,7 +14,7 @@ export type RealtimeGatewayOptions = { reauthEveryMs?:number; pingEveryMs?:numbe
  * is not proof of permanent authorization: periodically recheck the session
  * and roles, and close the socket when the account or role is revoked.
  *
- * This is deliberately a metadata-only hint channel. Room/DM content stays
+ * This is deliberately a metadata-only hint channel. Chat and order content stays
  * in permission-checked HTTP endpoints. Do not send credentials in messages.
  */
 export function attachRealtimeGateway(server:http.Server,app:RealtimeGatewayDependencies,

@@ -115,6 +115,30 @@ async function run(width, height, mobile, nativePreview = false) {
     await verifyPage(page, suffix + ':register');
     await page.screenshot({ path: OUT + '/register-' + suffix + '.png', fullPage: true });
 
+    // Realistic mocked SMS request: failure must remain visible; success
+    // must open the code field. Never send a real message from CI.
+    if (width === 390 && !nativePreview) {
+      await page.getByRole('button', { name: 'Получить код' }).click();
+      await page.getByRole('alert').getByText(/Введите номер полностью/).waitFor();
+      let smsRejected = true;
+      await page.route('**/api/auth/code', async route => {
+        const response = smsRejected
+          ? { error: 'sms_rejected', message: 'SMS.ru отклонил отправку.', requestId: 'e2e-sms-502' }
+          : { phone: '+79990001234', sent: true };
+        await route.fulfill({ status: smsRejected ? 502 : 200, contentType: 'application/json', body: JSON.stringify(response) });
+      });
+      await page.locator('.auth-desktop-form input[type=tel]').fill('+79990001234');
+      await page.locator('.auth-desktop-form input[type=checkbox]').check();
+      await page.getByRole('button', { name: 'Получить код' }).click();
+      await page.getByRole('alert').getByText(/Код обращения: e2e-sms-502/).waitFor();
+      check(await page.locator('input[autocomplete="one-time-code"]').count() === 0,
+        suffix + ': SMS rejection must not pretend the code was sent');
+      smsRejected = false;
+      await page.getByRole('button', { name: 'Получить код' }).click();
+      await page.locator('input[autocomplete="one-time-code"]').waitFor();
+      await page.unroute('**/api/auth/code');
+    }
+
     await page.goto(BASE + '/#/join');
     await page.getByRole('heading', { name: 'Работать с TrakSOS' }).waitFor();
     for (const name of ['Мастер', 'Эвакуаторщик', 'СТО', 'Страховой агент']) {
@@ -141,6 +165,19 @@ async function run(width, height, mobile, nativePreview = false) {
     await page.goto(BASE + '/#/login');
     await page.getByRole('heading', { name: 'Вход по номеру телефона' }).waitFor();
     check(await page.locator('input[type=password]').isVisible(), 'Password login unavailable');
+    if (width === 390 && !nativePreview) {
+      await page.getByRole('button', { name: 'Войти', exact: true }).click();
+      await page.getByRole('alert').getByText(/Введите номер телефона полностью/).waitFor();
+      await page.locator('.auth-desktop-form input[type=tel]').fill('+79990001234');
+      await page.locator('.auth-desktop-form input[type=password]').fill('Incorrect-E2E-Password');
+      await page.route('**/api/auth/login', route => route.fulfill({
+        status: 401, contentType: 'application/json',
+        body: JSON.stringify({ error: 'invalid_login', message: 'Неверный пароль', requestId: 'e2e-login-401' })
+      }));
+      await page.getByRole('button', { name: 'Войти', exact: true }).click();
+      await page.getByRole('alert').getByText(/Код обращения: e2e-login-401/).waitFor();
+      await page.unroute('**/api/auth/login');
+    }
     await verifyPage(page, suffix + ':login');
     await page.screenshot({ path: OUT + '/login-' + suffix + '.png', fullPage: true });
 

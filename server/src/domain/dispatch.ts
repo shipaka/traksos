@@ -19,6 +19,7 @@ export interface Candidate {
   verification: string;
   lat: number | null;
   lng: number | null;
+  prep_minutes?: number | null;
   rating: number | string | null;
   accepts_group: boolean;
   user_status: string;

@@ -175,7 +175,11 @@ expect(shell.includes("route[0] === 'explore'") && shell.includes("route[0] === 
   'public catalogue, Company and Offers have real routes');
 expect(shell.includes('guest-mobile-catalog') && shell.includes('guest-nav-group'),
   'guest catalogue links work on mobile and desktop');
-expect(landing.includes('>Войти</button>') && landing.includes('>Регистрация</button>'),
+// The first hero slide uses a dynamic label; verify the actual actions,
+// not the superseded static text markup.
+expect(landing.includes("heroSlide === 0 ? go('login')") &&
+  landing.includes("heroSlide === 0 ? 'Войти'") &&
+  landing.includes("onClick={() => go('register')}>Регистрация</button>"),
   'approved hero calls to action open login and client registration');
 try { await stat('web/public/approved-desktop.html'); expect(false, 'superseded static demo was deleted'); }
 catch { console.log('OK: superseded static HTML mockup not present'); }
