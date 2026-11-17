@@ -320,7 +320,7 @@ export class AuctionService {
   }
 
   private async finishEmpty(order: any) {
-    const r = await this.db.query(`update orders set status='no_performer' where id=$1 and status='searching' and (auction_until is null or auction_until<=$2) returning id`, [order.id,this.now()]);
+    const r = await this.db.query(`update orders set status='no_performer' where id=$1 and status='searching' returning id`, [order.id]);
     if (!r.length) return;
     await this.db.query(`update order_dispatch set status='missed' where order_id=$1 and status='bidding'`, [order.id]);
     await this.orders.event(this.db, order.id, null, 'no_performer', { auction: true });
