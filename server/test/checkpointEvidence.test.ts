@@ -109,6 +109,16 @@ test('real database: client plan, pass decision, GPS evidence, manual review, pr
     assert.equal(p.version,1);
     assert.equal((await service.agreePlan(c,id,input)).reused,true);
     await assert.rejects(service.agreePlan(c,id,{...input,lat:60}),(e:any)=>e.status===409);
+    // A grant is mandatory even for direct service calls, not only HTTP.
+    const granted=await service.gpsConsent(w,id,{
+      eventKey:'direct-consent-grant-001',planId:p.planId,
+      action:'granted',durationMinutes:60,
+    });
+    assert.equal(granted.active,true);
+    await assert.rejects(service.gpsConsent(c,id,{
+      eventKey:'direct-consent-grant-002',planId:p.planId,
+      action:'granted',durationMinutes:60,
+    }),(e:any)=>e.status===403);
     await assert.rejects(service.submitAttempt(c,id,{
       requestKey:'arrival-001',planId:p.planId,gpsConsent:true,
     }),(e:any)=>e.status===403);
@@ -140,10 +150,10 @@ test('real database: client plan, pass decision, GPS evidence, manual review, pr
 
     await t.db.query(
       'insert into performer_route_samples '+
-      '(order_id,performer_id,lat,lng,received_at,accepted,accuracy_m,gps_source,checkpoint_consent) '+
-      "values($1,$2,$3,$4,now()-interval '48 seconds',true,12,'gps',true),"+
-      "($1,$2,$3,$4,now()-interval '12 seconds',true,12,'gps',true)",
-      [id,worker.id,59.9343,30.3351],
+      '(order_id,performer_id,lat,lng,received_at,accepted,accuracy_m,gps_source,checkpoint_consent,checkpoint_plan_id,checkpoint_consent_seq) '+
+      "values($1,$2,$3,$4,now()-interval '48 seconds',true,12,'gps',true,$5,$6),"+
+      "($1,$2,$3,$4,now()-interval '12 seconds',true,12,'gps',true,$5,$6)",
+      [id,worker.id,59.9343,30.3351,p.planId,granted.eventId],
     );
     const second=await service.submitAttempt(w,id,{
       requestKey:'arrival-002',planId:p.planId,gpsConsent:true,
@@ -157,6 +167,16 @@ test('real database: client plan, pass decision, GPS evidence, manual review, pr
     assert.equal(raw.samples.length,2);
     assert.equal(raw.sampleCount,2);
     assert.equal(raw.sampleDigest.length,64);
+    // Data older than its retention expiry is never returned even if a
+    // separate privileged purge job hasn't removed the underlying row yet.
+    const afterExpiry=new CheckpointEvidenceService(t.db,
+      ()=>new Date('2099-01-01T00:00:00Z'));
+    const hidden=await afterExpiry.inspectSnapshot(a,second.id);
+    assert.equal(hidden.samples,null);
+    assert.equal(hidden.expiresAt,null);
+    await assert.rejects(afterExpiry.submitAttempt(w,id,{
+      requestKey:'arrival-expired-consent',planId:p.planId,gpsConsent:true,
+    }),(e:any)=>e.status===403);
 
     const visible=await service.inspect(c,id);
     assert.equal(visible.attempts.length,2);
@@ -177,10 +197,47 @@ test('real database: client plan, pass decision, GPS evidence, manual review, pr
     assert.equal(order.wait_started_at,null);
     assert.equal((await t.db.query('select id from payments where order_id=$1',[id])).length,0);
 
+    // Consent must be independently revocable even after an earlier
+    // successful candidate. Old GPS points remain tied to this plan.
+    const revoked=await service.gpsConsent(w,id,{
+      eventKey:'direct-consent-revoke-001',planId:p.planId,action:'revoked',
+    });
+    assert.equal(revoked.active,false);
+    await assert.rejects(service.submitAttempt(w,id,{
+      requestKey:'arrival-after-revocation',planId:p.planId,gpsConsent:true,
+    }),(e:any)=>e.status===403);
+
+    // Re-granting under the SAME plan is a NEW consent epoch. The old two
+    // GPS points belong to the earlier permission and must not be reused.
+    const regranted=await service.gpsConsent(w,id,{
+      eventKey:'direct-consent-grant-002',planId:p.planId,
+      action:'granted',durationMinutes:60,
+    });
+    assert.equal(regranted.active,true);
+    const regrantAttempt=await service.submitAttempt(w,id,{
+      requestKey:'arrival-after-regrant-001',planId:p.planId,gpsConsent:true,
+    });
+    assert.equal(regrantAttempt.outcome,'needs_review');
+    assert.ok((regrantAttempt.evaluation.reasons as string[]).includes('no_recent_samples'));
+
     const changed=await service.agreePlan(c,id,{
       ...input,requestKey:'checkpoint-002',lat:59.935,
     });
     assert.equal(changed.version,2);
+    const newGrant=await service.gpsConsent(w,id,{
+      eventKey:'direct-consent-grant-003',planId:changed.planId,
+      action:'granted',durationMinutes:60,
+    });
+    assert.equal(newGrant.active,true);
+    // Old consented positions do not belong to the newly approved plan,
+    // even when both gates are geographically close to each other.
+    const stale=await service.submitAttempt(w,id,{
+      requestKey:'arrival-new-plan-001',planId:changed.planId,gpsConsent:true,
+    });
+    assert.equal(stale.outcome,'needs_review');
+    assert.ok((stale.evaluation.reasons as string[]).includes('no_recent_samples'));
+    const snap=await service.inspectSnapshot(a,stale.id);
+    assert.equal(snap.sampleCount,0);
     await assert.rejects(service.submitAttempt(w,id,{
       requestKey:'arrival-003',planId:p.planId,gpsConsent:true,
     }),(e:any)=>e.status===409);
@@ -188,9 +245,9 @@ test('real database: client plan, pass decision, GPS evidence, manual review, pr
     assert.equal((await service.purgeExpiredSnapshots(a)).purged,0);
     await assert.rejects(service.purgeExpiredSnapshots(c),(e:any)=>e.status===403);
     const future=new CheckpointEvidenceService(t.db,()=>new Date('2099-01-01T00:00:00Z'));
-    assert.equal((await future.purgeExpiredSnapshots(a)).purged,2);
+    assert.equal((await future.purgeExpiredSnapshots(a)).purged,4);
     assert.equal((await t.db.query(
-      'select id from checkpoint_arrival_attempts where order_id=$1',[id])).length,2);
+      'select id from checkpoint_arrival_attempts where order_id=$1',[id])).length,4);
     assert.equal((await t.db.query(
       'select attempt_id from checkpoint_arrival_sample_snapshots')).length,0);
   } finally {await t.close();}

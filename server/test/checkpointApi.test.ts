@@ -101,6 +101,25 @@ test('checkpoint API: roles, consented GPS, idempotence, pass review, non-billab
         {...gpsData,checkpointEvidenceConsent:true},worker.token)).status,409);
 
       ok(await t.api('POST','/api/orders/'+id+'/step',{action:'depart'},worker.token));
+
+      // A per-message consent boolean without an active scoped grant is not
+      // sufficient. The server must explicitly record a reversible permission.
+      const ungranted=await t.api('POST','/api/performer/location',
+        {...gpsData,checkpointEvidenceConsent:true},worker.token);
+      assert.equal(ungranted.status,409);
+      const consentUrl='/api/orders/'+id+'/checkpoint/gps-consent';
+      const grant={
+        eventKey:'scoped-gps-grant-001',planId:agreed.planId,
+        action:'granted',durationMinutes:60,
+      };
+      assert.equal((await t.api('POST',consentUrl,grant,client.token)).status,403);
+      const granted=ok(await t.api('POST',consentUrl,grant,worker.token));
+      assert.equal(granted.active,true);
+      assert.equal(granted.reused,false);
+      assert.equal((await t.api('POST',consentUrl,grant,worker.token)).body.reused,true);
+      assert.equal((await t.api('POST',consentUrl,
+        {...grant,durationMinutes:90},worker.token)).status,409);
+
       const first=ok(await t.api('POST','/api/performer/location',
         {...gpsData,checkpointEvidenceConsent:true},worker.token));
       assert.notEqual(first.accepted,false);
@@ -112,6 +131,9 @@ test('checkpoint API: roles, consented GPS, idempotence, pass review, non-billab
       assert.equal(firstRows[0].gps_source,'gps');
       assert.equal(Number(firstRows[0].accuracy_m),12);
       assert.equal(firstRows[0].mock_location,false);
+      const scoped=await t.db.one<any>(
+        'select checkpoint_plan_id from performer_route_samples where id=$1',[firstRows[0].id]);
+      assert.equal(scoped.checkpoint_plan_id,agreed.planId);
 
       // Move the stored sample backwards in this isolated DB only; no time
       // delays or fake route positions are sent to the live application.
@@ -149,6 +171,8 @@ test('checkpoint API: roles, consented GPS, idempotence, pass review, non-billab
       const clientView=ok(await t.api('GET','/api/orders/'+id+'/checkpoint',
         undefined,client.token));
       assert.equal(clientView.attempts.length,1);
+      assert.equal(clientView.gpsConsent.planId,agreed.planId);
+      assert.equal(clientView.gpsConsent.active,true);
       assert.equal(JSON.stringify(clientView).includes('lastDistanceM'),false);
       assert.equal(JSON.stringify(clientView).includes('sample_snapshot'),false);
       assert.equal((await t.api('GET','/api/orders/'+id+'/checkpoint',
@@ -197,6 +221,28 @@ test('checkpoint API: roles, consented GPS, idempotence, pass review, non-billab
         requestKey:'attempt-0001',planId:agreed.planId,gpsConsent:true,
       },worker.token));
       assert.equal(stillReplay.id,attempt.id);
+
+      // Stopping consent must be honored even if an old APK still sends its
+      // previous per-position true flag and a valid plan ID.
+      const revoke={eventKey:'scoped-gps-revoke-001',
+        planId:agreed.planId,action:'revoked'};
+      const stopped=ok(await t.api('POST',consentUrl,revoke,worker.token));
+      assert.equal(stopped.active,false);
+      const blocked=await t.api('POST','/api/performer/location',
+        {...gpsData,checkpointEvidenceConsent:true},worker.token);
+      assert.equal(blocked.status,409);
+      assert.equal((await t.api('POST','/api/orders/'+id+'/checkpoint/arrival',{
+        requestKey:'attempt-0010',planId:agreed.planId,gpsConsent:true,
+      },worker.token)).status,403);
+      assert.equal((await t.api('POST',consentUrl,grant,worker.token)).body.active,false);
+      assert.equal((await t.api('GET','/api/orders/'+id+'/checkpoint',
+        undefined,worker.token)).body.gpsConsent.active,false);
+      const regrant=ok(await t.api('POST',consentUrl,{
+        ...grant,eventKey:'scoped-gps-grant-002',
+      },worker.token));
+      assert.equal(regrant.active,true);
+      assert.equal((await t.api('POST','/api/performer/location',
+        {...gpsData,checkpointEvidenceConsent:true},worker.token)).status,200);
 
       const order=await t.db.one<any>(
         'select status,arrived_at,wait_started_at from orders where id=$1',[id]);

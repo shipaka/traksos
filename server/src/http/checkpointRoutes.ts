@@ -37,6 +37,18 @@ export function registerCheckpointRoutes(r: Router, service: CheckpointEvidenceS
   r.get('/api/orders/:id/checkpoint', true,
     (c: AuthedCtx) => service.inspect(c.user, c.params.id));
 
+  // Separate time-limited permission. A single GPS message with a boolean
+  // cannot silently create lasting tracking consent. Revocation is always
+  // accepted for the original performer, including after order closure.
+  r.post('/api/orders/:id/checkpoint/gps-consent', ['master', 'tow', 'service'],
+    (c: AuthedCtx) => {
+      const p = parse(z.object({
+        eventKey: key, planId: uuid, action: z.enum(['granted','revoked']),
+        durationMinutes: z.number().int().min(5).max(180).optional(),
+      }).strict(), c.body);
+      return service.gpsConsent(c.user, c.params.id, p);
+    });
+
   r.post('/api/orders/:id/checkpoint/arrival', ['master', 'tow', 'service'], (c: AuthedCtx) => {
     const p = parse(z.object({
       requestKey: key, planId: uuid,

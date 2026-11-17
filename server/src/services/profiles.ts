@@ -192,29 +192,40 @@ export class ProfilesService {
       // Location updates remain live, but cap persisted audit sampling to one
       // point per order per 10 seconds. The profile row lock above serializes
       // concurrent requests from the same performer and prevents burst inserts.
+      let consentSeq: string | null = null;
       if (evidence) {
-        // No consent for unrelated orders, and no trust in a guessed plan ID.
-        // This select is deliberately checked inside the same profile lock.
-        const approvedPlan = await q.one<{ id: string }>(
-          `select p.id from checkpoint_evidence_plans p
+        // Serialize with both grant and revoke; already-revoked metadata
+        // must not be used to build a later GPS checkpoint snapshot.
+        await q.query('select pg_advisory_xact_lock(712021,hashtext($1::text))',
+          [evidence.planId]);
+        const approvedPlan = await q.one<{ id: string; seq: string }>(
+          `select p.id,c.seq from checkpoint_evidence_plans p
            join orders o on o.id=p.order_id
+           join lateral (
+             select seq,action,expires_at from checkpoint_gps_consent_events e
+             where e.plan_id=p.id order by seq desc limit 1
+           ) c on true
            where p.id=$1 and p.performer_id=$2
              and o.performer_id=$2 and o.status='en_route'
              and p.id=(select id from checkpoint_evidence_plans
-                       where order_id=o.id order by version desc limit 1)`,
+                       where order_id=o.id order by version desc limit 1)
+             and c.action='granted' and c.expires_at>now()`,
           [evidence.planId, userId],
         );
-        if (!approvedPlan) throw conflict('checkpoint_plan_outdated',
-          'Нет актуального согласованного КПП для записи доказательств');
+        if (!approvedPlan) throw conflict('checkpoint_consent_unavailable',
+          'Нужно актуальное действующее согласие специалиста для этого КПП');
+        consentSeq = String(approvedPlan.seq);
       }
       await q.query(`insert into performer_route_samples
         (order_id,performer_id,lat,lng,received_at,accuracy_m,gps_source,
-         mock_location,checkpoint_consent,device_at)
-        select o.id,$1,$2,$3,$4,$5,$6,$7,$8,$9 from orders o
+         mock_location,checkpoint_consent,device_at,checkpoint_plan_id,checkpoint_consent_seq)
+        select o.id,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10::uuid,$11::bigint from orders o
         where o.performer_id=$1 and o.status='en_route'
           and ($10::uuid is null or exists (
             select 1 from checkpoint_evidence_plans p
             where p.id=$10 and p.order_id=o.id and p.performer_id=$1
+              and p.id=(select id from checkpoint_evidence_plans
+                        where order_id=o.id order by version desc limit 1)
           ))
           and not exists (
             select 1 from performer_route_samples s
@@ -223,7 +234,7 @@ export class ProfilesService {
           )`, [userId, lat, lng, now,
           evidence?.accuracyM ?? null, evidence?.source ?? 'unknown',
           evidence?.mockLocation ?? false, !!evidence, evidence?.deviceAt ?? null,
-          evidence?.planId ?? null]);
+          evidence?.planId ?? null,consentSeq]);
       return true;
     });
   }

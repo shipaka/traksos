@@ -1,5 +1,6 @@
 /**
- * Checkpoint arrival evidence repository. No HTTP route is registered yet.
+ * Checkpoint arrival evidence repository. Sandbox HTTP integration is
+ * feature-gated and must never enable billing or production location capture.
  * These operations never mutate orders, GPS history, payments, waiting-time
  * billing, performer ratings, or pass documents.
  */
@@ -41,6 +42,13 @@ export interface AttemptInput {
 export interface DecisionInput {
   decision: 'corroborated' | 'insufficient';
   explanation: string;
+}
+/** Consent is for a single immutable plan, never a standing GPS permission. */
+export interface GpsConsentInput {
+  eventKey: string;
+  planId: string;
+  action: 'granted' | 'revoked';
+  durationMinutes?: number;
 }
 export interface AttemptRow {
   id: string;
@@ -106,6 +114,77 @@ function renderAttempt(row: any) {
 
 export class CheckpointEvidenceService {
   constructor(private readonly db: Db, private readonly now: () => Date = () => new Date()) {}
+
+  /**
+   * Append-only consent that is bound to one plan, one performer and a strict
+   * expiry. Revocation takes effect on all new location writes and attempts.
+   *
+   * Serialize with the order row lock AND with GPS telemetry's advisory lock:
+   * location ingest locks performer profile -> advisory lock; this method locks
+   * order -> advisory lock; neither waits for the other's profile/order row.
+   */
+  async gpsConsent(actor: AuthUser, orderId: string, input: GpsConsentInput) {
+    assertKey(input.eventKey);
+    if (!['granted','revoked'].includes(input.action)) throw bad('checkpoint_consent_action');
+    if (input.action === 'granted') {
+      if (!Number.isInteger(input.durationMinutes) ||
+          input.durationMinutes! < 5 || input.durationMinutes! > 180) {
+        throw bad('checkpoint_consent_duration', 'Согласие на GPS: от 5 до 180 минут');
+      }
+    } else if (input.durationMinutes !== undefined) {
+      throw bad('checkpoint_consent_duration', 'Отзыв согласия не имеет срока');
+    }
+    const duration = input.action === 'granted' ? input.durationMinutes! : null;
+    const digest = sha(JSON.stringify([input.planId, input.action, duration]));
+    return this.db.tx(async (q) => {
+      const order = await q.one<any>(
+        'select id,performer_id,status from orders where id=$1 for update', [orderId]);
+      if (!order) throw notFound('Заявка не найдена');
+      const plan = await q.one<any>(
+        'select id,performer_id,order_id from checkpoint_evidence_plans where id=$1 and order_id=$2',
+        [input.planId, orderId]);
+      if (!plan) throw notFound('План КПП не найден');
+      if (plan.performer_id !== actor.id) throw forbidden('Согласие GPS даёт только назначенный специалист');
+      await q.query('select pg_advisory_xact_lock(712021,hashtext($1::text))', [plan.id]);
+      const old = await q.one<any>(
+        'select * from checkpoint_gps_consent_events where plan_id=$1 and event_key=$2',
+        [plan.id, input.eventKey]);
+      const current = async () => q.one<any>(
+        'select action,expires_at from checkpoint_gps_consent_events where plan_id=$1 ' +
+        'order by seq desc limit 1', [plan.id]);
+      const response = (event: any, latest: any, reused: boolean) => ({
+        eventId: String(event.seq), planId: plan.id, action: event.action, reused,
+        active: latest?.action === 'granted' &&
+          new Date(latest.expires_at).getTime() > this.now().getTime(),
+        expiresAt: latest?.action === 'granted' ? new Date(latest.expires_at).toISOString() : null,
+      });
+      if (old) {
+        if (old.request_hash !== digest) throw conflict('checkpoint_consent_key_changed',
+          'Ключ согласия уже использован с другими условиями');
+        return response(old, await current(), true);
+      }
+      if (input.action === 'granted') {
+        requireAssigned(order, actor);
+        ensureActive(order);
+        const latestPlan = await q.one<any>(
+          'select id from checkpoint_evidence_plans where order_id=$1 order by version desc limit 1',
+          [orderId]);
+        if (latestPlan?.id !== plan.id) throw conflict('checkpoint_plan_outdated',
+          'Новая версия КПП требует отдельного согласия на GPS');
+      }
+      const expires = duration == null ? null :
+        new Date(this.now().getTime() + duration * 60_000).toISOString();
+      const event = await q.one<any>(
+        'insert into checkpoint_gps_consent_events ' +
+        '(plan_id,order_id,performer_id,event_key,request_hash,action,duration_minutes,expires_at) ' +
+        'values($1,$2,$3,$4,$5,$6,$7,$8) returning *',
+        [plan.id,orderId,actor.id,input.eventKey,digest,input.action,duration,expires],
+      );
+      await audit(q,actor,'checkpoint.gps_consent_'+input.action,plan.id,
+        { orderId, eventSeq: String(event.seq), durationMinutes: duration });
+      return response(event,event,false);
+    });
+  }
 
   /** Immutable client-approved gate plan; later changes create new versions. */
   async agreePlan(actor: AuthUser, orderId: string, input: PlanInput) {
@@ -231,6 +310,13 @@ export class CheckpointEvidenceService {
         return { ...renderAttempt(old), reused: true };
       }
       ensureActive(order);
+      const consent = await q.one<any>(
+        'select seq,action,expires_at from checkpoint_gps_consent_events ' +
+        'where plan_id=$1 order by seq desc limit 1', [plan.id]);
+      if (!consent || consent.action !== 'granted' ||
+          new Date(consent.expires_at).getTime() <= this.now().getTime()) {
+        throw forbidden('Согласие на GPS для этого КПП не дано, истекло или отозвано');
+      }
       // An idempotent replay returns above even at the rate limit. Unique
       // new submissions are capped while the order row lock serializes races.
       const count = await q.one<{ n: number }>(
@@ -253,9 +339,11 @@ export class CheckpointEvidenceService {
       const gpsRows = await q.query<any>(
         'select lat,lng,received_at,accuracy_m,gps_source,mock_location,accepted ' +
         'from performer_route_samples where order_id=$1 and performer_id=$2 ' +
-        'and accepted=true and checkpoint_consent=true and received_at >= $3 and received_at <= $4 ' +
+        'and accepted=true and checkpoint_consent=true and checkpoint_plan_id=$3 ' +
+        'and checkpoint_consent_seq=$4 and received_at >= $5 and received_at <= $6 ' +
         'order by received_at desc limit 200',
-        [orderId, actor.id, new Date(now.getTime() - 10 * 60_000).toISOString(), now.toISOString()],
+        [orderId, actor.id, plan.id, String(consent.seq),
+          new Date(now.getTime() - 10 * 60_000).toISOString(), now.toISOString()],
       );
       const positions: ObservedPosition[] = gpsRows.reverse().map((r) => ({
         lat: Number(r.lat), lng: Number(r.lng),
@@ -339,6 +427,17 @@ export class CheckpointEvidenceService {
     const decisions = await this.db.query<any>(
       'select a.attempt_id,a.decision,a.decided_at from checkpoint_arrival_decisions a ' +
       'where a.order_id=$1 order by a.decided_at desc limit 100', [orderId]);
+    const latestPlanId: string | null = plans[0]?.id ?? null;
+    const lastConsent = latestPlanId ? await this.db.one<any>(
+      'select action,expires_at from checkpoint_gps_consent_events where plan_id=$1 ' +
+      'order by seq desc limit 1', [latestPlanId]) : null;
+    const consent = {
+      planId: latestPlanId,
+      active: lastConsent?.action === 'granted' &&
+        new Date(lastConsent.expires_at).getTime() > this.now().getTime(),
+      expiresAt: lastConsent?.action === 'granted'
+        ? new Date(lastConsent.expires_at).toISOString() : null,
+    };
     const details = attempts.map((a) => {
       const ev = a.evaluation as Record<string, unknown>;
       return {
@@ -352,7 +451,7 @@ export class CheckpointEvidenceService {
     });
     await audit(this.db, actor, 'checkpoint.evidence_viewed', orderId,
       { detailLevel: admin ? 'staff' : actor.id === order.performer_id ? 'performer' : 'client' });
-    return { orderId, plans, attempts: details, decisions, startBilling: false };
+    return { orderId, plans, attempts: details, decisions, gpsConsent: consent, startBilling: false };
   }
 
   /** Raw precise GPS is STAFF-ONLY, never returned to the client UI. */
@@ -363,8 +462,9 @@ export class CheckpointEvidenceService {
       [attemptId]);
     if (!attempt) throw notFound('Попытка прибытия не найдена');
     const snapshot = await this.db.one<any>(
-      'select sample_snapshot,expires_at from checkpoint_arrival_sample_snapshots where attempt_id=$1',
-      [attemptId]);
+      'select sample_snapshot,expires_at from checkpoint_arrival_sample_snapshots ' +
+      'where attempt_id=$1 and expires_at>$2',
+      [attemptId,this.now().toISOString()]);
     await audit(this.db, actor, 'checkpoint.gps_snapshot_viewed', attemptId, {
       orderId: attempt.order_id, exists: !!snapshot,
     });
