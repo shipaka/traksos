@@ -47,6 +47,9 @@ test('owner images have credits, manuals are link-only and no repair instruction
   assert.ok(renault.photo?.author);
   assert.ok(renault.photo?.licenseUrl);
   assert.equal(renault.repairSchematicsIncluded,false);
+  assert.ok(renault.manuals.some(x=>x.url==='https://driverguide.renault-trucks.com/'));
+  assert.ok((await publicVehicleCard('truck','kamaz','54901')).manuals.some(x=>x.url==='https://guide.kamaz.ru/'));
+  assert.ok((await publicVehicleCard('truck','kamaz','65951')).manuals.length===0,'do not claim K5 tractor manual fits recovery truck');
   assert.ok(!JSON.stringify(renault).includes('professional'));
   const mismatched=await publicVehicleCard('truck','renault','magnum');
   assert.equal(mismatched.photo,null,'never substitute the wrong model');
