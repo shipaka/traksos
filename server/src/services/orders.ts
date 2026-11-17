@@ -603,6 +603,7 @@ export class OrdersService {
   async performerStep(user: AuthUser, orderId: string, action: 'depart' | 'arrive' | 'start_work') {
     const o = await this.mustBePerformer(user, orderId);
     if (o.service === 'consult') throw bad('consult_no_trip', 'Это консультация по телефону — выезда нет. Закройте её с подсказкой.');
+    if(o.service==='ecu')throw bad('ecu_stationary','ЭБУ — стационарная работа. Отметки о выезде и прибытии не применяются.');
     const to = transition(o.status, action, 'performer');
     const col = { depart: 'en_route_at', arrive: 'arrived_at', start_work: 'work_started_at' }[action];
     await this.guarded(this.db, `update orders set status=$2${col ? `, ${col}=$5` : ''} where id=$1 and status=$3 and performer_id=$4`,
@@ -635,6 +636,64 @@ export class OrdersService {
     return { ...bill, end: end.toISOString() };
   }
 
+  /** Workshop-only progress, no driving stages and no billable stopwatch. */
+  async startEcuWork(user:AuthUser,orderId:string){
+    const o=await this.mustBePerformer(user,orderId);
+    if(o.service!=='ecu')throw bad('not_ecu','Это действие только для стационарных ЭБУ');
+    if(o.status!=='accepted')throw conflict('ecu_bad_status','Нельзя начать диагностику в текущем статусе');
+    await this.guarded(this.db,
+      "update orders set status='working',work_started_at=now() "+
+      "where id=$1 and status='accepted' and performer_id=$2",
+      [orderId,user.id]);
+    await this.event(this.db,orderId,user.id,'ecu_work_started',{timerBilling:false});
+    await this.notifier.notify([o.client_id,o.created_by],
+      {type:'order',orderId,status:'working'},
+      {kind:'normal',title:'Эксперт ЭБУ начал диагностику',
+       body:'Стоимость работ будет выставлена и подтверждена отдельно.',
+       data:{orderId}}).catch(()=>{});
+    return this.view(user,orderId);
+  }
+
+  /** ECU work is billed ONLY when the customer confirms the final itemized
+   * proposal. Earlier unpriced acceptance never creates a payable debt.
+   */
+  async proposeEcuTotal(user:AuthUser,orderId:string,p:{
+    amount:number;summary:string;warrantyDays?:7|14|30|null;warrantyWork?:string
+  }){
+    const o=await this.mustBePerformer(user,orderId);
+    if(o.service!=='ecu')throw bad('not_ecu','Это действие только для ЭБУ');
+    if(!['accepted','working','awaiting_confirmation'].includes(o.status))
+      throw conflict('ecu_bad_status','Стоимость можно предложить для принятой заявки ЭБУ');
+    const description=p.summary.trim();
+    if(description.length<5||description.length>300)
+      throw bad('ecu_work_summary','Коротко укажите выполненную работу');
+    const initial=Number(o.call_out_amount??0);
+    if(!Number.isInteger(p.amount)||p.amount<100||p.amount<initial)
+      throw bad('ecu_final_amount','Итоговая стоимость должна быть положительной и не ниже ранее предложенной диагностики');
+    const warranty=p.warrantyDays??null;
+    const warrantyWork=(p.warrantyWork??description).trim();
+    if(warranty!==null&&warrantyWork.length<5)
+      throw bad('warranty_work_required','Укажите работы, на которые даёте дополнительную гарантию');
+    const additional=p.amount-initial;
+    await this.guarded(this.db,
+      `update orders set status='awaiting_confirmation',work_amount=$2,
+        amount_proposed_at=$3,amount_confirmed_at=null,
+        result='solved',result_note=$4,warranty_days=$5,
+        warranty_work_summary=$6,bill=null
+       where id=$1 and status=$7 and performer_id=$8`,
+      [orderId,additional,this.now(),description,warranty,warrantyWork,o.status,user.id]);
+    const total=this.money({...o,work_amount:additional}).total;
+    await this.event(this.db,orderId,user.id,'ecu_final_price_proposed',
+      {work:description,contractPrice:p.amount,clientTotal:total,
+        initialDiagnosticOffer:initial,warrantyDays:warranty});
+    await this.notifier.notify([o.client_id,o.created_by],
+      {type:'order',orderId,status:'awaiting_confirmation'},
+      {kind:'normal',title:'Эксперт ЭБУ выставил итоговую смету',
+       body:'Проверьте выполненные работы и точную сумму перед согласием.',
+       data:{orderId}}).catch(()=>{});
+    return this.view(user,orderId);
+  }
+
   /** Мастер закрывает выезд. Сумму за работу он не вводит: она идёт по таймеру и цене часа, о которой договорились заранее.
    *  Сверху — только расходники и запчасти отдельными строками, клиент видит каждую. */
   async proposeAmount(user: AuthUser, orderId: string, p: {
@@ -642,7 +701,7 @@ export class OrdersService {
     note?: string; warrantyDays?:7|14|30|null; warrantyWork?:string
   }) {
     const o = await this.mustBePerformer(user, orderId);
-    if (o.service === 'consult') throw bad('consult_fixed', 'Цена консультации фиксированная. Закройте её с подсказкой.');
+    if (o.service === 'consult' || o.service === 'ecu') throw bad('special_pricing', 'Для ЭБУ используйте итоговую смету без выездного таймера; консультация имеет фиксированную цену.');
     const to = transition(o.status, 'propose_amount', 'performer');
     if (['cause_found', 'not_found'].includes(p.result ?? '') && (p.note?.trim().length ?? 0) < 10)
       throw bad('result_reason_required', 'Напишите, почему неисправность нельзя устранить на месте (не меньше 10 символов)');
