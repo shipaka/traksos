@@ -7,7 +7,7 @@ import {parse,bad,forbidden,notFound,conflict,HttpError} from '../http/router.ts
 
 type ProRoom={id:string;active:boolean;audience:string;specialty:string|null};
 type CaseRow={
-  id:string;room_id:string;author_id:string;client_nonce:string;status:string;make:string|null;
+  id:string;room_id:string;author_id:string;client_nonce:string;status:string;moderation_state:string;make:string|null;
   model:string|null;model_year:number|null;subsystem:string;symptoms:string;
   dtc_codes:string[];diagnostic_context:string|null;origin:string;
   accepted_reply_id:string|null;knowledge_proposal_id:string|null;
@@ -62,6 +62,7 @@ async function openCase(db:Db,c:AuthedCtx,write=false){
   const row=await db.one<CaseRow>('select * from community_technical_cases where id=$1',[id]);
   if(!row)throw notFound('Техническая карточка не найдена');
   await access(db,c.user,row.room_id,write);
+  if(row.moderation_state!=='published')throw notFound('Техническая карточка не найдена');
   return row;
 }
 async function orderPreview(db:Db,user:AuthUser,orderId:string){
@@ -125,7 +126,7 @@ export function registerProfessionalCasesRoutes(r:Router,db:Db,notifier:Notifier
     const found=await db.query<CaseRow & {nickname:string|null}>(`
       select t.*,p.nickname from community_technical_cases t
       left join community_profiles p on p.user_id=t.author_id
-      where t.room_id=$1 and ($2::text='' or lower(t.subsystem)=lower($2))
+      where t.room_id=$1 and t.moderation_state='published' and ($2::text='' or lower(t.subsystem)=lower($2))
         and ($3::text='' or t.status=$3)
         and ($5::text='' or position(lower($5) in
           lower(coalesce(t.make,'')||' '||coalesce(t.model,'')||' '||
@@ -188,7 +189,7 @@ export function registerProfessionalCasesRoutes(r:Router,db:Db,notifier:Notifier
       select r.id::text as id,r.body,r.created_at,p.nickname,r.author_id
       from community_technical_case_replies r
       left join community_profiles p on p.user_id=r.author_id
-      where r.case_id=$1 and r.id>$2::bigint order by r.id limit 51`,[row.id,after]);
+      where r.case_id=$1 and r.id>$2::bigint and r.moderation_state='published' order by r.id limit 51`,[row.id,after]);
     return {replies:replies.slice(0,50).map(x=>({
       id:x.id,body:x.body,created_at:x.created_at,nickname:x.nickname??'Участник',
       isMine:x.author_id===c.user.id,
@@ -215,8 +216,9 @@ export function registerProfessionalCasesRoutes(r:Router,db:Db,notifier:Notifier
         where author_id=$1 and created_at>now()-interval '1 minute'`,[c.user.id]);
       if((recent?.n??0)>=8)throw new HttpError(429,'slow_down','Ответов слишком много, повторите позже');
       await q.one('select id from community_technical_cases where id=$1 for update',[row.id]);
-      const fresh=await q.one<{status:string}>(
-        'select status from community_technical_cases where id=$1',[row.id]);
+      const fresh=await q.one<{status:string;moderation_state:string}>(
+        'select status,moderation_state from community_technical_cases where id=$1',[row.id]);
+      if(fresh?.moderation_state!=='published')throw notFound('Техническая карточка скрыта');
       if(fresh?.status!=='open')throw conflict('case_resolved','Вопрос уже закрыт');
       const saved=await q.one<{id:string}>(`
         insert into community_technical_case_replies(case_id,author_id,client_nonce,body)
@@ -241,7 +243,7 @@ export function registerProfessionalCasesRoutes(r:Router,db:Db,notifier:Notifier
         return {id:row.id,status:'resolved',accepted_reply_id:current.accepted_reply_id,resolved_at:row.resolved_at,modified:false};
       }
       if(b.replyId){
-        if(!await q.one('select 1 from community_technical_case_replies where case_id=$1 and id=$2',
+        if(!await q.one("select 1 from community_technical_case_replies where case_id=$1 and id=$2 and moderation_state='published'",
           [row.id,b.replyId]))throw bad('reply_not_found','Ответ не принадлежит этому вопросу');
       }
       return q.one(`update community_technical_cases
@@ -266,6 +268,7 @@ export function registerProfessionalCasesRoutes(r:Router,db:Db,notifier:Notifier
     return db.tx(async q=>{
       const current=await q.one<CaseRow>(
         'select * from community_technical_cases where id=$1 for update',[row.id]);
+      if(current?.moderation_state!=='published')throw notFound('Техническая карточка скрыта');
       if(current?.knowledge_proposal_id)
         return {id:current.knowledge_proposal_id,created:false,rightsReview:'pending',technicalReview:'pending'};
       const text=`Технический вопрос автора:\n${row.symptoms}\n\nСобственные выводы автора:\n${b.authorNotes}`;
