@@ -9,6 +9,7 @@ import {MyTechnicalAppeals,TechnicalAppealsQueue} from './technicalCaseAppeals.t
 import {TechnicalApplicability,AdminTechnicalApplicability} from './technicalApplicability.tsx';
 import {CommunityNotificationSettings} from './communityNotificationSettings.tsx';
 import {TechnicalCaseReportQueue} from './technicalCaseReportQueue.tsx';
+import {TechnicalEvidenceReviewQueue} from './technicalEvidence.tsx';
 
 type Entry={id:string;title:string;make:string;model:string|null;model_year:number|null;
  subsystem:string;source_url:string|null;created_at:string};
@@ -156,7 +157,7 @@ export function TechnicalBase(){
  const {me}=useMe();
  const admin=Boolean(me?.roles.includes('admin'));
  const professional=Boolean(me?.roles.some(r=>['master','tow','service'].includes(r)));
- const [tab,setTab]=useState<'sources'|'search'|'cases'|'propose'|'review'|'source-review'|'case-reports'|'appeals'|'appeal-review'|'variants'|'notifications'>('sources');
+ const [tab,setTab]=useState<'sources'|'search'|'cases'|'propose'|'review'|'source-review'|'case-reports'|'appeals'|'appeal-review'|'variants'|'notifications'|'evidence'>('sources');
  if(!professional&&!admin)return <main className="tech-shell"><h1>ТехБаза</h1><p>Раздел доступен только подтверждённым специалистам.</p></main>;
  return <main className="tech-shell">
   <header className="tech-head">
@@ -175,6 +176,7 @@ export function TechnicalBase(){
    {admin&&<button aria-current={tab==='case-reports'?'page':undefined}
       onClick={()=>setTab('case-reports')}>Жалобы на техсоветы</button>}
    {admin&&<button aria-current={tab==='appeal-review'?'page':undefined} onClick={()=>setTab('appeal-review')}>Апелляции специалистов</button>}
+   {admin&&<button aria-current={tab==='evidence'?'page':undefined} onClick={()=>setTab('evidence')}>Источники специалистов</button>}
    {admin&&<button aria-current={tab==='variants'?'page':undefined} onClick={()=>setTab('variants')}>Применяемость схем</button>}
    {admin&&<button aria-current={tab==='source-review'?'page':undefined}
       onClick={()=>setTab('source-review')}>Контроль источников</button>}
@@ -190,6 +192,7 @@ export function TechnicalBase(){
   {tab==='case-reports'&&admin&&<TechnicalCaseReportQueue/>}
   {tab==='appeal-review'&&admin&&<TechnicalAppealsQueue/>}
   {tab==='variants'&&admin&&<AdminTechnicalApplicability/>}
+  {tab==='evidence'&&admin&&<TechnicalEvidenceReviewQueue/>}
   <p className="tech-footer-note">Материалы не заменяют документацию производителя. Системных запретов на снимки экрана в обычном браузере нет; доступ защищён проверкой роли на сервере.</p>
  </main>;
 }
