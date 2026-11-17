@@ -685,6 +685,16 @@ export function NewOrder({ service }: { service: string }) {
         {method === 'online' && <span className="note">Выезд оплачивается сейчас и замораживается. Мастеру деньги уйдут после того, как вы подтвердите работу.</span>}
       </Step>
 
+      {service==='ecu'&&!est&&<div className="card flat stack" id="f-agree" role="status">
+        <span className="label">7 · Подтверждение стоимости ЭБУ</span>
+        <p className="note">
+          Сначала укажите местоположение и осознанно выберите тарифную зону.
+          Здесь появится отдельный расчёт работы специалиста по электронным блокам.
+        </p>
+        <p className="note">
+          До получения расчёта согласие с суммой недоступно — заявку и оплату не создаём.
+        </p>
+      </div>}
       {est && (
         <div className={`card hi ${tried && !agree ? 'missing' : ''}`} id="f-agree">
           <span className="label" style={{ color: 'var(--accent)' }}>{isTow ? 6 : 7} · Проверьте перед вызовом</span>
