@@ -272,7 +272,7 @@ test('real database: client plan, pass decision, GPS evidence, manual review, pr
     assert.equal(preview.dueSnapshots,4);
     assert.equal(preview.dueSamples,2);
     assert.equal((await t.db.query(
-      'select id from checkpoint_arrival_sample_snapshots')).length,4);
+      'select attempt_id from checkpoint_arrival_sample_snapshots')).length,4);
     await assert.rejects(future.retentionSweep(a,{
       execute:true,limit:2,eventKey:'purge-gps-001',
     }),(e:any)=>e.status===400);
