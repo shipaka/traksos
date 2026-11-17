@@ -248,7 +248,8 @@ function App() {
     case 'air': screen = me.roles.some(r=>r==='driver'||r==='client') ? <DriverAir /> : <main><div className="empty">Водительский Эфир доступен водителям и владельцам транспорта.</div></main>; break;
     case 'partner': screen = b==='admin' && isAdmin ? <PartnerLevelAdmin /> : (isPerformer||isService) ? <PartnerLevelView /> : <main><div className="empty">Партнёрская программа только для специалистов.</div></main>; break;
     case 'techbase': screen = me.roles.some(r => ['master','tow','service','admin'].includes(r))
-      ? b==='order' && route[2] ? <OrderTechBase orderId={route[2]}/> : <TechnicalBase />
+      ? b==='order' && route[2] ? <OrderTechBase orderId={route[2]}/>
+        : b==='cases' ? <TechnicalBase initialTab="cases" initialRoomSlug={route[2]}/> : <TechnicalBase />
       : <main><div className="empty">ТехБаза доступна только подтверждённым специалистам.</div></main>; break;
     case 'profile': screen = <Profile />; break;
     case 'invite': screen = <Invite />; break;
