@@ -33,6 +33,7 @@ export function CourierAdmin(){
  const [verifyOrder,setVerifyOrder]=useState(''),[verifyEvidence,setVerifyEvidence]=useState('');
  const [courierId,setCourierId]=useState(''),[warehouse,setWarehouse]=useState(''),[orders,setOrders]=useState('');
  const [packingRequired,setPackingRequired]=useState(false);
+ const [traceabilityRequired,setTraceabilityRequired]=useState(false);
  const [selected,setSelected]=useState('');
  const economics=useLoad<Economics|null>(()=>selected?get('/api/admin/shop/courier-runs/'+selected+'/economics'):Promise.resolve(null),[selected]);
  const [budget,setBudget]=useState(zeros),[budgetNote,setBudgetNote]=useState('');
@@ -95,7 +96,7 @@ export function CourierAdmin(){
      <form className="stack" onSubmit={async e=>{
        e.preventDefault();const orderIds=orders.split(/[,;\s]+/).map(x=>x.trim()).filter(Boolean);
        const saved=await run(()=>post('/api/admin/shop/courier-runs',{
-         courierId:courierId.trim(),pickupAddress:warehouse.trim(),orderIds,packingRequired
+         courierId:courierId.trim(),pickupAddress:warehouse.trim(),orderIds,packingRequired,traceabilityRequired
        }),'План рейса сформирован');
        if(saved){setOrders('');setSelected(saved.id);await runs.reload();await economics.reload();}
      }}>
@@ -105,9 +106,19 @@ export function CourierAdmin(){
          rows={4} placeholder="Каждый UUID на новой строке" required/></label>
        <label className="row">
          <input type="checkbox" checked={packingRequired}
-           onChange={e=>setPackingRequired(e.target.checked)}/>
+           onChange={e=>{setPackingRequired(e.target.checked);
+             if(!e.target.checked)setTraceabilityRequired(false)}}/>
          Обязательная складская сверка артикула и количества перед выдачей курьеру
        </label>
+       <label className="row">
+         <input type="checkbox" checked={traceabilityRequired} disabled={!packingRequired}
+           onChange={e=>setTraceabilityRequired(e.target.checked)}/>
+         Дополнительно требовать GTIN (EAN/UPC) и номер партии или серии каждой детали
+       </label>
+       <p className="note">Строгая прослеживаемость включается только для нового рейса со
+         складской сверкой. Контрольная цифра GTIN не доказывает подлинность товара
+         или его применяемость к автомобилю. Сканер-клавиатура не считается
+         аппаратно подтверждённым считывателем.</p>
        <p className="note">Если включить проверку, отправка рейса и забор посылки невозможны до подтверждения всех строк состава. Это не проверка оригинальности деталей.</p>
        <button className="btn" disabled={busy||!courierId||warehouse.trim().length<10||!orders.trim()} type="submit">
          Создать маршрут без отправки курьеру
