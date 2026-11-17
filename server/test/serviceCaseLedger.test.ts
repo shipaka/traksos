@@ -1,6 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {setup,ok} from './helpers.ts';
+import {publishedEcuWorkshop} from './ecuWorkshopFixture.ts';
 
 test('service case ledger separates contracts, bank truth and fleet driver permissions',async()=>{
  const t=await setup();
@@ -10,6 +11,7 @@ test('service case ledger separates contracts, bank truth and fleet driver permi
   const driver=await t.login('+79996123002','driver');
   const outsider=await t.login('+79996123003','client');
   const master=await t.login('+79996123004','master');
+  const ecu=await publishedEcuWorkshop(t,'+79996123005');
   await t.db.query('update users set owner_id=$2 where id=$1',[driver.id,owner.id]);
   const parent=ok(await t.api('POST','/api/orders',{
    service:'electric',zoneId:'spb',paymentMethod:'cash',isSos:true,
@@ -32,7 +34,7 @@ test('service case ledger separates contracts, bank truth and fleet driver permi
    "values($1,'work','card',38000,2000,40000,'partially_refunded',"+
    "'mock',$2,12000)",[root,'service-case-ledger-'+root]);
   const added=ok(await t.api('POST','/api/orders',{
-   service:'ecu',additionalTo:root,zoneId:'spb',paymentMethod:'cash',
+   service:'ecu',additionalTo:root,zoneId:'ecu_station',ecuSpecialistId:ecu.id,paymentMethod:'cash',
    address:'Санкт-Петербург, тестовая стоянка 111',
    description:'Дополнительная диагностика электронного блока управления'
   },owner.token));
