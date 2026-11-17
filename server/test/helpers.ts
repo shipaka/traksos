@@ -3,7 +3,7 @@ import type { AddressInfo } from 'node:net';
 
 process.env.ADMIN_PHONES = '+79990000001';
 // Dedicated second staff identity for independent moderation appeal tests.
-process.env.MODERATOR_PHONES = '+79990000002';
+process.env.MODERATOR_PHONES ??= '+79990000002';
 
 const { createDb } = await import('../src/db/index.ts');
 const { migrate } = await import('../src/db/migrate.ts');
