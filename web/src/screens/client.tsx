@@ -536,7 +536,7 @@ export function NewOrder({ service }: { service: string }) {
       </Step>
 
       <Step n={3} id="f-where" title={isTow ? 'Откуда забрать' : 'Где машина'} req done={need.where} missing={tried && !need.where}>
-        <input className="field" placeholder="Укажите регион и населённый пункт, затем улицу или км трассы" value={address} onChange={(e) => setAddress(e.target.value)} />
+        <input className="field" placeholder="Адрес: регион, населённый пункт, улица или км трассы" value={address} onChange={(e) => setAddress(e.target.value)} />
         <div className="row">
           <button type="button" className="chip" onClick={locate} disabled={geoState === 'wait'}>
             {geoState === 'wait' ? 'Определяем GPS…' : 'Использовать мою GPS-точку'}
