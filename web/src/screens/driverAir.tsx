@@ -7,6 +7,7 @@ import {CommunityNotificationSettings,CommunityMuteToggle} from './communityNoti
 import {readAirDraft,writeAirDraft,clearAirDraft} from './airDraft.ts';
 
 type AirProfile={nickname:string;city_label:string|null;share_city:boolean;public_city:string|null};
+type DriverAccess={eligible:boolean;enabled:boolean;driverRole:boolean};
 type AirRoom={id:string;slug:string;title:string;kind:string;audience:string;locality:string|null;joined:boolean};
 type AirMessage={id:string;nickname:string;body:string;public_city:string|null;isMine:boolean;created_at:string;moderation_state:string};
 type AirModerationChange={id:string;revision:string;moderation_state:'published'|'hidden';message?:AirMessage};
@@ -411,9 +412,13 @@ function DirectMessages(){
 
 export function DriverAir(){
   const {me}=useMe();
-  const isDriver=Boolean(me?.roles.includes('driver'));
-  const profile=useLoad<AirProfile>(()=>get('/api/community/me'),[me?.id]);
-  const rooms=useLoad<{rooms:AirRoom[]}>(()=>get('/api/community/rooms'),[me?.id]);
+  const isDriver=Boolean(me?.roles.includes('driver')||me?.roles.includes('client'));
+  const access=useLoad<DriverAccess>(()=>get('/api/community/driver-access'),[me?.id]);
+  const [disableStep,setDisableStep]=useState(false);
+  const profile=useLoad<AirProfile>(()=>access.data?.enabled?get('/api/community/me'):
+    Promise.resolve({nickname:'',city_label:null,share_city:false,public_city:null}),[me?.id,access.data?.enabled]);
+  const rooms=useLoad<{rooms:AirRoom[]}>(()=>access.data?.enabled?get('/api/community/rooms'):
+    Promise.resolve({rooms:[]}),[me?.id,access.data?.enabled]);
   const [roomId,setRoomId]=useState<string|null>(null);
   const [view,setView]=useState<'rooms'|'direct'|'profile'|'help'|'notifications'>('rooms');
   const [roomPane,setRoomPane]=useState<'chat'|'road'>('chat');
@@ -436,7 +441,28 @@ export function DriverAir(){
     }finally{setSending(false)}
   };
   if(!isDriver)return <main className="air-shell">
-    <h1>Водительский Эфир</h1><p>Раздел доступен в водительском кабинете.</p>
+    <h1>Водительский Эфир</h1><p>Раздел доступен водителям и владельцам, которые сами водят грузовик.</p>
+  </main>;
+  if(!access.data)return <main className="air-shell"><h1>Водительский Эфир</h1>
+    <p role="status">{access.error??'Проверяю доступ…'}</p>
+    {access.error&&<button type="button" className="btn ghost" onClick={()=>void access.reload()}>Повторить</button>}
+  </main>;
+  if(!access.data.enabled)return <main className="air-shell">
+    <div className="air-heading"><div><span className="note">TRAKSOS · ВОДИТЕЛЬСКОЕ СООБЩЕСТВО</span>
+      <h1>Водительский Эфир</h1><p>Бесплатное общение с коллегами по всей России — в вашем аккаунте владельца.</p>
+    </div><a className="btn ghost" href="#/">В кабинет</a></div>
+    <section className="card stack" aria-label="Добровольное участие в Эфире">
+      <h2>Я сам за рулём</h2>
+      <p>Подключите Эфир без новой регистрации. Ваш номер телефона, ФИО,
+        машина, заявки и точное местоположение не публикуются. В чате используется
+        отдельный позывной. Регион и участие в комнатах вы выбираете сами.</p>
+      <p className="note">Подключение не отправляет сообщения, не включает GPS и не добавляет вас в чаты.
+        Вы сможете отключить участие в настройках Эфира.</p>
+      <button className="btn" type="button" disabled={sending||!access.data.eligible}
+        onClick={async()=>{const updated=await run(
+          ()=>put('/api/community/driver-access',{enabled:true}),'Эфир подключён');
+          if(updated)await access.reload();}}>Включить Эфир</button>
+    </section>
   </main>;
   return <main className="air-shell">
     <div className="air-heading">
@@ -444,8 +470,24 @@ export function DriverAir(){
         <h1>Водительский Эфир</h1>
         <p>Бесплатное общение по России: коллеги, города и маршруты. Всё внутри TrakSOS.</p>
       </div>
-      <a className="btn ghost" href="#/">В кабинет</a>
+      <div className="stack">
+        <a className="btn ghost" href="#/">В кабинет</a>
+        {!access.data.driverRole&&<button type="button" className="btn ghost"
+          onClick={()=>setDisableStep(true)}>Отключить участие</button>}
+      </div>
     </div>
+    {disableStep&&<section className="card stack" aria-label="Подтверждение отключения Эфира">
+      <b>Отключить водительский Эфир?</b>
+      <p className="note">Сообщения и история заявок не удаляются. Пока участие отключено,
+        переписки, сообщения и уведомления Эфира будут недоступны.</p>
+      <div className="row">
+        <button type="button" className="btn" disabled={sending}
+          onClick={async()=>{const updated=await run(
+            ()=>put('/api/community/driver-access',{enabled:false}),'Эфир отключён');
+            if(updated){setDisableStep(false);await access.reload();}}}>Подтвердить отключение</button>
+        <button type="button" className="btn ghost" onClick={()=>setDisableStep(false)}>Оставить включённым</button>
+      </div>
+    </section>}
     <nav className="air-tabs" aria-label="Разделы Эфира">
       <button type="button" aria-current={view==='rooms'?'page':undefined} onClick={()=>setView('rooms')}>Эфир и города</button>
       <button type="button" aria-current={view==='direct'?'page':undefined} onClick={()=>setView('direct')}>Личные чаты</button>
