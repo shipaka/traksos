@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { ApiError, onEvent } from './api.ts';
+import { ApiError, get, post, onEvent } from './api.ts';
 import { BRANDS, MODELS, YEARS } from './dict.ts';
 import { reportApiError } from './screens/offers.tsx';
 
@@ -137,41 +137,172 @@ export function RubInput({ value, onChange, placeholder }: { value: number | nul
 }
 
 // Машина: марка → модель → год, всё выпадающими списками. Нет в списке — «Другая…» и вписать самому.
-export type VehicleValue = { brand: string; model: string; year: string };
-export function VehicleFields({ value, onChange }: { value: VehicleValue; onChange: (v: VehicleValue) => void }) {
-  const knownBrand = !value.brand || BRANDS.includes(value.brand);
-  const [ownBrand, setOwnBrand] = useState(!knownBrand);
-  const models = MODELS[value.brand] ?? [];
-  const knownModel = !value.model || models.includes(value.model);
-  const [ownModel, setOwnModel] = useState(!knownModel);
-  const OTHER = '__other';
-  return (
-    <div className="stack" style={{ gap: 8 }}>
-      <select className="field" aria-label="Марка" value={ownBrand ? OTHER : value.brand}
-        onChange={(e) => { const b = e.target.value; if (b === OTHER) { setOwnBrand(true); onChange({ ...value, brand: '', model: '' }); } else { setOwnBrand(false); setOwnModel(false); onChange({ ...value, brand: b, model: '' }); } }}>
-        <option value="">Марка</option>
-        {BRANDS.filter((b) => b !== 'Прочие').map((b) => <option key={b} value={b}>{b}</option>)}
-        <option value={OTHER}>Другая марка…</option>
+export type VehicleValue = {
+  brand:string;model:string;year:string;
+  catalogCategory?:'truck'|'trailer'|'van'|'bus'|'passenger';
+  catalogBrandKey?:string;catalogModelKey?:string;
+};
+type DirectoryMake={key:string;name:string;category:'truck'|'trailer'|'van'|'bus'|'passenger'};
+type DirectoryModel={key:string;name:string};
+type TruckEvidence={
+  production:{yearFrom:number;yearTo:number|null;status:string|null}|null;
+  registrationEvidence:{firstRegistrationObserved:number;lastRegistrationObserved:number|null;notProductionYears:true}|null;
+  note:string;sourceVersion:string;
+};
+export function VehicleFields({value,onChange,purpose='garage'}:{
+  value:VehicleValue;onChange:(v:VehicleValue)=>void;purpose?:'garage'|'master'|'tow';
+}){
+  const {me}=useMe();
+  const [category,setCategory]=useState<'truck'|'trailer'|'van'|'bus'|'passenger'>(value.catalogCategory??(purpose==='master'?'passenger':'truck'));
+  const [makeQuery,setMakeQuery]=useState('');
+  const [modelQuery,setModelQuery]=useState('');
+  const [makes,setMakes]=useState<DirectoryMake[]>([]);
+  const [models,setModels]=useState<DirectoryModel[]>([]);
+  const [makeLoading,setMakeLoading]=useState(false);
+  const [modelLoading,setModelLoading]=useState(false);
+  const [loadError,setLoadError]=useState('');
+  const [truckEvidence,setTruckEvidence]=useState<TruckEvidence|null>(null);
+  const [missing,setMissing]=useState(false);
+  const [missingMake,setMissingMake]=useState('');
+  const [missingModel,setMissingModel]=useState('');
+  const [missingNote,setMissingNote]=useState('');
+  const [sent,setSent]=useState('');
+  const [sending,setSending]=useState(false);
+  const selectedMake=value.catalogCategory===category?value.catalogBrandKey??'':'';
+  const selectedModel=value.catalogCategory===category?value.catalogModelKey??'':'';
+  useEffect(()=>{
+    let alive=true;
+    const timer=setTimeout(()=>{
+      setMakeLoading(true);
+      get('/api/vehicle-reference/makes?purpose='+purpose+'&category='+category+'&includeHeavy='+(purpose==='master')+'&q='+encodeURIComponent(makeQuery)).then((data:any)=>{
+        if(alive){setMakes((data.items??[]).filter((x:DirectoryMake)=>x.category===category));
+          setLoadError('');}
+      }).catch((e:Error)=>{if(alive){setMakes([]);setLoadError(e.message)}})
+        .finally(()=>{if(alive)setMakeLoading(false)});
+    },180);
+    return ()=>{alive=false;clearTimeout(timer)};
+  },[category,makeQuery,purpose]);
+  useEffect(()=>{
+    if(!selectedMake){setModels([]);return;}
+    let alive=true;
+    const timer=setTimeout(()=>{
+      setModelLoading(true);
+      const url='/api/vehicle-reference/models?purpose='+purpose+
+        '&category='+category+'&brandKey='+encodeURIComponent(selectedMake)+'&includeHeavy='+(purpose==='master')+'&q='+encodeURIComponent(modelQuery);
+      get(url).then((data:any)=>{if(alive){setModels(data.items??[]);setLoadError('')}})
+        .catch((e:Error)=>{if(alive){setModels([]);setLoadError(e.message)}})
+        .finally(()=>{if(alive)setModelLoading(false)});
+    },180);
+    return ()=>{alive=false;clearTimeout(timer)};
+  },[category,selectedMake,modelQuery,purpose]);
+  useEffect(()=>{
+    if(category!=='truck'||!selectedMake||!selectedModel){setTruckEvidence(null);return;}
+    let alive=true;
+    get('/api/vehicle-reference/truck-evidence?purpose='+purpose+
+      '&brandKey='+encodeURIComponent(selectedMake)+'&modelKey='+encodeURIComponent(selectedModel))
+      .then((v:TruckEvidence)=>{if(alive)setTruckEvidence(v)})
+      .catch(()=>{if(alive)setTruckEvidence(null)});
+    return ()=>{alive=false};
+  },[category,selectedMake,selectedModel,purpose]);
+  const chooseMake=(key:string)=>{
+    const choice=makes.find(x=>x.key===key);
+    setModelQuery('');
+    setModels([]);
+    onChange({...value,brand:choice?.name??'',model:'',
+      catalogCategory:choice?.category??category,catalogBrandKey:key||undefined,catalogModelKey:undefined});
+  };
+  const chooseModel=(key:string)=>{
+    const choice=models.find(x=>x.key===key);
+    onChange({...value,model:choice?.name??'',catalogModelKey:key||undefined});
+  };
+  const submitMissing=async()=>{
+    setSending(true);setSent('');
+    try {
+      const r:any=await post('/api/vehicle-reference/missing',{
+        category,purpose,make:missingMake.trim(),model:missingModel.trim(),
+        year:value.year?Number(value.year):undefined,note:missingNote.trim()});
+      setSent(r.message||'Заявка направлена на модерацию');
+      setMissing(false);setMissingMake('');setMissingModel('');setMissingNote('');
+    }catch(e:any){setSent(e.message??'Не удалось отправить запрос')}
+    finally{setSending(false)}
+  };
+  return <div className="stack" style={{gap:8}}>
+    <label className="label">Категория транспорта</label>
+    <select className="field" aria-label="Категория транспорта" value={category}
+      onChange={(e)=>{
+        const c=e.target.value as typeof category;setCategory(c);setMakeQuery('');setModelQuery('');
+        onChange({...value,brand:'',model:'',catalogCategory:c,
+          catalogBrandKey:undefined,catalogModelKey:undefined});
+      }}>
+      {(purpose==='tow' ? [
+        ['truck','Тяжёлый эвакуатор (подтверждённая надстройка)']
+      ] : purpose==='master' ? [
+        ['passenger','Легковой автомобиль'],['van','Фургон'],['truck','Грузовой автомобиль'],
+        ['trailer','Прицеп или полуприцеп'],['bus','Автобус']
+      ] : [
+        ['truck','Грузовой автомобиль'],['trailer','Прицеп или полуприцеп'],
+        ['van','Фургон'],['bus','Автобус']
+      ]).map(([v,l])=><option key={v} value={v}>{l}</option>)}
+    </select>
+    <input className="field" value={makeQuery} onChange={e=>setMakeQuery(e.target.value)}
+      aria-label="Поиск марки" placeholder="Поиск марки в каталоге" maxLength={80}/>
+    <select className="field" aria-label="Марка" value={selectedMake}
+      onChange={e=>chooseMake(e.target.value)}>
+      <option value="">{makeLoading?'Поиск марок…':'Выберите марку'}</option>
+      {makes.map(x=><option key={x.key} value={x.key}>{x.name}</option>)}
+      {selectedMake&&!makes.some(x=>x.key===selectedMake)&&<option value={selectedMake}>{value.brand}</option>}
+    </select>
+    {selectedMake&&<>
+      <input className="field" aria-label="Поиск модели" placeholder="Поиск модели или серии"
+        value={modelQuery} onChange={e=>setModelQuery(e.target.value)} maxLength={80}/>
+      <select className="field" aria-label="Модель" value={selectedModel}
+        onChange={e=>chooseModel(e.target.value)}>
+        <option value="">{modelLoading?'Поиск моделей…':'Выберите модель'}</option>
+        {models.map(x=><option key={x.key} value={x.key}>{x.name}</option>)}
+        {selectedModel&&!models.some(x=>x.key===selectedModel)&&<option value={selectedModel}>{value.model}</option>}
       </select>
-      {ownBrand && <input className="field" autoFocus placeholder="Как называется марка" value={value.brand} onChange={(e) => onChange({ ...value, brand: e.target.value })} />}
-      <div className="grid2">
-        {!ownBrand && models.length > 0 && !ownModel ? (
-          <select className="field" aria-label="Модель" value={value.model}
-            onChange={(e) => { if (e.target.value === OTHER) { setOwnModel(true); onChange({ ...value, model: '' }); } else onChange({ ...value, model: e.target.value }); }}>
-            <option value="">Модель</option>
-            {models.map((m) => <option key={m} value={m}>{m}</option>)}
-            <option value={OTHER}>Другая модель…</option>
-          </select>
-        ) : (
-          <input className="field" placeholder="Модель" value={value.model} onChange={(e) => onChange({ ...value, model: e.target.value })} />
-        )}
-        <select className="field" aria-label="Год выпуска" value={value.year} onChange={(e) => onChange({ ...value, year: e.target.value })}>
-          <option value="">Год выпуска</option>
-          {YEARS.map((y) => <option key={y} value={String(y)}>{y}</option>)}
-        </select>
-      </div>
-    </div>
-  );
+    </>}
+    <select className="field" aria-label="Год выпуска" value={value.year}
+      onChange={e=>onChange({...value,year:e.target.value})}>
+      <option value="">Год выпуска (при наличии)</option>
+      {YEARS.map(y=><option key={y} value={String(y)}>{y}</option>)}
+    </select>
+    {loadError&&<span className="note" role="alert">Каталог временно недоступен: {loadError}. Свободный ввод не включается.</span>}
+    <span className="note">
+      Марка и модель выбираются из справочника. Год и комплектацию
+      необходимо уточнять по документам автомобиля.
+    </span>
+    {category==='truck' && truckEvidence && <aside className="card stack">
+      <b>Грузовой справочник · проверенные данные</b>
+      {truckEvidence.production&&<span className="note">Официально подтверждённое начало выпуска:
+        {truckEvidence.production.yearFrom} г.
+        {truckEvidence.production.yearTo?' — '+truckEvidence.production.yearTo+' г.':''}
+      </span>}
+      {truckEvidence.registrationEvidence&&<span className="note">Первые регистрации в реестрах:
+        {truckEvidence.registrationEvidence.firstRegistrationObserved}–{truckEvidence.registrationEvidence.lastRegistrationObserved??'н/д'}.
+        Это не период выпуска модели.
+      </span>}
+      {!truckEvidence.production&&!truckEvidence.registrationEvidence&&<span className="note">Пока нет подтверждённых дат модели; не заменяем их предположениями.</span>}
+      <small className="note">Годы и модификации техники уточняются по VIN и документации изготовителя.
+        Справочные данные VehiclesDB, выпуск {truckEvidence.sourceVersion}.</small>
+    </aside>}
+    <button className="btn ghost small" type="button" aria-expanded={missing}
+      onClick={()=>setMissing(!missing)}>Нет марки или модели в каталоге?</button>
+    {missing&&<section className="card stack">
+      <b>Предложить транспорт в каталог</b>
+      <p className="note">Здесь можно описать отсутствующую модель. Она не добавится в общую базу без проверки администратором.</p>
+      <input className="field" aria-label="Новая марка для модерации" placeholder="Марка"
+        value={missingMake} onChange={e=>setMissingMake(e.target.value)} maxLength={100}/>
+      <input className="field" aria-label="Новая модель для модерации" placeholder="Модель или серия"
+        value={missingModel} onChange={e=>setMissingModel(e.target.value)} maxLength={120}/>
+      <textarea className="field" rows={2} aria-label="Основание запроса" placeholder="Год, регион, документы (без личных данных)"
+        value={missingNote} onChange={e=>setMissingNote(e.target.value)} maxLength={1200}/>
+      <button className="btn" type="button" disabled={sending||missingMake.trim().length<2||missingModel.trim().length<2}
+        onClick={()=>void submitMissing()}>{sending?'Отправляю…':'Отправить на модерацию'}</button>
+    </section>}
+    {sent&&<span className="note" role="status">{sent}</span>}
+    <small className="note">Данные: <a href="https://vehiclesdb.com" target="_blank" rel="noopener noreferrer">Vehicle data by VehiclesDB</a> · CC BY 4.0 · <a href="/api/vehicle-reference/attribution" target="_blank" rel="noopener noreferrer">источники и лицензии</a>.</small>
+  </div>;
 }
 
 // «Сейчас в TrakSOS» — просто факт, не кнопка: сколько на линии и сколько заявок за сутки. Обновляется раз в минуту.
