@@ -100,7 +100,8 @@ test('client-controlled linked ECU order keeps independent contracts and private
     input,outsider.token)).status));
   assert.ok([403,404].includes((await t.api('POST','/api/orders',
     input,mechanic.token)).status));
-  const linked=ok(await t.api('POST','/api/orders',input,customer.token)).order;
+  const requestHeaders={'idempotency-key':'ecu-linked-referrals-test-0001'};
+  const linked=ok(await t.api('POST','/api/orders',input,customer.token,requestHeaders)).order;
   assert.notEqual(linked.id,sourceId);
   assert.equal(linked.additionalTo,sourceId);
   assert.equal(linked.caseRootId,sourceId);
@@ -115,8 +116,10 @@ test('client-controlled linked ECU order keeps independent contracts and private
     'first specialist must not see the ECU contractor amounts');
   assert.ok([403,404].includes((await t.api('GET',
     `/api/orders/${linked.id}`,undefined,mechanic.token)).status));
-  assert.equal((await t.api('POST','/api/orders',input,customer.token)).status,409,
-    'duplicate linked expert job must fail, even with a repeated request');
+  const retried=ok(await t.api('POST','/api/orders',input,customer.token,requestHeaders)).order;
+  assert.equal(retried.id,linked.id,'network retry returns one stable order, never a second charge');
+  const duplicateRows=await t.db.query('select id from orders where additional_to=$1 and created_by=$2',[sourceId,customer.id]);
+  assert.equal(duplicateRows.length,1);
   const rec=ok(await t.api('GET',
     `/api/orders/${sourceId}/ecu-recommendations`,undefined,customer.token));
   assert.equal(rec.recommendations[0].status,'used');
