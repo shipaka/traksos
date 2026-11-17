@@ -200,7 +200,6 @@ export function Sos() {
                 </a>
               ))}
             </div>
-            <EcuDiscovery place="sos" />
           </> : direction === 'tow' ? <>
             <p className="note">Для эвакуации укажете тип машины или сцепки, откуда и куда её везти.</p>
             <a className="btn" href="#/new/tow?sos=accident">Оформить вызов эвакуатора →</a>
