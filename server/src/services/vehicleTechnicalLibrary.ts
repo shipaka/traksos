@@ -3,7 +3,7 @@ import type { Db } from '../db/index.ts';
 import { forbidden, type AuthUser } from '../http/router.ts';
 
 type Portal = { id: string; title: string; make: string | null; subsystem: string; kind: string; url: string;
-  region: string; scope: string; rights: 'LINK_ONLY' };
+  region: string; scope: string; rights: 'LINK_ONLY' | 'PUBLIC_DOMAIN' | 'CC-BY-3.0' | 'CC-BY-SA-4.0';author?:string;licenseUrl?:string;origin?:string };
 type Tip = { id:string;title:string;category:string;tags:string[];body:string;priority:string;professionalDetail:false };
 type Sources = { version:string;policy:string;professional:Portal[];driverTips:Tip[];sourceNotice:string };
 let cache: Promise<Sources> | undefined;

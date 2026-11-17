@@ -1,6 +1,6 @@
 {
   "version": "2026-11-17",
-  "policy": "LINK_ONLY: OEM technical PDFs and schematics remain on publisher sites; no mirroring or embedding without a separate redistribution licence. Only approved specialists/admin can open these links through TrackSOS.",
+  "policy": "LINK_ONLY: OEM technical PDFs and schematics remain on publisher sites; no mirroring or embedding without a separate redistribution licence. Only approved specialists/admin can open these links through TrackSOS. Educational Commons diagrams are linked with author, origin, and license attribution; no altered or copied OEM manual is stored.",
   "professional": [
     {
       "id": "scania-bodybuilder",
@@ -89,6 +89,62 @@
       "region": "North America",
       "scope": "Каталоги и руководства производителя; не применяйте без сверки модели и версии модуля.",
       "rights": "LINK_ONLY"
+    },
+    {
+      "id": "commons-alternator-basics",
+      "title": "Схема устройства генератора — учебная иллюстрация",
+      "make": null,
+      "subsystem": "electrical",
+      "kind": "educational_diagram",
+      "url": "https://commons.wikimedia.org/wiki/File:Alternator_1.svg",
+      "region": "General",
+      "scope": "Учебная схема, не распиновка автомобильного генератора. Нельзя переносить на конкретные клеммы B+/D+ без заводского руководства.",
+      "rights": "CC-BY-3.0",
+      "author": "Egmason",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "origin": "Wikimedia Commons"
+    },
+    {
+      "id": "commons-differential-pd",
+      "title": "Дифференциал ведущего моста — учебная схема",
+      "make": null,
+      "subsystem": "drivetrain",
+      "kind": "educational_diagram",
+      "url": "https://commons.wikimedia.org/wiki/File:Differential_gear_(PSF).png",
+      "region": "General",
+      "scope": "Общая конструкция дифференциала, не руководство по ремонту редуктора и регулировке преднатяга.",
+      "rights": "PUBLIC_DOMAIN",
+      "author": "Pearson Scott Foresman",
+      "licenseUrl": "https://commons.wikimedia.org/wiki/File:Differential_gear_(PSF).png",
+      "origin": "Wikimedia Commons"
+    },
+    {
+      "id": "commons-diesel-scr",
+      "title": "Система SCR / AdBlue — учебная схема",
+      "make": null,
+      "subsystem": "exhaust",
+      "kind": "educational_diagram",
+      "url": "https://commons.wikimedia.org/wiki/File:Diesel_technology_-_SCR.svg",
+      "region": "General",
+      "scope": "Упрощённая цепочка дизельного SCR, без расположения датчиков и распиновок конкретного автомобиля.",
+      "rights": "CC-BY-SA-4.0",
+      "author": "Cjp24",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "origin": "Wikimedia Commons"
+    },
+    {
+      "id": "commons-alternator-pdf",
+      "title": "Электрическая схема генератора — авторский PDF",
+      "make": null,
+      "subsystem": "electrical",
+      "kind": "educational_diagram",
+      "url": "https://commons.wikimedia.org/wiki/File:AANSLUITSCHEMA_ALTERNATOR-geconverteerd(1).pdf",
+      "region": "General",
+      "scope": "Авторский пример подключения генератора. Перед использованием сверяйте контакты с заводской документацией, нельзя применять как универсальную распиновку.",
+      "rights": "CC-BY-SA-4.0",
+      "author": "IstasRené",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "origin": "Wikimedia Commons"
     }
   ],
   "driverTips": [

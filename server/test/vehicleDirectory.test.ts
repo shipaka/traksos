@@ -39,7 +39,8 @@ test('technical OEM links are professional/admin only; ordinary users see safe r
   assert.ok(resource.links.some((r)=>r.url.startsWith('https://www.volvotrucks')));
   assert.ok(resource.links.every((l)=>l.rights==='LINK_ONLY'));
   const admin=await library.professional(dual);
-  assert.ok(admin.links.length>=8);
+  assert.ok(admin.links.length>=12);
+  assert.ok(admin.links.some((r)=>r.kind==='educational_diagram'&&r.author&&r.licenseUrl));
   const blocked=new VehicleTechnicalLibrary({
     one:async()=>({verification:'pending'}),query:async()=>[],
   } as any);

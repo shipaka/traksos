@@ -3,7 +3,7 @@ import {get} from '../api.ts';
 import {useLoad,useMe,Back} from '../ui.tsx';
 
 type Tip={id:string;title:string;category:string;body:string;priority:string;tags:string[]};
-type Link={id:string;title:string;make:string|null;subsystem:string;region:string;url:string;scope:string;rights:string};
+type Link={id:string;title:string;make:string|null;subsystem:string;region:string;url:string;scope:string;rights:string;author?:string;licenseUrl?:string};
 export function VehicleKnowledge(){
   const {me}=useMe();
   const professional=Boolean(me?.roles.some(r=>['admin','master','tow','service'].includes(r)));
@@ -54,8 +54,10 @@ export function VehicleKnowledge(){
           <p>{link.scope}</p>
           <a className="btn ghost" target="_blank" rel="noopener noreferrer" href={link.url}>
             Открыть оригинальный источник производителя</a>
-          <small className="note">LINK ONLY. TrackSOS не хранит и не перепубликует чужие PDF,
-            схемы и ремонтные программы без разрешения правообладателя.</small>
+          {link.rights==='LINK_ONLY'
+            ? <small className="note">Заводская документация: только внешняя ссылка, TrakSOS не копирует PDF или схемы без разрешения правообладателя.</small>
+            : <small className="note">Учебная схема · {link.rights} · автор: {link.author??'указан в источнике'}.
+                <a href={link.licenseUrl} target="_blank" rel="noopener noreferrer"> Условия лицензии</a>. Иллюстрация не подтверждает применимость к конкретному VIN.</small>}
         </article>)}
       </>}
     </section>}
