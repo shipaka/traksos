@@ -56,12 +56,12 @@ async function checkOldWebViewUuid(dir) {
   for (const entry of await readdir(dir, { withFileTypes: true })) {
     const path = dir + '/' + entry.name;
     if (entry.isDirectory()) { await checkOldWebViewUuid(path); continue; }
-    if (!/\\.[jt]sx?$/.test(entry.name)) continue;
-    const lines = (await read(path)).split('\\n');
+    if (!/\.[jt]sx?$/.test(entry.name)) continue;
+    const lines = (await read(path)).split('\n');
     for (const [index,line] of lines.entries()) {
       const trimmed = line.trim();
       if (trimmed.startsWith('//') || trimmed.startsWith('*')) continue;
-      if (/crypto\\.randomUUID\\s*\\(/.test(line)) {
+      if (/crypto\.randomUUID\s*\(/.test(line)) {
         expect(false, 'old Android WebView unsupported crypto.randomUUID: ' + path +
           ':' + (index+1));
       }
