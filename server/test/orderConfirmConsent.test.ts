@@ -1,6 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {setup,ok} from './helpers.ts';
+import {publishedEcuWorkshop} from './ecuWorkshopFixture.ts';
 
 test('service confirmation tolerates lost responses without charging twice',async()=>{
  const t=await setup();
@@ -62,8 +63,9 @@ test('stale proposal version blocks consent even when the numeric total matches'
  try{
   const client=await t.login('+79996662011','client');
   const master=await t.login('+79996662012','master');
+  const ecu=await publishedEcuWorkshop(t,'+79996662013');
   const made=ok(await t.api('POST','/api/orders',{
-   service:'ecu',zoneId:'spb',paymentMethod:'cash',
+   service:'ecu',zoneId:'ecu_station',ecuSpecialistId:ecu.id,paymentMethod:'cash',
    address:'Санкт-Петербург, тестовая площадка проверки ЭБУ',
    description:'Проверка отдельной сметы специалиста по ЭБУ'
   },client.token));
@@ -96,10 +98,12 @@ test('two independent service stages cannot spend the same owner bonus balance',
  try{
   const client=await t.login('+79996662021','client');
   const master=await t.login('+79996662022','master');
+  const ecu=await publishedEcuWorkshop(t,'+79996662023');
   const ids:string[]=[];
   for(const i of [1,2]){
    const created=ok(await t.api('POST','/api/orders',{
     service:i===1?'electric':'ecu',zoneId:'spb',paymentMethod:'cash',
+    ecuSpecialistId:i===2?ecu.id:undefined,
     address:'Санкт-Петербург, тестовая площадка '+i,
     description:'Независимое согласование работ №'+i
    },client.token));
