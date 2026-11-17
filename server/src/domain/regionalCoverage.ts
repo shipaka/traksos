@@ -17,6 +17,7 @@ export interface CoverageInput {
   regionId?: ServiceRegion | null;
   zoneId?: string | null;
   address?: string | null;
+  city?: string | null;
   lat?: number | null;
   lng?: number | null;
 }
@@ -70,34 +71,35 @@ export function assertRegionalTariff(i: CoverageInput, requireSite = false) {
     invalid('invalid_location','Координаты места выезда недействительны');
   const gps = hasLat && hasLng;
   const address = i.address?.trim() ?? '';
+  const statedPlace = [i.city?.trim(), address].filter(Boolean).join(', ');
   if (requireSite && !gps && address.length < 3)
     invalid('location_required','Укажите адрес или координаты автомобиля');
 
   // Do not trust a declared region when the typed street/city explicitly says otherwise.
-  if (address && OTHER_PATTERN.test(address))
+  if (address && OTHER_PATTERN.test(statedPlace))
     invalid('address_region_mismatch','Адрес находится за пределами действующих тарифных зон СПб и Ленобласти');
-  if (i.regionId === 'lo' && SPB_PATTERN.test(address) && !LO_PATTERN.test(address))
+  if (i.regionId === 'lo' && SPB_PATTERN.test(statedPlace) && !LO_PATTERN.test(statedPlace))
     invalid('address_region_mismatch','В адресе указан Санкт-Петербург, а выбран регион Ленобласть');
-  if (i.regionId === 'spb' && LO_PATTERN.test(address) && !SPB_PATTERN.test(address))
+  if (i.regionId === 'spb' && LO_PATTERN.test(statedPlace) && !SPB_PATTERN.test(statedPlace))
     invalid('address_region_mismatch','В адресе указана Ленобласть, а выбран Санкт-Петербург');
 
   // Without a geocoder, address-only orders must identify the locality,
   // otherwise it is impossible to show the SPb/KAD tariff honestly.
   if (!gps && address) {
-    if (i.regionId === 'spb' && !SPB_PATTERN.test(address))
+    if (i.regionId === 'spb' && !SPB_PATTERN.test(statedPlace))
       invalid('location_unverified','Для заявки без GPS укажите в адресе Санкт-Петербург');
     if (i.regionId === 'lo') {
       const locality = CITY_POINTS[zone!];
-      if (locality && !locality.stem.test(address))
+      if (locality && !locality.stem.test(statedPlace))
         invalid('location_unverified',`В адресе без GPS укажите населённый пункт: ${locality.name}`);
-      if (zone === 'kad30' && !LO_PATTERN.test(address))
+      if (zone === 'kad30' && !LO_PATTERN.test(statedPlace))
         invalid('location_unverified','Для зоны за КАД без GPS укажите Ленинградскую область в адресе');
     }
   }
 
   // A named town must not be priced as another town or as the KAD ring.
-  if (address) {
-    const statedTown = Object.entries(CITY_POINTS).find(([,city])=>city.stem.test(address))?.[0];
+  if (statedPlace) {
+    const statedTown = Object.entries(CITY_POINTS).find(([,city])=>city.stem.test(statedPlace))?.[0];
     if (statedTown && statedTown !== zone)
       invalid('address_zone_mismatch','Указанный город не совпадает с выбранной тарифной зоной');
     if (i.regionId === 'spb' && statedTown)
