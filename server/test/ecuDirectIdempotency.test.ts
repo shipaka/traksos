@@ -1,16 +1,18 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {setup,ok} from './helpers.ts';
+import {publishedEcuWorkshop} from './ecuWorkshopFixture.ts';
 
 test('customer direct ECU retry has one order and one idempotency identity',async()=>{
   const t=await setup();
   try{
     const customer=await t.login('+79998194001','client');
+    const expert=await publishedEcuWorkshop(t,'+79998194002');
     const vehicle=ok(await t.api('POST','/api/vehicles',{
       brand:'Renault',model:'Premium',year:2010
     },customer.token));
     const body={
-      service:'ecu',zoneId:'spb',vehicleId:vehicle.id,
+      service:'ecu',zoneId:'ecu_station',ecuSpecialistId:expert.id,vehicleId:vehicle.id,
       description:'Отдельная диагностика электронного блока управления EBS',
       address:'Санкт-Петербург, парковка у Московского шоссе'
     };
