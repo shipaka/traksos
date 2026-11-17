@@ -94,6 +94,15 @@ export class ProfilesService {
                  coalesce($9::int,0),coalesce($10::boolean,true),$11::text,$12::text,$13::jsonb,coalesce($14::jsonb,'[]'))
          on conflict (user_id) do update set
            kind=excluded.kind,
+           verification=case when performer_profiles.kind<>excluded.kind
+             then 'pending' else performer_profiles.verification end,
+           submitted_at=case when performer_profiles.kind<>excluded.kind
+             then null else performer_profiles.submitted_at end,
+           verification_note=case when performer_profiles.kind<>excluded.kind
+             then 'Специализация изменена; требуется новая проверка документов'
+             else performer_profiles.verification_note end,
+           line_status=case when performer_profiles.kind<>excluded.kind
+             then 'offline' else performer_profiles.line_status end,
            specialties=coalesce($3::text[], performer_profiles.specialties),
            brands=coalesce($4::jsonb, performer_profiles.brands),
            tier=coalesce($5::text, performer_profiles.tier),
