@@ -48,7 +48,7 @@ export function TechnicalEvidenceLinks({caseId,canPropose}:{caseId:string;canPro
   return <section className="tech-section" aria-label="Проверенные технические первоисточники">
     <h4>Источники и иллюстрации по вопросу</h4>
     <p className="note">Здесь доступны только ссылки, прошедшие проверку прав и
-      техническую экспертизу. Сами заводские PDF, фото или видео на TrackSOS
+      техническую экспертизу. Сами заводские PDF, фото или видео на TrakSOS
       не загружаются. Совпадение модели не гарантирует применимость к VIN.</p>
     {records.error&&<p role="alert">{records.error}
       <button type="button" className="btn ghost" onClick={records.reload}>Повторить</button>
