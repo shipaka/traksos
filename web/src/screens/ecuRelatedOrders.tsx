@@ -14,6 +14,7 @@ type Recommendation={
 };
 type Props={order:{
   id:string;you:string;service:string;status:string;additionalTo:string|null;
+  hasActiveEcuAddition?:boolean;
   caseRootId:string;caseOtherStages?:Array<{number:number;service:string;status:string}>;
   caseSummary?:{
     stages:Stage[];confirmedTotal:number;pendingCount:number;
@@ -33,7 +34,7 @@ export function EcuRelatedOrders({order}:Props){
     (e:any)=>e.type==='order'&&e.orderId===order.id
   );
   const steps=order.caseSummary?.stages??[];
-  const addOnExists=steps.some(x=>x.additionalTo===order.id&&x.service==='ecu'&&
+  const addOnExists=Boolean(order.hasActiveEcuAddition)||steps.some(x=>x.additionalTo===order.id&&x.service==='ecu'&&
     !['cancelled','no_performer'].includes(x.status));
   const mayAdd=customer&&order.service!=='ecu'&&active.has(order.status)&&!addOnExists;
   const mayRecommend=executor&&active.has(order.status);
