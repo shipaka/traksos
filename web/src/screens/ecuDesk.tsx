@@ -159,6 +159,9 @@ export function EcuDesk(){
         <b>{rub(balance.data.to_pay??0)}</b>
       </div>}
       <a className="btn ghost" href="#/work/me">Настройки и документы</a>
+      {profile.verification==='approved'&&<a className="btn ghost" href="#/techbase/cases/ecu-pro">
+        Клуб специалистов по ЭБУ · обсудить неисправность
+      </a>}
       <a className="btn ghost" href="#/techbase">ТехБаза</a>
     </section>
   </main>;
