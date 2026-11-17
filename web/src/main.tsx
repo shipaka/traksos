@@ -245,7 +245,7 @@ function App() {
     case 'orders': screen = isCustomer ? <Orders as="client" /> : <main><div className="empty">Нет доступа к клиентским заявкам</div></main>; break;
     case 'garage': screen = isCustomer ? <Garage /> : <main><div className="empty">Нет доступа к гаражу</div></main>; break;
     case 'courier': screen = b==='admin' && isAdmin ? <CourierAdmin /> : isCourier ? <CourierHome /> : <main><div className="empty">Кабинет доступен только курьерам, которых назначил администратор.</div></main>; break;
-    case 'air': screen = me.roles.includes('driver') ? <DriverAir /> : <main><div className="empty">Водительский Эфир доступен только водителям.</div></main>; break;
+    case 'air': screen = me.roles.some(r=>r==='driver'||r==='client') ? <DriverAir /> : <main><div className="empty">Водительский Эфир доступен водителям и владельцам транспорта.</div></main>; break;
     case 'partner': screen = b==='admin' && isAdmin ? <PartnerLevelAdmin /> : (isPerformer||isService) ? <PartnerLevelView /> : <main><div className="empty">Партнёрская программа только для специалистов.</div></main>; break;
     case 'techbase': screen = me.roles.some(r => ['master','tow','service','admin'].includes(r))
       ? b==='order' && route[2] ? <OrderTechBase orderId={route[2]}/> : <TechnicalBase />
@@ -402,7 +402,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     : [['/orders', 'История заявок'], ['/garage', 'Мой гараж'],
        ...(!me?.owner_id && !me?.roles.includes('driver') ? [['/fleet', 'Мой автопарк']] as [string,string][] : []),
        ['/services', 'СТО и запись'],
-       ...(me?.roles.includes('driver') ? [['/air', 'Водительский Эфир и личные чаты'], ['/shop', 'Магазин запчастей']] as [string,string][] : []),
+       ...(me?.roles.some(r=>r==='driver'||r==='client') ? [['/air', 'Водительский Эфир и личные чаты']] as [string,string][] : []),
+       ...(me?.roles.includes('driver') ? [['/shop', 'Магазин запчастей']] as [string,string][] : []),
        ['/reviews', 'Мои отзывы'], ['/invite', 'Пригласить друга'],
        ['/profile', 'Профиль и настройки']];
   const helpLinks: [string, string][] = [
@@ -416,7 +417,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       <header className="top">
         <span className="logo">Trak<b>SOS</b></span>
         {me && mode === 'client' && <nav className="track-top-shortcuts" aria-label="Быстрый доступ">
-          <a href="#/">Главная</a><a href="#/orders">Заявки</a><a href="#/sos">Помощь в дороге</a><a href="#/shop">Запчасти</a>
+          <a href="#/">Главная</a><a href="#/orders">Заявки</a><a href="#/sos">Помощь в дороге</a><a href="#/air">Эфир</a><a href="#/shop">Запчасти</a>
         </nav>}
         {!me && !isAuthEntry && <nav className="guest-site-nav" aria-label="Разделы TrakSOS">
           {TOP_CATALOGUE.map(group => <details key={group.title} className="guest-nav-group"
