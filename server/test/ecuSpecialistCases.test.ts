@@ -151,6 +151,10 @@ test('fleet driver cannot read owner-created ECU charges within a shared case',a
   const root=await createSource(t,driver.token);
   await t.db.query("update orders set performer_id=$2,status='accepted' where id=$1",
     [root,master.id]);
+  const suggestion=ok(await t.api('POST','/api/orders/'+root+'/recommend-ecu',{
+    reason:'По результатам электродиагностики требуется отдельная проверка электронного блока EBS.'
+  },master.token));
+  assert.equal(suggestion.createsOrder,false);
   const additional={
     service:'ecu',zoneId:'spb',tier:'pro',paymentMethod:'cash',
     additionalTo:root,
@@ -168,6 +172,16 @@ test('fleet driver cannot read owner-created ECU charges within a shared case',a
   assert.equal(driverView.caseSummary.stages[0].id,root);
   assert.equal(driverView.hasActiveEcuAddition,true,
     'private boolean can prevent duplicate order without leaking owner-created work');
+  const ownerReferral=ok(await t.api('GET','/api/orders/'+root+'/ecu-recommendations',
+    undefined,owner.token));
+  const driverReferral=ok(await t.api('GET','/api/orders/'+root+'/ecu-recommendations',
+    undefined,driver.token));
+  assert.equal(ownerReferral.recommendations[0].linkedOrderId,child.id,
+    'fleet owner can navigate to their own separate ECU contract');
+  assert.equal(driverReferral.recommendations[0].status,'used');
+  assert.equal(driverReferral.recommendations[0].linkedOrderId,null,
+    'a driver cannot obtain the owner-only child ID from recommendation metadata');
+  assert.ok(!JSON.stringify(driverReferral).includes(child.id));
   assert.equal((await t.api('GET','/api/orders/'+child.id,
     undefined,driver.token)).status,403);
   assert.ok(!JSON.stringify(driverView.caseSummary).includes(child.id));
