@@ -42,7 +42,7 @@ export class AuctionService {
     // Консультация — фиксированная цена, торговаться не о чем
     if (order.service === 'consult') return offerLimits(order.estimate.callOut as number, 1, 1);
     if (order.service === 'ecu')
-      return {usual:0,floor:100,ceil:100_000_000}; // explicit client quote, kopecks
+      return {usual:0,floor:0,ceil:100_000_000}; // zero is an unpriced inquiry, NEVER a free service
     return offerLimits(order.estimate.callOut as number, d.offerFloor, d.offerCeil);
   }
 
@@ -165,7 +165,8 @@ export class AuctionService {
     const prof0 = await this.db.one<{ line_status: string; paused: boolean }>('select line_status, paused from performer_profiles where user_id=$1', [user.id]);
     if (!prof0 || prof0.paused || prof0.line_status === 'offline') throw conflict('offline', 'Выйдите на линию, чтобы откликаться');
     const lim = this.limits(order, all.dispatch);
-    if (order.service==='ecu' && price==null) throw bad('ecu_quote_required','Укажите собственную цену диагностики');
+    // ECU specialists may acknowledge an unpriced inquiry; billing happens
+    // only after a separately confirmed final offer.
     const p = price ?? lim.usual;
     if (!Number.isInteger(p) || p < lim.floor || p > lim.ceil) {
       throw bad('price_out_of_corridor', `Цена для этой заявки — от ${rub(lim.floor)} до ${rub(lim.ceil)}`);
@@ -215,7 +216,9 @@ export class AuctionService {
     const lim = this.limits(o, all.dispatch);
     // «Мои мастера»: избранные клиента — первыми в «Рекомендуем»
     const favs = new Set((await this.db.query<{ performer_id: string }>(`select performer_id from client_prefs where client_id=$1 and pref='fav'`, [o.client_id])).map((r) => r.performer_id));
-    let sorted = sortOffers(rows, sort, lim, all.dispatch.weights).map((r: any) => ({ ...r, favorite: favs.has(r.performer_id), diffPct: o.service==='ecu'?null:Math.round((r.price / lim.usual - 1) * 100) }));
+    let sorted=(o.service==='ecu'?rows:sortOffers(rows,sort,lim,all.dispatch.weights))
+      .map((r:any)=>({...r,favorite:favs.has(r.performer_id),
+        diffPct:o.service==='ecu'?null:Math.round((r.price / lim.usual-1)*100)}));
     if (sort === 'recommended') sorted = [...sorted.filter((r) => r.favorite), ...sorted.filter((r) => !r.favorite)];
     return { limits: lim, until: o.auction_until, autoPick: o.auto_pick, sort, offers: sorted };
   }
@@ -237,7 +240,7 @@ export class AuctionService {
   async choose(user: AuthUser | null, orderId: string, offerId: string, acceptedPrice?: number) {
     const pre = await this.db.one('select o.client_id, o.created_by, o.service, b.performer_id from orders o join bids b on b.order_id=o.id where o.id=$1 and b.id=$2', [orderId, offerId]);
     if (!pre) throw notFound('Отклик не найден');
-    if(pre.service==='ecu' && (!user || !Number.isInteger(acceptedPrice) || acceptedPrice!>0))
+    if(pre.service==='ecu' && (!user || !Number.isInteger(acceptedPrice) || acceptedPrice!<0))
       throw bad('ecu_price_consent_required','Подтвердите точную стоимость диагностики');
     if (user && pre.client_id !== user.id && pre.created_by !== user.id) throw forbidden();
     // Исполнитель мог только что взять другую заявку — его отклик здесь больше не действует
@@ -275,14 +278,14 @@ export class AuctionService {
     });
     await this.orders.afterRelease(res.released);
     await this.notifier.notify([res.f.performer_id], { type: 'order', orderId, status: 'accepted' },
-      { kind: 'normal', title: 'Клиент выбрал вас', body: res.o.service==='ecu'?`Согласована диагностика ЭБУ: ${rub(res.f.price)}. Клиент приедет в мастерскую.` : res.o.service === 'consult' ? `Консультация №${res.o.number}: свяжитесь с клиентом` : `Заявка №${res.o.number}: выезд ${rub(res.f.price)}, подача ~${res.f.eta_minutes} мин`, data: { orderId } });
+      { kind: 'normal', title: 'Клиент выбрал вас', body: res.o.service==='ecu'?(res.f.price===0?'Клиент выбрал вашу мастерскую. Итоговую стоимость нужно отдельно согласовать после диагностики.':`Предложена диагностика ЭБУ: ${rub(res.f.price)}. Клиент приедет в мастерскую.`) : res.o.service === 'consult' ? `Консультация №${res.o.number}: свяжитесь с клиентом` : `Заявка №${res.o.number}: выезд ${rub(res.f.price)}, подача ~${res.f.eta_minutes} мин`, data: { orderId } });
     this.notifier.live(res.losers, { type: 'order', orderId, status: 'lost' });
     if (!user) {
       await this.notifier.notify([res.o.client_id, res.o.created_by], { type: 'order', orderId, status: 'accepted' },
         { kind: 'normal', title: 'Исполнитель назначен', body: res.o.service === 'consult' ? 'Мастер на связи — он позвонит или напишет в чат' : `Выбрали лучшего из откликов: выезд ${rub(res.f.price)}, подача ~${res.f.eta_minutes} мин`, data: { orderId } });
     }
     await this.orders.systemMessage(orderId, res.o.service==='ecu'
-      ? `Клиент согласовал стоимость диагностики ЭБУ ${rub(res.f.price)}. Новые работы и суммы требуют отдельного согласования.`
+      ? (res.f.price===0?'Специалист по ЭБУ выбран. Цена пока не известна, окончательную сумму клиент должен подтвердить отдельно.':'Предварительное предложение ЭБУ: '+rub(res.f.price)+'. Дополнительные суммы требуют отдельного согласия.')
       : res.o.service === 'consult'
       ? `Мастер на связи: консультация ${rub(res.f.price)}. Он позвонит через TrakSOS или напишет здесь.`
       : `Исполнитель выбран: выезд ${rub(res.f.price)}, подача ~${res.f.eta_minutes} мин. Чат открыт.`);
