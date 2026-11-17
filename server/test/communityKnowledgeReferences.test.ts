@@ -46,6 +46,13 @@ test('administrator can withdraw and restore a source without creating a fake OE
  try{
   const admin=await t.login('+79990000001');
   const driver=await t.login('+79994550112','driver');
+  const master=await t.login('+79994550113','master');
+  ok(await t.api('PUT','/api/performer/profile',{
+    kind:'master',name:'Проверяющий инженер',
+    specialties:['electric'],taxStatus:'self_employed',inn:'780000000113'
+  },master.token));
+  ok(await t.api('POST','/api/admin/performers/'+master.id+'/verify',
+    {decision:'approved'},admin.token));
   const base='/api/community/knowledge/references';
   assert.equal((await t.api('GET','/api/admin/community/knowledge/references',
     undefined,driver.token)).status,403);
@@ -63,11 +70,12 @@ test('administrator can withdraw and restore a source without creating a fake OE
   assert.equal((await edit(portal.id,'expert_approved',admin.token)).status,400);
   assert.equal((await edit(doc.id,'portal_link',admin.token)).status,400);
   assert.equal(ok(await edit(doc.id,'withdrawn',admin.token)).active,false);
-  assert.equal((await t.api('GET',base+'/'+doc.id,undefined,admin.token)).status,404);
-  assert.ok(!ok(await t.api('GET',base,undefined,admin.token))
+  assert.equal((await t.api('GET',base+'/'+doc.id,undefined,master.token)).status,404);
+  assert.equal((await t.api('GET',base,undefined,master.token)).status,403,'moderation is a separate admin API');
+  assert.ok(!ok(await t.api('GET',base,undefined,master.token))
     .references.some((x:any)=>x.id===doc.id));
   assert.equal(ok(await edit(doc.id,'illustrative',admin.token)).active,true);
-  const entry=ok(await t.api('GET',base+'/'+doc.id,undefined,admin.token));
+  const entry=ok(await t.api('GET',base+'/'+doc.id,undefined,master.token));
   assert.equal(entry.technical_status,'illustrative');
   assert.equal(entry.coverage,'generic');
   assert.equal(entry.referenceOnly,true);
