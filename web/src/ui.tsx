@@ -144,6 +144,11 @@ export type VehicleValue = {
 };
 type DirectoryMake={key:string;name:string;category:'truck'|'van'|'bus'|'passenger'};
 type DirectoryModel={key:string;name:string};
+type TruckEvidence={
+  production:{yearFrom:number;yearTo:number|null;status:string|null}|null;
+  registrationEvidence:{firstRegistrationObserved:number;lastRegistrationObserved:number|null;notProductionYears:true}|null;
+  note:string;sourceVersion:string;
+};
 export function VehicleFields({value,onChange,purpose='garage'}:{
   value:VehicleValue;onChange:(v:VehicleValue)=>void;purpose?:'garage'|'master';
 }){
@@ -156,6 +161,7 @@ export function VehicleFields({value,onChange,purpose='garage'}:{
   const [makeLoading,setMakeLoading]=useState(false);
   const [modelLoading,setModelLoading]=useState(false);
   const [loadError,setLoadError]=useState('');
+  const [truckEvidence,setTruckEvidence]=useState<TruckEvidence|null>(null);
   const [missing,setMissing]=useState(false);
   const [missingMake,setMissingMake]=useState('');
   const [missingModel,setMissingModel]=useState('');
@@ -189,6 +195,15 @@ export function VehicleFields({value,onChange,purpose='garage'}:{
     },180);
     return ()=>{alive=false;clearTimeout(timer)};
   },[category,selectedMake,modelQuery,purpose]);
+  useEffect(()=>{
+    if(category!=='truck'||!selectedMake||!selectedModel){setTruckEvidence(null);return;}
+    let alive=true;
+    get('/api/vehicle-reference/truck-evidence?purpose='+purpose+
+      '&brandKey='+encodeURIComponent(selectedMake)+'&modelKey='+encodeURIComponent(selectedModel))
+      .then((v:TruckEvidence)=>{if(alive)setTruckEvidence(v)})
+      .catch(()=>{if(alive)setTruckEvidence(null)});
+    return ()=>{alive=false};
+  },[category,selectedMake,selectedModel,purpose]);
   const chooseMake=(key:string)=>{
     const choice=makes.find(x=>x.key===key);
     setModelQuery('');
@@ -254,6 +269,20 @@ export function VehicleFields({value,onChange,purpose='garage'}:{
       Марка и модель выбираются только из справочника. Год и комплектацию
       необходимо уточнять по документам автомобиля.
     </span>
+    {category==='truck' && truckEvidence && <aside className="card stack">
+      <b>Грузовой справочник · проверенные данные</b>
+      {truckEvidence.production&&<span className="note">Официально подтверждённое начало выпуска:
+        {truckEvidence.production.yearFrom} г.
+        {truckEvidence.production.yearTo?' — '+truckEvidence.production.yearTo+' г.':''}
+      </span>}
+      {truckEvidence.registrationEvidence&&<span className="note">Первые регистрации в реестрах:
+        {truckEvidence.registrationEvidence.firstRegistrationObserved}–{truckEvidence.registrationEvidence.lastRegistrationObserved??'н/д'}.
+        Это не период выпуска модели.
+      </span>}
+      {!truckEvidence.production&&!truckEvidence.registrationEvidence&&<span className="note">Пока нет подтверждённых дат модели; не заменяем их предположениями.</span>}
+      <small className="note">Годы и модификации техники уточняются по VIN и документации изготовителя.
+        Справочные данные VehiclesDB, выпуск {truckEvidence.sourceVersion}.</small>
+    </aside>}
     <button className="btn ghost small" type="button" aria-expanded={missing}
       onClick={()=>setMissing(!missing)}>Нет марки или модели в каталоге?</button>
     {missing&&<section className="card stack">

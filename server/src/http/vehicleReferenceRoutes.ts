@@ -33,6 +33,9 @@ export function registerVehicleReferenceRoutes(
   r.get('/api/vehicle-reference/models',true,(c:AuthedCtx)=>
     dir.models(c.user,readPurpose(c),getCategory(c),c.query.get('brandKey')??'',
       c.query.get('q')??'',c.query.get('includeHeavy')==='true'));
+  r.get('/api/vehicle-reference/truck-evidence',true,(c:AuthedCtx)=>
+    dir.truckEvidence(c.user,readPurpose(c),c.query.get('brandKey')??'',
+      c.query.get('modelKey')??''));
 
   // Strict new vehicle creation path: the backend, never an editable text field,
   // resolves exact model/make from the pinned, licensed dataset.
@@ -90,7 +93,8 @@ export function registerVehicleReferenceRoutes(
   r.get('/api/vehicle-reference/tips',true,(c:AuthedCtx)=>
     tech.tips(c.user,c.query.get('q')??'',c.query.get('category')??''));
   r.get('/api/vehicle-reference/professional',true,(c:AuthedCtx)=>
-    tech.professional(c.user,{make:c.query.get('make')??'',subsystem:c.query.get('subsystem')??'',q:c.query.get('q')??''}));
+    tech.professional(c.user,{make:c.query.get('make')??'',subsystem:c.query.get('subsystem')??'',q:c.query.get('q')??'',
+      category:(c.query.get('category')??'truck') as 'truck'|'trailer'|'passenger'}));
   r.get('/api/vehicle-reference/nearby',true,(c:AuthedCtx)=>{
     const type=parse(service,c.query.get('service'));
     const lat=c.query.get('lat'),lng=c.query.get('lng');

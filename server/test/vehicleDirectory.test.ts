@@ -15,6 +15,17 @@ test('real pinned CC-BY directory has truck, van, bus and passenger models',asyn
   assert.equal(info.source,'VehiclesDB');
   assert.equal(info.version,'2026.11.11');
   assert.ok(info.count>=8000);
+  const evidence=await dir.truckEvidence(client,'garage','renault','premium');
+  assert.equal(evidence.category,'truck');
+  assert.equal(evidence.applicabilityVerified,false);
+  assert.ok(evidence.registrationEvidence?.notProductionYears!==false);
+  const manTgx=await dir.truckEvidence(client,'garage','man','tgx');
+  assert.equal(manTgx.production?.yearFrom,2007);
+  assert.equal(manTgx.applicabilityVerified,false);
+  const renaultAe=await dir.truckEvidence(client,'garage','renault','ae');
+  assert.ok(renaultAe.registrationEvidence?.firstRegistrationObserved);
+  assert.equal(renaultAe.registrationEvidence?.notProductionYears,true);
+  await assert.rejects(dir.truckEvidence(client,'garage','renault','fake-model'),/подтверждённого каталога/);
   assert.equal(info.attribution.license,'CC BY 4.0');
   const makes=await dir.makes(client,'garage','Renault',false,'truck');
   assert.ok(makes.items.some((m)=>m.key==='renault'&&m.category==='truck'));
@@ -35,11 +46,22 @@ test('technical OEM links are professional/admin only; ordinary users see safe r
   assert.ok(tips.items.length>=5);
   assert.ok(tips.items.every((t)=>!('url'in t)&&!('rights'in t)));
   await assert.rejects(library.professional(client),/только специалистам/);
+  await assert.rejects(library.professional(master,{category:'passenger'}),/только грузового транспорта/);
   const resource=await library.professional(master,{make:'volvo'});
   assert.ok(resource.links.some((r)=>r.url.startsWith('https://www.volvotrucks')));
-  assert.ok(resource.links.every((l)=>l.rights==='LINK_ONLY'));
+  assert.ok(resource.links.every((l)=>l.rights==='LINK_ONLY'||l.kind==='educational_diagram'));
+  assert.ok(resource.links.some((l)=>l.rights==='LINK_ONLY'));
+  assert.ok(!resource.links.some((l)=>l.sourceStatus==='hold_upstream'));
   const admin=await library.professional(dual);
-  assert.ok(admin.links.length>=12);
+  assert.ok(admin.links.length>=20);
+  assert.ok(admin.links.every((r)=>r.sourceStatus!=='hold_upstream'));
+  assert.ok(admin.links.every((r)=>r.vehicleClasses?.includes('truck')||r.vehicleClasses?.includes('trailer')));
+  const manGuides=await library.professional(master,{category:'truck',q:'TGX'});
+  assert.ok(manGuides.links.some((r)=>r.id==='man-manted'));
+  const trailers=await library.professional(master,{category:'trailer',q:'BPW'});
+  assert.ok(trailers.links.some((r)=>r.id==='bpw-downloads'));
+  assert.ok(!trailers.links.some((r)=>r.id==='scania-bodybuilder'));
+  assert.ok(!admin.links.some((r)=>r.id==='commons-diesel-scr'));
   assert.ok(admin.links.some((r)=>r.kind==='educational_diagram'&&r.author&&r.licenseUrl));
   const blocked=new VehicleTechnicalLibrary({
     one:async()=>({verification:'pending'}),query:async()=>[],

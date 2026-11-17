@@ -20,6 +20,23 @@ interface DirectoryFile {
   models: ModelRow[];
 }
 const catalogPath = new URL('../../data/vehiclesdb_2026_11_11.json', import.meta.url);
+interface TruckEvidenceRecord {
+ makeKey: string; modelKey: string; registrationFirst: number | null;
+ registrationLast: number | null; productionStart: number | null;
+ productionEnd: number | null; productionStatus: string | null;
+ citedCountries: string[]; citedSourceIds: string[];
+ regionCodes: string[]; officialAliases: string[];
+}
+interface TruckEvidenceFile {
+ sourceVersion: string;truckModelsSha: string;license: string;records: TruckEvidenceRecord[];
+}
+let truckCache: Promise<TruckEvidenceFile> | undefined;
+async function truckData() {
+ truckCache ??= readFile(new URL('../../data/vehiclesdb_truck_evidence_2026_11_11.json',import.meta.url),'utf8')
+   .then(text=>JSON.parse(text) as TruckEvidenceFile)
+   .catch(err=>{truckCache=undefined;throw err});
+ return truckCache;
+}
 let cached: Promise<DirectoryFile> | undefined;
 async function dataset() {
   cached ??= readFile(catalogPath, 'utf8').then((text) => JSON.parse(text) as DirectoryFile)
@@ -94,6 +111,29 @@ export class PublicVehicleDirectory {
       items: matches.slice(0, 200).map((m) => ({ key: m[2], name: m[3], yearFrom: null, yearTo: null })),
       total: matches.length, hasMore: matches.length > 200,
       yearsUnverified: true, attribution: publishedAttribution() };
+  }
+  async truckEvidence(actor: AuthUser,purpose:CatalogPurpose,makeKey:string,modelKey:string) {
+    if(!categoriesForActor(actor,purpose,true).includes('truck'))
+      throw forbidden('Грузовой справочник недоступен выбранной роли');
+    await this.resolve('truck',makeKey,modelKey);
+    const full=await truckData();
+    const row=full.records.find((r)=>r.makeKey===makeKey&&r.modelKey===modelKey);
+    return {
+      source:'VehiclesDB',sourceVersion:full.sourceVersion,license:full.license,
+      attribution:publishedAttribution(),
+      category:'truck',brandKey:makeKey,modelKey,
+      production:row?.productionStart ? {yearFrom:row.productionStart,yearTo:row.productionEnd,
+        status:row.productionStatus,confidence:'source_lifecycle'} : null,
+      registrationEvidence:row?.registrationFirst ? {
+        firstRegistrationObserved:row.registrationFirst,
+        lastRegistrationObserved:row.registrationLast,
+        countryCodes:row.citedCountries,
+        sourceIds:row.citedSourceIds,
+        notProductionYears:true
+      } : null,
+      applicabilityVerified:false,vehicleVariantVerified:false,
+      note:'Первичная регистрация в реестре НЕ доказывает год производства или серию. Версию двигателя, EBS и электрику необходимо сверить по VIN на заводском портале.',
+    };
   }
   async resolve(category: DirectoryCategory, makeKey: string, modelKey: string) {
     const d = await dataset();
