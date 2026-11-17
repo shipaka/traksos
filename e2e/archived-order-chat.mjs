@@ -2,8 +2,6 @@
 // Runs against the disposable CI application/database, never against VPS.
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
-import { deflateSync } from 'node:zlib';
-import { randomBytes } from 'node:crypto';
 import { chromium } from 'playwright';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:8080';
@@ -23,60 +21,19 @@ async function api(method, path, body, token) {
   if (!response.ok) throw new Error(method+' '+path+' returned '+response.status+' '+JSON.stringify(data));
   return data;
 }
-async function login(phone, role) {
-  const one = await api('POST','/api/auth/code',{phone});
-  if (!one.devCode) throw new Error('The isolated test server must supply a development code');
-  const verified = await api('POST','/api/auth/verify',{phone,code:one.devCode,...(role?{role}:{})});
-  return {id:verified.user.id,token:verified.token};
-}
-
-// Exercise the real document-review policy rather than disabling it in CI.
-function testingPng() {
-  const w=160,h=120;
-  const crcTable=Array.from({length:256},(_,n)=>{
-    let c=n;for(let k=0;k<8;k++)c=c&1?0xedb88320^(c>>>1):c>>>1;return c>>>0;
+// This browser regression follows e2e/flow.mjs in the SAME disposable CI DB.
+// Its fixtures have already registered, accepted the current terms and passed
+// real performer document review; do not sidestep those production safeguards.
+async function loginExisting(phone) {
+  const user=await api('POST','/api/auth/login',{
+    phone,password:'TrakSOS-Test-2026!',
   });
-  const crc=(buf)=>{
-    let c=0xffffffff;
-    for(const b of buf)c=crcTable[(c^b)&0xff]^(c>>>8);
-    return (c^0xffffffff)>>>0;
-  };
-  const chunk=(type,payload)=>{
-    const n=Buffer.alloc(4);n.writeUInt32BE(payload.length);
-    const data=Buffer.concat([Buffer.from(type),payload]);
-    const c=Buffer.alloc(4);c.writeUInt32BE(crc(data));
-    return Buffer.concat([n,data,c]);
-  };
-  const ihdr=Buffer.alloc(13);
-  ihdr.writeUInt32BE(w,0);ihdr.writeUInt32BE(h,4);ihdr[8]=8;ihdr[9]=2;
-  const raw=Buffer.alloc((w*3+1)*h);
-  const pixels=randomBytes(w*h*3);
-  for(let y=0;y<h;y++)pixels.copy(raw,y*(w*3+1)+1,y*w*3,(y+1)*w*3);
-  return Buffer.concat([
-    Buffer.from([137,80,78,71,13,10,26,10]),
-    chunk('IHDR',ihdr),chunk('IDAT',deflateSync(raw)),
-    chunk('IEND',Buffer.alloc(0))
-  ]);
+  return {id:user.user.id,token:user.token};
 }
-
-const admin = await login('+79990000001');
-const client = await login('+79993657101');
-const performer = await login('+79993657102','master');
-await api('PUT','/api/performer/profile', {
-  kind:'master',name:'Тестовый мастер архива',specialties:['electric'],
-  brands:{},taxStatus:'self_employed',inn:'780000000001',
-}, performer.token);
-// Test-only generated PNGs are submitted, individually reviewed and then
-// used for a standard performer approval. No bypass or global settings change.
-for(const kind of ['passport','selfie','car_front']) {
-  const doc=await api('POST','/api/performer/documents', {
-    kind,dataUrl:'data:image/png;base64,'+testingPng().toString('base64'),
-  },performer.token);
-  await api('POST','/api/admin/documents/'+doc.id,{status:'approved'},admin.token);
-}
-await api('POST','/api/performer/documents/submit',{},performer.token);
-await api('POST','/api/admin/performers/'+performer.id+'/verify',
-  {decision:'approved'}, admin.token);
+const client=await loginExisting('+79991112233');
+const performer=await loginExisting('+79992223344');
+const profile=await api('GET','/api/performer/profile',undefined,performer.token);
+assert.equal(profile.verification,'approved','the previous E2E must verify real performer documents');
 await api('POST','/api/performer/line',{lineStatus:'online'},performer.token);
 
 const created = await api('POST','/api/orders',{
