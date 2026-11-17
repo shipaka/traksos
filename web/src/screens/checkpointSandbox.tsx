@@ -1,5 +1,5 @@
 /**
- * Operational checkpoint evidence panel for the isolated TrackSOS sandbox.
+ * Operational checkpoint evidence panel for the isolated TrakSOS sandbox.
  * Do not enable in public production or ask for device geolocation here.
  * A GPS location fix must have its own audited mobile permission integration.
  */
