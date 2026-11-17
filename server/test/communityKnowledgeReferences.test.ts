@@ -71,7 +71,7 @@ test('administrator can withdraw and restore a source without creating a fake OE
   assert.equal((await edit(doc.id,'portal_link',admin.token)).status,400);
   assert.equal(ok(await edit(doc.id,'withdrawn',admin.token)).active,false);
   assert.equal((await t.api('GET',base+'/'+doc.id,undefined,master.token)).status,404);
-  assert.equal((await t.api('GET',base,undefined,master.token)).status,403,'moderation is a separate admin API');
+  assert.equal((await t.api('GET',base,undefined,admin.token)).status,403,'moderation is a separate admin API');
   assert.ok(!ok(await t.api('GET',base,undefined,master.token))
     .references.some((x:any)=>x.id===doc.id));
   assert.equal(ok(await edit(doc.id,'illustrative',admin.token)).active,true);
