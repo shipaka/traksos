@@ -42,7 +42,7 @@ export function CommunityNotificationSettings({professional=false}:{professional
  return <section className="card stack" aria-label="Уведомления водительского сообщества и ТехБазы">
    <h2>Уведомления сообщества</h2>
    <p className="note">Обычные заявки, SOS, безопасность аккаунта, платежи
-     и рабочие уведомления TrackSOS этими настройками не отключаются.
+     и рабочие уведомления TrakSOS этими настройками не отключаются.
      Чат продолжает получать сообщения при открытом экране.</p>
    {data.error&&<p role="alert">{data.error}
      <button className="btn ghost" type="button" onClick={data.reload}>Повторить</button>
