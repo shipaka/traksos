@@ -561,7 +561,7 @@ export function NewOrder({ service }: { service: string }) {
   const s = SERVICES[service];
 
   return (
-    <main>
+    <main className={isEcu?'ecu-intake':undefined}>
       <Back to={additionalTo?`order/${additionalTo}`:fromConsult ? `order/${fromConsult}` : sos ? 'sos' : ''} />
       <div>
         <h1>{sym ? sym.name : s?.name ?? 'Заявка'}</h1>
