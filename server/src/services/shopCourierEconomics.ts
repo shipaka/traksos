@@ -4,6 +4,7 @@ import type { Router, AuthedCtx } from '../http/router.ts';
 import { parse, conflict, notFound } from '../http/router.ts';
 import type { Notifier } from './notify.ts';
 import { warehouseProgress } from './shopWarehouse.ts';
+import {supplierReceiptReadiness} from './shopSupplierReceiving.ts';
 
 const uuid=z.string().uuid();
 const cost=z.number().int().min(0).max(1_000_000_000);
@@ -13,14 +14,15 @@ const budgetSchema=z.object({
   note:z.string().trim().min(10).max(1000),
 });
 type QueryDb=Pick<Db,'one'|'query'>;
-type Run={id:string;status:string;courier_id:string;dispatch_approved_at:Date|null;packing_required:boolean};
+type Run={id:string;status:string;courier_id:string;dispatch_approved_at:Date|null;
+  packing_required:boolean;supplier_receipt_required:boolean};
 type Line={id:string;items:any[];goods_total:number;delivery_price:number;status:string};
 type Snapshot={shop_order_id:string;product_id:string;qty:number;purchase_unit_kopecks:number};
 type Budget={courier_pay_kopecks:number;fuel_kopecks:number;packing_kopecks:number;
   acquiring_kopecks:number;taxes_kopecks:number;other_kopecks:number};
 
 async function economics(db:QueryDb,runId:string){
-  const run=await db.one<Run>('select id,status,courier_id,dispatch_approved_at from shop_courier_runs where id=$1',[runId]);
+  const run=await db.one<Run>('select id,status,courier_id,dispatch_approved_at,packing_required,supplier_receipt_required from shop_courier_runs where id=$1',[runId]);
   if(!run)throw notFound('Курьерский рейс не найден');
   const orders=await db.query<Line>(
     'select o.id,o.items,o.goods_total,o.delivery_price,o.status from shop_courier_stops st '+
@@ -57,6 +59,9 @@ async function economics(db:QueryDb,runId:string){
     'where st.run_id=$1 and i.needs_review=true',[runId]);
   const supplierIssues=(issue?.n??0)>0;
   const ready=orders.length>0&&orders.every(o=>o.status==='ready');
+  const supplierReceiptReady=!run.supplier_receipt_required||(
+    orders.length>0&&(await Promise.all(orders.map(o=>
+      supplierReceiptReadiness(db,o.id)))).every(x=>x.ready));
   return {
     runId,status:run.status,stops:orders.length,goodsRevenueKopecks:goods,
     deliveryRevenueKopecks:delivery,procurementKnown:costsKnown,
@@ -64,7 +69,8 @@ async function economics(db:QueryDb,runId:string){
     forecastExpensesKopecks:expenses,courierPayKopecks:budget?Number(budget.courier_pay_kopecks):null,
     routeContributionKopecks:contribution,budgetDocumented:Boolean(budget),
     supplierIssuesOpen:supplierIssues,ordersReady:ready,
-    canApprove:Boolean(budget)&&costsKnown&&!supplierIssues&&ready,
+    supplierReceiptRequired:run.supplier_receipt_required,supplierReceiptReady,
+    canApprove:Boolean(budget)&&costsKnown&&!supplierIssues&&ready&&supplierReceiptReady,
     platformCommissionRatePct:5,platformCommissionEstimateKopecks:Math.round(goods*0.05),
     platformCommissionBookedKopecks:0,feeIncludedInContribution:false,
     profitable:contribution==null?null:contribution>=0,
@@ -116,6 +122,9 @@ export function registerShopCourierEconomicsRoutes(r:Router,db:Db,notifier:Notif
             'Нельзя отправить рейс: склад не сверил все артикулы и количества');
       }
       const stats=await economics(q,id);
+      if(run.supplier_receipt_required&&!stats.supplierReceiptReady)
+        throw conflict('supplier_receipt_incomplete',
+          'Нельзя отправить рейс: не все товары подтверждены актами физической приёмки поставщика');
       if(!stats.canApprove||stats.routeContributionKopecks==null)
         throw conflict('route_economics_incomplete',
           'Нет проверенной закупки, сметы или поставщик отменил заказ');
