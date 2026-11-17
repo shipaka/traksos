@@ -3,8 +3,9 @@ import { ModQueue } from './moderation.tsx';
 import { SupportQueue } from './support.tsx';
 import { Verify, Flagged } from './admin.tsx';
 import { TechnicalCaseReportQueue } from './technicalCaseReportQueue.tsx';
+import { TechnicalAppealsQueue } from './technicalCaseAppeals.tsx';
 
-type DeskTab = 'cases' | 'support' | 'verify' | 'flagged' | 'technical';
+type DeskTab = 'cases' | 'support' | 'verify' | 'flagged' | 'technical' | 'appeals';
 
 export function ModeratorDesk() {
   const [tab, setTab] = useState<DeskTab>('cases');
@@ -14,6 +15,7 @@ export function ModeratorDesk() {
     ['verify', 'Проверка мастеров'],
     ['flagged', 'Подозрительные сообщения'],
     ['technical', 'Технические советы'],
+    ['appeals', 'Обжалования техсоветов'],
   ];
   return <main className="moderator-workspace stack">
     <section className="internal-role-hero internal-role-hero-moderator"><span>TRAKSOS · КАЧЕСТВО И БЕЗОПАСНОСТЬ</span><h1>Модерация</h1>
@@ -22,7 +24,7 @@ export function ModeratorDesk() {
       {options.map(([key,name],i)=><button type="button" key={key}
         className={tab===key?'moderator-action active':'moderator-action'} onClick={()=>setTab(key)}
         aria-pressed={tab===key}>
-        <span aria-hidden="true">{['⚑','▣','✓','◈','⚙'][i]}</span>
+        <span aria-hidden="true">{['⚑','▣','✓','◈','⚙','↩'][i]}</span>
         <b>{name}</b><small>Открыть рабочий раздел →</small>
       </button>)}
     </div>
@@ -35,5 +37,6 @@ export function ModeratorDesk() {
     {tab === 'verify' && <Verify />}
     {tab === 'flagged' && <Flagged />}
     {tab === 'technical' && <TechnicalCaseReportQueue />}
+    {tab === 'appeals' && <TechnicalAppealsQueue />}
   </main>;
 }
