@@ -68,6 +68,15 @@ try{
       await consent.locator('input[type="checkbox"]').check();
       if(!await consent.locator('input[type="checkbox"]').isChecked())
         throw Error(width+': user cannot accept the displayed quotation');
+      await page.locator('#f-what textarea.field').fill(
+        'Нужно выполнить дополнительную проверку питания блока EBS и его программирования');
+      await page.waitForFunction(()=>{
+        const check=document.querySelector('#f-agree input[type="checkbox"]');
+        return !!check && !check.checked;
+      },null,{timeout:12000});
+      if(await consent.locator('input[type="checkbox"]').isChecked())
+        throw Error(width+': editing ECU work description retained stale consent');
+      await consent.locator('input[type="checkbox"]').check();
       await address.fill('Санкт-Петербург, другая тестовая стоянка');
       // A changed route invalidates the prior price/consent immediately.
       await page.waitForFunction(()=>{
