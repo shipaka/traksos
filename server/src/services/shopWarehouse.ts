@@ -138,4 +138,132 @@ export function registerShopWarehouseRoutes(r:Router,db:Db){
         return {verified:true,stopId,lineIndex:b.lineIndex,method:saved?.method};
       });
     });
+
+  const incidentInput=z.object({
+    lineIndex:z.number().int().min(0).max(499),
+    kind:z.enum(['wrong_article','shortage','surplus','damaged','seal_broken','other']),
+    observedArticle:z.string().trim().max(100),
+    observedQty:z.number().int().min(0).max(10000),
+    note:z.string().trim().min(20).max(1000)
+  });
+  r.post('/api/admin/shop/courier-runs/:id/warehouse/stops/:stopId/discrepancies',
+    ['admin'],async(c:AuthedCtx)=>{
+      const runId=parse(uuid,c.params.id),stopId=parse(uuid,c.params.stopId);
+      const b=parse(incidentInput,c.body);
+      return db.tx(async q=>{
+        const run=await q.one<Run>(
+          'select id,status,packing_required,dispatch_approved_at '+
+          'from shop_courier_runs where id=$1 for update',[runId]);
+        if(!run)throw notFound('Рейс не найден');
+        if(!run.packing_required||run.status!=='planned'||run.dispatch_approved_at)
+          throw conflict('packing_locked','Расхождение регистрируется только до утверждения строгой комплектации');
+        const st=await q.one<Stop>(
+          'select s.id as stop_id,s.shop_order_id,o.number,o.items,s.status '+
+          'from shop_courier_stops s join shop_orders o on o.id=s.shop_order_id '+
+          'where s.run_id=$1 and s.id=$2 for update of s,o',[runId,stopId]);
+        if(!st)throw notFound('Посылка не входит в этот рейс');
+        if(st.status!=='awaiting_pickup')
+          throw conflict('parcel_collected','Посылку уже передали курьеру');
+        const lines=Array.isArray(st.items)?st.items:[];
+        const item=lines[b.lineIndex];
+        if(!item)throw bad('line_not_found','Строка товара отсутствует');
+        const expectedArticle=typeof item.article==='string'?item.article.trim():'';
+        const expectedQty=Number(item.qty);
+        if(expectedArticle.length<2||!Number.isSafeInteger(expectedQty)||expectedQty<1)
+          throw conflict('invalid_order_line','Товар в заказе требует уточнения артикула/количества');
+        if(b.kind==='wrong_article'&&key(b.observedArticle)===key(expectedArticle))
+          throw bad('no_article_mismatch','Укажите реально отличающийся артикул');
+        if(b.kind==='shortage'&&b.observedQty>=expectedQty)
+          throw bad('no_shortage','Недовложение требует фактического количества меньше заказанного');
+        if(b.kind==='surplus'&&b.observedQty<=expectedQty)
+          throw bad('no_surplus','Излишек требует фактического количества больше заказанного');
+        const previous=await q.one<{id:string}>(
+          "select id from shop_warehouse_discrepancies where stop_id=$1 "+
+          "and line_index=$2 and status='open' for update",[stopId,b.lineIndex]);
+        if(previous)
+          throw conflict('open_warehouse_discrepancy','По этой строке уже открыто расследование');
+        const recorded=await q.one<{id:string}>(`
+          insert into shop_warehouse_discrepancies
+            (stop_id,line_index,kind,expected_article,expected_qty,
+             observed_article,observed_qty,note,reported_by)
+          values($1,$2,$3,$4,$5,$6,$7,$8,$9)
+          returning id`,[stopId,b.lineIndex,b.kind,expectedArticle,expectedQty,
+            b.observedArticle,b.observedQty,b.note,c.user.id]);
+        // A previous scan never certifies a parcel after a discrepancy is found.
+        await q.query('delete from shop_warehouse_line_checks where stop_id=$1 and line_index=$2',
+          [stopId,b.lineIndex]);
+        await q.query('insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4)',
+          [c.user.id,'shop.warehouse_discrepancy_reported',recorded!.id,
+            {runId,stopId,lineIndex:b.lineIndex,kind:b.kind,
+             expectedArticle,expectedQty,observedArticle:b.observedArticle,
+             observedQty:b.observedQty,note:b.note}]);
+        return {id:recorded!.id,stopId,lineIndex:b.lineIndex,
+          status:'open',dispatchBlocked:true,financialChanges:false};
+      });
+    });
+  r.post('/api/admin/shop/courier-runs/:id/warehouse/stops/:stopId/discrepancies/:incidentId/resolve',
+    ['admin'],async(c:AuthedCtx)=>{
+      const runId=parse(uuid,c.params.id),stopId=parse(uuid,c.params.stopId);
+      const incidentId=parse(uuid,c.params.incidentId);
+      const b=parse(z.object({note:z.string().trim().min(20).max(1000)}),c.body);
+      return db.tx(async q=>{
+        const run=await q.one<Run>(
+          'select id,status,packing_required,dispatch_approved_at from shop_courier_runs '+
+          'where id=$1 for update',[runId]);
+        if(!run)throw notFound('Рейс не найден');
+        if(!run.packing_required||run.status!=='planned'||run.dispatch_approved_at)
+          throw conflict('packing_locked','Нельзя закрывать складской случай после утверждения рейса');
+        const st=await q.one<Stop>(
+          'select s.id as stop_id,s.shop_order_id,o.number,o.items,s.status '+
+          'from shop_courier_stops s join shop_orders o on o.id=s.shop_order_id '+
+          'where s.run_id=$1 and s.id=$2 for update of s,o',[runId,stopId]);
+        if(!st)throw notFound('Посылка не входит в этот рейс');
+        if(st.status!=='awaiting_pickup')
+          throw conflict('parcel_collected','Посылку уже забрали');
+        const d=await q.one<{
+          id:string;line_index:number;expected_article:string;expected_qty:number;
+          reported_at:Date;status:string
+        }>('select * from shop_warehouse_discrepancies where id=$1 and stop_id=$2 for update',
+          [incidentId,stopId]);
+        if(!d)throw notFound('Случай не найден');
+        if(d.status==='resolved')
+          throw conflict('already_resolved','Расхождение уже закрыто');
+        const raw=Array.isArray(st.items)?st.items:[];
+        const item=raw[d.line_index];
+        if(!item||key(String(item.article??''))!==key(d.expected_article)||
+          Number(item.qty)!==d.expected_qty)
+          throw conflict('order_line_changed',
+            'Состав заказа изменился. Требуется новая проверка заказа и пересоздание складского задания');
+        const checked=await q.one<Check>(
+          'select * from shop_warehouse_line_checks where stop_id=$1 and line_index=$2 for update',
+          [stopId,d.line_index]);
+        if(!checked||key(checked.checked_article)!==key(d.expected_article)||
+          checked.checked_qty!==d.expected_qty||checked.checked_at<=d.reported_at)
+          throw conflict('fresh_recheck_required',
+            'После выявления расхождения нужна новая физическая сверка правильного артикула и количества');
+        await q.query(`
+          update shop_warehouse_discrepancies set status='resolved',
+          resolved_by=$2,resolution_note=$3,resolved_at=clock_timestamp() where id=$1`,
+          [incidentId,c.user.id,b.note]);
+        await q.query('insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4)',
+          [c.user.id,'shop.warehouse_discrepancy_resolved',incidentId,
+            {runId,stopId,lineIndex:d.line_index,note:b.note}]);
+        return {id:incidentId,status:'resolved',runId,financialChanges:false};
+      });
+    });
+  r.get('/api/admin/shop/courier-runs/:id/warehouse/discrepancies',
+    ['admin'],async(c:AuthedCtx)=>{
+      const runId=parse(uuid,c.params.id);
+      if(!await db.one('select 1 from shop_courier_runs where id=$1',[runId]))
+        throw notFound('Рейс не найден');
+      const rows=await db.query(`
+        select d.id,d.stop_id,d.line_index,d.kind,d.expected_article,
+          d.expected_qty,d.observed_article,d.observed_qty,
+          d.note,d.reported_at,d.status,d.resolved_at,d.resolution_note
+        from shop_warehouse_discrepancies d
+        join shop_courier_stops s on s.id=d.stop_id
+        where s.run_id=$1 order by d.reported_at desc,d.id desc limit 250`,[runId]);
+      return {discrepancies:rows,privateToDispatcher:true,
+        financialChanges:false};
+    });
 }
