@@ -903,7 +903,7 @@ export function Garage() {
   const [form, setForm] = useState<VehicleValue & {plate:string;trailerPlate:string}>({ brand: '', model: '', year: '', plate: '', trailerPlate: '' });
   const [driverFor, setDriverFor] = useState<string | null>(null);
   const [driverPhone, setDriverPhone] = useState('+7 ');
-  const isDriver = !!me?.owner_id;
+  const isDriver = !!me?.owner_id || !!me?.roles.includes('driver');
   const [serviceHistoryVersion, setServiceHistoryVersion] = useState(0);
   useEffect(() => {
     const refresh = () => { if (document.visibilityState === 'visible' && navigator.onLine) setServiceHistoryVersion(v => v + 1); };
