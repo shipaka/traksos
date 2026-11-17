@@ -38,13 +38,15 @@ export interface CreateOrderInput {
   loaded?: 'empty' | 'loaded' | 'adr';
   driverOnSite?: boolean;
   /** Условия на месте: тип места, пропуск, кто встретит, что с машиной, когда */
-  site?: { place?: string; pass?: string; meet?: string; state?: string; when?: string; time?: string };
+  site?: { place?: string; pass?: string; meet?: string; state?: string; when?: string; time?: string; ecuSpecialistId?: string };
   /** Выезд после консультации: подсказка мастера переходит в заявку, клиенту — скидка */
   fromConsult?: string;
   /** Следующий самостоятельный этап того же обращения. */
   continueFrom?: string;
   /** Independent expert assignment grouped with an earlier job (client-confirmed). */
   additionalTo?: string;
+  /** Explicit stationary ECU workshop chosen by client, never automatic SOS. */
+  ecuSpecialistId?: string;
 }
 
 /** Подсказка мастера после консультации */
@@ -99,6 +101,24 @@ export class OrdersService {
       if (previous) return reuse(previous);
     }
     const all = await this.settings.all();
+    const isEcu = i.service === 'ecu';
+    if (isEcu) {
+      if (i.isSos || i.continueFrom || i.fromConsult)
+        throw bad('ecu_not_sos', 'ЭБУ — отдельная стационарная услуга, не SOS');
+      if (!i.ecuSpecialistId)
+        throw bad('ecu_specialist_required', 'Выберите конкретного специалиста по ЭБУ');
+      if (i.paymentMethod && i.paymentMethod !== 'cash')
+        throw bad('ecu_payment_unavailable', 'Сперва согласуйте цену диагностики; онлайн-оплата пока закрыта');
+      const station = await this.db.one(
+        "select 1 from performer_profiles p join users u on u.id=p.user_id "+
+        "where p.user_id=$1 and p.kind='ecu' and p.verification='approved' "+
+        "and u.status='active' and p.extras #>> '{ecuStation,published}'='true'",
+        [i.ecuSpecialistId]);
+      if (!station) throw bad('ecu_station_unavailable','Выбранная мастерская пока не принимает заявки');
+      i = {...i,isSos:false,zoneId:'ecu_station',regionId:undefined,
+        paymentMethod:'cash',night:false,groupTrip:false,
+        site:{ecuSpecialistId:i.ecuSpecialistId}};
+    }
     const method = i.paymentMethod ?? 'cash';
     await this.payments.assertMethodAllowed(method);
 
@@ -129,8 +149,7 @@ export class OrdersService {
         throw bad('different_vehicle','Модель машины должна совпадать');
       if(additionalParent.year&&i.year&&additionalParent.year!==i.year)
         throw bad('different_vehicle','Год машины должен совпадать');
-      if(additionalParent.zone_id!==i.zoneId)
-        throw bad('zone_changed','Для связанной работы выберите тарифную зону первого заказа');
+      // Workshop does not inherit the mechanic's call-out zone.
       const already=await this.db.one(
         "select 1 from orders where additional_to=$1 and service='ecu' "+
         "and status not in ('cancelled','no_performer')",[additionalParent.id]);
@@ -177,26 +196,34 @@ export class OrdersService {
     }
     // Critical: validate the declared location independently of the price zone,
     // before INSERT, bank hold, owner approval or dispatch. Never guess by IP.
-    try { assertRegionalTariff(i, true); }
-    catch (e) { if (e instanceof CoverageError) throw bad(e.code, e.message); throw e; }
+    if(!isEcu){
+      try { assertRegionalTariff(i, true); }
+      catch (e) { if (e instanceof CoverageError) throw bad(e.code, e.message); throw e; }
+    }
     const isConsult = i.service === 'consult';
-    if(!isConsult && checkLegacyPricingLocation({
+    if(!isConsult && !isEcu && checkLegacyPricingLocation({
       address:i.address,lat:i.lat,lng:i.lng
     })==='outside'){
       throw conflict('outside_legacy_tariff_region',
         'Нельзя оформить выезд по тарифам СПб/ЛО за их пределами. В вашем регионе нужен подтверждённый местный тариф. Заявку и оплату не создавали.');
     }
-    if(!isConsult){
+    if(!isConsult && !isEcu){
       const zoneMismatch=legacyTariffZoneMismatch({address:i.address},i.zoneId);
       if(zoneMismatch)throw conflict('mismatched_legacy_tariff_zone',
         'Указанный населённый пункт не соответствует выбранной зоне выезда СПб/ЛО. Выберите правильную зону, прежде чем подтверждать цену.');
     }
     const night = isConsult ? false : i.night ?? isNight(all.pricing, this.now());
     const tier = i.tier ?? 'eco';
-    const est = estimate(all.pricing, { service: i.service, tier, zoneId: i.zoneId, night, group: !isConsult && !!i.groupTrip });
+    // An ECU request carries NO platform-defined diagnostics or travel price.
+    // Zero is a non-billable unquoted inquiry, never an offer of free service.
+    const est = isEcu
+      ? {zoneId:'ecu_station',zoneName:'Точка ремонта ЭБУ',km:0,roadKm:0,
+         base:0,road:0,callOut:0,hour:null,night:false,group:false,
+         quoteRequired:true,ecuInquiry:true}
+      : estimate(all.pricing, { service: i.service, tier, zoneId: i.zoneId, night, group: !isConsult && !!i.groupTrip });
     // Historic local quotes stay compatible; metadata makes the limits visible
     // to the buyer and to the dispatched professional for NEW orders only.
-    const quotation= isConsult ? est : {
+    const quotation= isConsult || isEcu ? est : {
       ...est,
       regionValidation:legacyPricingWarning({address:i.address,lat:i.lat,lng:i.lng})
     };
@@ -242,7 +269,7 @@ export class OrdersService {
         previous ? (previous.case_root_id ?? previous.id) :
           additionalParent ? (additionalParent.case_root_id ?? additionalParent.id) : null,
         previous?.id ?? null, additionalParent?.id ?? null,
-        requestKey,requestHash, isConsult ? null : i.regionId],
+        requestKey,requestHash, isConsult || isEcu ? null : i.regionId],
     ).catch(async (e: any) => {
       if (e?.code === '23505' && e?.constraint === 'orders_create_key_unique') {
         const prior = await this.db.one<any>(
@@ -284,6 +311,11 @@ export class OrdersService {
 
   /** Заявка пошла в работу: оплата (холд) и вызов исполнителей */
   async launch(user: AuthUser, order: any) {
+    // Stationary ECU inquiry: no call-out or pre-quote bank authorization.
+    if(order.service==='ecu'){
+      await this.startDispatch(order.id);
+      return {order:await this.view(user,order.id),confirmationUrl:null};
+    }
     // Owner-approved requests can launch later. Recheck the frozen location
     // snapshot before creating a bank hold. Do not reprice legacy orders with
     // a NULL region: their agreed amounts/cancellations remain unchanged.
@@ -357,7 +389,8 @@ export class OrdersService {
     const all = await this.settings.all();
     const order = await this.db.one('select * from orders where id=$1', [orderId]);
     if (!order || order.status !== 'searching') return;
-    if (!all.dispatch.priorityFirst) return this.auction.start(orderId, exclude);
+    if (order.service === 'ecu' || !all.dispatch.priorityFirst)
+      return this.auction.start(orderId, exclude);
     const kind = performerKindFor(order.service);
     const list = await this.db.query<Candidate>(
       `select p.user_id, p.kind, p.specialties, p.brands, p.is_priority, p.paused, p.line_status, p.verification,

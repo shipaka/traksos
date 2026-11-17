@@ -47,6 +47,7 @@ import {registerShopCourierOperationsRoutes} from './services/shopCourierOperati
 import { registerShopCourierEconomicsRoutes } from './services/shopCourierEconomics.ts';
 import { registerShopWarehouseRoutes } from './services/shopWarehouse.ts';
 import {registerEcuReferralRoutes} from './services/ecuReferrals.ts';
+import {registerEcuDirectoryRoutes} from './services/ecuDirectory.ts';
 import {registerServiceCaseLedgerRoutes} from './services/serviceCaseLedger.ts';
 import {registerShopSupplierReceivingRoutes} from './services/shopSupplierReceiving.ts';
 import {registerShopWarehouseTraceRoutes} from './services/shopWarehouseTraceability.ts';
@@ -152,6 +153,7 @@ export function createApp(d: Deps) {
   const r = new Router();
   registerVehicleReferenceRoutes(r,d.db,settings,now);
   registerPartnerLevelRoutes(r, d.db, now);
+  registerEcuDirectoryRoutes(r,d.db);
   registerPartnerActivityRoutes(r,d.db,now);
   // Put /knowledge/references before /knowledge/:id in Router's first-match order.
   registerKnowledgeReferenceRoutes(r,d.db);
@@ -636,6 +638,7 @@ export function createApp(d: Deps) {
     loaded: z.enum(['empty', 'loaded', 'adr']).optional(), driverOnSite: z.boolean().optional(), fromConsult: z.string().uuid().optional(),
     continueFrom: z.string().uuid().optional(),
     additionalTo: z.string().uuid().optional(),
+    ecuSpecialistId: z.string().uuid().optional(),
     site: z.object({
       place: z.enum(['parking', 'yard', 'plant', 'road']).optional(), pass: z.enum(['none', 'onsite', 'ahead']).optional(),
       meet: z.string().max(60).optional(), state: z.enum(['free', 'loading', 'other_work']).optional(),
@@ -1156,7 +1159,9 @@ export function createApp(d: Deps) {
     return auction.offer(c.user, c.params.id, parse(z.object({ price: money.optional() }), c.body).price);
   });
   r.delete('/api/orders/:id/offers', performerRoles, (c: AuthedCtx) => auction.withdraw(c.user, c.params.id));
-  r.post('/api/orders/:id/offers/:offerId/choose', true, (c: AuthedCtx) => auction.choose(c.user, c.params.id, c.params.offerId));
+  r.post('/api/orders/:id/offers/:offerId/choose', true, (c: AuthedCtx) =>
+    auction.choose(c.user,c.params.id,c.params.offerId,
+      parse(z.object({acceptedPrice:money.optional()}),c.body).acceptedPrice));
   r.get('/api/performer/auctions', performerRoles, (c: AuthedCtx) => auction.open(c.user));
   r.get('/api/orders/:id/messages', true, (c: AuthedCtx) => chat.list(c.user, c.params.id, Number(c.query.get('after') ?? 0)));
   r.post('/api/orders/:id/messages', true, (c: AuthedCtx) => {
