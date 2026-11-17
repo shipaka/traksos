@@ -306,10 +306,10 @@ export class OrdersService {
         stage ?
           `insert into order_dispatch(order_id,performer_id,rank,distance_km,road_eta_minutes)
            select $1,$2,$3,$4,$5 from orders where id=$1 and status='searching'
-           on conflict do nothing`:
+           on conflict do nothing returning id`:
           `insert into order_dispatch(order_id, performer_id, rank, distance_km) values ($1,$2,$3,$4) on conflict do nothing`,
         stage?[orderId,r.user_id,base+i,r.distanceKm,r.roadEtaMinutes]:
-          [orderId,r.user_id,base+i,r.distanceKm]);
+          [orderId,r.user_id,base+i,r.distanceKm],!!stage);
     }
     await this.db.query('update orders set dispatch_started_at = coalesce(dispatch_started_at, now()) where id=$1', [orderId]);
     await this.event(this.db, orderId, null, 'dispatch_started', { candidates: ranked.length });
