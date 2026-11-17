@@ -58,6 +58,7 @@ export class PrivacyService {
       professionalTechnicalCases: await q('select room_id,make,model,model_year,subsystem,symptoms,dtc_codes,diagnostic_context,status,created_at,resolved_at from community_technical_cases where author_id=$1 order by created_at'),
       professionalTechnicalReplies: await q('select case_id,body,created_at from community_technical_case_replies where author_id=$1 order by created_at'),
       professionalTechnicalReports: await q('select case_id,reply_id,reason,status,decision,review_note,created_at,reviewed_at from community_technical_case_reports where reporter_id=$1 order by created_at'),
+      professionalTechnicalAppeals: await q('select report_id,grounds,status,created_at,reviewed_at,review_note from community_technical_case_appeals where appellant_id=$1 order by created_at'),
       warehouseChecksPerformed: await q('select line_index,checked_article,checked_qty,method,manual_reason,checked_at from shop_warehouse_line_checks where checked_by=$1 order by checked_at'),
       notifications: await q('select title, body, created_at from notifications where user_id=$1 order by created_at desc limit 500'),
     };
@@ -120,6 +121,8 @@ export class PrivacyService {
           where id in (select distinct room_id from community_messages where sender_id=$1)`,[id]);
         await q.query('delete from community_messages where sender_id=$1', [id]);
         await q.query('delete from community_technical_case_reports where reporter_id=$1',[id]);
+        await q.query('delete from community_technical_case_appeals where appellant_id=$1',[id]);
+        await q.query('update community_technical_case_appeals set reviewed_by=null where reviewed_by=$1',[id]);
         await q.query('update community_technical_case_reports set reviewed_by=null where reviewed_by=$1',[id]);
         // A deleted expert may have an accepted answer on someone else's
         // technical case. Drop that link first to respect the composite FK;
