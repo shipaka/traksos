@@ -409,7 +409,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/profile', 'Аккаунт'], ['/as/client', 'Кабинет клиента']]
     : [['/orders', 'История заявок'], ['/garage', 'Мой гараж'],
        ...(!me?.owner_id && !me?.roles.includes('driver') ? [['/fleet', 'Мой автопарк']] as [string,string][] : []),
-       ['/services', 'СТО и запись'],
+       ['/services', 'СТО и запись'], ['/experience', 'Опыт эксплуатации'],
        ...(me?.roles.some(r=>r==='driver'||r==='client') ? [['/air', 'Водительский Эфир и личные чаты']] as [string,string][] : []),
        ...(me?.roles.includes('driver') ? [['/shop', 'Магазин запчастей']] as [string,string][] : []),
        ['/reviews', 'Мои отзывы'], ['/invite', 'Пригласить друга'],
@@ -425,7 +425,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       <header className="top">
         <span className="logo">Trak<b>SOS</b></span>
         {me && mode === 'client' && <nav className="track-top-shortcuts" aria-label="Быстрый доступ">
-          <a href="#/">Главная</a><a href="#/orders">Заявки</a><a href="#/sos">Помощь в дороге</a><a href="#/air">Эфир</a><a href="#/shop">Запчасти</a>
+          <a href="#/">Главная</a><a href="#/orders">Заявки</a><a href="#/sos">Помощь в дороге</a><a href="#/air">Эфир</a><a href="#/experience">Опыт эксплуатации</a><a href="#/shop">Запчасти</a>
         </nav>}
         {!me && !isAuthEntry && <nav className="guest-site-nav" aria-label="Разделы TrakSOS">
           {TOP_CATALOGUE.map(group => <details key={group.title} className="guest-nav-group"
