@@ -7,6 +7,7 @@ import {AdminTechReferences} from './adminTechReferences.tsx';
 import {ProfessionalCases} from './professionalCases.tsx';
 import {MyTechnicalAppeals,TechnicalAppealsQueue} from './technicalCaseAppeals.tsx';
 import {TechnicalApplicability,AdminTechnicalApplicability} from './technicalApplicability.tsx';
+import {CommunityNotificationSettings} from './communityNotificationSettings.tsx';
 import {TechnicalCaseReportQueue} from './technicalCaseReportQueue.tsx';
 
 type Entry={id:string;title:string;make:string;model:string|null;model_year:number|null;
@@ -155,7 +156,7 @@ export function TechnicalBase(){
  const {me}=useMe();
  const admin=Boolean(me?.roles.includes('admin'));
  const professional=Boolean(me?.roles.some(r=>['master','tow','service'].includes(r)));
- const [tab,setTab]=useState<'sources'|'search'|'cases'|'propose'|'review'|'source-review'|'case-reports'|'appeals'|'appeal-review'|'variants'>('sources');
+ const [tab,setTab]=useState<'sources'|'search'|'cases'|'propose'|'review'|'source-review'|'case-reports'|'appeals'|'appeal-review'|'variants'|'notifications'>('sources');
  if(!professional&&!admin)return <main className="tech-shell"><h1>ТехБаза</h1><p>Раздел доступен только подтверждённым специалистам.</p></main>;
  return <main className="tech-shell">
   <header className="tech-head">
@@ -167,6 +168,7 @@ export function TechnicalBase(){
    <button aria-current={tab==='sources'?'page':undefined} onClick={()=>setTab('sources')}>Схемы и источники</button>
    <button aria-current={tab==='search'?'page':undefined} onClick={()=>setTab('search')}>Проверенные решения</button>
    {professional&&<button aria-current={tab==='cases'?'page':undefined} onClick={()=>setTab('cases')}>Советы коллег</button>}
+   {professional&&<button aria-current={tab==='notifications'?'page':undefined} onClick={()=>setTab('notifications')}>Уведомления</button>}
    {professional&&<button aria-current={tab==='appeals'?'page':undefined} onClick={()=>setTab('appeals')}>Мои обжалования</button>}
    {professional&&<button aria-current={tab==='propose'?'page':undefined} onClick={()=>setTab('propose')}>Мои материалы</button>}
    {admin&&<button aria-current={tab==='review'?'page':undefined} onClick={()=>setTab('review')}>Проверка материалов</button>}
@@ -181,6 +183,7 @@ export function TechnicalBase(){
   {tab==='search'&&<ApprovedKnowledge/>}
   {tab==='cases'&&professional&&<ProfessionalCases/>}
   {tab==='appeals'&&professional&&<MyTechnicalAppeals/>}
+  {tab==='notifications'&&professional&&<CommunityNotificationSettings professional/>}
   {tab==='propose'&&professional&&<ProposeKnowledge/>}
   {tab==='review'&&admin&&<AdminKnowledgeQueue/>}
   {tab==='source-review'&&admin&&<AdminTechReferences/>}
