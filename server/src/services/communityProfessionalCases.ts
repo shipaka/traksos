@@ -18,6 +18,9 @@ const uid=z.string().uuid();
 const nonce=z.string().uuid();
 const safeLabel=z.string().trim().max(80);
 const codes=z.array(z.string().trim().toUpperCase().regex(/^[A-Z0-9-]{3,12}$/)).max(8).default([]);
+// A precise street/building reference in a free-text technical case could
+// identify a stranded customer even when the order address is not copied.
+const preciseAddress=/(?:адрес\s*[:—-]|(?<![\p{L}\p{N}])(?:улица|ул\.|проспект|пр-т|переулок|шоссе|набережная)\s+[\p{L}\p{N}\p{M} .'-]{3,65}?(?:,?\s*(?:д\.|дом|№)\s*\d{1,4}))/iu;
 const unsafeText=[
   /(?:\+?\d[\s().-]*){10,}/u,
   /[\w.+-]+@[\w.-]+\.[a-z]{2,}/iu,
@@ -27,13 +30,14 @@ const unsafeText=[
   /(?<![\p{L}\p{N}])[АВЕКМНОРСТУХABEKMHOPCTYX]\d{3}[АВЕКМНОРСТУХABEKMHOPCTYX]{2}\d{2,3}(?![\p{L}\p{N}])/iu,
 ];
 export function safeText(value:string){
-  if(unsafeText.some(x=>x.test(value)))
+  if(preciseAddress.test(value)||unsafeText.some(x=>x.test(value)))
     throw bad('sensitive_technical_text',
       'Уберите VIN, телефоны, госномера, ссылки и точные координаты. Коллегам нужны только технические признаки неисправности');
   return value;
 }
 function safeMeta(value:string|null|undefined){
   const candidate=value?.trim().slice(0,80)??'';
+  if(preciseAddress.test(candidate))return null;
   return candidate&&unsafeText.every(r=>!r.test(candidate))?candidate:null;
 }
 
