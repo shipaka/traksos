@@ -19,8 +19,10 @@ test('open TechBase references preserve source, licensing, professional ACL and 
   ok(await t.api('POST','/api/admin/performers/'+master.id+'/verify',
     {decision:'approved'},admin.token));
   const all=ok(await t.api('GET',base,undefined,master.token));
-  assert.equal(all.references.length,17);
-  assert.equal(all.references.filter((x:any)=>x.source_kind==='manufacturer_portal').length,5);
+  assert.equal(all.references.length,20);
+  assert.equal(all.references.filter((x:any)=>x.source_kind==='manufacturer_portal').length,8);
+  assert.ok(['zf-wabco-tech-downloads','knorr-bremse-tech-manuals','haldex-trailer-tag']
+    .every(slug=>all.references.some((x:any)=>x.slug===slug&&x.license_code==='LINK_ONLY')));
   assert.ok(all.references.every((x:any)=>x.source_url.startsWith('https://')));
   assert.ok(all.references.every((x:any)=>x.license_code && x.attribution_author));
   const renault=ok(await t.api('GET',base+'?make=Renault',undefined,master.token));
@@ -49,7 +51,7 @@ test('administrator can withdraw and restore a source without creating a fake OE
     undefined,driver.token)).status,403);
   const catalog=ok(await t.api('GET','/api/admin/community/knowledge/references',
     undefined,admin.token));
-  assert.equal(catalog.sources.length,17);
+  assert.equal(catalog.sources.length,20);
   const doc=catalog.sources.find((x:any)=>x.slug==='alternator-rotor-stator');
   const portal=catalog.sources.find((x:any)=>x.slug==='daf-rmi-portal');
   assert.ok(doc&&portal);
