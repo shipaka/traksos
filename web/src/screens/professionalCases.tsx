@@ -35,6 +35,8 @@ export function ProfessionalCases({orderId}:{orderId?:string}){
  const [acceptedReply,setAcceptedReply]=useState<string|null>(null);
  const [solutionNotes,setSolutionNotes]=useState('');
  const [knowledgeTitle,setKnowledgeTitle]=useState('');
+ const [reportReplyId,setReportReplyId]=useState<string|null|undefined>(undefined);
+ const [reportReason,setReportReason]=useState('');
  const [replyAfter,setReplyAfter]=useState('0');
  const replyPending=useRef<{id:string;text:string;caseId:string}|null>(null);
  const {busy,run}=useAction();
@@ -110,6 +112,13 @@ export function ProfessionalCases({orderId}:{orderId?:string}){
    const saved=await run(()=>post('/api/community/pro-cases/'+selected+'/resolve',
      {replyId:acceptedReply}),'Вопрос помечен как решённый');
    if(saved){await selectedCase.reload();await replies.reload();await list.reload()}
+ };
+ const flag=async()=>{
+   if(!selected||reportReason.trim().length<10)return;
+   const saved=await run(()=>post('/api/community/pro-cases/'+selected+'/report',{
+     replyId:reportReplyId??null,reason:reportReason.trim()
+   }),'Жалоба передана на рассмотрение модератору');
+   if(saved){setReportReason('');setReportReplyId(undefined)}
  };
  const contribute=async()=>{
    if(!selected||!selectedCase.data)return;
@@ -242,6 +251,10 @@ export function ProfessionalCases({orderId}:{orderId?:string}){
          {selectedCase.data.diagnostic_context&&<p className="tech-description">
            {selectedCase.data.diagnostic_context}</p>}
          <p role="status">{selectedCase.data.status==='resolved'?'Вопрос решён':'Ожидает ответов коллег'}</p>
+         {!selectedCase.data.isAuthor&&<button type="button" className="btn ghost"
+           onClick={()=>{setReportReplyId(null);setReportReason('')}}>
+           Пожаловаться на технический вопрос
+         </button>}
          <h4>Ответы коллег</h4>
          {replies.error&&<p role="alert">{replies.error}</p>}
          {replies.data?.replies.length===0&&<p className="note">Ответов пока нет.</p>}
@@ -249,6 +262,10 @@ export function ProfessionalCases({orderId}:{orderId?:string}){
            <strong>{a.nickname}{a.accepted?' · выбранное решение':''}</strong>
            <p className="tech-description">{a.body}</p>
            <small>{fmtTime(a.created_at)}</small>
+           {!a.isMine&&<button type="button" className="btn ghost"
+             onClick={()=>{setReportReplyId(a.id);setReportReason('')}}>
+             Пожаловаться на ответ
+           </button>}
            {selectedCase.data?.isAuthor&&selectedCase.data.status==='open'&&
              <button className="btn ghost" type="button"
                aria-pressed={acceptedReply===a.id}
@@ -256,6 +273,21 @@ export function ProfessionalCases({orderId}:{orderId?:string}){
                {acceptedReply===a.id?'Выбран':'Выбрать решение'}
              </button>}
          </div>)}
+         {reportReplyId!==undefined&&<form className="tech-form"
+           onSubmit={e=>{e.preventDefault();void flag()}}>
+           <h4>Сообщить модератору об опасном техническом совете</h4>
+           <p className="note">Укажите конкретный риск или ошибку. Текст вашей жалобы
+             виден модераторам, а не участникам клуба.</p>
+           <textarea className="field" minLength={10} maxLength={500}
+             rows={3} required value={reportReason}
+             onChange={e=>setReportReason(e.target.value)}/>
+           <div className="tech-actions">
+             <button type="submit" className="btn"
+               disabled={busy||reportReason.trim().length<10}>Отправить жалобу</button>
+             <button type="button" className="btn ghost"
+               onClick={()=>setReportReplyId(undefined)}>Отмена</button>
+           </div>
+         </form>}
          {replies.data?.hasMore&&<button type="button" className="btn ghost"
            onClick={()=>setReplyAfter(replies.data!.nextCursor)}>Следующие ответы</button>}
          {selectedCase.data.status==='open'&&room?.joined&&<>
