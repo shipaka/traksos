@@ -29,18 +29,18 @@ const invalid = (code: string, message: string): never => { throw new CoverageEr
 const SPB_ZONES = new Set(['spb']);
 const LO_ZONES = new Set(['kad30','gat','tos','vyb','lug','kir','ust']);
 const CITY_POINTS: Record<string, { name: string; lat: number; lng: number; stem: RegExp }> = {
-  gat: { name:'Гатчина', lat:59.576, lng:30.129, stem:/\bгатчин/i },
-  tos: { name:'Тосно', lat:59.540, lng:30.877, stem:/\bтосн/i },
-  vyb: { name:'Выборг', lat:60.714, lng:28.757, stem:/\bвыборг/i },
-  lug: { name:'Луга', lat:58.737, lng:29.847, stem:/\bлуг(?:а|и|е|ой|у)?\b/i },
-  kir: { name:'Кириши', lat:59.448, lng:32.021, stem:/\bкириш/i },
-  ust: { name:'Усть-Луга', lat:59.665, lng:28.284, stem:/\bусть[-\s]?луг/i },
+  gat: { name:'Гатчина', lat:59.576, lng:30.129, stem:/гатчин/i },
+  tos: { name:'Тосно', lat:59.540, lng:30.877, stem:/тосн/i },
+  vyb: { name:'Выборг', lat:60.714, lng:28.757, stem:/выборг/i },
+  lug: { name:'Луга', lat:58.737, lng:29.847, stem:/(?:^|[\s,])луг(?:а|и|е|ой|у)?(?=$|[\s,.])/i },
+  kir: { name:'Кириши', lat:59.448, lng:32.021, stem:/кириш/i },
+  ust: { name:'Усть-Луга', lat:59.665, lng:28.284, stem:/усть[-\s]?луг/i },
 };
-const SPB_PATTERN = /(?:санкт[-\s]?петербург|\bспб\b|\bspb\b|\bс[.]?\s?петербург)/i;
+const SPB_PATTERN = /(?:санкт[-\s]?петербург|спб|\bspb\b|с[.]?\s?петербург)/i;
 const LO_PATTERN = /(?:ленинградск\S*\s+област|\bленобласт\S*)/i;
 // Explicit incompatible locations: fail closed even when the user/client also
 // supplies a spoofed Petersburg point. This is NOT a nationwide geocoder.
-const OTHER_PATTERN = /(?:\bмоскв\S*|\bкалининград\S*|\bвладивосток\S*|\bновосибирск\S*|\bекатеринбург\S*|\bкраснодар\S*|\bприморск\S*\s+край|\bхабаровск\S*|\bказан\S*)/i;
+const OTHER_PATTERN = /(?:^|[\\s,])(?:москва|москвы|москве|москву|москвой|калининград(?:а|е|ом)?|владивосток(?:а|е|ом)?|новосибирск(?:а|е|ом)?|екатеринбург(?:а|е|ом)?|краснодар(?:а|е|ом)?|хабаровск(?:а|е|ом)?|казань|казани)(?=$|[\\s,.])|(?:московск\\S*\\s+област|приморск\\S*\\s+край|калининградск\\S*\\s+област)/i;
 const SPB_CENTER = {lat:59.934, lng:30.315};
 
 function inside(lat:number,lng:number,range:{south:number;north:number;west:number;east:number}) {
