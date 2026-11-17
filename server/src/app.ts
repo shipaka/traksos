@@ -1314,8 +1314,13 @@ export function createApp(d: Deps) {
       const { status, body } = errorBody(e);
       // Structured, privacy-minimal diagnostics are available through Docker's log driver.
       // Never log the request body, phone, password, SMS code, auth header or query string.
-      if (status >= 500 || (url.pathname === '/api/auth/login' && status >= 400)) {
-        const category = status >= 500 ? 'http_server_error' : 'auth_login_rejected';
+      // Registration failures are as important as login failures: a rejected
+      // SMS request leaves users on the phone step. Record request ID/status
+      // only; never the phone, message body, password or verification code.
+      const authFailure = (url.pathname === '/api/auth/login' || url.pathname === '/api/auth/code') && status >= 400;
+      if (status >= 500 || authFailure) {
+        const category = status >= 500 ? 'http_server_error'
+          : url.pathname === '/api/auth/code' ? 'auth_sms_request_rejected' : 'auth_login_rejected';
         // Do not block the HTTP response if the diagnostics store is unavailable.
         try {
           await d.db.query(
