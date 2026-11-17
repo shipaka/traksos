@@ -34,7 +34,7 @@ create table if not exists shop_supplier_receipt_lines (
   observed_article text not null default '',
   observed_qty int not null default 0 check(observed_qty between 0 and 10000),
   condition text not null default 'not_checked' check(condition in
-    ('not_checked','intact','packaging_damaged','damaged','missing')),
+    ('not_checked','intact','not_supplied','packaging_damaged','damaged','missing')),
   inspection_note text,
   inspected_by uuid references users(id) on delete set null,
   inspected_at timestamptz,
