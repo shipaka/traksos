@@ -140,9 +140,9 @@ test('real database: client plan, pass decision, GPS evidence, manual review, pr
 
     await t.db.query(
       'insert into performer_route_samples '+
-      '(order_id,performer_id,lat,lng,received_at,accepted,accuracy_m,gps_source) '+
-      "values($1,$2,$3,$4,now()-interval '48 seconds',true,12,'gps'),"+
-      "($1,$2,$3,$4,now()-interval '12 seconds',true,12,'gps')",
+      '(order_id,performer_id,lat,lng,received_at,accepted,accuracy_m,gps_source,checkpoint_consent) '+
+      "values($1,$2,$3,$4,now()-interval '48 seconds',true,12,'gps',true),"+
+      "($1,$2,$3,$4,now()-interval '12 seconds',true,12,'gps',true)",
       [id,worker.id,59.9343,30.3351],
     );
     const second=await service.submitAttempt(w,id,{

@@ -1,6 +1,6 @@
 import type { Db } from '../db/index.ts';
 import type { SettingsService } from './settings.ts';
-import { bad, forbidden, notFound, type AuthUser } from '../http/router.ts';
+import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { slot, endOfMoscowDay, validSchedule, type Schedule } from '../domain/schedule.ts';
 import { normalizePhone } from '../util.ts';
 import { plausibleGpsStep } from '../domain/geo.ts';
@@ -164,7 +164,17 @@ export class ProfilesService {
   /** Подключается из app.ts: снять исполнителя со всех торгов и звонков */
   onUnavailable?: (userId: string) => Promise<void>;
 
-  async setLocation(userId: string, lat: number, lng: number): Promise<boolean> {
+  /**
+   * Optional opt-in, order-scoped GPS metadata. Supplied values are device
+   * assertions (not attestation); they never certify arrival on their own.
+   */
+  async setLocation(userId: string, lat: number, lng: number, evidence?: {
+    planId: string;
+    accuracyM: number;
+    source: 'gps' | 'network';
+    mockLocation: boolean;
+    deviceAt?: string | null;
+  }): Promise<boolean> {
     return this.db.tx(async q => {
       // Lock the previous point to prevent simultaneous updates from bypassing
       // the jump filter. Server receive time, not client clock, is authoritative.
@@ -182,14 +192,38 @@ export class ProfilesService {
       // Location updates remain live, but cap persisted audit sampling to one
       // point per order per 10 seconds. The profile row lock above serializes
       // concurrent requests from the same performer and prevents burst inserts.
-      await q.query(`insert into performer_route_samples(order_id,performer_id,lat,lng,received_at)
-        select o.id,$1,$2,$3,$4 from orders o
+      if (evidence) {
+        // No consent for unrelated orders, and no trust in a guessed plan ID.
+        // This select is deliberately checked inside the same profile lock.
+        const approvedPlan = await q.one<{ id: string }>(
+          `select p.id from checkpoint_evidence_plans p
+           join orders o on o.id=p.order_id
+           where p.id=$1 and p.performer_id=$2
+             and o.performer_id=$2 and o.status='en_route'
+             and p.id=(select id from checkpoint_evidence_plans
+                       where order_id=o.id order by version desc limit 1)`,
+          [evidence.planId, userId],
+        );
+        if (!approvedPlan) throw conflict('checkpoint_plan_outdated',
+          'Нет актуального согласованного КПП для записи доказательств');
+      }
+      await q.query(`insert into performer_route_samples
+        (order_id,performer_id,lat,lng,received_at,accuracy_m,gps_source,
+         mock_location,checkpoint_consent,device_at)
+        select o.id,$1,$2,$3,$4,$5,$6,$7,$8,$9 from orders o
         where o.performer_id=$1 and o.status='en_route'
+          and ($10::uuid is null or exists (
+            select 1 from checkpoint_evidence_plans p
+            where p.id=$10 and p.order_id=o.id and p.performer_id=$1
+          ))
           and not exists (
             select 1 from performer_route_samples s
             where s.order_id=o.id and s.performer_id=$1 and s.accepted=true
               and s.received_at > $4::timestamptz - interval '10 seconds'
-          )`, [userId, lat, lng, now]);
+          )`, [userId, lat, lng, now,
+          evidence?.accuracyM ?? null, evidence?.source ?? 'unknown',
+          evidence?.mockLocation ?? false, !!evidence, evidence?.deviceAt ?? null,
+          evidence?.planId ?? null]);
       return true;
     });
   }

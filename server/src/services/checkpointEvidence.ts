@@ -5,7 +5,7 @@
  */
 import { createHash } from 'node:crypto';
 import type { Db, Queryable } from '../db/index.ts';
-import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
+import { bad, conflict, forbidden, notFound, HttpError, type AuthUser } from '../http/router.ts';
 import {
   assertCheckpointPlan, evaluateCheckpoint, sampledSnapshot,
   type CheckpointPlan, type ObservedPosition,
@@ -64,8 +64,9 @@ function assertExplanation(s: string, min = 20) {
 }
 function isAdmin(a: AuthUser): boolean { return !!a?.roles?.includes('admin'); }
 function isClient(actor: AuthUser, order: any): boolean {
-  return order.client_id === actor.id || order.created_by === actor.id ||
-    (!!actor.owner_id && order.client_id === actor.owner_id);
+  // A driver can only view an order THEY created. Sharing owner_id must
+  // never grant access to other drivers' orders in the same fleet.
+  return order.client_id === actor.id || order.created_by === actor.id;
 }
 async function audit(q: Queryable, actor: AuthUser, action: string, target: string, data: object = {}) {
   await q.query('insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4)',
@@ -230,6 +231,17 @@ export class CheckpointEvidenceService {
         return { ...renderAttempt(old), reused: true };
       }
       ensureActive(order);
+      // An idempotent replay returns above even at the rate limit. Unique
+      // new submissions are capped while the order row lock serializes races.
+      const count = await q.one<{ n: number }>(
+        'select count(*)::int as n from checkpoint_arrival_attempts ' +
+        'where order_id=$1 and performer_id=$2 and created_at >= $3',
+        [orderId, actor.id, new Date(this.now().getTime() - 15 * 60_000).toISOString()],
+      );
+      if (Number(count?.n ?? 0) >= 8) {
+        throw new HttpError(429, 'checkpoint_rate_limited',
+          'Слишком много попыток фиксации КПП за 15 минут');
+      }
       const review = plan.requires_pass
         ? await q.one<any>(
           'select outcome from checkpoint_pass_reviews where plan_id=$1 order by recorded_at desc,id desc limit 1',
@@ -241,7 +253,7 @@ export class CheckpointEvidenceService {
       const gpsRows = await q.query<any>(
         'select lat,lng,received_at,accuracy_m,gps_source,mock_location,accepted ' +
         'from performer_route_samples where order_id=$1 and performer_id=$2 ' +
-        'and accepted=true and received_at >= $3 and received_at <= $4 ' +
+        'and accepted=true and checkpoint_consent=true and received_at >= $3 and received_at <= $4 ' +
         'order by received_at desc limit 200',
         [orderId, actor.id, new Date(now.getTime() - 10 * 60_000).toISOString(), now.toISOString()],
       );

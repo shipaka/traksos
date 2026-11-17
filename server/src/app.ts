@@ -30,6 +30,8 @@ import { SupportService, TOPICS } from './services/support.ts';
 import { StatsService } from './services/stats.ts';
 import { OpsService } from './services/ops.ts';
 import { OnsiteService } from './services/onsite.ts';
+import { CheckpointEvidenceService } from './services/checkpointEvidence.ts';
+import { checkpointApiEnabled, registerCheckpointRoutes } from './http/checkpointRoutes.ts';
 import { ServiceCenters } from './services/service.ts';
 import { FleetService } from './services/fleet.ts';
 import { VehicleServiceRequests } from './services/vehicleServiceRequests.ts';
@@ -115,6 +117,9 @@ export function createApp(d: Deps) {
   centers.onDispute = (p) => moderation.open({ kind: 'dispute', title: p.title, text: p.text, openedBy: p.userId, targetId: p.targetId, bookingId: p.bookingId, ticketId: p.ticketId, priority: 1 });
 
   const r = new Router();
+  // Feature-gated, non-billable КПП evidence; production remains disabled.
+  const checkpointEvidence = new CheckpointEvidenceService(d.db);
+  registerCheckpointRoutes(r, checkpointEvidence);
   const staff = ['admin', 'moderator'];
   const performerRoles = ['master', 'tow', 'service'];
 
@@ -500,8 +505,27 @@ export function createApp(d: Deps) {
     return profiles.setLine(c.user.id, b);
   });
   r.post('/api/performer/location', performerRoles, async (c: AuthedCtx) => {
-    const b = parse(z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) }), c.body);
-    const accepted = await profiles.setLocation(c.user.id, b.lat, b.lng);
+    const b = parse(z.object({
+      lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180),
+      checkpointPlanId: z.string().uuid().optional(),
+      checkpointEvidenceConsent: z.boolean().optional(),
+      accuracyM: z.number().gt(0).max(10000).optional(),
+      source: z.enum(['gps','network']).optional(),
+      mockLocation: z.boolean().optional(),
+      deviceAt: z.string().datetime({offset:true}).optional(),
+    }), c.body);
+    const metadataRequested = b.checkpointPlanId !== undefined ||
+      b.checkpointEvidenceConsent !== undefined || b.accuracyM !== undefined ||
+      b.source !== undefined || b.mockLocation !== undefined || b.deviceAt !== undefined;
+    if (metadataRequested && !checkpointApiEnabled())
+      throw forbidden('Сбор GPS-доказательств КПП пока выключен');
+    if (metadataRequested && (b.checkpointEvidenceConsent !== true ||
+      !b.checkpointPlanId || b.accuracyM == null || !b.source))
+      throw bad('checkpoint_gps_consent','Для доказательной записи нужны согласие, актуальная точка КПП и точность GPS');
+    const evidence = b.checkpointEvidenceConsent === true && b.checkpointPlanId && b.accuracyM != null && b.source
+      ? { planId: b.checkpointPlanId, accuracyM: b.accuracyM, source: b.source,
+          mockLocation: b.mockLocation ?? false, deviceAt: b.deviceAt ?? null } : undefined;
+    const accepted = await profiles.setLocation(c.user.id, b.lat, b.lng, evidence);
     if (!accepted) return { ok: true, accepted: false };
     // Клиенту в заявке — только точка, прошедшая проверку скачков
     const active = await d.db.query<{ id: string; client_id: string; created_by: string }>(

@@ -10,6 +10,12 @@ alter table performer_route_samples
     check (gps_source in ('gps','network','predicted','unknown'));
 alter table performer_route_samples
   add column if not exists mock_location boolean not null default false;
+-- Source/accuracy are client-reported (NOT platform GPS attestation).
+-- Only the explicitly consented, correct-plan samples are considered.
+alter table performer_route_samples
+  add column if not exists checkpoint_consent boolean not null default false;
+alter table performer_route_samples
+  add column if not exists device_at timestamptz;
 
 create table if not exists checkpoint_evidence_plans (
   id uuid primary key default gen_random_uuid(),
