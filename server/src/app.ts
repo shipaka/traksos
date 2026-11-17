@@ -37,9 +37,9 @@ import { PartnerFinance } from './services/partnerFinance.ts';
 import { InsuranceQuoteFlow } from './services/insuranceQuoteFlow.ts';
 import { PrivacyService } from './services/privacy.ts';
 import { StandingService } from './services/standing.ts';
-import { ShopService } from './services/shop.ts';
 import { ShopAgencyLedger } from './services/shopAgencyLedger.ts';
 import { ShopAgencyBankReconciliation } from './services/shopAgencyBankReconciliation.ts';
+import { ShopService } from './services/shop.ts';
 import { ShopCatalogService } from './services/shopCatalog.ts';
 import { ModerationService } from './services/moderation.ts';
 import { WarrantyClaimsService } from './services/warranty.ts';
@@ -50,7 +50,9 @@ import { normalizePhone, sha256 } from './util.ts';
 import { Raw } from './http/router.ts';
 import { PaymentsService } from './payments/service.ts';
 import { estimate, isNight } from './domain/pricing.ts';
+import { assertRegionalTariff, CoverageError, REGIONAL_COVERAGE_NOTE } from './domain/regionalCoverage.ts';
 import { defaultSettings } from './domain/defaults.ts';
+import { validStages, type VerifiedRoadEta } from './domain/progressiveSos.ts';
 import { config, isProd } from './config.ts';
 
 export interface Deps {
@@ -59,6 +61,8 @@ export interface Deps {
   push: PushProvider;
   payments: PaymentProvider;
   now?: () => Date;
+  /** Server-controlled route ETA, never supplied by a performer or a client. */
+  verifiedRoadEta?: VerifiedRoadEta;
 }
 
 const money = z.number().int().nonnegative();
@@ -75,7 +79,7 @@ export function createApp(d: Deps) {
   const orders = new OrdersService(d.db, settings, notifier, now);
   const payments = new PaymentsService(d.db, settings, d.payments, notifier, orders);
   orders.payments = payments;
-  const auction = new AuctionService(d.db, settings, notifier, orders, now);
+  const auction = new AuctionService(d.db, settings, notifier, orders, now, d.verifiedRoadEta);
   orders.auction = auction;
   profiles.onUnavailable = async (userId) => orders.afterRelease(await orders.release(d.db, userId, null));
   const chat = new ChatService(d.db, settings, notifier, orders);
@@ -229,6 +233,11 @@ export function createApp(d: Deps) {
     if (b.acceptOffers) await offers.acceptCurrent(r.user as any, c.ip);
     return r;
   });
+  // Short-lived one-use WebSocket ticket: long-lived login token stays in a
+  // regular authorized POST header, never in the /ws URL of current clients.
+  r.post('/api/auth/realtime-ticket', true, (c: AuthedCtx) =>
+    auth.issueRealtimeTicket(bearer(c.req)!));
+
   r.post('/api/auth/logout', true, async (c: AuthedCtx) => {
     // Closing/minimizing the app never calls logout and never changes availability.
     // Explicit sign-out must not leave a performer discoverable without any call token.
@@ -466,8 +475,8 @@ export function createApp(d: Deps) {
 
   // Исполнитель --------------------------------------------------------------
   const brandLevel = z.enum(['excellent', 'good', 'last_resort', 'refuse']);
-  r.get('/api/performer/profile', true, (c: AuthedCtx) => profiles.performer(c.user.id));
-  r.put('/api/performer/profile', true, (c: AuthedCtx) => profiles.upsertPerformer(c.user, parse(z.object({
+  // Same contracts for the legacy single-section APIs and the atomic screen save.
+  const performerProfileSchema = z.object({
     kind: z.enum(['master', 'tow', 'service', 'ecu']), name: z.string().min(1).max(100).optional(),
     specialties: z.array(z.enum(['electric', 'diag', 'air', 'autonomy', 'tyre', 'consult'])).max(10).optional(),
     brands: z.record(z.string().max(40), brandLevel).optional(), tier: z.enum(['eco', 'comfort', 'pro']).optional(),
@@ -475,8 +484,8 @@ export function createApp(d: Deps) {
     acceptsGroup: z.boolean().optional(), taxStatus: z.enum(['self_employed', 'ip']).nullish(), inn: z.string().nullish(),
     car: z.object({ brand: z.string().max(50), color: z.string().max(30).optional(), plate: z.string().max(15) }).nullish(),
     cars: z.array(z.object({ brand: z.string().min(1).max(50), color: z.string().max(30).optional(), plate: z.string().min(1).max(15) })).max(3).optional(),
-  }), c.body)));
-  r.put('/api/performer/extras', performerRoles, (c: AuthedCtx) => profiles.setExtras(c.user.id, parse(z.object({
+  });
+  const performerExtrasSchema = z.object({
     weekendPct: z.number().int().min(0).max(100).optional(), nightPct: z.number().int().min(0).max(100).optional(),
     holidayPct: z.number().int().min(0).max(100).optional(), waitRate: z.number().int().min(0).max(1_000_000).optional(),
     prepay: z.enum(['never', 'low', 'always']).optional(), vacation: z.boolean().optional(),
@@ -486,7 +495,21 @@ export function createApp(d: Deps) {
     ring: z.boolean().optional(),
     // Баллы: гасить ли ими комиссию и сколько максимум с одной заявки (копейки, null — сколько можно)
     pointsAuto: z.boolean().optional(), pointsMax: money.nullable().optional(),
-  }), c.body)));
+  });
+  r.get('/api/performer/profile', true, (c: AuthedCtx) => profiles.performer(c.user.id));
+  r.put('/api/performer/profile', true, (c: AuthedCtx) =>
+    profiles.upsertPerformer(c.user, parse(performerProfileSchema, c.body)));
+  r.put('/api/performer/extras', performerRoles, (c: AuthedCtx) =>
+    profiles.setExtras(c.user.id, parse(performerExtrasSchema, c.body)));
+  // Profile matching and its presentation/conditions now commit in one transaction.
+  // A failure to save either half must roll back the entire request.
+  r.put('/api/performer/request-settings', performerRoles, (c: AuthedCtx) => {
+    const body = parse(z.object({
+      profile: performerProfileSchema,
+      extras: performerExtrasSchema,
+    }).strict(), c.body);
+    return profiles.upsertPerformer(c.user, body.profile, body.extras);
+  });
   r.put('/api/performer/schedule', performerRoles, (c: AuthedCtx) => {
     const t = z.string().regex(/^\d{2}:\d{2}$/);
     const day = z.boolean();
@@ -537,11 +560,17 @@ export function createApp(d: Deps) {
   });
   r.post('/api/pricing/estimate', false, async (c: Ctx) => {
     const b = parse(z.object({ service: z.string(), tier: z.enum(['eco', 'comfort', 'pro']).default('eco'), zoneId: z.string(),
+      regionId: z.enum(['spb', 'lo', 'other']).optional(), city: z.string().max(120).optional(),
+      address: z.string().max(300).optional(), lat: z.number().optional(), lng: z.number().optional(),
       night: z.boolean().optional(), group: z.boolean().default(false) }), c.body);
     const p = await settings.get('pricing');
     try {
-      return estimate(p, { ...b, night: b.night ?? isNight(p, now()) });
+      assertRegionalTariff(b);
+      const price = estimate(p, { ...b, night: b.night ?? isNight(p, now()) });
+      return { ...price, provisional: b.service !== 'consult',
+        coverageNote: b.service === 'consult' ? null : REGIONAL_COVERAGE_NOTE };
     } catch (e) {
+      if (e instanceof CoverageError) throw bad(e.code, e.message);
       throw bad('bad_zone', (e as Error).message);
     }
   });
@@ -552,7 +581,7 @@ export function createApp(d: Deps) {
     await offers.requireClient(c.user);
     return orders.create(c.user, parse(z.object({
     service: z.string(), isSos: z.boolean().optional(), problem: z.string().max(40).optional(), description: z.string().max(1000).optional(),
-    address: z.string().max(300).optional(), lat: z.number().optional(), lng: z.number().optional(), zoneId: z.string().default('spb'),
+    address: z.string().max(300).optional(), lat: z.number().optional(), lng: z.number().optional(), zoneId: z.string().default('phone'), regionId: z.enum(['spb', 'lo', 'other']).optional(), city: z.string().max(120).optional(),
     tier: z.enum(['eco', 'comfort', 'pro']).optional(), vehicleId: z.string().uuid().optional(), brand: z.string().max(40).optional(),
     model: z.string().max(40).optional(), year: z.number().int().min(1950).max(2100).optional(),
     groupTrip: z.boolean().optional(), night: z.boolean().optional(), paymentMethod: z.enum(['cash', 'online', 'invoice']).optional(),
@@ -785,6 +814,8 @@ export function createApp(d: Deps) {
       kind:z.enum(['customer_receipt','customer_receipt_reversal','supplier_payment',
         'supplier_payment_reversal','customer_refund','supplier_refund','handover','agent_report']),
       amount:agencyMoney,sourceRef:z.string().trim().min(2).max(300),occurredAt:agencyDate,
+      reversesEventId:z.string().uuid().nullable().optional(),
+      correctionReason:z.string().trim().min(8).max(1000).nullable().optional(),
     }),c.body)));
   r.post('/api/admin/agency/cases/:id/review',['admin'],(c:AuthedCtx)=>{
     const b=parse(z.object({
@@ -1200,6 +1231,21 @@ export function createApp(d: Deps) {
   r.get('/api/admin/settings', ['admin'], () => settings.all());
   r.put('/api/admin/settings/:key', ['admin'], (c: AuthedCtx) => {
     if (!(c.params.key in defaultSettings)) throw notFound('Нет такой настройки');
+    if (c.params.key === 'dispatch' && c.body?.sosProgressive !== undefined) {
+      const policy=parse(z.object({
+        enabled:z.boolean(),
+        stages:z.array(z.object({
+          radiusKm:z.number().int().min(1).max(220),
+          maxRoadEtaMinutes:z.number().int().min(5).max(180),
+          waitSeconds:z.number().int().min(10).max(900),
+        }).strict()).max(5),
+      }).strict(),c.body.sosProgressive);
+      if (policy.stages.length>0 && !validStages(policy.stages))
+        throw bad('invalid_sos_stages','Этапы должны иметь возрастающие ограничения радиуса и дорожного ETA');
+      if (policy.enabled && (!validStages(policy.stages)||!auction.roadEta))
+        throw bad('road_eta_not_ready','Для включения этапов нужны согласованные пределы и серверный маршрутизатор');
+      return settings.set('dispatch',{...c.body,sosProgressive:policy},c.user.id);
+    }
     if (c.params.key === 'insurancePartners') {
       const input = parse(z.object({ registrationOpen: z.boolean() }).strict(), c.body);
       if (input.registrationOpen && !config.insurerPrimaryPhone)

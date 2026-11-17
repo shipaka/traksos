@@ -80,6 +80,8 @@ export function AdminAgencyLedger() {
   const [eventAmount,setEventAmount]=useState('0');
   const [eventRef,setEventRef]=useState('');
   const [eventKey,setEventKey]=useState('');
+  const [reversesEventId,setReversesEventId]=useState('');
+  const [correctionReason,setCorrectionReason]=useState('');
   const [reviewNote,setReviewNote]=useState('');
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
@@ -162,7 +164,11 @@ export function AdminAgencyLedger() {
     const r=await perform(()=>post('/api/admin/agency/cases/'+selected.id+'/events',{
       kind:eventKind,amount:events.find(e=>e[0]===eventKind)&&['handover','agent_report'].includes(eventKind)
         ?0:toKopecks(eventAmount),
-      occurredAt:new Date().toISOString(),sourceRef:eventRef.trim(),idempotencyKey:eventKey.trim()
+      occurredAt:new Date().toISOString(),sourceRef:eventRef.trim(),idempotencyKey:eventKey.trim(),
+      reversesEventId:['customer_receipt_reversal','supplier_payment_reversal'].includes(eventKind)
+        ?reversesEventId:null,
+      correctionReason:['customer_receipt_reversal','supplier_payment_reversal'].includes(eventKind)
+        ?correctionReason.trim():null,
     }),'Событие добавлено без изменения предыдущих записей');
     if(r){setActiveForm(null);await getCase(selected.id);await reload();}
   };
@@ -408,7 +414,24 @@ export function AdminAgencyLedger() {
         <label>Реквизиты первичного подтверждения<input className="field" value={eventRef} onChange={e=>setEventRef(e.target.value)} /></label>
         <label>Уникальный ключ события<input className="field" value={eventKey} onChange={e=>setEventKey(e.target.value)}
           placeholder="например, банк-номер-строка" /></label>
-        <button className="btn" disabled={busy} onClick={addEvent}>Добавить в журнал</button>
+        {['customer_receipt_reversal','supplier_payment_reversal'].includes(eventKind)&&<>
+          <p className="note">Сторно фиксирует корректировку в журнале, но не отправляет деньги.
+            Выберите конкретный исходный платёж; частичные сторно не могут превысить его сумму.</p>
+          <label>Исходный платёж<select className="field" value={reversesEventId}
+            onChange={e=>setReversesEventId(e.target.value)}>
+            <option value="">Выберите исходное событие</option>
+            {(selected?.events||[]).filter((e:Row)=>e.kind===(eventKind==='customer_receipt_reversal'
+              ?'customer_receipt':'supplier_payment')).map((e:Row)=>
+              <option value={e.id} key={e.id}>{e.source_ref} · {rub(Number(e.amount))}</option>)}
+          </select></label>
+          <label>Основание корректировки<input className="field" value={correctionReason}
+            onChange={e=>setCorrectionReason(e.target.value)}
+            placeholder="Почему требуется сторнирование" /></label>
+        </>}
+        <button className="btn" disabled={busy||(
+          ['customer_receipt_reversal','supplier_payment_reversal'].includes(eventKind)&&
+          (!reversesEventId||correctionReason.trim().length<8))}
+          onClick={addEvent}>Добавить в журнал</button>
       </div>}
       <b>Документы и распределение по строкам</b>
       {(selected.allocations||[]).map((a:Row)=><div className="card" key={a.id}>
@@ -424,7 +447,9 @@ export function AdminAgencyLedger() {
         реквизит соответствующего денежного события, привяжите к этой операции
         и отметьте документ проверенным. Без этого подтверждать комплект нельзя.</p>
       <b>Денежные события</b>
-      {(selected.events||[]).map((e:Row)=><p className="note" key={e.id}>{e.kind} · {rub(Number(e.amount))} · {e.source_ref} · {new Date(e.occurred_at).toLocaleString('ru-RU')}</p>)}
+      {(selected.events||[]).map((e:Row)=><p className="note" key={e.id}>{e.kind} · {rub(Number(e.amount))} · {e.source_ref} · {new Date(e.occurred_at).toLocaleString('ru-RU')}
+        {e.reverses_event_id?' · Сторно исходного: '+e.reverses_event_id:''}
+        {e.correction_reason?' · '+e.correction_reason:''}</p>)}
       <label>Примечание к проверке и основание<input className="field" value={reviewNote} onChange={e=>setReviewNote(e.target.value)} /></label>
       <div className="row">
         <button className="btn" disabled={busy||!reviewNote.trim()||selected.problems?.length>0||selected.missing?.length>0}

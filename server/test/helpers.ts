@@ -12,7 +12,7 @@ const { MockProvider } = await import('../src/payments/provider.ts');
 
 export const TEST_DB = process.env.TEST_DATABASE_URL ?? 'postgres://postgres@127.0.0.1:5432/traksos_test';
 
-export async function setup() {
+export async function setup(opts?: { verifiedRoadEta?: import('../src/domain/progressiveSos.ts').VerifiedRoadEta }) {
   const db = await createDb(TEST_DB);
   await db.exec('drop schema public cascade; create schema public;');
   await migrate(db);
@@ -21,7 +21,7 @@ export async function setup() {
   const sms = new LogSms();
   const push = new LogPush();
   const payments = new MockProvider('http://test');
-  const app = createApp({ db, sms, push, payments, now: clock.now });
+  const app = createApp({ db, sms, push, payments, now: clock.now, verifiedRoadEta: opts?.verifiedRoadEta });
   app.hub.keepLog = true;
   // В тестах исполнителей одобряем без фото; проверка с фото — в documents.test.ts
   await app.settings.set('verification', { requireDocs: false }, null);
@@ -29,11 +29,40 @@ export async function setup() {
   await new Promise<void>((r) => server.listen(0, r));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 
+  // Legacy integration fixtures are explicitly located in the pilot region.
+  // This enrichment exists ONLY in the test helper, never in production API.
+  // Raw fetch tests prove that omitting regionId from the real API is rejected.
+  function withPilotSiteFixture(method: string, path: string, body: unknown) {
+    if (method !== 'POST' || !['/api/orders', '/api/pricing/estimate'].includes(path) ||
+        !body || typeof body !== 'object' || Array.isArray(body)) return body;
+    const data = body as Record<string, any>;
+    if (data.service === 'consult') return data;
+    const zoneId = data.zoneId ?? 'spb';
+    const named: Record<string, string> = {
+      spb: 'Санкт-Петербург, тестовый адрес 1',
+      kad30: 'Ленинградская область, тестовая стоянка за КАД',
+      gat: 'Гатчина, улица Ленина',
+      tos: 'Тосно, улица Ленина',
+      vyb: 'Выборг, улица Ленина',
+      lug: 'Луга, улица Ленина',
+      kir: 'Кириши, улица Ленина',
+      ust: 'Усть-Луга, тестовый адрес',
+    };
+    return {
+      ...data,
+      zoneId,
+      regionId: data.regionId ?? (zoneId === 'spb' ? 'spb' : 'lo'),
+      ...(path === '/api/orders' && data.lat == null && data.lng == null && !data.address
+        ? { address: named[zoneId] ?? 'Санкт-Петербург, тестовый адрес 1' } : {}),
+    };
+  }
+
   async function api(method: string, path: string, body?: unknown, token?: string) {
+    const fixtureBody = withPilotSiteFixture(method, path, body);
     const r = await fetch(base + path, {
       method,
       headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: fixtureBody === undefined ? undefined : JSON.stringify(fixtureBody),
     });
     const j: any = await r.json().catch(() => null);
     return { status: r.status, body: j };

@@ -11,7 +11,7 @@ test('12 concurrent SOS submits with same key create exactly ONE order and ONE b
     const another=await t.login('+79998884442');
     ok(await t.api('PUT','/api/admin/settings/payments',{online:true},admin.token));
     const key='order-test-concurrent-sos-123';
-    const data={service:'electric',zoneId:'spb',paymentMethod:'online',description:'Повтор при плохой связи'};
+    const data={service:'electric',regionId:'spb',zoneId:'spb',address:'Санкт-Петербург, тестовая парковка',paymentMethod:'online',description:'Повтор при плохой связи'};
     const send=async(user:{token:string},body:unknown=data)=> {
       const r=await fetch(t.base+'/api/orders',{
         method:'POST',

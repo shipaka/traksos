@@ -64,6 +64,12 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
               : d.search?.candidates ? `Заявку видят ${d.search.candidates} ${plural(d.search.candidates, d.service === 'tow' ? 'эвакуаторщик' : 'мастер', d.service === 'tow' ? 'эвакуаторщика' : 'мастера', d.service === 'tow' ? 'эвакуаторщиков' : 'мастеров')}${d.service === 'consult' ? ' на связи' : ' рядом'} — ждём, кто откликнется` : 'Звоним ближайшим'}
           </span>
         </div>
+        {d.searchStage && <div className="note" role="status">
+          Ищем исполнителей: этап {d.searchStage.wave} из {d.searchStage.waves}.
+          Приглашаем только тех, для кого дорожное время подачи подтверждено маршрутизатором
+          и не превышает {d.searchStage.maxRoadEtaMinutes} минут с учётом сборов.
+          Дальний выезд без отдельного согласия не назначается.
+        </div>}
         {d.autoPick && left != null && data?.until && <Progress until={data.until} />}
         {lim && <div className="sum" style={{ justifyContent: 'center', gap: 6 }}><span>{d.service === 'consult' ? 'Стоимость консультации' : `Обычная цена ${isTow ? 'перевозки' : 'выезда'}`}</span><b>{rub(lim.usual)}</b></div>}
       </div>
@@ -94,7 +100,7 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
                     </div>
                   </div>
                   <div className="row note">
-                    {d.service !== 'consult' && <span>⏱ подача ~{o.eta_minutes} мин</span>}
+                    {d.service !== 'consult' && <span>Подача: {o.road_eta_minutes != null ? 'по маршруту ' : 'ориентировочно ~'}{o.eta_minutes} мин</span>}
                     {d.service !== 'consult' && o.distance_km != null && <span>· {o.distance_km.toFixed(1)} км</span>}
                     {o.hour_price && <span>· час {rub(o.hour_price)}</span>}
                     {o.brand_level === 'excellent' && <span className="pill good">Знает {d.brand}</span>}

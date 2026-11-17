@@ -4,6 +4,7 @@ import type { SettingsService } from './settings.ts';
 import type { Notifier } from './notify.ts';
 import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { estimate, isNight, billWork, type Tier, type Extra } from '../domain/pricing.ts';
+import { assertRegionalTariff, CoverageError, type ServiceRegion } from '../domain/regionalCoverage.ts';
 import { rankCandidates, performerKindFor, type Candidate } from '../domain/dispatch.ts';
 import { transition, canDo, statusLabels, type Action, type Actor, type OrderStatus } from '../domain/orderState.ts';
 import { cancelStage, cancelSplit, pct } from '../domain/money.ts';
@@ -21,6 +22,8 @@ export interface CreateOrderInput {
   lat?: number;
   lng?: number;
   zoneId: string;
+  regionId?: ServiceRegion;
+  city?: string;
   tier?: Tier;
   vehicleId?: string;
   brand?: string;
@@ -128,6 +131,10 @@ export class OrdersService {
       model = model ?? v.model;
       year = year ?? v.year;
     }
+    // Critical: validate the declared location independently of the price zone,
+    // before INSERT, bank hold, owner approval or dispatch. Never guess by IP.
+    try { assertRegionalTariff(i, true); }
+    catch (e) { if (e instanceof CoverageError) throw bad(e.code, e.message); throw e; }
     const isConsult = i.service === 'consult';
     const night = isConsult ? false : i.night ?? isNight(all.pricing, this.now());
     const tier = i.tier ?? 'eco';
@@ -164,15 +171,15 @@ export class OrdersService {
           zone_id, night, group_trip, tier, brand, estimate, payment_method, client_fee_pct, destination, cargo, loaded, driver_on_site,
           consult_of, discount_amount, discount_reason, model, year, site, status, owner_note,
           commission_pct_override, commission_campaign_id, case_root_id, continuation_of,
-          create_request_key,create_request_hash)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36) returning *`,
+          create_request_key,create_request_hash,location_region)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37) returning *`,
       [clientId, user.id, i.vehicleId ?? null, i.service, !!i.isSos, i.problem ?? null, i.description ?? null, isConsult ? null : i.address ?? null,
         isConsult ? null : i.lat ?? null, isConsult ? null : i.lng ?? null, est.zoneId, night, est.group, tier, brand, est, method, feePct,
         i.destination ?? null, i.cargo ?? null, i.loaded ?? null, i.driverOnSite ?? null,
         consultOf, discount, discount ? CONSULT_DISCOUNT : null, model, year, isConsult ? null : i.site ?? null,
         gate ? 'awaiting_owner' : 'searching', gate, campaign?.commission_pct ?? null, campaign?.id ?? null,
         previous ? (previous.case_root_id ?? previous.id) : null, previous?.id ?? null,
-        requestKey,requestHash],
+        requestKey,requestHash, isConsult ? null : i.regionId],
     ).catch(async (e: any) => {
       if (e?.code === '23505' && e?.constraint === 'orders_create_key_unique') {
         const prior = await this.db.one<any>(
@@ -198,6 +205,21 @@ export class OrdersService {
 
   /** Заявка пошла в работу: оплата (холд) и вызов исполнителей */
   async launch(user: AuthUser, order: any) {
+    // Owner-approved requests can launch later. Recheck the frozen location
+    // snapshot before creating a bank hold. Do not reprice legacy orders with
+    // a NULL region: their agreed amounts/cancellations remain unchanged.
+    if (order.location_region != null) {
+      try {
+        assertRegionalTariff({
+          service: order.service, regionId: order.location_region,
+          zoneId: order.zone_id, address: order.address,
+          lat: order.lat, lng: order.lng,
+        }, true);
+      } catch (e) {
+        if (e instanceof CoverageError) throw bad(e.code, e.message);
+        throw e;
+      }
+    }
     const pay = await this.payments.onCreated(order);
     if (!pay.holdRequired) await this.startDispatch(order!.id);
     return { order: await this.view(user, order!.id), confirmationUrl: pay.confirmationUrl ?? null };
@@ -260,7 +282,7 @@ export class OrdersService {
     const kind = performerKindFor(order.service);
     const list = await this.db.query<Candidate>(
       `select p.user_id, p.kind, p.specialties, p.brands, p.is_priority, p.paused, p.line_status, p.verification,
-              p.lat, p.lng, u.rating, p.accepts_group, u.status as user_status, p.schedule, p.off_schedule_until, p.extras,
+              p.lat, p.lng, p.prep_minutes, u.rating, p.accepts_group, u.status as user_status, p.schedule, p.off_schedule_until, p.extras,
               (select coalesce(-sum(amount),0)::int from ledger_entries l
                 where l.performer_id = p.user_id and l.kind in ('cash_commission','cash_commission_paid')) as cash_debt
          from performer_profiles p join users u on u.id = p.user_id
@@ -269,18 +291,25 @@ export class OrdersService {
       [kind, order.client_id],
     );
     const already = await this.db.query<{ performer_id: string }>('select performer_id from order_dispatch where order_id=$1', [orderId]);
+    const stage=this.auction.stages(order,all.dispatch)?.[0]??null;
     const ranked = rankCandidates(order as any, list, {
-      radiusKm: all.dispatch.radiusKm,
+      radiusKm: stage?.radiusKm??all.dispatch.radiusKm,
       maxCandidates: all.dispatch.maxCandidates,
       cashDebtLimit: all.fees.cashDebtLimit, now: this.now(),
       exclude: new Set([...exclude, ...already.map((a) => a.performer_id), order.created_by, ...(await this.blockedBy(order.client_id))]),
     });
-    if (!ranked.length) return this.auction.start(orderId, exclude);
+    const eligible=await this.auction.stagedCandidates(order,list,ranked,stage);
+    if (!eligible.length) return this.auction.start(orderId, exclude);
     const base = already.length;
-    for (const [i, r] of ranked.entries()) {
+    for (const [i, r] of eligible.entries()) {
       await this.enlist(r.user_id,
-        `insert into order_dispatch(order_id, performer_id, rank, distance_km) values ($1,$2,$3,$4) on conflict do nothing`,
-        [orderId, r.user_id, base + i, r.distanceKm]);
+        stage ?
+          `insert into order_dispatch(order_id,performer_id,rank,distance_km,road_eta_minutes)
+           select $1,$2,$3,$4,$5 from orders where id=$1 and status='searching'
+           on conflict do nothing returning id`:
+          `insert into order_dispatch(order_id, performer_id, rank, distance_km) values ($1,$2,$3,$4) on conflict do nothing`,
+        stage?[orderId,r.user_id,base+i,r.distanceKm,r.roadEtaMinutes]:
+          [orderId,r.user_id,base+i,r.distanceKm],!!stage);
     }
     await this.db.query('update orders set dispatch_started_at = coalesce(dispatch_started_at, now()) where id=$1', [orderId]);
     await this.event(this.db, orderId, null, 'dispatch_started', { candidates: ranked.length });
@@ -659,7 +688,7 @@ export class OrdersService {
   async retry(user: AuthUser, orderId: string) {
     const o = await this.mustBeClient(user, orderId);
     transition(o.status, 'retry', 'client');
-    await this.guarded(this.db, `update orders set status='searching', auction_until=null where id=$1 and status='no_performer'`, [orderId]);
+    await this.guarded(this.db, `update orders set status='searching', auction_until=null, sos_dispatch_stage=0 where id=$1 and status='no_performer'`, [orderId]);
     await this.db.query(`delete from order_dispatch where order_id=$1`, [orderId]);
     await this.db.query(`update bids set status='withdrawn' where order_id=$1 and status='active'`, [orderId]);
     await this.event(this.db, orderId, user.id, 'retry', {});
@@ -771,6 +800,13 @@ export class OrdersService {
     const caseConfirmedTotal = caseRows.filter((step: any) => step.status === 'completed')
       .reduce((sum: number, step: any) => sum + this.money(step).total, 0)
       + caseServiceStages.reduce((sum: number, stage: any) => sum + (stage.confirmedTotal ?? 0), 0);
+    const dispatchSettings = o.status === 'searching' ? await this.settings.get('dispatch') : null;
+    const searchStages = dispatchSettings ? this.auction.stages(o,dispatchSettings) : null;
+    const searchStage = searchStages ? {
+      wave: Math.min(Number(o.sos_dispatch_stage??0)+1,searchStages.length),
+      waves: searchStages.length, verifiedRoadEta: true,
+      maxRoadEtaMinutes: searchStages[Math.min(Number(o.sos_dispatch_stage??0),searchStages.length-1)].maxRoadEtaMinutes,
+    } : null;
     const search = o.status === 'searching'
       ? await this.db.one<{ candidates: number; offers: number }>(
           `select (select count(*)::int from order_dispatch where order_id=$1 and status in ('bidding','ringing','queued')) as candidates,
@@ -781,7 +817,7 @@ export class OrdersService {
       service: o.service, isSos: o.is_sos, problem: o.problem, description: o.description,
       address: o.address, lat: o.lat, lng: o.lng, zoneId: o.zone_id, night: o.night, groupTrip: o.group_trip, tier: o.tier,
       brand: o.brand, model: o.model, year: o.year, vehicleId: o.vehicle_id, vehicle, estimate: o.estimate, paymentMethod: o.payment_method,
-      auction: o.status === 'searching' && !!o.auction_until, auctionUntil: o.auction_until, autoPick: o.auto_pick, search,
+      auction: o.status === 'searching' && !!o.auction_until, auctionUntil: o.auction_until, autoPick: o.auto_pick, search, searchStage,
       limits: o.status === 'searching' ? this.auction.limits(o, (await this.settings.get('dispatch'))) : null,
       destination: o.destination, cargo: o.cargo, loaded: o.loaded, driverOnSite: o.driver_on_site, discountReason: o.discount_reason,
       money: this.money(o), result: o.result, resultNote: o.result_note,
@@ -851,14 +887,14 @@ export class OrdersService {
    * Поставить исполнителя в звонки/торги заявки — под блокировкой исполнителя, той же, что при выборе.
    * Если он в этот миг взял другую заявку или ушёл с линии — не ставим. false — не поставлен.
    */
-  async enlist(performerId: string, sql: string, params: unknown[]) {
+  async enlist(performerId: string, sql: string, params: unknown[], requireInserted = false) {
     return this.db.tx(async (q) => {
       const p = await q.one<{ line_status: string; paused: boolean }>(
         'select line_status, paused from performer_profiles where user_id=$1 for update', [performerId]);
       if (!p || p.paused || p.line_status === 'offline' || p.line_status === 'on_job') return false;
       if (await this.busyWith(q, performerId, null)) return false;
-      await q.query(sql, params);
-      return true;
+      const rows=await q.query(sql, params);
+      return !requireInserted || rows.length>0;
     });
   }
 

@@ -81,6 +81,11 @@ export const defaultSettings = {
     parallel: 10,
     parallelSos: 10,
     radiusKm: 220,
+    /** #51: awaiting approved limits and road ETA connector; legacy search unchanged until enabled. */
+    sosProgressive: {
+      enabled: false,
+      stages: [] as import('./progressiveSos.ts').SosSearchStage[],
+    },
     /** Торги: сколько минут принимаем отклики на обычную заявку */
     auctionMinutes: 10,
     /** SOS: через столько секунд назначаем лучшего из «Рекомендуем», если клиент не выбрал */

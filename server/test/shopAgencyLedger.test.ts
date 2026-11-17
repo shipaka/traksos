@@ -212,3 +212,36 @@ test('собственная перепродажа отдельно от аге
     idempotencyKey:'x',kind:'customer_receipt',amount:1000,sourceRef:'X',occurredAt:'bad-date'
   },admin.token)).status,400);
 });
+
+test('финальное сторно: неизменяемая ссылка на оригинал, частичная коррекция и предел суммы',async()=>{
+  const c=(globalThis as any).__agencyCase;
+  const detail=ok(await t.api('GET',root+'/cases/'+c,undefined,admin.token));
+  const receipt=detail.events.find((e:any)=>e.kind==='customer_receipt');
+  const supplier=detail.events.find((e:any)=>e.kind==='supplier_payment');
+  assert.ok(receipt?.id && supplier?.id);
+  const make=(key:string,amount:number,originalId:string|null,reason:string|null)=>({
+    kind:'customer_receipt_reversal',amount,
+    sourceRef:'BANK-CORRECTION-2026-TEST',
+    idempotencyKey:key,occurredAt:'2026-12-01T11:00:00.000Z',
+    reversesEventId:originalId,correctionReason:reason,
+  });
+  const good=make('REV-ORIGINAL-1',50_000,receipt.id,
+    'Исправление двойного учёта платежа по оригиналу');
+  assert.equal((await t.api('POST',root+'/cases/'+c+'/events',
+    make('REV-MISSING',50_000,null,'Исправление двойной операции'),admin.token)).status,400);
+  assert.equal((await t.api('POST',root+'/cases/'+c+'/events',
+    make('REV-WRONG',50_000,supplier.id,'Исправление чужой категории'),admin.token)).status,409);
+  const first=ok(await t.api('POST',root+'/cases/'+c+'/events',good,admin.token));
+  assert.ok(first.id);assert.equal(first.duplicate,false);
+  assert.equal(ok(await t.api('POST',root+'/cases/'+c+'/events',good,admin.token)).duplicate,true);
+  assert.equal((await t.api('POST',root+'/cases/'+c+'/events',
+    {...good,correctionReason:'Подмена назначения повторного запроса'},admin.token)).status,409);
+  assert.equal((await t.api('POST',root+'/cases/'+c+'/events',
+    make('REV-TOO-BIG',1_315_001,receipt.id,'Слишком большая сумма сторно'),admin.token)).status,409);
+  const after=ok(await t.api('GET',root+'/cases/'+c,undefined,admin.token));
+  assert.equal(after.financial.customerReceived,1_215_000);
+  assert.equal(after.events.find((e:any)=>e.id===first.id).reverses_event_id,receipt.id);
+  await assert.rejects(
+    t.db.query('update shop_agency_events set correction_reason=$2 where id=$1',
+      [first.id,'Попытка подмены основания']),/immutable/i);
+});

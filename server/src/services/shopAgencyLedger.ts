@@ -20,6 +20,7 @@ type DocInput = {
 };
 type EventInput = {
   idempotencyKey: string; kind: string; amount: number; sourceRef: string; occurredAt: string;
+  reversesEventId?: string | null; correctionReason?: string | null;
 };
 type AllocationInput = { documentId: string; lineKey: string; quantity: number; amount: number; vatAmount: number };
 
@@ -277,24 +278,60 @@ export class ShopAgencyLedger {
     });
   }
 
+  /** Corrections are append-only, linked to ONE original. The sum of partial
+   * reversals cannot exceed the original (even under concurrent admin requests).
+   * This only records evidence; it never executes a bank refund. */
   async addEvent(actor: AuthUser, caseId: string, b: EventInput) {
     return this.db.tx(async q => {
       const c = await q.one<any>('select id from shop_agency_cases where id=$1 for update',[caseId]);
       if (!c) throw notFound('Операция не найдена');
+      const occurredAt=signedDate(b.occurredAt);
+      const sourceRef=b.sourceRef.trim();
+      const correctionReason=b.correctionReason?.trim()||null;
+      const reverseOf=b.reversesEventId||null;
+      const reversalSource:Record<string,string>={
+        customer_receipt_reversal:'customer_receipt',
+        supplier_payment_reversal:'supplier_payment',
+      };
+      const originalKind=reversalSource[b.kind];
+      if(originalKind){
+        if(!reverseOf||!correctionReason||correctionReason.length<8)
+          throw bad('reversal_proof_required','Сторно требует ID исходной операции и причину не менее 8 символов');
+      }else if(reverseOf||correctionReason){
+        throw bad('reversal_only','Ссылка на исходное событие допускается только для сторно');
+      }
       const past = await q.one<any>('select * from shop_agency_events where case_id=$1 and idempotency_key=$2',
         [caseId,b.idempotencyKey]);
       if (past) {
-        if (past.kind === b.kind && Number(past.amount) === b.amount &&
-            past.source_ref === b.sourceRef && new Date(past.occurred_at).getTime() === Date.parse(b.occurredAt))
+        if (past.kind===b.kind && Number(past.amount)===b.amount &&
+            past.source_ref===sourceRef &&
+            new Date(past.occurred_at).getTime()===Date.parse(occurredAt) &&
+            (past.reverses_event_id||null)===reverseOf &&
+            (past.correction_reason||null)===correctionReason)
           return {id:past.id,duplicate:true};
         throw conflict('event_key_conflict','Ключ события уже относится к другим данным');
       }
+      if(originalKind){
+        const original=await q.one<any>(`select id,case_id,kind,amount
+          from shop_agency_events where id=$1`,[reverseOf]);
+        if(!original||original.case_id!==caseId||original.kind!==originalKind)
+          throw conflict('reversal_original_invalid',
+            'Сторно должно ссылаться на исходное положительное событие такого же вида в этой операции');
+        const used=await q.one<any>(`select coalesce(sum(amount),0)::text as sum
+          from shop_agency_events where reverses_event_id=$1`,[reverseOf]);
+        if(!Number.isSafeInteger(b.amount)||Number(used.sum)+b.amount>Number(original.amount))
+          throw conflict('reversal_amount_exceeded',
+            'Сумма всех сторно превышает исходный подтверждённый платёж');
+      }
       const [r] = await q.query<any>(`insert into shop_agency_events
-        (case_id,idempotency_key,kind,amount,source_ref,occurred_at,created_by)
-        values($1,$2,$3,$4,$5,$6,$7) returning id`,
-        [caseId,b.idempotencyKey,b.kind,b.amount,b.sourceRef.trim(),signedDate(b.occurredAt),actor.id]);
+        (case_id,idempotency_key,kind,amount,source_ref,occurred_at,created_by,
+          reverses_event_id,correction_reason)
+        values($1,$2,$3,$4,$5,$6,$7,$8,$9) returning id`,
+        [caseId,b.idempotencyKey,b.kind,b.amount,sourceRef,occurredAt,
+          actor.id,reverseOf,correctionReason]);
       await q.query('update shop_agency_cases set evidence_version=evidence_version+1 where id=$1',[caseId]);
-      await this.audit(actor,'shop.agency.cash_event',r.id,{caseId,kind:b.kind},q);
+      await this.audit(actor,'shop.agency.cash_event',r.id,
+        {caseId,kind:b.kind,reversesEventId:reverseOf,correctionReason},q);
       return {id:r.id,duplicate:false};
     });
   }

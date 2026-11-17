@@ -21,7 +21,7 @@ transaction_ref — уникальный точный ID операции для
 
 ## Хранение и защита
 
-Миграция 118_shop_agency_bank_reconciliation.sql создаёт четыре таблицы: shop_agency_bank_statements с неизменяемыми байтами CSV, SHA-256, банком, accountRef, автором; shop_agency_bank_rows с уникальной парой (account_ref, transaction_ref); shop_agency_bank_matches для истории сопоставлений; shop_agency_bank_match_retractions для документированного отзыва ошибочной связи.
+Миграция 121_shop_agency_bank_reconciliation.sql создаёт четыре таблицы: shop_agency_bank_statements с неизменяемыми байтами CSV, SHA-256, банком, accountRef, автором; shop_agency_bank_rows с уникальной парой (account_ref, transaction_ref); shop_agency_bank_matches для истории сопоставлений; shop_agency_bank_match_retractions для документированного отзыва ошибочной связи.
 
 Все четыре защищены SQL-триггерами от UPDATE и DELETE. Если один и тот же файл импортируется повторно с теми же параметрами, вернётся прежний ID. Повтор с иными метаданными — конфликт 409. Повтор банковского transaction_ref в другом CSV по тому же accountRef — 409 с откатом всего импорта. Ошибочная связь не редактируется: отзыв создаёт новую неизменяемую запись с причиной и позволяет повторное сопоставление. Сопоставление и отзыв повышают версию доказательств агентского кейса; прежнее утверждение может стать неактуальным.
 
