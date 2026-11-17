@@ -64,6 +64,13 @@ test('published club case never exposes its originating order, including to its 
   const rows=await t.db.query<{order_id:string}>(
     'select order_id from community_technical_case_order_links where case_id=$1',[caseId]);
   assert.deepEqual(rows.map(x=>x.order_id),[orderId]);
+  const archive=await t.app.privacy.export({
+    id:author.id,phone:'+79996771002',name:null,
+    roles:['master'],status:'active',owner_id:null
+  });
+  assert.ok(archive.privateTechnicalCaseOrderLinks.some((x:any)=>
+    x.case_id===caseId&&x.order_id===orderId),
+    'author has an auditable personal data export of private case links');
   const replay=ok(await t.api('POST','/api/community/pro-cases',payload,author.token));
   assert.equal(replay.case.id,caseId);
   assert.equal(replay.created,false);
