@@ -7,7 +7,7 @@ type WarehouseIssue={id:string;kind:string;note:string;observedArticle:string;
 type Line={index:number;name:string;brand:string|null;article:string|null;
  quantity:number;verified:boolean;method:string|null;checkedAt:string|null;blockedReason:string|null;
  recheckedAfterDiscrepancy:boolean;openDiscrepancy:WarehouseIssue|null};
-type IssueRecord={id:string;stop_id:string;line_index:number;kind:string;
+type IssueRecord={id:string;stop_id:string|null;order_number:number;line_index:number;kind:string;
  expected_article:string;expected_qty:number;observed_article:string;observed_qty:number;
  note:string;reported_at:string;status:string;resolved_at:string|null;resolution_note:string|null};
 type Stop={id:string;orderNumber:number;status:string;lines:Line[]};
@@ -207,7 +207,7 @@ export function CourierWarehouseCheck({runId}:{runId:string}){
      {incidents.data?.discrepancies.length? <details className="stack">
        <summary>История складских расхождений ({incidents.data.discrepancies.length})</summary>
        {incidents.data.discrepancies.map(x=><div className="card stack" key={x.id}>
-         <strong>{kindNames[x.kind as IncidentInput['kind']]??x.kind}
+         <strong>Заказ №{x.order_number} · {kindNames[x.kind as IncidentInput['kind']]??x.kind}
            {' · '}{x.status==='open'?'не закрыто':'урегулировано'}</strong>
          <p className="note">Заказанная позиция {x.expected_article} × {x.expected_qty};
            фактическая {x.observed_article||'не читается'} × {x.observed_qty}</p>
