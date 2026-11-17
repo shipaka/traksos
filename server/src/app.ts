@@ -225,6 +225,11 @@ export function createApp(d: Deps) {
     if (b.acceptOffers) await offers.acceptCurrent(r.user as any, c.ip);
     return r;
   });
+  // Short-lived one-use WebSocket ticket: long-lived login token stays in a
+  // regular authorized POST header, never in the /ws URL of current clients.
+  r.post('/api/auth/realtime-ticket', true, (c: AuthedCtx) =>
+    auth.issueRealtimeTicket(bearer(c.req)!));
+
   r.post('/api/auth/logout', true, async (c: AuthedCtx) => {
     // Closing/minimizing the app never calls logout and never changes availability.
     // Explicit sign-out must not leave a performer discoverable without any call token.
