@@ -82,10 +82,11 @@ test('real database: client plan, pass decision, GPS evidence, manual review, pr
     const admin=await t.login('+79990000001');
     const client=await t.login('+79998886671');
     const worker=await t.login('+79998886672','master');
+    const outsider=await t.login('+79998886673');
     const a={id:admin.id,roles:['admin'],owner_id:null} as any;
     const c={id:client.id,roles:['client'],owner_id:null} as any;
     const w={id:worker.id,roles:['master'],owner_id:null} as any;
-    const other={id:'00000000-0000-0000-0000-000000000000',roles:['client'],owner_id:null} as any;
+    const other={id:outsider.id,roles:['client'],owner_id:null} as any;
 
     ok(await t.api('PUT','/api/performer/profile',{
       kind:'master',name:'Checkpoint worker',specialties:['electric'],
