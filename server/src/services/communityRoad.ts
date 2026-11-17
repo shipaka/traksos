@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { Db } from '../db/index.ts';
+import {requireDriverAir,driverAirSql} from './driverAirAccess.ts';
 import type { Router, AuthedCtx } from '../http/router.ts';
 import { parse, bad, forbidden, notFound, HttpError } from '../http/router.ts';
 import type { Notifier } from './notify.ts';
@@ -8,11 +9,8 @@ const uuid=z.string().uuid();
 const phone=/(?:\+?\d[\s().-]*){10,}/u;
 const contacts=/(?:https?:\/\/|[\w.+-]+@[\w.-]+\.[a-z]{2,}|(?:t\.me|wa\.me)\/|@\w{4,})/iu;
 const abuse=/(?:бляд|сука|хуй|пизд|ебан|ёбан|fuck)/iu;
-function driver(c:AuthedCtx){
-  if(!c.user.roles.includes('driver'))throw forbidden('Дорожные события доступны водителям');
-}
 async function room(db:Db,c:AuthedCtx) {
-  driver(c);
+  await requireDriverAir(db,c.user);
   const id=parse(uuid,c.params.id);
   const r=await db.one<{id:string;kind:string;audience:string}>(
     'select id,kind,audience from community_rooms where id=$1 and active=true',[id]);
@@ -63,7 +61,7 @@ export function registerCommunityRoadRoutes(r:Router,db:Db,notifier:Notifier) {
     if(state==='published'){
       const users=await db.query<{user_id:string}>(
         "select m.user_id from community_memberships m join users u on u.id=m.user_id "+
-        "where m.room_id=$1 and m.user_id<>$2 and u.status='active' and 'driver'=any(u.roles) limit 2000",
+        "where m.room_id=$1 and m.user_id<>$2 and u.status='active' and u.deleted_at is null and "+driverAirSql('u')+" limit 2000",
         [group.id,c.user.id]);
       notifier.live(users.map(x=>x.user_id),{type:'community_road_event',roomId:group.id,id:event.id});
     }
@@ -71,7 +69,7 @@ export function registerCommunityRoadRoutes(r:Router,db:Db,notifier:Notifier) {
       verifiedByRoadServices:false};
   });
   r.post('/api/community/road-events/:id/report',true,async(c:AuthedCtx)=>{
-    driver(c);
+    await requireDriverAir(db,c.user);
     const id=parse(uuid,c.params.id);
     const {reason}=parse(z.object({reason:z.string().trim().min(3).max(240)}),c.body);
     const e=await db.one<{author_id:string;room_id:string}>(
