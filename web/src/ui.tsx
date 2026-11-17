@@ -139,10 +139,10 @@ export function RubInput({ value, onChange, placeholder }: { value: number | nul
 // Каталог по официальным открытым реестрам: собственный текст не сохраняется.
 export type VehicleValue = {
   brand:string;model:string;year:string;
-  catalogCategory?:'truck'|'van'|'bus'|'passenger';
+  catalogCategory?:'truck'|'trailer'|'van'|'bus'|'passenger';
   catalogBrandKey?:string;catalogModelKey?:string;
 };
-type DirectoryMake={key:string;name:string;category:'truck'|'van'|'bus'|'passenger'};
+type DirectoryMake={key:string;name:string;category:'truck'|'trailer'|'van'|'bus'|'passenger'};
 type DirectoryModel={key:string;name:string};
 type TruckEvidence={
   production:{yearFrom:number;yearTo:number|null;status:string|null}|null;
@@ -150,10 +150,10 @@ type TruckEvidence={
   note:string;sourceVersion:string;
 };
 export function VehicleFields({value,onChange,purpose='garage'}:{
-  value:VehicleValue;onChange:(v:VehicleValue)=>void;purpose?:'garage'|'master';
+  value:VehicleValue;onChange:(v:VehicleValue)=>void;purpose?:'garage'|'master'|'tow';
 }){
   const {me}=useMe();
-  const [category,setCategory]=useState<'truck'|'van'|'bus'|'passenger'>(value.catalogCategory??(purpose==='master'?'passenger':'truck'));
+  const [category,setCategory]=useState<'truck'|'trailer'|'van'|'bus'|'passenger'>(value.catalogCategory??(purpose==='master'?'passenger':'truck'));
   const [makeQuery,setMakeQuery]=useState('');
   const [modelQuery,setModelQuery]=useState('');
   const [makes,setMakes]=useState<DirectoryMake[]>([]);
@@ -234,11 +234,14 @@ export function VehicleFields({value,onChange,purpose='garage'}:{
         onChange({...value,brand:'',model:'',catalogCategory:c,
           catalogBrandKey:undefined,catalogModelKey:undefined});
       }}>
-      {(purpose==='master'?[
+      {(purpose==='tow' ? [
+        ['truck','Тяжёлый эвакуатор (подтверждённая надстройка)']
+      ] : purpose==='master' ? [
         ['passenger','Легковой автомобиль'],['van','Фургон'],['truck','Грузовой автомобиль'],
-        ['bus','Автобус']
-      ]:[
-        ['truck','Грузовой автомобиль'],['van','Фургон'],['bus','Автобус']
+        ['trailer','Прицеп или полуприцеп'],['bus','Автобус']
+      ] : [
+        ['truck','Грузовой автомобиль'],['trailer','Прицеп или полуприцеп'],
+        ['van','Фургон'],['bus','Автобус']
       ]).map(([v,l])=><option key={v} value={v}>{l}</option>)}
     </select>
     <input className="field" value={makeQuery} onChange={e=>setMakeQuery(e.target.value)}
@@ -266,7 +269,7 @@ export function VehicleFields({value,onChange,purpose='garage'}:{
     </select>
     {loadError&&<span className="note" role="alert">Каталог временно недоступен: {loadError}. Свободный ввод не включается.</span>}
     <span className="note">
-      Марка и модель выбираются только из справочника. Год и комплектацию
+      Марка и модель выбираются из справочника. Год и комплектацию
       необходимо уточнять по документам автомобиля.
     </span>
     {category==='truck' && truckEvidence && <aside className="card stack">

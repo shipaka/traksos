@@ -39,13 +39,13 @@ test('real pinned CC-BY directory has truck, van, bus and passenger models',asyn
   assert.ok(categoriesForActor(dual,'master',true).includes('truck'));
 });
 
-test('technical OEM links are professional/admin only; ordinary users see safe reminders',async()=>{
+test('technical OEM links are verified master/service only; ordinary users see safe reminders',async()=>{
   const db:any={one:async()=>({verification:'approved'}),query:async()=>[]};
   const library=new VehicleTechnicalLibrary(db);
   const tips=await library.tips(client);
   assert.ok(tips.items.length>=5);
   assert.ok(tips.items.every((t)=>!('url'in t)&&!('rights'in t)));
-  await assert.rejects(library.professional(client),/только специалистам/);
+  await assert.rejects(library.professional(client),/только мастерам и СТО/);
   await assert.rejects(library.professional(master,{category:'passenger'}),/только грузового транспорта/);
   const resource=await library.professional(master,{make:'volvo'});
   assert.ok(resource.links.some((r)=>r.url.startsWith('https://www.volvotrucks')));
@@ -138,7 +138,7 @@ test('integrated strict garage / missing-model queue / admin review and data sep
     },owner.token);
     assert.equal(none.status,400,'Moderation acceptance never auto-adds invented models');
     assert.equal((await t.api('GET','/api/vehicle-reference/professional',undefined,owner.token)).status,403);
-    assert.equal((await t.api('GET','/api/vehicle-reference/professional',undefined,admin.token)).status,200);
+    assert.equal((await t.api('GET','/api/vehicle-reference/professional',undefined,admin.token)).status,403);
     const attribution=await t.api('GET','/api/vehicle-reference/attribution');
     // Raw markdown is deliberately not JSON; verify the response code only.
     assert.equal(attribution.status,200);

@@ -40,14 +40,12 @@ export class VehicleTechnicalLibrary {
     // if the same account is both admin and master, it retains the full
     // professional and administrative view regardless of the currently
     // selected frontend mode. No phone-number or public profile bypass.
-    if (!actor.roles.includes('admin')) {
-      if (!actor.roles.some((role)=>['master','tow','service'].includes(role)))
-        throw forbidden('Профессиональные материалы доступны только специалистам');
-      const performer = await this.db.one<{verification:string}>(
-        "select verification from performer_profiles where user_id=$1", [actor.id]);
-      if (performer?.verification!=='approved')
-        throw forbidden('ТехБаза требует подтверждённый профиль специалиста');
-    }
+    if (!actor.roles.some(role=>role==='master'||role==='service'))
+      throw forbidden('Профессиональные материалы доступны только мастерам и СТО');
+    const performer = await this.db.one<{verification:string}>(
+      "select verification from performer_profiles where user_id=$1", [actor.id]);
+    if (performer?.verification!=='approved')
+      throw forbidden('ТехБаза требует подтверждённый профиль мастера или СТО');
     const d = await readSources();
     const make = filter.make?.trim().toLowerCase().slice(0,60);
     const subsystem = filter.subsystem?.trim().toLowerCase().slice(0,60);

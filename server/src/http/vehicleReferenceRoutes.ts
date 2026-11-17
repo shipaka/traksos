@@ -7,9 +7,10 @@ import { PublicVehicleDirectory, type CatalogPurpose } from '../services/publicV
 import { VehicleMissingQueue } from '../services/vehicleMissingQueue.ts';
 import { VehicleTechnicalLibrary } from '../services/vehicleTechnicalLibrary.ts';
 import { VehicleHelpAvailability } from '../services/vehicleHelpAvailability.ts';
+import { publicVehicleCard, publicRecoveryGallery } from '../services/vehicleOwnerShelf.ts';
 
 const purpose = z.enum(['garage','master','tow','service','insurance','parts','admin']);
-const category = z.enum(['passenger','truck','van','bus']);
+const category = z.enum(['passenger','truck','trailer','van','bus']);
 const service = z.enum(['electric','diag','air','autonomy','tyre','ecu','tow','consult']);
 const optionalYear = z.number().int().min(1960).max(2100).nullish();
 const dir = new PublicVehicleDirectory();
@@ -37,13 +38,26 @@ export function registerVehicleReferenceRoutes(
     dir.truckEvidence(c.user,readPurpose(c),c.query.get('brandKey')??'',
       c.query.get('modelKey')??''));
 
+  r.get('/api/vehicle-reference/recovery-gallery',true,async(c:AuthedCtx)=>{
+    await dir.makes(c.user,'tow','',false,'truck'); // Server-side role gate, not UI-only.
+    return publicRecoveryGallery();
+  });
+
+  r.get('/api/vehicle-reference/public-card',true,async(c:AuthedCtx)=>{
+    const cat=parse(category,c.query.get('category'));
+    const brandKey=parse(z.string().min(2).max(64),c.query.get('brandKey'));
+    const modelKey=parse(z.string().min(2).max(64),c.query.get('modelKey'));
+    await dir.resolve(cat,brandKey,modelKey); // Do not display wrong manual/image for unknown keys.
+    return publicVehicleCard(cat,brandKey,modelKey);
+  });
+
   // Strict new vehicle creation path: the backend, never an editable text field,
   // resolves exact model/make from the pinned, licensed dataset.
   r.post('/api/vehicle-reference/vehicles',true,async(c:AuthedCtx)=>{
     if(c.user.owner_id||!c.user.roles.includes('client')||c.user.roles.includes('driver'))
       throw forbidden('Машины добавляет владелец автопарка');
     const data=parse(z.object({
-      category: z.enum(['truck','van','bus']),
+      category: z.enum(['truck','trailer','van','bus']),
       brandKey:z.string().min(2).max(64),
       modelKey:z.string().min(2).max(64),
       year:optionalYear,

@@ -6,7 +6,7 @@ type Tip={id:string;title:string;category:string;body:string;priority:string;tag
 type Link={id:string;title:string;make:string|null;subsystem:string;region:string;url:string;scope:string;rights:string;author?:string;licenseUrl?:string;owner?:string;checkedOn?:string;requiresLogin?:string;changeStatus?:string;modelFamilyKeywords?:string[];documentSections?:string[];confirmedFitment?:boolean;accessCost?:string};
 export function VehicleKnowledge(){
   const {me}=useMe();
-  const professional=Boolean(me?.roles.some(r=>['admin','master','tow','service'].includes(r)));
+  const professional=Boolean(me?.roles.some(r=>['master','service'].includes(r)));
   const [tab,setTab]=useState<'tips'|'professional'>('tips');
   const [category,setCategory]=useState<'truck'|'trailer'>('truck');
   const [make,setMake]=useState('');
@@ -24,9 +24,8 @@ export function VehicleKnowledge(){
     <Back to="" label="Рабочий стол" />
     <section className="card stack">
       <span className="label">TrakSOS · ТРАНСПОРТ И БЕЗОПАСНОСТЬ</span>
-      <h1>Памятки и грузовая ТехБаза</h1>
-      <p>Водителю — понятные рекомендации по безопасности. Подробные материалы по грузовикам и прицепам,
-        ссылки на оригинальные схемы и сервисные материалы — только для подтверждённых специалистов.</p>
+      <h1>{professional?'Памятки и техническая библиотека':'Эксплуатация и полезные памятки'}</h1>
+      <p>{professional?'Проверенные источники по грузовикам и прицепам с доступом по профессиональной роли.':'Полезные рекомендации по эксплуатации и безопасности грузовой техники.'}</p>
       <nav className="row" aria-label="Разделы справочника">
         <button className="btn" type="button" aria-pressed={tab==='tips'} onClick={()=>setTab('tips')}>Памятки водителю</button>
         {professional&&<button className="btn ghost" type="button" aria-pressed={tab==='professional'}
@@ -39,16 +38,14 @@ export function VehicleKnowledge(){
       <button className="btn" type="submit">Найти</button>
     </form>
     {tab==='tips'&&<section className="stack" aria-label="Памятки">
-      <p className="note">В памятках намеренно нет электрических распиновок, карт кодирования ЭБУ,
-        процедур вмешательства в тормозную систему и непроверенных моментов затяжки.</p>
+      <p className="note">Для точной модели и комплектации руководствуйтесь заводской инструкцией по эксплуатации.</p>
       {!tips.data?<p className="note">{tips.error??'Загружаю памятки…'}</p>:
         tips.data.items.length===0?<p>По вашему запросу пока нет памяток.</p>:
         tips.data.items.map(t=><article className="card stack" key={t.id}>
           <div className="between"><h2>{t.title}</h2><span className="pill">{t.priority==='critical'?'Безопасность':t.priority==='high'?'Внимание':'Памятка'}</span></div>
           <p>{t.body}</p><small className="note">{t.tags.join(' · ')}</small>
         </article>)}
-      <p className="note">По вопросам конкретной машины обратитесь к специалисту. Публикация новых
-        технических инструкций проходит модерацию в профессиональной ТехБазе.</p>
+      <p className="note">Если рекомендаций недостаточно, уточните модификацию машины по VIN или обратитесь к специалисту.</p>
     </section>}
     {tab==='professional'&&professional&&<section className="stack" aria-label="Профессиональные источники">
       <div className="card stack">
