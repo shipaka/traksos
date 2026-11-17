@@ -29,3 +29,11 @@
   .vehicle-owner-guide-book{width:36px;height:36px;flex-basis:36px}
 }
 @media(prefers-reduced-motion:reduce){.vehicle-owner-guide *{scroll-behavior:auto;transition:none!important}}
+
+/* Category examples in the tow-cabinet selector: never mistaken for the selected rig. */
+.recovery-photo-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:6px 0 0}
+.recovery-photo{margin:0;border-radius:12px;border:1px solid rgba(127,151,197,.2);overflow:hidden;background:rgba(25,46,76,.1)}
+.recovery-photo img{display:block;width:100%;height:142px;object-fit:cover;background:rgba(52,84,117,.18)}
+.recovery-photo .vehicle-owner-guide-fallback{min-height:142px}
+.recovery-photo figcaption{padding:8px 10px;font-size:11px;line-height:1.4;color:var(--muted,var(--fg))}
+.recovery-photo a{color:var(--accent)}
