@@ -840,8 +840,8 @@ function VehicleHistory({ id, isDriver }: { id: string; isDriver: boolean }) {
   const d = h.data;
   if (!d) return null;
   const finance=isDriver?null:<details className="vehicle-finance-summary"><summary className="linkrow" style={{cursor:'pointer'}}>Финансы по этой технике</summary>
-    <div className="card stack"><b>Учтённые расходы TrackSOS: {rub(d.summary.spent??0)}</b>
-    <span className="note">Показаны только суммы, связанные с историей заявок этой техники в TrackSOS. Внешние расходы, покупки вне платформы и неподтверждённые платежи сюда не включены.</span></div></details>;
+    <div className="card stack"><b>Суммы завершённых заявок TrakSOS: {rub(d.summary.spent??0)}</b>
+    <span className="note">Показаны только суммы, связанные с историей заявок этой техники в TrakSOS. Внешние расходы, покупки вне платформы и неподтверждённые платежи сюда не включены.</span></div></details>;
   if (!d.items.length) return <div className="stack">{finance}<span className="note">История пока пустая — здесь будут обращения и ремонты по этой машине.</span></div>;
   const last = d.summary.lastAt ? fmtTime(d.summary.lastAt) : '';
   return (
