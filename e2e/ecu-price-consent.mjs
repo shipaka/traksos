@@ -35,7 +35,8 @@ try{
       localStorage.setItem('traksos.mode','client');
     },account.token);
     try{
-      await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
+      await page.goto(BASE+'/#/new/ecu',{waitUntil:'domcontentloaded'});
+      await page.getByRole('heading',{name:'Специалист по ЭБУ',exact:true}).waitFor({timeout:20000});
       for(let n=0;n<6;n++){
         const modal=page.locator('[role="dialog"]').first();
         if(!await modal.isVisible().catch(()=>false))break;
@@ -48,9 +49,7 @@ try{
       }
       const cookie=page.getByRole('button',{name:'Понятно'});
       if(await cookie.isVisible().catch(()=>false))await cookie.click();
-      await page.goto(BASE+'/#/new/ecu',{waitUntil:'domcontentloaded'});
-      await page.getByRole('heading',{name:'Специалист по ЭБУ',exact:true})
-        .waitFor({timeout:20000});
+
       await page.locator('#f-where').waitFor();
       const consent=page.locator('#f-agree');
       await consent.waitFor();
@@ -60,8 +59,9 @@ try{
         throw Error(width+': missing unpriced stage explanation');
       const address=page.locator('#f-where input.field');
       await address.fill('Санкт-Петербург, тестовая парковка');
-      await page.locator('#f-where .scroll-x button.chip')
-        .filter({hasText:'Санкт-Петербург'}).click();
+      await page.locator('#f-where .scroll-x button.chip').getByText('Санкт-Петербург',{exact:true}).click();
+      await page.locator('#f-where .scroll-x button.chip').filter({hasText:'Санкт-Петербург, в пределах КАД'}).click();
+      await page.getByRole('button',{name:'Днём',exact:true}).click();
       await consent.locator('input[type="checkbox"]').waitFor({timeout:20000});
       if(await consent.locator('input[type="checkbox"]').isChecked())
         throw Error(width+': ECU quote auto-accepted without consent');
