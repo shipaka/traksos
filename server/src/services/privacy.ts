@@ -56,6 +56,9 @@ export class PrivacyService {
       directMessageReports: await q('select message_id,reason,status,created_at from community_dm_reports where reporter_id=$1'),
       communityProfile: await this.db.one('select nickname,city_label,share_city,created_at from community_profiles where user_id=$1',[id]),
       communityMessages: await q('select room_id,body,moderation_state,created_at from community_messages where sender_id=$1 order by created_at desc'),
+      // Visible only in this authenticated export: the public club case never
+      // exposes its private source order, even to other verified specialists.
+      privateTechnicalCaseOrderLinks: await q('select case_id,order_id,created_at from community_technical_case_order_links where author_id=$1'),
       communityRooms: await q('select room_id,joined_at from community_memberships where user_id=$1'),
       driverAirParticipation: await this.db.one('select enabled,updated_at from community_driver_optins where user_id=$1',[id]),
       communityNotificationPreferences: await this.db.one('select dm_invites,dm_messages,case_replies,quiet_enabled,quiet_start_minute,quiet_end_minute,quiet_timezone,updated_at from community_notification_preferences where user_id=$1',[id]),
