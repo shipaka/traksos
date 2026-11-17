@@ -113,6 +113,11 @@ test('disabling access revokes reading, sending, road alerts and recipient disco
 test('re-enable preserves identity while unrelated clients and specialists stay excluded',async()=>{
   assert.equal(ok(await t.api('PUT','/api/community/driver-access',{enabled:true},owner.token)).enabled,true);
   assert.equal(ok(await t.api('GET','/api/community/me',undefined,owner.token)).nickname,'OwnerDriver_78');
+  const exported=await t.app.privacy.export({id:owner.id,phone:'+79996333001',name:null,
+    roles:['client'],status:'active',owner_id:null});
+  assert.equal(exported.driverAirParticipation?.enabled,true);
+  assert.ok(!JSON.stringify(exported.driverAirParticipation).includes('DriverAir_123'));
+
   assert.ok(ok(await t.api('GET','/api/community/direct',undefined,owner.token)).threads.length);
   const outsiderRooms=ok(await t.api('GET','/api/community/rooms',undefined,guestCustomer.token)).rooms;
   assert.ok(!outsiderRooms.some((x:any)=>x.id===roomId));
