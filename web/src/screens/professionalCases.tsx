@@ -25,7 +25,7 @@ const emptyCase={make:'',model:'',year:'',system:'',symptoms:'',codes:'',context
  * Structured technical consultations inside an existing verified club.
  * Order id is used ONLY to obtain a non-identifying preview before posting.
  */
-export function ProfessionalCases({orderId}:{orderId?:string}){
+export function ProfessionalCases({orderId,initialRoomSlug}:{orderId?:string;initialRoomSlug?:string}){
  const {me}=useMe();
  const [roomId,setRoomId]=useState<string|null>(null);
  const [pendingLinked,setPendingLinked]=useState<{id:string;roomId:string}|null>(null);
@@ -50,8 +50,11 @@ export function ProfessionalCases({orderId}:{orderId?:string}){
  const rooms=useLoad<{rooms:Club[]}>(()=>get('/api/community/rooms'),[me?.id]);
  const clubs=(rooms.data?.rooms??[]).filter(c=>c.audience==='professional');
  useEffect(()=>{
-   setRoomId(current=>current&&clubs.some(c=>c.id===current)?current:clubs[0]?.id??null);
- },[rooms.data]);
+   // Choose only rooms returned by the authenticated, server-filtered list.
+   // A deep link must never grant access to an unverified specialty room.
+   setRoomId(current=>current&&clubs.some(c=>c.id===current)?current:
+     (clubs.find(c=>c.slug===initialRoomSlug)??clubs[0])?.id??null);
+ },[rooms.data,initialRoomSlug]);
  const room=clubs.find(c=>c.id===roomId)??null;
  const preview=useLoad<Preview|null>(
    ()=>orderId?get('/api/community/pro-cases/order-preview/'+orderId):Promise.resolve(null),[orderId]);
