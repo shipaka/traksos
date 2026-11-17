@@ -39,6 +39,7 @@ async function roomAllowed(user: AuthUser, room: Room, profile: Awaited<ReturnTy
   if (!room.specialty) return true;
   if (room.specialty === 'tow') return profile.kind === 'tow';
   if (room.specialty === 'service') return profile.kind === 'service';
+  if (room.specialty === 'ecu') return profile.kind === 'ecu' || profile.specialties.includes('ecu');
   return profile.specialties.includes(room.specialty);
 }
 async function ensureNick(db: Db, user: AuthUser) {
@@ -87,6 +88,7 @@ export async function roomLiveRecipients(db:Db,room:Pick<Room,'id'|'audience'|'s
             and ($4::text is null
               or ($4='tow' and p.kind='tow')
               or ($4='service' and p.kind='service')
+              or ($4='ecu' and (p.kind='ecu' or 'ecu'=any(p.specialties)))
               or $4=any(p.specialties)))
         )
       order by cm.user_id limit 2000`,
@@ -158,6 +160,7 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
       if (profile?.verification !== 'approved') return false;
       return !room.specialty || (room.specialty === 'tow' && profile.kind === 'tow')
         || (room.specialty === 'service' && profile.kind === 'service')
+        || (room.specialty === 'ecu' && (profile.kind === 'ecu' || profile.specialties.includes('ecu')))
         || profile.specialties.includes(room.specialty);
     }).map(({id,slug,title,kind,audience,locality_label}) =>
       ({id,slug,title,kind,audience,locality:locality_label,joined:joined.has(id)})) };
