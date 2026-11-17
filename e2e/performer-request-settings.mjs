@@ -32,7 +32,7 @@ try{
       await page.getByRole('button',{name:'С собой'}).click();
       await page.getByText(/наличие инструмента не меняет очередь/).waitFor();
       const scanner=page.getByRole('button',{name:/Сканер под марку/});
-      await scanner.click();
+      if (await scanner.getAttribute('aria-pressed') !== 'true') await scanner.click();
       await page.getByRole('button',{name:'Сохранить всё'}).click();
       await page.getByText('Настройки заявок сохранены').waitFor({timeout:12000});
       let p=await request('/api/performer/profile','GET',auth.token);
