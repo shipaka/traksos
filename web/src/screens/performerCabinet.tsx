@@ -2,6 +2,7 @@
 // Каждый раздел — своя короткая страница со своей кнопкой «Сохранить», ничего не листается до конца.
 
 import { useEffect, useState } from 'react';
+import '../vehicleOwnerGuide.css';
 import { get, put, post, rub, fmtTime, fmtPhone } from '../api.ts';
 import { BRANDS, BRAND_LEVELS, SERVICES } from '../dict.ts';
 import { FEE_PURPOSE } from '../dict.ts';
@@ -181,15 +182,31 @@ export function PhoneSection() {
 
 type RecoveryMake={key:string;name:string};
 type RecoveryModel={key:string;name:string};
+type RecoveryPhoto={makeKey:string;src:string;caption:string;sourcePage:string;author:string;
+ license:string;licenseUrl:string;specificModelVerified:false};
+function RecoveryPhotoTile({photo}:{photo:RecoveryPhoto}){
+  const [failed,setFailed]=useState(false);
+  return <figure className="recovery-photo">
+    {failed?<div className="vehicle-owner-guide-fallback" aria-hidden="true">▰</div>
+      :<img loading="lazy" src={photo.src} alt={photo.caption}
+        referrerPolicy="no-referrer" onError={()=>setFailed(true)}/>}
+    <figcaption>{photo.caption}. <a href={photo.sourcePage} target="_blank" rel="noopener noreferrer">
+      {photo.author}</a>{' · '}<a href={photo.licenseUrl} target="_blank" rel="noopener noreferrer">{photo.license}</a>.
+      Это пример надстройки, не доказательство модели.</figcaption>
+  </figure>;
+}
 function CarInputs({ car, onChange, tow }: { car: { brand: string; color?: string; plate: string }; onChange: (c: any) => void; tow?: boolean }) {
   const [makes,setMakes]=useState<RecoveryMake[]>([]);
   const [models,setModels]=useState<RecoveryModel[]>([]);
   const [makeKey,setMakeKey]=useState('');
   const [modelKey,setModelKey]=useState('');
   const [lookupError,setLookupError]=useState('');
+  const [recoveryPhotos,setRecoveryPhotos]=useState<RecoveryPhoto[]>([]);
   useEffect(()=>{
     if(!tow)return;
     let live=true;
+    get<{items:RecoveryPhoto[]}>('/api/vehicle-reference/recovery-gallery')
+      .then(r=>{if(live)setRecoveryPhotos(r.items)}).catch(()=>{if(live)setRecoveryPhotos([])});
     get<{items:RecoveryMake[]}>('/api/vehicle-reference/makes?purpose=tow&category=truck')
       .then(r=>{if(live){setMakes(r.items);setLookupError('')}})
       .catch(()=>{if(live)setLookupError('Справочник эвакуаторов пока недоступен')});
@@ -225,6 +242,10 @@ function CarInputs({ car, onChange, tow }: { car: { brand: string; color?: strin
           {models.map(x=><option key={x.key} value={x.key}>{x.name}</option>)}
         </select>}
         {lookupError&&<small className="note" role="alert">{lookupError}. Если вашей модели нет, запросите её добавление через администратора.</small>}
+        {recoveryPhotos.some(p=>!makeKey||p.makeKey===makeKey)&&<div className="recovery-photo-gallery" aria-label="Иллюстрации тяжёлых эвакуаторов">
+          {recoveryPhotos.filter(p=>!makeKey||p.makeKey===makeKey)
+            .map(p=><RecoveryPhotoTile key={p.sourcePage} photo={p}/>)}
+        </div>}
         {car.brand&&<small className="note">Выбрано: {car.brand}. Фото надстройки, её паспорт и допустимую массу необходимо подтвердить отдельно.</small>}
       </section>:<input className="field" placeholder="Марка и модель служебной машины" value={car.brand}
         onChange={(e) => onChange({ ...car, brand: e.target.value })}/>}
