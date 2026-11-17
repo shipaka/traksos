@@ -1109,6 +1109,33 @@ export function createApp(d: Deps) {
   r.post('/api/orders/:id/drop', performerRoles, (c: AuthedCtx) => orders.drop(c.user, c.params.id, parse(z.object({ reason: z.string().min(2).max(300) }), c.body).reason));
   r.post('/api/orders/:id/step', performerRoles, (c: AuthedCtx) =>
     orders.performerStep(c.user, c.params.id, parse(z.object({ action: z.enum(['depart', 'arrive', 'start_work']) }), c.body).action));
+  // ECU work is a stationary long-running repair. Every +3 day extension
+  // is deliberate, documented, shown to the customer, and never auto-paid.
+  r.post('/api/orders/:id/ecu/extend', true, async (c:AuthedCtx)=>{
+    const b=parse(z.object({reason:z.string().trim().min(8).max(500)}),c.body);
+    const changed=await d.db.tx(async q=>{
+      const o=await q.one<any>('select * from orders where id=$1 for update',[c.params.id]);
+      if(!o)throw notFound('Заявка не найдена');
+      if(o.service!=='ecu')throw bad('not_ecu','Это не ремонт ЭБУ');
+      if(o.performer_id!==c.user.id&&!c.user.roles.includes('admin'))
+        throw forbidden('Продлить срок может назначенный эксперт или администратор');
+      if(!['accepted','en_route','arrived','working','awaiting_confirmation'].includes(o.status))
+        throw conflict('ecu_inactive','Продлить можно только активную заявку');
+      const newDue=await q.one<any>(
+        "update orders set ecu_due_at=greatest(coalesce(ecu_due_at,now()),now())+interval '3 days',"+
+        " ecu_extensions_count=ecu_extensions_count+1 where id=$1 "+
+        "returning ecu_due_at,ecu_extensions_count",[o.id]);
+      await orders.event(q,o.id,c.user.id,'ecu_deadline_extended',
+        {reason:b.reason,daysAdded:3,until:newDue.ecu_due_at,extensions:newDue.ecu_extensions_count});
+      return {order:o,due:newDue.ecu_due_at,extensions:newDue.ecu_extensions_count};
+    });
+    await notifier.notify([changed.order.client_id,changed.order.created_by],
+      {type:'order',orderId:c.params.id,status:changed.order.status},
+      {kind:'normal',title:'Срок работ ЭБУ продлён на 3 дня',
+       body:b.reason.slice(0,150),data:{orderId:c.params.id}})
+      .catch(e=>console.error('[ecu-extend-notify]',e));
+    return orders.view(c.user,c.params.id);
+  });
   r.post('/api/orders/:id/amount', performerRoles, (c: AuthedCtx) => orders.proposeAmount(c.user, c.params.id, parse(z.object({
     // Суммы за работу здесь нет — её считает таймер. Только расходники и запчасти, каждая строкой
     extras: z.array(z.object({ name: z.string().min(2).max(60), amount: money })).max(10).optional(),
