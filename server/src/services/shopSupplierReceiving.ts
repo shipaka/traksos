@@ -92,8 +92,7 @@ export function registerShopSupplierReceivingRoutes(r:Router,db:Db){
         'select * from shop_supplier_receipts where shop_order_id=$1 and document_ref=$2',
         [o.id,b.documentRef]);
       if(existing){
-        if(String(existing.document_date).slice(0,10)!==b.documentDate&&
-          !(existing.document_date instanceof Date&&existing.document_date.toISOString().slice(0,10)===b.documentDate))
+        if(new Date(existing.document_date).toISOString().slice(0,10)!==b.documentDate)
           throw conflict('document_reused','Номер накладной повторно использован с иной датой');
         if(existing.evidence_note!==b.evidenceNote)
           throw conflict('document_reused','У документа уже другое основание сверки');
