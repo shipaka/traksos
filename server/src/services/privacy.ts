@@ -65,6 +65,9 @@ export class PrivacyService {
       communityRoomMutes: await q('select room_id,muted,updated_at from community_notification_room_mutes where user_id=$1'),
       communityThreadMutes: await q('select thread_id,muted,updated_at from community_notification_thread_mutes where user_id=$1'),
       communityReports: await q('select message_id,reason,status,created_at from community_reports where reporter_id=$1'),
+      ownerExperiencePosts: await q('select catalog_category,display_brand,display_model,model_year,topic,title,body,review_state,created_at from vehicle_owner_experiences where author_id=$1 order by created_at'),
+      ownerExperienceSaves: await q('select experience_id,created_at from vehicle_owner_experience_saves where user_id=$1'),
+      ownerExperienceReports: await q('select experience_id,reason,review_state,created_at from vehicle_owner_experience_reports where reporter_id=$1'),
       knowledgeContributions: await q('select title,make,model,model_year,subsystem,description,source_url,rights_basis,rights_review,technical_review,created_at from community_knowledge where author_id=$1'),
       professionalTechnicalCases: await q('select room_id,make,model,model_year,subsystem,symptoms,dtc_codes,diagnostic_context,status,created_at,resolved_at from community_technical_cases where author_id=$1 order by created_at'),
       professionalTechnicalReplies: await q('select case_id,body,created_at from community_technical_case_replies where author_id=$1 order by created_at'),
@@ -129,6 +132,12 @@ export class PrivacyService {
         await q.query('delete from community_dm_reports where reporter_id=$1', [id]);
         await q.query('delete from community_dm_threads where user_a=$1 or user_b=$1', [id]);
         await q.query('delete from community_reports where reporter_id=$1', [id]);
+        // Operator notes are community material, never retained as accounting evidence.
+        await q.query('delete from vehicle_owner_experience_saves where user_id=$1',[id]);
+        await q.query('delete from vehicle_owner_experience_reports where reporter_id=$1',[id]);
+        await q.query('delete from vehicle_owner_experiences where author_id=$1',[id]);
+        await q.query('update vehicle_owner_experiences set reviewed_by=null where reviewed_by=$1',[id]);
+        await q.query('update vehicle_owner_experience_reports set reviewed_by=null where reviewed_by=$1',[id]);
         // Erasing a message also cascades its publication events. Invalidate
         // every affected room's event cursor BEFORE removal, so other drivers
         // cannot keep stale text in their live in-memory chat.
