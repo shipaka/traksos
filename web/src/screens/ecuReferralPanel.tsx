@@ -32,11 +32,14 @@ export function EcuReferralPanel({order}:{order:any}){
   const steps=order.caseSummary?.stages??[];
   const related=(order.caseOtherStages??[]) as {number:number;service:string;status:string}[];
   const activeRecommendation=rec.data?.recommendations.find(x=>x.status==='pending');
-  const alreadyAdded=steps.some((x:any)=>x.additionalTo===order.id&&x.service==='ecu'&&
-    !['cancelled','no_performer'].includes(x.status));
+  const alreadyAdded=Boolean(order.hasActiveEcuAddition)||
+    steps.some((x:any)=>x.additionalTo===order.id&&x.service==='ecu'&&
+      !['cancelled','no_performer'].includes(x.status))||
+    related.some(x=>x.service==='ecu'&&!['cancelled','no_performer'].includes(x.status));
   const canRecommend=isPerformer&&order.service!=='ecu'&&allowed.has(order.status)&&
-    !activeRecommendation;
-  const canAdd=isCustomer&&order.service!=='ecu'&&allowed.has(order.status)&&!alreadyAdded;
+    !alreadyAdded&&!activeRecommendation;
+  const canAdd=isCustomer&&order.service!=='ecu'&&allowed.has(order.status)&&
+    !alreadyAdded&&(rec.data?.canCreate??true);
   const applyLink=`#/new/ecu?additionalTo=${encodeURIComponent(order.id)}`;
   async function recommend(){
     const saved=await run(()=>post(`/api/orders/${order.id}/recommend-ecu`,{
@@ -86,6 +89,10 @@ export function EcuReferralPanel({order}:{order:any}){
         {STATUS[x.status]?.name??x.status}
       </span>)}
     </div>}
+    {isCustomer&&order.service!=='ecu'&&alreadyAdded&&steps.length<=1&&<p className="note" role="status">
+      По этому обращению уже открыт дополнительный этап ЭБУ. Если его оформил владелец автопарка,
+      детали отдельного заказа доступны только уполномоченному заказчику.
+    </p>}
     {rec.error&&<p role="alert" className="note">Рекомендации: {rec.error}
       <button type="button" className="btn ghost small" onClick={()=>void rec.reload()}>Повторить</button>
     </p>}
