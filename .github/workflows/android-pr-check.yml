@@ -110,6 +110,13 @@ jobs:
         with:
           name: tracksos-pr-debug-apk
           path: apk
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          accept-android-sdk-licenses: true
       # The public Android SDK mirror may close a large system-image download
       # mid-stream (Premature EOF). Prepare with bounded retries BEFORE trying
       # to boot. An image-download failure must not be reported as an APK crash.
