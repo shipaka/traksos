@@ -90,6 +90,7 @@ export function Order({ id }: { id: string }) {
         events={d.events} createdAt={d.createdAt} acceptedAt={d.acceptedAt}
         arrivedAt={d.arrivedAt} completedAt={d.completedAt} isAdmin={d.you === 'admin'} />}
       {(d.you === 'client' || d.you === 'admin') && d.paymentMethod !== 'cash' && <PaymentsList id={id} admin={d.you === 'admin'} />}
+      {isPerformer && d.service==='ecu' && <EcuStationaryActions d={d} onDone={o.reload}/>}
       {isPerformer && d.service!=='ecu' && (isConsult ? <ConsultFinish d={d} onDone={o.reload} /> : <PerformerActions d={d} onDone={o.reload} />)}
       {!isPerformer && ['arrived', 'working'].includes(d.status) && d.service !== 'consult' && d.service !== 'ecu' && <WorkInProgress d={d} />}
       {d.you !== 'candidate' && d.you !== 'admin' && d.service !== 'tow' && d.service !== 'consult' && d.service !== 'ecu' && ['arrived', 'working'].includes(d.status) && <PartPicker d={d} onDone={o.reload} performer={isPerformer} />}
@@ -391,6 +392,19 @@ function EcuDeadline({d,onDone}:{d:any;onDone:()=>void}){
 function Money({ d }: { d: any }) {
   const m = d.money;
   const proposed = ['awaiting_confirmation', 'completed'].includes(d.status) || m.work > 0;
+  if(d.service==='ecu')return <section className="card stack" aria-label="Финансы стационарного ремонта ЭБУ">
+    <b>Итоговая стоимость ЭБУ</b>
+    {!proposed?<p className="note">Цена ещё не выставлена. Эксперт уточнит её после диагностики или ремонта; до вашего подтверждения сумма не подлежит оплате.</p>:<>
+      <div className="sum"><span>Диагностика и выполненные работы</span><b>{rub(m.amount)}</b></div>
+      {m.clientFee>0&&<div className="sum"><span>Сервисный сбор площадки</span><span>{rub(m.clientFee)}</span></div>}
+      <div className="sum total"><span>К подтверждению</span><b>{rub(m.total)}</b></div>
+      {d.resultNote&&<p className="note">Что сделано: {d.resultNote}</p>}
+      {d.warrantyDays!=null&&<p className="note">Дополнительная гарантия: {d.warrantyDays} дней
+        {d.warrantyStartedAt?' с '+new Date(d.warrantyStartedAt).toLocaleDateString('ru-RU'):' после приёмки работ'}.
+        {d.warrantyWork?' '+d.warrantyWork:''}</p>}
+      <small className="note">Цена не была известна при обращении. Без отдельного подтверждения клиентом списания или обязательства оплатить предложенную сумму не возникает.</small>
+    </>}
+  </section>;
   if (d.service === 'consult') return (
     <div className="card">
       <div className="sum total"><span>Консультация</span><span>{rub(m.callOut)}</span></div>
@@ -510,6 +524,48 @@ function PerformerActions({ d, onDone }: { d: any; onDone: () => void }) {
       ) : <button className="btn bad" onClick={() => setShowDrop(true)}>Не смогу приехать</button>)}
     </div>
   );
+}
+
+/** Specialist handles a stationary ECU job; no driving status or hourly billing. */
+function EcuStationaryActions({d,onDone}:{d:any;onDone:()=>void}){
+  const {busy,run}=useAction();
+  const [price,setPrice]=useState<number|null>(null);
+  const [summary,setSummary]=useState(d.resultNote??'');
+  const [warrantyDays,setWarrantyDays]=useState<number|null>(d.warrantyDays??null);
+  const [warrantyWork,setWarrantyWork]=useState(d.warrantyWork??'');
+  if(!['accepted','working','awaiting_confirmation'].includes(d.status))return null;
+  return <section className="card hi stack" aria-label="Работа специалиста ЭБУ">
+    <b>Диагностика и ремонт на стационарной точке</b>
+    {d.status==='accepted'&&<button type="button" className="btn" disabled={busy}
+      onClick={()=>run(()=>post('/api/orders/'+d.id+'/ecu/start',{}),'Диагностика начата')
+        .then(v=>v&&onDone())}>Приступили к диагностике блока</button>}
+    <p className="note">Комментарий и итоговую стоимость можно указать только после исследования блока. Если запчасти в пути, продлите срок на 3 дня выше. Таймер выездных часов здесь не применяется.</p>
+    <label>Что сделано
+      <textarea className="field" maxLength={300} value={summary} onChange={e=>setSummary(e.target.value)}
+        placeholder="Проверка блока, восстановление платы, диагностика…"/>
+    </label>
+    <Field label="Итоговая стоимость работ (₽)">
+      <RubInput value={price} onChange={setPrice}/>
+    </Field>
+    <div className="card flat stack">
+      <b>Дополнительная гарантия на результат</b>
+      <div className="row">{([null,7,14,30] as Array<number|null>).map(days=><button
+        key={days??0} className="chip" type="button" aria-pressed={warrantyDays===days}
+        onClick={()=>setWarrantyDays(days)}>{days==null?'Не заявлена':days+' дней'}</button>)}</div>
+      <input className="field" maxLength={300} value={warrantyWork}
+        onChange={e=>setWarrantyWork(e.target.value)} placeholder="На какие работы распространяется гарантия"/>
+      <small className="note">Гарантия начинается только после подтверждения итоговой суммы и приёмки работы клиентом.</small>
+    </div>
+    <button type="button" className="btn good"
+      disabled={busy||price==null||price<100||summary.trim().length<5}
+      onClick={()=>run(()=>post('/api/orders/'+d.id+'/ecu/final-price',{
+        amount:price,summary:summary.trim(),warrantyDays,warrantyWork:warrantyWork||summary.trim()
+      }),'Итоговая смета отправлена клиенту на отдельное согласование')
+        .then(v=>v&&onDone())}>
+      {d.status==='awaiting_confirmation'?'Исправить итоговую смету':'Предложить итоговую сумму клиенту'}
+    </button>
+    <small className="note">Изменение суммы отменяет прежнее согласие. До явного подтверждения клиентом деньги автоматически не списываются.</small>
+  </section>;
 }
 
 /** Мастер: клиент отказывается платить — сразу поддержка */
