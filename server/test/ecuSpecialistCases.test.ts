@@ -1,6 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {setup,ok} from './helpers.ts';
+import {publishedEcuWorkshop} from './ecuWorkshopFixture.ts';
 
 async function createSource(t:Awaited<ReturnType<typeof setup>>,token:string){
   const made=ok(await t.api('POST','/api/orders',{
@@ -32,6 +33,12 @@ test('linked ECU order keeps distinct payment/performer/status and client-only c
     {decision:'approved'},admin.token));
   ok(await t.api('POST','/api/admin/performers/'+ecu.id+'/verify',
     {decision:'approved'},admin.token));
+  ok(await t.api('PUT','/api/admin/ecu/stations/'+ecu.id,{
+    name:'Тестовая мастерская ЭБУ',address:'Санкт-Петербург, проверочная мастерская 2',
+    lat:59.94,lng:30.34,published:true,consentConfirmed:true,
+    reason:'Публикация синтетической тестовой точки с согласованием в изолированном CI'
+  },admin.token));
+  ok(await t.api('POST','/api/performer/line',{lineStatus:'online'},ecu.token));
   const profile=ok(await t.api('GET','/api/performer/profile',undefined,ecu.token));
   assert.equal(profile.kind,'ecu');
   const first=await createSource(t,client.token);
@@ -50,15 +57,15 @@ test('linked ECU order keeps distinct payment/performer/status and client-only c
     {reason},master.token)).status,409);
 
   const addition={
-    service:'ecu',zoneId:'spb',tier:'pro',
+    service:'ecu',zoneId:'ecu_station',ecuSpecialistId:ecu.id,tier:'pro',
     paymentMethod:'cash',additionalTo:first,
     description:'Отдельная диагностическая работа с ЭБУ по рекомендации электрика',
     address:'Санкт-Петербург, тестовая ремонтная площадка 22'
   };
   assert.equal((await t.api('POST','/api/orders',{...addition,service:'diag'},
     client.token)).status,400,'unsupported additional service must never silently merge contracts');
-  assert.equal((await t.api('POST','/api/orders',{...addition,zoneId:'lo'},
-    client.token)).status,400,'linked service must use parent quotation region');
+  assert.equal((await t.api('POST','/api/orders',{...addition,ecuSpecialistId:'00000000-0000-4000-8000-000000000000'},
+    client.token)).status,400,'workshop must be verified and explicitly selected');
   assert.equal((await t.api('POST','/api/orders',{...addition,brand:'Scania'},
     client.token)).status,400,'different vehicle forbidden');
   assert.equal((await t.api('POST','/api/orders',addition,outsider.token)).status,403);
@@ -145,6 +152,7 @@ test('fleet driver cannot read owner-created ECU charges within a shared case',a
   const owner=await t.login('+79994620021','client');
   const driver=await t.login('+79994620022','driver');
   const master=await t.login('+79994620023','master');
+  const ecu=await publishedEcuWorkshop(t,'+79994620024');
   // Driver belongs to the fleet; the order is owned by the fleet but created
   // by the driver. This must not expose unrelated follow-up contracts.
   await t.db.query('update users set owner_id=$2 where id=$1',[driver.id,owner.id]);
@@ -156,7 +164,7 @@ test('fleet driver cannot read owner-created ECU charges within a shared case',a
   },master.token));
   assert.equal(suggestion.createsOrder,false);
   const additional={
-    service:'ecu',zoneId:'spb',tier:'pro',paymentMethod:'cash',
+    service:'ecu',zoneId:'ecu_station',ecuSpecialistId:ecu.id,tier:'pro',paymentMethod:'cash',
     additionalTo:root,
     description:'Отдельная диагностика и ремонт ЭБУ для машины из парка',
     address:'Санкт-Петербург, тестовая ремонтная площадка 22'
