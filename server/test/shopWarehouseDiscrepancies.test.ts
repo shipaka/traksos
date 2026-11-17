@@ -131,3 +131,63 @@ test('warehouse discrepancies block dispatch until physical recount, audited res
   assert.equal(audits.filter(x=>x.action==='shop.warehouse_discrepancy_resolved').length,1);
  }finally{await t.close()}
 });
+
+test('planned route cancellation preserves warehouse incident audit after stops are released',async()=>{
+ const t=await setup();
+ try{
+  const admin=await t.login('+79990000001');
+  const customer=await t.login('+79995608201','client');
+  const courier=await t.login('+79995608202','client');
+  ok(await t.api('PUT','/api/shop/region',{city:'Санкт-Петербург'},customer.token));
+  ok(await t.api('PUT','/api/admin/settings/shop',{enabled:true,delivery:true},admin.token));
+  const productId=ok(await t.api('POST','/api/admin/shop/products',{
+    name:'Тестовый модуль EBS с повреждённой коробкой',
+    article:'EBS-WR990',brand:'TestBrand',category:'sensors',price:120000,stock:10
+  },admin.token)).id;
+  ok(await t.api('PUT','/api/admin/shop/products/'+productId+'/costing',{
+    purchaseCostKopecks:65000,markupBps:3000,
+    costSourceNote:'Учебная закупочная цена для испытания отмены курьерского рейса'
+  },admin.token));
+  const orderId=ok(await t.api('POST','/api/shop/orders',{
+    items:[{productId,qty:1}],delivery:'delivery',
+    address:'Санкт-Петербург, проверочный складской адрес 55'
+  },customer.token)).id;
+  for(const status of ['confirmed','ready'])
+    ok(await t.api('POST','/api/admin/shop/orders/'+orderId+'/status',{status},admin.token));
+  ok(await t.api('POST','/api/admin/shop/delivery-addresses/'+orderId+'/verify',{
+    cityCode:'spb',evidence:'Адрес подтверждён человеком для проверки отмены маршрута'
+  },admin.token));
+  ok(await t.api('POST','/api/admin/shop/couriers',{
+    userId:courier.id,displayName:'Курьер тестовой отмены',
+    vehicleLabel:'Фургон тестовой доставки'
+  },admin.token));
+  const runId=ok(await t.api('POST','/api/admin/shop/courier-runs',{
+    courierId:courier.id,pickupAddress:'Санкт-Петербург, контрольная база выдачи 10',
+    orderIds:[orderId],packingRequired:true
+  },admin.token)).id;
+  const root='/api/admin/shop/courier-runs/'+runId+'/warehouse';
+  const stopId=ok(await t.api('GET',root,undefined,admin.token)).stops[0].id;
+  const incident=ok(await t.api('POST',root+'/stops/'+stopId+'/discrepancies',{
+    lineIndex:0,kind:'seal_broken',observedArticle:'EBS-WR990',observedQty:1,
+    note:'На коробке повреждена контрольная пломба, посылку выпускать запрещено'
+  },admin.token));
+  assert.equal(incident.status,'open');
+  const cancelled=ok(await t.api('POST','/api/admin/shop/courier-runs/'+runId+'/cancel',{
+    reason:'Доставка отменена до забора после обнаружения повреждённой заводской пломбы'
+  },admin.token));
+  assert.equal(cancelled.status,'cancelled');
+  assert.equal((await t.db.query('select 1 from shop_courier_stops where run_id=$1',[runId])).length,0);
+  const history=ok(await t.api('GET',root+'/discrepancies',undefined,admin.token));
+  assert.equal(history.discrepancies.length,1);
+  assert.equal(history.discrepancies[0].id,incident.id);
+  assert.equal(history.discrepancies[0].order_number>0,true);
+  assert.equal(history.discrepancies[0].stop_id,null,
+    'canceled stop is removed but run-level incident remains auditable');
+  assert.equal(history.discrepancies[0].status,'open',
+    'cancellation is not an invented physical fix to packaging damage');
+  assert.equal((await t.api('POST',root+'/stops/'+stopId+'/discrepancies',{
+    lineIndex:0,kind:'damaged',observedArticle:'EBS-WR990',observedQty:1,
+    note:'Запрещено прикреплять новое расхождение к отменённому маршруту'
+  },admin.token)).status,409);
+ }finally{await t.close()}
+});
