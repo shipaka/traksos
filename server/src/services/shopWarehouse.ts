@@ -189,11 +189,11 @@ export function registerShopWarehouseRoutes(r:Router,db:Db){
           throw conflict('open_warehouse_discrepancy','По этой строке уже открыто расследование');
         const recorded=await q.one<{id:string}>(`
           insert into shop_warehouse_discrepancies
-            (stop_id,line_index,kind,expected_article,expected_qty,
+            (run_id,stop_id,order_number,line_index,kind,expected_article,expected_qty,
              observed_article,observed_qty,note,reported_by)
-          values($1,$2,$3,$4,$5,$6,$7,$8,$9)
-          returning id`,[stopId,b.lineIndex,b.kind,expectedArticle,expectedQty,
-            b.observedArticle,b.observedQty,b.note,c.user.id]);
+          values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+          returning id`,[runId,stopId,st.number,b.lineIndex,b.kind,
+            expectedArticle,expectedQty,b.observedArticle,b.observedQty,b.note,c.user.id]);
         // A previous scan never certifies a parcel after a discrepancy is found.
         await q.query('delete from shop_warehouse_line_checks where stop_id=$1 and line_index=$2',
           [stopId,b.lineIndex]);
@@ -262,12 +262,11 @@ export function registerShopWarehouseRoutes(r:Router,db:Db){
       if(!await db.one('select 1 from shop_courier_runs where id=$1',[runId]))
         throw notFound('Рейс не найден');
       const rows=await db.query(`
-        select d.id,d.stop_id,d.line_index,d.kind,d.expected_article,
+        select d.id,d.stop_id,d.order_number,d.line_index,d.kind,d.expected_article,
           d.expected_qty,d.observed_article,d.observed_qty,
           d.note,d.reported_at,d.status,d.resolved_at,d.resolution_note
         from shop_warehouse_discrepancies d
-        join shop_courier_stops s on s.id=d.stop_id
-        where s.run_id=$1 order by d.reported_at desc,d.id desc limit 250`,[runId]);
+        where d.run_id=$1 order by d.reported_at desc,d.id desc limit 250`,[runId]);
       return {discrepancies:rows,privateToDispatcher:true,
         financialChanges:false};
     });
