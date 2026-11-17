@@ -59,11 +59,11 @@ export async function setup(opts?: { verifiedRoadEta?: import('../src/domain/pro
     };
   }
 
-  async function api(method: string, path: string, body?: unknown, token?: string) {
+  async function api(method: string, path: string, body?: unknown, token?: string, extraHeaders: Record<string,string> = {}) {
     const fixtureBody = withPilotSiteFixture(method, path, body);
     const r = await fetch(base + path, {
       method,
-      headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
+      headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}), ...extraHeaders },
       body: fixtureBody === undefined ? undefined : JSON.stringify(fixtureBody),
     });
     const j: any = await r.json().catch(() => null);
