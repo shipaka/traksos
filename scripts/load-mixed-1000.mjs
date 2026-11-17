@@ -5,8 +5,9 @@ import {randomBytes} from 'node:crypto';
 import {performance} from 'node:perf_hooks';
 import {mkdir,writeFile} from 'node:fs/promises';
 process.env.MODERATOR_PHONES='+79997500998';
-const {sha256}=await import('../server/src/util.ts');
+// Initialize test-only staff allowlists before importing shared config.
 const {setup,ok}=await import('../server/test/helpers.ts');
+const {sha256}=await import('../server/src/util.ts');
 const start=performance.now(),measurements=[],errors=[];
 const COUNTS={client:630,driver:120,master:150,tow:55,service:25,
  insurer:18,moderator:1,admin:1};
@@ -35,6 +36,8 @@ const measure=async(label,records)=>{
 };
 try{
  const root=await t.login('+79990000001');
+ const rootMe=ok(await t.api('GET','/api/me',undefined,root.token));
+ assert.ok(rootMe.roles.includes('admin'),'CI root must have the real admin role');
  const accounts=[{id:root.id,token:root.token,role:'admin'}];
  const entries=roles.map((role,i)=>({
   phone:'+799975'+String(i).padStart(5,'0'),
