@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {get,post,fmtTime} from '../api.ts';
+import {get,post,put,fmtTime} from '../api.ts';
 import {useLoad,useAction,useMe,Back} from '../ui.tsx';
 
 type Tier='start'|'active'|'priority';
@@ -143,8 +143,27 @@ type Queue={appeals:Array<{id:string;user_id:string;message:string;created_at:st
  reviewDue:Array<{user_id:string;level:Tier;review_due_at:string}>;
  ecuSpecialists:Array<{user_id:string;name:string|null;verification:string;level:Tier}>;
  automaticDemotion:boolean};
+type EcuStationAdmin={user_id:string;name:string|null;verification:string;
+ station:{name?:string;address?:string;lat?:number;lng?:number;published?:boolean}|null};
 export function PartnerLevelAdmin(){
   const queue=useLoad<Queue>(()=>get('/api/admin/partner/levels'),[]);
+  const stations=useLoad<EcuStationAdmin[]>(()=>get('/api/admin/ecu/stations'),[]);
+  const [stationId,setStationId]=useState('');
+  const [stationName,setStationName]=useState('');
+  const [stationAddress,setStationAddress]=useState('');
+  const [stationLat,setStationLat]=useState('');
+  const [stationLng,setStationLng]=useState('');
+  const [stationPublished,setStationPublished]=useState(false);
+  const [stationConsent,setStationConsent]=useState(false);
+  const [stationReason,setStationReason]=useState('');
+  const selectStation=(p:EcuStationAdmin)=>{
+    setStationId(p.user_id);
+    setStationName(p.station?.name||p.name||'Мастерская ЭБУ');
+    setStationAddress(p.station?.address||'');
+    setStationLat(p.station?.lat==null?'':String(p.station.lat));
+    setStationLng(p.station?.lng==null?'':String(p.station.lng));
+    setStationPublished(Boolean(p.station?.published));setStationConsent(false);setStationReason('');
+  };
   const {busy,run}=useAction();
   const [userId,setUserId]=useState('');
   const [tier,setTier]=useState<Tier>('active');
@@ -162,6 +181,51 @@ export function PartnerLevelAdmin(){
         <div><strong>{p.name||'Специалист ЭБУ'}</strong><p className="note">{displayLevel(p.level,'ecu')} · {p.verification==='approved'?'Проверен':'Ожидает проверки'}</p></div>
         <button className="btn ghost small" type="button" onClick={()=>{setUserId(p.user_id);setTier(p.level==='start'?'priority':p.level)}}>Назначить уровень</button>
       </div>)}
+    </section>
+    <section className="card stack" aria-label="Адреса стационарных мастерских ЭБУ">
+      <h2>Проверенные точки ЭБУ на карте</h2>
+      <p className="note">Заполняется реальный адрес мастерской — не GPS телефона исполнителя. Публиковать только после проверки профиля и согласия владельца точки.</p>
+      {stations.error&&<p role="alert">{stations.error} <button type="button" onClick={stations.reload}>Повторить</button></p>}
+      {!stations.data&&!stations.error&&<p className="note">Загружаю точки…</p>}
+      {stations.data?.length===0&&<p className="note">Специалистов ЭБУ пока нет.</p>}
+      {stations.data?.map(p=><div className="between" key={p.user_id}>
+        <span>{p.station?.name||p.name||'Мастерская ЭБУ'} · {p.station?.published?'Опубликована':'Не опубликована'} · {p.verification==='approved'?'Проверен':'На проверке'}</span>
+        <button className="btn ghost small" type="button" onClick={()=>selectStation(p)}>Настроить точку</button>
+      </div>)}
+      {stationId&&<form className="stack" onSubmit={async e=>{
+        e.preventDefault();
+        const lat=Number(stationLat),lng=Number(stationLng);
+        if(!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)return;
+        const saved=await run(()=>put('/api/admin/ecu/stations/'+stationId,{
+          name:stationName.trim(),address:stationAddress.trim(),lat,lng,
+          published:stationPublished,reason:stationReason.trim()
+        }),'Точка сохранена в журнале администратора');
+        if(saved){await stations.reload();setStationId('');setStationReason('');setStationConsent(false)}
+      }}>
+        <label>Название мастерской <input className="field" maxLength={120} required
+          value={stationName} onChange={e=>setStationName(e.target.value)}/></label>
+        <label>Адрес приёма клиентов <input className="field" maxLength={300} required
+          value={stationAddress} onChange={e=>setStationAddress(e.target.value)}/></label>
+        <div className="grid2">
+          <label>Широта <input className="field" type="number" step="any" min={-90} max={90} required
+            value={stationLat} onChange={e=>setStationLat(e.target.value)}/></label>
+          <label>Долгота <input className="field" type="number" step="any" min={-180} max={180} required
+            value={stationLng} onChange={e=>setStationLng(e.target.value)}/></label>
+        </div>
+        <label className="agree"><input type="checkbox" checked={stationPublished}
+          onChange={e=>setStationPublished(e.target.checked)}/>
+          <span>Публиковать эту мастерскую в отдельном поиске ЭБУ</span></label>
+        {stationPublished&&<label className="agree"><input type="checkbox" checked={stationConsent}
+          onChange={e=>setStationConsent(e.target.checked)}/>
+          <span>Проверил согласие специалиста на публикацию именно этого рабочего адреса</span></label>}
+        <label>Основание изменения и проверки <textarea className="field" rows={2} minLength={20}
+          maxLength={500} required value={stationReason}
+          onChange={e=>setStationReason(e.target.value)}/></label>
+        <div className="row"><button className="btn" type="submit" disabled={busy||stationReason.trim().length<20||
+          !stationAddress.trim()||!stationLat.trim()||!stationLng.trim()||
+          (stationPublished&&!stationConsent)}>Сохранить точку</button>
+          <button type="button" className="btn ghost" onClick={()=>setStationId('')}>Отменить</button></div>
+      </form>}
     </section>
     {queue.error&&<p role="alert">{queue.error} <button onClick={queue.reload}>Повторить</button></p>}
     <section className="card stack">
