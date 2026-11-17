@@ -5,6 +5,7 @@ import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFiel
 import { BookingRows } from './base.tsx';
 import { DriverRules } from './fleet.tsx';
 import { VehicleServiceApplication, VehicleServiceHistory } from './vehicleServices.tsx';
+import { VehicleOwnerGuide } from './VehicleOwnerGuide.tsx';
 import { native } from '../native.ts';
 import { EcuDiscovery } from './ecuDiscovery.tsx';
 import { insurancePresentation, isOpenInsuranceRequest } from '../insurancePresentation.ts';
@@ -843,7 +844,7 @@ export function Garage() {
   const { me } = useMe();
   const list = useLoad(() => get('/api/vehicles'), []);
   const { busy, run } = useAction();
-  const [form, setForm] = useState({ brand: '', model: '', year: '', plate: '', trailerPlate: '' });
+  const [form, setForm] = useState<VehicleValue & {plate:string;trailerPlate:string}>({ brand: '', model: '', year: '', plate: '', trailerPlate: '' });
   const [driverFor, setDriverFor] = useState<string | null>(null);
   const [driverPhone, setDriverPhone] = useState('+7 ');
   const isDriver = !!me?.owner_id;
@@ -856,10 +857,11 @@ export function Garage() {
   }, []);
 
   async function add() {
-    const r = await run(() => post('/api/vehicles', {
-      brand: form.brand, model: form.model || undefined, year: form.year ? Number(form.year) : undefined,
-      plate: form.plate || undefined, trailerPlate: form.trailerPlate || undefined,
-    }), 'Машина добавлена');
+    const r = await run(() => post('/api/vehicle-reference/vehicles', {
+      category: form.catalogCategory, brandKey: form.catalogBrandKey, modelKey: form.catalogModelKey,
+      year: form.year ? Number(form.year) : undefined,
+      plate: form.plate || undefined, trailerPlate: form.catalogCategory==='trailer'?undefined:(form.trailerPlate || undefined),
+    }), 'Машина добавлена из подтверждённого каталога');
     if (r) { setForm({ brand: '', model: '', year: '', plate: '', trailerPlate: '' }); list.reload(); }
   }
 
@@ -876,13 +878,14 @@ export function Garage() {
       )}
       {!list.data ? <Loading error={list.error} /> : list.data.map((v: any) => (
         <div key={v.id} className="card">
-          <div className="between"><b>{v.brand} {v.model ?? ''}{v.year ? `, ${v.year}` : ''}</b><span className="pill">{v.plate ?? 'без номера'}</span></div>
+          <div className="between"><b>{v.brand} {v.model ?? ''}{v.year ? `, ${v.year}` : ''}</b><span className="pill">{v.catalog_category==='trailer'?'Прицеп / полуприцеп · ':''}{v.plate ?? 'без номера'}</span></div>
+          <VehicleOwnerGuide vehicle={v} />
           {v.trailer_plate && <span className="note">Прицеп {v.trailer_plate}</span>}
           {v.fixed_at && <span className="pill good" style={{ alignSelf: 'flex-start' }}>уточнено мастером · {fmtTime(v.fixed_at)}</span>}
           {seriesHint(v.brand, v.year) && <span className="note" style={{ color: 'var(--accent)' }}>{seriesHint(v.brand, v.year)}</span>}
           <VehicleServiceApplication vehicleId={v.id} onCreated={() => setServiceHistoryVersion(v => v + 1)} />
           <VehicleServiceHistory id={v.id} isDriver={isDriver} refreshVersion={serviceHistoryVersion} />
-          <VehicleHistory id={v.id} />
+          <VehicleHistory id={v.id} isDriver={isDriver} />
           <a className="btn ghost small" href={`#/shop/history/${v.id}`}>Покупки и запчасти этой машины</a>
           {!isDriver && (driverFor === v.id ? (
             <div className="stack">
@@ -908,13 +911,13 @@ export function Garage() {
       {!isDriver && (
         <form className="card" onSubmit={(e) => { e.preventDefault(); add(); }}>
           <b>Добавить машину</b>
-          <VehicleFields value={{ brand: form.brand, model: form.model, year: form.year }} onChange={(v) => setForm({ ...form, ...v })} />
+          <VehicleFields value={form} onChange={(v) => setForm((prev) => ({ ...prev, ...v }))} />
           <div className="grid2">
-            <input className="field" placeholder="Госномер тягача" value={form.plate} onChange={(e) => setForm({ ...form, plate: e.target.value })} />
-            <input className="field" placeholder="Прицеп" value={form.trailerPlate} onChange={(e) => setForm({ ...form, trailerPlate: e.target.value })} />
+            <input className="field" placeholder={form.catalogCategory==='trailer'?'Госномер прицепа / полуприцепа':'Госномер тягача'} value={form.plate} onChange={(e) => setForm({ ...form, plate: e.target.value })} />
+            {form.catalogCategory!=='trailer'&&<input className="field" placeholder="Номер связанного прицепа (необязательно)" value={form.trailerPlate} onChange={(e) => setForm({ ...form, trailerPlate: e.target.value })} />}
           </div>
           <span className="note">Год влияет на подбор мастера: у разных поколений своя электрика.</span>
-          <button className="btn" disabled={busy || !form.brand}>Сохранить</button>
+          <button className="btn" disabled={busy || !form.catalogBrandKey || !form.catalogModelKey}>Сохранить</button>
         </form>
       )}
     </main>
@@ -922,15 +925,19 @@ export function Garage() {
 }
 
 /** История машины: что и когда делали, комментарий мастера. Свёрнута, раскрывается по нажатию. */
-function VehicleHistory({ id }: { id: string }) {
+function VehicleHistory({ id, isDriver }: { id: string; isDriver: boolean }) {
   const [open, setOpen] = useState(false);
   const h = useLoad(() => get(`/api/vehicles/${id}/history`), [id], (e) => e.type === 'order');
   const d = h.data;
   if (!d) return null;
-  if (!d.items.length) return <span className="note">История пока пустая — здесь будут все вызовы по этой машине и что делали мастера.</span>;
+  const finance=isDriver?null:<details className="vehicle-finance-summary"><summary className="linkrow" style={{cursor:'pointer'}}>Финансы по этой технике</summary>
+    <div className="card stack"><b>Суммы завершённых заявок TrakSOS: {rub(d.summary.spent??0)}</b>
+    <span className="note">Показаны только суммы, связанные с историей заявок этой техники в TrakSOS. Внешние расходы, покупки вне платформы и неподтверждённые платежи сюда не включены.</span></div></details>;
+  if (!d.items.length) return <div className="stack">{finance}<span className="note">История пока пустая — здесь будут обращения и ремонты по этой машине.</span></div>;
   const last = d.summary.lastAt ? fmtTime(d.summary.lastAt) : '';
   return (
     <div className="stack" style={{ gap: 8 }}>
+      {finance}
       <button type="button" className="linkrow" onClick={() => setOpen(!open)} aria-expanded={open}>
         <span><b>История · {d.summary.total} {d.summary.total === 1 ? 'обращение' : d.summary.total < 5 ? 'обращения' : 'обращений'}</b>
           <small>последнее {last}{d.summary.spent != null && d.summary.spent > 0 ? ` · всего ${rub(d.summary.spent)}` : ''}</small></span>
