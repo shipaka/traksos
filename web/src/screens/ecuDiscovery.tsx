@@ -22,7 +22,7 @@ export function EcuDiscovery({place}:EcuDiscoveryProps){
       </svg>
     </div>
     <div className="ecu-discovery__copy">
-      <span className="ecu-discovery__label">{sos?'ОТДЕЛЬНАЯ СПЕЦИАЛИЗАЦИЯ':'ДОПОЛНИТЕЛЬНАЯ ВОЗМОЖНОСТЬ TRACKSOS'}</span>
+      <span className="ecu-discovery__label">{sos?'ОТДЕЛЬНАЯ СПЕЦИАЛИЗАЦИЯ':'ДОПОЛНИТЕЛЬНАЯ ВОЗМОЖНОСТЬ TrakSOS'}</span>
       <h2>Специалист по ЭБУ</h2>
       <p>Диагностика, программирование и восстановление электронных блоков грузовиков.
         Не заменяет обычного диагноста: здесь работают с самим блоком управления.</p>
