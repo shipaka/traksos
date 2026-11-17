@@ -282,7 +282,7 @@ export class OrdersService {
     const kind = performerKindFor(order.service);
     const list = await this.db.query<Candidate>(
       `select p.user_id, p.kind, p.specialties, p.brands, p.is_priority, p.paused, p.line_status, p.verification,
-              p.lat, p.lng, u.rating, p.accepts_group, u.status as user_status, p.schedule, p.off_schedule_until, p.extras,
+              p.lat, p.lng, p.prep_minutes, u.rating, p.accepts_group, u.status as user_status, p.schedule, p.off_schedule_until, p.extras,
               (select coalesce(-sum(amount),0)::int from ledger_entries l
                 where l.performer_id = p.user_id and l.kind in ('cash_commission','cash_commission_paid')) as cash_debt
          from performer_profiles p join users u on u.id = p.user_id
@@ -291,18 +291,25 @@ export class OrdersService {
       [kind, order.client_id],
     );
     const already = await this.db.query<{ performer_id: string }>('select performer_id from order_dispatch where order_id=$1', [orderId]);
+    const stage=this.auction.stages(order,all.dispatch)?.[0]??null;
     const ranked = rankCandidates(order as any, list, {
-      radiusKm: all.dispatch.radiusKm,
+      radiusKm: stage?.radiusKm??all.dispatch.radiusKm,
       maxCandidates: all.dispatch.maxCandidates,
       cashDebtLimit: all.fees.cashDebtLimit, now: this.now(),
       exclude: new Set([...exclude, ...already.map((a) => a.performer_id), order.created_by, ...(await this.blockedBy(order.client_id))]),
     });
-    if (!ranked.length) return this.auction.start(orderId, exclude);
+    const eligible=await this.auction.stagedCandidates(order,list,ranked,stage);
+    if (!eligible.length) return this.auction.start(orderId, exclude);
     const base = already.length;
-    for (const [i, r] of ranked.entries()) {
+    for (const [i, r] of eligible.entries()) {
       await this.enlist(r.user_id,
-        `insert into order_dispatch(order_id, performer_id, rank, distance_km) values ($1,$2,$3,$4) on conflict do nothing`,
-        [orderId, r.user_id, base + i, r.distanceKm]);
+        stage ?
+          `insert into order_dispatch(order_id,performer_id,rank,distance_km,road_eta_minutes)
+           select $1,$2,$3,$4,$5 from orders where id=$1 and status='searching'
+           on conflict do nothing`:
+          `insert into order_dispatch(order_id, performer_id, rank, distance_km) values ($1,$2,$3,$4) on conflict do nothing`,
+        stage?[orderId,r.user_id,base+i,r.distanceKm,r.roadEtaMinutes]:
+          [orderId,r.user_id,base+i,r.distanceKm]);
     }
     await this.db.query('update orders set dispatch_started_at = coalesce(dispatch_started_at, now()) where id=$1', [orderId]);
     await this.event(this.db, orderId, null, 'dispatch_started', { candidates: ranked.length });
@@ -681,7 +688,7 @@ export class OrdersService {
   async retry(user: AuthUser, orderId: string) {
     const o = await this.mustBeClient(user, orderId);
     transition(o.status, 'retry', 'client');
-    await this.guarded(this.db, `update orders set status='searching', auction_until=null where id=$1 and status='no_performer'`, [orderId]);
+    await this.guarded(this.db, `update orders set status='searching', auction_until=null, sos_dispatch_stage=0 where id=$1 and status='no_performer'`, [orderId]);
     await this.db.query(`delete from order_dispatch where order_id=$1`, [orderId]);
     await this.db.query(`update bids set status='withdrawn' where order_id=$1 and status='active'`, [orderId]);
     await this.event(this.db, orderId, user.id, 'retry', {});
@@ -793,6 +800,13 @@ export class OrdersService {
     const caseConfirmedTotal = caseRows.filter((step: any) => step.status === 'completed')
       .reduce((sum: number, step: any) => sum + this.money(step).total, 0)
       + caseServiceStages.reduce((sum: number, stage: any) => sum + (stage.confirmedTotal ?? 0), 0);
+    const dispatchSettings = o.status === 'searching' ? await this.settings.get('dispatch') : null;
+    const searchStages = dispatchSettings ? this.auction.stages(o,dispatchSettings) : null;
+    const searchStage = searchStages ? {
+      wave: Math.min(Number(o.sos_dispatch_stage??0)+1,searchStages.length),
+      waves: searchStages.length, verifiedRoadEta: true,
+      maxRoadEtaMinutes: searchStages[Math.min(Number(o.sos_dispatch_stage??0),searchStages.length-1)].maxRoadEtaMinutes,
+    } : null;
     const search = o.status === 'searching'
       ? await this.db.one<{ candidates: number; offers: number }>(
           `select (select count(*)::int from order_dispatch where order_id=$1 and status in ('bidding','ringing','queued')) as candidates,
@@ -803,7 +817,7 @@ export class OrdersService {
       service: o.service, isSos: o.is_sos, problem: o.problem, description: o.description,
       address: o.address, lat: o.lat, lng: o.lng, zoneId: o.zone_id, night: o.night, groupTrip: o.group_trip, tier: o.tier,
       brand: o.brand, model: o.model, year: o.year, vehicleId: o.vehicle_id, vehicle, estimate: o.estimate, paymentMethod: o.payment_method,
-      auction: o.status === 'searching' && !!o.auction_until, auctionUntil: o.auction_until, autoPick: o.auto_pick, search,
+      auction: o.status === 'searching' && !!o.auction_until, auctionUntil: o.auction_until, autoPick: o.auto_pick, search, searchStage,
       limits: o.status === 'searching' ? this.auction.limits(o, (await this.settings.get('dispatch'))) : null,
       destination: o.destination, cargo: o.cargo, loaded: o.loaded, driverOnSite: o.driver_on_site, discountReason: o.discount_reason,
       money: this.money(o), result: o.result, resultNote: o.result_note,
@@ -873,14 +887,14 @@ export class OrdersService {
    * Поставить исполнителя в звонки/торги заявки — под блокировкой исполнителя, той же, что при выборе.
    * Если он в этот миг взял другую заявку или ушёл с линии — не ставим. false — не поставлен.
    */
-  async enlist(performerId: string, sql: string, params: unknown[]) {
+  async enlist(performerId: string, sql: string, params: unknown[], requireInserted = false) {
     return this.db.tx(async (q) => {
       const p = await q.one<{ line_status: string; paused: boolean }>(
         'select line_status, paused from performer_profiles where user_id=$1 for update', [performerId]);
       if (!p || p.paused || p.line_status === 'offline' || p.line_status === 'on_job') return false;
       if (await this.busyWith(q, performerId, null)) return false;
-      await q.query(sql, params);
-      return true;
+      const rows=await q.query(sql, params);
+      return !requireInserted || rows.length>0;
     });
   }
 
