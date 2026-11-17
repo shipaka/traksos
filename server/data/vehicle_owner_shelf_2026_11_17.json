@@ -482,6 +482,18 @@
       "license": "CC BY-SA 3.0",
       "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
       "checkedOn": "2026-11-17"
+    },
+    {
+      "category": "truck",
+      "makeKey": "sitrak",
+      "modelKey": "c7h",
+      "match": "family",
+      "label": "SITRAK C7H, грузовик модельного семейства",
+      "file": "Sitrak C7H IMG001.jpg",
+      "author": "Anonymousfox36",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "checkedOn": "2026-11-17"
     }
   ],
   "guides": [
