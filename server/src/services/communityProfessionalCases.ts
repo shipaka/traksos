@@ -58,7 +58,7 @@ async function access(db:Db,u:AuthUser,roomId:string,write=false){
   }
   return room;
 }
-async function openCase(db:Db,c:AuthedCtx,write=false){
+export async function openCase(db:Db,c:AuthedCtx,write=false){
   const id=parse(uid,c.params.id);
   const row=await db.one<CaseRow>('select * from community_technical_cases where id=$1',[id]);
   if(!row)throw notFound('Техническая карточка не найдена');
