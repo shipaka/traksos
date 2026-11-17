@@ -19,21 +19,28 @@ type Discrepancy={id:string;stop_id:string;line_index:number;kind:string;note:st
   observed_article:string;observed_qty:number;reported_at:Date;status:string};
 type Trace={stop_id:string;line_index:number;article_snapshot:string;qty_snapshot:number;
   gtin:string;lot:string|null;serials:string[];input_method:string;recorded_at:Date};
+type TraceReceiptAllocation={stop_id:string;line_index:number;allocated_qty:number;
+  receipt_id:string;recorded_at:Date;receipt_status:string;receipt_order_id:string;
+  stop_order_id:string;product_id:string;expected_article:string;
+  supplier_article:string|null;supplier_verified:boolean|null;
+  observed_article:string;observed_qty:number;condition:string;
+  inspected_at:Date|null;accepted_at:Date|null};
 type WarehouseLine={index:number;name:string;brand:string|null;article:string|null;
   quantity:number;verified:boolean;method:string|null;checkedAt:Date|null;blockedReason:string|null;
+  supplierSourceVerified:boolean;supplierSourceCount:number;
   recheckedAfterDiscrepancy:boolean;traceabilityVerified:boolean;
   trace:{gtin:string;lot:string|null;serials:string[];method:string;recordedAt:Date}|null;
   openDiscrepancy:{id:string;kind:string;note:string;observedArticle:string;
     observedQty:number;reportedAt:Date}|null};
 type WarehouseStop={id:string;orderNumber:number;status:string;lines:WarehouseLine[]};
-type Run={id:string;status:string;packing_required:boolean;traceability_required:boolean;dispatch_approved_at:Date|null};
+type Run={id:string;status:string;packing_required:boolean;traceability_required:boolean;supplier_receipt_required:boolean;dispatch_approved_at:Date|null};
 
 /** No checkout amount, price, client identity, address, phone or GPS leaves this service. */
 export async function warehouseProgress(q:Queryable,runId:string){
   const run=await q.one<Run>(
-    'select id,status,packing_required,traceability_required,dispatch_approved_at from shop_courier_runs where id=$1',[runId]);
+    'select id,status,packing_required,traceability_required,supplier_receipt_required,dispatch_approved_at from shop_courier_runs where id=$1',[runId]);
   if(!run)throw notFound('Рейс не найден');
-  const [stops,checks,exceptions,traces]=await Promise.all([
+  const [stops,checks,exceptions,traces,allocations]=await Promise.all([
     q.query<Stop>(
       'select s.id as stop_id,s.shop_order_id,o.number,o.items,s.status '+
       'from shop_courier_stops s join shop_orders o on o.id=s.shop_order_id '+
@@ -48,11 +55,29 @@ export async function warehouseProgress(q:Queryable,runId:string){
       "where s.run_id=$1 and d.status='open'",[runId]),
     q.query<Trace>(
       'select t.* from shop_warehouse_line_traces t '+
-      'join shop_courier_stops s on s.id=t.stop_id where s.run_id=$1',[runId])
+      'join shop_courier_stops s on s.id=t.stop_id where s.run_id=$1',[runId]),
+    q.query<TraceReceiptAllocation>(`
+      select a.stop_id,a.line_index,a.allocated_qty,a.receipt_id,a.recorded_at,
+        r.status as receipt_status,r.shop_order_id as receipt_order_id,
+        s.shop_order_id as stop_order_id,l.product_id,l.expected_article,
+        sr.supplier_article,sr.verified as supplier_verified,
+        l.observed_article,l.observed_qty,l.condition,l.inspected_at,r.accepted_at
+      from shop_warehouse_trace_receipt_allocations a
+      join shop_courier_stops s on s.id=a.stop_id
+      join shop_supplier_receipts r on r.id=a.receipt_id
+      join shop_supplier_receipt_lines l on l.receipt_id=a.receipt_id
+        and l.line_index=a.line_index
+      left join shop_supplier_refs sr on sr.product_id=l.product_id
+      where s.run_id=$1`,[runId])
   ]);
   const checked=new Map(checks.map(c=>[c.stop_id+':'+c.line_index,c]));
   const open=new Map(exceptions.map(d=>[d.stop_id+':'+d.line_index,d]));
   const traced=new Map(traces.map(t=>[t.stop_id+':'+t.line_index,t]));
+  const sourced=new Map<string,TraceReceiptAllocation[]>();
+  for(const allocation of allocations){
+    const key=allocation.stop_id+':'+allocation.line_index;
+    sourced.set(key,[...(sourced.get(key)??[]),allocation]);
+  }
   let remaining=0,total=0;
   const output:WarehouseStop[]=stops.map(st=>{
     const raw=Array.isArray(st.items)?st.items:[] as any[];
@@ -63,6 +88,7 @@ export async function warehouseProgress(q:Queryable,runId:string){
       const confirmed=checked.get(st.stop_id+':'+index);
       const discrepancy=open.get(st.stop_id+':'+index);
       const recorded=traced.get(st.stop_id+':'+index);
+      const sourceRows=sourced.get(st.stop_id+':'+index)??[];
       const recheckedAfterDiscrepancy=Boolean(expected&&discrepancy&&confirmed&&
         key(confirmed.checked_article)===key(article!)&&confirmed.checked_qty===qty&&
         confirmed.checked_at>discrepancy.reported_at);
@@ -71,10 +97,26 @@ export async function warehouseProgress(q:Queryable,runId:string){
       const traceabilityVerified=Boolean(verified&&recorded&&confirmed&&
         key(recorded.article_snapshot)===key(article!)&&recorded.qty_snapshot===qty&&
         recorded.recorded_at>=confirmed.checked_at);
-      if(!verified||(run.traceability_required&&!traceabilityVerified))remaining++;
+      const itemProductId=String(item.productId??'');
+      const sourceCount=sourceRows.reduce((n,row)=>n+row.allocated_qty,0);
+      const supplierSourceVerified=Boolean(traceabilityVerified&&sourceRows.length&&
+        sourceCount===qty&&sourceRows.every(row=>
+          row.receipt_status==='accepted'&&row.accepted_at!==null&&
+          row.inspected_at!==null&&row.receipt_order_id===st.shop_order_id&&
+          row.stop_order_id===st.shop_order_id&&
+          row.product_id===itemProductId&&row.condition==='intact'&&
+          row.supplier_verified===true&&row.supplier_article!==null&&
+          key(row.expected_article)===key(row.supplier_article)&&
+          key(row.observed_article)===key(row.expected_article)&&
+          row.observed_qty>=row.allocated_qty&&recorded!==undefined&&
+          row.recorded_at>=recorded.recorded_at));
+      if(!verified||(run.traceability_required&&!traceabilityVerified)||
+        (run.traceability_required&&run.supplier_receipt_required&&!supplierSourceVerified))
+        remaining++;
       total++;
       return {index,name:String(item.name??'Товар'),brand:item.brand??null,
         article,quantity:qty,verified,recheckedAfterDiscrepancy,traceabilityVerified,
+        supplierSourceVerified,supplierSourceCount:sourceCount,
         trace:recorded?{
           gtin:recorded.gtin,lot:recorded.lot,serials:recorded.serials,
           method:recorded.input_method,recordedAt:recorded.recorded_at
@@ -90,18 +132,22 @@ export async function warehouseProgress(q:Queryable,runId:string){
           !expected?'Не указан пригодный артикул или количество в заказе':
           !verified?'Требуется физическая сверка артикула и количества':
           run.traceability_required&&!traceabilityVerified?
-            'Нужны проверенный GTIN и партия или серии всех единиц':null};
+            'Нужны проверенный GTIN и партия или серии всех единиц':
+          run.traceability_required&&run.supplier_receipt_required&&!supplierSourceVerified?
+            'Нужно связать всю маркированную партию с действующими принятыми накладными':null};
     });
     if(!Array.isArray(st.items)||lines.length===0)remaining++;
     return {id:st.stop_id,orderNumber:st.number,status:st.status,lines};
   });
   return {runId,packingRequired:run.packing_required,
-    traceabilityRequired:run.traceability_required,runStatus:run.status,
+    traceabilityRequired:run.traceability_required,
+    supplierSourceRequired:run.traceability_required&&run.supplier_receipt_required,
+    runStatus:run.status,
     dispatchApproved:Boolean(run.dispatch_approved_at),stops:output,
     totalLines:total,remainingLines:remaining,
     openDiscrepancies:exceptions.length,
     ready:stops.length>0&&total>0&&remaining===0&&exceptions.length===0,
-    warning:'Проверка GTIN подтверждает только контрольную цифру GS1 и записанную маркировку: она НЕ подтверждает подлинность производителя, сопоставление с поставщиком, применяемость к VIN или содержимое коробки.'};
+    warning:'Приёмка и связь с накладной записаны человеком. Даже совместная сверка GTIN и строки поставщика не подтверждает подлинность, соответствие серий поставщику или применяемость к VIN.'};
 }
 
 export function registerShopWarehouseRoutes(r:Router,db:Db){
