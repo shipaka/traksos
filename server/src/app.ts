@@ -35,6 +35,7 @@ import { VehicleServiceRequests } from './services/vehicleServiceRequests.ts';
 import { PartnerFinance } from './services/partnerFinance.ts';
 import { InsuranceQuoteFlow } from './services/insuranceQuoteFlow.ts';
 import { PrivacyService } from './services/privacy.ts';
+import { registerVehicleReferenceRoutes } from './http/vehicleReferenceRoutes.ts';
 import { StandingService } from './services/standing.ts';
 import { registerPartnerLevelRoutes } from './services/partnerLevels.ts';
 import { registerPartnerActivityRoutes } from './services/partnerActivity.ts';
@@ -142,6 +143,7 @@ export function createApp(d: Deps) {
   centers.onDispute = (p) => moderation.open({ kind: 'dispute', title: p.title, text: p.text, openedBy: p.userId, targetId: p.targetId, bookingId: p.bookingId, ticketId: p.ticketId, priority: 1 });
 
   const r = new Router();
+  registerVehicleReferenceRoutes(r,d.db,settings,now);
   registerPartnerLevelRoutes(r, d.db, now);
   registerPartnerActivityRoutes(r,d.db,now);
   // Put /knowledge/references before /knowledge/:id in Router's first-match order.
