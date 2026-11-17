@@ -1,0 +1,47 @@
+name: TrackSOS — проверка Docker-образа для песочницы
+
+# After the main-branch Docker image has been published, test that exact tag
+# against a disposable, isolated PostgreSQL database on a GitHub-hosted runner.
+# NEVER touches the VPS. An independent restricted deployment path comes later.
+on:
+  workflow_run:
+    workflows: ['Образ сервера']
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+concurrency:
+  group: traksos-sandbox-candidate-${{ github.event.workflow_run.head_sha || github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  sandbox-candidate:
+    if: >-
+      ${{ (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+          (github.event_name == 'workflow_run' &&
+           github.event.workflow_run.conclusion == 'success' &&
+           github.event.workflow_run.head_branch == 'main') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exactly the published candidate source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
+      - name: Log in to GHCR using Actions token (no user PAT)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify image in a disposable and isolated sandbox
+        shell: bash
+        env:
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+        run: |
+          set -Eeuo pipefail
+          bash deploy/automation/ci-sandbox-image-check.sh "$RELEASE_SHA"
