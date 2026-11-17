@@ -11,6 +11,7 @@ import { YooKassaProvider } from './payments/yookassa.ts';
 import { staticHandler } from './http/static.ts';
 import { PublicWeatherService } from './services/publicWeather.ts';
 import { attachRealtimeGateway } from './realtime/gateway.ts';
+import { pruneCommunityEvents } from './services/communityEventRetention.ts';
 
 const db = await createDb(config.databaseUrl);
 const applied = await migrate(db);
