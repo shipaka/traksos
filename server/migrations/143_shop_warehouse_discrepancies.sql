@@ -3,7 +3,9 @@
 -- Older courier runs and existing warehouse checks remain untouched.
 create table if not exists shop_warehouse_discrepancies (
   id uuid primary key default gen_random_uuid(),
-  stop_id uuid not null references shop_courier_stops(id) on delete cascade,
+  run_id uuid not null references shop_courier_runs(id) on delete cascade,
+  stop_id uuid references shop_courier_stops(id) on delete set null,
+  order_number int not null,
   line_index int not null check(line_index between 0 and 499),
   kind text not null check(kind in
     ('wrong_article','shortage','surplus','damaged','seal_broken','other')),
@@ -28,4 +30,4 @@ create table if not exists shop_warehouse_discrepancies (
 create unique index if not exists shop_warehouse_one_open_discrepancy_per_line
   on shop_warehouse_discrepancies(stop_id,line_index) where status='open';
 create index if not exists shop_warehouse_discrepancy_time
-  on shop_warehouse_discrepancies(stop_id,reported_at desc);
+  on shop_warehouse_discrepancies(run_id,reported_at desc);
