@@ -205,6 +205,7 @@ await k.locator('.agree input').check();
 await shot(k, '04-client-new-order');
 await k.getByRole('button', { name: 'Вызвать мастера' }).click();
 await k.waitForURL(/order\//);
+await k.getByRole('button', { name: 'Отменить заявку' }).waitFor({ timeout: 10000 });
 await k.locator('.radar').waitFor();
 await k.waitForTimeout(1500);
 await shot(k, '05-client-searching');
