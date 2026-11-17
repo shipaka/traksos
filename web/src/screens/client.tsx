@@ -380,7 +380,11 @@ export function NewOrder({ service }: { service: string }) {
   const consult = useLoad(() => (fromConsult ? get(`/api/orders/${fromConsult}`) : Promise.resolve(null)), [fromConsult]);
   const [agree, setAgree] = useState(false);
 
-  const [zoneId, setZoneId] = useState('spb');
+  // A region is not a tariff zone. Neither GPS nor IP must silently assign
+  // the Petersburg call-out price to another part of the country.
+  const [regionId, setRegionId] = useState<'' | 'spb' | 'lo' | 'other'>('');
+  const [zoneId, setZoneId] = useState('');
+  const [coverageError, setCoverageError] = useState('');
   const [tier, setTier] = useState<'eco' | 'comfort' | 'pro'>(service === 'diag' ? 'pro' : 'eco');
   const [night, setNight] = useState<boolean | null>(null);
   const [group, setGroup] = useState(false);
@@ -398,6 +402,7 @@ export function NewOrder({ service }: { service: string }) {
   const [loaded, setLoaded] = useState<'empty' | 'loaded' | 'adr'>('empty');
   const [driverOnSite, setDriverOnSite] = useState(true);
   const isTow = service === 'tow';
+  const isConsult = service === 'consult';
 
   useEffect(() => {
     if (pricing.data && night === null) setNight(pricing.data.nightNow);
@@ -413,9 +418,23 @@ export function NewOrder({ service }: { service: string }) {
     if (!c.vehicle && c.brand) { setVehicleId(''); setCar({ brand: c.brand, model: c.model ?? '', year: c.year ? String(c.year) : '' }); }
   }, [consult.data]); // eslint-disable-line
   useEffect(() => {
-    if (night === null) return;
-    post('/api/pricing/estimate', { service, tier, zoneId, night, group }).then(setEst).catch(() => setEst(null));
-  }, [service, tier, zoneId, night, group]);
+    // Cancel stale previews when the declared region, address or GPS changes.
+    // A delayed response must never restore an older SPb estimate.
+    let active = true;
+    setEst(null);
+    setCoverageError('');
+    if (night === null || (!isConsult && (!regionId || regionId === 'other' || !zoneId))) return;
+    const timer = window.setTimeout(() => {
+      post('/api/pricing/estimate', {
+        service, tier, regionId: regionId || undefined, zoneId: zoneId || 'phone',
+        night, group, address: address || undefined, lat: geo?.lat, lng: geo?.lng,
+      }).then(price => { if (active) setEst(price); })
+        .catch(error => {
+          if (active) { setEst(null); setCoverageError(error?.message || 'Не удалось проверить регион и тарифную зону'); }
+        });
+    }, 250);
+    return () => { active = false; window.clearTimeout(timer); };
+  }, [service, tier, regionId, zoneId, night, group, address, geo?.lat, geo?.lng]);
 
   function locate() {
     if (!navigator.geolocation) return setGeoState('fail');
@@ -426,16 +445,22 @@ export function NewOrder({ service }: { service: string }) {
       { enableHighAccuracy: true, timeout: 15_000 },
     );
   }
-  useEffect(locate, []);
+  // Location sharing is optional and user-initiated: an automatically
+  // acquired point may be the *person's* position, not a remote truck's.
 
-  const zone = pricing.data?.zones.find((z: any) => z.id === zoneId);
-  const groupAllowed = service !== 'tow' && (zone?.km ?? 0) > 30;
+  const zones = (pricing.data?.zones ?? []).filter((z: any) =>
+    regionId === 'spb' ? z.id === 'spb'
+      : regionId === 'lo' ? z.id !== 'spb'
+        : false);
+  const zone = zones.find((z: any) => z.id === zoneId);
+  const groupAllowed = service !== 'tow' && !!zone && zone.km > 30;
   const methods = pricing.data?.payments;
 
   async function submit() {
     const r = await run(() => post('/api/orders', {
       service, isSos: !!sos, problem: sos?.id, description: description || undefined, address: address || undefined,
-      lat: geo?.lat, lng: geo?.lng, zoneId, tier: service === 'tow' ? undefined : tier, vehicleId: vehicleId || undefined,
+      lat: geo?.lat, lng: geo?.lng, regionId: regionId || undefined, zoneId: zoneId || 'phone',
+      tier: service === 'tow' ? undefined : tier, vehicleId: vehicleId || undefined,
       ...carBody(vehicleId, car), groupTrip: groupAllowed && group, night: night ?? undefined, paymentMethod: method,
       ...(isTow ? { destination: destination || undefined, cargo, loaded, driverOnSite } : {}),
       fromConsult: fromConsult || undefined,
@@ -455,6 +480,10 @@ export function NewOrder({ service }: { service: string }) {
     tow: !isTow || destination.trim().length >= 3,
   };
   const missing = [
+    !isConsult && !regionId && { id: 'f-where', name: 'регион' },
+    !isConsult && regionId !== 'other' && !zoneId && { id: 'f-where', name: 'тарифная зона' },
+    !isConsult && regionId === 'other' && { id: 'f-where', name: 'индивидуальное согласование региона' },
+    !est && { id: 'f-where', name: 'проверенная предварительная смета' },
     !need.car && { id: 'f-car', name: 'марка машины' },
     !need.what && { id: 'f-what', name: 'описание задачи' },
     !need.where && { id: 'f-where', name: 'где машина' },
@@ -507,17 +536,54 @@ export function NewOrder({ service }: { service: string }) {
       </Step>
 
       <Step n={3} id="f-where" title={isTow ? 'Откуда забрать' : 'Где машина'} req done={need.where} missing={tried && !need.where}>
-        <input className="field" placeholder="Адрес, стоянка или км трассы" value={address} onChange={(e) => setAddress(e.target.value)} />
+        <input className="field" placeholder="Адрес: регион, населённый пункт, улица или км трассы" value={address} onChange={(e) => setAddress(e.target.value)} />
+        <div className="row">
+          <button type="button" className="chip" onClick={locate} disabled={geoState === 'wait'}>
+            {geoState === 'wait' ? 'Определяем GPS…' : 'Использовать мою GPS-точку'}
+          </button>
+          {geo && <button type="button" className="chip" onClick={() => {
+            setGeo(null); setGeoState('idle');
+          }}>Использовать только адрес</button>}
+        </div>
         <span className="note">
-          {geoState === 'ok' ? '✓ Точка на карте определена — адрес можно не писать' : geoState === 'wait' ? 'Определяю место…' : geoState === 'fail'
+          {geoState === 'ok' ? '✓ GPS-точка указана. Проверьте, что это место машины, а не ваше текущее положение' : geoState === 'wait' ? 'Определяю место…' : geoState === 'fail'
             ? <>Не удалось определить место — напишите адрес. <button type="button" className="chip" style={{ minHeight: 30 }} onClick={locate}>Ещё раз</button></> : null}
         </span>
-        <span className="label">Зона — от неё цена выезда</span>
-        <Chips value={zoneId} onChange={setZoneId} options={pricing.data.zones.map((z: any) => ({ id: z.id, name: z.km > 30 ? `${z.name} · ${z.km} км` : z.name }))} />
-        <div className="grid2">
+        {!isConsult && <>
+          <span className="label">Регион местонахождения машины — выберите вручную</span>
+          <Chips value={regionId} onChange={(value) => {
+            setRegionId(value as 'spb' | 'lo' | 'other');
+            setZoneId(''); setEst(null); setAgree(false);
+          }} options={[
+            { id: 'spb', name: 'Санкт-Петербург' },
+            { id: 'lo', name: 'Ленинградская область' },
+            { id: 'other', name: 'Другой регион' },
+          ]} />
+          {regionId === 'other' ? (
+            <div className="banner warn">
+              Тарифы выезда для других регионов пока не подтверждены. Мы не показываем цены КАД
+              и не создаём платёж. Возможность выезда и полную смету нужно согласовать отдельно.
+              <a href="#/support/new">Запросить индивидуальную помощь</a>
+            </div>
+          ) : regionId ? (
+            <>
+              <span className="label">Тарифная зона — выберите отдельно от региона</span>
+              <Chips value={zoneId} onChange={(value) => {
+                setZoneId(value); setEst(null); setAgree(false);
+              }} options={zones.map((z: any) => ({
+                id: z.id, name: z.km > 30 ? `${z.name} · ${z.km} км` : z.name,
+              }))} />
+              <span className="note">Зона выбирается вручную, а не по IP или GPS. За пределами согласованной зоны стоимость уточняется до заказа.</span>
+            </>
+          ) : (
+            <span className="note">Сначала выберите регион. Сумма выезда не появится, пока не будет указана тарифная зона.</span>
+          )}
+          {coverageError && <div role="alert" className="banner warn">{coverageError}</div>}
+        </>}
+        {regionId !== 'other' && <div className="grid2">
           <button type="button" className="seg" aria-pressed={!night} onClick={() => setNight(false)}>Днём</button>
           <button type="button" className="seg" aria-pressed={!!night} onClick={() => setNight(true)}>Ночь 22–7</button>
-        </div>
+        </div>}
         {groupAllowed && (
           <button type="button" className="opt" aria-pressed={group} onClick={() => setGroup(!group)}>
             <b>{group ? '✓ ' : ''}Совместный выезд</b>
@@ -564,7 +630,7 @@ export function NewOrder({ service }: { service: string }) {
           </div>
         </details>
       )}
-      {!isTow && <MastersNearby service={service} geo={geo} brand={vehicles.data?.find((v: any) => v.id === vehicleId)?.brand ?? car.brand} />}
+      {!isTow && regionId !== 'other' && <MastersNearby service={service} geo={geo} brand={vehicles.data?.find((v: any) => v.id === vehicleId)?.brand ?? car.brand} />}
 
       {isTow ? (
         <Step n={4} id="f-tow" title="Куда и что везём" req done={need.tow} missing={tried && !need.tow}>
@@ -588,7 +654,7 @@ export function NewOrder({ service }: { service: string }) {
         </Step>
       )}
 
-      <Step n={isTow ? 5 : 6} id="f-pay" title="Оплата" done>
+      {regionId !== 'other' && <Step n={isTow ? 5 : 6} id="f-pay" title="Оплата" done>
         <div className="grid2">
           <button type="button" className="seg" aria-pressed={method === 'cash'} onClick={() => setMethod('cash')}>Мастеру на месте</button>
           <button type="button" className="seg" aria-pressed={method === 'online'} disabled={!methods?.online} onClick={() => setMethod('online')}>СБП / карта</button>
@@ -596,10 +662,13 @@ export function NewOrder({ service }: { service: string }) {
         {methods?.invoice && <button type="button" className="seg" aria-pressed={method === 'invoice'} onClick={() => setMethod('invoice')}>Счёт на компанию</button>}
         {!methods?.online && <span className="note">Оплата в приложении скоро появится. Пока — наличными или переводом мастеру, сумму подтверждаете здесь.</span>}
         {method === 'online' && <span className="note">Выезд оплачивается сейчас и замораживается. Мастеру деньги уйдут после того, как вы подтвердите работу.</span>}
-      </Step>
+      </Step>}
 
       {est && (
         <div className={`card hi ${tried && !agree ? 'missing' : ''}`} id="f-agree">
+          {est.provisional && <div role="note" className="banner warn">
+            {est.coverageNote || 'Предварительная смета. Проверим фактический адрес и согласуем стоимость до выезда.'}
+          </div>}
           <span className="label" style={{ color: 'var(--accent)' }}>{isTow ? 6 : 7} · Проверьте перед вызовом</span>
           <div className="sum"><span>{isTow ? 'Обычная цена перевозки' : 'Вызов специалиста · выезд'}{est.km ? <small className="note" style={{ display: 'block' }}>{est.roadKm} км: туда и половина обратно</small> : null}</span><b>{rub(est.callOut)}</b></div>
           {est.hour != null && <>
@@ -624,9 +693,10 @@ export function NewOrder({ service }: { service: string }) {
         </div>
       )}
 
-      <CallBar busy={busy} missing={missing} price={est ? `${isTow ? 'перевозка от' : 'выезд'} ${rub(est.callOut)}` : ''}
+      {regionId !== 'other' && <CallBar busy={busy} missing={missing}
+        price={est ? `предварительно: ${isTow ? 'перевозка' : 'выезд'} ${rub(est.callOut)}` : ''}
         label={isTow ? 'Вызвать эвакуатор' : 'Вызвать мастера'}
-        onGo={() => { setTried(true); if (missing.length) jump(missing[0].id); else submit(); }} />
+        onGo={() => { setTried(true); if (missing.length) jump(missing[0].id); else submit(); }} />}
     </main>
   );
 }

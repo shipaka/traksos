@@ -78,6 +78,7 @@ jobs:
           node e2e/offline.mjs
           SHOTS_DIR=e2e/shots/premium-unified-client node e2e/premium-unified-client.mjs
           node e2e/flow.mjs e2e/shots
+          node e2e/sos-regional-pricing.mjs e2e/shots
           node e2e/archived-order-chat.mjs e2e/shots
           node e2e/client-order-sections.mjs e2e/shots
           node e2e/performer-request-settings.mjs e2e/shots
