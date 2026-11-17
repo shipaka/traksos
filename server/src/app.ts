@@ -39,6 +39,7 @@ import { PrivacyService } from './services/privacy.ts';
 import { StandingService } from './services/standing.ts';
 import { ShopService } from './services/shop.ts';
 import { ShopAgencyLedger } from './services/shopAgencyLedger.ts';
+import { ShopAgencyBankReconciliation } from './services/shopAgencyBankReconciliation.ts';
 import { ShopCatalogService } from './services/shopCatalog.ts';
 import { ModerationService } from './services/moderation.ts';
 import { WarrantyClaimsService } from './services/warranty.ts';
@@ -102,6 +103,7 @@ export function createApp(d: Deps) {
   const standing = new StandingService(d.db, now, settings);
   const shop = new ShopService(d.db, notifier, settings);
   const agency = new ShopAgencyLedger(d.db);
+  const agencyBank = new ShopAgencyBankReconciliation(d.db);
   const partCatalog = new ShopCatalogService(d.db, settings);
   const moderation = new ModerationService(d.db, notifier, reviews, now, d.sms);
   const warranty = new WarrantyClaimsService(d.db, notifier, now);
@@ -732,6 +734,30 @@ export function createApp(d: Deps) {
     agency.listSnapshots(c.user));
   r.get('/api/admin/agency/snapshots/:id',['admin'],(c:AuthedCtx)=>
     agency.snapshot(c.user,c.params.id));
+  // Normalized *manual* bank CSV. No connection to bank APIs, no accounting postings.
+  r.post('/api/admin/agency/bank/statements',['admin'],(c:AuthedCtx)=>
+    agencyBank.importStatement(c.user,parse(z.object({
+      bankName:z.string().trim().min(2).max(160),
+      accountRef:z.string().trim().min(4).max(100),
+      filename:z.string().trim().min(1).max(180),
+      base64:z.string().min(8).max(650000),
+    }),c.body)));
+  r.get('/api/admin/agency/bank/statements',['admin'],(c:AuthedCtx)=>
+    agencyBank.statements(c.user));
+  r.get('/api/admin/agency/bank/statements/:id/rows',['admin'],(c:AuthedCtx)=>
+    agencyBank.statementRows(c.user,c.params.id));
+  r.get('/api/admin/agency/cases/:id/bank',['admin'],(c:AuthedCtx)=>
+    agencyBank.caseMatches(c.user,c.params.id));
+  r.post('/api/admin/agency/bank/matches',['admin'],(c:AuthedCtx)=>{
+    const b=parse(z.object({
+      rowId:z.string().uuid(),eventId:z.string().uuid(),
+      note:z.string().trim().min(8).max(1000),
+    }),c.body);
+    return agencyBank.match(c.user,b.rowId,b.eventId,b.note);
+  });
+  r.post('/api/admin/agency/bank/matches/:id/retract',['admin'],(c:AuthedCtx)=>
+    agencyBank.retract(c.user,c.params.id,
+      parse(z.object({note:z.string().trim().min(8).max(1000)}),c.body).note));
   r.post('/api/admin/agency/documents', ['admin'], (c:AuthedCtx) =>
     agency.addDocument(c.user,parse(z.object({
       kind:z.enum(['purchase','mandate','handover','agent_report','payment_proof']),

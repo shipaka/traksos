@@ -40,6 +40,15 @@ export function AdminAgencyLedger() {
   const [archiveNote,setArchiveNote]=useState('');
   const [snapshotKey,setSnapshotKey]=useState('');
   const [selected,setSelected]=useState<Row|null>(null);
+  const [bankCase,setBankCase]=useState<Row|null>(null);
+  const [bankName,setBankName]=useState('');
+  const [bankAccountRef,setBankAccountRef]=useState('');
+  const [bankFile,setBankFile]=useState<File|null>(null);
+  const [bankStatements,setBankStatements]=useState<Row[]>([]);
+  const [bankStatement,setBankStatement]=useState<Row|null>(null);
+  const [bankRowFilter,setBankRowFilter]=useState('');
+  const [bankEventId,setBankEventId]=useState('');
+  const [bankNote,setBankNote]=useState('');
   const [company,setCompany]=useState('');
   const [order,setOrder]=useState('');
   const [lineIndex,setLineIndex]=useState('0');
@@ -107,8 +116,11 @@ export function AdminAgencyLedger() {
     setTo(end.toISOString().slice(0,10));
   };
   const getCase=async(id:string)=>{
-    const r=await perform(()=>get('/api/admin/agency/cases/'+encodeURIComponent(id)),'Цепочка доказательств открыта');
-    if(r)setSelected(r);
+    const r=await perform(async()=>({
+      detail:await get('/api/admin/agency/cases/'+encodeURIComponent(id)),
+      bank:await get('/api/admin/agency/cases/'+encodeURIComponent(id)+'/bank'),
+    }),'Цепочка доказательств открыта');
+    if(r){setSelected(r.detail);setBankCase(r.bank);}
   };
   const create=async()=>{
     const r=await perform(()=>post('/api/admin/agency/cases',{
@@ -197,6 +209,50 @@ export function AdminAgencyLedger() {
     const url=URL.createObjectURL(bytes);
     const a=document.createElement('a');a.href=url;a.download='traksos-agency-manifest-'+id+'.json';a.click();
     setTimeout(()=>URL.revokeObjectURL(url),1000);
+  };
+  const loadBankStatements=async()=>{
+    const result=await perform(()=>get('/api/admin/agency/bank/statements'),
+      'Импорты банковских операций обновлены');
+    if(result)setBankStatements(result);
+  };
+  const bankImport=async()=>{
+    if(!bankFile){setError('Выберите нормализованный CSV');return;}
+    if(bankFile.size>450000){setError('CSV более 450 КБ: разбейте выписку');return;}
+    const result=await perform(async()=>post('/api/admin/agency/bank/statements',{
+      bankName,accountRef:bankAccountRef,filename:bankFile.name,
+      base64:await fileBase64(bankFile),
+    }),'CSV архивирован без каких-либо банковских проводок');
+    if(result){
+      await loadBankStatements();
+      await openBankStatement(result.id);
+    }
+  };
+  const openBankStatement=async(id:string)=>{
+    const result=await perform(()=>get('/api/admin/agency/bank/statements/'+encodeURIComponent(id)+'/rows'),
+      'Строки банковского CSV загружены');
+    if(result){setBankStatement(result);setBankRowFilter('');}
+  };
+  const matchBankRow=async(id:string)=>{
+    if(!selected||!bankEventId){setError('Выберите финансовое событие текущего заказа');return;}
+    const result=await perform(()=>post('/api/admin/agency/bank/matches',{
+      rowId:id,eventId:bankEventId,note:bankNote.trim(),
+    }),'Сверка сохранена, предыдущая проверка версии требует обновления');
+    if(result){
+      await getCase(selected.id);
+      if(bankStatement)await openBankStatement(bankStatement.statement.id);
+      await reload();
+    }
+  };
+  const retractBankMatch=async(id:string)=>{
+    if(!selected)return;
+    const result=await perform(()=>post('/api/admin/agency/bank/matches/'+id+'/retract',{
+      note:bankNote.trim(),
+    }),'Старая связь отозвана с сохранением истории');
+    if(result){
+      await getCase(selected.id);
+      if(bankStatement)await openBankStatement(bankStatement.statement.id);
+      await reload();
+    }
   };
   const openProof=async(id:string)=>{
     await perform(async()=>{
@@ -378,6 +434,82 @@ export function AdminAgencyLedger() {
       </div>
       <p className="note">Кнопки фиксируют внутреннюю проверку и не формируют налоговую декларацию. Изменение доказательств автоматически отзывает прежнее подтверждение.</p>
     </div>}
+    <div className="card stack">
+      <b>Сверка банковских операций · внутренний импорт</b>
+      <p className="note">Импорт CSV вручную не означает проверку банком и не создаёт
+        поступление, платёж или налоговое начисление. Для каждого совпадения
+        сначала проверьте оригинал платёжного документа в цепочке заказа.</p>
+      <p className="note">Поддерживается только нормализованный UTF-8 CSV до 1000 строк
+        и 450 КБ. Первая строка строго:
+        <code style={{overflowWrap:'anywhere'}}> transaction_ref;occurred_at;direction;amount_kopecks;note</code>.
+        Направление: in (приход) / out (расход), дата: ISO-8601 с часовым поясом,
+        сумма целым числом копеек. CSV от разных банков автоматически не распознаётся.</p>
+      <div className="grid2">
+        <label>Банк<input className="field" value={bankName}
+          onChange={e=>setBankName(e.target.value)} placeholder="Название банка" /></label>
+        <label>Идентификатор банковского счёта (только админ)<input className="field"
+          value={bankAccountRef} onChange={e=>setBankAccountRef(e.target.value)}
+          placeholder="Уникальный внутренний ID счёта" /></label>
+      </div>
+      <label>Нормализованный CSV<input className="field" type="file"
+        accept=".csv,text/csv" onChange={e=>setBankFile(e.target.files?.[0]||null)}/></label>
+      <div className="row">
+        <button className="btn ghost" disabled={busy||!bankFile||!bankName||!bankAccountRef}
+          onClick={bankImport}>Импортировать без проводок</button>
+        <button className="btn ghost" disabled={busy}
+          onClick={loadBankStatements}>Список импортов</button>
+      </div>
+      {bankStatements.map(item=><div key={item.id} className="row">
+        <div><b>{item.bank_name} · {item.account_ref}</b>
+          <p className="note">{item.filename} · {item.row_count} строк ·
+            SHA-256 {String(item.content_sha256).slice(0,16)}…</p></div>
+        <button className="btn ghost small" disabled={busy}
+          onClick={()=>openBankStatement(item.id)}>Строки</button>
+      </div>)}
+      {bankStatement&&<>
+        <b>Банк: {bankStatement.statement.bank_name} · найдено {bankStatement.rows.length} строк;
+          сопоставлено {bankStatement.matched}, требуют проверки {bankStatement.unmatched}</b>
+        <p className="note">{bankStatement.disclaimer}</p>
+        <input className="field" placeholder="Фильтр по номеру банковской операции"
+          aria-label="Фильтр банковских строк" value={bankRowFilter}
+          onChange={e=>setBankRowFilter(e.target.value)}/>
+        <label>Денежное событие выбранной операции
+          <select className="field" value={bankEventId}
+            onChange={e=>setBankEventId(e.target.value)}>
+            <option value="">Выберите событие</option>
+            {(bankCase?.events||[]).filter((e:Row)=>!e.match_id).map((e:Row)=>
+              <option key={e.event_id} value={e.event_id}>
+                {e.kind} · {rub(Number(e.amount))} · {e.source_ref}
+              </option>)}
+          </select>
+        </label>
+        <label>Основание сверки или отмены (минимум 8 символов)
+          <input className="field" value={bankNote} onChange={e=>setBankNote(e.target.value)}
+            placeholder="Сравнил дату, сумму, реквизит и оригинал документа" /></label>
+        {(bankStatement.rows||[]).filter((r:Row)=>!bankRowFilter||
+          String(r.transaction_ref).toLowerCase().includes(bankRowFilter.toLowerCase()))
+          .slice(0,50).map((r:Row)=><div className="row" key={r.id}>
+            <div><b>{r.transaction_ref} · {r.direction==='in'?'Приход':'Расход'}</b>
+              <p className="note">{rub(Number(r.amount))} · {new Date(r.occurred_at).toLocaleString('ru-RU')}
+                · {r.match_id?'Сопоставлено':'Не сопоставлено'}</p></div>
+            {!r.match_id&&<button className="btn ghost small"
+              disabled={busy||!selected||!bankEventId||bankNote.trim().length<8}
+              onClick={()=>matchBankRow(r.id)}>Сверить</button>}
+          </div>)}
+        {bankStatement.rows.length>50&&<p className="note">
+          В списке показано не более 50 подходящих строк. Для остальных используйте поиск по номеру.</p>}
+      </>}
+      {selected&&bankCase&&<>
+        <b>Банк и выбранный заказ · сопоставлено {bankCase.matched} / {bankCase.events.length}</b>
+        {(bankCase.events||[]).map((e:Row)=><div key={e.event_id} className="row">
+          <div><b>{e.kind} · {rub(Number(e.amount))}</b>
+            <p className="note">{e.source_ref} · {e.match_id?
+              ('Связано: '+e.bank_name+' / '+e.account_ref):'Пока нет банковской связки'}</p></div>
+          {e.match_id&&<button className="btn ghost small" disabled={busy||bankNote.trim().length<8}
+            onClick={()=>retractBankMatch(e.match_id)}>Отозвать связь</button>}
+        </div>)}
+      </>}
+    </div>
     <div className="card stack">
       <div className="row"><b>Архив контрольных снимков</b>
         <button className="btn ghost" onClick={loadSnapshots} disabled={busy}>Показать архив</button></div>
