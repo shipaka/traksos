@@ -8,11 +8,15 @@ import {URL} from 'node:url';
 const files=['server/migrations/133_knowledge_open_reference_seed.sql',
   'server/migrations/140_techbase_ebs_manufacturer_portals.sql'];
 const sql=(await Promise.all(files.map(path=>readFile(path,'utf8')))).join('\n');
-const records=sql.split('\n').map(s=>s.trim()).filter(s=>s.startsWith("('"));
+// A source SQL tuple can span several lines (component suppliers), so
+// detect the start of every slug row and slice until the next slug row.
+const starts=[...sql.matchAll(/^\('([a-z0-9-]+)',/gm)];
+const records=starts.map((match,i)=>sql.slice(match.index,
+  starts[i+1]?.index??sql.length));
 const items=records.map(row=>{
   const slug=row.match(/^\('([^']+)'/u)?.[1];
   const source=[...row.matchAll(/'(https:\/\/[^']+)'/g)].map(m=>m[1])[0];
-  const license=row.match(/'(CC-[A-Za-z0-9.-]+|PUBLIC_DOMAIN|LINK_ONLY)'/)?.[1];
+  const license=row.match(/'(CC0-[A-Za-z0-9.-]+|CC-[A-Za-z0-9.-]+|PUBLIC_DOMAIN|LINK_ONLY)'/)?.[1];
   if(!slug||!source||!license)throw new Error('Incomplete source metadata: '+row.slice(0,90));
   const url=new URL(source);
   const hosts=['commons.wikimedia.org','bodybuilder.scania.com',
