@@ -45,7 +45,7 @@ test('technical OEM links are verified master/service only; ordinary users see s
   const tips=await library.tips(client);
   assert.ok(tips.items.length>=5);
   assert.ok(tips.items.every((t)=>!('url'in t)&&!('rights'in t)));
-  await assert.rejects(library.professional(client),/только специалистам/);
+  await assert.rejects(library.professional(client),/только мастерам и СТО/);
   await assert.rejects(library.professional(master,{category:'passenger'}),/только грузового транспорта/);
   const resource=await library.professional(master,{make:'volvo'});
   assert.ok(resource.links.some((r)=>r.url.startsWith('https://www.volvotrucks')));
