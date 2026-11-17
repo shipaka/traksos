@@ -32,6 +32,23 @@ const login=async(phone,role)=>{
 const admin=await login('+79990000001');
 const client=await login('+79998887571');
 const worker=await login('+79998887572','master');
+// The shared E2E database may have published offers from previous tests.
+// Each synthetic actor must independently accept the CURRENT agreements.
+for (const [actor,audiences] of [
+  [client,['client','privacy']],
+  [worker,['performer','privacy']],
+]) {
+  for (const audience of audiences) {
+    const response=await fetch(BASE+'/api/offers/current/'+audience,{
+      headers:{authorization:'Bearer '+actor.token},
+    });
+    if (response.status===404) continue;
+    assert.equal(response.status,200,'Cannot fetch current '+audience+' agreement');
+    const agreement=await response.json();
+    if (agreement?.id) await api('POST','/api/offers/'+agreement.id+'/accept',
+      {},actor.token);
+  }
+}
 await api('PUT','/api/performer/profile',{
   kind:'master',name:'Checkpoint sandbox test worker',specialties:['electric'],
   taxStatus:'self_employed',inn:'780000000557',
