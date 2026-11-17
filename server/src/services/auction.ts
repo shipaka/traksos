@@ -104,16 +104,15 @@ export class AuctionService {
           ? `insert into order_dispatch(order_id,performer_id,rank,distance_km,status,ring_until,sent_at,road_eta_minutes)
              select $1,$2,$3,$4,'bidding',$5,$6,$7
               from orders where id=$1 and status='searching' and sos_dispatch_stage=$8
-             on conflict (order_id,performer_id) do nothing`
+             on conflict (order_id,performer_id) do nothing returning id`
           : `insert into order_dispatch(order_id, performer_id, rank, distance_km, status, ring_until, sent_at)
              values ($1,$2,$3,$4,'bidding',$5,$6)
              on conflict (order_id, performer_id) do update set status='bidding', ring_until=excluded.ring_until, sent_at=excluded.sent_at`,
         stage?[orderId,r.user_id,100+i,r.distanceKm,until,this.now(),r.roadEtaMinutes,stageIndex]:
-          [orderId,r.user_id,100+i,r.distanceKm,until,this.now()]);
+          [orderId,r.user_id,100+i,r.distanceKm,until,this.now()],!!stage);
       if (ok) invited.push(r);
     }
     await this.orders.event(this.db, orderId, null, 'auction_started', { candidates: invited.length, until, sos: !!order.is_sos, wave: stage?stageIndex+1:null, waves: stages?.length??null });
-    const ids = await this.participants(orderId);
     this.notifier.live([order.client_id, order.created_by], { type: 'order', orderId, status: 'searching', auction: true });
     if (!invited.length) return stage ? undefined : this.finishEmpty(order);
 
@@ -133,11 +132,6 @@ export class AuctionService {
         ttlSeconds: all.dispatch.ringSeconds,
       });
     }
-    void ids;
-  }
-
-  private async participants(orderId: string) {
-    return this.orders.participants(orderId);
   }
 
   /** Отклик исполнителя: price не указана — по обычной цене. Можно поменять, пока клиент не выбрал. */
@@ -293,7 +287,29 @@ export class AuctionService {
     for (const o of due) {
       const rows = await this.rows(o.id, o.brand, null);
       const active = rows.filter((r: any) => r.status === 'active');
-      if (!active.length) { await this.finishEmpty(o); n++; continue; }
+      if (!active.length) {
+        const stages=this.stages(o,all.dispatch);
+        const index=Number(o.sos_dispatch_stage??0);
+        if (stages && index+1 < stages.length) {
+          // Atomic compare-and-set: concurrent timers advance a wave once.
+          // A cancelled order or another tick must never restart dispatch.
+          const next=await this.db.query<{id:string}>(
+            `update orders set sos_dispatch_stage=sos_dispatch_stage+1,auction_until=null
+              where id=$1 and status='searching' and sos_dispatch_stage=$2
+                and auction_until<=$3 returning id`,[o.id,index,this.now()]);
+          if (next.length) {
+            await this.orders.event(this.db,o.id,null,'search_expanded',{
+              wave:index+2,waves:stages.length,maxRoadEtaMinutes:stages[index+1].maxRoadEtaMinutes,
+            });
+            await this.start(o.id);
+            n++;
+          }
+        } else {
+          await this.finishEmpty(o);
+          n++;
+        }
+        continue;
+      }
       if (o.auto_pick) {
         const best = sortOffers(active, 'recommended', this.limits(o, all.dispatch), all.dispatch.weights)[0];
         await this.choose(null, o.id, best.id).catch(() => {});
@@ -304,7 +320,7 @@ export class AuctionService {
   }
 
   private async finishEmpty(order: any) {
-    const r = await this.db.query(`update orders set status='no_performer' where id=$1 and status='searching' returning id`, [order.id]);
+    const r = await this.db.query(`update orders set status='no_performer' where id=$1 and status='searching' and (auction_until is null or auction_until<=$2) returning id`, [order.id,this.now()]);
     if (!r.length) return;
     await this.db.query(`update order_dispatch set status='missed' where order_id=$1 and status='bidding'`, [order.id]);
     await this.orders.event(this.db, order.id, null, 'no_performer', { auction: true });
