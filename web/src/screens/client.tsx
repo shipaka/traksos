@@ -999,7 +999,7 @@ function VehicleHistory({ id, isDriver }: { id: string; isDriver: boolean }) {
       {finance}
       <button type="button" className="linkrow" onClick={() => setOpen(!open)} aria-expanded={open}>
         <span><b>История · {d.summary.total} {d.summary.total === 1 ? 'обращение' : d.summary.total < 5 ? 'обращения' : 'обращений'}</b>
-          <small>последнее {last}{d.summary.spent != null && d.summary.spent > 0 ? ` · всего ${rub(d.summary.spent)}` : ''}</small></span>
+          <small>последнее {last}{!isDriver&&d.summary.spent != null && d.summary.spent > 0 ? ` · всего ${rub(d.summary.spent)}` : ''}</small></span>
         <span aria-hidden="true">{open ? '˄' : '˅'}</span>
       </button>
       {open && (
