@@ -31,6 +31,7 @@ import { StatsService } from './services/stats.ts';
 import { OpsService } from './services/ops.ts';
 import { OnsiteService } from './services/onsite.ts';
 import { CheckpointEvidenceService } from './services/checkpointEvidence.ts';
+import { CheckpointIntegrityService } from './services/checkpointIntegrity.ts';
 import { checkpointApiEnabled, registerCheckpointRoutes } from './http/checkpointRoutes.ts';
 import { ServiceCenters } from './services/service.ts';
 import { FleetService } from './services/fleet.ts';
@@ -119,7 +120,8 @@ export function createApp(d: Deps) {
   const r = new Router();
   // Feature-gated, non-billable КПП evidence; production remains disabled.
   const checkpointEvidence = new CheckpointEvidenceService(d.db);
-  registerCheckpointRoutes(r, checkpointEvidence);
+  const checkpointIntegrity = new CheckpointIntegrityService(d.db);
+  registerCheckpointRoutes(r, checkpointEvidence, checkpointIntegrity);
   const staff = ['admin', 'moderator'];
   const performerRoles = ['master', 'tow', 'service'];
 

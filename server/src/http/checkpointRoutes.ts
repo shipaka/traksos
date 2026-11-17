@@ -9,6 +9,7 @@ import { z } from 'zod';
 import type { Router, AuthedCtx } from './router.ts';
 import { parse } from './router.ts';
 import type { CheckpointEvidenceService } from '../services/checkpointEvidence.ts';
+import type { CheckpointIntegrityService } from '../services/checkpointIntegrity.ts';
 
 const uuid = z.string().uuid();
 const key = z.string().regex(/^[a-zA-Z0-9._:-]{8,160}$/);
@@ -22,7 +23,9 @@ export function checkpointApiEnabled(): boolean {
     (process.env.SANDBOX_INSTANCE === 'true' || process.env.NODE_ENV !== 'production');
 }
 
-export function registerCheckpointRoutes(r: Router, service: CheckpointEvidenceService): boolean {
+export function registerCheckpointRoutes(
+  r: Router, service: CheckpointEvidenceService, integrity: CheckpointIntegrityService,
+): boolean {
   if (!checkpointApiEnabled()) return false;
 
   r.put('/api/orders/:id/checkpoint-plan', true, (c: AuthedCtx) => {
@@ -105,6 +108,18 @@ export function registerCheckpointRoutes(r: Router, service: CheckpointEvidenceS
       acknowledge: z.literal(true),
     }).strict(), c.body);
     return service.retentionSweep(c.user, { ...p, execute: true });
+  });
+
+  // Historical evidence validation is manual and sandbox-only.
+  // Preview exposes anonymous counters/constraint status, NOT affected IDs.
+  r.get('/api/admin/checkpoint-gps/integrity', ['admin'],
+    (c: AuthedCtx) => integrity.preview(c.user));
+  r.post('/api/admin/checkpoint-gps/integrity/validate', ['admin'], (c: AuthedCtx) => {
+    const p = parse(z.object({
+      snapshotDigest: z.string().regex(/^[a-f0-9]{64}$/),
+      acknowledge: z.literal(true),
+    }).strict(), c.body);
+    return integrity.validate(c.user, p);
   });
 
   // No public API to delete summaries, rewrite decisions or override expiry.
