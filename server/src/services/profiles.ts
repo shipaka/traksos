@@ -73,6 +73,16 @@ export class ProfilesService {
     const userRoles = (await this.db.one<{ roles: string[] }>('select roles from users where id=$1', [user.id]))?.roles ?? user.roles;
     assertRoleExtension(userRoles, role);
     await this.db.tx(async (q) => {
+      const old=await q.one<{kind:string}>(
+        'select kind from performer_profiles where user_id=$1 for update',[user.id]);
+      if(old&&old.kind!==p.kind){
+        const active=await q.one(
+          "select 1 from orders where performer_id=$1 and status in "+
+          "('accepted','en_route','arrived','working','awaiting_confirmation') limit 1",
+          [user.id]);
+        if(active)throw conflict('active_job',
+          'Нельзя сменить специализацию, пока не завершена текущая заявка');
+      }
       await q.query(
         `update users set roles = (select array(select distinct unnest(roles || $2::text[]))), name = coalesce($3, name) where id=$1`,
         [user.id, [role], p.name ?? null],
