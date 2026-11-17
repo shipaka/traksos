@@ -89,7 +89,7 @@ export function Order({ id }: { id: string }) {
       )}
       {d.status === 'completed' && <Review id={id} you={d.you} />}
 
-      {d.status !== 'searching' && d.status !== 'no_performer' && <Chat id={id} disabled={d.status === 'cancelled'} />}
+      {d.status !== 'searching' && d.status !== 'no_performer' && <Chat id={id} status={d.status} />}
       </>}
 
       {d.you !== 'admin' && d.you !== 'candidate' && <a className="btn ghost" href={`#/support/new?order=${d.id}`}>Позвать поддержку</a>}
@@ -932,7 +932,8 @@ function WorksCheck({ id }: { id: string }) {
 
 // Чат -----------------------------------------------------------------------
 
-function Chat({ id, disabled }: { id: string; disabled: boolean }) {
+function Chat({ id, status }: { id: string; status: string }) {
+  const archived = ['completed', 'cancelled', 'no_performer'].includes(status);
   const { me } = useMe();
   const toast = useToast();
   const [msgs, setMsgs] = useState<any[]>([]);
@@ -941,26 +942,36 @@ function Chat({ id, disabled }: { id: string; disabled: boolean }) {
   const [text, setText] = useState('');
   const [open, setOpen] = useState(false);
   const [seen, setSeen] = useState(0);
+  const [serverClosed, setServerClosed] = useState(false);
+  const readOnly = archived || serverClosed;
   const box = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let alive = true;
-    get(`/api/orders/${id}/messages`).then((r) => { if (alive) { setMsgs(r.messages); setQuick(r.quickReplies); setPeople(r.participants ?? []); } }).catch(() => {});
+    // Re-read the current chat capabilities when the parent order changes stage.
+    // The server is authoritative: a closed order never has quick replies.
+    get(`/api/orders/${id}/messages`).then((r) => {
+      if (alive) { setMsgs(r.messages); setQuick(r.quickReplies); setPeople(r.participants ?? []); }
+    }).catch(() => {});
     const off = onEvent((e) => {
       if (e.type === 'chat' && e.message.order_id === id) setMsgs((m) => (m.some((x) => x.id === e.message.id) ? m : [...m, e.message]));
     });
     return () => { alive = false; off(); };
-  }, [id]);
+  }, [id, status]);
+  useEffect(() => { setServerClosed(false); setOpen(false); setMsgs([]); setQuick([]); setPeople([]); setSeen(0); }, [id]);
   useEffect(() => { box.current?.scrollTo(0, box.current.scrollHeight); }, [msgs.length, open]);
   useEffect(() => { if (open) setSeen(msgs.length); }, [open, msgs.length]);
 
   async function send(body: string, kind: 'text' | 'quick' = 'text') {
-    if (!body.trim()) return;
+    if (!body.trim() || readOnly) return;
     try {
       const m = await post(`/api/orders/${id}/messages`, { body, kind });
       setMsgs((x) => (x.some((y) => y.id === m.id) ? x : [...x, m]));
       setText('');
     } catch (e) {
+      // Concurrent completion can beat the browser event. Fail closed immediately
+      // even before the parent order status refreshes.
+      if ((e as { code?: string }).code === 'chat_closed') { setServerClosed(true); setQuick([]); }
       toast((e as Error).message);
     }
   }
@@ -969,16 +980,17 @@ function Chat({ id, disabled }: { id: string; disabled: boolean }) {
   const fresh = msgs.slice(seen).filter((m) => m.sender_id && m.sender_id !== me?.id && m.kind !== 'system').length;
   if (!open) return (
     <button type="button" className="card" onClick={() => setOpen(true)} style={{ textAlign: 'left', cursor: 'pointer', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-      <b>💬 Чат по заявке</b>
+      <b>{readOnly ? 'Архив переписки' : '💬 Чат по заявке'}</b>
       <span className="row" style={{ gap: 6 }}>
         {fresh > 0 && <span className="pill warn">новых: {fresh}</span>}
-        <span className="note">{msgs.length ? `${msgs.length} сообщ.` : 'открыть'} ▾</span>
+        <span className="note">{readOnly ? 'только чтение' : msgs.length ? `${msgs.length} сообщ.` : 'открыть'} ▾</span>
       </span>
     </button>
   );
   return (
-    <div className="card">
-      <button type="button" onClick={() => setOpen(false)} className="between" style={{ background: 'none', border: 0, padding: 0, color: 'inherit', cursor: 'pointer' }}><b>Чат по заявке</b><span className="note">свернуть ▴</span></button>
+    <div className="card" aria-label={readOnly ? 'Архив переписки по заявке' : 'Чат по заявке'}>
+      <button type="button" onClick={() => setOpen(false)} className="between" style={{ background: 'none', border: 0, padding: 0, color: 'inherit', cursor: 'pointer' }}><b>{readOnly ? 'Архив переписки' : 'Чат по заявке'}</b><span className="note">{readOnly ? 'Завершить диалог' : 'свернуть ▴'}</span></button>
+      {readOnly && <span className="note">Заявка закрыта. История сообщений сохранена, новые сообщения недоступны. Для нового обращения используйте поддержку.</span>}
       {people.length > 0 && <span className="note">В чате: {people.map((p) => p.you ? 'вы' : `${({ owner: 'владелец', driver: 'водитель', performer: 'исполнитель', support: '' } as Record<string, string>)[p.who]} ${p.name ?? ''}`.trim()).join(', ')}. Номера скрыты.</span>}
       <div className="msgs" ref={box}>
         {msgs.length === 0 && <span className="note">Сообщений пока нет</span>}
@@ -993,7 +1005,7 @@ function Chat({ id, disabled }: { id: string; disabled: boolean }) {
           );
         })}
       </div>
-      {!disabled && (
+      {!readOnly && (
         <>
           <div className="scroll-x">{quick.map((q) => <button key={q} className="chip" onClick={() => send(q, 'quick')}>{q}</button>)}</div>
           <form className="compose" onSubmit={(e) => { e.preventDefault(); send(text); }}>
