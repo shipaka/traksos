@@ -23,6 +23,12 @@ before(async()=>{
     {decision:'approved'},admin.token));
   ok(await t.api('POST',`/api/admin/performers/${expert.id}/verify`,
     {decision:'approved'},admin.token));
+  ok(await t.api('PUT',`/api/admin/ecu/stations/${expert.id}`,{
+    name:'Тестовая мастерская ЭБУ',address:'Санкт-Петербург, тестовая мастерская 2',
+    lat:59.94,lng:30.34,published:true,consentConfirmed:true,
+    reason:'Изолированная техническая проверка публикации подтверждённой мастерской'
+  },admin.token));
+  ok(await t.api('POST','/api/performer/line',{lineStatus:'online'},expert.token));
   vehicleId=ok(await t.api('POST','/api/vehicles',
     {brand:'Scania',model:'R-series',year:2010,plate:'а456вс178'},
     customer.token)).id;
@@ -92,7 +98,7 @@ test('client-controlled linked ECU order keeps independent contracts and private
     `/api/orders/${sourceId}/recommend-ecu`,{reason},mechanic.token));
   assert.equal(recommended.status,'pending');
   const input={
-    service:'ecu',zoneId:'spb',vehicleId,additionalTo:sourceId,
+    service:'ecu',zoneId:'ecu_station',ecuSpecialistId:expert.id,vehicleId,additionalTo:sourceId,
     description:'Отдельная проверка и восстановление электронного блока EBS',
     address:'Санкт-Петербург, Московское шоссе, 10'
   };
