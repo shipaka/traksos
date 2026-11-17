@@ -1008,6 +1008,7 @@ export class OrdersService {
       address: o.address, lat: o.lat, lng: o.lng, zoneId: o.zone_id, night: o.night, groupTrip: o.group_trip, tier: o.tier,
       brand: o.brand, model: o.model, year: o.year, vehicleId: o.vehicle_id, vehicle, estimate: o.estimate, paymentMethod: o.payment_method,
       warrantyDays:o.warranty_days??null,warrantyWork:o.warranty_work_summary??null,warrantyStartedAt:o.warranty_started_at??null,
+      ecuDueAt:o.ecu_due_at??null,ecuExtensionsCount:o.ecu_extensions_count??0,
       auction: o.status === 'searching' && !!o.auction_until, auctionUntil: o.auction_until, autoPick: o.auto_pick, search, searchStage,
       limits: o.status === 'searching' ? this.auction.limits(o, (await this.settings.get('dispatch'))) : null,
       destination: o.destination, cargo: o.cargo, loaded: o.loaded, driverOnSite: o.driver_on_site, discountReason: o.discount_reason,
