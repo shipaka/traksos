@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import {get,post,fmtTime} from '../api.ts';
-import {useAction,useLoad} from '../ui.tsx';
+import {useAction,useLoad,useMe} from '../ui.tsx';
 
 type Evidence={
   id:string;caseId:string;title:string;mediaKind:'diagram'|'manual'|'video_link';
