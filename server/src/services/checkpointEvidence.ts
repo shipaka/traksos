@@ -60,6 +60,30 @@ export interface AttemptRow {
   created_at: Date | string;
 }
 
+/** Returned for a non-destructive preview of the checkpoint GPS cleanup. */
+export interface CheckpointRetentionPreview {
+  dryRun: true;
+  executed: false;
+  limit: number;
+  dueSnapshots: number;
+  dueSamples: number;
+  cutoffAt: string;
+  sampleCutoffAt: string;
+  startBilling: false;
+}
+/** Immutable receipt of an explicitly acknowledged deletion batch. */
+export interface CheckpointRetentionExecution {
+  dryRun: false;
+  executed: true;
+  reused: boolean;
+  batchId: string;
+  deletedSnapshots: number;
+  deletedSamples: number;
+  cutoffAt: string;
+  sampleCutoffAt: string;
+  startBilling: false;
+}
+
 const normalize = (value: string) => value.trim();
 const sha = (s: string) => createHash('sha256').update(s, 'utf8').digest('hex');
 function assertKey(key: string, max = 160) {
@@ -481,12 +505,22 @@ export class CheckpointEvidenceService {
    * An approved legal-hold/backup policy is required BEFORE production use;
    * HTTP exposure remains in the sandbox-only feature gate.
    */
+  retentionSweep(actor: AuthUser, input: {
+    limit?: number;
+    execute: true;
+    acknowledge?: boolean;
+    eventKey?: string;
+  }): Promise<CheckpointRetentionExecution>;
+  retentionSweep(actor: AuthUser, input?: {
+    limit?: number;
+    execute?: false;
+  }): Promise<CheckpointRetentionPreview>;
   async retentionSweep(actor: AuthUser, input: {
     limit?: number;
     execute?: boolean;
     acknowledge?: boolean;
     eventKey?: string;
-  } = {}) {
+  } = {}): Promise<CheckpointRetentionPreview | CheckpointRetentionExecution> {
     if (!isAdmin(actor)) throw forbidden('Удаление GPS-доказательств — только для администратора');
     const limit = input.limit ?? 250;
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > 1000) {
@@ -513,10 +547,10 @@ export class CheckpointEvidenceService {
           'and received_at<$1', [sampleCutoff]),
       ]);
       return {
-        dryRun: true, limit, dueSnapshots: Number(snapshots?.count ?? 0),
+        dryRun: true as const, limit, dueSnapshots: Number(snapshots?.count ?? 0),
         dueSamples: Number(samples?.count ?? 0),
         cutoffAt: snapshotCutoff, sampleCutoffAt: sampleCutoff,
-        executed: false, startBilling: false as const,
+        executed: false as const, startBilling: false as const,
       };
     }
     const eventKey = input.eventKey!;
@@ -533,7 +567,7 @@ export class CheckpointEvidenceService {
             'Повторный ключ очистки с другими условиями');
         }
         return {
-          dryRun: false, executed: true, reused: true, batchId: old.id,
+          dryRun: false as const, executed: true as const, reused: true, batchId: old.id,
           deletedSnapshots: Number(old.deleted_snapshots),
           deletedSamples: Number(old.deleted_samples),
           cutoffAt: new Date(old.cutoff_at).toISOString(),
@@ -573,7 +607,7 @@ export class CheckpointEvidenceService {
         deletedSamples: samples.length, sampleCutoffAt: sampleCutoff,
       });
       return {
-        dryRun: false, executed: true, reused: false, batchId: row.id,
+        dryRun: false as const, executed: true as const, reused: false, batchId: row.id,
         deletedSnapshots: snapshots.length, deletedSamples: samples.length,
         cutoffAt: snapshotCutoff, sampleCutoffAt: sampleCutoff,
         startBilling: false as const,
