@@ -198,6 +198,7 @@ await k.locator('select[aria-label="Марка"]').selectOption('Scania');
 await k.locator('select[aria-label="Модель"]').selectOption('R-серия');
 await k.locator('select[aria-label="Год выпуска"]').selectOption('2012');
 await k.locator('input[placeholder^="Адрес"]').fill('Тосно, М-11, стоянка у АЗС');
+await k.getByRole('button', { name: 'Ленинградская область' }).click();
 await k.getByRole('button', { name: /Тосно/ }).click();
 await k.getByText('Проверьте перед вызовом').waitFor();
 await k.locator('.agree input').check();
