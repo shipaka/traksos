@@ -18,6 +18,8 @@ const roadLabels:Record<string,string>={
 };
 const uuid=()=>crypto.randomUUID();
 const safeError=(e:unknown)=>e instanceof Error?e.message:'Не удалось обновить данные. Проверьте интернет.';
+// SessionStorage can throw SecurityError in privacy modes and some WebViews.
+const optionalDraftStorage=()=>{try{return window.sessionStorage}catch{return null}};
 function appendMessages(existing:AirMessage[],next:AirMessage[],recentApprovals:ReadonlySet<string>=new Set()){
   const byId=new Map(existing.map(m=>[m.id,m]));
   next.forEach(m=>byId.set(m.id,m));
@@ -179,6 +181,7 @@ function MessageStream({endpoint,canWrite,placeholder,ownerId}:{
   const {messages,loading,error,reload}=useAirMessages(endpoint);
   const [draft,setDraft]=useState('');
   const [rememberDraft,setRememberDraft]=useState(false);
+  const [draftError,setDraftError]=useState('');
   // Keep one idempotency nonce per unchanged draft until its delivery is known.
   // A dropped HTTP response must not create two messages when retried manually.
   const pendingSend=useRef<{endpoint:string;text:string;nonce:string}|null>(null);
@@ -186,24 +189,30 @@ function MessageStream({endpoint,canWrite,placeholder,ownerId}:{
   const {busy,run}=useAction();
   const bottom=useRef<HTMLDivElement>(null);
   useEffect(()=>{
-    pendingSend.current=null;setDraft('');setReportId(null);setRememberDraft(false);
+    pendingSend.current=null;setDraft('');setReportId(null);setRememberDraft(false);setDraftError('');
     if(!endpoint||!ownerId)return;
     try{
-      const saved=readAirDraft(window.sessionStorage,ownerId,endpoint);
+      const storage=optionalDraftStorage();if(!storage)return;
+      const saved=readAirDraft(storage,ownerId,endpoint);
       setRememberDraft(saved.enabled);setDraft(saved.text);
       if(saved.nonce)pendingSend.current={endpoint,text:saved.text.trim(),nonce:saved.nonce};
     }catch{/* Session storage unavailable; chat remains usable without persistence. */}
   },[endpoint,ownerId]);
   const updateDraft=(value:string)=>{
     pendingSend.current=null;setDraft(value);
-    if(rememberDraft&&endpoint&&ownerId)
-      writeAirDraft(window.sessionStorage,ownerId,endpoint,value);
+    if(rememberDraft&&endpoint&&ownerId){
+      const storage=optionalDraftStorage();if(storage)writeAirDraft(storage,ownerId,endpoint,value);
+    }
   };
   const remember=(enabled:boolean)=>{
     if(!endpoint||!ownerId)return;
-    if(!enabled)clearAirDraft(window.sessionStorage,ownerId,endpoint);
-    else writeAirDraft(window.sessionStorage,ownerId,endpoint,draft);
-    setRememberDraft(enabled);
+    const storage=optionalDraftStorage();
+    if(!storage){setRememberDraft(false);setDraftError('Хранение черновика недоступно в настройках этого браузера.');return;}
+    if(!enabled)clearAirDraft(storage,ownerId,endpoint);
+    else if(!writeAirDraft(storage,ownerId,endpoint,draft)){
+      setDraftError('Не удалось сохранить черновик. Попробуйте без сохранения.');return;
+    }
+    setDraftError('');setRememberDraft(enabled);
   };
   useEffect(()=>{bottom.current?.scrollIntoView({block:'nearest',behavior:'auto'})},[endpoint,messages.length]);
   const send=async()=>{
@@ -211,11 +220,13 @@ function MessageStream({endpoint,canWrite,placeholder,ownerId}:{
     const previous=pendingSend.current;
     const nonce=previous?.endpoint===endpoint&&previous.text===text?previous.nonce:uuid();
     pendingSend.current={endpoint,text,nonce};
-    if(rememberDraft&&ownerId)writeAirDraft(window.sessionStorage,ownerId,endpoint,draft,Date.now(),nonce);
+    if(rememberDraft&&ownerId){const storage=optionalDraftStorage();if(storage)
+      writeAirDraft(storage,ownerId,endpoint,draft,Date.now(),nonce);}
     const sent=await run(()=>post(endpoint,{text,clientNonce:nonce}),'Сообщение отправлено');
     if(sent){
       pendingSend.current=null;setDraft('');
-      if(ownerId)clearAirDraft(window.sessionStorage,ownerId,endpoint);
+      if(ownerId){const storage=optionalDraftStorage();if(storage)
+        clearAirDraft(storage,ownerId,endpoint);}
       reload();
     }
   };
@@ -256,6 +267,7 @@ function MessageStream({endpoint,canWrite,placeholder,ownerId}:{
         placeholder={canWrite?placeholder:'Присоединитесь к чату, чтобы писать'}
         value={draft} disabled={!canWrite||busy} onChange={e=>updateDraft(e.target.value)}
         onKeyDown={e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();void send()}}}/>
+      {draftError&&<p className="note" role="status">{draftError}</p>}
       <label className="air-checkbox">
         <input type="checkbox" checked={rememberDraft} disabled={!ownerId}
           onChange={e=>remember(e.target.checked)}/>
