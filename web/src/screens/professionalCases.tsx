@@ -3,6 +3,7 @@ import {get,post,fmtTime} from '../api.ts';
 import {useAction,useLoad,useMe} from '../ui.tsx';
 import './techBase.css';
 import {CommunityMuteToggle} from './communityNotificationSettings.tsx';
+import {TechnicalEvidenceLinks} from './technicalEvidence.tsx';
 
 type Club={id:string;slug:string;title:string;audience:string;joined:boolean};
 type Case={
@@ -257,6 +258,7 @@ export function ProfessionalCases({orderId}:{orderId?:string}){
            onClick={()=>{setReportReplyId(null);setReportReason('')}}>
            Пожаловаться на технический вопрос
          </button>}
+         <TechnicalEvidenceLinks key={selected} caseId={selected} canPropose={Boolean(room?.joined)}/>
          <h4>Ответы коллег</h4>
          {replies.error&&<p role="alert">{replies.error}</p>}
          {replies.data?.replies.length===0&&<p className="note">Ответов пока нет.</p>}
