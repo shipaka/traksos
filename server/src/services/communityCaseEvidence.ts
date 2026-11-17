@@ -52,8 +52,8 @@ export function safeEvidenceUrl(value:string){
   let decodedPath:string;
   try{decodedPath=decodeURIComponent(u.pathname)}
   catch{throw bad('source_path','Некорректное кодирование пути ссылки')}
-  if(/\\b[A-HJ-NPR-Z0-9]{17}\\b/i.test(decodedPath)||
-     /(?:\\+?\\d[\\s().-]*){10,}/u.test(decodedPath))
+  if(/\b[A-HJ-NPR-Z0-9]{17}\b/i.test(decodedPath)||
+     /(?:\+?\d[\s().-]*){10,}/u.test(decodedPath))
     throw bad('sensitive_source_path','Ссылка не должна содержать VIN или телефон');
   if(u.toString().length>1200)
     throw bad('source_url','Слишком длинная ссылка');
