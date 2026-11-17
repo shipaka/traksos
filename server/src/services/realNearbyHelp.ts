@@ -1,5 +1,6 @@
 import {z} from 'zod';
 import type {Db} from '../db/index.ts';
+import {requireDriverAir} from './driverAirAccess.ts';
 import type {Router,AuthedCtx} from '../http/router.ts';
 import {parse} from '../http/router.ts';
 import {haversineKm} from '../domain/geo.ts';
@@ -72,7 +73,8 @@ export function workshopOpenNow(w:Pick<Workshop,'time_zone'|'hours'|'closed_days
  * The existing SOS dispatch independently rechecks eligibility when booked.
  */
 export function registerRealNearbyHelpRoutes(r:Router,db:Db,now:()=>Date){
-  r.post('/api/community/nearby-help',['driver'],async(c:AuthedCtx)=>{
+  r.post('/api/community/nearby-help',true,async(c:AuthedCtx)=>{
+    await requireDriverAir(db,c.user);
     const args=parse(z.object({
       lat:z.number().min(-90).max(90),
       lng:z.number().min(-180).max(180),
