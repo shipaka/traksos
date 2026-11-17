@@ -2,7 +2,7 @@ import {z} from 'zod';
 import type {Db} from '../db/index.ts';
 import type {Router,AuthedCtx} from '../http/router.ts';
 import {parse,bad,forbidden,notFound,conflict,HttpError} from '../http/router.ts';
-import {openCase} from './communityProfessionalCases.ts';
+import {openCase,safeText} from './communityProfessionalCases.ts';
 
 const uuid=z.string().uuid();
 const officialHosts=new Set([
