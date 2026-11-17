@@ -435,7 +435,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
                 {MASTER_SPECIALTIES.map(item => <button key={item.id} type="button" className="seg"
                   aria-pressed={specialties.includes(item.id)}
                   onClick={() => setSpecialties(current => current.includes(item.id)
-                    ? current.filter(id => id !== item.id) : [...current,item.id])}>{item.name}</button>)}
+                    ? current.filter(id => id !== item.id) : item.id==='ecu' ? ['ecu'] : [...current.filter(id=>id!=='ecu'),item.id])}>{item.name}</button>)}
               </div>
             </details>}
           </div>}
