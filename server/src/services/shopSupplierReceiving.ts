@@ -155,8 +155,9 @@ export function registerShopSupplierReceivingRoutes(r:Router,db:Db){
       if(b.condition!=='intact'&&b.condition!=='not_supplied'&&b.inspectionNote.length<20)
         throw bad('inspection_reason_required','Повреждение или недостача требуют письменного объяснения');
       return db.tx(async q=>{
+        const initial=await receipt(q,id);
+        const o=await order(q,initial.shop_order_id,true);
         const r=await receipt(q,id,true);
-        const o=await order(q,r.shop_order_id,true);
         if(r.status!=='draft'||['cancelled','done','shipped'].includes(o.status))
           throw conflict('receipt_locked','Акт уже принят, отозван или заказ закрыт');
         const line=await q.one<ReceiptLine>(
