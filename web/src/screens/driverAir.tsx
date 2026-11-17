@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiError, get, post, put, fmtTime, onEvent } from '../api.ts';
+import {newOrderRequestKey} from '../orderRequestKey.ts';
 import { useAction, useLoad, useMe } from '../ui.tsx';
 import './driverAir.css';
 import { NearbyHelp } from './nearbyHelp.tsx';
@@ -17,7 +18,7 @@ const roadLabels:Record<string,string>={
   traffic:'Дорожная обстановка',parking:'Стоянка',roadworks:'Ремонт дороги',
   weather:'Погода',question:'Вопрос по маршруту'
 };
-const uuid=()=>crypto.randomUUID();
+const uuid=()=>newOrderRequestKey();
 const safeError=(e:unknown)=>e instanceof Error?e.message:'Не удалось обновить данные. Проверьте интернет.';
 // SessionStorage can throw SecurityError in privacy modes and some WebViews.
 const optionalDraftStorage=()=>{try{return window.sessionStorage}catch{return null}};
