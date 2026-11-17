@@ -20,7 +20,7 @@ export class AuctionService {
 
   /** Disabled for real users until admin approves thresholds AND a trusted router is connected. */
   stages(order: any, dispatch: Settings['dispatch']): SosSearchStage[] | null {
-    return policyFor(order, dispatch.sosProgressive, !!this.roadEta);
+    return policyFor(order, dispatch.sosProgressive);
   }
 
   /** Filter AFTER ordinary eligibility: no missing GPS, no fabricated drive time. */
