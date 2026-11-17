@@ -15,8 +15,12 @@ const key=(article:string)=>article.trim().replace(/\s+/g,'').toLocaleUpperCase(
 type Stop={stop_id:string;shop_order_id:string;number:number;items:unknown;status:string};
 type Check={stop_id:string;line_index:number;checked_article:string;checked_qty:number;
   method:string;checked_at:Date;manual_reason:string|null};
+type Discrepancy={id:string;stop_id:string;line_index:number;kind:string;note:string;
+  observed_article:string;observed_qty:number;reported_at:Date;status:string};
 type WarehouseLine={index:number;name:string;brand:string|null;article:string|null;
-  quantity:number;verified:boolean;method:string|null;checkedAt:Date|null;blockedReason:string|null};
+  quantity:number;verified:boolean;method:string|null;checkedAt:Date|null;blockedReason:string|null;
+  openDiscrepancy:{id:string;kind:string;note:string;observedArticle:string;
+    observedQty:number;reportedAt:Date}|null};
 type WarehouseStop={id:string;orderNumber:number;status:string;lines:WarehouseLine[]};
 type Run={id:string;status:string;packing_required:boolean;dispatch_approved_at:Date|null};
 
@@ -25,16 +29,22 @@ export async function warehouseProgress(q:Queryable,runId:string){
   const run=await q.one<Run>(
     'select id,status,packing_required,dispatch_approved_at from shop_courier_runs where id=$1',[runId]);
   if(!run)throw notFound('Рейс не найден');
-  const [stops,checks]=await Promise.all([
+  const [stops,checks,exceptions]=await Promise.all([
     q.query<Stop>(
       'select s.id as stop_id,s.shop_order_id,o.number,o.items,s.status '+
       'from shop_courier_stops s join shop_orders o on o.id=s.shop_order_id '+
       'where s.run_id=$1 order by s.seq',[runId]),
     q.query<Check>(
       'select c.* from shop_warehouse_line_checks c '+
-      'join shop_courier_stops s on s.id=c.stop_id where s.run_id=$1',[runId])
+      'join shop_courier_stops s on s.id=c.stop_id where s.run_id=$1',[runId]),
+    q.query<Discrepancy>(
+      "select d.id,d.stop_id,d.line_index,d.kind,d.note,d.observed_article,"+
+      "d.observed_qty,d.reported_at,d.status from shop_warehouse_discrepancies d "+
+      "join shop_courier_stops s on s.id=d.stop_id "+
+      "where s.run_id=$1 and d.status='open'",[runId])
   ]);
   const checked=new Map(checks.map(c=>[c.stop_id+':'+c.line_index,c]));
+  const open=new Map(exceptions.map(d=>[d.stop_id+':'+d.line_index,d]));
   let remaining=0,total=0;
   const output:WarehouseStop[]=stops.map(st=>{
     const raw=Array.isArray(st.items)?st.items:[] as any[];
@@ -43,14 +53,21 @@ export async function warehouseProgress(q:Queryable,runId:string){
       const qty=Number(item.qty);
       const expected=article&&article.length>=2&&Number.isSafeInteger(qty)&&qty>0;
       const confirmed=checked.get(st.stop_id+':'+index);
-      const verified=Boolean(expected&&confirmed&&
+      const discrepancy=open.get(st.stop_id+':'+index);
+      const verified=Boolean(expected&&!discrepancy&&confirmed&&
         key(confirmed.checked_article)===key(article!)&&confirmed.checked_qty===qty);
       if(!verified)remaining++;
       total++;
       return {index,name:String(item.name??'Товар'),brand:item.brand??null,
         article,quantity:qty,verified,method:verified?confirmed!.method:null,
         checkedAt:verified?confirmed!.checked_at:null,
-        blockedReason:!expected?'Не указан пригодный артикул или количество в заказе':
+        openDiscrepancy:discrepancy?{
+          id:discrepancy.id,kind:discrepancy.kind,note:discrepancy.note,
+          observedArticle:discrepancy.observed_article,observedQty:discrepancy.observed_qty,
+          reportedAt:discrepancy.reported_at
+        }:null,
+        blockedReason:discrepancy?'Открытое складское расхождение — выдача заблокирована':
+          !expected?'Не указан пригодный артикул или количество в заказе':
           verified?null:'Требуется физическая сверка артикула и количества'};
     });
     if(!Array.isArray(st.items)||lines.length===0)remaining++;
@@ -59,7 +76,8 @@ export async function warehouseProgress(q:Queryable,runId:string){
   return {runId,packingRequired:run.packing_required,runStatus:run.status,
     dispatchApproved:Boolean(run.dispatch_approved_at),stops:output,
     totalLines:total,remainingLines:remaining,
-    ready:stops.length>0&&total>0&&remaining===0,
+    openDiscrepancies:exceptions.length,
+    ready:stops.length>0&&total>0&&remaining===0&&exceptions.length===0,
     warning:'Сверка подтверждает только совпадение артикула и количества с заказом. Она не подтверждает качество, оригинальность, применяемость детали или фактическое содержимое закрытой коробки.'};
 }
 
