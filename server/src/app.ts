@@ -553,7 +553,7 @@ export function createApp(d: Deps) {
   });
   r.post('/api/pricing/estimate', false, async (c: Ctx) => {
     const b = parse(z.object({ service: z.string(), tier: z.enum(['eco', 'comfort', 'pro']).default('eco'), zoneId: z.string(),
-      regionId: z.enum(['spb', 'lo', 'other']).optional(),
+      regionId: z.enum(['spb', 'lo', 'other']).optional(), city: z.string().max(120).optional(),
       address: z.string().max(300).optional(), lat: z.number().optional(), lng: z.number().optional(),
       night: z.boolean().optional(), group: z.boolean().default(false) }), c.body);
     const p = await settings.get('pricing');
@@ -574,7 +574,7 @@ export function createApp(d: Deps) {
     await offers.requireClient(c.user);
     return orders.create(c.user, parse(z.object({
     service: z.string(), isSos: z.boolean().optional(), problem: z.string().max(40).optional(), description: z.string().max(1000).optional(),
-    address: z.string().max(300).optional(), lat: z.number().optional(), lng: z.number().optional(), zoneId: z.string().default('phone'), regionId: z.enum(['spb', 'lo', 'other']).optional(),
+    address: z.string().max(300).optional(), lat: z.number().optional(), lng: z.number().optional(), zoneId: z.string().default('phone'), regionId: z.enum(['spb', 'lo', 'other']).optional(), city: z.string().max(120).optional(),
     tier: z.enum(['eco', 'comfort', 'pro']).optional(), vehicleId: z.string().uuid().optional(), brand: z.string().max(40).optional(),
     model: z.string().max(40).optional(), year: z.number().int().min(1950).max(2100).optional(),
     groupTrip: z.boolean().optional(), night: z.boolean().optional(), paymentMethod: z.enum(['cash', 'online', 'invoice']).optional(),
