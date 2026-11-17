@@ -40,6 +40,7 @@ import { registerPartnerLevelRoutes } from './services/partnerLevels.ts';
 import { registerPartnerActivityRoutes } from './services/partnerActivity.ts';
 import { ShopService } from './services/shop.ts';
 import { registerShopCourierRoutes } from './services/shopCourier.ts';
+import { registerShopCourierBatchRoutes } from './services/shopCourierBatch.ts';
 import { registerShopCourierEconomicsRoutes } from './services/shopCourierEconomics.ts';
 import { registerShopWarehouseRoutes } from './services/shopWarehouse.ts';
 import {registerEcuReferralRoutes} from './services/ecuReferrals.ts';
@@ -649,6 +650,7 @@ export function createApp(d: Deps) {
   // request light configuration then load only one page of products at a time.
   registerShopRegionRoutes(r, shopRegion);
   registerShopCourierRoutes(r, d.db, notifier);
+  registerShopCourierBatchRoutes(r, d.db);
   registerShopCourierEconomicsRoutes(r, d.db, notifier);
   registerShopWarehouseRoutes(r, d.db);
   registerShopSupplierReceivingRoutes(r,d.db);

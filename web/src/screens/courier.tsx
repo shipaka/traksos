@@ -26,7 +26,7 @@ const parcelText:Record<string,string>={
 function Navigate({address,label}:{address:string|null;label:string}){
   if(!address)return null;
   return <a className="btn ghost" href={'https://yandex.ru/maps/?text='+encodeURIComponent(address)}
-    rel="noopener noreferrer" aria-label={label}>Открыть адрес в Яндекс Картах</a>;
+    target="_blank" rel="noopener noreferrer" aria-label={label}>Открыть адрес в Яндекс Картах</a>;
 }
 function CargoItems({items}:{items:Parcel[]}){
   return <ul className="courier-cargo">{items.map((p,i)=><li key={i}>
@@ -65,6 +65,7 @@ export function CourierHome(){
  },[selected]);
  const current=detail.data;
  const status=current?.status??null;
+ const activeStop=current?.stops.find(x=>x.id===current.activeStopId)??null;
  // No tracking in the background, without explicit user action, on other routes,
  // or after departure from the active delivery stage.
  useEffect(()=>{
@@ -168,6 +169,14 @@ export function CourierHome(){
            Остались невручённые посылки. Верните их на склад. Только администратор может подтвердить фактический возврат и закрыть рейс.
          </div>}
          <CourierRouteMap route={current}/>
+         {current.status==='delivering'&&activeStop&&
+           <section className="courier-step-info" aria-label="Текущая остановка">
+             <b>Следующая остановка №{activeStop.seq} · заказ №{activeStop.orderNumber}</b>
+             <p>{activeStop.address??'Адрес уточняется диспетчером'}</p>
+             <Navigate address={activeStop.address} label="Открыть навигацию к текущей остановке"/>
+             <p className="note">После подтверждения вручения маршрутный лист
+               автоматически переключится на следующего получателя.</p>
+           </section>}
          <h3>Заказы по маршруту</h3>
          <ol className="courier-stops">
            {current.stops.map(st=><li className="courier-stop" key={st.id}>

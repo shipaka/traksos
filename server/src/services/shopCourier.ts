@@ -97,7 +97,7 @@ async function recordDelivery(q:Queryable,orderId:string,runId:string,
     [orderId,runId,status,actorId]);
 }
 const DELIVERY_MESSAGES:Record<DeliveryPhase,string>={
-  planned:'Заказ включён в маршрут доставки',
+  planned:'Доставка предварительно запланирована; маршрут ещё требует утверждения',
   accepted:'Курьер принял маршрут',
   collected:'Посылка забрана на складе',
   dispatched:'Курьер выехал со склада',
@@ -142,27 +142,39 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
   });
   r.get('/api/admin/shop/couriers',['admin'],async()=>{
     return {couriers:await db.query(
-      "select p.user_id,p.display_name,p.vehicle_label,p.active,p.created_at from shop_couriers p order by created_at desc limit 100")};
+      "select p.user_id,p.display_name,p.vehicle_label,(p.active and u.status='active') as active,p.created_at, "+
+      "(exists(select 1 from shop_courier_runs r where r.courier_id=p.user_id "+
+      "and r.status in ('planned','accepted','collecting','delivering','returning'))) as busy "+
+      "from shop_couriers p join users u on u.id=p.user_id order by p.created_at desc limit 100")};
   });
   r.post('/api/admin/shop/delivery-addresses/:id/verify',['admin'],async(c:AuthedCtx)=>{
     const shopOrderId=parse(id,c.params.id);
     const b=parse(z.object({cityCode:z.literal('spb'),evidence:z.string().trim().min(10).max(500),
       lat:z.number().min(-90).max(90).optional(),lng:z.number().min(-180).max(180).optional()}),c.body);
     if((b.lat==null)!==(b.lng==null))throw bad('coords_incomplete','Укажите обе координаты или ни одной');
-    const o=await db.one<{delivery:string;status:string;address:string|null}>(
-      'select delivery,status,address from shop_orders where id=$1',[shopOrderId]);
+    return db.tx(async q=>{
+    // Lock the order consistently with single-route and bulk route creation.
+    // A change to a verified address after route planning would silently
+    // invalidate both the stop sequence and the map/navigation coordinates.
+    const o=await q.one<{delivery:string;status:string;address:string|null}>(
+      'select delivery,status,address from shop_orders where id=$1 for update',[shopOrderId]);
     if(!o || o.delivery!=='delivery' || !o.address)throw notFound('Заказ с адресной доставкой не найден');
     if(!addressDeclaredInSpb(o.address))
       throw conflict('delivery_outside_region','Курьерская доставка доступна только по адресам Санкт-Петербурга');
     if(!['confirmed','ready'].includes(o.status))throw conflict('not_ready','Адрес подтверждается после согласования заказа');
-    await db.query("insert into shop_delivery_address_checks(shop_order_id,city_code,reviewed_by,review_note,lat,lng) "+
+    const assigned=await q.one<{id:string}>(
+      'select id from shop_courier_stops where shop_order_id=$1 limit 1',[shopOrderId]);
+    if(assigned)throw conflict('route_address_locked',
+      'Адрес включён в маршрут. Сначала отмените незапущенный рейс или согласуйте отдельный возврат');
+    await q.query("insert into shop_delivery_address_checks(shop_order_id,city_code,reviewed_by,review_note,lat,lng) "+
       "values($1,$2,$3,$4,$5,$6) on conflict(shop_order_id) do update set "+
       "city_code=excluded.city_code,reviewed_by=excluded.reviewed_by,review_note=excluded.review_note,"+
       "lat=excluded.lat,lng=excluded.lng,reviewed_at=now()",
       [shopOrderId,b.cityCode,c.user.id,b.evidence,b.lat??null,b.lng??null]);
-    await db.query('insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4)',
+    await q.query('insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4)',
       [c.user.id,'shop.delivery_address_verified',shopOrderId,{city:'spb',evidence:b.evidence}]);
     return {verified:true,cityCode:'spb'};
+    });
   });
   r.post('/api/admin/shop/courier-runs',['admin'],async(c:AuthedCtx)=>{
     const b=parse(z.object({courierId:id,pickupAddress:z.string().trim().min(10).max(300),
@@ -180,7 +192,9 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
       throw bad('receipt_requires_packing','Приёмка поставщика требует обязательной складской комплектации');
     if(!addressDeclaredInSpb(b.pickupAddress))
       throw conflict('warehouse_outside_region','Склад отправления должен быть подтверждён в Санкт-Петербурге');
-    const courierProfile=await db.one<{active:boolean}>('select active from shop_couriers where user_id=$1',[b.courierId]);
+    const courierProfile=await db.one<{active:boolean}>(
+      "select c.active from shop_couriers c join users u on u.id=c.user_id "+
+      "where c.user_id=$1 and u.status='active'",[b.courierId]);
     if(!courierProfile?.active)throw notFound('Курьер не активен');
     const run=await db.tx(async q=>{
       // Serialize planning per courier. One driver cannot pick up a second
@@ -638,12 +652,15 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
       'select client_id,created_by from shop_orders where id=$1',[orderId]);
     if(!owner||(owner.client_id!==c.user.id&&owner.created_by!==c.user.id))
       throw notFound('Доставка не найдена');
-    const row=await db.one<{client_id:string;created_by:string;status:string;stop_status:string;run_id:string;leg_active:boolean;handoff_verified:boolean}>(
-      "select o.client_id,o.created_by,r.status,s.status as stop_status,r.id as run_id, \n       (exists(select 1 from shop_delivery_handoffs h where h.stop_id=s.id and h.verified_at is not null)) as handoff_verified, "+
+    const row=await db.one<{client_id:string;created_by:string;status:string;stop_status:string;run_id:string;leg_active:boolean;handoff_verified:boolean;approved_at:Date|null}>(
+      "select o.client_id,o.created_by,r.status,s.status as stop_status,r.id as run_id,r.dispatch_approved_at as approved_at, \n       (exists(select 1 from shop_delivery_handoffs h where h.stop_id=s.id and h.verified_at is not null)) as handoff_verified, "+
       "(r.active_stop_id=s.id) as leg_active "+
       "from shop_orders o join shop_courier_stops s on s.shop_order_id=o.id "+
       "join shop_courier_runs r on r.id=s.run_id where o.id=$1",[orderId]);
-    if(!row)return {status:'awaiting_assignment',runStatus:null,location:null,live:false,etaMinutes:null,handoffVerified:false};
+    // A draft route is not an assigned delivery until a real admin approves
+    // warehouse and financial readiness. Never promise the buyer a courier
+    // while the parcel still awaits supplier documents.
+    if(!row||!row.approved_at)return {status:'awaiting_assignment',runStatus:null,location:null,live:false,etaMinutes:null,handoffVerified:false};
     const live=row.status==='delivering' && row.leg_active &&
       ['collected','at_door'].includes(row.stop_status);
     const position=live?await db.one<{lat:number;lng:number;accuracy_m:number;updated_at:Date}>(

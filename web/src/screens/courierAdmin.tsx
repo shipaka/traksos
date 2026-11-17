@@ -1,10 +1,11 @@
 import {useState} from 'react';
 import {CourierWarehouseCheck} from './courierWarehouse.tsx';
 import {SupplierReceivingDesk} from './supplierReceivingDesk.tsx';
+import {CourierAutoDispatch} from './courierAutoDispatch.tsx';
 import {get,post,put} from '../api.ts';
 import {useAction,useLoad,Back} from '../ui.tsx';
 
-type Courier={user_id:string;display_name:string;vehicle_label:string|null;active:boolean};
+type Courier={user_id:string;display_name:string;vehicle_label:string|null;active:boolean;busy:boolean};
 type Run={id:string;courier_id:string;courier_name:string;status:string;stops:number};
 type Economics={
   runId:string;status:string;stops:number;
@@ -78,7 +79,7 @@ export function CourierAdmin(){
      {couriers.data?.couriers.map(c=><div className="between" key={c.user_id}>
        <span><b>{c.display_name}</b> · {c.vehicle_label??'транспорт не указан'}
          <small className="note">{c.user_id}</small></span>
-       <button className="btn ghost small" onClick={()=>setCourierId(c.user_id)}>Выбрать для рейса</button>
+       <button className="btn ghost small" disabled={!c.active||c.busy} onClick={()=>setCourierId(c.user_id)}>{c.busy?"Курьер занят":"Выбрать для рейса"}</button>
      </div>)}
    </section>
    <section className="card stack">
@@ -108,8 +109,10 @@ export function CourierAdmin(){
      </form>
    </section>
    <SupplierReceivingDesk/>
+   <CourierAutoDispatch couriers={couriers.data?.couriers??[]}
+     onCreated={async ids=>{setSelected(ids[0]??'');await runs.reload()}}/>
    <section className="card stack">
-     <h2>Составить рейс</h2>
+     <h2>Составить отдельный рейс вручную</h2>
      <p className="note">Вставьте готовые заказы в любом порядке. С проверенными координатами склада и всех получателей TrakSOS автоматически расставит остановки по близости и составит курьеру один маршрутный лист. Без координат сохранится ручной порядок. Дорожные ограничения, пробки и ETA не рассчитываются.</p>
      <form className="stack" onSubmit={async e=>{
        e.preventDefault();const orderIds=orders.split(/[,;\s]+/).map(x=>x.trim()).filter(Boolean);

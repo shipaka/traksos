@@ -5,14 +5,9 @@ import assert from 'node:assert/strict';
 import {performance} from 'node:perf_hooks';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {setup,ok} from '../server/test/helpers.ts';
-import {planCourierRoute,greatCircleKm} from '../server/src/services/shopCourierRoute.ts';
 
 const ROUTES=20,STOPS_PER_ROUTE=50,TOTAL=ROUTES*STOPS_PER_ROUTE;
-const start=performance.now(),latencies=[],issues=[];
-const percentile=(values,p)=>{
- const x=[...values].sort((a,b)=>a-b);
- return x.length?Math.round(x[Math.min(x.length-1,Math.ceil(x.length*p)-1)]):null;
-};
+const start=performance.now(),issues=[];
 const t=await setup();
 try{
  const admin=await t.login('+79990000001');
@@ -49,19 +44,41 @@ try{
     59.80+(p.n%100)*0.002,30.10+floor(p.n/100)*0.03
   from unnest($2::uuid[]) with ordinality as p(id,n)
  `,[admin.id,ids]);
- const created=await Promise.all(couriers.map(async(person,routeNumber)=>{
-  const orderIds=ids.slice(routeNumber*STOPS_PER_ROUTE,(routeNumber+1)*STOPS_PER_ROUTE).reverse();
-  const began=performance.now();
-  const result=await t.api('POST','/api/admin/shop/courier-runs',{
-    courierId:person.id,pickupAddress:'Санкт-Петербург, тестовый склад, 1',
-    pickupLat:59.8,pickupLng:30.1,orderIds
-  },admin.token);
-  latencies.push(performance.now()-began);
-  assert.equal(result.status,200,'planner failed for route '+routeNumber+': '+JSON.stringify(result.body));
-  assert.equal(result.body.routePlanning,'coordinate_heuristic');
-  assert.equal(result.body.stops,50);
-  return {...result.body,courier:person,orderIds};
- }));
+ // The entire 1000-parcel queue is grouped on the server. One operator
+ // confirmation creates all 20 DRAFT routes atomically; no customer notification.
+ const payload={
+  courierIds:couriers.map(x=>x.id),
+  pickupAddress:'Санкт-Петербург, тестовый склад, 1',
+  pickupLat:59.8,pickupLng:30.1,maxStops:STOPS_PER_ROUTE
+ };
+ const previewStart=performance.now();
+ const draft=ok(await t.api('POST','/api/admin/shop/courier-dispatch/preview',
+  payload,admin.token));
+ const previewMs=Math.round(performance.now()-previewStart);
+ assert.equal(draft.plannedOrders,TOTAL);
+ assert.equal(draft.batches.length,ROUTES);
+ assert.equal(draft.queueTruncated,false);
+ const createStart=performance.now();
+ const committed=ok(await t.api('POST','/api/admin/shop/courier-dispatch/create',{
+  ...payload,expectedSignature:draft.signature,capacityConfirmed:true
+ },admin.token));
+ const createMs=Math.round(performance.now()-createStart);
+ assert.equal(committed.created,true);
+ assert.equal(committed.courierNotified,false);
+ assert.equal(committed.draftRuns.length,ROUTES);
+ assert.equal(committed.plannedOrders,TOTAL);
+ const byCourier=new Map(draft.batches.map(b=>[b.courierId,b]));
+ const created=committed.draftRuns.map(r=>{
+  const courier=couriers.find(x=>x.id===r.courierId);
+  const batch=byCourier.get(r.courierId);
+  assert.ok(courier&&batch,'route must belong to a selected courier');
+  assert.equal(r.stops,STOPS_PER_ROUTE);
+  return {...r,courier,orderIds:batch.orderIds};
+ });
+ const retry=await t.api('POST','/api/admin/shop/courier-dispatch/create',{
+  ...payload,expectedSignature:draft.signature,capacityConfirmed:true
+ },admin.token);
+ assert.equal(retry.status,409,'repeating batch preview cannot reserve twice');
  const createdIds=created.map(x=>x.id);
  assert.equal(new Set(createdIds).size,ROUTES);
  const assignments=await t.db.query(`
@@ -88,18 +105,11 @@ try{
   assert.equal(sheet.routePlanning,'coordinate_heuristic');
   assert.deepEqual(sheet.stops.map(x=>x.seq),Array.from({length:50},(_,i)=>i+1));
   assert.ok(sheet.stops.every(x=>Number.isFinite(x.lat)&&Number.isFinite(x.lng)));
-  const sourceRows=await t.db.query(`
-    select so.id,ac.lat,ac.lng from shop_orders so
-    join shop_delivery_address_checks ac on ac.shop_order_id=so.id
-    where so.id=any($1::uuid[])
-  `,[row.orderIds]);
-  const geo=new Map(sourceRows.map(x=>[x.id,{lat:x.lat,lng:x.lng}]));
-  const expected=planCourierRoute({lat:59.8,lng:30.1},
-    row.orderIds.map(id=>({...geo.get(id),id})));
   const actual=await t.db.query(`
     select shop_order_id from shop_courier_stops where run_id=$1 order by seq
   `,[row.id]);
-  assert.deepEqual(actual.map(x=>x.shop_order_id),expected.orderedIds);
+  assert.deepEqual(actual.map(x=>x.shop_order_id),row.orderIds,
+   'committed route must match confirmed preview order');
  }
  const foreign=await t.api('GET','/api/courier/runs/'+created[1].id,
    undefined,created[0].courier.token);
@@ -112,12 +122,11 @@ try{
  const report={
   scenario:'1000_ready_parcels_20_approved_fixture_courier_sheets',
   environment:'temporary local CI PostgreSQL; no production requests',
-  realOrderCreation:false,realRouteCreationAPI:true,
+  realOrderCreation:false,realRouteCreationAPI:true,realBatchPlanningAPI:true,
   realCourierReadAPI:true,financialApproval:'fixture-only; separately tested',
   orders:TOTAL,courierRuns:ROUTES,stopsPerRun:STOPS_PER_ROUTE,
   duplicateAssignments:0,foreignCourierPrivacy:foreign.status===404,
-  plannerMs:{p50:percentile(latencies,.5),p95:percentile(latencies,.95),
-    p99:percentile(latencies,.99),max:percentile(latencies,1)},
+  autoPlanningMs:{preview:previewMs,atomicCreate:createMs},
   durationMs:Math.round(performance.now()-start),issues
  };
  await mkdir('test-results',{recursive:true});
