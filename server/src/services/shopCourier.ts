@@ -88,7 +88,7 @@ async function advanceRun(q:Queryable,runId:string){
   return 'delivering';
 }
 
-type DeliveryPhase='planned'|'accepted'|'collected'|'dispatched'|'arrived'|
+type DeliveryPhase='planned'|'assigned'|'accepted'|'collected'|'dispatched'|'arrived'|
   'handoff_verified'|'delivered'|'failed'|'returned'|'route_cancelled';
 async function recordDelivery(q:Queryable,orderId:string,runId:string,
   status:DeliveryPhase,actorId:string){
@@ -98,6 +98,7 @@ async function recordDelivery(q:Queryable,orderId:string,runId:string,
 }
 const DELIVERY_MESSAGES:Record<DeliveryPhase,string>={
   planned:'Доставка предварительно запланирована; маршрут ещё требует утверждения',
+  assigned:'Маршрут доставки утверждён; курьер ожидает забора посылок',
   accepted:'Курьер принял маршрут',
   collected:'Посылка забрана на складе',
   dispatched:'Курьер выехал со склада',
@@ -268,6 +269,23 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
         'select shop_order_id,status from shop_courier_stops where run_id=$1 order by seq for update',[routeId]);
       if(stops.some(x=>x.status!=='awaiting_pickup'))
         throw conflict('parcel_already_collected','Нельзя аннулировать рейс после забора товаров');
+      const affected=run.dispatch_approved_at?await q.query<{
+        id:string;number:number;client_id:string;created_by:string
+      }>(
+        "select o.id,o.number,o.client_id,o.created_by from shop_orders o "+
+        "join shop_courier_stops st on st.shop_order_id=o.id "+
+        "where st.run_id=$1 order by st.seq",[routeId]):[];
+      // Persist customer notifications with the cancellation itself, before
+      // releasing reserved parcels. Do not notify buyers about unapproved drafts.
+      for(const item of affected){
+        for(const recipient of new Set([item.client_id,item.created_by]))
+          await q.query(
+            "insert into notifications(user_id,kind,title,body,data) "+
+            "values($1,'shop',$2,$3,$4)",
+            [recipient,'Доставка заказа №'+item.number,
+             'Назначенный маршрут отменён. Заказ ожидает нового согласования доставки.',
+             {shopOrderId:item.id}]);
+      }
       await q.query('delete from shop_courier_live_positions where run_id=$1',[routeId]);
       for(const st of stops)
         await recordDelivery(q,st.shop_order_id,routeId,'route_cancelled',c.user.id);
@@ -280,10 +298,19 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
         [c.user.id,'shop.courier_route_cancelled',routeId,
           {reason,orderIds:stops.map(x=>x.shop_order_id)}]);
       return {id:routeId,status:'cancelled',releasedOrders:stops.length,
-        courierId:run.courier_id,wasApproved:Boolean(run.dispatch_approved_at)};
+        courierId:run.courier_id,wasApproved:Boolean(run.dispatch_approved_at),
+        affected};
     });
-    if(result.wasApproved)
+    if(result.wasApproved){
       notifier.live([result.courierId],{type:'courier_route_cancelled',runId:routeId});
+      for(const item of result.affected)
+        await notifier.deliverStored(
+          [item.client_id,item.created_by],{type:'shop',shopOrderId:item.id},
+          {kind:'normal',title:'Доставка заказа №'+item.number,
+           body:'Назначенный маршрут отменён. Заказ ожидает нового согласования доставки.',
+           data:{shopOrderId:item.id}}
+        ).catch(err=>console.warn('[courier-cancel-push]',err));
+    }
     return {id:result.id,status:result.status,releasedOrders:result.releasedOrders};
   });
 
@@ -571,29 +598,48 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
   r.post('/api/shop/orders/:id/confirm-delivery',true,async(c:AuthedCtx)=>{
     const orderId=parse(id,c.params.id);
     const result=await db.tx(async q=>{
-      const row=await q.one<{id:string;status:string;client_id:string;created_by:string;run_id:string}>(
-        "select so.id,so.status,so.client_id,so.created_by,st.run_id "+
+      // Lock ordering: courier route -> order -> stop. The courier's
+      // "report-failure" action also locks the route first. Two devices can
+      // therefore never both complete and fail the SAME active stop.
+      const target=await q.one<{run_id:string}>(
+        'select run_id from shop_courier_stops where shop_order_id=$1',[orderId]);
+      if(!target)throw notFound('Заказ не найден');
+      const state=await q.one<{status:string;active_stop_id:string|null}>(
+        'select status,active_stop_id from shop_courier_runs where id=$1 for update',
+        [target.run_id]);
+      const row=await q.one<{id:string;status:string;client_id:string;created_by:string;
+        run_id:string;stop_id:string;stop_status:string}>(
+        "select so.id,so.status,so.client_id,so.created_by,st.run_id, "+
+        "st.id as stop_id,st.status as stop_status "+
         "from shop_orders so join shop_courier_stops st on st.shop_order_id=so.id "+
-        "where so.id=$1 for update of so",[orderId]);
+        "where so.id=$1 for update of so,st",[orderId]);
       if(!row || (row.client_id!==c.user.id && row.created_by!==c.user.id))
         throw notFound('Заказ не найден');
-      if(row.status==='done')return {status:'done'};
-      if(row.status!=='shipped')throw conflict('invalid_state','Заказ ещё не доставлен');
+      // Lost-response retries must not insert duplicate timeline entries,
+      // move the courier to another stop or alert the buyer twice.
+      if(row.status==='done'&&row.stop_status==='delivered')
+        return {status:'done',changed:false};
+      if(row.status!=='shipped'||state?.status!=='delivering'||
+         state.active_stop_id!==row.stop_id||row.stop_status!=='at_door')
+        throw conflict('invalid_state','Действие недоступно: остановка уже обработана');
       const stop=await q.one<{id:string}>(
         "update shop_courier_stops set status='delivered',delivered_at=now() "+
-        "where shop_order_id=$1 and status='at_door' "+
-         "and exists(select 1 from shop_delivery_handoffs h "+
-         "where h.stop_id=shop_courier_stops.id and h.verified_at is not null) "+
-         "returning id",[orderId]);
-      if(!stop)throw conflict('handoff_unconfirmed','Нужны прибытие курьера и проверенный одноразовый код получателя');
+        "where id=$1 and status='at_door' "+
+        "and exists(select 1 from shop_delivery_handoffs h "+
+        "where h.stop_id=$1 and h.verified_at is not null) returning id",
+        [row.stop_id]);
+      if(!stop)
+        throw conflict('handoff_unconfirmed',
+          'Нужны прибытие курьера и проверенный одноразовый код получателя');
       await q.query("update shop_orders set status='done',updated_at=now() where id=$1",[orderId]);
       await recordDelivery(q,orderId,row.run_id,'delivered',c.user.id);
       await q.query('delete from shop_delivery_handoffs where stop_id=$1',[stop.id]);
       await advanceRun(q,row.run_id);
-      return {status:'done'};
+      return {status:'done',changed:true};
     });
-    await alert(db,notifier,orderId,'Получение подтверждено');
-    return result;
+    if(result.changed)
+      await alert(db,notifier,orderId,'Получение подтверждено');
+    return {status:result.status,alreadyConfirmed:!result.changed};
   });
   r.put('/api/courier/location-consent',true,async(c:AuthedCtx)=>{
     await courier(db,c.user);

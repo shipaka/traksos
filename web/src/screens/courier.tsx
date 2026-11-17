@@ -56,13 +56,22 @@ export function CourierHome(){
      previous:list.data!.runs[0]?.id??null);
  },[list.data]);
  useEffect(()=>{
-   const id=window.setInterval(()=>{
-     if(document.visibilityState==='visible'&&navigator.onLine){
-       void list.reload();if(selected)void detail.reload();
-     }
-   },20000);
-   return ()=>window.clearInterval(id);
- },[selected]);
+   const refresh=()=>{
+     if(document.visibilityState!=='visible'||!navigator.onLine)return;
+     void list.reload();
+     if(selected)void detail.reload();
+   };
+   const visible=()=>refresh();
+   const id=window.setInterval(refresh,20000);
+   // Reconcile changed assignments and handoffs immediately on reconnection.
+   window.addEventListener('online',refresh);
+   document.addEventListener('visibilitychange',visible);
+   return ()=>{
+     window.clearInterval(id);
+     window.removeEventListener('online',refresh);
+     document.removeEventListener('visibilitychange',visible);
+   };
+ },[selected,list.reload,detail.reload]);
  const current=detail.data;
  const status=current?.status??null;
  const activeStop=current?.stops.find(x=>x.id===current.activeStopId)??null;

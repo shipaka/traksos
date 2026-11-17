@@ -25,13 +25,23 @@ export function CustomerCourierTracking({orderId,onChanged}:{
   const [codeExpiry,setCodeExpiry]=useState<string|null>(null);
   useEffect(()=>{setHandoffCode(null);setCodeExpiry(null)},[orderId]);
   useEffect(()=>{
-    const timer=window.setInterval(()=>{
+    const refresh=()=>{
       if(!navigator.onLine||document.visibilityState==='hidden')return;
       void position.reload();
       void history.reload();
-    },20000);
-    return ()=>window.clearInterval(timer);
-  },[orderId]);
+    };
+    const onVisible=()=>refresh();
+    const timer=window.setInterval(refresh,20000);
+    // Reconcile the authoritative order state as soon as the customer
+    // regains network or returns to the app. Never cache other stops/GPS.
+    window.addEventListener('online',refresh);
+    document.addEventListener('visibilitychange',onVisible);
+    return ()=>{
+      window.clearInterval(timer);
+      window.removeEventListener('online',refresh);
+      document.removeEventListener('visibilitychange',onVisible);
+    };
+  },[orderId,position.reload,history.reload]);
   const d=position.data;
   return <section className="card stack" aria-label="Отслеживание заказа" style={{gap:12}}>
     <h3>Доставка заказа</h3>

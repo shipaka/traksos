@@ -133,13 +133,45 @@ export function registerShopCourierEconomicsRoutes(r:Router,db:Db,notifier:Notif
           'Нужна обоснованная ручная санкция администратора на убыточный рейс');
       await q.query('update shop_courier_runs set dispatch_approved_at=now(),dispatch_approved_by=$2,dispatch_exception_reason=$3 where id=$1',
         [id,c.user.id,stats.routeContributionKopecks<0?exceptionReason??null:null]);
+      // Assignments and in-app notifications are persisted in the SAME
+      // transaction as approval. They cannot precede actual finance approval,
+      // and an HTTP retry cannot generate duplicate "courier assigned" alerts.
+      const assigned=await q.query<{id:string;number:number;client_id:string;created_by:string}>(
+        "select o.id,o.number,o.client_id,o.created_by from shop_orders o "+
+        "join shop_courier_stops st on st.shop_order_id=o.id "+
+        "where st.run_id=$1 order by st.seq",[id]);
+      await q.query(
+        "insert into shop_delivery_events(shop_order_id,run_id,status,actor_id) "+
+        "select shop_order_id,run_id,'assigned',$2 from shop_courier_stops "+
+        "where run_id=$1",[id,c.user.id]);
+      for(const item of assigned){
+        const recipients=[...new Set([item.client_id,item.created_by])];
+        for(const userId of recipients)
+          await q.query(
+            "insert into notifications(user_id,kind,title,body,data) "+
+            "values($1,'shop',$2,$3,$4)",
+            [userId,'Доставка заказа №'+item.number,
+              'Маршрут доставки утверждён. Ожидайте подтверждения курьера и отправки со склада.',
+              {shopOrderId:item.id}]);
+      }
       await q.query('insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4)',
         [c.user.id,'shop.courier_dispatch_approved',id,
           {contributionKopecks:stats.routeContributionKopecks,
+           customerAssignments:assigned.length,
            exceptionReason:stats.routeContributionKopecks<0?exceptionReason??null:null}]);
-      return {courierId:run.courier_id,stats};
+      return {courierId:run.courier_id,stats,assigned};
     });
     notifier.live([approved.courierId],{type:'courier_route_assigned',runId:id});
+    // A push is best-effort. The stored customer notification and audit
+    // event are already committed and remain visible if push delivery fails.
+    for(const item of approved.assigned){
+      await notifier.deliverStored(
+        [item.client_id,item.created_by],{type:'shop',shopOrderId:item.id},
+        {kind:'normal',title:'Доставка заказа №'+item.number,
+          body:'Маршрут доставки утверждён. Ожидайте отправки со склада.',
+          data:{shopOrderId:item.id}}
+      ).catch(err=>console.warn('[courier-dispatch-push]',err));
+    }
     return {approved:true,economics:approved.stats};
   });
 }

@@ -2,6 +2,7 @@ import {useState} from 'react';
 import {CourierWarehouseCheck} from './courierWarehouse.tsx';
 import {SupplierReceivingDesk} from './supplierReceivingDesk.tsx';
 import {CourierAutoDispatch} from './courierAutoDispatch.tsx';
+import {CourierOperations} from './courierOperations.tsx';
 import {get,post,put} from '../api.ts';
 import {useAction,useLoad,Back} from '../ui.tsx';
 
@@ -46,7 +47,12 @@ export function CourierAdmin(){
  const [exception,setException]=useState('');
  const [cancelReason,setCancelReason]=useState('');
  const [returnEvidence,setReturnEvidence]=useState('');
- const chosen=runs.data?.runs.find(r=>r.id===selected)??null;
+ const chosen=runs.data?.runs.find(r=>r.id===selected)??(
+   selected&&economics.data?.runId===selected?{
+    id:selected,courier_id:'',courier_name:'Рейс из контроля задержек',
+    status:economics.data.status,stops:economics.data.stops
+   }:null);
+ 
  const updateBudget=(key:keyof typeof zeros,value:string)=>setBudget(x=>({...x,[key]:value}));
  const saveBudget=async()=>{
    const amounts=Object.fromEntries(Object.entries(budget).map(([key,value])=>[key,toMoney(value)]));
@@ -109,6 +115,7 @@ export function CourierAdmin(){
      </form>
    </section>
    <SupplierReceivingDesk/>
+   <CourierOperations onOpenRun={setSelected}/>
    <CourierAutoDispatch couriers={couriers.data?.couriers??[]}
      onCreated={async ids=>{setSelected(ids[0]??'');await runs.reload()}}/>
    <section className="card stack">

@@ -41,6 +41,7 @@ import { registerPartnerActivityRoutes } from './services/partnerActivity.ts';
 import { ShopService } from './services/shop.ts';
 import { registerShopCourierRoutes } from './services/shopCourier.ts';
 import { registerShopCourierBatchRoutes } from './services/shopCourierBatch.ts';
+import {registerShopCourierOperationsRoutes} from './services/shopCourierOperations.ts';
 import { registerShopCourierEconomicsRoutes } from './services/shopCourierEconomics.ts';
 import { registerShopWarehouseRoutes } from './services/shopWarehouse.ts';
 import {registerEcuReferralRoutes} from './services/ecuReferrals.ts';
@@ -651,6 +652,7 @@ export function createApp(d: Deps) {
   registerShopRegionRoutes(r, shopRegion);
   registerShopCourierRoutes(r, d.db, notifier);
   registerShopCourierBatchRoutes(r, d.db);
+  registerShopCourierOperationsRoutes(r, d.db);
   registerShopCourierEconomicsRoutes(r, d.db, notifier);
   registerShopWarehouseRoutes(r, d.db);
   registerShopSupplierReceivingRoutes(r,d.db);

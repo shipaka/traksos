@@ -107,8 +107,30 @@ test('dispatch requires verified SPb delivery addresses and never assigns unveri
  assert.equal(forecast.profitable,true);
  assert.equal(forecast.platformCommissionBookedKopecks,0,
    'потенциальные 5% не включаются в прибыль запчастей');
+ const beforeApproval=ok(await t.api('GET','/api/shop/orders/'+order1+'/courier',
+   undefined,client1.token));
+ assert.equal(beforeApproval.status,'awaiting_assignment');
  ok(await t.api('POST','/api/admin/shop/courier-runs/'+runId+'/approve-dispatch',
    {},admin.token));
+ const afterApproval=ok(await t.api('GET','/api/shop/orders/'+order1+'/courier',
+   undefined,client1.token));
+ assert.equal(afterApproval.status,'awaiting_pickup',
+   'buyer sees an assigned courier ONLY after financial approval');
+ const deliveryEvents=ok(await t.api('GET','/api/shop/orders/'+order1+
+   '/delivery-history',undefined,client1.token)).events;
+ assert.deepEqual(deliveryEvents.slice(0,2).map((x:any)=>x.status),
+   ['planned','assigned']);
+ const notifications=await t.db.query<{n:number}>(
+   "select count(*)::int as n from notifications where user_id=$1 and "+
+   "data->>'shopOrderId'=$2 and body like 'Маршрут доставки утверждён%'",
+   [client1.id,order1]);
+ assert.equal(notifications[0]?.n,1,'client notified once after approved assignment');
+ assert.equal((await t.api('POST','/api/admin/shop/courier-runs/'+runId+
+   '/approve-dispatch',{},admin.token)).status,409);
+ assert.equal((await t.db.one<{n:number}>(
+   "select count(*)::int as n from notifications where user_id=$1 and "+
+   "data->>'shopOrderId'=$2 and body like 'Маршрут доставки утверждён%'",
+   [client1.id,order1]))?.n,1,'duplicate approval cannot duplicate notifications');
  const info=ok(await t.api('GET','/api/courier/runs/'+runId,undefined,driver.token));
  stops=info.stops;
  assert.equal(stops.length,2);
@@ -163,7 +185,16 @@ test('courier consent + stop-by-stop GPS, customer signs handoff, last fix is er
  assert.equal((await t.api('POST','/api/courier/runs/'+runId+'/stops/'+stops[0].id+
    '/verify-handoff',{code:firstCode.code},driver.token)).status,409,'code cannot be reused');
  assert.equal(ok(await t.api('GET','/api/shop/orders/'+order1+'/courier',undefined,client1.token)).handoffVerified,true);
- ok(await t.api('POST','/api/shop/orders/'+order1+'/confirm-delivery',{},client1.token));
+ const firstConfirmation=ok(await t.api('POST','/api/shop/orders/'+order1+
+   '/confirm-delivery',{},client1.token));
+ assert.equal(firstConfirmation.alreadyConfirmed,false);
+ const secondConfirmation=ok(await t.api('POST','/api/shop/orders/'+order1+
+   '/confirm-delivery',{},client1.token));
+ assert.equal(secondConfirmation.alreadyConfirmed,true,
+   'replaying a lost successful response must not advance to another stop');
+ const deliveredEvents=ok(await t.api('GET','/api/shop/orders/'+order1+
+   '/delivery-history',undefined,client1.token)).events;
+ assert.equal(deliveredEvents.filter((x:any)=>x.status==='delivered').length,1);
  const secondLeg=ok(await t.api('GET','/api/courier/runs/'+runId,undefined,driver.token));
  assert.equal(secondLeg.activeStopId,stops[1].id);
  assert.equal(secondLeg.stops[0].recipientName,null,'после вручения имя прежнего получателя больше не раскрывается');
@@ -275,6 +306,19 @@ test('new supplier cancellation after route approval blocks courier acceptance a
    {reason:'Автоконтинент отменил заказ до передачи курьеру, маршрут расформирован'},admin.token));
  assert.equal(removed.releasedOrders,1);
  assert.equal((await t.api('GET','/api/courier/runs/'+route.id,undefined,driver.token)).status,404);
+ const afterCancel=ok(await t.api('GET','/api/shop/orders/'+fourth+'/courier',
+   undefined,client2.token));
+ assert.equal(afterCancel.status,'awaiting_assignment',
+   'cancelled assignment must not appear as active customer delivery');
+ const history=ok(await t.api('GET','/api/shop/orders/'+fourth+
+   '/delivery-history',undefined,client2.token)).events;
+ assert.deepEqual(history.map((x:any)=>x.status).slice(-2),
+   ['assigned','route_cancelled']);
+ assert.equal((await t.db.one<{n:number}>(
+   "select count(*)::int as n from notifications where user_id=$1 and "+
+   "data->>'shopOrderId'=$2 and body like 'Назначенный маршрут отменён%'",
+   [client2.id,fourth]))?.n,1,
+   'one persisted buyer cancellation alert accompanies the route rollback');
 });
 
 
