@@ -112,13 +112,20 @@ export class PartnerLevelsService{
     catch(e:any){if(e?.code==='23505')throw conflict('appeal_pending','Обращение уже открыто');throw e}
   }
   async queue(){
-    const [appeals,reviewDue]=await Promise.all([
+    const [appeals,reviewDue,ecuSpecialists]=await Promise.all([
       this.db.query("select a.id,a.user_id,a.message,a.created_at,d.level from partner_level_appeals a "+
         "left join partner_level_decisions d on d.user_id=a.user_id and d.current=true "+
         "where a.status='open' order by a.created_at limit 100"),
-      this.db.query('select user_id,level,review_due_at from partner_level_decisions where current=true and review_due_at<=$1 order by review_due_at limit 100',[this.now()])
+      this.db.query('select user_id,level,review_due_at from partner_level_decisions where current=true and review_due_at<=$1 order by review_due_at limit 100',[this.now()]),
+      // Admin-only shortlist of ECU specialists; names and explicitly reviewed
+      // levels, never private phone numbers, VINs or location history.
+      this.db.query(
+        "select p.user_id,u.name,p.verification,coalesce(d.level,'start') as level "+
+        "from performer_profiles p join users u on u.id=p.user_id "+
+        "left join partner_level_decisions d on d.user_id=p.user_id and d.current=true "+
+        "where p.kind='ecu' order by u.name nulls last,p.user_id limit 100")
     ]);
-    return {appeals,reviewDue,automaticDemotion:false};
+    return {appeals,reviewDue,ecuSpecialists,automaticDemotion:false};
   }
   async decide(admin:AuthUser,userId:string,level:Level,reason:string){
     const now=this.now(),due=new Date(now.getTime()+90*86400000);
