@@ -73,9 +73,13 @@ test('public estimates reject far-away GPS and explicit other cities without inv
   assert.equal(local.provisional,true);
   assert.match(local.coverageNote,/координаты не подтверждают точную границу КАД/i,
     'API must not claim that the address or pricing was geocoded');
-  const omitted=await t.api('POST',route,{service:'electric',zoneId:'spb',tier:'eco'});
+  // Bypass legacy fixture enrichment to exercise the real production API contract.
+  const omitted=await fetch(t.base+route,{
+    method:'POST',headers:{'content-type':'application/json'},
+    body:JSON.stringify({service:'electric',zoneId:'spb',tier:'eco'})
+  });
   assert.equal(omitted.status,400,'region must be explicitly declared in production API');
-  assert.equal(omitted.body.error,'region_required');
+  assert.equal((await omitted.json()).error,'region_required');
   const blind=ok(await t.api('POST',route,base));
   assert.equal(blind.provisional,true);
   assert.ok(blind.coverageNote,'without location a preview is still explicitly preliminary');
