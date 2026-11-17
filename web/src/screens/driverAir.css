@@ -23,7 +23,9 @@ background:transparent;color:inherit;font:inherit;padding:11px 14px;white-space:
 .air-bubble p{margin:7px 0 0;white-space:pre-wrap;line-height:1.48}
 .air-bubble-meta{font-size:.8rem;flex-wrap:wrap;justify-content:flex-start}
 .air-bubble-meta time,.air-bubble small{opacity:.75}
-.air-compose{display:flex;align-items:stretch;gap:8px}
+.air-compose{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap}
+.air-compose>.air-checkbox{flex:1 1 100%;min-width:0;font-size:.85rem;line-height:1.4}
+.air-compose>.air-checkbox input{flex-shrink:0}
 .air-compose textarea{flex:1;min-width:0;resize:vertical;min-height:50px}
 .air-safe-tip,.air-empty{font-size:.84rem;opacity:.78;margin:4px 0}
 .air-empty{padding:20px;text-align:center}
