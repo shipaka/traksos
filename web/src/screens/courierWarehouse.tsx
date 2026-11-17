@@ -4,17 +4,24 @@ import {useAction,useLoad} from '../ui.tsx';
 
 type WarehouseIssue={id:string;kind:string;note:string;observedArticle:string;
  observedQty:number;reportedAt:string};
+type WarehouseTrace={gtin:string;lot:string|null;serials:string[];method:string;recordedAt:string};
 type Line={index:number;name:string;brand:string|null;article:string|null;
  quantity:number;verified:boolean;method:string|null;checkedAt:string|null;blockedReason:string|null;
- recheckedAfterDiscrepancy:boolean;openDiscrepancy:WarehouseIssue|null};
+ recheckedAfterDiscrepancy:boolean;openDiscrepancy:WarehouseIssue|null;
+ traceabilityVerified:boolean;trace:WarehouseTrace|null};
 type IssueRecord={id:string;stop_id:string|null;order_number:number;line_index:number;kind:string;
  expected_article:string;expected_qty:number;observed_article:string;observed_qty:number;
  note:string;reported_at:string;status:string;resolved_at:string|null;resolution_note:string|null};
 type Stop={id:string;orderNumber:number;status:string;lines:Line[]};
-type Progress={runId:string;packingRequired:boolean;runStatus:string;dispatchApproved:boolean;
+type Progress={runId:string;packingRequired:boolean;traceabilityRequired:boolean;runStatus:string;dispatchApproved:boolean;
  totalLines:number;remainingLines:number;openDiscrepancies:number;ready:boolean;stops:Stop[];warning:string};
 type Input={article:string;quantity:string;method:'scanner'|'manual';reason:string};
 const empty:Input={article:'',quantity:'',method:'scanner',reason:''};
+type TraceInput={gtin:string;lot:string;serialsText:string;
+ inputMethod:'manual'|'keyboard_wedge';manualReason:string};
+const emptyTrace:TraceInput={
+ gtin:'',lot:'',serialsText:'',inputMethod:'keyboard_wedge',manualReason:''
+};
 type IncidentInput={kind:'wrong_article'|'shortage'|'surplus'|'damaged'|'seal_broken'|'other';
  observedArticle:string;observedQty:string;note:string};
 const emptyIssue:IncidentInput={kind:'wrong_article',observedArticle:'',observedQty:'',
@@ -32,10 +39,13 @@ export function CourierWarehouseCheck({runId}:{runId:string}){
    get('/api/admin/shop/courier-runs/'+runId+'/warehouse/discrepancies'),[runId]);
  const {busy,run}=useAction();
  const [forms,setForms]=useState<Record<string,Input>>({});
+ const [traceForms,setTraceForms]=useState<Record<string,TraceInput>>({});
  const [issueForms,setIssueForms]=useState<Record<string,IncidentInput>>({});
  const [resolutionNotes,setResolutionNotes]=useState<Record<string,string>>({});
  const patch=(id:string,partial:Partial<Input>)=>
    setForms(current=>({...current,[id]:{...(current[id]??empty),...partial}}));
+ const patchTrace=(id:string,partial:Partial<TraceInput>)=>
+   setTraceForms(current=>({...current,[id]:{...(current[id]??emptyTrace),...partial}}));
  const patchIssue=(key:string,partial:Partial<IncidentInput>)=>
    setIssueForms(current=>({...current,[key]:{...(current[key]??emptyIssue),...partial}}));
  const reportIssue=async(stopId:string,line:Line)=>{
@@ -61,6 +71,22 @@ export function CourierWarehouseCheck({runId}:{runId:string}){
      'Случай закрыт после повторной физической сверки');
    if(saved){setResolutionNotes(v=>{const x={...v};delete x[item.id];return x});
      await Promise.all([result.reload(),incidents.reload()]);
+   }
+ };
+ const saveTrace=async(stopId:string,line:Line)=>{
+   const key=stopId+':'+line.index,form=traceForms[key]??emptyTrace;
+   const serials=form.serialsText.split(/[;,\n]+/).map(x=>x.trim()).filter(Boolean);
+   if(!form.gtin.trim()||(!form.lot.trim()&&serials.length===0))return;
+   const saved=await run(()=>post('/api/admin/shop/courier-runs/'+runId+
+     '/warehouse/stops/'+stopId+'/trace',{
+       lineIndex:line.index,gtin:form.gtin.trim(),
+       lot:form.lot.trim()||null,serials,
+       inputMethod:form.inputMethod,
+       manualReason:form.inputMethod==='manual'?form.manualReason.trim():null
+     }),'Маркировка записана. Это не подтверждение подлинности детали.');
+   if(saved){
+     setTraceForms(v=>{const n={...v};delete n[key];return n});
+     await result.reload();
    }
  };
  const save=async(stopId:string,line:Line)=>{
@@ -98,6 +124,11 @@ export function CourierWarehouseCheck({runId}:{runId:string}){
        сверки каждой проблемной строки и документированного закрытия расхождений.
      </p>}
      <p className="note">{p.warning}</p>
+     {p.traceabilityRequired&&<p className="note">
+       В этом новом рейсе обязательны GTIN с правильной контрольной цифрой и
+       партия либо серийные номера всех единиц. Прежде всего выполните физическую
+       сверку артикула и количества; после исправлений маркировку нужно записать вновь.
+     </p>
      {p.stops.map(stop=><article key={stop.id} className="card stack">
        <h4>Заказ №{stop.orderNumber}</h4>
        {stop.lines.length===0&&<p role="alert">Состав заказа отсутствует: запрещено подтверждать пустую посылку.</p>}
@@ -112,6 +143,53 @@ export function CourierWarehouseCheck({runId}:{runId:string}){
            {line.verified?<p role="status">Сверено: {line.method==='scanner'?'сканер':'ручная сверка'}
              {line.checkedAt?' · '+fmtTime(line.checkedAt):''}
            </p>:<p role="status">{line.blockedReason??'Не сверено'}</p>}
+           {p.traceabilityRequired&&<div className="stack">
+             {line.traceabilityVerified?<p role="status">
+               Маркировка записана: GTIN {line.trace?.gtin}
+               {line.trace?.lot?' · партия '+line.trace.lot:''}
+               {line.trace?.serials.length?' · серии '+line.trace.serials.join(', '):''}
+             </p>:<p role="status">Маркировка GTIN/партии не подтверждена.</p>}
+             {!locked&&line.verified&&!line.openDiscrepancy&&<form className="stack"
+               onSubmit={e=>{e.preventDefault();void saveTrace(stop.id,line)}}>
+               <label>GTIN / EAN / UPC — цифры со штрихкода
+                 <input className="field" inputMode="numeric" maxLength={14}
+                   autoComplete="off" placeholder="8, 12, 13 или 14 цифр"
+                   value={(traceForms[key]??emptyTrace).gtin}
+                   onChange={e=>patchTrace(key,{gtin:e.target.value})} required/>
+               </label>
+               <label>Номер партии (если применяется)
+                 <input className="field" maxLength={80} autoComplete="off"
+                   value={(traceForms[key]??emptyTrace).lot}
+                   onChange={e=>patchTrace(key,{lot:e.target.value})}/>
+               </label>
+               <label>Серийные номера (если есть; один для каждой единицы, через строку)
+                 <textarea className="field" rows={3}
+                   value={(traceForms[key]??emptyTrace).serialsText}
+                   onChange={e=>patchTrace(key,{serialsText:e.target.value})}/>
+               </label>
+               <label>Способ ввода маркировки
+                 <select className="field" value={(traceForms[key]??emptyTrace).inputMethod}
+                   onChange={e=>patchTrace(key,{inputMethod:e.target.value as TraceInput['inputMethod']})}>
+                   <option value="keyboard_wedge">Сканер или ввод с клавиатуры</option>
+                   <option value="manual">Ручная запись с объяснением</option>
+                 </select>
+               </label>
+               {(traceForms[key]??emptyTrace).inputMethod==='manual'&&
+                 <label>Причина ручной записи
+                   <textarea className="field" minLength={15} maxLength={500} rows={2}
+                     value={(traceForms[key]??emptyTrace).manualReason}
+                     onChange={e=>patchTrace(key,{manualReason:e.target.value})}/>
+                 </label>}
+               <button className="btn ghost" type="submit" disabled={busy||
+                 (traceForms[key]?.gtin.trim().length??0)<8||
+                 !((traceForms[key]?.lot.trim().length??0)>0||
+                   (traceForms[key]?.serialsText.trim().length??0)>0)||
+                 (traceForms[key]?.inputMethod==='manual'&&
+                   (traceForms[key]?.manualReason.trim().length??0)<15)}>
+                 Зафиксировать маркировку
+               </button>
+             </form>}
+           </div>}
            {line.openDiscrepancy&&<div className="stack" role="status">
              <strong>Открытое складское расхождение</strong>
              <p className="note">{kindNames[line.openDiscrepancy.kind as IncidentInput['kind']]??
