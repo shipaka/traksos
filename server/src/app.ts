@@ -1191,7 +1191,18 @@ export function createApp(d: Deps) {
   r.post('/api/orders/:id/consult-finish', performerRoles, (c: AuthedCtx) => orders.finishConsult(c.user, c.params.id, parse(z.object({
     hints: z.array(z.string().min(1).max(40)).min(1).max(3), confidence: z.enum(['sure', 'likely', 'guess']), note: z.string().max(300).optional(),
   }), c.body)));
-  r.post('/api/orders/:id/confirm', true, (c: AuthedCtx) => { const b = parse(z.object({ total: money.optional(), points: money.optional(), proposalVersion:z.string().datetime().optional() }), c.body); return orders.confirmAmount(c.user, c.params.id, b.total, b.points ?? 0,b.proposalVersion); });
+  r.post('/api/orders/:id/confirm', true, async (c:AuthedCtx)=>{
+    const b=parse(z.object({
+      total:money.optional(),points:money.optional(),
+      proposalVersion:z.string().datetime().optional(),ecuConsent:z.boolean().optional()
+    }),c.body);
+    const order=await orders.mustSee(c.user,c.params.id);
+    // A generic confirmation request cannot bypass the optional, final
+    // ECU quote. Require a fresh version and explicit server-side attestation.
+    if(order.service==='ecu'&&(!b.ecuConsent||b.total==null||!b.proposalVersion))
+      throw bad('ecu_consent_required','Подтвердите конкретную итоговую стоимость и версию сметы');
+    return orders.confirmAmount(c.user,c.params.id,b.total,b.points??0,b.proposalVersion);
+  });
   r.post('/api/orders/:id/dispute', true, (c: AuthedCtx) => orders.disputeAmount(c.user, c.params.id, parse(z.object({ reason: z.string().min(2).max(500) }), c.body).reason));
   r.post('/api/orders/:id/cancel', true, (c: AuthedCtx) => orders.cancel(c.user, c.params.id, parse(z.object({ reason: z.string().min(2).max(300) }), c.body).reason));
   r.post('/api/orders/:id/retry', true, (c: AuthedCtx) => orders.retry(c.user, c.params.id));
