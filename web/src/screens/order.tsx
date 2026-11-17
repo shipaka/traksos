@@ -11,6 +11,7 @@ import { Search, OfferForm } from './search.tsx';
 import { RoadsideMap } from './roadsideMap.tsx';
 import { AdminRouteMap } from './AdminRouteMap.tsx';
 import { OrderTimeline } from './OrderTimeline.tsx';
+import { EcuReferralPanel } from './ecuReferralPanel.tsx';
 import { LocationSharing } from './performer.tsx';
 import { RefundForm, payStatus } from './adminUser.tsx';
 
@@ -68,6 +69,7 @@ export function Order({ id }: { id: string }) {
       {!isConsult && d.you !== 'candidate' && <Steps status={d.status} service={d.service} events={d.events} />}
       {isConsult && !isPerformer && d.you !== 'candidate' && <ConsultClient d={d} />}
       {d.consultFrom?.hint && <ConsultHintCard from={d.consultFrom} />}
+      {d.you !== 'candidate' && <EcuReferralPanel order={d} />}
       {d.status === 'no_performer' && !isPerformer && <Retry id={id} onDone={o.reload} />}
 
       {d.performer && !isPerformer && <PerformerCard p={d.performer} pos={perfPos} consult={isConsult} to={d.lat != null ? { lat: d.lat, lng: d.lng } : null} moving={['accepted', 'en_route'].includes(d.status)} />}
