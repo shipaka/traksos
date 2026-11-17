@@ -919,7 +919,9 @@ export class OrdersService {
     const items = await this.db.query<any>(
       `select o.id, o.number, o.status, o.service, o.is_sos, o.problem, o.description, o.address, o.brand, o.estimate, o.work_amount, o.call_out_amount,
               o.client_fee_pct, o.discount_amount, o.payment_method, o.created_at, o.completed_at, o.consult_of,
-              o.case_root_id, o.continuation_of, o.additional_to, o.result, o.result_note, o.vehicle_id,
+              o.case_root_id, o.continuation_of, o.additional_to,
+              (select number from orders parent where parent.id=o.additional_to) as parent_number,
+              o.result, o.result_note, o.vehicle_id,
               v.brand as v_brand, v.model as v_model, v.year as v_year, v.plate as v_plate,
               (select coalesce(company_name, name) from users where id=o.client_id) as client_name
          from orders o left join vehicles v on v.id=o.vehicle_id where ${where} ${status ? 'and o.status = $2' : ''} order by o.created_at desc limit 100`,
