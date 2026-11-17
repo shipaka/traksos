@@ -9,6 +9,7 @@ import { useLoad, useAction, useMe, go, Loading, Field, RubInput, Back } from '.
 
 const SPECIALTIES: { id: string; name: string }[] = [
   { id: 'electric', name: 'Электрика' }, { id: 'diag', name: 'Диагностика' }, { id: 'air', name: 'Пневма, тормоза' },
+  { id: 'ecu', name: 'Специалист по ЭБУ' },
   { id: 'autonomy', name: 'Автономки' }, { id: 'tyre', name: 'Шиномонтаж' }, { id: 'consult', name: 'Консультации' },
 ];
 
@@ -33,7 +34,7 @@ export function PerformerHub() {
   if (!p) return <PerformerOnboarding />;
   const cars = (p.cars?.length ? p.cars : p.car ? [p.car] : []) as any[];
   const rows: [string, string, string][] = [
-    ['work/me/about', 'Кто вы', `${me?.name ?? 'Имя не указано'} · ${p.kind === 'tow' ? 'эвакуатор' : 'мастер'}`],
+    ['work/me/about', 'Кто вы', `${me?.name ?? 'Имя не указано'} · ${p.kind === 'tow' ? 'эвакуатор' : p.kind === 'ecu' ? 'специалист по ЭБУ' : 'мастер'}`],
     ['work/me/phone', 'Телефон и вход', fmtPhone(me!.phone)],
     ['work/me/cars', p.kind === 'tow' ? 'Эвакуаторы' : 'Машины', cars.length ? `${cars.length} из 3 · сегодня: ${p.car?.brand ?? '—'} ${p.car?.plate ?? ''}` : 'не добавлены'],
     ['work/me/schedule', 'Распорядок', p.schedule?.on ? `${dayList(p.schedule.days)} · выезды ${p.schedule.from}–${p.schedule.to} · телефон до ${p.schedule.phoneTo}` : 'не задан — заявки идут, пока вы на линии'],
@@ -75,7 +76,14 @@ export function PerformerHub() {
 function PerformerOnboarding() {
   const { me, reload } = useMe();
   const { busy, run } = useAction();
-  const [kind, setKind] = useState(me?.roles.includes('tow') ? 'tow' : 'master');
+  const [kind, setKind] = useState(()=>{
+    if(me?.roles.includes('tow'))return 'tow';
+    try{
+      const selected=JSON.parse(sessionStorage.getItem('traksos.masterSpecialties')??'[]');
+      if(Array.isArray(selected)&&selected.includes('ecu'))return 'ecu';
+    }catch{/* Guest hints are never used as credentials. */}
+    return 'master';
+  });
   const canTow = !!me?.roles.includes('tow');
   const canMaster = !!me?.roles.includes('master');
   const [name, setName] = useState(me?.name ?? '');
@@ -93,10 +101,12 @@ function PerformerOnboarding() {
   const [taxStatus, setTax] = useState('');
   const [inn, setInn] = useState('');
   const isTow = kind === 'tow';
+  const isEcu = kind === 'ecu';
   async function save() {
     const body: any = { kind, name: name || undefined, taxStatus: taxStatus || null, inn: inn || null,
       cars: car.brand && car.plate ? [car] : [], car: car.brand && car.plate ? car : null };
-    if (!isTow) body.specialties = spec;
+    if (isEcu) body.specialties = ['diag','electric'];
+    else if (!isTow) body.specialties = spec.filter(x=>x!=='ecu');
     if (await run(() => put('/api/performer/profile', body), 'Профиль сохранён — теперь фото для проверки')) {
       try { sessionStorage.removeItem('traksos.masterSpecialties'); } catch {}
       await reload(); go('work/docs');
@@ -109,11 +119,12 @@ function PerformerOnboarding() {
         <div className="step-head"><span className="step-n">1</span><b>Кто вы</b></div>
         <div className="grid2">
           {canMaster && <button type="button" className="seg" aria-pressed={kind === 'master'} onClick={() => setKind('master')}>Мастер</button>}
+          {canMaster && <button type="button" className="seg" aria-pressed={isEcu} onClick={() => setKind('ecu')}>Специалист по ЭБУ</button>}
           {canTow && <button type="button" className="seg" aria-pressed={kind === 'tow'} onClick={() => setKind('tow')}>Эвакуатор</button>}
         </div>
         <input className="field" placeholder="Имя, как увидят клиенты" value={name} onChange={(e) => setName(e.target.value)} />
       </div>
-      {!isTow && (
+      {!isTow&&!isEcu && (
         <div className="step-card">
           <div className="step-head"><span className="step-n">2</span><b>Что делаете</b></div>
           <div className="row">{SPECIALTIES.map((s) => (
@@ -122,15 +133,19 @@ function PerformerOnboarding() {
           ))}</div>
         </div>
       )}
+      {isEcu&&<div className="step-card">
+        <b>Электронные блоки управления</b>
+        <p className="note">Диагностика, восстановление и программирование ЭБУ. В кабинет поступают отдельные заявки и дополнительные этапы после другого мастера. Заявки не объединяют оплату автоматически.</p>
+      </div>}
       <div className="step-card">
-        <div className="step-head"><span className="step-n">{isTow ? 2 : 3}</span><b>{isTow ? 'Эвакуатор' : 'Машина, на которой приезжаете'}</b></div>
+        <div className="step-head"><span className="step-n">{isTow||isEcu ? 2 : 3}</span><b>{isTow ? 'Эвакуатор' : 'Машина, на которой приезжаете'}</b></div>
         <CarInputs car={car} onChange={setCar} tow={isTow} />
       </div>
       <div className="step-card">
-        <div className="step-head"><span className="step-n">{isTow ? 3 : 4}</span><b>Налоговый статус</b></div>
+        <div className="step-head"><span className="step-n">{isTow||isEcu ? 3 : 4}</span><b>Налоговый статус</b></div>
         <TaxInputs taxStatus={taxStatus} inn={inn} onChange={(t, i) => { setTax(t); setInn(i); }} />
       </div>
-      <button className="btn" disabled={busy || !name || (!isTow && !spec.length)} onClick={save}>Дальше — фото для проверки</button>
+      <button className="btn" disabled={busy || !name || (!isTow&&!isEcu && !spec.some(x=>x!=='ecu'))} onClick={save}>Дальше — фото для проверки</button>
     </main>
   );
 }
