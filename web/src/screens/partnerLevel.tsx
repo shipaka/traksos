@@ -4,8 +4,10 @@ import {useLoad,useAction,useMe,Back} from '../ui.tsx';
 
 type Tier='start'|'active'|'priority';
 const names:Record<Tier,string>={start:'Старт',active:'Активный',priority:'Приоритетный'};
+const ecuNames:Record<Tier,string>={start:'Специалист по ЭБУ',active:'Проверенный специалист',priority:'Эксперт по ЭБУ'};
+const displayLevel=(level:Tier,kind?:string)=>kind==='ecu'?ecuNames[level]:names[level];
 type LevelResponse={
-  level:Tier;verification:string;effectiveAt:string|null;reviewDueAt:string|null;
+  level:Tier;verification:string;kind:string;effectiveAt:string|null;reviewDueAt:string|null;
   lastDecisionReason:string|null;
   metrics:{offered:number;completedFromOffers:number;completedTotal:number;
     approvedKnowledge:number;complaints:number;drops:number;rating:number|null;
@@ -47,12 +49,12 @@ export function PartnerLevelView(){
     {!d&&!account.error&&<div className="card">Загружаю персональные показатели…</div>}
     {d&&<>
       <section className="card stack" aria-label="Текущий уровень">
-        <h2>Ваш статус: {names[d.level]}</h2>
+        <h2>Ваш статус: {displayLevel(d.level,d.kind)}</h2>
         <p className="note">{d.verification==='approved'?'Профиль исполнителя подтверждён':'Подтвердите профиль исполнителя для получения следующего уровня'}</p>
         <div className="grid2">
           {(['start','active','priority'] as Tier[]).map(t=><div key={t} className="card" style={{
             borderColor:d.level===t?'var(--accent)':'var(--line)'
-          }}><b>{names[t]}</b><p className="note">{t==='start'?'Доступ к рабочим функциям и знакомство с платформой':
+          }}><b>{displayLevel(t,d.kind)}</b><p className="note">{t==='start'?'Доступ к рабочим функциям и знакомство с платформой':
             t==='active'?'Подтверждённая работа или профессиональный вклад':'Индивидуально подтверждённая экспертиза и качество'}</p>
             {d.level===t&&<span className="pill accent">Текущий</span>}</div>)}
         </div>
@@ -111,7 +113,7 @@ export function PartnerLevelView(){
         </>}
       </section>
       <section className="card stack">
-        <h2>Рекомендация к рассмотрению: {names[d.recommendation.candidate]}</h2>
+        <h2>Рекомендация к рассмотрению: {displayLevel(d.recommendation.candidate,d.kind)}</h2>
         <p>Это ориентир для ручного решения, а не автоматический рейтинг, штраф или изменение комиссии.</p>
         {d.recommendation.reasons.map((reason,i)=><p key={i} className="note">— {reason}</p>)}
         <p className="note">Мастера не обязаны работать исключительно с TrakSOS. Отсутствие повторного заказа само по себе ничего не доказывает.</p>
@@ -138,7 +140,9 @@ export function PartnerLevelView(){
 }
 
 type Queue={appeals:Array<{id:string;user_id:string;message:string;created_at:string;level:Tier|null}>;
- reviewDue:Array<{user_id:string;level:Tier;review_due_at:string}>;automaticDemotion:boolean};
+ reviewDue:Array<{user_id:string;level:Tier;review_due_at:string}>;
+ ecuSpecialists:Array<{user_id:string;name:string|null;verification:string;level:Tier}>;
+ automaticDemotion:boolean};
 export function PartnerLevelAdmin(){
   const queue=useLoad<Queue>(()=>get('/api/admin/partner/levels'),[]);
   const {busy,run}=useAction();
@@ -150,6 +154,15 @@ export function PartnerLevelAdmin(){
     <Back to="admin" label="Админка"/>
     <h1>TrakSOS Партнёр · проверка уровней</h1>
     <p className="note">Повышение и понижение выполняются только администратором с причиной. Ни комиссия, ни порядок распределения заявок от этого пока не меняются. Не делайте выводы по абсолютному числу заказов в малом городе.</p>
+    <section className="card stack" aria-label="Эксперты ЭБУ">
+      <h2>Специалисты по электронным блокам управления</h2>
+      <p className="note">У них стационарные мастерские, а не выездные машины. После проверки профиля администратор может сразу присвоить уровень «Проверенный специалист» или «Эксперт по ЭБУ». Это статус подтверждённой экспертизы, а не выдуманный рейтинг или число выполненных заявок.</p>
+      {queue.data?.ecuSpecialists?.length===0&&<p className="note">Специалисты ЭБУ ещё не зарегистрированы.</p>}
+      {queue.data?.ecuSpecialists?.map(p=><div className="between" key={p.user_id}>
+        <div><strong>{p.name||'Специалист ЭБУ'}</strong><p className="note">{displayLevel(p.level,'ecu')} · {p.verification==='approved'?'Проверен':'Ожидает проверки'}</p></div>
+        <button className="btn ghost small" type="button" onClick={()=>{setUserId(p.user_id);setTier(p.level==='start'?'priority':p.level)}}>Назначить уровень</button>
+      </div>)}
+    </section>
     {queue.error&&<p role="alert">{queue.error} <button onClick={queue.reload}>Повторить</button></p>}
     <section className="card stack">
       <h2>Назначить или подтвердить уровень</h2>
@@ -162,7 +175,7 @@ export function PartnerLevelAdmin(){
         <label>ID исполнителя <input className="field" value={userId} onChange={e=>setUserId(e.target.value)}
           placeholder="UUID из карточки исполнителя" required/></label>
         <label>Уровень <select className="field" value={tier} onChange={e=>setTier(e.target.value as Tier)}>
-          {(['start','active','priority'] as Tier[]).map(x=><option value={x} key={x}>{names[x]}</option>)}
+          {(['start','active','priority'] as Tier[]).map(x=><option value={x} key={x}>{names[x]} · для ЭБУ: {ecuNames[x]}</option>)}
         </select></label>
         <label>Результаты проверки и основание <textarea className="field" rows={3} minLength={20} maxLength={1200}
           value={reason} onChange={e=>setReason(e.target.value)} required/></label>
