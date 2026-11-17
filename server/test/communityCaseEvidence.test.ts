@@ -180,3 +180,39 @@ test('hidden technical case cannot publish linked evidence and rejected evidence
   assert.equal((await t.api('POST',path,source,author.token)).status,404);
  }finally{await t.close()}
 });
+
+test('erasing a professional account exports and removes their proposed evidence links',async()=>{
+ const t=await setup();
+ try{
+  const admin=await t.login('+79990000001');
+  const author=await t.login('+79996530021','master');
+  ok(await t.api('PUT','/api/performer/profile',{
+    kind:'master',name:'Пользователь для удаления',
+    specialties:['electric'],taxStatus:'self_employed',inn:'780005501021'
+  },author.token));
+  ok(await t.api('POST','/api/admin/performers/'+author.id+'/verify',
+    {decision:'approved'},admin.token));
+  const room=ok(await t.api('GET','/api/community/rooms',undefined,author.token))
+    .rooms.find((r:any)=>r.slug==='electric-pro');
+  ok(await t.api('POST','/api/community/rooms/'+room.id+'/join',{},author.token));
+  const item=ok(await t.api('POST','/api/community/pro-cases',{
+    roomId:room.id,clientNonce:randomUUID(),make:'Renault',model:'Premium',
+    subsystem:'Электрика',symptoms:'Вопрос о заводских каталогах схем электропроводки и безопасной диагностике питания.'
+  },author.token));
+  const id=ok(await t.api('POST','/api/community/pro-cases/'+item.case.id+'/evidence',{
+    clientNonce:randomUUID(),title:'Каталог ZF для диагностики блока',
+    sourceUrl:'https://www.zf.com/products/en/cv/footer/downloads/downloads.html',
+    mediaKind:'manual',documentRevision:'2026-index',
+    rightsNote:'Здесь только внешний каталог производителя без копирования авторских документов.',
+    applicabilityNote:'Каталог не подтверждает подбор схемы по VIN и требует проверки конкретной ревизии блока.'
+  },author.token)).id;
+  const profile={id:author.id,phone:'+79996530021',name:null,
+    roles:['master'],status:'active',owner_id:null};
+  const archive=await t.app.privacy.export(profile);
+  assert.ok(archive.professionalEvidenceLinks.some((x:any)=>x.title.includes('Каталог ZF')));
+  await t.app.privacy.requestDelete(profile);
+  t.clock.advance(31*86_400);
+  assert.equal(await t.app.privacy.processDeletions(),1);
+  assert.equal((await t.db.query('select 1 from community_case_evidence where id=$1',[id])).length,0);
+ }finally{await t.close()}
+});
