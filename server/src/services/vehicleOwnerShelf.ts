@@ -74,3 +74,9 @@ export async function publicRecoveryGallery() {
       caption:p.caption,author:p.author,license:p.license,licenseUrl:p.licenseUrl,
       specificModelVerified:false}))};
 }
+
+/** Only documented recovery builds may be newly selected in a tow fleet. */
+export async function isVerifiedRecoveryUnitLabel(label:string){
+  const d=await vehicleOwnerShelf();
+  return d.recovery.some(r=>(r.make+' '+r.model.split(' — ')[0]).slice(0,50)===label.trim());
+}
