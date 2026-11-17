@@ -147,6 +147,36 @@ export function registerProfessionalCasesRoutes(r:Router,db:Db,notifier:Notifier
     return {cases:found.slice(0,20).map(row=>publicCase(row,c.user.id)),
       page,hasMore:found.length>20};
   });
+  // Only the currently assigned, verified expert can see which club questions
+  // were drafted from their order. Never expose this mapping to club members.
+  r.get('/api/community/pro-cases/for-order/:id',true,async(c:AuthedCtx)=>{
+    const orderId=parse(uid,c.params.id);
+    if(!c.user.roles.some(role=>['master','tow','service'].includes(role)))
+      throw forbidden('Связанные технические вопросы доступны только назначенному специалисту');
+    const profile=await db.one<{verification:string}>(
+      'select verification from performer_profiles where user_id=$1',[c.user.id]);
+    if(profile?.verification!=='approved')
+      throw forbidden('Требуется подтверждение специалиста');
+    const order=await db.one<{performer_id:string|null}>(
+      'select performer_id from orders where id=$1',[orderId]);
+    if(!order||order.performer_id!==c.user.id)throw notFound('Заявка не найдена');
+    const linked=await db.query<{
+      id:string;room_id:string;status:string;subsystem:string;
+      make:string|null;model:string|null;model_year:number|null;created_at:Date;
+    }>(`select t.id,t.room_id,t.status,t.subsystem,t.make,t.model,t.model_year,t.created_at
+       from community_technical_case_order_links l
+       join community_technical_cases t on t.id=l.case_id
+       where l.order_id=$1 and l.author_id=$2 and t.moderation_state='published'
+       order by t.created_at desc,t.id desc limit 30`,[orderId,c.user.id]);
+    const cases=[];
+    for(const row of linked){
+      try{await access(db,c.user,row.room_id);cases.push({
+        id:row.id,roomId:row.room_id,status:row.status,subsystem:row.subsystem,
+        make:row.make,model:row.model,modelYear:row.model_year,createdAt:row.created_at
+      })}catch{/* membership or professional verification may have been revoked */}
+    }
+    return {cases,privateOrderContext:true,createsOrder:false};
+  });
   r.get('/api/community/pro-cases/:id',true,async(c:AuthedCtx)=>{
     const row=await openCase(db,c);
     const nick=await db.one<{nickname:string}>(
@@ -170,8 +200,16 @@ export function registerProfessionalCasesRoutes(r:Router,db:Db,notifier:Notifier
         'select * from community_technical_cases where author_id=$1 and client_nonce=$2',
         [c.user.id,b.clientNonce]);
       if(previous){
-        if(previous.room_id!==b.roomId||previous.symptoms!==b.symptoms)
+        if(previous.room_id!==b.roomId||previous.symptoms!==b.symptoms||
+          previous.subsystem!==b.subsystem)
           throw conflict('nonce_reused','Этот идентификатор уже занят другим вопросом');
+        // A reconnect/retry must never silently rebind a club case to a
+        // different customer's private order (or turn a manual case into one).
+        const privateLink=await q.one<{order_id:string}>(
+          'select order_id from community_technical_case_order_links where case_id=$1',
+          [previous.id]);
+        if((privateLink?.order_id??null)!==(b.orderId??null))
+          throw conflict('nonce_reused','Технический вопрос привязан к другому контексту');
         return {record:previous,created:false};
       }
       const recent=await q.one<{n:number}>(`
@@ -186,6 +224,11 @@ export function registerProfessionalCasesRoutes(r:Router,db:Db,notifier:Notifier
         [b.roomId,c.user.id,b.clientNonce,make,model,year,b.subsystem,
           b.symptoms,uniqueCodes,b.diagnosticContext??null,b.orderId?'order_preview':'manual']);
       if(!record)throw new Error('case insert returned no row');
+      if(b.orderId){
+        await q.query(`insert into community_technical_case_order_links
+          (case_id,order_id,author_id) values($1,$2,$3)`,
+          [record.id,b.orderId,c.user.id]);
+      }
       return {record,created:true};
     });
     if(result.created)await notify(b.roomId,c.user.id,result.record.id,'created');
