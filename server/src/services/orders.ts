@@ -830,7 +830,10 @@ export class OrdersService {
       ? await this.db.query<any>(
           `select id, number, status, service, result, result_note, continuation_of, additional_to, estimate,
                   call_out_amount, work_amount, client_fee_pct, discount_amount
-             from orders where id=$1 or case_root_id=$1 order by created_at, number`, [caseRootId])
+             from orders where (id=$1 or case_root_id=$1)
+               and ($2::boolean or created_by=$3)
+             order by created_at, number`,
+            [caseRootId, actor==='admin'||!user.owner_id, user.id])
       : [];
     const caseOtherStages=actor==='performer'
       ? await this.db.query<{number:number;service:string;status:string}>(`
@@ -844,8 +847,10 @@ export class OrdersService {
       ? await this.db.query<any>(
           `select b.id, b.number, b.status, b.need, b.amount, b.discount, b.from_order_id
              from service_bookings b left join orders step on step.id=b.from_order_id
-            where b.case_root_id=$1 or step.id=$1 or step.case_root_id=$1
-            order by b.created_at, b.number`, [caseRootId])
+            where (b.case_root_id=$1 or step.id=$1 or step.case_root_id=$1)
+              and ($2::boolean or step.created_by=$3)
+            order by b.created_at, b.number`,
+            [caseRootId, actor==='admin'||!user.owner_id, user.id])
       : [];
     const caseServiceStages = caseBookings.map((b: any) => ({
       id: b.id, number: b.number, status: b.status, need: b.need,
@@ -887,6 +892,10 @@ export class OrdersService {
         separateContracts:true,
         multiStage: caseSteps.length + caseServiceStages.length > 1,
       },
+      hasActiveEcuAddition:actor==='client'
+        ? Boolean(await this.db.one(
+          "select 1 from orders where additional_to=$1 and service='ecu' "+
+          "and status not in ('cancelled','no_performer') limit 1",[o.id])) : false,
       canContinueWithTow: actor === 'client' && o.status === 'completed' &&
         o.service !== 'tow' && ['cause_found', 'not_found'].includes(o.result) &&
         !caseRows.some((step: any) => step.continuation_of === o.id && step.status !== 'cancelled'),
