@@ -35,7 +35,7 @@ trap cleanup EXIT
 
 # Sandbox must be on internal networks only; NEVER attach it to production.
 "${compose[@]}" config --format json | jq -e '
-  (.services["sandbox-app"].networks | keys | sort) == (["sandbox_private","sandbox_public"] | sort)
+  (.services["sandbox-app"].networks | if type == "array" then . else keys end | sort) == (["sandbox_private","sandbox_public"] | sort)
   and (.networks | to_entries | all(.value.internal == true))
 ' >/dev/null || fail "Sandbox Compose network isolation invariant failed."
 
