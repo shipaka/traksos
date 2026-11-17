@@ -7,6 +7,7 @@ import { OfferForm } from './search.tsx';
 import { WorkerNotices } from './ops.tsx';
 import { useToast } from '../ui.tsx';
 import { VerifiedBadge } from '../verifiedBadge.tsx';
+import {EcuDesk} from './ecuDesk.tsx';
 
 // Линия: статус, геолокация, входящие ---------------------------------------
 
