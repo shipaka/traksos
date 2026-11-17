@@ -48,6 +48,7 @@ import { ShopCatalogService } from './services/shopCatalog.ts';
 import { ModerationService } from './services/moderation.ts';
 import { registerCommunityRoutes } from './services/community.ts';
 import { registerCommunityDirectRoutes } from './services/communityDirect.ts';
+import { CommunityNotifications,registerCommunityNotificationRoutes } from './services/communityNotifications.ts';
 import { registerCommunityRoadRoutes } from './services/communityRoad.ts';
 import { registerRealNearbyHelpRoutes } from './services/realNearbyHelp.ts';
 import {legacyTariffScope,legacyPricingWarning,legacyTariffZoneMismatch} from './domain/pricingRegion.ts';
@@ -83,6 +84,7 @@ export function createApp(d: Deps) {
   const hub = new Hub();
   const settings = new SettingsService(d.db);
   const notifier = new Notifier(d.db, hub, d.push);
+  const communityNotifications=new CommunityNotifications(d.db,notifier,now);
   const auth = new AuthService(d.db, d.sms, now, settings);
   const operatorDemo = new OperatorDemoAccess(d.db, now);
   const profiles = new ProfilesService(d.db, settings, now);
@@ -139,13 +141,14 @@ export function createApp(d: Deps) {
   registerKnowledgeApplicabilityRoutes(r,d.db);
   // Isolated community rooms, nickname moderation and professional knowledge ACL.
   registerCommunityRoutes(r, d.db, notifier);
-  registerCommunityDirectRoutes(r, d.db, notifier);
+  registerCommunityDirectRoutes(r, d.db, notifier, communityNotifications);
+  registerCommunityNotificationRoutes(r,d.db,communityNotifications);
   registerCommunityRoadRoutes(r, d.db, notifier);
   registerRealNearbyHelpRoutes(r,d.db,now);
   registerKnowledgeOrderRoutes(r, d.db);
   // Register fixed appeal listing before /pro-cases/:id dynamic paths.
   registerProfessionalCaseAppeals(r,d.db,notifier);
-  registerProfessionalCasesRoutes(r,d.db,notifier);
+  registerProfessionalCasesRoutes(r,d.db,notifier,communityNotifications);
   const staff = ['admin', 'moderator'];
   const performerRoles = ['master', 'tow', 'service'];
 
