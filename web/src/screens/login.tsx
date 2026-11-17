@@ -430,7 +430,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
               <summary onClick={event => { event.preventDefault(); setSpecialtiesOpen(v => !v); }}>
                 Специализации мастера · выбрано: {specialties.length} <span aria-hidden="true">⌄</span>
               </summary>
-              <span className="label">Можно выбрать несколько вариантов</span>
+              <span className="label">Можно выбрать несколько вариантов. Специалист по ЭБУ — отдельный профиль и кабинет.</span>
               <div className="guest-master-specialties-grid">
                 {MASTER_SPECIALTIES.map(item => <button key={item.id} type="button" className="seg"
                   aria-pressed={specialties.includes(item.id)}
