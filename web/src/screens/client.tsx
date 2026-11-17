@@ -6,6 +6,7 @@ import { BookingRows } from './base.tsx';
 import { DriverRules } from './fleet.tsx';
 import { VehicleServiceApplication, VehicleServiceHistory } from './vehicleServices.tsx';
 import { VehicleOwnerGuide } from './VehicleOwnerGuide.tsx';
+import { VehicleOwnerExpenses } from './VehicleOwnerExpenses.tsx';
 import { native } from '../native.ts';
 import { EcuDiscovery } from './ecuDiscovery.tsx';
 import { insurancePresentation, isOpenInsuranceRequest } from '../insurancePresentation.ts';
@@ -887,6 +888,8 @@ export function Garage() {
           <VehicleServiceApplication vehicleId={v.id} onCreated={() => setServiceHistoryVersion(v => v + 1)} />
           <VehicleServiceHistory id={v.id} isDriver={isDriver} refreshVersion={serviceHistoryVersion} />
           <VehicleHistory id={v.id} isDriver={isDriver} />
+          {!isDriver&&<VehicleOwnerExpenses vehicleId={v.id}/>}
+
           <a className="btn ghost small" href={`#/shop/history/${v.id}`}>Покупки и запчасти этой машины</a>
           {!isDriver && (driverFor === v.id ? (
             <div className="stack">
@@ -931,7 +934,7 @@ function VehicleHistory({ id, isDriver }: { id: string; isDriver: boolean }) {
   const h = useLoad(() => get(`/api/vehicles/${id}/history`), [id], (e) => e.type === 'order');
   const d = h.data;
   if (!d) return null;
-  const finance=isDriver?null:<details className="vehicle-finance-summary"><summary className="linkrow" style={{cursor:'pointer'}}>Финансы по этой технике</summary>
+  const finance=isDriver?null:<details className="vehicle-finance-summary"><summary className="linkrow" style={{cursor:'pointer'}}>Платежи и работы через TrakSOS</summary>
     <div className="card stack"><b>Суммы завершённых заявок TrakSOS: {rub(d.summary.spent??0)}</b>
     <span className="note">Показаны только суммы, связанные с историей заявок этой техники в TrakSOS. Внешние расходы, покупки вне платформы и неподтверждённые платежи сюда не включены.</span></div></details>;
   if (!d.items.length) return <div className="stack">{finance}<span className="note">История пока пустая — здесь будут обращения и ремонты по этой машине.</span></div>;
