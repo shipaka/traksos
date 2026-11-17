@@ -1,0 +1,327 @@
+import { useState } from 'react';
+import { API_URL, getToken, get, post, rub } from '../api.ts';
+
+type Row = any;
+const euro = (date: string) => date || new Date().toLocaleDateString('sv-SE',{timeZone:'Europe/Moscow'});
+const toKopecks = (r: string) => {
+  const s=r.replace(',','.').trim();
+  if (!/^\d+(?:\.\d{1,2})?$/.test(s)) throw new Error('Сумма должна быть в рублях, максимум две цифры после точки');
+  const [whole,frac=''] = s.split('.');
+  const n=Number(whole)*100+Number((frac+'00').slice(0,2));
+  if (!Number.isSafeInteger(n)) throw new Error('Слишком большая сумма');
+  return n;
+};
+function moneyField(label:string, value:string, set:(x:string)=>void) {
+  return <label>{label}<input className="field" inputMode="decimal" value={value}
+    onChange={e=>set(e.target.value)} placeholder="0.00" /></label>;
+}
+const statusText:Record<string,string>={
+  awaiting_docs:'Ожидает доказательства',requires_reconciliation:'Есть расхождения / нужна сверка',
+  verified:'Проверено администратором',accountant_approved:'Отмечено после проверки бухгалтером'
+};
+const operationKinds=[
+  ['client_purchase_agent','Закупка по поручению клиента'],
+  ['supplier_sales_agent','Агент поставщика (нужен договор)'],
+  ['own_inventory_sale','Собственная перепродажа'],
+];
+const events=[['customer_receipt','Платёж клиента'],['customer_receipt_reversal','Сторно поступления'],
+  ['supplier_payment','Оплата поставщику'],['supplier_payment_reversal','Сторно платежа'],
+  ['customer_refund','Возврат клиенту'],['supplier_refund','Возврат поставщика'],
+  ['handover','Передача товара'],['agent_report','Отчёт агента']];
+const docs=[['purchase','Первичка закупки'],['mandate','Поручение/акцепт'],
+  ['handover','Передача товара'],['agent_report','Отчёт агента'],['payment_proof','Подтверждение оплаты']];
+
+export function AdminAgencyLedger() {
+  const [period,setPeriod]=useState('month');
+  const [from,setFrom]=useState(()=>euro(''));
+  const [to,setTo]=useState(()=>euro(''));
+  const [report,setReport]=useState<Row|null>(null);
+  const [selected,setSelected]=useState<Row|null>(null);
+  const [company,setCompany]=useState('');
+  const [order,setOrder]=useState('');
+  const [lineIndex,setLineIndex]=useState('0');
+  const [operation,setOperation]=useState('client_purchase_agent');
+  const [supplier,setSupplier]=useState('Автоконтинент');
+  const [article,setArticle]=useState('');
+  const [clientName,setClientName]=useState('');
+  const [inn,setInn]=useState('');
+  const [mandate,setMandate]=useState('');
+  const [mandateTime,setMandateTime]=useState('');
+  const [offer,setOffer]=useState('');
+  const [feeVersion,setFeeVersion]=useState('');
+  const [reimburse,setReimburse]=useState('0');
+  const [procurementFee,setProcurementFee]=useState('0');
+  const [platformFee,setPlatformFee]=useState('0');
+  const [docKind,setDocKind]=useState('purchase');
+  const [docReference,setDocReference]=useState('');
+  const [docDate,setDocDate]=useState(()=>new Date().toISOString().slice(0,16));
+  const [docAmount,setDocAmount]=useState('0');
+  const [docVat,setDocVat]=useState('0');
+  const [docQty,setDocQty]=useState('0');
+  const [docFile,setDocFile]=useState<File|null>(null);
+  const [docId,setDocId]=useState('');
+  const [docLine,setDocLine]=useState('1');
+  const [allocQty,setAllocQty]=useState('0');
+  const [allocAmount,setAllocAmount]=useState('0');
+  const [allocVat,setAllocVat]=useState('0');
+  const [eventKind,setEventKind]=useState('customer_receipt');
+  const [eventAmount,setEventAmount]=useState('0');
+  const [eventRef,setEventRef]=useState('');
+  const [eventKey,setEventKey]=useState('');
+  const [reviewNote,setReviewNote]=useState('');
+  const [busy,setBusy]=useState(false);
+  const [error,setError]=useState('');
+  const [notice,setNotice]=useState('');
+  const [activeForm,setActiveForm]=useState<'case'|'document'|'allocation'|'event'|null>(null);
+
+  const perform=async (fn:()=>Promise<any>, success='Сохранено')=>{
+    setError('');setNotice('');setBusy(true);
+    try{const r=await fn();setNotice(success);return r;}
+    catch(e:any){setError(e?.message||'Ошибка операции');return null;}
+    finally{setBusy(false);}
+  };
+  const reload=async ()=>{
+    const q=new URLSearchParams({from,to});
+    const r=await perform(()=>get('/api/admin/agency/report?'+q),'Реестр обновлён');
+    if(r){setReport(r);if(selected){const fresh=r.records.find((x:Row)=>x.id===selected.id);
+      if(fresh)setSelected(fresh);}}
+  };
+  const changePeriod=(p:string)=>{
+    setPeriod(p);
+    const end=new Date();const start=new Date(end);
+    if(p==='day'){} else if(p==='week'){start.setDate(end.getDate()-6);}
+    else if(p==='month'){start.setDate(1);}
+    if(p!=='custom'){setFrom(euro(start.toISOString().slice(0,10)));setTo(euro(''));}
+  };
+  const getCase=async(id:string)=>{
+    const r=await perform(()=>get('/api/admin/agency/cases/'+encodeURIComponent(id)),'Цепочка доказательств открыта');
+    if(r)setSelected(r);
+  };
+  const create=async()=>{
+    const r=await perform(()=>post('/api/admin/agency/cases',{
+      shopOrderId:order.trim(),lineIndex:Number(lineIndex),operationKind:operation,supplierName:supplier,
+      article,clientName,clientInn:inn||null,mandateRef:mandate||null,
+      mandateAcceptedAt:mandateTime?new Date(mandateTime).toISOString():null,offerVersion:offer||null,
+      feeScheduleVersion:feeVersion||null,
+      expectedReimbursement:toKopecks(reimburse),procurementFee:toKopecks(procurementFee),
+      platformFee:toKopecks(platformFee),
+    }),'Операция создана — добавьте оригиналы документов');
+    if(r){setActiveForm(null);await getCase(r.id);await reload();}
+  };
+  const fileBase64=(file:File)=>new Promise<string>((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(String(reader.result).split(',')[1]||'');
+    reader.onerror=()=>reject(new Error('Не удалось прочитать документ'));
+    reader.readAsDataURL(file);
+  });
+  const upload=async()=>{
+    if(!docFile){setError('Выберите оригинал документа');return;}
+    if(docFile.size>450000){setError('Документ более 450 КБ: приложите уменьшенный PDF или изображение');return;}
+    const r=await perform(async()=>post('/api/admin/agency/documents',{
+      kind:docKind,supplierName:supplier,reference:docReference,issuedAt:new Date(docDate).toISOString(),
+      amount:toKopecks(docAmount),vatAmount:toKopecks(docVat),quantity:Number(docQty),
+      mime:docFile.type,base64:await fileBase64(docFile)
+    }),'Документ сохранён, ожидает ручной проверки');
+    if(r){setDocId(r.id);setActiveForm('allocation');}
+  };
+  const allocate=async()=>{
+    if(!selected)return;
+    const r=await perform(()=>post('/api/admin/agency/cases/'+selected.id+'/allocations',{
+      documentId:docId,lineKey:docLine.trim(),quantity:Number(allocQty),
+      amount:toKopecks(allocAmount),vatAmount:toKopecks(allocVat)
+    }),'Документ привязан к позиции');
+    if(r){setActiveForm(null);await getCase(selected.id);await reload();}
+  };
+  const addEvent=async()=>{
+    if(!selected)return;
+    const r=await perform(()=>post('/api/admin/agency/cases/'+selected.id+'/events',{
+      kind:eventKind,amount:events.find(e=>e[0]===eventKind)&&['handover','agent_report'].includes(eventKind)
+        ?0:toKopecks(eventAmount),
+      occurredAt:new Date().toISOString(),sourceRef:eventRef.trim(),idempotencyKey:eventKey.trim()
+    }),'Событие добавлено без изменения предыдущих записей');
+    if(r){setActiveForm(null);await getCase(selected.id);await reload();}
+  };
+  const reviewDoc=async(id:string)=>{
+    const r=await perform(()=>post('/api/admin/agency/documents/'+id+'/verify',{note:reviewNote.trim()}),
+      'Документ прошёл ручную проверку');
+    if(r&&selected){await getCase(selected.id);await reload();}
+  };
+  const reviewCase=async(kind:'verified'|'accountant_approved')=>{
+    if(!selected)return;
+    const r=await perform(()=>post('/api/admin/agency/cases/'+selected.id+'/review',{kind,note:reviewNote.trim()}),
+      'Статус записан в неизменяемую историю');
+    if(r){await getCase(selected.id);await reload();}
+  };
+  const download=async()=>{
+    await perform(async()=>{
+      const u=API_URL+'/api/admin/agency/report.csv?'+new URLSearchParams({from,to});
+      const r=await fetch(u,{headers:{authorization:'Bearer '+(getToken()||'')},cache:'no-store'});
+      if(!r.ok)throw new Error('Не удалось сформировать CSV');
+      const url=URL.createObjectURL(await r.blob());
+      const a=document.createElement('a');a.href=url;a.download='traksos-agency-'+from+'-'+to+'.csv';a.click();
+      setTimeout(()=>URL.revokeObjectURL(url),1000);
+    },'CSV скачан. Это не налоговая декларация');
+  };
+  const openProof=async(id:string)=>{
+    await perform(async()=>{
+      const r=await fetch(API_URL+'/api/admin/agency/documents/'+encodeURIComponent(id)+'/file',
+        {headers:{authorization:'Bearer '+(getToken()||'')},cache:'no-store'});
+      if(!r.ok)throw new Error('Нет доступа к оригиналу документа');
+      const url=URL.createObjectURL(await r.blob());
+      window.open(url,'_blank','noopener,noreferrer');
+      setTimeout(()=>URL.revokeObjectURL(url),60000);
+    },'Оригинал открыт отдельно');
+  };
+  const filtered=(report?.records||[]).filter((r:Row)=>!company||
+    (r.client_name+' '+(r.client_inn||'')+' '+r.shop_order_id).toLowerCase().includes(company.toLowerCase()));
+  return <section className="stack">
+    <p className="note"><strong>Внутренний доказательный реестр.</strong> Магазин и оплаты не включаются этим разделом.
+      Котировка поставщика не считается первичкой. Расчёт налоговой базы, НДС к уплате, деклараций и КУДиР
+      намеренно заблокирован до утверждения договоров и методики бухгалтером.</p>
+    {error&&<p role="alert" className="note">{error}</p>}
+    {notice&&<p role="status" className="note">{notice}</p>}
+    <div className="card stack">
+      <b>Отчётный период (МСК)</b>
+      <div className="row">{[['day','День'],['week','7 дней'],['month','Месяц'],['custom','Диапазон']].map(x=>
+        <button className={'btn '+(period===x[0]?'':'ghost')} type="button" key={x[0]}
+          onClick={()=>changePeriod(x[0])}>{x[1]}</button>)}</div>
+      <div className="grid2">
+        <label>С<input className="field" type="date" value={from} onChange={e=>{setFrom(e.target.value);setPeriod('custom');}} /></label>
+        <label>По<input className="field" type="date" value={to} onChange={e=>{setTo(e.target.value);setPeriod('custom');}} /></label>
+      </div>
+      <div className="row">
+        <button type="button" className="btn" onClick={reload} disabled={busy}>Сформировать реестр</button>
+        <button type="button" className="btn ghost" onClick={download} disabled={busy||!report}>Экспорт CSV</button>
+      </div>
+    </div>
+    {report&&<>
+      <div className="card stack">
+        <b>Сводка · {report.from} — {report.to}</b>
+        <p>Операции: {report.summary.cases}; подтверждено: {report.summary.verified};
+          требуют внимания: {report.summary.unverified}</p>
+        <div className="grid2">
+          <span>Поступления за период: <b>{rub(report.summary.customerReceived)}</b></span>
+          <span>Платежи поставщикам: <b>{rub(report.summary.supplierPaid)}</b></span>
+          <span>Закупка по первичке: <b>{rub(report.summary.recordedPurchases)}</b></span>
+          <span>Проверенная закупка: <b>{rub(report.summary.confirmedPurchases)}</b></span>
+          <span>Комиссии по договорным снимкам: <b>{rub(report.summary.feePotential)}</b></span>
+          <span>НДС из документов (не вычет): <b>{rub(report.summary.vatRecorded)}</b></span>
+        </div>
+        <p className="note">{report.disclaimer}</p>
+      </div>
+      <div className="card stack"><b>По компаниям</b>
+        {report.companies.map((c:Row)=><div className="row" key={c.key}>
+          <span>{c.name} {c.inn||''} · {c.count} поз. · неподтверждено {c.unverified}</span>
+          <b>{rub(c.received)}</b>
+        </div>)}
+      </div>
+      <div className="card stack">
+        <b>Операции и цепочки доказательств</b>
+        <input className="field" placeholder="Фильтр: компания, ИНН, заказ"
+          aria-label="Поиск в доказательном реестре" value={company} onChange={e=>setCompany(e.target.value)}/>
+        {filtered.map((r:Row)=><div className="row" key={r.id}>
+          <div><b>{r.client_name} · {r.article}</b><p className="note">{statusText[r.status]||r.status} · {rub(r.financial.agreedCustomerTotal)}</p></div>
+          <button className="btn ghost small" onClick={()=>getCase(r.id)}>Доказательства</button>
+        </div>)}
+        {!filtered.length&&<p className="note">Операций за выбранный период нет.</p>}
+      </div>
+    </>}
+    <div className="card stack">
+      <b>Добавление операции (только к реальному заказу магазина)</b>
+      <button className="btn ghost" onClick={()=>setActiveForm(activeForm==='case'?null:'case')}>Новая операция</button>
+      {activeForm==='case'&&<>
+        <label>ID заказа магазина<input className="field" value={order} onChange={e=>setOrder(e.target.value)} placeholder="UUID заказа"/></label>
+        <div className="grid2">
+          <label>Индекс позиции, начиная с нуля<input className="field" type="number" min="0" value={lineIndex} onChange={e=>setLineIndex(e.target.value)} /></label>
+          <label>Модель<select className="field" value={operation} onChange={e=>setOperation(e.target.value)}>
+            {operationKinds.map(x=><option key={x[0]} value={x[0]}>{x[1]}</option>)}</select></label>
+          <label>Поставщик<input className="field" value={supplier} onChange={e=>setSupplier(e.target.value)}/></label>
+          <label>Артикул<input className="field" value={article} onChange={e=>setArticle(e.target.value)}/></label>
+          <label>Клиент/компания<input className="field" value={clientName} onChange={e=>setClientName(e.target.value)}/></label>
+          <label>ИНН<input className="field" value={inn} onChange={e=>setInn(e.target.value)}/></label>
+        </div>
+        {operation!=='own_inventory_sale'&&<>
+          <div className="grid2">
+            <label>Номер поручения<input className="field" value={mandate} onChange={e=>setMandate(e.target.value)}/></label>
+            <label>Дата и время акцепта<input className="field" type="datetime-local" value={mandateTime} onChange={e=>setMandateTime(e.target.value)}/></label>
+            <label>Версия оферты<input className="field" value={offer} onChange={e=>setOffer(e.target.value)}/></label>
+            <label>Версия тарифа<input className="field" value={feeVersion} onChange={e=>setFeeVersion(e.target.value)}/></label>
+            {moneyField('Возмещение закупки, ₽',reimburse,setReimburse)}
+            {moneyField('Вознаграждение за закупку, ₽',procurementFee,setProcurementFee)}
+            {moneyField('Сервисный сбор, ₽',platformFee,setPlatformFee)}
+          </div>
+          <p className="note">Возмещение + оба вознаграждения должны совпадать со стоимостью выбранной позиции заказа. Значения не подставляются автоматически.</p>
+        </>}
+        <button className="btn" disabled={busy} onClick={create}>Зафиксировать снимок условий</button>
+      </>}
+    </div>
+    {selected&&<div className="card stack">
+      <div className="row"><b>Доказательства: {selected.article}</b><button className="btn ghost" onClick={()=>setSelected(null)}>Закрыть</button></div>
+      <p className="note">Заказ {selected.shop_order_id}, позиция {selected.line_index}; версия {selected.evidence_version}.
+        Статус: {statusText[selected.status]||selected.status}.</p>
+      {!!selected.problems?.length&&<p className="note"><strong>Расхождения:</strong> {selected.problems.join('; ')}</p>}
+      {!!selected.missing?.length&&<p className="note"><strong>Не хватает:</strong> {selected.missing.join('; ')}</p>}
+      <p>Цена согласована: {rub(selected.financial.agreedCustomerTotal)} · Первичка:
+        {rub(selected.financial.purchaseRecorded)} · Поступило: {rub(selected.financial.customerReceived)}</p>
+      <div className="row">
+        <button className="btn ghost" onClick={()=>setActiveForm('document')}>Загрузить документ</button>
+        <button className="btn ghost" onClick={()=>setActiveForm('allocation')}>Привязать документ</button>
+        <button className="btn ghost" onClick={()=>setActiveForm('event')}>Добавить событие</button>
+      </div>
+      {activeForm==='document'&&<div className="stack">
+        <label>Тип документа<select className="field" value={docKind} onChange={e=>{setDocKind(e.target.value);setDocAmount('0');setDocQty('0');setDocVat('0');}}>
+          {docs.map(x=><option key={x[0]} value={x[0]}>{x[1]}</option>)}</select></label>
+        <div className="grid2">
+          <label>Номер документа<input className="field" value={docReference} onChange={e=>setDocReference(e.target.value)}/></label>
+          <label>Дата<input className="field" type="datetime-local" value={docDate} onChange={e=>setDocDate(e.target.value)}/></label>
+          {docKind==='purchase'&&<>
+            {moneyField('Сумма первички, ₽',docAmount,setDocAmount)}
+            {moneyField('Входящий НДС, ₽',docVat,setDocVat)}
+            <label>Количество<input className="field" type="number" min="0" value={docQty} onChange={e=>setDocQty(e.target.value)}/></label>
+          </>}
+        </div>
+        <label>Оригинал PDF, PNG или JPEG до 450 КБ<input className="field" type="file" accept=".pdf,.png,.jpg,.jpeg"
+          onChange={e=>setDocFile(e.target.files?.[0]||null)}/></label>
+        <button className="btn" onClick={upload} disabled={busy}>Загрузить без подтверждения</button>
+      </div>}
+      {activeForm==='allocation'&&<div className="stack">
+        <label>ID ранее загруженного документа<input className="field" value={docId} onChange={e=>setDocId(e.target.value)} /></label>
+        <label>Ключ строки первички<input className="field" value={docLine} onChange={e=>setDocLine(e.target.value)} /></label>
+        <div className="grid2">
+          <label>Количество<input className="field" type="number" min="0" value={allocQty} onChange={e=>setAllocQty(e.target.value)} /></label>
+          {moneyField('Сумма по позиции, ₽',allocAmount,setAllocAmount)}
+          {moneyField('НДС по позиции, ₽',allocVat,setAllocVat)}
+        </div>
+        <button className="btn" disabled={busy} onClick={allocate}>Привязать к операции</button>
+      </div>}
+      {activeForm==='event'&&<div className="stack">
+        <label>Денежное/товарное событие<select className="field" value={eventKind} onChange={e=>setEventKind(e.target.value)}>
+          {events.map(x=><option key={x[0]} value={x[0]}>{x[1]}</option>)}</select></label>
+        {!['handover','agent_report'].includes(eventKind)&&moneyField('Сумма события, ₽',eventAmount,setEventAmount)}
+        <label>Реквизиты первичного подтверждения<input className="field" value={eventRef} onChange={e=>setEventRef(e.target.value)} /></label>
+        <label>Уникальный ключ события<input className="field" value={eventKey} onChange={e=>setEventKey(e.target.value)}
+          placeholder="например, банк-номер-строка" /></label>
+        <button className="btn" disabled={busy} onClick={addEvent}>Добавить в журнал</button>
+      </div>}
+      <b>Документы и распределение по строкам</b>
+      {(selected.allocations||[]).map((a:Row)=><div className="card" key={a.id}>
+        <p>{a.kind} · {a.reference} · {rub(a.amount)} · {a.quantity} шт. · НДС {rub(a.vat_amount)}</p>
+        <p className="note">{a.source} · SHA-256: {a.sha256}</p>
+        <div className="row">
+          <button className="btn ghost small" onClick={()=>openProof(a.document_id)}>Оригинал</button>
+          {a.source==='manual_unverified'&&<button className="btn ghost small" onClick={()=>reviewDoc(a.document_id)} disabled={!reviewNote.trim()||busy}>Проверить документ</button>}
+        </div>
+      </div>)}
+      <b>Денежные события</b>
+      {(selected.events||[]).map((e:Row)=><p className="note" key={e.id}>{e.kind} · {rub(Number(e.amount))} · {e.source_ref} · {new Date(e.occurred_at).toLocaleString('ru-RU')}</p>)}
+      <label>Примечание к проверке и основание<input className="field" value={reviewNote} onChange={e=>setReviewNote(e.target.value)} /></label>
+      <div className="row">
+        <button className="btn" disabled={busy||!reviewNote.trim()||selected.problems?.length>0||selected.missing?.length>0}
+          onClick={()=>reviewCase('verified')}>Подтвердить комплект</button>
+        <button className="btn ghost" disabled={busy||!reviewNote.trim()||selected.status!=='verified'}
+          onClick={()=>reviewCase('accountant_approved')}>Отметить бухгалтерскую проверку</button>
+      </div>
+      <p className="note">Кнопки фиксируют внутреннюю проверку и не формируют налоговую декларацию. Изменение доказательств автоматически отзывает прежнее подтверждение.</p>
+    </div>}
+  </section>;
+}

@@ -4,6 +4,7 @@ import { ModQueue } from './moderation.tsx';
 import { AdminSummary } from './adminSummary.tsx';
 import { AdminSettings } from './adminSettings.tsx';
 import { AdminDiagnostics } from './adminDiagnostics.tsx';
+import { AdminAgencyLedger } from './adminAgencyLedger.tsx';
 import { AdminAccountAccess } from './adminAccountAccess.tsx';
 import { useState } from 'react';
 import { useEffect } from 'react';
@@ -15,7 +16,7 @@ import { get, post, put, rub, fmtPhone, fmtTime, authedImage } from '../api.ts';
 import { STATUS, SERVICES, LINE } from '../dict.ts';
 import { useLoad, useAction, Loading } from '../ui.tsx';
 
-type AdminSection = 'stats' | 'search' | 'support' | 'verify' | 'people' | 'access' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'settings' | 'demand' | 'announcements' | 'vehicleServices' | 'diagnostics';
+type AdminSection = 'agency' | 'stats' | 'search' | 'support' | 'verify' | 'people' | 'access' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'settings' | 'demand' | 'announcements' | 'vehicleServices' | 'diagnostics';
 type AdminNavItem = { id: AdminSection; name: string; description: string; symbol: string };
 const ADMIN_GROUPS: { name: string; items: AdminNavItem[] }[] = [
   { name: 'Операционная работа', items: [
@@ -36,6 +37,7 @@ const ADMIN_GROUPS: { name: string; items: AdminNavItem[] }[] = [
   ] },
   { name: 'Финансы и документы', items: [
     { id: 'payments', name: 'Деньги', description: 'Комиссии, отчёты и выплаты', symbol: '12' },
+    { id: 'agency', name: 'Агентские закупки', description: 'Первичка, сверка и налоговые реестры', symbol: '12+' },
     { id: 'offers', name: 'Оферты', description: 'Документы для пользователей', symbol: '13' },
     { id: 'announcements', name: 'Объявления и комиссии', description: 'Оповещения и условия работы', symbol: '14' },
   ] },
@@ -136,6 +138,7 @@ export function Admin({ initialSection }: { initialSection?: string }) {
             {tab === 'orders' && <AllOrders />}
             {tab === 'dispatch' && <Dispatch />}
             {tab === 'payments' && <Payments />}
+            {tab === 'agency' && <AdminAgencyLedger />}
             {tab === 'flagged' && <Flagged />}
             {tab === 'diagnostics' && <AdminDiagnostics />}
           </div>
