@@ -28,6 +28,10 @@ export class PrivacyService {
       vehicles: await q('select brand, model, year, plate, trailer_plate, created_at from vehicles where owner_id=$1 or driver_id=$1'),
       orders: await q(`select number, service, status, description, address, created_at, completed_at, call_out_amount, work_amount
                          from orders where client_id=$1 or created_by=$1 or performer_id=$1 order by created_at`),
+      ecuRecommendations: await q(`select r.source_order_id,r.reason,r.status,r.created_at,r.resolved_at,r.linked_order_id
+                           from order_ecu_referrals r join orders o on o.id=r.source_order_id
+                           where r.suggested_by=$1 or o.client_id=$1 or o.created_by=$1
+                           order by r.created_at`),
       messages: await q('select o.number as order_number, m.body, m.created_at from chat_messages m join orders o on o.id=m.order_id where m.sender_id=$1 order by m.created_at'),
       reviewsWritten: await q('select stars, tags, text, created_at from reviews where author_id=$1'),
       reviewsAboutYou: await q('select stars, tags, text, created_at from reviews where target_id=$1'),
@@ -98,6 +102,9 @@ export class PrivacyService {
       await this.db.tx(async (q) => {
         await q.query(`update users set phone='deleted-' || id, name=null, company_name=null, company_inn=null, edo_operator=null, edo_id=null,
                          status='blocked', deleted_at=$2, owner_id=null where id=$1`, [id, this.now()]);
+        // Recommendations are not payment evidence; do not retain their free-form personal data.
+        await q.query('delete from order_ecu_referrals where suggested_by=$1 or source_order_id in '+
+          '(select id from orders where client_id=$1 or created_by=$1)',[id]);
         await q.query('delete from shop_customer_regions where user_id=$1',[id]);
         await q.query('delete from sessions where user_id=$1', [id]);
         // Courier accounting runs remain for statutory records but the precise
