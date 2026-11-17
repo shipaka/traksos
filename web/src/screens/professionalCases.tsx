@@ -45,6 +45,9 @@ export function ProfessionalCases({orderId,initialRoomSlug}:{orderId?:string;ini
  const [reportReason,setReportReason]=useState('');
  const [replyAfter,setReplyAfter]=useState('0');
  const replyPending=useRef<{id:string;text:string;caseId:string}|null>(null);
+ // Reuse the same nonce if a post succeeded server-side but its reply was lost.
+ // Changing any technical field, room or private order creates a fresh nonce.
+ const casePending=useRef<{nonce:string;fingerprint:string}|null>(null);
  const {busy,run}=useAction();
  const {busy:answerBusy,run:answerRun}=useAction();
  const rooms=useLoad<{rooms:Club[]}>(()=>get('/api/community/rooms'),[me?.id]);
@@ -100,17 +103,22 @@ export function ProfessionalCases({orderId,initialRoomSlug}:{orderId?:string;ini
  const ask=async()=>{
    if(!room||!room.joined)return;
    if(orderId&&!confirmShare)return;
-   const data={
-     roomId:room.id,clientNonce:uuid(),
+   const draft={
+     roomId:room.id,
      ...(orderId?{orderId}:{make:form.make.trim()||null,
        model:form.model.trim()||null,modelYear:form.year?Number(form.year):null}),
      subsystem:form.system.trim(),symptoms:form.symptoms.trim(),
      dtcCodes:form.codes.toUpperCase().split(/[,;\s]+/).filter(Boolean),
      diagnosticContext:form.context.trim()||null
    };
+   const fingerprint=JSON.stringify(draft);
+   if(casePending.current?.fingerprint!==fingerprint)
+     casePending.current={nonce:uuid(),fingerprint};
+   const data={...draft,clientNonce:casePending.current.nonce};
    const result=await run(()=>post<{case:Case}>('/api/community/pro-cases',data),
      'Технический вопрос опубликован в закрытом клубе');
    if(result){
+     casePending.current=null;
      setSelected(result.case.id);setShowComposer(false);
      setForm(emptyCase);setConfirmShare(false);await list.reload();await privateLinks.reload();
    }
