@@ -53,8 +53,11 @@ export class AuctionService {
 
   async start(orderId: string, exclude: string[] = []) {
     const all = await this.settings.all();
-    let order = await this.db.one('select * from orders where id=$1', [orderId]);
-    if (!order || order.status !== 'searching') return;
+    const loaded = await this.db.one('select * from orders where id=$1', [orderId]);
+    if (!loaded || loaded.status !== 'searching') return;
+    // Loaded row passed the existence guard. Subsequent conditional UPDATE
+    // RETURNING rows are non-null when present.
+    let order: NonNullable<typeof loaded> = loaded;
     const stages = this.stages(order,all.dispatch);
     const stageIndex=Number(order.sos_dispatch_stage??0);
     const stage=stages?.[stageIndex]??null;
