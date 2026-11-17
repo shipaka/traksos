@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   public-source-health:
-    name: 17 original pages only (no downloads or source duplication)
+    name: 20 original pages only (no downloads or source duplication)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
