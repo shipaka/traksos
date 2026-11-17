@@ -51,6 +51,7 @@ export function Order({ id }: { id: string }) {
       </div>
 
       <EcuRelatedOrders order={d}/>
+      {d.service==='ecu'&&<EcuDeadline d={d} onDone={o.reload}/>}
       {(d.you==='client'||d.you==='admin')&&<ServiceCaseLedger orderId={id}/>}
       {isPerformer && ['accepted','en_route','arrived','working'].includes(d.status)
         && <div className="card" role="region" aria-label="Технические материалы по заявке">
@@ -58,7 +59,7 @@ export function Order({ id }: { id: string }) {
           <p className="note">Доступ к проверенным схемам и инструкциям по марке, году и системе. Личные данные клиента не передаются в клуб.</p>
           <a className="btn ghost" href={'#/techbase/order/'+id}>Найти технические материалы</a>
         </div>}
-      {isPerformer && ['accepted','en_route','arrived','working'].includes(d.status)
+      {isPerformer && d.service!=='ecu' && ['accepted','en_route','arrived','working'].includes(d.status)
         && !location.hash.startsWith('#/admin/test-center') &&
         <section className="roadside-location-share" aria-label="Передача GPS при выезде">
           <b>GPS во время выезда</b>
@@ -71,27 +72,27 @@ export function Order({ id }: { id: string }) {
       {d.status === 'searching' && d.actions?.includes('cancel') && !isPerformer && <Cancel id={id} status={d.status} consult={isConsult} onDone={o.reload} />}
       {d.you === 'candidate' && <CandidateView d={d} onDone={o.reload} />}
 
-      {!isConsult && d.you !== 'candidate' && <Steps status={d.status} service={d.service} events={d.events} />}
+      {!isConsult && d.service!=='ecu' && d.you !== 'candidate' && <Steps status={d.status} service={d.service} events={d.events} />}
       {isConsult && !isPerformer && d.you !== 'candidate' && <ConsultClient d={d} />}
       {d.consultFrom?.hint && <ConsultHintCard from={d.consultFrom} />}
       {d.you !== 'candidate' && <EcuReferralPanel order={d} />}
       {d.status === 'no_performer' && !isPerformer && <Retry id={id} onDone={o.reload} />}
 
-      {d.performer && !isPerformer && <PerformerCard p={d.performer} pos={perfPos} consult={isConsult} to={d.lat != null ? { lat: d.lat, lng: d.lng } : null} moving={['accepted', 'en_route'].includes(d.status)} />}
+      {d.performer && !isPerformer && d.service!=='ecu' && <PerformerCard p={d.performer} pos={perfPos} consult={isConsult} to={d.lat != null ? { lat: d.lat, lng: d.lng } : null} moving={['accepted', 'en_route'].includes(d.status)} />}
       {isPerformer && <ClientCard d={d} />}
       {d.service === 'tow' && !isPerformer && d.you !== 'candidate' && d.destination && <TowInfo d={d} />}
 
       {d.you !== 'candidate' && d.status !== 'searching' && <Money d={d} />}
 
       {d.you === 'admin' && <AdminPanel d={d} onDone={o.reload} />}
-      {d.you === 'admin' && !isConsult && <AdminRouteMap orderId={id} />}
+      {d.you === 'admin' && !isConsult && d.service!=='ecu' && <AdminRouteMap orderId={id} />}
       {(d.you === 'client' || d.you === 'admin') && <OrderTimeline
         events={d.events} createdAt={d.createdAt} acceptedAt={d.acceptedAt}
         arrivedAt={d.arrivedAt} completedAt={d.completedAt} isAdmin={d.you === 'admin'} />}
       {(d.you === 'client' || d.you === 'admin') && d.paymentMethod !== 'cash' && <PaymentsList id={id} admin={d.you === 'admin'} />}
-      {isPerformer && (isConsult ? <ConsultFinish d={d} onDone={o.reload} /> : <PerformerActions d={d} onDone={o.reload} />)}
-      {!isPerformer && ['arrived', 'working'].includes(d.status) && d.service !== 'consult' && <WorkInProgress d={d} />}
-      {d.you !== 'candidate' && d.you !== 'admin' && d.service !== 'tow' && d.service !== 'consult' && ['arrived', 'working'].includes(d.status) && <PartPicker d={d} onDone={o.reload} performer={isPerformer} />}
+      {isPerformer && d.service!=='ecu' && (isConsult ? <ConsultFinish d={d} onDone={o.reload} /> : <PerformerActions d={d} onDone={o.reload} />)}
+      {!isPerformer && ['arrived', 'working'].includes(d.status) && d.service !== 'consult' && d.service !== 'ecu' && <WorkInProgress d={d} />}
+      {d.you !== 'candidate' && d.you !== 'admin' && d.service !== 'tow' && d.service !== 'consult' && d.service !== 'ecu' && ['arrived', 'working'].includes(d.status) && <PartPicker d={d} onDone={o.reload} performer={isPerformer} />}
       {!isPerformer && d.status === 'awaiting_confirmation' && (isConsult ? <ConsultConfirm d={d} onDone={o.reload} /> : <ConfirmAmount d={d} onDone={o.reload} />)}
       {d.recommendedCenter && !isPerformer && d.you !== 'candidate' && (
         <div className="banner good col">
@@ -364,6 +365,27 @@ function BillRows({ b }: { b: any }) {
     {b.wait > 0 && <div className="sum"><span>Ожидание запчасти · {b.waitMinutes} мин</span><span>{rub(b.wait)}</span></div>}
     {(b.extras ?? []).map((x: any, i: number) => <div key={i} className="sum"><span>{x.name}</span><span>{rub(x.amount)}</span></div>)}
   </>;
+}
+
+/** Stationary ECU repair: no location sharing, drive-to-client map or SOS timer. */
+function EcuDeadline({d,onDone}:{d:any;onDone:()=>void}){
+  const {busy,run}=useAction();
+  const [reason,setReason]=useState('');
+  const canExtend=['accepted','en_route','arrived','working','awaiting_confirmation'].includes(d.status)&&
+    ['performer','admin'].includes(d.you);
+  return <section className="card hi stack" aria-label="Срок работы ЭБУ">
+    <b>Стационарная мастерская ЭБУ</b>
+    <p className="note">Первоначальный срок — 7 дней после подтверждения специалиста. Ремонт и ожидание редких запчастей могут требовать больше времени.</p>
+    {d.ecuDueAt&&<p>Срок: <b>{new Date(d.ecuDueAt).toLocaleDateString('ru-RU')}</b> · продлений на 3 дня: {d.ecuExtensionsCount??0}</p>}
+    <small className="note">Срок информационный. Он не закрывает заказ автоматически и не списывает средства клиента.</small>
+    {canExtend&&<div className="stack">
+      <textarea className="field" maxLength={500} value={reason} onChange={e=>setReason(e.target.value)}
+        placeholder="Почему нужно продление: ждём деталь, продолжаем диагностику…" />
+      <button className="btn ghost" disabled={busy||reason.trim().length<8}
+        onClick={()=>run(()=>post('/api/orders/'+d.id+'/ecu/extend',{reason}),'Срок продлён на 3 дня')
+          .then(v=>{if(v){setReason('');onDone()}})}>Продлить на 3 дня</button>
+    </div>}
+  </section>;
 }
 
 function Money({ d }: { d: any }) {
