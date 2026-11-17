@@ -1,5 +1,6 @@
 import {z} from 'zod';
 import type {Db} from '../db/index.ts';
+import {driverAirSql,requireDriverAir} from './driverAirAccess.ts';
 import type {Notifier} from './notify.ts';
 import type {Router,AuthUser,AuthedCtx} from '../http/router.ts';
 import {parse,bad,forbidden,notFound} from '../http/router.ts';
@@ -99,10 +100,11 @@ export class CommunityNotifications{
       channel:Channel,scopeId:string,opts?:{roomId?:string;threadId?:string}){
     const sendLive=()=>this.notifier.live([userId],event);
     try{
-      const user=await this.db.one<{roles:string[];status:string}>(
-        'select roles,status from users where id=$1 and deleted_at is null',[userId]);
+      const user=await this.db.one<{roles:string[];status:string;driver_access:boolean}>(
+        `select u.roles,u.status,${driverAirSql('u')} as driver_access
+          from users u where u.id=$1 and u.deleted_at is null`,[userId]);
       if(!user||user.status!=='active'){return}
-      if((channel==='dm_messages'||channel==='dm_invites')&&!user.roles.includes('driver'))return;
+      if((channel==='dm_messages'||channel==='dm_invites')&&!user.driver_access)return;
       if(channel==='case_replies'&&!user.roles.some(r=>['master','tow','service','admin','moderator'].includes(r)))return;
       const p=await this.db.one<Preferences>(
         'select dm_invites,dm_messages,case_replies,quiet_enabled,quiet_start_minute,'+
@@ -199,7 +201,7 @@ export function registerCommunityNotificationRoutes(r:Router,db:Db,notifications
     return {roomId:id,muted:b.muted};
   });
   r.put('/api/community/notification-preferences/threads/:id',true,async(c:AuthedCtx)=>{
-    if(!c.user.roles.includes('driver'))throw forbidden('Только водительский кабинет');
+    await requireDriverAir(db,c.user);
     const id=parse(uuid,c.params.id);
     const b=parse(z.object({muted:z.boolean()}),c.body);
     const thread=await db.one('select id from community_dm_threads where id=$1 and (user_a=$2 or user_b=$2)',
