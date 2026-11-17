@@ -804,6 +804,28 @@ export function BookingPage({ id }: { id: string }) {
 }
 
 /** Строки записей в сервис — в «Заявках» клиента */
+export const isOpenBooking = (b: { status: string }) =>
+  !['closed', 'declined', 'cancelled'].includes(b.status);
+
+/** Pure list, reused when the parent already owns the bookings query and counter. */
+export function BookingList({ rows }: { rows: any[] }) {
+  if (!rows.length) return null;
+  return (
+    <div className="rows">
+      {rows.map((b: any) => (
+        <a key={b.id} href={`#/booking/${b.id}`} className="list-item">
+          <div className="stack" style={{ gap: 2 }}>
+            <b>Рембаза «{b.center.name}» · {b.needName}</b>
+            <span className="note">{fmtDay(b.whenDay)} · {carName(b.vehicle)} {b.vehicle?.plate ?? ''}</span>
+          </div>
+          <span className={`pill ${TONE[b.status]}`}>{b.statusName}</span>
+        </a>
+      ))}
+    </div>
+  );
+}
+
+/** Legacy independent listing for embedded history views. */
 export function BookingRows({ live }: { live: boolean }) {
   const l = useLoad(() => get('/api/bookings'), [], isBookingEvent);
   const rows = (l.data ?? []).filter((b: any) => live === !['closed', 'declined', 'cancelled'].includes(b.status));
