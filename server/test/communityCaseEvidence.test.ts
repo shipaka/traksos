@@ -114,7 +114,7 @@ test('club evidence links require professional ACL, official HTTPS host and two 
   assert.equal(shown[0].technicalReview,'approved');
   assert.equal(shown[0].sourceUrl,source.sourceUrl);
   assert.ok(!JSON.stringify(shown).includes(author.id),
-    'reviewed source must not reveal the author's account identifier');
+    'Проверенный источник не должен раскрывать внутренний ID автора');
   assert.equal((await t.api('POST',path+'/'+created.id+'/withdraw',{},driver.token)).status,404);
   assert.equal((await t.api('POST',path+'/'+created.id+'/withdraw',{},peer.token)).status,404);
   const removed=ok(await t.api('POST',path+'/'+created.id+'/withdraw',{},author.token));
