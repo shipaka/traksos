@@ -6,6 +6,7 @@ import {TechReferenceShelf} from './techReferenceShelf.tsx';
 import {AdminTechReferences} from './adminTechReferences.tsx';
 import {ProfessionalCases} from './professionalCases.tsx';
 import {MyTechnicalAppeals,TechnicalAppealsQueue} from './technicalCaseAppeals.tsx';
+import {TechnicalApplicability,AdminTechnicalApplicability} from './technicalApplicability.tsx';
 import {TechnicalCaseReportQueue} from './technicalCaseReportQueue.tsx';
 
 type Entry={id:string;title:string;make:string;model:string|null;model_year:number|null;
@@ -53,6 +54,9 @@ function ApprovedKnowledge(){
       {detail.data.source_url&&<a href={detail.data.source_url} target="_blank" rel="noreferrer noopener">Перейти к разрешённому источнику</a>}
       <p className="note">Последнее обновление: {fmtTime(detail.data.updated_at)}</p>
       <p className="note">Проверяйте применимость к конкретной модификации и VIN до проведения работ. Изменения на автомобиле требуют сверки с оригинальными документами.</p>
+      <TechnicalApplicability key={detail.data.id} articleId={detail.data.id}
+        initialMake={detail.data.make} initialModel={detail.data.model??''}
+        initialYear={detail.data.model_year}/>
      </>}
    </article>}
   </div>
@@ -151,7 +155,7 @@ export function TechnicalBase(){
  const {me}=useMe();
  const admin=Boolean(me?.roles.includes('admin'));
  const professional=Boolean(me?.roles.some(r=>['master','tow','service'].includes(r)));
- const [tab,setTab]=useState<'sources'|'search'|'cases'|'propose'|'review'|'source-review'|'case-reports'|'appeals'|'appeal-review'>('sources');
+ const [tab,setTab]=useState<'sources'|'search'|'cases'|'propose'|'review'|'source-review'|'case-reports'|'appeals'|'appeal-review'|'variants'>('sources');
  if(!professional&&!admin)return <main className="tech-shell"><h1>ТехБаза</h1><p>Раздел доступен только подтверждённым специалистам.</p></main>;
  return <main className="tech-shell">
   <header className="tech-head">
@@ -169,6 +173,7 @@ export function TechnicalBase(){
    {admin&&<button aria-current={tab==='case-reports'?'page':undefined}
       onClick={()=>setTab('case-reports')}>Жалобы на техсоветы</button>}
    {admin&&<button aria-current={tab==='appeal-review'?'page':undefined} onClick={()=>setTab('appeal-review')}>Апелляции специалистов</button>}
+   {admin&&<button aria-current={tab==='variants'?'page':undefined} onClick={()=>setTab('variants')}>Применяемость схем</button>}
    {admin&&<button aria-current={tab==='source-review'?'page':undefined}
       onClick={()=>setTab('source-review')}>Контроль источников</button>}
   </nav>
@@ -181,6 +186,7 @@ export function TechnicalBase(){
   {tab==='source-review'&&admin&&<AdminTechReferences/>}
   {tab==='case-reports'&&admin&&<TechnicalCaseReportQueue/>}
   {tab==='appeal-review'&&admin&&<TechnicalAppealsQueue/>}
+  {tab==='variants'&&admin&&<AdminTechnicalApplicability/>}
   <p className="tech-footer-note">Материалы не заменяют документацию производителя. Системных запретов на снимки экрана в обычном браузере нет; доступ защищён проверкой роли на сервере.</p>
  </main>;
 }
