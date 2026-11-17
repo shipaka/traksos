@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { get, post, put, del, rub, fmtTime, fmtPhone } from '../api.ts';
 import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF, ON_SITE, seriesHint } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFields, LiveStrip, type VehicleValue } from '../ui.tsx';
-import { BookingRows } from './base.tsx';
+import { BookingRows, BookingList, isOpenBooking } from './base.tsx';
 import { DriverRules } from './fleet.tsx';
 import { VehicleServiceApplication, VehicleServiceHistory } from './vehicleServices.tsx';
 import { native } from '../native.ts';
@@ -635,12 +635,16 @@ export function NewOrder({ service }: { service: string }) {
 
 export function Orders({ as }: { as: 'client' | 'performer' }) {
   const list = useLoad(() => get(`/api/orders?as=${as}`), [as], (e) => e.type === 'order');
+  const bookings = useLoad<any[]>(() => as === 'client' ? get('/api/bookings') : Promise.resolve([]),
+    [as], (e) => e.type === 'booking');
   const [tab, setTab] = useState<'list' | 'black' | 'cars'>('list');
   const [ctab, setCtab] = useState<'now' | 'my' | 'hist' | 'black'>('now');
   if (as === 'performer' && tab === 'black') return <main><h1>История</h1><HistoryTabs tab={tab} setTab={setTab} /><PerformerBlacklist /></main>;
   if (as === 'performer' && tab === 'cars') return <main><h1>История</h1><HistoryTabs tab={tab} setTab={setTab} />{list.data ? <JobsByCar orders={list.data} /> : <Loading error={list.error} />}</main>;
   const live = (o: any) => !['completed', 'cancelled', 'no_performer'].includes(o.status);
   const shown = as === 'performer' ? list.data : (list.data ?? []).filter((o: any) => ctab === 'now' ? live(o) : !live(o));
+  const activeBookings = (bookings.data ?? []).filter(isOpenBooking);
+  const showingNow = as === 'client' && ctab === 'now';
   return (
     <main className={as === 'performer' ? 'performer-orders-page' : 'client-orders-page'}>
       <h1>{as === 'performer' ? 'История' : 'Заявки'}</h1>
@@ -652,10 +656,13 @@ export function Orders({ as }: { as: 'client' | 'performer' }) {
           ))}
         </div>
       )}
-      {as === 'client' && ctab === 'now' && <BookingRows live />}
+      {showingNow && <h2>Активные выезды и консультации · {(list.data ?? []).filter(live).length}</h2>}
       {as === 'client' && ctab === 'hist' && list.data && <TaskArchive orders={list.data.filter((o: any) => !live(o))} />}
       {as === 'client' && (ctab === 'my' || ctab === 'black') ? <MyPerformers black={ctab === 'black'} /> :
-      as === 'client' && ctab === 'hist' ? null : !list.data ? <Loading error={list.error} /> : !shown!.length ? <div className="empty">{as === 'client' && ctab === 'now' ? 'Выездов сейчас нет' : 'Выездов пока нет'}</div> : (
+      as === 'client' && ctab === 'hist' ? null : !list.data ? <Loading error={list.error} /> : !shown!.length ?
+        showingNow && (!bookings.data || activeBookings.length > 0)
+          ? <span className="note">Активных выездов и консультаций сейчас нет.</span>
+          : <div className="empty">{showingNow ? 'Активных выездов и записей на СТО сейчас нет' : 'Выездов пока нет'}</div> : (
         <div className="rows">
           {shown!.map((o: any) => (
             <a key={o.id} href={`#/order/${o.id}`} className="list-item">
@@ -668,6 +675,13 @@ export function Orders({ as }: { as: 'client' | 'performer' }) {
           ))}
         </div>
       )}
+      {showingNow && <section className="stack" aria-label="Активные записи на СТО">
+        <h2>Записи на СТО · {activeBookings.length}</h2>
+        {bookings.error ? <div className="note">Не удалось загрузить записи на СТО: {bookings.error}</div>
+          : !bookings.data ? <Loading />
+            : activeBookings.length > 0 ? <BookingList rows={activeBookings} />
+              : <span className="note">Открытых записей на СТО сейчас нет. Завершённые — в истории.</span>}
+      </section>}
     </main>
   );
 }
@@ -1014,7 +1028,7 @@ function MastersNearby({ service, geo, brand }: { service: string; geo: { lat: n
 /** Архив задач: одна поломка — одна задача. Консультация, выезды по ней и ремонт в сервисе по совету мастера — вместе. */
 function TaskArchive({ orders }: { orders: any[] }) {
   const b = useLoad(() => get('/api/bookings'), []);
-  const bookings = ((b.data ?? []) as any[]).filter((x) => ['closed', 'disputed', 'cancelled', 'declined', 'invoiced'].includes(x.status) || x.fromOrderId);
+  const bookings = ((b.data ?? []) as any[]).filter((x) => !isOpenBooking(x));
   const root = (o: any) => o.consult_of ?? o.id;
   const groups = new Map<string, { orders: any[]; bookings: any[] }>();
   for (const o of [...orders].sort((x, y) => +new Date(x.created_at) - +new Date(y.created_at))) {

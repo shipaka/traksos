@@ -803,10 +803,12 @@ export function BookingPage({ id }: { id: string }) {
   );
 }
 
-/** Строки записей в сервис — в «Заявках» клиента */
-export function BookingRows({ live }: { live: boolean }) {
-  const l = useLoad(() => get('/api/bookings'), [], isBookingEvent);
-  const rows = (l.data ?? []).filter((b: any) => live === !['closed', 'declined', 'cancelled'].includes(b.status));
+/** Terminal STO bookings are history, even if a previous screenshot called them "ready". */
+export const isOpenBooking = (b: { status: string }) =>
+  !['closed', 'declined', 'cancelled'].includes(b.status);
+
+/** Pure list, reused when the parent already owns the bookings query and counter. */
+export function BookingList({ rows }: { rows: any[] }) {
   if (!rows.length) return null;
   return (
     <div className="rows">
@@ -821,6 +823,12 @@ export function BookingRows({ live }: { live: boolean }) {
       ))}
     </div>
   );
+}
+
+/** Legacy independent listing for embedded history views. */
+export function BookingRows({ live }: { live: boolean }) {
+  const l = useLoad(() => get('/api/bookings'), [], isBookingEvent);
+  return <BookingList rows={(l.data ?? []).filter((b: any) => live === isOpenBooking(b))} />;
 }
 
 /** Мастер на месте: «на месте не исправить — советую сервис» */
