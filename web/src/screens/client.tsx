@@ -445,7 +445,8 @@ export function NewOrder({ service }: { service: string }) {
       { enableHighAccuracy: true, timeout: 15_000 },
     );
   }
-  useEffect(locate, []);
+  // Location sharing is optional and user-initiated: an automatically
+  // acquired point may be the *person's* position, not a remote truck's.
 
   const zones = (pricing.data?.zones ?? []).filter((z: any) =>
     regionId === 'spb' ? z.id === 'spb'
@@ -535,9 +536,17 @@ export function NewOrder({ service }: { service: string }) {
       </Step>
 
       <Step n={3} id="f-where" title={isTow ? 'Откуда забрать' : 'Где машина'} req done={need.where} missing={tried && !need.where}>
-        <input className="field" placeholder="Адрес, стоянка или км трассы" value={address} onChange={(e) => setAddress(e.target.value)} />
+        <input className="field" placeholder="Укажите регион и населённый пункт, затем улицу или км трассы" value={address} onChange={(e) => setAddress(e.target.value)} />
+        <div className="row">
+          <button type="button" className="chip" onClick={locate} disabled={geoState === 'wait'}>
+            {geoState === 'wait' ? 'Определяем GPS…' : 'Использовать мою GPS-точку'}
+          </button>
+          {geo && <button type="button" className="chip" onClick={() => {
+            setGeo(null); setGeoState('idle');
+          }}>Использовать только адрес</button>}
+        </div>
         <span className="note">
-          {geoState === 'ok' ? '✓ Точка на карте определена — адрес можно не писать' : geoState === 'wait' ? 'Определяю место…' : geoState === 'fail'
+          {geoState === 'ok' ? '✓ GPS-точка указана. Проверьте, что это место машины, а не ваше текущее положение' : geoState === 'wait' ? 'Определяю место…' : geoState === 'fail'
             ? <>Не удалось определить место — напишите адрес. <button type="button" className="chip" style={{ minHeight: 30 }} onClick={locate}>Ещё раз</button></> : null}
         </span>
         {!isConsult && <>
