@@ -53,6 +53,9 @@ export class PrivacyService {
       communityProfile: await this.db.one('select nickname,city_label,share_city,created_at from community_profiles where user_id=$1',[id]),
       communityMessages: await q('select room_id,body,moderation_state,created_at from community_messages where sender_id=$1 order by created_at desc'),
       communityRooms: await q('select room_id,joined_at from community_memberships where user_id=$1'),
+      communityNotificationPreferences: await this.db.one('select dm_invites,dm_messages,case_replies,quiet_enabled,quiet_start_minute,quiet_end_minute,quiet_timezone,updated_at from community_notification_preferences where user_id=$1',[id]),
+      communityRoomMutes: await q('select room_id,muted,updated_at from community_notification_room_mutes where user_id=$1'),
+      communityThreadMutes: await q('select thread_id,muted,updated_at from community_notification_thread_mutes where user_id=$1'),
       communityReports: await q('select message_id,reason,status,created_at from community_reports where reporter_id=$1'),
       knowledgeContributions: await q('select title,make,model,model_year,subsystem,description,source_url,rights_basis,rights_review,technical_review,created_at from community_knowledge where author_id=$1'),
       professionalTechnicalCases: await q('select room_id,make,model,model_year,subsystem,symptoms,dtc_codes,diagnostic_context,status,created_at,resolved_at from community_technical_cases where author_id=$1 order by created_at'),
@@ -132,6 +135,10 @@ export class PrivacyService {
             (select id from community_technical_case_replies where author_id=$1)`,[id]);
         await q.query('delete from community_technical_case_replies where author_id=$1',[id]);
         await q.query('delete from community_technical_cases where author_id=$1',[id]);
+        await q.query('delete from community_notification_preferences where user_id=$1',[id]);
+        await q.query('delete from community_notification_room_mutes where user_id=$1',[id]);
+        await q.query('delete from community_notification_thread_mutes where user_id=$1',[id]);
+        await q.query('delete from community_notification_cooldowns where user_id=$1',[id]);
         await q.query('delete from community_memberships where user_id=$1', [id]);
         await q.query('delete from community_knowledge where author_id=$1', [id]);
         await q.query('update community_knowledge set rights_reviewer=null where rights_reviewer=$1', [id]);
