@@ -182,9 +182,10 @@ test('moderator hides unsafe advice, revokes accepted solution and audits restor
  assert.equal(ok(await t.api('POST',reportUrl,{
    replyId:answer.id,reason:'Опасная рекомендация по ремонту EBS'
  },writer.token)).duplicate,true);
- assert.equal(ok(await t.api('POST',reportUrl,{
+ // Admin moderation is a separate endpoint; staff must not open repair club cases.
+ assert.equal((await t.api('POST',reportUrl,{
    replyId:answer.id,reason:'Риск неверной диагностики тормозной системы'
- },admin.token)).reported,true);
+ },admin.token)).status,404);
  ok(await t.api('POST',endpoint+'/'+id+'/resolve',{replyId:answer.id},writer.token));
  const moderation='/api/admin/community/pro-cases/reports';
  assert.equal((await t.api('GET',moderation,undefined,writer.token)).status,403);
