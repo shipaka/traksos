@@ -17,20 +17,23 @@ type Check={stop_id:string;line_index:number;checked_article:string;checked_qty:
   method:string;checked_at:Date;manual_reason:string|null};
 type Discrepancy={id:string;stop_id:string;line_index:number;kind:string;note:string;
   observed_article:string;observed_qty:number;reported_at:Date;status:string};
+type Trace={stop_id:string;line_index:number;article_snapshot:string;qty_snapshot:number;
+  gtin:string;lot:string|null;serials:string[];input_method:string;recorded_at:Date};
 type WarehouseLine={index:number;name:string;brand:string|null;article:string|null;
   quantity:number;verified:boolean;method:string|null;checkedAt:Date|null;blockedReason:string|null;
-  recheckedAfterDiscrepancy:boolean;
+  recheckedAfterDiscrepancy:boolean;traceabilityVerified:boolean;
+  trace:{gtin:string;lot:string|null;serials:string[];method:string;recordedAt:Date}|null;
   openDiscrepancy:{id:string;kind:string;note:string;observedArticle:string;
     observedQty:number;reportedAt:Date}|null};
 type WarehouseStop={id:string;orderNumber:number;status:string;lines:WarehouseLine[]};
-type Run={id:string;status:string;packing_required:boolean;dispatch_approved_at:Date|null};
+type Run={id:string;status:string;packing_required:boolean;traceability_required:boolean;dispatch_approved_at:Date|null};
 
 /** No checkout amount, price, client identity, address, phone or GPS leaves this service. */
 export async function warehouseProgress(q:Queryable,runId:string){
   const run=await q.one<Run>(
-    'select id,status,packing_required,dispatch_approved_at from shop_courier_runs where id=$1',[runId]);
+    'select id,status,packing_required,traceability_required,dispatch_approved_at from shop_courier_runs where id=$1',[runId]);
   if(!run)throw notFound('Рейс не найден');
-  const [stops,checks,exceptions]=await Promise.all([
+  const [stops,checks,exceptions,traces]=await Promise.all([
     q.query<Stop>(
       'select s.id as stop_id,s.shop_order_id,o.number,o.items,s.status '+
       'from shop_courier_stops s join shop_orders o on o.id=s.shop_order_id '+
@@ -42,10 +45,14 @@ export async function warehouseProgress(q:Queryable,runId:string){
       "select d.id,d.stop_id,d.line_index,d.kind,d.note,d.observed_article,"+
       "d.observed_qty,d.reported_at,d.status from shop_warehouse_discrepancies d "+
       "join shop_courier_stops s on s.id=d.stop_id "+
-      "where s.run_id=$1 and d.status='open'",[runId])
+      "where s.run_id=$1 and d.status='open'",[runId]),
+    q.query<Trace>(
+      'select t.* from shop_warehouse_line_traces t '+
+      'join shop_courier_stops s on s.id=t.stop_id where s.run_id=$1',[runId])
   ]);
   const checked=new Map(checks.map(c=>[c.stop_id+':'+c.line_index,c]));
   const open=new Map(exceptions.map(d=>[d.stop_id+':'+d.line_index,d]));
+  const traced=new Map(traces.map(t=>[t.stop_id+':'+t.line_index,t]));
   let remaining=0,total=0;
   const output:WarehouseStop[]=stops.map(st=>{
     const raw=Array.isArray(st.items)?st.items:[] as any[];
@@ -55,15 +62,23 @@ export async function warehouseProgress(q:Queryable,runId:string){
       const expected=article&&article.length>=2&&Number.isSafeInteger(qty)&&qty>0;
       const confirmed=checked.get(st.stop_id+':'+index);
       const discrepancy=open.get(st.stop_id+':'+index);
+      const recorded=traced.get(st.stop_id+':'+index);
       const recheckedAfterDiscrepancy=Boolean(expected&&discrepancy&&confirmed&&
         key(confirmed.checked_article)===key(article!)&&confirmed.checked_qty===qty&&
         confirmed.checked_at>discrepancy.reported_at);
       const verified=Boolean(expected&&!discrepancy&&confirmed&&
         key(confirmed.checked_article)===key(article!)&&confirmed.checked_qty===qty);
-      if(!verified)remaining++;
+      const traceabilityVerified=Boolean(verified&&recorded&&confirmed&&
+        key(recorded.article_snapshot)===key(article!)&&recorded.qty_snapshot===qty&&
+        recorded.recorded_at>=confirmed.checked_at);
+      if(!verified||(run.traceability_required&&!traceabilityVerified))remaining++;
       total++;
       return {index,name:String(item.name??'Товар'),brand:item.brand??null,
-        article,quantity:qty,verified,recheckedAfterDiscrepancy,
+        article,quantity:qty,verified,recheckedAfterDiscrepancy,traceabilityVerified,
+        trace:recorded?{
+          gtin:recorded.gtin,lot:recorded.lot,serials:recorded.serials,
+          method:recorded.input_method,recordedAt:recorded.recorded_at
+        }:null,
         method:verified?confirmed!.method:null,
         checkedAt:verified?confirmed!.checked_at:null,
         openDiscrepancy:discrepancy?{
@@ -73,17 +88,20 @@ export async function warehouseProgress(q:Queryable,runId:string){
         }:null,
         blockedReason:discrepancy?'Открытое складское расхождение — выдача заблокирована':
           !expected?'Не указан пригодный артикул или количество в заказе':
-          verified?null:'Требуется физическая сверка артикула и количества'};
+          !verified?'Требуется физическая сверка артикула и количества':
+          run.traceability_required&&!traceabilityVerified?
+            'Нужны проверенный GTIN и партия или серии всех единиц':null};
     });
     if(!Array.isArray(st.items)||lines.length===0)remaining++;
     return {id:st.stop_id,orderNumber:st.number,status:st.status,lines};
   });
-  return {runId,packingRequired:run.packing_required,runStatus:run.status,
+  return {runId,packingRequired:run.packing_required,
+    traceabilityRequired:run.traceability_required,runStatus:run.status,
     dispatchApproved:Boolean(run.dispatch_approved_at),stops:output,
     totalLines:total,remainingLines:remaining,
     openDiscrepancies:exceptions.length,
     ready:stops.length>0&&total>0&&remaining===0&&exceptions.length===0,
-    warning:'Сверка подтверждает только совпадение артикула и количества с заказом. Она не подтверждает качество, оригинальность, применяемость детали или фактическое содержимое закрытой коробки.'};
+    warning:'Проверка GTIN подтверждает только контрольную цифру GS1 и записанную маркировку: она НЕ подтверждает подлинность производителя, сопоставление с поставщиком, применяемость к VIN или содержимое коробки.'};
 }
 
 export function registerShopWarehouseRoutes(r:Router,db:Db){
@@ -126,6 +144,8 @@ export function registerShopWarehouseRoutes(r:Router,db:Db){
         if(key(b.article)!==key(article)||b.quantity!==qty)
           throw conflict('packing_mismatch',
             'Артикул или количество не соответствует строке заказа. Не выдавайте посылку');
+        await q.query('delete from shop_warehouse_line_traces where stop_id=$1 and line_index=$2',
+          [stopId,b.lineIndex]);
         const saved=await q.one<Check>(
           `insert into shop_warehouse_line_checks
            (stop_id,line_index,checked_article,checked_qty,method,manual_reason,checked_by)
@@ -196,6 +216,8 @@ export function registerShopWarehouseRoutes(r:Router,db:Db){
             expectedArticle,expectedQty,b.observedArticle,b.observedQty,b.note,c.user.id]);
         // A previous scan never certifies a parcel after a discrepancy is found.
         await q.query('delete from shop_warehouse_line_checks where stop_id=$1 and line_index=$2',
+          [stopId,b.lineIndex]);
+        await q.query('delete from shop_warehouse_line_traces where stop_id=$1 and line_index=$2',
           [stopId,b.lineIndex]);
         await q.query('insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4)',
           [c.user.id,'shop.warehouse_discrepancy_reported',recorded!.id,
