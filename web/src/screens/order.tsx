@@ -390,6 +390,11 @@ function Money({ d }: { d: any }) {
         {d.paymentMethod === 'cash' ? 'Оплата мастеру на месте. Сумму подтверждаете в приложении.' : d.paymentMethod === 'online' ? 'Оплата через TrakSOS, мастеру — после подтверждения.' : 'Оплата по счёту на компанию.'}
       </span>
       {d.result && <span className="pill">{RESULTS[d.result]}{d.resultNote ? ` · ${d.resultNote}` : ''}</span>}
+      {d.warrantyDays!=null?<div className="note">
+        Дополнительная гарантия исполнителя: <b>{d.warrantyDays} дней</b>
+        {d.warrantyStartedAt?' с '+new Date(d.warrantyStartedAt).toLocaleDateString('ru-RU'):' после приёмки'}.
+        {d.warrantyWork?' Работы: '+d.warrantyWork:''}
+      </div>:<div className="note">Дополнительная гарантия не заявлена. Законные права клиента сохраняются.</div>}
     </div>
   );
 }
@@ -403,6 +408,8 @@ function PerformerActions({ d, onDone }: { d: any; onDone: () => void }) {
   const bill = liveBill(d, now, cleanExtras);
   const setExtra = (i: number, v: Partial<{ name: string; amount: number | null }>) => setExtras(extras.map((x, j) => (j === i ? { ...x, ...v } : x)));
   const [result, setResult] = useState<string>(d.result ?? 'solved');
+  const [warrantyDays,setWarrantyDays]=useState<number|null>(d.warrantyDays??null);
+  const [warrantyWork,setWarrantyWork]=useState<string>(d.warrantyWork??d.resultNote??'');
   const [note, setNote] = useState(d.resultNote ?? '');
   const [dropReason, setDropReason] = useState('');
   const [showDrop, setShowDrop] = useState(false);
@@ -449,9 +456,21 @@ function PerformerActions({ d, onDone }: { d: any; onDone: () => void }) {
               <button key={k} type="button" className="opt" aria-pressed={result === k} onClick={() => setResult(k)}><b>{v}</b></button>
             ))}
           </div>
-          <input className="field" placeholder="Что сделали — одной строкой" value={note} onChange={(e) => setNote(e.target.value)} maxLength={300} />
+          <input className="field" placeholder="Что сделали — одной строкой" value={note}
+            onChange={e=>{setNote(e.target.value);setWarrantyWork(e.target.value)}} maxLength={300}/>
+          <div className="card flat stack">
+            <b>Дополнительная гарантия исполнителя</b>
+            <div className="row">
+              {([null,7,14,30] as Array<number|null>).map(days=><button key={days??0} type="button"
+                className="chip" aria-pressed={warrantyDays===days} onClick={()=>setWarrantyDays(days)}>
+                {days==null?'Не заявлена':days+' дней'}</button>)}
+            </div>
+            <input className="field" placeholder="На какие работы распространяется гарантия"
+              maxLength={300} value={warrantyWork} onChange={e=>setWarrantyWork(e.target.value)}/>
+            <small className="note">Срок начинается после подтверждения работ клиентом. Без дополнительной гарантии права клиента сохраняются.</small>
+          </div>
           <button className="btn" disabled={busy} onClick={() =>
-            run(() => post(`/api/orders/${d.id}/amount`, { extras: cleanExtras, result, note: note || undefined }), 'Клиенту отправлено на подтверждение').then((r) => r && onDone())}>
+            run(() => post(`/api/orders/${d.id}/amount`, { extras: cleanExtras, result, note: note || undefined, warrantyDays, warrantyWork }), 'Клиенту отправлено на подтверждение').then((r) => r && onDone())}>
             {d.status === 'awaiting_confirmation' ? 'Исправить сумму' : 'Отправить клиенту'}
           </button>
         </div>
