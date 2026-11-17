@@ -6,7 +6,6 @@ import { setup, ok } from './helpers.ts';
 // No real bank, credentials, invoices or personal information are involved.
 async function fixture() {
   const t=await setup();
-  const admin=await t.login('+79997774701');
   const customer=await t.login('+79997774702');
   const performer=await t.login('+79997774703','master');
   // The fixture admin number is explicitly allowlisted by helpers.ts.
@@ -113,8 +112,8 @@ test('provider accepted refund but its HTTP response is lost: mark needs_review,
         'select * from payment_refund_requests where payment_id=$1',[work.id]);
       assert.equal(pending.length,1);
       assert.equal(pending[0].status,'needs_review');
-      assert.equal((await f.t.db.one<any>(
-        'select refunded_amount from payments where id=$1',[work.id]))?.refunded_amount,0,
+      assert.equal(Number((await f.t.db.one<any>(
+        'select refunded_amount from payments where id=$1',[work.id]))?.refunded_amount),0,
         'unverified provider response never counts as completed refund');
       const retries=await Promise.all(Array.from({length:12},()=>
         f.t.api('POST',`/api/admin/payments/${work.id}/refund`,body,f.admin.token)));
