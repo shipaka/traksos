@@ -332,7 +332,7 @@ export class ShopAgencyLedger {
       const c=await q.one<any>('select * from shop_agency_cases where id=$1 for update',[id]);
       if (!c) throw notFound('Операция не найдена');
       // Read evidence inside the transaction, with the case row locked against writers.
-      const a=await q.query<any>(`select al.*,d.kind,d.issued_at,d.source
+      const a=await q.query<any>(`select al.*,d.kind,d.reference,d.issued_at,d.source
         from shop_agency_allocations al join shop_agency_documents d on d.id=al.document_id where al.case_id=$1`,[id]);
       const e=await q.query<any>('select * from shop_agency_events where case_id=$1',[id]);
       const r=await q.query<any>('select * from shop_agency_reviews where case_id=$1',[id]);

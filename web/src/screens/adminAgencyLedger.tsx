@@ -246,7 +246,7 @@ export function AdminAgencyLedger() {
           <span>Возвраты поставщиков: <b>{rub(report.summary.supplierRefunds)}</b></span>
         </div>
         <p className="note">{report.disclaimer}</p>
-        <p className="note">SHA-256 текущего снимка доказательств: <code>{report.manifestSha256}</code>.
+        <p className="note">SHA-256 текущего снимка доказательств: <code style={{overflowWrap:'anywhere',wordBreak:'break-all'}}>{report.manifestSha256}</code>.
           Новые документы или события могут изменить эту контрольную сумму.</p>
         <label>Основание архивирования снимка<input className="field" value={archiveNote}
           onChange={e=>setArchiveNote(e.target.value)}
