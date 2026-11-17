@@ -54,6 +54,7 @@ async function access(db:Db,u:AuthUser,roomId:string,write=false){
       (room.specialty!==null &&
         !(room.specialty==='tow'&&p.kind==='tow') &&
         !(room.specialty==='service'&&p.kind==='service') &&
+        !(room.specialty==='ecu'&&(p.kind==='ecu'||p.specialties.includes('ecu'))) &&
         !p.specialties.includes(room.specialty)))
       throw notFound('Клуб не найден');
     if(write&&!await db.one(
