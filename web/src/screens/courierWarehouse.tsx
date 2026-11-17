@@ -128,7 +128,7 @@ export function CourierWarehouseCheck({runId}:{runId:string}){
        В этом новом рейсе обязательны GTIN с правильной контрольной цифрой и
        партия либо серийные номера всех единиц. Прежде всего выполните физическую
        сверку артикула и количества; после исправлений маркировку нужно записать вновь.
-     </p>
+     </p>}
      {p.stops.map(stop=><article key={stop.id} className="card stack">
        <h4>Заказ №{stop.orderNumber}</h4>
        {stop.lines.length===0&&<p role="alert">Состав заказа отсутствует: запрещено подтверждать пустую посылку.</p>}
