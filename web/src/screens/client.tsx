@@ -6,6 +6,7 @@ import { BookingRows } from './base.tsx';
 import { DriverRules } from './fleet.tsx';
 import { VehicleServiceApplication, VehicleServiceHistory } from './vehicleServices.tsx';
 import { native } from '../native.ts';
+import { EcuDiscovery } from './ecuDiscovery.tsx';
 import { insurancePresentation, isOpenInsuranceRequest } from '../insurancePresentation.ts';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
@@ -74,6 +75,7 @@ export function Home() {
         </a>}
       </section>
 
+      <EcuDiscovery place="home" />
       <div className="desktop-home-columns">
         <section className="desktop-home-main">
           <div className="mobile-home-heading">
@@ -195,6 +197,7 @@ export function Sos() {
                 </a>
               ))}
             </div>
+            <EcuDiscovery place="sos" />
           </> : direction === 'tow' ? <>
             <p className="note">Для эвакуации укажете тип машины или сцепки, откуда и куда её везти.</p>
             <a className="btn" href="#/new/tow?sos=accident">Оформить вызов эвакуатора →</a>
