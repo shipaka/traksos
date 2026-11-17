@@ -193,6 +193,16 @@ function TowInfo({ d }: { d: any }) {
 
 /** Исполнитель, которому предложена заявка: подробности и отклик */
 function CandidateView({ d, onDone }: { d: any; onDone: () => void }) {
+  const {busy,run}=useAction();
+  if(d.service==='ecu')return <section className="card stack">
+    <b>Запрос выбранной мастерской ЭБУ</b>
+    <p>{d.brand??'Грузовик'} {d.model??''} {d.year??''}</p>
+    {d.description&&<p className="note">{d.description}</p>}
+    <p className="note">Цена сейчас не известна. Отметьте, что готовы принять блок на диагностику. Счёт можно выставить только отдельно, после выполнения работ и согласования клиентом.</p>
+    <button type="button" className="btn" disabled={busy||d.status!=='searching'}
+      onClick={()=>run(()=>post('/api/orders/'+d.id+'/offers',{}),'Запрос принят. Ожидаем выбора клиента.')
+        .then(x=>x&&onDone())}>Могу принять блок · цена после диагностики</button>
+  </section>;
   if (d.status !== 'searching') return <div className="card"><b>Заявка уже у другого исполнителя</b></div>;
   return (
     <div className="stack">
