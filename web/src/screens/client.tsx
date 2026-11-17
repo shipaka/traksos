@@ -794,7 +794,7 @@ export function Garage() {
           {seriesHint(v.brand, v.year) && <span className="note" style={{ color: 'var(--accent)' }}>{seriesHint(v.brand, v.year)}</span>}
           <VehicleServiceApplication vehicleId={v.id} onCreated={() => setServiceHistoryVersion(v => v + 1)} />
           <VehicleServiceHistory id={v.id} isDriver={isDriver} refreshVersion={serviceHistoryVersion} />
-          <VehicleHistory id={v.id} />
+          <VehicleHistory id={v.id} isDriver={isDriver} />
           <a className="btn ghost small" href={`#/shop/history/${v.id}`}>Покупки и запчасти этой машины</a>
           {!isDriver && (driverFor === v.id ? (
             <div className="stack">
@@ -834,12 +834,12 @@ export function Garage() {
 }
 
 /** История машины: что и когда делали, комментарий мастера. Свёрнута, раскрывается по нажатию. */
-function VehicleHistory({ id }: { id: string }) {
+function VehicleHistory({ id, isDriver }: { id: string; isDriver: boolean }) {
   const [open, setOpen] = useState(false);
   const h = useLoad(() => get(`/api/vehicles/${id}/history`), [id], (e) => e.type === 'order');
   const d = h.data;
   if (!d) return null;
-  const finance=<details className="vehicle-finance-summary"><summary className="linkrow" style={{cursor:'pointer'}}>Финансы по этой технике</summary>
+  const finance=isDriver?null:<details className="vehicle-finance-summary"><summary className="linkrow" style={{cursor:'pointer'}}>Финансы по этой технике</summary>
     <div className="card stack"><b>Учтённые расходы TrackSOS: {rub(d.summary.spent??0)}</b>
     <span className="note">Показаны только суммы, связанные с историей заявок этой техники в TrackSOS. Внешние расходы, покупки вне платформы и неподтверждённые платежи сюда не включены.</span></div></details>;
   if (!d.items.length) return <div className="stack">{finance}<span className="note">История пока пустая — здесь будут обращения и ремонты по этой машине.</span></div>;
