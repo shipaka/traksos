@@ -753,7 +753,7 @@ export class OrdersService {
       used += pts;
       // Подтверждаем ровно ту сумму, что видел клиент: если мастер успел её поменять — конфликт
       await this.guarded(q, `update orders set status=$2, amount_confirmed_at=$3, completed_at=$3,
-          warranty_started_at=case when warranty_days is not null then $3 else null end
+          warranty_started_at=case when warranty_days is not null then $3::timestamptz else null::timestamptz end
           where id=$1 and status='awaiting_confirmation' and work_amount is not distinct from $4 and performer_id=$5`,
         [orderId, to, this.now(), o.work_amount, o.performer_id]);
       await q.query(`update performer_profiles set line_status='online' where user_id=$1 and line_status='on_job'`, [o.performer_id]);
