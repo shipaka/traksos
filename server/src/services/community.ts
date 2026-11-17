@@ -3,6 +3,7 @@ import type { Db } from '../db/index.ts';
 import type { Router, AuthedCtx, AuthUser } from '../http/router.ts';
 import { parse, bad, conflict, forbidden, notFound, HttpError } from '../http/router.ts';
 import type { Notifier } from './notify.ts';
+import {canUseDriverAir,driverAirSql} from './driverAirAccess.ts';
 
 /**
  * TrakSOS community backend. Isolated from the private, order-scoped ChatService.
@@ -29,11 +30,11 @@ async function verifiedProfile(db: Db, user: AuthUser) {
   return db.one<{ kind:string; specialties:string[]; verification:string }>(
     'select kind,specialties,verification from performer_profiles where user_id=$1', [user.id]);
 }
-async function roomAllowed(user: AuthUser, room: Room, profile: Awaited<ReturnType<typeof verifiedProfile>>) {
+async function roomAllowed(user: AuthUser, room: Room, profile: Awaited<ReturnType<typeof verifiedProfile>>,driverAccess:boolean) {
   if (!room.active && !isStaff(user)) return false;
   if (isStaff(user)) return true;
   if (room.audience === 'all') return true;
-  if (room.audience === 'driver') return user.roles.includes('driver');
+  if (room.audience === 'driver') return driverAccess;
   if (room.audience !== 'professional' || profile?.verification !== 'approved') return false;
   if (!room.specialty) return true;
   if (room.specialty === 'tow') return profile.kind === 'tow';
@@ -59,7 +60,7 @@ async function mustRoom(db: Db, c: AuthedCtx) {
   if (!room) throw notFound('Чат не найден');
   const profile = await verifiedProfile(db,c.user);
   // 404 instead of 403 avoids advertising private room membership to outsiders.
-  if (!await roomAllowed(c.user,room,profile)) throw notFound('Чат не найден');
+  if (!await roomAllowed(c.user,room,profile,await canUseDriverAir(db,c.user))) throw notFound('Чат не найден');
   return room;
 }
 async function requireKnowledgeAccess(db: Db, u: AuthUser) {
@@ -80,7 +81,7 @@ export async function roomLiveRecipients(db:Db,room:Pick<Room,'id'|'audience'|'s
         and (
           'admin'=any(u.roles) or 'moderator'=any(u.roles)
           or $3::text='all'
-          or ($3::text='driver' and 'driver'=any(u.roles))
+          or ($3::text='driver' and ${driverAirSql('u')})
           or ($3::text='professional' and p.verification='approved'
             and ('master'=any(u.roles) or 'tow'=any(u.roles) or 'service'=any(u.roles))
             and ($4::text is null
@@ -94,6 +95,28 @@ export async function roomLiveRecipients(db:Db,room:Pick<Room,'id'|'audience'|'s
 }
 
 export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
+  // Information is safe to request before opt-in: it never creates participation.
+  r.get('/api/community/driver-access',true,async(c:AuthedCtx)=>{
+    const u=await db.one<{roles:string[];status:string}>(`select roles,status from users where id=$1 and deleted_at is null`,[c.user.id]);
+    if(!u||u.status!=='active')throw forbidden();
+    const driverRole=u.roles.includes('driver');
+    const eligible=driverRole||u.roles.includes('client');
+    return {eligible,enabled:eligible&&await canUseDriverAir(db,c.user),driverRole};
+  });
+  r.put('/api/community/driver-access',true,async(c:AuthedCtx)=>{
+    const b=parse(z.object({enabled:z.boolean()}),c.body);
+    return db.tx(async q=>{
+      const u=await q.one<{roles:string[];status:string}>(`select roles,status from users
+        where id=$1 and deleted_at is null for update`,[c.user.id]);
+      if(!u||u.status!=='active'||!u.roles.includes('client')||u.roles.includes('driver'))
+        throw forbidden('Участие владельца в Эфире настраивается только в клиентском кабинете');
+      await q.query(`insert into community_driver_optins(user_id,enabled) values($1,$2)
+        on conflict(user_id) do update set enabled=excluded.enabled,updated_at=now()`,[c.user.id,b.enabled]);
+      await q.query('insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4)',
+        [c.user.id,'community.driver_access_changed',c.user.id,{enabled:b.enabled}]);
+      return {eligible:true,enabled:b.enabled,driverRole:false};
+    });
+  });
   r.get('/api/community/me', true, async (c: AuthedCtx) => {
     await ensureNick(db,c.user);
     return db.one(`select nickname, case when share_city then city_label else null end as public_city,
@@ -121,16 +144,17 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
   });
 
   r.get('/api/community/rooms', true, async (c: AuthedCtx) => {
-    const [rooms,profile,subscriptions] = await Promise.all([
+    const [rooms,profile,subscriptions,driverAccess] = await Promise.all([
       db.query<Room>('select * from community_rooms where active=true order by created_at,id limit 200'),
       verifiedProfile(db,c.user),
       db.query<{room_id:string}>('select room_id from community_memberships where user_id=$1',[c.user.id]),
+      canUseDriverAir(db,c.user),
     ]);
     const joined = new Set(subscriptions.map(x=>x.room_id));
     return { rooms: rooms.filter(room => {
       // Synchronous equivalent of roomAllowed for filtering (verification already queried).
       if (isStaff(c.user) || room.audience === 'all') return true;
-      if (room.audience === 'driver') return c.user.roles.includes('driver');
+      if (room.audience === 'driver') return driverAccess;
       if (profile?.verification !== 'approved') return false;
       return !room.specialty || (room.specialty === 'tow' && profile.kind === 'tow')
         || (room.specialty === 'service' && profile.kind === 'service')
@@ -292,7 +316,7 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
       'select room_id,sender_id from community_messages where id=$1 and moderation_state=\'published\'',[c.params.id]);
     if(!m) throw notFound('Сообщение не найдено');
     const room=await db.one<Room>('select * from community_rooms where id=$1',[m.room_id]);
-    if(!room || !await roomAllowed(c.user,room,await verifiedProfile(db,c.user))) throw notFound('Сообщение не найдено');
+    if(!room || !await roomAllowed(c.user,room,await verifiedProfile(db,c.user),await canUseDriverAir(db,c.user))) throw notFound('Сообщение не найдено');
     if (m.sender_id===c.user.id) throw bad('own_report','Для своего сообщения используйте обращение к модератору');
     await db.query(`insert into community_reports(message_id,reporter_id,reason) values($1,$2,$3)
       on conflict(message_id,reporter_id) do nothing`,[c.params.id,c.user.id,b.reason]);
