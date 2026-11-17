@@ -720,6 +720,18 @@ export function createApp(d: Deps) {
       'content-disposition':`attachment; filename="traksos-agency-${from}-${to}.csv"`,
     });
   });
+  // Internal, unsigned, append-only report archives with a SHA-256 manifest.
+  r.post('/api/admin/agency/snapshots',['admin'],(c:AuthedCtx)=>
+    agency.archiveReport(c.user,parse(z.object({
+      from:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      to:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      requestKey:z.string().trim().min(8).max(120),
+      note:z.string().trim().min(8).max(1000),
+    }),c.body)));
+  r.get('/api/admin/agency/snapshots',['admin'],(c:AuthedCtx)=>
+    agency.listSnapshots(c.user));
+  r.get('/api/admin/agency/snapshots/:id',['admin'],(c:AuthedCtx)=>
+    agency.snapshot(c.user,c.params.id));
   r.post('/api/admin/agency/documents', ['admin'], (c:AuthedCtx) =>
     agency.addDocument(c.user,parse(z.object({
       kind:z.enum(['purchase','mandate','handover','agent_report','payment_proof']),

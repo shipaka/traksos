@@ -36,6 +36,9 @@ export function AdminAgencyLedger() {
   const [from,setFrom]=useState(()=>euro(''));
   const [to,setTo]=useState(()=>euro(''));
   const [report,setReport]=useState<Row|null>(null);
+  const [snapshots,setSnapshots]=useState<Row[]>([]);
+  const [archiveNote,setArchiveNote]=useState('');
+  const [snapshotKey,setSnapshotKey]=useState('');
   const [selected,setSelected]=useState<Row|null>(null);
   const [company,setCompany]=useState('');
   const [order,setOrder]=useState('');
@@ -88,10 +91,20 @@ export function AdminAgencyLedger() {
   };
   const changePeriod=(p:string)=>{
     setPeriod(p);
-    const end=new Date();const start=new Date(end);
-    if(p==='day'){} else if(p==='week'){start.setDate(end.getDate()-6);}
-    else if(p==='month'){start.setDate(1);}
-    if(p!=='custom'){setFrom(euro(start.toISOString().slice(0,10)));setTo(euro(''));}
+    if(p==='custom')return;
+    const today=new Date(euro('')+'T00:00:00.000Z');
+    const start=new Date(today),end=new Date(today);
+    if(p==='week'){
+      const mondayOffset=(start.getUTCDay()+6)%7;
+      start.setUTCDate(start.getUTCDate()-mondayOffset);
+      end.setUTCDate(start.getUTCDate()+6);
+    }
+    if(p==='month'){
+      start.setUTCDate(1);
+      end.setUTCMonth(start.getUTCMonth()+1,0);
+    }
+    setFrom(start.toISOString().slice(0,10));
+    setTo(end.toISOString().slice(0,10));
   };
   const getCase=async(id:string)=>{
     const r=await perform(()=>get('/api/admin/agency/cases/'+encodeURIComponent(id)),'Цепочка доказательств открыта');
@@ -162,6 +175,29 @@ export function AdminAgencyLedger() {
       setTimeout(()=>URL.revokeObjectURL(url),1000);
     },'CSV скачан. Это не налоговая декларация');
   };
+  const loadSnapshots=async()=>{
+    const rows=await perform(()=>get('/api/admin/agency/snapshots'),'Архив снимков обновлён');
+    if(rows)setSnapshots(rows);
+  };
+  const archive=async()=>{
+    if(!report){setError('Сначала сформируйте реестр');return;}
+    if(archiveNote.trim().length<8){setError('Укажите основание архивирования не короче 8 символов');return;}
+    const key=snapshotKey||crypto.randomUUID();
+    setSnapshotKey(key); // stable key even after an uncertain network response
+    const result=await perform(()=>post('/api/admin/agency/snapshots',{
+      from,to,requestKey:key,note:archiveNote.trim()
+    }),'Неизменяемый снимок сохранён; это не подписанный отчёт ФНС');
+    if(result){setSnapshotKey('');await loadSnapshots();}
+  };
+  const downloadSnapshot=async(id:string)=>{
+    const result=await perform(()=>get('/api/admin/agency/snapshots/'+encodeURIComponent(id)),
+      'Контрольный архив загружен');
+    if(!result)return;
+    const bytes=new Blob([JSON.stringify(result,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(bytes);
+    const a=document.createElement('a');a.href=url;a.download='traksos-agency-manifest-'+id+'.json';a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  };
   const openProof=async(id:string)=>{
     await perform(async()=>{
       const r=await fetch(API_URL+'/api/admin/agency/documents/'+encodeURIComponent(id)+'/file',
@@ -182,7 +218,7 @@ export function AdminAgencyLedger() {
     {notice&&<p role="status" className="note">{notice}</p>}
     <div className="card stack">
       <b>Отчётный период (МСК)</b>
-      <div className="row">{[['day','День'],['week','7 дней'],['month','Месяц'],['custom','Диапазон']].map(x=>
+      <div className="row">{[['day','День'],['week','Неделя Пн–Вс'],['month','Месяц'],['custom','Диапазон']].map(x=>
         <button className={'btn '+(period===x[0]?'':'ghost')} type="button" key={x[0]}
           onClick={()=>changePeriod(x[0])}>{x[1]}</button>)}</div>
       <div className="grid2">
@@ -202,17 +238,32 @@ export function AdminAgencyLedger() {
         <div className="grid2">
           <span>Поступления за период: <b>{rub(report.summary.customerReceived)}</b></span>
           <span>Платежи поставщикам: <b>{rub(report.summary.supplierPaid)}</b></span>
-          <span>Закупка по первичке: <b>{rub(report.summary.recordedPurchases)}</b></span>
-          <span>Проверенная закупка: <b>{rub(report.summary.confirmedPurchases)}</b></span>
-          <span>Комиссии по договорным снимкам: <b>{rub(report.summary.feePotential)}</b></span>
-          <span>НДС из документов (не вычет): <b>{rub(report.summary.vatRecorded)}</b></span>
+          <span>Первичка, датированная периодом: <b>{rub(report.summary.recordedPurchases)}</b></span>
+          <span>Из неё проверено на сегодня: <b>{rub(report.summary.confirmedPurchases)}</b></span>
+          <span>Согласованные в периоде комиссии: <b>{rub(report.summary.feePotential)}</b></span>
+          <span>Входящий НДС по первичке периода (не вычет): <b>{rub(report.summary.vatRecorded)}</b></span>
+          <span>Возвраты клиентам: <b>{rub(report.summary.refunds)}</b></span>
+          <span>Возвраты поставщиков: <b>{rub(report.summary.supplierRefunds)}</b></span>
         </div>
         <p className="note">{report.disclaimer}</p>
+        <p className="note">SHA-256 текущего снимка доказательств: <code>{report.manifestSha256}</code>.
+          Новые документы или события могут изменить эту контрольную сумму.</p>
+        <label>Основание архивирования снимка<input className="field" value={archiveNote}
+          onChange={e=>setArchiveNote(e.target.value)}
+          placeholder="Например, ежемесячная сверка с бухгалтером" /></label>
+        <button type="button" className="btn ghost" onClick={archive}
+          disabled={busy||archiveNote.trim().length<8}>Зафиксировать неизменяемый снимок</button>
       </div>
       <div className="card stack"><b>По компаниям</b>
         {report.companies.map((c:Row)=><div className="row" key={c.key}>
           <span>{c.name} {c.inn||''} · {c.count} поз. · неподтверждено {c.unverified}</span>
           <b>{rub(c.received)}</b>
+        </div>)}
+      </div>
+      <div className="card stack"><b>По поставщикам</b>
+        {report.suppliers.map((supplier:Row)=><div className="row" key={supplier.name}>
+          <span>{supplier.name} · {supplier.count} поз. · первичка {rub(supplier.purchases)}</span>
+          <b>Оплачено {rub(supplier.paid)}</b>
         </div>)}
       </div>
       <div className="card stack">
@@ -312,6 +363,10 @@ export function AdminAgencyLedger() {
           {a.source==='manual_unverified'&&<button className="btn ghost small" onClick={()=>reviewDoc(a.document_id)} disabled={!reviewNote.trim()||busy}>Проверить документ</button>}
         </div>
       </div>)}
+      <p className="note">Чтобы проверить поступление, оплату, сторно или возврат,
+        загрузите оригинал «Подтверждение оплаты», укажите его номер точно как
+        реквизит соответствующего денежного события, привяжите к этой операции
+        и отметьте документ проверенным. Без этого подтверждать комплект нельзя.</p>
       <b>Денежные события</b>
       {(selected.events||[]).map((e:Row)=><p className="note" key={e.id}>{e.kind} · {rub(Number(e.amount))} · {e.source_ref} · {new Date(e.occurred_at).toLocaleString('ru-RU')}</p>)}
       <label>Примечание к проверке и основание<input className="field" value={reviewNote} onChange={e=>setReviewNote(e.target.value)} /></label>
@@ -323,5 +378,17 @@ export function AdminAgencyLedger() {
       </div>
       <p className="note">Кнопки фиксируют внутреннюю проверку и не формируют налоговую декларацию. Изменение доказательств автоматически отзывает прежнее подтверждение.</p>
     </div>}
+    <div className="card stack">
+      <div className="row"><b>Архив контрольных снимков</b>
+        <button className="btn ghost" onClick={loadSnapshots} disabled={busy}>Показать архив</button></div>
+      <p className="note">Снимки сохраняют суммы и SHA-256 связанных документов без файлов первички.
+        Это внутреннее доказательство состояния реестра, а не подписанная отчётность.</p>
+      {snapshots.map(item=><div className="row" key={item.id}>
+        <div><b>{String(item.from_day).slice(0,10)} — {String(item.to_day).slice(0,10)}</b>
+          <p className="note">{item.note} · {String(item.manifest_sha256).slice(0,16)}…</p></div>
+        <button type="button" className="btn ghost small" disabled={busy}
+          onClick={()=>downloadSnapshot(item.id)}>JSON</button>
+      </div>)}
+    </div>
   </section>;
 }

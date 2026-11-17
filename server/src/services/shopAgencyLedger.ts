@@ -36,6 +36,23 @@ function signedDate(value: string) {
 function sum(items: any[], key: string) {
   return items.reduce((a, x) => a + amount(x[key]), 0);
 }
+const msk = new Intl.DateTimeFormat('en-GB', {
+  timeZone:'Europe/Moscow', year:'numeric', month:'2-digit', day:'2-digit',
+});
+/** Stable ISO civil date; avoids locale-specific en-CA formatting differences. */
+export function moscowDay(value: string | Date): string {
+  const parts = msk.formatToParts(new Date(value));
+  const get = (type: string) => parts.find(p => p.type === type)?.value ?? '';
+  return `${get('year')}-${get('month')}-${get('day')}`;
+}
+function reportDay(value: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value) ||
+      !Number.isFinite(Date.parse(value)) ||
+      new Date(value+'T00:00:00.000Z').toISOString().slice(0,10) !== value)
+    throw bad('bad_period', 'Дата должна существовать в календаре (ГГГГ-ММ-ДД)');
+  return value;
+}
+function within(day: string, from: string, to: string) { return day >= from && day <= to; }
 function moneyTotals(events: any[]) {
   const of = (k: string) => events.filter(e => e.kind === k).reduce((a, e) => a + amount(e.amount), 0);
   return {
@@ -69,7 +86,8 @@ export function reconcileCase(c: any, allocations: any[], events: any[], reviews
   }
   if (!purchase.length) missing.push('Нет первичного документа фактической закупки');
   if (purchase.length && !verifiedPurchase) missing.push('Первичные документы не прошли ручную проверку');
-  if (deliveredQty !== amount(c.quantity)) missing.push('Количество закупки не подтверждено полностью');
+  if (deliveredQty > amount(c.quantity)) problems.push('Закуплено больше количества из поручения');
+  else if (deliveredQty < amount(c.quantity)) missing.push('Количество закупки не подтверждено полностью');
   // Partial/missing primary documents mean 'awaiting_docs', not an invented discrepancy.
   // Compare contracted reimbursement only once the full purchase quantity is evidenced.
   if (isAgent && verifiedPurchase && deliveredQty === amount(c.quantity) && purchaseAmount !== expected)
@@ -92,8 +110,15 @@ export function reconcileCase(c: any, allocations: any[], events: any[], reviews
     missing.push('Нет подтверждения передачи');
   if (isAgent && (!events.some(e => e.kind === 'agent_report') || !evidenceKind('agent_report')))
     missing.push('Нет подтверждённого отчёта агента');
-  if (events.some(e => e.kind !== 'handover' && e.kind !== 'agent_report' && !e.source_ref))
-    missing.push('Есть платёж без источника');
+  // A manually entered bank reference is NOT proof of payment. Every cash
+  // event must match a checked original attached to this exact case.
+  const cashEvents = events.filter(e => e.kind !== 'handover' && e.kind !== 'agent_report');
+  for (const event of cashEvents) {
+    if (!byKind('payment_proof').some(a =>
+      a.source === 'manually_checked' && a.reference === event.source_ref)) {
+      missing.push('Нет проверенного платёжного подтверждения: ' + event.source_ref);
+    }
+  }
   const current = reviews.filter(r => Number(r.evidence_version) === Number(c.evidence_version));
   const approved = current.some(r => r.kind === 'accountant_approved');
   const checked = current.some(r => r.kind === 'verified');
@@ -131,6 +156,12 @@ export class ShopAgencyLedger {
       const line = items[b.lineIndex];
       if (!line || !Number.isInteger(b.lineIndex) || b.lineIndex < 0) throw bad('line_missing', 'Нет такой позиции в заказе');
       if (!b.article.trim()) throw bad('article_required', 'Укажите артикул из подтверждения клиента');
+      if (line.article && String(line.article).trim().toLowerCase() !== b.article.trim().toLowerCase())
+        throw conflict('article_mismatch', 'Артикул отличается от неизменяемого снимка позиции заказа');
+      if (o.company_inn && b.clientInn && o.company_inn !== b.clientInn.trim())
+        throw conflict('inn_mismatch', 'ИНН отличается от профиля компании в заказе');
+      if (o.company_name && b.clientName && o.company_name.trim() !== b.clientName.trim())
+        throw conflict('company_mismatch', 'Название организации отличается от профиля клиента');
       const agreed = amount(line.price) * amount(line.qty);
       if (!Number.isSafeInteger(agreed)) throw bad('money_overflow', 'Слишком большая сумма');
       if (b.operationKind === 'own_inventory_sale' && (b.expectedReimbursement || b.procurementFee || b.platformFee))
@@ -162,7 +193,8 @@ export class ShopAgencyLedger {
 
   async addDocument(actor: AuthUser, b: DocInput) {
     const bytes = Buffer.from(b.base64, 'base64');
-    if (!bytes.length || bytes.length > 450_000 || bytes.toString('base64').replace(/=+$/, '') !== b.base64.replace(/=+$/, ''))
+    if (!bytes.length || bytes.length > 450_000 ||
+        bytes.toString('base64').replace(/=+$/, '') !== b.base64.replace(/=+$/, ''))
       throw bad('document_invalid', 'Файл должен быть корректным Base64 и не более 450 КБ');
     const magic = b.mime === 'application/pdf' ? bytes.subarray(0,5).toString() === '%PDF-'
       : b.mime === 'image/png' ? bytes.subarray(0,8).equals(Buffer.from('89504e470d0a1a0a','hex'))
@@ -171,16 +203,30 @@ export class ShopAgencyLedger {
     if (b.kind !== 'purchase' && (b.amount || b.vatAmount || b.quantity))
       throw bad('document_amount', 'Финансовые суммы указываются только для первички закупки');
     if (b.vatAmount > b.amount) throw bad('vat_amount', 'НДС превышает сумму документа');
+    const issuedAt = signedDate(b.issuedAt);
     const hash = createHash('sha256').update(bytes).digest('hex');
     return this.db.tx(async q => {
-      const [r] = await q.query<any>(`insert into shop_agency_documents
+      const [newRow] = await q.query<any>(`insert into shop_agency_documents
         (kind,supplier_name,reference,issued_at,amount,vat_amount,quantity,mime,file_data,sha256,created_by)
-        values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) on conflict (sha256) do nothing returning id`,
-        [b.kind,b.supplierName.trim(),b.reference.trim(),signedDate(b.issuedAt),b.amount,b.vatAmount,
+        values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) on conflict (sha256) do nothing returning *`,
+        [b.kind,b.supplierName.trim(),b.reference.trim(),issuedAt,b.amount,b.vatAmount,
           b.quantity,b.mime,'\\x'+bytes.toString('hex'),hash,actor.id]);
-      if (r) await this.audit(actor,'shop.agency.document_upload',r.id,{sha256:hash,kind:b.kind},q);
-      const saved = r ?? await q.one<{id:string}>('select id from shop_agency_documents where sha256=$1',[hash]);
-      return { id:saved!.id, sha256:hash, duplicate:!r, source:'manual_unverified' };
+      const saved = newRow ?? await q.one<any>(
+        `select id,kind,supplier_name,reference,issued_at,amount,vat_amount,quantity,mime,source
+           from shop_agency_documents where sha256=$1`,[hash]);
+      if (!saved) throw conflict('document_race', 'Документ был изменён конкурентной загрузкой');
+      // Byte-level idempotency must not silently accept conflicting invoice metadata.
+      if (!newRow && (saved.kind !== b.kind ||
+          saved.supplier_name !== b.supplierName.trim() ||
+          saved.reference !== b.reference.trim() ||
+          new Date(saved.issued_at).getTime() !== Date.parse(issuedAt) ||
+          Number(saved.amount) !== b.amount ||
+          Number(saved.vat_amount) !== b.vatAmount ||
+          Number(saved.quantity) !== b.quantity || saved.mime !== b.mime))
+        throw conflict('document_metadata_conflict',
+          'Файл уже загружен с другими реквизитами; нельзя подменять первичку');
+      if (newRow) await this.audit(actor,'shop.agency.document_upload',newRow.id,{sha256:hash,kind:b.kind},q);
+      return {id:saved.id,sha256:hash,duplicate:!newRow,source:saved.source};
     });
   }
 
@@ -312,73 +358,178 @@ export class ShopAgencyLedger {
     return {mime:d.mime, sha256:d.sha256,bytes:Buffer.isBuffer(v)?v:Buffer.from(String(v).replace(/^\\x/,''),'hex')};
   }
 
+  /** Report facts by their OWN Moscow civil date, not by an unrelated order date.
+   * Purchase docs are issued facts; fees and prices are creation-time snapshots;
+   * bank events use occurred_at. Current verification state is never misrepresented
+   * as a historical as-of-period approval. */
   async report(actor:AuthUser,from:string,to:string) {
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(from)||!/^\d{4}-\d{2}-\d{2}$/.test(to) ||
-      !Number.isFinite(Date.parse(from)) || !Number.isFinite(Date.parse(to)) || from>to ||
-      (Date.parse(to)-Date.parse(from))/86400000>366)
-      throw bad('bad_period','Укажите корректный период до 366 дней');
+    reportDay(from); reportDay(to);
+    if(from>to || (Date.parse(to)-Date.parse(from))/86400000>366)
+      throw bad('bad_period','Укажите период не больше 366 дней');
     const cases=await this.db.query<any>(`select c.* from shop_agency_cases c
       where (c.created_at at time zone 'Europe/Moscow')::date between $1::date and $2::date
-         or exists(select 1 from shop_agency_events e where e.case_id=c.id and
-           (e.occurred_at at time zone 'Europe/Moscow')::date between $1::date and $2::date)
+        or exists(select 1 from shop_agency_events e where e.case_id=c.id and
+          (e.occurred_at at time zone 'Europe/Moscow')::date between $1::date and $2::date)
+        or exists(select 1 from shop_agency_allocations a
+          join shop_agency_documents d on d.id=a.document_id
+          where a.case_id=c.id and d.kind='purchase' and
+            (d.issued_at at time zone 'Europe/Moscow')::date between $1::date and $2::date)
       order by c.created_at,c.id limit 2001`,[from,to]);
-    if(cases.length>2000) throw conflict('report_too_large','Период содержит более 2000 операций. Уточните диапазон.');
+    if(cases.length>2000) throw conflict('report_too_large',
+      'Период содержит более 2000 операций. Уточните диапазон.');
     const evidence=await this.loadEvidence(cases.map(c=>c.id));
     const records=cases.map(c=>{
       const v=this.view(c,evidence);
-      // Period cash totals are actual event dates (Moscow civil day), not order creation dates.
-      const inPeriod=v.events.filter((e:any)=>{
-        const date=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Moscow',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(e.occurred_at));
-        return date>=from && date<=to;
-      });
-      return {...v,periodCash:moneyTotals(inPeriod)};
+      const included=(date:string|Date)=>within(moscowDay(date),from,to);
+      const periodEvents=v.events.filter((e:any)=>included(e.occurred_at));
+      const periodPurchaseDocs=v.allocations.filter((a:any)=>
+        a.kind==='purchase' && included(a.issued_at));
+      const createdInPeriod=included(c.created_at);
+      const isAgent=c.operation_kind!=='own_inventory_sale';
+      const period={
+        createdInPeriod,
+        agreedCustomerTotal:createdInPeriod?amount(c.agreed_customer_total):0,
+        feePotential:createdInPeriod&&isAgent?
+          amount(c.procurement_fee)+amount(c.platform_fee):0,
+        purchaseRecorded:sum(periodPurchaseDocs,'amount'),
+        purchaseConfirmed:sum(periodPurchaseDocs.filter((a:any)=>a.source==='manually_checked'),'amount'),
+        inputVatRecorded:sum(periodPurchaseDocs,'vat_amount'),
+        purchaseQuantity:sum(periodPurchaseDocs,'quantity'),
+      };
+      return {...v,period,periodCash:moneyTotals(periodEvents)};
     });
     const confirmed=records.filter(r=>r.status==='verified'||r.status==='accountant_approved');
-    const total=(rows:any[],key:string)=>rows.reduce((a,r)=>a+amount(r.financial[key]),0);
-    const cash=(rows:any[],key:string)=>rows.reduce((a,r)=>a+amount(r.periodCash[key]),0);
+    const add=(rows:any[],section:'period'|'periodCash',key:string)=>
+      rows.reduce((a,r)=>a+amount(r[section][key]),0);
     const summary={
       cases:records.length,verified:confirmed.length,unverified:records.length-confirmed.length,
-      agreedCustomerTotal:total(records,'agreedCustomerTotal'),
-      confirmedPurchases:total(confirmed,'purchaseConfirmed'),
-      recordedPurchases:total(records,'purchaseRecorded'),
-      feePotential:total(records,'feePotential'),
-      confirmedFeePotential:total(confirmed,'feePotential'),
-      customerReceived:cash(records,'customerReceived'),
-      supplierPaid:cash(records,'supplierPaid'),
-      refunds:cash(records,'customerRefunds'),
-      vatRecorded:total(records,'inputVatRecorded'),
+      agreedCustomerTotal:add(records,'period','agreedCustomerTotal'),
+      confirmedPurchases:add(records,'period','purchaseConfirmed'),
+      recordedPurchases:add(records,'period','purchaseRecorded'),
+      feePotential:add(records,'period','feePotential'),
+      confirmedFeePotential:add(confirmed,'period','feePotential'),
+      customerReceived:add(records,'periodCash','customerReceived'),
+      supplierPaid:add(records,'periodCash','supplierPaid'),
+      refunds:add(records,'periodCash','customerRefunds'),
+      supplierRefunds:add(records,'periodCash','supplierRefunds'),
+      vatRecorded:add(records,'period','inputVatRecorded'),
       taxableRevenue:null,
     };
     const companies=new Map<string,any>();
+    const suppliers=new Map<string,any>();
     for(const r of records){
       const key=r.client_inn||r.client_id;
-      const group=companies.get(key)||{key,name:r.client_name,inn:r.client_inn,count:0,received:0,purchases:0,fees:0,unverified:0};
-      group.count++;group.received+=r.periodCash.customerReceived;
-      group.purchases+=r.financial.purchaseRecorded;group.fees+=r.financial.feePotential;
-      if(r.status!=='verified'&&r.status!=='accountant_approved') group.unverified++;
-      companies.set(key,group);
+      const g=companies.get(key)||{key,name:r.client_name,inn:r.client_inn,count:0,
+        received:0,purchases:0,confirmedPurchases:0,fees:0,refunds:0,unverified:0};
+      g.count++;g.received+=r.periodCash.customerReceived;
+      g.purchases+=r.period.purchaseRecorded;
+      g.confirmedPurchases+=r.period.purchaseConfirmed;
+      g.fees+=r.period.feePotential;
+      g.refunds+=r.periodCash.customerRefunds;
+      if(r.status!=='verified'&&r.status!=='accountant_approved')g.unverified++;
+      companies.set(key,g);
+      const supplierKey=r.supplier_name;
+      const sp=suppliers.get(supplierKey)||{name:supplierKey,count:0,purchases:0,
+        confirmedPurchases:0,vatRecorded:0,paid:0};
+      sp.count++;sp.purchases+=r.period.purchaseRecorded;
+      sp.confirmedPurchases+=r.period.purchaseConfirmed;
+      sp.vatRecorded+=r.period.inputVatRecorded;sp.paid+=r.periodCash.supplierPaid;
+      suppliers.set(supplierKey,sp);
     }
-    await this.audit(actor,'shop.agency.report_read',from+'_'+to,{cases:records.length});
-    return {from,to,timezone:'Europe/Moscow',summary,companies:[...companies.values()],records,
-      disclaimer:'Черновой доказательный реестр, НЕ декларация, НЕ КУДиР и НЕ установленная налоговая база. До подписания договорной схемы бухгалтером сведения не использовать для налоговой отчётности.'};
+    const manifest={
+      format:'traksos-agency-evidence-manifest-v2',from,to,timezone:'Europe/Moscow',
+      currentVerificationOnly:true,
+      summary,
+      cases:records.map(r=>({
+        id:r.id,shopOrderId:r.shop_order_id,lineIndex:r.line_index,
+        evidenceVersion:r.evidence_version,status:r.status,
+        period:r.period,periodCash:r.periodCash,
+        problems:r.problems,missing:r.missing,
+        documentHashes:r.allocations.map((a:any)=>({
+          id:a.document_id,sha256:a.sha256,sourceLineKey:a.source_line_key,
+          source:a.source,amount:a.amount,vat:a.vat_amount,quantity:a.quantity,
+        })).sort((a:any,b:any)=>a.id.localeCompare(b.id)||a.sourceLineKey.localeCompare(b.sourceLineKey)),
+        eventIds:r.events.map((e:any)=>e.id).sort(),
+        reviewIds:r.reviews.map((e:any)=>e.id).sort(),
+      })),
+    };
+    const manifestSha256=createHash('sha256').update(JSON.stringify(manifest)).digest('hex');
+    await this.audit(actor,'shop.agency.report_read',from+'_'+to,{cases:records.length,manifestSha256});
+    return {from,to,timezone:'Europe/Moscow',summary,
+      companies:[...companies.values()].sort((a,b)=>a.key.localeCompare(b.key)),
+      suppliers:[...suppliers.values()].sort((a,b)=>a.name.localeCompare(b.name)),
+      records,manifest,manifestSha256,verificationAsOf:'current',
+      disclaimer:'Внутренний доказательный реестр, НЕ декларация, НЕ КУДиР и НЕ налоговая база. Подтверждение показано на дату просмотра, суммы по датам событий МСК. Для бухгалтерской отчётности требуется согласованная методика.'};
   }
+
   async csv(actor:AuthUser,from:string,to:string) {
     const result=await this.report(actor,from,to);
     const safe=(v:unknown)=>{
-      let s=String(v??'').replace(/"/g,'""');
-      // Prevent spreadsheet formula injection from user-entered names and references.
-      if(/^[\s]*[=+@-]/.test(s))s="'"+s;
-      return '"'+s+'"';
+      // Numeric negative values must remain numeric; strings beginning with
+      // spreadsheet formula markers must not become executable formulas.
+      if(typeof v==='number'&&Number.isFinite(v))return '"'+String(v)+'"';
+      let x=String(v??'').replace(/"/g,'""');
+      if(/^[\s]*[=+@-]/.test(x))x="'"+x;
+      return '"'+x+'"';
     };
-    const heads=['case_id','shop_order_id','client','inn','operation_kind','status','agreed_kopecks',
-      'purchase_recorded_kopecks','purchase_verified_kopecks','fees_potential_kopecks',
-      'customer_received_in_period_kopecks','supplier_paid_in_period_kopecks','vat_recorded_kopecks',
-      'issues','missing','taxable_revenue'];
-    const rows=result.records.map(r=>[r.id,r.shop_order_id,r.client_name,r.client_inn,r.operation_kind,
-      r.status,r.financial.agreedCustomerTotal,r.financial.purchaseRecorded,r.financial.purchaseConfirmed,
-      r.financial.feePotential,r.periodCash.customerReceived,r.periodCash.supplierPaid,
-      r.financial.inputVatRecorded,r.problems.join('; '),r.missing.join('; '),'NOT_DETERMINED'].map(safe).join(';'));
-    await this.audit(actor,'shop.agency.csv_export',from+'_'+to,{rows:rows.length});
+    const heads=['case_id','shop_order_id','client','inn','supplier','operation_kind',
+      'verification_as_of_now','agreed_created_in_period_kopecks',
+      'purchase_issued_in_period_kopecks','purchase_checked_now_in_period_kopecks',
+      'fees_agreed_in_period_kopecks','customer_cash_in_period_kopecks',
+      'supplier_cash_in_period_kopecks','customer_refunds_in_period_kopecks',
+      'input_vat_in_supplier_docs_period_kopecks','problems','missing','taxable_revenue'];
+    const rows=result.records.map(r=>[r.id,r.shop_order_id,r.client_name,r.client_inn,r.supplier_name,
+      r.operation_kind,r.status,r.period.agreedCustomerTotal,r.period.purchaseRecorded,
+      r.period.purchaseConfirmed,r.period.feePotential,r.periodCash.customerReceived,
+      r.periodCash.supplierPaid,r.periodCash.customerRefunds,r.period.inputVatRecorded,
+      r.problems.join('; '),r.missing.join('; '),'NOT_DETERMINED'].map(safe).join(';'));
+    await this.audit(actor,'shop.agency.csv_export',from+'_'+to,
+      {rows:rows.length,manifestSha256:result.manifestSha256});
     return '\ufeff'+[heads.map(safe).join(';'),...rows].join('\r\n')+'\r\n';
+  }
+
+  /** Immutable internal manifest, NOT a signed tax report. Reusing an import
+   * key after any data change is a conflict, not a silent history overwrite. */
+  async archiveReport(actor:AuthUser,b:{from:string;to:string;requestKey:string;note:string}) {
+    const report=await this.report(actor,b.from,b.to);
+    const payload={manifest:report.manifest,manifestSha256:report.manifestSha256,
+      summary:report.summary,companies:report.companies,suppliers:report.suppliers,
+      disclaimer:report.disclaimer};
+    return this.db.tx(async q=>{
+      const [row]=await q.query<any>(`insert into shop_agency_report_snapshots
+        (request_key,from_day,to_day,manifest_sha256,payload,note,created_by)
+        values($1,$2::date,$3::date,$4,$5::jsonb,$6,$7)
+        on conflict(request_key) do nothing
+        returning id,request_key,from_day,to_day,manifest_sha256,note,created_at`,
+        [b.requestKey,b.from,b.to,report.manifestSha256,JSON.stringify(payload),b.note,actor.id]);
+      const saved=row??await q.one<any>(`select id,request_key,from_day,to_day,
+        manifest_sha256,note,created_at from shop_agency_report_snapshots
+        where request_key=$1`,[b.requestKey]);
+      if(!saved)throw conflict('snapshot_race','Снимок уже создаётся');
+      if(!row && (saved.manifest_sha256!==report.manifestSha256 ||
+         String(saved.from_day).slice(0,10)!==b.from && moscowDay(saved.from_day)!==b.from ||
+         String(saved.to_day).slice(0,10)!==b.to && moscowDay(saved.to_day)!==b.to ||
+         saved.note!==b.note))
+        throw conflict('snapshot_key_conflict','По этому ключу уже сохранён другой снимок');
+      if(row)await this.audit(actor,'shop.agency.report_archive',saved.id,
+        {from:b.from,to:b.to,manifestSha256:report.manifestSha256},q);
+      return {id:saved.id,duplicate:!row,manifestSha256:saved.manifest_sha256,
+        from:b.from,to:b.to,createdAt:saved.created_at};
+    });
+  }
+
+  async listSnapshots(actor:AuthUser) {
+    const rows=await this.db.query<any>(`select id,from_day,to_day,manifest_sha256,note,
+      created_at from shop_agency_report_snapshots order by created_at desc,id desc limit 100`);
+    await this.audit(actor,'shop.agency.snapshot_index','index',{count:rows.length});
+    return rows;
+  }
+
+  async snapshot(actor:AuthUser,id:string) {
+    const row=await this.db.one<any>(`select id,from_day,to_day,manifest_sha256,
+      payload,note,created_at from shop_agency_report_snapshots where id=$1`,[id]);
+    if(!row)throw notFound('Архивный снимок не найден');
+    await this.audit(actor,'shop.agency.snapshot_read',id);
+    return row;
   }
 }

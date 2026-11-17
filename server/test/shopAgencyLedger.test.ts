@@ -53,6 +53,9 @@ test('первичка: уникальный файл, распределени�
   assert.equal(initial.source,'manual_unverified');
   const dupe=ok(await t.api('POST',root+'/documents',document('purchase','UPD-TEST',1_000_000,1,200_000),admin.token));
   assert.equal(dupe.duplicate,true);assert.equal(dupe.id,initial.id);
+  assert.equal((await t.api('POST',root+'/documents',
+    {...document('purchase','UPD-TEST',1_000_000,1,200_000),amount:999_000},admin.token)).status,409,
+    'тот же SHA-256 с другой суммой недопустим');
   assert.equal((await t.api('POST',root+'/documents',document('purchase','BAD-VAT',1_000,1,2_000),admin.token)).status,400);
   const a={documentId:initial.id,lineKey:'UPD-TEST:1',amount:1_000_000,quantity:1,vatAmount:200_000};
   const allocated=ok(await t.api('POST',root+'/cases/'+c+'/allocations',a,admin.token));
@@ -64,6 +67,15 @@ test('первичка: уникальный файл, распределени�
   assert.equal((await t.api('GET',root+'/documents/'+initial.id+'/file',undefined,client.token)).status,403);
   assert.equal((await t.api('POST',root+'/documents/'+initial.id+'/verify',{note:'test verified'},client.token)).status,403);
   ok(await t.api('POST',root+'/documents/'+initial.id+'/verify',{note:'Проверено по оригиналу УПД TEST'},admin.token));
+  assert.equal(ok(await t.api('POST',root+'/documents',
+    document('purchase','UPD-TEST',1_000_000,1,200_000),admin.token)).source,
+    'manually_checked','повтор файла не понижает статус проверки');
+  await assert.rejects(
+    t.db.query('update shop_agency_documents set amount=0 where id=$1',[initial.id]),
+    /immutable/i,'закупочную первичку нельзя редактировать SQL-запросом');
+  await assert.rejects(
+    t.db.query('delete from shop_agency_allocations where id=$1',[allocated.id]),
+    /immutable/i,'распределение документа не удаляется');
 });
 
 test('полная доказательная цепочка, идемпотентность платежей и подтверждение версии',async()=>{
@@ -87,9 +99,30 @@ test('полная доказательная цепочка, идемпотен
   ok(await t.api('POST',root+'/cases/'+c+'/events',evt('supplier_payment',1_000_000),admin.token));
   ok(await t.api('POST',root+'/cases/'+c+'/events',evt('handover',0),admin.token));
   ok(await t.api('POST',root+'/cases/'+c+'/events',evt('agent_report',0),admin.token));
+  const bankMissing=ok(await t.api('GET',root+'/cases/'+c,undefined,admin.token));
+  assert.ok(bankMissing.missing.some((p:string)=>p.includes('платёжного')),
+    'номер платёжного поручения не является доказательством без оригинала');
+  assert.equal((await t.api('POST',root+'/cases/'+c+'/review',
+    {kind:'verified',note:'Проверены только реквизиты'},admin.token)).status,409);
+  // A checked payment document for EACH cash event, attached to the same case,
+  // is required before accepting an internal verification.
+  for(const kind of ['customer_receipt','supplier_payment']){
+    const ref='TEST-'+kind;
+    const d=ok(await t.api('POST',root+'/documents',document('payment_proof',ref),admin.token));
+    ok(await t.api('POST',root+'/cases/'+c+'/allocations',
+      {documentId:d.id,lineKey:ref+':1',quantity:0,amount:0,vatAmount:0},admin.token));
+    ok(await t.api('POST',root+'/documents/'+d.id+'/verify',
+      {note:'Сверено с оригиналом банковской операции '+ref},admin.token));
+  }
   const before=ok(await t.api('GET',root+'/cases/'+c,undefined,admin.token));
   assert.deepEqual(before.missing,[]);assert.deepEqual(before.problems,[]);
   assert.equal(before.status,'requires_reconciliation','проверка не выдумывается автоматически');
+  await assert.rejects(
+    t.db.query('update shop_agency_events set amount=1 where id=$1',[cash.id]),
+    /immutable/i,'денежное событие нельзя изменить задним числом');
+  await assert.rejects(
+    t.db.query('delete from shop_agency_events where id=$1',[cash.id]),
+    /immutable/i,'денежное событие нельзя удалить');
   assert.equal((await t.api('POST',root+'/cases/'+c+'/review',
     {kind:'accountant_approved',note:'Проверка бухгалтером TEST'},admin.token)).status,409);
   ok(await t.api('POST',root+'/cases/'+c+'/review',{kind:'verified',note:'Документы проверены тестом'},admin.token));
@@ -99,8 +132,22 @@ test('полная доказательная цепочка, идемпотен
   assert.equal(r.financial.inputVatRecorded,200_000);
   const report=ok(await t.api('GET',root+'/report?from=2026-12-01&to=2026-12-01',undefined,admin.token));
   assert.equal(report.summary.customerReceived,1_365_000,'21:30Z попадает в 00:30 МСК следующего дня');
-  assert.equal(report.summary.confirmedFeePotential,365_000);
+  assert.equal(report.summary.confirmedFeePotential,0,
+    'сбор, зафиксированный при создании заказа, не повторяется в месяце последующего платежа');
+  assert.equal(report.summary.recordedPurchases,0,
+    'закупка от 15 ноября не дублируется в декабрьском реестре');
   assert.equal(report.summary.taxableRevenue,null);
+  assert.match(report.manifestSha256,/^[a-f0-9]{64}$/);
+  const reportPurchase=ok(await t.api('GET',
+    root+'/report?from=2026-11-15&to=2026-11-15',undefined,admin.token));
+  assert.equal(reportPurchase.summary.recordedPurchases,1_000_000,
+    'первичка включена по собственной дате');
+  assert.equal(reportPurchase.summary.confirmedPurchases,1_000_000);
+  assert.equal(reportPurchase.summary.customerReceived,0);
+  assert.ok(reportPurchase.suppliers.some((p:any)=>p.name==='Автоконтинент'&&p.purchases===1_000_000));
+  assert.equal((await t.api('GET',
+    root+'/report?from=2026-02-31&to=2026-03-01',undefined,admin.token)).status,400,
+    'невозможные календарные дни запрещены');
   assert.equal(report.companies.find((x:any)=>x.inn==='7800000000').received,1_365_000);
   const csv=await fetch(t.base+root+'/report.csv?from=2026-12-01&to=2026-12-01',{
     headers:{authorization:'Bearer '+admin.token}
@@ -108,6 +155,22 @@ test('полная доказательная цепочка, идемпотен
   assert.equal(csv.status,200);
   const csvText=await csv.text();assert.match(csvText,/NOT_DETERMINED/);
   assert.doesNotMatch(csvText,/base64/);
+  assert.match(csvText,/purchase_issued_in_period_kopecks/);
+  const snapshotInput={from:'2026-12-01',to:'2026-12-01',
+    requestKey:'agency-test-dec-2026-v1',note:'Сверка главной книги за тестовый период'};
+  const snapshot=ok(await t.api('POST',root+'/snapshots',snapshotInput,admin.token));
+  assert.equal(snapshot.manifestSha256,report.manifestSha256);
+  assert.equal(ok(await t.api('POST',root+'/snapshots',snapshotInput,admin.token)).duplicate,true);
+  assert.equal((await t.api('POST',root+'/snapshots',snapshotInput,client.token)).status,403);
+  const archives=ok(await t.api('GET',root+'/snapshots',undefined,admin.token));
+  assert.ok(archives.some((x:any)=>x.id===snapshot.id));
+  const loaded=ok(await t.api('GET',root+'/snapshots/'+snapshot.id,undefined,admin.token));
+  assert.equal(loaded.manifest_sha256,report.manifestSha256);
+  assert.equal(loaded.payload.manifestSha256,report.manifestSha256);
+  assert.equal((await t.api('GET',root+'/snapshots/'+snapshot.id,undefined,client.token)).status,403);
+  await assert.rejects(
+    t.db.query('update shop_agency_report_snapshots set note=$2 where id=$1',
+      [snapshot.id,'Подмена сохраненного снимка']),/immutable/i);
   ok(await t.api('POST',root+'/cases/'+c+'/review',
     {kind:'accountant_approved',note:'Внешняя бухгалтерская проверка TEST'},admin.token));
   const approved=ok(await t.api('GET',root+'/cases/'+c,undefined,admin.token));
@@ -117,6 +180,11 @@ test('полная доказательная цепочка, идемпотен
   const afterRefund=ok(await t.api('GET',root+'/cases/'+c,undefined,admin.token));
   assert.equal(afterRefund.financial.customerReceived,1_265_000);
   assert.equal(afterRefund.status,'awaiting_docs','любая новая первичка снимает прежнее утверждение');
+  assert.equal((await t.api('POST',root+'/snapshots',snapshotInput,admin.token)).status,409,
+    'старый ключ нельзя переиспользовать после изменения финансовых событий');
+  const archived=ok(await t.api('GET',root+'/snapshots/'+snapshot.id,undefined,admin.token));
+  assert.equal(archived.manifest_sha256,report.manifestSha256,
+    'архив сохраняет исходный контрольный SHA-256, несмотря на последующий возврат');
 });
 
 test('собственная перепродажа отдельно от агентских комиссий; роль не видит внутреннюю закупку',async()=>{
