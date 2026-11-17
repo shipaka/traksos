@@ -3,6 +3,7 @@ import type { Db } from '../db/index.ts';
 import type { Router, AuthUser, AuthedCtx } from '../http/router.ts';
 import { parse, bad, forbidden, notFound, conflict, HttpError } from '../http/router.ts';
 import type { Notifier } from './notify.ts';
+import type {CommunityNotifications} from './communityNotifications.ts';
 
 // TrakSOS driver messaging: only nicknames are ever returned; both sides must consent.
 const uuid=z.string().uuid();
@@ -39,7 +40,7 @@ function cursor(c:AuthedCtx){
   const limit=Number.isFinite(v)?Math.max(1,Math.min(100,Math.trunc(v))):50;
   return {after,limit};
 }
-export function registerCommunityDirectRoutes(r:Router,db:Db,notifier:Notifier){
+export function registerCommunityDirectRoutes(r:Router,db:Db,notifier:Notifier,alerts:CommunityNotifications){
   r.post('/api/community/direct/request',true,async(c:AuthedCtx)=>{
     requireDriver(c.user);
     const b=parse(z.object({nickname}),c.body);
@@ -60,7 +61,7 @@ export function registerCommunityDirectRoutes(r:Router,db:Db,notifier:Notifier){
     if(!t)throw new Error('Missing direct thread');
     // Retries return the existing thread, but must not re-notify the recipient indefinitely.
     if(invitation.created && t.initiated_by===c.user.id && t.status==='pending')
-      notifier.live([dest.id],{type:'community_direct_invite',threadId:t.id});
+      await alerts.dmInvite(dest.id,t.id);
     return {id:t.id,status:t.status,direction:t.initiated_by===c.user.id?'outgoing':'incoming'};
   });
   r.get('/api/community/direct',true,async(c:AuthedCtx)=>{
@@ -179,7 +180,7 @@ export function registerCommunityDirectRoutes(r:Router,db:Db,notifier:Notifier){
     if(!saved)throw new Error('Failed to store private message');
     // A repeated network request must not notify the other driver again.
     if(messageInsert.created && saved.moderation_state==='published' && !await blocked(db,t.user_a,t.user_b))
-      notifier.live([other(t,c.user.id)],{type:'community_direct_message',threadId:t.id,id:saved.id});
+      await alerts.dmMessage(other(t,c.user.id),t.id,saved.id);
     return {id:saved.id,status:saved.moderation_state,createdAt:saved.created_at};
   });
   r.post('/api/community/direct/messages/:id/report',true,async(c:AuthedCtx)=>{
