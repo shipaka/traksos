@@ -14,6 +14,7 @@ import { OrderTimeline } from './OrderTimeline.tsx';
 import { EcuReferralPanel } from './ecuReferralPanel.tsx';
 import { LocationSharing } from './performer.tsx';
 import {EcuRelatedOrders} from './ecuRelatedOrders.tsx';
+import {ServiceCaseLedger} from './serviceCaseLedger.tsx';
 import { RefundForm, payStatus } from './adminUser.tsx';
 
 export function Order({ id }: { id: string }) {
@@ -50,6 +51,7 @@ export function Order({ id }: { id: string }) {
       </div>
 
       <EcuRelatedOrders order={d}/>
+      {(d.you==='client'||d.you==='admin')&&<ServiceCaseLedger orderId={id}/>}
       {isPerformer && ['accepted','en_route','arrived','working'].includes(d.status)
         && <div className="card" role="region" aria-label="Технические материалы по заявке">
           <b>ТехБаза по этой машине</b>
@@ -702,7 +704,7 @@ function ConfirmAmount({ d, onDone }: { d: any; onDone: () => void }) {
         </div>
       )}
       {mode === null && <>
-        <button className="btn good" disabled={busy} onClick={() => send('confirm', { total: d.money.total, points: spend }, 'Сумма подтверждена')}>Подтверждаю {rub(d.money.total - spend)}{spend ? ' с баллами' : ''}</button>
+        <button className="btn good" disabled={busy} onClick={() => send('confirm', { total: d.money.total, points: spend, proposalVersion:d.amountProposalVersion??undefined }, 'Сумма подтверждена')}>Подтверждаю {rub(d.money.total - spend)}{spend ? ' с баллами' : ''}</button>
         <button className="btn ghost" onClick={() => setMode('menu')}>Не согласен</button>
       </>}
       {mode === 'menu' && <div className="stack">
@@ -723,7 +725,7 @@ function ConfirmAmount({ d, onDone }: { d: any; onDone: () => void }) {
         <span className="note">По <a href="#/offer/client" target="_blank" rel="noreferrer">оферте</a> выезд и время работы по согласованной цене оплачиваются, если работа выполнена. Отказ платить за выполненную работу — нарушение договора: долг могут взыскать по закону, а аккаунт — заблокировать до оплаты.</span>
         <span className="note">Если работа не сделана — выберите «Работа не выполнена» и укажите причину.</span>
         <button className="btn" onClick={() => setMode('not_done')}>Работа не выполнена — указать причину</button>
-        <button className="btn good" disabled={busy} onClick={() => send('confirm', { total: d.money.total, points: spend }, 'Сумма подтверждена')}>Подтвердить {rub(d.money.total - spend)}</button>
+        <button className="btn good" disabled={busy} onClick={() => send('confirm', { total: d.money.total, points: spend, proposalVersion:d.amountProposalVersion??undefined }, 'Сумма подтверждена')}>Подтвердить {rub(d.money.total - spend)}</button>
         <button className="btn bad small" disabled={busy} onClick={() => send('nonpayment', { kind: 'refuse' }, 'Поддержка подключена')}>Всё равно отказываюсь — позвать поддержку</button>
       </div>}
     </div>
@@ -769,7 +771,7 @@ function ConsultConfirm({ d, onDone }: { d: any; onDone: () => void }) {
       <b>Вопрос решён?</b>
       <span className="note">Подтвердите консультацию — {rub(d.money.total)}. Если без выезда не обойтись, вызовите мастера: подсказка перейдёт к нему, а вам скидка {rub(d.consultBack?.backDiscount ?? 0)}.</span>
       <button className="btn good" disabled={busy} onClick={() =>
-        run(() => post(`/api/orders/${d.id}/confirm`, { total: d.money.total }), 'Спасибо! Консультация закрыта').then((r) => r && onDone())}>Вопрос решён · {rub(d.money.total)}</button>
+        run(() => post(`/api/orders/${d.id}/confirm`, { total: d.money.total, proposalVersion:d.amountProposalVersion??undefined }), 'Спасибо! Консультация закрыта').then((r) => r && onDone())}>Вопрос решён · {rub(d.money.total)}</button>
       <button className="btn ghost" onClick={() => go(`new/electric?from=${d.id}`)}>Нужен выезд</button>
       <a className="btn ghost" href={`#/support/new?order=${d.id}`}>Помощи не было — в поддержку</a>
       <span className="note">Не нажмёте — консультация закроется сама через сутки.</span>

@@ -623,13 +623,52 @@ export class OrdersService {
     return this.view(user, orderId);
   }
 
-  async confirmAmount(user: AuthUser, orderId: string, expectedTotal?: number, points = 0) {
+  async confirmAmount(user: AuthUser, orderId: string, expectedTotal?: number, points = 0,
+    proposalVersion?: string) {
     const o = await this.mustBeClient(user, orderId);
+    const identicalConfirmation=async()=>{
+      const ev=await this.db.one<{data:any}>(
+        "select data from order_events where order_id=$1 and type='amount_confirmed' "+
+        "order by id desc limit 1",[orderId]);
+      if(!ev)throw conflict('confirmation_unverified',
+        'Подтверждённая заявка требует сверки финансовых событий');
+      if((expectedTotal!=null&&Number(ev.data?.total)!==expectedTotal)||
+        Number(ev.data?.requestedPoints??0)!==points||
+        (proposalVersion!=null&&ev.data?.proposalVersion!==proposalVersion))
+        throw conflict('confirmation_changed',
+          'Заявка была подтверждена на других условиях. Обновите карточку');
+      return this.view(user,orderId);
+    };
+    if(o.status==='completed')return identicalConfirmation();
     const to = transition(o.status, 'confirm_amount', 'client');
     const m = this.money(o);
-    let used = 0;
+    let used = 0,replayed=false;
     if (expectedTotal != null && expectedTotal !== m.total) throw conflict('amount_changed', 'Сумма изменилась — проверьте заново');
     await this.db.tx(async (q) => {
+      // A single order row lock serializes the buyer's decision against
+      // re-quoting, disputes and a second HTTP confirmation after packet loss.
+      const locked=await q.one<{status:string;work_amount:number|null;
+        amount_proposed_at:Date|null}>(
+        'select status,work_amount,amount_proposed_at from orders where id=$1 for update',
+        [orderId]);
+      if(!locked)throw notFound('Заявка не найдена');
+      if(locked.status==='completed'){replayed=true;return;}
+      const lockedVersion=locked.amount_proposed_at
+        ?new Date(locked.amount_proposed_at).toISOString():null;
+      const originalVersion=o.amount_proposed_at
+        ?new Date(o.amount_proposed_at).toISOString():null;
+      if(locked.status!=='awaiting_confirmation'||
+        locked.work_amount!==o.work_amount||
+        lockedVersion!==originalVersion||
+        (proposalVersion!=null&&lockedVersion!==proposalVersion))
+        throw conflict('quote_changed',
+          'Мастер изменил смету или состояние. Обновите карточку до подтверждения');
+      // Two DIFFERENT orders owned by the same fleet account must not
+      // both spend the same available bonus/points balance concurrently.
+      // Transaction-scoped lock; no heavy global lock or external state.
+      await q.query(
+        'select pg_advisory_xact_lock(hashtext($1),hashtext($2))',
+        ['tracksos:service-confirmation-credit',o.client_id]);
       // Бонусы клиента списываются сами в момент подтверждения
       const bonus = await q.one<{ b: number }>('select coalesce(sum(amount),0)::int b from bonus_entries where user_id=$1', [o.client_id]);
       const use = Math.min(bonus?.b ?? 0, m.total);
@@ -646,10 +685,22 @@ export class OrdersService {
           where id=$1 and status='awaiting_confirmation' and work_amount is not distinct from $4 and performer_id=$5`,
         [orderId, to, this.now(), o.work_amount, o.performer_id]);
       await q.query(`update performer_profiles set line_status='online' where user_id=$1 and line_status='on_job'`, [o.performer_id]);
-      await this.event(q, orderId, user.id, 'amount_confirmed', { total: m.total, method: o.payment_method });
+      await this.event(q, orderId, user.id, 'amount_confirmed', {
+        total:m.total,method:o.payment_method,requestedPoints:points,
+        proposalVersion:lockedVersion
+      });
+      // Consent, accounting and the performer's in-app notification must
+      // commit together. A push outage cannot erase this confirmation.
+      if(o.performer_id)
+        await q.query(
+          "insert into notifications(user_id,kind,title,body,data) "+
+          "values($1,'order',$2,$3,$4)",
+          [o.performer_id,'Сумма подтверждена',
+            'Заявка №'+o.number+': '+rub(m.total),{orderId}]);
       await this.payments.onConfirmed({ ...o, status: to, discount_amount: Number(o.discount_amount ?? 0) + used }, q);
       await this.referral?.afterOrder(q, { ...o, status: to }, m.amount);
     });
+    if(replayed)return identicalConfirmation();
     // The order and capture-intent transaction MUST commit before bank IO.
     // A transport failure leaves the durable intent for manual/provider reconciliation.
     await this.payments.processWorkPaymentForOrder(orderId)
@@ -657,8 +708,11 @@ export class OrdersService {
     await this.payments.processCaptureForOrder(orderId)
       .catch((e) => console.error('[order-capture]', e));
     await this.systemMessage(orderId, `Сумма ${rub(m.total - used)} подтверждена${used ? ` (бонусами и баллами ${rub(used)})` : ''}. Оставьте отзыв друг о друге.`);
-    await this.notifier.notify([o.performer_id], { type: 'order', orderId, status: to },
-      { kind: 'normal', title: 'Сумма подтверждена', body: `Заявка №${o.number}: ${rub(m.total)}`, data: { orderId } });
+    await this.notifier.deliverStored([o.performer_id],
+      {type:'order',orderId,status:to},
+      {kind:'normal',title:'Сумма подтверждена',
+        body:`Заявка №${o.number}: ${rub(m.total)}`,data:{orderId}})
+      .catch(e=>console.warn('[order-confirmation-push]',e));
     return this.view(user, orderId);
   }
 
@@ -880,6 +934,7 @@ export class OrdersService {
       money: this.money(o), result: o.result, resultNote: o.result_note,
       pointsFee: o.points_fee ?? 0, pointsCommission: actor === 'performer' || actor === 'admin' ? o.points_commission ?? 0 : undefined,
       points: actor === 'client' && o.status === 'awaiting_confirmation' && this.referral ? await this.referral.available(o.client_id, this.money(o).clientFee) : null,
+      amountProposalVersion:o.amount_proposed_at??null,
       bill: o.bill ?? null, billingStep: Number((await this.settings.get('pricing')).billingStepMinutes ?? 60),
       site: o.site, workStartedAt: o.work_started_at ?? null, waitRate: performer?.wait_rate ?? null, ownerNote: o.owner_note ?? null, partMode: o.part_mode ?? null, waitStartedAt: o.wait_started_at ?? null, waitMinutes: o.wait_minutes ?? 0,
       consultHint: o.consult_hint, consultOf: o.consult_of,

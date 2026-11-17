@@ -45,6 +45,7 @@ import {registerShopCourierOperationsRoutes} from './services/shopCourierOperati
 import { registerShopCourierEconomicsRoutes } from './services/shopCourierEconomics.ts';
 import { registerShopWarehouseRoutes } from './services/shopWarehouse.ts';
 import {registerEcuReferralRoutes} from './services/ecuReferrals.ts';
+import {registerServiceCaseLedgerRoutes} from './services/serviceCaseLedger.ts';
 import {registerShopSupplierReceivingRoutes} from './services/shopSupplierReceiving.ts';
 import {registerShopWarehouseTraceRoutes} from './services/shopWarehouseTraceability.ts';
 import {registerShopWarehouseSourceRoutes} from './services/shopTraceSources.ts';
@@ -1076,6 +1077,7 @@ export function createApp(d: Deps) {
     orders.list(c.user, c.query.get('as') === 'performer' ? 'performer' : 'client', c.query.get('status') ?? undefined));
   r.get('/api/orders/:id', true, (c: AuthedCtx) => orders.view(c.user, c.params.id));
   registerEcuReferralRoutes(r,d.db,notifier);
+  registerServiceCaseLedgerRoutes(r,d.db,orders);
   r.post('/api/orders/:id/accept', performerRoles, async (c: AuthedCtx) => (await offers.requirePerformer(c.user), orders.accept(c.user, c.params.id)));
   r.post('/api/orders/:id/decline', performerRoles, (c: AuthedCtx) => orders.decline(c.user, c.params.id));
   r.post('/api/orders/:id/drop', performerRoles, (c: AuthedCtx) => orders.drop(c.user, c.params.id, parse(z.object({ reason: z.string().min(2).max(300) }), c.body).reason));
@@ -1123,7 +1125,7 @@ export function createApp(d: Deps) {
   r.post('/api/orders/:id/consult-finish', performerRoles, (c: AuthedCtx) => orders.finishConsult(c.user, c.params.id, parse(z.object({
     hints: z.array(z.string().min(1).max(40)).min(1).max(3), confidence: z.enum(['sure', 'likely', 'guess']), note: z.string().max(300).optional(),
   }), c.body)));
-  r.post('/api/orders/:id/confirm', true, (c: AuthedCtx) => { const b = parse(z.object({ total: money.optional(), points: money.optional() }), c.body); return orders.confirmAmount(c.user, c.params.id, b.total, b.points ?? 0); });
+  r.post('/api/orders/:id/confirm', true, (c: AuthedCtx) => { const b = parse(z.object({ total: money.optional(), points: money.optional(), proposalVersion:z.string().datetime().optional() }), c.body); return orders.confirmAmount(c.user, c.params.id, b.total, b.points ?? 0,b.proposalVersion); });
   r.post('/api/orders/:id/dispute', true, (c: AuthedCtx) => orders.disputeAmount(c.user, c.params.id, parse(z.object({ reason: z.string().min(2).max(500) }), c.body).reason));
   r.post('/api/orders/:id/cancel', true, (c: AuthedCtx) => orders.cancel(c.user, c.params.id, parse(z.object({ reason: z.string().min(2).max(300) }), c.body).reason));
   r.post('/api/orders/:id/retry', true, (c: AuthedCtx) => orders.retry(c.user, c.params.id));
