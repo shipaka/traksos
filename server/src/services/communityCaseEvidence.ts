@@ -84,7 +84,7 @@ export function registerProfessionalEvidenceRoutes(r:Router,db:Db){
       [item.id,c.user.id,staff(c)]);
     return {evidence:rows.map(e=>publicItem(e,e.author_id===c.user.id,staff(c)))
       .filter(Boolean),allReviewedBeforePublication:true,linksOnly:true,
-      warning:'Ссылки не подтверждают применимость к VIN и не заменяют оригинальную заводскую диагностику. Файлы не загружаются и не копируются на сервер TrackSOS.'};
+      warning:'Ссылки не подтверждают применимость к VIN и не заменяют оригинальную заводскую диагностику. Файлы не загружаются и не копируются на сервер TrakSOS.'};
   });
 
   r.post('/api/community/pro-cases/:id/evidence',true,async(c:AuthedCtx)=>{
