@@ -57,6 +57,7 @@ export function Order({ id }: { id: string }) {
       {(isPerformer || d.you === 'candidate') && ptab === 'client' ? <ClientTab id={id} canEdit={isPerformer} /> : <>
       {d.status === 'awaiting_owner' && <OwnerApproval d={d} onDone={o.reload} />}
       {d.status === 'searching' && (d.you === 'client' || d.you === 'admin') && <Search d={d} onChosen={o.reload} />}
+      {d.status === 'searching' && d.actions?.includes('cancel') && !isPerformer && <Cancel id={id} status={d.status} consult={isConsult} onDone={o.reload} />}
       {d.you === 'candidate' && <CandidateView d={d} onDone={o.reload} />}
 
       {!isConsult && d.you !== 'candidate' && <Steps status={d.status} service={d.service} events={d.events} />}
@@ -93,7 +94,7 @@ export function Order({ id }: { id: string }) {
       </>}
 
       {d.you !== 'admin' && d.you !== 'candidate' && <a className="btn ghost" href={`#/support/new?order=${d.id}`}>Позвать поддержку</a>}
-      {!done && d.actions.includes('cancel') && !isPerformer && !(isConsult && d.status === 'awaiting_confirmation') && <Cancel id={id} status={d.status} consult={isConsult} onDone={o.reload} />}
+      {!done && d.status !== 'searching' && d.actions.includes('cancel') && !isPerformer && !(isConsult && d.status === 'awaiting_confirmation') && <Cancel id={id} status={d.status} consult={isConsult} onDone={o.reload} />}
       {d.status === 'cancelled' && <div className="card stack">
         <b>Заявка отменена</b>
         <span className="note">{d.cancelReason}</span>
