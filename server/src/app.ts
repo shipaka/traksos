@@ -44,6 +44,7 @@ import { registerShopCourierEconomicsRoutes } from './services/shopCourierEconom
 import { registerShopWarehouseRoutes } from './services/shopWarehouse.ts';
 import {registerShopSupplierReceivingRoutes} from './services/shopSupplierReceiving.ts';
 import {registerShopWarehouseTraceRoutes} from './services/shopWarehouseTraceability.ts';
+import {registerShopWarehouseSourceRoutes} from './services/shopTraceSources.ts';
 import { ShopRegionService, registerShopRegionRoutes } from './services/shopRegion.ts';
 import { registerShopMerchandisingRoutes } from './services/shopMerchandising.ts';
 import { ShopCatalogService } from './services/shopCatalog.ts';
@@ -650,6 +651,7 @@ export function createApp(d: Deps) {
   registerShopWarehouseRoutes(r, d.db);
   registerShopSupplierReceivingRoutes(r,d.db);
   registerShopWarehouseTraceRoutes(r,d.db);
+  registerShopWarehouseSourceRoutes(r,d.db);
   registerShopMerchandisingRoutes(r, d.db, notifier);
   r.get('/api/shop', true, (c: AuthedCtx) => shopRegion.catalog(c.user, shop, c.query.get('light') === '1'));
   r.get('/api/shop/search', true, async (c: AuthedCtx) => {
