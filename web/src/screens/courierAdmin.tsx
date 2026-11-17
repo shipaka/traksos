@@ -1,5 +1,6 @@
 import {useState} from 'react';
 import {CourierWarehouseCheck} from './courierWarehouse.tsx';
+import {SupplierReceivingDesk} from './supplierReceivingDesk.tsx';
 import {get,post,put} from '../api.ts';
 import {useAction,useLoad,Back} from '../ui.tsx';
 
@@ -12,6 +13,7 @@ type Economics={
   tradingMarkupKopecks:number|null;forecastExpensesKopecks:number|null;
   routeContributionKopecks:number|null;budgetDocumented:boolean;
   supplierIssuesOpen:boolean;ordersReady:boolean;canApprove:boolean;
+  supplierReceiptRequired:boolean;supplierReceiptReady:boolean;
   approved:boolean;profitable:boolean|null;warning:string;
   platformCommissionEstimateKopecks:number;platformCommissionBookedKopecks:number;
 };
@@ -34,6 +36,7 @@ export function CourierAdmin(){
  const [courierId,setCourierId]=useState(''),[warehouse,setWarehouse]=useState(''),[orders,setOrders]=useState('');
  const [packingRequired,setPackingRequired]=useState(false);
  const [traceabilityRequired,setTraceabilityRequired]=useState(false);
+ const [supplierReceiptRequired,setSupplierReceiptRequired]=useState(false);
  const [selected,setSelected]=useState('');
  const economics=useLoad<Economics|null>(()=>selected?get('/api/admin/shop/courier-runs/'+selected+'/economics'):Promise.resolve(null),[selected]);
  const [budget,setBudget]=useState(zeros),[budgetNote,setBudgetNote]=useState('');
@@ -90,13 +93,14 @@ export function CourierAdmin(){
        <button className="btn" disabled={busy||verifyEvidence.trim().length<10} type="submit">Зафиксировать проверку</button>
      </form>
    </section>
+   <SupplierReceivingDesk/>
    <section className="card stack">
      <h2>Составить рейс</h2>
      <p className="note">Порядок ID заказов определяет порядок доставки. Маршрутизатор ещё не подключён; здесь нет автоматического расчёта пути и ETA.</p>
      <form className="stack" onSubmit={async e=>{
        e.preventDefault();const orderIds=orders.split(/[,;\s]+/).map(x=>x.trim()).filter(Boolean);
        const saved=await run(()=>post('/api/admin/shop/courier-runs',{
-         courierId:courierId.trim(),pickupAddress:warehouse.trim(),orderIds,packingRequired,traceabilityRequired
+         courierId:courierId.trim(),pickupAddress:warehouse.trim(),orderIds,packingRequired,traceabilityRequired,supplierReceiptRequired
        }),'План рейса сформирован');
        if(saved){setOrders('');setSelected(saved.id);await runs.reload();await economics.reload();}
      }}>
@@ -107,7 +111,7 @@ export function CourierAdmin(){
        <label className="row">
          <input type="checkbox" checked={packingRequired}
            onChange={e=>{setPackingRequired(e.target.checked);
-             if(!e.target.checked)setTraceabilityRequired(false)}}/>
+             if(!e.target.checked){setTraceabilityRequired(false);setSupplierReceiptRequired(false)}}}/>
          Обязательная складская сверка артикула и количества перед выдачей курьеру
        </label>
        <label className="row">
@@ -115,6 +119,14 @@ export function CourierAdmin(){
            onChange={e=>setTraceabilityRequired(e.target.checked)}/>
          Дополнительно требовать GTIN (EAN/UPC) и номер партии или серии каждой детали
        </label>
+       <label className="row">
+         <input type="checkbox" checked={supplierReceiptRequired} disabled={!packingRequired}
+           onChange={e=>setSupplierReceiptRequired(e.target.checked)}/>
+         Требовать принятые накладные поставщика на каждую позицию заказа
+       </label>
+       <p className="note">При включённой проверке отправку и забор
+         курьером заблокирует недопоставка или отозванный акт. Это ручная
+         приёмка, без подключения к API поставщика и без движения денег.</p>
        <p className="note">Строгая прослеживаемость включается только для нового рейса со
          складской сверкой. Контрольная цифра GTIN не доказывает подлинность товара
          или его применяемость к автомобилю. Сканер-клавиатура не считается
@@ -150,7 +162,10 @@ export function CourierAdmin(){
            <dt>Прогноз вклада рейса</dt><dd>{asRub(economics.data.routeContributionKopecks)}</dd>
            <dt>Комиссия платформы 5% (не включена и не проведена)</dt><dd>{asRub(economics.data.platformCommissionEstimateKopecks)}</dd>
          </dl>
-         <p className="note">{economics.data.warning}</p>
+         {economics.data.supplierReceiptRequired&&
+         <p role="status">Акты поставщика: {economics.data.supplierReceiptReady?
+           'полное количество принято':'приёмка не завершена — выдача заблокирована'}</p>}
+       <p className="note">{economics.data.warning}</p>
          {!economics.data.canApprove&&<p role="alert">Утверждать нельзя: отсутствует смета/подтверждённая закупка, не готов заказ или открыт спор с поставщиком.</p>}
        </div>}
        {chosen.status==='planned'&&<>
