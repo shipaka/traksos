@@ -72,14 +72,20 @@ export function registerEcuReferralRoutes(r:Router,db:Db,notify:Notifier){
       throw notFound('Заявка не найдена');
     const rows=await db.query<{
       id:string;source_order_id:string;reason:string;status:string;created_at:Date;
-      linked_order_id:string|null
-    }>('select id,source_order_id,reason,status,created_at,linked_order_id '+
-      'from order_ecu_referrals where source_order_id=$1 order by created_at desc limit 30',
+      linked_order_id:string|null;linked_created_by:string|null
+    }>('select r.id,r.source_order_id,r.reason,r.status,r.created_at,r.linked_order_id, '+
+      'child.created_by as linked_created_by from order_ecu_referrals r '+
+      'left join orders child on child.id=r.linked_order_id '+
+      'where r.source_order_id=$1 order by r.created_at desc limit 30',
       [id]);
     return {recommendations:rows.map(x=>({
       id:x.id,orderId:x.source_order_id,reason:x.reason,status:x.status,
-      createdAt:x.created_at,linkedOrderId:customer||c.user.roles.includes('admin')?
-        x.linked_order_id:null
+      createdAt:x.created_at,
+      // A fleet driver can read the original request they created, but must
+      // not learn the ID of a separately contracted owner-created ECU stage.
+      linkedOrderId:c.user.roles.includes('admin') ||
+        (customer && (!c.user.owner_id || x.linked_created_by===c.user.id))
+        ? x.linked_order_id : null
     })),canCreate:customer};
   });
   r.post('/api/orders/:id/ecu-recommendations/:refId/decline',true,
