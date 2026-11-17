@@ -250,6 +250,9 @@ test('hiding a reported case removes it from discovery and resets linked knowled
    'an unsafe case cannot leave its derived TechBase material approved');
 });
 test('privacy export covers professional questions, and erasure removes accepted peer replies',async()=>{
+ // Earlier cases belong to the same shared fixture: move their timestamps
+ // outside the per-hour quota before exercising privacy deletion itself.
+ await t.db.query("update community_technical_cases set created_at=now()-interval '2 hours' where author_id=$1",[writer.id]);
  const own=ok(await t.api('POST','/api/community/pro-cases',newCase(),writer.token));
  const written=ok(await t.api('POST','/api/community/pro-cases/'+own.case.id+'/replies',{
    clientNonce:randomUUID(),body:'Авторская диагностическая гипотеза без VIN, контактов или сторонних источников.'
