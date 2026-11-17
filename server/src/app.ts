@@ -1109,6 +1109,17 @@ export function createApp(d: Deps) {
   r.post('/api/orders/:id/drop', performerRoles, (c: AuthedCtx) => orders.drop(c.user, c.params.id, parse(z.object({ reason: z.string().min(2).max(300) }), c.body).reason));
   r.post('/api/orders/:id/step', performerRoles, (c: AuthedCtx) =>
     orders.performerStep(c.user, c.params.id, parse(z.object({ action: z.enum(['depart', 'arrive', 'start_work']) }), c.body).action));
+  r.post('/api/orders/:id/ecu/start', performerRoles, (c:AuthedCtx)=>
+    orders.startEcuWork(c.user,c.params.id));
+  r.post('/api/orders/:id/ecu/final-price', performerRoles, (c:AuthedCtx)=>{
+    const b=parse(z.object({
+      amount:z.number().int().min(100).max(100_000_000),
+      summary:z.string().trim().min(5).max(300),
+      warrantyDays:z.union([z.literal(7),z.literal(14),z.literal(30),z.null()]).optional(),
+      warrantyWork:z.string().trim().max(300).optional()
+    }),c.body);
+    return orders.proposeEcuTotal(c.user,c.params.id,b);
+  });
   // ECU work is a stationary long-running repair. Every +3 day extension
   // is deliberate, documented, shown to the customer, and never auto-paid.
   r.post('/api/orders/:id/ecu/extend', true, async (c:AuthedCtx)=>{
