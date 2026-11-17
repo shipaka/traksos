@@ -80,7 +80,7 @@ test('stale proposal version blocks consent even when the numeric total matches'
    "update orders set amount_proposed_at=amount_proposed_at+interval '3 seconds' "+
    "where id=$1",[id]);
   const response=await t.api('POST','/api/orders/'+id+'/confirm',{
-   total:card.money.total,points:0,proposalVersion:card.amountProposalVersion
+   total:card.money.total,points:0,proposalVersion:card.amountProposalVersion,ecuConsent:true
   },client.token);
   assert.equal(response.status,409);
   assert.equal((await t.db.one<{status:string}>(
@@ -121,7 +121,7 @@ test('two independent service stages cannot spend the same owner bonus balance',
   const result=await Promise.all(ids.map((id,i)=>t.api('POST',
     '/api/orders/'+id+'/confirm',
     {total:cards[i].money.total,points:0,
-     proposalVersion:cards[i].amountProposalVersion},client.token)));
+     proposalVersion:cards[i].amountProposalVersion,ecuConsent:i===1},client.token)));
   assert.ok(result.every(x=>x.status===200),
    'both independent confirmations must settle without spending the bonus twice');
   const balance=await t.db.one<{n:number;spent:number}>(
