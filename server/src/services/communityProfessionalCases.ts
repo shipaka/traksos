@@ -255,6 +255,112 @@ export function registerProfessionalCasesRoutes(r:Router,db:Db,notifier:Notifier
     const {modified,...response}=result;
     return response;
   });
+  // Reports are visible only to staff. A driver/client does not learn whether
+  // a closed specialist club, its author or its case even exists.
+  r.post('/api/community/pro-cases/:id/report',true,async(c:AuthedCtx)=>{
+    const row=await openCase(db,c);
+    const b=parse(z.object({
+      replyId:z.string().regex(/^\\d{1,16}$/).nullable().optional(),
+      reason:z.string().trim().min(10).max(500)
+    }),c.body);
+    let author=row.author_id;
+    if(b.replyId){
+      const reply=await db.one<{author_id:string}>(
+        "select author_id from community_technical_case_replies "+
+        "where case_id=$1 and id=$2 and moderation_state='published'",
+        [row.id,b.replyId]);
+      if(!reply)throw notFound('Ответ не найден');
+      author=reply.author_id;
+    }
+    if(author===c.user.id)throw bad('own_report','Для собственного текста используйте обращение к модератору');
+    const recent=await db.one<{n:number}>(
+      "select count(*)::int as n from community_technical_case_reports "+
+      "where reporter_id=$1 and created_at>now()-interval '1 day'",[c.user.id]);
+    if((recent?.n??0)>=20)throw new HttpError(429,'report_limit',
+      'Достигнут дневной предел жалоб');
+    const saved=await db.query(`
+      insert into community_technical_case_reports(case_id,reply_id,reporter_id,reason)
+      values($1,$2,$3,$4) on conflict do nothing returning id::text as id`,
+      [row.id,b.replyId??null,c.user.id,b.reason]);
+    return {reported:true,duplicate:saved.length===0};
+  });
+  r.get('/api/admin/community/pro-cases/reports',['admin','moderator'],async()=>{
+    const reports=await db.query(`
+      select x.id::text as id,x.case_id,x.reply_id::text as reply_id,
+        x.reason,x.created_at,t.subsystem,t.moderation_state as case_state,
+        coalesce(a.body,t.symptoms) as reported_text,
+        a.moderation_state as reply_state,r.title as club_title
+      from community_technical_case_reports x
+      join community_technical_cases t on t.id=x.case_id
+      left join community_technical_case_replies a on a.id=x.reply_id
+      join community_rooms r on r.id=t.room_id
+      where x.status='open'
+      order by x.created_at,x.id limit 100`);
+    return {reports,moderationIsHuman:true,autoPublish:false};
+  });
+  r.post('/api/admin/community/pro-cases/reports/:id/review',
+    ['admin','moderator'],async(c:AuthedCtx)=>{
+      const reportId=c.params.id;
+      if(!/^\\d{1,16}$/.test(reportId))throw notFound('Жалоба не найдена');
+      const b=parse(z.object({
+        decision:z.enum(['dismiss','hide','restore']),
+        note:z.string().trim().min(15).max(1000)
+      }),c.body);
+      const outcome=await db.tx(async q=>{
+        const report=await q.one<{
+          id:string;case_id:string;reply_id:string|null;status:string
+        }>(`select id::text as id,case_id,reply_id::text as reply_id,status
+           from community_technical_case_reports where id=$1 for update`,[reportId]);
+        if(!report)throw notFound('Жалоба не найдена');
+        if(report.status!=='open')
+          throw conflict('report_reviewed','Эта жалоба уже рассмотрена');
+        const target=await q.one<CaseRow>(
+          'select * from community_technical_cases where id=$1 for update',[report.case_id]);
+        if(!target)throw notFound('Техническая карточка не найдена');
+        const state=b.decision==='hide'?'hidden':'published';
+        if(b.decision!=='dismiss'){
+          if(report.reply_id){
+            const reply=await q.one<{moderation_state:string}>(
+              'select moderation_state from community_technical_case_replies '+
+              'where case_id=$1 and id=$2 for update',[report.case_id,report.reply_id]);
+            if(!reply)throw notFound('Ответ не найден');
+            await q.query(
+              'update community_technical_case_replies set moderation_state=$3 '+
+              'where case_id=$1 and id=$2',[report.case_id,report.reply_id,state]);
+            if(state==='hidden')await q.query(
+              'update community_technical_cases set accepted_reply_id=null,updated_at=now() '+
+              'where id=$1 and accepted_reply_id=$2',[report.case_id,report.reply_id]);
+          }else{
+            await q.query(
+              'update community_technical_cases set moderation_state=$2,updated_at=now() where id=$1',
+              [report.case_id,state]);
+          }
+          if(state==='hidden'&&target.knowledge_proposal_id){
+            // A hidden unsafe case can no longer back a previously accepted
+            // manual. Reset technical approval; never auto-approve on restore.
+            await q.query(
+              "update community_knowledge set technical_review='pending',updated_at=now() "+
+              "where id=$1 and technical_review='approved'",
+              [target.knowledge_proposal_id]);
+          }
+        }
+        await q.query(
+          `update community_technical_case_reports
+             set status='reviewed',decision=$2,reviewed_by=$3,
+                 review_note=$4,reviewed_at=now() where id=$1`,
+          [reportId,b.decision,c.user.id,b.note]);
+        await q.query(
+          'insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4)',
+          [c.user.id,'community.technical_report_review',reportId,
+            {caseId:report.case_id,replyId:report.reply_id,decision:b.decision,
+              note:b.note}]);
+        return {id:reportId,decision:b.decision,caseId:report.case_id,
+          roomId:target.room_id,changed:b.decision!=='dismiss'};
+      });
+      if(outcome.changed)await notify(outcome.roomId,c.user.id,outcome.caseId,
+        'moderation');
+      return {id:outcome.id,decision:outcome.decision,reviewed:true};
+    });
   r.post('/api/community/pro-cases/:id/propose-knowledge',true,async(c:AuthedCtx)=>{
     const row=await openCase(db,c,true);
     if(row.author_id!==c.user.id)throw forbidden('Только автор может передать свой текст на проверку');
