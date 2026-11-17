@@ -57,17 +57,23 @@ before(async()=>{
 after(()=>t.close());
 test('public estimates reject far-away GPS and explicit other cities without inventing fares',async()=>{
   const route='/api/pricing/estimate';
-  const base={service:'electric',zoneId:'spb',tier:'eco'};
+  const base={service:'electric',regionId:'spb',zoneId:'spb',tier:'eco'};
   for(const location of knownOutside){
     const reply=await t.api('POST',route,{...base,...location});
-    assert.equal(reply.status,409,JSON.stringify(location));
-    assert.equal(reply.body.error,'outside_legacy_tariff_region');
+    assert.equal(reply.status,400,JSON.stringify(location));
+    assert.ok(['address_region_mismatch','outside_coverage','location_unverified'].includes(reply.body.error),
+      JSON.stringify({location,error:reply.body.error}));
     const adr=await t.api('POST',route,{...base,address:location.address});
-    assert.equal(adr.status,409);
+    assert.equal(adr.status,400);
+    assert.ok(['address_region_mismatch','location_unverified'].includes(adr.body.error),
+      JSON.stringify({location,error:adr.body.error}));
   }
   const local=ok(await t.api('POST',route,{...base,address:'Санкт-Петербург, Невский проспект 1'}));
   assert.ok(local.callOut>0);
   assert.equal(local.regionValidation.validatedByGeocoder,false);
+  const omitted=await t.api('POST',route,{service:'electric',zoneId:'spb',tier:'eco'});
+  assert.equal(omitted.status,400,'region must be explicitly declared in production API');
+  assert.equal(omitted.body.error,'region_required');
   const blind=ok(await t.api('POST',route,base));
   assert.equal(blind.regionValidation.status,'unknown');
   assert.equal(blind.regionValidation.manualConfirmationRequired,true);
@@ -79,11 +85,12 @@ test('clearly outside locations cannot create orders or bank holds, including di
   ok(await t.api('PUT','/api/admin/settings/payments',{online:true},admin.token));
   for(const location of knownOutside){
     const result=await t.api('POST','/api/orders',{
-      service:'electric',isSos:true,zoneId:'spb',
+      service:'electric',isSos:true,regionId:'spb',zoneId:'spb',
       paymentMethod:'online',description:'Проблема с тормозами',...location
     },customer.token);
-    assert.equal(result.status,409,JSON.stringify(location));
-    assert.equal(result.body.error,'outside_legacy_tariff_region');
+    assert.equal(result.status,400,JSON.stringify(location));
+    assert.ok(['address_region_mismatch','outside_coverage','location_unverified'].includes(result.body.error),
+      JSON.stringify({location,error:result.body.error}));
   }
   const after=await t.db.query('select id from orders where created_by=$1',[customer.id]);
   assert.equal(after.length,0,'no order is entered before real pricing');
@@ -101,11 +108,11 @@ test('clearly outside locations cannot create orders or bank holds, including di
 });
 
 test('an explicitly named outlying town is not charged at the KAD tariff',async()=>{
-  const mismatched={service:'electric',tier:'eco',zoneId:'spb',
+  const mismatched={service:'electric',tier:'eco',regionId:'lo',zoneId:'spb',
     address:'Ленинградская область, г. Гатчина, улица Соборная 1'};
   const rejected=await t.api('POST','/api/pricing/estimate',mismatched);
-  assert.equal(rejected.status,409);
-  assert.equal(rejected.body.error,'mismatched_legacy_tariff_zone');
+  assert.equal(rejected.status,400);
+  assert.equal(rejected.body.error,'region_zone_mismatch');
   const correct=ok(await t.api('POST','/api/pricing/estimate',{...mismatched,zoneId:'gat'}));
   assert.equal(correct.zoneId,'gat');
   assert.equal(correct.regionValidation.validatedByGeocoder,false);
@@ -114,8 +121,8 @@ test('an explicitly named outlying town is not charged at the KAD tariff',async(
   const attempt=await t.api('POST','/api/orders',{
     ...mismatched,paymentMethod:'online',description:'Ремонт на месте',isSos:true
   },customer.token);
-  assert.equal(attempt.status,409);
-  assert.equal(attempt.body.error,'mismatched_legacy_tariff_zone');
+  assert.equal(attempt.status,400);
+  assert.equal(attempt.body.error,'region_zone_mismatch');
   assert.equal((await t.db.query('select id from orders where created_by=$1',[customer.id])).length,countBefore);
   assert.equal(t.payments.payments.size,paymentsBefore,'no new bank hold for misleading zone');
 });
