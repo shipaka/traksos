@@ -21,12 +21,13 @@ const account=await post('/api/auth/verify',{
   phone,code:code.devCode,accountType:'owner',password:'SyntheticTest2026-Only!'
 });
 if(!account.user?.roles?.includes('client'))throw Error('Synthetic client role unavailable');
+// ECU inquiries are unpriced until the chosen stationary expert issues a
+// final bill. This browser test rejects the old pre-priced SOS form. All
+// state is synthetic and isolated to the local CI service.
 const browser=await chromium.launch();
 try{
   for(const width of [390,1440]){
-    const ctx=await browser.newContext({
-      viewport:{width,height:900},deviceScaleFactor:1,locale:'ru-RU'
-    });
+    const ctx=await browser.newContext({viewport:{width,height:900},deviceScaleFactor:1,locale:'ru-RU'});
     const page=await ctx.newPage();
     const errors=[];
     page.on('pageerror',e=>errors.push(e.message));
@@ -36,7 +37,6 @@ try{
     },account.token);
     try{
       await page.goto(BASE+'/#/new/ecu',{waitUntil:'domcontentloaded'});
-      await page.getByRole('heading',{name:'Специалист по ЭБУ',exact:true}).waitFor({timeout:20000});
       for(let n=0;n<6;n++){
         const modal=page.locator('[role="dialog"]').first();
         if(!await modal.isVisible().catch(()=>false))break;
@@ -49,48 +49,29 @@ try{
       }
       const cookie=page.getByRole('button',{name:'Понятно'});
       if(await cookie.isVisible().catch(()=>false))await cookie.click();
-
-      await page.locator('#f-where').waitFor();
-      const consent=page.locator('#f-agree');
-      await consent.waitFor();
-      if(await consent.locator('input[type="checkbox"]').count())
-        throw Error(width+': customer could accept ECU price before selecting a zone');
-      if(!await consent.getByText(/Сначала укажите местоположение/).count())
-        throw Error(width+': missing unpriced stage explanation');
-      const address=page.locator('#f-where input.field');
-      await address.fill('Санкт-Петербург, тестовая парковка');
-      await page.locator('#f-where .scroll-x button.chip').getByText('Санкт-Петербург',{exact:true}).click();
-      await page.locator('#f-where .scroll-x button.chip').filter({hasText:'Санкт-Петербург, в пределах КАД'}).click();
-      await page.getByRole('button',{name:'Днём',exact:true}).click();
-      await consent.locator('input[type="checkbox"]').waitFor({timeout:20000});
-      if(await consent.locator('input[type="checkbox"]').isChecked())
-        throw Error(width+': ECU quote auto-accepted without consent');
-      await consent.locator('input[type="checkbox"]').check();
-      if(!await consent.locator('input[type="checkbox"]').isChecked())
-        throw Error(width+': user cannot accept the displayed quotation');
-      await page.locator('#f-what textarea.field').fill(
-        'Нужно выполнить дополнительную проверку питания блока EBS и его программирования');
-      await page.waitForFunction(()=>{
-        const check=document.querySelector('#f-agree input[type="checkbox"]');
-        return !!check && !check.checked;
-      },null,{timeout:12000});
-      if(await consent.locator('input[type="checkbox"]').isChecked())
-        throw Error(width+': editing ECU work description retained stale consent');
-      await consent.locator('input[type="checkbox"]').check();
-      await address.fill('Санкт-Петербург, другая тестовая стоянка');
-      // A changed route invalidates the prior price/consent immediately.
-      await page.waitForFunction(()=>{
-        const old=document.querySelector('#f-agree input[type="checkbox"]');
-        return !old || !old.checked;
-      },null,{timeout:12000});
-      const sizes=await page.evaluate(()=>({
+      await page.getByRole('heading',{name:'Специалист по ЭБУ',exact:true})
+        .waitFor({timeout:25000});
+      await page.locator('#f-ecu-station').waitFor();
+      await page.locator('#f-what').getByText('Справочник электронных блоков').waitFor();
+      const station=page.locator('#f-ecu-station');
+      if(!await station.getByText(/нет опубликованных проверенных мастерских/).count())
+        throw Error(width+': missing fail-closed notice when no station is published');
+      if(await page.locator('#f-agree input[type="checkbox"]').count())
+        throw Error(width+': old pre-priced ECU consent is still displayed');
+      if(!await page.getByText(/Цена может стать известна|Смета и сроки — после изучения блока/).count())
+        throw Error(width+': post-diagnostic quotation terms are missing');
+      const create=page.getByRole('button',{name:/Отправить запрос выбранной мастерской/});
+      await create.click();
+      if(!await station.getByText(/нет опубликованных проверенных мастерских/).count())
+        throw Error(width+': unverified workshop path became enabled');
+      const overflow=await page.evaluate(()=>({
         content:document.documentElement.scrollWidth,
         viewport:document.documentElement.clientWidth
       }));
-      if(sizes.content>sizes.viewport+3)
-        throw Error(width+': ECU quote screen overflow '+JSON.stringify(sizes));
+      if(overflow.content>overflow.viewport+3)
+        throw Error(width+': ECU intake overflow '+JSON.stringify(overflow));
       if(errors.length)throw Error(width+': browser exceptions '+errors.join('; '));
-      console.log('PASS ECU quote '+width+'px: no early consent, explicit zone, revocation on edit');
+      console.log('PASS ECU intake '+width+'px: private block glossary, unpriced consent, verified station gate');
     }finally{await ctx.close()}
   }
 }finally{await browser.close()}
