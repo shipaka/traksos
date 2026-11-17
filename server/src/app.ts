@@ -37,6 +37,7 @@ import { PartnerFinance } from './services/partnerFinance.ts';
 import { InsuranceQuoteFlow } from './services/insuranceQuoteFlow.ts';
 import { PrivacyService } from './services/privacy.ts';
 import { StandingService } from './services/standing.ts';
+import { registerVehicleReferenceRoutes } from './http/vehicleReferenceRoutes.ts';
 import { ShopService } from './services/shop.ts';
 import { ShopCatalogService } from './services/shopCatalog.ts';
 import { ModerationService } from './services/moderation.ts';
@@ -115,6 +116,7 @@ export function createApp(d: Deps) {
   centers.onDispute = (p) => moderation.open({ kind: 'dispute', title: p.title, text: p.text, openedBy: p.userId, targetId: p.targetId, bookingId: p.bookingId, ticketId: p.ticketId, priority: 1 });
 
   const r = new Router();
+  registerVehicleReferenceRoutes(r, d.db, settings, now);
   const staff = ['admin', 'moderator'];
   const performerRoles = ['master', 'tow', 'service'];
 
@@ -225,6 +227,11 @@ export function createApp(d: Deps) {
     if (b.acceptOffers) await offers.acceptCurrent(r.user as any, c.ip);
     return r;
   });
+  // Short-lived one-use WebSocket ticket: long-lived login token stays in a
+  // regular authorized POST header, never in the /ws URL of current clients.
+  r.post('/api/auth/realtime-ticket', true, (c: AuthedCtx) =>
+    auth.issueRealtimeTicket(bearer(c.req)!));
+
   r.post('/api/auth/logout', true, async (c: AuthedCtx) => {
     // Closing/minimizing the app never calls logout and never changes availability.
     // Explicit sign-out must not leave a performer discoverable without any call token.
@@ -462,8 +469,8 @@ export function createApp(d: Deps) {
 
   // Исполнитель --------------------------------------------------------------
   const brandLevel = z.enum(['excellent', 'good', 'last_resort', 'refuse']);
-  r.get('/api/performer/profile', true, (c: AuthedCtx) => profiles.performer(c.user.id));
-  r.put('/api/performer/profile', true, (c: AuthedCtx) => profiles.upsertPerformer(c.user, parse(z.object({
+  // Same contracts for the legacy single-section APIs and the atomic screen save.
+  const performerProfileSchema = z.object({
     kind: z.enum(['master', 'tow', 'service', 'ecu']), name: z.string().min(1).max(100).optional(),
     specialties: z.array(z.enum(['electric', 'diag', 'air', 'autonomy', 'tyre', 'consult'])).max(10).optional(),
     brands: z.record(z.string().max(40), brandLevel).optional(), tier: z.enum(['eco', 'comfort', 'pro']).optional(),
@@ -471,8 +478,8 @@ export function createApp(d: Deps) {
     acceptsGroup: z.boolean().optional(), taxStatus: z.enum(['self_employed', 'ip']).nullish(), inn: z.string().nullish(),
     car: z.object({ brand: z.string().max(50), color: z.string().max(30).optional(), plate: z.string().max(15) }).nullish(),
     cars: z.array(z.object({ brand: z.string().min(1).max(50), color: z.string().max(30).optional(), plate: z.string().min(1).max(15) })).max(3).optional(),
-  }), c.body)));
-  r.put('/api/performer/extras', performerRoles, (c: AuthedCtx) => profiles.setExtras(c.user.id, parse(z.object({
+  });
+  const performerExtrasSchema = z.object({
     weekendPct: z.number().int().min(0).max(100).optional(), nightPct: z.number().int().min(0).max(100).optional(),
     holidayPct: z.number().int().min(0).max(100).optional(), waitRate: z.number().int().min(0).max(1_000_000).optional(),
     prepay: z.enum(['never', 'low', 'always']).optional(), vacation: z.boolean().optional(),
@@ -482,7 +489,21 @@ export function createApp(d: Deps) {
     ring: z.boolean().optional(),
     // Баллы: гасить ли ими комиссию и сколько максимум с одной заявки (копейки, null — сколько можно)
     pointsAuto: z.boolean().optional(), pointsMax: money.nullable().optional(),
-  }), c.body)));
+  });
+  r.get('/api/performer/profile', true, (c: AuthedCtx) => profiles.performer(c.user.id));
+  r.put('/api/performer/profile', true, (c: AuthedCtx) =>
+    profiles.upsertPerformer(c.user, parse(performerProfileSchema, c.body)));
+  r.put('/api/performer/extras', performerRoles, (c: AuthedCtx) =>
+    profiles.setExtras(c.user.id, parse(performerExtrasSchema, c.body)));
+  // Profile matching and its presentation/conditions now commit in one transaction.
+  // A failure to save either half must roll back the entire request.
+  r.put('/api/performer/request-settings', performerRoles, (c: AuthedCtx) => {
+    const body = parse(z.object({
+      profile: performerProfileSchema,
+      extras: performerExtrasSchema,
+    }).strict(), c.body);
+    return profiles.upsertPerformer(c.user, body.profile, body.extras);
+  });
   r.put('/api/performer/schedule', performerRoles, (c: AuthedCtx) => {
     const t = z.string().regex(/^\d{2}:\d{2}$/);
     const day = z.boolean();

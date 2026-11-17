@@ -1,0 +1,175 @@
+{
+  "version": "2026-11-17",
+  "policy": "LINK_ONLY: OEM technical PDFs and schematics remain on publisher sites; no mirroring or embedding without a separate redistribution licence. Only approved specialists/admin can open these links through TrackSOS.",
+  "professional": [
+    {
+      "id": "scania-bodybuilder",
+      "title": "Scania — портал надстроек и электрики",
+      "make": "scania",
+      "subsystem": "electrical",
+      "kind": "manufacturer_portal",
+      "url": "https://bodybuilder.scania.com/trucks/en/home.html",
+      "region": "Europe",
+      "scope": "Надстройки и системы шасси, доступ к чертежам может требовать входа; модель и год сверяются на портале.",
+      "rights": "LINK_ONLY"
+    },
+    {
+      "id": "scania-rmi",
+      "title": "Scania — официальный Repair & Maintenance Information",
+      "make": "scania",
+      "subsystem": "general",
+      "kind": "manufacturer_portal",
+      "url": "https://www.scania.com/group/en/home/products-and-services/services/rmi/information-package.html",
+      "region": "Europe",
+      "scope": "Описание доступных заводских сведений, электрические схемы — в системе производителя.",
+      "rights": "LINK_ONLY"
+    },
+    {
+      "id": "volvo-bodybuilder-eu",
+      "title": "Volvo Trucks — Bodybuilder Instructions (Европа)",
+      "make": "volvo",
+      "subsystem": "electrical",
+      "kind": "manufacturer_portal",
+      "url": "https://www.volvotrucks.co.uk/en-gb/trucks/features/bodybuilding.html",
+      "region": "Europe",
+      "scope": "Заводская документация для надстройки; точную применимость по VIN уточняют у Volvo.",
+      "rights": "LINK_ONLY"
+    },
+    {
+      "id": "volvo-wiring-na",
+      "title": "Volvo Trucks — оригинальные схемы Body Builder (Сев. Америка)",
+      "make": "volvo",
+      "subsystem": "electrical",
+      "kind": "manufacturer_portal",
+      "url": "https://www.volvotrucks.ca/en-ca/parts-and-services/services/body-builder-support/wiring-diagrams/",
+      "region": "North America",
+      "scope": "Внимание: не считать американскую VN/VHD схему схемой европейского FH/FM.",
+      "rights": "LINK_ONLY"
+    },
+    {
+      "id": "knorr-docs",
+      "title": "Knorr-Bremse — техническая документация TruckServices",
+      "make": null,
+      "subsystem": "brakes",
+      "kind": "manufacturer_portal",
+      "url": "https://truckservices.knorr-bremse.com/en/gb/services/technical-documentation/",
+      "region": "Global",
+      "scope": "Руководства по тормозам/пневматике и сервису, доступ через кабинет производителя.",
+      "rights": "LINK_ONLY"
+    },
+    {
+      "id": "knorr-portal",
+      "title": "Knorr-Bremse — кабинет TruckServices",
+      "make": null,
+      "subsystem": "brakes",
+      "kind": "manufacturer_portal",
+      "url": "https://mytruckservices.knorr-bremse.com/",
+      "region": "Global",
+      "scope": "Подбор документации по артикулу/продукту; схема не универсальна.",
+      "rights": "LINK_ONLY"
+    },
+    {
+      "id": "zf-wabco",
+      "title": "ZF WABCO — справочная поддержка и документация",
+      "make": null,
+      "subsystem": "ebs",
+      "kind": "manufacturer_portal",
+      "url": "https://aftermarket.zf.com/us/aftermarket-portal/our-catalog/technical-information/",
+      "region": "Global",
+      "scope": "Техническая библиотека ZF/WABCO; конфигурация EBS, версия блока и регион должны быть проверены.",
+      "rights": "LINK_ONLY"
+    },
+    {
+      "id": "zf-wabco-customer",
+      "title": "WABCO — официальная сервисная поддержка",
+      "make": null,
+      "subsystem": "ebs",
+      "kind": "manufacturer_portal",
+      "url": "https://wabco-solutioncentre.com/en_US/cc/aftermarket-service-and-support/",
+      "region": "North America",
+      "scope": "Каталоги и руководства производителя; не применяйте без сверки модели и версии модуля.",
+      "rights": "LINK_ONLY"
+    }
+  ],
+  "driverTips": [
+    {
+      "id": "brakes",
+      "title": "Неисправность тормозов и EBS",
+      "category": "truck",
+      "tags": [
+        "EBS",
+        "ABS",
+        "тормоза"
+      ],
+      "body": "При сообщении EBS/ABS оцените управляемость и торможение, остановитесь в безопасном месте. Не отключайте защитные системы и не продолжайте движение, если торможение ненадёжно. Зафиксируйте код ошибки и тип прицепа; вызовите профильного специалиста.",
+      "priority": "critical",
+      "professionalDetail": false
+    },
+    {
+      "id": "charging",
+      "title": "Пропала зарядка генератора",
+      "category": "truck",
+      "tags": [
+        "генератор",
+        "АКБ",
+        "питание"
+      ],
+      "body": "Остановитесь в безопасном месте и проверьте индикаторы напряжения без вмешательства в проводку. Оцените необходимость эвакуатора/выездного электрика. Не замыкайте силовые контакты и не разбирайте генератор на обочине.",
+      "priority": "high",
+      "professionalDetail": false
+    },
+    {
+      "id": "cooling",
+      "title": "Перегрев двигателя",
+      "category": "truck",
+      "tags": [
+        "антифриз",
+        "температура",
+        "охлаждение"
+      ],
+      "body": "Остановитесь там, где безопасно. Не открывайте крышку расширительного бачка горячего двигателя: возможен ожог. Зафиксируйте температуру и признаки утечек, обратитесь к специалисту.",
+      "priority": "critical",
+      "professionalDetail": false
+    },
+    {
+      "id": "adblue",
+      "title": "Ошибка SCR/AdBlue",
+      "category": "truck",
+      "tags": [
+        "AdBlue",
+        "SCR",
+        "NOx"
+      ],
+      "body": "Запишите сообщения панели и код ошибки, проверьте уровень AdBlue по штатному индикатору. Не обходите экологическую систему и не пытайтесь сбросить ошибку без диагностики; при ограничении мощности запросите консультацию.",
+      "priority": "normal",
+      "professionalDetail": false
+    },
+    {
+      "id": "trailer_lights",
+      "title": "Не работает освещение прицепа",
+      "category": "trailer",
+      "tags": [
+        "свет",
+        "розетка",
+        "прицеп"
+      ],
+      "body": "Остановитесь безопасно и проверьте наружный свет визуально. Если не работают габариты/стоп-сигналы, оцените возможность безопасного движения и обратитесь к выездному электрику. Не делайте перемычки в разъёме наугад.",
+      "priority": "high",
+      "professionalDetail": false
+    },
+    {
+      "id": "tyre",
+      "title": "Повреждение шины",
+      "category": "truck",
+      "tags": [
+        "колесо",
+        "шина",
+        "давление"
+      ],
+      "body": "При повреждении шины не выполняйте опасную замену на проезжей части. Установите предупреждение по ПДД, покиньте опасную зону и вызовите шиномонтаж или эвакуатор. Не проверяйте рукой утечку воздуха на накачанной грузовой шине.",
+      "priority": "high",
+      "professionalDetail": false
+    }
+  ],
+  "sourceNotice": "Original TrackSOS safety reminders, not OEM repair instructions. Linked OEM portals are NOT licensed for local redistribution of their PDFs, wiring diagrams or repair programs."
+}
