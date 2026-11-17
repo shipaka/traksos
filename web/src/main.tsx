@@ -378,8 +378,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/admin/section/settings', 'Настройки площадки'],
          ['/profile', 'Аккаунт'], ['/as/client', 'Кабинет клиента']]
     : [['/orders', 'История заявок'], ['/garage', 'Мой гараж'],
-       ['/vehicle-tech', 'Памятки и ТехБаза'],
-       ['/vehicle-tech', 'Памятки водителю'],
+       ['/vehicle-tech', 'Эксплуатация и памятки'],
        ...(!me?.owner_id && !me?.roles.includes('driver') ? [['/fleet', 'Мой автопарк']] as [string,string][] : []),
        ['/services', 'СТО и запись'],
        ['/reviews', 'Мои отзывы'], ['/invite', 'Пригласить друга'],
