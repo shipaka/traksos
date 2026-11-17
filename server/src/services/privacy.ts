@@ -120,6 +120,7 @@ export class PrivacyService {
           where id in (select distinct room_id from community_messages where sender_id=$1)`,[id]);
         await q.query('delete from community_messages where sender_id=$1', [id]);
         await q.query('delete from community_technical_case_reports where reporter_id=$1',[id]);
+        await q.query('update community_technical_case_reports set reviewed_by=null where reviewed_by=$1',[id]);
         // A deleted expert may have an accepted answer on someone else's
         // technical case. Drop that link first to respect the composite FK;
         // then erase their own replies and cases, including copied symptoms.
