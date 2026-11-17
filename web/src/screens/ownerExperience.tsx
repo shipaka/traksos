@@ -65,8 +65,8 @@ function ExperienceCard({item,onChanged}:{item:Article;onChanged:()=>void}){
        {item.mine&&<button className="btn bad small" type="button" disabled={busy}
          onClick={()=>{if(window.confirm('Убрать свою публикацию?'))void action(
            ()=>del('/api/owner-experience/'+item.id),'Публикация удалена')}}>Удалить</button>}
-       <a className="btn ghost small" href="#/shop" title="Проверяйте применимость деталей к VIN и комплектации">
-         Запчасти для этой марки</a>
+       <a className="btn ghost small" href={`#/shop?brand=${encodeURIComponent(item.brand)}&model=${encodeURIComponent(item.model)}&category=${encodeURIComponent(item.category)}`} title="Проверяйте применимость деталей к VIN и комплектации">
+         Проверить запчасти</a>
      </div>
      {reportOpen&&<div className="experience-report stack">
        <label className="note">Что необходимо проверить в этой публикации?</label>
