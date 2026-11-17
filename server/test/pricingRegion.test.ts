@@ -70,16 +70,21 @@ test('public estimates reject far-away GPS and explicit other cities without inv
   }
   const local=ok(await t.api('POST',route,{...base,address:'Санкт-Петербург, Невский проспект 1'}));
   assert.ok(local.callOut>0);
-  assert.equal(local.regionValidation.validatedByGeocoder,false);
+  assert.equal(local.provisional,true);
+  assert.match(local.coverageNote,/координаты не подтверждают точную границу КАД/i,
+    'API must not claim that the address or pricing was geocoded');
   const omitted=await t.api('POST',route,{service:'electric',zoneId:'spb',tier:'eco'});
   assert.equal(omitted.status,400,'region must be explicitly declared in production API');
   assert.equal(omitted.body.error,'region_required');
   const blind=ok(await t.api('POST',route,base));
-  assert.equal(blind.regionValidation.status,'unknown');
-  assert.equal(blind.regionValidation.manualConfirmationRequired,true);
+  assert.equal(blind.provisional,true);
+  assert.ok(blind.coverageNote,'without location a preview is still explicitly preliminary');
+  assert.equal(blind.regionValidation,undefined,
+    'the current response does not invent a validated region status');
   const phone=ok(await t.api('POST',route,{service:'consult',zoneId:'spb',address:'Калининград'}));
   assert.equal(phone.consult,true,'remote consultation is independent of region');
-  assert.equal(phone.regionValidation,null);
+  assert.equal(phone.coverageNote,null);
+  assert.equal(phone.provisional,false);
 });
 test('clearly outside locations cannot create orders or bank holds, including direct API call',async()=>{
   ok(await t.api('PUT','/api/admin/settings/payments',{online:true},admin.token));
@@ -115,7 +120,8 @@ test('an explicitly named outlying town is not charged at the KAD tariff',async(
   assert.equal(rejected.body.error,'region_zone_mismatch');
   const correct=ok(await t.api('POST','/api/pricing/estimate',{...mismatched,zoneId:'gat'}));
   assert.equal(correct.zoneId,'gat');
-  assert.equal(correct.regionValidation.validatedByGeocoder,false);
+  assert.equal(correct.provisional,true);
+  assert.match(correct.coverageNote,/координаты не подтверждают точную границу КАД/i);
   const countBefore=(await t.db.query('select id from orders where created_by=$1',[customer.id])).length;
   const paymentsBefore=t.payments.payments.size;
   const attempt=await t.api('POST','/api/orders',{
