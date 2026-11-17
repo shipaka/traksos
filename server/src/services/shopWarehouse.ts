@@ -19,6 +19,7 @@ type Discrepancy={id:string;stop_id:string;line_index:number;kind:string;note:st
   observed_article:string;observed_qty:number;reported_at:Date;status:string};
 type WarehouseLine={index:number;name:string;brand:string|null;article:string|null;
   quantity:number;verified:boolean;method:string|null;checkedAt:Date|null;blockedReason:string|null;
+  recheckedAfterDiscrepancy:boolean;
   openDiscrepancy:{id:string;kind:string;note:string;observedArticle:string;
     observedQty:number;reportedAt:Date}|null};
 type WarehouseStop={id:string;orderNumber:number;status:string;lines:WarehouseLine[]};
@@ -54,12 +55,16 @@ export async function warehouseProgress(q:Queryable,runId:string){
       const expected=article&&article.length>=2&&Number.isSafeInteger(qty)&&qty>0;
       const confirmed=checked.get(st.stop_id+':'+index);
       const discrepancy=open.get(st.stop_id+':'+index);
+      const recheckedAfterDiscrepancy=Boolean(expected&&discrepancy&&confirmed&&
+        key(confirmed.checked_article)===key(article!)&&confirmed.checked_qty===qty&&
+        confirmed.checked_at>discrepancy.reported_at);
       const verified=Boolean(expected&&!discrepancy&&confirmed&&
         key(confirmed.checked_article)===key(article!)&&confirmed.checked_qty===qty);
       if(!verified)remaining++;
       total++;
       return {index,name:String(item.name??'Товар'),brand:item.brand??null,
-        article,quantity:qty,verified,method:verified?confirmed!.method:null,
+        article,quantity:qty,verified,recheckedAfterDiscrepancy,
+        method:verified?confirmed!.method:null,
         checkedAt:verified?confirmed!.checked_at:null,
         openDiscrepancy:discrepancy?{
           id:discrepancy.id,kind:discrepancy.kind,note:discrepancy.note,
