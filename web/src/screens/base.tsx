@@ -230,6 +230,8 @@ export function BaseCar({ id }: { id: string }) {
   const [works, setWorks] = useState<string[] | null>(null);
   const [amount, setAmount] = useState<number | null>(null);
   const [invPts, setInvPts] = useState<number | null>(null);
+  const [warrantyDays,setWarrantyDays]=useState<number|null>(null);
+  const [warrantyWork,setWarrantyWork]=useState('');
   const [company, setCompany] = useState<any>(null);
   const d = b.data;
   if (!d) return <main><Back to={servicePreviewPath('base')} label="Рембаза" /><Loading error={b.error} /></main>;
@@ -303,8 +305,17 @@ export function BaseCar({ id }: { id: string }) {
           <b>Что делали — коротко</b>
           <div className="row">{WORKS.map((w) => <button key={w} type="button" className="chip" aria-pressed={works.includes(w)} onClick={() => setWorks(toggle(works, w))}>{w}</button>)}</div>
           <span className="note">Галочки вместо описаний. Подробности — в заметках, по желанию. Клиент сверит перечень.</span>
+          <div className="card flat stack">
+            <b>Дополнительная гарантия СТО на работы</b>
+            <div className="row">{([null,7,14,30] as Array<number|null>).map(days=><button type="button"
+              key={days??0} className="chip" aria-pressed={warrantyDays===days}
+              onClick={()=>setWarrantyDays(days)}>{days==null?'Не заявлена':days+' дней'}</button>)}</div>
+            <input className="field" maxLength={300} placeholder="Какие работы гарантирует СТО"
+              value={warrantyWork} onChange={e=>setWarrantyWork(e.target.value)}/>
+            <small className="note">Срок начнётся после подтверждения работ клиентом. Права по закону сохраняются.</small>
+          </div>
           <div className="grid2">
-            <button className="btn" disabled={busy || !works.length} onClick={async () => { if (await act('ready', { works }, 'Готово — клиент сверит работы')) setWorks(null); }}>Машина готова</button>
+            <button className="btn" disabled={busy || !works.length} onClick={async () => { if (await act('ready', { works,warrantyDays,warrantyWork:warrantyWork||works.join(', ') }, 'Готово — клиент сверит работы')) setWorks(null); }}>Машина готова</button>
             <button className="btn ghost" onClick={() => setWorks(null)}>Назад</button>
           </div>
         </div>
@@ -813,6 +824,12 @@ export function BookingPage({ id }: { id: string }) {
           )}
         </div>
       )}
+      {d.warrantyDays!=null&&['invoiced','closed'].includes(d.status)&&
+        <div className="card flat">
+          <b>Дополнительная гарантия СТО: {d.warrantyDays} дней</b>
+          <p className="note">На работы: {d.warrantyWork??d.works.join(', ')}.
+            {d.warrantyStartedAt?' Действует с '+new Date(d.warrantyStartedAt).toLocaleDateString('ru-RU'):' Начнёт действовать после приёмки.'}</p>
+        </div>}
       {d.status === 'closed' && <div className="banner col"><b>Работы подтверждены</b><span className="note">{d.works.join(', ')} · {rub(d.toPay)}{d.reviewStars ? ` · ваша оценка ${'★'.repeat(d.reviewStars)}` : ''}. Ремонт записан в историю машины.</span></div>}
       {d.status === 'disputed' && <div className="banner warn col"><b>Спор по работам</b><span className="note">Модератор свяжется с вами и с сервисом. Ответ придёт в «Поддержку».</span></div>}
       {['new', 'clarify', 'expected'].includes(d.status) && (
