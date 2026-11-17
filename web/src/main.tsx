@@ -31,6 +31,7 @@ import { PerformerHub, ScheduleSection, AboutSection, PhoneSection, CarsSection,
 import { Consult, Home, Sos, NewOrder, Orders, Garage, Profile, logout } from './screens/client.tsx';
 import { Order } from './screens/order.tsx';
 import { Work,  IncomingCall } from './screens/performer.tsx';
+import { EcuDesk } from './screens/ecuDesk.tsx';
 import { Admin } from './screens/admin.tsx';
 import { Documents } from './screens/documents.tsx';
 import { OfferGate, OfferPage } from './screens/offers.tsx';
@@ -40,6 +41,12 @@ import { Fleet, QrJoin } from './screens/fleet.tsx';
 import { Help } from './screens/help.tsx';
 import { Rules } from './screens/rules.tsx';
 import { Shop, ShopCart, ShopHistory } from './screens/shop.tsx';
+import { DriverAir } from './screens/driverAir.tsx';
+import { TechnicalBase } from './screens/technicalBase.tsx';
+import { OrderTechBase } from './screens/orderTechBase.tsx';
+import { PartnerLevelView, PartnerLevelAdmin } from './screens/partnerLevel.tsx';
+import { CourierHome } from './screens/courier.tsx';
+import { CourierAdmin } from './screens/courierAdmin.tsx';
 import { Privacy } from './screens/privacy.tsx';
 import { ModCase, Appeal, MyReviews } from './screens/moderation.tsx';
 import { ModeratorDesk } from './screens/moderatorDesk.tsx';
@@ -74,7 +81,7 @@ class ScreenErrorBoundary extends Component<
   }
 }
 
-type Mode = 'client' | 'performer' | 'admin' | 'moderator' | 'service' | 'insurer' | 'inspection';
+type Mode = 'client' | 'performer' | 'admin' | 'moderator' | 'service' | 'insurer' | 'inspection' | 'courier';
 const PERFORMER_ROLES = ['master', 'tow', 'service'];
 
 /** Consistent vector icons for the same mobile navigation on web and Android WebView. */
@@ -163,9 +170,10 @@ function App() {
   useEffect(() => {
     const [x, m] = route;
     if (x !== 'as') return;
-    if (m === 'client' || m === 'performer' || m === 'admin' || m === 'moderator' || m === 'service' || m === 'insurer' || m === 'inspection') setMode(m);
-    location.replace('#/' + (m === 'performer' ? 'work' : m === 'admin' ? 'admin' : m === 'moderator' ? 'moderation' : m === 'service' ? 'base' : m === 'insurer' ? 'insurance' : m === 'inspection' ? 'inspections' : ''));
+    if (m === 'client' || m === 'performer' || m === 'admin' || m === 'moderator' || m === 'service' || m === 'insurer' || m === 'inspection' || m === 'courier') setMode(m);
+    location.replace('#/' + (m === 'performer' ? 'work' : m === 'admin' ? 'admin' : m === 'moderator' ? 'moderation' : m === 'service' ? 'base' : m === 'insurer' ? 'insurance' : m === 'inspection' ? 'inspections' : m === 'courier' ? 'courier' : ''));
   }, [route.join('/')]); // eslint-disable-line
+  const activeSessionToken = getToken();
   useEffect(() => {
     if (!ready) return; // Keep the native token until the initial auth check finishes.
     if (!me) {
@@ -178,7 +186,7 @@ function App() {
     if (sessionStorage.getItem('traksos.sandboxMode') === '1') return;
     native.setSession(API_URL || location.origin, getToken());
     native.registerPush((token) => post('/api/me/push-token', { provider: 'rustore', token }));
-  }, [ready, me?.id]); // eslint-disable-line
+  }, [ready, me?.id, activeSessionToken]); // eslint-disable-line
   const modeRef = useRef(mode);
   modeRef.current = mode;
   useEffect(() => onEvent((e) => {
@@ -207,6 +215,7 @@ function App() {
   if (a === 'as') return null;
   const isPerformer = me.roles.some((r) => r === 'master' || r === 'tow');
   const isCustomer = me.roles.some((r) => r === 'client' || r === 'driver');
+  const isCourier = me.roles.includes('courier');
   const isAdmin = me.roles.includes('admin');
   const serviceSandbox = isAdmin && a === 'admin' && b === 'test-center' && route[2] === 'service' && route.length > 3;
   const isModerator = me.roles.includes('moderator') || isAdmin;
@@ -215,26 +224,33 @@ function App() {
   const isInsurer = me.roles.includes('insurer');
   const isInspection = me.roles.includes('inspection_operator');
   // A saved/forced mode must never expose navigation for a role the account lacks.
-  const fallback: Mode = isInsurer ? 'insurer' : isInspection ? 'inspection'
+  const fallback: Mode = isCourier ? 'courier' : isInsurer ? 'insurer' : isInspection ? 'inspection'
     : isCustomer ? 'client' : isPerformer ? 'performer'
     : isService ? 'service' : isAdmin ? 'admin' : isModerator ? 'moderator' : 'client';
-  const permitted = mode === 'insurer' ? isInsurer : mode === 'inspection' ? isInspection : mode === 'admin' ? isAdmin : mode === 'moderator' ? isModerator
+  const permitted = mode === 'courier' ? isCourier : mode === 'insurer' ? isInsurer : mode === 'inspection' ? isInspection : mode === 'admin' ? isAdmin : mode === 'moderator' ? isModerator
     : mode === 'performer' ? isPerformer : mode === 'service' ? isService
     : isCustomer || isStaff;
   const allowedMode: Mode = permitted ? mode : fallback;
-  const effMode: Mode = serviceSandbox ? 'service' : a === 'work' && isPerformer ? 'performer'
+  const effMode: Mode = serviceSandbox ? 'service' : a === 'courier' && isCourier ? 'courier' : a === 'work' && isPerformer ? 'performer'
     : a === 'admin' && isAdmin ? 'admin' : a === 'moderation' && isModerator ? 'moderator'
     : a === 'base' && isService ? 'service' : a === 'insurance' && isInsurer ? 'insurer' : a === 'inspections' && (isInspection||isInsurer) ? 'inspection' : allowedMode;
 
   let screen;
   switch (a) {
-    case undefined: screen = effMode === 'insurer' ? <InsurerCabinet /> : effMode === 'inspection' ? <InsurerCabinet inspectionOnly /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isAdmin ? <Admin /> : effMode === 'moderator' && isModerator ? <ModeratorDesk /> : <Home />; break;
+    case undefined: screen = effMode === 'courier' ? <CourierHome /> : effMode === 'insurer' ? <InsurerCabinet /> : effMode === 'inspection' ? <InsurerCabinet inspectionOnly /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? (me.performer?.kind === 'ecu' ? <EcuDesk /> : <Work />) : effMode === 'admin' && isAdmin ? <Admin /> : effMode === 'moderator' && isModerator ? <ModeratorDesk /> : <Home />; break;
     case 'login': screen = <Home />; break;
     case 'sos': screen = isCustomer ? <Sos /> : <main><div className="empty">Для вызова SOS нужен клиентский аккаунт</div></main>; break;
     case 'new': screen = !isCustomer ? <main><div className="empty">Для заказа нужен клиентский аккаунт</div></main> : b === 'consult' ? <Consult /> : <NewOrder service={b ?? 'electric'} />; break;
     case 'order': screen = <Order id={b} />; break;
     case 'orders': screen = isCustomer ? <Orders as="client" /> : <main><div className="empty">Нет доступа к клиентским заявкам</div></main>; break;
     case 'garage': screen = isCustomer ? <Garage /> : <main><div className="empty">Нет доступа к гаражу</div></main>; break;
+    case 'courier': screen = b==='admin' && isAdmin ? <CourierAdmin /> : isCourier ? <CourierHome /> : <main><div className="empty">Кабинет доступен только курьерам, которых назначил администратор.</div></main>; break;
+    case 'air': screen = me.roles.some(r=>r==='driver'||r==='client') ? <DriverAir /> : <main><div className="empty">Водительский Эфир доступен водителям и владельцам транспорта.</div></main>; break;
+    case 'partner': screen = b==='admin' && isAdmin ? <PartnerLevelAdmin /> : (isPerformer||isService) ? <PartnerLevelView /> : <main><div className="empty">Партнёрская программа только для специалистов.</div></main>; break;
+    case 'techbase': screen = me.roles.some(r => ['master','tow','service','admin'].includes(r))
+      ? b==='order' && route[2] ? <OrderTechBase orderId={route[2]}/>
+        : b==='cases' ? <TechnicalBase initialTab="cases" initialRoomSlug={route[2]}/> : <TechnicalBase />
+      : <main><div className="empty">ТехБаза доступна только подтверждённым специалистам.</div></main>; break;
     case 'profile': screen = <Profile />; break;
     case 'invite': screen = <Invite />; break;
     case 'r': screen = <Invite />; break;
@@ -242,7 +258,7 @@ function App() {
       if (!isPerformer) { screen = <Home />; break; }
       screen = !me.performer || b === 'profile' || (b === 'me' && !route[2]) ? <PerformerHub />
         : b === 'me' ? ({ about: <AboutSection />, phone: <PhoneSection />, schedule: <ScheduleSection />, cars: <CarsSection />, tax: <TaxSection />, money: <MoneySection />, level: <LevelSection /> } as Record<string, JSX.Element>)[route[2]] ?? <PerformerHub />
-        : b === 'filter' ? <FilterSection /> : b === 'jobs' ? <Orders as="performer" /> : b === 'docs' ? <Documents /> : <Work />;
+        : b === 'filter' ? <FilterSection /> : b === 'jobs' ? <Orders as="performer" /> : b === 'docs' ? <Documents /> : me.performer?.kind === 'ecu' ? <EcuDesk /> : <Work />;
       break;
     case 'base': screen = !isService ? <Home /> : b === 'car' && route[2] ? <BaseCar id={route[2]} /> : b === 'me' ? <BaseSetup /> : b === 'money' ? <BaseMoney /> : <BaseHome />; break;
     case 'services': screen = b && route[2] === 'book' ? <BookForm id={b} /> : b ? <CenterPage id={b} /> : <ServicesList />; break;
@@ -320,7 +336,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   const sandboxHref=(href:string)=>serviceSandbox?'#/admin/test-center/service'+(href==='/base'||href.startsWith('/base/')?href:'/unavailable'):'#'+href;
   // На телефоне оставляем только рабочие действия. Все прежние маршруты
   // сохраняются через меню; компьютерная боковая навигация остаётся полной.
-  const tabs: [string, string, string][] = !me ? [] : mode === 'performer'
+  const tabs: [string, string, string][] = !me ? [] : mode === 'courier'
+    ? [['/courier','▣','Мои рейсы'],['/profile','◉','Аккаунт']]
+    : mode === 'performer'
     ? [['/work', '⚡', 'Линия'], ['/work/jobs', '☰', 'Заявки'], ['/shop', '🛍', 'Магазин']]
     : mode === 'service'
       ? [['/base', '▤', 'Рембаза'], ['/support', '?', 'Связь'], ['/shop', '🛍', 'Магазин']]
@@ -332,10 +350,14 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       ? [['/moderation', '▦', 'Рабочий стол'], ['/admin/section/queue', '⚑', 'Проверки'], ['/support', '?', 'Обращения']]
     : mode === 'admin'
       ? [['/admin', '▦', 'Рабочий стол'], ['/admin/section/orders', '☰', 'Заявки'], ['/admin/section/support', '?', 'Обращения']]
-      : [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь'], ['/shop', '⚙', 'Запчасти'], ['/profile', '◉', 'Профиль']];
+      : me.roles.includes('driver')
+        ? [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь'], ['/air', '◉', 'Эфир'], ['/profile', '◉', 'Профиль']]
+        : [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь'], ['/shop', '⚙', 'Запчасти'], ['/profile', '◉', 'Профиль']];
   // Все дополнительные функции доступны в шапке, даже когда они не в нижних вкладках.
   // Не показываем чужие роли и не создаём несуществующие страницы.
-  const accountLinks: [string, string][] = mode === 'performer'
+  const accountLinks: [string, string][] = mode === 'courier'
+    ? [['/courier','Маршруты и посылки'],['/profile','Аккаунт']]
+    : mode === 'performer'
     ? [...(me?.roles.includes('service') ? [['/base', 'Моя СТО — стационарный ремонт']] as [string, string][] : []),
        ['/work/me', 'Профиль исполнителя'], ['/work/me/about', 'Личные сведения'],
        ['/work/me/phone', 'Телефон и вход'], ['/work/me/cars', 'Автомобили'],
@@ -343,11 +365,11 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
        ['/work/me/money', 'Финансы и выплаты'], ['/work/me/tax', 'Налоговый статус'],
        ['/work/me/level', 'Рейтинг и уровень'], ['/work/docs', 'Проверка и документы'],
        ['/reviews', 'Отзывы'], ['/invite', 'Пригласить партнёра'],
-       ['/work/jobs', 'История заявок'], ['/profile', 'Аккаунт']]
+       ['/work/jobs', 'История заявок'], ['/partner', 'TrakSOS Партнёр · привилегии и обжалование'], ['/techbase', 'Профессиональная ТехБаза'], ['/profile', 'Аккаунт']]
     : mode === 'service'
       ? [...(me?.roles.some(r => r === 'master' || r === 'tow') ? [['/work', 'Выездной мастер — заявки']] as [string, string][] : []),
          ['/base', 'Заявки и история ремонтов'], ['/base/me', 'Карточка СТО'],
-         ['/base/money', 'Финансы'], ['/profile', 'Аккаунт'],
+         ['/base/money', 'Финансы'], ['/partner', 'TrakSOS Партнёр'], ['/techbase', 'Профессиональная ТехБаза'], ['/profile', 'Аккаунт'],
          ['/invite', 'Пригласить партнёра']]
     : mode === 'inspection'
       ? [['/inspections', 'Кабинет техосмотра'], ['/profile', 'Аккаунт']]
@@ -364,6 +386,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/admin/section/people', 'Пользователи'],
          ['/admin/section/access', 'Регистрация и доступы'],
          ['/admin/section/verify', 'Проверка исполнителей'],
+         ['/techbase', 'Проверка материалов ТехБазы'],
+         ['/partner/admin', 'TrakSOS Партнёр · уровни и обращения'],
+         ['/courier/admin', 'Курьерская доставка · маршруты и склад'],
          ['/admin/section/bases', 'СТО и рембазы'],
          ['/admin/section/payments', 'Деньги и выплаты'],
          ['/admin/section/stats', 'Статистика'],
@@ -378,6 +403,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     : [['/orders', 'История заявок'], ['/garage', 'Мой гараж'],
        ...(!me?.owner_id && !me?.roles.includes('driver') ? [['/fleet', 'Мой автопарк']] as [string,string][] : []),
        ['/services', 'СТО и запись'],
+       ...(me?.roles.some(r=>r==='driver'||r==='client') ? [['/air', 'Водительский Эфир и личные чаты']] as [string,string][] : []),
+       ...(me?.roles.includes('driver') ? [['/shop', 'Магазин запчастей']] as [string,string][] : []),
        ['/reviews', 'Мои отзывы'], ['/invite', 'Пригласить друга'],
        ['/profile', 'Профиль и настройки']];
   const helpLinks: [string, string][] = [
@@ -391,7 +418,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       <header className="top">
         <span className="logo">Trak<b>SOS</b></span>
         {me && mode === 'client' && <nav className="track-top-shortcuts" aria-label="Быстрый доступ">
-          <a href="#/">Главная</a><a href="#/orders">Заявки</a><a href="#/sos">Помощь в дороге</a><a href="#/shop">Запчасти</a>
+          <a href="#/">Главная</a><a href="#/orders">Заявки</a><a href="#/sos">Помощь в дороге</a><a href="#/air">Эфир</a><a href="#/shop">Запчасти</a>
         </nav>}
         {!me && !isAuthEntry && <nav className="guest-site-nav" aria-label="Разделы TrakSOS">
           {TOP_CATALOGUE.map(group => <details key={group.title} className="guest-nav-group"
@@ -417,6 +444,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
             </div>
           </details>)}
           <a href="#/join" className="guest-business-link">Для партнёров</a>
+          <a href="#/login" className="guest-business-link">Сообщество</a>
           <a href="#/company" className="guest-business-link">Компания</a>
           <a href="#/offers" className="guest-business-link">Оферты</a>
         </nav>}
@@ -532,7 +560,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               <span className="track-sidebar-app-soon">Скоро в RuStore</span>
             </span>
           </aside>}
-          <div className="desktop-sidebar-bottom"><strong>TRAKSOS 24/7</strong><span>Помощь грузовикам</span><small>Санкт-Петербург и Ленинградская область</small></div>
+          <div className="desktop-sidebar-bottom"><strong>TRAKSOS 24/7</strong><span>Помощь грузовикам</span><small>Единая платформа для всей России</small></div>
         </aside>
         <div className="desktop-content">
           {children}

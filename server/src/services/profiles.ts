@@ -1,6 +1,6 @@
 import type { Db } from '../db/index.ts';
 import type { SettingsService } from './settings.ts';
-import { bad, forbidden, notFound, type AuthUser } from '../http/router.ts';
+import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { slot, endOfMoscowDay, validSchedule, type Schedule } from '../domain/schedule.ts';
 import { normalizePhone } from '../util.ts';
 import { plausibleGpsStep } from '../domain/geo.ts';
@@ -73,6 +73,16 @@ export class ProfilesService {
     const userRoles = (await this.db.one<{ roles: string[] }>('select roles from users where id=$1', [user.id]))?.roles ?? user.roles;
     assertRoleExtension(userRoles, role);
     await this.db.tx(async (q) => {
+      const old=await q.one<{kind:string}>(
+        'select kind from performer_profiles where user_id=$1 for update',[user.id]);
+      if(old&&old.kind!==p.kind){
+        const active=await q.one(
+          "select 1 from orders where performer_id=$1 and status in "+
+          "('accepted','en_route','arrived','working','awaiting_confirmation') limit 1",
+          [user.id]);
+        if(active)throw conflict('active_job',
+          'Нельзя сменить специализацию, пока не завершена текущая заявка');
+      }
       await q.query(
         `update users set roles = (select array(select distinct unnest(roles || $2::text[]))), name = coalesce($3, name) where id=$1`,
         [user.id, [role], p.name ?? null],
@@ -84,6 +94,15 @@ export class ProfilesService {
                  coalesce($9::int,0),coalesce($10::boolean,true),$11::text,$12::text,$13::jsonb,coalesce($14::jsonb,'[]'))
          on conflict (user_id) do update set
            kind=excluded.kind,
+           verification=case when performer_profiles.kind<>excluded.kind
+             then 'pending' else performer_profiles.verification end,
+           submitted_at=case when performer_profiles.kind<>excluded.kind
+             then null else performer_profiles.submitted_at end,
+           verification_note=case when performer_profiles.kind<>excluded.kind
+             then 'Специализация изменена; требуется новая проверка документов'
+             else performer_profiles.verification_note end,
+           line_status=case when performer_profiles.kind<>excluded.kind
+             then 'offline' else performer_profiles.line_status end,
            specialties=coalesce($3::text[], performer_profiles.specialties),
            brands=coalesce($4::jsonb, performer_profiles.brands),
            tier=coalesce($5::text, performer_profiles.tier),
@@ -135,7 +154,7 @@ export class ProfilesService {
          off_schedule_until = case when $2::text = 'online' then $5::timestamptz when $2::text = 'offline' then null else off_schedule_until end,
          paused = coalesce($4::boolean, paused), missed_in_row = case when $2::text = 'online' then 0 else missed_in_row end, updated_at = now()
        where user_id=$1`,
-      [userId, s.lineStatus ?? null, s.busyUntil ?? null, s.paused ?? null, outside ? endOfMoscowDay(this.now()) : null],
+      [userId, s.lineStatus ?? null, s.busyUntil ?? null, s.paused ?? null, outside ? endOfMoscowDay(this.now(),p.schedule?.timeZone??'Europe/Moscow') : null],
     );
     // Ушёл с линии или на паузу — убираем из звонков и торгов
     if (s.lineStatus === 'offline' || s.lineStatus === 'busy' || s.paused === true) await this.onUnavailable?.(userId);

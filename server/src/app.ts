@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { isIP } from 'node:net';
 import { z } from 'zod';
 import type { Db } from './db/index.ts';
-import { Router, parse, readBody, send, errorBody, forbidden, bad, notFound, HttpError, type Ctx, type AuthedCtx } from './http/router.ts';
+import { Router, parse, readBody, send, errorBody, forbidden, bad, conflict, notFound, HttpError, type Ctx, type AuthedCtx } from './http/router.ts';
 import { Hub } from './realtime/hub.ts';
 import type { SmsProvider } from './providers/sms.ts';
 import type { PushProvider } from './providers/push.ts';
@@ -37,9 +37,35 @@ import { PartnerFinance } from './services/partnerFinance.ts';
 import { InsuranceQuoteFlow } from './services/insuranceQuoteFlow.ts';
 import { PrivacyService } from './services/privacy.ts';
 import { StandingService } from './services/standing.ts';
+import { registerPartnerLevelRoutes } from './services/partnerLevels.ts';
+import { registerPartnerActivityRoutes } from './services/partnerActivity.ts';
 import { ShopService } from './services/shop.ts';
+import { registerShopCourierRoutes } from './services/shopCourier.ts';
+import { registerShopCourierBatchRoutes } from './services/shopCourierBatch.ts';
+import {registerShopCourierOperationsRoutes} from './services/shopCourierOperations.ts';
+import { registerShopCourierEconomicsRoutes } from './services/shopCourierEconomics.ts';
+import { registerShopWarehouseRoutes } from './services/shopWarehouse.ts';
+import {registerEcuReferralRoutes} from './services/ecuReferrals.ts';
+import {registerServiceCaseLedgerRoutes} from './services/serviceCaseLedger.ts';
+import {registerShopSupplierReceivingRoutes} from './services/shopSupplierReceiving.ts';
+import {registerShopWarehouseTraceRoutes} from './services/shopWarehouseTraceability.ts';
+import {registerShopWarehouseSourceRoutes} from './services/shopTraceSources.ts';
+import { ShopRegionService, registerShopRegionRoutes } from './services/shopRegion.ts';
+import { registerShopMerchandisingRoutes } from './services/shopMerchandising.ts';
 import { ShopCatalogService } from './services/shopCatalog.ts';
 import { ModerationService } from './services/moderation.ts';
+import { registerCommunityRoutes } from './services/community.ts';
+import { registerCommunityDirectRoutes } from './services/communityDirect.ts';
+import { CommunityNotifications,registerCommunityNotificationRoutes } from './services/communityNotifications.ts';
+import { registerCommunityRoadRoutes } from './services/communityRoad.ts';
+import { registerRealNearbyHelpRoutes } from './services/realNearbyHelp.ts';
+import {legacyTariffScope,legacyPricingWarning,legacyTariffZoneMismatch} from './domain/pricingRegion.ts';
+import { registerKnowledgeOrderRoutes } from './services/communityKnowledgeOrder.ts';
+import { registerKnowledgeReferenceRoutes } from './services/communityKnowledgeReferences.ts';
+import { registerKnowledgeApplicabilityRoutes } from './services/communityKnowledgeApplicability.ts';
+import { registerProfessionalCasesRoutes } from './services/communityProfessionalCases.ts';
+import {registerProfessionalEvidenceRoutes} from './services/communityCaseEvidence.ts';
+import { registerProfessionalCaseAppeals } from './services/communityProfessionalCaseAppeals.ts';
 import { WarrantyClaimsService } from './services/warranty.ts';
 import { WarrantyRemediationService } from './services/warrantyRemediation.ts';
 import { WarrantyRecourseService } from './services/warrantyRecourse.ts';
@@ -67,6 +93,7 @@ export function createApp(d: Deps) {
   const hub = new Hub();
   const settings = new SettingsService(d.db);
   const notifier = new Notifier(d.db, hub, d.push);
+  const communityNotifications=new CommunityNotifications(d.db,notifier,now);
   const auth = new AuthService(d.db, d.sms, now, settings);
   const operatorDemo = new OperatorDemoAccess(d.db, now);
   const profiles = new ProfilesService(d.db, settings, now);
@@ -100,6 +127,7 @@ export function createApp(d: Deps) {
   const privacy = new PrivacyService(d.db, notifier, now);
   const standing = new StandingService(d.db, now, settings);
   const shop = new ShopService(d.db, notifier, settings);
+  const shopRegion = new ShopRegionService(d.db, settings);
   const partCatalog = new ShopCatalogService(d.db, settings);
   const moderation = new ModerationService(d.db, notifier, reviews, now, d.sms);
   const warranty = new WarrantyClaimsService(d.db, notifier, now);
@@ -115,6 +143,22 @@ export function createApp(d: Deps) {
   centers.onDispute = (p) => moderation.open({ kind: 'dispute', title: p.title, text: p.text, openedBy: p.userId, targetId: p.targetId, bookingId: p.bookingId, ticketId: p.ticketId, priority: 1 });
 
   const r = new Router();
+  registerPartnerLevelRoutes(r, d.db, now);
+  registerPartnerActivityRoutes(r,d.db,now);
+  // Put /knowledge/references before /knowledge/:id in Router's first-match order.
+  registerKnowledgeReferenceRoutes(r,d.db);
+  registerKnowledgeApplicabilityRoutes(r,d.db);
+  // Isolated community rooms, nickname moderation and professional knowledge ACL.
+  registerCommunityRoutes(r, d.db, notifier);
+  registerCommunityDirectRoutes(r, d.db, notifier, communityNotifications);
+  registerCommunityNotificationRoutes(r,d.db,communityNotifications);
+  registerCommunityRoadRoutes(r, d.db, notifier);
+  registerRealNearbyHelpRoutes(r,d.db,now);
+  registerKnowledgeOrderRoutes(r, d.db);
+  // Register fixed appeal listing before /pro-cases/:id dynamic paths.
+  registerProfessionalCaseAppeals(r,d.db,notifier);
+  registerProfessionalCasesRoutes(r,d.db,notifier,communityNotifications);
+  registerProfessionalEvidenceRoutes(r,d.db);
   const staff = ['admin', 'moderator'];
   const performerRoles = ['master', 'tow', 'service'];
 
@@ -225,6 +269,11 @@ export function createApp(d: Deps) {
     if (b.acceptOffers) await offers.acceptCurrent(r.user as any, c.ip);
     return r;
   });
+  // The browser obtains a 30-second single-use WebSocket ticket through a
+  // normal authenticated POST. The 90-day session token never enters the WS URL.
+  r.post('/api/auth/realtime-ticket',true,(c:AuthedCtx)=>
+    auth.issueRealtimeTicket(bearer(c.req)!));
+
   r.post('/api/auth/logout', true, async (c: AuthedCtx) => {
     // Closing/minimizing the app never calls logout and never changes availability.
     // Explicit sign-out must not leave a performer discoverable without any call token.
@@ -488,6 +537,7 @@ export function createApp(d: Deps) {
     const day = z.boolean();
     return profiles.setSchedule(c.user.id, parse(z.object({
       on: z.boolean(), from: t, to: t, phoneTo: t,
+      timeZone: z.string().min(3).max(80).refine(v=>{try{new Intl.DateTimeFormat('en',{timeZone:v});return true}catch{return false}},'Неверный часовой пояс').optional(),
       days: z.object({ mon: day, tue: day, wed: day, thu: day, fri: day, sat: day, sun: day }),
     }), c.body));
   });
@@ -526,18 +576,29 @@ export function createApp(d: Deps) {
   // Цены ---------------------------------------------------------------------
   r.get('/api/pricing', false, async () => {
     const all = await settings.all();
-    return { zones: all.pricing.zones, tiers: all.pricing.tiers, consult: all.pricing.consult, towBase: all.pricing.towBase, nightNow: isNight(all.pricing, now()), payments: await payments.methods(),
+    return { tariffScope:legacyTariffScope, zones: all.pricing.zones, tiers: all.pricing.tiers, consult: all.pricing.consult, towBase: all.pricing.towBase, nightNow: isNight(all.pricing, now()), payments: await payments.methods(),
       clientFeePct: all.fees.clientFeePct, reviewTags: REVIEW_TAGS, cancelScale: all.cancel.scale,
       serviceCommissionPct: all.fees.serviceCommissionPct, serviceCommissionMax: all.fees.serviceCommissionMax, serviceReferralDiscountPct: all.fees.serviceReferralDiscountPct, performerCommissionPct: all.fees.performerCommissionPct,
       billingStep: Number(all.pricing.billingStepMinutes ?? 60) };
   });
   r.post('/api/pricing/estimate', false, async (c: Ctx) => {
     const b = parse(z.object({ service: z.string(), tier: z.enum(['eco', 'comfort', 'pro']).default('eco'), zoneId: z.string(),
-      night: z.boolean().optional(), group: z.boolean().default(false) }), c.body);
+      night: z.boolean().optional(), group: z.boolean().default(false),
+      address:z.string().max(300).optional(),
+      lat:z.number().min(-90).max(90).optional(),
+      lng:z.number().min(-180).max(180).optional() }), c.body);
     const p = await settings.get('pricing');
     try {
-      return estimate(p, { ...b, night: b.night ?? isNight(p, now()) });
+      const scope=legacyPricingWarning({address:b.address,lat:b.lat,lng:b.lng});
+      if(b.service!=='consult'&&!scope.available)
+        throw conflict('outside_legacy_tariff_region',scope.message);
+      const mismatch=b.service==='consult'?null:legacyTariffZoneMismatch({address:b.address},b.zoneId);
+      if(mismatch)throw conflict('mismatched_legacy_tariff_zone',
+        'Указанный населённый пункт не соответствует выбранной зоне тарифа СПб/ЛО. Выберите верную зону.');
+      const quote=estimate(p, { ...b, night: b.night ?? isNight(p, now()) });
+      return {...quote,regionValidation:b.service==='consult'?null:scope};
     } catch (e) {
+      if(e instanceof HttpError)throw e;
       throw bad('bad_zone', (e as Error).message);
     }
   });
@@ -555,6 +616,7 @@ export function createApp(d: Deps) {
     destination: z.string().max(300).optional(), cargo: z.enum(['tractor', 'semitrailer', 'coupling', 'truck12', 'bus', 'special']).optional(),
     loaded: z.enum(['empty', 'loaded', 'adr']).optional(), driverOnSite: z.boolean().optional(), fromConsult: z.string().uuid().optional(),
     continueFrom: z.string().uuid().optional(),
+    additionalTo: z.string().uuid().optional(),
     site: z.object({
       place: z.enum(['parking', 'yard', 'plant', 'road']).optional(), pass: z.enum(['none', 'onsite', 'ahead']).optional(),
       meet: z.string().max(60).optional(), state: z.enum(['free', 'loading', 'other_work']).optional(),
@@ -586,28 +648,46 @@ export function createApp(d: Deps) {
   r.get('/api/legal', false, () => settings.get('legal'));
   // The legacy full catalog endpoint remains for older APK versions. New clients
   // request light configuration then load only one page of products at a time.
-  r.get('/api/shop', true, (c: AuthedCtx) => shop.catalog(c.query.get('light') === '1'));
-  r.get('/api/shop/search', true, (c: AuthedCtx) => shop.search(
-    c.query.get('q') ?? '', c.query.get('category') ?? '',
-    Number(c.query.get('page') ?? '0'), Number(c.query.get('limit') ?? '24')));
+  registerShopRegionRoutes(r, shopRegion);
+  registerShopCourierRoutes(r, d.db, notifier);
+  registerShopCourierBatchRoutes(r, d.db);
+  registerShopCourierOperationsRoutes(r, d.db);
+  registerShopCourierEconomicsRoutes(r, d.db, notifier);
+  registerShopWarehouseRoutes(r, d.db);
+  registerShopSupplierReceivingRoutes(r,d.db);
+  registerShopWarehouseTraceRoutes(r,d.db);
+  registerShopWarehouseSourceRoutes(r,d.db);
+  registerShopMerchandisingRoutes(r, d.db, notifier);
+  r.get('/api/shop', true, (c: AuthedCtx) => shopRegion.catalog(c.user, shop, c.query.get('light') === '1'));
+  r.get('/api/shop/search', true, async (c: AuthedCtx) => {
+    await shopRegion.requireWhenOpen(c.user);
+    return shop.search(c.query.get('q') ?? '', c.query.get('category') ?? '',
+      Number(c.query.get('page') ?? '0'), Number(c.query.get('limit') ?? '24'));
+  });
   r.get('/api/shop/selection', true, (c: AuthedCtx) => {
     const raw = c.query.get('ids') ?? '';
     const ids = raw.split(',').filter(Boolean).slice(0, 50);
     if (ids.some((id) => !z.string().uuid().safeParse(id).success)) throw bad('bad_ids', 'Неверный артикул товара');
-    return shop.selection(ids);
+    return shopRegion.requireWhenOpen(c.user).then(() => shop.selection(ids));
   });
-  r.get('/api/shop/index/manifest', true, () => shop.indexManifest());
+  r.get('/api/shop/index/manifest', true, async (c: AuthedCtx) => {
+    await shopRegion.requireWhenOpen(c.user);
+    return shop.indexManifest();
+  });
   r.get('/api/shop/index/page', true, (c: AuthedCtx) => {
     const after = c.query.get('after');
     if (after && !z.string().uuid().safeParse(after).success) throw bad('bad_cursor', 'Некорректный курсор');
-    return shop.indexPage(after, Number(c.query.get('limit') ?? '750'));
+    return shopRegion.requireWhenOpen(c.user).then(() => shop.indexPage(after, Number(c.query.get('limit') ?? '750')));
   });
   r.get('/api/shop/index/changes', true, (c: AuthedCtx) => {
     const after = c.query.get('after') ?? '0';
     if (!/^\d{1,19}$/.test(after)) throw bad('bad_cursor', 'Неверная версия справочника');
-    return shop.indexChanges(after, Number(c.query.get('limit') ?? '750'));
+    return shopRegion.requireWhenOpen(c.user).then(() => shop.indexChanges(after, Number(c.query.get('limit') ?? '750')));
   });
-  r.get('/api/shop/products/:id/analogs', true, (c: AuthedCtx) => shop.alternatives(c.params.id));
+  r.get('/api/shop/products/:id/analogs', true, async (c: AuthedCtx) => {
+    await shopRegion.requireWhenOpen(c.user);
+    return shop.alternatives(c.params.id);
+  });
   r.post('/api/admin/shop/products/:id/analogs', ['admin'], (c: AuthedCtx) => {
     const b = parse(z.object({
       analogId: z.string().uuid(), source: z.string().min(3).max(300), verified: z.boolean().default(false),
@@ -657,12 +737,16 @@ export function createApp(d: Deps) {
     return shop.history(c.user, vehicleId, Number(c.query.get('page') ?? '0'));
   });
   r.get('/api/shop/products/:id/photo', false, async (c: Ctx) => { const f = await shop.photo(c.params.id); return new Raw(f.mime, f.body, { 'cache-control': 'public, max-age=86400' }); });
-  r.post('/api/shop/orders', true, (c: AuthedCtx) => shop.order(c.user, parse(z.object({
+  r.post('/api/shop/orders', true, async (c: AuthedCtx) => {
+    const input = parse(z.object({
     items: z.array(z.object({ productId: z.string().uuid(), qty: z.number().int().min(1).max(99) })).min(1).max(50),
     delivery: z.enum(['pickup', 'delivery', 'master']), address: z.string().max(300).nullable().optional(), orderId: z.string().uuid().nullable().optional(),
     payment: z.enum(['on_receipt', 'invoice']).optional(), comment: z.string().max(500).nullable().optional(),
     vehicleId: z.string().uuid().nullable().optional(),
-  }), c.body)));
+  }), c.body);
+    await shopRegion.requireCheckout(c.user, input.delivery, input.address);
+    return shop.order(c.user, input);
+  });
   r.get('/api/shop/orders', true, (c: AuthedCtx) => shop.myOrders(c.user));
   r.post('/api/shop/orders/:id/cancel', true, (c: AuthedCtx) => shop.cancelMine(c.user, c.params.id));
   // Autokontinent purchase identifiers: strictly admin-only; there is no supplier API connection yet.
@@ -932,6 +1016,7 @@ export function createApp(d: Deps) {
     name: z.string().min(2).max(120).optional(), address: z.string().min(3).max(300).optional(),
     lat: z.number().min(-90).max(90).nullable().optional(), lng: z.number().min(-180).max(180).nullable().optional(),
     hours: z.string().max(60).optional(), inn: z.string().max(12).nullable().optional(),
+    timeZone: z.string().trim().min(3).max(80).refine(value=>{try {new Intl.DateTimeFormat('en',{timeZone:value});return true;}catch{return false;}},'Укажите действительный часовой пояс').optional(),
     brands: z.array(z.string().max(40)).max(40).optional(),
     staff: z.record(z.string().max(20), z.enum(['own', 'invite', 'none'])).optional(),
     conditions: z.array(z.enum(['parking', 'pit', 'lift', 'night'])).max(4).optional(),
@@ -989,6 +1074,8 @@ export function createApp(d: Deps) {
   r.get('/api/orders', true, (c: AuthedCtx) =>
     orders.list(c.user, c.query.get('as') === 'performer' ? 'performer' : 'client', c.query.get('status') ?? undefined));
   r.get('/api/orders/:id', true, (c: AuthedCtx) => orders.view(c.user, c.params.id));
+  registerEcuReferralRoutes(r,d.db,notifier);
+  registerServiceCaseLedgerRoutes(r,d.db,orders);
   r.post('/api/orders/:id/accept', performerRoles, async (c: AuthedCtx) => (await offers.requirePerformer(c.user), orders.accept(c.user, c.params.id)));
   r.post('/api/orders/:id/decline', performerRoles, (c: AuthedCtx) => orders.decline(c.user, c.params.id));
   r.post('/api/orders/:id/drop', performerRoles, (c: AuthedCtx) => orders.drop(c.user, c.params.id, parse(z.object({ reason: z.string().min(2).max(300) }), c.body).reason));
@@ -1036,7 +1123,7 @@ export function createApp(d: Deps) {
   r.post('/api/orders/:id/consult-finish', performerRoles, (c: AuthedCtx) => orders.finishConsult(c.user, c.params.id, parse(z.object({
     hints: z.array(z.string().min(1).max(40)).min(1).max(3), confidence: z.enum(['sure', 'likely', 'guess']), note: z.string().max(300).optional(),
   }), c.body)));
-  r.post('/api/orders/:id/confirm', true, (c: AuthedCtx) => { const b = parse(z.object({ total: money.optional(), points: money.optional() }), c.body); return orders.confirmAmount(c.user, c.params.id, b.total, b.points ?? 0); });
+  r.post('/api/orders/:id/confirm', true, (c: AuthedCtx) => { const b = parse(z.object({ total: money.optional(), points: money.optional(), proposalVersion:z.string().datetime().optional() }), c.body); return orders.confirmAmount(c.user, c.params.id, b.total, b.points ?? 0,b.proposalVersion); });
   r.post('/api/orders/:id/dispute', true, (c: AuthedCtx) => orders.disputeAmount(c.user, c.params.id, parse(z.object({ reason: z.string().min(2).max(500) }), c.body).reason));
   r.post('/api/orders/:id/cancel', true, (c: AuthedCtx) => orders.cancel(c.user, c.params.id, parse(z.object({ reason: z.string().min(2).max(300) }), c.body).reason));
   r.post('/api/orders/:id/retry', true, (c: AuthedCtx) => orders.retry(c.user, c.params.id));

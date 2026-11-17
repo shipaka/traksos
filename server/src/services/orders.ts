@@ -4,6 +4,7 @@ import type { SettingsService } from './settings.ts';
 import type { Notifier } from './notify.ts';
 import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { estimate, isNight, billWork, type Tier, type Extra } from '../domain/pricing.ts';
+import {checkLegacyPricingLocation,legacyPricingWarning,legacyTariffZoneMismatch} from '../domain/pricingRegion.ts';
 import { rankCandidates, performerKindFor, type Candidate } from '../domain/dispatch.ts';
 import { transition, canDo, statusLabels, type Action, type Actor, type OrderStatus } from '../domain/orderState.ts';
 import { cancelStage, cancelSplit, pct } from '../domain/money.ts';
@@ -39,6 +40,8 @@ export interface CreateOrderInput {
   fromConsult?: string;
   /** Следующий самостоятельный этап того же обращения. */
   continueFrom?: string;
+  /** Independent expert assignment grouped with an earlier job (client-confirmed). */
+  additionalTo?: string;
 }
 
 /** Подсказка мастера после консультации */
@@ -99,6 +102,47 @@ export class OrdersService {
     const clientId = user.owner_id ?? user.id;
     // Previous stage must be closed; never mix its price into the next auction.
     let previous: any = null;
+    let additionalParent: any = null;
+    if(i.additionalTo){
+      if(i.continueFrom||i.fromConsult||i.service!=='ecu')
+        throw bad('bad_additional_service',
+          'Сейчас к другому заказу можно добавить только отдельную заявку специалисту по ЭБУ');
+      additionalParent=await this.db.one<any>(
+        'select * from orders where id=$1',[i.additionalTo]);
+      if(!additionalParent||additionalParent.client_id!==clientId||
+        (user.owner_id&&additionalParent.created_by!==user.id))
+        throw forbidden('Добавить эксперта можно только к своему обращению');
+      if(!['accepted','en_route','arrived','working','awaiting_confirmation','completed']
+        .includes(additionalParent.status))
+        throw conflict('source_order_not_started',
+          'Для подключения специалиста дождитесь принятия первой заявки');
+      if(i.vehicleId&&additionalParent.vehicle_id!==i.vehicleId)
+        throw bad('different_vehicle','Связанные работы выполняются по одному автомобилю');
+      if(additionalParent.brand&&i.brand&&
+        additionalParent.brand.toLowerCase()!==i.brand.toLowerCase())
+        throw bad('different_vehicle','Марка машины должна совпадать');
+      if(additionalParent.model&&i.model&&
+        additionalParent.model.toLowerCase()!==i.model.toLowerCase())
+        throw bad('different_vehicle','Модель машины должна совпадать');
+      if(additionalParent.year&&i.year&&additionalParent.year!==i.year)
+        throw bad('different_vehicle','Год машины должен совпадать');
+      if(additionalParent.zone_id!==i.zoneId)
+        throw bad('zone_changed','Для связанной работы выберите тарифную зону первого заказа');
+      const already=await this.db.one(
+        "select 1 from orders where additional_to=$1 and service='ecu' "+
+        "and status not in ('cancelled','no_performer')",[additionalParent.id]);
+      if(already)
+        throw conflict('ecu_additional_exists',
+          'Специалист по ЭБУ уже вызван по этой заявке. Откройте связанную карточку.');
+      i={...i,vehicleId:additionalParent.vehicle_id??i.vehicleId,
+        brand:additionalParent.brand??i.brand,model:additionalParent.model??i.model,
+        year:additionalParent.year??i.year,
+        address:i.address||additionalParent.address||undefined,
+        lat:i.lat??additionalParent.lat??undefined,
+        lng:i.lng??additionalParent.lng??undefined,
+        description:i.description||
+          'Дополнительная диагностика и работа с ЭБУ после другого специалиста'};
+    }
     if (i.continueFrom) {
       if (i.fromConsult || i.service !== 'tow')
         throw bad('bad_continuation', 'Сейчас можно продолжить выезд мастера вызовом эвакуатора');
@@ -129,9 +173,26 @@ export class OrdersService {
       year = year ?? v.year;
     }
     const isConsult = i.service === 'consult';
+    if(!isConsult && checkLegacyPricingLocation({
+      address:i.address,lat:i.lat,lng:i.lng
+    })==='outside'){
+      throw conflict('outside_legacy_tariff_region',
+        'Нельзя оформить выезд по тарифам СПб/ЛО за их пределами. В вашем регионе нужен подтверждённый местный тариф. Заявку и оплату не создавали.');
+    }
+    if(!isConsult){
+      const zoneMismatch=legacyTariffZoneMismatch({address:i.address},i.zoneId);
+      if(zoneMismatch)throw conflict('mismatched_legacy_tariff_zone',
+        'Указанный населённый пункт не соответствует выбранной зоне выезда СПб/ЛО. Выберите правильную зону, прежде чем подтверждать цену.');
+    }
     const night = isConsult ? false : i.night ?? isNight(all.pricing, this.now());
     const tier = i.tier ?? 'eco';
     const est = estimate(all.pricing, { service: i.service, tier, zoneId: i.zoneId, night, group: !isConsult && !!i.groupTrip });
+    // Historic local quotes stay compatible; metadata makes the limits visible
+    // to the buyer and to the dispatched professional for NEW orders only.
+    const quotation= isConsult ? est : {
+      ...est,
+      regionValidation:legacyPricingWarning({address:i.address,lat:i.lat,lng:i.lng})
+    };
     const defaultFee = method === 'cash' ? (all.fees.cashChargesClientFee ? all.fees.clientFeePct : 0) : all.fees.clientFeePct;
     // Персональный сбор клиента (назначает администратор) важнее общего. Консультация — фиксированная цена, сбор уже внутри.
     const personal = await this.db.one<{ fee_pct_override: string | null }>('select fee_pct_override from users where id=$1', [clientId]);
@@ -163,15 +224,17 @@ export class OrdersService {
       `insert into orders(client_id, created_by, vehicle_id, service, is_sos, problem, description, address, lat, lng,
           zone_id, night, group_trip, tier, brand, estimate, payment_method, client_fee_pct, destination, cargo, loaded, driver_on_site,
           consult_of, discount_amount, discount_reason, model, year, site, status, owner_note,
-          commission_pct_override, commission_campaign_id, case_root_id, continuation_of,
+          commission_pct_override, commission_campaign_id, case_root_id, continuation_of, additional_to,
           create_request_key,create_request_hash)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36) returning *`,
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37) returning *`,
       [clientId, user.id, i.vehicleId ?? null, i.service, !!i.isSos, i.problem ?? null, i.description ?? null, isConsult ? null : i.address ?? null,
-        isConsult ? null : i.lat ?? null, isConsult ? null : i.lng ?? null, est.zoneId, night, est.group, tier, brand, est, method, feePct,
+        isConsult ? null : i.lat ?? null, isConsult ? null : i.lng ?? null, est.zoneId, night, est.group, tier, brand, quotation, method, feePct,
         i.destination ?? null, i.cargo ?? null, i.loaded ?? null, i.driverOnSite ?? null,
         consultOf, discount, discount ? CONSULT_DISCOUNT : null, model, year, isConsult ? null : i.site ?? null,
         gate ? 'awaiting_owner' : 'searching', gate, campaign?.commission_pct ?? null, campaign?.id ?? null,
-        previous ? (previous.case_root_id ?? previous.id) : null, previous?.id ?? null,
+        previous ? (previous.case_root_id ?? previous.id) :
+          additionalParent ? (additionalParent.case_root_id ?? additionalParent.id) : null,
+        previous?.id ?? null, additionalParent?.id ?? null,
         requestKey,requestHash],
     ).catch(async (e: any) => {
       if (e?.code === '23505' && e?.constraint === 'orders_create_key_unique') {
@@ -180,12 +243,28 @@ export class OrdersService {
           [user.id,requestKey]);
         if (prior) { reused = true; return prior; }
       }
+      if(e?.code==='23505'&&e?.constraint==='orders_one_live_ecu_additional_idx')
+        throw conflict('ecu_additional_exists','Дополнительный специалист по ЭБУ уже вызван');
       if (e?.code === '23505' && e?.constraint === 'orders_one_live_continuation_idx')
         throw conflict('continuation_exists', 'Этап уже оформлен: откройте его из обращения');
       throw e;
     });
     if (reused) return reuse(order!);
-    await this.event(this.db, order!.id, user.id, 'created', { estimate: est, sos: !!i.isSos, continuationOf: previous?.id ?? null });
+    await this.event(this.db, order!.id, user.id, 'created', {
+      estimate:quotation,sos:!!i.isSos,continuationOf:previous?.id??null,
+      additionalTo:additionalParent?.id??null
+    });
+    if(additionalParent){
+      // A performer cannot trigger this: the client has just placed and
+      // accepted the separately priced ECU order on their own account.
+      await this.db.query(
+        "update order_ecu_referrals set status='used',linked_order_id=$2,resolved_at=now() "+
+        "where source_order_id=$1 and status='pending'",
+        [additionalParent.id,order!.id]);
+      await this.event(this.db,additionalParent.id,user.id,'expert_order_added',{
+        additionalOrderId:order!.id,service:'ecu'
+      });
+    }
 
     if (gate) {
       await this.event(this.db, order!.id, user.id, 'owner_approval_requested', { reason: gate });
@@ -544,13 +623,52 @@ export class OrdersService {
     return this.view(user, orderId);
   }
 
-  async confirmAmount(user: AuthUser, orderId: string, expectedTotal?: number, points = 0) {
+  async confirmAmount(user: AuthUser, orderId: string, expectedTotal?: number, points = 0,
+    proposalVersion?: string) {
     const o = await this.mustBeClient(user, orderId);
+    const identicalConfirmation=async()=>{
+      const ev=await this.db.one<{data:any}>(
+        "select data from order_events where order_id=$1 and type='amount_confirmed' "+
+        "order by id desc limit 1",[orderId]);
+      if(!ev)throw conflict('confirmation_unverified',
+        'Подтверждённая заявка требует сверки финансовых событий');
+      if((expectedTotal!=null&&Number(ev.data?.total)!==expectedTotal)||
+        Number(ev.data?.requestedPoints??0)!==points||
+        (proposalVersion!=null&&ev.data?.proposalVersion!==proposalVersion))
+        throw conflict('confirmation_changed',
+          'Заявка была подтверждена на других условиях. Обновите карточку');
+      return this.view(user,orderId);
+    };
+    if(o.status==='completed')return identicalConfirmation();
     const to = transition(o.status, 'confirm_amount', 'client');
     const m = this.money(o);
-    let used = 0;
+    let used = 0,replayed=false;
     if (expectedTotal != null && expectedTotal !== m.total) throw conflict('amount_changed', 'Сумма изменилась — проверьте заново');
     await this.db.tx(async (q) => {
+      // A single order row lock serializes the buyer's decision against
+      // re-quoting, disputes and a second HTTP confirmation after packet loss.
+      const locked=await q.one<{status:string;work_amount:number|null;
+        amount_proposed_at:Date|null}>(
+        'select status,work_amount,amount_proposed_at from orders where id=$1 for update',
+        [orderId]);
+      if(!locked)throw notFound('Заявка не найдена');
+      if(locked.status==='completed'){replayed=true;return;}
+      const lockedVersion=locked.amount_proposed_at
+        ?new Date(locked.amount_proposed_at).toISOString():null;
+      const originalVersion=o.amount_proposed_at
+        ?new Date(o.amount_proposed_at).toISOString():null;
+      if(locked.status!=='awaiting_confirmation'||
+        locked.work_amount!==o.work_amount||
+        lockedVersion!==originalVersion||
+        (proposalVersion!=null&&lockedVersion!==proposalVersion))
+        throw conflict('quote_changed',
+          'Мастер изменил смету или состояние. Обновите карточку до подтверждения');
+      // Two DIFFERENT orders owned by the same fleet account must not
+      // both spend the same available bonus/points balance concurrently.
+      // Transaction-scoped lock; no heavy global lock or external state.
+      await q.query(
+        'select pg_advisory_xact_lock(hashtext($1),hashtext($2))',
+        ['tracksos:service-confirmation-credit',o.client_id]);
       // Бонусы клиента списываются сами в момент подтверждения
       const bonus = await q.one<{ b: number }>('select coalesce(sum(amount),0)::int b from bonus_entries where user_id=$1', [o.client_id]);
       const use = Math.min(bonus?.b ?? 0, m.total);
@@ -567,10 +685,22 @@ export class OrdersService {
           where id=$1 and status='awaiting_confirmation' and work_amount is not distinct from $4 and performer_id=$5`,
         [orderId, to, this.now(), o.work_amount, o.performer_id]);
       await q.query(`update performer_profiles set line_status='online' where user_id=$1 and line_status='on_job'`, [o.performer_id]);
-      await this.event(q, orderId, user.id, 'amount_confirmed', { total: m.total, method: o.payment_method });
+      await this.event(q, orderId, user.id, 'amount_confirmed', {
+        total:m.total,method:o.payment_method,requestedPoints:points,
+        proposalVersion:lockedVersion
+      });
+      // Consent, accounting and the performer's in-app notification must
+      // commit together. A push outage cannot erase this confirmation.
+      if(o.performer_id)
+        await q.query(
+          "insert into notifications(user_id,kind,title,body,data) "+
+          "values($1,'order',$2,$3,$4)",
+          [o.performer_id,'Сумма подтверждена',
+            'Заявка №'+o.number+': '+rub(m.total),{orderId}]);
       await this.payments.onConfirmed({ ...o, status: to, discount_amount: Number(o.discount_amount ?? 0) + used }, q);
       await this.referral?.afterOrder(q, { ...o, status: to }, m.amount);
     });
+    if(replayed)return identicalConfirmation();
     // The order and capture-intent transaction MUST commit before bank IO.
     // A transport failure leaves the durable intent for manual/provider reconciliation.
     await this.payments.processWorkPaymentForOrder(orderId)
@@ -578,8 +708,11 @@ export class OrdersService {
     await this.payments.processCaptureForOrder(orderId)
       .catch((e) => console.error('[order-capture]', e));
     await this.systemMessage(orderId, `Сумма ${rub(m.total - used)} подтверждена${used ? ` (бонусами и баллами ${rub(used)})` : ''}. Оставьте отзыв друг о друге.`);
-    await this.notifier.notify([o.performer_id], { type: 'order', orderId, status: to },
-      { kind: 'normal', title: 'Сумма подтверждена', body: `Заявка №${o.number}: ${rub(m.total)}`, data: { orderId } });
+    await this.notifier.deliverStored([o.performer_id],
+      {type:'order',orderId,status:to},
+      {kind:'normal',title:'Сумма подтверждена',
+        body:`Заявка №${o.number}: ${rub(m.total)}`,data:{orderId}})
+      .catch(e=>console.warn('[order-confirmation-push]',e));
     return this.view(user, orderId);
   }
 
@@ -749,16 +882,29 @@ export class OrdersService {
     // a performer sees exclusively the price of their own contract.
     const caseRows = actor === 'client' || actor === 'admin'
       ? await this.db.query<any>(
-          `select id, number, status, service, result, result_note, continuation_of, estimate,
+          `select id, number, status, service, result, result_note, continuation_of, additional_to, estimate,
                   call_out_amount, work_amount, client_fee_pct, discount_amount
-             from orders where id=$1 or case_root_id=$1 order by created_at, number`, [caseRootId])
+             from orders where (id=$1 or case_root_id=$1)
+               and ($2::boolean or created_by=$3)
+             order by created_at, number`,
+            [caseRootId, actor==='admin'||!user.owner_id, user.id])
       : [];
+    const caseOtherStages=actor==='performer'
+      ? await this.db.query<{number:number;service:string;status:string}>(`
+          select number,service,status from orders
+          where (id=$1 or case_root_id=$1) and id<>$2
+          order by created_at,number limit 30`,[caseRootId,o.id])
+      : [];
+    // A confirmed expert sees that a related stage exists, not the other
+    // contractor's bill, private notes, contacts, messages or payout.
     const caseBookings = actor === 'client' || actor === 'admin'
       ? await this.db.query<any>(
           `select b.id, b.number, b.status, b.need, b.amount, b.discount, b.from_order_id
              from service_bookings b left join orders step on step.id=b.from_order_id
-            where b.case_root_id=$1 or step.id=$1 or step.case_root_id=$1
-            order by b.created_at, b.number`, [caseRootId])
+            where (b.case_root_id=$1 or step.id=$1 or step.case_root_id=$1)
+              and ($2::boolean or step.created_by=$3)
+            order by b.created_at, b.number`,
+            [caseRootId, actor==='admin'||!user.owner_id, user.id])
       : [];
     const caseServiceStages = caseBookings.map((b: any) => ({
       id: b.id, number: b.number, status: b.status, need: b.need,
@@ -766,6 +912,7 @@ export class OrdersService {
     }));
     const caseSteps = caseRows.map((step: any) => ({
       id: step.id, number: step.number, service: step.service, status: step.status,
+      additionalTo:step.additional_to??null,continuationOf:step.continuation_of??null,
       result: step.result, resultNote: step.result_note, money: this.money(step),
     }));
     const caseConfirmedTotal = caseRows.filter((step: any) => step.status === 'completed')
@@ -787,15 +934,23 @@ export class OrdersService {
       money: this.money(o), result: o.result, resultNote: o.result_note,
       pointsFee: o.points_fee ?? 0, pointsCommission: actor === 'performer' || actor === 'admin' ? o.points_commission ?? 0 : undefined,
       points: actor === 'client' && o.status === 'awaiting_confirmation' && this.referral ? await this.referral.available(o.client_id, this.money(o).clientFee) : null,
+      amountProposalVersion:o.amount_proposed_at??null,
       bill: o.bill ?? null, billingStep: Number((await this.settings.get('pricing')).billingStepMinutes ?? 60),
       site: o.site, workStartedAt: o.work_started_at ?? null, waitRate: performer?.wait_rate ?? null, ownerNote: o.owner_note ?? null, partMode: o.part_mode ?? null, waitStartedAt: o.wait_started_at ?? null, waitMinutes: o.wait_minutes ?? 0,
       consultHint: o.consult_hint, consultOf: o.consult_of,
-      continuationOf: o.continuation_of ?? null, caseRootId,
+      continuationOf: o.continuation_of ?? null, additionalTo:o.additional_to??null,caseRootId,
+      caseOtherStages:caseOtherStages,
       caseSummary: {
         rootId: caseRootId, stages: caseSteps, serviceBookings: caseServiceStages,
         confirmedTotal: caseConfirmedTotal,
+        pendingCount:caseRows.filter((step:any)=>!['completed','cancelled','no_performer'].includes(step.status)).length,
+        separateContracts:true,
         multiStage: caseSteps.length + caseServiceStages.length > 1,
       },
+      hasActiveEcuAddition:actor==='client'
+        ? Boolean(await this.db.one(
+          "select 1 from orders where additional_to=$1 and service='ecu' "+
+          "and status not in ('cancelled','no_performer') limit 1",[o.id])) : false,
       canContinueWithTow: actor === 'client' && o.status === 'completed' &&
         o.service !== 'tow' && ['cause_found', 'not_found'].includes(o.result) &&
         !caseRows.some((step: any) => step.continuation_of === o.id && step.status !== 'cancelled'),
@@ -827,7 +982,9 @@ export class OrdersService {
     const items = await this.db.query<any>(
       `select o.id, o.number, o.status, o.service, o.is_sos, o.problem, o.description, o.address, o.brand, o.estimate, o.work_amount, o.call_out_amount,
               o.client_fee_pct, o.discount_amount, o.payment_method, o.created_at, o.completed_at, o.consult_of,
-              o.case_root_id, o.continuation_of, o.result, o.result_note, o.vehicle_id,
+              o.case_root_id, o.continuation_of, o.additional_to,
+              (select number from orders parent where parent.id=o.additional_to) as parent_number,
+              o.result, o.result_note, o.vehicle_id,
               v.brand as v_brand, v.model as v_model, v.year as v_year, v.plate as v_plate,
               (select coalesce(company_name, name) from users where id=o.client_id) as client_name
          from orders o left join vehicles v on v.id=o.vehicle_id where ${where} ${status ? 'and o.status = $2' : ''} order by o.created_at desc limit 100`,

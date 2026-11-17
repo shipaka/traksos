@@ -1,0 +1,29 @@
+.courier-shell{width:min(1150px,100%);margin:auto;padding:clamp(12px,3vw,26px);display:flex;flex-direction:column;gap:15px}
+.courier-head{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;flex-wrap:wrap}
+.courier-head h1{font-size:clamp(1.7rem,3vw,2.4rem);margin:5px 0}
+.courier-head p{max-width:70ch}
+.courier-profile{display:flex;align-items:center;gap:15px;flex-wrap:wrap;padding:12px 16px;border:1px solid var(--line,#526076);border-radius:12px}
+.courier-profile small{opacity:.74}
+.courier-layout{display:grid;grid-template-columns:minmax(200px,28%) minmax(0,1fr);gap:14px}
+.courier-runs{display:flex;flex-direction:column;gap:8px}
+.courier-runs button{display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;border-radius:14px;background:transparent;color:inherit;border:1px solid var(--line,#526076);padding:16px;font:inherit;cursor:pointer}
+.courier-runs button[aria-current=page]{border-color:var(--accent,#62cce8);background:color-mix(in srgb,var(--accent,#62cce8) 14%,transparent)}
+.courier-runs small{opacity:.75}
+.courier-route{border:1px solid var(--line,#526076);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.courier-route-head,.courier-stop-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.courier-route-head h2{font-size:1.25rem;margin:0}
+.courier-warehouse,.courier-gps,.courier-step-info{padding:12px;border:1px solid var(--line,#526076);border-radius:12px;display:flex;flex-direction:column;gap:6px}
+.courier-warehouse p,.courier-gps p{margin:0}
+.courier-warehouse .btn{align-self:flex-start}
+.courier-stops{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px;counter-reset:stops}
+.courier-stop{padding:16px;border:1px solid var(--line,#526076);border-radius:14px;overflow-wrap:anywhere}
+.courier-stop p{margin:9px 0}
+.courier-cargo{margin:12px 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
+.courier-cargo li{padding:8px;border-radius:7px;background:color-mix(in srgb,var(--accent,#62cce8) 7%,transparent)}
+.courier-cargo small{display:block;opacity:.74}
+.courier-stop-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.courier-failure{display:flex;flex-direction:column;gap:8px;width:100%}
+.courier-failure label{display:flex;flex-direction:column;gap:6px}
+.courier-shell :is(button,a,input,textarea):focus-visible{outline:3px solid var(--accent,#62cce8);outline-offset:3px}
+@media(max-width:740px){.courier-shell{padding:12px}.courier-layout{grid-template-columns:1fr}.courier-runs{flex-direction:row;overflow-x:auto;scroll-snap-type:x mandatory}.courier-runs button{min-width:150px;max-width:200px;flex:0 0 auto;scroll-snap-align:start}.courier-route{padding:10px}.courier-stop{padding:10px}.courier-stop-actions .btn{min-height:44px}.courier-warehouse .btn{width:100%;text-align:center}}
+@media(prefers-reduced-motion:reduce){.courier-shell *{scroll-behavior:auto!important;transition:none!important}}

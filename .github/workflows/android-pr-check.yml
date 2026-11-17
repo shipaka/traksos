@@ -110,6 +110,39 @@ jobs:
         with:
           name: tracksos-pr-debug-apk
           path: apk
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      # The public Android SDK mirror may close a large system-image download
+      # mid-stream (Premature EOF). Prepare with bounded retries BEFORE trying
+      # to boot. An image-download failure must not be reported as an APK crash.
+      - name: Preinstall emulator image, retry transient SDK download failures
+        env:
+          API_LEVEL: ${{ matrix.api-level }}
+        shell: bash
+        run: |
+          # GitHub ubuntu runner ships the official Android cmdline-tools
+          # already; avoid third-party setup actions which reinstall the
+          # removed legacy 'tools' package and fail before APK launch.
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            echo "::error::Preinstalled Android sdkmanager missing at $SDKMANAGER"
+            exit 1
+          fi
+          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+          for attempt in 1 2 3; do
+            if "$SDKMANAGER" --install "system-images;android-${API_LEVEL};google_apis;x86_64" --channel=0 > sdk-image-install.log 2>&1; then
+              echo "Android system image ${API_LEVEL} installed on attempt ${attempt}"
+              exit 0
+            fi
+            cat sdk-image-install.log
+            echo "::warning::SDK image install attempt ${attempt}/3 failed (transient mirror failure possible)"
+            if [ "${attempt}" -lt 3 ]; then sleep "$((attempt * 12))"; fi
+          done
+          echo "::error::Failed downloading Android ${API_LEVEL} image after three attempts; no app was launched"
+          exit 1
       - name: Boot emulator, launch APK and fail on native crash
         uses: reactivecircus/android-emulator-runner@v2
         with:

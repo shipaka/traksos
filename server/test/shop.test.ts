@@ -16,6 +16,7 @@ before(async () => {
   t = await setup();
   admin = await t.login('+79990000001');
   client = await t.login('+79991112233');
+  ok(await t.api('PUT', '/api/shop/region', {city:'Санкт-Петербург'}, client.token));
 });
 after(() => t.close());
 
@@ -42,7 +43,7 @@ test('включили: витрина, наборы сверху, фото; з�
   assert.equal(ph.headers.get('content-type'), 'image/png');
   assert.equal((await t.api('POST', '/api/shop/orders', { items: [{ productId: socket, qty: 1 }], delivery: 'delivery' }, client.token)).status, 400, 'доставка без адреса');
   assert.equal((await t.api('POST', '/api/shop/orders', { items: [{ productId: socket, qty: 1 }], delivery: 'pickup', payment: 'invoice' }, client.token)).status, 400, 'счёт — только компании');
-  const o = ok(await t.api('POST', '/api/shop/orders', { items: [{ productId: socket, qty: 2 }, { productId: kit, qty: 1 }], delivery: 'delivery', address: 'КАД, 45 км' }, client.token));
+  const o = ok(await t.api('POST', '/api/shop/orders', { items: [{ productId: socket, qty: 2 }, { productId: kit, qty: 1 }], delivery: 'delivery', address: 'Санкт-Петербург, Московское шоссе, 45' }, client.token));
   assert.equal(o.goodsTotal, 2 * 120_000 + 450_000);
   assert.equal(o.total, o.goodsTotal + 50_000);
   assert.equal(o.items.find((i: any) => i.productId === kit).inStock, false, 'набор — под заказ');

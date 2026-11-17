@@ -5,6 +5,7 @@ import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '.
 import { syncOfflineParts, searchOfflineParts } from '../shopOffline.ts';
 import { syncOfflineReferences, searchOfflineReferences } from '../shopReferenceOffline.ts';
 import { AdminShopCatalog } from './shopCatalogAdmin.tsx';
+import { CustomerCourierTracking } from './courierTracking.tsx';
 
 const CART_KEY = 'traksos.cart';
 type Cart = Record<string, number>;
@@ -23,6 +24,37 @@ function Thumb({ p, size = 56 }: { p: any; size?: number }) {
   return p.hasPhoto
     ? <img src={photoUrl(p)} alt="" loading="lazy" decoding="async" width={size} height={size} style={{ borderRadius: 12, objectFit: 'cover', flex: 'none', background: 'var(--bg-2)' }} />
     : <div aria-hidden="true" style={{ width: size, height: size, borderRadius: 12, background: 'var(--bg-2)', display: 'grid', placeItems: 'center', flex: 'none', fontSize: 22 }}>🔧</div>;
+}
+
+/** Storefront city is selected explicitly, never guessed from the visitor's IP. */
+function ShopCityControl({ city, reload }: {city: string | null; reload: () => void}) {
+  const [value,setValue]=useState(city ?? '');
+  const [editing,setEditing]=useState(!city);
+  const {busy,run}=useAction();
+  useEffect(()=>{setValue(city ?? '');},[city]);
+  const submit=async()=>{
+    const chosen=value.trim();
+    if(!chosen)return;
+    const changed=await run(()=>put('/api/shop/region',{city:chosen}),null);
+    if(changed){setEditing(false);reload();}
+  };
+  return <div className="card stack" style={{gap:10}} aria-label="Город магазина">
+    <div className="between">
+      <b>Город покупки</b>
+      {city&&!editing&&<button type="button" className="btn ghost small" onClick={()=>setEditing(true)}>Изменить</button>}
+    </div>
+    {city&&!editing&&<span className="note">{city}</span>}
+    {editing&&<>
+      <label className="note" htmlFor="shop-region-city">Укажите город получения или самовывоза</label>
+      <input id="shop-region-city" className="field" type="text" autoComplete="address-level2"
+        placeholder="Например, Санкт-Петербург или Ижевск" maxLength={80}
+        value={value} onChange={(e)=>setValue(e.target.value)}/>
+      <button className="btn" type="button" disabled={busy||value.trim().length<2} onClick={submit}>
+        {busy?'Проверяем…':'Проверить доступность'}
+      </button>
+    </>}
+    <span className="note">Сейчас магазин обслуживает только Санкт-Петербург. Этот выбор не меняет город Эфира и не передаёт геолокацию.</span>
+  </div>;
 }
 
 export function Shop() {
@@ -64,6 +96,7 @@ export function Shop() {
         <b style={{ fontSize: 20 }}>{d.closedTitle}</b>
         <span className="note">{d.closedText}</span>
       </div>
+      <ShopCityControl city={d.region?.city??null} reload={c.reload}/>
       <a className="linkrow" href="#/shop/history"><span><b>История покупок</b><small>Просмотреть предыдущие заказы</small></span><span aria-hidden="true">›</span></a>
     </main>
   );
@@ -73,6 +106,7 @@ export function Shop() {
   return (
     <main className="track-shop-home">
       <div className="track-shop-hero"><span className="track-shop-eyebrow">TRAKSOS · ЗАПЧАСТИ ДЛЯ ГРУЗОВИКОВ</span><h1>Найдём нужную деталь</h1><p>Удобный поиск по названию и артикулу, наличие, аналоги и история покупок.</p><span className="track-shop-gear" aria-hidden="true"/></div>
+      <ShopCityControl city={d.region?.city??null} reload={c.reload}/>
       <div className="between" style={{ alignItems: 'flex-start' }}>
         <div><h1>Магазин</h1><div className="sub">{d.note}</div></div>
         <button className="bell" aria-label={`Корзина, товаров: ${count}`} onClick={() => go('shop/cart')} style={{ position: 'relative' }}>
@@ -187,6 +221,7 @@ function MyShopOrders({ orders, reload, canOrder }: { orders: any[]; reload: () 
   const { busy, run } = useAction();
   const [cart, setCart] = useCart();
   const [openAnalog, setOpenAnalog] = useState<string | null>(null);
+  const [openTracking, setOpenTracking] = useState<string | null>(null);
   const addItem = (id: string, qty = 1) => setCart({ ...cart, [id]: Math.min(99, (cart[id] ?? 0) + qty) });
   return (
     <div className="stack">
@@ -195,6 +230,11 @@ function MyShopOrders({ orders, reload, canOrder }: { orders: any[]; reload: () 
         <div key={o.id} className="card">
           <div className="between"><b>Заказ №{o.number} · {rub(o.total)}</b><span className={`pill ${STATUS_TONE[o.status]}`}>{o.statusName}</span></div>
           <span className="note">{fmtTime(o.createdAt)} · {DELIVERY[o.delivery]}{o.address ? `: ${o.address}` : ''}</span>
+          {o.supplierProgress && <span className="note" role="status">
+            Поставка: <b>{o.supplierProgress.display}</b>
+            {o.supplierProgress.updatedAt ? ` · проверено ${fmtTime(o.supplierProgress.updatedAt)}` : ''}
+            {o.supplierProgress.status === 'cancelled' && ' · Служба поддержки уточняет ситуацию; возврат не считается завершённым автоматически.'}
+          </span>}
           {o.vehicle && <span className="note">Для: {[o.vehicle.brand, o.vehicle.model, o.vehicle.plate].filter(Boolean).join(' ')}</span>}
           {o.items.map((i: any) => <div key={i.productId} className="stack" style={{ gap: 6 }}>
             <span className="note">{i.name}{i.article ? ` · ${i.article}` : ''} × {i.qty}</span>
@@ -207,6 +247,13 @@ function MyShopOrders({ orders, reload, canOrder }: { orders: any[]; reload: () 
           {o.adminNote && <span>{o.adminNote}</span>}
           {o.cancelReason && <span className="note">Отменён: {o.cancelReason}</span>}
           {o.status === 'new' && <button className="btn ghost small" disabled={busy} onClick={async () => { if (await run(() => post(`/api/shop/orders/${o.id}/cancel`), 'Заказ отменён')) reload(); }}>Отменить</button>}
+          {o.delivery === 'delivery' && <section className="stack" aria-label={'Доставка заказа №' + o.number}>
+            <button type="button" className="btn ghost small" aria-expanded={openTracking === o.id}
+              onClick={() => setOpenTracking(openTracking === o.id ? null : o.id)}>
+              {openTracking === o.id ? 'Свернуть отслеживание' : 'Отследить курьера и историю доставки'}
+            </button>
+            {openTracking === o.id && <CustomerCourierTracking orderId={o.id} onChanged={reload} />}
+          </section>}
         </div>
       ))}
     </div>

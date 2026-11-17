@@ -1,0 +1,30 @@
+name: TechBase public source link audit
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-source-health:
+    name: 20 original pages only (no downloads or source duplication)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check reachable public originals and restricted OEM portals
+        run: node scripts/audit-techbase-links.mjs
+      - name: Preserve human review report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: techbase-public-source-health
+          path: test-results/techbase-sources-health.json
+          if-no-files-found: ignore
+          retention-days: 30

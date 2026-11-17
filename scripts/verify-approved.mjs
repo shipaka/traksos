@@ -1,6 +1,6 @@
 // Nightly and push-time gate: approved TrakSOS identity is not replaced silently.
 // This only verifies invariants; visual fidelity is additionally checked via screenshots.
-import { readFile, stat } from 'node:fs/promises';
+import { readFile, stat, readdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 
 const read = (path) => readFile(path, 'utf8');
@@ -49,6 +49,26 @@ async function asset(path, minBytes = 5000) {
     }
   } catch { expect(false, path + ' is present'); }
 }
+// Android 10 devices can run a WebView without crypto.randomUUID(), although
+// crypto.getRandomValues() is present. Check the whole shipped React source,
+// not only the order form: message send/nonces in clubs and Driver Air must work.
+async function checkOldWebViewUuid(dir) {
+  for (const entry of await readdir(dir, { withFileTypes: true })) {
+    const path = dir + '/' + entry.name;
+    if (entry.isDirectory()) { await checkOldWebViewUuid(path); continue; }
+    if (!/\.[jt]sx?$/.test(entry.name)) continue;
+    const lines = (await read(path)).split('\n');
+    for (const [index,line] of lines.entries()) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('//') || trimmed.startsWith('*')) continue;
+      if (/crypto\.randomUUID\s*\(/.test(line)) {
+        expect(false, 'old Android WebView unsupported crypto.randomUUID: ' + path +
+          ':' + (index+1));
+      }
+    }
+  }
+}
+await checkOldWebViewUuid('web/src');
 const landing = await read('web/src/screens/login.tsx');
 const catalogue = await read('web/src/guestCatalog.ts');
 const finalCss = await read('web/src/finalCanon.css');
@@ -118,7 +138,10 @@ expect(landing.includes('public-map-static'), 'public map does not depend on net
 expect(!landing.includes('openstreetmap.org/export/embed'), 'no third-party iframe is required for offline public map');
 expect(landing.includes('Пример расположения услуг.'), 'demo map explicitly labels fictional service markers');
 expect(landing.includes('yandex.ru/maps/'), 'guest static map opens real Yandex Maps on click');
-expect(landing.includes('Санкт-Петербург и Ленинградская область'), 'launch region is shown');
+// Federal product positioning supersedes the original local launch copy.
+expect(landing.includes('Единая платформа для России'), 'federal brand positioning is visible');
+expect(landing.includes('Реальная доступность выездных специалистов'), 'local availability is stated honestly');
+expect(!landing.includes('Санкт-Петербург и Ленинградская область'), 'obsolete local marketing copy was removed');
 expect(shell.includes("import './finalCanon.css';"), 'the only final design layer is loaded by the real app');
 expect(shell.includes('guest-site-nav'), 'the guest PC has horizontal navigation, not an alternative sidebar');
 expect(finalCss.includes('public-hero-slide-approved') && finalCss.includes("url('../public/tracksos-approved-scenic-hero.webp')"), 'the final guest hero uses the approved full Scania photo without baked controls');

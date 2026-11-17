@@ -246,17 +246,60 @@ export class AuthService {
     return { token, user: safe };
   }
 
-  async authenticate(token: string | null | undefined): Promise<AuthUser | null> {
-    if (!token) return null;
-    const u = await this.db.one<AuthUser>(
-      `select u.id, u.phone, u.name, u.roles, u.status, u.owner_id
-         from sessions s join users u on u.id = s.user_id
-        where s.token_hash = $1 and s.expires_at > now()
-          and (u.admin_preview_until is null or u.admin_preview_until > now())`,
-      [sha256(token)],
-    );
-    if (!u || u.status !== 'active' || !staffRoleAllowed(u.phone, u.roles)) return null;
+  // Session hash lookup is shared by HTTP bearer auth and one-time WS tickets.
+  // A consumed ticket does not retain or reveal the long-lived bearer token.
+  private async authenticateHash(hash:string):Promise<AuthUser|null>{
+    const u=await this.db.one<AuthUser>(
+      `select u.id,u.phone,u.name,u.roles,u.status,u.owner_id
+         from sessions s join users u on u.id=s.user_id
+        where s.token_hash=$1 and s.expires_at>now()
+          and (u.admin_preview_until is null or u.admin_preview_until>now())`,
+      [hash]);
+    if(!u||u.status!=='active'||!staffRoleAllowed(u.phone,u.roles))return null;
     return u;
+  }
+
+  async authenticate(token: string | null | undefined): Promise<AuthUser | null> {
+    return token ? this.authenticateHash(sha256(token)) : null;
+  }
+
+  async authenticateRealtimeSession(sessionHash:string):Promise<AuthUser|null>{
+    // Internal authenticated gateway only: never accept this as an API bearer.
+    return this.authenticateHash(sessionHash);
+  }
+
+  async issueRealtimeTicket(token:string){
+    const user=await this.authenticate(token);
+    if(!user)throw new HttpError(401,'unauthorized','Нужно войти заново');
+    const sessionHash=sha256(token);
+    // Limit outstanding tickets per session. Expired tickets do not count.
+    const ticket=randomBytes(32).toString('base64url');
+    await this.db.tx(async q=>{
+      await q.query('select pg_advisory_xact_lock(hashtext($1))',['ws-ticket:'+sessionHash]);
+      const existing=await q.one<{n:number}>(
+        'select count(*)::int as n from realtime_ws_tickets where session_token_hash=$1 and expires_at>now()',
+        [sessionHash]);
+      if((existing?.n??0)>=5)throw new HttpError(429,'ws_ticket_limit','Слишком много подключений');
+      await q.query(
+        "insert into realtime_ws_tickets(ticket_hash,user_id,session_token_hash,expires_at) "+
+        "values($1,$2,$3,now()+interval '30 seconds')",
+        [sha256(ticket),user.id,sessionHash]);
+    });
+    return {ticket,expiresInSeconds:30};
+  }
+
+  async consumeRealtimeTicket(ticket:string){
+    if(!/^[A-Za-z0-9_-]{43}$/.test(ticket))return null;
+    // DELETE ... RETURNING consumes the ticket exactly once, even if two
+    // sockets race to use the same URL. There is no permanent token in it.
+    const record=await this.db.one<{user_id:string;session_token_hash:string}>(
+      "delete from realtime_ws_tickets where ticket_hash=$1 and expires_at>now() "+
+      "returning user_id,session_token_hash",
+      [sha256(ticket)]);
+    if(!record)return null;
+    const user=await this.authenticateHash(record.session_token_hash);
+    if(!user||user.id!==record.user_id)return null;
+    return {user,sessionHash:record.session_token_hash};
   }
 
   async logout(token: string) {

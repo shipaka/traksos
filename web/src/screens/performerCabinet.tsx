@@ -9,6 +9,7 @@ import { useLoad, useAction, useMe, go, Loading, Field, RubInput, Back } from '.
 
 const SPECIALTIES: { id: string; name: string }[] = [
   { id: 'electric', name: 'Электрика' }, { id: 'diag', name: 'Диагностика' }, { id: 'air', name: 'Пневма, тормоза' },
+  { id: 'ecu', name: 'Специалист по ЭБУ' },
   { id: 'autonomy', name: 'Автономки' }, { id: 'tyre', name: 'Шиномонтаж' }, { id: 'consult', name: 'Консультации' },
 ];
 
@@ -33,7 +34,7 @@ export function PerformerHub() {
   if (!p) return <PerformerOnboarding />;
   const cars = (p.cars?.length ? p.cars : p.car ? [p.car] : []) as any[];
   const rows: [string, string, string][] = [
-    ['work/me/about', 'Кто вы', `${me?.name ?? 'Имя не указано'} · ${p.kind === 'tow' ? 'эвакуатор' : 'мастер'}`],
+    ['work/me/about', 'Кто вы', `${me?.name ?? 'Имя не указано'} · ${p.kind === 'tow' ? 'эвакуатор' : p.kind === 'ecu' ? 'специалист по ЭБУ' : 'мастер'}`],
     ['work/me/phone', 'Телефон и вход', fmtPhone(me!.phone)],
     ['work/me/cars', p.kind === 'tow' ? 'Эвакуаторы' : 'Машины', cars.length ? `${cars.length} из 3 · сегодня: ${p.car?.brand ?? '—'} ${p.car?.plate ?? ''}` : 'не добавлены'],
     ['work/me/schedule', 'Распорядок', p.schedule?.on ? `${dayList(p.schedule.days)} · выезды ${p.schedule.from}–${p.schedule.to} · телефон до ${p.schedule.phoneTo}` : 'не задан — заявки идут, пока вы на линии'],
@@ -41,6 +42,7 @@ export function PerformerHub() {
     ['work/me/money', 'Финансы', 'баланс, начисления, списания, выплаты'],
     ['invite', 'Пригласить и получать баллы', 'баллы гасят до половины комиссии'],
     ['work/me/level', 'Мой уровень и точность', 'Новичок · Проверенный · Лучший, точность подсказок по телефону'],
+    ['partner', 'TrakSOS Партнёр', 'Старт · Активный · Приоритетный, спрос по региону, качество и пересмотр'],
     ['work/docs', 'Проверка и фото', p.verification === 'approved' ? 'пройдена' : p.submitted_at ? 'на проверке' : 'нужно пройти'],
     ['support', 'Поддержка', 'обращения и ответы'],
     ['help', 'Справка', 'как приходят заявки, комиссия, опоздания'],
@@ -74,7 +76,14 @@ export function PerformerHub() {
 function PerformerOnboarding() {
   const { me, reload } = useMe();
   const { busy, run } = useAction();
-  const [kind, setKind] = useState(me?.roles.includes('tow') ? 'tow' : 'master');
+  const [kind, setKind] = useState(()=>{
+    if(me?.roles.includes('tow'))return 'tow';
+    try{
+      const selected=JSON.parse(sessionStorage.getItem('traksos.masterSpecialties')??'[]');
+      if(Array.isArray(selected)&&selected.includes('ecu'))return 'ecu';
+    }catch{/* Guest hints are never used as credentials. */}
+    return 'master';
+  });
   const canTow = !!me?.roles.includes('tow');
   const canMaster = !!me?.roles.includes('master');
   const [name, setName] = useState(me?.name ?? '');
@@ -92,10 +101,12 @@ function PerformerOnboarding() {
   const [taxStatus, setTax] = useState('');
   const [inn, setInn] = useState('');
   const isTow = kind === 'tow';
+  const isEcu = kind === 'ecu';
   async function save() {
     const body: any = { kind, name: name || undefined, taxStatus: taxStatus || null, inn: inn || null,
       cars: car.brand && car.plate ? [car] : [], car: car.brand && car.plate ? car : null };
-    if (!isTow) body.specialties = spec;
+    if (isEcu) body.specialties = ['diag','electric'];
+    else if (!isTow) body.specialties = spec.filter(x=>x!=='ecu');
     if (await run(() => put('/api/performer/profile', body), 'Профиль сохранён — теперь фото для проверки')) {
       try { sessionStorage.removeItem('traksos.masterSpecialties'); } catch {}
       await reload(); go('work/docs');
@@ -108,11 +119,12 @@ function PerformerOnboarding() {
         <div className="step-head"><span className="step-n">1</span><b>Кто вы</b></div>
         <div className="grid2">
           {canMaster && <button type="button" className="seg" aria-pressed={kind === 'master'} onClick={() => setKind('master')}>Мастер</button>}
+          {canMaster && <button type="button" className="seg" aria-pressed={isEcu} onClick={() => setKind('ecu')}>Специалист по ЭБУ</button>}
           {canTow && <button type="button" className="seg" aria-pressed={kind === 'tow'} onClick={() => setKind('tow')}>Эвакуатор</button>}
         </div>
         <input className="field" placeholder="Имя, как увидят клиенты" value={name} onChange={(e) => setName(e.target.value)} />
       </div>
-      {!isTow && (
+      {!isTow&&!isEcu && (
         <div className="step-card">
           <div className="step-head"><span className="step-n">2</span><b>Что делаете</b></div>
           <div className="row">{SPECIALTIES.map((s) => (
@@ -121,15 +133,19 @@ function PerformerOnboarding() {
           ))}</div>
         </div>
       )}
+      {isEcu&&<div className="step-card">
+        <b>Электронные блоки управления</b>
+        <p className="note">Диагностика, восстановление и программирование ЭБУ. В кабинет поступают отдельные заявки и дополнительные этапы после другого мастера. Заявки не объединяют оплату автоматически.</p>
+      </div>}
       <div className="step-card">
-        <div className="step-head"><span className="step-n">{isTow ? 2 : 3}</span><b>{isTow ? 'Эвакуатор' : 'Машина, на которой приезжаете'}</b></div>
+        <div className="step-head"><span className="step-n">{isTow||isEcu ? 2 : 3}</span><b>{isTow ? 'Эвакуатор' : 'Машина, на которой приезжаете'}</b></div>
         <CarInputs car={car} onChange={setCar} tow={isTow} />
       </div>
       <div className="step-card">
-        <div className="step-head"><span className="step-n">{isTow ? 3 : 4}</span><b>Налоговый статус</b></div>
+        <div className="step-head"><span className="step-n">{isTow||isEcu ? 3 : 4}</span><b>Налоговый статус</b></div>
         <TaxInputs taxStatus={taxStatus} inn={inn} onChange={(t, i) => { setTax(t); setInn(i); }} />
       </div>
-      <button className="btn" disabled={busy || !name || (!isTow && !spec.length)} onClick={save}>Дальше — фото для проверки</button>
+      <button className="btn" disabled={busy || !name || (!isTow&&!isEcu && !spec.some(x=>x!=='ecu'))} onClick={save}>Дальше — фото для проверки</button>
     </main>
   );
 }
@@ -254,6 +270,26 @@ export function ScheduleSection() {
       <Back to="work/me" label="Профиль" />
       <div><h1>Распорядок</h1><div className="sub">По нему решаем, звонить ли вам. Кончилось рабочее время — статус сам станет «Не на линии», пока вы не выйдете на линию вручную.</div></div>
       <VacationToggle />
+      <div className="card">
+        <b>Ваш часовой пояс</b>
+        <p className="note">Нужен для правильного времени выездов во всех регионах России. Часовой пояс не определяется по IP и не показывает вашу геолокацию в Эфире.</p>
+        <select className="field" value={s.timeZone??''} onChange={e=>setS({...s,timeZone:e.target.value||undefined})}>
+          <option value="">Не указан — текущий старый график считается по Москве</option>
+          <option value="Europe/Kaliningrad">Калининград (UTC+2)</option>
+          <option value="Europe/Moscow">Москва / Санкт-Петербург (UTC+3)</option>
+          <option value="Europe/Samara">Самара (UTC+4)</option>
+          <option value="Asia/Yekaterinburg">Екатеринбург (UTC+5)</option>
+          <option value="Asia/Omsk">Омск (UTC+6)</option>
+          <option value="Asia/Novosibirsk">Новосибирск (UTC+7)</option>
+          <option value="Asia/Krasnoyarsk">Красноярск (UTC+7)</option>
+          <option value="Asia/Irkutsk">Иркутск (UTC+8)</option>
+          <option value="Asia/Yakutsk">Якутск (UTC+9)</option>
+          <option value="Asia/Vladivostok">Владивосток (UTC+10)</option>
+          <option value="Asia/Sakhalin">Сахалин (UTC+11)</option>
+          <option value="Asia/Magadan">Магадан (UTC+11)</option>
+          <option value="Asia/Kamchatka">Камчатка (UTC+12)</option>
+        </select>
+      </div>
       <button className="opt" aria-pressed={s.on} onClick={() => setS({ ...s, on: !s.on })}>
         <b>{s.on ? '✓ Работаю по графику' : 'Без графика'}</b><small>{s.on ? 'Заявки — только в рабочие дни и часы' : 'Заявки идут всегда, пока вы на линии'}</small>
       </button>
@@ -644,7 +680,8 @@ export function LevelSection() {
   return (
     <main>
       <Back to="work/me" label="Профиль" />
-      <div><h1>Мой уровень</h1><div className="sub">Считается сам — по заказам, рейтингу, неприездам и спорам за 90 дней. Видно только вам.</div></div>
+      <div><h1>История опыта и точность</h1><div className="sub">Прежний показатель опыта — отдельно от новой программы «TrakSOS Партнёр». Количество заказов здесь не определяет новые привилегии.</div></div>
+      <a className="btn ghost" href="#/partner">TrakSOS Партнёр: уровни, спрос и апелляции</a>
       {!d ? <Loading error={s.error} /> : <>
         <div className="card">
           {LEVELS.map(([k, n, h]) => (

@@ -1,0 +1,74 @@
+/* One client-facing ECU specialty card, outside the four service-photo tiles.
+   Neutral circuit motif until a distinct rights-cleared diagnostic photograph
+   is approved. No new top-level SOS direction. */
+.app.role-client .ecu-discovery {
+  display:flex;
+  align-items:center;
+  gap:clamp(12px,2.2vw,24px);
+  min-width:0;
+  padding:clamp(14px,2vw,23px);
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  border:1px solid rgba(95,191,218,.52);
+  border-radius:20px;
+  color:#edfaff;
+  background:linear-gradient(110deg,#0c243b 0%,#11334d 57%,#142c46 100%);
+  box-shadow:0 13px 33px rgba(0,9,24,.18);
+}
+.app.role-client .ecu-discovery::before {
+  content:"";
+  position:absolute;inset:0;
+  z-index:-1;pointer-events:none;
+  background:radial-gradient(ellipse at 84% 18%,rgba(73,221,243,.18),transparent 48%);
+}
+.app.role-client .ecu-discovery__mark {
+  flex:0 0 clamp(62px,8vw,84px);
+  display:grid;place-items:center;
+  width:clamp(62px,8vw,84px);
+  aspect-ratio:1;border-radius:18px;
+  background:linear-gradient(150deg,rgba(16,98,120,.52),rgba(14,56,83,.7));
+  border:1px solid rgba(108,224,243,.44);
+  color:#81edfc;
+  filter:drop-shadow(0 6px 12px rgba(0,12,31,.25));
+}
+.app.role-client .ecu-discovery__copy{flex:1 1 380px;min-width:0;}
+.app.role-client .ecu-discovery__label {
+  display:block;color:#93e8f6;
+  font-size:10px;font-weight:800;letter-spacing:.13em;
+}
+.app.role-client .ecu-discovery h2{font-size:clamp(16px,1.7vw,21px);line-height:1.25;color:#fff;margin:5px 0 7px;}
+.app.role-client .ecu-discovery p{margin:0;max-width:650px;font-size:13px;line-height:1.55;color:#c8e0ed;}
+.app.role-client .ecu-discovery__hint{display:block;margin-top:6px;color:#9dcfdf;font-size:11px;line-height:1.5;}
+.app.role-client .ecu-discovery__action {
+  display:inline-flex;align-items:center;justify-content:center;gap:12px;
+  min-height:48px;min-width:175px;padding:12px 17px;
+  border:1px solid #6ddae9;border-radius:12px;
+  color:#eaffff;background:rgba(17,80,107,.72);
+  font-size:13px;font-weight:800;line-height:1.25;
+  text-decoration:none;text-align:center;white-space:normal;
+  transition:background .18s ease,border-color .18s ease,transform .18s ease;
+}
+@media(hover:hover) and (pointer:fine) {
+  .app.role-client .ecu-discovery__action:hover {
+    background:rgba(24,119,143,.77);border-color:#c1faff;transform:translateY(-2px);
+  }
+}
+.app.role-client .ecu-discovery__action:focus-visible {
+  outline:3px solid #f3bb55;outline-offset:3px;
+}
+.app.role-client .ecu-discovery--sos {margin-top:13px;}
+@media(max-width:690px) {
+  .app.role-client .ecu-discovery {flex-wrap:wrap;align-items:flex-start;gap:11px;}
+  .app.role-client .ecu-discovery__mark {flex:0 0 52px;width:52px;border-radius:13px;}
+  .app.role-client .ecu-discovery__mark svg{width:34px;height:34px;}
+  .app.role-client .ecu-discovery__copy{flex:1 1 calc(100% - 70px);}
+  .app.role-client .ecu-discovery__label{font-size:9px;letter-spacing:.08em;}
+  .app.role-client .ecu-discovery h2{font-size:17px;}
+  .app.role-client .ecu-discovery p{font-size:12px;}
+  .app.role-client .ecu-discovery__action{flex:1 0 100%;min-width:0;min-height:46px;}
+}
+@media(prefers-reduced-motion:reduce) {
+  .app.role-client .ecu-discovery__action{transition:none;}
+  .app.role-client .ecu-discovery__action:hover{transform:none;}
+}

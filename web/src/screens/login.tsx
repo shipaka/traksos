@@ -6,7 +6,7 @@ import { SERVICE_TILES, MASTER_SPECIALTIES, rememberGuestService } from '../gues
 const HERO_SLIDES = [
   { id: 'approved', label: 'Единая платформа TrakSOS', eyebrow: 'ЕДИНАЯ ПЛАТФОРМА ДЛЯ ГРУЗОВОГО ТРАНСПОРТА',
     description: 'Эвакуация · Выездной мастер · Ремонт и ТО · Запчасти · Страхование · Техосмотры · Консультации',
-    caption: 'Зона запуска: Санкт-Петербург и Ленинградская область. В других регионах выездные услуги пока недоступны.' },
+    caption: 'TrakSOS объединяет сервисы по всей России. Реальная доступность выездных специалистов и СТО проверяется для выбранного города.' },
   { id: 'rescue', label: 'Эвакуация грузового транспорта', eyebrow: 'TRAKSOS · ПОМОЩЬ НА ДОРОГЕ',
     description: 'Нужен эвакуатор? Опишите технику и маршрут, ознакомьтесь с предложениями исполнителей в личном кабинете.',
     caption: 'Наличие исполнителя и условия выезда зависят от региона и выбранной заявки.' },
@@ -19,7 +19,7 @@ function PublicDemoMapBackdrop() {
   // The public demonstration map is a bundled, immutable asset.
   // It is never replaced with text because of network quality.
   return <div className="public-map-static" role="img"
-    aria-label="Утверждённая демонстрационная карта Санкт-Петербурга и Ленинградской области с условными отметками услуг; доступна без интернета" />;
+    aria-label="Демонстрационная карта с условными отметками услуг, не отражающая реальную доступность; доступна без интернета" />;
 }
 
 // Роль выбирают только те, кто подключается работать. Остальные входят по номеру — кабинет определяется по ролям.
@@ -251,7 +251,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   if (!intent) return (
     <main className="public-home public-landing" id="public-home">
       <div className="public-landing-head">
-        <span className="public-landing-region">◉ Санкт-Петербург и Ленинградская область</span>
+        <span className="public-landing-region">◉ Единая платформа для России</span>
 
       </div>
 
@@ -267,7 +267,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <div className="public-track-benefits" aria-label="Преимущества TrakSOS">
             <span><i aria-hidden="true">ϟ</i>Быстрое обращение</span>
             <span><i aria-hidden="true">✓</i>Проверка исполнителей</span>
-            <span><i aria-hidden="true">⌖</i>Санкт-Петербург и Ленобласть</span>
+            <span><i aria-hidden="true">⌖</i>Для грузовиков по всей России</span>
             <span><i aria-hidden="true">▤</i>Работа с юрлицами</span>
           </div>
           <div className="public-actions">
@@ -377,15 +377,15 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         <section className="public-demo-map" id="public-map" aria-label="Как выглядит карта помощи">
           <div className="public-section-head"><span className="public-section-kicker">ЗОНА ОБСЛУЖИВАНИЯ</span><h2>Рядом с вами</h2></div>
           <div className="public-map-wrap">
-            <a className="public-map-static-link" href="https://yandex.ru/maps/2/saint-petersburg/?ll=30.314130%2C59.938630&z=10"
+            <a className="public-map-static-link" href="https://yandex.ru/maps/"
               target="_blank" rel="noopener noreferrer" aria-label="Открыть этот район в Яндекс Картах">
               <PublicDemoMapBackdrop />
             </a>
           </div>
-          <a className="public-map-open-link" href="https://yandex.ru/maps/2/saint-petersburg/?ll=30.314130%2C59.938630&z=10"
+          <a className="public-map-open-link" href="https://yandex.ru/maps/"
             target="_blank" rel="noopener noreferrer">Открыть в Яндекс Картах ↗</a>
           <div className="public-map-legend"><span><i className="service"/>СТО</span><span><i className="master"/>Мастер</span><span><i className="tow"/>Эвакуация</span></div>
-          <p className="public-demo-warning"><strong>Пример расположения услуг.</strong> Значки условные: это не реальные исполнители и не их доступность. Нажмите на карту, чтобы открыть Санкт-Петербург в Яндекс Картах.</p>
+          <p className="public-demo-warning"><strong>Пример расположения услуг.</strong> Значки условные: это не реальные исполнители и не их доступность. Вы можете открыть Яндекс Карты и посмотреть интересующий вас регион. Отметки на демонстрационной карте условные.</p>
         </section>
         <div className="public-partner">
           <span className="public-section-kicker">ДЛЯ МАСТЕРОВ И СТО</span>
@@ -472,12 +472,12 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
               <summary onClick={event => { event.preventDefault(); setSpecialtiesOpen(v => !v); }}>
                 Специализации мастера · выбрано: {specialties.length} <span aria-hidden="true">⌄</span>
               </summary>
-              <span className="label">Можно выбрать несколько вариантов</span>
+              <span className="label">Можно выбрать несколько вариантов. Специалист по ЭБУ — отдельный профиль и кабинет.</span>
               <div className="guest-master-specialties-grid">
                 {MASTER_SPECIALTIES.map(item => <button key={item.id} type="button" className="seg"
                   aria-pressed={specialties.includes(item.id)}
                   onClick={() => setSpecialties(current => current.includes(item.id)
-                    ? current.filter(id => id !== item.id) : [...current,item.id])}>{item.name}</button>)}
+                    ? current.filter(id => id !== item.id) : item.id==='ecu' ? ['ecu'] : [...current.filter(id=>id!=='ecu'),item.id])}>{item.name}</button>)}
               </div>
             </details>}
           </div>}

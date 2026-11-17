@@ -12,7 +12,7 @@ export const defaultSettings = {
     address: '',
     phone: '',
     email: '',
-    tagline: 'Маркетплейс выездной помощи грузовикам · Санкт-Петербург и Ленинградская область',
+    tagline: 'Цифровая экосистема коммерческого транспорта по всей России',
   },
   /** Insurance partners: closed to new registrations until admin allows them. */
   insurancePartners: {

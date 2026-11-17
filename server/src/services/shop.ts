@@ -95,6 +95,18 @@ export class ShopService {
   async saveProduct(actor: AuthUser, id: string | null, p: ProductInput) {
     if (p.category && !SHOP_CATEGORIES[p.category]) throw bad('bad_category', 'Нет такой категории');
     const photo = p.photoDataUrl ? this.decodePhoto(p.photoDataUrl) : null;
+    // A verified purchase cost is binding: a casual manual price edit cannot
+    // bypass the approved >=30% markup (or a documented admin exception).
+    if (id && p.price != null) {
+      const cost = await this.db.one<{purchase_cost_kopecks:number;markup_bps:number}>(
+        'select purchase_cost_kopecks::integer,markup_bps from shop_product_costing where product_id=$1',[id]);
+      if (cost) {
+        const floor = Math.ceil(cost.purchase_cost_kopecks*(10000+cost.markup_bps)/10000);
+        if (p.price < floor)throw conflict('price_below_approved_markup',
+          'Цена ниже подтверждённой наценки. Изменение закупки и исключения оформляются в калькуляторе себестоимости.');
+      }
+    }
+
     let row: any;
     if (!id) {
       if (!p.name?.trim() || p.price == null) throw bad('need_name', 'Укажите название и цену');
@@ -342,9 +354,23 @@ export class ShopService {
     const where = filters.join(' and ');
     const take = 20;
     const rows = await this.db.query<any>(
-      `select * from shop_orders where ${where} order by created_at desc, id desc
-       limit $${params.length + 1} offset $${params.length + 2}`, [...params, take + 1, safePage * take]);
-    return { items: rows.slice(0, take).map((o: any) => this.orderView(o)), hasMore: rows.length > take, page: safePage };
+      `select * from shop_orders where ${where} order by created_at desc,id desc
+       limit $${params.length + 1} offset $${params.length + 2}`,
+       [...params,take + 1,safePage*take]);
+    const pageRows=rows.slice(0,take);
+    const states=pageRows.length ? await this.db.query<{
+      shop_order_id:string;status:string;event_time:Date
+    }>(`select distinct on (shop_order_id) shop_order_id,status,event_time
+       from shop_supplier_order_events where shop_order_id=any($1::uuid[])
+       order by shop_order_id,event_time desc,id desc`,
+       [pageRows.map((o:any)=>o.id)]) : [];
+    const stateByOrder=new Map(states.map(x=>[x.shop_order_id,x]));
+    return { items:pageRows.map((o:any)=>{
+      const current=stateByOrder.get(o.id);
+      return this.orderView({...o,supplier_status:current?.status??null,
+        supplier_status_at:current?.event_time??null});
+    }),hasMore:rows.length>take,page:safePage };
+
   }
 
   // ——— Клиент: заказ ———
@@ -369,9 +395,10 @@ export class ShopService {
     }
     let linkOrder: string | null = null;
     if (p.delivery === 'master') {
-      const o = await this.db.one<{ id: string }>(
-        `select id from orders where id=$1 and (client_id=$2 or created_by=$3) and status in ('accepted','en_route','arrived','working')`, [p.orderId ?? null, clientId, user.id]);
+      const o = await this.db.one<{ id: string; zone_id:string }>(
+        `select id,zone_id from orders where id=$1 and (client_id=$2 or created_by=$3) and status in ('accepted','en_route','arrived','working')`, [p.orderId ?? null, clientId, user.id]);
       if (!o) throw bad('need_order', 'Передать с мастером можно только по открытой заявке, пока мастер не приехал или работает');
+      if(o.zone_id!=='spb')throw conflict('shop_region_unavailable','Магазин пока работает только в Санкт-Петербурге');
       linkOrder = o.id;
     }
     return this.db.tx(async (q) => {
@@ -390,6 +417,18 @@ export class ShopService {
         `insert into shop_orders(client_id, created_by, items, goods_total, delivery, delivery_price, total, address, order_id, payment, comment, vehicle_id, vehicle_snapshot)
          values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) returning *`,
         [clientId, user.id, JSON.stringify(items), goods, p.delivery, dprice, goods + dprice, p.address?.trim() || null, linkOrder, p.payment ?? 'on_receipt', p.comment?.trim() || null, vehicle?.id ?? null, vehicle ? JSON.stringify({ brand: vehicle.brand, model: vehicle.model, plate: vehicle.plate, trailerPlate: vehicle.trailer_plate }) : null]);
+      // Immutable per-item purchase-cost snapshot for route profitability;
+      // unknown costs stay unknown and never become a fictional zero.
+      const confirmed = await q.query<{product_id:string;purchase_cost_kopecks:number;markup_bps:number}>(
+        'select product_id,purchase_cost_kopecks::integer,markup_bps from shop_product_costing where product_id=any($1::uuid[])',
+        [[...want.keys()]]);
+      const known = new Map(confirmed.map(x=>[x.product_id,x]));
+      for (const it of items) {
+        const cost = known.get(it.productId);
+        if (!cost) continue;
+        await q.query('insert into shop_order_cost_snapshots(shop_order_id,product_id,qty,purchase_unit_kopecks,retail_unit_kopecks,target_markup_bps) values($1,$2,$3,$4,$5,$6)',
+          [row.id,it.productId,it.qty,cost.purchase_cost_kopecks,it.price,cost.markup_bps]);
+      }
       return row;
     }).then(async (row: any) => {
       const staff = (await this.db.query<{ id: string }>(`select id from users where roles && '{admin}'::text[]`)).map((r) => r.id);
@@ -403,13 +442,27 @@ export class ShopService {
     return {
       id: o.id, number: o.number, status: o.status, statusName: SHOP_STATUS[o.status], items: o.items, goodsTotal: o.goods_total, delivery: o.delivery,
       deliveryPrice: o.delivery_price, total: o.total, address: o.address, orderId: o.order_id, payment: o.payment, comment: o.comment,
-      adminNote: o.admin_note, cancelReason: o.cancel_reason, vehicleId: o.vehicle_id ?? null, vehicle: o.vehicle_snapshot ?? null, createdAt: o.created_at, updatedAt: o.updated_at,
+      adminNote: o.admin_note, cancelReason: o.cancel_reason,
+      supplierProgress: o.supplier_status ? {
+        status: o.supplier_status, updatedAt: o.supplier_status_at,
+        display: {
+          requested:'Ожидаем подтверждения',accepted:'Принят поставщиком',
+          processing:'Заказ обрабатывается',partner_accepted:'Поставщик подтвердил заказ',
+          awaiting_assembly:'Ожидает сборки',assembling:'Собирается',
+          assembled:'Собран поставщиком',dispatched:'Передан на наш склад',
+          cancelled:'Поставщик отменил заказ — уточняем причину',unknown:'Уточняем статус'
+        }[o.supplier_status as string] ?? 'Уточняем статус'
+      } : null,
+      vehicleId: o.vehicle_id ?? null, vehicle: o.vehicle_snapshot ?? null, createdAt: o.created_at, updatedAt: o.updated_at,
     };
   }
 
   async myOrders(user: AuthUser) {
     const rows = await this.db.query(
-      `select * from shop_orders where client_id=$1 ${user.owner_id ? 'and created_by=$2' : ''} order by created_at desc limit 50`,
+      `select o.*,ev.status as supplier_status,ev.event_time as supplier_status_at from shop_orders o
+       left join lateral (select status,event_time from shop_supplier_order_events e
+        where e.shop_order_id=o.id order by e.event_time desc,e.id desc limit 1) ev on true
+       where o.client_id=$1 ${user.owner_id ? 'and o.created_by=$2' : ''} order by o.created_at desc limit 50`,
       user.owner_id ? [user.owner_id, user.id] : [user.id]);
     return rows.map((o) => this.orderView(o));
   }
@@ -430,21 +483,40 @@ export class ShopService {
   }
 
   async setStatus(actor: AuthUser | null, id: string, status: string, note?: string) {
-    const o = await this.db.one<any>('select * from shop_orders where id=$1', [id]);
-    if (!o) throw notFound('Заказ не найден');
-    if (!(NEXT[o.status] ?? []).includes(status)) throw conflict('bad_status', `Из «${SHOP_STATUS[o.status]}» в «${SHOP_STATUS[status] ?? status}» нельзя`);
-    await this.db.tx(async (q) => {
-      if (status === 'cancelled') {
-        // Вернуть зарезервированное на склад
-        for (const it of o.items) if (it.inStock) await q.query('update shop_products set stock = coalesce(stock, 0) + $2 where id=$1', [it.productId, it.qty]);
+    // Lock inside the transaction. Two requests must not both restock the same
+    // cancelled order or overwrite a courier's legitimate fulfillment state.
+    const updated=await this.db.tx(async q=>{
+      const o=await q.one<any>('select * from shop_orders where id=$1 for update',[id]);
+      if(!o)throw notFound('Заказ не найден');
+      if(!(NEXT[o.status]??[]).includes(status))
+        throw conflict('bad_status',`Из «${SHOP_STATUS[o.status]}» в «${SHOP_STATUS[status]??status}» нельзя`);
+      const assigned=await q.one<{run_id:string;run_status:string}>(
+        "select st.run_id,r.status as run_status from shop_courier_stops st "+
+        "join shop_courier_runs r on r.id=st.run_id where st.shop_order_id=$1 "+
+        "and r.status in ('planned','accepted','collecting','delivering','returning') limit 1",[id]);
+      if(assigned)
+        throw conflict('courier_route_assigned',
+          'Заказ закреплён за курьерским рейсом. Сначала отмените несостоявшийся рейс либо оформите возврат через диспетчера');
+      if(status==='cancelled'){
+        // Restore reserved stock once; the row-level lock and status transition
+        // protect against two concurrent cancellation requests.
+        for(const item of o.items)if(item.inStock)
+          await q.query('update shop_products set stock=coalesce(stock,0)+$2 where id=$1',
+            [item.productId,item.qty]);
       }
-      await q.query(`update shop_orders set status=$2, cancel_reason = case when $2='cancelled' then $3 else cancel_reason end,
-                       admin_note = case when $2<>'cancelled' and $3::text is not null then $3 else admin_note end, updated_at=now() where id=$1`, [id, status, note?.trim() || null]);
-      await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [actor?.id ?? o.created_by, 'shop.status', id, { status, note }]);
+      const row=await q.one<any>(
+        "update shop_orders set status=$2,cancel_reason=case when $2='cancelled' then $3 else cancel_reason end,"+
+        "admin_note=case when $2<>'cancelled' and $3::text is not null then $3 else admin_note end,"+
+        "updated_at=now() where id=$1 returning *",[id,status,note?.trim()||null]);
+      await q.query('insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4)',
+        [actor?.id??o.created_by,'shop.status',id,{status,note}]);
+      return row;
     });
-    if (actor) await this.notifier.notify([o.client_id, o.created_by], { type: 'shop', shopOrderId: id },
-      { kind: 'normal', title: `Заказ в магазине №${o.number}: ${SHOP_STATUS[status].toLowerCase()}`, body: note?.trim() || (status === 'ready' ? 'Можно забирать' : ''), data: { shopOrderId: id } });
-    const r = await this.db.one('select * from shop_orders where id=$1', [id]);
-    return this.orderView(r);
+    if(actor)await this.notifier.notify([updated.client_id,updated.created_by],
+      {type:'shop',shopOrderId:id},
+      {kind:'normal',title:`Заказ в магазине №${updated.number}: ${SHOP_STATUS[status].toLowerCase()}`,
+        body:note?.trim()||(status==='ready'?'Можно забирать':''),
+        data:{shopOrderId:id}});
+    return this.orderView(updated);
   }
 }

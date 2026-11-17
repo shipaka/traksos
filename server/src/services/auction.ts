@@ -221,7 +221,9 @@ export class AuctionService {
     const all = await this.settings.all();
     const rows = await this.db.query(
       `select o.id as order_id, o.number, o.service, o.address, o.destination, o.cargo, o.brand, o.description, o.problem,
-              o.estimate, o.auction_until, o.is_sos, o.auto_pick, d.distance_km::float as distance_km, f.price as my_price
+              o.estimate, o.auction_until, o.is_sos, o.auto_pick,
+              (o.additional_to is not null) as is_linked_stage,
+              d.distance_km::float as distance_km, f.price as my_price
          from order_dispatch d join orders o on o.id=d.order_id
          left join bids f on f.order_id=o.id and f.performer_id=d.performer_id and f.status='active'
         where d.performer_id=$1 and d.status='bidding' and o.status='searching'

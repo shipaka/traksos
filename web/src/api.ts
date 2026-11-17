@@ -11,7 +11,19 @@ const store = {
 let token: string | null = store.get('traksos.token');
 export const getToken = () => token;
 export function setToken(t: string | null) {
-  if (token !== t) store.set('traksos.offlineIdentity', null);
+  if (token !== t) {
+    // A login switch/logout must never leave an old user's WS connection open.
+    disconnectWs();
+    store.set('traksos.offlineIdentity', null);
+    // Delete explicitly opted-in tab drafts when the account/token changes.
+    // A shared phone must not expose previous account's private unsent text.
+    try{
+      for(let i=sessionStorage.length-1;i>=0;i--){
+        const key=sessionStorage.key(i);
+        if(key?.startsWith('tracksos:air:opt-in-draft:v1:'))sessionStorage.removeItem(key);
+      }
+    }catch{/* Private/locked WebView storage must not interrupt logout. */}
+  }
   token = t;
   store.set('traksos.token', t);
 }
@@ -20,7 +32,7 @@ export class ApiError extends Error {
   constructor(public status: number, public code: string, message: string, public data?: any) { super(message); }
 }
 
-export async function api<T = any>(method: string, path: string, body?: unknown): Promise<T> {
+export async function api<T = any>(method: string, path: string, body?: unknown, extraHeaders: Record<string,string> = {}): Promise<T> {
   // The sandbox is the exact same frontend served from another origin.
   // Fail closed if a bundle was accidentally built with a remote production API.
   if (sessionStorage.getItem('traksos.sandboxMode') === '1' &&
@@ -35,7 +47,7 @@ export async function api<T = any>(method: string, path: string, body?: unknown)
     try {
       r = await fetch(API_URL + path, {
         method,
-        headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
+        headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}), ...extraHeaders },
         body: body === undefined ? undefined : JSON.stringify(body),
         cache: 'no-store',
         signal: timeout.signal,
@@ -59,6 +71,11 @@ export async function api<T = any>(method: string, path: string, body?: unknown)
 
 export const get = <T = any>(p: string) => api<T>('GET', p);
 export const post = <T = any>(p: string, b: unknown = {}) => api<T>('POST', p, b);
+/** Retry the same customer order with the same key; never create a second charge. */
+export const postOrderIdempotent = <T = any>(b: unknown, key: string) =>
+  api<T>('POST', '/api/orders', b, { 'idempotency-key': key });
+
+export { newOrderRequestKey } from './orderRequestKey.ts';
 export const put = <T = any>(p: string, b: unknown = {}) => api<T>('PUT', p, b);
 export const patch = <T = any>(p: string, b: unknown = {}) => api<T>('PATCH', p, b);
 export const del = <T = any>(p: string) => api<T>('DELETE', p);
@@ -70,45 +87,81 @@ const listeners = new Set<Listener>();
 let ws: WebSocket | null = null;
 let retry = 0;
 let closedByUs = false;
+let wsConnectingGeneration: number | null = null;
+let wsGeneration = 0;
+let wsRetryTimer: ReturnType<typeof setTimeout> | null = null;
 
 export function onEvent(fn: Listener) {
   listeners.add(fn);
   return () => { listeners.delete(fn); };
 }
+function scheduleWsRetry() {
+  if(closedByUs || !token || !navigator.onLine || wsRetryTimer !== null)return;
+  retry=Math.min(retry+1,6);
+  wsRetryTimer=setTimeout(()=>{
+    wsRetryTimer=null;
+    connectWs();
+  },500*2**retry);
+}
 
 export function connectWs() {
-  if (!token || !navigator.onLine || (ws && ws.readyState <= 1)) return;
-  closedByUs = false;
-  const base = API_URL || location.origin;
-  const url = base.replace(/^http/, 'ws') + '/ws?token=' + encodeURIComponent(token);
-  ws = new WebSocket(url);
-  ws.onopen = () => { retry = 0; };
-  ws.onmessage = (m) => {
-    let e: any;
-    try { e = JSON.parse(m.data); } catch { return; }
-    listeners.forEach((l) => l(e));
-  };
-  ws.onclose = () => {
-    ws = null;
-    if (closedByUs || !token || !navigator.onLine) return;
-    retry = Math.min(retry + 1, 6);
-    setTimeout(connectWs, 500 * 2 ** retry);
-  };
+  if (!token || !navigator.onLine || wsConnectingGeneration===wsGeneration || (ws && ws.readyState <= 1)) return;
+  closedByUs=false;
+  const sessionToken=token;
+  const generation=wsGeneration;
+  wsConnectingGeneration=generation;
+  // A short-lived one-use ticket replaces putting the 90-day bearer token
+  // in /ws URLs, which reverse proxies might log.
+  void post<{ticket:string}>('/api/auth/realtime-ticket').then(({ticket})=>{
+    if(closedByUs || generation!==wsGeneration || token!==sessionToken || !navigator.onLine)return;
+    const base=API_URL || location.origin;
+    const url=base.replace(/^http/,'ws')+'/ws?ticket='+encodeURIComponent(ticket);
+    const socket=new WebSocket(url);
+    ws=socket;
+    socket.onopen=()=>{
+      if(closedByUs || generation!==wsGeneration || token!==sessionToken){
+        socket.close();return;
+      }
+      retry=0;
+      if(wsRetryTimer!==null){clearTimeout(wsRetryTimer);wsRetryTimer=null;}
+      // Do not wait 12 seconds to reconcile an offline Air backlog.
+      listeners.forEach(l=>l({type:'connection_restored'}));
+    };
+    socket.onmessage=(m)=>{
+      if(generation!==wsGeneration || token!==sessionToken)return;
+      let e:any;
+      try{e=JSON.parse(m.data);}catch{return;}
+      listeners.forEach(l=>l(e));
+    };
+    socket.onclose=()=>{
+      if(ws===socket)ws=null;
+      if(generation!==wsGeneration)return;
+      scheduleWsRetry();
+    };
+    socket.onerror=()=>{ /* onclose schedules a bounded reconnect */ };
+  }).catch(()=>{
+    if(generation===wsGeneration)scheduleWsRetry();
+  }).finally(()=>{
+    if(wsConnectingGeneration===generation)wsConnectingGeneration=null;
+  });
 }
 
 export function disconnectWs() {
-  closedByUs = true;
+  wsGeneration++;
+  closedByUs=true;
+  if(wsRetryTimer!==null){clearTimeout(wsRetryTimer);wsRetryTimer=null;}
   ws?.close();
-  ws = null;
+  ws=null;
 }
 
-window.addEventListener('online', () => {
-  if (token) connectWs();
+window.addEventListener('online',()=>{
+  if(token)connectWs();
 });
-window.addEventListener('offline', () => {
-  // Avoid reconnect churn and cellular battery usage when disconnected.
+window.addEventListener('offline',()=>{
+  // Prevent cellular battery use and reconnect storms while disconnected.
   ws?.close();
-  ws = null;
+  ws=null;
+  if(wsRetryTimer!==null){clearTimeout(wsRetryTimer);wsRetryTimer=null;}
 });
 
 

@@ -2,6 +2,8 @@ import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 
 process.env.ADMIN_PHONES = '+79990000001';
+// Dedicated second staff identity for independent moderation appeal tests.
+process.env.MODERATOR_PHONES ??= '+79990000002';
 
 const { createDb } = await import('../src/db/index.ts');
 const { migrate } = await import('../src/db/migrate.ts');
@@ -29,10 +31,10 @@ export async function setup() {
   await new Promise<void>((r) => server.listen(0, r));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 
-  async function api(method: string, path: string, body?: unknown, token?: string) {
+  async function api(method: string, path: string, body?: unknown, token?: string, extraHeaders: Record<string,string> = {}) {
     const r = await fetch(base + path, {
       method,
-      headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
+      headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}), ...extraHeaders },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
     const j: any = await r.json().catch(() => null);
@@ -53,7 +55,7 @@ export async function setup() {
     await db.close();
   }
 
-  return { db, app, api, login, clock, sms, push, payments, close, base };
+  return { db, app, api, login, clock, sms, push, payments, close, base, server };
 }
 
 export type T = Awaited<ReturnType<typeof setup>>;

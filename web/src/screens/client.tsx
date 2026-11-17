@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
-import { get, post, put, del, rub, fmtTime, fmtPhone } from '../api.ts';
+import { useEffect, useRef, useState } from 'react';
+import { get, post, put, del, rub, fmtTime, fmtPhone, postOrderIdempotent, newOrderRequestKey } from '../api.ts';
 import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF, ON_SITE, seriesHint } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFields, LiveStrip, type VehicleValue } from '../ui.tsx';
 import { BookingRows } from './base.tsx';
 import { DriverRules } from './fleet.tsx';
 import { VehicleServiceApplication, VehicleServiceHistory } from './vehicleServices.tsx';
 import { native } from '../native.ts';
+import { EcuDiscovery } from './ecuDiscovery.tsx';
 import { insurancePresentation, isOpenInsuranceRequest } from '../insurancePresentation.ts';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
@@ -33,14 +34,19 @@ export function Home() {
     <main className="client-home client-dashboard">
       <section className="desktop-hero" aria-label="Помощь грузовому транспорту">
         <div className="desktop-hero-copy">
-          <span className="desktop-eyebrow">TRAKSOS · САНКТ-ПЕТЕРБУРГ И ЛЕНОБЛАСТЬ</span>
+          <span className="desktop-eyebrow">TRAKSOS · ЦИФРОВОЙ СЕРВИС ПО ВСЕЙ РОССИИ</span>
           <h1>Помощь грузовикам в пути <span>24/7</span></h1>
           <p>Выездной мастер, эвакуатор, грузовые СТО и консультации. Заявки, страхование и запчасти — в одном кабинете.</p>
           <div className="desktop-hero-buttons">
             <a className="desktop-primary-action" href="#/sos">SOS · Помощь в дороге ↗</a>
+            {me?.roles.some(r=>r==='driver'||r==='client')&&<a href="#/air"
+              className="desktop-air-action" aria-label="Водительский Эфир — маршруты, города и общение с коллегами">
+              <span className="desktop-air-action-signal" aria-hidden="true">◉</span>
+              <span><b>Водительский Эфир</b><small>Маршруты · города · коллеги</small></span>
+            </a>}
             <a className="desktop-outline-action" href="#/orders">Мои заявки</a>
           </div>
-          <div className="launch-region" role="note">Зона запуска: Санкт-Петербург и Ленинградская область</div>
+          <div className="launch-region" role="note">Выберите регион заявки — доступность исполнителей проверим отдельно</div>
         </div>
         <img className="client-hero-scania" src="/tracksos-approved-scenic-hero.webp" alt="Реалистичный грузовой тягач Scania на дороге в закатном свете" loading="eager" />
       </section>
@@ -69,11 +75,12 @@ export function Home() {
         <a href="#/new/consult" className="desktop-quick-card"><span className="desktop-quick-icon">☎</span><span><b>Консультация по телефону</b><small>Обсудить проблему со специалистом</small></span><span aria-hidden="true">↗</span></a>
       </section>
 
+      <EcuDiscovery place="home" />
       <div className="desktop-home-columns">
         <section className="desktop-home-main">
           <div className="mobile-home-heading">
             <h1>{me?.name ? `${me.name}, что случилось?` : 'Что случилось?'}</h1>
-            <div className="sub">Выберите проблему — подскажем, к кому обратиться. Работаем в Санкт-Петербурге и Ленинградской области.</div>
+            <div className="sub">Выберите проблему — подскажем, к кому обратиться. Наличие мастеров и СТО зависит от вашего региона.</div>
           </div>
           <div className="desktop-section-heading"><h2>Мои активные заявки</h2><a href="#/orders">Все заявки →</a></div>
           <div className="desktop-active-orders">
@@ -190,6 +197,7 @@ export function Sos() {
                 </a>
               ))}
             </div>
+            <EcuDiscovery place="sos" />
           </> : direction === 'tow' ? <>
             <p className="note">Для эвакуации укажете тип машины или сцепки, откуда и куда её везти.</p>
             <a className="btn" href="#/new/tow?sos=accident">Оформить вызов эвакуатора →</a>
@@ -263,6 +271,7 @@ export function Consult() {
   const c = pricing.consult ?? { price: 70_000, backDiscount: 20_000, backHours: 48 };
 
   async function submit() {
+    if(!zoneId || !est || est.regionValidation?.available===false)return;
     const r = await run(() => post('/api/orders', {
       service: 'consult', problem: sym?.id, description: description.trim() || undefined,
       vehicleId: vehicleId || undefined, ...carBody(vehicleId, car), paymentMethod: 'cash',
@@ -373,15 +382,20 @@ export function NewOrder({ service }: { service: string }) {
   const sos = SYMPTOMS.find((p) => p.id === params.get('sos'));
   const sym = sos ?? SYMPTOMS.find((p) => p.id === params.get('p'));
   const fromConsult = params.get('from');
+  const additionalTo = service==='ecu'?params.get('additionalTo'):null;
   const { me } = useMe();
   const { busy, run } = useAction();
+  const submittedRequest=useRef<{body:string;key:string}|null>(null);
+  const [submissionUncertain,setSubmissionUncertain]=useState(false);
   const pricing = useLoad(() => get('/api/pricing'), []);
   const vehicles = useLoad(() => get('/api/vehicles'), []);
   const consult = useLoad(() => (fromConsult ? get(`/api/orders/${fromConsult}`) : Promise.resolve(null)), [fromConsult]);
-  const [agree, setAgree] = useState(false);
+  const related = useLoad(()=>additionalTo?get('/api/orders/'+additionalTo):Promise.resolve(null),[additionalTo]);
+  const [agreedQuoteKey, setAgreedQuoteKey] = useState<string | null>(null);
 
-  const [zoneId, setZoneId] = useState('spb');
-  const [tier, setTier] = useState<'eco' | 'comfort' | 'pro'>(service === 'diag' ? 'pro' : 'eco');
+  // A national visitor must deliberately choose the legacy local pricing zone.
+  const [zoneId, setZoneId] = useState(service==='consult'?'spb':'');
+  const [tier, setTier] = useState<'eco' | 'comfort' | 'pro'>(service === 'diag'||service==='ecu' ? 'pro' : 'eco');
   const [night, setNight] = useState<boolean | null>(null);
   const [group, setGroup] = useState(false);
   const [vehicleId, setVehicleId] = useState<string>('');
@@ -392,19 +406,54 @@ export function NewOrder({ service }: { service: string }) {
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [geoState, setGeoState] = useState<'idle' | 'wait' | 'ok' | 'fail'>('idle');
   const [method, setMethod] = useState<'cash' | 'online' | 'invoice'>('cash');
-  const [est, setEst] = useState<any>(null);
+  const [quote, setQuote] = useState<{ key: string; value: any } | null>(null);
+  const [quoteError,setQuoteError]=useState<string|null>(null);
+  const [quoteAddress,setQuoteAddress]=useState('');
   const [destination, setDestination] = useState(prefill.destination ?? '');
   const [cargo, setCargo] = useState<'tractor' | 'semitrailer' | 'coupling' | 'truck12' | 'bus' | 'special'>('tractor');
   const [loaded, setLoaded] = useState<'empty' | 'loaded' | 'adr'>('empty');
   const [driverOnSite, setDriverOnSite] = useState(true);
+  const [site, setSite] = useState<{ place?: string; pass?: string; meet?: string; state?: string; when?: string; time?: string }>({});
   const isTow = service === 'tow';
+  // Price and customer consent apply to these exact parameters, not a stale quote.
+  const quoteKey = JSON.stringify([service,tier,zoneId,night,group,address.trim(),geo?.lat ?? null,geo?.lng ?? null]);
+  const est = quoteAddress === address.trim() && quote?.key === quoteKey ? quote.value : null;
+  // The quote may remain numerically unchanged while the vehicle, task or
+  // payment terms change. Prior consent must never carry into a different
+  // service contract merely because the regional call-out tariff is equal.
+  const consentKey = JSON.stringify([
+    quoteKey,additionalTo,fromConsult,vehicleId,car.brand.trim(),car.model.trim(),
+    car.year,description.trim(),method,destination,cargo,loaded,driverOnSite,
+    site.place,site.pass,site.meet,site.state,site.when,site.time,
+  ]);
+  const agree = Boolean(est && agreedQuoteKey === consentKey);
+  const setAgree = (checked: boolean) => setAgreedQuoteKey(checked ? consentKey : null);
+  useEffect(() => { setAgreedQuoteKey(null); }, [consentKey]);
 
   useEffect(() => {
     if (pricing.data && night === null) setNight(pricing.data.nightNow);
   }, [pricing.data]); // eslint-disable-line
   useEffect(() => {
-    if (vehicles.data?.length && !vehicleId) setVehicleId(vehicles.data[0].id);
+    if (vehicles.data?.length && !vehicleId && !additionalTo) setVehicleId(vehicles.data[0].id);
   }, [vehicles.data]); // eslint-disable-line
+  // Related ECU service is separately priced but must use the same vehicle.
+  useEffect(()=>{
+    const parent=related.data;
+    if(!parent||!additionalTo)return;
+    if(parent.zoneId)setZoneId(parent.zoneId);
+    if(parent.vehicleId)setVehicleId(parent.vehicleId);
+    else if(parent.brand){
+      setVehicleId('');
+      setCar({brand:parent.brand,model:parent.model??'',
+        year:parent.year?String(parent.year):''});
+    }
+    if(parent.address)setAddress(parent.address);
+    if(Number.isFinite(parent.lat)&&Number.isFinite(parent.lng)){
+      setGeo({lat:parent.lat,lng:parent.lng});
+      setGeoState('ok');
+    }
+    if(!description)setDescription('Дополнительная диагностика ЭБУ после заявки №'+parent.number);
+  },[related.data,additionalTo]); // eslint-disable-line
   // Выезд после консультации: та же машина и описание
   useEffect(() => {
     const c = consult.data;
@@ -412,10 +461,20 @@ export function NewOrder({ service }: { service: string }) {
     if (c.description && !description) setDescription(c.description);
     if (!c.vehicle && c.brand) { setVehicleId(''); setCar({ brand: c.brand, model: c.model ?? '', year: c.year ? String(c.year) : '' }); }
   }, [consult.data]); // eslint-disable-line
+  useEffect(()=>{
+    const t=window.setTimeout(()=>setQuoteAddress(address.trim()),350);
+    return ()=>window.clearTimeout(t);
+  },[address]);
   useEffect(() => {
-    if (night === null) return;
-    post('/api/pricing/estimate', { service, tier, zoneId, night, group }).then(setEst).catch(() => setEst(null));
-  }, [service, tier, zoneId, night, group]);
+    let alive=true;
+    if(night===null||!zoneId||quoteAddress!==address.trim()){setQuote(null);setQuoteError(null);return}
+    setQuote(null);setQuoteError(null);
+    post('/api/pricing/estimate', {service,tier,zoneId,night,group,
+      address:quoteAddress||undefined,lat:geo?.lat,lng:geo?.lng})
+      .then(x=>{if(alive)setQuote({key:quoteKey,value:x})})
+      .catch(()=>{if(alive){setQuote(null);setQuoteError('Для выбранного местоположения тариф СПб/ЛО не подтверждён. Проверьте адрес и зону. Нельзя отправить заказ по цене другого региона.')}})
+    return ()=>{alive=false};
+  }, [service, tier, zoneId, night, group, quoteAddress,geo?.lat,geo?.lng,quoteKey]);
 
   function locate() {
     if (!navigator.geolocation) return setGeoState('fail');
@@ -426,27 +485,37 @@ export function NewOrder({ service }: { service: string }) {
       { enableHighAccuracy: true, timeout: 15_000 },
     );
   }
-  useEffect(locate, []);
+  // GPS is permission-based: do not prompt automatically when opening SOS.
 
   const zone = pricing.data?.zones.find((z: any) => z.id === zoneId);
   const groupAllowed = service !== 'tow' && (zone?.km ?? 0) > 30;
   const methods = pricing.data?.payments;
 
   async function submit() {
-    const r = await run(() => post('/api/orders', {
+    // Defensive guard even if the CallBar is invoked during a debounced update.
+    if(!zoneId || !est || !agree||(additionalTo&&(!related.data||zoneId!==related.data.zoneId)))return;
+    const payload = {
       service, isSos: !!sos, problem: sos?.id, description: description || undefined, address: address || undefined,
       lat: geo?.lat, lng: geo?.lng, zoneId, tier: service === 'tow' ? undefined : tier, vehicleId: vehicleId || undefined,
       ...carBody(vehicleId, car), groupTrip: groupAllowed && group, night: night ?? undefined, paymentMethod: method,
       ...(isTow ? { destination: destination || undefined, cargo, loaded, driverOnSite } : {}),
       fromConsult: fromConsult || undefined,
+      additionalTo:additionalTo||undefined,
       site: isTow || !Object.keys(site).length ? undefined : { ...site, meet: site.meet || undefined, time: site.time || undefined },
-    }));
-    if (!r) return;
+    };
+    // The server may accept an order before mobile data drops.
+    // A user-triggered retry sends the identical idempotency key.
+    const serialized=JSON.stringify(payload);
+    if(!submittedRequest.current||submittedRequest.current.body!==serialized)
+      submittedRequest.current={body:serialized,key:newOrderRequestKey()};
+    const key=submittedRequest.current.key;
+    const r = await run(() => postOrderIdempotent(payload,key));
+    if (!r){setSubmissionUncertain(true);return;}
+    setSubmissionUncertain(false);
     if (r.confirmationUrl) location.href = r.confirmationUrl;
     else go(`order/${r.order.id}`);
   }
 
-  const [site, setSite] = useState<{ place?: string; pass?: string; meet?: string; state?: string; when?: string; time?: string }>({});
   const [tried, setTried] = useState(false);
   const need = {
     car: !!vehicleId || car.brand.trim().length >= 2,
@@ -455,9 +524,12 @@ export function NewOrder({ service }: { service: string }) {
     tow: !isTow || destination.trim().length >= 3,
   };
   const missing = [
+    !!additionalTo&&!related.data && {id:'f-car',name:'исходная заявка'},
     !need.car && { id: 'f-car', name: 'марка машины' },
     !need.what && { id: 'f-what', name: 'описание задачи' },
     !need.where && { id: 'f-where', name: 'где машина' },
+    !zoneId && { id: 'f-where', name: 'тарифная зона СПб/ЛО' },
+    !est && { id: 'f-where', name: 'подтверждённый предварительный расчёт' },
     !need.tow && { id: 'f-tow', name: 'куда везти' },
     !agree && { id: 'f-agree', name: 'согласие с суммами' },
   ].filter(Boolean) as { id: string; name: string }[];
@@ -467,16 +539,31 @@ export function NewOrder({ service }: { service: string }) {
 
   return (
     <main>
-      <Back to={fromConsult ? `order/${fromConsult}` : sos ? 'sos' : ''} />
+      <Back to={additionalTo?`order/${additionalTo}`:fromConsult ? `order/${fromConsult}` : sos ? 'sos' : ''} />
       <div>
         <h1>{sym ? sym.name : s?.name ?? 'Заявка'}</h1>
         <div className="sub">{sos ? `${s?.name} · срочный вызов` : sym ? s?.name : s?.hint}</div>
       </div>
       <SelfOrderWarning me={me} />
+      {submissionUncertain&&<div className="banner warn" role="alert">
+        Если ответ потерялся из-за связи, заявка могла быть оформлена.
+        Перед изменением формы проверьте <a href="#/orders">Мои заявки</a>.
+        Повтор отправки без изменения условий использует прежний ключ и не создаёт второй заказ.
+      </div>}
       <DriverRules />
-      {!isTow && !sos && (
+      {additionalTo&&<section className="card stack" aria-label="Дополнительная заявка по ЭБУ">
+        <strong>Дополнительный специалист в этом же обращении</strong>
+        {related.error?<p role="alert">Не удалось проверить первую заявку: {related.error}</p>:
+          related.data?<p className="note">
+            Первая заявка №{related.data.number} · {SERVICES[related.data.service]?.name??related.data.service}.
+            Автомобиль и тарифная зона должны совпадать.
+            ЭБУ получит отдельную заявку, со своей ценой, исполнителем, статусами и оплатой.
+            После подтверждения клиент увидит оба этапа в общей истории.
+          </p>:<p className="note">Проверяю доступ к первоначальной заявке…</p>}
+      </section>}
+      {!additionalTo&&!isTow && !sos && (
         <div className="scroll-x" role="tablist" aria-label="Какой мастер нужен">
-          {(['electric', 'air', 'autonomy', 'tyre', 'diag'] as const).map((k) => (
+          {(['electric', 'air', 'autonomy', 'tyre', 'diag', 'ecu'] as const).map((k) => (
             <button key={k} type="button" className="chip" role="tab" aria-pressed={service === k} onClick={() => { if (k !== service) go(`new/${k}${location.hash.includes('?') ? '?' + location.hash.split('?')[1] : ''}`); }}>{SERVICES[k].name}</button>
           ))}
         </div>
@@ -491,7 +578,8 @@ export function NewOrder({ service }: { service: string }) {
 
       <Step n={1} id="f-car" title="Машина" req done={need.car} missing={tried && !need.car}>
         {vehicles.data?.length ? (
-          <select className="field" value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
+          <select className="field" value={vehicleId} disabled={!!additionalTo}
+            onChange={(e) => setVehicleId(e.target.value)}>
             {vehicles.data.map((v: any) => <option key={v.id} value={v.id}>{v.brand} {v.model ?? ''} {v.year ?? ''} {v.plate ?? ''}</option>)}
             <option value="">Другая машина</option>
           </select>
@@ -512,8 +600,15 @@ export function NewOrder({ service }: { service: string }) {
           {geoState === 'ok' ? '✓ Точка на карте определена — адрес можно не писать' : geoState === 'wait' ? 'Определяю место…' : geoState === 'fail'
             ? <>Не удалось определить место — напишите адрес. <button type="button" className="chip" style={{ minHeight: 30 }} onClick={locate}>Ещё раз</button></> : null}
         </span>
-        <span className="label">Зона — от неё цена выезда</span>
-        <Chips value={zoneId} onChange={setZoneId} options={pricing.data.zones.map((z: any) => ({ id: z.id, name: z.km > 30 ? `${z.name} · ${z.km} км` : z.name }))} />
+        <button type="button" className="btn ghost small" disabled={geoState==='wait'} onClick={locate}>
+          {geoState==='ok'?'Обновить GPS-точку':'Определить местоположение по GPS'}
+        </button>
+        <span className="note">Сейчас для автоматического расчёта доступны тарифы Санкт-Петербурга и Ленинградской области. Для остальных регионов ещё нет подтверждённой цены — нельзя применять расценки КАД.</span>
+        <span className="label">Тарифная зона — выберите осознанно</span>
+        {additionalTo ? <p className="note" role="status">{zone?.name??'Зона загружается'} · тарифная зона совпадает с первым заказом</p> :
+          <Chips value={zoneId} onChange={v=>{setZoneId(v);setAgree(false)}} options={pricing.data.zones.map((z: any) => ({ id: z.id, name: z.km > 30 ? `${z.name} · ${z.km} км` : z.name }))} />}
+        {quoteError&&<div className="banner warn" role="alert">{quoteError}</div>}
+        {est?.regionValidation?.message&&<div className="note" role="status">{est.regionValidation.message}</div>}
         <div className="grid2">
           <button type="button" className="seg" aria-pressed={!night} onClick={() => setNight(false)}>Днём</button>
           <button type="button" className="seg" aria-pressed={!!night} onClick={() => setNight(true)}>Ночь 22–7</button>
@@ -598,6 +693,16 @@ export function NewOrder({ service }: { service: string }) {
         {method === 'online' && <span className="note">Выезд оплачивается сейчас и замораживается. Мастеру деньги уйдут после того, как вы подтвердите работу.</span>}
       </Step>
 
+      {service==='ecu'&&!est&&<div className="card flat stack" id="f-agree" role="status">
+        <span className="label">7 · Подтверждение стоимости ЭБУ</span>
+        <p className="note">
+          Сначала укажите местоположение и осознанно выберите тарифную зону.
+          Здесь появится отдельный расчёт работы специалиста по электронным блокам.
+        </p>
+        <p className="note">
+          До получения расчёта согласие с суммой недоступно — заявку и оплату не создаём.
+        </p>
+      </div>}
       {est && (
         <div className={`card hi ${tried && !agree ? 'missing' : ''}`} id="f-agree">
           <span className="label" style={{ color: 'var(--accent)' }}>{isTow ? 6 : 7} · Проверьте перед вызовом</span>
