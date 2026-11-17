@@ -2,14 +2,18 @@ import {useEffect,useRef,useState} from 'react';
 import {get,post,put} from '../api.ts';
 import {useAction,useLoad,useMe,Back} from '../ui.tsx';
 import './courier.css';
+import {CourierRouteMap} from './courierRouteMap.tsx';
 
 type CourierProfile={displayName:string;vehicleLabel:string|null;locationConsent:boolean;gpsNote:string};
 type Run={id:string;status:string;cityCode:string;pickupAddress:string;
+  pickupLat:number|null;pickupLng:number|null;routePlanning:string;
+  directKm:number|null;routeDisclaimer:string;
   activeStopId:string|null;stops:Stop[]};
 type RunList={runs:Array<{id:string;status:string;cityCode:string}>};
 type Parcel={name:string;brand:string|null;article:string|null;qty:number};
 type Stop={id:string;seq:number;status:string;orderNumber:number;recipientName:string|null;
-  address:string|null;items:Parcel[];comment:string|null;handoffVerified:boolean};
+  address:string|null;lat:number|null;lng:number|null;items:Parcel[];comment:string|null;
+  handoffVerified:boolean};
 const statusText:Record<string,string>={
   planned:'Ожидает принятия',accepted:'Принят',collecting:'Забираем со склада',
   delivering:'Доставляем клиентам',returning:'Возврат на склад',
@@ -163,6 +167,7 @@ export function CourierHome(){
          {current.status==='returning'&&<div className="banner warn" role="status">
            Остались невручённые посылки. Верните их на склад. Только администратор может подтвердить фактический возврат и закрыть рейс.
          </div>}
+         <CourierRouteMap route={current}/>
          <h3>Заказы по маршруту</h3>
          <ol className="courier-stops">
            {current.stops.map(st=><li className="courier-stop" key={st.id}>
@@ -230,7 +235,7 @@ export function CourierHome(){
              </div>
            </li>)}
          </ol>
-         <p className="note">Маршрут следует порядку, утверждённому диспетчером. Время прибытия не прогнозируется без подключённого маршрутизатора. Сборка и статус поставщика проверяются до отправки.</p>
+         <p className="note">Остановки идут в порядке маршрутного листа. При наличии проверенных координат порядок рассчитан автоматически по геометрии точек, иначе оставлен ручной порядок диспетчера. Дорожный пробег, пробки и ETA требуют лицензированного маршрутизатора.</p>
        </>}
      </section>
    </div>}

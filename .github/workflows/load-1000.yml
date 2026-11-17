@@ -1,0 +1,73 @@
+name: TrackSOS load gate (1000 sessions, couriers and real WebSockets)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/load-1000.yml'
+      - 'scripts/load-*-1000.mjs'
+      - 'server/src/services/shopCourier*.ts'
+      - 'server/migrations/150_courier_coordinate_route_sheets.sql'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One CI runner and one disposable PostgreSQL. Four scenarios run sequentially,
+# never hammer a production server or start four concurrent 1000-user jobs.
+concurrency:
+  group: tracksos-load-1000-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  thousand-load:
+    name: 1000 participants + 1000 courier parcels / isolated DB
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/traksos_1000_load
+      PGPASSWORD: postgres
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - name: Create isolated, disposable test database
+        run: psql -h 127.0.0.1 -U postgres -c "create database traksos_1000_load"
+      - name: Run all four 1000-participant and courier-backlog gates sequentially
+        shell: bash
+        run: |
+          failures=0
+          for script in scripts/load-mixed-1000.mjs scripts/load-community-1000.mjs scripts/load-community-ws-1000.mjs scripts/load-courier-1000.mjs; do
+            echo "::group::1000 load $script"
+            node --import tsx "$script" || failures=$((failures+1))
+            echo "::endgroup::"
+          done
+          if [ "$failures" -ne 0 ]; then
+            echo "::error::$failures of 4 isolated load scenarios failed"
+            exit 1
+          fi
+      - name: Publish all latency, event-delivery and courier route reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tracksos-1000-load-reports
+          path: |
+            test-results/load-mixed-1000.json
+            test-results/community-load-1000.json
+            test-results/community-ws-1000.json
+            test-results/courier-route-1000.json
+          if-no-files-found: warn
+          retention-days: 14

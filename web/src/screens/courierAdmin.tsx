@@ -34,6 +34,8 @@ export function CourierAdmin(){
  const [vehicle,setVehicle]=useState('');
  const [verifyOrder,setVerifyOrder]=useState(''),[verifyEvidence,setVerifyEvidence]=useState('');
  const [courierId,setCourierId]=useState(''),[warehouse,setWarehouse]=useState(''),[orders,setOrders]=useState('');
+ const [pickupLat,setPickupLat]=useState(''),[pickupLng,setPickupLng]=useState('');
+ const [verifyLat,setVerifyLat]=useState(''),[verifyLng,setVerifyLng]=useState('');
  const [packingRequired,setPackingRequired]=useState(false);
  const [traceabilityRequired,setTraceabilityRequired]=useState(false);
  const [supplierReceiptRequired,setSupplierReceiptRequired]=useState(false);
@@ -84,29 +86,52 @@ export function CourierAdmin(){
      <p className="note">Подтверждайте только реально проверенные адреса Санкт-Петербурга. При сомнениях нужно связаться с получателем; IP не является подтверждением адреса.</p>
      <form className="stack" onSubmit={async e=>{
        e.preventDefault();const saved=await run(()=>post('/api/admin/shop/delivery-addresses/'+verifyOrder.trim()+'/verify',{
-         cityCode:'spb',evidence:verifyEvidence.trim()
-       }),'Адрес проверен');if(saved){setVerifyOrder('');setVerifyEvidence('')}
+         cityCode:'spb',evidence:verifyEvidence.trim(),
+         ...(verifyLat.trim()&&verifyLng.trim()?{lat:Number(verifyLat.replace(',','.')),
+           lng:Number(verifyLng.replace(',','.'))}:{})
+       }),'Адрес проверен');if(saved){setVerifyOrder('');setVerifyEvidence('');setVerifyLat('');setVerifyLng('')}
      }}>
        <label>ID заказа магазина <input className="field" value={verifyOrder} onChange={e=>setVerifyOrder(e.target.value)} required/></label>
        <label>Как проверили адрес <textarea className="field" value={verifyEvidence} onChange={e=>setVerifyEvidence(e.target.value)}
          minLength={10} maxLength={500} required rows={2}/></label>
-       <button className="btn" disabled={busy||verifyEvidence.trim().length<10} type="submit">Зафиксировать проверку</button>
+       <div className="grid2">
+         <label>Широта получателя (проверенная, необязательно)
+           <input className="field" inputMode="decimal" value={verifyLat}
+             onChange={e=>setVerifyLat(e.target.value)} placeholder="59.93"/></label>
+         <label>Долгота получателя (проверенная, необязательно)
+           <input className="field" inputMode="decimal" value={verifyLng}
+             onChange={e=>setVerifyLng(e.target.value)} placeholder="30.32"/></label>
+       </div>
+       <p className="note">Координаты вводятся только после реальной сверки адреса оператором. Без них порядок будет ручным.</p>
+       <button className="btn" disabled={busy||verifyEvidence.trim().length<10||
+         Boolean(verifyLat.trim())!==Boolean(verifyLng.trim())} type="submit">Зафиксировать проверку</button>
      </form>
    </section>
    <SupplierReceivingDesk/>
    <section className="card stack">
      <h2>Составить рейс</h2>
-     <p className="note">Порядок ID заказов определяет порядок доставки. Маршрутизатор ещё не подключён; здесь нет автоматического расчёта пути и ETA.</p>
+     <p className="note">Вставьте готовые заказы в любом порядке. С проверенными координатами склада и всех получателей TrakSOS автоматически расставит остановки по близости и составит курьеру один маршрутный лист. Без координат сохранится ручной порядок. Дорожные ограничения, пробки и ETA не рассчитываются.</p>
      <form className="stack" onSubmit={async e=>{
        e.preventDefault();const orderIds=orders.split(/[,;\s]+/).map(x=>x.trim()).filter(Boolean);
        const saved=await run(()=>post('/api/admin/shop/courier-runs',{
-         courierId:courierId.trim(),pickupAddress:warehouse.trim(),orderIds,packingRequired,traceabilityRequired,supplierReceiptRequired
+         courierId:courierId.trim(),pickupAddress:warehouse.trim(),orderIds,
+         ...(pickupLat.trim()&&pickupLng.trim()?{pickupLat:Number(pickupLat.replace(',','.')),
+           pickupLng:Number(pickupLng.replace(',','.'))}:{}),
+         packingRequired,traceabilityRequired,supplierReceiptRequired
        }),'План рейса сформирован');
        if(saved){setOrders('');setSelected(saved.id);await runs.reload();await economics.reload();}
      }}>
        <label>ID курьера <input className="field" value={courierId} onChange={e=>setCourierId(e.target.value)} required/></label>
        <label>Адрес склада <input className="field" value={warehouse} onChange={e=>setWarehouse(e.target.value)} minLength={10} required placeholder="Санкт-Петербург, …"/></label>
-       <label>ID готовых заказов по порядку <textarea className="field" value={orders} onChange={e=>setOrders(e.target.value)}
+       <div className="grid2">
+         <label>Широта склада (проверенная)
+           <input className="field" inputMode="decimal" value={pickupLat}
+             onChange={e=>setPickupLat(e.target.value)} placeholder="59.93"/></label>
+         <label>Долгота склада (проверенная)
+           <input className="field" inputMode="decimal" value={pickupLng}
+             onChange={e=>setPickupLng(e.target.value)} placeholder="30.32"/></label>
+       </div>
+       <label>ID готовых заказов в любом порядке <textarea className="field" value={orders} onChange={e=>setOrders(e.target.value)}
          rows={4} placeholder="Каждый UUID на новой строке" required/></label>
        <label className="row">
          <input type="checkbox" checked={packingRequired}
@@ -132,7 +157,8 @@ export function CourierAdmin(){
          или его применяемость к автомобилю. Сканер-клавиатура не считается
          аппаратно подтверждённым считывателем.</p>
        <p className="note">Если включить проверку, отправка рейса и забор посылки невозможны до подтверждения всех строк состава. Это не проверка оригинальности деталей.</p>
-       <button className="btn" disabled={busy||!courierId||warehouse.trim().length<10||!orders.trim()} type="submit">
+       <button className="btn" disabled={busy||!courierId||warehouse.trim().length<10||!orders.trim()||
+         Boolean(pickupLat.trim())!==Boolean(pickupLng.trim())} type="submit">
          Создать маршрут без отправки курьеру
        </button>
      </form>

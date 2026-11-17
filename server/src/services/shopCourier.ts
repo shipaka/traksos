@@ -6,6 +6,7 @@ import { parse, bad, forbidden, notFound, conflict, HttpError } from '../http/ro
 import type { Notifier } from './notify.ts';
 import { addressDeclaredInSpb } from './shopRegion.ts';
 import { warehouseProgress } from './shopWarehouse.ts';
+import {planCourierRoute} from './shopCourierRoute.ts';
 import {supplierReceiptReadiness} from './shopSupplierReceiving.ts';
 
 /** Only an admin can grant a courier entitlement; no public courier signup. */
@@ -21,7 +22,8 @@ async function courier(db:Db,user:AuthUser) {
 }
 type Run={id:string;courier_id:string;status:string;pickup_address:string;city_code:string;
   active_stop_id:string|null;dispatch_approved_at:Date|null;packing_required:boolean;
-  supplier_receipt_required:boolean};
+  supplier_receipt_required:boolean;pickup_lat:number|null;pickup_lng:number|null;
+  route_planning:string;route_direct_km:number|null};
 async function myRun(db:Db,c:AuthedCtx) {
   await courier(db,c.user);
   const run=await db.one<Run>('select * from shop_courier_runs where id=$1',[parse(id,c.params.id)]);
@@ -31,18 +33,26 @@ async function myRun(db:Db,c:AuthedCtx) {
 }
 async function runSummary(db:Db,run:Run) {
   const stops=await db.query<any>(
-    "select st.id,st.seq,st.status,so.id as shop_order_id,so.number,so.items,so.address,so.comment, "+
+    "select st.id,st.seq,st.status,so.id as shop_order_id,so.number,so.items,so.address,so.comment,ac.lat as stop_lat,ac.lng as stop_lng, "+
     "u.name as recipient_name,(h.verified_at is not null) as handoff_verified from shop_courier_stops st "+
     "left join shop_delivery_handoffs h on h.stop_id=st.id "+ 
+    "left join shop_delivery_address_checks ac on ac.shop_order_id=st.shop_order_id "+ 
     "join shop_orders so on so.id=st.shop_order_id join users u on u.id=so.client_id "+
     "where st.run_id=$1 order by st.seq",[run.id]);
   return {id:run.id,status:run.status,cityCode:run.city_code,pickupAddress:run.pickup_address,
+    pickupLat:run.pickup_lat,pickupLng:run.pickup_lng,
+    routePlanning:run.route_planning,directKm:run.route_direct_km,
+    routeDisclaimer:run.route_planning==='coordinate_heuristic'
+      ?'Порядок рассчитан по прямым расстояниям между проверенными точками; нет учёта дорог, пробок и ETA'
+      :'Недостаточно координат склада или получателей: порядок задан диспетчером вручную',
     packingRequired:run.packing_required,
     activeStopId:run.active_stop_id,
     stops:stops.map(x=>({id:x.id,seq:x.seq,status:x.status,orderNumber:x.number,
        handoffVerified:Boolean(x.handoff_verified),
       recipientName:['delivered','failed'].includes(x.status)?null:(x.recipient_name??'Получатель'),
       address:['delivered','failed'].includes(x.status)?null:x.address,
+      lat:['delivered','failed'].includes(x.status)?null:x.stop_lat,
+      lng:['delivered','failed'].includes(x.status)?null:x.stop_lng,
       items:Array.isArray(x.items)?x.items.map((item:any)=>({
         name:String(item.name??'Товар'),brand:item.brand??null,article:item.article??null,
         qty:Number(item.qty??0)
@@ -156,10 +166,14 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
   });
   r.post('/api/admin/shop/courier-runs',['admin'],async(c:AuthedCtx)=>{
     const b=parse(z.object({courierId:id,pickupAddress:z.string().trim().min(10).max(300),
+      pickupLat:z.number().min(-90).max(90).optional(),
+      pickupLng:z.number().min(-180).max(180).optional(),
       orderIds:z.array(id).min(1).max(50),packingRequired:z.boolean().default(false),
       traceabilityRequired:z.boolean().default(false),
       supplierReceiptRequired:z.boolean().default(false)}),c.body);
     if(new Set(b.orderIds).size!==b.orderIds.length)throw bad('duplicate_orders','Заказ повторяется в маршруте');
+    if((b.pickupLat==null)!==(b.pickupLng==null))
+      throw bad('warehouse_coords_incomplete','Укажите обе координаты склада');
     if(b.traceabilityRequired&&!b.packingRequired)throw bad('trace_requires_packing',
       'Прослеживаемость GTIN допускается только вместе со складской сверкой');
     if(b.supplierReceiptRequired&&!b.packingRequired)
@@ -177,8 +191,10 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
         "and status in ('planned','accepted','collecting','delivering','returning') limit 1",
         [b.courierId]);
       if(busy)throw conflict('courier_busy','У курьера есть незакрытый маршрут, включая возврат на склад');
-      const orders=await q.query<{id:string;status:string;delivery:string;verified:boolean;supplier_status:string|null}>(
-        "select so.id,so.status,so.delivery,(ac.shop_order_id is not null) as verified,ev.status as supplier_status "+
+      const orders=await q.query<{id:string;status:string;delivery:string;verified:boolean;
+        supplier_status:string|null;stop_lat:number|null;stop_lng:number|null}>(
+        "select so.id,so.status,so.delivery,(ac.shop_order_id is not null) as verified,ev.status as supplier_status, "+
+        "ac.lat as stop_lat,ac.lng as stop_lng "+
         "from shop_orders so left join shop_delivery_address_checks ac on ac.shop_order_id=so.id "+
         "left join lateral(select status from shop_supplier_order_events e where e.shop_order_id=so.id "+
         "order by e.event_time desc,e.id desc limit 1) ev on true "+
@@ -191,22 +207,34 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
         'select shop_order_id from shop_courier_stops where shop_order_id=any($1::uuid[]) limit 1',
         [b.orderIds]);
       if(assigned)throw conflict('order_already_assigned','Один из заказов уже находится в другом курьерском рейсе');
+      const byId=new Map(orders.map(order=>[order.id,order]));
+      const routePlan=planCourierRoute(
+        b.pickupLat==null||b.pickupLng==null?null:{lat:b.pickupLat,lng:b.pickupLng},
+        b.orderIds.map(orderId=>({id:orderId,lat:byId.get(orderId)?.stop_lat??NaN,
+          lng:byId.get(orderId)?.stop_lng??NaN})));
       const result=await q.one<Run>(
-        "insert into shop_courier_runs(courier_id,created_by,pickup_address,packing_required,traceability_required,supplier_receipt_required) values($1,$2,$3,$4,$5,$6) returning *",
-        [b.courierId,c.user.id,b.pickupAddress,b.packingRequired,b.traceabilityRequired,b.supplierReceiptRequired]);
+        "insert into shop_courier_runs(courier_id,created_by,pickup_address, "+
+        "pickup_lat,pickup_lng,route_planning,route_direct_km, "+
+        "packing_required,traceability_required,supplier_receipt_required) "+
+        "values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning *",
+        [b.courierId,c.user.id,b.pickupAddress,b.pickupLat??null,b.pickupLng??null,
+         routePlan.planning,routePlan.directKm,b.packingRequired,b.traceabilityRequired,
+         b.supplierReceiptRequired]);
       if(!result)throw new Error('Courier run insert failed');
-      for(let i=0;i<b.orderIds.length;i++) {
+      for(let i=0;i<routePlan.orderedIds.length;i++) {
         await q.query('insert into shop_courier_stops(run_id,shop_order_id,seq) values($1,$2,$3)',
-          [result.id,b.orderIds[i],i+1]);
-        await recordDelivery(q,b.orderIds[i],result.id,'planned',c.user.id);
+          [result.id,routePlan.orderedIds[i],i+1]);
+        await recordDelivery(q,routePlan.orderedIds[i],result.id,'planned',c.user.id);
       }
       await q.query('insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4)',
         [c.user.id,'shop.courier_run_created',result.id,{stops:b.orderIds.length,packingRequired:b.packingRequired,traceabilityRequired:b.traceabilityRequired,
-          supplierReceiptRequired:b.supplierReceiptRequired}]);
+          supplierReceiptRequired:b.supplierReceiptRequired,routePlanning:routePlan.planning,
+          directKm:routePlan.directKm}]);
       return result;
     });
     // The courier will be notified only after an admin approves the route economics.
     return {id:run.id,status:run.status,stops:b.orderIds.length,
+      routePlanning:run.route_planning,directKm:run.route_direct_km,
       packingRequired:b.packingRequired,traceabilityRequired:b.traceabilityRequired,
       supplierReceiptRequired:b.supplierReceiptRequired};
   });
