@@ -125,6 +125,8 @@ export function TechnicalEvidenceLinks({caseId,canPropose}:{caseId:string;canPro
 }
 
 export function TechnicalEvidenceReviewQueue(){
+  const {me}=useMe();
+  const isAdmin=Boolean(me?.roles.includes('admin'));
   const queue=useLoad<{evidence:Evidence[]}>(()=>get('/api/admin/community/evidence/queue'),[]);
   const [notes,setNotes]=useState<Record<string,string>>({});
   const [decisions,setDecisions]=useState<Record<string,'approved'|'rejected'>>({});
@@ -159,6 +161,10 @@ export function TechnicalEvidenceReviewQueue(){
       <p><strong>Применимость:</strong> {e.applicabilityNote}</p>
       <p role="status">{e.needsRightsReview?'Стадия: права и лицензия':
         'Стадия: независимая техническая проверка'}</p>
+      {e.needsRightsReview&&!isAdmin&&<p className="note">
+        Проверку прав выполняет администратор. Модератор видит материал
+        для координации, но не может подтверждать лицензию.
+      </p>
       <label>Решение
         <select className="field" value={decisions[e.id]??'rejected'}
           onChange={x=>setDecisions(v=>({...v,[e.id]:
@@ -173,6 +179,7 @@ export function TechnicalEvidenceReviewQueue(){
           onChange={x=>setNotes(v=>({...v,[e.id]:x.target.value}))}/>
       </label>
       <button type="button" className="btn" disabled={busy||
+        (e.needsRightsReview&&!isAdmin)||
         (notes[e.id]?.trim().length??0)<20}
         onClick={()=>void review(e)}>Зафиксировать решение</button>
     </article>)}
