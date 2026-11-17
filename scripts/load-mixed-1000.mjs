@@ -8,6 +8,10 @@ import {performance} from 'node:perf_hooks';
 
 process.env.NODE_ENV='test';
 process.env.ADMIN_PHONES='+79990000001';
+// Moderator sessions must also satisfy the real staff phone allowlist.
+// Non-admin users occupy indices 0..998, moderators are exactly 994..998.
+process.env.MODERATOR_PHONES=Array.from({length:5},(_,i)=>
+  '+79996'+String(994+i).padStart(6,'0')).join(',');
 const {sha256}=await import('../server/src/util.ts');
 const {setup,ok}=await import('../server/test/helpers.ts');
 assert.ok(process.env.TEST_DATABASE_URL?.includes('traksos_load_1000_'),
