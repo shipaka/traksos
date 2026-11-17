@@ -171,7 +171,12 @@ async function ordersFlow(){
     t.api('POST','/api/orders/'+j.orderId+'/confirm',{},j.client.token),
     t.api('POST','/api/orders/'+j.orderId+'/confirm',{},j.client.token)
    ]);
-   assert.deepEqual(two.map(r=>r.status).sort(),[200,409],'Two competing confirmations must charge once');
+   assert.deepEqual(two.map(r=>r.status).sort(),[200,200],
+    'Identical concurrent confirmations are idempotent successful retries');
+   const confirmed=await t.db.query(
+    "select id from order_events where order_id=$1 and type='amount_confirmed'",[j.orderId]);
+   assert.equal(confirmed.length,1,
+    'Two successful retries must persist exactly one confirmation and financial decision');
   }else await request(j.client,'POST','/api/orders/'+j.orderId+'/confirm',{});
   const c=await request(j.client,'GET','/api/orders/'+j.orderId);
   const m=await request(j.worker,'GET','/api/orders/'+j.orderId);
