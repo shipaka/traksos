@@ -154,8 +154,11 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
   });
   r.post('/api/admin/shop/courier-runs',['admin'],async(c:AuthedCtx)=>{
     const b=parse(z.object({courierId:id,pickupAddress:z.string().trim().min(10).max(300),
-      orderIds:z.array(id).min(1).max(50),packingRequired:z.boolean().default(false)}),c.body);
+      orderIds:z.array(id).min(1).max(50),packingRequired:z.boolean().default(false),
+      traceabilityRequired:z.boolean().default(false)}),c.body);
     if(new Set(b.orderIds).size!==b.orderIds.length)throw bad('duplicate_orders','Заказ повторяется в маршруте');
+    if(b.traceabilityRequired&&!b.packingRequired)throw bad('trace_requires_packing',
+      'Прослеживаемость GTIN допускается только вместе со складской сверкой');
     if(!addressDeclaredInSpb(b.pickupAddress))
       throw conflict('warehouse_outside_region','Склад отправления должен быть подтверждён в Санкт-Петербурге');
     const courierProfile=await db.one<{active:boolean}>('select active from shop_couriers where user_id=$1',[b.courierId]);
@@ -184,8 +187,8 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
         [b.orderIds]);
       if(assigned)throw conflict('order_already_assigned','Один из заказов уже находится в другом курьерском рейсе');
       const result=await q.one<Run>(
-        "insert into shop_courier_runs(courier_id,created_by,pickup_address,packing_required) values($1,$2,$3,$4) returning *",
-        [b.courierId,c.user.id,b.pickupAddress,b.packingRequired]);
+        "insert into shop_courier_runs(courier_id,created_by,pickup_address,packing_required,traceability_required) values($1,$2,$3,$4,$5) returning *",
+        [b.courierId,c.user.id,b.pickupAddress,b.packingRequired,b.traceabilityRequired]);
       if(!result)throw new Error('Courier run insert failed');
       for(let i=0;i<b.orderIds.length;i++) {
         await q.query('insert into shop_courier_stops(run_id,shop_order_id,seq) values($1,$2,$3)',
@@ -193,11 +196,12 @@ export function registerShopCourierRoutes(r:Router,db:Db,notifier:Notifier) {
         await recordDelivery(q,b.orderIds[i],result.id,'planned',c.user.id);
       }
       await q.query('insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4)',
-        [c.user.id,'shop.courier_run_created',result.id,{stops:b.orderIds.length,packingRequired:b.packingRequired}]);
+        [c.user.id,'shop.courier_run_created',result.id,{stops:b.orderIds.length,packingRequired:b.packingRequired,traceabilityRequired:b.traceabilityRequired}]);
       return result;
     });
     // The courier will be notified only after an admin approves the route economics.
-    return {id:run.id,status:run.status,stops:b.orderIds.length,packingRequired:b.packingRequired};
+    return {id:run.id,status:run.status,stops:b.orderIds.length,
+      packingRequired:b.packingRequired,traceabilityRequired:b.traceabilityRequired};
   });
   // Cancel a planned route only BEFORE anyone collects a parcel. Do not
   // silently erase completed/ongoing delivery movements or financial records.
