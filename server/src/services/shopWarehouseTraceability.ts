@@ -89,6 +89,10 @@ export function registerShopWarehouseTraceRoutes(r:Router,db:Db){
             throw conflict('serial_already_recorded',
               'Эта серийная маркировка уже указана в другой посылке рейса');
         }
+        // Re-identifying the physical lot invalidates any earlier manual
+        // supplier-invoice attribution, even if the barcode text is unchanged.
+        await q.query('delete from shop_warehouse_trace_receipt_allocations '+
+          'where stop_id=$1 and line_index=$2',[stopId,b.lineIndex]);
         const saved=await q.one<{recorded_at:Date}>(
           'insert into shop_warehouse_line_traces '+
           '(stop_id,line_index,article_snapshot,qty_snapshot,gtin,lot,serials,'+
