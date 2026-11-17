@@ -214,9 +214,10 @@ export class AuctionService {
   private async rows(orderId: string, brand: string | null, onlyPerformer: string | null) {
     const rows = await this.db.query(
       `select f.id, f.performer_id, f.price, f.hour_price, f.eta_minutes, f.status,
-              u.name, u.rating::float as rating, u.rating_count, p.car, p.brands, p.tier, p.extras, d.distance_km::float as distance_km, d.road_eta_minutes,
+              u.name, u.rating::float as rating, u.rating_count, p.car, p.brands, p.tier, p.extras, p.kind as performer_kind, p.verification as performer_verification, pl.level as partner_level, d.distance_km::float as distance_km, d.road_eta_minutes,
               (select count(*)::int from orders c where c.performer_id=f.performer_id and c.status='completed') as completed
          from bids f join users u on u.id=f.performer_id left join performer_profiles p on p.user_id=f.performer_id
+         left join partner_level_decisions pl on pl.user_id=f.performer_id and pl.current=true
          left join order_dispatch d on d.order_id=f.order_id and d.performer_id=f.performer_id
         where f.order_id=$1 and f.status in ('active','chosen') ${onlyPerformer ? 'and f.performer_id=$2' : ''}`,
       onlyPerformer ? [orderId, onlyPerformer] : [orderId]);
