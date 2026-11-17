@@ -413,13 +413,22 @@ export function NewOrder({ service }: { service: string }) {
   const [cargo, setCargo] = useState<'tractor' | 'semitrailer' | 'coupling' | 'truck12' | 'bus' | 'special'>('tractor');
   const [loaded, setLoaded] = useState<'empty' | 'loaded' | 'adr'>('empty');
   const [driverOnSite, setDriverOnSite] = useState(true);
+  const [site, setSite] = useState<{ place?: string; pass?: string; meet?: string; state?: string; when?: string; time?: string }>({});
   const isTow = service === 'tow';
   // Price and customer consent apply to these exact parameters, not a stale quote.
   const quoteKey = JSON.stringify([service,tier,zoneId,night,group,address.trim(),geo?.lat ?? null,geo?.lng ?? null]);
   const est = quoteAddress === address.trim() && quote?.key === quoteKey ? quote.value : null;
-  const agree = Boolean(est && agreedQuoteKey === quoteKey);
-  const setAgree = (checked: boolean) => setAgreedQuoteKey(checked ? quoteKey : null);
-  useEffect(() => { setAgreedQuoteKey(null); }, [quoteKey]);
+  // The quote may remain numerically unchanged while the vehicle, task or
+  // payment terms change. Prior consent must never carry into a different
+  // service contract merely because the regional call-out tariff is equal.
+  const consentKey = JSON.stringify([
+    quoteKey,additionalTo,fromConsult,vehicleId,car.brand.trim(),car.model.trim(),
+    car.year,description.trim(),method,destination,cargo,loaded,driverOnSite,
+    site.place,site.pass,site.meet,site.state,site.when,site.time,
+  ]);
+  const agree = Boolean(est && agreedQuoteKey === consentKey);
+  const setAgree = (checked: boolean) => setAgreedQuoteKey(checked ? consentKey : null);
+  useEffect(() => { setAgreedQuoteKey(null); }, [consentKey]);
 
   useEffect(() => {
     if (pricing.data && night === null) setNight(pricing.data.nightNow);
@@ -507,7 +516,6 @@ export function NewOrder({ service }: { service: string }) {
     else go(`order/${r.order.id}`);
   }
 
-  const [site, setSite] = useState<{ place?: string; pass?: string; meet?: string; state?: string; when?: string; time?: string }>({});
   const [tried, setTried] = useState(false);
   const need = {
     car: !!vehicleId || car.brand.trim().length >= 2,
