@@ -420,7 +420,7 @@ export function NewOrder({ service }: { service: string }) {
     if (pricing.data && night === null) setNight(pricing.data.nightNow);
   }, [pricing.data]); // eslint-disable-line
   useEffect(() => {
-    if (vehicles.data?.length && !vehicleId) setVehicleId(vehicles.data[0].id);
+    if (vehicles.data?.length && !vehicleId && !additionalTo) setVehicleId(vehicles.data[0].id);
   }, [vehicles.data]); // eslint-disable-line
   // Related ECU service is separately priced but must use the same vehicle.
   useEffect(()=>{
@@ -434,8 +434,10 @@ export function NewOrder({ service }: { service: string }) {
         year:parent.year?String(parent.year):''});
     }
     if(parent.address)setAddress(parent.address);
-    if(Number.isFinite(parent.lat)&&Number.isFinite(parent.lng))
+    if(Number.isFinite(parent.lat)&&Number.isFinite(parent.lng)){
       setGeo({lat:parent.lat,lng:parent.lng});
+      setGeoState('ok');
+    }
     if(!description)setDescription('Дополнительная диагностика ЭБУ после заявки №'+parent.number);
   },[related.data,additionalTo]); // eslint-disable-line
   // Выезд после консультации: та же машина и описание
@@ -477,7 +479,7 @@ export function NewOrder({ service }: { service: string }) {
 
   async function submit() {
     // Defensive guard even if the CallBar is invoked during a debounced update.
-    if(!zoneId || !est || !agree||(additionalTo&&!related.data))return;
+    if(!zoneId || !est || !agree||(additionalTo&&(!related.data||zoneId!==related.data.zoneId)))return;
     const r = await run(() => post('/api/orders', {
       service, isSos: !!sos, problem: sos?.id, description: description || undefined, address: address || undefined,
       lat: geo?.lat, lng: geo?.lng, zoneId, tier: service === 'tow' ? undefined : tier, vehicleId: vehicleId || undefined,
@@ -577,7 +579,8 @@ export function NewOrder({ service }: { service: string }) {
         </button>
         <span className="note">Сейчас для автоматического расчёта доступны тарифы Санкт-Петербурга и Ленинградской области. Для остальных регионов ещё нет подтверждённой цены — нельзя применять расценки КАД.</span>
         <span className="label">Тарифная зона — выберите осознанно</span>
-        <Chips value={zoneId} onChange={v=>{setZoneId(v);setAgree(false)}} options={pricing.data.zones.map((z: any) => ({ id: z.id, name: z.km > 30 ? `${z.name} · ${z.km} км` : z.name }))} />
+        {additionalTo ? <p className="note" role="status">{zone?.name??'Зона загружается'} · тарифная зона совпадает с первым заказом</p> :
+          <Chips value={zoneId} onChange={v=>{setZoneId(v);setAgree(false)}} options={pricing.data.zones.map((z: any) => ({ id: z.id, name: z.km > 30 ? `${z.name} · ${z.km} км` : z.name }))} />}
         {quoteError&&<div className="banner warn" role="alert">{quoteError}</div>}
         {est?.regionValidation?.message&&<div className="note" role="status">{est.regionValidation.message}</div>}
         <div className="grid2">
