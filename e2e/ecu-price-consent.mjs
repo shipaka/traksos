@@ -35,7 +35,7 @@ try{
       localStorage.setItem('traksos.mode','client');
     },account.token);
     try{
-      await page.goto(BASE+'/#/new/ecu',{waitUntil:'domcontentloaded'});
+      await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
       for(let n=0;n<6;n++){
         const modal=page.locator('[role="dialog"]').first();
         if(!await modal.isVisible().catch(()=>false))break;
@@ -48,6 +48,7 @@ try{
       }
       const cookie=page.getByRole('button',{name:'Понятно'});
       if(await cookie.isVisible().catch(()=>false))await cookie.click();
+      await page.goto(BASE+'/#/new/ecu',{waitUntil:'domcontentloaded'});
       await page.getByRole('heading',{name:'Специалист по ЭБУ',exact:true})
         .waitFor({timeout:20000});
       await page.locator('#f-where').waitFor();
