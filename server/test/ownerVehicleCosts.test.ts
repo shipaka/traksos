@@ -32,7 +32,7 @@ test('vehicle expenses are owner-only, separated from platform transactions and 
   assert.equal((await t.api('DELETE',url+'/'+fuel.entry.id,undefined,stranger.token)).status,404);
   assert.equal(ok(await t.api('DELETE',url+'/'+fuel.entry.id,undefined,owner.token)).deleted,true);
   assert.equal(ok(await t.api('GET',url,undefined,owner.token)).totalKopeks,300000);
-  const exported=ok(await t.api('GET','/api/me/data/export',undefined,owner.token));
+  const exported=ok(await t.api('GET','/api/me/export',undefined,owner.token));
   assert.ok(JSON.stringify(exported).includes('ownerVehicleExpenses')||
     JSON.stringify(exported).includes('300000'));
  }finally{await t.close()}
