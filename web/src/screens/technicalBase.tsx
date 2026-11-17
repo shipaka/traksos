@@ -153,11 +153,11 @@ function AdminKnowledgeQueue(){
   </article>)}
  </section>;
 }
-export function TechnicalBase(){
+export function TechnicalBase({initialTab='sources',initialRoomSlug}:{initialTab?:'sources'|'cases';initialRoomSlug?:string}={}){
  const {me}=useMe();
  const admin=Boolean(me?.roles.includes('admin'));
  const professional=Boolean(me?.roles.some(r=>['master','tow','service'].includes(r)));
- const [tab,setTab]=useState<'sources'|'search'|'cases'|'propose'|'review'|'source-review'|'case-reports'|'appeals'|'appeal-review'|'variants'|'notifications'|'evidence'>('sources');
+ const [tab,setTab]=useState<'sources'|'search'|'cases'|'propose'|'review'|'source-review'|'case-reports'|'appeals'|'appeal-review'|'variants'|'notifications'|'evidence'>(initialTab);
  if(!professional&&!admin)return <main className="tech-shell"><h1>ТехБаза</h1><p>Раздел доступен только подтверждённым специалистам.</p></main>;
  return <main className="tech-shell">
   <header className="tech-head">
@@ -183,7 +183,7 @@ export function TechnicalBase(){
   </nav>
   {tab==='sources'&&<TechReferenceShelf/>}
   {tab==='search'&&<ApprovedKnowledge/>}
-  {tab==='cases'&&professional&&<ProfessionalCases/>}
+  {tab==='cases'&&professional&&<ProfessionalCases initialRoomSlug={initialRoomSlug}/>}
   {tab==='appeals'&&professional&&<MyTechnicalAppeals/>}
   {tab==='notifications'&&professional&&<CommunityNotificationSettings professional/>}
   {tab==='propose'&&professional&&<ProposeKnowledge/>}
