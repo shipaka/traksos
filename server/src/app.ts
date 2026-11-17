@@ -56,6 +56,7 @@ import { registerKnowledgeOrderRoutes } from './services/communityKnowledgeOrder
 import { registerKnowledgeReferenceRoutes } from './services/communityKnowledgeReferences.ts';
 import { registerKnowledgeApplicabilityRoutes } from './services/communityKnowledgeApplicability.ts';
 import { registerProfessionalCasesRoutes } from './services/communityProfessionalCases.ts';
+import {registerProfessionalEvidenceRoutes} from './services/communityCaseEvidence.ts';
 import { registerProfessionalCaseAppeals } from './services/communityProfessionalCaseAppeals.ts';
 import { WarrantyClaimsService } from './services/warranty.ts';
 import { WarrantyRemediationService } from './services/warrantyRemediation.ts';
@@ -149,6 +150,7 @@ export function createApp(d: Deps) {
   // Register fixed appeal listing before /pro-cases/:id dynamic paths.
   registerProfessionalCaseAppeals(r,d.db,notifier);
   registerProfessionalCasesRoutes(r,d.db,notifier,communityNotifications);
+  registerProfessionalEvidenceRoutes(r,d.db);
   const staff = ['admin', 'moderator'];
   const performerRoles = ['master', 'tow', 'service'];
 
