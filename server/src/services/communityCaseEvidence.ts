@@ -49,7 +49,9 @@ export function safeEvidenceUrl(value:string){
      !officialHosts.has(u.hostname.toLowerCase())||u.hash||
      Boolean(u.search)||u.pathname.includes('\\'))
     throw bad('source_host','Принимаются только HTTPS-ссылки проверенных официальных каталогов и Wikimedia Commons без параметров доступа');
-  const decodedPath=decodeURIComponent(u.pathname);
+  let decodedPath:string;
+  try{decodedPath=decodeURIComponent(u.pathname)}
+  catch{throw bad('source_path','Некорректное кодирование пути ссылки')}
   if(/\\b[A-HJ-NPR-Z0-9]{17}\\b/i.test(decodedPath)||
      /(?:\\+?\\d[\\s().-]*){10,}/u.test(decodedPath))
     throw bad('sensitive_source_path','Ссылка не должна содержать VIN или телефон');
