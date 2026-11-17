@@ -107,9 +107,9 @@ function FullFidelityRoleLauncher({role}:{role:RoleInfo}) {
   },[role.id]);
   if(fallback) return <AdminTestCenter roleId={role.id} />;
   return <main className="sandbox-root stack" style={{maxWidth:720,margin:'28px auto'}}>
-    <span className="pill accent">ТОЧНАЯ КОПИЯ РАБОЧЕГО КАБИНЕТА</span>
+    <span className="pill accent">НАСТОЯЩИЙ КАБИНЕТ · ТЕСТОВАЯ ВЕРСИЯ</span>
     <h1>{role.label}</h1><p>{message}</p>
-    <p className="note">Рабочие компоненты TrakSOS открываются на отдельном адресе с тестовыми аккаунтами, базой и платёжным имитатором. Снимки, карта, меню и кнопки — из того же приложения.</p>
+    <p className="note">На отдельном адресе открываются настоящие экраны TrakSOS с тестовыми аккаунтами, базой и платёжным имитатором. Песочница может содержать новые изменения раньше основного сайта.</p>
     <div className="row">
       <a className="btn ghost" href="#/admin/test-center">← Выбор кабинета</a>
       <button type="button" className="btn ghost" onClick={()=>{if(role.id==='service')location.hash='#/admin/test-center/service/base';else setFallback(true);}}>Открыть старый учебный тренажёр</button>
@@ -124,7 +124,7 @@ export function AdminTestCenter({roleId,fullFidelity=false}:{roleId?:string;full
     <section className="sandbox-intro">
       <span className="sandbox-eyebrow">TRAKSOS · ЗАКРЫТЫЙ ДЕМОНСТРАЦИОННЫЙ РЕЖИМ</span>
       <h1>Тестирование кабинетов</h1>
-      <p>{fullFidelity?'Выберите роль: откроется настоящий рабочий кабинет с тем же дизайном и логикой, но отдельной базой данных.':'Выберите роль: откроется отдельный учебный экран с собственным меню и возвратом к списку.'}</p>
+      <p>{fullFidelity?'Выберите роль: откроется настоящий кабинет с отдельной тестовой базой. На песочнице изменения могут появляться раньше, чем на основном сайте.':'Выберите роль: откроется отдельный учебный экран с собственным меню и возвратом к списку.'}</p>
       <a className="btn ghost small" href="#/admin">← Вернуться в админку</a>
     </section>
     <div className="banner" role="note"><b>ТЕСТОВЫЙ РЕЖИМ · НЕ РЕАЛЬНЫЕ АККАУНТЫ</b>
