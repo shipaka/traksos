@@ -15,6 +15,14 @@ export function setToken(t: string | null) {
     // A login switch/logout must never leave an old user's WS connection open.
     disconnectWs();
     store.set('traksos.offlineIdentity', null);
+    // Delete explicitly opted-in tab drafts when the account/token changes.
+    // A shared phone must not expose previous account's private unsent text.
+    try{
+      for(let i=sessionStorage.length-1;i>=0;i--){
+        const key=sessionStorage.key(i);
+        if(key?.startsWith('tracksos:air:opt-in-draft:v1:'))sessionStorage.removeItem(key);
+      }
+    }catch{/* Private/locked WebView storage must not interrupt logout. */}
   }
   token = t;
   store.set('traksos.token', t);
