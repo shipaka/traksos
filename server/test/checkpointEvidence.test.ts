@@ -242,13 +242,74 @@ test('real database: client plan, pass decision, GPS evidence, manual review, pr
       requestKey:'arrival-003',planId:p.planId,gpsConsent:true,
     }),(e:any)=>e.status===409);
 
-    assert.equal((await service.purgeExpiredSnapshots(a)).purged,0);
-    await assert.rejects(service.purgeExpiredSnapshots(c),(e:any)=>e.status===403);
+    // The user can export only their own consent ledger and precise GPS.
+    const workerPrivacy=await service.myCheckpointPrivacy(w,0,2);
+    assert.equal(workerPrivacy.samples.length,2);
+    assert.equal(workerPrivacy.hasMore.consents,true);
+    assert.ok(workerPrivacy.consentEvents.every(e=>e.orderId===id));
+    assert.equal(workerPrivacy.approvedPlans.length,0);
+    const ownerPrivacy=await service.myCheckpointPrivacy(c);
+    assert.equal(ownerPrivacy.samples.length,0);
+    assert.equal(ownerPrivacy.approvedPlans.length,2);
+    const strangerPrivacy=await service.myCheckpointPrivacy(other);
+    assert.equal(strangerPrivacy.samples.length,0);
+    assert.equal(strangerPrivacy.consentEvents.length,0);
+    assert.equal(strangerPrivacy.approvedPlans.length,0);
+    await assert.rejects(service.myCheckpointPrivacy(w,-1),(e:any)=>e.status===400);
+    await assert.rejects(service.retentionSweep(c,{execute:true,acknowledge:true,
+      eventKey:'purge-denied-001'}),(e:any)=>e.status===403);
+
+    // No points or snapshots are due at the real clock. The disposable
+    // 2099 clock exercises the actual retention path without sleeping.
+    const present=await service.retentionSweep(a);
+    assert.equal(present.dryRun,true);
+    assert.equal(present.dueSnapshots,0);
+    assert.equal(present.dueSamples,0);
     const future=new CheckpointEvidenceService(t.db,()=>new Date('2099-01-01T00:00:00Z'));
-    assert.equal((await future.purgeExpiredSnapshots(a)).purged,4);
+    const preview=await future.retentionSweep(a,{limit:2});
+    assert.equal(preview.dryRun,true);
+    assert.equal(preview.dueSnapshots,4);
+    assert.equal(preview.dueSamples,2);
+    assert.equal((await t.db.query(
+      'select id from checkpoint_arrival_sample_snapshots')).length,4);
+    await assert.rejects(future.retentionSweep(a,{
+      execute:true,limit:2,eventKey:'purge-gps-001',
+    }),(e:any)=>e.status===400);
+
+    const purge=await future.retentionSweep(a,{
+      execute:true,acknowledge:true,limit:2,eventKey:'purge-gps-001',
+    });
+    assert.equal(purge.deletedSnapshots,2);
+    assert.equal(purge.deletedSamples,2);
+    assert.equal(purge.startBilling,false);
+    const repeat=await future.retentionSweep(a,{
+      execute:true,acknowledge:true,limit:2,eventKey:'purge-gps-001',
+    });
+    assert.equal(repeat.reused,true);
+    assert.equal(repeat.batchId,purge.batchId);
+    await assert.rejects(future.retentionSweep(a,{
+      execute:true,acknowledge:true,limit:3,eventKey:'purge-gps-001',
+    }),(e:any)=>e.status===409);
+
+    const remaining=await future.retentionSweep(a,{limit:100});
+    assert.equal(remaining.dueSnapshots,2);
+    assert.equal(remaining.dueSamples,0);
+    const finish=await future.retentionSweep(a,{
+      execute:true,acknowledge:true,limit:100,eventKey:'purge-gps-002',
+    });
+    assert.equal(finish.deletedSnapshots,2);
+    assert.equal(finish.deletedSamples,0);
+    assert.equal((await future.purgeExpiredSnapshots(a)).purged,0);
+    await assert.rejects(service.purgeExpiredSnapshots(c),(e:any)=>e.status===403);
     assert.equal((await t.db.query(
       'select id from checkpoint_arrival_attempts where order_id=$1',[id])).length,4);
     assert.equal((await t.db.query(
       'select attempt_id from checkpoint_arrival_sample_snapshots')).length,0);
+    assert.equal((await t.db.query(
+      'select id from performer_route_samples where order_id=$1',[id])).length,0);
+    assert.equal((await t.db.query(
+      'select id from checkpoint_gps_purge_batches')).length,2);
+    assert.equal((await t.db.query(
+      'select id from audit_log where action=$1',['checkpoint.gps_retention_purged'])).length,2);
   } finally {await t.close();}
 });

@@ -475,6 +475,180 @@ export class CheckpointEvidenceService {
     };
   }
 
+  /**
+   * Preview and explicitly execute checkpoint-only GPS deletion.
+   * Legacy route history and administrative evidence SUMMARY are untouched.
+   * An approved legal-hold/backup policy is required BEFORE production use;
+   * HTTP exposure remains in the sandbox-only feature gate.
+   */
+  async retentionSweep(actor: AuthUser, input: {
+    limit?: number;
+    execute?: boolean;
+    acknowledge?: boolean;
+    eventKey?: string;
+  } = {}) {
+    if (!isAdmin(actor)) throw forbidden('Удаление GPS-доказательств — только для администратора');
+    const limit = input.limit ?? 250;
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 1000) {
+      throw bad('checkpoint_purge_limit', 'Пакет очистки — от 1 до 1000 записей');
+    }
+    if (input.execute && input.acknowledge !== true) {
+      throw bad('checkpoint_purge_ack', 'Нужно явно подтвердить необратимость очистки GPS');
+    }
+    if (input.execute) assertKey(input.eventKey ?? '');
+    const now = this.now();
+    if (!Number.isFinite(now.getTime())) throw bad('checkpoint_purge_time');
+    const snapshotCutoff = now.toISOString();
+    const sampleCutoff = new Date(now.getTime() - 30 * 86_400_000).toISOString();
+    if (!input.execute) {
+      // Aggregate-only preview; no coordinate, user ID or order ID leaves the
+      // database. Counts may exceed the per-call limit.
+      const [snapshots, samples] = await Promise.all([
+        this.db.one<{ count: number }>(
+          'select count(*)::int as count from checkpoint_arrival_sample_snapshots ' +
+          'where expires_at<$1', [snapshotCutoff]),
+        this.db.one<{ count: number }>(
+          'select count(*)::int as count from performer_route_samples ' +
+          'where checkpoint_consent=true and checkpoint_plan_id is not null ' +
+          'and received_at<$1', [sampleCutoff]),
+      ]);
+      return {
+        dryRun: true, limit, dueSnapshots: Number(snapshots?.count ?? 0),
+        dueSamples: Number(samples?.count ?? 0),
+        cutoffAt: snapshotCutoff, sampleCutoffAt: sampleCutoff,
+        executed: false, startBilling: false as const,
+      };
+    }
+    const eventKey = input.eventKey!;
+    const requestHash = sha(JSON.stringify([limit, 'checkpoint-gps-only-v1']));
+    return this.db.tx(async (q) => {
+      // One globally serialized bounded cleanup at a time: two admins cannot
+      // race the same eventKey or create contradictory purge receipts.
+      await q.query('select pg_advisory_xact_lock(712022,1)');
+      const old = await q.one<any>(
+        'select * from checkpoint_gps_purge_batches where batch_key=$1', [eventKey]);
+      if (old) {
+        if (old.request_hash !== requestHash) {
+          throw conflict('checkpoint_purge_key_changed',
+            'Повторный ключ очистки с другими условиями');
+        }
+        return {
+          dryRun: false, executed: true, reused: true, batchId: old.id,
+          deletedSnapshots: Number(old.deleted_snapshots),
+          deletedSamples: Number(old.deleted_samples),
+          cutoffAt: new Date(old.cutoff_at).toISOString(),
+          sampleCutoffAt: new Date(old.sample_cutoff_at).toISOString(),
+          startBilling: false as const,
+        };
+      }
+      const snapshots = await q.query<{ attempt_id: string }>(
+        'delete from checkpoint_arrival_sample_snapshots ' +
+        'where attempt_id in (' +
+          'select attempt_id from checkpoint_arrival_sample_snapshots ' +
+          'where expires_at<$1 order by expires_at,attempt_id ' +
+          'limit $2 for update skip locked' +
+        ') returning attempt_id',
+        [snapshotCutoff, limit],
+      );
+      const samples = await q.query<{ id: number }>(
+        'delete from performer_route_samples ' +
+        'where id in (' +
+          'select id from performer_route_samples ' +
+          'where checkpoint_consent=true and checkpoint_plan_id is not null ' +
+          'and received_at<$1 order by received_at,id ' +
+          'limit $2 for update skip locked' +
+        ') returning id',
+        [sampleCutoff, limit],
+      );
+      const row = await q.one<any>(
+        'insert into checkpoint_gps_purge_batches ' +
+        '(batch_key,request_hash,requested_by,cutoff_at,sample_cutoff_at,' +
+        'deleted_snapshots,deleted_samples) ' +
+        'values($1,$2,$3,$4,$5,$6,$7) returning id',
+        [eventKey,requestHash,actor.id,snapshotCutoff,sampleCutoff,
+          snapshots.length,samples.length],
+      );
+      await audit(q, actor, 'checkpoint.gps_retention_purged', row.id, {
+        batchId: row.id, deletedSnapshots: snapshots.length,
+        deletedSamples: samples.length, sampleCutoffAt: sampleCutoff,
+      });
+      return {
+        dryRun: false, executed: true, reused: false, batchId: row.id,
+        deletedSnapshots: snapshots.length, deletedSamples: samples.length,
+        cutoffAt: snapshotCutoff, sampleCutoffAt: sampleCutoff,
+        startBilling: false as const,
+      };
+    });
+  }
+
+  /**
+   * Personal, paginated view of MY checkpoint permissions and MY precise GPS.
+   * A fleet owner, client, administrator or another performer gets none of a
+   * different person's raw GPS here. Administrative evidence access remains
+   * the separately audited inspectSnapshot route.
+   */
+  async myCheckpointPrivacy(actor: AuthUser, offset = 0, limit = 100) {
+    if (!Number.isSafeInteger(offset) || offset < 0 || offset > 100_000 ||
+        !Number.isSafeInteger(limit) || limit < 1 || limit > 500) {
+      throw bad('checkpoint_privacy_page', 'Неверная страница выгрузки GPS');
+    }
+    const cutoff = new Date(this.now().getTime() - 30 * 86_400_000).toISOString();
+    const [samples, grants, plans] = await Promise.all([
+      this.db.query<any>(
+        'select order_id,checkpoint_plan_id,received_at,lat,lng,accuracy_m,' +
+        'gps_source,mock_location,device_at from performer_route_samples ' +
+        'where performer_id=$1 and checkpoint_consent=true ' +
+        'and checkpoint_plan_id is not null and received_at >= $2 ' +
+        'order by received_at desc,id desc limit $3 offset $4',
+        [actor.id,cutoff,limit + 1,offset],
+      ),
+      this.db.query<any>(
+        'select plan_id,order_id,action,duration_minutes,expires_at,recorded_at ' +
+        'from checkpoint_gps_consent_events where performer_id=$1 ' +
+        'order by seq desc limit $2 offset $3',
+        [actor.id,limit + 1,offset],
+      ),
+      this.db.query<any>(
+        'select order_id,id,version,checkpoint_lat,checkpoint_lng,radius_m,' +
+        'client_approved_at from checkpoint_evidence_plans ' +
+        'where approved_by=$1 order by client_approved_at desc,id desc ' +
+        'limit $2 offset $3',
+        [actor.id,limit + 1,offset],
+      ),
+    ]);
+    const hasMore = {
+      samples: samples.length > limit, consents: grants.length > limit,
+      approvedPlans: plans.length > limit,
+    };
+    await audit(this.db,actor,'checkpoint.own_privacy_viewed',actor.id,
+      { offset, limit, sampleCount: Math.min(samples.length,limit) });
+    return {
+      userId: actor.id, offset, limit, nextOffset: offset + limit,
+      sampleCutoffAt: cutoff,
+      samples: samples.slice(0,limit).map((p) => ({
+        orderId: p.order_id, planId: p.checkpoint_plan_id,
+        receivedAt: new Date(p.received_at).toISOString(),
+        lat: Number(p.lat), lng: Number(p.lng),
+        accuracyM: p.accuracy_m == null ? null : Number(p.accuracy_m),
+        source: p.gps_source, mockLocation: p.mock_location,
+        deviceAt: p.device_at ? new Date(p.device_at).toISOString() : null,
+      })),
+      consentEvents: grants.slice(0,limit).map((g) => ({
+        planId: g.plan_id, orderId: g.order_id, action: g.action,
+        durationMinutes: g.duration_minutes,
+        expiresAt: g.expires_at ? new Date(g.expires_at).toISOString() : null,
+        recordedAt: new Date(g.recorded_at).toISOString(),
+      })),
+      approvedPlans: plans.slice(0,limit).map((p) => ({
+        planId: p.id, orderId: p.order_id, version: Number(p.version),
+        lat: Number(p.checkpoint_lat), lng: Number(p.checkpoint_lng),
+        radiusM: Number(p.radius_m),
+        approvedAt: new Date(p.client_approved_at).toISOString(),
+      })),
+      hasMore, startBilling: false as const,
+    };
+  }
+
   /** Explicit privacy action; not a background task. Does not delete audit. */
   async purgeExpiredSnapshots(actor: AuthUser, limit = 250) {
     if (!isAdmin(actor)) throw forbidden('Только администратор может удалять истёкшие GPS-снимки');

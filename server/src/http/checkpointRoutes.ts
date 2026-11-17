@@ -37,6 +37,21 @@ export function registerCheckpointRoutes(r: Router, service: CheckpointEvidenceS
   r.get('/api/orders/:id/checkpoint', true,
     (c: AuthedCtx) => service.inspect(c.user, c.params.id));
 
+  // Personal-data access: paginated, only the authenticated user's own GPS
+  // and grant history; never routes of the client's other drivers.
+  r.get('/api/me/checkpoint-privacy', true, (c: AuthedCtx) => {
+    const q = parse(z.object({
+      offset: z.coerce.number().int().min(0).max(100000).default(0),
+      limit: z.coerce.number().int().min(1).max(500).default(100),
+    }), {
+      offset: c.query.get('offset') ?? undefined,
+      limit: c.query.get('limit') ?? undefined,
+    });
+    return service.myCheckpointPrivacy(c.user, q.offset, q.limit);
+  });
+
+
+
   // Separate time-limited permission. A single GPS message with a boolean
   // cannot silently create lasting tracking consent. Revocation is always
   // accepted for the original performer, including after order closure.
@@ -76,7 +91,24 @@ export function registerCheckpointRoutes(r: Router, service: CheckpointEvidenceS
   r.get('/api/admin/checkpoint-attempts/:id/gps', ['admin'],
     (c: AuthedCtx) => service.inspectSnapshot(c.user, c.params.id));
 
-  // Deliberately NO HTTP route for bulk deletion or administrative overrides.
-  // Expired GPS cleanup must run from a privileged, audited internal process.
+  // Sandbox-only: preview counts first, then an explicit, audited and
+  // idempotent request. No cron, no automatic deletion in production.
+  r.get('/api/admin/checkpoint-gps/retention', ['admin'], (c: AuthedCtx) => {
+    const q = parse(z.object({
+      limit: z.coerce.number().int().min(1).max(1000).default(250),
+    }), { limit: c.query.get('limit') ?? undefined });
+    return service.retentionSweep(c.user, { limit: q.limit });
+  });
+  r.post('/api/admin/checkpoint-gps/retention', ['admin'], (c: AuthedCtx) => {
+    const p = parse(z.object({
+      eventKey: key, limit: z.number().int().min(1).max(1000).default(250),
+      acknowledge: z.literal(true),
+    }).strict(), c.body);
+    return service.retentionSweep(c.user, { ...p, execute: true });
+  });
+
+  // No public API to delete summaries, rewrite decisions or override expiry.
+  // This experimental retention interface requires a legal-hold/backup policy
+  // before any enabling outside the disposable test sandbox.
   return true;
 }
