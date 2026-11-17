@@ -57,6 +57,11 @@ test('owner images have credits, manuals are link-only and no repair instruction
   assert.ok(krone.manuals.some(x=>x.origin==='official_manufacturer_link'));
   const koegel=await publicVehicleCard('trailer','koegel','cargo');
   assert.ok(koegel.photo?.caption.includes('Kögel'));
+  for(const [make,model] of [['krone','cool-liner'],['krone','box-liner'],['schmitz-cargobull','s-ko-cool']]){
+    const photo=(await publicVehicleCard('trailer',make,model)).photo;
+    assert.ok(photo?.author&&photo.licenseUrl&&photo.sourcePage);
+    assert.equal(photo.confidence,'family','image matches family/type, not exact vehicle VIN');
+  }
 });
 test('recovery photo examples are licensed and never claim specific chassis identity',async()=>{
   const shelf=await publicRecoveryGallery();
