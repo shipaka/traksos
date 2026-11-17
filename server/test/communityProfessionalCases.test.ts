@@ -182,9 +182,20 @@ test('moderator hides unsafe advice, revokes accepted solution and audits restor
  assert.equal(ok(await t.api('POST',reportUrl,{
    replyId:answer.id,reason:'Опасная рекомендация по ремонту EBS'
  },writer.token)).duplicate,true);
- // Admin moderation is a separate endpoint; staff must not open repair club cases.
+ // A different verified mechanic submits the second report that later
+ // supports a separate restoration review. The staff account never enters the club.
+ const third=await t.login('+79995671124','master');
+ ok(await t.api('PUT','/api/performer/profile',{
+   kind:'master',name:'Второй проверяющий',specialties:['electric'],
+   taxStatus:'self_employed',inn:'780000001224'
+ },third.token));
+ ok(await t.api('POST','/api/admin/performers/'+third.id+'/verify',
+   {decision:'approved'},admin.token));
+ assert.equal(ok(await t.api('POST',reportUrl,{
+   replyId:answer.id,reason:'Повторная независимая проверка опасного ответа'
+ },third.token)).reported,true);
  assert.equal((await t.api('POST',reportUrl,{
-   replyId:answer.id,reason:'Риск неверной диагностики тормозной системы'
+   replyId:answer.id,reason:'Администратор не участвует в закрытом клубе'
  },admin.token)).status,404);
  ok(await t.api('POST',endpoint+'/'+id+'/resolve',{replyId:answer.id},writer.token));
  const moderation='/api/admin/community/pro-cases/reports';
