@@ -880,6 +880,7 @@ export function Garage() {
         <div key={v.id} className="card">
           <div className="between"><b>{v.brand} {v.model ?? ''}{v.year ? `, ${v.year}` : ''}</b><span className="pill">{v.catalog_category==='trailer'?'Прицеп / полуприцеп · ':''}{v.plate ?? 'без номера'}</span></div>
           <VehicleOwnerGuide vehicle={v} />
+          <a href={`#/experience/vehicle/${v.id}`} className="btn ghost small">Опыт эксплуатации этой модели</a>
           {v.trailer_plate && <span className="note">Прицеп {v.trailer_plate}</span>}
           {v.fixed_at && <span className="pill good" style={{ alignSelf: 'flex-start' }}>уточнено мастером · {fmtTime(v.fixed_at)}</span>}
           {seriesHint(v.brand, v.year) && <span className="note" style={{ color: 'var(--accent)' }}>{seriesHint(v.brand, v.year)}</span>}
