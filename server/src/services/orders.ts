@@ -833,6 +833,14 @@ export class OrdersService {
                   call_out_amount, work_amount, client_fee_pct, discount_amount
              from orders where id=$1 or case_root_id=$1 order by created_at, number`, [caseRootId])
       : [];
+    const caseOtherStages=actor==='performer'
+      ? await this.db.query<{number:number;service:string;status:string}>(`
+          select number,service,status from orders
+          where (id=$1 or case_root_id=$1) and id<>$2
+          order by created_at,number limit 30`,[caseRootId,o.id])
+      : [];
+    // A confirmed expert sees that a related stage exists, not the other
+    // contractor's bill, private notes, contacts, messages or payout.
     const caseBookings = actor === 'client' || actor === 'admin'
       ? await this.db.query<any>(
           `select b.id, b.number, b.status, b.need, b.amount, b.discount, b.from_order_id
@@ -872,9 +880,12 @@ export class OrdersService {
       site: o.site, workStartedAt: o.work_started_at ?? null, waitRate: performer?.wait_rate ?? null, ownerNote: o.owner_note ?? null, partMode: o.part_mode ?? null, waitStartedAt: o.wait_started_at ?? null, waitMinutes: o.wait_minutes ?? 0,
       consultHint: o.consult_hint, consultOf: o.consult_of,
       continuationOf: o.continuation_of ?? null, additionalTo:o.additional_to??null,caseRootId,
+      caseOtherStages:caseOtherStages,
       caseSummary: {
         rootId: caseRootId, stages: caseSteps, serviceBookings: caseServiceStages,
         confirmedTotal: caseConfirmedTotal,
+        pendingCount:caseRows.filter((step:any)=>!['completed','cancelled','no_performer'].includes(step.status)).length,
+        separateContracts:true,
         multiStage: caseSteps.length + caseServiceStages.length > 1,
       },
       canContinueWithTow: actor === 'client' && o.status === 'completed' &&
