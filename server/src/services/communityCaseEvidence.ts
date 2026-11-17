@@ -47,7 +47,7 @@ export function safeEvidenceUrl(value:string){
   try{u=new URL(value)}catch{throw bad('source_url','Некорректная ссылка на первоисточник')}
   if(u.protocol!=='https:'||u.username||u.password||u.port||
      !officialHosts.has(u.hostname.toLowerCase())||u.hash||
-     u.search.length>200||u.pathname.includes('\\'))
+     Boolean(u.search)||u.pathname.includes('\\'))
     throw bad('source_host','Принимаются только HTTPS-ссылки проверенных официальных каталогов и Wikimedia Commons без параметров доступа');
   if(u.toString().length>1200)
     throw bad('source_url','Слишком длинная ссылка');
