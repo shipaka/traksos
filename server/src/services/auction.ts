@@ -257,6 +257,7 @@ export class AuctionService {
         throw conflict('ecu_quote_changed','Цена изменилась. Проверьте и подтвердите новую сумму');
       const upd = await q.one(
         `update orders set status='accepted', performer_id=$2, accepted_at=$3, call_out_amount=$4,
+            ecu_due_at=case when service='ecu' then $3::timestamptz + interval '7 days' else ecu_due_at end,
             estimate = jsonb_set(estimate, '{hour}', coalesce(to_jsonb($5::int), estimate->'hour'))
           where id=$1 and status='searching' returning *`,
         [orderId, f0.performer_id, this.now(), f0.price, f0.hour_price]);
