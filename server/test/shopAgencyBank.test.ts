@@ -85,7 +85,7 @@ test('сопоставление: только проверенная перви
     offerVersion:'contract-bank-1',feeScheduleVersion:'agency-bank-1',
     expectedReimbursement:1_000_000,procurementFee:300_000,platformFee:65_000,
   },admin.token));
-  const event=(kind:string,amt:number,ref:string,key:string)=>ok(await t.api('POST',
+  const event=async (kind:string,amt:number,ref:string,key:string)=>ok(await t.api('POST',
     root+'/cases/'+c.id+'/events',{
       idempotencyKey:key,kind,amount:amt,sourceRef:ref,
       occurredAt:'2026-12-01T10:00:00Z',
