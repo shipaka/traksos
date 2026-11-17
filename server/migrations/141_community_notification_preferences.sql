@@ -28,3 +28,13 @@ create table if not exists community_notification_thread_mutes (
   updated_at timestamptz not null default now(),
   primary key(user_id,thread_id)
 );
+
+-- Atomic anti-flood: a notification channel can send at most once per scope
+-- until the next_allowed_at timestamp, regardless of API replica count.
+create table if not exists community_notification_cooldowns (
+  user_id uuid not null references users(id) on delete cascade,
+  channel text not null check(channel in ('dm_invites','dm_messages','case_replies')),
+  scope_id uuid not null,
+  next_allowed_at timestamptz not null,
+  primary key(user_id,channel,scope_id)
+);
