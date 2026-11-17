@@ -2,7 +2,7 @@ import {useEffect} from 'react';
 import {get,post,rub,onEvent,fmtTime} from '../api.ts';
 import {useMe,useLoad,useAction,go} from '../ui.tsx';
 import {SERVICES,STATUS,LINE} from '../dict.ts';
-import {OfferForm} from './search.tsx';
+// ECU jobs have no standard call-out fee, so the generic auction offer form is not used.
 import {VerifiedBadge} from '../verifiedBadge.tsx';
 import {WorkerNotices} from './ops.tsx';
 import {native} from '../native.ts';
@@ -30,6 +30,7 @@ function EcuJobCard({job}:{job:EcuJob}){
   </a>;
 }
 function EcuOfferCard({offer,onDone}:{offer:EcuOffer;onDone:()=>void}){
+  const {busy,run}=useAction();
   return <article className="card stack">
     <b>{offer.is_sos?'SOS · ':''}ЭБУ · {offer.brand??'грузовой транспорт'}</b>
     {offer.is_linked_stage&&<span className="note">Дополнительный этап ремонта. Финансы
@@ -37,8 +38,14 @@ function EcuOfferCard({offer,onDone}:{offer:EcuOffer;onDone:()=>void}){
     {offer.description&&<p className="note">{offer.description}</p>}
     <p className="note">{offer.address??'Место уточняется'}
       {offer.distance_km!=null?' · '+offer.distance_km.toFixed(1)+' км':''}</p>
-    <OfferForm orderId={offer.order_id} limits={offer.limits} myPrice={offer.my_price}
-      onDone={onDone}/>
+    {offer.my_price!=null?<span className="pill good">Вы подтвердили получение запроса. Ждём выбора клиента.</span>:
+      <button className="btn" disabled={busy} onClick={()=>run(
+        ()=>post('/api/orders/'+offer.order_id+'/offers',{}),
+        'Вы приняли запрос без предварительной цены. Ждём подтверждения клиента.'
+      ).then(v=>v&&onDone())}>
+        Могу принять блок на диагностику · цену сообщу после изучения
+      </button>}
+    <small className="note">Это не срочный выезд. Подтверждение возможности принять блок не выставляет клиенту счёт.</small>
   </article>;
 }
 /**
@@ -82,7 +89,7 @@ export function EcuDesk(){
         <h1>Специалист по ЭБУ</h1>
         <p>Диагностика, восстановление и программирование электронных блоков грузового
           транспорта. Отдельные заявки и дополнительные этапы после другого мастера
-          поступают сюда через общую систему распределения.</p>
+          поступают только после прямого выбора клиентом конкретной мастерской. Без массового SOS.</p>
         <div className="work-command-tags">
           <span className="work-command-status">{LINE[profile.line_status]??'Не на линии'}</span>
           {profile.verification==='approved'?
@@ -145,7 +152,7 @@ export function EcuDesk(){
 
     <section className="card stack" aria-label="Результаты и действия">
       <h2>Работа и история</h2>
-      <p className="note">Статусы, чат, выезд и завершение — в карточке каждой заявки.
+      <p className="note">Статусы ремонта, чат и итоговая смета — в карточке каждой заявки.
         История ремонта объединяется для клиента, но договор с каждым мастером отдельный.</p>
       {past.slice(0,5).map(o=><a key={o.id} className="linkrow" href={'#/order/'+o.id}>
         <span><b>№{o.number} · {STATUS[o.status]?.name??o.status}</b>
