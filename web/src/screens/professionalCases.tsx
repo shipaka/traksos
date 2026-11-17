@@ -2,6 +2,7 @@ import {useEffect,useRef,useState} from 'react';
 import {get,post,fmtTime} from '../api.ts';
 import {useAction,useLoad,useMe} from '../ui.tsx';
 import './techBase.css';
+import {CommunityMuteToggle} from './communityNotificationSettings.tsx';
 
 type Club={id:string;slug:string;title:string;audience:string;joined:boolean};
 type Case={
@@ -141,6 +142,7 @@ export function ProfessionalCases({orderId}:{orderId?:string}){
          {clubs.map(c=><option key={c.id} value={c.id}>{c.title}</option>)}
        </select>
      </label>
+     {room?.joined&&<CommunityMuteToggle id={room.id} kind="room"/>}
      {room&&!room.joined&&<button className="btn" type="button" disabled={busy}
        onClick={()=>void join()}>Вступить в клуб</button>}
      {room?.joined&&<button className="btn" type="button"
