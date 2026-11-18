@@ -70,6 +70,8 @@ test('stationary ECU: free inquiry, priced diagnostic consent, post-work revisio
     },customer.token));
     assert.equal(accepted.status,'accepted');
     assert.equal(accepted.money.total,32000,'only scoped diagnostic quote, no hidden platform surcharge');
+    assert.match(accepted.ecuDiagnosticQuote?.scope??'',/Измерение напряжений/);
+    assert.equal(accepted.ecuDiagnosticQuote?.price,32000);
     assert.equal((await t.api('POST',offerPath+'/'+offerId+'/choose',{
       acceptedPrice:32000,quoteVersion:fresh,ecuConsent:true
     },customer.token)).status,409,'only one successful selection');
