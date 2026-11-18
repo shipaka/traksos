@@ -64,7 +64,7 @@ export class SmsRu implements SmsProvider {
       throw new SmsRejectedError('SMS.ru отклонил исходящий проверочный звонок');
     // Unknown status/malformed reply can mean the call was already placed:
     // preserve auth cooldown rather than charging twice.
-    if (!response.ok || data?.status !== 'OK' || typeof data.code !== 'string' || !/^\\d{4}$/.test(data.code))
+    if (!response.ok || data?.status !== 'OK' || typeof data.code !== 'string' || !/^\d{4}$/.test(data.code))
       throw new Error('Не удалось подтвердить статус Flash Call от SMS.ru');
     return data.code;
   }
