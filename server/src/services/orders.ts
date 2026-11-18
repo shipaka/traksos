@@ -230,7 +230,7 @@ export class OrdersService {
     const defaultFee = method === 'cash' ? (all.fees.cashChargesClientFee ? all.fees.clientFeePct : 0) : all.fees.clientFeePct;
     // Персональный сбор клиента (назначает администратор) важнее общего. Консультация — фиксированная цена, сбор уже внутри.
     const personal = await this.db.one<{ fee_pct_override: string | null }>('select fee_pct_override from users where id=$1', [clientId]);
-    const feePct = isConsult ? 0 : personal?.fee_pct_override != null ? Number(personal.fee_pct_override) : defaultFee;
+    const feePct = isConsult || isEcu ? 0 : personal?.fee_pct_override != null ? Number(personal.fee_pct_override) : defaultFee;
 
     // Выезд после консультации: та же машина, подсказка мастера, скидка — если уложились в срок и скидку ещё не брали
     let consultOf: string | null = null;
