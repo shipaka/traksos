@@ -44,3 +44,13 @@ end $$;
 drop trigger if exists traksos_guard_emergency_quote_update on orders;
 create trigger traksos_guard_emergency_quote_update
   before update on orders for each row execute function traksos_guard_emergency_quote();
+
+-- Deliberate non-financial SLA: reminder does not mean consent; escalation
+-- creates staff review only, never completes a payment or customer approval.
+alter table order_unilateral_closures
+  add column if not exists reminder_sent_at timestamptz,
+  add column if not exists escalated_at timestamptz,
+  add column if not exists escalation_case_id uuid references mod_cases(id);
+create index if not exists order_unilateral_closures_sla_idx
+  on order_unilateral_closures(created_at)
+  where status='pending_client';
