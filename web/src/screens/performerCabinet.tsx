@@ -96,7 +96,7 @@ function PerformerOnboarding() {
   async function save() {
     const body: any = { kind, name: name || undefined, taxStatus: taxStatus || null, inn: inn || null,
       cars: !isEcu && car.brand && car.plate ? [car] : [], car: !isEcu && car.brand && car.plate ? car : null };
-    if (!isTow) body.specialties = spec;
+    if (!isTow && !isEcu) body.specialties = spec;
     if (await run(() => put('/api/performer/profile', body), 'Профиль сохранён — теперь фото для проверки')) {
       try { sessionStorage.removeItem('traksos.masterSpecialties'); } catch {}
       await reload(); go('work/docs');
@@ -109,11 +109,12 @@ function PerformerOnboarding() {
         <div className="step-head"><span className="step-n">1</span><b>Кто вы</b></div>
         <div className="grid2">
           {canMaster && <button type="button" className="seg" aria-pressed={kind === 'master'} onClick={() => setKind('master')}>Мастер</button>}
+          {canMaster && <button type="button" className="seg" aria-pressed={kind === 'ecu'} onClick={() => setKind('ecu')}>Ремонт ЭБУ · стационарно</button>
           {canTow && <button type="button" className="seg" aria-pressed={kind === 'tow'} onClick={() => setKind('tow')}>Эвакуатор</button>}
         </div>
         <input className="field" placeholder="Имя, как увидят клиенты" value={name} onChange={(e) => setName(e.target.value)} />
       </div>
-      {!isTow && (
+      {!isTow && !isEcu && (
         <div className="step-card">
           <div className="step-head"><span className="step-n">2</span><b>Что делаете</b></div>
           <div className="row">{SPECIALTIES.map((s) => (
@@ -122,15 +123,15 @@ function PerformerOnboarding() {
           ))}</div>
         </div>
       )}
-      <div className="step-card">
+      {!isEcu && <div className="step-card">
         <div className="step-head"><span className="step-n">{isTow ? 2 : 3}</span><b>{isTow ? 'Эвакуатор' : 'Машина, на которой приезжаете'}</b></div>
         <CarInputs car={car} onChange={setCar} tow={isTow} />
-      </div>
+      </div>}
       <div className="step-card">
-        <div className="step-head"><span className="step-n">{isTow ? 3 : 4}</span><b>Налоговый статус</b></div>
+        <div className="step-head"><span className="step-n">{isEcu ? 2 : isTow ? 3 : 4}</span><b>Налоговый статус</b></div>
         <TaxInputs taxStatus={taxStatus} inn={inn} onChange={(t, i) => { setTax(t); setInn(i); }} />
       </div>
-      <button className="btn" disabled={busy || !name || (!isTow && !spec.length)} onClick={save}>Дальше — фото для проверки</button>
+      <button className="btn" disabled={busy || !name || (!isTow && !isEcu && !spec.length)} onClick={save}>Дальше — фото для проверки</button>
     </main>
   );
 }
@@ -149,7 +150,7 @@ export function AboutSection() {
       <Field label="Имя, как увидят клиенты"><input className="field" value={name} onChange={(e) => setName(e.target.value)} /></Field>
       <div className="card">
         <dl className="kv">
-          <dt>Кто</dt><dd>{p.kind === 'tow' ? 'Эвакуатор' : 'Мастер'}</dd>
+          <dt>Кто</dt><dd>{p.kind === 'tow' ? 'Эвакуатор' : p.kind === 'ecu' ? 'Ремонтник ЭБУ (стационарно)' : 'Мастер'}</dd>
           <dt>Рейтинг</dt><dd>{me?.rating ? `★ ${Number(me.rating).toFixed(1)} · ${me.rating_count} оценок` : 'пока нет оценок'}</dd>
           <dt>Проверка</dt><dd>{p.verification === 'approved' ? 'Пройдена' : p.verification === 'rejected' ? 'Не пройдена' : 'Ещё не пройдена'}</dd>
         </dl>

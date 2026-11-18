@@ -87,6 +87,9 @@ export class EcuHandoffService {
   const root=source.case_root_id??source.id;
   const created=await this.db.tx(async q=>{
    await q.query('select pg_advisory_xact_lock(hashtext($1))',['ecu-case:'+root]);
+   const fromSameSource=await q.one<{id:string}>(
+    'select id from ecu_handoffs where source_order_id=$1',[sourceOrderId]);
+   if(fromSameSource)return {id:fromSameSource.id,isNew:false};
    const previous=await q.one<{id:string;source_order_id:string}>(
     "select id,source_order_id from ecu_handoffs where root_order_id=$1 and state in ('pending','selected')",[root]);
    if(previous){
