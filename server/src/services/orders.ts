@@ -620,8 +620,11 @@ export class OrdersService {
       await this.guarded(q, `update orders set status=$2, amount_confirmed_at=$3, completed_at=$3
           where id=$1 and status='awaiting_confirmation' and work_amount is not distinct from $4 and performer_id=$5`,
         [orderId, to, this.now(), o.work_amount, o.performer_id]);
-      // A client can confirm an older emergency job while the performer is already
-      // executing a new job. Never put that worker 'online' mid-trip.
+      // Serialize availability with acceptance/dispatch, which locks the same
+      // performer profile row. Recheck *after* acquiring the row lock: otherwise
+      // a concurrent new trip could be overwritten to "online" by old approval.
+      await q.one('select user_id from performer_profiles where user_id=$1 for update',
+        [o.performer_id]);
       if(!(await this.busyWith(q,o.performer_id,orderId)))
         await q.query(`update performer_profiles set line_status='online' where user_id=$1 and line_status='on_job'`, [o.performer_id]);
       if(unilateral){
