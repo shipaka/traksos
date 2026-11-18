@@ -3,9 +3,9 @@ import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/route
 import { maskPhones } from '../util.ts';
 import type { Notifier } from './notify.ts';
 
-type Target = 'tow' | 'sto' | 'master';
+type Target = 'tow' | 'sto' | 'master' | 'ecu';
 const targetNames: Record<Target,string> = {
- tow:'эвакуатор',sto:'СТО',master:'выездной мастер',
+ tow:'эвакуатор',sto:'СТО',master:'выездной мастер',ecu:'специалист по ЭБУ',
 };
 const sensitive = (value:string) => maskPhones(value
  .replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g,'[email скрыт]')).text.trim();
@@ -34,22 +34,25 @@ export class OrderContinuationService {
    `select r.id,r.source_order_id,r.target_kind,r.summary,r.status,
      r.created_at,r.decided_at,
      (select id from orders o where
-       (r.target_kind='tow' and o.continuation_of=r.source_order_id and o.service='tow')
+       (r.target_kind='tow' and (o.continuation_of=r.source_order_id or o.consult_of=r.source_order_id) and o.service='tow')
        or (r.target_kind='master' and o.consult_of=r.source_order_id and o.service<>'consult')
        order by o.created_at desc limit 1) as next_order_id,
      (select id from service_bookings b where r.target_kind='sto'
-       and b.from_order_id=r.source_order_id order by b.created_at desc limit 1) as next_booking_id
+       and b.from_order_id=r.source_order_id order by b.created_at desc limit 1) as next_booking_id,
+     (select id from ecu_handoffs h where r.target_kind='ecu'
+       and h.source_order_id=r.source_order_id order by h.created_at desc limit 1) as next_ecu_handoff_id
     from order_continuation_recommendations r
     where r.source_order_id=$1 order by r.created_at,r.id`,[orderId]);
  }
  async propose(user:AuthUser,orderId:string,target:Target,reason:string) {
   const {order,origin}=await this.source(user,orderId);
   if(!origin)throw forbidden('Предложить продолжение может назначенный исполнитель');
-  if(!['arrived','working','awaiting_confirmation','completed'].includes(order.status)
-    && !(order.service==='consult' && order.status==='accepted'))
+  if(!['arrived','working','awaiting_confirmation','completed'].includes(order.status))
    throw conflict('too_early','Сначала проведите консультацию или осмотрите машину');
   if(target==='master' && order.service!=='consult')
    throw bad('unsupported_transition','Выездного мастера после консультации можно предложить из консультации');
+  if(target==='ecu' && order.service==='tow')
+   throw bad('unsupported_transition','ЭБУ передают после консультации или технической диагностики');
   if(target==='tow' && order.service==='tow')
    throw bad('unsupported_transition','Повторный эвакуатор требует отдельного обращения');
   const summary=sensitive(reason);
@@ -120,6 +123,6 @@ export class OrderContinuationService {
   if((rec.target_kind==='tow' && service!=='tow')||
      (rec.target_kind==='master' && !['diag','electric','air','autonomy','tyre'].includes(service)))
    throw bad('wrong_next_stage','Рекомендация относится к другому виду помощи');
-  if(rec.target_kind==='sto')throw bad('sto_booking_only','СТО оформляется через запись в проверенный сервис');
+  if(rec.target_kind==='sto'||rec.target_kind==='ecu')throw bad('specialist_booking_only','СТО и ЭБУ оформляются по собственному защищённому процессу');
  }
 }
