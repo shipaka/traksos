@@ -5,7 +5,7 @@ import { useMe } from '../ui.tsx';
 type Audience = 'driver' | 'master';
 type TechDoc = {
   id:string; title:string; audience:Audience; kind:'truck'|'trailer'|'component';
-  vehicleMake:string|null; models:string[]; componentMake:string|null;
+  vehicleMake:string|null; models:string[]; modelYearFrom?:number; modelYearTo?:number; componentMake:string|null;
   system:string; type:string; language:string; source:string; url:string;
   access:'open'|'portal'; applicability:'brand'|'model'|'component'|'vin';
   warning:string; reviewedOn:string;
@@ -47,6 +47,7 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
   const chosen = vehicles.find(v => v.id === vehicleId);
   const selectedMake = (chosen?.brand || make).trim();
   const selectedModel = chosen?.model?.trim() || '';
+  const selectedYear = chosen?.year || null;
   const docs = useMemo(() => (payload?.documents ?? []).filter(d => {
     if (kind !== 'all' && d.kind !== kind) return false;
     if (system && d.system !== system) return false;
@@ -55,12 +56,14 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
     if (selectedMake && d.kind !== 'component' && normalize(d.vehicleMake || '') !== normalize(selectedMake)) return false;
     if (selectedModel && d.kind === 'truck' && d.models.length &&
         !d.models.some(m => normalize(selectedModel).includes(normalize(m)) || normalize(m).includes(normalize(selectedModel)))) return false;
+    if (selectedYear && d.modelYearFrom && selectedYear < d.modelYearFrom) return false;
+    if (selectedYear && d.modelYearTo && selectedYear > d.modelYearTo) return false;
     if (query) {
       const words = (d.title+' '+d.system+' '+d.source+' '+d.models.join(' ')+' '+(d.componentMake||'')).toLowerCase();
       if (!words.includes(query.trim().toLowerCase())) return false;
     }
     return true;
-  }),[payload,kind,system,documentType,query,selectedMake,selectedModel]);
+  }),[payload,kind,system,documentType,query,selectedMake,selectedModel,selectedYear]);
   const systems = [...new Set((payload?.documents ?? []).map(d=>d.system))].sort();
   const groups = [...new Set(docs.map(d=>d.system))].sort().map(name => ({name,entries:docs.filter(d=>d.system===name)}));
   const canSeeMaster = !!payload?.audiences.includes('master');
