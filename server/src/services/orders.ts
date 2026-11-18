@@ -43,6 +43,10 @@ export interface CreateOrderInput {
   fromConsult?: string;
   /** Следующий самостоятельный этап того же обращения. */
   continueFrom?: string;
+  /** A separate tow alongside the accepted master's visit; owner explicitly acknowledges the second call-out. */
+  parallelWith?: string;
+  parallelConsent?: boolean;
+  parallelCallOut?: number;
   preferredPerformerId?: string;
 }
 
@@ -102,15 +106,33 @@ export class OrdersService {
     await this.payments.assertMethodAllowed(method);
 
     const clientId = user.owner_id ?? user.id;
-    // Previous stage must be closed; never mix its price into the next auction.
+    // A second tow can be explicitly parallel, while normal continuations
+    // remain sequential. Both have their own tariff, agreement and ledger.
+    if (i.parallelWith && i.continueFrom)
+      throw bad('bad_link', 'Выберите последовательное продолжение или параллельный эвакуатор');
+    if (!i.parallelWith && (i.parallelConsent || i.parallelCallOut != null))
+      throw bad('parallel_requires_source', 'Для второго выезда укажите первую заявку');
     let previous: any = null;
-    if (i.continueFrom) {
+    if (i.continueFrom || i.parallelWith) {
       if (i.fromConsult || i.service !== 'tow')
-        throw bad('bad_continuation', 'Сейчас можно продолжить выезд мастера вызовом эвакуатора');
-      previous = await this.db.one<any>('select * from orders where id=$1', [i.continueFrom]);
+        throw bad('bad_continuation', 'Совместное обращение поддерживает выезд и эвакуацию');
+      previous = await this.db.one<any>('select * from orders where id=$1', [i.continueFrom ?? i.parallelWith]);
       if (!previous || previous.client_id !== clientId || (user.owner_id && previous.created_by !== user.id))
         throw forbidden('Продолжить можно только собственное обращение');
-      if (previous.status !== 'completed' || !['cause_found', 'not_found'].includes(previous.result) || previous.service === 'tow')
+      if (i.parallelWith) {
+        if (user.owner_id || user.roles.includes('driver'))
+          throw forbidden('Параллельный второй выезд с отдельной оплатой подтверждает владелец автопарка');
+        if (i.parallelConsent !== true || !Number.isSafeInteger(i.parallelCallOut))
+          throw bad('need_parallel_consent', 'Отдельно подтвердите стоимость второго выезда');
+        if (!['electric','diag','air','autonomy','tyre'].includes(previous.service) ||
+            !['accepted','en_route','arrived','working','awaiting_confirmation'].includes(previous.status))
+          throw conflict('stage_not_ready', 'Для параллельной эвакуации сначала должен быть принят выезд мастера');
+        if (previous.location_region && i.regionId !== previous.location_region)
+          throw bad('different_location', 'Регион второго выезда должен совпадать с первым');
+        if (i.zoneId !== previous.zone_id)
+          throw bad('different_location', 'Тарифная зона должна совпадать с первым этапом');
+      } else if (previous.status !== 'completed' ||
+          !['cause_found', 'not_found'].includes(previous.result) || previous.service === 'tow')
         throw conflict('stage_not_ready', 'Предыдущий этап не завершён или не требует эвакуации');
       const existing = await this.db.one('select id from orders where continuation_of=$1 and status<>$2', [previous.id, 'cancelled']);
       if (existing) throw conflict('continuation_exists', 'Следующий этап этого обращения уже оформлен');
@@ -118,7 +140,9 @@ export class OrdersService {
         throw bad('different_vehicle', 'Продолжение относится к тому же грузовику');
       i = { ...i, isSos: true, vehicleId: previous.vehicle_id ?? i.vehicleId,
         brand: previous.brand ?? i.brand, model: previous.model ?? i.model, year: previous.year ?? i.year,
-        address: i.address || previous.address, lat: i.lat ?? previous.lat, lng: i.lng ?? previous.lng,
+        address: i.parallelWith ? previous.address : i.address || previous.address,
+        lat: i.parallelWith ? previous.lat : i.lat ?? previous.lat,
+        lng: i.parallelWith ? previous.lng : i.lng ?? previous.lng,
         description: i.description || previous.description || 'Эвакуация после выездного ремонта',
         site: i.site ?? previous.site ?? undefined };
     }
@@ -153,6 +177,8 @@ export class OrdersService {
     const night = isConsult ? false : i.night ?? isNight(all.pricing, this.now());
     const tier = i.tier ?? 'eco';
     const est = estimate(all.pricing, { service: i.service, tier, zoneId: i.zoneId, night, group: !isConsult && !!i.groupTrip });
+    if (i.parallelWith && i.parallelCallOut !== est.callOut)
+      throw conflict('parallel_price_changed', 'Цена эвакуации изменилась. Проверьте и подтвердите новую сумму');
     const defaultFee = method === 'cash' ? (all.fees.cashChargesClientFee ? all.fees.clientFeePct : 0) : all.fees.clientFeePct;
     // Персональный сбор клиента (назначает администратор) важнее общего. Консультация — фиксированная цена, сбор уже внутри.
     const personal = await this.db.one<{ fee_pct_override: string | null }>('select fee_pct_override from users where id=$1', [clientId]);
@@ -160,11 +186,15 @@ export class OrdersService {
 
     // Выезд после консультации: та же машина, подсказка мастера, скидка — если уложились в срок и скидку ещё не брали
     let consultOf: string | null = null;
+    let consultRootId: string | null = null;
     let discount = 0;
     if (i.fromConsult && !isConsult) {
       const c = await this.db.one<any>(`select * from orders where id=$1 and service='consult' and (client_id=$2 or created_by=$3)`, [i.fromConsult, clientId, user.id]);
       if (!c) throw bad('bad_consult', 'Консультация не найдена');
       consultOf = c.id;
+      // A phone consultation and the following visit are the same incident,
+      // not two unrelated case timelines. Financial contracts stay separate.
+      consultRootId = c.case_root_id ?? c.id;
       const used = await this.db.one('select 1 from orders where consult_of=$1 and discount_reason=$2 and status<>$3', [c.id, CONSULT_DISCOUNT, 'cancelled']);
       const ref = c.completed_at ?? c.accepted_at;
       const fresh = ref && this.now().getTime() - new Date(ref).getTime() <= all.pricing.consult.backHours * 3600_000;
@@ -185,15 +215,18 @@ export class OrdersService {
           zone_id, night, group_trip, tier, brand, estimate, payment_method, client_fee_pct, destination, cargo, loaded, driver_on_site,
           consult_of, discount_amount, discount_reason, model, year, site, status, owner_note,
           commission_pct_override, commission_campaign_id, case_root_id, continuation_of,
-          create_request_key,create_request_hash,location_region,preferred_performer_id)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38) returning *`,
+          create_request_key,create_request_hash,location_region,preferred_performer_id,parallel_consent)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39) returning *`,
       [clientId, user.id, i.vehicleId ?? null, i.service, !!i.isSos, i.problem ?? null, i.description ?? null, isConsult ? null : i.address ?? null,
         isConsult ? null : i.lat ?? null, isConsult ? null : i.lng ?? null, est.zoneId, night, est.group, tier, brand, est, method, feePct,
         i.destination ?? null, i.cargo ?? null, i.loaded ?? null, i.driverOnSite ?? null,
         consultOf, discount, discount ? CONSULT_DISCOUNT : null, model, year, isConsult ? null : i.site ?? null,
         gate ? 'awaiting_owner' : 'searching', gate, campaign?.commission_pct ?? null, campaign?.id ?? null,
-        previous ? (previous.case_root_id ?? previous.id) : null, previous?.id ?? null,
-        requestKey,requestHash, isConsult ? null : i.regionId, preferredId],
+        previous ? (previous.case_root_id ?? previous.id) : consultRootId, previous?.id ?? null,
+        requestKey,requestHash, isConsult ? null : i.regionId, preferredId,
+        i.parallelWith ? {sourceOrderId:previous.id,sourceNumber:previous.number,
+          actorId:user.id,approvedAt:this.now().toISOString(),secondCallOut:est.callOut,
+          paymentMethod:method,independentCharge:true} : null],
     ).catch(async (e: any) => {
       if (e?.code === '23505' && e?.constraint === 'orders_create_key_unique') {
         const prior = await this.db.one<any>(
@@ -206,7 +239,16 @@ export class OrdersService {
       throw e;
     });
     if (reused) return reuse(order!);
-    await this.event(this.db, order!.id, user.id, 'created', { estimate: est, sos: !!i.isSos, continuationOf: previous?.id ?? null });
+    await this.event(this.db, order!.id, user.id, 'created', { estimate: est, sos: !!i.isSos,
+      continuationOf: previous?.id ?? null, parallel:!!i.parallelWith });
+    if (i.parallelWith) {
+      await this.event(this.db, previous!.id, user.id, 'parallel_tow_requested',
+        {towOrderId:order!.id,acknowledgedCallOut:est.callOut});
+      await this.notifier.notify([previous!.performer_id], {type:'order',orderId:previous!.id},
+        {kind:'normal',title:'К вашей заявке приглашён эвакуатор',
+          body:'Второй выезд согласован владельцем. Погрузка начнётся после освобождения автомобиля.',
+          data:{orderId:previous!.id,towOrderId:order!.id}});
+    }
 
     if (gate) {
       await this.event(this.db, order!.id, user.id, 'owner_approval_requested', { reason: gate });
@@ -549,8 +591,14 @@ export class OrdersService {
     const o = await this.mustBePerformer(user, orderId);
     if (o.service === 'consult') throw bad('consult_no_trip', 'Это консультация по телефону — выезда нет. Закройте её с подсказкой.');
     const to = transition(o.status, action, 'performer');
+    if (action === 'start_work' && o.service === 'tow' && o.continuation_of) {
+      const source = await this.db.one<{status:string}>('select status from orders where id=$1',[o.continuation_of]);
+      if (source && !['completed','cancelled','no_performer'].includes(source.status))
+        throw conflict('vehicle_still_in_work', 'Машина ещё у мастера. Эвакуатор может прибыть и ожидать, но не начинать погрузку');
+    }
     const col = { depart: 'en_route_at', arrive: 'arrived_at', start_work: 'work_started_at' }[action];
-    await this.guarded(this.db, `update orders set status=$2${col ? `, ${col}=$5` : ''} where id=$1 and status=$3 and performer_id=$4`,
+    await this.guarded(this.db, `update orders set status=$2${col ? `, ${col}=$5` : ''} where id=$1 and status=$3 and performer_id=$4${action === 'start_work' && o.service === 'tow' && o.continuation_of ?
+      ` and not exists(select 1 from orders source where source.id='${o.continuation_of}'::uuid and source.status not in ('completed','cancelled','no_performer'))` : ''}`,
       col ? [orderId, to, o.status, user.id, this.now()] : [orderId, to, o.status, user.id]);
     await this.event(this.db, orderId, user.id, action, {});
     const text = { depart: 'Исполнитель выехал', arrive: 'Исполнитель на месте', start_work: 'Исполнитель начал работу' }[action];
@@ -885,6 +933,7 @@ export class OrdersService {
       consultHint: o.consult_hint, consultOf: o.consult_of,
       preferredPerformerId: o.preferred_performer_id ?? null,
       continuationOf: o.continuation_of ?? null, caseRootId,
+      parallelTow: actor === 'client' || actor === 'admin' ? o.parallel_consent ?? null : null,
       caseSummary: {
         rootId: caseRootId, stages: caseSteps, serviceBookings: caseServiceStages,
         confirmedTotal: caseConfirmedTotal,

@@ -88,6 +88,13 @@ export function Order({ id }: { id: string }) {
           <a className="btn small" href={`#/services/${d.recommendedCenter.id}/book?from=${d.id}`}>Записаться</a>
         </div>
       )}
+      {d.you === 'client' && d.service !== 'tow' && d.service !== 'consult'
+        && ['accepted','en_route','arrived','working','awaiting_confirmation'].includes(d.status) && (
+        <div className="card stack">
+          <b>Нужен эвакуатор, пока работает мастер?</b>
+          <span className="note">Можно пригласить эвакуатор параллельно, но он не начнёт погрузку до завершения работы мастера. Второй выезд оплачивается отдельно после вашего согласия.</span>
+          <a className="btn ghost small" href={`#/new/tow?parallel=${d.id}`}>Согласовать отдельный выезд эвакуатора</a>
+        </div>)}
       {d.status === 'completed' && <Review id={id} you={d.you} />}
 
       {d.status !== 'searching' && d.status !== 'no_performer' && <Chat id={id} status={d.status} />}

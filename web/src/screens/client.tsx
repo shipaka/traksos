@@ -388,6 +388,7 @@ export function NewOrder({ service }: { service: string }) {
   const sos = SYMPTOMS.find((p) => p.id === params.get('sos'));
   const sym = sos ?? SYMPTOMS.find((p) => p.id === params.get('p'));
   const fromConsult = params.get('from');
+  const parallelWith = service === 'tow' ? params.get('parallel') : null;
   const preferredPerformerId = params.get('preferred') ?? '';
   const { me } = useMe();
   const { busy, run } = useAction();
@@ -396,6 +397,8 @@ export function NewOrder({ service }: { service: string }) {
   const pastPerformers = useLoad(() => preferredPerformerId ? get('/api/my-performers') : Promise.resolve([]), [preferredPerformerId]);
   const selectedPerformer = (pastPerformers.data ?? []).find((p:any) => p.id === preferredPerformerId);
   const consult = useLoad(() => (fromConsult ? get(`/api/orders/${fromConsult}`) : Promise.resolve(null)), [fromConsult]);
+  const parallelSource = useLoad(() => (parallelWith ? get(`/api/orders/${parallelWith}`) : Promise.resolve(null)), [parallelWith]);
+  const [parallelAgree,setParallelAgree] = useState(false);
   const [agree, setAgree] = useState(false);
 
   // A region is not a tariff zone. Neither GPS nor IP must silently assign
@@ -433,6 +436,18 @@ export function NewOrder({ service }: { service: string }) {
   useEffect(() => {
     if (vehicles.data?.length && !vehicleId) setVehicleId(vehicles.data[0].id);
   }, [vehicles.data]); // eslint-disable-line
+  // A second tow must use the very same incident and car.
+  useEffect(()=>{
+    const source=parallelSource.data;
+    if(!source)return;
+    setAddress(source.address??'');
+    setRegionId(source.locationRegion??'');
+    setZoneId(source.zoneId??'');
+    if(source.vehicleId)setVehicleId(source.vehicleId);
+    else {setVehicleId('');setCar({brand:source.brand??'',model:source.model??'',
+      year:source.year?String(source.year):''});}
+    setDescription('Эвакуация параллельно работам по заявке №'+source.number);
+  },[parallelSource.data]);
   // Выезд после консультации: та же машина и описание
   useEffect(() => {
     const c = consult.data;
@@ -488,6 +503,9 @@ export function NewOrder({ service }: { service: string }) {
       ...(isTow ? { destination: destination || undefined, cargo, loaded, driverOnSite } : {}),
       fromConsult: fromConsult || undefined,
       preferredPerformerId: preferredPerformerId || undefined,
+      parallelWith: parallelWith || undefined,
+      parallelConsent: parallelWith ? parallelAgree : undefined,
+      parallelCallOut: parallelWith ? est?.callOut : undefined,
       site: (!isTow && Object.keys(site).length) || roadside ? {
         ...(!isTow ? site : {}),
         ...(!isTow ? { meet: site.meet || undefined, time: site.time || undefined } : {}),
@@ -552,6 +570,8 @@ export function NewOrder({ service }: { service: string }) {
     !need.where && { id: 'f-where', name: 'где машина' },
     !need.tow && { id: 'f-tow', name: 'куда везти' },
     !agree && { id: 'f-agree', name: 'согласие с суммами' },
+    !!parallelWith && (!parallelSource.data || !parallelAgree || !!me?.owner_id) &&
+      {id:'f-agree',name:'отдельное согласие владельца на второй выезд'},
   ].filter(Boolean) as { id: string; name: string }[];
 
   if (!pricing.data) return <main>
@@ -567,7 +587,7 @@ export function NewOrder({ service }: { service: string }) {
 
   return (
     <main>
-      <Back to={fromConsult ? `order/${fromConsult}` : sos ? 'sos' : ''} />
+      <Back to={parallelWith ? `order/${parallelWith}` : fromConsult ? `order/${fromConsult}` : sos ? 'sos' : ''} />
       <div>
         <h1>{sym ? sym.name : s?.name ?? 'Заявка'}</h1>
         <div className="sub">{sos ? `${s?.name} · срочный вызов` : sym ? s?.name : s?.hint}</div>
@@ -588,6 +608,19 @@ export function NewOrder({ service }: { service: string }) {
           <button type="button" className="btn ghost small" onClick={restoreDraftFromDevice}>Восстановить поля (без GPS и согласия на оплату)</button>
         </div>}
       </div>
+      {parallelWith && <div className="card stack">
+        <b>Параллельный эвакуатор · отдельный оплачиваемый выезд</b>
+        <span className="note">{parallelSource.data
+          ? `Первая заявка №${parallelSource.data.number} остаётся у мастера. Эвакуатор может ехать одновременно, но погрузка начнётся после окончания работ мастера.`
+          : 'Проверяем связь с исходной заявкой. Без неё нельзя отправить второй вызов.'}</span>
+        <span className="note">Это отдельная заявка с собственной стоимостью, исполнителем, отменой и документами. Случайное повторное создание второго этапа запрещено.</span>
+        {me?.owner_id && <span className="banner warn">Второй платный выезд должен отдельно подтвердить владелец автопарка.</span>}
+        <label className="agree"><input type="checkbox" checked={parallelAgree}
+          disabled={!parallelSource.data||!est||!!me?.owner_id}
+          onChange={e=>setParallelAgree(e.target.checked)}/>
+          <span>Я отдельно согласен на второй вызов эвакуатора: предварительный выезд {est ? rub(est.callOut) : 'после проверки тарифа'} (остальные расходы — по отдельной смете).</span>
+        </label>
+      </div>}
       {preferredPerformerId && <div className="card stack">
         <b>Повторный вызов знакомого исполнителя</b>
         <span className="note">{selectedPerformer
