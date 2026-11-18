@@ -37,6 +37,7 @@ export function AdminCaseCenter() {
   const [tab,setTab]=useState<DetailTab>('overview');
   const [comment,setComment]=useState('');
   const [saving,setSaving]=useState(false);
+  const [exporting,setExporting]=useState(false);
   const dialog=useRef<HTMLElement|null>(null);
   useEffect(()=>{
     let live=true;
@@ -72,6 +73,20 @@ export function AdminCaseCenter() {
       setComment('');setRefresh(x=>x+1);
     }catch(e:any){setError(String(e?.message||e));}
     finally{setSaving(false);}
+  };
+  const downloadCsv=async()=>{
+    if(!selected||exporting)return;
+    setExporting(true);
+    try{
+      const result:any=await get('/api/admin/cases/'+encodeURIComponent(selected)+'/export');
+      const blob=new Blob([result.csv],{type:'text/csv;charset=utf-8'});
+      const url=URL.createObjectURL(blob);
+      const link=document.createElement('a');
+      link.href=url;link.download=result.filename||'traksos-case.csv';
+      document.body.appendChild(link);link.click();link.remove();
+      URL.revokeObjectURL(url);
+    }catch(e:any){setError(String(e?.message||e));}
+    finally{setExporting(false);}
   };
   const stages=detail?.stages||[],bookings=detail?.bookings||[];
   return <div className="case-register">
@@ -198,6 +213,16 @@ export function AdminCaseCenter() {
               <div className="case-detail-between"><span>Работы (если указаны)</span><b>{cash(s.work_amount)}</b></div>
               <div className="case-detail-between"><span>Скидка (если указана)</span><b>{cash(s.discount_amount)}</b></div>
             </article>)}
+            {stages.map((s:any)=>s.recorded_items?.lines?.length>0&&<div key={'lines-'+s.id} className="case-detail-stage">
+              <b>Позиции из расчёта мастера · №{s.number}</b>
+              {s.recorded_items.lines.map((line:any,i:number)=><div className="case-detail-between" key={i}>
+                <span>{line.description}</span><b>{cash(line.amount)}</b>
+              </div>)}
+              <small>{s.recorded_items.workVerified?'Сумма работ совпадает с записанным расчётом':'Расчёт требует сверки'}</small>
+              {s.recorded_items.quoteOnly&&<small>Предложение не подтверждено как завершённая услуга</small>}
+            </div>)}
+            <button type="button" className="btn ghost small" disabled={exporting}
+              onClick={downloadCsv}>{exporting?'Подготовка…':'Скачать операционную детализацию CSV'}</button>
             <h4>Записи платёжной системы</h4>
             {!detail.payments?.length?<p className="note">Сопоставленных платежей нет.</p>
             :detail.payments.map((p:any)=><div className="case-detail-payment" key={p.id}>
