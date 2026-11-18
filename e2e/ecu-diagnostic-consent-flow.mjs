@@ -27,7 +27,8 @@ const register=async(phone,accountType)=>{
   });
 };
 const adminPhone='+79990000001';
-const admin=await register(adminPhone,'owner');
+// Existing CI admin fixture already has roles; never request a new client role.
+const admin=await register(adminPhone);
 if(!admin.user?.roles?.includes('admin'))throw Error('Missing local CI admin fixture');
 const allSettings=await api('GET','/api/admin/settings',undefined,admin.token);
 const oldVerification=allSettings.verification;
