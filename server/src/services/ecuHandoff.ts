@@ -142,8 +142,8 @@ export class EcuHandoffService {
  }
  private async access(user:AuthUser,id:string):Promise<{h:Handoff;actor:Access}>{
   const h=await this.db.one<Handoff>(
-   'select h.*,o.service,o.number as source_number,o.performer_id as source_performer_id,
-   o.created_by as source_created_by,' +
+   'select h.*,o.service,o.number as source_number,o.performer_id as source_performer_id,' +
+   ' o.created_by as source_created_by,' +
    ' o.brand,o.model,o.year,o.vehicle_id from ecu_handoffs h' +
    ' join orders o on o.id=h.source_order_id where h.id=$1',[id]);
   if(!h)throw notFound('Передача не найдена');

@@ -109,7 +109,7 @@ function PerformerOnboarding() {
         <div className="step-head"><span className="step-n">1</span><b>Кто вы</b></div>
         <div className="grid2">
           {canMaster && <button type="button" className="seg" aria-pressed={kind === 'master'} onClick={() => setKind('master')}>Мастер</button>}
-          {canMaster && <button type="button" className="seg" aria-pressed={kind === 'ecu'} onClick={() => setKind('ecu')}>Ремонт ЭБУ · стационарно</button>
+          {canMaster && <button type="button" className="seg" aria-pressed={kind === 'ecu'} onClick={() => setKind('ecu')}>Ремонт ЭБУ · стационарно</button>}
           {canTow && <button type="button" className="seg" aria-pressed={kind === 'tow'} onClick={() => setKind('tow')}>Эвакуатор</button>}
         </div>
         <input className="field" placeholder="Имя, как увидят клиенты" value={name} onChange={(e) => setName(e.target.value)} />

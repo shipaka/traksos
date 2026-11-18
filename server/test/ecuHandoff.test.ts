@@ -87,7 +87,7 @@ test('ECU handoff: named original worker, no money, verified station, versioned 
  const chosen=ok(await t.api('GET','/api/ecu/handoffs/'+sent.id,undefined,expert.token));
  assert.equal(chosen.actor,'expert');
  assert.equal(chosen.vehicle.vin,'VF611MTA000123456');
- assert.equal(chosen.history[0].performerName,'Мастерская блоков ЭБУ'===chosen.history[0].performerName?'Мастерская блоков ЭБУ':chosen.history[0].performerName);
+ assert.equal(chosen.history.length,1,'selected specialist reads the source technician report');
  assert.match(chosen.history[0].resultNote,/цепи|питания|массы/i);
  assert.equal(chosen.station.public_name,'Стенд ЭБУ Север');
  const note=ok(await t.api('POST','/api/ecu/handoffs/'+sent.id+'/notes',{
