@@ -131,3 +131,42 @@ test('roadside master recommends tow, owner approves search and a separately pri
  assert.equal((await t.api('POST','/api/orders',request,owner.token)).status,409,
   'repeated second dispatch cannot create a duplicate');
 });
+
+
+test('consultant STO advice creates one numbered same-case workshop booking, without fake referral discount',async()=>{
+ const admin=await t.login('+79990000001');
+ const service=await t.login('+79997803005','service');
+ const center=ok(await t.api('PUT','/api/base',{
+  name:'Тестовая грузовая рембаза',address:'Шушары, Московское шоссе, 50',
+  staff:{electric:'own'},accepts:['quick','long']
+ },service.token)).center;
+ ok(await t.api('POST','/api/admin/services/'+center.id+'/verify',
+  {decision:'approved'},admin.token));
+ const truck=ok(await t.api('POST','/api/vehicles',{
+  brand:'DAF',model:'XF',year:2016,plate:'А482КМ178'
+ },owner.token));
+ const consult=ok(await t.api('POST','/api/orders',{
+  service:'consult',zoneId:'phone',vehicleId:truck.id,
+  description:'Диагностика двигателя, требуется рембаза',paymentMethod:'cash'
+ },owner.token)).order;
+ await t.db.query("update orders set status='awaiting_confirmation',performer_id=$2 where id=$1",
+  [consult.id,consultant.id]);
+ const advice=ok(await t.api('POST','/api/orders/'+consult.id+'/continuations',{
+  target:'sto',summary:'После диагностики на стенде требуется ремонт на грузовой рембазе'
+ },consultant.token));
+ const day=new Date(t.clock.now().getTime()+3*3600_000).toISOString().slice(0,10);
+ const booking={vehicleId:truck.id,need:'electric',day,arrival:'tow',
+  caseOrderId:consult.id,recommendationId:advice.id};
+ assert.equal((await t.api('POST','/api/services/'+center.id+'/book',booking,owner.token)).status,403);
+ ok(await t.api('POST','/api/orders/'+consult.id+'/continuations/'+advice.id+'/decision',
+  {approve:true},owner.token));
+ const booked=ok(await t.api('POST','/api/services/'+center.id+'/book',booking,owner.token));
+ assert.equal(booked.caseRootId,consult.id);
+ assert.equal(booked.fromOrder,false,'unearned referral discount not created');
+ assert.equal((await t.api('POST','/api/services/'+center.id+'/book',booking,owner.token)).status,409);
+ const linked=ok(await t.api('GET','/api/orders/'+consult.id+'/continuations',undefined,owner.token));
+ assert.equal(linked[0].next_booking_id,booked.id);
+ const caseData=ok(await t.api('GET','/api/orders/'+consult.id,undefined,owner.token));
+ assert.equal(caseData.caseSummary.multiStage,true);
+ assert.equal(caseData.caseSummary.serviceBookings.some((b:any)=>b.id===booked.id),true);
+});
