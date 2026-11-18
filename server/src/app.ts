@@ -415,7 +415,7 @@ export function createApp(d: Deps) {
 
   // Stalled stages are incidents, not automatic fault findings or financial charges.
   r.get('/api/admin/order-sla', ['admin'], (c: AuthedCtx) =>
-    orderSla.report(Math.min(365,Math.max(1,Number(c.query.get('days') ?? 30)))));
+    orderSla.report(parse(z.coerce.number().int().min(1).max(365), c.query.get('days') ?? '30')));
   r.put('/api/admin/order-sla/:id/review', ['admin'], (c: AuthedCtx) => {
     const b = parse(z.object({ state:z.enum(['investigating','confirmed','excused']),
       note:z.string().trim().min(10).max(1200) }),c.body);
@@ -1347,7 +1347,7 @@ export function createApp(d: Deps) {
     const cors: Record<string, string> = { 'x-request-id': requestId };
     if (origin && (config.corsOrigins.includes('*') || config.corsOrigins.includes(origin))) {
       cors['access-control-allow-origin'] = origin;
-      cors['access-control-allow-headers'] = 'authorization, content-type';
+      cors['access-control-allow-headers'] = 'authorization, content-type, idempotency-key';
       cors['access-control-expose-headers'] = 'x-request-id';
       cors['access-control-allow-methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS';
       cors['vary'] = 'origin';

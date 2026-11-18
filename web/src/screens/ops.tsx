@@ -28,7 +28,7 @@ export function OpsDashboard() {
   const [filter,setFilter]=useState('all');
   const [onlyOpen,setOnlyOpen]=useState(false);
   const report = useLoad(() => get('/api/admin/demand?days='+days+'&wait='+wait),[days,wait]);
-  const sla = useLoad(() => get('/api/admin/order-sla?days='+days),[days]);
+  const sla = useLoad(() => admin ? get('/api/admin/order-sla?days='+days) : Promise.resolve({incidents:[],repeat:[]}),[days,admin]);
   const {busy,run}=useAction();
   const d=report.data;
   const incidents=(d?.incidents??[]).filter((x:any)=>
@@ -80,7 +80,7 @@ export function OpsDashboard() {
             <td>{SERVICES[r.service]?.name??r.service}</td><td>{r.total}</td><td>{r.unfilled}</td>
             <td>{r.cancelled_before_acceptance}</td><td>{r.waiting_now}</td></tr>)}</tbody></table></div>
       </div>
-      <div className="card stack">
+      {admin && <div className="card stack">
         <b>Контроль зависших этапов · третий табличный блок</b>
         <span className="note">Поиск, ожидание выезда, дорога, работа, подтверждение. Контрольный интервал — не доказательство вины. Выезд далеко за КАД требует отдельной проверки времени маршрута. Указанная причина остаётся в журнале.</span>
         <button className="btn ghost small" style={{alignSelf:'flex-start'}} onClick={()=>sla.reload()}>Обновить нарушения этапов</button>
@@ -100,7 +100,7 @@ export function OpsDashboard() {
               <tr><td colSpan={4}>Повторных инцидентов нет.</td></tr>}</tbody>
           </table></div>
         </>}
-      </div>
+      </div>}
       <div className="card stack">
         <b>Реестр проблемных заявок</b>
         <span className="note">Показываются до 250 последних случаев за период. Отметка «Разобрано» не удаляет заявку и не изменяет её исходный статус.</span>
