@@ -1,0 +1,21 @@
+/* Scoped TechBase styling; preserves the approved global TrackSOS canon. */
+.techbase-page{display:flex;flex-direction:column;gap:18px;padding-bottom:28px}
+.techbase-hero{position:relative;overflow:hidden;padding:32px 28px;border-radius:22px;color:#f7fbff;background:linear-gradient(120deg,#0a1933 2%,#17375d 62%,#0878a3 120%);box-shadow:0 16px 45px #081a3630}
+.techbase-hero:after{content:"";position:absolute;right:-65px;top:-70px;width:290px;height:290px;border-radius:50%;background:radial-gradient(circle,#24d6ee5b,transparent 66%);pointer-events:none}
+.techbase-eyebrow{font-size:12px;letter-spacing:.09em;opacity:.76;text-transform:uppercase;margin-bottom:10px}
+.techbase-hero h1{color:inherit;font-size:clamp(27px,3.4vw,42px);margin:0 0 12px}
+.techbase-hero p{color:#d1e4fa;max-width:700px;margin:0;line-height:1.6}
+.techbase-hero-actions{display:flex;gap:10px;margin-top:18px;position:relative;z-index:1}
+.techbase-hero-actions a{color:#e7f9ff;text-decoration:none;border:1px solid #a3d6ee55;border-radius:11px;padding:9px 15px}
+.techbase-hero-actions a.selected{background:#1f9bce;color:#fff}
+.techbase-filter{padding:20px}
+.techbase-filter label.stack{gap:7px;min-width:0}
+.techbase-filter label b{font-size:13px}
+.techbase-context{font-size:13px;line-height:1.55;padding:11px 13px;background:color-mix(in srgb,var(--accent) 9%,transparent);border-radius:12px}
+.techbase-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.techbase-document{min-width:0;justify-content:space-between;gap:10px}
+.techbase-document h3{font-size:17px;line-height:1.35;margin:0}
+.techbase-document .between{flex-wrap:wrap;gap:8px}
+.techbase-warning{border-left:3px solid #42adc9;padding-left:11px;font-size:13px;line-height:1.55;margin:0}
+.techbase-footer-note{font-size:12px;line-height:1.55;opacity:.77}
+@media(max-width:740px){.techbase-page{gap:12px}.techbase-hero{padding:24px 18px;border-radius:17px}.techbase-grid{grid-template-columns:minmax(0,1fr)}.techbase-filter{padding:14px}}
