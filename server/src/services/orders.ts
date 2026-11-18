@@ -580,6 +580,20 @@ export class OrdersService {
     let used = 0;
     if (expectedTotal != null && expectedTotal !== m.total) throw conflict('amount_changed', 'Сумма изменилась — проверьте заново');
     await this.db.tx(async (q) => {
+      // Serialize acceptance/disagreement and preserve the quoted version.
+      const locked = await q.one<any>('select status from orders where id=$1 for update',[orderId]);
+      if(!locked||locked.status!=='awaiting_confirmation')
+        throw conflict('state_changed','Заявка изменилась — обновите экран');
+      const unilateral = await q.one<any>(
+        'select * from order_unilateral_closures where order_id=$1 for update',[orderId]);
+      if(unilateral){
+        if(unilateral.status!=='pending_client')
+          throw conflict('emergency_under_review','Аварийное завершение уже оспорено или обработано');
+        if(expectedTotal==null || expectedTotal!==Number(unilateral.quote_total) ||
+          new Date(unilateral.quote_at).getTime()!==new Date(o.amount_proposed_at).getTime() ||
+          Number(unilateral.work_amount)!==Number(o.work_amount))
+          throw conflict('emergency_quote_changed','Проверьте окончательную сумму и подтвердите её явно');
+      }
       // Бонусы клиента списываются сами в момент подтверждения
       const bonus = await q.one<{ b: number }>('select coalesce(sum(amount),0)::int b from bonus_entries where user_id=$1', [o.client_id]);
       const use = Math.min(bonus?.b ?? 0, m.total);
@@ -596,6 +610,13 @@ export class OrdersService {
           where id=$1 and status='awaiting_confirmation' and work_amount is not distinct from $4 and performer_id=$5`,
         [orderId, to, this.now(), o.work_amount, o.performer_id]);
       await q.query(`update performer_profiles set line_status='online' where user_id=$1 and line_status='on_job'`, [o.performer_id]);
+      if(unilateral){
+        await q.query(
+          "update order_unilateral_closures set status='accepted',answered_at=$2,answered_by=$3 "+
+          "where order_id=$1 and status='pending_client'",
+          [orderId,this.now(),user.id]);
+        await this.event(q,orderId,user.id,'emergency_client_accepted',{quoteTotal:unilateral.quote_total});
+      }
       await this.event(q, orderId, user.id, 'amount_confirmed', { total: m.total, method: o.payment_method });
       await this.payments.onConfirmed({ ...o, status: to, discount_amount: Number(o.discount_amount ?? 0) + used }, q);
       await this.referral?.afterOrder(q, { ...o, status: to }, m.amount);
@@ -614,6 +635,10 @@ export class OrdersService {
 
   async disputeAmount(user: AuthUser, orderId: string, reason: string) {
     const o = await this.mustBeClient(user, orderId);
+    const unusual = await this.db.one<{status:string}>(
+      'select status from order_unilateral_closures where order_id=$1',[orderId]);
+    if(unusual)
+      throw conflict('use_emergency_dispute','Аварийное завершение оспаривается отдельно, без возврата мастера в работу');
     const to = transition(o.status, 'dispute_amount', 'client');
     await this.guarded(this.db, `update orders set status=$2, bill = case when bill is null then null else bill || '{"disputed":true}'::jsonb end
         where id=$1 and status='awaiting_confirmation'`, [orderId, to]);
@@ -734,6 +759,9 @@ export class OrdersService {
   async view(user: AuthUser, orderId: string) {
     const o = await this.mustSee(user, orderId);
     const actor = this.actorOf(user, o);
+    const unilateral = actor ? await this.db.one<any>(
+      'select order_id,reason,note,quote_total,status,created_at,answered_at,answer_reason '+
+      'from order_unilateral_closures where order_id=$1',[orderId]) : null;
     const performer = o.performer_id
       ? await this.db.one(
           `select u.id, u.name, u.rating::float as rating, u.rating_count, p.car, p.kind, p.lat, p.lng, p.location_at, (p.extras->>'waitRate')::int as wait_rate
@@ -813,7 +841,15 @@ export class OrdersService {
                   (select count(*)::int from bids where order_id=$1 and status='active') as offers`, [orderId])
       : null;
     return {
-      id: o.id, number: o.number, status: o.status as OrderStatus, statusLabel: statusLabels[o.status as OrderStatus],
+      id: o.id, number: o.number, status: o.status as OrderStatus,
+      statusLabel: unilateral?.status==='pending_client' ? 'Работа сдана · ожидаем клиента'
+        : unilateral?.status==='disputed' ? 'Работа сдана · разбирательство'
+        : statusLabels[o.status as OrderStatus],
+      unilateralClosure:unilateral ? {
+        status:unilateral.status,reason:unilateral.reason,note:unilateral.note,
+        quoteTotal:unilateral.quote_total,createdAt:unilateral.created_at,
+        answeredAt:unilateral.answered_at,answerReason:unilateral.answer_reason
+      } : null,
       service: o.service, isSos: o.is_sos, problem: o.problem, description: o.description,
       address: o.address, lat: o.lat, lng: o.lng, zoneId: o.zone_id, night: o.night, groupTrip: o.group_trip, tier: o.tier,
       brand: o.brand, model: o.model, year: o.year, vehicleId: o.vehicle_id, vehicle, estimate: o.estimate, paymentMethod: o.payment_method,
@@ -864,9 +900,11 @@ export class OrdersService {
       `select o.id, o.number, o.status, o.service, o.is_sos, o.problem, o.description, o.address, o.brand, o.estimate, o.work_amount, o.call_out_amount,
               o.client_fee_pct, o.discount_amount, o.payment_method, o.created_at, o.completed_at, o.consult_of,
               o.case_root_id, o.continuation_of, o.result, o.result_note, o.vehicle_id,
+              uc.status as unilateral_status,
               v.brand as v_brand, v.model as v_model, v.year as v_year, v.plate as v_plate,
               (select coalesce(company_name, name) from users where id=o.client_id) as client_name
-         from orders o left join vehicles v on v.id=o.vehicle_id where ${where} ${status ? 'and o.status = $2' : ''} order by o.created_at desc limit 100`,
+         from orders o left join vehicles v on v.id=o.vehicle_id
+         left join order_unilateral_closures uc on uc.order_id=o.id where ${where} ${status ? 'and o.status = $2' : ''} order by o.created_at desc limit 100`,
       status ? [user.id, status] : [user.id],
     );
     // The archive and the order detail must use the same final price formula.
@@ -936,7 +974,13 @@ export class OrdersService {
   /** Есть ли у исполнителя другая заявка в работе */
   async busyWith(q: Queryable, performerId: string, exceptOrderId: string | null) {
     return !!(await q.one(
-      `select 1 from orders where performer_id=$1 and status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (service='consult' and status='awaiting_confirmation') and ($2::uuid is null or id<>$2::uuid) limit 1`,
+      `select 1 from orders o where o.performer_id=$1
+       and o.status in ('accepted','en_route','arrived','working','awaiting_confirmation')
+       and not (o.status='awaiting_confirmation' and
+         (o.service='consult' or exists (
+           select 1 from order_unilateral_closures uc
+             where uc.order_id=o.id and uc.status in ('pending_client','disputed'))))
+       and ($2::uuid is null or o.id<>$2::uuid) limit 1`,
       [performerId, exceptOrderId]));
   }
 
