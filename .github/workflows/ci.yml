@@ -58,6 +58,10 @@ jobs:
         run: npm run typecheck
       - name: Сервер — тесты
         run: npm test
+      - name: Миграции main → кандидат, сохранность данных и повторный прогон
+        run: |
+          git fetch --no-tags --depth=1 origin main
+          npx tsx scripts/check-main-upgrade.mjs
       - name: Веб — сборка
         run: npm -w web run build
       - name: Сверка утверждённого дизайна и комплектации
