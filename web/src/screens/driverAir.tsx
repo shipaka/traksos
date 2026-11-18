@@ -422,7 +422,7 @@ export function DriverAir(){
   const rooms=useLoad<{rooms:AirRoom[]}>(()=>access.data?.enabled?get('/api/community/rooms'):
     Promise.resolve({rooms:[]}),[me?.id,access.data?.enabled]);
   const [roomId,setRoomId]=useState<string|null>(null);
-  const [view,setView]=useState<'rooms'|'voice'|'offers'|'direct'|'profile'|'help'|'notifications'>('rooms');
+  const [view,setView]=useState<'rooms'|'voice'|'ai'|'offers'|'direct'|'profile'|'help'|'notifications'>('rooms');
   const [roomPane,setRoomPane]=useState<'chat'|'road'>('chat');
   const [sending,setSending]=useState(false);
   const {run}=useAction();
@@ -493,6 +493,7 @@ export function DriverAir(){
     <nav className="air-tabs" aria-label="Разделы Эфира">
       <button type="button" aria-current={view==='rooms'?'page':undefined} onClick={()=>setView('rooms')}>Эфир и города</button>
       <button type="button" aria-current={view==='voice'?'page':undefined} onClick={()=>setView('voice')}>Голосовой эфир · В разработке</button>
+      <button type="button" aria-current={view==='ai'?'page':undefined} onClick={()=>setView('ai')}>ИИ-попутчик · В разработке</button>
       <button type="button" aria-current={view==='offers'?'page':undefined} onClick={()=>setView('offers')}>Предложения партнёров</button>
       <button type="button" aria-current={view==='direct'?'page':undefined} onClick={()=>setView('direct')}>Личные чаты</button>
       <button type="button" aria-current={view==='profile'?'page':undefined} onClick={()=>setView('profile')}>Мой позывной</button>
@@ -507,6 +508,14 @@ export function DriverAir(){
       <p>Планируем голосовые комнаты для водителей. Сейчас доступны текстовые чаты, дорожные сообщения и личные диалоги.</p>
       <p className="note">Микрофон не включается, аудио не передаётся и записи не создаются. Подключение к голосовой комнате пока недоступно.</p>
       <button type="button" className="btn ghost" onClick={()=>setView('rooms')}>Вернуться в текстовый Эфир</button>
+    </section>}
+    {view==='ai'&&<section className="card stack" aria-label="ИИ-помощник Эфира в разработке">
+      <span className="pill">В разработке</span>
+      <h2>ТраксБот · ИИ-попутчик</h2>
+      <p>Планируем помощника, которого можно будет позвать в водительском чате по обращению @ТраксБот. Он сможет объяснить диагностические коды, предложить безопасные первые проверки, подсказать, как составить заявку, и помочь найти нужную категорию специалистов TrackSOS.</p>
+      <p className="note">Бот будет отвечать только на явное обращение, обозначать себя как ИИ и не публиковать рекламу под видом совета. Водительские личные чаты, точные координаты и данные заявок не будут автоматически передаваться боту.</p>
+      <p className="note">Пока бот не подключён: он не читает сообщения, не формирует ответы и не запускает действия. Технические подсказки не заменяют осмотр специалиста, особенно при неисправностях тормозной системы.</p>
+      <button type="button" className="btn ghost" onClick={()=>setView('rooms')}>К текстовым чатам</button>
     </section>}
     {view==='offers'&&<PartnerOffers mode="reader"/>}
     {view==='direct'&&<DirectMessages/>}
