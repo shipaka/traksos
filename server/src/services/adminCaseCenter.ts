@@ -100,7 +100,7 @@ export class AdminCaseCenter {
       'where b.case_root_id=$1 order by b.created_at,b.number'
     ].join(' '),[rootId]);
     const orderIds=stages.map(s=>s.id),bookingIds=bookings.map(b=>b.id);
-    const [events,payments,moderation,notes,chat,vehicleHistory,registry,ordinals]=await Promise.all([
+    const [events,payments,payouts,moderation,notes,chat,vehicleHistory,registry,ordinals]=await Promise.all([
       this.db.query<any>(
         'select e.order_id,e.actor_id,e.type,e.data,e.created_at from order_events e '+
         'where e.order_id=any($1::uuid[]) order by e.created_at,e.id limit 600',[orderIds]),
@@ -108,6 +108,10 @@ export class AdminCaseCenter {
         'select p.id,p.order_id,p.kind,p.method,p.amount,p.client_fee,p.total,p.status,'+
         'p.refunded_amount,p.created_at from payments p where p.order_id=any($1::uuid[]) '+
         'order by p.created_at,p.id',[orderIds]),
+      this.db.query<any>(
+        'select po.id,po.order_id,po.amount,po.commission,po.status,po.created_at,po.paid_at '+
+        'from payouts po where po.order_id=any($1::uuid[]) order by po.created_at,po.id',
+        [orderIds]),
       this.db.query<any>(
         'select id,number,kind,status,title,decision,decision_note,created_at,decided_at,'+
         'order_id,booking_id from mod_cases where order_id=any($1::uuid[]) '+
@@ -147,7 +151,7 @@ export class AdminCaseCenter {
       multi,
       stages:stages.map((s,i)=>({...s,stage_no:stageNo.get('order:'+s.id)??i+1,recorded_items:recordedStageLines(s,events)})),
       bookings:bookings.map((b,i)=>({...b,stage_no:stageNo.get('booking:'+b.id)??stages.length+i+1})),
-      events,payments,moderation,notes,chat,vehicle_history:vehicleHistory,
+      events,payments,payouts,moderation,notes,chat,vehicle_history:vehicleHistory,
       document_status:'Итоговый счёт требует подтверждённых построчных позиций и первичных документов'
     };
   }
@@ -169,6 +173,16 @@ export class AdminCaseCenter {
       for(const line of lines)table.push(['Операционная детализация, не чек',detail.case_number||'',
         String(stage.stage_no),String(stage.number),stage.status,line.description,String(line.amount),
         line.source,stage.recorded_items?.workVerified?'Проверено с суммой работ':'Требует сверки']);
+    }
+    for(const payout of detail.payouts){
+      const stage=detail.stages.find((s:any)=>s.id===payout.order_id);
+      if(!stage)continue;
+      if(payout.amount!=null)table.push(['Реестр выплат (не клиентский счёт)',detail.case_number||'',
+        String(stage.stage_no),String(stage.number),payout.status,
+        'Сумма выплаты исполнителю',String(payout.amount),'payouts.amount','Факт выплаты проверять по статусу']);
+      if(payout.commission!=null)table.push(['Реестр комиссий (не налоговая база)',detail.case_number||'',
+        String(stage.stage_no),String(stage.number),payout.status,
+        'Удержанная комиссия',String(payout.commission),'payouts.commission','Требуется бухгалтерская сверка']);
     }
     for(const b of detail.bookings){
       table.push(['СТО (свод, не первичный документ)',detail.case_number||'',String(b.stage_no),
