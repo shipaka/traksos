@@ -156,3 +156,14 @@ test('operational CSV separates actual payout and platform commission from clien
   assert.equal(audit[0][1],'root-paid');
   assert.match(exported.notice,/Не является/);
 });
+
+
+test('a journal note does not incorrectly label an unchanged case as moderated',async()=>{
+  let sql='';
+  const db:any={query:async(q:string)=>{sql=q;return [];}};
+  await new AdminCaseCenter(db).list('','moderated');
+  assert.match(sql,/from mod_cases/);
+  assert.match(sql,/order\.resolve/);
+  assert.match(sql,/order\.discount/);
+  assert.doesNotMatch(sql,/admin\.case_note/);
+});
