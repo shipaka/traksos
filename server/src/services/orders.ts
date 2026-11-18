@@ -896,7 +896,9 @@ export class OrdersService {
       createdAt: o.created_at, acceptedAt: o.accepted_at, arrivedAt: o.arrived_at, completedAt: o.completed_at,
       performer, client, events,
       you: actor ?? 'candidate',
-      actions: actor ? canDo(o.status, actor === 'admin' ? 'admin' : actor) : [],
+      actions: unilateral && ['pending_client','disputed'].includes(unilateral.status)
+        ? (actor==='client' && unilateral.status==='pending_client' ? ['confirm_amount'] : [])
+        : actor ? canDo(o.status, actor === 'admin' ? 'admin' : actor) : [],
     };
   }
 
