@@ -5,6 +5,8 @@ export interface SmsProvider {
   /** true — код можно показать в ответе (только разработка) */
   exposesCode: boolean;
   send(phone: string, text: string): Promise<void>;
+  /** Inbound Flash Call: return only the 4 caller-ID digits. The auth layer stores a keyed hash. */
+  verificationCall?(phone: string, ip: string): Promise<string>;
 }
 
 export class LogSms implements SmsProvider {
@@ -14,6 +16,14 @@ export class LogSms implements SmsProvider {
   async send(phone: string, text: string) {
     this.sent.push({ phone, text });
     console.log(`[sms] ${phone}: ${text}`);
+  }
+  /** Local-only simulation, never used by the real SMS.ru provider. */
+  async verificationCall(phone: string, _ip: string) {
+    const { newCode } = await import('../util.ts');
+    const code = newCode();
+    this.sent.push({ phone, text: '[local Flash Call simulation] ' + code });
+    console.log('[call] local simulation: ' + code);
+    return code;
   }
 }
 
@@ -30,6 +40,34 @@ export class SmsRu implements SmsProvider {
   name = 'smsru';
   exposesCode = false;
   constructor(private apiId: string) {}
+  /**
+   * SMS.ru /code/call: provider calls the CUSTOMER. Never use /callcheck/add
+   * (the reverse direction), and never expose the returned code to a browser.
+   * https://sms.ru/docs/api/api_group_call/code_call
+   */
+  async verificationCall(phone: string, ip: string): Promise<string> {
+    if (!this.apiId) throw new Error('SMSRU_API_ID не задан');
+    const body = new URLSearchParams({
+      api_id: this.apiId, phone: phone.replace('+',''),
+      // Provider requires client IP; -1 is documented for internal or manual calls.
+      ip: ip || '-1',
+    });
+    const response = await fetch('https://sms.ru/code/call', {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded; charset=utf-8' },
+      body, signal: AbortSignal.timeout(15_000),
+    });
+    const result: unknown = await response.json().catch(() => null);
+    const data = result && typeof result === 'object' ? result as Record<string, unknown> : null;
+    // An explicit provider refusal is safe to retry after correcting the cause.
+    if (data?.status && data.status !== 'OK')
+      throw new SmsRejectedError('SMS.ru отклонил исходящий проверочный звонок');
+    // Unknown status/malformed reply can mean the call was already placed:
+    // preserve auth cooldown rather than charging twice.
+    if (!response.ok || data?.status !== 'OK' || typeof data.code !== 'string' || !/^\\d{4}$/.test(data.code))
+      throw new Error('Не удалось подтвердить статус Flash Call от SMS.ru');
+    return data.code;
+  }
   async send(phone: string, text: string) {
     if (!this.apiId) throw new Error('SMSRU_API_ID не задан');
     const to = phone.replace('+', '');
