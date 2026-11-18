@@ -1538,7 +1538,11 @@ export function bearer(req: http.IncomingMessage) {
   const h = req.headers.authorization;
   if (h?.startsWith('Bearer ')) return h.slice(7);
   const u = new URL(req.url ?? '/', 'http://x');
-  return u.searchParams.get('token');
+  // Never authenticate normal HTTP/API requests through URL query strings.
+  // A leaked URL is often retained in browser history, proxies and referrers.
+  // The legacy /ws?token= exception exists only for already installed APKs
+  // and must be retired after the migration gate in issue #115.
+  return u.pathname === '/ws' ? u.searchParams.get('token') : null;
 }
 
 function clientIp(req: http.IncomingMessage) {
