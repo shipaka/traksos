@@ -1051,6 +1051,9 @@ export function createApp(d: Deps) {
     const b = parse(z.object({ kind: z.enum(['not_done', 'refuse', 'client_refuses']), reason: z.string().max(500).optional() }), c.body);
     const o = await orders.mustSee(c.user, c.params.id);
     const who = orders.actorOf(c.user, o);
+    if (await d.db.one(
+      "select 1 from order_unilateral_closures where order_id=$1 and status in ('pending_client','disputed')",[o.id]))
+      throw new HttpError(409,'use_emergency_response','Этот спор уже в аварийном порядке: ответьте через подтверждение или модерацию.');
     if (who !== 'client' && who !== 'performer') throw forbidden('Сообщить о неоплате могут участники заявки');
     if ((who === 'performer') !== (b.kind === 'client_refuses')) throw bad('bad_kind', 'Не тот вариант для вашей роли');
     if (!['arrived', 'working', 'awaiting_confirmation'].includes(o.status)) throw new HttpError(409, 'bad_status', 'Это решается на месте, пока сумма не подтверждена');
