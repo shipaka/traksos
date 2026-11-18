@@ -12,14 +12,17 @@ type LiveOrder = {
   events?: { at: string; type: string }[];
 };
 type Risk = 'high' | 'watch' | 'normal';
-const openStatuses = new Set(['searching','accepted','en_route','arrived','working','awaiting_confirmation']);
+const openStatuses = new Set(['awaiting_owner','searching','accepted','en_route','arrived','working','awaiting_confirmation']);
 const ageMinutes = (time: string | undefined, now: number) => time ? Math.max(0, Math.floor((now - new Date(time).getTime()) / 60000)) : 0;
 function assess(o: LiveOrder, now: number): {level: Risk; note: string} {
   const age = ageMinutes(o.created_at, now);
-  const last = o.events?.length ? o.events[o.events.length - 1]?.at : undefined;
+  const last = o.events?.length ? o.events[0]?.at : undefined;
   const silence = ageMinutes(last || o.created_at, now);
   if (o.status === 'searching' && age >= (o.is_sos ? 3 : 10)) {
     return { level: 'high', note: 'Долгий поиск исполнителя' };
+  }
+  if (o.status === 'awaiting_owner' && age >= 15) {
+    return { level: 'watch', note: 'Ожидает решения владельца автопарка' };
   }
   if (o.status === 'accepted' && silence >= 10) {
     return { level: 'watch', note: 'После принятия нет новых событий' };
@@ -70,13 +73,13 @@ export function DispatchConsole() {
   return <div className="dispatch-console">
     <section className="dispatch-top" aria-label="Текущее состояние диспетчерской">
       <div className="dispatch-heading"><div><span className="dispatch-eyebrow">ОПЕРАТИВНЫЙ МОНИТОРИНГ · СПБ И ЛО</span>
-        <h3>Контроль всех вызовов</h3><p>Только реальные заявки сервера. Приоритет — SOS, задержки и обращения без ответственного.</p></div>
+        <h3>Контроль активных вызовов</h3><p>Только реальные заявки сервера (до 100 в ленте). Приоритет — SOS, задержки и обращения без ответственного.</p></div>
         <div className="dispatch-refresh"><span>Время просмотра: {updatedAt} МСК</span>
           <button className="btn ghost small" type="button" onClick={() => { setNow(Date.now()); live.reload(); demand.reload(); }}>Обновить сейчас</button>
           <small>Автообновление каждые 30 секунд</small></div>
       </div>
       <div className="dispatch-kpis">
-        <Indicator label="Активных заявок" number={rows.length} note="По данным сервера" />
+        <Indicator label="В оперативной ленте" number={rows.length} note="До 100 активных" />
         <Indicator label="Требуют внимания" number={high} note="Длительный поиск" variant={high ? 'critical' : ''}/>
         <Indicator label="Проверить вручную" number={watch} note="Нет новых этапов" variant={watch ? 'attention' : ''}/>
         <Indicator label="SOS в работе" number={rows.filter(x=>x.order.is_sos).length} note="Все открытые SOS"/>
