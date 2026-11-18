@@ -38,7 +38,8 @@ export class OrderContinuationService {
        or (r.target_kind='master' and o.consult_of=r.source_order_id and o.service in ('electric','diag','air','autonomy','tyre'))
        order by o.created_at desc limit 1) as next_order_id,
      (select id from service_bookings b where r.target_kind='sto'
-       and b.from_order_id=r.source_order_id order by b.created_at desc limit 1) as next_booking_id,
+       and (b.continuation_recommendation_id=r.id or b.from_order_id=r.source_order_id)
+       order by b.created_at desc limit 1) as next_booking_id,
      (select id from ecu_handoffs h where r.target_kind='ecu'
        and h.source_order_id=r.source_order_id order by h.created_at desc limit 1) as next_ecu_handoff_id
     from order_continuation_recommendations r
