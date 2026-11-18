@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { get, post, put, del, rub, fmtTime, fmtPhone } from '../api.ts';
+import { get, post, postOrder, put, patch, del, rub, fmtTime, fmtPhone } from '../api.ts';
 import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF, ON_SITE, seriesHint } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFields, LiveStrip, type VehicleValue } from '../ui.tsx';
 import { BookingRows, BookingList, isOpenBooking } from './base.tsx';
@@ -263,7 +263,7 @@ export function Consult() {
   const c = pricing.consult ?? { price: 70_000, backDiscount: 20_000, backHours: 48 };
 
   async function submit() {
-    const r = await run(() => post('/api/orders', {
+    const r = await run(() => postOrder( {
       service: 'consult', problem: sym?.id, description: description.trim() || undefined,
       vehicleId: vehicleId || undefined, ...carBody(vehicleId, car), paymentMethod: 'cash',
     }));
@@ -373,10 +373,13 @@ export function NewOrder({ service }: { service: string }) {
   const sos = SYMPTOMS.find((p) => p.id === params.get('sos'));
   const sym = sos ?? SYMPTOMS.find((p) => p.id === params.get('p'));
   const fromConsult = params.get('from');
+  const preferredPerformerId = params.get('preferred') ?? '';
   const { me } = useMe();
   const { busy, run } = useAction();
   const pricing = useLoad(() => get('/api/pricing'), []);
   const vehicles = useLoad(() => get('/api/vehicles'), []);
+  const pastPerformers = useLoad(() => preferredPerformerId ? get('/api/my-performers') : Promise.resolve([]), [preferredPerformerId]);
+  const selectedPerformer = (pastPerformers.data ?? []).find((p:any) => p.id === preferredPerformerId);
   const consult = useLoad(() => (fromConsult ? get(`/api/orders/${fromConsult}`) : Promise.resolve(null)), [fromConsult]);
   const [agree, setAgree] = useState(false);
 
@@ -393,6 +396,11 @@ export function NewOrder({ service }: { service: string }) {
   const [description, setDescription] = useState(sym ? sym.name : '');
   const [prefill] = useState<{ address?: string; destination?: string }>(() => { try { const v = JSON.parse(sessionStorage.getItem('traksos.prefill') ?? '{}'); sessionStorage.removeItem('traksos.prefill'); return v; } catch { return {}; } });
   const [address, setAddress] = useState(prefill.address ?? '');
+  const [roadside, setRoadside] = useState(false);
+  const [roadName, setRoadName] = useState('');
+  const [roadKm, setRoadKm] = useState('');
+  const [roadDirection, setRoadDirection] = useState('');
+  const [roadSide, setRoadSide] = useState<'right'|'left'|'unknown'>('unknown');
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [geoState, setGeoState] = useState<'idle' | 'wait' | 'ok' | 'fail'>('idle');
   const [method, setMethod] = useState<'cash' | 'online' | 'invoice'>('cash');
@@ -457,14 +465,23 @@ export function NewOrder({ service }: { service: string }) {
   const methods = pricing.data?.payments;
 
   async function submit() {
-    const r = await run(() => post('/api/orders', {
+    const r = await run(() => postOrder( {
       service, isSos: !!sos, problem: sos?.id, description: description || undefined, address: address || undefined,
       lat: geo?.lat, lng: geo?.lng, regionId: regionId || undefined, zoneId: zoneId || 'phone',
       tier: service === 'tow' ? undefined : tier, vehicleId: vehicleId || undefined,
       ...carBody(vehicleId, car), groupTrip: groupAllowed && group, night: night ?? undefined, paymentMethod: method,
       ...(isTow ? { destination: destination || undefined, cargo, loaded, driverOnSite } : {}),
       fromConsult: fromConsult || undefined,
-      site: isTow || !Object.keys(site).length ? undefined : { ...site, meet: site.meet || undefined, time: site.time || undefined },
+      preferredPerformerId: preferredPerformerId || undefined,
+      site: (!isTow && Object.keys(site).length) || roadside ? {
+        ...(!isTow ? site : {}),
+        ...(!isTow ? { meet: site.meet || undefined, time: site.time || undefined } : {}),
+        ...(roadside ? { road: {
+          highway: roadName.trim() || undefined,
+          km: roadKm.trim() && Number.isFinite(Number(roadKm.replace(',', '.'))) ? Number(roadKm.replace(',', '.')) : undefined,
+          direction: roadDirection.trim() || undefined, side: roadSide,
+        } } : {}),
+      } : undefined,
     }));
     if (!r) return;
     if (r.confirmationUrl) location.href = r.confirmationUrl;
@@ -503,6 +520,15 @@ export function NewOrder({ service }: { service: string }) {
       </div>
       <SelfOrderWarning me={me} />
       <DriverRules />
+      {preferredPerformerId && <div className="card stack">
+        <b>Повторный вызов знакомого исполнителя</b>
+        <span className="note">{selectedPerformer
+          ? 'Первым пригласим '+(selectedPerformer.name??'вашего специалиста')+'. Если он занят, не подходит или откажется — общий поиск продолжится автоматически.'
+          : pastPerformers.data
+            ? 'Специалист не найден в вашей истории. Вернитесь к списку своих мастеров или вызовите без предпочтения.'
+            : 'Проверяем историю сотрудничества…'}</span>
+        <a className="btn ghost small" href={'#/new/'+service}>Вызвать без предпочтения</a>
+      </div>}
       {!isTow && !sos && (
         <div className="scroll-x" role="tablist" aria-label="Какой мастер нужен">
           {(['electric', 'air', 'autonomy', 'tyre', 'diag'] as const).map((k) => (
@@ -549,6 +575,25 @@ export function NewOrder({ service }: { service: string }) {
           {geoState === 'ok' ? '✓ GPS-точка указана. Проверьте, что это место машины, а не ваше текущее положение' : geoState === 'wait' ? 'Определяю место…' : geoState === 'fail'
             ? <>Не удалось определить место — напишите адрес. <button type="button" className="chip" style={{ minHeight: 30 }} onClick={locate}>Ещё раз</button></> : null}
         </span>
+        <button type="button" className="opt" aria-pressed={roadside} onClick={() => setRoadside(!roadside)}>
+          <b>{roadside ? '✓ ' : ''}Машина на трассе — указать километр и направление</b>
+          <small>Необязательно, но очень помогает мастеру и эвакуаторщику найти правильную сторону дороги.</small>
+        </button>
+        {roadside && <div className="card stack" style={{gap:8}}>
+          <span className="label">Трасса и дорожный ориентир (по желанию)</span>
+          <div className="grid2">
+            <input className="field" value={roadName} maxLength={80} onChange={e=>setRoadName(e.target.value)} placeholder="Трасса: М-10, А-181, КАД…" />
+            <input className="field" value={roadKm} type="number" min="0" max="15000" step="0.1" onChange={e=>setRoadKm(e.target.value)} placeholder="Километр (например, 87,5)" />
+          </div>
+          <input className="field" value={roadDirection} maxLength={100} onChange={e=>setRoadDirection(e.target.value)}
+            placeholder="В сторону чего: СПб / Москвы / Выборга…" />
+          <span className="label">С какой стороны по ходу движения стоит машина</span>
+          <div className="grid3">
+            {([['unknown','Не знаю'],['right','Справа'],['left','Слева']] as const).map(([id,label])=>
+              <button key={id} type="button" className="seg" aria-pressed={roadSide===id} onClick={()=>setRoadSide(id)}>{label}</button>)}
+          </div>
+          <span className="note">Номер километра и направление не заменяют GPS. Не угадывайте их: неправильная сторона трассы может сильно увеличить время подъезда.</span>
+        </div>}
         {!isConsult && <>
           <span className="label">Регион местонахождения машины — выберите вручную</span>
           <Chips value={regionId} onChange={(value) => {
@@ -779,7 +824,7 @@ function MyPerformers({ black }: { black: boolean }) {
                 <button className="chip" disabled={busy} aria-pressed={p.pref === 'fav'} onClick={() => set(p.id, p.pref === 'fav' ? null : 'fav', p.pref === 'fav' ? 'Убрано из избранного' : 'В избранном — предлагаем первым')}>{p.pref === 'fav' ? '★ В избранном' : '☆ В избранное'}</button>
                 <button className="chip" disabled={busy} onClick={() => set(p.id, 'hide', 'Больше не предлагаем — он в чёрном списке')}>Не предлагать</button>
               </div>
-              <button className="btn small" onClick={() => go(`new/${p.kind === 'tow' ? 'tow' : p.last_service && p.last_service !== 'consult' ? p.last_service : 'electric'}`)}>Вызвать снова</button>
+              <button className="btn small" disabled={!p.jobs} onClick={() => go(`new/${p.kind === 'tow' ? 'tow' : p.last_service && p.last_service !== 'consult' ? p.last_service : 'electric'}?preferred=${encodeURIComponent(p.id)}`)}>{p.jobs ? 'Пригласить снова' : 'Нет завершённых выездов'}</button>
             </>
           )}
         </div>
@@ -859,6 +904,7 @@ export function Garage() {
           {v.trailer_plate && <span className="note">Прицеп {v.trailer_plate}</span>}
           {v.fixed_at && <span className="pill good" style={{ alignSelf: 'flex-start' }}>уточнено мастером · {fmtTime(v.fixed_at)}</span>}
           {seriesHint(v.brand, v.year) && <span className="note" style={{ color: 'var(--accent)' }}>{seriesHint(v.brand, v.year)}</span>}
+          <VehicleExtendedDetails vehicle={v} isDriver={isDriver} onSaved={()=>list.reload()} />
           <VehicleServiceApplication vehicleId={v.id} onCreated={() => setServiceHistoryVersion(v => v + 1)} />
           <VehicleServiceHistory id={v.id} isDriver={isDriver} refreshVersion={serviceHistoryVersion} />
           <VehicleHistory id={v.id} />
@@ -898,6 +944,62 @@ export function Garage() {
       )}
     </main>
   );
+}
+
+/** More accurate spare-parts matching without making SOS registration onerous. */
+function VehicleExtendedDetails({vehicle:v,isDriver,onSaved}:{
+  vehicle:any;isDriver:boolean;onSaved:()=>void
+}) {
+  const [open,setOpen]=useState(false);
+  const [vin,setVin]=useState(v.vin??'');
+  const [engine,setEngine]=useState(v.engine??'');
+  const [notes,setNotes]=useState(v.configuration_notes??'');
+  const {busy,run}=useAction();
+  const fields=[v.vin,v.engine,v.configuration_notes].filter((x:any)=>!!String(x??'').trim()).length;
+  const validVin=!vin.trim()||/^[A-HJ-NPR-Z0-9]{17}$/.test(vin.trim().toUpperCase());
+  return <div className="stack" style={{gap:7}}>
+    <button type="button" className="linkrow" onClick={()=>setOpen(x=>!x)}
+      aria-expanded={open} aria-label="Дополнительные данные машины">
+      <span><b>Характеристики для точного подбора запчастей</b>
+        <small>{fields===3?'Заполнены VIN, двигатель и особенности комплектации'
+          : 'Заполнено '+fields+' из 3. Необязательно, но желательно уточнить.'}</small>
+      </span><span aria-hidden="true">{open?'˄':'˅'}</span>
+    </button>
+    {open && <div className="card stack" style={{gap:8}}>
+      <span className="note">Уточнение VIN, двигателя и заменённых агрегатов помогает избежать ошибочного подбора. SOS и вызов мастера доступны и без этих данных.</span>
+      {isDriver ? <div className="banner warn">
+        <b>Ограниченный доступ</b>
+        <span className="note">Вы можете посмотреть характеристики закреплённой машины, но изменяет их только владелец автопарка.</span>
+        <span className="note">VIN: {v.vin??'не заполнен'} · Двигатель: {v.engine??'не заполнен'}</span>
+        {v.configuration_notes&&<span className="note">{v.configuration_notes}</span>}
+      </div> : <>
+        <label className="stack" style={{gap:3}}>
+          <span className="label">VIN (необязательно)</span>
+          <input className="field" value={vin} maxLength={17} autoCapitalize="characters"
+            onChange={e=>setVin(e.target.value.toUpperCase())}
+            placeholder="17 символов — можно оставить пустым"/>
+          {!validVin&&<span role="alert" className="note">Проверьте VIN: 17 символов, буквы I, O, Q не используются</span>}
+        </label>
+        <label className="stack" style={{gap:3}}>
+          <span className="label">Фактический двигатель</span>
+          <input className="field" maxLength={80} value={engine} onChange={e=>setEngine(e.target.value)}
+            placeholder="Например, DCI 11 / D13 / двигатель заменён"/>
+        </label>
+        <label className="stack" style={{gap:3}}>
+          <span className="label">Комплектация и замены</span>
+          <textarea className="field" maxLength={500} value={notes} onChange={e=>setNotes(e.target.value)}
+            placeholder="Уточнения по коробке, мостам, установленным агрегатам и изменённым деталям"/>
+        </label>
+        <button type="button" className="btn small" disabled={busy||!validVin}
+          onClick={async()=>{
+            const result=await run(()=>patch('/api/vehicles/'+v.id+'/details',
+              {vin:vin.trim()||null,engine:engine.trim()||null,configurationNotes:notes.trim()||null}),
+              'Характеристики обновлены');
+            if(result){onSaved();setOpen(false);}
+          }}>Сохранить характеристики</button>
+      </>}
+    </div>}
+  </div>;
 }
 
 /** История машины: что и когда делали, комментарий мастера. Свёрнута, раскрывается по нажатию. */

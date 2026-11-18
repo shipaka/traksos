@@ -11,7 +11,7 @@ const store = {
 let token: string | null = store.get('traksos.token');
 export const getToken = () => token;
 export function setToken(t: string | null) {
-  if (token !== t) { disconnectWs(); store.set('traksos.offlineIdentity', null); }
+  if (token !== t) { disconnectWs(); store.set('traksos.offlineIdentity', null); try { sessionStorage.removeItem('traksos.pendingOrder'); } catch { /* unavailable */ } }
   token = t;
   store.set('traksos.token', t);
 }
@@ -20,7 +20,7 @@ export class ApiError extends Error {
   constructor(public status: number, public code: string, message: string, public data?: any) { super(message); }
 }
 
-export async function api<T = any>(method: string, path: string, body?: unknown): Promise<T> {
+export async function api<T = any>(method: string, path: string, body?: unknown, options?: { idempotencyKey?: string }): Promise<T> {
   // The sandbox is the exact same frontend served from another origin.
   // Fail closed if a bundle was accidentally built with a remote production API.
   if (sessionStorage.getItem('traksos.sandboxMode') === '1' &&
@@ -35,7 +35,7 @@ export async function api<T = any>(method: string, path: string, body?: unknown)
     try {
       r = await fetch(API_URL + path, {
         method,
-        headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
+        headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}), ...(options?.idempotencyKey ? { 'idempotency-key': options.idempotencyKey } : {}) },
         body: body === undefined ? undefined : JSON.stringify(body),
         cache: 'no-store',
         signal: timeout.signal,
@@ -55,6 +55,56 @@ export async function api<T = any>(method: string, path: string, body?: unknown)
   }
   if (!r.ok) throw new ApiError(r.status, j?.error ?? 'error', j?.message ?? 'Ошибка', { ...(j?.data ?? {}), requestId: j?.requestId ?? r.headers.get('x-request-id') });
   return j as T;
+}
+
+
+/**
+ * Explicit retry for the *same* new order after an ambiguous mobile response.
+ * No automatic POST replay. Server verifies key + canonical request payload,
+ * and returns the existing order instead of creating another bank hold.
+ * Only a hash and random key (no address, vehicle or description) are persisted.
+ */
+type PendingOrderKey = { fingerprint: string; key: string; createdAt: number };
+let fallbackPending: PendingOrderKey | null = null;
+
+async function fingerprintOrder(body: unknown): Promise<string> {
+  const message = new TextEncoder().encode(JSON.stringify(body));
+  if (!globalThis.crypto?.subtle) return 'memory:' + JSON.stringify(body);
+  const digest = await globalThis.crypto.subtle.digest('SHA-256', message);
+  return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
+}
+function newOrderRequestKey() {
+  const bytes = new Uint8Array(16);
+  globalThis.crypto.getRandomValues(bytes);
+  return 'web-' + Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+}
+export async function postOrder<T = any>(body: unknown): Promise<T> {
+  const fingerprint = await fingerprintOrder(body);
+  const now = Date.now();
+  let saved = fallbackPending;
+  if (!fingerprint.startsWith('memory:')) {
+    try {
+      const item = sessionStorage.getItem('traksos.pendingOrder');
+      if (item) saved = JSON.parse(item) as PendingOrderKey;
+    } catch { /* private storage: retain the in-memory request identity */ }
+  }
+  const same = saved && saved.fingerprint === fingerprint &&
+    now - saved.createdAt >= 0 && now - saved.createdAt < 24 * 60 * 60 * 1000;
+  const pending: PendingOrderKey = same ? saved : { fingerprint, key: newOrderRequestKey(), createdAt: now };
+  fallbackPending = pending;
+  if (!fingerprint.startsWith('memory:')) {
+    try { sessionStorage.setItem('traksos.pendingOrder', JSON.stringify(pending)); } catch { /* private mode */ }
+  }
+  // A timeout can mean the server already created the order. Keep the key on
+  // *every* error until the user retries this exact unchanged form.
+  const result = await api<T>('POST', '/api/orders', body, { idempotencyKey: pending.key });
+  if (fallbackPending?.key === pending.key) fallbackPending = null;
+  try {
+    const item = sessionStorage.getItem('traksos.pendingOrder');
+    if (item && (JSON.parse(item) as PendingOrderKey).key === pending.key)
+      sessionStorage.removeItem('traksos.pendingOrder');
+  } catch { /* private mode */ }
+  return result;
 }
 
 export const get = <T = any>(p: string) => api<T>('GET', p);

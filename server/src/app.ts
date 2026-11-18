@@ -18,6 +18,7 @@ import { SANDBOX_HANDOFF_PROTOCOL, assessSandboxPeerHealth } from './services/sa
 import { ReferralService } from './services/referral.ts';
 import { ProfilesService } from './services/profiles.ts';
 import { OrdersService } from './services/orders.ts';
+import { OrderSlaService } from './services/orderSla.ts';
 import { ChatService } from './services/chat.ts';
 import { ReviewsService, REVIEW_TAGS } from './services/reviews.ts';
 import { OffersService } from './services/offers.ts';
@@ -91,6 +92,7 @@ export function createApp(d: Deps) {
   const support = new SupportService(d.db, notifier, orders, now);
   const stats = new StatsService(d.db, now);
   const ops = new OpsService(d.db, now);
+  const orderSla = new OrderSlaService(d.db, orders, notifier, now);
   orders.ops = ops;
   const centers = new ServiceCenters(d.db, notifier, settings, support, now);
   const referral = new ReferralService(d.db, settings, notifier, now);
@@ -411,6 +413,15 @@ export function createApp(d: Deps) {
   r.get('/api/live', true, () => stats.live());
   r.get('/api/admin/stats', ['admin'], (c: AuthedCtx) => stats.overview(Math.min(365, Math.max(1, Number(c.query.get('days') ?? 30)))));
 
+  // Stalled stages are incidents, not automatic fault findings or financial charges.
+  r.get('/api/admin/order-sla', ['admin'], (c: AuthedCtx) =>
+    orderSla.report(Math.min(365,Math.max(1,Number(c.query.get('days') ?? 30)))));
+  r.put('/api/admin/order-sla/:id/review', ['admin'], (c: AuthedCtx) => {
+    const b = parse(z.object({ state:z.enum(['investigating','confirmed','excused']),
+      note:z.string().trim().min(10).max(1200) }),c.body);
+    return orderSla.review(c.user,c.params.id,b.state,b.note);
+  });
+
   // Operational demand analysis does not overwrite or hide any order.
   r.get('/api/admin/demand', ['admin'], (c: AuthedCtx) =>
     ops.demand(Math.min(365,Math.max(1,Number(c.query.get('days') ?? 7))),
@@ -465,6 +476,14 @@ export function createApp(d: Deps) {
     plate: z.string().max(15).optional(), trailerPlate: z.string().max(15).optional() });
   r.get('/api/vehicles', true, (c: AuthedCtx) => profiles.vehicles(c.user));
   r.post('/api/vehicles', true, (c: AuthedCtx) => profiles.addVehicle(c.user, parse(vehicleSchema, c.body)));
+  // These fields already exist in migration 032; never require them for SOS
+  // or mutate a customer's registered vehicle as a driver.
+  r.patch('/api/vehicles/:id/details', true, (c: AuthedCtx) =>
+    profiles.updateVehicleDetails(c.user,c.params.id,parse(z.object({
+      vin: z.string().trim().toUpperCase().regex(/^[A-HJ-NPR-Z0-9]{17}$/,'VIN — 17 символов без I, O и Q').nullable().optional(),
+      engine: z.string().trim().max(80).nullable().optional(),
+      configurationNotes: z.string().trim().max(500).nullable().optional(),
+    }).strict(),c.body)));
   r.get('/api/vehicles/:id/history', true, (c: AuthedCtx) => profiles.vehicleHistory(c.user, c.params.id));
   r.delete('/api/vehicles/:id', true, async (c: AuthedCtx) => (await profiles.removeVehicle(c.user, c.params.id), { ok: true }));
   r.post('/api/vehicles/:id/driver', true, (c: AuthedCtx) => profiles.assignDriver(c.user, c.params.id, parse(z.object({ phone: z.string().nullable() }), c.body).phone));
@@ -583,10 +602,14 @@ export function createApp(d: Deps) {
     groupTrip: z.boolean().optional(), night: z.boolean().optional(), paymentMethod: z.enum(['cash', 'online', 'invoice']).optional(),
     destination: z.string().max(300).optional(), cargo: z.enum(['tractor', 'semitrailer', 'coupling', 'truck12', 'bus', 'special']).optional(),
     loaded: z.enum(['empty', 'loaded', 'adr']).optional(), driverOnSite: z.boolean().optional(), fromConsult: z.string().uuid().optional(),
-    continueFrom: z.string().uuid().optional(),
+    continueFrom: z.string().uuid().optional(), preferredPerformerId: z.string().uuid().optional(),
     site: z.object({
       place: z.enum(['parking', 'yard', 'plant', 'road']).optional(), pass: z.enum(['none', 'onsite', 'ahead']).optional(),
       meet: z.string().max(60).optional(), state: z.enum(['free', 'loading', 'other_work']).optional(),
+      road: z.object({
+        highway: z.string().trim().max(80).optional(), km: z.number().min(0).max(15000).optional(),
+        direction: z.string().trim().max(100).optional(), side: z.enum(['right','left','unknown']).optional(),
+      }).optional(),
       when: z.enum(['now', 'today', 'tomorrow']).optional(), time: z.string().max(20).optional(),
     }).optional(),
   }), c.body), typeof c.headers['idempotency-key'] === 'string'
@@ -1384,7 +1407,7 @@ export function createApp(d: Deps) {
     }
   }
 
-  return { handle, hub, auth, settings, orders, payments, auction, documents, admin, support, developerReportDelivery, warranty, warrantyRemediation, warrantyRecourse, profiles, chat, reviews, offers, notifier, privacy, ops, router: r };
+  return { handle, hub, auth, settings, orders, payments, auction, documents, admin, support, developerReportDelivery, warranty, warrantyRemediation, warrantyRecourse, profiles, chat, reviews, offers, notifier, privacy, ops, orderSla, router: r };
 }
 
 export type App = ReturnType<typeof createApp>;

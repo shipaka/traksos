@@ -487,6 +487,11 @@ function SitePills({ site }: { site: any }) {
   const items = [
     site.place && PLACE[site.place], site.place === 'plant' && site.pass && PASS[site.pass], site.meet && `встретит: ${site.meet}`,
     site.state && STATE[site.state], site.when && WHEN[site.when] && `${WHEN[site.when]}${site.time ? ` к ${site.time}` : ''}`,
+    site.road?.highway && `трасса ${site.road.highway}`,
+    site.road?.km != null && `км ${site.road.km}`,
+    site.road?.direction && `направление: ${site.road.direction}`,
+    site.road?.side === 'right' && 'по ходу справа',
+    site.road?.side === 'left' && 'по ходу слева',
   ].filter(Boolean) as string[];
   if (!items.length) return <>—</>;
   return <span className="row" style={{ gap: 4 }}>{items.map((x) => <span key={x} className={`pill ${/погрузка|работы|заранее/.test(x) ? 'warn' : ''}`}>{x}</span>)}</span>;
