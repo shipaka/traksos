@@ -11,6 +11,7 @@ import { cancelStage, cancelSplit, pct } from '../domain/money.ts';
 import { slot } from '../domain/schedule.ts';
 import { rub } from '../util.ts';
 import type { AuctionService } from './auction.ts';
+import type { OrderContinuationService } from './orderContinuation.ts';
 const SERVICE_TITLE: Record<string, string> = { consult: 'Консультация', electric: 'Электрик', air: 'Пневматика', autonomy: 'Автономка', tyre: 'Шиномонтаж', diag: 'Диагност', ecu: 'Блоки управления', tow: 'Эвакуатор' };
 
 export interface CreateOrderInput {
@@ -47,6 +48,7 @@ export interface CreateOrderInput {
   parallelWith?: string;
   parallelConsent?: boolean;
   parallelCallOut?: number;
+  recommendationId?: string;
   preferredPerformerId?: string;
 }
 
@@ -74,6 +76,7 @@ export class OrdersService {
   ops: import('./ops.ts').OpsService | null = null;
   payments!: PaymentHooks;
   auction!: AuctionService;
+  continuations!: OrderContinuationService;
 
   constructor(private db: Db, private settings: SettingsService, private notifier: Notifier, private now: () => Date = () => new Date()) {}
 
@@ -110,6 +113,12 @@ export class OrdersService {
     await this.payments.assertMethodAllowed(method);
 
     const clientId = user.owner_id ?? user.id;
+    if(i.recommendationId){
+      // Advice is not a price acceptance: normal paid checkout follows.
+      const parentId=i.parallelWith??i.continueFrom??i.fromConsult;
+      if(!parentId)throw bad('recommendation_without_parent','Нужна исходная заявка');
+      await this.continuations.validateForOrder(user,i.recommendationId,parentId,i.service);
+    }
     // A second tow can be explicitly parallel, while normal continuations
     // remain sequential. Both have their own tariff, agreement and ledger.
     if (i.parallelWith && i.continueFrom)
