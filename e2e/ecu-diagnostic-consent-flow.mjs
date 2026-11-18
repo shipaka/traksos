@@ -26,6 +26,18 @@ const register=async(phone,accountType)=>{
     phone,code:code.devCode,accountType,password:'OnlySynthetic-Ecu2026!'
   });
 };
+// Existing CI flows may publish current legal offer versions first.
+// The synthetic accounts must explicitly consent, just like real clients.
+async function acceptRequiredOffers(account) {
+  const offers=await api('GET','/api/me/offers',undefined,account.token);
+  for(const offer of offers) {
+    if(offer.current?.id && !offer.accepted)
+      await api('POST','/api/offers/'+offer.current.id+'/accept',{},account.token);
+  }
+  const after=await api('GET','/api/me/offers',undefined,account.token);
+  if(after.some(o=>o.current?.id&&!o.accepted))
+    throw Error('Synthetic CI account did not consent to published legal terms');
+}
 const adminPhone='+79990000001';
 // Existing CI admin fixture already has roles; never request a new client role.
 const admin=await register(adminPhone);
@@ -43,6 +55,8 @@ try{
   const expert=await register('+79990000986','master');
   if(!client.user?.roles?.includes('client')||!expert.user?.roles?.includes('master'))
     throw Error('Synthetic identities have unexpected roles');
+  await acceptRequiredOffers(client);
+  await acceptRequiredOffers(expert);
   await api('PUT','/api/performer/profile',
     {kind:'ecu',name:'ЭБУ лаборатория для CI',specialties:['diag']},expert.token);
   await api('POST','/api/admin/performers/'+expert.user.id+'/verify',
