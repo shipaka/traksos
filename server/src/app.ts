@@ -19,6 +19,7 @@ import { ReferralService } from './services/referral.ts';
 import { ProfilesService } from './services/profiles.ts';
 import { OrdersService } from './services/orders.ts';
 import { EcuHandoffService } from './services/ecuHandoff.ts';
+import { OrderContinuationService } from './services/orderContinuation.ts';
 import { OrderSlaService } from './services/orderSla.ts';
 import { ChatService } from './services/chat.ts';
 import { ReviewsService, REVIEW_TAGS } from './services/reviews.ts';
@@ -79,6 +80,8 @@ export function createApp(d: Deps) {
   const profiles = new ProfilesService(d.db, settings, now);
   const orders = new OrdersService(d.db, settings, notifier, now);
   const ecuHandoffs = new EcuHandoffService(d.db, notifier, now);
+  const continuations = new OrderContinuationService(d.db, notifier, now);
+  orders.continuations = continuations;
   const payments = new PaymentsService(d.db, settings, d.payments, notifier, orders);
   orders.payments = payments;
   const auction = new AuctionService(d.db, settings, notifier, orders, now, d.verifiedRoadEta);
@@ -608,6 +611,19 @@ export function createApp(d: Deps) {
   r.post('/api/admin/ecu/stations/:id/verify', ['admin'], (c: AuthedCtx) =>
     ecuHandoffs.verifyStation(c.user,c.params.id,
       parse(z.object({approved:z.boolean()}),c.body).approved));
+  // Non-billable recommendation; owner controls new search and contract.
+  r.get('/api/orders/:id/continuations', true,
+    (c: AuthedCtx) => continuations.list(c.user,c.params.id));
+  r.post('/api/orders/:id/continuations', performerRoles, (c: AuthedCtx) => {
+    const b=parse(z.object({
+      target:z.enum(['tow','sto','master']),
+      summary:z.string().trim().min(12).max(1000),
+    }),c.body);
+    return continuations.propose(c.user,c.params.id,b.target,b.summary);
+  });
+  r.post('/api/orders/:id/continuations/:recommendationId/decision', true,
+    (c: AuthedCtx) => continuations.decide(c.user,c.params.id,
+      c.params.recommendationId,parse(z.object({approve:z.boolean()}),c.body).approve));
   r.post('/api/orders/:id/ecu-handoff', true, (c: AuthedCtx) =>
     ecuHandoffs.open(c.user,c.params.id,parse(z.object({
       summary:z.string().trim().min(10).max(1400),
@@ -653,6 +669,7 @@ export function createApp(d: Deps) {
     destination: z.string().max(300).optional(), cargo: z.enum(['tractor', 'semitrailer', 'coupling', 'truck12', 'bus', 'special']).optional(),
     loaded: z.enum(['empty', 'loaded', 'adr']).optional(), driverOnSite: z.boolean().optional(), fromConsult: z.string().uuid().optional(),
     continueFrom: z.string().uuid().optional(), parallelWith: z.string().uuid().optional(),
+     recommendationId: z.string().uuid().optional(),
     parallelConsent: z.boolean().optional(), parallelCallOut: money.optional(),
     preferredPerformerId: z.string().uuid().optional(),
     site: z.object({
