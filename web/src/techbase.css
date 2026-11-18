@@ -1,4 +1,4 @@
-/* Scoped TechBase styling; preserves the approved global TrackSOS canon. */
+/* Scoped TechBase styling; preserves the approved global TrakSOS canon. */
 .techbase-page{display:flex;flex-direction:column;gap:18px;padding-bottom:28px}
 .techbase-hero{position:relative;overflow:hidden;padding:32px 28px;border-radius:22px;color:#f7fbff;background:linear-gradient(120deg,#0a1933 2%,#17375d 62%,#0878a3 120%);box-shadow:0 16px 45px #081a3630}
 .techbase-hero:after{content:"";position:absolute;right:-65px;top:-70px;width:290px;height:290px;border-radius:50%;background:radial-gradient(circle,#24d6ee5b,transparent 66%);pointer-events:none}
