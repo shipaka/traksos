@@ -95,7 +95,7 @@ export class AdminCaseCenter {
     const bookings=await this.db.query<any>([
       'select b.id,b.number,b.need,b.status,b.when_day,b.when_time,b.arrival,b.works,',
       'b.created_at,b.updated_at,b.arrived_at,b.ready_at,b.closed_at,',
-      'b.amount,b.discount,b.commission,c.name as center_name',
+      'b.amount,b.discount,b.commission,b.center_id,c.name as center_name',
       'from service_bookings b join service_centers c on c.id=b.center_id',
       'where b.case_root_id=$1 order by b.created_at,b.number'
     ].join(' '),[rootId]);
