@@ -1070,6 +1070,12 @@ export class OrdersService {
           `select (select count(*)::int from order_dispatch where order_id=$1 and status in ('bidding','ringing','queued')) as candidates,
                   (select count(*)::int from bids where order_id=$1 and status='active') as offers`, [orderId])
       : null;
+    const ecuDiagnosticQuote=o.service==='ecu' && o.status!=='searching' && actor!=='candidate'
+      ? await this.db.one<{price:number;scope:string;quote_version:Date}>(
+          "select price,ecu_diagnostic_scope as scope,updated_at as quote_version "+
+          "from bids where order_id=$1 and status='chosen' and performer_id=$2",
+          [o.id,o.performer_id])
+      : null;
     return {
       id: o.id, number: o.number, status: o.status as OrderStatus, statusLabel: statusLabels[o.status as OrderStatus],
       service: o.service, isSos: o.is_sos, problem: o.problem, description: o.description,
@@ -1077,6 +1083,7 @@ export class OrdersService {
       brand: o.brand, model: o.model, year: o.year, vehicleId: o.vehicle_id, vehicle, estimate: o.estimate, paymentMethod: o.payment_method,
       warrantyDays:o.warranty_days??null,warrantyWork:o.warranty_work_summary??null,warrantyStartedAt:o.warranty_started_at??null,
       ecuDueAt:o.ecu_due_at??null,ecuExtensionsCount:o.ecu_extensions_count??0,
+      ecuDiagnosticQuote,
       auction: o.status === 'searching' && !!o.auction_until, auctionUntil: o.auction_until, autoPick: o.auto_pick, search, searchStage,
       limits: o.status === 'searching' ? this.auction.limits(o, (await this.settings.get('dispatch'))) : null,
       destination: o.destination, cargo: o.cargo, loaded: o.loaded, driverOnSite: o.driver_on_site, discountReason: o.discount_reason,
