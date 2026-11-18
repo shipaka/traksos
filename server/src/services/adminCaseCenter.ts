@@ -72,7 +72,7 @@ export class AdminCaseCenter {
       (scope==='closed'&&!x.has_active) || (scope==='moderated'&&x.moderated)
     ).map(x=>({
       ...x,
-      is_multi:Number(x.order_count)+Number(x.workshop_count)+Number(x.ecu_count)>1,
+      is_multi:Number(x.order_count)+Number(x.workshop_count)+Number(x.ecu_count??0)>1,
       case_number:Number(x.order_count)+Number(x.workshop_count)+Number(x.ecu_count)>1&&x.multi_number!=null
         ? 'М-'+String(x.multi_number).padStart(6,'0'):null,
     }));

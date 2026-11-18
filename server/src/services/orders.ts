@@ -148,6 +148,7 @@ export class OrdersService {
         lat: i.parallelWith ? previous.lat : i.lat ?? previous.lat,
         lng: i.parallelWith ? previous.lng : i.lng ?? previous.lng,
         description: i.description || previous.description || 'Эвакуация после выездного ремонта',
+        site: i.site ?? previous.site ?? undefined,
         site: i.site ?? previous.site ?? undefined };
     }
     let brand = i.brand ?? null;

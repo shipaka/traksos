@@ -150,7 +150,7 @@ export function EcuHandoffPage({id}:{id:string}){
     {quote && <>
      <label className="agree"><input type="checkbox" checked={agree}
       onChange={e=>setAgree(e.target.checked)} />
-      Я подтверждаю цену диагностики {rub(quote.diagnosis_price)} по версии {quote.version}. Дополнительный ремонт отдельно.</label>
+      Я подтверждаю цену диагностики {rub(quote.diagnosis_price)} по версии {quote.version} и разрешаю выбранному специалисту увидеть VIN и технические заключения этой цепочки. Другие специалисты доступа не получат. Дополнительный ремонт отдельно.</label>
      <button className="btn" disabled={busy||!agree} onClick={async()=>{
       const r=await run(()=>post('/api/ecu/handoffs/'+id+'/choose',
        {quoteId:quote.id,version:quote.version,price:quote.diagnosis_price,agree:true}),
