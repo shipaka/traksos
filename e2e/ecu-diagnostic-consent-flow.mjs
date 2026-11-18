@@ -147,6 +147,18 @@ try{
     if(overflow)throw Error('Desktop ECU agreement has horizontal overflow');
     if(desktop.errors.length)throw Error('Desktop JS errors: '+desktop.errors.join('; '));
   }finally{await desktop.context.close();}
+  // A stationary ECU profile never asks for or displays a personal service vehicle.
+  const expertProfile=await openPage(expert.token,'performer',390);
+  try{
+    await expertProfile.page.goto(BASE+'/#/work/me',{waitUntil:'domcontentloaded'});
+    await expertProfile.page.getByText('TRAKSOS · СТАЦИОНАРНАЯ РАБОТА ЭБУ').waitFor({timeout:20000});
+    if(await expertProfile.page.locator('button.linkrow').filter({hasText:'Машины'}).count())
+      throw Error('Stationary ECU profile incorrectly exposes a roadside vehicle section');
+    await expertProfile.page.goto(BASE+'/#/work/me/cars',{waitUntil:'domcontentloaded'});
+    await expertProfile.page.getByText(/Личный автомобиль не требуется/).waitFor();
+    if(expertProfile.errors.length)
+      throw Error('ECU stationary profile browser errors: '+expertProfile.errors.join('; '));
+  }finally{await expertProfile.context.close();}
   console.log('PASS ECU full browser flow: specialist price, scope, changed quote, fresh client consent; mobile+desktop');
 }finally{
   if(browser)await browser.close();
