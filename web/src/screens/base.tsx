@@ -482,6 +482,13 @@ const loadSearch = (): Search => { try { return { ...SEARCH0, ...JSON.parse(loca
 export function ServicesList() {
   const q = query();
   const from = q.get('from');
+  const caseOrderId = q.get('case');
+  const recommendationId = q.get('recommendation');
+  const linkQuery = new URLSearchParams();
+  if(from)linkQuery.set('from',from);
+  if(caseOrderId)linkQuery.set('case',caseOrderId);
+  if(recommendationId)linkQuery.set('recommendation',recommendationId);
+  const linkSuffix=linkQuery.toString();
   const [s, setS0] = useState<Search>(() => ({ ...loadSearch(), ...(q.get('need') ? { need: q.get('need')! } : {}) }));
   const setS = (v: Partial<Search>) => setS0((x) => { const n = { ...x, ...v }; try { localStorage.setItem('traksos.svcsearch', JSON.stringify(n)); } catch { /* */ } return n; });
   const [pickPlace, setPickPlace] = useState(false);
@@ -577,7 +584,7 @@ export function ServicesList() {
         ) : (
           <div className="stack">
             {shown.map((c: any) => (
-              <a key={c.id} href={`#/services/${c.id}${from ? `?from=${from}` : ''}`} className="card" style={{ textDecoration: 'none', color: 'inherit', gap: 6 }}>
+              <a key={c.id} href={`#/services/${c.id}${linkSuffix ? '?' + linkSuffix : ''}`} className="card" style={{ textDecoration: 'none', color: 'inherit', gap: 6 }}>
                 <div className="between" style={{ alignItems: 'flex-start' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
                     <b>{c.name}</b>
@@ -609,6 +616,13 @@ function prefillOrder(service: string, place: { address?: string; destination?: 
 export function CenterPage({ id }: { id: string }) {
   const c = useLoad(() => get(`/api/services/${id}`), [id]);
   const from = query().get('from');
+  const caseOrderId=query().get('case');
+  const recommendationId=query().get('recommendation');
+  const nextQuery=new URLSearchParams();
+  if(from)nextQuery.set('from',from);
+  if(caseOrderId)nextQuery.set('case',caseOrderId);
+  if(recommendationId)nextQuery.set('recommendation',recommendationId);
+  const nextSuffix=nextQuery.toString();
   const d = c.data;
   if (!d) return <main><Back to="services" label="Сервисы" /><Loading error={c.error} /></main>;
   const staffOwn = Object.entries(d.staff ?? {}).filter(([, v]) => v === 'own').map(([k]) => NEEDS[k]).filter(Boolean);
@@ -633,7 +647,7 @@ export function CenterPage({ id }: { id: string }) {
         <span className="note">Цену сервис скажет после осмотра. Смежные работы — закисшие болты, сварка, мелочи — нередко добавляют к счёту: сверьте перечень перед оплатой.</span>
       </div>
       {d.paused ? <div className="banner warn col"><b>Приём временно закрыт</b></div> : (
-        <a className="btn" href={`#/services/${id}/book${from ? `?from=${from}` : ''}`}>Записаться</a>
+        <a className="btn" href={`#/services/${id}/book${nextSuffix ? '?' + nextSuffix : ''}`}>Записаться</a>
       )}
       <div className="grid2">
         <button className="btn ghost" onClick={() => prefillOrder('tow', { destination: `${d.name}, ${d.address}` })}>Везти сюда эвакуатором</button>
@@ -658,6 +672,9 @@ export function BookForm({ id }: { id: string }) {
   const c = useLoad(() => get(`/api/services/${id}`), [id]);
   const cars = useLoad(() => get('/api/vehicles'), []);
   const from = query().get('from');
+  const caseOrderId=query().get('case');
+  const recommendationId=query().get('recommendation');
+  const source=useLoad(()=>caseOrderId ? get('/api/orders/'+caseOrderId) : Promise.resolve(null),[caseOrderId]);
   const { busy, run } = useAction();
   const [vehicleId, setVehicle] = useState('');
   const [need, setNeed] = useState(query().get('need') ?? '');
@@ -665,12 +682,13 @@ export function BookForm({ id }: { id: string }) {
   const [time, setTime] = useState('');
   const [arrival, setArrival] = useState<'self' | 'tow'>('self');
   const [comment, setComment] = useState('');
-  useEffect(() => { if (cars.data?.length && !vehicleId) setVehicle(cars.data[0].id); }, [cars.data]); // eslint-disable-line
+  useEffect(() => { if (cars.data?.length && !vehicleId && !caseOrderId) setVehicle(cars.data[0].id); }, [cars.data,caseOrderId]);
+  useEffect(()=>{if(source.data)setVehicle(source.data.vehicleId??'');},[source.data]); // eslint-disable-line
   if (!c.data) return <main><Back to={`services/${id}`} label="Сервис" /><Loading error={c.error} /></main>;
   const d = c.data;
   const needs = Object.entries(NEEDS).filter(([k]) => k === 'other' || (d.staff?.[k] && d.staff[k] !== 'none'));
   async function send() {
-    const r = await run(() => post(`/api/services/${id}/book`, { vehicleId: vehicleId || null, need, day, time: time || null, arrival, comment: comment || null, fromOrderId: from }), 'Запрос отправлен — сервис ответит уведомлением');
+    const r = await run(() => post(`/api/services/${id}/book`, { vehicleId: vehicleId || null, need, day, time: time || null, arrival, comment: comment || null, fromOrderId: from, caseOrderId, recommendationId }), 'Запрос отправлен — сервис ответит уведомлением');
     if (r) go(`booking/${r.id}`);
   }
   return (
@@ -708,7 +726,8 @@ export function BookForm({ id }: { id: string }) {
         <Field label="Комментарий · по желанию"><textarea className="field" value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Что беспокоит" /></Field>
       </div>
       {from && <span className="note">По совету мастера — скидка применится в счёте сама.</span>}
-      <button className="btn" disabled={busy || !need || !day} onClick={send}>Отправить запрос</button>
+      {caseOrderId && <span className="note">Продолжение обращения №{source.data?.number??'…'}. СТО подтвердит запись и согласует отдельную смету; рекомендация не является оплатой.</span>}
+      <button className="btn" disabled={busy || !need || !day || (!!caseOrderId && !source.data)} onClick={send}>Отправить запрос</button>
       <span className="note">Сервис подтвердит готовность или уточнит детали — придёт уведомление.</span>
     </main>
   );
