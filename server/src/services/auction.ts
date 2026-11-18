@@ -193,10 +193,10 @@ export class AuctionService {
       return q.one(
         `insert into bids(order_id, performer_id, price, hour_price, eta_minutes, ecu_diagnostic_scope) values ($1,$2,$3,$4,$5,$6)
          on conflict (order_id, performer_id) do update set price=excluded.price, hour_price=excluded.hour_price,
-           eta_minutes=excluded.eta_minutes, ecu_diagnostic_scope=excluded.ecu_diagnostic_scope, status='active', updated_at=clock_timestamp()
+           eta_minutes=excluded.eta_minutes, ecu_diagnostic_scope=excluded.ecu_diagnostic_scope, status='active', updated_at=greatest(clock_timestamp(),bids.updated_at + interval '1 millisecond')
          returning *`, [orderId, user.id, p, hour, eta, scope]);
     });
-    await this.orders.event(this.db, orderId, user.id, 'offer', {price:p,eta,diagnosticScope:scope,quoteVersion:new Date(o.updated_at).toISOString()});
+    await this.orders.event(this.db, orderId, user.id, 'offer', {price:p,eta,diagnosticScope:scope,quoteVersion:new Date(o!.updated_at).toISOString()});
     const diff = order.service==='ecu'?0:Math.round((p / lim.usual - 1) * 100);
     await this.notifier.notify([order.client_id, order.created_by], { type: 'order', orderId, status: 'searching', offers: true },
       { kind: 'normal', title: order.service==='ecu'?'Цена диагностики ЭБУ':'Новый отклик', body: order.service==='ecu'?`Специалист предложил диагностику за ${rub(p)}. Подтвердите сумму отдельно.`:`${user.name ?? 'Исполнитель'}: ${rub(p)}${diff ? ` (${diff > 0 ? '+' : ''}${diff}%)` : ''}, подача ~${eta} мин`, data: { orderId } });
