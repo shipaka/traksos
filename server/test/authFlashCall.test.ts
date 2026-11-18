@@ -1,9 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, ok } from './helpers.ts';
-import { AuthService } from '../src/services/auth.ts';
+import { AuthService, passwordValid } from '../src/services/auth.ts';
 import { SmsRu, SmsRejectedError, type SmsProvider } from '../src/providers/sms.ts';
 import { hmac } from '../src/util.ts';
+
+test('passphrases stay memorable while obvious weak passwords are rejected',()=>{
+  for(const p of ['1234567890','0000000000','aaaaaaaaaa','qwertyuiop','Пароль12345','password123']){
+    assert.equal(passwordValid(p),false,p);
+  }
+  for(const p of ['Большой грузовик едет домой', 'Дорога длинная, свет горит', 'Nice long truck passphrase 2026', 'a1b2c3d4e5f6g7h8']){
+    assert.equal(passwordValid(p),true,p);
+  }
+  assert.equal(passwordValid('short'),false);
+  assert.equal(passwordValid('Z'.repeat(129)),false);
+});
 
 test('SMS.ru calls the customer, validates response, and keeps API ID out of error text', async () => {
   const original=globalThis.fetch;
