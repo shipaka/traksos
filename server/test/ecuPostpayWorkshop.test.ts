@@ -65,15 +65,25 @@ test('stationary ECU: free inquiry, priced diagnostic consent, post-work revisio
     assert.equal((await t.api('POST',offerPath+'/'+offerId+'/choose',{
       acceptedPrice:30000,quoteVersion:fresh,ecuConsent:true
     },customer.token)).status,409,'stale price cannot authorize work');
-    const accepted=ok(await t.api('POST',offerPath+'/'+offerId+'/choose',{
+    // A scope change must also revoke consent even if the number is unchanged.
+    ok(await t.api('POST',offerPath,{
+      price:32000,diagnosticScope:'Измерение напряжений блока, диагностика памяти и отчёт заказчику'
+    },expert.token));
+    const revised=ok(await t.api('GET',offerPath,undefined,customer.token));
+    const current=revised.offers[0].quote_version;
+    assert.notEqual(current,fresh,'scope-only edits must change the quote version');
+    assert.equal((await t.api('POST',offerPath+'/'+offerId+'/choose',{
       acceptedPrice:32000,quoteVersion:fresh,ecuConsent:true
+    },customer.token)).status,409,'old scope cannot authorize unchanged numeric price');
+    const accepted=ok(await t.api('POST',offerPath+'/'+offerId+'/choose',{
+      acceptedPrice:32000,quoteVersion:current,ecuConsent:true
     },customer.token));
     assert.equal(accepted.status,'accepted');
     assert.equal(accepted.money.total,32000,'only scoped diagnostic quote, no hidden platform surcharge');
-    assert.match(accepted.ecuDiagnosticQuote?.scope??'',/Измерение напряжений/);
+    assert.match(accepted.ecuDiagnosticQuote?.scope??'',/диагностика памяти/);
     assert.equal(accepted.ecuDiagnosticQuote?.price,32000);
     assert.equal((await t.api('POST',offerPath+'/'+offerId+'/choose',{
-      acceptedPrice:32000,quoteVersion:fresh,ecuConsent:true
+      acceptedPrice:32000,quoteVersion:current,ecuConsent:true
     },customer.token)).status,409,'only one successful selection');
     assert.ok(accepted.ecuDueAt);
     assert.ok((await t.db.query('select id from payments where order_id=$1',[request.id])).length===0);
