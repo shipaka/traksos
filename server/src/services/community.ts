@@ -122,7 +122,7 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
   r.get('/api/community/me', true, async (c: AuthedCtx) => {
     await ensureNick(db,c.user);
     return db.one(`select nickname, case when share_city then city_label else null end as public_city,
-      city_label, share_city from community_profiles where user_id=$1`,[c.user.id]);
+      city_label, share_city, ai_tone from community_profiles where user_id=$1`,[c.user.id]);
   });
   r.put('/api/community/me', true, async (c: AuthedCtx) => {
     const b = parse(z.object({
@@ -143,6 +143,18 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
       throw e;
     }
     return { nickname:b.nickname, publicCity:b.shareCity ? (b.cityLabel ?? null) : null };
+  });
+
+  // Individual, explicit preference only. No LLM service is connected.
+  r.put('/api/community/me/ai-tone',true,async(c:AuthedCtx)=>{
+    const b=parse(z.object({tone:z.enum(['straight','humor','road'])}),c.body);
+    if(!await canUseDriverAir(db,c.user))
+      throw forbidden('Выбор характера ТраксБота доступен только участникам водительского Эфира');
+    await ensureNick(db,c.user);
+    const updated=await db.one<{ai_tone:string}>(`
+      update community_profiles set ai_tone=$2,updated_at=now()
+      where user_id=$1 returning ai_tone`,[c.user.id,b.tone]);
+    return {tone:updated!.ai_tone};
   });
 
   r.get('/api/community/rooms', true, async (c: AuthedCtx) => {
