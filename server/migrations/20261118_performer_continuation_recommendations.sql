@@ -18,3 +18,12 @@ create index if not exists order_continuation_recommendations_client
  on order_continuation_recommendations(client_id,created_at desc);
 comment on table order_continuation_recommendations is
  'No-cost next-step suggestions. Only owner may approve search; quote and payment follow the separate linked order or STO booking.';
+
+-- A booking created from a recommendation is linked to that exact decision;
+-- repeat submissions cannot create two workshop bookings from one approval.
+alter table service_bookings
+ add column if not exists continuation_recommendation_id uuid
+ references order_continuation_recommendations(id);
+create unique index if not exists service_booking_recommendation_once
+ on service_bookings(continuation_recommendation_id)
+ where continuation_recommendation_id is not null;
