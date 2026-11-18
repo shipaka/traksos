@@ -1403,7 +1403,7 @@ export function createApp(d: Deps) {
     }
   }
 
-  return { handle, hub, auth, settings, orders, payments, auction, documents, admin, support, developerReportDelivery, warranty, warrantyRemediation, warrantyRecourse, profiles, chat, reviews, offers, notifier, privacy, ops, router: r };
+  return { handle, hub, auth, settings, orders, payments, auction, documents, admin, support, unilateral, developerReportDelivery, warranty, warrantyRemediation, warrantyRecourse, profiles, chat, reviews, offers, notifier, privacy, ops, router: r };
 }
 
 export type App = ReturnType<typeof createApp>;
