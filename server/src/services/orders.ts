@@ -228,8 +228,8 @@ export class OrdersService {
           zone_id, night, group_trip, tier, brand, estimate, payment_method, client_fee_pct, destination, cargo, loaded, driver_on_site,
           consult_of, discount_amount, discount_reason, model, year, site, status, owner_note,
           commission_pct_override, commission_campaign_id, case_root_id, continuation_of,
-          create_request_key,create_request_hash,location_region,preferred_performer_id,parallel_consent)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39) returning *`,
+          create_request_key,create_request_hash,location_region,preferred_performer_id,parallel_consent,continuation_recommendation_id)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40) returning *`,
       [clientId, user.id, i.vehicleId ?? null, i.service, !!i.isSos, i.problem ?? null, i.description ?? null, isConsult ? null : i.address ?? null,
         isConsult ? null : i.lat ?? null, isConsult ? null : i.lng ?? null, est.zoneId, night, est.group, tier, brand, est, method, feePct,
         i.destination ?? null, i.cargo ?? null, i.loaded ?? null, i.driverOnSite ?? null,
@@ -239,7 +239,7 @@ export class OrdersService {
         requestKey,requestHash, isConsult ? null : i.regionId, preferredId,
         i.parallelWith ? {sourceOrderId:previous.id,sourceNumber:previous.number,
           actorId:user.id,approvedAt:this.now().toISOString(),secondCallOut:est.callOut,
-          paymentMethod:method,independentCharge:true} : null],
+          paymentMethod:method,independentCharge:true} : null, i.recommendationId ?? null],
     ).catch(async (e: any) => {
       if (e?.code === '23505' && e?.constraint === 'orders_create_key_unique') {
         const prior = await this.db.one<any>(
@@ -249,6 +249,8 @@ export class OrdersService {
       }
       if (e?.code === '23505' && e?.constraint === 'orders_one_live_continuation_idx')
         throw conflict('continuation_exists', 'Этап уже оформлен: откройте его из обращения');
+      if (e?.code === '23505' && e?.constraint === 'orders_recommendation_once')
+        throw conflict('recommendation_already_used', 'По этой рекомендации уже создан отдельный заказ');
       throw e;
     });
     if (reused) return reuse(order!);
