@@ -8,7 +8,52 @@ import { PartnerOffers } from './PartnerOffers.tsx';
 import {CommunityNotificationSettings,CommunityMuteToggle} from './communityNotificationSettings.tsx';
 import {readAirDraft,writeAirDraft,clearAirDraft} from './airDraft.ts';
 
-type AirProfile={nickname:string;city_label:string|null;share_city:boolean;public_city:string|null};
+type AiTone='straight'|'humor'|'road';
+type AiSituation='morning'|'traffic'|'parking'|'brakes';
+type AirProfile={nickname:string;city_label:string|null;share_city:boolean;public_city:string|null;ai_tone:AiTone};
+const AI_SCENARIOS:Record<AiSituation,{title:string;question:string;answers:Record<AiTone,string>;followup:string}>={
+  morning:{
+    title:'Scania не заводится',
+    question:'Мужики, Scania после ночёвки не заводится. Что делать?',
+    answers:{
+      straight:'Уточни: стартер крутит? Приборка загорается? Какое напряжение показывает? По симптомам определим, с чего начать проверку.',
+      humor:'Похоже, твоя Scania решила, что сегодня воскресенье. Но у нас тут не санаторий! Давай разбираться: стартер крутит или даже не пытается?',
+      road:'Ну здорово, бродяга! Чего, железяка с утра забастовку устроила? Бывает. Ты скажи, стартер хоть шевелится или вообще тишина? По симптомам раскидаем.'
+    },
+    followup:'Водитель: «Приборка горит, а стартер молчит»'
+  },
+  traffic:{
+    title:'Застрял на трассе',
+    question:'На М-10 уже час стою в пробке. Что скажешь?',
+    answers:{
+      straight:'Если вы в безопасном месте, посмотрите сообщения о дорожной обстановке по М-10. За рулём переписку лучше отложить.',
+      humor:'Похоже, М-10 открыла филиал клуба стоящих грузовиков. Посмотрим дорожные сообщения, но телефон в руки — только на безопасной остановке.',
+      road:'Ох, коллега, М-10 опять устроила слёт экипажей. Если стоишь безопасно, глянь дорожный Эфир. А когда едешь — телефон пусть отдыхает.'
+    },
+    followup:'Водитель: «Я на стоянке, может, у кого маршрут получше?»'
+  },
+  parking:{
+    title:'Вопрос коллеге',
+    question:'Нашёл коллегу, хочу спросить про стоянку без спама в общем чате.',
+    answers:{
+      straight:'Под его сообщением выберите «В ЛС» и отправьте приглашение. Личная переписка откроется после согласия собеседника.',
+      humor:'Правильно! Общий Эфир — не семейный совет на сорок страниц. Жми «В ЛС» и дождись приглашения в диалог.',
+      road:'Вот это по-нашему: эфир не забиваем, вопросы решаем по-соседски. Под сообщением есть «В ЛС» — пригласи коллегу, а дальше без лишнего шума.'
+    },
+    followup:'Водитель: «А номер телефона он увидит?» — «Нет, только позывной»'
+  },
+  brakes:{
+    title:'Проблема с тормозами',
+    question:'Загорелась ошибка EBS и тормоза ведут себя странно. Могу ехать дальше?',
+    answers:{
+      straight:'Нет оснований считать движение безопасным. Остановитесь в безопасном месте, обозначьте автомобиль и обратитесь за профессиональной помощью. Не пытайтесь отключать EBS.',
+      humor:'Нет оснований считать движение безопасным. Остановитесь в безопасном месте, обозначьте автомобиль и обратитесь за профессиональной помощью. Не пытайтесь отключать EBS.',
+      road:'Нет оснований считать движение безопасным. Остановитесь в безопасном месте, обозначьте автомобиль и обратитесь за профессиональной помощью. Не пытайтесь отключать EBS.'
+    },
+    followup:'При риске для людей сначала обратитесь в экстренные службы.'
+  }
+};
+
 type DriverAccess={eligible:boolean;enabled:boolean;driverRole:boolean};
 type AirRoom={id:string;slug:string;title:string;kind:string;audience:string;locality:string|null;joined:boolean};
 type AirMessage={id:string;nickname:string;body:string;public_city:string|null;isMine:boolean;created_at:string;moderation_state:string};
@@ -432,14 +477,22 @@ export function DriverAir(){
   const access=useLoad<DriverAccess>(()=>get('/api/community/driver-access'),[me?.id]);
   const [disableStep,setDisableStep]=useState(false);
   const profile=useLoad<AirProfile>(()=>access.data?.enabled?get('/api/community/me'):
-    Promise.resolve({nickname:'',city_label:null,share_city:false,public_city:null}),[me?.id,access.data?.enabled]);
+    Promise.resolve({nickname:'',city_label:null,share_city:false,public_city:null,ai_tone:'road' as AiTone}),[me?.id,access.data?.enabled]);
   const rooms=useLoad<{rooms:AirRoom[]}>(()=>access.data?.enabled?get('/api/community/rooms'):
     Promise.resolve({rooms:[]}),[me?.id,access.data?.enabled]);
   const [roomId,setRoomId]=useState<string|null>(null);
   const [view,setView]=useState<'rooms'|'voice'|'ai'|'offers'|'direct'|'profile'|'help'|'notifications'>('rooms');
-  // The AI service is not connected. This controls only a clearly labeled
-  // static preview of future response styles, never creates an AI request.
-  const [aiTone,setAiTone]=useState<'straight'|'humor'|'road'>('humor');
+  // The bot is not connected. Each user can still save their own future tone.
+  const [aiTone,setAiTone]=useState<AiTone>('road');
+  const [aiSituation,setAiSituation]=useState<AiSituation>('morning');
+  const aiAction=useAction();
+  useEffect(()=>{if(profile.data?.ai_tone)setAiTone(profile.data.ai_tone);},[profile.data?.ai_tone]);
+  const chooseAiTone=async(tone:AiTone)=>{
+    if(!profile.data||aiAction.busy||tone===aiTone)return;
+    const saved=await aiAction.run(()=>put('/api/community/me/ai-tone',{tone}),
+      'Ваш характер ТраксБота сохранён');
+    if(saved){setAiTone(tone);await profile.reload();}
+  };
   const [roomPane,setRoomPane]=useState<'chat'|'road'>('chat');
   const [directPeer,setDirectPeer]=useState<string|null>(null);
   const [sending,setSending]=useState(false);
@@ -529,27 +582,43 @@ export function DriverAir(){
     </section>}
     {view==='ai'&&<section className="card stack" aria-label="ИИ-помощник Эфира в разработке">
       <span className="pill">В разработке</span>
-      <h2>ТраксБот · ИИ-попутчик с характером</h2>
-      <p>Планируем помощника, которого можно будет позвать в водительском чате по обращению @ТраксБот. Он сможет объяснять диагностические коды, предлагать безопасные первые проверки, подсказывать категорию специалиста и помогать оформить заявку.</p>
-      <p>У него будет чувство юмора: лёгкие подколы про железо, дорожные ситуации и жизнь дальнобойщика, но без насмешек над людьми.</p>
-      <div className="stack" aria-label="Пример будущей манеры общения">
-        <b>Каким будет характер ТраксБота</b>
-        <div className="row" role="group" aria-label="Манера общения">
-          <button type="button" className="chip" aria-pressed={aiTone==='straight'} onClick={()=>setAiTone('straight')}>По делу</button>
-          <button type="button" className="chip" aria-pressed={aiTone==='humor'} onClick={()=>setAiTone('humor')}>С юморком</button>
-          <button type="button" className="chip" aria-pressed={aiTone==='road'} onClick={()=>setAiTone('road')}>По-дальнобойному</button>
+      <h2>ТраксБот · выбирайте характер сами</h2>
+      <p>Будущий помощник будет отвечать на обращение @ТраксБот, помогать с вопросами по грузовикам и работе TrackSOS. Манеру общения каждый участник Эфира выбирает самостоятельно.</p>
+      <div className="stack" aria-label="Мой характер ТраксБота">
+        <b>Мой характер ТраксБота</b>
+        {!profile.data&&<p role="status">{profile.error??'Загружаем сохранённую настройку…'}</p>}
+        <div className="air-ai-tone-options" role="group" aria-label="Выберите характер для своего ТраксБота">
+          {([
+            ['straight','По делу','Коротко, спокойно и технически точно'],
+            ['humor','С юморком','Лёгкие шутки, но полезный ответ на первом месте'],
+            ['road','Михалыч','По-дальнобойному: свой парень, дружелюбный и с шутками']
+          ] as const).map(([tone,name,desc])=>
+            <button key={tone} className="air-ai-tone-option" type="button"
+              aria-pressed={aiTone===tone} disabled={!profile.data||aiAction.busy}
+              onClick={()=>void chooseAiTone(tone)}>
+              <b>{name}</b><small>{desc}</small><span>{aiTone===tone?'Выбран':'Выбрать'}</span>
+            </button>
+          )}
         </div>
-        <blockquote className="air-ai-demo">
-          {aiTone==='straight'
-            ? 'Уточним марку, симптомы и коды ошибок. Начнём с безопасных проверок, а при неисправности тормозов потребуется специалист.'
-            : aiTone==='humor'
-              ? 'Если грузовик разговаривает лампочками — это не дискотека. Давай коды ошибок и симптомы, разберёмся по порядку.'
-              : 'Ну что, коллега, железный конь характер показывает? Пиши, что загорелось и что изменилось. Без гадания на гаечных ключах.'}
-        </blockquote>
-        <span className="note">Пример заранее написан для демонстрации стиля. Кнопки переключают только текст образца; настоящий ИИ пока не отвечает.</span>
+        <p className="note" role="status">{aiAction.busy?'Сохраняем ваш выбор…':profile.data?
+          'Выбор сохраняется в вашем аккаунте и не меняет ТраксБота у других пользователей. Менять можно сколько угодно.':'После загрузки профиля можно выбрать свой стиль.'}</p>
       </div>
-      <p className="note">В аварийных ситуациях, при неисправностях тормозов, риске для людей и других серьёзных случаях юмор автоматически отключается. Никакой грубости в адрес пользователей и никакой скрытой рекламы.</p>
-      <p className="note">Бот будет отвечать только на явное обращение, обозначать себя как ИИ и не читать личные чаты, точные координаты или заявки без отдельного осознанного разрешения. Пока бот не подключён: он не читает сообщения и не запускает действия.</p>
+      <div className="stack" aria-label="Примеры ответов выбранного характера">
+        <b>Посмотрите, как он будет разговаривать</b>
+        <div className="air-ai-scenarios" role="group" aria-label="Пример ситуации">
+          {(['morning','traffic','parking','brakes'] as AiSituation[]).map(id=>
+            <button key={id} className="chip" type="button" aria-pressed={aiSituation===id}
+              onClick={()=>setAiSituation(id)}>{AI_SCENARIOS[id].title}</button>
+          )}
+        </div>
+        <div className="air-ai-dialogue">
+          <p><b>Водитель:</b> {AI_SCENARIOS[aiSituation].question}</p>
+          <p><b>ТраксБот:</b> {AI_SCENARIOS[aiSituation].answers[aiTone]}</p>
+          <small>{AI_SCENARIOS[aiSituation].followup}</small>
+        </div>
+        <span className="note">Это заранее написанные примеры, не ответы работающего ИИ. Реальный бот пока не читает сообщения и не общается.</span>
+      </div>
+      <p className="note">В вопросах безопасности, особенно при неисправных тормозах и ДТП, любой характер переключается на серьёзный стиль. Чужие личные чаты, контакты, GPS и заявки без согласия недоступны; скрытой рекламы не будет.</p>
       <button type="button" className="btn ghost" onClick={()=>setView('rooms')}>К текстовым чатам</button>
     </section>}
     {view==='offers'&&<PartnerOffers mode="reader"/>}
