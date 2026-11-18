@@ -440,10 +440,12 @@ export class ServiceCenters {
       fromOrderId = o?.id ?? null;
     }
     const b = await this.db.one(
-      `insert into service_bookings(center_id, client_id, created_by, vehicle_id, vehicle, need, when_day, when_time, arrival, comment, from_order_id, case_root_id)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) returning *`,
-      [centerId, clientId, user.id, p.vehicleId ?? null, vehicle, p.need, p.day, p.time?.trim() || null, p.arrival, p.comment?.trim() || null, fromOrderId, caseRootId]
+      `insert into service_bookings(center_id, client_id, created_by, vehicle_id, vehicle, need, when_day, when_time, arrival, comment, from_order_id, case_root_id, continuation_recommendation_id)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) returning *`,
+      [centerId, clientId, user.id, p.vehicleId ?? null, vehicle, p.need, p.day, p.time?.trim() || null, p.arrival, p.comment?.trim() || null, fromOrderId, caseRootId, approvedRecommendation ? p.recommendationId : null]
     ).catch((e: any) => {
+      if(e?.code==='23505' && e?.constraint==='service_booking_recommendation_once')
+        throw conflict('continuation_exists','Эта рекомендация уже оформлена как запись на СТО');
       if (e?.code === '23505' && e?.constraint === 'service_bookings_one_open_case_idx')
         throw conflict('continuation_exists', 'В этом обращении уже есть незакрытая запись на СТО');
       throw e;
