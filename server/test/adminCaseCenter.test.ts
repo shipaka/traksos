@@ -19,6 +19,18 @@ test('multi-case number is displayed only for two or more linked stages', async 
   assert.equal((await service.list('','closed')).length,1);
 });
 
+test('an ECU handoff is counted as a second case stage in the admin list', async () => {
+  const fakeDb:any={query:async()=>[
+    {id:'root',number:125,multi_number:42,order_count:1,workshop_count:0,ecu_count:1,has_active:true,moderated:false},
+    {id:'single',number:126,multi_number:43,order_count:1,workshop_count:0,ecu_count:0,has_active:false,moderated:false},
+  ]};
+  const items=await new AdminCaseCenter(fakeDb).list('');
+  assert.equal(items[0].is_multi,true);
+  assert.equal(items[0].case_number,'М-000042');
+  assert.equal(items[1].is_multi,false);
+  assert.equal(items[1].case_number,null);
+});
+
 test('search for an M-number uses its own sequence and does not merge it with order numbers', async () => {
   let params:any[]=[],sql='';
   const fakeDb:any={query:async(s:string,p:any[])=>{sql=s;params=p;return [];}};
