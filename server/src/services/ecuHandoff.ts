@@ -137,7 +137,7 @@ export class EcuHandoffService {
   return this.db.query(
    "select h.id,h.summary,h.created_at,h.state,o.number as source_number," +
    " o.brand,o.model,o.year,o.service from ecu_handoffs h join orders o on o.id=h.source_order_id" +
-   " where h.state='pending' or (h.state='selected' and h.selected_performer_id=$1)" +
+   " where h.state='pending' or (h.state in ('selected','closed') and h.selected_performer_id=$1)" +
    ' order by h.created_at desc limit 100',[user.id]);
  }
  private async access(user:AuthUser,id:string):Promise<{h:Handoff;actor:Access}>{
@@ -151,7 +151,7 @@ export class EcuHandoffService {
   if(user.id===h.client_id)return{h,actor:'owner'};
   if(user.id===h.source_created_by && user.owner_id===h.client_id)return{h,actor:'driver'};
   if(user.id===h.source_performer_id)return{h,actor:'origin'};
-  if(h.state==='selected' && h.selected_performer_id===user.id && user.roles.includes('master'))
+  if(['selected','closed'].includes(h.state) && h.selected_performer_id===user.id && user.roles.includes('master'))
    return{h,actor:'expert'}; // historical selected cases stay readable if station verification lapses
   if(await this.verified(user.id)){
    if(h.state==='pending')return{h,actor:'candidate'};
