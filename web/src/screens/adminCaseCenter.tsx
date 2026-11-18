@@ -89,6 +89,9 @@ export function AdminCaseCenter() {
     finally{setExporting(false);}
   };
   const stages=detail?.stages||[],bookings=detail?.bookings||[];
+  const segments=[...stages.map((s:any)=>({...s,source_kind:'order'})),
+    ...bookings.map((b:any)=>({...b,source_kind:'booking'}))]
+    .sort((a:any,b:any)=>(a.stage_no||0)-(b.stage_no||0));
   return <div className="case-register">
     <div className="case-reg-intro">
       <div><span className="case-reg-kicker">ОПЕРАЦИОННЫЙ РЕЕСТР</span>
@@ -159,28 +162,34 @@ export function AdminCaseCenter() {
               <div><span>Случаев модерации</span><b>{detail.moderation?.length||0}</b></div>
             </div>
             <h4>Этапы обращения</h4>
-            {stages.map((s:any,i:number)=><article key={s.id} className="case-detail-stage">
-              <div className="case-detail-between">
-                <b>Этап {i+1} · заказ №{s.number}</b><span className="case-reg-chip">{status(s.status)}</span>
-              </div>
-              <div>{SERVICES[s.service]?.name||s.service} · {s.performer_name||'Исполнитель ещё не выбран'}</div>
-              <small>{s.problem||s.description||'Описание не заполнено'}</small>
-              <div className="case-detail-stage-dates">
-                <span>Открыта: {date(s.created_at)}</span><span>Принята: {date(s.accepted_at)}</span>
-                <span>Закрыта: {date(s.completed_at||s.cancelled_at)}</span>
-              </div>
-              <a className="case-detail-link" href={'#/order/'+s.id}>Открыть рабочую заявку</a>
-            </article>)}
-            {bookings.map((b:any,i:number)=><article key={b.id} className="case-detail-stage">
-              <div className="case-detail-between"><b>СТО · связанная запись №{b.number}</b>
-                <span className="case-reg-chip">{b.status}</span></div>
-              <div>{b.center_name} · {b.need}</div>
-              <small>Запись: {String(b.when_day||'—')} {b.when_time||''}</small>
-              <div className="case-detail-stage-dates">
-                <span>Приезд: {date(b.arrived_at)}</span><span>Готова: {date(b.ready_at)}</span>
-                <span>Закрыта: {date(b.closed_at)}</span>
-              </div>
-            </article>)}
+            {segments.map((item:any)=>item.source_kind==='order'?
+              <article key={'order-'+item.id} className="case-detail-stage">
+                <div className="case-detail-between">
+                  <b>Этап {item.stage_no} · заказ №{item.number}</b>
+                  <span className="case-reg-chip">{status(item.status)}</span>
+                </div>
+                <div>{SERVICES[item.service]?.name||item.service} · {item.performer_name||'Исполнитель ещё не выбран'}</div>
+                <small>{item.problem||item.description||'Описание не заполнено'}</small>
+                <div className="case-detail-stage-dates">
+                  <span>Открыта: {date(item.created_at)}</span>
+                  <span>Принята: {date(item.accepted_at)}</span>
+                  <span>Закрыта: {date(item.completed_at||item.cancelled_at)}</span>
+                </div>
+                <a className="case-detail-link" href={'#/order/'+item.id}>Открыть рабочую заявку</a>
+              </article>:
+              <article key={'booking-'+item.id} className="case-detail-stage">
+                <div className="case-detail-between">
+                  <b>Этап {item.stage_no} · СТО · запись №{item.number}</b>
+                  <span className="case-reg-chip">{item.status}</span>
+                </div>
+                <div>{item.center_name} · {item.need}</div>
+                <small>Запись: {String(item.when_day||'—')} {item.when_time||''}</small>
+                <div className="case-detail-stage-dates">
+                  <span>Приезд: {date(item.arrived_at)}</span>
+                  <span>Готова: {date(item.ready_at)}</span>
+                  <span>Закрыта: {date(item.closed_at)}</span>
+                </div>
+              </article>)}
             <h4>Предыдущие обращения по автомобилю</h4>
             {!detail.vehicle_history?.length?<p className="note">Другие записи по указанному автомобилю не найдены.</p>
               :detail.vehicle_history.map((v:any)=><p key={v.id} className="case-detail-history">№{v.number} · {SERVICES[v.service]?.name||v.service} · {date(v.created_at)} · {status(v.status)}</p>)}
