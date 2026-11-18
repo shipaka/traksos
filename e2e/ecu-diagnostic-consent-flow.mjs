@@ -55,6 +55,15 @@ try{
   const expert=await register('+79990000986','master');
   if(!client.user?.roles?.includes('client')||!expert.user?.roles?.includes('master'))
     throw Error('Synthetic identities have unexpected roles');
+  // The short, independent gate starts from a clean DB. Publish disposable
+  // fixture offers if absent, so the test verifies genuine consent handling.
+  for(const audience of ['client','performer']){
+    const current=await api('GET','/api/offers/current/'+audience);
+    if(!current?.id)await api('POST','/api/admin/offers',{
+      audience,version:'ci-ecu-consent-1',
+      body:'СИНТЕТИЧЕСКАЯ ОФЕРТА ТОЛЬКО ДЛЯ ИЗОЛИРОВАННОЙ CI БАЗЫ. Это фиктивный документ теста, не пользовательская редакция оферты и не договор для реального сервиса.'
+    },admin.token);
+  }
   await acceptRequiredOffers(client);
   await acceptRequiredOffers(expert);
   await api('PUT','/api/performer/profile',
