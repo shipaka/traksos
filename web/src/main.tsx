@@ -12,6 +12,7 @@ import './trackScenic.css';
 import './clientDashboardLatest.css';
 import './premiumVehiclePolish.css';
 import './finalCanon.css';
+import './techbase.css';
 // Insurance-only refinement follows the approved global visual canon.
 import './insurancePremiumStates.css';
 import { createRoot } from 'react-dom/client';
@@ -20,6 +21,7 @@ import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './ap
 import { MeCtx, ToastProvider, useRoute, useToast, type Me } from './ui.tsx';
 import { native } from './native.ts';
 import { Login } from './screens/login.tsx';
+import { TechBase } from './screens/techbase.tsx';
 import { GuestExplore } from './screens/guestExplore.tsx';
 import { DemoPreviewGate } from './screens/demoPreview.tsx';
 import { SandboxEnter, SandboxModeBar } from './screens/isolatedSandbox.tsx';
@@ -235,6 +237,9 @@ function App() {
     case 'order': screen = <Order id={b} />; break;
     case 'orders': screen = isCustomer ? <Orders as="client" /> : <main><div className="empty">Нет доступа к клиентским заявкам</div></main>; break;
     case 'garage': screen = isCustomer ? <Garage /> : <main><div className="empty">Нет доступа к гаражу</div></main>; break;
+    case 'techbase': screen = (b === 'master' ? me.roles.some(r => ['master','service','admin','moderator'].includes(r)) : me.roles.some(r => ['client','driver','master','service','tow','admin','moderator'].includes(r)))
+      ? <TechBase key={b + ':' + (route[2] ?? '')} audience={b === 'master' ? 'master' : 'driver'} initialVehicleId={route[2]} />
+      : <main><div className="empty">Нет доступа к этому разделу ТехБазы</div></main>; break;
     case 'profile': screen = <Profile />; break;
     case 'invite': screen = <Invite />; break;
     case 'r': screen = <Invite />; break;
@@ -343,11 +348,11 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
        ['/work/me/money', 'Финансы и выплаты'], ['/work/me/tax', 'Налоговый статус'],
        ['/work/me/level', 'Рейтинг и уровень'], ['/work/docs', 'Проверка и документы'],
        ['/reviews', 'Отзывы'], ['/invite', 'Пригласить партнёра'],
-       ['/work/jobs', 'История заявок'], ['/profile', 'Аккаунт']]
+       ['/work/jobs', 'История заявок'], ['/techbase/master', 'ТехБаза мастера'], ['/profile', 'Аккаунт']]
     : mode === 'service'
       ? [...(me?.roles.some(r => r === 'master' || r === 'tow') ? [['/work', 'Выездной мастер — заявки']] as [string, string][] : []),
          ['/base', 'Заявки и история ремонтов'], ['/base/me', 'Карточка СТО'],
-         ['/base/money', 'Финансы'], ['/profile', 'Аккаунт'],
+         ['/base/money', 'Финансы'], ['/techbase/master', 'ТехБаза мастера'], ['/profile', 'Аккаунт'],
          ['/invite', 'Пригласить партнёра']]
     : mode === 'inspection'
       ? [['/inspections', 'Кабинет техосмотра'], ['/profile', 'Аккаунт']]
@@ -375,7 +380,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/admin/section/flagged', 'Подозрительные действия'],
          ['/admin/section/settings', 'Настройки площадки'],
          ['/profile', 'Аккаунт'], ['/as/client', 'Кабинет клиента']]
-    : [['/orders', 'История заявок'], ['/garage', 'Мой гараж'],
+    : [['/orders', 'История заявок'], ['/garage', 'Мой гараж'], ['/techbase/driver', 'ТехБаза водителя'],
        ...(!me?.owner_id && !me?.roles.includes('driver') ? [['/fleet', 'Мой автопарк']] as [string,string][] : []),
        ['/services', 'СТО и запись'],
        ['/reviews', 'Мои отзывы'], ['/invite', 'Пригласить друга'],
@@ -483,11 +488,11 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           <nav className="desktop-nav">
             {me ? <>
               {(mode === 'client'
-                ? [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь в дороге'], ['/shop', '⚙', 'Запчасти'], ['/garage', '▣', 'Мой транспорт'], ['/insurance/request/new', '◇', 'Страхование'], ['/services', '▤', 'Грузовые СТО']]
+                ? [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь в дороге'], ['/shop', '⚙', 'Запчасти'], ['/garage', '▣', 'Мой транспорт'], ['/techbase/driver', '▤', 'ТехБаза'], ['/insurance/request/new', '◇', 'Страхование'], ['/services', '▤', 'Грузовые СТО']]
                 : mode === 'performer'
-                  ? [...tabs, ['/work/me', '◉', 'Профиль'], ...(me.roles.includes('service') ? [['/base', '▤', 'Моя СТО']] : [])]
+                  ? [...tabs, ['/techbase/master', '▤', 'ТехБаза'], ['/work/me', '◉', 'Профиль'], ...(me.roles.includes('service') ? [['/base', '▤', 'Моя СТО']] : [])]
                   : mode === 'service'
-                    ? [...tabs, ['/base/money', '₽', 'Финансы'], ['/base/me', '⚙', 'Карточка'], ...(me.roles.some(r => r === 'master' || r === 'tow') ? [['/work', '⚡', 'Выездной мастер']] : []), ['/profile', '◉', 'Аккаунт']]
+                    ? [...tabs, ['/techbase/master', '▤', 'ТехБаза'], ['/base/money', '₽', 'Финансы'], ['/base/me', '⚙', 'Карточка'], ...(me.roles.some(r => r === 'master' || r === 'tow') ? [['/work', '⚡', 'Выездной мастер']] : []), ['/profile', '◉', 'Аккаунт']]
                     : mode === 'insurer' || mode === 'inspection'
                       ? tabs
                       : mode === 'moderator' ? [...tabs, ['/profile', '◉', 'Аккаунт']]
