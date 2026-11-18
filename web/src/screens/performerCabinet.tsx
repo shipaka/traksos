@@ -37,8 +37,11 @@ export function PerformerHub() {
   const rows: [string, string, string][] = [
     ['work/me/about', 'Кто вы', `${me?.name ?? 'Имя не указано'} · ${p.kind === 'tow' ? 'эвакуатор' : p.kind === 'ecu' ? 'специалист по ЭБУ' : 'мастер'}`],
     ['work/me/phone', 'Телефон и вход', fmtPhone(me!.phone)],
-    ['work/me/cars', p.kind === 'tow' ? 'Эвакуаторы' : 'Машины', cars.length ? `${cars.length} из 3 · сегодня: ${p.car?.brand ?? '—'} ${p.car?.plate ?? ''}` : 'не добавлены'],
-    ['work/me/schedule', 'Распорядок', p.schedule?.on ? `${dayList(p.schedule.days)} · выезды ${p.schedule.from}–${p.schedule.to} · телефон до ${p.schedule.phoneTo}` : 'не задан — заявки идут, пока вы на линии'],
+    ...(p.kind === 'ecu' ? [] : [[
+      'work/me/cars', p.kind === 'tow' ? 'Эвакуаторы' : 'Машины',
+      cars.length ? `${cars.length} из 3 · сегодня: ${p.car?.brand ?? '—'} ${p.car?.plate ?? ''}` : 'не добавлены'
+    ]] as [string,string,string][]),
+    ['work/me/schedule', 'Распорядок', p.schedule?.on ? `${dayList(p.schedule.days)} · ${p.kind==='ecu'?'приём заказов':'выезды'} ${p.schedule.from}–${p.schedule.to} · телефон до ${p.schedule.phoneTo}` : 'не задан — заявки идут, пока вы на линии'],
     ['work/me/tax', 'Налоговый статус', p.tax_status ? `${p.tax_status === 'ip' ? 'ИП' : 'Самозанятый'} · ИНН ${p.inn ?? '—'}` : 'не указан'],
     ['work/me/money', 'Финансы', 'баланс, начисления, списания, выплаты'],
     ['invite', 'Пригласить и получать баллы', 'баллы гасят до половины комиссии'],
@@ -56,9 +59,11 @@ export function PerformerHub() {
   ];
   return (
     <main className="performer-workspace stack">
-      <section className="internal-role-hero internal-role-hero-performer"><span>TRAKSOS · ВЫЕЗДНОЙ СПЕЦИАЛИСТ</span><h1>Профиль</h1><p>Всё по разделам — откройте нужный.</p><a className="btn" href="#/work">← На линию и к заявкам</a></section>
+      <section className="internal-role-hero internal-role-hero-performer"><span>{p.kind==='ecu'?'TRAKSOS · СТАЦИОНАРНАЯ РАБОТА ЭБУ':'TRAKSOS · ВЫЕЗДНОЙ СПЕЦИАЛИСТ'}</span><h1>Профиль</h1><p>Всё по разделам — откройте нужный.</p><a className="btn" href="#/work">← На линию и к заявкам</a></section>
       <section className="performer-live-insights" aria-label="Обзор профиля исполнителя">
-        <div><span>Моя техника</span><strong>{cars.length}</strong><small>{p.kind==='tow'?'эвакуаторов':'автомобилей'}</small></div>
+        {p.kind==='ecu'
+          ? <div><span>Специализация</span><strong>ЭБУ</strong><small>стационарная мастерская</small></div>
+          : <div><span>Моя техника</span><strong>{cars.length}</strong><small>{p.kind==='tow'?'эвакуаторов':'автомобилей'}</small></div>}
         <div><span>Проверка</span><strong className="performer-verify">{p.verification==='approved'?'✓':p.verification==='rejected'?'!':'…'}</strong>
           <small>{p.verification==='approved'?'пройдена':p.verification==='rejected'?'требует исправления':'в процессе'}</small></div>
         <div><span>График</span><strong className="performer-verify">{p.schedule?.on?'●':'○'}</strong>
@@ -105,7 +110,10 @@ function PerformerOnboarding() {
   const isEcu = kind === 'ecu';
   async function save() {
     const body: any = { kind, name: name || undefined, taxStatus: taxStatus || null, inn: inn || null,
-      cars: car.brand && car.plate ? [car] : [], car: car.brand && car.plate ? car : null };
+      ...(isEcu ? {} : {
+        cars: car.brand && car.plate ? [car] : [],
+        car: car.brand && car.plate ? car : null
+      }) };
     if (isEcu) body.specialties = ['diag','electric'];
     else if (!isTow) body.specialties = spec.filter(x=>x!=='ecu');
     if (await run(() => put('/api/performer/profile', body), 'Профиль сохранён — теперь фото для проверки')) {
@@ -138,12 +146,12 @@ function PerformerOnboarding() {
         <b>Электронные блоки управления</b>
         <p className="note">Диагностика, восстановление и программирование ЭБУ. В кабинет поступают отдельные заявки и дополнительные этапы после другого мастера. Заявки не объединяют оплату автоматически.</p>
       </div>}
-      <div className="step-card">
-        <div className="step-head"><span className="step-n">{isTow||isEcu ? 2 : 3}</span><b>{isTow ? 'Эвакуатор' : 'Машина, на которой приезжаете'}</b></div>
+      {!isEcu&&<div className="step-card">
+        <div className="step-head"><span className="step-n">{isTow ? 2 : 3}</span><b>{isTow ? 'Эвакуатор' : 'Машина, на которой приезжаете'}</b></div>
         <CarInputs car={car} onChange={setCar} tow={isTow} />
-      </div>
+      </div>}
       <div className="step-card">
-        <div className="step-head"><span className="step-n">{isTow||isEcu ? 3 : 4}</span><b>Налоговый статус</b></div>
+        <div className="step-head"><span className="step-n">{isEcu ? 2 : isTow ? 3 : 4}</span><b>Налоговый статус</b></div>
         <TaxInputs taxStatus={taxStatus} inn={inn} onChange={(t, i) => { setTax(t); setInn(i); }} />
       </div>
       <button className="btn" disabled={busy || !name || (!isTow&&!isEcu && !spec.some(x=>x!=='ecu'))} onClick={save}>Дальше — фото для проверки</button>
@@ -165,7 +173,7 @@ export function AboutSection() {
       <Field label="Имя, как увидят клиенты"><input className="field" value={name} onChange={(e) => setName(e.target.value)} /></Field>
       <div className="card">
         <dl className="kv">
-          <dt>Кто</dt><dd>{p.kind === 'tow' ? 'Эвакуатор' : 'Мастер'}</dd>
+          <dt>Кто</dt><dd>{p.kind === 'tow' ? 'Эвакуатор' : p.kind==='ecu'?'Стационарный специалист ЭБУ':'Мастер'}</dd>
           <dt>Рейтинг</dt><dd>{me?.rating ? `★ ${Number(me.rating).toFixed(1)} · ${me.rating_count} оценок` : 'пока нет оценок'}</dd>
           <dt>Проверка</dt><dd>{p.verification === 'approved' ? 'Пройдена' : p.verification === 'rejected' ? 'Не пройдена' : 'Ещё не пройдена'}</dd>
         </dl>
@@ -282,6 +290,11 @@ export function CarsSection() {
   const [add, setAdd] = useState({ brand: '', color: '', plate: '' });
   const tow = p.kind === 'tow';
   const commit = (list: any[], t: string) => save({ cars: list, car: list.find((c) => c.plate === t) ?? list[0] ?? null }, 'Машины сохранены');
+  if(p.kind==='ecu')return <main className="stack">
+    <Back to="work/me" label="Профиль" />
+    <h1>Стационарная специализация ЭБУ</h1>
+    <p className="note">Личный автомобиль не требуется и не участвует в заявках. Публикацию адреса мастерской подтверждает администратор по согласованию с владельцем точки.</p>
+  </main>;
   return (
     <main>
       <Back to="work/me" label="Профиль" />
