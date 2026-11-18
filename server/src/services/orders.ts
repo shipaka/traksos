@@ -584,7 +584,7 @@ export class OrdersService {
     if (expectedTotal != null && expectedTotal !== m.total) throw conflict('amount_changed', 'Сумма изменилась — проверьте заново');
     await this.db.tx(async (q) => {
       // Serialize acceptance/disagreement and preserve the quoted version.
-      const locked = await q.one<any>('select status from orders where id=$1 for update',[orderId]);
+      const locked = await q.one<any>('select * from orders where id=$1 for update',[orderId]);
       if(!locked||locked.status!=='awaiting_confirmation')
         throw conflict('state_changed','Заявка изменилась — обновите экран');
       const unilateral = await q.one<any>(
@@ -593,8 +593,10 @@ export class OrdersService {
         if(unilateral.status!=='pending_client')
           throw conflict('emergency_under_review','Аварийное завершение уже оспорено или обработано');
         if(expectedTotal==null || expectedTotal!==Number(unilateral.quote_total) ||
-          new Date(unilateral.quote_at).getTime()!==new Date(o.amount_proposed_at).getTime() ||
-          Number(unilateral.work_amount)!==Number(o.work_amount))
+          new Date(unilateral.quote_at).getTime()!==new Date(locked.amount_proposed_at).getTime() ||
+          Number(unilateral.work_amount)!==Number(locked.work_amount) ||
+          Number(unilateral.quote_total)!==this.money(locked).total ||
+          Number(unilateral.quote_total)!==m.total)
           throw conflict('emergency_quote_changed','Проверьте окончательную сумму и подтвердите её явно');
       }
       // Бонусы клиента списываются сами в момент подтверждения
