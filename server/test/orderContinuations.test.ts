@@ -56,6 +56,13 @@ test('consultant proposes linked stages: owner approves, but no auto charge or d
  assert.notEqual(follow.number,consult.number);
  const linked=ok(await t.api('GET','/api/orders/'+consult.id+'/continuations',undefined,owner.token));
  assert.equal(linked[0].next_order_id,follow.id);
+ const exactLink=await t.db.one<{continuation_recommendation_id:string}>(
+  'select continuation_recommendation_id from orders where id=$1',[follow.id]);
+ assert.equal(exactLink?.continuation_recommendation_id,proposal.id,
+  'paid next stage must carry the exact approved recommendation');
+ assert.equal((await t.api('POST','/api/orders',{...next,service:'diag'},owner.token)).status,409,
+  'another paid order cannot reuse the same approval even for another master specialty');
+ assert.equal((await t.db.query('select id from orders where continuation_recommendation_id=$1',[proposal.id])).length,1);
  assert.equal((await t.api('POST','/api/orders/'+consult.id+'/continuations/'+proposal.id+'/decision',
   {approve:false},owner.token)).status,409);
 });
