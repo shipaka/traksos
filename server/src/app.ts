@@ -1183,6 +1183,8 @@ export function createApp(d: Deps) {
   // Case centre: always admin-only. Order IDs from linked stages resolve to one root.
   r.get('/api/admin/cases', ['admin'], (c: AuthedCtx) =>
     adminCases.list(c.query.get('q') ?? '', c.query.get('scope') ?? 'all'));
+  r.get('/api/admin/cases/:id/export', ['admin'], (c: AuthedCtx) =>
+    adminCases.exportOperationalCsv(c.user, c.params.id));
   r.get('/api/admin/cases/:id', ['admin'], (c: AuthedCtx) =>
     adminCases.detail(c.user, c.params.id));
   r.post('/api/admin/cases/:id/notes', ['admin'], (c: AuthedCtx) => {
