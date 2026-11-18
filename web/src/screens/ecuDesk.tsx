@@ -1,6 +1,6 @@
-import {useEffect} from 'react';
+import {useEffect,useState} from 'react';
 import {get,post,rub,onEvent,fmtTime} from '../api.ts';
-import {useMe,useLoad,useAction,go} from '../ui.tsx';
+import {useMe,useLoad,useAction,go,RubInput} from '../ui.tsx';
 import {SERVICES,STATUS,LINE} from '../dict.ts';
 // ECU jobs have no standard call-out fee, so the generic auction offer form is not used.
 import {VerifiedBadge} from '../verifiedBadge.tsx';
@@ -15,7 +15,7 @@ type EcuJob={
 type EcuOffer={
   order_id:string;service:string;is_sos:boolean;brand:string|null;
   address:string|null;description:string|null;distance_km:number|null;
-  limits:any;my_price?:number;is_linked_stage?:boolean
+  limits:any;my_price?:number;my_scope?:string;is_linked_stage?:boolean
 };
 const inProgress=new Set(['accepted','en_route','arrived','working','awaiting_confirmation']);
 
@@ -29,23 +29,45 @@ function EcuJobCard({job}:{job:EcuJob}){
     <span className="note">{job.address??'Адрес уточняется'} · Открыть заявку</span>
   </a>;
 }
-function EcuOfferCard({offer,onDone}:{offer:EcuOffer;onDone:()=>void}){
+/** Also used inside the candidate order detail: never offer an unpriced paid diagnostic. */
+export function EcuDiagnosticQuote({orderId,myPrice,myScope,onDone}:{
+  orderId:string;myPrice?:number;myScope?:string;onDone:()=>void
+}){
   const {busy,run}=useAction();
-  return <article className="card stack">
-    <b>{offer.is_sos?'SOS · ':''}ЭБУ · {offer.brand??'грузовой транспорт'}</b>
-    {offer.is_linked_stage&&<span className="note">Дополнительный этап ремонта. Финансы
-      и переписка другого исполнителя не доступны.</span>}
-    {offer.description&&<p className="note">{offer.description}</p>}
-    <p className="note">{offer.address??'Место уточняется'}
-      {offer.distance_km!=null?' · '+offer.distance_km.toFixed(1)+' км':''}</p>
-    {offer.my_price!=null?<span className="pill good">Вы подтвердили получение запроса. Ждём выбора клиента.</span>:
-      <button className="btn" disabled={busy} onClick={()=>run(
-        ()=>post('/api/orders/'+offer.order_id+'/offers',{}),
-        'Вы приняли запрос без предварительной цены. Ждём подтверждения клиента.'
+  const [price,setPrice]=useState<number|null>(myPrice??null);
+  const [scope,setScope]=useState(myScope??'');
+  return <section className="stack" aria-label="Предложение диагностики ЭБУ">
+    {myPrice!=null&&myPrice>=100&&<p className="pill good">Ваше предложение: {rub(myPrice)}. Клиент ещё не подтвердил цену.</p>}
+    <label className="stack">
+      <b>Стоимость диагностики (₽), ваша цена</b>
+      <RubInput value={price} onChange={setPrice}/>
+    </label>
+    <label className="stack">
+      <b>Что входит в диагностику</b>
+      <textarea className="field" value={scope} maxLength={500}
+        onChange={e=>setScope(e.target.value)}
+        placeholder="Например: проверка цепей питания блока, считывание ошибок, отчёт с результатами"/>
+      <small className="note">Укажите не менее 10 символов. При изменении цены или объёма клиент должен подтвердить новую версию.</small>
+    </label>
+    <button type="button" className="btn"
+      disabled={busy||price==null||price<100||scope.trim().length<10}
+      onClick={()=>void run(
+        ()=>post('/api/orders/'+orderId+'/offers',{price,diagnosticScope:scope.trim()}),
+        'Цена диагностики отправлена. Ожидаем отдельного подтверждения клиентом.'
       ).then(v=>v&&onDone())}>
-        Могу принять блок на диагностику · цену сообщу после изучения
-      </button>}
-    <small className="note">Это не срочный выезд. Подтверждение возможности принять блок не выставляет клиенту счёт.</small>
+      {myPrice!=null?'Обновить предложение диагностики':'Предложить диагностику клиенту'}
+    </button>
+    <small className="note">Это не выезд и не платёж. Ремонт/прошивка и любые доплаты — только по новой смете с согласием клиента.</small>
+  </section>;
+}
+function EcuOfferCard({offer,onDone}:{offer:EcuOffer;onDone:()=>void}){
+  return <article className="card stack">
+    <b>ЭБУ · {offer.brand??'грузовой транспорт'}</b>
+    {offer.is_linked_stage&&<span className="note">Дополнительный этап ремонта. Финансы и переписка другого исполнителя недоступны.</span>}
+    {offer.description&&<p className="note">{offer.description}</p>}
+    <span className="note">Стационарная диагностика без выезда. Вы выбраны клиентом; сначала предложите конкретную цену.</span>
+    <EcuDiagnosticQuote orderId={offer.order_id} myPrice={offer.my_price}
+      myScope={offer.my_scope} onDone={onDone}/>
   </article>;
 }
 /**
