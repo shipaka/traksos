@@ -39,6 +39,8 @@ export const config = {
     /** log — код пишется в лог и возвращается в ответе (только не в production); smsru — SMS.ru */
     provider: (env.SMS_PROVIDER ?? 'log') as 'log' | 'smsru',
     smsruApiId: env.SMSRU_API_ID ?? '',
+    /** sms is the deployed default; call requires an explicit cutover after real device tests. */
+    verificationChannel: (env.AUTH_VERIFICATION_CHANNEL ?? 'sms') as 'sms' | 'call',
   },
   push: {
     /** log — только запись в базу; rustore — RuStore Push */
@@ -61,6 +63,11 @@ export const isProd = config.env === 'production';
 if (isProd && config.secret === 'dev-secret-change-me') {
   throw new Error('APP_SECRET не задан');
 }
+if (!['sms','call'].includes(config.sms.verificationChannel))
+  throw new Error('AUTH_VERIFICATION_CHANNEL must be sms or call');
+if (isProd && config.sms.verificationChannel === 'call' &&
+    (config.sms.provider !== 'smsru' || !config.sms.smsruApiId))
+  throw new Error('Flash Call in production requires SMS_PROVIDER=smsru and SMSRU_API_ID');
 
 // Refuse to start the sandbox unless it is physically separate from production.
 // The sandbox never contacts SMS.ru, RuStore Push or a real payment provider.

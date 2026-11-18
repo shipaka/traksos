@@ -7,6 +7,10 @@ on:
       - 'server/src/services/shopCourier*.ts'
       - 'server/src/services/orders.ts'
       - 'server/src/services/auction.ts'
+      # Authentication changes affect session churn and WebSocket load.
+      - 'server/src/services/auth.ts'
+      - 'server/src/providers/sms.ts'
+      - 'server/src/config.ts'
       - 'server/migrations/272_ecu_diagnostic_quote_scope.sql'
       - 'server/migrations/150_courier_coordinate_route_sheets.sql'
   workflow_dispatch:
