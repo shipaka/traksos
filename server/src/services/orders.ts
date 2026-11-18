@@ -528,6 +528,9 @@ export class OrdersService {
   async proposeAmount(user: AuthUser, orderId: string, p: { extras?: Extra[]; result?: 'solved' | 'cause_found' | 'not_found'; note?: string }) {
     const o = await this.mustBePerformer(user, orderId);
     if (o.service === 'consult') throw bad('consult_fixed', 'Цена консультации фиксированная. Закройте её с подсказкой.');
+    if(await this.db.one(
+      "select 1 from order_unilateral_closures where order_id=$1 and status in ('pending_client','disputed')",[orderId]))
+      throw conflict('emergency_quote_frozen','После аварийной сдачи расчёт не редактируется без модерации');
     const to = transition(o.status, 'propose_amount', 'performer');
     if (['cause_found', 'not_found'].includes(p.result ?? '') && (p.note?.trim().length ?? 0) < 10)
       throw bad('result_reason_required', 'Напишите, почему неисправность нельзя устранить на месте (не меньше 10 символов)');
@@ -656,6 +659,9 @@ export class OrdersService {
     const actor = this.actorOf(user, o);
     if (actor === 'performer') throw bad('use_drop', 'Исполнитель отказывается от заявки кнопкой «Не смогу приехать»');
     if (!actor) throw forbidden();
+    if(await this.db.one(
+      "select 1 from order_unilateral_closures where order_id=$1 and status in ('pending_client','disputed')",[orderId]))
+      throw conflict('emergency_requires_review','Аварийное завершение нельзя отменить без рассмотрения обращения');
     transition(o.status, 'cancel', actor);
     // Fail closed on the 100% halfway tier: the current location endpoint stores
     // only the last point, and dispatch distance is not a verified travelled route.
