@@ -37,7 +37,7 @@ try{
       await ctx.addInitScript(token=>localStorage.setItem('traksos.token',token),auth.token);
       const page=await ctx.newPage();
       await page.goto(BASE+'/#/orders');
-      await page.getByRole('heading',{name:`Активные выезды и консультации · ${activeOrders.length}`})
+      await page.getByRole('heading',{name:`Текущие обращения и заявки на подтверждении · ${activeOrders.length}`})
         .waitFor({timeout:15000});
       const sto=page.getByRole('region',{name:'Активные записи на СТО'});
       await sto.getByRole('heading',{name:`Записи на СТО · ${activeBookings.length}`})
