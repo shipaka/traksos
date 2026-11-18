@@ -25,6 +25,7 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
   const [kind,setKind] = useState<'all'|'truck'|'trailer'|'component'>('all');
   const [make,setMake] = useState('');
   const [system,setSystem] = useState('');
+  const [documentType,setDocumentType] = useState('');
   const [query,setQuery] = useState('');
   const [error,setError] = useState('');
   useEffect(() => {
@@ -49,6 +50,7 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
   const docs = useMemo(() => (payload?.documents ?? []).filter(d => {
     if (kind !== 'all' && d.kind !== kind) return false;
     if (system && d.system !== system) return false;
+    if (documentType && d.type !== documentType) return false;
     // Never treat a component reference as validated for the selected truck.
     if (selectedMake && d.kind !== 'component' && normalize(d.vehicleMake || '') !== normalize(selectedMake)) return false;
     if (selectedModel && d.kind === 'truck' && d.models.length &&
@@ -58,8 +60,9 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
       if (!words.includes(query.trim().toLowerCase())) return false;
     }
     return true;
-  }),[payload,kind,system,query,selectedMake,selectedModel]);
+  }),[payload,kind,system,documentType,query,selectedMake,selectedModel]);
   const systems = [...new Set((payload?.documents ?? []).map(d=>d.system))].sort();
+  const groups = [...new Set(docs.map(d=>d.system))].sort().map(name => ({name,entries:docs.filter(d=>d.system===name)}));
   const canSeeMaster = !!payload?.audiences.includes('master');
 
   return <main className="techbase-page">
@@ -91,6 +94,12 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
             {systems.map(s=><option key={s} value={s}>{s}</option>)}
           </select>
         </label>
+        <label className="stack"><b>Тип материала</b>
+          <select className="field" value={documentType} onChange={e=>setDocumentType(e.target.value)}>
+            <option value="">Любой тип документа</option>
+            {Object.entries(TYPE_LABELS).map(([v,n])=><option key={v} value={v}>{n}</option>)}
+          </select>
+        </label>
         <label className="stack"><b>Марка техники</b>
           <input className="field" value={selectedMake} disabled={!!chosen}
             placeholder="Например, Scania или KRONE" onChange={e=>setMake(e.target.value)} />
@@ -108,15 +117,18 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
     {payload && <div className="stack">
       <div className="between"><h2>Материалы</h2><span className="pill">{docs.length} найдено</span></div>
       {docs.length===0 && <div className="card">Для выбранной модели пока нет подтверждённых ссылок. Снимите фильтр или выберите другую систему. Мы не показываем схемы другой машины как подходящие.</div>}
-      <div className="techbase-grid">
-      {docs.map(d=><article className="card stack techbase-document" key={d.id}>
+      {groups.map(group => <section className="stack" key={group.name}>
+        <h3 className="techbase-system-title">{group.name} <span className="note">({group.entries.length})</span></h3>
+        <div className="techbase-grid">
+        {group.entries.map(d=><article className="card stack techbase-document" key={d.id}>
         <div className="between"><span className="pill">{TYPE_LABELS[d.type]||d.type}</span><span className="note">{d.language} · {d.access==='portal'?'Портал':'Открытый источник'}</span></div>
         <h3>{d.title}</h3>
         <span className="note">{d.vehicleMake||d.componentMake||'Компонент'}{d.models.length?' / '+d.models.join(', '):''} · {d.system}</span>
         <p className="techbase-warning">{d.warning}</p>
         <div className="between"><span className="note">{d.source}</span><a className="btn ghost small" href={d.url} target="_blank" rel="noopener noreferrer">Открыть первоисточник ↗</a></div>
       </article>)}
-      </div>
+        </div>
+      </section>)}
     </div>}
     <div className="techbase-footer-note">TrackSOS показывает ссылки на публикации производителей, не хранит копии без разрешения и не подтверждает применимость автоматически. Инструкции по критически важным тормозным и электрическим системам предназначены для квалифицированных специалистов.</div>
   </main>;
