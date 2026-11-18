@@ -81,9 +81,9 @@ export function registerCommunityPartnerOfferRoutes(r:Router,db:Db,now:()=>Date=
         [c.user.id,new Date(now().getTime()-7*86400000)]);
       if((recent?.count??0)>=2)throw conflict('post_limit','Можно подать не более двух предложений за 7 дней');
       const row=await q.one<{id:string;status:string}>(`insert into
-        community_partner_offers(partner_id,category,display_name,title,description,region_label)
-        values ($1,$2,$3,$4,$5,$6) returning id,status`,
-        [c.user.id,category,input.displayName,input.title,input.description,input.region]);
+        community_partner_offers(partner_id,category,display_name,title,description,region_label,created_at)
+        values ($1,$2,$3,$4,$5,$6,$7) returning id,status`,
+        [c.user.id,category,input.displayName,input.title,input.description,input.region,now()]);
       await q.query(`insert into audit_log(actor_id,action,target,data) values
         ($1,'community.partner_offer_submitted',$2,$3)`,
         [c.user.id,row!.id,{category,region:input.region}]);
