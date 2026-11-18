@@ -423,6 +423,9 @@ export function DriverAir(){
     Promise.resolve({rooms:[]}),[me?.id,access.data?.enabled]);
   const [roomId,setRoomId]=useState<string|null>(null);
   const [view,setView]=useState<'rooms'|'voice'|'ai'|'offers'|'direct'|'profile'|'help'|'notifications'>('rooms');
+  // The AI service is not connected. This controls only a clearly labeled
+  // static preview of future response styles, never creates an AI request.
+  const [aiTone,setAiTone]=useState<'straight'|'humor'|'road'>('humor');
   const [roomPane,setRoomPane]=useState<'chat'|'road'>('chat');
   const [sending,setSending]=useState(false);
   const {run}=useAction();
@@ -511,10 +514,27 @@ export function DriverAir(){
     </section>}
     {view==='ai'&&<section className="card stack" aria-label="ИИ-помощник Эфира в разработке">
       <span className="pill">В разработке</span>
-      <h2>ТраксБот · ИИ-попутчик</h2>
-      <p>Планируем помощника, которого можно будет позвать в водительском чате по обращению @ТраксБот. Он сможет объяснить диагностические коды, предложить безопасные первые проверки, подсказать, как составить заявку, и помочь найти нужную категорию специалистов TrackSOS.</p>
-      <p className="note">Бот будет отвечать только на явное обращение, обозначать себя как ИИ и не публиковать рекламу под видом совета. Водительские личные чаты, точные координаты и данные заявок не будут автоматически передаваться боту.</p>
-      <p className="note">Пока бот не подключён: он не читает сообщения, не формирует ответы и не запускает действия. Технические подсказки не заменяют осмотр специалиста, особенно при неисправностях тормозной системы.</p>
+      <h2>ТраксБот · ИИ-попутчик с характером</h2>
+      <p>Планируем помощника, которого можно будет позвать в водительском чате по обращению @ТраксБот. Он сможет объяснять диагностические коды, предлагать безопасные первые проверки, подсказывать категорию специалиста и помогать оформить заявку.</p>
+      <p>У него будет чувство юмора: лёгкие подколы про железо, дорожные ситуации и жизнь дальнобойщика, но без насмешек над людьми.</p>
+      <div className="stack" aria-label="Пример будущей манеры общения">
+        <b>Каким будет характер ТраксБота</b>
+        <div className="row" role="group" aria-label="Манера общения">
+          <button type="button" className="chip" aria-pressed={aiTone==='straight'} onClick={()=>setAiTone('straight')}>По делу</button>
+          <button type="button" className="chip" aria-pressed={aiTone==='humor'} onClick={()=>setAiTone('humor')}>С юморком</button>
+          <button type="button" className="chip" aria-pressed={aiTone==='road'} onClick={()=>setAiTone('road')}>По-дальнобойному</button>
+        </div>
+        <blockquote className="air-ai-demo">
+          {aiTone==='straight'
+            ? 'Уточним марку, симптомы и коды ошибок. Начнём с безопасных проверок, а при неисправности тормозов потребуется специалист.'
+            : aiTone==='humor'
+              ? 'Если грузовик разговаривает лампочками — это не дискотека. Давай коды ошибок и симптомы, разберёмся по порядку.'
+              : 'Ну что, коллега, железный конь характер показывает? Пиши, что загорелось и что изменилось. Без гадания на гаечных ключах.'}
+        </blockquote>
+        <span className="note">Пример заранее написан для демонстрации стиля. Кнопки переключают только текст образца; настоящий ИИ пока не отвечает.</span>
+      </div>
+      <p className="note">В аварийных ситуациях, при неисправностях тормозов, риске для людей и других серьёзных случаях юмор автоматически отключается. Никакой грубости в адрес пользователей и никакой скрытой рекламы.</p>
+      <p className="note">Бот будет отвечать только на явное обращение, обозначать себя как ИИ и не читать личные чаты, точные координаты или заявки без отдельного осознанного разрешения. Пока бот не подключён: он не читает сообщения и не запускает действия.</p>
       <button type="button" className="btn ghost" onClick={()=>setView('rooms')}>К текстовым чатам</button>
     </section>}
     {view==='offers'&&<PartnerOffers mode="reader"/>}
