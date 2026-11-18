@@ -97,7 +97,7 @@ export function Order({ id }: { id: string }) {
           <a className="btn ghost small" href={`#/new/tow?parallel=${d.id}`}>Согласовать отдельный выезд эвакуатора</a>
         </div>)}
       <EcuOrderPanel order={d} />
-      {d.status === 'completed' && <Review id={id} you={d.you} />
+      {d.status === 'completed' && <Review id={id} you={d.you} />}
 
       {d.status !== 'searching' && d.status !== 'no_performer' && <Chat id={id} status={d.status} />}
       </>}
