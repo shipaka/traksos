@@ -136,3 +136,23 @@ test('mixed order/СТО stage ordinals never change when stage types interleave
   assert.equal(detail.bookings[0].stage_no,2);
   assert.equal(detail.case_number,'М-000009');
 });
+
+
+test('operational CSV separates actual payout and platform commission from client itemization',async()=>{
+  const audit:any[]=[];
+  const svc=new AdminCaseCenter({query:async(_sql:string,params:any[])=>{audit.push(params);return [];}} as any);
+  (svc as any).detail=async()=>({
+    root_id:'root-paid',case_number:'М-000042',
+    stages:[{id:'paid-stage',stage_no:2,number:777,status:'completed',recorded_items:{lines:[],workVerified:false}}],
+    bookings:[],
+    payouts:[{order_id:'paid-stage',amount:180000,commission:10000,status:'paid'}]
+  });
+  const exported=await svc.exportOperationalCsv({id:'admin'} as any,'root-paid');
+  assert.match(exported.csv,/Реестр выплат \(не клиентский счёт\)/);
+  assert.match(exported.csv,/Реестр комиссий \(не налоговая база\)/);
+  assert.ok(exported.csv.includes('180000'));
+  assert.ok(exported.csv.includes('10000'));
+  assert.equal(audit.length,1);
+  assert.equal(audit[0][1],'root-paid');
+  assert.match(exported.notice,/Не является/);
+});
