@@ -70,7 +70,7 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
 
   return <main className="techbase-page">
     <section className="techbase-hero">
-      <div className="techbase-eyebrow">TrackSOS / ТехБаза / {isMaster?'Профессиональная':'Для водителя'}</div>
+      <div className="techbase-eyebrow">TrakSOS / ТехБаза / {isMaster?'Профессиональная':'Для водителя'}</div>
       <h1>{isMaster?'ТехБаза мастера':'ТехБаза водителя'}</h1>
       <p>{isMaster?'Схемы, диагностика, ремонт и документация производителя — с проверкой применимости.':'Эксплуатация, безопасные проверки, инструкции и обслуживание вашего транспорта.'}</p>
       <div className="techbase-hero-actions">
@@ -133,6 +133,6 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
         </div>
       </section>)}
     </div>}
-    <div className="techbase-footer-note">TrackSOS показывает ссылки на публикации производителей, не хранит копии без разрешения и не подтверждает применимость автоматически. Инструкции по критически важным тормозным и электрическим системам предназначены для квалифицированных специалистов.</div>
+    <div className="techbase-footer-note">TrakSOS показывает ссылки на публикации производителей, не хранит копии без разрешения и не подтверждает применимость автоматически. Инструкции по критически важным тормозным и электрическим системам предназначены для квалифицированных специалистов.</div>
   </main>;
 }
