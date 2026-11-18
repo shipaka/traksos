@@ -174,7 +174,7 @@ export class AdminCaseCenter {
         String(stage.stage_no),String(stage.number),stage.status,line.description,String(line.amount),
         line.source,stage.recorded_items?.workVerified?'Проверено с суммой работ':'Требует сверки']);
     }
-    for(const payout of detail.payouts){
+    for(const payout of detail.payouts??[]){
       const stage=detail.stages.find((s:any)=>s.id===payout.order_id);
       if(!stage)continue;
       if(payout.amount!=null)table.push(['Реестр выплат (не клиентский счёт)',detail.case_number||'',
