@@ -373,10 +373,13 @@ export function NewOrder({ service }: { service: string }) {
   const sos = SYMPTOMS.find((p) => p.id === params.get('sos'));
   const sym = sos ?? SYMPTOMS.find((p) => p.id === params.get('p'));
   const fromConsult = params.get('from');
+  const preferredPerformerId = params.get('preferred') ?? '';
   const { me } = useMe();
   const { busy, run } = useAction();
   const pricing = useLoad(() => get('/api/pricing'), []);
   const vehicles = useLoad(() => get('/api/vehicles'), []);
+  const pastPerformers = useLoad(() => preferredPerformerId ? get('/api/my-performers') : Promise.resolve([]), [preferredPerformerId]);
+  const selectedPerformer = (pastPerformers.data ?? []).find((p:any) => p.id === preferredPerformerId);
   const consult = useLoad(() => (fromConsult ? get(`/api/orders/${fromConsult}`) : Promise.resolve(null)), [fromConsult]);
   const [agree, setAgree] = useState(false);
 
@@ -464,6 +467,7 @@ export function NewOrder({ service }: { service: string }) {
       ...carBody(vehicleId, car), groupTrip: groupAllowed && group, night: night ?? undefined, paymentMethod: method,
       ...(isTow ? { destination: destination || undefined, cargo, loaded, driverOnSite } : {}),
       fromConsult: fromConsult || undefined,
+      preferredPerformerId: preferredPerformerId || undefined,
       site: isTow || !Object.keys(site).length ? undefined : { ...site, meet: site.meet || undefined, time: site.time || undefined },
     }));
     if (!r) return;
@@ -503,6 +507,15 @@ export function NewOrder({ service }: { service: string }) {
       </div>
       <SelfOrderWarning me={me} />
       <DriverRules />
+      {preferredPerformerId && <div className="card stack">
+        <b>Повторный вызов знакомого исполнителя</b>
+        <span className="note">{selectedPerformer
+          ? 'Первым пригласим '+(selectedPerformer.name??'вашего специалиста')+'. Если он занят, не подходит или откажется — общий поиск продолжится автоматически.'
+          : pastPerformers.data
+            ? 'Специалист не найден в вашей истории. Вернитесь к списку своих мастеров или вызовите без предпочтения.'
+            : 'Проверяем историю сотрудничества…'}</span>
+        <a className="btn ghost small" href={'#/new/'+service}>Вызвать без предпочтения</a>
+      </div>}
       {!isTow && !sos && (
         <div className="scroll-x" role="tablist" aria-label="Какой мастер нужен">
           {(['electric', 'air', 'autonomy', 'tyre', 'diag'] as const).map((k) => (
@@ -779,7 +792,7 @@ function MyPerformers({ black }: { black: boolean }) {
                 <button className="chip" disabled={busy} aria-pressed={p.pref === 'fav'} onClick={() => set(p.id, p.pref === 'fav' ? null : 'fav', p.pref === 'fav' ? 'Убрано из избранного' : 'В избранном — предлагаем первым')}>{p.pref === 'fav' ? '★ В избранном' : '☆ В избранное'}</button>
                 <button className="chip" disabled={busy} onClick={() => set(p.id, 'hide', 'Больше не предлагаем — он в чёрном списке')}>Не предлагать</button>
               </div>
-              <button className="btn small" onClick={() => go(`new/${p.kind === 'tow' ? 'tow' : p.last_service && p.last_service !== 'consult' ? p.last_service : 'electric'}`)}>Вызвать снова</button>
+              <button className="btn small" disabled={!p.jobs} onClick={() => go(`new/${p.kind === 'tow' ? 'tow' : p.last_service && p.last_service !== 'consult' ? p.last_service : 'electric'}?preferred=${encodeURIComponent(p.id)}`)}>{p.jobs ? 'Пригласить снова' : 'Нет завершённых выездов'}</button>
             </>
           )}
         </div>

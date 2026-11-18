@@ -42,6 +42,7 @@ export interface CreateOrderInput {
   fromConsult?: string;
   /** Следующий самостоятельный этап того же обращения. */
   continueFrom?: string;
+  preferredPerformerId?: string;
 }
 
 /** Подсказка мастера после консультации */
@@ -131,6 +132,17 @@ export class OrdersService {
       model = model ?? v.model;
       year = year ?? v.year;
     }
+    // A targeted invitation is only valid for a performer who already worked
+    // for this fleet; arbitrary account IDs cannot be targeted.
+    const preferredId = i.preferredPerformerId ?? null;
+    if (preferredId) {
+      const previousHire = await this.db.one(
+        "select 1 from orders past join performer_profiles p on p.user_id=past.performer_id" +
+        " where past.client_id=$1 and past.performer_id=$2 and past.status='completed'" +
+        " and p.kind=$3 limit 1",
+        [clientId,preferredId,performerKindFor(i.service)]);
+      if (!previousHire) throw forbidden('Пригласить первым можно только ранее работавшего с вашим парком специалиста этого направления');
+    }
     // Critical: validate the declared location independently of the price zone,
     // before INSERT, bank hold, owner approval or dispatch. Never guess by IP.
     try { assertRegionalTariff(i, true); }
@@ -171,15 +183,15 @@ export class OrdersService {
           zone_id, night, group_trip, tier, brand, estimate, payment_method, client_fee_pct, destination, cargo, loaded, driver_on_site,
           consult_of, discount_amount, discount_reason, model, year, site, status, owner_note,
           commission_pct_override, commission_campaign_id, case_root_id, continuation_of,
-          create_request_key,create_request_hash,location_region)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37) returning *`,
+          create_request_key,create_request_hash,location_region,preferred_performer_id)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38) returning *`,
       [clientId, user.id, i.vehicleId ?? null, i.service, !!i.isSos, i.problem ?? null, i.description ?? null, isConsult ? null : i.address ?? null,
         isConsult ? null : i.lat ?? null, isConsult ? null : i.lng ?? null, est.zoneId, night, est.group, tier, brand, est, method, feePct,
         i.destination ?? null, i.cargo ?? null, i.loaded ?? null, i.driverOnSite ?? null,
         consultOf, discount, discount ? CONSULT_DISCOUNT : null, model, year, isConsult ? null : i.site ?? null,
         gate ? 'awaiting_owner' : 'searching', gate, campaign?.commission_pct ?? null, campaign?.id ?? null,
         previous ? (previous.case_root_id ?? previous.id) : null, previous?.id ?? null,
-        requestKey,requestHash, isConsult ? null : i.regionId],
+        requestKey,requestHash, isConsult ? null : i.regionId, preferredId],
     ).catch(async (e: any) => {
       if (e?.code === '23505' && e?.constraint === 'orders_create_key_unique') {
         const prior = await this.db.one<any>(
@@ -278,6 +290,8 @@ export class OrdersService {
     const all = await this.settings.all();
     const order = await this.db.one('select * from orders where id=$1', [orderId]);
     if (!order || order.status !== 'searching') return;
+    // One standard first invitation, if the chosen former performer is eligible.
+    if (order.preferred_performer_id && await this.invitePreferred(order, all, exclude)) return;
     if (!all.dispatch.priorityFirst) return this.auction.start(orderId, exclude);
     const kind = performerKindFor(order.service);
     const list = await this.db.query<Candidate>(
@@ -314,6 +328,47 @@ export class OrdersService {
     await this.db.query('update orders set dispatch_started_at = coalesce(dispatch_started_at, now()) where id=$1', [orderId]);
     await this.event(this.db, orderId, null, 'dispatch_started', { candidates: ranked.length });
     await this.ringNext(orderId);
+  }
+
+  /** Invite a previously hired specialist once, under ordinary route and capacity checks. */
+  private async invitePreferred(order: any, all: Awaited<ReturnType<SettingsService['all']>>, exclude: string[]) {
+    const performerId = order.preferred_performer_id as string;
+    const prior = await this.db.one(
+      'select 1 from order_dispatch where order_id=$1 and performer_id=$2', [order.id,performerId]);
+    if (prior) return false;
+    const list = await this.db.query<Candidate>(
+      "select p.user_id,p.kind,p.specialties,p.brands,p.is_priority,p.paused,p.line_status,p.verification," +
+      " p.lat,p.lng,p.prep_minutes,u.rating,p.accepts_group,u.status as user_status,p.schedule,p.off_schedule_until,p.extras," +
+      " (select coalesce(-sum(amount),0)::int from ledger_entries l" +
+      " where l.performer_id=p.user_id and l.kind in ('cash_commission','cash_commission_paid')) as cash_debt" +
+      " from performer_profiles p join users u on u.id=p.user_id" +
+      " where p.user_id=$1 and p.kind=$2 and not exists" +
+      " (select 1 from orders x where x.performer_id=p.user_id and" +
+      " x.status in ('accepted','en_route','arrived','working','awaiting_confirmation')" +
+      " and not (x.service='consult' and x.status='awaiting_confirmation'))",
+      [performerId,performerKindFor(order.service)]);
+    const policy = this.auction.stages(order, all.dispatch);
+    const stage = policy?.[Number(order.sos_dispatch_stage??0)]??null;
+    const ranked = rankCandidates(order as any,list,{
+      radiusKm: stage?.radiusKm??all.dispatch.radiusKm, maxCandidates:1,
+      cashDebtLimit: all.fees.cashDebtLimit, now:this.now(),
+      exclude: new Set([...exclude,order.client_id,order.created_by,...(await this.blockedBy(order.client_id))]),
+    });
+    const eligible = await this.auction.stagedCandidates(order,list,ranked,stage);
+    const candidate = eligible[0];
+    if (!candidate) return false;
+    const inserted = await this.enlist(performerId,
+      "insert into order_dispatch(order_id,performer_id,rank,distance_km,road_eta_minutes)" +
+      " select $1,$2,0,$3,$4 from orders where id=$1 and status='searching'" +
+      " on conflict(order_id,performer_id) do nothing returning id",
+      [order.id,performerId,candidate.distanceKm,candidate.roadEtaMinutes],true);
+    if (!inserted) return false;
+    await this.db.query(
+      "update orders set dispatch_started_at=coalesce(dispatch_started_at,$2)" +
+      " where id=$1 and status='searching'",[order.id,this.now()]);
+    await this.event(this.db,order.id,null,'preferred_invited',{performerId});
+    await this.ringNext(order.id);
+    return true;
   }
 
   /** Звоним следующему приоритетному; очередь кончилась — общие торги */
@@ -826,6 +881,7 @@ export class OrdersService {
       bill: o.bill ?? null, billingStep: Number((await this.settings.get('pricing')).billingStepMinutes ?? 60),
       site: o.site, workStartedAt: o.work_started_at ?? null, waitRate: performer?.wait_rate ?? null, ownerNote: o.owner_note ?? null, partMode: o.part_mode ?? null, waitStartedAt: o.wait_started_at ?? null, waitMinutes: o.wait_minutes ?? 0,
       consultHint: o.consult_hint, consultOf: o.consult_of,
+      preferredPerformerId: o.preferred_performer_id ?? null,
       continuationOf: o.continuation_of ?? null, caseRootId,
       caseSummary: {
         rootId: caseRootId, stages: caseSteps, serviceBookings: caseServiceStages,
