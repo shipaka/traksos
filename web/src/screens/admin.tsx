@@ -2,6 +2,7 @@ import '../adminExperience.css';
 import { AdminServices } from './base.tsx';
 import { ModQueue } from './moderation.tsx';
 import { AdminSummary } from './adminSummary.tsx';
+import { AdminCaseCenter } from './adminCaseCenter.tsx';
 import { AdminSettings } from './adminSettings.tsx';
 import { AdminDiagnostics } from './adminDiagnostics.tsx';
 import { AdminAccountAccess } from './adminAccountAccess.tsx';
@@ -15,13 +16,14 @@ import { get, post, put, rub, fmtPhone, fmtTime, authedImage } from '../api.ts';
 import { STATUS, SERVICES, LINE } from '../dict.ts';
 import { useLoad, useAction, Loading } from '../ui.tsx';
 
-type AdminSection = 'stats' | 'search' | 'support' | 'verify' | 'people' | 'access' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'settings' | 'demand' | 'announcements' | 'vehicleServices' | 'diagnostics';
+type AdminSection = 'cases' | 'stats' | 'search' | 'support' | 'verify' | 'people' | 'access' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'settings' | 'demand' | 'announcements' | 'vehicleServices' | 'diagnostics';
 type AdminNavItem = { id: AdminSection; name: string; description: string; symbol: string };
 const ADMIN_GROUPS: { name: string; items: AdminNavItem[] }[] = [
   { name: 'Операционная работа', items: [
     { id: 'queue', name: 'Модерация', description: 'Очередь проверок и обращений', symbol: '01' },
     { id: 'summary', name: 'Сводка', description: 'Общее состояние платформы', symbol: '02' },
-    { id: 'orders', name: 'Заявки', description: 'Работы и статусы исполнения', symbol: '03' },
+    { id: 'cases', name: 'Заявки и мультизаявки', description: 'Номера, история, модерация и расчёты', symbol: '03' },
+    { id: 'orders', name: 'Все заказы', description: 'Отдельные рабочие заказы исполнителей', symbol: '03+' },
     { id: 'dispatch', name: 'Распределение', description: 'Назначения и управление вызовами', symbol: '04' },
     { id: 'demand', name: 'Проблемные заявки', description: 'Найти и устранить задержки', symbol: '05' },
     { id: 'support', name: 'Обращения', description: 'Поддержка пользователей и партнёров', symbol: '06' },
@@ -133,6 +135,7 @@ export function Admin({ initialSection }: { initialSection?: string }) {
             {tab === 'offers' && <Offers />}
             {tab === 'people' && <People />}
             {tab === 'access' && <AdminAccountAccess />}
+            {tab === 'cases' && <AdminCaseCenter />}
             {tab === 'orders' && <AllOrders />}
             {tab === 'dispatch' && <Dispatch />}
             {tab === 'payments' && <Payments />}
