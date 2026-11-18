@@ -287,7 +287,10 @@ export class OrdersService {
                 where l.performer_id = p.user_id and l.kind in ('cash_commission','cash_commission_paid')) as cash_debt
          from performer_profiles p join users u on u.id = p.user_id
         where p.kind = $1 and p.user_id <> $2 and p.is_priority
-          and not exists (select 1 from orders x where x.performer_id=p.user_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (x.service='consult' and x.status='awaiting_confirmation'))`,
+          and not exists (select 1 from orders x where x.performer_id=p.user_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (x.status='awaiting_confirmation' and (
+                   x.service='consult' or exists (
+                     select 1 from order_unilateral_closures uc
+                       where uc.order_id=x.id and uc.status in ('pending_client','disputed')))))`,
       [kind, order.client_id],
     );
     const already = await this.db.query<{ performer_id: string }>('select performer_id from order_dispatch where order_id=$1', [orderId]);
@@ -330,7 +333,10 @@ export class OrdersService {
     const next = await this.db.query<{ id: string; performer_id: string; distance_km: number | null }>(
       `update order_dispatch set status='ringing', ring_until=$2, sent_at=$3
         where id in (select d.id from order_dispatch d where d.order_id=$1 and d.status='queued'
-                       and not exists (select 1 from orders x where x.performer_id=d.performer_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (x.service='consult' and x.status='awaiting_confirmation'))
+                       and not exists (select 1 from orders x where x.performer_id=d.performer_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (x.status='awaiting_confirmation' and (
+                   x.service='consult' or exists (
+                     select 1 from order_unilateral_closures uc
+                       where uc.order_id=x.id and uc.status in ('pending_client','disputed')))))
                      order by d.rank limit $4)
         returning id, performer_id, distance_km`,
       [orderId, until, this.now(), free],
@@ -614,7 +620,10 @@ export class OrdersService {
       await this.guarded(q, `update orders set status=$2, amount_confirmed_at=$3, completed_at=$3
           where id=$1 and status='awaiting_confirmation' and work_amount is not distinct from $4 and performer_id=$5`,
         [orderId, to, this.now(), o.work_amount, o.performer_id]);
-      await q.query(`update performer_profiles set line_status='online' where user_id=$1 and line_status='on_job'`, [o.performer_id]);
+      // A client can confirm an older emergency job while the performer is already
+      // executing a new job. Never put that worker 'online' mid-trip.
+      if(!(await this.busyWith(q,o.performer_id,orderId)))
+        await q.query(`update performer_profiles set line_status='online' where user_id=$1 and line_status='on_job'`, [o.performer_id]);
       if(unilateral){
         await q.query(
           "update order_unilateral_closures set status='accepted',answered_at=$2,answered_by=$3 "+
