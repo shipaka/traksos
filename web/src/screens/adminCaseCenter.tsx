@@ -232,6 +232,17 @@ export function AdminCaseCenter() {
             </div>)}
             <button type="button" className="btn ghost small" disabled={exporting}
               onClick={downloadCsv}>{exporting?'Подготовка…':'Скачать операционную детализацию CSV'}</button>
+            <h4>Выплаты исполнителям и комиссии</h4>
+            {!detail.payouts?.length?<p className="note">Записей о выплатах пока нет.</p>
+            :detail.payouts.map((p:any)=><article key={p.id} className="case-detail-stage">
+              <div className="case-detail-between">
+                <b>Заказ №{stages.find((s:any)=>s.id===p.order_id)?.number||'—'}</b>
+                <span className="case-reg-chip">{p.status}</span>
+              </div>
+              <div className="case-detail-between"><span>Сумма в реестре выплат</span><b>{cash(p.amount)}</b></div>
+              <div className="case-detail-between"><span>Комиссия по записи</span><b>{cash(p.commission)}</b></div>
+              <small>Выплачено: {date(p.paid_at)} · Для налоговой базы требуется проверка договора и первичных документов</small>
+            </article>)}
             <h4>Записи платёжной системы</h4>
             {!detail.payments?.length?<p className="note">Сопоставленных платежей нет.</p>
             :detail.payments.map((p:any)=><div className="case-detail-payment" key={p.id}>
