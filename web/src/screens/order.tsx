@@ -62,6 +62,7 @@ export function Order({ id }: { id: string }) {
       {d.you === 'candidate' && <CandidateView d={d} onDone={o.reload} />}
 
       {!isConsult && d.you !== 'candidate' && <Steps status={d.status} service={d.service} events={d.events} unilateralStatus={d.unilateralClosure?.status} />}
+      {isPerformer && (isConsult ? <ConsultFinish d={d} onDone={o.reload} /> : <PerformerActions d={d} onDone={o.reload} />)}
       {isConsult && !isPerformer && d.you !== 'candidate' && <ConsultClient d={d} />}
       {d.consultFrom?.hint && <ConsultHintCard from={d.consultFrom} />}
       {d.status === 'no_performer' && !isPerformer && <Retry id={id} onDone={o.reload} />}
@@ -78,7 +79,7 @@ export function Order({ id }: { id: string }) {
         events={d.events} createdAt={d.createdAt} acceptedAt={d.acceptedAt}
         arrivedAt={d.arrivedAt} completedAt={d.completedAt} isAdmin={d.you === 'admin'} />}
       {(d.you === 'client' || d.you === 'admin') && d.paymentMethod !== 'cash' && <PaymentsList id={id} admin={d.you === 'admin'} />}
-      {isPerformer && (isConsult ? <ConsultFinish d={d} onDone={o.reload} /> : <PerformerActions d={d} onDone={o.reload} />)}
+
       {!isPerformer && ['arrived', 'working'].includes(d.status) && d.service !== 'consult' && <WorkInProgress d={d} />}
       {d.you !== 'candidate' && d.you !== 'admin' && d.service !== 'tow' && d.service !== 'consult' && ['arrived', 'working'].includes(d.status) && <PartPicker d={d} onDone={o.reload} performer={isPerformer} />}
       {!isPerformer && d.status === 'awaiting_confirmation' && (
