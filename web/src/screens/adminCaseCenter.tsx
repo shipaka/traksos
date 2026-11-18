@@ -173,6 +173,9 @@ export function AdminCaseCenter() {
                 <div className="case-detail-stage-dates">
                   <span>Открыта: {date(item.created_at)}</span>
                   <span>Принята: {date(item.accepted_at)}</span>
+                  <span>Выехал: {date(item.en_route_at)}</span>
+                  <span>Прибыл: {date(item.arrived_at)}</span>
+                  <span>Начал работу: {date(item.work_started_at)}</span>
                   <span>Закрыта: {date(item.completed_at||item.cancelled_at)}</span>
                 </div>
                 <a className="case-detail-link" href={'#/order/'+item.id}>Открыть рабочую заявку</a>
