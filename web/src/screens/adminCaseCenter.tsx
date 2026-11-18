@@ -62,10 +62,29 @@ export function AdminCaseCenter() {
   useEffect(()=>{
     if(!selected)return;
     dialog.current?.focus();
-    const close=(e:KeyboardEvent)=>{if(e.key==='Escape')setSelected(null);};
-    document.addEventListener('keydown',close);
-    return ()=>document.removeEventListener('keydown',close);
-  },[selected]);
+    const previousOverflow=document.body.style.overflow;
+    document.body.style.overflow='hidden';
+    const keydown=(e:KeyboardEvent)=>{
+      if(e.key==='Escape'){
+        e.preventDefault();
+        if(focused)setFocused(null); else setSelected(null);
+        return;
+      }
+      if(e.key!=='Tab'||!dialog.current)return;
+      const all=Array.from(dialog.current.querySelectorAll<HTMLElement>(
+        'a[href],button:not([disabled]),textarea:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])'
+      )).filter(x=>x.getBoundingClientRect().width>0);
+      if(!all.length){e.preventDefault();dialog.current.focus();return;}
+      const first=all[0],last=all[all.length-1];
+      if(e.shiftKey&&(document.activeElement===first||document.activeElement===dialog.current)){
+        e.preventDefault();last.focus();
+      }else if(!e.shiftKey&&(document.activeElement===last||document.activeElement===dialog.current)){
+        e.preventDefault();first.focus();
+      }
+    };
+    document.addEventListener('keydown',keydown);
+    return ()=>{document.removeEventListener('keydown',keydown);document.body.style.overflow=previousOverflow;};
+  },[selected,focused]);
   const open=(id:string)=>{setTab('overview');setFocused(null);setComment('');setSelected(id);};
   const drill=(kind:FocusCard['kind'],id?:string|null)=>{if(id){setFocused({kind,id});dialog.current?.focus();}};
   const save=async()=>{
