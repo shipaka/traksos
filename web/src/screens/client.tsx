@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { get, post, put, del, rub, fmtTime, fmtPhone } from '../api.ts';
+import { get, post, postOrder, put, del, rub, fmtTime, fmtPhone } from '../api.ts';
 import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF, ON_SITE, seriesHint } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFields, LiveStrip, type VehicleValue } from '../ui.tsx';
 import { BookingRows, BookingList, isOpenBooking } from './base.tsx';
@@ -263,7 +263,7 @@ export function Consult() {
   const c = pricing.consult ?? { price: 70_000, backDiscount: 20_000, backHours: 48 };
 
   async function submit() {
-    const r = await run(() => post('/api/orders', {
+    const r = await run(() => postOrder( {
       service: 'consult', problem: sym?.id, description: description.trim() || undefined,
       vehicleId: vehicleId || undefined, ...carBody(vehicleId, car), paymentMethod: 'cash',
     }));
@@ -457,7 +457,7 @@ export function NewOrder({ service }: { service: string }) {
   const methods = pricing.data?.payments;
 
   async function submit() {
-    const r = await run(() => post('/api/orders', {
+    const r = await run(() => postOrder( {
       service, isSos: !!sos, problem: sos?.id, description: description || undefined, address: address || undefined,
       lat: geo?.lat, lng: geo?.lng, regionId: regionId || undefined, zoneId: zoneId || 'phone',
       tier: service === 'tow' ? undefined : tier, vehicleId: vehicleId || undefined,

@@ -28,6 +28,7 @@ export function OpsDashboard() {
   const [filter,setFilter]=useState('all');
   const [onlyOpen,setOnlyOpen]=useState(false);
   const report = useLoad(() => get('/api/admin/demand?days='+days+'&wait='+wait),[days,wait]);
+  const sla = useLoad(() => get('/api/admin/order-sla?days='+days),[days]);
   const {busy,run}=useAction();
   const d=report.data;
   const incidents=(d?.incidents??[]).filter((x:any)=>
@@ -80,6 +81,27 @@ export function OpsDashboard() {
             <td>{r.cancelled_before_acceptance}</td><td>{r.waiting_now}</td></tr>)}</tbody></table></div>
       </div>
       <div className="card stack">
+        <b>Контроль зависших этапов · третий табличный блок</b>
+        <span className="note">Поиск, ожидание выезда, дорога, работа, подтверждение. Контрольный интервал — не доказательство вины. Выезд далеко за КАД требует отдельной проверки времени маршрута. Указанная причина остаётся в журнале.</span>
+        <button className="btn ghost small" style={{alignSelf:'flex-start'}} onClick={()=>sla.reload()}>Обновить нарушения этапов</button>
+        {!sla.data ? <Loading error={sla.error}/> : <>
+          <div className="scroll-x"><table><thead><tr><th>Заявка / этап</th><th>Начало этапа</th><th>Контрольная дата</th><th>Текущий статус</th><th>Разбор</th></tr></thead>
+            <tbody>{sla.data.incidents.length ? sla.data.incidents.map((i:any)=>
+              <SlaIncidentRow key={i.id} incident={i} onSaved={()=>sla.reload()}/>) :
+              <tr><td colSpan={5}>Зависших этапов за период нет.</td></tr>}</tbody>
+          </table></div>
+          <b>Повторяющиеся случаи за 30 дней</b>
+          <span className="note">Только подтверждённые администратором нарушения попадают в счётчик. Три и более — повод для индивидуальной проверки, а не автоматического штрафа.</span>
+          <div className="scroll-x"><table><thead><tr><th>Исполнитель</th><th>Подтверждено</th><th>На проверке</th><th>Рекомендация</th></tr></thead>
+            <tbody>{sla.data.repeat.length ? sla.data.repeat.map((p:any)=>
+              <tr key={p.performer_id}><td>{p.performer_name||'Без имени'}</td>
+                <td>{p.confirmed}</td><td>{p.pending}</td>
+                <td>{p.confirmed>=3?'Индивидуальный разбор систематичности':p.confirmed>=1?'Предупреждение / анализ':'Проверить причины'}</td></tr>) :
+              <tr><td colSpan={4}>Повторных инцидентов нет.</td></tr>}</tbody>
+          </table></div>
+        </>}
+      </div>
+      <div className="card stack">
         <b>Реестр проблемных заявок</b>
         <span className="note">Показываются до 250 последних случаев за период. Отметка «Разобрано» не удаляет заявку и не изменяет её исходный статус.</span>
         <div className="row" style={{flexWrap:'wrap'}}>
@@ -95,6 +117,35 @@ export function OpsDashboard() {
       </div>
     </>}
   </div>;
+}
+
+function SlaIncidentRow({incident:i,onSaved}:{incident:any;onSaved:()=>void}) {
+  const [state,setState]=useState<'investigating'|'confirmed'|'excused'>(
+    i.review_state==='confirmed'||i.review_state==='excused'?i.review_state:'investigating');
+  const [note,setNote]=useState(i.review_note??'');
+  const {busy,run}=useAction();
+  const names:Record<string,string>={
+    searching:'Поиск исполнителя',awaiting_owner:'Ждёт владельца',accepted:'Не выехал',
+    en_route:'В пути',arrived:'На месте',working:'Работает',awaiting_confirmation:'Ждёт клиента',
+  };
+  return <tr>
+    <td><a href={'#/order/'+i.order_id}>№{i.number}</a>{i.is_sos?' · SOS':''}<div className="note">{names[i.stage]??i.stage}</div></td>
+    <td>{mskTime(i.stage_started_at)}</td>
+    <td>{mskTime(i.due_at)}</td>
+    <td>{STATUS[i.current_status]?.name??i.current_status}</td>
+    <td><div className="stack" style={{minWidth:210,gap:5}}>
+      <span className="note">{i.review_state==='confirmed'?'Подтверждено':i.review_state==='excused'?'Без вины':i.review_state==='investigating'?'Разбирается':'Ожидает разбора'}</span>
+      <select className="field" aria-label="Решение по инциденту" value={state}
+        disabled={busy} onChange={e=>setState(e.target.value as typeof state)}>
+        <option value="investigating">В работе</option><option value="confirmed">Подтверждено</option>
+        <option value="excused">Обоснованная задержка</option>
+      </select>
+      <input className="field" value={note} maxLength={1200} placeholder="Причина и доказательства"
+        aria-label="Объяснение и доказательства" onChange={e=>setNote(e.target.value)}/>
+      <button className="btn ghost small" disabled={busy||note.trim().length<10}
+        onClick={async()=>{if(await run(()=>put('/api/admin/order-sla/'+i.id+'/review',{state,note}),'Разбор сохранён'))onSaved();}}>Сохранить</button>
+    </div></td>
+  </tr>;
 }
 
 function IncidentRow({order:o,editable,onSave,busy}:{order:any;editable:boolean;onSave:(state:'open'|'investigating'|'resolved',note:string)=>Promise<void>;busy:boolean}) {
