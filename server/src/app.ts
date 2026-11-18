@@ -40,6 +40,7 @@ import { StandingService } from './services/standing.ts';
 import { ShopService } from './services/shop.ts';
 import { ShopCatalogService } from './services/shopCatalog.ts';
 import { ModerationService } from './services/moderation.ts';
+import { UnilateralClosures } from './services/unilateralClosures.ts';
 import { WarrantyClaimsService } from './services/warranty.ts';
 import { WarrantyRemediationService } from './services/warrantyRemediation.ts';
 import { WarrantyRecourseService } from './services/warrantyRecourse.ts';
@@ -106,6 +107,7 @@ export function createApp(d: Deps) {
   const shop = new ShopService(d.db, notifier, settings);
   const partCatalog = new ShopCatalogService(d.db, settings);
   const moderation = new ModerationService(d.db, notifier, reviews, now, d.sms);
+  const unilateral = new UnilateralClosures(d.db, orders, notifier, moderation, now);
   const warranty = new WarrantyClaimsService(d.db, notifier, now);
   const warrantyRemediation = new WarrantyRemediationService(d.db, notifier, now);
   const warrantyRecourse = new WarrantyRecourseService(d.db, notifier, now);
@@ -1028,6 +1030,20 @@ export function createApp(d: Deps) {
     extras: z.array(z.object({ name: z.string().min(2).max(60), amount: money })).max(10).optional(),
     result: z.enum(['solved', 'cause_found', 'not_found']).optional(), note: z.string().max(300).optional(),
   }), c.body)));
+  // Work-complete without the customer: operational release, NOT payment confirmation.
+  r.post('/api/orders/:id/emergency-close', performerRoles, (c: AuthedCtx) => {
+    const b=parse(z.object({
+      requestKey:z.string().min(8).max(100),
+      reason:z.enum(['client_offline','client_unreachable','client_absent','other']),
+      note:z.string().trim().min(10).max(1500),
+      workFinished:z.literal(true),
+    }),c.body);
+    return unilateral.request(c.user,c.params.id,b);
+  });
+  r.post('/api/orders/:id/emergency-dispute', true, (c: AuthedCtx) => {
+    const b=parse(z.object({reason:z.string().trim().min(10).max(1500)}),c.body);
+    return unilateral.disagree(c.user,c.params.id,b.reason);
+  });
   // Неоплата: клиент отказывается платить — сообщает мастер или сам клиент. Сразу поддержка и случай модератору.
   // not_done — клиент: работа не выполнена (причина обязательна); refuse — клиент отказывается без причины
   // (экран заранее напомнил ему условия оферты); client_refuses — мастер: клиент не платит.
