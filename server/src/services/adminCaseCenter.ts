@@ -83,7 +83,7 @@ export class AdminCaseCenter {
     const stages=await this.db.query<any>([
       'select o.id,o.number,o.service,o.is_sos,o.status,o.client_id,o.created_by,o.performer_id,',
       'o.vehicle_id,o.brand,o.model,o.year,o.problem,o.description,o.address,',
-      'o.created_at,o.accepted_at,o.completed_at,o.cancelled_at,',
+      'o.created_at,o.accepted_at,o.en_route_at,o.arrived_at,o.work_started_at,o.completed_at,o.cancelled_at,',
       'o.estimate,o.call_out_amount,o.work_amount,o.discount_amount,o.payment_method,',
       'o.result,o.result_note,o.continuation_of,',
       'coalesce(u.company_name,u.name) as performer_name,cl.name as client_name',
