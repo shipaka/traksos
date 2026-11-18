@@ -3,6 +3,7 @@ import { get, post, fmtTime, rub } from '../api.ts';
 import { SERVICES, STATUS } from '../dict.ts';
 import '../adminCaseCenter.css';
 
+type FocusCard = { kind:'order'|'vehicle'|'booking'|'person'; id:string }; 
 type Scope = 'all'|'active'|'closed'|'moderated';
 type DetailTab = 'overview'|'timeline'|'chat'|'finance'|'moderation'|'notes';
 const scopes: {id:Scope;name:string}[] = [
@@ -35,6 +36,7 @@ export function AdminCaseCenter() {
   const [detail,setDetail]=useState<any|null>(null);
   const [error,setError]=useState('');
   const [tab,setTab]=useState<DetailTab>('overview');
+  const [focused,setFocused]=useState<FocusCard|null>(null);
   const [comment,setComment]=useState('');
   const [saving,setSaving]=useState(false);
   const [exporting,setExporting]=useState(false);
@@ -64,7 +66,8 @@ export function AdminCaseCenter() {
     document.addEventListener('keydown',close);
     return ()=>document.removeEventListener('keydown',close);
   },[selected]);
-  const open=(id:string)=>{setTab('overview');setComment('');setSelected(id);};
+  const open=(id:string)=>{setTab('overview');setFocused(null);setComment('');setSelected(id);};
+  const drill=(kind:FocusCard['kind'],id?:string|null)=>{if(id){setFocused({kind,id});dialog.current?.focus();}};
   const save=async()=>{
     if(!selected||comment.trim().length<5||saving)return;
     setSaving(true);
@@ -89,6 +92,11 @@ export function AdminCaseCenter() {
     finally{setExporting(false);}
   };
   const stages=detail?.stages||[],bookings=detail?.bookings||[];
+  const currentOrder=focused?.kind==='order'?stages.find((s:any)=>s.id===focused.id):null;
+  const currentBooking=focused?.kind==='booking'?bookings.find((b:any)=>b.id===focused.id):null;
+  const currentPerson=focused?.kind==='person'?stages.reduce((p:any,s:any)=>p??(
+    s.client_id===focused.id?{id:s.client_id,name:s.client_name,role:'Клиент'}:
+    s.performer_id===focused.id?{id:s.performer_id,name:s.performer_name,role:'Исполнитель'}:null),null):null;
   const segments=[...stages.map((s:any)=>({...s,source_kind:'order'})),
     ...bookings.map((b:any)=>({...b,source_kind:'booking'}))]
     .sort((a:any,b:any)=>(a.stage_no||0)-(b.stage_no||0));
@@ -149,26 +157,118 @@ export function AdminCaseCenter() {
         </header>
         <nav className="case-detail-tabs" aria-label="Разделы обращения">
           {tabs.map(x=><button key={x.id} type="button" className={tab===x.id?'active':''}
-            aria-current={tab===x.id?'page':undefined} onClick={()=>setTab(x.id)}>{x.name}</button>)}
+            aria-current={tab===x.id?'page':undefined} onClick={()=>{setFocused(null);setTab(x.id);}}>{x.name}</button>)}
         </nav>
         <div className="case-detail-body">
           {error&&<div className="case-reg-error" role="alert">{error}</div>}
           {!detail&&!error&&<p className="note">Загружаю историю обращения…</p>}
-          {detail&&tab==='overview'&&<>
+
+          {detail&&focused&&<div className="case-inspect-pane">
+            <div className="case-inspect-top">
+              <button type="button" className="case-detail-link case-inspect-back" onClick={()=>setFocused(null)}>← Вернуться к обращению</button>
+              <span className="case-reg-chip">Просмотр администратора · операции по правам</span>
+            </div>
+            {focused.kind==='vehicle'&&<>
+              <h4>Карточка автомобиля</h4>
+              {!detail.vehicle||detail.vehicle.id!==focused.id
+                ?<p className="case-detail-warning">В этом обращении автомобиль не привязан к подтверждённой карточке. Данные по марке из описания заявки нельзя выдавать за запись из гаража.</p>
+                :<div className="case-inspect-grid">
+                  <div><span>Марка и модель</span><b>{detail.vehicle.brand||'—'} {detail.vehicle.model||''}</b></div>
+                  <div><span>Год выпуска</span><b>{detail.vehicle.year||'Не указан'}</b></div>
+                  <div><span>Госномер</span><b>{detail.vehicle.plate||'Не указан'}</b></div>
+                  <div><span>Прицеп</span><b>{detail.vehicle.trailer_plate||'Не указан'}</b></div>
+                </div>}
+              <h4>Владелец и водитель</h4>
+              <div className="case-inspect-links">
+                {detail.vehicle?.owner_id&&<button type="button" className="case-inspect-target" onClick={()=>drill('person',detail.vehicle.owner_id)}>Владелец · открыть профиль <span>›</span></button>}
+                {detail.vehicle?.driver_id&&<a className="case-inspect-target" href={'#/admin/user/'+detail.vehicle.driver_id}>Водитель · полная карточка <span>›</span></a>}
+              </div>
+              <h4>История обращений этого ТС</h4>
+              {!detail.vehicle_history?.length&&!detail.vehicle_history_bookings?.length?<p className="note">Других зарегистрированных обращений по этому ТС нет.</p>:null}
+              {detail.vehicle_history?.map((v:any)=><a key={v.id} className="case-inspect-target" href={'#/order/'+v.id}>
+                <span>Заказ №{v.number} · {SERVICES[v.service]?.name||v.service} · {date(v.created_at)}</span><b>Открыть ›</b>
+              </a>)}
+              {detail.vehicle_history_bookings?.map((b:any)=><a key={b.id} className="case-inspect-target" href={'#/booking/'+b.id}>
+                <span>СТО №{b.number} · {b.center_name||'Сервис'} · {date(b.created_at)}</span><b>Открыть ›</b>
+              </a>)}
+              <p className="note">История берётся по внутреннему идентификатору машины. Одного совпадения марки или госномера недостаточно для объединения чужих автомобилей.</p>
+            </>}
+            {focused.kind==='order'&&<>
+              {!currentOrder?<p className="case-reg-error">Этот этап отсутствует среди заказов обращения.</p>:<>
+                <h4>Рабочая заявка №{currentOrder.number}</h4>
+                <div className="case-inspect-grid">
+                  <div><span>Статус</span><b>{status(currentOrder.status)}</b></div>
+                  <div><span>Услуга</span><b>{SERVICES[currentOrder.service]?.name||currentOrder.service}</b></div>
+                  <div><span>Выезд</span><b>{date(currentOrder.en_route_at)}</b></div>
+                  <div><span>На месте</span><b>{date(currentOrder.arrived_at)}</b></div>
+                  <div><span>Начало работы</span><b>{date(currentOrder.work_started_at)}</b></div>
+                  <div><span>Завершение</span><b>{date(currentOrder.completed_at||currentOrder.cancelled_at)}</b></div>
+                </div>
+                <p>{currentOrder.problem||currentOrder.description||'Описание отсутствует'}</p>
+                <div className="case-inspect-links">
+                  {currentOrder.vehicle_id&&<button type="button" className="case-inspect-target" onClick={()=>drill('vehicle',currentOrder.vehicle_id)}>Автомобиль и история ТС <span>›</span></button>}
+                  {currentOrder.client_id&&<button type="button" className="case-inspect-target" onClick={()=>drill('person',currentOrder.client_id)}>Клиент · профиль <span>›</span></button>}
+                  {currentOrder.performer_id&&<button type="button" className="case-inspect-target" onClick={()=>drill('person',currentOrder.performer_id)}>Исполнитель · профиль <span>›</span></button>}
+                  <button type="button" className="case-inspect-target" onClick={()=>{setFocused(null);setTab('chat');}}>Чат по обращению <span>›</span></button>
+                  <a className="case-inspect-target" href={'#/order/'+currentOrder.id}>Полная рабочая заявка и разрешённые действия <span>›</span></a>
+                </div>
+                <p className="case-detail-warning">Для смены суммы, статуса или назначения используйте только реальные полномочные операции в рабочей заявке. Обязательные причины и аудит не обходятся этим окном.</p>
+              </>}
+            </>}
+            {focused.kind==='booking'&&<>
+              {!currentBooking?<p className="case-reg-error">Связанная запись СТО не найдена.</p>:<>
+                <h4>Запись СТО №{currentBooking.number}</h4>
+                <div className="case-inspect-grid">
+                  <div><span>Сервис</span><b>{currentBooking.center_name||'—'}</b></div>
+                  <div><span>Статус</span><b>{currentBooking.status}</b></div>
+                  <div><span>Записан</span><b>{String(currentBooking.when_day||'—')} {currentBooking.when_time||''}</b></div>
+                  <div><span>Прибыл</span><b>{date(currentBooking.arrived_at)}</b></div>
+                  <div><span>Готов</span><b>{date(currentBooking.ready_at)}</b></div>
+                  <div><span>Закрыт</span><b>{date(currentBooking.closed_at)}</b></div>
+                </div>
+                <p>{currentBooking.need||'Работы не указаны'}</p>
+                <a className="case-inspect-target" href={'#/booking/'+currentBooking.id}>Открыть полную запись и документы СТО <span>›</span></a>
+              </>}
+            </>}
+            {focused.kind==='person'&&<>
+              <h4>{currentPerson?.role||'Участник обращения'} · карточка пользователя</h4>
+              <p>{currentPerson?.name||'Имя в заказе не указано'}</p>
+              <a className="case-inspect-target" href={'#/admin/user/'+focused.id}>Открыть полный профиль, историю и разрешённые администратору действия <span>›</span></a>
+              <p className="note">Открытие профиля — просмотр с административными правами, не вход от имени другого пользователя.</p>
+            </>}
+          </div>}
+
+          {detail&&!focused&&tab==='overview'&&<>
             <div className="case-detail-summary">
               <div><span>Открыто</span><b>{date(stages[0]?.created_at)}</b></div>
               <div><span>Заказов</span><b>{stages.length}</b></div>
               <div><span>Связанных СТО</span><b>{bookings.length}</b></div>
               <div><span>Случаев модерации</span><b>{detail.moderation?.length||0}</b></div>
             </div>
+            <div className="case-inspect-overview">
+              <span className="case-reg-kicker">СВЯЗАННЫЕ КАРТОЧКИ</span>
+              <div className="case-inspect-links">
+                {detail.vehicle?.id
+                  ?<button type="button" className="case-inspect-target" onClick={()=>drill('vehicle',detail.vehicle.id)}>
+                    <span>Автомобиль · {detail.vehicle.brand||'ТС'} {detail.vehicle.model||''} · {detail.vehicle.plate||'без госномера'}</span><b>Открыть ›</b>
+                  </button>
+                  :<span className="note">Карточка ТС не привязана к этому обращению</span>}
+                {stages[0]?.client_id&&<button type="button" className="case-inspect-target" onClick={()=>drill('person',stages[0].client_id)}>
+                  <span>Клиент · {stages[0].client_name||'без имени'}</span><b>Открыть ›</b>
+                </button>}
+              </div>
+            </div>
             <h4>Этапы обращения</h4>
             {segments.map((item:any)=>item.source_kind==='order'?
               <article key={'order-'+item.id} className="case-detail-stage">
                 <div className="case-detail-between">
-                  <b>Этап {item.stage_no} · заказ №{item.number}</b>
+                  <button type="button" className="case-inspect-text-link" onClick={()=>drill('order',item.id)}>
+                    Этап {item.stage_no} · заказ №{item.number} ↗</button>
                   <span className="case-reg-chip">{status(item.status)}</span>
                 </div>
-                <div>{SERVICES[item.service]?.name||item.service} · {item.performer_name||'Исполнитель ещё не выбран'}</div>
+                <div>{SERVICES[item.service]?.name||item.service} · {item.performer_id
+                  ?<button type="button" className="case-inspect-text-link" onClick={()=>drill('person',item.performer_id)}>{item.performer_name||'Исполнитель'} ↗</button>
+                  :'Исполнитель ещё не выбран'}</div>
                 <small>{item.problem||item.description||'Описание не заполнено'}</small>
                 <div className="case-detail-stage-dates">
                   <span>Открыта: {date(item.created_at)}</span>
@@ -182,7 +282,8 @@ export function AdminCaseCenter() {
               </article>:
               <article key={'booking-'+item.id} className="case-detail-stage">
                 <div className="case-detail-between">
-                  <b>Этап {item.stage_no} · СТО · запись №{item.number}</b>
+                  <button type="button" className="case-inspect-text-link" onClick={()=>drill('booking',item.id)}>
+                    Этап {item.stage_no} · СТО · запись №{item.number} ↗</button>
                   <span className="case-reg-chip">{item.status}</span>
                 </div>
                 <div>{item.center_name} · {item.need}</div>
@@ -195,9 +296,13 @@ export function AdminCaseCenter() {
               </article>)}
             <h4>Предыдущие обращения по автомобилю</h4>
             {!detail.vehicle_history?.length?<p className="note">Другие записи по указанному автомобилю не найдены.</p>
-              :detail.vehicle_history.map((v:any)=><p key={v.id} className="case-detail-history">№{v.number} · {SERVICES[v.service]?.name||v.service} · {date(v.created_at)} · {status(v.status)}</p>)}
+              :detail.vehicle_history.map((v:any)=><a key={v.id} className="case-inspect-target" href={'#/order/'+v.id}>
+                  Заказ №{v.number} · {SERVICES[v.service]?.name||v.service} · {date(v.created_at)} <span>›</span></a>)}
+            {detail.vehicle_history_bookings?.map((b:any)=><a key={'history-booking-'+b.id} className="case-inspect-target" href={'#/booking/'+b.id}>
+              СТО №{b.number} · {b.center_name||'Сервис'} · {date(b.created_at)} <span>›</span>
+            </a>)}
           </>}
-          {detail&&tab==='timeline'&&<>
+          {detail&&!focused&&tab==='timeline'&&<>
             <h4>Хронология этапов · подтверждённые события</h4>
             {!detail.events?.length?<p className="note">Событий пока нет.</p>
               :detail.events.map((e:any,i:number)=><div key={i} className="case-detail-event">
@@ -207,7 +312,7 @@ export function AdminCaseCenter() {
               </div>)}
             <p className="note">Временные отметки берутся из журнала; пропущенные события не восстанавливаются предположительно.</p>
           </>}
-          {detail&&tab==='chat'&&<>
+          {detail&&!focused&&tab==='chat'&&<>
             <h4>Переписка по заявкам</h4>
             {!detail.chat?.length?<p className="note">Сообщений по этим заказам пока нет.</p>
               :detail.chat.map((m:any)=><div className="case-detail-message" key={m.id}>
@@ -216,7 +321,7 @@ export function AdminCaseCenter() {
               </div>)}
             <p className="note">Ответ клиенту направляется через соответствующий защищённый чат заявки с сохранением прав доступа.</p>
           </>}
-          {detail&&tab==='finance'&&<>
+          {detail&&!focused&&tab==='finance'&&<>
             <h4>Фактические записи по расчётам</h4>
             <p className="case-detail-warning">{detail.document_status}</p>
             {stages.map((s:any)=><article className="case-detail-stage" key={s.id}>
@@ -254,22 +359,23 @@ export function AdminCaseCenter() {
             </div>)}
             <p className="note">Построчные детали и отчёты агента появятся только после подтверждённых смет, деталей, первичных документов и фискальных чеков.</p>
           </>}
-          {detail&&tab==='moderation'&&<>
+          {detail&&!focused&&tab==='moderation'&&<>
             <h4>Модерация и редакции</h4>
             {!detail.moderation?.length?<p className="note">Связанных случаев модерации нет. Административные действия смотри во вкладке «Журнал».</p>
               :detail.moderation.map((m:any)=><article className="case-detail-stage" key={m.id}>
-                <div className="case-detail-between"><b>Случай №{m.number} · {m.title}</b><span>{m.status}</span></div>
+                <div className="case-detail-between"><a className="case-inspect-text-link" href={'#/admin/case/'+m.id}>Случай №{m.number} · {m.title} ↗</a><span>{m.status}</span></div>
                 <small>Открыт: {date(m.created_at)} · Решение: {m.decision||'ожидается'}</small>
                 {m.decision_note&&<p>{m.decision_note}</p>}
               </article>)}
             <a className="case-detail-link" href="#/admin/section/queue">Перейти в очередь модерации</a>
           </>}
-          {detail&&tab==='notes'&&<>
+          {detail&&!focused&&tab==='notes'&&<>
             <h4>Комментарии и изменения администратора</h4>
             {!detail.notes?.length?<p className="note">Комментариев и зарегистрированных административных изменений пока нет.</p>
               :detail.notes.map((n:any)=><div className="case-detail-event" key={n.id}>
                 <time>{date(n.created_at)}</time><div><b>{n.actor_name} · {n.action}</b>
-                <small>{n.data?.comment||n.data?.reason||'Действие внесено в журнал'}</small></div>
+                <small>{n.data?.comment||n.data?.reason||'Действие внесено в журнал'}</small>
+                {n.data?.orderId&&<button type="button" className="case-inspect-text-link" onClick={()=>drill('order',n.data.orderId)}>К заказу ↗</button>}</div>
               </div>)}
             <label className="case-detail-note-label" htmlFor="case-admin-note">Добавить комментарий к обращению</label>
             <textarea id="case-admin-note" className="field" rows={4} maxLength={1500}
