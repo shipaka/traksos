@@ -118,7 +118,7 @@ export class AuthService {
         // The provider chooses the caller ID and rings the user's phone.
         // Save only a keyed hash; never return the code or call metadata.
         const deliveredCode = await this.sms.verificationCall!(phone, publicIp ? ip : '-1');
-        if (!/^\\d{4}$/.test(deliveredCode)) throw new Error('Неверный формат кода от провайдера');
+        if (!/^\d{4}$/.test(deliveredCode)) throw new Error('Неверный формат кода от провайдера');
         const stored = await this.db.one<{ code_hash: string }>(
           'update auth_codes set code_hash=$3 where phone=$1 and code_hash=$2 returning code_hash',
           [phone, hash, hmac(phone + ':' + deliveredCode)],
@@ -161,18 +161,31 @@ export class AuthService {
     if (!phone) throw bad('bad_phone', 'Неверный номер');
     // Re-check on verification: users may forge accountType or re-use an old SMS.
     if (purpose === 'register') await this.ensureInsuranceRegistration(phone, accountType ?? (role as AccountChoice | undefined));
-    const row = await this.db.one<{ code_hash: string; expires_at: Date; attempts: number; purpose: string }>(
-      'select code_hash, expires_at, attempts, purpose from auth_codes where phone=$1', [phone],
-    );
-    if (!row || new Date(row.expires_at) < this.now()) throw bad('code_expired', 'Код устарел, запросите новый');
-    if (row.purpose !== purpose && isProd) throw bad('wrong_purpose', 'Запросите код для выбранной операции');
     if (isProd && !passwordValid(password ?? '')) throw bad('weak_password', 'Пароль — от 10 до 128 символов');
-    if (row.attempts >= MAX_ATTEMPTS) throw new HttpError(429, 'too_many_attempts', 'Слишком много попыток, запросите новый код');
-    if (row.code_hash !== hmac(phone + ':' + code.trim())) {
-      await this.db.query('update auth_codes set attempts = attempts + 1 where phone=$1', [phone]);
-      throw bad('wrong_code', 'Неверный код');
-    }
-    await this.db.query('delete from auth_codes where phone=$1', [phone]);
+    // A four-digit code proves phone possession; it is never a password.
+    // Serialize both issuance and verification, preventing concurrent guessing
+    // from bypassing MAX_ATTEMPTS or consuming a valid code multiple times.
+    // Return an error rather than throwing inside the transaction so a wrong
+    // attempt COMMITs the increment and is shared across all server processes.
+    const outcome = await this.db.tx(async q => {
+      await q.query('select pg_advisory_xact_lock(hashtext($1))', ['sms:' + phone]);
+      const row = await q.one<{ code_hash: string; expires_at: Date; attempts: number; purpose: string }>(
+        'select code_hash, expires_at, attempts, purpose from auth_codes where phone=$1 for update', [phone],
+      );
+      if (!row || new Date(row.expires_at) < this.now())
+        return { error: bad('code_expired', 'Код устарел, запросите новый') };
+      if (row.purpose !== purpose && isProd)
+        return { error: bad('wrong_purpose', 'Запросите код для выбранной операции') };
+      if (row.attempts >= MAX_ATTEMPTS)
+        return { error: new HttpError(429, 'too_many_attempts', 'Слишком много попыток, запросите новый код') };
+      if (row.code_hash !== hmac(phone + ':' + code.trim())) {
+        await q.query('update auth_codes set attempts=attempts+1 where phone=$1', [phone]);
+        return { error: bad('wrong_code', 'Неверный код') };
+      }
+      await q.query('delete from auth_codes where phone=$1', [phone]);
+      return { error: null };
+    });
+    if (outcome.error) throw outcome.error;
 
     // Production never grants administrator privileges from control of an SMS number alone.
     // Historical development fixtures retain the old behavior solely outside production.
