@@ -4,6 +4,28 @@ import type { Db } from '../db/index.ts';
 import type { AuthUser } from '../http/router.ts';
 import { bad, notFound } from '../http/router.ts';
 
+export function recordedStageLines(stage: any, events: any[]) {
+  const lines: {kind:string;description:string;amount:number;source:string}[]=[];
+  const add=(kind:string,description:string,value:any,source:string)=>{
+    if(value==null||!Number.isFinite(Number(value))||Number(value)<0)return;
+    lines.push({kind,description,amount:Number(value),source});
+  };
+  add('callout','Выезд исполнителя',stage.call_out_amount,'orders.call_out_amount');
+  const proposed=events.filter(e=>e.order_id===stage.id&&e.type==='amount_proposed'&&e.data?.bill);
+  const bill=proposed.length?proposed[proposed.length-1].data.bill:null;
+  if(bill){
+    if(Number(bill.time)>0)add('work','Работа по времени',bill.time,'order_events.amount_proposed');
+    if(Number(bill.wait)>0)add('wait','Ожидание',bill.wait,'order_events.amount_proposed');
+    for(const extra of Array.isArray(bill.extras)?bill.extras:[])
+      add('extra',String(extra.name||'Дополнительная позиция').slice(0,200),extra.amount,'order_events.amount_proposed');
+  }else{
+    add('work','Работы (без построчной расшифровки)',stage.work_amount,'orders.work_amount');
+  }
+  const billed=lines.filter(x=>x.kind!=='callout').reduce((n,x)=>n+x.amount,0);
+  const workVerified=stage.work_amount!=null && (!bill||Number(stage.work_amount)===billed);
+  return {lines,workVerified,quoteOnly:stage.status!=='completed'};
+}
+
 export class AdminCaseCenter {
   constructor(private db: Db) {}
 
@@ -119,11 +141,42 @@ export class AdminCaseCenter {
       root_id:rootId,
       case_number:multi&&registry?'М-'+String(registry.multi_number).padStart(6,'0'):null,
       multi,
-      stages:stages.map((s,i)=>({...s,stage_no:i+1})),
+      stages:stages.map((s,i)=>({...s,stage_no:i+1,recorded_items:recordedStageLines(s,events)})),
       bookings:bookings.map((b,i)=>({...b,stage_no:stages.length+i+1})),
       events,payments,moderation,notes,chat,vehicle_history:vehicleHistory,
       document_status:'Итоговый счёт требует подтверждённых построчных позиций и первичных документов'
     };
+  }
+
+  async exportOperationalCsv(admin: AuthUser, anyOrderId: string) {
+    const detail=await this.detail(admin,anyOrderId);
+    const quote=(v:unknown)=>{
+      const value=String(v??'');
+      const secured=/^[=+@-]/.test(value)?"'"+value:value;
+      return '"'+secured.replace(/"/g,'""')+'"';
+    };
+    const table=[
+      ['Тип','Мультизаявка','Порядок этапа','Номер заказа','Статус','Название позиции','Сумма коп.','Источник','Проверка']
+    ];
+    for(const stage of detail.stages){
+      const lines=stage.recorded_items?.lines||[];
+      if(!lines.length)table.push(['Сведения',detail.case_number||'',String(stage.stage_no),
+        String(stage.number),stage.status,'Построчные позиции не подтверждены','','','Нет данных']);
+      for(const line of lines)table.push(['Операционная детализация, не чек',detail.case_number||'',
+        String(stage.stage_no),String(stage.number),stage.status,line.description,String(line.amount),
+        line.source,stage.recorded_items?.workVerified?'Проверено с суммой работ':'Требует сверки']);
+    }
+    for(const b of detail.bookings){
+      table.push(['СТО (свод, не первичный документ)',detail.case_number||'',String(b.stage_no),
+        String(b.number),b.status,'Работы СТО без деталей первички',
+        b.amount==null?'':String(b.amount),'service_bookings.amount','Требует сверки']);
+    }
+    await this.db.query(
+      "insert into audit_log(actor_id,action,target,data) values ($1,'admin.case_export',$2,$3)",
+      [admin.id,detail.root_id,{format:'csv',caseNumber:detail.case_number,stageCount:detail.stages.length}]);
+    return {filename:'traksos-case-'+(detail.case_number||detail.stages[0]?.number||'case')+'.csv',
+      csv:'\uFEFF'+table.map(row=>row.map(quote).join(';')).join('\r\n'),
+      notice:'Операционный реестр. Не является кассовым чеком, счётом-фактурой или отчётом агента.'};
   }
 
   async note(admin: AuthUser, anyOrderId: string, rawComment: string) {
