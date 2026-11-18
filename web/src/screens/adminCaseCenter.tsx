@@ -246,6 +246,7 @@ export function AdminCaseCenter() {
                   <div><span>Закрыт</span><b>{date(currentBooking.closed_at)}</b></div>
                 </div>
                 <p>{currentBooking.need||'Работы не указаны'}</p>
+                {currentBooking.center_id&&<a className="case-inspect-target" href={'#/services/'+currentBooking.center_id}>Открыть страницу СТО <span>›</span></a>}
                 <a className="case-inspect-target" href={'#/booking/'+currentBooking.id}>Открыть полную запись и документы СТО <span>›</span></a>
               </>}
             </>}
@@ -402,6 +403,7 @@ export function AdminCaseCenter() {
             {!detail.notes?.length?<p className="note">Комментариев и зарегистрированных административных изменений пока нет.</p>
               :detail.notes.map((n:any)=><div className="case-detail-event" key={n.id}>
                 <time>{date(n.created_at)}</time><div><b>{n.actor_name} · {n.action}</b>
+                {n.actor_id&&<a className="case-inspect-text-link" href={'#/admin/user/'+n.actor_id}>Профиль автора ↗</a>}
                 <small>{n.data?.comment||n.data?.reason||'Действие внесено в журнал'}</small>
                 {n.data?.orderId&&<button type="button" className="case-inspect-text-link" onClick={()=>drill('order',n.data.orderId)}>К заказу ↗</button>}</div>
               </div>)}
