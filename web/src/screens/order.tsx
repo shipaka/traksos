@@ -403,6 +403,7 @@ function Money({ d }: { d: any }) {
   if(d.service==='ecu')return <section className="card stack" aria-label="Финансы стационарного ремонта ЭБУ">
     <b>Итоговая стоимость ЭБУ</b>
     {m.callOut>0&&<div className="sum"><span>Согласованная цена диагностики</span><b>{rub(m.callOut)}</b></div>}
+    {d.ecuDiagnosticQuote?.scope&&<p className="note">Согласованный объём диагностики: {d.ecuDiagnosticQuote.scope}</p>}
     {!proposed?<p className="note">Начальная заявка бесплатна. До диагностики вы подтвердили стоимость и объём работ выбранного специалиста; дополнительные работы и ремонт оплачиваются только после новой отдельной сметы.</p>:<>
       <div className="sum"><span>Диагностика и выполненные работы</span><b>{rub(m.amount)}</b></div>
       {m.clientFee>0&&<div className="sum"><span>Сервисный сбор площадки</span><span>{rub(m.clientFee)}</span></div>}
