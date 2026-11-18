@@ -57,6 +57,7 @@ import { registerCommunityRoutes } from './services/community.ts';
 import { registerCommunityDirectRoutes } from './services/communityDirect.ts';
 import { CommunityNotifications,registerCommunityNotificationRoutes } from './services/communityNotifications.ts';
 import { registerCommunityRoadRoutes } from './services/communityRoad.ts';
+import { registerCommunityPartnerOfferRoutes } from './services/communityPartnerOffers.ts';
 import { registerRealNearbyHelpRoutes } from './services/realNearbyHelp.ts';
 import {legacyTariffScope,legacyPricingWarning,legacyTariffZoneMismatch} from './domain/pricingRegion.ts';
 import { registerKnowledgeOrderRoutes } from './services/communityKnowledgeOrder.ts';
@@ -152,6 +153,7 @@ export function createApp(d: Deps) {
   registerCommunityDirectRoutes(r, d.db, notifier, communityNotifications);
   registerCommunityNotificationRoutes(r,d.db,communityNotifications);
   registerCommunityRoadRoutes(r, d.db, notifier);
+  registerCommunityPartnerOfferRoutes(r,d.db,now);
   registerRealNearbyHelpRoutes(r,d.db,now);
   registerKnowledgeOrderRoutes(r, d.db);
   // Register fixed appeal listing before /pro-cases/:id dynamic paths.
