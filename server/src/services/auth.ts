@@ -26,13 +26,13 @@ function staffRoleAllowed(phone: string, roles: string[]): boolean {
 /** Human-memorable passphrases are welcome; reject only obvious weak choices. */
 export function passwordValid(p: string): boolean {
   if (p.length < 10 || p.length > 128) return false;
-  const compact = p.normalize('NFKC').toLocaleLowerCase('ru-RU').replace(/\\s+/g, '');
-  if (compact.length < 10 || /^(.)\\1+$/.test(compact)) return false;
+  const compact = p.normalize('NFKC').toLocaleLowerCase('ru-RU').replace(/\s+/g, '');
+  if (compact.length < 10 || /^(.)\1+$/.test(compact)) return false;
   if (['password123','password1234','qwerty12345','qwertyuiop','1234567890',
       '0123456789','0987654321','admin12345','пароль12345',
       'traksos1234','tracksos1234'].includes(compact)) return false;
   // A short numeric code belongs to local Android unlock, not remote login.
-  if (/^\\d{10,14}$/.test(compact)) return false;
+  if (/^\d{10,14}$/.test(compact)) return false;
   return true;
 }
 function hashPassword(password: string) {
