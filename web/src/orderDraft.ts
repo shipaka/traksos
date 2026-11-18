@@ -41,7 +41,7 @@ function hexToBytes(value:string):Uint8Array {
 async function key() {
   const token=getToken();
   if(!token||!crypto?.subtle)throw Error('Локальные черновики доступны только после входа через защищённое соединение');
-  const digest=await crypto.subtle.digest('SHA-256',encoder.encode('TrackSOS-order-draft-v1:'+token));
+  const digest=await crypto.subtle.digest('SHA-256',encoder.encode('TrakSOS-order-draft-v1:'+token));
   return crypto.subtle.importKey('raw',digest,'AES-GCM',false,['encrypt','decrypt']);
 }
 export function clearNewOrderDraft() {
