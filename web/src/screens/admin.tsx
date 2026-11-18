@@ -2,6 +2,7 @@ import '../adminExperience.css';
 import { AdminServices } from './base.tsx';
 import { ModQueue } from './moderation.tsx';
 import { AdminSummary } from './adminSummary.tsx';
+import { DispatchConsole } from './DispatchConsole.tsx';
 import { AdminSettings } from './adminSettings.tsx';
 import { AdminDiagnostics } from './adminDiagnostics.tsx';
 import { AdminAccountAccess } from './adminAccountAccess.tsx';
@@ -15,10 +16,11 @@ import { get, post, put, rub, fmtPhone, fmtTime, authedImage } from '../api.ts';
 import { STATUS, SERVICES, LINE } from '../dict.ts';
 import { useLoad, useAction, Loading } from '../ui.tsx';
 
-type AdminSection = 'stats' | 'search' | 'support' | 'verify' | 'people' | 'access' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'settings' | 'demand' | 'announcements' | 'vehicleServices' | 'diagnostics';
+type AdminSection = 'desk' | 'stats' | 'search' | 'support' | 'verify' | 'people' | 'access' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'settings' | 'demand' | 'announcements' | 'vehicleServices' | 'diagnostics';
 type AdminNavItem = { id: AdminSection; name: string; description: string; symbol: string };
 const ADMIN_GROUPS: { name: string; items: AdminNavItem[] }[] = [
   { name: 'Операционная работа', items: [
+    { id: 'desk', name: 'Диспетчерская', description: 'Все активные вызовы и сигналы риска на одном экране', symbol: '00' },
     { id: 'queue', name: 'Модерация', description: 'Очередь проверок и обращений', symbol: '01' },
     { id: 'summary', name: 'Сводка', description: 'Общее состояние платформы', symbol: '02' },
     { id: 'orders', name: 'Заявки', description: 'Работы и статусы исполнения', symbol: '03' },
@@ -50,7 +52,7 @@ const ADMIN_SECTIONS: AdminSection[] = ADMIN_GROUPS.flatMap(group => group.items
 
 export function Admin({ initialSection }: { initialSection?: string }) {
   const [tab, setTab] = useState<AdminSection>(() =>
-    ADMIN_SECTIONS.includes(initialSection as AdminSection) ? initialSection as AdminSection : 'queue');
+    ADMIN_SECTIONS.includes(initialSection as AdminSection) ? initialSection as AdminSection : 'desk');
   const [navOpen, setNavOpen] = useState(false);
   const [filter, setFilter] = useState('');
   const selected = ADMIN_GROUPS.flatMap(group => group.items).find(item => item.id === tab)!;
@@ -73,7 +75,7 @@ export function Admin({ initialSection }: { initialSection?: string }) {
         <h1>Администратор</h1>
         <p>Заявки, партнёры, страхование, финансы и качество сервиса — в одном рабочем пространстве.</p>
         <div className="admin-command-actions">
-          <button type="button" className="btn" onClick={() => navigate('summary')}>Открыть общую сводку</button>
+          <button type="button" className="btn" onClick={() => navigate('desk')}>Открыть диспетчерскую</button>
           <button type="button" className="btn ghost" onClick={() => navigate('access')}>Добавить номер / передать проблему разработчику</button>
           <a className="btn ghost" href="#/admin/test-center">Тестирование всех кабинетов (без реальных действий)</a>
         </div>
@@ -116,6 +118,7 @@ export function Admin({ initialSection }: { initialSection?: string }) {
             <p>{selected.description}</p>
           </header>
           <div className="admin-stage-content">
+            {tab === 'desk' && <DispatchConsole />}
             {tab === 'stats' && <Stats />}
             {tab === 'demand' && <OpsDashboard />}
             {tab === 'announcements' && <WorkerCommunications />}
@@ -142,7 +145,7 @@ export function Admin({ initialSection }: { initialSection?: string }) {
           <div className="admin-mobile-quick">
             <div className="admin-mobile-quick-heading"><b>Быстрые переходы</b><small>Частые задачи администратора</small></div>
             <div className="admin-mobile-quick-grid">
-              {(['access','verify','dispatch','payments','search','offers','support','stats'] as AdminSection[]).map(id => {
+              {(['desk','access','verify','dispatch','search','support','stats'] as AdminSection[]).map(id => {
                 const item = ADMIN_GROUPS.flatMap(group => group.items).find(entry => entry.id === id)!;
                 return <button type="button" key={id} aria-label={item.name}
                   className="admin-mobile-quick-item" onClick={() => navigate(id)}>
