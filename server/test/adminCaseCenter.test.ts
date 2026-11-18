@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { AdminCaseCenter } from '../src/services/adminCaseCenter.ts';
+import { AdminCaseCenter, recordedStageLines } from '../src/services/adminCaseCenter.ts';
 
 test('multi-case number is displayed only for two or more linked stages', async () => {
   const fakeDb:any={
@@ -75,4 +75,35 @@ test('admin case detail preserves stage numbers and audit-logs sensitive reads',
   assert.equal(detail.case_number,'М-000007');
   assert.deepEqual(detail.stages.map(x=>[x.stage_no,x.number]),[[1,300],[2,302]]);
   assert.equal(audit,1);
+});
+
+test('mechanic extras and spare parts remain separate itemized lines, never a fabricated receipt',()=>{
+  const recorded=recordedStageLines(
+    {id:'work-1',status:'awaiting_confirmation',call_out_amount:150000,work_amount:250000},
+    [{order_id:'work-1',type:'amount_proposed',data:{bill:{
+      time:200000,wait:10000,extras:[{name:'Запчасть',amount:40000}],total:250000
+    }}}]
+  );
+  assert.equal(recorded.lines.length,4);
+  assert.deepEqual(recorded.lines.map(x=>x.amount),[150000,200000,10000,40000]);
+  assert.equal(recorded.workVerified,true);
+  assert.equal(recorded.quoteOnly,true);
+});
+
+test('operational CSV is audited and protects against spreadsheet formula injection',async()=>{
+  const logs:any[]=[];
+  const db:any={query:async(_sql:string,params:any[])=>{logs.push(params);return [];}};
+  const svc=new AdminCaseCenter(db);
+  (svc as any).detail=async()=>({
+    root_id:'root-1',case_number:'М-000010',
+    stages:[{stage_no:1,number:456,status:'completed',recorded_items:{
+      lines:[{kind:'extra',description:'=unsafe()',amount:40000,source:'order_events.amount_proposed'}],
+      workVerified:true
+    }}],bookings:[]
+  });
+  const result=await svc.exportOperationalCsv({id:'admin-1'} as any,'root-1');
+  assert.ok(result.csv.includes("'=unsafe()"));
+  assert.ok(result.csv.includes('40000'));
+  assert.match(result.notice,/Не является/);
+  assert.equal(logs[0][1],'root-1');
 });
