@@ -56,6 +56,11 @@ const timer = setInterval(() => {
   app.orders.tick().catch((e) => console.error('[tick]', e));
   app.auction.tick().catch((e) => console.error('[auction]', e));
 }, 2_000);
+// Check stalled order stages once per minute, separately from the two-second call queue.
+const orderSlaTimer = setInterval(() => {
+  void app.orderSla.tick().catch((e) => console.error('[order-sla]', e));
+}, 60_000);
+void app.orderSla.tick().catch((e) => console.error('[order-sla]', e));
 // First human response deadline, one durable overdue notification at 60 min.
 // Database row locks and event uniqueness protect multi-instance operation.
 const supportSlaTimer = setInterval(() => {
@@ -109,6 +114,7 @@ for (const sig of ['SIGINT', 'SIGTERM'] as const) {
     clearInterval(hourly);
     clearInterval(captureTimer);
     clearInterval(supportSlaTimer);
+    clearInterval(orderSlaTimer);
     clearInterval(developerDeliveryTimer);
     server.close();
     await db.close();

@@ -18,6 +18,7 @@ import { SANDBOX_HANDOFF_PROTOCOL, assessSandboxPeerHealth } from './services/sa
 import { ReferralService } from './services/referral.ts';
 import { ProfilesService } from './services/profiles.ts';
 import { OrdersService } from './services/orders.ts';
+import { OrderSlaService } from './services/orderSla.ts';
 import { ChatService } from './services/chat.ts';
 import { ReviewsService, REVIEW_TAGS } from './services/reviews.ts';
 import { OffersService } from './services/offers.ts';
@@ -91,6 +92,7 @@ export function createApp(d: Deps) {
   const support = new SupportService(d.db, notifier, orders, now);
   const stats = new StatsService(d.db, now);
   const ops = new OpsService(d.db, now);
+  const orderSla = new OrderSlaService(d.db, orders, notifier, now);
   orders.ops = ops;
   const centers = new ServiceCenters(d.db, notifier, settings, support, now);
   const referral = new ReferralService(d.db, settings, notifier, now);
@@ -410,6 +412,15 @@ export function createApp(d: Deps) {
   r.post('/api/support/:id/close', true, (c: AuthedCtx) => support.close(c.user, c.params.id));
   r.get('/api/live', true, () => stats.live());
   r.get('/api/admin/stats', ['admin'], (c: AuthedCtx) => stats.overview(Math.min(365, Math.max(1, Number(c.query.get('days') ?? 30)))));
+
+  // Stalled stages are incidents, not automatic fault findings or financial charges.
+  r.get('/api/admin/order-sla', ['admin'], (c: AuthedCtx) =>
+    orderSla.report(Math.min(365,Math.max(1,Number(c.query.get('days') ?? 30)))));
+  r.put('/api/admin/order-sla/:id/review', ['admin'], (c: AuthedCtx) => {
+    const b = parse(z.object({ state:z.enum(['investigating','confirmed','excused']),
+      note:z.string().trim().min(10).max(1200) }),c.body);
+    return orderSla.review(c.user,c.params.id,b.state,b.note);
+  });
 
   // Operational demand analysis does not overwrite or hide any order.
   r.get('/api/admin/demand', ['admin'], (c: AuthedCtx) =>
@@ -1384,7 +1395,7 @@ export function createApp(d: Deps) {
     }
   }
 
-  return { handle, hub, auth, settings, orders, payments, auction, documents, admin, support, developerReportDelivery, warranty, warrantyRemediation, warrantyRecourse, profiles, chat, reviews, offers, notifier, privacy, ops, router: r };
+  return { handle, hub, auth, settings, orders, payments, auction, documents, admin, support, developerReportDelivery, warranty, warrantyRemediation, warrantyRecourse, profiles, chat, reviews, offers, notifier, privacy, ops, orderSla, router: r };
 }
 
 export type App = ReturnType<typeof createApp>;
