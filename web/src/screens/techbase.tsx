@@ -16,12 +16,12 @@ const KIND_LABELS = { all:'Все типы', truck:'Грузовики', trailer
 const TYPE_LABELS: Record<string,string> = { operation:'Эксплуатация',maintenance:'ТО',diagnostics:'Диагностика',wiring:'Схемы',parts:'Запчасти',service:'Ремонт' };
 const normalize = (s:string) => s.toLowerCase().replace(/[^a-zа-яё0-9]+/gi,'').replace('мерседесбенц','mercedesbenz');
 
-export function TechBase({ audience }: { audience:Audience }) {
+export function TechBase({ audience, initialVehicleId = '' }: { audience:Audience; initialVehicleId?:string }) {
   const { me } = useMe();
   const isMaster = audience === 'master';
   const [payload,setPayload] = useState<Payload|null>(null);
   const [vehicles,setVehicles] = useState<GarageVehicle[]>([]);
-  const [vehicleId,setVehicleId] = useState('');
+  const [vehicleId,setVehicleId] = useState(initialVehicleId);
   const [kind,setKind] = useState<'all'|'truck'|'trailer'|'component'>('all');
   const [make,setMake] = useState('');
   const [system,setSystem] = useState('');
