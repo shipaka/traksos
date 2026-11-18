@@ -1,0 +1,16 @@
+.partner-offers{display:flex;flex-direction:column;gap:20px;min-width:0}
+.partner-offers h2{margin:0;font-size:clamp(1.2rem,2vw,1.55rem)}
+.partner-offers h3{margin:4px 0 0}
+.partner-offers p{margin:4px 0;line-height:1.45;overflow-wrap:anywhere}
+.partner-offers-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;max-width:900px}
+.partner-offers-form>label{display:flex;flex-direction:column;gap:7px;font-size:.9rem}
+.partner-offers-form>label:nth-child(4){grid-column:1/-1}
+.partner-offers-form>button{justify-self:start}
+.partner-offers-form input,.partner-offers-form textarea{width:100%;min-width:0;box-sizing:border-box}
+.partner-offers-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.partner-offer{display:flex;flex-direction:column;gap:9px;min-width:0;overflow-wrap:anywhere}
+.partner-offer>small{opacity:.75}
+.partner-offer>p{white-space:pre-wrap}
+.partner-offer>label{display:flex;flex-direction:column;gap:6px}
+@media(max-width:700px){.partner-offers-grid,.partner-offers-form{grid-template-columns:minmax(0,1fr)}
+.partner-offers-form>label:nth-child(4){grid-column:auto}}
