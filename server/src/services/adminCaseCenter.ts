@@ -51,7 +51,8 @@ export class AdminCaseCenter {
       'or mc.booking_id in (select b.id from service_bookings b where b.case_root_id=r.id))',
       'or exists (select 1 from audit_log al where',
       'al.target in (select s.id::text from orders s where s.id=r.id or s.case_root_id=r.id)',
-      "and al.action in ('order.resolve','order.discount'))) as moderated",
+      "and al.action in ('order.resolve','order.discount'))",
+      "or exists (select 1 from audit_log al where al.target=r.id::text and al.action='admin.case_note')) as moderated",
       'from orders r',
       'left join users cl on cl.id=r.client_id',
       'left join vehicles v on v.id=r.vehicle_id',
@@ -98,6 +99,10 @@ export class AdminCaseCenter {
       'from service_bookings b join service_centers c on c.id=b.center_id',
       'where b.case_root_id=$1 order by b.created_at,b.number'
     ].join(' '),[rootId]);
+    const vehicleId=stages.find((s:any)=>s.vehicle_id)?.vehicle_id??null;
+    const vehicle=vehicleId ? await this.db.one<any>(
+      'select id,owner_id,driver_id,brand,model,year,plate,trailer_plate,created_at '+
+      'from vehicles where id=$1',[vehicleId]) : null;
     const orderIds=stages.map(s=>s.id),bookingIds=bookings.map(b=>b.id);
     const [events,payments,payouts,moderation,notes,chat,vehicleHistory,registry,ordinals]=await Promise.all([
       this.db.query<any>(
@@ -128,11 +133,11 @@ export class AdminCaseCenter {
         'from chat_messages m left join users u on u.id=m.sender_id '+
         'where m.order_id=any($1::uuid[]) order by m.created_at,m.id limit 500',
         [orderIds]),
-      stages[0]?.vehicle_id ? this.db.query<any>(
+      vehicleId ? this.db.query<any>(
         'select o.id,o.number,o.service,o.status,o.problem,o.result_note,o.created_at,o.completed_at '+
         'from orders o where o.vehicle_id=$1 and o.id<>all($2::uuid[]) '+
         'order by o.created_at desc limit 100',
-        [stages[0].vehicle_id,orderIds]) : Promise.resolve([]),
+        [vehicleId,orderIds]) : Promise.resolve([]),
       this.db.one<{multi_number:number}>(
         'select multi_number from case_registry where root_order_id=$1',[rootId]),
       this.db.query<any>(
@@ -150,7 +155,7 @@ export class AdminCaseCenter {
       multi,
       stages:stages.map((s,i)=>({...s,stage_no:stageNo.get('order:'+s.id)??i+1,recorded_items:recordedStageLines(s,events)})),
       bookings:bookings.map((b,i)=>({...b,stage_no:stageNo.get('booking:'+b.id)??stages.length+i+1})),
-      events,payments,payouts,moderation,notes,chat,vehicle_history:vehicleHistory,
+      vehicle,events,payments,payouts,moderation,notes,chat,vehicle_history:vehicleHistory,
       document_status:'Итоговый счёт требует подтверждённых построчных позиций и первичных документов'
     };
   }
