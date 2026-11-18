@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { get, post, postOrder, put, patch, del, rub, fmtTime, fmtPhone } from '../api.ts';
 import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF, ON_SITE, seriesHint } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFields, LiveStrip, type VehicleValue } from '../ui.tsx';
@@ -22,8 +22,23 @@ export function usePrices() {
   return { pricing: p, fill };
 }
 
+
+/** Same cabinet, but owner-disabled non-emergency actions are visibly unavailable. */
+function FleetShortcut({href,locked,className,children}:{
+  href:string; locked:boolean; className:string; children:ReactNode;
+}) {
+  return <a href={locked ? undefined : href} role={locked ? 'group' : undefined}
+    className={className+(locked ? ' fleet-limited' : '')} aria-disabled={locked || undefined}>
+    {children}
+    {locked && <span className="fleet-limited-note">Ограниченный доступ · разрешает владелец</span>}
+  </a>;
+}
+
 export function Home() {
   const { me } = useMe();
+  const fleetRules = useLoad(() => me?.owner_id ? get('/api/fleet/rules') : Promise.resolve(null),[me?.owner_id]);
+  const restricted = (permission:'repair'|'tow'|'service'|'consult'|'insurance'|'inspection'|'shop') =>
+    !!me?.owner_id && (!fleetRules.data || fleetRules.data.allow?.[permission] === false);
   const active = useLoad(() => get('/api/orders'), [], (e) => e.type === 'order');
   const services = useLoad(() => get<any[]>('/api/vehicle-service-requests'), [],
     e => e.type === 'vehicle_service' || e.type === 'connection_restored');
@@ -64,10 +79,10 @@ export function Home() {
         </section>;
       })()}
       <section className="desktop-quick-links" aria-label="Выберите помощь">
-        <a href="#/sos" className="desktop-quick-card"><span className="desktop-quick-icon">⚡</span><span><b>Выездной мастер</b><small>Электрика, диагностика, пневматика, шиномонтаж</small></span><span aria-hidden="true">↗</span></a>
-        <a href="#/new/tow" className="desktop-quick-card"><span className="desktop-quick-icon">↗</span><span><b>Эвакуатор</b><small>Тягач, полуприцеп или сцепка</small></span><span aria-hidden="true">↗</span></a>
-        <a href="#/services" className="desktop-quick-card"><span className="desktop-quick-icon">▤</span><span><b>СТО грузовых автомобилей</b><small>Выбор сервиса и запись на ремонт</small></span><span aria-hidden="true">↗</span></a>
-        <a href="#/new/consult" className="desktop-quick-card"><span className="desktop-quick-icon">☎</span><span><b>Консультация по телефону</b><small>Обсудить проблему со специалистом</small></span><span aria-hidden="true">↗</span></a>
+        <FleetShortcut href="#/sos" locked={false} className="desktop-quick-card"><span className="desktop-quick-icon">⚡</span><span><b>Выездной мастер</b><small>Электрика, диагностика, пневматика, шиномонтаж</small></span><span aria-hidden="true">↗</span></FleetShortcut>
+        <FleetShortcut href="#/new/tow" locked={restricted("tow")} className="desktop-quick-card"><span className="desktop-quick-icon">↗</span><span><b>Эвакуатор</b><small>Тягач, полуприцеп или сцепка</small></span><span aria-hidden="true">↗</span></FleetShortcut>
+        <FleetShortcut href="#/services" locked={restricted("service")} className="desktop-quick-card"><span className="desktop-quick-icon">▤</span><span><b>СТО грузовых автомобилей</b><small>Выбор сервиса и запись на ремонт</small></span><span aria-hidden="true">↗</span></FleetShortcut>
+        <FleetShortcut href="#/new/consult" locked={restricted("consult")} className="desktop-quick-card"><span className="desktop-quick-icon">☎</span><span><b>Консультация по телефону</b><small>Обсудить проблему со специалистом</small></span><span aria-hidden="true">↗</span></FleetShortcut>
       </section>
 
       <div className="desktop-home-columns">
@@ -114,8 +129,8 @@ export function Home() {
           </section>}
           <div className="desktop-section-heading"><h2>Сервисы TrakSOS</h2></div>
           <section className="client-dashboard-hubs" aria-label="Разделы кабинета">
-            <a href="#/garage"><span className="client-dashboard-hub-icon">◇</span><b>Страхование и техосмотр</b><small>Документы и оформление для вашей техники</small><em>К автомобилям →</em></a>
-            <a href="#/shop"><span className="client-dashboard-hub-icon">▧</span><b>Грузовые запчасти</b><small>Поиск, аналоги и история покупок. Магазин пока закрыт</small><em>Открыть раздел →</em></a>
+            <FleetShortcut href="#/garage" locked={restricted("insurance") && restricted("inspection")} className="client-dashboard-hub"><span className="client-dashboard-hub-icon">◇</span><b>Страхование и техосмотр</b><small>Документы и оформление для вашей техники</small><em>К автомобилям →</em></FleetShortcut>
+            <FleetShortcut href="#/shop" locked={restricted("shop")} className="client-dashboard-hub"><span className="client-dashboard-hub-icon">▧</span><b>Грузовые запчасти</b><small>Поиск, аналоги и история покупок. Магазин пока закрыт</small><em>Открыть раздел →</em></FleetShortcut>
             <a href="#/garage"><span className="client-dashboard-hub-icon">▤</span><b>Мой транспорт</b><small>Грузовики, прицепы и история обслуживания</small><em>Мой гараж →</em></a>
             <a href="#/support"><span className="client-dashboard-hub-icon">☏</span><b>Поддержка</b><small>Обращения и помощь по вашим заявкам</small><em>Написать →</em></a>
           </section>
