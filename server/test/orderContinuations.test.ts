@@ -89,3 +89,45 @@ test('consultant can propose ECU: only owner starts station quote flow with no p
  assert.equal(detail.state,'pending');
  assert.equal((await t.api('GET','/api/ecu/handoffs/'+handed.id,undefined,outsider.token)).status,403);
 });
+
+
+test('roadside master recommends tow, owner approves search and a separately priced tow links into the case',async()=>{
+ const source=ok(await t.api('POST','/api/orders',{
+  service:'electric',zoneId:'spb',regionId:'spb',brand:'MAN',
+  address:'Санкт-Петербург, Софийская улица, 60',
+  description:'Неисправность на дороге',paymentMethod:'cash'
+ },owner.token)).order;
+ await t.db.query(
+  "update orders set status='arrived',performer_id=$2,arrived_at=$3 where id=$1",
+  [source.id,consultant.id,t.clock.now()]);
+ const count=async()=>(await t.db.query(
+  'select id from orders where continuation_of=$1',[source.id])).length;
+ const initial=await count();
+ const proposal=ok(await t.api('POST','/api/orders/'+source.id+'/continuations',{
+  target:'tow',summary:'На месте устранить поломку невозможно, требуется эвакуировать тягач'
+ },consultant.token));
+ assert.equal(await count(),initial,'proposal cannot dispatch a tow itself');
+ ok(await t.api('POST','/api/orders/'+source.id+'/continuations/'+proposal.id+'/decision',
+  {approve:true},owner.token));
+ assert.equal(await count(),initial,'owner approval of search still creates no paid job');
+ const estimate=ok(await t.api('POST','/api/pricing/estimate',{
+  service:'tow',zoneId:'spb',regionId:'spb',
+  address:'Санкт-Петербург, Софийская улица, 60'
+ }));
+ const request={
+  service:'tow',zoneId:'spb',regionId:'spb',brand:'MAN',
+  address:'Санкт-Петербург, Софийская улица, 60',
+  description:'Эвакуировать после диагностики',destination:'Санкт-Петербург, Софийская улица, 70',
+  cargo:'tractor',paymentMethod:'cash',parallelWith:source.id,
+  recommendationId:proposal.id,parallelConsent:true,parallelCallOut:estimate.callOut,
+ };
+ assert.equal((await t.api('POST','/api/orders',{...request,parallelConsent:false},owner.token)).status,400);
+ const tow=ok(await t.api('POST','/api/orders',request,owner.token)).order;
+ assert.equal(tow.caseRootId,source.id);
+ assert.equal(tow.continuationOf,source.id);
+ assert.equal(tow.parallelTow.secondCallOut,estimate.callOut);
+ const listed=ok(await t.api('GET','/api/orders/'+source.id+'/continuations',undefined,owner.token));
+ assert.equal(listed[0].next_order_id,tow.id);
+ assert.equal((await t.api('POST','/api/orders',request,owner.token)).status,409,
+  'repeated second dispatch cannot create a duplicate');
+});
