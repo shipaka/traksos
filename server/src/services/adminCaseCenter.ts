@@ -104,7 +104,7 @@ export class AdminCaseCenter {
       'select id,owner_id,driver_id,brand,model,year,plate,trailer_plate,created_at '+
       'from vehicles where id=$1',[vehicleId]) : null;
     const orderIds=stages.map(s=>s.id),bookingIds=bookings.map(b=>b.id);
-    const [events,payments,payouts,moderation,notes,chat,vehicleHistory,registry,ordinals]=await Promise.all([
+    const [events,payments,payouts,moderation,notes,chat,vehicleHistory,vehicleHistoryBookings,registry,ordinals]=await Promise.all([
       this.db.query<any>(
         'select e.order_id,e.actor_id,e.type,e.data,e.created_at from order_events e '+
         'where e.order_id=any($1::uuid[]) order by e.created_at,e.id limit 600',[orderIds]),
@@ -138,6 +138,13 @@ export class AdminCaseCenter {
         'from orders o where o.vehicle_id=$1 and o.id<>all($2::uuid[]) '+
         'order by o.created_at desc limit 100',
         [vehicleId,orderIds]) : Promise.resolve([]),
+      vehicleId ? this.db.query<any>(
+        'select b.id,b.number,b.status,b.need,b.works,b.created_at,b.closed_at, '+
+        'c.name as center_name from service_bookings b '+
+        'join service_centers c on c.id=b.center_id '+
+        'where b.vehicle_id=$1 and b.id<>all($2::uuid[]) '+
+        'order by b.created_at desc limit 100',
+        [vehicleId,bookingIds]) : Promise.resolve([]),
       this.db.one<{multi_number:number}>(
         'select multi_number from case_registry where root_order_id=$1',[rootId]),
       this.db.query<any>(
@@ -155,7 +162,7 @@ export class AdminCaseCenter {
       multi,
       stages:stages.map((s,i)=>({...s,stage_no:stageNo.get('order:'+s.id)??i+1,recorded_items:recordedStageLines(s,events)})),
       bookings:bookings.map((b,i)=>({...b,stage_no:stageNo.get('booking:'+b.id)??stages.length+i+1})),
-      vehicle,events,payments,payouts,moderation,notes,chat,vehicle_history:vehicleHistory,
+      vehicle,events,payments,payouts,moderation,notes,chat,vehicle_history:vehicleHistory,vehicle_history_bookings:vehicleHistoryBookings,
       document_status:'Итоговый счёт требует подтверждённых построчных позиций и первичных документов'
     };
   }
