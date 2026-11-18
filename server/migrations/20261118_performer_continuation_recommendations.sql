@@ -6,7 +6,7 @@ create table if not exists order_continuation_recommendations (
  source_order_id uuid not null references orders(id),
  client_id uuid not null references users(id),
  suggested_by uuid not null references users(id),
- target_kind text not null check (target_kind in ('tow','sto','master')),
+ target_kind text not null check (target_kind in ('tow','sto','master','ecu')),
  summary text not null,
  status text not null default 'pending' check(status in ('pending','approved','declined')),
  decided_by uuid references users(id),
