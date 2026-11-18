@@ -100,7 +100,7 @@ export function EcuHandoffPage({id}:{id:string}){
  const canChat=d?.state==='selected'&&['owner','driver','expert','admin'].includes(d?.actor);
  return <main className="stack">
   <Back to={me?.performer?.kind==='ecu'?'work':'orders'} />
-  <h1>Передача ЭБУ · техническая цепочка</h1>
+  <h1>Передача ЭБУ №{d?.number??'…'} · техническая цепочка</h1>
   {!d ? <Loading error={details.error}/> : <>
    <div className="card stack">
     <div className="between"><b>После заявки №{d.sourceNumber}</b>
@@ -159,6 +159,7 @@ export function EcuHandoffPage({id}:{id:string}){
      }}>Выбрать этого специалиста</button>
     </>}
    </div>}
+   {owner && d.state!=='closed' && <EcuClose id={id} onDone={()=>details.reload()} />}
    {canChat && <div className="card stack">
     <b>Техническая переписка по выбранной передаче</b>
     {d.notes?.map((m:any)=><div key={m.id} className="stack">
@@ -175,6 +176,23 @@ export function EcuHandoffPage({id}:{id:string}){
    </div>}
   </>}
  </main>;
+}
+
+function EcuClose({id,onDone}:{id:string;onDone:()=>void}){
+ const [reason,setReason]=useState('');
+ const {busy,run}=useAction();
+ return <div className="card stack">
+  <b>Закрыть техническую передачу</b>
+  <span className="note">Закрытие завершает только техническую передачу. Не меняет суммы, оплаты или статусы предыдущих заказов.</span>
+  <textarea className="field" rows={2} maxLength={1000} value={reason}
+   onChange={e=>setReason(e.target.value)}
+   placeholder="Чем закончилась диагностика или почему закрываете передачу"/>
+  <button className="btn ghost small" disabled={busy||reason.trim().length<10}
+   onClick={async()=>{
+    const r=await run(()=>post('/api/ecu/handoffs/'+id+'/close',{reason}),'Передача закрыта');
+    if(r)onDone();
+   }}>Закрыть передачу с итоговым комментарием</button>
+ </div>;
 }
 
 export function EcuAdminStations(){

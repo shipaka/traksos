@@ -898,6 +898,13 @@ export class OrdersService {
             where b.case_root_id=$1 or step.id=$1 or step.case_root_id=$1
             order by b.created_at, b.number`, [caseRootId])
       : [];
+    const caseEcuReferrals = actor === 'client' || actor === 'admin'
+      ? await this.db.query(
+          'select h.id,h.number,h.state,h.selected_at,h.selected_performer_id,'+
+          'i.ordinal as stage_no from ecu_handoffs h left join case_stage_index i'+
+          " on i.root_order_id=h.root_order_id and i.source_kind='ecu' and i.source_id=h.id"+
+          ' where h.root_order_id=$1 order by h.created_at,h.number',[caseRootId])
+      : [];
     const caseServiceStages = caseBookings.map((b: any) => ({
       id: b.id, number: b.number, status: b.status, need: b.need,
       confirmedTotal: b.status === 'closed' ? Math.max(0, Number(b.amount ?? 0) - Number(b.discount ?? 0)) : null,
@@ -940,8 +947,9 @@ export class OrdersService {
       parallelTow: actor === 'client' || actor === 'admin' ? o.parallel_consent ?? null : null,
       caseSummary: {
         rootId: caseRootId, stages: caseSteps, serviceBookings: caseServiceStages,
+        ecuReferrals:caseEcuReferrals,
         confirmedTotal: caseConfirmedTotal,
-        multiStage: caseSteps.length + caseServiceStages.length > 1,
+        multiStage: caseSteps.length + caseServiceStages.length + caseEcuReferrals.length > 1,
       },
       canContinueWithTow: actor === 'client' && o.status === 'completed' &&
         o.service !== 'tow' && ['cause_found', 'not_found'].includes(o.result) &&

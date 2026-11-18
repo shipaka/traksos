@@ -42,10 +42,12 @@ export class AdminCaseCenter {
       'v.plate as vehicle_plate,coalesce(v.brand,r.brand) as vehicle_brand,v.model as vehicle_model,',
       '(select count(*)::int from orders s where s.id=r.id or s.case_root_id=r.id) as order_count,',
       '(select count(*)::int from service_bookings b where b.case_root_id=r.id) as workshop_count,',
+      '(select count(*)::int from ecu_handoffs h where h.root_order_id=r.id) as ecu_count,',
       '(select max(s.created_at) from orders s where s.id=r.id or s.case_root_id=r.id) as last_opened_at,',
       '(select max(s.completed_at) from orders s where s.id=r.id or s.case_root_id=r.id) as last_completed_at,',
       "(exists(select 1 from orders s where (s.id=r.id or s.case_root_id=r.id) and s.status not in ('completed','cancelled','no_performer'))",
-      "or exists(select 1 from service_bookings b where b.case_root_id=r.id and b.status not in ('closed','cancelled','declined'))) as has_active,",
+      "or exists(select 1 from service_bookings b where b.case_root_id=r.id and b.status not in ('closed','cancelled','declined'))"+
+      " or exists(select 1 from ecu_handoffs h where h.root_order_id=r.id and h.state<>'closed')) as has_active,",
       '(exists (select 1 from mod_cases mc where',
       'mc.order_id in (select s.id from orders s where s.id=r.id or s.case_root_id=r.id)',
       'or mc.booking_id in (select b.id from service_bookings b where b.case_root_id=r.id))',
@@ -59,6 +61,7 @@ export class AdminCaseCenter {
       'where r.case_root_id is null',
       "and ($1::text='' or r.number::text like '%'||$1||'%'",
       "or exists(select 1 from orders s where s.case_root_id=r.id and s.number::text like '%'||$1||'%')",
+      "or exists(select 1 from ecu_handoffs h where h.root_order_id=r.id and h.number::text like '%'||$1||'%')",
       "or r.vehicle_id in (select id from vehicles where plate ilike '%'||$1||'%'))",
       'and ($2::bigint is null or cr.multi_number=$2)',
       'order by r.created_at desc limit 500'
@@ -69,8 +72,8 @@ export class AdminCaseCenter {
       (scope==='closed'&&!x.has_active) || (scope==='moderated'&&x.moderated)
     ).map(x=>({
       ...x,
-      is_multi:Number(x.order_count)+Number(x.workshop_count)>1,
-      case_number:Number(x.order_count)+Number(x.workshop_count)>1&&x.multi_number!=null
+      is_multi:Number(x.order_count)+Number(x.workshop_count)+Number(x.ecu_count)>1,
+      case_number:Number(x.order_count)+Number(x.workshop_count)+Number(x.ecu_count)>1&&x.multi_number!=null
         ? 'М-'+String(x.multi_number).padStart(6,'0'):null,
     }));
   }
@@ -98,6 +101,13 @@ export class AdminCaseCenter {
       'from service_bookings b join service_centers c on c.id=b.center_id',
       'where b.case_root_id=$1 order by b.created_at,b.number'
     ].join(' '),[rootId]);
+    const ecuReferrals=await this.db.query<any>(
+      'select h.id,h.number,h.source_order_id,h.state,h.summary,h.created_at,h.selected_at,'+
+      'h.selected_performer_id,u.name as selected_performer_name,'+
+      'q.diagnosis_price,q.version as quote_version,q.explanation from ecu_handoffs h'+
+      ' left join users u on u.id=h.selected_performer_id'+
+      ' left join ecu_quotes q on q.id=h.selected_quote_id'+
+      ' where h.root_order_id=$1 order by h.created_at,h.number',[rootId]);
     const vehicleId=stages.find((s:any)=>s.vehicle_id)?.vehicle_id??null;
     const vehicle=vehicleId ? await this.db.one<any>(
       'select id,owner_id,driver_id,brand,model,year,plate,trailer_plate,created_at '+
@@ -151,7 +161,7 @@ export class AdminCaseCenter {
         [rootId])
     ]);
     const stageNo=new Map<string,number>(ordinals.map((x:any)=>[x.source_kind+':'+x.source_id,Number(x.ordinal)]));
-    const multi=stages.length+bookings.length>1;
+    const multi=stages.length+bookings.length+ecuReferrals.length>1;
     await this.db.query(
       "insert into audit_log(actor_id,action,target,data) values ($1,'admin.case_view',$2,$3)",
       [admin.id,rootId,{number:stages[0]?.number,stageCount:stages.length}]);
@@ -161,6 +171,7 @@ export class AdminCaseCenter {
       multi,
       stages:stages.map((s,i)=>({...s,stage_no:stageNo.get('order:'+s.id)??i+1,recorded_items:recordedStageLines(s,events)})),
       bookings:bookings.map((b,i)=>({...b,stage_no:stageNo.get('booking:'+b.id)??stages.length+i+1})),
+      ecu_referrals:ecuReferrals.map((h:any,i:number)=>({...h,stage_no:stageNo.get('ecu:'+h.id)??stages.length+bookings.length+i+1})),
       vehicle,events,payments,payouts,moderation,notes,chat,vehicle_history:vehicleHistory,vehicle_history_bookings:vehicleHistoryBookings,
       document_status:'Итоговый счёт требует подтверждённых построчных позиций и первичных документов'
     };

@@ -110,14 +110,15 @@ export function AdminCaseCenter() {
     }catch(e:any){setError(String(e?.message||e));}
     finally{setExporting(false);}
   };
-  const stages=detail?.stages||[],bookings=detail?.bookings||[];
+  const stages=detail?.stages||[],bookings=detail?.bookings||[],ecuReferrals=detail?.ecu_referrals||[];
   const currentOrder=focused?.kind==='order'?stages.find((s:any)=>s.id===focused.id):null;
   const currentBooking=focused?.kind==='booking'?bookings.find((b:any)=>b.id===focused.id):null;
   const currentPerson=focused?.kind==='person'?stages.reduce((p:any,s:any)=>p??(
     s.client_id===focused.id?{id:s.client_id,name:s.client_name,role:'Клиент'}:
     s.performer_id===focused.id?{id:s.performer_id,name:s.performer_name,role:'Исполнитель'}:null),null):null;
   const segments=[...stages.map((s:any)=>({...s,source_kind:'order'})),
-    ...bookings.map((b:any)=>({...b,source_kind:'booking'}))]
+    ...bookings.map((b:any)=>({...b,source_kind:'booking'})),
+    ...ecuReferrals.map((h:any)=>({...h,source_kind:'ecu'}))]
     .sort((a:any,b:any)=>(a.stage_no||0)-(b.stage_no||0));
   return <div className="case-register">
     <div className="case-reg-intro">
@@ -149,7 +150,7 @@ export function AdminCaseCenter() {
             <small>{x.client_name||'Клиент'} · {x.vehicle_brand||'Автомобиль'} {x.vehicle_plate||''}</small>
           </div>
           <div className="case-reg-entry-meta">
-            <span>{x.is_multi?'Этапов: '+(Number(x.order_count)+Number(x.workshop_count)):'Один заказ'}</span>
+            <span>{x.is_multi?'Этапов: '+(Number(x.order_count)+Number(x.workshop_count)+Number(x.ecu_count??0)):'Один заказ'}</span>
             <small>Открыта: {date(x.opened_at)}</small>
           </div>
           <div className="case-reg-entry-badges">
@@ -263,6 +264,7 @@ export function AdminCaseCenter() {
               <div><span>Открыто</span><b>{date(stages[0]?.created_at)}</b></div>
               <div><span>Заказов</span><b>{stages.length}</b></div>
               <div><span>Связанных СТО</span><b>{bookings.length}</b></div>
+              <div><span>Передач ЭБУ</span><b>{ecuReferrals.length}</b></div>
               <div><span>Случаев модерации</span><b>{detail.moderation?.length||0}</b></div>
             </div>
             <div className="case-inspect-overview">
@@ -299,6 +301,24 @@ export function AdminCaseCenter() {
                   <span>Закрыта: {date(item.completed_at||item.cancelled_at)}</span>
                 </div>
                 <a className="case-detail-link" href={'#/order/'+item.id}>Открыть рабочую заявку</a>
+              </article>:item.source_kind==='ecu'?
+              <article key={'ecu-'+item.id} className="case-detail-stage">
+                <div className="case-detail-between">
+                  <a className="case-inspect-text-link" href={'#/ecu-handoff/'+item.id}>
+                    Этап {item.stage_no} · ЭБУ №{item.number} ↗</a>
+                  <span className="case-reg-chip">{item.state==='pending'?'Ожидает предложений':item.state==='selected'?'Специалист выбран':'Закрыто'}</span>
+                </div>
+                <p>{item.summary}</p>
+                <div>{item.selected_performer_id
+                  ? <button className="case-inspect-text-link" onClick={()=>drill('person',item.selected_performer_id)}>
+                    {item.selected_performer_name||'Специалист ЭБУ'} ↗</button>
+                  : 'Исполнитель ЭБУ ещё не выбран'}</div>
+                {item.diagnosis_price!=null && <small>Диагностика: {rub(Number(item.diagnosis_price))} · предложение версии {item.quote_version} (оплата отдельно)</small>}
+                <div className="case-detail-stage-dates">
+                  <span>Передано: {date(item.created_at)}</span>
+                  <span>Согласовано: {date(item.selected_at)}</span>
+                </div>
+                <a className="case-detail-link" href={'#/ecu-handoff/'+item.id}>Открыть техническую историю</a>
               </article>:
               <article key={'booking-'+item.id} className="case-detail-stage">
                 <div className="case-detail-between">
