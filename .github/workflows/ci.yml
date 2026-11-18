@@ -81,6 +81,7 @@ jobs:
           SHOTS_DIR=e2e/shots/public node e2e/public-layout.mjs
           node e2e/offline.mjs
           node e2e/ecu-price-consent.mjs
+          SHOTS_DIR=e2e/shots/ecu-quote node e2e/ecu-diagnostic-consent-flow.mjs
           SHOTS_DIR=e2e/shots/premium-unified-client node e2e/premium-unified-client.mjs
           node e2e/flow.mjs e2e/shots
           node e2e/sos-regional-pricing.mjs e2e/shots
