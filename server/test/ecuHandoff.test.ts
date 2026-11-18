@@ -30,7 +30,7 @@ test('ECU handoff: named original worker, no money, verified station, versioned 
  const countPayments=async()=>(await t.db.query('select id from payments where order_id=$1',[source.id])).length;
  const beforePayments=await countPayments();
  const sent=ok(await t.api('POST','/api/orders/'+source.id+'/ecu-handoff',{
-  summary:'Проверены цепи питания и масса, подозрение на неисправность ЭБУ'
+  summary:'Проверены цепи питания и масса, подозрение на ЭБУ, VIN VF611MTA000123456, номер А222АА178'
  },master.token));
  assert.equal(sent.created,true);
  assert.equal(ok(await t.api('POST','/api/orders/'+source.id+'/ecu-handoff',{
@@ -66,6 +66,9 @@ test('ECU handoff: named original worker, no money, verified station, versioned 
  assert.equal(candidate.actor,'candidate');
  assert.deepEqual(candidate.history,[]);
  assert.equal(candidate.vehicle.vin,null);
+ assert.doesNotMatch(candidate.summary,/VF611MTA000123456|А222АА178/,
+  'VIN и госномер не должны утекать в свободном техническом тексте кандидату');
+ assert.match(candidate.summary,/VIN скрыт|госномер скрыт/);
  const q1=ok(await t.api('POST','/api/ecu/handoffs/'+sent.id+'/quote',{
   diagnosisPrice:250000,explanation:'Диагностика на стенде, проверка питания и связи ЭБУ'
  },expert.token));
