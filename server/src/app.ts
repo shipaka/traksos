@@ -18,6 +18,7 @@ import { SANDBOX_HANDOFF_PROTOCOL, assessSandboxPeerHealth } from './services/sa
 import { ReferralService } from './services/referral.ts';
 import { ProfilesService } from './services/profiles.ts';
 import { OrdersService } from './services/orders.ts';
+import { EcuHandoffService } from './services/ecuHandoff.ts';
 import { OrderSlaService } from './services/orderSla.ts';
 import { ChatService } from './services/chat.ts';
 import { ReviewsService, REVIEW_TAGS } from './services/reviews.ts';
@@ -77,6 +78,7 @@ export function createApp(d: Deps) {
   const operatorDemo = new OperatorDemoAccess(d.db, now);
   const profiles = new ProfilesService(d.db, settings, now);
   const orders = new OrdersService(d.db, settings, notifier, now);
+  const ecuHandoffs = new EcuHandoffService(d.db, notifier, now);
   const payments = new PaymentsService(d.db, settings, d.payments, notifier, orders);
   orders.payments = payments;
   const auction = new AuctionService(d.db, settings, notifier, orders, now, d.verifiedRoadEta);
@@ -591,6 +593,48 @@ export function createApp(d: Deps) {
       throw bad('bad_zone', (e as Error).message);
     }
   });
+
+  // Free technical referral to a verified stationary ECU shop.
+  // NOT the legacy ECU call-out, and no online payment/hold is created here.
+  r.get('/api/ecu/station', ['master'], (c: AuthedCtx) => ecuHandoffs.station(c.user));
+  r.put('/api/ecu/station', ['master'], (c: AuthedCtx) => {
+    const b=parse(z.object({
+      publicName:z.string().trim().min(3).max(120),
+      address:z.string().trim().min(8).max(300),
+    }),c.body);
+    return ecuHandoffs.saveStation(c.user,b.publicName,b.address);
+  });
+  r.get('/api/admin/ecu/stations', ['admin'], () => ecuHandoffs.stationQueue());
+  r.post('/api/admin/ecu/stations/:id/verify', ['admin'], (c: AuthedCtx) =>
+    ecuHandoffs.verifyStation(c.user,c.params.id,
+      parse(z.object({approved:z.boolean()}),c.body).approved));
+  r.post('/api/orders/:id/ecu-handoff', true, (c: AuthedCtx) =>
+    ecuHandoffs.open(c.user,c.params.id,parse(z.object({
+      summary:z.string().trim().min(10).max(1400),
+    }),c.body).summary));
+  r.get('/api/orders/:id/ecu-handoff', true, (c: AuthedCtx) =>
+    ecuHandoffs.byOrder(c.user,c.params.id));
+  r.get('/api/ecu/handoffs', ['master'], (c: AuthedCtx) => ecuHandoffs.inbox(c.user));
+  r.get('/api/ecu/handoffs/:id', true, (c: AuthedCtx) =>
+    ecuHandoffs.detail(c.user,c.params.id));
+  r.post('/api/ecu/handoffs/:id/quote', ['master'], (c: AuthedCtx) => {
+    const b=parse(z.object({
+      diagnosisPrice:z.number().int().min(100).max(100_000_000),
+      explanation:z.string().trim().min(10).max(1000),
+    }),c.body);
+    return ecuHandoffs.quote(c.user,c.params.id,b.diagnosisPrice,b.explanation);
+  });
+  r.post('/api/ecu/handoffs/:id/choose', true, (c: AuthedCtx) => {
+    const b=parse(z.object({
+      quoteId:z.string().uuid(),version:z.number().int().min(1),
+      price:z.number().int().min(100).max(100_000_000),agree:z.literal(true),
+    }),c.body);
+    return ecuHandoffs.choose(c.user,c.params.id,b.quoteId,b.version,b.price,b.agree);
+  });
+  r.post('/api/ecu/handoffs/:id/notes', true, (c: AuthedCtx) =>
+    ecuHandoffs.note(c.user,c.params.id,parse(z.object({
+      body:z.string().trim().min(2).max(1500),
+    }),c.body).body));
 
   // Заявки -------------------------------------------------------------------
   r.post('/api/orders', true, async (c: AuthedCtx) => {

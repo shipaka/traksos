@@ -81,6 +81,10 @@ export class OrdersService {
 
   async create(user: AuthUser, i: CreateOrderInput, idempotencyKey?: string) {
     if (!SERVICES.includes(i.service)) throw bad('bad_service', 'Неизвестная услуга');
+    // The old auction-based 'ecu' type had a roadside tariff. ECU workshops
+    // cannot be assigned/charged using that contract; use free handoffs.
+    if(i.service==='ecu')throw bad('ecu_station_only',
+      'Ремонт ЭБУ — стационарная услуга. Передайте техническое заключение из заявки специалисту ЭБУ.');
     const requestKey = idempotencyKey?.trim() || null;
     if (requestKey && !/^[A-Za-z0-9._:-]{8,100}$/.test(requestKey))
       throw bad('bad_idempotency_key', 'Недопустимый ключ повторной заявки');

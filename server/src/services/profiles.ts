@@ -67,6 +67,10 @@ export class ProfilesService {
     inRange(p.hourPrice, corridor.hourMin, corridor.hourMax, 'Час работы');
     if (p.inn && !/^\d{12}$/.test(p.inn)) throw bad('bad_inn', 'ИНН физлица или ИП — 12 цифр');
     if (p.cars && p.cars.length > 3) throw bad('too_many_cars', 'Не больше трёх машин');
+    // An ECU shop is stationary: never require or publish a dispatch vehicle.
+    if (p.kind==='ecu' && (p.car || p.cars?.length || p.callOutPrice != null
+      || p.hourPrice != null || p.kmRate != null))
+      throw bad('ecu_stationary','Для специалиста ЭБУ нужна стационарная точка, а не цена выезда или машина');
     if (p.car && p.cars && !p.cars.some((c) => c.plate === p.car!.plate)) throw bad('bad_car', 'Выберите машину из своего списка');
 
     if (extras !== undefined) {
@@ -94,15 +98,15 @@ export class ProfilesService {
            specialties=coalesce($3::text[], performer_profiles.specialties),
            brands=coalesce($4::jsonb, performer_profiles.brands),
            tier=coalesce($5::text, performer_profiles.tier),
-           call_out_price=coalesce($6::int, performer_profiles.call_out_price),
-           hour_price=coalesce($7::int, performer_profiles.hour_price),
-           km_rate=coalesce($8::int, performer_profiles.km_rate),
+           call_out_price=case when excluded.kind='ecu' then null else coalesce($6::int,performer_profiles.call_out_price) end,
+           hour_price=case when excluded.kind='ecu' then null else coalesce($7::int,performer_profiles.hour_price) end,
+           km_rate=case when excluded.kind='ecu' then null else coalesce($8::int,performer_profiles.km_rate) end,
            prep_minutes=coalesce($9::int, performer_profiles.prep_minutes),
            accepts_group=coalesce($10::boolean, performer_profiles.accepts_group),
            tax_status=coalesce($11::text, performer_profiles.tax_status),
            inn=coalesce($12::text, performer_profiles.inn),
-           car=coalesce($13::jsonb, performer_profiles.car),
-           cars=coalesce($14::jsonb, performer_profiles.cars),
+           car=case when excluded.kind='ecu' then null else coalesce($13::jsonb,performer_profiles.car) end,
+           cars=case when excluded.kind='ecu' then '[]'::jsonb else coalesce($14::jsonb,performer_profiles.cars) end,
            updated_at=now()`,
         [user.id, p.kind, p.specialties ?? null, p.brands ?? null, p.tier ?? null, p.callOutPrice ?? null, p.hourPrice ?? null,
           p.kmRate ?? null, p.prepMinutes ?? null, p.acceptsGroup ?? null, p.taxStatus ?? null, p.inn ?? null,
