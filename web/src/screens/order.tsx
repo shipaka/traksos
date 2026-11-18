@@ -14,6 +14,7 @@ import { OrderTimeline } from './OrderTimeline.tsx';
 import { EcuReferralPanel } from './ecuReferralPanel.tsx';
 import { LocationSharing } from './performer.tsx';
 import {EcuRelatedOrders} from './ecuRelatedOrders.tsx';
+import {EcuDiagnosticQuote} from './ecuDesk.tsx';
 import {ServiceCaseLedger} from './serviceCaseLedger.tsx';
 import { RefundForm, payStatus } from './adminUser.tsx';
 
@@ -198,10 +199,7 @@ function CandidateView({ d, onDone }: { d: any; onDone: () => void }) {
     <b>Запрос выбранной мастерской ЭБУ</b>
     <p>{d.brand??'Грузовик'} {d.model??''} {d.year??''}</p>
     {d.description&&<p className="note">{d.description}</p>}
-    <p className="note">Цена сейчас не известна. Отметьте, что готовы принять блок на диагностику. Счёт можно выставить только отдельно, после выполнения работ и согласования клиентом.</p>
-    <button type="button" className="btn" disabled={busy||d.status!=='searching'}
-      onClick={()=>run(()=>post('/api/orders/'+d.id+'/offers',{}),'Запрос принят. Ожидаем выбора клиента.')
-        .then(x=>x&&onDone())}>Могу принять блок · цена после диагностики</button>
+    <EcuDiagnosticQuote orderId={d.id} onDone={onDone}/>
   </section>;
   if (d.status !== 'searching') return <div className="card"><b>Заявка уже у другого исполнителя</b></div>;
   return (
@@ -404,7 +402,9 @@ function Money({ d }: { d: any }) {
   const proposed = ['awaiting_confirmation', 'completed'].includes(d.status) || m.work > 0;
   if(d.service==='ecu')return <section className="card stack" aria-label="Финансы стационарного ремонта ЭБУ">
     <b>Итоговая стоимость ЭБУ</b>
-    {!proposed?<p className="note">Цена ещё не выставлена. Эксперт уточнит её после диагностики или ремонта; до вашего подтверждения сумма не подлежит оплате.</p>:<>
+    {m.callOut>0&&<div className="sum"><span>Согласованная цена диагностики</span><b>{rub(m.callOut)}</b></div>}
+    {d.ecuDiagnosticQuote?.scope&&<p className="note">Согласованный объём диагностики: {d.ecuDiagnosticQuote.scope}</p>}
+    {!proposed?<p className="note">Начальная заявка бесплатна. До диагностики вы подтвердили стоимость и объём работ выбранного специалиста; дополнительные работы и ремонт оплачиваются только после новой отдельной сметы.</p>:<>
       <div className="sum"><span>Диагностика и выполненные работы</span><b>{rub(m.amount)}</b></div>
       {m.clientFee>0&&<div className="sum"><span>Сервисный сбор площадки</span><span>{rub(m.clientFee)}</span></div>}
       <div className="sum total"><span>К подтверждению</span><b>{rub(m.total)}</b></div>
@@ -412,7 +412,7 @@ function Money({ d }: { d: any }) {
       {d.warrantyDays!=null&&<p className="note">Дополнительная гарантия: {d.warrantyDays} дней
         {d.warrantyStartedAt?' с '+new Date(d.warrantyStartedAt).toLocaleDateString('ru-RU'):' после приёмки работ'}.
         {d.warrantyWork?' '+d.warrantyWork:''}</p>}
-      <small className="note">Цена не была известна при обращении. Без отдельного подтверждения клиентом списания или обязательства оплатить предложенную сумму не возникает.</small>
+      <small className="note">Цена диагностики согласована отдельно до начала работ. Любая новая сумма и ремонт требуют свежего согласия клиента. Автоматических списаний нет.</small>
     </>}
   </section>;
   if (d.service === 'consult') return (
@@ -549,7 +549,7 @@ function EcuStationaryActions({d,onDone}:{d:any;onDone:()=>void}){
     {d.status==='accepted'&&<button type="button" className="btn" disabled={busy}
       onClick={()=>run(()=>post('/api/orders/'+d.id+'/ecu/start',{}),'Диагностика начата')
         .then(v=>v&&onDone())}>Приступили к диагностике блока</button>}
-    <p className="note">Комментарий и итоговую стоимость можно указать только после исследования блока. Если запчасти в пути, продлите срок на 3 дня выше. Таймер выездных часов здесь не применяется.</p>
+    <p className="note">Диагностика начинается после согласования клиентом её цены и объёма. Ремонт, прошивка и доплаты требуют отдельного подтверждения итоговой сметы. Таймер выезда не применяется.</p>
     <label>Что сделано
       <textarea className="field" maxLength={300} value={summary} onChange={e=>setSummary(e.target.value)}
         placeholder="Проверка блока, восстановление платы, диагностика…"/>

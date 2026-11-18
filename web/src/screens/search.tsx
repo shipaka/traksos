@@ -40,15 +40,20 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
   const offers: any[] = data?.offers ?? [];
   const isTow = d.service === 'tow';
   const isEcu = d.service === 'ecu';
-  const [ecuConsent,setEcuConsent]=useState(false);
+  const [ecuConsentKey,setEcuConsentKey]=useState<string|null>(null);
   const phrases = isTow ? TOW_PHRASES : d.service === 'consult' ? CONSULT_PHRASES : PHRASES;
   const phrase = usePhrase(phrases, offers.length > 0);
   const left = useLeft(d.autoPick ? d.auctionUntil : null);
   const lim = data?.limits ?? d.limits;
 
-  async function choose(id: string) {
-    const r = await run(() => post(`/api/orders/${d.id}/offers/${id}/choose`,isEcu?{acceptedPrice:0}:{}));
-    if (r) { toast(isEcu?'Мастерская выбрана. Итоговую цену подтвердите отдельно.':'Исполнитель выбран'); onChosen(); }
+  async function choose(offer: any) {
+    const key=offer.id+'|'+offer.quote_version+'|'+offer.price;
+    if(isEcu && (ecuConsentKey!==key || !(offer.price>=100) ||
+      !offer.ecu_diagnostic_scope || !offer.quote_version))return;
+    const r = await run(() => post(`/api/orders/${d.id}/offers/${offer.id}/choose`,isEcu?{
+      acceptedPrice:offer.price,quoteVersion:new Date(offer.quote_version).toISOString(),ecuConsent:true
+    }:{}));
+    if (r) { toast(isEcu?'Стоимость диагностики согласована. Допработы только по новой смете.':'Исполнитель выбран'); onChosen(); }
   }
 
   return (
@@ -59,9 +64,9 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
       <div className="card search-card">
         <Radar dots={Math.min(d.search?.candidates ?? 0, 8)} hits={offers.length} />
         <div className="stack" style={{ gap: 4, textAlign: 'center' }}>
-          <b className="search-title">{isEcu?(offers.length?'Мастерская подтвердила получение запроса':'Ждём ответа выбранной мастерской'):offers.length ? `${offers.length} ${plural(offers.length, 'отклик', 'отклика', 'откликов')}` : phrase}</b>
+          <b className="search-title">{isEcu?(offers.length?'Специалист предложил цену диагностики':'Ждём стоимость от выбранной мастерской'):offers.length ? `${offers.length} ${plural(offers.length, 'отклик', 'отклика', 'откликов')}` : phrase}</b>
           <span className="note">
-            {isEcu?'Другим специалистам ЭБУ запрос не отправляли. Цена может стать известна только после диагностики или ремонта.':offers.length
+            {isEcu?'Другим мастерским запрос не отправляли. Сумму диагностики и объём работ вы согласовываете до начала диагностики.':offers.length
               ? (d.autoPick && left != null ? `Выберите сами — или через ${mmss(left)} назначим лучшего` : 'Выберите исполнителя — остальным сообщим сами')
               : d.search?.candidates ? `Заявку видят ${d.search.candidates} ${plural(d.search.candidates, d.service === 'tow' ? 'эвакуаторщик' : 'мастер', d.service === 'tow' ? 'эвакуаторщика' : 'мастера', d.service === 'tow' ? 'эвакуаторщиков' : 'мастеров')}${d.service === 'consult' ? ' на связи' : ' рядом'} — ждём, кто откликнется` : 'Звоним ближайшим'}
           </span>
@@ -101,7 +106,7 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
                       </span>
                     </div>
                     <div className="stack" style={{ gap: 2, alignItems: 'flex-end' }}>
-                      <b className="offer-price">{isEcu?'Цена после диагностики':rub(o.price)}</b>
+                      <b className="offer-price">{rub(o.price)}</b>
                       {o.diffPct!=null && o.diffPct !== 0 && <span className={`pill ${o.diffPct < 0 ? 'good' : ''}`}>{o.diffPct > 0 ? '+' : ''}{o.diffPct}%</span>}
                     </div>
                   </div>
@@ -115,12 +120,17 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
                   {(o.extras?.weekendPct || o.extras?.nightPct || o.extras?.waitRate) && d.service !== 'consult' && !isEcu ? <span className="note">Наценки мастера: {[o.extras.weekendPct && `выходные +${o.extras.weekendPct}%`, o.extras.nightPct && `ночь +${o.extras.nightPct}%`, o.extras.waitRate && `ожидание ${rub(o.extras.waitRate)}/ч`].filter(Boolean).join(' · ')}</span> : null}
                   {o.extras?.prepay === 'always' && !isEcu && <span className="note" style={{ color: 'var(--warn)' }}>Берёт предоплату за работу</span>}
                   {o.car && d.service !== 'consult' && o.performer_kind!=='ecu' && <span className="note">Приедет на: {o.car.brand}{o.car.color ? `, ${o.car.color}` : ''}</span>}
-                  {isEcu&&<label className="agree">
-                    <input type="checkbox" checked={ecuConsent} onChange={e=>setEcuConsent(e.target.checked)}/>
-                    <span>Выбираю эту мастерскую без установленной цены. До отдельного подтверждения итоговой сметы согласия на оплату не даю.</span>
-                  </label>}
-                  <button className="btn small" style={{width:'100%'}} disabled={busy||(isEcu&&!ecuConsent)}
-                    onClick={()=>choose(o.id)}>{isEcu?'Подтвердить выбранную мастерскую':'Выбрать за '+rub(o.price)}</button>
+                  {isEcu&&<>
+                    <p className="note">Диагностика: {o.ecu_diagnostic_scope??'Объём не указан'}</p>
+                    <label className="agree">
+                      <input type="checkbox" checked={ecuConsentKey===o.id+'|'+o.quote_version+'|'+o.price}
+                        onChange={e=>setEcuConsentKey(e.target.checked?o.id+'|'+o.quote_version+'|'+o.price:null)}/>
+                      <span>Согласен на диагностику стоимостью {rub(o.price)} в указанном объёме у выбранного специалиста. Ремонт и дополнительные суммы потребуют нового согласия.</span>
+                    </label>
+                  </>}
+                  <button className="btn small" style={{width:'100%'} }
+                    disabled={busy||(isEcu&&(ecuConsentKey!==o.id+'|'+o.quote_version+'|'+o.price||!(o.price>=100)||!o.ecu_diagnostic_scope))}
+                    onClick={()=>choose(o)}>{isEcu?'Подтвердить диагностику '+rub(o.price):'Выбрать за '+rub(o.price)}</button>
                 </div>
               );
             })}

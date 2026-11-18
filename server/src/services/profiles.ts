@@ -85,6 +85,11 @@ export class ProfilesService {
       if (current.kind === 'tow' && extras.prepAck === false)
         throw bad('need_ack', 'Отметьте, что отвечаете за время на сборы');
     }
+    // ECU is stationary: the expert's personal car must never be required
+    // or saved as a vehicle for servicing a customer.
+    if(p.kind==='ecu' && (p.car || (p.cars?.length??0)>0))
+      throw bad('ecu_stationary_no_car',
+        'Стационарному специалисту ЭБУ не нужно указывать автомобиль исполнителя');
     const role = p.kind === 'ecu' ? 'master' : p.kind;
     const userRoles = (await this.db.one<{ roles: string[] }>('select roles from users where id=$1', [user.id]))?.roles ?? user.roles;
     assertRoleExtension(userRoles, role);
@@ -129,8 +134,10 @@ export class ProfilesService {
            accepts_group=coalesce($10::boolean, performer_profiles.accepts_group),
            tax_status=coalesce($11::text, performer_profiles.tax_status),
            inn=coalesce($12::text, performer_profiles.inn),
-           car=coalesce($13::jsonb, performer_profiles.car),
-           cars=coalesce($14::jsonb, performer_profiles.cars),
+           car=case when excluded.kind='ecu' then null
+             else coalesce($13::jsonb, performer_profiles.car) end,
+           cars=case when excluded.kind='ecu' then '[]'::jsonb
+             else coalesce($14::jsonb, performer_profiles.cars) end,
            updated_at=now()`,
         [user.id, p.kind, p.specialties ?? null, p.brands ?? null, p.tier ?? null, p.callOutPrice ?? null, p.hourPrice ?? null,
           p.kmRate ?? null, p.prepMinutes ?? null, p.acceptsGroup ?? null, p.taxStatus ?? null, p.inn ?? null,

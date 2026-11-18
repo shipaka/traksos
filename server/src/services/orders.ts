@@ -230,7 +230,7 @@ export class OrdersService {
     const defaultFee = method === 'cash' ? (all.fees.cashChargesClientFee ? all.fees.clientFeePct : 0) : all.fees.clientFeePct;
     // Персональный сбор клиента (назначает администратор) важнее общего. Консультация — фиксированная цена, сбор уже внутри.
     const personal = await this.db.one<{ fee_pct_override: string | null }>('select fee_pct_override from users where id=$1', [clientId]);
-    const feePct = isConsult ? 0 : personal?.fee_pct_override != null ? Number(personal.fee_pct_override) : defaultFee;
+    const feePct = isConsult || isEcu ? 0 : personal?.fee_pct_override != null ? Number(personal.fee_pct_override) : defaultFee;
 
     // Выезд после консультации: та же машина, подсказка мастера, скидка — если уложились в срок и скидку ещё не брали
     let consultOf: string | null = null;
@@ -641,6 +641,15 @@ export class OrdersService {
     const o=await this.mustBePerformer(user,orderId);
     if(o.service!=='ecu')throw bad('not_ecu','Это действие только для стационарных ЭБУ');
     if(o.status!=='accepted')throw conflict('ecu_bad_status','Нельзя начать диагностику в текущем статусе');
+    // Legacy zero-price acknowledgements are not consent to paid work.
+    // The selected diagnostic price and the scoped offer must both exist.
+    const agreed=await this.db.one<{id:string}>(
+      "select b.id from bids b where b.order_id=$1 and b.performer_id=$2 "+
+      "and b.status='chosen' and b.price=$3 and b.price>=100 "+
+      "and length(coalesce(b.ecu_diagnostic_scope,''))>=10",
+      [orderId,user.id,o.call_out_amount]);
+    if(!agreed)throw conflict('ecu_quote_not_accepted',
+      'Клиент должен подтвердить сумму и объём диагностики до начала работ');
     await this.guarded(this.db,
       "update orders set status='working',work_started_at=now() "+
       "where id=$1 and status='accepted' and performer_id=$2",
@@ -1061,6 +1070,12 @@ export class OrdersService {
           `select (select count(*)::int from order_dispatch where order_id=$1 and status in ('bidding','ringing','queued')) as candidates,
                   (select count(*)::int from bids where order_id=$1 and status='active') as offers`, [orderId])
       : null;
+    const ecuDiagnosticQuote=o.service==='ecu' && o.status!=='searching' && actor!==null
+      ? await this.db.one<{price:number;scope:string;quote_version:Date}>(
+          "select price,ecu_diagnostic_scope as scope,updated_at as quote_version "+
+          "from bids where order_id=$1 and status='chosen' and performer_id=$2",
+          [o.id,o.performer_id])
+      : null;
     return {
       id: o.id, number: o.number, status: o.status as OrderStatus, statusLabel: statusLabels[o.status as OrderStatus],
       service: o.service, isSos: o.is_sos, problem: o.problem, description: o.description,
@@ -1068,6 +1083,7 @@ export class OrdersService {
       brand: o.brand, model: o.model, year: o.year, vehicleId: o.vehicle_id, vehicle, estimate: o.estimate, paymentMethod: o.payment_method,
       warrantyDays:o.warranty_days??null,warrantyWork:o.warranty_work_summary??null,warrantyStartedAt:o.warranty_started_at??null,
       ecuDueAt:o.ecu_due_at??null,ecuExtensionsCount:o.ecu_extensions_count??0,
+      ecuDiagnosticQuote,
       auction: o.status === 'searching' && !!o.auction_until, auctionUntil: o.auction_until, autoPick: o.auto_pick, search, searchStage,
       limits: o.status === 'searching' ? this.auction.limits(o, (await this.settings.get('dispatch'))) : null,
       destination: o.destination, cargo: o.cargo, loaded: o.loaded, driverOnSite: o.driver_on_site, discountReason: o.discount_reason,

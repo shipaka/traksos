@@ -21,9 +21,9 @@ const account=await post('/api/auth/verify',{
   phone,code:code.devCode,accountType:'owner',password:'SyntheticTest2026-Only!'
 });
 if(!account.user?.roles?.includes('client'))throw Error('Synthetic client role unavailable');
-// ECU inquiries are unpriced until the chosen stationary expert issues a
-// final bill. This browser test rejects the old pre-priced SOS form. All
-// state is synthetic and isolated to the local CI service.
+// The initial ECU inquiry is free, but diagnostics cannot begin until the chosen
+// verified specialist quotes a price and scope and the client approves them.
+// This intake smoke rejects old pre-priced SOS forms and unverified workshops.
 const browser=await chromium.launch();
 try{
   for(const width of [390,1440]){
@@ -58,8 +58,8 @@ try{
         throw Error(width+': missing fail-closed notice when no station is published');
       if(await page.locator('#f-agree input[type="checkbox"]').count())
         throw Error(width+': old pre-priced ECU consent is still displayed');
-      if(!await page.getByText(/Цена может стать известна|Смета и сроки — после изучения блока/).count())
-        throw Error(width+': post-diagnostic quotation terms are missing');
+      if(!await page.getByText(/Стоимость диагностики — до начала работы/).count())
+        throw Error(width+': pre-work diagnostic quotation terms are missing');
       const create=page.getByRole('button',{name:/Отправить запрос выбранной мастерской/});
       await create.click();
       if(!await station.getByText(/нет опубликованных проверенных мастерских/).count())
@@ -71,7 +71,7 @@ try{
       if(overflow.content>overflow.viewport+3)
         throw Error(width+': ECU intake overflow '+JSON.stringify(overflow));
       if(errors.length)throw Error(width+': browser exceptions '+errors.join('; '));
-      console.log('PASS ECU intake '+width+'px: private block glossary, unpriced consent, verified station gate');
+      console.log('PASS ECU intake '+width+'px: free inquiry, diagnostic consent before work, verified station gate');
     }finally{await ctx.close()}
   }
 }finally{await browser.close()}

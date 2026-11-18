@@ -42,7 +42,7 @@ export class AuctionService {
     // Консультация — фиксированная цена, торговаться не о чем
     if (order.service === 'consult') return offerLimits(order.estimate.callOut as number, 1, 1);
     if (order.service === 'ecu')
-      return {usual:0,floor:0,ceil:100_000_000}; // zero is an unpriced inquiry, NEVER a free service
+      return {usual:0,floor:100,ceil:100_000_000}; // scope and specialist price required
     return offerLimits(order.estimate.callOut as number, d.offerFloor, d.offerCeil);
   }
 
@@ -151,7 +151,7 @@ export class AuctionService {
   }
 
   /** Отклик исполнителя: price не указана — по обычной цене. Можно поменять, пока клиент не выбрал. */
-  async offer(user: AuthUser, orderId: string, price?: number) {
+  async offer(user: AuthUser, orderId: string, price?: number, diagnosticScope?: string) {
     const all = await this.settings.all();
     const order = await this.db.one('select * from orders where id=$1', [orderId]);
     if (!order) throw notFound();
@@ -165,8 +165,12 @@ export class AuctionService {
     const prof0 = await this.db.one<{ line_status: string; paused: boolean }>('select line_status, paused from performer_profiles where user_id=$1', [user.id]);
     if (!prof0 || prof0.paused || prof0.line_status === 'offline') throw conflict('offline', 'Выйдите на линию, чтобы откликаться');
     const lim = this.limits(order, all.dispatch);
-    // ECU specialists may acknowledge an unpriced inquiry; billing happens
-    // only after a separately confirmed final offer.
+    // A free inquiry becomes a scoped, explicitly priced offer — not a bank hold.
+    if(order.service==='ecu' && (!Number.isInteger(price) || (price??0)<100))
+      throw bad('ecu_diagnostic_price_required','Укажите цену диагностики до начала работ');
+    const scope=order.service==='ecu'?diagnosticScope?.trim()??'':null;
+    if(order.service==='ecu' && (scope!.length<10||scope!.length>500))
+      throw bad('ecu_diagnostic_scope_required','Укажите объём диагностики (10–500 символов)');
     const p = price ?? lim.usual;
     if (!Number.isInteger(p) || p < lim.floor || p > lim.ceil) {
       throw bad('price_out_of_corridor', `Цена для этой заявки — от ${rub(lim.floor)} до ${rub(lim.ceil)}`);
@@ -187,12 +191,12 @@ export class AuctionService {
           where d.order_id=$1 and d.performer_id=$2 and d.status='bidding' and o.status='searching'`, [orderId, user.id]);
       if (!still) throw conflict('too_late', 'Клиент уже выбрал исполнителя');
       return q.one(
-        `insert into bids(order_id, performer_id, price, hour_price, eta_minutes) values ($1,$2,$3,$4,$5)
+        `insert into bids(order_id, performer_id, price, hour_price, eta_minutes, ecu_diagnostic_scope) values ($1,$2,$3,$4,$5,$6)
          on conflict (order_id, performer_id) do update set price=excluded.price, hour_price=excluded.hour_price,
-           eta_minutes=excluded.eta_minutes, status='active', updated_at=now()
-         returning *`, [orderId, user.id, p, hour, eta]);
+           eta_minutes=excluded.eta_minutes, ecu_diagnostic_scope=excluded.ecu_diagnostic_scope, status='active', updated_at=greatest(clock_timestamp(),bids.updated_at + interval '1 millisecond')
+         returning *`, [orderId, user.id, p, hour, eta, scope]);
     });
-    await this.orders.event(this.db, orderId, user.id, 'offer', { price: p, eta });
+    await this.orders.event(this.db, orderId, user.id, 'offer', {price:p,eta,diagnosticScope:scope,quoteVersion:new Date(o!.updated_at).toISOString()});
     const diff = order.service==='ecu'?0:Math.round((p / lim.usual - 1) * 100);
     await this.notifier.notify([order.client_id, order.created_by], { type: 'order', orderId, status: 'searching', offers: true },
       { kind: 'normal', title: order.service==='ecu'?'Цена диагностики ЭБУ':'Новый отклик', body: order.service==='ecu'?`Специалист предложил диагностику за ${rub(p)}. Подтвердите сумму отдельно.`:`${user.name ?? 'Исполнитель'}: ${rub(p)}${diff ? ` (${diff > 0 ? '+' : ''}${diff}%)` : ''}, подача ~${eta} мин`, data: { orderId } });
@@ -226,6 +230,7 @@ export class AuctionService {
   private async rows(orderId: string, brand: string | null, onlyPerformer: string | null) {
     const rows = await this.db.query(
       `select f.id, f.performer_id, f.price, f.hour_price, f.eta_minutes, f.status,
+               f.updated_at as quote_version, f.ecu_diagnostic_scope,
               u.name, u.rating::float as rating, u.rating_count, p.car, p.brands, p.tier, p.extras, p.kind as performer_kind, p.verification as performer_verification, pl.level as partner_level, d.distance_km::float as distance_km, d.road_eta_minutes,
               (select count(*)::int from orders c where c.performer_id=f.performer_id and c.status='completed') as completed
          from bids f join users u on u.id=f.performer_id left join performer_profiles p on p.user_id=f.performer_id
@@ -237,10 +242,10 @@ export class AuctionService {
   }
 
   /** Клиент (или система для SOS) выбирает отклик — исполнитель назначен, цена выезда зафиксирована */
-  async choose(user: AuthUser | null, orderId: string, offerId: string, acceptedPrice?: number) {
+  async choose(user: AuthUser | null, orderId: string, offerId: string, acceptedPrice?: number, quoteVersion?: string, ecuConsent?: boolean) {
     const pre = await this.db.one('select o.client_id, o.created_by, o.service, b.performer_id from orders o join bids b on b.order_id=o.id where o.id=$1 and b.id=$2', [orderId, offerId]);
     if (!pre) throw notFound('Отклик не найден');
-    if(pre.service==='ecu' && (!user || !Number.isInteger(acceptedPrice) || acceptedPrice!<0))
+    if(pre.service==='ecu' && (!user || !Number.isInteger(acceptedPrice) || (acceptedPrice??0)<100 || !quoteVersion || ecuConsent!==true))
       throw bad('ecu_price_consent_required','Подтвердите точную стоимость диагностики');
     if (user && pre.client_id !== user.id && pre.created_by !== user.id) throw forbidden();
     // Исполнитель мог только что взять другую заявку — его отклик здесь больше не действует
@@ -256,7 +261,7 @@ export class AuctionService {
       await q.query('select 1 from performer_profiles where user_id=$1 for update', [pre.performer_id]);
       const f0 = await q.one(`select * from bids where id=$1 and order_id=$2 and status='active' for update`, [offerId, orderId]);
       if (!f0) throw conflict('offer_gone', 'Этот отклик уже недоступен');
-      if(pre.service==='ecu' && Number(f0.price)!==acceptedPrice)
+      if(pre.service==='ecu' && (Number(f0.price)!==acceptedPrice || (f0.ecu_diagnostic_scope??'').length<10 || new Date(f0.updated_at).toISOString()!==quoteVersion))
         throw conflict('ecu_quote_changed','Цена изменилась. Проверьте и подтвердите новую сумму');
       const upd = await q.one(
         `update orders set status='accepted', performer_id=$2, accepted_at=$3, call_out_amount=$4,
@@ -271,7 +276,7 @@ export class AuctionService {
       await q.query(`update order_dispatch set status = case when performer_id=$2 then 'accepted' else 'lost' end, responded_at=$3
                       where order_id=$1 and status in ('bidding','queued','ringing')`, [orderId, f.performer_id, this.now()]);
       if(pre.service!=='ecu') await q.query(`update performer_profiles set line_status='on_job' where user_id=$1`, [f.performer_id]);
-      await this.orders.event(q, orderId, user?.id ?? null, user ? 'offer_chosen' : 'offer_autopicked', { offerId, price: f.price, eta: f.eta_minutes });
+      await this.orders.event(q, orderId, user?.id ?? null, user ? 'offer_chosen' : 'offer_autopicked', { offerId, price: f.price, eta: f.eta_minutes, ...(pre.service==='ecu'?{diagnosticScope:f.ecu_diagnostic_scope,quoteVersion:new Date(f0.updated_at).toISOString(),ecuConsent:true}:{}) });
       const losers = await q.query<{ performer_id: string }>(`select performer_id from order_dispatch where order_id=$1 and status='lost'`, [orderId]);
       const released = await this.orders.release(q, f.performer_id, orderId);
       return { o: upd, f, losers: losers.map((l) => l.performer_id), released };
@@ -298,7 +303,7 @@ export class AuctionService {
       `select o.id as order_id, o.number, o.service, o.address, o.destination, o.cargo, o.brand, o.description, o.problem,
               o.estimate, o.auction_until, o.is_sos, o.auto_pick,
               (o.additional_to is not null) as is_linked_stage,
-              d.distance_km::float as distance_km, f.price as my_price
+              d.distance_km::float as distance_km, f.price as my_price, f.ecu_diagnostic_scope as my_scope
          from order_dispatch d join orders o on o.id=d.order_id
          left join bids f on f.order_id=o.id and f.performer_id=d.performer_id and f.status='active'
         where d.performer_id=$1 and d.status='bidding' and o.status='searching'
