@@ -4,6 +4,7 @@ import {newOrderRequestKey} from '../orderRequestKey.ts';
 import { useAction, useLoad, useMe } from '../ui.tsx';
 import './driverAir.css';
 import { NearbyHelp } from './nearbyHelp.tsx';
+import { PartnerOffers } from './PartnerOffers.tsx';
 import {CommunityNotificationSettings,CommunityMuteToggle} from './communityNotificationSettings.tsx';
 import {readAirDraft,writeAirDraft,clearAirDraft} from './airDraft.ts';
 
@@ -421,7 +422,7 @@ export function DriverAir(){
   const rooms=useLoad<{rooms:AirRoom[]}>(()=>access.data?.enabled?get('/api/community/rooms'):
     Promise.resolve({rooms:[]}),[me?.id,access.data?.enabled]);
   const [roomId,setRoomId]=useState<string|null>(null);
-  const [view,setView]=useState<'rooms'|'voice'|'direct'|'profile'|'help'|'notifications'>('rooms');
+  const [view,setView]=useState<'rooms'|'voice'|'offers'|'direct'|'profile'|'help'|'notifications'>('rooms');
   const [roomPane,setRoomPane]=useState<'chat'|'road'>('chat');
   const [sending,setSending]=useState(false);
   const {run}=useAction();
@@ -492,6 +493,7 @@ export function DriverAir(){
     <nav className="air-tabs" aria-label="Разделы Эфира">
       <button type="button" aria-current={view==='rooms'?'page':undefined} onClick={()=>setView('rooms')}>Эфир и города</button>
       <button type="button" aria-current={view==='voice'?'page':undefined} onClick={()=>setView('voice')}>Голосовой эфир · В разработке</button>
+      <button type="button" aria-current={view==='offers'?'page':undefined} onClick={()=>setView('offers')}>Предложения партнёров</button>
       <button type="button" aria-current={view==='direct'?'page':undefined} onClick={()=>setView('direct')}>Личные чаты</button>
       <button type="button" aria-current={view==='profile'?'page':undefined} onClick={()=>setView('profile')}>Мой позывной</button>
       <button type="button" aria-current={view==='help'?'page':undefined} onClick={()=>setView('help')}>Помощь рядом</button>
@@ -506,6 +508,7 @@ export function DriverAir(){
       <p className="note">Микрофон не включается, аудио не передаётся и записи не создаются. Подключение к голосовой комнате пока недоступно.</p>
       <button type="button" className="btn ghost" onClick={()=>setView('rooms')}>Вернуться в текстовый Эфир</button>
     </section>}
+    {view==='offers'&&<PartnerOffers mode="reader"/>}
     {view==='direct'&&<DirectMessages/>}
     {view==='help'&&<NearbyHelp/>}
     {view==='notifications'&&<CommunityNotificationSettings/>}
