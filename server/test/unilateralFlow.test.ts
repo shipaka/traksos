@@ -136,4 +136,18 @@ test('SLA: one reminder, one overdue moderator review, never customer consent',a
   assert.equal(state.status,'awaiting_confirmation');
   assert.equal(state.completed_at,null);
   assert.equal(state.amount_confirmed_at,null);
+  // The client may object AFTER a moderator's timeout case already exists.
+  // Upgrade that existing case, do not create a second case or revive the trip.
+  ok(await t.api('POST','/api/orders/'+id+'/emergency-dispute',{
+    reason:'После проверки машина всё ещё не заводится, работу оспариваю'
+  },client.token));
+  const reviewed=await t.db.query<any>(
+    "select id,priority,text from mod_cases where order_id=$1 and kind='dispute'",[id]);
+  assert.equal(reviewed.length,1);
+  assert.equal(reviewed[0].priority,1);
+  assert.match(reviewed[0].text,/машина всё ещё не заводится/);
+  const afterDispute=await t.db.one<any>(
+    'select status,completed_at from orders where id=$1',[id]);
+  assert.equal(afterDispute.status,'awaiting_confirmation');
+  assert.equal(afterDispute.completed_at,null);
 });
