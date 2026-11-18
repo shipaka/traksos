@@ -60,3 +60,25 @@ background:transparent;color:inherit;font:inherit;padding:11px 14px;white-space:
  .air-compose button{align-self:flex-end}
 }
 @media(prefers-reduced-motion:reduce){.air-shell *{scroll-behavior:auto!important;transition:none!important}}
+
+/* User-owned AI character settings: accessible on small Android screens. */
+.air-ai-tone-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.air-ai-tone-option{display:flex;flex-direction:column;gap:7px;align-items:flex-start;
+  border:1px solid var(--line,#506078);border-radius:14px;padding:14px;background:transparent;
+  color:inherit;font:inherit;text-align:left;cursor:pointer;min-width:0}
+.air-ai-tone-option b{font-size:1.02rem}
+.air-ai-tone-option small{opacity:.78;line-height:1.4}
+.air-ai-tone-option>span{font-size:.82rem;margin-top:auto;font-weight:700;opacity:.8}
+.air-ai-tone-option[aria-pressed="true"]{border-color:var(--accent,#62cce8);
+  background:color-mix(in srgb,var(--accent,#62cce8) 14%,transparent)}
+.air-ai-tone-option[aria-pressed="true"]>span{opacity:1}
+.air-ai-tone-option:disabled{cursor:wait;opacity:.65}
+.air-ai-scenarios{display:flex;flex-wrap:wrap;gap:7px}
+.air-ai-dialogue{border:1px solid var(--line,#506078);border-radius:15px;
+  padding:14px;display:flex;flex-direction:column;gap:10px;overflow-wrap:anywhere}
+.air-ai-dialogue p{margin:0;line-height:1.5}
+.air-ai-dialogue small{opacity:.78;line-height:1.45}
+@media(max-width:720px){.air-ai-tone-options{grid-template-columns:minmax(0,1fr)}
+  .air-ai-tone-option{padding:12px}
+  .air-ai-scenarios{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin}
+  .air-ai-scenarios button{flex:0 0 auto}}
