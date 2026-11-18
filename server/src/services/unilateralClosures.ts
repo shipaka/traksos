@@ -243,6 +243,22 @@ export class UnilateralClosures {
       kind:'dispute',openedBy:user.id,orderId,targetId:result.order.performer_id,
       title:'Спор по аварийному завершению заявки №'+result.order.number,
       text:'Клиент оспаривает завершение без связи: '+(result.closure.answer_reason||reason),priority:1});
+    else if(result.created){
+      // SLA escalation may have opened a monitoring case before the client replied.
+      // Upgrade that SAME case to a dispute instead of producing two moderator tickets.
+      await this.db.query(
+        "update mod_cases set priority=1, text=coalesce(text,'') || E'\\n— ' || $2 "+
+        "where id=$1 and status='open'",
+        [existing.id,'Клиент оспаривает завершение: '+reason]);
+      const staff=(await this.db.query<{id:string}>(
+        "select id from users where roles && '{admin,moderator}'::text[] and status='active'"))
+        .map(x=>x.id);
+      await this.notifier.notify(staff,{type:'mod_case',caseId:existing.id},
+        {kind:'normal',title:'Клиент оспорил аварийное завершение №'+result.order.number,
+          body:'Новое возражение приложено к уже открытому делу; требуется разбор.',
+          data:{caseId:existing.id,orderId}})
+        .catch(e=>console.warn('[emergency dispute staff]',e));
+    }
     if(result.created){
       const parties=[...new Set([result.order.client_id,result.order.created_by,result.order.performer_id].filter(Boolean))] as string[];
       this.notifier.live(parties,{type:'chat',message:result.message});
