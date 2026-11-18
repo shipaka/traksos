@@ -11,7 +11,7 @@ const store = {
 let token: string | null = store.get('traksos.token');
 export const getToken = () => token;
 export function setToken(t: string | null) {
-  if (token !== t) { disconnectWs(); store.set('traksos.offlineIdentity', null); try { sessionStorage.removeItem('traksos.pendingOrder'); } catch { /* unavailable */ } }
+  if (token !== t) { disconnectWs(); store.set('traksos.offlineIdentity', null); try { sessionStorage.removeItem('traksos.pendingOrder'); } catch { /* unavailable */ } store.set('traksos.savedOrderDraft.v1', null); }
   token = t;
   store.set('traksos.token', t);
 }
