@@ -3,7 +3,11 @@ import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/route
 import { maskPhones } from '../util.ts';
 import type { Notifier } from './notify.ts';
 
-const safe = (v:string) => maskPhones(v.replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g,'[email скрыт]')).text.trim();
+const safe = (v:string) => maskPhones(v
+ .replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g,'[email скрыт]')
+ .replace(/\b[A-HJ-NPR-Z0-9]{17}\b/gi,'[VIN скрыт]')
+ .replace(/[АВЕКМНОРСТУХABEKMHOPCTYX]\s?\d{3}\s?[АВЕКМНОРСТУХABEKMHOPCTYX]{2}\s?\d{2,3}/gi,'[госномер скрыт]')
+).text.trim();
 const repairServices = new Set(['electric','diag','air','autonomy','tyre','consult']);
 type Handoff = {
  id:string;root_order_id:string;source_order_id:string;client_id:string;
