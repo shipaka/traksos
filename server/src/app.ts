@@ -52,6 +52,7 @@ import { assertRegionalTariff, CoverageError, REGIONAL_COVERAGE_NOTE } from './d
 import { defaultSettings } from './domain/defaults.ts';
 import { validStages, type VerifiedRoadEta } from './domain/progressiveSos.ts';
 import { config, isProd } from './config.ts';
+import { techBaseAudience, techBaseForRoles } from './domain/techbase.ts';
 
 export interface Deps {
   db: Db;
@@ -119,6 +120,17 @@ export function createApp(d: Deps) {
   centers.onDispute = (p) => moderation.open({ kind: 'dispute', title: p.title, text: p.text, openedBy: p.userId, targetId: p.targetId, bookingId: p.bookingId, ticketId: p.ticketId, priority: 1 });
 
   const r = new Router();
+  // Curated links only. Specialist materials never leave the server for a
+  // client-only session, including guessed requests to ?audience=master.
+  r.get('/api/techbase', true, (c: AuthedCtx) => {
+    const allowed = techBaseAudience(c.user.roles);
+    if (!allowed.length) throw forbidden();
+    const requested = c.query.get('audience');
+    if (requested && !['driver', 'master'].includes(requested)) throw bad('audience', 'Неизвестный раздел ТехБазы');
+    if (requested && !allowed.includes(requested as 'driver' | 'master')) throw forbidden();
+    return { audiences: allowed, documents: techBaseForRoles(c.user.roles, requested ?? undefined) };
+  });
+
   const staff = ['admin', 'moderator'];
   const performerRoles = ['master', 'tow', 'service'];
 
