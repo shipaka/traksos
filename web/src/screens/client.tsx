@@ -393,6 +393,11 @@ export function NewOrder({ service }: { service: string }) {
   const [description, setDescription] = useState(sym ? sym.name : '');
   const [prefill] = useState<{ address?: string; destination?: string }>(() => { try { const v = JSON.parse(sessionStorage.getItem('traksos.prefill') ?? '{}'); sessionStorage.removeItem('traksos.prefill'); return v; } catch { return {}; } });
   const [address, setAddress] = useState(prefill.address ?? '');
+  const [roadside, setRoadside] = useState(false);
+  const [roadName, setRoadName] = useState('');
+  const [roadKm, setRoadKm] = useState('');
+  const [roadDirection, setRoadDirection] = useState('');
+  const [roadSide, setRoadSide] = useState<'right'|'left'|'unknown'>('unknown');
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [geoState, setGeoState] = useState<'idle' | 'wait' | 'ok' | 'fail'>('idle');
   const [method, setMethod] = useState<'cash' | 'online' | 'invoice'>('cash');
@@ -464,7 +469,15 @@ export function NewOrder({ service }: { service: string }) {
       ...carBody(vehicleId, car), groupTrip: groupAllowed && group, night: night ?? undefined, paymentMethod: method,
       ...(isTow ? { destination: destination || undefined, cargo, loaded, driverOnSite } : {}),
       fromConsult: fromConsult || undefined,
-      site: isTow || !Object.keys(site).length ? undefined : { ...site, meet: site.meet || undefined, time: site.time || undefined },
+      site: (!isTow && Object.keys(site).length) || roadside ? {
+        ...(!isTow ? site : {}),
+        ...(!isTow ? { meet: site.meet || undefined, time: site.time || undefined } : {}),
+        ...(roadside ? { road: {
+          highway: roadName.trim() || undefined,
+          km: roadKm.trim() && Number.isFinite(Number(roadKm.replace(',', '.'))) ? Number(roadKm.replace(',', '.')) : undefined,
+          direction: roadDirection.trim() || undefined, side: roadSide,
+        } } : {}),
+      } : undefined,
     }));
     if (!r) return;
     if (r.confirmationUrl) location.href = r.confirmationUrl;
@@ -549,6 +562,25 @@ export function NewOrder({ service }: { service: string }) {
           {geoState === 'ok' ? '✓ GPS-точка указана. Проверьте, что это место машины, а не ваше текущее положение' : geoState === 'wait' ? 'Определяю место…' : geoState === 'fail'
             ? <>Не удалось определить место — напишите адрес. <button type="button" className="chip" style={{ minHeight: 30 }} onClick={locate}>Ещё раз</button></> : null}
         </span>
+        <button type="button" className="opt" aria-pressed={roadside} onClick={() => setRoadside(!roadside)}>
+          <b>{roadside ? '✓ ' : ''}Машина на трассе — указать километр и направление</b>
+          <small>Необязательно, но очень помогает мастеру и эвакуаторщику найти правильную сторону дороги.</small>
+        </button>
+        {roadside && <div className="card stack" style={{gap:8}}>
+          <span className="label">Трасса и дорожный ориентир (по желанию)</span>
+          <div className="grid2">
+            <input className="field" value={roadName} maxLength={80} onChange={e=>setRoadName(e.target.value)} placeholder="Трасса: М-10, А-181, КАД…" />
+            <input className="field" value={roadKm} type="number" min="0" max="15000" step="0.1" onChange={e=>setRoadKm(e.target.value)} placeholder="Километр (например, 87,5)" />
+          </div>
+          <input className="field" value={roadDirection} maxLength={100} onChange={e=>setRoadDirection(e.target.value)}
+            placeholder="В сторону чего: СПб / Москвы / Выборга…" />
+          <span className="label">С какой стороны по ходу движения стоит машина</span>
+          <div className="grid3">
+            {([['unknown','Не знаю'],['right','Справа'],['left','Слева']] as const).map(([id,label])=>
+              <button key={id} type="button" className="seg" aria-pressed={roadSide===id} onClick={()=>setRoadSide(id)}>{label}</button>)}
+          </div>
+          <span className="note">Номер километра и направление не заменяют GPS. Не угадывайте их: неправильная сторона трассы может сильно увеличить время подъезда.</span>
+        </div>}
         {!isConsult && <>
           <span className="label">Регион местонахождения машины — выберите вручную</span>
           <Chips value={regionId} onChange={(value) => {

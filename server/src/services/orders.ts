@@ -37,7 +37,8 @@ export interface CreateOrderInput {
   loaded?: 'empty' | 'loaded' | 'adr';
   driverOnSite?: boolean;
   /** Условия на месте: тип места, пропуск, кто встретит, что с машиной, когда */
-  site?: { place?: string; pass?: string; meet?: string; state?: string; when?: string; time?: string };
+  site?: { place?: string; pass?: string; meet?: string; state?: string; when?: string; time?: string;
+    road?: { highway?: string; km?: number; direction?: string; side?: 'left' | 'right' | 'unknown' } };
   /** Выезд после консультации: подсказка мастера переходит в заявку, клиенту — скидка */
   fromConsult?: string;
   /** Следующий самостоятельный этап того же обращения. */
@@ -117,7 +118,8 @@ export class OrdersService {
       i = { ...i, isSos: true, vehicleId: previous.vehicle_id ?? i.vehicleId,
         brand: previous.brand ?? i.brand, model: previous.model ?? i.model, year: previous.year ?? i.year,
         address: i.address || previous.address, lat: i.lat ?? previous.lat, lng: i.lng ?? previous.lng,
-        description: i.description || previous.description || 'Эвакуация после выездного ремонта' };
+        description: i.description || previous.description || 'Эвакуация после выездного ремонта',
+        site: i.site ?? previous.site ?? undefined };
     }
     let brand = i.brand ?? null;
     let model = i.model ?? null;
@@ -341,7 +343,7 @@ export class OrdersService {
       await this.event(this.db, orderId, null, 'ringing', { performerId: n.performer_id });
       await this.notifier.notify([n.performer_id], {
         type: 'incoming_call', orderId, number: order.number, service: order.service, sos: order.is_sos, problem: order.problem,
-        address: order.address, zone: est.zoneName, distanceKm: n.distance_km, brand: order.brand, callOut: est.callOut,
+        address: order.address, road: order.site?.road ?? null, zone: est.zoneName, distanceKm: n.distance_km, brand: order.brand, callOut: est.callOut,
         ringUntil: until.toISOString(),
       }, {
         kind: 'call',
@@ -456,7 +458,7 @@ export class OrdersService {
   async incoming(user: AuthUser) {
     return this.db.query(
       `select d.order_id, d.ring_until, d.distance_km, o.number, o.service, o.is_sos, o.problem, o.description, o.address,
-              o.brand, o.estimate, o.night, o.group_trip
+              o.brand, o.estimate, o.night, o.group_trip, o.site->'road' as road
          from order_dispatch d join orders o on o.id = d.order_id
         where d.performer_id=$1 and d.status='ringing' and d.ring_until >= $2 order by d.sent_at`,
       [user.id, this.now()],

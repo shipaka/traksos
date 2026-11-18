@@ -129,7 +129,7 @@ export class AuctionService {
         [orderId]))) break;
       await this.notifier.notify([r.user_id], {
         type: 'auction', orderId, number: order.number, service: order.service, sos: order.is_sos, problem: order.problem,
-        description: order.description, address: order.address, destination: order.destination, cargo: order.cargo,
+        description: order.description, address: order.address, road: order.site?.road ?? null, destination: order.destination, cargo: order.cargo,
         zone: order.estimate.zoneName, brand: order.brand, distanceKm: r.distanceKm,
         usual: lim.usual, floor: lim.floor, ceil: lim.ceil, until: until.toISOString(), ringUntil: ring,
       }, {
