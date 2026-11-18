@@ -35,7 +35,7 @@ export class OrderContinuationService {
      r.created_at,r.decided_at,
      (select id from orders o where
        (r.target_kind='tow' and (o.continuation_of=r.source_order_id or o.consult_of=r.source_order_id) and o.service='tow')
-       or (r.target_kind='master' and o.consult_of=r.source_order_id and o.service<>'consult')
+       or (r.target_kind='master' and o.consult_of=r.source_order_id and o.service in ('electric','diag','air','autonomy','tyre'))
        order by o.created_at desc limit 1) as next_order_id,
      (select id from service_bookings b where r.target_kind='sto'
        and b.from_order_id=r.source_order_id order by b.created_at desc limit 1) as next_booking_id,
