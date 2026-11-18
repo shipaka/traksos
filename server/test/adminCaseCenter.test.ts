@@ -169,7 +169,7 @@ test('a journal note does not incorrectly label an unchanged case as moderated',
 });
 
 
-test('moderated filter includes commented cases without moving them out of general register',async()=>{
+test('moderated filter shows real interventions in both views, but not notes alone',async()=>{
   let sql='';
   const svc=new AdminCaseCenter({
     query:async(q:string)=>{sql=q;return [
@@ -179,7 +179,7 @@ test('moderated filter includes commented cases without moving them out of gener
   } as any);
   assert.equal((await svc.list('','all')).length,2);
   assert.deepEqual((await svc.list('','moderated')).map((x:any)=>x.number),[11]);
-  assert.match(sql,/admin\.case_note/);
+  assert.doesNotMatch(sql,/admin\.case_note/);
 });
 
 test('admin case details resolve the linked vehicle and its previous workshop history',async()=>{
