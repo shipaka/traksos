@@ -75,6 +75,11 @@ export class AuthService {
     const callMode = this.verificationChannel === 'call';
     if (callMode && !this.sms.verificationCall)
       throw new HttpError(503, 'call_not_configured', 'Подтверждение входящим звонком пока недоступно');
+    // SMS.ru requires the real requester's IP for automatic calls. Do not
+    // silently bypass its anti-abuse checks with ip=-1 in production.
+    // Validate reverse-proxy TRUST_PROXY/X-Forwarded-For at rollout.
+    if (callMode && isProd && !publicIp)
+      throw new HttpError(503, 'call_client_ip_missing', 'Безопасная проверка номера временно недоступна. Обратитесь в поддержку.');
     // Reserve quotas BEFORE contacting the provider. In call mode the 32-byte
     // random placeholder can never be entered as a 4-digit verification code.
     const code = callMode ? randomBytes(32).toString('hex') : newCode();
