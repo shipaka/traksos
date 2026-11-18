@@ -371,7 +371,7 @@ export class ServiceCenters {
     return { ...c, reviews: reviews };
   }
 
-  async book(user: AuthUser, centerId: string, p: { vehicleId?: string | null; need: string; day: string; time?: string | null; arrival: 'self' | 'tow'; comment?: string | null; fromOrderId?: string | null; caseOrderId?: string | null }) {
+  async book(user: AuthUser, centerId: string, p: { vehicleId?: string | null; need: string; day: string; time?: string | null; arrival: 'self' | 'tow'; comment?: string | null; fromOrderId?: string | null; caseOrderId?: string | null; recommendationId?: string | null }) {
     const c = await this.db.one(`select * from service_centers where id=$1 and verification='approved' and not paused`, [centerId]);
     if (!c) throw notFound('Сервис не найден');
     if (c.owner_id === user.id) throw bad('self', 'Это ваш сервис');
@@ -392,13 +392,28 @@ export class ServiceCenters {
     // A case link is NOT a referral. Do not use from_order_id for tow->STO
     // or the old workshop referral discount would be applied incorrectly.
     if (p.caseOrderId && p.fromOrderId) throw bad('bad_link', 'Выберите одно продолжение обращения');
+    // Owner-approved STO recommendation may link an in-progress consultation,
+    // master visit or tow to a future workshop booking. The booking is still
+    // an independent service contract and produces no immediate payment.
+    let approvedRecommendation=false;
+    if (p.recommendationId) {
+      if (!p.caseOrderId || p.fromOrderId || user.owner_id)
+        throw forbidden('Запись по рекомендации подтверждает владелец автопарка');
+      const rec=await this.db.one<{id:string}>(
+        "select id from order_continuation_recommendations where id=$1 and source_order_id=$2 and client_id=$3 and target_kind='sto' and status='approved'",
+        [p.recommendationId,p.caseOrderId,user.id]);
+      if(!rec)throw forbidden('Сначала согласуйте рекомендацию СТО');
+      approvedRecommendation=true;
+    }
     let caseRootId: string | null = null;
     if (p.caseOrderId) {
       const previous = await this.db.one<any>('select id, case_root_id, client_id, created_by, vehicle_id, brand, model, year, status, result, service from orders where id=$1', [p.caseOrderId]);
       if (!previous || previous.client_id !== clientId || (user.owner_id && previous.created_by !== user.id))
         throw forbidden('Продолжить можно только собственное обращение');
-      if (previous.status !== 'completed' ||
-          !(previous.service === 'tow' || ['cause_found','not_found'].includes(previous.result)))
+      if ((approvedRecommendation
+            ? !['arrived','working','awaiting_confirmation','completed'].includes(previous.status)
+            : previous.status !== 'completed' ||
+              !(previous.service === 'tow' || ['cause_found','not_found'].includes(previous.result))))
         throw conflict('stage_not_ready', 'Сначала завершите текущий этап помощи');
       if (previous.vehicle_id && p.vehicleId && previous.vehicle_id !== p.vehicleId)
         throw bad('different_vehicle', 'Запись должна относиться к тому же грузовику');
