@@ -78,7 +78,7 @@ export class AdminCaseCenter {
       'where b.case_root_id=$1 order by b.created_at,b.number'
     ].join(' '),[rootId]);
     const orderIds=stages.map(s=>s.id),bookingIds=bookings.map(b=>b.id);
-    const [events,payments,moderation,notes,registry]=await Promise.all([
+    const [events,payments,moderation,notes,chat,vehicleHistory,registry]=await Promise.all([
       this.db.query<any>(
         'select e.order_id,e.actor_id,e.type,e.data,e.created_at from order_events e '+
         'where e.order_id=any($1::uuid[]) order by e.created_at,e.id limit 600',[orderIds]),
@@ -97,6 +97,17 @@ export class AdminCaseCenter {
         "where (al.target=$1 or al.target=any($2::text[])) and "+
         "(al.action='admin.case_note' or al.action like 'order.%') "+
         'order by al.created_at,al.id',[rootId,orderIds]),
+      this.db.query<any>(
+        'select m.id,m.order_id,m.sender_id,m.kind,m.body,m.created_at, '+
+        "coalesce(u.name,'Система') as sender_name "+
+        'from chat_messages m left join users u on u.id=m.sender_id '+
+        'where m.order_id=any($1::uuid[]) order by m.created_at,m.id limit 500',
+        [orderIds]),
+      stages[0]?.vehicle_id ? this.db.query<any>(
+        'select o.id,o.number,o.service,o.status,o.problem,o.result_note,o.created_at,o.completed_at '+
+        'from orders o where o.vehicle_id=$1 and o.id<>all($2::uuid[]) '+
+        'order by o.created_at desc limit 100',
+        [stages[0].vehicle_id,orderIds]) : Promise.resolve([]),
       this.db.one<{multi_number:number}>(
         'select multi_number from case_registry where root_order_id=$1',[rootId])
     ]);
@@ -110,7 +121,7 @@ export class AdminCaseCenter {
       multi,
       stages:stages.map((s,i)=>({...s,stage_no:i+1})),
       bookings:bookings.map((b,i)=>({...b,stage_no:stages.length+i+1})),
-      events,payments,moderation,notes,
+      events,payments,moderation,notes,chat,vehicle_history:vehicleHistory,
       document_status:'Итоговый счёт требует подтверждённых построчных позиций и первичных документов'
     };
   }
