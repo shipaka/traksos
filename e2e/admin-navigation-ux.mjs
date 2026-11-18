@@ -78,6 +78,10 @@ try {
       await navigation.getByRole('button',{name,exact:true}).click();
       await page.waitForURL(new RegExp('#/admin/section/'+id+'$'));
       await page.locator('.admin-stage-head h2').getByText(name,{exact:true}).waitFor();
+      if(id==='ecu') {
+        await page.getByText('Проверка стационарных точек ЭБУ',{exact:true}).waitFor();
+        await page.getByText('Это не выездная услуга и не тариф по километрам.',{exact:false}).waitFor();
+      }
       if(id==='cases') {
         await page.getByRole('heading',{name:'Заявки и мультизаявки'}).first().waitFor();
         await page.getByRole('searchbox',{name:'Найти заявку, мультизаявку или автомобиль'}).waitFor();
