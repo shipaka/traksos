@@ -6,6 +6,7 @@ import { BookingRows, BookingList, isOpenBooking } from './base.tsx';
 import { DriverRules } from './fleet.tsx';
 import { VehicleServiceApplication, VehicleServiceHistory } from './vehicleServices.tsx';
 import { native } from '../native.ts';
+import { saveNewOrderDraft, readNewOrderDraft, clearNewOrderDraft, type SavedNewOrderDraft } from '../orderDraft.ts';
 import { insurancePresentation, isOpenInsuranceRequest } from '../insurancePresentation.ts';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
@@ -484,11 +485,42 @@ export function NewOrder({ service }: { service: string }) {
       } : undefined,
     }));
     if (!r) return;
+    clearNewOrderDraft();
     if (r.confirmationUrl) location.href = r.confirmationUrl;
     else go(`order/${r.order.id}`);
   }
 
   const [site, setSite] = useState<{ place?: string; pass?: string; meet?: string; state?: string; when?: string; time?: string }>({});
+  const [savedDraft,setSavedDraft]=useState<SavedNewOrderDraft|null>(null);
+  useEffect(()=>{
+    let active=true;
+    if(me?.id)void readNewOrderDraft(me.id,service).then(d=>{if(active)setSavedDraft(d)});
+    return ()=>{active=false};
+  },[me?.id,service]);
+
+  async function saveDraftOnDevice(){
+    if(!me?.id)return;
+    const saved=await run(()=>saveNewOrderDraft(me.id,{
+      service,regionId,zoneId,tier,night,group,vehicleId,car,description,address,
+      destination,cargo,loaded,driverOnSite,method,site,
+      roadside,roadName,roadKm,roadDirection,roadSide,
+    }),'Черновик зашифрован и сохранён только на устройстве');
+    if(saved)setSavedDraft(saved);
+  }
+  function restoreDraftFromDevice(){
+    const d=savedDraft?.data;
+    if(!d)return;
+    setRegionId(d.regionId);setZoneId(d.zoneId);setTier(d.tier);
+    setNight(d.night);setGroup(d.group);setVehicleId(d.vehicleId);
+    setCar(d.car);setDescription(d.description);setAddress(d.address);
+    setDestination(d.destination);setCargo(d.cargo);setLoaded(d.loaded);
+    setDriverOnSite(d.driverOnSite);setMethod(d.method);setSite(d.site??{});
+    setRoadside(d.roadside);setRoadName(d.roadName);setRoadKm(d.roadKm);
+    setRoadDirection(d.roadDirection);setRoadSide(d.roadSide);
+    setGeo(null);setGeoState('idle'); // Never treat old GPS as a current fix.
+    setAgree(false);setEst(null);setTried(false);
+  }
+
   const [tried, setTried] = useState(false);
   const need = {
     car: !!vehicleId || car.brand.trim().length >= 2,
@@ -508,7 +540,15 @@ export function NewOrder({ service }: { service: string }) {
     !agree && { id: 'f-agree', name: 'согласие с суммами' },
   ].filter(Boolean) as { id: string; name: string }[];
 
-  if (!pricing.data) return <main><Loading error={pricing.error} /></main>;
+  if (!pricing.data) return <main>
+    <Back to="" />
+    <div className="banner warn">{pricing.error ?? 'Проверяем тарифы и тарифные зоны. Без связи отправка новой заявки недоступна.'}</div>
+    {savedDraft && <div className="card stack">
+      <b>Ваш локальный черновик сохранён</b>
+      <span className="note">Сохранён {fmtTime(new Date(savedDraft.savedAt).toISOString())}. Описание: {savedDraft.data.description.slice(0,180)||'не указано'}</span>
+      <span className="note">Дождитесь проверки тарифа при восстановлении соединения. Черновик никогда не отправится без вашего нажатия.</span>
+    </div>}
+  </main>;
   const s = SERVICES[service];
 
   return (
@@ -520,6 +560,20 @@ export function NewOrder({ service }: { service: string }) {
       </div>
       <SelfOrderWarning me={me} />
       <DriverRules />
+      <div className="card stack" aria-label="Локальный черновик для слабого интернета">
+        <b>Черновик заявки · для плохой связи</b>
+        <span className="note">Сохраняется только по вашему нажатию, зашифрован на этом устройстве на срок до 48 часов. Не отправляется автоматически. Координаты GPS намеренно не сохраняем — перед вызовом проверьте положение машины.</span>
+        <div className="row">
+          <button type="button" className="btn ghost small" disabled={busy||!me?.id}
+            onClick={saveDraftOnDevice}>Сохранить черновик</button>
+          {savedDraft && <button type="button" className="chip"
+            onClick={()=>{clearNewOrderDraft();setSavedDraft(null);}}>Удалить</button>}
+        </div>
+        {savedDraft && <div className="stack" style={{gap:4}}>
+          <span className="note">Сохранён {fmtTime(new Date(savedDraft.savedAt).toISOString())} · только на этом устройстве</span>
+          <button type="button" className="btn ghost small" onClick={restoreDraftFromDevice}>Восстановить поля (без GPS и согласия на оплату)</button>
+        </div>}
+      </div>
       {preferredPerformerId && <div className="card stack">
         <b>Повторный вызов знакомого исполнителя</b>
         <span className="note">{selectedPerformer
