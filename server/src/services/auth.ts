@@ -45,7 +45,8 @@ const PER_IP_HOUR = 15;
 
 export class AuthService {
   constructor(private db: Db, private sms: SmsProvider,
-    private now: () => Date = () => new Date(), private settings?: SettingsService) {}
+    private now: () => Date = () => new Date(), private settings?: SettingsService,
+    private verificationChannel: 'sms' | 'call' = config.sms.verificationChannel) {}
 
   private async ensureInsuranceRegistration(phone: string, choice?: AccountChoice) {
     // Legacy local CI fixtures remain supported without any partner configuration.
@@ -71,7 +72,12 @@ export class AuthService {
     const ttl = new Date(now.getTime() + CODE_TTL_MS);
     // Local and proxy-internal IPs are not a reliable individual identifier.
     const publicIp = ip && !/^(::1|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|::ffff:(127|10|192\.168)\.|fc|fd)/i.test(ip);
-    const code = newCode();
+    const callMode = this.verificationChannel === 'call';
+    if (callMode && !this.sms.verificationCall)
+      throw new HttpError(503, 'call_not_configured', 'Подтверждение входящим звонком пока недоступно');
+    // Reserve quotas BEFORE contacting the provider. In call mode the 32-byte
+    // random placeholder can never be entered as a 4-digit verification code.
+    const code = callMode ? randomBytes(32).toString('hex') : newCode();
     const hash = hmac(phone + ':' + code);
 
     await this.db.tx(async (q) => {
@@ -108,7 +114,19 @@ export class AuthService {
       );
     });
     try {
-      await this.sms.send(phone, `TrakSOS: код ${purpose === 'reset' ? 'восстановления доступа' : 'регистрации'} ${code}. Никому его не сообщайте.`);
+      if (callMode) {
+        // The provider chooses the caller ID and rings the user's phone.
+        // Save only a keyed hash; never return the code or call metadata.
+        const deliveredCode = await this.sms.verificationCall!(phone, publicIp ? ip : '-1');
+        if (!/^\\d{4}$/.test(deliveredCode)) throw new Error('Неверный формат кода от провайдера');
+        const stored = await this.db.one<{ code_hash: string }>(
+          'update auth_codes set code_hash=$3 where phone=$1 and code_hash=$2 returning code_hash',
+          [phone, hash, hmac(phone + ':' + deliveredCode)],
+        );
+        if (!stored) throw new Error('Запрос уже заменён; код звонка больше недействителен');
+      } else {
+        await this.sms.send(phone, `TrakSOS: код ${purpose === 'reset' ? 'восстановления доступа' : 'регистрации'} ${code}. Никому его не сообщайте.`);
+      }
     } catch (error) {
       if (error instanceof SmsRejectedError) {
         // Only a coarse, non-sensitive reason is logged. Do not log the number,
@@ -119,19 +137,22 @@ export class AuthService {
           : /отправител|sender|подпись/.test(reason) ? 'отправитель'
           : /лимит|quota|limit/.test(reason) ? 'лимит'
           : /номер|phone|recipient/.test(reason) ? 'получатель' : 'другая причина';
-        console.warn('SMS.ru не принял сообщение: ' + category);
+        console.warn('SMS.ru не принял ' + (callMode ? 'проверочный звонок' : 'сообщение') + ': ' + category);
         // SMS.ru explicitly refused the message: the code was never delivered.
         // Remove only this exact pending code, never one from a newer request.
         // Keep hourly/daily quotas to prevent repeated rejected requests being abused.
         await this.db.query('delete from auth_codes where phone=$1 and code_hash=$2', [phone, hash]);
-        throw new HttpError(502, 'sms_rejected',
-          'SMS.ru отклонил отправку. Проверьте баланс и ограничения SMS.ru; повторить можно после исправления.');
+        throw new HttpError(502, callMode ? 'call_rejected' : 'sms_rejected',
+          callMode
+            ? 'SMS.ru отклонил проверочный звонок. Проверьте доступность услуги и баланс; повторите запрос после исправления.'
+            : 'SMS.ru отклонил отправку. Проверьте баланс и ограничения SMS.ru; повторить можно после исправления.');
       }
       // Unknown network error: do NOT remove the pending code. SMS.ru may
       // have accepted it despite a lost response; keep the 60-second cooldown.
       throw error;
     }
-    return { phone, sent: true, devCode: this.sms.exposesCode && !isProd ? code : undefined };
+    return { phone, sent: true, channel: callMode ? 'call' : 'sms',
+      devCode: !callMode && this.sms.exposesCode && !isProd ? code : undefined };
   }
 
   /** role не передан — вход «как есть»: новый номер становится клиентом, у существующего роли не меняются */
