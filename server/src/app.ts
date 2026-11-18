@@ -587,6 +587,10 @@ export function createApp(d: Deps) {
     site: z.object({
       place: z.enum(['parking', 'yard', 'plant', 'road']).optional(), pass: z.enum(['none', 'onsite', 'ahead']).optional(),
       meet: z.string().max(60).optional(), state: z.enum(['free', 'loading', 'other_work']).optional(),
+      road: z.object({
+        highway: z.string().trim().max(80).optional(), km: z.number().min(0).max(15000).optional(),
+        direction: z.string().trim().max(100).optional(), side: z.enum(['right','left','unknown']).optional(),
+      }).optional(),
       when: z.enum(['now', 'today', 'tomorrow']).optional(), time: z.string().max(20).optional(),
     }).optional(),
   }), c.body), typeof c.headers['idempotency-key'] === 'string'
