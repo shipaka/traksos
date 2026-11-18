@@ -24,6 +24,7 @@ import { OffersService } from './services/offers.ts';
 import { AuctionService } from './services/auction.ts';
 import { DocumentsService } from './services/documents.ts';
 import { AdminService } from './services/admin.ts';
+import { AdminCaseCenter } from './services/adminCaseCenter.ts';
 import { AdminAccessService, MANUAL_ROLES, REPORT_CATEGORIES } from './services/adminAccess.ts';
 import { DeveloperReportDelivery } from './services/developerReportDelivery.ts';
 import { SupportService, TOPICS } from './services/support.ts';
@@ -86,6 +87,7 @@ export function createApp(d: Deps) {
   const offers = new OffersService(d.db, notifier, now);
   const documents = new DocumentsService(d.db, notifier, settings, now);
   const admin = new AdminService(d.db, notifier, orders, payments, profiles, settings, now);
+  const adminCases = new AdminCaseCenter(d.db);
   const adminAccess = new AdminAccessService(d.db);
   const developerReportDelivery = new DeveloperReportDelivery(d.db);
   const support = new SupportService(d.db, notifier, orders, now);
@@ -1178,6 +1180,17 @@ export function createApp(d: Deps) {
     admin.setRoles(c.user, c.params.id, parse(z.object({ roles: z.array(z.enum(ROLES as [string, ...string[]])).min(1) }), c.body).roles));
   r.get('/api/admin/users/:id', ['admin'], (c: AuthedCtx) => admin.userCard(c.params.id));
   r.get('/api/admin/search', ['admin'], (c: AuthedCtx) => admin.search(c.query.get('q') ?? ''));
+  // Case centre: always admin-only. Order IDs from linked stages resolve to one root.
+  r.get('/api/admin/cases', ['admin'], (c: AuthedCtx) =>
+    adminCases.list(c.query.get('q') ?? '', c.query.get('scope') ?? 'all'));
+  r.get('/api/admin/cases/:id/export', ['admin'], (c: AuthedCtx) =>
+    adminCases.exportOperationalCsv(c.user, c.params.id));
+  r.get('/api/admin/cases/:id', ['admin'], (c: AuthedCtx) =>
+    adminCases.detail(c.user, c.params.id));
+  r.post('/api/admin/cases/:id/notes', ['admin'], (c: AuthedCtx) => {
+    const input = parse(z.object({ comment: z.string().trim().min(5).max(1500) }), c.body);
+    return adminCases.note(c.user,c.params.id,input.comment);
+  });
   r.post('/api/admin/payments/:id/refund', ['admin'], (c: AuthedCtx) => admin.refund(c.user, c.params.id, parse(z.object({
     amount: money.positive(), from: z.enum(['platform', 'performer']), reason: z.string().min(3).max(300),
   }), c.body), typeof c.headers['idempotency-key'] === 'string' ? c.headers['idempotency-key'] : undefined));
