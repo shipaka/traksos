@@ -1070,7 +1070,7 @@ export class OrdersService {
           `select (select count(*)::int from order_dispatch where order_id=$1 and status in ('bidding','ringing','queued')) as candidates,
                   (select count(*)::int from bids where order_id=$1 and status='active') as offers`, [orderId])
       : null;
-    const ecuDiagnosticQuote=o.service==='ecu' && o.status!=='searching' && actor!=='candidate'
+    const ecuDiagnosticQuote=o.service==='ecu' && o.status!=='searching' && actor!==null
       ? await this.db.one<{price:number;scope:string;quote_version:Date}>(
           "select price,ecu_diagnostic_scope as scope,updated_at as quote_version "+
           "from bids where order_id=$1 and status='chosen' and performer_id=$2",
