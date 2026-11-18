@@ -178,8 +178,9 @@ function useAirMessages(endpoint:string|null){
   return {messages,loading,error,reload:()=>setRevision(x=>x+1),
     append:(m:AirMessage)=>setMessages(curr=>appendMessages(curr,[m],new Set(recentApprovals.current)))};
 }
-function MessageStream({endpoint,canWrite,placeholder,ownerId}:{
-  endpoint:string|null;canWrite:boolean;placeholder:string;ownerId:string|null
+function MessageStream({endpoint,canWrite,placeholder,ownerId,onStartDirect}:{
+  endpoint:string|null;canWrite:boolean;placeholder:string;ownerId:string|null;
+  onStartDirect?:(nickname:string)=>void
 }){
   const {messages,loading,error,reload}=useAirMessages(endpoint);
   const [draft,setDraft]=useState('');
@@ -247,6 +248,9 @@ function MessageStream({endpoint,canWrite,placeholder,ownerId}:{
         <p>{m.body}</p>
         {m.moderation_state==='pending'&&<small>Проверяется модератором</small>}
       {!m.isMine&&m.moderation_state==='published'&&<div className="air-moderation">
+        {onStartDirect&&<button className="btn ghost small" type="button"
+          aria-label={'Предложить личный диалог: '+m.nickname}
+          onClick={()=>onStartDirect(m.nickname)}>В ЛС</button>}
         {reportId===m.id?<span>
           <button className="btn ghost small" disabled={busy} onClick={async()=>{
             const api=endpoint?.includes('/direct/')?
@@ -362,16 +366,26 @@ function RoadEvents({roomId,joined}: {roomId:string;joined:boolean}){
     </form>}
   </section>;
 }
-function DirectMessages(){
+function DirectMessages({invitePeer}:{invitePeer?:string|null}){
   const {me}=useMe();
   const threads=useLoad<{threads:AirThread[]}>(()=>get('/api/community/direct'),[],
     (e:any)=>String(e.type).startsWith('community_direct'));
   const [peer,setPeer]=useState('');
   const [selected,setSelected]=useState<string|null>(null);
+  useEffect(()=>{
+    if(!invitePeer)return;
+    // Already accepted or pending: open the existing thread, never create a
+    // duplicate invitation and never send a message automatically.
+    const existing=threads.data?.threads.find(t=>t.peerNickname.toLocaleLowerCase('ru-RU')===
+      invitePeer.toLocaleLowerCase('ru-RU'));
+    if(existing){setSelected(existing.id);setPeer('');}
+    else {setSelected(null);setPeer(invitePeer);}
+  },[invitePeer,threads.data?.threads]);
   const {busy,run}=useAction();
   const choice=threads.data?.threads.find(t=>t.id===selected)??null;
   return <div className="air-direct">
-    <p className="note">Личные сообщения начинаются только после согласия второго водителя. Собеседник видит псевдоним, не номер телефона.</p>
+    <p className="note">Личные сообщения начинаются только после согласия второго водителя. Собеседник видит псевдоним, не номер телефона. Приглашения ограничены, нежелательных собеседников можно заблокировать.</p>
+    {invitePeer&&<p className="note" role="status">Переход из Эфира: {invitePeer}. Если диалог ещё не открыт, подтвердите отправку приглашения ниже.</p>}
     <form className="air-invite" onSubmit={async e=>{
       e.preventDefault();
       const result=await run(()=>post('/api/community/direct/request',{nickname:peer.trim()}),'Приглашение отправлено');
@@ -427,6 +441,7 @@ export function DriverAir(){
   // static preview of future response styles, never creates an AI request.
   const [aiTone,setAiTone]=useState<'straight'|'humor'|'road'>('humor');
   const [roomPane,setRoomPane]=useState<'chat'|'road'>('chat');
+  const [directPeer,setDirectPeer]=useState<string|null>(null);
   const [sending,setSending]=useState(false);
   const {run}=useAction();
   const active=rooms.data?.rooms.find(x=>x.id===roomId)??null;
@@ -538,7 +553,7 @@ export function DriverAir(){
       <button type="button" className="btn ghost" onClick={()=>setView('rooms')}>К текстовым чатам</button>
     </section>}
     {view==='offers'&&<PartnerOffers mode="reader"/>}
-    {view==='direct'&&<DirectMessages/>}
+    {view==='direct'&&<DirectMessages invitePeer={directPeer}/>} 
     {view==='help'&&<NearbyHelp/>}
     {view==='notifications'&&<CommunityNotificationSettings/>}
     {view==='rooms'&&<div className="air-layout">
@@ -572,6 +587,9 @@ export function DriverAir(){
           {roomPane==='chat'&&<MessageStream key={active.id+':'+active.joined}
             ownerId={me?.id??null}
             endpoint={'/api/community/rooms/'+active.id+'/messages'} canWrite={active.joined}
+            onStartDirect={active.audience==='driver'?(nickname)=>{
+              setDirectPeer(nickname);setView('direct');
+            }:undefined}
             placeholder="Напишите сообщение коллегам…"/>}
           {roomPane==='road'&&active.audience==='driver'&&<RoadEvents key={active.id} roomId={active.id} joined={active.joined}/>}
         </>}
