@@ -1217,11 +1217,14 @@ export function createApp(d: Deps) {
     return auction.offer(c.user,c.params.id,b.price,b.diagnosticScope);
   });
   r.delete('/api/orders/:id/offers', performerRoles, (c: AuthedCtx) => auction.withdraw(c.user, c.params.id));
-  r.post('/api/orders/:id/offers/:offerId/choose', true, (c: AuthedCtx) =>
-    auction.choose(c.user,c.params.id,c.params.offerId,
-      parse(z.object({acceptedPrice:money.optional(),quoteVersion:z.string().datetime().optional(),ecuConsent:z.boolean().optional()}),c.body).acceptedPrice,
-      parse(z.object({acceptedPrice:money.optional(),quoteVersion:z.string().datetime().optional(),ecuConsent:z.boolean().optional()}),c.body).quoteVersion,
-      parse(z.object({acceptedPrice:money.optional(),quoteVersion:z.string().datetime().optional(),ecuConsent:z.boolean().optional()}),c.body).ecuConsent));
+  r.post('/api/orders/:id/offers/:offerId/choose', true, (c: AuthedCtx) => {
+    const body=parse(z.object({
+      acceptedPrice:money.optional(),quoteVersion:z.string().datetime().optional(),
+      ecuConsent:z.boolean().optional()
+    }),c.body);
+    return auction.choose(c.user,c.params.id,c.params.offerId,
+      body.acceptedPrice,body.quoteVersion,body.ecuConsent);
+  });
   r.get('/api/performer/auctions', performerRoles, (c: AuthedCtx) => auction.open(c.user));
   r.get('/api/orders/:id/messages', true, (c: AuthedCtx) => chat.list(c.user, c.params.id, Number(c.query.get('after') ?? 0)));
   r.post('/api/orders/:id/messages', true, (c: AuthedCtx) => {
