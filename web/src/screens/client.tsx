@@ -389,6 +389,8 @@ export function NewOrder({ service }: { service: string }) {
   const sym = sos ?? SYMPTOMS.find((p) => p.id === params.get('p'));
   const fromConsult = params.get('from');
   const parallelWith = service === 'tow' ? params.get('parallel') : null;
+  const continueFrom = service === 'tow' ? params.get('continue') : null;
+  const recommendationId = params.get('recommendation');
   const preferredPerformerId = params.get('preferred') ?? '';
   const { me } = useMe();
   const { busy, run } = useAction();
@@ -397,7 +399,7 @@ export function NewOrder({ service }: { service: string }) {
   const pastPerformers = useLoad(() => preferredPerformerId ? get('/api/my-performers') : Promise.resolve([]), [preferredPerformerId]);
   const selectedPerformer = (pastPerformers.data ?? []).find((p:any) => p.id === preferredPerformerId);
   const consult = useLoad(() => (fromConsult ? get(`/api/orders/${fromConsult}`) : Promise.resolve(null)), [fromConsult]);
-  const parallelSource = useLoad(() => (parallelWith ? get(`/api/orders/${parallelWith}`) : Promise.resolve(null)), [parallelWith]);
+  const parallelSource = useLoad(() => ((parallelWith||continueFrom) ? get(`/api/orders/${parallelWith||continueFrom}`) : Promise.resolve(null)), [parallelWith,continueFrom]);
   const [parallelAgree,setParallelAgree] = useState(false);
   const [agree, setAgree] = useState(false);
 
@@ -502,6 +504,8 @@ export function NewOrder({ service }: { service: string }) {
       ...carBody(vehicleId, car), groupTrip: groupAllowed && group, night: night ?? undefined, paymentMethod: method,
       ...(isTow ? { destination: destination || undefined, cargo, loaded, driverOnSite } : {}),
       fromConsult: fromConsult || undefined,
+      continueFrom: continueFrom || undefined,
+      recommendationId: recommendationId || undefined,
       preferredPerformerId: preferredPerformerId || undefined,
       parallelWith: parallelWith || undefined,
       parallelConsent: parallelWith ? parallelAgree : undefined,
@@ -587,7 +591,7 @@ export function NewOrder({ service }: { service: string }) {
 
   return (
     <main>
-      <Back to={parallelWith ? `order/${parallelWith}` : fromConsult ? `order/${fromConsult}` : sos ? 'sos' : ''} />
+      <Back to={parallelWith ? `order/${parallelWith}` : continueFrom ? `order/${continueFrom}` : fromConsult ? `order/${fromConsult}` : sos ? 'sos' : ''} />
       <div>
         <h1>{sym ? sym.name : s?.name ?? 'Заявка'}</h1>
         <div className="sub">{sos ? `${s?.name} · срочный вызов` : sym ? s?.name : s?.hint}</div>
