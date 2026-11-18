@@ -616,7 +616,7 @@ export function createApp(d: Deps) {
     (c: AuthedCtx) => continuations.list(c.user,c.params.id));
   r.post('/api/orders/:id/continuations', performerRoles, (c: AuthedCtx) => {
     const b=parse(z.object({
-      target:z.enum(['tow','sto','master']),
+      target:z.enum(['tow','sto','master','ecu']),
       summary:z.string().trim().min(12).max(1000),
     }),c.body);
     return continuations.propose(c.user,c.params.id,b.target,b.summary);
