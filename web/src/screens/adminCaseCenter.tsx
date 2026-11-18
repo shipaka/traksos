@@ -308,7 +308,10 @@ export function AdminCaseCenter() {
               :detail.events.map((e:any,i:number)=><div key={i} className="case-detail-event">
                 <time>{date(e.created_at)}</time>
                 <div><b>{action(e.type)}</b>
-                  <small>Заказ {stages.find((s:any)=>s.id===e.order_id)?.number||'—'}</small></div>
+                  {stages.some((s:any)=>s.id===e.order_id)
+                    ?<button type="button" className="case-inspect-text-link" onClick={()=>drill('order',e.order_id)}>
+                      Заказ №{stages.find((s:any)=>s.id===e.order_id)?.number} ↗</button>
+                    :<small>Заказ не определён</small>}</div>
               </div>)}
             <p className="note">Временные отметки берутся из журнала; пропущенные события не восстанавливаются предположительно.</p>
           </>}
@@ -317,7 +320,9 @@ export function AdminCaseCenter() {
             {!detail.chat?.length?<p className="note">Сообщений по этим заказам пока нет.</p>
               :detail.chat.map((m:any)=><div className="case-detail-message" key={m.id}>
                 <div className="case-detail-between"><b>{m.sender_name}</b><small>{date(m.created_at)}</small></div>
-                <p>{m.body}</p><small>Заказ №{stages.find((s:any)=>s.id===m.order_id)?.number||'—'}</small>
+                <p>{m.body}</p>
+                <button type="button" className="case-inspect-text-link" onClick={()=>drill('order',m.order_id)}>
+                  Заказ №{stages.find((s:any)=>s.id===m.order_id)?.number||'—'} ↗</button>
               </div>)}
             <p className="note">Ответ клиенту направляется через соответствующий защищённый чат заявки с сохранением прав доступа.</p>
           </>}
@@ -325,13 +330,15 @@ export function AdminCaseCenter() {
             <h4>Фактические записи по расчётам</h4>
             <p className="case-detail-warning">{detail.document_status}</p>
             {stages.map((s:any)=><article className="case-detail-stage" key={s.id}>
-              <b>Заказ №{s.number} · {SERVICES[s.service]?.name||s.service}</b>
+              <button type="button" className="case-inspect-text-link" onClick={()=>drill('order',s.id)}>
+                Заказ №{s.number} · {SERVICES[s.service]?.name||s.service} ↗</button>
               <div className="case-detail-between"><span>Подтверждённый выезд (если указан)</span><b>{cash(s.call_out_amount)}</b></div>
               <div className="case-detail-between"><span>Работы (если указаны)</span><b>{cash(s.work_amount)}</b></div>
               <div className="case-detail-between"><span>Скидка (если указана)</span><b>{cash(s.discount_amount)}</b></div>
             </article>)}
             {stages.map((s:any)=>s.recorded_items?.lines?.length>0&&<div key={'lines-'+s.id} className="case-detail-stage">
-              <b>Позиции из расчёта мастера · №{s.number}</b>
+              <button type="button" className="case-inspect-text-link" onClick={()=>drill('order',s.id)}>
+                Позиции мастера · заказ №{s.number} ↗</button>
               {s.recorded_items.lines.map((line:any,i:number)=><div className="case-detail-between" key={i}>
                 <span>{line.description}</span><b>{cash(line.amount)}</b>
               </div>)}
@@ -344,7 +351,8 @@ export function AdminCaseCenter() {
             {!detail.payouts?.length?<p className="note">Записей о выплатах пока нет.</p>
             :detail.payouts.map((p:any)=><article key={p.id} className="case-detail-stage">
               <div className="case-detail-between">
-                <b>Заказ №{stages.find((s:any)=>s.id===p.order_id)?.number||'—'}</b>
+                <button type="button" className="case-inspect-text-link" onClick={()=>drill('order',p.order_id)}>
+                  Заказ №{stages.find((s:any)=>s.id===p.order_id)?.number||'—'} ↗</button>
                 <span className="case-reg-chip">{p.status}</span>
               </div>
               <div className="case-detail-between"><span>Сумма в реестре выплат</span><b>{cash(p.amount)}</b></div>
@@ -354,7 +362,8 @@ export function AdminCaseCenter() {
             <h4>Записи платёжной системы</h4>
             {!detail.payments?.length?<p className="note">Сопоставленных платежей нет.</p>
             :detail.payments.map((p:any)=><div className="case-detail-payment" key={p.id}>
-              <span>Заказ №{stages.find((s:any)=>s.id===p.order_id)?.number||'—'} · {p.kind} · {p.status}</span>
+              <button type="button" className="case-inspect-text-link" onClick={()=>drill('order',p.order_id)}>
+                Заказ №{stages.find((s:any)=>s.id===p.order_id)?.number||'—'} · {p.kind} · {p.status} ↗</button>
               <b>{cash(p.total)}</b>
             </div>)}
             <p className="note">Построчные детали и отчёты агента появятся только после подтверждённых смет, деталей, первичных документов и фискальных чеков.</p>
