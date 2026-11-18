@@ -3,6 +3,7 @@ import { AdminServices } from './base.tsx';
 import { ModQueue } from './moderation.tsx';
 import { AdminSummary } from './adminSummary.tsx';
 import { AdminCaseCenter } from './adminCaseCenter.tsx';
+import { EcuAdminStations } from './ecuHandoffs.tsx';
 import { AdminSettings } from './adminSettings.tsx';
 import { AdminDiagnostics } from './adminDiagnostics.tsx';
 import { AdminAccountAccess } from './adminAccountAccess.tsx';
@@ -16,7 +17,7 @@ import { get, post, put, rub, fmtPhone, fmtTime, authedImage } from '../api.ts';
 import { STATUS, SERVICES, LINE } from '../dict.ts';
 import { useLoad, useAction, Loading } from '../ui.tsx';
 
-type AdminSection = 'cases' | 'stats' | 'search' | 'support' | 'verify' | 'people' | 'access' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'settings' | 'demand' | 'announcements' | 'vehicleServices' | 'diagnostics';
+type AdminSection = 'ecu' | 'cases' | 'stats' | 'search' | 'support' | 'verify' | 'people' | 'access' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'settings' | 'demand' | 'announcements' | 'vehicleServices' | 'diagnostics';
 type AdminNavItem = { id: AdminSection; name: string; description: string; symbol: string };
 const ADMIN_GROUPS: { name: string; items: AdminNavItem[] }[] = [
   { name: 'Операционная работа', items: [
@@ -34,6 +35,7 @@ const ADMIN_GROUPS: { name: string; items: AdminNavItem[] }[] = [
     { id: 'access', name: 'Регистрация и доступы', description: 'Создать учётную запись, выбрать роли и передать проблему разработчику', symbol: '08+' },
     { id: 'verify', name: 'Проверка', description: 'Документы и допуск исполнителей', symbol: '09' },
     { id: 'bases', name: 'Рембазы', description: 'Партнёрские станции ремонта', symbol: '10' },
+    { id: 'ecu', name: 'Стационарные ЭБУ', description: 'Проверка адресов ремонтников электронных блоков', symbol: '10+' },
     { id: 'vehicleServices', name: 'Страхование и ТО', description: 'Заявки и контроль партнёров', symbol: '11' },
   ] },
   { name: 'Финансы и документы', items: [
@@ -125,6 +127,7 @@ export function Admin({ initialSection }: { initialSection?: string }) {
             {tab === 'support' && <SupportQueue />}
             {tab === 'verify' && <Verify />}
             {tab === 'bases' && <AdminServices />}
+            {tab === 'ecu' && <EcuAdminStations />}
             {tab === 'queue' && <ModQueue />}
             {tab === 'summary' && <AdminSummary />}
             {tab === 'vehicleServices' && <>

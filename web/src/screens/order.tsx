@@ -10,6 +10,7 @@ import { onEvent } from '../api.ts';
 import { Search, OfferForm } from './search.tsx';
 import { RoadsideMap } from './roadsideMap.tsx';
 import { AdminRouteMap } from './AdminRouteMap.tsx';
+import { EcuOrderPanel } from './ecuHandoffs.tsx';
 import { OrderTimeline } from './OrderTimeline.tsx';
 import { LocationSharing } from './performer.tsx';
 import { RefundForm, payStatus } from './adminUser.tsx';
@@ -95,7 +96,8 @@ export function Order({ id }: { id: string }) {
           <span className="note">Можно пригласить эвакуатор параллельно, но он не начнёт погрузку до завершения работы мастера. Второй выезд оплачивается отдельно после вашего согласия.</span>
           <a className="btn ghost small" href={`#/new/tow?parallel=${d.id}`}>Согласовать отдельный выезд эвакуатора</a>
         </div>)}
-      {d.status === 'completed' && <Review id={id} you={d.you} />}
+      <EcuOrderPanel order={d} />
+      {d.status === 'completed' && <Review id={id} you={d.you} />
 
       {d.status !== 'searching' && d.status !== 'no_performer' && <Chat id={id} status={d.status} />}
       </>}

@@ -164,7 +164,7 @@ export class EcuHandoffService {
     'select id,performer_id,diagnosis_price,explanation,version,updated_at from ecu_quotes'+
     ' where handoff_id=$1 and performer_id=$2',[id,user.id]),
    full ? this.db.query(
-    'select o.number,o.service,o.status,o.description,o.result,o.result_note,o.consult_hint,'+
+    'select o.id,o.number,o.service,o.status,o.description,o.result,o.result_note,o.consult_hint,'+
     'o.created_at,o.completed_at,u.name as performer_name from orders o'+
     ' left join users u on u.id=o.performer_id where o.id=$1 or o.case_root_id=$1'+
     ' order by o.created_at,o.number',[h.root_order_id]) : Promise.resolve([]),
@@ -185,7 +185,7 @@ export class EcuHandoffService {
    summary:safe(h.summary),state:h.state,actor,
    vehicle:{brand:h.brand,model:h.model,year:h.year,vin:vin?.vin??null},
    history:history.map((r:any)=>({
-    number:r.number,service:r.service,status:r.status,
+    id:r.id,number:r.number,service:r.service,status:r.status,
     description:safe(r.description??''),result:r.result,
     resultNote:safe(r.result_note??''),
     consultHint:r.consult_hint?{hints:r.consult_hint.hints,confidence:r.consult_hint.confidence,

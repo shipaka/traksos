@@ -114,7 +114,7 @@ export function EcuHandoffPage({id}:{id:string}){
    {d.history?.length>0 && <div className="card stack">
     <b>Хронология · кто и что проверил</b>
     {d.history.map((s:any)=><div key={s.number} className="stack" style={{gap:4}}>
-     <a href={'#/order/'+d.rootOrderId} className="note">Этап №{s.number} · {SERVICES[s.service]?.name??s.service} · {STATUS[s.status]?.name??s.status}</a>
+     <a href={'#/order/'+s.id} className="note">Этап №{s.number} · {SERVICES[s.service]?.name??s.service} · {STATUS[s.status]?.name??s.status}</a>
      <b>{s.performerName}</b>
      {s.description && <span className="note">{s.description}</span>}
      {s.resultNote && <span className="note">Результат: {s.resultNote}</span>}
