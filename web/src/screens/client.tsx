@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { get, post, put, del, rub, fmtTime, fmtPhone } from '../api.ts';
+import { get, post, put, patch, del, rub, fmtTime, fmtPhone } from '../api.ts';
 import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF, ON_SITE, seriesHint } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFields, LiveStrip, type VehicleValue } from '../ui.tsx';
 import { BookingRows, BookingList, isOpenBooking } from './base.tsx';
@@ -859,6 +859,7 @@ export function Garage() {
           {v.trailer_plate && <span className="note">Прицеп {v.trailer_plate}</span>}
           {v.fixed_at && <span className="pill good" style={{ alignSelf: 'flex-start' }}>уточнено мастером · {fmtTime(v.fixed_at)}</span>}
           {seriesHint(v.brand, v.year) && <span className="note" style={{ color: 'var(--accent)' }}>{seriesHint(v.brand, v.year)}</span>}
+          <VehicleExtendedDetails vehicle={v} isDriver={isDriver} onSaved={()=>list.reload()} />
           <VehicleServiceApplication vehicleId={v.id} onCreated={() => setServiceHistoryVersion(v => v + 1)} />
           <VehicleServiceHistory id={v.id} isDriver={isDriver} refreshVersion={serviceHistoryVersion} />
           <VehicleHistory id={v.id} />
@@ -898,6 +899,62 @@ export function Garage() {
       )}
     </main>
   );
+}
+
+/** More accurate spare-parts matching without making SOS registration onerous. */
+function VehicleExtendedDetails({vehicle:v,isDriver,onSaved}:{
+  vehicle:any;isDriver:boolean;onSaved:()=>void
+}) {
+  const [open,setOpen]=useState(false);
+  const [vin,setVin]=useState(v.vin??'');
+  const [engine,setEngine]=useState(v.engine??'');
+  const [notes,setNotes]=useState(v.configuration_notes??'');
+  const {busy,run}=useAction();
+  const fields=[v.vin,v.engine,v.configuration_notes].filter((x:any)=>!!String(x??'').trim()).length;
+  const validVin=!vin.trim()||/^[A-HJ-NPR-Z0-9]{17}$/.test(vin.trim().toUpperCase());
+  return <div className="stack" style={{gap:7}}>
+    <button type="button" className="linkrow" onClick={()=>setOpen(x=>!x)}
+      aria-expanded={open} aria-label="Дополнительные данные машины">
+      <span><b>Характеристики для точного подбора запчастей</b>
+        <small>{fields===3?'Заполнены VIN, двигатель и особенности комплектации'
+          : 'Заполнено '+fields+' из 3. Необязательно, но желательно уточнить.'}</small>
+      </span><span aria-hidden="true">{open?'˄':'˅'}</span>
+    </button>
+    {open && <div className="card stack" style={{gap:8}}>
+      <span className="note">Уточнение VIN, двигателя и заменённых агрегатов помогает избежать ошибочного подбора. SOS и вызов мастера доступны и без этих данных.</span>
+      {isDriver ? <div className="banner warn">
+        <b>Ограниченный доступ</b>
+        <span className="note">Вы можете посмотреть характеристики закреплённой машины, но изменяет их только владелец автопарка.</span>
+        <span className="note">VIN: {v.vin??'не заполнен'} · Двигатель: {v.engine??'не заполнен'}</span>
+        {v.configuration_notes&&<span className="note">{v.configuration_notes}</span>}
+      </div> : <>
+        <label className="stack" style={{gap:3}}>
+          <span className="label">VIN (необязательно)</span>
+          <input className="field" value={vin} maxLength={17} autoCapitalize="characters"
+            onChange={e=>setVin(e.target.value.toUpperCase())}
+            placeholder="17 символов — можно оставить пустым"/>
+          {!validVin&&<span role="alert" className="note">Проверьте VIN: 17 символов, буквы I, O, Q не используются</span>}
+        </label>
+        <label className="stack" style={{gap:3}}>
+          <span className="label">Фактический двигатель</span>
+          <input className="field" maxLength={80} value={engine} onChange={e=>setEngine(e.target.value)}
+            placeholder="Например, DCI 11 / D13 / двигатель заменён"/>
+        </label>
+        <label className="stack" style={{gap:3}}>
+          <span className="label">Комплектация и замены</span>
+          <textarea className="field" maxLength={500} value={notes} onChange={e=>setNotes(e.target.value)}
+            placeholder="Уточнения по коробке, мостам, установленным агрегатам и изменённым деталям"/>
+        </label>
+        <button type="button" className="btn small" disabled={busy||!validVin}
+          onClick={async()=>{
+            const result=await run(()=>patch('/api/vehicles/'+v.id+'/details',
+              {vin:vin.trim()||null,engine:engine.trim()||null,configurationNotes:notes.trim()||null}),
+              'Характеристики обновлены');
+            if(result){onSaved();setOpen(false);}
+          }}>Сохранить характеристики</button>
+      </>}
+    </div>}
+  </div>;
 }
 
 /** История машины: что и когда делали, комментарий мастера. Свёрнута, раскрывается по нажатию. */
