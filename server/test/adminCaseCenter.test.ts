@@ -107,3 +107,32 @@ test('operational CSV is audited and protects against spreadsheet formula inject
   assert.match(result.notice,/Не является/);
   assert.equal(logs[0][1],'root-1');
 });
+
+test('mixed order/СТО stage ordinals never change when stage types interleave',async()=>{
+  const root='00000000-0000-4000-8000-000000000001';
+  const second='00000000-0000-4000-8000-000000000002';
+  const booking='00000000-0000-4000-8000-000000000003';
+  const db:any={
+    one:async(sql:string)=>sql.includes('select id,case_root_id')
+      ?{id:root,case_root_id:null}
+      :sql.includes('select multi_number')?{multi_number:9}:null,
+    query:async(sql:string)=>{
+      if(sql.includes('from orders o'))return [
+        {id:root,number:15,vehicle_id:null},
+        {id:second,number:17,vehicle_id:null}
+      ];
+      if(sql.includes('from service_bookings b join service_centers'))
+        return [{id:booking,number:16,center_name:'СТО'}];
+      if(sql.includes('from case_stage_index'))return [
+        {source_kind:'order',source_id:root,ordinal:1},
+        {source_kind:'booking',source_id:booking,ordinal:2},
+        {source_kind:'order',source_id:second,ordinal:3}
+      ];
+      return [];
+    }
+  };
+  const detail=await new AdminCaseCenter(db).detail({id:'admin'} as any,root);
+  assert.deepEqual(detail.stages.map(x=>x.stage_no),[1,3]);
+  assert.equal(detail.bookings[0].stage_no,2);
+  assert.equal(detail.case_number,'М-000009');
+});
