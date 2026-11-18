@@ -6,12 +6,14 @@ let t:T;
 let admin:{token:string;id:string};
 let client:{token:string;id:string};
 let master:{token:string;id:string};
+let anotherClient:{token:string;id:string};
 
 before(async()=>{
   t=await setup();
   admin=await t.login('+79990000001');
   client=await t.login('+79991112233');
   master=await t.login('+79992223344','master');
+  anotherClient=await t.login('+79993335566');
   ok(await t.api('PUT','/api/performer/profile',{
     kind:'master',name:'Выездной диагност',specialties:['electric'],
     taxStatus:'self_employed',inn:'780000000001'
@@ -150,4 +152,30 @@ test('SLA: one reminder, one overdue moderator review, never customer consent',a
     'select status,completed_at from orders where id=$1',[id]);
   assert.equal(afterDispute.status,'awaiting_confirmation');
   assert.equal(afterDispute.completed_at,null);
+});
+
+
+test('after emergency release, new work can be accepted and an old client confirmation must not mark the performer online',async()=>{
+  const oldId=await scheduledTestOrder();
+  ok(await closeEmergency(oldId,'emergency-test-d-20261118'));
+  assert.equal(await t.app.orders.busyWith(t.db,master.id,null),false);
+  const newer=ok(await t.api('POST','/api/orders',{
+    service:'electric',zoneId:'spb',description:'Второй независимый выезд после аварийной сдачи'
+  },anotherClient.token)).order;
+  const bid=await t.api('POST','/api/orders/'+newer.id+'/offers',{},master.token);
+  assert.equal(bid.status,200,'released performer must be able to bid for another client');
+  const offers=ok(await t.api('GET','/api/orders/'+newer.id+'/offers',undefined,anotherClient.token));
+  ok(await t.api('POST','/api/orders/'+newer.id+'/offers/'+offers.offers[0].id+'/choose',
+    {},anotherClient.token));
+  assert.equal((await t.db.one<any>(
+    'select line_status from performer_profiles where user_id=$1',[master.id]))?.line_status,'on_job');
+  const old=ok(await t.api('GET','/api/orders/'+oldId,undefined,client.token));
+  ok(await t.api('POST','/api/orders/'+oldId+'/confirm',
+    {total:old.unilateralClosure.quoteTotal},client.token));
+  // Confirming the previous case is a FINANCIAL settlement, not a physical
+  // "go online" request for the now-busy worker.
+  assert.equal((await t.db.one<any>(
+    'select line_status from performer_profiles where user_id=$1',[master.id]))?.line_status,
+    'on_job');
+  assert.equal(await t.app.orders.busyWith(t.db,master.id,null),true);
 });
