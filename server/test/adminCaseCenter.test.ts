@@ -167,3 +167,48 @@ test('a journal note does not incorrectly label an unchanged case as moderated',
   assert.match(sql,/order\.discount/);
   assert.doesNotMatch(sql,/admin\.case_note/);
 });
+
+
+test('moderated filter includes commented cases without moving them out of general register',async()=>{
+  let sql='';
+  const svc=new AdminCaseCenter({
+    query:async(q:string)=>{sql=q;return [
+      {id:'root',number:11,multi_number:null,order_count:1,workshop_count:0,has_active:true,moderated:true},
+      {id:'normal',number:12,multi_number:null,order_count:1,workshop_count:0,has_active:true,moderated:false}
+    ];}
+  } as any);
+  assert.equal((await svc.list('','all')).length,2);
+  assert.deepEqual((await svc.list('','moderated')).map((x:any)=>x.number),[11]);
+  assert.match(sql,/admin\.case_note/);
+});
+
+test('admin case details resolve the linked vehicle and its previous workshop history',async()=>{
+  const root='00000000-0000-4000-8000-000000000100';
+  const vehicleId='00000000-0000-4000-8000-000000000200';
+  const calls:any[]=[];
+  const db:any={
+    one:async(sql:string,params:any[])=>{
+      if(sql.includes('select id,case_root_id'))return {id:root,case_root_id:null};
+      if(sql.includes('from vehicles where id='))return {id:vehicleId,brand:'R',model:'Грузовик',plate:'А100АА'};
+      if(sql.includes('select multi_number'))return null;
+      return null;
+    },
+    query:async(sql:string,params:any[])=>{
+      calls.push({sql,params});
+      if(sql.includes('from orders o left join users'))return [{id:root,vehicle_id:vehicleId,number:15,created_at:'2026-11-18'}];
+      if(sql.includes('from service_bookings b join service_centers') && sql.includes('where b.case_root_id'))return [];
+      if(sql.includes('from service_bookings b') && sql.includes('b.vehicle_id='))return [
+        {id:'previous-booking',number:8,center_name:'СТО',created_at:'2026-11-16'}
+      ];
+      if(sql.includes('from orders o where o.vehicle_id'))return [{id:'previous-order',number:7}];
+      return [];
+    }
+  };
+  const d=await new AdminCaseCenter(db).detail({id:'admin'} as any,root);
+  assert.equal(d.vehicle.id,vehicleId);
+  assert.equal(d.vehicle_history[0].number,7);
+  assert.equal(d.vehicle_history_bookings[0].number,8);
+  const bookingQuery=calls.find(c=>c.sql.includes('b.vehicle_id='));
+  assert.deepEqual(bookingQuery.params,[vehicleId,[]]);
+  assert.ok(calls.some(c=>c.sql.includes('admin.case_view')));
+});
