@@ -67,6 +67,31 @@ test('consultant proposes linked stages: owner approves, but no auto charge or d
   {approve:false},owner.token)).status,409);
 });
 
+test('an older independent consultation follow-up is not mistaken for an approved recommendation',async()=>{
+ const consult=ok(await t.api('POST','/api/orders',{
+  service:'consult',zoneId:'phone',brand:'DAF',paymentMethod:'cash',
+  description:'Первичная дистанционная консультация по проводке'
+ },owner.token)).order;
+ await t.db.query(
+  "update orders set status='awaiting_confirmation',performer_id=$2 where id=$1",
+  [consult.id,consultant.id]);
+ const legacy=ok(await t.api('POST','/api/orders',{
+  service:'diag',zoneId:'spb',regionId:'spb',brand:'DAF',
+  address:'Санкт-Петербург, Софийская улица, 61',
+  description:'Ранее отдельно оформленный выезд после консультации',
+  fromConsult:consult.id,paymentMethod:'cash'
+ },owner.token)).order;
+ assert.equal(legacy.consultOf,consult.id);
+ const advice=ok(await t.api('POST','/api/orders/'+consult.id+'/continuations',{
+  target:'master',summary:'Нужно проверить проводку и генератор с выездным электриком'
+ },consultant.token));
+ const linked=ok(await t.api('GET','/api/orders/'+consult.id+'/continuations',undefined,owner.token));
+ assert.equal(linked[0].id,advice.id);
+ assert.equal(linked[0].status,'pending');
+ assert.equal(linked[0].next_order_id,null,
+  'independent earlier order must not impersonate the recommendation');
+});
+
 test('consultant can propose ECU: only owner starts station quote flow with no payment',async()=>{
  const consult=ok(await t.api('POST','/api/orders',{
   service:'consult',zoneId:'phone',brand:'Scania',
