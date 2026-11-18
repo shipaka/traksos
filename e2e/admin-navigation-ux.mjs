@@ -8,7 +8,7 @@ if (!['localhost','127.0.0.1'].includes(new URL(BASE).hostname))
   throw Error('Admin visual/navigation audit is LOCAL ONLY');
 
 const sections = [
-  ['queue','Модерация'],['summary','Сводка'],['orders','Заявки'],
+  ['queue','Модерация'],['summary','Сводка'],['cases','Заявки и мультизаявки'],['orders','Все заказы'],
   ['dispatch','Распределение'],['demand','Проблемные заявки'],
   ['support','Обращения'],['search','Поиск'],['people','Все люди'],
   ['access','Регистрация и доступы'],
@@ -78,6 +78,11 @@ try {
       await navigation.getByRole('button',{name,exact:true}).click();
       await page.waitForURL(new RegExp('#/admin/section/'+id+'$'));
       await page.locator('.admin-stage-head h2').getByText(name,{exact:true}).waitFor();
+      if(id==='cases') {
+        await page.getByRole('heading',{name:'Заявки и мультизаявки'}).first().waitFor();
+        await page.getByRole('searchbox',{name:'Найти заявку, мультизаявку или автомобиль'}).waitFor();
+        await page.getByRole('button',{name:'Модерировались'}).waitFor();
+      }
       if(id==='access') {
         await page.getByRole('heading',{name:'Зарегистрировать человека вручную'}).waitFor();
         await page.getByRole('button',{name:'Создать учётную запись'}).waitFor();
@@ -91,7 +96,7 @@ try {
     await page.reload({waitUntil:'domcontentloaded'});
     await page.locator('.admin-stage-head h2').getByText('Настройки',{exact:true}).waitFor();
     await page.goto(BASE+'/#/admin/section/orders');
-    await page.locator('.admin-stage-head h2').getByText('Заявки',{exact:true}).waitFor();
+    await page.locator('.admin-stage-head h2').getByText('Все заказы',{exact:true}).waitFor();
     await checkLayout('deep link');
     await context.close();
   }
