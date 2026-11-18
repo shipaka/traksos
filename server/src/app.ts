@@ -465,6 +465,14 @@ export function createApp(d: Deps) {
     plate: z.string().max(15).optional(), trailerPlate: z.string().max(15).optional() });
   r.get('/api/vehicles', true, (c: AuthedCtx) => profiles.vehicles(c.user));
   r.post('/api/vehicles', true, (c: AuthedCtx) => profiles.addVehicle(c.user, parse(vehicleSchema, c.body)));
+  // These fields already exist in migration 032; never require them for SOS
+  // or mutate a customer's registered vehicle as a driver.
+  r.patch('/api/vehicles/:id/details', true, (c: AuthedCtx) =>
+    profiles.updateVehicleDetails(c.user,c.params.id,parse(z.object({
+      vin: z.string().trim().toUpperCase().regex(/^[A-HJ-NPR-Z0-9]{17}$/,'VIN — 17 символов без I, O и Q').nullable().optional(),
+      engine: z.string().trim().max(80).nullable().optional(),
+      configurationNotes: z.string().trim().max(500).nullable().optional(),
+    }).strict(),c.body)));
   r.get('/api/vehicles/:id/history', true, (c: AuthedCtx) => profiles.vehicleHistory(c.user, c.params.id));
   r.delete('/api/vehicles/:id', true, async (c: AuthedCtx) => (await profiles.removeVehicle(c.user, c.params.id), { ok: true }));
   r.post('/api/vehicles/:id/driver', true, (c: AuthedCtx) => profiles.assignDriver(c.user, c.params.id, parse(z.object({ phone: z.string().nullable() }), c.body).phone));

@@ -223,6 +223,27 @@ export class ProfilesService {
     );
   }
 
+  /** Nonblocking optional vehicle details. Owner-only and scoped to own fleet. */
+  async updateVehicleDetails(user: AuthUser, vehicleId: string,
+    changes: { vin?: string|null; engine?: string|null; configurationNotes?: string|null }) {
+    if (user.owner_id || !user.roles.includes('client') || user.roles.includes('driver'))
+      throw forbidden('Характеристики машины меняет только владелец');
+    if (!Object.keys(changes).length) throw bad('empty_vehicle_details','Укажите изменённое поле');
+    const normal=(v:string|null|undefined)=>v == null?null:v.trim() || null;
+    const found=await this.db.one(
+      'update vehicles set ' +
+      ' vin=case when $3::boolean then $4::text else vin end,' +
+      ' engine=case when $5::boolean then $6::text else engine end,' +
+      ' configuration_notes=case when $7::boolean then $8::text else configuration_notes end' +
+      ' where id=$1 and owner_id=$2 returning *',
+      [vehicleId,user.id,
+        changes.vin !== undefined,normal(changes.vin),
+        changes.engine !== undefined,normal(changes.engine),
+        changes.configurationNotes !== undefined,normal(changes.configurationNotes)]);
+    if (!found) throw notFound('Машина не найдена в вашем гараже');
+    return found;
+  }
+
   /**
    * История машины: всё, что по ней делали, — услуга, кто, итог и комментарий мастера, подсказка по телефону.
    * Владелец видит суммы, водитель — только свои заявки и без сумм.
