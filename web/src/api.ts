@@ -20,7 +20,7 @@ export class ApiError extends Error {
   constructor(public status: number, public code: string, message: string, public data?: any) { super(message); }
 }
 
-export async function api<T = any>(method: string, path: string, body?: unknown): Promise<T> {
+export async function api<T = any>(method: string, path: string, body?: unknown, idempotencyKey?: string): Promise<T> {
   // The sandbox is the exact same frontend served from another origin.
   // Fail closed if a bundle was accidentally built with a remote production API.
   if (sessionStorage.getItem('traksos.sandboxMode') === '1' &&
@@ -35,7 +35,7 @@ export async function api<T = any>(method: string, path: string, body?: unknown)
     try {
       r = await fetch(API_URL + path, {
         method,
-        headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
+        headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}), ...(idempotencyKey ? { 'idempotency-key': idempotencyKey } : {}) },
         body: body === undefined ? undefined : JSON.stringify(body),
         cache: 'no-store',
         signal: timeout.signal,
@@ -59,6 +59,8 @@ export async function api<T = any>(method: string, path: string, body?: unknown)
 
 export const get = <T = any>(p: string) => api<T>('GET', p);
 export const post = <T = any>(p: string, b: unknown = {}) => api<T>('POST', p, b);
+// Never retry POST automatically. A caller can reuse its own stable key after a lost response.
+export const postIdempotent = <T = any>(p: string, b: unknown, key: string) => api<T>('POST', p, b, key);
 export const put = <T = any>(p: string, b: unknown = {}) => api<T>('PUT', p, b);
 export const patch = <T = any>(p: string, b: unknown = {}) => api<T>('PATCH', p, b);
 export const del = <T = any>(p: string) => api<T>('DELETE', p);
