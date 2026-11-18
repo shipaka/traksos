@@ -448,14 +448,16 @@ export function NewOrder({ service }: { service: string }) {
     if(source.vehicleId)setVehicleId(source.vehicleId);
     else {setVehicleId('');setCar({brand:source.brand??'',model:source.model??'',
       year:source.year?String(source.year):''});}
-    setDescription('Эвакуация параллельно работам по заявке №'+source.number);
-  },[parallelSource.data]);
+    setDescription(parallelWith ? 'Эвакуация параллельно работам по заявке №'+source.number
+      : 'Эвакуация после завершения заявки №'+source.number);
+  },[parallelSource.data,parallelWith]);
   // Выезд после консультации: та же машина и описание
   useEffect(() => {
     const c = consult.data;
     if (!c) return;
     if (c.description && !description) setDescription(c.description);
-    if (!c.vehicle && c.brand) { setVehicleId(''); setCar({ brand: c.brand, model: c.model ?? '', year: c.year ? String(c.year) : '' }); }
+    if (c.vehicleId) setVehicleId(c.vehicleId);
+    else if (!c.vehicle && c.brand) { setVehicleId(''); setCar({ brand: c.brand, model: c.model ?? '', year: c.year ? String(c.year) : '' }); }
   }, [consult.data]); // eslint-disable-line
   useEffect(() => {
     // Cancel stale previews when the declared region, address or GPS changes.
