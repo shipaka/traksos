@@ -31,7 +31,7 @@ export function OrderContinuations({order:o}:{order:any}) {
  const nextLink=(r:any)=>{
   const suffix='&recommendation='+r.id;
   if(r.target_kind==='master')return '#/new/diag?from='+o.id+suffix;
-  if(r.target_kind==='sto')return '#/services?from='+o.id;
+  if(r.target_kind==='sto')return '#/services?case='+o.id+suffix;
   if(o.service==='consult')return '#/new/tow?from='+o.id+suffix;
   if(['completed'].includes(o.status))return '#/new/tow?continue='+o.id+suffix;
   return '#/new/tow?parallel='+o.id+suffix;
