@@ -100,7 +100,7 @@ export class AdminCaseCenter {
       'where b.case_root_id=$1 order by b.created_at,b.number'
     ].join(' '),[rootId]);
     const orderIds=stages.map(s=>s.id),bookingIds=bookings.map(b=>b.id);
-    const [events,payments,moderation,notes,chat,vehicleHistory,registry]=await Promise.all([
+    const [events,payments,moderation,notes,chat,vehicleHistory,registry,ordinals]=await Promise.all([
       this.db.query<any>(
         'select e.order_id,e.actor_id,e.type,e.data,e.created_at from order_events e '+
         'where e.order_id=any($1::uuid[]) order by e.created_at,e.id limit 600',[orderIds]),
@@ -131,8 +131,12 @@ export class AdminCaseCenter {
         'order by o.created_at desc limit 100',
         [stages[0].vehicle_id,orderIds]) : Promise.resolve([]),
       this.db.one<{multi_number:number}>(
-        'select multi_number from case_registry where root_order_id=$1',[rootId])
+        'select multi_number from case_registry where root_order_id=$1',[rootId]),
+      this.db.query<any>(
+        'select source_kind,source_id,ordinal from case_stage_index where root_order_id=$1 order by ordinal',
+        [rootId])
     ]);
+    const stageNo=new Map<string,number>(ordinals.map((x:any)=>[x.source_kind+':'+x.source_id,Number(x.ordinal)]));
     const multi=stages.length+bookings.length>1;
     await this.db.query(
       "insert into audit_log(actor_id,action,target,data) values ($1,'admin.case_view',$2,$3)",
@@ -141,8 +145,8 @@ export class AdminCaseCenter {
       root_id:rootId,
       case_number:multi&&registry?'М-'+String(registry.multi_number).padStart(6,'0'):null,
       multi,
-      stages:stages.map((s,i)=>({...s,stage_no:i+1,recorded_items:recordedStageLines(s,events)})),
-      bookings:bookings.map((b,i)=>({...b,stage_no:stages.length+i+1})),
+      stages:stages.map((s,i)=>({...s,stage_no:stageNo.get('order:'+s.id)??i+1,recorded_items:recordedStageLines(s,events)})),
+      bookings:bookings.map((b,i)=>({...b,stage_no:stageNo.get('booking:'+b.id)??stages.length+i+1})),
       events,payments,moderation,notes,chat,vehicle_history:vehicleHistory,
       document_status:'Итоговый счёт требует подтверждённых построчных позиций и первичных документов'
     };
