@@ -10,6 +10,7 @@ type Handoff = {
  created_by:string;summary:string;state:string;selected_performer_id:string|null;
  selected_quote_id:string|null;selected_at:Date|null;created_at:Date;
  service:string;source_number:number;source_performer_id:string|null;
+ source_created_by:string;number:number;
  brand:string|null;model:string|null;year:number|null;vehicle_id:string|null;
 };
 type Access = 'owner'|'driver'|'origin'|'expert'|'candidate'|'admin';
@@ -138,17 +139,19 @@ export class EcuHandoffService {
  }
  private async access(user:AuthUser,id:string):Promise<{h:Handoff;actor:Access}>{
   const h=await this.db.one<Handoff>(
-   'select h.*,o.service,o.number as source_number,o.performer_id as source_performer_id,' +
+   'select h.*,o.service,o.number as source_number,o.performer_id as source_performer_id,
+   o.created_by as source_created_by,' +
    ' o.brand,o.model,o.year,o.vehicle_id from ecu_handoffs h' +
    ' join orders o on o.id=h.source_order_id where h.id=$1',[id]);
   if(!h)throw notFound('Передача не найдена');
   if(user.roles.includes('admin'))return{h,actor:'admin'};
   if(user.id===h.client_id)return{h,actor:'owner'};
-  if(user.id===h.created_by && user.owner_id===h.client_id)return{h,actor:'driver'};
+  if(user.id===h.source_created_by && user.owner_id===h.client_id)return{h,actor:'driver'};
   if(user.id===h.source_performer_id)return{h,actor:'origin'};
+  if(h.state==='selected' && h.selected_performer_id===user.id && user.roles.includes('master'))
+   return{h,actor:'expert'}; // historical selected cases stay readable if station verification lapses
   if(await this.verified(user.id)){
    if(h.state==='pending')return{h,actor:'candidate'};
-   if(h.state==='selected' && h.selected_performer_id===user.id)return{h,actor:'expert'};
   }
   throw forbidden('Нет доступа к передаче');
  }
@@ -180,7 +183,7 @@ export class EcuHandoffService {
     : Promise.resolve(null),
   ]);
   return {
-   id:h.id,rootOrderId:h.root_order_id,sourceOrderId:h.source_order_id,
+   id:h.id,number:h.number,rootOrderId:h.root_order_id,sourceOrderId:h.source_order_id,
    sourceNumber:h.source_number,sourceService:h.service,
    summary:safe(h.summary),state:h.state,actor,
    vehicle:{brand:h.brand,model:h.model,year:h.year,vin:vin?.vin??null},
@@ -252,6 +255,29 @@ export class EcuHandoffService {
     data:{handoffId:id}}).catch(()=>{});
   return answer;
  }
+ async close(user:AuthUser,id:string,reason:string) {
+  const clean=safe(reason);
+  if(clean.length<10)throw bad('need_reason','Укажите итог или причину закрытия');
+  const info=await this.db.tx(async q=>{
+   const h=await q.one<{client_id:string;state:string;source_order_id:string;selected_performer_id:string|null;created_by:string}>(
+    'select client_id,state,source_order_id,selected_performer_id,created_by from ecu_handoffs where id=$1 for update',[id]);
+   if(!h)throw notFound();
+   if(user.id!==h.client_id && !user.roles.includes('admin'))
+    throw forbidden('Передачу закрывает владелец или администратор');
+   if(h.state==='closed')return {changed:false,sourceId:h.source_order_id,worker:h.selected_performer_id};
+   await q.query("update ecu_handoffs set state='closed' where id=$1",[id]);
+   await q.query('insert into ecu_handoff_notes(handoff_id,author_id,body) values($1,$2,$3)',
+    [id,user.id,'Закрыто: '+clean]);
+   await q.query("insert into order_events(order_id,actor_id,type,data) values($1,$2,'ecu_handoff_closed',$3)",
+    [h.source_order_id,user.id,{handoffId:id}]);
+   return {changed:true,sourceId:h.source_order_id,worker:h.selected_performer_id};
+  });
+  if(info.changed)await this.notifier.notify([info.worker],{type:'ecu_handoff',handoffId:id},
+   {kind:'normal',title:'Передача ЭБУ закрыта',
+    body:'В обращении сохранено итоговое заключение.',data:{handoffId:id}}).catch(()=>{});
+  return {ok:true,state:'closed'};
+ }
+
  async note(user:AuthUser,id:string,body:string){
   const {h,actor}=await this.access(user,id);
   if(h.state!=='selected'||!['owner','driver','expert','admin'].includes(actor))
@@ -261,7 +287,7 @@ export class EcuHandoffService {
   const m=await this.db.one(
    'insert into ecu_handoff_notes(handoff_id,author_id,body) values($1,$2,$3) returning id,body,created_at',
    [id,user.id,clean]);
-  await this.notifier.notify([h.client_id,h.created_by,h.selected_performer_id].filter(x=>x!==user.id),
+  await this.notifier.notify([h.client_id,h.source_created_by,h.selected_performer_id].filter(x=>x!==user.id),
    {type:'ecu_handoff',handoffId:id},{kind:'normal',title:'Новое сообщение по передаче ЭБУ',
     body:'Доступна новая техническая запись в цепочке обращения.',data:{handoffId:id}}).catch(()=>{});
   return m;

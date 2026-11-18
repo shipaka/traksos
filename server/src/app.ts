@@ -631,6 +631,10 @@ export function createApp(d: Deps) {
     }),c.body);
     return ecuHandoffs.choose(c.user,c.params.id,b.quoteId,b.version,b.price,b.agree);
   });
+  r.post('/api/ecu/handoffs/:id/close', true, (c: AuthedCtx) =>
+    ecuHandoffs.close(c.user,c.params.id,parse(z.object({
+      reason:z.string().trim().min(10).max(1000),
+    }),c.body).reason));
   r.post('/api/ecu/handoffs/:id/notes', true, (c: AuthedCtx) =>
     ecuHandoffs.note(c.user,c.params.id,parse(z.object({
       body:z.string().trim().min(2).max(1500),
