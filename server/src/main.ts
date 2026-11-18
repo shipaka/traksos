@@ -62,6 +62,12 @@ const supportSlaTimer = setInterval(() => {
   app.support.tickSla().catch((e) => console.error('[support-sla]', e));
 }, 30_000);
 void app.support.tickSla().catch((e) => console.error('[support-sla]', e));
+// Durable emergency handoff SLA: reminder and manual review only, never financial completion.
+const unilateralSlaTimer=setInterval(()=>{
+  void app.unilateral.tickSla().catch(e=>console.error('[unilateral-sla]',e));
+},60_000);
+void app.unilateral.tickSla().catch(e=>console.error('[unilateral-sla]',e));
+
 // Background delivery is durable across restarts. Missing webhook config keeps reports
 // in the internal admin queue; it never silently sends personal data externally.
 const developerDeliveryTimer = setInterval(() => {
@@ -109,6 +115,7 @@ for (const sig of ['SIGINT', 'SIGTERM'] as const) {
     clearInterval(hourly);
     clearInterval(captureTimer);
     clearInterval(supportSlaTimer);
+    clearInterval(unilateralSlaTimer);
     clearInterval(developerDeliveryTimer);
     server.close();
     await db.close();
