@@ -3,7 +3,7 @@ import {get,post,fmtTime} from '../api.ts';
 import {useAction,useLoad,useMe} from '../ui.tsx';
 
 const titles:Record<string,string> = {
- tow:'Эвакуатор',sto:'СТО',master:'Выездной мастер',
+ tow:'Эвакуатор',sto:'СТО',master:'Выездной мастер',ecu:'Ремонт ЭБУ',
 };
 
 /**
@@ -16,17 +16,16 @@ export function OrderContinuations({order:o}:{order:any}) {
  const recs=useLoad<any[]>(()=>get('/api/orders/'+o.id+'/continuations'),[o.id],
   e=>e.orderId===o.id && e.type==='order');
  const {busy,run}=useAction();
- const [target,setTarget]=useState<'tow'|'sto'|'master'>(o.service==='consult'?'master':o.service==='tow'?'sto':'tow');
+ const [target,setTarget]=useState<'tow'|'sto'|'master'|'ecu'>(o.service==='consult'?'master':o.service==='tow'?'sto':'tow');
  const [reason,setReason]=useState('');
  const isPerformer=o.you==='performer';
  const client=o.you==='client';
  const owner=client&&!me?.owner_id;
  const canSuggest=isPerformer && (
-  ['arrived','working','awaiting_confirmation','completed'].includes(o.status) ||
-  (o.service==='consult'&&o.status==='accepted')
+  ['arrived','working','awaiting_confirmation','completed'].includes(o.status)
  );
- const targets=o.service==='consult'?['master','tow','sto']
-  :o.service==='tow'?['sto']:['tow','sto'];
+ const targets=o.service==='consult'?['master','tow','sto','ecu']
+  :o.service==='tow'?['sto']:['tow','sto','ecu'];
  if(!client&&!isPerformer||!targets.length)return null;
  const rows=recs.data??[];
  const nextLink=(r:any)=>{
@@ -43,7 +42,7 @@ export function OrderContinuations({order:o}:{order:any}) {
   {canSuggest&&<>
    <label className="label" htmlFor={'continuation-target-'+o.id}>Кого предложить клиенту</label>
    <select className="field" id={'continuation-target-'+o.id} value={target}
-    onChange={e=>setTarget(e.target.value as 'tow'|'sto'|'master')}>
+    onChange={e=>setTarget(e.target.value as 'tow'|'sto'|'master'|'ecu')}>
     {targets.map(k=><option key={k} value={k}>{titles[k]}</option>)}
    </select>
    <textarea className="field" rows={3} maxLength={1000} value={reason}
@@ -61,7 +60,7 @@ export function OrderContinuations({order:o}:{order:any}) {
   {!recs.data && recs.error && <span className="note">{String(recs.error)}</span>}
   {rows.map((r:any)=><div className="card flat stack" key={r.id}>
    <div className="between"><b>{titles[r.target_kind]??r.target_kind}</b>
-    <span className="pill">{r.next_order_id||r.next_booking_id?'Создан следующий этап':
+    <span className="pill">{r.next_order_id||r.next_booking_id||r.next_ecu_handoff_id?'Создан следующий этап':
        r.status==='pending'?'Ожидает решения':
        r.status==='approved'?'Поиск согласован':'Отказано'}</span></div>
    <p>{r.summary}</p>
@@ -76,7 +75,15 @@ export function OrderContinuations({order:o}:{order:any}) {
       {approve:false}),'Продолжение отклонено'))recs.reload();
     }}>Отказаться</button>
    </div>}
-   {owner&&r.status==='approved'&&!r.next_order_id&&!r.next_booking_id&&
+   {owner&&r.status==='approved'&&r.target_kind==='ecu'&&!r.next_ecu_handoff_id&&
+    <button className="btn small" disabled={busy} onClick={async()=>{
+     const created=await run(()=>post('/api/orders/'+o.id+'/ecu-handoff',
+       {summary:r.summary}), 'Заключение направлено мастерским ЭБУ');
+     if(created)recs.reload();
+    }}>Направить заключение специалистам ЭБУ</button>}
+   {r.next_ecu_handoff_id&&<a className="btn ghost small"
+     href={'#/ecu-handoff/'+r.next_ecu_handoff_id}>Открыть предложения диагностики ЭБУ</a>}
+   {owner&&r.status==='approved'&&r.target_kind!=='ecu'&&!r.next_order_id&&!r.next_booking_id&&
     <a className="btn small" href={nextLink(r)}>
      {r.target_kind==='sto'?'Выбрать СТО и оформить запись':
       r.target_kind==='master'?'Выбрать мастера и проверить цену':
