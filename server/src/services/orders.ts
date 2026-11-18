@@ -641,6 +641,15 @@ export class OrdersService {
     const o=await this.mustBePerformer(user,orderId);
     if(o.service!=='ecu')throw bad('not_ecu','Это действие только для стационарных ЭБУ');
     if(o.status!=='accepted')throw conflict('ecu_bad_status','Нельзя начать диагностику в текущем статусе');
+    // Legacy zero-price acknowledgements are not consent to paid work.
+    // The selected diagnostic price and the scoped offer must both exist.
+    const agreed=await this.db.one<{id:string}>(
+      "select b.id from bids b where b.order_id=$1 and b.performer_id=$2 "+
+      "and b.status='chosen' and b.price=$3 and b.price>=100 "+
+      "and length(coalesce(b.ecu_diagnostic_scope,''))>=10",
+      [orderId,user.id,o.call_out_amount]);
+    if(!agreed)throw conflict('ecu_quote_not_accepted',
+      'Клиент должен подтвердить сумму и объём диагностики до начала работ');
     await this.guarded(this.db,
       "update orders set status='working',work_started_at=now() "+
       "where id=$1 and status='accepted' and performer_id=$2",
