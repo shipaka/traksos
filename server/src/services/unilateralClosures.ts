@@ -73,7 +73,7 @@ export class UnilateralClosures {
       this.notifier.live(participants,{type:'chat',message:result.system});
       this.notifier.live([user.id],{type:'order',orderId,status:'awaiting_confirmation',unilateral:'pending_client'});
       this.notifier.live([user.id],{type:'line_status'});
-      await this.notifier.deliverStored(result.customers,{
+      await this.notifier.deliverStored(result.customers ?? [],{
         type:'order',orderId,status:'awaiting_confirmation',unilateral:true},
         {kind:'normal',title:'Ожидается подтверждение выполнения',
           body:'Заявка №'+result.order.number+': проверьте результат и расчёт',
