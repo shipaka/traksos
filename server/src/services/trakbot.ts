@@ -25,36 +25,70 @@ function vehicleLabel(v: VehicleContext): string {
   return [v.make?.trim(), v.model?.trim(), v.year, v.ecu?.trim()].filter(Boolean).join(' · ');
 }
 
-export function composeTrakBotReply(input: string, found: Dtc[], context: VehicleContext = {}): string {
+export type TrakBotRole = 'driver' | 'specialist';
+
+/** Replies are deliberately conversational, not sales scripts. Grounding beats confidence. */
+export function composeTrakBotReply(
+  input: string, found: Dtc[], context: VehicleContext = {},
+  previousUserMessages: string[] = [], role: TrakBotRole = 'driver',
+): string {
   const codes = extractDtcCodes(input);
   const vehicle = vehicleLabel(context);
-  const safety = /\b(EBS|ABS|ECAS)\b|тормоз|рулев|педаль тормоза|brake|steer/i.test(input)
-    ? '\n\nЕсли тормозная система, рулевое управление или подвеска работают неправильно, не продолжайте движение до проверки специалистом.'
+  const expert = role === 'specialist';
+  const danger = /\b(EBS|ABS|ECAS)\b|тормоз|рулев|педаль тормоза|brake|steer/i.test(input + ' ' + (context.ecu ?? ''));
+  const safety = danger
+    ? '\n\nВажно: если тормоза, рулевое или подвеска работают неправильно, не продолжай движение до проверки специалистом.'
     : '';
+  const incompatibleEcu = /^(EBS|ABS|ECAS)$/i.test((context.ecu ?? '').trim());
   if (codes.length) {
+    if (incompatibleEcu) {
+      return 'Смотри, тут надо уточнить формат. Указан блок ' + context.ecu +
+        ', а код похож на универсальный OBD-II. Для этого блока значение может быть другим. Пришли код точно как на диагностике, включая систему и подтип — гадать не буду.' + safety;
+    }
     const parts = codes.map((code) => {
       const row = found.find((x) => x.code === code);
-      if (!row) return `Код ${code}: проверенной расшифровки пока нет. Нельзя назначать причину по одному коду.`;
-      const title = row.title_ru || row.title_en;
-      const detail = row.detail_ru || (row.detail_en ? 'Подробное описание источника доступно на английском языке специалисту.' : '');
-      return `${code} — ${title}. ${detail}`.trim();
+      if (!row) return 'По ' + code + ' проверенной расшифровки у меня пока нет. Лучше уточнить блок и формат кода.';
+      const name = row.title_ru || row.title_en;
+      const description = row.detail_ru ||
+        (row.detail_en ? 'Есть английское описание в источнике, но русский технический перевод ещё не проверен.' : '');
+      const verification = row.review_state === 'unverified'
+        ? ' Значение из внешнего справочника ещё не перепроверено.' : '';
+      return code + ' — ' + name + '. ' + description + verification;
     });
-    const caution = 'Это общие OBD-II значения, а не подтверждённый диагноз для конкретного блока. Не заменяйте детали только по коду.';
-    const next = found.length === codes.length
-      ? 'Уточни блок управления и условия возникновения ошибки — это поможет точнее сопоставить данные.'
-      : 'По части кодов нет достоверной информации. Не стану угадывать; если нужно, можно передать вопрос специалисту.';
-    return [vehicle ? `Автомобиль: ${vehicle}.` : '', ...parts, caution, next].filter(Boolean).join('\n\n') + safety;
+    const followup = expert
+      ? 'Для дальнейшего разбора нужны версия блока, условия появления, текущие параметры и проведённые измерения. Назови их — отделим факты от предположений.'
+      : 'Что именно сейчас делает машина? Напиши симптом и когда ошибка появилась — попробуем сузить круг вопросов.';
+    return [vehicle ? 'По машине: ' + vehicle + '.' : '', ...parts,
+      'Это общий OBD-II справочник, не подтверждённый диагноз конкретного блока. По одному коду менять детали нельзя.',
+      followup].filter(Boolean).join('\n\n') + safety;
   }
   if (SPN_PATTERN.test(input) || /\bFMI\b/i.test(input)) {
-    return 'Для грузовых SPN/FMI укажи оба числа, марку, модель, год и блок управления. В пилотной базе пока нет подтверждённой заводской расшифровки J1939 — придумывать её не буду. Если точной карточки нет, вопрос лучше передать специалисту.' + safety;
+    return 'Понял, это формат грузовой диагностики. Напиши SPN и FMI полностью, марку, двигатель и блок. В текущей базе проверенных J1939-карточек мало, поэтому расшифровку наугад не дам. Если нет достоверного совпадения, лучше подключить специалиста.' + safety;
   }
-  if (/не завод|не запуска|не схватыв|стартер|запуск двигател|doesn.t start/i.test(input)) {
-    return 'Проверим самое простое. Стартер крутит двигатель с обычной скоростью, только щёлкает или совсем молчит? Есть ли сообщения или коды ошибок на панели? Напиши марку, модель, год и двигатель. Не перемыкай контакты стартера и не вмешивайся в топливную систему на дороге.' + safety;
+
+  const prior = previousUserMessages.join(' ').toLowerCase();
+  const first = input.toLowerCase();
+  const startupMentioned = /не завод|не запуска|не схватыв|стартер|запуск двигател|doesn.t start/i.test(first + ' ' + prior);
+  if (startupMentioned && /щелк|щёлк|не крутит|молчит|не реагирует|тишина/i.test(first)) {
+    return 'Ага, стартер двигатель не проворачивает. При включении зажигания приборы сильно гаснут или всё остаётся как обычно? Есть ли возможность проверить напряжение АКБ без разборки? Не перемыкай клеммы и не лезь под машину на обочине.' + safety;
   }
-  if (/аккумулятор|зарядк|генератор|напряжени/i.test(input)) {
-    return 'Уточни: двигатель работает или заглох, что показывает приборная панель, есть ли код ошибки? Если есть возможность безопасно проверить напряжение обычным вольтметром без разборки проводки, сообщи показание. По одному симптому генератор не приговариваем.' + safety;
+  if (startupMentioned && /крутит|вращает|вертит/i.test(first) && /не схватыв|не завод|без запуска|не запуска|крутит/i.test(first)) {
+    return expert
+      ? 'Окей, прокрутка есть, запуска нет. Какие коды записаны в ЭБУ двигателя и есть ли фактические параметры при прокрутке? Не будем приговаривать топливную аппаратуру без замеров.' + safety
+      : 'Понял, стартер крутит, а мотор не запускается. Есть ошибки на панели или код из сканера? Напиши его и двигатель. С топливной системой высокого давления без мастера ничего не откручивай.' + safety;
   }
-  return 'Я TrakBot, помощник для первичных вопросов в личном чате. Напиши марку, модель, год, блок управления и точный код ошибки (например P0087), либо коротко опиши симптом. Я не ставлю окончательный диагноз — сложное передадим специалисту.' + safety;
+  if (/не завод|не запуска|не схватыв|стартер|запуск двигател|doesn.t start/i.test(first)) {
+    return 'Давай разберёмся. Стартер крутит мотор, только щёлкает или вообще молчит? И что за машина — марка, год, двигатель? Начнём с простого, без опасных экспериментов.' + safety;
+  }
+  if (/аккумулятор|зарядк|генератор|напряжени/i.test(first)) {
+    return 'Ясно. Двигатель работает или заглох? Что показывает панель и есть ли код ошибки? Если можешь безопасно измерить напряжение обычным вольтметром, напиши цифру. Генератор по одному симптому менять рано.' + safety;
+  }
+  if (/привет|здоров|салют|хай|добрый/i.test(first) && first.length < 40) {
+    return 'Здорово! Что с машиной? Рассказывай, разберём по порядку.' + safety;
+  }
+  return expert
+    ? 'Слушаю. Пришли марку, год, двигатель, блок и точный код или опиши симптомы и измерения. Где есть подтверждённые данные — покажу; где их нет — так и скажу.' + safety
+    : 'Рассказывай, что случилось. Желательно марка, год, симптомы и код ошибки, если есть. По простому подскажу, а сложное без проверок выдумывать не стану.' + safety;
 }
 
 export class TrakBotService {
@@ -87,9 +121,15 @@ export class TrakBotService {
           [codes],
         )
       : [];
-    const answer = composeTrakBotReply(message, found, context);
+    const prior = await this.db.query<{ role: string; body: string }>(
+      "select role, body from trakbot_messages where user_id=$1 and role='user' order by id desc limit 8",
+      [user.id],
+    );
+    const specialist = user.roles.some((r) => ['master','service','admin','moderator'].includes(r));
+    const answer = composeTrakBotReply(message, found, context, prior.map((r) => r.body),
+      specialist ? 'specialist' : 'driver');
     const coverage = codes.length ? (codes.every((code) => found.some((row) => row.code === code)) ? 'generic_found' : 'partial_or_missing')
-      : (SPN_PATTERN.test(message) || /\\bFMI\\b/i.test(message) ? 'not_supported' : 'initial_triage');
+      : (SPN_PATTERN.test(message) || /\bFMI\b/i.test(message) ? 'not_supported' : 'initial_triage');
     // Billing is deliberately disabled. No authorization or capture is made for an unverified answer.
     return this.db.tx(async (q) => {
       await q.query('insert into trakbot_messages(user_id,role,body) values($1,\'user\',$2)', [user.id, message]);
