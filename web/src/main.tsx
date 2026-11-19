@@ -512,7 +512,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                   ['Профиль и настройки', [
                     ['/work/me','▣','Мой профиль'], ['/work/me/phone','⚿','Вход и безопасность'],
                     ['/work/me/cars','⚙','Автомобили'], ['/work/me/tax','▤','Налоговый статус'],
-                    ['/offer/performer','☷','Оферта'], ['/shop','▦','Запчасти']]]]
+                    ['/offer/performer','☷','Оферта'], ['/shop','▦','Запчасти']]]
                   ] as [string,[string,string,string][]][]).map(([group, links])=><div key={group}>
                   <div className="desktop-sidebar-title desktop-nav-section">{group}</div>
                   {links.map(([href,ic,name])=><a key={href} href={sandboxHref(href)}
