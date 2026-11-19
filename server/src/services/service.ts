@@ -7,6 +7,7 @@ import type { Notifier } from './notify.ts';
 import type { SettingsService } from './settings.ts';
 import type { SupportService } from './support.ts';
 import { haversineKm } from '../domain/geo.ts';
+import { maskPhones } from '../util.ts';
 import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
 
 export const NEEDS: Record<string, string> = {
@@ -20,6 +21,13 @@ export const STATUS_NAME: Record<string, string> = {
   agreeing: 'Согласуем с клиентом', ready: 'Готова', invoiced: 'Счёт выставлен', closed: 'Закрыто',
   disputed: 'Спор по работам', cancelled: 'Отменено',
 };
+// A recommendation may contain free-text contact information. The selected
+// workshop receives a technical diagnosis, not personal contact details.
+const publicHandoff = (text:string) => maskPhones(text
+ .replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g,'[email скрыт]')
+ .replace(/\b[A-HJ-NPR-Z0-9]{17}\b/gi,'[VIN скрыт]')
+ .replace(/[АВЕКМНОРСТУХABEKMHOPCTYX]\s?\d{3}\s?[АВЕКМНОРСТУХABEKMHOPCTYX]{2}\s?\d{2,3}/gi,'[госномер скрыт]')
+).text.trim();
 export const WORKS = ['Диагностика', 'Электрика', 'Пневматика', 'Двигатель', 'КПП', 'Тормоза', 'Ходовая', 'Шины', 'Сварка', 'Замена масла и фильтров'];
 export const DECLINE = ['Нет такого специалиста', 'Нет мест', 'Не работаем с этой маркой'];
 
@@ -152,8 +160,16 @@ export class ServiceCenters {
 
   async booking(user: AuthUser, id: string) {
     const b = await this.db.one(
-      `select b.*, u.name as client_name, u.company_name, u.rating::float as client_rating, c.owner_id, c.name as center_name, c.address as center_address
-         from service_bookings b join users u on u.id=b.client_id join service_centers c on c.id=b.center_id where b.id=$1`, [id]);
+      `select b.*, u.name as client_name, u.company_name, u.rating::float as client_rating,
+              c.owner_id, c.name as center_name, c.address as center_address,
+              r.summary as continuation_summary, src.number as continuation_source_number,
+              author.name as continuation_author_name
+         from service_bookings b
+         join users u on u.id=b.client_id join service_centers c on c.id=b.center_id
+         left join order_continuation_recommendations r on r.id=b.continuation_recommendation_id
+         left join orders src on src.id=r.source_order_id
+         left join users author on author.id=r.suggested_by
+        where b.id=$1`, [id]);
     if (!b) throw notFound('Запись не найдена');
     const asService = b.owner_id === user.id;
     const clientId = user.owner_id ?? user.id;
@@ -165,7 +181,13 @@ export class ServiceCenters {
         " and service='tow' and status not in ('cancelled','no_performer')" +
         ' order by created_at desc limit 1',[b.case_root_id])
       : null;
-    return { ...v, transport: linkedTow ? {
+    return { ...v,
+      handoff: b.continuation_summary ? {
+        sourceNumber: b.continuation_source_number,
+        suggestedBy: b.continuation_author_name || 'Предыдущий исполнитель',
+        summary: publicHandoff(String(b.continuation_summary)),
+      } : null,
+      transport: linkedTow ? {
         orderNumber:linkedTow.number, status:linkedTow.status,
         deliveryReported:['awaiting_confirmation','completed'].includes(linkedTow.status),
       } : null,

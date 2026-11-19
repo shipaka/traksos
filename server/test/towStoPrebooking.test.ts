@@ -56,6 +56,9 @@ test('linked STO can be booked during tow travel but truck cannot be recorded as
  assert.equal(booking.fromOrder,false,'an in-case prebooking does not invent a workshop referral discount');
  assert.equal(booking.status,'new');
  assert.equal(booking.transport.orderNumber,order.number);
+ assert.equal(booking.handoff.sourceNumber,order.number);
+ assert.match(booking.handoff.summary,/подготовить место/);
+ assert.ok(booking.handoff.suggestedBy,'the original tow performer is recorded in the workshop handoff');
  assert.equal(booking.transport.status,'en_route');
  assert.equal(booking.transport.deliveryReported,false);
  assert.equal((await t.api('POST','/api/services/'+center.id+'/book',{

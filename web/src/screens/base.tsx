@@ -266,6 +266,12 @@ export function BaseCar({ id }: { id: string }) {
         )}
       </div>
 
+      {d.handoff && <div className="card stack">
+        <b>Техническое заключение предыдущего исполнителя</b>
+        <span className="note">Из заявки №{d.handoff.sourceNumber} · {d.handoff.suggestedBy}</span>
+        <p>{d.handoff.summary}</p>
+        <span className="note">Это рекомендации для подготовки ремонта, не согласование дополнительных работ и не подтверждение прибытия автомобиля.</span>
+      </div>}
       {d.arrival==='tow' && d.transport && !d.arrivedAt && <div className="banner col">
         <b>Связанная эвакуация №{d.transport.orderNumber}</b>
         <span className="note">{d.transport.deliveryReported
