@@ -3,6 +3,7 @@ import type { AuthUser } from '../http/router.ts';
 import { bad, forbidden } from '../http/router.ts';
 import { config } from '../config.ts';
 import { maskPhones } from '../util.ts';
+import { resolveGuideDestination } from './trakbotGuide.ts';
 import { canUseGroundedAi, groundedAiAnswer } from './trakbotAi.ts';
 
 export interface VehicleContext {
@@ -103,7 +104,7 @@ export class TrakBotService {
     // A private conversation. Never joins to broadcasts, order chats or support threads.
     await this.db.query("delete from trakbot_messages where user_id=$1 and created_at < now() - interval '90 days'", [user.id]);
     const rows = await this.db.query(
-      'select id::text as id, role, body, created_at from trakbot_messages where user_id=$1 order by id desc limit 60',
+      'select id::text as id, role, body, action_path, action_label, created_at from trakbot_messages where user_id=$1 order by id desc limit 60',
       [user.id],
     );
     return { messages: rows.reverse(), freePilot: true };
@@ -131,9 +132,20 @@ export class TrakBotService {
       [user.id],
     );
     const specialist = user.roles.some((r) => ['master','service','admin','moderator'].includes(r));
-    const deterministic = composeTrakBotReply(message, found, context, prior.map((r) => r.body),
+    const isNavigationSafe = codes.length === 0 && !SPN_PATTERN.test(message) && !/\bFMI\b/i.test(message);
+    let guide = isNavigationSafe ? resolveGuideDestination(message, user.roles) : null;
+    if (guide?.destination.path === '/tech/codes' &&
+        !user.roles.some((r) => ['admin','moderator'].includes(r))) {
+      const p = await this.db.one<{ verification: string }>(
+        'select verification from performer_profiles where user_id=$1', [user.id]);
+      if (p?.verification !== 'approved') {
+        guide = { text: 'Техническая база откроется после подтверждения твоего профиля специалиста.',
+          destination: { path: '/work/docs', label: 'Проверка документов' } };
+      }
+    }
+    const deterministic = guide?.text ?? composeTrakBotReply(message, found, context, prior.map((r) => r.body),
       specialist ? 'specialist' : 'driver');
-    const llmEligible = canUseGroundedAi(allowAiProcessing, found, codes, context) &&
+    const llmEligible = !guide && canUseGroundedAi(allowAiProcessing, found, codes, context) &&
       !SPN_PATTERN.test(message) && !/\bFMI\b/i.test(message);
     const generated = llmEligible ? await groundedAiAnswer(message, prior.map((r) => r.body), context, found, {
       enabled: config.trakbot.llmEnabled,
@@ -175,9 +187,9 @@ export class TrakBotService {
     // Billing is deliberately disabled. No authorization or capture is made for an unverified answer.
     return this.db.tx(async (q) => {
       await q.query('insert into trakbot_messages(user_id,role,body) values($1,\'user\',$2)', [user.id, message]);
-      const [bot] = await q.query<{ id: string; role: string; body: string; created_at: string }>(
-        "insert into trakbot_messages(user_id,role,body) values($1,'bot',$2) returning id::text as id,role,body,created_at",
-        [user.id, answer],
+      const [bot] = await q.query<{ id: string; role: string; body: string; action_path: string | null; action_label: string | null; created_at: string }>(
+        "insert into trakbot_messages(user_id,role,body,action_path,action_label) values($1,'bot',$2,$3,$4) returning id::text as id,role,body,action_path,action_label,created_at",
+        [user.id, answer, guide?.destination.path ?? null, guide?.destination.label ?? null],
       );
       return { message: bot, freePilot: true, aiUsed: !!generated, coverage, chargeAllowed: false, handoffSuggested: coverage === 'partial_or_missing' || coverage === 'not_supported' || coverage === 'mismatched_protocol' };
     });
