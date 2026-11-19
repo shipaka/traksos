@@ -326,7 +326,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   // На телефоне оставляем только рабочие действия. Все прежние маршруты
   // сохраняются через меню; компьютерная боковая навигация остаётся полной.
   const tabs: [string, string, string][] = !me ? [] : mode === 'performer'
-    ? [['/work', '⚡', 'Линия'], ['/work/jobs', '☰', 'Заявки'], ['/notifications', '◉', 'Сообщения']]
+    ? [['/work', '⌂', 'Главная'], ['/work/jobs', '☷', 'Заявки'], ['/work/me/schedule', '▦', 'График'], ['/profile', '◉', 'Профиль']]
     : mode === 'service'
       ? [['/base', '▤', 'Рембаза'], ['/support', '?', 'Связь'], ['/shop', '🛍', 'Магазин']]
     : mode === 'inspection'
