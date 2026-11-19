@@ -27,6 +27,11 @@ export function Order({ id }: { id: string }) {
     });
   }, [id]);
 
+  useEffect(() => {
+    if (!o.data || new URLSearchParams(location.hash.split('?')[1] || '').get('chat') !== '1') return;
+    const timer = window.setTimeout(() => document.getElementById('order-chat')?.scrollIntoView({ behavior: 'auto', block: 'start' }), 60);
+    return () => window.clearTimeout(timer);
+  }, [id, !!o.data]); // eslint-disable-line
   const { mode } = useMe();
   const [ptab, setPtab] = useState<'order' | 'client'>('order');
   const backTo = mode === 'admin' ? 'admin' : mode === 'performer' ? 'work' : 'orders';
@@ -90,7 +95,7 @@ export function Order({ id }: { id: string }) {
       )}
       {d.status === 'completed' && <Review id={id} you={d.you} />}
 
-      {d.status !== 'searching' && d.status !== 'no_performer' && <Chat id={id} status={d.status} />}
+      {d.status !== 'searching' && d.status !== 'no_performer' && <section id="order-chat"><Chat id={id} status={d.status} /></section>}
       </>}
 
       {d.you !== 'admin' && d.you !== 'candidate' && <a className="btn ghost" href={`#/support/new?order=${d.id}`}>Позвать поддержку</a>}
@@ -959,7 +964,11 @@ function Chat({ id, status }: { id: string; status: string }) {
     });
     return () => { alive = false; off(); };
   }, [id, status]);
-  useEffect(() => { setServerClosed(false); setOpen(false); setMsgs([]); setQuick([]); setPeople([]); setSeen(0); }, [id]);
+  useEffect(() => {
+    setServerClosed(false);
+    setOpen(new URLSearchParams(location.hash.split('?')[1] || '').get('chat') === '1');
+    setMsgs([]); setQuick([]); setPeople([]); setSeen(0);
+  }, [id]);
   useEffect(() => { box.current?.scrollTo(0, box.current.scrollHeight); }, [msgs.length, open]);
   useEffect(() => { if (open) setSeen(msgs.length); }, [open, msgs.length]);
 
