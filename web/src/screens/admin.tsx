@@ -1,6 +1,7 @@
 import '../adminExperience.css';
 import { AdminServices } from './base.tsx';
 import { ModQueue } from './moderation.tsx';
+import { AdminUnilateralQueue } from './adminUnilateralQueue.tsx';
 import { AdminSummary } from './adminSummary.tsx';
 import { AdminCaseCenter } from './adminCaseCenter.tsx';
 import { EcuAdminStations } from './ecuHandoffs.tsx';
@@ -128,7 +129,7 @@ export function Admin({ initialSection }: { initialSection?: string }) {
             {tab === 'verify' && <Verify />}
             {tab === 'bases' && <AdminServices />}
             {tab === 'ecu' && <EcuAdminStations />}
-            {tab === 'queue' && <ModQueue />}
+            {tab === 'queue' && <><AdminUnilateralQueue /><ModQueue /></>}
             {tab === 'summary' && <AdminSummary />}
             {tab === 'vehicleServices' && <>
               <a className="btn ghost small" href="#/admin/section/settings">Управлять регистрацией страховых агентов</a>
