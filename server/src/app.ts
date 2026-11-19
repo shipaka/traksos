@@ -1121,9 +1121,9 @@ export function createApp(d: Deps) {
   // The exact legal VAT for principal service vs agent fee must be approved.
   const tochkaBuyerSchema = z.object({
     type: z.enum(['company', 'ip']),
-    taxCode: z.string().regex(/^\\d{10}(\\d{2})?$/),
+    taxCode: z.string().regex(/^\d{10}(\d{2})?$/),
     secondSideName: z.string().min(2).max(255),
-    kpp: z.string().regex(/^\\d{9}$/).optional(),
+    kpp: z.string().regex(/^\d{9}$/).optional(),
     legalAddress: z.string().max(500).optional(),
     accountId: z.string().max(50).optional(),
     bankName: z.string().max(255).optional(),
