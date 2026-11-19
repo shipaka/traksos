@@ -61,3 +61,9 @@ test('brief real-life replies keep the thread instead of resetting to diagnostic
   assert.match(offlineSmallTalk('Хватит', ['Пошути']) ?? '', /Договорились/);
   assert.equal(offlineSmallTalk('ага', ['Ошибка P0087']), null);
 });
+
+test('continuations ignore earlier sensitive or technical phrases that contain "story" or "joke"', () => {
+  assert.equal(offlineSmallTalk('да', ['История аварии с травмой']), null);
+  assert.equal(offlineSmallTalk('ещё', ['Расскажи шутку про тормоза']), null);
+  assert.equal(offlineSmallTalk('дальше', ['Ошибка P0087', 'Расскажи историю']), null);
+});
