@@ -38,7 +38,7 @@ function BotBubble({ message, newest = false, onNavigate }: {
   </div>;
 }
 
-export function TrakBotChat({ compact = false, onNavigate }: { compact?: boolean; onNavigate?: () => void } = {}) {
+export function TrakBotChat({ compact = false, onNavigate, onComposerSubmit }: { compact?: boolean; onNavigate?: () => void; onComposerSubmit?: () => void } = {}) {
   const { me } = useMe();
   const [messages, setMessages] = useState<BotMessage[]>([]);
   const [text, setText] = useState('');
@@ -179,7 +179,7 @@ export function TrakBotChat({ compact = false, onNavigate }: { compact?: boolean
       {compact && handoff && <div className="trakbot-compact-handoff" role="note">
         Нет проверенной расшифровки. {!isTech && <a href="#/new/consult" onClick={onNavigate}>Связаться с мастером</a>}
       </div>}
-      <form className="compose" onSubmit={(event) => { event.preventDefault(); void send(); }}>
+      <form className="compose" onSubmit={(event) => { event.preventDefault(); void send(); onComposerSubmit?.(); }}>
         <input className="field" maxLength={700} value={text} onChange={(e) => setText(e.target.value)} placeholder="Например: Iveco, ошибка P0087..." aria-label="Сообщение TrakBot" />
         {speechAvailable && <button type="button" className="btn ghost small" aria-label={listening ? 'Остановить запись голоса' : 'Надиктовать вопрос'} title="Надиктовать вопрос — ответ придёт текстом" onClick={startDictation}>{listening ? 'Стоп' : '🎙'}</button>}
         <button type="submit" className="btn small" disabled={working || !text.trim()}>{working ? '...' : 'Отправить'}</button>
