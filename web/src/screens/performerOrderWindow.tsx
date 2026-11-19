@@ -9,7 +9,7 @@ import './performerOrderWindow.css';
  * compact order window, with working (not copied/demo) Order actions and data.
  * The Android/mobile view remains full-screen.
  */
-export function PerformerOrderWindow({id}:{id:string}) {
+export function PerformerOrderWindow({id,initialTab='order'}:{id:string;initialTab?:'order'|'client'|'finance'|'chat'|'history'}) {
   const [compact, setCompact] = useState(() => window.matchMedia('(max-width: 820px)').matches);
   useEffect(() => {
     const mq=window.matchMedia('(max-width: 820px)');
@@ -50,7 +50,7 @@ export function PerformerOrderWindow({id}:{id:string}) {
   },[id,compact]);
   // Android / narrow screen: never create a hidden desktop dashboard, GPS watcher
   // or inaccessible modal. Render the original order directly with live actions.
-  if (compact) return <Order id={id}/>;
+  if (compact) return <Order id={id} initialTab={initialTab}/>;
   return <div className="performer-order-workspace">
     <div className="performer-order-desk" aria-hidden="true"><Work background/></div>
     <div className="performer-order-shade" aria-hidden="true" onClick={()=>go('work')}/>
@@ -64,7 +64,7 @@ export function PerformerOrderWindow({id}:{id:string}) {
           Закрыть ✕
         </button>
       </header>
-      <Order id={id}/>
+      <Order id={id} initialTab={initialTab}/>
     </section>
   </div>;
 }
