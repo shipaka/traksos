@@ -1,6 +1,7 @@
 import {before,after,test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import {migrate} from '../src/db/migrate.ts';
 import {setup,ok,type T} from './helpers.ts';
 
 // Test the new additive migrations on a database WITH existing case data,
@@ -32,18 +33,17 @@ test('populated legacy case survives new recommendation migrations without fabri
  await t.db.exec('alter table orders drop column continuation_recommendation_id;');
  await t.db.exec('alter table service_bookings drop column continuation_recommendation_id;');
  await t.db.exec('drop table order_continuation_recommendations;');
- for(const filename of [
+ const migrations=[
   '20261118_performer_continuation_recommendations.sql',
   '20261119_order_recommendation_exact_link.sql'
- ]){
-  const sql=await readFile(new URL('../migrations/'+filename,import.meta.url),'utf8');
-  await t.db.exec(sql);
- }
- // A restart-safe repeat of IF NOT EXISTS DDL must be harmless too.
- for(const filename of [
-  '20261118_performer_continuation_recommendations.sql',
-  '20261119_order_recommendation_exact_link.sql'
- ]){
+ ];
+ // Recreate the historical migration ledger, then use the REAL production
+ // migration runner (including transaction boundaries and sorted ordering).
+ await t.db.query('delete from schema_migrations where name=any($1::text[])',[migrations]);
+ assert.deepEqual(await migrate(t.db),migrations);
+ assert.deepEqual(await migrate(t.db),[],'the migration runner is retry-safe');
+ // A DBA accidentally re-running either additive SQL file is harmless too.
+ for(const filename of migrations){
   const sql=await readFile(new URL('../migrations/'+filename,import.meta.url),'utf8');
   await t.db.exec(sql);
  }
