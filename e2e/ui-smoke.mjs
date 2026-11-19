@@ -138,7 +138,7 @@ try {
       width + 'px: approved regional map is not displayed');
 
     for (const name of [
-      'tracksos-approved-scenic-hero.webp','tracksos-hero-rescue-hq.webp','tracksos-hero-service-hq.webp',
+      'tracksos-approved-hero-owner-20261119.webp','tracksos-approved-logo-owner-20261119.webp','tracksos-hero-rescue-hq.webp','tracksos-hero-service-hq.webp',
       'tracksos-partner-master-approved.webp','tracksos-partner-tow-approved.webp',
       'tracksos-partner-sto-approved.webp','tracksos-partner-insurer-approved.webp','tracksos-approved-map.webp'
     ]) {
