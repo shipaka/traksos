@@ -83,8 +83,8 @@ export function financeGuide(s:Settings,role:FinanceRole):FinanceGuide {
       {title:'Изменение условий',text:'Любая смена действующих тарифов, бонусов и реферальных правил требует синхронного обновления справки, учебных сценариев и НОВОЙ версии применимой оферты. Уже принятые редакции не редактируются задним числом.'},
     ]};
 }
-export function contractEconomyAnnex(s:Settings,audience:'client'|'performer'):string {
-  const roles:FinanceRole[]=audience==='client'?['owner','driver']:['master','tow','service'];
+export function contractEconomyAnnex(s:Settings,audience:'client'|'performer'|'insurer'|'inspection'):string {
+  const roles:FinanceRole[]=audience==='client'?['owner','driver']:audience==='performer'?['master','tow','service']:audience==='insurer'?['insurer']:['inspection'];
   const parts=roles.map(role=>{
     const g=financeGuide(s,role);
     return '### '+g.title+'\n\n'+g.paragraphs.map(p=>'**'+p.title+'.** '+p.text).join('\n\n')+
