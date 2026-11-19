@@ -4,6 +4,7 @@ import { get, rub } from '../api.ts';
 import { SERVICES, STATUS } from '../dict.ts';
 import { useLoad } from '../ui.tsx';
 import { OfferForm } from './search.tsx';
+import { insurancePresentation } from '../insurancePresentation.ts';
 
 /** Render a single role dashboard per viewport, rather than hiding a live component tree with CSS. */
 export function useMobileWorkspace() {
@@ -69,8 +70,9 @@ function OrderFacts({ order }: { order: any }) {
   </div>;
 }
 
-export function AndroidClientWorkspace({ orders, loading, error, me, retry }: {
+export function AndroidClientWorkspace({ orders, loading, error, me, retry, insuranceInProgress }: {
   orders: any[]; loading: boolean; error: string | null; me: any; retry: () => void;
+  insuranceInProgress: any[];
 }) {
   const current = orders.find(o => IN_PROGRESS.includes(o.status));
   const isDriver = !!me?.owner_id || me?.roles?.includes('driver');
@@ -86,6 +88,23 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry }: {
       <a href="#/services"><span aria-hidden="true">▤</span>СТО</a>
       <a href="#/new/consult"><span aria-hidden="true">◉</span>Консультация</a>
     </div>
+    {insuranceInProgress.length > 0 && <section className="and19-insurance" role="region"
+      aria-label="Мои активные страховые заявки">
+      <div className="and19-insurance-header"><strong>Активные страховые заявки</strong><a href="#/garage">Все страховки ›</a></div>
+      {insuranceInProgress.slice(0, 3).map(request => {
+        const presentation = insurancePresentation(request.insurance_stage, request.status);
+        return <a className={'and19-insurance-card tone-' + presentation.tone} key={request.id}
+          href={request.insurance_stage ? '#/insurance/request/' + request.id : '#/garage'}>
+          <small>СТРАХОВАНИЕ · {[request.brand, request.model].filter(Boolean).join(' ') || 'Транспорт'}</small>
+          <strong>{presentation.label}</strong>
+          <span>{presentation.next}</span>
+          <em>Открыть заявку ›</em>
+        </a>;
+      })}
+      {insuranceInProgress.length > 3 && <a className="and19-insurance-more" href="#/garage">
+        Остальные {insuranceInProgress.length - 3} — в разделе «Моя техника» ›
+      </a>}
+    </section>}
     {loading ? <MobileLoading label="Проверяем активные заявки" /> : error && !current
       ? <section className="and19-panel" role="alert"><strong>Не удалось обновить заявки</strong><p>{error}</p><button className="and19-action" onClick={retry}>Повторить</button></section>
       : current ? <section className="and19-panel and19-main-order">
