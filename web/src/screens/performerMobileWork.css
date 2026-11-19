@@ -49,3 +49,8 @@
 .work-mobile-progress span.done{background:#31d78c}
 .work-mobile-progress span.current{background:#ff942f;box-shadow:0 0 0 2px #ff9a4344}
 .work-mobile-action-hint{display:block;margin-top:8px;color:#ccd8e6;font-size:11px;line-height:1.35}
+.work-mobile-jobtools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:12px}
+.work-mobile-jobtools a{display:flex;align-items:center;justify-content:center;text-decoration:none;
+  padding:10px 4px;border-radius:12px;min-height:48px;background:#294056;border:1px solid #617a91;
+  color:#fff;font-weight:750;font-size:13px;text-align:center}
+.work-mobile-jobtools a:focus-visible{outline:3px solid #ffa754;outline-offset:2px}
