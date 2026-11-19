@@ -142,6 +142,11 @@ export function PlatformIntro() {
           : <button className="btn" type="button" onClick={()=>setIndex(i=>Math.min(course.lessons.length-1,i+1))}>Дальше</button>}
       </div>
     </div>}
+    <section className="card stack">
+      <b>Энциклопедия сложных ситуаций</b>
+      <p className="note">Отказ от оплаты, спор, невыезд мастера, проблемы со связью и другие форс-мажоры — отдельные курсы для вашей роли. Сами выбирайте действия и узнавайте последствия без риска для реальных заявок.</p>
+      <a className="btn ghost" href="#/help">Открыть энциклопедию ситуаций</a>
+    </section>
     <div className="row" style={{gap:12,flexWrap:'wrap'}}>
       <a href="#/help">Вся справка</a><a href="#/trakbot">Спросить TrakBot</a>
       <button className="btn ghost small" type="button" onClick={finish}>Завершить знакомство</button>
