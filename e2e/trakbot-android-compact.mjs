@@ -25,7 +25,16 @@ try {
     });
     const page = await context.newPage();
     const errors = [];
+    const requests = [];
+    const unauthorized = [];
+    let interceptedAnswers = 0;
     page.on('pageerror', (e) => errors.push(e.message));
+    page.on('request', (req) => {
+      if (req.url().includes('/api/')) requests.push(req.method()+' '+new URL(req.url()).pathname);
+    });
+    page.on('response', (res) => {
+      if (res.status() === 401) unauthorized.push(new URL(res.url()).pathname);
+    });
     await page.addInitScript(() => {
       // Test-only mocked account; server never receives it as a valid token.
       localStorage.setItem('traksos.token','playwright-mock-trakbot');
@@ -61,6 +70,7 @@ try {
       body:JSON.stringify({ messages:sample,freePilot:true,aiAvailable:false }),
     }));
     await page.route('**/api/trakbot/answer', async route => {
+      interceptedAnswers++;
       // Keep the API reply pending long enough to observe the genuine typing state.
       await new Promise(resolve => setTimeout(resolve, 1800));
       await route.fulfill({
@@ -114,10 +124,25 @@ try {
       width+'×'+height+': composer button not enabled after typing');
     // Subscribe before clicking: a fast network roundtrip can otherwise hide the
     // transient typing state before Playwright starts waiting.
-    await Promise.all([
-      page.locator('.trakbot-typing[role="status"]').waitFor({state:'attached',timeout:4000}),
-      page.locator('.trakbot-dialog .compose button[type=submit]').click(),
-    ]);
+    try {
+      await Promise.all([
+        page.locator('.trakbot-typing[role="status"]').waitFor({state:'attached',timeout:4000}),
+        page.locator('.trakbot-dialog .compose button[type=submit]').click(),
+      ]);
+    } catch (failure) {
+      const ui = await page.evaluate(() => ({
+        hash:location.hash,
+        chatMounted:!!document.querySelector('.trakbot-dialog'),
+        hasTyping:!!document.querySelector('.trakbot-typing'),
+        sendDisabled:document.querySelector('.trakbot-dialog .compose button[type=submit]')?.disabled,
+        errorText:document.querySelector('.trakbot-dialog [role=alert]')?.textContent || '',
+        inputValue:document.querySelector('.trakbot-dialog .compose input')?.value || '',
+      }));
+      console.error('TrakBot mobile diagnostics', JSON.stringify({
+        width,height,interceptedAnswers,unauthorized,requests:requests.slice(-25),ui,errors,
+      }));
+      throw failure;
+    }
     await page.locator('.trakbot-message--bot').filter({hasText:'Не продолжай движение'}).waitFor({timeout:5000});
     const safety = await page.locator('.trakbot-message--bot').last().locator('.trakbot-mascot--stop').count();
     assert(safety===1,width+'×'+height+': brake advice must show stop/safety expression');
