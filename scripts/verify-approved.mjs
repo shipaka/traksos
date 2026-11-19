@@ -1,4 +1,8 @@
-// Nightly and push-time gate: approved TrakSOS identity is not replaced silently.
+// Nightly and push-time gate: functional and asset integrity tests.
+// IMPORTANT: the 14 Nov Scania hero / six-tile row are superseded by the 18 Nov
+// owner direction: unbranded truck manufacturer + visible TrakSos logo, nine tiles.
+// Do not restore or force legacy images/counts just to satisfy old tests.
+// Artwork still requires visual inspection; source-level tests cannot prove logo pixels.
 // This only verifies invariants; visual fidelity is additionally checked via screenshots.
 import { readFile, stat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
@@ -12,10 +16,7 @@ function expect(ok, description) {
 const LOCKED_ASSETS = {
   // Exact approved images. Deliberate asset changes require a new owner-approved baseline.
   'web/public/tracksos-approved-truck.webp': '9193ebd1312c2d2e',
-  // New 14 November branded high-resolution portrait with correct Scania grille and TrakSOS trailer.
-  'web/public/tracksos-approved-scania-r520.webp': '8f5161004a18746f',
   'web/public/tracksos-approved-map.webp': '994097c8c01b2c80',
-  // The ONLY final desktop design uses the truck crop and service visuals from owner's last PNG.
   'web/public/traksos-final-hero.webp': 'bfce4ea62b859d80',
   'web/public/traksos-final-insurance.webp': '6cbcba4d541f4ddc',
   'web/public/traksos-final-parts.webp': '0531cbfd715179c3',
@@ -34,7 +35,6 @@ const LOCKED_ASSETS = {
   'web/public/tracksos-partner-master-approved.webp': 'a6af5a54938a79b7',
   'web/public/tracksos-partner-sto-approved.webp': '2f2830a773e5c50c',
   'web/public/tracksos-partner-insurer-approved.webp': '875b2a3031882b8f',
-  'web/public/tracksos-approved-scenic-hero.webp': '9193ebd1312c2d2e',
   'android/app/src/main/res/drawable-nodpi/splash_truck.webp': '75bfacfcdf8c0673',
 };
 async function asset(path, minBytes = 5000) {
@@ -79,7 +79,6 @@ const labels = await read('web/src/dict.ts');
 const native = await read('android/app/src/main/java/ru/traksos/app/MainActivity.kt');
 
 await asset('web/public/tracksos-approved-truck.webp', 15000);
-await asset('web/public/tracksos-approved-scania-r520.webp', 40000);
 await asset('web/public/tracksos-approved-map.webp', 15000);
 await asset('web/public/traksos-final-hero.webp', 100000);
 await asset('web/public/traksos-final-insurance.webp', 25000);
@@ -88,7 +87,6 @@ await asset('web/public/tracksos-photo-master.webp', 30000);
 await asset('web/public/tracksos-photo-tow.webp', 30000);
 await asset('web/public/tracksos-photo-sto.webp', 30000);
 await asset('web/public/tracksos-photo-consult.webp', 30000);
-await asset('web/public/tracksos-approved-scenic-hero.webp', 50000);
 await asset('web/public/tracksos-hero-rescue-hq.webp', 300000);
 await asset('web/public/tracksos-hero-service-hq.webp', 300000);
 await asset('web/public/tracksos-partner-tow-approved.webp', 200000);
@@ -110,8 +108,6 @@ expect(createHash('sha256').update(await readFile('web/public/icon-512.png')).di
 expect((await read('web/index.html')).includes('icon-192.png') &&
        (await read('web/public/manifest.webmanifest')).includes('icon-512.png'),
   'browser favicon and PWA manifest use approved raster artwork');
-expect(css.includes("url('../public/tracksos-approved-scania-r520.webp')"), 'public hero uses approved Scania R520 crop');
-expect(landing.includes('src="/tracksos-approved-scania-r520.webp"'), 'app teaser uses same approved Scania R520');
 expect(css.includes("url('../public/tracksos-approved-map.webp')"), 'public demo map is a bundled image');
 expect(!css.includes("url('../public/truck-scene.svg')"), 'old cartoon truck is not the active hero image');
 expect(landing.includes('public-map-static'), 'public map does not depend on network services');
@@ -121,7 +117,6 @@ expect(landing.includes('yandex.ru/maps/'), 'guest static map opens real Yandex 
 expect(landing.includes('Санкт-Петербург и Ленинградская область'), 'launch region is shown');
 expect(shell.includes("import './finalCanon.css';"), 'the only final design layer is loaded by the real app');
 expect(shell.includes('guest-site-nav'), 'the guest PC has horizontal navigation, not an alternative sidebar');
-expect(finalCss.includes('public-hero-slide-approved') && finalCss.includes("url('../public/tracksos-approved-scenic-hero.webp')"), 'the final guest hero uses the approved full Scania photo without baked controls');
 expect(finalCss.includes("url('../public/tracksos-hero-rescue-hq.webp')") &&
   finalCss.includes("url('../public/tracksos-hero-service-hq.webp')"),
   'second and third homepage slides use separate high-resolution cinematic assets');
@@ -130,8 +125,7 @@ for (const suffix of ['tow','master','sto','insurer']) {
     'selected partner illustration for '+suffix+' remains local to TrakSOS');
 }
 expect(landing.includes("const [role, setRole] = useState<JoinRole | null>(null)"),
-  'partner role is chosen explicitly so opening illustration starts on Scania');
-expect(finalCss.includes('grid-template-columns:repeat(6,minmax(0,1fr))'), 'six photographic service cards in desktop row');
+  'partner role is chosen explicitly before viewing role-specific examples');
 const finalServices = [
   "{ id: 'tow', icon: '↗', title: 'Эвакуация'",
   "{ id: 'van', icon: '⚒', title: 'Выездной мастер'",
@@ -147,7 +141,7 @@ for (const item of finalServices) {
   previous = index;
 }
 expect(landing.includes('SERVICE_TILES.map') && landing.includes('Далее'),
-  'six photographic services link to public previews with Далее action');
+  'service catalogue entries link to public previews with Далее action');
 expect(shell.includes("route[0] === 'explore'") && shell.includes("route[0] === 'company'") && shell.includes("route[0] === 'offers'"),
   'public catalogue, Company and Offers have real routes');
 expect(shell.includes('guest-mobile-catalog') && shell.includes('guest-nav-group'),
@@ -189,3 +183,5 @@ if (failures.length) {
   console.error('Approved design gate: ' + failures.length + ' failure(s).');
   process.exitCode = 1;
 } else console.log('Approved TrakSOS design gate: all invariants passed.');
+
+console.log('DESIGN AUDIT PENDING: verify Nov 18 TrakSos-branded manufacturer-neutral truck and 9-card desktop layout against owner-approved visual. Legacy asset checks are not an approval.');
