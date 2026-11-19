@@ -64,6 +64,8 @@ jobs:
         run: npm test
       - name: Веб — сборка
         run: npm -w web run build
+      - name: TrackSalesBot — 30 состояний и единый персонаж
+        run: node e2e/trakbot-mascot.mjs
       - name: Сверка утверждённого дизайна и комплектации
         run: node scripts/verify-approved.mjs
       - name: Сквозной сценарий в браузере и контроль интерактивности
