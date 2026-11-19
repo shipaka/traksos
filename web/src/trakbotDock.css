@@ -1,0 +1,63 @@
+/* Compact, opt-in assistant. Does not replace approved main layouts. */
+.trakbot-dock{
+  position:fixed;right:18px;bottom:calc(98px + env(safe-area-inset-bottom));
+  z-index:48;display:flex;flex-direction:column;align-items:flex-end;
+  pointer-events:none;font-family:inherit;
+}
+.trakbot-dock>*{pointer-events:auto;}
+.trakbot-dock-launcher{
+  min-width:58px;min-height:52px;padding:7px 13px 7px 8px;display:flex;gap:9px;align-items:center;
+  border:1px solid rgba(110,225,236,.32);border-radius:99px;color:#f5fcff;
+  background:linear-gradient(125deg,#122f4e,#15486c);box-shadow:0 8px 30px #07152666;
+  font:inherit;font-size:14px;font-weight:700;cursor:pointer;
+}
+.trakbot-dock-launcher:hover{filter:brightness(1.13);}
+.trakbot-dock-launcher:focus-visible,.trakbot-dock-close:focus-visible{outline:3px solid #74d7f3;outline-offset:3px;}
+.trakbot-dock-mark,.trakbot-dock-avatar{
+  display:grid;place-items:center;border-radius:50%;font-weight:900;background:#19bccc;color:#031b2b;
+  width:36px;height:36px;font-size:19px;
+}
+.trakbot-dock-panel{
+  position:absolute;right:0;bottom:calc(100% + 12px);width:min(420px,calc(100vw - 30px));
+  max-height:min(710px,calc(100dvh - 168px));
+  border:1px solid #316083;border-radius:20px;background:#0b2035;color:#eef7fc;
+  box-shadow:0 16px 60px #05101fbb;display:flex;flex-direction:column;overflow:hidden;
+}
+.trakbot-dock-head{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid #31516c;flex-shrink:0;background:#112f4d;}
+.trakbot-dock-brand{display:flex;align-items:center;gap:10px;}
+.trakbot-dock-brand span:last-child{display:flex;flex-direction:column;gap:2px;}
+.trakbot-dock-brand small{font-size:11px;color:#a4c5d9;}
+.trakbot-dock-close{border:1px solid #53768d;border-radius:50%;width:35px;height:35px;background:transparent;color:#fff;font-size:24px;cursor:pointer;}
+.trakbot-compact-body{overflow-y:auto;overscroll-behavior:contain;padding:12px;display:flex;flex-direction:column;gap:10px;min-height:0;}
+.trakbot-compact-body .trakbot-compact-title{display:none;}
+.trakbot-compact-body .card{margin:0;}
+.trakbot-compact-body .trakbot-dialog{padding:10px;}
+.trakbot-compact-body .msg .b{white-space:pre-wrap;overflow-wrap:anywhere;}
+.trakbot-compact-body .compose{display:flex;gap:6px;min-width:0;}
+.trakbot-compact-body .compose .field{min-width:0;}
+.trakbot-compact-body .trakbot-vehicle{padding:9px 11px;}
+.trakbot-compact-body .trakbot-vehicle summary{cursor:pointer;}
+.trakbot-compact-body .trakbot-vehicle .stack{padding-top:10px;}
+.trakbot-compact-body .grid2{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;}
+.trakbot-compact-body .field{font-size:14px;}
+.trakbot-advice{border-left:3px solid #4ba3ba;border-radius:5px;padding:8px 10px;margin:0;
+  background:rgba(66,145,180,.13);color:inherit;font-size:12px;line-height:1.4;}
+.trakbot-advice a{color:#87dcfa;text-decoration:underline;}
+.trakbot-direction{display:inline-block;margin-top:7px;text-align:left;}
+.trakbot-dock-guest{padding:16px;overflow:auto;display:flex;flex-direction:column;gap:12px;font-size:14px;line-height:1.5;}
+.trakbot-dock-guest p{margin:0;}
+.trakbot-dock-guest nav{display:grid;gap:8px;}
+.trakbot-dock-guest nav a{display:block;padding:10px 12px;border:1px solid #365977;border-radius:11px;color:#d8f5ff;text-decoration:none;}
+.trakbot-dock-guest nav a:hover{background:#17415b;}
+@media(min-width:900px){
+  .trakbot-dock{bottom:22px;right:24px;}
+  .trakbot-dock-panel{max-height:min(720px,calc(100dvh - 105px));}
+}
+@media(max-width:420px){
+  .trakbot-dock{right:12px;bottom:calc(92px + env(safe-area-inset-bottom));}
+  .trakbot-dock-panel{width:calc(100vw - 24px);max-height:calc(100dvh - 175px);}
+  .trakbot-dock-label{display:none;}
+  .trakbot-dock-launcher{padding:7px;min-width:50px;height:50px;}
+}
+@media(prefers-reduced-motion:reduce){.trakbot-dock *{scroll-behavior:auto;transition:none!important;}}
