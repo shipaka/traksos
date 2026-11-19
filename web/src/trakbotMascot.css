@@ -99,3 +99,6 @@ html.traksos-reduced-motion .trakbot-mascot,
 html.traksos-reduced-motion .trakbot-mascot *,
 html.traksos-reduced-motion .trakbot-typing-dots i,
 html.traksos-reduced-motion .trakbot-message--new .trakbot-mascot {animation:none!important;transition:none!important;}
+
+/* Emergency incoming calls must stay above the now header-safe bot layer. */
+.call { z-index:130; }
