@@ -41,7 +41,12 @@ export function composeTrakBotReply(
   const safety = danger
     ? '\n\nВажно: если тормоза, рулевое или подвеска работают неправильно, не продолжайте движение до проверки специалистом.'
     : '';
-  const incompatibleEcu = /^(EBS|ABS|ECAS)$/i.test((context.ecu ?? '').trim());
+  const incompatibleEcu = /^(EBS|ABS|ECAS)$/i.test((context.ecu ?? '').trim()) ||
+    /\b(EBS|ABS|ECAS)\b/i.test(input);
+  const unsupportedProtocol = SPN_PATTERN.test(input) || /\bFMI\b/i.test(input);
+  if (unsupportedProtocol) {
+    return 'Понял, это формат грузовой диагностики. Напиши SPN и FMI полностью, марку, двигатель и блок. В текущей базе нет подтверждённой расшифровки именно этой ошибки J1939 — наугад не дам. Если точной карточки нет, лучше подключить специалиста.' + safety;
+  }
   if (codes.length) {
     if (incompatibleEcu) {
       return 'Смотри, тут надо уточнить формат. Указан блок ' + context.ecu +
@@ -63,9 +68,6 @@ export function composeTrakBotReply(
     return [vehicle ? 'По машине: ' + vehicle + '.' : '', ...parts,
       'Это общий OBD-II справочник, не подтверждённый диагноз конкретного блока. По одному коду менять детали нельзя.',
       followup].filter(Boolean).join('\n\n') + safety;
-  }
-  if (SPN_PATTERN.test(input) || /\bFMI\b/i.test(input)) {
-    return 'Понял, это формат грузовой диагностики. Напиши SPN и FMI полностью, марку, двигатель и блок. В текущей базе проверенных J1939-карточек мало, поэтому расшифровку наугад не дам. Если нет достоверного совпадения, лучше подключить специалиста.' + safety;
   }
 
   const prior = previousUserMessages.join(' ').toLowerCase();
@@ -138,8 +140,12 @@ export class TrakBotService {
       model: config.trakbot.llmModel,
     }) : null;
     const answer = generated ?? deterministic;
-    const coverage = codes.length ? (codes.every((code) => found.some((row) => row.code === code)) ? 'generic_found' : 'partial_or_missing')
-      : (SPN_PATTERN.test(message) || /\bFMI\b/i.test(message) ? 'not_supported' : 'initial_triage');
+    const unsupported = SPN_PATTERN.test(message) || /\bFMI\b/i.test(message);
+    const mismatch = /^(EBS|ABS|ECAS)$/i.test((context.ecu ?? '').trim()) ||
+      /\b(EBS|ABS|ECAS)\b/i.test(message);
+    const coverage = unsupported ? 'not_supported' : (mismatch && codes.length) ? 'mismatched_protocol'
+      : codes.length ? (codes.every((code) => found.some((row) => row.code === code)) ? 'generic_found' : 'partial_or_missing')
+      : 'initial_triage';
     // Billing is deliberately disabled. No authorization or capture is made for an unverified answer.
     return this.db.tx(async (q) => {
       await q.query('insert into trakbot_messages(user_id,role,body) values($1,\'user\',$2)', [user.id, message]);
@@ -147,7 +153,7 @@ export class TrakBotService {
         "insert into trakbot_messages(user_id,role,body) values($1,'bot',$2) returning id::text as id,role,body,created_at",
         [user.id, answer],
       );
-      return { message: bot, freePilot: true, aiUsed: !!generated, coverage, chargeAllowed: false, handoffSuggested: coverage === 'partial_or_missing' || coverage === 'not_supported' };
+      return { message: bot, freePilot: true, aiUsed: !!generated, coverage, chargeAllowed: false, handoffSuggested: coverage === 'partial_or_missing' || coverage === 'not_supported' || coverage === 'mismatched_protocol' };
     });
   }
 
