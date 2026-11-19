@@ -78,7 +78,7 @@ export const courses:Record<Role,Course>={
     lesson('Настройки','Проверяйте условия и настройки прежде чем сохранять изменения.','Платежи и роли изменяются только при реальном подтверждении.','/admin/section/settings','Настройки'),
   ]},
 };
-function key(userId:string,role:Role):string {return 'traksos.learn.v1.'+userId+'.'+role;}
+function key(userId:string,role:Role):string {return 'traksos.learn.v2.'+userId+'.'+role;}
 function marked(k:string):boolean {try{return localStorage.getItem(k)==='yes';}catch{return true;}}
 function mark(k:string) {try{localStorage.setItem(k,'yes');}catch{/* private browser */}}
 
@@ -88,6 +88,7 @@ export function IntroInvitation({userId,mode,roles}:{userId:string;mode:string;r
   const k=key(userId,role);
   const [dismissed,setDismissed]=useState(()=>marked(k));
   if(dismissed)return null;
+  const start=()=>setDismissed(true);
   const close=()=>{mark(k);setDismissed(true);};
   return <section className="card" aria-label="Знакомство с TrakSOS"
     style={{display:'flex',gap:12,justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',margin:'12px 12px 4px',padding:14}}>
@@ -96,7 +97,7 @@ export function IntroInvitation({userId,mode,roles}:{userId:string;mode:string;r
       <p className="note">Покажем кабинет «{courses[role].label}», затем вместе пройдём учебную заявку. Без настоящих заказов и платежей.</p>
     </div>
     <div className="row" style={{gap:8,flexWrap:'wrap'}}>
-      <a className="btn small" href="#/learn" onClick={close}>Познакомиться</a>
+      <a className="btn small" href="#/learn" onClick={start}>Познакомиться</a>
       <button className="btn ghost small" type="button" onClick={close}>Не сейчас</button>
     </div>
   </section>;
