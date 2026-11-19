@@ -53,6 +53,21 @@ const landing = await read('web/src/screens/login.tsx');
 const catalogue = await read('web/src/guestCatalog.ts');
 const roleCss = await read('web/src/roleShared20261119.css');
 const currentCss = await read('web/src/currentApproved20261119.css');
+
+/* A retired guest stylesheet must never silently redraw the approved 19 Nov
+   desktop / mobile-browser page. Signed-in cabinet selectors remain intact. */
+for (const path of ['web/src/trackVisual.css', 'web/src/trackPolish.css', 'web/src/trackScenic.css']) {
+  const retainedRoleStyles = await read(path);
+  expect(!/\\.guest-app\\b|\\.public-[\\w-]+\\b|\\.track-guest-tabbar\\b/.test(retainedRoleStyles),
+    'obsolete public layout cannot leak from signed-in cabinet stylesheet: ' + path);
+}
+const androidCss = await read('web/src/androidApproved20261119.css');
+const browserCss = await read('web/src/mobileBrowser.css');
+expect(androidCss.includes('.and19-workspace') && browserCss.includes('html.traksos-browser'),
+  'Android and mobile browser keep their separate approved presentation layers');
+expect(!currentCss.includes('.and19-workspace') && !currentCss.includes('.app.role-performer'),
+  'public 19 Nov CSS does not rewrite signed-in Android or performer workspaces');
+
 const css = await read('web/src/styles.css');
 const shell = await read('web/src/main.tsx');
 const demo = await read('web/src/screens/adminTestCenter.tsx');
