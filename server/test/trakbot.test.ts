@@ -68,9 +68,12 @@ test('TrakBot rejects oversized inputs', async () => {
 
 
 test('TrakBot masks phone and VIN before persisting private chat text', async () => {
-  ok(await t.api('POST','/api/trakbot/answer',{
+  const stored = ok(await t.api('POST','/api/trakbot/answer',{
     message: 'Ошибка P0087, звоните +7 (911) 123-45-67, VIN WAUZZZ8V6JA123456',
   }, client.token));
+  assert.match(stored.userMessage.body, /\[номер скрыт\]/);
+  assert.match(stored.userMessage.body, /\[VIN скрыт\]/);
+  assert.doesNotMatch(stored.userMessage.body, /911|WAUZZZ8V6JA123456/);
   const result = ok(await t.api('GET','/api/trakbot/messages',undefined,client.token));
   const recent = result.messages.slice(-2);
   assert.match(recent[0].body, /\[номер скрыт\]/);
