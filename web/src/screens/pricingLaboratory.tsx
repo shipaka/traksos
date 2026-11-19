@@ -1,7 +1,6 @@
 // Admin-only, read-only scenario builder. Never updates tariff settings, offers or ledger.
 import { useState } from 'react';
 import { useMe } from '../ui.tsx';
-import { usePrices } from './client.tsx';
 import { proposedEconomics, type PaymentRail } from '../proposedEconomics.ts';
 import { rub } from '../api.ts';
 const rails: {value:PaymentRail;label:string}[] = [
@@ -10,7 +9,6 @@ const rails: {value:PaymentRail;label:string}[] = [
 ];
 export function PricingLaboratory() {
   const { me } = useMe();
-  const { pricing } = usePrices();
   const [amount,setAmount] = useState(10_000);
   const [rail,setRail] = useState<PaymentRail>('card');
   const [processingRate,setProcessingRate] = useState(2.8);
