@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { get, post, del } from '../api.ts';
 import { Back, useMe } from '../ui.tsx';
+import { BOT_REACTIONS, botReactionFor, TrakBotMascot, TrakBotReactionGallery } from '../trakbotMascot.tsx';
 
 interface BotMessage { id: string; role: 'user'|'bot'; body: string; created_at: string; action_path?: string|null; action_label?: string|null; }
 const allowedRoutes = new Set(['/orders','/work/jobs','/base','/profile','/shop','/garage',
@@ -13,6 +14,29 @@ interface CodeRecord {
   detail_en: string|null; detail_ru: string|null; source_url: string; review_state: string;
 }
 const initialGreeting = 'Здорово! Что с машиной? Напиши код ошибки или просто расскажи, что происходит. По порядку разберёмся.';
+
+/** Only real bot messages receive the technician character; other chats stay untouched. */
+function BotBubble({ message, newest = false, onNavigate }: {
+  message: BotMessage; newest?: boolean; onNavigate?: () => void;
+}) {
+  const reaction = botReactionFor(message.body);
+  const label = BOT_REACTIONS.find((entry) => entry.id === reaction)?.label || 'Помогу разобраться';
+  return <div className={'msg trakbot-message--bot' + (newest ? ' trakbot-message--new' : '')}>
+    <div className="trakbot-bot-layout">
+      <TrakBotMascot reaction={reaction} size="regular" />
+      <div className="trakbot-bot-content">
+        <div className="trakbot-bot-head"><strong className="trakbot-bot-name">TrackSalesBot</strong>
+          <span className="trakbot-bot-state">{label}</span>
+        </div>
+        <span className="b">{message.body}</span>
+        {message.action_path && allowedRoutes.has(message.action_path) &&
+          <a className="btn ghost small trakbot-direction" href={'#' + message.action_path} onClick={onNavigate}>
+            {message.action_label || 'Открыть раздел'}
+          </a>}
+      </div>
+    </div>
+  </div>;
+}
 
 export function TrakBotChat({ compact = false, onNavigate }: { compact?: boolean; onNavigate?: () => void } = {}) {
   const { me } = useMe();
@@ -27,6 +51,7 @@ export function TrakBotChat({ compact = false, onNavigate }: { compact?: boolean
   const [aiConsent, setAiConsent] = useState(false);
   const [handoff, setHandoff] = useState(false);
   const [working, setWorking] = useState(false);
+  const [justAnsweredId, setJustAnsweredId] = useState<string | null>(null);
   const [listening, setListening] = useState(false);
   const speechRef = useRef<any>(null);
   // Launch gate: voice recognition may send audio to the browser vendor.
@@ -65,7 +90,7 @@ export function TrakBotChat({ compact = false, onNavigate }: { compact?: boolean
       .catch((e) => { if (live) setError(e.message || 'Не удалось загрузить диалог'); });
     return () => { live = false; };
   }, [me?.id]);
-  useEffect(() => { if (msgBox.current) msgBox.current.scrollTop = msgBox.current.scrollHeight; }, [messages.length]);
+  useEffect(() => { if (msgBox.current) msgBox.current.scrollTop = msgBox.current.scrollHeight; }, [messages.length, working]);
 
   const send = async () => {
     if (working || !text.trim()) return;
@@ -79,6 +104,7 @@ export function TrakBotChat({ compact = false, onNavigate }: { compact?: boolean
           ...(year.length === 4 && { year: Number(year) }), ...(ecu.trim() && { ecu: ecu.trim() }) },
       });
       setMessages((old) => [...old, result.userMessage, result.message]);
+      setJustAnsweredId(result.message.id);
       setText('');
       setHandoff(!!result.handoffSuggested);
     } catch (e: any) {
@@ -96,6 +122,7 @@ export function TrakBotChat({ compact = false, onNavigate }: { compact?: boolean
     try {
       await del('/api/trakbot/messages');
       setMessages([]);
+      setJustAnsweredId(null);
       setHandoff(false);
       setText('');
     } catch (e: any) {
@@ -108,7 +135,7 @@ export function TrakBotChat({ compact = false, onNavigate }: { compact?: boolean
   const Frame = compact ? 'div' : 'main';
   return <Frame className={compact ? 'trakbot-compact-body' : undefined}>
     {!compact && <Back to="help" />}
-    {compact ? <h2 className="trakbot-compact-title">TrakBot</h2> : <h1>TrakBot</h1>}
+    {compact ? <h2 className="trakbot-compact-title">TrackSalesBot</h2> : <div className="trakbot-chat-title"><TrakBotMascot reaction="hello" size="small"/><h1>TrackSalesBot</h1></div>}
     <div className="sub">{isTech ? 'Помощник мастера и СТО.' : 'Помощник для водителя.'} Личный чат, без публикаций в общем эфире.</div>
     <p className="trakbot-advice" role="note">{advice} <a href="#/rules" onClick={onNavigate}>Условия</a></p>
     <details className="card flat trakbot-vehicle" open={!compact || undefined}>
@@ -132,15 +159,17 @@ export function TrakBotChat({ compact = false, onNavigate }: { compact?: boolean
     </details>
     <section className="card trakbot-dialog">
       <div className="msgs" ref={msgBox} aria-live="polite" style={{ minHeight: compact ? 180 : 240, maxHeight: compact ? '35vh' : '50vh', overflowY: 'auto' }}>
-        {!messages.length && <div className="msg sys"><span className="b">{initialGreeting}</span></div>}
-        {messages.map((message) => <div key={message.id} className={'msg '+(message.role === 'user' ? 'me' : '')}>
-          {message.role === 'bot' && <span className="n">TrakBot</span>}
-          <span className="b" style={{ whiteSpace: 'pre-wrap' }}>{message.body}</span>
-          {message.role === 'bot' && message.action_path && allowedRoutes.has(message.action_path) &&
-            <a className="btn ghost small trakbot-direction" href={'#' + message.action_path} onClick={onNavigate}>
-              {message.action_label || 'Открыть раздел'}
-            </a>}
-        </div>)}
+        {!messages.length && <BotBubble message={{ id: 'initial', role: 'bot', body: initialGreeting, created_at: '' }} onNavigate={onNavigate} />}
+        {messages.map((message) => message.role === 'bot'
+          ? <BotBubble key={message.id} message={message} newest={message.id === justAnsweredId} onNavigate={onNavigate} />
+          : <div key={message.id} className="msg me trakbot-message--user">
+            <span className="b" style={{ whiteSpace: 'pre-wrap' }}>{message.body}</span>
+          </div>)}
+        {working && <div className="trakbot-typing" role="status" aria-label="TrakBot готовит ответ">
+          <TrakBotMascot reaction="typing" size="small" active />
+          <span>Разбираюсь с вопросом</span>
+          <span className="trakbot-typing-dots" aria-hidden="true"><i/><i/><i/></span>
+        </div>}
         <div ref={end} />
       </div>
       {error && <div role="alert" className="note" style={{ color: 'var(--danger, #b42318)' }}>{error}</div>}
@@ -150,6 +179,7 @@ export function TrakBotChat({ compact = false, onNavigate }: { compact?: boolean
         <button type="submit" className="btn small" disabled={working || !text.trim()}>{working ? '...' : 'Отправить'}</button>
       </form>
     </section>
+    <TrakBotReactionGallery />
     <span className="note">Сейчас это бесплатный помощник, без автоплатежей. Платные консультации — отдельно, только после явного согласия. Голосовой ввод включается отдельно после проверки устройства и приватности.</span>
     {!!messages.length && <button type="button" className="btn ghost small" disabled={working}
       aria-label="Очистить историю TrakBot" onClick={() => void clearConversation()}>Очистить мою переписку</button>}
