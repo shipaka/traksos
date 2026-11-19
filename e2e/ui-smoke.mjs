@@ -171,6 +171,18 @@ try {
       }
     }
 
+    if (width === 390 || width === 1672) {
+      const link = page.locator('.public-track-techbase');
+      assert(await link.getAttribute('href') === '#/explore/tech',
+        width + 'px: TechBase feature must be a working direct link');
+      await link.click();
+      await page.getByRole('heading', { name: 'ТехБаза TrakSOS' }).waitFor({ timeout: 10000 });
+      assert(new URL(page.url()).hash === '#/explore/tech',
+        width + 'px: TechBase must reach its own feature preview');
+      await page.locator('.guest-explore-back').first().click();
+      await page.locator('.public-service-tiles').waitFor();
+    }
+
     // Last approved 19 Nov layout has login in the desktop/mobile header;
     // the public hero is intentionally registration-first, without a duplicate login.
     await page.locator('.guest-header-actions').getByRole('link', { name: 'Войти', exact: true }).click();

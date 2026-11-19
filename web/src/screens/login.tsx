@@ -376,8 +376,8 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <a href="#/explore/inspection" className="public-track-extra public-track-inspection" onClick={() => rememberGuestService('inspection')}>
             <span className="public-track-extra-art" aria-hidden="true"/><b>Техосмотр</b><small>Информация и доступные варианты</small><span aria-hidden="true">›</span>
           </a>
-          <a href="#/explore/guide" className="public-track-extra public-track-guide">
-            <span className="public-track-extra-art" aria-hidden="true"/><b>Полезное</b><small>Как работает сервис</small><span aria-hidden="true">›</span>
+          <a href="#/explore/tech" className="public-track-extra public-track-techbase">
+            <span className="public-track-extra-art" aria-hidden="true"/><b>ТехБаза</b><small>Коды ошибок, схемы и проверенные технические источники</small><span aria-hidden="true">›</span>
           </a>
         </div>
       </div>

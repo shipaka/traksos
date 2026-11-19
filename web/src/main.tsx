@@ -17,11 +17,12 @@ import './insurancePremiumStates.css';
 // Mobile browser and Android use separate approved responsive layers.
 import './mobileBrowser.css';
 import './androidApproved20261119.css';
-import './currentApproved20261119.css';
 import './trakbotDock.css';
 import './techbase.css';
 import './trainingPractice.css';
 import './scenarioCourses.css';
+// Approved public design is loaded last: previous role/guest CSS may not overwrite it.
+import './currentApproved20261119.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
@@ -487,6 +488,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               <span className="guest-nav-hint">Услуги доступны после входа и только при наличии исполнителей</span>
             </div>
           </details>
+          <a href="#/explore/tech" className="guest-nav-techbase">ТехБаза</a>
           <a href="#/company">О платформе</a>
           <a href="#/explore/pricing">Тарифы</a>
           <a href="#/help">Помощь</a>

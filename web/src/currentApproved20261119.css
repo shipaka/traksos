@@ -402,3 +402,20 @@
     text-align:center!important;
   }
 }
+
+/* 20 Nov correction: directly accessible TechBase, present in the current
+   information architecture instead of buried solely in a dropdown. */
+@media(min-width:1251px){
+  .guest-app .guest-site-nav>a.guest-nav-techbase{color:#6de0f9!important;white-space:nowrap!important}
+  .guest-app .guest-site-nav>a.guest-nav-techbase:hover{color:#fff!important}
+  /* Use the full image height on the right, not an oversized cover crop:
+     the 19 Nov approved composition shows the whole cab and road. */
+  .guest-app .public-landing .public-hero-visual.public-hero-slide-approved{
+    background-size:auto 100%!important;background-position:right center!important;
+  }
+}
+.guest-app .public-track-extra.public-track-techbase{border-color:#217799!important;}
+.guest-app .public-track-extra.public-track-techbase b{color:#d9f8ff!important;}
+@media(max-width:1250px){
+  .guest-app .guest-site-nav>a.guest-nav-techbase{display:none!important}
+}
