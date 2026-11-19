@@ -63,6 +63,12 @@ for (const path of ['web/src/trackVisual.css', 'web/src/trackPolish.css', 'web/s
 }
 const androidCss = await read('web/src/androidApproved20261119.css');
 const browserCss = await read('web/src/mobileBrowser.css');
+const androidAcceptance = await read('e2e/android-approved-workspaces.mjs');
+expect(androidAcceptance.includes("Object.defineProperty(window,'TrakSOSNative'") &&
+  androidAcceptance.includes("['master_service'") &&
+  androidAcceptance.includes('for(const width of [320,390])'),
+  'Android visual acceptance exercises the native bridge, hybrid workspace and narrow widths');
+
 expect(androidCss.includes('.and19-workspace') && browserCss.includes('html.traksos-browser'),
   'Android and mobile browser keep their separate approved presentation layers');
 expect(!currentCss.includes('.and19-workspace') && !currentCss.includes('.app.role-performer'),
