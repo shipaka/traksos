@@ -7,7 +7,7 @@ import { estimate, isNight, billWork, type Tier, type Extra } from '../domain/pr
 import { assertRegionalTariff, CoverageError, type ServiceRegion } from '../domain/regionalCoverage.ts';
 import { rankCandidates, performerKindFor, type Candidate } from '../domain/dispatch.ts';
 import { transition, canDo, statusLabels, type Action, type Actor, type OrderStatus } from '../domain/orderState.ts';
-import { cancelStage, cancelSplit, cappedPct, pct } from '../domain/money.ts';
+import { cancelStage, cancelSplit, cappedPct } from '../domain/money.ts';
 import { slot } from '../domain/schedule.ts';
 import { rub } from '../util.ts';
 import type { AuctionService } from './auction.ts';
