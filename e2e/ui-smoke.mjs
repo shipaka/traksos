@@ -153,6 +153,24 @@ try {
       assert(check, width + 'px: approved image cannot be loaded: ' + name);
     }
 
+    // The six approved live tiles are real links to each feature's truthful
+    // guest preview, not dead cards or an unexpected login redirect.
+    if (width === 390 || width === 1672) {
+      for (const id of ['sos', 'air', 'sto', 'ecu', 'parts', 'insurance']) {
+        const link = page.locator('.public-service-' + id);
+        assert(await link.getAttribute('href') === '#/explore/' + id,
+          width + 'px: public tile ' + id + ' changed its approved destination');
+        await link.click();
+        await page.locator('.guest-explore-hero h1').waitFor({ timeout: 10000 });
+        assert(new URL(page.url()).hash === '#/explore/' + id,
+          width + 'px: public ' + id + ' did not open its own feature page');
+        await page.locator('.guest-explore-back').first().click();
+        await page.locator('.public-service-tiles').waitFor();
+        assert(new URL(page.url()).hash === '#/',
+          width + 'px: returning from ' + id + ' failed');
+      }
+    }
+
     // Last approved 19 Nov layout has login in the desktop/mobile header;
     // the public hero is intentionally registration-first, without a duplicate login.
     await page.locator('.guest-header-actions').getByRole('link', { name: 'Войти', exact: true }).click();
