@@ -62,7 +62,8 @@ export function RoleTour({ page }: { page:string }) {
     nextButton.current?.focus();
     return()=>{window.removeEventListener('resize',update);window.removeEventListener('scroll',update,true);};
   },[open,i,steps]);
-  useEffect(()=>{if(open&&page!=='')setOpen(false);},[page]); // navigating away always closes
+  const lastPage = useRef(page);
+  useEffect(()=>{if(lastPage.current!==page&&open)setOpen(false);lastPage.current=page;},[page]); // close only on actual navigation
   if(!me||!open)return null;
   const step=steps[i];
   const box=rect;
