@@ -44,7 +44,7 @@ export function Work({background=false}:{background?:boolean}={}) {
   });
 
   if (compact && !background) return <MobilePerformerWork p={p} personName={me?.name ?? undefined}
-    active={active} awaiting={toReview} incoming={auctions.data ?? []}
+    active={active} awaiting={toReview} jobs={jobs.data ?? []} incoming={auctions.data ?? []}
     onOfferDone={auctions.reload} balance={balance.data} online={online}
     busy={busy} setLine={setLine} />;
 
@@ -130,13 +130,85 @@ export function Work({background=false}:{background?:boolean}={}) {
   );
 }
 
+
+/**
+ * Phone-sized work search: only records already granted to this performer by
+ * /api/orders?as=performer and /api/performer/auctions. No global client lookup.
+ * Current orders API returns the most recent 100 assigned jobs.
+ */
+function MobileWorkSearch({jobs,incoming,onOfferDone}:{
+  jobs:any[]; incoming:any[]; onOfferDone:()=>void;
+}) {
+  const [expanded,setExpanded] = useState(false);
+  const [query,setQuery] = useState('');
+  const [scope,setScope] = useState<'mine'|'incoming'|'archive'>('mine');
+  const normalize=(x:unknown)=>String(x??'').toLocaleLowerCase('ru-RU').trim();
+  const needle=normalize(query);
+  const searchText=(o:any)=>[
+    o.number,o.address,o.v_plate,o.v_brand,o.v_model,o.brand,o.problem,o.description,
+  ].map(normalize).join(' ');
+  const selected = scope==='incoming'
+    ? incoming.filter((o:any)=>[o.number,o.order_id,o.address,o.brand,o.description]
+        .map(normalize).join(' ').includes(needle))
+    : jobs.filter((o:any)=>scope==='archive'
+        ? ['completed','cancelled'].includes(o.status)
+        : !['completed','cancelled'].includes(o.status))
+        .filter((o:any)=>searchText(o).includes(needle));
+  return <section className="work-mobile-search" aria-label="Поиск заявок мастера">
+    <div className="work-mobile-searchbar">
+      <span aria-hidden="true" className="work-mobile-search-icon">⌕</span>
+      <input type="search" aria-label="Поиск по своим заявкам, номеру, госномеру или адресу"
+        placeholder="Номер, госномер, адрес…" autoComplete="off"
+        value={query} onChange={e=>{setQuery(e.target.value);setExpanded(true)}}
+        onFocus={()=>setExpanded(true)}/>
+      <button type="button" aria-label={expanded?'Свернуть поиск':'Открыть поиск и фильтры'}
+        aria-expanded={expanded} onClick={()=>setExpanded(v=>!v)}>
+        {expanded?'Свернуть':'Фильтры'}
+      </button>
+    </div>
+    {expanded && <>
+      <div className="work-mobile-searchfilters" role="group" aria-label="Что ищем">
+        {([['mine','Мои'],['incoming','Входящие'],['archive','История']] as const)
+          .map(([id,label])=><button type="button" key={id}
+            aria-pressed={scope===id} className={scope===id?'active':''}
+            onClick={()=>setScope(id)}>{label}</button>)}
+      </div>
+      <p className="work-mobile-searchinfo">
+        {scope==='mine'?'Только назначенные вам открытые заявки'
+        :scope==='archive'?'Последние завершённые и отменённые вами заявки'
+        :'Только реально поступившие вам предложения'} · найдено {selected.length}
+      </p>
+      <div className="work-mobile-searchresults" role="region" aria-label="Найденные заявки">
+        {selected.length===0
+          ? <p className="work-mobile-search-empty">Ничего не найдено. Проверьте номер или переключите фильтр.</p>
+          : selected.slice(0,20).map((o:any)=>scope==='incoming'
+            ? <article key={o.order_id} className="work-mobile-search-result">
+                <b>{o.is_sos?'SOS · ':''}{SERVICES[o.service]?.name??o.service}</b>
+                <span className="note">{o.address || 'Адрес в предложении'}</span>
+                <OfferForm orderId={o.order_id} limits={o.limits} myPrice={o.my_price}
+                  onDone={onOfferDone}/>
+              </article>
+            : <a key={o.id} href={`#/order/${o.id}`} className="work-mobile-search-result">
+                <b>№{o.number} · {SERVICES[o.service]?.name??o.service}</b>
+                <span>{o.v_plate || o.v_model || o.brand || 'Грузовой транспорт'}</span>
+                <span className="note">{o.address || 'Адрес в заявке'} · {o.status==='completed'?'Завершена':
+                  o.status==='cancelled'?'Отменена':o.unilateral_status==='disputed'?'Спор':
+                  'Открыть'}</span>
+              </a>)}
+        {selected.length>20 && <p className="work-mobile-searchinfo">Показаны первые 20 из {selected.length} найденных.</p>}
+      </div>
+      <p className="work-mobile-searchinfo">Поиск только по доступным вам данным; архив API ограничен последними 100 заявками. Календарные записи открываются в графике.</p>
+    </>}
+  </section>;
+}
+
 /** Android / narrow-screen workspace. One next action, not a squeezed PC dashboard.
  * All numbers, orders and offers are read from exactly the same authenticated API
  * responses as the desktop. No fake progress, no offline status mutations.
  */
-function MobilePerformerWork({p, personName, active, awaiting, incoming, onOfferDone,
+function MobilePerformerWork({p, personName, active, awaiting, jobs, incoming, onOfferDone,
   balance, online, busy, setLine}: {
-  p:any; personName?:string; active:any[]; awaiting:any[]; incoming:any[];
+  p:any; personName?:string; active:any[]; awaiting:any[]; jobs:any[]; incoming:any[];
   onOfferDone:()=>void; balance:any; online:boolean; busy:boolean;
   setLine:(line:string, until?:string)=>void;
 }) {
@@ -156,6 +228,7 @@ function MobilePerformerWork({p, personName, active, awaiting, incoming, onOffer
       </div>
     </header>
     <WorkerNotices />
+    <MobileWorkSearch jobs={jobs} incoming={incoming} onOfferDone={onOfferDone}/>
     {p.verification === 'approved'
       ? <LineCard p={p} busy={busy} setLine={setLine} online={online}/>
       : <section className="card stack" aria-label="Проверка исполнителя">
@@ -168,7 +241,23 @@ function MobilePerformerWork({p, personName, active, awaiting, incoming, onOffer
         <h2>№{first.number} · {SERVICES[first.service]?.name || first.service}</h2>
         <p className="work-mobile-stage">{stage[first.status] || 'Открытая заявка'}</p>
         <p className="note">{first.address || first.estimate?.zoneName || 'Место — в карточке заявки'}</p>
-        <a className="btn work-mobile-primary" href={`#/order/${first.id}`}>Открыть заявку и следующий шаг</a>
+        <div className="work-mobile-progress" aria-label="Этапы текущей работы">
+          {(['accepted','en_route','arrived','working','awaiting_confirmation'] as const).map((step,i)=>{
+            const order = ['accepted','en_route','arrived','working','awaiting_confirmation'];
+            const at = order.indexOf(first.status);
+            return <span key={step} className={i<at?'done':i===at?'current':''}
+              title={['Принята','В пути','На месте','Работа','На подтверждении'][i]}
+              aria-label={['Принята','В пути','На месте','Работа','На подтверждении'][i]}/>;
+          })}
+        </div>
+        <a className="btn work-mobile-primary" href={`#/order/${first.id}`}>{({
+          accepted:'Открыть · подтвердить выезд',
+          en_route:'Открыть · отметить прибытие',
+          arrived:'Открыть · начать работу',
+          working:'Оформить результат и расчёт',
+          awaiting_confirmation:'Проверить подтверждение клиента',
+        } as Record<string,string>)[first.status] ?? 'Открыть заявку'}</a>
+        <span className="work-mobile-action-hint">Действие выполняется внутри заявки и подтверждается сервером.</span>
         {active.length > 1 && <span className="note">Других активных заявок: {active.length-1}</span>}
       </section>
       : <section className="work-mobile-current work-mobile-empty" aria-label="Нет текущих работ">
