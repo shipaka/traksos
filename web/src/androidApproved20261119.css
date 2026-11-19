@@ -12,6 +12,11 @@
  .app.role-client .client-dashboard{max-width:100%;padding:12px 10px 22px}
  .app.role-performer .work-live-dashboard{max-width:100%;padding:12px 10px 22px}
  .app.role-performer .work-live-dashboard>.and19-workspace{width:100%}
+ .app:not(.guest-app){--accent:#ff7627;--accent-soft:#ff762727;--on-accent:#fff}
+ .and19-price{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:8px 11px;
+   border:1px solid #39637a;border-radius:10px;background:#0d2738}
+ .and19-price small{color:#bad6e4;font-size:11px}
+ .and19-price strong{font-size:18px;font-variant-numeric:tabular-nums;color:#fff}
  .and19-workspace h1{font-size:clamp(24px,6.5vw,30px);line-height:1.12;margin:3px 0 0;color:#fff}
  .and19-workspace h2{font-size:16px;color:#fff;margin:4px 0 9px}
  .and19-workspace p{margin:3px 0;line-height:1.5}
