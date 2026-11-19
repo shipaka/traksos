@@ -132,9 +132,9 @@ test('комиссия рембазы: 5%, но не больше 5 000 ₽ за
 
 test('финансы рембазы: к выплате после сверки клиента, выплачено — после отметки админа', async () => {
   const m0 = ok(await t.api('GET', '/api/base/money', undefined, base.token));
-  assert.ok(m0.summary.toPay > 0, 'подтверждённый клиентом счёт — к выплате');
+  assert.ok(m0.summary.unpaid > 0, 'сверка работ не равна получению денег');
   assert.ok(m0.items.every((x: any) => x.payout === x.amount - x.commission));
-  assert.ok(m0.months.length >= 1);
+  assert.equal(m0.summary.toPay, 0, 'до подтверждения оплаты новых счетов нет суммы к выплате');
   const due = ok(await t.api('GET', '/api/admin/service-payouts', undefined, admin.token));
   assert.ok(due.length >= 1);
   assert.equal((await t.api('POST', `/api/admin/bookings/${due[0].id}/paid`, {}, base.token)).status, 403, 'выплату отмечает только админ');
@@ -148,7 +148,8 @@ test('финансы рембазы: к выплате после сверки �
   ok(await t.api('POST', `/api/admin/bookings/${due[0].id}/paid`, {reference:'TEST-PAYOUT-'+due[0].number}, admin.token));
   const m1 = ok(await t.api('GET', '/api/base/money', undefined, base.token));
   assert.equal(m1.summary.paid, due[0].payout);
-  assert.equal(m1.summary.toPay, m0.summary.toPay - due[0].payout);
+  assert.equal(m1.summary.toPay, 0);
+  assert.equal(m1.summary.unpaid, m0.summary.unpaid - due[0].payout);
   assert.equal((await t.api('GET', '/api/base/money', undefined, client.token)).status, 403);
 });
 
