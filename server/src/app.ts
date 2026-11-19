@@ -19,6 +19,7 @@ import { ReferralService } from './services/referral.ts';
 import { ProfilesService } from './services/profiles.ts';
 import { OrdersService } from './services/orders.ts';
 import { ChatService } from './services/chat.ts';
+import { TrakBotService } from './services/trakbot.ts';
 import { ReviewsService, REVIEW_TAGS } from './services/reviews.ts';
 import { OffersService } from './services/offers.ts';
 import { AuctionService } from './services/auction.ts';
@@ -81,6 +82,7 @@ export function createApp(d: Deps) {
   orders.auction = auction;
   profiles.onUnavailable = async (userId) => orders.afterRelease(await orders.release(d.db, userId, null));
   const chat = new ChatService(d.db, settings, notifier, orders);
+  const trakbot = new TrakBotService(d.db);
   const reviews = new ReviewsService(d.db, settings, orders);
   const onsite = new OnsiteService(d.db, notifier, orders);
   const offers = new OffersService(d.db, notifier, now);
@@ -400,6 +402,23 @@ export function createApp(d: Deps) {
       return warrantyRecourse.recordReceived(c.user,c.params.id,p);
     });
 
+  // TrakBot only operates in the authenticated user's private conversation.
+  // No broadcasting to general feed, service tickets or order chats.
+  r.get('/api/trakbot/messages', true, (c: AuthedCtx) => trakbot.history(c.user));
+  r.post('/api/trakbot/answer', true, (c: AuthedCtx) => {
+    const body = parse(z.object({
+      message: z.string().min(1).max(700),
+      vehicle: z.object({
+        make: z.string().max(60).optional(),
+        model: z.string().max(60).optional(),
+        ecu: z.string().max(60).optional(),
+        year: z.number().int().min(1980).max(2100).optional(),
+      }).optional().default({}),
+    }), c.body);
+    return trakbot.reply(c.user, body.message, body.vehicle);
+  });
+  r.get('/api/tech/codes', ['master','service','admin','moderator'], (c: AuthedCtx) =>
+    trakbot.expertLookup(c.user, c.query.get('q') ?? ''));
   r.get('/api/support/topics', false, () => TOPICS);
   r.get('/api/support', true, (c: AuthedCtx) => support.mine(c.user));
   r.post('/api/support', true, (c: AuthedCtx) => support.open(c.user, parse(z.object({
