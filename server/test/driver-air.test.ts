@@ -2,15 +2,12 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, ok, type T } from './helpers.ts';
 
-let t:T; let driver:any, other:any, admin:any, moderator:any;
+let t:T; let driver:any, other:any, admin:any;
 before(async()=>{
   t=await setup();
   driver=await t.login('+79997778101');
   other=await t.login('+79997778102');
   admin=await t.login('+79990000001');
-  moderator=await t.login('+79997778103');
-  // Set a dedicated staff role for test isolation via authenticated admin API.
-  ok(await t.api('POST','/api/admin/users/'+moderator.id+'/roles',{roles:['moderator']},admin.token));
 });
 after(()=>t.close());
 
