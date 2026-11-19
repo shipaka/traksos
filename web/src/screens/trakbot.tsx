@@ -4,7 +4,7 @@ import { Back, useMe } from '../ui.tsx';
 
 interface BotMessage { id: string; role: 'user'|'bot'; body: string; created_at: string; action_path?: string|null; action_label?: string|null; }
 const allowedRoutes = new Set(['/orders','/work/jobs','/base','/profile','/shop','/garage',
-  '/fleet','/tech/codes','/work/docs','/insurance/request/new','/support','/help','/rules',
+  '/fleet','/economics','/tech/codes','/work/docs','/insurance/request/new','/support','/help','/rules',
   '/help/case/refuses-to-pay','/help/case/no-show','/help/case/bill-changed']);
 const advice = 'TrakBot даёт справочные рекомендации, не диагноз. Он может ошибаться: проверяй важное с мастером. При проблемах с тормозами, рулевым или подвеской не продолжай движение.';
 interface BotHistory { messages: BotMessage[]; freePilot: true; aiAvailable?: boolean; aiTransport?: 'api'|'local'; }
