@@ -132,7 +132,11 @@ export class TrakBotService {
       specialist ? 'specialist' : 'driver');
     const llmEligible = canUseGroundedAi(allowAiProcessing, found, codes, context) &&
       !SPN_PATTERN.test(message) && !/\bFMI\b/i.test(message);
-    const generated = llmEligible ? await groundedAiAnswer(message, prior.map((r) => r.body), context, found, config.trakbot) : null;
+    const generated = llmEligible ? await groundedAiAnswer(message, prior.map((r) => r.body), context, found, {
+      enabled: config.trakbot.llmEnabled,
+      apiKey: config.trakbot.llmApiKey,
+      model: config.trakbot.llmModel,
+    }) : null;
     const answer = generated ?? deterministic;
     const coverage = codes.length ? (codes.every((code) => found.some((row) => row.code === code)) ? 'generic_found' : 'partial_or_missing')
       : (SPN_PATTERN.test(message) || /\bFMI\b/i.test(message) ? 'not_supported' : 'initial_triage');
