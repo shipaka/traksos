@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { rub } from '../api.ts';
 import { useMe, Back } from '../ui.tsx';
 import { usePrices } from './client.tsx';
+import { learningRole, courses } from './platformIntro.tsx';
+import { ScenarioEncyclopedia } from './scenarioEncyclopedia.tsx';
 
 type Item = [string, string];
 
@@ -14,7 +16,8 @@ export function Help() {
   const consult = p?.consult ?? { price: 70_000, backDiscount: 20_000, backHours: 48 };
   const sc = p?.cancelScale ?? {};
   const keep = (k: string) => `${Math.round((1 - (sc[k] ?? 0)) * 100)}%`;
-  const isDriver = !!me?.owner_id;
+  const isDriver = !!me?.owner_id || !!me?.roles.includes('driver');
+  const role = learningRole(mode,me?.roles??[]);
 
   const client: Item[] = [
     ['Знакомство и подсказки', 'При первом входе на главной появится предложение познакомиться с кабинетом. В любой момент можно открыть «Меню → Знакомство с TrakSOS» или «? → Справка». В обучении можно самостоятельно пройти вымышленную заявку от выбора помощи до истории: никаких реальных звонков, уведомлений или платежей. Вопросы задавайте личному TrakBot, а проблемы с заказами — в личной поддержке.'],
@@ -66,8 +69,11 @@ export function Help() {
     ['Счёт и комиссия', `После «Выставить счёт» клиент сверяет работы. С работ по клиентам TrakSOS — комиссия ${p?.serviceCommissionPct ?? 5}%, но не больше ${((p?.serviceCommissionMax ?? 500_000) / 100).toLocaleString('ru-RU')} ₽ за один счёт. Скидка клиенту по совету мастера оплачивается из комиссии TrakSOS — ваша выручка не меняется.`],
     ['Клиенты по совету мастера', 'Если ремонт долгий, раз в неделю отметьте «ещё у нас» в карточке машины.'],
   ];
+  const specialistLessons:Item[] = courses[role].lessons.map(item=>
+    [item.title,item.text+' '+item.tip]);
   const sections: [string, Item[]][] = mode === 'service' ? [['Рембаза', service]]
     : mode === 'performer' ? [['Исполнителю', performer]]
+    : ['insurer','inspection','moderator','admin'].includes(role) ? [[courses[role].label,specialistLessons]]
     : isDriver ? [['Водителю', driver], ['Как всё устроено', client]]
     : [['Как всё устроено', client], ['Владельцу парка', owner]];
   const match = (it: Item) => !q.trim() || (it[0] + ' ' + it[1]).toLowerCase().includes(q.trim().toLowerCase());
@@ -76,7 +82,8 @@ export function Help() {
       <Back to="" label="Назад" />
       <div><h1>Справка</h1><div className="sub">Коротко о том, как устроены суммы, оплата, отмена и кто что видит.</div></div>
       {me && <a className="btn" href="#/learn">Пройти знакомство с TrakSOS · по шагам</a>}
-      <input className="field" type="search" placeholder="Поиск по справке" value={q} onChange={(e) => setQ(e.target.value)} />
+      <input className="field" type="search" placeholder="Поиск по справке и ситуациям" value={q} onChange={(e) => setQ(e.target.value)} />
+      {me && <ScenarioEncyclopedia query={q} />}
       {sections.map(([title, items]) => {
         const shown = items.filter(match);
         if (!shown.length) return null;
