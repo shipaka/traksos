@@ -111,16 +111,31 @@ export function EcuHandoffPage({id}:{id:string}){
     <span className="note">{d.disclaimer}</span>
     {d.station && <span>Выбранная мастерская: <b>{d.station.public_name}</b> · {d.station.address}</span>}
    </div>
-   {d.history?.length>0 && <div className="card stack">
-    <b>Хронология · кто и что проверил</b>
-    {d.history.map((s:any)=><div key={s.number} className="stack" style={{gap:4}}>
-     <a href={'#/order/'+s.id} className="note">Этап №{s.number} · {SERVICES[s.service]?.name??s.service} · {STATUS[s.status]?.name??s.status}</a>
-     <b>{s.performerName}</b>
-     {s.description && <span className="note">{s.description}</span>}
-     {s.resultNote && <span className="note">Результат: {s.resultNote}</span>}
-     {s.consultHint?.note && <span className="note">Консультация: {s.consultHint.note}</span>}
-     <small className="note">{fmtTime(s.createdAt)} {s.completedAt?'· завершено '+fmtTime(s.completedAt):''}</small>
-    </div>)}
+   {((d.history?.length??0)+(d.workshops?.length??0))>0 && <div className="card stack">
+    <b>Общая хронология · консультация, мастер, эвакуатор, СТО</b>
+    <span className="note">У каждого этапа свой исполнитель. От СТО передаются только публичные технические заметки, без закрытых переписок и финансов.</span>
+    {[...(d.history??[]).map((v:any)=>({...v,kind:'order'})),
+      ...(d.workshops??[]).map((v:any)=>({...v,kind:'sto'}))]
+      .sort((a:any,b:any)=>new Date(a.createdAt).getTime()-new Date(b.createdAt).getTime())
+      .map((item:any)=>item.kind==='sto'
+       ? <div key={'sto-'+item.id} className="stack" style={{gap:4}}>
+          <a href={'#/booking/'+item.id} className="note">СТО · запись №{item.number} · {item.status}</a>
+          <b>{item.centerName}</b>
+          <span className="note">{item.need}</span>
+          {item.comment && <span className="note">{item.comment}</span>}
+          {item.works?.length>0 && <span className="note">Что сделали: {item.works.join(', ')}</span>}
+          {item.publicNotes?.map((n:any,i:number)=><span className="note" key={i}>
+            Публичное заключение СТО: {n.text}</span>)}
+          <small className="note">{fmtTime(item.createdAt)} {item.closedAt?'· закрыто '+fmtTime(item.closedAt):''}</small>
+         </div>
+       : <div key={'order-'+item.id} className="stack" style={{gap:4}}>
+          <a href={'#/order/'+item.id} className="note">Заказ №{item.number} · {SERVICES[item.service]?.name??item.service} · {STATUS[item.status]?.name??item.status}</a>
+          <b>{item.performerName}</b>
+          {item.description && <span className="note">{item.description}</span>}
+          {item.resultNote && <span className="note">Заключение: {item.resultNote}</span>}
+          {item.consultHint?.note && <span className="note">Консультация: {item.consultHint.note}</span>}
+          <small className="note">{fmtTime(item.createdAt)} {item.completedAt?'· завершено '+fmtTime(item.completedAt):''}</small>
+         </div>)}
    </div>}
    {d.actor==='candidate' && d.state==='pending' && <div className="card stack">
     <b>Предложить цену первичной диагностики</b>

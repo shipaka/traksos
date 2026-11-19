@@ -165,7 +165,7 @@ export class EcuHandoffService {
  async detail(user:AuthUser,id:string){
   const {h,actor}=await this.access(user,id);
   const full=actor!=='candidate';
-  const [quotes,history,notes,station,vin]=await Promise.all([
+  const [quotes,history,workshops,notes,station,vin]=await Promise.all([
    full ? this.db.query(
     'select q.id,q.performer_id,q.diagnosis_price,q.explanation,q.version,q.updated_at,'+
     's.public_name,s.address from ecu_quotes q join ecu_stations s on s.performer_id=q.performer_id'+
@@ -178,6 +178,13 @@ export class EcuHandoffService {
     'o.created_at,o.completed_at,u.name as performer_name from orders o'+
     ' left join users u on u.id=o.performer_id where o.id=$1 or o.case_root_id=$1'+
     ' order by o.created_at,o.number',[h.root_order_id]) : Promise.resolve([]),
+   // The shop publishes only technical notes explicitly marked public.
+   // Internal notes, customer details, chats and financials are never shared.
+   full ? this.db.query(
+    'select b.id,b.number,b.need,b.status,b.comment,b.works,b.notes,b.notes_public,'+
+    'b.created_at,b.closed_at,c.name as center_name from service_bookings b'+
+    ' join service_centers c on c.id=b.center_id where b.case_root_id=$1'+
+    ' order by b.created_at,b.number',[h.root_order_id]) : Promise.resolve([]),
    full ? this.db.query(
     'select n.id,n.body,n.created_at,u.name as author_name from ecu_handoff_notes n'+
     ' join users u on u.id=n.author_id where n.handoff_id=$1 order by n.id',[id]) : Promise.resolve([]),
@@ -202,6 +209,14 @@ export class EcuHandoffService {
       note:safe(r.consult_hint.note??'')}:null,
     performerName:r.performer_name??'Не назначен',
     createdAt:r.created_at,completedAt:r.completed_at,
+   })),
+   workshops:workshops.map((b:any)=>({
+    id:b.id,number:b.number,kind:'sto',status:b.status,need:b.need,
+    centerName:b.center_name,comment:safe(b.comment??''),
+    works:Array.isArray(b.works)?b.works.map((v:any)=>safe(String(v))):[],
+    publicNotes:b.notes_public && Array.isArray(b.notes)
+      ? b.notes.map((n:any)=>({text:safe(String(n.text??'')),at:n.at??null})):[],
+    createdAt:b.created_at,closedAt:b.closed_at,
    })),
    quotes,notes,station,selectedQuoteId:h.selected_quote_id,selectedAt:h.selected_at,
    disclaimer:'Техническая передача бесплатна. Согласование суммы — не оплата и не автоматическая запись на ремонт.',
