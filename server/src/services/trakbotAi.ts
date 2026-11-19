@@ -75,7 +75,7 @@ const CASUAL_RULES = [
 export function neutralConversationEligible(input: string): boolean {
   if (!input.trim() || input.length > 200) return false;
   // Only everyday small talk: never let a non-grounded model troubleshoot a truck.
-  if (/ошибк|код|диагност|машин|завод|двигател|топлив|тормоз|рулев|подвес|электр|масло|акб|давлен|датчик|схем|провод|ремонт|страхов|комисс|оплат|платн|возврат|заявк|заказ|профил|магазин|справочник|парол|кабинет/i.test(input)) return false;
+  if (/ошибк|код|диагност|машин|грузов|завод|двигател|мотор|троит|стартер|аккумулят|генератор|топлив|тормоз|рулев|подвес|электр|масло|акб|давлен|датчик|схем|провод|ремонт|полом|турбин|форсунк|ebs|abs|ecas|\bspn\b|\bfmi\b|\b[pbcu][0-3][0-9a-f]{3}\b|страхов|комисс|оплат|платн|возврат|заявк|заказ|профил|магазин|справочник|парол|кабинет/i.test(input)) return false;
   return /привет|как дела|как жизнь|как ты|настроени|спасибо|благодар|поговор|поболта|анекдот|шутк|как прошёл день|салют|здоров|добрый|чем занят/i.test(input);
 }
 
@@ -84,7 +84,7 @@ export async function neutralAiAnswer(
 ): Promise<string | null> {
   if (!neutralConversationEligible(message)) return null;
   const input = [
-    'Предыдущие реплики: ' + prior.slice(0, 3).reverse().map(stripIdentifiers).join(' | '),
+    'Предыдущие нейтральные реплики: ' + prior.filter(neutralConversationEligible).slice(0, 3).reverse().map(stripIdentifiers).join(' | '),
     'Новое сообщение: ' + stripIdentifiers(message),
   ].join('\n');
   const answer = await requestGeneratedText(CASUAL_RULES, input, 260, 8_000, settings);
