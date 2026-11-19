@@ -273,7 +273,7 @@ function MobilePerformerWork({p, personName, active, awaiting, jobs, incoming, o
       {lineOptionsOpen && <LineCard p={p} busy={busy} setLine={setLine} online={online} shareLocation={false}/>}
       {online && <div className="work-mobile-location"><LocationSharing/></div>}
     </div>}
-    {first ? <section className="work-mobile-current" aria-label="Активная заявка">
+    {first ? <section className="work-mobile-current card" aria-label="Активная заявка">
         <span className="work-mobile-kicker">СЕЙЧАС В РАБОТЕ</span>
         <h2>№{first.number} · {SERVICES[first.service]?.name || first.service}</h2>
         <p className="work-mobile-stage">{stage[first.status] || 'Открытая заявка'}</p>
@@ -304,7 +304,7 @@ function MobilePerformerWork({p, personName, active, awaiting, jobs, incoming, o
         </div>
         {active.length > 1 && <span className="note">Других активных заявок: {active.length-1}</span>}
       </section>
-      : <section className="work-mobile-current work-mobile-empty" aria-label="Нет текущих работ">
+      : <section className="work-mobile-current work-mobile-empty card" aria-label="Нет текущих работ">
           <span className="work-mobile-kicker">{online ? 'ГОТОВ К НОВЫМ ЗАЯВКАМ' : 'СЕЙЧАС НЕ НА ЛИНИИ'}</span>
           <h2>{online?'Ожидаем подходящий вызов':'Включите доступность, когда готовы'}</h2>
           <p className="note">Входящие предложения появятся здесь, когда их отправит сервер. Статус меняется выше.</p>
