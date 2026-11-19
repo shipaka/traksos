@@ -502,7 +502,7 @@ function Offers() {
               <span className="note">Три отдельных раздела для клиента, исполнителя и персональных данных. Уже принятые редакции не редактируются: создаётся новая версия с датой вступления. Для исполнителей сохраняется уведомление минимум за 15 дней.</span>
               <button type="button" className="btn ghost small" onClick={() => {
                 const section = TRAKBOT_TERMS[f.audience as TrakBotOfferAudience];
-                if (f.body.includes('## TrakBot')) return;
+                if (!section || f.body.includes('## TrakBot')) return;
                 setF({ ...f, body: f.body.trimEnd() + '\\n\\n' + section.trim() + '\\n',
                   summary: f.summary || 'Добавлены правила справочного ИИ TrakBot и дистанционных консультаций' });
               }}>Добавить проект раздела TrakBot в эту редакцию</button>
