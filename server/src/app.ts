@@ -404,10 +404,14 @@ export function createApp(d: Deps) {
 
   // TrakBot only operates in the authenticated user's private conversation.
   // No broadcasting to general feed, service tickets or order chats.
-  r.get('/api/trakbot/messages', true, (c: AuthedCtx) => trakbot.history(c.user));
+  r.get('/api/trakbot/messages', true, async (c: AuthedCtx) => ({
+    ...(await trakbot.history(c.user)),
+    aiAvailable: config.trakbot.llmEnabled && !!config.trakbot.llmApiKey,
+  }));
   r.post('/api/trakbot/answer', true, (c: AuthedCtx) => {
     const body = parse(z.object({
       message: z.string().min(1).max(700),
+      allowAiProcessing: z.boolean().optional().default(false),
       vehicle: z.object({
         make: z.string().max(60).optional(),
         model: z.string().max(60).optional(),
@@ -415,7 +419,7 @@ export function createApp(d: Deps) {
         year: z.number().int().min(1980).max(2100).optional(),
       }).optional().default({}),
     }), c.body);
-    return trakbot.reply(c.user, body.message, body.vehicle);
+    return trakbot.reply(c.user, body.message, body.vehicle, body.allowAiProcessing);
   });
   r.get('/api/tech/codes', ['master','service','admin','moderator'], (c: AuthedCtx) =>
     trakbot.expertLookup(c.user, c.query.get('q') ?? ''));
