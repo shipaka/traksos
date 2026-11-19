@@ -1,14 +1,15 @@
 // TrakSOS: smoke-test the public interface in an actual Chromium browser.
 // This complements the code/design gate with working clicks and responsive layout.
 import { chromium } from 'playwright';
+import { mkdirSync } from 'node:fs';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:8080';
 const browser = await chromium.launch();
 const assert = (condition, message) => { if (!condition) throw new Error(message); };
 
 try {
-  for (const width of [360, 390, 768, 1440]) {
-    const context = await browser.newContext({ viewport: { width, height: 844 }, locale: 'ru-RU' });
+  for (const width of [360, 390, 768, 1440, 1672]) {
+    const context = await browser.newContext({ viewport: { width, height: width === 1672 ? 941 : 844 }, locale: 'ru-RU' });
     const page = await context.newPage();
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
@@ -38,6 +39,14 @@ try {
     const invite = await botDialog.boundingBox();
     assert(!!invite && invite.height < 350,
       width + 'px: guest invitation too tall for a small popup');
+    // Real Chromium render, not an illustration: archive the exact open guest panel.
+    if (width === 390 || width === 1672) {
+      mkdirSync('e2e/shots/trakbot-proof', { recursive: true });
+      await page.screenshot({
+        path: `e2e/shots/trakbot-proof/guest-open-${width}.png`,
+        fullPage: false, animations: 'disabled'
+      });
+    }
     await page.locator('.trakbot-dock-close').click();
     assert(await page.locator('.trakbot-dock-panel').count() === 0,
       width + 'px: TrakBot failed to close');
