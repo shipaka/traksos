@@ -123,6 +123,27 @@ export class OffersService {
     return offer;
   }
 
+  /** Audit against settings without mutating a previously accepted legal text. */
+  async economicsAudit() {
+    if(!this.settings) return [];
+    const cfg=await this.settings.all();
+    const marker='\n\n<!-- TRAKSOS-ECONOMICS-ANNEX:V1 -->';
+    const out=[];
+    for(const audience of ['client','performer'] as const){
+      const current=await this.current(audience);
+      const expected=marker+contractEconomyAnnex(cfg,audience);
+      out.push({
+        audience,
+        published:!!current,
+        version:current?.version??null,
+        upToDate:!!current&&String(current.body??'').endsWith(expected),
+        requiresReview:!current||!String(current.body??'').endsWith(expected),
+        explanation:'Если экономические настройки отличаются от опубликованной редакции, требуется юридическая проверка, выпуск новой версии и согласие соответствующих пользователей. Старый документ не изменяем.',
+      });
+    }
+    return out;
+  }
+
   async history() {
     return this.db.query(
       `select o.id, o.audience, o.version, o.summary, o.published_at, o.effective_at,
