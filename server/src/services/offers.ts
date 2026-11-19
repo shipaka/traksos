@@ -5,6 +5,8 @@
 // не позже чем за 15 дней.
 
 import type { Db } from '../db/index.ts';
+import type { SettingsService } from './settings.ts';
+import { contractEconomyAnnex } from '../domain/economicsGuide.ts';
 import type { Notifier } from './notify.ts';
 import { HttpError, bad, notFound, type AuthUser } from '../http/router.ts';
 
@@ -19,7 +21,7 @@ export const AUDIENCE_NAMES: Record<string, string> = {
 const isPerformer = (roles: string[]) => roles.some((r) => ['master', 'tow', 'service'].includes(r));
 
 export class OffersService {
-  constructor(private db: Db, private notifier: Notifier, private now: () => Date = () => new Date()) {}
+  constructor(private db: Db, private notifier: Notifier, private now: () => Date = () => new Date(), private settings?:SettingsService) {}
 
   /** Какие документы нужны человеку: клиенту (владелец, водитель) — оферта, исполнителю и рембазе — агентский договор.
    *  Персонал без других ролей принимает только согласие на обработку данных. */
@@ -93,9 +95,17 @@ export class OffersService {
     }
     const dup = await this.db.one('select 1 from offers where audience=$1 and version=$2', [p.audience, p.version]);
     if (dup) throw bad('version_exists', `Редакция ${p.version} уже есть — укажите новый номер`);
+    // Immutable financial annex is generated from the exact current settings
+    // at publication. Editing an accepted edition is prohibited; a later
+    // tariff change requires another published and accepted contract version.
+    const marker='\n\n<!-- TRAKSOS-ECONOMICS-ANNEX:V1 -->';
+    const baseBody=p.body.split(marker)[0].trimEnd();
+    const body=this.settings && p.audience!=='privacy'
+      ? baseBody+marker+contractEconomyAnnex(await this.settings.all(),p.audience)
+      : p.body;
     const offer = await this.db.one(
       `insert into offers(audience, version, body, summary, effective_at, published_at) values ($1,$2,$3,$4,$5,$6) returning *`,
-      [p.audience, p.version, p.body, p.summary ?? null, eff, this.now()]);
+      [p.audience, p.version, body, p.summary ?? null, eff, this.now()]);
     await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
       [admin.id, 'offer.publish', offer!.id, { audience: p.audience, version: p.version, effectiveAt: eff }]);
 
