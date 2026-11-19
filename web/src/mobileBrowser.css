@@ -1,0 +1,263 @@
+/* Browser-only mobile presentation, 19 Nov 2026.
+   Approved desktop canon and the Android WebView remain unchanged.
+   Opted in by html.traksos-browser, never by viewport alone. */
+@media (max-width: 899px) {
+  html.traksos-browser .guest-app:has(.public-landing) {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  html.traksos-browser .guest-app .top {
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr) 44px !important;
+    grid-auto-rows: auto;
+    align-items: center !important;
+    gap: 9px 8px !important;
+    padding: 12px max(12px, env(safe-area-inset-left)) 10px max(12px, env(safe-area-inset-right)) !important;
+    min-height: 0 !important;
+  }
+  html.traksos-browser .guest-app .top .logo {
+    grid-column: 1 / 3 !important;
+    grid-row: 1 !important;
+    font-size: clamp(24px, 6.6vw, 30px) !important;
+    margin-right: 0 !important;
+    min-width: 0 !important;
+  }
+  html.traksos-browser .guest-app .track-site-search {
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    align-self: center !important;
+    order: initial !important;
+  }
+  html.traksos-browser .guest-app .top > .row {
+    grid-column: 1 / -1 !important;
+    grid-row: 2 !important;
+    justify-content: stretch !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+  html.traksos-browser .guest-app .guest-header-actions {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+    width: 100%;
+    gap: 9px !important;
+    margin: 0 !important;
+    white-space: normal !important;
+  }
+  html.traksos-browser .guest-app .guest-header-actions a {
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    min-width: 0;
+    min-height: 44px !important;
+    padding: 9px 8px !important;
+    font-size: clamp(11px, 2.9vw, 13px) !important;
+    line-height: 1.2 !important;
+    overflow-wrap: anywhere;
+  }
+  html.traksos-browser .guest-app .guest-mobile-catalog {
+    grid-column: 1 / -1 !important;
+    grid-row: 3 !important;
+    width: 100%;
+    min-width: 0;
+    margin: 0 !important;
+  }
+  html.traksos-browser .guest-app .guest-mobile-catalog > summary {
+    min-height: 44px;
+    display: block;
+    padding: 12px 14px;
+  }
+  html.traksos-browser .guest-app .guest-mobile-catalog > nav {
+    max-height: min(65dvh, 500px);
+    overscroll-behavior: contain;
+  }
+  html.traksos-browser .guest-app:has(.public-landing) .desktop-content > main.public-landing {
+    padding: 10px 12px calc(104px + env(safe-area-inset-bottom)) !important;
+    min-width: 0 !important;
+    gap: 12px !important;
+  }
+  /* Show the original, unmodified local photography in its own area;
+     the title and real action buttons are never overlaid on the truck. */
+  html.traksos-browser .guest-app .public-landing .public-brand-hero {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    padding: 10px 12px 14px !important;
+    min-height: 0 !important;
+    height: auto !important;
+    gap: 10px !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+  }
+  html.traksos-browser .guest-app .public-landing .public-brand-hero::before {
+    background: linear-gradient(180deg, transparent 0%, rgba(5, 23, 42, .10) 65%, rgba(5, 23, 42, .28)) !important;
+    pointer-events: none;
+  }
+  html.traksos-browser .guest-app .public-landing .public-hero-visual {
+    display: block !important;
+    position: relative !important;
+    inset: auto !important;
+    order: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    aspect-ratio: 2 / 1 !important;
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    background-size: contain !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
+    opacity: 1 !important;
+    pointer-events: none !important;
+  }
+  html.traksos-browser .guest-app .public-landing .public-hero-copy {
+    position: relative !important;
+    order: 1 !important;
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 2px !important;
+    margin: 0 !important;
+    background: none !important;
+    z-index: 3 !important;
+  }
+  html.traksos-browser .guest-app .public-landing .public-eyebrow {
+    font-size: 10px !important;
+  }
+  html.traksos-browser .guest-app .public-landing .public-brand-hero h1 {
+    font-size: clamp(23px, 5.7vw, 33px) !important;
+    line-height: 1.16 !important;
+    margin: 9px 0 !important;
+    max-width: none !important;
+    overflow-wrap: anywhere;
+  }
+  html.traksos-browser .guest-app .public-landing .public-hero-copy > p {
+    max-width: none !important;
+    font-size: clamp(12px, 3.1vw, 14px) !important;
+    line-height: 1.48 !important;
+  }
+  html.traksos-browser .guest-app .public-landing .public-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 9px !important;
+    margin: 14px 0 0 !important;
+    min-width: 0;
+  }
+  html.traksos-browser .guest-app .public-landing .public-actions .public-button {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 46px !important;
+    text-align: center;
+    line-height: 1.25 !important;
+    padding: 10px 7px !important;
+    white-space: normal;
+  }
+  html.traksos-browser .guest-app .public-landing .public-hero-caption {
+    margin: 9px 0 0 !important;
+    font-size: 11px !important;
+  }
+  html.traksos-browser .guest-app .public-landing .public-hero-carousel {
+    position: relative !important;
+    order: 2 !important;
+    inset: auto !important;
+    align-self: flex-end !important;
+    margin: 0 !important;
+    min-height: 46px !important;
+    transform: none !important;
+  }
+  html.traksos-browser .guest-app .public-landing .public-hero-carousel button {
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+  html.traksos-browser .guest-app .public-landing .public-content-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+  html.traksos-browser .guest-app .public-landing .public-service-tiles {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+  html.traksos-browser .guest-app .public-landing .public-service-tile {
+    min-width: 0 !important;
+    min-height: 185px !important;
+    height: auto !important;
+    padding: 13px 11px !important;
+    overflow: hidden !important;
+  }
+  html.traksos-browser .guest-app .public-landing .public-service-tile b {
+    font-size: clamp(13px, 3.6vw, 17px) !important;
+    line-height: 1.18 !important;
+  }
+  html.traksos-browser .guest-app .public-landing .public-service-tile .public-service-arrow {
+    min-height: 28px !important;
+    min-width: 68px !important;
+  }
+  html.traksos-browser .guest-app .public-landing .public-app-card {
+    min-height: 196px !important;
+    width: 100% !important;
+    padding: 16px 120px 16px 15px !important;
+  }
+  html.traksos-browser .guest-app .public-landing .public-app-card .public-app-phone {
+    right: 8px !important;
+    width: 99px !important;
+  }
+  html.traksos-browser .guest-app .public-landing .public-why-strip {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+  html.traksos-browser .guest-app .public-landing .public-location-process-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-areas: "process" "map" "partner" !important;
+  }
+  html.traksos-browser .guest-app .public-landing :is(#public-services, #public-how) {
+    scroll-margin-top: 16px;
+  }
+  html.traksos-browser .guest-app .track-guest-tabbar {
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+  html.traksos-browser .guest-app .auth-desktop-layout {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding-inline: max(12px, env(safe-area-inset-left));
+  }
+  html.traksos-browser .guest-app :is(a, button, summary) {
+    touch-action: manipulation;
+  }
+}
+@media (min-width: 600px) and (max-width: 899px) {
+  html.traksos-browser .guest-app .public-landing .public-service-tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+  html.traksos-browser .guest-app .public-landing .public-service-tile {
+    min-height: 226px !important;
+  }
+  html.traksos-browser .guest-app .public-landing .public-hero-visual {
+    aspect-ratio: 2.5 / 1 !important;
+  }
+}
+@media (max-width: 359px) {
+  html.traksos-browser .guest-app .public-landing .public-app-card {
+    padding-right: 103px !important;
+  }
+  html.traksos-browser .guest-app .public-landing .public-app-card .public-app-phone {
+    width: 84px !important;
+  }
+  html.traksos-browser .guest-app .public-landing .public-service-tile {
+    padding: 10px 8px !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html.traksos-browser .guest-app .public-landing :is(.public-button,.public-service-tile) {
+    transition: none !important;
+    transform: none !important;
+  }
+}
