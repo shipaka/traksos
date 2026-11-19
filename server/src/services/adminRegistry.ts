@@ -17,7 +17,7 @@ export interface RegistryMetadata {
 const csvHeader = [
   'ID', 'Имя', 'Компания', 'ИНН', 'Телефон', 'Роли', 'Статус',
   'Регион', 'Источник региона', 'Город', 'Адрес СТО', 'Категория исполнителя',
-  'Специализации', 'Проверка', 'На линии', 'Рейтинг', 'Кол-во отзывов',
+  'Специализации', 'Проверка', 'На линии', 'Налоговый статус', 'Категория тарифа', 'Рейтинг', 'Кол-во отзывов',
   'ТС в парке', 'Заявок клиента', 'Выездов исполнителя', 'Счетов СТО',
   'Дата регистрации', 'Последняя активность', 'Теги', 'Заметка администратора',
 ];
@@ -33,9 +33,9 @@ export function registryCsv(rows: any[]) {
   const cell = (v: unknown) => safeCsvCell(v);
   const head = csvHeader.map(cell).join(';');
   return '\uFEFF' + [head, ...rows.map(r => [
-    r.id, r.name, r.company_name || r.center_name, r.company_inn || r.center_inn,
+    r.id, r.name, r.company_name || r.center_name, r.company_inn || r.center_inn || r.worker_inn,
     r.phone, r.roles, r.status, r.region, r.region_source, r.city, r.center_address,
-    r.kind, r.specialties, r.verification, r.line_status,
+    r.kind, r.specialties, r.verification, r.line_status, r.tax_status, r.tier,
     r.rating, r.rating_count, r.vehicles_count, r.orders_client_count,
     r.orders_performer_count, r.bookings_service_count, r.created_at, r.last_seen_at,
     r.tags, r.note,
