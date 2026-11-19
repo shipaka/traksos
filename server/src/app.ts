@@ -406,6 +406,7 @@ export function createApp(d: Deps) {
 
   // TrakBot only operates in the authenticated user's private conversation.
   // No broadcasting to general feed, service tickets or order chats.
+  r.delete('/api/trakbot/messages', true, (c: AuthedCtx) => trakbot.clearHistory(c.user));
   r.get('/api/trakbot/messages', true, async (c: AuthedCtx) => ({
     ...(await trakbot.history(c.user)),
     aiAvailable: config.trakbot.llmEnabled && !!config.trakbot.llmApiKey,
