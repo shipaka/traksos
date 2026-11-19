@@ -145,6 +145,8 @@ export class ServiceCenters {
       id: b.id, number: b.number, status: b.status, statusName: STATUS_NAME[b.status], need: b.need, needName: NEEDS[b.need] ?? b.need,
       whenDay: b.when_day, whenTime: b.when_time, acceptTime: b.accept_time, arrival: b.arrival, comment: b.comment,
       vehicle: b.vehicle, vehicleId: b.vehicle_id, clarifyQ: b.clarify_q, clientAnswer: b.client_answer, declineReason: b.decline_reason,
+      partsAmount: b.amount == null ? null : Number(b.parts_amount ?? 0),
+      feeBaseAmount: b.amount == null ? null : (b.payment_required ? Number(b.fee_base_amount ?? 0) : Number(b.amount)-Number(b.parts_amount ?? 0)),
       notes, notesPublic: b.notes_public, works: b.works, amount: b.amount, discount: b.discount,
       // Never include the customer's separately charged service fee in the service owner's JSON.
       clientFee: as === 'client' ? Number(b.client_fee ?? 0) : undefined,
@@ -268,17 +270,20 @@ export class ServiceCenters {
   }
 
   /** New invoices snapshot BOTH independent caps. Financial and points writes are atomic. */
-  async invoice(user: AuthUser, id: string, amount: number, points = 0) {
+  async invoice(user: AuthUser, id: string, amount: number, points = 0, partsAmount = 0) {
+    if(!Number.isSafeInteger(partsAmount) || partsAmount<0 || partsAmount>amount)
+      throw bad('bad_parts_amount','Запчасти не могут стоить больше общей суммы счёта');
+    const feeBase = amount - partsAmount;
     const c = await this.mustMine(user);
     const fees = await this.settings.get('fees');
     const clientPct = Math.max(0, Math.min(5, fees.clientFeePct)); // approved ceiling: 5% and max 5,000 RUB.
-    const clientFee = Math.min(Math.round(amount * clientPct / 100), 500_000);
+    const clientFee = Math.min(Math.round(feeBase * clientPct / 100), 500_000);
     const b = await this.db.tx(async q => {
       const row = await q.one<any>('select * from service_bookings where id=$1 and center_id=$2 for update', [id, c.id]);
       if (!row) throw notFound('Запрос не найден');
       if (row.status !== 'ready') throw conflict('bad_status', 'Сначала «Машина готова»');
-      let commission = Math.min(Math.round(amount * Math.max(0, Math.min(5,fees.serviceCommissionPct)) / 100), fees.serviceCommissionMax ?? 500_000, 500_000);
-      const discount = row.from_order_id ? Math.min(commission, Math.round(amount * fees.serviceReferralDiscountPct / 100)) : 0;
+      let commission = Math.min(Math.round(feeBase * Math.max(0, Math.min(5,fees.serviceCommissionPct)) / 100), fees.serviceCommissionMax ?? 500_000, 500_000);
+      const discount = row.from_order_id ? Math.min(commission, Math.round(feeBase * fees.serviceReferralDiscountPct / 100)) : 0;
       // Points and the new invoice must commit together; never spend points twice on a retry.
       const pts = this.referral
         ? await this.referral.spendServiceCommission(q, user.id, commission - discount, id, row.number, points) : 0;
@@ -286,11 +291,11 @@ export class ServiceCenters {
       await q.query(
         `update service_bookings
             set status='invoiced', amount=$2, commission=$3, discount=$4, points=$5,
-                client_fee=$6, client_fee_pct=$7, payment_required=true,
-                invoiced_at=now(), updated_at=now()
+                client_fee=$6, client_fee_pct=$7, parts_amount=$8, fee_base_amount=$9,
+                payment_required=true, invoiced_at=now(), updated_at=now()
           where id=$1`,
-        [id, amount, commission, discount, pts, clientFee, clientPct]);
-      return {...row, client_fee:clientFee, discount, amount};
+        [id, amount, commission, discount, pts, clientFee, clientPct, partsAmount, feeBase]);
+      return {...row, client_fee:clientFee, discount, amount, parts_amount:partsAmount, fee_base_amount:feeBase};
     });
     await this.tell({ ...b, status: 'invoiced' }, 'Счёт за ремонт', 'Работы завершены. Проверьте в личном кабинете состав счёта и итог к оплате.');
     return this.booking(user, id);
@@ -573,7 +578,7 @@ export class ServiceCenters {
          join users u on u.id=e.confirmed_by where e.booking_id=$1
          order by e.id desc`,[id]);
     return {invoice:{id:b.id,number:b.number,centerName:b.center_name,amount:b.amount,
-      clientFee:b.client_fee,discount:b.discount,commission:b.commission,payout:b.amount==null?null:b.amount-b.commission,
+      clientFee:b.client_fee,discount:b.discount,partsAmount:b.parts_amount,feeBaseAmount:b.fee_base_amount,commission:b.commission,payout:b.amount==null?null:b.amount-b.commission,
       received:b.received_amount,refunded:b.refunded_amount,paidOutAt:b.paid_out_at,payoutReference:b.payout_reference,
       ...this.settlement(b)},events};
   }
@@ -581,7 +586,7 @@ export class ServiceCenters {
   async financialRegister(user: AuthUser) {
     if (!user.roles.includes('admin')) throw forbidden();
     const rows = await this.db.query<any>(
-      `select b.id,b.number,b.status,b.amount,b.client_fee,b.discount,b.commission,b.points,
+      `select b.id,b.number,b.status,b.amount,b.parts_amount,b.fee_base_amount,b.client_fee,b.discount,b.commission,b.points,
               b.payment_required,b.received_amount,b.refunded_amount,b.paid_out_at,b.payout_reference,b.invoiced_at,
               c.name as center_name, coalesce(u.company_name,u.name,u.phone) as client_name
          from service_bookings b
