@@ -12,7 +12,7 @@ import './performerMobileWork.css';
 
 // Линия: статус, геолокация, входящие ---------------------------------------
 
-export function Work() {
+export function Work({background=false}:{background?:boolean}={}) {
   const { me, reload } = useMe();
   const { busy, run } = useAction();
   const [compact, setCompact] = useState(() => window.matchMedia('(max-width: 820px)').matches);
@@ -43,7 +43,7 @@ export function Work() {
     reload();
   });
 
-  if (compact) return <MobilePerformerWork p={p} personName={me?.name ?? undefined}
+  if (compact && !background) return <MobilePerformerWork p={p} personName={me?.name ?? undefined}
     active={active} awaiting={toReview} incoming={auctions.data ?? []}
     onOfferDone={auctions.reload} balance={balance.data} online={online}
     busy={busy} setLine={setLine} />;
@@ -67,7 +67,7 @@ export function Work() {
         <div className="work-command-art" aria-hidden="true" />
       </section>
       <LiveStrip who={p.kind === 'tow' ? 'tow' : 'master'} />
-      {online && <Nearby />}
+      {!background && online && <Nearby />}
       {p.verification !== 'approved' ? (
         <div className="card hi">
           <b>{p.verification === 'rejected' ? 'Проверка не пройдена' : p.submitted_at ? 'Профиль на проверке' : 'Пройдите проверку'}</b>
@@ -77,7 +77,7 @@ export function Work() {
           <button className="btn" onClick={() => go('work/docs')}>{p.submitted_at ? 'Мои фото' : 'Снять фото'}</button>
         </div>
       ) : (
-        <LineCard p={p} busy={busy} setLine={setLine} online={online} />
+        <LineCard p={p} busy={busy} setLine={setLine} online={online} shareLocation={!background} />
       )}
 
       {active.length > 0 && (
@@ -213,7 +213,7 @@ function MobilePerformerWork({p, personName, active, awaiting, incoming, onOffer
 const BREAKS: [number, string][] = [[15, '15 мин'], [30, '30 мин'], [60, '1 час'], [120, '2 часа']];
 
 /** Статус на линии, как в демо: Свободен / На звонке / Перерыв / Не на линии — и что сейчас по графику */
-function LineCard({ p, busy, setLine, online }: { p: any; busy: boolean; setLine: (s: string, until?: string) => void; online: boolean }) {
+function LineCard({ p, busy, setLine, online, shareLocation = true }: { p: any; busy: boolean; setLine: (s: string, until?: string) => void; online: boolean; shareLocation?:boolean }) {
   const [open, setOpen] = useState(false);
   const [breakOpen, setBreakOpen] = useState(false);
   const sl = scheduleSlot(p.schedule, new Date(), p.off_schedule_until);
@@ -249,7 +249,7 @@ function LineCard({ p, busy, setLine, online }: { p: any; busy: boolean; setLine
         </div>
       )}
       <SearchSettingsLink p={p} />
-      {online && <LocationSharing />}
+      {shareLocation && online && <LocationSharing />}
     </div>
   );
 }
