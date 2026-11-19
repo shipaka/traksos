@@ -32,6 +32,7 @@ import { Consult, Home, Sos, NewOrder, Orders, Garage, Profile, logout } from '.
 import { Order } from './screens/order.tsx';
 import { EcuHandoffPage } from './screens/ecuHandoffs.tsx';
 import { Work,  IncomingCall } from './screens/performer.tsx';
+import { PerformerOrderWindow } from './screens/performerOrderWindow.tsx';
 import { Admin } from './screens/admin.tsx';
 import { Documents } from './screens/documents.tsx';
 import { OfferGate, OfferPage } from './screens/offers.tsx';
@@ -233,7 +234,7 @@ function App() {
     case 'login': screen = <Home />; break;
     case 'sos': screen = isCustomer ? <Sos /> : <main><div className="empty">Для вызова SOS нужен клиентский аккаунт</div></main>; break;
     case 'new': screen = !isCustomer ? <main><div className="empty">Для заказа нужен клиентский аккаунт</div></main> : b === 'ecu' ? <main className="stack"><h1>Ремонт электронных блоков ЭБУ</h1><p>Специалист принимает блок в стационарной мастерской. Передайте техническое заключение из ранее оформленной консультации или выездной заявки: это бесплатно, и диагностика согласуется отдельно.</p><a className="btn" href="#/orders">Открыть мои заявки и заключения</a></main> : b === 'consult' ? <Consult /> : <NewOrder service={b ?? 'electric'} />; break;
-    case 'order': screen = <Order id={b} />; break;
+    case 'order': screen = isPerformer && b ? <PerformerOrderWindow id={b} /> : <Order id={b} />; break;
     case 'ecu-handoff': screen = <EcuHandoffPage id={b??''} />; break;
     case 'orders': screen = isCustomer ? <Orders as="client" /> : <main><div className="empty">Нет доступа к клиентским заявкам</div></main>; break;
     case 'garage': screen = isCustomer ? <Garage /> : <main><div className="empty">Нет доступа к гаражу</div></main>; break;
