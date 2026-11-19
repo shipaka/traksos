@@ -87,7 +87,6 @@
 .trakbot-dock .trakbot-dock-launcher:focus-visible {outline-color:#ffb878;}
 @media(max-width:420px){
   .trakbot-dialog .trakbot-bot-layout{gap:5px;}
-  .trakbot-dialog .trakbot-bot-layout .trakbot-mascot{--bot-size:48px;}
   .trakbot-dialog .trakbot-bot-content > .b{font-size:13px;padding:10px;}
   .trakbot-reactions-grid{grid-template-columns:repeat(4,minmax(0,1fr));}
 }
@@ -99,6 +98,44 @@ html.traksos-reduced-motion .trakbot-mascot,
 html.traksos-reduced-motion .trakbot-mascot *,
 html.traksos-reduced-motion .trakbot-typing-dots i,
 html.traksos-reduced-motion .trakbot-message--new .trakbot-mascot {animation:none!important;transition:none!important;}
+
+/* Android and compact popup: message text always dominates the character. */
+.trakbot-dialog .trakbot-bot-layout .trakbot-mascot { --bot-size:40px; }
+.trakbot-dialog .trakbot-bot-layout { min-width:0;align-items:flex-start; }
+.trakbot-dialog .trakbot-bot-head { gap:4px 7px; }
+.trakbot-dialog .trakbot-bot-content { flex:1 1 0;min-width:0; }
+.trakbot-dialog .trakbot-message--bot .b { width:100%;word-break:normal;overflow-wrap:anywhere; }
+.trakbot-dialog .trakbot-message--user .b { overflow-wrap:anywhere; }
+.trakbot-compact-body .trakbot-bot-layout .trakbot-mascot { --bot-size:32px; }
+.trakbot-compact-body .trakbot-bot-head { margin-bottom:3px; }
+.trakbot-compact-body .trakbot-bot-name { font-size:11px; }
+.trakbot-compact-body .trakbot-bot-state { font-size:9px;padding:1px 5px; }
+.trakbot-compact-body .trakbot-bot-content > .b { font-size:12px;line-height:1.4;padding:7px 8px; }
+.trakbot-compact-body .trakbot-message--bot { margin:0; }
+.trakbot-compact-body .trakbot-message--user { max-width:88%; }
+.trakbot-compact-body .trakbot-typing { min-height:38px;padding:2px 0;font-size:11px; }
+.trakbot-compact-body .trakbot-typing .trakbot-mascot { --bot-size:28px; }
+.trakbot-compact-body .trakbot-mascot-symbol { min-width:14px;height:14px;font-size:9px; }
+@media(max-width:899px){
+  .trakbot-dialog .trakbot-bot-layout .trakbot-mascot { --bot-size:34px; }
+  .trakbot-compact-body .trakbot-bot-layout .trakbot-mascot { --bot-size:29px; }
+  .trakbot-dialog .trakbot-bot-layout { gap:5px; }
+  .trakbot-dialog .trakbot-bot-content > .b { font-size:13px;line-height:1.43;padding:8px 9px; }
+  .trakbot-dialog .trakbot-bot-head { margin-bottom:3px; }
+  .trakbot-dialog .trakbot-bot-name { font-size:11px; }
+  .trakbot-dialog .trakbot-bot-state { font-size:9px; }
+  .trakbot-chat-title .trakbot-mascot { --bot-size:38px; }
+  .trakbot-chat-title h1 { font-size:clamp(19px,5vw,26px); }
+  .trakbot-reactions-gallery { max-width:100%; }
+}
+@media(max-width:359px){
+  .trakbot-dialog .trakbot-bot-layout .trakbot-mascot { --bot-size:30px; }
+  .trakbot-compact-body .trakbot-bot-layout .trakbot-mascot { --bot-size:27px; }
+  .trakbot-dialog .trakbot-bot-layout { gap:4px; }
+  .trakbot-dialog .trakbot-bot-content > .b { padding:7px;font-size:12px; }
+  .trakbot-dialog .trakbot-bot-name { font-size:10px; }
+  .trakbot-dialog .trakbot-bot-state { font-size:9px; }
+}
 
 /* Emergency incoming calls must stay above the now header-safe bot layer. */
 .call { z-index:130; }
