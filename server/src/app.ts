@@ -24,6 +24,7 @@ import { OffersService } from './services/offers.ts';
 import { AuctionService } from './services/auction.ts';
 import { DocumentsService } from './services/documents.ts';
 import { AdminService } from './services/admin.ts';
+import { AdminRegistry } from './services/adminRegistry.ts';
 import { AdminAccessService, MANUAL_ROLES, REPORT_CATEGORIES } from './services/adminAccess.ts';
 import { DeveloperReportDelivery } from './services/developerReportDelivery.ts';
 import { SupportService, TOPICS } from './services/support.ts';
@@ -86,6 +87,7 @@ export function createApp(d: Deps) {
   const offers = new OffersService(d.db, notifier, now);
   const documents = new DocumentsService(d.db, notifier, settings, now);
   const admin = new AdminService(d.db, notifier, orders, payments, profiles, settings, now);
+  const adminRegistry = new AdminRegistry(d.db);
   const adminAccess = new AdminAccessService(d.db);
   const developerReportDelivery = new DeveloperReportDelivery(d.db);
   const support = new SupportService(d.db, notifier, orders, now);
@@ -1166,6 +1168,34 @@ export function createApp(d: Deps) {
     (await adminAccess.listReports()).map(report => ({ ...report, delivery_configured: developerReportDelivery.enabled })));
   r.post('/api/admin/developer-reports/:id/resolve', ['admin'], (c: AuthedCtx) =>
     adminAccess.resolveReport(c.user, c.params.id));
+  // Admin-only CRM. All operational facts are read from source-of-truth tables.
+  // Export and metadata edits are audit-logged; no open public CSV endpoint.
+  const registryQuery = z.object({
+    q:z.string().max(120).optional(),role:z.enum(ROLES as [string,...string[]]).optional(),
+    region:z.string().max(80).optional(),city:z.string().max(120).optional(),
+    status:z.enum(['active','blocked']).optional(),
+    verification:z.enum(['pending','approved','rejected']).optional(),
+    specialty:z.string().max(60).optional(),
+    activity:z.enum(['with_orders','without_orders','recent_30']).optional(),
+    company:z.enum(['yes','no']).optional(),tag:z.string().max(50).optional(),
+    kind:z.enum(['master','tow','service','ecu']).optional(),
+    ratingMin:z.coerce.number().min(0).max(5).optional(),
+    from:z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    to:z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    page:z.coerce.number().int().min(1).max(100000).optional(),
+    pageSize:z.coerce.number().int().min(1).max(100).optional(),
+  }).strict();
+  r.get('/api/admin/registry', ['admin'], (c: AuthedCtx) =>
+    adminRegistry.list(parse(registryQuery,Object.fromEntries(c.query.entries()))));
+  r.post('/api/admin/registry/export', ['admin'], (c: AuthedCtx) =>
+    adminRegistry.exportCsv(c.user,parse(registryQuery,c.body)));
+  r.post('/api/admin/registry/:id/metadata', ['admin'], (c: AuthedCtx) =>
+    adminRegistry.saveMetadata(c.user,c.params.id,parse(z.object({
+      region:z.string().max(80).nullable().optional(),city:z.string().max(120).nullable().optional(),
+      tags:z.array(z.string().max(40)).max(12).optional(),
+      note:z.string().max(2000).optional(),
+    }).strict(),c.body)));
+
   r.get('/api/admin/users', ['admin'], (c: AuthedCtx) => {
     const q = `%${(c.query.get('q') ?? '').replace(/[%_]/g, '')}%`;
     return d.db.query(
