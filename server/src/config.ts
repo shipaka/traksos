@@ -64,6 +64,7 @@ export const config = {
     token: env.TOCHKA_API_TOKEN ?? '',
     customerCode: env.TOCHKA_CUSTOMER_CODE ?? '',
     accountId: env.TOCHKA_ACCOUNT_ID ?? '',
+  },
   payments: {
     /** mock — тестовый сервис; yookassa — ЮKassa. Включение оплаты — в настройках площадки. */
     provider: (env.PAYMENT_PROVIDER ?? 'mock') as 'mock' | 'yookassa',
