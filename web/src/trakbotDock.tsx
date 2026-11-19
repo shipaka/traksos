@@ -43,6 +43,7 @@ export function TrakBotDock({ authenticated }: { authenticated: boolean }) {
               <a href="#/explore/van" onClick={() => setOpen(false)}>Услуги и выездная помощь</a>
               <a href="#/join" onClick={() => setOpen(false)}>Как стать партнёром</a>
               <a href="#/offers" onClick={() => setOpen(false)}>Условия и документы</a>
+              <a href="#/register" onClick={() => setOpen(false)}>Зарегистрироваться и узнать обо мне</a>
               <a href="#/login" onClick={() => setOpen(false)}>Войти и поговорить с TrakBot</a>
             </nav>
             <p className="note">Подсказки ИИ справочные, не заменяют диагностику.</p>
