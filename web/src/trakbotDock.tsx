@@ -10,8 +10,18 @@ export function TrakBotDock({ authenticated }: { authenticated: boolean }) {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const openedRef = useRef(false);
+  const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelBlurTimer = () => {
+    if (blurTimerRef.current !== null) {
+      clearTimeout(blurTimerRef.current);
+      blurTimerRef.current = null;
+    }
+  };
+  useEffect(() => () => {
+    if (blurTimerRef.current !== null) clearTimeout(blurTimerRef.current);
+  }, []);
 
-  const close = () => { setOpen(false); setInputFocused(false); triggerRef.current?.focus(); };
+  const close = () => { cancelBlurTimer(); setOpen(false); setInputFocused(false); triggerRef.current?.focus(); };
   // Android WebView can leave the layout viewport taller than the visible area
   // when the soft keyboard opens. Use visualViewport to anchor a compact panel
   // above the keyboard, without hiding the send field or covering the full app.
@@ -60,16 +70,23 @@ export function TrakBotDock({ authenticated }: { authenticated: boolean }) {
         '--trakbot-keyboard-inset': visibleViewport.bottomInset + 'px',
       } as CSSProperties}
       onFocusCapture={(event) => {
-        if ((event.target as HTMLElement).matches('.trakbot-dialog .compose input')) setInputFocused(true);
+        if ((event.target as HTMLElement).matches('.trakbot-dialog .compose input')) {
+          cancelBlurTimer();
+          setInputFocused(true);
+        }
       }}
       onBlurCapture={(event) => {
-        // Moving focus from the input to its Send button is still inside the
-        // same mini-chat. Do NOT reposition the panel during pointerdown/up:
-        // on touchscreens that would swallow the actual submit click.
-        if ((event.target as HTMLElement).matches('.trakbot-dialog .compose input') &&
-            (!event.relatedTarget || !event.currentTarget.contains(event.relatedTarget as Node))) {
-          setInputFocused(false);
-        }
+        if (!(event.target as HTMLElement).matches('.trakbot-dialog .compose input')) return;
+        if (event.relatedTarget && event.currentTarget.contains(event.relatedTarget as Node)) return;
+        // Android touch can blur inputs with relatedTarget=null on pointerdown.
+        // Defer moving the dock until after the click/submit sequence completes.
+        cancelBlurTimer();
+        blurTimerRef.current = setTimeout(() => {
+          blurTimerRef.current = null;
+          if (!(document.activeElement as HTMLElement | null)?.matches('.trakbot-dialog .compose input')) {
+            setInputFocused(false);
+          }
+        }, 220);
       }}>
       {open && <div className="trakbot-dock-panel" role="dialog" aria-label="TrakBot — личный помощник" aria-modal="false">
         <header className="trakbot-dock-head">
