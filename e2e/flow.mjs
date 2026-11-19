@@ -237,10 +237,12 @@ await shot(k, '07-client-accepted');
 await k.getByRole('button', { name: /Чат по заявке/ }).click();
 await k.locator('.compose input').fill('Позвоните мне 8 921 111-22-33');
 await k.locator('.compose button').click();
+await m.getByRole('tab', { name: 'Чат' }).click();
 await m.getByRole('button', { name: /Чат по заявке/ }).click();
 await m.getByText('[номер скрыт]').first().waitFor({ timeout: 10000 });
 
-// Статусы
+// Статусы: возврат на вкладку работы после переписки.
+await m.getByRole('tab', { name: 'Работа' }).click();
 await m.locator('button.btn', { hasText: 'Выехал' }).click();
 await m.locator('button.btn:not([disabled])', { hasText: 'Я на месте' }).waitFor();
 await m.locator('button.btn', { hasText: 'Я на месте' }).click();
