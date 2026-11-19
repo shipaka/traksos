@@ -68,3 +68,12 @@ test('neutral AI is restricted to harmless small talk and does not receive repai
   assert.equal(neutralConversationEligible('сколько стоит платная диагностика'), false);
   assert.equal(neutralConversationEligible('ошибка P0087'), false);
 });
+
+test('pricing queries recognize Latin and Cyrillic names without suggesting a purchase', () => {
+  for (const message of ['TrakBot платный?', 'траКбот бесплатный?', 'Сколько стоит помощь бота?', 'trak-bot сколько стоит?']) {
+    const reply = composeTrakBotReply(message, []);
+    assert.match(reply, /сейчас бесплатный/i, message);
+    assert.match(reply, /отдельного согласия/i, message);
+    assert.doesNotMatch(reply, /купить|срочно оплат|закажи/i, message);
+  }
+});
