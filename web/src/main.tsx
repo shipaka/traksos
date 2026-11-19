@@ -369,6 +369,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/admin', 'Административная сводка'],
          ['/admin/section/orders', 'Все заявки'],
          ['/admin/section/search', 'Поиск людей и заявок'],
+         ['/admin/section/registry', 'Единая база клиентов и партнёров'],
          ['/admin/section/people', 'Пользователи'],
          ['/admin/section/access', 'Регистрация и доступы'],
          ['/admin/section/verify', 'Проверка исполнителей'],
