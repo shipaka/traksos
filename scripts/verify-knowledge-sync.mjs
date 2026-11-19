@@ -29,6 +29,7 @@ const api=file('server/src/app.ts');
 const finance=file('server/src/domain/money.ts');
 const rf=file('server/src/services/referral.ts');
 const guide=file('server/src/domain/economicsGuide.ts');
+const invite=file('web/src/screens/invite.tsx');
 const nav=file('web/src/main.tsx');
 
 const init=file('server/src/domain/defaults.ts');
@@ -50,6 +51,10 @@ for(const [name,passes] of [
   ['Every cabinet has finances menu',nav.includes("['/economics', 'Комиссии, баллы и рефералы']")],
   ['Finance route is present',nav.includes("case 'economics': screen = <EconomicsPage />")],
   ['Finance page reuses role server guide',econ.includes('export function EconomicsPage()')&&econ.includes('<EconomicsGuide />')],
+  ['Referral page respects both client and performer point caps',invite.includes('r.clientSpendCapPct')&&invite.includes('r.spendCapPct')],
+  ['Referral page explains client service-fee basis',invite.includes('фактического клиентского сервисного сбора')],
+  ['Welcome gift timing is explicit',invite.includes('Приветственные баллы новому клиенту начисляются при регистрации')],
+
 
 ])if(!passes)throw new Error('Knowledge consistency check failed: '+name);
 
@@ -78,6 +83,9 @@ if(base){
   }
   // An economic rule change must be reviewed in ALL three public surfaces:
   // role finance, legal offer, and release policy. Merely touching help is not enough.
+  const referralChanged=changedHas(/^server\/src\/(?:services\/referral|domain\/defaults)\.ts$/);
+  if(referralChanged && !changed.includes('web/src/screens/invite.tsx'))
+    throw new Error('Referral terms changed without updating invitations and bonus explanation');
   if(legalChanged){
     for(const path of [
       'web/src/screens/offers.tsx',
