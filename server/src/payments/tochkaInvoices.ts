@@ -41,7 +41,7 @@ export class TochkaInvoiceClient {
     private readonly accountId: string,
     private readonly transport: typeof fetch = fetch,
   ) {
-    if (!token || !/^\\d{9}$/.test(customerCode) || !/^\\d{20}\\/\\d{9}$/.test(accountId))
+    if (!token || !/^\d{9}$/.test(customerCode) || !/^\d{20}\/\d{9}$/.test(accountId))
       throw new Error('Tochka invoice API credentials/account identifiers are incomplete');
   }
 
