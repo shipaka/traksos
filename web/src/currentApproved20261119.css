@@ -99,3 +99,15 @@
 @media(prefers-reduced-motion:reduce){
   .guest-app .public-landing .public-service-tile{transition:none!important;}
 }
+
+/* Preserve actual three-slide interaction without resurrecting a static
+   14 Nov image. Hero media changes on the selected server-free slide. */
+.guest-app .public-landing .public-hero-visual.public-hero-slide-approved{
+  background-image:url('../public/tracksos-approved-scenic-hero.webp')!important;
+}
+.guest-app .public-landing .public-hero-visual.public-hero-slide-rescue{
+  background-image:url('../public/tracksos-hero-rescue-hq.webp')!important;
+}
+.guest-app .public-landing .public-hero-visual.public-hero-slide-service{
+  background-image:url('../public/tracksos-hero-service-hq.webp')!important;
+}
