@@ -389,7 +389,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
        ['/reviews', 'Мои отзывы'], ['/invite', 'Пригласить друга'],
        ['/profile', 'Профиль и настройки']];
   const helpLinks: [string, string][] = [
-    ['/air', 'Эфир водителей'], ['/support', 'Поддержка'], ['/notifications', 'Уведомления'],
+    ...(me?.roles.some(r => ['client','driver','master','tow','service','admin','moderator'].includes(r))
+      ? [['/air', 'Эфир водителей'] as [string,string]] : []),
+    ['/support', 'Поддержка'], ['/notifications', 'Уведомления'],
     ['/help', 'Помощь и подсказки'], ['/trakbot', 'TrakBot · личный чат'], ['/rules', 'Правила площадки'],
     ['/offer/' + (mode === 'performer' || mode === 'service' ? 'performer' : mode === 'insurer' ? 'privacy' : 'client'), mode === 'insurer' ? 'Документы и условия' : 'Оферта'],
     ['/offer/privacy', 'Политика персональных данных'],
