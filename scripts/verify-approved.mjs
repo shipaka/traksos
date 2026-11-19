@@ -89,6 +89,30 @@ expect(retiredReferences.length === 0,
   'no retired 14–18 Nov imagery in active web/Android code' +
   (retiredReferences.length ? ': ' + retiredReferences.join('; ') : ''));
 
+
+// Hard allowlist: only the owner's 19 Nov branding + original Tech №3 can
+// enter the active public image root. Vehicle model photos have their own
+// validated generation/brand registry in /vehicles/models; do not delete it.
+const allowedPublicVisuals = new Set([
+  'icon-192.png','icon-512.png',
+  'tracksos-approved-header-logo-20261119.webp',
+  'tracksos-approved-hero-owner-20261119.webp',
+  'tracksos-approved-logo-owner-20261119.webp',
+  'trakbot-approved-30.webp','trakbot-approved-hello.webp',
+]);
+const visualRootEntries = await readdir('web/public',{withFileTypes:true});
+const unexpectedVisuals = visualRootEntries.filter(entry =>
+  entry.isFile() && /\.(?:png|webp|svg|jpg|jpeg|avif|gif)$/i.test(entry.name) &&
+  !allowedPublicVisuals.has(entry.name)).map(entry=>entry.name);
+expect(unexpectedVisuals.length===0,
+  'no obsolete artwork or unapproved new images in live public assets' +
+  (unexpectedVisuals.length ? ': '+unexpectedVisuals.join(', ') : ''));
+for (const file of ['web/src/finalCanon.css','web/src/trackPhotos.css']) {
+  let exists = false;
+  try { await stat(file); exists = true; } catch {}
+  expect(!exists, 'retired photo/layout stylesheet cannot be bundled: '+file);
+}
+
 const landing = await read('web/src/screens/login.tsx');
 const catalogue = await read('web/src/guestCatalog.ts');
 const roleCss = await read('web/src/roleShared20261119.css');
