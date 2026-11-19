@@ -23,7 +23,7 @@ function fakeBank(options?: { failCreate?: boolean }) {
     if (url.endsWith('/email'))
       return Response.json({ Data: { result: true } });
     if (url.endsWith('/file'))
-      return new Response(Buffer.from('%PDF-1.4\n%%EOF'), {
+      return new Response('%PDF-1.4\n%%EOF', {
         headers: { 'content-type': 'application/pdf' } });
     throw new Error('Unexpected bank endpoint ' + url);
   }) as typeof fetch;
