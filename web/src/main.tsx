@@ -39,6 +39,7 @@ import { AdminUser } from './screens/adminUser.tsx';
 import { BaseHome, BaseCar, BaseSetup, BaseMoney, AdminServicePayouts, ServicesList, CenterPage, BookForm, BookingPage } from './screens/base.tsx';
 import { Fleet, QrJoin } from './screens/fleet.tsx';
 import { Help } from './screens/help.tsx';
+import { PlatformIntro, IntroInvitation } from './screens/platformIntro.tsx';
 import { TrakBotChat, TechCodes } from './screens/trakbot.tsx';
 import { DriverAir } from './screens/driverAir.tsx';
 import { TrakBotDock } from './trakbotDock.tsx';
@@ -256,6 +257,7 @@ function App() {
     case 'inspections': screen = isInspection || isInsurer ? <InsurerCabinet inspectionOnly /> : <Home />; break;
     case 'insurance': screen = b === 'request' ? (route[2] === 'new' ? <InsuranceApplication vehicleId={route[3]??''} /> : <InsuranceThread requestId={route[2]??''} />) : isInsurer ? <InsurerCabinet /> : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
     case 'help': screen = <Help />; break;
+    case 'learn': screen = <PlatformIntro />; break;
     case 'trakbot': screen = <TrakBotChat />; break;
     case 'air': screen = <DriverAir />; break;
     case 'tech': screen = b === 'codes' ? <TechCodes /> : b === 'cases' ? <RepairCases /> : b === 'review' && isAdmin ? <TechnicalCasesReview /> : <Help />; break;
@@ -395,7 +397,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         !me.roles.some(r => ['master','tow','service','insurer','inspection_operator'].includes(r)))
     ) ? [['/air', 'Эфир водителей'] as [string,string]] : []),
     ['/support', 'Поддержка'], ['/notifications', 'Уведомления'],
-    ['/help', 'Помощь и подсказки'], ['/trakbot', 'TrakBot · личный чат'], ['/rules', 'Правила площадки'],
+    ['/learn', 'Знакомство с TrakSOS'], ['/help', 'Помощь и подсказки'], ['/trakbot', 'TrakBot · личный чат'], ['/rules', 'Правила площадки'],
     ['/offer/' + (mode === 'performer' || mode === 'service' ? 'performer' : mode === 'insurer' ? 'privacy' : 'client'), mode === 'insurer' ? 'Документы и условия' : 'Оферта'],
     ['/offer/privacy', 'Политика персональных данных'],
     ['/privacy', 'Мои персональные данные']];
@@ -548,6 +550,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           <div className="desktop-sidebar-bottom"><strong>TRAKSOS 24/7</strong><span>Помощь грузовикам</span><small>Санкт-Петербург и Ленинградская область</small></div>
         </aside>
         <div className="desktop-content">
+          {me && !serviceSandbox && route.length===0 && <IntroInvitation key={me.id+'-'+mode} userId={me.id} mode={mode} roles={me.roles} />}
           {children}
           <SiteFooter />
         </div>
