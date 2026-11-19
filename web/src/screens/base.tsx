@@ -767,10 +767,14 @@ export function BookingPage({ id }: { id: string }) {
           <b>Счёт за ремонт · сверьте работы</b>
           <dl className="kv">
             <dt>Что делали</dt><dd>{d.works.join(', ')}</dd>
-            <dt>Работы</dt><dd>{rub(d.amount)}</dd>
+            <dt>Работы и запчасти</dt><dd>{rub(d.amount)}</dd>
+            {d.clientFee > 0 && <><dt>Сервисный сбор TrakSOS ({d.clientFeePct}%, но не больше 5 000 ₽)</dt><dd>+ {rub(d.clientFee)}</dd></>}
             {d.discount > 0 && <><dt>Скидка по совету мастера</dt><dd>− {rub(d.discount)}</dd></>}
             <dt>К оплате</dt><dd><b>{rub(d.toPay)}</b></dd>
           </dl>
+          {d.paymentStatus === 'received' && <span className="note">Поступление оплаты подтверждено администратором.</span>}
+          {d.paymentStatus === 'partial' && <span className="note">Часть оплаты получена; до полного расчёта выплата СТО не проводится.</span>}
+          {d.paymentStatus === 'awaiting_payment' && <span className="note">Оплата ещё не подтверждена. Подтверждение выполненных работ не является подтверждением оплаты. Не переводите деньги на непроверенные реквизиты.</span>}
           {mode === '' && (
             <div className="grid2">
               <button className="btn" onClick={() => setMode('agree')}>Всё верно</button>
@@ -794,7 +798,11 @@ export function BookingPage({ id }: { id: string }) {
           )}
         </div>
       )}
-      {d.status === 'closed' && <div className="banner col"><b>Работы подтверждены</b><span className="note">{d.works.join(', ')} · {rub(d.toPay)}{d.reviewStars ? ` · ваша оценка ${'★'.repeat(d.reviewStars)}` : ''}. Ремонт записан в историю машины.</span></div>}
+      {d.status === 'closed' && <div className="banner col"><b>Работы подтверждены</b>
+        <span className="note">{d.works.join(', ')} · итого {rub(d.toPay)}{d.clientFee > 0 ? ` (в том числе сервисный сбор ${rub(d.clientFee)})` : ''}{d.reviewStars ? ` · ваша оценка ${'★'.repeat(d.reviewStars)}` : ''}. Ремонт записан в историю машины.</span>
+        {d.paymentStatus === 'awaiting_payment' && <span className="note">Платёж ожидает подтверждения в TrakSOS. Принятие работ не подтверждает получение денежных средств.</span>}
+        {d.paymentStatus === 'received' && <span className="note">Поступление оплаты зафиксировано в учёте.</span>}
+      </div>}
       {d.status === 'disputed' && <div className="banner warn col"><b>Спор по работам</b><span className="note">Модератор свяжется с вами и с сервисом. Ответ придёт в «Поддержку».</span></div>}
       {['new', 'clarify', 'expected'].includes(d.status) && (
         <button className="btn ghost" disabled={busy} onClick={() => act('cancel', {}, 'Запись отменена')}>Отменить запись</button>
