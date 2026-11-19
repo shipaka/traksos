@@ -54,8 +54,9 @@ export function composeTrakBotReply(
   }
   if (codes.length) {
     if (incompatibleEcu) {
-      return 'Смотри, тут надо уточнить формат. Указан блок ' + context.ecu +
-        ', а код похож на универсальный OBD-II. Для этого блока значение может быть другим. Пришли код точно как на диагностике, включая систему и подтип — гадать не буду.' + safety;
+      return 'Смотри, тут надо уточнить формат. ' +
+        (context.ecu?.trim() ? 'Указан блок ' + context.ecu.trim() + '.' : 'В вопросе упомянут блок EBS/ABS/ECAS.') +
+        ' А код похож на универсальный OBD-II. Для этого блока значение может быть другим. Пришли код точно как на диагностике, включая систему и подтип — гадать не буду.' + safety;
     }
     const parts = codes.map((code) => {
       const row = found.find((x) => x.code === code);
@@ -172,6 +173,7 @@ export class TrakBotService {
     const deterministic = guide?.text ?? composeTrakBotReply(message, found, context, prior.map((r) => r.body),
       specialist ? 'specialist' : 'driver');
     const llmEligible = !guide && !nonGenericDtcContext(message, context) &&
+      !/тормоз|рулев|подвес|brake|steer/i.test(message) &&
       canUseGroundedAi(allowAiProcessing, found, codes, context) &&
       !SPN_PATTERN.test(message) && !/\bFMI\b/i.test(message);
     const externalAi = {
