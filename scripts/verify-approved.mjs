@@ -188,7 +188,7 @@ const approvedMasterWindow = await read('web/src/screens/performerOrderWindow.ts
 const liveOrderUi = await read('web/src/screens/order.tsx');
 expect(shell.includes("effMode === 'performer' && isPerformer && b ? <PerformerOrderWindow id={b} />") &&
   approvedMasterWindow.includes('<Work background/>') &&
-  approvedMasterWindow.includes('<Order id={id}/>') &&
+  approvedMasterWindow.includes('<Order id={id} initialTab={initialTab}/>') &&
   approvedMasterWindow.includes('role="dialog"') &&
   approvedMasterWindow.includes("go('work')"),
   'approved 18 Nov performer popup shows live dashboard and real order with close/ESC, not fake cards');
