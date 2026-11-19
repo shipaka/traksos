@@ -182,17 +182,17 @@ export class TrakBotService {
       !/тормоз|рулев|подвес|brake|steer/i.test(message) &&
       canUseGroundedAi(allowAiProcessing, found, codes, context) &&
       !SPN_PATTERN.test(message) && !/\bFMI\b/i.test(message);
-    const externalAi = {
+    const modelSettings = {
       enabled: config.trakbot.llmEnabled && allowAiProcessing,
       apiKey: config.trakbot.llmApiKey,
       model: config.trakbot.llmModel,
+      transport: config.trakbot.llmTransport === 'local' ? 'local' as const : 'api' as const,
+      localUrl: config.trakbot.llmLocalUrl,
     };
-    const generated = llmEligible ? await groundedAiAnswer(message, prior.map((r) => r.body), context, found, {
-      enabled: config.trakbot.llmEnabled,
-      apiKey: config.trakbot.llmApiKey,
-      model: config.trakbot.llmModel,
-    }) : !guide && !codes.length && allowAiProcessing
-      ? await neutralAiAnswer(message, prior.map((r) => r.body), externalAi) : null;
+    const generated = llmEligible
+      ? await groundedAiAnswer(message, prior.map((r) => r.body), context, found, modelSettings)
+      : !guide && !codes.length && allowAiProcessing
+        ? await neutralAiAnswer(message, prior.map((r) => r.body), modelSettings) : null;
     // Verified field experience is only attached for validated technicians and
     // a matching vehicle. Never use it as a universal repair instruction.
     let caseNotes = '';
