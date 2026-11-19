@@ -100,3 +100,32 @@ test('links and direct email are rejected while phones and VIN get masked',async
   const msg=ok(await t.api('POST','/api/air/messages',{body:'Синий грузовик VIN WAUZZZ8V6JA123456'},driver.token));
   assert.match(msg.message.body,/\[VIN скрыт\]/);
 });
+
+
+test('public air rejects obvious adverts but permits ordinary route and repair discussions',async()=>{
+  const ads=[
+    'Продам грузовик недорого',
+    'Предлагаем услуги грузового ремонта',
+    'Скидка на шиномонтаж в выходные',
+    'Пишите в личку за эвакуатором',
+    'Заходите в наш магазин автозапчастей',
+  ];
+  for (const body of ads) {
+    const r=await t.api('POST','/api/air/messages',{body},owner.token);
+    assert.equal(r.status,400,body);
+    assert.equal(r.body.error,'air_ads',body);
+  }
+  const ordinary=ok(await t.api('POST','/api/air/messages',{
+    body:'Кто знает, где удобнее остановиться на трассе М11?'
+  },owner.token));
+  assert.match(ordinary.message.body,/трассе М11/);
+  const first=ok(await t.api('POST','/api/air/messages',{
+    body:'Еду из Петербурга в Выборг'
+  },owner.token));
+  assert.match(first.message.body,/Петербурга/);
+  const repeat=await t.api('POST','/api/air/messages',{
+    body:'Еду из Петербурга в Выборг'
+  },owner.token);
+  assert.equal(repeat.status,400);
+  assert.equal(repeat.body.error,'air_duplicate');
+});
