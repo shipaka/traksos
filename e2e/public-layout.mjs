@@ -73,9 +73,22 @@ async function run(width, height, mobile, nativePreview = false) {
           paragraphTop:paragraph.top,actionsTop:actions.top,copyBottom:copy.bottom,
           carouselTop:carousel.top,carouselHeight:carousel.height };
       });
-      check(heroGeometry && Math.abs(heroGeometry.heroWidth-heroGeometry.pictureWidth)<3 &&
-        Math.abs(heroGeometry.heroHeight-heroGeometry.pictureHeight)<3,
-        suffix + ': artwork must cover the entire banner behind copy: ' + JSON.stringify(heroGeometry));
+      if (nativePreview) {
+        check(!await page.evaluate(() => document.documentElement.classList.contains('traksos-browser')),
+          suffix + ': Android must not activate browser-only styling');
+        check(heroGeometry && Math.abs(heroGeometry.heroWidth-heroGeometry.pictureWidth)<3 &&
+          Math.abs(heroGeometry.heroHeight-heroGeometry.pictureHeight)<3,
+          suffix + ': native artwork must cover the approved banner: ' + JSON.stringify(heroGeometry));
+      } else {
+        check(await page.evaluate(() => document.documentElement.classList.contains('traksos-browser')),
+          suffix + ': regular Chrome must activate mobile browser styling');
+        check(heroGeometry && heroGeometry.pictureWidth <= heroGeometry.heroWidth + 2 &&
+          heroGeometry.pictureHeight >= 135 && heroGeometry.pictureHeight < heroGeometry.heroHeight,
+          suffix + ': browser truck artwork must have a dedicated uncropped photo area: ' + JSON.stringify(heroGeometry));
+        check(await page.locator('.guest-header-actions a[href="#/login"]').isVisible() &&
+          await page.locator('.guest-header-actions a[href="#/register"]').isVisible(),
+          suffix + ': both entry actions must be visible in the mobile header');
+      }
       check(heroGeometry.actionsTop >= heroGeometry.paragraphTop-2,
         suffix + ': banner actions overlap its paragraph: ' + JSON.stringify(heroGeometry));
       check(heroGeometry.copyBottom < heroGeometry.carouselTop-2,
