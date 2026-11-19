@@ -1,7 +1,7 @@
 // Unified administrative registry. Identity and operational data are always live from their
 // source tables; only annotations are stored in admin_crm_profiles.
 import type { Db } from '../db/index.ts';
-import { bad, notFound, type AuthUser } from '../http/router.ts';
+import { notFound, type AuthUser } from '../http/router.ts';
 
 export interface RegistryFilters {
   q?: string; role?: string; region?: string; city?: string; status?: string;
@@ -128,7 +128,7 @@ export class AdminRegistry {
           and ($11::float8=0 or coalesce(r.rating,0) >= $11)
           and ($12::date is null or r.created_at >= $12::date)
           and ($13::date is null or r.created_at < $13::date + interval '1 day')
-          and ($14::text='' or r.kind=$14)
+          and ($14::text='' or r.kind=$14 or ($14='service' and 'service'=any(r.roles)))
       )`;
   }
 
@@ -138,7 +138,7 @@ export class AdminRegistry {
     const rows = await this.db.query(`${sql}
       select r.*,
          (select count(*)::int from vehicles v where v.owner_id=r.id) as vehicles_count,
-         (select count(*)::int from orders o where o.client_id=r.id) as orders_client_count,
+         (select count(*)::int from orders o where o.client_id=r.id or o.created_by=r.id) as orders_client_count,
          (select count(*)::int from orders o where o.performer_id=r.id) as orders_performer_count,
          (select count(*)::int from service_bookings b join service_centers sc2 on sc2.id=b.center_id
             where sc2.owner_id=r.id) as bookings_service_count
