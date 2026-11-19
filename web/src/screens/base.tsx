@@ -229,6 +229,7 @@ export function BaseCar({ id }: { id: string }) {
   const [note, setNote] = useState('');
   const [works, setWorks] = useState<string[] | null>(null);
   const [amount, setAmount] = useState<number | null>(null);
+  const [partsAmount, setPartsAmount] = useState<number | null>(null);
   const [invPts, setInvPts] = useState<number | null>(null);
   const [company, setCompany] = useState<any>(null);
   const d = b.data;
@@ -313,17 +314,24 @@ export function BaseCar({ id }: { id: string }) {
         <div className="card">
           <b>Выставить счёт</b>
           <span className="note">Работы: {d.works.join(', ')}</span>
-          <Field label="Сумма работ и запчастей"><RubInput value={amount} onChange={setAmount} placeholder="например, 12 000 ₽" /></Field>
-          <span className="note">Счёт и акт формируются сами и уходят клиенту, компаниям — по ИНН. Деньги придут после оплаты и сверки работ.</span>
-          <InvoicePoints amount={amount} value={invPts} onChange={setInvPts} />
-          <button className="btn" disabled={busy || !amount} onClick={() => act('invoice', { amount, points: invPts ?? 0 }, 'Агентский счёт сформирован')}>Выставить счёт</button>
+          <Field label="Общая сумма работ и материалов"><RubInput value={amount} onChange={setAmount} placeholder="например, 12 000 ₽" /></Field>
+          <Field label="Из неё запчасти и материалы (в рублях, если есть)">
+            <RubInput value={partsAmount} onChange={setPartsAmount} placeholder="например, 3 000 ₽" />
+          </Field>
+          {amount!=null && <span className="note">База для комиссии — только работы: {rub(Math.max(0,amount-(partsAmount??0)))}. Запчасти в этот расчёт 5% не включаются. Клиент получит отдельную разбивку своего сбора.</span>}
+          {amount!=null && (partsAmount??0)>amount && <span className="err">Стоимость запчастей не может превышать общий счёт.</span>}
+          <span className="note">Счёт и акт с юридически корректными реквизитами требуют отдельного подключения платёжных и документооборотных сервисов. До этого админ сверяет платёж вручную.</span>
+          <InvoicePoints amount={amount == null ? null : Math.max(0,amount-(partsAmount??0))} value={invPts} onChange={setInvPts} />
+          <button className="btn" disabled={busy || !amount || (partsAmount??0)>amount} onClick={() => act('invoice',
+            { amount, partsAmount:partsAmount??0, points: invPts ?? 0 }, 'Счёт выставлен — клиенту отправлен итог')}>Выставить счёт</button>
         </div>
       )}
       {['invoiced', 'closed', 'disputed'].includes(d.status) && d.amount != null && (
         <div className="card">
           <b>{d.status === 'closed' ? 'Клиент подтвердил работы' : d.status === 'disputed' ? 'Клиент не согласен — модератор свяжется с обеими сторонами' : 'Агентский счёт сформирован · ждём сверки клиента'}</b>
           <dl className="kv">
-            <dt>Работы</dt><dd>{d.works.length} поз. · {rub(d.amount)}</dd>
+            <dt>Работы</dt><dd>{d.works.length} поз. · {rub(d.feeBaseAmount??d.amount)}</dd>
+            {!!d.partsAmount && <><dt>Материалы и запчасти</dt><dd>{rub(d.partsAmount)}</dd></>}
             <dt>Комиссия TrakSOS</dt><dd>− {rub(d.commission)}</dd>
             {d.discount > 0 && <><dt>Скидка клиенту</dt><dd>{rub(d.discount)} — из комиссии TrakSOS</dd></>}
             <dt>Вам к выплате</dt><dd><b>{rub(d.payout)}</b></dd>
@@ -767,7 +775,8 @@ export function BookingPage({ id }: { id: string }) {
           <b>Счёт за ремонт · сверьте работы</b>
           <dl className="kv">
             <dt>Что делали</dt><dd>{d.works.join(', ')}</dd>
-            <dt>Работы и запчасти</dt><dd>{rub(d.amount)}</dd>
+            <dt>Работы</dt><dd>{rub(d.feeBaseAmount??d.amount)}</dd>
+            {d.partsAmount > 0 && <><dt>Запчасти и материалы</dt><dd>{rub(d.partsAmount)}</dd></>}
             {d.clientFee > 0 && <><dt>Сервисный сбор TrakSOS ({d.clientFeePct}%, но не больше 5 000 ₽)</dt><dd>+ {rub(d.clientFee)}</dd></>}
             {d.discount > 0 && <><dt>Скидка по совету мастера</dt><dd>− {rub(d.discount)}</dd></>}
             <dt>К оплате</dt><dd><b>{rub(d.toPay)}</b></dd>
