@@ -3,8 +3,8 @@
 .and19-workspace{display:none}
 @media(max-width:899px){
  .and19-workspace{display:flex;flex-direction:column;gap:12px;min-width:0;color:#eef8ff;font-size:14px}
- .app.role-client .client-dashboard>.and19-legacy-client,
- .app.role-performer .work-live-dashboard>.and19-legacy-performer{display:none}
+ .app.role-client .client-dashboard>:not(.and19-workspace){display:none!important}
+ .app.role-performer .work-live-dashboard>:not(.and19-workspace):not(.and19-keep-notices){display:none!important}
  .app.role-client .client-dashboard{max-width:100%;padding:12px 10px 22px}
  .app.role-performer .work-live-dashboard{max-width:100%;padding:12px 10px 22px}
  .app.role-performer .work-live-dashboard>.and19-workspace{width:100%}
