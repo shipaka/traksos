@@ -5,6 +5,8 @@
 // не позже чем за 15 дней.
 
 import type { Db } from '../db/index.ts';
+import type { SettingsService } from './settings.ts';
+import { contractEconomyAnnex } from '../domain/economicsGuide.ts';
 import type { Notifier } from './notify.ts';
 import { HttpError, bad, notFound, type AuthUser } from '../http/router.ts';
 
@@ -14,12 +16,14 @@ export const AUDIENCE_NAMES: Record<string, string> = {
   client: 'Оферта для клиентов',
   performer: 'Агентский договор для исполнителей и рембаз',
   privacy: 'Согласие на обработку персональных данных',
+  insurer: 'Условия сотрудничества со страховым партнёром',
+  inspection: 'Условия работы оператора техосмотра',
 };
 
 const isPerformer = (roles: string[]) => roles.some((r) => ['master', 'tow', 'service'].includes(r));
 
 export class OffersService {
-  constructor(private db: Db, private notifier: Notifier, private now: () => Date = () => new Date()) {}
+  constructor(private db: Db, private notifier: Notifier, private now: () => Date = () => new Date(), private settings?:SettingsService) {}
 
   /** Какие документы нужны человеку: клиенту (владелец, водитель) — оферта, исполнителю и рембазе — агентский договор.
    *  Персонал без других ролей принимает только согласие на обработку данных. */
@@ -28,6 +32,8 @@ export class OffersService {
     const a: string[] = [];
     if (r.includes('client') || r.includes('driver')) a.push('client');
     if (isPerformer(r)) a.push('performer');
+    if (r.includes('insurer')) a.push('insurer');
+    if (r.includes('inspection_operator')) a.push('inspection');
     a.push('privacy');
     return a;
   }
@@ -67,6 +73,8 @@ export class OffersService {
 
   requireClient = (user: AuthUser) => this.require(user, ['client', 'privacy']);
   requirePerformer = (user: AuthUser) => this.require(user, ['performer', 'privacy']);
+  requireInsurer = (user: AuthUser) => this.require(user, ['insurer', 'privacy']);
+  requireInspection = (user: AuthUser) => this.require(user, ['inspection', 'privacy']);
 
   async accept(user: AuthUser, offerId: string, ip: string) {
     const o = await this.db.one('select id, effective_at from offers where id=$1', [offerId]);
@@ -83,9 +91,9 @@ export class OffersService {
     }
   }
 
-  async publish(admin: AuthUser, p: { audience: 'client' | 'performer' | 'privacy'; version: string; body: string; summary?: string; effectiveAt?: string }) {
+  async publish(admin: AuthUser, p: { audience: 'client' | 'performer' | 'insurer' | 'inspection' | 'privacy'; version: string; body: string; summary?: string; effectiveAt?: string }) {
     const hasPrev = await this.db.one('select 1 from offers where audience=$1', [p.audience]);
-    const minDate = p.audience === 'performer' && hasPrev ? new Date(this.now().getTime() + PERFORMER_NOTICE_DAYS * 86_400_000) : this.now();
+    const minDate = ['performer','insurer','inspection'].includes(p.audience) && hasPrev ? new Date(this.now().getTime() + PERFORMER_NOTICE_DAYS * 86_400_000) : this.now();
     const eff = p.effectiveAt ? new Date(p.effectiveAt) : minDate;
     if (Number.isNaN(eff.getTime())) throw bad('bad_date', 'Неверная дата');
     if (eff.getTime() < minDate.getTime() - 60_000) {
@@ -93,15 +101,25 @@ export class OffersService {
     }
     const dup = await this.db.one('select 1 from offers where audience=$1 and version=$2', [p.audience, p.version]);
     if (dup) throw bad('version_exists', `Редакция ${p.version} уже есть — укажите новый номер`);
+    // Immutable financial annex is generated from the exact current settings
+    // at publication. Editing an accepted edition is prohibited; a later
+    // tariff change requires another published and accepted contract version.
+    const marker='\n\n<!-- TRAKSOS-ECONOMICS-ANNEX:V1 -->';
+    const baseBody=p.body.split(marker)[0].trimEnd();
+    const body=this.settings && p.audience!=='privacy'
+      ? baseBody+marker+contractEconomyAnnex(await this.settings.all(),p.audience)
+      : p.body;
     const offer = await this.db.one(
       `insert into offers(audience, version, body, summary, effective_at, published_at) values ($1,$2,$3,$4,$5,$6) returning *`,
-      [p.audience, p.version, p.body, p.summary ?? null, eff, this.now()]);
+      [p.audience, p.version, body, p.summary ?? null, eff, this.now()]);
     await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
       [admin.id, 'offer.publish', offer!.id, { audience: p.audience, version: p.version, effectiveAt: eff }]);
 
     // Уведомляем всех, кого касается
     const who = p.audience === 'performer'
       ? `select id from users where roles && '{master,tow,service}'::text[]`
+      : p.audience === 'insurer' ? `select id from users where roles && '{insurer}'::text[]`
+      : p.audience === 'inspection' ? `select id from users where roles && '{inspection_operator}'::text[]`
       : p.audience === 'client' ? `select id from users where roles && '{client,driver}'::text[]` : `select id from users`;
     const ids = (await this.db.query<{ id: string }>(who)).map((r) => r.id);
     const when = eff.getTime() <= this.now().getTime() + 60_000 ? 'с сегодняшнего дня' : `с ${eff.toLocaleDateString('ru-RU')}`;
@@ -111,6 +129,27 @@ export class OffersService {
       data: { offerId: offer!.id },
     });
     return offer;
+  }
+
+  /** Audit against settings without mutating a previously accepted legal text. */
+  async economicsAudit() {
+    if(!this.settings) return [];
+    const cfg=await this.settings.all();
+    const marker='\n\n<!-- TRAKSOS-ECONOMICS-ANNEX:V1 -->';
+    const out=[];
+    for(const audience of ['client','performer','insurer','inspection'] as const){
+      const current=await this.current(audience);
+      const expected=marker+contractEconomyAnnex(cfg,audience);
+      out.push({
+        audience,
+        published:!!current,
+        version:current?.version??null,
+        upToDate:!!current&&String(current.body??'').endsWith(expected),
+        requiresReview:!current||!String(current.body??'').endsWith(expected),
+        explanation:'Если экономические настройки отличаются от опубликованной редакции, требуется юридическая проверка, выпуск новой версии и согласие соответствующих пользователей. Старый документ не изменяем.',
+      });
+    }
+    return out;
   }
 
   async history() {

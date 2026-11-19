@@ -46,6 +46,18 @@ export const config = {
     rustoreProjectId: env.RUSTORE_PROJECT_ID ?? '',
     rustoreServiceToken: env.RUSTORE_SERVICE_TOKEN ?? '',
   },
+  trakbot: {
+    // Legal/privacy review and provider configuration required before production rollout.
+    // Both switches are required: no network inference is enabled by accident.
+    llmEnabled: env.TRAKBOT_LLM_ENABLED === 'true' &&
+      (env.TRAKBOT_LLM_TRANSPORT === 'api' || env.TRAKBOT_LLM_TRANSPORT === 'local'),
+    llmTransport: env.TRAKBOT_LLM_TRANSPORT === 'api' || env.TRAKBOT_LLM_TRANSPORT === 'local'
+      ? env.TRAKBOT_LLM_TRANSPORT : 'off',
+    llmApiKey: env.TRAKBOT_LLM_API_KEY ?? '',
+    llmModel: env.TRAKBOT_LLM_MODEL ?? 'gpt-4.1-mini',
+    // Loopback only; use an SSH tunnel or local proxy for an independent GPU node.
+    llmLocalUrl: env.TRAKBOT_LLM_LOCAL_URL ?? 'http://127.0.0.1:8000/v1/chat/completions',
+  },
   payments: {
     /** mock — тестовый сервис; yookassa — ЮKassa. Включение оплаты — в настройках площадки. */
     provider: (env.PAYMENT_PROVIDER ?? 'mock') as 'mock' | 'yookassa',
@@ -69,8 +81,8 @@ if (config.sandboxInstance) {
   if (!dbName.includes('sandbox') || !env.DATABASE_URL)
     throw new Error('SANDBOX_INSTANCE requires its own explicit *sandbox* PostgreSQL database');
   if (config.sms.provider !== 'log' || config.push.provider !== 'log' ||
-      config.payments.provider !== 'mock')
-    throw new Error('Sandbox external integrations must be disabled (log/log/mock)');
+      config.payments.provider !== 'mock' || config.trakbot.llmEnabled)
+    throw new Error('Sandbox external integrations and TrakBot AI must be disabled (log/log/mock/LLM off)');
   if (config.sandboxSharedSecret.length < 32)
     throw new Error('Sandbox shared secret is missing');
   if (!config.adminPhones.includes('+79000000001') ||

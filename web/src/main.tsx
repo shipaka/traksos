@@ -14,6 +14,9 @@ import './premiumVehiclePolish.css';
 import './finalCanon.css';
 // Insurance-only refinement follows the approved global visual canon.
 import './insurancePremiumStates.css';
+import './trakbotDock.css';
+import './trainingPractice.css';
+import './scenarioCourses.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
@@ -40,6 +43,13 @@ import { AdminUser } from './screens/adminUser.tsx';
 import { BaseHome, BaseCar, BaseSetup, BaseMoney, AdminServicePayouts, ServicesList, CenterPage, BookForm, BookingPage } from './screens/base.tsx';
 import { Fleet, QrJoin } from './screens/fleet.tsx';
 import { Help } from './screens/help.tsx';
+import { PlatformIntro, IntroInvitation } from './screens/platformIntro.tsx';
+import { EconomicsPage } from './screens/economicsGuide.tsx';
+import { ScenarioLesson } from './screens/scenarioEncyclopedia.tsx';
+import { TrakBotChat, TechCodes } from './screens/trakbot.tsx';
+import { DriverAir } from './screens/driverAir.tsx';
+import { TrakBotDock } from './trakbotDock.tsx';
+import { RepairCases, TechnicalCasesReview } from './screens/technicalCases.tsx';
 import { Rules } from './screens/rules.tsx';
 import { Shop, ShopCart, ShopHistory } from './screens/shop.tsx';
 import { Privacy } from './screens/privacy.tsx';
@@ -255,7 +265,12 @@ function App() {
     case 'fleet': screen = isCustomer && !me.owner_id && !me.roles.includes('driver') ? <Fleet /> : <main><div className="empty">Парком управляет владелец</div></main>; break;
     case 'inspections': screen = isInspection || isInsurer ? <InsurerCabinet inspectionOnly /> : <Home />; break;
     case 'insurance': screen = b === 'request' ? (route[2] === 'new' ? <InsuranceApplication vehicleId={route[3]??''} /> : <InsuranceThread requestId={route[2]??''} />) : isInsurer ? <InsurerCabinet /> : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
-    case 'help': screen = <Help />; break;
+    case 'help': screen = b === 'case' && route[2] ? <ScenarioLesson id={route[2]} /> : <Help />; break;
+    case 'economics': screen = <EconomicsPage />; break;
+    case 'learn': screen = <PlatformIntro />; break;
+    case 'trakbot': screen = <TrakBotChat />; break;
+    case 'air': screen = <DriverAir />; break;
+    case 'tech': screen = b === 'codes' ? <TechCodes /> : b === 'cases' ? <RepairCases /> : b === 'review' && isAdmin ? <TechnicalCasesReview /> : <Help />; break;
     case 'rules': screen = <Rules />; break;
     case 'shop': screen = ((effMode === 'client' && isCustomer) || (effMode === 'performer' && isPerformer) || (effMode === 'service' && isService))
       ? (b === 'cart' ? <ShopCart /> : b === 'history' ? <ShopHistory vehicleId={route[2]} /> : <Shop />)
@@ -380,15 +395,21 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/admin/section/flagged', 'Подозрительные действия'],
          ['/admin/section/settings', 'Настройки площадки'],
          ['/profile', 'Аккаунт'], ['/as/client', 'Кабинет клиента']]
-    : [['/orders', 'История заявок'], ['/garage', 'Мой гараж'],
+    : [['/air', 'Эфир водителей'], ['/orders', 'История заявок'], ['/garage', 'Мой гараж'],
        ...(!me?.owner_id && !me?.roles.includes('driver') ? [['/fleet', 'Мой автопарк']] as [string,string][] : []),
        ['/services', 'СТО и запись'],
        ['/reviews', 'Мои отзывы'], ['/invite', 'Пригласить друга'],
        ['/profile', 'Профиль и настройки']];
   const helpLinks: [string, string][] = [
+    ...(me && (
+      me.roles.some(r => r === 'admin' || r === 'moderator') ||
+      (me.roles.some(r => r === 'client' || r === 'driver') &&
+        !me.roles.some(r => ['master','tow','service','insurer','inspection_operator'].includes(r)))
+    ) ? [['/air', 'Эфир водителей'] as [string,string]] : []),
     ['/support', 'Поддержка'], ['/notifications', 'Уведомления'],
-    ['/help', 'Помощь и подсказки'], ['/rules', 'Правила площадки'],
-    ['/offer/' + (mode === 'performer' || mode === 'service' ? 'performer' : mode === 'insurer' ? 'privacy' : 'client'), mode === 'insurer' ? 'Документы и условия' : 'Оферта'],
+    ['/learn', 'Знакомство с TrakSOS'], ['/help', 'Помощь и подсказки'],
+    ['/economics', 'Комиссии, баллы и рефералы'], ['/trakbot', 'TrakBot · личный чат'], ['/rules', 'Правила площадки'],
+    ['/offer/' + (mode === 'performer' || mode === 'service' ? 'performer' : mode === 'insurer' ? 'insurer' : mode === 'inspection' ? 'inspection' : mode === 'admin' || mode === 'moderator' ? 'privacy' : 'client'), mode === 'insurer' || mode === 'inspection' ? 'Договор партнёра' : 'Оферта'],
     ['/offer/privacy', 'Политика персональных данных'],
     ['/privacy', 'Мои персональные данные']];
   return (
@@ -528,7 +549,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               </>}
               {mode === 'client' && <>
                 <div className="desktop-sidebar-title desktop-nav-section">Мой кабинет</div>
-                {([...(me && !me.owner_id && !me.roles.includes('driver') ? [['/fleet','▣','Мой парк']] as [string,string,string][] : []),['/support','?','Поддержка'],['/profile','◉','Профиль']] as [string,string,string][]).map(([href, ic, name]) => (
+                {([...(me && !me.owner_id && !me.roles.includes('driver') ? [['/fleet','▣','Мой парк']] as [string,string,string][] : []),['/air','☷','Эфир'],['/support','?','Поддержка'],['/profile','◉','Профиль']] as [string,string,string][]).map(([href, ic, name]) => (
                   <a key={href} href={sandboxHref(href)} className={`desktop-nav-link ${here === href || here.startsWith(href + '/') ? 'active' : ''}`}>
                     <span aria-hidden="true">{ic}</span><span>{name}</span>
                   </a>
@@ -565,6 +586,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           <div className="desktop-sidebar-bottom"><strong>TRAKSOS 24/7</strong><span>Помощь грузовикам</span><small>Санкт-Петербург и Ленинградская область</small></div>
         </aside>
         <div className="desktop-content">
+          {me && !serviceSandbox && route.length===0 && <IntroInvitation key={me.id+'-'+mode} userId={me.id} mode={mode} roles={me.roles} />}
           {children}
           <SiteFooter />
         </div>
@@ -587,6 +609,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           ))}
         </nav>
       )}
+      {!serviceSandbox && !isAuthEntry && route[0] !== 'trakbot' && <TrakBotDock authenticated={!!me} />}
     </div>
   );
 }

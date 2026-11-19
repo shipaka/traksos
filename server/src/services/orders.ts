@@ -7,7 +7,7 @@ import { estimate, isNight, billWork, type Tier, type Extra } from '../domain/pr
 import { assertRegionalTariff, CoverageError, type ServiceRegion } from '../domain/regionalCoverage.ts';
 import { rankCandidates, performerKindFor, type Candidate } from '../domain/dispatch.ts';
 import { transition, canDo, statusLabels, type Action, type Actor, type OrderStatus } from '../domain/orderState.ts';
-import { cancelStage, cancelSplit, pct } from '../domain/money.ts';
+import { cancelStage, cancelSplit, cappedPct } from '../domain/money.ts';
 import { slot } from '../domain/schedule.ts';
 import { rub } from '../util.ts';
 import type { AuctionService } from './auction.ts';
@@ -798,7 +798,7 @@ export class OrdersService {
     const stage = cancelStage(o.status);
     const scale = (await this.settings.get('cancel')).scale;
     const m = this.money(o);
-    const splitInfo = cancelSplit(scale, stage, m.callOut, pct(m.callOut, Number(o.client_fee_pct)));
+    const splitInfo = cancelSplit(scale, stage, m.callOut, cappedPct(m.callOut, Number(o.client_fee_pct)));
     const invited = (await this.db.query<{ performer_id: string }>(
       `select performer_id from order_dispatch where order_id=$1 and status in ('queued','ringing','bidding')`, [orderId])).map((x) => x.performer_id);
     await this.db.tx(async (q) => {
@@ -859,7 +859,7 @@ export class OrdersService {
     const callOut: number = o.call_out_amount ?? o.estimate?.callOut ?? 0;
     const work: number = o.work_amount ?? 0;
     const amount = callOut + work;
-    const clientFee = pct(amount, Number(o.client_fee_pct ?? 0));
+    const clientFee = cappedPct(amount, Number(o.client_fee_pct ?? 0));
     // Скидка и бонусы — за счёт площадки, не больше суммы заявки
     const discount = Math.min(Number(o.discount_amount ?? 0), amount + clientFee);
     return { callOut, work, amount, clientFee, discount, total: amount + clientFee - discount };
@@ -1000,7 +1000,7 @@ export class OrdersService {
       destination: o.destination, cargo: o.cargo, loaded: o.loaded, driverOnSite: o.driver_on_site, discountReason: o.discount_reason,
       money: this.money(o), result: o.result, resultNote: o.result_note,
       pointsFee: o.points_fee ?? 0, pointsCommission: actor === 'performer' || actor === 'admin' ? o.points_commission ?? 0 : undefined,
-      points: actor === 'client' && o.status === 'awaiting_confirmation' && this.referral ? await this.referral.available(o.client_id, this.money(o).clientFee) : null,
+      points: actor === 'client' && o.status === 'awaiting_confirmation' && this.referral ? await this.referral.clientAvailable(o.client_id, this.money(o).amount, this.money(o).clientFee) : null,
       bill: o.bill ?? null, billingStep: Number((await this.settings.get('pricing')).billingStepMinutes ?? 60),
       site: o.site, workStartedAt: o.work_started_at ?? null, waitRate: performer?.wait_rate ?? null, ownerNote: o.owner_note ?? null, partMode: o.part_mode ?? null, waitStartedAt: o.wait_started_at ?? null, waitMinutes: o.wait_minutes ?? 0,
       consultHint: o.consult_hint, consultOf: o.consult_of,

@@ -16,6 +16,7 @@ import { VehicleServicesQueue } from './vehicleServicesAdmin.tsx';
 import { get, post, put, rub, fmtPhone, fmtTime, authedImage } from '../api.ts';
 import { STATUS, SERVICES, LINE } from '../dict.ts';
 import { useLoad, useAction, Loading } from '../ui.tsx';
+import { TRAKBOT_TERMS, type TrakBotOfferAudience } from '../trakbotTerms.ts';
 
 type AdminSection = 'ecu' | 'cases' | 'stats' | 'search' | 'support' | 'verify' | 'people' | 'access' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'settings' | 'demand' | 'announcements' | 'vehicleServices' | 'diagnostics';
 type AdminNavItem = { id: AdminSection; name: string; description: string; symbol: string };
@@ -450,6 +451,7 @@ function FeesEditor({ fees, onDone }: { fees: any; onDone: () => void }) {
         <label className="stack" style={{ gap: 6 }}><span className="label">Пауза при долге, ₽</span><input className="field" inputMode="numeric" value={f.debt} onChange={(e) => setF({ ...f, debt: e.target.value.replace(/\D/g, '') })} /></label>
         <label className="stack" style={{ gap: 6 }}><span className="label">Без комиссии до</span><input className="field" type="date" value={f.free} onChange={(e) => setF({ ...f, free: e.target.value })} /></label>
       </div>
+      <span className="note">Изменение процентов немедленно меняет расчёты новых заявок и справку. До такого изменения необходимо подготовить юридически согласованную новую редакцию оферты; её публикация и повторное согласие пользователей — отдельные обязательные шаги. Для исполнителей действует срок уведомления, поэтому без согласованного перехода тарифы менять нельзя.</span>
       <span className="note">Новые проценты — для новых заявок. «Без комиссии до» — первый месяц для мастеров, включительно.</span>
       <button className="btn small" disabled={busy || !valid} onClick={() => run(() => put('/api/admin/settings/fees', {
         clientFeePct: num(f.client), performerCommissionPct: num(f.perf), cashDebtLimit: num(f.debt) * 100, freeUntil: f.free || null,
@@ -460,10 +462,11 @@ function FeesEditor({ fees, onDone }: { fees: any; onDone: () => void }) {
 
 // Оферты -----------------------------------------------------------------------
 
-const AUD: Record<string, string> = { client: 'Оферта для клиентов', performer: 'Агентский договор для исполнителей и рембаз', privacy: 'Согласие на обработку ПДн' };
+const AUD: Record<string, string> = { client: 'Оферта для клиентов', performer: 'Агентский договор для исполнителей и рембаз', insurer:'Договор страхового партнёра', inspection:'Договор оператора ТО', privacy: 'Согласие на обработку ПДн' };
 
 function Offers() {
   const list = useLoad(() => get('/api/admin/offers'), []);
+  const economicsAudit = useLoad(() => get('/api/admin/offers/economics-audit'), []);
   const { busy, run } = useAction();
   const [f, setF] = useState({ audience: 'client', version: '', summary: '', body: '', effectiveAt: '' });
   const [loaded, setLoaded] = useState(false);
@@ -475,6 +478,17 @@ function Offers() {
   const minPerf = new Date(Date.now() + 15 * 86_400_000).toISOString().slice(0, 10);
   return (
     <div className="stack">
+      <div className="card stack" aria-label="Сверка экономики с офертами">
+        <b>Контроль: тарифы и действующие редакции</b>
+        <p className="note">Цифры справки обновляются из настроек автоматически. Юридически принятые редакции неизменны: новые ставки, бонусы и рефералы необходимо утвердить новой версией оферты. Финансовый раздел приложения к ней при публикации формируется из действующих настроек.</p>
+        {(economicsAudit.data as any[]|undefined)?.map((record:any)=><div className="between" style={{gap:10,flexWrap:'wrap'}} key={record.audience}>
+          <span>{AUD[record.audience] ?? record.audience} · {record.version??'не опубликована'}</span>
+          <strong style={{color:record.requiresReview?'var(--warn, #bc6020)':'var(--accent, #2f84df)'}}>
+            {record.requiresReview?'Нужна новая редакция':'Расчёты совпадают'}
+          </strong>
+        </div>)}
+        {economicsAudit.error && <span className="note">Не удалось проверить соответствие экономических условий опубликованным редакциям.</span>}
+      </div>
       <div className="card">
         <b>Новая редакция</b>
         <span className="note">После публикации всем, кого касается, придёт уведомление, а при входе — окно «Условия изменились» с галочкой. Пока не примут, клиент не создаст заявку, исполнитель не выйдет на линию. Для исполнителей — не раньше чем через 15 дней (закон о платформах).</span>
@@ -485,16 +499,26 @@ function Offers() {
           <>
             <div className="grid2">
               <input className="field" placeholder="Номер редакции" value={f.version} onChange={(e) => setF({ ...f, version: e.target.value })} />
-              <input className="field" type="date" min={f.audience === 'performer' ? minPerf : undefined} value={f.effectiveAt} onChange={(e) => setF({ ...f, effectiveAt: e.target.value })} />
+              <input className="field" type="date" min={['performer','insurer','inspection'].includes(f.audience) ? minPerf : undefined} value={f.effectiveAt} onChange={(e) => setF({ ...f, effectiveAt: e.target.value })} />
             </div>
-            <span className="note">{f.effectiveAt ? '' : f.audience === 'performer' ? `Дата не выбрана — вступит ${new Date(minPerf).toLocaleDateString('ru-RU')}` : 'Дата не выбрана — вступит сразу'}</span>
+            <span className="note">{f.effectiveAt ? '' : ['performer','insurer','inspection'].includes(f.audience) ? `Дата не выбрана — вступит ${new Date(minPerf).toLocaleDateString('ru-RU')}` : 'Дата не выбрана — вступит сразу'}</span>
             <input className="field" placeholder="Что изменилось — одной строкой, люди увидят первым" value={f.summary} onChange={(e) => setF({ ...f, summary: e.target.value })} />
+            <div className="card flat" style={{ gap: 8 }}>
+              <b>Дополнения TrakBot — черновик, нужен юридический просмотр</b>
+              <span className="note">Три отдельных раздела для клиента, исполнителя и персональных данных. Уже принятые редакции не редактируются: создаётся новая версия с датой вступления. Для исполнителей сохраняется уведомление минимум за 15 дней.</span>
+              <button type="button" className="btn ghost small" onClick={() => {
+                const section = TRAKBOT_TERMS[f.audience as TrakBotOfferAudience];
+                if (!section || f.body.includes('## TrakBot')) return;
+                setF({ ...f, body: f.body.trimEnd() + '\\n\\n' + section.trim() + '\\n',
+                  summary: f.summary || 'Добавлены правила справочного ИИ TrakBot и дистанционных консультаций' });
+              }}>Добавить проект раздела TrakBot в эту редакцию</button>
+            </div>
             <textarea className="field" style={{ minHeight: 260, fontFamily: 'ui-monospace, monospace', fontSize: 13 }} value={f.body} onChange={(e) => setF({ ...f, body: e.target.value })}
               placeholder={'# Заголовок\n\nТекст. **Жирный** выделяется звёздочками.\n\n1. Пункт\n2. Пункт'} />
             <button className="btn" disabled={busy || !f.version || f.body.length < 50} onClick={() => run(() => post('/api/admin/offers', {
               audience: f.audience, version: f.version, summary: f.summary || undefined, body: f.body,
               effectiveAt: f.effectiveAt ? new Date(f.effectiveAt + 'T00:00:00+03:00').toISOString() : undefined,
-            }), 'Опубликовано — всем придёт уведомление').then((r) => { if (r) { setLoaded(false); list.reload(); } })}>Опубликовать</button>
+            }), 'Опубликовано — всем придёт уведомление').then((r) => { if (r) { setLoaded(false); list.reload(); economicsAudit.reload(); } })}>Опубликовать</button>
           </>
         )}
       </div>

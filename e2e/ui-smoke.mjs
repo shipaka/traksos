@@ -14,6 +14,20 @@ try {
     page.on('pageerror', (e) => errors.push(e.message));
     await page.goto(BASE + '/#/', { waitUntil: 'domcontentloaded' });
     await page.locator('.public-landing').waitFor({ timeout: 15000 });
+    // TrakBot is opt-in and does not interrupt the public landing.
+    const botLauncher = page.getByRole('button', { name: 'Открыть TrakBot' });
+    assert(await botLauncher.isVisible(), width + 'px: TrakBot entry not visible');
+    assert(await page.locator('.trakbot-dock-panel').count() === 0,
+      width + 'px: TrakBot opened automatically');
+    await botLauncher.click();
+    const botDialog = page.getByRole('dialog', { name: 'TrakBot — личный помощник' });
+    await botDialog.waitFor();
+    assert(await botDialog.getByRole('link', { name: /Войти и поговорить с TrakBot/ }).count() === 1,
+      width + 'px: guest entry must not expose private chat');
+    await page.locator('.trakbot-dock-close').click();
+    assert(await page.locator('.trakbot-dock-panel').count() === 0,
+      width + 'px: TrakBot failed to close');
+
 
     const data = await page.evaluate(() => {
       const hero = document.querySelector('.public-hero-visual');

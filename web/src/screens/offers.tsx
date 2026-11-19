@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { get, post, onEvent, ApiError } from '../api.ts';
 import { useAction, useMe, Back } from '../ui.tsx';
 import { Markdown } from '../markdown.tsx';
+import { EconomicsGuide } from './economicsGuide.tsx';
 
 /** Любой ответ сервера «offer_required» открывает окно согласия */
 export const offerRequired = new EventTarget();
@@ -55,7 +56,11 @@ export function OfferPage({ audience }: { audience: string }) {
       <Back to="" />
       <a href="#/" className="note" style={{ textDecoration: 'none' }}>← Назад</a>
       {o === undefined ? <div className="empty">Загружаю…</div> : o === null ? <div className="empty">Документ ещё не опубликован</div> : (
-        <div className="card offer-text"><span className="note">Редакция {o.version} · с {new Date(o.effective_at).toLocaleDateString('ru-RU')}</span><Markdown text={o.body ?? ''} /></div>
+        <>
+          <div className="card offer-text"><span className="note">Редакция {o.version} · с {new Date(o.effective_at).toLocaleDateString('ru-RU')}</span><Markdown text={o.body ?? ''} /></div>
+          {audience !== 'privacy' && <EconomicsGuide inOffer />}
+          <p className="note">Действующая правовая редакция — текст выше. Изменение тарифов требует новой опубликованной версии документа и предусмотренного принятия пользователем; примеры текущей экономики не изменяют уже подписанную редакцию задним числом.</p>
+        </>
       )}
     </main>
   );

@@ -15,7 +15,7 @@ import type { Notifier } from '../services/notify.ts';
 import type { OrdersService, PaymentHooks } from '../services/orders.ts';
 import type { CreatePaymentInput, PaymentProvider, ProviderStatus } from './provider.ts';
 import { HttpError, bad, notFound, type AuthUser } from '../http/router.ts';
-import { cancelSplit, commissionPct, pct, split, type CancelStage } from '../domain/money.ts';
+import { cancelSplit, commissionPct, cappedPct, split, type CancelStage } from '../domain/money.ts';
 import { agentReceipt } from './yookassa.ts';
 import { config } from '../config.ts';
 import { rub } from '../util.ts';
@@ -101,7 +101,9 @@ export class PaymentsService implements PaymentHooks {
       return;
     }
     // online: выезд уже заморожен, работу списываем сразу (скидка сначала уменьшает оплату работы)
-    const workTotal = m.work + pct(m.work, Number(order.client_fee_pct));
+    const callOut = m.callOut;
+    const workFee = cappedPct(callOut + m.work, Number(order.client_fee_pct)) - cappedPct(callOut, Number(order.client_fee_pct));
+    const workTotal = m.work + workFee;
     if (m.work > 0 && workTotal - Math.min(m.discount, workTotal) > 0) {
       // The bank call happens only AFTER this order transaction commits.
       await this.prepareWorkPayment(order, q, m.work, Math.min(m.discount, workTotal));
@@ -147,7 +149,7 @@ export class PaymentsService implements PaymentHooks {
       const scale = (await this.settings.get('cancel')).scale;
       const base: number = order.call_out_amount ?? order.estimate.callOut;
       const amounts = cancelSplit(scale, stage as CancelStage, base,
-        pct(base, Number(order.client_fee_pct)));
+        cappedPct(base, Number(order.client_fee_pct)));
       toPerformer = amounts.toPerformer;
       platformKeeps = amounts.platformKeeps;
       keep = toPerformer + platformKeeps;
@@ -156,7 +158,7 @@ export class PaymentsService implements PaymentHooks {
         const fees = await this.settings.get('fees');
         const perf = await q.one<{ is_priority: boolean }>(
           'select is_priority from performer_profiles where user_id=$1', [order.performer_id]);
-        commission = pct(toPerformer,
+        commission = cappedPct(toPerformer,
           commissionPct(fees, { isPriority: !!perf?.is_priority,
             overridePct: order.commission_pct_override == null ? null : Number(order.commission_pct_override) }));
       }
@@ -325,7 +327,7 @@ export class PaymentsService implements PaymentHooks {
         "select id from payments where order_id=$1 and kind='call_out' for update", [order.id]);
       if (present) return present;
       const cfg = await this.settings.get('payments');
-      const fee = pct(amount,Number(order.client_fee_pct));
+      const fee = cappedPct(amount,Number(order.client_fee_pct));
       const total = amount + fee;
       if (!Number.isInteger(total) || total<=0) throw new Error('Invalid call-out hold');
       const key=`${order.id}:call_out:1`;
@@ -370,7 +372,8 @@ export class PaymentsService implements PaymentHooks {
   /** Write an immutable request to PostgreSQL while confirming the order. */
   private async prepareWorkPayment(order: any, q: Queryable, amount: number, discount: number) {
     const cfg = await this.settings.get('payments');
-    const fee = pct(amount, Number(order.client_fee_pct));
+    const callOut = Number(order.call_out_amount ?? order.estimate?.callOut ?? 0);
+    const fee = cappedPct(callOut + amount, Number(order.client_fee_pct)) - cappedPct(callOut, Number(order.client_fee_pct));
     const total = amount + fee - discount;
     if (!Number.isInteger(total) || total <= 0) throw new Error('Invalid work payment');
     const previous = await q.one('select id from payments where order_id=$1 and kind=$2', [order.id, 'work']);
@@ -707,10 +710,13 @@ export class PaymentsService implements PaymentHooks {
       return;
     }
     if (!callOutPay.provider_payment_id) throw new Error('Held payment has no provider reference');
-    const workTotal = (order.work_amount ?? 0) + pct(order.work_amount ?? 0, Number(order.client_fee_pct));
+    const workAmount = Number(order.work_amount ?? 0);
+    const orderCallOut = Number(order.call_out_amount ?? order.estimate?.callOut ?? 0);
+    const workFee = cappedPct(orderCallOut + workAmount, Number(order.client_fee_pct)) - cappedPct(orderCallOut, Number(order.client_fee_pct));
+    const workTotal = workAmount + workFee;
     const discountOnCallOut = Math.max(0, Number(order.discount_amount ?? 0) - workTotal);
     const actual: number = order.call_out_amount ?? callOutPay.amount;
-    const fee = pct(actual, Number(order.client_fee_pct)) - discountOnCallOut;
+    const fee = cappedPct(actual, Number(order.client_fee_pct)) - discountOnCallOut;
     const total = actual + fee;
     if (!Number.isInteger(total) || total < 0 || total > callOutPay.total)
       throw new Error('Invalid frozen payment capture amount');
