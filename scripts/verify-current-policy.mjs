@@ -17,7 +17,7 @@ const shop=file('web/src/screens/shop.tsx');
 const policy=file('server/src/domain/paymentPolicy.ts');
 const approved=file('docs/ACTIVE_SOURCE_OF_TRUTH_2026-11-20.md');
 const readme=file('README.md');
-check(approved.includes('19 ноября')&&approved.includes('Точка')&&approved.includes('наличн'),
+check(approved.includes('19 ноября')&&approved.includes('Точка')&&/наличн/i.test(approved),
   'single 19 Nov canon and current settlement policy are documented');
 check(readme.includes('ACTIVE_SOURCE_OF_TRUTH_2026-11-20.md'),
   'README starts at current source, not a historical conversation');
