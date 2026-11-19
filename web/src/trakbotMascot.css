@@ -150,7 +150,7 @@ html.traksos-reduced-motion .trakbot-message--new .trakbot-mascot {animation:non
   overflow:hidden;
   border-radius:9px;
   background-color:#f4f6f8;
-  background-image:url('/trakbot-approved-30.webp');
+  background-image:url('../public/trakbot-approved-30.webp');
   background-size:500% 600%;
   background-repeat:no-repeat;
   background-position:0 0;
