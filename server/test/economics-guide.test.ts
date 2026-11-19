@@ -46,6 +46,35 @@ test('economy explainer shows only the own side and all actual bonus settings',(
   assert.match(performerDocument,/СТО/);
 });
 
+
+test('bonus and referral arithmetic is explained using the same settings as real commissions',()=>{
+  const normalized=(role:'owner'|'driver'|'master'|'tow'|'service')=>
+    financeGuide(defaultSettings,role).paragraphs.map(p=>p.title+' '+p.text)
+      .join('\n').replace(/[\u00a0\u202f]/g,' ');
+  const owner=normalized('owner');
+  assert.match(owner,/10 000.*500.*1 000.*500/s,'client spending limit is fee- and order-capped');
+  assert.match(owner,/500.*10% = 50/s,'referral percentage applies to actual service fee, not order amount');
+  assert.match(owner,/200.*300.*30/s,'referral decreases when client pays part of its fee with points');
+  assert.match(owner,/180 дней/);
+  const master=normalized('master');
+  const service=normalized('service');
+  assert.match(master,/комиссия 500.*до 250.*250/s,'performer point cap is calculated from commission');
+  assert.match(service,/комиссия TrakSOS составит 500.*до 250.*250/s);
+  assert.equal(normalized('driver').includes('Пример: сколько получает пригласивший'),true);
+  assert.ok(!/комиссия исполнителя\s*[—:-]\s*5%/.test(owner));
+
+  // Simulate a later settings revision; all teaching math must move with it.
+  const changed=structuredClone(defaultSettings);
+  changed.fees.clientFeePct=4;
+  changed.referral.clientSharePct=7;
+  changed.referral.clientSpendCapPct=8;
+  const updated=financeGuide(changed,'owner').paragraphs.map(p=>p.text)
+    .join('\n').replace(/[\u00a0\u202f]/g,' ');
+  assert.match(updated,/400.*7% = 28/s);
+  assert.match(updated,/8% от цены/);
+  assert.doesNotMatch(updated,/500.*10% = 50/s);
+});
+
 let t:T;
 before(async()=>{t=await setup();});
 after(()=>t.close());
