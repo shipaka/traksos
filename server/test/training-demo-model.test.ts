@@ -6,7 +6,7 @@ import {
 
 test('onboarding training scenarios cover all TrakSOS cabinet roles safely', () => {
   const variants: Record<string,PracticeKind> = {
-    owner:'customer',driver:'customer',master:'performer',tow:'performer',
+    owner:'customer',driver:'customer',master:'performer',master_service:'performer',tow:'performer',
     service:'service',insurer:'insurance',inspection:'insurance',
     moderator:'staff',admin:'staff',
   };
@@ -19,6 +19,17 @@ test('onboarding training scenarios cover all TrakSOS cabinet roles safely', () 
         assert.ok(step[field].trim().length>3,role+': missing '+field);
     }
   }
+});
+
+test('hybrid master + station training distinguishes hydraulic specialties', () => {
+  assert.equal(practiceKindFor('master_service'),'performer');
+  const master=practiceStages.performer[0].explanation;
+  const station=practiceStages.service[0].explanation;
+  assert.match(master,/гидравлик/i);
+  assert.match(master,/выездн/i);
+  assert.match(station,/гидравлик/i);
+  assert.match(station,/отдельно от выездн/i);
+  assert.ok(station!==master,'hybrid roles must teach separate work settings');
 });
 
 test('test customer order cannot proceed without meaningful problem details', () => {
