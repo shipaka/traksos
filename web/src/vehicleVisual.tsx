@@ -31,13 +31,17 @@ export function VehiclePhotoLink({brand,model,year,plate,href,compact=false}:{
 }) {
   const photo=vehicleReferencePhoto(brand,model,year);
   const description=[brand,model,year,plate].filter(Boolean).join(' ')||'Грузовой автомобиль';
-  return <a className={'trak-vehicle-photo-link'+(compact?' compact':'')} href={href}
-    aria-label={'Открыть карточку и историю автомобиля: '+description}>
-    <VehicleModelPhoto brand={brand} model={model} year={year}/>
-    <span className="trak-vehicle-photo-caption">
-      <span>{description}</span>
-      <small>{photo ? 'Фото соответствующей модели, не вашей машины'
-        : 'Фото для этой модели пока нет'} · открыть историю автомобиля ›</small>
-    </span>
-  </a>;
+  return <div className="trak-vehicle-photo-wrap">
+    <a className={'trak-vehicle-photo-link'+(compact?' compact':'')} href={href}
+      aria-label={'Открыть карточку и историю автомобиля: '+description}>
+      <VehicleModelPhoto brand={brand} model={model} year={year}/>
+      <span className="trak-vehicle-photo-caption">
+        <span>{description}</span>
+        <small>{photo ? 'Фото соответствующей модели, не вашей машины'
+          : 'Фото для этой модели пока нет'} · открыть историю автомобиля ›</small>
+      </span>
+    </a>
+    {photo && <a href="/vehicle-photo-credits.html" target="_blank" rel="noopener noreferrer"
+      className="trak-vehicle-photo-credits">Источник и лицензия фотографии</a>}
+  </div>;
 }
