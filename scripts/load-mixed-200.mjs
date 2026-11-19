@@ -176,7 +176,10 @@ async function ordersFlow(){
   const c=await request(j.client,'GET','/api/orders/'+j.orderId);
   const m=await request(j.worker,'GET','/api/orders/'+j.orderId);
   assert.equal(c.status,'completed');assert.equal(m.status,c.status);
-  assert.equal(c.money.total,m.money.total,'Final amount mismatch');
+  assert.equal(c.money.amount,m.money.amount,'Both sides must share one base service price');
+  assert.equal(c.money.total, m.money.total + c.money.clientFee - c.money.discount, 'Customer sees its fee above the worker quote');
+  assert.equal(m.money.clientFee,undefined,'Worker must not see customer surcharge');
+  assert.equal(m.money.payout, m.money.amount - m.money.commission + m.money.pointsCommission, 'Worker net includes only their commission');
   completedOrders++;
  }));
  await Promise.all(jobs.slice(20,25).map(async j=>{
