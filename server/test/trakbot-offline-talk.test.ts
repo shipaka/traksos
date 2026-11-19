@@ -52,3 +52,12 @@ test('offline entertainment cannot hijack automotive diagnosis or sensitive subj
   }
   assert.match(composeTrakBotReply('Привет, стартер не крутит', []), /стартер|зажигания/i);
 });
+
+test('brief real-life replies keep the thread instead of resetting to diagnostics', () => {
+  assert.match(offlineSmallTalk('ага', ['Пошути']) ?? '', /Ещё одну/);
+  assert.match(offlineSmallTalk('да', ['Расскажи историю']) ?? '', /запасную/);
+  assert.match(offlineSmallTalk('новую', ['Дальше','Дальше','Расскажи историю']) ?? '', /Самый важный груз/);
+  assert.match(offlineSmallTalk('Ахаха', ['Расскажи шутку']) ?? '', /Ещё одну/);
+  assert.match(offlineSmallTalk('Хватит', ['Пошути']) ?? '', /Договорились/);
+  assert.equal(offlineSmallTalk('ага', ['Ошибка P0087']), null);
+});
