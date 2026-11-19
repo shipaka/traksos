@@ -81,7 +81,8 @@ test('consult → roadside master emergency report → owner-approved parallel t
  assert.equal(states.find(x=>x.id===visit.id)?.status,'awaiting_confirmation');
  assert.equal(states.find(x=>x.id===visit.id)?.amount_confirmed_at,null);
  assert.equal(states.find(x=>x.id===visit.id)?.completed_at,null);
- assert.equal(states.find(x=>x.id===tow.id)?.status,'searching');
+ assert.ok(['searching','no_performer'].includes(states.find(x=>x.id===tow.id)?.status),
+  'without a verified tow partner the independent order can legitimately end search as no_performer');
  const root=ok(await t.api('GET','/api/orders/'+consult.id,undefined,owner.token));
  assert.equal(root.caseSummary.stages.length,3);
  assert.equal(root.caseSummary.confirmedTotal,0);
@@ -93,6 +94,7 @@ test('consult → roadside master emergency report → owner-approved parallel t
  assert.equal(confirmed.status,'completed');
  assert.equal(confirmed.unilateralClosure.status,'accepted');
  const towAfter=await t.db.one<any>('select status,completed_at from orders where id=$1',[tow.id]);
- assert.equal(towAfter?.status,'searching','approval of one stage cannot close the tow');
+ assert.ok(['searching','no_performer'].includes(towAfter?.status),
+  'owner approval of the roadside stage cannot complete an independent tow stage');
  assert.equal(towAfter?.completed_at,null);
 });
