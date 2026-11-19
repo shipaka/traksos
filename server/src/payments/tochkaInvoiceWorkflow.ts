@@ -42,6 +42,7 @@ export class TochkaInvoiceWorkflow {
       return { paymentId, documentId: plan.already.bank_document_id,
         invoiceNumber: plan.already.invoice_number, status: 'issued', reused: true };
     }
+    if (!plan.invoiceNumber) throw new Error('Invoice document number missing');
     const work = plan.pay.total - plan.pay.client_fee;
     const lines = [
       ...(work > 0 ? [{ title: 'Услуги исполнителя по заявке TrakSOS №' + plan.pay.order_number,
