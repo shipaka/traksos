@@ -59,7 +59,7 @@ export class ChatService {
     const visibleMessages = role === 'performer' || role === null ? (msgs as any[]).map(m => {
       if (m.sender_role !== 'system') return m;
       const body = String(m.body ?? '');
-      if (body.startsWith('Исполнитель закрыл выезд:') || body.startsWith('Сумма '))
+      if (body.startsWith('Исполнитель закрыл выезд:') || /^Сумма\s+[\d\s,.]+\s*₽/.test(body))
         return { ...m, body: 'Клиенту доступен подробный расчёт. Свои удержания и выплаты смотрите в разделе «Финансы».' };
       return m;
     }) : msgs;
