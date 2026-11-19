@@ -137,4 +137,17 @@
   .trakbot-dock-brand small{display:none;}
 }
 
+@media(max-width:899px) and (max-height:500px){
+  /* Landscape Android and short split-screen windows: prioritize text + composer. */
+  .trakbot-dock { bottom:calc(6px + env(safe-area-inset-bottom)); }
+  .trakbot-dock-panel { height:min(420px,calc(var(--trakbot-visible-height,100dvh) - 68px)); }
+  .trakbot-dock--editing{bottom:calc(5px + var(--trakbot-keyboard-inset,0px));}
+  .trakbot-dock--editing .trakbot-dock-panel{
+    height:min(420px,calc(var(--trakbot-visible-height,100dvh) - 66px));
+  }
+  .trakbot-compact-body .trakbot-vehicle { display:none; }
+  .trakbot-compact-body .trakbot-advice-compact {font-size:10px;padding:3px 6px;}
+  .trakbot-compact-body .trakbot-compact-footer {font-size:10px;}
+  .trakbot-compact-body .trakbot-dialog .msgs { min-height:0!important; }
+}
 @media(prefers-reduced-motion:reduce){.trakbot-dock *{scroll-behavior:auto;transition:none!important;}}
