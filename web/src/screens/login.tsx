@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { post, setToken, connectWs, ApiError } from '../api.ts';
 import { useAction, useMe, useToast, Field, go } from '../ui.tsx';
-import { SERVICE_TILES, MASTER_SPECIALTIES, rememberGuestService } from '../guestCatalog.ts';
+import { SERVICE_TILES, PUBLIC_HOME_TILES, MASTER_SPECIALTIES, rememberGuestService } from '../guestCatalog.ts';
 
 const HERO_SLIDES = [
-  { id: 'approved', label: 'Единая платформа TrakSOS', eyebrow: 'ЕДИНАЯ ПЛАТФОРМА ДЛЯ ГРУЗОВОГО ТРАНСПОРТА',
-    description: 'Эвакуация · Выездной мастер · Ремонт и ТО · Запчасти · Страхование · Техосмотры · Консультации',
+  { id: 'approved', label: 'Единая платформа TrakSOS', eyebrow: 'TRAKSOS · ПОМОЩЬ НА ДОРОГЕ И В ДЕЛЕ',
+    description: 'Единая платформа для водителей, перевозчиков и всех, кто работает с грузовой техникой',
     caption: 'Зона запуска: Санкт-Петербург и Ленинградская область. В других регионах выездные услуги пока недоступны.' },
   { id: 'rescue', label: 'Эвакуация грузового транспорта', eyebrow: 'TRAKSOS · ПОМОЩЬ НА ДОРОГЕ',
     description: 'Нужен эвакуатор? Опишите технику и маршрут, ознакомьтесь с предложениями исполнителей в личном кабинете.',
@@ -259,7 +259,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         <div className="public-hero-copy">
           <span className="public-eyebrow">{HERO_SLIDES[heroSlide].eyebrow}</span>
           <h1 id="public-main-title" key={'title-'+heroSlide}>
-            {heroSlide === 0 ? <><em>Trak<b>SOS</b></em> — помощь<br/>в пути и полный сервис<br/>для грузовиков и прицепов</>
+            {heroSlide === 0 ? <><em>Trak<b>SOS</b></em> —<br/>помощь в пути</>
             : heroSlide === 1 ? <>Эвакуация грузовиков<br/>и помощь в пути<br/>с <em>Trak<b>SOS</b></em></>
             : <>Ремонт и запись в СТО<br/>для грузового транспорта<br/>с <em>Trak<b>SOS</b></em></>}
           </h1>
@@ -272,10 +272,10 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           </div>
           <div className="public-actions">
             <button type="button" className="public-button public-button-sos"
-              onClick={() => heroSlide === 0 ? go('login') : go(heroSlide === 1 ? 'explore/tow' : 'explore/sto')}>
-              {heroSlide === 0 ? 'Войти' : heroSlide === 1 ? 'Узнать об эвакуации' : 'Узнать о СТО'}
+              onClick={() => heroSlide === 0 ? go('register') : go(heroSlide === 1 ? 'explore/tow' : 'explore/sto')}>
+              {heroSlide === 0 ? 'Зарегистрироваться' : heroSlide === 1 ? 'Узнать об эвакуации' : 'Узнать о СТО'}
             </button>
-            <button type="button" className="public-button public-button-outline" onClick={() => go('register')}>Регистрация</button>
+            <a className="public-button public-button-outline" href="#/learn">Как это работает</a>
           </div>
 
           <div className="public-hero-caption" key={'caption-'+heroSlide}>{HERO_SLIDES[heroSlide].caption}</div>
@@ -301,9 +301,9 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         <section className="public-real-services" id="public-services">
           <div className="public-section-head public-services-a11y-title"><span className="public-section-kicker">ПОМОЩЬ ГРУЗОВИКАМ</span><h2>Все услуги TrakSOS</h2></div>
           <div className="public-service-tiles">
-            {SERVICE_TILES.map(({id,icon,title,hint}) => (
-              <a href={'#/explore/' + id} className={'public-service-tile public-service-' + id}
-                key={id} onClick={() => rememberGuestService(id)}>
+            {PUBLIC_HOME_TILES.map(({id,icon,title,hint,href}) => (
+              <a href={href} className={'public-service-tile public-service-' + id}
+                key={id}>
                 <span className="public-service-icon" aria-hidden="true">{icon}</span>
                 <b>{title}</b><small>{hint}</small><span className="public-service-arrow">Далее <span aria-hidden="true">›</span></span>
               </a>
