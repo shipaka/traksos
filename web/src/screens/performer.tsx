@@ -252,7 +252,7 @@ function MobilePerformerWork({p, personName, active, awaiting, jobs, incoming, o
       <button type="button" className="work-mobile-launcher-new"
         onClick={()=>setSearchIntent(v=>({scope:'incoming',count:v.count+1}))}>
         <span className="work-mobile-launcher-icon" aria-hidden="true">⚡</span>
-        <span>Входящие</span>
+        <span>Новые вызовы</span>
         {incoming.length>0 && <b className="work-mobile-launcher-count">{incoming.length}</b>}
       </button>
       <a href="#/work/jobs"><span className="work-mobile-launcher-icon" aria-hidden="true">☷</span><span>Мои заявки</span></a>
