@@ -20,6 +20,10 @@ type Dtc = {
 };
 const DTC_PATTERN = /\b[PBCU][0-3][0-9A-F]{3}\b/gi;
 const SPN_PATTERN = /\bSPN\s*[:#-]?\s*\d{1,6}\b/i;
+const NON_GENERIC_ECU = /\b(?:EBS|ABS|ECAS)\b/i;
+function nonGenericDtcContext(question: string, vehicle: VehicleContext): boolean {
+  return NON_GENERIC_ECU.test(question) || NON_GENERIC_ECU.test(vehicle.ecu ?? '');
+}
 
 export function extractDtcCodes(text: string): string[] {
   return [...new Set((text.toUpperCase().match(DTC_PATTERN) ?? []))].slice(0, 5);
@@ -43,8 +47,7 @@ export function composeTrakBotReply(
   const safety = danger
     ? '\n\nВажно: если тормоза, рулевое или подвеска работают неправильно, не продолжайте движение до проверки специалистом.'
     : '';
-  const incompatibleEcu = /^(EBS|ABS|ECAS)$/i.test((context.ecu ?? '').trim()) ||
-    /\b(EBS|ABS|ECAS)\b/i.test(input);
+  const incompatibleEcu = nonGenericDtcContext(input, context);
   const unsupportedProtocol = SPN_PATTERN.test(input) || /\bFMI\b/i.test(input);
   if (unsupportedProtocol) {
     return 'Понял, это формат грузовой диагностики. Напиши SPN и FMI полностью, марку, двигатель и блок. В текущей базе нет подтверждённой расшифровки именно этой ошибки J1939 — наугад не дам. Если точной карточки нет, лучше подключить специалиста.' + safety;
@@ -168,7 +171,8 @@ export class TrakBotService {
     }
     const deterministic = guide?.text ?? composeTrakBotReply(message, found, context, prior.map((r) => r.body),
       specialist ? 'specialist' : 'driver');
-    const llmEligible = !guide && canUseGroundedAi(allowAiProcessing, found, codes, context) &&
+    const llmEligible = !guide && !nonGenericDtcContext(message, context) &&
+      canUseGroundedAi(allowAiProcessing, found, codes, context) &&
       !SPN_PATTERN.test(message) && !/\bFMI\b/i.test(message);
     const externalAi = {
       enabled: config.trakbot.llmEnabled && allowAiProcessing,
@@ -184,7 +188,12 @@ export class TrakBotService {
     // Verified field experience is only attached for validated technicians and
     // a matching vehicle. Never use it as a universal repair instruction.
     let caseNotes = '';
-    if (specialist && codes.length && context.make?.trim()) {
+    // No "similar successful repair" without complete model, ECU and model year:
+    // matching one DTC across vehicle generations is not evidence of identical cause.
+    if (specialist && codes.length && !nonGenericDtcContext(message, context) &&
+        !SPN_PATTERN.test(message) && !/\bFMI\b/i.test(message) &&
+        context.make?.trim() && context.model?.trim() && context.ecu?.trim() &&
+        context.year && Number.isInteger(context.year)) {
       const staff = user.roles.some((r) => ['admin','moderator'].includes(r));
       const profile = staff ? { verification: 'approved' } :
         await this.db.one<{ verification: string }>(
@@ -195,7 +204,7 @@ export class TrakBotService {
           make: string; model: string; ecu: string; code: string;
           symptoms: string; checks_performed: string; verified_fix: string;
         }>(
-          "select make,model,ecu,code,symptoms,checks_performed,verified_fix from technical_repair_cases where review_state='approved' and code=any($1::text[]) and lower(make)=lower($2) and ($3='' or model='' or lower(model)=lower($3)) and ($4='' or ecu='' or lower(ecu)=lower($4)) and ($5::int is null or production_year is null or production_year=$5::int) order by id desc limit 2",
+          "select make,model,ecu,code,symptoms,checks_performed,verified_fix from technical_repair_cases where review_state='approved' and code=any($1::text[]) and lower(make)=lower($2) and lower(model)=lower($3) and lower(ecu)=lower($4) and production_year=$5::int order by id desc limit 2",
           [codes, context.make.trim(), (context.model ?? '').trim(), (context.ecu ?? '').trim(), context.year ?? null],
         );
         if (matches.length) {
@@ -208,8 +217,7 @@ export class TrakBotService {
     }
     const answer = (generated ?? deterministic) + caseNotes;
     const unsupported = SPN_PATTERN.test(message) || /\bFMI\b/i.test(message);
-    const mismatch = /^(EBS|ABS|ECAS)$/i.test((context.ecu ?? '').trim()) ||
-      /\b(EBS|ABS|ECAS)\b/i.test(message);
+    const mismatch = nonGenericDtcContext(message, context);
     const coverage = unsupported ? 'not_supported' : (mismatch && codes.length) ? 'mismatched_protocol'
       : codes.length ? (codes.every((code) => found.some((row) => row.code === code)) ? 'generic_found' : 'partial_or_missing')
       : 'initial_triage';
