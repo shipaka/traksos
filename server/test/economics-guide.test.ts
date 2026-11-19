@@ -59,7 +59,7 @@ test('bonus and referral arithmetic is explained using the same settings as real
   const master=normalized('master');
   const service=normalized('service');
   assert.match(master,/комиссия 500.*до 250.*250/s,'performer point cap is calculated from commission');
-  assert.match(service,/комиссия TrakSOS составит 500.*до 250.*250/s);
+  assert.match(service,/комиссия TrakSOS составит 500.*не более 250.*250/s);
   assert.equal(normalized('driver').includes('Пример: сколько получает пригласивший'),true);
   assert.ok(!/комиссия исполнителя\s*[—:-]\s*5%/.test(owner));
 
