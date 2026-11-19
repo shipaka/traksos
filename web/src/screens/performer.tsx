@@ -7,12 +7,13 @@ import { OfferForm } from './search.tsx';
 import { WorkerNotices } from './ops.tsx';
 import { useToast } from '../ui.tsx';
 import { VerifiedBadge } from '../verifiedBadge.tsx';
-import { AndroidPerformerWorkspace } from './androidWorkspaces.tsx';
+import { AndroidPerformerWorkspace, useMobileWorkspace } from './androidWorkspaces.tsx';
 
 // Линия: статус, геолокация, входящие ---------------------------------------
 
 export function Work() {
   const { me, reload } = useMe();
+  const mobileWorkspace = useMobileWorkspace();
   const { busy, run } = useAction();
   const balance = useLoad(() => get('/api/performer/balance'), [], (e) => e.type === 'balance' || e.type === 'order');
   const jobs = useLoad(() => get('/api/orders?as=performer'), [], (e) => e.type === 'order');
@@ -29,11 +30,18 @@ export function Work() {
     reload();
   });
 
-  return (
+  if (mobileWorkspace) return (
     <main className="work-live-dashboard">
-      <div className="and19-keep-notices"><WorkerNotices /></div>
+      <WorkerNotices />
       <AndroidPerformerWorkspace performer={p} active={active} auctions={auctions.data ?? []} online={online}
         busy={busy} setLine={(status) => setLine(status)} balance={balance.data} reloadAuctions={auctions.reload} />
+      <LiveStrip who={p.kind === 'tow' ? 'tow' : 'master'} />
+      {online && <LocationSharing />}
+    </main>
+  );
+  return (
+    <main className="work-live-dashboard">
+      <WorkerNotices />
       <section className="work-command-hero" aria-label="Рабочий стол исполнителя">
         <div className="work-command-copy">
           <span className="work-command-kicker">TRAKSOS · {p.kind === 'tow' ? 'ЭВАКУАЦИЯ' : 'ВЫЕЗДНАЯ ПОМОЩЬ'}</span>
