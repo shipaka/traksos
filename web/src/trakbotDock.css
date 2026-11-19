@@ -60,4 +60,81 @@
   .trakbot-dock-label{display:none;}
   .trakbot-dock-launcher{padding:7px;min-width:50px;height:50px;}
 }
+/* Android: the mascot is a small avatar, never a full-screen illustration.
+   The composer stays visible while only the message list scrolls. */
+.trakbot-compact-body {
+  overflow:hidden; flex:1 1 auto; height:100%; min-height:0; gap:7px;
+}
+.trakbot-compact-body .trakbot-dialog {
+  display:flex;flex-direction:column;flex:1 1 auto;min-height:0;overflow:hidden;
+}
+.trakbot-compact-body .trakbot-dialog .msgs {
+  flex:1 1 auto;min-height:0!important;max-height:none!important;
+  overflow-y:auto;overscroll-behavior:contain;
+}
+.trakbot-compact-body .trakbot-dialog .compose { flex:0 0 auto;align-items:stretch; }
+.trakbot-compact-body .trakbot-dialog .compose .field { min-height:42px;max-height:52px; }
+.trakbot-compact-body .trakbot-dialog .compose button { min-width:44px;min-height:42px;flex:0 0 auto; }
+.trakbot-compact-body .trakbot-advice-compact {
+  flex:0 0 auto;border-left:2px solid #d18640;border-radius:5px;
+  padding:4px 8px;background:rgba(248,139,45,.07);color:#d6dce1;
+  font-size:11px;line-height:1.35;
+}
+.trakbot-compact-body .trakbot-advice-compact summary{cursor:pointer;}
+.trakbot-compact-body .trakbot-advice-compact p{margin:6px 0 3px;}
+.trakbot-compact-body .trakbot-advice-compact a{color:#ffad6b;}
+.trakbot-compact-body .trakbot-compact-footer{
+  flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:4px 9px;font-size:10.5px;color:#b6c4d1;
+}
+.trakbot-compact-body .trakbot-compact-footer a{color:#ffad69;text-decoration:underline;}
+.trakbot-compact-body .trakbot-compact-handoff{
+  flex:0 0 auto;padding:6px 7px;border:1px solid rgba(255,153,63,.4);
+  border-radius:8px;font-size:11px;line-height:1.35;
+}
+.trakbot-compact-body .trakbot-compact-handoff a{color:#ffc48a;}
+.trakbot-compact-body .trakbot-vehicle{flex:0 0 auto;max-height:34vh;overflow-y:auto;}
+@media(min-width:900px){
+  .trakbot-dock-panel{height:min(630px,calc(100dvh - 110px));}
+}
+@media(max-width:899px){
+  .trakbot-dock {right:10px;bottom:calc(84px + env(safe-area-inset-bottom));}
+  .trakbot-dock-panel {
+    box-sizing:border-box;
+    width:min(395px,calc(100vw - 20px));
+    height:min(58dvh,430px,calc(var(--trakbot-visible-height, 100dvh) - 155px));
+    max-height:none;min-height:0;bottom:calc(100% + 8px);
+    border-radius:16px;
+  }
+  .trakbot-dock--editing{bottom:calc(7px + var(--trakbot-keyboard-inset,0px));}
+  .trakbot-dock--editing .trakbot-dock-panel{
+    height:min(440px,calc(var(--trakbot-visible-height,100dvh) - 75px));
+  }
+  .trakbot-dock-head{padding:7px 10px;}
+  .trakbot-dock-brand{gap:7px;min-width:0;}
+  .trakbot-dock-brand > span:last-child{min-width:0;}
+  .trakbot-dock-brand b{font-size:12px;}
+  .trakbot-dock-brand small{font-size:10px;}
+  .trakbot-dock-brand .trakbot-mascot{--bot-size:32px;}
+  .trakbot-dock-close{min-width:40px;min-height:40px;}
+  .trakbot-compact-body{padding:7px;}
+  .trakbot-compact-body .trakbot-dialog{padding:7px;}
+  .trakbot-compact-body .trakbot-vehicle{padding:7px 9px;}
+  .trakbot-compact-body .trakbot-vehicle summary{font-size:11px;}
+  .trakbot-dock-launcher{min-width:48px;min-height:48px;}
+  .trakbot-dock-launcher .trakbot-mascot{--bot-size:34px;width:34px;height:34px;}
+  .trakbot-dock-guest-mascot .trakbot-mascot{--bot-size:54px;}
+  .trakbot-dock-guest{padding:10px;gap:8px;}
+  .trakbot-dock-guest nav{gap:5px;}
+  .trakbot-dock-guest nav a{padding:8px 10px;min-height:40px;box-sizing:border-box;}
+}
+@media(max-width:359px){
+  .trakbot-dock{right:7px;}
+  .trakbot-dock-panel{width:calc(100vw - 14px);}
+  .trakbot-dock-head{padding:6px 7px;}
+  .trakbot-compact-body{padding:5px;gap:5px;}
+  .trakbot-compact-body .trakbot-dialog{padding:5px;}
+  .trakbot-dock-brand small{display:none;}
+}
+
 @media(prefers-reduced-motion:reduce){.trakbot-dock *{scroll-behavior:auto;transition:none!important;}}
