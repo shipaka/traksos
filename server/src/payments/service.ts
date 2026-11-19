@@ -15,7 +15,7 @@ import type { Notifier } from '../services/notify.ts';
 import type { OrdersService, PaymentHooks } from '../services/orders.ts';
 import type { CreatePaymentInput, PaymentProvider, ProviderStatus } from './provider.ts';
 import { HttpError, bad, notFound, type AuthUser } from '../http/router.ts';
-import { cancelSplit, commissionPct, cappedPct, pct, split, type CancelStage } from '../domain/money.ts';
+import { cancelSplit, commissionPct, cappedPct, split, type CancelStage } from '../domain/money.ts';
 import { agentReceipt } from './yookassa.ts';
 import { config } from '../config.ts';
 import { rub } from '../util.ts';
