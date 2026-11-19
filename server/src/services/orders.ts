@@ -7,7 +7,7 @@ import { estimate, isNight, billWork, type Tier, type Extra } from '../domain/pr
 import { assertRegionalTariff, CoverageError, type ServiceRegion } from '../domain/regionalCoverage.ts';
 import { rankCandidates, performerKindFor, type Candidate } from '../domain/dispatch.ts';
 import { transition, canDo, statusLabels, type Action, type Actor, type OrderStatus } from '../domain/orderState.ts';
-import { cancelStage, cancelSplit, pct } from '../domain/money.ts';
+import { cancelStage, cancelSplit, cappedPct, pct } from '../domain/money.ts';
 import { slot } from '../domain/schedule.ts';
 import { rub } from '../util.ts';
 import type { AuctionService } from './auction.ts';
@@ -640,7 +640,7 @@ export class OrdersService {
     const stage = cancelStage(o.status);
     const scale = (await this.settings.get('cancel')).scale;
     const m = this.money(o);
-    const splitInfo = cancelSplit(scale, stage, m.callOut, pct(m.callOut, Number(o.client_fee_pct)));
+    const splitInfo = cancelSplit(scale, stage, m.callOut, cappedPct(m.callOut, Number(o.client_fee_pct)));
     const invited = (await this.db.query<{ performer_id: string }>(
       `select performer_id from order_dispatch where order_id=$1 and status in ('queued','ringing','bidding')`, [orderId])).map((x) => x.performer_id);
     await this.db.tx(async (q) => {
@@ -701,7 +701,7 @@ export class OrdersService {
     const callOut: number = o.call_out_amount ?? o.estimate?.callOut ?? 0;
     const work: number = o.work_amount ?? 0;
     const amount = callOut + work;
-    const clientFee = pct(amount, Number(o.client_fee_pct ?? 0));
+    const clientFee = cappedPct(amount, Number(o.client_fee_pct ?? 0));
     // Скидка и бонусы — за счёт площадки, не больше суммы заявки
     const discount = Math.min(Number(o.discount_amount ?? 0), amount + clientFee);
     return { callOut, work, amount, clientFee, discount, total: amount + clientFee - discount };
