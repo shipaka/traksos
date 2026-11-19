@@ -47,6 +47,8 @@ import { checkAppealToken } from './services/auth.ts';
 import { normalizePhone, sha256 } from './util.ts';
 import { Raw } from './http/router.ts';
 import { PaymentsService } from './payments/service.ts';
+import { TochkaInvoiceClient } from './payments/tochkaInvoices.ts';
+import { TochkaInvoiceWorkflow } from './payments/tochkaInvoiceWorkflow.ts';
 import { estimate, isNight } from './domain/pricing.ts';
 import { assertRegionalTariff, CoverageError, REGIONAL_COVERAGE_NOTE } from './domain/regionalCoverage.ts';
 import { defaultSettings } from './domain/defaults.ts';
@@ -76,6 +78,20 @@ export function createApp(d: Deps) {
   const profiles = new ProfilesService(d.db, settings, now);
   const orders = new OrdersService(d.db, settings, notifier, now);
   const payments = new PaymentsService(d.db, settings, d.payments, notifier, orders);
+  // Document-only integration. Real payment capture/payout must remain in the
+  // existing financial system until separately approved and bank-reconciled.
+  const tochkaInvoiceWorkflow = config.tochkaInvoices.enabled && !config.sandboxInstance
+    ? new TochkaInvoiceWorkflow(d.db, new TochkaInvoiceClient(
+        config.tochkaInvoices.token,
+        config.tochkaInvoices.customerCode,
+        config.tochkaInvoices.accountId))
+    : null;
+  const requireTochkaInvoice = () => {
+    if (!tochkaInvoiceWorkflow)
+      throw new HttpError(403, 'tochka_disabled', 'Выставление счетов через Точку пока не подключено');
+    return tochkaInvoiceWorkflow;
+  };
+
   orders.payments = payments;
   const auction = new AuctionService(d.db, settings, notifier, orders, now, d.verifiedRoadEta);
   orders.auction = auction;
@@ -1100,6 +1116,40 @@ export function createApp(d: Deps) {
     if (!targetIsPerformer && !meSees) throw forbidden();
     return reviews.about(c.params.id);
   });
+
+  // Tochka B2B invoice API: admin only, feature-flagged, no funds moved.
+  // The exact legal VAT for principal service vs agent fee must be approved.
+  const tochkaBuyerSchema = z.object({
+    type: z.enum(['company', 'ip']),
+    taxCode: z.string().regex(/^\\d{10}(\\d{2})?$/),
+    secondSideName: z.string().min(2).max(255),
+    kpp: z.string().regex(/^\\d{9}$/).optional(),
+    legalAddress: z.string().max(500).optional(),
+    accountId: z.string().max(50).optional(),
+    bankName: z.string().max(255).optional(),
+    bankCorrAccount: z.string().max(30).optional(),
+  }).refine(b => b.type === 'ip' ? b.taxCode.length === 12 : b.taxCode.length === 10,
+    'ИНН не соответствует типу организации');
+  const tochkaVatSchema = z.enum(['without_nds', 'nds_0', 'nds_5', 'nds_7', 'nds_10', 'nds_22']);
+  r.post('/api/admin/payments/:id/tochka-invoice', ['admin'], (c: AuthedCtx) => {
+    const b = parse(z.object({
+      buyer: tochkaBuyerSchema,
+      workVat: tochkaVatSchema,
+      serviceVat: tochkaVatSchema,
+    }), c.body);
+    return requireTochkaInvoice().issue(c.params.id, c.user.id, b.buyer, b.workVat, b.serviceVat);
+  });
+  r.get('/api/admin/payments/:id/tochka-invoice', ['admin'],
+    (c: AuthedCtx) => requireTochkaInvoice().local(c.params.id));
+  r.get('/api/admin/payments/:id/tochka-invoice/bank-status', ['admin'],
+    (c: AuthedCtx) => requireTochkaInvoice().status(c.params.id));
+  r.post('/api/admin/payments/:id/tochka-invoice/email', ['admin'], (c: AuthedCtx) => {
+    const b = parse(z.object({ email: z.string().email().max(254) }), c.body);
+    return requireTochkaInvoice().email(c.params.id, b.email, c.user.id);
+  });
+  r.get('/api/admin/payments/:id/tochka-invoice/pdf', ['admin'], async (c: AuthedCtx) =>
+    new Raw('application/pdf', await requireTochkaInvoice().pdf(c.params.id),
+      { 'content-disposition': 'attachment; filename="traksos-invoice.pdf"' }));
 
   // Платёжный сервис ---------------------------------------------------------
   r.post('/api/payments/webhook', false, (c: Ctx) => payments.handleWebhook(c.body));
