@@ -32,7 +32,7 @@ export function Home() {
     r.kind === 'insurance' && isOpenInsuranceRequest(r.status));
   const live = (active.data ?? []).filter((o: any) => !['completed', 'cancelled'].includes(o.status));
   if (mobileWorkspace) return <main className="client-home client-dashboard">
-    <AndroidClientWorkspace orders={live} loading={!active.data && !active.error} error={active.error} retry={active.reload} me={me} />
+    <AndroidClientWorkspace orders={live} loading={!active.data && !active.error} error={active.error} retry={active.reload} me={me} insuranceInProgress={insuranceInProgress} />
   </main>;
   return (
     <main className="client-home client-dashboard">
