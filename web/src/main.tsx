@@ -343,8 +343,10 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       ? [['/work', '⌂', 'Главная'], ['/work/jobs', '☷', 'Заявки'], ['/work/chats', '▤', 'Чат'], ['/profile', '◉', 'Меню']]
     : mode === 'service'
       ? [['/base', '⌂', 'Главная'], ['/base/me', '▤', 'Моя СТО'], ['/base/money', '₽', 'Финансы'], ['/profile', '◉', 'Меню']]
-    : mode === 'insurer' || mode === 'inspection'
-      ? [...tabs, ['/profile', '◉', 'Меню']]
+    : mode === 'insurer'
+      ? [['/insurance', '▦', 'Главная'], ['/profile', '◉', 'Меню']]
+    : mode === 'inspection'
+      ? [['/inspections', '▣', 'Техосмотр'], ['/profile', '◉', 'Меню']]
     : mode === 'moderator'
       ? [['/moderation', '⌂', 'Главная'], ['/support', '?', 'Обращения'], ['/profile', '◉', 'Меню']]
     : [['/admin', '⌂', 'Главная'], ['/admin/section/orders', '☷', 'Заявки'],
