@@ -92,12 +92,37 @@ export function registerCommunityAirAiRoutes(
   const request=await db.tx(async q=>{
    // Shared DB locks prevent two devices from creating a duplicate reply or
    // evading the per-user/room request quotas.
+   await q.query('select pg_advisory_xact_lock(hashtext($1))',['air-ai-global-budget']);
    await q.query('select pg_advisory_xact_lock(hashtext($1))',['ai-user:'+c.user.id]);
    await q.one('select id from community_rooms where id=$1 for update',[roomId]);
-   const old=await q.one<{id:string;state:string;response_message_id:string|null}>(
-    'select id,state,response_message_id::text from community_ai_requests where source_message_id=$1',
+   // A hidden or deleted source must never be sent to the external provider,
+   // even if a moderator changed its state during the initial validation.
+   const fresh=await q.one<{id:string}>(
+    "select id::text as id from community_messages where id=$1 and room_id=$2"+
+    " and sender_id=$3 and moderation_state='published' for update",
+    [source.id,roomId,c.user.id]);
+   if(!fresh)throw notFound('Опубликованный вопрос уже недоступен');
+   const old=await q.one<{
+     id:string;state:string;response_message_id:string|null;attempts:number;
+     last_attempt_at:Date;tone:AirAiTone;
+   }>(
+    'select id,state,response_message_id::text,attempts,last_attempt_at,tone'+
+    ' from community_ai_requests where source_message_id=$1 for update',
     [source.id]);
-   if(old)return {id:old.id,created:false,state:old.state,responseId:old.response_message_id,tone:'road' as AirAiTone};
+   if(old){
+    if(old.state==='failed'||old.state==='processing'){
+     if(old.attempts>=2||at.getTime()-new Date(old.last_attempt_at).getTime()<60_000)
+      return {id:old.id,created:false,state:old.state,responseId:old.response_message_id,
+        tone:old.tone,attempts:old.attempts};
+     await q.query(
+      "update community_ai_requests set state='processing',attempts=attempts+1,"+
+      " last_attempt_at=$2,error_code=null where id=$1",[old.id,at]);
+     return {id:old.id,created:true,state:'processing',responseId:null,
+      tone:old.tone,attempts:old.attempts+1};
+    }
+    return {id:old.id,created:false,state:old.state,responseId:old.response_message_id,
+      tone:old.tone,attempts:old.attempts};
+   }
    const minute=await q.one<{n:number}>(
     'select count(*)::int as n from community_ai_requests where requester_id=$1 and created_at>=$2',
     [c.user.id,new Date(at.getTime()-60_000)]);
@@ -107,16 +132,21 @@ export function registerCommunityAirAiRoutes(
    const busyRoom=await q.one<{n:number}>(
     'select count(*)::int as n from community_ai_requests where room_id=$1 and created_at>=$2',
     [roomId,new Date(at.getTime()-60_000)]);
+   const globalDay=await q.one<{n:number}>(
+    'select count(*)::int as n from community_ai_requests where created_at>=$1',
+    [new Date(at.getTime()-86400_000)]);
+   if((globalDay?.n??0)>=config.airAi.dailyLimit)
+    throw new HttpError(429,'ai_budget','Дневной лимит ТраксБота исчерпан. Попробуйте завтра.');
    if((minute?.n??0)>=2||(daily?.n??0)>=15||(busyRoom?.n??0)>=4)
     throw new HttpError(429,'ai_slow_down','ТраксБот отвечает с паузами, чтобы не засорять Эфир.');
    const toneRow=await q.one<{ai_tone:string}>('select ai_tone from community_profiles where user_id=$1',[c.user.id]);
    const tone:AirAiTone=['straight','humor','road'].includes(toneRow?.ai_tone??'')
     ?toneRow!.ai_tone as AirAiTone:'road';
    const created=await q.one<{id:string}>(
-    'insert into community_ai_requests(room_id,source_message_id,requester_id,tone,consent_at,created_at)'+
-    ' values($1,$2,$3,$4,$5,$5) returning id',
+    'insert into community_ai_requests(room_id,source_message_id,requester_id,tone,consent_at,created_at,last_attempt_at)'+
+    ' values($1,$2,$3,$4,$5,$5,$5) returning id',
     [roomId,source.id,c.user.id,tone,at]);
-   return {id:created!.id,created:true,state:'processing',responseId:null,tone};
+   return {id:created!.id,created:true,state:'processing',responseId:null,tone,attempts:1};
   });
   if(!request.created)return {requestId:request.id,status:request.state,responseMessageId:request.responseId};
   try{
@@ -127,9 +157,9 @@ export function registerCommunityAirAiRoutes(
    if(!answer||/(?:бляд|сука|хуй|пизд|ебан|ёбан|fuck)/iu.test(answer))
     answer='По этим данным нельзя дать надёжный ответ. Уточните симптомы и коды ошибок; при риске для людей остановитесь и обратитесь к профильному специалисту.';
    const published=await db.tx(async q=>{
-    const state=await q.one<{state:string}>(
-     'select state from community_ai_requests where id=$1 for update',[request.id]);
-    if(state?.state!=='processing')return null;
+    const state=await q.one<{state:string;attempts:number}>(
+     'select state,attempts from community_ai_requests where id=$1 for update',[request.id]);
+    if(state?.state!=='processing'||state.attempts!==request.attempts)return null;
     const allowed=await q.one<{id:string}>(
      "select m.id::text as id from community_messages m"+
      " join community_rooms rm on rm.id=m.room_id and rm.active=true and rm.audience='driver'"+
@@ -163,8 +193,9 @@ export function registerCommunityAirAiRoutes(
    return {requestId:request.id,status:'published',responseMessageId:published};
   }catch(error){
    await db.query(
-    "update community_ai_requests set state='failed',error_code='provider_unavailable',finished_at=$2 where id=$1 and state='processing'",
-    [request.id,now()]).catch(()=>{});
+    "update community_ai_requests set state='failed',error_code='provider_unavailable',finished_at=$2"+
+    " where id=$1 and state='processing' and attempts=$3",
+    [request.id,now(),request.attempts]).catch(()=>{});
    // Never log prompt, raw provider body, personal details or API credentials.
    console.warn('[community_ai_provider_unavailable]',(error as Error)?.name||'unknown');
    throw new HttpError(503,'ai_unavailable','ТраксБот не ответил. Вопрос в Эфире опубликован, попробуйте позже.');

@@ -17,6 +17,8 @@ create table if not exists community_ai_requests (
  tone text not null check(tone in ('straight','humor','road')),
  consent_at timestamptz not null,
  state text not null default 'processing' check(state in ('processing','published','failed','revoked')),
+ attempts integer not null default 1 check(attempts between 1 and 2),
+ last_attempt_at timestamptz not null default now(),
  error_code text,
  response_message_id bigint references community_messages(id) on delete set null,
  created_at timestamptz not null default now(),

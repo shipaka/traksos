@@ -36,6 +36,8 @@ export const config = {
     enabled: env.AIR_AI_ENABLED === 'true' && !!env.AIR_AI_API_KEY && env.SANDBOX_INSTANCE !== 'true',
     apiKey: env.AIR_AI_API_KEY ?? '',
     model: env.AIR_AI_MODEL ?? 'gpt-4.1-mini',
+    dailyLimit: Number.isFinite(Number(env.AIR_AI_DAILY_LIMIT)) && Number(env.AIR_AI_DAILY_LIMIT)>0
+      ? Math.min(2000,Math.floor(Number(env.AIR_AI_DAILY_LIMIT))) : 250,
   },
 
   // Optional private notification endpoint. Never send personal report text to this channel.
