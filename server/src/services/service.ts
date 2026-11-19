@@ -118,6 +118,26 @@ export class ServiceCenters {
     };
   }
 
+  /** Immutable invoice snapshot. Legacy invoices deliberately keep their zero customer fee. */
+  private settlement(b: any) {
+    const total = b.amount == null ? null : Math.max(0, Number(b.amount) + Number(b.client_fee ?? 0) - Number(b.discount ?? 0));
+    const received = Number(b.received_amount ?? 0);
+    const refunded = Number(b.refunded_amount ?? 0);
+    const netReceived = received - refunded;
+    const required = !!b.payment_required;
+    return {
+      total, netReceived, outstanding: total == null ? null : Math.max(0,total-netReceived),
+      paymentRequired: required,
+      paymentStatus: total == null ? 'not_invoiced'
+        : !required ? 'legacy_not_verified'
+        : netReceived >= total ? 'received'
+        : netReceived > 0 ? 'partial'
+        : refunded > 0 ? 'refunded'
+        : 'awaiting_payment',
+      recoveryNeeded: required && b.paid_out_at != null && total != null && netReceived < total,
+    };
+  }
+
   private bookingView(b: any, as: 'service' | 'client', weekAgo = 0) {
     const repair = (REPAIR_STATUSES as readonly string[]).includes(b.status);
     const notes = as === 'client' && !b.notes_public ? [] : b.notes;
@@ -126,9 +146,14 @@ export class ServiceCenters {
       whenDay: b.when_day, whenTime: b.when_time, acceptTime: b.accept_time, arrival: b.arrival, comment: b.comment,
       vehicle: b.vehicle, vehicleId: b.vehicle_id, clarifyQ: b.clarify_q, clientAnswer: b.client_answer, declineReason: b.decline_reason,
       notes, notesPublic: b.notes_public, works: b.works, amount: b.amount, discount: b.discount,
+      // Never include the customer's separately charged service fee in the service owner's JSON.
+      clientFee: as === 'client' ? Number(b.client_fee ?? 0) : undefined,
+      clientFeePct: as === 'client' ? Number(b.client_fee_pct ?? 0) : undefined,
       commission: as === 'service' ? b.commission : undefined, points: as === 'service' ? b.points ?? 0 : undefined, paidOutAt: as === 'service' ? b.paid_out_at ?? null : undefined,
       payout: as === 'service' && b.amount != null ? b.amount - b.commission : undefined,
-      toPay: b.amount != null ? b.amount - b.discount : null,
+      toPay: as === 'client' ? this.settlement(b).total : undefined,
+      paymentStatus: this.settlement(b).paymentStatus,
+      paymentConfirmed: this.settlement(b).paymentStatus === 'received',
       fromOrder: !!b.from_order_id, fromOrderId: as === 'client' ? b.from_order_id : undefined,
       caseRootId: as === 'client' ? b.case_root_id ?? null : undefined, arrivedAt: b.arrived_at, readyAt: b.ready_at, createdAt: b.created_at,
       daysInRepair: b.arrived_at ? Math.max(1, Math.ceil((this.now().getTime() - new Date(b.arrived_at).getTime()) / 86400_000)) : null,
@@ -242,20 +267,32 @@ export class ServiceCenters {
     return this.booking(user, id);
   }
 
-  /** Агентский счёт: клиент платит через TrakSOS, сервису — за вычетом комиссии; скидка по совету мастера — из комиссии */
+  /** New invoices snapshot BOTH independent caps. Financial and points writes are atomic. */
   async invoice(user: AuthUser, id: string, amount: number, points = 0) {
-    const { b } = await this.mineBooking(user, id);
-    if (b.status !== 'ready') throw conflict('bad_status', 'Сначала «Машина готова»');
+    const c = await this.mustMine(user);
     const fees = await this.settings.get('fees');
-    let commission = Math.min(Math.round(amount * fees.serviceCommissionPct / 100), fees.serviceCommissionMax ?? Infinity);
-    const discount = b.from_order_id ? Math.min(commission, Math.round(amount * fees.serviceReferralDiscountPct / 100)) : 0;
-    // Баллы рембазы гасят до половины комиссии, что остаётся TrakSOS после скидки
-    const pts = this.referral ? await this.referral.spendServiceCommission(this.db, user.id, commission - discount, id, b.number, points) : 0;
-    commission -= pts;
-    await this.db.query(
-      `update service_bookings set status='invoiced', amount=$2, commission=$3, discount=$4, points=$5, invoiced_at=now(), updated_at=now() where id=$1`,
-      [id, amount, commission, discount, pts]);
-    await this.tell({ ...b, status: 'invoiced' }, 'Счёт за ремонт', `${((amount - discount) / 100).toLocaleString('ru-RU')} ₽ — сверьте работы`);
+    const clientPct = fees.clientFeePct; // 5% approved; independently capped at 5,000 RUB.
+    const clientFee = Math.min(Math.round(amount * clientPct / 100), 500_000);
+    const b = await this.db.tx(async q => {
+      const row = await q.one<any>('select * from service_bookings where id=$1 and center_id=$2 for update', [id, c.id]);
+      if (!row) throw notFound('Запрос не найден');
+      if (row.status !== 'ready') throw conflict('bad_status', 'Сначала «Машина готова»');
+      let commission = Math.min(Math.round(amount * fees.serviceCommissionPct / 100), fees.serviceCommissionMax ?? 500_000);
+      const discount = row.from_order_id ? Math.min(commission, Math.round(amount * fees.serviceReferralDiscountPct / 100)) : 0;
+      // Points and the new invoice must commit together; never spend points twice on a retry.
+      const pts = this.referral
+        ? await this.referral.spendServiceCommission(q, user.id, commission - discount, id, row.number, points) : 0;
+      commission -= pts;
+      await q.query(
+        `update service_bookings
+            set status='invoiced', amount=$2, commission=$3, discount=$4, points=$5,
+                client_fee=$6, client_fee_pct=$7, payment_required=true,
+                invoiced_at=now(), updated_at=now()
+          where id=$1`,
+        [id, amount, commission, discount, pts, clientFee, clientPct]);
+      return {...row, client_fee:clientFee, discount, amount};
+    });
+    await this.tell({ ...b, status: 'invoiced' }, 'Счёт за ремонт', 'Работы завершены. Проверьте в личном кабинете состав счёта и итог к оплате.');
     return this.booking(user, id);
   }
 
@@ -480,7 +517,9 @@ export class ServiceCenters {
       await this.db.query(
         `update service_bookings set status='closed', closed_at=now(), review_stars=$2, review_text=$3, updated_at=now() where id=$1`,
         [id, p.stars ?? null, p.text?.trim() || null]);
-      await this.referral?.afterBookingClosed(b.owner_id, id);
+      // New agreements award post-payment bonuses only after a recorded receipt.
+      if (!b.payment_required) await this.referral?.afterBookingClosed(b.owner_id, id);
+      else if (this.settlement(b).paymentStatus === 'received') await this.referral?.afterBookingClosed(b.owner_id, id);
       await this.notifier.notify([b.owner_id], { type: 'booking', bookingId: id, status: 'closed' },
         { kind: 'normal', title: 'Клиент подтвердил работы', body: `Счёт №${b.number} — деньги придут после оплаты`, data: { bookingId: id } });
     } else {
@@ -493,6 +532,84 @@ export class ServiceCenters {
         { kind: 'normal', title: 'Клиент не согласен с работами', body: 'Модератор свяжется с обеими сторонами', data: { bookingId: id } });
     }
     return this.booking(user, id);
+  }
+
+  // ——— Сверка оплаченных счетов СТО: only staff attest bank/cash movements ———
+  /** These are immutable external-receipt attestations, NEVER a payment gateway operation. */
+  async paymentEvents(user: AuthUser, id: string) {
+    if (!user.roles.includes('admin')) throw forbidden();
+    const b = await this.db.one<any>(
+      `select b.*, c.name as center_name from service_bookings b
+         join service_centers c on c.id=b.center_id where b.id=$1`,[id]);
+    if (!b) throw notFound('Счёт не найден');
+    const events = await this.db.query(
+      `select e.id::int as id,e.kind,e.amount,e.method,e.reference,e.created_at,
+              u.phone as verified_by from service_payment_events e
+         join users u on u.id=e.confirmed_by where e.booking_id=$1
+         order by e.id desc`,[id]);
+    return {invoice:{id:b.id,number:b.number,centerName:b.center_name,amount:b.amount,
+      clientFee:b.client_fee,discount:b.discount,commission:b.commission,payout:b.amount==null?null:b.amount-b.commission,
+      received:b.received_amount,refunded:b.refunded_amount,paidOutAt:b.paid_out_at,
+      ...this.settlement(b)},events};
+  }
+
+  async financialRegister(user: AuthUser) {
+    if (!user.roles.includes('admin')) throw forbidden();
+    const rows = await this.db.query<any>(
+      `select b.id,b.number,b.status,b.amount,b.client_fee,b.discount,b.commission,b.points,
+              b.payment_required,b.received_amount,b.refunded_amount,b.paid_out_at,b.invoiced_at,
+              c.name as center_name, coalesce(u.company_name,u.name,u.phone) as client_name
+         from service_bookings b
+         join service_centers c on c.id=b.center_id
+         join users u on u.id=b.client_id
+         where b.amount is not null order by b.invoiced_at desc limit 300`);
+    return rows.map(b=>({...b,toPay:this.settlement(b).total,
+      netReceived:this.settlement(b).netReceived,
+      outstanding:this.settlement(b).outstanding,paymentStatus:this.settlement(b).paymentStatus,
+      recoveryNeeded:this.settlement(b).recoveryNeeded,
+      payout:b.amount-b.commission,
+      payoutReady:b.status==='closed' && b.paid_out_at==null &&
+        (!b.payment_required || this.settlement(b).paymentStatus==='received')}));
+  }
+
+  async recordTransfer(admin: AuthUser, id: string, entry: {
+    kind:'receipt'|'refund';amount:number;method:'invoice'|'online'|'cash'|'other';reference:string;
+  }) {
+    if (!admin.roles.includes('admin')) throw forbidden();
+    const reference=entry.reference.trim();
+    if (reference.length<4 || reference.length>200) throw bad('bad_reference','Укажите номер подтверждённой банковской или кассовой операции');
+    const updated=await this.db.tx(async q=>{
+      const b=await q.one<any>('select * from service_bookings where id=$1 for update',[id]);
+      if (!b) throw notFound('Счёт не найден');
+      if (!b.payment_required || b.amount==null) throw conflict('legacy_invoice','Для старого счёта нужна отдельная ручная сверка; данные не изменяем');
+      if (!['invoiced','closed','disputed'].includes(b.status)) throw conflict('bad_status','Счёт не выставлен');
+      const total=this.settlement(b).total!;
+      const current=Number(b.received_amount)-Number(b.refunded_amount);
+      if (entry.kind==='receipt' && current+entry.amount>total)
+        throw conflict('overpayment','Сумма подтверждённых поступлений не может превышать согласованный счёт');
+      if (entry.kind==='refund' && entry.amount>current)
+        throw conflict('refund_exceeds_receipts','Возврат не может превышать действительно полученные средства');
+      try {
+        await q.query(
+          `insert into service_payment_events(booking_id,kind,amount,method,reference,confirmed_by)
+           values ($1,$2,$3,$4,$5,$6)`,
+          [id,entry.kind,entry.amount,entry.method,reference,admin.id]);
+      } catch(e:any) {
+        if(e?.code==='23505') throw conflict('duplicate_bank_reference','Эта внешняя операция уже зарегистрирована');
+        throw e;
+      }
+      const field=entry.kind==='receipt' ? 'received_amount' : 'refunded_amount';
+      await q.query(`update service_bookings set ${field}=${field}+$2,updated_at=now() where id=$1`,
+        [id,entry.amount]);
+      await q.query('insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4::jsonb)',
+        [admin.id,'service.payment.'+entry.kind,id,JSON.stringify({...entry})]);
+      return {...b,received_amount:Number(b.received_amount)+(entry.kind==='receipt'?entry.amount:0),
+        refunded_amount:Number(b.refunded_amount)+(entry.kind==='refund'?entry.amount:0)};
+    });
+    if (updated.status==='closed' && entry.kind==='receipt' && this.settlement(updated).paymentStatus==='received')
+      await this.referral?.afterBookingClosed((await this.db.one<{owner_id:string}>(
+        'select owner_id from service_centers where id=$1',[updated.center_id]))!.owner_id,id);
+    return this.paymentEvents(admin,id);
   }
 
   // ——— Модерация ———
