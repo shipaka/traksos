@@ -162,13 +162,13 @@ async function run(width, height, mobile, nativePreview = false) {
     check(await page.locator('.auth-desktop-form .opt').count() === 4,
       suffix + ': partner registration must offer exactly 4 roles');
     check(await page.locator('.guest-partner-role').count() === 4,
-      suffix + ': all partner roles must use photographic cards');
+      suffix + ': all four partner role options remain accessible');
     check(await page.getByRole('navigation',{name:'Тип регистрации'}).count() === 0,
       suffix + ': partner page repeats client registration tab');
     const partnerImage=page.locator(mobile ? '.guest-partner-mobile-preview' : '.auth-desktop-showcase-photo');
     if(await partnerImage.isVisible())
-      check((await partnerImage.evaluate(el=>getComputedStyle(el).backgroundImage)).includes('tracksos-approved-scania-r520'),
-        suffix + ': partner signup must start with the neutral Scania artwork');
+      check((await partnerImage.evaluate(el=>getComputedStyle(el).backgroundImage)).includes('tracksos-approved-hero-owner-20261119'),
+        suffix + ': partner signup must start with the owner-approved 19 Nov truck artwork');
     check(await page.locator('.guest-partner-role[aria-pressed="true"]').count()===0,
       suffix + ': default partner role must not be preselected');
     await page.getByRole('button',{name:'Мастер',exact:true}).click();

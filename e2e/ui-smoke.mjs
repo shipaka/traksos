@@ -139,13 +139,14 @@ try {
     assert(approvedHeroUrl.test(data.heroCss ?? '') &&
       !/tracksos-approved-(?:scenic-hero|truck|scania-r520)/.test(data.heroCss ?? ''),
       width + 'px: owner-approved 19 Nov hero is not active; computed background=' + data.heroCss);
-    assert(data.mapCss?.includes('tracksos-approved-map'),
-      width + 'px: approved regional map is not displayed');
+    assert(!/tracksos-approved-map|tracksos-road-atmosphere/.test(data.mapCss ?? '') &&
+      data.mapCss?.includes('gradient'),
+      width + 'px: retired pre-17 Nov map/road art returned to active layout');
 
+    // Only post-17 Nov owner-approved visuals may be loaded by the active public site.
     for (const name of [
-      'tracksos-approved-hero-owner-20261119.webp','tracksos-approved-logo-owner-20261119.webp','tracksos-hero-rescue-hq.webp','tracksos-hero-service-hq.webp',
-      'tracksos-partner-master-approved.webp','tracksos-partner-tow-approved.webp',
-      'tracksos-partner-sto-approved.webp','tracksos-partner-insurer-approved.webp','tracksos-approved-map.webp'
+      'tracksos-approved-hero-owner-20261119.webp',
+      'tracksos-approved-logo-owner-20261119.webp'
     ]) {
       const check = await page.evaluate(async (asset) => {
         const res = await fetch('/' + asset);

@@ -149,7 +149,7 @@ class MainActivity : AppCompatActivity() {
     }
     private lateinit var bundledAssets: WebViewAssetLoader
     private var startupOverlay: View? = null
-    // Keep the agreed seasonal scene on screen long enough to notice.
+    // Only the owner's actual 19 Nov clean loading art is shown; obsolete seasonal backgrounds were retired.
     private var startupShownAt = 0L
     private var debugUiReadyLogged = false
     private val startupMinimumVisibleMs = 3_500L

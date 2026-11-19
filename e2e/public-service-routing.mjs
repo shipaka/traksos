@@ -57,7 +57,7 @@ try {
     await page.goto(BASE+'/#/');
     const bgImage=()=>page.locator('.public-hero-visual').evaluate(el=>getComputedStyle(el).backgroundImage);
     const firstPhoto=await bgImage();
-    if(!firstPhoto.includes('tracksos-approved-scenic-hero'))throw Error('Unapproved first hero photo: '+firstPhoto);
+    if(!firstPhoto.includes('tracksos-approved-hero-owner-20261119'))throw Error('Unapproved first hero photo: '+firstPhoto);
     if(firstPhoto.includes('traksos-final-hero'))throw Error('First slide has baked-in fake carousel controls');
     const photoGeometry=await page.evaluate(()=>{
       const hero=document.querySelector('.public-brand-hero')?.getBoundingClientRect();
@@ -88,18 +88,18 @@ try {
     const secondPhoto=await bgImage();
     await page.getByRole('heading',{name:/Эвакуация грузовиков/}).waitFor();
     await page.getByRole('button',{name:'Узнать об эвакуации'}).waitFor();
-    if(!secondPhoto.includes('tracksos-hero-rescue-hq') || secondPhoto===firstPhoto)
-      throw Error('Hero next arrow does not change photograph: '+secondPhoto);
+    if(!secondPhoto.includes('tracksos-approved-hero-owner-20261119'))
+      throw Error('Hero next arrow did not keep current owner-approved photograph: '+secondPhoto);
     if(await page.locator('.public-hero-dot[aria-pressed="true"]').count()!==1)
       throw Error('Hero active dot state not updated');
     await page.getByRole('button',{name:'Следующее фото'}).click();
     const thirdPhoto=await bgImage();
     await page.getByRole('heading',{name:/Ремонт и запись в СТО/}).waitFor();
     await page.getByRole('button',{name:'Узнать о СТО'}).waitFor();
-    if(!thirdPhoto.includes('tracksos-hero-service-hq') || thirdPhoto===secondPhoto)
-      throw Error('Hero next arrow does not show third photograph');
+    if(!thirdPhoto.includes('tracksos-approved-hero-owner-20261119'))
+      throw Error('Third hero slide uses obsolete or missing photo');
     await page.getByRole('button',{name:'Предыдущее фото'}).click();
-    if(await bgImage()!==secondPhoto)throw Error('Hero previous arrow did not reverse photograph');
+    if(await page.getByRole('heading',{name:/Эвакуация грузовиков/}).count()!==1)throw Error('Hero previous arrow did not restore previous service copy');
     await page.getByRole('button',{name:/Показать фото 1:/}).click();
     if(await bgImage()!==firstPhoto)throw Error('Hero dot did not select original photograph');
 
@@ -186,16 +186,16 @@ try {
     const visual=page.locator(showcaseImage);
     await visual.waitFor();
     const photo=()=>visual.evaluate(el=>getComputedStyle(el).backgroundImage);
-    if(!(await photo()).includes('tracksos-approved-scania-r520'))
+    if(!(await photo()).includes('tracksos-approved-hero-owner-20261119'))
       throw Error('Partner page must initially display the generic Scania hero');
     const fixedPosition=width>=900 ? await page.locator('.partner-showcase').evaluate(el=>{
       const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};
     }) : null;
     for(const [roleName,asset] of [
-      ['Эвакуаторщик','tracksos-partner-tow-approved'],
-      ['Мастер','tracksos-partner-master-approved'],
-      ['СТО','tracksos-partner-sto-approved'],
-      ['Страховой агент','tracksos-partner-insurer-approved'],
+      ['Эвакуаторщик','linear-gradient'],
+      ['Мастер','linear-gradient'],
+      ['СТО','linear-gradient'],
+      ['Страховой агент','linear-gradient'],
     ]){
       await page.getByRole('button',{name:roleName,exact:true}).click();
       if(!(await photo()).includes(asset))throw Error('Wrong cinematic showcase when choosing '+roleName);
@@ -216,8 +216,8 @@ try {
     }
     if(!await page.getByText('Специализации мастера · выбрано: 2').count())
       throw Error('Partner specialty accordion did not retain multiple choices');
-    if(!await page.locator('.guest-partner-role-master').evaluate(el=>getComputedStyle(el).backgroundImage.includes('tracksos-photo-master')))
-      throw Error('Master signup role card is not photographic');
+    if(!await page.locator('.guest-partner-role-master').evaluate(el=>!getComputedStyle(el).backgroundImage.includes('tracksos-photo-master')))
+      throw Error('Retired Nov 14 signup card image returned');
 
     // Latest 'Возможности' menu keeps all other approved functions discoverable.
     await page.goto(BASE+'/#/');

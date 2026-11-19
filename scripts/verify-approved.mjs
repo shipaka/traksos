@@ -21,7 +21,7 @@ const LOCKED_ASSETS = {
   'android/app/src/main/res/mipmap-xhdpi/ic_launcher.png': '5022fec38cc1898d',
   'android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png': '22456b8817e2a561',
   'android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png': '70c666ed8cb09e6c',
-  'android/app/src/main/res/drawable-nodpi/splash_truck.webp': '75bfacfcdf8c0673',
+  'android/app/src/main/res/drawable-nodpi/splash_truck.webp': '7a7a9acec9ee7f32',
 };
 async function asset(path, minBytes = 5000) {
   try {
@@ -135,6 +135,15 @@ for (const name of ['tracksos-approved-map.webp','tracksos-hero-rescue-hq.webp',
   let exists = false;
   try { await stat('web/public/' + name); exists = true; } catch { /* expected */ }
   expect(!exists, 'retired public asset absent: ' + name);
+}
+const nativeSplash = await read('android/app/src/main/java/ru/traksos/app/SeasonalStartupOverlay.kt');
+expect(nativeSplash.includes('R.drawable.splash_truck') && !nativeSplash.includes('seasonal_splash/') &&
+  !nativeSplash.includes('Сезонный фон') && !nativeSplash.includes('TrakSOSNative-weather'),
+  'Android startup uses only 19 Nov approved image, without old seasonal backgrounds or caption');
+for (const name of ['autumn.webp','spring.webp','summer.webp','winter.webp']) {
+  let present = false;
+  try { await stat('android/app/src/main/assets/seasonal_splash/'+name); present = true; } catch {}
+  expect(!present, 'retired pre-17 Nov Android scene is absent: '+name);
 }
 const shell = await read('web/src/main.tsx');
 expect(landing.includes('/tracksos-approved-logo-owner-20261119.webp') &&
