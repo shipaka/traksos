@@ -81,8 +81,8 @@ if (config.sandboxInstance) {
   if (!dbName.includes('sandbox') || !env.DATABASE_URL)
     throw new Error('SANDBOX_INSTANCE requires its own explicit *sandbox* PostgreSQL database');
   if (config.sms.provider !== 'log' || config.push.provider !== 'log' ||
-      config.payments.provider !== 'mock')
-    throw new Error('Sandbox external integrations must be disabled (log/log/mock)');
+      config.payments.provider !== 'mock' || config.trakbot.llmEnabled)
+    throw new Error('Sandbox external integrations and TrakBot AI must be disabled (log/log/mock/LLM off)');
   if (config.sandboxSharedSecret.length < 32)
     throw new Error('Sandbox shared secret is missing');
   if (!config.adminPhones.includes('+79000000001') ||
