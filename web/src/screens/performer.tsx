@@ -8,12 +8,20 @@ import { WorkerNotices } from './ops.tsx';
 import { useToast } from '../ui.tsx';
 import { VerifiedBadge } from '../verifiedBadge.tsx';
 import { EcuStationWorkspace } from './ecuHandoffs.tsx';
+import './performerMobileWork.css';
 
 // Линия: статус, геолокация, входящие ---------------------------------------
 
 export function Work() {
   const { me, reload } = useMe();
   const { busy, run } = useAction();
+  const [compact, setCompact] = useState(() => window.matchMedia('(max-width: 820px)').matches);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 820px)');
+    const sync = () => setCompact(mq.matches);
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
   const balance = useLoad(() => get('/api/performer/balance'), [], (e) => e.type === 'balance' || e.type === 'order');
   const jobs = useLoad(() => get('/api/orders?as=performer'), [], (e) => e.type === 'order');
   const auctions = useLoad(() => get('/api/performer/auctions'), [], (e) => e.type === 'auction' || e.type === 'order');
@@ -34,6 +42,11 @@ export function Work() {
     if (lineStatus === 'online') native.performerOnline();
     reload();
   });
+
+  if (compact) return <MobilePerformerWork p={p} personName={me?.name ?? undefined}
+    active={active} awaiting={toReview} incoming={auctions.data ?? []}
+    onOfferDone={auctions.reload} balance={balance.data} online={online}
+    busy={busy} setLine={setLine} />;
 
   return (
     <main className="work-live-dashboard">
@@ -115,6 +128,86 @@ export function Work() {
       <button className="btn ghost" onClick={() => go('work/me/money')}>Финансы · все операции</button>
     </main>
   );
+}
+
+/** Android / narrow-screen workspace. One next action, not a squeezed PC dashboard.
+ * All numbers, orders and offers are read from exactly the same authenticated API
+ * responses as the desktop. No fake progress, no offline status mutations.
+ */
+function MobilePerformerWork({p, personName, active, awaiting, incoming, onOfferDone,
+  balance, online, busy, setLine}: {
+  p:any; personName?:string; active:any[]; awaiting:any[]; incoming:any[];
+  onOfferDone:()=>void; balance:any; online:boolean; busy:boolean;
+  setLine:(line:string, until?:string)=>void;
+}) {
+  const first = active[0];
+  const stage:Record<string,string> = {
+    accepted:'Принята — пора выезжать', en_route:'Вы в пути', arrived:'Вы на месте',
+    working:'Идёт работа', awaiting_confirmation:'Ждём подтверждения клиента',
+  };
+  return <main className="work-mobile" aria-label="Мобильное рабочее место исполнителя">
+    <header className="work-mobile-header">
+      <span className="work-mobile-kicker">TrakSos · {p.kind === 'tow' ? 'эвакуация' : 'выездной мастер'}</span>
+      <h1>Рабочая смена</h1>
+      <div className="work-mobile-person">
+        <span>{personName || (p.kind==='tow' ? 'Эвакуаторщик' : 'Мастер')}</span>
+        <span className="work-mobile-state"><span className={'dot '+(online?'on':'')}/>
+          {LINE[p.line_status] || 'Доступность не указана'}</span>
+      </div>
+    </header>
+    <WorkerNotices />
+    {p.verification === 'approved'
+      ? <LineCard p={p} busy={busy} setLine={setLine} online={online}/>
+      : <section className="card stack" aria-label="Проверка исполнителя">
+          <strong>{p.verification==='rejected'?'Проверка не пройдена':p.submitted_at?'Профиль на проверке':'Подтвердите профиль'}</strong>
+          <span className="note">{p.verification_note || 'Пока статус не подтверждён, ознакомьтесь с условиями приёма заявок.'}</span>
+          <a className="btn ghost" href="#/work/docs">Документы исполнителя</a>
+        </section>}
+    {first ? <section className="work-mobile-current" aria-label="Активная заявка">
+        <span className="work-mobile-kicker">СЕЙЧАС В РАБОТЕ</span>
+        <h2>№{first.number} · {SERVICES[first.service]?.name || first.service}</h2>
+        <p className="work-mobile-stage">{stage[first.status] || 'Открытая заявка'}</p>
+        <p className="note">{first.address || first.estimate?.zoneName || 'Место — в карточке заявки'}</p>
+        <a className="btn work-mobile-primary" href={`#/order/${first.id}`}>Открыть заявку и следующий шаг</a>
+        {active.length > 1 && <span className="note">Других активных заявок: {active.length-1}</span>}
+      </section>
+      : <section className="work-mobile-current work-mobile-empty" aria-label="Нет текущих работ">
+          <span className="work-mobile-kicker">{online ? 'ГОТОВ К НОВЫМ ЗАЯВКАМ' : 'СЕЙЧАС НЕ НА ЛИНИИ'}</span>
+          <h2>{online?'Ожидаем подходящий вызов':'Включите доступность, когда готовы'}</h2>
+          <p className="note">Входящие предложения появятся здесь, когда их отправит сервер. Статус меняется выше.</p>
+        </section>}
+    {active.length > 1 && <section className="work-mobile-list" aria-label="Другие активные работы">
+      <h2>Остальные работы</h2>
+      {active.slice(1).map((o:any)=><a className="work-mobile-list-item" href={`#/order/${o.id}`} key={o.id}>
+        <strong>№{o.number} · {SERVICES[o.service]?.name || o.service}</strong>
+        <span>{stage[o.status] || o.status} ›</span></a>)}
+    </section>}
+    {incoming.length>0 && <section className="work-mobile-list" aria-label="Новые предложения">
+      <h2>Новые предложения · {incoming.length}</h2>
+      {incoming.map((a:any)=><div className="card stack" key={a.order_id}>
+        <div className="between"><b>{a.is_sos?'SOS · ':''}{SERVICES[a.service]?.name || a.service}</b>
+          {Number.isFinite(a.distance_km) && <span className="pill">{a.distance_km.toFixed(1)} км</span>}</div>
+        <span className="note">{a.address || a.estimate?.zoneName || 'Адрес уточняется'}</span>
+        <OfferForm orderId={a.order_id} limits={a.limits} myPrice={a.my_price}
+          onDone={onOfferDone}/></div>)}
+    </section>}
+    {awaiting.length>0 && <section className="work-mobile-list" aria-label="Сданные работы на проверке">
+      <h2>Ждём ответа клиента · {awaiting.length}</h2>
+      {awaiting.map((o:any)=><a key={o.id} className="work-mobile-list-item"
+        href={`#/order/${o.id}`}><strong>№{o.number}</strong>
+        <span>{o.unilateral_status==='disputed'?'Спор рассматривается':'Работа сдана — деньги не подтверждены'} ›</span></a>)}
+    </section>}
+    <nav className="work-mobile-shortcuts" aria-label="Рабочие разделы">
+      <a href="#/work/jobs"><span aria-hidden="true">☷</span> Мои заявки</a>
+      <a href="#/work/me/schedule"><span aria-hidden="true">▦</span> График</a>
+      <a href="#/notifications"><span aria-hidden="true">♧</span> Уведомления</a>
+      <a href="#/work/me/money"><span aria-hidden="true">₽</span> Финансы</a>
+    </nav>
+    {balance && <div className="work-mobile-balance note">
+      К выплате: <b>{rub(balance.to_pay)}</b>
+      {balance.paused && <span className="err">Заявки приостановлены до урегулирования комиссии.</span>}
+    </div>}
+  </main>;
 }
 
 const BREAKS: [number, string][] = [[15, '15 мин'], [30, '30 мин'], [60, '1 час'], [120, '2 часа']];
