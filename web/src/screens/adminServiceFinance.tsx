@@ -80,6 +80,7 @@ export function AdminServiceFinance() {
   const d=useLoad(()=>get('/api/admin/service-finance'),[]);
   const {busy,run}=useAction();
   const [selected,setSelected]=useState<string|null>(null);
+  const [payoutRefs,setPayoutRefs]=useState<Record<string,string>>({});
   const [filter,setFilter]=useState<'all'|'awaiting'|'ready'|'disputed'|'recovery'>('all');
   const items:any[]=d.data??[];
   const shown=items.filter(x=>
@@ -87,7 +88,9 @@ export function AdminServiceFinance() {
     (filter==='ready'&&x.payoutReady)||(filter==='disputed'&&x.status==='disputed')||
     (filter==='recovery'&&x.recoveryNeeded));
   async function markPayout(id:string) {
-    const out=await run(()=>post('/api/admin/bookings/'+id+'/paid',{}),'Выплата отмечена как отправленная');
+    const ref=payoutRefs[id]?.trim()??'';
+    if(ref.length<4)return;
+    const out=await run(()=>post('/api/admin/bookings/'+id+'/paid',{reference:ref}),'Фактическая выплата отмечена по банковскому документу');
     if(out)await d.reload();
   }
   return <div className="stack">
@@ -119,13 +122,20 @@ export function AdminServiceFinance() {
         {x.recoveryNeeded && <p className="banner warn">По уже выплаченному счёту зарегистрирован возврат — требуется ручное урегулирование с СТО.</p>}
         {x.status==='closed'&&!x.paid_out_at && !x.payoutReady &&
           <p className="note">Выплата заблокирована до подтверждения полного поступления.</p>}
-        {x.paid_out_at && <span className="note">Выплата отмечена {new Date(x.paid_out_at).toLocaleDateString('ru-RU')}.</span>}
+        {x.paid_out_at && <span className="note">Выплата отмечена {new Date(x.paid_out_at).toLocaleDateString('ru-RU')}{x.payout_reference?' · перевод '+x.payout_reference:''}.</span>}
         <div className="row">
           <button type="button" className="btn ghost small" onClick={()=>setSelected(selected===x.id?null:x.id)}>
             {selected===x.id?'Скрыть сверку':'Сверить оплату / возврат'}
           </button>
-          {x.payoutReady && <button type="button" className="btn small" disabled={busy}
-            onClick={()=>markPayout(x.id)}>Отметить подтверждённую выплату СТО</button>}
+          {x.payoutReady && <>
+            {x.payment_required && <label className="stack">Номер реально отправленного перевода СТО
+              <input className="field" maxLength={200} value={payoutRefs[x.id]??''}
+                onChange={e=>setPayoutRefs(old=>({...old,[x.id]:e.target.value}))}
+                placeholder="Номер платёжного поручения / транзакции" />
+            </label>}
+            <button type="button" className="btn small" disabled={busy||(x.payment_required&&(payoutRefs[x.id]??'').trim().length<4)}
+              onClick={()=>markPayout(x.id)}>Отметить фактическую выплату СТО</button>
+          </>}
         </div>
         {selected===x.id && <BankMovements id={x.id} close={()=>setSelected(null)} reload={d.reload}/>}
       </div>)}
