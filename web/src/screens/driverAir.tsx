@@ -15,7 +15,7 @@ export function DriverAir() {
   const [refresh,setRefresh] = useState(0);
   const end = useRef<HTMLDivElement>(null);
   const lastCount = useRef(0);
-  const canView = !!me?.roles.some(r=>['client','driver','admin','moderator'].includes(r));
+  const canView = !!me?.roles.some(r=>['client','driver','master','tow','service','admin','moderator'].includes(r));
 
   useEffect(()=>{
     if(!canView) return;
@@ -66,11 +66,11 @@ export function DriverAir() {
     finally{setPosting(false);}
   };
   if(!canView) return <main><Back to="" /><h1>Эфир водителей</h1>
-    <p>Общий эфир доступен зарегистрированным водителям и сотрудникам.</p></main>;
+    <p>Общий эфир доступен зарегистрированным водителям, мастерам, СТО и сотрудникам.</p></main>;
   return <main className="stack" style={{maxWidth:840}}>
     <Back to="" />
     <div className="between" style={{gap:12,flexWrap:'wrap'}}>
-      <div><h1>Эфир TrakSOS</h1><p className="sub">Общий текстовый чат водителей. Маршруты, жизнь в рейсе, полезный опыт и общение.</p></div>
+      <div><h1>Эфир TrakSOS</h1><p className="sub">Общий текстовый чат водителей и специалистов. Маршруты, жизнь в рейсе, полезный опыт и общение.</p></div>
       <a className="btn ghost small" href="#/support/new">Личное обращение</a>
     </div>
     <div className="card flat">
@@ -93,7 +93,7 @@ export function DriverAir() {
           <div style={{whiteSpace:'pre-wrap',overflowWrap:'anywhere',marginTop:5}}>{item.body}</div>
           {item.isBot && /личн(?:ом|ое) обращени|личную поддержку|личной поддержке/i.test(item.body) &&
             <a className="btn ghost small" style={{marginTop:8}} href="#/support/new">Описать вопрос приватно</a>}
-          {air.canModerate && <button className="btn ghost small" type="button" disabled={posting}
+          {air?.canModerate && <button className="btn ghost small" type="button" disabled={posting}
             style={{marginTop:8}} onClick={()=>void hide(item.id)}>Скрыть</button>}
         </div>)}
         <div ref={end}/>
