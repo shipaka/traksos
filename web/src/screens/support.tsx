@@ -148,15 +148,26 @@ export function useUnread() {
     if (!me) return;
     const load = () => get('/api/me/notifications').then((r) => setN(r.unread)).catch(() => {});
     load();
-    return onEvent(() => load());
+    const stop = onEvent(() => load());
+    window.addEventListener('traksos:notifications-read',load);
+    return () => { stop(); window.removeEventListener('traksos:notifications-read',load); };
   }, [me?.id]); // eslint-disable-line
   return n;
 }
 
 export function Notifications() {
   const list = useLoad(() => get('/api/me/notifications'), []);
-  useEffect(() => { post('/api/me/notifications/read').catch(() => {}); }, []);
-  const open = (n: any) => {
+  const [readError,setReadError]=useState('');
+  const [markingAll,setMarkingAll]=useState(false);
+  const open = async (n: any) => {
+    if (!n.read_at) {
+      try {
+        await post(`/api/me/notifications/${n.id}/read`);
+        window.dispatchEvent(new Event('traksos:notifications-read'));
+      } catch {
+        // Do not pretend that an offline mark was persisted; open the destination anyway.
+      }
+    }
     if (n.data?.orderId) go(`order/${n.data.orderId}`);
     else if (n.data?.ticketId) go(`support/${n.data.ticketId}`);
     else if (n.kind === 'verification') go('work/docs');
@@ -166,7 +177,18 @@ export function Notifications() {
   return (
     <main>
       <Back to="" />
-      <h1>Уведомления</h1>
+      <div className="between"><h1>Уведомления</h1>
+        <button className="btn ghost small" disabled={markingAll || !list.data?.unread} onClick={async()=>{
+          setMarkingAll(true);setReadError('');
+          try{
+            await post('/api/me/notifications/read');
+            await list.reload();
+            window.dispatchEvent(new Event('traksos:notifications-read'));
+          }catch{setReadError('Не удалось отметить уведомления: соединение недоступно');}
+          finally{setMarkingAll(false);}
+        }}>Прочитать все</button>
+      </div>
+      {readError && <p className="err" role="alert">{readError}</p>}
       {!list.data ? <Loading error={list.error} /> : !list.data.items.length ? <div className="empty">Пока ничего</div> : (
         <div className="rows">{list.data.items.map((n: any) => (
           <button key={n.id} className="list-item" style={{ width: '100%', background: n.read_at ? 'transparent' : 'var(--accent-soft)', border: 0, textAlign: 'left', color: 'inherit' }} onClick={() => open(n)}>
