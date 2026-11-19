@@ -185,6 +185,18 @@ class MainActivity : AppCompatActivity() {
             .addPathHandler("/", BundledWeb(this))
             .build()
         web = WebView(this)
+        // Legacy Android 10 Google-API system images can carry Chromium WebView 74.
+        // On a headless/software GPU its hardware-backed surface may stay blank,
+        // even while JS and the React guest screen run normally. Use the CPU
+        // compositor only for that outdated engine; current WebViews stay GPU-backed.
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
+            val major = WebView.getCurrentWebViewPackage()?.versionName
+                ?.substringBefore('.')?.toIntOrNull()
+            if (major != null && major in 1..79) {
+                web.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+                if (BuildConfig.DEBUG) android.util.Log.i("TrakSOSRuntime", "LEGACY_WEBVIEW_SOFTWARE_LAYER=$major")
+            }
+        }
         if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val pkg = WebView.getCurrentWebViewPackage()
             android.util.Log.i("TrakSOSRuntime", "WEBVIEW_VERSION=" + (pkg?.versionName ?: "unknown"))
