@@ -29,6 +29,8 @@ const api=file('server/src/app.ts');
 const finance=file('server/src/domain/money.ts');
 const rf=file('server/src/services/referral.ts');
 const guide=file('server/src/domain/economicsGuide.ts');
+const nav=file('web/src/main.tsx');
+
 const init=file('server/src/domain/defaults.ts');
 for(const [name,passes] of [
   ['Help consumes live economics',help.includes('<EconomicsGuide')],
@@ -45,6 +47,10 @@ for(const [name,passes] of [
   ['Financial guide contains examples',guide.includes('examples=[1_000_000,20_000_000]')],
   ['Financial guide is called from help',help.includes("import { EconomicsGuide }")],
   ['Financial guide shown to user',econ.includes('Математика на примерах')],
+  ['Every cabinet has finances menu',nav.includes("['/economics', 'Комиссии, баллы и рефералы']")],
+  ['Finance route is present',nav.includes("case 'economics': screen = <EconomicsPage />")],
+  ['Finance page reuses role server guide',econ.includes('export function EconomicsPage()')&&econ.includes('<EconomicsGuide />')],
+
 ])if(!passes)throw new Error('Knowledge consistency check failed: '+name);
 
 // Changes in these behavior modules require actual knowledge/offer files in the
