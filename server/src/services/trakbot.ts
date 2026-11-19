@@ -39,7 +39,7 @@ export function composeTrakBotReply(
   const expert = role === 'specialist';
   const danger = /\b(EBS|ABS|ECAS)\b|тормоз|рулев|педаль тормоза|brake|steer/i.test(input + ' ' + (context.ecu ?? ''));
   const safety = danger
-    ? '\n\nВажно: если тормоза, рулевое или подвеска работают неправильно, не продолжай движение до проверки специалистом.'
+    ? '\n\nВажно: если тормоза, рулевое или подвеска работают неправильно, не продолжайте движение до проверки специалистом.'
     : '';
   const incompatibleEcu = /^(EBS|ABS|ECAS)$/i.test((context.ecu ?? '').trim());
   if (codes.length) {
@@ -49,7 +49,7 @@ export function composeTrakBotReply(
     }
     const parts = codes.map((code) => {
       const row = found.find((x) => x.code === code);
-      if (!row) return 'По ' + code + ' проверенной расшифровки у меня пока нет. Лучше уточнить блок и формат кода.';
+      if (!row) return 'По ' + code + ' проверенной расшифровки пока нет. Лучше уточнить блок и формат кода.';
       const name = row.title_ru || row.title_en;
       const description = row.detail_ru ||
         (row.detail_en ? 'Есть английское описание в источнике, но русский технический перевод ещё не проверен.' : '');
