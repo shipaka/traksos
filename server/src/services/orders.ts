@@ -822,7 +822,7 @@ export class OrdersService {
       destination: o.destination, cargo: o.cargo, loaded: o.loaded, driverOnSite: o.driver_on_site, discountReason: o.discount_reason,
       money: this.money(o), result: o.result, resultNote: o.result_note,
       pointsFee: o.points_fee ?? 0, pointsCommission: actor === 'performer' || actor === 'admin' ? o.points_commission ?? 0 : undefined,
-      points: actor === 'client' && o.status === 'awaiting_confirmation' && this.referral ? await this.referral.available(o.client_id, this.money(o).clientFee) : null,
+      points: actor === 'client' && o.status === 'awaiting_confirmation' && this.referral ? await this.referral.clientAvailable(o.client_id, this.money(o).amount, this.money(o).clientFee) : null,
       bill: o.bill ?? null, billingStep: Number((await this.settings.get('pricing')).billingStepMinutes ?? 60),
       site: o.site, workStartedAt: o.work_started_at ?? null, waitRate: performer?.wait_rate ?? null, ownerNote: o.owner_note ?? null, partMode: o.part_mode ?? null, waitStartedAt: o.wait_started_at ?? null, waitMinutes: o.wait_minutes ?? 0,
       consultHint: o.consult_hint, consultOf: o.consult_of,
