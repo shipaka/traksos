@@ -160,3 +160,12 @@ html.traksos-reduced-motion .trakbot-message--new .trakbot-mascot {animation:non
 .trakbot-mascot--small .trakbot-mascot-original {border-radius:6px;}
 .trakbot-mascot--large .trakbot-mascot-original {border-radius:12px;}
 .trakbot-mascot-original + .trakbot-mascot-symbol {display:none!important;}
+
+/* Correctly cut original 19 Nov v3 technician sticker: artwork starts below
+   the title band and each pose stops ABOVE its caption. 30 frames 5x6.
+   The greeting has its own clearer crop to preserve details in the launcher. */
+.trakbot-mascot--hello .trakbot-mascot-original{
+  background-image:url('../public/trakbot-approved-hello.webp');
+  background-size:100% 100%;
+  background-position:center center;
+}

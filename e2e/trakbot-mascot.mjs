@@ -43,8 +43,13 @@ for (const r of BOT_REACTIONS) {
   assert(html.includes('aria-hidden="true"'), r.id + ': illustration must stay decorative');
 }
 const sprite = await readFile('web/public/trakbot-approved-30.webp');
-assert.equal(sprite.length, 5018, 'approved sprite file size changed');
+assert.equal(sprite.length, 4130, 'approved 30-frame sprite file size changed');
 assert.equal(createHash('sha256').update(sprite).digest('hex'),
-  'b60f010983f80fd5845e1b32c1ee4c5d9ab6be8e22a78e47a2117648c0288c55',
+  'd986b5c42c2487dcb594ac67bbbf0288eb327670369b0bac2cfb141e3d295bda',
   'approved sprite must remain the exact owner-selected 30-pose variant, no redraw');
-console.log('TrakBot: all 30 genuine owner-approved frames and reactions OK');
+const greeting = await readFile('web/public/trakbot-approved-hello.webp');
+assert.equal(greeting.length, 1540, 'the approved greeting is no longer the correct image');
+assert.equal(createHash('sha256').update(greeting).digest('hex'),
+  '41bc2764273d153b885b2b900ecf553d8a5b3f9f65ca4e83e765b8845d28c2fc',
+  'approved greeting must come from the original technician mascot');
+console.log('TrakBot: all 30 correctly cropped original poses and the approved greeting OK');
