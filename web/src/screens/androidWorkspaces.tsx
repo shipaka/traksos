@@ -161,7 +161,7 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
     {balance?.cash_debt > 0 && <a href="#/work/me/money" className="and19-row-link">
       Долг по комиссии с наличных <strong>{rub(balance.cash_debt)} ›</strong>
     </a>}
-    {performer.verification !== 'approved' && <a href="#/work/docs" className="and19-row-link">Проверка и документы профиля ›</a>
+    {performer.verification !== 'approved' && <a href="#/work/docs" className="and19-row-link">Проверка и документы профиля ›</a>}
     <div className="and19-quick">
       <a href="#/work/jobs">Все заявки</a>
       <a href="#/work/me/money">Финансы</a>
