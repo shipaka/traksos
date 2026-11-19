@@ -1,9 +1,22 @@
 /* Android workspaces approved 19.11.2026. Only real API-backed values. */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { get, rub } from '../api.ts';
 import { SERVICES, STATUS } from '../dict.ts';
 import { useLoad } from '../ui.tsx';
 import { OfferForm } from './search.tsx';
+
+/** Render a single role dashboard per viewport, rather than hiding a live component tree with CSS. */
+export function useMobileWorkspace() {
+  const [mobile, setMobile] = useState(() => window.matchMedia('(max-width: 899px)').matches);
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 899px)');
+    const update = () => setMobile(media.matches);
+    update();
+    media.addEventListener?.('change', update);
+    return () => media.removeEventListener?.('change', update);
+  }, []);
+  return mobile;
+}
 
 const IN_PROGRESS = ['searching', 'accepted', 'en_route', 'arrived', 'working', 'awaiting_confirmation'];
 const MILESTONES = ['Получено', 'Принято', 'В пути', 'На месте', 'Завершено'];
