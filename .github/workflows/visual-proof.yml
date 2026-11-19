@@ -1,0 +1,67 @@
+name: Реальные скриншоты TrakSOS
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+# A separate visual proof run so failed backend tests do not suppress screenshots.
+concurrency:
+  group: visual-proof-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: traksos
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://postgres@127.0.0.1:5432/traksos
+    steps:
+      - name: Исходники точно из интеграционной ревизии
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - name: Сборка реального веб-приложения
+        run: npm -w web run build
+      - name: Установка Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Запуск тестового сервера
+        run: |
+          npm -w server start > /tmp/traksos-visual-server.log 2>&1 &
+          for attempt in {1..60}; do
+            if curl -fsS http://127.0.0.1:8080/api/health >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/traksos-visual-server.log
+          exit 1
+      - name: Реальные снимки ПК и телефона на утверждённых размерах
+        run: node e2e/public-shots.mjs e2e/shots
+      - name: Реальная проверка TrakBot и переходов
+        run: node e2e/ui-smoke.mjs
+      - name: PNG со всех проверенных экранов
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screens-real-browser
+          path: e2e/shots/**/*.png
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Честный протокол визуальной проверки
+        if: always()
+        run: |
+          echo '### TrakSOS: screenshots — real Chromium, not mockups' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Owner-approved reference: 19 Nov 2026; file SHA256 87dfe69efc473842707cfb85fbe5a8cde2f691732a5be35d0f82def1a69cdda5.' >> "$GITHUB_STEP_SUMMARY"
+          echo "Source HEAD: ${{ github.event.pull_request.head.sha || github.sha }}" >> "$GITHUB_STEP_SUMMARY"
+          echo 'Artifact screens-real-browser contains actual HTML screenshots if build and Chromium launched.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Passing this job does not mean visual owner acceptance, Android acceptance, or production deployment.' >> "$GITHUB_STEP_SUMMARY"
