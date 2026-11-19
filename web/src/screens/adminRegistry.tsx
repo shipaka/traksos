@@ -127,7 +127,7 @@ export function AdminRegistry() {
         </label>
         <label className="stack">Регион
           <input className="field" value={draft.region} onChange={e=>set('region',e.target.value)}
-            placeholder="spb / lo / любой регион" maxLength={80}/>
+            placeholder="Санкт-Петербург, Ленинградская область, Москва…" maxLength={80}/>
         </label>
         <label className="stack">Город / адрес
           <input className="field" value={draft.city} onChange={e=>set('city',e.target.value)}
