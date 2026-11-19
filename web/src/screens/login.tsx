@@ -105,6 +105,9 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const [role, setRole] = useState<JoinRole | null>(null);
   const [customerType, setCustomerType] = useState<'owner' | 'driver'>('owner');
   const [specialties, setSpecialties] = useState<string[]>([]);
+  const [hybridMasterService, setHybridMasterService] = useState(false);
+  // A single vetted company may run both the mobile master and the fixed STO.
+  // The two cabinets and their scopes stay separate; no extra public role card.
   const [specialtiesOpen, setSpecialtiesOpen] = useState(true);
   const [insurerOnly, setInsurerOnly] = useState(false);
   const [agree, setAgree] = useState(false);
@@ -136,6 +139,8 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
     if (entry) go('');
   };
 
+  const partnerAccountType = intent === 'join' && (role === 'master' || role === 'service') && hybridMasterService
+    ? 'master_service' : role;
   async function sendCode() {
     if (busy) return;
     setCodeError('');
@@ -152,7 +157,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
       setCodeError('Выберите, кем хотите работать с TrakSOS.');
       return;
     }
-    if (intent === 'join' && role === 'master' && specialties.length === 0) {
+    if (intent === 'join' && (role === 'master' || hybridMasterService) && specialties.length === 0) {
       setCodeError('Выберите хотя бы одну специализацию мастера.');
       return;
     }
@@ -161,7 +166,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
     const r = await run(async () => {
       try {
         return await post('/api/auth/code', { phone, purpose: intent === 'reset' || intent === 'activate' ? 'reset' : 'register',
-          accountType: intent === 'join' ? role : intent === 'register' || intent === 'help' ? customerType : undefined });
+          accountType: intent === 'join' ? partnerAccountType : intent === 'register' || intent === 'help' ? customerType : undefined });
       } catch (e) {
         if (e instanceof ApiError && e.code === 'insurer_only') setInsurerOnly(true);
         setCodeError(authErrorMessage(e, 'Не удалось связаться с сервером. Проверьте интернет и повторите попытку.'));
@@ -206,7 +211,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
       try {
         return await post('/api/auth/verify', { phone, code,
           role: intent === 'join' ? role : undefined,
-          accountType: intent === 'join' ? role : intent === 'register' || intent === 'help' ? customerType : undefined,
+          accountType: intent === 'join' ? partnerAccountType : intent === 'register' || intent === 'help' ? customerType : undefined,
           purpose: intent === 'reset' || intent === 'activate' ? 'reset' : 'register', password,
           ref: (() => { try { return localStorage.getItem('traksos.ref') ?? undefined; } catch { return undefined; } })(), device: navigator.userAgent.slice(0, 200), acceptOffers: agree });
       } catch (e) {
@@ -219,7 +224,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
     if (r) await signedIn(r);
   }
   async function signedIn(r: any) {
-      if (intent === 'join' && role === 'master') {
+      if (intent === 'join' && (role === 'master' || hybridMasterService)) {
         try { sessionStorage.setItem('traksos.masterSpecialties', JSON.stringify(specialties)); } catch { /* private browsing */ }
       }
       toast('Вы вошли');
@@ -483,9 +488,13 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
                 <b>{partnerShowcase.tag}</b><span>{partnerShowcase.title}</span>
               </div>
             </div>
-            {role === 'master' && <details className="guest-master-specialties" open={specialtiesOpen}>
+            {(role === 'master' || role === 'service') && <label className="agree guest-partner-hybrid">
+              <input type="checkbox" checked={hybridMasterService} onChange={event=>setHybridMasterService(event.target.checked)}/>
+              <span><b>Работаю и выездным мастером, и в своей СТО</b> — открыть оба кабинета, профиль работ и режим работы каждого отдельно</span>
+            </label>}
+            {(role === 'master' || (role === 'service' && hybridMasterService)) && <details className="guest-master-specialties" open={specialtiesOpen}>
               <summary onClick={event => { event.preventDefault(); setSpecialtiesOpen(v => !v); }}>
-                Специализации мастера · выбрано: {specialties.length} <span aria-hidden="true">⌄</span>
+                Специализации выездного мастера · выбрано: {specialties.length} <span aria-hidden="true">⌄</span>
               </summary>
               <span className="label">Можно выбрать несколько вариантов</span>
               <div className="guest-master-specialties-grid">

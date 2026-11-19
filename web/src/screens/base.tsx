@@ -15,7 +15,7 @@ const basePut=(url:string,body:any)=>inServicePreview()?previewServiceApi('PUT',
 
 export const NEEDS: Record<string, string> = {
   electric: 'Электрика', air: 'Пневматика', engine: 'Двигатель', gearbox: 'КПП', brakes: 'Тормоза',
-  chassis: 'Ходовая', tires: 'Шины', ecu: 'Блоки управления', heater: 'Автономка', other: 'Другое',
+  chassis: 'Ходовая', tires: 'Шины', hydraulics: 'Гидравлика', ecu: 'Блоки управления', heater: 'Автономка', other: 'Другое',
 };
 const CONDITIONS: Record<string, string> = { parking: 'Стоянка для фуры', pit: 'Яма', lift: 'Подъёмник', night: 'Ночная работа' };
 const ACCEPTS: Record<string, [string, string]> = {
@@ -23,7 +23,7 @@ const ACCEPTS: Record<string, [string, string]> = {
 };
 const STAFF: Record<string, string> = { own: 'Есть у нас', invite: 'Приглашаем', none: 'Нет' };
 const REPAIR: [string, string][] = [['arrived', 'Машина приехала'], ['diagnostics', 'Диагностика'], ['in_work', 'В работе'], ['waiting_part', 'Ждём запчасть'], ['agreeing', 'Согласуем с клиентом']];
-const WORKS = ['Диагностика', 'Электрика', 'Пневматика', 'Двигатель', 'КПП', 'Тормоза', 'Ходовая', 'Шины', 'Сварка', 'Замена масла и фильтров'];
+const WORKS = ['Диагностика', 'Электрика', 'Пневматика', 'Двигатель', 'КПП', 'Тормоза', 'Ходовая', 'Шины', 'Гидравлика', 'Сварка', 'Замена масла и фильтров'];
 const DECLINE = ['Нет такого специалиста', 'Нет мест', 'Не работаем с этой маркой'];
 const CLARIFY = ['Нужно подробнее о поломке', 'Своим ходом или на эвакуаторе?', 'Нужен госномер прицепа'];
 const TONE: Record<string, string> = {

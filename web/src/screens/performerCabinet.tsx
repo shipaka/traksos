@@ -9,7 +9,7 @@ import { useLoad, useAction, useMe, go, Loading, Field, RubInput, Back } from '.
 
 const SPECIALTIES: { id: string; name: string }[] = [
   { id: 'electric', name: 'Электрика' }, { id: 'diag', name: 'Диагностика' }, { id: 'air', name: 'Пневма, тормоза' },
-  { id: 'autonomy', name: 'Автономки' }, { id: 'tyre', name: 'Шиномонтаж' }, { id: 'consult', name: 'Консультации' },
+  { id: 'autonomy', name: 'Автономки' }, { id: 'tyre', name: 'Шиномонтаж' }, { id: 'hydraulics', name: 'Гидравлика' }, { id: 'consult', name: 'Консультации' },
 ];
 
 /** Сохранить часть профиля: kind обязателен, остальное — только то, что меняем */

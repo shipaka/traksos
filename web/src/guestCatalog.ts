@@ -119,7 +119,7 @@ export const TOP_CATALOGUE: { title: string; serviceIds: ServiceId[]; direct?: b
 export const MASTER_SPECIALTIES = [
   { id:'electric', name:'Электрик' }, {id:'diag',name:'Диагност'},
   {id:'air',name:'Пневматика и тормоза'}, {id:'autonomy',name:'Автономщик'},
-  {id:'tyre',name:'Шиномонтаж'}, {id:'consult',name:'Консультации'},
+  {id:'tyre',name:'Шиномонтаж'}, {id:'hydraulics',name:'Гидравлика'}, {id:'consult',name:'Консультации'},
 ] as const;
 
 /** Short-lived client-side navigation hint; never grants a role or access. */

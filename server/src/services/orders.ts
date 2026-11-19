@@ -12,7 +12,7 @@ import { slot } from '../domain/schedule.ts';
 import { rub } from '../util.ts';
 import type { AuctionService } from './auction.ts';
 import type { OrderContinuationService } from './orderContinuation.ts';
-const SERVICE_TITLE: Record<string, string> = { consult: 'Консультация', electric: 'Электрик', air: 'Пневматика', autonomy: 'Автономка', tyre: 'Шиномонтаж', diag: 'Диагност', ecu: 'Блоки управления', tow: 'Эвакуатор' };
+const SERVICE_TITLE: Record<string, string> = { consult: 'Консультация', electric: 'Электрик', air: 'Пневматика', autonomy: 'Автономка', tyre: 'Шиномонтаж', hydraulics: 'Гидравлика', diag: 'Диагност', ecu: 'Блоки управления', tow: 'Эвакуатор' };
 
 export interface CreateOrderInput {
   service: string;
@@ -66,7 +66,7 @@ export interface PaymentHooks {
   assertMethodAllowed(method: string): Promise<void>;
 }
 
-const SERVICES = ['electric', 'diag', 'air', 'autonomy', 'tyre', 'tow', 'consult', 'ecu'];
+const SERVICES = ['electric', 'diag', 'air', 'autonomy', 'tyre', 'hydraulics', 'tow', 'consult', 'ecu'];
 const CONSULT_DISCOUNT = 'Скидка после консультации';
 
 export class OrdersService {
@@ -137,7 +137,7 @@ export class OrdersService {
           throw forbidden('Параллельный второй выезд с отдельной оплатой подтверждает владелец автопарка');
         if (i.parallelConsent !== true || !Number.isSafeInteger(i.parallelCallOut))
           throw bad('need_parallel_consent', 'Отдельно подтвердите стоимость второго выезда');
-        if (!['electric','diag','air','autonomy','tyre'].includes(previous.service) ||
+        if (!['electric','diag','air','autonomy','tyre','hydraulics'].includes(previous.service) ||
             !['accepted','en_route','arrived','working','awaiting_confirmation'].includes(previous.status))
           throw conflict('stage_not_ready', 'Для параллельной эвакуации сначала должен быть принят выезд мастера');
         if (previous.location_region && i.regionId !== previous.location_region)

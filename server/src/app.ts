@@ -557,7 +557,7 @@ export function createApp(d: Deps) {
   r.post('/api/admin/announcements', ['admin'], (c: AuthedCtx) =>
     ops.publish(c.user,parse(z.object({
       audience:z.enum(['master','tow','service','all_workers']),
-      service:z.enum(['electric','diag','air','autonomy','tyre','tow','consult','ecu']).nullish(),
+      service:z.enum(['electric','diag','air','autonomy','tyre','hydraulics','tow','consult','ecu']).nullish(),
       title:z.string().trim().min(3).max(140),body:z.string().trim().min(3).max(3000),
       startsAt:z.string().datetime(),endsAt:z.string().datetime(),published:z.boolean(),
     }),c.body)));
@@ -580,7 +580,7 @@ export function createApp(d: Deps) {
   });
   r.post('/api/admin/commission-campaigns', ['admin'], (c: AuthedCtx) =>
     ops.campaign(c.user,parse(z.object({
-      service:z.enum(['electric','diag','air','autonomy','tyre','tow','consult','ecu']).nullish(),
+      service:z.enum(['electric','diag','air','autonomy','tyre','hydraulics','tow','consult','ecu']).nullish(),
       commissionPct:z.number().min(0).max(100),
       startsAt:z.string().datetime(),endsAt:z.string().datetime(),
       enabled:z.boolean(),reason:z.string().trim().min(3).max(500),
@@ -641,7 +641,7 @@ export function createApp(d: Deps) {
   // Same contracts for the legacy single-section APIs and the atomic screen save.
   const performerProfileSchema = z.object({
     kind: z.enum(['master', 'tow', 'service', 'ecu']), name: z.string().min(1).max(100).optional(),
-    specialties: z.array(z.enum(['electric', 'diag', 'air', 'autonomy', 'tyre', 'consult'])).max(10).optional(),
+    specialties: z.array(z.enum(['electric', 'diag', 'air', 'autonomy', 'tyre', 'hydraulics', 'consult'])).max(10).optional(),
     brands: z.record(z.string().max(40), brandLevel).optional(), tier: z.enum(['eco', 'comfort', 'pro']).optional(),
     callOutPrice: money.nullish(), hourPrice: money.nullish(), kmRate: money.nullish(), prepMinutes: z.number().int().min(0).max(60).optional(),
     acceptsGroup: z.boolean().optional(), taxStatus: z.enum(['self_employed', 'ip']).nullish(), inn: z.string().nullish(),
