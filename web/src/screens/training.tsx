@@ -177,6 +177,10 @@ export function Training({ chapter }: { chapter?: string }) {
         {items.map((item, i) => <button type="button" key={item.title} className={i === index ? 'active' : ''} aria-current={i === index ? 'step' : undefined} onClick={() => setIndex(i)}>{i + 1}. {item.title}</button>)}
       </nav>
     </section>
+    <section className="tr-training-hero tr-training-practice-entry"><h2>Попробовать на примере</h2>
+      <p>Учебная заявка с кнопками и безопасными действиями. Всё выполняется внутри тренажёра, без реальных денег и уведомлений.</p>
+      <a className="btn" href={'#/practice/' + role}>Запустить тренировку</a>
+    </section>
     <section className="tr-training-reference">
       <h2>Деньги и правила</h2><p>{amountNote}</p>
       <p>Стоимость работы, сбор площадки, возможная скидка и итог должны быть показаны отдельно. Новый этап ремонта требует отдельного согласия клиента.</p>
