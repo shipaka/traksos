@@ -88,7 +88,8 @@ export function TrakBotDock({ authenticated }: { authenticated: boolean }) {
           }
         }, 220);
       }}>
-      {open && <div className="trakbot-dock-panel" role="dialog" aria-label="TrakBot — личный помощник" aria-modal="false">
+      {open && <div className={'trakbot-dock-panel' + (!authenticated ? ' trakbot-dock-panel--guest' : '')}
+        role="dialog" aria-label="TrakBot — личный помощник" aria-modal="false">
         <header className="trakbot-dock-head">
           <div className="trakbot-dock-brand"><TrakBotMascot reaction="hello" size="small" />
             <span><b>TrackSalesBot</b><small>TrakBot · Технический помощник</small></span></div>
@@ -97,24 +98,23 @@ export function TrakBotDock({ authenticated }: { authenticated: boolean }) {
         {authenticated ? <TrakBotChat compact onNavigate={() => setOpen(false)}
           onComposerSubmit={() => setInputFocused(false)} /> :
           <div className="trakbot-dock-guest">
-            <div className="trakbot-dock-guest-mascot"><TrakBotMascot reaction="hello" size="large" />
-              <span><b>Привет! Я TrackSalesBot.</b><small>Твой говорящий грузовичок-техник.</small></span></div>
-            <p>Могу показать, как устроен TrakSOS. Зарегистрируйся и узнай обо мне больше — личный диалог по машине доступен после входа.</p>
-            <nav aria-label="Что посмотреть в TrakSOS">
-              <a href="#/explore/van" onClick={() => setOpen(false)}>Услуги и выездная помощь</a>
-              <a href="#/join" onClick={() => setOpen(false)}>Как стать партнёром</a>
-              <a href="#/offers" onClick={() => setOpen(false)}>Условия и документы</a>
-              <a href="#/register" onClick={() => setOpen(false)}>Зарегистрироваться и узнать обо мне</a>
-              <a href="#/login" onClick={() => setOpen(false)}>Войти и поговорить с TrakBot</a>
+            <div className="trakbot-dock-guest-mascot">
+              <TrakBotMascot reaction="hello" size="small" />
+              <p><b>Привет! Я TrakBot.</b>
+                <span>Помощник TrakSOS. Хочешь познакомиться? Войди или зарегистрируйся.</span>
+              </p>
+            </div>
+            <nav aria-label="Вход и регистрация">
+              <a href="#/login" onClick={() => setOpen(false)}>Войти</a>
+              <a href="#/register" onClick={() => setOpen(false)}>Зарегистрироваться</a>
             </nav>
-            <p className="note">Подсказки ИИ справочные, не заменяют диагностику.</p>
           </div>}
       </div>}
       <button ref={triggerRef} type="button" className="trakbot-dock-launcher"
         aria-label={open ? 'Закрыть TrakBot' : 'Открыть TrakBot'} aria-expanded={open}
         onClick={() => setOpen((value) => !value)}>
         <TrakBotMascot reaction={open ? 'ok' : 'hello'} size="small" />
-        <span className="trakbot-dock-label">{open ? 'Закрыть' : 'TrackSalesBot'}</span>
+        <span className="trakbot-dock-label">{open ? 'Закрыть' : authenticated ? 'TrakBot' : 'Наш ИИ-помощник'}</span>
       </button>
     </aside>
   );
