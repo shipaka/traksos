@@ -1,3 +1,4 @@
+import './trakbotMascot.css';
 /**
  * TrackSalesBot/TrakBot character: ONE canonical truck technician across desktop,
  * Android WebView, the guest dock and the private chat.
