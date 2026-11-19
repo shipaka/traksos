@@ -110,6 +110,20 @@ jobs:
         with:
           name: tracksos-pr-debug-apk
           path: apk
+      # SDK repository downloads sometimes terminate with "Premature EOF" before
+      # any emulator is booted. Retry the SDK package install, not the app test.
+      - name: Preinstall Android emulator with bounded network retries
+        shell: bash
+        run: |
+          for attempt in 1 2 3; do
+            if sdkmanager --install emulator --channel=0; then
+              test -x "${ANDROID_HOME}/emulator/emulator" && exit 0
+            fi
+            echo "::warning::Android SDK emulator download failed (attempt ${attempt}/3)"
+            if [ "${attempt}" -lt 3 ]; then sleep $((attempt * 8)); fi
+          done
+          echo "::error::Android emulator SDK installation could not be completed"
+          exit 1
       - name: Boot emulator, launch APK and fail on native crash
         uses: reactivecircus/android-emulator-runner@v2
         with:
