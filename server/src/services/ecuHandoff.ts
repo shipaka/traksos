@@ -72,7 +72,7 @@ export class EcuHandoffService {
   });
  }
 
- async open(user:AuthUser,sourceOrderId:string,note:string){
+ async open(user:AuthUser,sourceOrderId:string,note:string,recommendationId?:string){
   const source=await this.db.one<any>('select * from orders where id=$1',[sourceOrderId]);
   if(!source)throw notFound('Исходная заявка не найдена');
   if(!repairServices.has(source.service))
@@ -86,14 +86,42 @@ export class EcuHandoffService {
    throw conflict('not_diagnosed','Сначала зафиксируйте работу или завершите консультацию');
   if(owner && !['awaiting_confirmation','completed'].includes(source.status))
    throw conflict('not_diagnosed','Для передачи нужно заключение специалиста');
+  // A direct free technical handoff by the assigned performer remains allowed.
+  // Only an explicit owner action may consume an approved recommendation.
+  if(recommendationId){
+   if(!owner || user.owner_id)
+    throw forbidden('Рекомендацию ЭБУ подтверждает только владелец автопарка');
+   const rec=await this.db.one<{id:string}>(
+    "select id from order_continuation_recommendations where id=$1" +
+    " and source_order_id=$2 and client_id=$3 and target_kind='ecu'" +
+    " and status='approved'",[recommendationId,sourceOrderId,user.id]);
+   if(!rec)throw forbidden('Сначала согласуйте рекомендацию ЭБУ');
+  }
   const clean=safe(note);
   if(clean.length<10)throw bad('need_summary','Напишите техническое заключение (от 10 символов)');
   const root=source.case_root_id??source.id;
   const created=await this.db.tx(async q=>{
    await q.query('select pg_advisory_xact_lock(hashtext($1))',['ecu-case:'+root]);
-   const fromSameSource=await q.one<{id:string}>(
-    'select id from ecu_handoffs where source_order_id=$1',[sourceOrderId]);
-   if(fromSameSource)return {id:fromSameSource.id,isNew:false};
+   const fromSameSource=await q.one<{
+    id:string;continuation_recommendation_id:string|null;state:string
+   }>('select id,continuation_recommendation_id,state from ecu_handoffs where source_order_id=$1',
+    [sourceOrderId]);
+   if(fromSameSource){
+    if(recommendationId && fromSameSource.continuation_recommendation_id!==recommendationId){
+     if(fromSameSource.continuation_recommendation_id)
+      throw conflict('recommendation_already_used','Передача уже связана с другим согласием');
+     if(fromSameSource.state==='closed')
+      throw conflict('handoff_closed','Эта техническая передача уже закрыта');
+     // The owner explicitly attaches an existing free handoff to their
+     // approved advice; the old record itself is not duplicated or charged.
+     await q.query('update ecu_handoffs set continuation_recommendation_id=$2 where id=$1',
+      [fromSameSource.id,recommendationId]);
+     await q.query(
+      "insert into order_events(order_id,actor_id,type,data) values($1,$2,'ecu_handoff_recommendation_linked',$3)",
+      [sourceOrderId,user.id,{handoffId:fromSameSource.id,recommendationId}]);
+    }
+    return {id:fromSameSource.id,isNew:false};
+   }
    const previous=await q.one<{id:string;source_order_id:string}>(
     "select id,source_order_id from ecu_handoffs where root_order_id=$1 and state in ('pending','selected')",[root]);
    if(previous){
@@ -101,8 +129,9 @@ export class EcuHandoffService {
     throw conflict('handoff_exists','По этому обращению уже создана передача ремонтникам ЭБУ');
    }
    const row=await q.one<{id:string}>(
-    'insert into ecu_handoffs(root_order_id,source_order_id,client_id,created_by,summary)' +
-    ' values($1,$2,$3,$4,$5) returning id',[root,sourceOrderId,source.client_id,user.id,clean]);
+    'insert into ecu_handoffs(root_order_id,source_order_id,client_id,created_by,summary,continuation_recommendation_id)' +
+    ' values($1,$2,$3,$4,$5,$6) returning id',
+    [root,sourceOrderId,source.client_id,user.id,clean,recommendationId??null]);
    await q.query("insert into order_events(order_id,actor_id,type,data) values($1,$2,'ecu_handoff_created',$3)",
     [sourceOrderId,user.id,{handoffId:row!.id}]);
    return {id:row!.id,isNew:true};
