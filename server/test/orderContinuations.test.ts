@@ -206,3 +206,56 @@ test('consultant STO advice creates one numbered same-case workshop booking, wit
  assert.equal(caseData.caseSummary.multiStage,true);
  assert.equal(caseData.caseSummary.serviceBookings.some((b:any)=>b.id===booked.id),true);
 });
+
+test('legacy free ECU handoff does not impersonate pending advice; explicit owner consent links it without charge',async()=>{
+ const consult=ok(await t.api('POST','/api/orders',{
+  service:'consult',zoneId:'phone',brand:'Renault',
+  description:'Пропала связь с электронным блоком после ремонта проводки',
+  paymentMethod:'cash'
+ },owner.token)).order;
+ await t.db.query(
+  "update orders set status='awaiting_confirmation',performer_id=$2 where id=$1",
+  [consult.id,consultant.id]);
+ const direct=ok(await t.api('POST','/api/orders/'+consult.id+'/ecu-handoff',{
+  summary:'Мастер заранее передал техническое заключение о неисправности ЭБУ'
+ },consultant.token));
+ assert.equal(direct.created,true,'free specialist-to-specialist transfer remains possible');
+ const advice=ok(await t.api('POST','/api/orders/'+consult.id+'/continuations',{
+  target:'ecu',
+  summary:'Рекомендую отдельную стендовую диагностику ЭБУ после консультации'
+ },consultant.token));
+ const pending=ok(await t.api('GET','/api/orders/'+consult.id+'/continuations',undefined,owner.token));
+ assert.equal(pending[0].status,'pending');
+ assert.equal(pending[0].next_ecu_handoff_id,null,
+  'a direct legacy handoff must not appear as fulfilment of pending owner advice');
+ const request={
+  summary:'Мастер передал исходное заключение, прошу продолжить согласованную передачу',
+  recommendationId:advice.id
+ };
+ assert.equal((await t.api('POST','/api/orders/'+consult.id+'/ecu-handoff',
+  request,owner.token)).status,403,'pending advice cannot be consumed');
+ assert.equal((await t.api('POST','/api/orders/'+consult.id+'/ecu-handoff',
+  request,consultant.token)).status,403,'the technician cannot accept for the owner');
+ assert.equal((await t.api('POST','/api/orders/'+consult.id+'/ecu-handoff',
+  request,outsider.token)).status,403,'unrelated user cannot consume consent');
+ ok(await t.api('POST','/api/orders/'+consult.id+'/continuations/'+advice.id+'/decision',
+  {approve:true},owner.token));
+ const afterApproval=ok(await t.api('GET','/api/orders/'+consult.id+'/continuations',undefined,owner.token));
+ assert.equal(afterApproval[0].next_ecu_handoff_id,null,
+  'approval itself does not retroactively bind the preexisting handoff');
+ const attached=ok(await t.api('POST','/api/orders/'+consult.id+'/ecu-handoff',
+  request,owner.token));
+ assert.equal(attached.id,direct.id,'no duplicate handoff');
+ assert.equal(attached.created,false,'existing technical transfer is reused, never charged');
+ const retried=ok(await t.api('POST','/api/orders/'+consult.id+'/ecu-handoff',
+  request,owner.token));
+ assert.equal(retried.id,direct.id);
+ assert.equal(retried.created,false);
+ const stored=await t.db.one<{continuation_recommendation_id:string}>(
+  'select continuation_recommendation_id from ecu_handoffs where id=$1',[direct.id]);
+ assert.equal(stored?.continuation_recommendation_id,advice.id);
+ assert.equal((await t.db.query('select id from ecu_handoffs where source_order_id=$1',[consult.id])).length,1);
+ assert.equal((await t.db.query('select id from payments where order_id=$1',[consult.id])).length,0);
+ const linked=ok(await t.api('GET','/api/orders/'+consult.id+'/continuations',undefined,owner.token));
+ assert.equal(linked[0].next_ecu_handoff_id,direct.id);
+});
