@@ -151,3 +151,58 @@
   .trakbot-compact-body .trakbot-dialog .msgs { min-height:0!important; }
 }
 @media(prefers-reduced-motion:reduce){.trakbot-dock *{scroll-behavior:auto;transition:none!important;}}
+
+/* Guest main page: an opt-in invitation, not an active chat window.
+   Preserve the approved hero and make the assistant a tiny side element. */
+.trakbot-dock-panel--guest {
+  width:min(330px,calc(100vw - 24px));
+  height:auto !important;
+  min-height:0;
+  max-height:min(65dvh,440px);
+}
+.trakbot-dock-panel--guest .trakbot-dock-head { padding:8px 10px; }
+.trakbot-dock-panel--guest .trakbot-dock-brand .trakbot-mascot { --bot-size:32px; }
+.trakbot-dock-guest {
+  padding:12px;
+  gap:11px;
+}
+.trakbot-dock-guest-mascot { align-items:flex-start; gap:9px; }
+.trakbot-dock-guest-mascot .trakbot-mascot {
+  --bot-size:44px;
+  width:44px;height:44px;
+}
+.trakbot-dock-guest-mascot p { flex:1 1 auto;min-width:0;margin:0; }
+.trakbot-dock-guest-mascot b {
+  display:block;margin:2px 0 3px;font-size:14px;color:#f8ad63;
+}
+.trakbot-dock-guest-mascot p span {
+  display:block;font-size:12px;line-height:1.5;color:#e4edf3;
+}
+.trakbot-dock-guest nav {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+}
+.trakbot-dock-guest nav a {
+  min-width:0;min-height:44px;padding:8px 6px;box-sizing:border-box;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  font-size:12px;font-weight:700;
+}
+.trakbot-dock-guest nav a:last-child {
+  border-color:#f6a05b;background:rgba(255,119,24,.12);
+}
+.trakbot-dock-guest nav a:focus-visible{
+  outline:3px solid #ffbf8b;outline-offset:2px;
+}
+@media(max-width:899px){
+  .trakbot-dock-panel--guest {
+    height:auto !important;
+    max-height:min(60dvh,340px);
+    width:min(320px,calc(100vw - 20px));
+  }
+  .trakbot-dock-guest {padding:10px;gap:8px;}
+  .trakbot-dock-guest-mascot .trakbot-mascot {
+    --bot-size:37px;width:37px;height:37px;
+  }
+  .trakbot-dock-guest-mascot b {font-size:13px;}
+  .trakbot-dock-guest-mascot p span {font-size:11px;}
+  .trakbot-dock-guest nav a {font-size:11px;min-height:44px;}
+}
