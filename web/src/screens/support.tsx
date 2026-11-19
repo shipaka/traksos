@@ -177,7 +177,7 @@ export function Notifications() {
   return (
     <main>
       <Back to="" />
-      <div className="between"><h1>Уведомления</h1>
+      <div className="between notifications-header"><h1>Уведомления</h1
         <button className="btn ghost small" disabled={markingAll || !list.data?.unread} onClick={async()=>{
           setMarkingAll(true);setReadError('');
           try{

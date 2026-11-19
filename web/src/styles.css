@@ -38,6 +38,14 @@ h2 { margin: 0; font-size: 17px; }
 .stack { display: flex; flex-direction: column; gap: 10px; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .between { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+/* Notifications header on 320px Android: don't force the bulk-read button
+   beyond the viewport beside a non-shrinking Russian heading. */
+.between.notifications-header{flex-wrap:wrap;align-items:flex-start;min-width:0;}
+.between.notifications-header>h1{flex:1 1 auto;min-width:0;}
+.between.notifications-header>.btn.small{
+  flex:0 1 auto;min-width:0;max-width:100%;white-space:normal;
+}
+
 .scroll-x { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
 .scroll-x::-webkit-scrollbar { display: none; }
 .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
