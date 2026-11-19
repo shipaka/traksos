@@ -67,6 +67,7 @@ try {
         loginCount: header?.querySelectorAll('a[href="#/login"]').length ?? 0,
         registerCount: header?.querySelectorAll('a[href="#/register"]').length ?? 0,
         serviceTiles: document.querySelectorAll('.public-service-tile').length,
+        tileIcons: document.querySelectorAll('.public-service-tile .public-service-icon svg').length,
       };
     });
     assert(data.scrollWidth <= data.clientWidth + 2,
@@ -74,6 +75,7 @@ try {
     assert(data.loginCount === 1 && data.registerCount === 1,
       width + 'px: duplicated/missing login or registration buttons');
     assert(data.serviceTiles === 6, width + 'px: unexpected public services count');
+    assert(data.tileIcons === 6, width + 'px: technical icon missing from a public tile');
     assert(data.heroCss?.includes('tracksos-approved-scenic-hero') && !data.heroCss.includes('traksos-final-hero'),
       width + 'px: full approved Scania photo without baked carousel controls is not displayed');
     assert(data.mapCss?.includes('tracksos-approved-map'),
@@ -95,13 +97,14 @@ try {
       assert(check, width + 'px: approved image cannot be loaded: ' + name);
     }
 
-    // Two approved hero CTAs: login and client registration, no forced SOS flow.
-    await page.locator('.public-actions').getByRole('button', { name: 'Войти', exact: true }).click();
+    // Last approved 19 Nov layout has login in the desktop/mobile header;
+    // the public hero is intentionally registration-first, without a duplicate login.
+    await page.locator('.guest-header-actions').getByRole('link', { name: 'Войти', exact: true }).click();
     await page.getByRole('heading', { name: 'Вход по номеру телефона' }).waitFor();
     assert(await page.getByText('Помогите — нужна помощь').count() === 0,
       width + 'px: legacy help button is still displayed');
     await page.goto(BASE + '/#/');
-    await page.locator('.public-actions').getByRole('button', { name: 'Регистрация', exact: true }).click();
+    await page.locator('.public-actions').getByRole('button', { name: 'Зарегистрироваться', exact: true }).click();
     await page.getByRole('heading', { name: 'Регистрация в TrakSOS' }).waitFor();
     for (const name of ['Владелец / автопарк','Водитель автопарка']) {
       assert(await page.getByRole('button', { name }).isVisible(),

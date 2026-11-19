@@ -111,3 +111,74 @@
 .guest-app .public-landing .public-hero-visual.public-hero-slide-service{
   background-image:url('../public/tracksos-hero-service-hq.webp')!important;
 }
+
+/* Desktop reproduction corrections based on real Chromium screenshots
+   versus the 19 Nov OWNER-APPROVED screenshot (not the obsolete 14 Nov files).
+   Mobile and existing operational cabinets retain their separate layouts. */
+@media(min-width:1200px){
+  .guest-app .public-landing .public-brand-hero{
+    border:0!important;border-radius:0!important;
+    min-height:510px!important;
+    padding:32px clamp(32px,4vw,70px)!important;
+  }
+  .guest-app .public-landing .public-hero-copy{width:min(47%,650px)!important;}
+  .guest-app .public-landing .public-hero-visual.public-hero-slide-approved{
+    background-size:84% auto!important;
+    background-position:right center!important;
+    background-color:#061827!important;
+  }
+  .guest-app .public-landing .public-brand-hero::before{
+    background:linear-gradient(90deg,#031725 0%,rgba(3,23,37,.97) 21%,rgba(3,23,37,.5) 51%,rgba(3,23,37,.02) 79%)!important;
+  }
+  .guest-app .public-landing .public-content-grid{
+    grid-template-columns:minmax(0,1fr) minmax(270px,20%)!important;
+    gap:14px!important;margin-top:10px!important;
+    align-items:start!important;
+  }
+  .guest-app .public-landing .public-service-tiles{height:auto!important;align-items:start!important;}
+  .guest-app .public-landing .public-service-tile{
+    display:grid!important;grid-template-columns:48px minmax(0,1fr)!important;
+    grid-template-rows:58px minmax(0,1fr)!important;
+    gap:0 6px!important;align-content:center!important;
+    height:145px!important;min-height:145px!important;
+    padding:15px 10px!important;justify-content:initial!important;
+    border-radius:15px!important;
+  }
+  .guest-app .public-landing .public-service-tile .public-service-icon{
+    grid-column:1!important;grid-row:1/3!important;align-self:center!important;
+    width:44px!important;height:44px!important;place-items:center!important;
+  }
+  .guest-app .public-landing .public-service-tile b{
+    grid-column:2!important;grid-row:1!important;align-self:end!important;
+    font-size:clamp(13px,1.05vw,18px)!important;
+  }
+  .guest-app .public-landing .public-service-tile small{
+    grid-column:2!important;grid-row:2!important;align-self:start!important;
+    padding-top:7px!important;font-size:clamp(10px,.71vw,12px)!important;
+  }
+  .guest-app .public-landing .public-app-card{
+    min-height:172px!important;height:172px!important;
+    padding:14px 110px 12px 14px!important;
+    justify-content:center!important;
+  }
+  .guest-app .public-landing .public-why-strip{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:16px!important;margin:14px 0!important;padding:10px 20px!important;
+  }
+  .guest-app .public-landing .public-why-strip>article.public-benefit{
+    background:transparent!important;border:0!important;box-shadow:none!important;
+    min-height:85px!important;padding:13px 8px!important;
+  }
+}
+.guest-app .public-landing .public-service-icon svg{
+  display:block;width:36px;height:36px;stroke:currentColor;
+  filter:drop-shadow(0 0 5px rgba(0,204,255,.35));
+}
+.guest-app .public-landing .public-service-tile:focus-visible{
+  outline:3px solid #2bdaff!important;outline-offset:3px!important;
+}
+@media(max-width:899px){
+  .guest-app .public-landing .public-service-tile .public-service-icon svg{
+    width:30px;height:30px;
+  }
+}

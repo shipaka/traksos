@@ -15,6 +15,20 @@ const HERO_SLIDES = [
     caption: 'Запись доступна после входа при наличии подключённых станций.' },
 ] as const;
 
+
+/** Approved 19 November visual system: recognisable service icons, not font glyph boxes. */
+function PublicTileIcon({ id }: { id: typeof PUBLIC_HOME_TILES[number]['id'] }) {
+  const shared = { fill:'none', stroke:'currentColor', strokeWidth:2, strokeLinecap:'round' as const, strokeLinejoin:'round' as const };
+  return <svg viewBox="0 0 48 48" width="40" height="40" aria-hidden="true" focusable="false" {...shared}>
+    {id === 'sos' ? <><path d="M24 5 45 42H3Z"/><path d="M24 17v13m0 6v1"/></>
+      : id === 'air' ? <><circle cx="24" cy="25" r="4" fill="currentColor" stroke="none"/><path d="M15 16a12 12 0 0 0 0 18m18-18a12 12 0 0 1 0 18M9 10a20 20 0 0 0 0 30m30-30a20 20 0 0 1 0 30"/></>
+      : id === 'sto' ? <><path d="M29 5a13 13 0 0 0-11 18L5 36a5 5 0 0 0 7 7l13-13A13 13 0 0 0 43 14l-9 9-9-2-2-9Z"/></>
+      : id === 'ecu' ? <><rect x="11" y="11" width="26" height="26" rx="3"/><rect x="18" y="18" width="12" height="12" rx="1"/><path d="M17 4v7m7-7v7m7-7v7M17 37v7m7-7v7m7-7v7M4 17h7m-7 7h7m-7 7h7m26-14h7m-7 7h7m-7 7h7"/></>
+      : id === 'parts' ? <><path d="M19 5h10l2 6 5 2 6-2 5 9-5 4v6l5 4-5 9-6-2-5 2-2 6H19l-2-6-5-2-6 2-5-9 5-4v-6l-5-4 5-9 6 2 5-2Z" transform="translate(0,-3) scale(.96)"/><circle cx="24" cy="24" r="8"/></>
+      : <><path d="M24 4 42 12v14c0 10-7 17-18 20C13 43 6 36 6 26V12Z"/><path d="m15 25 6 6 12-13"/></>}
+  </svg>;
+}
+
 function PublicDemoMapBackdrop() {
   // The public demonstration map is a bundled, immutable asset.
   // It is never replaced with text because of network quality.
@@ -301,10 +315,10 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         <section className="public-real-services" id="public-services">
           <div className="public-section-head public-services-a11y-title"><span className="public-section-kicker">ПОМОЩЬ ГРУЗОВИКАМ</span><h2>Все услуги TrakSOS</h2></div>
           <div className="public-service-tiles">
-            {PUBLIC_HOME_TILES.map(({id,icon,title,hint,href}) => (
+            {PUBLIC_HOME_TILES.map(({id,title,hint,href}) => (
               <a href={href} className={'public-service-tile public-service-' + id}
                 key={id}>
-                <span className="public-service-icon" aria-hidden="true">{icon}</span>
+                <span className="public-service-icon" aria-hidden="true"><PublicTileIcon id={id}/></span>
                 <b>{title}</b><small>{hint}</small><span className="public-service-arrow">Далее <span aria-hidden="true">›</span></span>
               </a>
             ))}
