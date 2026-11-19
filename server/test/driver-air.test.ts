@@ -5,7 +5,7 @@ import { setup, ok, type T } from './helpers.ts';
 let t:T; let driver:any, other:any, owner:any, admin:any, master:any, tow:any, service:any;
 before(async()=>{
   t=await setup();
-  driver=await t.login('+79997778101');
+  driver=await t.login('+79997778101','driver');
   other=await t.login('+79997778102');
   owner=await t.login('+79997778104','client');
   master=await t.login('+79997778105','master');
