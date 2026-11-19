@@ -148,7 +148,7 @@ export function PlatformIntro() {
       <a className="btn ghost" href="#/help">Открыть энциклопедию ситуаций</a>
     </section>
     <div className="row" style={{gap:12,flexWrap:'wrap'}}>
-      <a href="#/help">Вся справка</a><a href="#/trakbot">Спросить TrakBot</a>
+      <a href="#/help">Вся справка</a><a href="#/economics">Комиссии, баллы и рефералы</a><a href="#/trakbot">Спросить TrakBot</a>
       <button className="btn ghost small" type="button" onClick={finish}>Завершить знакомство</button>
     </div>
     <p className="note">Повторить знакомство можно в «Меню → Знакомство с TrakSOS».</p>
