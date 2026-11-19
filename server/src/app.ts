@@ -21,6 +21,7 @@ import { OrdersService } from './services/orders.ts';
 import { EcuHandoffService } from './services/ecuHandoff.ts';
 import { OrderContinuationService } from './services/orderContinuation.ts';
 import { OrderSlaService } from './services/orderSla.ts';
+import { OrderUnilateralClosureService } from './services/orderUnilateralClosure.ts';
 import { ChatService } from './services/chat.ts';
 import { ReviewsService, REVIEW_TAGS } from './services/reviews.ts';
 import { OffersService } from './services/offers.ts';
@@ -100,6 +101,7 @@ export function createApp(d: Deps) {
   const stats = new StatsService(d.db, now);
   const ops = new OpsService(d.db, now);
   const orderSla = new OrderSlaService(d.db, orders, notifier, now);
+  const unilateralClose = new OrderUnilateralClosureService(d.db, orders, notifier, now);
   orders.ops = ops;
   const centers = new ServiceCenters(d.db, notifier, settings, support, now);
   const referral = new ReferralService(d.db, settings, notifier, now);
@@ -1161,6 +1163,17 @@ export function createApp(d: Deps) {
   r.post('/api/orders/:id/consult-finish', performerRoles, (c: AuthedCtx) => orders.finishConsult(c.user, c.params.id, parse(z.object({
     hints: z.array(z.string().min(1).max(40)).min(1).max(3), confidence: z.enum(['sure', 'likely', 'guess']), note: z.string().max(300).optional(),
   }), c.body)));
+  r.post('/api/orders/:id/unilateral-closure', performerRoles, (c: AuthedCtx) => {
+    const b = parse(z.object({
+      requestKey:z.string().uuid(),
+      reason:z.enum(['no_connection','phone_unavailable','customer_absent','other']),
+      comment:z.string().min(10).max(1500),
+      physicalWorkConfirmed:z.literal(true),
+      evidenceRefs:z.array(z.string().uuid()).max(8).optional(),
+    }),c.body);
+    return unilateralClose.submit(c.user,c.params.id,b);
+  });
+  r.get('/api/admin/unilateral-closures', staff, (c: AuthedCtx) => unilateralClose.queue(c.user));
   r.post('/api/orders/:id/confirm', true, (c: AuthedCtx) => { const b = parse(z.object({ total: money.optional(), points: money.optional() }), c.body); return orders.confirmAmount(c.user, c.params.id, b.total, b.points ?? 0); });
   r.post('/api/orders/:id/dispute', true, (c: AuthedCtx) => orders.disputeAmount(c.user, c.params.id, parse(z.object({ reason: z.string().min(2).max(500) }), c.body).reason));
   r.post('/api/orders/:id/cancel', true, (c: AuthedCtx) => orders.cancel(c.user, c.params.id, parse(z.object({ reason: z.string().min(2).max(300) }), c.body).reason));
