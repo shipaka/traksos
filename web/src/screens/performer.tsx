@@ -136,12 +136,19 @@ export function Work({background=false}:{background?:boolean}={}) {
  * /api/orders?as=performer and /api/performer/auctions. No global client lookup.
  * Current orders API returns the most recent 100 assigned jobs.
  */
-function MobileWorkSearch({jobs,incoming,onOfferDone}:{
+function MobileWorkSearch({jobs,incoming,onOfferDone,intent}:{
   jobs:any[]; incoming:any[]; onOfferDone:()=>void;
+  intent:{scope:'incoming'|'mine'|'archive';count:number};
 }) {
   const [expanded,setExpanded] = useState(false);
   const [query,setQuery] = useState('');
   const [scope,setScope] = useState<'mine'|'incoming'|'archive'>('mine');
+  useEffect(()=>{
+    if(!intent.count) return;
+    setScope(intent.scope);
+    setExpanded(true);
+    document.getElementById('work-mobile-search')?.scrollIntoView({behavior:'smooth',block:'start'});
+  },[intent.count,intent.scope]);
   const normalize=(x:unknown)=>String(x??'').toLocaleLowerCase('ru-RU').trim();
   const needle=normalize(query);
   const searchText=(o:any)=>[
@@ -154,7 +161,7 @@ function MobileWorkSearch({jobs,incoming,onOfferDone}:{
         ? ['completed','cancelled'].includes(o.status)
         : !['completed','cancelled'].includes(o.status))
         .filter((o:any)=>searchText(o).includes(needle));
-  return <section className="work-mobile-search" aria-label="Поиск заявок мастера">
+  return <section id="work-mobile-search" className="work-mobile-search" aria-label="Поиск заявок мастера">
     <div className="work-mobile-searchbar">
       <span aria-hidden="true" className="work-mobile-search-icon">⌕</span>
       <input type="search" aria-label="Поиск по своим заявкам, номеру, госномеру или адресу"
@@ -213,6 +220,9 @@ function MobilePerformerWork({p, personName, active, awaiting, jobs, incoming, o
   setLine:(line:string, until?:string)=>void;
 }) {
   const first = active[0];
+  const [searchIntent,setSearchIntent] = useState<{scope:'incoming'|'mine'|'archive';count:number}>({scope:'mine',count:0});
+  const [lineOptionsOpen,setLineOptionsOpen] = useState(false);
+  const switchable = p.verification === 'approved' && ['online','offline'].includes(p.line_status);
   const stage:Record<string,string> = {
     accepted:'Принята — пора выезжать', en_route:'Вы в пути', arrived:'Вы на месте',
     working:'Идёт работа', awaiting_confirmation:'Ждём подтверждения клиента',
@@ -223,31 +233,60 @@ function MobilePerformerWork({p, personName, active, awaiting, jobs, incoming, o
       <h1>Рабочая смена</h1>
       <div className="work-mobile-person">
         <span>{personName || (p.kind==='tow' ? 'Эвакуаторщик' : 'Мастер')}</span>
-        <span className="work-mobile-state"><span className={'dot '+(online?'on':'')}/>
-          {LINE[p.line_status] || 'Доступность не указана'}</span>
+        <div className="work-mobile-presence">
+          <span className="work-mobile-state"><span className={'dot '+(online?'on':'')}/>
+            {p.line_status==='online'?'На линии':LINE[p.line_status] || 'Доступность не указана'}</span>
+          {switchable && <button type="button" role="switch"
+            className={'work-mobile-switch'+(p.line_status==='online'?' is-on':'')}
+            aria-label="Принимать новые заявки" aria-checked={p.line_status==='online'}
+            title={p.line_status==='online'?'Уйти с линии':'Выйти на линию'}
+            disabled={busy} onClick={()=>setLine(p.line_status==='online'?'offline':'online')}>
+            <span aria-hidden="true"/>
+          </button>}
+        </div>
       </div>
     </header>
     <WorkerNotices />
-    <MobileWorkSearch jobs={jobs} incoming={incoming} onOfferDone={onOfferDone}/>
-    {p.verification === 'approved'
-      ? <LineCard p={p} busy={busy} setLine={setLine} online={online}/>
-      : <section className="card stack" aria-label="Проверка исполнителя">
-          <strong>{p.verification==='rejected'?'Проверка не пройдена':p.submitted_at?'Профиль на проверке':'Подтвердите профиль'}</strong>
-          <span className="note">{p.verification_note || 'Пока статус не подтверждён, ознакомьтесь с условиями приёма заявок.'}</span>
-          <a className="btn ghost" href="#/work/docs">Документы исполнителя</a>
-        </section>}
+    <MobileWorkSearch jobs={jobs} incoming={incoming} onOfferDone={onOfferDone} intent={searchIntent}/>
+    <nav className="work-mobile-launcher" aria-label="Быстрые рабочие действия">
+      <button type="button" className="work-mobile-launcher-new"
+        onClick={()=>setSearchIntent(v=>({scope:'incoming',count:v.count+1}))}>
+        <span className="work-mobile-launcher-icon" aria-hidden="true">⚡</span>
+        <span>Входящие</span>
+        {incoming.length>0 && <b className="work-mobile-launcher-count">{incoming.length}</b>}
+      </button>
+      <a href="#/work/jobs"><span className="work-mobile-launcher-icon" aria-hidden="true">☷</span><span>Мои заявки</span></a>
+      <a href="#/work/me/schedule"><span className="work-mobile-launcher-icon" aria-hidden="true">▦</span><span>График</span></a>
+      <a href="#/work/me/money"><span className="work-mobile-launcher-icon" aria-hidden="true">₽</span><span>Финансы</span></a>
+    </nav>
+    {p.verification !== 'approved' && <section className="card stack" aria-label="Проверка исполнителя">
+      <strong>{p.verification==='rejected'?'Проверка не пройдена':p.submitted_at?'Профиль на проверке':'Подтвердите профиль'}</strong>
+      <span className="note">{p.verification_note || 'Для работы и доступа к заявкам проверьте настройки профиля.'}</span>
+      <a className="btn ghost" href="#/work/docs">Проверка и документы</a>
+    </section>}
+    {p.verification === 'approved' && <div className="work-mobile-extra-presence">
+      <button className="work-mobile-extra-button" type="button"
+        aria-expanded={lineOptionsOpen} onClick={()=>setLineOptionsOpen(v=>!v)}>
+        {p.line_status==='on_job'?'Статус: на выезде · настройки заблокированы':'Перерыв, статус звонка и настройки заявок'} 
+        <span aria-hidden="true">{lineOptionsOpen?'⌃':'⌄'}</span>
+      </button>
+      {lineOptionsOpen && <LineCard p={p} busy={busy} setLine={setLine} online={online} shareLocation={false}/>}
+      {online && <div className="work-mobile-location"><LocationSharing/></div>}
+    </div>}
     {first ? <section className="work-mobile-current" aria-label="Активная заявка">
         <span className="work-mobile-kicker">СЕЙЧАС В РАБОТЕ</span>
         <h2>№{first.number} · {SERVICES[first.service]?.name || first.service}</h2>
         <p className="work-mobile-stage">{stage[first.status] || 'Открытая заявка'}</p>
         <p className="note">{first.address || first.estimate?.zoneName || 'Место — в карточке заявки'}</p>
-        <div className="work-mobile-progress" aria-label="Этапы текущей работы">
+        <div className="work-mobile-progress" role="list" aria-label="Этапы текущей работы">
           {(['accepted','en_route','arrived','working','awaiting_confirmation'] as const).map((step,i)=>{
             const order = ['accepted','en_route','arrived','working','awaiting_confirmation'];
             const at = order.indexOf(first.status);
-            return <span key={step} className={i<at?'done':i===at?'current':''}
-              title={['Принята','В пути','На месте','Работа','На подтверждении'][i]}
-              aria-label={['Принята','В пути','На месте','Работа','На подтверждении'][i]}/>;
+            const name = ['Принята','В пути','На месте','Работа','Расчёт'][i];
+            return <div key={step} role="listitem" className={'work-mobile-progress-step '+(i<at?'done':i===at?'current':'')}>
+              <span aria-hidden="true">{i<at?'✓':i+1}</span>
+              <small>{name}</small>
+            </div>;
           })}
         </div>
         <a className="btn work-mobile-primary" href={`#/order/${first.id}`}>{({
@@ -291,12 +330,7 @@ function MobilePerformerWork({p, personName, active, awaiting, jobs, incoming, o
         href={`#/order/${o.id}`}><strong>№{o.number}</strong>
         <span>{o.unilateral_status==='disputed'?'Спор рассматривается':'Работа сдана — деньги не подтверждены'} ›</span></a>)}
     </section>}
-    <nav className="work-mobile-shortcuts" aria-label="Рабочие разделы">
-      <a href="#/work/jobs"><span aria-hidden="true">☷</span> Мои заявки</a>
-      <a href="#/work/me/schedule"><span aria-hidden="true">▦</span> График</a>
-      <a href="#/notifications"><span aria-hidden="true">♧</span> Уведомления</a>
-      <a href="#/work/me/money"><span aria-hidden="true">₽</span> Финансы</a>
-    </nav>
+    <a className="work-mobile-notices-link" href="#/notifications">Уведомления и сообщения <span aria-hidden="true">›</span></a>
     {balance && <div className="work-mobile-balance note">
       <span>К выплате: <b>{rub(balance.to_pay)}</b></span>
       <span>Долг по комиссии с наличных: <b>{rub(balance.cash_debt)}</b></span>
