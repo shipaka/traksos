@@ -57,11 +57,13 @@ test('пригласил клиента: ему подарок, мне 0,5% с �
   ok(await t.api('POST', `/api/orders/${o.id}/offers/${f.id}/choose`, {}, friend.token));
   ok(await t.api('POST', `/api/orders/${o.id}/step`, { action: 'arrive' }, master.token));
   const pr = ok(await t.api('POST', `/api/orders/${o.id}/amount`, { result: 'solved' }, master.token));
-  const fee = pr.money.clientFee;
-  // Клиент видит, сколько баллов можно списать, и вписывает сам
+  // Исполнитель видит только цену услуги и свою комиссию; сбор клиента — в клиентском API.
+  assert.equal(pr.money.clientFee, undefined);
   const view = ok(await t.api('GET', `/api/orders/${o.id}`, undefined, friend.token));
+  const fee = view.money.clientFee;
+  // Клиент видит, сколько баллов можно списать, и вписывает сам
   assert.equal(view.points.max, Math.min(30_000, Math.floor(fee / 2)));
-  const done = ok(await t.api('POST', `/api/orders/${o.id}/confirm`, { total: pr.money.total, points: 999_999 }, friend.token));
+  const done = ok(await t.api('POST', `/api/orders/${o.id}/confirm`, { total: view.money.total, points: 999_999 }, friend.token));
   const row = (await t.db.one<any>('select points_fee from orders where id=$1', [o.id]))!;
   assert.equal(row.points_fee, Math.min(30_000, Math.floor(fee / 2)), 'вписал больше — списали не больше половины сбора');
   assert.equal(done.money.discount, row.points_fee);
@@ -82,12 +84,13 @@ test('мастер гасит баллами до половины комисс�
   ok(await t.api('POST', `/api/orders/${o.id}/step`, { action: 'arrive' }, master.token));
   const pr = ok(await t.api('POST', `/api/orders/${o.id}/amount`, { result: 'solved' }, master.token));
   const before = ok(await t.api('GET', '/api/performer/balance', undefined, master.token)).cash_debt;
-  ok(await t.api('POST', `/api/orders/${o.id}/confirm`, { total: pr.money.total }, c.token));
+  const clientTotal = ok(await t.api('GET', `/api/orders/${o.id}`, undefined, c.token)).money.total;
+  ok(await t.api('POST', `/api/orders/${o.id}/confirm`, { total: clientTotal }, c.token));
   const after = ok(await t.api('GET', '/api/performer/balance', undefined, master.token)).cash_debt;
   const commission = Math.round(pr.money.amount * 5 / 100);
   const used = (await t.db.one<any>('select points_commission from orders where id=$1', [o.id]))!.points_commission;
   assert.equal(used, Math.floor(commission / 2));
-  assert.equal(after - before, commission + pr.money.clientFee - used, 'долг меньше на погашенное баллами');
+  assert.equal(after - before, commission + Math.round(pr.money.amount * 5 / 100) - used, 'наличные: долг включает собственную комиссию и собранную клиентскую надбавку');
   assert.deepEqual(await t.db.query(`select order_id from ledger_entries where order_id is not null group by order_id having sum(amount) <> 0`), [], 'проводки сходятся');
 });
 
@@ -101,7 +104,8 @@ test('баллы — по желанию: мастер выключил гаше
   ok(await t.api('POST', `/api/orders/${o.id}/offers/${f.id}/choose`, {}, c.token));
   ok(await t.api('POST', `/api/orders/${o.id}/step`, { action: 'arrive' }, master.token));
   const pr = ok(await t.api('POST', `/api/orders/${o.id}/amount`, { result: 'solved' }, master.token));
-  ok(await t.api('POST', `/api/orders/${o.id}/confirm`, { total: pr.money.total }, c.token));
+  const totalClient = ok(await t.api('GET', `/api/orders/${o.id}`, undefined, c.token)).money.total;
+  ok(await t.api('POST', `/api/orders/${o.id}/confirm`, { total: totalClient }, c.token));
   assert.equal(ok(await t.api('GET', '/api/me/referral', undefined, master.token)).balance, b0);
   ok(await t.api('PUT', '/api/performer/extras', { pointsAuto: true }, master.token));
 });
