@@ -231,12 +231,15 @@ export class TrakBotService {
       : 'initial_triage';
     // Billing is deliberately disabled. No authorization or capture is made for an unverified answer.
     return this.db.tx(async (q) => {
-      await q.query('insert into trakbot_messages(user_id,role,body) values($1,\'user\',$2)', [user.id, message]);
+      const [userMessage] = await q.query<{ id: string; role: 'user'; body: string; created_at: string }>(
+        "insert into trakbot_messages(user_id,role,body) values($1,'user',$2) returning id::text as id,role,body,created_at",
+        [user.id, message],
+      );
       const [bot] = await q.query<{ id: string; role: string; body: string; action_path: string | null; action_label: string | null; created_at: string }>(
         "insert into trakbot_messages(user_id,role,body,action_path,action_label) values($1,'bot',$2,$3,$4) returning id::text as id,role,body,action_path,action_label,created_at",
         [user.id, answer, guide?.destination.path ?? null, guide?.destination.label ?? null],
       );
-      return { message: bot, freePilot: true, aiUsed: !!generated, coverage, chargeAllowed: false, handoffSuggested: coverage === 'partial_or_missing' || coverage === 'not_supported' || coverage === 'mismatched_protocol' };
+      return { userMessage, message: bot, freePilot: true, aiUsed: !!generated, coverage, chargeAllowed: false, handoffSuggested: coverage === 'partial_or_missing' || coverage === 'not_supported' || coverage === 'mismatched_protocol' };
     });
   }
 
