@@ -89,6 +89,11 @@ test('consult → roadside master emergency report → owner-approved parallel t
  const view=ok(await t.api('GET','/api/orders/'+visit.id,undefined,owner.token));
  assert.equal(view.unilateralClosure.status,'pending_client');
  assert.equal(view.statusLabel,'Работа сдана · ожидаем клиента');
+ // A driver can be the original creator of an order, but cannot accept
+ // the owner's final emergency bill without independent financial authority.
+ await t.db.query('update orders set created_by=$2 where id=$1',[visit.id,driver.id]);
+ assert.equal((await t.api('POST','/api/orders/'+visit.id+'/confirm',
+  {total:view.unilateralClosure.quoteTotal},driver.token)).status,403);
  const confirmed=ok(await t.api('POST','/api/orders/'+visit.id+'/confirm',
   {total:view.unilateralClosure.quoteTotal},owner.token));
  assert.equal(confirmed.status,'completed');
