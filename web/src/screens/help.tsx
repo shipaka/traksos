@@ -103,8 +103,10 @@ export function Help() {
       })}
       <a className="btn" href="#/trakbot">TrakBot — первичная помощь в личном чате</a>
       <a className="btn ghost" href="#/support/new">Не нашли ответ — написать в поддержку</a>
-      <a className="note" href="#/offer/client">Оферта для клиентов</a>
-      {mode !== 'client' && <a className="note" href="#/offer/performer">Агентский договор</a>}
+      {(mode === 'client' || !me) && <a className="note" href="#/offer/client">Оферта для клиентов</a>}
+      {(mode === 'performer' || mode === 'service') && <a className="note" href="#/offer/performer">Агентский договор исполнителя / СТО</a>}
+      {mode === 'insurer' && <a className="note" href="#/offer/insurer">Договор страхового партнёра</a>}
+      {mode === 'inspection' && <a className="note" href="#/offer/inspection">Договор оператора техосмотра</a>}
     </main>
   );
 }
