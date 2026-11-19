@@ -479,9 +479,18 @@ export function BaseSetup() {
 
 // ═══════════════════════ Клиент: сервисы-партнёры ═══════════════════════
 
-function useGps() {
+function useGps(enabled: boolean) {
   const [pos, setPos] = useState<{ lat: number; lng: number } | null>(null);
-  useEffect(() => { navigator.geolocation?.getCurrentPosition((p) => setPos({ lat: p.coords.latitude, lng: p.coords.longitude }), () => {}, { timeout: 6000, maximumAge: 300_000 }); }, []);
+  // No phone-location prompt when the user is browsing an incident somewhere
+  // else. Ask the browser only after the user selects "By GPS".
+  useEffect(() => {
+    if(!enabled){setPos(null);return;}
+    let live=true;
+    navigator.geolocation?.getCurrentPosition(
+      p=>{if(live)setPos({lat:p.coords.latitude,lng:p.coords.longitude});},
+      ()=>{}, {timeout:6000,maximumAge:300_000});
+    return ()=>{live=false;};
+  },[enabled]);
   return pos;
 }
 
@@ -509,7 +518,7 @@ export function ServicesList() {
   });
   const setS = (v: Partial<Search>) => setS0((x) => { const n = { ...x, ...v }; try { localStorage.setItem('traksos.svcsearch', JSON.stringify(n)); } catch { /* */ } return n; });
   const [pickPlace, setPickPlace] = useState(false);
-  const gps = useGps();
+  const gps = useGps(s.place === 'gps');
   const cars = useLoad(() => get('/api/vehicles'), []);
   const source = useLoad(() => caseOrderId ? get('/api/orders/'+caseOrderId) : Promise.resolve(null),[caseOrderId]);
   // In a linked case the truck's position, not the fleet owner's phone GPS,
