@@ -85,3 +85,9 @@ test('inline EBS never receives a generic OBD-II interpretation or an undefined 
   assert.doesNotMatch(answer, /Давление ниже ожидаемого|undefined/);
   assert.match(answer, /не продолжайте движение/i);
 });
+
+test('greeting with truck symptoms is not eligible for ungrounded conversational AI', () => {
+  for (const text of ['Привет, мотор троит', 'Как дела с EBS?', 'Привет, SPN 123 FMI 5', 'Привет, P0087', 'Привет, стартер щёлкает']) {
+    assert.equal(neutralConversationEligible(text), false, text);
+  }
+});
