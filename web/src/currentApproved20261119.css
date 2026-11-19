@@ -301,3 +301,18 @@
   .guest-app .public-landing .public-app-card{grid-column:1!important;grid-row:2!important;transform:none!important;margin:12px 0 0!important;min-height:170px!important;height:auto!important}
   .guest-app .public-landing .public-service-tiles{gap:8px!important}
 }
+
+/* Exact logo cropped from the OWNER'S accepted 19 Nov desktop source PNG:
+   truck silhouette plus white/cyan TrakSOS mark, not a newly invented wordmark. */
+.guest-app .top .guest-approved-mark{
+  display:inline-flex!important;align-items:center!important;flex:0 0 auto!important;
+  padding:0!important;margin:0!important;border:0!important;background:none!important;
+  width:clamp(190px,17vw,275px)!important;max-width:46vw!important;min-width:0!important;
+  text-decoration:none!important;box-shadow:none!important;
+}
+.guest-app .top .guest-approved-mark img{
+  display:block!important;width:100%!important;height:auto!important;object-fit:contain!important;
+}
+@media(max-width:899px){
+  .guest-app .top .guest-approved-mark{width:min(218px,66vw)!important;max-width:100%!important;}
+}

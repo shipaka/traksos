@@ -13,6 +13,7 @@ function expect(ok, description) {
   else { console.error('FAIL: ' + description); failures.push(description); }
 }
 const LOCKED_ASSETS = {
+  'web/public/tracksos-approved-header-logo-20261119.webp': '4820e2a77018e638',
   // Exact approved images. Deliberate asset changes require a new owner-approved baseline.
   'web/public/tracksos-approved-truck.webp': '9193ebd1312c2d2e',
   'web/public/tracksos-approved-map.webp': '994097c8c01b2c80',
@@ -78,6 +79,7 @@ for(const role of ['client','owner','driver','master','tow','service','master_se
 const labels = await read('web/src/dict.ts');
 const native = await read('android/app/src/main/java/ru/traksos/app/MainActivity.kt');
 
+await asset('web/public/tracksos-approved-header-logo-20261119.webp', 1600);
 await asset('web/public/tracksos-approved-truck.webp', 15000);
 await asset('web/public/tracksos-approved-map.webp', 15000);
 await asset('web/public/traksos-final-hero.webp', 100000);

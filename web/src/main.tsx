@@ -464,7 +464,10 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   return (
     <div className={`app ${me ? "role-"+mode : "guest-app"}`}>
       <header className="top">
-        <span className="logo">Trak<b>Sos</b></span>
+        {me ? <span className="logo">Trak<b>Sos</b></span>
+          : <a href="#/" className="logo guest-approved-mark" aria-label="TrakSOS — главная">
+              <img src="/tracksos-approved-header-logo-20261119.webp" width="220" height="41" alt="TrakSOS"/>
+            </a>}
         {me && mode === 'client' && <nav className="track-top-shortcuts" aria-label="Быстрый доступ">
           <a href="#/">Главная</a><a href="#/orders">Заявки</a><a href="#/sos">Помощь в дороге</a><a href="#/shop">Запчасти</a>
         </nav>}
