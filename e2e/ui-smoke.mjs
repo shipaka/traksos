@@ -152,7 +152,7 @@ try {
         const blob = await res.blob();
         const img=await createImageBitmap(blob);
         const widthFloor=asset.includes('-hq')?1700:asset.includes('partner-')?1400:0;
-        const bytesFloor=asset.includes('map')?10_000:asset.includes('-hq')?280_000:asset.includes('partner-')?180_000:50_000;
+        const bytesFloor=asset.includes('logo-owner')?2_000:asset.includes('map')?10_000:asset.includes('-hq')?280_000:asset.includes('partner-')?180_000:50_000;
         return res.ok && blob.type.startsWith('image/') && blob.size>bytesFloor && img.width>=widthFloor;
       }, name);
       assert(check, width + 'px: approved image cannot be loaded: ' + name);

@@ -15,11 +15,12 @@ function expect(ok, description) {
 const LOCKED_ASSETS = {
   'web/public/tracksos-approved-header-logo-20261119.webp': '4820e2a77018e638',
   // Exact approved images. Deliberate asset changes require a new owner-approved baseline.
-  'web/public/tracksos-approved-truck.webp': '9193ebd1312c2d2e',
+  'web/public/tracksos-approved-scenic-hero.webp': '9193ebd1312c2d2e',
+  'web/public/tracksos-approved-hero-owner-20261119.webp': '7a7a9acec9ee7f32',
   'web/public/tracksos-approved-map.webp': '994097c8c01b2c80',
-  'web/public/traksos-final-hero.webp': 'bfce4ea62b859d80',
-  'web/public/traksos-final-insurance.webp': '6cbcba4d541f4ddc',
-  'web/public/traksos-final-parts.webp': '0531cbfd715179c3',
+
+
+
   'android/app/src/main/res/mipmap-mdpi/ic_launcher.png': '8325d8040b7a14f1',
   'android/app/src/main/res/mipmap-hdpi/ic_launcher.png': '934c4448c5a758fd',
   'android/app/src/main/res/mipmap-xhdpi/ic_launcher.png': '5022fec38cc1898d',
@@ -60,7 +61,7 @@ const heroVisualE2E = await read('e2e/approved-truck-hero.mjs');
 expect(currentCss.includes(approvedPhoto) && approvedHeroLayer.includes(approvedPhoto)
   && !currentCss.includes('tracksos-approved-scenic-hero.webp'),
   'guest home has one approved Nov 19 truck image, with no legacy image fallback');
-expect(heroVisualE2E.includes("!info.photo.includes('tracksos-approved-hero-owner-20261119.webp')")
+expect(heroVisualE2E.includes("tracksos-approved-hero-owner-20261119(?:-[A-Za-z0-9]+)")
   && heroVisualE2E.includes("info.photo.includes('tracksos-approved-scenic-hero')"),
   'browser screenshot gate rejects obsolete 14 Nov hero and requires actual owner image');
 
@@ -91,7 +92,18 @@ const css = await read('web/src/styles.css');
 // into a future deploy even when the final CSS file changes its order.
 expect(!/\.public-landing \.public-hero-visual\s*\{[^}]*tracksos-approved-(?:truck|scania-r520)\.webp/.test(css),
   'obsolete truck art cannot reappear as the public home background');
+// The following old public images have no live source readers. Reject their
+// return to the distributable public directory (they otherwise enter the PWA cache).
+for (const name of ['tracksos-approved-truck.webp','traksos-final-hero.webp',
+                    'traksos-final-insurance.webp','traksos-final-parts.webp']) {
+  let exists = false;
+  try { await stat('web/public/' + name); exists = true; } catch { /* expected */ }
+  expect(!exists, 'retired public asset absent: ' + name);
+}
 const shell = await read('web/src/main.tsx');
+expect(landing.includes('/tracksos-approved-logo-owner-20261119.webp') &&
+       shell.includes('/tracksos-approved-logo-owner-20261119.webp'),
+       'mobile promo and guest sidebar use the approved logo instead of the old Scania photo');
 const demo = await read('web/src/screens/adminTestCenter.tsx');
 const serviceDemo = await read('web/src/demo/servicePreviewApi.ts');
 expect(!/\bstructuredClone\s*\(/.test(serviceDemo),
@@ -117,11 +129,10 @@ const labels = await read('web/src/dict.ts');
 const native = await read('android/app/src/main/java/ru/traksos/app/MainActivity.kt');
 
 await asset('web/public/tracksos-approved-header-logo-20261119.webp', 1600);
-await asset('web/public/tracksos-approved-truck.webp', 15000);
+await asset('web/public/tracksos-approved-scenic-hero.webp', 15000);
+await asset('web/public/tracksos-approved-hero-owner-20261119.webp', 50000);
+await asset('web/public/tracksos-approved-logo-owner-20261119.webp', 2000);
 await asset('web/public/tracksos-approved-map.webp', 15000);
-await asset('web/public/traksos-final-hero.webp', 100000);
-await asset('web/public/traksos-final-insurance.webp', 25000);
-await asset('web/public/traksos-final-parts.webp', 25000);
 await asset('web/public/tracksos-photo-master.webp', 30000);
 await asset('web/public/tracksos-photo-tow.webp', 30000);
 await asset('web/public/tracksos-photo-sto.webp', 30000);

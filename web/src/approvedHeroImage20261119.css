@@ -19,8 +19,8 @@
    The accepted desktop has a continuous navy-to-road photograph transition. */
 @media(min-width:900px){
   .guest-app .public-landing .public-hero-visual.public-hero-slide-approved{
-    -webkit-mask-image:linear-gradient(90deg,transparent 32%,#000 51%)!important;
-    mask-image:linear-gradient(90deg,transparent 32%,#000 51%)!important;
+    -webkit-mask-image:linear-gradient(90deg,transparent 37%,rgba(0,0,0,.45) 44%,#000 52%)!important;
+    mask-image:linear-gradient(90deg,transparent 37%,rgba(0,0,0,.45) 44%,#000 52%)!important;
   }
 }
 /* Mobile guest header: the old pseudo-element created a cyan/magenta slash

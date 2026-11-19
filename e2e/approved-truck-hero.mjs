@@ -107,7 +107,7 @@ try {
     // intentionally reserve a separate, uncropped image above the text.
     if (!info.visible || (width >= 900 && !info.fullBleed) ||
         (width < 900 && (info.fullBleed || info.fit !== 'contain')) ||
-        !info.photo.includes('tracksos-approved-hero-owner-20261119.webp') ||
+        !/tracksos-approved-hero-owner-20261119(?:-[A-Za-z0-9]+)?\.webp/.test(info.photo) ||
         info.photo.includes('tracksos-approved-scenic-hero') ||
         info.photo.includes('traksos-final-hero'))
       throw Error(width + 'px public Scania photograph is missing or has the wrong layout: ' + JSON.stringify(info));
