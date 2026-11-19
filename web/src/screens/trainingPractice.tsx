@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { nextPracticeStage, practiceKindFor, practiceStages, type PracticeInput } from './trainingDemoModel.ts';
+import { customerStageFor, nextPracticeStage, practiceKindFor, practiceStages, type PracticeInput } from './trainingDemoModel.ts';
 
 const services = ['Выездной мастер', 'Эвакуатор', 'СТО', 'Консультация по телефону'] as const;
 
@@ -17,7 +17,7 @@ export function TrainingPractice({role,onBack}:{role:string;onBack:()=>void}) {
   const [error,setError]=useState('');
   const [chatOpen,setChatOpen]=useState(false);
   const [helpOpen,setHelpOpen]=useState(true);
-  const stage=stages[index];
+  const stage=kind==='customer'?customerStageFor(service,index):stages[index];
   const isCustomer=kind==='customer';
   const isPerformer=kind==='performer';
   const orderExample=isCustomer||isPerformer||kind==='service';
@@ -110,7 +110,11 @@ export function TrainingPractice({role,onBack}:{role:string;onBack:()=>void}) {
             </button>
             {chatOpen && <div className="training-demo-chat-bubble">
               <b>Исполнитель · учебное сообщение</b>
-              <p>Здравствуйте! Заявку вижу. Уточните, пожалуйста, удобный подъезд к грузовику.</p>
+              <p>{service==='Консультация по телефону'
+                ? 'Здравствуйте! Расскажите, что проверяли до обращения, и есть ли диагностический код.'
+                : service==='СТО'
+                ? 'Запись вижу. Уточните, пожалуйста, удобно ли подъехать к станции в назначенное время.'
+                : 'Здравствуйте! Заявку вижу. Уточните, пожалуйста, удобный подъезд к грузовику.'}</p>
               <small>Настоящее сообщение не отправлено. Ответы по заказу пишут в чате конкретной заявки.</small>
             </div>}
           </div>}
