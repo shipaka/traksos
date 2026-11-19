@@ -7,6 +7,7 @@ import { OfferForm } from './search.tsx';
 import { WorkerNotices } from './ops.tsx';
 import { useToast } from '../ui.tsx';
 import { VerifiedBadge } from '../verifiedBadge.tsx';
+import { AndroidPerformerWorkspace } from './androidWorkspaces.tsx';
 
 // Линия: статус, геолокация, входящие ---------------------------------------
 
@@ -31,6 +32,9 @@ export function Work() {
   return (
     <main className="work-live-dashboard">
       <WorkerNotices />
+      <AndroidPerformerWorkspace performer={p} active={active} auctions={auctions.data ?? []} online={online}
+        busy={busy} setLine={(status) => setLine(status)} balance={balance.data} reloadAuctions={auctions.reload} />
+      <div className="and19-legacy-performer">
       <section className="work-command-hero" aria-label="Рабочий стол исполнителя">
         <div className="work-command-copy">
           <span className="work-command-kicker">TRAKSOS · {p.kind === 'tow' ? 'ЭВАКУАЦИЯ' : 'ВЫЕЗДНАЯ ПОМОЩЬ'}</span>
@@ -98,6 +102,7 @@ export function Work() {
         </div>
       )}
       <button className="btn ghost" onClick={() => go('work/me/money')}>Финансы · все операции</button>
+      </div>
     </main>
   );
 }
