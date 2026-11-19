@@ -75,6 +75,16 @@ try {
         await page.locator('.app').waitFor();
       }
     }
+    // Verify both narrow Android WebView geometries with the native bridge active.
+    for(const width of [320,390]){
+      await page.setViewportSize({width,height:844});
+      const bounds=await page.evaluate(()=>({
+        page:document.documentElement.scrollWidth,
+        viewport:document.documentElement.clientWidth
+      }));
+      if(bounds.page>bounds.viewport+3)
+        throw Error(role+': Android workspace horizontal overflow at '+width+'px');
+    }
     if(mode==='client'){
       const desk=page.locator('.and19-client');
       await desk.waitFor({state:'visible'});
