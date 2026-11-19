@@ -19,7 +19,9 @@ export function TrakBotChat() {
   const [working, setWorking] = useState(false);
   const [listening, setListening] = useState(false);
   const speechRef = useRef<any>(null);
-  const speechAvailable = typeof window !== 'undefined' &&
+  // Launch gate: voice recognition may send audio to the browser vendor.
+  // Enable only after 152-FZ/privacy assessment and configured speech provider.
+  const speechAvailable = typeof window !== 'undefined' && (window as any).TRAKSOS_VOICE_INPUT_ENABLED === true &&
     !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
   const startDictation = () => {
     // Browser/Android WebView permission happens only after an explicit tap.
@@ -44,6 +46,8 @@ export function TrakBotChat() {
   const [error, setError] = useState('');
   const end = useRef<HTMLDivElement>(null);
   const isTech = !!me?.roles.some((role) => ['master','service','admin','moderator'].includes(role));
+  const canUseTech = !!me?.roles.some((role) => ['admin','moderator'].includes(role)) ||
+    (isTech && me?.performer?.verification === 'approved');
   useEffect(() => {
     let live = true;
     get<BotHistory>('/api/trakbot/messages').then((result) => { if (live) setMessages(result.messages); })
@@ -95,15 +99,16 @@ export function TrakBotChat() {
         <button type="submit" className="btn small" disabled={working || !text.trim()}>{working ? '...' : 'Отправить'}</button>
       </form>
     </section>
-    <span className="note">Пилот бесплатный, дополнительных комиссий нет. Голосовой ввод работает, только если поддерживается устройством, и включается вручную. Ответ приходит текстом. Если точного ответа нет, TrakBot не будет угадывать.</span>
+    <span className="note">Пилот бесплатный, дополнительных комиссий нет. Голосовой ввод появится после проверки конфиденциальности и поддержки устройства; включается только вручную. Ответ приходит текстом. Если точного ответа нет, TrakBot не будет угадывать.</span>
     {!isTech && <a className="btn ghost" href="#/new/consult">Нужна помощь человека? Консультация специалиста</a>}
-    {isTech && <a href="#/tech/codes" className="btn ghost">Технический справочник кодов для специалистов</a>}
+    {canUseTech && <a href="#/tech/codes" className="btn ghost">Технический справочник кодов для специалистов</a>}
   </main>;
 }
 
 export function TechCodes() {
   const { me } = useMe();
-  const permitted = !!me?.roles.some((role) => ['master','service','admin','moderator'].includes(role));
+  const permitted = !!me?.roles.some((role) => ['admin','moderator'].includes(role)) ||
+    (!!me?.roles.some((role) => ['master','service'].includes(role)) && me?.performer?.verification === 'approved');
   const [term, setTerm] = useState('');
   const [items, setItems] = useState<CodeRecord[]>([]);
   const [error, setError] = useState('');
