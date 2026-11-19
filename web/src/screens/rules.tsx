@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { get } from '../api.ts';
 import { useLoad, useMe, Back } from '../ui.tsx';
 import { usePrices } from './client.tsx';
+import { EconomicsGuide } from './economicsGuide.tsx';
 
 type Item = [string, string];
 
@@ -23,7 +24,7 @@ export function Rules() {
 
   ];
   const performer: Item[] = [
-    ['Как считается комиссия', `С заказов через TrakSOS удерживается ${p?.performerCommissionPct ?? 5}%. За наличные — долг по комиссии; при долге выше лимита новые заявки не приходят, пока не погасите.`],
+    ['Как считается комиссия', 'Для выездного исполнителя комиссия ограничена 5 000 ₽ за заказ. Процент и формула с примерами находятся ниже в разделе «Финансовые условия кабинета», загружаемом с сервера. При наличных долг по комиссии учитывается в финансах.'],
     ['Неприезд — самое серьёзное нарушение', 'Взяли заявку — приезжайте. Не можете — нажмите «Не смогу приехать» как можно раньше: клиенту сразу найдём другого. Неприезд без предупреждения снижает рейтинг и уровень.'],
     ['Опоздания', 'Обещанное время — ваше время на сборы плюс дорога. Задерживаетесь — «Опаздываю»: клиент увидит новое время.'],
     ['Консультации и точность подсказок', 'Ошибка по телефону — не нарушение. Точность считается сама по отметкам мастеров на выезде и видна только вам.'],
@@ -40,10 +41,11 @@ export function Rules() {
       <div><h1>Правила площадки</h1><div className="sub">Коротко и по делу. Полный текст — в оферте{mode === 'performer' ? ' и агентском договоре' : ''}.</div></div>
       {mode === 'performer' && d && (
         <div className="grid2">
-          <div className="card tile"><span className="label">Ваша комиссия</span><span className="tile-value">{p?.performerCommissionPct ?? 5}%</span></div>
+          <div className="card tile"><span className="label">Ваша комиссия</span><span className="tile-value">до 5 000 ₽</span></div>
           <div className="card tile"><span className="label">Нарушений за 90 дней</span><span className="tile-value" style={{ color: d.drops + d.lostDisputes ? 'var(--warn)' : undefined }}>{d.drops + d.lostDisputes}</span><span className="note">неприезды и проигранные споры</span></div>
         </div>
       )}
+      {me && <EconomicsGuide />}
       {sections.map(([title, items]) => (
         <div key={title} className="stack">
           <span className="label">{title}</span>
