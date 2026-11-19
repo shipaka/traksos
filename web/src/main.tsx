@@ -32,7 +32,7 @@ import { GuestExplore } from './screens/guestExplore.tsx';
 import { DemoPreviewGate } from './screens/demoPreview.tsx';
 import { SandboxEnter, SandboxModeBar } from './screens/isolatedSandbox.tsx';
 import { GuestCompany, GuestOffers } from './screens/guestInfo.tsx';
-import { TOP_CATALOGUE, SERVICE_TILES, CATALOGUE, rememberGuestService } from './guestCatalog.ts';
+import { PUBLIC_CAPABILITIES } from './guestCatalog.ts';
 import { SiteQuickSearch } from './screens/siteQuickSearch.tsx';
 import { Invite } from './screens/invite.tsx';
 import { PerformerHub, ScheduleSection, AboutSection, PhoneSection, CarsSection, TaxSection, MoneySection, FilterSection, LevelSection } from './screens/performerCabinet.tsx';
@@ -451,53 +451,37 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           <a href="#/">Главная</a><a href="#/orders">Заявки</a><a href="#/sos">Помощь в дороге</a><a href="#/shop">Запчасти</a>
         </nav>}
         {!me && !isAuthEntry && <nav className="guest-site-nav" aria-label="Разделы TrakSOS">
-          {TOP_CATALOGUE.map(group => <details key={group.title} className="guest-nav-group"
-            open={openGuestGroup === group.title}
-            onMouseEnter={() => { if (window.matchMedia('(hover: hover)').matches && openGuestGroup && openGuestGroup !== group.title) setOpenGuestGroup(group.title); }}
-            onMouseLeave={() => setOpenGuestGroup(current => current === group.title ? null : current)}
+          <a href="#/" aria-current={route.length === 0 ? 'page' : undefined}>Главная</a>
+          <details className="guest-nav-group" open={openGuestGroup === 'Возможности'}
+            onMouseLeave={() => setOpenGuestGroup(null)}
             onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpenGuestGroup(null); }}
             onKeyDown={event => { if (event.key === 'Escape') { setOpenGuestGroup(null); (event.currentTarget.querySelector('summary') as HTMLElement | null)?.focus(); event.preventDefault(); } }}>
-            <summary aria-expanded={openGuestGroup === group.title}
-              onClick={event => { event.preventDefault(); setOpenGuestGroup(current => current === group.title ? null : group.title); }}>
-              {group.title}<span aria-hidden="true">⌄</span></summary>
-            <div className="guest-nav-dropdown">
-              {group.serviceIds.flatMap(id => (group.serviceIds.length > 1
-                ? [{label: SERVICE_TILES.find(tile => tile.id === id)?.title || id, key: ''}]
-                : CATALOGUE[id].services).map(item => (
-                <a key={id + ':' + item.key}
-                  href={'#/explore/' + id + (item.key ? '/' + item.key : '')}
-                  onClick={() => { rememberGuestService(id, item.key || undefined); setOpenGuestGroup(null); }}>
-                  {item.label}
-                </a>
-              )))}
-              <span className="guest-nav-hint">{group.title === 'Запчасти' ? 'Магазин доступен после входа' : 'Описание и регистрация'}</span>
+            <summary aria-expanded={openGuestGroup === 'Возможности'}
+              onClick={event => { event.preventDefault(); setOpenGuestGroup(current => current === 'Возможности' ? null : 'Возможности'); }}>
+              Возможности <span aria-hidden="true">⌄</span>
+            </summary>
+            <div className="guest-nav-dropdown guest-nav-dropdown--all">
+              {PUBLIC_CAPABILITIES.map(item =>
+                <a key={item.href} href={item.href} onClick={() => setOpenGuestGroup(null)}>{item.title}</a>)}
+              <span className="guest-nav-hint">Услуги доступны после входа и только при наличии исполнителей</span>
             </div>
-          </details>)}
-          <a href="#/join" className="guest-business-link">Для партнёров</a>
-          <a href="#/company" className="guest-business-link">Компания</a>
-          <a href="#/offers" className="guest-business-link">Оферты</a>
+          </details>
+          <a href="#/company">О платформе</a>
+          <a href="#/economics">Тарифы</a>
+          <a href="#/help">Помощь</a>
         </nav>}
         {!me && isAuthEntry && <nav className="guest-auth-links" aria-label="О компании и документах">
           <a href="#/">Главная</a><a href="#/company">Компания</a>
           <a href="#/offers">Оферты</a><a href="#/offer/privacy">Документы</a>
         </nav>}
         {!me && !isAuthEntry && <details className="guest-mobile-catalog" open={mobileCatalogOpen}>
-          <summary onClick={event => { event.preventDefault(); setMobileCatalogOpen(v => !v); setMobileGroupOpen(null); }}>
-            Каталог услуг <span aria-hidden="true">⌄</span></summary>
-          <nav aria-label="Каталог услуг TrakSOS">
-            {TOP_CATALOGUE.map(group => <details key={group.title} open={mobileGroupOpen === group.title}>
-              <summary onClick={event => { event.preventDefault(); setMobileGroupOpen(current => current === group.title ? null : group.title); }}>{group.title}</summary>
-              <div>
-                {group.serviceIds.flatMap(id => (group.serviceIds.length > 1
-                  ? [{label: SERVICE_TILES.find(tile => tile.id === id)?.title || id, key: ''}]
-                  : CATALOGUE[id].services).map(item => <a key={id + ':' + item.key}
-                    href={'#/explore/' + id + (item.key ? '/' + item.key : '')}
-                    onClick={() => { rememberGuestService(id, item.key || undefined); setMobileCatalogOpen(false); setMobileGroupOpen(null); }}>{item.label}</a>))}
-              </div>
-            </details>)}
-            <a href="#/join" className="guest-mobile-business">Для партнёров · регистрация</a>
-            <a href="#/company" className="guest-mobile-business">Компания</a>
-            <a href="#/offers" className="guest-mobile-business">Оферты</a>
+          <summary onClick={event => { event.preventDefault(); setMobileCatalogOpen(v => !v); }}>Возможности <span aria-hidden="true">⌄</span></summary>
+          <nav aria-label="Возможности TrakSOS">
+            {PUBLIC_CAPABILITIES.map(item =>
+              <a key={item.href} href={item.href} onClick={() => setMobileCatalogOpen(false)}>{item.title}</a>)}
+            <a href="#/company" onClick={() => setMobileCatalogOpen(false)}>О платформе</a>
+            <a href="#/economics" onClick={() => setMobileCatalogOpen(false)}>Тарифы</a>
+            <a href="#/help" onClick={() => setMobileCatalogOpen(false)}>Помощь</a>
           </nav>
         </details>}
         {!isAuthEntry && <SiteQuickSearch authenticated={!!me} />}
