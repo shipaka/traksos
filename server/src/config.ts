@@ -46,6 +46,12 @@ export const config = {
     rustoreProjectId: env.RUSTORE_PROJECT_ID ?? '',
     rustoreServiceToken: env.RUSTORE_SERVICE_TOKEN ?? '',
   },
+  trakbot: {
+    // Legal/privacy review and provider configuration required before production rollout.
+    llmEnabled: env.TRAKBOT_LLM_ENABLED === 'true',
+    llmApiKey: env.TRAKBOT_LLM_API_KEY ?? '',
+    llmModel: env.TRAKBOT_LLM_MODEL ?? 'gpt-4.1-mini',
+  },
   payments: {
     /** mock — тестовый сервис; yookassa — ЮKassa. Включение оплаты — в настройках площадки. */
     provider: (env.PAYMENT_PROVIDER ?? 'mock') as 'mock' | 'yookassa',
