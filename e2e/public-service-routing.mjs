@@ -64,9 +64,25 @@ try {
       const visual=document.querySelector('.public-hero-visual')?.getBoundingClientRect();
       return hero&&visual?{heroWidth:hero.width,heroHeight:hero.height,photoWidth:visual.width,photoHeight:visual.height}:null;
     });
-    if(!photoGeometry||Math.abs(photoGeometry.heroWidth-photoGeometry.photoWidth)>3||
-       Math.abs(photoGeometry.heroHeight-photoGeometry.photoHeight)>3)
-      throw Error('Hero image is not full bleed: '+JSON.stringify(photoGeometry));
+    // Desktop keeps the approved full-bleed photographic banner.
+    // Mobile Chrome deliberately shows a separate uncropped photo above
+    // the heading and CTAs; it must not be rejected by the old desktop gate.
+    if(width>=900){
+      if(!photoGeometry||Math.abs(photoGeometry.heroWidth-photoGeometry.photoWidth)>3||
+         Math.abs(photoGeometry.heroHeight-photoGeometry.photoHeight)>3)
+        throw Error('Desktop hero image is not full bleed: '+JSON.stringify(photoGeometry));
+    }else{
+      const mobilePhoto=await page.locator('.public-hero-visual').evaluate(el=>({
+        fit:getComputedStyle(el).backgroundSize,
+        browserOnly:document.documentElement.classList.contains('traksos-browser')
+      }));
+      if(!photoGeometry||!mobilePhoto.browserOnly||mobilePhoto.fit!=='contain'||
+         photoGeometry.photoWidth>photoGeometry.heroWidth+2||
+         photoGeometry.photoHeight<135||
+         photoGeometry.photoHeight>=photoGeometry.heroHeight)
+        throw Error('Mobile browser hero must show a separate uncropped photograph: '+
+          JSON.stringify({photoGeometry,mobilePhoto}));
+    }
     if(await page.locator('.public-hero-dots button').count()!==3)throw Error('Hero must show three selectable photographs');
     await page.getByRole('button',{name:'Следующее фото'}).click();
     const secondPhoto=await bgImage();
