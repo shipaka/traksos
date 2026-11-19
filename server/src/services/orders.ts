@@ -811,7 +811,7 @@ export class OrdersService {
       `select performer_id from order_dispatch where order_id=$1 and status in ('queued','ringing','bidding')`, [orderId])).map((x) => x.performer_id);
     await this.db.tx(async (q) => {
       await this.guarded(q, `update orders set status='cancelled', cancelled_at=$5, cancelled_by=$2, cancel_reason=$3, cancel_stage=$4
-          where id=$1 and status=$6 and performer_id is not distinct from $7`,
+          where id=$1 and status=$6 and performer_id is not distinct from $7 and not exists(select 1 from order_unilateral_closures where order_id=$1)`,
         [orderId, user.id, reason, stage, this.now(), o.status, o.performer_id]);
       await q.query(`update order_dispatch set status='cancelled' where order_id=$1 and status in ('queued','ringing','bidding')`, [orderId]);
       await q.query(`update bids set status='withdrawn' where order_id=$1 and status='active'`, [orderId]);
