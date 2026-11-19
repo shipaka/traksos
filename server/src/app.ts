@@ -980,9 +980,9 @@ export function createApp(d: Deps) {
   r.post('/api/base/bookings/:id/note', ['service'], (c: AuthedCtx) => centers.note(c.user, c.params.id, parse(z.object({ text: z.string().max(500).optional(), notesPublic: z.boolean().optional() }), c.body)));
   r.post('/api/base/bookings/:id/still-here', ['service'], (c: AuthedCtx) => centers.stillHere(c.user, c.params.id));
   r.post('/api/base/bookings/:id/ready', ['service'], (c: AuthedCtx) => centers.ready(c.user, c.params.id, parse(z.object({ works: z.array(z.string().max(80)).max(20) }), c.body).works));
-  r.post('/api/base/bookings/:id/invoice', ['service'], (c: AuthedCtx) => { const b = parse(z.object({ amount: z.number().int().min(100).max(100_000_000), points: money.optional() }), c.body); return centers.invoice(c.user, c.params.id, b.amount, b.points ?? 0); });
+  r.post('/api/base/bookings/:id/invoice', ['service'], (c: AuthedCtx) => { const b = parse(z.object({ amount: z.number().int().min(100).max(100_000_000), partsAmount: z.number().int().min(0).max(100_000_000).optional(), points: money.optional() }).strict(), c.body); return centers.invoice(c.user, c.params.id, b.amount, b.points ?? 0, b.partsAmount ?? 0); });
   // Сколько баллов рембаза может погасить в счёте на сумму amount
-  r.get('/api/base/points', ['service'], async (c: AuthedCtx) => { const fees = await settings.get('fees'); const amount = Number(c.query.get('amount') ?? 0) || 0; const commission = Math.min(Math.round(amount * fees.serviceCommissionPct / 100), fees.serviceCommissionMax); return referral.available(c.user.id, commission); });
+  r.get('/api/base/points', ['service'], async (c: AuthedCtx) => { const fees = await settings.get('fees'); const amount = Number(c.query.get('amount') ?? 0) || 0; const commission = Math.min(Math.round(amount * Math.min(5,fees.serviceCommissionPct) / 100), fees.serviceCommissionMax ?? 500_000,500_000); return referral.available(c.user.id, commission); });
   r.get('/api/base/bookings/:id/company', ['service'], (c: AuthedCtx) => centers.companyCard(c.user, c.params.id));
   // Рембаза: клиент
   r.get('/api/services', true, (c: AuthedCtx) => {
