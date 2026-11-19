@@ -21,23 +21,16 @@ async function checkCabinetMenu(page, expectedLinks, { shopTab = true } = {}) {
     if (!href || !href.startsWith('#/')) throw new Error('Invalid cabinet route for ' + label);
   }
   await summary.click();
-  if (!shopTab) return; // Admin, insurer, inspection and moderator use role-specific navigation.
-  const shop = page.locator('.tabbar').locator('a[href="#/shop"]');
-  try {
-    await shop.waitFor({ state: 'visible', timeout: 10000 });
-  } catch {
-    throw new Error('Shop tab must be visible for every account: ' + JSON.stringify({
-      url: page.url(),
-      tabbar: await page.locator('.tabbar').count(),
-      links: await page.locator('.tabbar a').allTextContents(),
-      menu: await page.locator('.account-menu nav a').allTextContents(),
-    }));
-  }
+  if (!shopTab) return; // Only client and masters have the parts catalog entry.
+  const shop = page.locator('.account-menu nav a[href="#/shop"]');
+  if(await shop.count() !== 1) throw Error('Parts catalogue must remain accessible in the account menu');
+  if(await page.locator('.tabbar a[href="#/shop"]').count())
+    throw Error('Android bottom tabs must not be overloaded by the closed parts catalog');
 }
 async function assertDashboardTheme(page, role) {
   const result = await page.evaluate(() => {
     const app = document.querySelector('.app');
-    const card = document.querySelector('.card') ?? document.querySelector('.client-dashboard .desktop-hero');
+    const card = document.querySelector('.and19-panel') ?? document.querySelector('.and19-cover') ?? document.querySelector('.card') ?? document.querySelector('.client-dashboard .desktop-hero');
     if (!app || !card) return null;
     const css = getComputedStyle(app);
     return {
@@ -48,7 +41,7 @@ async function assertDashboardTheme(page, role) {
       offenders: [...document.querySelectorAll('*')].filter(e => e.getBoundingClientRect().right > innerWidth + 2).slice(0, 6).map(e => [e.tagName, e.className, Math.round(e.getBoundingClientRect().right)]),
     };
   });
-  if (!result || result.theme !== '#f51a78' || !result.gradient.includes('gradient') || result.overflow)
+  if (!result || result.theme.toLowerCase() !== '#ff7627' || !result.gradient.includes('gradient') || result.overflow)
     throw new Error('Dashboard theme regression (' + role + '): ' + JSON.stringify(result));
 }
 
@@ -168,10 +161,10 @@ await shot(a, '01c-admin-verify');
 await a.getByRole('button', { name: 'Одобрить' }).click();
 await a.getByText('Очередь пуста').waitFor();
 await m.goto(BASE + '/#/work');
-const lineStatus = m.getByRole('button', { name: /Статус ·/ });
+const lineStatus = m.locator('.and19-line button');
 await lineStatus.waitFor({ timeout: 10000 });
-await lineStatus.click();
-await m.getByRole('button', { name: 'Свободен', exact: false }).click();
+if(await lineStatus.getAttribute('class') !== 'and19-online')
+  await lineStatus.click();
 await m.getByText(/Геолокация включена/).waitFor();
 await assertDashboardTheme(m, 'master');
 await checkCabinetMenu(m, ['Профиль исполнителя', 'Финансы и выплаты', 'Проверка и документы', 'История заявок', 'Оферта']);
@@ -183,12 +176,12 @@ await login(k, '+79991112233', 'client');
 // Регистрация после выбора выездной помощи открывает нужный раздел SOS.
 await k.waitForURL(/#\/sos/);
 await k.goto(BASE + '/#/');
-await k.locator('.client-dashboard .desktop-quick-card').first().waitFor();
+await k.locator('.and19-client .and19-services > a').first().waitFor();
 await assertDashboardTheme(k, 'client');
 await checkCabinetMenu(k, ['История заявок', 'Мой гараж', 'Мой автопарк', 'Оферта', 'Профиль и настройки']);
 await shot(k, '03-client-home');
 // Home and SOS share the approved direction-first flow.
-await k.locator('.client-dashboard .desktop-quick-card').first().click();
+await k.locator('.and19-client .and19-services > a').first().click();
 await k.getByRole('button', { name: /Выездной мастер/ }).click();
 await k.getByRole('link', { name: /Электрик/ }).first().click();
 await k.getByRole('button', { name: /Вызвать мастера/ }).click(); // рано: подсветит, чего не хватает
@@ -217,7 +210,7 @@ const callStyle = await m.locator('[role="alertdialog"]').evaluate((el) => ({
   bg: getComputedStyle(el).backgroundImage,
   overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 2,
 }));
-if (callStyle.accent !== '#f51a78' || !callStyle.bg.includes('radial-gradient') || callStyle.overflow)
+if (callStyle.accent !== '#f77c24' || !callStyle.bg.includes('radial-gradient') || callStyle.overflow)
   throw new Error('Incoming SOS visual regression: ' + JSON.stringify(callStyle));
 await shot(m, '06-master-incoming-call');
 await m.getByRole('alertdialog').getByRole('button', { name: /Беру за/ }).click();
@@ -281,7 +274,7 @@ await shot(a, '13-admin-payments');
 
 // Переходы между кабинетами: из админки в клиента и обратно, «Назад» ведёт в свой список
 await clickCabinetLink(a, 'Кабинет клиента');
-await a.locator('.client-dashboard .desktop-quick-card').first().waitFor();
+await a.locator('.and19-client .and19-services > a').first().waitFor();
 await clickCabinetLink(a, 'Профиль и настройки');
 await a.getByRole('button', { name: 'Кабинет администратора' }).click();
 await a.getByText('Администратор').first().waitFor();
