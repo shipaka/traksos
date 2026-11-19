@@ -5,6 +5,7 @@ import { AdminSummary } from './adminSummary.tsx';
 import { AdminSettings } from './adminSettings.tsx';
 import { AdminDiagnostics } from './adminDiagnostics.tsx';
 import { AdminAccountAccess } from './adminAccountAccess.tsx';
+import { AdminRegistry } from './adminRegistry.tsx';
 import { useState } from 'react';
 import { useEffect } from 'react';
 import { SupportQueue } from './support.tsx';
@@ -15,7 +16,7 @@ import { get, post, put, rub, fmtPhone, fmtTime, authedImage } from '../api.ts';
 import { STATUS, SERVICES, LINE } from '../dict.ts';
 import { useLoad, useAction, Loading } from '../ui.tsx';
 
-type AdminSection = 'stats' | 'search' | 'support' | 'verify' | 'people' | 'access' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'settings' | 'demand' | 'announcements' | 'vehicleServices' | 'diagnostics';
+type AdminSection = 'registry' | 'stats' | 'search' | 'support' | 'verify' | 'people' | 'access' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'settings' | 'demand' | 'announcements' | 'vehicleServices' | 'diagnostics';
 type AdminNavItem = { id: AdminSection; name: string; description: string; symbol: string };
 const ADMIN_GROUPS: { name: string; items: AdminNavItem[] }[] = [
   { name: 'Операционная работа', items: [
@@ -27,6 +28,7 @@ const ADMIN_GROUPS: { name: string; items: AdminNavItem[] }[] = [
     { id: 'support', name: 'Обращения', description: 'Поддержка пользователей и партнёров', symbol: '06' },
   ] },
   { name: 'Люди и партнёры', items: [
+    { id: 'registry', name: 'Единая база', description: 'Компании, водители, мастера, эвакуаторы, СТО — поиск, регионы, CSV', symbol: 'CRM' },
     { id: 'search', name: 'Поиск', description: 'Люди, заявки и история', symbol: '07' },
     { id: 'people', name: 'Все люди', description: 'Пользователи и их права', symbol: '08' },
     { id: 'access', name: 'Регистрация и доступы', description: 'Создать учётную запись, выбрать роли и передать проблему разработчику', symbol: '08+' },
@@ -119,6 +121,7 @@ export function Admin({ initialSection }: { initialSection?: string }) {
             {tab === 'stats' && <Stats />}
             {tab === 'demand' && <OpsDashboard />}
             {tab === 'announcements' && <WorkerCommunications />}
+            {tab === 'registry' && <AdminRegistry />}
             {tab === 'search' && <Search />}
             {tab === 'support' && <SupportQueue />}
             {tab === 'verify' && <Verify />}
@@ -142,7 +145,7 @@ export function Admin({ initialSection }: { initialSection?: string }) {
           <div className="admin-mobile-quick">
             <div className="admin-mobile-quick-heading"><b>Быстрые переходы</b><small>Частые задачи администратора</small></div>
             <div className="admin-mobile-quick-grid">
-              {(['access','verify','dispatch','payments','search','offers','support','stats'] as AdminSection[]).map(id => {
+              {(['registry','access','verify','dispatch','payments','search','support','stats'] as AdminSection[]).map(id => {
                 const item = ADMIN_GROUPS.flatMap(group => group.items).find(entry => entry.id === id)!;
                 return <button type="button" key={id} aria-label={item.name}
                   className="admin-mobile-quick-item" onClick={() => navigate(id)}>
