@@ -132,8 +132,13 @@ try {
         width + 'px: benefits must start below elevated RuStore promo: ' + JSON.stringify(layout));
     }
     assert(data.tileIcons === 6, width + 'px: technical icon missing from a public tile');
-    assert(data.heroCss?.includes('tracksos-approved-hero-owner-20261119.webp') && !data.heroCss.includes('tracksos-approved-scenic-hero'),
-      width + 'px: actual owner-approved 19 Nov truck photo is not displayed');
+    // esbuild fingerprints CSS-loaded WebP filenames on production builds. Match
+    // the approved basename with or without its generated content hash; the
+    // original static path is separately checked below through a real fetch.
+    const approvedHeroUrl = /tracksos-approved-hero-owner-20261119(?:-[A-Za-z0-9]+)?\\.webp/;
+    assert(approvedHeroUrl.test(data.heroCss ?? '') &&
+      !/tracksos-approved-(?:scenic-hero|truck|scania-r520)/.test(data.heroCss ?? ''),
+      width + 'px: owner-approved 19 Nov hero is not active; computed background=' + data.heroCss);
     assert(data.mapCss?.includes('tracksos-approved-map'),
       width + 'px: approved regional map is not displayed');
 
