@@ -8,6 +8,37 @@ export const SERVICE_TILES = [
   { id: 'parts', icon: '⚙', title: 'Запчасти', hint: 'Оригиналы и аналоги для грузовиков' },
   { id: 'consult', icon: '☏', title: 'Консультации', hint: 'Техническая помощь по телефону' },
 ] as const;
+// Owner-approved PUBLIC six tiles of 19 Nov 2026. Keep SERVICE_TILES
+// as the underlying technical catalogue: services not in this promotional
+// row (master, tow, consultation) must continue to work elsewhere.
+export const PUBLIC_HOME_TILES = [
+  { id:'sos', icon:'⚠', title:'SOS', hint:'Экстренная помощь на дороге', href:'#/sos' },
+  { id:'air', icon:'◉', title:'Эфир', hint:'Общение и помощь водителей', href:'#/air' },
+  { id:'sto', icon:'⚒', title:'СТО', hint:'Проверенные сервисы и ремонт', href:'#/explore/sto' },
+  { id:'ecu', icon:'▣', title:'ЭБУ', hint:'Диагностика и решения', href:'#/new/ecu' },
+  { id:'parts', icon:'⚙', title:'Запчасти', hint:'Поиск и подбор деталей', href:'#/explore/parts' },
+  { id:'insurance', icon:'◇', title:'Страхование', hint:'Подбор полиса для грузовика', href:'#/explore/insurance' },
+] as const;
+
+// Working secondary navigation. Not appearing in the six-tile banner must
+// NEVER make an existing function disappear from the product.
+export const PUBLIC_CAPABILITIES = [
+  { title:'Помощь SOS', href:'#/sos' },
+  { title:'Выездной мастер', href:'#/explore/van' },
+  { title:'Эвакуатор', href:'#/explore/tow' },
+  { title:'СТО и ремонт', href:'#/explore/sto' },
+  { title:'Ремонт ЭБУ', href:'#/new/ecu' },
+  { title:'Консультация', href:'#/explore/consult' },
+  { title:'Эфир водителей', href:'#/air' },
+  { title:'ТехБаза и справочник', href:'#/tech' },
+  { title:'Мой гараж', href:'#/garage' },
+  { title:'Запчасти', href:'#/explore/parts' },
+  { title:'Страхование', href:'#/explore/insurance' },
+  { title:'Обучение', href:'#/training' },
+  { title:'TrakBot', href:'#/trakbot' },
+  { title:'Партнёрам', href:'#/join' },
+] as const;
+
 export type ServiceId = typeof SERVICE_TILES[number]['id'];
 export type CatalogueItem = { label: string; key: string };
 export const CATALOGUE: Record<ServiceId,{
