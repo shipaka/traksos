@@ -139,3 +139,24 @@ html.traksos-reduced-motion .trakbot-message--new .trakbot-mascot {animation:non
 
 /* Emergency incoming calls must stay above the now header-safe bot layer. */
 .call { z-index:130; }
+
+
+/* The source is the actual 30-frame owner-approved "Technician" artwork
+   from 19 November, not an SVG approximation. 5 columns × 6 rows. */
+.trakbot-mascot .trakbot-mascot-original {
+  display:block;
+  flex:none;
+  width:100%;height:100%;
+  overflow:hidden;
+  border-radius:9px;
+  background-color:#f4f6f8;
+  background-image:url('/trakbot-approved-30.webp');
+  background-size:500% 600%;
+  background-repeat:no-repeat;
+  background-position:0 0;
+  filter:none;
+  box-shadow:0 1px 5px #0005;
+}
+.trakbot-mascot--small .trakbot-mascot-original {border-radius:6px;}
+.trakbot-mascot--large .trakbot-mascot-original {border-radius:12px;}
+.trakbot-mascot-original + .trakbot-mascot-symbol {display:none!important;}
