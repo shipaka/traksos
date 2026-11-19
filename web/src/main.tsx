@@ -14,11 +14,15 @@ import './premiumVehiclePolish.css';
 import './finalCanon.css';
 // Insurance-only refinement follows the approved global visual canon.
 import './insurancePremiumStates.css';
+// Browser-only phone/tablet adaptation; approved Android and desktop layers stay untouched.
+import './mobileBrowser.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
 import { MeCtx, ToastProvider, useRoute, useToast, type Me } from './ui.tsx';
 import { native } from './native.ts';
+// The bridge is installed before the WebView loads this bundle. Never style native as a browser.
+document.documentElement.classList.toggle('traksos-browser', !native.isApp);
 import { Login } from './screens/login.tsx';
 import { GuestExplore } from './screens/guestExplore.tsx';
 import { DemoPreviewGate } from './screens/demoPreview.tsx';
