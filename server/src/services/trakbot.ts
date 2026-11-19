@@ -2,6 +2,7 @@ import type { Db } from '../db/index.ts';
 import type { AuthUser } from '../http/router.ts';
 import { bad, forbidden } from '../http/router.ts';
 import { config } from '../config.ts';
+import { maskPhones } from '../util.ts';
 import { canUseGroundedAi, groundedAiAnswer } from './trakbotAi.ts';
 
 export interface VehicleContext {
@@ -109,7 +110,7 @@ export class TrakBotService {
   }
 
   async reply(user: AuthUser, input: string, context: VehicleContext, allowAiProcessing = false) {
-    const message = input.trim();
+    const message = maskPhones(input).text.replace(/\b[A-HJ-NPR-Z0-9]{17}\b/gi, '[VIN скрыт]').trim();
     if (!message || message.length > 700) throw bad('invalid_message', 'Сообщение должно быть от 1 до 700 символов');
     // Bounded automated traffic to avoid unlimited text-generation or DB usage.
     const limit = await this.db.one<{ minute: number; day: number }>(
