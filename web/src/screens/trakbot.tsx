@@ -148,6 +148,10 @@ export function TechCodes() {
     <Back to="trakbot" />
     <h1>Техническая база TrakSOS</h1>
     <p className="sub">Справочник кодов с происхождением данных и пометками достоверности. Не заменяет заводскую документацию.</p>
+    <div className="row" style={{flexWrap:'wrap'}}>
+      <a className="btn ghost small" href="#/tech/cases">Реальные случаи ремонта</a>
+      {me?.roles.includes('admin') && <a className="btn ghost small" href="#/tech/review">Проверить новые кейсы</a>}
+    </div>
     <form className="compose" onSubmit={(e) => {e.preventDefault();void search();}}>
       <input aria-label="Поиск кода" className="field" placeholder="Код или фрагмент названия" value={term} onChange={(e)=>setTerm(e.target.value)} />
       <button className="btn small" disabled={busy || term.trim().length < 2}>Искать</button>
