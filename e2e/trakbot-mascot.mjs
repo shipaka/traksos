@@ -9,6 +9,7 @@ const result = await build({
   bundle: true,
   platform: 'node',
   format: 'cjs',
+  jsx: 'automatic',
   write: false,
   logLevel: 'silent',
   external: ['react', 'react/jsx-runtime'],
