@@ -919,7 +919,7 @@ export function BaseMoney() {
       <div className="card">
         <div className="sum total"><span>К выплате</span><span>{rub(s.toPay)}</span></div>
         <div className="sum"><span>Ждёт сверки клиента</span><span>{rub(s.awaiting)}</span></div>
-        {s.unpaid > 0 && <div className="sum"><span>Клиент подтвердил работы, оплата ещё не поступила</span><span>{rub(s.unpaid)}</span></div>
+        {s.unpaid > 0 && <div className="sum"><span>Клиент подтвердил работы, оплата ещё не поступила</span><span>{rub(s.unpaid)}</span></div>}
         {s.disputed > 0 && <div className="sum"><span>В споре</span><span>{rub(s.disputed)}</span></div>}
         <div className="sum"><span>Уже выплачено</span><span>{rub(s.paid)}</span></div>
         <span className="note">Выплата возможна после подтверждения клиентом работ и поступления денег. Платёж проверяет TrakSOS по банковским/кассовым документам. Отчёт агента и акт — раз в месяц.</span>
