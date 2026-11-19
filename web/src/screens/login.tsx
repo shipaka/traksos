@@ -338,7 +338,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <h2>Мобильное приложение <em>TrakSOS</em></h2>
           <div className="public-app-phone" aria-hidden="true">
             <span className="public-app-logo">Trak<b>SOS</b></span>
-            <img className="public-app-phone-truck" src="/tracksos-approved-logo-owner-20261119.webp" alt="" loading="lazy" />
+            <img className="public-app-phone-truck" src="/icon-192.png" alt="" loading="lazy" />
             <span>Помощь грузовику<br/>в дороге</span>
           </div>
           <p>Заявки, специалисты, документы и связь с мастером — в одном приложении.</p>

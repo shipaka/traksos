@@ -79,3 +79,32 @@
     font-size:11px!important;color:#bddeea!important;white-space:normal!important;
   }
 }
+
+/* Owner reference 19 Nov: the phone teaser shows the same cyan/white truck
+   logo, not the retired magenta Android promo or a cover-cropped word fragment. */
+.guest-app .public-landing .public-app-card .public-app-phone{
+  background:linear-gradient(160deg,#041b31,#0b3e60)!important;
+  border:3px solid #071a2a!important;
+  outline:1px solid #257ba8!important;
+  box-shadow:8px 13px 24px rgba(0,0,0,.48)!important;
+  padding:8px 5px!important;
+  gap:0!important;
+  transform:rotate(-3deg)!important;
+}
+.guest-app .public-landing .public-app-card .public-app-phone-truck{
+  display:block!important;width:100%!important;height:auto!important;
+  max-height:128px!important;object-fit:contain!important;
+  border:0!important;border-radius:0!important;filter:none!important;
+  box-shadow:none!important;
+}
+.guest-app .public-landing .public-app-card .public-app-phone .public-app-logo,
+.guest-app .public-landing .public-app-card .public-app-phone>span:last-child{
+  display:none!important;
+}
+@media(min-width:1251px){
+  .guest-app .public-landing .public-service-tile b{
+    font-size:clamp(12px,.82vw,15px)!important;
+    white-space:nowrap!important;overflow-wrap:normal!important;
+    letter-spacing:-.025em!important;
+  }
+}

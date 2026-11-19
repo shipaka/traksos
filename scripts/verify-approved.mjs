@@ -125,6 +125,10 @@ expect(!roleCss.includes('traksos-final-insurance.webp') &&
 
 const approvedPhoto = 'tracksos-approved-hero-owner-20261119.webp';
 const approvedHeroLayer = await read('web/src/approvedHeroImage20261119.css');
+expect(approvedHeroLayer.includes('object-fit:contain!important') &&
+  approvedHeroLayer.includes('.public-app-phone-truck') &&
+  !approvedHeroLayer.includes('#f3197c'),
+  'Android promo phone cannot crop approved logo into a retro magenta fragment');
 const heroVisualE2E = await read('e2e/approved-truck-hero.mjs');
 expect(currentCss.includes(approvedPhoto) && approvedHeroLayer.includes(approvedPhoto)
   && !currentCss.includes('tracksos-approved-scenic-hero.webp'),
@@ -179,9 +183,9 @@ for (const name of ['autumn.webp','spring.webp','summer.webp','winter.webp']) {
   expect(!present, 'retired pre-17 Nov Android scene is absent: '+name);
 }
 const shell = await read('web/src/main.tsx');
-expect(landing.includes('/tracksos-approved-logo-owner-20261119.webp') &&
+expect(landing.includes('/icon-192.png') &&
        shell.includes('/tracksos-approved-logo-owner-20261119.webp'),
-       'mobile promo and guest sidebar use the approved logo instead of the old Scania photo');
+       'mobile promo shows 19 Nov icon and guest sidebar uses owner-approved original logo');
 const demo = await read('web/src/screens/adminTestCenter.tsx');
 const serviceDemo = await read('web/src/demo/servicePreviewApi.ts');
 expect(!/\bstructuredClone\s*\(/.test(serviceDemo),
