@@ -35,6 +35,12 @@ const ask=(sourceMessageId:string,token:string,consent:any=true)=>
 
 test('driver room AI: requires own published @mention, explicit consent and live membership',async()=>{
  assert.equal(ok(await t.api('GET','/api/community/ai/status',undefined,driver.token)).enabled,true);
+ assert.equal((await t.api('PUT','/api/community/me',
+  {nickname:'ТраксБот',shareCity:false},driver.token)).status,400,
+  'a human must not impersonate the visibly marked AI bot');
+ assert.equal((await t.api('PUT','/api/community/me',
+  {nickname:'TraksBot',shareCity:false},driver.token)).status,400);
+
  assert.equal((await t.api('GET','/api/community/ai/status',undefined,other.token)).status,403);
  assert.equal((await t.api('POST','/api/community/rooms/'+room+'/ai/ask',{
   sourceMessageId:'1',consent:true
