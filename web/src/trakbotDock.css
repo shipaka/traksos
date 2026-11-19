@@ -100,14 +100,20 @@
 @media(max-width:899px){
   .trakbot-dock {right:10px;bottom:calc(84px + env(safe-area-inset-bottom));}
   .trakbot-dock-panel {
+    /* Anchor to the visual page instead of the shrinking launcher box.
+       This prevents narrow Android/mobile viewports from placing the chat
+       outside the horizontal viewport, while preserving the bottom tab bar. */
+    position:fixed;right:10px;left:auto;
     box-sizing:border-box;
     width:min(395px,calc(100vw - 20px));
     height:min(58dvh,430px,calc(var(--trakbot-visible-height, 100dvh) - 155px));
-    max-height:none;min-height:0;bottom:calc(100% + 8px);
+    max-height:none;min-height:0;
+    bottom:calc(84px + env(safe-area-inset-bottom) + 56px);
     border-radius:16px;
   }
   .trakbot-dock--editing{bottom:calc(7px + var(--trakbot-keyboard-inset,0px));}
   .trakbot-dock--editing .trakbot-dock-panel{
+    bottom:calc(7px + var(--trakbot-keyboard-inset,0px) + 56px);
     height:min(440px,calc(var(--trakbot-visible-height,100dvh) - 75px));
   }
   .trakbot-dock-head{padding:7px 10px;}
@@ -130,7 +136,7 @@
 }
 @media(max-width:359px){
   .trakbot-dock{right:7px;}
-  .trakbot-dock-panel{width:calc(100vw - 14px);}
+  .trakbot-dock-panel{right:7px;width:calc(100vw - 14px);}
   .trakbot-dock-head{padding:6px 7px;}
   .trakbot-compact-body{padding:5px;gap:5px;}
   .trakbot-compact-body .trakbot-dialog{padding:5px;}
@@ -140,7 +146,13 @@
 @media(max-width:899px) and (max-height:500px){
   /* Landscape Android and short split-screen windows: prioritize text + composer. */
   .trakbot-dock { bottom:calc(6px + env(safe-area-inset-bottom)); }
-  .trakbot-dock-panel { height:min(420px,calc(var(--trakbot-visible-height,100dvh) - 68px)); }
+  .trakbot-dock-panel {
+    bottom:calc(6px + env(safe-area-inset-bottom) + 56px);
+    height:min(420px,calc(var(--trakbot-visible-height,100dvh) - 68px));
+  }
+  .trakbot-dock--editing .trakbot-dock-panel{
+    bottom:calc(5px + var(--trakbot-keyboard-inset,0px) + 56px);
+  }
   .trakbot-dock--editing{bottom:calc(5px + var(--trakbot-keyboard-inset,0px));}
   .trakbot-dock--editing .trakbot-dock-panel{
     height:min(420px,calc(var(--trakbot-visible-height,100dvh) - 66px));
