@@ -45,13 +45,20 @@ export function registryCsv(rows: any[]) {
 function cleanText(s: string | undefined, max = 100) {
   return String(s ?? '').trim().slice(0, max);
 }
+function normalizeRegion(s: string | undefined) {
+  const raw = cleanText(s,80);
+  const v = raw.toLocaleLowerCase('ru-RU');
+  if (['спб','санкт-петербург','санкт петербург','петербург','spb'].includes(v)) return 'spb';
+  if (['ло','ленобласть','ленинградская область','lo'].includes(v)) return 'lo';
+  return raw;
+}
 
 export class AdminRegistry {
   constructor(private db: Db) {}
 
   private args(f: RegistryFilters) {
     const q = cleanText(f.q, 120).replace(/[%_\\]/g, '');
-    const region = cleanText(f.region, 80);
+    const region = normalizeRegion(f.region);
     const page = Math.max(1, Math.min(100_000, Math.trunc(f.page ?? 1)));
     const pageSize = Math.max(1, Math.min(100, Math.trunc(f.pageSize ?? 30)));
     return {
@@ -174,7 +181,7 @@ export class AdminRegistry {
   async saveMetadata(actor: AuthUser, userId: string, input: RegistryMetadata) {
     const exists = await this.db.one('select id from users where id=$1', [userId]);
     if(!exists) throw notFound('Участник не найден');
-    const region = cleanText(input.region ?? undefined,80) || null;
+    const region = normalizeRegion(input.region ?? undefined) || null;
     const city = cleanText(input.city ?? undefined,120) || null;
     const note = cleanText(input.note,2000);
     const tags = [...new Set((input.tags??[]).map(s=>cleanText(s,40)).filter(Boolean))].slice(0,12);
