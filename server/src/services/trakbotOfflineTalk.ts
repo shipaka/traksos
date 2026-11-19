@@ -70,28 +70,30 @@ export function offlineSmallTalk(
   const input = nice(message);
   if (!input || input.length > 220 || !isOfflineCasual(input)) return null;
   const previous = previousUserMessages.slice(0, 12).map(nice);
+  const safeStoryRequest = (p: string) => STORY.test(p) && isOfflineCasual(p);
+  const safeJokeRequest = (p: string) => JOKE.test(p) && isOfflineCasual(p);
 
   const anotherStory = /^(?:новую|другую|новую историю|другую историю)[!?.\s]*$/i.test(input) &&
-    previous.some((p) => STORY.test(p));
-  const storyContinuation = CONTINUE.test(input) && previous.some((p) => STORY.test(p));
+    previous.some(safeStoryRequest);
+  const storyContinuation = CONTINUE.test(input) && previous.some(safeStoryRequest);
   if (STORY.test(input) || storyContinuation || anotherStory) {
     if (storyContinuation) {
-      const anchor = previous.findIndex((p) => STORY.test(p));
+      const anchor = previous.findIndex(safeStoryRequest);
       if (anchor < 0 || previous.slice(0, anchor).some((p) => !CONTINUE.test(p))) return null;
-      const idx = Math.max(0, previous.filter((p) => STORY.test(p)).length - 1) % stories.length;
+      const idx = Math.max(0, previous.filter(safeStoryRequest).length - 1) % stories.length;
       const story = stories[idx];
       return anchor < story.parts.length - 1 ? story.parts[anchor + 1] : 'Эта история закончилась. Хочешь новую? Напиши «расскажи историю».';
     }
-    const idx = previous.filter((p) => STORY.test(p)).length % stories.length;
+    const idx = previous.filter(safeStoryRequest).length % stories.length;
     const story = stories[idx];
     return story.title + '. ' + story.parts[0];
   }
 
   const last = previous[0] ?? '';
-  const jokeContinuation = CONTINUE.test(input) && (JOKE.test(last) ||
-    (CONTINUE.test(last) && previous.some((p) => JOKE.test(p)) && !previous.some((p) => STORY.test(p))));
+  const jokeContinuation = CONTINUE.test(input) && ((safeJokeRequest(last)) ||
+    (CONTINUE.test(last) && previous.some(safeJokeRequest) && !previous.some(safeStoryRequest)));
   if (JOKE.test(input) || jokeContinuation) {
-    const idx = previous.filter((p) => JOKE.test(p) || CONTINUE.test(p)).length % jokes.length;
+    const idx = previous.filter((p) => safeJokeRequest(p) || CONTINUE.test(p)).length % jokes.length;
     return jokes[idx] + ' Ещё одну?';
   }
 
@@ -113,10 +115,10 @@ export function offlineSmallTalk(
       /как дела|как жизнь|как настроение|нормально|отлично|поболта/i.test(last))
     return 'У меня всё спокойно: смена бесконечная, зато перерыв на чай виртуальный. А тебе что сегодня подняло настроение?';
   if (/^(?:ахаха+|аха+|хаха+|ха-ха|лол|смешно|забавно)[!?.\s]*$/i.test(input) &&
-      previous.some((p) => JOKE.test(p)))
+      previous.some(safeJokeRequest))
     return 'Отлично, значит, шутка не зря выехала на смену. Ещё одну?';
   if (/^(?:нет|не надо|хватит|пока|не хочу)[!?.\s]*$/i.test(input) &&
-      previous.some((p) => JOKE.test(p) || STORY.test(p)))
+      previous.some((p) => safeJokeRequest(p) || safeStoryRequest(p)))
     return 'Договорились. Без шуток так без шуток. Если захочешь поболтать или нужна помощь — я рядом.';
   if (/^(?:поговорим|поболтаем|хочу поболтать|давай пообщаемся|просто поговорить)[!?.\s]*$/i.test(input))
     return 'Погнали. Что выбираешь: дорога, смешные случаи или вообще любая тема? Не буду всё сводить к диагностике.';
