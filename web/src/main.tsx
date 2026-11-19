@@ -341,7 +341,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   if (isOperatorDemo) return (
     <div className="app operator-demo-app">
       <header className="top">
-        <span className="logo">Trak<b>SOS</b></span>
+        <span className="logo">Trak<b>Sos</b></span>
         <span className="operator-demo-badge">ТЕСТОВЫЙ РЕЖИМ</span>
       </header>
       <div className="operator-demo-content" style={{width:'100%', maxWidth:1440, margin:'0 auto'}}>
@@ -446,7 +446,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   return (
     <div className={`app ${me ? "role-"+mode : "guest-app"}`}>
       <header className="top">
-        <span className="logo">Trak<b>SOS</b></span>
+        <span className="logo">Trak<b>Sos</b></span>
         {me && mode === 'client' && <nav className="track-top-shortcuts" aria-label="Быстрый доступ">
           <a href="#/">Главная</a><a href="#/orders">Заявки</a><a href="#/sos">Помощь в дороге</a><a href="#/shop">Запчасти</a>
         </nav>}
@@ -686,7 +686,7 @@ function SiteFooter() {
           <button className="btn ghost small" onClick={() => { try { localStorage.setItem('traksos.cookie', '1'); } catch { /* */ } setCookieOk(true); }}>Понятно</button>
         </div>
       )}
-      <span className="logo">Trak<b>SOS</b></span>
+      <span className="logo">Trak<b>Sos</b></span>
       <span className="note">{l?.tagline}</span>
       {req && <span className="note">{req}</span>}
       {l?.address && <span className="note">{l.address}</span>}
