@@ -1,4 +1,4 @@
-import {useEffect, useRef} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {go} from '../ui.tsx';
 import {Work} from './performer.tsx';
 import {Order} from './order.tsx';
@@ -10,11 +10,18 @@ import './performerOrderWindow.css';
  * The Android/mobile view remains full-screen.
  */
 export function PerformerOrderWindow({id}:{id:string}) {
+  const [compact, setCompact] = useState(() => window.matchMedia('(max-width: 820px)').matches);
+  useEffect(() => {
+    const mq=window.matchMedia('(max-width: 820px)');
+    const sync=()=>setCompact(mq.matches);
+    mq.addEventListener('change',sync);
+    return ()=>mq.removeEventListener('change',sync);
+  },[]);
   const panel = useRef<HTMLElement>(null);
   const close = useRef<HTMLButtonElement>(null);
   useEffect(()=>{
     const desktop = window.matchMedia('(min-width: 821px)');
-    if (!desktop.matches) return;
+    if (compact || !desktop.matches) return;
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow='hidden';
@@ -40,9 +47,12 @@ export function PerformerOrderWindow({id}:{id:string}) {
       document.body.style.overflow=previousOverflow;
       if(previous?.isConnected) previous.focus();
     };
-  },[id]);
+  },[id,compact]);
+  // Android / narrow screen: never create a hidden desktop dashboard, GPS watcher
+  // or inaccessible modal. Render the original order directly with live actions.
+  if (compact) return <Order id={id}/>;
   return <div className="performer-order-workspace">
-    <div className="performer-order-desk" aria-hidden="true"><Work/></div>
+    <div className="performer-order-desk" aria-hidden="true"><Work background/></div>
     <div className="performer-order-shade" aria-hidden="true" onClick={()=>go('work')}/>
     <section ref={panel} className="performer-order-window" role="dialog"
       aria-modal="true" aria-labelledby="performer-order-dialog-heading">
