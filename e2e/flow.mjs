@@ -175,6 +175,17 @@ await m.getByRole('button', { name: 'Свободен', exact: false }).click();
 await m.getByText(/Геолокация включена/).waitFor();
 await assertDashboardTheme(m, 'master');
 await checkCabinetMenu(m, ['Профиль исполнителя', 'Финансы и выплаты', 'Проверка и документы', 'История заявок', 'Оферта'], { shopTab: false });
+// Mobile search is role-scoped and offers honest empty results before any jobs.
+// It must not route to the global user/partner registry.
+const masterSearch=m.getByRole('searchbox',{name:/Поиск по своим заявкам/});
+await masterSearch.waitFor();
+await masterSearch.fill('НЕСУЩЕСТВУЮЩАЯ-ЗАЯВКА-00991');
+await m.getByText('Ничего не найдено. Проверьте номер или переключите фильтр.').waitFor();
+await m.getByRole('button',{name:'Входящие',exact:true}).click();
+await m.getByRole('region',{name:'Найденные заявки'}).waitFor();
+await masterSearch.fill('');
+await m.getByRole('button',{name:'Мои',exact:true}).click();
+await m.getByRole('button',{name:'Свернуть поиск'}).click();
 await shot(m, '02-master-online');
 
 // Клиент
