@@ -58,9 +58,23 @@ try{
    const page=await ctx.newPage();
    await page.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','client');},token);
    await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
-   await page.locator('.client-dashboard .desktop-quick-card').first().waitFor();
-   const client=await cssAudit(page,'.client-dashboard .desktop-quick-card',width);
-   assert(client.count===4&&client.issues.length===0,width+'px client layout: '+JSON.stringify(client));
+   if(width<900){
+     await page.locator('.and19-client .and19-services>a').first().waitFor();
+     const client=await page.evaluate(()=>{
+       const items=[...document.querySelectorAll('.and19-client .and19-services>a')];
+       const vw=document.documentElement.clientWidth;
+       return {count:items.length,
+         overflow:document.documentElement.scrollWidth>vw+3,
+         tiny:items.map((e,i)=>({i,w:e.getBoundingClientRect().width,h:e.getBoundingClientRect().height}))
+           .filter(x=>x.w<60||x.h<72)};
+     });
+     assert(client.count===4&&!client.overflow&&!client.tiny.length,
+       width+'px approved Android 4 service hit-targets: '+JSON.stringify(client));
+   }else{
+     await page.locator('.client-dashboard .desktop-quick-card').first().waitFor();
+     const client=await cssAudit(page,'.client-dashboard .desktop-quick-card',width);
+     assert(client.count===4&&client.issues.length===0,width+'px desktop illustration layout: '+JSON.stringify(client));
+   }
    await page.screenshot({path:out+'/client-'+width+'.png',fullPage:true});
    await ctx.close();
    console.log('OK illustrated labels and no horizontal spill at '+width+'px');
