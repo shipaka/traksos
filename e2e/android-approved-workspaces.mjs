@@ -12,6 +12,7 @@ const roles = [
   ['master', '+79992223344', 'TrakSOS-Test-2026!', 'performer', '#/work'],
   ['tow', '+79990000143', 'Test-Role-Only-2026!', 'performer', '#/work'],
   ['service', '+79990000144', 'Test-Role-Only-2026!', 'service', '#/base'],
+  ['master_service', '+79990000146', 'Test-Role-Only-2026!', 'service', '#/base'],
   ['insurer', '+79990000145', 'Test-Role-Only-2026!', 'insurer', '#/insurance'],
   ['moderator', '+79990000147', 'Test-Role-Only-2026!', 'moderator', '#/moderation'],
   ['admin', '+79990000001', 'TrakSOS-Test-2026!', 'admin', '#/admin'],
@@ -87,6 +88,15 @@ try {
     if(links.some(v=>!v||!v.startsWith('#/')))throw Error(role+': dead mobile tab');
     if(mode!=='client' && links.some(v=>v==='#/sos'||v==='#/garage'))
       throw Error(role+': unauthorized client navigation');
+    if(role==='master_service'){
+      await page.locator('.account-menu > summary').click();
+      const link=page.locator('.account-menu a[href="#/work"]');
+      if(!await link.count())throw Error('Hybrid partner has no mobile master workplace');
+      await page.goto(BASE+'/#/work',{waitUntil:'domcontentloaded'});
+      await page.locator('.app.role-performer').waitFor();
+      await page.goto(BASE+'/#/base',{waitUntil:'domcontentloaded'});
+      await page.locator('.app.role-service').waitFor();
+    }
     const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>document.documentElement.clientWidth+3);
     if(overflow)throw Error(role+': mobile horizontal overflow');
     await page.waitForTimeout(400);
