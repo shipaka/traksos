@@ -16,7 +16,8 @@ import { OrderTimeline } from './OrderTimeline.tsx';
 import { LocationSharing } from './performer.tsx';
 import { RefundForm, payStatus } from './adminUser.tsx';
 
-export function Order({ id }: { id: string }) {
+type PerformerOrderTab = 'order' | 'client' | 'finance' | 'chat' | 'history';
+export function Order({ id, initialTab = 'order' }: { id: string; initialTab?: PerformerOrderTab }) {
   const o = useLoad(() => get(`/api/orders/${id}`), [id], (e) => e.orderId === id && (e.type === 'order' || e.type === 'payment'));
   const [perfPos, setPerfPos] = useState<{ lat: number; lng: number; at: number } | null>(null);
   useEffect(() => {
@@ -30,8 +31,8 @@ export function Order({ id }: { id: string }) {
   }, [id]);
 
   const { mode } = useMe();
-  const [ptab, setPtab] = useState<'order' | 'client' | 'finance' | 'chat' | 'history'>('order');
-  useEffect(() => { setPtab('order'); }, [id]);
+  const [ptab, setPtab] = useState<PerformerOrderTab>(initialTab);
+  useEffect(() => { setPtab(initialTab); }, [id, initialTab]);
   const backTo = mode === 'admin' ? 'admin' : mode === 'performer' ? 'work' : 'orders';
   if (!o.data) return <main><Back to={backTo} /><Loading error={o.error} /></main>;
   const d = o.data;
