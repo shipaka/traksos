@@ -181,3 +181,6 @@
  .and19-insurance-card.tone-action{border-color:#ef8a3d;background:linear-gradient(125deg,#3e2d2b,#183247)}
  .and19-insurance-more{font-size:11px;color:#87d8e6}
 }
+
+/* Disabled owner-controlled service actions stay visible but cannot start an order. */
+.and19-services a[aria-disabled="true"] { opacity: .48; cursor: not-allowed; }

@@ -10,11 +10,13 @@ import { VerifiedBadge } from '../verifiedBadge.tsx';
 import { EcuStationWorkspace } from './ecuHandoffs.tsx';
 import './performerMobileWork.css';
 import { VehiclePhotoLink } from '../vehicleVisual.tsx';
+import { AndroidPerformerWorkspace, useMobileWorkspace } from './androidWorkspaces.tsx';
 
 // Линия: статус, геолокация, входящие ---------------------------------------
 
 export function Work({background=false}:{background?:boolean}={}) {
   const { me, reload } = useMe();
+  const mobileWorkspace = useMobileWorkspace();
   const { busy, run } = useAction();
   const [compact, setCompact] = useState(() => window.matchMedia('(max-width: 820px)').matches);
   useEffect(() => {
@@ -43,6 +45,17 @@ export function Work({background=false}:{background?:boolean}={}) {
     if (lineStatus === 'online') native.performerOnline();
     reload();
   });
+
+  // The approved Android dashboard does not replace the browser's richer
+  // emergency-close, ECU and partner workflows. Keep pending disputes visible.
+  if (mobileWorkspace && native.isApp && !background) return <main className="work-live-dashboard">
+    <WorkerNotices />
+    <AndroidPerformerWorkspace performer={p} active={active} auctions={auctions.data ?? []} online={online}
+      busy={busy} setLine={setLine} balance={balance.data} reloadAuctions={auctions.reload}
+      pendingReview={toReview.length}/>
+    <LiveStrip who={p.kind === 'tow' ? 'tow' : 'master'} />
+    {online && <LocationSharing />}
+  </main>;
 
   if (compact && !background) return <MobilePerformerWork p={p} personName={me?.name ?? undefined}
     active={active} awaiting={toReview} jobs={jobs.data ?? []} incoming={auctions.data ?? []}

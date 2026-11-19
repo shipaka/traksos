@@ -9,6 +9,7 @@ import { native } from '../native.ts';
 import { saveNewOrderDraft, readNewOrderDraft, clearNewOrderDraft, type SavedNewOrderDraft } from '../orderDraft.ts';
 import { insurancePresentation, isOpenInsuranceRequest } from '../insurancePresentation.ts';
 import { VehiclePhotoLink } from '../vehicleVisual.tsx';
+import { AndroidClientWorkspace, useMobileWorkspace } from './androidWorkspaces.tsx';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
 
@@ -36,6 +37,7 @@ function FleetShortcut({href,locked,className,children}:{
 
 export function Home() {
   const { me } = useMe();
+  const mobileWorkspace = useMobileWorkspace();
   const fleetRules = useLoad(() => me?.owner_id ? get('/api/fleet/rules') : Promise.resolve(null),[me?.owner_id]);
   const restricted = (permission:'repair'|'tow'|'service'|'consult'|'insurance'|'inspection'|'shop') =>
     !!me?.owner_id && (!fleetRules.data || fleetRules.data.allow?.[permission] === false);
@@ -45,6 +47,12 @@ export function Home() {
   const insuranceInProgress = (services.data ?? []).filter(r =>
     r.kind === 'insurance' && isOpenInsuranceRequest(r.status));
   const live = (active.data ?? []).filter((o: any) => !['completed', 'cancelled'].includes(o.status));
+  // Native Android approved workspace, with existing fleet permissions still enforced.
+  if (mobileWorkspace && native.isApp) return <main className="client-home client-dashboard">
+    <AndroidClientWorkspace orders={live} loading={!active.data && !active.error} error={active.error}
+      retry={active.reload} me={me} insuranceInProgress={insuranceInProgress}
+      disabledServices={{repair:restricted('repair'),tow:restricted('tow'),service:restricted('service'),consult:restricted('consult')}} />
+  </main>;
   return (
     <main className="client-home client-dashboard">
       <section className="desktop-hero" aria-label="Помощь грузовому транспорту">

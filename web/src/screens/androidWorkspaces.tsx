@@ -70,9 +70,10 @@ function OrderFacts({ order }: { order: any }) {
   </div>;
 }
 
-export function AndroidClientWorkspace({ orders, loading, error, me, retry, insuranceInProgress }: {
+export function AndroidClientWorkspace({ orders, loading, error, me, retry, insuranceInProgress, disabledServices }: {
   orders: any[]; loading: boolean; error: string | null; me: any; retry: () => void;
   insuranceInProgress: any[];
+  disabledServices?: {repair:boolean; tow:boolean; service:boolean; consult:boolean};
 }) {
   const current = orders.find(o => IN_PROGRESS.includes(o.status));
   const isDriver = !!me?.owner_id || me?.roles?.includes('driver');
@@ -83,10 +84,10 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
       <img src="/tracksos-approved-scenic-hero.webp" alt="" aria-hidden="true" />
     </div>
     <div className="and19-services" aria-label="Вызвать помощь">
-      <a href="#/sos"><span aria-hidden="true">⚒</span>Выездной мастер</a>
-      <a href="#/new/tow"><span aria-hidden="true">↗</span>Эвакуатор</a>
-      <a href="#/services"><span aria-hidden="true">▤</span>СТО</a>
-      <a href="#/new/consult"><span aria-hidden="true">◉</span>Консультация</a>
+      <a href={disabledServices?.repair ? undefined : '#/sos'} aria-disabled={disabledServices?.repair || undefined}><span aria-hidden="true">⚒</span>Выездной мастер</a>
+      <a href={disabledServices?.tow ? undefined : '#/new/tow'} aria-disabled={disabledServices?.tow || undefined}><span aria-hidden="true">↗</span>Эвакуатор</a>
+      <a href={disabledServices?.service ? undefined : '#/services'} aria-disabled={disabledServices?.service || undefined}><span aria-hidden="true">▤</span>СТО</a>
+      <a href={disabledServices?.consult ? undefined : '#/new/consult'} aria-disabled={disabledServices?.consult || undefined}><span aria-hidden="true">◉</span>Консультация</a>
     </div>
     {insuranceInProgress.length > 0 && <section className="and19-insurance" role="region"
       aria-label="Мои активные страховые заявки">
@@ -130,9 +131,9 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
   </div>;
 }
 
-export function AndroidPerformerWorkspace({ performer, active, auctions, online, busy, setLine, balance, reloadAuctions }: {
+export function AndroidPerformerWorkspace({ performer, active, auctions, online, busy, setLine, balance, reloadAuctions, pendingReview=0 }: {
   performer: any; active: any[]; auctions: any[]; online: boolean; busy: boolean;
-  setLine: (status: string) => void; balance: any; reloadAuctions: () => void;
+  setLine: (status: string) => void; balance: any; reloadAuctions: () => void; pendingReview?: number;
 }) {
   const tow = performer.kind === 'tow';
   const inJob = performer.line_status === 'on_job';
@@ -168,6 +169,7 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
       <p>{online ? 'Когда заявка поступит, вы получите входящий вызов. Приложение не нужно держать открытым.' : 'Включите статус «На линии», чтобы получать заявки. При необходимости настройте график.'}</p>
       <a href="#/work/filter" className="and19-link">Настройки заявок ›</a>
     </section>}
+    {pendingReview > 0 && <a className="and19-row-link" href="#/work/jobs">Работы завершены физически, ожидают решения клиента: {pendingReview} ›</a>}
     {auctions.length > 0 && <section className="and19-auctions">
       <h2>Новые подходящие заявки ({auctions.length})</h2>
       {auctions.map((a: any) => <div className="and19-panel" key={a.order_id}>
@@ -198,7 +200,7 @@ export function AndroidMasterChats() {
     {!l.data && !l.error && <MobileLoading label="Загружаем ваши заявки" />}
     {l.error && <div className="and19-panel" role="alert"><p>{l.error}</p><button className="and19-action" onClick={l.reload}>Повторить</button></div>}
     {l.data && !rows.length && <div className="and19-panel">Чатов по принятым заявкам пока нет.</div>}
-    {rows.map(o => <a key={o.id} className="and19-row-link" href={'#/order/' + o.id + '?chat=1'}>
+    {rows.map(o => <a key={o.id} className="and19-row-link" href={'#/order/' + o.id + '/chat'}>
       <span>Заявка №{o.number} · {SERVICES[o.service]?.name || 'Работа'}</span><span>Открыть ›</span>
     </a>)}
   </main>;
