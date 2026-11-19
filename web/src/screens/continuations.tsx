@@ -22,7 +22,8 @@ export function OrderContinuations({order:o}:{order:any}) {
  const client=o.you==='client';
  const owner=client&&!me?.owner_id;
  const canSuggest=isPerformer && (
-  ['arrived','working','awaiting_confirmation','completed'].includes(o.status)
+  ['arrived','working','awaiting_confirmation','completed'].includes(o.status) ||
+  (o.service==='tow' && ['accepted','en_route'].includes(o.status))
  );
  const targets=o.service==='consult'?['master','tow','sto','ecu']
   :o.service==='tow'?['sto']:['tow','sto','ecu'];
@@ -39,6 +40,8 @@ export function OrderContinuations({order:o}:{order:any}) {
  return <section className="card stack" aria-label="Продолжение обращения">
   <b>Продолжить обращение · мультизаявка</b>
   <span className="note">Это рекомендация к следующей услуге, а не новая платная заявка. Исходная работа и расчёты сохраняются отдельно.</span>
+  {o.service==='tow' && ['accepted','en_route'].includes(o.status) &&
+   <span className="note">СТО можно предложить заранее, пока эвакуатор в пути. Запись останется предварительной до фактической доставки.</span>}
   {canSuggest&&<>
    <label className="label" htmlFor={'continuation-target-'+o.id}>Кого предложить клиенту</label>
    <select className="field" id={'continuation-target-'+o.id} value={target}

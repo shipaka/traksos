@@ -159,7 +159,18 @@ export class ServiceCenters {
     const clientId = user.owner_id ?? user.id;
     if (!asService && b.client_id !== clientId && b.created_by !== user.id && !user.roles.some((r) => r === 'admin' || r === 'moderator')) throw forbidden();
     const v = this.bookingView(b, asService ? 'service' : 'client', this.now().getTime() - 7 * 86400_000);
-    return { ...v, center: { id: b.center_id, name: b.center_name, address: b.center_address }, mine: asService, history: asService && b.vehicle_id ? await this.carHistory(b.vehicle_id, b.id) : [] };
+    const linkedTow = b.arrival === 'tow' && b.case_root_id
+      ? await this.db.one<{number:number;status:string}>(
+        "select number,status from orders where (id=$1 or case_root_id=$1)" +
+        " and service='tow' and status not in ('cancelled','no_performer')" +
+        ' order by created_at desc limit 1',[b.case_root_id])
+      : null;
+    return { ...v, transport: linkedTow ? {
+        orderNumber:linkedTow.number, status:linkedTow.status,
+        deliveryReported:['awaiting_confirmation','completed'].includes(linkedTow.status),
+      } : null,
+      center: { id: b.center_id, name: b.center_name, address: b.center_address },
+      mine: asService, history: asService && b.vehicle_id ? await this.carHistory(b.vehicle_id, b.id) : [] };
   }
 
   /** Вся история машины на TrakSOS для сервиса — чужие работы тоже, без сумм */
@@ -206,6 +217,18 @@ export class ServiceCenters {
     const { b } = await this.mineBooking(user, id);
     if (!(REPAIR_STATUSES as readonly string[]).includes(status)) throw bad('bad_status', 'Нет такого статуса');
     if (!['expected', ...REPAIR_STATUSES].includes(b.status)) throw conflict('bad_status', 'Статус уже не поменять');
+    // A prebooked workshop cannot jump to "arrived" OR "in_work" while a
+    // linked tow is still searching, driving to pickup or transporting.
+    // "awaiting_confirmation" is the tow's reported delivery, not an
+    // automatic physical receipt; the workshop must still mark receipt.
+    if (b.case_root_id && b.arrival === 'tow' && !b.arrived_at) {
+      const movingTow = await this.db.one<{number:number;status:string}>(
+        "select number,status from orders where (id=$1 or case_root_id=$1)" +
+        " and service='tow' and status in ('searching','accepted','en_route','arrived','working')" +
+        ' order by created_at desc limit 1',[b.case_root_id]);
+      if(movingTow)throw conflict('tow_not_delivered',
+        `Эвакуатор №${movingTow.number} ещё не сообщил о доставке. СТО может подтвердить запись, но не отмечать приезд машины.`);
+    }
     await this.db.query(
       `update service_bookings set status=$2, arrived_at=coalesce(arrived_at, now()), updated_at=now() where id=$1`, [id, status]);
     await this.tell({ ...b, status }, `Ремонт: ${STATUS_NAME[status]}`, `${b.vehicle?.brand ?? ''} ${b.vehicle?.plate ?? ''}`.trim());
@@ -410,8 +433,10 @@ export class ServiceCenters {
       const previous = await this.db.one<any>('select id, case_root_id, client_id, created_by, vehicle_id, brand, model, year, status, result, service from orders where id=$1', [p.caseOrderId]);
       if (!previous || previous.client_id !== clientId || (user.owner_id && previous.created_by !== user.id))
         throw forbidden('Продолжить можно только собственное обращение');
+      const canPreBookTow=approvedRecommendation && previous.service==='tow' &&
+        p.arrival==='tow' && ['accepted','en_route'].includes(previous.status);
       if ((approvedRecommendation
-            ? !['arrived','working','awaiting_confirmation','completed'].includes(previous.status)
+            ? !canPreBookTow && !['arrived','working','awaiting_confirmation','completed'].includes(previous.status)
             : previous.status !== 'completed' ||
               !(previous.service === 'tow' || ['cause_found','not_found'].includes(previous.result))))
         throw conflict('stage_not_ready', 'Сначала завершите текущий этап помощи');

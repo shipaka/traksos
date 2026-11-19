@@ -266,9 +266,16 @@ export function BaseCar({ id }: { id: string }) {
         )}
       </div>
 
+      {d.arrival==='tow' && d.transport && !d.arrivedAt && <div className="banner col">
+        <b>Связанная эвакуация №{d.transport.orderNumber}</b>
+        <span className="note">{d.transport.deliveryReported
+          ? 'Эвакуатор сообщил о доставке. Отметьте приезд только после фактического приёма грузовика.'
+          : 'Эвакуатор ещё в пути. Запись есть, но машину нельзя отмечать прибывшей.'}</span>
+      </div>}
       {d.status === 'expected' && (
         <div className="grid2">
-          <button className="btn" disabled={busy} onClick={() => act('status', { status: 'arrived' }, 'Клиент видит: машина приехала')}>Машина приехала</button>
+          <button className="btn" disabled={busy || (d.transport && !d.transport.deliveryReported)}
+            onClick={() => act('status', { status: 'arrived' }, 'Клиент видит: машина приехала')}>Машина приехала</button>
           <button className="btn ghost" disabled={busy} onClick={async () => { if (await act('respond', { action: 'undo' }, 'Ответ отменён')) go(servicePreviewPath('base')); }}>Отменить ответ</button>
         </div>
       )}
@@ -489,14 +496,25 @@ export function ServicesList() {
   if(caseOrderId)linkQuery.set('case',caseOrderId);
   if(recommendationId)linkQuery.set('recommendation',recommendationId);
   const linkSuffix=linkQuery.toString();
-  const [s, setS0] = useState<Search>(() => ({ ...loadSearch(), ...(q.get('need') ? { need: q.get('need')! } : {}) }));
+  const [s, setS0] = useState<Search>(() => {
+    const previous=loadSearch();
+    return {...previous,place:caseOrderId?'incident':previous.place==='incident'?'gps':previous.place,
+      ...(q.get('need') ? { need: q.get('need')! } : {})};
+  });
   const setS = (v: Partial<Search>) => setS0((x) => { const n = { ...x, ...v }; try { localStorage.setItem('traksos.svcsearch', JSON.stringify(n)); } catch { /* */ } return n; });
   const [pickPlace, setPickPlace] = useState(false);
   const gps = useGps();
   const cars = useLoad(() => get('/api/vehicles'), []);
-  const brand = cars.data?.[0]?.brand ?? '';
+  const source = useLoad(() => caseOrderId ? get('/api/orders/'+caseOrderId) : Promise.resolve(null),[caseOrderId]);
+  // In a linked case the truck's position, not the fleet owner's phone GPS,
+  // determines distances. Never geocode an address by guesswork.
+  const brand = caseOrderId ? (source.data?.brand ?? source.data?.vehicle?.brand ?? '')
+    : (cars.data?.[0]?.brand ?? '');
   const preset = PLACES.find((p) => p.id === s.place);
-  const point = s.place === 'gps' ? gps : preset ?? null;
+  const incidentPoint=source.data && Number.isFinite(source.data.lat) && Number.isFinite(source.data.lng)
+    ? {lat:source.data.lat,lng:source.data.lng} : null;
+  const point = s.place === 'incident' ? incidentPoint :
+    s.place === 'gps' ? gps : preset ?? null;
   const list = useLoad(() => get(`/api/services?${new URLSearchParams({ ...(point ? { lat: String(point.lat), lng: String(point.lng) } : {}), ...(s.need ? { need: s.need } : {}), ...(brand ? { brand } : {}) })}`), [point?.lat, point?.lng, s.need, brand]);
   const nFilters = (s.open ? 1 : 0) + s.cond.length + s.accepts.length + (s.myBrand ? 1 : 0);
   const all: any[] = list.data ?? [];
@@ -526,11 +544,20 @@ export function ServicesList() {
       <div className="card" style={{ gap: 8 }}>
         <span className="label">Где машина</span>
         <div className="between">
-          <b>{s.place === 'gps' ? (gps ? '📍 Рядом со мной' : '📍 Определяю место…') : `📍 ${preset?.name ?? 'Выберите место'}`}</b>
+          <b>{s.place==='incident'
+   ? (source.data ? 'Место обращения №'+source.data.number : 'Проверяем место обращения…')
+   : s.place==='gps' ? (gps ? 'Рядом со мной' : 'Определяю место…')
+   : (preset?.name ?? 'Выберите место')}</b>
           <button type="button" className="btn ghost small" onClick={() => setPickPlace(!pickPlace)}>{pickPlace ? 'Готово' : 'Изменить'}</button>
         </div>
         {s.place === 'gps' && !gps && !pickPlace && <span className="note">Нет доступа к геолокации? Нажмите «Изменить» и выберите район.</span>}
+        {s.place==='incident' && source.data && <span className="note">
+          Адрес грузовика: {source.data.address || 'не указан'}.
+          {!incidentPoint && ' Точных координат нет, расстояния не рассчитаны; при необходимости выберите район.'}
+        </span>}
         {pickPlace && <div className="row" style={{ gap: 6 }}>
+          {caseOrderId && <button type="button" className="chip" aria-pressed={s.place==='incident'}
+            onClick={() => {setS({place:'incident'});setPickPlace(false);}}>У машины из заявки</button>}
           <button type="button" className="chip" aria-pressed={s.place === 'gps'} onClick={() => { setS({ place: 'gps' }); setPickPlace(false); }}>По GPS</button>
           {PLACES.map((p) => <button key={p.id} type="button" className="chip" aria-pressed={s.place === p.id} onClick={() => { setS({ place: p.id }); setPickPlace(false); }}>{p.name}</button>)}
         </div>}
@@ -683,7 +710,10 @@ export function BookForm({ id }: { id: string }) {
   const [arrival, setArrival] = useState<'self' | 'tow'>('self');
   const [comment, setComment] = useState('');
   useEffect(() => { if (cars.data?.length && !vehicleId && !caseOrderId) setVehicle(cars.data[0].id); }, [cars.data,caseOrderId]);
-  useEffect(()=>{if(source.data)setVehicle(source.data.vehicleId??'');},[source.data]); // eslint-disable-line
+  useEffect(()=>{if(source.data){
+    setVehicle(source.data.vehicleId??'');
+    if(source.data.service==='tow')setArrival('tow');
+  }},[source.data]); // eslint-disable-line
   if (!c.data) return <main><Back to={`services/${id}`} label="Сервис" /><Loading error={c.error} /></main>;
   const d = c.data;
   const needs = Object.entries(NEEDS).filter(([k]) => k === 'other' || (d.staff?.[k] && d.staff[k] !== 'none'));
@@ -726,7 +756,7 @@ export function BookForm({ id }: { id: string }) {
         <Field label="Комментарий · по желанию"><textarea className="field" value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Что беспокоит" /></Field>
       </div>
       {from && <span className="note">По совету мастера — скидка применится в счёте сама.</span>}
-      {caseOrderId && <span className="note">Продолжение обращения №{source.data?.number??'…'}. СТО подтвердит запись и согласует отдельную смету; рекомендация не является оплатой.</span>}
+      {caseOrderId && <span className="note">Продолжение обращения №{source.data?.number??'…'}. СТО подтвердит запись и согласует отдельную смету; рекомендация не является оплатой. Если грузовик на эвакуаторе, запись предварительная и не означает доставку.</span>}
       <button className="btn" disabled={busy || !need || !day || (!!caseOrderId && !source.data)} onClick={send}>Отправить запрос</button>
       <span className="note">Сервис подтвердит готовность или уточнит детали — придёт уведомление.</span>
     </main>

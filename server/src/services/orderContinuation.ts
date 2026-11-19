@@ -46,7 +46,11 @@ export class OrderContinuationService {
  async propose(user:AuthUser,orderId:string,target:Target,reason:string) {
   const {order,origin}=await this.source(user,orderId);
   if(!origin)throw forbidden('Предложить продолжение может назначенный исполнитель');
-  if(!['arrived','working','awaiting_confirmation','completed'].includes(order.status))
+  // An assigned tow driver can advise an STO en route, to reserve a future
+  // reception slot. Neither advice nor booking implies physical delivery.
+  const towToWorkshopInTransit=order.service==='tow' && target==='sto'
+   && ['accepted','en_route'].includes(order.status);
+  if(!towToWorkshopInTransit && !['arrived','working','awaiting_confirmation','completed'].includes(order.status))
    throw conflict('too_early','Сначала проведите консультацию или осмотрите машину');
   if(target==='master' && order.service!=='consult')
    throw bad('unsupported_transition','Выездного мастера после консультации можно предложить из консультации');
