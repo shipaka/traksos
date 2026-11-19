@@ -25,6 +25,21 @@ try {
       localStorage.setItem('traksos.mode', 'client');
     }, token);
     await page.goto(BASE + '/#/', {waitUntil: 'domcontentloaded'});
+    if(width<900){
+      const mobile = page.locator('.and19-client');
+      await mobile.waitFor({state:'visible'});
+      const image=mobile.locator('.and19-cover img');
+      const state=await image.evaluate(i=>({
+        loaded:i.complete&&i.naturalWidth>100,
+        visible:getComputedStyle(i).display!=='none',
+        viewport:document.documentElement.clientWidth,
+        content:document.documentElement.scrollWidth
+      }));
+      if(!state.loaded||!state.visible||state.content>state.viewport+3)
+        throw Error(width+'px approved Android scene invalid: '+JSON.stringify(state));
+      if(await mobile.locator('.and19-services>a').count()!==4)
+        throw Error(width+'px Android missing four help services');
+    }else{
     const hero = page.locator('.client-dashboard .desktop-hero');
     await hero.waitFor();
     const img = hero.locator('img.client-hero-scania');
@@ -55,8 +70,9 @@ try {
     if (check.sourceWidth < 1200)
       console.warn('ASSET QUALITY BLOCKER: desktop landscape truck photo is only ' +
         check.sourceWidth + 'x' + check.sourceHeight + '; replace with high-resolution approved artwork before release');
+    }
     await page.screenshot({path: 'e2e/shots/approved-truck/client-' + width + '.png', fullPage: true});
-    await page.locator('a.desktop-primary-action[href="#/sos"]').click();
+    await page.locator(width<900 ? '.and19-sos' : 'a.desktop-primary-action[href="#/sos"]').click();
     await page.locator('.client-sos-choices').waitFor();
     if (await page.locator('.client-sos-choice').count() !== 3)
       throw Error(width + 'px approved SOS must have exactly three main directions');
