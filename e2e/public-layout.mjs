@@ -47,8 +47,8 @@ async function run(width, height, mobile, nativePreview = false) {
   try {
     await page.goto(BASE + '/#/', { waitUntil: 'domcontentloaded' });
     await page.getByRole('heading', { name: /TrakSOS.*помощь.*в пути/i }).waitFor();
-    check(await page.locator('.public-actions').getByRole('button', { name: 'Войти', exact: true }).isVisible(), 'Hero login is not visible');
-    check(await page.locator('.public-actions').getByRole('button', { name: 'Регистрация', exact: true }).isVisible(), 'Hero registration is not visible');
+    check(await page.locator('.public-actions').getByRole('button', { name: 'Зарегистрироваться', exact: true }).isVisible(), 'Hero registration is not visible');
+    check(await page.locator('.public-actions').getByRole('link', { name: 'Как это работает', exact: true }).isVisible(), 'Hero guide is not visible');
     const image = await page.locator('.public-hero-visual').evaluate(async el => {
       const bg = [getComputedStyle(el).backgroundImage, getComputedStyle(el,'::after').backgroundImage].join(' | ');
       const match = bg.match(/url\(["']?([^"')]+)["']?\)/);
@@ -110,13 +110,12 @@ async function run(width, height, mobile, nativePreview = false) {
         check(!(await nav.getByText(forbidden,{exact:true}).count()), suffix + ': protected tab visible before sign-in: '+forbidden);
       }
     }
-    // All six approved photographic services must remain in their exact order.
+    // The latest 19 Nov public six tiles are the only approved public row.
     const services = page.locator('.public-service-tiles > a');
     check(await services.count() === 6, suffix + ': six approved service cards required');
     const labels = await services.locator('b').allTextContents();
     check(JSON.stringify(labels) === JSON.stringify([
-      'Эвакуация', 'Выездной мастер', 'СТО и сервисы',
-      'Страхование', 'Запчасти', 'Консультации'
+      'SOS', 'Эфир', 'СТО', 'ЭБУ', 'Запчасти', 'Страхование'
     ]), suffix + ': service card order changed: ' + JSON.stringify(labels));
     await page.screenshot({ path: OUT + '/home-' + suffix + '.png', fullPage: true });
 
@@ -243,7 +242,7 @@ async function run(width, height, mobile, nativePreview = false) {
     } else {
       await page.goto(BASE + '/#/');
       await page.locator('.guest-mobile-catalog > summary').click();
-      await page.getByRole('navigation',{name:'Каталог услуг TrakSOS'}).getByRole('link',{name:'Компания'}).click();
+      await page.getByRole('navigation',{name:'Возможности TrakSOS'}).getByRole('link',{name:'О платформе'}).click();
       await page.getByRole('heading',{name:'Компания TrakSOS'}).waitFor();
       await verifyPage(page, suffix + ':company');
     }
