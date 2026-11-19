@@ -33,6 +33,10 @@ function filterMessage(raw:string):string {
   if(!text || text.length>400) throw bad('air_length','Сообщение должно содержать от 1 до 400 символов');
   if(/https?:\/\/|www\.|[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(text))
     throw bad('air_links','Ссылки и адреса почты в общем эфире запрещены');
+  // Community-only room: block obvious sales pitches, not ordinary questions
+  // about repairs, prices, routes or parts. Real abuse can still be moderated.
+  if(/(?:^|\s)(?:продам|продаю|прода[её]м|купите|покупайте|заказывайте|рекламирую|промокод|подписывайтесь|ищем клиентов)(?:\s|[!.,:;]|$)|(?:^|\s)(?:предлага(?:ю|ем)|оказыва(?:ю|ем))\s+услуги|(?:^|\s)(?:скидк[аиу]|акци[яию])\s+(?:на|для|по)\s|(?:^|\s)пишите\s+(?:в\s+личку|в\s+лс)|(?:^|\s)заходите\s+в\s+(?:наш|мо[йю]|магазин|сервис)/i.test(text))
+    throw bad('air_ads','В эфире запрещена реклама и продажа услуг. Это чат водителей и владельцев автопарков.');
   return maskPhones(text).text.replace(/\b[A-HJ-NPR-Z0-9]{17}\b/gi,'[VIN скрыт]');
 }
 function label(user:AuthUser):string {
@@ -75,6 +79,14 @@ export class DriverAirService {
         "from driver_air_messages where user_id=$1 and origin='human'",[user.id,now]);
       if((rate?.minute??0)>=6||(rate?.day??0)>=80)
         throw bad('air_rate','Слишком много сообщений. Можно написать чуть позже.');
+      // A lost mobile connection may cause a repeated tap; don't publish the
+      // same text again, and don't let a new account flood identical adverts.
+      const duplicate=await q.one(
+        "select 1 from driver_air_messages where user_id=$1 and origin='human' "+
+        "and body=$2 and created_at>$3::timestamptz-interval '10 minutes' "+
+        "and hidden_at is null limit 1",
+        [user.id,call ? 'Хочу обратиться к '+(call==='admin'?'администратору':'модератору')+' через личную поддержку.' : text,now]);
+      if(duplicate) throw bad('air_duplicate','Ты уже отправлял такое сообщение недавно.');
       const body=call
         ? 'Хочу обратиться к '+(call==='admin'?'администратору':'модератору')+' через личную поддержку.'
         : text;
