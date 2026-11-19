@@ -346,8 +346,8 @@ await a.getByText('Начислено').first().waitFor();
 await shot(a, '15-admin-performer');
 
 // Админ: новая редакция оферты → клиенту окно с галочкой → принял
-await a.goto(BASE + '/#/admin');
-await a.getByRole('button', { name: 'Оферты', exact: true }).click();
+await a.goto(BASE + '/#/admin/section/offers');
+await a.getByRole('heading', { name: 'Оферты', exact: true }).waitFor();
 await a.getByRole('button', { name: 'Оферта для клиентов' }).click();
 await a.locator('textarea').fill('# Оферта для клиентов\n\nТестовая редакция для проверки окна согласия. Здесь будет текст от юриста.\n\n1. Пункт первый');
 await a.locator('input[placeholder^="Что изменилось"]').fill('Новая шкала отмены');
