@@ -25,3 +25,8 @@
 .fleet-vehicle-media .trak-vehicle-no-photo{flex:1;min-width:0;max-width:none;width:100%;
  min-height:115px;aspect-ratio:auto;color:#edf4fc;border-radius:10px}
 @media(max-width:360px){.trak-vehicle-no-photo{min-width:93px;font-size:10px}}
+
+.trak-vehicle-photo-wrap{display:flex;flex-direction:column;gap:3px;min-width:0}
+.trak-vehicle-photo-credits{font-size:11px;line-height:1.3;color:#f5b67e;align-self:flex-end;
+ padding:4px 8px;text-decoration:underline;text-underline-offset:2px}
+.trak-vehicle-photo-credits:focus-visible{outline:3px solid #ffa357;outline-offset:2px}
