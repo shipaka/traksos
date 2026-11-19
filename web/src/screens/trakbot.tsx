@@ -17,6 +17,30 @@ export function TrakBotChat() {
   const [make, setMake] = useState('');
   const [ecu, setEcu] = useState('');
   const [working, setWorking] = useState(false);
+  const [listening, setListening] = useState(false);
+  const speechRef = useRef<any>(null);
+  const speechAvailable = typeof window !== 'undefined' &&
+    !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
+  const startDictation = () => {
+    // Browser/Android WebView permission happens only after an explicit tap.
+    if (!speechAvailable || working) return;
+    if (listening) { speechRef.current?.stop(); return; }
+    const Ctor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new Ctor();
+    speechRef.current = recognition;
+    recognition.lang = 'ru-RU';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onresult = (event: any) => {
+      const result = String(event.results?.[0]?.[0]?.transcript ?? '').trim();
+      if (result) setText((current) => (current ? current + ' ' : '') + result);
+    };
+    recognition.onerror = () => setError('Голосовой ввод недоступен. Напиши сообщение текстом.');
+    recognition.onend = () => { speechRef.current = null; setListening(false); };
+    try { setError(''); setListening(true); recognition.start(); }
+    catch { setListening(false); setError('Не получилось включить микрофон. Можно написать текстом.'); }
+  };
+  useEffect(() => () => speechRef.current?.abort(), []);
   const [error, setError] = useState('');
   const end = useRef<HTMLDivElement>(null);
   const isTech = !!me?.roles.some((role) => ['master','service','admin','moderator'].includes(role));
@@ -46,7 +70,7 @@ export function TrakBotChat() {
   return <main>
     <Back to="help" />
     <h1>TrakBot</h1>
-    <div className="sub">Личный технический помощник. Другим участникам эфира ваши сообщения не видны.</div>
+    <div className="sub">{isTech ? 'Технический помощник для мастеров и СТО.' : 'Первичная помощь водителю.'} Личный чат: другим участникам эфира ваши сообщения не видны.</div>
     <div className="card flat" style={{ gap: 8 }}>
       <b>Что за машина?</b>
       <div className="grid2">
@@ -67,11 +91,12 @@ export function TrakBotChat() {
       {error && <div role="alert" className="note" style={{ color: 'var(--danger, #b42318)' }}>{error}</div>}
       <form className="compose" onSubmit={(event) => { event.preventDefault(); void send(); }}>
         <input className="field" maxLength={700} value={text} onChange={(e) => setText(e.target.value)} placeholder="Например: Iveco, ошибка P0087..." aria-label="Сообщение TrakBot" />
+        {speechAvailable && <button type="button" className="btn ghost small" aria-label={listening ? 'Остановить запись голоса' : 'Надиктовать вопрос'} title="Надиктовать вопрос — ответ придёт текстом" onClick={startDictation}>{listening ? 'Стоп' : '🎙'}</button>}
         <button type="submit" className="btn small" disabled={working || !text.trim()}>{working ? '...' : 'Отправить'}</button>
       </form>
     </section>
-    <span className="note">Пока бесплатно. Платные консультации с резервированием оплаты не включены. Если в справочнике нет точного ответа, TrakBot скажет об этом.</span>
-    <a className="btn ghost" href="#/new/consult">Нужна помощь человека? Консультация специалиста</a>
+    <span className="note">Пилот бесплатный, дополнительных комиссий нет. Голосовой ввод работает, только если поддерживается устройством, и включается вручную. Ответ приходит текстом. Если точного ответа нет, TrakBot не будет угадывать.</span>
+    {!isTech && <a className="btn ghost" href="#/new/consult">Нужна помощь человека? Консультация специалиста</a>}
     {isTech && <a href="#/tech/codes" className="btn ghost">Технический справочник кодов для специалистов</a>}
   </main>;
 }
