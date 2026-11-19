@@ -1,6 +1,12 @@
 -- SТО/repair invoice 5% customer surcharge is a separate snapshotted component.
 -- Legacy invoices remain EXACTLY as before (client_fee=0, payment_required=false).
 -- New invoices require separately attested incoming funds before being marked paid out.
+alter table service_bookings add column if not exists parts_amount integer not null default 0
+  check(parts_amount >= 0);
+alter table service_bookings add column if not exists fee_base_amount integer not null default 0
+  check(fee_base_amount >= 0);
+alter table service_bookings add constraint service_parts_not_above_invoice
+  check (amount is null or parts_amount <= amount);
 alter table service_bookings add column if not exists client_fee integer not null default 0
   check (client_fee between 0 and 500000);
 alter table service_bookings add column if not exists client_fee_pct numeric(5,2) not null default 0
