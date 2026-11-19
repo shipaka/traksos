@@ -466,7 +466,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
             </div>
           </details>
           <a href="#/company">О платформе</a>
-          <a href="#/economics">Тарифы</a>
+          <a href="#/explore/pricing">Тарифы</a>
           <a href="#/help">Помощь</a>
         </nav>}
         {!me && isAuthEntry && <nav className="guest-auth-links" aria-label="О компании и документах">
