@@ -14,6 +14,7 @@ import './premiumVehiclePolish.css';
 import './finalCanon.css';
 // Insurance-only refinement follows the approved global visual canon.
 import './insurancePremiumStates.css';
+import './trakbotDock.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
@@ -39,6 +40,7 @@ import { BaseHome, BaseCar, BaseSetup, BaseMoney, AdminServicePayouts, ServicesL
 import { Fleet, QrJoin } from './screens/fleet.tsx';
 import { Help } from './screens/help.tsx';
 import { TrakBotChat, TechCodes } from './screens/trakbot.tsx';
+import { TrakBotDock } from './trakbotDock.tsx';
 import { RepairCases, TechnicalCasesReview } from './screens/technicalCases.tsx';
 import { Rules } from './screens/rules.tsx';
 import { Shop, ShopCart, ShopHistory } from './screens/shop.tsx';
@@ -561,6 +563,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           ))}
         </nav>
       )}
+      {!serviceSandbox && !isAuthEntry && route[0] !== 'trakbot' && <TrakBotDock authenticated={!!me} />}
     </div>
   );
 }
