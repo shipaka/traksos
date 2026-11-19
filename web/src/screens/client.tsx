@@ -8,6 +8,7 @@ import { VehicleServiceApplication, VehicleServiceHistory } from './vehicleServi
 import { native } from '../native.ts';
 import { saveNewOrderDraft, readNewOrderDraft, clearNewOrderDraft, type SavedNewOrderDraft } from '../orderDraft.ts';
 import { insurancePresentation, isOpenInsuranceRequest } from '../insurancePresentation.ts';
+import { VehiclePhotoLink } from '../vehicleVisual.tsx';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
 
@@ -97,7 +98,11 @@ export function Home() {
               <a key={o.id} href={`#/order/${o.id}`} className="card hi" style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div className="between">
                   <b>Заявка №{o.number} · {SERVICES[o.service]?.name ?? o.service}</b>
-                  <span className={`pill ${STATUS[o.status]?.tone}`}>{STATUS[o.status]?.name}</span>
+                  <span className={`pill ${o.unilateral_status==='disputed'?'warn':STATUS[o.status]?.tone}`}>
+                {o.unilateral_status==='pending_client'?'Работа сдана · нужен ваш ответ'
+                  :o.unilateral_status==='disputed'?'На разбирательстве'
+                  :STATUS[o.status]?.name}
+              </span>
                 </div>
                 <span className="note">{o.service === 'consult' ? 'по телефону' : o.address ?? o.estimate?.zoneName} · открыть →</span>
               </a>
@@ -878,7 +883,7 @@ export function Orders({ as }: { as: 'client' | 'performer' }) {
           ))}
         </div>
       )}
-      {showingNow && <h2>Активные выезды и консультации · {(list.data ?? []).filter(live).length}</h2>}
+      {showingNow && <h2>Текущие обращения и заявки на подтверждении · {(list.data ?? []).filter(live).length}</h2>}
       {as === 'client' && ctab === 'hist' && list.data && <TaskArchive orders={list.data.filter((o: any) => !live(o))} />}
       {as === 'client' && (ctab === 'my' || ctab === 'black') ? <MyPerformers black={ctab === 'black'} /> :
       as === 'client' && ctab === 'hist' ? null : !list.data ? <Loading error={list.error} /> : !shown!.length ?
@@ -970,7 +975,7 @@ function PerformerBlacklist() {
 
 // Гараж ---------------------------------------------------------------------
 
-export function Garage() {
+export function Garage({focusVehicleId}:{focusVehicleId?:string}={}) {
   const { me } = useMe();
   const list = useLoad(() => get('/api/vehicles'), []);
   const { busy, run } = useAction();
@@ -1006,7 +1011,8 @@ export function Garage() {
         </button>
       )}
       {!list.data ? <Loading error={list.error} /> : list.data.map((v: any) => (
-        <div key={v.id} className="card">
+        <div key={v.id} id={`garage-vehicle-${v.id}`} className="card">
+          <VehiclePhotoLink brand={v.brand} model={v.model} plate={v.plate} href={`#/garage/${v.id}`}/>
           <div className="between"><b>{v.brand} {v.model ?? ''}{v.year ? `, ${v.year}` : ''}</b><span className="pill">{v.plate ?? 'без номера'}</span></div>
           {v.trailer_plate && <span className="note">Прицеп {v.trailer_plate}</span>}
           {v.fixed_at && <span className="pill good" style={{ alignSelf: 'flex-start' }}>уточнено мастером · {fmtTime(v.fixed_at)}</span>}
@@ -1014,7 +1020,7 @@ export function Garage() {
           <VehicleExtendedDetails vehicle={v} isDriver={isDriver} onSaved={()=>list.reload()} />
           <VehicleServiceApplication vehicleId={v.id} onCreated={() => setServiceHistoryVersion(v => v + 1)} />
           <VehicleServiceHistory id={v.id} isDriver={isDriver} refreshVersion={serviceHistoryVersion} />
-          <VehicleHistory id={v.id} />
+          <VehicleHistory id={v.id} initialOpen={focusVehicleId===v.id} />
           <a className="btn ghost small" href={`#/shop/history/${v.id}`}>Покупки и запчасти этой машины</a>
           {!isDriver && (driverFor === v.id ? (
             <div className="stack">
@@ -1110,8 +1116,14 @@ function VehicleExtendedDetails({vehicle:v,isDriver,onSaved}:{
 }
 
 /** История машины: что и когда делали, комментарий мастера. Свёрнута, раскрывается по нажатию. */
-function VehicleHistory({ id }: { id: string }) {
-  const [open, setOpen] = useState(false);
+function VehicleHistory({ id,initialOpen=false }: { id: string; initialOpen?:boolean }) {
+  const [open, setOpen] = useState(initialOpen);
+  useEffect(()=>{
+    if(!initialOpen)return;
+    setOpen(true);
+    const el=document.getElementById('garage-vehicle-'+id);
+    el?.scrollIntoView({block:'start',behavior:'auto'});
+  },[initialOpen,id]);
   const h = useLoad(() => get(`/api/vehicles/${id}/history`), [id], (e) => e.type === 'order');
   const d = h.data;
   if (!d) return null;

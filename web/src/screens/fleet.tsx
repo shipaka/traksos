@@ -5,6 +5,7 @@ import { SERVICES } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '../ui.tsx';
 import { qrSvg } from '../qr.ts';
 import { Login } from './login.tsx';
+import { VehicleModelPhoto, vehicleReferencePhoto } from '../vehicleVisual.tsx';
 
 const ALLOW: [string, string, string][] = [
   ['repair', 'Вызов мастера', 'электрик, пневматика, автономка, шиномонтаж'],
@@ -95,18 +96,19 @@ export function Fleet() {
         {!d.cars.length && <div className="empty">Машин пока нет — добавьте в гараже.</div>}
         {d.cars.map((c: any) => (
           <div key={c.id} className="card fleet-vehicle-card">
-            <div className="fleet-vehicle-media">
-              <img src={c.brand === 'Scania' && /R\s?520/i.test(c.model ?? '')
-                ? '/tracksos-approved-scania-r520.webp' : '/tracksos-hero-service-hq.webp'}
-                alt={c.brand === 'Scania' && /R\s?520/i.test(c.model ?? '')
-                  ? 'Scania R520 · фотография тягача' : 'Грузовой сервис · тематическая фотография, не снимок конкретной машины'}
-                loading="lazy" />
+            <a className="fleet-vehicle-media" href={`#/garage/${c.id}`}
+              aria-label={`Открыть историю машины ${c.brand} ${c.model??''} ${c.plate??''}`}
+              style={{textDecoration:'none',color:'inherit'}}>
+              <VehicleModelPhoto brand={c.brand} model={c.model}/>
               <div className="fleet-vehicle-title">
                 <span>ТЕХНИКА АВТОПАРКА</span>
                 <h2>{c.brand} {c.model ?? ''}</h2>
                 <p>{c.year ? c.year + ' год · ' : ''}{c.plate ?? 'Госномер не добавлен'}</p>
+                <small>{vehicleReferencePhoto(c.brand,c.model)
+                  ? 'Фото указанной модели, не этой машины'
+                  : 'Точное фото модели пока недоступно'} · открыть историю ›</small>
               </div>
-            </div>
+            </a>
             <div className="between"><b>{c.brand} {c.model ?? ''}</b><span className="pill">{c.plate ?? 'без номера'}</span></div>
             {c.driver ? (
               <span className="note">Водитель {c.driver.name ?? c.driver.phone} · доступ с {c.driver.since ? fmtTime(c.driver.since) : '—'} · в этом месяце {rub(c.driver.monthSpent)} <span className="pill good">Активен</span></span>

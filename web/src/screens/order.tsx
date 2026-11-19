@@ -15,8 +15,10 @@ import { OrderContinuations } from './continuations.tsx';
 import { OrderTimeline } from './OrderTimeline.tsx';
 import { LocationSharing } from './performer.tsx';
 import { RefundForm, payStatus } from './adminUser.tsx';
+import { VehiclePhotoLink } from '../vehicleVisual.tsx';
 
-export function Order({ id }: { id: string }) {
+type PerformerOrderTab = 'order' | 'client' | 'finance' | 'chat' | 'history' | 'vehicle';
+export function Order({ id, initialTab = 'order' }: { id: string; initialTab?: PerformerOrderTab }) {
   const o = useLoad(() => get(`/api/orders/${id}`), [id], (e) => e.orderId === id && (e.type === 'order' || e.type === 'payment'));
   const [perfPos, setPerfPos] = useState<{ lat: number; lng: number; at: number } | null>(null);
   useEffect(() => {
@@ -30,7 +32,8 @@ export function Order({ id }: { id: string }) {
   }, [id]);
 
   const { mode } = useMe();
-  const [ptab, setPtab] = useState<'order' | 'client'>('order');
+  const [ptab, setPtab] = useState<PerformerOrderTab>(initialTab);
+  useEffect(() => { setPtab(initialTab); }, [id, initialTab]);
   const backTo = mode === 'admin' ? 'admin' : mode === 'performer' ? 'work' : 'orders';
   if (!o.data) return <main><Back to={backTo} /><Loading error={o.error} /></main>;
   const d = o.data;
@@ -46,23 +49,37 @@ export function Order({ id }: { id: string }) {
           <h1>№{d.number} · {SERVICES[d.service]?.name ?? d.service}</h1>
           <div className="sub">{d.isSos ? 'SOS · ' : ''}{fmtTime(d.createdAt)} · {isConsult ? 'по телефону, без выезда' : d.estimate?.zoneName}</div>
         </div>
-        <span className={`pill ${STATUS[d.status]?.tone}`}>{isConsult && d.status === 'accepted' ? 'На связи' : isConsult && d.status === 'awaiting_confirmation' ? 'Ждём «Вопрос решён»' : STATUS[d.status]?.name}</span>
+        <span className={`pill ${d.unilateralClosure?.status==='disputed'?'warn':STATUS[d.status]?.tone}`}>
+          {d.statusLabel || STATUS[d.status]?.name}</span>
       </div>
 
+      {d.you === 'client' && d.vehicleId && <section aria-label="Автомобиль заявки и его история" className="order-vehicle-preview">
+        <VehiclePhotoLink brand={d.vehicle?.brand ?? d.brand} model={d.vehicle?.model ?? d.model}
+          plate={d.vehicle?.plate} href={`#/garage/${d.vehicleId}`} compact/>
+      </section>}
       {isPerformer && ['accepted','en_route','arrived','working'].includes(d.status)
         && !location.hash.startsWith('#/admin/test-center') &&
         <section className="roadside-location-share" aria-label="Передача GPS при выезде">
           <b>GPS во время выезда</b>
           <LocationSharing />
         </section>}
-      {(isPerformer || d.you === 'candidate') && <PerformerTabs tab={ptab} setTab={setPtab} />}
-      {(isPerformer || d.you === 'candidate') && ptab === 'client' ? <ClientTab id={id} canEdit={isPerformer} /> : <>
+      {(isPerformer || d.you === 'candidate') && <PerformerTabs tab={ptab === 'vehicle' ? 'client' : ptab} setTab={setPtab} full={isPerformer} />}
+      {(isPerformer || d.you === 'candidate') && (ptab === 'client' || ptab === 'vehicle')
+        ? <ClientTab id={id} canEdit={isPerformer} historyOnly={ptab === 'vehicle'} />
+        : isPerformer && ptab === 'finance' ? <Money d={d} />
+        : isPerformer && ptab === 'chat' ? <Chat id={id} status={d.status} />
+        : isPerformer && ptab === 'history'
+          ? <OrderTimeline events={d.events ?? []} createdAt={d.createdAt}
+              acceptedAt={d.acceptedAt} arrivedAt={d.arrivedAt}
+              completedAt={d.completedAt} isAdmin={false} />
+        : <>
       {d.status === 'awaiting_owner' && <OwnerApproval d={d} onDone={o.reload} />}
       {d.status === 'searching' && (d.you === 'client' || d.you === 'admin') && <Search d={d} onChosen={o.reload} />}
       {d.status === 'searching' && d.actions?.includes('cancel') && !isPerformer && <Cancel id={id} status={d.status} consult={isConsult} onDone={o.reload} />}
       {d.you === 'candidate' && <CandidateView d={d} onDone={o.reload} />}
 
-      {!isConsult && d.you !== 'candidate' && <Steps status={d.status} service={d.service} events={d.events} />}
+      {!isConsult && d.you !== 'candidate' && <Steps status={d.status} service={d.service} events={d.events} unilateralStatus={d.unilateralClosure?.status} />}
+      {isPerformer && (isConsult ? <ConsultFinish d={d} onDone={o.reload} /> : <PerformerActions d={d} onDone={o.reload} />)}
       {isConsult && !isPerformer && d.you !== 'candidate' && <ConsultClient d={d} />}
       {d.consultFrom?.hint && <ConsultHintCard from={d.consultFrom} />}
       {d.status === 'no_performer' && !isPerformer && <Retry id={id} onDone={o.reload} />}
@@ -71,7 +88,7 @@ export function Order({ id }: { id: string }) {
       {isPerformer && <ClientCard d={d} />}
       {d.service === 'tow' && !isPerformer && d.you !== 'candidate' && d.destination && <TowInfo d={d} />}
 
-      {d.you !== 'candidate' && d.status !== 'searching' && <Money d={d} />}
+      {d.you !== 'candidate' && d.status !== 'searching' && !isPerformer && <Money d={d} />}
 
       {d.you === 'admin' && <AdminPanel d={d} onDone={o.reload} />}
       {d.you === 'admin' && !isConsult && <AdminRouteMap orderId={id} />}
@@ -79,10 +96,14 @@ export function Order({ id }: { id: string }) {
         events={d.events} createdAt={d.createdAt} acceptedAt={d.acceptedAt}
         arrivedAt={d.arrivedAt} completedAt={d.completedAt} isAdmin={d.you === 'admin'} />}
       {(d.you === 'client' || d.you === 'admin') && d.paymentMethod !== 'cash' && <PaymentsList id={id} admin={d.you === 'admin'} />}
-      {isPerformer && (isConsult ? <ConsultFinish d={d} onDone={o.reload} /> : <PerformerActions d={d} onDone={o.reload} />)}
+
       {!isPerformer && ['arrived', 'working'].includes(d.status) && d.service !== 'consult' && <WorkInProgress d={d} />}
       {d.you !== 'candidate' && d.you !== 'admin' && d.service !== 'tow' && d.service !== 'consult' && ['arrived', 'working'].includes(d.status) && <PartPicker d={d} onDone={o.reload} performer={isPerformer} />}
-      {!isPerformer && d.status === 'awaiting_confirmation' && (isConsult ? <ConsultConfirm d={d} onDone={o.reload} /> : <ConfirmAmount d={d} onDone={o.reload} />)}
+      {!isPerformer && d.status === 'awaiting_confirmation' && (
+        d.unilateralClosure
+          ? <EmergencyClientResponse d={d} onDone={o.reload} />
+          : isConsult ? <ConsultConfirm d={d} onDone={o.reload} /> : <ConfirmAmount d={d} onDone={o.reload} />
+      )}
       {d.recommendedCenter && !isPerformer && d.you !== 'candidate' && (
         <div className="banner good col">
           <b>Мастер советует сервис «{d.recommendedCenter.name}»</b>
@@ -101,7 +122,7 @@ export function Order({ id }: { id: string }) {
       <EcuOrderPanel order={d} />
       {d.status === 'completed' && <Review id={id} you={d.you} />}
 
-      {d.status !== 'searching' && d.status !== 'no_performer' && <Chat id={id} status={d.status} />}
+      {!isPerformer && d.status !== 'searching' && d.status !== 'no_performer' && <Chat id={id} status={d.status} />}
       </>}
 
       {d.you !== 'admin' && d.you !== 'candidate' && <a className="btn ghost" href={`#/support/new?order=${d.id}`}>Позвать поддержку</a>}
@@ -210,7 +231,7 @@ function CandidateView({ d, onDone }: { d: any; onDone: () => void }) {
   );
 }
 
-function Steps({ status, service, events = [] }: { status: string; service: string; events?: Array<{type:string;created_at:string}> }) {
+function Steps({ status, service, events = [], unilateralStatus }: { status: string; service: string; unilateralStatus?: string; events?: Array<{type:string;created_at:string}> }) {
   const names = service === 'tow' ? TOW_STEP_NAMES : STEP_NAMES;
   const sequence = STEPS;
   const current = sequence.indexOf(status);
@@ -235,7 +256,9 @@ function Steps({ status, service, events = [] }: { status: string; service: stri
     if (!at) return null;
     return new Intl.DateTimeFormat('ru-RU', {hour:'2-digit', minute:'2-digit', second:'2-digit'}).format(new Date(at));
   };
-  const heading = finished ? 'Заявка выполнена' : status === 'cancelled' ? 'Заявка отменена' : status === 'no_performer' ? 'Исполнитель не найден'
+  const heading = unilateralStatus==='pending_client' ? 'Работа сдана · ожидаем ответ клиента'
+    : unilateralStatus==='disputed' ? 'Работа сдана · разбирательство'
+    : finished ? 'Заявка выполнена' : status === 'cancelled' ? 'Заявка отменена' : status === 'no_performer' ? 'Исполнитель не найден'
     : status === 'en_route' ? 'Исполнитель в пути'
     : status === 'arrived' ? 'Исполнитель на месте'
     : status === 'working' ? 'Работа выполняется'
@@ -318,6 +341,8 @@ function PerformerCard({p,pos,consult,to,moving}:{
 function ClientCard({ d }: { d: any }) {
   return (
     <div className="card">
+      <VehiclePhotoLink brand={d.vehicle?.brand ?? d.brand} model={d.vehicle?.model ?? d.model}
+        plate={d.vehicle?.plate} href={`#/order/${d.id}/vehicle`} />
       <dl className="kv">
         <dt>Клиент</dt><dd>{d.client?.company_name ?? d.client?.name ?? 'Клиент'}{d.client?.rating ? ` · ★ ${d.client.rating.toFixed(1)}` : ''}</dd>
         <dt>Машина</dt><dd>{d.vehicle ? `${d.vehicle.brand} ${d.vehicle.model ?? ''} ${d.vehicle.year ?? ''} · ${d.vehicle.plate ?? ''}` : [d.brand, d.model, d.year].filter(Boolean).join(' ') || '—'}</dd>
@@ -407,6 +432,11 @@ function PerformerActions({ d, onDone }: { d: any; onDone: () => void }) {
   const [showDrop, setShowDrop] = useState(false);
   const step = (action: string, text: string) => run(() => post(`/api/orders/${d.id}/step`, { action }), text).then((r) => r && onDone());
 
+  if(d.unilateralClosure && ['pending_client','disputed'].includes(d.unilateralClosure.status))
+    return <div className="card hi">
+      <b>{d.unilateralClosure.status==='disputed'?'Клиент оспорил завершение · модерация':'Работа сдана · ожидаем клиента'}</b>
+      <span className="note">Физическая работа зафиксирована. Вам не нужно повторно нажимать «Завершить»; расчёт не считается оплаченным. История и чат остаются доступны.</span>
+    </div>;
   if (['completed', 'cancelled'].includes(d.status)) return null;
   return (
     <div className="stack">
@@ -456,6 +486,7 @@ function PerformerActions({ d, onDone }: { d: any; onDone: () => void }) {
         </div>
       )}
 
+      {d.status==='awaiting_confirmation' && !d.unilateralClosure && <EmergencyClose d={d} onDone={onDone} />}
       {['arrived', 'working', 'awaiting_confirmation'].includes(d.status) && <ClientRefuses d={d} onDone={onDone} />}
       {['accepted', 'en_route'].includes(d.status) && (showDrop ? (
         <div className="card">
@@ -561,11 +592,18 @@ function PartPicker({ d, onDone, performer }: { d: any; onDone: () => void; perf
 
 // Мастер на заявке --------------------------------------------------------------
 
-function PerformerTabs({ tab, setTab }: { tab: string; setTab: (t: any) => void }) {
+function PerformerTabs({ tab, setTab, full }: {
+  tab: string; setTab: (t: 'order' | 'client' | 'finance' | 'chat' | 'history') => void; full: boolean
+}) {
+  const tabs = full
+    ? [['order','Работа'],['client','Клиент и ТС'],['finance','Расчёт'],['chat','Чат'],['history','История']]
+    : [['order','Заявка'],['client','Клиент и машина']];
   return (
-    <div className="grid2" role="tablist">
-      <button className="seg" role="tab" aria-pressed={tab === 'order'} onClick={() => setTab('order')}>Заявка</button>
-      <button className="seg" role="tab" aria-pressed={tab === 'client'} onClick={() => setTab('client')}>Клиент и машина</button>
+    <div className={full ? 'performer-order-tabs' : 'grid2'} role="tablist"
+      aria-label="Разделы заявки">
+      {tabs.map(([key,label])=><button key={key} type="button" className="seg" role="tab"
+        aria-selected={tab===key} aria-pressed={tab===key}
+        onClick={()=>setTab(key as 'order'|'client'|'finance'|'chat'|'history')}>{label}</button>)}
     </div>
   );
 }
@@ -623,7 +661,7 @@ function HintCheck({ d, onDone }: { d: any; onDone: () => void }) {
 }
 
 /** Вкладка «Клиент и машина»: метки других исполнителей, история машины без сумм, уточнить машину, «не брать этого клиента» */
-function ClientTab({ id, canEdit }: { id: string; canEdit: boolean }) {
+function ClientTab({ id, canEdit, historyOnly = false }: { id: string; canEdit: boolean; historyOnly?: boolean }) {
   const card = useLoad(() => get(`/api/orders/${id}/client-card`), [id]);
   const { busy, run } = useAction();
   const [fix, setFix] = useState(false);
@@ -631,6 +669,30 @@ function ClientTab({ id, canEdit }: { id: string; canEdit: boolean }) {
   if (!card.data) return <Loading error={card.error} />;
   const c = card.data;
   const veh = c.vehicle;
+  if(historyOnly) return <div className="stack trak-vehicle-history-panel">
+    <h2>История автомобиля</h2>
+    <VehiclePhotoLink brand={veh.brand} model={veh.model} plate={veh.plate}
+      href={`#/order/${id}/client`}/>
+    <p className="note">Это справочная фотография модели, не снимок автомобиля клиента. Данные истории получены из реальных заявок TrakSos. Исполнителю суммы других работ недоступны.</p>
+    <div className="card stack">
+      <b>{[veh.brand,veh.model,veh.year].filter(Boolean).join(' ') || 'Автомобиль не указан'}</b>
+      <span>{veh.plate || 'Госномер не заполнен'}</span>
+      {veh.from==='order'&&<span className="note">Машина указана со слов клиента, не привязана к гаражу; история по ней пока недоступна.</span>}
+    </div>
+    <div className="card stack">
+      <h3>История обслуживания · без сумм</h3>
+      {c.history.length ? <ol className="tl">{c.history.map((h:any)=>
+        <li key={h.id}><i className={h.mine?'now':'ok'}/><div>
+          <b>{SERVICES[h.service]?.name??h.service}{h.mine?' · ваша работа':''}</b>
+          <small>{fmtTime(h.created_at)}</small>
+          {h.result_note&&<p className="note">{h.result_note}</p>}
+          {h.consult_hint?.hints?.length>0&&<small>Из консультации: {h.consult_hint.hints.join(', ')}</small>}
+        </div></li>
+      )}</ol> : <p className="note">По этой машине пока нет записей о завершённых работах в TrakSos.</p>}
+    </div>
+    <a className="btn ghost" href={`#/order/${id}/client`}>К полной карточке клиента и ТС</a>
+    <a className="btn ghost" href={`#/order/${id}`}>Вернуться к заявке</a>
+  </div>;
   return (
     <div className="stack">
       <div className="card">
@@ -644,6 +706,8 @@ function ClientTab({ id, canEdit }: { id: string; canEdit: boolean }) {
       </div>
 
       <div className="card">
+        <VehiclePhotoLink brand={veh.brand} model={veh.model} plate={veh.plate}
+          href={`#/order/${id}/vehicle`}/>
         <div className="between"><b>{[veh.brand, veh.model, veh.year].filter(Boolean).join(' ') || 'Машина не указана'}</b>{veh.plate && <span className="pill">{veh.plate}</span>}</div>
         <span className="note">{veh.fixed_at ? `Уточнено мастером ${veh.fixed_by_name ?? ''}` : veh.from === 'order' ? 'Со слов клиента, не из гаража' : 'Со слов клиента'}{veh.axles ? ` · осей: ${veh.axles}` : ''}</span>
         {canEdit && !fix && <button className="btn ghost small" onClick={() => { setV({ brand: veh.brand ?? '', model: veh.model ?? '', year: veh.year ? String(veh.year) : '', axles: veh.axles ? String(veh.axles) : '' }); setFix(true); }}>{veh.fixed_at ? 'Исправить ещё раз' : 'Проверить на месте · исправить'}</button>}
@@ -735,6 +799,110 @@ function ConfirmAmount({ d, onDone }: { d: any; onDone: () => void }) {
       </div>}
     </div>
   );
+}
+
+
+/** A physical handover, not a customer approval or a payment operation. */
+function EmergencyClose({d,onDone}:{d:any;onDone:()=>void}) {
+  const [open,setOpen]=useState(false);
+  const [reason,setReason]=useState('client_offline');
+  const [note,setNote]=useState('');
+  const [finished,setFinished]=useState(false);
+  const [requestKey]=useState(()=> 'emergency-'+String(Date.now())+'-'+Math.random().toString(36).slice(2,12));
+  const [busy,setBusy]=useState(false);
+  const [error,setError]=useState('');
+  const submit=async()=>{
+    if(busy)return;
+    setBusy(true);setError('');
+    try{
+      await post('/api/orders/'+d.id+'/emergency-close',{
+        requestKey,reason,note:note.trim(),workFinished:finished});
+      setOpen(false);onDone();
+    }catch(e:any){
+      setError(e?.status===0
+        ? 'Связь потеряна. Неизвестно, дошёл ли запрос. Мастер ещё не освобождён: повторите отправку или обновите заявку при восстановлении сети.'
+        : (e?.message||'Не удалось передать завершение.'));
+    }finally{setBusy(false);}
+  };
+  return <section className="card flat" aria-label="Аварийное завершение">
+    {!open?<button type="button" className="btn ghost" onClick={()=>setOpen(true)}>
+      Нет связи с клиентом · аварийное завершение
+    </button>:<>
+      <b>Работа сделана, но клиент недоступен?</b>
+      <span className="note">Этот путь освободит ваш рабочий статус только после ответа сервера. Клиенту отправим запрос согласия, сумма останется на проверке. Это не подтверждение оплаты.</span>
+      <Field label="Причина">
+        <select className="field" value={reason} onChange={e=>setReason(e.target.value)}>
+          <option value="client_offline">Нет интернета у клиента</option>
+          <option value="client_unreachable">Клиент не отвечает</option>
+          <option value="client_absent">Клиент отсутствует на месте</option>
+          <option value="other">Другая объективная причина</option>
+        </select>
+      </Field>
+      <Field label="Пояснение">
+        <textarea className="field" rows={3} maxLength={1500} value={note}
+          onChange={e=>setNote(e.target.value)} placeholder="Что выполнено, почему не удаётся получить подтверждение…"/>
+      </Field>
+      <label className="note" style={{display:'flex',gap:9,alignItems:'flex-start'}}>
+        <input type="checkbox" checked={finished} onChange={e=>setFinished(e.target.checked)}/>
+        <span>Подтверждаю, что физическая работа завершена, а расчёт уже отправлен.</span>
+      </label>
+      {error&&<p className="err" role="alert">{error}</p>}
+      <div className="row">
+        <button type="button" className="btn" disabled={busy||!finished||note.trim().length<10}
+          onClick={submit}>{busy?'Отправляем…':'Передать на подтверждение без связи'}</button>
+        <button type="button" className="btn ghost" disabled={busy} onClick={()=>setOpen(false)}>Назад</button>
+      </div>
+    </>}
+  </section>;
+}
+
+function EmergencyClientResponse({d,onDone}:{d:any;onDone:()=>void}) {
+  const [busy,setBusy]=useState(false);
+  const [reason,setReason]=useState('');
+  const [open,setOpen]=useState(false);
+  const [error,setError]=useState('');
+  const answer=async(agree:boolean)=>{
+    if(busy)return;
+    setBusy(true);setError('');
+    try{
+      if(agree)await post('/api/orders/'+d.id+'/confirm',{total:d.unilateralClosure.quoteTotal,points:0});
+      else await post('/api/orders/'+d.id+'/emergency-dispute',{reason:reason.trim()});
+      onDone();
+    }catch(e:any){setError(e?.message||'Не удалось отправить ответ. Проверьте интернет и повторите.');}
+    finally{setBusy(false);}
+  };
+  const c=d.unilateralClosure;
+  if(!c)return null;
+  return <section className="card hi" aria-label="Подтверждение аварийного завершения">
+    <b>{c.status==='disputed'?'Спор передан модератору':'Исполнитель сообщил о завершении без вашего ответа'}</b>
+    <span className="note">Ваша заявка №{d.number}: исполнитель утверждает, что закончил работу. Причина: {c.note}</span>
+    <div className="sum total"><span>Представлено на подтверждение</span><b>{rub(c.quoteTotal)}</b></div>
+    <span className="note">Это заявленная сумма, а не подтверждение списания или выплаты. Вы можете вернуться к вопросу при восстановлении связи.</span>
+    {c.status==='pending_client'&&d.you==='client'&&<>
+      {!d.unilateralCanApprove&&<span className="note">
+        Подтвердить окончательную сумму может только владелец автопарка.
+        Как участник обращения вы можете сообщить о несогласии с результатом.
+      </span>}
+      {!open?<div className="row">
+        {d.unilateralCanApprove && <button type="button" className="btn good" disabled={busy} onClick={()=>answer(true)}>
+          Да, работа выполнена, подтверждаю сумму
+        </button>}
+        <button type="button" className="btn ghost" onClick={()=>setOpen(true)}>Нет, не согласен</button>
+      </div>:<>
+        <Field label="Причина несогласия">
+          <textarea className="field" rows={3} value={reason} onChange={e=>setReason(e.target.value)}
+            maxLength={1500} placeholder="Что не сделано или какая сумма неверна?"/>
+        </Field>
+        <div className="row">
+          <button type="button" className="btn bad" disabled={busy||reason.trim().length<10}
+            onClick={()=>answer(false)}>Передать на модерацию</button>
+          <button type="button" className="btn ghost" disabled={busy} onClick={()=>setOpen(false)}>Назад</button>
+        </div>
+      </>}
+    </>}
+    {c.status==='disputed'&&<span className="pill">Разбираемся · средства не выплачены</span>}
+    {error&&<p className="err" role="alert">{error}</p>}
+  </section>;
 }
 
 // Консультация ---------------------------------------------------------------

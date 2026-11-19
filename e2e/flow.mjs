@@ -168,13 +168,24 @@ await shot(a, '01c-admin-verify');
 await a.getByRole('button', { name: 'Одобрить' }).click();
 await a.getByText('Очередь пуста').waitFor();
 await m.goto(BASE + '/#/work');
-const lineStatus = m.getByRole('button', { name: /Статус ·/ });
-await lineStatus.waitFor({ timeout: 10000 });
-await lineStatus.click();
-await m.getByRole('button', { name: 'Свободен', exact: false }).click();
+const availabilitySwitch = m.getByRole('switch', { name: 'Принимать новые заявки' });
+await availabilitySwitch.waitFor({ timeout: 10000 });
+if (await availabilitySwitch.getAttribute('aria-checked') !== 'true') await availabilitySwitch.click();
+await m.getByRole('searchbox', { name: /Поиск по своим заявкам/ }).waitFor();
 await m.getByText(/Геолокация включена/).waitFor();
 await assertDashboardTheme(m, 'master');
-await checkCabinetMenu(m, ['Профиль исполнителя', 'Финансы и выплаты', 'Проверка и документы', 'История заявок', 'Оферта']);
+await checkCabinetMenu(m, ['Профиль исполнителя', 'Финансы и выплаты', 'Проверка и документы', 'История заявок', 'Оферта'], { shopTab: false });
+// Mobile search is role-scoped and offers honest empty results before any jobs.
+// It must not route to the global user/partner registry.
+const masterSearch=m.getByRole('searchbox',{name:/Поиск по своим заявкам/});
+await masterSearch.waitFor();
+await masterSearch.fill('НЕСУЩЕСТВУЮЩАЯ-ЗАЯВКА-00991');
+await m.getByText('Ничего не найдено. Проверьте номер или переключите фильтр.').waitFor();
+await m.getByRole('button',{name:'Входящие',exact:true}).click();
+await m.getByRole('region',{name:'Найденные заявки'}).waitFor();
+await masterSearch.fill('');
+await m.getByRole('button',{name:'Мои',exact:true}).click();
+await m.getByRole('button',{name:'Свернуть поиск'}).click();
 await shot(m, '02-master-online');
 
 // Клиент
@@ -231,16 +242,26 @@ await k.getByRole('button', { name: /Выбрать за/ }).click();
 await m.waitForURL(/order\//, { timeout: 10000 });
 await k.getByText('Иван').first().waitFor({ timeout: 10000 });
 await shot(k, '07-client-accepted');
+// Tap the actual truck photo, not a dummy image: it opens this order's
+// server-authorized vehicle history, without another customer's prices.
+await m.locator('.trak-vehicle-photo-link').first().click();
+await m.waitForURL(/\/order\/[^/]+\/vehicle$/, {timeout: 10000});
+await m.getByRole('heading', {name:'История автомобиля'}).waitFor();
+await m.getByText('История обслуживания · без сумм').waitFor();
+await m.getByRole('link',{name:'Вернуться к заявке'}).click();
+await m.getByRole('tab',{name:'Работа'}).waitFor();
 
 // Чат
 // Чат свёрнут, пока не нажали
 await k.getByRole('button', { name: /Чат по заявке/ }).click();
 await k.locator('.compose input').fill('Позвоните мне 8 921 111-22-33');
 await k.locator('.compose button').click();
+await m.getByRole('tab', { name: 'Чат' }).click();
 await m.getByRole('button', { name: /Чат по заявке/ }).click();
 await m.getByText('[номер скрыт]').first().waitFor({ timeout: 10000 });
 
-// Статусы
+// Статусы: возврат на вкладку работы после переписки.
+await m.getByRole('tab', { name: 'Работа' }).click();
 await m.locator('button.btn', { hasText: 'Выехал' }).click();
 await m.locator('button.btn:not([disabled])', { hasText: 'Я на месте' }).waitFor();
 await m.locator('button.btn', { hasText: 'Я на месте' }).click();
@@ -407,7 +428,7 @@ const both = await mk();
 await login(both, '+79993334456', 'hybrid');
 await both.waitForURL(new RegExp('work'));
 await both.goto(BASE + '/#/work');
-await checkCabinetMenu(both, ['Моя СТО — стационарный ремонт', 'Профиль исполнителя']);
+await checkCabinetMenu(both, ['Моя СТО — стационарный ремонт', 'Профиль исполнителя'], { shopTab: false });
 await shot(both, '21-hybrid-master');
 await clickCabinetLink(both, 'Моя СТО — стационарный ремонт');
 await both.waitForURL(/#\/base$/);

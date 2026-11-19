@@ -1,6 +1,6 @@
 {
-  "name": "TrakSOS",
-  "short_name": "TrakSOS",
+  "name": "TrakSos",
+  "short_name": "TrakSos",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#061426",
