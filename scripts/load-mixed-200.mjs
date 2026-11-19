@@ -215,7 +215,10 @@ async function serviceFlow(){
   const invoice=await request(j.provider,'POST','/api/base/bookings/'+j.bookingId+'/invoice',{amount:600000});
   assert.equal(invoice.payout+invoice.commission,invoice.amount,'Service invoice split wrong');
   const clientView=await request(j.client,'GET','/api/bookings/'+j.bookingId);
-  assert.equal(clientView.toPay,invoice.amount,'STO and client see different amounts');
+  assert.equal(clientView.clientFee,30000,'client fee is 5% of 6,000 rubles');
+  assert.equal(clientView.toPay,invoice.amount+30000,'customer pays the added surcharge');
+  assert.equal(invoice.clientFee,undefined,'provider must not see the customer surcharge');
+  assert.equal(invoice.toPay,undefined,'provider must not see the customer total');
   await request(j.client,'POST','/api/bookings/'+j.bookingId+'/confirm',{agree:true,stars:5});
  }
  const seen=await request(services[0],'GET','/api/base/money');
