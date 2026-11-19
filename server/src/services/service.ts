@@ -277,7 +277,7 @@ export class ServiceCenters {
       const row = await q.one<any>('select * from service_bookings where id=$1 and center_id=$2 for update', [id, c.id]);
       if (!row) throw notFound('Запрос не найден');
       if (row.status !== 'ready') throw conflict('bad_status', 'Сначала «Машина готова»');
-      let commission = Math.min(Math.round(amount * fees.serviceCommissionPct / 100), fees.serviceCommissionMax ?? 500_000);
+      let commission = Math.min(Math.round(amount * fees.serviceCommissionPct / 100), fees.serviceCommissionMax ?? 500_000, 500_000);
       const discount = row.from_order_id ? Math.min(commission, Math.round(amount * fees.serviceReferralDiscountPct / 100)) : 0;
       // Points and the new invoice must commit together; never spend points twice on a retry.
       const pts = this.referral
