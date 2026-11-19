@@ -54,3 +54,53 @@
   padding:10px 4px;border-radius:12px;min-height:48px;background:#294056;border:1px solid #617a91;
   color:#fff;font-weight:750;font-size:13px;text-align:center}
 .work-mobile-jobtools a:focus-visible{outline:3px solid #ffa754;outline-offset:2px}
+
+
+/* Approved 19 Nov Android hierarchy: presence, search, quick sections, live job. */
+.work-mobile-presence{display:flex;align-items:center;gap:10px;min-width:0}
+.work-mobile-switch{width:59px;min-width:59px;height:35px;border:1px solid #6b849b;
+ border-radius:99px;padding:4px;background:#35495d;display:flex;align-items:center;
+ transition:background .15s ease;cursor:pointer}
+.work-mobile-switch span{display:block;width:25px;height:25px;background:#f8fbff;border-radius:50%;
+ box-shadow:0 2px 7px #09152299;transition:transform .15s ease}
+.work-mobile-switch.is-on{background:#39af48;border-color:#82ee8b}
+.work-mobile-switch.is-on span{transform:translateX(23px)}
+.work-mobile-switch:disabled{opacity:.5;cursor:default}
+.work-mobile-switch:focus-visible{outline:3px solid #ff9b4b;outline-offset:3px}
+.work-mobile-launcher{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.work-mobile-launcher a,.work-mobile-launcher button{position:relative;min-width:0;min-height:92px;
+ border:1px solid #637c92;border-radius:15px;background:linear-gradient(155deg,#263747,#182631);
+ color:#f4f7fd;text-align:center;display:flex;flex-direction:column;align-items:center;
+ justify-content:center;gap:8px;padding:10px 4px;text-decoration:none;font-size:12px;
+ line-height:1.2;font-weight:750;cursor:pointer}
+.work-mobile-launcher .work-mobile-launcher-new{background:linear-gradient(135deg,#ba560f,#f77d24);
+ border-color:#ffb05d;color:#fff}
+.work-mobile-launcher-icon{display:block;font-size:24px;line-height:1}
+.work-mobile-launcher-count{position:absolute;top:2px;right:3px;background:#ffb974;color:#101b29;
+ border-radius:50%;font-size:11px;min-width:20px;line-height:20px}
+.work-mobile-launcher a:focus-visible,.work-mobile-launcher button:focus-visible,
+.work-mobile-extra-button:focus-visible{outline:3px solid #ffbc87;outline-offset:2px}
+.work-mobile-extra-presence{margin:0;display:flex;flex-direction:column;gap:5px}
+.work-mobile-extra-button{border:1px solid #4d6a83;border-radius:11px;background:#233547;color:#dceaf7;
+ min-height:44px;font-size:12px;font-weight:700;padding:9px 12px;
+ display:flex;align-items:center;justify-content:space-between;gap:6px;text-align:left}
+.work-mobile-extra-presence>.card{padding:8px 12px}
+.work-mobile-location{color:#b1cbdc;padding:0 9px;font-size:11px}
+.work-mobile-location .note{font-size:11px}
+.work-mobile-notices-link{min-height:44px;padding:10px 13px;background:#1f3345;
+ border:1px solid #4b6986;color:#e5efff;display:flex;align-items:center;justify-content:space-between;
+ border-radius:11px;font-size:13px;text-decoration:none;font-weight:700}
+.work-mobile-progress{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;margin:16px 0}
+.work-mobile-progress-step{min-width:0;display:flex;align-items:center;flex-direction:column;gap:5px;
+ color:#aabdd1;text-align:center}
+.work-mobile-progress-step>span{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;
+ background:#33475d;border:1px solid #6a8399;color:#f0f6fd;font-size:11px;font-weight:800}
+.work-mobile-progress-step.done>span{background:#23b96e;border-color:#a7f2b9;color:#071b12}
+.work-mobile-progress-step.current>span{background:#fa8027;border-color:#ffcf97;color:#111e30;
+ box-shadow:0 0 0 3px #ffac573d}
+.work-mobile-progress-step small{font-size:10px;line-height:1.2;word-break:normal}
+.work-mobile-progress-step.current{color:#ffb578;font-weight:800}
+.work-mobile-current{border-color:#fe8e38;box-shadow:0 10px 28px #08152624, inset 3px 0 #fb7f23}
+@media(max-width:359px){.work-mobile-launcher{gap:4px}.work-mobile-launcher a,.work-mobile-launcher button{font-size:11px;padding:8px 3px;min-height:86px}
+ .work-mobile-launcher-icon{font-size:20px}.work-mobile-state{font-size:11px}}
+@media(prefers-reduced-motion:reduce){.work-mobile-switch,.work-mobile-switch span{transition:none}}
