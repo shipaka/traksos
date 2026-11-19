@@ -1,0 +1,29 @@
+/* Approved 18 Nov: real live order in a compact desktop window, not a second fake cabinet. */
+.performer-order-workspace{min-height:calc(100dvh - 120px);position:relative}
+.performer-order-desk{pointer-events:none;user-select:none;opacity:.72;filter:blur(1px)}
+.performer-order-shade{position:fixed;inset:0;z-index:195;background:rgba(2,9,19,.56)}
+.performer-order-window{position:fixed;z-index:196;left:50%;top:clamp(68px,8vh,106px);
+ transform:translateX(-50%);width:min(1050px,calc(100vw - 56px));
+ height:min(84dvh,850px);max-height:calc(100dvh - 80px);overflow:auto;overscroll-behavior:contain;
+ background:linear-gradient(165deg,#182738,#0d1826 80%);color:#f4f7fc;
+ border:1px solid rgba(243,162,90,.36);box-shadow:0 24px 100px #020814e0;
+ border-radius:22px;padding:18px 24px 28px}
+.performer-order-window-top{display:flex;align-items:center;justify-content:space-between;
+ gap:16px;position:sticky;top:-18px;z-index:3;padding:13px 4px 12px;
+ background:linear-gradient(110deg,#182738,#101e2c);
+ border-bottom:1px solid rgba(255,255,255,.13);margin:0 -2px 12px}
+.performer-order-window-top h2{font-size:20px;margin:3px 0}
+.performer-order-window-top small{color:#ffb679;font-size:11px;font-weight:700;letter-spacing:.4px}
+.performer-order-window>main{max-width:100%;padding:0;margin:0}
+.performer-order-window>main h1{font-size:clamp(20px,2vw,27px)}
+.performer-order-window .grid2[role="tablist"]{position:sticky;top:63px;z-index:2;
+ background:#142334f5;padding:8px;border-radius:12px}
+@media(max-width:820px){
+ .performer-order-workspace{min-height:0}
+ .performer-order-desk,.performer-order-shade,.performer-order-window-top{display:none}
+ .performer-order-window{position:static;transform:none;width:auto;height:auto;max-height:none;overflow:visible;
+  box-shadow:none;border:none;border-radius:0;padding:0;background:transparent;color:inherit}
+ .performer-order-window>main{padding:0}
+ .performer-order-window .grid2[role="tablist"]{position:static}
+}
+@media(prefers-reduced-motion:reduce){.performer-order-desk{filter:none}}
