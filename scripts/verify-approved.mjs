@@ -149,7 +149,7 @@ expect(shell.includes('guest-mobile-catalog') && shell.includes('guest-nav-group
 // not the superseded static text markup.
 expect(landing.includes("heroSlide === 0 ? go('register')") &&
   landing.includes("heroSlide === 0 ? 'Зарегистрироваться'") &&
-  landing.includes('href="#/learn">Как это работает</a>'),
+  landing.includes('href="#/explore/guide">Как это работает</a>'),
   'approved 19 Nov hero opens registration and explains the platform');
 try { await stat('web/public/approved-desktop.html'); expect(false, 'superseded static demo was deleted'); }
 catch { console.log('OK: superseded static HTML mockup not present'); }
