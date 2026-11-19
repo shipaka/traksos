@@ -807,14 +807,14 @@ export class OrdersService {
       : [];
     const caseBookings = actor === 'client' || actor === 'admin'
       ? await this.db.query<any>(
-          `select b.id, b.number, b.status, b.need, b.amount, b.discount, b.from_order_id
+          `select b.id, b.number, b.status, b.need, b.amount, b.client_fee, b.discount, b.from_order_id
              from service_bookings b left join orders step on step.id=b.from_order_id
             where b.case_root_id=$1 or step.id=$1 or step.case_root_id=$1
             order by b.created_at, b.number`, [caseRootId])
       : [];
     const caseServiceStages = caseBookings.map((b: any) => ({
       id: b.id, number: b.number, status: b.status, need: b.need,
-      confirmedTotal: b.status === 'closed' ? Math.max(0, Number(b.amount ?? 0) - Number(b.discount ?? 0)) : null,
+      confirmedTotal: b.status === 'closed' ? Math.max(0, Number(b.amount ?? 0) + Number(b.client_fee ?? 0) - Number(b.discount ?? 0)) : null,
     }));
     const caseSteps = caseRows.map((step: any) => ({
       id: step.id, number: step.number, service: step.service, status: step.status,
