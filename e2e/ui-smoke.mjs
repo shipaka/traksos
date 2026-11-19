@@ -132,8 +132,8 @@ try {
         width + 'px: benefits must start below elevated RuStore promo: ' + JSON.stringify(layout));
     }
     assert(data.tileIcons === 6, width + 'px: technical icon missing from a public tile');
-    assert(data.heroCss?.includes('tracksos-approved-scenic-hero') && !data.heroCss.includes('traksos-final-hero'),
-      width + 'px: full approved Scania photo without baked carousel controls is not displayed');
+    assert(data.heroCss?.includes('tracksos-approved-hero-owner-20261119.webp') && !data.heroCss.includes('tracksos-approved-scenic-hero'),
+      width + 'px: actual owner's 19 Nov truck photo is not displayed');
     assert(data.mapCss?.includes('tracksos-approved-map'),
       width + 'px: approved regional map is not displayed');
 
