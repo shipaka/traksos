@@ -83,7 +83,10 @@ async function run(width, height, mobile, nativePreview = false) {
         check(await page.evaluate(() => document.documentElement.classList.contains('traksos-browser')),
           suffix + ': regular Chrome must activate mobile browser styling');
         check(heroGeometry && heroGeometry.pictureWidth <= heroGeometry.heroWidth + 2 &&
-          heroGeometry.pictureHeight >= 135 && heroGeometry.pictureHeight < heroGeometry.heroHeight,
+          // The artwork stays at its original 2:1 aspect ratio. At 320px
+          // the available 238px width gives a correct 119px tall photograph.
+          heroGeometry.pictureHeight >= heroGeometry.pictureWidth / 2 - 3 &&
+          heroGeometry.pictureHeight < heroGeometry.heroHeight,
           suffix + ': browser truck artwork must have a dedicated uncropped photo area: ' + JSON.stringify(heroGeometry));
         check(await page.locator('.guest-header-actions a[href="#/login"]').isVisible() &&
           await page.locator('.guest-header-actions a[href="#/register"]').isVisible(),
