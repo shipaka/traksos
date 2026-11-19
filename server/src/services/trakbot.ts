@@ -5,6 +5,7 @@ import { config } from '../config.ts';
 import { maskPhones } from '../util.ts';
 import { resolveGuideDestination } from './trakbotGuide.ts';
 import { canUseGroundedAi, groundedAiAnswer, neutralAiAnswer } from './trakbotAi.ts';
+import { offlineSmallTalk } from './trakbotOfflineTalk.ts';
 
 export interface VehicleContext {
   make?: string;
@@ -75,6 +76,11 @@ export function composeTrakBotReply(
       'Это общий OBD-II справочник, не подтверждённый диагноз конкретного блока. По одному коду менять детали нельзя.',
       followup].filter(Boolean).join('\n\n') + safety;
   }
+
+  // Offline conversation is a tiny separate personality layer, never a
+  // substitute for codes, platform navigation or safety-relevant diagnostics.
+  const casualReply = offlineSmallTalk(input, previousUserMessages);
+  if (casualReply) return casualReply;
 
   const prior = previousUserMessages.join(' ').toLowerCase();
   const first = input.toLowerCase();
