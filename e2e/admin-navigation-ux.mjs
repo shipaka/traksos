@@ -10,10 +10,10 @@ if (!['localhost','127.0.0.1'].includes(new URL(BASE).hostname))
 const sections = [
   ['queue','Модерация'],['summary','Сводка'],['orders','Заявки'],
   ['dispatch','Распределение'],['demand','Проблемные заявки'],
-  ['support','Обращения'],['search','Поиск'],['people','Все люди'],
+  ['support','Обращения'],['registry','Единая база'],['search','Поиск'],['people','Все люди'],
   ['access','Регистрация и доступы'],
   ['verify','Проверка'],['bases','Рембазы'],['vehicleServices','Страхование и ТО'],
-  ['payments','Деньги'],['offers','Оферты'],
+  ['serviceFinance','Счета и выплаты СТО'],['payments','Деньги'],['offers','Оферты'],
   ['announcements','Объявления и комиссии'],['stats','Статистика'],
   ['flagged','Подозрительное'],['diagnostics','Журнал ошибок'],['settings','Настройки'],
 ];
