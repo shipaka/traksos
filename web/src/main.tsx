@@ -360,7 +360,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
        ['/work/me/schedule', 'График работы'], ['/work/filter', 'Фильтры заявок'],
        ['/work/me/money', 'Финансы и выплаты'], ['/work/me/tax', 'Налоговый статус'],
        ['/work/me/level', 'Рейтинг и уровень'], ['/work/docs', 'Проверка и документы'],
-       ['/reviews', 'Отзывы'], ['/invite', 'Пригласить партнёра'],
+       ['/reviews', 'Отзывы'], ['/shop', 'Запчасти · магазин пока закрыт'], ['/invite', 'Пригласить партнёра'],
        ['/work/jobs', 'История заявок'], ['/profile', 'Аккаунт']]
     : mode === 'service'
       ? [...(me?.roles.some(r => r === 'master' || r === 'tow') ? [['/work', 'Выездной мастер — заявки']] as [string, string][] : []),
@@ -393,7 +393,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/admin/section/flagged', 'Подозрительные действия'],
          ['/admin/section/settings', 'Настройки площадки'],
          ['/profile', 'Аккаунт'], ['/as/client', 'Кабинет клиента']]
-    : [['/orders', 'История заявок'], ['/garage', 'Мой гараж'],
+    : [['/orders', 'История заявок'], ['/garage', 'Мой гараж'], ['/shop', 'Запчасти · магазин пока закрыт'],
        ...(!me?.owner_id && !me?.roles.includes('driver') ? [['/fleet', 'Мой автопарк']] as [string,string][] : []),
        ['/services', 'СТО и запись'],
        ['/reviews', 'Мои отзывы'], ['/invite', 'Пригласить друга'],
