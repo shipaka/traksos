@@ -145,7 +145,7 @@ test('финансы рембазы: к выплате после сверки �
   ok(await t.api('POST', `/api/admin/bookings/${due[0].id}/payment-events`, {
     kind:'receipt',amount:total,method:'invoice',reference:'TEST-BANK-'+due[0].number,
   }, admin.token));
-  ok(await t.api('POST', `/api/admin/bookings/${due[0].id}/paid`, {}, admin.token));
+  ok(await t.api('POST', `/api/admin/bookings/${due[0].id}/paid`, {reference:'TEST-PAYOUT-'+due[0].number}, admin.token));
   const m1 = ok(await t.api('GET', '/api/base/money', undefined, base.token));
   assert.equal(m1.summary.paid, due[0].payout);
   assert.equal(m1.summary.toPay, m0.summary.toPay - due[0].payout);
