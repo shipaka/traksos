@@ -55,7 +55,7 @@ export function Order({ id, initialTab = 'order' }: { id: string; initialTab?: P
 
       {d.you === 'client' && d.vehicleId && <section aria-label="Автомобиль заявки и его история" className="order-vehicle-preview">
         <VehiclePhotoLink brand={d.vehicle?.brand ?? d.brand} model={d.vehicle?.model ?? d.model}
-          plate={d.vehicle?.plate} href={`#/garage/${d.vehicleId}`} compact/>
+          year={d.vehicle?.year ?? d.year} plate={d.vehicle?.plate} href={`#/garage/${d.vehicleId}`} compact/>
       </section>}
       {isPerformer && ['accepted','en_route','arrived','working'].includes(d.status)
         && !location.hash.startsWith('#/admin/test-center') &&
@@ -342,7 +342,7 @@ function ClientCard({ d }: { d: any }) {
   return (
     <div className="card">
       <VehiclePhotoLink brand={d.vehicle?.brand ?? d.brand} model={d.vehicle?.model ?? d.model}
-        plate={d.vehicle?.plate} href={`#/order/${d.id}/vehicle`} />
+        year={d.vehicle?.year ?? d.year} plate={d.vehicle?.plate} href={`#/order/${d.id}/vehicle`} />
       <dl className="kv">
         <dt>Клиент</dt><dd>{d.client?.company_name ?? d.client?.name ?? 'Клиент'}{d.client?.rating ? ` · ★ ${d.client.rating.toFixed(1)}` : ''}</dd>
         <dt>Машина</dt><dd>{d.vehicle ? `${d.vehicle.brand} ${d.vehicle.model ?? ''} ${d.vehicle.year ?? ''} · ${d.vehicle.plate ?? ''}` : [d.brand, d.model, d.year].filter(Boolean).join(' ') || '—'}</dd>
@@ -671,7 +671,7 @@ function ClientTab({ id, canEdit, historyOnly = false }: { id: string; canEdit: 
   const veh = c.vehicle;
   if(historyOnly) return <div className="stack trak-vehicle-history-panel">
     <h2>История автомобиля</h2>
-    <VehiclePhotoLink brand={veh.brand} model={veh.model} plate={veh.plate}
+    <VehiclePhotoLink brand={veh.brand} model={veh.model} year={veh.year} plate={veh.plate}
       href={`#/order/${id}/client`}/>
     <p className="note">Это справочная фотография модели, не снимок автомобиля клиента. Данные истории получены из реальных заявок TrakSos. Исполнителю суммы других работ недоступны.</p>
     <div className="card stack">
@@ -706,7 +706,7 @@ function ClientTab({ id, canEdit, historyOnly = false }: { id: string; canEdit: 
       </div>
 
       <div className="card">
-        <VehiclePhotoLink brand={veh.brand} model={veh.model} plate={veh.plate}
+        <VehiclePhotoLink brand={veh.brand} model={veh.model} year={veh.year} plate={veh.plate}
           href={`#/order/${id}/vehicle`}/>
         <div className="between"><b>{[veh.brand, veh.model, veh.year].filter(Boolean).join(' ') || 'Машина не указана'}</b>{veh.plate && <span className="pill">{veh.plate}</span>}</div>
         <span className="note">{veh.fixed_at ? `Уточнено мастером ${veh.fixed_by_name ?? ''}` : veh.from === 'order' ? 'Со слов клиента, не из гаража' : 'Со слов клиента'}{veh.axles ? ` · осей: ${veh.axles}` : ''}</span>

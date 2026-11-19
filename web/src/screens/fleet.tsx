@@ -99,16 +99,19 @@ export function Fleet() {
             <a className="fleet-vehicle-media" href={`#/garage/${c.id}`}
               aria-label={`Открыть историю машины ${c.brand} ${c.model??''} ${c.plate??''}`}
               style={{textDecoration:'none',color:'inherit'}}>
-              <VehicleModelPhoto brand={c.brand} model={c.model}/>
+              <VehicleModelPhoto brand={c.brand} model={c.model} year={c.year}/>
               <div className="fleet-vehicle-title">
                 <span>ТЕХНИКА АВТОПАРКА</span>
                 <h2>{c.brand} {c.model ?? ''}</h2>
                 <p>{c.year ? c.year + ' год · ' : ''}{c.plate ?? 'Госномер не добавлен'}</p>
-                <small>{vehicleReferencePhoto(c.brand,c.model)
+                <small>{vehicleReferencePhoto(c.brand,c.model,c.year)
                   ? 'Фото указанной модели, не этой машины'
                   : 'Точное фото модели пока недоступно'} · открыть историю ›</small>
               </div>
             </a>
+            {vehicleReferencePhoto(c.brand,c.model,c.year) && <a className="trak-vehicle-photo-credits"
+              href="/vehicle-photo-credits.html" target="_blank" rel="noopener noreferrer">
+              Источник и лицензия фотографии</a>}
             <div className="between"><b>{c.brand} {c.model ?? ''}</b><span className="pill">{c.plate ?? 'без номера'}</span></div>
             {c.driver ? (
               <span className="note">Водитель {c.driver.name ?? c.driver.phone} · доступ с {c.driver.since ? fmtTime(c.driver.since) : '—'} · в этом месяце {rub(c.driver.monthSpent)} <span className="pill good">Активен</span></span>

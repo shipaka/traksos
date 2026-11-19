@@ -278,7 +278,7 @@ function MobilePerformerWork({p, personName, active, awaiting, jobs, incoming, o
         <span className="work-mobile-kicker">СЕЙЧАС В РАБОТЕ</span>
         <h2>№{first.number} · {SERVICES[first.service]?.name || first.service}</h2>
         <VehiclePhotoLink compact brand={first.v_brand || first.brand}
-          model={first.v_model} plate={first.v_plate}
+          model={first.v_model} year={first.v_year} plate={first.v_plate}
           href={`#/order/${first.id}/vehicle`}/>
         <p className="work-mobile-stage">{stage[first.status] || 'Открытая заявка'}</p>
         <p className="note">{first.address || first.estimate?.zoneName || 'Место — в карточке заявки'}</p>
