@@ -106,9 +106,10 @@ export function TrainingInvite() {
   useEffect(() => { setHidden(!key || !!localStorage.getItem(key)); }, [key]);
   if (!me || hidden) return null;
   return <section className="tr-training-invite" aria-label="Знакомство с кабинетом">
-    <div><strong>Впервые здесь?</strong><span>Покажем 5 важных действий в вашем кабинете — без настоящих заказов и оплаты.</span></div>
+    <div><strong>Впервые здесь?</strong><span>Покажем основные действия в вашем кабинете — без настоящих заказов и оплаты.</span></div>
     <div className="tr-training-invite-actions">
       <a href="#/training">Начать обучение</a>
+      <button type="button" onClick={() => window.dispatchEvent(new Event('traksos-tour-start'))}>Показать кнопки</button>
       <button type="button" onClick={() => { localStorage.setItem(key, 'later'); setHidden(true); }}>Позже</button>
     </div>
   </section>;
@@ -176,6 +177,10 @@ export function Training({ chapter }: { chapter?: string }) {
       <nav className="tr-training-step-links" aria-label="Все шаги">
         {items.map((item, i) => <button type="button" key={item.title} className={i === index ? 'active' : ''} aria-current={i === index ? 'step' : undefined} onClick={() => setIndex(i)}>{i + 1}. {item.title}</button>)}
       </nav>
+    </section>
+    <section className="tr-training-hero tr-training-practice-entry"><h2>Посмотреть свой кабинет</h2>
+      <p>Подсветим основные разделы прямо на работающем экране. Никаких кнопок за вас не нажмём.</p>
+      <button type="button" className="btn ghost" onClick={() => { try { sessionStorage.setItem('traksos.tour.pending','1'); } catch {} location.hash='#/'; }}>Быстрый обзор кнопок</button>
     </section>
     <section className="tr-training-hero tr-training-practice-entry"><h2>Попробовать на примере</h2>
       <p>Учебная заявка с кнопками и безопасными действиями. Всё выполняется внутри тренажёра, без реальных денег и уведомлений.</p>
