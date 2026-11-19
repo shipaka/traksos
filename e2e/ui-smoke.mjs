@@ -133,7 +133,7 @@ try {
     }
     assert(data.tileIcons === 6, width + 'px: technical icon missing from a public tile');
     assert(data.heroCss?.includes('tracksos-approved-hero-owner-20261119.webp') && !data.heroCss.includes('tracksos-approved-scenic-hero'),
-      width + 'px: actual owner's 19 Nov truck photo is not displayed');
+      width + 'px: actual owner-approved 19 Nov truck photo is not displayed');
     assert(data.mapCss?.includes('tracksos-approved-map'),
       width + 'px: approved regional map is not displayed');
 
