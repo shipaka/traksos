@@ -1,0 +1,162 @@
+{
+  "schemaVersion": 1,
+  "notes": "Manually verified Commons make/model. All registration plates must be redacted during preparation; no unprocessed photos in APK. Source files are downloaded only by offline import script. Author/license/source must be retained.",
+  "items": [
+    {
+      "id": "renault-premium-2006",
+      "brand": "renault",
+      "model": "premium",
+      "yearMin": 2006,
+      "yearMax": 2013,
+      "sourceFile": "Renault Premium (2010).JPG",
+      "author": "selbst / Elkawe",
+      "license": "Public domain",
+      "licenseUrl": "https://creativecommons.org/publicdomain/mark/1.0/",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Renault_Premium_(2010).JPG",
+      "crop": [
+        0.025,
+        0.015,
+        0.975,
+        0.94
+      ],
+      "redact": [
+        [
+          0.18,
+          0.815,
+          0.36,
+          0.92
+        ]
+      ]
+    },
+    {
+      "id": "daf-xf105",
+      "brand": "daf",
+      "model": "xf105",
+      "yearMin": 2005,
+      "yearMax": 2015,
+      "sourceFile": "DAF FT XF 105, CTS Group.JPG",
+      "author": "Alf van Beem",
+      "license": "CC0 1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:DAF_FT_XF_105,_CTS_Group.JPG",
+      "crop": [
+        0.28,
+        0.1,
+        0.975,
+        0.93
+      ],
+      "redact": [
+        [
+          0.78,
+          0.63,
+          0.88,
+          0.84
+        ]
+      ]
+    },
+    {
+      "id": "man-tgx-2007",
+      "brand": "man",
+      "model": "tgx",
+      "yearMin": 2007,
+      "yearMax": 2019,
+      "sourceFile": "MAN TGX, Gunco, HZ Transport.JPG",
+      "author": "Alf van Beem",
+      "license": "CC0 1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:MAN_TGX,_Gunco,_HZ_Transport.JPG",
+      "crop": [
+        0.46,
+        0.25,
+        0.96,
+        0.935
+      ],
+      "redact": [
+        [
+          0.725,
+          0.785,
+          0.813,
+          0.843
+        ]
+      ]
+    },
+    {
+      "id": "mercedes-actros-2019",
+      "brand": "mercedes-benz",
+      "model": "actros",
+      "yearMin": 2017,
+      "yearMax": 2021,
+      "sourceFile": "165-365 Mercedes Actros.jpg",
+      "author": "dickinsonjohn02",
+      "license": "CC0 1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:165-365_Mercedes_Actros.jpg",
+      "crop": [
+        0.315,
+        0.2,
+        0.955,
+        0.92
+      ],
+      "redact": [
+        [
+          0.725,
+          0.79,
+          0.8,
+          0.835
+        ]
+      ]
+    },
+    {
+      "id": "volvo-fh-2013",
+      "brand": "volvo",
+      "model": "fh",
+      "yearMin": 2013,
+      "yearMax": 2020,
+      "sourceFile": "New Volvo FH.jpg",
+      "author": "Raymondo166",
+      "license": "CC BY 2.5",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.5/",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:New_Volvo_FH.jpg",
+      "crop": [
+        0.325,
+        0.025,
+        0.965,
+        0.925
+      ],
+      "redact": [
+        [
+          0.77,
+          0.773,
+          0.872,
+          0.837
+        ]
+      ]
+    },
+    {
+      "id": "scania-r520-2016",
+      "brand": "scania",
+      "model": "r520",
+      "yearMin": 2016,
+      "yearMax": 2025,
+      "sourceFile": "Scania Next Gen R 520 1.jpg",
+      "author": "Lav Ulv",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Scania_Next_Gen_R_520_1.jpg",
+      "crop": [
+        0.03,
+        0.25,
+        0.97,
+        0.925
+      ],
+      "redact": [
+        [
+          0.205,
+          0.79,
+          0.285,
+          0.875
+        ]
+      ]
+    }
+  ]
+}
