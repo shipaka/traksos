@@ -99,12 +99,12 @@ export function Fleet() {
             <a className="fleet-vehicle-media" href={`#/garage/${c.id}`}
               aria-label={`Открыть историю машины ${c.brand} ${c.model??''} ${c.plate??''}`}
               style={{textDecoration:'none',color:'inherit'}}>
-              <VehicleModelPhoto brand={c.brand} model={c.model}/>
+              <VehicleModelPhoto brand={c.brand} model={c.model} year={c.year}/>
               <div className="fleet-vehicle-title">
                 <span>ТЕХНИКА АВТОПАРКА</span>
                 <h2>{c.brand} {c.model ?? ''}</h2>
                 <p>{c.year ? c.year + ' год · ' : ''}{c.plate ?? 'Госномер не добавлен'}</p>
-                <small>{vehicleReferencePhoto(c.brand,c.model)
+                <small>{vehicleReferencePhoto(c.brand,c.model,c.year)
                   ? 'Фото указанной модели, не этой машины'
                   : 'Точное фото модели пока недоступно'} · открыть историю ›</small>
               </div>
