@@ -103,14 +103,14 @@ export function TrainingInvite() {
   const role = trainingRole(mode, me?.roles ?? [], me?.owner_id);
   const key = me ? localFlag(me.id, role) : '';
   const [hidden, setHidden] = useState(false);
-  useEffect(() => { setHidden(!key || !!localStorage.getItem(key)); }, [key]);
+  useEffect(() => { try { setHidden(!key || !!localStorage.getItem(key)); } catch { setHidden(!key); } }, [key]);
   if (!me || hidden) return null;
   return <section className="tr-training-invite" aria-label="Знакомство с кабинетом">
     <div><strong>Впервые здесь?</strong><span>Покажем основные действия в вашем кабинете — без настоящих заказов и оплаты.</span></div>
     <div className="tr-training-invite-actions">
       <a href="#/training">Начать обучение</a>
       <button type="button" onClick={() => window.dispatchEvent(new Event('traksos-tour-start'))}>Показать кнопки</button>
-      <button type="button" onClick={() => { localStorage.setItem(key, 'later'); setHidden(true); }}>Позже</button>
+      <button type="button" onClick={() => { try { localStorage.setItem(key, 'later'); } catch {} setHidden(true); }}>Позже</button>
     </div>
   </section>;
 }
@@ -128,10 +128,10 @@ export function Training({ chapter }: { chapter?: string }) {
   const [index, setIndex] = useState(0);
   const [completed, setCompleted] = useState(false);
   const key = me ? localFlag(me.id, role) : '';
-  useEffect(() => { setIndex(0); setCompleted(key ? localStorage.getItem(key) === 'done' : false); }, [key]);
+  useEffect(() => { setIndex(0); try { setCompleted(key ? localStorage.getItem(key) === 'done' : false); } catch { setCompleted(false); } }, [key]);
   const items = lessons[role];
   const lesson = items[Math.min(index, items.length - 1)];
-  const finish = () => { if (key) localStorage.setItem(key, 'done'); setCompleted(true); };
+  const finish = () => { if (key) { try { localStorage.setItem(key, 'done'); } catch {} } setCompleted(true); };
   const next = () => { if (index === items.length - 1) finish(); else setIndex(v => v + 1); };
   const amountNote = !pricing
     ? 'Актуальные ставки загрузятся из настроек площадки. Окончательную сумму смотрите в заявке до подтверждения.'
