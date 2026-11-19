@@ -3,13 +3,11 @@ name: TrakSos sandbox Android debug APK
 # Dedicated review build. APP_URL points to sandbox, not the production website.
 # No production deployment, signing, bank credentials, SMS, or RuStore publishing.
 on:
+  # Build from every candidate commit, including backend/docs/fee changes.
+  # Release evidence requires the web, server and APK to reference the same SHA.
   push:
     branches:
       - integration/sandbox-unified-20261119
-    paths:
-      - 'web/**'
-      - 'android/**'
-      - '.github/workflows/android-sandbox-preview.yml'
   workflow_dispatch:
 
 permissions:
