@@ -375,20 +375,24 @@ export class ServiceCenters {
 
   async markPaidOut(admin: AuthUser, id: string, reference?: string) {
     const ref = reference?.trim() || null;
-    const b = await this.db.one<any>(`update service_bookings
-         set paid_out_at=now(),payout_reference=case when payment_required then $2::text else payout_reference end
-       where id=$1 and status='closed' and paid_out_at is null
-         and (not payment_required or
-              (length(coalesce($2::text,'')) between 4 and 200 and
-               received_amount-refunded_amount >= amount+client_fee-discount))
-        returning id, number, center_id, amount - commission as payout`, [id,ref]).catch((e:any)=>{
-      if(e?.code==='23505') throw conflict('duplicate_payout_reference','Эта банковская выплата уже отмечена');
-      throw e;
+    const b = await this.db.tx(async q => {
+      const paid = await q.one<any>(`update service_bookings
+           set paid_out_at=now(),payout_reference=case when payment_required then $2::text else payout_reference end
+         where id=$1 and status='closed' and paid_out_at is null
+           and (not payment_required or
+                (length(coalesce($2::text,'')) between 4 and 200 and
+                 received_amount-refunded_amount >= amount+client_fee-discount))
+          returning id, number, center_id, amount - commission as payout`, [id,ref]).catch((e:any)=>{
+        if(e?.code==='23505') throw conflict('duplicate_payout_reference','Эта банковская выплата уже отмечена');
+        throw e;
+      });
+      if (!paid) throw conflict('payout_not_ready',
+        'Нужны: подтверждение работ, проверенное поступление всей суммы и номер фактически отправленной выплаты СТО (для новых счетов). Повторную выплату отметить нельзя.');
+      await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4::jsonb)',
+        [admin.id, 'service.paid_out', id, JSON.stringify({reference:ref,payout:paid.payout})]);
+      return paid;
     });
-    if (!b) throw conflict('payout_not_ready', 'Нужны: подтверждение работ, проверенное поступление всей суммы и номер фактически отправленной выплаты СТО (для новых счетов). Повторную выплату отметить нельзя.');
     const c = await this.db.one<{ owner_id: string }>('select owner_id from service_centers where id=$1', [b.center_id]);
-    await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4::jsonb)',
-      [admin.id, 'service.paid_out', id, JSON.stringify({reference:ref,payout:b.payout})]);
     if (c) await this.notifier.notify([c.owner_id], { type: 'booking', bookingId: id, status: 'paid' },
       { kind: 'normal', title: 'Выплата отправлена', body: `Счёт №${b.number}: ${(b.payout / 100).toLocaleString('ru-RU')} ₽`, data: { bookingId: id } });
     return { ok: true };
