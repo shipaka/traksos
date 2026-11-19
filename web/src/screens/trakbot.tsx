@@ -3,12 +3,12 @@ import { get, post } from '../api.ts';
 import { Back, useMe } from '../ui.tsx';
 
 interface BotMessage { id: string; role: 'user'|'bot'; body: string; created_at: string; }
-interface BotHistory { messages: BotMessage[]; freePilot: true; }
+interface BotHistory { messages: BotMessage[]; freePilot: true; aiAvailable?: boolean; }
 interface CodeRecord {
   code: string; title_en: string; title_ru: string|null;
   detail_en: string|null; detail_ru: string|null; source_url: string; review_state: string;
 }
-const initialGreeting = 'Привет! Я TrakBot. Могу помочь с первичными вопросами по автомобилю. Напиши точный код ошибки и блок управления или опиши, что происходит.';
+const initialGreeting = 'Здорово! Что с машиной? Напиши код ошибки или просто расскажи, что происходит. По порядку разберёмся.';
 
 export function TrakBotChat() {
   const { me } = useMe();
@@ -16,6 +16,11 @@ export function TrakBotChat() {
   const [text, setText] = useState('');
   const [make, setMake] = useState('');
   const [ecu, setEcu] = useState('');
+  const [model, setModel] = useState('');
+  const [year, setYear] = useState('');
+  const [aiAvailable, setAiAvailable] = useState(false);
+  const [aiConsent, setAiConsent] = useState(false);
+  const [handoff, setHandoff] = useState(false);
   const [working, setWorking] = useState(false);
   const [listening, setListening] = useState(false);
   const speechRef = useRef<any>(null);
@@ -50,7 +55,7 @@ export function TrakBotChat() {
     (isTech && me?.performer?.verification === 'approved');
   useEffect(() => {
     let live = true;
-    get<BotHistory>('/api/trakbot/messages').then((result) => { if (live) setMessages(result.messages); })
+    get<BotHistory>('/api/trakbot/messages').then((result) => { if (live) { setMessages(result.messages); setAiAvailable(!!result.aiAvailable); } })
       .catch((e) => { if (live) setError(e.message || 'Не удалось загрузить диалог'); });
     return () => { live = false; };
   }, [me?.id]);
@@ -62,26 +67,40 @@ export function TrakBotChat() {
     setWorking(true);
     setError('');
     try {
-      const result = await post<{ message: BotMessage; freePilot: true }>('/api/trakbot/answer', {
-        message: body, vehicle: { ...(make.trim() && { make: make.trim() }), ...(ecu.trim() && { ecu: ecu.trim() }) },
+      const result = await post<{ message: BotMessage; freePilot: true; handoffSuggested?: boolean }>('/api/trakbot/answer', {
+        message: body, allowAiProcessing: aiAvailable && aiConsent,
+        vehicle: { ...(make.trim() && { make: make.trim() }), ...(model.trim() && { model: model.trim() }),
+          ...(year && { year: Number(year) }), ...(ecu.trim() && { ecu: ecu.trim() }) },
       });
       setMessages((old) => [...old, { id: 'local-'+Date.now(), role: 'user', body, created_at: new Date().toISOString() }, result.message]);
       setText('');
-    } catch (e: any) { setError(e.message || 'Ошибка связи'); }
+      setHandoff(!!result.handoffSuggested);
+    } catch (e: any) {
+      setError(e.message || 'Ошибка связи');
+      // A write may have succeeded before a network disconnect; reconcile rather than resending.
+      get<BotHistory>('/api/trakbot/messages').then((history) => setMessages(history.messages)).catch(() => {});
+    }
     finally { setWorking(false); }
   };
 
   return <main>
     <Back to="help" />
     <h1>TrakBot</h1>
-    <div className="sub">{isTech ? 'Технический помощник для мастеров и СТО.' : 'Первичная помощь водителю.'} Личный чат: другим участникам эфира ваши сообщения не видны.</div>
+    <div className="sub">{isTech ? 'Технический помощник для мастеров и СТО.' : 'Первичная помощь водителю.'} Только личный чат. В общий эфир TrakBot ничего не отправляет.</div>
     <div className="card flat" style={{ gap: 8 }}>
       <b>Что за машина?</b>
       <div className="grid2">
         <input className="field" maxLength={60} value={make} onChange={(e) => setMake(e.target.value)} placeholder="Марка, например Scania" aria-label="Марка" />
-        <input className="field" maxLength={60} value={ecu} onChange={(e) => setEcu(e.target.value)} placeholder="Блок, например EBS" aria-label="Блок управления" />
+        <input className="field" maxLength={60} value={model} onChange={(e) => setModel(e.target.value)} placeholder="Модель" aria-label="Модель" />
+        <input className="field" inputMode="numeric" maxLength={4} value={year} onChange={(e) => setYear(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="Год выпуска" aria-label="Год выпуска" />
+        <input className="field" maxLength={60} value={ecu} onChange={(e) => setEcu(e.target.value)} placeholder="Блок, например EDC" aria-label="Блок управления" />
       </div>
-      <span className="note">В пилотном режиме бот использует общие OBD-II коды и безопасные вопросы по симптомам. Заводские SPN/FMI и конкретные схемы он не выдумывает.</span>
+      <span className="note">Общий OBD-II справочник — не заводская диагностика. Если кода или достоверных данных нет, TrakBot скажет об этом прямо.</span>
+      {aiAvailable && <label className="note" style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+        <input type="checkbox" checked={aiConsent} onChange={(e) => setAiConsent(e.target.checked)} />
+        Разрешаю отправлять текст моего вопроса, указанные данные машины и краткий контекст диалога внешнему ИИ-провайдеру для составления ответа.
+        Номер телефона и VIN перед отправкой скрываются. Без согласия работает только локальный справочник.
+      </label>}
     </div>
     <section className="card">
       <div className="msgs" aria-live="polite" style={{ minHeight: 240, maxHeight: '50vh', overflowY: 'auto' }}>
@@ -99,8 +118,12 @@ export function TrakBotChat() {
         <button type="submit" className="btn small" disabled={working || !text.trim()}>{working ? '...' : 'Отправить'}</button>
       </form>
     </section>
-    <span className="note">Пилот бесплатный, дополнительных комиссий нет. Голосовой ввод появится после проверки конфиденциальности и поддержки устройства; включается только вручную. Ответ приходит текстом. Если точного ответа нет, TrakBot не будет угадывать.</span>
-    {!isTech && <a className="btn ghost" href="#/new/consult">Нужна помощь человека? Консультация специалиста</a>}
+    <span className="note">Пока бесплатно. Бот не назначает ремонт без проверки, не резервирует и не списывает деньги. Голосовой ввод доступен только на совместимых устройствах после отдельного включения; отправляется распознанный и проверенный тобой текст.</span>
+    {handoff && <div className="card flat">
+      <b>Здесь достоверной расшифровки не нашлось.</b>
+      <span className="note">Не буду придумывать. Можно уточнить исходные данные или перейти к человеку — только если захочешь.</span>
+      {!isTech && <a className="btn ghost" href="#/new/consult">Связаться с мастером</a>}
+    </div>}
     {canUseTech && <a href="#/tech/codes" className="btn ghost">Технический справочник кодов для специалистов</a>}
   </main>;
 }
@@ -130,7 +153,7 @@ export function TechCodes() {
       <button className="btn small" disabled={busy || term.trim().length < 2}>Искать</button>
     </form>
     {error && <p role="alert">{error}</p>}
-    {items.map((it) => <details key={it.code} className="card">
+    {items.map((it) => <details key={it.code + ':' + it.source_url} className="card">
       <summary><b>{it.code}</b> · {it.title_ru || it.title_en}</summary>
       <div className="stack">
         <p style={{whiteSpace:'pre-wrap'}}>{it.detail_ru || it.detail_en || 'Подробности не проверены'}</p>
