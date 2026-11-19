@@ -199,10 +199,15 @@ const vehicleVisual=await read('web/src/vehicleVisual.tsx');
 const performerUi=await read('web/src/screens/performer.tsx');
 const garageUi=await read('web/src/screens/client.tsx');
 const fleetUi=await read('web/src/screens/fleet.tsx');
-expect(vehicleVisual.includes('Фото-иллюстрация · открыть историю автомобиля') &&
-  vehicleVisual.includes('tracksos-hero-service-hq.webp') &&
-  vehicleVisual.includes('не фотография этой машины'),
-  'truck photography is locally hosted and honestly labeled as reference, not uploaded owner photo');
+expect(vehicleVisual.includes("brand: 'scania'") &&
+  vehicleVisual.includes('/tracksos-approved-scania-r520.webp') &&
+  vehicleVisual.includes('return null;') &&
+  vehicleVisual.includes('Точное фото модели пока недоступно') &&
+  vehicleVisual.includes('Фото модели пока не добавлено') &&
+  !vehicleVisual.includes('tracksos-hero-service-hq.webp') &&
+  !vehicleVisual.includes('tracksos-photo-master.webp') &&
+  fleetUi.includes('<VehicleModelPhoto brand={c.brand} model={c.model}/>'),
+  '19 Nov vehicle photo invariant: exact brand/model only; missing images use neutral placeholder, never another truck');
 expect(performerUi.includes('<VehiclePhotoLink compact') &&
   performerUi.includes('/vehicle') &&
   shell.includes("'garage': screen = isCustomer ? <Garage focusVehicleId={b} />"),
