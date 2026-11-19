@@ -75,6 +75,13 @@ try {
     assert(data.loginCount === 1 && data.registerCount === 1,
       width + 'px: duplicated/missing login or registration buttons');
     assert(data.serviceTiles === 6, width + 'px: unexpected public services count');
+    if (width >= 1200) {
+      const benefits = await page.locator('.public-why-strip .public-benefit').allTextContents();
+      assert(benefits.length === 3, 'approved desktop footer requires exactly 3 benefit columns');
+      assert(benefits[0].includes('Надёжное сообщество'), 'first approved benefit missing');
+      assert(benefits[1].includes('Быстрая помощь'), 'second approved benefit missing');
+      assert(benefits[2].includes('Всё в одном месте'), 'third approved benefit missing');
+    }
     assert(data.tileIcons === 6, width + 'px: technical icon missing from a public tile');
     assert(data.heroCss?.includes('tracksos-approved-scenic-hero') && !data.heroCss.includes('traksos-final-hero'),
       width + 'px: full approved Scania photo without baked carousel controls is not displayed');

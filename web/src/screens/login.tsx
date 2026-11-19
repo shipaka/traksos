@@ -343,18 +343,19 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
       </div>
 
       <section className="public-why-strip" aria-label="Преимущества сервиса">
-        <article className="public-benefit public-benefit-speed"><span className="public-benefit-icon">⚡</span><b>Быстрая помощь</b><small>Обращение можно оформить онлайн</small></article>
-        <article className="public-benefit public-benefit-verified"><span className="public-benefit-icon">
+        <article className="public-benefit public-benefit-community"><span className="public-benefit-icon">
           <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M24 4 39 10v12c0 10-6 17-15 22C15 39 9 32 9 22V10Z" />
-            <path d="m17 24 5 5 10-11" />
-          </svg></span><b>Проверенные партнёры</b><small>Проверка мастеров, СТО и эвакуаторов</small></article>
+            <path d="M24 4 41 11v12c0 12-7 18-17 22C14 41 7 35 7 23V11Z" />
+            <path d="m15 24 6 6 12-13"/>
+          </svg></span><b>Надёжное сообщество</b><small>Реальный опыт, поддержка коллег и проверенные решения</small></article>
+        <article className="public-benefit public-benefit-speed"><span className="public-benefit-icon">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M27 3 8 27h15l-3 18 20-25H25Z"/>
+          </svg></span><b>Быстрая помощь</b><small>Оперативные ответы и конкретные действия в любой ситуации</small></article>
         <article className="public-benefit public-benefit-unified"><span className="public-benefit-icon">
           <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <circle cx="24" cy="12" r="6" /><circle cx="11" cy="34" r="6" /><circle cx="37" cy="34" r="6" />
-            <path d="m21 18-7 10m13-10 7 10M18 34h12" />
-          </svg></span><b>Всё в одном месте</b><small>Помощь, запчасти и страхование</small></article>
-        <article className="public-benefit public-benefit-value"><span className="public-benefit-icon">%</span><b>Выгодные условия</b><small>Для водителей и автопарков</small></article>
+            <path d="m24 4 19 11-19 11L5 15Z"/><path d="m5 23 19 11 19-11M5 32l19 11 19-11"/>
+          </svg></span><b>Всё в одном месте</b><small>Сервисы, инструменты и контакты для работы с грузовой техникой</small></article>
       </section>
       <div className="public-track-extras">
         <button type="button" className="public-track-insurance" onClick={() => { rememberGuestService('insurance'); go('register'); }}>

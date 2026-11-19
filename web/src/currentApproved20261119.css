@@ -182,3 +182,29 @@
     width:30px;height:30px;
   }
 }
+
+/* Owner's 19 Nov desktop reference: app teaser sits alongside (and slightly
+   above) the compact service row; three benefits, not the obsolete four. */
+@media(min-width:1200px){
+  .guest-app .public-landing .public-app-card{
+    height:220px!important;min-height:220px!important;
+    margin-bottom:-75px!important;transform:translateY(-58px)!important;
+    z-index:4!important;padding-right:114px!important;
+  }
+  .guest-app .public-landing .public-app-card .public-app-phone{
+    top:16px!important;bottom:16px!important;width:99px!important;
+  }
+  .guest-app .public-landing .public-app-card .public-rustore-soon{
+    display:inline-flex!important;min-height:32px;align-items:center;
+    padding:5px 10px;border:1px solid #2ba5e0;border-radius:9px;
+    background:rgba(11,47,87,.8);color:#b3eaff!important;
+    font-weight:750;
+  }
+  .guest-app .public-landing .public-why-strip{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    padding:19px 12px 8px!important;margin-top:13px!important;
+  }
+  .guest-app .public-landing .public-why-strip>article.public-benefit{
+    min-height:90px!important;padding:13px 9px!important;
+  }
+}
