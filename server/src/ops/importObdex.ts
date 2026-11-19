@@ -2,6 +2,7 @@
 // This is NOT a downloader for proprietary OEM/J1939 service databases.
 // Run: npm -w server run import:dtc
 import { readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { createDb } from '../db/index.ts';
 import { migrate } from '../db/migrate.ts';
 import { config } from '../config.ts';
@@ -19,7 +20,8 @@ interface RecordDtc {
   reviewed?: string;
 }
 async function main() {
-  const file = process.argv[2];
+  const checkOnly = process.argv.includes('--check');
+  const file = process.argv.slice(2).find((arg) => arg !== '--check');
   const raw = file ? await readFile(file, 'utf8') : await (async () => {
     const response = await fetch(SOURCE, { signal: AbortSignal.timeout(90_000) });
     if (!response.ok) throw new Error('OBDex fetch failed: HTTP ' + response.status);
@@ -28,6 +30,9 @@ async function main() {
     return response.text();
   })();
   if (raw.length > 100_000_000) throw new Error('OBDex payload exceeds size limit');
+  const digest = createHash('sha256').update(raw).digest('hex');
+  const expected = process.env.TRAKBOT_DTC_SOURCE_SHA256?.toLowerCase().trim();
+  if (expected && expected !== digest) throw new Error('OBDex checksum mismatch: import cancelled');
   const input: unknown = JSON.parse(raw);
   if (!Array.isArray(input) || input.length < 8000 || input.length > 20000)
     throw new Error('Unexpected OBDex dataset size: refusing partial import');
@@ -40,6 +45,14 @@ async function main() {
     if (unique.has(item.code)) throw new Error('Duplicate OBDex code: ' + item.code);
     unique.set(item.code, item);
   }
+  if (checkOnly) {
+    console.log('OBDex dataset OK: ' + unique.size + ' records, SHA-256 ' + digest +
+      '. Source: ' + CREDIT + ' (CC0-1.0). No database changes.');
+    return;
+  }
+  // In production the upstream dataset must be explicitly pinned to an audited checksum.
+  if (config.env === 'production' && !expected)
+    throw new Error('Set TRAKBOT_DTC_SOURCE_SHA256 after staging validation before production import');
   const db = await createDb(config.databaseUrl);
   try {
     await migrate(db);
@@ -70,7 +83,7 @@ async function main() {
       inserted += result.length;
       console.log(`OBDex import: ${Math.min(start + batch.length, records.length)}/${records.length} processed`);
     }
-    console.log(`OBDex: ${records.length} validated, ${inserted} new, existing records preserved. Source: ${CREDIT} (CC0-1.0)`);
+    console.log(`OBDex: ${records.length} validated, ${inserted} new, existing records preserved. SHA-256 ${digest}. Source: ${CREDIT} (CC0-1.0)`);
   } finally {
     await db.close();
   }
