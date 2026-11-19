@@ -705,6 +705,10 @@ export class OrdersService {
       const unilateral = await q.one<any>(
         'select * from order_unilateral_closures where order_id=$1 for update',[orderId]);
       if(unilateral){
+        // A fleet driver may submit a request, but cannot accept the owner's
+        // final emergency bill merely by being its creator.
+        if(user.id!==locked.client_id)
+          throw forbidden('Аварийную работу и сумму подтверждает владелец автопарка');
         if(unilateral.status!=='pending_client')
           throw conflict('emergency_under_review','Аварийное завершение уже оспорено или обработано');
         if(expectedTotal==null || expectedTotal!==Number(unilateral.quote_total) ||
