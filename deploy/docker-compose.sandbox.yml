@@ -35,6 +35,8 @@ services:
       SMS_PROVIDER: log
       PUSH_PROVIDER: log
       PAYMENT_PROVIDER: mock
+      # Fictitious money movements only in this separately isolated database.
+      TRAKSOS_SANDBOX_MOCK_CHECKOUT: "true"
       ADMIN_PHONES: "+79000000001"
       MODERATOR_PHONES: "+79000000005"
       YANDEX_WEATHER_API_KEY: ""

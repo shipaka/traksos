@@ -48,9 +48,11 @@ check(orders.includes("legacyCashFixtureEnabled() ? 'cash' : 'online'"),
 check(client.includes('methods?.cash &&') && !client.includes('Мастеру на месте</button>') &&
       client.includes('!methods?.[method]'),
   'new order checkout does not offer retired cash or replay a disabled offline draft');
-check(settings.includes('merged.payments.online = mockCheckoutFixtureEnabled()') &&
-      settings.includes('merged.payments.invoice = mockCheckoutFixtureEnabled()') &&
-      payments.includes("'payment_method_not_connected'"),
+check(settings.includes('merged.payments.online = isolatedSandboxMockEnabled()') &&
+      settings.includes('merged.payments.invoice = isolatedSandboxMockEnabled()') &&
+      payments.includes("'payment_method_not_connected'") &&
+      file('server/src/domain/paymentPolicy.ts').includes("env.SANDBOX_INSTANCE === 'true'") &&
+      file('deploy/docker-compose.sandbox.yml').includes('TRAKSOS_SANDBOX_MOCK_CHECKOUT'),
   'stale admin or DB settings cannot mark mock bank transactions as real');
 check(!file('web/src/screens/admin.tsx').includes("['cash', 'Наличные мастеру на месте']") &&
       file('web/src/screens/admin.tsx').includes('Тестовые списания'),

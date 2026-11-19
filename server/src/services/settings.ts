@@ -1,5 +1,5 @@
 import type { Db } from '../db/index.ts';
-import { legacyCashFixtureEnabled, shopFixtureEnabled, mockCheckoutFixtureEnabled } from '../domain/paymentPolicy.ts';
+import { legacyCashFixtureEnabled, shopFixtureEnabled, mockCheckoutFixtureEnabled, isolatedSandboxMockEnabled } from '../domain/paymentPolicy.ts';
 import { defaultSettings, type Settings, type SettingsKey } from '../domain/defaults.ts';
 
 /** Настройки площадки: значения по умолчанию + то, что поменял админ. Кэш на 5 секунд. */
@@ -22,8 +22,10 @@ export class SettingsService {
     merged.payments.cash = legacyCashFixtureEnabled();
     // This build has MOCK acquiring only. No bank-confirmed online or invoice
     // checkout can be enabled by an old DB value or stale admin interface.
-    merged.payments.online = mockCheckoutFixtureEnabled() && !!merged.payments.online;
-    merged.payments.invoice = mockCheckoutFixtureEnabled() && !!merged.payments.invoice;
+    // Only the isolated fake-user sandbox gets built-in mock checkout. Live
+    // production remains closed regardless of a restored database setting.
+    merged.payments.online = isolatedSandboxMockEnabled() || (mockCheckoutFixtureEnabled() && !!merged.payments.online);
+    merged.payments.invoice = isolatedSandboxMockEnabled() || (mockCheckoutFixtureEnabled() && !!merged.payments.invoice);
     // An old admin toggle or restored DB must not reopen the unreleased store.
     merged.shop.enabled = shopFixtureEnabled() && !!merged.shop.enabled;
     this.cache = { at: Date.now(), value: merged };
@@ -42,8 +44,8 @@ export class SettingsService {
     if (key === 'payments') {
       const v = value as { cash?: boolean; online?: boolean; invoice?: boolean };
       v.cash = legacyCashFixtureEnabled();
-      v.online = mockCheckoutFixtureEnabled() && !!v.online;
-      v.invoice = mockCheckoutFixtureEnabled() && !!v.invoice;
+      v.online = isolatedSandboxMockEnabled() || (mockCheckoutFixtureEnabled() && !!v.online);
+      v.invoice = isolatedSandboxMockEnabled() || (mockCheckoutFixtureEnabled() && !!v.invoice);
     }
     if (key === 'shop') (value as { enabled?: boolean }).enabled = shopFixtureEnabled() && !!(value as { enabled?: boolean }).enabled;
     await this.db.query(
