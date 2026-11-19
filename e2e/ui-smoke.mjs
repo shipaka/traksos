@@ -1,14 +1,15 @@
 // TrakSOS: smoke-test the public interface in an actual Chromium browser.
 // This complements the code/design gate with working clicks and responsive layout.
 import { chromium } from 'playwright';
+import { mkdirSync } from 'node:fs';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:8080';
 const browser = await chromium.launch();
 const assert = (condition, message) => { if (!condition) throw new Error(message); };
 
 try {
-  for (const width of [360, 390, 768, 1440]) {
-    const context = await browser.newContext({ viewport: { width, height: 844 }, locale: 'ru-RU' });
+  for (const width of [360, 390, 768, 1440, 1672]) {
+    const context = await browser.newContext({ viewport: { width, height: width === 1672 ? 941 : 844 }, locale: 'ru-RU' });
     const page = await context.newPage();
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
@@ -17,16 +18,40 @@ try {
     // TrakBot is opt-in and does not interrupt the public landing.
     const botLauncher = page.getByRole('button', { name: 'Открыть TrakBot' });
     assert(await botLauncher.isVisible(), width + 'px: TrakBot entry not visible');
+    assert(await botLauncher.locator('.trakbot-mascot-truck').count() === 1,
+      width + 'px: approved truck technician missing from launcher');
     assert(await page.locator('.trakbot-dock-panel').count() === 0,
       width + 'px: TrakBot opened automatically');
     await botLauncher.click();
     const botDialog = page.getByRole('dialog', { name: 'TrakBot — личный помощник' });
     await botDialog.waitFor();
-    assert(await botDialog.getByRole('link', { name: /Войти и поговорить с TrakBot/ }).count() === 1,
-      width + 'px: guest entry must not expose private chat');
+    assert(await botDialog.locator('.trakbot-dock-guest-mascot .trakbot-mascot-truck').count() === 1,
+      width + 'px: guest must see the same technician character');
+    assert(await botDialog.getByRole('link', { name: 'Зарегистрироваться', exact: true }).count() === 1,
+      width + 'px: mascot registration action is missing');
+    assert(await botDialog.getByRole('link', { name: 'Войти', exact: true }).count() === 1,
+      width + 'px: mascot login action is missing');
+    assert(await botDialog.locator('nav a').count() === 2,
+      width + 'px: guest bot must only offer login or registration');
+    assert(await botDialog.getByRole('textbox').count() === 0 &&
+      await botDialog.locator('.trakbot-dialog, .trakbot-typing, .trakbot-reactions-gallery').count() === 0,
+      width + 'px: invitation must never become a private guest chat');
+    const invite = await botDialog.boundingBox();
+    assert(!!invite && invite.height < 350,
+      width + 'px: guest invitation too tall for a small popup');
+    // Real Chromium render, not an illustration: archive the exact open guest panel.
+    if (width === 390 || width === 1672) {
+      mkdirSync('e2e/shots/trakbot-proof', { recursive: true });
+      await page.screenshot({
+        path: `e2e/shots/trakbot-proof/guest-open-${width}.png`,
+        fullPage: false, animations: 'disabled'
+      });
+    }
     await page.locator('.trakbot-dock-close').click();
     assert(await page.locator('.trakbot-dock-panel').count() === 0,
       width + 'px: TrakBot failed to close');
+    assert(await page.locator('.trakbot-dock-panel').count() === 0,
+      width + 'px: guest invitation reopened without a user action');
 
 
     const data = await page.evaluate(() => {

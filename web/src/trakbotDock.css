@@ -1,7 +1,7 @@
 /* Compact, opt-in assistant. Does not replace approved main layouts. */
 .trakbot-dock{
   position:fixed;right:18px;bottom:calc(98px + env(safe-area-inset-bottom));
-  z-index:48;display:flex;flex-direction:column;align-items:flex-end;
+  z-index:96;display:flex;flex-direction:column;align-items:flex-end;
   pointer-events:none;font-family:inherit;
 }
 .trakbot-dock>*{pointer-events:auto;}
@@ -26,7 +26,7 @@
 .trakbot-dock-head{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;
   border-bottom:1px solid #31516c;flex-shrink:0;background:#112f4d;}
 .trakbot-dock-brand{display:flex;align-items:center;gap:10px;}
-.trakbot-dock-brand span:last-child{display:flex;flex-direction:column;gap:2px;}
+.trakbot-dock-brand > span:last-child{display:flex;flex-direction:column;gap:2px;}
 .trakbot-dock-brand small{font-size:11px;color:#a4c5d9;}
 .trakbot-dock-close{border:1px solid #53768d;border-radius:50%;width:35px;height:35px;background:transparent;color:#fff;font-size:24px;cursor:pointer;}
 .trakbot-compact-body{overflow-y:auto;overscroll-behavior:contain;padding:12px;display:flex;flex-direction:column;gap:10px;min-height:0;}
@@ -60,4 +60,151 @@
   .trakbot-dock-label{display:none;}
   .trakbot-dock-launcher{padding:7px;min-width:50px;height:50px;}
 }
+/* Android: the mascot is a small avatar, never a full-screen illustration.
+   The composer stays visible while only the message list scrolls. */
+.trakbot-compact-body {
+  overflow:hidden; flex:1 1 auto; height:100%; min-height:0; gap:7px;
+}
+.trakbot-compact-body .trakbot-dialog {
+  display:flex;flex-direction:column;flex:1 1 auto;min-height:0;overflow:hidden;
+}
+.trakbot-compact-body .trakbot-dialog .msgs {
+  flex:1 1 auto;min-height:0!important;max-height:none!important;
+  overflow-y:auto;overscroll-behavior:contain;
+}
+.trakbot-compact-body .trakbot-dialog .compose { flex:0 0 auto;align-items:stretch; }
+.trakbot-compact-body .trakbot-dialog .compose .field { min-height:42px;max-height:52px; }
+.trakbot-compact-body .trakbot-dialog .compose button { min-width:44px;min-height:42px;flex:0 0 auto; }
+.trakbot-compact-body .trakbot-advice-compact {
+  flex:0 0 auto;border-left:2px solid #d18640;border-radius:5px;
+  padding:4px 8px;background:rgba(248,139,45,.07);color:#d6dce1;
+  font-size:11px;line-height:1.35;
+}
+.trakbot-compact-body .trakbot-advice-compact summary{cursor:pointer;}
+.trakbot-compact-body .trakbot-advice-compact p{margin:6px 0 3px;}
+.trakbot-compact-body .trakbot-advice-compact a{color:#ffad6b;}
+.trakbot-compact-body .trakbot-compact-footer{
+  flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:4px 9px;font-size:10.5px;color:#b6c4d1;
+}
+.trakbot-compact-body .trakbot-compact-footer a{color:#ffad69;text-decoration:underline;}
+.trakbot-compact-body .trakbot-compact-handoff{
+  flex:0 0 auto;padding:6px 7px;border:1px solid rgba(255,153,63,.4);
+  border-radius:8px;font-size:11px;line-height:1.35;
+}
+.trakbot-compact-body .trakbot-compact-handoff a{color:#ffc48a;}
+.trakbot-compact-body .trakbot-vehicle{flex:0 0 auto;max-height:34vh;overflow-y:auto;}
+@media(min-width:900px){
+  .trakbot-dock-panel{height:min(630px,calc(100dvh - 110px));}
+}
+@media(max-width:899px){
+  .trakbot-dock {right:10px;bottom:calc(84px + env(safe-area-inset-bottom));}
+  .trakbot-dock-panel {
+    box-sizing:border-box;
+    width:min(395px,calc(100vw - 20px));
+    height:min(58dvh,430px,calc(var(--trakbot-visible-height, 100dvh) - 155px));
+    max-height:none;min-height:0;bottom:calc(100% + 8px);
+    border-radius:16px;
+  }
+  .trakbot-dock--editing{bottom:calc(7px + var(--trakbot-keyboard-inset,0px));}
+  .trakbot-dock--editing .trakbot-dock-panel{
+    height:min(440px,calc(var(--trakbot-visible-height,100dvh) - 75px));
+  }
+  .trakbot-dock-head{padding:7px 10px;}
+  .trakbot-dock-brand{gap:7px;min-width:0;}
+  .trakbot-dock-brand > span:last-child{min-width:0;}
+  .trakbot-dock-brand b{font-size:12px;}
+  .trakbot-dock-brand small{font-size:10px;}
+  .trakbot-dock-brand .trakbot-mascot{--bot-size:32px;}
+  .trakbot-dock-close{min-width:40px;min-height:40px;}
+  .trakbot-compact-body{padding:7px;}
+  .trakbot-compact-body .trakbot-dialog{padding:7px;}
+  .trakbot-compact-body .trakbot-vehicle{padding:7px 9px;}
+  .trakbot-compact-body .trakbot-vehicle summary{font-size:11px;}
+  .trakbot-dock-launcher{min-width:48px;min-height:48px;}
+  .trakbot-dock-launcher .trakbot-mascot{--bot-size:34px;width:34px;height:34px;}
+  .trakbot-dock-guest-mascot .trakbot-mascot{--bot-size:54px;}
+  .trakbot-dock-guest{padding:10px;gap:8px;}
+  .trakbot-dock-guest nav{gap:5px;}
+  .trakbot-dock-guest nav a{padding:8px 10px;min-height:40px;box-sizing:border-box;}
+}
+@media(max-width:359px){
+  .trakbot-dock{right:7px;}
+  .trakbot-dock-panel{width:calc(100vw - 14px);}
+  .trakbot-dock-head{padding:6px 7px;}
+  .trakbot-compact-body{padding:5px;gap:5px;}
+  .trakbot-compact-body .trakbot-dialog{padding:5px;}
+  .trakbot-dock-brand small{display:none;}
+}
+
+@media(max-width:899px) and (max-height:500px){
+  /* Landscape Android and short split-screen windows: prioritize text + composer. */
+  .trakbot-dock { bottom:calc(6px + env(safe-area-inset-bottom)); }
+  .trakbot-dock-panel { height:min(420px,calc(var(--trakbot-visible-height,100dvh) - 68px)); }
+  .trakbot-dock--editing{bottom:calc(5px + var(--trakbot-keyboard-inset,0px));}
+  .trakbot-dock--editing .trakbot-dock-panel{
+    height:min(420px,calc(var(--trakbot-visible-height,100dvh) - 66px));
+  }
+  .trakbot-compact-body .trakbot-vehicle { display:none; }
+  .trakbot-compact-body .trakbot-advice-compact {font-size:10px;padding:3px 6px;}
+  .trakbot-compact-body .trakbot-compact-footer {font-size:10px;}
+  .trakbot-compact-body .trakbot-dialog .msgs { min-height:0!important; }
+}
 @media(prefers-reduced-motion:reduce){.trakbot-dock *{scroll-behavior:auto;transition:none!important;}}
+
+/* Guest main page: an opt-in invitation, not an active chat window.
+   Preserve the approved hero and make the assistant a tiny side element. */
+.trakbot-dock-panel--guest {
+  width:min(330px,calc(100vw - 24px));
+  height:auto !important;
+  min-height:0;
+  max-height:min(65dvh,440px);
+}
+.trakbot-dock-panel--guest .trakbot-dock-head { padding:8px 10px; }
+.trakbot-dock-panel--guest .trakbot-dock-brand .trakbot-mascot { --bot-size:32px; }
+.trakbot-dock-guest {
+  padding:12px;
+  gap:11px;
+}
+.trakbot-dock-guest-mascot { align-items:flex-start; gap:9px; }
+.trakbot-dock-guest-mascot .trakbot-mascot {
+  --bot-size:44px;
+  width:44px;height:44px;
+}
+.trakbot-dock-guest-mascot p { flex:1 1 auto;min-width:0;margin:0; }
+.trakbot-dock-guest-mascot b {
+  display:block;margin:2px 0 3px;font-size:14px;color:#f8ad63;
+}
+.trakbot-dock-guest-mascot p span {
+  display:block;font-size:12px;line-height:1.5;color:#e4edf3;
+}
+.trakbot-dock-guest nav {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+}
+.trakbot-dock-guest nav a {
+  min-width:0;min-height:44px;padding:8px 6px;box-sizing:border-box;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  font-size:12px;font-weight:700;
+}
+.trakbot-dock-guest nav a:last-child {
+  border-color:#f6a05b;background:rgba(255,119,24,.12);
+}
+.trakbot-dock-guest nav a:focus-visible{
+  outline:3px solid #ffbf8b;outline-offset:2px;
+}
+@media(max-width:899px){
+  /* Phones and Android WebView: launcher stays icon-only, no text pill. */
+  .trakbot-dock-label {display:none;}
+  .trakbot-dock-panel--guest {
+    height:auto !important;
+    max-height:min(60dvh,340px);
+    width:min(320px,calc(100vw - 20px));
+  }
+  .trakbot-dock-guest {padding:10px;gap:8px;}
+  .trakbot-dock-guest-mascot .trakbot-mascot {
+    --bot-size:37px;width:37px;height:37px;
+  }
+  .trakbot-dock-guest-mascot b {font-size:13px;}
+  .trakbot-dock-guest-mascot p span {font-size:11px;}
+  .trakbot-dock-guest nav a {font-size:11px;min-height:44px;}
+}
