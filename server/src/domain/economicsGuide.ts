@@ -27,6 +27,12 @@ export function financeGuide(s:Settings,role:FinanceRole):FinanceGuide {
       performerReward:r.performerReward,performerJobs:r.performerJobs,
       serviceReward:r.serviceReward,ttlDays:r.ttlDays}};
   if(role==='owner'||role==='driver'){
+    const demoAmount=examples[0];
+    const demoFee=cappedPct(demoAmount,f.clientFeePct);
+    const demoClientCap=Math.min(demoFee,pct(demoAmount,r.clientSpendCapPct));
+    const demoPoints=Math.min(20_000,demoClientCap); // example only: 200 ₽ if allowed
+    const referralWithoutPoints=pct(demoFee,r.clientSharePct);
+    const referralAfterPoints=pct(Math.max(0,demoFee-demoPoints),r.clientSharePct);
     const items=examples.map(amount=>{
       const fee=cappedPct(amount,f.clientFeePct);
       return {amount,fee,total:amount+fee,
@@ -38,12 +44,18 @@ export function financeGuide(s:Settings,role:FinanceRole):FinanceGuide {
         {title:'Что вы оплачиваете',text:'Сервисный сбор TrakSOS — '+f.clientFeePct+'% сверх согласованной стоимости услуги, максимум '+show(PER_SIDE_FEE_CAP)+' с одной заявки. Цена и сбор показываются до подтверждения. Комиссии исполнителя здесь не раскрываются.'},
         {title:'Баллы и скидки',text:'1 балл уменьшает оплату на 1 ₽ и не выводится деньгами. В заказе можно погасить не более '+r.clientSpendCapPct+'% стоимости заказа и не более начисленного клиентского сервисного сбора; размер доступного остатка и точная скидка показываются перед подтверждением.'},
         {title:'Приглашения',text:'Если пригласивший привёл клиента, ему начисляется '+r.clientSharePct+'% от фактически полученного клиентского сервисного сбора TrakSOS (после применённых баллов) по подтверждённым заказам этого клиента в течение '+r.days+' дней. Это НЕ '+r.clientSharePct+'% стоимости ремонта. При регистрации по приглашению предусмотрено '+show(r.welcome)+' приветственных баллов; действуют сроки и ограничения бонусной программы.'},
+        {title:'Пример: сколько можно списать баллами',text:'Если цена работы '+show(demoAmount)+', клиентский сбор '+show(demoFee)+', то предел по заказу — '+r.clientSpendCapPct+'% от цены работы ('+show(pct(demoAmount,r.clientSpendCapPct))+'), но не более самого сбора: максимум '+show(demoClientCap)+' и только при достаточном остатке баллов. Итоговый сбор после списания выбранного количества баллов уменьшается на фактически применённую скидку.'},
+        {title:'Пример: сколько получает пригласивший',text:'При заказе на '+show(demoAmount)+' без списания баллов: сбор '+show(demoFee)+' × '+r.clientSharePct+'% = '+show(referralWithoutPoints)+' баллов пригласившему. Если приглашённый применил '+show(demoPoints)+' баллов к сбору, платформа фактически получает '+show(Math.max(0,demoFee-demoPoints))+', и реферальный бонус составит '+show(referralAfterPoints)+'. Начисление — по оплаченному заказу в пределах '+r.days+' дней реферальной программы.'},
+        {title:'Сколько действуют баллы',text:'Начисленные баллы действуют '+r.ttlDays+' дней; если на момент начисления идёт бесплатный период площадки, срок отсчитывается не раньше его окончания. Баллы не выводятся деньгами.'},
         {title:'Отмена и возврат',text:'Результат зависит от стадии заявки и оснований отмены. Расчёт показывается по конкретному заказу, спор о сумме решается по материалам заявки. Обещание полного возврата без проверки недопустимо.'},
         {title:'Для водителей компании',text:'Если заказ превышает лимит владельца автопарка, для платного оформления может понадобиться его подтверждение. SOS доступен в предусмотренном интерфейсе.'},
       ]};
   }
   if(role==='master'||role==='tow'){
     const rate=commissionPct(f,{isPriority:false});
+    const demoAmount=examples[0];
+    const demoCommission=cappedPct(demoAmount,rate);
+    const demoPointsCap=Math.floor(demoCommission*r.spendCapPct/100);
     return {...base,title:role==='tow'?'Эвакуаторщику · комиссионные и выплаты':'Мастеру · комиссионные и выплаты',
       examples:examples.map(amount=>{
         const fee=cappedPct(amount,rate);
@@ -52,11 +64,15 @@ export function financeGuide(s:Settings,role:FinanceRole):FinanceGuide {
       }),paragraphs:[
         {title:'Комиссия с исполнителя',text:'Обычная комиссия TrakSOS — '+rate+'% согласованной стоимости заказа, максимум '+show(PER_SIDE_FEE_CAP)+' за заказ. Комиссия удерживается внутри цены исполнителя, не прибавляется к вашему вознаграждению. Приоритетные, промо- и персональные условия могут менять процент: конкретная заявка фиксирует свою ставку.'},
         {title:'Баллы и вознаграждения',text:'Баллами можно покрыть не более '+r.spendCapPct+'% подлежащей уплате комиссии по одной заявке, при наличии баллов. Приглашение нового исполнителя даёт '+show(r.performerReward)+' баллов после '+r.performerJobs+' завершённых заявок приглашённого участника при выполнении правил.'},
+        {title:'Пример: комиссия и списание баллов',text:'За услугу '+show(demoAmount)+' комиссия '+show(demoCommission)+'. При лимите '+r.spendCapPct+'% комиссии можно зачесть до '+show(demoPointsCap)+' баллами (если они есть); оставшаяся комиссия составит '+show(demoCommission-demoPointsCap)+'. Фактический зачёт и остаток показываются в финансах заявки. Баллы действуют '+r.ttlDays+' дней и не выводятся деньгами.'},
         {title:'Клиенты по реферальным ссылкам',text:'За приглашённого клиента — '+r.clientSharePct+'% от фактического сервисного сбора TrakSOS с его подтверждённых заказов на протяжении '+r.days+' дней. Вознаграждение начисляется баллами, не деньгами.'},
         {title:'Наличные и выплаты',text:'При расчёте наличными задолженность по агентской комиссии учитывается на счёте исполнителя. Банковские выплаты, долги, возвраты и погашение баллами проверяются в «Профиль → Финансы». Суммы клиентского сервисного сбора в этом кабинете не раскрываются.'},
       ]};
   }
   if(role==='service'){
+    const demoAmount=examples[0];
+    const demoCommission=cappedPct(demoAmount,f.serviceCommissionPct,Math.min(PER_SIDE_FEE_CAP,f.serviceCommissionMax));
+    const demoPointsCap=Math.floor(demoCommission*r.spendCapPct/100);
     return {...base,title:'СТО · комиссии и счета',examples:examples.map(amount=>{
       const fee=cappedPct(amount,f.serviceCommissionPct,Math.min(PER_SIDE_FEE_CAP,f.serviceCommissionMax));
       return {amount,fee,total:amount,partnerReceives:amount-fee,title:'Пример счёта за работы '+show(amount),
@@ -64,6 +80,7 @@ export function financeGuide(s:Settings,role:FinanceRole):FinanceGuide {
     }),paragraphs:[
       {title:'Комиссия СТО',text:'Комиссия TrakSOS с согласованных работ по привлечённым клиентам — '+f.serviceCommissionPct+'%, максимум '+show(Math.min(PER_SIDE_FEE_CAP,f.serviceCommissionMax))+' за счёт. Точные исключения, состав счёта и доставка деталей зависят от подтверждённого заказа и действующего договора.'},
       {title:'Баллы и приглашения',text:'Баллами можно уменьшить не более '+r.spendCapPct+'% подлежащей уплате комиссии. За приглашённую СТО предусмотрено '+show(r.serviceReward)+' баллов после её первого закрытого счёта, если соблюдены условия программы.'},
+      {title:'Пример: удержание комиссии СТО',text:'За согласованные работы на '+show(demoAmount)+' комиссия TrakSOS составит '+show(demoCommission)+'. С баллами можно зачесть не более '+show(demoPointsCap)+' ('+r.spendCapPct+'% комиссии), если их достаточно; к уплате останется '+show(demoCommission-demoPointsCap)+'. При другом счёте предел пересчитывается по тому же правилу.'},
       {title:'Рекомендация СТО мастером',text:'В предусмотренном сценарии направления в партнёрскую СТО клиент может получить скидку '+f.serviceReferralDiscountPct+'% по счёту; она финансируется из комиссии TrakSOS и не должна автоматически уменьшать согласованную выручку СТО.'},
       {title:'Выплаты',text:'Сверяйте услуги, согласованные цены, счета и начисления в «Финансы» вашего кабинета. Спор по счёту рассматривается по документам и истории заявки.'},
     ]};
