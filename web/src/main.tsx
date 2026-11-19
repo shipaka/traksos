@@ -16,6 +16,7 @@ import './finalCanon.css';
 import './insurancePremiumStates.css';
 import './trakbotDock.css';
 import './trainingPractice.css';
+import './scenarioCourses.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
