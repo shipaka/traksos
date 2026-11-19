@@ -5,7 +5,7 @@ import { SERVICES } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '../ui.tsx';
 import { qrSvg } from '../qr.ts';
 import { Login } from './login.tsx';
-import { vehicleReferencePhoto } from '../vehicleVisual.tsx';
+import { VehicleModelPhoto, vehicleReferencePhoto } from '../vehicleVisual.tsx';
 
 const ALLOW: [string, string, string][] = [
   ['repair', 'Вызов мастера', 'электрик, пневматика, автономка, шиномонтаж'],
@@ -99,13 +99,14 @@ export function Fleet() {
             <a className="fleet-vehicle-media" href={`#/garage/${c.id}`}
               aria-label={`Открыть историю машины ${c.brand} ${c.model??''} ${c.plate??''}`}
               style={{textDecoration:'none',color:'inherit'}}>
-              <img src={vehicleReferencePhoto(c.brand,c.model).src}
-                alt={vehicleReferencePhoto(c.brand,c.model).description} loading="lazy"/>
+              <VehicleModelPhoto brand={c.brand} model={c.model}/>
               <div className="fleet-vehicle-title">
                 <span>ТЕХНИКА АВТОПАРКА</span>
                 <h2>{c.brand} {c.model ?? ''}</h2>
                 <p>{c.year ? c.year + ' год · ' : ''}{c.plate ?? 'Госномер не добавлен'}</p>
-                <small>Фото для примера · нажмите, чтобы открыть историю ›</small>
+                <small>{vehicleReferencePhoto(c.brand,c.model)
+                  ? 'Фото указанной модели, не этой машины'
+                  : 'Точное фото модели пока недоступно'} · открыть историю ›</small>
               </div>
             </a>
             <div className="between"><b>{c.brand} {c.model ?? ''}</b><span className="pill">{c.plate ?? 'без номера'}</span></div>
