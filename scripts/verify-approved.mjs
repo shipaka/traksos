@@ -1,7 +1,6 @@
 // Nightly and push-time gate: functional and asset integrity tests.
-// IMPORTANT: the 14 Nov Scania hero / six-tile row are superseded by the 18 Nov
-// owner direction: unbranded truck manufacturer + visible TrakSos logo, nine tiles.
-// Do not restore or force legacy images/counts just to satisfy old tests.
+// Current owner-approved public design is 19 Nov: SOS, Air, STO, ECU, Parts, Insurance.
+// Never restore the deleted 14 Nov design or the interim 18 Nov nine-card layout.
 // Artwork still requires visual inspection; source-level tests cannot prove logo pixels.
 // This only verifies invariants; visual fidelity is additionally checked via screenshots.
 import { readFile, stat } from 'node:fs/promises';
@@ -127,20 +126,20 @@ for (const suffix of ['tow','master','sto','insurer']) {
 expect(landing.includes("const [role, setRole] = useState<JoinRole | null>(null)"),
   'partner role is chosen explicitly before viewing role-specific examples');
 const finalServices = [
-  "{ id: 'tow', icon: '↗', title: 'Эвакуация'",
-  "{ id: 'van', icon: '⚒', title: 'Выездной мастер'",
-  "{ id: 'sto', icon: '▤', title: 'СТО и сервисы'",
-  "{ id: 'insurance', icon: '◇', title: 'Страхование'",
-  "{ id: 'parts', icon: '⚙', title: 'Запчасти'",
-  "{ id: 'consult', icon: '☏', title: 'Консультации'",
+  "{ id:'sos', icon:'⚠', title:'SOS'",
+  "{ id:'air', icon:'◉', title:'Эфир'",
+  "{ id:'sto', icon:'⚒', title:'СТО'",
+  "{ id:'ecu', icon:'▣', title:'ЭБУ'",
+  "{ id:'parts', icon:'⚙', title:'Запчасти'",
+  "{ id:'insurance', icon:'◇', title:'Страхование'",
 ];
 let previous = -1;
 for (const item of finalServices) {
   const index = catalogue.indexOf(item);
-  expect(index > previous, 'approved 6 services are present and ordered: ' + item);
+  expect(index > previous, 'approved 19 Nov public tiles are present and ordered: ' + item);
   previous = index;
 }
-expect(landing.includes('SERVICE_TILES.map') && landing.includes('Далее'),
+expect(landing.includes('PUBLIC_HOME_TILES.map') && landing.includes('href={href}'),
   'service catalogue entries link to public previews with Далее action');
 expect(shell.includes("route[0] === 'explore'") && shell.includes("route[0] === 'company'") && shell.includes("route[0] === 'offers'"),
   'public catalogue, Company and Offers have real routes');
@@ -149,8 +148,8 @@ expect(shell.includes('guest-mobile-catalog') && shell.includes('guest-nav-group
 // The first hero slide uses a dynamic label; verify the actual actions,
 // not the superseded static text markup.
 expect(landing.includes("heroSlide === 0 ? go('login')") &&
-  landing.includes("heroSlide === 0 ? 'Войти'") &&
-  landing.includes("onClick={() => go('register')}>Регистрация</button>"),
+  landing.includes("heroSlide === 0 ? 'Зарегистрироваться'") &&
+  landing.includes('href="#/learn">Как это работает</a>'),
   'approved hero calls to action open login and client registration');
 try { await stat('web/public/approved-desktop.html'); expect(false, 'superseded static demo was deleted'); }
 catch { console.log('OK: superseded static HTML mockup not present'); }
