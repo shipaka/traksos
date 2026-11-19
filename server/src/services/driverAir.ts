@@ -7,7 +7,7 @@ import { config } from '../config.ts';
 import { suggestTrakBotAirReply } from './trakbotAirPolicy.ts';
 
 type AirRow = { id:string; author_label:string; body:string; origin:string; created_at:Date };
-const permitted = new Set(['client','driver','admin','moderator']);
+const permitted = new Set(['client','driver','master','tow','service','admin','moderator']);
 const isStaff = (u:AuthUser) => u.roles.includes('admin') || u.roles.includes('moderator');
 function allow(u:AuthUser) {
   if(!u.roles.some(role=>permitted.has(role))) throw forbidden('Эфир доступен водителям и сотрудникам');
@@ -28,6 +28,9 @@ function label(user:AuthUser):string {
   if(user.roles.includes('admin')) return 'Администратор';
   if(user.roles.includes('moderator')) return 'Модератор';
   const code=createHmac('sha256',config.secret).update(user.id).digest('hex').slice(0,5).toUpperCase();
+  if(user.roles.includes('service')) return 'СТО '+code;
+  if(user.roles.includes('tow')) return 'Эвакуатор '+code;
+  if(user.roles.includes('master')) return 'Мастер '+code;
   return 'Водитель '+code;
 }
 function expose(rows:AirRow[]) {
