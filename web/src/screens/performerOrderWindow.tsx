@@ -9,7 +9,7 @@ import './performerOrderWindow.css';
  * compact order window, with working (not copied/demo) Order actions and data.
  * The Android/mobile view remains full-screen.
  */
-export function PerformerOrderWindow({id,initialTab='order'}:{id:string;initialTab?:'order'|'client'|'finance'|'chat'|'history'}) {
+export function PerformerOrderWindow({id,initialTab='order'}:{id:string;initialTab?:'order'|'client'|'finance'|'chat'|'history'|'vehicle'}) {
   const [compact, setCompact] = useState(() => window.matchMedia('(max-width: 820px)').matches);
   useEffect(() => {
     const mq=window.matchMedia('(max-width: 820px)');
