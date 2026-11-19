@@ -888,6 +888,7 @@ export class OrdersService {
     const items = await this.db.query<any>(
       `select o.id, o.number, o.status, o.service, o.is_sos, o.problem, o.description, o.address, o.brand, o.estimate, o.work_amount, o.call_out_amount,
               o.client_fee_pct, o.discount_amount, o.payment_method, o.created_at, o.completed_at, o.consult_of,
+              o.performer_id, o.commission_pct_override, o.points_commission,
               o.case_root_id, o.continuation_of, o.result, o.result_note, o.vehicle_id,
               v.brand as v_brand, v.model as v_model, v.year as v_year, v.plate as v_plate,
               (select coalesce(company_name, name) from users where id=o.client_id) as client_name
@@ -898,12 +899,17 @@ export class OrdersService {
     // Do not recalculate totals from just call_out_amount + work_amount on the client.
     if (scope === 'performer') {
       return Promise.all(items.map(async (row: any) => {
-        const { client_fee_pct, discount_amount, ...order } = row;
-        void client_fee_pct; void discount_amount;
+        const { client_fee_pct, discount_amount, commission_pct_override,
+          points_commission, ...order } = row;
+        void client_fee_pct; void discount_amount; void commission_pct_override; void points_commission;
         return { ...order, money: await this.moneyForViewer(row, 'performer') };
       }));
     }
-    return items.map((order: any) => ({ ...order, money: this.money(order) }));
+    return items.map((row: any) => {
+      const { commission_pct_override, points_commission, ...order } = row;
+      void commission_pct_override; void points_commission;
+      return { ...order, money: this.money(row) };
+    });
   }
 
   /**
