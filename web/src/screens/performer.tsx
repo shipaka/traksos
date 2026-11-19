@@ -22,7 +22,12 @@ export function Work() {
   if (p?.kind === 'ecu') return <EcuStationWorkspace />;
   if (!p) return <main><h1>Кабинет исполнителя</h1><div className="card"><b>Заполните профиль</b><span className="note">Марки, цены, машина и статус самозанятого или ИП — после проверки начнут приходить заявки.</span><button className="btn" onClick={() => go('work/me')}>Заполнить</button></div></main>;
 
-  const active = (jobs.data ?? []).filter((o: any) => ['accepted', 'en_route', 'arrived', 'working', 'awaiting_confirmation'].includes(o.status));
+  // A physical job may be completed while its separate price dispute is still open.
+  const active = (jobs.data ?? []).filter((o: any) =>
+    ['accepted','en_route','arrived','working','awaiting_confirmation'].includes(o.status) &&
+    !(['pending_client','disputed'].includes(o.unilateral_status)));
+  const toReview = (jobs.data ?? []).filter((o:any)=>
+    ['pending_client','disputed'].includes(o.unilateral_status));
   const online = p.line_status === 'online' || p.line_status === 'on_job' || p.line_status === 'on_call';
   const setLine = (lineStatus: string, busyUntil?: string) => run(() => post('/api/performer/line', { lineStatus, busyUntil })).then((r) => {
     if (!r) return;
@@ -74,6 +79,14 @@ export function Work() {
         </div>
       )}
 
+      {toReview.length > 0 && <section className="stack" aria-label="Работы на проверке">
+        <span className="label">Работа сдана · ожидаются подтверждения</span>
+        {toReview.map((o:any)=><a key={o.id} className="card"
+          href={'#/order/'+o.id} style={{textDecoration:'none',color:'inherit'}}>
+          <b>Заявка №{o.number} · {o.unilateral_status==='disputed'?'Разбирательство':'Ожидаем клиента'}</b>
+          <span className="note">Физическая работа завершена. Расчёт ещё не утверждён и не означает оплату. Открыть историю и чат →</span>
+        </a>)}
+      </section>}
       {(auctions.data ?? []).length > 0 && (
         <div className="stack">
           <span className="label">Заявки рядом · торги</span>
