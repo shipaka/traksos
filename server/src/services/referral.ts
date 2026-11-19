@@ -3,7 +3,7 @@
 // сбора/комиссии с одной заявки, живут ttlDays (начисленные в бесплатный месяц — от его конца).
 //
 // За что начисляются (суммы — в настройках «referral»):
-//  · пригласил клиента (кто угодно) — clientSharePct от его оплаченных заявок, days дней;
+//  · пригласил клиента — clientSharePct от сервисного сбора, учитывая скидку баллами, days дней;
 //  · приглашённому клиенту — welcome на первую заявку;
 //  · мастер пригласил мастера — performerReward, когда новичок выполнит performerJobs заявок;
 //  · пригласил рембазу — serviceReward после её первого закрытого счёта.
@@ -14,7 +14,7 @@ import type { Db, Queryable } from '../db/index.ts';
 import type { SettingsService } from './settings.ts';
 import type { Notifier } from './notify.ts';
 import type { AuthUser } from '../http/router.ts';
-import { pct, commissionPct } from '../domain/money.ts';
+import { pct, cappedPct, commissionPct } from '../domain/money.ts';
 import { rub } from '../util.ts';
 
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -113,11 +113,25 @@ export class ReferralService {
     return true;
   }
 
-  /** Заявка подтверждена: клиент гасит баллами сбор (до cap) — в момент подтверждения, как бонусы */
+  /** К клиентскому заказу: ограничение не выше 10% стоимости заказа и не выше самого сбора. */
+  async clientAvailable(userId: string, orderAmount: number, clientFee: number, q: Queryable = this.db) {
+    const r = await this.settings.get('referral');
+    const { balance } = await this.balance(userId, q);
+    const cap = Math.max(0, Math.min(clientFee, pct(orderAmount, r.clientSpendCapPct)));
+    return { balance, cap, max: Math.min(balance, cap) };
+  }
+
+  /** Заявка подтверждена: баллы гасят только сбор клиента в пределах лимита заказа. */
   async spendClientFee(q: Queryable, order: any, clientFee: number, want: number) {
     if (want <= 0) return 0;
-    const used = await this.spend(q, order.client_id, clientFee, `Сервисный сбор по заявке №${order.number}`, order.id, null, want);
-    if (used > 0) await q.query(`update orders set points_fee=$2, discount_amount = discount_amount + $2,
+    const amount = Number(order.call_out_amount ?? order.estimate?.callOut ?? 0) + Number(order.work_amount ?? 0);
+    const a = await this.clientAvailable(order.client_id, amount, clientFee, q);
+    const used = Math.max(0, Math.min(a.max, want));
+    if (used <= 0) return 0;
+    await q.query(`insert into points_entries(user_id,amount,kind,order_id,note,created_at)
+         values ($1,$2,'spend',$3,$4,$5)`,
+      [order.client_id,-used,order.id,`Сервисный сбор по заявке №${order.number}`,this.now()]);
+    await q.query(`update orders set points_fee=$2, discount_amount = discount_amount + $2,
         discount_reason = coalesce(discount_reason, 'Баллы') where id=$1`, [order.id, used]);
     return used;
   }
@@ -127,7 +141,7 @@ export class ReferralService {
     const r = await this.settings.get('referral');
     const fees = await this.settings.get('fees');
     const perf = order.performer_id ? await q.one<{ is_priority: boolean }>('select is_priority from performer_profiles where user_id=$1', [order.performer_id]) : null;
-    const commission = pct(amount, commissionPct(fees, { isPriority: !!perf?.is_priority, at: this.now() }));
+    const commission = cappedPct(amount, commissionPct(fees, { isPriority: !!perf?.is_priority, at: this.now() }));
     // 1. Комиссия исполнителя баллами — возвращаем ему на счёт (наличные — уменьшаем долг)
     // Исполнитель сам решает в «Финансах»: гасить ли комиссию баллами и сколько максимум с заявки
     const pref = order.performer_id ? await q.one<{ extras: any }>('select extras from performer_profiles where user_id=$1', [order.performer_id]) : null;
@@ -145,8 +159,12 @@ export class ReferralService {
     // 2. Пригласивший клиента — доля от оплаченной заявки, пока не прошло days дней
     const c = await q.one<{ referred_by: string | null; referred_at: Date | null; name: string | null }>('select referred_by, referred_at, name from users where id=$1', [order.client_id]);
     if (c?.referred_by && c.referred_at && this.now().getTime() - new Date(c.referred_at).getTime() <= r.days * DAY) {
-      await this.grant(q, { userId: c.referred_by, amount: pct(amount, r.clientSharePct), kind: 'ref_client', orderId: order.id, refUserId: order.client_id,
-        note: `${r.clientSharePct}% с заявки №${order.number} приглашённого клиента` });
+      const clientFee = cappedPct(amount, Number(order.client_fee_pct ?? fees.clientFeePct));
+      const actualPoints = await q.one<{points_fee:number|null}>('select points_fee from orders where id=$1',[order.id]);
+      const actualFee = Math.max(0, clientFee - Number(actualPoints?.points_fee ?? 0));
+      const reward = pct(actualFee, r.clientSharePct);
+      if (reward > 0) await this.grant(q, { userId: c.referred_by, amount: reward, kind: 'ref_client', orderId: order.id, refUserId: order.client_id,
+        note: `${r.clientSharePct}% от сервисного сбора TrakSOS по заявке №${order.number} приглашённого клиента` });
     }
     // 3. Мастер пригласил мастера — разово, когда новичок выполнит performerJobs заявок
     if (order.performer_id) {
