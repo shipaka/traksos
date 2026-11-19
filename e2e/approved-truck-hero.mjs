@@ -1,4 +1,4 @@
-// Canonical Nov 14 real-browser audit: truck photos, SOS route and public site.
+// Canonical Nov 19 real-browser audit: owner-approved truck photo, SOS routes and public site.
 // Never validate the obsolete demo direction grid or require a clipped hero.
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
@@ -99,7 +99,8 @@ try {
     // intentionally reserve a separate, uncropped image above the text.
     if (!info.visible || (width >= 900 && !info.fullBleed) ||
         (width < 900 && (info.fullBleed || info.fit !== 'contain')) ||
-        !info.photo.includes('tracksos-approved-scenic-hero') ||
+        !info.photo.includes('tracksos-approved-hero-owner-20261119.webp') ||
+        info.photo.includes('tracksos-approved-scenic-hero') ||
         info.photo.includes('traksos-final-hero'))
       throw Error(width + 'px public Scania photograph is missing or has the wrong layout: ' + JSON.stringify(info));
     await p.getByRole('button',{name:'Следующее фото'}).click();
@@ -119,4 +120,4 @@ try {
 } finally {
   await browser.close();
 }
-console.log('Verified client Scania photo, real full-bleed three-scene guest hero, SOS and public photo cards at 390 and 1440px');
+console.log('Verified 19 Nov owner-approved public truck photo, adaptive hero, SOS and client photo cards at 390 and 1440px');
