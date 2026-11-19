@@ -58,6 +58,12 @@ export const config = {
     // Loopback only; use an SSH tunnel or local proxy for an independent GPU node.
     llmLocalUrl: env.TRAKBOT_LLM_LOCAL_URL ?? 'http://127.0.0.1:8000/v1/chat/completions',
   },
+  /** Tochka business invoice documents: entirely separate from live payment processing. */
+  tochkaInvoices: {
+    enabled: env.TOCHKA_INVOICE_ENABLED === 'true',
+    token: env.TOCHKA_API_TOKEN ?? '',
+    customerCode: env.TOCHKA_CUSTOMER_CODE ?? '',
+    accountId: env.TOCHKA_ACCOUNT_ID ?? '',
   payments: {
     /** mock — тестовый сервис; yookassa — ЮKassa. Включение оплаты — в настройках площадки. */
     provider: (env.PAYMENT_PROVIDER ?? 'mock') as 'mock' | 'yookassa',
@@ -76,6 +82,8 @@ if (isProd && config.secret === 'dev-secret-change-me') {
 
 // Refuse to start the sandbox unless it is physically separate from production.
 // The sandbox never contacts SMS.ru, RuStore Push or a real payment provider.
+if (config.sandboxInstance && config.tochkaInvoices.enabled)
+  throw new Error('Real Tochka invoice API is forbidden in the isolated sandbox');
 if (config.sandboxInstance) {
   const dbName = new URL(config.databaseUrl).pathname.replace(/^\//, '').toLowerCase();
   if (!dbName.includes('sandbox') || !env.DATABASE_URL)

@@ -229,6 +229,7 @@ export function BaseCar({ id }: { id: string }) {
   const [note, setNote] = useState('');
   const [works, setWorks] = useState<string[] | null>(null);
   const [amount, setAmount] = useState<number | null>(null);
+  const [partsAmount, setPartsAmount] = useState<number | null>(null);
   const [invPts, setInvPts] = useState<number | null>(null);
   const [company, setCompany] = useState<any>(null);
   const d = b.data;
@@ -326,17 +327,24 @@ export function BaseCar({ id }: { id: string }) {
         <div className="card">
           <b>Выставить счёт</b>
           <span className="note">Работы: {d.works.join(', ')}</span>
-          <Field label="Сумма работ и запчастей"><RubInput value={amount} onChange={setAmount} placeholder="например, 12 000 ₽" /></Field>
-          <span className="note">Счёт и акт формируются сами и уходят клиенту, компаниям — по ИНН. Деньги придут после оплаты и сверки работ.</span>
-          <InvoicePoints amount={amount} value={invPts} onChange={setInvPts} />
-          <button className="btn" disabled={busy || !amount} onClick={() => act('invoice', { amount, points: invPts ?? 0 }, 'Агентский счёт сформирован')}>Выставить счёт</button>
+          <Field label="Общая сумма работ и материалов"><RubInput value={amount} onChange={setAmount} placeholder="например, 12 000 ₽" /></Field>
+          <Field label="Из неё запчасти и материалы (в рублях, если есть)">
+            <RubInput value={partsAmount} onChange={setPartsAmount} placeholder="например, 3 000 ₽" />
+          </Field>
+          {amount!=null && <span className="note">База для комиссии — только работы: {rub(Math.max(0,amount-(partsAmount??0)))}. Запчасти в этот расчёт 5% не включаются. Клиент получит отдельную разбивку своего сбора.</span>}
+          {amount!=null && (partsAmount??0)>amount && <span className="err">Стоимость запчастей не может превышать общий счёт.</span>}
+          <span className="note">Счёт и акт с юридически корректными реквизитами требуют отдельного подключения платёжных и документооборотных сервисов. До этого админ сверяет платёж вручную.</span>
+          <InvoicePoints amount={amount == null ? null : Math.max(0,amount-(partsAmount??0))} value={invPts} onChange={setInvPts} />
+          <button className="btn" disabled={busy || !amount || (partsAmount??0)>amount} onClick={() => act('invoice',
+            { amount, partsAmount:partsAmount??0, points: invPts ?? 0 }, 'Счёт выставлен — клиенту отправлен итог')}>Выставить счёт</button>
         </div>
       )}
       {['invoiced', 'closed', 'disputed'].includes(d.status) && d.amount != null && (
         <div className="card">
           <b>{d.status === 'closed' ? 'Клиент подтвердил работы' : d.status === 'disputed' ? 'Клиент не согласен — модератор свяжется с обеими сторонами' : 'Агентский счёт сформирован · ждём сверки клиента'}</b>
           <dl className="kv">
-            <dt>Работы</dt><dd>{d.works.length} поз. · {rub(d.amount)}</dd>
+            <dt>Работы</dt><dd>{d.works.length} поз. · {rub(d.feeBaseAmount??d.amount)}</dd>
+            {!!d.partsAmount && <><dt>Материалы и запчасти</dt><dd>{rub(d.partsAmount)}</dd></>}
             <dt>Комиссия TrakSOS</dt><dd>− {rub(d.commission)}</dd>
             {d.discount > 0 && <><dt>Скидка клиенту</dt><dd>{rub(d.discount)} — из комиссии TrakSOS</dd></>}
             <dt>Вам к выплате</dt><dd><b>{rub(d.payout)}</b></dd>
@@ -831,10 +839,15 @@ export function BookingPage({ id }: { id: string }) {
           <b>Счёт за ремонт · сверьте работы</b>
           <dl className="kv">
             <dt>Что делали</dt><dd>{d.works.join(', ')}</dd>
-            <dt>Работы</dt><dd>{rub(d.amount)}</dd>
+            <dt>Работы</dt><dd>{rub(d.feeBaseAmount??d.amount)}</dd>
+            {d.partsAmount > 0 && <><dt>Запчасти и материалы</dt><dd>{rub(d.partsAmount)}</dd></>}
+            {d.clientFee > 0 && <><dt>Сервисный сбор TrakSOS ({d.clientFeePct}%, но не больше 5 000 ₽)</dt><dd>+ {rub(d.clientFee)}</dd></>}
             {d.discount > 0 && <><dt>Скидка по совету мастера</dt><dd>− {rub(d.discount)}</dd></>}
             <dt>К оплате</dt><dd><b>{rub(d.toPay)}</b></dd>
           </dl>
+          {d.paymentStatus === 'received' && <span className="note">Поступление оплаты подтверждено администратором.</span>}
+          {d.paymentStatus === 'partial' && <span className="note">Часть оплаты получена; до полного расчёта выплата СТО не проводится.</span>}
+          {d.paymentStatus === 'awaiting_payment' && <span className="note">Оплата ещё не подтверждена. Подтверждение выполненных работ не является подтверждением оплаты. Не переводите деньги на непроверенные реквизиты.</span>}
           {mode === '' && (
             <div className="grid2">
               <button className="btn" onClick={() => setMode('agree')}>Всё верно</button>
@@ -858,7 +871,11 @@ export function BookingPage({ id }: { id: string }) {
           )}
         </div>
       )}
-      {d.status === 'closed' && <div className="banner col"><b>Работы подтверждены</b><span className="note">{d.works.join(', ')} · {rub(d.toPay)}{d.reviewStars ? ` · ваша оценка ${'★'.repeat(d.reviewStars)}` : ''}. Ремонт записан в историю машины.</span></div>}
+      {d.status === 'closed' && <div className="banner col"><b>Работы подтверждены</b>
+        <span className="note">{d.works.join(', ')} · итого {rub(d.toPay)}{d.clientFee > 0 ? ` (в том числе сервисный сбор ${rub(d.clientFee)})` : ''}{d.reviewStars ? ` · ваша оценка ${'★'.repeat(d.reviewStars)}` : ''}. Ремонт записан в историю машины.</span>
+        {d.paymentStatus === 'awaiting_payment' && <span className="note">Платёж ожидает подтверждения в TrakSOS. Принятие работ не подтверждает получение денежных средств.</span>}
+        {d.paymentStatus === 'received' && <span className="note">Поступление оплаты зафиксировано в учёте.</span>}
+      </div>}
       {d.status === 'disputed' && <div className="banner warn col"><b>Спор по работам</b><span className="note">Модератор свяжется с вами и с сервисом. Ответ придёт в «Поддержку».</span></div>}
       {['new', 'clarify', 'expected'].includes(d.status) && (
         <button className="btn ghost" disabled={busy} onClick={() => act('cancel', {}, 'Запись отменена')}>Отменить запись</button>
@@ -943,7 +960,8 @@ export function AdminServices() {
 // Финансы рембазы ---------------------------------------------------------------
 
 const MSTATE: Record<string, [string, string]> = {
-  awaiting: ['ждёт сверки клиента', ''], to_pay: ['к выплате', 'warn'], paid: ['выплачено', 'good'], disputed: ['спор у модератора', 'bad'],
+  awaiting: ['ждёт сверки клиента', ''], unpaid: ['ожидаем оплату', 'warn'],
+  to_pay: ['к выплате', 'warn'], paid: ['выплачено', 'good'], disputed: ['спор у модератора', 'bad'],
 };
 const monthName = (m: string) => { const [y, mm] = m.split('-').map(Number); return new Date(Date.UTC(y, mm - 1, 1)).toLocaleDateString('ru-RU', { month: 'long', year: 'numeric', timeZone: 'UTC' }); };
 
@@ -951,7 +969,7 @@ const monthName = (m: string) => { const [y, mm] = m.split('-').map(Number); ret
 export function BaseMoney() {
   const m = useLoad(() => baseGet('/api/base/money'), [], isBookingEvent);
   const pts = useLoad(() => baseGet('/api/me/referral'), [], (e) => e.type === 'points');
-  const [filter, setFilter] = useState<'all' | 'to_pay' | 'awaiting' | 'paid' | 'disputed'>('all');
+  const [filter, setFilter] = useState<'all' | 'to_pay' | 'unpaid' | 'awaiting' | 'paid' | 'disputed'>('all');
   if (!m.data) return <main><Loading error={m.error} /></main>;
   const { summary: s, months, items, rule } = m.data;
   const shown = items.filter((x: any) => filter === 'all' || x.state === filter);
@@ -965,9 +983,10 @@ export function BaseMoney() {
       <div className="card">
         <div className="sum total"><span>К выплате</span><span>{rub(s.toPay)}</span></div>
         <div className="sum"><span>Ждёт сверки клиента</span><span>{rub(s.awaiting)}</span></div>
+        {s.unpaid > 0 && <div className="sum"><span>Клиент подтвердил работы, оплата ещё не поступила</span><span>{rub(s.unpaid)}</span></div>}
         {s.disputed > 0 && <div className="sum"><span>В споре</span><span>{rub(s.disputed)}</span></div>}
         <div className="sum"><span>Уже выплачено</span><span>{rub(s.paid)}</span></div>
-        <span className="note">Деньги приходят после того, как клиент сверит работы. TrakSOS работает как агент: отчёт агента и акт — раз в месяц.</span>
+        <span className="note">Выплата возможна после подтверждения клиентом работ и поступления денег. Платёж проверяет TrakSOS по банковским/кассовым документам. Отчёт агента и акт — раз в месяц.</span>
       </div>
 
       <details className="card">
@@ -998,7 +1017,7 @@ export function BaseMoney() {
 
       <span className="label">Счета</span>
       <div className="scroll-x">
-        {([['all', 'Все'], ['to_pay', 'К выплате'], ['awaiting', 'Ждут сверки'], ['paid', 'Выплачено'], ['disputed', 'Споры']] as const).map(([k, n]) =>
+        {([['all', 'Все'], ['to_pay', 'К выплате'], ['unpaid', 'Ждут оплаты'], ['awaiting', 'Ждут сверки'], ['paid', 'Выплачено'], ['disputed', 'Споры']] as const).map(([k, n]) =>
           <button key={k} className="chip" aria-pressed={filter === k} onClick={() => setFilter(k)}>{n}</button>)}
       </div>
       {!shown.length ? <div className="empty">{items.length ? 'Здесь пусто' : 'Счетов пока нет — появятся после «Выставить счёт»'}</div> : (
@@ -1019,6 +1038,7 @@ export function BaseMoney() {
                 <div className="sum"><span>Комиссия TrakSOS</span><span>−{rub(x.commissionFull)}</span></div>
                 {x.points > 0 && <div className="sum"><span>…из них погашено баллами</span><span>+{rub(x.points)}</span></div>}
                 <div className="sum total"><span>Вам</span><span>{rub(x.payout)}</span></div>
+                {x.state === 'unpaid' && <span className="note">Клиент подтвердил работы. Выплата ожидает поступления оплаты.</span>}
                 {x.paidOutAt && <span className="note">Выплачено {fmtDay(x.paidOutAt)}</span>}
                 <div className="row" style={{ gap: 6, marginTop: 4 }}>
                   <a className="btn ghost small" href={servicePreviewHref(`base/car/${x.id}`)}>Открыть счёт</a>

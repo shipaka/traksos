@@ -7,7 +7,7 @@ import { estimate, isNight, billWork, type Tier, type Extra } from '../domain/pr
 import { assertRegionalTariff, CoverageError, type ServiceRegion } from '../domain/regionalCoverage.ts';
 import { rankCandidates, performerKindFor, type Candidate } from '../domain/dispatch.ts';
 import { transition, canDo, statusLabels, type Action, type Actor, type OrderStatus } from '../domain/orderState.ts';
-import { cancelStage, cancelSplit, cappedPct } from '../domain/money.ts';
+import { cancelStage, cancelSplit, cappedPct, commissionPct, pct } from '../domain/money.ts';
 import { slot } from '../domain/schedule.ts';
 import { rub } from '../util.ts';
 import type { AuctionService } from './auction.ts';
@@ -665,7 +665,7 @@ export class OrdersService {
       bill.wait ? `ожидание ${bill.waitMinutes} мин ${rub(bill.wait)}` : null,
       ...bill.extras.map((x) => `${x.name} ${rub(x.amount)}`),
     ].filter(Boolean).join(', ');
-    await this.systemMessage(orderId, `Исполнитель закрыл выезд: выезд ${rub(m.callOut)}${parts ? `, ${parts}` : ''}${m.clientFee ? ` + сбор ${rub(m.clientFee)}` : ''} = ${rub(m.total)}. Подтвердите в заявке.`);
+    await this.systemMessage(orderId, 'Исполнитель завершил работы. Клиенту отправлен подробный расчёт для подтверждения в заявке.');
     await this.notifier.notify([o.client_id, o.created_by], { type: 'order', orderId, status: to },
       { kind: 'normal', title: 'Подтвердите сумму', body: `Заявка №${o.number}: ${rub(m.total)}`, data: { orderId } });
     return this.view(user, orderId);
@@ -757,9 +757,9 @@ export class OrdersService {
       .catch((e) => console.error('[order-work-payment-create]', e));
     await this.payments.processCaptureForOrder(orderId)
       .catch((e) => console.error('[order-capture]', e));
-    await this.systemMessage(orderId, `Сумма ${rub(m.total - used)} подтверждена${used ? ` (бонусами и баллами ${rub(used)})` : ''}. Оставьте отзыв друг о друге.`);
+    await this.systemMessage(orderId, 'Клиент подтвердил расчёт. Детали сумм и комиссий доступны каждой стороне в своём кабинете.');
     await this.notifier.notify([o.performer_id], { type: 'order', orderId, status: to },
-      { kind: 'normal', title: 'Сумма подтверждена', body: `Заявка №${o.number}: ${rub(m.total)}`, data: { orderId } });
+      { kind: 'normal', title: 'Сумма подтверждена', body: `Заявка №${o.number}: клиент подтвердил работу`, data: { orderId } });
     return this.view(user, orderId);
   }
 
@@ -865,6 +865,29 @@ export class OrdersService {
     return { callOut, work, amount, clientFee, discount, total: amount + clientFee - discount };
   }
 
+  /** Viewer-scoped monetary data; the performer's price excludes the client surcharge. */
+  async moneyForViewer(o: any, actor: Actor | null) {
+    const full = this.money(o);
+    if (actor === 'client' || actor === 'admin') return full;
+    const base = { callOut: full.callOut, work: full.work, amount: full.amount, total: full.amount };
+    if (actor !== 'performer') return base;
+    const fees = await this.settings.get('fees');
+    const worker = await this.db.one<{ is_priority: boolean }>(
+      'select is_priority from performer_profiles where user_id=$1', [o.performer_id]);
+    const rate = commissionPct(fees, {
+      isPriority: !!worker?.is_priority,
+      overridePct: o.commission_pct_override == null ? null : Number(o.commission_pct_override),
+      at: this.now(),
+    });
+    const commission = pct(full.amount, rate);
+    const pointsCommission = Math.min(commission, Math.max(0, Number(o.points_commission ?? 0)));
+    return { ...base, commission, commissionPct: rate,
+      pointsCommission, payout: full.amount - commission + pointsCommission,
+      // Cash is physically received by the worker; the receipt amount is required
+      // to prevent undercollection. This does NOT expose the customer's fee split.
+      cashToCollect: o.payment_method === 'cash' ? full.total : undefined };
+  }
+
   // Просмотр ---------------------------------------------------------------
 
   actorOf(user: AuthUser, o: any): Actor | null {
@@ -945,7 +968,7 @@ export class OrdersService {
       : [];
     const caseBookings = actor === 'client' || actor === 'admin'
       ? await this.db.query<any>(
-          `select b.id, b.number, b.status, b.need, b.amount, b.discount, b.from_order_id
+          `select b.id, b.number, b.status, b.need, b.amount, b.client_fee, b.discount, b.from_order_id
              from service_bookings b left join orders step on step.id=b.from_order_id
             where b.case_root_id=$1 or step.id=$1 or step.case_root_id=$1
             order by b.created_at, b.number`, [caseRootId])
@@ -959,7 +982,7 @@ export class OrdersService {
       : [];
     const caseServiceStages = caseBookings.map((b: any) => ({
       id: b.id, number: b.number, status: b.status, need: b.need,
-      confirmedTotal: b.status === 'closed' ? Math.max(0, Number(b.amount ?? 0) - Number(b.discount ?? 0)) : null,
+      confirmedTotal: b.status === 'closed' ? Math.max(0, Number(b.amount ?? 0) + Number(b.client_fee ?? 0) - Number(b.discount ?? 0)) : null,
     }));
     const caseSteps = caseRows.map((step: any) => ({
       id: step.id, number: step.number, service: step.service, status: step.status,
@@ -997,9 +1020,11 @@ export class OrdersService {
       brand: o.brand, model: o.model, year: o.year, vehicleId: o.vehicle_id, vehicle, estimate: o.estimate, paymentMethod: o.payment_method,
       auction: o.status === 'searching' && !!o.auction_until, auctionUntil: o.auction_until, autoPick: o.auto_pick, search, searchStage,
       limits: o.status === 'searching' ? this.auction.limits(o, (await this.settings.get('dispatch'))) : null,
-      destination: o.destination, cargo: o.cargo, loaded: o.loaded, driverOnSite: o.driver_on_site, discountReason: o.discount_reason,
-      money: this.money(o), result: o.result, resultNote: o.result_note,
-      pointsFee: o.points_fee ?? 0, pointsCommission: actor === 'performer' || actor === 'admin' ? o.points_commission ?? 0 : undefined,
+      destination: o.destination, cargo: o.cargo, loaded: o.loaded, driverOnSite: o.driver_on_site,
+      discountReason: actor === 'client' || actor === 'admin' ? o.discount_reason : undefined,
+      money: await this.moneyForViewer(o, actor), result: o.result, resultNote: o.result_note,
+      pointsFee: actor === 'client' || actor === 'admin' ? o.points_fee ?? 0 : undefined,
+      pointsCommission: actor === 'performer' || actor === 'admin' ? o.points_commission ?? 0 : undefined,
       points: actor === 'client' && o.status === 'awaiting_confirmation' && this.referral ? await this.referral.clientAvailable(o.client_id, this.money(o).amount, this.money(o).clientFee) : null,
       bill: o.bill ?? null, billingStep: Number((await this.settings.get('pricing')).billingStepMinutes ?? 60),
       site: o.site, workStartedAt: o.work_started_at ?? null, waitRate: performer?.wait_rate ?? null, ownerNote: o.owner_note ?? null, partMode: o.part_mode ?? null, waitStartedAt: o.wait_started_at ?? null, waitMinutes: o.wait_minutes ?? 0,
@@ -1023,7 +1048,8 @@ export class OrdersService {
       followUps: o.service === 'consult' ? await this.db.query(`select id, number, service, status from orders where consult_of=$1 order by created_at`, [o.id]) : [],
       consultBack: o.service === 'consult' ? (await this.settings.get('pricing')).consult : null,
       cancelReason: o.cancel_reason, cancelStage: o.cancel_stage,
-      cancelBreakdown, cancellationPayment: cancellationPayment ? {
+      cancelBreakdown: actor === 'client' || actor === 'admin' ? cancelBreakdown : null,
+      cancellationPayment: cancellationPayment ? {
         paymentStatus: cancellationPayment.payment_status,
         paymentTotal: cancellationPayment.payment_total,
         refundedAmount: cancellationPayment.refunded_amount,
@@ -1033,7 +1059,9 @@ export class OrdersService {
         plannedRefund: cancellationPayment.planned_refund,
       } : null,
       createdAt: o.created_at, acceptedAt: o.accepted_at, arrivedAt: o.arrived_at, completedAt: o.completed_at,
-      performer, client, events,
+      performer, client,
+      events: actor === 'client' || actor === 'admin'
+        ? events : events.map((e: any) => ({ type: e.type, actor_id: e.actor_id, created_at: e.created_at })),
       you: actor ?? 'candidate',
       actions: unilateral && ['pending_client','disputed'].includes(unilateral.status)
         ? (actor==='client' && unilateral.status==='pending_client' ? ['confirm_amount'] : [])
@@ -1046,6 +1074,7 @@ export class OrdersService {
     const items = await this.db.query<any>(
       `select o.id, o.number, o.status, o.service, o.is_sos, o.problem, o.description, o.address, o.brand, o.estimate, o.work_amount, o.call_out_amount,
               o.client_fee_pct, o.discount_amount, o.payment_method, o.created_at, o.completed_at, o.consult_of,
+              o.performer_id, o.commission_pct_override, o.points_commission,
               o.case_root_id, o.continuation_of, o.result, o.result_note, o.vehicle_id,
               uc.status as unilateral_status,
               v.brand as v_brand, v.model as v_model, v.year as v_year, v.plate as v_plate,
@@ -1056,7 +1085,19 @@ export class OrdersService {
     );
     // The archive and the order detail must use the same final price formula.
     // Do not recalculate totals from just call_out_amount + work_amount on the client.
-    return items.map((order: any) => ({ ...order, money: this.money(order) }));
+    if (scope === 'performer') {
+      return Promise.all(items.map(async (row: any) => {
+        const { client_fee_pct, discount_amount, commission_pct_override,
+          points_commission, ...order } = row;
+        void client_fee_pct; void discount_amount; void commission_pct_override; void points_commission;
+        return { ...order, money: await this.moneyForViewer(row, 'performer') };
+      }));
+    }
+    return items.map((row: any) => {
+      const { commission_pct_override, points_commission, ...order } = row;
+      void commission_pct_override; void points_commission;
+      return { ...order, money: this.money(row) };
+    });
   }
 
   /**

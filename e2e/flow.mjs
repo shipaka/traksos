@@ -367,8 +367,8 @@ await a.getByText('Начислено').first().waitFor();
 await shot(a, '15-admin-performer');
 
 // Админ: новая редакция оферты → клиенту окно с галочкой → принял
-await a.goto(BASE + '/#/admin');
-await a.getByRole('button', { name: 'Оферты', exact: true }).click();
+await a.goto(BASE + '/#/admin/section/offers');
+await a.getByRole('heading', { name: 'Оферты', exact: true }).waitFor();
 await a.getByRole('button', { name: 'Оферта для клиентов' }).click();
 await a.locator('textarea').fill('# Оферта для клиентов\n\nТестовая редакция для проверки окна согласия. Здесь будет текст от юриста.\n\n1. Пункт первый');
 await a.locator('input[placeholder^="Что изменилось"]').fill('Новая шкала отмены');
@@ -396,8 +396,8 @@ await k.getByRole('button', { name: 'Не согласен с суммой' }).c
 await k.locator('textarea').fill('Хочу уточнить итоговую сумму');
 await k.getByRole('button', { name: 'Отправить' }).click();
 await k.waitForURL(/#\/support\//);
-await a.goto(BASE + '/#/admin');
-await a.getByRole('button', { name: 'Обращения', exact: true }).click();
+await a.goto(BASE + '/#/admin/section/support');
+await a.getByRole('heading', { name: 'Обращения', exact: true }).waitFor();
 await a.getByText('Ждёт ответа').click();
 await a.locator('.compose input').fill('Здравствуйте! Сейчас проверим');
 await a.locator('.compose button').click();
@@ -405,10 +405,17 @@ await k.getByText('Сейчас проверим').waitFor({ timeout: 10000 });
 await shot(k, '17-client-support');
 await a.getByRole('button', { name: 'Закрыть обращение' }).click();
 await k.getByText(/Поддержка закрыла обращение/).waitFor({ timeout: 10000 });
-await a.goto(BASE + '/#/admin');
-await a.getByRole('button', { name: 'Статистика', exact: true }).click();
+await a.goto(BASE + '/#/admin/section/stats');
+await a.getByRole('heading', { name: 'Статистика', exact: true }).waitFor();
 await a.getByText('Заявок в день').waitFor();
 await shot(a, '18-admin-stats');
+// CRM smoke: admin can open unified participant database, filter and see actual cards.
+await a.goto(BASE + '/#/admin/section/registry');
+await a.getByRole('heading', { name: 'Единая база клиентов и партнёров' }).waitFor();
+await a.locator('input[placeholder^="Имя, компания, телефон"]').fill('79991112233');
+await a.getByRole('button', { name: 'Найти участников' }).click();
+await a.getByText(/Найдено участников:/).waitFor();
+await shot(a, '18b-admin-registry');
 await k.goto(BASE + '/#/notifications');
 await k.getByText('Поддержка ответила', { exact: false }).first().waitFor();
 

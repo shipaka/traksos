@@ -82,6 +82,11 @@ export function Help() {
     <main>
       <Back to="" label="Назад" />
       <div><h1>Справка</h1><div className="sub">Коротко о том, как устроены суммы, оплата, отмена и кто что видит.</div></div>
+      <div className="card stack">
+        <h2>Новичок? Начните здесь</h2>
+        <p className="note">Покажем ваш кабинет простыми шагами, а потом потренируемся без настоящих денег и заявок.</p>
+        <div className="row"><a className="btn" href="#/training">Обучение по шагам</a><a className="btn ghost" href="#/practice">Попробовать в тренажёре</a></div>
+      </div>
       {me && <a className="btn" href="#/learn">Пройти знакомство с TrakSOS · по шагам</a>}
       <input className="field" type="search" placeholder="Поиск по справке и ситуациям" value={q} onChange={(e) => setQ(e.target.value)} />
       {me && <EconomicsGuide />}
