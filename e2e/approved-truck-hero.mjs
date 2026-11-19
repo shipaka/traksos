@@ -20,10 +20,18 @@ try {
     const page = await ctx.newPage();
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
-    await page.addInitScript(t => {
-      localStorage.setItem('traksos.token', t);
+    await page.addInitScript(({token,nativeApp}) => {
+      // The mobile acceptance branch is the Android WebView workspace.
+      // Chromium without this bridge renders the *browser* client dashboard.
+      if(nativeApp) Object.defineProperty(window,'TrakSOSNative',{
+        configurable:true,value:{
+          isApp:()=>true,setSession:()=>{},pushToken:()=>'',performerOnline:()=>{},
+          appLockEnabled:()=>false,setAppLockEnabled:()=>false
+        }
+      });
+      localStorage.setItem('traksos.token', token);
       localStorage.setItem('traksos.mode', 'client');
-    }, token);
+    }, {token,nativeApp:width<900});
     await page.goto(BASE + '/#/', {waitUntil: 'domcontentloaded'});
     if(width<900){
       const mobile = page.locator('.and19-client');
