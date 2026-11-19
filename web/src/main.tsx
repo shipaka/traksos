@@ -41,6 +41,7 @@ import { BaseHome, BaseCar, BaseSetup, BaseMoney, AdminServicePayouts, ServicesL
 import { Fleet, QrJoin } from './screens/fleet.tsx';
 import { Help } from './screens/help.tsx';
 import { PlatformIntro, IntroInvitation } from './screens/platformIntro.tsx';
+import { ScenarioLesson } from './screens/scenarioEncyclopedia.tsx';
 import { TrakBotChat, TechCodes } from './screens/trakbot.tsx';
 import { DriverAir } from './screens/driverAir.tsx';
 import { TrakBotDock } from './trakbotDock.tsx';
@@ -257,7 +258,7 @@ function App() {
     case 'fleet': screen = isCustomer && !me.owner_id && !me.roles.includes('driver') ? <Fleet /> : <main><div className="empty">Парком управляет владелец</div></main>; break;
     case 'inspections': screen = isInspection || isInsurer ? <InsurerCabinet inspectionOnly /> : <Home />; break;
     case 'insurance': screen = b === 'request' ? (route[2] === 'new' ? <InsuranceApplication vehicleId={route[3]??''} /> : <InsuranceThread requestId={route[2]??''} />) : isInsurer ? <InsurerCabinet /> : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
-    case 'help': screen = <Help />; break;
+    case 'help': screen = b === 'case' && route[2] ? <ScenarioLesson id={route[2]} /> : <Help />; break;
     case 'learn': screen = <PlatformIntro />; break;
     case 'trakbot': screen = <TrakBotChat />; break;
     case 'air': screen = <DriverAir />; break;
