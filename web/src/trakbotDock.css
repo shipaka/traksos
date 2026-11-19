@@ -193,6 +193,8 @@
   outline:3px solid #ffbf8b;outline-offset:2px;
 }
 @media(max-width:899px){
+  /* Phones and Android WebView: launcher stays icon-only, no text pill. */
+  .trakbot-dock-label {display:none;}
   .trakbot-dock-panel--guest {
     height:auto !important;
     max-height:min(60dvh,340px);
