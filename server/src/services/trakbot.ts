@@ -102,7 +102,12 @@ export class TrakBotService {
   }
 
   async expertLookup(user: AuthUser, query: string) {
-    if (!user.roles.some((r) => ['master','service','admin','moderator'].includes(r))) throw forbidden();
+    const staff = user.roles.some((r) => ['admin','moderator'].includes(r));
+    if (!staff) {
+      if (!user.roles.some((r) => ['master','service'].includes(r))) throw forbidden();
+      const profile = await this.db.one<{verification:string}>('select verification from performer_profiles where user_id=$1', [user.id]);
+      if (profile?.verification !== 'approved') throw forbidden('Технический справочник доступен после проверки специалиста');
+    }
     const q = query.trim().slice(0, 60);
     if (q.length < 2) return { items: [] };
     const items = await this.db.query(
