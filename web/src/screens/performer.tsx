@@ -134,7 +134,7 @@ export function Work({background=false}:{background?:boolean}={}) {
         <div className="card">
           <b>Баланс</b>
           <div className="sum"><span>К выплате</span><span>{rub(balance.data.to_pay)}</span></div>
-          <div className="sum"><span>Долг по комиссии с наличных</span><span>{rub(balance.data.cash_debt)}</span></div>
+          {balance.data.cash_debt > 0 && <div className="sum"><span>Обязательства по историческим заявкам</span><span>{rub(balance.data.cash_debt)}</span></div>}
           {balance.data.paused && <span className="err">Долг больше {rub(balance.data.cashDebtLimit)} — новые заявки на паузе до оплаты.</span>}
           <span className="note">TrakSOS работает как агент: отчёт агента и акт — раз в месяц.</span>
         </div>
@@ -350,7 +350,7 @@ function MobilePerformerWork({p, personName, active, awaiting, jobs, incoming, o
     <a className="work-mobile-notices-link" href="#/notifications">Уведомления и сообщения <span aria-hidden="true">›</span></a>
     {balance && <div className="work-mobile-balance note">
       <span>К выплате: <b>{rub(balance.to_pay)}</b></span>
-      <span>Долг по комиссии с наличных: <b>{rub(balance.cash_debt)}</b></span>
+      {balance.cash_debt > 0 && <span>Историческая задолженность: <b>{rub(balance.cash_debt)}</b></span>}
       {balance.paused && <span className="err">Заявки приостановлены до урегулирования комиссии.</span>}
     </div>}
   </main>;

@@ -325,7 +325,7 @@ export function TaxSection() {
       <h1>Налоговый статус</h1>
       <div className="card">
         <TaxInputs taxStatus={taxStatus} inn={inn} onChange={(t, i) => { setTax(t); setInn(i); }} />
-        <span className="note">Самозанятый выдаёт чек в «Мой налог» на наличные сам. По безналу чеки и отчёт агента формирует TrakSOS — раз в месяц.</span>
+        <span className="note">Новые платные заказы будут доступны после подключения проверенного банковского расчёта. Чеки, НПД и отчёты оформляются по фактически подтверждённым операциям и условиям договора; история прежних расчётов сохраняется.</span>
       </div>
       <button className="btn" disabled={busy || !taxStatus || inn.length !== 12} onClick={() => save({ taxStatus, inn })}>Сохранить</button>
     </main>
@@ -384,8 +384,10 @@ export function MoneySection() {
         <div className="card">
           <div className="sum total"><span>К выплате</span><span>{rub(balance.data.to_pay)}</span></div>
           <div className="sum"><span>Уже выплачено</span><span>{rub(balance.data.paid)}</span></div>
-          <div className="sum"><span>К перечислению TrakSOS по наличным заявкам</span><span>{rub(balance.data.cash_debt)}</span></div>
-          <span className="note">В наличных расчётах указывается общая сумма обязательств перед площадкой. Подробности клиентского сервисного сбора в вашем кабинете не показываются.</span>
+          {balance.data.cash_debt > 0 && <>
+            <div className="sum"><span>Исторические обязательства по прежним заказам</span><span>{rub(balance.data.cash_debt)}</span></div>
+            <span className="note">Новые наличные заказы отключены. Этот остаток относится только к ранее оформленным обязательствам. Финансовые данные клиента здесь не раскрываются.</span>
+          </>}
           {balance.data.paused && <span className="err">Долг больше {rub(balance.data.cashDebtLimit)} — новые заявки на паузе до оплаты.</span>}
           <span className="note">TrakSOS работает как агент: отчёт агента и акт — раз в месяц.</span>
           <span className="note">{FEE_PURPOSE}</span>

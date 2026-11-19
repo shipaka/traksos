@@ -48,6 +48,13 @@ check(orders.includes("legacyCashFixtureEnabled() ? 'cash' : 'online'"),
 check(client.includes('methods?.cash &&') && !client.includes('Мастеру на месте</button>') &&
       client.includes('!methods?.[method]'),
   'new order checkout does not offer retired cash or replay a disabled offline draft');
+check(settings.includes('merged.payments.online = mockCheckoutFixtureEnabled()') &&
+      settings.includes('merged.payments.invoice = mockCheckoutFixtureEnabled()') &&
+      payments.includes("'payment_method_not_connected'"),
+  'stale admin or DB settings cannot mark mock bank transactions as real');
+check(!file('web/src/screens/admin.tsx').includes("['cash', 'Наличные мастеру на месте']") &&
+      file('web/src/screens/admin.tsx').includes('Тестовые списания'),
+  'admin panel no longer advertises obsolete cash or fake bank activation');
 check(!shop.includes("'Магазин открыт'") && shop.includes('Магазин закрыт до приёмки'),
   'admin cannot claim to open an unreleased parts store');
 check(guide.includes("title:'Безналичные выплаты'") &&

@@ -50,7 +50,7 @@ function BankMovements({id,close,reload}:{id:string;close:()=>void;reload:()=>vo
             <select className="field" value={method} onChange={e=>setMethod(e.target.value as Method)}>
               <option value="invoice">Банковский перевод / счёт</option>
               <option value="online">Онлайн-эквайринг (сверен)</option>
-              <option value="cash">Наличные по кассовому документу</option>
+              <option value="cash">Наличные (только сверка исторического кассового документа)</option>
               <option value="other">Другое подтверждённое поступление</option>
             </select>
           </label>
