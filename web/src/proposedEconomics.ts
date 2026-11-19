@@ -7,6 +7,9 @@ export type ProposedEconomicInput = {
   base: number;
   partnerFeePct: number;
   customerFeePct: number;
+  /** Optional per-side caps in kopecks; for STO each is independently 500_000. */
+  partnerFeeMax?: number;
+  customerFeeMax?: number;
   paymentRail: PaymentRail;
   acquiringPct: number;
   supportCost: number;
@@ -19,8 +22,8 @@ export type ProposedEconomicInput = {
 export const percent = (value: number, rate: number) => Math.round(value * rate / 100);
 export function proposedEconomics(i: ProposedEconomicInput) {
   if (!Number.isFinite(i.base) || i.base < 0) throw new Error('base must be non-negative');
-  const clientFee = percent(i.base, i.customerFeePct);
-  const partnerFee = percent(i.base, i.partnerFeePct);
+  const clientFee = Math.min(percent(i.base, i.customerFeePct), i.customerFeeMax ?? Infinity);
+  const partnerFee = Math.min(percent(i.base, i.partnerFeePct), i.partnerFeeMax ?? Infinity);
   const totalClient = i.base + clientFee;
   const platformRevenue = partnerFee + clientFee;
   const partnerGets = i.base - partnerFee;
