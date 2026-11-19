@@ -44,3 +44,16 @@
 .tr-training-practice-entry a{margin-top:8px;text-decoration:none}
 .tr-training-practice .tr-training-step-links span{font-size:.84rem;padding:8px 10px;border-radius:9px;border:1px solid rgba(125,168,188,.25);opacity:.7}
 .tr-training-practice .tr-training-step-links span.active{background:rgba(18,183,207,.11);border-color:#12b7cf;opacity:1}
+
+.account-menu-tour{font:inherit;color:inherit;background:transparent;border:0;text-align:left;padding:10px 16px;cursor:pointer;width:100%}
+.account-menu-tour:hover,.account-menu-tour:focus-visible{background:rgba(14,178,205,.12);outline-offset:-2px}
+.tr-tour{position:fixed;inset:0;z-index:99999;font-size:1rem;color:#f8fbfd}
+.tr-tour-cover{position:absolute;inset:0;background:transparent;pointer-events:auto}
+.tr-tour-spot{position:fixed;border-radius:13px;border:2px solid #38dfed;box-shadow:0 0 0 110vmax rgba(3,12,23,.73),0 0 0 4px rgba(21,183,207,.13);pointer-events:none}
+.tr-tour-bubble{position:fixed;display:grid;gap:11px;max-height:calc(100vh - 20px);overflow-y:auto;padding:20px 20px 18px;background:#102b40;border:1px solid #3a9ab3;border-radius:17px;box-shadow:0 14px 40px rgba(0,0,0,.35)}
+.tr-tour-bubble h2{font-size:1.25rem;line-height:1.2;margin:0;color:#fff}
+.tr-tour-bubble p{margin:0;line-height:1.55;color:#deedf2}
+.tr-tour-actions{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px}
+.tr-tour-actions .row{display:flex;flex-wrap:nowrap;gap:6px}
+.tr-tour-actions button{min-height:40px}
+@media(max-width:650px){.tr-tour-bubble{padding:16px}.tr-training-invite-actions{flex-wrap:wrap}}
