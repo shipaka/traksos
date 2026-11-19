@@ -51,7 +51,6 @@ jobs:
           rm -rf android/app/src/main/assets/www
           mkdir -p android/app/src/main/assets/www
           cp -a web/dist/. android/app/src/main/assets/www/
-          # All APK assets must be rebuilt from this exact PR SHA, never merged with an old WebView bundle.
           for obsolete in tracksos-approved-scenic-hero.webp tracksos-approved-scania-r520.webp tracksos-approved-truck.webp traksos-final-hero.webp traksos-final-insurance.webp traksos-final-parts.webp; do
             if test -e "android/app/src/main/assets/www/$obsolete"; then
               echo "FAIL: retired visual asset packaged in APK: $obsolete" >&2
@@ -61,6 +60,7 @@ jobs:
           test -s android/app/src/main/assets/www/index.html
           test -s android/app/src/main/assets/www/app.js
           test -s android/app/src/main/assets/www/app.css
+          test -s android/app/src/main/assets/www/tracksos-approved-hero-owner-20261119.webp
           test -s android/app/src/main/assets/www/tracksos-approved-hero-owner-20261119.webp
 
       - name: Build debug APK without release credentials
@@ -75,96 +75,10 @@ jobs:
             unzip -Z1 "$APK" | grep -Fx "assets/www/$asset"
           done
           grep -F '"applicationId": "ru.traksos.app.preview"' android/app/build/outputs/apk/debug/output-metadata.json
-          if unzip -Z1 "$APK" | grep -Eq '^assets/www/(tracksos-approved-(scenic-hero|scania-r520|truck)|traksos-final-(hero|insurance|parts))\.webp          echo '### Android PR smoke' >> "$GITHUB_STEP_SUMMARY"
-          echo '- Built debug APK, without release signing credentials.' >> "$GITHUB_STEP_SUMMARY"
-          echo '- Bundled 19 Nov owner-approved visual assets; outdated imagery excluded.' >> "$GITHUB_STEP_SUMMARY"
-          echo '- Physical-device notifications and calls remain unverified.' >> "$GITHUB_STEP_SUMMARY"
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: tracksos-pr-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-          retention-days: 7
-          if-no-files-found: error
-
-  # A successful Gradle build does not prove that the app opens on a device.
-  # Launch the exact uploaded APK under Android 10 and Android 15, collect native crash logs.
-  runtime-launch:
-    needs: debug-apk
-    runs-on: ubuntu-latest
-    timeout-minutes: 35
-    strategy:
-      fail-fast: false
-      matrix:
-        api-level: [29, 35]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Diagnose and enable KVM when available
-        run: |
-          if [ -c /dev/kvm ]; then
-            echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-            sudo udevadm control --reload-rules || true
-            sudo udevadm trigger --name-match=kvm || true
-            if [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
-              echo 'KVM acceleration is available'
-            else
-              echo '::warning::KVM exists but is not accessible; using software emulator'
-            fi
-          else
-            echo '::warning::This GitHub runner has no /dev/kvm; using software emulator'
-          fi
-      - uses: actions/download-artifact@v4
-        with:
-          name: tracksos-pr-debug-apk
-          path: apk
-      # SDK repository downloads sometimes terminate with "Premature EOF" before
-      # any emulator is booted. Retry the SDK package install, not the app test.
-      - name: Preinstall Android emulator with bounded network retries
-        shell: bash
-        run: |
-          sdkmanager_bin="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
-          if [ ! -x "$sdkmanager_bin" ]; then
-            sdkmanager_bin="$(find "${ANDROID_HOME}" -type f -name sdkmanager -print -quit)"
-          fi
-          if [ -z "$sdkmanager_bin" ] || [ ! -x "$sdkmanager_bin" ]; then
-            echo "::error::Android SDK command-line tools are unavailable"
-            exit 1
-          fi
-          for attempt in 1 2 3; do
-            if "$sdkmanager_bin" --install emulator --channel=0; then
-              test -x "${ANDROID_HOME}/emulator/emulator" && exit 0
-            fi
-            echo "::warning::Android SDK emulator download failed (attempt ${attempt}/3)"
-            if [ "${attempt}" -lt 3 ]; then sleep $((attempt * 8)); fi
-          done
-          echo "::error::Android emulator SDK installation could not be completed"
-          exit 1
-      - name: Boot emulator, launch APK and fail on native crash
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: ${{ matrix.api-level }}
-          target: google_apis
-          arch: x86_64
-          script: bash scripts/android-pr-runtime-smoke.sh
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: tracksos-emulator-api-${{ matrix.api-level }}
-          path: |
-            runtime-errors.log
-            activity-dump.txt
-            emulator-screen.png
-            emulator-ui.xml
-            runtime-ready.log
-          if-no-files-found: warn
-; then
-            echo 'FAIL: retired visual art bundled in APK' >&2
-            exit 1
-          fi
           sha256sum "$APK"
           echo '### Android PR smoke' >> "$GITHUB_STEP_SUMMARY"
           echo '- Built debug APK, without release signing credentials.' >> "$GITHUB_STEP_SUMMARY"
-          echo '- Bundled 19 Nov owner-approved visual assets; outdated imagery excluded.' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Bundled the owner-approved 19 Nov truck artwork; retired asset names rejected.' >> "$GITHUB_STEP_SUMMARY"
           echo '- Physical-device notifications and calls remain unverified.' >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4
