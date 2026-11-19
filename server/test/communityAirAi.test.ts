@@ -1,4 +1,4 @@
-import {before,after,test} from 'node:test';
+import {before,after,beforeEach,test} from 'node:test';
 import assert from 'node:assert/strict';
 import {setup,ok,type T} from './helpers.ts';
 
@@ -19,6 +19,15 @@ before(async()=>{
  ok(await t.api('POST','/api/community/rooms/'+room+'/join',{},driver.token));
 });
 after(()=>t.close());
+beforeEach(async()=>{
+ // Community human-post spam quotas use DB wall-clock time, unlike the
+ // injected AI clock. Preserve the limiter while preventing unrelated cases
+ // within this multi-scenario integration test from exhausting it.
+ if(t && driver) await t.db.query(
+  "update community_messages set created_at=now()- interval '40 seconds' where sender_id=$1",
+  [driver.id]);
+});
+
 const send=(text:string,token:string)=>t.api('POST','/api/community/rooms/'+room+'/messages',
  {text,clientNonce:crypto.randomUUID()},token);
 const ask=(sourceMessageId:string,token:string,consent:any=true)=>
