@@ -95,6 +95,8 @@ try {
       const rect = (s) => { const el=document.querySelector(s);return el?el.getBoundingClientRect():null; };
       return {
         vw:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+        visualWidth:window.visualViewport?.width,innerWidth:window.innerWidth,
+        dock:rect('.trakbot-dock'),
         panel:rect('.trakbot-dock-panel'),avatar:rect('.trakbot-dialog .trakbot-message--bot .trakbot-mascot'),
         input:rect('.trakbot-dialog .compose input'),send:rect('.trakbot-dialog .compose button[type=submit]'),
         messages:rect('.trakbot-dialog .msgs'),galleryCount:document.querySelectorAll('.trakbot-reactions-gallery').length,
@@ -106,7 +108,12 @@ try {
       width+'×'+height+': missing mini-chat parts');
     assert(geometry.avatar.width<=37, width+'×'+height+': mascot too large: '+geometry.avatar.width);
     assert(geometry.panel.width<=width+wiggle && geometry.panel.left>=-wiggle && geometry.panel.right<=width+wiggle,
-      width+'×'+height+': mini-chat overflows horizontal viewport');
+      width+'×'+height+': mini-chat overflows horizontal viewport '+JSON.stringify({
+        viewport:geometry.vw,innerWidth:geometry.innerWidth,visualWidth:geometry.visualWidth,
+        documentScrollWidth:geometry.scrollWidth,
+        dock:geometry.dock && {left:geometry.dock.left,right:geometry.dock.right,width:geometry.dock.width},
+        panel:geometry.panel && {left:geometry.panel.left,right:geometry.panel.right,width:geometry.panel.width},
+      }));
     assert(geometry.panel.height<height*.87, width+'×'+height+': mini-chat monopolizes the screen');
     assert(geometry.input.bottom<=geometry.panel.bottom+wiggle && geometry.input.top>=geometry.panel.top-wiggle,
       width+'×'+height+': message input outside mini-chat');
