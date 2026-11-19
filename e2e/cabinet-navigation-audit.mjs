@@ -75,6 +75,21 @@ try {
     if(kind==='insurer' && !financeText.includes('Универсальная комиссия'))
       throw Error(kind+': insurer must not inherit the master commission');
 
+
+    // Invite bonuses are calculated with different role-specific caps.
+    // This check also guards the registration welcome gift against stale FAQ text.
+    if(links.some(link=>link.href==='#/invite')) {
+      await page.goto(BASE+'/#/invite',{waitUntil:'domcontentloaded'});
+      await page.getByRole('heading',{name:'Пригласить в TrakSOS'}).waitFor();
+      const invitation=(await page.locator('main').textContent()??'').replace(/\s+/g,' ');
+      if((kind==='owner'||kind==='driver') && !invitation.includes('не более 10% стоимости услуги'))
+        throw Error(kind+': the invitation page shows the wrong client points cap');
+      if(['master','tow','service','master_service'].includes(kind) &&
+         !invitation.includes('не более 50% комиссии TrakSOS'))
+        throw Error(kind+': the invitation page shows the wrong performer points cap');
+      if(!invitation.includes('Приветственные баллы новому клиенту начисляются при регистрации'))
+        throw Error(kind+': welcome reward timing contradicts actual referral logic');
+    }
     const paths=[...new Set(links.map(l=>l.href))];
     if(kind!=='admin' && paths.some(path=>path.startsWith('#/admin/section')))
       throw Error(kind+': sees administrator menu routes');
