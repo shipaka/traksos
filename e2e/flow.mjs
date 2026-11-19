@@ -174,7 +174,7 @@ await lineStatus.click();
 await m.getByRole('button', { name: 'Свободен', exact: false }).click();
 await m.getByText(/Геолокация включена/).waitFor();
 await assertDashboardTheme(m, 'master');
-await checkCabinetMenu(m, ['Профиль исполнителя', 'Финансы и выплаты', 'Проверка и документы', 'История заявок', 'Оферта']);
+await checkCabinetMenu(m, ['Профиль исполнителя', 'Финансы и выплаты', 'Проверка и документы', 'История заявок', 'Оферта'], { shopTab: false });
 await shot(m, '02-master-online');
 
 // Клиент
@@ -409,7 +409,7 @@ const both = await mk();
 await login(both, '+79993334456', 'hybrid');
 await both.waitForURL(new RegExp('work'));
 await both.goto(BASE + '/#/work');
-await checkCabinetMenu(both, ['Моя СТО — стационарный ремонт', 'Профиль исполнителя']);
+await checkCabinetMenu(both, ['Моя СТО — стационарный ремонт', 'Профиль исполнителя'], { shopTab: false });
 await shot(both, '21-hybrid-master');
 await clickCabinetLink(both, 'Моя СТО — стационарный ремонт');
 await both.waitForURL(/#\/base$/);
