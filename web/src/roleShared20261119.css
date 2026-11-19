@@ -643,7 +643,7 @@
 .guest-app .guest-partner-role-master{background-image:url('../public/tracksos-photo-master.webp')!important}
 .guest-app .guest-partner-role-tow{background-image:url('../public/tracksos-photo-tow.webp')!important}
 .guest-app .guest-partner-role-service{background-image:url('../public/tracksos-photo-sto.webp')!important}
-.guest-app .guest-partner-role-insurer{background-image:url('../public/traksos-final-insurance.webp')!important}
+.guest-app .guest-partner-role-insurer{background-image:url('../public/tracksos-partner-insurer-approved.webp')!important}
 .guest-app .guest-partner-roles .guest-partner-role b{font-size:clamp(15px,1.4vw,19px);text-shadow:0 2px 7px #000}
 .guest-app .guest-partner-roles .guest-partner-role small{color:#d7eaf5;font-size:12px;line-height:1.35;text-shadow:0 2px 6px #000}
 .guest-app .guest-partner-roles .guest-partner-role[aria-pressed=true]{
