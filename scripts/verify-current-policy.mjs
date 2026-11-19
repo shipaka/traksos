@@ -55,6 +55,9 @@ check(settings.includes('merged.payments.online = mockCheckoutFixtureEnabled()')
 check(!file('web/src/screens/admin.tsx').includes("['cash', 'Наличные мастеру на месте']") &&
       file('web/src/screens/admin.tsx').includes('Тестовые списания'),
   'admin panel no longer advertises obsolete cash or fake bank activation');
+check(payments.includes("'bank_payout_not_connected'") &&
+      !file('web/src/screens/admin.tsx').includes("'Выплаты отправлены'"),
+  'mock payout cannot record a fictitious paid transfer or run from admin');
 check(!shop.includes("'Магазин открыт'") && shop.includes('Магазин закрыт до приёмки'),
   'admin cannot claim to open an unreleased parts store');
 check(guide.includes("title:'Безналичные выплаты'") &&

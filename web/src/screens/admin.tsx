@@ -249,7 +249,7 @@ function Payments() {
       </div>
       <div className="card">
         <b>Выплаты исполнителям</b>
-        <button className="btn" disabled={busy} onClick={() => run(() => post('/api/admin/payouts/run'), 'Выплаты отправлены')}>Выплатить всё, что ждёт</button>
+        <div className="banner warn">Автоматические банковские выплаты ещё не подключены. Отправка заблокирована: тестовые суммы нельзя отмечать реальными переводами.</div>
       </div>
       <div className="card">
         <b>Отчёт агента</b>

@@ -896,6 +896,11 @@ export class PaymentsService implements PaymentHooks {
   // Выплаты и долги -------------------------------------------------------
 
   async runPayouts(admin: AuthUser | null) {
+    // A mock provider can report artificial 'paid' transfers. Never record
+    // those as actual bank settlements on production or a real sandbox.
+    if (!mockCheckoutFixtureEnabled())
+      throw new HttpError(403, 'bank_payout_not_connected',
+        'Банковские выплаты пока не подключены. Тестовый провайдер не переводит деньги.');
     // Read a shortlist only. An item in this snapshot is NOT authorization to
     // send money: another administrator, scheduler or process may claim it.
     const list = await this.db.query(
