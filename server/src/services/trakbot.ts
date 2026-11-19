@@ -182,9 +182,12 @@ export class TrakBotService {
           destination: { path: '/work/docs', label: 'Проверка документов' } };
       }
     }
-    const deterministic = guide?.text ?? composeTrakBotReply(message, found, context, prior.map((r) => r.body),
+    const previousQuestions = prior.map((r) => r.body);
+    const offlineReply = !guide && codes.length === 0
+      ? offlineSmallTalk(message, previousQuestions) : null;
+    const deterministic = guide?.text ?? composeTrakBotReply(message, found, context, previousQuestions,
       specialist ? 'specialist' : 'driver');
-    const llmEligible = !guide && !nonGenericDtcContext(message, context) &&
+    const llmEligible = !offlineReply && !guide && !nonGenericDtcContext(message, context) &&
       !/тормоз|рулев|подвес|brake|steer/i.test(message) &&
       canUseGroundedAi(allowAiProcessing, found, codes, context) &&
       !SPN_PATTERN.test(message) && !/\bFMI\b/i.test(message);
@@ -197,8 +200,8 @@ export class TrakBotService {
     };
     const generated = llmEligible
       ? await groundedAiAnswer(message, prior.map((r) => r.body), context, found, modelSettings)
-      : !guide && !codes.length && allowAiProcessing
-        ? await neutralAiAnswer(message, prior.map((r) => r.body), modelSettings) : null;
+      : !offlineReply && !guide && !codes.length && allowAiProcessing
+        ? await neutralAiAnswer(message, previousQuestions, modelSettings) : null;
     // Verified field experience is only attached for validated technicians and
     // a matching vehicle. Never use it as a universal repair instruction.
     let caseNotes = '';
