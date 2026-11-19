@@ -229,26 +229,22 @@ function Payments() {
   const [period, setPeriod] = useState(() => new Date().toISOString().slice(0, 7));
   const [report, setReport] = useState<any[] | null>(null);
   if (!settings.data) return <Loading error={settings.error} />;
-  const p = settings.data.payments;
   const fees = settings.data.fees;
-  const toggle = (key: string, value: boolean) => run(() => put('/api/admin/settings/payments', { [key]: value }), 'Сохранено').then((r) => r && settings.reload());
 
   return (
     <div className="stack">
       <div className="card">
         <b>Способы оплаты</b>
-        <span className="note">Агентская схема: TrakSOS принимает деньги за исполнителя и перечисляет ему за вычетом вознаграждения. Безнал и счета включайте после проверки оферты юристом и бухгалтером.</span>
-        {([['cash', 'Наличные мастеру на месте'], ['online', 'СБП и карта в приложении'], ['invoice', 'Счёт для компаний']] as const).map(([k, n]) => (
-          <button key={k} className="opt" aria-pressed={!!p[k]} disabled={busy} onClick={() => toggle(k, !p[k])}>
-            <div className="between"><b>{n}</b><span className={`pill ${p[k] ? 'good' : ''}`}>{p[k] ? 'Включено' : 'Выключено'}</span></div>
-          </button>
-        ))}
+        <div className="banner warn">Реальные банковские платежи ещё не подключены. Тестовые списания и счета не разрешается выдавать за полученные деньги.</div>
+        <div className="sum"><span>СБП / карта</span><b>Не подключено</b></div>
+        <div className="sum"><span>Счета компаний</span><b>Подготовка документов через Точку, без приёма платежей</b></div>
+        <div className="note">Наличные для новых заказов исключены. Подключение оплаты требует отдельного банковского и юридического выпуска, а не переключателя администратора.</div>
       </div>
       <div className="card">
         <b>Комиссии</b>
         <div className="sum"><span>Сбор с клиента</span><span>{fees.clientFeePct}%</span></div>
         <div className="sum"><span>Вознаграждение с исполнителя</span><span>{fees.performerCommissionPct}%</span></div>
-        <div className="sum"><span>Долг по наличным — пауза с</span><span>{rub(fees.cashDebtLimit)}</span></div>
+        <div className="note">Исторические задолженности доступны в учёте, но новые наличные заказы не создаются.</div>
         <FeesEditor fees={fees} onDone={settings.reload} />
       </div>
       <div className="card">

@@ -18,7 +18,7 @@ import { HttpError, bad, notFound, type AuthUser } from '../http/router.ts';
 import { cancelSplit, commissionPct, cappedPct, split, type CancelStage } from '../domain/money.ts';
 import { agentReceipt } from './agentReceipt.ts';
 import { config } from '../config.ts';
-import { legacyCashFixtureEnabled } from '../domain/paymentPolicy.ts';
+import { legacyCashFixtureEnabled, mockCheckoutFixtureEnabled } from '../domain/paymentPolicy.ts';
 import { rub } from '../util.ts';
 import { roundTo } from '../domain/pricing.ts';
 
@@ -38,6 +38,9 @@ export class PaymentsService implements PaymentHooks {
   async assertMethodAllowed(method: string) {
     if (method === 'cash' && !legacyCashFixtureEnabled())
       throw new HttpError(403, 'payment_method_retired', 'Наличные в новых заявках отключены. Безналичная оплата пока подключается.');
+    if ((method === 'online' || method === 'invoice') && !mockCheckoutFixtureEnabled())
+      throw new HttpError(403, 'payment_method_not_connected',
+        'Банковская оплата пока не подключена. Тестовый провайдер не принимает реальные деньги.');
     const p = await this.settings.get('payments');
     const on = method === 'cash' ? p.cash : method === 'online' ? p.online : method === 'invoice' ? p.invoice : false;
     if (!on) {

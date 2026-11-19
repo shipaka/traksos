@@ -1,5 +1,5 @@
 import type { Db } from '../db/index.ts';
-import { legacyCashFixtureEnabled, shopFixtureEnabled } from '../domain/paymentPolicy.ts';
+import { legacyCashFixtureEnabled, shopFixtureEnabled, mockCheckoutFixtureEnabled } from '../domain/paymentPolicy.ts';
 import { defaultSettings, type Settings, type SettingsKey } from '../domain/defaults.ts';
 
 /** Настройки площадки: значения по умолчанию + то, что поменял админ. Кэш на 5 секунд. */
@@ -20,6 +20,10 @@ export class SettingsService {
     merged.legal.brand = 'TrakSOS';
     // Existing database settings cannot reactivate a cancelled cash policy.
     merged.payments.cash = legacyCashFixtureEnabled();
+    // This build has MOCK acquiring only. No bank-confirmed online or invoice
+    // checkout can be enabled by an old DB value or stale admin interface.
+    merged.payments.online = mockCheckoutFixtureEnabled() && !!merged.payments.online;
+    merged.payments.invoice = mockCheckoutFixtureEnabled() && !!merged.payments.invoice;
     // An old admin toggle or restored DB must not reopen the unreleased store.
     merged.shop.enabled = shopFixtureEnabled() && !!merged.shop.enabled;
     this.cache = { at: Date.now(), value: merged };
@@ -35,7 +39,12 @@ export class SettingsService {
     const current = (await this.db.one<{ value: any }>('select value from settings where key=$1', [key]))?.value ?? {};
     const value = { ...current, ...patch };
     if (key === 'legal') (value as { brand?: string }).brand = 'TrakSOS';
-    if (key === 'payments') (value as { cash?: boolean }).cash = legacyCashFixtureEnabled();
+    if (key === 'payments') {
+      const v = value as { cash?: boolean; online?: boolean; invoice?: boolean };
+      v.cash = legacyCashFixtureEnabled();
+      v.online = mockCheckoutFixtureEnabled() && !!v.online;
+      v.invoice = mockCheckoutFixtureEnabled() && !!v.invoice;
+    }
     if (key === 'shop') (value as { enabled?: boolean }).enabled = shopFixtureEnabled() && !!(value as { enabled?: boolean }).enabled;
     await this.db.query(
       `insert into settings(key, value, updated_by) values ($1,$2,$3)

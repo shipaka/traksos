@@ -11,3 +11,10 @@ export function legacyCashFixtureEnabled(env: NodeJS.ProcessEnv = process.env): 
 export function shopFixtureEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return env.NODE_ENV !== 'production' && env.TRAKSOS_SHOP_FIXTURES === '1';
 }
+
+/** Legacy non-production E2E only: no live bank has been connected.
+ * Production and the real sandbox MUST NEVER accept mock money as paid.
+ */
+export function mockCheckoutFixtureEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  return env.NODE_ENV !== 'production' && env.TRAKSOS_PAYMENT_FIXTURES === '1';
+}
