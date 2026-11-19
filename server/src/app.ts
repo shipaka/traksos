@@ -266,6 +266,15 @@ export function createApp(d: Deps) {
     const b = parse(z.object({ phone: z.string(), password: z.string().min(1).max(128), device: z.string().max(200).optional() }), c.body);
     return auth.loginPassword(b.phone, b.password, b.device, c.ip);
   });
+  // Known-password rotation requires the active bearer and never contacts SMS.
+  r.post('/api/auth/change-password', true, (c: AuthedCtx) => {
+    if (config.sandboxInstance) throw new HttpError(403, 'sandbox_auth_disabled', 'Тестовые пользователи не могут менять пароль');
+    const b = parse(z.object({
+      currentPassword: z.string().min(1).max(128),
+      newPassword: z.string().min(1).max(128),
+    }), c.body);
+    return auth.changePassword(c.user, b.currentPassword, b.newPassword, bearer(c.req)!);
+  });
   r.post('/api/auth/verify', false, async (c: Ctx) => {
     if (config.sandboxInstance) throw new HttpError(403, 'sandbox_auth_disabled', 'Тестовые пользователи входят только через администратора');
     const b = parse(z.object({ phone: z.string(), code: z.string().min(4).max(6), role: z.enum(SELF_ROLES).optional(),
@@ -1739,7 +1748,9 @@ export function bearer(req: http.IncomingMessage) {
   const h = req.headers.authorization;
   if (h?.startsWith('Bearer ')) return h.slice(7);
   const u = new URL(req.url ?? '/', 'http://x');
-  return u.searchParams.get('token');
+  // Query-string bearer tokens must never authorize normal HTTP/API requests.
+  // Legacy installed APKs may still use /ws?token= until the WS migration gate.
+  return u.pathname === '/ws' ? u.searchParams.get('token') : null;
 }
 
 function clientIp(req: http.IncomingMessage) {

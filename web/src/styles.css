@@ -556,7 +556,7 @@ select.field { appearance: none; }
 .public-landing-head-actions{display:none;}
 .public-landing .public-brand-hero{display:flex;position:relative;isolation:isolate;min-height:430px;overflow:hidden;border-radius:22px;background:#081e35;color:#fff;box-shadow:0 16px 48px #0007;}
 .public-landing .public-brand-hero::before{content:"";z-index:1;position:absolute;inset:0;background:linear-gradient(90deg,#071626 0%,#081a2b 24%,rgba(7,24,43,.89) 45%,rgba(7,24,43,.05) 90%);}
-.public-landing .public-hero-visual{z-index:0;position:absolute;inset:0 0 0 28%;background:radial-gradient(circle at 72% 25%,#e06c8c44,transparent 56%),url('../public/tracksos-approved-truck.webp') center center/contain no-repeat;pointer-events:none;}
+.public-landing .public-hero-visual{z-index:0;position:absolute;inset:0 0 0 28%;background-color:#071a2d;pointer-events:none;}
 .public-landing .public-hero-copy{position:relative;z-index:2;width:min(68%,710px);padding:49px 22px 38px 45px;display:flex;flex-direction:column;align-items:flex-start;}
 .public-landing .public-eyebrow{color:#dd8caf;font-size:11px;font-weight:800;letter-spacing:2px;}
 .public-landing .public-brand-hero h1{margin:16px 0 17px;font-family:var(--display);font-size:clamp(29px,3.2vw,48px);line-height:1.13;letter-spacing:-1px;color:#fff;}
@@ -1085,7 +1085,7 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
    Keep SCANIA and R520 entirely visible; never substitute a generic cab. */
 .public-landing .public-hero-visual {
   inset: 0 0 0 50%;
-  background: #071a2d url('../public/tracksos-approved-scania-r520.webp') right center / auto 102% no-repeat;
+  background-color: #071a2d;
   opacity: 1;
 }
 .public-landing .public-brand-hero::before {

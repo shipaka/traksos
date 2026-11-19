@@ -86,6 +86,11 @@ expect(!currentCss.includes('.and19-workspace') && !currentCss.includes('.app.ro
   'public 19 Nov CSS does not rewrite signed-in Android or performer workspaces');
 
 const css = await read('web/src/styles.css');
+// The retired pre-19-Nov hero may remain in role-only visuals but must never be
+// a CSS fallback for the owner-approved public landing. Prevent old art regressing
+// into a future deploy even when the final CSS file changes its order.
+expect(!/\.public-landing \.public-hero-visual\s*\{[^}]*tracksos-approved-(?:truck|scania-r520)\.webp/.test(css),
+  'obsolete truck art cannot reappear as the public home background');
 const shell = await read('web/src/main.tsx');
 const demo = await read('web/src/screens/adminTestCenter.tsx');
 const serviceDemo = await read('web/src/demo/servicePreviewApi.ts');
