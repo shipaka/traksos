@@ -65,3 +65,15 @@ test('Technical codes are hidden from ordinary clients and accessible to staff',
 test('TrakBot rejects oversized inputs', async () => {
   assert.equal((await t.api('POST','/api/trakbot/answer',{message:'x'.repeat(701)},client.token)).status,400);
 });
+
+
+test('TrakBot masks phone and VIN before persisting private chat text', async () => {
+  ok(await t.api('POST','/api/trakbot/answer',{
+    message: 'Ошибка P0087, звоните +7 (911) 123-45-67, VIN WAUZZZ8V6JA123456',
+  }, client.token));
+  const result = ok(await t.api('GET','/api/trakbot/messages',undefined,client.token));
+  const recent = result.messages.slice(-2);
+  assert.match(recent[0].body, /\[номер скрыт\]/);
+  assert.match(recent[0].body, /\[VIN скрыт\]/);
+  assert.doesNotMatch(recent[0].body, /911|WAUZZZ8V6JA123456/);
+});
