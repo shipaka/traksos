@@ -10,6 +10,9 @@ alter table service_bookings add column if not exists received_amount integer no
   check (received_amount >= 0);
 alter table service_bookings add column if not exists refunded_amount integer not null default 0
   check (refunded_amount >= 0 and refunded_amount <= received_amount);
+alter table service_bookings add column if not exists payout_reference text;
+create unique index if not exists service_bookings_payout_external_reference_unique
+  on service_bookings(payout_reference) where payout_reference is not null;
 
 create table if not exists service_payment_events (
   id bigserial primary key,
