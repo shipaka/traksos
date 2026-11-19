@@ -419,3 +419,56 @@
 @media(max-width:1250px){
   .guest-app .guest-site-nav>a.guest-nav-techbase{display:none!important}
 }
+
+/* Visual acceptance corrections from real 1602x981 Chromium screenshot.
+   Never allow the retired Scania R520 pseudo-layer behind the approved truck.
+   Secondary TechBase remains accessible through "Возможности" and its own
+   lower-page link; it is not a sixth top-level nav item in the 19 Nov canon. */
+.guest-app .public-landing .public-hero-visual.public-hero-slide-approved::before,
+.guest-app .public-landing .public-hero-visual.public-hero-slide-approved::after{
+  content:none!important;display:none!important;
+  background:none!important;background-image:none!important;
+}
+@media(min-width:1251px){
+  .guest-app .top .guest-site-nav>a.guest-nav-techbase{display:none!important}
+}
+/* Extra services are real functionality BELOW the approved first fold.
+   Keep links accessible without allowing unstyled text over the lower panel. */
+@media(min-width:900px){
+  .guest-app .public-landing .public-track-extras{
+    box-sizing:border-box!important;width:100%!important;
+    display:grid!important;gap:16px!important;
+    margin:100px 0 0!important;padding:12px 32px 32px!important;
+  }
+  .guest-app .public-landing .public-track-insurance{
+    box-sizing:border-box!important;position:relative!important;
+    display:flex!important;align-items:center!important;gap:15px!important;
+    width:100%!important;min-height:90px!important;margin:0!important;
+    padding:14px 18px!important;border:1px solid #245574!important;
+    border-radius:16px!important;background:#0b2940!important;
+    color:#e9f8ff!important;text-align:left!important;
+  }
+  .guest-app .public-landing .public-track-insurance>span:nth-child(2){
+    flex:1 1 auto!important;min-width:0!important;
+  }
+  .guest-app .public-landing .public-track-insurance b,
+  .guest-app .public-landing .public-track-insurance small{
+    display:block!important;color:#e9f8ff!important;
+  }
+  .guest-app .public-landing .public-track-insurance strong{color:#66e5ff!important}
+  .guest-app .public-landing .public-track-extras-grid{
+    display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:14px!important;
+  }
+  .guest-app .public-landing .public-track-extra{
+    display:flex!important;align-items:center!important;gap:10px!important;
+    min-width:0!important;min-height:70px!important;
+    padding:14px!important;border:1px solid #245574!important;
+    border-radius:14px!important;background:#0b2940!important;
+    color:#e9f8ff!important;text-decoration:none!important;
+  }
+  .guest-app .public-landing .public-track-extra b,
+  .guest-app .public-landing .public-track-extra small{
+    color:#e9f8ff!important;min-width:0!important;
+  }
+}
