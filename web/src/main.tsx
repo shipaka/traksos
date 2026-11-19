@@ -6,7 +6,6 @@ import './trackVisual.css';
 import './trackPolish.css';
 import './trackSearch.css';
 import './trackReference.css';
-import './trackPhotos.css';
 import './trackMatch.css';
 import './trackScenic.css';
 import './clientDashboardLatest.css';

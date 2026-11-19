@@ -72,8 +72,10 @@ try {
     if (await cards.count() !== 4) throw Error(width + 'px missing four help cards');
     for (const [i, key] of ['master', 'tow', 'sto', 'consult'].entries()) {
       const photo = await cards.nth(i).evaluate(e => getComputedStyle(e).backgroundImage);
-      if (!photo.includes('tracksos-photo-' + key))
-        throw Error(width + 'px service photo is missing for ' + key);
+      if (/tracksos-photo-|tracksos-partner-(?:master|tow|sto|insurer)-approved/.test(photo))
+        throw Error(width + 'px retired pre-17 Nov image is still applied to ' + key);
+      if (!photo || photo === 'none')
+        throw Error(width + 'px service card lost its approved background: ' + key);
     }
     if (check.sourceWidth < 1200)
       console.warn('ASSET QUALITY BLOCKER: desktop landscape truck photo is only ' +
@@ -113,14 +115,14 @@ try {
       throw Error(width + 'px public Scania photograph is missing or has the wrong layout: ' + JSON.stringify(info));
     await p.getByRole('button',{name:'Следующее фото'}).click();
     const rescuePhoto=await art.evaluate(el=>getComputedStyle(el).backgroundImage);
-    if(!rescuePhoto.includes('tracksos-hero-rescue-hq') ||
+    if(!/tracksos-approved-hero-owner-20261119(?:-[A-Za-z0-9]+)?\\.webp/.test(rescuePhoto) ||
        !await p.getByRole('heading',{name:/Эвакуация грузовиков/}).count())
-      throw Error(width+'px: tow scene must change both photograph and headline');
+      throw Error(width+'px: tow slide must keep the approved photo and update its headline');
     await p.getByRole('button',{name:'Следующее фото'}).click();
     const stoPhoto=await art.evaluate(el=>getComputedStyle(el).backgroundImage);
-    if(!stoPhoto.includes('tracksos-hero-service-hq') ||
+    if(!/tracksos-approved-hero-owner-20261119(?:-[A-Za-z0-9]+)?\\.webp/.test(stoPhoto) ||
        !await p.getByRole('heading',{name:/Ремонт и запись в СТО/}).count())
-      throw Error(width+'px: STO scene must change both photograph and headline');
+      throw Error(width+'px: STO slide must keep the approved photo and update its headline');
     await p.getByRole('button',{name:/Показать фото 1:/}).click();
     await p.screenshot({path:'e2e/shots/approved-truck/public-' + width + '.png',fullPage:true});
     await guest.close();

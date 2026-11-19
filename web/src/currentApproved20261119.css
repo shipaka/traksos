@@ -100,16 +100,17 @@
   .guest-app .public-landing .public-service-tile{transition:none!important;}
 }
 
+/* Slide actions remain functional; all photographs use the post-17 Nov approved source. */
 /* Preserve actual three-slide interaction without resurrecting a static
    14 Nov image. Hero media changes on the selected server-free slide. */
 .guest-app .public-landing .public-hero-visual.public-hero-slide-approved{
   background-image:url('../public/tracksos-approved-hero-owner-20261119.webp')!important;
 }
 .guest-app .public-landing .public-hero-visual.public-hero-slide-rescue{
-  background-image:url('../public/tracksos-hero-rescue-hq.webp')!important;
+  background-image:url('../public/tracksos-approved-hero-owner-20261119.webp')!important;
 }
 .guest-app .public-landing .public-hero-visual.public-hero-slide-service{
-  background-image:url('../public/tracksos-hero-service-hq.webp')!important;
+  background-image:url('../public/tracksos-approved-hero-owner-20261119.webp')!important;
 }
 
 /* Desktop reproduction corrections based on real Chromium screenshots

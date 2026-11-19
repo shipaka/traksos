@@ -698,7 +698,7 @@ select.field { appearance: none; }
    No AI redraws or fictitious map/network fallbacks. */
 .public-landing .public-map-static{
  position:absolute;inset:0;
- background:#071b32 url('../public/tracksos-approved-map.webp') center/cover no-repeat;
+ background:#071b32 linear-gradient(120deg,#113a56,#072139) center/cover no-repeat;
 }
 .public-landing .public-hero-visual{
  background-position:center right;

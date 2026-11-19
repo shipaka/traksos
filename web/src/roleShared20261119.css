@@ -640,10 +640,10 @@
   content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
   background:linear-gradient(180deg,rgba(4,16,29,.08),rgba(4,16,29,.70) 48%,#06172cf5);
 }
-.guest-app .guest-partner-role-master{background-image:url('../public/tracksos-photo-master.webp')!important}
-.guest-app .guest-partner-role-tow{background-image:url('../public/tracksos-photo-tow.webp')!important}
-.guest-app .guest-partner-role-service{background-image:url('../public/tracksos-photo-sto.webp')!important}
-.guest-app .guest-partner-role-insurer{background-image:url('../public/tracksos-partner-insurer-approved.webp')!important}
+.guest-app .guest-partner-role-master{background-image:linear-gradient(145deg,#0b3754,#071b31)!important}
+.guest-app .guest-partner-role-tow{background-image:linear-gradient(145deg,#0b3754,#071b31)!important}
+.guest-app .guest-partner-role-service{background-image:linear-gradient(145deg,#0b3754,#071b31)!important}
+.guest-app .guest-partner-role-insurer{background-image:linear-gradient(145deg,#0b3754,#071b31)!important}
 .guest-app .guest-partner-roles .guest-partner-role b{font-size:clamp(15px,1.4vw,19px);text-shadow:0 2px 7px #000}
 .guest-app .guest-partner-roles .guest-partner-role small{color:#d7eaf5;font-size:12px;line-height:1.35;text-shadow:0 2px 6px #000}
 .guest-app .guest-partner-roles .guest-partner-role[aria-pressed=true]{
@@ -766,13 +766,13 @@
 }
 
 
-/* #82: user-approved numbered partner artwork; no third-party image host.
+/* Pre-17 Nov partner photography retired; only current palette remains until approved replacement assets.
    The same four source images render consistently in desktop + mobile webview. */
 .guest-app .partner-art-intro{--partner-art:url('../public/tracksos-approved-hero-owner-20261119.webp')}
-.guest-app .partner-art-tow{--partner-art:url('../public/tracksos-partner-tow-approved.webp')}
-.guest-app .partner-art-master{--partner-art:url('../public/tracksos-partner-master-approved.webp')}
-.guest-app .partner-art-service{--partner-art:url('../public/tracksos-partner-sto-approved.webp')}
-.guest-app .partner-art-insurer{--partner-art:url('../public/tracksos-partner-insurer-approved.webp')}
+.guest-app .partner-art-tow{--partner-art:linear-gradient(145deg,#0b3754,#071b31)}
+.guest-app .partner-art-master{--partner-art:linear-gradient(145deg,#0b3754,#071b31)}
+.guest-app .partner-art-service{--partner-art:linear-gradient(145deg,#0b3754,#071b31)}
+.guest-app .partner-art-insurer{--partner-art:linear-gradient(145deg,#0b3754,#071b31)}
 .guest-app .guest-partner-mobile-preview{display:none}
 @media(min-width:900px){
   .guest-app .auth-desktop-layout{
