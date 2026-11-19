@@ -54,6 +54,7 @@ import { registerShopMerchandisingRoutes } from './services/shopMerchandising.ts
 import { ShopCatalogService } from './services/shopCatalog.ts';
 import { ModerationService } from './services/moderation.ts';
 import { registerCommunityRoutes } from './services/community.ts';
+import {registerCommunityAirAiRoutes,createLiveAirAiResponder,type AirAiResponder} from './services/communityAirAi.ts';
 import { registerCommunityDirectRoutes } from './services/communityDirect.ts';
 import { CommunityNotifications,registerCommunityNotificationRoutes } from './services/communityNotifications.ts';
 import { registerCommunityRoadRoutes } from './services/communityRoad.ts';
@@ -83,6 +84,8 @@ export interface Deps {
   push: PushProvider;
   payments: PaymentProvider;
   now?: () => Date;
+  /** CI injection uses a deterministic test responder; no external network. */
+  airAiResponder?: AirAiResponder | null;
 }
 
 const money = z.number().int().nonnegative();
@@ -150,6 +153,7 @@ export function createApp(d: Deps) {
   registerKnowledgeApplicabilityRoutes(r,d.db);
   // Isolated community rooms, nickname moderation and professional knowledge ACL.
   registerCommunityRoutes(r, d.db, notifier);
+  registerCommunityAirAiRoutes(r,d.db,notifier,d.airAiResponder===undefined?createLiveAirAiResponder():d.airAiResponder,now);
   registerCommunityDirectRoutes(r, d.db, notifier, communityNotifications);
   registerCommunityNotificationRoutes(r,d.db,communityNotifications);
   registerCommunityRoadRoutes(r, d.db, notifier);

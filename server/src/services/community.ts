@@ -224,9 +224,10 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
       "select coalesce(max(id),0)::text as cursor from community_room_moderation_events where room_id=$1",[room.id]);
     const rows = await db.query<{
       id:string; body:string; created_at:Date; moderation_state:string;
-      sender_id:string; nickname:string|null; public_city:string|null;
+      sender_id:string|null; nickname:string|null; public_city:string|null; is_bot:boolean;
     }>(`select m.id::text as id, m.body,m.created_at,m.moderation_state,m.sender_id,
-       coalesce(p.nickname,'Участник') as nickname,
+       (m.bot_type='traksbot') as is_bot,
+       case when m.bot_type='traksbot' then 'ИИ · ТраксБот' else coalesce(p.nickname,'Участник') end as nickname,
        case when p.share_city then p.city_label else null end as public_city
        from community_messages m left join community_profiles p on p.user_id=m.sender_id
        where m.room_id=$1 and ($6::boolean or m.id>$2) and
@@ -249,10 +250,11 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
     const events=await db.query<{
       revision:string;id:string;moderation_state:string;previous_state:string;
       current_state:string;sender_id:string;body:string;created_at:Date;
-      nickname:string;public_city:string|null;
+      nickname:string;public_city:string|null;is_bot:boolean;
     }>(`select e.id::text as revision,e.message_id::text as id,e.moderation_state,
        e.previous_state,m.moderation_state as current_state,m.sender_id,m.body,
-       m.created_at,coalesce(p.nickname,'Участник') as nickname,
+       m.created_at,case when m.bot_type='traksbot' then 'ИИ · ТраксБот' else coalesce(p.nickname,'Участник') end as nickname,
+       (m.bot_type='traksbot') as is_bot,
        case when p.share_city then p.city_label else null end as public_city
        from community_room_moderation_events e
        join community_messages m on m.id=e.message_id
@@ -265,7 +267,7 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
         // Do not resurrect text that has subsequently been hidden.
         if(e.current_state!=='published')return [];
         return [{revision:e.revision,id:e.id,moderation_state:'published',
-          message:{id:e.id,body:e.body,nickname:e.nickname,public_city:e.public_city,
+          message:{id:e.id,body:e.body,nickname:e.nickname,is_bot:e.is_bot,public_city:e.public_city,
             isMine:e.sender_id===c.user.id,created_at:e.created_at,moderation_state:'published'}}];
       }
       // A pending -> hidden message was never public: do not leak its existence.

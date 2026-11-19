@@ -14,7 +14,7 @@ const { MockProvider } = await import('../src/payments/provider.ts');
 
 export const TEST_DB = process.env.TEST_DATABASE_URL ?? 'postgres://postgres@127.0.0.1:5432/traksos_test';
 
-export async function setup() {
+export async function setup(options?:{airAiResponder?:import('../src/services/communityAirAi.ts').AirAiResponder|null}) {
   const db = await createDb(TEST_DB);
   await db.exec('drop schema public cascade; create schema public;');
   await migrate(db);
@@ -23,7 +23,7 @@ export async function setup() {
   const sms = new LogSms();
   const push = new LogPush();
   const payments = new MockProvider('http://test');
-  const app = createApp({ db, sms, push, payments, now: clock.now });
+  const app = createApp({ db, sms, push, payments, now: clock.now, airAiResponder:options?.airAiResponder });
   app.hub.keepLog = true;
   // В тестах исполнителей одобряем без фото; проверка с фото — в documents.test.ts
   await app.settings.set('verification', { requireDocs: false }, null);
