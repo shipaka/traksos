@@ -7,10 +7,21 @@ import { config } from '../config.ts';
 import { suggestTrakBotAirReply } from './trakbotAirPolicy.ts';
 
 type AirRow = { id:string; author_label:string; body:string; origin:string; created_at:Date };
-const permitted = new Set(['client','driver','master','tow','service','admin','moderator']);
 const isStaff = (u:AuthUser) => u.roles.includes('admin') || u.roles.includes('moderator');
-function allow(u:AuthUser) {
-  if(!u.roles.some(role=>permitted.has(role))) throw forbidden('Эфир доступен водителям и сотрудникам');
+const excludedFromChat = new Set(['master','tow','service','insurer','inspection_operator','admin','moderator']);
+/** Only ordinary truck owners and fleet drivers can contribute to the community. */
+export function canPostInDriverAir(u:Pick<AuthUser,'roles'>):boolean {
+  return u.roles.some(r=>r==='client'||r==='driver') &&
+    !u.roles.some(r=>excludedFromChat.has(r));
+}
+export function canReadDriverAir(u:Pick<AuthUser,'roles'>):boolean {
+  return canPostInDriverAir(u) || u.roles.includes('admin') || u.roles.includes('moderator');
+}
+function allowRead(u:AuthUser) {
+  if(!canReadDriverAir(u)) throw forbidden('Эфир только для водителей и владельцев автопарков');
+}
+function allowWrite(u:AuthUser) {
+  if(!canPostInDriverAir(u)) throw forbidden('Сообщения в эфир пишут только водители и владельцы автопарков');
 }
 function recipient(text:string):'admin'|'moderator'|null {
   if(/@(?:admin|админ(?:истратор)?)(?![a-zа-я])|позов.{0,15}админ|вызови.{0,15}админ/i.test(text)) return 'admin';
@@ -25,13 +36,8 @@ function filterMessage(raw:string):string {
   return maskPhones(text).text.replace(/\b[A-HJ-NPR-Z0-9]{17}\b/gi,'[VIN скрыт]');
 }
 function label(user:AuthUser):string {
-  if(user.roles.includes('admin')) return 'Администратор';
-  if(user.roles.includes('moderator')) return 'Модератор';
   const code=createHmac('sha256',config.secret).update(user.id).digest('hex').slice(0,5).toUpperCase();
-  if(user.roles.includes('service')) return 'СТО '+code;
-  if(user.roles.includes('tow')) return 'Эвакуатор '+code;
-  if(user.roles.includes('master')) return 'Мастер '+code;
-  return 'Водитель '+code;
+  return (user.roles.includes('driver') ? 'Водитель ' : 'Владелец ') + code;
 }
 function expose(rows:AirRow[]) {
   return rows.map(x=>({id:x.id,author:x.author_label,body:x.body,isBot:x.origin==='bot',createdAt:x.created_at}));
@@ -41,7 +47,7 @@ export class DriverAirService {
   constructor(private db:Db,private now:()=>Date) {}
 
   async list(user:AuthUser,after=0) {
-    allow(user);
+    allowRead(user);
     const cursor=Number.isSafeInteger(after)&&after>0?after:0;
     const rows=cursor
       ? await this.db.query<AirRow>(
@@ -50,11 +56,11 @@ export class DriverAirService {
           'select id::text,author_label,body,origin,created_at from driver_air_messages where hidden_at is null order by id desc limit 80')).reverse();
     const state=await this.db.one<{bot_enabled:boolean}>('select bot_enabled from driver_air_state where id=true');
     return {messages:expose(rows),botEnabled:!!state?.bot_enabled,canModerate:isStaff(user),
-      canConfigure:user.roles.includes('admin'),publicForDrivers:true};
+      canConfigure:user.roles.includes('admin'),canPost:canPostInDriverAir(user),publicForDrivers:true};
   }
 
   async post(user:AuthUser,raw:string) {
-    allow(user);
+    allowWrite(user);
     const text=filterMessage(raw);
     const call=recipient(text);
     const now=this.now();
