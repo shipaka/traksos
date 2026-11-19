@@ -279,6 +279,21 @@
     border-radius:19px!important;border:1px solid #0795c5!important;background:linear-gradient(145deg,#063758,#061a33)!important;
   }
   .guest-app .public-landing .public-app-card .public-app-phone{position:absolute!important;top:11px!important;bottom:11px!important;right:8px!important;width:93px!important;height:auto!important}
+  /* The compact promo is a two-zone layout. Long copy must not retain the
+     obsolete grid-column:3 minimum width and run outside the viewport. */
+  .guest-app .public-landing .public-app-card>:not(.public-app-phone){
+    box-sizing:border-box!important;min-width:0!important;max-width:100%!important;
+    overflow-wrap:anywhere!important;
+  }
+  .guest-app .public-landing .public-app-card>p,
+  .guest-app .public-landing .public-app-card>small{
+    width:100%!important;margin:0!important;white-space:normal!important;
+  }
+  .guest-app .public-landing .public-app-card>.public-rustore-soon{
+    max-width:100%!important;min-width:0!important;padding:6px 8px!important;
+    overflow-wrap:anywhere!important;white-space:normal!important;
+    text-align:center!important;
+  }
   .guest-app .public-landing .public-app-card h2{font-size:clamp(15px,1.21vw,21px)!important;line-height:1.18!important}
   .guest-app .public-landing .public-app-card h2 em{color:#21d5fa!important}
   .guest-app .public-landing .public-why-strip{
