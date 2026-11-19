@@ -34,7 +34,7 @@ export function PricingLaboratory() {
       <div className="grid2">
         <label className="stack">Цена работ, ₽
           <input className="field" type="number" min={100} max={10_000_000} step={100} value={amount}
-            onChange={e=>setAmount(Math.max(0,Math.min(10_000_000,Number(e.target.value)||0))}/></label>
+            onChange={e=>setAmount(Math.max(0,Math.min(10_000_000,Number(e.target.value)||0)))}/></label>
         <label className="stack">Способ оплаты
           <select className="field" value={rail} onChange={e=>{const v=e.target.value as PaymentRail;setRail(v);setProcessingRate(v==='card'?2.8:v==='sbp'?0.7:0);}}>
             {rails.map(r=><option key={r.value} value={r.value}>{r.label}</option>)}</select></label>
