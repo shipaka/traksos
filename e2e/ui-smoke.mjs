@@ -17,11 +17,17 @@ try {
     // TrakBot is opt-in and does not interrupt the public landing.
     const botLauncher = page.getByRole('button', { name: 'Открыть TrakBot' });
     assert(await botLauncher.isVisible(), width + 'px: TrakBot entry not visible');
+    assert(await botLauncher.locator('.trakbot-mascot-truck').count() === 1,
+      width + 'px: approved truck technician missing from launcher');
     assert(await page.locator('.trakbot-dock-panel').count() === 0,
       width + 'px: TrakBot opened automatically');
     await botLauncher.click();
     const botDialog = page.getByRole('dialog', { name: 'TrakBot — личный помощник' });
     await botDialog.waitFor();
+    assert(await botDialog.locator('.trakbot-dock-guest-mascot .trakbot-mascot-truck').count() === 1,
+      width + 'px: guest must see the same technician character');
+    assert(await botDialog.getByRole('link', { name: /Зарегистрироваться и узнать обо мне/ }).count() === 1,
+      width + 'px: mascot registration action is missing');
     assert(await botDialog.getByRole('link', { name: /Войти и поговорить с TrakBot/ }).count() === 1,
       width + 'px: guest entry must not expose private chat');
     await page.locator('.trakbot-dock-close').click();
