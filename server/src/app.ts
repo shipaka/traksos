@@ -1009,6 +1009,17 @@ export function createApp(d: Deps) {
   r.post('/api/orders/:id/recommend-service', performerRoles, (c: AuthedCtx) => onsite.recommend(c.user, c.params.id, parse(z.object({ centerId: z.string().uuid().nullable() }), c.body).centerId));
   r.get('/api/admin/services', staff, () => centers.pending());
   r.get('/api/admin/service-payouts', ['admin'], () => centers.payoutsDue());
+  // This is manual bank/receipt evidence, not a gateway transaction.
+  r.get('/api/admin/service-finance', ['admin'], (c: AuthedCtx) => centers.financialRegister(c.user));
+  r.get('/api/admin/bookings/:id/payment-events', ['admin'], (c: AuthedCtx) =>
+    centers.paymentEvents(c.user,c.params.id));
+  r.post('/api/admin/bookings/:id/payment-events', ['admin'], (c: AuthedCtx) =>
+    centers.recordTransfer(c.user,c.params.id,parse(z.object({
+      kind:z.enum(['receipt','refund']),
+      amount:money.positive(),
+      method:z.enum(['invoice','online','cash','other']),
+      reference:z.string().trim().min(4).max(200),
+    }).strict(),c.body)));
   r.post('/api/admin/bookings/:id/paid', ['admin'], (c: AuthedCtx) => centers.markPaidOut(c.user, c.params.id));
   r.get('/api/base/money', ['service'], (c: AuthedCtx) => centers.money(c.user));
   r.get('/api/admin/summary', ['admin'], () => stats.summary());
