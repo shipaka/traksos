@@ -324,7 +324,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   // На телефоне оставляем только рабочие действия. Все прежние маршруты
   // сохраняются через меню; компьютерная боковая навигация остаётся полной.
   const tabs: [string, string, string][] = !me ? [] : mode === 'performer'
-    ? [['/work', '⚡', 'Линия'], ['/work/jobs', '☰', 'Заявки'], ['/shop', '🛍', 'Магазин']]
+    ? [['/work', '⚡', 'Линия'], ['/work/jobs', '☰', 'Заявки'], ['/notifications', '◉', 'Сообщения']]
     : mode === 'service'
       ? [['/base', '▤', 'Рембаза'], ['/support', '?', 'Связь'], ['/shop', '🛍', 'Магазин']]
     : mode === 'inspection'
@@ -346,7 +346,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
        ['/work/me/money', 'Финансы и выплаты'], ['/work/me/tax', 'Налоговый статус'],
        ['/work/me/level', 'Рейтинг и уровень'], ['/work/docs', 'Проверка и документы'],
        ['/reviews', 'Отзывы'], ['/invite', 'Пригласить партнёра'],
-       ['/work/jobs', 'История заявок'], ['/profile', 'Аккаунт']]
+       ['/work/jobs', 'История заявок'], ['/shop', 'Магазин запчастей'], ['/profile', 'Аккаунт']]
     : mode === 'service'
       ? [...(me?.roles.some(r => r === 'master' || r === 'tow') ? [['/work', 'Выездной мастер — заявки']] as [string, string][] : []),
          ['/base', 'Заявки и история ремонтов'], ['/base/me', 'Карточка СТО'],
@@ -488,7 +488,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               {(mode === 'client'
                 ? [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь в дороге'], ['/shop', '⚙', 'Запчасти'], ['/garage', '▣', 'Мой транспорт'], ['/insurance/request/new', '◇', 'Страхование'], ['/services', '▤', 'Грузовые СТО']]
                 : mode === 'performer'
-                  ? [...tabs, ['/work/me', '◉', 'Профиль'], ...(me.roles.includes('service') ? [['/base', '▤', 'Моя СТО']] : [])]
+                  ? []
                   : mode === 'service'
                     ? [...tabs, ['/base/money', '₽', 'Финансы'], ['/base/me', '⚙', 'Карточка'], ...(me.roles.some(r => r === 'master' || r === 'tow') ? [['/work', '⚡', 'Выездной мастер']] : []), ['/profile', '◉', 'Аккаунт']]
                     : mode === 'insurer' || mode === 'inspection'
@@ -499,6 +499,31 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                   <span aria-hidden="true">{ic}</span><span>{name}</span>
                 </a>
               ))}
+              {mode === 'performer' && <>
+                {([
+                  ['Рабочее место', [
+                    ['/work','⌂','Рабочий стол'], ['/work/jobs','☷','Мои заявки и история'],
+                    ['/work/me/schedule','▦','Календарь и график'], ['/work/filter','⚙','Настройки заявок']]],
+                  ['Финансы', [
+                    ['/work/me/money','₽','Начисления и выплаты']]],
+                  ['Сообщения и помощь', [
+                    ['/notifications','◉','Уведомления'], ['/support','?','Поддержка'],
+                    ['/work/docs','◇','Документы и проверки'], ['/help','ⓘ','Подсказки']]],
+                  ['Профиль и настройки', [
+                    ['/work/me','▣','Мой профиль'], ['/work/me/phone','⚿','Вход и безопасность'],
+                    ['/work/me/cars','⚙','Автомобили'], ['/work/me/tax','▤','Налоговый статус'],
+                    ['/offer/performer','☷','Оферта'], ['/shop','▦','Запчасти']]]]
+                  ] as [string,[string,string,string][]][]).map(([group, links])=><div key={group}>
+                  <div className="desktop-sidebar-title desktop-nav-section">{group}</div>
+                  {links.map(([href,ic,name])=><a key={href} href={sandboxHref(href)}
+                    className={`desktop-nav-link ${here===href?'active':''}`}>
+                    <span aria-hidden="true">{ic}</span><span>{name}</span>
+                  </a>)}
+                </div>)}
+                {me.roles.includes('service') && <a className="desktop-nav-link" href="#/base">
+                  <span aria-hidden="true">▤</span><span>Моя СТО</span>
+                </a>}
+              </>}
               {mode === 'client' && <>
                 <div className="desktop-sidebar-title desktop-nav-section">Мой кабинет</div>
                 {([...(me && !me.owner_id && !me.roles.includes('driver') ? [['/fleet','▣','Мой парк']] as [string,string,string][] : []),['/support','?','Поддержка'],['/profile','◉','Профиль']] as [string,string,string][]).map(([href, ic, name]) => (
