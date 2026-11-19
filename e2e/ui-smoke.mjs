@@ -63,6 +63,22 @@ try {
       return {
         scrollWidth: document.documentElement.scrollWidth,
         clientWidth: document.documentElement.clientWidth,
+        overflowSources: Array.from(document.querySelectorAll('body *')).flatMap((el) => {
+          const box = el.getBoundingClientRect();
+          const css = getComputedStyle(el);
+          if (css.display === 'none' || css.visibility === 'hidden' ||
+              box.width === 0 || box.height === 0 ||
+              (box.right <= document.documentElement.clientWidth + 2 && box.left >= -2)) return [];
+          return [{
+            tag: el.tagName.toLowerCase(),
+            selector: (el.id ? '#' + el.id : '') +
+              (typeof el.className === 'string' ? '.' + el.className.trim().split(/\\s+/).join('.') : ''),
+            left: Math.round(box.left), right: Math.round(box.right),
+            width: Math.round(box.width), scrollWidth: el.scrollWidth,
+            position: css.position, whiteSpace: css.whiteSpace
+          }];
+        }).sort((a, b) => (b.right - document.documentElement.clientWidth) -
+                           (a.right - document.documentElement.clientWidth)).slice(0, 15),
         heroCss, mapCss,
         loginCount: header?.querySelectorAll('a[href="#/login"]').length ?? 0,
         registerCount: header?.querySelectorAll('a[href="#/register"]').length ?? 0,
@@ -70,8 +86,17 @@ try {
         tileIcons: document.querySelectorAll('.public-service-tile .public-service-icon svg').length,
       };
     });
+    if (data.scrollWidth > data.clientWidth + 2) {
+      mkdirSync('e2e/shots/overflow-proof', { recursive: true });
+      await page.screenshot({
+        path: `e2e/shots/overflow-proof/guest-${width}.png`,
+        fullPage: true, animations: 'disabled'
+      });
+      console.error('Layout overflow offenders:', JSON.stringify(data.overflowSources, null, 2));
+    }
     assert(data.scrollWidth <= data.clientWidth + 2,
-      width + 'px: horizontal overflow ' + data.scrollWidth + '/' + data.clientWidth);
+      width + 'px: horizontal overflow ' + data.scrollWidth + '/' + data.clientWidth +
+      ' offenders=' + JSON.stringify(data.overflowSources.slice(0, 5)));
     assert(data.loginCount === 1 && data.registerCount === 1,
       width + 'px: duplicated/missing login or registration buttons');
     assert(data.serviceTiles === 6, width + 'px: unexpected public services count');
