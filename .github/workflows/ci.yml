@@ -104,6 +104,14 @@ jobs:
           node e2e/approved-truck-hero.mjs
           node e2e/visual-text-geometry.mjs
           node e2e/preview-login.mjs
+      - name: Реальный вид TrakBot — ПК и телефон
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trakbot-real-chromium
+          path: e2e/shots/trakbot-proof/*.png
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Снимки экранов каждой проверяемой версии
         if: always()
         uses: actions/upload-artifact@v4
