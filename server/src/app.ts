@@ -290,6 +290,20 @@ export function createApp(d: Deps) {
       `select id::int as id, kind, body, data, created_at, read_at, title
          from notifications where user_id=$1 order by id desc limit 100`, [c.user.id]),
   }));
+  r.post('/api/me/notifications/:id/read', true, async (c: AuthedCtx) => {
+    const id=Number(c.params.id);
+    if (!Number.isSafeInteger(id) || id<=0) throw bad('bad_notification_id','Неверный номер уведомления');
+    // User identity comes only from authenticated context, never from the body.
+    const read=await d.db.one<{id:number;read_at:string}>(
+      'update notifications set read_at=now() where id=$1 and user_id=$2 and read_at is null returning id,read_at',
+      [id,c.user.id]);
+    if (read) return {ok:true,id,readAt:read.read_at};
+    // Same-user retry is idempotent; a foreign or missing notification is invisible.
+    const previous=await d.db.one<{read_at:string|null}>(
+      'select read_at from notifications where id=$1 and user_id=$2',[id,c.user.id]);
+    if (!previous) throw notFound('Уведомление не найдено');
+    return {ok:true,id,readAt:previous.read_at};
+  });
   r.post('/api/me/notifications/read', true, async (c: AuthedCtx) => {
     await d.db.query('update notifications set read_at=now() where user_id=$1 and read_at is null', [c.user.id]);
     return { ok: true };
