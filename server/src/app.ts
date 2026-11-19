@@ -91,7 +91,7 @@ export function createApp(d: Deps) {
   const technicalCases = new TechnicalCasesService(d.db);
   const reviews = new ReviewsService(d.db, settings, orders);
   const onsite = new OnsiteService(d.db, notifier, orders);
-  const offers = new OffersService(d.db, notifier, now);
+  const offers = new OffersService(d.db, notifier, now, settings);
   const documents = new DocumentsService(d.db, notifier, settings, now);
   const admin = new AdminService(d.db, notifier, orders, payments, profiles, settings, now);
   const adminAccess = new AdminAccessService(d.db);
