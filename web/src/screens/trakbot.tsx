@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { get, post } from '../api.ts';
+import { get, post, del } from '../api.ts';
 import { Back, useMe } from '../ui.tsx';
 
 interface BotMessage { id: string; role: 'user'|'bot'; body: string; created_at: string; action_path?: string|null; action_label?: string|null; }
@@ -87,6 +87,22 @@ export function TrakBotChat({ compact = false, onNavigate }: { compact?: boolean
     finally { setWorking(false); }
   };
 
+  const clearConversation = async () => {
+    if (working || !messages.length || !window.confirm('Очистить всю личную переписку с TrakBot? Отменить действие нельзя.')) return;
+    setWorking(true);
+    setError('');
+    try {
+      await del('/api/trakbot/messages');
+      setMessages([]);
+      setHandoff(false);
+      setText('');
+    } catch (e: any) {
+      setError(e.message || 'Не получилось очистить историю. Попробуй ещё раз.');
+    } finally {
+      setWorking(false);
+    }
+  };
+
   const Frame = compact ? 'div' : 'main';
   return <Frame className={compact ? 'trakbot-compact-body' : undefined}>
     {!compact && <Back to="help" />}
@@ -131,6 +147,8 @@ export function TrakBotChat({ compact = false, onNavigate }: { compact?: boolean
       </form>
     </section>
     <span className="note">Сейчас это бесплатный помощник, без автоплатежей. Платные консультации — отдельно, только после явного согласия. Голосовой ввод включается отдельно после проверки устройства и приватности.</span>
+    {!!messages.length && <button type="button" className="btn ghost small" disabled={working}
+      aria-label="Очистить историю TrakBot" onClick={() => void clearConversation()}>Очистить мою переписку</button>}
     {handoff && <div className="card flat">
       <b>Здесь достоверной расшифровки не нашлось.</b>
       <span className="note">Не буду придумывать. Можно уточнить исходные данные или перейти к человеку — только если захочешь.</span>
