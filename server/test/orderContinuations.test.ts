@@ -111,9 +111,13 @@ test('consultant can propose ECU: only owner starts station quote flow with no p
   'select id from payments where order_id=$1',[consult.id])).length;
  const before=await count();
  const handed=ok(await t.api('POST','/api/orders/'+consult.id+'/ecu-handoff',{
-  summary:'Не отвечает блок двигателя, рекомендуется диагностика ЭБУ на стенде'
+  summary:'Не отвечает блок двигателя, рекомендуется диагностика ЭБУ на стенде',
+  recommendationId:p.id
  },owner.token));
  assert.equal(handed.created,true);
+ assert.equal((await t.db.one<{continuation_recommendation_id:string}>(
+  'select continuation_recommendation_id from ecu_handoffs where id=$1',[handed.id]
+ ))?.continuation_recommendation_id,p.id);
  assert.equal(await count(),before);
  const linked=ok(await t.api('GET','/api/orders/'+consult.id+'/continuations',undefined,owner.token));
  assert.equal(linked[0].next_ecu_handoff_id,handed.id);
