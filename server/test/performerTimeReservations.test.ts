@@ -45,7 +45,7 @@ test('proposals do not reserve, cancellation releases only its interval, invalid
  assert.equal((await t.db.one<any>('select status from performer_time_reservations where id=$1',[proposal.id]))?.status,'proposed');
  await assert.rejects(
   add(a.id,'2026-12-04T09:00:00Z','2026-12-04T08:00:00Z'),
-  (e:any)=>e.code==='23514' || /constraint|check|violat/i.test(String(e?.message)));
+  (e:any)=>e.code==='23514' || /constraint|check|violat|range lower bound must be less than or equal to range upper bound/i.test(String(e?.message)));
 });
 
 
