@@ -101,6 +101,10 @@ try {
         input:rect('.trakbot-dialog .compose input'),send:rect('.trakbot-dialog .compose button[type=submit]'),
         messages:rect('.trakbot-dialog .msgs'),galleryCount:document.querySelectorAll('.trakbot-reactions-gallery').length,
         scrollableMessages:document.querySelector('.trakbot-dialog .msgs')?.scrollHeight > document.querySelector('.trakbot-dialog .msgs')?.clientHeight,
+        overflowingNodes:[...document.querySelectorAll('body *')].filter(e=>{
+          const r=e.getBoundingClientRect();
+          return r.width>0 && r.height>0 && (r.right> (window.visualViewport?.width??window.innerWidth)+3 || r.left< -3);
+        }).slice(0,12).map(e=>({tag:e.tagName,cls:typeof e.className==='string'?e.className.slice(0,80):'',right:Math.round(e.getBoundingClientRect().right)})),
       };
     });
     const wiggle = 3;
@@ -110,7 +114,7 @@ try {
     assert(geometry.panel.width<=width+wiggle && geometry.panel.left>=-wiggle && geometry.panel.right<=width+wiggle,
       width+'×'+height+': mini-chat overflows horizontal viewport '+JSON.stringify({
         viewport:geometry.vw,innerWidth:geometry.innerWidth,visualWidth:geometry.visualWidth,
-        documentScrollWidth:geometry.scrollWidth,
+        documentScrollWidth:geometry.scrollWidth,overflowingNodes:geometry.overflowingNodes,
         dock:geometry.dock && {left:geometry.dock.left,right:geometry.dock.right,width:geometry.dock.width},
         panel:geometry.panel && {left:geometry.panel.left,right:geometry.panel.right,width:geometry.panel.width},
       }));

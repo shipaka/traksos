@@ -6,7 +6,7 @@ import { TrakBotMascot } from './trakbotMascot.tsx';
 export function TrakBotDock({ authenticated }: { authenticated: boolean }) {
   const [open, setOpen] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
-  const [visibleViewport, setVisibleViewport] = useState({ height: 700, bottomInset: 0 });
+  const [visibleViewport, setVisibleViewport] = useState({ height: 700, width: 390, rightInset: 0, bottomInset: 0 });
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const openedRef = useRef(false);
@@ -30,9 +30,15 @@ export function TrakBotDock({ authenticated }: { authenticated: boolean }) {
     const update = () => {
       const view = window.visualViewport;
       const height = view?.height ?? window.innerHeight;
+      const width = view?.width ?? window.innerWidth;
+      // Layout viewport may be 12px wider than Android's visible 320px area.
+      // Compensate the actual difference rather than hiding the overflow.
+      const rightInset = view ? Math.max(0, window.innerWidth - (view.offsetLeft + view.width)) : 0;
       const inset = view ? Math.max(0, window.innerHeight - view.height - view.offsetTop) : 0;
       setVisibleViewport({
         height: Math.max(180, Math.round(height)),
+        width: Math.max(240, Math.round(width)),
+        rightInset: Math.max(0, Math.round(rightInset)),
         bottomInset: Math.max(0, Math.round(inset)),
       });
     };
@@ -67,6 +73,8 @@ export function TrakBotDock({ authenticated }: { authenticated: boolean }) {
       aria-label="Помощник TrakBot"
       style={{
         '--trakbot-visible-height': visibleViewport.height + 'px',
+        '--trakbot-visible-width': visibleViewport.width + 'px',
+        '--trakbot-layout-right-inset': visibleViewport.rightInset + 'px',
         '--trakbot-keyboard-inset': visibleViewport.bottomInset + 'px',
       } as CSSProperties}
       onFocusCapture={(event) => {

@@ -220,3 +220,21 @@
   .trakbot-dock-guest-mascot p span {font-size:11px;}
   .trakbot-dock-guest nav a {font-size:11px;min-height:44px;}
 }
+
+/* On narrow Android WebViews layout viewport may exceed visualViewport.
+   Both panel AND launcher align to the genuine visible right edge. */
+@media(max-width:899px){
+  .trakbot-dock{right:calc(10px + var(--trakbot-layout-right-inset,0px))!important;}
+  .trakbot-dock-panel{
+    right:calc(10px + var(--trakbot-layout-right-inset,0px))!important;
+    width:min(395px,calc(var(--trakbot-visible-width,100vw) - 20px))!important;
+  }
+  .trakbot-dock-panel--guest{
+    width:min(320px,calc(var(--trakbot-visible-width,100vw) - 20px))!important;
+  }
+}
+@media(max-width:359px){
+  .trakbot-dock{right:calc(7px + var(--trakbot-layout-right-inset,0px))!important;}
+  .trakbot-dock-panel{right:calc(7px + var(--trakbot-layout-right-inset,0px))!important;
+    width:calc(var(--trakbot-visible-width,100vw) - 14px)!important;}
+}
