@@ -368,7 +368,11 @@ function Money({ d }: { d: any }) {
         <div className="sum total"><span>Вам к выплате</span><span>{rub(m.payout ?? m.amount)}</span></div>
       </>}
       {!proposed && <span className="note">Комиссия удерживается из стоимости вашей услуги. Окончательный расчёт появится после выполнения работ.</span>}
-      {d.paymentMethod === 'cash' && <span className="note">При наличном расчёте проверьте отдельные инструкции по приёму оплаты и расчётам с площадкой в «Финансах».</span>}
+      {d.paymentMethod === 'cash' && proposed && m.cashToCollect != null && <>
+        <div className="sum"><span>К приёму наличными от клиента</span><b>{rub(m.cashToCollect)}</b></div>
+        <span className="note">Это полная сумма, которую нужно принять по подтверждённому расчёту. Клиентская разбивка вам не показывается. Общее обязательство перед TrakSOS отражается в разделе «Финансы».</span>
+      </>}
+      {d.paymentMethod === 'cash' && !proposed && <span className="note">После согласования работ здесь появится точная сумма наличных к приёму. Не принимайте оплату по предварительной оценке.</span>}
     </div>
   );
   if (d.service === 'consult') return (
