@@ -30,8 +30,8 @@ test('one notification is read only by its recipient, retries do not change othe
   assert.equal(ok(await t.api('POST',route,{},a.token)).ok,true);
   const partial=ok(await t.api('GET','/api/me/notifications',undefined,a.token));
   assert.equal(partial.unread,1);
-  assert.equal(partial.items.find((n:any)=>n.id===first!.id)?.read_at!==null,true);
-  assert.equal(partial.items.find((n:any)=>n.id===second!.id)?.read_at,null);
+  assert.equal(partial.items.find((n:any)=>Number(n.id)===Number(first!.id))?.read_at!==null,true);
+  assert.equal(partial.items.find((n:any)=>Number(n.id)===Number(second!.id))?.read_at,null);
   assert.equal(ok(await t.api('GET','/api/me/notifications',undefined,b.token)).unread,1);
   ok(await t.api('POST','/api/me/notifications/read',{},a.token));
   assert.equal(ok(await t.api('GET','/api/me/notifications',undefined,a.token)).unread,0);
