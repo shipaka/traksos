@@ -19,19 +19,19 @@ try {
         if(await bottom.getByText(missing,{exact:true}).count())throw Error('Protected guest tab '+missing);
       if(await bottom.locator('a').count()!==4)throw Error('Guest tabbar count incorrect');
     }
-    for(const id of ['tow','van','sto','insurance','parts','consult']) {
+    // Owner-approved 19 Nov public row. Every tile must open a real,
+    // readable preview, not silently return to the initial guest homepage.
+    for(const id of ['sos','air','sto','ecu','parts','insurance']) {
       await page.goto(BASE+'/#/');
       const card=page.locator('.public-service-tile.public-service-'+id);
-      await card.getByText('Далее').waitFor();
+      await card.waitFor({state:'visible'});
       await card.click();
-      await page.waitForURL(new RegExp('#/explore/'+id+'$'));
+      await page.waitForURL('**/#/explore/'+id);
       await page.locator('.guest-explore-hero h1').waitFor({state:'visible'});
-      const saved=await page.evaluate(()=>sessionStorage.getItem('traksos.pendingLandingAction'));
-      if(saved!==id)throw Error(id+': selected service lost: '+saved);
       const next=page.locator('.guest-explore-cta');
       await next.waitFor({state:'visible'});
-      if(await next.count()!==1)throw Error(id+': missing registration CTA');
-      if(await next.getAttribute('href')!=='#/register')throw Error(id+': wrong registration destination');
+      if(await next.getAttribute('href')!=='#/register')
+        throw Error(id+': protected action did not route to registration');
     }
     // Three lower tiles have real information pages, not blind registration.
     for(const [selector,destination,heading] of [
@@ -153,12 +153,13 @@ try {
     }
 
     await page.goto(BASE+'/#/');
-    const buttons=page.locator('.public-actions button');
-    if(await buttons.count()!==2)throw Error('Hero must have 2 call-to-action buttons');
-    if(!await page.getByRole('button',{name:'Войти',exact:true}).count())throw Error('Hero login missing');
+    const buttons=page.locator('.public-actions .public-button');
+    if(await buttons.count()!==2)throw Error('Approved hero must have registration and guide actions');
+    if(!await page.locator('.public-actions').getByRole('button',{name:'Зарегистрироваться',exact:true}).count())throw Error('Hero registration missing');
+    if(!await page.locator('.public-actions').getByRole('link',{name:'Как это работает'}).count())throw Error('Hero guide missing');
     await buttons.first().click();
-    await page.waitForURL(/#\/login$/);
-    await page.getByRole('heading',{name:'Вход по номеру телефона'}).waitFor();
+    await page.waitForURL(/#\/register$/);
+    await page.getByRole('heading',{name:'Регистрация в TrakSOS'}).waitFor();
     if(await page.getByText('Помогите — нужна помощь').count())throw Error('Legacy help on entry');
 
     await page.goto(BASE+'/#/register');
@@ -218,48 +219,34 @@ try {
     if(!await page.locator('.guest-partner-role-master').evaluate(el=>getComputedStyle(el).backgroundImage.includes('tracksos-photo-master')))
       throw Error('Master signup role card is not photographic');
 
-    // Every public parts category opens a descriptive premium preview, not direct login.
+    // Latest 'Возможности' menu keeps all other approved functions discoverable.
     await page.goto(BASE+'/#/');
     if(width>=900){
       const nav=page.locator('.guest-site-nav');
-      const parts=nav.locator('.guest-nav-group').filter({has:page.locator('summary',{hasText:'Запчасти'})});
-      await parts.locator('summary').click();
-      for(const a of await parts.locator('.guest-nav-dropdown a').all()){
-        const href=await a.getAttribute('href');
-        if(!href?.startsWith('#/explore/parts/'))throw Error('Parts entry jumps to login: '+href);
+      const all=nav.locator('.guest-nav-group');
+      await all.locator('summary').click();
+      for(const route of ['#/explore/van','#/explore/tow','#/explore/tech',
+        '#/explore/air','#/explore/ecu','#/explore/parts','#/explore/insurance']) {
+        if(!(await all.locator('a[href="'+route+'"]').count()))
+          throw Error('Missing actual capability '+route);
       }
-      await parts.locator('summary').hover();
-      await page.locator('.guest-nav-group').filter({has:page.locator('summary',{hasText:'СТО и сервисы'})}).locator('summary').hover();
-      if(await parts.getAttribute('open')!==null)throw Error('Previous desktop dropdown did not close');
-      await page.locator('.top .logo').hover();
-      if(await nav.locator('.guest-nav-group[open]').count())throw Error('Guest dropdown remains open after pointer leaves nav');
-      const sto=nav.locator('.guest-nav-group').filter({has:page.locator('summary',{hasText:'СТО и сервисы'})});
-      await sto.locator('summary').click();
-      if(!(await sto.locator('.guest-nav-dropdown a').first().innerText()).includes('Запись в СТО'))
-        throw Error('STO first public option must be booking');
-      await sto.locator('summary').press('Escape');
-      if(await sto.getAttribute('open')!==null)throw Error('Escape did not close desktop dropdown');
-      const consult=nav.locator('.guest-nav-group').filter({has:page.locator('summary',{hasText:'Консультации'})});
-      await consult.locator('summary').click();
-      if(await consult.locator('.guest-nav-dropdown a').count()!==2)throw Error('Consultations should display two simple choices');
-      await page.locator('.top .logo').hover();
-    }
-    await page.goto(BASE+'/#/');
-    if(width>=900){
-      const nav=page.locator('.guest-site-nav');
-      for(const title of ['Помощь в дороге','Страхование','Запчасти','СТО и сервисы','Консультации'])
-        await nav.locator('details').filter({has:page.locator('summary', {hasText:title})}).first().count();
-      await nav.getByRole('link',{name:'Компания'}).click();
+      await all.locator('summary').press('Escape');
+      if(await all.getAttribute('open')!==null)throw Error('Escape did not close capabilities');
+      await nav.getByRole('link',{name:'О платформе'}).click();
       await page.getByRole('heading',{name:'Компания TrakSOS'}).waitFor();
-      await nav.getByRole('link',{name:'Оферты'}).click();
-      await page.getByRole('heading',{name:'Оферты и документы'}).waitFor();
+      await page.goto(BASE+'/#/');
+      await nav.getByRole('link',{name:'Тарифы'}).click();
+      await page.getByRole('heading',{name:'Комиссии и тарифы TrakSOS'}).waitFor();
     } else {
       await page.locator('.guest-mobile-catalog > summary').click();
-      await page.getByRole('navigation',{name:'Каталог услуг TrakSOS'}).getByRole('link',{name:'Компания'}).click();
+      const nav=page.getByRole('navigation',{name:'Возможности TrakSOS'});
+      if(!(await nav.getByRole('link',{name:'ТехБаза и справочник'}).count()))
+        throw Error('TechBase hidden from mobile capabilities');
+      await nav.getByRole('link',{name:'О платформе'}).click();
       await page.getByRole('heading',{name:'Компания TrakSOS'}).waitFor();
     }
     if(jsErrors.length)throw Error('JS exceptions: '+jsErrors.join('; '));
     await context.close();
   }
 } finally {await browser.close();}
-console.log('PASS: responsive photo carousel, contextual auth, 6 service previews, partner roles, exclusive menus, compact map and legal pages');
+console.log('PASS: 19 Nov public services, previews, restricted actions, partner roles and real capability menus');
