@@ -42,6 +42,7 @@ import { BaseHome, BaseCar, BaseSetup, BaseMoney, AdminServicePayouts, ServicesL
 import { Fleet, QrJoin } from './screens/fleet.tsx';
 import { Help } from './screens/help.tsx';
 import { PlatformIntro, IntroInvitation } from './screens/platformIntro.tsx';
+import { EconomicsPage } from './screens/economicsGuide.tsx';
 import { ScenarioLesson } from './screens/scenarioEncyclopedia.tsx';
 import { TrakBotChat, TechCodes } from './screens/trakbot.tsx';
 import { DriverAir } from './screens/driverAir.tsx';
@@ -260,6 +261,7 @@ function App() {
     case 'inspections': screen = isInspection || isInsurer ? <InsurerCabinet inspectionOnly /> : <Home />; break;
     case 'insurance': screen = b === 'request' ? (route[2] === 'new' ? <InsuranceApplication vehicleId={route[3]??''} /> : <InsuranceThread requestId={route[2]??''} />) : isInsurer ? <InsurerCabinet /> : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
     case 'help': screen = b === 'case' && route[2] ? <ScenarioLesson id={route[2]} /> : <Help />; break;
+    case 'economics': screen = <EconomicsPage />; break;
     case 'learn': screen = <PlatformIntro />; break;
     case 'trakbot': screen = <TrakBotChat />; break;
     case 'air': screen = <DriverAir />; break;
@@ -400,7 +402,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         !me.roles.some(r => ['master','tow','service','insurer','inspection_operator'].includes(r)))
     ) ? [['/air', 'Эфир водителей'] as [string,string]] : []),
     ['/support', 'Поддержка'], ['/notifications', 'Уведомления'],
-    ['/learn', 'Знакомство с TrakSOS'], ['/help', 'Помощь и подсказки'], ['/trakbot', 'TrakBot · личный чат'], ['/rules', 'Правила площадки'],
+    ['/learn', 'Знакомство с TrakSOS'], ['/help', 'Помощь и подсказки'],
+    ['/economics', 'Комиссии, баллы и рефералы'], ['/trakbot', 'TrakBot · личный чат'], ['/rules', 'Правила площадки'],
     ['/offer/' + (mode === 'performer' || mode === 'service' ? 'performer' : mode === 'insurer' ? 'insurer' : mode === 'inspection' ? 'inspection' : mode === 'admin' || mode === 'moderator' ? 'privacy' : 'client'), mode === 'insurer' || mode === 'inspection' ? 'Договор партнёра' : 'Оферта'],
     ['/offer/privacy', 'Политика персональных данных'],
     ['/privacy', 'Мои персональные данные']];
