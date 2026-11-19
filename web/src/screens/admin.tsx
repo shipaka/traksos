@@ -3,6 +3,7 @@ import { AdminServices } from './base.tsx';
 import { ModQueue } from './moderation.tsx';
 import { AdminSummary } from './adminSummary.tsx';
 import { AdminCaseCenter } from './adminCaseCenter.tsx';
+import { DispatcherDesk } from './DispatcherDesk.tsx';
 import { EcuAdminStations } from './ecuHandoffs.tsx';
 import { AdminSettings } from './adminSettings.tsx';
 import { AdminDiagnostics } from './adminDiagnostics.tsx';
@@ -146,7 +147,13 @@ export function Admin({ initialSection }: { initialSection?: string }) {
             {tab === 'access' && <AdminAccountAccess />}
             {tab === 'cases' && <AdminCaseCenter />}
             {tab === 'orders' && <AllOrders />}
-            {tab === 'dispatch' && <Dispatch />}
+            {tab === 'dispatch' && <div className="stack">
+              <DispatcherDesk />
+              <details className="card">
+                <summary>Настройки распределения и торгов</summary>
+                <Dispatch />
+              </details>
+            </div>}
             {tab === 'payments' && <Payments />}
             {tab === 'serviceFinance' && <AdminServiceFinance />}
             {tab === 'flagged' && <Flagged />}
