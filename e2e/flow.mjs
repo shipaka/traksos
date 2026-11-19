@@ -242,6 +242,14 @@ await k.getByRole('button', { name: /Выбрать за/ }).click();
 await m.waitForURL(/order\//, { timeout: 10000 });
 await k.getByText('Иван').first().waitFor({ timeout: 10000 });
 await shot(k, '07-client-accepted');
+// Tap the actual truck photo, not a dummy image: it opens this order's
+// server-authorized vehicle history, without another customer's prices.
+await m.locator('.trak-vehicle-photo-link').first().click();
+await m.waitForURL(/\/order\/[^/]+\/vehicle$/, {timeout: 10000});
+await m.getByRole('heading', {name:'История автомобиля'}).waitFor();
+await m.getByText('История обслуживания · без сумм').waitFor();
+await m.getByRole('link',{name:'Вернуться к заявке'}).click();
+await m.getByRole('tab',{name:'Работа'}).waitFor();
 
 // Чат
 // Чат свёрнут, пока не нажали
