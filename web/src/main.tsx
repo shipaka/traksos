@@ -239,7 +239,7 @@ function App() {
       : <Order id={b} />; break;
     case 'ecu-handoff': screen = <EcuHandoffPage id={b??''} />; break;
     case 'orders': screen = isCustomer ? <Orders as="client" /> : <main><div className="empty">Нет доступа к клиентским заявкам</div></main>; break;
-    case 'garage': screen = isCustomer ? <Garage /> : <main><div className="empty">Нет доступа к гаражу</div></main>; break;
+    case 'garage': screen = isCustomer ? <Garage focusVehicleId={b} /> : <main><div className="empty">Нет доступа к гаражу</div></main>; break;
     case 'profile': screen = <Profile />; break;
     case 'invite': screen = <Invite />; break;
     case 'r': screen = <Invite />; break;
