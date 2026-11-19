@@ -77,3 +77,11 @@ test('pricing queries recognize Latin and Cyrillic names without suggesting a pu
     assert.doesNotMatch(reply, /купить|срочно оплат|закажи/i, message);
   }
 });
+
+test('inline EBS never receives a generic OBD-II interpretation or an undefined ECU label', () => {
+  const answer = composeTrakBotReply('Ошибка EBS P0087', [p0087], {});
+  assert.match(answer, /EBS|ABS|ECAS/i);
+  assert.match(answer, /на диагностике/i);
+  assert.doesNotMatch(answer, /Давление ниже ожидаемого|undefined/);
+  assert.match(answer, /не продолжайте движение/i);
+});
