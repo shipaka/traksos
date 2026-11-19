@@ -50,7 +50,8 @@ async function asset(path, minBytes = 5000) {
 }
 const landing = await read('web/src/screens/login.tsx');
 const catalogue = await read('web/src/guestCatalog.ts');
-const finalCss = await read('web/src/finalCanon.css');
+const roleCss = await read('web/src/roleShared20261119.css');
+const currentCss = await read('web/src/currentApproved20261119.css');
 const css = await read('web/src/styles.css');
 const shell = await read('web/src/main.tsx');
 const demo = await read('web/src/screens/adminTestCenter.tsx');
@@ -114,13 +115,14 @@ expect(!landing.includes('openstreetmap.org/export/embed'), 'no third-party ifra
 expect(landing.includes('Пример расположения услуг.'), 'demo map explicitly labels fictional service markers');
 expect(landing.includes('yandex.ru/maps/'), 'guest static map opens real Yandex Maps on click');
 expect(landing.includes('Санкт-Петербург и Ленинградская область'), 'launch region is shown');
-expect(shell.includes("import './finalCanon.css';"), 'the only final design layer is loaded by the real app');
+expect(shell.includes("import './roleShared20261119.css';") && !shell.includes("import './finalCanon.css';"), 'the obsolete 14 Nov public CSS was physically removed');
+expect(!roleCss.includes('.public-landing'), 'old guest-home selectors absent from retained role styles');
 expect(shell.includes('guest-site-nav'), 'the guest PC has horizontal navigation, not an alternative sidebar');
-expect(finalCss.includes("url('../public/tracksos-hero-rescue-hq.webp')") &&
-  finalCss.includes("url('../public/tracksos-hero-service-hq.webp')"),
+expect(currentCss.includes("url('../public/tracksos-hero-rescue-hq.webp')") &&
+  currentCss.includes("url('../public/tracksos-hero-service-hq.webp')"),
   'second and third homepage slides use separate high-resolution cinematic assets');
 for (const suffix of ['tow','master','sto','insurer']) {
-  expect(finalCss.includes("tracksos-partner-" + suffix + "-approved.webp"),
+  expect(roleCss.includes("tracksos-partner-" + suffix + "-approved.webp"),
     'selected partner illustration for '+suffix+' remains local to TrakSOS');
 }
 expect(landing.includes("const [role, setRole] = useState<JoinRole | null>(null)"),
@@ -192,7 +194,7 @@ expect(['Работа','Клиент и ТС','Расчёт','Чат','Исто�
   liveOrderUi.includes("ptab === 'chat' ? <Chat id={id} status={d.status} />"),
   'approved performer order separates live work/vehicle/finance/chat/history in real tabs');
 
-console.log('DESIGN AUDIT PENDING: verify Nov 18 TrakSos-branded manufacturer-neutral truck and 9-card desktop layout against owner-approved visual. Legacy asset checks are not an approval.');
+console.log('VISUAL APPROVAL PENDING: exact 19 Nov source PNG vs real Chromium on the final commit.');
 
 const vehicleVisual=await read('web/src/vehicleVisual.tsx');
 const performerUi=await read('web/src/screens/performer.tsx');

@@ -11,7 +11,7 @@ import './trackMatch.css';
 import './trackScenic.css';
 import './clientDashboardLatest.css';
 import './premiumVehiclePolish.css';
-import './finalCanon.css';
+import './roleShared20261119.css';
 // Insurance-only refinement follows the approved global visual canon.
 import './insurancePremiumStates.css';
 // Mobile browser and Android use separate approved responsive layers.
