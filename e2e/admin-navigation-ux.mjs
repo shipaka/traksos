@@ -78,6 +78,14 @@ try {
       await navigation.getByRole('button',{name,exact:true}).click();
       await page.waitForURL(new RegExp('#/admin/section/'+id+'$'));
       await page.locator('.admin-stage-head h2').getByText(name,{exact:true}).waitFor();
+      if(id==='dispatch') {
+        await page.getByRole('heading',{name:'Диспетчерская'}).waitFor();
+        await page.getByRole('button',{name:'Обновить данные'}).waitFor();
+        await page.getByText('Настройки распределения и торгов').waitFor();
+        const search = page.getByRole('searchbox',{name:'Найти заявку по номеру, имени или месту'});
+        await search.fill('Тестовый поиск');
+        if(await search.inputValue() !== 'Тестовый поиск') throw Error('Dispatcher search cannot be edited');
+      }
       if(id==='ecu') {
         await page.getByText('Проверка стационарных точек ЭБУ',{exact:true}).waitFor();
         await page.getByText('Это не выездная услуга и не тариф по километрам.',{exact:false}).waitFor();
