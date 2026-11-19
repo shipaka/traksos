@@ -886,12 +886,14 @@ export function createApp(d: Deps) {
   // Quotation and PDF workflow: real insured customer vs designated agent, never automatic insurer API calls.
   r.get('/api/insurance/requests/:id', true, (c:AuthedCtx)=>insuranceFlow.detail(c.user,c.params.id));
   r.post('/api/insurance/requests/:id/accept', ['insurer'], async (c:AuthedCtx)=>{
+    await offers.requireInsurer(c.user);
     const out=await insuranceFlow.accept(c.user,c.params.id);
     const item=await insuranceFlow.detail(c.user,c.params.id);
     notifier.live([item.request.owner_id],{type:'vehicle_service',requestId:c.params.id});
     return out;
   });
   r.post('/api/insurance/requests/:id/offers', ['insurer'], async (c:AuthedCtx)=>{
+    await offers.requireInsurer(c.user);
     const o=z.object({company:z.string().trim().min(1).max(140),
       product:z.string().trim().min(1).max(140),
       premiumKopecks:z.number().int().positive().max(1_000_000_000),
@@ -923,6 +925,7 @@ export function createApp(d: Deps) {
     return out;
   });
   r.post('/api/insurance/requests/:id/policy', ['insurer'],async(c:AuthedCtx)=>{
+    await offers.requireInsurer(c.user);
     const b=parse(z.object({dataUrl:z.string().max(6_100_000),
       fileName:z.string().max(120),expiresOn:z.string().regex(/^\d{4}-\d{2}-\d{2}$/)}),c.body);
     const out=await insuranceFlow.uploadPolicy(c.user,c.params.id,b.dataUrl,b.fileName,b.expiresOn);
@@ -976,6 +979,7 @@ export function createApp(d: Deps) {
   });
 
   r.patch('/api/insurer/inspections/:id', ['insurer','inspection_operator'], async (c: AuthedCtx) => {
+    await (c.user.roles.includes('inspection_operator') ? offers.requireInspection(c.user) : offers.requireInsurer(c.user));
     const b = parse(z.object({status:z.enum(['completed','rejected']),note:z.string().max(2000).optional()}),c.body);
     const updated = await vehicleRequests.updateInspection(c.user,c.params.id,b.status,b.note);
     notifier.live(await vehicleRequests.recipients(updated),
@@ -1396,7 +1400,7 @@ export function createApp(d: Deps) {
   r.post('/api/admin/reviews/:id', staff, (c: AuthedCtx) =>
     reviews.moderate(c.user, c.params.id, parse(z.object({ disputed: z.boolean().optional(), hidden: z.boolean().optional() }), c.body)));
   r.post('/api/admin/offers', ['admin'], (c: AuthedCtx) => offers.publish(c.user, parse(z.object({
-    audience: z.enum(['client', 'performer', 'privacy']), version: z.string().min(1).max(20), body: z.string().min(50).max(200_000),
+    audience: z.enum(['client', 'performer', 'insurer', 'inspection', 'privacy']), version: z.string().min(1).max(20), body: z.string().min(50).max(200_000),
     summary: z.string().max(500).optional(), effectiveAt: z.string().optional(),
   }), c.body)));
   r.get('/api/admin/offers', ['admin'], () => offers.history());
