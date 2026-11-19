@@ -17,7 +17,7 @@ const submission = {
   symptoms: 'Задний мост не опускается, пульт реагирует',
   checksPerformed: 'Проверили питание и сигнал управления кнопки',
   verifiedFix: 'После устранения дефекта проводки подвеска работает',
-  provenanceNote: 'Собственные данные ремонта; без VIN и клиента',
+  provenanceNote: 'Собственные данные ремонта, личные сведения удалены',
 };
 
 test('repair case is pending until manual review, then searchable only by specialist', async () => {
