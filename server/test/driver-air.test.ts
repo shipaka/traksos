@@ -1,0 +1,82 @@
+import { test, before, after } from 'node:test';
+import assert from 'node:assert/strict';
+import { setup, ok, type T } from './helpers.ts';
+
+let t:T; let driver:any, other:any, admin:any, moderator:any;
+before(async()=>{
+  t=await setup();
+  driver=await t.login('+79997778101');
+  other=await t.login('+79997778102');
+  admin=await t.login('+79990000001');
+  moderator=await t.login('+79997778103');
+  // Set a dedicated staff role for test isolation via authenticated admin API.
+  ok(await t.api('POST','/api/admin/users/'+moderator.id+'/roles',{roles:['moderator']},admin.token));
+});
+after(()=>t.close());
+
+test('public driver text air is isolated and not accessible without auth', async()=>{
+  assert.equal((await t.api('GET','/api/air/messages')).status,401);
+  const original=ok(await t.api('GET','/api/air/messages',undefined,driver.token));
+  assert.equal(original.botEnabled,false);
+  assert.deepEqual(original.messages,[]);
+  const sent=ok(await t.api('POST','/api/air/messages',{body:'Всем привет, кто сегодня в рейсе?'},driver.token));
+  assert.equal(sent.message.isBot,false);
+  assert.equal(sent.message.author.startsWith('Водитель '),true);
+  assert.equal(sent.botMessage,null);
+  const b=ok(await t.api('GET','/api/air/messages',undefined,other.token));
+  assert.equal(b.messages.length,1);
+  assert.equal(b.messages[0].body,'Всем привет, кто сегодня в рейсе?');
+  const privateHistory=ok(await t.api('GET','/api/trakbot/messages',undefined,driver.token));
+  assert.equal(privateHistory.messages.length,0);
+});
+
+test('staff calls get a clarifying prompt, but private details are never echoed in public air', async()=>{
+  const prompt=ok(await t.api('POST','/api/air/messages',{
+    body:'@админ у меня конфликт по заявке, телефон +7 999 123 45 67'
+  },driver.token));
+  assert.equal(prompt.supportSuggested,true);
+  assert.match(prompt.botMessage.body,/Уточню|заявк|поведением/);
+  assert.match(prompt.botMessage.body,/личн/);
+  const messages=ok(await t.api('GET','/api/air/messages',undefined,other.token));
+  assert.equal(messages.messages.at(-2).body,'Хочу обратиться к администратору через личную поддержку.');
+  assert.doesNotMatch(JSON.stringify(messages),/999 123 45 67|конфликт по заявке/);
+  const mod=ok(await t.api('POST','/api/air/messages',{body:'@модератор помоги разобраться'},driver.token));
+  assert.equal(mod.supportSuggested,true);
+  assert.match(mod.botMessage.body,/модератор/);
+  const tickets=ok(await t.api('GET','/api/support',undefined,driver.token));
+  assert.equal(tickets.length,0,'bot cannot auto-create a support ticket');
+});
+
+test('bot posting requires admin enablement and exposes explicit bot identity',async()=>{
+  assert.equal((await t.api('POST','/api/admin/air/bot',{enabled:true},driver.token)).status,403);
+  ok(await t.api('POST','/api/admin/air/bot',{enabled:true},admin.token));
+  // 15m cooldown for direct mentions; staff-intake messages do not count.
+  const a=ok(await t.api('POST','/api/air/messages',{body:'@TrakBot расскажи шутку'},other.token));
+  assert.equal(a.botMessage.isBot,true);
+  assert.equal(a.botMessage.author,'TrakBot · бот');
+  assert.match(a.botMessage.body,/Ещё одну/);
+  const b=ok(await t.api('POST','/api/air/messages',{body:'@TrakBot привет'},other.token));
+  assert.equal(b.botMessage,null,'bot must avoid responding repeatedly');
+  const changed=ok(await t.api('POST','/api/admin/air/bot',{enabled:false},admin.token));
+  assert.equal(changed.botEnabled,false);
+  const off=ok(await t.api('POST','/api/air/messages',{body:'@TrakBot расскажи историю'},other.token));
+  assert.equal(off.botMessage,null);
+});
+
+test('staff can hide abusive content; ordinary users cannot hide messages', async()=>{
+  const msg=ok(await t.api('POST','/api/air/messages',{body:'Чай в термосе готов'},other.token));
+  assert.equal((await t.api('POST','/api/admin/air/messages/'+msg.message.id+'/hide',{},driver.token)).status,403);
+  assert.equal((await t.api('POST','/api/admin/air/messages/0/hide',{},admin.token)).status,400);
+  const hidden=ok(await t.api('POST','/api/admin/air/messages/'+msg.message.id+'/hide',{},admin.token));
+  assert.equal(hidden.hidden,true);
+  const messages=ok(await t.api('GET','/api/air/messages',undefined,driver.token));
+  assert.equal(messages.messages.some((x:any)=>x.id===msg.message.id),false);
+});
+
+test('links and direct email are rejected while phones and VIN get masked',async()=>{
+  const first=await t.api('POST','/api/air/messages',{body:'Пишите test@example.com'},driver.token);
+  assert.equal(first.status,400);
+  assert.equal((await t.api('POST','/api/air/messages',{body:'https://example.com'},driver.token)).status,400);
+  const msg=ok(await t.api('POST','/api/air/messages',{body:'Синий грузовик VIN WAUZZZ8V6JA123456'},driver.token));
+  assert.match(msg.message.body,/\[VIN скрыт\]/);
+});
