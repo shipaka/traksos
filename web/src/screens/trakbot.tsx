@@ -71,12 +71,12 @@ export function TrakBotChat({ compact = false, onNavigate }: { compact?: boolean
     setWorking(true);
     setError('');
     try {
-      const result = await post<{ message: BotMessage; freePilot: true; handoffSuggested?: boolean }>('/api/trakbot/answer', {
+      const result = await post<{ userMessage: BotMessage; message: BotMessage; freePilot: true; handoffSuggested?: boolean }>('/api/trakbot/answer', {
         message: body, allowAiProcessing: aiAvailable && aiConsent,
         vehicle: { ...(make.trim() && { make: make.trim() }), ...(model.trim() && { model: model.trim() }),
           ...(year.length === 4 && { year: Number(year) }), ...(ecu.trim() && { ecu: ecu.trim() }) },
       });
-      setMessages((old) => [...old, { id: 'local-'+Date.now(), role: 'user', body, created_at: new Date().toISOString() }, result.message]);
+      setMessages((old) => [...old, result.userMessage, result.message]);
       setText('');
       setHandoff(!!result.handoffSuggested);
     } catch (e: any) {
