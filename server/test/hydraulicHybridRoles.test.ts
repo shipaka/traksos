@@ -14,11 +14,13 @@ test('one approved partner holds separate mobile-master and station roles', () =
   assert.throws(() => validateRoles(['client'], ['master','service']), /.*(?=.)/);
   assert.throws(() => validateRoles(['insurer'], ['master','service']), /.*(?=.)/);
 });
+const repoRoot = new URL('../../', import.meta.url);
+
 test('matching, onboarding and forms know hydraulic as a separate specialization', async () => {
   const [app, orders, publicRoles, master, station, auth] = await Promise.all([
     'server/src/app.ts','server/src/services/orders.ts','web/src/guestCatalog.ts',
     'web/src/screens/performerCabinet.tsx','web/src/screens/base.tsx','web/src/screens/login.tsx'
-  ].map(path => readFile(path,'utf8')));
+  ].map(path => readFile(new URL(path,repoRoot),'utf8')));
   assert(app.includes("'tyre', 'hydraulics', 'consult'"));
   assert(orders.includes("'hydraulics', 'tow'"));
   assert(publicRoles.includes("id:'hydraulics'"));
