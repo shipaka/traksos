@@ -1020,7 +1020,10 @@ export function createApp(d: Deps) {
       method:z.enum(['invoice','online','cash','other']),
       reference:z.string().trim().min(4).max(200),
     }).strict(),c.body)));
-  r.post('/api/admin/bookings/:id/paid', ['admin'], (c: AuthedCtx) => centers.markPaidOut(c.user, c.params.id));
+  r.post('/api/admin/bookings/:id/paid', ['admin'], (c: AuthedCtx) =>
+    centers.markPaidOut(c.user, c.params.id, parse(z.object({
+      reference:z.string().trim().min(4).max(200).optional(),
+    }).strict(),c.body).reference));
   r.get('/api/base/money', ['service'], (c: AuthedCtx) => centers.money(c.user));
   r.get('/api/admin/summary', ['admin'], () => stats.summary());
   r.get('/api/admin/live', ['admin'], () => stats.liveOrders());
