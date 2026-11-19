@@ -46,6 +46,17 @@ try {
       await modal.getByRole('button',{name:'Принимаю'}).click();
       await modal.waitFor({state:'detached',timeout:12000});
     }
+    // Catch stale PC and narrow-phone layouts in each real role, not only at 390px.
+    for (const width of [320, 390, 1440]) {
+      await page.setViewportSize({width, height: width === 1440 ? 900 : 844});
+      const size = await page.evaluate(() => ({
+        actual: document.documentElement.scrollWidth,
+        available: document.documentElement.clientWidth,
+      }));
+      if (size.actual > size.available + 3)
+        throw Error(kind + ': role layout overflows at ' + width + 'px');
+    }
+    await page.setViewportSize({width:390,height:844});
     await page.locator('.account-menu > summary').click();
     const links=await page.locator('.account-menu nav a[href^="#/"]').evaluateAll(
       els=>els.map(el=>({href:el.getAttribute('href'),text:(el.textContent??'').trim()}))
