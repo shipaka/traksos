@@ -258,6 +258,11 @@ function MobilePerformerWork({p, personName, active, awaiting, jobs, incoming, o
           awaiting_confirmation:'Проверить подтверждение клиента',
         } as Record<string,string>)[first.status] ?? 'Открыть заявку'}</a>
         <span className="work-mobile-action-hint">Действие выполняется внутри заявки и подтверждается сервером.</span>
+        <div className="work-mobile-jobtools" role="group" aria-label="Быстрые действия по заявке">
+          <a href={`#/order/${first.id}/chat`}>Чат</a>
+          <a href={`#/order/${first.id}/client`}>Клиент и ТС</a>
+          <a href={`#/order/${first.id}/finance`}>Расчёт</a>
+        </div>
         {active.length > 1 && <span className="note">Других активных заявок: {active.length-1}</span>}
       </section>
       : <section className="work-mobile-current work-mobile-empty" aria-label="Нет текущих работ">
