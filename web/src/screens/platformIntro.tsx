@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Back, useMe } from '../ui.tsx';
+import { TrainingPractice } from './trainingPractice.tsx';
 
 type Role = 'owner'|'driver'|'master'|'tow'|'service'|'insurer'|'inspection'|'moderator'|'admin';
 type Lesson = { title:string; text:string; tip:string; path:string; link:string };
@@ -92,7 +93,7 @@ export function IntroInvitation({userId,mode,roles}:{userId:string;mode:string;r
     style={{display:'flex',gap:12,justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',margin:'12px 12px 4px',padding:14}}>
     <div style={{flex:'1 1 220px'}}>
       <b>Впервые в TrakSOS?</b>
-      <p className="note">Коротко покажем возможности кабинета «{courses[role].label}». Это безопасный обзор, без заказов и платежей.</p>
+      <p className="note">Покажем кабинет «{courses[role].label}», затем вместе пройдём учебную заявку. Без настоящих заказов и платежей.</p>
     </div>
     <div className="row" style={{gap:8,flexWrap:'wrap'}}>
       <a className="btn small" href="#/learn" onClick={close}>Познакомиться</a>
@@ -107,16 +108,23 @@ export function PlatformIntro() {
   const role=learningRole(mode,me?.roles??[]);
   const course=courses[role];
   const [index,setIndex]=useState(0);
+  const [modeView,setModeView]=useState<'lessons'|'practice'>('lessons');
   const lesson=course.lessons[index];
   const finish=()=>{
     if(me)mark(key(me.id,role));
     location.hash='#/help';
   };
-  return <main className="stack" style={{maxWidth:760}}>
+  return <main className="stack" style={{maxWidth:1000}}>
     <Back to="" />
     <div><span className="label">TRAKSOS · ЗНАКОМСТВО</span><h1>Как пользоваться TrakSOS</h1>
       <p className="sub">Обзор для роли «{course.label}». Просмотр ничего не оформляет и не оплачивает.</p></div>
-    <div className="card stack">
+    <nav className="training-intro-switch" aria-label="Этап обучения">
+      <button type="button" className={modeView==='lessons'?'active':''}
+        aria-current={modeView==='lessons'?'step':undefined} onClick={()=>setModeView('lessons')}>1. Знакомство с кабинетом</button>
+      <button type="button" className={modeView==='practice'?'active':''}
+        aria-current={modeView==='practice'?'step':undefined} onClick={()=>setModeView('practice')}>2. Учебная заявка</button>
+    </nav>
+    {modeView==='practice' ? <TrainingPractice role={role} onBack={()=>setModeView('lessons')} /> : <div className="card stack">
       <div className="between"><b>Шаг {index+1} из {course.lessons.length}</b><span className="note">Можно пропустить</span></div>
       <div role="progressbar" aria-label="Прогресс знакомства" aria-valuemin={0} aria-valuemax={course.lessons.length} aria-valuenow={index+1}
         style={{height:6,borderRadius:10,overflow:'hidden',background:'var(--line, #d5dce5)'}}>
@@ -129,13 +137,13 @@ export function PlatformIntro() {
       <div className="row" style={{justifyContent:'space-between',flexWrap:'wrap'}}>
         <button className="btn ghost" disabled={index===0} type="button" onClick={()=>setIndex(i=>Math.max(0,i-1))}>Назад</button>
         {index+1===course.lessons.length
-          ? <button className="btn" type="button" onClick={finish}>Завершить</button>
+          ? <button className="btn" type="button" onClick={()=>setModeView('practice')}>К учебной заявке →</button>
           : <button className="btn" type="button" onClick={()=>setIndex(i=>Math.min(course.lessons.length-1,i+1))}>Дальше</button>}
       </div>
-    </div>
+    </div>}
     <div className="row" style={{gap:12,flexWrap:'wrap'}}>
       <a href="#/help">Вся справка</a><a href="#/trakbot">Спросить TrakBot</a>
-      <button className="btn ghost small" type="button" onClick={finish}>Пропустить обучение</button>
+      <button className="btn ghost small" type="button" onClick={finish}>Завершить знакомство</button>
     </div>
     <p className="note">Повторить знакомство можно в «Меню → Знакомство с TrakSOS».</p>
   </main>;
