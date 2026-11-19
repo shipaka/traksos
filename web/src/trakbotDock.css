@@ -1,7 +1,7 @@
 /* Compact, opt-in assistant. Does not replace approved main layouts. */
 .trakbot-dock{
   position:fixed;right:18px;bottom:calc(98px + env(safe-area-inset-bottom));
-  z-index:48;display:flex;flex-direction:column;align-items:flex-end;
+  z-index:96;display:flex;flex-direction:column;align-items:flex-end;
   pointer-events:none;font-family:inherit;
 }
 .trakbot-dock>*{pointer-events:auto;}
