@@ -7,7 +7,7 @@ import { DriverRules } from './fleet.tsx';
 import { VehicleServiceApplication, VehicleServiceHistory } from './vehicleServices.tsx';
 import { native } from '../native.ts';
 import { insurancePresentation, isOpenInsuranceRequest } from '../insurancePresentation.ts';
-import { AndroidClientWorkspace } from './androidWorkspaces.tsx';
+import { AndroidClientWorkspace, useMobileWorkspace } from './androidWorkspaces.tsx';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
 
@@ -24,15 +24,18 @@ export function usePrices() {
 
 export function Home() {
   const { me } = useMe();
+  const mobileWorkspace = useMobileWorkspace();
   const active = useLoad(() => get('/api/orders'), [], (e) => e.type === 'order');
   const services = useLoad(() => get<any[]>('/api/vehicle-service-requests'), [],
     e => e.type === 'vehicle_service' || e.type === 'connection_restored');
   const insuranceInProgress = (services.data ?? []).filter(r =>
     r.kind === 'insurance' && isOpenInsuranceRequest(r.status));
   const live = (active.data ?? []).filter((o: any) => !['completed', 'cancelled'].includes(o.status));
+  if (mobileWorkspace) return <main className="client-home client-dashboard">
+    <AndroidClientWorkspace orders={live} loading={!active.data && !active.error} error={active.error} retry={active.reload} me={me} />
+  </main>;
   return (
     <main className="client-home client-dashboard">
-      <AndroidClientWorkspace orders={live} loading={!active.data && !active.error} error={active.error} retry={active.reload} me={me} />
       <section className="desktop-hero" aria-label="Помощь грузовому транспорту">
         <div className="desktop-hero-copy">
           <span className="desktop-eyebrow">TRAKSOS · САНКТ-ПЕТЕРБУРГ И ЛЕНОБЛАСТЬ</span>
