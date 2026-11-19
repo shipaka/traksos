@@ -19,6 +19,7 @@ import './mobileBrowser.css';
 import './androidApproved20261119.css';
 import './currentApproved20261119.css';
 import './trakbotDock.css';
+import './techbase.css';
 import './trainingPractice.css';
 import './scenarioCourses.css';
 import { createRoot } from 'react-dom/client';
@@ -50,6 +51,7 @@ import { AdminUser } from './screens/adminUser.tsx';
 import { BaseHome, BaseCar, BaseSetup, BaseMoney, AdminServicePayouts, ServicesList, CenterPage, BookForm, BookingPage } from './screens/base.tsx';
 import { Fleet, QrJoin } from './screens/fleet.tsx';
 import { Help } from './screens/help.tsx';
+import { TechBase } from './screens/techbase.tsx';
 import { PlatformIntro, IntroInvitation } from './screens/platformIntro.tsx';
 import { EconomicsPage } from './screens/economicsGuide.tsx';
 import { ScenarioLesson } from './screens/scenarioEncyclopedia.tsx';
@@ -282,6 +284,11 @@ function App() {
     case 'learn': screen = <PlatformIntro />; break;
     case 'trakbot': screen = <TrakBotChat />; break;
     case 'air': screen = <DriverAir />; break;
+    case 'techbase': screen = (b === 'master'
+      ? me.roles.some(r => ['master','service','admin','moderator'].includes(r))
+      : me.roles.some(r => ['client','driver','master','tow','service','admin','moderator'].includes(r)))
+      ? <TechBase key={b + ':' + (route[2] ?? '')} audience={b === 'master' ? 'master' : 'driver'} initialVehicleId={route[2]} />
+      : <main><div className="empty">Нет доступа к этому разделу ТехБазы</div></main>; break;
     case 'tech': screen = b === 'codes' ? <TechCodes /> : b === 'cases' ? <RepairCases /> : b === 'review' && isAdmin ? <TechnicalCasesReview /> : <Help />; break;
     case 'training': screen = <Training chapter={b} />; break;
     case 'practice': screen = <TrainingPractice chapter={b} />; break;
@@ -431,6 +438,10 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
        ['/reviews', 'Мои отзывы'], ['/invite', 'Пригласить друга'],
        ['/profile', 'Профиль и настройки']];
   const helpLinks: [string, string][] = [
+    ...(me?.roles.some(r => ['master','service','admin','moderator'].includes(r))
+      ? [['/techbase/master','ТехБаза специалиста'] as [string,string]] : []),
+    ...(me?.roles.some(r => ['client','driver','tow'].includes(r))
+      ? [['/techbase/driver','ТехБаза водителя'] as [string,string]] : []),
     ...(me && (
       me.roles.some(r => r === 'admin' || r === 'moderator') ||
       (me.roles.some(r => r === 'client' || r === 'driver') &&
