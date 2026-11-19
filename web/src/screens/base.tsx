@@ -887,7 +887,8 @@ export function AdminServices() {
 // Финансы рембазы ---------------------------------------------------------------
 
 const MSTATE: Record<string, [string, string]> = {
-  awaiting: ['ждёт сверки клиента', ''], to_pay: ['к выплате', 'warn'], paid: ['выплачено', 'good'], disputed: ['спор у модератора', 'bad'],
+  awaiting: ['ждёт сверки клиента', ''], unpaid: ['ожидаем оплату', 'warn'],
+  to_pay: ['к выплате', 'warn'], paid: ['выплачено', 'good'], disputed: ['спор у модератора', 'bad'],
 };
 const monthName = (m: string) => { const [y, mm] = m.split('-').map(Number); return new Date(Date.UTC(y, mm - 1, 1)).toLocaleDateString('ru-RU', { month: 'long', year: 'numeric', timeZone: 'UTC' }); };
 
@@ -895,7 +896,7 @@ const monthName = (m: string) => { const [y, mm] = m.split('-').map(Number); ret
 export function BaseMoney() {
   const m = useLoad(() => baseGet('/api/base/money'), [], isBookingEvent);
   const pts = useLoad(() => baseGet('/api/me/referral'), [], (e) => e.type === 'points');
-  const [filter, setFilter] = useState<'all' | 'to_pay' | 'awaiting' | 'paid' | 'disputed'>('all');
+  const [filter, setFilter] = useState<'all' | 'to_pay' | 'unpaid' | 'awaiting' | 'paid' | 'disputed'>('all');
   if (!m.data) return <main><Loading error={m.error} /></main>;
   const { summary: s, months, items, rule } = m.data;
   const shown = items.filter((x: any) => filter === 'all' || x.state === filter);
@@ -909,9 +910,10 @@ export function BaseMoney() {
       <div className="card">
         <div className="sum total"><span>К выплате</span><span>{rub(s.toPay)}</span></div>
         <div className="sum"><span>Ждёт сверки клиента</span><span>{rub(s.awaiting)}</span></div>
+        {s.unpaid > 0 && <div className="sum"><span>Клиент подтвердил работы, оплата ещё не поступила</span><span>{rub(s.unpaid)}</span></div>
         {s.disputed > 0 && <div className="sum"><span>В споре</span><span>{rub(s.disputed)}</span></div>}
         <div className="sum"><span>Уже выплачено</span><span>{rub(s.paid)}</span></div>
-        <span className="note">Деньги приходят после того, как клиент сверит работы. TrakSOS работает как агент: отчёт агента и акт — раз в месяц.</span>
+        <span className="note">Выплата возможна после подтверждения клиентом работ и поступления денег. Платёж проверяет TrakSOS по банковским/кассовым документам. Отчёт агента и акт — раз в месяц.</span>
       </div>
 
       <details className="card">
@@ -942,7 +944,7 @@ export function BaseMoney() {
 
       <span className="label">Счета</span>
       <div className="scroll-x">
-        {([['all', 'Все'], ['to_pay', 'К выплате'], ['awaiting', 'Ждут сверки'], ['paid', 'Выплачено'], ['disputed', 'Споры']] as const).map(([k, n]) =>
+        {([['all', 'Все'], ['to_pay', 'К выплате'], ['unpaid', 'Ждут оплаты'], ['awaiting', 'Ждут сверки'], ['paid', 'Выплачено'], ['disputed', 'Споры']] as const).map(([k, n]) =>
           <button key={k} className="chip" aria-pressed={filter === k} onClick={() => setFilter(k)}>{n}</button>)}
       </div>
       {!shown.length ? <div className="empty">{items.length ? 'Здесь пусто' : 'Счетов пока нет — появятся после «Выставить счёт»'}</div> : (
@@ -963,6 +965,7 @@ export function BaseMoney() {
                 <div className="sum"><span>Комиссия TrakSOS</span><span>−{rub(x.commissionFull)}</span></div>
                 {x.points > 0 && <div className="sum"><span>…из них погашено баллами</span><span>+{rub(x.points)}</span></div>}
                 <div className="sum total"><span>Вам</span><span>{rub(x.payout)}</span></div>
+                {x.state === 'unpaid' && <span className="note">Клиент подтвердил работы. Выплата ожидает поступления оплаты.</span>}
                 {x.paidOutAt && <span className="note">Выплачено {fmtDay(x.paidOutAt)}</span>}
                 <div className="row" style={{ gap: 6, marginTop: 4 }}>
                   <a className="btn ghost small" href={servicePreviewHref(`base/car/${x.id}`)}>Открыть счёт</a>
