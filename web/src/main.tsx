@@ -17,6 +17,7 @@ import './insurancePremiumStates.css';
 // Mobile browser and Android use separate approved responsive layers.
 import './mobileBrowser.css';
 import './androidApproved20261119.css';
+import './currentApproved20261119.css';
 import './trakbotDock.css';
 import './trainingPractice.css';
 import './scenarioCourses.css';
