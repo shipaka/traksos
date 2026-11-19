@@ -1400,6 +1400,7 @@ export function createApp(d: Deps) {
     summary: z.string().max(500).optional(), effectiveAt: z.string().optional(),
   }), c.body)));
   r.get('/api/admin/offers', ['admin'], () => offers.history());
+  r.get('/api/admin/offers/economics-audit', ['admin'], () => offers.economicsAudit());
   r.post('/api/admin/payouts/run', ['admin'], (c: AuthedCtx) => payments.runPayouts(c.user));
   r.post('/api/admin/payments/:id/invoice-paid', ['admin'], (c: AuthedCtx) => payments.markInvoicePaid(c.user, c.params.id));
   r.post('/api/admin/performers/:id/cash-debt-paid', ['admin'], (c: AuthedCtx) =>
