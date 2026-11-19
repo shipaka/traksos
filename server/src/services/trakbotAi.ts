@@ -88,3 +88,48 @@ export async function groundedAiAnswer(
     return null;
   }
 }
+
+
+const CASUAL_RULES = [
+  'Ты TrakBot — дружелюбный, спокойный автоматический помощник TrakSOS. Общайся естественно, на ты, без рекламы и маркетинговых предложений.',
+  'Это нейтральная беседа, а не диагностика. Не придумывай данные о пользователе, ценах, статусах заявок, функциях сайта или партнёрах.',
+  'Если вопрос касается неисправности, закона, денег, регистрации, точной навигации по сайту или опасного действия, признай ограничение и попроси уточнить. Профессиональную диагностику не подменяй.',
+  'Не изображай живого механика и не давай гарантий. Ответ максимум 90 слов по-русски. Уместна лёгкая доброжелательная шутка.',
+].join('\n');
+
+export function neutralConversationEligible(input: string): boolean {
+  if (!input.trim() || input.length > 200) return false;
+  // Only everyday small talk: never let a non-grounded model troubleshoot a truck.
+  if (/ошибк|код|диагност|машин|завод|двигател|топлив|тормоз|рулев|подвес|электр|масло|акб|давлен|датчик|схем|провод|ремонт|страхов|комисс|оплат|платн|возврат|заявк|заказ|профил|магазин|справочник|парол|кабинет/i.test(input)) return false;
+  return /привет|как дела|как жизнь|как ты|настроени|спасибо|благодар|поговор|поболта|анекдот|шутк|как прошёл день|салют|здоров|добрый|чем занят/i.test(input);
+}
+
+export async function neutralAiAnswer(message: string, prior: string[], settings: ProviderSettings): Promise<string | null> {
+  if (!settings.enabled || !settings.apiKey || !settings.model || !neutralConversationEligible(message)) return null;
+  try {
+    const r = await fetch('https://api.openai.com/v1/responses', {
+      method: 'POST',
+      headers: { authorization: 'Bearer ' + settings.apiKey, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        model: settings.model,
+        instructions: CASUAL_RULES,
+        input: [{ role: 'user', content: [
+          'Предыдущие реплики: ' + prior.slice(0, 3).reverse().map(stripIdentifiers).join(' | '),
+          'Новое сообщение: ' + stripIdentifiers(message),
+        ].join('\n') }],
+        store: false,
+        max_output_tokens: 260,
+      }),
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!r.ok) return null;
+    const data = await r.json() as { output?: Array<{ content?: Array<{type?: string;text?: string}> }> };
+    const answer = (data.output ?? []).flatMap(x => x.content ?? []).filter(x => x.type === 'output_text')
+      .map(x => x.text ?? '').join('\n').trim();
+    if (!answer || answer.length > 1200 ||
+        /оплат|подписк|купите|скидк|мы гарантируем|точная диагностика/i.test(answer)) return null;
+    return answer;
+  } catch {
+    return null;
+  }
+}
