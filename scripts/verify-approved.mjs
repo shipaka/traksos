@@ -187,7 +187,7 @@ if (failures.length) {
 const approvedMasterWindow = await read('web/src/screens/performerOrderWindow.tsx');
 const liveOrderUi = await read('web/src/screens/order.tsx');
 expect(shell.includes("effMode === 'performer' && isPerformer && b ? <PerformerOrderWindow id={b} />") &&
-  approvedMasterWindow.includes('<Work/>') &&
+  approvedMasterWindow.includes('<Work background/>') &&
   approvedMasterWindow.includes('<Order id={id}/>') &&
   approvedMasterWindow.includes('role="dialog"') &&
   approvedMasterWindow.includes("go('work')"),
