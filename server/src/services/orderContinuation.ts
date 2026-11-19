@@ -39,7 +39,8 @@ export class OrderContinuationService {
        and b.continuation_recommendation_id=r.id
        order by b.created_at desc limit 1) as next_booking_id,
      (select id from ecu_handoffs h where r.target_kind='ecu'
-       and h.source_order_id=r.source_order_id order by h.created_at desc limit 1) as next_ecu_handoff_id
+       and h.continuation_recommendation_id=r.id
+       order by h.created_at desc limit 1) as next_ecu_handoff_id
     from order_continuation_recommendations r
     where r.source_order_id=$1 order by r.created_at,r.id`,[orderId]);
  }
