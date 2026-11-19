@@ -293,7 +293,8 @@ function MobilePerformerWork({p, personName, active, awaiting, jobs, incoming, o
       <a href="#/work/me/money"><span aria-hidden="true">₽</span> Финансы</a>
     </nav>
     {balance && <div className="work-mobile-balance note">
-      К выплате: <b>{rub(balance.to_pay)}</b>
+      <span>К выплате: <b>{rub(balance.to_pay)}</b></span>
+      <span>Долг по комиссии с наличных: <b>{rub(balance.cash_debt)}</b></span>
       {balance.paused && <span className="err">Заявки приостановлены до урегулирования комиссии.</span>}
     </div>}
   </main>;
