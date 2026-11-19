@@ -1,6 +1,8 @@
 // Bot UI unit test: 30 expressions, safe classification, server/desktop/mobile shared component.
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { build } from 'esbuild';
 
 const require = createRequire(import.meta.url);
@@ -36,7 +38,13 @@ assert.equal(botReactionFor('Все готово!'), 'done');
 for (const r of BOT_REACTIONS) {
   const html = renderToStaticMarkup(React.createElement(TrakBotMascot, { reaction: r.id, size: 'small' }));
   assert(html.includes('trakbot-mascot-truck'), r.id + ': missing common mascot');
-  assert(html.includes('Trak') && html.includes('SOS'), r.id + ': missing approved truck cap mark');
+  assert(html.includes('data-reaction="' + r.id + '"'), r.id + ': wrong approved reaction frame');
+  assert(html.includes('background-position:'), r.id + ': missing sprite frame coordinates');
   assert(html.includes('aria-hidden="true"'), r.id + ': illustration must stay decorative');
 }
-console.log('TrakBot: all 30 technician reactions, classification and SVG rendering OK');
+const sprite = await readFile('web/public/trakbot-approved-30.webp');
+assert.equal(sprite.length, 5018, 'approved sprite file size changed');
+assert.equal(createHash('sha256').update(sprite).digest('hex'),
+  'b60f010983f80fd5845e1b32c1ee4c5d9ab6be8e22a78e47a2117648c0288c55',
+  'approved sprite must remain the exact owner-selected 30-pose variant, no redraw');
+console.log('TrakBot: all 30 genuine owner-approved frames and reactions OK');
