@@ -358,7 +358,7 @@ export class ServiceCenters {
       },
       months: [...months.values()],
       items,
-      rule: { pct: fees.serviceCommissionPct, max: fees.serviceCommissionMax, referralPct: fees.serviceReferralDiscountPct },
+      rule: { pct: Math.min(5,fees.serviceCommissionPct), max: Math.min(500_000,fees.serviceCommissionMax ?? 500_000), referralPct: fees.serviceReferralDiscountPct },
     };
   }
 
