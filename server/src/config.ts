@@ -48,9 +48,15 @@ export const config = {
   },
   trakbot: {
     // Legal/privacy review and provider configuration required before production rollout.
-    llmEnabled: env.TRAKBOT_LLM_ENABLED === 'true',
+    // Both switches are required: no network inference is enabled by accident.
+    llmEnabled: env.TRAKBOT_LLM_ENABLED === 'true' &&
+      (env.TRAKBOT_LLM_TRANSPORT === 'api' || env.TRAKBOT_LLM_TRANSPORT === 'local'),
+    llmTransport: env.TRAKBOT_LLM_TRANSPORT === 'api' || env.TRAKBOT_LLM_TRANSPORT === 'local'
+      ? env.TRAKBOT_LLM_TRANSPORT : 'off',
     llmApiKey: env.TRAKBOT_LLM_API_KEY ?? '',
     llmModel: env.TRAKBOT_LLM_MODEL ?? 'gpt-4.1-mini',
+    // Loopback only; use an SSH tunnel or local proxy for an independent GPU node.
+    llmLocalUrl: env.TRAKBOT_LLM_LOCAL_URL ?? 'http://127.0.0.1:8000/v1/chat/completions',
   },
   payments: {
     /** mock — тестовый сервис; yookassa — ЮKassa. Включение оплаты — в настройках площадки. */
