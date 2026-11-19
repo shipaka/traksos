@@ -272,6 +272,7 @@
   .guest-app .public-landing .public-service-tile b{grid-column:2!important;grid-row:1!important;align-self:end!important;font-size:clamp(12px,.98vw,17px)!important;color:white!important;margin:0!important;text-shadow:none!important}
   .guest-app .public-landing .public-service-tile small{grid-column:2!important;grid-row:2!important;align-self:start!important;font-size:clamp(9px,.68vw,12px)!important;line-height:1.36!important;color:#d4e3ee!important;margin:4px 0 0!important;text-shadow:none!important}
   .guest-app .public-landing .public-app-card{
+    position:relative!important;min-width:0!important;
     grid-column:2!important;grid-row:1!important;z-index:4!important;
     height:218px!important;min-height:218px!important;transform:translateY(-49px)!important;
     margin:0 0 -92px!important;padding:13px 107px 13px 14px!important;
