@@ -360,7 +360,7 @@ export class OrdersService {
                 where l.performer_id = p.user_id and l.kind in ('cash_commission','cash_commission_paid')) as cash_debt
          from performer_profiles p join users u on u.id = p.user_id
         where p.kind = $1 and p.user_id <> $2 and p.is_priority
-          and not exists (select 1 from orders x where x.performer_id=p.user_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (x.service='consult' and x.status='awaiting_confirmation'))`,
+          and not exists (select 1 from orders x where x.performer_id=p.user_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (x.service='consult' and x.status='awaiting_confirmation') and not (x.status='awaiting_confirmation' and exists (select 1 from order_unilateral_closures uc where uc.order_id=x.id and uc.status in ('pending_client','disputed'))))`,
       [kind, order.client_id],
     );
     const already = await this.db.query<{ performer_id: string }>('select performer_id from order_dispatch where order_id=$1', [orderId]);
@@ -404,7 +404,7 @@ export class OrdersService {
       " where p.user_id=$1 and p.kind=$2 and not exists" +
       " (select 1 from orders x where x.performer_id=p.user_id and" +
       " x.status in ('accepted','en_route','arrived','working','awaiting_confirmation')" +
-      " and not (x.service='consult' and x.status='awaiting_confirmation'))",
+      " and not (x.service='consult' and x.status='awaiting_confirmation') and not (x.status='awaiting_confirmation' and exists (select 1 from order_unilateral_closures uc where uc.order_id=x.id and uc.status in ('pending_client','disputed'))))",
       [performerId,performerKindFor(order.service)]);
     const policy = this.auction.stages(order, all.dispatch);
     const stage = policy?.[Number(order.sos_dispatch_stage??0)]??null;
@@ -444,7 +444,7 @@ export class OrdersService {
     const next = await this.db.query<{ id: string; performer_id: string; distance_km: number | null }>(
       `update order_dispatch set status='ringing', ring_until=$2, sent_at=$3
         where id in (select d.id from order_dispatch d where d.order_id=$1 and d.status='queued'
-                       and not exists (select 1 from orders x where x.performer_id=d.performer_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (x.service='consult' and x.status='awaiting_confirmation'))
+                       and not exists (select 1 from orders x where x.performer_id=d.performer_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (x.service='consult' and x.status='awaiting_confirmation') and not (x.status='awaiting_confirmation' and exists (select 1 from order_unilateral_closures uc where uc.order_id=x.id and uc.status in ('pending_client','disputed'))))
                      order by d.rank limit $4)
         returning id, performer_id, distance_km`,
       [orderId, until, this.now(), free],
@@ -648,6 +648,8 @@ export class OrdersService {
   async proposeAmount(user: AuthUser, orderId: string, p: { extras?: Extra[]; result?: 'solved' | 'cause_found' | 'not_found'; note?: string }) {
     const o = await this.mustBePerformer(user, orderId);
     if (o.service === 'consult') throw bad('consult_fixed', 'Цена консультации фиксированная. Закройте её с подсказкой.');
+    if (await this.db.one("select 1 from order_unilateral_closures where order_id=$1", [orderId]))
+      throw conflict('unilateral_bill_locked', 'Расчёт зафиксирован после аварийного завершения. Обратитесь к модератору');
     const to = transition(o.status, 'propose_amount', 'performer');
     if (['cause_found', 'not_found'].includes(p.result ?? '') && (p.note?.trim().length ?? 0) < 10)
       throw bad('result_reason_required', 'Напишите, почему неисправность нельзя устранить на месте (не меньше 10 символов)');
@@ -657,7 +659,8 @@ export class OrdersService {
     await this.guarded(this.db,
       `update orders set status=$2, work_amount=$3, bill=$9, amount_proposed_at=$6, amount_confirmed_at=null,
          wait_minutes=$10, wait_started_at=null,
-         result=coalesce($4,result), result_note=coalesce($5,result_note) where id=$1 and status=$7 and performer_id=$8`,
+         result=coalesce($4,result), result_note=coalesce($5,result_note) where id=$1 and status=$7 and performer_id=$8
+         and not exists (select 1 from order_unilateral_closures where order_id=$1) `,
       [orderId, to, bill.total, p.result ?? null, p.note ?? null, this.now(), o.status, user.id, bill, bill.waitMinutes],
     );
     const m = this.money({ ...o, work_amount: bill.total });
@@ -700,6 +703,18 @@ export class OrdersService {
     let used = 0;
     if (expectedTotal != null && expectedTotal !== m.total) throw conflict('amount_changed', 'Сумма изменилась — проверьте заново');
     await this.db.tx(async (q) => {
+      const current = await q.one<any>('select status,work_amount from orders where id=$1 for update', [orderId]);
+      if (current?.status !== 'awaiting_confirmation' || current.work_amount !== o.work_amount)
+        throw conflict('state_changed', 'Расчёт уже изменился — обновите экран');
+      const unilateral = await q.one<{status:string;work_amount:number;bill_matches:boolean}>(
+        `select u.status,u.work_amount,(u.bill_snapshot=o.bill) as bill_matches
+           from order_unilateral_closures u join orders o on o.id=u.order_id where u.order_id=$1`,[orderId]);
+      if (unilateral) {
+        if (user.id !== o.client_id) throw forbidden('Аварийное завершение подтверждает только владелец');
+        if (unilateral.status !== 'pending_client') throw conflict('unilateral_review', 'Заявка уже на рассмотрении');
+        if (!unilateral.bill_matches || unilateral.work_amount !== o.work_amount)
+          throw conflict('bill_changed', 'Смета изменилась. Подтверждение заблокировано');
+      }
       // Бонусы клиента списываются сами в момент подтверждения
       const bonus = await q.one<{ b: number }>('select coalesce(sum(amount),0)::int b from bonus_entries where user_id=$1', [o.client_id]);
       const use = Math.min(bonus?.b ?? 0, m.total);
@@ -716,6 +731,11 @@ export class OrdersService {
           where id=$1 and status='awaiting_confirmation' and work_amount is not distinct from $4 and performer_id=$5`,
         [orderId, to, this.now(), o.work_amount, o.performer_id]);
       await q.query(`update performer_profiles set line_status='online' where user_id=$1 and line_status='on_job'`, [o.performer_id]);
+      if (unilateral) {
+        await q.query(`update order_unilateral_closures set status='accepted',responded_by=$2,responded_at=$3
+                         where order_id=$1 and status='pending_client'`,[orderId,user.id,this.now()]);
+        await this.event(q,orderId,user.id,'unilateral_accepted',{workAmount:o.work_amount});
+      }
       await this.event(q, orderId, user.id, 'amount_confirmed', { total: m.total, method: o.payment_method });
       await this.payments.onConfirmed({ ...o, status: to, discount_amount: Number(o.discount_amount ?? 0) + used }, q);
       await this.referral?.afterOrder(q, { ...o, status: to }, m.amount);
@@ -733,16 +753,40 @@ export class OrdersService {
   }
 
   async disputeAmount(user: AuthUser, orderId: string, reason: string) {
-    const o = await this.mustBeClient(user, orderId);
-    const to = transition(o.status, 'dispute_amount', 'client');
-    await this.guarded(this.db, `update orders set status=$2, bill = case when bill is null then null else bill || '{"disputed":true}'::jsonb end
+    const o = await this.mustBeClient(user,orderId);
+    const to = transition(o.status,'dispute_amount','client');
+    const unilateral = await this.db.tx(async (q) => {
+      const current = await q.one<any>('select * from orders where id=$1 for update',[orderId]);
+      if (!current || current.status !== 'awaiting_confirmation')
+        throw conflict('state_changed','Состояние изменилось — обновите экран');
+      const closure = await q.one<{status:string;work_amount:number;bill_matches:boolean}>(
+        `select u.status,u.work_amount,(u.bill_snapshot=o.bill) as bill_matches
+         from order_unilateral_closures u join orders o on o.id=u.order_id where u.order_id=$1`,[orderId]);
+      if (closure) {
+        if (user.id !== current.client_id) throw forbidden('Оспорить аварийное завершение может только владелец');
+        if (closure.status !== 'pending_client') throw conflict('unilateral_review','Решение уже отправлено');
+        if (!closure.bill_matches || closure.work_amount !== current.work_amount)
+          throw conflict('bill_changed','Смета изменилась — нужна проверка модератора');
+        await q.query(
+          `update order_unilateral_closures set status='disputed',responded_by=$2,responded_at=$3,decision_reason=$4
+             where order_id=$1 and status='pending_client'`,[orderId,user.id,this.now(),reason]);
+        await this.event(q,orderId,user.id,'unilateral_disputed',{reason});
+        return true;
+      }
+      await this.guarded(q, `update orders set status=$2, bill = case when bill is null then null else bill || '{"disputed":true}'::jsonb end
         where id=$1 and status='awaiting_confirmation'`, [orderId, to]);
-    await this.event(this.db, orderId, user.id, 'amount_disputed', { reason });
-    await this.systemMessage(orderId, `Клиент не согласен с расходниками: ${reason}. Время работы не меняется — исправьте строки расходников или позовите поддержку.`);
-    await this.onDispute?.({ userId: user.id, orderId, text: reason, targetId: o.performer_id, title: `Не согласен с суммой по заявке №${o.number}` });
-    await this.notifier.notify([o.performer_id], { type: 'order', orderId, status: to },
-      { kind: 'normal', title: 'Клиент не согласен с суммой', body: reason, data: { orderId } });
-    return this.view(user, orderId);
+      await this.event(q,orderId,user.id,'amount_disputed',{reason});
+      return false;
+    });
+    await this.systemMessage(orderId,unilateral
+      ? 'Заказчик оспорил работу и/или сумму. Физическая работа заявлена завершённой, заказ и деньги остаются на проверке модератора.'
+      : `Клиент не согласен с расходниками: ${reason}. Время работы не меняется — исправьте строки расходников или позовите поддержку.`);
+    await this.onDispute?.({userId:user.id,orderId,text:reason,targetId:o.performer_id,
+      title:unilateral?`Аварийное завершение оспорено · №${o.number}`:`Не согласен с суммой по заявке №${o.number}`});
+    await this.notifier.notify([o.performer_id],{type:'order',orderId,status:unilateral?'awaiting_confirmation':to},
+      {kind:'normal',title:unilateral?'Работа оспорена — проверка модератора':'Клиент не согласен с суммой',
+       body:reason,data:{orderId}});
+    return this.view(user,orderId);
   }
 
   async cancel(user: AuthUser, orderId: string, reason: string) {
@@ -751,6 +795,8 @@ export class OrdersService {
     const actor = this.actorOf(user, o);
     if (actor === 'performer') throw bad('use_drop', 'Исполнитель отказывается от заявки кнопкой «Не смогу приехать»');
     if (!actor) throw forbidden();
+    if (await this.db.one("select 1 from order_unilateral_closures where order_id=$1", [orderId]))
+      throw conflict('unilateral_review', 'Расчёт после аварийного завершения рассматривается отдельно. Обратитесь к модератору');
     transition(o.status, 'cancel', actor);
     // Fail closed on the 100% halfway tier: the current location endpoint stores
     // only the last point, and dispatch distance is not a verified travelled route.
@@ -854,6 +900,9 @@ export class OrdersService {
   async view(user: AuthUser, orderId: string) {
     const o = await this.mustSee(user, orderId);
     const actor = this.actorOf(user, o);
+    const unilateralClosure = actor ? await this.db.one(
+      `select status,reason,comment,evidence_refs,work_amount,created_at,responded_at,decision_reason
+         from order_unilateral_closures where order_id=$1`,[orderId]) : null;
     const performer = o.performer_id
       ? await this.db.one(
           `select u.id, u.name, u.rating::float as rating, u.rating_count, p.car, p.kind, p.lat, p.lng, p.location_at, (p.extras->>'waitRate')::int as wait_rate
@@ -948,7 +997,7 @@ export class OrdersService {
       auction: o.status === 'searching' && !!o.auction_until, auctionUntil: o.auction_until, autoPick: o.auto_pick, search, searchStage,
       limits: o.status === 'searching' ? this.auction.limits(o, (await this.settings.get('dispatch'))) : null,
       destination: o.destination, cargo: o.cargo, loaded: o.loaded, driverOnSite: o.driver_on_site, discountReason: o.discount_reason,
-      money: this.money(o), result: o.result, resultNote: o.result_note,
+      money: this.money(o), result: o.result, resultNote: o.result_note, unilateralClosure,
       pointsFee: o.points_fee ?? 0, pointsCommission: actor === 'performer' || actor === 'admin' ? o.points_commission ?? 0 : undefined,
       points: actor === 'client' && o.status === 'awaiting_confirmation' && this.referral ? await this.referral.available(o.client_id, this.money(o).clientFee) : null,
       bill: o.bill ?? null, billingStep: Number((await this.settings.get('pricing')).billingStepMinutes ?? 60),
@@ -1067,7 +1116,7 @@ export class OrdersService {
   /** Есть ли у исполнителя другая заявка в работе */
   async busyWith(q: Queryable, performerId: string, exceptOrderId: string | null) {
     return !!(await q.one(
-      `select 1 from orders where performer_id=$1 and status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (service='consult' and status='awaiting_confirmation') and ($2::uuid is null or id<>$2::uuid) limit 1`,
+      `select 1 from orders where performer_id=$1 and status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (service='consult' and status='awaiting_confirmation') and not (status='awaiting_confirmation' and exists (select 1 from order_unilateral_closures u where u.order_id=orders.id and u.status in ('pending_client','disputed'))) and ($2::uuid is null or id<>$2::uuid) limit 1`,
       [performerId, exceptOrderId]));
   }
 
