@@ -97,7 +97,11 @@ export function Home() {
               <a key={o.id} href={`#/order/${o.id}`} className="card hi" style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div className="between">
                   <b>Заявка №{o.number} · {SERVICES[o.service]?.name ?? o.service}</b>
-                  <span className={`pill ${STATUS[o.status]?.tone}`}>{STATUS[o.status]?.name}</span>
+                  <span className={`pill ${o.unilateral_status==='disputed'?'warn':STATUS[o.status]?.tone}`}>
+                {o.unilateral_status==='pending_client'?'Работа сдана · нужен ваш ответ'
+                  :o.unilateral_status==='disputed'?'На разбирательстве'
+                  :STATUS[o.status]?.name}
+              </span>
                 </div>
                 <span className="note">{o.service === 'consult' ? 'по телефону' : o.address ?? o.estimate?.zoneName} · открыть →</span>
               </a>
@@ -878,7 +882,7 @@ export function Orders({ as }: { as: 'client' | 'performer' }) {
           ))}
         </div>
       )}
-      {showingNow && <h2>Активные выезды и консультации · {(list.data ?? []).filter(live).length}</h2>}
+      {showingNow && <h2>Текущие обращения и заявки на подтверждении · {(list.data ?? []).filter(live).length}</h2>}
       {as === 'client' && ctab === 'hist' && list.data && <TaskArchive orders={list.data.filter((o: any) => !live(o))} />}
       {as === 'client' && (ctab === 'my' || ctab === 'black') ? <MyPerformers black={ctab === 'black'} /> :
       as === 'client' && ctab === 'hist' ? null : !list.data ? <Loading error={list.error} /> : !shown!.length ?
