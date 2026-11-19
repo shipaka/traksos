@@ -107,6 +107,30 @@ try {
       assert(benefits[1].includes('Быстрая помощь'), 'second approved benefit missing');
       assert(benefits[2].includes('Всё в одном месте'), 'third approved benefit missing');
     }
+    if (width >= 1440) {
+      // Actual owner-approved 19 Nov composition, not a static rendered mock:
+      // one header row, compact RuStore promo, three benefits beside the bot.
+      const layout = await page.evaluate(() => {
+        const box = (selector) => {
+          const r = document.querySelector(selector)?.getBoundingClientRect();
+          return r ? {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height} : null;
+        };
+        return {
+          header:box('.guest-app .top'),
+          promo:box('.public-app-card'),
+          benefits:box('.public-why-strip'),
+          bot:box('.trakbot-dock-launcher')
+        };
+      });
+      assert(layout.header && layout.header.height <= 92,
+        width + 'px: approved single-row header regressed: ' + JSON.stringify(layout.header));
+      assert(layout.promo && layout.promo.right <= width + 2,
+        width + 'px: promo card escaped viewport: ' + JSON.stringify(layout.promo));
+      assert(layout.bot && layout.bot.width >= 190 && layout.bot.width <= 360,
+        width + 'px: approved bot dock must stay compact but readable: ' + JSON.stringify(layout.bot));
+      assert(layout.benefits && layout.promo && layout.benefits.top >= layout.promo.bottom - 15,
+        width + 'px: benefits must start below elevated RuStore promo: ' + JSON.stringify(layout));
+    }
     assert(data.tileIcons === 6, width + 'px: technical icon missing from a public tile');
     assert(data.heroCss?.includes('tracksos-approved-scenic-hero') && !data.heroCss.includes('traksos-final-hero'),
       width + 'px: full approved Scania photo without baked carousel controls is not displayed');
