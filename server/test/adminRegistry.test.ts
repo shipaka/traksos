@@ -18,7 +18,7 @@ test('CRM registry: real roles, regional source, combined filters, export and au
     ok(await t.api('PUT','/api/performer/profile',
       {kind:'master',name:'Электрик 24',specialties:['electric'],taxStatus:'self_employed',inn:'780000000001'},master.token));
     ok(await t.api('PUT','/api/performer/profile',
-      {kind:'tow',name:'Эвакуация 78',specialties:['tow'],taxStatus:'ip',inn:'780000000002'},tow.token));
+      {kind:'tow',name:'Эвакуация 78',specialties:['electric'],taxStatus:'ip',inn:'780000000002'},tow.token));
     ok(await t.api('PUT','/api/base',
       {name:'Рембаза Центр',address:'Санкт-Петербург, Софийская улица, 8'},base.token));
 
