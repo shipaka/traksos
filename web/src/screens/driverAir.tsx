@@ -3,7 +3,7 @@ import { get, post } from '../api.ts';
 import { Back, useMe } from '../ui.tsx';
 
 type Message = { id:string; author:string; body:string; isBot:boolean; createdAt:string };
-type Air = { messages:Message[]; botEnabled:boolean; canModerate:boolean; canConfigure:boolean; publicForDrivers:boolean };
+type Air = { messages:Message[]; botEnabled:boolean; canModerate:boolean; canConfigure:boolean; canPost:boolean; publicForDrivers:boolean };
 
 export function DriverAir() {
   const { me } = useMe();
@@ -15,7 +15,10 @@ export function DriverAir() {
   const [refresh,setRefresh] = useState(0);
   const end = useRef<HTMLDivElement>(null);
   const lastCount = useRef(0);
-  const canView = !!me?.roles.some(r=>['client','driver','master','tow','service','admin','moderator'].includes(r));
+  const isStaff = !!me?.roles.some(r=>r==='admin'||r==='moderator');
+  const ownerOrDriver = !!me?.roles.some(r=>r==='client'||r==='driver') &&
+    !me?.roles.some(r=>['master','tow','service','insurer','inspection_operator','admin','moderator'].includes(r));
+  const canView = ownerOrDriver || isStaff;
 
   useEffect(()=>{
     if(!canView) return;
@@ -38,7 +41,7 @@ export function DriverAir() {
   },[air?.messages.length]);
 
   const send = async()=>{
-    if(posting||!text.trim())return;
+    if(!air?.canPost||posting||!text.trim())return;
     setPosting(true);setError('');
     try {
       const answer=await post<{supportSuggested:boolean}>('/api/air/messages',{body:text.trim()});
@@ -66,11 +69,11 @@ export function DriverAir() {
     finally{setPosting(false);}
   };
   if(!canView) return <main><Back to="" /><h1>Эфир водителей</h1>
-    <p>Общий эфир доступен зарегистрированным водителям, мастерам, СТО и сотрудникам.</p></main>;
+    <p>Писать в общем эфире могут только водители и владельцы автопарков. Сотрудникам доступна модерация.</p></main>;
   return <main className="stack" style={{maxWidth:840}}>
     <Back to="" />
     <div className="between" style={{gap:12,flexWrap:'wrap'}}>
-      <div><h1>Эфир TrakSOS</h1><p className="sub">Общий текстовый чат водителей и специалистов. Маршруты, жизнь в рейсе, полезный опыт и общение.</p></div>
+      <div><h1>Эфир TrakSOS</h1><p className="sub">Общий текстовый чат водителей и владельцев автопарков. Маршруты, жизнь в рейсе, полезный опыт и общение.</p></div>
       <a className="btn ghost small" href="#/support/new">Личное обращение</a>
     </div>
     <div className="card flat">
@@ -84,7 +87,7 @@ export function DriverAir() {
     <section className="card" aria-label="Общий эфир водителей">
       <div role="log" aria-label="Сообщения эфира" aria-live="polite" style={{height:'min(53vh,520px)',minHeight:260,overflowY:'auto'}}>
         {!air && <div className="empty">Загружаю сообщения…</div>}
-        {air && !air.messages.length && <div className="empty">Эфир открыт. Начни разговор — например, расскажи, как проходит рейс.</div>}
+        {air && !air.messages.length && <div className="empty">{air.canPost ? 'Эфир открыт. Начни разговор — например, расскажи, как проходит рейс.' : 'Сообщений пока нет.'}</div>}
         {air?.messages.map(item=><div key={item.id} className="card flat" style={{margin:'8px 0',padding:12}}>
           <div className="between" style={{gap:10}}>
             <b>{item.author}</b>
@@ -104,13 +107,13 @@ export function DriverAir() {
         <p className="note">Проблема по заявке, поведению участника или работе сервиса? Напиши подробности в личной поддержке. Это не создаст обращение до твоего подтверждения.</p>
         <a className="btn ghost" href="#/support/new">Перейти к обращению</a>
       </div>}
-      <form className="compose" onSubmit={e=>{e.preventDefault();void send();}}>
+      {air?.canPost ? <form className="compose" onSubmit={e=>{e.preventDefault();void send();}}>
         <input className="field" value={text} maxLength={400} disabled={posting}
           onChange={e=>setText(e.target.value)} aria-label="Сообщение в эфир"
           placeholder="Напиши водителям… или @TrakBot, расскажи шутку" />
         <button className="btn" type="submit" disabled={posting||!text.trim()}>Отправить</button>
-      </form>
-      <p className="note">Для вызова помощи напиши @модератор или @админ. TrakBot уточнит, как оформить вопрос без раскрытия деталей в публичном чате.</p>
+      </form> : <p className="note">Режим наблюдения: писать в эфир могут только водители и владельцы автопарков. Модераторы и администраторы могут скрывать нарушения.</p>}
+      {air?.canPost && <p className="note">Для вызова помощи напиши @модератор или @админ. TrakBot уточнит, как оформить вопрос без раскрытия деталей в публичном чате.</p>}
     </section>
   </main>;
 }
