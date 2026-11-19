@@ -401,7 +401,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     ) ? [['/air', 'Эфир водителей'] as [string,string]] : []),
     ['/support', 'Поддержка'], ['/notifications', 'Уведомления'],
     ['/learn', 'Знакомство с TrakSOS'], ['/help', 'Помощь и подсказки'], ['/trakbot', 'TrakBot · личный чат'], ['/rules', 'Правила площадки'],
-    ['/offer/' + (mode === 'performer' || mode === 'service' ? 'performer' : mode === 'insurer' ? 'privacy' : 'client'), mode === 'insurer' ? 'Документы и условия' : 'Оферта'],
+    ['/offer/' + (mode === 'performer' || mode === 'service' ? 'performer' : mode === 'insurer' ? 'insurer' : mode === 'inspection' ? 'inspection' : mode === 'admin' || mode === 'moderator' ? 'privacy' : 'client'), mode === 'insurer' || mode === 'inspection' ? 'Договор партнёра' : 'Оферта'],
     ['/offer/privacy', 'Политика персональных данных'],
     ['/privacy', 'Мои персональные данные']];
   return (
