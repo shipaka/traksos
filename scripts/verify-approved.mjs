@@ -199,15 +199,17 @@ const vehicleVisual=await read('web/src/vehicleVisual.tsx');
 const performerUi=await read('web/src/screens/performer.tsx');
 const garageUi=await read('web/src/screens/client.tsx');
 const fleetUi=await read('web/src/screens/fleet.tsx');
-expect(vehicleVisual.includes("brand: 'scania'") &&
-  vehicleVisual.includes('/tracksos-approved-scania-r520.webp') &&
-  vehicleVisual.includes('return null;') &&
-  vehicleVisual.includes('Точное фото модели пока недоступно') &&
-  vehicleVisual.includes('Фото модели пока не добавлено') &&
+const photoCatalog=await read('web/src/vehiclePhotoCatalog.ts');
+const photoSourceManifest=JSON.parse(await read('scripts/vehiclePhotoSources.json'));
+expect(photoSourceManifest.items.length===6 &&
+  photoSourceManifest.items.every(x=>photoCatalog.includes(x.id+'.webp')) &&
+  vehicleVisual.includes('vehiclePhotoCatalog.ts') &&
+  vehicleVisual.includes('Точное фото модели пока не добавлено') &&
   !vehicleVisual.includes('tracksos-hero-service-hq.webp') &&
   !vehicleVisual.includes('tracksos-photo-master.webp') &&
-  fleetUi.includes('<VehicleModelPhoto brand={c.brand} model={c.model}/>'),
-  '19 Nov vehicle photo invariant: exact brand/model only; missing images use neutral placeholder, never another truck');
+  fleetUi.includes('<VehicleModelPhoto brand={c.brand} model={c.model} year={c.year}/>') &&
+  photoCatalog.includes('yearRequired:true'),
+  '19 Nov photo gate: six locally optimized model+generation WebPs; no unrelated fallback, wrong year or manufacturer');
 expect(performerUi.includes('<VehiclePhotoLink compact') &&
   performerUi.includes('/vehicle') &&
   shell.includes("'garage': screen = isCustomer ? <Garage focusVehicleId={b} />"),
