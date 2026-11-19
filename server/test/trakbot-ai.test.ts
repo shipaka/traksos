@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { canUseGroundedAi } from '../src/services/trakbotAi.ts';
+import { canUseGroundedAi, neutralConversationEligible } from '../src/services/trakbotAi.ts';
 import { composeTrakBotReply } from '../src/services/trakbot.ts';
 
 const p0087 = {
@@ -57,4 +57,14 @@ test('neutral small-talk is human-friendly and never hard-sells', () => {
   const cost = composeTrakBotReply('TrakBot платный?', []);
   assert.match(cost, /сейчас бесплатный/i);
   assert.doesNotMatch([hello,thanks,who,cost].join(' '), /покупайте|оформить заказ|срочно оплачивай/i);
+});
+
+
+test('neutral AI is restricted to harmless small talk and does not receive repair or platform queries', () => {
+  assert.equal(neutralConversationEligible('привет, как дела?'), true);
+  assert.equal(neutralConversationEligible('расскажи шутку'), true);
+  assert.equal(neutralConversationEligible('как дела с тормозами EBS?'), false);
+  assert.equal(neutralConversationEligible('покажи мои заявки'), false);
+  assert.equal(neutralConversationEligible('сколько стоит платная диагностика'), false);
+  assert.equal(neutralConversationEligible('ошибка P0087'), false);
 });
