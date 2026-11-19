@@ -139,7 +139,32 @@ export class TrakBotService {
       apiKey: config.trakbot.llmApiKey,
       model: config.trakbot.llmModel,
     }) : null;
-    const answer = generated ?? deterministic;
+    // Verified field experience is only attached for validated technicians and
+    // a matching vehicle. Never use it as a universal repair instruction.
+    let caseNotes = '';
+    if (specialist && codes.length && context.make?.trim()) {
+      const staff = user.roles.some((r) => ['admin','moderator'].includes(r));
+      const profile = staff ? { verification: 'approved' } :
+        await this.db.one<{ verification: string }>(
+          'select verification from performer_profiles where user_id=$1', [user.id],
+        );
+      if (profile?.verification === 'approved') {
+        const matches = await this.db.query<{
+          make: string; model: string; ecu: string; code: string;
+          symptoms: string; checks_performed: string; verified_fix: string;
+        }>(
+          "select make,model,ecu,code,symptoms,checks_performed,verified_fix from technical_repair_cases where review_state='approved' and code=any($1::text[]) and lower(make)=lower($2) and ($3='' or model='' or lower(model)=lower($3)) and ($4='' or ecu='' or lower(ecu)=lower($4)) and ($5::int is null or production_year is null or production_year=$5::int) order by id desc limit 2",
+          [codes, context.make.trim(), (context.model ?? '').trim(), (context.ecu ?? '').trim(), context.year ?? null],
+        );
+        if (matches.length) {
+          caseNotes = '\n\nИз проверенных кейсов коллег для похожей комплектации (не заводская инструкция):\n' +
+            matches.map((x) => x.code + ' · признаки: ' + x.symptoms +
+              '; проверяли: ' + x.checks_performed + '; в том случае помогло: ' + x.verified_fix).join('\n') +
+            '\nСравни конфигурацию и измерения до любых ремонтных действий.';
+        }
+      }
+    }
+    const answer = (generated ?? deterministic) + caseNotes;
     const unsupported = SPN_PATTERN.test(message) || /\bFMI\b/i.test(message);
     const mismatch = /^(EBS|ABS|ECAS)$/i.test((context.ecu ?? '').trim()) ||
       /\b(EBS|ABS|ECAS)\b/i.test(message);
