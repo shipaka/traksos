@@ -184,4 +184,17 @@ if (failures.length) {
   process.exitCode = 1;
 } else console.log('Approved TrakSOS design gate: all invariants passed.');
 
+const approvedMasterWindow = await read('web/src/screens/performerOrderWindow.tsx');
+const liveOrderUi = await read('web/src/screens/order.tsx');
+expect(shell.includes("effMode === 'performer' && isPerformer && b ? <PerformerOrderWindow id={b} />") &&
+  approvedMasterWindow.includes('<Work/>') &&
+  approvedMasterWindow.includes('<Order id={id}/>') &&
+  approvedMasterWindow.includes('role="dialog"') &&
+  approvedMasterWindow.includes("go('work')"),
+  'approved 18 Nov performer popup shows live dashboard and real order with close/ESC, not fake cards');
+expect(['Работа','Клиент и ТС','Расчёт','Чат','История'].every(label=>liveOrderUi.includes(label)) &&
+  liveOrderUi.includes("ptab === 'finance' ? <Money d={d} />") &&
+  liveOrderUi.includes("ptab === 'chat' ? <Chat id={id} status={d.status} />"),
+  'approved performer order separates live work/vehicle/finance/chat/history in real tabs');
+
 console.log('DESIGN AUDIT PENDING: verify Nov 18 TrakSos-branded manufacturer-neutral truck and 9-card desktop layout against owner-approved visual. Legacy asset checks are not an approval.');
