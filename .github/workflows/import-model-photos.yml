@@ -1,0 +1,24 @@
+name: One-time licensed model-photo import
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/import-model-photos.yml'
+      - 'scripts/import_vehicle_photos.py'
+      - 'scripts/vehiclePhotoSources.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  import-approved:
+    if: github.head_ref == 'feature/model-photos-license-plates-20261119'
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install photo processing
+        run: python3 -m pip install --disable-pip-version-check pillow==11.3.0
+      - name: Download licensed Commons photographs, redact registration plates and emit reviewed assets
+        run: python3 scripts/import_vehicle_photos.py --emit-github-logs
