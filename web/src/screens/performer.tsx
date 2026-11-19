@@ -31,10 +31,9 @@ export function Work() {
 
   return (
     <main className="work-live-dashboard">
-      <WorkerNotices />
+      <div className="and19-keep-notices"><WorkerNotices /></div>
       <AndroidPerformerWorkspace performer={p} active={active} auctions={auctions.data ?? []} online={online}
         busy={busy} setLine={(status) => setLine(status)} balance={balance.data} reloadAuctions={auctions.reload} />
-      <div className="and19-legacy-performer">
       <section className="work-command-hero" aria-label="Рабочий стол исполнителя">
         <div className="work-command-copy">
           <span className="work-command-kicker">TRAKSOS · {p.kind === 'tow' ? 'ЭВАКУАЦИЯ' : 'ВЫЕЗДНАЯ ПОМОЩЬ'}</span>
@@ -102,7 +101,6 @@ export function Work() {
         </div>
       )}
       <button className="btn ghost" onClick={() => go('work/me/money')}>Финансы · все операции</button>
-      </div>
     </main>
   );
 }
