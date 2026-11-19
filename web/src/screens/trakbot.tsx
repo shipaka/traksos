@@ -23,7 +23,7 @@ function BotBubble({ message, newest = false, onNavigate }: {
   const label = BOT_REACTIONS.find((entry) => entry.id === reaction)?.label || 'Помогу разобраться';
   return <div className={'msg trakbot-message--bot' + (newest ? ' trakbot-message--new' : '')}>
     <div className="trakbot-bot-layout">
-      <TrakBotMascot reaction={reaction} size="regular" />
+      <TrakBotMascot reaction={reaction} size="small" />
       <div className="trakbot-bot-content">
         <div className="trakbot-bot-head"><strong className="trakbot-bot-name">TrackSalesBot</strong>
           <span className="trakbot-bot-state">{label}</span>
@@ -136,8 +136,11 @@ export function TrakBotChat({ compact = false, onNavigate }: { compact?: boolean
   return <Frame className={compact ? 'trakbot-compact-body' : undefined}>
     {!compact && <Back to="help" />}
     {compact ? <h2 className="trakbot-compact-title">TrackSalesBot</h2> : <div className="trakbot-chat-title"><TrakBotMascot reaction="hello" size="small"/><h1>TrackSalesBot</h1></div>}
-    <div className="sub">{isTech ? 'Помощник мастера и СТО.' : 'Помощник для водителя.'} Личный чат, без публикаций в общем эфире.</div>
-    <p className="trakbot-advice" role="note">{advice} <a href="#/rules" onClick={onNavigate}>Условия</a></p>
+    {!compact && <div className="sub">{isTech ? 'Помощник мастера и СТО.' : 'Помощник для водителя.'} Личный чат, без публикаций в общем эфире.</div>}
+    {compact ? <details className="trakbot-advice-compact">
+      <summary>Важно: советы справочные, не диагноз</summary>
+      <p>{advice} <a href="#/rules" onClick={onNavigate}>Условия</a></p>
+    </details> : <p className="trakbot-advice" role="note">{advice} <a href="#/rules" onClick={onNavigate}>Условия</a></p>}
     <details className="card flat trakbot-vehicle" open={!compact || undefined}>
       <summary><b>Данные машины (необязательно)</b></summary>
       <div className="stack" style={{ gap: 8 }}>
@@ -158,7 +161,7 @@ export function TrakBotChat({ compact = false, onNavigate }: { compact?: boolean
       </div>
     </details>
     <section className="card trakbot-dialog">
-      <div className="msgs" ref={msgBox} aria-live="polite" style={{ minHeight: compact ? 180 : 240, maxHeight: compact ? '35vh' : '50vh', overflowY: 'auto' }}>
+      <div className="msgs" ref={msgBox} aria-live="polite" style={{ minHeight: compact ? 0 : 240, maxHeight: compact ? undefined : '50vh', overflowY: 'auto' }}>
         {!messages.length && <BotBubble message={{ id: 'initial', role: 'bot', body: initialGreeting, created_at: '' }} onNavigate={onNavigate} />}
         {messages.map((message) => message.role === 'bot'
           ? <BotBubble key={message.id} message={message} newest={message.id === justAnsweredId} onNavigate={onNavigate} />
@@ -173,22 +176,30 @@ export function TrakBotChat({ compact = false, onNavigate }: { compact?: boolean
         <div ref={end} />
       </div>
       {error && <div role="alert" className="note" style={{ color: 'var(--danger, #b42318)' }}>{error}</div>}
+      {compact && handoff && <div className="trakbot-compact-handoff" role="note">
+        Нет проверенной расшифровки. {!isTech && <a href="#/new/consult" onClick={onNavigate}>Связаться с мастером</a>}
+      </div>}
       <form className="compose" onSubmit={(event) => { event.preventDefault(); void send(); }}>
         <input className="field" maxLength={700} value={text} onChange={(e) => setText(e.target.value)} placeholder="Например: Iveco, ошибка P0087..." aria-label="Сообщение TrakBot" />
         {speechAvailable && <button type="button" className="btn ghost small" aria-label={listening ? 'Остановить запись голоса' : 'Надиктовать вопрос'} title="Надиктовать вопрос — ответ придёт текстом" onClick={startDictation}>{listening ? 'Стоп' : '🎙'}</button>}
         <button type="submit" className="btn small" disabled={working || !text.trim()}>{working ? '...' : 'Отправить'}</button>
       </form>
     </section>
-    <TrakBotReactionGallery />
-    <span className="note">Сейчас это бесплатный помощник, без автоплатежей. Платные консультации — отдельно, только после явного согласия. Голосовой ввод включается отдельно после проверки устройства и приватности.</span>
-    {!!messages.length && <button type="button" className="btn ghost small" disabled={working}
+    {!compact && <TrakBotReactionGallery />}
+    {compact
+      ? <div className="trakbot-compact-footer">
+          <span>Бесплатно · Без автоплатежей</span>
+          <a href="#/trakbot" onClick={onNavigate}>Полный чат и настройки</a>
+        </div>
+      : <span className="note">Сейчас это бесплатный помощник, без автоплатежей. Платные консультации — отдельно, только после явного согласия. Голосовой ввод включается отдельно после проверки устройства и приватности.</span>}
+    {!compact && !!messages.length && <button type="button" className="btn ghost small" disabled={working}
       aria-label="Очистить историю TrakBot" onClick={() => void clearConversation()}>Очистить мою переписку</button>}
-    {handoff && <div className="card flat">
+    {!compact && handoff && <div className="card flat">
       <b>Здесь достоверной расшифровки не нашлось.</b>
       <span className="note">Не буду придумывать. Можно уточнить исходные данные или перейти к человеку — только если захочешь.</span>
       {!isTech && <a className="btn ghost" href="#/new/consult" onClick={onNavigate}>Связаться с мастером</a>}
     </div>}
-    {canUseTech && <a href="#/tech/codes" className="btn ghost" onClick={onNavigate}>Технический справочник кодов для специалистов</a>}
+    {!compact && canUseTech && <a href="#/tech/codes" className="btn ghost" onClick={onNavigate}>Технический справочник кодов для специалистов</a>}
   </Frame>;
 }
 
