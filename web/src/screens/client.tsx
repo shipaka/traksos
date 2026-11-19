@@ -33,7 +33,6 @@ export function Home() {
   return (
     <main className="client-home client-dashboard">
       <AndroidClientWorkspace orders={live} loading={!active.data && !active.error} error={active.error} retry={active.reload} me={me} />
-      <div className="and19-legacy-client">
       <section className="desktop-hero" aria-label="Помощь грузовому транспорту">
         <div className="desktop-hero-copy">
           <span className="desktop-eyebrow">TRAKSOS · САНКТ-ПЕТЕРБУРГ И ЛЕНОБЛАСТЬ</span>
@@ -131,7 +130,6 @@ export function Home() {
           </div>
           <div className="desktop-aside-card"><h2>Ваш кабинет</h2><p>Профиль и уведомления доступны в личном кабинете.</p><a href="#/profile" className="desktop-aside-cta">Открыть профиль →</a></div>
         </aside>
-      </div>
       </div>
     </main>
   );
