@@ -11,7 +11,7 @@ test('navigation is whitelisted, role-aware and never launches an action', () =>
   assert.equal(resolveGuideDestination('открой магазин', ['insurer']), null);
   assert.equal(resolveGuideDestination('где справочник ошибок', ['client']), null);
   assert.equal(resolveGuideDestination('покажи ошибку P0087', ['client']), null);
-  assert.equal(resolveGuideDestination('где мои пароли?', ['client'])?.destination.path, '/profile');
+  assert.equal(resolveGuideDestination('как поменять пароль?', ['client'])?.destination.path, '/profile');
   assert.equal(resolveGuideDestination('как работает TrakSOS', ['client'])?.destination.path, '/help');
   assert.match(ASSISTANT_ADVISORY, /не заменяют очный осмотр/);
   assert.match(ASSISTANT_ADVISORY, /законом/);
