@@ -157,10 +157,23 @@ try {
     assert(await page.locator('.guest-partner-role[aria-pressed="true"]').count()===0,
       width+'px: a new partner must choose a role');
     await page.getByRole('button',{name:'Мастер',exact:true}).click();
-    for (const name of ['Электрик','Автономщик']) {
+    for (const name of ['Электрик','Автономщик','Гидравлика']) {
       assert(await page.getByRole('button', {name,exact:true}).isVisible(),
         width+'px: master specialization missing '+name);
     }
+    const hydraulics = page.getByRole('button', { name: 'Гидравлика', exact: true });
+    await hydraulics.click();
+    assert(await hydraulics.getAttribute('aria-pressed') === 'true',
+      width+'px: hydraulic mobile specialization did not select');
+    const hybridRole = page.locator('.guest-partner-hybrid input[type="checkbox"]');
+    assert(await hybridRole.isVisible(), width+'px: hybrid mobile master + station toggle missing');
+    await hybridRole.check();
+    assert(await hybridRole.isChecked(), width+'px: dual master + station toggle failed');
+    await page.getByRole('button', { name: 'СТО', exact: true }).click();
+    assert(await hybridRole.isChecked() && await hydraulics.isVisible(),
+      width+'px: station cannot retain a separate mobile master hydraulic specialty');
+    assert(await page.locator('.guest-partner-role').count() === 4,
+      width+'px: hybrid partner unexpectedly creates a fifth public role card');
     await page.goto(BASE + '/#/company');
     await page.getByRole('heading', {name:'Компания TrakSOS'}).waitFor();
     await page.goto(BASE + '/#/offers');
