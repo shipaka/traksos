@@ -205,7 +205,7 @@ export function AdminRegistry() {
           <div className="stack tr-registry-identity">
             <a href={'#/admin/user/'+item.id}><b>{item.company_name||item.center_name||item.name||'Без имени'}</b></a>
             {item.company_name && item.name && <span className="note">Контакт: {item.name}</span>}
-            <span className="note">{fmtPhone(item.phone)}{item.company_inn||item.center_inn ? ' · ИНН '+(item.company_inn||item.center_inn):''}</span>
+            <span className="note">{fmtPhone(item.phone)}{item.company_inn||item.center_inn||item.worker_inn ? ' · ИНН '+(item.company_inn||item.center_inn||item.worker_inn):''}</span>
           </div>
           <div className="row">
             <span className={'pill '+(item.status==='blocked'?'bad':'')}>{item.status==='blocked'?'Заблокирован':'Активен'}</span>
@@ -218,6 +218,8 @@ export function AdminRegistry() {
           {item.city && <span><b>Город:</b> {item.city}</span>}
           {item.center_address && <span><b>Адрес СТО:</b> {item.center_address}</span>}
           {item.specialties?.length>0 && <span><b>Специализации:</b> {item.specialties.join(', ')}</span>}
+          {item.tax_status && <span><b>Налоговый статус:</b> {item.tax_status==='ip'?'ИП':item.tax_status==='self_employed'?'Самозанятый':item.tax_status}</span>}
+          {item.kind && <span><b>Тип исполнителя:</b> {item.kind}</span>}
           {item.rating!=null && <span><b>Рейтинг:</b> {item.rating} · {item.rating_count} отзывов</span>}
           <span><b>Автопарк:</b> {item.vehicles_count} ТС</span>
           <span><b>Заявок клиента:</b> {item.orders_client_count}</span>
