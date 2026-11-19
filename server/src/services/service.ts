@@ -357,15 +357,21 @@ export class ServiceCenters {
   /** Админ: подтверждённые счета, которые ещё не выплачены сервисам */
   async payoutsDue() {
     return this.db.query(
-      `select b.id, b.number, b.amount, b.commission, b.amount - b.commission as payout, b.closed_at, c.name as center_name, c.inn
+      `select b.id, b.number, b.amount, b.client_fee, b.discount, b.commission,
+              b.received_amount, b.refunded_amount, b.payment_required,
+              b.amount - b.commission as payout, b.closed_at, c.name as center_name, c.inn,
+              (not b.payment_required or b.received_amount-b.refunded_amount >= b.amount+b.client_fee-b.discount) as payout_ready
          from service_bookings b join service_centers c on c.id=b.center_id
         where b.status='closed' and b.amount is not null and b.paid_out_at is null order by b.closed_at`);
   }
 
   async markPaidOut(admin: AuthUser, id: string) {
-    const b = await this.db.one<any>(`update service_bookings set paid_out_at=now() where id=$1 and status='closed' and paid_out_at is null
+    const b = await this.db.one<any>(`update service_bookings set paid_out_at=now()
+       where id=$1 and status='closed' and paid_out_at is null
+         and (not payment_required or
+              received_amount-refunded_amount >= amount+client_fee-discount)
         returning id, number, center_id, amount - commission as payout`, [id]);
-    if (!b) throw conflict('bad_status', 'Счёт не подтверждён клиентом или уже выплачен');
+    if (!b) throw conflict('payout_not_ready', 'Клиент не подтвердил работы, оплата по счёту СТО не подтверждена или выплата уже проведена');
     const c = await this.db.one<{ owner_id: string }>('select owner_id from service_centers where id=$1', [b.center_id]);
     await this.db.query('insert into audit_log(actor_id, action, target) values ($1,$2,$3)', [admin.id, 'service.paid_out', id]);
     if (c) await this.notifier.notify([c.owner_id], { type: 'booking', bookingId: id, status: 'paid' },
