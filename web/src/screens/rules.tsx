@@ -58,8 +58,10 @@ export function Rules() {
         </div>
       ))}
       {me && <a className="btn ghost" href="#/appeal">Оспорить нарушение или блокировку</a>}
-      <a className="note" href="#/offer/client">Оферта для клиентов</a>
-      {(mode === 'performer' || mode === 'service') && <a className="note" href="#/offer/performer">Агентский договор</a>}
+      {(mode === 'client' || !me) && <a className="note" href="#/offer/client">Оферта для клиентов</a>}
+      {(mode === 'performer' || mode === 'service') && <a className="note" href="#/offer/performer">Агентский договор исполнителя / СТО</a>}
+      {mode === 'insurer' && <a className="note" href="#/offer/insurer">Договор страхового партнёра</a>}
+      {mode === 'inspection' && <a className="note" href="#/offer/inspection">Договор оператора техосмотра</a>}
     </main>
   );
 }
