@@ -32,7 +32,7 @@ test('do not mistake generic OBD-II for EBS or invent J1939 descriptions', () =>
   const conflict = composeTrakBotReply('P0087', [p0087], { ecu: 'EBS' });
   assert.match(conflict, /формат|другим/i);
   assert.doesNotMatch(conflict, /Давление ниже ожидаемого/i);
-  assert.match(conflict, /не продолжай движение/i);
+  assert.match(conflict, /не продолжайте движение/i);
   assert.match(composeTrakBotReply('SPN 520243 FMI 9', []), /наугад не дам/i);
 });
 
