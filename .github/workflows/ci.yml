@@ -30,6 +30,8 @@ jobs:
       TEST_DATABASE_URL: postgres://postgres@127.0.0.1:5432/traksos_test
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # knowledge gate checks the whole PR against the target branch
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -54,6 +56,8 @@ jobs:
           DB_PASSWORD=ci-only-check APP_SECRET=ci-only-check docker compose --env-file deploy/.env.example -f deploy/docker-compose.yml config --quiet
       - name: Проверка единого бренда TrakSOS
         run: node scripts/verify-brand.mjs
+      - name: Согласованность обучения, экономики и оферт с логикой выпуска
+        run: node scripts/verify-knowledge-sync.mjs
       - name: Сервер — типы
         run: npm run typecheck
       - name: Сервер — тесты
