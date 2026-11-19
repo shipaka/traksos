@@ -60,7 +60,7 @@ try {
     await page.getByRole('heading',{name:'Комиссии, баллы и рефералы',exact:true}).waitFor();
     const guide=page.locator('section.economics-guide');
     await guide.waitFor({timeout:12000});
-    const financeText=(await guide.innerText()).replace(/\\s+/g,' ');
+    const financeText=(await guide.innerText()).replace(/\s+/g,' ');
     if(!financeText.includes('Математика на примерах') &&
       !['admin','insurer'].includes(kind) && kind!=='moderator_master')
       throw Error(kind+': economics guide has no example math');
