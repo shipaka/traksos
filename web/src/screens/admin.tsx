@@ -14,6 +14,7 @@ import { VehicleServicesQueue } from './vehicleServicesAdmin.tsx';
 import { get, post, put, rub, fmtPhone, fmtTime, authedImage } from '../api.ts';
 import { STATUS, SERVICES, LINE } from '../dict.ts';
 import { useLoad, useAction, Loading } from '../ui.tsx';
+import { TRAKBOT_TERMS, type TrakBotOfferAudience } from '../trakbotTerms.ts';
 
 type AdminSection = 'stats' | 'search' | 'support' | 'verify' | 'people' | 'access' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'settings' | 'demand' | 'announcements' | 'vehicleServices' | 'diagnostics';
 type AdminNavItem = { id: AdminSection; name: string; description: string; symbol: string };
@@ -483,6 +484,16 @@ function Offers() {
             </div>
             <span className="note">{f.effectiveAt ? '' : f.audience === 'performer' ? `Дата не выбрана — вступит ${new Date(minPerf).toLocaleDateString('ru-RU')}` : 'Дата не выбрана — вступит сразу'}</span>
             <input className="field" placeholder="Что изменилось — одной строкой, люди увидят первым" value={f.summary} onChange={(e) => setF({ ...f, summary: e.target.value })} />
+            <div className="card flat" style={{ gap: 8 }}>
+              <b>Дополнения TrakBot — черновик, нужен юридический просмотр</b>
+              <span className="note">Три отдельных раздела для клиента, исполнителя и персональных данных. Уже принятые редакции не редактируются: создаётся новая версия с датой вступления. Для исполнителей сохраняется уведомление минимум за 15 дней.</span>
+              <button type="button" className="btn ghost small" onClick={() => {
+                const section = TRAKBOT_TERMS[f.audience as TrakBotOfferAudience];
+                if (f.body.includes('## TrakBot')) return;
+                setF({ ...f, body: f.body.trimEnd() + '\\n\\n' + section.trim() + '\\n',
+                  summary: f.summary || 'Добавлены правила справочного ИИ TrakBot и дистанционных консультаций' });
+              }}>Добавить проект раздела TrakBot в эту редакцию</button>
+            </div>
             <textarea className="field" style={{ minHeight: 260, fontFamily: 'ui-monospace, monospace', fontSize: 13 }} value={f.body} onChange={(e) => setF({ ...f, body: e.target.value })}
               placeholder={'# Заголовок\n\nТекст. **Жирный** выделяется звёздочками.\n\n1. Пункт\n2. Пункт'} />
             <button className="btn" disabled={busy || !f.version || f.body.length < 50} onClick={() => run(() => post('/api/admin/offers', {
