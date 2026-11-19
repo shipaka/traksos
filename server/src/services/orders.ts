@@ -8,6 +8,7 @@ import { assertRegionalTariff, CoverageError, type ServiceRegion } from '../doma
 import { rankCandidates, performerKindFor, type Candidate } from '../domain/dispatch.ts';
 import { transition, canDo, statusLabels, type Action, type Actor, type OrderStatus } from '../domain/orderState.ts';
 import { cancelStage, cancelSplit, cappedPct, commissionPct, pct } from '../domain/money.ts';
+import { legacyCashFixtureEnabled } from '../domain/paymentPolicy.ts';
 import { slot } from '../domain/schedule.ts';
 import { rub } from '../util.ts';
 import type { AuctionService } from './auction.ts';
@@ -109,7 +110,7 @@ export class OrdersService {
       if (previous) return reuse(previous);
     }
     const all = await this.settings.all();
-    const method = i.paymentMethod ?? 'cash';
+    const method = i.paymentMethod ?? (legacyCashFixtureEnabled() ? 'cash' : 'online');
     await this.payments.assertMethodAllowed(method);
 
     const clientId = user.owner_id ?? user.id;

@@ -282,10 +282,13 @@ export function Consult() {
   const [agree, setAgree] = useState(false);
   useEffect(() => { if (vehicles.data?.length && !vehicleId) setVehicleId(vehicles.data[0].id); }, [vehicles.data]); // eslint-disable-line
   const [tried, setTried] = useState(false);
+  const consultMethod = pricing?.payments?.online ? 'online' : pricing?.payments?.invoice ? 'invoice'
+    : pricing?.payments?.cash ? 'cash' : null;
   const needC = { car: !!vehicleId || car.brand.trim().length >= 2 };
   const missingC = [
     !needC.car && { id: 'f-car', name: 'марка машины' },
     !agree && { id: 'f-agree', name: 'согласие' },
+    !consultMethod && { id: 'f-pay', name: 'безналичный способ оплаты' },
   ].filter(Boolean) as { id: string; name: string }[];
   if (!pricing) return <main><Loading /></main>;
   const c = pricing.consult ?? { price: 70_000, backDiscount: 20_000, backHours: 48 };
@@ -293,7 +296,7 @@ export function Consult() {
   async function submit() {
     const r = await run(() => postOrder( {
       service: 'consult', problem: sym?.id, description: description.trim() || undefined,
-      vehicleId: vehicleId || undefined, ...carBody(vehicleId, car), paymentMethod: 'cash',
+      vehicleId: vehicleId || undefined, ...carBody(vehicleId, car), paymentMethod: consultMethod ?? 'online',
     }));
     if (r) go(`order/${r.order.id}`);
   }
@@ -339,6 +342,7 @@ export function Consult() {
         <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
         <span>Согласен со стоимостью {rub(c.price)} и <a href="#/offer/client">офертой TrakSOS</a></span>
       </label>
+      {!consultMethod && <div id="f-pay" className="banner warn">Консультация будет доступна после подключения безналичной оплаты. Наличные не принимаются.</div>}
       <CallBar busy={busy} missing={missingC} price={rub(c.price)} label={`Заказать консультацию · ${rub(c.price)}`}
         onGo={() => { setTried(true); if (missingC.length) jump(missingC[0].id); else submit(); }} />
     </main>
@@ -436,7 +440,7 @@ export function NewOrder({ service }: { service: string }) {
   const [roadSide, setRoadSide] = useState<'right'|'left'|'unknown'>('unknown');
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [geoState, setGeoState] = useState<'idle' | 'wait' | 'ok' | 'fail'>('idle');
-  const [method, setMethod] = useState<'cash' | 'online' | 'invoice'>('cash');
+  const [method, setMethod] = useState<'cash' | 'online' | 'invoice'>('online');
   const [est, setEst] = useState<any>(null);
   const [destination, setDestination] = useState(prefill.destination ?? '');
   const [cargo, setCargo] = useState<'tractor' | 'semitrailer' | 'coupling' | 'truck12' | 'bus' | 'special'>('tractor');
@@ -510,8 +514,14 @@ export function NewOrder({ service }: { service: string }) {
   const zone = zones.find((z: any) => z.id === zoneId);
   const groupAllowed = service !== 'tow' && !!zone && zone.km > 30;
   const methods = pricing.data?.payments;
+  useEffect(() => {
+    // Old drafts may contain 'cash': only server-approved methods can be chosen.
+    if (!methods || methods[method]) return;
+    setMethod(methods.online ? 'online' : methods.invoice ? 'invoice' : methods.cash ? 'cash' : 'online');
+  }, [methods?.online, methods?.invoice, methods?.cash, method]);
 
   async function submit() {
+    if (!methods?.[method]) return;
     const r = await run(() => postOrder( {
       service, isSos: !!sos, problem: sos?.id, description: description || undefined, address: address || undefined,
       lat: geo?.lat, lng: geo?.lng, regionId: regionId || undefined, zoneId: zoneId || 'phone',
@@ -589,6 +599,7 @@ export function NewOrder({ service }: { service: string }) {
     !need.where && { id: 'f-where', name: 'где машина' },
     !need.tow && { id: 'f-tow', name: 'куда везти' },
     !agree && { id: 'f-agree', name: 'согласие с суммами' },
+    !methods?.[method] && { id: 'f-pay', name: 'безналичный способ оплаты' },
     !!parallelWith && (!parallelSource.data || !parallelAgree || !!me?.owner_id) &&
       {id:'f-agree',name:'отдельное согласие владельца на второй выезд'},
   ].filter(Boolean) as { id: string; name: string }[];
@@ -821,11 +832,11 @@ export function NewOrder({ service }: { service: string }) {
 
       {regionId !== 'other' && <Step n={isTow ? 5 : 6} id="f-pay" title="Оплата" done>
         <div className="grid2">
-          <button type="button" className="seg" aria-pressed={method === 'cash'} onClick={() => setMethod('cash')}>Мастеру на месте</button>
+          {methods?.cash && <button type="button" className="seg" aria-pressed={method === 'cash'} onClick={() => setMethod('cash')}>Исторический тестовый способ</button>}
           <button type="button" className="seg" aria-pressed={method === 'online'} disabled={!methods?.online} onClick={() => setMethod('online')}>СБП / карта</button>
         </div>
         {methods?.invoice && <button type="button" className="seg" aria-pressed={method === 'invoice'} onClick={() => setMethod('invoice')}>Счёт на компанию</button>}
-        {!methods?.online && <span className="note">Оплата в приложении скоро появится. Пока — наличными или переводом мастеру, сумму подтверждаете здесь.</span>}
+        {!methods?.online && <span className="note">Новые платные заявки временно недоступны, пока банк не подключён. Наличную оплату TrakSOS не предлагает.</span>}
         {method === 'online' && <span className="note">Выезд оплачивается сейчас и замораживается. Мастеру деньги уйдут после того, как вы подтвердите работу.</span>}
       </Step>}
 

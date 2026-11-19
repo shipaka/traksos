@@ -1,4 +1,5 @@
 import type { Db } from '../db/index.ts';
+import { legacyCashFixtureEnabled } from '../domain/paymentPolicy.ts';
 import { defaultSettings, type Settings, type SettingsKey } from '../domain/defaults.ts';
 
 /** Настройки площадки: значения по умолчанию + то, что поменял админ. Кэш на 5 секунд. */
@@ -17,6 +18,8 @@ export class SettingsService {
     }
     // Brand identity is immutable even when old admin settings exist in the database.
     merged.legal.brand = 'TrakSOS';
+    // Existing database settings cannot reactivate a cancelled cash policy.
+    merged.payments.cash = legacyCashFixtureEnabled();
     this.cache = { at: Date.now(), value: merged };
     return merged;
   }
@@ -30,6 +33,7 @@ export class SettingsService {
     const current = (await this.db.one<{ value: any }>('select value from settings where key=$1', [key]))?.value ?? {};
     const value = { ...current, ...patch };
     if (key === 'legal') (value as { brand?: string }).brand = 'TrakSOS';
+    if (key === 'payments') (value as { cash?: boolean }).cash = legacyCashFixtureEnabled();
     await this.db.query(
       `insert into settings(key, value, updated_by) values ($1,$2,$3)
        on conflict (key) do update set value = excluded.value, updated_at = now(), updated_by = excluded.updated_by`,

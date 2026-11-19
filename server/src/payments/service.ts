@@ -18,6 +18,7 @@ import { HttpError, bad, notFound, type AuthUser } from '../http/router.ts';
 import { cancelSplit, commissionPct, cappedPct, split, type CancelStage } from '../domain/money.ts';
 import { agentReceipt } from './agentReceipt.ts';
 import { config } from '../config.ts';
+import { legacyCashFixtureEnabled } from '../domain/paymentPolicy.ts';
 import { rub } from '../util.ts';
 import { roundTo } from '../domain/pricing.ts';
 
@@ -35,18 +36,21 @@ export class PaymentsService implements PaymentHooks {
   ) {}
 
   async assertMethodAllowed(method: string) {
+    if (method === 'cash' && !legacyCashFixtureEnabled())
+      throw new HttpError(403, 'payment_method_retired', 'Наличные в новых заявках отключены. Безналичная оплата пока подключается.');
     const p = await this.settings.get('payments');
     const on = method === 'cash' ? p.cash : method === 'online' ? p.online : method === 'invoice' ? p.invoice : false;
     if (!on) {
       throw new HttpError(403, 'payment_method_disabled',
-        method === 'online' ? 'Оплата на сайте пока не подключена — оплатите исполнителю на месте'
+        method === 'online' ? 'Безналичная оплата через TrakSOS пока не подключена'
           : method === 'invoice' ? 'Оплата по счёту пока не подключена' : 'Этот способ оплаты сейчас недоступен');
     }
   }
 
   async methods() {
     const p = await this.settings.get('payments');
-    return { cash: p.cash, online: p.online, invoice: p.invoice, defaultMethod: p.online ? p.defaultMethod : 'cash' };
+    return { cash: p.cash && legacyCashFixtureEnabled(), online: p.online, invoice: p.invoice,
+      defaultMethod: p.online ? p.defaultMethod : p.invoice ? 'invoice' : p.cash && legacyCashFixtureEnabled() ? 'cash' : null };
   }
 
   // Хуки заявки -----------------------------------------------------------

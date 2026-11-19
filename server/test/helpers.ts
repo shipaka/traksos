@@ -2,6 +2,8 @@ import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 
 process.env.ADMIN_PHONES = '+79990000001';
+// Temporary historical-cash fixtures on disposable DB only; never enable on a VPS.
+process.env.TRAKSOS_LEGACY_CASH_FIXTURES = '1';
 
 const { createDb } = await import('../src/db/index.ts');
 const { migrate } = await import('../src/db/migrate.ts');

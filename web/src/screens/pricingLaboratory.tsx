@@ -4,7 +4,7 @@ import { useMe } from '../ui.tsx';
 import { proposedEconomics, type PaymentRail } from '../proposedEconomics.ts';
 import { rub } from '../api.ts';
 const rails: {value:PaymentRail;label:string}[] = [
-  {value:'cash',label:'Наличные у исполнителя'}, {value:'invoice',label:'Счёт / прямой перевод'},
+  {value:'invoice',label:'Счёт компании (проект)'},
   {value:'sbp',label:'СБП (пример 0,7%)'}, {value:'card',label:'Карта (пример 2,8%)'},
 ];
 export function PricingLaboratory() {
