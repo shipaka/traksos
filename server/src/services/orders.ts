@@ -486,7 +486,8 @@ export class OrdersService {
       }
     }
     for (const orderId of new Set(missed.map((m) => m.order_id))) await this.ringNext(orderId);
-    await this.autoCloseConsults(all.pricing.consult.autoCloseHours);
+    // Do not auto-accept consultations on customer silence. The owner must
+    // explicitly confirm; overdue cases belong in notifications/SLA review.
     await this.applyLineTimers();
     return missed.length;
   }
@@ -511,17 +512,9 @@ export class OrdersService {
     }
   }
 
-  /** Консультация, которую клиент не подтвердил за сутки, закрывается сама — как «Вопрос решён» */
-  private async autoCloseConsults(hours: number) {
-    const due = await this.db.query<{ id: string; client_id: string }>(
-      `select id, client_id from orders where service='consult' and status='awaiting_confirmation' and amount_proposed_at < $1 limit 20`,
-      [new Date(this.now().getTime() - hours * 3600_000)]);
-    for (const o of due) {
-      try {
-        await this.confirmAmount({ id: o.client_id, roles: ['client'], owner_id: null } as unknown as AuthUser, o.id);
-      } catch { /* состояние уже поменялось — пропускаем */ }
-    }
-  }
+  // Historical automatic consultation acceptance was removed: elapsed time
+  // is not consent to pay or to close an order.
+
 
   async accept(user: AuthUser, orderId: string) {
     const res = await this.db.tx(async (q) => {
