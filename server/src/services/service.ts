@@ -342,7 +342,7 @@ export class ServiceCenters {
     const items = rows.map(item);
     const sum = (f: (x: any) => boolean, k: string) => items.filter(f).reduce((s, x: any) => s + x[k], 0);
     const months = new Map<string, any>();
-    for (const x of items.filter((i) => i.state !== 'awaiting' && i.state !== 'disputed')) {
+    for (const x of items.filter((i) => i.state !== 'awaiting' && i.state !== 'disputed' && i.state !== 'unpaid')) {
       const m = new Date(new Date(x.closedAt ?? x.invoicedAt).getTime() + 3 * 3600_000).toISOString().slice(0, 7);
       const r = months.get(m) ?? { month: m, count: 0, amount: 0, discount: 0, commission: 0, points: 0, payout: 0 };
       r.count++; r.amount += x.amount; r.discount += x.discount; r.commission += x.commission; r.points += x.points; r.payout += x.payout;
