@@ -39,6 +39,17 @@ try {
         rating:null,rating_count:0,performer:null,
       }),
     }));
+    // Keep the synthetic session isolated. Ordinary Shell widgets request
+    // notifications and WebSocket tickets; real 401s would correctly log out
+    // the fake user before the mobile-chat interaction can be tested.
+    await page.route('**/api/me/notifications', route => route.fulfill({
+      status:200,contentType:'application/json',
+      body:JSON.stringify({unread:0,items:[]}),
+    }));
+    await page.route('**/api/auth/realtime-ticket', route => route.fulfill({
+      status:200,contentType:'application/json',
+      body:JSON.stringify({ticket:'mock-ephemeral-websocket-ticket'}),
+    }));
     await page.route('**/api/trakbot/messages', route => route.fulfill({
       status:200,contentType:'application/json',
       body:JSON.stringify({ messages:sample,freePilot:true,aiAvailable:false }),
@@ -92,6 +103,8 @@ try {
 
     const input=page.getByRole('textbox',{name:'Сообщение TrakBot'});
     await input.fill('Есть проблема с тормозами');
+    assert(await page.locator('.trakbot-dialog .compose button[type=submit]').isEnabled(),
+      width+'×'+height+': composer button not enabled after typing');
     // Subscribe before clicking: a fast network roundtrip can otherwise hide the
     // transient typing state before Playwright starts waiting.
     await Promise.all([
