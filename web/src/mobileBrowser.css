@@ -120,6 +120,9 @@
     max-width: none !important;
     padding: 0 2px !important;
     margin: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    flex: 0 0 auto !important;
     background: none !important;
     z-index: 3 !important;
   }
