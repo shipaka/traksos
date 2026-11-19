@@ -6,7 +6,7 @@ interface BotMessage { id: string; role: 'user'|'bot'; body: string; created_at:
 const allowedRoutes = new Set(['/orders','/work/jobs','/base','/profile','/shop','/garage',
   '/fleet','/tech/codes','/work/docs','/insurance/request/new','/support','/help','/rules']);
 const advice = 'TrakBot даёт справочные рекомендации, не диагноз. Он может ошибаться: проверяй важное с мастером. При проблемах с тормозами, рулевым или подвеской не продолжай движение.';
-interface BotHistory { messages: BotMessage[]; freePilot: true; aiAvailable?: boolean; }
+interface BotHistory { messages: BotMessage[]; freePilot: true; aiAvailable?: boolean; aiTransport?: 'api'|'local'; }
 interface CodeRecord {
   code: string; title_en: string; title_ru: string|null;
   detail_en: string|null; detail_ru: string|null; source_url: string; review_state: string;
@@ -22,6 +22,7 @@ export function TrakBotChat({ compact = false, onNavigate }: { compact?: boolean
   const [model, setModel] = useState('');
   const [year, setYear] = useState('');
   const [aiAvailable, setAiAvailable] = useState(false);
+  const [aiTransport, setAiTransport] = useState<'api'|'local'>('api');
   const [aiConsent, setAiConsent] = useState(false);
   const [handoff, setHandoff] = useState(false);
   const [working, setWorking] = useState(false);
@@ -59,7 +60,7 @@ export function TrakBotChat({ compact = false, onNavigate }: { compact?: boolean
     (isTech && me?.performer?.verification === 'approved');
   useEffect(() => {
     let live = true;
-    get<BotHistory>('/api/trakbot/messages').then((result) => { if (live) { setMessages(result.messages); setAiAvailable(!!result.aiAvailable); } })
+    get<BotHistory>('/api/trakbot/messages').then((result) => { if (live) { setMessages(result.messages); setAiAvailable(!!result.aiAvailable); setAiTransport(result.aiTransport === 'local' ? 'local' : 'api'); } })
       .catch((e) => { if (live) setError(e.message || 'Не удалось загрузить диалог'); });
     return () => { live = false; };
   }, [me?.id]);
@@ -121,8 +122,10 @@ export function TrakBotChat({ compact = false, onNavigate }: { compact?: boolean
       <span className="note">Общий OBD-II справочник — не заводская диагностика. Если кода или достоверных данных нет, TrakBot скажет об этом прямо.</span>
       {aiAvailable && <label className="note" style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
         <input type="checkbox" checked={aiConsent} onChange={(e) => setAiConsent(e.target.checked)} />
-        Разрешаю отправлять текст моего вопроса, указанные данные машины и краткий контекст диалога внешнему ИИ-провайдеру для составления ответа.
-        Номер телефона и VIN перед отправкой скрываются. Без согласия работает только локальный справочник.
+        {aiTransport === 'local'
+          ? 'Разрешаю обработку текста вопроса и краткого контекста локальной ИИ-моделью TrakSOS. Внешнему ИИ-провайдеру этот режим данные не отправляет.'
+          : 'Разрешаю отправить текст вопроса, сведения о машине и краткий контекст внешнему ИИ-провайдеру для составления ответа.'}
+        {' '}Телефон и VIN маскируются. Без этого согласия работает только справочник.
       </label>}
       </div>
     </details>
