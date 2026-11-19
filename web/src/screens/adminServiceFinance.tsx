@@ -110,7 +110,8 @@ export function AdminServiceFinance() {
           <span className="pill">{x.status==='disputed'?'Спор':paymentNames[x.paymentStatus]??x.paymentStatus}</span>
         </div>
         <div className="grid2">
-          <div className="sum"><span>Цена работ</span><b>{rub(x.amount)}</b></div>
+          <div className="sum"><span>Цена работ — база комиссии</span><b>{rub(x.payment_required?x.fee_base_amount:x.amount)}</b></div>
+          {x.parts_amount>0 && <div className="sum"><span>Материалы и запчасти (без сбора)</span><b>{rub(x.parts_amount)}</b></div>}
           <div className="sum"><span>Сбор клиента</span><b>+{rub(x.client_fee)}</b></div>
           <div className="sum"><span>Комиссия СТО</span><b>−{rub(x.commission)}</b></div>
           {x.discount>0 && <div className="sum"><span>Скидка клиенту</span><b>−{rub(x.discount)}</b></div>}
