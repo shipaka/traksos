@@ -54,6 +54,10 @@ const landing = await read('web/src/screens/login.tsx');
 const catalogue = await read('web/src/guestCatalog.ts');
 const roleCss = await read('web/src/roleShared20261119.css');
 const currentCss = await read('web/src/currentApproved20261119.css');
+// Regression guard: removing legacy visual assets must never leave broken CSS references.
+expect(!roleCss.includes('traksos-final-insurance.webp') &&
+  roleCss.includes('tracksos-partner-insurer-approved.webp'),
+  'insurance partner card uses the current approved image, not deleted legacy artwork');
 
 const approvedPhoto = 'tracksos-approved-hero-owner-20261119.webp';
 const approvedHeroLayer = await read('web/src/approvedHeroImage20261119.css');
