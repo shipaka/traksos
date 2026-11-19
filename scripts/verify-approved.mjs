@@ -179,11 +179,6 @@ const publicPart = landing.slice(landing.indexOf('if (!intent) return ('), landi
 for (const word of ['Аптека', 'Химчистка', 'Авиабилеты', 'Покупка авиабилетов', 'Магазин лекарств']) {
   expect(!publicPart.includes(word), 'no unrelated public services: ' + word);
 }
-if (failures.length) {
-  console.error('Approved design gate: ' + failures.length + ' failure(s).');
-  process.exitCode = 1;
-} else console.log('Approved TrakSOS design gate: all invariants passed.');
-
 const approvedMasterWindow = await read('web/src/screens/performerOrderWindow.tsx');
 const liveOrderUi = await read('web/src/screens/order.tsx');
 expect(shell.includes("effMode === 'performer' && isPerformer && b") &&
@@ -199,3 +194,27 @@ expect(['Работа','Клиент и ТС','Расчёт','Чат','Исто�
   'approved performer order separates live work/vehicle/finance/chat/history in real tabs');
 
 console.log('DESIGN AUDIT PENDING: verify Nov 18 TrakSos-branded manufacturer-neutral truck and 9-card desktop layout against owner-approved visual. Legacy asset checks are not an approval.');
+
+const vehicleVisual=await read('web/src/vehicleVisual.tsx');
+const performerUi=await read('web/src/screens/performer.tsx');
+const garageUi=await read('web/src/screens/client.tsx');
+const fleetUi=await read('web/src/screens/fleet.tsx');
+expect(vehicleVisual.includes('Фото-иллюстрация · открыть историю автомобиля') &&
+  vehicleVisual.includes('tracksos-hero-service-hq.webp') &&
+  vehicleVisual.includes('не фотография этой машины'),
+  'truck photography is locally hosted and honestly labeled as reference, not uploaded owner photo');
+expect(performerUi.includes('<VehiclePhotoLink compact') &&
+  performerUi.includes('/vehicle') &&
+  shell.includes("'garage': screen = isCustomer ? <Garage focusVehicleId={b} />"),
+  'approved mobile truck tap opens assigned work-order history and owner garage deep link');
+expect(liveOrderUi.includes("ptab === 'vehicle'") &&
+  liveOrderUi.includes('historyOnly={ptab ===') &&
+  liveOrderUi.includes('История обслуживания · без сумм') &&
+  garageUi.includes('initialOpen={focusVehicleId===v.id}') &&
+  fleetUi.includes('href={`#/garage/${c.id}`}'),
+  'vehicle history views are real, role-scoped and reachable from photo in master, garage and fleet');
+
+if (failures.length) {
+  console.error('Approved design gate: '+failures.length+' failure(s).');
+  process.exitCode=1;
+} else console.log('Approved TrakSos design gate: all code invariants passed.');
