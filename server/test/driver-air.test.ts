@@ -33,7 +33,7 @@ test('staff calls get a clarifying prompt, but private details are never echoed 
   },driver.token));
   assert.equal(prompt.supportSuggested,true);
   assert.match(prompt.botMessage.body,/Уточню|заявк|поведением/);
-  assert.match(prompt.botMessage.body,/личн/);
+  assert.match(prompt.botMessage.body,/личн/i);
   const messages=ok(await t.api('GET','/api/air/messages',undefined,other.token));
   assert.equal(messages.messages.at(-2).body,'Хочу обратиться к администратору через личную поддержку.');
   assert.doesNotMatch(JSON.stringify(messages),/999 123 45 67|конфликт по заявке/);
