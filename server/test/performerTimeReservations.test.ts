@@ -47,3 +47,19 @@ test('proposals do not reserve, cancellation releases only its interval, invalid
   add(a.id,'2026-12-04T09:00:00Z','2026-12-04T08:00:00Z'),
   (e:any)=>e.code==='23514' || /constraint|check|violat/i.test(String(e?.message)));
 });
+
+
+test('two devices confirming overlapping proposals concurrently leave exactly one confirmed slot',async()=>{
+ const x=await add(b.id,'2026-12-06T08:30:00Z','2026-12-06T11:00:00Z','proposed');
+ const y=await add(b.id,'2026-12-06T09:00:00Z','2026-12-06T10:00:00Z','proposed');
+ const confirm=(id:string)=>t.db.query(
+  "update performer_time_reservations set status='confirmed',decision_at=$2,decided_by=$3 where id=$1",
+  [id,t.clock.now(),owner.id]);
+ const results=await Promise.allSettled([confirm(x.id),confirm(y.id)]);
+ assert.equal(results.filter(r=>r.status==='fulfilled').length,1,
+  'the exclusion constraint must reject one of two competing confirmations');
+ const rows=await t.db.query<any>(
+  "select id from performer_time_reservations where performer_id=$1 and status='confirmed' and starts_at>=$2",
+  [b.id,'2026-12-06T00:00:00Z']);
+ assert.equal(rows.length,1);
+});
