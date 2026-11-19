@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { TrakBotChat } from './screens/trakbot.tsx';
+import { TrakBotMascot } from './trakbotMascot.tsx';
 
 /** A user-opened side assistant, never a popup on its own. No public-feed activity. */
 export function TrakBotDock({ authenticated }: { authenticated: boolean }) {
@@ -29,13 +30,15 @@ export function TrakBotDock({ authenticated }: { authenticated: boolean }) {
     <aside className="trakbot-dock" aria-label="Помощник TrakBot">
       {open && <div className="trakbot-dock-panel" role="dialog" aria-label="TrakBot — личный помощник" aria-modal="false">
         <header className="trakbot-dock-head">
-          <div className="trakbot-dock-brand"><span className="trakbot-dock-avatar" aria-hidden="true">T</span>
-            <span><b>TrakBot</b><small>На связи, когда нужен</small></span></div>
+          <div className="trakbot-dock-brand"><TrakBotMascot reaction="hello" size="small" />
+            <span><b>TrackSalesBot</b><small>TrakBot · Технический помощник</small></span></div>
           <button ref={closeRef} type="button" className="trakbot-dock-close" onClick={close} aria-label="Закрыть TrakBot">×</button>
         </header>
         {authenticated ? <TrakBotChat compact onNavigate={() => setOpen(false)} /> :
           <div className="trakbot-dock-guest">
-            <p>Здорово! Могу показать, как устроен TrakSOS. А личный диалог по машине доступен после входа.</p>
+            <div className="trakbot-dock-guest-mascot"><TrakBotMascot reaction="hello" size="large" />
+              <span><b>Привет! Я TrackSalesBot.</b><small>Твой говорящий грузовичок-техник.</small></span></div>
+            <p>Могу показать, как устроен TrakSOS. Зарегистрируйся и узнай обо мне больше — личный диалог по машине доступен после входа.</p>
             <nav aria-label="Что посмотреть в TrakSOS">
               <a href="#/explore/van" onClick={() => setOpen(false)}>Услуги и выездная помощь</a>
               <a href="#/join" onClick={() => setOpen(false)}>Как стать партнёром</a>
@@ -48,8 +51,8 @@ export function TrakBotDock({ authenticated }: { authenticated: boolean }) {
       <button ref={triggerRef} type="button" className="trakbot-dock-launcher"
         aria-label={open ? 'Закрыть TrakBot' : 'Открыть TrakBot'} aria-expanded={open}
         onClick={() => setOpen((value) => !value)}>
-        <span className="trakbot-dock-mark" aria-hidden="true">{open ? '×' : 'T'}</span>
-        <span className="trakbot-dock-label">{open ? 'Закрыть' : 'TrakBot'}</span>
+        <TrakBotMascot reaction={open ? 'ok' : 'hello'} size="small" />
+        <span className="trakbot-dock-label">{open ? 'Закрыть' : 'TrackSalesBot'}</span>
       </button>
     </aside>
   );
