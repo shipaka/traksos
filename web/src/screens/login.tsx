@@ -275,7 +275,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
               onClick={() => heroSlide === 0 ? go('register') : go(heroSlide === 1 ? 'explore/tow' : 'explore/sto')}>
               {heroSlide === 0 ? 'Зарегистрироваться' : heroSlide === 1 ? 'Узнать об эвакуации' : 'Узнать о СТО'}
             </button>
-            <a className="public-button public-button-outline" href="#/learn">Как это работает</a>
+            <a className="public-button public-button-outline" href="#/explore/guide">Как это работает</a>
           </div>
 
           <div className="public-hero-caption" key={'caption-'+heroSlide}>{HERO_SLIDES[heroSlide].caption}</div>
