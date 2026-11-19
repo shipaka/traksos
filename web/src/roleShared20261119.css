@@ -75,42 +75,6 @@
   border-color:#37f2ff !important;
 }
 
-/* One uninterrupted cinematic desktop hero: copy on left, approved
-   photographic, correctly branded real truck on right{
-  display:flex !important;
-  align-items:center !important;
-  position:relative;
-  isolation:isolate;
-  min-height:clamp(365px,29vw,460px) !important;
-  padding:34px clamp(28px,4vw,70px) !important;
-  border-radius:0 0 8px 8px !important;
-  border:0 !important;
-  background:
-    radial-gradient(ellipse at 74% 35%,rgba(26,143,216,.20),transparent 52%),
-    linear-gradient(100deg,#031325 0%,#0b2a47 70%,#091829 100%) !important;
-  box-shadow:inset 0 -28px 44px rgba(0,8,26,.28) !important;
-  overflow:hidden;
-}
-
-/* Six REAL entry points in one row{
-  display:grid !important;
-  grid-template-columns:minmax(0,1fr) minmax(238px,18.2vw) !important;
-  gap:13px !important;
-  align-items:stretch !important;
-  margin:12px 0 0 !important;
-  padding:0 !important;
-}
-
-/* Four succinct benefits exactly under cards{
-  display:grid !important;
-  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
-  gap:22px !important;
-  padding:24px 16px 28px !important;
-  margin:0 !important;
-  background:#071a2e !important;
-  border:0 !important;
-}
-
 /* Smaller desktops: keep readable cards instead of six microscopic tiles. */
 @media (min-width:900px) and (max-width:1200px) {
   .guest-app .guest-site-nav {gap:10px !important;}
