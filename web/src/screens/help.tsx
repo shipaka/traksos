@@ -72,6 +72,7 @@ export function Help() {
     <main>
       <Back to="" label="Назад" />
       <div><h1>Справка</h1><div className="sub">Коротко о том, как устроены суммы, оплата, отмена и кто что видит.</div></div>
+      {me && <a className="btn" href="#/learn">Пройти знакомство с TrakSOS · по шагам</a>}
       <input className="field" type="search" placeholder="Поиск по справке" value={q} onChange={(e) => setQ(e.target.value)} />
       {sections.map(([title, items]) => {
         const shown = items.filter(match);
