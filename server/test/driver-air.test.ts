@@ -2,11 +2,15 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, ok, type T } from './helpers.ts';
 
-let t:T; let driver:any, other:any, admin:any;
+let t:T; let driver:any, other:any, owner:any, admin:any, master:any, tow:any, service:any;
 before(async()=>{
   t=await setup();
   driver=await t.login('+79997778101');
   other=await t.login('+79997778102');
+  owner=await t.login('+79997778104','client');
+  master=await t.login('+79997778105','master');
+  tow=await t.login('+79997778106','tow');
+  service=await t.login('+79997778107','service');
   admin=await t.login('+79990000001');
 });
 after(()=>t.close());
@@ -25,6 +29,25 @@ test('public driver text air is isolated and not accessible without auth', async
   assert.equal(b.messages[0].body,'Всем привет, кто сегодня в рейсе?');
   const privateHistory=ok(await t.api('GET','/api/trakbot/messages',undefined,driver.token));
   assert.equal(privateHistory.messages.length,0);
+});
+
+test('driver chat excludes repair partners and is read-only for moderators and admin',async()=>{
+  for(const account of [master,tow,service]) {
+    assert.equal((await t.api('GET','/api/air/messages',undefined,account.token)).status,403);
+    assert.equal((await t.api('POST','/api/air/messages',{body:'Привет из СТО'},account.token)).status,403);
+  }
+  const own=ok(await t.api('GET','/api/air/messages',undefined,owner.token));
+  assert.equal(own.canPost,true);
+  const fromOwner=ok(await t.api('POST','/api/air/messages',{body:'Владелец автопарка на связи'},owner.token));
+  assert.match(fromOwner.message.author,/^Владелец /);
+  const ownerMessage=ok(await t.api('GET','/api/air/messages',undefined,driver.token));
+  assert.ok(ownerMessage.messages.some((m:any)=>m.body==='Владелец автопарка на связи'));
+  const fromDriver=ok(await t.api('GET','/api/air/messages',undefined,driver.token));
+  assert.equal(fromDriver.canPost,true);
+  const observer=ok(await t.api('GET','/api/air/messages',undefined,admin.token));
+  assert.equal(observer.canPost,false);
+  assert.equal(observer.canModerate,true);
+  assert.equal((await t.api('POST','/api/air/messages',{body:'Реклама от администратора'},admin.token)).status,403);
 });
 
 test('staff calls get a clarifying prompt, but private details are never echoed in public air', async()=>{
