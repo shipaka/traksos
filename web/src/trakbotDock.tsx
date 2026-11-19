@@ -1,15 +1,41 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { TrakBotChat } from './screens/trakbot.tsx';
 import { TrakBotMascot } from './trakbotMascot.tsx';
 
 /** A user-opened side assistant, never a popup on its own. No public-feed activity. */
 export function TrakBotDock({ authenticated }: { authenticated: boolean }) {
   const [open, setOpen] = useState(false);
+  const [inputFocused, setInputFocused] = useState(false);
+  const [visibleViewport, setVisibleViewport] = useState({ height: 700, bottomInset: 0 });
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const openedRef = useRef(false);
 
-  const close = () => { setOpen(false); triggerRef.current?.focus(); };
+  const close = () => { setOpen(false); setInputFocused(false); triggerRef.current?.focus(); };
+  // Android WebView can leave the layout viewport taller than the visible area
+  // when the soft keyboard opens. Use visualViewport to anchor a compact panel
+  // above the keyboard, without hiding the send field or covering the full app.
+  useEffect(() => {
+    if (!open) return;
+    const update = () => {
+      const view = window.visualViewport;
+      const height = view?.height ?? window.innerHeight;
+      const inset = view ? Math.max(0, window.innerHeight - view.height - view.offsetTop) : 0;
+      setVisibleViewport({
+        height: Math.max(180, Math.round(height)),
+        bottomInset: Math.max(0, Math.round(inset)),
+      });
+    };
+    update();
+    window.addEventListener('resize', update);
+    window.visualViewport?.addEventListener('resize', update);
+    window.visualViewport?.addEventListener('scroll', update);
+    return () => {
+      window.removeEventListener('resize', update);
+      window.visualViewport?.removeEventListener('resize', update);
+      window.visualViewport?.removeEventListener('scroll', update);
+    };
+  }, [open]);
   useEffect(() => {
     if (!open) return;
     const escape = (event: KeyboardEvent) => {
@@ -27,7 +53,18 @@ export function TrakBotDock({ authenticated }: { authenticated: boolean }) {
   }, [open]);
 
   return (
-    <aside className="trakbot-dock" aria-label="Помощник TrakBot">
+    <aside className={'trakbot-dock' + (open && (inputFocused || visibleViewport.bottomInset > 120) ? ' trakbot-dock--editing' : '')}
+      aria-label="Помощник TrakBot"
+      style={{
+        '--trakbot-visible-height': visibleViewport.height + 'px',
+        '--trakbot-keyboard-inset': visibleViewport.bottomInset + 'px',
+      } as CSSProperties}
+      onFocusCapture={(event) => {
+        if ((event.target as HTMLElement).matches('.trakbot-dialog .compose input')) setInputFocused(true);
+      }}
+      onBlurCapture={(event) => {
+        if ((event.target as HTMLElement).matches('.trakbot-dialog .compose input')) setInputFocused(false);
+      }}>
       {open && <div className="trakbot-dock-panel" role="dialog" aria-label="TrakBot — личный помощник" aria-modal="false">
         <header className="trakbot-dock-head">
           <div className="trakbot-dock-brand"><TrakBotMascot reaction="hello" size="small" />
