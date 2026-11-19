@@ -50,11 +50,11 @@ export function botReactionFor(body: string): BotReactionId {
   const s = body.toLocaleLowerCase('ru-RU');
   if (/не продолжай движение|не продолжать движение|останови[тс]|немедленно|опасн|тормоз|рулев|возгорани|пожар/.test(s)) return 'stop';
   if (/предупрежден|осторожн|риск|внимани/.test(s)) return 'warning';
-  if (/не наш[её]л|неизвестн|не смог|нет достоверн|недоступн|не подтвержд|не могу определить/.test(s)) return 'thinking';
+  if (/не наш[её]л|неизвестн|не смог|нет достоверн|недоступн|не подтвержд|не могу определить|не записан|не оформлен|не выполнен|не готово|не заверш[её]н/.test(s)) return 'thinking';
   if (/ошибк[аи]|неисправност|код p[0-9]|spn|fmi|dtc/.test(s)) return 'diagnostic';
   if (/записан|оформлен|выполнен|готово|успешно/.test(s)) return 'done';
   if (/маршрут|дорог|навигат|проехать/.test(s)) return 'route';
-  if (/сто|ремонт|мастер|сервис/.test(s)) return 'service';
+  if (/(?:^|[\s,.!?])сто(?:$|[\s,.!?])|ремонт|мастер|сервис/.test(s)) return 'service';
   if (/ищу|поиск|найти/.test(s)) return 'search';
   if (/спасибо|благодар/.test(s)) return 'thanks';
   if (/извин|сожалени/.test(s)) return 'sorry';
