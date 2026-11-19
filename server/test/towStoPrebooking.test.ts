@@ -83,7 +83,7 @@ test('linked STO can be booked during tow travel but truck cannot be recorded as
  assert.equal(caseBefore.caseSummary.confirmedTotal,0,'STO future reservation must not charge a repair');
  // The driver has reported delivery, but arrival is still an explicit STO action.
  await t.db.query("update orders set status='awaiting_confirmation' where id=$1",[order.id]);
- const receipt=ok(await t.api('GET','/api/base/bookings/'+booking.id,undefined,base.token));
+ const receipt=ok(await t.api('GET','/api/bookings/'+booking.id,undefined,base.token));
  assert.equal(receipt.transport.deliveryReported,true);
  assert.equal(receipt.status,'expected','reported delivery is not automatic check-in');
  ok(await t.api('POST','/api/base/bookings/'+booking.id+'/status',{status:'arrived'},base.token));
