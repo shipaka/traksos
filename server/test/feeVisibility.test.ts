@@ -24,6 +24,7 @@ test('client surcharge is added only in client JSON; worker only sees included c
     assert.equal(clientView.money.total, clientView.money.amount + clientView.money.clientFee);
     assert.equal(workerView.money.amount, clientView.money.amount);
     assert.equal(workerView.money.total, workerView.money.amount);
+    assert.equal(workerView.money.cashToCollect, clientView.money.total, 'cash collection is not undercharged');
     assert.equal(workerView.money.commission, Math.round(workerView.money.amount * 0.05));
     assert.equal(workerView.money.payout, workerView.money.amount - workerView.money.commission);
     assert.equal(workerView.money.clientFee, undefined);
@@ -55,5 +56,9 @@ test('client surcharge is added only in client JSON; worker only sees included c
     assert.ok(debt && debt.amount<0);
     assert.ok(!String(debt.note).includes('сбор 500'));
     assert.ok(!String(debt.note).includes('Наличные '));
+    const paidClient = ok(await t.api('GET',`/api/orders/${order.id}`,undefined,client.token));
+    const paidWorker = ok(await t.api('GET',`/api/orders/${order.id}`,undefined,worker.token));
+    assert.equal(paidWorker.money.cashToCollect,paidClient.money.total);
+    assert.equal(paidWorker.money.clientFee,undefined);
   } finally { await t.close(); }
 });
