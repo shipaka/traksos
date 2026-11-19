@@ -1,4 +1,4 @@
-import { useLoad, useMe } from '../ui.tsx';
+import { useLoad, useMe, Back } from '../ui.tsx';
 import { get, rub } from '../api.ts';
 import { learningRole } from './platformIntro.tsx';
 
@@ -52,4 +52,22 @@ export function EconomicsGuide({inOffer=false}:{inOffer?:boolean}) {
       <a href="#/support/new">Вопрос по расчёту</a>
     </div>
   </section>;
+}
+
+/** Permanent finances entry in every signed-in cabinet; no duplicated rates. */
+export function EconomicsPage() {
+  return <main className="stack" style={{maxWidth:960}}>
+    <Back to="help" label="К справке" />
+    <div>
+      <span className="label">TRAKSOS · УСЛОВИЯ МОЕГО КАБИНЕТА</span>
+      <h1>Комиссии, баллы и рефералы</h1>
+      <p className="sub">Финансовые условия вашей роли: из чего складывается итог, бонусы и реферальная программа. Цифры и примеры берутся из действующих настроек.</p>
+    </div>
+    <EconomicsGuide />
+    <p className="note">Текущая справка не заменяет принятую оферту. При существенном изменении условий нужна новая редакция с датой вступления и предусмотренным уведомлением.</p>
+    <div className="row" style={{gap:12,flexWrap:'wrap'}}>
+      <a className="btn ghost" href="#/help">Энциклопедия ситуаций</a>
+      <a className="btn ghost" href="#/support/new">Вопрос по расчётам</a>
+    </div>
+  </main>;
 }
