@@ -66,12 +66,8 @@ export const config = {
     accountId: env.TOCHKA_ACCOUNT_ID ?? '',
   },
   payments: {
-    /** mock — тестовый сервис; yookassa — ЮKassa. Включение оплаты — в настройках площадки. */
-    provider: (env.PAYMENT_PROVIDER ?? 'mock') as 'mock' | 'yookassa',
-    yookassaShopId: env.YOOKASSA_SHOP_ID ?? '',
-    yookassaSecretKey: env.YOOKASSA_SECRET_KEY ?? '',
-    yookassaAgentId: env.YOOKASSA_AGENT_ID ?? '',
-    yookassaPayoutKey: env.YOOKASSA_PAYOUT_KEY ?? '',
+    /** Only a mock provider is valid until a NEW, separately tested Tochka settlement rail is approved. */
+    provider: 'mock' as const,
   },
 };
 
@@ -105,4 +101,10 @@ if (config.sandboxUrl) {
     throw new Error('SANDBOX_URL must use a separate HTTPS origin');
   if (config.sandboxSharedSecret.length < 32)
     throw new Error('SANDBOX_SHARED_SECRET is required with SANDBOX_URL');
+}
+
+// Fail closed on an obsolete provider setting rather than silently connecting a bank
+// or treating a formerly live merchant credential as approved after deployment.
+if (env.PAYMENT_PROVIDER && env.PAYMENT_PROVIDER !== 'mock') {
+  throw new Error('Устаревший PAYMENT_PROVIDER отключён. Реальные платежи через Точку ещё не подключены.');
 }

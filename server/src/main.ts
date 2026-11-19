@@ -7,7 +7,6 @@ import { createSms } from './providers/sms.ts';
 import { sendInsuranceReminders } from './services/insuranceReminders.ts';
 import { createPush } from './providers/push.ts';
 import { MockProvider } from './payments/provider.ts';
-import { YooKassaProvider } from './payments/yookassa.ts';
 import { staticHandler } from './http/static.ts';
 import { PublicWeatherService } from './services/publicWeather.ts';
 import { attachRealtimeGateway } from './realtime/gateway.ts';
@@ -16,9 +15,9 @@ const db = await createDb(config.databaseUrl);
 const applied = await migrate(db);
 if (applied.length) console.log('Миграции:', applied.join(', '));
 
-const payments = config.payments.provider === 'yookassa'
-  ? new YooKassaProvider(config.payments.yookassaShopId, config.payments.yookassaSecretKey, config.payments.yookassaAgentId, config.payments.yookassaPayoutKey)
-  : new MockProvider(config.publicUrl);
+// Real acquiring/payouts are deliberately disconnected: TrakSOS chose Tochka.
+// The current Tochka integration handles invoice DOCUMENTS only, not real capture.
+const payments = new MockProvider(config.publicUrl);
 
 const app = createApp({ db, sms: createSms(), push: createPush(), payments });
 

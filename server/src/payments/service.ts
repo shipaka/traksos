@@ -16,7 +16,7 @@ import type { OrdersService, PaymentHooks } from '../services/orders.ts';
 import type { CreatePaymentInput, PaymentProvider, ProviderStatus } from './provider.ts';
 import { HttpError, bad, notFound, type AuthUser } from '../http/router.ts';
 import { cancelSplit, commissionPct, cappedPct, split, type CancelStage } from '../domain/money.ts';
-import { agentReceipt } from './yookassa.ts';
+import { agentReceipt } from './agentReceipt.ts';
 import { config } from '../config.ts';
 import { rub } from '../util.ts';
 import { roundTo } from '../domain/pricing.ts';
