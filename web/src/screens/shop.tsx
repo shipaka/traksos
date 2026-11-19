@@ -378,7 +378,8 @@ function ShopSwitch() {
     <div className={`banner col ${on ? '' : 'warn'}`}>
       <b>Магазин {on ? 'открыт для клиентов' : 'закрыт — клиенты видят «скоро»'}</b>
       <span className="note">{on ? 'Если что-то сбоит — закройте: новые заказы перестанут приниматься, уже оформленные останутся у вас и у клиентов.' : `Клиент видит: «${s.data.shop.closedTitle}». Товары можно готовить заранее.`}</span>
-      <button className={`btn small ${on ? 'ghost' : ''}`} disabled={busy} onClick={async () => { if (await run(() => put('/api/admin/settings/shop', { enabled: !on }), on ? 'Магазин закрыт' : 'Магазин открыт')) s.reload(); }}>{on ? 'Закрыть магазин' : 'Открыть магазин'}</button>
+      <button className="btn ghost small" disabled={busy || !on} onClick={async () => { if (await run(() => put('/api/admin/settings/shop', { enabled: false }), 'Магазин закрыт')) s.reload(); }}>{on ? 'Закрыть магазин' : 'Магазин закрыт до приёмки'}</button>
+      {!on && <small className="note">Открытие магазина для клиентов заблокировано до отдельной проверки и утверждённого выпуска. Администратор может готовить каталог без публикации.</small>}
     </div>
   );
 }
