@@ -45,5 +45,15 @@ test('client surcharge is added only in client JSON; worker only sees included c
     const workerChat = ok(await t.api('GET',`/api/orders/${order.id}/messages`,undefined,worker.token));
     assert.ok(clientChat.messages.some((m:any)=>String(m.body).includes('+ сбор 500')));
     assert.ok(!workerChat.messages.some((m:any)=>String(m.body).includes('+ сбор 500')));
+    // Cash accounting stays correct, but the worker API only returns an aggregate debt.
+    ok(await t.api('POST',`/api/orders/${order.id}/step`,{action:'arrive'},worker.token));
+    ok(await t.api('POST',`/api/orders/${order.id}/amount`,{result:'solved'},worker.token));
+    const payable = ok(await t.api('GET',`/api/orders/${order.id}`,undefined,client.token)).money.total;
+    ok(await t.api('POST',`/api/orders/${order.id}/confirm`,{total:payable},client.token));
+    const history = ok(await t.api('GET','/api/performer/ledger',undefined,worker.token));
+    const debt = history.find((entry:any)=>entry.kind==='cash_commission');
+    assert.ok(debt && debt.amount<0);
+    assert.ok(!String(debt.note).includes('сбор 500'));
+    assert.ok(!String(debt.note).includes('Наличные '));
   } finally { await t.close(); }
 });
