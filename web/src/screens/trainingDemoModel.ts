@@ -64,6 +64,38 @@ export const practiceStages: Record<PracticeKind, readonly PracticeStage[]> = {
   ],
 };
 
+/**
+ * A phone consultation does not involve arrival at the vehicle, and a repair
+ * base does not pretend its employee drove out. Keep examples truthful.
+ */
+export function customerStageFor(service: string, index: number): PracticeStage {
+  const base=practiceStages.customer[index];
+  if(!base) return practiceStages.customer[0];
+  if(service==='СТО') {
+    const extra: Record<number, Partial<PracticeStage>>={
+      3:{title:'4. Запрос направлен в СТО',status:'Получено',explanation:'Учебная запись ожидает подтверждения станции. Это не вызов выездного мастера.',where:'Мои заявки → Запись в СТО',button:'Показать подтверждение записи'},
+      4:{title:'5. Запись подтверждена',status:'Записано',explanation:'В настоящем процессе СТО согласует время приёма и сообщает условия.',where:'Запись → Подтверждённое время',button:'Показать подготовку к визиту'},
+      5:{title:'6. Готовимся к приезду',status:'Ожидает визита',explanation:'Клиент привозит автомобиль в СТО. Никакого статуса «Мастер выехал» здесь нет.',where:'Запись → Условия приезда',button:'Показать принятие машины'},
+      6:{title:'7. Машина принята',status:'В ремонте',explanation:'СТО сообщает, что автомобиль принят и работы начались.',where:'Карточка ремонта → Статус',button:'Показать готовность'},
+      7:{title:'8. СТО завершила работы',status:'Машина готова',explanation:'Клиент сверяет список работ и согласованные суммы; тренажёр их не рассчитывает.',where:'Карточка ремонта → Итог',button:'Подтвердить учебный результат'},
+      8:{title:'9. История ремонта',status:'Подтверждено',explanation:'Учебная запись закончена. В реальном кабинете история ремонта привязана к автомобилю.',where:'Мои заявки → История'},
+    };
+    return {...base,...(extra[index]??{})};
+  }
+  if(service==='Консультация по телефону') {
+    const extra: Record<number, Partial<PracticeStage>>={
+      3:{title:'4. Запрос на консультацию',status:'Получено',explanation:'Учебный запрос принят площадкой. Настоящие звонки не инициируются.',where:'Мои заявки → Консультации',button:'Показать назначение консультанта'},
+      4:{title:'5. Консультант найден',status:'Консультация назначена',explanation:'В реальности клиент получает связь с консультантом по заявке.',where:'Консультация → Связь',button:'Показать начало разговора'},
+      5:{title:'6. Консультация началась',status:'Разговор',explanation:'Вместо выезда специалист по телефону уточняет симптомы и рекомендует безопасные проверки.',where:'Консультация → Разговор и чат',button:'Показать рекомендации'},
+      6:{title:'7. Получены рекомендации',status:'Рекомендации',explanation:'Мастер объяснил, что можно проверить и когда нужен очный ремонт.',where:'Консультация → Итог',button:'Показать завершение консультации'},
+      7:{title:'8. Разговор завершён',status:'Завершено',explanation:'В настоящей заявке клиент подтверждает решение вопроса или необходимость выезда. Оплата в примере не проводится.',where:'Консультация → Завершение',button:'Подтвердить учебный итог'},
+      8:{title:'9. История консультации',status:'Подтверждено',explanation:'История разговора и итог доступны в своей заявке, а не в общем эфире.',where:'Мои заявки → История'},
+    };
+    return {...base,...(extra[index]??{})};
+  }
+  return base;
+}
+
 export function nextPracticeStage(kind: PracticeKind, index: number, input: PracticeInput): number {
   const stages = practiceStages[kind];
   if (index < 0 || index >= stages.length) return 0;
