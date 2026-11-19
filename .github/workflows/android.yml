@@ -57,11 +57,20 @@ jobs:
           npm install
           node scripts/verify-brand.mjs
           npm -w web run build
+          rm -rf android/app/src/main/assets/www
           mkdir -p android/app/src/main/assets/www
           cp -a web/dist/. android/app/src/main/assets/www/
+          # All APK assets must be rebuilt from this exact PR SHA, never merged with an old WebView bundle.
+          for obsolete in tracksos-approved-scenic-hero.webp tracksos-approved-scania-r520.webp tracksos-approved-truck.webp traksos-final-hero.webp traksos-final-insurance.webp traksos-final-parts.webp; do
+            if test -e "android/app/src/main/assets/www/$obsolete"; then
+              echo "FAIL: retired visual asset packaged in APK: $obsolete" >&2
+              exit 1
+            fi
+          done
           test -s android/app/src/main/assets/www/index.html
           test -s android/app/src/main/assets/www/app.js
           test -s android/app/src/main/assets/www/app.css
+          test -s android/app/src/main/assets/www/tracksos-approved-hero-owner-20261119.webp
           echo "Bundled web assets:"; du -sh android/app/src/main/assets/www
 
       - name: Сверка дизайна до ночной сборки
