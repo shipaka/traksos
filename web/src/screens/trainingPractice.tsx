@@ -1,119 +1,163 @@
-// Isolated practice simulator: absolutely no API calls, messages, billing or persisted orders.
-// Scenarios are illustrative examples, not legal terms or an operational promise.
-import { useEffect, useState } from 'react';
-import { useMe } from '../ui.tsx';
-import { trainingRole } from './training.tsx';
+import { useState } from 'react';
+import { customerStageFor, nextPracticeStage, practiceKindFor, practiceStages, type PracticeInput } from './trainingDemoModel.ts';
 
-type Step = { title: string; explanation: string; action: string; result: string; warning?: string };
-type Scenario = { title: string; introduction: string; steps: Step[] };
-const scenarios: Record<string, Scenario> = {
-  owner: { title: 'Владелец — помощь грузовику', introduction: 'Тестовая Scania встала у КАД. Водитель просит помощь, владелец согласует расходы.', steps: [
-    {title:'Машина',explanation:'Укажите транспорт, чтобы подобрать нужного мастера.',action:'Выбрать Scania (пример)',result:'Машина выбрана.'},
-    {title:'Заявка',explanation:'Опишите неисправность и проверьте геолокацию.',action:'Подготовить тестовую заявку',result:'Заявка подготовлена, реальным исполнителям не отправлена.'},
-    {title:'Цена',explanation:'Перед заказом показаны цена работы, комиссия и итог. Пример: работа 10 000 ₽, реальный итог берётся из согласованной сметы.',action:'Проверить стоимость (пример)',result:'Цена просмотрена. Никаких денег не списано.'},
-    {title:'Согласование',explanation:'Водитель превышает лимит. Согласие даёт владелец.',action:'Одобрить в тренажёре',result:'Учебный лимит подтверждён.'},
-    {title:'Продолжение',explanation:'Мастер советует СТО. Это новый заказ с отдельной ценой, а не доплата к прежнему.',action:'Согласовать новый этап в тренажёре',result:'Учебное продолжение согласовано отдельно.'},
-    {title:'Результат',explanation:'Сверьте выполненное и документы.',action:'Завершить учебный кейс',result:'Практика завершена; настоящий заказ не создан.'},
-  ]},
-  driver: { title: 'Водитель — поломка на трассе', introduction: 'Тестовый водитель ищет помощь и передаёт владельцу расходы выше лимита.', steps: [
-    {title:'Машина',explanation:'Работайте только с транспортом, который назначил владелец.',action:'Открыть назначенный автомобиль',result:'Вы видите только тестовую машину.'},
-    {title:'SOS',explanation:'Выберите нужный вид помощи и укажите место.',action:'Заполнить SOS (тренажёр)',result:'Запрос подготовлен без отправки.'},
-    {title:'Лимит',explanation:'Сумма выше лимита — подождите владельца. Не подтверждайте чужие расходы.',action:'Передать согласование владельцу',result:'Учебное уведомление владельцу показано только здесь.'},
-    {title:'Прибытие',explanation:'Сообщите исполнителю о пропуске, подъезде и характере поломки.',action:'Уточнить детали',result:'Детали добавлены в учебный сценарий.'},
-    {title:'Итог',explanation:'Просмотрите статус, не подписывайте за владельца лишние работы.',action:'Закончить практику',result:'Учебная заявка закрыта.'},
-  ]},
-  master: { title: 'Мастер — выезд, ремонт и передача', introduction: 'Тренировка полного рабочего цикла с безопасным продолжением заявки.', steps: [
-    {title:'В работе',explanation:'Подключите только те специализации, которые действительно выполняете.',action:'Проверить профиль',result:'Профиль в тренажёре готов.'},
-    {title:'Заявка',explanation:'Проверьте машину, место, расстояние и заявленную сумму.',action:'Принять учебную заявку',result:'Заявка принята в тренировке.'},
-    {title:'Маршрут',explanation:'После выезда клиент должен видеть актуальный статус.',action:'Выехал',result:'Учебный статус: Выехал.'},
-    {title:'На месте',explanation:'Отметьте фактическое прибытие.',action:'На месте',result:'Учебный статус: На месте.'},
-    {title:'Новая услуга',explanation:'Нужна СТО, эвакуация или ЭБУ? Только предложение: отдельное согласие клиента, новый счёт.',action:'Отправить учебное предложение',result:'Предложение показано клиенту; автоматически оно не принято.',warning:'Это не разрешение на дополнительные списания.'},
-    {title:'Итог',explanation:'Укажите реально выполненную работу и расходники отдельными строками.',action:'Закрыть учебный выезд',result:'Учебный выезд завершён.'},
-  ]},
-  tow: { title: 'Эвакуатор — забрать и передать', introduction: 'Тестовая эвакуация тяжёлого грузовика на СТО.', steps: [
-    {title:'Техника',explanation:'Проверьте допустимую массу и вид эвакуатора.',action:'Проверить возможности',result:'Тестовая техника подходит.'},
-    {title:'Маршрут',explanation:'Уточните точки, погрузку и полную цену.',action:'Согласовать перевозку (пример)',result:'Учебная цена согласована.'},
-    {title:'Выехал',explanation:'Поменяйте статус только при реальном выезде.',action:'Выехал',result:'Статус учтён в тренажёре.'},
-    {title:'На месте',explanation:'Проверьте автомобиль и безопасность погрузки.',action:'На месте',result:'Учебное прибытие отмечено.'},
-    {title:'СТО',explanation:'Предложите СТО, но не оформляйте заказ без согласия клиента.',action:'Создать учебное предложение СТО',result:'Предложение создано без настоящих заявок.'},
-    {title:'Завершение',explanation:'Отметьте фактическую доставку и результат.',action:'Завершить тренировку',result:'Тестовая перевозка выполнена.'},
-  ]},
-  consultant: { title: 'Консультант — мультизаявка', introduction: 'Покажем, как после консультации передать клиенту предложение следующей услуги.', steps: [
-    {title:'Обращение',explanation:'Проверьте симптомы и модель ТС.',action:'Принять консультацию',result:'Учебная консультация открыта.'},
-    {title:'Безопасность',explanation:'Не предлагайте опасных действий с тормозами, электрикой и под поднятым автомобилем.',action:'Отметить безопасные рекомендации',result:'Рекомендации зафиксированы.'},
-    {title:'Решение',explanation:'По результатам требуется выезд диагноста.',action:'Предложить диагноста',result:'Клиент увидит предложение, но оно ещё не принято.'},
-    {title:'Согласие',explanation:'У клиента отдельный выбор нового исполнителя и цены.',action:'Смоделировать согласие клиента',result:'Отдельное учебное согласие зафиксировано.'},
-    {title:'История',explanation:'Оба этапа связаны одной поломкой, но имеют отдельные счета.',action:'Завершить консультацию',result:'Практика закончена.'},
-  ]},
-  service: { title: 'СТО — от записи до счёта', introduction: 'Один учебный автомобиль, приём, ремонт, новая смета и закрытие.', steps: [
-    {title:'Запись',explanation:'Примите заявку только при наличии возможности ремонта.',action:'Принять тестовый автомобиль',result:'Тестовый автомобиль ожидается.'},
-    {title:'Приём',explanation:'Отметьте реальное прибытие и диагностику.',action:'Машина прибыла',result:'Статус: диагностика.'},
-    {title:'Смета',explanation:'Работы и материалы выделены отдельно; итог показывают клиенту до подтверждения.',action:'Предложить смету (пример)',result:'Учебная смета составлена.'},
-    {title:'Согласование',explanation:'Не начинайте дополнительные работы без отдельного согласия.',action:'Смоделировать согласие клиента',result:'Согласие получено только в тренировке.'},
-    {title:'Готовность',explanation:'Укажите перечень работ и статус «Готова».',action:'Машина готова',result:'Статус ремонта обновлён.'},
-    {title:'Счёт',explanation:'До закрытия клиент видит детализацию и может обратиться по спору.',action:'Закрыть учебный счёт',result:'Ремонт завершён в тренажёре.'},
-  ]},
-  insurer: { title: 'Страхование — путь запроса', introduction: 'Учебные предложения без полисов и финансовых операций.', steps: [
-    {title:'Запрос',explanation:'Проверьте назначенный страховой запрос и ТС.',action:'Принять тестовый запрос',result:'Запрос на рассмотрении.'},
-    {title:'Расчёт',explanation:'Разделите премию страховщика и вознаграждение посредника.',action:'Создать учебное предложение',result:'Предложение подготовлено.'},
-    {title:'Сравнение',explanation:'Клиент выбирает страховщика и условия.',action:'Отправить тестовые варианты',result:'Учебные предложения доступны клиенту.'},
-    {title:'Выбор',explanation:'Никакой страховщик не выбран автоматически.',action:'Смоделировать выбор клиента',result:'Выбор подтверждён только в сценарии.'},
-    {title:'Документ',explanation:'Полис оформляется только через реальную уполномоченную цепочку.',action:'Прикрепить макет документа',result:'Учебный образец приложен. Реальный полис не выпускался.'},
-  ]},
-  inspection: { title: 'Техосмотр — проверка запроса', introduction: 'Пример учёта обращения без выдачи диагностической карты.', steps: [
-    {title:'Запись',explanation:'Назначенный запрос отображается в кабинете.',action:'Открыть пример запроса',result:'Запрос открыт.'},
-    {title:'Проверка',explanation:'Сверьте документы и машину по установленной процедуре.',action:'Отметить проверку',result:'Учебные данные сверены.'},
-    {title:'Результат',explanation:'Статус обращения не равен оформлению диагностической карты.',action:'Завершить учёт запроса',result:'Статус изменён лишь в учебной среде.'},
-  ]},
-  moderator: { title: 'Модератор — решение по спору', introduction: 'Нужно обосновать результат и сохранить право сторон оспорить его.', steps: [
-    {title:'Кейс',explanation:'Посмотрите обращение клиента и исполнителя.',action:'Открыть учебный спор',result:'Открыт тестовый кейс.'},
-    {title:'Доказательства',explanation:'Просмотрите согласованную сумму, статусы, чат и документы.',action:'Проверить факты',result:'Учебные данные проверены.'},
-    {title:'Решение',explanation:'Вывод должен объяснять, чем подтверждается нарушение.',action:'Подготовить обоснование',result:'Основание заполнено в тренажёре.'},
-    {title:'Уведомление',explanation:'Стороны должны получить решение и способ его обжаловать.',action:'Закрыть учебное обращение',result:'Пример обращения закрыт без реальных санкций.'},
-  ]},
-  admin: { title: 'Администратор — контроль запуска', introduction: 'Проверка исполнителей, комиссий и условий без изменений production.', steps: [
-    {title:'Очередь',explanation:'Сначала незакрытые и просроченные заявки.',action:'Открыть учебную сводку',result:'Тестовая очередь просмотрена.'},
-    {title:'Проверка',explanation:'Профиль без документов не выдаём за подтверждённый.',action:'Проверить карточку партнёра',result:'Сведения проверены в сценарии.'},
-    {title:'Тарифы',explanation:'Не публикуйте ставки, пока они не совпадают с расчётом и офертой.',action:'Сверить комиссию (пример)',result:'Учебное сравнение выполнено.'},
-    {title:'Юридическое',explanation:'Текст оферты и версия должны быть утверждены.',action:'Проверить редакцию оферты',result:'Условия проверены в тренажёре.'},
-    {title:'Выпуск',explanation:'Нужны CI, бэкап, sandbox и отдельное разрешение на продакшен.',action:'Завершить контрольный список',result:'Практика завершена; сервер не обновлён.'},
-  ]},
-};
+const services = ['Выездной мастер', 'Эвакуатор', 'СТО', 'Консультация по телефону'] as const;
 
-export function TrainingPractice({ chapter }: { chapter?: string }) {
-  const { me, mode } = useMe();
-  const ownRole = trainingRole(mode, me?.roles ?? [], me?.owner_id);
-  const isAdmin = !!me?.roles.includes('admin');
-  const role = (isAdmin || (ownRole === 'master' && chapter === 'consultant')) && chapter && scenarios[chapter] ? chapter : ownRole;
-  const scene = scenarios[role];
-  const [current, setCurrent] = useState(0);
-  const [done, setDone] = useState(false);
-  useEffect(() => { setCurrent(0); setDone(false); }, [role]);
-  const step = scene.steps[Math.min(current, scene.steps.length - 1)];
-  const progress = done ? scene.steps.length : current;
-  const advance = () => { if (current === scene.steps.length - 1) setDone(true); else setCurrent(n => n + 1); };
-  return <main className="tr-training-page tr-training-practice">
-    <a className="note" href={'#/training/' + role}>← Назад к обучению</a>
-    <section className="tr-training-hero"><span className="label">TRAKSOS · ТРЕНИРОВКА</span>
-      <h1>{scene.title}</h1><p>{scene.introduction}</p></section>
-    <div className="banner" role="status"><b>ТЕСТОВЫЙ РЕЖИМ</b><span>Никаких заявок, уведомлений клиентам, платежей и изменений аккаунта. Все действия существуют только на этой странице.</span></div>
-    <section className="tr-training-workspace">
-      <div className="tr-training-progress"><div className="tr-training-progress-label"><strong>Учебный сценарий</strong><span>{progress} из {scene.steps.length} выполнено</span></div>
-        <div className="tr-training-track" role="progressbar" aria-label="Прогресс практики" aria-valuemin={0} aria-valuemax={scene.steps.length} aria-valuenow={progress}>
-          <span style={{width:(progress / scene.steps.length) * 100 + '%'}} />
-        </div></div>
-      {done ? <div className="card stack" role="status"><h2>Практика завершена</h2>
-          <p>Теперь можно вернуться в свой кабинет. Тестовые действия не затронули реальные данные.</p>
-          <div className="row"><button type="button" className="btn ghost" onClick={() => {setCurrent(0);setDone(false);}}>Пройти ещё раз</button><a className="btn" href={'#/training/'+role}>К инструкциям</a></div></div>
-        : <div className="tr-training-lesson"><span className="label">ШАГ {current+1}</span><h2>{step.title}</h2>
-          <p className="tr-training-purpose">{step.explanation}</p>
-          {step.warning && <p className="tr-training-caution">{step.warning}</p>}
-          <div className="tr-training-instruction"><strong>Результат после действия</strong><p>{step.result}</p></div>
-          <button className="btn" type="button" onClick={advance}>{step.action}</button>
+/**
+ * A miniature training order. Its complete state stays in React memory.
+ * There are deliberately NO app API, web socket or native bridge imports.
+ */
+export function TrainingPractice({role,onBack}:{role:string;onBack:()=>void}) {
+  const kind=practiceKindFor(role);
+  const stages=practiceStages[kind];
+  const [index,setIndex]=useState(0);
+  const [vehicle,setVehicle]=useState('Scania R520 · учебный автомобиль');
+  const [service,setService]=useState<string>('Выездной мастер');
+  const [problem,setProblem]=useState('');
+  const [error,setError]=useState('');
+  const [chatOpen,setChatOpen]=useState(false);
+  const [helpOpen,setHelpOpen]=useState(true);
+  const stage=kind==='customer'?customerStageFor(service,index):stages[index];
+  const isCustomer=kind==='customer';
+  const isPerformer=kind==='performer';
+  const orderExample=isCustomer||isPerformer||kind==='service';
+  const input:PracticeInput={vehicle,problem,service};
+  const advance=()=>{
+    const next=nextPracticeStage(kind,index,input);
+    if(next===index) {
+      setError('Для учебной заявки укажите автомобиль и опишите проблему хотя бы в пяти символах.');
+      return;
+    }
+    setIndex(next);
+    setError('');
+    setChatOpen(false);
+    if(next===0) {
+      setProblem('');setService('Выездной мастер');setVehicle('Scania R520 · учебный автомобиль');
+    }
+  };
+  const caseTitle=kind==='staff'?'Вопрос о сроке ответа':
+    kind==='insurance'?'Страхование грузового автомобиля':
+    kind==='service'?'Проверить электрику и зарядку':
+    isPerformer&&role==='tow'?'Учебная эвакуация с трассы':'Не заводится грузовик, требуется диагностика';
+  return <section className="training-practice stack" aria-label="Практическая часть обучения">
+    <div className="training-practice-top">
+      <div><span className="label">TRAKSOS · БЕЗОПАСНЫЙ ТРЕНАЖЁР</span>
+        <h2>Пройдём одну тестовую заявку</h2>
+        <p className="note">Нажимайте кнопки сами. После каждого действия объясним, что произошло и где это находится в настоящем кабинете.</p>
+      </div>
+      <button className="btn ghost small" type="button" onClick={onBack}>← К знакомству</button>
+    </div>
+    <div className="training-practice-alert" role="note">
+      <strong>ДЕМОНСТРАЦИЯ · НЕ НАСТОЯЩАЯ ЗАЯВКА</strong>
+      <span>Нет обращения к серверу. Не вызываются мастера, не отправляются SMS, не меняются реальные статусы и не списываются деньги.</span>
+    </div>
+    <div className="training-demo-overview" aria-label="Прогресс учебной заявки">
+      <span>Шаг {index+1} из {stages.length}</span>
+      <span className="training-demo-status">{stage.status} · демо</span>
+    </div>
+    <div className="training-demo-progress" role="progressbar" aria-label="Прогресс учебной заявки"
+      aria-valuemin={0} aria-valuemax={stages.length} aria-valuenow={index+1}>
+      <span style={{width:(((index+1)/stages.length)*100)+'%'}} />
+    </div>
+    <div className="training-demo-workspace">
+      <div className="training-demo-card stack">
+        <div className="row" style={{alignItems:'center',flexWrap:'wrap'}}>
+          <span className="pill accent">УЧЕБНАЯ ЗАЯВКА · DEMO-001</span>
+          <span className="note">Все данные вымышленные</span>
+        </div>
+        <h3>{stage.title}</h3>
+        <p>{stage.explanation}</p>
+
+        {isCustomer && index===0 && <fieldset className="training-demo-fieldset">
+          <legend>Кого будем вызывать?</legend>
+          <div className="training-demo-options">
+            {services.map(value=><label key={value} className={'training-demo-option'+(value===service?' selected':'')}>
+              <input type="radio" name="demo-service" checked={value===service} onChange={()=>setService(value)} />
+              <span>{value}</span>
+            </label>)}
+          </div>
+        </fieldset>}
+        {isCustomer && index===1 && <div className="stack">
+          <label className="stack" htmlFor="demo-vehicle"><b>Автомобиль</b>
+            <select id="demo-vehicle" className="field" value={vehicle} onChange={e=>setVehicle(e.target.value)}>
+              <option value="Scania R520 · учебный автомобиль">Scania R520 · учебный</option>
+              <option value="Iveco Stralis · учебный автомобиль">Iveco Stralis · учебный</option>
+              <option value="Volvo FH · учебный автомобиль">Volvo FH · учебный</option>
+            </select>
+          </label>
+          <label className="stack" htmlFor="demo-problem"><b>Что случилось?</b>
+            <textarea id="demo-problem" className="field" rows={3} maxLength={220}
+              placeholder="Например: не запускается двигатель, нужен выездной мастер"
+              value={problem} onChange={e=>{setProblem(e.target.value);setError('');}} />
+          </label>
+          <p className="note">Это тренировочный ввод. Не пишите здесь свои номера телефонов, адреса или настоящие данные транспорта.</p>
         </div>}
-      <nav className="tr-training-step-links" aria-label="Маршрут практики">
-        {scene.steps.map((s,i)=><span key={s.title} className={i===current&&!done?'active':''}>{i+1}. {s.title}</span>)}
-      </nav>
-    </section>
-  </main>;
+        {orderExample && (isCustomer?index>=2:true) && <section className="training-demo-order" aria-label="Карточка учебной заявки">
+          <div className="between" style={{gap:12,flexWrap:'wrap'}}>
+            <strong>Грузовик: {isCustomer?vehicle:'Scania R520 · учебный'}</strong>
+            <span className="training-demo-status">{stage.status}</span>
+          </div>
+          <div className="training-demo-details">
+            <div><span>Услуга</span><b>{isCustomer?service:isPerformer&&role==='tow'?'Эвакуатор':kind==='service'?'Ремонт в СТО':'Выездной мастер'}</b></div>
+            <div><span>Проблема</span><b>{isCustomer?(problem.trim()||'Только демонстрация'):caseTitle}</b></div>
+            <div><span>Место</span><b>Учебная стоянка · адрес не передаётся</b></div>
+            <div><span>Стоимость</span><b>Не рассчитывается в тренажёре</b></div>
+          </div>
+          {isCustomer && index>=4 && index<=7 && <div className="training-demo-chat">
+            <button className="btn ghost small" type="button" aria-expanded={chatOpen}
+              onClick={()=>setChatOpen(v=>!v)}>
+              {chatOpen?'Скрыть':'Показать'} пример чата заявки
+            </button>
+            {chatOpen && <div className="training-demo-chat-bubble">
+              <b>Исполнитель · учебное сообщение</b>
+              <p>{service==='Консультация по телефону'
+                ? 'Здравствуйте! Расскажите, что проверяли до обращения, и есть ли диагностический код.'
+                : service==='СТО'
+                ? 'Запись вижу. Уточните, пожалуйста, удобно ли подъехать к станции в назначенное время.'
+                : 'Здравствуйте! Заявку вижу. Уточните, пожалуйста, удобный подъезд к грузовику.'}</p>
+              <small>Настоящее сообщение не отправлено. Ответы по заказу пишут в чате конкретной заявки.</small>
+            </div>}
+          </div>}
+        </section>}
+        {!orderExample && <section className="training-demo-order" aria-label="Учебное обращение">
+          <div className="between" style={{gap:8,flexWrap:'wrap'}}>
+            <b>DEMO-001 · {caseTitle}</b><span className="training-demo-status">{stage.status}</span>
+          </div>
+          <p className="note">Вымышленная карточка для знакомства с этапами работы. Ни один клиент и сотрудник не получил сообщения.</p>
+        </section>}
+
+        <div className="training-demo-navigator">
+          <button type="button" className="btn ghost" disabled={index===0}
+            onClick={()=>{setIndex(v=>Math.max(v-1,0));setError('');setChatOpen(false);}}>← Предыдущий шаг</button>
+          <button className="btn" type="button" onClick={advance}>{stage.button}</button>
+        </div>
+        {error && <p role="alert" className="note">{error}</p>}
+        {index===stages.length-1 && <div className="training-demo-complete">
+          <strong>Готово — вы прошли учебный сценарий.</strong>
+          <span>Никаких настоящих заявок не создавалось. Теперь можно возвращаться к урокам или пройти пример ещё раз.</span>
+        </div>}
+      </div>
+      <aside className="training-demo-hints stack" aria-label="Подсказки к шагу">
+        <div className="card stack">
+          <div className="between" style={{gap:6}}>
+            <b>Что и для чего?</b>
+            <button className="btn ghost small" type="button" aria-expanded={helpOpen}
+              onClick={()=>setHelpOpen(v=>!v)}>{helpOpen?'Свернуть':'Подсказка'}</button>
+          </div>
+          {helpOpen && <>
+            <div><span className="label">Где это в кабинете</span><p>{stage.where}</p></div>
+            <div><span className="label">Зачем нужен этот шаг</span><p>{stage.why}</p></div>
+          </>}
+        </div>
+        <div className="card stack">
+          <b>Где искать подсказки?</b>
+          <p className="note"><b>Меню → Знакомство с TrakSOS</b> — повторить обучение. <b>«?» / Справка</b> — инструкции, условия и поиск по темам.</p>
+          <p className="note"><b>TrakBot</b> — личный помощник: объясняет, где найти функцию. <b>Поддержка</b> — вопросы по конкретному заказу и спорные случаи.</p>
+          <a href="#/help">Открыть справку</a>
+          <a href="#/trakbot">Спросить TrakBot</a>
+          <a href="#/support/new">Личная поддержка</a>
+        </div>
+      </aside>
+    </div>
+  </section>;
 }
