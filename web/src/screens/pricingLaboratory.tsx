@@ -51,7 +51,7 @@ export function PricingLaboratory() {
           <input className="field" type="number" min={0} max={50000} value={bonus}
             onChange={e=>setBonus(Math.max(0,Number(e.target.value)||0))}/></label>
       </div>
-      <label className="row"><input type="checkbox" checked={referral} onChange={e=>setReferral(e.target.checked)} /> Рефералу 10% от комиссии TrackSOS</label>
+      <label className="row"><input type="checkbox" checked={referral} onChange={e=>setReferral(e.target.checked)} /> Рефералу 10% от комиссии TrakSOS</label>
       <div className="tr-training-instruction">
         <h2>Расчёт</h2>
         {row('Цена услуги',Math.round(amount*100))}
@@ -60,7 +60,7 @@ export function PricingLaboratory() {
         {row('Комиссия исполнителя',calc.partnerFee)}
         {row('Исполнитель получает',calc.partnerGets)}
         <hr/>
-        {row('Выручка TrackSOS',calc.platformRevenue)}
+        {row('Выручка TrakSOS',calc.platformRevenue)}
         {row('Эквайринг',-calc.processing)}
         {row('УСН 6% с агентского вознаграждения (модель)',-calc.tax)}
         {row('Реферальные выплаты',-calc.referral)}
