@@ -10,6 +10,7 @@ const rails: {value:PaymentRail;label:string}[] = [
 export function PricingLaboratory() {
   const { me } = useMe();
   const [amount,setAmount] = useState(10_000);
+  const [isSto,setIsSto] = useState(false);
   const [rail,setRail] = useState<PaymentRail>('card');
   const [processingRate,setProcessingRate] = useState(2.8);
   const [support,setSupport] = useState(30);
@@ -18,7 +19,8 @@ export function PricingLaboratory() {
   const [referral,setReferral] = useState(true);
   if (!me?.roles.includes('admin')) return <main><h1>Нет доступа</h1><a href="#/">На главную</a></main>;
   const calc = proposedEconomics({
-    base:Math.round(amount*100),partnerFeePct:5,customerFeePct:0,paymentRail:rail,
+    base:Math.round(amount*100),partnerFeePct:5,customerFeePct:5,paymentRail:rail,
+    partnerFeeMax:isSto?500_000:undefined,customerFeeMax:isSto?500_000:undefined,
     acquiringPct:processingRate,supportCost:Math.round(support*100),riskReserve:Math.round(risk*100),
     referralPctOfPlatformRevenue:referral?10:0,bonuses:Math.round(bonus*100),
     taxPctOfPlatformRevenue:6,marketingCapPctOfPlatformRevenue:30,
@@ -27,10 +29,11 @@ export function PricingLaboratory() {
   return <main className="tr-training-page tr-finance-lab">
     <a href="#/admin" className="note">← Администратор</a>
     <section className="tr-training-hero"><span className="label">TRAKSOS · СЦЕНАРНЫЙ РАСЧЁТ</span><h1>Проверка прибыльности комиссии</h1>
-      <p>Предлагаемая модель: клиенту 0% доплаты, исполнителю 5%. Это калькулятор решений, не утверждённый тариф и не финансовая операция.</p></section>
+      <p>Утверждено: 5% сервисного сбора с клиента сверх цены услуги и 5% комиссии исполнителя внутри его цены. Для СТО оба процента ограничены независимо — по 5 000 ₽ с каждой стороны за счёт.</p></section>
     <div className="banner" role="note"><strong>РЕАЛЬНЫЕ НАСТРОЙКИ НЕ ИЗМЕНЯЮТСЯ</strong>
-      <span>В действующих настройках по умолчанию: клиент 5%, исполнитель 5%. База может содержать переопределения. Здесь тестируем альтернативу до согласования и миграции.</span></div>
+      <span>Тариф утверждён как бизнес-правило. Калькулятор ничего не меняет в базе и платежах. Отдельный клиентский сбор для счетов СТО ещё требует сквозной реализации и проверок.</span></div>
     <section className="tr-training-workspace">
+      <label className="row"><input type="checkbox" checked={isSto} onChange={e=>setIsSto(e.target.checked)} /> Счёт СТО: ограничить 5% клиента и 5% сервиса отдельными потолками по 5 000 ₽</label>
       <div className="grid2">
         <label className="stack">Цена работ, ₽
           <input className="field" type="number" min={100} max={10_000_000} step={100} value={amount}
@@ -55,12 +58,13 @@ export function PricingLaboratory() {
       <div className="tr-training-instruction">
         <h2>Расчёт</h2>
         {row('Цена услуги',Math.round(amount*100))}
-        {row('Доплата клиента',calc.clientFee)}
-        {row('Всего платит клиент',calc.totalClient)}
-        {row('Комиссия исполнителя',calc.partnerFee)}
-        {row('Исполнитель получает',calc.partnerGets)}
+        {row('Стоимость услуги (у обеих сторон)',Math.round(amount*100))}
+        {row('В кабинете клиента: сбор TrakSOS сверху',calc.clientFee)}
+        {row('В кабинете клиента: итог к оплате',calc.totalClient)}
+        {row('В кабинете исполнителя: комиссия внутри цены',-calc.partnerFee)}
+        {row('В кабинете исполнителя: к выплате',calc.partnerGets)}
         <hr/>
-        {row('Выручка TrakSOS',calc.platformRevenue)}
+        {row('Выручка TrakSOS (видит только администратор)',calc.platformRevenue)}
         {row('Эквайринг',-calc.processing)}
         {row('УСН 6% с агентского вознаграждения (модель)',-calc.tax)}
         {row('Реферальные выплаты',-calc.referral)}
