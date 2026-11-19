@@ -319,12 +319,10 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   const route = useRoute();
   const [openGuestGroup, setOpenGuestGroup] = useState<string | null>(null);
   const [mobileCatalogOpen, setMobileCatalogOpen] = useState(false);
-  const [mobileGroupOpen, setMobileGroupOpen] = useState<string | null>(null);
   const isAuthEntry = !me && ['login', 'register', 'join', 'reset', 'activate'].includes(route[0] ?? '');
   useEffect(() => {
     setOpenGuestGroup(null);
     setMobileCatalogOpen(false);
-    setMobileGroupOpen(null);
   }, [route.join('/')]);
   useEffect(() => {
     if (!openGuestGroup) return;
