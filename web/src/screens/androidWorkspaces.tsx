@@ -92,6 +92,11 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry }: {
         <a className="and19-order-open" href={'#/order/' + current.id} aria-label={'Открыть заявку №' + current.number}>
           <OrderTitle order={current} />
           <OrderFacts order={current} />
+          {current.status !== 'searching' && Number.isFinite(current.money?.total) &&
+            <div className="and19-price">
+              <small>{['awaiting_confirmation', 'completed'].includes(current.status) ? 'Сумма к подтверждению' : 'Предварительный расчёт'}</small>
+              <strong>{rub(current.money.total)}</strong>
+            </div>}
           {current.status !== 'searching' && <MobileTimeline status={current.status} />}
           {current.status === 'searching' && <p className="and19-search-active"><span className="and19-pulse" aria-hidden="true" />Поиск исполнителя продолжается · открыть отклики</p>}
           <span className="and19-link">Открыть заявку и связь с исполнителем <span aria-hidden="true">›</span></span>
@@ -153,7 +158,10 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
         <OfferForm orderId={a.order_id} limits={a.limits} myPrice={a.my_price} onDone={reloadAuctions} />
       </div>)}
     </section>}
-    {performer.verification !== 'approved' && <a href="#/work/docs" className="and19-row-link">Проверка и документы профиля ›</a>}
+    {balance?.cash_debt > 0 && <a href="#/work/me/money" className="and19-row-link">
+      Долг по комиссии с наличных <strong>{rub(balance.cash_debt)} ›</strong>
+    </a>}
+    {performer.verification !== 'approved' && <a href="#/work/docs" className="and19-row-link">Проверка и документы профиля ›</a>
     <div className="and19-quick">
       <a href="#/work/jobs">Все заявки</a>
       <a href="#/work/me/money">Финансы</a>
