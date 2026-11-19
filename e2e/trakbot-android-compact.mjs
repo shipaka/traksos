@@ -125,7 +125,7 @@ try {
       width+'×'+height+': send button outside mini-chat');
     assert(geometry.galleryCount===0, width+'×'+height+': large 30-sticker gallery visible in mini-chat');
     assert(geometry.scrollWidth<=geometry.vw+wiggle,
-      width+'×'+height+': page horizontal overflow '+geometry.scrollWidth+'/'+geometry.vw);
+      width+'×'+height+': page horizontal overflow '+geometry.scrollWidth+'/'+geometry.vw+' offenders '+JSON.stringify(geometry.overflowingNodes));
     assert(geometry.scrollableMessages,
       width+'×'+height+': long messages should scroll inside chat, not enlarge panel');
 
