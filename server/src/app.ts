@@ -624,10 +624,13 @@ export function createApp(d: Deps) {
   r.post('/api/orders/:id/continuations/:recommendationId/decision', true,
     (c: AuthedCtx) => continuations.decide(c.user,c.params.id,
       c.params.recommendationId,parse(z.object({approve:z.boolean()}),c.body).approve));
-  r.post('/api/orders/:id/ecu-handoff', true, (c: AuthedCtx) =>
-    ecuHandoffs.open(c.user,c.params.id,parse(z.object({
+  r.post('/api/orders/:id/ecu-handoff', true, (c: AuthedCtx) => {
+    const b=parse(z.object({
       summary:z.string().trim().min(10).max(1400),
-    }),c.body).summary));
+      recommendationId:z.string().uuid().optional(),
+    }),c.body);
+    return ecuHandoffs.open(c.user,c.params.id,b.summary,b.recommendationId);
+  });
   r.get('/api/orders/:id/ecu-handoff', true, (c: AuthedCtx) =>
     ecuHandoffs.byOrder(c.user,c.params.id));
   r.get('/api/ecu/handoffs', ['master'], (c: AuthedCtx) => ecuHandoffs.inbox(c.user));
