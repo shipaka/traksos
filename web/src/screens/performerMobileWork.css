@@ -23,3 +23,29 @@
 .work-mobile .card .linkrow{min-height:50px}
 .work-mobile .card .opt{min-height:50px}
 @media(max-width:359px){.work-mobile{padding-left:9px;padding-right:9px}.work-mobile-shortcuts a{font-size:12px;padding:5px}.work-mobile-current h2{font-size:20px}}
+
+
+/* One-hand search, with truthful server-scoped result sets. */
+.work-mobile-search{display:flex;flex-direction:column;gap:9px}
+.work-mobile-searchbar{display:flex;align-items:center;gap:7px;padding:6px 7px 6px 12px;min-height:56px;border-radius:17px;background:#1c2d3d;border:1px solid #7a91a377;color:#fff;box-shadow:0 8px 24px #06132124}
+.work-mobile-search-icon{font-size:25px;flex-shrink:0;color:#ffad70;line-height:1}
+.work-mobile-searchbar input[type=search]{flex:1;width:100%;min-width:0;background:transparent;border:0;color:white;padding:11px 1px;font-size:15px;outline:none}
+.work-mobile-searchbar input[type=search]::placeholder{color:#b7c7d9}
+.work-mobile-searchbar:focus-within{border-color:#ffb676;box-shadow:0 0 0 2px #ffac7233}
+.work-mobile-searchbar button{min-height:42px;border-radius:10px;background:#31465a;border:1px solid #60778b;color:#fff;font-size:13px;font-weight:750;padding:7px 10px}
+.work-mobile-searchfilters{display:flex;gap:6px;overflow-x:auto;scrollbar-width:thin}
+.work-mobile-searchfilters button{padding:10px 15px;border-radius:999px;min-height:44px;color:#dde8f2;background:#192a3c;border:1px solid #516e88;font-size:13px;font-weight:700;white-space:nowrap}
+.work-mobile-searchfilters button.active{border-color:#ff9b4e;background:#5c3420;color:#fff}
+.work-mobile-searchinfo{color:#a9becd;font-size:12px;line-height:1.45;margin:2px 0}
+.work-mobile-searchresults{max-height:min(50dvh,410px);overflow:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:6px;padding:2px}
+.work-mobile-search-result{display:flex;flex-direction:column;gap:6px;min-height:62px;border-radius:12px;background:#1c2a39;color:#fff;padding:12px 14px;text-decoration:none;border:1px solid #5e748e66}
+.work-mobile-search-result:focus-visible,.work-mobile-searchbar button:focus-visible,.work-mobile-searchfilters button:focus-visible{outline:3px solid #f98034;outline-offset:2px}
+.work-mobile-search-result b{font-size:14px}
+.work-mobile-search-result>span{font-size:12px}
+.work-mobile-search-result .note{color:#cbd8e6}
+.work-mobile-search-empty{padding:16px;margin:0;border:1px dashed #546c7f;border-radius:12px;font-size:13px;color:#d7e5f2}
+.work-mobile-progress{display:flex;gap:7px;margin:14px 0 12px}
+.work-mobile-progress span{display:block;height:6px;border-radius:999px;flex:1;background:#536375}
+.work-mobile-progress span.done{background:#31d78c}
+.work-mobile-progress span.current{background:#ff942f;box-shadow:0 0 0 2px #ff9a4344}
+.work-mobile-action-hint{display:block;margin-top:8px;color:#ccd8e6;font-size:11px;line-height:1.35}
