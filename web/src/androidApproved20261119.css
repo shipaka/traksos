@@ -1,6 +1,11 @@
 /* TrakSOS Android workspaces — approved 19 Nov 2026.
    Mobile-only layer. Desktop CSS and existing workflows remain authoritative. */
 .and19-workspace{display:none}
+/* A bookmarked chat-inbox URL must also work on desktop, not render a blank page. */
+.and19-chats{display:flex;flex-direction:column;gap:12px;max-width:780px;margin:0 auto;padding:22px}
+.and19-chats .and19-row-link{display:flex;justify-content:space-between;gap:12px;padding:15px;text-decoration:none;color:#e5f6ff}
+.and19-chats .and19-panel{padding:16px}
+.and19-chats .and19-action{display:inline-flex;justify-content:center;align-items:center;min-height:42px;padding:8px 15px;border-radius:11px;background:#ef6c1b;color:white}
 @media(max-width:899px){
  .and19-workspace{display:flex;flex-direction:column;gap:12px;min-width:0;color:#eef8ff;font-size:14px}
  .app.role-client .client-dashboard>:not(.and19-workspace){display:none!important}
