@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  nextPracticeStage, practiceKindFor, practiceStages, type PracticeKind,
+  customerStageFor, nextPracticeStage, practiceKindFor, practiceStages, type PracticeKind,
 } from '../../web/src/screens/trainingDemoModel.ts';
 
 test('onboarding training scenarios cover all TrakSOS cabinet roles safely', () => {
@@ -55,4 +55,18 @@ test('training model never contains payment execution or API request controls', 
   assert.doesNotMatch(all,/https?:\/\/|api\/orders|api\/payments|отправить SMS-код/i);
   assert.match(all,/справк|истори|заявк/i);
   assert.match(all,/демонстрац|учебн|вымышлен|тренаж/i);
+});
+
+
+test('phone consultations and workshop appointments never pretend a master drove to the car', () => {
+  for (const option of ['СТО','Консультация по телефону']) {
+    const steps=Array.from({length:practiceStages.customer.length},(_,i)=>customerStageFor(option,i));
+    const text=steps.map(x=>[x.title,x.status,x.explanation,x.button].join(' ')).join('\n');
+    assert.doesNotMatch(text,/исполнитель выехал|показать прибытие|«Выехал»|статус «На месте»/i,option);
+    assert.ok(steps[4].status!==practiceStages.customer[4].status,option);
+    assert.ok(steps[6].status!==practiceStages.customer[6].status,option);
+    assert.match(steps[8].where,/История/);
+  }
+  assert.equal(customerStageFor('Выездной мастер',5).status,'Выехал');
+  assert.equal(customerStageFor('Эвакуатор',6).status,'На месте');
 });
