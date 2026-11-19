@@ -193,7 +193,10 @@ export function AdminRegistry() {
     {exportInfo && <p className="note" role="status">{exportInfo}</p>}
     <div className="tr-registry-results-header">
       <b>{result.data ? `Найдено участников: ${total}` : 'Загружаем реестр'}</b>
-      <span className="note">Регион последней заявки — не подтверждённый адрес проживания или работы.</span>
+      <div className="row">
+        <span className="note">Регион последней заявки — не подтверждённый адрес проживания или работы.</span>
+        <button type="button" className="btn ghost small" onClick={()=>result.reload()}>Обновить данные</button>
+      </div>
     </div>
     {!result.data ? <Loading error={result.error} /> : <>
       {result.data.items.length===0 && <div className="empty">По заданным параметрам участников нет. Измените фильтры.</div>}
