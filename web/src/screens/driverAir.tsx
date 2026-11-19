@@ -56,7 +56,8 @@ const AI_SCENARIOS:Record<AiSituation,{title:string;question:string;answers:Reco
 
 type DriverAccess={eligible:boolean;enabled:boolean;driverRole:boolean};
 type AirRoom={id:string;slug:string;title:string;kind:string;audience:string;locality:string|null;joined:boolean};
-type AirMessage={id:string;nickname:string;body:string;public_city:string|null;isMine:boolean;created_at:string;moderation_state:string};
+type AirMessage={id:string;nickname:string;body:string;public_city:string|null;isMine:boolean;is_bot?:boolean;created_at:string;moderation_state:string};
+type AirAiStatus={enabled:boolean;name:string;scope:string};
 type AirModerationChange={id:string;revision:string;moderation_state:'published'|'hidden';message?:AirMessage};
 type AirThread={id:string;status:string;peerNickname:string;direction:'outgoing'|'incoming';blocked:boolean};
 type RoadEvent={id:string;nickname:string;category:string;description:string;locality:string|null;expires_at:string;moderation_state:string;verifiedByRoadServices:boolean};
@@ -223,14 +224,16 @@ function useAirMessages(endpoint:string|null){
   return {messages,loading,error,reload:()=>setRevision(x=>x+1),
     append:(m:AirMessage)=>setMessages(curr=>appendMessages(curr,[m],new Set(recentApprovals.current)))};
 }
-function MessageStream({endpoint,canWrite,placeholder,ownerId,onStartDirect}:{
+function MessageStream({endpoint,canWrite,placeholder,ownerId,onStartDirect,botRoomId,botEnabled}:{
   endpoint:string|null;canWrite:boolean;placeholder:string;ownerId:string|null;
-  onStartDirect?:(nickname:string)=>void
+  onStartDirect?:(nickname:string)=>void;botRoomId?:string;botEnabled?:boolean
 }){
   const {messages,loading,error,reload}=useAirMessages(endpoint);
   const [draft,setDraft]=useState('');
   const [rememberDraft,setRememberDraft]=useState(false);
   const [draftError,setDraftError]=useState('');
+  const [askBot,setAskBot]=useState(false);
+  const [botNotice,setBotNotice]=useState('');
   // Keep one idempotency nonce per unchanged draft until its delivery is known.
   // A dropped HTTP response must not create two messages when retried manually.
   const pendingSend=useRef<{endpoint:string;text:string;nonce:string}|null>(null);
@@ -238,7 +241,7 @@ function MessageStream({endpoint,canWrite,placeholder,ownerId,onStartDirect}:{
   const {busy,run}=useAction();
   const bottom=useRef<HTMLDivElement>(null);
   useEffect(()=>{
-    pendingSend.current=null;setDraft('');setReportId(null);setRememberDraft(false);setDraftError('');
+    pendingSend.current=null;setDraft('');setReportId(null);setRememberDraft(false);setDraftError('');setAskBot(false);setBotNotice('');
     if(!endpoint||!ownerId)return;
     try{
       const storage=optionalDraftStorage();if(!storage)return;
@@ -249,6 +252,7 @@ function MessageStream({endpoint,canWrite,placeholder,ownerId,onStartDirect}:{
   },[endpoint,ownerId]);
   const updateDraft=(value:string)=>{
     pendingSend.current=null;setDraft(value);
+    if(!/(?:^|\s)@ТраксБот(?=\s|[.,!?;:]|$)/iu.test(value))setAskBot(false);
     if(rememberDraft&&endpoint&&ownerId){
       const storage=optionalDraftStorage();if(storage)writeAirDraft(storage,ownerId,endpoint,value);
     }
@@ -273,7 +277,20 @@ function MessageStream({endpoint,canWrite,placeholder,ownerId,onStartDirect}:{
       writeAirDraft(storage,ownerId,endpoint,draft,Date.now(),nonce);}
     const sent=await run(()=>post(endpoint,{text,clientNonce:nonce}),'Сообщение отправлено');
     if(sent){
-      pendingSend.current=null;setDraft('');
+      const botRequest=botRoomId && botEnabled && askBot &&
+        /(?:^|\s)@ТраксБот(?=\s|[.,!?;:]|$)/iu.test(text) && sent.status==='published';
+      // Authorization at publication is only half the check; the server
+      // requires independent, explicit consent and rechecks membership.
+      if(botRequest){
+        setBotNotice('ТраксБот обрабатывает вопрос. Ответ появится в этом Эфире.');
+        const result=await run(()=>post('/api/community/rooms/'+botRoomId+'/ai/ask',
+          {sourceMessageId:String(sent.id),consent:true}),null);
+        setBotNotice(result?.status==='published'?'ТраксБот ответил в Эфире.'
+          :'Бот не ответил. Ваш вопрос остался опубликован, отправлять его повторно не нужно.');
+      }else if(askBot && botRoomId){
+        setBotNotice('ИИ не вызван: сообщение пока не опубликовано либо модель недоступна.');
+      }
+      pendingSend.current=null;setDraft('');setAskBot(false);
       if(ownerId){const storage=optionalDraftStorage();if(storage)
         clearAirDraft(storage,ownerId,endpoint);}
       reload();
@@ -284,16 +301,18 @@ function MessageStream({endpoint,canWrite,placeholder,ownerId,onStartDirect}:{
       {loading&&<p className="note">Загружаю последние сообщения…</p>}
       {error&&<div className="banner warn" role="status">{error} <button type="button" onClick={reload}>Повторить</button></div>}
       {!loading&&messages.length===0&&<div className="air-empty">В этом чате пока тихо. Можно начать разговор.</div>}
-      {messages.map(m=><article key={m.id} className={'air-bubble '+(m.isMine?'mine':'')}>
+      {messages.map(m=><article key={m.id} className={'air-bubble '+(m.isMine?'mine':'')+(m.is_bot?' ai-bot':'')}
+        aria-label={m.is_bot?'Сообщение ИИ ТраксБот':undefined}>
         <div className="air-bubble-meta">
           <strong>{m.isMine?'Вы':m.nickname}</strong>
+          {m.is_bot&&<span className="air-ai-mark">ИИ, не человек</span>}
           {m.public_city&&<span>{m.public_city}</span>}
           <time dateTime={m.created_at}>{fmtTime(m.created_at)}</time>
         </div>
         <p>{m.body}</p>
         {m.moderation_state==='pending'&&<small>Проверяется модератором</small>}
       {!m.isMine&&m.moderation_state==='published'&&<div className="air-moderation">
-        {onStartDirect&&<button className="btn ghost small" type="button"
+        {onStartDirect&&!m.is_bot&&<button className="btn ghost small" type="button"
           aria-label={'Предложить личный диалог: '+m.nickname}
           onClick={()=>onStartDirect(m.nickname)}>В ЛС</button>}
         {reportId===m.id?<span>
@@ -320,6 +339,21 @@ function MessageStream({endpoint,canWrite,placeholder,ownerId,onStartDirect}:{
         value={draft} disabled={!canWrite||busy} onChange={e=>updateDraft(e.target.value)}
         onKeyDown={e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();void send()}}}/>
       {draftError&&<p className="note" role="status">{draftError}</p>}
+      {botRoomId&&canWrite&&<div className="air-ai-call stack">
+        {botEnabled?<button className="btn ghost small" type="button" disabled={busy}
+          onClick={()=>updateDraft(/(?:^|\s)@ТраксБот(?=\s|[.,!?;:]|$)/iu.test(draft)
+            ? draft : '@ТраксБот '+draft)}>
+          Позвать @ТраксБот
+        </button>:<span className="note">ТраксБот пока не подключён на сервере. Общение с водителями доступно.</span>}
+        {botEnabled&&/(?:^|\s)@ТраксБот(?=\s|[.,!?;:]|$)/iu.test(draft)&&
+          <label className="air-checkbox">
+            <input type="checkbox" checked={askBot} disabled={busy}
+              onChange={e=>setAskBot(e.target.checked)}/>
+            Я разрешаю отправить только этот опубликованный вопрос модели ИИ.
+            Ответ будет виден всем участникам комнаты. Чужие чаты, заявки и GPS не передаются.
+          </label>}
+      </div>}
+      {botNotice&&<p className="note" role="status">{botNotice}</p>}
       <label className="air-checkbox">
         <input type="checkbox" checked={rememberDraft} disabled={!ownerId}
           onChange={e=>remember(e.target.checked)}/>
@@ -493,6 +527,7 @@ export function DriverAir(){
       'Ваш характер ТраксБота сохранён');
     if(saved){setAiTone(tone);await profile.reload();}
   };
+  const aiStatus=useLoad<AirAiStatus>(()=>get('/api/community/ai/status'),[me?.id,access.data?.enabled]);
   const [roomPane,setRoomPane]=useState<'chat'|'road'>('chat');
   const [directPeer,setDirectPeer]=useState<string|null>(null);
   const [sending,setSending]=useState(false);
@@ -564,7 +599,7 @@ export function DriverAir(){
     <nav className="air-tabs" aria-label="Разделы Эфира">
       <button type="button" aria-current={view==='rooms'?'page':undefined} onClick={()=>setView('rooms')}>Эфир и города</button>
       <button type="button" aria-current={view==='voice'?'page':undefined} onClick={()=>setView('voice')}>Голосовой эфир · В разработке</button>
-      <button type="button" aria-current={view==='ai'?'page':undefined} onClick={()=>setView('ai')}>ИИ-попутчик · В разработке</button>
+      <button type="button" aria-current={view==='ai'?'page':undefined} onClick={()=>setView('ai')}>ИИ-попутчик{aiStatus.data?.enabled?' · ТраксБот':''}</button>
       <button type="button" aria-current={view==='offers'?'page':undefined} onClick={()=>setView('offers')}>Предложения партнёров</button>
       <button type="button" aria-current={view==='direct'?'page':undefined} onClick={()=>setView('direct')}>Личные чаты</button>
       <button type="button" aria-current={view==='profile'?'page':undefined} onClick={()=>setView('profile')}>Мой позывной</button>
@@ -580,10 +615,11 @@ export function DriverAir(){
       <p className="note">Микрофон не включается, аудио не передаётся и записи не создаются. Подключение к голосовой комнате пока недоступно.</p>
       <button type="button" className="btn ghost" onClick={()=>setView('rooms')}>Вернуться в текстовый Эфир</button>
     </section>}
-    {view==='ai'&&<section className="card stack" aria-label="ИИ-помощник Эфира в разработке">
-      <span className="pill">В разработке</span>
+    {view==='ai'&&<section className="card stack" aria-label="ИИ-попутчик ТраксБот">
       <h2>ТраксБот · выбирайте характер сами</h2>
-      <p>Будущий помощник будет отвечать на обращение @ТраксБот, помогать с вопросами по грузовикам и работе TrackSOS. Манеру общения каждый участник Эфира выбирает самостоятельно.</p>
+      <p>{aiStatus.data?.enabled
+        ? 'ИИ подключён. Чтобы спросить, зайдите в водительскую комнату, нажмите «Позвать @ТраксБот», сформулируйте вопрос и явно разрешите передачу этого опубликованного текста модели. Ответ появится в общей ленте.'
+        : 'Серверный ИИ пока выключен. Можно выбрать и сохранить характер будущих ответов, но реальные ответы не генерируются.'}</p>
       <div className="stack" aria-label="Мой характер ТраксБота">
         <b>Мой характер ТраксБота</b>
         {!profile.data&&<p role="status">{profile.error??'Загружаем сохранённую настройку…'}</p>}
@@ -616,7 +652,7 @@ export function DriverAir(){
           <p><b>ТраксБот:</b> {AI_SCENARIOS[aiSituation].answers[aiTone]}</p>
           <small>{AI_SCENARIOS[aiSituation].followup}</small>
         </div>
-        <span className="note">Это заранее написанные примеры, не ответы работающего ИИ. Реальный бот пока не читает сообщения и не общается.</span>
+        <span className="note">Это заранее написанные примеры. Они не генерируются моделью. Бот обрабатывает только явно отмеченные и разрешённые публичные вопросы в водительских комнатах.</span>
       </div>
       <p className="note">В вопросах безопасности, особенно при неисправных тормозах и ДТП, любой характер переключается на серьёзный стиль. Чужие личные чаты, контакты, GPS и заявки без согласия недоступны; скрытой рекламы не будет.</p>
       <button type="button" className="btn ghost" onClick={()=>setView('rooms')}>К текстовым чатам</button>
@@ -656,6 +692,8 @@ export function DriverAir(){
           {roomPane==='chat'&&<MessageStream key={active.id+':'+active.joined}
             ownerId={me?.id??null}
             endpoint={'/api/community/rooms/'+active.id+'/messages'} canWrite={active.joined}
+            botRoomId={active.audience==='driver'?active.id:undefined}
+            botEnabled={!!aiStatus.data?.enabled}
             onStartDirect={active.audience==='driver'?(nickname)=>{
               setDirectPeer(nickname);setView('direct');
             }:undefined}
