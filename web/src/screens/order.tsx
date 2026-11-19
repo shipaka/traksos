@@ -829,10 +829,14 @@ function EmergencyClientResponse({d,onDone}:{d:any;onDone:()=>void}) {
     <div className="sum total"><span>Представлено на подтверждение</span><b>{rub(c.quoteTotal)}</b></div>
     <span className="note">Это заявленная сумма, а не подтверждение списания или выплаты. Вы можете вернуться к вопросу при восстановлении связи.</span>
     {c.status==='pending_client'&&d.you==='client'&&<>
+      {!d.unilateralCanApprove&&<span className="note">
+        Подтвердить окончательную сумму может только владелец автопарка.
+        Как участник обращения вы можете сообщить о несогласии с результатом.
+      </span>}
       {!open?<div className="row">
-        <button type="button" className="btn good" disabled={busy} onClick={()=>answer(true)}>
+        {d.unilateralCanApprove && <button type="button" className="btn good" disabled={busy} onClick={()=>answer(true)}>
           Да, работа выполнена, подтверждаю сумму
-        </button>
+        </button>}
         <button type="button" className="btn ghost" onClick={()=>setOpen(true)}>Нет, не согласен</button>
       </div>:<>
         <Field label="Причина несогласия">
