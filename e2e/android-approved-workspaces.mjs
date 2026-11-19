@@ -42,6 +42,28 @@ try {
       await modal.getByRole('button',{name:'Принимаю'}).click();
       await modal.waitFor({state:'detached',timeout:15000});
     }
+    // The role matrix creates a brand-new tow account without a performer
+    // profile. Confirm that onboarding is visible, then finish it through the
+    // public API on this isolated CI database before testing the full workspace.
+    // A new partner must not be mistaken for a broken dashboard.
+    if(role==='tow'){
+      const profileResponse=await fetch(BASE+'/api/performer/profile',{
+        headers:{authorization:'Bearer '+token}
+      });
+      if(!profileResponse.ok)throw Error(role+': cannot inspect performer onboarding '+profileResponse.status);
+      const profile=await profileResponse.json();
+      if(!profile){
+        await page.getByText('Заполните профиль',{exact:true}).waitFor({state:'visible'});
+        await page.getByRole('button',{name:'Заполнить',exact:true}).waitFor({state:'visible'});
+        const created=await fetch(BASE+'/api/performer/profile',{
+          method:'PUT',headers:{authorization:'Bearer '+token,'content-type':'application/json'},
+          body:JSON.stringify({kind:'tow',specialties:[],brands:{},tier:'eco'})
+        });
+        if(!created.ok)throw Error(role+': synthetic profile setup failed HTTP '+created.status);
+        await page.reload({waitUntil:'domcontentloaded'});
+        await page.locator('.app').waitFor();
+      }
+    }
     if(mode==='client'){
       const desk=page.locator('.and19-client');
       await desk.waitFor({state:'visible'});
