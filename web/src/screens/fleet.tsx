@@ -109,6 +109,9 @@ export function Fleet() {
                   : 'Точное фото модели пока недоступно'} · открыть историю ›</small>
               </div>
             </a>
+            {vehicleReferencePhoto(c.brand,c.model,c.year) && <a className="trak-vehicle-photo-credits"
+              href="/vehicle-photo-credits.html" target="_blank" rel="noopener noreferrer">
+              Источник и лицензия фотографии</a>}
             <div className="between"><b>{c.brand} {c.model ?? ''}</b><span className="pill">{c.plate ?? 'без номера'}</span></div>
             {c.driver ? (
               <span className="note">Водитель {c.driver.name ?? c.driver.phone} · доступ с {c.driver.since ? fmtTime(c.driver.since) : '—'} · в этом месяце {rub(c.driver.monthSpent)} <span className="pill good">Активен</span></span>
