@@ -40,11 +40,13 @@ export function composeTrakBotReply(input: string, found: Dtc[], context: Vehicl
       return `${code} — ${title}. ${detail}`.trim();
     });
     const caution = 'Это общие OBD-II значения, а не подтверждённый диагноз для конкретного блока. Не заменяйте детали только по коду.';
-    return [vehicle ? `Автомобиль: ${vehicle}.` : '', ...parts, caution,
-      'Напиши, какой блок выдал ошибку, при каких условиях она появляется и какие симптомы видишь. При необходимости подключим реального мастера.'].filter(Boolean).join('\n\n') + safety;
+    const next = found.length === codes.length
+      ? 'Уточни блок управления и условия возникновения ошибки — это поможет точнее сопоставить данные.'
+      : 'По части кодов нет достоверной информации. Не стану угадывать; если нужно, можно передать вопрос специалисту.';
+    return [vehicle ? `Автомобиль: ${vehicle}.` : '', ...parts, caution, next].filter(Boolean).join('\n\n') + safety;
   }
   if (SPN_PATTERN.test(input) || /\bFMI\b/i.test(input)) {
-    return 'Для грузовых SPN/FMI укажи оба числа, марку, модель, год и блок управления. В пилотной базе пока нет подтверждённой заводской расшифровки J1939 — придумывать её не буду. Можно сразу обратиться к специалисту.' + safety;
+    return 'Для грузовых SPN/FMI укажи оба числа, марку, модель, год и блок управления. В пилотной базе пока нет подтверждённой заводской расшифровки J1939 — придумывать её не буду. Если точной карточки нет, вопрос лучше передать специалисту.' + safety;
   }
   if (/не завод|не запуска|не схватыв|стартер|запуск двигател|doesn.t start/i.test(input)) {
     return 'Проверим самое простое. Стартер крутит двигатель с обычной скоростью, только щёлкает или совсем молчит? Есть ли сообщения или коды ошибок на панели? Напиши марку, модель, год и двигатель. Не перемыкай контакты стартера и не вмешивайся в топливную систему на дороге.' + safety;
@@ -86,13 +88,16 @@ export class TrakBotService {
         )
       : [];
     const answer = composeTrakBotReply(message, found, context);
+    const coverage = codes.length ? (codes.every((code) => found.some((row) => row.code === code)) ? 'generic_found' : 'partial_or_missing')
+      : (SPN_PATTERN.test(message) || /\\bFMI\\b/i.test(message) ? 'not_supported' : 'initial_triage');
+    // Billing is deliberately disabled. No authorization or capture is made for an unverified answer.
     return this.db.tx(async (q) => {
       await q.query('insert into trakbot_messages(user_id,role,body) values($1,\'user\',$2)', [user.id, message]);
       const [bot] = await q.query<{ id: string; role: string; body: string; created_at: string }>(
         "insert into trakbot_messages(user_id,role,body) values($1,'bot',$2) returning id::text as id,role,body,created_at",
         [user.id, answer],
       );
-      return { message: bot, freePilot: true };
+      return { message: bot, freePilot: true, coverage, chargeAllowed: false, handoffSuggested: coverage === 'partial_or_missing' || coverage === 'not_supported' };
     });
   }
 
