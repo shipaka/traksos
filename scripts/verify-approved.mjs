@@ -13,14 +13,22 @@ function expect(ok, description) {
   else { console.error('FAIL: ' + description); failures.push(description); }
 }
 const LOCKED_ASSETS = {
+  'android/app/src/main/res/drawable-xxxhdpi/ic_notify.png': 'b076e31adbe265e3',
+  'android/app/src/main/res/drawable-xxhdpi/ic_notify.png': '99977763f15a882c',
+  'android/app/src/main/res/drawable-xhdpi/ic_notify.png': '99e8a55cd6eb58ef',
+  'android/app/src/main/res/drawable-hdpi/ic_notify.png': '051234c95f35fd2f',
+  'android/app/src/main/res/drawable-mdpi/ic_notify.png': 'd8b301cdb07e6d88',
+  'branding/tracksos-rustore-icon.png': '2583f9590d32107b',
+  'web/public/icon-512.png': '2583f9590d32107b',
+  'web/public/icon-192.png': 'fa6451ff36f1fec3',
   'web/public/tracksos-approved-header-logo-20261119.webp': '4820e2a77018e638',
   // Exact approved images. Deliberate asset changes require a new owner-approved baseline.
   'web/public/tracksos-approved-hero-owner-20261119.webp': '7a7a9acec9ee7f32',
-  'android/app/src/main/res/mipmap-mdpi/ic_launcher.png': '8325d8040b7a14f1',
-  'android/app/src/main/res/mipmap-hdpi/ic_launcher.png': '934c4448c5a758fd',
-  'android/app/src/main/res/mipmap-xhdpi/ic_launcher.png': '5022fec38cc1898d',
-  'android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png': '22456b8817e2a561',
-  'android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png': '70c666ed8cb09e6c',
+  'android/app/src/main/res/mipmap-mdpi/ic_launcher.png': '327f52a2d6e836e9',
+  'android/app/src/main/res/mipmap-hdpi/ic_launcher.png': 'f797b183e93c4bad',
+  'android/app/src/main/res/mipmap-xhdpi/ic_launcher.png': '27ea3b5ebbfe86ce',
+  'android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png': '3d47c3852548579f',
+  'android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png': 'fa6451ff36f1fec3',
   'android/app/src/main/res/drawable-nodpi/splash_truck.webp': '7a7a9acec9ee7f32',
 };
 async function asset(path, minBytes = 5000) {
@@ -186,6 +194,12 @@ await asset('android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png', 5000);
 await asset('web/public/icon-192.png', 5000);
 await asset('web/public/icon-512.png', 25000);
 await asset('branding/tracksos-rustore-icon.png', 25000);
+// These PNG resources have been rebuilt directly from the owner's 19 Nov PNG:
+// truck silhouette / wordmark. Pre-17 Nov launcher and notification bytes fail.
+for (const icon of ["android/app/src/main/res/drawable-mdpi/ic_notify.png","android/app/src/main/res/drawable-hdpi/ic_notify.png","android/app/src/main/res/drawable-xhdpi/ic_notify.png","android/app/src/main/res/drawable-xxhdpi/ic_notify.png","android/app/src/main/res/drawable-xxxhdpi/ic_notify.png"]) {
+  await asset(icon, 400);
+}
+
 expect(createHash('sha256').update(await readFile('web/public/icon-512.png')).digest('hex') ===
        createHash('sha256').update(await readFile('branding/tracksos-rustore-icon.png')).digest('hex'),
   'RuStore and PWA 512 use the same owner-approved cinematic icon');
