@@ -332,3 +332,33 @@
 @media(max-width:899px){
   .guest-app .top .guest-approved-mark{width:min(218px,66vw)!important;max-width:100%!important;}
 }
+
+/* OWNER HEADER/FOLD GEOMETRY (19 Nov, 1602x981 source).
+   With the guest search removed there is room for the approved single-row
+   desktop navigation. Do not affect the partner and authenticated headers. */
+@media(min-width:1251px){
+  .guest-app:has(.public-landing) .top:has(.guest-site-nav){
+    display:flex!important;flex-wrap:nowrap!important;align-items:center!important;
+    gap:clamp(12px,1.5vw,24px)!important;
+  }
+  .guest-app:has(.public-landing) .top .guest-site-nav{
+    display:flex!important;flex:1 1 auto!important;min-width:0!important;
+    justify-content:space-evenly!important;align-items:center!important;
+    gap:clamp(9px,1vw,17px)!important;
+  }
+  .guest-app .public-landing .public-why-strip{
+    margin-top:62px!important;
+    grid-template-columns:repeat(3,minmax(0,1fr)) minmax(220px,22%)!important;
+    gap:12px!important;
+  }
+}
+.guest-app .public-landing .public-actions .public-button-sos{
+  background:linear-gradient(105deg,#07d9f6,#05bdf3)!important;
+  border:1px solid #25e6fb!important;color:#032436!important;
+  box-shadow:0 6px 22px rgba(0,191,238,.18)!important;
+}
+.guest-app .public-landing .public-service-tile,
+.guest-app .public-landing .public-service-tile b,
+.guest-app .public-landing .public-service-tile small{
+  text-decoration:none!important;
+}
