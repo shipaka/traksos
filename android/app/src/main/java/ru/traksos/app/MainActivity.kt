@@ -189,7 +189,7 @@ class MainActivity : AppCompatActivity() {
         // On a headless/software GPU its hardware-backed surface may stay blank,
         // even while JS and the React guest screen run normally. Use the CPU
         // compositor only for that outdated engine; current WebViews stay GPU-backed.
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT in Build.VERSION_CODES.O..Build.VERSION_CODES.Q) {
             val major = WebView.getCurrentWebViewPackage()?.versionName
                 ?.substringBefore('.')?.toIntOrNull()
             if (major != null && major in 1..79) {
