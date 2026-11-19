@@ -16,6 +16,7 @@ import { OperatorDemoAccess } from './services/operatorDemo.ts';
 import { SANDBOX_ROLES, issueSandboxTicket, exchangeSandboxTicket } from './services/sandboxTickets.ts';
 import { SANDBOX_HANDOFF_PROTOCOL, assessSandboxPeerHealth } from './services/sandboxCompatibility.ts';
 import { ReferralService } from './services/referral.ts';
+import { financeGuide, type FinanceRole } from './domain/economicsGuide.ts';
 import { ProfilesService } from './services/profiles.ts';
 import { OrdersService } from './services/orders.ts';
 import { ChatService } from './services/chat.ts';
@@ -522,6 +523,32 @@ export function createApp(d: Deps) {
 
   r.get('/api/admin/support', staff, (c: AuthedCtx) => support.queue(c.query.get('status') === 'closed' ? 'closed' : 'open'));
   r.get('/api/me/referral', true, (c: AuthedCtx) => referral.mine(c.user));
+  // Only the actor's own financial conditions: never expose an executor's fee
+  // through the client-facing pricing API or the economics explanation.
+  r.get('/api/me/economics', true, async (c: AuthedCtx) => {
+    const role = c.query.get('role') as FinanceRole | null;
+    const options: Record<FinanceRole,boolean> = {
+      owner: c.user.roles.includes('client') && !c.user.owner_id,
+      driver: c.user.roles.includes('driver') || !!c.user.owner_id,
+      master: c.user.roles.includes('master'),
+      tow: c.user.roles.includes('tow'),
+      service: c.user.roles.includes('service'),
+      insurer: c.user.roles.includes('insurer'),
+      inspection: c.user.roles.includes('inspection_operator'),
+      moderator: c.user.roles.includes('moderator'),
+      admin: c.user.roles.includes('admin'),
+    };
+    const selected = role ?? (c.user.roles.includes('driver')||c.user.owner_id?'driver':
+      c.user.roles.includes('client')?'owner':
+      c.user.roles.includes('master')?'master':
+      c.user.roles.includes('tow')?'tow':
+      c.user.roles.includes('service')?'service':
+      c.user.roles.includes('insurer')?'insurer':
+      c.user.roles.includes('inspection_operator')?'inspection':
+      c.user.roles.includes('admin')?'admin':'moderator');
+    if (!options[selected]) throw forbidden('Экономика чужого кабинета недоступна');
+    return financeGuide(await settings.all(),selected);
+  });
   r.get('/api/me/offers', true, (c: AuthedCtx) => offers.status(c.user));
   r.post('/api/offers/:id/accept', true, (c: AuthedCtx) => offers.accept(c.user, c.params.id, c.ip));
   r.get('/api/offers/current/:audience', false, async (c: Ctx) => (await offers.current(c.params.audience)) ?? null);
@@ -618,7 +645,7 @@ export function createApp(d: Deps) {
     const all = await settings.all();
     return { zones: all.pricing.zones, tiers: all.pricing.tiers, consult: all.pricing.consult, towBase: all.pricing.towBase, nightNow: isNight(all.pricing, now()), payments: await payments.methods(),
       clientFeePct: all.fees.clientFeePct, reviewTags: REVIEW_TAGS, cancelScale: all.cancel.scale,
-      serviceCommissionPct: all.fees.serviceCommissionPct, serviceCommissionMax: all.fees.serviceCommissionMax, serviceReferralDiscountPct: all.fees.serviceReferralDiscountPct, performerCommissionPct: all.fees.performerCommissionPct,
+      serviceReferralDiscountPct: all.fees.serviceReferralDiscountPct,
       billingStep: Number(all.pricing.billingStepMinutes ?? 60) };
   });
   r.post('/api/pricing/estimate', false, async (c: Ctx) => {
