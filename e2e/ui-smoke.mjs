@@ -26,13 +26,23 @@ try {
     await botDialog.waitFor();
     assert(await botDialog.locator('.trakbot-dock-guest-mascot .trakbot-mascot-truck').count() === 1,
       width + 'px: guest must see the same technician character');
-    assert(await botDialog.getByRole('link', { name: /Зарегистрироваться и узнать обо мне/ }).count() === 1,
+    assert(await botDialog.getByRole('link', { name: 'Зарегистрироваться', exact: true }).count() === 1,
       width + 'px: mascot registration action is missing');
-    assert(await botDialog.getByRole('link', { name: /Войти и поговорить с TrakBot/ }).count() === 1,
-      width + 'px: guest entry must not expose private chat');
+    assert(await botDialog.getByRole('link', { name: 'Войти', exact: true }).count() === 1,
+      width + 'px: mascot login action is missing');
+    assert(await botDialog.locator('nav a').count() === 2,
+      width + 'px: guest bot must only offer login or registration');
+    assert(await botDialog.getByRole('textbox').count() === 0 &&
+      await botDialog.locator('.trakbot-dialog, .trakbot-typing, .trakbot-reactions-gallery').count() === 0,
+      width + 'px: invitation must never become a private guest chat');
+    const invite = await botDialog.boundingBox();
+    assert(!!invite && invite.height < 350,
+      width + 'px: guest invitation too tall for a small popup');
     await page.locator('.trakbot-dock-close').click();
     assert(await page.locator('.trakbot-dock-panel').count() === 0,
       width + 'px: TrakBot failed to close');
+    assert(await page.locator('.trakbot-dock-panel').count() === 0,
+      width + 'px: guest invitation reopened without a user action');
 
 
     const data = await page.evaluate(() => {
