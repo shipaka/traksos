@@ -53,6 +53,10 @@ export function Order({ id, initialTab = 'order' }: { id: string; initialTab?: P
           {d.statusLabel || STATUS[d.status]?.name}</span>
       </div>
 
+      {d.you === 'client' && d.vehicleId && <section aria-label="Автомобиль заявки и его история" className="order-vehicle-preview">
+        <VehiclePhotoLink brand={d.vehicle?.brand ?? d.brand} model={d.vehicle?.model ?? d.model}
+          plate={d.vehicle?.plate} href={`#/garage/${d.vehicleId}`} compact/>
+      </section>}
       {isPerformer && ['accepted','en_route','arrived','working'].includes(d.status)
         && !location.hash.startsWith('#/admin/test-center') &&
         <section className="roadside-location-share" aria-label="Передача GPS при выезде">
