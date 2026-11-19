@@ -15,8 +15,9 @@ import { OrderContinuations } from './continuations.tsx';
 import { OrderTimeline } from './OrderTimeline.tsx';
 import { LocationSharing } from './performer.tsx';
 import { RefundForm, payStatus } from './adminUser.tsx';
+import { VehiclePhotoLink } from '../vehicleVisual.tsx';
 
-type PerformerOrderTab = 'order' | 'client' | 'finance' | 'chat' | 'history';
+type PerformerOrderTab = 'order' | 'client' | 'finance' | 'chat' | 'history' | 'vehicle';
 export function Order({ id, initialTab = 'order' }: { id: string; initialTab?: PerformerOrderTab }) {
   const o = useLoad(() => get(`/api/orders/${id}`), [id], (e) => e.orderId === id && (e.type === 'order' || e.type === 'payment'));
   const [perfPos, setPerfPos] = useState<{ lat: number; lng: number; at: number } | null>(null);
@@ -58,9 +59,9 @@ export function Order({ id, initialTab = 'order' }: { id: string; initialTab?: P
           <b>GPS во время выезда</b>
           <LocationSharing />
         </section>}
-      {(isPerformer || d.you === 'candidate') && <PerformerTabs tab={ptab} setTab={setPtab} full={isPerformer} />}
-      {(isPerformer || d.you === 'candidate') && ptab === 'client'
-        ? <ClientTab id={id} canEdit={isPerformer} />
+      {(isPerformer || d.you === 'candidate') && <PerformerTabs tab={ptab === 'vehicle' ? 'client' : ptab} setTab={setPtab} full={isPerformer} />}
+      {(isPerformer || d.you === 'candidate') && (ptab === 'client' || ptab === 'vehicle')
+        ? <ClientTab id={id} canEdit={isPerformer} historyOnly={ptab === 'vehicle'} />
         : isPerformer && ptab === 'finance' ? <Money d={d} />
         : isPerformer && ptab === 'chat' ? <Chat id={id} status={d.status} />
         : isPerformer && ptab === 'history'
@@ -336,6 +337,8 @@ function PerformerCard({p,pos,consult,to,moving}:{
 function ClientCard({ d }: { d: any }) {
   return (
     <div className="card">
+      <VehiclePhotoLink brand={d.vehicle?.brand ?? d.brand} model={d.vehicle?.model ?? d.model}
+        plate={d.vehicle?.plate} href={`#/order/${d.id}/vehicle`} />
       <dl className="kv">
         <dt>Клиент</dt><dd>{d.client?.company_name ?? d.client?.name ?? 'Клиент'}{d.client?.rating ? ` · ★ ${d.client.rating.toFixed(1)}` : ''}</dd>
         <dt>Машина</dt><dd>{d.vehicle ? `${d.vehicle.brand} ${d.vehicle.model ?? ''} ${d.vehicle.year ?? ''} · ${d.vehicle.plate ?? ''}` : [d.brand, d.model, d.year].filter(Boolean).join(' ') || '—'}</dd>
@@ -654,7 +657,7 @@ function HintCheck({ d, onDone }: { d: any; onDone: () => void }) {
 }
 
 /** Вкладка «Клиент и машина»: метки других исполнителей, история машины без сумм, уточнить машину, «не брать этого клиента» */
-function ClientTab({ id, canEdit }: { id: string; canEdit: boolean }) {
+function ClientTab({ id, canEdit, historyOnly = false }: { id: string; canEdit: boolean; historyOnly?: boolean }) {
   const card = useLoad(() => get(`/api/orders/${id}/client-card`), [id]);
   const { busy, run } = useAction();
   const [fix, setFix] = useState(false);
@@ -662,6 +665,30 @@ function ClientTab({ id, canEdit }: { id: string; canEdit: boolean }) {
   if (!card.data) return <Loading error={card.error} />;
   const c = card.data;
   const veh = c.vehicle;
+  if(historyOnly) return <div className="stack trak-vehicle-history-panel">
+    <h2>История автомобиля</h2>
+    <VehiclePhotoLink brand={veh.brand} model={veh.model} plate={veh.plate}
+      href={`#/order/${id}/client`}/>
+    <p className="note">Это справочная фотография модели, не снимок автомобиля клиента. Данные истории получены из реальных заявок TrakSos. Исполнителю суммы других работ недоступны.</p>
+    <div className="card stack">
+      <b>{[veh.brand,veh.model,veh.year].filter(Boolean).join(' ') || 'Автомобиль не указан'}</b>
+      <span>{veh.plate || 'Госномер не заполнен'}</span>
+      {veh.from==='order'&&<span className="note">Машина указана со слов клиента, не привязана к гаражу; история по ней пока недоступна.</span>}
+    </div>
+    <div className="card stack">
+      <h3>История обслуживания · без сумм</h3>
+      {c.history.length ? <ol className="tl">{c.history.map((h:any)=>
+        <li key={h.id}><i className={h.mine?'now':'ok'}/><div>
+          <b>{SERVICES[h.service]?.name??h.service}{h.mine?' · ваша работа':''}</b>
+          <small>{fmtTime(h.created_at)}</small>
+          {h.result_note&&<p className="note">{h.result_note}</p>}
+          {h.consult_hint?.hints?.length>0&&<small>Из консультации: {h.consult_hint.hints.join(', ')}</small>}
+        </div></li>
+      )}</ol> : <p className="note">По этой машине пока нет записей о завершённых работах в TrakSos.</p>}
+    </div>
+    <a className="btn ghost" href={`#/order/${id}/client`}>К полной карточке клиента и ТС</a>
+    <a className="btn ghost" href={`#/order/${id}`}>Вернуться к заявке</a>
+  </div>;
   return (
     <div className="stack">
       <div className="card">
@@ -675,6 +702,8 @@ function ClientTab({ id, canEdit }: { id: string; canEdit: boolean }) {
       </div>
 
       <div className="card">
+        <VehiclePhotoLink brand={veh.brand} model={veh.model} plate={veh.plate}
+          href={`#/order/${id}/vehicle`}/>
         <div className="between"><b>{[veh.brand, veh.model, veh.year].filter(Boolean).join(' ') || 'Машина не указана'}</b>{veh.plate && <span className="pill">{veh.plate}</span>}</div>
         <span className="note">{veh.fixed_at ? `Уточнено мастером ${veh.fixed_by_name ?? ''}` : veh.from === 'order' ? 'Со слов клиента, не из гаража' : 'Со слов клиента'}{veh.axles ? ` · осей: ${veh.axles}` : ''}</span>
         {canEdit && !fix && <button className="btn ghost small" onClick={() => { setV({ brand: veh.brand ?? '', model: veh.model ?? '', year: veh.year ? String(veh.year) : '', axles: veh.axles ? String(veh.axles) : '' }); setFix(true); }}>{veh.fixed_at ? 'Исправить ещё раз' : 'Проверить на месте · исправить'}</button>}
