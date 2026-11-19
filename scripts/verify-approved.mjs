@@ -60,12 +60,14 @@ async function activeWebFiles(dir) {
   const entries = await readdir(dir, { withFileTypes: true });
   const nested = await Promise.all(entries.map(async entry => {
     const path = dir + '/' + entry.name;
-    return entry.isDirectory() ? activeWebFiles(path) : /\\.(?:css|ts|tsx|html)$/.test(entry.name) ? [path] : [];
+    return entry.isDirectory() ? activeWebFiles(path) : /\.(?:css|ts|tsx|html)$/.test(entry.name) ? [path] : [];
   }));
   return nested.flat();
 }
 const retiredReferences = [];
-for (const file of await activeWebFiles('web/src')) {
+const activeFiles = await activeWebFiles('web/src');
+expect(activeFiles.length >= 100, 'approved-design guard scans all web/src source files');
+for (const file of activeFiles) {
   const source = await read(file);
   for (const name of retiredVisuals) if (source.includes(name)) retiredReferences.push(file + ' → ' + name);
 }
