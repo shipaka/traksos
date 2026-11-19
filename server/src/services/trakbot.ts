@@ -4,7 +4,7 @@ import { bad, forbidden } from '../http/router.ts';
 import { config } from '../config.ts';
 import { maskPhones } from '../util.ts';
 import { resolveGuideDestination } from './trakbotGuide.ts';
-import { canUseGroundedAi, groundedAiAnswer } from './trakbotAi.ts';
+import { canUseGroundedAi, groundedAiAnswer, neutralAiAnswer } from './trakbotAi.ts';
 
 export interface VehicleContext {
   make?: string;
@@ -170,11 +170,17 @@ export class TrakBotService {
       specialist ? 'specialist' : 'driver');
     const llmEligible = !guide && canUseGroundedAi(allowAiProcessing, found, codes, context) &&
       !SPN_PATTERN.test(message) && !/\bFMI\b/i.test(message);
+    const externalAi = {
+      enabled: config.trakbot.llmEnabled && allowAiProcessing,
+      apiKey: config.trakbot.llmApiKey,
+      model: config.trakbot.llmModel,
+    };
     const generated = llmEligible ? await groundedAiAnswer(message, prior.map((r) => r.body), context, found, {
       enabled: config.trakbot.llmEnabled,
       apiKey: config.trakbot.llmApiKey,
       model: config.trakbot.llmModel,
-    }) : null;
+    }) : !guide && !codes.length && allowAiProcessing
+      ? await neutralAiAnswer(message, prior.map((r) => r.body), externalAi) : null;
     // Verified field experience is only attached for validated technicians and
     // a matching vehicle. Never use it as a universal repair instruction.
     let caseNotes = '';
