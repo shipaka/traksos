@@ -66,7 +66,7 @@ export function Home() {
           </div>
           <div className="launch-region" role="note">Зона запуска: Санкт-Петербург и Ленинградская область</div>
         </div>
-        <img className="client-hero-scania" src="/tracksos-approved-scenic-hero.webp" alt="Реалистичный грузовой тягач Scania на дороге в закатном свете" loading="eager" />
+        <img className="client-hero-scania" src="/tracksos-approved-hero-owner-20261119.webp" alt="Грузовой автомобиль TrakSOS на дороге" loading="eager" />
       </section>
 
       {insuranceInProgress.length>0&&(()=>{

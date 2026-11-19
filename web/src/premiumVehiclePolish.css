@@ -22,7 +22,7 @@
   width: min(49%, 580px);
   height: 92%;
   opacity: .94;
-  background-image: url('../public/tracksos-approved-scania-r520.webp');
+  background-image: url('../public/tracksos-approved-hero-owner-20261119.webp');
   background-size: contain;
   background-position: right bottom;
   background-repeat: no-repeat;
@@ -117,7 +117,7 @@
     height: 170px !important;
     right: 0 !important;
     bottom: 0 !important;
-    background-image: url('../public/tracksos-approved-scenic-hero.webp') !important;
+    background-image: url('../public/tracksos-approved-hero-owner-20261119.webp') !important;
     background-size: contain !important;
     background-position: center bottom !important;
     background-repeat: no-repeat !important;
@@ -462,7 +462,7 @@
   top: 0;
   bottom: 0;
   width: 55%;
-  background: url('../public/tracksos-approved-scenic-hero.webp') right center/contain no-repeat;
+  background: url('../public/tracksos-approved-hero-owner-20261119.webp') right center/contain no-repeat;
   pointer-events: none;
   z-index: 0;
   opacity: .90;

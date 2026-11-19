@@ -7,7 +7,7 @@
 .app.role-client .tracksos-visual-home .track-road-hero::before{
   content:"";position:absolute;inset:-7px;z-index:0;pointer-events:none;
   background:linear-gradient(90deg,transparent 0%,rgba(5,19,37,.25) 38%,rgba(5,19,37,.94) 88%),
-    url('../public/tracksos-approved-scenic-hero.webp') center/cover no-repeat!important;
+    url('../public/tracksos-approved-hero-owner-20261119.webp') center/cover no-repeat!important;
   filter:blur(16px) saturate(1.15) brightness(.73)!important;
   transform:scale(1.04)!important;
   -webkit-mask-image:none!important;mask-image:none!important;
@@ -20,7 +20,7 @@
 .app.role-client .tracksos-visual-home .track-road-art{position:relative;z-index:2!important;}
 .app.role-client .tracksos-visual-home .track-road-art::before{
   content:"";position:absolute;inset:0!important;
-  background:url('../public/tracksos-approved-scenic-hero.webp') center/cover no-repeat!important;
+  background:url('../public/tracksos-approved-hero-owner-20261119.webp') center/cover no-repeat!important;
   filter:blur(17px) brightness(.66)!important;opacity:.55!important;z-index:0!important;
   -webkit-mask-image:radial-gradient(ellipse,#000 45%,transparent 92%)!important;
   mask-image:radial-gradient(ellipse,#000 45%,transparent 92%)!important;
@@ -48,7 +48,7 @@
   }
   .app.role-client .tracksos-visual-home .track-road-hero::before{
     inset:0 0 auto 0!important;height:56%!important;
-    background:url('../public/tracksos-approved-scenic-hero.webp') center top/cover no-repeat!important;
+    background:url('../public/tracksos-approved-hero-owner-20261119.webp') center top/cover no-repeat!important;
     filter:blur(11px) brightness(.62)!important;
     opacity:.9!important;transform:none!important;
   }

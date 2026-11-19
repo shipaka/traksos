@@ -3,7 +3,7 @@
 // Never restore the deleted 14 Nov design or the interim 18 Nov nine-card layout.
 // Artwork still requires visual inspection; source-level tests cannot prove logo pixels.
 // This only verifies invariants; visual fidelity is additionally checked via screenshots.
-import { readFile, stat } from 'node:fs/promises';
+import { readFile, readdir, stat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 
 const read = (path) => readFile(path, 'utf8');
@@ -15,7 +15,6 @@ function expect(ok, description) {
 const LOCKED_ASSETS = {
   'web/public/tracksos-approved-header-logo-20261119.webp': '4820e2a77018e638',
   // Exact approved images. Deliberate asset changes require a new owner-approved baseline.
-  'web/public/tracksos-approved-scenic-hero.webp': '9193ebd1312c2d2e',
   'web/public/tracksos-approved-hero-owner-20261119.webp': '7a7a9acec9ee7f32',
   'web/public/tracksos-approved-map.webp': '994097c8c01b2c80',
 
@@ -50,6 +49,30 @@ async function asset(path, minBytes = 5000) {
     }
   } catch { expect(false, path + ' is present'); }
 }
+// Build gate: a previously approved design must not return through role CSS,
+// mobile JSX or an old asset copied into the PWA service-worker cache.
+const retiredVisuals = [
+  'tracksos-approved-scenic-hero.webp', 'tracksos-approved-scania-r520.webp',
+  'tracksos-approved-truck.webp', 'traksos-final-hero.webp',
+  'traksos-final-insurance.webp', 'traksos-final-parts.webp',
+];
+async function activeWebFiles(dir) {
+  const entries = await readdir(dir, { withFileTypes: true });
+  const nested = await Promise.all(entries.map(async entry => {
+    const path = dir + '/' + entry.name;
+    return entry.isDirectory() ? activeWebFiles(path) : /\\.(?:css|ts|tsx|html)$/.test(entry.name) ? [path] : [];
+  }));
+  return nested.flat();
+}
+const retiredReferences = [];
+for (const file of await activeWebFiles('web/src')) {
+  const source = await read(file);
+  for (const name of retiredVisuals) if (source.includes(name)) retiredReferences.push(file + ' → ' + name);
+}
+expect(retiredReferences.length === 0,
+  'no retired 14–18 Nov imagery in active web/Android code' +
+  (retiredReferences.length ? ': ' + retiredReferences.join('; ') : ''));
+
 const landing = await read('web/src/screens/login.tsx');
 const catalogue = await read('web/src/guestCatalog.ts');
 const roleCss = await read('web/src/roleShared20261119.css');
@@ -98,7 +121,8 @@ expect(!/\.public-landing \.public-hero-visual\s*\{[^}]*tracksos-approved-(?:tru
   'obsolete truck art cannot reappear as the public home background');
 // The following old public images have no live source readers. Reject their
 // return to the distributable public directory (they otherwise enter the PWA cache).
-for (const name of ['tracksos-approved-truck.webp','traksos-final-hero.webp',
+for (const name of ['tracksos-approved-scenic-hero.webp','tracksos-approved-scania-r520.webp',
+  'tracksos-approved-truck.webp','traksos-final-hero.webp',
                     'traksos-final-insurance.webp','traksos-final-parts.webp']) {
   let exists = false;
   try { await stat('web/public/' + name); exists = true; } catch { /* expected */ }
@@ -133,7 +157,6 @@ const labels = await read('web/src/dict.ts');
 const native = await read('android/app/src/main/java/ru/traksos/app/MainActivity.kt');
 
 await asset('web/public/tracksos-approved-header-logo-20261119.webp', 1600);
-await asset('web/public/tracksos-approved-scenic-hero.webp', 15000);
 await asset('web/public/tracksos-approved-hero-owner-20261119.webp', 50000);
 await asset('web/public/tracksos-approved-logo-owner-20261119.webp', 2000);
 await asset('web/public/tracksos-approved-map.webp', 15000);

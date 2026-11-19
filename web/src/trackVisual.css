@@ -381,7 +381,7 @@
 .app.role-service :is(.base-command-hero,.base-onboarding-hero)::after{background-image:url('../public/tracksos-visual-sto.svg');}
 .app.role-insurer .cabinet-page>.cabinet-heading::after{background-image:url('../public/tracksos-visual-insurance.svg');}
 .app.role-inspection .cabinet-page>.cabinet-heading::after{background-image:url('../public/tracksos-visual-inspection.svg');}
-.app.role-client .client-garage-page>.client-section-hero::after{background-image:url('../public/tracksos-approved-scania-r520.webp');}
+.app.role-client .client-garage-page>.client-section-hero::after{background-image:none!important;} /* Actual vehicle photos belong to their own model-specific cards. */
 .app.role-client .insurance-workflow-hero::after{background-image:url('../public/tracksos-visual-insurance.svg');}
 .app.role-performer .work-command-hero>*,
 .app.role-service .base-command-hero>*,

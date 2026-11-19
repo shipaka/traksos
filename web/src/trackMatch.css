@@ -23,7 +23,7 @@
 .guest-app .public-landing .public-brand-hero::before{
   content:"";position:absolute;inset:-18px;z-index:0;pointer-events:none;
   background:linear-gradient(90deg,rgba(3,18,37,.20),rgba(2,16,30,.70) 83%),
-    url('../public/tracksos-approved-scania-r520.webp') center/cover no-repeat!important;
+    url('../public/tracksos-approved-hero-owner-20261119.webp') center/cover no-repeat!important;
   filter:blur(33px) saturate(1.35) brightness(.75);
   transform:scale(1.03);
 }

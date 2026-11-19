@@ -81,7 +81,7 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
     <div className="and19-role">{isDriver ? 'Водитель' : 'Клиент · Владелец автопарка'}</div>
     <div className="and19-cover">
       <div><small>TRAKSOS · ПОМОЩЬ В ДОРОГЕ</small><h1>Рабочий стол</h1></div>
-      <img src="/tracksos-approved-scenic-hero.webp" alt="" aria-hidden="true" />
+      <img src="/tracksos-approved-hero-owner-20261119.webp" alt="" aria-hidden="true" />
     </div>
     <div className="and19-services" aria-label="Вызвать помощь">
       <a href={disabledServices?.repair ? undefined : '#/sos'} aria-disabled={disabledServices?.repair || undefined}><span aria-hidden="true">⚒</span>Выездной мастер</a>
@@ -149,7 +149,7 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
     </div>
     <div className="and19-cover">
       <div><small>TRAKSOS · {tow ? 'ЭВАКУАЦИЯ' : 'ВЫЕЗДНОЙ СЕРВИС'}</small><h1>Рабочий стол</h1></div>
-      <img src="/tracksos-approved-scenic-hero.webp" alt="" aria-hidden="true" />
+      <img src="/tracksos-approved-hero-owner-20261119.webp" alt="" aria-hidden="true" />
     </div>
     <div className="and19-metrics">
       <a href="#/work/jobs"><small>В работе</small><strong>{active.length}</strong></a>
