@@ -125,7 +125,14 @@ export class ProfilesService {
   /** Все движения денег исполнителя: за что начислили, что списали, выплаты — с номером заявки */
   async ledger(userId: string) {
     return this.db.query(
-      `select l.id::int as id, l.kind, l.amount, l.note, l.created_at, o.id as order_id, o.number as order_number, o.service,
+      `select l.id::int as id, l.kind, l.amount,
+              case
+                when l.kind='cash_commission' then 'Наличный заказ: общая сумма к перечислению площадке'
+                when l.kind='cash_commission_paid' then 'Погашение обязательства перед TrakSOS'
+                when l.kind='adjustment' and l.note ilike 'Скидка клиенту%' then 'Корректировка взаиморасчётов с TrakSOS'
+                else l.note
+              end as note,
+              l.created_at, o.id as order_id, o.number as order_number, o.service,
               (select t.id from support_tickets t where t.ledger_entry_id = l.id and t.user_id = $1 order by t.created_at desc limit 1) as ticket_id
          from ledger_entries l left join orders o on o.id = l.order_id
         where l.account = 'performer' and l.performer_id = $1 order by l.id desc limit 300`, [userId]);

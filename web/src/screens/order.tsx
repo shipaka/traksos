@@ -393,6 +393,24 @@ function BillRows({ b }: { b: any }) {
 function Money({ d }: { d: any }) {
   const m = d.money;
   const proposed = ['awaiting_confirmation', 'completed'].includes(d.status) || m.work > 0;
+  if (d.you === 'performer') return (
+    <div className="card" aria-label="Финансовый расчёт исполнителя">
+      <b>Ваш расчёт по заявке</b>
+      <div className="sum"><span>Стоимость услуги</span><span>{rub(m.amount)}</span></div>
+      {proposed && <>
+        <div className="sum"><span>Комиссия TrakSOS ({m.commissionPct ?? 5}%, внутри цены)</span><span>−{rub(m.commission ?? 0)}</span></div>
+        {!!m.pointsCommission && <div className="sum"><span>Часть комиссии оплачена баллами</span><span>+{rub(m.pointsCommission)}</span></div>}
+        <div className="hr" />
+        <div className="sum total"><span>Вам к выплате</span><span>{rub(m.payout ?? m.amount)}</span></div>
+      </>}
+      {!proposed && <span className="note">Комиссия удерживается из стоимости вашей услуги. Окончательный расчёт появится после выполнения работ.</span>}
+      {d.paymentMethod === 'cash' && proposed && m.cashToCollect != null && <>
+        <div className="sum"><span>К приёму наличными от клиента</span><b>{rub(m.cashToCollect)}</b></div>
+        <span className="note">Это полная сумма, которую нужно принять по подтверждённому расчёту. Клиентская разбивка вам не показывается. Общее обязательство перед TrakSOS отражается в разделе «Финансы».</span>
+      </>}
+      {d.paymentMethod === 'cash' && !proposed && <span className="note">После согласования работ здесь появится точная сумма наличных к приёму. Не принимайте оплату по предварительной оценке.</span>}
+    </div>
+  );
   if (d.service === 'consult') return (
     <div className="card">
       <div className="sum total"><span>Консультация</span><span>{rub(m.callOut)}</span></div>

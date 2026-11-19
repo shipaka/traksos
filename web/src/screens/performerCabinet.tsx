@@ -338,8 +338,8 @@ const KIND: Record<string, [string, string]> = {
   payout: ['Выплата вам', 'Перевод на ваш счёт'],
   adjustment: ['Корректировка', 'Начисление или списание администратором — причина в комментарии'],
   refund_charge: ['Удержание за возврат', 'Клиенту вернули деньги по заявке — ваша доля удержана'],
-  cash_commission: ['Комиссия с наличных', 'Клиент заплатил вам наличными — комиссия TrakSOS к оплате'],
-  cash_commission_paid: ['Комиссия оплачена', 'Долг по комиссии с наличных погашен — деньгами или баллами, см. комментарий'],
+  cash_commission: ['Расчёт по наличной заявке', 'Общая сумма TrakSOS к перечислению после принятой наличной оплаты'],
+  cash_commission_paid: ['Расчёт погашен', 'Задолженность по наличной заявке погашена'],
   points: ['Комиссия оплачена баллами', 'Баллы за приглашения погасили часть комиссии — эти деньги ваши'],
 };
 
@@ -382,7 +382,8 @@ export function MoneySection() {
         <div className="card">
           <div className="sum total"><span>К выплате</span><span>{rub(balance.data.to_pay)}</span></div>
           <div className="sum"><span>Уже выплачено</span><span>{rub(balance.data.paid)}</span></div>
-          <div className="sum"><span>Долг по комиссии с наличных</span><span>{rub(balance.data.cash_debt)}</span></div>
+          <div className="sum"><span>К перечислению TrakSOS по наличным заявкам</span><span>{rub(balance.data.cash_debt)}</span></div>
+          <span className="note">В наличных расчётах указывается общая сумма обязательств перед площадкой. Подробности клиентского сервисного сбора в вашем кабинете не показываются.</span>
           {balance.data.paused && <span className="err">Долг больше {rub(balance.data.cashDebtLimit)} — новые заявки на паузе до оплаты.</span>}
           <span className="note">TrakSOS работает как агент: отчёт агента и акт — раз в месяц.</span>
           <span className="note">{FEE_PURPOSE}</span>

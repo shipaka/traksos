@@ -50,6 +50,11 @@ import { TrakBotChat, TechCodes } from './screens/trakbot.tsx';
 import { DriverAir } from './screens/driverAir.tsx';
 import { TrakBotDock } from './trakbotDock.tsx';
 import { RepairCases, TechnicalCasesReview } from './screens/technicalCases.tsx';
+import { Training, TrainingInvite } from './screens/training.tsx';
+import { TrainingPractice } from './screens/roleTrainingPractice.tsx';
+import { ContextHelp } from './screens/contextHelp.tsx';
+import { PricingLaboratory } from './screens/pricingLaboratory.tsx';
+import { RoleTour } from './screens/roleTour.tsx';
 import { Rules } from './screens/rules.tsx';
 import { Shop, ShopCart, ShopHistory } from './screens/shop.tsx';
 import { Privacy } from './screens/privacy.tsx';
@@ -271,6 +276,9 @@ function App() {
     case 'trakbot': screen = <TrakBotChat />; break;
     case 'air': screen = <DriverAir />; break;
     case 'tech': screen = b === 'codes' ? <TechCodes /> : b === 'cases' ? <RepairCases /> : b === 'review' && isAdmin ? <TechnicalCasesReview /> : <Help />; break;
+    case 'training': screen = <Training chapter={b} />; break;
+    case 'practice': screen = <TrainingPractice chapter={b} />; break;
+    case 'economics': screen = isAdmin ? <PricingLaboratory /> : <main><div className="empty">Нет доступа</div></main>; break;
     case 'rules': screen = <Rules />; break;
     case 'shop': screen = ((effMode === 'client' && isCustomer) || (effMode === 'performer' && isPerformer) || (effMode === 'service' && isService))
       ? (b === 'cart' ? <ShopCart /> : b === 'history' ? <ShopHistory vehicleId={route[2]} /> : <Shop />)
@@ -381,6 +389,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/admin', 'Административная сводка'],
          ['/admin/section/orders', 'Все заявки'],
          ['/admin/section/search', 'Поиск людей и заявок'],
+         ['/admin/section/registry', 'Единая база клиентов и партнёров'],
          ['/admin/section/people', 'Пользователи'],
          ['/admin/section/access', 'Регистрация и доступы'],
          ['/admin/section/verify', 'Проверка исполнителей'],
@@ -394,6 +403,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/admin/section/offers', 'Оферты площадки'],
          ['/admin/section/flagged', 'Подозрительные действия'],
          ['/admin/section/settings', 'Настройки площадки'],
+         ['/economics', 'Калькулятор прибыльности · проект'],
          ['/profile', 'Аккаунт'], ['/as/client', 'Кабинет клиента']]
     : [['/air', 'Эфир водителей'], ['/orders', 'История заявок'], ['/garage', 'Мой гараж'],
        ...(!me?.owner_id && !me?.roles.includes('driver') ? [['/fleet', 'Мой автопарк']] as [string,string][] : []),
@@ -407,7 +417,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         !me.roles.some(r => ['master','tow','service','insurer','inspection_operator'].includes(r)))
     ) ? [['/air', 'Эфир водителей'] as [string,string]] : []),
     ['/support', 'Поддержка'], ['/notifications', 'Уведомления'],
-    ['/learn', 'Знакомство с TrakSOS'], ['/help', 'Помощь и подсказки'],
+    ['/learn', 'Знакомство с TrakSOS'], ['/training', 'Обучение по шагам'], ['/practice', 'Учебный тренажёр'], ['/help', 'Помощь и подсказки'],
     ['/economics', 'Комиссии, баллы и рефералы'], ['/trakbot', 'TrakBot · личный чат'], ['/rules', 'Правила площадки'],
     ['/offer/' + (mode === 'performer' || mode === 'service' ? 'performer' : mode === 'insurer' ? 'insurer' : mode === 'inspection' ? 'inspection' : mode === 'admin' || mode === 'moderator' ? 'privacy' : 'client'), mode === 'insurer' || mode === 'inspection' ? 'Договор партнёра' : 'Оферта'],
     ['/offer/privacy', 'Политика персональных данных'],
@@ -492,6 +502,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               <span className="account-menu-heading">Мой кабинет</span>
               {accountLinks.map(([href, label]) => <a key={href} href={sandboxHref(href)}>{label}</a>)}
               <span className="account-menu-heading">Помощь и документы</span>
+              {!serviceSandbox && <button type="button" className="account-menu-tour" onClick={() => window.dispatchEvent(new Event('traksos-tour-start'))}>Показать, где какие кнопки</button>}
               {helpLinks.map(([href, label]) => <a key={href} href={sandboxHref(href)}>{label}</a>)}
               {!serviceSandbox && <button type="button" className="account-menu-logout" onClick={() => {
                 if (me.roles.some(r => r === 'master' || r === 'tow') &&
@@ -503,6 +514,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         </div>
       </header>
       <NetworkStatus />
+      {me && !serviceSandbox && ['', 'work', 'base', 'admin', 'moderation', 'insurance', 'inspections'].includes(route[0] ?? '') && <TrainingInvite />}
+      {me && !serviceSandbox && <ContextHelp page={route[0] ?? ''} />}
       <div className="desktop-layout">
         <aside className="desktop-sidebar" aria-label="Навигация по сайту">
           <div className="desktop-sidebar-title">{me ? 'Рабочий кабинет' : isAuthEntry ? 'TrakSos · вход и документы' : 'TrakSos · помощь в дороге'}</div>
@@ -610,6 +623,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         </nav>
       )}
       {!serviceSandbox && !isAuthEntry && route[0] !== 'trakbot' && <TrakBotDock authenticated={!!me} />}
+      {me && !serviceSandbox && <RoleTour page={route[0] ?? ''} />}
     </div>
   );
 }
