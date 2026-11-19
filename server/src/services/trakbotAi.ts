@@ -4,6 +4,7 @@
  * Treat model output as explanation, never a verified factory repair procedure.
  */
 import type { VehicleContext } from './trakbot.ts';
+import { requestGeneratedText, type TrakBotProviderSettings } from './trakbotProvider.ts';
 
 export interface GroundingRecord {
   code: string;
@@ -14,7 +15,6 @@ export interface GroundingRecord {
   source_url: string;
   review_state: string;
 }
-interface ProviderSettings { enabled: boolean; apiKey: string; model: string }
 const RULES = [
   'Ты TrakBot — спокойный напарник по диагностике грузовых автомобилей. Общайся естественно, дружелюбно, на "ты".',
   'НЕ продавай и НЕ рекламируй услуги. Не предлагай оплату, подписку или скидку. Не изображай живого мастера.',
@@ -44,7 +44,7 @@ export async function groundedAiAnswer(
   prior: string[],
   context: VehicleContext,
   rows: GroundingRecord[],
-  settings: ProviderSettings,
+  settings: TrakBotProviderSettings,
 ): Promise<string | null> {
   if (!settings.enabled || !settings.apiKey || !settings.model) return null;
   const grounding = rows.map((r) => ({
@@ -58,35 +58,10 @@ export async function groundedAiAnswer(
     'Новый вопрос: ' + stripIdentifiers(message),
     'Подтверждённые справочные записи (не диагноз!): ' + JSON.stringify(grounding),
   ].join('\n');
-  try {
-    const response = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: {
-        authorization: 'Bearer ' + settings.apiKey,
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: settings.model,
-        instructions: RULES,
-        input: [{ role: 'user', content: input }],
-        store: false,
-        max_output_tokens: 550,
-      }),
-      signal: AbortSignal.timeout(12_000),
-    });
-    if (!response.ok) return null;
-    const result = await response.json() as {
-      output?: Array<{ type?: string; content?: Array<{ type?: string; text?: string }> }>;
-    };
-    const answer = (result.output ?? []).flatMap((o) => o.content ?? [])
-      .filter((c) => c.type === 'output_text').map((c) => c.text ?? '').join('\n').trim();
-    if (!answer || answer.length > 2400) return null;
-    if (/купите|оформите подписку|гарантирую|обязательно замените|точно неисправен/i.test(answer)) return null;
-    return answer + '\n\nЭто справочная версия, не итоговая проверка автомобиля.';
-  } catch {
-    // Model/network outage must never block the free private chat or result in charges.
-    return null;
-  }
+  const answer = await requestGeneratedText(RULES, input, 550, 12_000, settings);
+  if (!answer) return null;
+  if (/купите|оформите подписку|гарантирую|обязательно замените|точно неисправен/i.test(answer)) return null;
+  return answer + '\n\nЭто справочная версия, не итоговая проверка автомобиля.';
 }
 
 
@@ -104,32 +79,16 @@ export function neutralConversationEligible(input: string): boolean {
   return /привет|как дела|как жизнь|как ты|настроени|спасибо|благодар|поговор|поболта|анекдот|шутк|как прошёл день|салют|здоров|добрый|чем занят/i.test(input);
 }
 
-export async function neutralAiAnswer(message: string, prior: string[], settings: ProviderSettings): Promise<string | null> {
-  if (!settings.enabled || !settings.apiKey || !settings.model || !neutralConversationEligible(message)) return null;
-  try {
-    const r = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: { authorization: 'Bearer ' + settings.apiKey, 'content-type': 'application/json' },
-      body: JSON.stringify({
-        model: settings.model,
-        instructions: CASUAL_RULES,
-        input: [{ role: 'user', content: [
-          'Предыдущие реплики: ' + prior.slice(0, 3).reverse().map(stripIdentifiers).join(' | '),
-          'Новое сообщение: ' + stripIdentifiers(message),
-        ].join('\n') }],
-        store: false,
-        max_output_tokens: 260,
-      }),
-      signal: AbortSignal.timeout(8_000),
-    });
-    if (!r.ok) return null;
-    const data = await r.json() as { output?: Array<{ content?: Array<{type?: string;text?: string}> }> };
-    const answer = (data.output ?? []).flatMap(x => x.content ?? []).filter(x => x.type === 'output_text')
-      .map(x => x.text ?? '').join('\n').trim();
-    if (!answer || answer.length > 1200 ||
-        /оплат|подписк|купите|скидк|мы гарантируем|точная диагностика/i.test(answer)) return null;
-    return answer;
-  } catch {
-    return null;
-  }
+export async function neutralAiAnswer(
+  message: string, prior: string[], settings: TrakBotProviderSettings,
+): Promise<string | null> {
+  if (!neutralConversationEligible(message)) return null;
+  const input = [
+    'Предыдущие реплики: ' + prior.slice(0, 3).reverse().map(stripIdentifiers).join(' | '),
+    'Новое сообщение: ' + stripIdentifiers(message),
+  ].join('\n');
+  const answer = await requestGeneratedText(CASUAL_RULES, input, 260, 8_000, settings);
+  if (!answer || answer.length > 1_200 ||
+      /оплат|подписк|купите|скидк|мы гарантируем|точная диагностика/i.test(answer)) return null;
+  return answer;
 }
