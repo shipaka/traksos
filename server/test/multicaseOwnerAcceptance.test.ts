@@ -124,12 +124,12 @@ test('one incident: consultation → roadside master → parallel tow → preboo
  assert.equal(root.caseSummary.confirmedTotal,0,
   'booking a future workshop cannot confirm any bill');
  const states=await t.db.query<{id:string;status:string}>(
-  'select id,status from orders where id=any($1::uuid[])',[consult.id,visit.id,tow.id]);
+  'select id,status from orders where id=any($1::uuid[])',[[consult.id,visit.id,tow.id]]);
  assert.equal(states.find(x=>x.id===consult.id)?.status,'awaiting_confirmation');
  assert.equal(states.find(x=>x.id===visit.id)?.status,'arrived');
  assert.equal(states.find(x=>x.id===tow.id)?.status,'en_route');
  const links=await t.db.query<{continuation_recommendation_id:string|null}>(
-  'select continuation_recommendation_id from orders where id=any($1::uuid[])',[visit.id,tow.id]);
+  'select continuation_recommendation_id from orders where id=any($1::uuid[])',[[visit.id,tow.id]]);
  assert.deepEqual(new Set(links.map(x=>x.continuation_recommendation_id)),
   new Set([visitAdvice.id,towAdvice.id]));
 });
