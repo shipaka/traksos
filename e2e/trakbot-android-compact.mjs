@@ -42,6 +42,12 @@ try {
     // Keep the synthetic session isolated. Ordinary Shell widgets request
     // notifications and WebSocket tickets; real 401s would correctly log out
     // the fake user before the mobile-chat interaction can be tested.
+    await page.route('**/api/me/offers', route => route.fulfill({
+      status:200,contentType:'application/json',body:JSON.stringify([]),
+    }));
+    await page.route('**/api/me/notifications/read', route => route.fulfill({
+      status:200,contentType:'application/json',body:JSON.stringify({ok:true}),
+    }));
     await page.route('**/api/me/notifications', route => route.fulfill({
       status:200,contentType:'application/json',
       body:JSON.stringify({unread:0,items:[]}),
@@ -66,7 +72,8 @@ try {
         }),
       });
     });
-    await page.goto(BASE+'/#/help',{waitUntil:'domcontentloaded'});
+    // This background page needs only notifications; avoid unrelated pricing/help calls.
+    await page.goto(BASE+'/#/notifications',{waitUntil:'domcontentloaded'});
     const launch = page.getByRole('button',{name:'Открыть TrakBot'});
     await launch.waitFor({timeout:15000});
     await launch.click();
