@@ -45,3 +45,16 @@ test('external AI only when each code is grounded and user consented', () => {
   assert.equal(canUseGroundedAi(true, [{...row, review_state:'unverified'}], ['P0087'], {}), false);
   assert.equal(canUseGroundedAi(true, [row], ['P0087','P0299'], {}), false);
 });
+
+
+test('neutral small-talk is human-friendly and never hard-sells', () => {
+  const hello = composeTrakBotReply('Как дела?', []);
+  assert.match(hello, /на связи/i);
+  const thanks = composeTrakBotReply('спасибо', []);
+  assert.match(thanks, /не за что/i);
+  const who = composeTrakBotReply('ты человек?', []);
+  assert.match(who, /автоматический помощник/i);
+  const cost = composeTrakBotReply('TrakBot платный?', []);
+  assert.match(cost, /сейчас бесплатный/i);
+  assert.doesNotMatch([hello,thanks,who,cost].join(' '), /покупайте|оформить заказ|срочно оплачивай/i);
+});
