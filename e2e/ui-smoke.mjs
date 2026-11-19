@@ -72,7 +72,7 @@ try {
           return [{
             tag: el.tagName.toLowerCase(),
             selector: (el.id ? '#' + el.id : '') +
-              (typeof el.className === 'string' ? '.' + el.className.trim().split(/\\s+/).join('.') : ''),
+              (typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/).join('.') : ''),
             left: Math.round(box.left), right: Math.round(box.right),
             width: Math.round(box.width), scrollWidth: el.scrollWidth,
             position: css.position, whiteSpace: css.whiteSpace
