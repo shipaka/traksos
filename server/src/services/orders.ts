@@ -985,6 +985,7 @@ export class OrdersService {
       statusLabel: unilateral?.status==='pending_client' ? 'Работа сдана · ожидаем клиента'
         : unilateral?.status==='disputed' ? 'Работа сдана · разбирательство'
         : statusLabels[o.status as OrderStatus],
+      unilateralCanApprove: !!unilateral && user.id===o.client_id,
       unilateralClosure: unilateral ? {
         status: unilateral.status, reason: unilateral.reason, note: unilateral.note,
         quoteTotal: unilateral.quote_total, createdAt: unilateral.created_at,
