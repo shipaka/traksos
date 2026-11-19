@@ -1012,7 +1012,7 @@ export function Garage({focusVehicleId}:{focusVehicleId?:string}={}) {
       )}
       {!list.data ? <Loading error={list.error} /> : list.data.map((v: any) => (
         <div key={v.id} id={`garage-vehicle-${v.id}`} className="card">
-          <VehiclePhotoLink brand={v.brand} model={v.model} plate={v.plate} href={`#/garage/${v.id}`}/>
+          <VehiclePhotoLink brand={v.brand} model={v.model} year={v.year} plate={v.plate} href={`#/garage/${v.id}`}/>
           <div className="between"><b>{v.brand} {v.model ?? ''}{v.year ? `, ${v.year}` : ''}</b><span className="pill">{v.plate ?? 'без номера'}</span></div>
           {v.trailer_plate && <span className="note">Прицеп {v.trailer_plate}</span>}
           {v.fixed_at && <span className="pill good" style={{ alignSelf: 'flex-start' }}>уточнено мастером · {fmtTime(v.fixed_at)}</span>}
