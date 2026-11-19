@@ -10,11 +10,13 @@ import { VerifiedBadge } from '../verifiedBadge.tsx';
 import { EcuStationWorkspace } from './ecuHandoffs.tsx';
 import './performerMobileWork.css';
 import { VehiclePhotoLink } from '../vehicleVisual.tsx';
+import { AndroidPerformerWorkspace, useMobileWorkspace } from './androidWorkspaces.tsx';
 
 // Линия: статус, геолокация, входящие ---------------------------------------
 
 export function Work({background=false}:{background?:boolean}={}) {
   const { me, reload } = useMe();
+  const mobileWorkspace = useMobileWorkspace();
   const { busy, run } = useAction();
   const [compact, setCompact] = useState(() => window.matchMedia('(max-width: 820px)').matches);
   useEffect(() => {
@@ -49,6 +51,15 @@ export function Work({background=false}:{background?:boolean}={}) {
     onOfferDone={auctions.reload} balance={balance.data} online={online}
     busy={busy} setLine={setLine} />;
 
+  if (mobileWorkspace) return (
+    <main className="work-live-dashboard">
+      <WorkerNotices />
+      <AndroidPerformerWorkspace performer={p} active={active} auctions={auctions.data ?? []} online={online}
+        busy={busy} setLine={(status) => setLine(status)} balance={balance.data} reloadAuctions={auctions.reload} />
+      <LiveStrip who={p.kind === 'tow' ? 'tow' : 'master'} />
+      {online && <LocationSharing />}
+    </main>
+  );
   return (
     <main className="work-live-dashboard">
       <WorkerNotices />

@@ -30,9 +30,12 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
     try { return ({ near: 'distance', cheap: 'price', fast: 'eta' } as Record<string, (typeof SORTS)[number]['id']>)[localStorage.getItem('traksos.prio') ?? ''] ?? 'recommended'; } catch { return 'recommended'; }
   });
   const [data, setData] = useState<any>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const seen = useRef(new Set<string>());
 
-  const load = () => get(`/api/orders/${d.id}/offers?sort=${sort}`).then(setData).catch(() => {});
+  const load = () => get('/api/orders/' + d.id + '/offers?sort=' + sort)
+    .then(response => { setData(response); setLoadError(null); })
+    .catch(e => setLoadError(e instanceof Error ? e.message : 'Нет связи с сервером'));
   useEffect(() => { load(); }, [sort, d.id]); // eslint-disable-line
   useEffect(() => onEvent((e) => { if (e.orderId === d.id && e.type === 'order') load(); }), [d.id, sort]); // eslint-disable-line
   useEffect(() => { const t = setInterval(load, 10_000); return () => clearInterval(t); }, [d.id, sort]); // eslint-disable-line
@@ -56,6 +59,7 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
         address={d.address} synthetic={String(d.id).startsWith('demo-')} />}
       <div className="card search-card">
         <Radar dots={Math.min(d.search?.candidates ?? 0, 8)} hits={offers.length} />
+        {loadError && <div className="and19-search-error" role="alert">Не удалось получить свежие отклики. <button type="button" onClick={load}>Повторить</button><small>{loadError}</small></div>}
         <div className="stack" style={{ gap: 4, textAlign: 'center' }}>
           <b className="search-title">{offers.length ? `${offers.length} ${plural(offers.length, 'отклик', 'отклика', 'откликов')}` : phrase}</b>
           <span className="note">
@@ -64,6 +68,7 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
               : d.search?.candidates ? `Заявку видят ${d.search.candidates} ${plural(d.search.candidates, d.service === 'tow' ? 'эвакуаторщик' : 'мастер', d.service === 'tow' ? 'эвакуаторщика' : 'мастера', d.service === 'tow' ? 'эвакуаторщиков' : 'мастеров')}${d.service === 'consult' ? ' на связи' : ' рядом'} — ждём, кто откликнется` : 'Звоним ближайшим'}
           </span>
         </div>
+        <span className="note and19-radar-note">Радар — анимация ожидания, не карта перемещения мастеров. Количество откликов обновляется сервером.</span>
         {d.searchStage && <div className="note" role="status">
           Ищем исполнителей: этап {d.searchStage.wave} из {d.searchStage.waves}.
           Приглашаем только тех, для кого дорожное время подачи подтверждено маршрутизатором

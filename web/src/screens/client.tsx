@@ -9,6 +9,7 @@ import { native } from '../native.ts';
 import { saveNewOrderDraft, readNewOrderDraft, clearNewOrderDraft, type SavedNewOrderDraft } from '../orderDraft.ts';
 import { insurancePresentation, isOpenInsuranceRequest } from '../insurancePresentation.ts';
 import { VehiclePhotoLink } from '../vehicleVisual.tsx';
+import { AndroidClientWorkspace, useMobileWorkspace } from './androidWorkspaces.tsx';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
 
@@ -39,12 +40,16 @@ export function Home() {
   const fleetRules = useLoad(() => me?.owner_id ? get('/api/fleet/rules') : Promise.resolve(null),[me?.owner_id]);
   const restricted = (permission:'repair'|'tow'|'service'|'consult'|'insurance'|'inspection'|'shop') =>
     !!me?.owner_id && (!fleetRules.data || fleetRules.data.allow?.[permission] === false);
+  const mobileWorkspace = useMobileWorkspace();
   const active = useLoad(() => get('/api/orders'), [], (e) => e.type === 'order');
   const services = useLoad(() => get<any[]>('/api/vehicle-service-requests'), [],
     e => e.type === 'vehicle_service' || e.type === 'connection_restored');
   const insuranceInProgress = (services.data ?? []).filter(r =>
     r.kind === 'insurance' && isOpenInsuranceRequest(r.status));
   const live = (active.data ?? []).filter((o: any) => !['completed', 'cancelled'].includes(o.status));
+  if (mobileWorkspace) return <main className="client-home client-dashboard">
+    <AndroidClientWorkspace orders={live} loading={!active.data && !active.error} error={active.error} retry={active.reload} me={me} insuranceInProgress={insuranceInProgress} />
+  </main>;
   return (
     <main className="client-home client-dashboard">
       <section className="desktop-hero" aria-label="Помощь грузовому транспорту">
@@ -149,7 +154,6 @@ export function Home() {
           <div className="desktop-aside-card"><h2>Ваш кабинет</h2><p>Профиль и уведомления доступны в личном кабинете.</p><a href="#/profile" className="desktop-aside-cta">Открыть профиль →</a></div>
         </aside>
       </div>
-
     </main>
   );
 }

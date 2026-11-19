@@ -100,6 +100,7 @@ jobs:
           node e2e/cabinet-navigation-audit.mjs
           node e2e/admin-navigation-ux.mjs
           node e2e/cabinet-visual-sweep.mjs
+          node e2e/android-approved-workspaces.mjs
           node e2e/cabinet-logout-and-shop.mjs
           node e2e/approved-truck-hero.mjs
           node e2e/visual-text-geometry.mjs
