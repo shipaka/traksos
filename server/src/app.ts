@@ -20,6 +20,7 @@ import { ProfilesService } from './services/profiles.ts';
 import { OrdersService } from './services/orders.ts';
 import { ChatService } from './services/chat.ts';
 import { TrakBotService } from './services/trakbot.ts';
+import { TechnicalCasesService } from './services/technicalCases.ts';
 import { ReviewsService, REVIEW_TAGS } from './services/reviews.ts';
 import { OffersService } from './services/offers.ts';
 import { AuctionService } from './services/auction.ts';
@@ -83,6 +84,7 @@ export function createApp(d: Deps) {
   profiles.onUnavailable = async (userId) => orders.afterRelease(await orders.release(d.db, userId, null));
   const chat = new ChatService(d.db, settings, notifier, orders);
   const trakbot = new TrakBotService(d.db);
+  const technicalCases = new TechnicalCasesService(d.db);
   const reviews = new ReviewsService(d.db, settings, orders);
   const onsite = new OnsiteService(d.db, notifier, orders);
   const offers = new OffersService(d.db, notifier, now);
@@ -420,6 +422,27 @@ export function createApp(d: Deps) {
       }).optional().default({}),
     }), c.body);
     return trakbot.reply(c.user, body.message, body.vehicle, body.allowAiProcessing);
+  });
+  // Repair experience is private to verified specialists until an admin approves it.
+  r.get('/api/tech/repair-cases', true, (c: AuthedCtx) =>
+    technicalCases.approved(c.user, c.query.get('q') ?? ''));
+  r.post('/api/tech/repair-cases', true, (c: AuthedCtx) =>
+    technicalCases.submit(c.user, parse(z.object({
+      make: z.string().min(2).max(60),
+      model: z.string().max(80).optional(),
+      productionYear: z.number().int().min(1980).max(2100).optional(),
+      ecu: z.string().max(80).optional(),
+      code: z.string().max(35).optional(),
+      symptoms: z.string().min(15).max(2000),
+      checksPerformed: z.string().min(15).max(2000),
+      verifiedFix: z.string().min(15).max(2000),
+      provenanceNote: z.string().max(800).optional(),
+    }), c.body)));
+  r.get('/api/admin/tech/repair-cases', ['admin'], (c: AuthedCtx) =>
+    technicalCases.pending(c.user));
+  r.post('/api/admin/tech/repair-cases/:id/review', ['admin'], (c: AuthedCtx) => {
+    const data = parse(z.object({ approve: z.boolean(), note: z.string().max(1000).default('') }), c.body);
+    return technicalCases.decide(c.user, c.params.id, data.approve, data.note);
   });
   r.get('/api/tech/codes', ['master','service','admin','moderator'], (c: AuthedCtx) =>
     trakbot.expertLookup(c.user, c.query.get('q') ?? ''));
