@@ -29,8 +29,18 @@ try {
     const page=await ctx.newPage();
     const pageErrors=[];
     page.on('pageerror',e=>pageErrors.push(e.message));
-    await page.addInitScript(v=>{localStorage.setItem('traksos.token',v.token);
-      localStorage.setItem('traksos.mode',v.mode)}, {token,mode});
+    // Model the Android JS bridge before the app bundle executes. Without it
+    // native.isApp stays false and Chromium tests the mobile website instead
+    // of the actual Android-specific workspace.
+    await page.addInitScript(v=>{
+      Object.defineProperty(window,'TrakSOSNative',{configurable:true,value:{
+        isApp:()=>true,
+        setSession:()=>{},pushToken:()=>'',performerOnline:()=>{},
+        appLockEnabled:()=>false,setAppLockEnabled:()=>false
+      }});
+      localStorage.setItem('traksos.token',v.token);
+      localStorage.setItem('traksos.mode',v.mode);
+    }, {token,mode});
     await page.goto(BASE+'/'+home,{waitUntil:'domcontentloaded'});
     await page.locator('.app').waitFor();
     // This is a synthetic CI account: accept any current synthetic legal offer.
