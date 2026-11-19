@@ -271,13 +271,13 @@ export class ServiceCenters {
   async invoice(user: AuthUser, id: string, amount: number, points = 0) {
     const c = await this.mustMine(user);
     const fees = await this.settings.get('fees');
-    const clientPct = fees.clientFeePct; // 5% approved; independently capped at 5,000 RUB.
+    const clientPct = Math.max(0, Math.min(5, fees.clientFeePct)); // approved ceiling: 5% and max 5,000 RUB.
     const clientFee = Math.min(Math.round(amount * clientPct / 100), 500_000);
     const b = await this.db.tx(async q => {
       const row = await q.one<any>('select * from service_bookings where id=$1 and center_id=$2 for update', [id, c.id]);
       if (!row) throw notFound('Запрос не найден');
       if (row.status !== 'ready') throw conflict('bad_status', 'Сначала «Машина готова»');
-      let commission = Math.min(Math.round(amount * fees.serviceCommissionPct / 100), fees.serviceCommissionMax ?? 500_000, 500_000);
+      let commission = Math.min(Math.round(amount * Math.max(0, Math.min(5,fees.serviceCommissionPct)) / 100), fees.serviceCommissionMax ?? 500_000, 500_000);
       const discount = row.from_order_id ? Math.min(commission, Math.round(amount * fees.serviceReferralDiscountPct / 100)) : 0;
       // Points and the new invoice must commit together; never spend points twice on a retry.
       const pts = this.referral
@@ -321,6 +321,7 @@ export class ServiceCenters {
     const c = await this.mustMine(user);
     const rows = await this.db.query<any>(
       `select b.id, b.number, b.status, b.works, b.amount, b.discount, b.commission, b.points, b.invoiced_at, b.closed_at, b.paid_out_at, b.vehicle,
+              b.payment_required, b.client_fee, b.received_amount, b.refunded_amount,
               coalesce(nullif(u.company_name,''), u.name, 'Клиент') as client_name, b.from_order_id is not null as from_order
          from service_bookings b join users u on u.id=b.client_id
         where b.center_id=$1 and b.amount is not null and b.status in ('invoiced','closed','disputed')
@@ -330,7 +331,13 @@ export class ServiceCenters {
       amount: b.amount, discount: b.discount, commission: b.commission, points: b.points ?? 0,
       commissionFull: b.commission + (b.points ?? 0), payout: b.amount - b.commission,
       invoicedAt: b.invoiced_at, closedAt: b.closed_at, paidOutAt: b.paid_out_at,
-      state: b.paid_out_at ? 'paid' : b.status === 'closed' ? 'to_pay' : b.status === 'disputed' ? 'disputed' : 'awaiting',
+      // Only boolean status is sent to service owner, not client fee or client invoice total.
+      state: b.paid_out_at ? 'paid'
+        : b.status === 'disputed' ? 'disputed'
+        : b.status === 'closed'
+          ? (!b.payment_required ||
+             b.received_amount-b.refunded_amount >= b.amount+b.client_fee-b.discount ? 'to_pay' : 'unpaid')
+          : 'awaiting',
     });
     const items = rows.map(item);
     const sum = (f: (x: any) => boolean, k: string) => items.filter(f).reduce((s, x: any) => s + x[k], 0);
@@ -345,6 +352,7 @@ export class ServiceCenters {
     return {
       summary: {
         toPay: sum((x) => x.state === 'to_pay', 'payout'), awaiting: sum((x) => x.state === 'awaiting', 'payout'),
+        unpaid: sum((x) => x.state === 'unpaid', 'payout'),
         disputed: sum((x) => x.state === 'disputed', 'payout'), paid: sum((x) => x.state === 'paid', 'payout'),
         points: sum(() => true, 'points'),
       },
