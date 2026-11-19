@@ -2,14 +2,12 @@
 import { useState } from 'react';
 import { get } from '../api.ts';
 import { useLoad, useMe, Back } from '../ui.tsx';
-import { usePrices } from './client.tsx';
 import { EconomicsGuide } from './economicsGuide.tsx';
 
 type Item = [string, string];
 
 export function Rules() {
   const { me, mode } = useMe();
-  const { pricing: p } = usePrices();
   const st = useLoad(() => (mode === 'performer' ? get('/api/performer/standing') : Promise.resolve(null)), [mode]);
   const [open, setOpen] = useState<string | null>(null);
   const common: Item[] = [
