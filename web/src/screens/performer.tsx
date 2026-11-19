@@ -9,6 +9,7 @@ import { useToast } from '../ui.tsx';
 import { VerifiedBadge } from '../verifiedBadge.tsx';
 import { EcuStationWorkspace } from './ecuHandoffs.tsx';
 import './performerMobileWork.css';
+import { VehiclePhotoLink } from '../vehicleVisual.tsx';
 
 // Линия: статус, геолокация, входящие ---------------------------------------
 
@@ -276,6 +277,9 @@ function MobilePerformerWork({p, personName, active, awaiting, jobs, incoming, o
     {first ? <section className="work-mobile-current card" aria-label="Активная заявка">
         <span className="work-mobile-kicker">СЕЙЧАС В РАБОТЕ</span>
         <h2>№{first.number} · {SERVICES[first.service]?.name || first.service}</h2>
+        <VehiclePhotoLink compact brand={first.v_brand || first.brand}
+          model={first.v_model} plate={first.v_plate}
+          href={`#/order/${first.id}/vehicle`}/>
         <p className="work-mobile-stage">{stage[first.status] || 'Открытая заявка'}</p>
         <p className="note">{first.address || first.estimate?.zoneName || 'Место — в карточке заявки'}</p>
         <div className="work-mobile-progress" role="list" aria-label="Этапы текущей работы">
