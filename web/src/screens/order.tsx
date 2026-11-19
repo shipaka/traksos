@@ -30,7 +30,8 @@ export function Order({ id }: { id: string }) {
   }, [id]);
 
   const { mode } = useMe();
-  const [ptab, setPtab] = useState<'order' | 'client'>('order');
+  const [ptab, setPtab] = useState<'order' | 'client' | 'finance' | 'chat' | 'history'>('order');
+  useEffect(() => { setPtab('order'); }, [id]);
   const backTo = mode === 'admin' ? 'admin' : mode === 'performer' ? 'work' : 'orders';
   if (!o.data) return <main><Back to={backTo} /><Loading error={o.error} /></main>;
   const d = o.data;
@@ -56,8 +57,16 @@ export function Order({ id }: { id: string }) {
           <b>GPS во время выезда</b>
           <LocationSharing />
         </section>}
-      {(isPerformer || d.you === 'candidate') && <PerformerTabs tab={ptab} setTab={setPtab} />}
-      {(isPerformer || d.you === 'candidate') && ptab === 'client' ? <ClientTab id={id} canEdit={isPerformer} /> : <>
+      {(isPerformer || d.you === 'candidate') && <PerformerTabs tab={ptab} setTab={setPtab} full={isPerformer} />}
+      {(isPerformer || d.you === 'candidate') && ptab === 'client'
+        ? <ClientTab id={id} canEdit={isPerformer} />
+        : isPerformer && ptab === 'finance' ? <Money d={d} />
+        : isPerformer && ptab === 'chat' ? <Chat id={id} status={d.status} />
+        : isPerformer && ptab === 'history'
+          ? <OrderTimeline events={d.events ?? []} createdAt={d.createdAt}
+              acceptedAt={d.acceptedAt} arrivedAt={d.arrivedAt}
+              completedAt={d.completedAt} isAdmin={false} />
+        : <>
       {d.status === 'awaiting_owner' && <OwnerApproval d={d} onDone={o.reload} />}
       {d.status === 'searching' && (d.you === 'client' || d.you === 'admin') && <Search d={d} onChosen={o.reload} />}
       {d.status === 'searching' && d.actions?.includes('cancel') && !isPerformer && <Cancel id={id} status={d.status} consult={isConsult} onDone={o.reload} />}
@@ -73,7 +82,7 @@ export function Order({ id }: { id: string }) {
       {isPerformer && <ClientCard d={d} />}
       {d.service === 'tow' && !isPerformer && d.you !== 'candidate' && d.destination && <TowInfo d={d} />}
 
-      {d.you !== 'candidate' && d.status !== 'searching' && <Money d={d} />}
+      {d.you !== 'candidate' && d.status !== 'searching' && !isPerformer && <Money d={d} />}
 
       {d.you === 'admin' && <AdminPanel d={d} onDone={o.reload} />}
       {d.you === 'admin' && !isConsult && <AdminRouteMap orderId={id} />}
@@ -107,7 +116,7 @@ export function Order({ id }: { id: string }) {
       <EcuOrderPanel order={d} />
       {d.status === 'completed' && <Review id={id} you={d.you} />}
 
-      {d.status !== 'searching' && d.status !== 'no_performer' && <Chat id={id} status={d.status} />}
+      {!isPerformer && d.status !== 'searching' && d.status !== 'no_performer' && <Chat id={id} status={d.status} />}
       </>}
 
       {d.you !== 'admin' && d.you !== 'candidate' && <a className="btn ghost" href={`#/support/new?order=${d.id}`}>Позвать поддержку</a>}
@@ -575,11 +584,18 @@ function PartPicker({ d, onDone, performer }: { d: any; onDone: () => void; perf
 
 // Мастер на заявке --------------------------------------------------------------
 
-function PerformerTabs({ tab, setTab }: { tab: string; setTab: (t: any) => void }) {
+function PerformerTabs({ tab, setTab, full }: {
+  tab: string; setTab: (t: 'order' | 'client' | 'finance' | 'chat' | 'history') => void; full: boolean
+}) {
+  const tabs = full
+    ? [['order','Работа'],['client','Клиент и ТС'],['finance','Расчёт'],['chat','Чат'],['history','История']]
+    : [['order','Заявка'],['client','Клиент и машина']];
   return (
-    <div className="grid2" role="tablist">
-      <button className="seg" role="tab" aria-pressed={tab === 'order'} onClick={() => setTab('order')}>Заявка</button>
-      <button className="seg" role="tab" aria-pressed={tab === 'client'} onClick={() => setTab('client')}>Клиент и машина</button>
+    <div className={full ? 'performer-order-tabs' : 'grid2'} role="tablist"
+      aria-label="Разделы заявки">
+      {tabs.map(([key,label])=><button key={key} type="button" className="seg" role="tab"
+        aria-selected={tab===key} aria-pressed={tab===key}
+        onClick={()=>setTab(key as 'order'|'client'|'finance'|'chat'|'history')}>{label}</button>)}
     </div>
   );
 }
