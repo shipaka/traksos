@@ -48,7 +48,9 @@ export function PerformerHub() {
     ['reviews', 'Отзывы обо мне', 'оспорить несправедливый'],
     ['rules', 'Правила площадки', 'комиссия, нарушения, что влияет на поиск'],
     ['appeal', 'Оспорить нарушение', 'открыто всегда'],
-    ...(me?.roles.includes('service') ? [['base', 'Моя СТО', 'отдельный кабинет ремонта на рембазе']] as [string, string, string][] : []),
+    ...(me?.roles.includes('service')
+      ? [['base', 'Моя СТО', 'отдельный кабинет стационарного ремонта и записи']] as [string, string, string][]
+      : [['base/me', 'Подключить свою СТО', 'отдельная карточка, специализации и проверка СТО']] as [string, string, string][]),
     ['profile', 'Аккаунт', 'личные данные, защита входа и выход'],
   ];
   return (
@@ -76,7 +78,7 @@ function PerformerOnboarding() {
   const { busy, run } = useAction();
   const [kind, setKind] = useState(me?.roles.includes('tow') ? 'tow' : 'master');
   const canTow = !!me?.roles.includes('tow');
-  const canMaster = !!me?.roles.includes('master');
+  const canMaster = !!me?.roles.includes('master') || (!!me?.roles.includes('service') && !me?.roles.includes('tow'));
   const [name, setName] = useState(me?.name ?? '');
   const [spec, setSpec] = useState<string[]>(() => {
     // Apply the specializations chosen at partner sign-up, but validate ids.

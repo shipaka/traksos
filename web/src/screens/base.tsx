@@ -58,6 +58,7 @@ function InvoicePoints({ amount, value, onChange }: { amount: number | null; val
 
 export function BaseHome() {
   const preview=inServicePreview();
+  const { me } = useMe();
   const cab = useLoad(() => baseGet('/api/base'), [], isBookingEvent);
   const [tab, setTab] = useState<'req' | 'cars' | 'done'>('req');
   const { busy, run } = useAction();
@@ -87,7 +88,14 @@ export function BaseHome() {
   );
   const cars = [...groups.expected, ...groups.repair, ...groups.ready];
   return (
-    <main className="base-workspace">{!preview&&<WorkerNotices audience="service" />}
+    <main className="base-workspace">
+      {!preview && !me?.roles.includes('master') && (
+        <a className="btn ghost small" href="#/work/profile">Подключить выездного мастера — отдельный рабочий кабинет</a>
+      )}
+      {!preview && me?.roles.includes('master') && (
+        <a className="btn ghost small" href="#/work">Перейти к выездным заявкам</a>
+      )}
+{!preview&&<WorkerNotices audience="service" />}
       <section className="base-command-hero">
         <span className="base-command-eyebrow">TRAKSOS · КАБИНЕТ СЕРВИСНОГО ПАРТНЁРА</span>
         <h1>Рембаза «{center.name}»</h1>
