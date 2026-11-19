@@ -20,6 +20,7 @@ import { ProfilesService } from './services/profiles.ts';
 import { OrdersService } from './services/orders.ts';
 import { ChatService } from './services/chat.ts';
 import { TrakBotService } from './services/trakbot.ts';
+import { DriverAirService } from './services/driverAir.ts';
 import { providerReady } from './services/trakbotProvider.ts';
 import { TechnicalCasesService } from './services/technicalCases.ts';
 import { ReviewsService, REVIEW_TAGS } from './services/reviews.ts';
@@ -85,6 +86,7 @@ export function createApp(d: Deps) {
   profiles.onUnavailable = async (userId) => orders.afterRelease(await orders.release(d.db, userId, null));
   const chat = new ChatService(d.db, settings, notifier, orders);
   const trakbot = new TrakBotService(d.db);
+  const driverAir = new DriverAirService(d.db, now);
   const technicalCases = new TechnicalCasesService(d.db);
   const reviews = new ReviewsService(d.db, settings, orders);
   const onsite = new OnsiteService(d.db, notifier, orders);
@@ -405,8 +407,18 @@ export function createApp(d: Deps) {
       return warrantyRecourse.recordReceived(c.user,c.params.id,p);
     });
 
-  // TrakBot only operates in the authenticated user's private conversation.
-  // No broadcasting to general feed, service tickets or order chats.
+  // Driver air has isolated storage; private TrakBot and order chats remain separate.
+  r.get('/api/air/messages', true, (c: AuthedCtx) =>
+    driverAir.list(c.user, Number(c.query.get('after') ?? 0)));
+  r.post('/api/air/messages', true, (c: AuthedCtx) =>
+    driverAir.post(c.user, parse(z.object({body:z.string().min(1).max(400)}),c.body).body));
+  r.post('/api/admin/air/bot', ['admin'], (c: AuthedCtx) =>
+    driverAir.setBot(c.user, parse(z.object({enabled:z.boolean()}),c.body).enabled));
+  r.post('/api/admin/air/messages/:id/hide', staff, (c: AuthedCtx) =>
+    driverAir.hide(c.user,c.params.id));
+
+  // Private TrakBot never writes into driver air, order or support chats.
+
   r.delete('/api/trakbot/messages', true, (c: AuthedCtx) => trakbot.clearHistory(c.user));
   r.get('/api/trakbot/messages', true, async (c: AuthedCtx) => ({
     ...(await trakbot.history(c.user)),
