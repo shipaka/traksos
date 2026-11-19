@@ -51,6 +51,30 @@ try {
       els=>els.map(el=>({href:el.getAttribute('href'),text:(el.textContent??'').trim()}))
     );
     if(links.length < 6)throw Error(kind+': almost empty cabinet menu');
+    // Each account has its own direct economic explanation, not a generic
+    // performer pricing page or unapproved commission in the customer menu.
+    const financeMenu=links.find(l=>l.href==='#/economics');
+    if(!financeMenu || !financeMenu.text.includes('Комиссии, баллы и рефералы'))
+      throw Error(kind+': financial conditions and referral terms are missing from cabinet menu');
+    await page.goto(BASE+'/#/economics',{waitUntil:'domcontentloaded'});
+    await page.getByRole('heading',{name:'Комиссии, баллы и рефералы',exact:true}).waitFor();
+    const guide=page.locator('section.economics-guide');
+    await guide.waitFor({timeout:12000});
+    const financeText=(await guide.innerText()).replace(/\\s+/g,' ');
+    if(!financeText.includes('Математика на примерах') &&
+      !['admin','insurer'].includes(kind) && kind!=='moderator_master')
+      throw Error(kind+': economics guide has no example math');
+    if(kind==='owner'||kind==='driver') {
+      if(!financeText.includes('10 500') || financeText.includes('исполнителю'))
+        throw Error(kind+': owner financial example or role privacy incorrect');
+    }
+    if(kind==='master'||kind==='tow') {
+      if(!financeText.includes('9 500') || financeText.includes('клиент оплачивает'))
+        throw Error(kind+': performer financial example or role privacy incorrect');
+    }
+    if(kind==='insurer' && !financeText.includes('Универсальная комиссия'))
+      throw Error(kind+': insurer must not inherit the master commission');
+
     const paths=[...new Set(links.map(l=>l.href))];
     if(kind!=='admin' && paths.some(path=>path.startsWith('#/admin/section')))
       throw Error(kind+': sees administrator menu routes');
