@@ -40,7 +40,7 @@ test('economy explainer shows only the own side and all actual bonus settings',(
   }
   const clientDocument=contractEconomyAnnex(defaultSettings,'client');
   const performerDocument=contractEconomyAnnex(defaultSettings,'performer');
-  assert.match(clientDocument,/10 500/);
+  assert.match(clientDocument.replace(/[\u00a0\u202f]/g,' '),/10 500/);
   assert.match(clientDocument,/180 дней/);
   assert.match(performerDocument,/мастер|Мастер/);
   assert.match(performerDocument,/СТО/);
@@ -69,4 +69,44 @@ test('pricing public endpoint does not expose contractor commission',async()=>{
   assert.equal(Object.prototype.hasOwnProperty.call(prices,'performerCommissionPct'),false);
   assert.equal(Object.prototype.hasOwnProperty.call(prices,'serviceCommissionPct'),false);
   assert.equal(prices.clientFeePct,defaultSettings.fees.clientFeePct);
+});
+
+
+test('published financial annex is immutable, drift detected, new edition reflects new settings',async()=>{
+  const admin=await t.login('+79990000001');
+  const body='# Договор TrakSOS\n\nЭто тестовая редакция условий для корректности системы, не реальный договор.';
+  const first=ok(await t.api('POST','/api/admin/offers',
+    {audience:'client',version:'econ-qa-1',body},admin.token));
+  const old=ok(await t.api('GET','/api/offers/'+first.id));
+  assert.match(old.body,/TRAKSOS-ECONOMICS-ANNEX:V1/);
+  assert.match(old.body,/10% от фактически полученного/);
+  const initially=ok(await t.api('GET','/api/admin/offers/economics-audit',undefined,admin.token));
+  assert.equal(initially.find((x:any)=>x.audience==='client').upToDate,true);
+  ok(await t.api('PUT','/api/admin/settings/referral',{clientSharePct:9},admin.token));
+  const changed=ok(await t.api('GET','/api/admin/offers/economics-audit',undefined,admin.token));
+  assert.equal(changed.find((x:any)=>x.audience==='client').requiresReview,true);
+  const frozen=ok(await t.api('GET','/api/offers/'+first.id));
+  assert.equal(frozen.body,old.body,'signed edition cannot be silently changed');
+  t.clock.advance(5);
+  const second=ok(await t.api('POST','/api/admin/offers',
+    {audience:'client',version:'econ-qa-2',body,summary:'Синхронизация экономики'},admin.token));
+  const current=ok(await t.api('GET','/api/offers/'+second.id));
+  assert.match(current.body,/9% от фактически полученного/);
+  const synced=ok(await t.api('GET','/api/admin/offers/economics-audit',undefined,admin.token));
+  assert.equal(synced.find((x:any)=>x.audience==='client').upToDate,true);
+  const original=ok(await t.api('GET','/api/offers/'+first.id));
+  assert.equal(original.body,old.body);
+});
+
+test('insurer and inspection partner contracts use different financial explanations',async()=>{
+  const admin=await t.login('+79990000001');
+  for(const audience of ['insurer','inspection']) {
+    const publication=ok(await t.api('POST','/api/admin/offers',
+      {audience,version:'partner-qa-1',body:'# Сотрудничество\n\nЭто тестовая юридическая редакция для проверки отображения экономического приложения.'},
+      admin.token));
+    const contract=ok(await t.api('GET','/api/offers/'+publication.id));
+    assert.match(contract.body,/Финансовые условия/);
+    assert.match(contract.body,/согласованным договором/);
+    assert.doesNotMatch(contract.body,/10 500.*сервисный сбор/);
+  }
 });
