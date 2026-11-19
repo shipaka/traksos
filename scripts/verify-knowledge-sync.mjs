@@ -10,6 +10,7 @@ import { execFileSync } from 'node:child_process';
 const file=(p)=>readFileSync(p,'utf8');
 const required=[
   'docs/TRAKSOS_USER_INTRO.md',
+  'docs/FINANCIAL_KNOWLEDGE_RELEASE_POLICY.md',
   'web/src/screens/help.tsx',
   'web/src/screens/platformIntro.tsx',
   'web/src/screens/trainingDemoModel.ts',
@@ -69,10 +70,25 @@ if(base){
     if(!changedHas(/^web\/src\/screens\/(?:scenarioLibrary|trainingDemoModel|economicsGuide)\.tsx?$/))
       throw new Error('Business rules changed without reviewing the matching role-learning module');
   }
+  // An economic rule change must be reviewed in ALL three public surfaces:
+  // role finance, legal offer, and release policy. Merely touching help is not enough.
   if(legalChanged){
-    for(const file of ['web/src/screens/offers.tsx','server/src/domain/economicsGuide.ts']){
-      if(!changed.includes(file))throw new Error('Economics changed without rechecking offer mechanics: '+file);
+    for(const path of [
+      'web/src/screens/offers.tsx',
+      'server/src/domain/economicsGuide.ts',
+      'docs/FINANCIAL_KNOWLEDGE_RELEASE_POLICY.md',
+      'server/test/economics-guide.test.ts',
+    ]){
+      if(!changed.includes(path))
+        throw new Error('Economics changed without updating the legal/learning release package: '+path);
     }
   }
-  console.log('Knowledge release gate: '+changed.length+' changed files, business='+domainChanged+', economics='+legalChanged);
+  // If the order/support lifecycle changes, at least one practical decision
+  // course must be reviewed, not just a paragraph about the new feature.
+  const lifecycleChanged=changedHas(/^server\/src\/(?:domain\/(?:pricing|orderState)\.ts|services\/(?:orders|support|service|insuranceQuoteFlow)\.ts)$/);
+  if(lifecycleChanged && !changedHas(/^web\/src\/screens\/(?:scenarioLibrary|trainingDemoModel)\.ts$/))
+    throw new Error('Order/support behavior changed without updating an interactive course');
+  if(lifecycleChanged && !changed.includes('server/test/scenario-encyclopedia.test.ts'))
+    throw new Error('Order/support behavior changed without reviewing scenario regression tests');
+  console.log('Knowledge release gate: '+changed.length+' changed files, business='+domainChanged+', economics='+legalChanged+', lifecycle='+lifecycleChanged);
 } else console.log('Knowledge consistency validated (no applicable git base comparison).');
