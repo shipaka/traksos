@@ -63,7 +63,13 @@ export function TrakBotDock({ authenticated }: { authenticated: boolean }) {
         if ((event.target as HTMLElement).matches('.trakbot-dialog .compose input')) setInputFocused(true);
       }}
       onBlurCapture={(event) => {
-        if ((event.target as HTMLElement).matches('.trakbot-dialog .compose input')) setInputFocused(false);
+        // Moving focus from the input to its Send button is still inside the
+        // same mini-chat. Do NOT reposition the panel during pointerdown/up:
+        // on touchscreens that would swallow the actual submit click.
+        if ((event.target as HTMLElement).matches('.trakbot-dialog .compose input') &&
+            (!event.relatedTarget || !event.currentTarget.contains(event.relatedTarget as Node))) {
+          setInputFocused(false);
+        }
       }}>
       {open && <div className="trakbot-dock-panel" role="dialog" aria-label="TrakBot — личный помощник" aria-modal="false">
         <header className="trakbot-dock-head">
@@ -71,7 +77,8 @@ export function TrakBotDock({ authenticated }: { authenticated: boolean }) {
             <span><b>TrackSalesBot</b><small>TrakBot · Технический помощник</small></span></div>
           <button ref={closeRef} type="button" className="trakbot-dock-close" onClick={close} aria-label="Закрыть TrakBot">×</button>
         </header>
-        {authenticated ? <TrakBotChat compact onNavigate={() => setOpen(false)} /> :
+        {authenticated ? <TrakBotChat compact onNavigate={() => setOpen(false)}
+          onComposerSubmit={() => setInputFocused(false)} /> :
           <div className="trakbot-dock-guest">
             <div className="trakbot-dock-guest-mascot"><TrakBotMascot reaction="hello" size="large" />
               <span><b>Привет! Я TrackSalesBot.</b><small>Твой говорящий грузовичок-техник.</small></span></div>
