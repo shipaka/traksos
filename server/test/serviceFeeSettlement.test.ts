@@ -122,3 +122,39 @@ test('старые счета СТО после миграции сохраня�
     assert.equal(paid.ok,true,'legacy payout rule is not retroactively tightened');
   } finally {await t.close();}
 });
+
+test('отдельные запчасти не облагаются 5% за ремонт и не влияют на оба лимита', {timeout:90000},async()=>{
+  const t=await setup();
+  try {
+    const admin=await t.login('+79990000001');
+    const client=await t.login('+79994000021');
+    const service=await t.login('+79994000022','service');
+    const c=ok(await t.api('PUT','/api/base',{
+      name:'Рембаза Запчасти',address:'Ленинградская область, Гатчина, д.1'
+    },service.token));
+    ok(await t.api('POST',`/api/admin/services/${c.center.id}/verify`,{decision:'approved'},admin.token));
+    const day=new Date(t.clock.now().getTime()+3*3600_000).toISOString().slice(0,10);
+    const booking=ok(await t.api('POST',`/api/services/${c.center.id}/book`,
+      {need:'electric',day,arrival:'self'},client.token));
+    ok(await t.api('POST',`/api/base/bookings/${booking.id}/respond`,{action:'accept'},service.token));
+    ok(await t.api('POST',`/api/base/bookings/${booking.id}/status`,{status:'arrived'},service.token));
+    ok(await t.api('POST',`/api/base/bookings/${booking.id}/ready`,{works:['Электрика']},service.token));
+    assert.equal((await t.api('POST',`/api/base/bookings/${booking.id}/invoice`,
+      {amount:20_000_000,partsAmount:20_000_001},service.token)).status,400);
+    const worker=ok(await t.api('POST',`/api/base/bookings/${booking.id}/invoice`,
+      {amount:20_000_000,partsAmount:15_000_000},service.token));
+    const customer=ok(await t.api('GET',`/api/bookings/${booking.id}`,undefined,client.token));
+    assert.equal(worker.feeBaseAmount,5_000_000,'50k labor');
+    assert.equal(worker.partsAmount,15_000_000,'150k spares');
+    assert.equal(worker.commission,250_000,'STO 5% of labor, not parts');
+    assert.equal(worker.payout,19_750_000,'200k minus 2.5k');
+    assert.equal(customer.clientFee,250_000,'customer 5% of labor, not parts');
+    assert.equal(customer.toPay,20_250_000,'202.5k');
+    assert.equal(worker.clientFee,undefined);
+    assert.equal(customer.commission,undefined);
+    const stored=await t.db.one<any>(
+      'select amount,parts_amount,fee_base_amount,client_fee from service_bookings where id=$1',[booking.id]);
+    assert.deepEqual([stored.amount,stored.parts_amount,stored.fee_base_amount,stored.client_fee],
+      [20_000_000,15_000_000,5_000_000,250_000]);
+  } finally {await t.close();}
+});
