@@ -724,7 +724,10 @@ export class OrdersService {
     const commission = pct(full.amount, rate);
     const pointsCommission = Math.min(commission, Math.max(0, Number(o.points_commission ?? 0)));
     return { ...base, commission, commissionPct: rate,
-      pointsCommission, payout: full.amount - commission + pointsCommission };
+      pointsCommission, payout: full.amount - commission + pointsCommission,
+      // Cash is physically received by the worker; the receipt amount is required
+      // to prevent undercollection. This does NOT expose the customer's fee split.
+      cashToCollect: o.payment_method === 'cash' ? full.total : undefined };
   }
 
   // Просмотр ---------------------------------------------------------------
