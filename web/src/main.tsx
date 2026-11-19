@@ -39,6 +39,8 @@ import { BaseHome, BaseCar, BaseSetup, BaseMoney, AdminServicePayouts, ServicesL
 import { Fleet, QrJoin } from './screens/fleet.tsx';
 import { Help } from './screens/help.tsx';
 import { Training, TrainingInvite } from './screens/training.tsx';
+import { TrainingPractice } from './screens/trainingPractice.tsx';
+import { ContextHelp } from './screens/contextHelp.tsx';
 import { Rules } from './screens/rules.tsx';
 import { Shop, ShopCart, ShopHistory } from './screens/shop.tsx';
 import { Privacy } from './screens/privacy.tsx';
@@ -253,6 +255,7 @@ function App() {
     case 'insurance': screen = b === 'request' ? (route[2] === 'new' ? <InsuranceApplication vehicleId={route[3]??''} /> : <InsuranceThread requestId={route[2]??''} />) : isInsurer ? <InsurerCabinet /> : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
     case 'help': screen = <Help />; break;
     case 'training': screen = <Training chapter={b} />; break;
+    case 'practice': screen = <TrainingPractice chapter={b} />; break;
     case 'rules': screen = <Rules />; break;
     case 'shop': screen = ((effMode === 'client' && isCustomer) || (effMode === 'performer' && isPerformer) || (effMode === 'service' && isService))
       ? (b === 'cart' ? <ShopCart /> : b === 'history' ? <ShopHistory vehicleId={route[2]} /> : <Shop />)
@@ -384,7 +387,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
        ['/profile', 'Профиль и настройки']];
   const helpLinks: [string, string][] = [
     ['/support', 'Поддержка'], ['/notifications', 'Уведомления'],
-    ['/training', 'Обучение по шагам'], ['/help', 'Помощь и подсказки'], ['/rules', 'Правила площадки'],
+    ['/training', 'Обучение по шагам'], ['/practice', 'Учебный тренажёр'], ['/help', 'Помощь и подсказки'], ['/rules', 'Правила площадки'],
     ['/offer/' + (mode === 'performer' || mode === 'service' ? 'performer' : mode === 'insurer' ? 'privacy' : 'client'), mode === 'insurer' ? 'Документы и условия' : 'Оферта'],
     ['/offer/privacy', 'Политика персональных данных'],
     ['/privacy', 'Мои персональные данные']];
@@ -479,7 +482,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         </div>
       </header>
       <NetworkStatus />
-      {me && !serviceSandbox && route[0] !== 'training' && <TrainingInvite />}
+      {me && !serviceSandbox && !['training','practice'].includes(route[0] ?? '') && <TrainingInvite />}
+      {me && !serviceSandbox && <ContextHelp page={route[0] ?? ''} />}
       <div className="desktop-layout">
         <aside className="desktop-sidebar" aria-label="Навигация по сайту">
           <div className="desktop-sidebar-title">{me ? 'Рабочий кабинет' : isAuthEntry ? 'TrakSOS · вход и документы' : 'TrakSOS · помощь в дороге'}</div>
