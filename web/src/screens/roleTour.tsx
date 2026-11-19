@@ -5,7 +5,7 @@ import { trainingRole } from './training.tsx';
 type TourStep = { selector: string; title: string; description: string };
 function tourSteps(mode: string, role: string): TourStep[] {
   const start: TourStep[] = [
-    { selector: 'header.top', title: 'Это ваш TrackSOS', description: 'Здесь вход в основные разделы и уведомления. Все элементы управления настоящие; экскурсия их не нажимает.' },
+    { selector: 'header.top', title: 'Это ваш TrakSOS', description: 'Здесь вход в основные разделы и уведомления. Все элементы управления настоящие; экскурсия их не нажимает.' },
   ];
   const byRole: Record<string, TourStep> = {
     owner: { selector: '.desktop-quick-links', title: 'Начните с нужной услуги', description: 'Выездной мастер, эвакуатор, СТО или консультация. В срочной ситуации откройте SOS.' },
