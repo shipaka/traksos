@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { get, post } from '../api.ts';
 import { Back, useMe } from '../ui.tsx';
 
-interface BotMessage { id: string; role: 'user'|'bot'; body: string; created_at: string; }
+interface BotMessage { id: string; role: 'user'|'bot'; body: string; created_at: string; action_path?: string|null; action_label?: string|null; }
+const allowedRoutes = new Set(['/orders','/work/jobs','/base','/profile','/shop','/garage',
+  '/fleet','/tech/codes','/work/docs','/insurance/request/new','/support','/help','/rules']);
+const advice = 'TrakBot даёт справочные рекомендации, не диагноз. Он может ошибаться: проверяй важное с мастером. При проблемах с тормозами, рулевым или подвеской не продолжай движение.';
 interface BotHistory { messages: BotMessage[]; freePilot: true; aiAvailable?: boolean; }
 interface CodeRecord {
   code: string; title_en: string; title_ru: string|null;
@@ -10,7 +13,7 @@ interface CodeRecord {
 }
 const initialGreeting = 'Здорово! Что с машиной? Напиши код ошибки или просто расскажи, что происходит. По порядку разберёмся.';
 
-export function TrakBotChat() {
+export function TrakBotChat({ compact = false, onNavigate }: { compact?: boolean; onNavigate?: () => void } = {}) {
   const { me } = useMe();
   const [messages, setMessages] = useState<BotMessage[]>([]);
   const [text, setText] = useState('');
@@ -50,6 +53,7 @@ export function TrakBotChat() {
   useEffect(() => () => speechRef.current?.abort(), []);
   const [error, setError] = useState('');
   const end = useRef<HTMLDivElement>(null);
+  const msgBox = useRef<HTMLDivElement>(null);
   const isTech = !!me?.roles.some((role) => ['master','service','admin','moderator'].includes(role));
   const canUseTech = !!me?.roles.some((role) => ['admin','moderator'].includes(role)) ||
     (isTech && me?.performer?.verification === 'approved');
@@ -59,7 +63,7 @@ export function TrakBotChat() {
       .catch((e) => { if (live) setError(e.message || 'Не удалось загрузить диалог'); });
     return () => { live = false; };
   }, [me?.id]);
-  useEffect(() => end.current?.scrollIntoView({ block: 'end' }), [messages.length]);
+  useEffect(() => { if (msgBox.current) msgBox.current.scrollTop = msgBox.current.scrollHeight; }, [messages.length]);
 
   const send = async () => {
     if (working || !text.trim()) return;
@@ -70,7 +74,7 @@ export function TrakBotChat() {
       const result = await post<{ message: BotMessage; freePilot: true; handoffSuggested?: boolean }>('/api/trakbot/answer', {
         message: body, allowAiProcessing: aiAvailable && aiConsent,
         vehicle: { ...(make.trim() && { make: make.trim() }), ...(model.trim() && { model: model.trim() }),
-          ...(year && { year: Number(year) }), ...(ecu.trim() && { ecu: ecu.trim() }) },
+          ...(year.length === 4 && { year: Number(year) }), ...(ecu.trim() && { ecu: ecu.trim() }) },
       });
       setMessages((old) => [...old, { id: 'local-'+Date.now(), role: 'user', body, created_at: new Date().toISOString() }, result.message]);
       setText('');
@@ -83,12 +87,15 @@ export function TrakBotChat() {
     finally { setWorking(false); }
   };
 
-  return <main>
-    <Back to="help" />
-    <h1>TrakBot</h1>
-    <div className="sub">{isTech ? 'Технический помощник для мастеров и СТО.' : 'Первичная помощь водителю.'} Только личный чат. В общий эфир TrakBot ничего не отправляет.</div>
-    <div className="card flat" style={{ gap: 8 }}>
-      <b>Что за машина?</b>
+  const Frame = compact ? 'div' : 'main';
+  return <Frame className={compact ? 'trakbot-compact-body' : undefined}>
+    {!compact && <Back to="help" />}
+    {compact ? <h2 className="trakbot-compact-title">TrakBot</h2> : <h1>TrakBot</h1>}
+    <div className="sub">{isTech ? 'Помощник мастера и СТО.' : 'Помощник для водителя.'} Личный чат, без публикаций в общем эфире.</div>
+    <p className="trakbot-advice" role="note">{advice} <a href="#/rules" onClick={onNavigate}>Условия</a></p>
+    <details className="card flat trakbot-vehicle" open={!compact || undefined}>
+      <summary><b>Данные машины (необязательно)</b></summary>
+      <div className="stack" style={{ gap: 8 }}>
       <div className="grid2">
         <input className="field" maxLength={60} value={make} onChange={(e) => setMake(e.target.value)} placeholder="Марка, например Scania" aria-label="Марка" />
         <input className="field" maxLength={60} value={model} onChange={(e) => setModel(e.target.value)} placeholder="Модель" aria-label="Модель" />
@@ -101,13 +108,18 @@ export function TrakBotChat() {
         Разрешаю отправлять текст моего вопроса, указанные данные машины и краткий контекст диалога внешнему ИИ-провайдеру для составления ответа.
         Номер телефона и VIN перед отправкой скрываются. Без согласия работает только локальный справочник.
       </label>}
-    </div>
-    <section className="card">
-      <div className="msgs" aria-live="polite" style={{ minHeight: 240, maxHeight: '50vh', overflowY: 'auto' }}>
+      </div>
+    </details>
+    <section className="card trakbot-dialog">
+      <div className="msgs" ref={msgBox} aria-live="polite" style={{ minHeight: compact ? 180 : 240, maxHeight: compact ? '35vh' : '50vh', overflowY: 'auto' }}>
         {!messages.length && <div className="msg sys"><span className="b">{initialGreeting}</span></div>}
         {messages.map((message) => <div key={message.id} className={'msg '+(message.role === 'user' ? 'me' : '')}>
           {message.role === 'bot' && <span className="n">TrakBot</span>}
           <span className="b" style={{ whiteSpace: 'pre-wrap' }}>{message.body}</span>
+          {message.role === 'bot' && message.action_path && allowedRoutes.has(message.action_path) &&
+            <a className="btn ghost small trakbot-direction" href={'#' + message.action_path} onClick={onNavigate}>
+              {message.action_label || 'Открыть раздел'}
+            </a>}
         </div>)}
         <div ref={end} />
       </div>
@@ -118,14 +130,14 @@ export function TrakBotChat() {
         <button type="submit" className="btn small" disabled={working || !text.trim()}>{working ? '...' : 'Отправить'}</button>
       </form>
     </section>
-    <span className="note">Пока бесплатно. Бот не назначает ремонт без проверки, не резервирует и не списывает деньги. Голосовой ввод доступен только на совместимых устройствах после отдельного включения; отправляется распознанный и проверенный тобой текст.</span>
+    <span className="note">Сейчас это бесплатный помощник, без автоплатежей. Платные консультации — отдельно, только после явного согласия. Голосовой ввод включается отдельно после проверки устройства и приватности.</span>
     {handoff && <div className="card flat">
       <b>Здесь достоверной расшифровки не нашлось.</b>
       <span className="note">Не буду придумывать. Можно уточнить исходные данные или перейти к человеку — только если захочешь.</span>
-      {!isTech && <a className="btn ghost" href="#/new/consult">Связаться с мастером</a>}
+      {!isTech && <a className="btn ghost" href="#/new/consult" onClick={onNavigate}>Связаться с мастером</a>}
     </div>}
-    {canUseTech && <a href="#/tech/codes" className="btn ghost">Технический справочник кодов для специалистов</a>}
-  </main>;
+    {canUseTech && <a href="#/tech/codes" className="btn ghost" onClick={onNavigate}>Технический справочник кодов для специалистов</a>}
+  </Frame>;
 }
 
 export function TechCodes() {
