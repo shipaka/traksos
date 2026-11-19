@@ -137,6 +137,12 @@ export class TrakBotService {
     return { messages: rows.reverse(), freePilot: true };
   }
 
+  async clearHistory(user: AuthUser) {
+    // Explicit user's own data only. Does not affect order chats, support, cases or DTC records.
+    await this.db.query('delete from trakbot_messages where user_id=$1', [user.id]);
+    return { cleared: true };
+  }
+
   async reply(user: AuthUser, input: string, context: VehicleContext, allowAiProcessing = false) {
     const message = maskPhones(input).text.replace(/\b[A-HJ-NPR-Z0-9]{17}\b/gi, '[VIN скрыт]').trim();
     if (!message || message.length > 700) throw bad('invalid_message', 'Сообщение должно быть от 1 до 700 символов');
