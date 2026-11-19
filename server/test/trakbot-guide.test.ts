@@ -13,6 +13,8 @@ test('navigation is whitelisted, role-aware and never launches an action', () =>
   assert.equal(resolveGuideDestination('покажи ошибку P0087', ['client']), null);
   assert.equal(resolveGuideDestination('как поменять пароль?', ['client'])?.destination.path, '/profile');
   assert.equal(resolveGuideDestination('как работает TrakSOS', ['client'])?.destination.path, '/help');
+  assert.equal(resolveGuideDestination('Где посмотреть комиссию и бонусы?', ['client'])?.destination.path, '/economics');
+  assert.equal(resolveGuideDestination('Как считаются реферальные баллы?', ['master'])?.destination.path, '/economics');
   assert.equal(resolveGuideDestination('Клиент не хочет платить по заявке', ['master'])?.destination.path,'/help/case/refuses-to-pay');
   assert.equal(resolveGuideDestination('Клиент не хочет платить по заявке', ['driver']),null);
   assert.equal(resolveGuideDestination('Мастер не приехал', ['client'])?.destination.path,'/help/case/no-show');
