@@ -58,6 +58,8 @@ jobs:
         run: node scripts/verify-brand.mjs
       - name: Согласованность обучения, экономики и оферт с логикой выпуска
         run: node scripts/verify-knowledge-sync.mjs
+      - name: Проверка действующих бизнес-правил 20.11
+        run: node scripts/verify-current-policy.mjs
       - name: Сервер — типы
         run: npm run typecheck
       - name: Сервер — тесты

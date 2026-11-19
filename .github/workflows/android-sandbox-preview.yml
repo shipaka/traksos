@@ -40,6 +40,7 @@ jobs:
         run: |
           npm install
           node scripts/verify-brand.mjs
+          node scripts/verify-current-policy.mjs
           npm -w web run build
           node scripts/verify-approved.mjs
           rm -rf android/app/src/main/assets/www
