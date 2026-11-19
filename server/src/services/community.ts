@@ -17,7 +17,7 @@ const isStaff = (u: AuthUser) => u.roles.some(r => r === 'admin' || r === 'moder
 const professional = (u: AuthUser) => u.roles.some(r => ['master','tow','service'].includes(r));
 const nickSchema = z.string().trim().min(3).max(24)
   .regex(/^[\p{L}][\p{L}\p{N}_-]{2,23}$/u, 'Только буквы, цифры, дефис и подчёркивание')
-  .refine(n => !/(?:track\s?sos|traksos|admin|support|модератор|админ|поддержка)/iu.test(n), 'Служебные имена недоступны');
+  .refine(n => !/(?:track\s?sos|traksos|traksbot|tracksbot|тракс[ _-]?бот|трак[ _-]?бот|admin|support|модератор|админ|поддержка)/iu.test(n), 'Служебные имена недоступны');
 const roomIdSchema = z.string().uuid();
 const clientNonce = z.string().uuid();
 const textSchema = z.string().trim().min(1).max(2000);
@@ -145,7 +145,7 @@ export function registerCommunityRoutes(r: Router, db: Db, notifier: Notifier) {
     return { nickname:b.nickname, publicCity:b.shareCity ? (b.cityLabel ?? null) : null };
   });
 
-  // Individual, explicit preference only. No LLM service is connected.
+  // Individual, explicit preference; the optional real AI is separately gated by public opt-in.
   r.put('/api/community/me/ai-tone',true,async(c:AuthedCtx)=>{
     const b=parse(z.object({tone:z.enum(['straight','humor','road'])}),c.body);
     if(!await canUseDriverAir(db,c.user))
