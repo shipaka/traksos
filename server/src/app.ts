@@ -17,6 +17,7 @@ import { SANDBOX_ROLES, issueSandboxTicket, exchangeSandboxTicket } from './serv
 import { SANDBOX_HANDOFF_PROTOCOL, assessSandboxPeerHealth } from './services/sandboxCompatibility.ts';
 import { ReferralService } from './services/referral.ts';
 import { financeGuide, type FinanceRole } from './domain/economicsGuide.ts';
+import { techBaseAudience, techBaseForRoles } from './domain/techbase.ts';
 import { ProfilesService } from './services/profiles.ts';
 import { OrdersService } from './services/orders.ts';
 import { EcuHandoffService } from './services/ecuHandoff.ts';
@@ -156,6 +157,18 @@ export function createApp(d: Deps) {
   centers.onDispute = (p) => moderation.open({ kind: 'dispute', title: p.title, text: p.text, openedBy: p.userId, targetId: p.targetId, bookingId: p.bookingId, ticketId: p.ticketId, priority: 1 });
 
   const r = new Router();
+  // Curated official source links only. No specialist documents are returned
+  // to a client even when the caller changes ?audience=master manually.
+  r.get('/api/techbase', true, (c: AuthedCtx) => {
+    const allowed = techBaseAudience(c.user.roles);
+    if (!allowed.length) throw forbidden();
+    const requested = c.query.get('audience');
+    if (requested && !['driver', 'master'].includes(requested))
+      throw bad('audience', 'Неизвестный раздел ТехБазы');
+    if (requested && !allowed.includes(requested as 'driver' | 'master'))
+      throw forbidden();
+    return { audiences: allowed, documents: techBaseForRoles(c.user.roles, requested ?? undefined) };
+  });
   const staff = ['admin', 'moderator'];
   const performerRoles = ['master', 'tow', 'service'];
 
