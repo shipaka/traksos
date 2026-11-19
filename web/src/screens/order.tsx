@@ -46,7 +46,7 @@ export function Order({ id }: { id: string }) {
           <h1>№{d.number} · {SERVICES[d.service]?.name ?? d.service}</h1>
           <div className="sub">{d.isSos ? 'SOS · ' : ''}{fmtTime(d.createdAt)} · {isConsult ? 'по телефону, без выезда' : d.estimate?.zoneName}</div>
         </div>
-        <span className={`pill ${STATUS[d.status]?.tone}`}>{isConsult && d.status === 'accepted' ? 'На связи' : isConsult && d.status === 'awaiting_confirmation' ? 'Ждём «Вопрос решён»' : STATUS[d.status]?.name}</span>
+        <span className={`pill ${d.unilateralClosure?.status === 'disputed' ? 'warn' : STATUS[d.status]?.tone}`}>{d.unilateralClosure?.status === 'pending_client' ? 'Работа сдана · ждём клиента' : d.unilateralClosure?.status === 'disputed' ? 'Расчёт на проверке' : isConsult && d.status === 'accepted' ? 'На связи' : isConsult && d.status === 'awaiting_confirmation' ? 'Ждём «Вопрос решён»' : STATUS[d.status]?.name}</span>
       </div>
 
       {isPerformer && ['accepted','en_route','arrived','working'].includes(d.status)
@@ -72,6 +72,15 @@ export function Order({ id }: { id: string }) {
       {d.service === 'tow' && !isPerformer && d.you !== 'candidate' && d.destination && <TowInfo d={d} />}
 
       {d.you !== 'candidate' && d.status !== 'searching' && <Money d={d} />}
+      {d.unilateralClosure && <section className="card stack" aria-label="Заявленное завершение без связи">
+        <b>{d.unilateralClosure.status === 'pending_client' ? 'Работа физически сдана · ждём решения заказчика'
+          : d.unilateralClosure.status === 'disputed' ? 'Расчёт рассматривает модератор' : 'Заказчик принял завершение'}</b>
+        <span className="note">Исполнитель заявил о завершении работ {fmtTime(d.unilateralClosure.created_at)}. Это не означает подтверждённый платёж или банковский резерв.</span>
+        <span className="note">{d.unilateralClosure.comment}</span>
+        {d.unilateralClosure.status === 'pending_client' && d.you === 'client' &&
+          <span className="note">Проверьте расчёт ниже и выберите «Подтвердить» или «Не согласен». Молчание не означает согласия.</span>}
+        {d.unilateralClosure.status === 'disputed' && <span className="note">Возражение зарегистрировано; изменять сумму без проверки нельзя.</span>}
+      </section>}
 
       {d.you === 'admin' && <AdminPanel d={d} onDone={o.reload} />}
       {d.you === 'admin' && !isConsult && <AdminRouteMap orderId={id} />}
@@ -80,6 +89,7 @@ export function Order({ id }: { id: string }) {
         arrivedAt={d.arrivedAt} completedAt={d.completedAt} isAdmin={d.you === 'admin'} />}
       {(d.you === 'client' || d.you === 'admin') && d.paymentMethod !== 'cash' && <PaymentsList id={id} admin={d.you === 'admin'} />}
       {isPerformer && (isConsult ? <ConsultFinish d={d} onDone={o.reload} /> : <PerformerActions d={d} onDone={o.reload} />)}
+      {isPerformer && !isConsult && d.status === 'awaiting_confirmation' && !d.unilateralClosure && <UnilateralClose d={d} onDone={o.reload} />}
       {!isPerformer && ['arrived', 'working'].includes(d.status) && d.service !== 'consult' && <WorkInProgress d={d} />}
       {d.you !== 'candidate' && d.you !== 'admin' && d.service !== 'tow' && d.service !== 'consult' && ['arrived', 'working'].includes(d.status) && <PartPicker d={d} onDone={o.reload} performer={isPerformer} />}
       {!isPerformer && d.status === 'awaiting_confirmation' && (isConsult ? <ConsultConfirm d={d} onDone={o.reload} /> : <ConfirmAmount d={d} onDone={o.reload} />)}
@@ -105,7 +115,7 @@ export function Order({ id }: { id: string }) {
       </>}
 
       {d.you !== 'admin' && d.you !== 'candidate' && <a className="btn ghost" href={`#/support/new?order=${d.id}`}>Позвать поддержку</a>}
-      {!done && d.status !== 'searching' && d.actions.includes('cancel') && !isPerformer && !(isConsult && d.status === 'awaiting_confirmation') && <Cancel id={id} status={d.status} consult={isConsult} onDone={o.reload} />}
+      {!done && !d.unilateralClosure && d.status !== 'searching' && d.actions.includes('cancel') && !isPerformer && !(isConsult && d.status === 'awaiting_confirmation') && <Cancel id={id} status={d.status} consult={isConsult} onDone={o.reload} />}
       {d.status === 'cancelled' && <div className="card stack">
         <b>Заявка отменена</b>
         <span className="note">{d.cancelReason}</span>
@@ -423,7 +433,7 @@ function PerformerActions({ d, onDone }: { d: any; onDone: () => void }) {
       </div>}
       {d.status === 'arrived' && <button className="btn" disabled={busy} onClick={() => step('start_work', 'Работа началась')}>Начать работу</button>}
 
-      {['working', 'awaiting_confirmation'].includes(d.status) && (
+      {['working', 'awaiting_confirmation'].includes(d.status) && !d.unilateralClosure && (
         <div className="card">
           <b>{d.status === 'awaiting_confirmation' ? 'Ждём подтверждения клиента' : 'Закрыть выезд'}</b>
           <BillRows b={bill} />
@@ -456,7 +466,7 @@ function PerformerActions({ d, onDone }: { d: any; onDone: () => void }) {
         </div>
       )}
 
-      {['arrived', 'working', 'awaiting_confirmation'].includes(d.status) && <ClientRefuses d={d} onDone={onDone} />}
+      {['arrived', 'working', 'awaiting_confirmation'].includes(d.status) && !d.unilateralClosure && <ClientRefuses d={d} onDone={onDone} />}
       {['accepted', 'en_route'].includes(d.status) && (showDrop ? (
         <div className="card">
           <b>Не сможете приехать?</b>
@@ -468,6 +478,52 @@ function PerformerActions({ d, onDone }: { d: any; onDone: () => void }) {
       ) : <button className="btn bad" onClick={() => setShowDrop(true)}>Не смогу приехать</button>)}
     </div>
   );
+}
+
+
+/** Only a physical completion declaration: no agreement, capture, refund, or payout. */
+function UnilateralClose({ d, onDone }: { d: any; onDone: () => void }) {
+  const { busy, run } = useAction();
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState<'no_connection'|'phone_unavailable'|'customer_absent'|'other'>('no_connection');
+  const [comment, setComment] = useState('');
+  const [confirmed, setConfirmed] = useState(false);
+  const key = useRef('');
+  if (!key.current) key.current = crypto.randomUUID();
+  if (!open) return <button type="button" className="btn ghost small" onClick={() => setOpen(true)}>
+    Нет связи с клиентом · работа фактически закончена
+  </button>;
+  return <section className="card stack">
+    <b>Аварийное завершение без ответа заказчика</b>
+    <span className="note">Только если работы действительно окончены и смета уже отправлена. После подтверждения сервером можно принимать новые совместимые заявки, но эта заявка останется на рассмотрении. Оплата и бонусы НЕ проводятся.</span>
+    <label>Причина
+      <select className="field" value={reason} onChange={(e) => setReason(e.target.value as typeof reason)}>
+        <option value="no_connection">Нет интернета или связи</option>
+        <option value="phone_unavailable">Телефон недоступен / разряжен</option>
+        <option value="customer_absent">Клиент не отвечает</option>
+        <option value="other">Другая объективная причина</option>
+      </select>
+    </label>
+    <label>Что выполнено и почему нет ответа (10–1500 символов)
+      <textarea className="field" rows={4} maxLength={1500} value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        placeholder="Опишите результат, кому передана машина и как пытались связаться" />
+    </label>
+    <label className="row"><input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} />
+      Подтверждаю: работа действительно закончена, а не просто нет связи с клиентом
+    </label>
+    <div className="row">
+      <button className="btn" disabled={busy || !confirmed || comment.trim().length < 10}
+        onClick={async () => {
+          const result = await run(() => post(`/api/orders/${d.id}/unilateral-closure`, {
+            requestKey:key.current,reason,comment:comment.trim(),physicalWorkConfirmed:true,
+          }), 'Работа заявлена завершённой; ждём решения заказчика');
+          if (result) {setOpen(false);onDone();}
+        }}>Отправить и дождаться подтверждения сервера</button>
+      <button className="btn ghost" disabled={busy} onClick={() => setOpen(false)}>Назад</button>
+    </div>
+    <span className="note">При ошибке сети запрос можно повторить. Пока сервер не подтвердил действие, свободный статус не включается.</span>
+  </section>;
 }
 
 /** Мастер: клиент отказывается платить — сразу поддержка */
