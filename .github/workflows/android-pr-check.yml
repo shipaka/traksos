@@ -115,8 +115,16 @@ jobs:
       - name: Preinstall Android emulator with bounded network retries
         shell: bash
         run: |
+          sdkmanager_bin="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$sdkmanager_bin" ]; then
+            sdkmanager_bin="$(find "${ANDROID_HOME}" -type f -name sdkmanager -print -quit)"
+          fi
+          if [ -z "$sdkmanager_bin" ] || [ ! -x "$sdkmanager_bin" ]; then
+            echo "::error::Android SDK command-line tools are unavailable"
+            exit 1
+          fi
           for attempt in 1 2 3; do
-            if sdkmanager --install emulator --channel=0; then
+            if "$sdkmanager_bin" --install emulator --channel=0; then
               test -x "${ANDROID_HOME}/emulator/emulator" && exit 0
             fi
             echo "::warning::Android SDK emulator download failed (attempt ${attempt}/3)"
