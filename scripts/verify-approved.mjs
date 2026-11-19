@@ -54,6 +54,17 @@ const catalogue = await read('web/src/guestCatalog.ts');
 const roleCss = await read('web/src/roleShared20261119.css');
 const currentCss = await read('web/src/currentApproved20261119.css');
 
+const approvedPhoto = 'tracksos-approved-hero-owner-20261119.webp';
+const approvedHeroLayer = await read('web/src/approvedHeroImage20261119.css');
+const heroVisualE2E = await read('e2e/approved-truck-hero.mjs');
+expect(currentCss.includes(approvedPhoto) && approvedHeroLayer.includes(approvedPhoto)
+  && !currentCss.includes('tracksos-approved-scenic-hero.webp'),
+  'guest home has one approved Nov 19 truck image, with no legacy image fallback');
+expect(heroVisualE2E.includes("!info.photo.includes('tracksos-approved-hero-owner-20261119.webp')")
+  && heroVisualE2E.includes("info.photo.includes('tracksos-approved-scenic-hero')"),
+  'browser screenshot gate rejects obsolete 14 Nov hero and requires actual owner image');
+
+
 /* A retired guest stylesheet must never silently redraw the approved 19 Nov
    desktop / mobile-browser page. Signed-in cabinet selectors remain intact. */
 for (const path of ['web/src/trackVisual.css', 'web/src/trackPolish.css', 'web/src/trackScenic.css']) {
