@@ -38,7 +38,7 @@ test('остаток: траты гасят старые начисления, �
   assert.equal(b.balance, 500, 'потратили 800 из первой тысячи, остаток 200 сгорел 1 марта');
 });
 
-test('пригласил клиента: ему подарок, мне 0,5% с его заявок; баллами — не больше половины сбора', async () => {
+test('пригласил клиента: ему подарок, рефереру 10% фактического сбора; баллы не больше 10% заказа', async () => {
   const me = ok(await t.api('GET', '/api/me/referral', undefined, inviter.token));
   assert.match(me.code, /^[A-Z2-9]{6}$/);
   assert.equal(me.balance, 0);
@@ -60,14 +60,14 @@ test('пригласил клиента: ему подарок, мне 0,5% с �
   const fee = pr.money.clientFee;
   // Клиент видит, сколько баллов можно списать, и вписывает сам
   const view = ok(await t.api('GET', `/api/orders/${o.id}`, undefined, friend.token));
-  assert.equal(view.points.max, Math.min(30_000, Math.floor(fee / 2)));
+  assert.equal(view.points.max, Math.min(30_000, fee, Math.floor(pr.money.amount * 0.1)));
   const done = ok(await t.api('POST', `/api/orders/${o.id}/confirm`, { total: pr.money.total, points: 999_999 }, friend.token));
   const row = (await t.db.one<any>('select points_fee from orders where id=$1', [o.id]))!;
-  assert.equal(row.points_fee, Math.min(30_000, Math.floor(fee / 2)), 'вписал больше — списали не больше половины сбора');
+  assert.equal(row.points_fee, Math.min(30_000, fee, Math.floor(pr.money.amount * 0.1)), 'вписал больше — клиентские баллы не превышают 10% заказа и величину сбора');
   assert.equal(done.money.discount, row.points_fee);
 
   const mine = ok(await t.api('GET', '/api/me/referral', undefined, inviter.token));
-  assert.equal(mine.balance, Math.round(pr.money.amount * 0.5 / 100), '0,5% от суммы заявки друга');
+  assert.equal(mine.balance, Math.round(Math.max(0, fee - row.points_fee) * 0.1), '10% от фактического сбора платформы после баллов');
   assert.equal(mine.invited.length, 1);
   assert.deepEqual(await t.db.query(`select order_id from ledger_entries where order_id is not null group by order_id having sum(amount) <> 0`), [], 'проводки сходятся');
 });
