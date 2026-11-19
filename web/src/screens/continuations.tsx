@@ -81,7 +81,7 @@ export function OrderContinuations({order:o}:{order:any}) {
    {owner&&r.status==='approved'&&r.target_kind==='ecu'&&!r.next_ecu_handoff_id&&
     <button className="btn small" disabled={busy} onClick={async()=>{
      const created=await run(()=>post('/api/orders/'+o.id+'/ecu-handoff',
-       {summary:r.summary}), 'Заключение направлено мастерским ЭБУ');
+       {summary:r.summary,recommendationId:r.id}), 'Заключение направлено мастерским ЭБУ');
      if(created)recs.reload();
     }}>Направить заключение специалистам ЭБУ</button>}
    {r.next_ecu_handoff_id&&<a className="btn ghost small"
