@@ -82,3 +82,9 @@ background:transparent;color:inherit;font:inherit;padding:11px 14px;white-space:
   .air-ai-tone-option{padding:12px}
   .air-ai-scenarios{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin}
   .air-ai-scenarios button{flex:0 0 auto}}
+
+/* Chat bot is explicitly non-human, not a driver or an endorsing partner. */
+.air-bubble.ai-bot { border-left: 3px solid var(--accent, #478d98); }
+.air-ai-mark { font-size: 12px; opacity: .78; padding-left: 4px; }
+.air-ai-call { align-items: flex-start; gap: 7px; }
+.air-ai-call .air-checkbox { line-height: 1.45; }

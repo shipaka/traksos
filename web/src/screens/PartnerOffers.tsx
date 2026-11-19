@@ -40,7 +40,7 @@ export function PartnerOffers({mode}:{mode:'reader'|'partner'|'staff'}) {
   };
   return <section className="partner-offers">
     {mode==='partner'&&<section className="card stack">
-      <span className="label">Партнёрам TrackSOS</span>
+      <span className="label">Партнёрам TrakSOS</span>
       <h2>Разместить предложение в Эфире</h2>
       <p className="note">Ваше предложение увидят водители и владельцы автопарков. Каждая публикация проходит проверку. Не более 2 заявок на размещение за 7 дней; одобренное предложение показывается 7 дней.</p>
       <p className="note">Публикация в разделе партнёров не даёт доступа к водительским чатам, перепискам или местоположению участников. Телефоны, ссылки и контакты в тексте запрещены.</p>

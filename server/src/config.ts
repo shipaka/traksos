@@ -30,6 +30,16 @@ export const config = {
   /** Exactly one initial insurance agent's phone. Stored only in VPS .env. */
   insurerPrimaryPhone: env.INSURER_PRIMARY_PHONE ?? '',
 
+  // Live public-chat AI is disabled by default and never enabled in the sandbox.
+  // Model secret stays on the server, never in web bundles or APK.
+  airAi: {
+    enabled: env.AIR_AI_ENABLED === 'true' && !!env.AIR_AI_API_KEY && env.SANDBOX_INSTANCE !== 'true',
+    apiKey: env.AIR_AI_API_KEY ?? '',
+    model: env.AIR_AI_MODEL ?? 'gpt-4.1-mini',
+    dailyLimit: Number.isFinite(Number(env.AIR_AI_DAILY_LIMIT)) && Number(env.AIR_AI_DAILY_LIMIT)>0
+      ? Math.min(2000,Math.floor(Number(env.AIR_AI_DAILY_LIMIT))) : 250,
+  },
+
   // Optional private notification endpoint. Never send personal report text to this channel.
   developerReports: {
     webhookUrl: env.DEVELOPER_REPORT_WEBHOOK_URL ?? '',

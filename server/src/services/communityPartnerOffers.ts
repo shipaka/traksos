@@ -23,7 +23,7 @@ type Category='master'|'tow'|'service'|'insurer';
 
 /** Advertising must never grant access to driver-only chat, private messages or GPS. */
 async function partnerCategory(db:Db,user:AuthUser):Promise<Category>{
-  if(user.status!=='active'||!hasRole(user))throw forbidden('Размещение доступно только партнёрам TrackSOS');
+  if(user.status!=='active'||!hasRole(user))throw forbidden('Размещение доступно только партнёрам TrakSOS');
   if(user.roles.includes('master')||user.roles.includes('tow')||user.roles.includes('service')){
     const p=await db.one<{kind:string;verification:string}>(
       'select kind,verification from performer_profiles where user_id=$1',[user.id]);
@@ -69,7 +69,7 @@ export function registerCommunityPartnerOfferRoutes(r:Router,db:Db,now:()=>Date=
     const input=parse(create,c.body);
     for(const str of Object.values(input)){
       if(forbiddenContact(str))throw bad('contact_not_allowed',
-        'В публичном предложении не размещайте телефон, ссылку или контактный ник. Общение — через TrackSOS.');
+        'В публичном предложении не размещайте телефон, ссылку или контактный ник. Общение — через TrakSOS.');
     }
     return db.tx(async q=>{
       // A user row lock serializes parallel submissions, preventing rate bypass.
