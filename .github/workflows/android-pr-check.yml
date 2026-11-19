@@ -53,7 +53,7 @@ jobs:
           test -s android/app/src/main/assets/www/index.html
           test -s android/app/src/main/assets/www/app.js
           test -s android/app/src/main/assets/www/app.css
-          test -s android/app/src/main/assets/www/tracksos-approved-scania-r520.webp
+          test -s android/app/src/main/assets/www/tracksos-approved-hero-owner-20261119.webp
 
       - name: Build debug APK without release credentials
         working-directory: android
