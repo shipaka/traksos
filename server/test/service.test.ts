@@ -81,7 +81,11 @@ test('запись → уточнить → готовы принять → ре
   assert.equal(inv.commission, 60_000);
   assert.equal(inv.payout, 1_140_000);
   assert.equal(inv.discount, 0, 'пришёл сам — без скидки');
-  assert.equal(ok(await t.api('GET', `/api/bookings/${b.id}`, undefined, client.token)).toPay, 1_200_000);
+  const clientBill = ok(await t.api('GET', `/api/bookings/${b.id}`, undefined, client.token));
+  assert.equal(clientBill.clientFee, 60_000);
+  assert.equal(clientBill.toPay, 1_260_000);
+  assert.equal(inv.clientFee, undefined, 'СТО не получает данные клиентского сервисного сбора');
+  assert.equal(inv.toPay, undefined, 'СТО не получает итог клиентского счёта');
   ok(await t.api('POST', `/api/bookings/${b.id}/confirm`, { agree: true, stars: 5, text: 'Быстро нашли место' }, client.token));
 
   const h = ok(await t.api('GET', `/api/vehicles/${vehicleId}/history`, undefined, client.token));
@@ -112,7 +116,8 @@ test('по совету мастера: скидка клиенту из ком�
   const inv = ok(await t.api('POST', `/api/base/bookings/${b.id}/invoice`, { amount: 5_000_000 }, base.token));
   assert.equal(inv.discount, 50_000, 'скидка 1% от 50 000 ₽');
   assert.equal(inv.payout, 4_750_000, 'выручка сервиса — минус комиссия 5%, скидка клиенту из комиссии');
-  assert.equal(inv.toPay, 4_950_000);
+  assert.equal(inv.clientFee, undefined);
+  assert.equal(ok(await t.api('GET', `/api/bookings/${b.id}`, undefined, client.token)).toPay, 5_200_000);
   assert.equal((await t.api('POST', `/api/bookings/${b.id}/confirm`, { agree: false }, client.token)).status, 400);
   assert.equal(ok(await t.api('POST', `/api/bookings/${b.id}/confirm`, { agree: false, why: 'Синхронизатор не меняли' }, client.token)).status, 'disputed');
   const tickets = ok(await t.api('GET', '/api/admin/support', undefined, admin.token));
@@ -133,6 +138,13 @@ test('финансы рембазы: к выплате после сверки �
   const due = ok(await t.api('GET', '/api/admin/service-payouts', undefined, admin.token));
   assert.ok(due.length >= 1);
   assert.equal((await t.api('POST', `/api/admin/bookings/${due[0].id}/paid`, {}, base.token)).status, 403, 'выплату отмечает только админ');
+  assert.equal(due[0].payout_ready, false, 'нет подтверждения поступления оплаты клиента');
+  assert.equal((await t.api('POST', `/api/admin/bookings/${due[0].id}/paid`, {}, admin.token)).status, 409,
+    'не отправлять выплату по неоплаченному счёту');
+  const total = due[0].amount + due[0].client_fee - due[0].discount;
+  ok(await t.api('POST', `/api/admin/bookings/${due[0].id}/payment-events`, {
+    kind:'receipt',amount:total,method:'invoice',reference:'TEST-BANK-'+due[0].number,
+  }, admin.token));
   ok(await t.api('POST', `/api/admin/bookings/${due[0].id}/paid`, {}, admin.token));
   const m1 = ok(await t.api('GET', '/api/base/money', undefined, base.token));
   assert.equal(m1.summary.paid, due[0].payout);
@@ -168,6 +180,6 @@ test('СТО как этап SOS после эвакуации: связь ес�
   const view = ok(await t.api('GET', `/api/orders/${tow.id}`, undefined, client.token));
   assert.equal(view.caseSummary.multiStage, true);
   assert.equal(view.caseSummary.serviceBookings.length, 1);
-  assert.equal(view.caseSummary.serviceBookings[0].confirmedTotal, 2_000_000);
-  assert.equal(view.caseSummary.confirmedTotal, view.money.total + 2_000_000);
+  assert.equal(view.caseSummary.serviceBookings[0].confirmedTotal, 2_100_000);
+  assert.equal(view.caseSummary.confirmedTotal, view.money.total + 2_100_000);
 });
