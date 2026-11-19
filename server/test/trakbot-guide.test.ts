@@ -45,3 +45,16 @@ test('role-unsafe navigation does not appear for client', async () => {
     {message:'где техническая база ошибок'}, user.token));
   assert.equal(answer.message.action_path, null);
 });
+
+test('history deletion is user-scoped, explicit and cannot remove another conversation', async () => {
+  const outside = ok(await t.api('POST', '/api/trakbot/answer',
+    {message:'Привет, другой пользователь'}, stranger.token));
+  assert.equal(outside.chargeAllowed, false);
+  assert.equal((await t.api('DELETE', '/api/trakbot/messages')).status, 401);
+  const removed = ok(await t.api('DELETE', '/api/trakbot/messages', undefined, user.token));
+  assert.equal(removed.cleared, true);
+  const history = ok(await t.api('GET', '/api/trakbot/messages', undefined, user.token));
+  assert.equal(history.messages.length, 0);
+  const someoneElse = ok(await t.api('GET', '/api/trakbot/messages', undefined, stranger.token));
+  assert.equal(someoneElse.messages.length, 2);
+});
