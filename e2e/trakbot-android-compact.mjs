@@ -44,7 +44,8 @@ try {
       body:JSON.stringify({ messages:sample,freePilot:true,aiAvailable:false }),
     }));
     await page.route('**/api/trakbot/answer', async route => {
-      await new Promise(resolve => setTimeout(resolve, 650));
+      // Keep the API reply pending long enough to observe the genuine typing state.
+      await new Promise(resolve => setTimeout(resolve, 1800));
       await route.fulfill({
         status:200,contentType:'application/json',
         body:JSON.stringify({
@@ -91,8 +92,12 @@ try {
 
     const input=page.getByRole('textbox',{name:'Сообщение TrakBot'});
     await input.fill('Есть проблема с тормозами');
-    await page.locator('.trakbot-dialog .compose button[type=submit]').click();
-    await page.getByRole('status',{name:'TrakBot готовит ответ'}).waitFor({timeout:2000});
+    // Subscribe before clicking: a fast network roundtrip can otherwise hide the
+    // transient typing state before Playwright starts waiting.
+    await Promise.all([
+      page.locator('.trakbot-typing[role="status"]').waitFor({state:'attached',timeout:4000}),
+      page.locator('.trakbot-dialog .compose button[type=submit]').click(),
+    ]);
     await page.locator('.trakbot-message--bot').filter({hasText:'Не продолжай движение'}).waitFor({timeout:5000});
     const safety = await page.locator('.trakbot-message--bot').last().locator('.trakbot-mascot--stop').count();
     assert(safety===1,width+'×'+height+': brake advice must show stop/safety expression');
