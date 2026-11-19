@@ -475,7 +475,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               <span className="account-menu-heading">Мой кабинет</span>
               {accountLinks.map(([href, label]) => <a key={href} href={sandboxHref(href)}>{label}</a>)}
               <span className="account-menu-heading">Помощь и документы</span>
-              {!serviceSandbox && <button type="button" className="account-menu-tour" onClick={() => window.dispatchEvent(new Event('traksos-tour-start'))}>Показать, где какие кнопки</button>
+              {!serviceSandbox && <button type="button" className="account-menu-tour" onClick={() => window.dispatchEvent(new Event('traksos-tour-start'))}>Показать, где какие кнопки</button>}
               {helpLinks.map(([href, label]) => <a key={href} href={sandboxHref(href)}>{label}</a>)}
               {!serviceSandbox && <button type="button" className="account-menu-logout" onClick={() => {
                 if (me.roles.some(r => r === 'master' || r === 'tow') &&
