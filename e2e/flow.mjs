@@ -388,7 +388,7 @@ await k.getByText('Поддержка ответила', { exact: false }).first
 const sto = await mk();
 await login(sto, '+79993334455', 'СТО');
 await sto.waitForURL(/#\/base/);
-await checkCabinetMenu(sto, ['Заявки и история ремонтов', 'Карточка СТО', 'Финансы', 'Оферта']);
+await checkCabinetMenu(sto, ['Заявки и история ремонтов', 'Карточка СТО', 'Финансы', 'Оферта'], {shopTab:false});
 await shot(sto, '19-service-cabinet');
 await clickCabinetLink(sto, 'Карточка СТО');
 await sto.waitForURL(/#\/base\/me/);
@@ -404,7 +404,7 @@ await checkCabinetMenu(both, ['Моя СТО — стационарный рем
 await shot(both, '21-hybrid-master');
 await clickCabinetLink(both, 'Моя СТО — стационарный ремонт');
 await both.waitForURL(/#\/base$/);
-await checkCabinetMenu(both, ['Выездной мастер — заявки', 'Карточка СТО']);
+await checkCabinetMenu(both, ['Выездной мастер — заявки', 'Карточка СТО'], {shopTab:false});
 await shot(both, '22-hybrid-service');
 await clickCabinetLink(both, 'Выездной мастер — заявки');
 await both.waitForURL(/#\/work$/);
