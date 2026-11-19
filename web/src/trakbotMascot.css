@@ -39,6 +39,8 @@
 @keyframes trakbot-tech-bob { 0%,100% { transform:translateY(0) rotate(0); } 50% { transform:translateY(-3px) rotate(-2deg); } }
 @keyframes trakbot-tech-pulse { 0%,100% {opacity:.7;transform:scale(.92);} 50% {opacity:1;transform:scale(1.1);} }
 
+.trakbot-chat-title { display:flex;gap:10px;align-items:center;min-width:0; }
+.trakbot-chat-title h1 { min-width:0;margin:0;overflow-wrap:anywhere; }
 /* One expressive system: normal users retain the original neutral message bubbles. */
 .trakbot-dialog .msgs .trakbot-message--bot { width:100%;max-width:100%; }
 .trakbot-dialog .trakbot-bot-layout { display:flex;align-items:flex-end;gap:8px;max-width:100%; }
