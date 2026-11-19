@@ -1,6 +1,19 @@
 import { useEffect } from 'react';
 import { CATALOGUE, SERVICE_TILES, rememberGuestService, type ServiceId } from '../guestCatalog.ts';
 
+// Latest 19 November public tiles point to honest, accessible information,
+// not to protected routes that silently bounce guests back to the homepage.
+const FEATURE_PREVIEWS: Record<string,{title:string;icon:string;description:string;details:string[]}> = {
+  sos:{title:'SOS — помощь в дороге',icon:'⚠',description:'Выберите помощь для грузовика: мастер, эвакуатор, СТО или консультация. Для создания заявки нужен клиентский аккаунт.',details:['Указание места поломки и автомобиля','Выбор подходящего типа помощи','История и статус обращения']},
+  air:{title:'Эфир водителей',icon:'◉',description:'Сообщество водителей и специалистов. Общие сообщения и личные диалоги разделены; личные данные и технические вопросы доступны только по правилам доступа.',details:['Общение водителей','Помощь и обмен опытом','Подтверждённый личный чат TrakBot']},
+  ecu:{title:'ЭБУ — диагностика и ремонт',icon:'▣',description:'Стационарная диагностика электронных блоков грузового транспорта. Не подменяется заявкой на выезд и требует отдельного согласования стоимости.',details:['Описание блока управления и неисправности','Согласование диагностики','Отдельная история работ']},
+  tech:{title:'ТехБаза TrakSOS',icon:'▤',description:'Проверяемая техническая информация по грузовикам, прицепам и кодам неисправностей. Закрытые документы доступны только пользователям с соответствующими правами.',details:['Справочник проверенных технических источников','Диагностические коды с уровнем достоверности','Материалы для подтверждённых мастеров и СТО']},
+  garage:{title:'Мой гараж',icon:'▣',description:'Транспорт и история обслуживания с разграничением прав владельца и водителя. Фотография открывает историю именно выбранного автомобиля.',details:['Марка, модель, год и при наличии VIN','История заявок и ремонтов','Подбор работ и запчастей по машине']},
+  training:{title:'Обучение работе с TrakSOS',icon:'?',description:'Пошаговые подсказки и тренажёр по вашей роли, которые должны обновляться вместе с логикой каждого выпуска.',details:['Клиент, мастер, эвакуаторщик, СТО и страховщик','Интерактивные безопасные учебные сценарии','Контекстные подсказки в кабинетах']},
+  trakbot:{title:'TrakBot — личный помощник',icon:'✦',description:'Приватный помощник для технических вопросов. Не пишет в общий Эфир и не предлагает платные консультации без явного согласия.',details:['Бесплатные справочные ответы в пилоте','Указание источника и достоверности','Без автоматических списаний']},
+  pricing:{title:'Комиссии и тарифы TrakSOS',icon:'₽',description:'Для услуги базовой стоимостью 10 000 ₽ клиент платит 10 500 ₽, а исполнитель видит базовую цену 10 000 ₽ и свою комиссию 500 ₽ внутри неё.',details:['5% с клиента сверх стоимости услуги','5% с исполнителя внутри базовой цены','Не более 5 000 ₽ с каждой стороны для согласованных заказов']},
+};
+
 /** Read-only, public explanation of the selected service and its future cabinet.
  * All real workflows require authentication; no fake provider cards or live orders.
  */
@@ -66,6 +79,28 @@ export function GuestExplore({ id, itemKey }: {id: string; itemKey?: string}) {
       </section>
     </main>;
   }
+  const preview = FEATURE_PREVIEWS[id];
+  if (preview) return <main className={'guest-explore guest-explore-'+id}>
+    <a className="guest-explore-back" href="#/">← На главную</a>
+    <section className="guest-explore-hero">
+      <span className="guest-explore-eyebrow">TRAKSOS · ВОЗМОЖНОСТИ ПЛАТФОРМЫ</span>
+      <span className="guest-explore-glyph" aria-hidden="true">{preview.icon}</span>
+      <h1>{preview.title}</h1><p>{preview.description}</p>
+      <div className="guest-explore-actions">
+        <a className="guest-explore-cta" href="#/register">Зарегистрироваться</a>
+        <a className="guest-explore-secondary" href="#/login">Уже есть аккаунт? Войти</a>
+      </div>
+    </section>
+    <section className="guest-explore-section">
+      <h2>Возможности раздела</h2>
+      <div className="guest-explore-service-grid">
+        {preview.details.map((detail,index)=><div className="guest-explore-item" key={detail}>
+          <span aria-hidden="true">{index+1}</span><strong>{detail}</strong>
+        </div>)}
+      </div>
+      <p className="guest-explore-note">Это ознакомление, а не подтверждение доступности исполнителей или работающего банковского сценария. Доступ и статусы определяются сервером после входа.</p>
+    </section>
+  </main>;
   if (!tile || !service) {
     return <main className="guest-explore"><section className="guest-explore-hero">
       <h1>Раздел не найден</h1><p>Вернитесь к каталогу услуг TrakSOS.</p><a className="guest-explore-cta" href="#/">На главную</a>
