@@ -6,6 +6,7 @@ import { AdminSettings } from './adminSettings.tsx';
 import { AdminDiagnostics } from './adminDiagnostics.tsx';
 import { AdminAccountAccess } from './adminAccountAccess.tsx';
 import { AdminRegistry } from './adminRegistry.tsx';
+import { AdminServiceFinance } from './adminServiceFinance.tsx';
 import { useState } from 'react';
 import { useEffect } from 'react';
 import { SupportQueue } from './support.tsx';
@@ -16,7 +17,7 @@ import { get, post, put, rub, fmtPhone, fmtTime, authedImage } from '../api.ts';
 import { STATUS, SERVICES, LINE } from '../dict.ts';
 import { useLoad, useAction, Loading } from '../ui.tsx';
 
-type AdminSection = 'registry' | 'stats' | 'search' | 'support' | 'verify' | 'people' | 'access' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'settings' | 'demand' | 'announcements' | 'vehicleServices' | 'diagnostics';
+type AdminSection = 'serviceFinance' | 'registry' | 'stats' | 'search' | 'support' | 'verify' | 'people' | 'access' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'settings' | 'demand' | 'announcements' | 'vehicleServices' | 'diagnostics';
 type AdminNavItem = { id: AdminSection; name: string; description: string; symbol: string };
 const ADMIN_GROUPS: { name: string; items: AdminNavItem[] }[] = [
   { name: 'Операционная работа', items: [
@@ -37,6 +38,7 @@ const ADMIN_GROUPS: { name: string; items: AdminNavItem[] }[] = [
     { id: 'vehicleServices', name: 'Страхование и ТО', description: 'Заявки и контроль партнёров', symbol: '11' },
   ] },
   { name: 'Финансы и документы', items: [
+    { id: 'serviceFinance', name: 'Счета и выплаты СТО', description: 'Поступления, возвраты и две независимые комиссии', symbol: 'СТО' },
     { id: 'payments', name: 'Деньги', description: 'Комиссии, отчёты и выплаты', symbol: '12' },
     { id: 'offers', name: 'Оферты', description: 'Документы для пользователей', symbol: '13' },
     { id: 'announcements', name: 'Объявления и комиссии', description: 'Оповещения и условия работы', symbol: '14' },
@@ -139,6 +141,7 @@ export function Admin({ initialSection }: { initialSection?: string }) {
             {tab === 'orders' && <AllOrders />}
             {tab === 'dispatch' && <Dispatch />}
             {tab === 'payments' && <Payments />}
+            {tab === 'serviceFinance' && <AdminServiceFinance />}
             {tab === 'flagged' && <Flagged />}
             {tab === 'diagnostics' && <AdminDiagnostics />}
           </div>
