@@ -20,6 +20,7 @@ import { ProfilesService } from './services/profiles.ts';
 import { OrdersService } from './services/orders.ts';
 import { ChatService } from './services/chat.ts';
 import { TrakBotService } from './services/trakbot.ts';
+import { providerReady } from './services/trakbotProvider.ts';
 import { TechnicalCasesService } from './services/technicalCases.ts';
 import { ReviewsService, REVIEW_TAGS } from './services/reviews.ts';
 import { OffersService } from './services/offers.ts';
@@ -409,7 +410,14 @@ export function createApp(d: Deps) {
   r.delete('/api/trakbot/messages', true, (c: AuthedCtx) => trakbot.clearHistory(c.user));
   r.get('/api/trakbot/messages', true, async (c: AuthedCtx) => ({
     ...(await trakbot.history(c.user)),
-    aiAvailable: config.trakbot.llmEnabled && !!config.trakbot.llmApiKey,
+    aiAvailable: providerReady({
+      enabled: config.trakbot.llmEnabled,
+      apiKey: config.trakbot.llmApiKey,
+      model: config.trakbot.llmModel,
+      transport: config.trakbot.llmTransport === 'local' ? 'local' : 'api',
+      localUrl: config.trakbot.llmLocalUrl,
+    }),
+    aiTransport: config.trakbot.llmTransport === 'local' ? 'local' : 'api',
   }));
   r.post('/api/trakbot/answer', true, (c: AuthedCtx) => {
     const body = parse(z.object({
