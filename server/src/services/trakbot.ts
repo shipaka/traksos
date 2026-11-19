@@ -1,6 +1,8 @@
 import type { Db } from '../db/index.ts';
 import type { AuthUser } from '../http/router.ts';
 import { bad, forbidden } from '../http/router.ts';
+import { config } from '../config.ts';
+import { canUseGroundedAi, groundedAiAnswer } from './trakbotAi.ts';
 
 export interface VehicleContext {
   make?: string;
@@ -104,7 +106,7 @@ export class TrakBotService {
     return { messages: rows.reverse(), freePilot: true };
   }
 
-  async reply(user: AuthUser, input: string, context: VehicleContext) {
+  async reply(user: AuthUser, input: string, context: VehicleContext, allowAiProcessing = false) {
     const message = input.trim();
     if (!message || message.length > 700) throw bad('invalid_message', 'Сообщение должно быть от 1 до 700 символов');
     // Bounded automated traffic to avoid unlimited text-generation or DB usage.
@@ -126,8 +128,12 @@ export class TrakBotService {
       [user.id],
     );
     const specialist = user.roles.some((r) => ['master','service','admin','moderator'].includes(r));
-    const answer = composeTrakBotReply(message, found, context, prior.map((r) => r.body),
+    const deterministic = composeTrakBotReply(message, found, context, prior.map((r) => r.body),
       specialist ? 'specialist' : 'driver');
+    const llmEligible = canUseGroundedAi(allowAiProcessing, found, codes, context) &&
+      !SPN_PATTERN.test(message) && !/\bFMI\b/i.test(message);
+    const generated = llmEligible ? await groundedAiAnswer(message, prior.map((r) => r.body), context, found, config.trakbot) : null;
+    const answer = generated ?? deterministic;
     const coverage = codes.length ? (codes.every((code) => found.some((row) => row.code === code)) ? 'generic_found' : 'partial_or_missing')
       : (SPN_PATTERN.test(message) || /\bFMI\b/i.test(message) ? 'not_supported' : 'initial_triage');
     // Billing is deliberately disabled. No authorization or capture is made for an unverified answer.
@@ -137,7 +143,7 @@ export class TrakBotService {
         "insert into trakbot_messages(user_id,role,body) values($1,'bot',$2) returning id::text as id,role,body,created_at",
         [user.id, answer],
       );
-      return { message: bot, freePilot: true, coverage, chargeAllowed: false, handoffSuggested: coverage === 'partial_or_missing' || coverage === 'not_supported' };
+      return { message: bot, freePilot: true, aiUsed: !!generated, coverage, chargeAllowed: false, handoffSuggested: coverage === 'partial_or_missing' || coverage === 'not_supported' };
     });
   }
 
