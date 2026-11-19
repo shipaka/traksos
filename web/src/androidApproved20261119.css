@@ -164,3 +164,20 @@
 @keyframes and19-call-pulse{0%{box-shadow:0 0 0 0 #f475286b}80%,100%{box-shadow:0 0 0 33px #f4752800}}
 @media(prefers-reduced-motion:reduce){.call .ring{animation:none!important}}
 .traksos-reduced-motion .call .ring{animation:none!important}
+
+/* Mobile insurance stays on the first screen, matching live client insurance workflow. */
+@media(max-width:899px){
+ .and19-insurance{display:flex;flex-direction:column;gap:9px;border-radius:16px;border:1px solid #3b627d;
+  background:linear-gradient(135deg,#102b40,#092135);padding:12px}
+ .and19-insurance-header{display:flex;justify-content:space-between;align-items:center;gap:10px}
+ .and19-insurance-header strong{font-size:14px;color:#effaff}
+ .and19-insurance-header a{font-size:11px;color:#88dce8;text-align:right}
+ .and19-insurance-card{display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:12px;
+  border:1px solid #34657a;background:#12354b;text-decoration:none;color:#e9f9ff}
+ .and19-insurance-card small{font-size:10px;color:#9acadd}
+ .and19-insurance-card strong{font-size:14px;color:#fff}
+ .and19-insurance-card>span{font-size:11px;color:#c0d9e8}
+ .and19-insurance-card em{font-size:11px;color:#66dce8;font-weight:800;font-style:normal}
+ .and19-insurance-card.tone-action{border-color:#ef8a3d;background:linear-gradient(125deg,#3e2d2b,#183247)}
+ .and19-insurance-more{font-size:11px;color:#87d8e6}
+}
