@@ -546,6 +546,77 @@ expect(appTour.includes('.tabbar a[href="#/menu"]') &&
   appContextHelp.includes("menu: ['Меню и разделы'"),
   'Android navigation, tutorials and contextual help describe the same actual bottom Menu and real sections');
 
+// Original 618.png is an acceptance CONTRACT, not a source for invented data.
+// Client: exactly 5 fixed bottom slots, no obsolete shop tile, four working
+// services, real route/time/vehicle, and an uncluttered speaking-truck bot.
+const liveAndroidNav = shell.slice(shell.indexOf('const mobileTabs:'),shell.indexOf('const accountLinks:'));
+const ownerNav818 = liveAndroidNav.match(/\[\['\/', '⌂', 'Главная'\], \['\/orders', 'clipboard', 'Заявки'\], \['\/air', '◌', 'Эфир'\], \['\/garage', 'truck', 'Техника'\], \['\/menu', 'menu', 'Меню'\]\]/g) ?? [];
+const approvedNavCSS = await read('web/src/approvedBottomNavigation20261120.css');
+const appPerformer = await read('web/src/screens/performer.tsx');
+expect(ownerNav818.length === 1 &&
+  approvedNavCSS.includes('grid-template-columns:repeat(5,minmax(0,1fr));') &&
+  !unifiedMobile.includes('className="and19-equipment and19-parts-shortcut"') &&
+  unifiedMobile.includes('Новая заявка на сервис') &&
+  shell.includes('!native.isApp && !serviceSandbox') &&
+  shell.includes("['/work/chats', 'chat', 'Чат']"),
+  '618.png client exactly five bottom tabs, four original services, separate shop in Menu, no floating native bot');
+
+expect(unifiedMobile.includes('function MobileTimeline({ order }') &&
+  unifiedMobile.includes('order.accepted_at') &&
+  unifiedMobile.includes('order.en_route_at') &&
+  unifiedMobile.includes('order.arrived_at') &&
+  unifiedMobile.includes('order.dispatch_eta_minutes') &&
+  unifiedMobile.includes('function orderNavigationHref(') &&
+  unifiedMobile.includes('Number.isFinite(lat)') &&
+  unifiedMobile.includes('traksos-native') &&
+  ordersServiceLive.includes('o.accepted_at, o.en_route_at, o.arrived_at') &&
+  ordersServiceLive.includes('d.road_eta_minutes') &&
+  ordersServiceLive.includes('o.address, o.lat, o.lng'),
+  '618.png shows actual order stage times, geocoded navigation and dispatch-age ETA, never fabricated clocks or stale live GPS claims');
+
+expect(unifiedMobile.includes("action:'depart'|'arrive'|'start_work'") &&
+  unifiedMobile.includes("post('/api/orders/'+current.id+'/step'") &&
+  unifiedMobile.includes("current.status==='working'") &&
+  unifiedMobile.includes('and19-stage-complete is-disabled')===false &&
+  unifiedMobile.includes('className="and19-stage-complete is-disabled"') &&
+  unifiedMobile.includes('commissionPct') &&
+  unifiedMobile.includes('money.payout') &&
+  appPerformer.includes('todayCount={todayCount}') &&
+  appPerformer.includes('reloadJobs={jobs.reload}'),
+  '618.png master next-step confirmation, disabled premature finish and private real commission/payout');
+
+const photoMigration = await read('server/migrations/20261120_order_photos.sql');
+const photoService = await read('server/src/services/orderPhotos.ts');
+const appServer = await read('server/src/app.ts');
+const photoWidgets = await read('web/src/screens/orderPhotos.tsx');
+const photoStyle = await read('web/src/screens/orderPhotos.css');
+const orderDetail = await read('web/src/screens/order.tsx');
+const androidActivity = await read('android/app/src/main/java/ru/traksos/app/MainActivity.kt');
+const androidManifest = await read('android/app/src/main/AndroidManifest.xml');
+const androidPhotoPaths = await read('android/app/src/main/res/xml/file_paths.xml');
+const photoIntegrationTest = await read('server/test/orderPhotos.test.ts');
+expect(photoMigration.includes('create table if not exists order_photos') &&
+  photoService.includes("createCipheriv('aes-256-gcm'") &&
+  photoService.includes("createDecipheriv('aes-256-gcm'") &&
+  photoService.includes("this.orders.actorOf(user,order)!=='performer'") &&
+  photoService.includes('select * from orders where id=$1 for update') &&
+  photoService.includes('MAX_PER_ORDER = 12') &&
+  appServer.includes("r.post('/api/orders/:id/photos', performerRoles") &&
+  appServer.includes("r.get('/api/orders/:id/photos/:photoId/file', true") &&
+  orderDetail.includes('<OrderPhotoGallery orderId={id}/>') &&
+  unifiedMobile.includes('<OrderPhotoCapture orderId={current.id} reviewOnly={reviewOnly}/>') &&
+  photoWidgets.includes("toDataURL('image/jpeg'") &&
+  photoWidgets.includes('if(reviewOnly)return') &&
+  photoStyle.includes('.tr-order-photo-gallery') &&
+  androidActivity.includes('FileProvider.getUriForFile(') &&
+  androidActivity.includes('MediaStore.ACTION_IMAGE_CAPTURE') &&
+  androidManifest.includes('androidx.core.content.FileProvider') &&
+  androidPhotoPaths.includes('<cache-path name="order-photos"') &&
+  photoIntegrationTest.includes('foreign user')===false &&
+  photoIntegrationTest.includes('outsider')===false &&
+  photoIntegrationTest.includes('stranger.token'),
+  '618.png Foto is REAL encrypted participant-scoped evidence and Android native chooser; debug photo never uploads');
+
 if (failures.length) {
   console.error('Approved design gate: '+failures.length+' failure(s).');
   process.exitCode=1;
