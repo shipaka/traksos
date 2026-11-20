@@ -635,7 +635,10 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         <div className="desktop-content">
           {me && !native.isApp && !serviceSandbox && route.length===0 && <IntroInvitation key={me.id+'-'+mode} userId={me.id} mode={mode} roles={me.roles} />}
           {children}
-          <SiteFooter />
+          {/* Android's task-first workspace must not be followed by a web
+              legal footer or the web cookie banner. Legal documents remain
+              available in Menu; web/browser footer is unchanged. */}
+          {!native.isApp && <SiteFooter />}
         </div>
       </div>
       {!me && !route[0] && (
