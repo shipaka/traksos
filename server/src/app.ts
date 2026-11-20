@@ -946,6 +946,10 @@ export function createApp(d: Deps) {
   r.get('/api/admin/couriers', ['admin'], () => deliveries.candidates());
   r.post('/api/admin/shop/orders/:id/courier', ['admin'], (c:AuthedCtx) =>
     deliveries.assign(c.user,c.params.id,parse(z.object({courierId:z.string().uuid()}),c.body).courierId));
+  r.post('/api/admin/shop/orders/:id/courier/reset-receipt', ['admin'], (c:AuthedCtx) =>
+    deliveries.resetReceipt(c.user,c.params.id,parse(z.object({
+      reason:z.string().trim().min(10).max(500)
+    }).strict(),c.body).reason));
   r.get('/api/courier/presence', ['courier'], (c:AuthedCtx) => deliveries.presence(c.user));
   r.put('/api/courier/presence', ['courier'], (c:AuthedCtx) =>
     deliveries.setPresence(c.user,parse(z.object({online:z.boolean()}),c.body).online));
