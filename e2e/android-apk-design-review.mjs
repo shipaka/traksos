@@ -66,6 +66,16 @@ try {
         return !!assigned && !!cost && !!(assigned.compareDocumentPosition(cost)&Node.DOCUMENT_POSITION_FOLLOWING);
       });
       if(!orderOfCost)throw Error('Approved 618.png requires master row before API-backed cost row');
+      // A tap on the exact-model photo opens that vehicle's own history,
+      // whereas the status/header opens the order and Chat opens the real chat.
+      const photoHref=await page.locator('.and19-order-photo-link').getAttribute('href');
+      const chatLinks=await page.locator('.and19-client a[href*="chat=1"]').count();
+      const costText=(await page.locator('.and19-client-cost').innerText()).replace(/\s/g,'');
+      const ratingText=(await page.locator('.and19-performer-rating').innerText()).replace(/\s/g,'');
+      if(photoHref!=='#/garage/SYNTHETIC-VEHICLE'||chatLinks<2||
+         !costText.includes('10500₽')||!costText.includes('10000₽')||
+         !costText.includes('500₽')||!ratingText.includes('4,9'))
+        throw Error('Client Android order routing/kopeck pricing/rating wrong '+JSON.stringify({photoHref,chatLinks,costText,ratingText}));
       const photo=page.locator('.and19-main-order img[src*="/vehicles/models/"]');
       if (await photo.count()) {
         const ok=await photo.first().evaluate(img=>img.complete&&img.naturalWidth>0);
