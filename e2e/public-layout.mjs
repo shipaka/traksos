@@ -100,9 +100,16 @@ async function run(width, height, mobile, nativePreview = false) {
       if (nativePreview) {
         check(!await page.evaluate(() => document.documentElement.classList.contains('traksos-browser')),
           suffix + ': Android must not activate browser-only styling');
-        check(heroGeometry && Math.abs(heroGeometry.heroWidth-heroGeometry.pictureWidth)<3 &&
-          Math.abs(heroGeometry.heroHeight-heroGeometry.pictureHeight)<3,
-          suffix + ': native artwork must cover the approved banner: ' + JSON.stringify(heroGeometry));
+        // The newer, stricter native-guest-layout.mjs checks the approved photo
+        // ABOVE the text. The obsolete "full-bleed" assertion contradicted that
+        // requirement and rejected the very layout approved for Android WebView.
+        const nativeFit=await page.locator('.public-hero-visual').evaluate(el=>getComputedStyle(el).backgroundSize);
+        check(heroGeometry && heroGeometry.pictureWidth <= heroGeometry.heroWidth + 3 &&
+          heroGeometry.pictureHeight >= 100 &&
+          heroGeometry.pictureHeight < heroGeometry.heroHeight &&
+          nativeFit === 'contain',
+          suffix + ': Android dedicated truck photo must remain uncropped above text: ' +
+          JSON.stringify({heroGeometry,nativeFit}));
       } else {
         check(await page.evaluate(() => document.documentElement.classList.contains('traksos-browser')),
           suffix + ': regular Chrome must activate mobile browser styling');
