@@ -49,11 +49,11 @@ jobs:
           exit 1
       - name: Реальные снимки ПК и телефона на утверждённых размерах
         run: node e2e/public-shots.mjs e2e/shots
-      - name: Проверка новой главной ПК 20 ноября (6 разрешений, реальные маршруты)
-        run: node e2e/owner20-layout-check.mjs
       - name: Реальные ПК-кабинеты всех доступных тестовых ролей
         continue-on-error: true
         run: node e2e/owner20-cabinet-evidence.mjs
+      - name: Проверка новой главной ПК 20 ноября (6 разрешений, реальные маршруты)
+        run: node e2e/owner20-layout-check.mjs
       - name: Настоящий Android WebView-гостевой экран, без наложения текста на фуру
         run: node e2e/native-guest-layout.mjs
       - name: Реальные Android-кабинеты после входа (синтетические CI-аккаунты)
