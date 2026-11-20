@@ -40,20 +40,17 @@ try {
       scroll:document.documentElement.scrollWidth
     }));
     if (!details.isNative || details.previewRole!==role)throw Error('Wrong role/native mode '+JSON.stringify(details));
-    // Regression gate: approved hero must be a real, visible bundled image.
-    const hero = await page.locator('.and19-cover img').evaluate(img => {
-      const bounds = img.getBoundingClientRect();
-      const parent = img.closest('.and19-cover');
-      const box = parent.getBoundingClientRect();
-      return {
-        loaded: img.complete && img.naturalWidth>0,
-        src:img.getAttribute('src'),
-        visible:bounds.width>200 && bounds.height>=100 && box.height>=100,
-        background:getComputedStyle(parent).backgroundColor
-      };
+    // The actual approved 618.png has a plain "Рабочий стол" heading above
+    // four actions / performer metrics. No oversized invented truck hero here.
+    const header = await page.locator('.and19-cover').evaluate(el => {
+      const b=el.getBoundingClientRect(),style=getComputedStyle(el);
+      return {text:el.textContent.trim(),height:b.height,images:el.querySelectorAll('img').length,bg:style.backgroundImage};
     });
-    if (!hero.loaded || !hero.visible || hero.src!=='/tracksos-approved-hero-owner-20261119.webp')
-      throw Error(role+': approved photo missing from Android hero '+JSON.stringify(hero));
+    if(header.text!=='Рабочий стол' || header.height>70 || header.images!==0)
+      throw Error(role+': Android heading differs from original 618.png '+JSON.stringify(header));
+    const logo=await page.locator('.and19-review-header img').evaluate(el=>
+      el.complete && el.naturalWidth>0 && el.src.endsWith('/traksos-brand-logo-approved-618.png'));
+    if(!logo) throw Error(role+': original 618.png logo is missing');
     const nav = await page.locator('.and19-review-tabbar a').allTextContents();
     if (nav.length!==((role==='client'||role==='driver')?6:4))
       throw Error(role+': Android bottom navigation does not match live role layout '+JSON.stringify(nav));
@@ -61,6 +58,8 @@ try {
     if (role==='client' || role==='driver') {
       if (await page.locator('.and19-services>a').count()!==4)throw Error('Lost approved four services');
       if (!await page.locator('.and19-main-order').count())throw Error('Preview is not displaying a real workspace component');
+      if (!await page.locator('.and19-assigned-performer').count())
+        throw Error('Approved 618.png assigned-master card absent from synthetic role review');
       const photo=page.locator('.and19-main-order img[src*="/vehicles/models/"]');
       if (await photo.count()) {
         const ok=await photo.first().evaluate(img=>img.complete&&img.naturalWidth>0);
@@ -70,6 +69,8 @@ try {
       const toggle=page.locator('.and19-line button');
       if (!await toggle.count())throw Error('Performer availability is missing');
       if (!await page.locator('.and19-main-order .and19-timeline').count())throw Error('Performer timeline missing');
+      if (!await page.locator('.and19-client-contact').count())
+        throw Error('Approved 618.png client-contact card absent from synthetic performer review');
       if (!await page.getByText('Открыть · отметить прибытие',{exact:false}).count())
         throw Error('The approved master must show a real status-specific next step');
       const links = await page.locator('.and19-order-shortcuts>a').evaluateAll(a => a.map(el=>el.getAttribute('href')));
