@@ -30,9 +30,14 @@ function useDesktopSize(){
   useEffect(()=>{
     const mq=window.matchMedia('(min-width: 1000px)');
     const sync=()=>setWide(mq.matches);
-    mq.addEventListener('change',sync);
+    // Old Android WebViews have addListener/removeListener but not MQL.addEventListener.
+    if (typeof mq.addEventListener === 'function') mq.addEventListener('change',sync);
+    else mq.addListener(sync);
     sync();
-    return ()=>mq.removeEventListener('change',sync);
+    return ()=>{
+      if (typeof mq.removeEventListener === 'function') mq.removeEventListener('change',sync);
+      else mq.removeListener(sync);
+    };
   },[]);
   return wide;
 }
