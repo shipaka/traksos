@@ -2,6 +2,13 @@ name: VPS — безопасная проверка без изменений
 
 on:
   workflow_dispatch:
+  # The first vetted merge to main automatically tests the bridge once.
+  # Later ordinary code deploys do not automatically open a VPS connection.
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/vps-readonly-status.yml'
+      - 'deploy/automation/github-vps-readonly-gate.sh'
 
 permissions:
   contents: read
