@@ -163,6 +163,44 @@
           0.875
         ]
       ]
+    },
+    {
+      "id": "scania-r440-2010",
+      "brand": "scania",
+      "model": "r440",
+      "yearMin": 2009,
+      "yearMax": 2013,
+      "sourceFile": "SCANIA R 440 A 4X2, De Koeijer.JPG",
+      "author": "Alf van Beem",
+      "license": "CC0 1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:SCANIA_R_440_A_4X2,_De_Koeijer.JPG",
+      "crop": [
+        0.36,
+        0.1,
+        0.98,
+        0.96
+      ],
+      "redact": [
+        [
+          0.7,
+          0.83,
+          0.82,
+          0.94
+        ],
+        [
+          0.89,
+          0.28,
+          0.99,
+          0.4
+        ],
+        [
+          0.75,
+          0.12,
+          0.91,
+          0.23
+        ]
+      ]
     }
   ]
 }
