@@ -50,18 +50,37 @@ function OfferModal({ item, left, onDone }: { item: any; left: number; onDone: (
 /** Страница оферты по ссылке: #/offer/client, #/offer/performer, #/offer/privacy */
 export function OfferPage({ audience }: { audience: string }) {
   const [o, setO] = useState<any>(undefined);
-  useEffect(() => { get(`/api/offers/current/${audience}`).then(setO).catch(() => setO(null)); }, [audience]);
+  useEffect(() => {
+    setO(undefined);
+    get(`/api/offers/current/${audience}`).then(setO).catch(error => {
+      setO(error instanceof ApiError && error.code === 'network' ? { networkError: true } : null);
+    });
+  }, [audience]);
+  const title = audience === 'client' ? 'Оферта для клиентов'
+    : audience === 'performer' ? 'Оферта для исполнителей'
+    : audience === 'privacy' ? 'Документы о персональных данных' : 'Документы TrakSOS';
   return (
-    <main>
+    <main className="stack">
       <Back to="" />
-      <a href="#/" className="note" style={{ textDecoration: 'none' }}>← Назад</a>
-      {o === undefined ? <div className="empty">Загружаю…</div> : o === null ? <div className="empty">Документ ещё не опубликован</div> : (
-        <>
-          <div className="card offer-text"><span className="note">Редакция {o.version} · с {new Date(o.effective_at).toLocaleDateString('ru-RU')}</span><Markdown text={o.body ?? ''} /></div>
-          {audience !== 'privacy' && <EconomicsGuide inOffer />}
-          <p className="note">Действующая правовая редакция — текст выше. Изменение тарифов требует новой опубликованной версии документа и предусмотренного принятия пользователем; примеры текущей экономики не изменяют уже подписанную редакцию задним числом.</p>
-        </>
-      )}
+      <h1>{title}</h1>
+      {o === undefined ? <div className="empty">Загружаем документ…</div>
+        : o === null ? <section className="card offer-text">
+          <h2>Текст пока недоступен</h2>
+          <p>Публичная редакция документа не найдена на сервере. До публикации действующей редакции здесь нельзя ознакомиться с условиями.</p>
+          <p className="note">Примеры и черновики не являются действующей офертой.</p>
+          <a className="btn ghost" href="#/offers">Все документы</a>
+        </section>
+        : o.networkError ? <section className="card offer-text">
+          <h2>Не удалось загрузить документ</h2>
+          <p>Связь с сервером недоступна. Повторите попытку после восстановления подключения.</p>
+        </section>
+        : (
+          <>
+            <div className="card offer-text"><span className="note">Редакция {o.version} · с {new Date(o.effective_at).toLocaleDateString('ru-RU')}</span><Markdown text={o.body ?? ''} /></div>
+            {audience !== 'privacy' && <EconomicsGuide inOffer />}
+            <p className="note">Действующая правовая редакция — текст выше. Изменение тарифов требует новой опубликованной версии документа и предусмотренного принятия пользователем; примеры текущей экономики не изменяют уже подписанную редакцию задним числом.</p>
+          </>
+        )}
     </main>
   );
 }
