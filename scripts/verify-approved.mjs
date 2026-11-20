@@ -229,6 +229,11 @@ const heroVisualE2E = await read('e2e/approved-truck-hero.mjs');
 expect(currentCss.includes(approvedPhoto) && approvedHeroLayer.includes(approvedPhoto)
   && !currentCss.includes('tracksos-approved-scenic-hero.webp'),
   'guest home has one approved Nov 19 truck image, with no legacy image fallback');
+// The copied public/ asset MUST be referenced by its runtime root path.
+ // ../public/ is relative to dist/app.css and silently blanks the truck on mobile.
+expect(!currentCss.includes("../public/tracksos-approved-hero-owner-20261119.webp") &&
+  currentCss.includes("url('/tracksos-approved-hero-owner-20261119.webp')"),
+  'approved guest hero loads from the deployed public root, not the source-tree path');
 expect(heroVisualE2E.includes("tracksos-approved-hero-owner-20261119(?:-[A-Za-z0-9]+)")
   && heroVisualE2E.includes("info.photo.includes('tracksos-approved-scenic-hero')"),
   'browser screenshot gate rejects obsolete 14 Nov hero and requires actual owner image');
