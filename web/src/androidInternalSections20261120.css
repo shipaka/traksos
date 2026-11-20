@@ -382,3 +382,54 @@ html.traksos-reduced-motion.traksos-native .app:not(.guest-app) .desktop-content
 html.traksos-reduced-motion.traksos-native .app:not(.guest-app) .account-menu[open]>nav {
  animation:none!important;
 }
+
+/* Fold the help/docs section and long administrator index, with short,
+ * non-distracting transitions and keyboard-operable native <details>. */
+@media(max-width:899px){
+ html.traksos-native .app:not(.guest-app) details.tr-mobile-menu-section>summary {
+   display:flex;
+   align-items:center;
+   cursor:pointer;
+   list-style:none;
+   min-height:45px;
+   -webkit-tap-highlight-color:transparent;
+ }
+ html.traksos-native .app:not(.guest-app) details.tr-mobile-menu-section>summary::-webkit-details-marker{
+   display:none;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-mobile-menu-section-copy{
+   flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-mobile-menu-section-copy strong{
+   color:#fff;font-size:14px;font-weight:800;line-height:1.25;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-mobile-menu-disclosure{
+   display:grid;place-items:center;flex:none;
+   width:25px;height:25px;
+   border:1px solid #55788d;
+   border-radius:8px;
+   background:#224155;
+   color:#ffad6b;
+   font-size:23px;line-height:1;
+   transition:transform .18s ease;
+ }
+ html.traksos-native .app:not(.guest-app) details.tr-mobile-menu-section[open] .tr-mobile-menu-disclosure{
+   transform:rotate(180deg);
+ }
+ html.traksos-native .app:not(.guest-app) details.tr-mobile-menu-section:not([open])>.tr-mobile-menu-links{
+   display:none;
+ }
+ html.traksos-native .app:not(.guest-app) details.tr-mobile-menu-section[open]>.tr-mobile-menu-links{
+   display:flex;
+   margin-top:7px;
+   animation:trAndroidMenuOpen .18s ease-out;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ html.traksos-native .app:not(.guest-app) .tr-mobile-menu-disclosure{
+   transition:none!important;
+ }
+ html.traksos-native .app:not(.guest-app) details.tr-mobile-menu-section[open]>.tr-mobile-menu-links{
+   animation:none!important;
+ }
+}
