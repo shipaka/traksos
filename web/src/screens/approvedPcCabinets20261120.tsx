@@ -362,8 +362,8 @@ function ModeratorDesk(){
     <Heading title="Модератор" description="Споры, обращения, проверка партнёров и журнал решений"/>
     <Tabs active={kind} onChange={id=>{setKind(id as typeof kind);setChosen('')}} items={[
       ['dispute','Споры и жалобы',null],['appeal','Обжалования',null],['review','Отзывы и отметки',null]]}/>
-    <div className="approved-pc-subnav"><a href="#/support">Обращения</a><a href="#/admin/section/verify">Проверка партнёров</a>
-      <a href="#/admin/section/flagged">Подозрительные сообщения</a><a href="#/admin/section/queue">Журнал решений</a></div>
+    <div className="approved-pc-subnav"><a href="#/moderation/support">Обращения</a><a href="#/moderation/verify">Проверка партнёров</a>
+      <a href="#/moderation/flagged">Подозрительные сообщения</a><a href="#/moderation/cases">Журнал решений</a></div>
     <WorkLayout left={<Pane title="Очередь обращений">{!source.data?<LoadingBlock error={source.error} retry={source.reload}/>:items.length?
       items.map((o:any)=><RowItem key={o.id} label={'№'+text(o.number)} info={text(o.title)}
         badge={o.priority===1?'Срочно':'На проверке'} active={selected?.id===o.id} onClick={()=>setChosen(String(o.id))}/>)
@@ -377,8 +377,8 @@ function ModeratorDesk(){
         <p className="approved-pc-caveat">Решения фиксируются на сервере. Из карточки здесь не создаются списания и блокировки.</p>
       </section>:<Pane title="Модерация"><Empty>Выберите обращение слева.</Empty></Pane>}
       right={<><Pane title="Что проверить"><p>✓ Связанная заявка и статус</p><p>✓ Доказательства обеих сторон</p><p>✓ Переписка и правила площадки</p><p>✓ Основание и журнал решения</p></Pane>
-        <Pane title="Рабочие инструменты"><a className="approved-pc-small-link" href="#/support">Очередь поддержки →</a>
-          <a className="approved-pc-small-link" href="#/admin/section/verify">Проверка партнёров →</a></Pane></>}/>
+        <Pane title="Рабочие инструменты"><a className="approved-pc-small-link" href="#/moderation/support">Очередь поддержки →</a>
+          <a className="approved-pc-small-link" href="#/moderation/verify">Проверка партнёров →</a></Pane></>}/>
   </main>;
 }
 function AdminDesk(){
