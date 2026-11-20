@@ -202,6 +202,7 @@ try{
      await page.locator('.account-menu > summary').waitFor({timeout:12000});
      await page.waitForTimeout(500);
      if(await page.getByText('Не удалось открыть раздел').count())throw Error('Inner route crashed');
+     if(c.id==='admin') await page.locator('.admin-stage-content .admin-orders-zero, .admin-stage-content .list-item').first().waitFor({timeout:12000});
      if(c.id==='owner'){
        const header=page.locator('.client-garage-page>.client-section-hero');
        await header.waitFor();
