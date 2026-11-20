@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { get, post, onEvent, ApiError } from '../api.ts';
-import { useAction, useMe, Back } from '../ui.tsx';
+import { useAction, useMe } from '../ui.tsx';
 import { Markdown } from '../markdown.tsx';
 import { EconomicsGuide } from './economicsGuide.tsx';
 
@@ -47,17 +47,51 @@ function OfferModal({ item, left, onDone }: { item: any; left: number; onDone: (
   );
 }
 
-/** Страница оферты по ссылке: #/offer/client, #/offer/performer, #/offer/privacy */
+/** Страница оферты по ссылке: #/offer/client, #/offer/performer, #/offer/privacy.
+ * A network/server failure is NOT proof a legal version is unpublished.
+ */
 export function OfferPage({ audience }: { audience: string }) {
   const [o, setO] = useState<any>(undefined);
-  useEffect(() => { get(`/api/offers/current/${audience}`).then(setO).catch(() => setO(null)); }, [audience]);
+  const [loadError, setLoadError] = useState(false);
+  const [retry, setRetry] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+    setO(undefined);
+    setLoadError(false);
+    get(`/api/offers/current/${audience}`)
+      .then(value => { if (active) setO(value); })
+      .catch(error => {
+        if (!active) return;
+        if (error instanceof ApiError && error.status === 404) setO(null);
+        else setLoadError(true);
+      });
+    return () => { active = false; };
+  }, [audience, retry]);
+
   return (
-    <main>
-      <Back to="" />
-      <a href="#/" className="note" style={{ textDecoration: 'none' }}>← Назад</a>
-      {o === undefined ? <div className="empty">Загружаю…</div> : o === null ? <div className="empty">Документ ещё не опубликован</div> : (
+    <main className="public-offer-page">
+      <a href="#/" className="guest-explore-back">← На главную</a>
+      {loadError ? (
+        <section className="offer-unpublished" role="alert">
+          <h1>Не удалось загрузить документ</h1>
+          <p>Сервер не ответил или произошла ошибка соединения. Это не означает, что документ не опубликован.</p>
+          <button type="button" className="btn" onClick={() => setRetry(value => value + 1)}>Попробовать снова</button>
+        </section>
+      ) : o === undefined ? (
+        <div className="empty" role="status">Загружаем документ…</div>
+      ) : o === null ? (
+        <section className="offer-unpublished" role="status">
+          <h1>Документ пока не опубликован</h1>
+          <p>На сервере пока нет доступной действующей редакции для этого раздела. Мы не заменяем юридический текст примером или черновиком.</p>
+          <a href="#/help">Связаться с поддержкой</a>
+        </section>
+      ) : (
         <>
-          <div className="card offer-text"><span className="note">Редакция {o.version} · с {new Date(o.effective_at).toLocaleDateString('ru-RU')}</span><Markdown text={o.body ?? ''} /></div>
+          <div className="card offer-text">
+            <span className="note">Редакция {o.version} · с {new Date(o.effective_at).toLocaleDateString('ru-RU')}</span>
+            <Markdown text={o.body ?? ''} />
+          </div>
           {audience !== 'privacy' && <EconomicsGuide inOffer />}
           <p className="note">Действующая правовая редакция — текст выше. Изменение тарифов требует новой опубликованной версии документа и предусмотренного принятия пользователем; примеры текущей экономики не изменяют уже подписанную редакцию задним числом.</p>
         </>
