@@ -169,3 +169,21 @@
    flex:none;
  }
 }
+/* Real outline traced from the owner's 617.png; visual demo only.
+   Never derive actual regional availability from painted pixels. */
+@media(min-width:900px){
+ .owner20-map-shape{
+   clip-path:none!important;background:transparent!important;
+   display:flex;position:relative;align-items:center;justify-content:center;
+   overflow:hidden;width:65%;
+ }
+ .owner20-map-shape img{
+   display:block;width:100%;height:100%;object-fit:contain;
+   filter:drop-shadow(0 0 6px #12a6a533);
+ }
+ .owner20-map-shape .owner20-map-demo-tag{
+   position:absolute;bottom:8px;left:4px;color:#a7eced;font-size:9px;font-weight:800;
+   letter-spacing:.05em;background:#082a35dd;border:1px solid #287884;
+   border-radius:5px;padding:2px 5px;
+ }
+}
