@@ -587,3 +587,20 @@
  }
  .guest-app.guest-home .owner20-bottom-club::after{width:213px;height:167px;background-position:-797px -170px}
 }
+
+
+/* Owner 20 Nov: TrakBot mascot is present without covering RuStore or the
+   approved four lower cards. Only the PC guest homepage needs this footprint. */
+@media(min-width:1281px){
+  .guest-app.guest-home .trakbot-dock{
+    right:5px!important;bottom:4px!important;
+  }
+  .guest-app.guest-home .trakbot-dock .trakbot-dock-launcher{
+    width:40px!important;min-width:40px!important;
+    height:40px!important;min-height:40px!important;
+    padding:3px!important;
+  }
+  .guest-app.guest-home .trakbot-dock-launcher .trakbot-mascot{
+    --bot-size:32px!important;width:32px!important;height:32px!important;
+  }
+}
