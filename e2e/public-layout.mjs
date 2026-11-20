@@ -116,6 +116,64 @@ async function run(width, height, mobile, nativePreview = false) {
         suffix + ': hero carousel too small for touch: '+JSON.stringify(heroGeometry));
     }
     await verifyPage(page, suffix + ':home');
+    // Regression for the 20 Nov owner screenshot: benefits/insurance were
+    // inline text and enormous icons even while the overall page did not scroll.
+    if (width < 900 && !nativePreview) {
+      const publicLegibility = await page.evaluate(() => {
+        const errors = [];
+        const bounds = el => el?.getBoundingClientRect();
+        const benefits = [...document.querySelectorAll('.public-why-strip > article.public-benefit')];
+        if (benefits.length !== 3) errors.push('wrong number of benefit cards');
+        for (const [i, item] of benefits.entries()) {
+          const box = bounds(item);
+          const icon = bounds(item.querySelector('.public-benefit-icon svg'));
+          const title = bounds(item.querySelector('b'));
+          const detail = bounds(item.querySelector('small'));
+          if (!box || !icon || !title || !detail) {
+            errors.push('benefit ' + i + ' missing layout element'); continue;
+          }
+          if (icon.width > 50 || icon.height > 50)
+            errors.push('benefit ' + i + ' huge icon ' + icon.width + 'x' + icon.height);
+          if (detail.top < title.bottom - 2)
+            errors.push('benefit ' + i + ' title and description overlap');
+          if (detail.left < title.left - 2 || detail.right > box.right + 2 ||
+              title.right > box.right + 2 || icon.right > title.left + 2)
+            errors.push('benefit ' + i + ' columns overlap or overflow');
+          if (box.height < 95 || box.width < 200)
+            errors.push('benefit ' + i + ' tiny card');
+        }
+        const insurance = document.querySelector('.public-track-insurance');
+        const insuranceText = bounds(insurance?.querySelector('span'));
+        const insuranceLabel = bounds(insurance?.querySelector('span b'));
+        const insuranceDetail = bounds(insurance?.querySelector('span small'));
+        const insuranceAction = bounds(insurance?.querySelector(':scope > strong'));
+        const insuranceBox = bounds(insurance);
+        if (!insuranceBox || !insuranceText || !insuranceLabel || !insuranceDetail || !insuranceAction)
+          errors.push('insurance CTA incomplete');
+        else if (insuranceDetail.top < insuranceLabel.bottom - 2 ||
+                 insuranceAction.top < insuranceText.bottom - 2 ||
+                 insuranceAction.right > insuranceBox.right + 2)
+          errors.push('insurance CTA text concatenated/overlapping');
+        const extras = [...document.querySelectorAll('.public-track-extras-grid > a.public-track-extra')];
+        if (extras.length !== 3) errors.push('missing service links');
+        for (const [i, link] of extras.entries()) {
+          const b = bounds(link.querySelector('b'));
+          const s = bounds(link.querySelector('small'));
+          if (!b || !s || s.top < b.bottom - 2)
+            errors.push('service link ' + i + ' inline/overlapping');
+        }
+        const map = document.querySelector('.public-map-static');
+        if (!map || !getComputedStyle(map).backgroundImage.includes('radial-gradient') ||
+            !getComputedStyle(map, '::after').content.includes('демонстрационная'))
+          errors.push('blank or unlabelled mobile demo map');
+        const logo = document.querySelector('.top .guest-approved-mark img');
+        if (!logo || getComputedStyle(logo).mixBlendMode !== 'screen')
+          errors.push('public brand crop with exposed dark background');
+        return { count: benefits.length, issues: errors };
+      });
+      check(publicLegibility.count === 3 && !publicLegibility.issues.length,
+        suffix + ': owner-reported mobile text/icon/branding defect: ' + JSON.stringify(publicLegibility));
+    }
     if (mobile && width <= 430) {
       const nav = page.locator('.track-guest-tabbar');
       const navCount = await nav.locator('a').count();
