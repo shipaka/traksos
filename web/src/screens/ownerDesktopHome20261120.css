@@ -202,3 +202,8 @@
  .owner20-quick-icon{flex-basis:27px}
  .owner20-quick-icon svg{width:27px;height:27px}
 }
+
+/* Old bottom guest tab bar is mobile-only; it must not leak below the approved PC homepage. */
+@media(min-width:900px){
+ .guest-app.guest-home > .track-guest-tabbar{display:none!important}
+}
