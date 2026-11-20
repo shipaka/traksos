@@ -1,0 +1,19 @@
+/* Debug APK visual acceptance only: production route is not exposed. */
+.and19-review-page{min-height:100dvh;padding:0 0 28px;background:linear-gradient(175deg,#071524,#0c2032 63%,#071523);color:#edf7ff;overflow-x:hidden}
+.and19-review-header{min-height:64px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;background:#081a2c;border-bottom:1px solid #29445a}
+.and19-review-header img{max-width:60%;height:auto}
+.and19-review-header a,.and19-review-footer a{color:#a5eaf2;font-size:12px;text-decoration:none;border:1px solid #466376;border-radius:9px;padding:10px;min-height:44px;display:flex;align-items:center}
+.and19-review-warning{display:flex;flex-direction:column;gap:3px;margin:12px 12px 9px;border:1px solid #f18b3b;border-radius:12px;padding:11px 12px;background:#48301a77;color:#f9e4d4;font-size:11px;line-height:1.4}
+.and19-review-warning strong{color:#ffad66;font-size:12px;letter-spacing:.03em}
+.and19-review-roles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:0 12px 12px}
+.and19-review-roles a{display:grid;place-items:center;min-height:44px;padding:6px 2px;text-align:center;border:1px solid #456076;border-radius:10px;color:#c7d7e7;text-decoration:none;font-size:11px;background:#14283b}
+.and19-review-roles a[aria-current=page]{color:#fff;border-color:#ff8b32;background:linear-gradient(180deg,#d9651c,#9b3e15);font-weight:800}
+.and19-review-live{padding:0 12px}
+.and19-review-live .and19-workspace{display:flex!important;width:100%}
+.and19-review-live a,.and19-review-live button{cursor:pointer}
+.and19-review-live a:focus-visible,.and19-review-roles a:focus-visible{outline:2px solid #f89a51;outline-offset:2px}
+.and19-review-message{margin:10px 12px;color:#ffd8b7;font-size:13px}
+.and19-review-footer{display:flex;flex-direction:column;gap:12px;margin:13px 12px 0;padding:12px 0;border-top:1px solid #345268;color:#b4cad9;font-size:11px;line-height:1.5}
+.and19-review-footer a{width:max-content;max-width:100%}
+@media(max-width:340px){.and19-review-roles{gap:4px}.and19-review-roles a{font-size:10px}}
+@media(min-width:900px){.and19-review-page{max-width:425px;margin:0 auto;border-left:1px solid #35576d;border-right:1px solid #35576d}}
