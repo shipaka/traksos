@@ -1,0 +1,201 @@
+/* Android 20 Nov 2026 approved roles. The photos are fixed visual references;
+   real customer/vehicle/order data and permission checks remain authoritative.
+   Scoped to narrow viewports; no restoration of 14/19 Nov legacy layout. */
+@media(max-width:899px){
+  .traksos-native .app:not(.guest-app){background:#07131e;color:#ebf6ff}
+  .traksos-native .app:not(.guest-app) .top{
+    min-height:56px;background:linear-gradient(180deg,#071521,#0a1e2b);
+    border-bottom:1px solid #365365;box-sizing:border-box;
+  }
+  .traksos-native .app:not(.guest-app) .top .logo{
+    color:#f4f5fb;font-weight:850;font-style:italic;letter-spacing:-.05em;
+    font-size:clamp(20px,5.8vw,27px);white-space:nowrap;
+  }
+  .traksos-native .app:not(.guest-app) .top .logo b{color:#fc7c24;font-style:italic}
+  .traksos-native .app:not(.guest-app) .tabbar{
+    border-radius:16px 16px 0 0;background:linear-gradient(180deg,#122535,#071925);
+    box-shadow:0 -6px 26px #0005;
+  }
+  .traksos-native .app:not(.guest-app) .tabbar a.on{
+    color:#fff1db;border:1px solid #f87c28;
+    background:linear-gradient(180deg,#6c310f,#251f21);
+    box-shadow:inset 0 0 18px #fd7c203c,0 0 10px #fb7c1718;
+  }
+  .and20-client,.and20-tow{gap:10px}
+  .and20-client .and19-cover.and20-client-heading,
+  .and19-performer .and19-cover.and20-master-heading{
+    display:block;min-height:0;padding:0 2px 2px;border:0;border-radius:0;
+    background:none;overflow:visible;box-shadow:none;
+  }
+  .and20-client .and20-client-heading::before,
+  .and19-performer .and20-master-heading::before{display:none}
+  .and20-client .and20-client-heading>div,
+  .and19-performer .and20-master-heading>div{max-width:100%;z-index:auto}
+  .and20-client h1,.and19-performer .and20-master-heading h1,
+  .and20-tow-title{margin:0 0 2px;font-size:clamp(22px,6vw,27px);font-weight:850;color:#f9fbff}
+  .and20-client .and19-services{gap:7px}
+  .and20-client .and19-services a{
+    font-size:11px;line-height:1.2;font-weight:720;min-height:94px;
+    min-width:0;overflow-wrap:break-word;text-align:center;
+    background:linear-gradient(158deg,#193445,#0c1f2c);
+    border:1px solid #496a7b;border-radius:14px;
+    box-shadow:inset 0 1px #d3f5ff0d,0 5px 14px #0002;
+  }
+  .and20-client .and19-services a:first-child{
+    background:linear-gradient(155deg,#c9510c,#74320f);
+    border-color:#ff8f30;box-shadow:inset 0 1px #fda76160,0 0 13px #ff7d232a;
+  }
+  .and20-client .and19-services a span{color:#ffb66a;font-size:24px}
+  .and20-client .and19-services a:first-child span{color:#fff}
+  .and20-client .and19-panel,.and19-performer .and19-panel,
+  .and20-tow .and19-panel{
+    background:linear-gradient(150deg,#153143,#0b2130);
+    border:1px solid #416478;border-radius:16px;
+    box-shadow:inset 0 1px #c7faff0d,0 7px 15px #0003;
+  }
+  .and20-client .and19-status,.and19-performer .and19-status{
+    background:linear-gradient(140deg,#854018,#cb550e);
+    border-color:#f08a37;color:#fff0dc;
+    padding:5px 9px;font-weight:750;max-width:40%;
+  }
+  .and20-client-order-data{
+    display:grid;grid-template-columns:minmax(92px,36%) minmax(0,1fr);gap:11px;
+    margin-top:11px;align-items:start;
+  }
+  .and20-client-order-data .and19-facts{
+    min-width:0;overflow-wrap:anywhere;margin:0;gap:6px;
+  }
+  .and20-client-order-data .and19-facts p{
+    line-height:1.35;margin:0;font-size:12px;
+  }
+  .and20-client-truck{
+    box-sizing:border-box;width:100%;aspect-ratio:1.32;object-fit:cover;
+    display:block;min-width:0;border-radius:12px;border:1px solid #416c83;
+    background:linear-gradient(155deg,#1f4558,#0b2334);
+  }
+  span.and20-client-truck{
+    display:flex;flex-direction:column;justify-content:center;align-items:center;
+    text-align:center;padding:7px;font-size:10px;overflow-wrap:anywhere;
+  }
+  .and20-client .and19-price{margin-top:10px}
+  .and20-client .and19-link,.and19-performer .and19-link{
+    min-height:42px;display:flex;align-items:center;justify-content:space-between;
+    box-sizing:border-box;text-align:center;color:#fff;font-weight:800;
+    padding:9px 12px;border:1px solid #5bdce8;border-radius:11px;
+    background:linear-gradient(180deg,#04728a,#10465a);
+  }
+  .and20-client .and19-equipment{
+    min-height:66px;border-radius:13px;
+    background:linear-gradient(150deg,#163042,#0a2232);
+  }
+  .and20-client .and19-sos{
+    background:linear-gradient(180deg,#ff8427,#d7520c);
+    box-shadow:0 0 14px #ff7f2640;border:1px solid #ff9a41;border-radius:12px;
+    min-height:48px;color:white;font-weight:850;
+  }
+  .and20-client .and19-panel-title>strong,
+  .and19-performer .and19-panel-title>strong{font-size:16px}
+  .and20-tow .and19-role{
+    display:flex;gap:8px;justify-content:space-between;min-width:0;
+  }
+  .and20-tow-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+  .and20-tow-metrics a{
+    display:flex;flex-direction:column;justify-content:center;text-align:center;gap:5px;
+    min-width:0;min-height:73px;padding:7px 3px;border:1px solid #456c85;
+    background:linear-gradient(160deg,#19364c,#0c2132);border-radius:14px;
+    font-variant-numeric:tabular-nums;
+  }
+  .and20-tow-metrics small{font-size:11px;color:#cce8f1}
+  .and20-tow-metrics strong{font-size:19px;overflow-wrap:anywhere;color:#fff}
+  .and20-tow-job .and20-tow-photo{display:block;object-fit:cover;width:100%;
+    box-sizing:border-box;aspect-ratio:2.05;border-radius:12px;margin:12px 0;
+    background:#214051;border:1px solid #456779}
+  .and20-tow-job span.and20-tow-photo{
+    display:flex;flex-direction:column;justify-content:center;align-items:center;
+    padding:12px;font-size:12px;text-align:center}
+  .and20-tow-problem{font-weight:800;margin:8px 0}
+  .and20-tow-route{display:flex;flex-direction:column;gap:4px;margin:8px 0}
+  .and20-tow-route p{display:flex;align-items:flex-start;gap:9px;padding:5px 0;font-size:12px}
+  .and20-tow-route p>span:first-child{color:#ff872c;font-size:18px;min-width:18px}
+  .and20-tow-route p>span:nth-child(2){display:flex;flex-direction:column;gap:2px}
+  .and20-tow-route small{font-size:10px;color:#94c8db}
+  .and20-tow-timeline{list-style:none;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
+    margin:13px 0;padding:0;gap:2px}
+  .and20-tow-timeline li{display:flex;flex-direction:column;align-items:center;gap:6px;
+    text-align:center;position:relative;color:#b5c9d8;min-width:0}
+  .and20-tow-timeline li:not(:last-child):after{
+    content:'';position:absolute;height:3px;width:calc(100% - 20px);top:12px;left:calc(50% + 10px);
+    background:#466274;z-index:0}
+  .and20-tow-timeline li.passed:not(:last-child):after{background:#24c6a6}
+  .and20-tow-timeline li>span{
+    display:grid;place-items:center;width:26px;height:26px;border:2px solid #526b7f;
+    border-radius:50%;background:#122b3a;font-size:11px;position:relative;z-index:1}
+  .and20-tow-timeline li.current>span{background:#e96912;border-color:#ff9b41;box-shadow:0 0 12px #fd692477}
+  .and20-tow-timeline li.passed>span{background:#17846e;border-color:#56eac1;color:#fff}
+  .and20-tow-timeline li small{font-size:9px;line-height:1.15;overflow-wrap:anywhere}
+  .and20-tow-actions{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:8px}
+  .and20-tow-actions a{
+    border-radius:11px;min-height:48px;display:flex;align-items:center;justify-content:center;
+    padding:8px;text-align:center;font-size:12px;font-weight:800;box-sizing:border-box}
+  .and20-tow-primary{background:linear-gradient(180deg,#f98222,#d9530e);
+    border:1px solid #ff9641;color:#fff!important}
+  .and20-tow-navigation{background:linear-gradient(150deg,#035f70,#073945);
+    border:1px solid #22d4e5;color:#efffff!important}
+  .and20-tow-disclaimer{padding:8px 10px;border-radius:10px;background:#56371b66;color:#ffdabe;font-size:11px}
+  /* All 20.11 roles share the approved visual vocabulary, never the same
+     rights or the same menu options. Functional data comes from existing APIs. */
+  .app.role-insurer .cabinet-page,.app.role-inspection .cabinet-page,
+  .app.role-moderator .moderator-workspace,.app.role-admin .admin-workspace{
+    color:#eef8ff;min-width:0;
+  }
+  .app.role-insurer .cabinet-heading,.app.role-inspection .cabinet-heading,
+  .app.role-moderator .internal-role-hero,
+  .app.role-admin .admin-command-hero{
+    border-radius:16px;border:1px solid #45687c;
+    background:linear-gradient(145deg,#162e40,#091d2d);padding:15px 13px;
+    color:#fff;box-shadow:inset 0 1px #f6ffff10;
+  }
+  .app.role-insurer .cabinet-heading h1,.app.role-inspection .cabinet-heading h1,
+  .app.role-moderator .internal-role-hero h1,.app.role-admin .admin-command-hero h1{
+    color:#fff;font-size:clamp(22px,5.7vw,27px);line-height:1.12}
+  .app.role-insurer .cabinet-metrics,.app.role-inspection .cabinet-metrics{
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .app.role-insurer .cabinet-metrics .card.tile,.app.role-inspection .cabinet-metrics .card.tile,
+  .app.role-moderator .moderator-workspace .grid2 .tile{
+    min-width:0;min-height:83px;border:1px solid #456b83;border-radius:13px;
+    background:linear-gradient(145deg,#1b3a4e,#0c2334);
+    padding:12px 10px}
+  .app.role-insurer .partner-workspaces,.app.role-inspection .partner-workspaces{
+    display:flex;overflow-x:auto;gap:7px;scrollbar-width:none}
+  .app.role-insurer .partner-workspaces>.btn,.app.role-inspection .partner-workspaces>.btn{
+    flex:1 0 auto;min-height:43px;border-radius:11px;font-size:12px}
+  .app.role-moderator .moderator-action-grid{
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .app.role-moderator .moderator-action{
+    min-height:94px;border:1px solid #496b81;border-radius:13px;
+    color:#eef8ff;background:linear-gradient(145deg,#17374b,#0d2232);padding:12px 10px}
+  .app.role-moderator .moderator-action.active{
+    border-color:#fa8c38;box-shadow:inset 0 0 20px #f5752025}
+  .app.role-admin .admin-command-art{display:none}
+  .app.role-admin .admin-command-hero{min-height:0}
+  .app.role-admin .admin-command-actions{
+    display:grid;grid-template-columns:1fr;gap:8px;padding:0}
+  .app.role-admin .admin-command-actions>*{
+    min-height:44px;box-sizing:border-box;text-align:center;border-radius:11px}
+  .app.role-admin .admin-nav-toggle{border-radius:12px}
+  .app.role-admin .admin-nav-item{border-radius:10px;min-height:47px}
+  .app.role-admin .admin-workspace a:focus-visible,
+  .app.role-admin .admin-workspace button:focus-visible,
+  .app.role-insurer a:focus-visible,.app.role-inspection a:focus-visible,
+  .app.role-moderator a:focus-visible,.app.role-moderator button:focus-visible{
+    outline:2px solid #7de9ed;outline-offset:2px}
+}
+@media(max-width:359px){
+  .and20-client-order-data{grid-template-columns:minmax(86px,35%) minmax(0,1fr);gap:7px}
+  .and20-client .and19-services{gap:4px}
+  .and20-client .and19-services a{font-size:10px;padding:6px 2px}
+  .and20-tow-actions{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  .and20-client a,.and20-tow a{transition:none!important}
+}
