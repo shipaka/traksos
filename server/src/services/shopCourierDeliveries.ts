@@ -114,7 +114,7 @@ export class ShopCourierDeliveries {
          from shop_courier_deliveries d join shop_orders o on o.id=d.shop_order_id
         where d.id=$1 and d.courier_id=$2 for update of d,o`,[id,courier.id]);
       if(!d)throw notFound('Доставка не назначена этому курьеру');
-      if(d.status===status)return d; // idempotent network retry
+      if(d.status===status)return {...d,unchanged:true}; // idempotent network retry
       if(courierNextStage(d.status)!==status)
         throw conflict('invalid_stage','Нельзя пропускать или откатывать этапы доставки');
       if(d.shop_status==='cancelled'||d.shop_status==='done')
@@ -129,7 +129,7 @@ export class ShopCourierDeliveries {
         [courier.id,'courier.stage',id,{status,shopOrderId:d.shop_order_id}]);
       return {...row,client_id:d.client_id,created_by:d.created_by};
     });
-    await this.notify.notify([d.client_id,d.created_by],{type:'shop',shopOrderId:d.shop_order_id},
+    if(!d.unchanged)await this.notify.notify([d.client_id,d.created_by],{type:'shop',shopOrderId:d.shop_order_id},
       {kind:'normal',title:'Доставка запчастей: новый этап',body:status==='arrived'?
         'Курьер прибыл — откройте заказ и покажите ему код получения':'Статус доставки обновлён',
         data:{shopOrderId:d.shop_order_id}});
@@ -141,7 +141,7 @@ export class ShopCourierDeliveries {
         from shop_courier_deliveries d join shop_orders o on o.id=d.shop_order_id
         where d.id=$1 and d.courier_id=$2 for update of d,o`,[id,courier.id]);
       if(!d)throw notFound('Доставка не назначена этому курьеру');
-      if(d.status==='code_verified')return {ok:true,d};
+      if(d.status==='code_verified')return {ok:true,d,repeated:true};
       if(d.status!=='arrived'||d.shop_status!=='shipped')
         throw conflict('invalid_stage','Код можно проверить только после прибытия по открытой доставке');
       if(d.code_attempts>=5)throw new HttpError(429,'receipt_locked','Лимит попыток исчерпан. Обратитесь к администратору.');
@@ -163,7 +163,7 @@ export class ShopCourierDeliveries {
       return {ok:true,d:{...checked,client_id:d.client_id,created_by:d.created_by}};
     });
     if(!result.ok)throw bad('wrong_receipt_code','Код не совпадает. Проверьте шесть цифр с получателем.');
-    await this.notify.notify([result.d.client_id,result.d.created_by],
+    if(!('repeated' in result))await this.notify.notify([result.d.client_id,result.d.created_by],
       {type:'shop',shopOrderId:result.d.shop_order_id},
       {kind:'normal',title:'Подтвердите получение запчастей',
        body:'Курьер проверил код. Заказ завершится только после вашего подтверждения.',
@@ -193,7 +193,7 @@ export class ShopCourierDeliveries {
        where o.id=$1 and o.created_by=$2 for update of d,o`,
        [orderId,buyer.id]);
       if(!d)throw notFound('Заказ не найден в ваших доставках');
-      if(d.status==='received')return d; // repeat request cannot double-close
+      if(d.status==='received')return {...d,repeated:true}; // repeat request cannot double-close
       if(d.status!=='code_verified'||!d.code_verified_at||d.shop_status!=='shipped')
         throw conflict('not_verified','Сначала курьер должен прибыть и проверить код вручения');
       await q.query(`update shop_courier_deliveries set status='received',
@@ -204,7 +204,7 @@ export class ShopCourierDeliveries {
         [buyer.id,'courier.customer_received',d.id,{shopOrderId:orderId}]);
       return {...d,status:'received'};
     });
-    await this.notify.notify([d.courier_id],{type:'shop',shopOrderId:orderId},
+    if(!d.repeated)await this.notify.notify([d.courier_id],{type:'shop',shopOrderId:orderId},
       {kind:'normal',title:'Получение подтверждено клиентом',
        body:'Доставка завершена. Заказ отмечен полученным покупателем.',
        data:{shopOrderId:orderId}});
