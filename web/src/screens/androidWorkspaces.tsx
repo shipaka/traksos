@@ -5,6 +5,8 @@ import { SERVICES, STATUS } from '../dict.ts';
 import { useLoad } from '../ui.tsx';
 import { OfferForm } from './search.tsx';
 import { insurancePresentation } from '../insurancePresentation.ts';
+import { APPROVED_VISUALS } from '../approvedVisuals.ts';
+import { ApprovedEmptyScene } from '../approvedEmptyScene.tsx';
 
 /** Render a single role dashboard per viewport, rather than hiding a live component tree with CSS. */
 export function useMobileWorkspace() {
@@ -81,7 +83,7 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
     <div className="and19-role">{isDriver ? 'Водитель' : 'Клиент · Владелец автопарка'}</div>
     <div className="and19-cover">
       <div><small>TRAKSOS · ПОМОЩЬ В ДОРОГЕ</small><h1>Рабочий стол</h1></div>
-      <img src="/tracksos-approved-hero-owner-20261119.webp" alt="" aria-hidden="true" />
+      <img src={APPROVED_VISUALS.workspaceTruck} alt="" aria-hidden="true" />
     </div>
     <div className="and19-services" aria-label="Вызвать помощь">
       <a href={disabledServices?.repair ? undefined : '#/sos'} aria-disabled={disabledServices?.repair || undefined}><span aria-hidden="true">⚒</span>Выездной мастер</a>
@@ -122,7 +124,7 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
           <span className="and19-link">Открыть заявку и связь с исполнителем <span aria-hidden="true">›</span></span>
         </a>
       </section>
-      : <section className="and19-panel and19-empty"><strong>Активных заявок нет</strong><p>Выберите необходимую помощь — мы покажем этапы поиска и отклики в заявке.</p></section>}
+      : <section className="and19-panel and19-empty"><strong>Активных заявок нет</strong><ApprovedEmptyScene kind="orders" /><p>Выберите необходимую помощь — здесь появятся только реальные этапы поиска и отклики в заявке.</p></section>}
     {orders.length > 1 && <a href="#/orders" className="and19-row-link">Все мои заявки <span>{orders.length} ›</span></a>}
     <a href="#/garage" className="and19-equipment">
       <span className="and19-equipment-icon" aria-hidden="true">▤</span><span><strong>{isDriver ? 'Моя машина' : 'Моя техника'}</strong><small>История ремонта, документы и обслуживание</small></span><span aria-hidden="true">›</span>
@@ -154,7 +156,7 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
     </div>
     <div className="and19-cover">
       <div><small>TRAKSOS · {tow ? 'ЭВАКУАЦИЯ' : 'ВЫЕЗДНОЙ СЕРВИС'}</small><h1>Рабочий стол</h1></div>
-      <img src="/tracksos-approved-hero-owner-20261119.webp" alt="" aria-hidden="true" />
+      <img src={APPROVED_VISUALS.workspaceTruck} alt="" aria-hidden="true" />
     </div>
     <div className="and19-metrics">
       <a href="#/work/jobs"><small>В работе</small><strong>{active.length}</strong></a>
@@ -171,6 +173,7 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
       {active.length > 1 && <a className="and19-row-link" href="#/work/jobs">Другие активные заявки: {active.length - 1} ›</a>}
     </section> : <section className="and19-panel and19-empty">
       <strong>{online ? 'Ожидаем подходящую заявку' : 'Вы не на линии'}</strong>
+      <ApprovedEmptyScene kind="shift" />
       <p>{online ? 'Когда заявка поступит, вы получите входящий вызов. Приложение не нужно держать открытым.' : 'Включите статус «На линии», чтобы получать заявки. При необходимости настройте график.'}</p>
       <a href="#/work/filter" className="and19-link">Настройки заявок ›</a>
     </section>}
