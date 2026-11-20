@@ -45,6 +45,18 @@ function MobileTimeline({ status }: { status: string }) {
   </ol>;
 }
 
+function performerNextStep(status: string): string {
+  // This CTA ONLY opens the authorized order: server validates every status change.
+  switch (status) {
+    case 'accepted': return 'Открыть · подтвердить выезд';
+    case 'en_route': return 'Открыть · отметить прибытие';
+    case 'arrived': return 'Открыть · начать работу';
+    case 'working': return 'Оформить результат и расчёт';
+    case 'awaiting_confirmation': return 'Проверить подтверждение клиента';
+    default: return 'Открыть заявку';
+  }
+}
+
 function MobileLoading({ label }: { label: string }) {
   return <div className="and19-loading" role="status" aria-label={label} aria-busy="true">
     <span className="and19-skeleton big" /><span className="and19-skeleton" /><span className="and19-skeleton short" />
@@ -126,6 +138,11 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
           {current.status === 'searching' && <p className="and19-search-active"><span className="and19-pulse" aria-hidden="true" />Поиск исполнителя продолжается · открыть отклики</p>}
           <span className="and19-link">Открыть заявку и связь с исполнителем <span aria-hidden="true">›</span></span>
         </a>
+        {current.status !== 'searching' &&
+          <nav className="and19-order-shortcuts" aria-label="Действия по активной заявке">
+            <a href={'#/order/' + current.id + '/chat'}>Чат заявки</a>
+            <a href={'#/order/' + current.id}>Подробности</a>
+          </nav>}
       </section>
       : <section className="and19-panel and19-empty"><strong>Активных заявок нет</strong><ApprovedEmptyScene kind="orders" /><p>Выберите необходимую помощь — здесь появятся только реальные этапы поиска и отклики в заявке.</p></section>}
     {orders.length > 1 && <a href="#/orders" className="and19-row-link">Все мои заявки <span>{orders.length} ›</span></a>}
@@ -172,8 +189,13 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
         {active[0].service!=='consult' && <ApprovedOrderTruck order={active[0]} />}
         <OrderFacts order={active[0]} />
         <MobileTimeline status={active[0].status} />
-        <span className="and19-link">Продолжить работу по заявке <span aria-hidden="true">›</span></span>
+        <span className="and19-link">{performerNextStep(active[0].status)} <span aria-hidden="true">›</span></span>
       </a>
+      <nav className="and19-order-shortcuts" aria-label="Разделы текущей заявки">
+        <a href={'#/order/' + active[0].id + '/chat'}>Чат</a>
+        <a href={'#/order/' + active[0].id + '/client'}>Клиент и ТС</a>
+        <a href={'#/order/' + active[0].id + '/finance'}>Расчёт</a>
+      </nav>
       {active.length > 1 && <a className="and19-row-link" href="#/work/jobs">Другие активные заявки: {active.length - 1} ›</a>}
     </section> : <section className="and19-panel and19-empty">
       <strong>{online ? 'Ожидаем подходящую заявку' : 'Вы не на линии'}</strong>
