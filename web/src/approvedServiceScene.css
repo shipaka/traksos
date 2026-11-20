@@ -11,6 +11,7 @@
   width:176px;
   height:105px;
   background-color:transparent;
+  background-image:var(--tr-service-mobile);
   background-size:704px 105px;
   background-repeat:no-repeat;
   background-position:0 0;
@@ -36,7 +37,15 @@
   z-index:2;
 }
 .app.role-client .desktop-quick-card>.tr-service-illustration {
-  opacity:.53;
+  opacity:.66;
+}
+/* 4x density (2816x420) desktop photos: same four corresponding services.
+   Never apply desktop scene to 618.png-approved Android or mobile browser. */
+@media(min-width:900px){
+  .app.role-client .desktop-quick-card>.tr-service-illustration {
+    background-image:var(--tr-service-desktop);
+    background-size:704px 105px;
+  }
 }
 .app.role-client .desktop-quick-card:hover>.tr-service-illustration {
   opacity:.79;
