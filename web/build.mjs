@@ -19,9 +19,6 @@ const opts = {
     'process.env.NODE_ENV': JSON.stringify(watch ? 'development' : 'production'),
     __API_URL__: JSON.stringify(process.env.API_URL ?? ''),
   },
-  // Root-relative CSS URLs below are served from web/public, copied verbatim to dist.
-  // They are not filesystem imports and must not be resolved by esbuild.
-  external: ['/traksos-russia-outline.svg', '/owner20-artwork-sprite.webp', '/owner20-photo-background-approved.webp'],
   loader: { '.css': 'css', '.svg': 'file', '.webp': 'file' },
   // These approved images are already copied as immutable public assets.
   // Resolve root-relative CSS URLs at runtime, not as src-relative imports.
