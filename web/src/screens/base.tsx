@@ -56,11 +56,11 @@ function InvoicePoints({ amount, value, onChange }: { amount: number | null; val
   );
 }
 
-export function BaseHome() {
+export function BaseHome({ initialTab='req' }: { initialTab?: 'req' | 'cars' | 'ready' | 'done' } = {}) {
   const preview=inServicePreview();
   const { me } = useMe();
   const cab = useLoad(() => baseGet('/api/base'), [], isBookingEvent);
-  const [tab, setTab] = useState<'req' | 'cars' | 'ready' | 'done'>('req');
+  const [tab, setTab] = useState<'req' | 'cars' | 'ready' | 'done'>(initialTab);
   const { busy, run } = useAction();
   if (!cab.data) return <main>{!preview&&<WorkerNotices audience="service" />}<Loading error={cab.error} /></main>;
   const { center, groups } = cab.data;
