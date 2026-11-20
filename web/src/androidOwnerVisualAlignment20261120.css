@@ -653,3 +653,301 @@ html.traksos-reduced-motion .and19-workspace button{transition:none!important}
    outline-offset:2px;
  }
 }
+
+/* 618.png — final home composition. Explicit classes protect authorized flows
+   from global card skins and keep 320–430px widths usable on actual Android. */
+@media(max-width:899px){
+ .app.role-client .and19-workspace,
+ .app.role-performer .and19-workspace{gap:8px}
+ .app.role-client .and19-service-symbol{
+   display:grid;place-items:center;
+   min-width:28px;min-height:31px;
+   color:#fff;
+ }
+ .app.role-client .and19-service-symbol svg{
+   display:block;width:29px;height:29px;
+   stroke-width:2.15;
+   filter:drop-shadow(0 2px 3px #05142466);
+ }
+ .app.role-client .and19-services>a{
+   min-height:85px;gap:4px;isolation:isolate;position:relative;
+ }
+ .app.role-client .and19-services>a>.tr-service-illustration{
+   position:absolute;inset:auto 0 1px;
+   z-index:-1;max-width:100%;opacity:.12!important;
+ }
+ .app.role-client .and19-services>a>.and19-service-label{
+   max-width:100%;font-size:clamp(9px,2.75vw,11px);
+   color:#fff;overflow-wrap:anywhere;
+   font-weight:800;
+ }
+ .app.role-client .and19-services>a:first-child>.tr-service-illustration{opacity:.07!important}
+ .app.role-client .and19-panel-title>strong::before{
+   content:'';display:inline-block;
+   width:9px;height:9px;vertical-align:2px;
+   border-radius:50%;margin-right:8px;
+   background:#42e47b;
+   box-shadow:0 0 0 3px #1a7a4842;
+ }
+ .app.role-client .and19-main-order .and19-order-heading-link,
+ .app.role-performer .and19-main-order .and19-order-heading-link{
+   grid-column:1/-1;min-width:0;color:inherit;text-decoration:none;
+ }
+ .app.role-client .and19-main-order .and19-order-heading-link .and19-panel-title,
+ .app.role-performer .and19-main-order .and19-order-heading-link .and19-panel-title{
+   min-width:0;margin-bottom:2px;
+ }
+ .app.role-client .and19-main-order .and19-order-photo-link,
+ .app.role-performer .and19-main-order .and19-order-photo-link{
+   display:block;position:relative;grid-column:1;min-width:0;align-self:start;
+   overflow:visible;border-radius:10px;color:inherit;
+ }
+ .app.role-client .and19-main-order .and19-order-photo-link>.tr-approved-order-truck,
+ .app.role-performer .and19-main-order .and19-order-photo-link>.tr-approved-order-truck{
+   width:100%;height:110px;max-width:none;min-width:0;display:block;
+   margin:0;border-radius:10px;border:1px solid #56788b;
+ }
+ .app.role-client .and19-main-order .and19-order-photo-link img,
+ .app.role-performer .and19-main-order .and19-order-photo-link img{
+   width:100%;height:100%;object-fit:cover;
+ }
+ .app.role-client .and19-photo-badge{
+   position:absolute;display:block;left:50%;bottom:-6px;
+   transform:translateX(-50%);min-width:max-content;
+   max-width:calc(100% - 6px);
+   padding:5px 8px;border-radius:9px;
+   border:1px solid #ffb668;
+   background:linear-gradient(145deg,#b8510d,#ec731a);
+   box-shadow:0 2px 8px #6a230b70;color:white;
+   font-size:10px;line-height:1;font-weight:800;text-align:center;
+ }
+ .app.role-client .and19-main-order .and19-order-photo-link+.and19-facts,
+ .app.role-performer .and19-main-order .and19-order-photo-link+.and19-facts{
+   grid-column:2;min-width:0;margin:0;
+ }
+ .app.role-client .and19-main-order .and19-facts,
+ .app.role-performer .and19-main-order .and19-facts{
+   gap:7px;min-width:0;align-self:center;
+ }
+ .app.role-client .and19-main-order .and19-facts .and19-issue,
+ .app.role-performer .and19-main-order .and19-facts .and19-issue{
+   display:flex;align-items:flex-start;gap:7px;
+   color:#f3f6fb;font-weight:800;
+   font-size:clamp(10px,2.7vw,12px);
+ }
+ .app.role-client .and19-main-order .and19-facts .and19-issue svg,
+ .app.role-performer .and19-main-order .and19-facts .and19-issue svg{
+   flex:none;width:24px;height:24px;color:#ff9b3d;
+ }
+ .app.role-client .and19-main-order .and19-facts .and19-order-address,
+ .app.role-performer .and19-main-order .and19-facts .and19-order-address{
+   display:flex;align-items:center;gap:7px;
+   font-size:11px;color:#d1e7f3;
+ }
+ .app.role-client .and19-main-order .and19-facts .and19-order-address svg,
+ .app.role-performer .and19-main-order .and19-facts .and19-order-address svg{
+   flex:none;width:19px;height:19px;color:#bddef0;
+ }
+ .app.role-client .and19-main-order .and19-facts .and19-vehicle,
+ .app.role-performer .and19-main-order .and19-facts .and19-vehicle{
+   font-size:10px;line-height:1.3;color:#bad5e2;
+ }
+ .app.role-client .and19-order-route,
+ .app.role-performer .and19-order-route{
+   grid-column:1/-1;min-width:0;
+   display:flex;align-items:center;gap:8px;
+   margin:6px 0 0;min-height:39px;
+ }
+ .app.role-client .and19-route-button,
+ .app.role-performer .and19-route-button{
+   display:flex;align-items:center;justify-content:center;gap:7px;
+   flex:0 0 42%;max-width:50%;
+   box-sizing:border-box;min-height:37px;padding:6px 8px;
+   border:1px solid #33b7ce;border-radius:10px;
+   color:#f5fdff;text-decoration:none;
+   background:linear-gradient(160deg,#146d88,#09536e);
+   font-size:11px;font-weight:800;
+   box-shadow:inset 0 1px #9feafa33;
+ }
+ .app.role-client .and19-route-button svg,
+ .app.role-performer .and19-route-button svg{
+   flex:none;width:19px;height:19px;
+ }
+ .app.role-client .and19-route-eta,
+ .app.role-performer .and19-route-eta{
+   display:flex;flex:1;align-items:center;gap:6px;min-width:0;
+   color:#ddebf3;font-size:10px;line-height:1.3;
+ }
+ .app.role-client .and19-route-eta svg,
+ .app.role-performer .and19-route-eta svg{
+   flex:none;width:18px;height:18px;
+ }
+ .app.role-client .and19-route-eta small,
+ .app.role-performer .and19-route-eta small{
+   display:block;color:#abc5d4;font-size:8px;
+ }
+ .app.role-client .and19-timeline,
+ .app.role-performer .and19-timeline{
+   grid-column:1/-1;margin:3px 0 0;padding:7px 0 0;
+   border-top:1px solid #345468;
+ }
+ .app.role-client .and19-timeline li,
+ .app.role-performer .and19-timeline li{gap:4px}
+ .app.role-client .and19-timeline li>span,
+ .app.role-performer .and19-timeline li>span{
+   width:24px;height:24px;
+ }
+ .app.role-client .and19-timeline li>span svg,
+ .app.role-performer .and19-timeline li>span svg{
+   width:15px;height:15px;stroke-width:2.35;
+ }
+ .app.role-client .and19-timeline li>time,
+ .app.role-performer .and19-timeline li>time{
+   color:#aac8d9;font-size:9px;line-height:1.1;
+   font-variant-numeric:tabular-nums;
+ }
+ .app.role-client .and19-client-cost{
+   display:flex;align-items:center;gap:9px;min-height:52px;
+   padding:9px 11px;background:linear-gradient(145deg,#19384d,#0d2334);
+   border-color:#477386;border-radius:13px;
+ }
+ .app.role-client .and19-client-cost>svg{
+   flex:none;width:28px;height:28px;color:#f5faff;
+ }
+ .app.role-client .and19-client-cost>span{
+   display:flex;flex-direction:column;flex:1;min-width:0;gap:3px;
+ }
+ .app.role-client .and19-client-cost>span strong{
+   font-size:12px;line-height:1.15;
+ }
+ .app.role-client .and19-client-cost>span small{
+   font-size:9px;line-height:1.25;
+ }
+ .app.role-client .and19-client-cost>strong{
+   flex:none;white-space:nowrap;
+   font-size:clamp(15px,4.5vw,20px);font-weight:850;
+ }
+ .app.role-client .and19-sos{min-height:49px;gap:9px;font-size:14px}
+ .app.role-client .and19-sos svg{width:22px;height:22px;flex:none}
+ .app.role-client .and19-assigned-performer>a svg,
+ .app.role-performer .and19-assigned-performer>a svg{
+   display:block;width:20px;height:20px;
+ }
+ .app.role-client .and19-assigned-icon svg,
+ .app.role-performer .and19-assigned-icon svg{
+   width:21px;height:21px;
+ }
+ /* The master uses the same card grammar as the owner, not a generic list. */
+ .app.role-performer .and19-metrics>a{
+   display:flex;flex-direction:row;align-items:center;gap:6px;
+   padding:9px 7px;min-height:57px;
+   background:linear-gradient(135deg,#1b3a50,#102638);
+ }
+ .app.role-performer .and19-metrics>a>svg{
+   flex:none;width:23px;height:23px;color:#f4a032;
+ }
+ .app.role-performer .and19-metrics>a>span{
+   min-width:0;display:flex;flex-direction:column;gap:2px;
+ }
+ .app.role-performer .and19-metrics small{font-size:9px}
+ .app.role-performer .and19-metrics strong{
+   font-size:clamp(11px,3vw,14px);
+   white-space:nowrap;
+ }
+ .app.role-performer .and19-main-order .and19-client-contact{
+   grid-column:1/-1;min-height:53px;
+   margin-top:3px;padding:6px 9px;
+ }
+ .app.role-performer .and19-main-order .and19-order-open{
+   grid-template-columns:minmax(104px,39%) minmax(0,1fr);
+   gap:9px 10px;
+ }
+ .app.role-performer .and19-stage-actions{
+   display:grid;grid-template-columns:1fr 1fr;gap:7px;
+   margin-top:9px;
+ }
+ .app.role-performer .and19-stage-actions>:is(a,button,span){
+   display:flex;align-items:center;justify-content:center;gap:7px;
+   box-sizing:border-box;min-width:0;min-height:48px;
+   padding:9px 6px;border:1px solid #ed944c;border-radius:12px;
+   font:800 13px/1.15 inherit;text-decoration:none;color:#fff;
+   background:linear-gradient(180deg,#ff8c30,#df590f);
+   box-shadow:0 5px 12px #b655173f;
+ }
+ .app.role-performer .and19-stage-actions svg{width:19px;height:19px;flex:none}
+ .app.role-performer .and19-stage-actions>.and19-stage-complete{
+   background:linear-gradient(135deg,#264d60,#17384c);
+   border-color:#7092a2;color:#e4f7fe;
+   box-shadow:none;
+ }
+ .app.role-performer .and19-stage-actions>.is-disabled{
+   border-color:#4f6675;color:#8398a5;
+   background:#253542;box-shadow:none;
+   cursor:not-allowed;
+ }
+ .app.role-performer .and19-stage-actions button:disabled{
+   filter:saturate(.6);opacity:.67;cursor:wait;
+ }
+ .app.role-performer .and19-performer-finance{
+   display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;
+   min-width:0;min-height:70px;
+   padding:8px 5px;
+   border:1px solid #416b80;border-radius:14px;
+   color:#f6faff;text-decoration:none;
+   background:linear-gradient(145deg,#173449,#0e2434);
+ }
+ .app.role-performer .and19-performer-finance>span{
+   min-width:0;display:grid;
+   grid-template-columns:20px 1fr;
+   align-content:center;align-items:center;gap:3px 4px;
+   padding:2px 6px;
+ }
+ .app.role-performer .and19-performer-finance>span+span{
+   border-left:1px solid #45687c;
+ }
+ .app.role-performer .and19-performer-finance>span svg{
+   grid-row:1/3;width:20px;height:20px;color:#ddeefa;
+ }
+ .app.role-performer .and19-performer-finance>span small{
+   font-size:9px;color:#b9d6e1;line-height:1.2;
+ }
+ .app.role-performer .and19-performer-finance>span strong{
+   display:block;min-width:0;grid-column:2;
+   font-size:clamp(10px,3vw,13px);font-weight:800;
+   line-height:1.15;
+   white-space:normal;
+ }
+ .app.role-performer .and19-performer-finance>span:last-child strong{color:#ffb34b}
+ .app.role-performer .and19-performer-finance em{
+   color:#cddfeb;font-style:normal;font-size:9px;
+ }
+ .app.role-performer .and19-quick{
+   display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;
+ }
+ .app.role-performer .and19-quick>a{
+   display:flex;flex-direction:column;align-items:center;justify-content:center;
+   min-height:66px;gap:5px;padding:9px 5px;
+   border-radius:12px;border:1px solid #456f85;
+   background:linear-gradient(140deg,#1b3a50,#102739);
+   color:#f3fbfe;font-size:11px;font-weight:750;text-align:center;
+ }
+ .app.role-performer .and19-quick svg{width:25px;height:25px}
+}
+@media(max-width:359px){
+ .app.role-client .and19-main-order .and19-order-photo-link>.tr-approved-order-truck,
+ .app.role-performer .and19-main-order .and19-order-photo-link>.tr-approved-order-truck{
+   height:95px;
+ }
+ .app.role-client .and19-client-cost>strong{font-size:14px}
+ .app.role-performer .and19-performer-finance>span{padding:2px 3px;grid-template-columns:17px 1fr;gap:2px}
+ .app.role-performer .and19-performer-finance>span svg{width:16px;height:16px}
+ .app.role-performer .and19-stage-actions>:is(a,button,span){font-size:11px}
+}
+@media(prefers-reduced-motion:reduce){
+ .app.role-client .and19-workspace *,
+ .app.role-performer .and19-workspace *{animation-duration:.01ms!important;transition:none!important}
+}
+html.traksos-reduced-motion .app.role-client .and19-workspace *,
+html.traksos-reduced-motion .app.role-performer .and19-workspace *{
+ animation-duration:.01ms!important;transition:none!important;
+}
