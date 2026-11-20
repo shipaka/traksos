@@ -52,7 +52,19 @@ try{
         await modal.getByRole('button',{name:'Принимаю'}).click();
         await modal.waitFor({state:'detached',timeout:15000});
       }
-      await page.locator(selector).waitFor({state:'visible',timeout:20000});
+      try {
+        await page.locator(selector).waitFor({state:'visible',timeout:20000});
+      } catch (error) {
+        const diagnostic=await page.evaluate(()=>({
+          hash:location.hash,
+          native:document.documentElement.className,
+          headings:[...document.querySelectorAll('h1')].slice(0,5).map(x=>x.textContent),
+          appClass:document.querySelector('.app')?.className,
+          content:document.querySelector('.desktop-content')?.textContent?.slice(0,250),
+          clientCount:document.querySelectorAll('.and19-client').length
+        }));
+        throw Error(role+': approved Android workspace missing '+JSON.stringify(diagnostic)+'; '+String(error));
+      }
       // Approved mobile workspaces must be visible immediately after login.
       // A first-run course or guided tour can be opened from Menu, not pushed
       // above the only actionable card on a small Android screen.
