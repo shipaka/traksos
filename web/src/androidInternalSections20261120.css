@@ -571,3 +571,86 @@ html.traksos-reduced-motion.traksos-native .app:not(.guest-app) .account-menu[op
    color:#e9f8fc;
  }
 }
+
+/* Secondary section chrome, driven by the one authorized role menu. */
+.tr-native-section-path{display:none}
+@media(max-width:899px){
+ html.traksos-native .app:not(.guest-app) .desktop-content>.tr-native-section-path{
+   display:flex;
+   align-items:center;
+   gap:9px;
+   min-width:0;
+   margin:12px 12px 0;
+   padding:8px;
+   border:1px solid #3a667c;
+   border-radius:14px;
+   color:#eef9fd;
+   background:linear-gradient(115deg,#19394d,#0e2537);
+   box-shadow:0 5px 15px rgba(0,11,23,.18);
+   animation:trAndroidInnerEnter .2s ease-out both;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-native-section-path>a{
+   display:inline-flex;
+   flex:none;
+   align-items:center;
+   justify-content:center;
+   box-sizing:border-box;
+   min-width:43px;
+   height:43px;
+   padding:8px;
+   border:1px solid #567c8e;
+   border-radius:11px;
+   color:#effaff;
+   text-decoration:none;
+   background:#224357;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-native-section-path>a:focus-visible{
+   outline:2px solid #6ce0e9;
+   outline-offset:1px;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-native-section-path>a:active{
+   background:#2c6279;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-native-section-path svg{
+   flex:none;width:21px;height:21px;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-native-section-current{
+   display:flex;flex:1;flex-direction:column;
+   min-width:0;gap:3px;
+   overflow-wrap:anywhere;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-native-section-current small{
+   font-size:9px;
+   color:#91c6d8;
+   letter-spacing:.045em;
+   font-weight:790;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-native-section-current strong{
+   font-size:clamp(11px,3.5vw,14px);
+   line-height:1.2;
+   color:#fff;
+   font-weight:800;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-native-section-menu{
+   gap:6px;
+   padding:8px 10px!important;
+   border-color:#d38344!important;
+   color:#fff!important;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-native-section-menu span{
+   font-size:10px;
+   font-weight:780;
+ }
+}
+@media(max-width:359px){
+ html.traksos-native .app:not(.guest-app) .tr-native-section-menu span{display:none}
+ html.traksos-native .app:not(.guest-app) .desktop-content>.tr-native-section-path{margin:9px 8px 0;gap:6px}
+}
+@media(prefers-reduced-motion:reduce){
+ html.traksos-native .app:not(.guest-app) .desktop-content>.tr-native-section-path{
+   animation:none!important;
+ }
+}
+html.traksos-reduced-motion.traksos-native .app:not(.guest-app) .desktop-content>.tr-native-section-path{
+ animation:none!important;
+}
