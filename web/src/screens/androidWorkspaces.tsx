@@ -7,6 +7,7 @@ import { OfferForm } from './search.tsx';
 import { insurancePresentation } from '../insurancePresentation.ts';
 import { APPROVED_VISUALS } from '../approvedVisuals.ts';
 import { ApprovedEmptyScene } from '../approvedEmptyScene.tsx';
+import { ApprovedServiceIllustration } from '../approvedServiceIllustration.tsx';
 
 /** Render a single role dashboard per viewport, rather than hiding a live component tree with CSS. */
 export function useMobileWorkspace() {
@@ -86,10 +87,10 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
       <img src={APPROVED_VISUALS.workspaceTruck} alt="" aria-hidden="true" />
     </div>
     <div className="and19-services" aria-label="Вызвать помощь">
-      <a href={disabledServices?.repair ? undefined : '#/sos'} aria-disabled={disabledServices?.repair || undefined}><span aria-hidden="true">⚒</span>Выездной мастер</a>
-      <a href={disabledServices?.tow ? undefined : '#/new/tow'} aria-disabled={disabledServices?.tow || undefined}><span aria-hidden="true">↗</span>Эвакуатор</a>
-      <a href={disabledServices?.service ? undefined : '#/services'} aria-disabled={disabledServices?.service || undefined}><span aria-hidden="true">▤</span>СТО</a>
-      <a href={disabledServices?.consult ? undefined : '#/new/consult'} aria-disabled={disabledServices?.consult || undefined}><span aria-hidden="true">◉</span>Консультация</a>
+      <a href={disabledServices?.repair ? undefined : '#/sos'} aria-disabled={disabledServices?.repair || undefined}><span aria-hidden="true">⚒</span>Выездной мастер<ApprovedServiceIllustration kind="repair" /></a>
+      <a href={disabledServices?.tow ? undefined : '#/new/tow'} aria-disabled={disabledServices?.tow || undefined}><span aria-hidden="true">↗</span>Эвакуатор<ApprovedServiceIllustration kind="tow" /></a>
+      <a href={disabledServices?.service ? undefined : '#/services'} aria-disabled={disabledServices?.service || undefined}><span aria-hidden="true">▤</span>СТО<ApprovedServiceIllustration kind="service" /></a>
+      <a href={disabledServices?.consult ? undefined : '#/new/consult'} aria-disabled={disabledServices?.consult || undefined}><span aria-hidden="true">◉</span>Консультация<ApprovedServiceIllustration kind="consult" /></a>
     </div>
     {insuranceInProgress.length > 0 && <section className="and19-insurance" role="region"
       aria-label="Мои активные страховые заявки">
