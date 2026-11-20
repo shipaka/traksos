@@ -82,7 +82,8 @@ docker compose build app || fail "Build failed. Existing app still running."
 if [[ -n "${TRAKSOS_SANDBOX_DIR:-}" ]]; then
   [[ -n "${TRAKSOS_SANDBOX_PROJECT:-}" ]] ||
     fail "TRAKSOS_SANDBOX_PROJECT required for an external sandbox."
-  [[ "$TRAKSOS_SANDBOX_PROJECT" != "$(docker compose ls --format json 2>/dev/null | grep -o '"Name":"deploy"' | head -1 | tr -d '"' | cut -d: -f2)" ]] ||
+  production_project="$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' "$db")"
+  [[ -n "$production_project" && "$TRAKSOS_SANDBOX_PROJECT" != "$production_project" ]] ||
     fail "External sandbox project must not be production."
   sandbox_dir="$(realpath -e "$TRAKSOS_SANDBOX_DIR")" ||
     fail "External sandbox directory not found."
