@@ -32,6 +32,8 @@ import './approvedCrossPlatformVisuals.css';
 import './androidDesignReview.css';
 // Last Android-only layer: prevent older desktop/mobile rules from hiding approved visuals.
 import './androidOwnerVisualAlignment20261120.css';
+// Android secondary routes and functional role menu; never restyle approved dashboards.
+import './androidInternalSections20261120.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
