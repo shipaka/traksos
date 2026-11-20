@@ -9,6 +9,8 @@ import { native } from '../native.ts';
 import { saveNewOrderDraft, readNewOrderDraft, clearNewOrderDraft, type SavedNewOrderDraft } from '../orderDraft.ts';
 import { insurancePresentation, isOpenInsuranceRequest } from '../insurancePresentation.ts';
 import { VehiclePhotoLink } from '../vehicleVisual.tsx';
+import { APPROVED_VISUALS } from '../approvedVisuals.ts';
+import { ApprovedEmptyScene } from '../approvedEmptyScene.tsx';
 import { AndroidClientWorkspace, useMobileWorkspace } from './androidWorkspaces.tsx';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
@@ -66,7 +68,7 @@ export function Home() {
           </div>
           <div className="launch-region" role="note">Зона запуска: Санкт-Петербург и Ленинградская область</div>
         </div>
-        <img className="client-hero-scania" src="/tracksos-approved-hero-owner-20261119.webp" alt="Грузовой автомобиль TrakSOS на дороге" loading="eager" />
+        <img className="client-hero-scania" src={APPROVED_VISUALS.workspaceTruck} alt="Иллюстрация грузовика на дороге, не транспорт клиента" loading="eager" />
       </section>
 
       {insuranceInProgress.length>0&&(()=>{
@@ -101,7 +103,13 @@ export function Home() {
           </div>
           <div className="desktop-section-heading"><h2>Мои активные заявки</h2><a href="#/orders">Все заявки →</a></div>
           <div className="desktop-active-orders">
-            {active.error ? <div className="desktop-empty-orders">Не удалось загрузить заявки. <a href="#/orders">Открыть раздел</a></div> : !active.data ? <div className="desktop-empty-orders">Загружаем заявки…</div> : live.length === 0 ? <div className="desktop-empty-orders">Сейчас нет активных выездов и консультаций. Страховые заявки показываются отдельно ниже.</div> : null}
+            {active.error ? <div className="desktop-empty-orders">Не удалось загрузить заявки. <a href="#/orders">Открыть раздел</a></div> : !active.data ? <div className="desktop-empty-orders">Загружаем заявки…</div> : live.length === 0 ? <div className="desktop-empty-orders tr-approved-empty-card">
+               <ApprovedEmptyScene kind="orders" />
+               <strong>Активных заявок пока нет</strong>
+               <span>Выберите помощь — здесь появится ход реальной заявки, связь с исполнителем и статусы.</span>
+               <a className="tr-approved-empty-action" href="#/sos">Создать заявку на помощь →</a>
+               <small>Иллюстрация маршрута — пример, не выполняемая заявка. Страховые заявки отображаются отдельно.</small>
+             </div> : null}
             {live.map((o: any) => (
               <a key={o.id} href={`#/order/${o.id}`} className="card hi" style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div className="between">
@@ -1029,6 +1037,11 @@ export function Garage({focusVehicleId}:{focusVehicleId?:string}={}) {
           <span><b>Мой парк</b><small>водители и лимиты, QR-наклейки, подтверждение заказов, ЭДО</small></span><span aria-hidden="true">›</span>
         </button>
       )}
+      {list.data?.length===0 && <section className="tr-approved-empty-card tr-approved-garage-empty" aria-label="Транспорт пока не добавлен">
+        <ApprovedEmptyScene kind="fleet" />
+        <strong>{isDriver?'Транспорт пока не закреплён за вами':'Ваш автопарк пока пуст'}</strong>
+        <p>{isDriver?'Попросите владельца автопарка назначить вашу машину.':'Добавьте грузовик или прицеп с помощью формы ниже. Фотография на иллюстрации не является вашей машиной.'}</p>
+      </section>}
       {!list.data ? <Loading error={list.error} /> : list.data.map((v: any) => (
         <div key={v.id} id={`garage-vehicle-${v.id}`} className="card">
           <VehiclePhotoLink brand={v.brand} model={v.model} year={v.year} plate={v.plate} href={`#/garage/${v.id}`}/>
