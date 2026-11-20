@@ -24,6 +24,10 @@
 .approved-pc-heading .approved-pc-eyebrow{font-size:11px;font-weight:750;letter-spacing:.12em;color:#f6a36a}
 .approved-pc-heading h1{font-size:clamp(22px,2.1vw,35px);margin:9px 0 5px;line-height:1.18;font-weight:850}
 .approved-pc-heading p{font-size:14px;color:#cbd8df;max-width:720px}
+.approved-pc:not(.approved-pc-admin) .approved-pc-heading{min-height:81px;padding:8px 17px;grid-template-columns:minmax(0,1fr) 135px}
+.approved-pc:not(.approved-pc-admin) .approved-pc-heading h1{font-size:23px;margin:4px 0 2px}
+.approved-pc:not(.approved-pc-admin) .approved-pc-heading p{font-size:12px;margin:0}
+.approved-pc:not(.approved-pc-admin) .approved-pc-heading>img{height:75px}
 .approved-pc-heading>img{height:135px;max-width:100%;width:100%;object-fit:contain;object-position:right center;filter:drop-shadow(0 5px 18px #ff833128)}
 .approved-pc-tabs{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
 .approved-pc-tabs button,.approved-pc-partner-switch a{
