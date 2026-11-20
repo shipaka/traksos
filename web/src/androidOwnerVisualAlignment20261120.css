@@ -951,3 +951,32 @@ html.traksos-reduced-motion .app.role-client .and19-workspace *,
 html.traksos-reduced-motion .app.role-performer .and19-workspace *{
  animation-duration:.01ms!important;transition:none!important;
 }
+
+/* Order camera tile is genuinely actionable: native photo picker/upload.
+ * In debug review it is an inert protected button styled identically. */
+@media(max-width:899px){
+ .app.role-performer .and19-quick>:is(label.and19-photo-capture,button.and19-photo-capture){
+   display:flex;position:relative;flex-direction:column;
+   align-items:center;justify-content:center;gap:5px;
+   box-sizing:border-box;min-height:66px;min-width:0;
+   padding:9px 5px;
+   border:1px solid #456f85;border-radius:12px;
+   background:linear-gradient(140deg,#1b3a50,#102739);
+   color:#f3fbfe;font:750 11px/1.35 system-ui,sans-serif;
+   text-decoration:none;text-align:center;cursor:pointer;
+   overflow:hidden;
+ }
+ .app.role-performer .and19-quick .and19-photo-capture>svg{
+   width:25px;height:25px;flex:none;
+ }
+ .app.role-performer .and19-photo-capture input[type=file]{
+   position:absolute;width:1px;height:1px;
+   opacity:0;overflow:hidden;pointer-events:none;
+ }
+ .app.role-performer .and19-quick .and19-photo-capture:focus-within{
+   outline:2px solid #6fe5f1;outline-offset:2px;
+ }
+ .app.role-performer .and19-quick .and19-photo-capture.is-busy{
+   opacity:.67;cursor:wait;
+ }
+}
