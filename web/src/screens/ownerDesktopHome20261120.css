@@ -207,3 +207,323 @@
 @media(min-width:900px){
  .guest-app.guest-home > .track-guest-tabbar{display:none!important}
 }
+
+
+/*
+ * PIXEL-REFERENCE PASS 20.11 — source: exact owner PNG 617.png (1536x864).
+ * Photographic areas now use cropped pixels FROM THAT OWNER IMAGE, not stock
+ * trucks or emoji placeholders. Headings, buttons and navigation remain live
+ * HTML and keyboard accessible.
+ * The photo sprite is decorative only: facts and click targets stay HTML.
+ */
+@media (min-width: 1281px) {
+  .guest-app.guest-home,
+  .guest-app.guest-home > .desktop-layout,
+  .guest-app.guest-home > .desktop-layout > .desktop-content,
+  .guest-app.guest-home .desktop-content > main.owner20-home {
+    margin:0!important;
+    padding:0!important;
+    border:0!important;
+    row-gap:0!important;
+    box-shadow:none!important;
+  }
+  .guest-app.guest-home > .desktop-layout {margin-top:0!important;transform:none!important}
+  .guest-app.guest-home .owner20-home{font-family:Arial,Inter,sans-serif}
+  .guest-app.guest-home .owner20-top {
+    display:grid!important;
+    grid-template-columns:230px 210px minmax(0,1fr) 150px 112px;
+    gap:20px!important;
+    height:66px!important;
+    min-height:66px!important;
+    padding:0 16px 0 44px!important;
+    align-items:center;
+    background:#06131a!important;
+    border-bottom:1px solid #1d3038!important;
+  }
+  .guest-app.guest-home .owner20-mark {
+    font-size:37px!important;
+    font-weight:900;letter-spacing:-1.7px;
+    justify-self:start;
+    gap:9px!important;
+  }
+  .guest-app.guest-home .owner20-mark svg{width:63px!important;height:44px!important}
+  .guest-app.guest-home .owner20-tagline{
+    font-size:12px!important;line-height:1.35!important;
+    margin:0!important;color:#d8dfe2!important;
+  }
+  .guest-app.guest-home .owner20-topnav {
+    min-width:0;
+    margin:0!important;
+    display:flex!important;
+    justify-content:space-evenly!important;
+    gap:8px!important;
+    font-size:13px!important;
+  }
+  .guest-app.guest-home .owner20-region{
+    margin:0!important;justify-self:center;
+    font-size:12px!important;
+  }
+  .guest-app.guest-home .owner20-signin {
+    width:112px!important;min-width:0!important;
+    height:38px!important;
+    display:flex;align-items:center;justify-content:center;
+    border:1px solid #d76727!important;
+    border-radius:10px!important;
+    padding:0!important;
+    background:#0d1921!important;
+  }
+  .guest-app.guest-home .owner20-hero{
+    height:324px!important;
+    min-height:324px!important;
+    position:relative;
+    overflow:hidden;
+    background:linear-gradient(180deg,#122028 0%,#0f1e26 48%,#070f15 80%,#0b1012 100%)!important;
+  }
+  .guest-app.guest-home .owner20-photo {
+    display:block!important;
+    position:absolute!important;inset:0!important;
+    background:
+      linear-gradient(90deg,#08141a 0%,#0d1920 29%,transparent 40%,transparent 60%,#101a1c 93%,#07141a),
+      radial-gradient(ellipse at 60% 18%,#efaf79 0%,#875c4c 26%,transparent 51%),
+      linear-gradient(180deg,#14232d 5%,#333d40 49%,#0c181b 67%,#192027 75%,#090e12 100%)!important;
+    filter:none!important;
+    opacity:1!important;
+  }
+  .guest-app.guest-home .owner20-photo::before{
+    content:"";
+    position:absolute;inset:0;
+    pointer-events:none;
+    background:
+      linear-gradient(169deg,transparent 75%,#40434a33 76%,#0b131b 76.5%,transparent 78%),
+      linear-gradient(12deg,#070c0e 1%,transparent 24%),
+      repeating-linear-gradient(176deg,transparent 0 31px,#afb0aa11 32px,#191e2311 33px,transparent 35px);
+    opacity:.86;
+  }
+  .guest-app.guest-home .owner20-photo::after{
+    content:"";
+    position:absolute;left:34.5%;top:10px;
+    width:456px;height:314px;
+    background-image:url('/owner20-artwork-sprite.webp')!important;
+    background-position:0 0!important;
+    background-size:1018px 446px!important;
+    background-repeat:no-repeat!important;
+    -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 9%,#000 96%,transparent 100%);
+    mask-image:linear-gradient(90deg,transparent 0%,#000 9%,#000 96%,transparent 100%);
+    z-index:1;
+    pointer-events:none;
+  }
+  .guest-app.guest-home .owner20-lead{
+    left:2.32%!important;top:26px!important;
+    max-width:60%!important;
+    z-index:2!important;
+  }
+  .guest-app.guest-home .owner20-lead h1{
+    font:800 clamp(33px,2.5vw,38px)/1.07 Arial,Inter,sans-serif!important;
+    letter-spacing:-.8px!important;
+    margin:0 0 12px!important;
+    color:#fbfcfd!important;
+  }
+  .guest-app.guest-home .owner20-lead h1 em{color:#ff6a25!important}
+  .guest-app.guest-home .owner20-lead>p{
+    font-size:17px!important;
+    line-height:1.32!important;
+    margin:0 0 18px!important;
+    color:#d7dfe3!important;
+  }
+  .guest-app.guest-home .owner20-hero-links{gap:24px!important}
+  .guest-app.guest-home .owner20-hero-links>a{
+    width:245px!important;
+    height:71px!important;
+    min-height:71px!important;
+    border-radius:13px!important;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .guest-app.guest-home .owner20-alert{background:linear-gradient(125deg,#ff7433,#e73d1f)!important}
+  .guest-app.guest-home .owner20-broadcast{background:#071c27e6!important}
+  .guest-app.guest-home .owner20-map{
+    right:1%!important;top:30px!important;
+    width:34.8%!important;
+    height:246px!important;
+    padding:13px 15px!important;
+    background:linear-gradient(118deg,#09151df0,#0b1b25f5)!important;
+    border:1px solid #314550!important;
+    border-radius:15px!important;
+    z-index:3!important;
+    box-shadow:0 14px 40px #000a;
+  }
+  .guest-app.guest-home .owner20-map h2{
+    font-size:16px!important;
+    letter-spacing:-.3px;
+    margin:0 0 8px!important;
+  }
+  .guest-app.guest-home .owner20-map-inner{height:171px!important;gap:8px!important}
+  .guest-app.guest-home .owner20-map-shape{
+    width:65%!important;
+    height:165px!important;
+    flex:0 0 65%;
+    display:block!important;
+    overflow:hidden!important;
+    background:transparent!important;
+  }
+  .guest-app.guest-home .owner20-map-source{
+    width:332px;height:165px;display:block;
+    background-image:url('/owner20-artwork-sprite.webp')!important;
+    background-position:-459px 0!important;
+    background-size:1018px 446px!important;
+    background-repeat:no-repeat!important;
+    -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 4%,#000 100%);
+    mask-image:linear-gradient(90deg,transparent 0%,#000 4%,#000 100%);
+  }
+  .guest-app.guest-home .owner20-map-legend{
+    width:35%!important;
+    font-size:11px!important;
+    line-height:1.25!important;
+    color:#d7e4e9!important;
+  }
+  .guest-app.guest-home .owner20-map-legend p{margin-bottom:12px!important}
+  .guest-app.guest-home .owner20-map-legend small{font-size:10px!important}
+  .guest-app.guest-home .owner20-map>a{
+    bottom:11px!important;right:12px!important;
+    border-radius:21px!important;
+    border-color:#63bcc4!important;
+  }
+  .guest-app.guest-home .owner20-quick{
+    margin:0 1% 0 2%!important;
+    height:85px!important;min-height:85px!important;
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;
+    border-radius:15px!important;
+    background:linear-gradient(130deg,#1b2d38,#0a1820)!important;
+    transform:none!important;
+  }
+  .guest-app.guest-home .owner20-quick>a{
+    justify-content:center!important;
+    gap:13px!important;
+    padding:14px 8px!important;
+  }
+  .guest-app.guest-home .owner20-quick-icon svg{width:44px!important;height:44px!important}
+  .guest-app.guest-home .owner20-quick b{font-size:16px!important}
+  .guest-app.guest-home .owner20-quick small{font-size:12px!important}
+  .guest-app.guest-home .owner20-features{
+    margin:16px 1% 0 2%!important;
+    gap:14px!important;
+    grid-template-columns:1.1fr 1.08fr 1fr 1fr 1fr!important;
+  }
+  .guest-app.guest-home .owner20-feature{
+    height:144px!important;
+    border:1px solid #3d5260!important;
+    border-radius:15px!important;
+    padding:13px 14px!important;
+    isolation:isolate;
+    background:linear-gradient(128deg,#243540,#0c1d28)!important;
+    box-shadow:inset 0 1px #ffffff0a;
+  }
+  .guest-app.guest-home .owner20-feature-title{
+    font-size:17px!important;
+    gap:9px!important;
+    position:relative;z-index:3!important;
+    text-shadow:0 1px 6px #071319;
+  }
+  .guest-app.guest-home .owner20-feature p{
+    max-width:78%!important;
+    font-size:12px!important;
+    line-height:1.35!important;
+    margin:8px 0 0!important;
+    color:#d2dce1!important;
+    z-index:3!important;
+    text-shadow:0 1px 5px #06141a;
+  }
+  .guest-app.guest-home .owner20-feature-illustration{
+    display:block!important;
+    position:absolute!important;
+    top:auto!important;left:auto!important;
+    right:0!important;bottom:0!important;
+    transform:none!important;
+    width:167px;height:128px;
+    z-index:1!important;
+    font-size:0!important;
+    background-image:url('/owner20-artwork-sprite.webp')!important;
+    background-size:1018px 446px!important;
+    background-repeat:no-repeat!important;
+    background-position:0 -317px!important;
+    opacity:1!important;
+    color:transparent!important;
+    -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.5) 16%,#000 38%);
+    mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.5) 16%,#000 38%);
+  }
+  .guest-app.guest-home .owner20-feature-ecu .owner20-feature-illustration{
+    width:147px;height:128px;background-position:-172px -317px!important;
+  }
+  .guest-app.guest-home .owner20-feature-parts .owner20-feature-illustration{
+    width:123px;height:128px;background-position:-324px -317px!important;
+  }
+  .guest-app.guest-home .owner20-feature-insurance .owner20-feature-illustration{
+    width:136px;height:125px;background-position:-452px -317px!important;
+  }
+  .guest-app.guest-home .owner20-feature-inspection .owner20-feature-illustration{
+    width:111px;height:126px;background-position:-594px -317px!important;
+  }
+  .guest-app.guest-home .owner20-feature-cta{
+    bottom:13px!important;left:15px!important;
+    border-color:#9fb4c0!important;
+    border-radius:22px!important;
+    padding:7px 15px!important;
+    font-size:12px!important;
+    color:#f6fbfd!important;
+    background:#15232a66;
+    z-index:4!important;
+  }
+  .guest-app.guest-home .owner20-bottom{
+    margin:17px 1% 0 2%!important;
+    gap:13px!important;
+    grid-template-columns:1.1fr 1.1fr .79fr .91fr!important;
+  }
+  .guest-app.guest-home .owner20-bottom-card{
+    height:177px!important;
+    padding:17px 16px!important;
+    isolation:isolate;
+    border-color:#38515e!important;
+    background:linear-gradient(120deg,#102631,#071924)!important;
+  }
+  .guest-app.guest-home .owner20-bottom-card b{
+    font-size:18px!important;
+    position:relative;z-index:2;
+  }
+  .guest-app.guest-home .owner20-bottom-card p{
+    font-size:12px!important;
+    line-height:1.38!important;
+    max-width:77%!important;
+    position:relative;z-index:2;
+  }
+  .guest-app.guest-home .owner20-bottom-air::after,
+  .guest-app.guest-home .owner20-bottom-club::after{
+    content:""!important;display:block!important;
+    position:absolute!important;right:0!important;bottom:0!important;
+    width:218px;height:168px;
+    background:url('/owner20-artwork-sprite.webp') -797px 0 / 1018px 446px no-repeat!important;
+    font-size:0!important;opacity:1!important;
+    pointer-events:none;
+    -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.15) 17%,#000 55%);
+    mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.15) 17%,#000 55%);
+    z-index:1;
+  }
+  .guest-app.guest-home .owner20-bottom-club::after{
+    width:213px;height:167px;
+    background-position:-797px -170px!important;
+  }
+  .guest-app.guest-home .owner20-bottom-card>span:not(.owner20-store){
+    z-index:3!important;
+    bottom:23px!important;
+    left:16px!important;
+    border-color:#e86b3d!important;
+    background:#081b2599;
+  }
+  .guest-app.guest-home .owner20-bottom-why ul{font-size:12px!important;line-height:1.65!important}
+  .guest-app.guest-home .owner20-disclaimer{margin-top:35px!important}
+  .guest-app.guest-home .trakbot-dock .trakbot-dock-launcher{
+    width:48px!important;min-width:48px!important;
+    height:48px!important;min-height:48px!important;
+  }
+  .guest-app.guest-home .trakbot-dock-launcher .trakbot-mascot{
+    --bot-size:39px!important;width:39px!important;height:39px!important;
+  }
+}
