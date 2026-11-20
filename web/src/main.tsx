@@ -363,6 +363,20 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   const route = useRoute();
   const [openGuestGroup, setOpenGuestGroup] = useState<string | null>(null);
   const [mobileCatalogOpen, setMobileCatalogOpen] = useState(false);
+  // The owner-approved desktop homepage has its own sole header.
+  // Mount that route without the legacy guest shell, rather than hiding
+  // a duplicated header/menu through CSS selectors.
+  const [standaloneDesktopHome, setStandaloneDesktopHome] = useState(
+    () => !native.isApp && window.matchMedia('(min-width: 900px)').matches
+  );
+  useEffect(() => {
+    if (native.isApp) return;
+    const media = window.matchMedia('(min-width: 900px)');
+    const sync = () => setStandaloneDesktopHome(media.matches);
+    media.addEventListener('change', sync);
+    sync();
+    return () => media.removeEventListener('change', sync);
+  }, []);
   const isAuthEntry = !me && ['login', 'register', 'join', 'reset', 'activate'].includes(route[0] ?? '');
   useEffect(() => {
     setOpenGuestGroup(null);
@@ -517,6 +531,15 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       !window.confirm('При выходе из аккаунта статус «На линии» отключится. Просто сверните приложение, если хотите продолжать получать заявки. Выйти?')) return;
     void logout();
   };
+  // Do not mount a second header, old sidebar or footer around the approved
+  // desktop homepage. Keep the existing mobile/Android and authenticated shell.
+  if (!me && route.length === 0 && standaloneDesktopHome) return (
+    <div className="app guest-app guest-home guest-home-standalone">
+      <NetworkStatus />
+      <div className="desktop-layout"><div className="desktop-content">{children}</div></div>
+      <TrakBotDock authenticated={false} />
+    </div>
+  );
   return (
     <div className={`app ${me ? "role-"+mode : (route.length === 0 ? "guest-app guest-home" : "guest-app")}`}>
       <header className="top">
