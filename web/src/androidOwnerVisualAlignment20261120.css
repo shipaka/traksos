@@ -516,3 +516,30 @@ html.traksos-reduced-motion .and19-workspace button{transition:none!important}
    font-variant-numeric:tabular-nums;
  }
 }
+
+/* Functional approved 618 account/availability strip, no nonworking chevron. */
+@media(max-width:899px){
+ .app.role-client .and19-client-role{
+   display:flex;
+   align-items:center;
+   justify-content:space-between;
+   gap:8px;
+   text-decoration:none;
+ }
+ .app.role-client .and19-client-role:focus-visible{outline:2px solid #ffad5f}
+ .app.role-client .and19-role-caption,
+ .app.role-performer .and19-role-caption{
+   display:flex;align-items:center;gap:8px;min-width:0;
+   font-size:clamp(11px,3.1vw,13px);font-weight:760;line-height:1.28;
+ }
+ .app.role-client .and19-role-caption svg,
+ .app.role-performer .and19-role-caption svg{
+   flex:none;width:19px;height:19px;color:#eff9ff;
+ }
+ .app.role-client .and19-role-chevron{
+   display:grid;place-items:center;flex:none;
+   width:24px;height:24px;font-size:22px;color:#d4e9f4;
+ }
+ .app.role-performer .and19-line{gap:5px}
+ .app.role-performer .and19-line .and19-role-caption{flex:1;min-width:0}
+}
