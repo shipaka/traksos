@@ -11,6 +11,7 @@ import { insurancePresentation, isOpenInsuranceRequest } from '../insurancePrese
 import { VehiclePhotoLink } from '../vehicleVisual.tsx';
 import { APPROVED_VISUALS } from '../approvedVisuals.ts';
 import { ApprovedEmptyScene } from '../approvedEmptyScene.tsx';
+import { ApprovedServiceIllustration } from '../approvedServiceIllustration.tsx';
 import { AndroidClientWorkspace, useMobileWorkspace } from './androidWorkspaces.tsx';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
@@ -89,10 +90,10 @@ export function Home() {
         </section>;
       })()}
       <section className="desktop-quick-links" aria-label="Выберите помощь">
-        <FleetShortcut href="#/sos" locked={false} className="desktop-quick-card"><span className="desktop-quick-icon">⚡</span><span><b>Выездной мастер</b><small>Электрика, диагностика, пневматика, шиномонтаж</small></span><span aria-hidden="true">↗</span></FleetShortcut>
-        <FleetShortcut href="#/new/tow" locked={restricted("tow")} className="desktop-quick-card"><span className="desktop-quick-icon">↗</span><span><b>Эвакуатор</b><small>{restricted("tow") ? "Ограниченный доступ · разрешает владелец" : "Тягач, полуприцеп или сцепка"}</small></span><span aria-hidden="true">↗</span></FleetShortcut>
-        <FleetShortcut href="#/services" locked={restricted("service")} className="desktop-quick-card"><span className="desktop-quick-icon">▤</span><span><b>СТО грузовых автомобилей</b><small>{restricted("service") ? "Ограниченный доступ · разрешает владелец" : "Выбор сервиса и запись на ремонт"}</small></span><span aria-hidden="true">↗</span></FleetShortcut>
-        <FleetShortcut href="#/new/consult" locked={restricted("consult")} className="desktop-quick-card"><span className="desktop-quick-icon">☎</span><span><b>Консультация по телефону</b><small>{restricted("consult") ? "Ограниченный доступ · разрешает владелец" : "Обсудить проблему со специалистом"}</small></span><span aria-hidden="true">↗</span></FleetShortcut>
+        <FleetShortcut href="#/sos" locked={false} className="desktop-quick-card"><span className="desktop-quick-icon">⚡</span><span><b>Выездной мастер</b><small>Электрика, диагностика, пневматика, шиномонтаж</small></span><ApprovedServiceIllustration kind="repair" /><span aria-hidden="true">↗</span></FleetShortcut>
+        <FleetShortcut href="#/new/tow" locked={restricted("tow")} className="desktop-quick-card"><span className="desktop-quick-icon">↗</span><span><b>Эвакуатор</b><small>{restricted("tow") ? "Ограниченный доступ · разрешает владелец" : "Тягач, полуприцеп или сцепка"}</small></span><ApprovedServiceIllustration kind="tow" /><span aria-hidden="true">↗</span></FleetShortcut>
+        <FleetShortcut href="#/services" locked={restricted("service")} className="desktop-quick-card"><span className="desktop-quick-icon">▤</span><span><b>СТО грузовых автомобилей</b><small>{restricted("service") ? "Ограниченный доступ · разрешает владелец" : "Выбор сервиса и запись на ремонт"}</small></span><ApprovedServiceIllustration kind="service" /><span aria-hidden="true">↗</span></FleetShortcut>
+        <FleetShortcut href="#/new/consult" locked={restricted("consult")} className="desktop-quick-card"><span className="desktop-quick-icon">☎</span><span><b>Консультация по телефону</b><small>{restricted("consult") ? "Ограниченный доступ · разрешает владелец" : "Обсудить проблему со специалистом"}</small></span><ApprovedServiceIllustration kind="consult" /><span aria-hidden="true">↗</span></FleetShortcut>
       </section>
 
       <div className="desktop-home-columns">
