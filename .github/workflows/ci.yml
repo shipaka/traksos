@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+    types: [opened, reopened, synchronize, edited, ready_for_review]
   workflow_dispatch:
   # 01:00 Moscow time (UTC+3). Scheduled starts can be delayed by GitHub.
   schedule:
