@@ -15,6 +15,8 @@ const sampleOrder = {
   status: 'en_route',
   description: 'Не набирает давление в тормозной системе',
   address: 'Пример адреса: Санкт-Петербург, КАД, 68 км',
+  performer_name: 'Мастер Иван · пример',
+  client_name: 'ООО «ТрансЛогистика» · пример',
   vehicle: { brand: 'Scania', model: 'R520', year: 2019 },
   money: { total: 10500 },
 };
