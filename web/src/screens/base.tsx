@@ -185,7 +185,7 @@ export function BaseHome({ initialTab='req' }: { initialTab?: 'req' | 'cars' | '
   );
 }
 
-function RequestCard({ b, onDone }: { b: any; onDone: () => void }) {
+export function RequestCard({ b, onDone }: { b: any; onDone: () => void }) {
   const { busy, run } = useAction();
   const [mode, setMode] = useState<'' | 'accept' | 'clarify' | 'decline'>('');
   const [time, setTime] = useState(b.whenTime ?? '');
