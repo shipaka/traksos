@@ -1,13 +1,15 @@
 // Кабинет партнёра-страховщика: только назначенные администратором страховые заявки.
 import { useState } from 'react';
 import { get, patch, fmtTime } from '../api.ts';
-import { useLoad, useAction } from '../ui.tsx';
+import { useLoad, useAction, useMe } from '../ui.tsx';
 import { insurancePresentation, insuranceQueueGroup } from '../insurancePresentation.ts';
 
 const labels: Record<string, string> = {
   sent_to_partner: 'Ждёт оформления', completed: 'Полис оформлен', rejected: 'Отказ',
 };
 export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}={}) {
+  const { me } = useMe();
+  const dualPartnerRole = !!me?.roles.includes('insurer') && !!me?.roles.includes('inspection_operator');
   const [workspace,setWorkspace]=useState<'insurance'|'inspection'|'finance'|'common'>(inspectionOnly?'inspection':'insurance');
   const finance=useLoad(()=>get<{entries:{id:string;kind:string;entry_type:string;amount_kopecks:string;note:string|null;created_at:string}[];totals:{kind:string;accrued:string;paid:string;balance:string}[]}>('/api/insurer/finance'),[]);
   const money=(value:string|number)=>new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB'}).format(Number(value)/100);
@@ -63,7 +65,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
       </header>
       <nav className="partner-workspaces" aria-label="Разделы кабинета партнёра">
         {([['insurance','Страховки'],['inspection','Техосмотры'],['finance','Финансы'],['common','Общее']] as const)
-          .filter(([key])=>!inspectionOnly||key!=='insurance')
+          .filter(([key])=>(!inspectionOnly||key!=='insurance') && !(dualPartnerRole && (key==='insurance'||key==='inspection')))
           .map(([key,label])=><button type="button" key={key} className={'btn ghost'+(workspace===key?' active':'')}
             aria-pressed={workspace===key} onClick={()=>setWorkspace(key)}>{label}</button>)}
       </nav>
