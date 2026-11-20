@@ -25,9 +25,20 @@
   /* The public PC hero layout remains 617.png. Its wordmark is harmonized
      to the exactly same lettering used in approved Android 618.png. */
   .guest-app.guest-home .owner20-mark {
-    background:url('/traksos-brand-logo-approved-618.png') center / 235px auto no-repeat!important;
+    background:none!important;
+    display:flex!important;
+    align-items:center!important;
+    width:235px!important;
+    flex:0 0 235px!important;
   }
-  .guest-app.guest-home .owner20-mark > * {opacity:0!important;}
+  .guest-app.guest-home .owner20-mark img {
+    display:block!important;
+    width:235px!important;
+    height:auto!important;
+    max-width:100%!important;
+    object-fit:contain;
+    opacity:1!important;
+  }
   .app.role-client .client-dashboard .tr-approved-empty-card {
     background:linear-gradient(145deg,#112a35,#091a24)!important;
     border-color:#345463!important;
