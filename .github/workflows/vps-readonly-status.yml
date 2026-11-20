@@ -40,7 +40,19 @@ jobs:
           known_hosts_file="$(mktemp)"
           trap 'rm -f "$key_file" "$known_hosts_file"' EXIT
           printf '%s\n' "$VPS_KEY" > "$key_file"
-          printf '%s\n' "$VPS_HOST_KEY" > "$known_hosts_file"
+          # Accept both a complete known_hosts line ("host ssh-ed25519 key")
+          # and a bare SSH public host key ("ssh-ed25519 key"). Regardless
+          # of format, PIN the saved Ed25519 public key to the configured
+          # host; never trust a freshly scanned unauthenticated host key.
+          pinned_key="$(printf '%s\n' "$VPS_HOST_KEY" | tr -d '\r' | awk '
+            $1 == "ssh-ed25519" { print $2; exit }
+            $2 == "ssh-ed25519" { print $3; exit }
+          ')"
+          if [[ ! "$pinned_key" =~ ^[A-Za-z0-9+/=]{40,}$ ]]; then
+            echo 'Invalid TRAKSOS_VPS_HOST_KEY format; paste server Ed25519 public key or known_hosts line.'
+            exit 64
+          fi
+          printf '%s ssh-ed25519 %s\n' "$VPS_HOST" "$pinned_key" > "$known_hosts_file"
           chmod 600 "$key_file" "$known_hosts_file"
           # No blanket StrictHostKeyChecking=no and no root shell: the
           # server's authorized_keys forced command only allows status.
