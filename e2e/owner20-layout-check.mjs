@@ -13,6 +13,12 @@ try {
   try{
    await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
    const root=page.locator('.owner20-home');await root.waitFor();
+   // Regression: never show two TrakSOS logos/navbars on the owner-approved PC home.
+   // The legacy outer shell must not mount at all (CSS hiding is insufficient).
+   if(await page.locator('.app > header.top, .desktop-sidebar, .site-footer').count()!==0)
+     throw Error(width+': legacy guest header/sidebar/footer mounted beneath approved desktop home');
+   if(await page.locator('header.owner20-top').count()!==1)
+     throw Error(width+': approved desktop header must appear exactly once');
    const cards=await page.locator('.owner20-quick>a').count();
    const features=await page.locator('.owner20-features>a').count();
    const bottom=await page.locator('.owner20-bottom>.owner20-bottom-card').count();
