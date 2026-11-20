@@ -100,7 +100,7 @@ export function TrakBotDock({ authenticated }: { authenticated: boolean }) {
         role="dialog" aria-label="TrakBot — личный помощник" aria-modal="false">
         <header className="trakbot-dock-head">
           <div className="trakbot-dock-brand"><TrakBotMascot reaction="hello" size="small" />
-            <span><b>TrackSalesBot</b><small>TrakBot · Технический помощник</small></span></div>
+            <span><b>TrakBot</b><small>Технический помощник TrakSOS</small></span></div>
           <button ref={closeRef} type="button" className="trakbot-dock-close" onClick={close} aria-label="Закрыть TrakBot">×</button>
         </header>
         {authenticated ? <TrakBotChat compact onNavigate={() => setOpen(false)}
