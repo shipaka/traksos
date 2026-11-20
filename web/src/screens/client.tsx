@@ -1040,7 +1040,10 @@ export function Garage({focusVehicleId}:{focusVehicleId?:string}={}) {
           <VehicleServiceApplication vehicleId={v.id} onCreated={() => setServiceHistoryVersion(v => v + 1)} />
           <VehicleServiceHistory id={v.id} isDriver={isDriver} refreshVersion={serviceHistoryVersion} />
           <VehicleHistory id={v.id} initialOpen={focusVehicleId===v.id} />
-          <a className="btn ghost small" href={`#/shop/history/${v.id}`}>Покупки и запчасти этой машины</a>
+          <div className="row" style={{gap:8, flexWrap:'wrap'}}>
+            <a className="btn ghost small" href={`#/shop?vehicleId=${encodeURIComponent(v.id)}`}>Подобрать запчасти для этой машины</a>
+            <a className="btn ghost small" href={`#/shop/history/${v.id}`}>История покупок</a>
+          </div>
           {!isDriver && (driverFor === v.id ? (
             <div className="stack">
               <input className="field" type="tel" value={driverPhone} onChange={(e) => setDriverPhone(e.target.value)} />
