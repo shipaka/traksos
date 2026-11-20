@@ -336,15 +336,20 @@ export class ShopService {
     const ownerId = user.owner_id ?? user.id;
     const safePage = Math.max(0, Math.min(1000, Math.floor(page)));
     const params: unknown[] = [ownerId];
-    const filters = ['client_id=$1'];
-    if (user.owner_id) { params.push(user.id); filters.push(`created_by=$${params.length}`); }
-    if (vehicleId) { params.push(vehicleId); filters.push(`vehicle_id=$${params.length}`); }
+    const filters = ['s.client_id=$1'];
+    if (user.owner_id) { params.push(user.id); filters.push(`s.created_by=${params.length}`); }
+    if (vehicleId) { params.push(vehicleId); filters.push(`s.vehicle_id=${params.length}`); }
     const where = filters.join(' and ');
     const take = 20;
     const rows = await this.db.query<any>(
-      `select * from shop_orders where ${where} order by created_at desc, id desc
-       limit $${params.length + 1} offset $${params.length + 2}`, [...params, take + 1, safePage * take]);
-    return { items: rows.slice(0, take).map((o: any) => this.orderView(o)), hasMore: rows.length > take, page: safePage };
+      `select s.*,d.status as courier_status
+         from shop_orders s left join shop_courier_deliveries d on d.shop_order_id=s.id
+        where ${where} order by s.created_at desc,s.id desc
+        limit ${params.length + 1} offset ${params.length + 2}`, [...params, take + 1, safePage * take]);
+    return { items: rows.slice(0, take).map((o: any) => ({
+      ...this.orderView(o),courierStatus:o.courier_status??null,
+      canConfirmCourierReceipt:!!o.courier_status&&o.created_by===user.id
+    })), hasMore: rows.length > take, page: safePage };
   }
 
   // ——— Клиент: заказ ———
@@ -410,9 +415,13 @@ export class ShopService {
 
   async myOrders(user: AuthUser) {
     const rows = await this.db.query(
-      `select * from shop_orders where client_id=$1 ${user.owner_id ? 'and created_by=$2' : ''} order by created_at desc limit 50`,
+      `select s.*,d.status as courier_status
+         from shop_orders s left join shop_courier_deliveries d on d.shop_order_id=s.id
+        where s.client_id=$1 ${user.owner_id ? 'and s.created_by=$2' : ''}
+        order by s.created_at desc limit 50`,
       user.owner_id ? [user.owner_id, user.id] : [user.id]);
-    return rows.map((o) => this.orderView(o));
+    return rows.map((o: any) => ({...this.orderView(o),courierStatus:o.courier_status??null,
+      canConfirmCourierReceipt:!!o.courier_status&&o.created_by===user.id}));
   }
 
   async cancelMine(user: AuthUser, id: string) {
