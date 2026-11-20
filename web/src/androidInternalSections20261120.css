@@ -150,10 +150,7 @@
    min-width:0;
  }
  /* Header and dropdown use the identical same premium cabinet palette. */
- html.traksos-native .app:not(.guest-app) .top {
-   background-color:#0b1e2c;
-   border-bottom:1px solid #2d5064;
- }
+ /* The 618.png-approved Android header remains owned by its prior layer. */
  html.traksos-native .app:not(.guest-app) .account-menu[open] > nav {
    color:#eaf6ff;
    background:linear-gradient(150deg,#1b3a4c,#0e2335);
@@ -181,25 +178,7 @@
    color:#ffe9e6;
    background:#4a2831;
  }
- /* Keep the bottom menu present and its active state understandable. */
- html.traksos-native .app:not(.guest-app) .tabbar {
-   bottom:calc(8px + env(safe-area-inset-bottom));
-   border:1px solid #4c6e80;
-   background:rgba(10,28,43,.97);
-   box-shadow:0 -5px 22px rgba(2,10,22,.32);
- }
- html.traksos-native .app:not(.guest-app) .tabbar a.on {
-   border:1px solid #e1843b;
-   background:linear-gradient(160deg,rgba(240,109,38,.35),rgba(47,53,62,.65));
-   color:#fff;
- }
- /* An active tab never depends on a repeating flash animation. */
- html.traksos-native .app:not(.guest-app) .tabbar a {
-   transition:background-color .13s ease,color .13s ease,transform .12s ease;
- }
- html.traksos-native .app:not(.guest-app) .tabbar a:active {
-   transform:scale(.96);
- }
+ /* First-screen bottom tabs keep their exact previously approved artwork. */
  /* Full-screen menu - shared source of truth with header and role routing. */
  html.traksos-native .app:not(.guest-app) .desktop-content
    > main.tr-mobile-menu-page {
