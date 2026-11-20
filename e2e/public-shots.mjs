@@ -7,7 +7,8 @@ await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch();
 try {
   for (const target of [
-    // Exact dimensions of the owner-approved 19 Nov reference (not the reference image itself).
+    // Owner's final 20 Nov reference (real JSX/CSS screenshot, not the reference PNG).
+    { name: '00-public-owner20-1536x864', viewport: { width: 1536, height: 864 }, isMobile: false },
     { name: '00-public-approved-target-1602x981', viewport: { width: 1602, height: 981 }, isMobile: false },
     { name: '00-public-canon-1672', viewport: { width: 1672, height: 941 }, isMobile: false },
     { name: '00-public-pc', viewport: { width: 1440, height: 900 }, isMobile: false },
@@ -21,8 +22,13 @@ try {
     });
     const page = await context.newPage();
     await page.goto(BASE + '/#/', { waitUntil: 'domcontentloaded' });
-    await page.locator('.public-landing').waitFor({ timeout: 15000 });
-    await page.locator('.public-service-tile').first().waitFor();
+    if(target.viewport.width >= 900){
+      await page.locator('.owner20-home').waitFor({ timeout: 15000 });
+      await page.locator('.owner20-quick a').first().waitFor();
+    }else{
+      await page.locator('.public-landing').waitFor({ timeout: 15000 });
+      await page.locator('.public-service-tile').first().waitFor();
+    }
     await page.evaluate(async () => { await document.fonts.ready; });
     await page.screenshot({ path: `${OUT}/${target.name}-viewport.png` });
     await page.screenshot({ path: `${OUT}/${target.name}.png`, fullPage: true });
