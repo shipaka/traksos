@@ -281,12 +281,14 @@ await m.getByText('Как прошло с клиентом?').waitFor({ timeout:
 await m.getByRole('button', { name: '4 из 5' }).click();
 await m.getByRole('button', { name: 'Оставить отзыв' }).click();
 await m.goto(BASE + '/#/work');
-await m.getByText('Долг по комиссии с наличных').waitFor();
+// Finance reports actual confirmed payout and only displays historical debt when present.
+await m.locator('.work-mobile-balance').getByText(/К выплате:/).waitFor();
 await shot(m, '11-master-balance');
 
 // Админ в браузере
 await a.goto(BASE + '/#/admin');
 await a.getByRole('button', { name: 'Распределение' }).click();
+await a.getByText('Настройки распределения и торгов', { exact: true }).click();
 await a.getByText('Сначала заявки нам').waitFor();
 await assertDashboardTheme(a, 'admin');
 await checkCabinetMenu(a, ['Все заявки', 'Деньги и выплаты', 'Настройки площадки', 'Модерация — очередь'], { shopTab: false });
