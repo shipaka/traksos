@@ -148,6 +148,8 @@ for (const path of ['web/src/trackVisual.css', 'web/src/trackPolish.css', 'web/s
 const shell = await read('web/src/main.tsx');
 const androidCss = await read('web/src/androidApproved20261119.css');
 const browserCss = await read('web/src/mobileBrowser.css');
+expect(browserCss.includes('@supports (aspect-ratio: 2 / 1)') && browserCss.includes('height: 156px !important') && browserCss.includes('top: auto !important;right: auto !important;bottom: auto !important;left: auto !important'),
+  'legacy Android WebView must reserve visible uncropped truck photo and reset absolute offsets');
 const androidAcceptance = await read('e2e/android-approved-workspaces.mjs');
 expect(androidAcceptance.includes("Object.defineProperty(window,'TrakSOSNative'") &&
   androidAcceptance.includes("['master_service'") &&

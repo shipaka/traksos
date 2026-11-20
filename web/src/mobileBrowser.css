@@ -99,11 +99,13 @@
     display: block !important;
     position: relative !important;
     inset: auto !important;
+    top: auto !important;right: auto !important;bottom: auto !important;left: auto !important;
     order: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
-    height: auto !important;
-    min-height: 0 !important;
+    /* Pre-Chrome-88 WebView ignores aspect-ratio: reserve real image height. */
+    height: 156px !important;
+    min-height: 156px !important;
     aspect-ratio: 2 / 1 !important;
     flex: 0 0 auto !important;
     margin: 0 !important;
@@ -115,6 +117,7 @@
   }
   html.traksos-compact-guest .guest-app .public-landing .public-hero-copy {
     position: relative !important;
+    top: auto !important;right: auto !important;bottom: auto !important;left: auto !important;
     order: 1 !important;
     width: 100% !important;
     max-width: none !important;
@@ -130,6 +133,7 @@
     font-size: 10px !important;
   }
   html.traksos-compact-guest .guest-app .public-landing .public-brand-hero h1 {
+    font-size: 26px !important; /* Chrome 74 fallback */
     font-size: clamp(23px, 5.7vw, 33px) !important;
     line-height: 1.16 !important;
     margin: 9px 0 !important;
@@ -165,6 +169,7 @@
   }
   html.traksos-compact-guest .guest-app .public-landing .public-hero-carousel {
     position: relative !important;
+    top: auto !important;right: auto !important;bottom: auto !important;left: auto !important;
     order: 2 !important;
     inset: auto !important;
     align-self: flex-end !important;
@@ -266,5 +271,16 @@
   html.traksos-compact-guest .guest-app .public-landing .public-service-tile {
     transition: none !important;
     transform: none !important;
+  }
+}
+
+/* Native Android 10 WebView 74 has no aspect-ratio; the 156px portrait fallback
+   above prevents a zero-height truck. Modern mobile Chrome keeps true 2:1. */
+@supports (aspect-ratio: 2 / 1) {
+  @media (max-width: 899px) {
+    html.traksos-compact-guest .guest-app .public-landing .public-hero-visual {
+      height: auto !important;
+      min-height: 0 !important;
+    }
   }
 }
