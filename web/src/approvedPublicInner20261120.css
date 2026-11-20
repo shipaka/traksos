@@ -399,3 +399,18 @@
     margin-right:auto!important;
   }
 }
+
+/* Nov 20 auth hover regression: the legacy stylesheet still used pink
+   #ff4b99 on the first login action. Keep the approved graphite/orange theme
+   on public auth pages without touching authenticated workspaces or Android. */
+.guest-app:not(.guest-home) .auth-entry-options button {
+  border-color: #526b77;
+  background: #112a34;
+  color: #e6f1f1;
+}
+.guest-app:not(.guest-home) .auth-entry-options button:hover,
+.guest-app:not(.guest-home) .auth-entry-options button:focus-visible {
+  border-color: #ff934d;
+  background: #203844;
+  color: #fff;
+}
