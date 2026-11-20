@@ -36,6 +36,7 @@ try {
       const style=getComputedStyle(document.querySelector('.public-hero-visual'));
       return {
         native:document.documentElement.classList.contains('traksos-native'),
+        home:!!document.querySelector('.guest-app.guest-home'),
         browser:document.documentElement.classList.contains('traksos-browser'),
         viewport:document.documentElement.clientWidth,
         scroll:document.documentElement.scrollWidth,
@@ -48,7 +49,7 @@ try {
         fit:style.backgroundSize,background:style.backgroundImage,
       };
     });
-    if(!g.native||g.browser||g.scroll>g.viewport+3||g.services!==6||g.login!==2)
+    if(!g.native||!g.home||g.browser||g.scroll>g.viewport+3||g.services!==6||g.login!==2)
       throw Error(width+'px Android public shell invalid: '+JSON.stringify(g));
     if(!g.hero||!g.photo||!g.copy||!g.arrows||g.fit!=='contain'||
        g.photo.height<100||g.photo.width>g.hero.width+3||

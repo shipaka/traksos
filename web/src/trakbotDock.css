@@ -243,10 +243,10 @@
    a full-width cyan-edged launcher with the ORIGINAL technician artwork,
    not the old small brown chat bubble. Workrooms/mobile remain compact. */
 @media(min-width:1251px){
-  .guest-app:has(.public-landing) .trakbot-dock{
+  .guest-app.guest-home .trakbot-dock{
     right:3.2%!important;bottom:20px!important;
   }
-  .guest-app:has(.public-landing) .trakbot-dock .trakbot-dock-launcher{
+  .guest-app.guest-home .trakbot-dock .trakbot-dock-launcher{
     display:flex!important;align-items:center!important;justify-content:flex-start!important;
     gap:14px!important;width:min(292px,23vw)!important;min-height:80px!important;
     border:2px solid #00d5f4!important;border-radius:999px!important;
@@ -254,15 +254,15 @@
     background:linear-gradient(105deg,#063455,#061e36)!important;
     color:#f4fbff!important;box-shadow:0 4px 19px #00192c55!important;
   }
-  .guest-app:has(.public-landing) .trakbot-dock-launcher .trakbot-mascot{
+  .guest-app.guest-home .trakbot-dock-launcher .trakbot-mascot{
     --bot-size:72px!important;width:72px!important;height:72px!important;
   }
-  .guest-app:has(.public-landing) .trakbot-dock-launcher .trakbot-dock-label{
+  .guest-app.guest-home .trakbot-dock-launcher .trakbot-dock-label{
     display:block!important;flex:1;min-width:0;max-width:160px;
     font-size:17px!important;font-weight:800!important;line-height:1.16!important;
     text-align:left!important;white-space:normal!important;
   }
-  .guest-app:has(.public-landing) .trakbot-dock-launcher::after{
+  .guest-app.guest-home .trakbot-dock-launcher::after{
     content:'›';color:#d5faff;font-size:28px;font-weight:400;
   }
 }

@@ -31,6 +31,7 @@ import { native } from './native.ts';
 // Native bridge is present before the bundled application starts.
 document.documentElement.classList.toggle('traksos-browser', !native.isApp);
 document.documentElement.classList.toggle('traksos-native', native.isApp);
+document.documentElement.classList.add('traksos-compact-guest');
 import { Login } from './screens/login.tsx';
 import { GuestExplore } from './screens/guestExplore.tsx';
 import { DemoPreviewGate } from './screens/demoPreview.tsx';
@@ -464,7 +465,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     ['/offer/privacy', 'Политика персональных данных'],
     ['/privacy', 'Мои персональные данные']];
   return (
-    <div className={`app ${me ? "role-"+mode : "guest-app"}`}>
+    <div className={`app ${me ? "role-"+mode : (route.length === 0 ? "guest-app guest-home" : "guest-app")}`}>
       <header className="top">
         {me ? <span className="logo">Trak<b>Sos</b></span>
           : <a href="#/" className="logo guest-approved-mark" aria-label="TrakSOS — главная">

@@ -1,7 +1,7 @@
 /* CURRENT OWNER-APPROVED HOME 19.11.2026.
    Scope to guest landing only; NEVER use the obsolete 14.11 layout as a
    release baseline. Earlier base CSS may supply non-design primitives. */
-.guest-app:has(.public-landing){background:#031725!important;}
+.guest-app.guest-home{background:#031725!important;}
 .guest-app .top{background:#031725!important;border-color:#11364a!important;}
 .guest-app .guest-site-nav>a:first-child{color:#f4fbff;border-bottom:3px solid #0ac7f7;}
 .guest-app .guest-site-nav .guest-nav-dropdown--all{
@@ -213,12 +213,12 @@
 /* CANON 19 NOV — page structure independent of deleted finalCanon.css.
    All approved front-page links remain real React links; this is presentation only. */
 @media(min-width:900px){
-  .guest-app:has(.public-landing) .desktop-sidebar{display:none!important}
-  .guest-app:has(.public-landing) .desktop-layout{display:block!important;max-width:none!important}
-  .guest-app:has(.public-landing) .desktop-content{max-width:none!important;width:100%!important;padding:0!important;color:#f8fcff!important;background:#031725!important}
-  .guest-app:has(.public-landing) .desktop-content>main.public-landing{max-width:none!important;width:100%!important;margin:0!important;padding:0 0 40px!important;gap:0!important}
-  .guest-app:has(.public-landing) .top{min-height:76px!important;padding:10px 3.5%!important;background:#041725!important}
-  .guest-app:has(.public-landing) .track-site-search{display:none!important}
+  .guest-app.guest-home .desktop-sidebar{display:none!important}
+  .guest-app.guest-home .desktop-layout{display:block!important;max-width:none!important}
+  .guest-app.guest-home .desktop-content{max-width:none!important;width:100%!important;padding:0!important;color:#f8fcff!important;background:#031725!important}
+  .guest-app.guest-home .desktop-content>main.public-landing{max-width:none!important;width:100%!important;margin:0!important;padding:0 0 40px!important;gap:0!important}
+  .guest-app.guest-home .top{min-height:76px!important;padding:10px 3.5%!important;background:#041725!important}
+  .guest-app.guest-home .track-site-search{display:none!important}
   .guest-app .public-landing .public-landing-head{display:none!important}
   .guest-app .public-landing .public-brand-hero{
     position:relative!important;display:flex!important;min-height:510px!important;height:510px!important;
@@ -338,11 +338,11 @@
    With the guest search removed there is room for the approved single-row
    desktop navigation. Do not affect the partner and authenticated headers. */
 @media(min-width:1251px){
-  .guest-app:has(.public-landing) .top:has(.guest-site-nav){
+  .guest-app.guest-home .top{
     display:flex!important;flex-wrap:nowrap!important;align-items:center!important;
     gap:clamp(12px,1.5vw,24px)!important;
   }
-  .guest-app:has(.public-landing) .top .guest-site-nav{
+  .guest-app.guest-home .top .guest-site-nav{
     display:flex!important;flex:1 1 auto!important;min-width:0!important;
     justify-content:space-evenly!important;align-items:center!important;
     gap:clamp(9px,1vw,17px)!important;
