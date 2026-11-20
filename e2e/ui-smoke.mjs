@@ -16,6 +16,10 @@ try {
     await page.goto(BASE + '/#/', { waitUntil: 'domcontentloaded' });
     if(width>=900){
       await page.locator('.owner20-home').waitFor({timeout:15000});
+      assert(await page.locator('.app > header.top, .desktop-sidebar, .site-footer').count()===0,
+        'Final PC owner page must not mount legacy double navbar, sidebar or footer');
+      assert(await page.locator('header.owner20-top').count()===1,
+        'Final PC should mount exactly one approved header');
       assert(await page.locator('.owner20-quick>a').count()===5,'Final PC services row must have 5 links');
       assert(await page.locator('.owner20-features>a').count()===5,'Final PC features row must have 5 links');
       assert(await page.locator('.owner20-bottom>.owner20-bottom-card').count()===4,'Final PC lower row must have 4 cards');
@@ -168,12 +172,16 @@ try {
     // Only post-17 Nov owner-approved visuals may be loaded by the active public site.
     for (const name of [
       'tracksos-approved-hero-owner-20261119.webp',
-      'tracksos-approved-logo-owner-20261119.webp'
+      'traksos-brand-logo-approved-618.png'
     ]) {
       const check = await page.evaluate(async (asset) => {
         const res = await fetch('/' + asset);
+        // A 404 may be served as index.html by SPA fallback: reject before
+        // decoding instead of throwing InvalidStateError in Chromium.
+        if (!res.ok || !(res.headers.get('content-type') ?? '').startsWith('image/')) return false;
         const blob = await res.blob();
-        const img=await createImageBitmap(blob);
+        const img=await createImageBitmap(blob).catch(() => null);
+        if (!img) return false;
         const widthFloor=asset.includes('-hq')?1700:asset.includes('partner-')?1400:0;
         const bytesFloor=asset.includes('logo-owner')?2_000:asset.includes('map')?10_000:asset.includes('-hq')?280_000:asset.includes('partner-')?180_000:50_000;
         return res.ok && blob.type.startsWith('image/') && blob.size>bytesFloor && img.width>=widthFloor;
