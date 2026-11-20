@@ -8,6 +8,7 @@ import { insurancePresentation } from '../insurancePresentation.ts';
 import { APPROVED_VISUALS } from '../approvedVisuals.ts';
 import { ApprovedEmptyScene } from '../approvedEmptyScene.tsx';
 import { ApprovedServiceIllustration } from '../approvedServiceIllustration.tsx';
+import { ApprovedOrderTruck } from '../approvedOrderTruck.tsx';
 
 /** Render a single role dashboard per viewport, rather than hiding a live component tree with CSS. */
 export function useMobileWorkspace() {
@@ -114,6 +115,7 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
       : current ? <section className="and19-panel and19-main-order">
         <a className="and19-order-open" href={'#/order/' + current.id} aria-label={'Открыть заявку №' + current.number}>
           <OrderTitle order={current} />
+          {current.service!=='consult' && <ApprovedOrderTruck order={current} />}
           <OrderFacts order={current} />
           {current.status !== 'searching' && Number.isFinite(current.money?.total) &&
             <div className="and19-price">
@@ -167,6 +169,7 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
     {active.length ? <section className="and19-panel and19-main-order">
       <a className="and19-order-open" href={'#/order/' + active[0].id}>
         <OrderTitle order={active[0]} />
+        {active[0].service!=='consult' && <ApprovedOrderTruck order={active[0]} />}
         <OrderFacts order={active[0]} />
         <MobileTimeline status={active[0].status} />
         <span className="and19-link">Продолжить работу по заявке <span aria-hidden="true">›</span></span>
