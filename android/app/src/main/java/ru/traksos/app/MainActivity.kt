@@ -529,6 +529,17 @@ class WebBridge(private val activity: MainActivity) {
     @JavascriptInterface
     fun isApp(): Boolean = true
 
+    /** Available only in the distinct debug APK; never bypasses backend login. */
+    @JavascriptInterface
+    fun isPreviewBuild(): Boolean = BuildConfig.DEBUG
+
+    /** Emulator proof of the real React review screen (no customer data logged). */
+    @JavascriptInterface
+    fun designReviewReady(role: String) {
+        if (BuildConfig.DEBUG && role in setOf("client", "driver", "master", "tow"))
+            android.util.Log.i("TrakSOSRuntime", "DESIGN_REVIEW_RENDERED=" + role)
+    }
+
     /** Экран ошибки: «Повторить» */
     @JavascriptInterface
     fun retry() = activity.reload()
