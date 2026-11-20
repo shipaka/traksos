@@ -441,7 +441,25 @@ function Money({ d }: { d: any }) {
   );
 }
 
+/** Offer professional reference only during a real master's arrived/working order.
+ * The API is the authoritative source of role access and available documents. */
+function MasterTechbaseShortcut() {
+  const catalog = useLoad<{audiences:string[];documents:{id:string}[]}>(() =>
+    get('/api/techbase?audience=master'), []);
+  if (!catalog.data?.audiences?.includes('master') || !catalog.data.documents?.length) return null;
+  return <a className="master-techbase-shortcut" href="#/techbase/master"
+    aria-label="ТехБаза мастера — схемы, диагностика и инструкции"
+    title="Открыть профессиональную ТехБазу">
+    <svg viewBox="0 0 24 24" width="19" height="19" fill="none"
+      stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 6.5c-2.7-1.7-5.6-2.1-9-1.3V19c3.4-.8 6.3-.4 9 1.3 2.7-1.7 5.6-2.1 9-1.3V5.2c-3.4-.8-6.3-.4-9 1.3Z"/>
+      <path d="M12 6.5v13.8"/>
+    </svg>
+    <span>ТехБаза</span>
+  </a>;
+}
 function PerformerActions({ d, onDone }: { d: any; onDone: () => void }) {
+  const { me } = useMe();
   const { busy, run } = useAction();
   const [extras, setExtras] = useState<{ name: string; amount: number | null }[]>(d.bill?.extras ?? []);
   const [now, setNow] = useState(Date.now());
@@ -454,6 +472,9 @@ function PerformerActions({ d, onDone }: { d: any; onDone: () => void }) {
   const [dropReason, setDropReason] = useState('');
   const [showDrop, setShowDrop] = useState(false);
   const step = (action: string, text: string) => run(() => post(`/api/orders/${d.id}/step`, { action }), text).then((r) => r && onDone());
+  // Never offer master-only links to tow drivers, clients, or before actual arrival.
+  const techbaseEligible = d.you === 'performer' && me?.roles?.includes('master') &&
+    d.service !== 'tow' && d.service !== 'consult' && ['arrived', 'working'].includes(d.status);
 
   if(d.unilateralClosure && ['pending_client','disputed'].includes(d.unilateralClosure.status))
     return <div className="card hi">
@@ -474,7 +495,11 @@ function PerformerActions({ d, onDone }: { d: any; onDone: () => void }) {
         <span className="note">После отметки «На месте» может начаться учёт оплачиваемого времени по действующим условиям заявки. Если въезд через КПП затруднён, сообщите клиенту в чате до подтверждения.</span>
         <button className="btn" disabled={busy} onClick={() => step('arrive', 'Клиент получил вашу отметку о прибытии')}>Подтвердить: я на месте</button>
       </div>}
-      {d.status === 'arrived' && <button className="btn" disabled={busy} onClick={() => step('start_work', 'Работа началась')}>Начать работу</button>}
+      {d.status === 'arrived' && <div className="master-arrival-tools">
+        <button className="btn" disabled={busy} onClick={() => step('start_work', 'Работа началась')}>Начать работу</button>
+        {techbaseEligible && <MasterTechbaseShortcut />}
+      </div>}
+      {d.status === 'working' && techbaseEligible && <div className="master-working-techbase"><MasterTechbaseShortcut /></div>}
 
       {['working', 'awaiting_confirmation'].includes(d.status) && (
         <div className="card">
