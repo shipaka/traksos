@@ -1,0 +1,384 @@
+/*
+ * TrakSOS — authenticated Android inner surfaces (20 Nov 2026).
+ * Scope: NATIVE PHONE + secondary routes. Never alter the approved 618.png
+ * client/master dashboards, desktop 617.png, data, roles or server actions.
+ *
+ * Deliberate motion: a single fast page reveal, menu disclosure and pressed
+ * feedback. No endless bounces, flashing prices/statuses, layout-shifting
+ * hover animations or motion when user requests reduced motion.
+ */
+@keyframes trAndroidInnerEnter {
+  from {opacity:.84;transform:translate3d(0,6px,0)}
+  to {opacity:1;transform:translate3d(0,0,0)}
+}
+@keyframes trAndroidMenuOpen {
+  from {opacity:0;transform:translate3d(0,-5px,0)}
+  to {opacity:1;transform:translate3d(0,0,0)}
+}
+
+@media (max-width:899px) {
+ html.traksos-native .app:not(.guest-app) {
+   --tr-inner-deep:#081724;
+   --tr-inner-surface:#112b3e;
+   --tr-inner-surface-2:#15364a;
+   --tr-inner-line:#3b647a;
+   --tr-inner-text:#eef7fc;
+   --tr-inner-muted:#b6cddd;
+   --tr-inner-action:#f47623;
+ }
+ html.traksos-native .app:not(.guest-app) .desktop-content {
+   min-width:0;
+   overflow-wrap:break-word;
+ }
+ /* One common inner-screen language for every authenticated role. */
+ html.traksos-native .app:not(.guest-app) .desktop-content
+   > main:not(.client-dashboard):not(.work-live-dashboard) {
+   box-sizing:border-box;
+   width:100%;
+   max-width:100%;
+   min-width:0;
+   padding:16px 12px calc(122px + env(safe-area-inset-bottom));
+   color:var(--tr-inner-text);
+   animation:trAndroidInnerEnter .26s cubic-bezier(.18,.65,.25,1) both;
+ }
+ html.traksos-native .app:not(.guest-app) .desktop-content
+   > main:not(.client-dashboard):not(.work-live-dashboard) > h1,
+ html.traksos-native .app:not(.guest-app) .desktop-content
+   > main:not(.client-dashboard):not(.work-live-dashboard) > .between > h1 {
+   font-size:clamp(22px,6.3vw,29px);
+   font-weight:830;
+   line-height:1.18;
+   letter-spacing:-.025em;
+   color:#fff;
+   border-left:3px solid var(--tr-inner-action);
+   padding-left:10px;
+   margin:4px 0 14px;
+   text-wrap:balance;
+ }
+ html.traksos-native .app:not(.guest-app) .desktop-content
+   > main:not(.client-dashboard):not(.work-live-dashboard) h2,
+ html.traksos-native .app:not(.guest-app) .desktop-content
+   > main:not(.client-dashboard):not(.work-live-dashboard) h3 {
+   color:#f0f8fc;
+   letter-spacing:-.01em;
+   line-height:1.25;
+ }
+ html.traksos-native .app:not(.guest-app) .desktop-content
+   > main:not(.client-dashboard):not(.work-live-dashboard) :is(.card,.panel,.opt,.empty) {
+   box-sizing:border-box;
+   min-width:0;
+   border-radius:15px;
+   border-color:var(--tr-inner-line);
+   background-color:var(--tr-inner-surface);
+   box-shadow:0 6px 18px rgba(1,10,24,.18),inset 0 1px rgba(225,245,255,.035);
+ }
+ html.traksos-native .app:not(.guest-app) .desktop-content
+   > main:not(.client-dashboard):not(.work-live-dashboard) .card:not(.hi) {
+   background-image:linear-gradient(150deg,rgba(26,62,83,.34),transparent 72%);
+ }
+ html.traksos-native .app:not(.guest-app) .desktop-content
+   > main:not(.client-dashboard):not(.work-live-dashboard) .card.hi {
+   border-color:#ed8540;
+   box-shadow:0 0 0 1px rgba(232,119,47,.11),0 7px 18px #07121c44;
+ }
+ html.traksos-native .app:not(.guest-app) .desktop-content
+   > main:not(.client-dashboard):not(.work-live-dashboard) :is(.note,small) {
+   line-height:1.44;
+ }
+ /* Controls retain existing success/error semantics and all real handlers. */
+ html.traksos-native .app:not(.guest-app) .desktop-content
+   > main:not(.client-dashboard):not(.work-live-dashboard)
+   :is(.field,input:not([type=checkbox]):not([type=radio]):not([type=range]),textarea,select) {
+   box-sizing:border-box;
+   max-width:100%;
+   min-width:0;
+   border-radius:12px;
+   border-color:#52748a;
+   background-color:#0c2538;
+   color:#eef8fe;
+   transition:border-color .14s ease,box-shadow .14s ease,background-color .14s ease;
+ }
+ html.traksos-native .app:not(.guest-app) .desktop-content
+   > main:not(.client-dashboard):not(.work-live-dashboard)
+   :is(.field,input:not([type=checkbox]):not([type=radio]):not([type=range]),textarea,select):focus-visible {
+   outline:2px solid #6cdee7;
+   outline-offset:1px;
+   border-color:#6cdee7;
+   box-shadow:0 0 0 3px rgba(53,188,210,.13);
+ }
+ html.traksos-native .app:not(.guest-app) .desktop-content
+   > main:not(.client-dashboard):not(.work-live-dashboard)
+   .btn:not(.ghost):not(.good):not(.bad) {
+   border-color:#f9a25a;
+   border-radius:12px;
+   color:#fff;
+   background:linear-gradient(155deg,#fd8b32,#e45b14);
+   box-shadow:0 5px 13px rgba(201,80,23,.22);
+ }
+ html.traksos-native .app:not(.guest-app) .desktop-content
+   > main:not(.client-dashboard):not(.work-live-dashboard)
+   :is(button,.btn,summary,a):focus-visible {
+   outline:2px solid #7ce5ed;
+   outline-offset:2px;
+ }
+ html.traksos-native .app:not(.guest-app) .desktop-content
+   > main:not(.client-dashboard):not(.work-live-dashboard)
+   :is(.btn,button,summary) {
+   -webkit-tap-highlight-color:transparent;
+   touch-action:manipulation;
+ }
+ html.traksos-native .app:not(.guest-app) .desktop-content
+   > main:not(.client-dashboard):not(.work-live-dashboard)
+   :is(.btn,button):active:not(:disabled) {
+   transform:scale(.985);
+   filter:brightness(1.07);
+ }
+ html.traksos-native .app:not(.guest-app) .desktop-content
+   > main:not(.client-dashboard):not(.work-live-dashboard) :is(.btn,button):disabled {
+   cursor:not-allowed;
+ }
+ html.traksos-native .app:not(.guest-app) .desktop-content
+   > main:not(.client-dashboard):not(.work-live-dashboard) :is(.tabs,.tablist) {
+   max-width:100%;
+   min-width:0;
+   overscroll-behavior-x:contain;
+   scrollbar-width:thin;
+ }
+ html.traksos-native .app:not(.guest-app) .desktop-content
+   > main:not(.client-dashboard):not(.work-live-dashboard) table {
+   max-width:100%;
+   min-width:0;
+ }
+ /* Header and dropdown use the identical same premium cabinet palette. */
+ html.traksos-native .app:not(.guest-app) .top {
+   background-color:#0b1e2c;
+   border-bottom:1px solid #2d5064;
+ }
+ html.traksos-native .app:not(.guest-app) .account-menu[open] > nav {
+   color:#eaf6ff;
+   background:linear-gradient(150deg,#1b3a4c,#0e2335);
+   border:1px solid #55788b;
+   box-shadow:0 16px 36px rgba(0,9,24,.46);
+   animation:trAndroidMenuOpen .17s ease-out both;
+ }
+ html.traksos-native .app:not(.guest-app) .account-menu > nav a {
+   min-height:45px;
+   border-radius:10px;
+   color:#e5f5fc;
+   transition:background-color .13s ease;
+ }
+ html.traksos-native .app:not(.guest-app) .account-menu > nav a:active {
+   background-color:#294b60;
+ }
+ html.traksos-native .app:not(.guest-app) .account-menu-heading {
+   color:#ffad70;
+   border-color:#49677a;
+ }
+ html.traksos-native .app:not(.guest-app) .account-menu-logout {
+   min-height:46px;
+   border:1px solid #bd6866;
+   border-radius:11px;
+   color:#ffe9e6;
+   background:#4a2831;
+ }
+ /* Keep the bottom menu present and its active state understandable. */
+ html.traksos-native .app:not(.guest-app) .tabbar {
+   bottom:calc(8px + env(safe-area-inset-bottom));
+   border:1px solid #4c6e80;
+   background:rgba(10,28,43,.97);
+   box-shadow:0 -5px 22px rgba(2,10,22,.32);
+ }
+ html.traksos-native .app:not(.guest-app) .tabbar a.on {
+   border:1px solid #e1843b;
+   background:linear-gradient(160deg,rgba(240,109,38,.35),rgba(47,53,62,.65));
+   color:#fff;
+ }
+ /* An active tab never depends on a repeating flash animation. */
+ html.traksos-native .app:not(.guest-app) .tabbar a {
+   transition:background-color .13s ease,color .13s ease,transform .12s ease;
+ }
+ html.traksos-native .app:not(.guest-app) .tabbar a:active {
+   transform:scale(.96);
+ }
+ /* Full-screen menu - shared source of truth with header and role routing. */
+ html.traksos-native .app:not(.guest-app) .desktop-content
+   > main.tr-mobile-menu-page {
+   padding-top:10px;
+   display:flex;
+   flex-direction:column;
+   gap:14px;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-mobile-menu-hero {
+   min-width:0;
+   display:flex;
+   align-items:center;
+   justify-content:space-between;
+   gap:10px;
+   padding:18px 16px;
+   border:1px solid #4b7183;
+   border-radius:18px;
+   background:linear-gradient(120deg,#1d4258,#112b3f 65%,#122636);
+   box-shadow:0 10px 24px rgba(0,9,26,.25);
+ }
+ html.traksos-native .app:not(.guest-app) .tr-mobile-menu-hero > div{
+   flex:1;
+   min-width:0;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-mobile-menu-eyebrow{
+   font-size:9px;
+   color:#74dfed;
+   font-weight:800;
+   letter-spacing:.065em;
+ }
+ html.traksos-native .app:not(.guest-app) .desktop-content
+   > main.tr-mobile-menu-page .tr-mobile-menu-hero h1{
+   margin:6px 0;
+   padding:0;
+   border:0;
+   font-size:clamp(23px,6.3vw,29px);
+   color:#fff;
+   line-height:1.15;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-mobile-menu-hero p{
+   margin:0;
+   font-size:11px;
+   color:#c9e0eb;
+   line-height:1.4;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-mobile-menu-hero > svg{
+   flex:none;width:42px;height:42px;
+   padding:9px;
+   box-sizing:border-box;
+   color:#ffab6d;
+   border-radius:13px;
+   background:#1b3748;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-mobile-menu-section {
+   display:flex;
+   flex-direction:column;
+   gap:9px;
+   min-width:0;
+   border:1px solid #3d6075;
+   border-radius:16px;
+   padding:12px 11px;
+   background:linear-gradient(145deg,#162f42,#0f2233);
+   box-shadow:0 6px 16px rgba(0,8,20,.17);
+ }
+ html.traksos-native .app:not(.guest-app) .tr-mobile-menu-section-head{
+   display:flex;align-items:center;gap:10px;
+   min-width:0;padding:1px 2px 4px;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-mobile-menu-section-icon{
+   display:grid;place-items:center;flex:none;
+   width:35px;height:35px;
+   border:1px solid #d98648;
+   background:linear-gradient(145deg,#593621,#1e3443);
+   border-radius:11px;
+   color:#ffb279;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-mobile-menu-section-icon svg{
+   width:18px;height:18px;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-mobile-menu-section-head > span:last-child{
+   flex:1;min-width:0;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-mobile-menu-section-head h2{
+   margin:0 0 3px;padding:0;
+   font-size:14px;
+   line-height:1.25;
+   color:#fff;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-mobile-menu-section-head small{
+   display:block;
+   font-size:10px;
+   line-height:1.35;
+   color:#b9d4e4;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-mobile-menu-links{
+   display:flex;flex-direction:column;gap:5px;min-width:0;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-mobile-menu-links > :is(a,button){
+   display:flex;
+   width:100%;
+   min-width:0;
+   min-height:46px;
+   align-items:center;
+   justify-content:space-between;
+   box-sizing:border-box;
+   gap:9px;
+   padding:9px 12px;
+   border:1px solid #3e647b;
+   border-radius:10px;
+   background:#1c3a4c;
+   color:#ecf8fd;
+   font-size:12px;
+   font-weight:720;
+   line-height:1.3;
+   text-decoration:none;
+   text-align:left;
+   overflow-wrap:anywhere;
+   transition:border-color .16s ease,background-color .16s ease,transform .13s ease;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-mobile-menu-links > a > span:first-child{
+   flex:1;
+   min-width:0;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-mobile-menu-links > a:active{
+   transform:scale(.993);
+   background:#28536a;
+   border-color:#7bb9cd;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-mobile-menu-chevron{
+   flex:none;
+   font-size:21px;
+   line-height:1;
+   color:#87dbe8;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-mobile-menu-logout{
+   cursor:pointer;
+   border-color:#b76b71!important;
+   background:#482a36!important;
+   color:#ffefed!important;
+   font-weight:770;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-mobile-menu-home{
+   display:flex;align-items:center;justify-content:center;gap:9px;
+   min-height:47px;
+   border:1px solid #dd8547;
+   border-radius:12px;
+   padding:11px;
+   background:linear-gradient(135deg,#d8661f,#9c4315);
+   color:#fff;
+   text-decoration:none;
+   font-size:12px;
+   font-weight:790;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-mobile-menu-home svg {
+   flex:none;
+   width:18px;height:18px;
+ }
+}
+/* Only pointer devices: no distracting movement while scrolling a phone. */
+@media (hover:hover) and (pointer:fine) and (max-width:899px) {
+ html.traksos-native .app:not(.guest-app) .tr-mobile-menu-links > a:hover {
+   border-color:#6198ad;
+   background:#245069;
+ }
+ html.traksos-native .app:not(.guest-app) .desktop-content
+   > main:not(.client-dashboard):not(.work-live-dashboard) .card:hover {
+   border-color:#62839a;
+ }
+}
+@media (prefers-reduced-motion:reduce) {
+ html.traksos-native .app:not(.guest-app) .desktop-content > main,
+ html.traksos-native .app:not(.guest-app) .account-menu[open]>nav {
+   animation:none!important;
+ }
+ html.traksos-native .app:not(.guest-app) :is(a,button,input,select,textarea) {
+   transition:none!important;
+ }
+}
+html.traksos-reduced-motion.traksos-native .app:not(.guest-app) .desktop-content > main,
+html.traksos-reduced-motion.traksos-native .app:not(.guest-app) .account-menu[open]>nav {
+ animation:none!important;
+}
