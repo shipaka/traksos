@@ -16,6 +16,9 @@ const features = [
   ['◇','Страхование','ОСАГО, КАСКО, грузы и автопарк','insurance','Подробнее'],
   ['▤','Техосмотр','Для грузового транспорта','inspection','Подробнее']
 ] as const;
+function rememberAllowed(key:string){
+  if(key==='van'||key==='tow'||key==='sto'||key==='consult'||key==='parts'||key==='insurance'||key==='inspection') rememberGuestService(key);
+}
 function route(key:string) { return '#/explore/' + key; }
 function TruckLogo() {
   return <svg viewBox="0 0 64 42" fill="none" stroke="currentColor" strokeWidth="2.1" aria-hidden="true">
@@ -25,7 +28,7 @@ function TruckLogo() {
 }
 function Feature({item,index}:{item:typeof features[number];index:number}) {
   const [symbol,title,description,key,action] = item;
-  return <a href={route(key)} className={'owner20-feature owner20-feature-'+key} onClick={() => rememberGuestService(key)}>
+  return <a href={route(key)} className={'owner20-feature owner20-feature-'+key} onClick={() => rememberAllowed(key)}>
     <div className="owner20-feature-title"><span aria-hidden="true">{symbol}</span><b>{title}</b></div>
     <p>{description}</p>
     <span className="owner20-feature-illustration" aria-hidden="true">{index === 0 ? '▤' : index===1?'▦':index===2?'⚙':index===3?'◇':'✓'}</span>
@@ -67,7 +70,7 @@ export function OwnerDesktopHome20261120() {
       </aside>
     </section>
     <nav className="owner20-quick" aria-label="Основные услуги" id="public-services">
-      {primary.map(([symbol,title,hint,key])=><a href={route(key)} key={key} onClick={() => rememberGuestService(key)}><span className="owner20-quick-icon" aria-hidden="true">{symbol}</span><span><b>{title}</b><small>{hint}</small></span></a>)}
+      {primary.map(([symbol,title,hint,key])=><a href={route(key)} key={key} onClick={() => rememberAllowed(key)}><span className="owner20-quick-icon" aria-hidden="true">{symbol}</span><span><b>{title}</b><small>{hint}</small></span></a>)}
     </nav>
     <section className="owner20-features" aria-label="Дополнительные сервисы">
       {features.map((item,index)=><Feature key={item[3]} item={item} index={index}/>)}
