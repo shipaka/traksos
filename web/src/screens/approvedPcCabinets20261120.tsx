@@ -5,13 +5,14 @@
  * Desktop only; Android/mobile continues to use the already-approved routes.
  */
 import {useEffect, useState, type ReactNode} from 'react';
-import {get, onEvent} from '../api.ts';
+import {get, onEvent, post} from '../api.ts';
 import {RoadsideMap} from './roadsideMap.tsx';
-import {useLoad, useMe} from '../ui.tsx';
+import {useAction, useLoad, useMe} from '../ui.tsx';
 import {STATUS, SERVICES} from '../dict.ts';
 import {APPROVED_VISUALS} from '../approvedVisuals.ts';
 import {VehicleModelPhoto} from '../vehicleVisual.tsx';
 import {OfferForm} from './search.tsx';
+import {OrderPhotoGallery, OrderPhotoCapture} from './orderPhotos.tsx';
 import {BaseHome} from './base.tsx';
 import {native} from '../native.ts';
 
@@ -211,6 +212,77 @@ function CustomerDesk({owner}:{owner:boolean}){
       </Pane><Bot message={owner?'Помогу с историей техники и заявками.':'Помогу с неисправностью или заявкой.'}/></>}/>
   </main>;
 }
+
+/** One selected real order; status buttons never get ahead of the server state. */
+function SelectedPerformerCase({order,tow}:{order:any;tow:boolean}){
+  const detail=useLoad(()=>get<any>('/api/orders/'+order.id),[order.id],e=>e.type==='order'&&String(e.orderId)===String(order.id));
+  const {busy,run}=useAction();
+  const d=detail.data||order;
+  const v=transport(d);
+  const step=d.you==='performer'&&d.status==='accepted' ? {action:'depart',label:'Выехал'}
+    : d.you==='performer'&&d.status==='en_route' ? {action:'arrive',label:'Подтвердить прибытие'}
+    : d.you==='performer'&&d.status==='arrived' ? {action:'start_work',label:'Начать работу'}
+    : null;
+  const steps:[string,string][]=[['accepted','Принято'],['en_route','Выехал'],['arrived','На месте'],['working','Работа'],['completed','Завершено']];
+  const index=steps.findIndex(([id])=>id===d.status);
+  const takeStep=async()=>{
+    if(!step || busy)return;
+    // "At location" is a manual declaration, not proof of GPS coordinates.
+    if(step.action==='arrive'&&!window.confirm('Подтвердить фактическое прибытие к клиенту? После отметки может начаться расчёт времени.'))return;
+    const ok=await run(()=>post('/api/orders/'+encodeURIComponent(String(order.id))+'/step',{action:step.action}),
+      step.action==='depart'?'Клиент увидит, что вы выехали':step.action==='arrive'?'Клиент получил отметку о прибытии':'Начало работы зафиксировано');
+    if(ok)detail.reload();
+  };
+  return <section className="approved-pc-case approved-pc-performer-case">
+    <header><div><small>{tow?'ЭВАКУАЦИЯ':'ВЫЕЗДНОЙ РЕМОНТ'} · ВЫБРАННАЯ ЗАЯВКА</small>
+      <h2>№{text(d.number||d.id)} · {SERVICES[d.service]?.name||text(d.service)}</h2></div>
+      <span className="approved-pc-stage">{statusName(d)}</span></header>
+    <div className="approved-pc-performer-content">
+      <div>
+        <div className="approved-pc-photo-with-tech">
+          <Photo v={v} href={d.vehicleId?'#/garage/'+d.vehicleId:undefined}/>
+          {!tow&&<a href="#/techbase/master" aria-label="Открыть ТехБазу по диагностике" className="approved-pc-techbook">▣ ТехБаза</a>}
+        </div>
+        <h3>{vehicleLabel(v)}</h3>
+        {v?.plate&&<p><b>Номер:</b> {v.plate}</p>}
+        {v?.trailerPlate&&<p><b>Прицеп / полуприцеп:</b> {v.trailerPlate}</p>}
+        <p><b>Проблема:</b> {text(d.description||d.problem,'Подробности в заявке')}</p>
+        <p><b>Место:</b> {text(d.address||d.estimate?.zoneName,'Адрес в заявке')}</p>
+        {tow&&<p><b>Доставка:</b> {text(d.destination,'Уточняется в заявке')}</p>}
+        <p><b>Клиент:</b> {text(d.client?.company_name||d.client?.name||d.client_name,'Уточняется')}</p>
+        {d.comment&&<p><b>Комментарий клиента:</b> {d.comment}</p>}
+        {d.lat!=null&&d.lng!=null&&<RoadsideMap point={{lat:d.lat,lng:d.lng}} kind="request" />}
+        {detail.error&&<p className="approved-pc-caveat">Не удалось загрузить дополнительные сведения: {String(detail.error?.message||detail.error)}</p>}
+      </div>
+      <div className="approved-pc-performer-next">
+        <Pane title="Ход выполнения">
+          <div className="approved-pc-stage-steps">
+            {steps.map(([id,label],i)=><span key={id} className={d.status===id?'current':index>i?'done':''}>{label}</span>)}
+          </div>
+          {step&&<button className="approved-pc-primary approved-pc-next-step" type="button"
+            disabled={busy||!detail.data} onClick={takeStep}>{busy?'Отправляем…':step.label}</button>}
+          {!detail.data&&!detail.error&&<p className="approved-pc-caveat">Проверяем возможность следующего действия…</p>}
+          {d.status==='en_route'&&<p className="approved-pc-caveat">Отметку «На месте» ставьте только после фактического прибытия; это не GPS-подтверждение.</p>}
+          {d.status==='working'&&<a className="approved-pc-primary approved-pc-next-step"
+            href={'#/order/'+d.id}>Оформить выполненную работу и расчёт</a>}
+          {d.status==='awaiting_confirmation'&&<p>Работа ожидает подтверждения клиента. Оплата не считается состоявшейся.</p>}
+          {(d.status==='completed'||d.status==='cancelled')&&<p>Заявка закрыта. История доступна для просмотра.</p>}
+          <div className="approved-pc-case-actions">
+            <a href={'#/order/'+d.id+'?chat=1'}>Чат по заявке</a>
+            <a href={'#/order/'+d.id}>Все действия и история</a>
+            {!tow&&<a href="#/techbase/master">ТехБаза</a>}
+          </div>
+        </Pane>
+        <Pane title={tow?'Погрузка и передача':'Отчёт по работе'}>
+          <OrderPhotoCapture orderId={String(d.id)} reviewOnly={d.you!=='performer'||['completed','cancelled'].includes(d.status)}/>
+          <OrderPhotoGallery orderId={String(d.id)}/>
+          <p className="approved-pc-caveat">Загруженные материалы прикрепляются к выбранному заказу. Закрытие и оплата подтверждаются отдельно.</p>
+        </Pane>
+      </div>
+    </div>
+  </section>;
+}
+
 function PerformDesk({tow}:{tow:boolean}){
   const {me}=useMe();
   const jobs=useLoad(()=>get<any[]>('/api/orders?as=performer'),[],e=>e.type==='order');
@@ -254,19 +326,7 @@ function PerformDesk({tow}:{tow:boolean}){
           onClick={()=>setChosen(String(o.id))} badge={statusName(o)}/>)}
         {!planned.length&&<Empty>Записей на следующие дни нет.</Empty>}
       </Pane></>}
-      center={selected?<section className="approved-pc-case">
-        <header><div><small>ВЫБРАННЫЙ ЗАКАЗ</small><h2>{tow?'Эвакуация':'Ремонт'} №{text(selected.number||selected.id)}</h2></div><span className="approved-pc-stage">{statusName(selected)}</span></header>
-        <div className="approved-pc-case-main"><Photo v={transport(selected)}/><div className="approved-pc-facts">
-          <h3>{vehicleLabel(transport(selected))}</h3>
-          <p><b>Проблема:</b> {text(selected.description||selected.problem,'Описание в заявке')}</p>
-          <p><b>Место:</b> {text(selected.address||selected.estimate?.zoneName)}</p>
-          {tow&&<p><b>Куда доставить:</b> {text(selected.destination,'В заявке')}</p>}
-        </div></div>
-        <div className="approved-pc-case-actions"><a className="approved-pc-primary" href={'#/order/'+selected.id}>Открыть заказ и следующий шаг</a>
-          {!tow&&<a href="#/techbase/master">ТехБаза ›</a>}
-          <a href="#/work/chats">Чат</a></div>
-        <p className="approved-pc-caveat">Фотографии, расчёт, подтверждения и смена статуса — только в серверной карточке заказа.</p>
-      </section>:<Pane title="Рабочая смена"><Empty>Нет принятых активных заявок. Перейдите в новые предложения.</Empty>
+      center={selected?<SelectedPerformerCase key={selected.id} order={selected} tow={tow}/>:<Pane title="Рабочая смена"><Empty>Нет принятых активных заявок. Перейдите в новые предложения.</Empty>
         <button className="approved-pc-primary" onClick={()=>setMode('offers')}>Проверить предложения</button></Pane>}
       right={<><Calendar items={all}/><Pane title="Моя смена"><p>Статус: <b>{text(me?.performer?.line_status)}</b></p>
         <a className="approved-pc-small-link" href="#/work/me/schedule">Расписание и доступность →</a></Pane>
