@@ -120,5 +120,5 @@ test('fleet owner sees purchase but cannot access driver-only courier handoff co
   const own=ok(await t.api('GET','/api/shop/orders',undefined,driver.token));
   assert.equal(own.find((o:any)=>o.id===order.id)?.canConfirmCourierReceipt,true);
   const receipt=ok(await t.api('GET',`/api/shop/orders/${order.id}/receipt-code`,undefined,driver.token));
-  assert.match(receipt.code,/^\\d{6}$/);
+  assert.match(receipt.code,/^\d{6}$/);
 });
