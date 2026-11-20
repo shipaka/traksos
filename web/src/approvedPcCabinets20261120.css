@@ -1,6 +1,6 @@
 /* 20 Nov 2026 approved PC workspaces. Desktop only; Android/mobile remains unchanged.
    Each screen consumes live role-scoped APIs and existing workflows. */
-/* Shared visual primitives also style the approved admin dashboard on mobile browsers.\n   Other roles continue to mount approved-pc only at desktop widths. */\n@media(min-width:0px){
+/* Shared visual primitives also style the approved admin dashboard on mobile browsers.\n   Other roles continue to mount approved-pc only at desktop widths. */\n@media(min-width:1000px){
 .approved-pc{
  --pc-ink:#06131a;--pc-panel:#0b2029;--pc-edge:#247585;--pc-hot:#ff791e;--pc-teal:#4ac5d4;
  color:#f5f9fc;min-width:0;max-width:1800px;margin:0 auto;padding:12px 16px 32px;
@@ -289,4 +289,116 @@ html.traksos-browser .approved-pc-admin .approved-pc-russia::before {
   background-image:url('/traksos-russia-outline.svg')!important;
   background-position:center;background-size:contain;background-repeat:no-repeat;
   opacity:.8;pointer-events:none;
+}
+
+/* Browser-only approved administrator dashboard at phone widths. Desktop role
+   primitives above remain desktop-only; native Android is never restyled. */
+@media (max-width:999px) {
+ html.traksos-browser .approved-pc-admin {
+   --pc-edge:#247585;--pc-hot:#ff791e;--pc-teal:#4ac5d4;
+   box-sizing:border-box;color:#f5f9fc;background:#071721;display:flex;flex-direction:column;
+ }
+ html.traksos-browser .approved-pc-admin *,
+ html.traksos-browser .approved-pc-admin *::before,
+ html.traksos-browser .approved-pc-admin *::after {box-sizing:border-box}
+ html.traksos-browser .approved-pc-admin a {color:#e2f8fb;text-decoration:none}
+ html.traksos-browser .approved-pc-admin :is(h1,h2,h3) {color:#fff;margin:0}
+ html.traksos-browser .approved-pc-admin .approved-pc-eyebrow {
+   font-size:10px;letter-spacing:.1em;color:#f6a36a;font-weight:800;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-heading {
+   position:relative;overflow:hidden;border:1px solid #37647a;border-radius:16px;
+   background:linear-gradient(105deg,#122b38,#091922 70%,#122d3a);
+   box-shadow:0 7px 21px #0007;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-heading::before {
+   content:"";position:absolute;left:0;top:10px;bottom:10px;width:4px;
+   background:#ff791e;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-heading p {
+   color:#cbd8df;margin:5px 0 0;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-metrics a,
+ html.traksos-browser .approved-pc-admin .approved-pc-pane {
+   min-width:0;border:1px solid #367784;border-radius:12px;
+   background:linear-gradient(140deg,#12313c,#091c27);
+   box-shadow:0 5px 15px #0006;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-metrics a {
+   display:flex;flex-direction:column;gap:7px;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-metrics small {
+   font-size:12px;color:#c1d8dd;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-metrics strong {
+   color:#ffb46a;font-weight:850;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-pane h2 {
+   font-size:16px;margin:0 0 10px;padding:0 0 9px;
+   border-bottom:1px solid #315361;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-pane h2::before {
+   content:"";display:inline-block;width:4px;height:17px;border-radius:4px;
+   background:#ff881f;margin-right:8px;vertical-align:middle;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-small-link {
+   display:block;font-size:13px;font-weight:750;padding:10px 3px;
+   border-bottom:1px solid #2d5160;overflow-wrap:anywhere;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-row {
+   display:flex;align-items:center;gap:9px;min-width:0;padding:10px;
+   border:1px solid #285664;border-radius:10px;background:#133341;
+   margin-bottom:8px;color:#f4faff;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-row-copy {
+   display:flex;flex:1;min-width:0;flex-direction:column;gap:3px;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-row-copy small {
+   font-size:11px;color:#b8d2da;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-row em {
+   font-size:11px;color:#ffb36b;font-style:normal;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-stats p {
+   padding:11px;border:1px solid #355d69;border-radius:9px;background:#0d2330;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-stats strong {
+   color:#ffb36a;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-case-actions {
+   display:flex;gap:7px;flex-wrap:wrap;margin:12px 0;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-case-actions a,
+ html.traksos-browser .approved-pc-admin a.approved-pc-primary {
+   display:inline-flex;align-items:center;justify-content:center;
+   min-height:44px;border-radius:10px;border:1px solid #39818d;
+   padding:10px;text-align:center;background:#143442;color:#e9f8fc;
+   font-size:12px;font-weight:800;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-case-actions .approved-pc-primary,
+ html.traksos-browser .approved-pc-admin a.approved-pc-primary {
+   background:linear-gradient(110deg,#fa6817,#ff9626);border-color:#ffb56b;color:white;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-russia {
+   position:relative;display:flex;flex-direction:column;justify-content:center;
+   gap:7px;padding:14px;overflow:hidden;border-radius:12px;
+   border:1px solid #335b70;background:linear-gradient(115deg,#123244,#071923);
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-russia > * {
+   position:relative;z-index:1;max-width:65%;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-russia b {
+   font-size:23px;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-russia span,
+ html.traksos-browser .approved-pc-admin .approved-pc-caveat {
+   font-size:11px;color:#c9dce1;line-height:1.5;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-role-grid {
+   display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-role-grid a {
+   padding:11px 7px;border:1px solid #39808b;border-radius:9px;
+   background:#133744;text-align:center;font-size:12px;
+ }
 }
