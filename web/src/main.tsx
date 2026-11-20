@@ -523,7 +523,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {me && !serviceSandbox && <a href="#/help" className="bell" aria-label="Справка">?</a>}
           {me && !serviceSandbox && <Bell />}
           {me && <details className="account-menu" key={here}>
-            <summary aria-label="Открыть меню кабинета">☰ <span>Меню</span></summary>
+            <summary aria-label="Открыть меню кабинета"><span className="account-menu-desktop-glyph" aria-hidden="true">☰</span><span className="account-menu-desktop-label">Меню</span><span className="account-menu-mobile-glyph" aria-hidden="true"><NavGlyph glyph="◉" /></span></summary>
             <nav aria-label="Все разделы кабинета">
               <span className="account-menu-heading">Мой кабинет</span>
               {accountLinks.map(([href, label]) => <a key={href} href={sandboxHref(href)}>{label}</a>)}
