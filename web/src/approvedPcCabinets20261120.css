@@ -1,6 +1,8 @@
 /* 20 Nov 2026 approved PC workspaces. Desktop only; Android/mobile remains unchanged.
    Each screen consumes live role-scoped APIs and existing workflows. */
-/* Shared visual primitives also style the approved admin dashboard on mobile browsers.\n   Other roles continue to mount approved-pc only at desktop widths. */\n@media(min-width:1000px){
+/* Shared visual primitives also style the approved admin dashboard on mobile browsers.
+   Other roles continue to mount approved-pc only at desktop widths. */
+@media(min-width:1000px){
 .approved-pc{
  --pc-ink:#06131a;--pc-panel:#0b2029;--pc-edge:#247585;--pc-hot:#ff791e;--pc-teal:#4ac5d4;
  color:#f5f9fc;min-width:0;max-width:1800px;margin:0 auto;padding:12px 16px 32px;
