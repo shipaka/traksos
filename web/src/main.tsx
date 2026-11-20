@@ -386,21 +386,21 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       : [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь'], ['/shop', '⚙', 'Запчасти'], ['/profile', '◉', 'Профиль']];
   // Mobile tabs only contain real role-dependent routes; extra tools remain in the menu.
   const mobileTabs: [string, string, string][] = !me ? [] : mode === 'client'
-    ? [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/air', '◌', 'Эфир'], ['/garage', '▣', 'Техника'], ['/shop', '🛍', 'Магазин'], ['/menu', '◉', 'Меню']]
+    ? [['/', '⌂', 'Главная'], ['/orders', 'clipboard', 'Заявки'], ['/air', '◌', 'Эфир'], ['/garage', 'truck', 'Техника'], ['/shop', '🛍', 'Магазин'], ['/menu', 'menu', 'Меню']]
     : mode === 'performer'
-      ? [['/work', '⌂', 'Главная'], ['/work/jobs', '☷', 'Заявки'], ['/work/chats', '▤', 'Чат'], ['/menu', '◉', 'Меню']]
+      ? [['/work', '⌂', 'Главная'], ['/work/jobs', 'clipboard', 'Заявки'], ['/work/chats', 'chat', 'Чат'], ['/menu', 'menu', 'Меню']]
     : mode === 'service'
       ? (serviceSandbox
-          ? [['/base', '⌂', 'Главная'], ['/base/inbox', '☷', 'Заявки'], ['/base/money', '₽', 'Финансы'], ['/menu', '◉', 'Меню']]
-          : [['/base', '⌂', 'Главная'], ['/base/inbox', '☷', 'Заявки'], ['/shop', '🛍', 'Магазин'], ['/base/money', '₽', 'Финансы'], ['/menu', '◉', 'Меню']])
+          ? [['/base', '⌂', 'Главная'], ['/base/inbox', 'clipboard', 'Заявки'], ['/base/money', '₽', 'Финансы'], ['/menu', 'menu', 'Меню']]
+          : [['/base', '⌂', 'Главная'], ['/base/inbox', 'clipboard', 'Заявки'], ['/shop', '🛍', 'Магазин'], ['/base/money', '₽', 'Финансы'], ['/menu', 'menu', 'Меню']])
     : mode === 'insurer'
-      ? [['/insurance', '▦', 'Главная'], ['/menu', '◉', 'Меню']]
+      ? [['/insurance', '▦', 'Главная'], ['/menu', 'menu', 'Меню']]
     : mode === 'inspection'
-      ? [['/inspections', '▣', 'Техосмотр'], ['/menu', '◉', 'Меню']]
+      ? [['/inspections', '▣', 'Техосмотр'], ['/menu', 'menu', 'Меню']]
     : mode === 'moderator'
-      ? [['/moderation', '⌂', 'Главная'], ['/support', '?', 'Обращения'], ['/menu', '◉', 'Меню']]
-    : [['/admin', '⌂', 'Главная'], ['/admin/section/orders', '☷', 'Заявки'],
-       ['/admin/section/people', '▤', 'Пользователи'], ['/menu', '◉', 'Меню']];
+      ? [['/moderation', '⌂', 'Главная'], ['/support', '?', 'Обращения'], ['/menu', 'menu', 'Меню']]
+    : [['/admin', '⌂', 'Главная'], ['/admin/section/orders', 'clipboard', 'Заявки'],
+       ['/admin/section/people', '▤', 'Пользователи'], ['/menu', 'menu', 'Меню']];
   // Все дополнительные функции доступны в шапке, даже когда они не в нижних вкладках.
   // Не показываем чужие роли и не создаём несуществующие страницы.
   const accountLinks: [string, string][] = mode === 'performer'
