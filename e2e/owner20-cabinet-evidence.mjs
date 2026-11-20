@@ -14,8 +14,8 @@ const cases=[
  {id:'service',phone:'+79990000345',accountType:'service',mode:'service',url:'#/base',inside:'#/base/me'},
  {id:'master_service',phone:'+79990000346',accountType:'master_service',mode:'service',url:'#/base',inside:'#/base/money'},
  {id:'insurer',phone:'+79990000347',accountType:'insurer',mode:'insurer',url:'#/insurance',inside:'#/profile'},
- {id:'admin',phone:'+79990000348',accountType:'client',mode:'admin',url:'#/admin',inside:'#/admin/section/orders',needs:'admin'},
- {id:'moderator',phone:'+79990000349',accountType:'client',mode:'moderator',url:'#/moderation',inside:'#/profile',needs:'moderator'}
+ {id:'admin',phone:'+79990000348',accountType:'owner',mode:'admin',url:'#/admin',inside:'#/admin/section/orders',needs:'admin'},
+ {id:'moderator',phone:'+79990000349',accountType:'owner',mode:'moderator',url:'#/moderation',inside:'#/profile',needs:'moderator'}
 ];
 async function post(path,body,token){
  const r=await fetch(BASE+path,{method:'POST',headers:{'content-type':'application/json',...(token?{authorization:'Bearer '+token}:{})},body:JSON.stringify(body)});
