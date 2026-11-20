@@ -232,8 +232,10 @@ expect(currentCss.includes(approvedPhoto) && approvedHeroLayer.includes(approved
 // The copied public/ asset MUST be referenced by its runtime root path.
  // ../public/ is relative to dist/app.css and silently blanks the truck on mobile.
 expect(!currentCss.includes("../public/tracksos-approved-hero-owner-20261119.webp") &&
-  currentCss.includes("url('/tracksos-approved-hero-owner-20261119.webp')"),
-  'approved guest hero loads from the deployed public root, not the source-tree path');
+  !approvedHeroLayer.includes("../public/tracksos-approved-hero-owner-20261119.webp") &&
+  currentCss.includes("url('/tracksos-approved-hero-owner-20261119.webp')") &&
+  approvedHeroLayer.includes("url('/tracksos-approved-hero-owner-20261119.webp')"),
+  'both approved guest hero layers resolve their images from the deployed public root');
 expect(heroVisualE2E.includes("tracksos-approved-hero-owner-20261119(?:-[A-Za-z0-9]+)")
   && heroVisualE2E.includes("info.photo.includes('tracksos-approved-scenic-hero')"),
   'browser screenshot gate rejects obsolete 14 Nov hero and requires actual owner image');
