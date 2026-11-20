@@ -14,7 +14,7 @@ docker compose version >/dev/null 2>&1 || fail "Docker Compose unavailable"
 # Do not start a production rollout if this checkout lacks the exact approved
 # source image or is still carrying the previous Android/RuStore/PWA artwork.
 command -v sha256sum >/dev/null || fail "sha256sum unavailable; cannot verify approved icon"
-if ! printf '%s\\n' \
+if ! printf '%s\n' \
   '9ea519c3d4cc9b2465459479673cff698e89256e85a11c768d364ddfc2d19cf7  branding/approved-launcher-master-2026-11-20.png' \
   'c43899c1c510ac6dbe33013e30e33630a4f97a791d528c26edf2cd2b523b03ab  branding/tracksos-rustore-icon.png' \
   'c43899c1c510ac6dbe33013e30e33630a4f97a791d528c26edf2cd2b523b03ab  web/public/icon-512.png' \
