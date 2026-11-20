@@ -48,7 +48,9 @@ function useDesktopSize(){
 /** Never mount both versions simultaneously: avoids duplicate requests/actions. */
 export function ApprovedPcDesk({role,fallback}:{role:ApprovedPCRole;fallback:ReactNode}) {
   const wide=useDesktopSize();
-  if(!wide) return <>{fallback}</>;
+  // Browser administrators see the approved workspace at narrow widths.
+  // Android WebView keeps the separately approved native/mobile layout.
+  if (!wide && !(role === 'admin' && !native.isApp)) return <>{fallback}</>;
   if(role==='owner'||role==='driver') return <CustomerDesk owner={role==='owner'}/>;
   if(role==='master'||role==='tow') return <PerformDesk tow={role==='tow'}/>;
   if(role==='service') return <ServiceDesk/>;

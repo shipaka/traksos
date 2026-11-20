@@ -109,7 +109,9 @@ try{
          .filter(el=>{const r=el.getBoundingClientRect();return r.width>0&&r.right>innerWidth+5;})
          .slice(0,10).map(el=>({tag:el.tagName,cls:String(el.className).slice(0,100),
            right:Math.round(el.getBoundingClientRect().right),
-           width:Math.round(el.getBoundingClientRect().width)})));
+           width:Math.round(el.getBoundingClientRect().width),
+           src:el.tagName==='IMG'?el.getAttribute('src'):null,
+           parent:String(el.parentElement?.className||'').slice(0,100)})));
        throw Error('Horizontal overflow '+JSON.stringify({dims,offenders}));
      }
      if(errors.length)throw Error('Uncaught errors '+errors.join('; '));
@@ -128,6 +130,13 @@ try{
            logo:logo?.getAttribute('src'),loaded:logo?.complete&&logo?.naturalWidth===274&&logo?.naturalHeight===46,
            logoRendered:logo?{w:logo.getBoundingClientRect().width,h:logo.getBoundingClientRect().height}:null,
            illustrations:scenes.length,
+           diagnostic:{
+             hash:location.hash,
+             main:document.querySelector('.desktop-content main')?.className||null,
+             pc:document.querySelectorAll('.approved-pc').length,
+             quick:document.querySelectorAll('.desktop-quick-card').length,
+             headline:document.querySelector('.desktop-content h1')?.textContent||null
+           },
            matched:scenes.every(el=>getComputedStyle(el).backgroundImage.includes(chosenAtlas.slice(1))),
            chosenAtlas,
            crops:scenes.map(el=>{

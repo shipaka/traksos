@@ -635,9 +635,11 @@ expect(pcSource.includes("export type ApprovedPCRole") &&
     .every(role=>pcSource.includes("'"+role+"'")) &&
   pcSource.includes("useDesktopSize()") &&
   pcCss.includes("@media(min-width:1000px)") &&
+  pcCss.includes("html.traksos-browser .approved-pc-admin") &&
+  pcSource.includes("role === 'admin' && !native.isApp") &&
   unifiedShell.includes('ApprovedPcDesk') &&
   unifiedShell.includes("approvedPcCabinets20261120.css"),
-  'nine real desktop role workspaces are routed and mobile viewport remains separate');
+  'nine real desktop role workspaces remain routed; browser admin responsive, Android separate');
 expect(pcSource.includes("get<any[]>('/api/orders')") &&
   pcSource.includes("get<any[]>('/api/orders?as=performer')") &&
   pcSource.includes("get<any[]>('/api/performer/auctions')") &&
