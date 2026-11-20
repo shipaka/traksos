@@ -710,7 +710,9 @@ function AdminShopOrders() {
               {NEXT[o.status].filter(([s])=>!o.courierStatus||!['done','shipped'].includes(s))
                 .map(([s, n]) => <button key={s} className="btn small" disabled={busy}
                   onClick={() => act(o.id, s, n)}>{n}</button>)}
-              <button className="btn ghost small" disabled={busy} onClick={() => act(o.id, 'cancelled', 'Заказ отменён, товар вернулся на склад')}>Отменить</button>
+              {(!o.courierStatus||o.courierStatus==='assigned')&&
+                <button className="btn ghost small" disabled={busy}
+                  onClick={() => act(o.id, 'cancelled', 'Заказ отменён, товар вернулся на склад')}>Отменить</button>}
             </div>
           </>}
         </div>
