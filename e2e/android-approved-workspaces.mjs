@@ -96,6 +96,28 @@ try {
       if(await garage.getAttribute('href')!=='#/garage')throw Error(role+': vehicle history does not open garage');
       if(await desk.locator('.and19-sos').getAttribute('href')!=='#/sos')throw Error(role+': SOS missing');
     }
+    // The approved owner, driver, moderator and admin layouts never offer
+    // "On line". That is an incoming-work availability control for performers.
+    // Never copy the decorative toggle visible in older approved reference PNGs.
+    if(['owner','driver','moderator','admin'].includes(role)){
+      const forbidden=page.locator([
+        '.and19-client .and19-role button[role="switch"]',
+        '.and19-client .and19-role button[aria-label*="На линии"]',
+        '.and19-client .and19-line',
+        '.moderator-workspace > .internal-role-hero button[role="switch"]',
+        '.admin-workspace > .admin-command-hero button[role="switch"]',
+        '.moderator-workspace > .internal-role-hero button[aria-label*="На линии"]',
+        '.admin-workspace > .admin-command-hero button[aria-label*="На линии"]',
+      ].join(','));
+      if(await forbidden.count())throw Error(role+': forbidden top-level online switch');
+      const top=page.locator(role==='owner'||role==='driver'
+        ? '.and19-client .and19-role'
+        : role==='moderator'
+          ? '.moderator-workspace > .internal-role-hero'
+          : '.admin-workspace > .admin-command-hero');
+      if(await top.count() && /На линии|Режим администратора/.test(await top.innerText()))
+        throw Error(role+': inherited decorative availability label on role header');
+    }
     if(mode==='performer'){
       const desk=page.locator('.and19-performer');
       await desk.waitFor({state:'visible'});
