@@ -22,6 +22,42 @@ try {
    const overflow=await page.evaluate(()=>({client:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));
    if(overflow.scroll>overflow.client+3)throw Error(width+': desktop overflow '+JSON.stringify(overflow));
    if(errors.length)throw Error(width+': JS error '+errors.join('; '));
+   // Visual contract from the real 1536x864 617.png, not a later assistant sketch.
+   // Verify source imagery comes from the owner's bundled crop sprite and the
+   // former 19 Nov truck cannot creep back through a CSS fallback.
+   const art=await page.evaluate(async () => {
+     const photo=document.querySelector('.owner20-photo');
+     const map=document.querySelector('.owner20-map-source');
+     const feature=document.querySelector('.owner20-feature-illustration');
+     const pick=(el,pseudo)=>el?getComputedStyle(el,pseudo).backgroundImage:'';
+     const res=await fetch('/owner20-artwork-sprite.webp');
+     const image=res.ok?await createImageBitmap(await res.blob()).catch(()=>null):null;
+     const rect=(selector)=>{const r=document.querySelector(selector)?.getBoundingClientRect();return r&&{x:r.x,y:r.y,w:r.width,h:r.height};};
+     return {
+       photo:pick(photo,'::after'),map:pick(map),feature:pick(feature),
+       dimensions:image&&{w:image.width,h:image.height},
+       head:rect('.owner20-top'),hero:rect('.owner20-hero'),
+       quick:rect('.owner20-quick'),features:rect('.owner20-features'),
+       bottom:rect('.owner20-bottom'),coverage:rect('.owner20-map'),
+     };
+   });
+   if(!art.photo.includes('owner20-artwork-sprite') ||
+      !art.map.includes('owner20-artwork-sprite') ||
+      !art.feature.includes('owner20-artwork-sprite') ||
+      art.photo.includes('tracksos-approved-hero-owner-20261119') ||
+      art.dimensions?.w!==1018 || art.dimensions?.h!==446)
+     throw Error(width+': wrong original 617.png photographic asset '+JSON.stringify(art));
+   if(width===1536){
+     const near=(got,expected)=>Math.abs(got-expected)<=7;
+     if(!art.head||!art.hero||!art.quick||!art.features||!art.bottom||!art.coverage||
+        !near(art.head.y,0)||!near(art.head.h,66)||
+        !near(art.hero.y,66)||!near(art.hero.h,324)||
+        !near(art.quick.y,391)||!near(art.quick.h,85)||
+        !near(art.features.y,493)||!near(art.features.h,144)||
+        !near(art.bottom.y,654)||!near(art.bottom.h,177)||
+        !near(art.coverage.x,986)||!near(art.coverage.y,96))
+       throw Error('1536x864 approved 617.png geometry regressed: '+JSON.stringify(art));
+   }
    await page.screenshot({path:'e2e/shots/owner20-pc/home-'+width+'.png',fullPage:true,animations:'disabled'});
    if(width===1536){
     for(const key of ['van','tow','sto','ecu','consult','tech','parts','insurance','inspection','air','club']){
