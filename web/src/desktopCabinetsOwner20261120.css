@@ -151,11 +151,8 @@
   .app.role-client .client-home .desktop-hero h1 span {
     color: var(--owner20-orange) !important;
   }
-  .app.role-client .client-home .desktop-hero .client-hero-scania,
-  .app.role-client .client-home .desktop-hero .client-hero-art {
-    /* Old Nov 19 truck is not a new owner-approved Nov 20 graphic. */
-    display: none !important;
-  }
+  /* Keep existing real client vehicle image until an exact approved Nov 20
+     interior image can be bundled; do not blank working hero content. */
   .app[class*="role-"] .desktop-content main :is(.banner,.empty) {
     background: #142b34;
     border: 1px solid #355260;
