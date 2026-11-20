@@ -16,14 +16,25 @@ import { OperatorDemoAccess } from './services/operatorDemo.ts';
 import { SANDBOX_ROLES, issueSandboxTicket, exchangeSandboxTicket } from './services/sandboxTickets.ts';
 import { SANDBOX_HANDOFF_PROTOCOL, assessSandboxPeerHealth } from './services/sandboxCompatibility.ts';
 import { ReferralService } from './services/referral.ts';
+import { financeGuide, type FinanceRole } from './domain/economicsGuide.ts';
+import { techBaseAudience, techBaseForRoles } from './domain/techbase.ts';
 import { ProfilesService } from './services/profiles.ts';
 import { OrdersService } from './services/orders.ts';
+import { EcuHandoffService } from './services/ecuHandoff.ts';
+import { OrderContinuationService } from './services/orderContinuation.ts';
+import { OrderSlaService } from './services/orderSla.ts';
 import { ChatService } from './services/chat.ts';
+import { TrakBotService } from './services/trakbot.ts';
+import { DriverAirService } from './services/driverAir.ts';
+import { providerReady } from './services/trakbotProvider.ts';
+import { TechnicalCasesService } from './services/technicalCases.ts';
 import { ReviewsService, REVIEW_TAGS } from './services/reviews.ts';
 import { OffersService } from './services/offers.ts';
 import { AuctionService } from './services/auction.ts';
 import { DocumentsService } from './services/documents.ts';
 import { AdminService } from './services/admin.ts';
+import { AdminCaseCenter } from './services/adminCaseCenter.ts';
+import { AdminRegistry } from './services/adminRegistry.ts';
 import { AdminAccessService, MANUAL_ROLES, REPORT_CATEGORIES } from './services/adminAccess.ts';
 import { DeveloperReportDelivery } from './services/developerReportDelivery.ts';
 import { SupportService, TOPICS } from './services/support.ts';
@@ -38,8 +49,10 @@ import { InsuranceQuoteFlow } from './services/insuranceQuoteFlow.ts';
 import { PrivacyService } from './services/privacy.ts';
 import { StandingService } from './services/standing.ts';
 import { ShopService } from './services/shop.ts';
+import { ShopCourierDeliveries } from './services/shopCourierDeliveries.ts';
 import { ShopCatalogService } from './services/shopCatalog.ts';
 import { ModerationService } from './services/moderation.ts';
+import { UnilateralClosures } from './services/unilateralClosures.ts';
 import { WarrantyClaimsService } from './services/warranty.ts';
 import { WarrantyRemediationService } from './services/warrantyRemediation.ts';
 import { WarrantyRecourseService } from './services/warrantyRecourse.ts';
@@ -47,6 +60,8 @@ import { checkAppealToken } from './services/auth.ts';
 import { normalizePhone, sha256 } from './util.ts';
 import { Raw } from './http/router.ts';
 import { PaymentsService } from './payments/service.ts';
+import { TochkaInvoiceClient } from './payments/tochkaInvoices.ts';
+import { TochkaInvoiceWorkflow } from './payments/tochkaInvoiceWorkflow.ts';
 import { estimate, isNight } from './domain/pricing.ts';
 import { assertRegionalTariff, CoverageError, REGIONAL_COVERAGE_NOTE } from './domain/regionalCoverage.ts';
 import { defaultSettings } from './domain/defaults.ts';
@@ -64,7 +79,7 @@ export interface Deps {
 }
 
 const money = z.number().int().nonnegative();
-const ROLES = ['client', 'driver', 'master', 'tow', 'service', 'insurer', 'inspection_operator', 'moderator', 'admin'];
+const ROLES = ['client', 'driver', 'master', 'tow', 'service', 'insurer', 'inspection_operator', 'courier', 'moderator', 'admin'];
 
 export function createApp(d: Deps) {
   const now = d.now ?? (() => new Date());
@@ -75,22 +90,45 @@ export function createApp(d: Deps) {
   const operatorDemo = new OperatorDemoAccess(d.db, now);
   const profiles = new ProfilesService(d.db, settings, now);
   const orders = new OrdersService(d.db, settings, notifier, now);
+  const ecuHandoffs = new EcuHandoffService(d.db, notifier, now);
+  const continuations = new OrderContinuationService(d.db, notifier, now);
+  orders.continuations = continuations;
   const payments = new PaymentsService(d.db, settings, d.payments, notifier, orders);
+  // Document-only integration. Real payment capture/payout must remain in the
+  // existing financial system until separately approved and bank-reconciled.
+  const tochkaInvoiceWorkflow = config.tochkaInvoices.enabled && !config.sandboxInstance
+    ? new TochkaInvoiceWorkflow(d.db, new TochkaInvoiceClient(
+        config.tochkaInvoices.token,
+        config.tochkaInvoices.customerCode,
+        config.tochkaInvoices.accountId))
+    : null;
+  const requireTochkaInvoice = () => {
+    if (!tochkaInvoiceWorkflow)
+      throw new HttpError(403, 'tochka_disabled', 'Выставление счетов через Точку пока не подключено');
+    return tochkaInvoiceWorkflow;
+  };
+
   orders.payments = payments;
   const auction = new AuctionService(d.db, settings, notifier, orders, now, d.verifiedRoadEta);
   orders.auction = auction;
   profiles.onUnavailable = async (userId) => orders.afterRelease(await orders.release(d.db, userId, null));
   const chat = new ChatService(d.db, settings, notifier, orders);
+  const trakbot = new TrakBotService(d.db);
+  const driverAir = new DriverAirService(d.db, now);
+  const technicalCases = new TechnicalCasesService(d.db);
   const reviews = new ReviewsService(d.db, settings, orders);
   const onsite = new OnsiteService(d.db, notifier, orders);
-  const offers = new OffersService(d.db, notifier, now);
+  const offers = new OffersService(d.db, notifier, now, settings);
   const documents = new DocumentsService(d.db, notifier, settings, now);
   const admin = new AdminService(d.db, notifier, orders, payments, profiles, settings, now);
+  const adminCases = new AdminCaseCenter(d.db);
+  const adminRegistry = new AdminRegistry(d.db);
   const adminAccess = new AdminAccessService(d.db);
   const developerReportDelivery = new DeveloperReportDelivery(d.db);
   const support = new SupportService(d.db, notifier, orders, now);
   const stats = new StatsService(d.db, now);
   const ops = new OpsService(d.db, now);
+  const orderSla = new OrderSlaService(d.db, orders, notifier, now);
   orders.ops = ops;
   const centers = new ServiceCenters(d.db, notifier, settings, support, now);
   const referral = new ReferralService(d.db, settings, notifier, now);
@@ -104,8 +142,10 @@ export function createApp(d: Deps) {
   const privacy = new PrivacyService(d.db, notifier, now);
   const standing = new StandingService(d.db, now, settings);
   const shop = new ShopService(d.db, notifier, settings);
+  const deliveries = new ShopCourierDeliveries(d.db, notifier);
   const partCatalog = new ShopCatalogService(d.db, settings);
   const moderation = new ModerationService(d.db, notifier, reviews, now, d.sms);
+  const unilateral = new UnilateralClosures(d.db, orders, notifier, moderation, now);
   const warranty = new WarrantyClaimsService(d.db, notifier, now);
   const warrantyRemediation = new WarrantyRemediationService(d.db, notifier, now);
   const warrantyRecourse = new WarrantyRecourseService(d.db, notifier, now);
@@ -119,6 +159,18 @@ export function createApp(d: Deps) {
   centers.onDispute = (p) => moderation.open({ kind: 'dispute', title: p.title, text: p.text, openedBy: p.userId, targetId: p.targetId, bookingId: p.bookingId, ticketId: p.ticketId, priority: 1 });
 
   const r = new Router();
+  // Curated official source links only. No specialist documents are returned
+  // to a client even when the caller changes ?audience=master manually.
+  r.get('/api/techbase', true, (c: AuthedCtx) => {
+    const allowed = techBaseAudience(c.user.roles);
+    if (!allowed.length) throw forbidden();
+    const requested = c.query.get('audience');
+    if (requested && !['driver', 'master'].includes(requested))
+      throw bad('audience', 'Неизвестный раздел ТехБазы');
+    if (requested && !allowed.includes(requested as 'driver' | 'master'))
+      throw forbidden();
+    return { audiences: allowed, documents: techBaseForRoles(c.user.roles, requested ?? undefined) };
+  });
   const staff = ['admin', 'moderator'];
   const performerRoles = ['master', 'tow', 'service'];
 
@@ -216,6 +268,15 @@ export function createApp(d: Deps) {
     const b = parse(z.object({ phone: z.string(), password: z.string().min(1).max(128), device: z.string().max(200).optional() }), c.body);
     return auth.loginPassword(b.phone, b.password, b.device, c.ip);
   });
+  // Known-password rotation requires the active bearer and never contacts SMS.
+  r.post('/api/auth/change-password', true, (c: AuthedCtx) => {
+    if (config.sandboxInstance) throw new HttpError(403, 'sandbox_auth_disabled', 'Тестовые пользователи не могут менять пароль');
+    const b = parse(z.object({
+      currentPassword: z.string().min(1).max(128),
+      newPassword: z.string().min(1).max(128),
+    }), c.body);
+    return auth.changePassword(c.user, b.currentPassword, b.newPassword, bearer(c.req)!);
+  });
   r.post('/api/auth/verify', false, async (c: Ctx) => {
     if (config.sandboxInstance) throw new HttpError(403, 'sandbox_auth_disabled', 'Тестовые пользователи входят только через администратора');
     const b = parse(z.object({ phone: z.string(), code: z.string().min(4).max(6), role: z.enum(SELF_ROLES).optional(),
@@ -279,6 +340,20 @@ export function createApp(d: Deps) {
       `select id::int as id, kind, body, data, created_at, read_at, title
          from notifications where user_id=$1 order by id desc limit 100`, [c.user.id]),
   }));
+  r.post('/api/me/notifications/:id/read', true, async (c: AuthedCtx) => {
+    const id=Number(c.params.id);
+    if (!Number.isSafeInteger(id) || id<=0) throw bad('bad_notification_id','Неверный номер уведомления');
+    // User identity comes only from authenticated context, never from the body.
+    const read=await d.db.one<{id:number;read_at:string}>(
+      'update notifications set read_at=now() where id=$1 and user_id=$2 and read_at is null returning id,read_at',
+      [id,c.user.id]);
+    if (read) return {ok:true,id,readAt:read.read_at};
+    // Same-user retry is idempotent; a foreign or missing notification is invisible.
+    const previous=await d.db.one<{read_at:string|null}>(
+      'select read_at from notifications where id=$1 and user_id=$2',[id,c.user.id]);
+    if (!previous) throw notFound('Уведомление не найдено');
+    return {ok:true,id,readAt:previous.read_at};
+  });
   r.post('/api/me/notifications/read', true, async (c: AuthedCtx) => {
     await d.db.query('update notifications set read_at=now() where user_id=$1 and read_at is null', [c.user.id]);
     return { ok: true };
@@ -400,6 +475,66 @@ export function createApp(d: Deps) {
       return warrantyRecourse.recordReceived(c.user,c.params.id,p);
     });
 
+  // Driver air has isolated storage; private TrakBot and order chats remain separate.
+  r.get('/api/air/messages', true, (c: AuthedCtx) =>
+    driverAir.list(c.user, Number(c.query.get('after') ?? 0)));
+  r.post('/api/air/messages', true, (c: AuthedCtx) =>
+    driverAir.post(c.user, parse(z.object({body:z.string().min(1).max(400)}),c.body).body));
+  r.post('/api/admin/air/bot', ['admin'], (c: AuthedCtx) =>
+    driverAir.setBot(c.user, parse(z.object({enabled:z.boolean()}),c.body).enabled));
+  r.post('/api/admin/air/messages/:id/hide', staff, (c: AuthedCtx) =>
+    driverAir.hide(c.user,c.params.id));
+
+  // Private TrakBot never writes into driver air, order or support chats.
+
+  r.delete('/api/trakbot/messages', true, (c: AuthedCtx) => trakbot.clearHistory(c.user));
+  r.get('/api/trakbot/messages', true, async (c: AuthedCtx) => ({
+    ...(await trakbot.history(c.user)),
+    aiAvailable: providerReady({
+      enabled: config.trakbot.llmEnabled,
+      apiKey: config.trakbot.llmApiKey,
+      model: config.trakbot.llmModel,
+      transport: config.trakbot.llmTransport === 'local' ? 'local' : 'api',
+      localUrl: config.trakbot.llmLocalUrl,
+    }),
+    aiTransport: config.trakbot.llmTransport === 'local' ? 'local' : 'api',
+  }));
+  r.post('/api/trakbot/answer', true, (c: AuthedCtx) => {
+    const body = parse(z.object({
+      message: z.string().min(1).max(700),
+      allowAiProcessing: z.boolean().optional().default(false),
+      vehicle: z.object({
+        make: z.string().max(60).optional(),
+        model: z.string().max(60).optional(),
+        ecu: z.string().max(60).optional(),
+        year: z.number().int().min(1980).max(2100).optional(),
+      }).optional().default({}),
+    }), c.body);
+    return trakbot.reply(c.user, body.message, body.vehicle, body.allowAiProcessing);
+  });
+  // Repair experience is private to verified specialists until an admin approves it.
+  r.get('/api/tech/repair-cases', true, (c: AuthedCtx) =>
+    technicalCases.approved(c.user, c.query.get('q') ?? ''));
+  r.post('/api/tech/repair-cases', true, (c: AuthedCtx) =>
+    technicalCases.submit(c.user, parse(z.object({
+      make: z.string().min(2).max(60),
+      model: z.string().max(80).optional(),
+      productionYear: z.number().int().min(1980).max(2100).optional(),
+      ecu: z.string().max(80).optional(),
+      code: z.string().max(35).optional(),
+      symptoms: z.string().min(15).max(2000),
+      checksPerformed: z.string().min(15).max(2000),
+      verifiedFix: z.string().min(15).max(2000),
+      provenanceNote: z.string().max(800).optional(),
+    }), c.body)));
+  r.get('/api/admin/tech/repair-cases', ['admin'], (c: AuthedCtx) =>
+    technicalCases.pending(c.user));
+  r.post('/api/admin/tech/repair-cases/:id/review', ['admin'], (c: AuthedCtx) => {
+    const data = parse(z.object({ approve: z.boolean(), note: z.string().max(1000).default('') }), c.body);
+    return technicalCases.decide(c.user, c.params.id, data.approve, data.note);
+  });
+  r.get('/api/tech/codes', ['master','service','admin','moderator'], (c: AuthedCtx) =>
+    trakbot.expertLookup(c.user, c.query.get('q') ?? ''));
   r.get('/api/support/topics', false, () => TOPICS);
   r.get('/api/support', true, (c: AuthedCtx) => support.mine(c.user));
   r.post('/api/support', true, (c: AuthedCtx) => support.open(c.user, parse(z.object({
@@ -410,6 +545,15 @@ export function createApp(d: Deps) {
   r.post('/api/support/:id/close', true, (c: AuthedCtx) => support.close(c.user, c.params.id));
   r.get('/api/live', true, () => stats.live());
   r.get('/api/admin/stats', ['admin'], (c: AuthedCtx) => stats.overview(Math.min(365, Math.max(1, Number(c.query.get('days') ?? 30)))));
+
+  // Stalled stages are incidents, not automatic fault findings or financial charges.
+  r.get('/api/admin/order-sla', ['admin'], (c: AuthedCtx) =>
+    orderSla.report(parse(z.coerce.number().int().min(1).max(365), c.query.get('days') ?? '30')));
+  r.put('/api/admin/order-sla/:id/review', ['admin'], (c: AuthedCtx) => {
+    const b = parse(z.object({ state:z.enum(['investigating','confirmed','excused']),
+      note:z.string().trim().min(10).max(1200) }),c.body);
+    return orderSla.review(c.user,c.params.id,b.state,b.note);
+  });
 
   // Operational demand analysis does not overwrite or hide any order.
   r.get('/api/admin/demand', ['admin'], (c: AuthedCtx) =>
@@ -424,7 +568,7 @@ export function createApp(d: Deps) {
   r.post('/api/admin/announcements', ['admin'], (c: AuthedCtx) =>
     ops.publish(c.user,parse(z.object({
       audience:z.enum(['master','tow','service','all_workers']),
-      service:z.enum(['electric','diag','air','autonomy','tyre','tow','consult','ecu']).nullish(),
+      service:z.enum(['electric','diag','air','autonomy','tyre','hydraulics','tow','consult','ecu']).nullish(),
       title:z.string().trim().min(3).max(140),body:z.string().trim().min(3).max(3000),
       startsAt:z.string().datetime(),endsAt:z.string().datetime(),published:z.boolean(),
     }),c.body)));
@@ -447,7 +591,7 @@ export function createApp(d: Deps) {
   });
   r.post('/api/admin/commission-campaigns', ['admin'], (c: AuthedCtx) =>
     ops.campaign(c.user,parse(z.object({
-      service:z.enum(['electric','diag','air','autonomy','tyre','tow','consult','ecu']).nullish(),
+      service:z.enum(['electric','diag','air','autonomy','tyre','hydraulics','tow','consult','ecu']).nullish(),
       commissionPct:z.number().min(0).max(100),
       startsAt:z.string().datetime(),endsAt:z.string().datetime(),
       enabled:z.boolean(),reason:z.string().trim().min(3).max(500),
@@ -455,6 +599,32 @@ export function createApp(d: Deps) {
 
   r.get('/api/admin/support', staff, (c: AuthedCtx) => support.queue(c.query.get('status') === 'closed' ? 'closed' : 'open'));
   r.get('/api/me/referral', true, (c: AuthedCtx) => referral.mine(c.user));
+  // Only the actor's own financial conditions: never expose an executor's fee
+  // through the client-facing pricing API or the economics explanation.
+  r.get('/api/me/economics', true, async (c: AuthedCtx) => {
+    const role = c.query.get('role') as FinanceRole | null;
+    const options: Record<FinanceRole,boolean> = {
+      owner: c.user.roles.includes('client') && !c.user.owner_id,
+      driver: c.user.roles.includes('driver') || !!c.user.owner_id,
+      master: c.user.roles.includes('master'),
+      tow: c.user.roles.includes('tow'),
+      service: c.user.roles.includes('service'),
+      insurer: c.user.roles.includes('insurer'),
+      inspection: c.user.roles.includes('inspection_operator'),
+      moderator: c.user.roles.includes('moderator'),
+      admin: c.user.roles.includes('admin'),
+    };
+    const selected = role ?? (c.user.roles.includes('driver')||c.user.owner_id?'driver':
+      c.user.roles.includes('client')?'owner':
+      c.user.roles.includes('master')?'master':
+      c.user.roles.includes('tow')?'tow':
+      c.user.roles.includes('service')?'service':
+      c.user.roles.includes('insurer')?'insurer':
+      c.user.roles.includes('inspection_operator')?'inspection':
+      c.user.roles.includes('admin')?'admin':'moderator');
+    if (!options[selected]) throw forbidden('Экономика чужого кабинета недоступна');
+    return financeGuide(await settings.all(),selected);
+  });
   r.get('/api/me/offers', true, (c: AuthedCtx) => offers.status(c.user));
   r.post('/api/offers/:id/accept', true, (c: AuthedCtx) => offers.accept(c.user, c.params.id, c.ip));
   r.get('/api/offers/current/:audience', false, async (c: Ctx) => (await offers.current(c.params.audience)) ?? null);
@@ -465,6 +635,14 @@ export function createApp(d: Deps) {
     plate: z.string().max(15).optional(), trailerPlate: z.string().max(15).optional() });
   r.get('/api/vehicles', true, (c: AuthedCtx) => profiles.vehicles(c.user));
   r.post('/api/vehicles', true, (c: AuthedCtx) => profiles.addVehicle(c.user, parse(vehicleSchema, c.body)));
+  // These fields already exist in migration 032; never require them for SOS
+  // or mutate a customer's registered vehicle as a driver.
+  r.patch('/api/vehicles/:id/details', true, (c: AuthedCtx) =>
+    profiles.updateVehicleDetails(c.user,c.params.id,parse(z.object({
+      vin: z.string().trim().toUpperCase().regex(/^[A-HJ-NPR-Z0-9]{17}$/,'VIN — 17 символов без I, O и Q').nullable().optional(),
+      engine: z.string().trim().max(80).nullable().optional(),
+      configurationNotes: z.string().trim().max(500).nullable().optional(),
+    }).strict(),c.body)));
   r.get('/api/vehicles/:id/history', true, (c: AuthedCtx) => profiles.vehicleHistory(c.user, c.params.id));
   r.delete('/api/vehicles/:id', true, async (c: AuthedCtx) => (await profiles.removeVehicle(c.user, c.params.id), { ok: true }));
   r.post('/api/vehicles/:id/driver', true, (c: AuthedCtx) => profiles.assignDriver(c.user, c.params.id, parse(z.object({ phone: z.string().nullable() }), c.body).phone));
@@ -474,7 +652,7 @@ export function createApp(d: Deps) {
   // Same contracts for the legacy single-section APIs and the atomic screen save.
   const performerProfileSchema = z.object({
     kind: z.enum(['master', 'tow', 'service', 'ecu']), name: z.string().min(1).max(100).optional(),
-    specialties: z.array(z.enum(['electric', 'diag', 'air', 'autonomy', 'tyre', 'consult'])).max(10).optional(),
+    specialties: z.array(z.enum(['electric', 'diag', 'air', 'autonomy', 'tyre', 'hydraulics', 'consult'])).max(10).optional(),
     brands: z.record(z.string().max(40), brandLevel).optional(), tier: z.enum(['eco', 'comfort', 'pro']).optional(),
     callOutPrice: money.nullish(), hourPrice: money.nullish(), kmRate: money.nullish(), prepMinutes: z.number().int().min(0).max(60).optional(),
     acceptsGroup: z.boolean().optional(), taxStatus: z.enum(['self_employed', 'ip']).nullish(), inn: z.string().nullish(),
@@ -551,7 +729,7 @@ export function createApp(d: Deps) {
     const all = await settings.all();
     return { zones: all.pricing.zones, tiers: all.pricing.tiers, consult: all.pricing.consult, towBase: all.pricing.towBase, nightNow: isNight(all.pricing, now()), payments: await payments.methods(),
       clientFeePct: all.fees.clientFeePct, reviewTags: REVIEW_TAGS, cancelScale: all.cancel.scale,
-      serviceCommissionPct: all.fees.serviceCommissionPct, serviceCommissionMax: all.fees.serviceCommissionMax, serviceReferralDiscountPct: all.fees.serviceReferralDiscountPct, performerCommissionPct: all.fees.performerCommissionPct,
+      serviceReferralDiscountPct: all.fees.serviceReferralDiscountPct,
       billingStep: Number(all.pricing.billingStepMinutes ?? 60) };
   });
   r.post('/api/pricing/estimate', false, async (c: Ctx) => {
@@ -571,6 +749,68 @@ export function createApp(d: Deps) {
     }
   });
 
+  // Free technical referral to a verified stationary ECU shop.
+  // NOT the legacy ECU call-out, and no online payment/hold is created here.
+  r.get('/api/ecu/station', ['master'], (c: AuthedCtx) => ecuHandoffs.station(c.user));
+  r.put('/api/ecu/station', ['master'], (c: AuthedCtx) => {
+    const b=parse(z.object({
+      publicName:z.string().trim().min(3).max(120),
+      address:z.string().trim().min(8).max(300),
+    }),c.body);
+    return ecuHandoffs.saveStation(c.user,b.publicName,b.address);
+  });
+  r.get('/api/admin/ecu/stations', ['admin'], () => ecuHandoffs.stationQueue());
+  r.post('/api/admin/ecu/stations/:id/verify', ['admin'], (c: AuthedCtx) =>
+    ecuHandoffs.verifyStation(c.user,c.params.id,
+      parse(z.object({approved:z.boolean()}),c.body).approved));
+  // Non-billable recommendation; owner controls new search and contract.
+  r.get('/api/orders/:id/continuations', true,
+    (c: AuthedCtx) => continuations.list(c.user,c.params.id));
+  r.post('/api/orders/:id/continuations', performerRoles, (c: AuthedCtx) => {
+    const b=parse(z.object({
+      target:z.enum(['tow','sto','master','ecu']),
+      summary:z.string().trim().min(12).max(1000),
+    }),c.body);
+    return continuations.propose(c.user,c.params.id,b.target,b.summary);
+  });
+  r.post('/api/orders/:id/continuations/:recommendationId/decision', true,
+    (c: AuthedCtx) => continuations.decide(c.user,c.params.id,
+      c.params.recommendationId,parse(z.object({approve:z.boolean()}),c.body).approve));
+  r.post('/api/orders/:id/ecu-handoff', true, (c: AuthedCtx) => {
+    const b=parse(z.object({
+      summary:z.string().trim().min(10).max(1400),
+      recommendationId:z.string().uuid().optional(),
+    }),c.body);
+    return ecuHandoffs.open(c.user,c.params.id,b.summary,b.recommendationId);
+  });
+  r.get('/api/orders/:id/ecu-handoff', true, (c: AuthedCtx) =>
+    ecuHandoffs.byOrder(c.user,c.params.id));
+  r.get('/api/ecu/handoffs', ['master'], (c: AuthedCtx) => ecuHandoffs.inbox(c.user));
+  r.get('/api/ecu/handoffs/:id', true, (c: AuthedCtx) =>
+    ecuHandoffs.detail(c.user,c.params.id));
+  r.post('/api/ecu/handoffs/:id/quote', ['master'], (c: AuthedCtx) => {
+    const b=parse(z.object({
+      diagnosisPrice:z.number().int().min(100).max(100_000_000),
+      explanation:z.string().trim().min(10).max(1000),
+    }),c.body);
+    return ecuHandoffs.quote(c.user,c.params.id,b.diagnosisPrice,b.explanation);
+  });
+  r.post('/api/ecu/handoffs/:id/choose', true, (c: AuthedCtx) => {
+    const b=parse(z.object({
+      quoteId:z.string().uuid(),version:z.number().int().min(1),
+      price:z.number().int().min(100).max(100_000_000),agree:z.literal(true),
+    }),c.body);
+    return ecuHandoffs.choose(c.user,c.params.id,b.quoteId,b.version,b.price,b.agree);
+  });
+  r.post('/api/ecu/handoffs/:id/close', true, (c: AuthedCtx) =>
+    ecuHandoffs.close(c.user,c.params.id,parse(z.object({
+      reason:z.string().trim().min(10).max(1000),
+    }),c.body).reason));
+  r.post('/api/ecu/handoffs/:id/notes', true, (c: AuthedCtx) =>
+    ecuHandoffs.note(c.user,c.params.id,parse(z.object({
+      body:z.string().trim().min(2).max(1500),
+    }),c.body).body));
+
   // Заявки -------------------------------------------------------------------
   r.post('/api/orders', true, async (c: AuthedCtx) => {
     if (!c.user.roles.some((r) => ['client', 'driver'].includes(r))) throw forbidden('Для заявки нужен отдельный клиентский аккаунт');
@@ -583,10 +823,17 @@ export function createApp(d: Deps) {
     groupTrip: z.boolean().optional(), night: z.boolean().optional(), paymentMethod: z.enum(['cash', 'online', 'invoice']).optional(),
     destination: z.string().max(300).optional(), cargo: z.enum(['tractor', 'semitrailer', 'coupling', 'truck12', 'bus', 'special']).optional(),
     loaded: z.enum(['empty', 'loaded', 'adr']).optional(), driverOnSite: z.boolean().optional(), fromConsult: z.string().uuid().optional(),
-    continueFrom: z.string().uuid().optional(),
+    continueFrom: z.string().uuid().optional(), parallelWith: z.string().uuid().optional(),
+     recommendationId: z.string().uuid().optional(),
+    parallelConsent: z.boolean().optional(), parallelCallOut: money.optional(),
+    preferredPerformerId: z.string().uuid().optional(),
     site: z.object({
       place: z.enum(['parking', 'yard', 'plant', 'road']).optional(), pass: z.enum(['none', 'onsite', 'ahead']).optional(),
       meet: z.string().max(60).optional(), state: z.enum(['free', 'loading', 'other_work']).optional(),
+      road: z.object({
+        highway: z.string().trim().max(80).optional(), km: z.number().min(0).max(15000).optional(),
+        direction: z.string().trim().max(100).optional(), side: z.enum(['right','left','unknown']).optional(),
+      }).optional(),
       when: z.enum(['now', 'today', 'tomorrow']).optional(), time: z.string().max(20).optional(),
     }).optional(),
   }), c.body), typeof c.headers['idempotency-key'] === 'string'
@@ -694,6 +941,32 @@ export function createApp(d: Deps) {
   }), c.body)));
   r.get('/api/shop/orders', true, (c: AuthedCtx) => shop.myOrders(c.user));
   r.post('/api/shop/orders/:id/cancel', true, (c: AuthedCtx) => shop.cancelMine(c.user, c.params.id));
+  // Courier: courier credentials never expose other buyers, order codes or
+  // admin controls. A buyer separately confirms delivery after code verification.
+  r.get('/api/admin/couriers', ['admin'], () => deliveries.candidates());
+  r.post('/api/admin/shop/orders/:id/courier', ['admin'], (c:AuthedCtx) =>
+    deliveries.assign(c.user,c.params.id,parse(z.object({courierId:z.string().uuid()}),c.body).courierId));
+  r.post('/api/admin/shop/orders/:id/courier/reset-receipt', ['admin'], (c:AuthedCtx) =>
+    deliveries.resetReceipt(c.user,c.params.id,parse(z.object({
+      reason:z.string().trim().min(10).max(500)
+    }).strict(),c.body).reason));
+  r.get('/api/courier/presence', ['courier'], (c:AuthedCtx) => deliveries.presence(c.user));
+  r.put('/api/courier/presence', ['courier'], (c:AuthedCtx) =>
+    deliveries.setPresence(c.user,parse(z.object({online:z.boolean()}),c.body).online));
+  r.get('/api/courier/jobs', ['courier'], (c:AuthedCtx) => deliveries.list(c.user));
+  r.get('/api/courier/jobs/:id', ['courier'], (c:AuthedCtx) => deliveries.one(c.user,c.params.id));
+  r.post('/api/courier/jobs/:id/stage', ['courier'], (c:AuthedCtx) =>
+    deliveries.progress(c.user,c.params.id,parse(z.object({
+      status:z.enum(['picked_up','en_route','arrived'])
+    }),c.body).status));
+  r.post('/api/courier/jobs/:id/verify', ['courier'], (c:AuthedCtx) =>
+    deliveries.verify(c.user,c.params.id,parse(z.object({
+      code:z.string().regex(/^\d{6}$/)
+    }),c.body).code));
+  r.get('/api/shop/orders/:id/receipt-code', true, (c:AuthedCtx) =>
+    deliveries.receiptCode(c.user,c.params.id));
+  r.post('/api/shop/orders/:id/confirm-received', true, (c:AuthedCtx) =>
+    deliveries.confirmReceived(c.user,c.params.id));
   // Autokontinent purchase identifiers: strictly admin-only; there is no supplier API connection yet.
   r.get('/api/admin/shop/supplier/status', ['admin'], () => shop.supplierStatus());
   r.get('/api/admin/shop/products/:id/supplier', ['admin'], (c: AuthedCtx) => shop.supplierRef(c.params.id));
@@ -792,12 +1065,14 @@ export function createApp(d: Deps) {
   // Quotation and PDF workflow: real insured customer vs designated agent, never automatic insurer API calls.
   r.get('/api/insurance/requests/:id', true, (c:AuthedCtx)=>insuranceFlow.detail(c.user,c.params.id));
   r.post('/api/insurance/requests/:id/accept', ['insurer'], async (c:AuthedCtx)=>{
+    await offers.requireInsurer(c.user);
     const out=await insuranceFlow.accept(c.user,c.params.id);
     const item=await insuranceFlow.detail(c.user,c.params.id);
     notifier.live([item.request.owner_id],{type:'vehicle_service',requestId:c.params.id});
     return out;
   });
   r.post('/api/insurance/requests/:id/offers', ['insurer'], async (c:AuthedCtx)=>{
+    await offers.requireInsurer(c.user);
     const o=z.object({company:z.string().trim().min(1).max(140),
       product:z.string().trim().min(1).max(140),
       premiumKopecks:z.number().int().positive().max(1_000_000_000),
@@ -829,6 +1104,7 @@ export function createApp(d: Deps) {
     return out;
   });
   r.post('/api/insurance/requests/:id/policy', ['insurer'],async(c:AuthedCtx)=>{
+    await offers.requireInsurer(c.user);
     const b=parse(z.object({dataUrl:z.string().max(6_100_000),
       fileName:z.string().max(120),expiresOn:z.string().regex(/^\d{4}-\d{2}-\d{2}$/)}),c.body);
     const out=await insuranceFlow.uploadPolicy(c.user,c.params.id,b.dataUrl,b.fileName,b.expiresOn);
@@ -882,6 +1158,7 @@ export function createApp(d: Deps) {
   });
 
   r.patch('/api/insurer/inspections/:id', ['insurer','inspection_operator'], async (c: AuthedCtx) => {
+    await (c.user.roles.includes('inspection_operator') ? offers.requireInspection(c.user) : offers.requireInsurer(c.user));
     const b = parse(z.object({status:z.enum(['completed','rejected']),note:z.string().max(2000).optional()}),c.body);
     const updated = await vehicleRequests.updateInspection(c.user,c.params.id,b.status,b.note);
     notifier.live(await vehicleRequests.recipients(updated),
@@ -978,9 +1255,9 @@ export function createApp(d: Deps) {
   r.post('/api/base/bookings/:id/note', ['service'], (c: AuthedCtx) => centers.note(c.user, c.params.id, parse(z.object({ text: z.string().max(500).optional(), notesPublic: z.boolean().optional() }), c.body)));
   r.post('/api/base/bookings/:id/still-here', ['service'], (c: AuthedCtx) => centers.stillHere(c.user, c.params.id));
   r.post('/api/base/bookings/:id/ready', ['service'], (c: AuthedCtx) => centers.ready(c.user, c.params.id, parse(z.object({ works: z.array(z.string().max(80)).max(20) }), c.body).works));
-  r.post('/api/base/bookings/:id/invoice', ['service'], (c: AuthedCtx) => { const b = parse(z.object({ amount: z.number().int().min(100).max(100_000_000), points: money.optional() }), c.body); return centers.invoice(c.user, c.params.id, b.amount, b.points ?? 0); });
+  r.post('/api/base/bookings/:id/invoice', ['service'], (c: AuthedCtx) => { const b = parse(z.object({ amount: z.number().int().min(100).max(100_000_000), partsAmount: z.number().int().min(0).max(100_000_000).optional(), points: money.optional() }).strict(), c.body); return centers.invoice(c.user, c.params.id, b.amount, b.points ?? 0, b.partsAmount ?? 0); });
   // Сколько баллов рембаза может погасить в счёте на сумму amount
-  r.get('/api/base/points', ['service'], async (c: AuthedCtx) => { const fees = await settings.get('fees'); const amount = Number(c.query.get('amount') ?? 0) || 0; const commission = Math.min(Math.round(amount * fees.serviceCommissionPct / 100), fees.serviceCommissionMax); return referral.available(c.user.id, commission); });
+  r.get('/api/base/points', ['service'], async (c: AuthedCtx) => { const fees = await settings.get('fees'); const amount = Number(c.query.get('amount') ?? 0) || 0; const commission = Math.min(Math.round(amount * Math.min(5,fees.serviceCommissionPct) / 100), fees.serviceCommissionMax ?? 500_000,500_000); return referral.available(c.user.id, commission); });
   r.get('/api/base/bookings/:id/company', ['service'], (c: AuthedCtx) => centers.companyCard(c.user, c.params.id));
   // Рембаза: клиент
   r.get('/api/services', true, (c: AuthedCtx) => {
@@ -995,6 +1272,7 @@ export function createApp(d: Deps) {
     vehicleId: z.string().uuid().nullable().optional(), need: z.string().max(20), day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
     time: z.string().max(20).nullable().optional(), arrival: z.enum(['self', 'tow']).default('self'), comment: z.string().max(500).nullable().optional(),
     fromOrderId: z.string().uuid().nullable().optional(), caseOrderId: z.string().uuid().nullable().optional(),
+     recommendationId: z.string().uuid().nullable().optional(),
   }), c.body));
   });
   r.get('/api/bookings', true, (c: AuthedCtx) => centers.myBookings(c.user));
@@ -1007,7 +1285,21 @@ export function createApp(d: Deps) {
   r.post('/api/orders/:id/recommend-service', performerRoles, (c: AuthedCtx) => onsite.recommend(c.user, c.params.id, parse(z.object({ centerId: z.string().uuid().nullable() }), c.body).centerId));
   r.get('/api/admin/services', staff, () => centers.pending());
   r.get('/api/admin/service-payouts', ['admin'], () => centers.payoutsDue());
-  r.post('/api/admin/bookings/:id/paid', ['admin'], (c: AuthedCtx) => centers.markPaidOut(c.user, c.params.id));
+  // This is manual bank/receipt evidence, not a gateway transaction.
+  r.get('/api/admin/service-finance', ['admin'], (c: AuthedCtx) => centers.financialRegister(c.user));
+  r.get('/api/admin/bookings/:id/payment-events', ['admin'], (c: AuthedCtx) =>
+    centers.paymentEvents(c.user,c.params.id));
+  r.post('/api/admin/bookings/:id/payment-events', ['admin'], (c: AuthedCtx) =>
+    centers.recordTransfer(c.user,c.params.id,parse(z.object({
+      kind:z.enum(['receipt','refund']),
+      amount:money.positive(),
+      method:z.enum(['invoice','online','cash','other']),
+      reference:z.string().trim().min(4).max(200),
+    }).strict(),c.body)));
+  r.post('/api/admin/bookings/:id/paid', ['admin'], (c: AuthedCtx) =>
+    centers.markPaidOut(c.user, c.params.id, parse(z.object({
+      reference:z.string().trim().min(4).max(200).optional(),
+    }).strict(),c.body).reference));
   r.get('/api/base/money', ['service'], (c: AuthedCtx) => centers.money(c.user));
   r.get('/api/admin/summary', ['admin'], () => stats.summary());
   r.get('/api/admin/live', ['admin'], () => stats.liveOrders());
@@ -1028,6 +1320,20 @@ export function createApp(d: Deps) {
     extras: z.array(z.object({ name: z.string().min(2).max(60), amount: money })).max(10).optional(),
     result: z.enum(['solved', 'cause_found', 'not_found']).optional(), note: z.string().max(300).optional(),
   }), c.body)));
+  // Work-complete without the customer: operational release, NOT payment confirmation.
+  r.post('/api/orders/:id/emergency-close', performerRoles, (c: AuthedCtx) => {
+    const b=parse(z.object({
+      requestKey:z.string().min(8).max(100),
+      reason:z.enum(['client_offline','client_unreachable','client_absent','other']),
+      note:z.string().trim().min(10).max(1500),
+      workFinished:z.literal(true),
+    }),c.body);
+    return unilateral.request(c.user,c.params.id,b);
+  });
+  r.post('/api/orders/:id/emergency-dispute', true, (c: AuthedCtx) => {
+    const b=parse(z.object({reason:z.string().trim().min(10).max(1500)}),c.body);
+    return unilateral.disagree(c.user,c.params.id,b.reason);
+  });
   // Неоплата: клиент отказывается платить — сообщает мастер или сам клиент. Сразу поддержка и случай модератору.
   // not_done — клиент: работа не выполнена (причина обязательна); refuse — клиент отказывается без причины
   // (экран заранее напомнил ему условия оферты); client_refuses — мастер: клиент не платит.
@@ -1035,6 +1341,9 @@ export function createApp(d: Deps) {
     const b = parse(z.object({ kind: z.enum(['not_done', 'refuse', 'client_refuses']), reason: z.string().max(500).optional() }), c.body);
     const o = await orders.mustSee(c.user, c.params.id);
     const who = orders.actorOf(c.user, o);
+    if (await d.db.one(
+      "select 1 from order_unilateral_closures where order_id=$1 and status in ('pending_client','disputed')",[o.id]))
+      throw new HttpError(409,'use_emergency_response','Этот спор уже в аварийном порядке: ответьте через подтверждение или модерацию.');
     if (who !== 'client' && who !== 'performer') throw forbidden('Сообщить о неоплате могут участники заявки');
     if ((who === 'performer') !== (b.kind === 'client_refuses')) throw bad('bad_kind', 'Не тот вариант для вашей роли');
     if (!['arrived', 'working', 'awaiting_confirmation'].includes(o.status)) throw new HttpError(409, 'bad_status', 'Это решается на месте, пока сумма не подтверждена');
@@ -1101,6 +1410,40 @@ export function createApp(d: Deps) {
     return reviews.about(c.params.id);
   });
 
+  // Tochka B2B invoice API: admin only, feature-flagged, no funds moved.
+  // The exact legal VAT for principal service vs agent fee must be approved.
+  const tochkaBuyerSchema = z.object({
+    type: z.enum(['company', 'ip']),
+    taxCode: z.string().regex(/^\d{10}(\d{2})?$/),
+    secondSideName: z.string().min(2).max(255),
+    kpp: z.string().regex(/^\d{9}$/).optional(),
+    legalAddress: z.string().max(500).optional(),
+    accountId: z.string().max(50).optional(),
+    bankName: z.string().max(255).optional(),
+    bankCorrAccount: z.string().max(30).optional(),
+  }).refine(b => b.type === 'ip' ? b.taxCode.length === 12 : b.taxCode.length === 10,
+    'ИНН не соответствует типу организации');
+  const tochkaVatSchema = z.enum(['without_nds', 'nds_0', 'nds_5', 'nds_7', 'nds_10', 'nds_22']);
+  r.post('/api/admin/payments/:id/tochka-invoice', ['admin'], (c: AuthedCtx) => {
+    const b = parse(z.object({
+      buyer: tochkaBuyerSchema,
+      workVat: tochkaVatSchema,
+      serviceVat: tochkaVatSchema,
+    }), c.body);
+    return requireTochkaInvoice().issue(c.params.id, c.user.id, b.buyer, b.workVat, b.serviceVat);
+  });
+  r.get('/api/admin/payments/:id/tochka-invoice', ['admin'],
+    (c: AuthedCtx) => requireTochkaInvoice().local(c.params.id));
+  r.get('/api/admin/payments/:id/tochka-invoice/bank-status', ['admin'],
+    (c: AuthedCtx) => requireTochkaInvoice().status(c.params.id));
+  r.post('/api/admin/payments/:id/tochka-invoice/email', ['admin'], (c: AuthedCtx) => {
+    const b = parse(z.object({ email: z.string().email().max(254) }), c.body);
+    return requireTochkaInvoice().email(c.params.id, b.email, c.user.id);
+  });
+  r.get('/api/admin/payments/:id/tochka-invoice/pdf', ['admin'], async (c: AuthedCtx) =>
+    new Raw('application/pdf', await requireTochkaInvoice().pdf(c.params.id),
+      { 'content-disposition': 'attachment; filename="traksos-invoice.pdf"' }));
+
   // Платёжный сервис ---------------------------------------------------------
   r.post('/api/payments/webhook', false, (c: Ctx) => payments.handleWebhook(c.body));
   if (!isProd) {
@@ -1166,6 +1509,34 @@ export function createApp(d: Deps) {
     (await adminAccess.listReports()).map(report => ({ ...report, delivery_configured: developerReportDelivery.enabled })));
   r.post('/api/admin/developer-reports/:id/resolve', ['admin'], (c: AuthedCtx) =>
     adminAccess.resolveReport(c.user, c.params.id));
+  // Admin-only CRM. All operational facts are read from source-of-truth tables.
+  // Export and metadata edits are audit-logged; no open public CSV endpoint.
+  const registryQuery = z.object({
+    q:z.string().max(120).optional(),role:z.enum(ROLES as [string,...string[]]).optional(),
+    region:z.string().max(80).optional(),city:z.string().max(120).optional(),
+    status:z.enum(['active','blocked']).optional(),
+    verification:z.enum(['pending','approved','rejected']).optional(),
+    specialty:z.string().max(60).optional(),
+    activity:z.enum(['with_orders','without_orders','recent_30']).optional(),
+    company:z.enum(['yes','no']).optional(),tag:z.string().max(50).optional(),
+    kind:z.enum(['master','tow','service','ecu']).optional(),
+    ratingMin:z.coerce.number().min(0).max(5).optional(),
+    from:z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    to:z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    page:z.coerce.number().int().min(1).max(100000).optional(),
+    pageSize:z.coerce.number().int().min(1).max(100).optional(),
+  }).strict();
+  r.get('/api/admin/registry', ['admin'], (c: AuthedCtx) =>
+    adminRegistry.list(parse(registryQuery,Object.fromEntries(c.query.entries()))));
+  r.post('/api/admin/registry/export', ['admin'], (c: AuthedCtx) =>
+    adminRegistry.exportCsv(c.user,parse(registryQuery,c.body)));
+  r.post('/api/admin/registry/:id/metadata', ['admin'], (c: AuthedCtx) =>
+    adminRegistry.saveMetadata(c.user,c.params.id,parse(z.object({
+      region:z.string().max(80).nullable().optional(),city:z.string().max(120).nullable().optional(),
+      tags:z.array(z.string().max(40)).max(12).optional(),
+      note:z.string().max(2000).optional(),
+    }).strict(),c.body)));
+
   r.get('/api/admin/users', ['admin'], (c: AuthedCtx) => {
     const q = `%${(c.query.get('q') ?? '').replace(/[%_]/g, '')}%`;
     return d.db.query(
@@ -1178,6 +1549,17 @@ export function createApp(d: Deps) {
     admin.setRoles(c.user, c.params.id, parse(z.object({ roles: z.array(z.enum(ROLES as [string, ...string[]])).min(1) }), c.body).roles));
   r.get('/api/admin/users/:id', ['admin'], (c: AuthedCtx) => admin.userCard(c.params.id));
   r.get('/api/admin/search', ['admin'], (c: AuthedCtx) => admin.search(c.query.get('q') ?? ''));
+  // Case centre: always admin-only. Order IDs from linked stages resolve to one root.
+  r.get('/api/admin/cases', ['admin'], (c: AuthedCtx) =>
+    adminCases.list(c.query.get('q') ?? '', c.query.get('scope') ?? 'all'));
+  r.get('/api/admin/cases/:id/export', ['admin'], (c: AuthedCtx) =>
+    adminCases.exportOperationalCsv(c.user, c.params.id));
+  r.get('/api/admin/cases/:id', ['admin'], (c: AuthedCtx) =>
+    adminCases.detail(c.user, c.params.id));
+  r.post('/api/admin/cases/:id/notes', ['admin'], (c: AuthedCtx) => {
+    const input = parse(z.object({ comment: z.string().trim().min(5).max(1500) }), c.body);
+    return adminCases.note(c.user,c.params.id,input.comment);
+  });
   r.post('/api/admin/payments/:id/refund', ['admin'], (c: AuthedCtx) => admin.refund(c.user, c.params.id, parse(z.object({
     amount: money.positive(), from: z.enum(['platform', 'performer']), reason: z.string().min(3).max(300),
   }), c.body), typeof c.headers['idempotency-key'] === 'string' ? c.headers['idempotency-key'] : undefined));
@@ -1302,10 +1684,11 @@ export function createApp(d: Deps) {
   r.post('/api/admin/reviews/:id', staff, (c: AuthedCtx) =>
     reviews.moderate(c.user, c.params.id, parse(z.object({ disputed: z.boolean().optional(), hidden: z.boolean().optional() }), c.body)));
   r.post('/api/admin/offers', ['admin'], (c: AuthedCtx) => offers.publish(c.user, parse(z.object({
-    audience: z.enum(['client', 'performer', 'privacy']), version: z.string().min(1).max(20), body: z.string().min(50).max(200_000),
+    audience: z.enum(['client', 'performer', 'insurer', 'inspection', 'privacy']), version: z.string().min(1).max(20), body: z.string().min(50).max(200_000),
     summary: z.string().max(500).optional(), effectiveAt: z.string().optional(),
   }), c.body)));
   r.get('/api/admin/offers', ['admin'], () => offers.history());
+  r.get('/api/admin/offers/economics-audit', ['admin'], () => offers.economicsAudit());
   r.post('/api/admin/payouts/run', ['admin'], (c: AuthedCtx) => payments.runPayouts(c.user));
   r.post('/api/admin/payments/:id/invoice-paid', ['admin'], (c: AuthedCtx) => payments.markInvoicePaid(c.user, c.params.id));
   r.post('/api/admin/performers/:id/cash-debt-paid', ['admin'], (c: AuthedCtx) =>
@@ -1324,7 +1707,7 @@ export function createApp(d: Deps) {
     const cors: Record<string, string> = { 'x-request-id': requestId };
     if (origin && (config.corsOrigins.includes('*') || config.corsOrigins.includes(origin))) {
       cors['access-control-allow-origin'] = origin;
-      cors['access-control-allow-headers'] = 'authorization, content-type';
+      cors['access-control-allow-headers'] = 'authorization, content-type, idempotency-key';
       cors['access-control-expose-headers'] = 'x-request-id';
       cors['access-control-allow-methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS';
       cors['vary'] = 'origin';
@@ -1384,7 +1767,7 @@ export function createApp(d: Deps) {
     }
   }
 
-  return { handle, hub, auth, settings, orders, payments, auction, documents, admin, support, developerReportDelivery, warranty, warrantyRemediation, warrantyRecourse, profiles, chat, reviews, offers, notifier, privacy, ops, router: r };
+  return { handle, hub, auth, settings, orders, payments, auction, documents, admin, support, unilateral, developerReportDelivery, warranty, warrantyRemediation, warrantyRecourse, profiles, chat, reviews, offers, notifier, privacy, ops, orderSla, router: r };
 }
 
 export type App = ReturnType<typeof createApp>;
@@ -1393,7 +1776,9 @@ export function bearer(req: http.IncomingMessage) {
   const h = req.headers.authorization;
   if (h?.startsWith('Bearer ')) return h.slice(7);
   const u = new URL(req.url ?? '/', 'http://x');
-  return u.searchParams.get('token');
+  // Query-string bearer tokens must never authorize normal HTTP/API requests.
+  // Legacy installed APKs may still use /ws?token= until the WS migration gate.
+  return u.pathname === '/ws' ? u.searchParams.get('token') : null;
 }
 
 function clientIp(req: http.IncomingMessage) {

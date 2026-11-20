@@ -1,6 +1,9 @@
-// Nightly and push-time gate: approved TrakSOS identity is not replaced silently.
+// Nightly and push-time gate: functional and asset integrity tests.
+// Current owner-approved public design is 19 Nov: SOS, Air, STO, ECU, Parts, Insurance.
+// Never restore the deleted 14 Nov design or the interim 18 Nov nine-card layout.
+// Artwork still requires visual inspection; source-level tests cannot prove logo pixels.
 // This only verifies invariants; visual fidelity is additionally checked via screenshots.
-import { readFile, stat } from 'node:fs/promises';
+import { readFile, readdir, stat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 
 const read = (path) => readFile(path, 'utf8');
@@ -10,32 +13,23 @@ function expect(ok, description) {
   else { console.error('FAIL: ' + description); failures.push(description); }
 }
 const LOCKED_ASSETS = {
+  'android/app/src/main/res/drawable-xxxhdpi/ic_notify.png': 'b076e31adbe265e3',
+  'android/app/src/main/res/drawable-xxhdpi/ic_notify.png': '99977763f15a882c',
+  'android/app/src/main/res/drawable-xhdpi/ic_notify.png': '99e8a55cd6eb58ef',
+  'android/app/src/main/res/drawable-hdpi/ic_notify.png': '051234c95f35fd2f',
+  'android/app/src/main/res/drawable-mdpi/ic_notify.png': 'd8b301cdb07e6d88',
+  'branding/tracksos-rustore-icon.png': '2583f9590d32107b',
+  'web/public/icon-512.png': '2583f9590d32107b',
+  'web/public/icon-192.png': 'fa6451ff36f1fec3',
+  'web/public/tracksos-approved-header-logo-20261119.webp': '4820e2a77018e638',
   // Exact approved images. Deliberate asset changes require a new owner-approved baseline.
-  'web/public/tracksos-approved-truck.webp': '9193ebd1312c2d2e',
-  // New 14 November branded high-resolution portrait with correct Scania grille and TrakSOS trailer.
-  'web/public/tracksos-approved-scania-r520.webp': '8f5161004a18746f',
-  'web/public/tracksos-approved-map.webp': '994097c8c01b2c80',
-  // The ONLY final desktop design uses the truck crop and service visuals from owner's last PNG.
-  'web/public/traksos-final-hero.webp': 'bfce4ea62b859d80',
-  'web/public/traksos-final-insurance.webp': '6cbcba4d541f4ddc',
-  'web/public/traksos-final-parts.webp': '0531cbfd715179c3',
-  'android/app/src/main/res/mipmap-mdpi/ic_launcher.png': '8325d8040b7a14f1',
-  'android/app/src/main/res/mipmap-hdpi/ic_launcher.png': '934c4448c5a758fd',
-  'android/app/src/main/res/mipmap-xhdpi/ic_launcher.png': '5022fec38cc1898d',
-  'android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png': '22456b8817e2a561',
-  'android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png': '70c666ed8cb09e6c',
-  'web/public/tracksos-photo-master.webp': 'ba0572aa5c6341ef',
-  'web/public/tracksos-photo-tow.webp': '1fdb913351585040',
-  'web/public/tracksos-photo-sto.webp': '48e638e981108763',
-  'web/public/tracksos-photo-consult.webp': 'c59634316748dde8',
-  'web/public/tracksos-hero-rescue-hq.webp': '763702ee90df9466',
-  'web/public/tracksos-hero-service-hq.webp': '494a472962520285',
-  'web/public/tracksos-partner-tow-approved.webp': '05fe81a6c55c5621',
-  'web/public/tracksos-partner-master-approved.webp': 'a6af5a54938a79b7',
-  'web/public/tracksos-partner-sto-approved.webp': '2f2830a773e5c50c',
-  'web/public/tracksos-partner-insurer-approved.webp': '875b2a3031882b8f',
-  'web/public/tracksos-approved-scenic-hero.webp': '9193ebd1312c2d2e',
-  'android/app/src/main/res/drawable-nodpi/splash_truck.webp': '75bfacfcdf8c0673',
+  'web/public/tracksos-approved-hero-owner-20261119.webp': '7a7a9acec9ee7f32',
+  'android/app/src/main/res/mipmap-mdpi/ic_launcher.png': '327f52a2d6e836e9',
+  'android/app/src/main/res/mipmap-hdpi/ic_launcher.png': 'f797b183e93c4bad',
+  'android/app/src/main/res/mipmap-xhdpi/ic_launcher.png': '27ea3b5ebbfe86ce',
+  'android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png': '3d47c3852548579f',
+  'android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png': 'fa6451ff36f1fec3',
+  'android/app/src/main/res/drawable-nodpi/splash_truck.webp': '7a7a9acec9ee7f32',
 };
 async function asset(path, minBytes = 5000) {
   try {
@@ -49,11 +43,153 @@ async function asset(path, minBytes = 5000) {
     }
   } catch { expect(false, path + ' is present'); }
 }
+// Build gate: a previously approved design must not return through role CSS,
+// mobile JSX or an old asset copied into the PWA service-worker cache.
+const retiredVisuals = [
+  'tracksos-approved-map.webp',
+  'tracksos-hero-rescue-hq.webp',
+  'tracksos-hero-service-hq.webp',
+  'tracksos-photo-consult.webp',
+  'tracksos-photo-master.webp',
+  'tracksos-photo-sto.webp',
+  'tracksos-photo-tow.webp',
+  'tracksos-partner-insurer-approved.webp',
+  'tracksos-partner-master-approved.webp',
+  'tracksos-partner-sto-approved.webp',
+  'tracksos-partner-tow-approved.webp',
+  'tracksos-road-atmosphere.svg',
+  'tracksos-visual-consult.svg',
+  'tracksos-visual-guide.svg',
+  'tracksos-visual-inspection.svg',
+  'tracksos-visual-insurance.svg',
+  'tracksos-visual-parts.svg',
+  'tracksos-visual-sto.svg',
+  'tracksos-visual-tow.svg',
+  'tracksos-visual-van.svg',
+  'tracksos-approved-scenic-hero.webp', 'tracksos-approved-scania-r520.webp',
+  'tracksos-approved-truck.webp', 'traksos-final-hero.webp',
+  'traksos-final-insurance.webp', 'traksos-final-parts.webp',
+];
+async function activeWebFiles(dir) {
+  const entries = await readdir(dir, { withFileTypes: true });
+  const nested = await Promise.all(entries.map(async entry => {
+    const path = dir + '/' + entry.name;
+    return entry.isDirectory() ? activeWebFiles(path) : /\.(?:css|ts|tsx|html)$/.test(entry.name) ? [path] : [];
+  }));
+  return nested.flat();
+}
+const retiredReferences = [];
+const activeFiles = await activeWebFiles('web/src');
+expect(activeFiles.length >= 100, 'approved-design guard scans all web/src source files');
+for (const file of activeFiles) {
+  const source = await read(file);
+  for (const name of retiredVisuals) if (source.includes(name)) retiredReferences.push(file + ' → ' + name);
+}
+expect(retiredReferences.length === 0,
+  'no retired 14–18 Nov imagery in active web/Android code' +
+  (retiredReferences.length ? ': ' + retiredReferences.join('; ') : ''));
+
+
+// Hard allowlist: only the owner's 19 Nov branding + original Tech №3 can
+// enter the active public image root. Vehicle model photos have their own
+// validated generation/brand registry in /vehicles/models; do not delete it.
+const allowedPublicVisuals = new Set([
+  'icon-192.png','icon-512.png',
+  'tracksos-approved-header-logo-20261119.webp',
+  'tracksos-approved-hero-owner-20261119.webp',
+  'tracksos-approved-logo-owner-20261119.webp',
+  'trakbot-approved-30.webp','trakbot-approved-hello.webp',
+]);
+const visualRootEntries = await readdir('web/public',{withFileTypes:true});
+const unexpectedVisuals = visualRootEntries.filter(entry =>
+  entry.isFile() && /\.(?:png|webp|svg|jpg|jpeg|avif|gif)$/i.test(entry.name) &&
+  !allowedPublicVisuals.has(entry.name)).map(entry=>entry.name);
+expect(unexpectedVisuals.length===0,
+  'no obsolete artwork or unapproved new images in live public assets' +
+  (unexpectedVisuals.length ? ': '+unexpectedVisuals.join(', ') : ''));
+for (const file of ['web/src/finalCanon.css','web/src/trackPhotos.css']) {
+  let exists = false;
+  try { await stat(file); exists = true; } catch {}
+  expect(!exists, 'retired photo/layout stylesheet cannot be bundled: '+file);
+}
+
 const landing = await read('web/src/screens/login.tsx');
 const catalogue = await read('web/src/guestCatalog.ts');
-const finalCss = await read('web/src/finalCanon.css');
-const css = await read('web/src/styles.css');
+const roleCss = await read('web/src/roleShared20261119.css');
+const currentCss = await read('web/src/currentApproved20261119.css');
+// Regression guard: removing legacy visual assets must never leave broken CSS references.
+expect(!roleCss.includes('traksos-final-insurance.webp') &&
+  !roleCss.includes('tracksos-partner-insurer-approved.webp') &&
+  roleCss.includes('.guest-app .partner-art-insurer{--partner-art:linear-gradient('),
+  'retired insurer background cannot return; partner screen keeps a nonempty branded fallback');
+
+expect(!landing.includes('public-track-extra-art') && !landing.includes('public-track-insurance-art'),
+  'all retired photographic ghost slots were physically removed from public service cards');
+const approvedPhoto = 'tracksos-approved-hero-owner-20261119.webp';
+const approvedHeroLayer = await read('web/src/approvedHeroImage20261119.css');
+expect(approvedHeroLayer.includes('object-fit:contain!important') &&
+  approvedHeroLayer.includes('.public-app-phone-truck') &&
+  !approvedHeroLayer.includes('#f3197c'),
+  'Android promo phone cannot crop approved logo into a retro magenta fragment');
+const heroVisualE2E = await read('e2e/approved-truck-hero.mjs');
+expect(currentCss.includes(approvedPhoto) && approvedHeroLayer.includes(approvedPhoto)
+  && !currentCss.includes('tracksos-approved-scenic-hero.webp'),
+  'guest home has one approved Nov 19 truck image, with no legacy image fallback');
+expect(heroVisualE2E.includes("tracksos-approved-hero-owner-20261119(?:-[A-Za-z0-9]+)")
+  && heroVisualE2E.includes("info.photo.includes('tracksos-approved-scenic-hero')"),
+  'browser screenshot gate rejects obsolete 14 Nov hero and requires actual owner image');
+
+
+/* A retired guest stylesheet must never silently redraw the approved 19 Nov
+   desktop / mobile-browser page. Signed-in cabinet selectors remain intact. */
+for (const path of ['web/src/trackVisual.css', 'web/src/trackPolish.css', 'web/src/trackScenic.css']) {
+  const retainedRoleStyles = await read(path);
+  expect(!/\\.guest-app\\b|\\.public-[\\w-]+\\b|\\.track-guest-tabbar\\b/.test(retainedRoleStyles),
+    'obsolete public layout cannot leak from signed-in cabinet stylesheet: ' + path);
+}
 const shell = await read('web/src/main.tsx');
+const androidCss = await read('web/src/androidApproved20261119.css');
+const browserCss = await read('web/src/mobileBrowser.css');
+expect(browserCss.includes('@supports (aspect-ratio: 2 / 1)') && browserCss.includes('height: 156px !important') && browserCss.includes('top: auto !important;right: auto !important;bottom: auto !important;left: auto !important'),
+  'legacy Android WebView must reserve visible uncropped truck photo and reset absolute offsets');
+const androidAcceptance = await read('e2e/android-approved-workspaces.mjs');
+expect(androidAcceptance.includes("Object.defineProperty(window,'TrakSOSNative'") &&
+  androidAcceptance.includes("['master_service'") &&
+  androidAcceptance.includes('for(const width of [320,390])'),
+  'Android visual acceptance exercises the native bridge, hybrid workspace and narrow widths');
+
+expect(androidCss.includes('.and19-workspace') && browserCss.includes('html.traksos-compact-guest') && shell.includes("classList.add('traksos-compact-guest')") && shell.includes('guest-app guest-home') && !browserCss.includes(':is(') && !browserCss.includes(':has(') && !currentCss.includes(':has('),
+  'Android guest shares the approved narrow-screen public layout; authenticated Android cabinets remain separate');
+expect(!currentCss.includes('.and19-workspace') && !currentCss.includes('.app.role-performer'),
+  'public 19 Nov CSS does not rewrite signed-in Android or performer workspaces');
+
+const css = await read('web/src/styles.css');
+// The retired pre-19-Nov hero may remain in role-only visuals but must never be
+// a CSS fallback for the owner-approved public landing. Prevent old art regressing
+// into a future deploy even when the final CSS file changes its order.
+expect(!/\.public-landing \.public-hero-visual\s*\{[^}]*tracksos-approved-(?:truck|scania-r520)\.webp/.test(css),
+  'obsolete truck art cannot reappear as the public home background');
+// The following old public images have no live source readers. Reject their
+// return to the distributable public directory (they otherwise enter the PWA cache).
+for (const name of ['tracksos-approved-map.webp','tracksos-hero-rescue-hq.webp','tracksos-hero-service-hq.webp','tracksos-photo-consult.webp','tracksos-photo-master.webp','tracksos-photo-sto.webp','tracksos-photo-tow.webp','tracksos-partner-insurer-approved.webp','tracksos-partner-master-approved.webp','tracksos-partner-sto-approved.webp','tracksos-partner-tow-approved.webp','tracksos-road-atmosphere.svg','tracksos-visual-consult.svg','tracksos-visual-guide.svg','tracksos-visual-inspection.svg','tracksos-visual-insurance.svg','tracksos-visual-parts.svg','tracksos-visual-sto.svg','tracksos-visual-tow.svg','tracksos-visual-van.svg', 'tracksos-approved-scenic-hero.webp','tracksos-approved-scania-r520.webp',
+  'tracksos-approved-truck.webp','traksos-final-hero.webp',
+                    'traksos-final-insurance.webp','traksos-final-parts.webp']) {
+  let exists = false;
+  try { await stat('web/public/' + name); exists = true; } catch { /* expected */ }
+  expect(!exists, 'retired public asset absent: ' + name);
+}
+const nativeSplash = await read('android/app/src/main/java/ru/traksos/app/SeasonalStartupOverlay.kt');
+expect(nativeSplash.includes('R.drawable.splash_truck') && !nativeSplash.includes('seasonal_splash/') &&
+  !nativeSplash.includes('Сезонный фон') && !nativeSplash.includes('TrakSOSNative-weather'),
+  'Android startup uses only 19 Nov approved image, without old seasonal backgrounds or caption');
+for (const name of ['autumn.webp','spring.webp','summer.webp','winter.webp']) {
+  let present = false;
+  try { await stat('android/app/src/main/assets/seasonal_splash/'+name); present = true; } catch {}
+  expect(!present, 'retired pre-17 Nov Android scene is absent: '+name);
+}
+expect(landing.includes('/icon-192.png') &&
+       shell.includes('/tracksos-approved-logo-owner-20261119.webp'),
+       'mobile promo shows 19 Nov icon and guest sidebar uses owner-approved original logo');
 const demo = await read('web/src/screens/adminTestCenter.tsx');
 const serviceDemo = await read('web/src/demo/servicePreviewApi.ts');
 expect(!/\bstructuredClone\s*\(/.test(serviceDemo),
@@ -78,23 +214,9 @@ for(const role of ['client','owner','driver','master','tow','service','master_se
 const labels = await read('web/src/dict.ts');
 const native = await read('android/app/src/main/java/ru/traksos/app/MainActivity.kt');
 
-await asset('web/public/tracksos-approved-truck.webp', 15000);
-await asset('web/public/tracksos-approved-scania-r520.webp', 40000);
-await asset('web/public/tracksos-approved-map.webp', 15000);
-await asset('web/public/traksos-final-hero.webp', 100000);
-await asset('web/public/traksos-final-insurance.webp', 25000);
-await asset('web/public/traksos-final-parts.webp', 25000);
-await asset('web/public/tracksos-photo-master.webp', 30000);
-await asset('web/public/tracksos-photo-tow.webp', 30000);
-await asset('web/public/tracksos-photo-sto.webp', 30000);
-await asset('web/public/tracksos-photo-consult.webp', 30000);
-await asset('web/public/tracksos-approved-scenic-hero.webp', 50000);
-await asset('web/public/tracksos-hero-rescue-hq.webp', 300000);
-await asset('web/public/tracksos-hero-service-hq.webp', 300000);
-await asset('web/public/tracksos-partner-tow-approved.webp', 200000);
-await asset('web/public/tracksos-partner-master-approved.webp', 200000);
-await asset('web/public/tracksos-partner-sto-approved.webp', 200000);
-await asset('web/public/tracksos-partner-insurer-approved.webp', 200000);
+await asset('web/public/tracksos-approved-header-logo-20261119.webp', 1600);
+await asset('web/public/tracksos-approved-hero-owner-20261119.webp', 50000);
+await asset('web/public/tracksos-approved-logo-owner-20261119.webp', 2000);
 await asset('android/app/src/main/res/drawable-nodpi/splash_truck.webp', 2000);
 await asset('android/app/src/main/res/mipmap-mdpi/ic_launcher.png', 1200);
 await asset('android/app/src/main/res/mipmap-hdpi/ic_launcher.png', 1800);
@@ -104,60 +226,60 @@ await asset('android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png', 5000);
 await asset('web/public/icon-192.png', 5000);
 await asset('web/public/icon-512.png', 25000);
 await asset('branding/tracksos-rustore-icon.png', 25000);
+// These PNG resources have been rebuilt directly from the owner's 19 Nov PNG:
+// truck silhouette / wordmark. Pre-17 Nov launcher and notification bytes fail.
+for (const icon of ["android/app/src/main/res/drawable-mdpi/ic_notify.png","android/app/src/main/res/drawable-hdpi/ic_notify.png","android/app/src/main/res/drawable-xhdpi/ic_notify.png","android/app/src/main/res/drawable-xxhdpi/ic_notify.png","android/app/src/main/res/drawable-xxxhdpi/ic_notify.png"]) {
+  await asset(icon, 400);
+}
+
 expect(createHash('sha256').update(await readFile('web/public/icon-512.png')).digest('hex') ===
        createHash('sha256').update(await readFile('branding/tracksos-rustore-icon.png')).digest('hex'),
   'RuStore and PWA 512 use the same owner-approved cinematic icon');
 expect((await read('web/index.html')).includes('icon-192.png') &&
        (await read('web/public/manifest.webmanifest')).includes('icon-512.png'),
   'browser favicon and PWA manifest use approved raster artwork');
-expect(css.includes("url('../public/tracksos-approved-scania-r520.webp')"), 'public hero uses approved Scania R520 crop');
-expect(landing.includes('src="/tracksos-approved-scania-r520.webp"'), 'app teaser uses same approved Scania R520');
-expect(css.includes("url('../public/tracksos-approved-map.webp')"), 'public demo map is a bundled image');
+expect(!css.includes('tracksos-approved-map.webp') && css.includes('public-map-static'), 'pre-17 Nov map bitmap is excluded from active website');
 expect(!css.includes("url('../public/truck-scene.svg')"), 'old cartoon truck is not the active hero image');
 expect(landing.includes('public-map-static'), 'public map does not depend on network services');
 expect(!landing.includes('openstreetmap.org/export/embed'), 'no third-party iframe is required for offline public map');
 expect(landing.includes('Пример расположения услуг.'), 'demo map explicitly labels fictional service markers');
 expect(landing.includes('yandex.ru/maps/'), 'guest static map opens real Yandex Maps on click');
 expect(landing.includes('Санкт-Петербург и Ленинградская область'), 'launch region is shown');
-expect(shell.includes("import './finalCanon.css';"), 'the only final design layer is loaded by the real app');
+expect(shell.includes("import './roleShared20261119.css';") && !shell.includes("import './finalCanon.css';"), 'the obsolete 14 Nov public CSS was physically removed');
+expect(!roleCss.includes('.public-landing'), 'old guest-home selectors absent from retained role styles');
 expect(shell.includes('guest-site-nav'), 'the guest PC has horizontal navigation, not an alternative sidebar');
-expect(finalCss.includes('public-hero-slide-approved') && finalCss.includes("url('../public/tracksos-approved-scenic-hero.webp')"), 'the final guest hero uses the approved full Scania photo without baked controls');
-expect(finalCss.includes("url('../public/tracksos-hero-rescue-hq.webp')") &&
-  finalCss.includes("url('../public/tracksos-hero-service-hq.webp')"),
-  'second and third homepage slides use separate high-resolution cinematic assets');
-for (const suffix of ['tow','master','sto','insurer']) {
-  expect(finalCss.includes("tracksos-partner-" + suffix + "-approved.webp"),
-    'selected partner illustration for '+suffix+' remains local to TrakSOS');
-}
+expect(!currentCss.includes('tracksos-hero-rescue-hq') && !currentCss.includes('tracksos-hero-service-hq') && currentCss.includes(approvedPhoto),
+  'every hero slide excludes pre-17 Nov cinematics and uses the owner-approved 19 Nov source');
+expect(!/tracksos-photo-|tracksos-partner-(?:tow|master|sto|insurer)-approved/.test(roleCss),
+  'partner UX never loads 14–15 Nov photography');
 expect(landing.includes("const [role, setRole] = useState<JoinRole | null>(null)"),
-  'partner role is chosen explicitly so opening illustration starts on Scania');
-expect(finalCss.includes('grid-template-columns:repeat(6,minmax(0,1fr))'), 'six photographic service cards in desktop row');
+  'partner role is chosen explicitly before viewing role-specific examples');
 const finalServices = [
-  "{ id: 'tow', icon: '↗', title: 'Эвакуация'",
-  "{ id: 'van', icon: '⚒', title: 'Выездной мастер'",
-  "{ id: 'sto', icon: '▤', title: 'СТО и сервисы'",
-  "{ id: 'insurance', icon: '◇', title: 'Страхование'",
-  "{ id: 'parts', icon: '⚙', title: 'Запчасти'",
-  "{ id: 'consult', icon: '☏', title: 'Консультации'",
+  "{ id:'sos', icon:'⚠', title:'SOS'",
+  "{ id:'air', icon:'◉', title:'Эфир'",
+  "{ id:'sto', icon:'⚒', title:'СТО'",
+  "{ id:'ecu', icon:'▣', title:'ЭБУ'",
+  "{ id:'parts', icon:'⚙', title:'Запчасти'",
+  "{ id:'insurance', icon:'◇', title:'Страхование'",
 ];
 let previous = -1;
 for (const item of finalServices) {
   const index = catalogue.indexOf(item);
-  expect(index > previous, 'approved 6 services are present and ordered: ' + item);
+  expect(index > previous, 'approved 19 Nov public tiles are present and ordered: ' + item);
   previous = index;
 }
-expect(landing.includes('SERVICE_TILES.map') && landing.includes('Далее'),
-  'six photographic services link to public previews with Далее action');
+expect(landing.includes('PUBLIC_HOME_TILES.map') && landing.includes('href={href}'),
+  'approved home links use real routes for all six public tiles');
 expect(shell.includes("route[0] === 'explore'") && shell.includes("route[0] === 'company'") && shell.includes("route[0] === 'offers'"),
   'public catalogue, Company and Offers have real routes');
 expect(shell.includes('guest-mobile-catalog') && shell.includes('guest-nav-group'),
   'guest catalogue links work on mobile and desktop');
 // The first hero slide uses a dynamic label; verify the actual actions,
 // not the superseded static text markup.
-expect(landing.includes("heroSlide === 0 ? go('login')") &&
-  landing.includes("heroSlide === 0 ? 'Войти'") &&
-  landing.includes("onClick={() => go('register')}>Регистрация</button>"),
-  'approved hero calls to action open login and client registration');
+expect(landing.includes("heroSlide === 0 ? go('register')") &&
+  landing.includes("heroSlide === 0 ? 'Зарегистрироваться'") &&
+  landing.includes('href="#/explore/guide">Как это работает</a>'),
+  'approved 19 Nov hero opens registration and explains the platform');
 try { await stat('web/public/approved-desktop.html'); expect(false, 'superseded static demo was deleted'); }
 catch { console.log('OK: superseded static HTML mockup not present'); }
 
@@ -185,7 +307,49 @@ const publicPart = landing.slice(landing.indexOf('if (!intent) return ('), landi
 for (const word of ['Аптека', 'Химчистка', 'Авиабилеты', 'Покупка авиабилетов', 'Магазин лекарств']) {
   expect(!publicPart.includes(word), 'no unrelated public services: ' + word);
 }
+const approvedMasterWindow = await read('web/src/screens/performerOrderWindow.tsx');
+const liveOrderUi = await read('web/src/screens/order.tsx');
+expect(shell.includes("effMode === 'performer' && isPerformer && b") &&
+  shell.includes("<PerformerOrderWindow id={b} initialTab=") &&
+  approvedMasterWindow.includes('<Work background/>') &&
+  approvedMasterWindow.includes('<Order id={id} initialTab={initialTab}/>') &&
+  approvedMasterWindow.includes('role="dialog"') &&
+  approvedMasterWindow.includes("go('work')"),
+  'approved 18 Nov performer popup shows live dashboard and real order with close/ESC, not fake cards');
+expect(['Работа','Клиент и ТС','Расчёт','Чат','История'].every(label=>liveOrderUi.includes(label)) &&
+  liveOrderUi.includes("ptab === 'finance' ? <Money d={d} />") &&
+  liveOrderUi.includes("ptab === 'chat' ? <Chat id={id} status={d.status} />"),
+  'approved performer order separates live work/vehicle/finance/chat/history in real tabs');
+
+console.log('VISUAL APPROVAL PENDING: exact 19 Nov source PNG vs real Chromium on the final commit.');
+
+const vehicleVisual=await read('web/src/vehicleVisual.tsx');
+const performerUi=await read('web/src/screens/performer.tsx');
+const garageUi=await read('web/src/screens/client.tsx');
+const fleetUi=await read('web/src/screens/fleet.tsx');
+const photoCatalog=await read('web/src/vehiclePhotoCatalog.ts');
+const photoSourceManifest=JSON.parse(await read('scripts/vehiclePhotoSources.json'));
+expect(photoSourceManifest.items.length===6 &&
+  photoSourceManifest.items.every(x=>photoCatalog.includes(x.id+'.webp')) &&
+  vehicleVisual.includes('vehiclePhotoCatalog.ts') &&
+  vehicleVisual.includes('Точное фото модели пока не добавлено') &&
+  !vehicleVisual.includes('tracksos-hero-service-hq.webp') &&
+  !vehicleVisual.includes('tracksos-photo-master.webp') &&
+  fleetUi.includes('<VehicleModelPhoto brand={c.brand} model={c.model} year={c.year}/>') &&
+  photoCatalog.includes('yearRequired:true'),
+  '19 Nov photo gate: six locally optimized model+generation WebPs; no unrelated fallback, wrong year or manufacturer');
+expect(performerUi.includes('<VehiclePhotoLink compact') &&
+  performerUi.includes('/vehicle') &&
+  shell.includes("'garage': screen = isCustomer ? <Garage focusVehicleId={b} />"),
+  'approved mobile truck tap opens assigned work-order history and owner garage deep link');
+expect(liveOrderUi.includes("ptab === 'vehicle'") &&
+  liveOrderUi.includes('historyOnly={ptab ===') &&
+  liveOrderUi.includes('История обслуживания · без сумм') &&
+  garageUi.includes('initialOpen={focusVehicleId===v.id}') &&
+  fleetUi.includes('href={`#/garage/${c.id}`}'),
+  'vehicle history views are real, role-scoped and reachable from photo in master, garage and fleet');
+
 if (failures.length) {
-  console.error('Approved design gate: ' + failures.length + ' failure(s).');
-  process.exitCode = 1;
-} else console.log('Approved TrakSOS design gate: all invariants passed.');
+  console.error('Approved design gate: '+failures.length+' failure(s).');
+  process.exitCode=1;
+} else console.log('Approved TrakSos design gate: all code invariants passed.');

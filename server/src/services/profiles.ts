@@ -67,6 +67,10 @@ export class ProfilesService {
     inRange(p.hourPrice, corridor.hourMin, corridor.hourMax, 'Час работы');
     if (p.inn && !/^\d{12}$/.test(p.inn)) throw bad('bad_inn', 'ИНН физлица или ИП — 12 цифр');
     if (p.cars && p.cars.length > 3) throw bad('too_many_cars', 'Не больше трёх машин');
+    // An ECU shop is stationary: never require or publish a dispatch vehicle.
+    if (p.kind==='ecu' && (p.car || p.cars?.length || p.callOutPrice != null
+      || p.hourPrice != null || p.kmRate != null))
+      throw bad('ecu_stationary','Для специалиста ЭБУ нужна стационарная точка, а не цена выезда или машина');
     if (p.car && p.cars && !p.cars.some((c) => c.plate === p.car!.plate)) throw bad('bad_car', 'Выберите машину из своего списка');
 
     if (extras !== undefined) {
@@ -94,15 +98,15 @@ export class ProfilesService {
            specialties=coalesce($3::text[], performer_profiles.specialties),
            brands=coalesce($4::jsonb, performer_profiles.brands),
            tier=coalesce($5::text, performer_profiles.tier),
-           call_out_price=coalesce($6::int, performer_profiles.call_out_price),
-           hour_price=coalesce($7::int, performer_profiles.hour_price),
-           km_rate=coalesce($8::int, performer_profiles.km_rate),
+           call_out_price=case when excluded.kind='ecu' then null else coalesce($6::int,performer_profiles.call_out_price) end,
+           hour_price=case when excluded.kind='ecu' then null else coalesce($7::int,performer_profiles.hour_price) end,
+           km_rate=case when excluded.kind='ecu' then null else coalesce($8::int,performer_profiles.km_rate) end,
            prep_minutes=coalesce($9::int, performer_profiles.prep_minutes),
            accepts_group=coalesce($10::boolean, performer_profiles.accepts_group),
            tax_status=coalesce($11::text, performer_profiles.tax_status),
            inn=coalesce($12::text, performer_profiles.inn),
-           car=coalesce($13::jsonb, performer_profiles.car),
-           cars=coalesce($14::jsonb, performer_profiles.cars),
+           car=case when excluded.kind='ecu' then null else coalesce($13::jsonb,performer_profiles.car) end,
+           cars=case when excluded.kind='ecu' then '[]'::jsonb else coalesce($14::jsonb,performer_profiles.cars) end,
            updated_at=now()`,
         [user.id, p.kind, p.specialties ?? null, p.brands ?? null, p.tier ?? null, p.callOutPrice ?? null, p.hourPrice ?? null,
           p.kmRate ?? null, p.prepMinutes ?? null, p.acceptsGroup ?? null, p.taxStatus ?? null, p.inn ?? null,
@@ -121,7 +125,14 @@ export class ProfilesService {
   /** Все движения денег исполнителя: за что начислили, что списали, выплаты — с номером заявки */
   async ledger(userId: string) {
     return this.db.query(
-      `select l.id::int as id, l.kind, l.amount, l.note, l.created_at, o.id as order_id, o.number as order_number, o.service,
+      `select l.id::int as id, l.kind, l.amount,
+              case
+                when l.kind='cash_commission' then 'Наличный заказ: общая сумма к перечислению площадке'
+                when l.kind='cash_commission_paid' then 'Погашение обязательства перед TrakSOS'
+                when l.kind='adjustment' and l.note ilike 'Скидка клиенту%' then 'Корректировка взаиморасчётов с TrakSOS'
+                else l.note
+              end as note,
+              l.created_at, o.id as order_id, o.number as order_number, o.service,
               (select t.id from support_tickets t where t.ledger_entry_id = l.id and t.user_id = $1 order by t.created_at desc limit 1) as ticket_id
          from ledger_entries l left join orders o on o.id = l.order_id
         where l.account = 'performer' and l.performer_id = $1 order by l.id desc limit 300`, [userId]);
@@ -221,6 +232,27 @@ export class ProfilesService {
       `insert into vehicles(owner_id, brand, model, year, plate, trailer_plate) values ($1,$2,$3,$4,$5,$6) returning *`,
       [user.id, v.brand, v.model ?? null, v.year ?? null, v.plate?.toUpperCase() ?? null, v.trailerPlate?.toUpperCase() ?? null],
     );
+  }
+
+  /** Nonblocking optional vehicle details. Owner-only and scoped to own fleet. */
+  async updateVehicleDetails(user: AuthUser, vehicleId: string,
+    changes: { vin?: string|null; engine?: string|null; configurationNotes?: string|null }) {
+    if (user.owner_id || !user.roles.includes('client') || user.roles.includes('driver'))
+      throw forbidden('Характеристики машины меняет только владелец');
+    if (!Object.keys(changes).length) throw bad('empty_vehicle_details','Укажите изменённое поле');
+    const normal=(v:string|null|undefined)=>v == null?null:v.trim() || null;
+    const found=await this.db.one(
+      'update vehicles set ' +
+      ' vin=case when $3::boolean then $4::text else vin end,' +
+      ' engine=case when $5::boolean then $6::text else engine end,' +
+      ' configuration_notes=case when $7::boolean then $8::text else configuration_notes end' +
+      ' where id=$1 and owner_id=$2 returning *',
+      [vehicleId,user.id,
+        changes.vin !== undefined,normal(changes.vin),
+        changes.engine !== undefined,normal(changes.engine),
+        changes.configurationNotes !== undefined,normal(changes.configurationNotes)]);
+    if (!found) throw notFound('Машина не найдена в вашем гараже');
+    return found;
   }
 
   /**

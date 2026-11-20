@@ -47,8 +47,8 @@ async function run(width, height, mobile, nativePreview = false) {
   try {
     await page.goto(BASE + '/#/', { waitUntil: 'domcontentloaded' });
     await page.getByRole('heading', { name: /TrakSOS.*помощь.*в пути/i }).waitFor();
-    check(await page.locator('.public-actions').getByRole('button', { name: 'Войти', exact: true }).isVisible(), 'Hero login is not visible');
-    check(await page.locator('.public-actions').getByRole('button', { name: 'Регистрация', exact: true }).isVisible(), 'Hero registration is not visible');
+    check(await page.locator('.public-actions').getByRole('button', { name: 'Зарегистрироваться', exact: true }).isVisible(), 'Hero registration is not visible');
+    check(await page.locator('.public-actions').getByRole('link', { name: 'Как это работает', exact: true }).isVisible(), 'Hero guide is not visible');
     const image = await page.locator('.public-hero-visual').evaluate(async el => {
       const bg = [getComputedStyle(el).backgroundImage, getComputedStyle(el,'::after').backgroundImage].join(' | ');
       const match = bg.match(/url\(["']?([^"')]+)["']?\)/);
@@ -110,13 +110,12 @@ async function run(width, height, mobile, nativePreview = false) {
         check(!(await nav.getByText(forbidden,{exact:true}).count()), suffix + ': protected tab visible before sign-in: '+forbidden);
       }
     }
-    // All six approved photographic services must remain in their exact order.
+    // The latest 19 Nov public six tiles are the only approved public row.
     const services = page.locator('.public-service-tiles > a');
     check(await services.count() === 6, suffix + ': six approved service cards required');
     const labels = await services.locator('b').allTextContents();
     check(JSON.stringify(labels) === JSON.stringify([
-      'Эвакуация', 'Выездной мастер', 'СТО и сервисы',
-      'Страхование', 'Запчасти', 'Консультации'
+      'SOS', 'Эфир', 'СТО', 'ЭБУ', 'Запчасти', 'Страхование'
     ]), suffix + ': service card order changed: ' + JSON.stringify(labels));
     await page.screenshot({ path: OUT + '/home-' + suffix + '.png', fullPage: true });
 
@@ -163,13 +162,13 @@ async function run(width, height, mobile, nativePreview = false) {
     check(await page.locator('.auth-desktop-form .opt').count() === 4,
       suffix + ': partner registration must offer exactly 4 roles');
     check(await page.locator('.guest-partner-role').count() === 4,
-      suffix + ': all partner roles must use photographic cards');
+      suffix + ': all four partner role options remain accessible');
     check(await page.getByRole('navigation',{name:'Тип регистрации'}).count() === 0,
       suffix + ': partner page repeats client registration tab');
     const partnerImage=page.locator(mobile ? '.guest-partner-mobile-preview' : '.auth-desktop-showcase-photo');
     if(await partnerImage.isVisible())
-      check((await partnerImage.evaluate(el=>getComputedStyle(el).backgroundImage)).includes('tracksos-approved-scania-r520'),
-        suffix + ': partner signup must start with the neutral Scania artwork');
+      check((await partnerImage.evaluate(el=>getComputedStyle(el).backgroundImage)).includes('tracksos-approved-hero-owner-20261119'),
+        suffix + ': partner signup must start with the owner-approved 19 Nov truck artwork');
     check(await page.locator('.guest-partner-role[aria-pressed="true"]').count()===0,
       suffix + ': default partner role must not be preselected');
     await page.getByRole('button',{name:'Мастер',exact:true}).click();
@@ -243,7 +242,7 @@ async function run(width, height, mobile, nativePreview = false) {
     } else {
       await page.goto(BASE + '/#/');
       await page.locator('.guest-mobile-catalog > summary').click();
-      await page.getByRole('navigation',{name:'Каталог услуг TrakSOS'}).getByRole('link',{name:'Компания'}).click();
+      await page.getByRole('navigation',{name:'Возможности TrakSOS'}).getByRole('link',{name:'О платформе'}).click();
       await page.getByRole('heading',{name:'Компания TrakSOS'}).waitFor();
       await verifyPage(page, suffix + ':company');
     }

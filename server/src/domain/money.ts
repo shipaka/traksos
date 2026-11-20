@@ -10,6 +10,12 @@ export function pct(amount: number, p: number) {
   return Math.round((amount * p) / 100);
 }
 
+/** TrakSOS approved limit: no more than 5 000 ₽ from EACH side of one order. */
+export const PER_SIDE_FEE_CAP = 500_000; // kopecks
+export function cappedPct(amount: number, percentage: number, cap = PER_SIDE_FEE_CAP) {
+  return Math.max(0, Math.min(cap, pct(Math.max(0, amount), Math.max(0, percentage))));
+}
+
 export interface CommissionCtx {
   isPriority: boolean;
   at?: Date;
@@ -25,8 +31,8 @@ export function commissionPct(fees: Settings['fees'], ctx: CommissionCtx) {
 }
 
 export function split(fees: Settings['fees'], amount: number, ctx: CommissionCtx) {
-  const clientFee = pct(amount, fees.clientFeePct);
-  const commission = pct(amount, commissionPct(fees, ctx));
+  const clientFee = cappedPct(amount, fees.clientFeePct);
+  const commission = cappedPct(amount, commissionPct(fees, ctx));
   return {
     amount,
     clientFee,

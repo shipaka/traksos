@@ -1,0 +1,3 @@
+TrackSOS integration batch (2026-11-18) — DRAFT / NO MERGE OR DEPLOY.
+
+Combines staged SLA monitoring and manual review (#163), weak-connection idempotent new-order submission (#163), optional highway kilometer and side details (#164), selected previously hired performer direct first invitation (#165), and optional owner-only VIN/engine/configuration with driver limited view (#166). Each source feature must pass its own CI; this combined branch also requires CI and on-device acceptance. No AI companion work in this batch. Existing admin case center #162 and large community PR #111 remain separate. Avoid changing main, VPS, banking terms and agreed public homepage before review.

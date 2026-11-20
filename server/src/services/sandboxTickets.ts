@@ -8,7 +8,7 @@ import { DEMO } from '../seed.ts';
 
 export const SANDBOX_ROLES = [
   'client', 'owner', 'driver', 'master', 'tow', 'service', 'master_service',
-  'insurer', 'inspection', 'moderator', 'admin',
+  'insurer', 'inspection', 'courier', 'moderator', 'admin',
 ] as const;
 export type SandboxRole = (typeof SANDBOX_ROLES)[number];
 
@@ -22,6 +22,7 @@ export const SANDBOX_USER_PHONE: Record<SandboxRole, string> = {
   master_service: '+79000000051',
   insurer: '+79000000052',
   inspection: '+79000000053',
+  courier: '+79000000054',
   moderator: DEMO.moderator,
   admin: DEMO.admin,
 };
@@ -36,6 +37,7 @@ export const SANDBOX_LANDING: Record<SandboxRole, string> = {
   master_service: '#/work',
   insurer: '#/insurance',
   inspection: '#/inspections',
+  courier: '#/courier',
   moderator: '#/moderation',
   admin: '#/admin',
 };

@@ -246,6 +246,55 @@ export class AuthService {
     return { token, user: safe };
   }
 
+  /** A known-password change does not contact SMS.ru or invalidate the active job. */
+  async changePassword(user:AuthUser,currentPassword:string,newPassword:string,currentToken:string) {
+    if (!passwordValid(newPassword) || /^(?:\d{10,14}|password1234?|qwerty12345|qwertyuiop|admin12345|пароль12345|traksos1234|tracksos1234)$/i.test(newPassword.normalize('NFKC').replace(/\s+/g,'')))
+      throw bad('weak_password','Новый пароль должен содержать 10–128 символов и не быть очевидным или только цифровым кодом');
+    const now=this.now();
+    const sessionHash=sha256(currentToken);
+    // One shared throttle for login and in-session old-password attempts.
+    // Reserve outside the credential transaction so failures cannot roll
+    // back the counter, even across multiple API processes.
+    await this.db.tx(async q=>{
+      const attempt=await q.one<{attempts:number}>(
+        `insert into auth_login_attempts(scope,identity,window_start,attempts)
+          values('phone',$1,$2,1)
+          on conflict (scope,identity) do update
+          set window_start=case when auth_login_attempts.window_start <= $2::timestamptz - interval '15 minutes'
+               then $2::timestamptz else auth_login_attempts.window_start end,
+              attempts=case when auth_login_attempts.window_start <= $2::timestamptz - interval '15 minutes'
+               then 1 else auth_login_attempts.attempts+1 end
+          where auth_login_attempts.window_start <= $2::timestamptz - interval '15 minutes'
+             or auth_login_attempts.attempts < 10
+          returning attempts`,[user.phone,now]);
+      if(!attempt)throw new HttpError(429,'too_many_attempts',
+        'Слишком много попыток. Повторите через 15 минут или восстановите пароль.');
+    });
+    return this.db.tx(async q=>{
+      const stored=await q.one<{password_hash:string|null}>(
+        'select password_hash from users where id=$1 for update',[user.id]);
+      if(!stored||!verifyPassword(currentPassword,stored.password_hash))
+        throw new HttpError(403,'bad_current_password','Текущий пароль указан неверно');
+      if(verifyPassword(newPassword,stored.password_hash))
+        throw bad('same_password','Новый пароль должен отличаться от текущего');
+      const session=await q.one<{ok:number}>(
+        'select 1 as ok from sessions where token_hash=$1 and user_id=$2 and expires_at>now()',
+        [sessionHash,user.id]);
+      if(!session)throw new HttpError(401,'unauthorized','Войдите снова');
+      await q.query('update users set password_hash=$2 where id=$1',
+        [user.id,hashPassword(newPassword)]);
+      // Keep only the actual device making the change. Close all other
+      // HTTP/WS sessions and remove their push token registrations.
+      await q.query('delete from sessions where user_id=$1 and token_hash<>$2',
+        [user.id,sessionHash]);
+      await q.query('delete from push_tokens where user_id=$1 and (session_token_hash is null or session_token_hash<>$2)',
+        [user.id,sessionHash]);
+      await q.query("delete from auth_login_attempts where scope='phone' and identity=$1",
+        [user.phone]);
+      return {ok:true,otherSessionsRevoked:true};
+    });
+  }
+
   private async authenticateHash(hash:string):Promise<AuthUser|null>{
     const u=await this.db.one<AuthUser>(
       `select u.id,u.phone,u.name,u.roles,u.status,u.owner_id

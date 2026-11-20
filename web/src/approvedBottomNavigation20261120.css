@@ -1,0 +1,51 @@
+/* 20 Nov agreed Android navigation: keep the five approved owner actions
+   and add a direct parts shop shortcut; driver never loses bottom "Эфир".
+   No drawer overlays, scrolling tabs, or changes to the desktop sidebar. */
+@media (max-width:899px) {
+  .app.role-client .tabbar {
+    width:min(430px,calc(100% - 16px));
+    box-sizing:border-box;
+    display:grid;
+    grid-template-columns:repeat(6,minmax(0,1fr));
+    align-items:stretch;
+    column-gap:3px;
+    padding:5px;
+  }
+  .app.role-client .tabbar a {
+    min-width:0;
+    white-space:nowrap;
+    padding:8px 0 7px;
+    gap:3px;
+    font-size:clamp(9px,2.75vw,10.8px);
+    letter-spacing:-.025em;
+    text-align:center;
+  }
+  .app.role-client .tabbar .ic {
+    min-width:0;
+    font-size:18px;
+  }
+  .app.role-client .tabbar .ic svg {
+    width:19px;
+    height:19px;
+  }
+  .app.role-client .tabbar a:focus-visible,
+  .app.role-service .tabbar a:focus-visible {
+    outline:2px solid #6fe6ed;
+    outline-offset:-2px;
+  }
+  .app.role-service .tabbar {
+    width:min(430px,calc(100% - 22px));
+    box-sizing:border-box;
+  }
+  .app.role-service .tabbar a {
+    min-width:0;
+    font-size:clamp(10px,2.85vw,11.5px);
+    white-space:nowrap;
+  }
+  /* Contextual shop entry stays next to the car details rather than below
+     long maintenance/inspection history lists. */
+  .app.role-client .client-garage-page .card > .row a[href^="#/shop?vehicleId="] {
+    flex:1 1 160px;
+    min-width:0;
+  }
+}

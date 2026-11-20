@@ -9,7 +9,7 @@ import { useLoad, useAction, useMe, go, Loading, Field, RubInput, Back } from '.
 
 const SPECIALTIES: { id: string; name: string }[] = [
   { id: 'electric', name: 'Электрика' }, { id: 'diag', name: 'Диагностика' }, { id: 'air', name: 'Пневма, тормоза' },
-  { id: 'autonomy', name: 'Автономки' }, { id: 'tyre', name: 'Шиномонтаж' }, { id: 'consult', name: 'Консультации' },
+  { id: 'autonomy', name: 'Автономки' }, { id: 'tyre', name: 'Шиномонтаж' }, { id: 'hydraulics', name: 'Гидравлика' }, { id: 'consult', name: 'Консультации' },
 ];
 
 /** Сохранить часть профиля: kind обязателен, остальное — только то, что меняем */
@@ -35,7 +35,7 @@ export function PerformerHub() {
   const rows: [string, string, string][] = [
     ['work/me/about', 'Кто вы', `${me?.name ?? 'Имя не указано'} · ${p.kind === 'tow' ? 'эвакуатор' : 'мастер'}`],
     ['work/me/phone', 'Телефон и вход', fmtPhone(me!.phone)],
-    ['work/me/cars', p.kind === 'tow' ? 'Эвакуаторы' : 'Машины', cars.length ? `${cars.length} из 3 · сегодня: ${p.car?.brand ?? '—'} ${p.car?.plate ?? ''}` : 'не добавлены'],
+    ...(p.kind === 'ecu' ? [['work', 'Моя стационарная мастерская ЭБУ', 'Адрес, диагностика и входящие заключения']] as [string,string,string][] : [['work/me/cars', p.kind === 'tow' ? 'Эвакуаторы' : 'Машины', cars.length ? `${cars.length} из 3 · сегодня: ${p.car?.brand ?? '—'} ${p.car?.plate ?? ''}` : 'не добавлены']] as [string,string,string][]),
     ['work/me/schedule', 'Распорядок', p.schedule?.on ? `${dayList(p.schedule.days)} · выезды ${p.schedule.from}–${p.schedule.to} · телефон до ${p.schedule.phoneTo}` : 'не задан — заявки идут, пока вы на линии'],
     ['work/me/tax', 'Налоговый статус', p.tax_status ? `${p.tax_status === 'ip' ? 'ИП' : 'Самозанятый'} · ИНН ${p.inn ?? '—'}` : 'не указан'],
     ['work/me/money', 'Финансы', 'баланс, начисления, списания, выплаты'],
@@ -48,14 +48,16 @@ export function PerformerHub() {
     ['reviews', 'Отзывы обо мне', 'оспорить несправедливый'],
     ['rules', 'Правила площадки', 'комиссия, нарушения, что влияет на поиск'],
     ['appeal', 'Оспорить нарушение', 'открыто всегда'],
-    ...(me?.roles.includes('service') ? [['base', 'Моя СТО', 'отдельный кабинет ремонта на рембазе']] as [string, string, string][] : []),
+    ...(me?.roles.includes('service')
+      ? [['base', 'Моя СТО', 'отдельный кабинет стационарного ремонта и записи']] as [string, string, string][]
+      : [['base/me', 'Подключить свою СТО', 'отдельная карточка, специализации и проверка СТО']] as [string, string, string][]),
     ['profile', 'Аккаунт', 'личные данные, защита входа и выход'],
   ];
   return (
     <main className="performer-workspace stack">
-      <section className="internal-role-hero internal-role-hero-performer"><span>TRAKSOS · ВЫЕЗДНОЙ СПЕЦИАЛИСТ</span><h1>Профиль</h1><p>Всё по разделам — откройте нужный.</p><a className="btn" href="#/work">← На линию и к заявкам</a></section>
+      <section className="internal-role-hero internal-role-hero-performer"><span>TRAKSOS · {p.kind==='ecu' ? 'СТАЦИОНАРНЫЙ СПЕЦИАЛИСТ ЭБУ' : 'ВЫЕЗДНОЙ СПЕЦИАЛИСТ'}</span><h1>Профиль</h1><p>Всё по разделам — откройте нужный.</p><a className="btn" href="#/work">← На линию и к заявкам</a></section>
       <section className="performer-live-insights" aria-label="Обзор профиля исполнителя">
-        <div><span>Моя техника</span><strong>{cars.length}</strong><small>{p.kind==='tow'?'эвакуаторов':'автомобилей'}</small></div>
+        {p.kind!=='ecu' && <div><span>Моя техника</span><strong>{cars.length}</strong><small>{p.kind==='tow'?'эвакуаторов':'автомобилей'}</small></div>}
         <div><span>Проверка</span><strong className="performer-verify">{p.verification==='approved'?'✓':p.verification==='rejected'?'!':'…'}</strong>
           <small>{p.verification==='approved'?'пройдена':p.verification==='rejected'?'требует исправления':'в процессе'}</small></div>
         <div><span>График</span><strong className="performer-verify">{p.schedule?.on?'●':'○'}</strong>
@@ -76,7 +78,7 @@ function PerformerOnboarding() {
   const { busy, run } = useAction();
   const [kind, setKind] = useState(me?.roles.includes('tow') ? 'tow' : 'master');
   const canTow = !!me?.roles.includes('tow');
-  const canMaster = !!me?.roles.includes('master');
+  const canMaster = !!me?.roles.includes('master') || (!!me?.roles.includes('service') && !me?.roles.includes('tow'));
   const [name, setName] = useState(me?.name ?? '');
   const [spec, setSpec] = useState<string[]>(() => {
     // Apply the specializations chosen at partner sign-up, but validate ids.
@@ -92,10 +94,11 @@ function PerformerOnboarding() {
   const [taxStatus, setTax] = useState('');
   const [inn, setInn] = useState('');
   const isTow = kind === 'tow';
+  const isEcu = kind === 'ecu';
   async function save() {
     const body: any = { kind, name: name || undefined, taxStatus: taxStatus || null, inn: inn || null,
-      cars: car.brand && car.plate ? [car] : [], car: car.brand && car.plate ? car : null };
-    if (!isTow) body.specialties = spec;
+      cars: !isEcu && car.brand && car.plate ? [car] : [], car: !isEcu && car.brand && car.plate ? car : null };
+    if (!isTow && !isEcu) body.specialties = spec;
     if (await run(() => put('/api/performer/profile', body), 'Профиль сохранён — теперь фото для проверки')) {
       try { sessionStorage.removeItem('traksos.masterSpecialties'); } catch {}
       await reload(); go('work/docs');
@@ -108,11 +111,12 @@ function PerformerOnboarding() {
         <div className="step-head"><span className="step-n">1</span><b>Кто вы</b></div>
         <div className="grid2">
           {canMaster && <button type="button" className="seg" aria-pressed={kind === 'master'} onClick={() => setKind('master')}>Мастер</button>}
+          {canMaster && <button type="button" className="seg" aria-pressed={kind === 'ecu'} onClick={() => setKind('ecu')}>Ремонт ЭБУ · стационарно</button>}
           {canTow && <button type="button" className="seg" aria-pressed={kind === 'tow'} onClick={() => setKind('tow')}>Эвакуатор</button>}
         </div>
         <input className="field" placeholder="Имя, как увидят клиенты" value={name} onChange={(e) => setName(e.target.value)} />
       </div>
-      {!isTow && (
+      {!isTow && !isEcu && (
         <div className="step-card">
           <div className="step-head"><span className="step-n">2</span><b>Что делаете</b></div>
           <div className="row">{SPECIALTIES.map((s) => (
@@ -121,15 +125,15 @@ function PerformerOnboarding() {
           ))}</div>
         </div>
       )}
-      <div className="step-card">
+      {!isEcu && <div className="step-card">
         <div className="step-head"><span className="step-n">{isTow ? 2 : 3}</span><b>{isTow ? 'Эвакуатор' : 'Машина, на которой приезжаете'}</b></div>
         <CarInputs car={car} onChange={setCar} tow={isTow} />
-      </div>
+      </div>}
       <div className="step-card">
-        <div className="step-head"><span className="step-n">{isTow ? 3 : 4}</span><b>Налоговый статус</b></div>
+        <div className="step-head"><span className="step-n">{isEcu ? 2 : isTow ? 3 : 4}</span><b>Налоговый статус</b></div>
         <TaxInputs taxStatus={taxStatus} inn={inn} onChange={(t, i) => { setTax(t); setInn(i); }} />
       </div>
-      <button className="btn" disabled={busy || !name || (!isTow && !spec.length)} onClick={save}>Дальше — фото для проверки</button>
+      <button className="btn" disabled={busy || !name || (!isTow && !isEcu && !spec.length)} onClick={save}>Дальше — фото для проверки</button>
     </main>
   );
 }
@@ -148,7 +152,7 @@ export function AboutSection() {
       <Field label="Имя, как увидят клиенты"><input className="field" value={name} onChange={(e) => setName(e.target.value)} /></Field>
       <div className="card">
         <dl className="kv">
-          <dt>Кто</dt><dd>{p.kind === 'tow' ? 'Эвакуатор' : 'Мастер'}</dd>
+          <dt>Кто</dt><dd>{p.kind === 'tow' ? 'Эвакуатор' : p.kind === 'ecu' ? 'Ремонтник ЭБУ (стационарно)' : 'Мастер'}</dd>
           <dt>Рейтинг</dt><dd>{me?.rating ? `★ ${Number(me.rating).toFixed(1)} · ${me.rating_count} оценок` : 'пока нет оценок'}</dd>
           <dt>Проверка</dt><dd>{p.verification === 'approved' ? 'Пройдена' : p.verification === 'rejected' ? 'Не пройдена' : 'Ещё не пройдена'}</dd>
         </dl>
@@ -321,7 +325,7 @@ export function TaxSection() {
       <h1>Налоговый статус</h1>
       <div className="card">
         <TaxInputs taxStatus={taxStatus} inn={inn} onChange={(t, i) => { setTax(t); setInn(i); }} />
-        <span className="note">Самозанятый выдаёт чек в «Мой налог» на наличные сам. По безналу чеки и отчёт агента формирует TrakSOS — раз в месяц.</span>
+        <span className="note">Новые платные заказы будут доступны после подключения проверенного банковского расчёта. Чеки, НПД и отчёты оформляются по фактически подтверждённым операциям и условиям договора; история прежних расчётов сохраняется.</span>
       </div>
       <button className="btn" disabled={busy || !taxStatus || inn.length !== 12} onClick={() => save({ taxStatus, inn })}>Сохранить</button>
     </main>
@@ -336,8 +340,8 @@ const KIND: Record<string, [string, string]> = {
   payout: ['Выплата вам', 'Перевод на ваш счёт'],
   adjustment: ['Корректировка', 'Начисление или списание администратором — причина в комментарии'],
   refund_charge: ['Удержание за возврат', 'Клиенту вернули деньги по заявке — ваша доля удержана'],
-  cash_commission: ['Комиссия с наличных', 'Клиент заплатил вам наличными — комиссия TrakSOS к оплате'],
-  cash_commission_paid: ['Комиссия оплачена', 'Долг по комиссии с наличных погашен — деньгами или баллами, см. комментарий'],
+  cash_commission: ['Расчёт по наличной заявке', 'Общая сумма TrakSOS к перечислению после принятой наличной оплаты'],
+  cash_commission_paid: ['Расчёт погашен', 'Задолженность по наличной заявке погашена'],
   points: ['Комиссия оплачена баллами', 'Баллы за приглашения погасили часть комиссии — эти деньги ваши'],
 };
 
@@ -380,7 +384,10 @@ export function MoneySection() {
         <div className="card">
           <div className="sum total"><span>К выплате</span><span>{rub(balance.data.to_pay)}</span></div>
           <div className="sum"><span>Уже выплачено</span><span>{rub(balance.data.paid)}</span></div>
-          <div className="sum"><span>Долг по комиссии с наличных</span><span>{rub(balance.data.cash_debt)}</span></div>
+          {balance.data.cash_debt > 0 && <>
+            <div className="sum"><span>Исторические обязательства по прежним заказам</span><span>{rub(balance.data.cash_debt)}</span></div>
+            <span className="note">Новые наличные заказы отключены. Этот остаток относится только к ранее оформленным обязательствам. Финансовые данные клиента здесь не раскрываются.</span>
+          </>}
           {balance.data.paused && <span className="err">Долг больше {rub(balance.data.cashDebtLimit)} — новые заявки на паузе до оплаты.</span>}
           <span className="note">TrakSOS работает как агент: отчёт агента и акт — раз в месяц.</span>
           <span className="note">{FEE_PURPOSE}</span>

@@ -55,13 +55,18 @@ try {
       if(!token || token.length<40) throw Error(width+': no scoped preview token');
       issuedTokens.push(token);
 
-      if(await page.locator('.sandbox-role-card').count()!==11)
-        throw Error(width+': the demo selector must expose eleven isolated roles');
+      const roles=['client','owner','driver','master','tow','service',
+        'master_service','insurer','inspection','courier','moderator','admin'];
+      const actualRoles=await page.locator('a.sandbox-role-card').evaluateAll(nodes=>
+        nodes.map(node=>node.getAttribute('href')?.split('/').at(-1)).sort());
+      if(JSON.stringify(actualRoles)!==JSON.stringify([...roles].sort()))
+        throw Error(width+': demo role list differs from the 12 approved roles: '+
+          JSON.stringify(actualRoles));
       const protectedMe=await fetch(BASE+'/api/me',{headers:{authorization:'Bearer '+token}});
       if(protectedMe.status!==401)
         throw Error(width+': preview token could authenticate against real /api/me');
 
-      for(const role of ['client','insurer']){
+      for(const role of roles){
         await page.locator('a.sandbox-role-card[href="#/admin/test-center/'+role+'"]').click();
         await page.waitForURL('**/#/admin/test-center/'+role);
         await page.getByText('ТЕСТОВЫЙ ПРОСМОТР · НЕ РЕАЛЬНЫЙ АККАУНТ').waitFor();
@@ -95,7 +100,7 @@ try {
       if(errors.length)throw Error(width+': JavaScript error: '+errors.join('; '));
     }finally{await context.close();}
   }
-  console.log('Temporary one-use demo code: phone-free entry, 11 roles, two role routes, fresh-browser isolation, no real API login, expiry — PASS (390/1440)');
+  console.log('Temporary one-use demo code: phone-free entry, all 12 role routes, fresh-browser isolation, no real API login, expiry — PASS (390/1440)');
 }finally{
   if(browser)await browser.close();
   // Strictly local CI fixture cleanup. Never deletes other roles or real users.

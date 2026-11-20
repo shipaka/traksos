@@ -10,7 +10,9 @@
     "test": "node --import tsx --test --test-concurrency=1 test/*.test.ts",
     "typecheck": "tsc --noEmit",
     "seed": "tsx src/seed.ts",
-    "seed:sandbox": "tsx src/seedSandbox.ts"
+    "seed:sandbox": "tsx src/seedSandbox.ts",
+    "import:dtc": "tsx src/ops/importObdex.ts",
+    "check:dtc": "tsx src/ops/importObdex.ts --check"
   },
   "dependencies": {
     "pg": "^8.13.1",

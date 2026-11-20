@@ -28,12 +28,15 @@ const cssAudit=async(page,selector,width)=>page.evaluate(({selector,width})=>{
    }
    const layer=getComputedStyle(card,'::after').backgroundImage;
    const icon=layer&&layer!=='none'?layer:getComputedStyle(card).backgroundImage;
-   const expected=(selector.includes('public-landing')
-     ? ['tracksos-photo-tow','tracksos-photo-master','tracksos-photo-sto','traksos-final-insurance','traksos-final-parts','tracksos-photo-consult']
-     : ['tracksos-photo-master','tracksos-photo-tow','tracksos-photo-sto','tracksos-photo-consult'])[i];
-   if(!icon||icon==='none')issues.push('missing illustration '+i);
-   if(expected&&!icon.includes(expected))
-     issues.push('reference photo mismatch '+i+': expected '+expected+', found '+icon);
+   // The latest six 19 Nov service cards use real SVG pictograms on new
+   // gradients, not any of the physically deleted 14–16 Nov photo tiles.
+   if(!icon||icon==='none')issues.push('missing current card surface '+i);
+   if(/tracksos-photo-|traksos-final-|tracksos-partner-.*approved/.test(icon))
+     issues.push('retired pre-17 Nov artwork returned in card '+i+': '+icon);
+   if(selector.includes('public-landing') && card.querySelectorAll('.public-service-icon svg').length!==1)
+     issues.push('missing approved service pictogram '+i);
+   if(!selector.includes('public-landing') && !icon.includes('gradient'))
+     issues.push('signed-in card lost its current gradient '+i);
  }
  const doc=document.documentElement;
  if(doc.scrollWidth>doc.clientWidth+3)
@@ -58,9 +61,23 @@ try{
    const page=await ctx.newPage();
    await page.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','client');},token);
    await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
-   await page.locator('.client-dashboard .desktop-quick-card').first().waitFor();
-   const client=await cssAudit(page,'.client-dashboard .desktop-quick-card',width);
-   assert(client.count===4&&client.issues.length===0,width+'px client layout: '+JSON.stringify(client));
+   if(width<900){
+     await page.locator('.and19-client .and19-services>a').first().waitFor();
+     const client=await page.evaluate(()=>{
+       const items=[...document.querySelectorAll('.and19-client .and19-services>a')];
+       const vw=document.documentElement.clientWidth;
+       return {count:items.length,
+         overflow:document.documentElement.scrollWidth>vw+3,
+         tiny:items.map((e,i)=>({i,w:e.getBoundingClientRect().width,h:e.getBoundingClientRect().height}))
+           .filter(x=>x.w<60||x.h<72)};
+     });
+     assert(client.count===4&&!client.overflow&&!client.tiny.length,
+       width+'px approved Android 4 service hit-targets: '+JSON.stringify(client));
+   }else{
+     await page.locator('.client-dashboard .desktop-quick-card').first().waitFor();
+     const client=await cssAudit(page,'.client-dashboard .desktop-quick-card',width);
+     assert(client.count===4&&client.issues.length===0,width+'px desktop illustration layout: '+JSON.stringify(client));
+   }
    await page.screenshot({path:out+'/client-'+width+'.png',fullPage:true});
    await ctx.close();
    console.log('OK illustrated labels and no horizontal spill at '+width+'px');

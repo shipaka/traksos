@@ -1,6 +1,6 @@
 // «Пригласить»: личная ссылка и QR, баллы и за что они, кого пригласили. 1 балл = 1 ₽ скидки на сбор или комиссию TrakSOS.
 import { get, fmtTime } from '../api.ts';
-import { useLoad, useToast, Loading } from '../ui.tsx';
+import { useLoad, useToast, Loading, useMe } from '../ui.tsx';
 import { qrSvg } from '../qr.ts';
 
 const pts = (k: number) => Math.round(k / 100).toLocaleString('ru-RU');
@@ -11,6 +11,7 @@ const KIND: Record<string, string> = {
 const WHO: Record<string, string> = { client: 'клиент', performer: 'исполнитель', service: 'рембаза' };
 
 export function Invite() {
+  const {mode}=useMe();
   const d = useLoad(() => get('/api/me/referral'), [], (e) => e.type === 'points' || e.type === 'order');
   const toast = useToast();
   if (!d.data) return <main><Loading error={d.error} /></main>;
@@ -34,7 +35,12 @@ export function Invite() {
         <span className="label">Ваши баллы</span>
         <div style={{ fontFamily: 'var(--display)', fontWeight: 700, fontSize: 32 }}>{pts(d.data.balance)}</div>
         {d.data.expiringSoon > 0 && <span className="pill warn">{pts(d.data.expiringSoon)} сгорят в ближайший месяц</span>}
-        <span className="note">Гасят до {r.spendCapPct}% сбора или комиссии с каждой заявки — сами, при подтверждении суммы. Живут {Math.round(r.ttlDays / 30)} месяцев.</span>
+        <span className="note">{mode==='client'
+          ? `В клиентском заказе баллами можно покрыть не более ${r.clientSpendCapPct}% стоимости услуги и не больше самого сервисного сбора; фактическое списание ограничено остатком баллов.`
+          : mode==='performer'||mode==='service'
+            ? `Для исполнителя и СТО баллами можно покрыть не более ${r.spendCapPct}% комиссии TrakSOS по одной заявке или счёту, если хватает баллов.`
+            : 'Баллы и их применение зависят от вашей роли и действующего договора. Откройте финансовые условия кабинета.'}
+          {' '}Срок действия — {r.ttlDays} дней, с учётом правила бесплатного периода.</span>
       </div>
 
       <div className="card">
@@ -52,11 +58,11 @@ export function Invite() {
       <details className="card">
         <summary><b>За что баллы</b></summary>
         <div className="stack" style={{ marginTop: 8, gap: 6 }}>
-          <div className="sum"><span>Пригласили клиента</span><b>{String(r.clientSharePct).replace('.', ',')}% с его заявок · {Math.round(r.days / 30)} мес.</b></div>
+          <div className="sum"><span>Пригласили клиента</span><b>{String(r.clientSharePct).replace('.', ',')}% от фактического клиентского сервисного сбора после применения баллов · {r.days} дней</b></div>
           <div className="sum"><span>Приглашённому клиенту</span><b>{pts(r.welcome)} на первую заявку</b></div>
           <div className="sum"><span>Пригласили мастера или эвакуаторщика</span><b>{pts(r.performerReward)} после {r.performerJobs} его заявок</b></div>
           <div className="sum"><span>Пригласили рембазу</span><b>{pts(r.serviceReward)} после её первого счёта</b></div>
-          <span className="note">Баллы начисляются только за оплаченное, не за регистрацию. Ссылка работает для новых номеров. Себя пригласить нельзя.</span>
+          <span className="note">Приветственные баллы новому клиенту начисляются при регистрации по действительной реферальной ссылке. Награды пригласившему за заказы — после предусмотренного расчёта по оплаченным заказам, мастерам и СТО — по условиям соответствующей программы. Ссылка только для новых аккаунтов, самого себя приглашать нельзя.</span>
         </div>
       </details>
 
@@ -81,7 +87,7 @@ export function Invite() {
           ))}
         </div>
       )}
-      <span className="note">Баллы — скидка на услуги площадки по правилам <a href="#/offer/client">оферты</a>.</span>
+      <span className="note">Баллы — скидка на услуги площадки; ставки и примеры смотрите в разделе <a href="#/economics">«Комиссии, баллы и рефералы»</a>. Правовые условия — в оферте или договоре, относящемся к вашему кабинету.</span>
     </main>
   );
 }

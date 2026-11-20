@@ -63,21 +63,21 @@
   }
   .guest-app .public-landing .public-hero-visual::before{
     content:"";position:absolute;inset:-9%;
-    background:url('../public/tracksos-approved-scania-r520.webp') center center/cover no-repeat;
+    background:url('../public/tracksos-approved-hero-owner-20261119.webp') center center/cover no-repeat;
     filter:blur(28px) brightness(.60) saturate(1.2);opacity:.67;
     -webkit-mask-image:linear-gradient(90deg,transparent,#000 18%,#000 65%,transparent);
     mask-image:linear-gradient(90deg,transparent,#000 18%,#000 65%,transparent);
   }
   .guest-app .public-landing .public-hero-visual::after{
     content:"";position:absolute;inset:6px 0;
-    background:url('../public/tracksos-approved-scania-r520.webp') center/contain no-repeat;
+    background:url('../public/tracksos-approved-hero-owner-20261119.webp') center/contain no-repeat;
     -webkit-mask-image:radial-gradient(ellipse 71% 73% at 50% 51%,#000 47%,rgba(0,0,0,.9) 63%,transparent 89%);
     mask-image:radial-gradient(ellipse 71% 73% at 50% 51%,#000 47%,rgba(0,0,0,.9) 63%,transparent 89%);
     filter:drop-shadow(0 13px 18px #000a);
   }
   .app.role-client .tracksos-visual-home .track-road-art::before{
     content:"";z-index:0;position:absolute;inset:0;
-    background:url('../public/tracksos-approved-scania-r520.webp') center/cover no-repeat;
+    background:url('../public/tracksos-approved-hero-owner-20261119.webp') center/cover no-repeat;
     filter:blur(29px) brightness(.52);opacity:.52;
     -webkit-mask-image:radial-gradient(ellipse at center,#000 36%,transparent 90%);
     mask-image:radial-gradient(ellipse at center,#000 36%,transparent 90%);

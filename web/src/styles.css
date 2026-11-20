@@ -38,6 +38,14 @@ h2 { margin: 0; font-size: 17px; }
 .stack { display: flex; flex-direction: column; gap: 10px; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .between { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+/* Notifications header on 320px Android: don't force the bulk-read button
+   beyond the viewport beside a non-shrinking Russian heading. */
+.between.notifications-header{flex-wrap:wrap;align-items:flex-start;min-width:0;}
+.between.notifications-header>h1{flex:1 1 auto;min-width:0;}
+.between.notifications-header>.btn.small{
+  flex:0 1 auto;min-width:0;max-width:100%;white-space:normal;
+}
+
 .scroll-x { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
 .scroll-x::-webkit-scrollbar { display: none; }
 .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
@@ -504,7 +512,7 @@ select.field { appearance: none; }
   .desktop-content > main.public-home { padding-top: 34px; gap: 22px; }
   .public-hero { min-height: 460px; background: #112b42; border: 1px solid #28445b; box-shadow: 0 18px 50px rgba(7,29,49,.18); }
   .public-hero::before { z-index: 1; background: linear-gradient(90deg,#0e253b 0%,rgba(14,37,59,.98) 27%,rgba(14,37,59,.78) 49%,rgba(14,37,59,.08) 86%); }
-  .public-hero-visual { inset: 0 0 0 29%; width: auto; opacity: 1; background: url('../public/tracksos-approved-truck.webp') center 52% / cover no-repeat; }
+  .public-hero-visual { inset: 0 0 0 29%; width: auto; opacity: 1; background: url('../public/tracksos-approved-hero-owner-20261119.webp') center 52% / cover no-repeat; }
   .public-hero-visual > * { display: none; }
   .public-hero-copy { width: 69%; padding: 60px 26px 54px 54px; }
   .desktop-content .public-hero h1 { font-size: clamp(39px,4.4vw,62px); line-height: 1.05; letter-spacing: -1.65px; max-width: 670px; }
@@ -556,7 +564,7 @@ select.field { appearance: none; }
 .public-landing-head-actions{display:none;}
 .public-landing .public-brand-hero{display:flex;position:relative;isolation:isolate;min-height:430px;overflow:hidden;border-radius:22px;background:#081e35;color:#fff;box-shadow:0 16px 48px #0007;}
 .public-landing .public-brand-hero::before{content:"";z-index:1;position:absolute;inset:0;background:linear-gradient(90deg,#071626 0%,#081a2b 24%,rgba(7,24,43,.89) 45%,rgba(7,24,43,.05) 90%);}
-.public-landing .public-hero-visual{z-index:0;position:absolute;inset:0 0 0 28%;background:radial-gradient(circle at 72% 25%,#e06c8c44,transparent 56%),url('../public/tracksos-approved-truck.webp') center center/contain no-repeat;pointer-events:none;}
+.public-landing .public-hero-visual{z-index:0;position:absolute;inset:0 0 0 28%;background-color:#071a2d;pointer-events:none;}
 .public-landing .public-hero-copy{position:relative;z-index:2;width:min(68%,710px);padding:49px 22px 38px 45px;display:flex;flex-direction:column;align-items:flex-start;}
 .public-landing .public-eyebrow{color:#dd8caf;font-size:11px;font-weight:800;letter-spacing:2px;}
 .public-landing .public-brand-hero h1{margin:16px 0 17px;font-family:var(--display);font-size:clamp(29px,3.2vw,48px);line-height:1.13;letter-spacing:-1px;color:#fff;}
@@ -698,7 +706,7 @@ select.field { appearance: none; }
    No AI redraws or fictitious map/network fallbacks. */
 .public-landing .public-map-static{
  position:absolute;inset:0;
- background:#071b32 url('../public/tracksos-approved-map.webp') center/cover no-repeat;
+ background:#071b32 linear-gradient(120deg,#113a56,#072139) center/cover no-repeat;
 }
 .public-landing .public-hero-visual{
  background-position:center right;
@@ -871,7 +879,7 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
   .app:not(.guest-app) .desktop-content .site-footer .logo{color:#eaf9ff;}
   .app:not(.guest-app) .desktop-hero{
     background:linear-gradient(95deg,rgba(7,21,39,.97),rgba(8,31,56,.65) 63%,rgba(13,32,54,.15)),
-      url('../public/tracksos-approved-truck.webp') 70% center/cover no-repeat;
+      url('../public/tracksos-approved-hero-owner-20261119.webp') 70% center/cover no-repeat;
     color:white;
     box-shadow:0 18px 40px rgba(0,7,19,.25);
     border:1px solid #345c78;
@@ -1085,7 +1093,7 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
    Keep SCANIA and R520 entirely visible; never substitute a generic cab. */
 .public-landing .public-hero-visual {
   inset: 0 0 0 50%;
-  background: #071a2d url('../public/tracksos-approved-scania-r520.webp') right center / auto 102% no-repeat;
+  background-color: #071a2d;
   opacity: 1;
 }
 .public-landing .public-brand-hero::before {
@@ -1093,7 +1101,7 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
 }
 .app:not(.guest-app) .desktop-hero {
   background: linear-gradient(90deg,#071727 5%,rgba(7,23,39,.89) 45%,rgba(7,23,39,0) 90%),
-    url('../public/tracksos-approved-scania-r520.webp') right center / auto 105% no-repeat #071b2d;
+    url('../public/tracksos-approved-hero-owner-20261119.webp') right center / auto 105% no-repeat #071b2d;
 }
 @media(max-width:899px) {
   .public-landing .public-hero-visual {
@@ -1764,7 +1772,7 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
   .auth-desktop-layout{display:grid;grid-template-columns:minmax(320px,440px) minmax(0,1fr);gap:clamp(20px,3vw,48px);align-items:stretch;min-height:min(740px,calc(100vh - 145px));max-width:1420px;margin:0 auto;padding:24px clamp(12px,2vw,28px);}
   .auth-desktop-form{justify-content:center;max-width:440px;padding:18px 4px;}
   .auth-desktop-showcase{display:flex;position:relative;isolation:isolate;overflow:hidden;min-height:510px;border-radius:24px;background:#091e32;align-items:flex-end;color:white;box-shadow:0 18px 45px rgba(0,0,0,.2);}
-  .auth-desktop-showcase-photo{position:absolute;inset:0;background:url('../public/tracksos-approved-truck.webp') center center/contain no-repeat;}
+  .auth-desktop-showcase-photo{position:absolute;inset:0;background:url('../public/tracksos-approved-hero-owner-20261119.webp') center center/contain no-repeat;}
   .auth-desktop-showcase::after{content:'';position:absolute;inset:0;z-index:0;background:linear-gradient(0deg,rgba(5,19,34,.96),rgba(5,19,34,.08) 65%);}
   .auth-desktop-showcase-copy{position:relative;z-index:1;padding:clamp(22px,4vw,48px);max-width:650px;}
   .auth-desktop-showcase-copy span{font-size:11px;font-weight:800;letter-spacing:1.6px;color:#ffb5d3;}

@@ -7,9 +7,13 @@ await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch();
 try {
   for (const target of [
+    // Exact dimensions of the owner-approved 19 Nov reference (not the reference image itself).
+    { name: '00-public-approved-target-1602x981', viewport: { width: 1602, height: 981 }, isMobile: false },
     { name: '00-public-canon-1672', viewport: { width: 1672, height: 941 }, isMobile: false },
     { name: '00-public-pc', viewport: { width: 1440, height: 900 }, isMobile: false },
     { name: '00-public-mobile', viewport: { width: 390, height: 844 }, isMobile: true },
+    { name: '00-public-mobile-360', viewport: { width: 360, height: 800 }, isMobile: true },
+    { name: '00-public-mobile-320', viewport: { width: 320, height: 640 }, isMobile: true },
   ]) {
     const context = await browser.newContext({
       viewport: target.viewport, locale: 'ru-RU', deviceScaleFactor: 1,

@@ -18,6 +18,13 @@ function useCart(): [Cart, (c: Cart) => void] {
 const photoUrl = (p: any) => `${API_URL}/api/shop/products/${p.id}/photo?v=${p.photoVersion}`;
 const STATUS_TONE: Record<string, string> = { new: 'accent', confirmed: 'accent', ready: 'good', shipped: 'accent', done: '', cancelled: 'bad' };
 const DELIVERY: Record<string, string> = { pickup: 'Самовывоз', delivery: 'Доставка', master: 'С мастером на заявке' };
+// Navigation passes opaque IDs, never VIN, vehicle details or customer information.
+const partsContext = () => new URLSearchParams(location.hash.split('?')[1] ?? '');
+const partsContextSuffix = (params: URLSearchParams) => {
+  const bookingId = params.get('bookingId'), vehicleId = params.get('vehicleId');
+  return bookingId ? '?bookingId=' + encodeURIComponent(bookingId)
+    : vehicleId ? '?vehicleId=' + encodeURIComponent(vehicleId) : '';
+};
 
 function Thumb({ p, size = 56 }: { p: any; size?: number }) {
   return p.hasPhoto
@@ -26,6 +33,26 @@ function Thumb({ p, size = 56 }: { p: any; size?: number }) {
 }
 
 export function Shop() {
+  const params = partsContext();
+  const contextBookingId = params.get('bookingId');
+  const contextVehicleId = params.get('vehicleId');
+  const contextSuffix = partsContextSuffix(params);
+  const contextualVehicle = useLoad<any>(() =>
+    contextBookingId ? get('/api/bookings/' + encodeURIComponent(contextBookingId)).then((b:any) => b?.vehicle ?? null)
+      : contextVehicleId ? get('/api/vehicles').then((fleet:any) =>
+        Array.isArray(fleet) ? fleet.find((v:any) => v.id === contextVehicleId) ?? null : null)
+      : Promise.resolve(null), [contextBookingId, contextVehicleId]);
+  const vehicleLabel = [contextualVehicle.data?.brand, contextualVehicle.data?.model, contextualVehicle.data?.year].filter(Boolean).join(' ');
+  const contextualBanner = (contextBookingId || contextVehicleId) && (
+    <section className="card col" aria-label="Подбор запчастей для техники">
+      <b>{contextBookingId ? 'Подбор для ремонтной заявки СТО' : 'Подбор для моей техники'}</b>
+      <span className="note">{contextualVehicle.error
+        ? 'Не удалось проверить данные машины. Уточните автомобиль в заявке перед подбором.'
+        : !contextualVehicle.data ? 'Проверяем данные автомобиля…'
+        : vehicleLabel || 'Автомобиль из заявки'}</span>
+      <span className="note">Поиск не подтверждает совместимость и не добавляет деталь автоматически в ремонт. Проверяйте применяемость по VIN и агрегату.</span>
+    </section>
+  );
   const c = useLoad(() => get('/api/shop?light=1'), []);
   const [cart, setCart] = useCart();
   const [cat, setCat] = useState('all');
@@ -59,6 +86,7 @@ export function Shop() {
   if (!d.enabled) return (
     <main className="track-shop-home">
       <div className="track-shop-hero"><span className="track-shop-eyebrow">TRAKSOS · ЗАПЧАСТИ ДЛЯ ГРУЗОВИКОВ</span><h1>Каталог запчастей</h1><p>Оригиналы, проверенные аналоги и история заказов вашей техники.</p><span className="track-shop-gear" aria-hidden="true"/></div>
+      {contextualBanner}
       <div className="card hi" style={{ alignItems: 'center', textAlign: 'center', padding: '32px 20px' }}>
         <span style={{ fontSize: 40 }} aria-hidden="true">🛒</span>
         <b style={{ fontSize: 20 }}>{d.closedTitle}</b>
@@ -73,9 +101,10 @@ export function Shop() {
   return (
     <main className="track-shop-home">
       <div className="track-shop-hero"><span className="track-shop-eyebrow">TRAKSOS · ЗАПЧАСТИ ДЛЯ ГРУЗОВИКОВ</span><h1>Найдём нужную деталь</h1><p>Удобный поиск по названию и артикулу, наличие, аналоги и история покупок.</p><span className="track-shop-gear" aria-hidden="true"/></div>
+      {contextualBanner}
       <div className="between" style={{ alignItems: 'flex-start' }}>
         <div><h1>Магазин</h1><div className="sub">{d.note}</div></div>
-        <button className="bell" aria-label={`Корзина, товаров: ${count}`} onClick={() => go('shop/cart')} style={{ position: 'relative' }}>
+        <button className="bell" aria-label={`Корзина, товаров: ${count}`} onClick={() => go('shop/cart' + contextSuffix)} style={{ position: 'relative' }}>
           🛒{count > 0 && <span className="badge">{count}</span>}
         </button>
       </div>
@@ -177,10 +206,52 @@ export function Shop() {
             onClick={() => setPage((n) => n + 1)}>Дальше</button>
         </div>
       )}
-      {count > 0 && <button className="btn" onClick={() => go('shop/cart')}>Корзина · {count} шт.</button>}
+      {count > 0 && <button className="btn" onClick={() => go('shop/cart' + contextSuffix)}>Корзина · {count} шт.</button>}
       <a className="linkrow" href="#/shop/history"><span><b>Мои покупки</b><small>Повторить заказ или подобрать аналоги</small></span><span aria-hidden="true">›</span></a>
     </main>
   );
+}
+
+/** Receipt code is shown only to the authenticated buyer, never to couriers.
+ * Verification by the courier does NOT complete the shop order: buyer approval
+ * is a separate action, with an explicit acknowledgement of actual receipt.
+ */
+function CustomerCourierReceipt({orderId,reload}:{orderId:string;reload:()=>void}){
+  const [open,setOpen]=useState(false);
+  const [code,setCode]=useState<any>(null);
+  const [error,setError]=useState('');
+  const [agree,setAgree]=useState(false);
+  const {busy,run}=useAction();
+  const refresh=async()=>{
+    try{const x=await get('/api/shop/orders/'+encodeURIComponent(orderId)+'/receipt-code');setCode(x);setError('');}
+    catch(e){setError(e instanceof Error?e.message:'Код пока недоступен');}
+  };
+  return <section className="courier-customer-proof" aria-label="Подтверждение вручения заказа">
+    <button type="button" className="btn ghost small" aria-expanded={open} onClick={async()=>{
+      if(open){setOpen(false);return;}setOpen(true);await refresh();
+    }}>{open?'Скрыть код вручения':'Код вручения и подтверждение получения'}</button>
+    {open&&<>
+      <p className="note">Покажите код курьеру только после прибытия. Не подтверждайте получение заранее.</p>
+      {error&&<p role="alert" className="note">{error}</p>}
+      {code&&<div className="courier-customer-code">
+        <small>Ваш код (6 цифр)</small><strong>{code.code}</strong>
+        <span>Курьер проверяет его на своём устройстве.</span>
+      </div>}
+      {code?.verified ? <>
+        <label className="agree"><input type="checkbox" checked={agree}
+          onChange={e=>setAgree(e.target.checked)}/>
+          <span>Я лично получил(а) все указанные в заказе запчасти.</span></label>
+        <button type="button" className="btn" disabled={!agree||busy}
+          onClick={async()=>{
+            const result=await run(()=>post('/api/shop/orders/'+encodeURIComponent(orderId)+'/confirm-received'),
+              'Получение заказа подтверждено');
+            if(result){setOpen(false);reload();}
+          }}>Подтвердить фактическое получение</button>
+      </> : <button type="button" className="btn ghost small" disabled={busy}
+        onClick={refresh}>Проверить статус вручения</button>}
+      <p className="note">После проверки кода заказ не закрывается автоматически — последнее решение за получателем.</p>
+    </>}
+  </section>;
 }
 
 function MyShopOrders({ orders, reload, canOrder }: { orders: any[]; reload: () => void; canOrder: boolean }) {
@@ -205,6 +276,13 @@ function MyShopOrders({ orders, reload, canOrder }: { orders: any[]; reload: () 
             {openAnalog === i.productId && <HistoryAnalogs productId={i.productId} add={addItem} />}
           </div>)}
           {o.adminNote && <span>{o.adminNote}</span>}
+          {o.delivery==='delivery' && o.canConfirmCourierReceipt &&
+            ['arrived','code_verified'].includes(o.courierStatus) && o.status==='shipped' &&
+            <CustomerCourierReceipt orderId={o.id} reload={reload}/>}
+          {o.canConfirmCourierReceipt && !['arrived','code_verified','received','cancelled'].includes(o.courierStatus) &&
+            <span className="note">Код вручения станет доступен, когда курьер отметит «На месте».</span>}
+          {o.courierStatus && !o.canConfirmCourierReceipt && o.status!=='done' && o.status!=='cancelled' &&
+            <span className="note">Код вручения доступен только пользователю, который оформил заказ.</span>}
           {o.cancelReason && <span className="note">Отменён: {o.cancelReason}</span>}
           {o.status === 'new' && <button className="btn ghost small" disabled={busy} onClick={async () => { if (await run(() => post(`/api/shop/orders/${o.id}/cancel`), 'Заказ отменён')) reload(); }}>Отменить</button>}
         </div>
@@ -250,6 +328,10 @@ export function ShopHistory({ vehicleId }: { vehicleId?: string }) {
 }
 
 export function ShopCart() {
+  const contextParams = partsContext();
+  const contextSuffix = partsContextSuffix(contextParams);
+  const selectedVehicleFromLink = contextParams.get('vehicleId');
+  const fromServiceBooking = !!contextParams.get('bookingId');
   const c = useLoad(() => get('/api/shop?light=1'), []);
   const live = useLoad(() => get('/api/orders').catch(() => []), []);
   const { me } = useMe();
@@ -261,6 +343,10 @@ export function ShopCart() {
   const vehicles = useLoad(() => c.data?.enabled && selectedIds
     ? get('/api/vehicles') : Promise.resolve([]), [c.data?.enabled, !!selectedIds]);
   const [vehicleId, setVehicleId] = useState('');
+  useEffect(() => {
+    if (selectedVehicleFromLink && ((vehicles.data ?? []) as any[]).some(v => v.id === selectedVehicleFromLink))
+      setVehicleId(selectedVehicleFromLink);
+  }, [selectedVehicleFromLink, vehicles.data]);
   const { busy, run } = useAction();
   const [delivery, setDelivery] = useState<'pickup' | 'delivery' | 'master' | ''>('');
   const [address, setAddress] = useState('');
@@ -284,8 +370,9 @@ export function ShopCart() {
   }
   return (
     <main>
-      <Back to="shop" label="Магазин" />
-      <div><h1>Корзина</h1><div className="sub">Оплата при получении — наличными, картой или СБП. Компаниям — по счёту.</div></div>
+      <Back to={'shop' + contextSuffix} label="Магазин" />
+      <div><h1>Корзина</h1><div className="sub">Доступные способы оплаты зависят от настроек магазина; компаниям — по счёту.</div></div>
+      {fromServiceBooking && <div className="note">Подбор открыт из ремонта СТО. Заказ товаров не меняет стоимость ремонта и не добавляет детали в смету автоматически.</div>}
       {!lines.length ? <div className="empty">{selection.error ?? (selectedIds ? 'Проверяем актуальную цену и наличие…' : 'Корзина пуста')}</div> : <>
         <div className="stack">
           {lines.map(({ p, qty }) => (
@@ -378,7 +465,8 @@ function ShopSwitch() {
     <div className={`banner col ${on ? '' : 'warn'}`}>
       <b>Магазин {on ? 'открыт для клиентов' : 'закрыт — клиенты видят «скоро»'}</b>
       <span className="note">{on ? 'Если что-то сбоит — закройте: новые заказы перестанут приниматься, уже оформленные останутся у вас и у клиентов.' : `Клиент видит: «${s.data.shop.closedTitle}». Товары можно готовить заранее.`}</span>
-      <button className={`btn small ${on ? 'ghost' : ''}`} disabled={busy} onClick={async () => { if (await run(() => put('/api/admin/settings/shop', { enabled: !on }), on ? 'Магазин закрыт' : 'Магазин открыт')) s.reload(); }}>{on ? 'Закрыть магазин' : 'Открыть магазин'}</button>
+      <button className="btn ghost small" disabled={busy || !on} onClick={async () => { if (await run(() => put('/api/admin/settings/shop', { enabled: false }), 'Магазин закрыт')) s.reload(); }}>{on ? 'Закрыть магазин' : 'Магазин закрыт до приёмки'}</button>
+      {!on && <small className="note">Открытие магазина для клиентов заблокировано до отдельной проверки и утверждённого выпуска. Администратор может готовить каталог без публикации.</small>}
     </div>
   );
 }
@@ -559,6 +647,76 @@ const NEXT: Record<string, [string, string][]> = {
   ready: [['shipped', 'Отправлен'], ['done', 'Получен']], shipped: [['done', 'Получен']],
 };
 
+function CourierAssign({order,onDone}:{order:any;onDone:()=>void}){
+  const [opened,setOpened]=useState(false);
+  const [selected,setSelected]=useState('');
+  const couriers=useLoad<any[]>(()=>opened?get('/api/admin/couriers'):Promise.resolve([]),[opened]);
+  const {busy,run}=useAction();
+  if(order.delivery!=='delivery')return null;
+  if(order.courierStatus&&order.courierStatus!=='assigned')return <p className="note">
+    Доставка курьером · {order.courierStatus==='received'?'Подтверждена получателем':
+      order.courierStatus==='code_verified'?'Код проверен — ожидаем подтверждение':
+      'В процессе'} · закрытие покупателем отдельно
+  </p>;
+  return <section className="courier-admin-assign">
+    {order.courierStatus==='assigned'&&<p className="note">Курьер назначен. Код доступен только покупателю.</p>}
+    {order.status==='ready'&&<button type="button" className="btn ghost small"
+      onClick={()=>setOpened(v=>!v)} aria-expanded={opened}>
+      {opened?'Скрыть выбор':'Назначить курьера'}
+    </button>}
+    {opened&&<div className="stack">
+      <p className="note">Назначать можно только подготовленные заказы с адресом.
+        Сменить назначение можно до начала рейса.</p>
+      {!couriers.data?<span className="note">{couriers.error||'Загружаем доступных курьеров…'}</span>
+        :couriers.data.length===0?<span className="note">Курьеров пока нет. Создайте отдельный аккаунт с ролью «Курьер» через раздел регистрации администратора.</span>
+        :<>
+          <label className="stack"><span className="label">Курьер для этой доставки</span>
+            <select className="field" value={selected} onChange={e=>setSelected(e.target.value)}>
+              <option value="">Выберите курьера</option>
+              {couriers.data.map((x:any)=><option key={x.id} value={x.id}>{x.name||'Курьер'} · {x.id.slice(0,8)}</option>)}
+            </select>
+          </label>
+          <button type="button" className="btn small" disabled={busy||!selected}
+            onClick={async()=>{
+              const saved=await run(()=>post('/api/admin/shop/orders/'+encodeURIComponent(order.id)+'/courier',
+                {courierId:selected}),'Курьер назначен');
+              if(saved){setOpened(false);onDone();}
+            }}>Сохранить назначение</button>
+        </>}
+    </div>}
+  </section>;
+}
+/** An administrator may rotate a locked or expired code, but cannot view it.
+ * A written reason and audit event are mandatory; the buyer sees it privately.
+ */
+function CourierReceiptRecovery({order,onDone}:{order:any;onDone:()=>void}){
+  const [reason,setReason]=useState('');
+  const {busy,run}=useAction();
+  const expires=order.courierCodeExpiresAt?new Date(order.courierCodeExpiresAt).getTime():NaN;
+  const expired=Number.isFinite(expires)&&expires<Date.now();
+  if(order.courierStatus!=='arrived'||order.status!=='shipped')return null;
+  if((order.courierCodeAttempts??0)<5&&!expired)return null;
+  return <section className="card stack" aria-label="Восстановление кода вручения">
+    <b>Код вручения {expired?'истёк':'заблокирован'}</b>
+    <p className="note">Администратор может выдать новый код после проверки ситуации.
+      Сам код показывается только покупателю в истории заказа.</p>
+    {(order.courierCodeResets??0)>=3
+      ? <p className="note">Лимит восстановления исчерпан — требуется разбирательство.</p>
+      : <>
+        <label className="stack"><span className="label">Причина восстановления</span>
+          <textarea className="field" value={reason} maxLength={500}
+            placeholder="Например: код истёк, согласовано с получателем"
+            onChange={e=>setReason(e.target.value)}/></label>
+        <button type="button" className="btn ghost small" disabled={busy||reason.trim().length<10}
+          onClick={async()=>{
+            const saved=await run(()=>post('/api/admin/shop/orders/'+encodeURIComponent(order.id)+
+              '/courier/reset-receipt',{reason:reason.trim()}),'Код обновлён для получателя');
+            if(saved){setReason('');onDone();}
+          }}>Выдать новый код получателю</button>
+      </>}
+  </section>;
+}
+
 function AdminShopOrders() {
   const [all, setAll] = useState(false);
   const l = useLoad(() => get(`/api/admin/shop/orders${all ? '' : '?status=open'}`), [all], (e) => e.type === 'shop');
@@ -581,11 +739,17 @@ function AdminShopOrders() {
           <span className="note">{DELIVERY[o.delivery]}{o.address ? `: ${o.address}` : ''}{o.orderId ? ' · ' : ''}{o.orderId && <a href={`#/order/${o.orderId}`}>заявка</a>} · {o.payment === 'invoice' ? 'по счёту' : 'оплата при получении'}</span>
           {o.comment && <span className="note">«{o.comment}»</span>}
           {o.adminNote && <span className="note">Клиенту: {o.adminNote}</span>}
+          <CourierAssign order={o} onDone={l.reload}/>
+          <CourierReceiptRecovery order={o} onDone={l.reload}/>
           {NEXT[o.status] && <>
             <input className="field" placeholder="Сообщение клиенту · по желанию" value={note[o.id] ?? ''} onChange={(e) => setNote({ ...note, [o.id]: e.target.value })} />
             <div className="row">
-              {NEXT[o.status].map(([s, n]) => <button key={s} className="btn small" disabled={busy} onClick={() => act(o.id, s, n)}>{n}</button>)}
-              <button className="btn ghost small" disabled={busy} onClick={() => act(o.id, 'cancelled', 'Заказ отменён, товар вернулся на склад')}>Отменить</button>
+              {NEXT[o.status].filter(([s])=>!o.courierStatus||!['done','shipped'].includes(s))
+                .map(([s, n]) => <button key={s} className="btn small" disabled={busy}
+                  onClick={() => act(o.id, s, n)}>{n}</button>)}
+              {(!o.courierStatus||o.courierStatus==='assigned')&&
+                <button className="btn ghost small" disabled={busy}
+                  onClick={() => act(o.id, 'cancelled', 'Заказ отменён, товар вернулся на склад')}>Отменить</button>}
             </div>
           </>}
         </div>

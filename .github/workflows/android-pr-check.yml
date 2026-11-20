@@ -46,14 +46,23 @@ jobs:
         run: |
           npm install
           node scripts/verify-brand.mjs
+          node scripts/verify-current-policy.mjs
           npm -w web run build
           node scripts/verify-approved.mjs
+          rm -rf android/app/src/main/assets/www
           mkdir -p android/app/src/main/assets/www
           cp -a web/dist/. android/app/src/main/assets/www/
+          for obsolete in tracksos-approved-scenic-hero.webp tracksos-approved-scania-r520.webp tracksos-approved-truck.webp traksos-final-hero.webp traksos-final-insurance.webp traksos-final-parts.webp; do
+            if test -e "android/app/src/main/assets/www/$obsolete"; then
+              echo "FAIL: retired visual asset packaged in APK: $obsolete" >&2
+              exit 1
+            fi
+          done
           test -s android/app/src/main/assets/www/index.html
           test -s android/app/src/main/assets/www/app.js
           test -s android/app/src/main/assets/www/app.css
-          test -s android/app/src/main/assets/www/tracksos-approved-scania-r520.webp
+          test -s android/app/src/main/assets/www/tracksos-approved-hero-owner-20261119.webp
+          test -s android/app/src/main/assets/www/tracksos-approved-hero-owner-20261119.webp
 
       - name: Build debug APK without release credentials
         working-directory: android
@@ -63,14 +72,14 @@ jobs:
         run: |
           APK=android/app/build/outputs/apk/debug/app-debug.apk
           test -s "$APK"
-          for asset in index.html app.js app.css tracksos-approved-scania-r520.webp; do
+          for asset in index.html app.js app.css tracksos-approved-hero-owner-20261119.webp; do
             unzip -Z1 "$APK" | grep -Fx "assets/www/$asset"
           done
           grep -F '"applicationId": "ru.traksos.app.preview"' android/app/build/outputs/apk/debug/output-metadata.json
           sha256sum "$APK"
           echo '### Android PR smoke' >> "$GITHUB_STEP_SUMMARY"
           echo '- Built debug APK, without release signing credentials.' >> "$GITHUB_STEP_SUMMARY"
-          echo '- Bundled actual PR web assets and Scania R520.' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Bundled the owner-approved 19 Nov truck artwork; retired asset names rejected.' >> "$GITHUB_STEP_SUMMARY"
           echo '- Physical-device notifications and calls remain unverified.' >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4
@@ -110,6 +119,28 @@ jobs:
         with:
           name: tracksos-pr-debug-apk
           path: apk
+      # SDK repository downloads sometimes terminate with "Premature EOF" before
+      # any emulator is booted. Retry the SDK package install, not the app test.
+      - name: Preinstall Android emulator with bounded network retries
+        shell: bash
+        run: |
+          sdkmanager_bin="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$sdkmanager_bin" ]; then
+            sdkmanager_bin="$(find "${ANDROID_HOME}" -type f -name sdkmanager -print -quit)"
+          fi
+          if [ -z "$sdkmanager_bin" ] || [ ! -x "$sdkmanager_bin" ]; then
+            echo "::error::Android SDK command-line tools are unavailable"
+            exit 1
+          fi
+          for attempt in 1 2 3; do
+            if "$sdkmanager_bin" --install emulator --channel=0; then
+              test -x "${ANDROID_HOME}/emulator/emulator" && exit 0
+            fi
+            echo "::warning::Android SDK emulator download failed (attempt ${attempt}/3)"
+            if [ "${attempt}" -lt 3 ]; then sleep $((attempt * 8)); fi
+          done
+          echo "::error::Android emulator SDK installation could not be completed"
+          exit 1
       - name: Boot emulator, launch APK and fail on native crash
         uses: reactivecircus/android-emulator-runner@v2
         with:

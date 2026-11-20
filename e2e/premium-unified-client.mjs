@@ -73,34 +73,50 @@ try {
       await page.waitForTimeout(200);
       console.log('visual entry route ' + width + 'px: ' + await page.evaluate(() => location.hash));
       await page.locator('.client-dashboard').waitFor({timeout: 20000});
-      const truck = await page.locator('.client-hero-scania').evaluate(img => ({
-        loaded: img.complete && img.naturalWidth > 100,
-        fit: getComputedStyle(img).objectFit,
-        visible: getComputedStyle(img).display !== 'none'
-      }));
-      if (!truck.loaded || !truck.visible || truck.fit !== 'contain')
-        throw new Error(width + 'px approved Scania image issue: ' + JSON.stringify(truck));
-      const cards = await page.locator('.client-dashboard .desktop-quick-card').count();
-      const hubs = await page.locator('.client-dashboard-hubs > a').count();
-      if (cards !== 4 || hubs !== 4)
-        throw new Error(width + 'px wrong card counts: ' + cards + '/' + hubs);
-      // Confirm actual high-resolution bundled photos load, not only CSS URLs.
+      if (width < 900) {
+        await page.locator('.and19-client').waitFor({state:'visible'});
+        const hero = await page.locator('.and19-cover img').evaluate(img => ({
+          loaded: img.complete && img.naturalWidth > 100,
+          visible: getComputedStyle(img).display !== 'none'
+        }));
+        if (!hero.loaded || !hero.visible) throw Error('Approved mobile truck scene missing: '+JSON.stringify(hero));
+        if (await page.locator('.and19-services > a').count() !== 4)
+          throw Error('Mobile Android must show exactly four usable service entries');
+        if (await page.locator('.desktop-quick-card').count() !== 0)
+          throw Error('Mobile view should not render the desktop dashboard tree');
+      } else {
+        const truck = await page.locator('.client-hero-scania').evaluate(img => ({
+          loaded: img.complete && img.naturalWidth > 100,
+          fit: getComputedStyle(img).objectFit,
+          visible: getComputedStyle(img).display !== 'none'
+        }));
+        if (!truck.loaded || !truck.visible || truck.fit !== 'contain')
+          throw new Error(width + 'px approved Scania image issue: ' + JSON.stringify(truck));
+        const cards = await page.locator('.client-dashboard .desktop-quick-card').count();
+        const hubs = await page.locator('.client-dashboard-hubs > a').count();
+        if (cards !== 4 || hubs !== 4)
+          throw new Error(width + 'px wrong desktop card counts: ' + cards + '/' + hubs);
+      }
+      // Older photographic service cards were physically retired at the owner's
+      // request. Preserve only verified actual vehicle-model photos in the app.
       const photoDetails = await page.evaluate(async () => {
-        const keys = ['master', 'tow', 'sto', 'consult'];
-        return await Promise.all(keys.map(async key => {
+        const modelPhotos = ['scania-r520-2016.webp','volvo-fh-2013.webp',
+          'renault-premium-2006.webp','daf-xf105.webp',
+          'man-tgx-2007.webp','mercedes-actros-2019.webp'];
+        return await Promise.all(modelPhotos.map(async name => {
           const img = new Image();
-          img.src = '/tracksos-photo-' + key + '.webp';
+          img.src = '/vehicles/models/' + name;
           await img.decode();
-          return { key, w: img.naturalWidth, h: img.naturalHeight };
+          return {name, w:img.naturalWidth, h:img.naturalHeight};
         }));
       });
-      if (photoDetails.some(p => p.w < 700 || p.h < 480))
-        throw new Error(width + 'px service-photo quality/availability: ' + JSON.stringify(photoDetails));
-      for (const [index, key] of ['master', 'tow', 'sto', 'consult'].entries()) {
+      if (photoDetails.some(p => p.w < 320 || p.h < 180))
+        throw new Error(width + 'px vehicle-model photo quality/availability: ' + JSON.stringify(photoDetails));
+      if(width >= 900) for (const [index, key] of ['master', 'tow', 'sto', 'consult'].entries()) {
         const bg = await page.locator('.desktop-quick-card').nth(index).evaluate(el =>
           getComputedStyle(el).backgroundImage);
-        if (!bg.includes('tracksos-photo-' + key))
-          throw new Error(width + 'px service-photo CSS mismatch: ' + key + '/' + bg);
+        if (bg.includes('tracksos-photo-') || !bg.includes('gradient'))
+          throw new Error(width + 'px retired pre-17 Nov service photography or missing current background: ' + key + '/' + bg);
       }
       const pageWidth = await page.evaluate(() => ({
         viewport: document.documentElement.clientWidth,
@@ -122,7 +138,7 @@ try {
         throw new Error(width + 'px expected 5 master specialties');
       await page.screenshot({path:OUT + '/specialties-' + width + '.png',fullPage:true});
       if (errors.length) throw new Error(width + 'px browser exception: ' + errors.join('; '));
-      console.log('PASS premium real client ' + width + 'px: Scania, 4 services, 4 hubs, SOS, 5 specialties, no overflow');
+      console.log('PASS real client ' + width + 'px: approved device-specific workspace, 4 services, SOS, 5 specialties, no overflow');
     } finally {
       await context.close();
     }

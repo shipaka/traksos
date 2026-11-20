@@ -1,4 +1,4 @@
-// Canonical Nov 14 real-browser audit: truck photos, SOS route and public site.
+// Canonical Nov 19 real-browser audit: owner-approved truck photo, SOS routes and public site.
 // Never validate the obsolete demo direction grid or require a clipped hero.
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
@@ -20,11 +20,34 @@ try {
     const page = await ctx.newPage();
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
-    await page.addInitScript(t => {
-      localStorage.setItem('traksos.token', t);
+    await page.addInitScript(({token,nativeApp}) => {
+      // The mobile acceptance branch is the Android WebView workspace.
+      // Chromium without this bridge renders the *browser* client dashboard.
+      if(nativeApp) Object.defineProperty(window,'TrakSOSNative',{
+        configurable:true,value:{
+          isApp:()=>true,setSession:()=>{},pushToken:()=>'',performerOnline:()=>{},
+          appLockEnabled:()=>false,setAppLockEnabled:()=>false
+        }
+      });
+      localStorage.setItem('traksos.token', token);
       localStorage.setItem('traksos.mode', 'client');
-    }, token);
+    }, {token,nativeApp:width<900});
     await page.goto(BASE + '/#/', {waitUntil: 'domcontentloaded'});
+    if(width<900){
+      const mobile = page.locator('.and19-client');
+      await mobile.waitFor({state:'visible'});
+      const image=mobile.locator('.and19-cover img');
+      const state=await image.evaluate(i=>({
+        loaded:i.complete&&i.naturalWidth>100,
+        visible:getComputedStyle(i).display!=='none',
+        viewport:document.documentElement.clientWidth,
+        content:document.documentElement.scrollWidth
+      }));
+      if(!state.loaded||!state.visible||state.content>state.viewport+3)
+        throw Error(width+'px approved Android scene invalid: '+JSON.stringify(state));
+      if(await mobile.locator('.and19-services>a').count()!==4)
+        throw Error(width+'px Android missing four help services');
+    }else{
     const hero = page.locator('.client-dashboard .desktop-hero');
     await hero.waitFor();
     const img = hero.locator('img.client-hero-scania');
@@ -49,14 +72,17 @@ try {
     if (await cards.count() !== 4) throw Error(width + 'px missing four help cards');
     for (const [i, key] of ['master', 'tow', 'sto', 'consult'].entries()) {
       const photo = await cards.nth(i).evaluate(e => getComputedStyle(e).backgroundImage);
-      if (!photo.includes('tracksos-photo-' + key))
-        throw Error(width + 'px service photo is missing for ' + key);
+      if (/tracksos-photo-|tracksos-partner-(?:master|tow|sto|insurer)-approved/.test(photo))
+        throw Error(width + 'px retired pre-17 Nov image is still applied to ' + key);
+      if (!photo || photo === 'none')
+        throw Error(width + 'px service card lost its approved background: ' + key);
     }
     if (check.sourceWidth < 1200)
       console.warn('ASSET QUALITY BLOCKER: desktop landscape truck photo is only ' +
         check.sourceWidth + 'x' + check.sourceHeight + '; replace with high-resolution approved artwork before release');
+    }
     await page.screenshot({path: 'e2e/shots/approved-truck/client-' + width + '.png', fullPage: true});
-    await page.locator('a.desktop-primary-action[href="#/sos"]').click();
+    await page.locator(width<900 ? '.and19-sos' : 'a.desktop-primary-action[href="#/sos"]').click();
     await page.locator('.client-sos-choices').waitFor();
     if (await page.locator('.client-sos-choice').count() !== 3)
       throw Error(width + 'px approved SOS must have exactly three main directions');
@@ -83,19 +109,20 @@ try {
     // intentionally reserve a separate, uncropped image above the text.
     if (!info.visible || (width >= 900 && !info.fullBleed) ||
         (width < 900 && (info.fullBleed || info.fit !== 'contain')) ||
-        !info.photo.includes('tracksos-approved-scenic-hero') ||
+        !/tracksos-approved-hero-owner-20261119(?:-[A-Za-z0-9]+)?\.webp/.test(info.photo) ||
+        info.photo.includes('tracksos-approved-scenic-hero') ||
         info.photo.includes('traksos-final-hero'))
       throw Error(width + 'px public Scania photograph is missing or has the wrong layout: ' + JSON.stringify(info));
     await p.getByRole('button',{name:'Следующее фото'}).click();
     const rescuePhoto=await art.evaluate(el=>getComputedStyle(el).backgroundImage);
-    if(!rescuePhoto.includes('tracksos-hero-rescue-hq') ||
+    if(!/tracksos-approved-hero-owner-20261119(?:-[A-Za-z0-9]+)?\.webp/.test(rescuePhoto) ||
        !await p.getByRole('heading',{name:/Эвакуация грузовиков/}).count())
-      throw Error(width+'px: tow scene must change both photograph and headline');
+      throw Error(width+'px: tow slide must keep the approved photo and update its headline');
     await p.getByRole('button',{name:'Следующее фото'}).click();
     const stoPhoto=await art.evaluate(el=>getComputedStyle(el).backgroundImage);
-    if(!stoPhoto.includes('tracksos-hero-service-hq') ||
+    if(!/tracksos-approved-hero-owner-20261119(?:-[A-Za-z0-9]+)?\.webp/.test(stoPhoto) ||
        !await p.getByRole('heading',{name:/Ремонт и запись в СТО/}).count())
-      throw Error(width+'px: STO scene must change both photograph and headline');
+      throw Error(width+'px: STO slide must keep the approved photo and update its headline');
     await p.getByRole('button',{name:/Показать фото 1:/}).click();
     await p.screenshot({path:'e2e/shots/approved-truck/public-' + width + '.png',fullPage:true});
     await guest.close();
@@ -103,4 +130,4 @@ try {
 } finally {
   await browser.close();
 }
-console.log('Verified client Scania photo, real full-bleed three-scene guest hero, SOS and public photo cards at 390 and 1440px');
+console.log('Verified 19 Nov owner-approved public truck photo, adaptive hero, SOS and client photo cards at 390 and 1440px');

@@ -249,14 +249,14 @@
 .app.role-admin .admin-command-hero .admin-command-art{
   width:min(44%,460px);opacity:1;border-radius:0 22px 22px 0;
   background:linear-gradient(90deg,#0a2945 0%,rgba(9,31,50,.22) 45%,rgba(6,22,38,.06)),
-    url('../public/tracksos-approved-scania-r520.webp') 72% center / cover no-repeat;
+    url('../public/tracksos-approved-hero-owner-20261119.webp') 72% center / cover no-repeat;
   mask-image:linear-gradient(90deg,transparent,black 18%);
 }
 .app.role-admin .admin-command-hero .admin-command-art>span,
 .app.role-admin .admin-command-hero .admin-command-art i{display:none;}
 .app.role-performer .desktop-content main > .between:has(> h1 + .pill){
   background:linear-gradient(105deg,#0a2238 1%,rgba(11,41,62,.96) 42%,rgba(9,36,53,.38)),
-    url('../public/tracksos-approved-scania-r520.webp') 78% center / cover no-repeat #0a253c;
+    url('../public/tracksos-approved-hero-owner-20261119.webp') 78% center / cover no-repeat #0a253c;
 }
 .app.role-service .base-workspace:has(> .card.col) > div:has(> h1){
   position:relative;isolation:isolate;overflow:hidden;
@@ -264,7 +264,7 @@
   padding:24px 24px;border:1px solid #3e7891;border-radius:21px;
   box-shadow:0 13px 35px #0003;
   background:linear-gradient(105deg,#09233c 0%,rgba(9,34,55,.93) 48%,rgba(9,36,60,.25) 100%),
-    url('../public/tracksos-approved-scania-r520.webp') right 38% / cover no-repeat #0b2742;
+    url('../public/tracksos-approved-hero-owner-20261119.webp') right 38% / cover no-repeat #0b2742;
 }
 .app.role-service .base-workspace:has(> .card.col) > div:has(> h1) h1{
   max-width:460px;color:#f7fcff;font-size:clamp(23px,3vw,33px);
@@ -291,7 +291,7 @@
     padding:19px;border:1px solid #3c6a87;border-radius:20px;
     box-shadow:0 13px 31px rgba(0,8,24,.28);
     background:linear-gradient(100deg,#071d31 0%,rgba(6,25,42,.95) 48%,rgba(5,22,40,.23)),
-      url('../public/tracksos-approved-scania-r520.webp') 66% center / cover no-repeat #09243e;
+      url('../public/tracksos-approved-hero-owner-20261119.webp') 66% center / cover no-repeat #09243e;
   }
   .app.role-client .client-home>.desktop-hero::before{display:none;}
   .app.role-client .client-home>.desktop-hero .desktop-hero-copy{
@@ -335,11 +335,11 @@
 
 /* Shared cabinet art treatment: show the entire approved Scania, never crop it. */
 .app.role-admin .admin-command-hero .admin-command-art{
-  background:linear-gradient(90deg,#0a2945 0%,rgba(9,31,50,.12) 65%),url('../public/tracksos-approved-scania-r520.webp') center center / contain no-repeat;
+  background:linear-gradient(90deg,#0a2945 0%,rgba(9,31,50,.12) 65%),url('../public/tracksos-approved-hero-owner-20261119.webp') center center / contain no-repeat;
 }
 .app.role-performer .desktop-content main > .between:has(> h1 + .pill),
 .app.role-service .base-workspace:has(> .card.col) > div:has(> h1){
-  background:linear-gradient(105deg,#09233c 0%,rgba(9,34,55,.9) 46%,rgba(9,36,60,.15) 100%),url('../public/tracksos-approved-scania-r520.webp') right center / contain no-repeat #0b2742;
+  background:linear-gradient(105deg,#09233c 0%,rgba(9,34,55,.9) 46%,rgba(9,36,60,.15) 100%),url('../public/tracksos-approved-hero-owner-20261119.webp') right center / contain no-repeat #0b2742;
 }
 @media(prefers-reduced-motion:no-preference){
   .app .desktop-content main > .card,

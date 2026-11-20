@@ -82,7 +82,10 @@ export class AuctionService {
                 where l.performer_id = p.user_id and l.kind in ('cash_commission','cash_commission_paid')) as cash_debt
          from performer_profiles p join users u on u.id = p.user_id
         where p.kind = $1 and p.user_id <> $2
-          and not exists (select 1 from orders x where x.performer_id=p.user_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (x.service='consult' and x.status='awaiting_confirmation'))`, [kind, order.client_id]);
+          and not exists (select 1 from orders x where x.performer_id=p.user_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (x.status='awaiting_confirmation' and (
+                    x.service='consult' or exists (
+                      select 1 from order_unilateral_closures uc
+                        where uc.order_id=x.id and uc.status in ('pending_client','disputed')))))`, [kind, order.client_id]);
     const already = await this.db.query<{ performer_id: string }>(
       `select performer_id from order_dispatch where order_id=$1 and status in ('declined','missed','bidding','lost')`, [orderId]);
     const ranked = rankCandidates(order as any, list, {
@@ -129,7 +132,7 @@ export class AuctionService {
         [orderId]))) break;
       await this.notifier.notify([r.user_id], {
         type: 'auction', orderId, number: order.number, service: order.service, sos: order.is_sos, problem: order.problem,
-        description: order.description, address: order.address, destination: order.destination, cargo: order.cargo,
+        description: order.description, address: order.address, road: order.site?.road ?? null, destination: order.destination, cargo: order.cargo,
         zone: order.estimate.zoneName, brand: order.brand, distanceKm: r.distanceKm,
         usual: lim.usual, floor: lim.floor, ceil: lim.ceil, until: until.toISOString(), ringUntil: ring,
       }, {

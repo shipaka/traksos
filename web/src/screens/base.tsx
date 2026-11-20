@@ -7,6 +7,7 @@ import { WorkerNotices } from './ops.tsx';
 import { RoadsideMap } from './roadsideMap.tsx';
 import { DestinationCard } from './DestinationCard.tsx';
 import { VerifiedBadge } from '../verifiedBadge.tsx';
+import { VehicleModelPhoto } from '../vehicleVisual.tsx';
 import { inServicePreview, servicePreviewPath, servicePreviewHref, previewServiceApi } from '../demo/servicePreviewApi.ts';
 // The same working STО components are used for both real accounts and the isolated admin preview.
 const baseGet=(url:string)=>inServicePreview()?previewServiceApi('GET',url):get(url);
@@ -15,7 +16,7 @@ const basePut=(url:string,body:any)=>inServicePreview()?previewServiceApi('PUT',
 
 export const NEEDS: Record<string, string> = {
   electric: 'Электрика', air: 'Пневматика', engine: 'Двигатель', gearbox: 'КПП', brakes: 'Тормоза',
-  chassis: 'Ходовая', tires: 'Шины', ecu: 'Блоки управления', heater: 'Автономка', other: 'Другое',
+  chassis: 'Ходовая', tires: 'Шины', hydraulics: 'Гидравлика', ecu: 'Блоки управления', heater: 'Автономка', other: 'Другое',
 };
 const CONDITIONS: Record<string, string> = { parking: 'Стоянка для фуры', pit: 'Яма', lift: 'Подъёмник', night: 'Ночная работа' };
 const ACCEPTS: Record<string, [string, string]> = {
@@ -23,7 +24,7 @@ const ACCEPTS: Record<string, [string, string]> = {
 };
 const STAFF: Record<string, string> = { own: 'Есть у нас', invite: 'Приглашаем', none: 'Нет' };
 const REPAIR: [string, string][] = [['arrived', 'Машина приехала'], ['diagnostics', 'Диагностика'], ['in_work', 'В работе'], ['waiting_part', 'Ждём запчасть'], ['agreeing', 'Согласуем с клиентом']];
-const WORKS = ['Диагностика', 'Электрика', 'Пневматика', 'Двигатель', 'КПП', 'Тормоза', 'Ходовая', 'Шины', 'Сварка', 'Замена масла и фильтров'];
+const WORKS = ['Диагностика', 'Электрика', 'Пневматика', 'Двигатель', 'КПП', 'Тормоза', 'Ходовая', 'Шины', 'Гидравлика', 'Сварка', 'Замена масла и фильтров'];
 const DECLINE = ['Нет такого специалиста', 'Нет мест', 'Не работаем с этой маркой'];
 const CLARIFY = ['Нужно подробнее о поломке', 'Своим ходом или на эвакуаторе?', 'Нужен госномер прицепа'];
 const TONE: Record<string, string> = {
@@ -56,10 +57,11 @@ function InvoicePoints({ amount, value, onChange }: { amount: number | null; val
   );
 }
 
-export function BaseHome() {
+export function BaseHome({ initialTab='req' }: { initialTab?: 'req' | 'cars' | 'expected' | 'ready' | 'done' } = {}) {
   const preview=inServicePreview();
+  const { me } = useMe();
   const cab = useLoad(() => baseGet('/api/base'), [], isBookingEvent);
-  const [tab, setTab] = useState<'req' | 'cars' | 'done'>('req');
+  const [tab, setTab] = useState<'req' | 'cars' | 'expected' | 'ready' | 'done'>(initialTab);
   const { busy, run } = useAction();
   if (!cab.data) return <main>{!preview&&<WorkerNotices audience="service" />}<Loading error={cab.error} /></main>;
   const { center, groups } = cab.data;
@@ -86,16 +88,25 @@ export function BaseHome() {
     </main>
   );
   const cars = [...groups.expected, ...groups.repair, ...groups.ready];
+  const focus = groups.repair[0] ?? groups.ready[0] ?? groups.expected[0] ?? null;
   return (
-    <main className="base-workspace">{!preview&&<WorkerNotices audience="service" />}
+    <main className="base-workspace">
+      {!preview && !me?.roles.includes('master') && (
+        <a className="btn ghost small" href="#/work/profile">Подключить выездного мастера — отдельный рабочий кабинет</a>
+      )}
+      {!preview && me?.roles.includes('master') && (
+        <a className="btn ghost small" href="#/work">Перейти к выездным заявкам</a>
+      )}
+{!preview&&<WorkerNotices audience="service" />}
       <section className="base-command-hero">
         <span className="base-command-eyebrow">TRAKSOS · КАБИНЕТ СЕРВИСНОГО ПАРТНЁРА</span>
         <h1>Рембаза «{center.name}»</h1>
         <p>{center.address} · {center.hours}</p>
         <div className="base-command-actions">
-          <button className="btn" onClick={()=>setTab('req')}>Входящие заявки · {groups.requests.length}</button>
-          <button className="btn ghost" onClick={()=>setTab('cars')}>Машины у вас</button>
-          <a className="btn ghost" href={servicePreviewHref('base/money')}>Финансы</a>
+          <button className="btn" onClick={()=>setTab('req')}>Входящие · {groups.requests.length}</button>
+          <button className="btn ghost" onClick={()=>setTab('cars')}>В ремонте · {groups.repair.length}</button>
+          <button className="btn ghost" onClick={()=>setTab('expected')}>Записи · {groups.expected.length}</button>
+          <button className="btn ghost" onClick={()=>setTab('ready')}>К выдаче · {groups.ready.length}</button>
         </div>
       </section>
       <div className="row" style={{ gap: 6 }}>
@@ -123,18 +134,49 @@ export function BaseHome() {
         </div>
       )}
       <div className="grid3">
-        <div className="card tile"><span className="label">Запросы</span><span className="tile-value">{groups.requests.length}</span></div>
-        <div className="card tile"><span className="label">Ожидаем</span><span className="tile-value">{groups.expected.length}</span></div>
+        <div className="card tile"><span className="label">Входящие</span><span className="tile-value">{groups.requests.length}</span></div>
         <div className="card tile"><span className="label">В ремонте</span><span className="tile-value">{groups.repair.length}</span></div>
+        <div className="card tile"><span className="label">К выдаче</span><span className="tile-value">{groups.ready.length}</span></div>
       </div>
+      {focus&&<section className="and20-sto-focus" aria-label="Текущий ремонт или ближайшая запись">
+        <div className="and20-sto-focus-heading">
+          <strong>{groups.repair.length?'Текущий ремонт':focus.status==='ready'?'Готово к выдаче':'Ближайшая запись'}</strong>
+          <span className="and20-state">{focus.statusName||'В работе'}</span>
+        </div>
+        <div className="and20-sto-focus-vehicle">
+          <VehicleModelPhoto brand={focus.vehicle?.brand} model={focus.vehicle?.model}
+            year={focus.vehicle?.year} className="and20-sto-photo"/>
+          <div><strong>{carName(focus.vehicle)}</strong>
+            <p>{focus.needName||'Работы по заявке'}</p>
+            <small>{focus.client?.name||'Клиент из заявки'}</small>
+          </div>
+        </div>
+        <div className="and20-sto-focus-actions">
+          <a href={servicePreviewHref(`base/car/${focus.id}`)}>Открыть заказ</a>
+          {!preview&&<a href={'#/shop?bookingId='+encodeURIComponent(focus.id)}>Подобрать запчасти</a>}
+        </div>
+        <small>Расчёт и согласование работ — в карточке этого ремонта.</small>
+      </section>}
       <div className="scroll-x" role="tablist">
-        {([['req', `Входящие запросы · ${groups.requests.length}`], ['cars', `Машины у вас · ${cars.length}`], ['done', 'Закрытые']] as const).map(([k, n]) => (
+        {([['req', `Входящие · ${groups.requests.length}`], ['cars', `Машины у вас · ${cars.length}`], ['expected', `Записи · ${groups.expected.length}`], ['ready', `К выдаче · ${groups.ready.length}`], ['done', 'История']] as const).map(([k, n]) => (
           <button key={k} className="chip" role="tab" aria-pressed={tab === k} onClick={() => setTab(k)}>{n}</button>
         ))}
       </div>
       {tab === 'req' && (groups.requests.length
         ? groups.requests.map((b: any) => <RequestCard key={b.id} b={b} onDone={cab.reload} />)
         : <div className="empty">Новых запросов нет. Они приходят уведомлением — со звуком, даже когда приложение закрыто.</div>)}
+      {tab === 'expected' && (groups.expected.length ? <div className="rows">
+        {groups.expected.map((b:any)=><a key={b.id} className="list-item"
+          href={servicePreviewHref(`base/car/${b.id}`)}>
+          <div className="stack" style={{gap:2}}>
+            <b>{carName(b.vehicle)}</b>
+            <span className="note">{b.client?.name||'Клиент'} · {b.needName||'Осмотр'}
+              {' · '}{b.whenDay ? fmtDay(b.whenDay) : 'Дата уточняется'}
+              {b.acceptTime ? ' к '+b.acceptTime : ''}</span>
+          </div>
+          <span className="pill">Открыть ›</span>
+        </a>)}
+      </div> : <div className="empty">Записей на ремонт пока нет</div>)}
       {tab === 'cars' && (cars.length ? (
         <div className="rows">
           {cars.map((b: any) => (
@@ -150,6 +192,19 @@ export function BaseHome() {
           <span className="note">Нажмите на машину — откроется её карточка: статус, заметки, компания, история.</span>
         </div>
       ) : <div className="empty">Машин у вас пока нет. После «Готовы принять» машина появится здесь в «Ожидаем».</div>)}
+      {tab === 'ready' && (groups.ready.length ? (
+        <div className="rows">
+          {groups.ready.map((b: any) => (
+            <a key={b.id} href={servicePreviewHref(`base/car/${b.id}`)} className="list-item">
+              <div className="stack" style={{gap:2}}>
+                <b>{carName(b.vehicle)} · {b.vehicle?.plate ?? 'без номера'}</b>
+                <span className="note">{b.client?.name} · {b.needName} · {b.statusName}</span>
+              </div>
+              <span className="pill good">Открыть заказ ›</span>
+            </a>
+          ))}
+        </div>
+      ) : <div className="empty">Готовых к выдаче машин пока нет</div>)}
       {tab === 'done' && (groups.done.length ? (
         <div className="rows">
           {groups.done.map((b: any) => (
@@ -229,6 +284,7 @@ export function BaseCar({ id }: { id: string }) {
   const [note, setNote] = useState('');
   const [works, setWorks] = useState<string[] | null>(null);
   const [amount, setAmount] = useState<number | null>(null);
+  const [partsAmount, setPartsAmount] = useState<number | null>(null);
   const [invPts, setInvPts] = useState<number | null>(null);
   const [company, setCompany] = useState<any>(null);
   const d = b.data;
@@ -266,9 +322,29 @@ export function BaseCar({ id }: { id: string }) {
         )}
       </div>
 
+      {!inServicePreview() && ['expected', 'arrived', 'diagnostics', 'in_work', 'waiting_part', 'agreeing', 'ready'].includes(d.status) && (
+        <div className="card col" aria-label="Подбор запчастей для ремонта">
+          <b>Запчасти для этого ремонта</b>
+          <span className="note">Откроем подбор с данными этой машины. Совместимость проверяется отдельно; магазин пока закрыт для заказов.</span>
+          <a className="btn ghost small" href={'#/shop?bookingId=' + encodeURIComponent(id)}>Подобрать запчасти ›</a>
+        </div>
+      )}
+      {d.handoff && <div className="card stack">
+        <b>Техническое заключение предыдущего исполнителя</b>
+        <span className="note">Из заявки №{d.handoff.sourceNumber} · {d.handoff.suggestedBy}</span>
+        <p>{d.handoff.summary}</p>
+        <span className="note">Это рекомендации для подготовки ремонта, не согласование дополнительных работ и не подтверждение прибытия автомобиля.</span>
+      </div>}
+      {d.arrival==='tow' && d.transport && !d.arrivedAt && <div className="banner col">
+        <b>Связанная эвакуация №{d.transport.orderNumber}</b>
+        <span className="note">{d.transport.deliveryReported
+          ? 'Эвакуатор сообщил о доставке. Отметьте приезд только после фактического приёма грузовика.'
+          : 'Эвакуатор ещё в пути. Запись есть, но машину нельзя отмечать прибывшей.'}</span>
+      </div>}
       {d.status === 'expected' && (
         <div className="grid2">
-          <button className="btn" disabled={busy} onClick={() => act('status', { status: 'arrived' }, 'Клиент видит: машина приехала')}>Машина приехала</button>
+          <button className="btn" disabled={busy || (d.transport && !d.transport.deliveryReported)}
+            onClick={() => act('status', { status: 'arrived' }, 'Клиент видит: машина приехала')}>Машина приехала</button>
           <button className="btn ghost" disabled={busy} onClick={async () => { if (await act('respond', { action: 'undo' }, 'Ответ отменён')) go(servicePreviewPath('base')); }}>Отменить ответ</button>
         </div>
       )}
@@ -313,17 +389,24 @@ export function BaseCar({ id }: { id: string }) {
         <div className="card">
           <b>Выставить счёт</b>
           <span className="note">Работы: {d.works.join(', ')}</span>
-          <Field label="Сумма работ и запчастей"><RubInput value={amount} onChange={setAmount} placeholder="например, 12 000 ₽" /></Field>
-          <span className="note">Счёт и акт формируются сами и уходят клиенту, компаниям — по ИНН. Деньги придут после оплаты и сверки работ.</span>
-          <InvoicePoints amount={amount} value={invPts} onChange={setInvPts} />
-          <button className="btn" disabled={busy || !amount} onClick={() => act('invoice', { amount, points: invPts ?? 0 }, 'Агентский счёт сформирован')}>Выставить счёт</button>
+          <Field label="Общая сумма работ и материалов"><RubInput value={amount} onChange={setAmount} placeholder="например, 12 000 ₽" /></Field>
+          <Field label="Из неё запчасти и материалы (в рублях, если есть)">
+            <RubInput value={partsAmount} onChange={setPartsAmount} placeholder="например, 3 000 ₽" />
+          </Field>
+          {amount!=null && <span className="note">База для комиссии — только работы: {rub(Math.max(0,amount-(partsAmount??0)))}. Запчасти в этот расчёт 5% не включаются. Клиент получит отдельную разбивку своего сбора.</span>}
+          {amount!=null && (partsAmount??0)>amount && <span className="err">Стоимость запчастей не может превышать общий счёт.</span>}
+          <span className="note">Счёт и акт с юридически корректными реквизитами требуют отдельного подключения платёжных и документооборотных сервисов. До этого админ сверяет платёж вручную.</span>
+          <InvoicePoints amount={amount == null ? null : Math.max(0,amount-(partsAmount??0))} value={invPts} onChange={setInvPts} />
+          <button className="btn" disabled={busy || !amount || (partsAmount??0)>amount} onClick={() => act('invoice',
+            { amount, partsAmount:partsAmount??0, points: invPts ?? 0 }, 'Счёт выставлен — клиенту отправлен итог')}>Выставить счёт</button>
         </div>
       )}
       {['invoiced', 'closed', 'disputed'].includes(d.status) && d.amount != null && (
         <div className="card">
           <b>{d.status === 'closed' ? 'Клиент подтвердил работы' : d.status === 'disputed' ? 'Клиент не согласен — модератор свяжется с обеими сторонами' : 'Агентский счёт сформирован · ждём сверки клиента'}</b>
           <dl className="kv">
-            <dt>Работы</dt><dd>{d.works.length} поз. · {rub(d.amount)}</dd>
+            <dt>Работы</dt><dd>{d.works.length} поз. · {rub(d.feeBaseAmount??d.amount)}</dd>
+            {!!d.partsAmount && <><dt>Материалы и запчасти</dt><dd>{rub(d.partsAmount)}</dd></>}
             <dt>Комиссия TrakSOS</dt><dd>− {rub(d.commission)}</dd>
             {d.discount > 0 && <><dt>Скидка клиенту</dt><dd>{rub(d.discount)} — из комиссии TrakSOS</dd></>}
             <dt>Вам к выплате</dt><dd><b>{rub(d.payout)}</b></dd>
@@ -466,9 +549,18 @@ export function BaseSetup() {
 
 // ═══════════════════════ Клиент: сервисы-партнёры ═══════════════════════
 
-function useGps() {
+function useGps(enabled: boolean) {
   const [pos, setPos] = useState<{ lat: number; lng: number } | null>(null);
-  useEffect(() => { navigator.geolocation?.getCurrentPosition((p) => setPos({ lat: p.coords.latitude, lng: p.coords.longitude }), () => {}, { timeout: 6000, maximumAge: 300_000 }); }, []);
+  // No phone-location prompt when the user is browsing an incident somewhere
+  // else. Ask the browser only after the user selects "By GPS".
+  useEffect(() => {
+    if(!enabled){setPos(null);return;}
+    let live=true;
+    navigator.geolocation?.getCurrentPosition(
+      p=>{if(live)setPos({lat:p.coords.latitude,lng:p.coords.longitude});},
+      ()=>{}, {timeout:6000,maximumAge:300_000});
+    return ()=>{live=false;};
+  },[enabled]);
   return pos;
 }
 
@@ -482,14 +574,32 @@ const loadSearch = (): Search => { try { return { ...SEARCH0, ...JSON.parse(loca
 export function ServicesList() {
   const q = query();
   const from = q.get('from');
-  const [s, setS0] = useState<Search>(() => ({ ...loadSearch(), ...(q.get('need') ? { need: q.get('need')! } : {}) }));
+  const caseOrderId = q.get('case');
+  const recommendationId = q.get('recommendation');
+  const linkQuery = new URLSearchParams();
+  if(from)linkQuery.set('from',from);
+  if(caseOrderId)linkQuery.set('case',caseOrderId);
+  if(recommendationId)linkQuery.set('recommendation',recommendationId);
+  const linkSuffix=linkQuery.toString();
+  const [s, setS0] = useState<Search>(() => {
+    const previous=loadSearch();
+    return {...previous,place:caseOrderId?'incident':previous.place==='incident'?'gps':previous.place,
+      ...(q.get('need') ? { need: q.get('need')! } : {})};
+  });
   const setS = (v: Partial<Search>) => setS0((x) => { const n = { ...x, ...v }; try { localStorage.setItem('traksos.svcsearch', JSON.stringify(n)); } catch { /* */ } return n; });
   const [pickPlace, setPickPlace] = useState(false);
-  const gps = useGps();
+  const gps = useGps(s.place === 'gps');
   const cars = useLoad(() => get('/api/vehicles'), []);
-  const brand = cars.data?.[0]?.brand ?? '';
+  const source = useLoad(() => caseOrderId ? get('/api/orders/'+caseOrderId) : Promise.resolve(null),[caseOrderId]);
+  // In a linked case the truck's position, not the fleet owner's phone GPS,
+  // determines distances. Never geocode an address by guesswork.
+  const brand = caseOrderId ? (source.data?.brand ?? source.data?.vehicle?.brand ?? '')
+    : (cars.data?.[0]?.brand ?? '');
   const preset = PLACES.find((p) => p.id === s.place);
-  const point = s.place === 'gps' ? gps : preset ?? null;
+  const incidentPoint=source.data && Number.isFinite(source.data.lat) && Number.isFinite(source.data.lng)
+    ? {lat:source.data.lat,lng:source.data.lng} : null;
+  const point = s.place === 'incident' ? incidentPoint :
+    s.place === 'gps' ? gps : preset ?? null;
   const list = useLoad(() => get(`/api/services?${new URLSearchParams({ ...(point ? { lat: String(point.lat), lng: String(point.lng) } : {}), ...(s.need ? { need: s.need } : {}), ...(brand ? { brand } : {}) })}`), [point?.lat, point?.lng, s.need, brand]);
   const nFilters = (s.open ? 1 : 0) + s.cond.length + s.accepts.length + (s.myBrand ? 1 : 0);
   const all: any[] = list.data ?? [];
@@ -519,11 +629,20 @@ export function ServicesList() {
       <div className="card" style={{ gap: 8 }}>
         <span className="label">Где машина</span>
         <div className="between">
-          <b>{s.place === 'gps' ? (gps ? '📍 Рядом со мной' : '📍 Определяю место…') : `📍 ${preset?.name ?? 'Выберите место'}`}</b>
+          <b>{s.place==='incident'
+   ? (source.data ? 'Место обращения №'+source.data.number : 'Проверяем место обращения…')
+   : s.place==='gps' ? (gps ? 'Рядом со мной' : 'Определяю место…')
+   : (preset?.name ?? 'Выберите место')}</b>
           <button type="button" className="btn ghost small" onClick={() => setPickPlace(!pickPlace)}>{pickPlace ? 'Готово' : 'Изменить'}</button>
         </div>
         {s.place === 'gps' && !gps && !pickPlace && <span className="note">Нет доступа к геолокации? Нажмите «Изменить» и выберите район.</span>}
+        {s.place==='incident' && source.data && <span className="note">
+          Адрес грузовика: {source.data.address || 'не указан'}.
+          {!incidentPoint && ' Точных координат нет, расстояния не рассчитаны; при необходимости выберите район.'}
+        </span>}
         {pickPlace && <div className="row" style={{ gap: 6 }}>
+          {caseOrderId && <button type="button" className="chip" aria-pressed={s.place==='incident'}
+            onClick={() => {setS({place:'incident'});setPickPlace(false);}}>У машины из заявки</button>}
           <button type="button" className="chip" aria-pressed={s.place === 'gps'} onClick={() => { setS({ place: 'gps' }); setPickPlace(false); }}>По GPS</button>
           {PLACES.map((p) => <button key={p.id} type="button" className="chip" aria-pressed={s.place === p.id} onClick={() => { setS({ place: p.id }); setPickPlace(false); }}>{p.name}</button>)}
         </div>}
@@ -577,7 +696,7 @@ export function ServicesList() {
         ) : (
           <div className="stack">
             {shown.map((c: any) => (
-              <a key={c.id} href={`#/services/${c.id}${from ? `?from=${from}` : ''}`} className="card" style={{ textDecoration: 'none', color: 'inherit', gap: 6 }}>
+              <a key={c.id} href={`#/services/${c.id}${linkSuffix ? '?' + linkSuffix : ''}`} className="card" style={{ textDecoration: 'none', color: 'inherit', gap: 6 }}>
                 <div className="between" style={{ alignItems: 'flex-start' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
                     <b>{c.name}</b>
@@ -609,6 +728,13 @@ function prefillOrder(service: string, place: { address?: string; destination?: 
 export function CenterPage({ id }: { id: string }) {
   const c = useLoad(() => get(`/api/services/${id}`), [id]);
   const from = query().get('from');
+  const caseOrderId=query().get('case');
+  const recommendationId=query().get('recommendation');
+  const nextQuery=new URLSearchParams();
+  if(from)nextQuery.set('from',from);
+  if(caseOrderId)nextQuery.set('case',caseOrderId);
+  if(recommendationId)nextQuery.set('recommendation',recommendationId);
+  const nextSuffix=nextQuery.toString();
   const d = c.data;
   if (!d) return <main><Back to="services" label="Сервисы" /><Loading error={c.error} /></main>;
   const staffOwn = Object.entries(d.staff ?? {}).filter(([, v]) => v === 'own').map(([k]) => NEEDS[k]).filter(Boolean);
@@ -633,7 +759,7 @@ export function CenterPage({ id }: { id: string }) {
         <span className="note">Цену сервис скажет после осмотра. Смежные работы — закисшие болты, сварка, мелочи — нередко добавляют к счёту: сверьте перечень перед оплатой.</span>
       </div>
       {d.paused ? <div className="banner warn col"><b>Приём временно закрыт</b></div> : (
-        <a className="btn" href={`#/services/${id}/book${from ? `?from=${from}` : ''}`}>Записаться</a>
+        <a className="btn" href={`#/services/${id}/book${nextSuffix ? '?' + nextSuffix : ''}`}>Записаться</a>
       )}
       <div className="grid2">
         <button className="btn ghost" onClick={() => prefillOrder('tow', { destination: `${d.name}, ${d.address}` })}>Везти сюда эвакуатором</button>
@@ -658,6 +784,9 @@ export function BookForm({ id }: { id: string }) {
   const c = useLoad(() => get(`/api/services/${id}`), [id]);
   const cars = useLoad(() => get('/api/vehicles'), []);
   const from = query().get('from');
+  const caseOrderId=query().get('case');
+  const recommendationId=query().get('recommendation');
+  const source=useLoad(()=>caseOrderId ? get('/api/orders/'+caseOrderId) : Promise.resolve(null),[caseOrderId]);
   const { busy, run } = useAction();
   const [vehicleId, setVehicle] = useState('');
   const [need, setNeed] = useState(query().get('need') ?? '');
@@ -665,12 +794,16 @@ export function BookForm({ id }: { id: string }) {
   const [time, setTime] = useState('');
   const [arrival, setArrival] = useState<'self' | 'tow'>('self');
   const [comment, setComment] = useState('');
-  useEffect(() => { if (cars.data?.length && !vehicleId) setVehicle(cars.data[0].id); }, [cars.data]); // eslint-disable-line
+  useEffect(() => { if (cars.data?.length && !vehicleId && !caseOrderId) setVehicle(cars.data[0].id); }, [cars.data,caseOrderId]);
+  useEffect(()=>{if(source.data){
+    setVehicle(source.data.vehicleId??'');
+    if(source.data.service==='tow')setArrival('tow');
+  }},[source.data]); // eslint-disable-line
   if (!c.data) return <main><Back to={`services/${id}`} label="Сервис" /><Loading error={c.error} /></main>;
   const d = c.data;
   const needs = Object.entries(NEEDS).filter(([k]) => k === 'other' || (d.staff?.[k] && d.staff[k] !== 'none'));
   async function send() {
-    const r = await run(() => post(`/api/services/${id}/book`, { vehicleId: vehicleId || null, need, day, time: time || null, arrival, comment: comment || null, fromOrderId: from }), 'Запрос отправлен — сервис ответит уведомлением');
+    const r = await run(() => post(`/api/services/${id}/book`, { vehicleId: vehicleId || null, need, day, time: time || null, arrival, comment: comment || null, fromOrderId: from, caseOrderId, recommendationId }), 'Запрос отправлен — сервис ответит уведомлением');
     if (r) go(`booking/${r.id}`);
   }
   return (
@@ -708,7 +841,8 @@ export function BookForm({ id }: { id: string }) {
         <Field label="Комментарий · по желанию"><textarea className="field" value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Что беспокоит" /></Field>
       </div>
       {from && <span className="note">По совету мастера — скидка применится в счёте сама.</span>}
-      <button className="btn" disabled={busy || !need || !day} onClick={send}>Отправить запрос</button>
+      {caseOrderId && <span className="note">Продолжение обращения №{source.data?.number??'…'}. СТО подтвердит запись и согласует отдельную смету; рекомендация не является оплатой. Если грузовик на эвакуаторе, запись предварительная и не означает доставку.</span>}
+      <button className="btn" disabled={busy || !need || !day || (!!caseOrderId && !source.data)} onClick={send}>Отправить запрос</button>
       <span className="note">Сервис подтвердит готовность или уточнит детали — придёт уведомление.</span>
     </main>
   );
@@ -767,10 +901,15 @@ export function BookingPage({ id }: { id: string }) {
           <b>Счёт за ремонт · сверьте работы</b>
           <dl className="kv">
             <dt>Что делали</dt><dd>{d.works.join(', ')}</dd>
-            <dt>Работы</dt><dd>{rub(d.amount)}</dd>
+            <dt>Работы</dt><dd>{rub(d.feeBaseAmount??d.amount)}</dd>
+            {d.partsAmount > 0 && <><dt>Запчасти и материалы</dt><dd>{rub(d.partsAmount)}</dd></>}
+            {d.clientFee > 0 && <><dt>Сервисный сбор TrakSOS ({d.clientFeePct}%, но не больше 5 000 ₽)</dt><dd>+ {rub(d.clientFee)}</dd></>}
             {d.discount > 0 && <><dt>Скидка по совету мастера</dt><dd>− {rub(d.discount)}</dd></>}
             <dt>К оплате</dt><dd><b>{rub(d.toPay)}</b></dd>
           </dl>
+          {d.paymentStatus === 'received' && <span className="note">Поступление оплаты подтверждено администратором.</span>}
+          {d.paymentStatus === 'partial' && <span className="note">Часть оплаты получена; до полного расчёта выплата СТО не проводится.</span>}
+          {d.paymentStatus === 'awaiting_payment' && <span className="note">Оплата ещё не подтверждена. Подтверждение выполненных работ не является подтверждением оплаты. Не переводите деньги на непроверенные реквизиты.</span>}
           {mode === '' && (
             <div className="grid2">
               <button className="btn" onClick={() => setMode('agree')}>Всё верно</button>
@@ -794,7 +933,11 @@ export function BookingPage({ id }: { id: string }) {
           )}
         </div>
       )}
-      {d.status === 'closed' && <div className="banner col"><b>Работы подтверждены</b><span className="note">{d.works.join(', ')} · {rub(d.toPay)}{d.reviewStars ? ` · ваша оценка ${'★'.repeat(d.reviewStars)}` : ''}. Ремонт записан в историю машины.</span></div>}
+      {d.status === 'closed' && <div className="banner col"><b>Работы подтверждены</b>
+        <span className="note">{d.works.join(', ')} · итого {rub(d.toPay)}{d.clientFee > 0 ? ` (в том числе сервисный сбор ${rub(d.clientFee)})` : ''}{d.reviewStars ? ` · ваша оценка ${'★'.repeat(d.reviewStars)}` : ''}. Ремонт записан в историю машины.</span>
+        {d.paymentStatus === 'awaiting_payment' && <span className="note">Платёж ожидает подтверждения в TrakSOS. Принятие работ не подтверждает получение денежных средств.</span>}
+        {d.paymentStatus === 'received' && <span className="note">Поступление оплаты зафиксировано в учёте.</span>}
+      </div>}
       {d.status === 'disputed' && <div className="banner warn col"><b>Спор по работам</b><span className="note">Модератор свяжется с вами и с сервисом. Ответ придёт в «Поддержку».</span></div>}
       {['new', 'clarify', 'expected'].includes(d.status) && (
         <button className="btn ghost" disabled={busy} onClick={() => act('cancel', {}, 'Запись отменена')}>Отменить запись</button>
@@ -879,7 +1022,8 @@ export function AdminServices() {
 // Финансы рембазы ---------------------------------------------------------------
 
 const MSTATE: Record<string, [string, string]> = {
-  awaiting: ['ждёт сверки клиента', ''], to_pay: ['к выплате', 'warn'], paid: ['выплачено', 'good'], disputed: ['спор у модератора', 'bad'],
+  awaiting: ['ждёт сверки клиента', ''], unpaid: ['ожидаем оплату', 'warn'],
+  to_pay: ['к выплате', 'warn'], paid: ['выплачено', 'good'], disputed: ['спор у модератора', 'bad'],
 };
 const monthName = (m: string) => { const [y, mm] = m.split('-').map(Number); return new Date(Date.UTC(y, mm - 1, 1)).toLocaleDateString('ru-RU', { month: 'long', year: 'numeric', timeZone: 'UTC' }); };
 
@@ -887,7 +1031,7 @@ const monthName = (m: string) => { const [y, mm] = m.split('-').map(Number); ret
 export function BaseMoney() {
   const m = useLoad(() => baseGet('/api/base/money'), [], isBookingEvent);
   const pts = useLoad(() => baseGet('/api/me/referral'), [], (e) => e.type === 'points');
-  const [filter, setFilter] = useState<'all' | 'to_pay' | 'awaiting' | 'paid' | 'disputed'>('all');
+  const [filter, setFilter] = useState<'all' | 'to_pay' | 'unpaid' | 'awaiting' | 'paid' | 'disputed'>('all');
   if (!m.data) return <main><Loading error={m.error} /></main>;
   const { summary: s, months, items, rule } = m.data;
   const shown = items.filter((x: any) => filter === 'all' || x.state === filter);
@@ -901,9 +1045,10 @@ export function BaseMoney() {
       <div className="card">
         <div className="sum total"><span>К выплате</span><span>{rub(s.toPay)}</span></div>
         <div className="sum"><span>Ждёт сверки клиента</span><span>{rub(s.awaiting)}</span></div>
+        {s.unpaid > 0 && <div className="sum"><span>Клиент подтвердил работы, оплата ещё не поступила</span><span>{rub(s.unpaid)}</span></div>}
         {s.disputed > 0 && <div className="sum"><span>В споре</span><span>{rub(s.disputed)}</span></div>}
         <div className="sum"><span>Уже выплачено</span><span>{rub(s.paid)}</span></div>
-        <span className="note">Деньги приходят после того, как клиент сверит работы. TrakSOS работает как агент: отчёт агента и акт — раз в месяц.</span>
+        <span className="note">Выплата возможна после подтверждения клиентом работ и поступления денег. Платёж проверяет TrakSOS по банковским/кассовым документам. Отчёт агента и акт — раз в месяц.</span>
       </div>
 
       <details className="card">
@@ -934,7 +1079,7 @@ export function BaseMoney() {
 
       <span className="label">Счета</span>
       <div className="scroll-x">
-        {([['all', 'Все'], ['to_pay', 'К выплате'], ['awaiting', 'Ждут сверки'], ['paid', 'Выплачено'], ['disputed', 'Споры']] as const).map(([k, n]) =>
+        {([['all', 'Все'], ['to_pay', 'К выплате'], ['unpaid', 'Ждут оплаты'], ['awaiting', 'Ждут сверки'], ['paid', 'Выплачено'], ['disputed', 'Споры']] as const).map(([k, n]) =>
           <button key={k} className="chip" aria-pressed={filter === k} onClick={() => setFilter(k)}>{n}</button>)}
       </div>
       {!shown.length ? <div className="empty">{items.length ? 'Здесь пусто' : 'Счетов пока нет — появятся после «Выставить счёт»'}</div> : (
@@ -955,6 +1100,7 @@ export function BaseMoney() {
                 <div className="sum"><span>Комиссия TrakSOS</span><span>−{rub(x.commissionFull)}</span></div>
                 {x.points > 0 && <div className="sum"><span>…из них погашено баллами</span><span>+{rub(x.points)}</span></div>}
                 <div className="sum total"><span>Вам</span><span>{rub(x.payout)}</span></div>
+                {x.state === 'unpaid' && <span className="note">Клиент подтвердил работы. Выплата ожидает поступления оплаты.</span>}
                 {x.paidOutAt && <span className="note">Выплачено {fmtDay(x.paidOutAt)}</span>}
                 <div className="row" style={{ gap: 6, marginTop: 4 }}>
                   <a className="btn ghost small" href={servicePreviewHref(`base/car/${x.id}`)}>Открыть счёт</a>
