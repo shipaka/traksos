@@ -52,8 +52,13 @@ try {
       el.complete && el.naturalWidth>0 && el.src.endsWith('/traksos-brand-logo-approved-618.png'));
     if(!logo) throw Error(role+': original 618.png logo is missing');
     const nav = await page.locator('.and19-review-tabbar a').allTextContents();
-    if (nav.length!==((role==='client'||role==='driver')?5:4))
+    const expectedTabs=(role==='client'||role==='driver')?5:4;
+    if (nav.length!==expectedTabs)
       throw Error(role+': Android bottom navigation does not match live role layout '+JSON.stringify(nav));
+    const columns=await page.locator('.and19-review-tabbar').evaluate(el=>
+      getComputedStyle(el).gridTemplateColumns.split(' ').filter(Boolean).length);
+    if (columns!==expectedTabs)
+      throw Error(role+': bottom tabbar CSS has '+columns+' columns for '+expectedTabs+' approved items');
     if (details.scroll>details.viewport+3)throw Error(role+': horizontal overflow '+JSON.stringify(details));
     if (role==='client' || role==='driver') {
       if (await page.locator('.and19-services>a').count()!==4)throw Error('Lost approved four services');
@@ -76,6 +81,15 @@ try {
          !costText.includes('10500₽')||!costText.includes('10000₽')||
          !costText.includes('500₽')||!ratingText.includes('4,9'))
         throw Error('Client Android order routing/kopeck pricing/rating wrong '+JSON.stringify({photoHref,chatLinks,costText,ratingText}));
+      // Owner-approved Scania R440 (2010) must NEVER display the unrelated
+      // Next Gen R520 photograph from the existing model catalog.
+      const vehicleText=await page.locator('.and19-main-order .and19-vehicle').innerText();
+      if(!vehicleText.includes('Scania R440 2010'))
+        throw Error(role+': debug app is not showing approved 618.png vehicle: '+vehicleText);
+      const imageSource=await page.locator('.and19-main-order .tr-approved-order-truck img').getAttribute('src');
+      if(imageSource?.includes('scania-r520') ||
+        (imageSource?.includes('/vehicles/models/') && !imageSource.includes('scania-r440')))
+        throw Error(role+': wrong model photograph displayed for R440 2010: '+imageSource);
       const photo=page.locator('.and19-main-order img[src*="/vehicles/models/"]');
       if (await photo.count()) {
         const ok=await photo.first().evaluate(img=>img.complete&&img.naturalWidth>0);
