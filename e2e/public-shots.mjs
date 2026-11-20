@@ -25,6 +25,22 @@ try {
     if(target.viewport.width >= 900){
       await page.locator('.owner20-home').waitFor({ timeout: 15000 });
       await page.locator('.owner20-quick a').first().waitFor();
+      // Asset availability is a precondition for claiming a real screenshot
+      // of the owner-approved 20 Nov artwork, not an HTML-only placeholder.
+      await page.evaluate(async () => {
+        for (const [path,w,h] of [
+          ['/owner20-artwork-sprite.webp',1018,446],
+          ['/owner20-photo-background-approved.webp',1536,324],
+          ['/owner20-header-logo-approved.webp',235,53],
+        ]) {
+          const response=await fetch(path);
+          if(!response.ok)throw Error('Approved visual unavailable: '+path+' HTTP '+response.status);
+          const bitmap=await createImageBitmap(await response.blob());
+          if(bitmap.width!==w||bitmap.height!==h)
+            throw Error('Approved visual incorrect size: '+path+' '+bitmap.width+'x'+bitmap.height);
+          bitmap.close();
+        }
+      });
     }else{
       await page.locator('.public-landing').waitFor({ timeout: 15000 });
       await page.locator('.public-service-tile').first().waitFor();
