@@ -10,6 +10,7 @@ import { onEvent } from '../api.ts';
 import { Search, OfferForm } from './search.tsx';
 import { RoadsideMap } from './roadsideMap.tsx';
 import { AdminRouteMap } from './AdminRouteMap.tsx';
+import { CheckpointSandboxOrder, checkpointSandboxViewEnabled } from './checkpointSandbox.tsx';
 import { OrderTimeline } from './OrderTimeline.tsx';
 import { LocationSharing } from './performer.tsx';
 import { RefundForm, payStatus } from './adminUser.tsx';
@@ -61,6 +62,10 @@ export function Order({ id }: { id: string }) {
       {d.you === 'candidate' && <CandidateView d={d} onDone={o.reload} />}
 
       {!isConsult && d.you !== 'candidate' && <Steps status={d.status} service={d.service} events={d.events} />}
+      {checkpointSandboxViewEnabled() && !isConsult &&
+        ['client','admin','performer'].includes(d.you) && d.performer &&
+        <CheckpointSandboxOrder key={id} orderId={id} you={d.you} status={d.status}
+          hasPerformer={!!d.performer} lat={d.lat} lng={d.lng} />}
       {isConsult && !isPerformer && d.you !== 'candidate' && <ConsultClient d={d} />}
       {d.consultFrom?.hint && <ConsultHintCard from={d.consultFrom} />}
       {d.status === 'no_performer' && !isPerformer && <Retry id={id} onDone={o.reload} />}

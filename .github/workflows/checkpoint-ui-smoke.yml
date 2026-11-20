@@ -1,0 +1,67 @@
+name: Checkpoint sandbox UI (isolated)
+
+on:
+  pull_request:
+    paths:
+      - 'e2e/checkpoint-sandbox-ui.mjs'
+      - 'web/src/screens/checkpointSandbox.tsx'
+      - 'web/src/screens/adminCheckpointSandbox.tsx'
+      - 'web/src/screens/order.tsx'
+      - 'web/src/screens/admin.tsx'
+      - '.github/workflows/checkpoint-ui-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checkpoint-browser:
+    name: checkpoint UI / isolated PostgreSQL / no real GPS
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: traksos_checkpoint_ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgres://postgres@127.0.0.1:5432/traksos_checkpoint_ci
+      ADMIN_PHONES: "+79990000001"
+      CHECKPOINT_EVIDENCE_API_ENABLED: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install --no-audit --no-fund
+      - name: Verify canonical brand
+        run: node scripts/verify-brand.mjs
+      - name: Build exact PR frontend
+        run: npm -w web run build
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start isolated local API
+        run: |
+          npm -w server start > checkpoint-server.log 2>&1 &
+          for i in $(seq 1 50); do
+            if curl -fsS localhost:8080/api/health >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          tail -100 checkpoint-server.log
+          exit 1
+      - name: Checkpoint client to performer to admin browser flow
+        run: node e2e/checkpoint-sandbox-ui.mjs
+      - name: Upload checkpoint screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: checkpoint-ui-screens
+          path: e2e/shots/checkpoint
+          if-no-files-found: ignore
+          retention-days: 14
