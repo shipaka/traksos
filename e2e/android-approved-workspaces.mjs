@@ -106,6 +106,20 @@ try {
     if(!await tabs.count())throw Error(role+': no mobile navigation');
     const links=await tabs.evaluateAll(nodes=>nodes.map(node=>node.getAttribute('href')));
     if(links.some(v=>!v||!v.startsWith('#/')))throw Error(role+': dead mobile tab');
+    // 20.11 owner-approved bottom navigation. Driver Air must remain immediately accessible.
+    if(mode==='client'){
+      const expected=['#/','#/orders','#/air','#/garage','#/shop','#/profile'];
+      if(JSON.stringify(links)!==JSON.stringify(expected))
+        throw Error(role+': agreed Air, vehicle and parts bottom tabs changed '+JSON.stringify(links));
+      const names=await tabs.allTextContents();
+      if(!names.some(t=>t.trim()==='Эфир')||!names.some(t=>t.trim()==='Магазин'))
+        throw Error(role+': missing driver Air or bottom store label');
+    }
+    if(mode==='service'){
+      const expected=['#/base','#/base/inbox','#/shop','#/base/money','#/profile'];
+      if(JSON.stringify(links)!==JSON.stringify(expected))
+        throw Error(role+': STO work actions and parts tab changed '+JSON.stringify(links));
+    }
     if(mode!=='client' && links.some(v=>v==='#/sos'||v==='#/garage'))
       throw Error(role+': unauthorized client navigation');
     if(role==='master_service'){
