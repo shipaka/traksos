@@ -5,7 +5,7 @@ import { SERVICES, STATUS } from '../dict.ts';
 import { useLoad } from '../ui.tsx';
 import { OfferForm } from './search.tsx';
 import { insurancePresentation } from '../insurancePresentation.ts';
-import { APPROVED_VISUALS } from '../approvedVisuals.ts';
+
 import { ApprovedEmptyScene } from '../approvedEmptyScene.tsx';
 import { ApprovedServiceIllustration } from '../approvedServiceIllustration.tsx';
 import { ApprovedOrderTruck } from '../approvedOrderTruck.tsx';
@@ -95,10 +95,7 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
   const isDriver = !!me?.owner_id || me?.roles?.includes('driver');
   return <div className="and19-workspace and19-client" aria-label="Android рабочий стол клиента">
     <div className="and19-role">{isDriver ? 'Водитель' : 'Клиент · Владелец автопарка'}</div>
-    <div className="and19-cover">
-      <div><small>TRAKSOS · ПОМОЩЬ В ДОРОГЕ</small><h1>Рабочий стол</h1></div>
-      <img src={APPROVED_VISUALS.workspaceTruck} alt="" aria-hidden="true" />
-    </div>
+    <div className="and19-cover"><h1>Рабочий стол</h1></div>
     <div className="and19-services" aria-label="Вызвать помощь">
       <a href={disabledServices?.repair ? undefined : '#/sos'} aria-disabled={disabledServices?.repair || undefined}><span aria-hidden="true">⚒</span><span className="and19-service-label">Выездной мастер</span><ApprovedServiceIllustration kind="repair" /></a>
       <a href={disabledServices?.tow ? undefined : '#/new/tow'} aria-disabled={disabledServices?.tow || undefined}><span aria-hidden="true">↗</span><span className="and19-service-label">Эвакуатор</span><ApprovedServiceIllustration kind="tow" /></a>
@@ -145,6 +142,15 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
           </nav>}
       </section>
       : <section className="and19-panel and19-empty"><strong>Активных заявок нет</strong><ApprovedEmptyScene kind="orders" /><p>Выберите необходимую помощь — здесь появятся только реальные этапы поиска и отклики в заявке.</p></section>}
+    {current?.performer_name && <div className="and19-assigned-performer">
+      <span className="and19-assigned-icon" aria-hidden="true">⚒</span>
+      <span className="and19-assigned-copy">
+        <strong>{current.performer_name}</strong>
+        <small>{SERVICES[current.service]?.name || 'Исполнитель'} · заявка №{current.number}</small>
+      </span>
+      <a href={'#/order/'+current.id+'/chat'} aria-label="Открыть чат с исполнителем">Чат</a>
+      <a href={'#/order/'+current.id} aria-label="Контакты исполнителя и подробности заявки">Связь</a>
+    </div>}
     {orders.length > 1 && <a href="#/orders" className="and19-row-link">Все мои заявки <span>{orders.length} ›</span></a>}
     <a href="#/garage" className="and19-equipment">
       <span className="and19-equipment-icon" aria-hidden="true">▤</span><span><strong>{isDriver ? 'Моя машина' : 'Моя техника'}</strong><small>История ремонта, документы и обслуживание</small></span><span aria-hidden="true">›</span>
@@ -174,10 +180,7 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
         <span aria-hidden="true" className="and19-toggle" />
       </button>
     </div>
-    <div className="and19-cover">
-      <div><small>TRAKSOS · {tow ? 'ЭВАКУАЦИЯ' : 'ВЫЕЗДНОЙ СЕРВИС'}</small><h1>Рабочий стол</h1></div>
-      <img src={APPROVED_VISUALS.workspaceTruck} alt="" aria-hidden="true" />
-    </div>
+    <div className="and19-cover"><h1>Рабочий стол</h1></div>
     <div className="and19-metrics">
       <a href="#/work/jobs"><small>В работе</small><strong>{active.length}</strong></a>
       <a href="#/work/me/level"><small>Рейтинг</small><strong>{performer.rating != null ? Number(performer.rating).toFixed(1) : '—'}</strong></a>
@@ -196,6 +199,13 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
         <a href={'#/order/' + active[0].id + '/client'}>Клиент и ТС</a>
         <a href={'#/order/' + active[0].id + '/finance'}>Расчёт</a>
       </nav>
+      {active[0].client_name && <div className="and19-assigned-performer and19-client-contact">
+        <span className="and19-assigned-icon" aria-hidden="true">◉</span>
+        <span className="and19-assigned-copy">
+          <strong>{active[0].client_name}</strong><small>Клиент по заявке №{active[0].number}</small>
+        </span>
+        <a href={'#/order/'+active[0].id+'/chat'}>Чат</a>
+      </div>}
       {active.length > 1 && <a className="and19-row-link" href="#/work/jobs">Другие активные заявки: {active.length - 1} ›</a>}
     </section> : <section className="and19-panel and19-empty">
       <strong>{online ? 'Ожидаем подходящую заявку' : 'Вы не на линии'}</strong>
