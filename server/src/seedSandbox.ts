@@ -32,6 +32,7 @@ export async function seedSandbox(db: Db) {
     on conflict (owner_id) do nothing`, [combined]);
   await upsert(SANDBOX_USER_PHONE.insurer, ['insurer'], 'Демо · страховой партнёр');
   await upsert(SANDBOX_USER_PHONE.inspection, ['inspection_operator'], 'Демо · техосмотр');
+  await upsert(SANDBOX_USER_PHONE.courier, ['courier'], 'Демо · курьер запчастей');
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
