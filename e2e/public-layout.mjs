@@ -46,6 +46,22 @@ async function run(width, height, mobile, nativePreview = false) {
   const suffix = width + 'x' + height + (nativePreview ? '-android-webview' : '');
   try {
     await page.goto(BASE + '/#/', { waitUntil: 'domcontentloaded' });
+    if(width>=900 && !nativePreview){
+      await page.locator('.owner20-home').waitFor();
+      check(await page.locator('.owner20-quick>a').count()===5,suffix+': Nov20 PC primary row missing');
+      check(await page.locator('.owner20-features>a').count()===5,suffix+': Nov20 PC feature row missing');
+      check(await page.locator('.owner20-bottom>.owner20-bottom-card').count()===4,suffix+': Nov20 PC lower cards missing');
+      await verifyPage(page,suffix+':new-desktop-home');
+      await page.screenshot({path:OUT+'/home-'+suffix+'.png',fullPage:true});
+      await page.goto(BASE+'/#/register');
+      await page.getByRole('heading',{name:'Регистрация в TrakSOS'}).waitFor();
+      await verifyPage(page,suffix+':register');
+      await page.goto(BASE+'/#/join');
+      await page.getByRole('heading',{name:'Работать с TrakSOS'}).waitFor();
+      await verifyPage(page,suffix+':join');
+      check(!errors.length,suffix+': JS errors '+errors.join('; '));
+      return;
+    }
     await page.getByRole('heading', { name: /TrakSOS.*помощь.*в пути/i }).waitFor();
     check(await page.locator('.public-actions').getByRole('button', { name: 'Зарегистрироваться', exact: true }).isVisible(), 'Hero registration is not visible');
     check(await page.locator('.public-actions').getByRole('link', { name: 'Как это работает', exact: true }).isVisible(), 'Hero guide is not visible');
