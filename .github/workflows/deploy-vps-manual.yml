@@ -50,24 +50,46 @@ jobs:
             echo "The requested release is not the current main HEAD. Aborting."; exit 1;
           }
 
-      - name: Configure pinned SSH host and key
+      - name: Validate separate SSH deployment key and audited Ed25519 host pin
         env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST || secrets.TRAKSOS_VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER || 'root' }}
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
-          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS || secrets.TRAKSOS_VPS_HOST_KEY }}
+          VPS_READONLY_KEY: ${{ secrets.TRAKSOS_VPS_READONLY_KEY }}
         run: |
           set -euo pipefail
           for name in VPS_HOST VPS_USER VPS_SSH_KEY VPS_KNOWN_HOSTS; do
             [[ -n "${!name}" ]] || { echo "Missing required secret: $name"; exit 1; }
           done
-          [[ "$VPS_HOST" =~ ^[A-Za-z0-9._-]+$ ]] || exit 1
-          [[ "$VPS_USER" =~ ^[A-Za-z_][A-Za-z0-9_-]*$ ]] || exit 1
+          [[ "$VPS_HOST" =~ ^[A-Za-z0-9._-]+$ ]] || { echo 'Invalid VPS host'; exit 1; }
+          [[ "$VPS_USER" =~ ^[A-Za-z_][A-Za-z0-9_-]*$ ]] || { echo 'Invalid VPS user'; exit 1; }
+          # The existing audit key runs authorized_keys command="status".
+          # A separate write-capable key is mandatory.
+          [[ -z "$VPS_READONLY_KEY" || "$VPS_SSH_KEY" != "$VPS_READONLY_KEY" ]] || {
+            echo "Read-only status key cannot be used for deployment."; exit 1;
+          }
           mkdir -p "$HOME/.ssh"
           chmod 700 "$HOME/.ssh"
           printf '%s\n' "$VPS_SSH_KEY" > "$HOME/.ssh/id_vps"
-          printf '%s\n' "$VPS_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
-          chmod 600 "$HOME/.ssh/id_vps" "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/id_vps"
+          ssh-keygen -y -f "$HOME/.ssh/id_vps" >/dev/null || {
+            echo "VPS_SSH_KEY is not a usable unencrypted SSH private key."; exit 1;
+          }
+          # Accept the exact pinned Ed25519 key, either bare or in known_hosts form.
+          # NEVER discover/trust the key at release time with ssh-keyscan.
+          pinned_key="$(printf '%s\n' "$VPS_KNOWN_HOSTS" | tr -d '\r' | awk '
+            NF >= 3 && $2 == "ssh-ed25519" { print $3; exit }
+            NF >= 2 && $1 == "ssh-ed25519" { print $2; exit }
+          ')"
+          [[ "$pinned_key" =~ ^[A-Za-z0-9+/]+={0,2}$ ]] || {
+            echo "Pinned Ed25519 public key missing or malformed"; exit 1;
+          }
+          printf '%s ssh-ed25519 %s\n' "$VPS_HOST" "$pinned_key" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+          ssh-keygen -lf "$HOME/.ssh/known_hosts" >/dev/null || {
+            echo "Pinned host public key failed validation"; exit 1;
+          }
           echo "TRAKSOS_VPS_HOST=$VPS_HOST" >> "$GITHUB_ENV"
           echo "TRAKSOS_VPS_USER=$VPS_USER" >> "$GITHUB_ENV"
 
