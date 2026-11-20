@@ -102,14 +102,20 @@ try{
          const atlas=await fetch('/traksos-service-scenes-shared.webp');
          const bmp=atlas.ok?await createImageBitmap(await atlas.blob()).catch(()=>null):null;
          return {
-           logo:logo?.getAttribute('src'),loaded:logo?.complete&&logo?.naturalWidth>0,
+           logo:logo?.getAttribute('src'),loaded:logo?.complete&&logo?.naturalWidth===274&&logo?.naturalHeight===46,
            illustrations:scenes.length,
            matched:scenes.every(el=>getComputedStyle(el).backgroundImage.includes('traksos-service-scenes-shared.webp')),
+           crops:scenes.map(el=>{
+             const css=getComputedStyle(el);
+             return {pos:css.backgroundPosition,size:css.backgroundSize};
+           }),
            size:bmp?{w:bmp.width,h:bmp.height}:null,
          };
        });
+       const expectedCrops=['0px 0px','-176px 0px','-352px 0px','-528px 0px'];
        if(visual.logo!=='/traksos-brand-logo-approved-618.png'||!visual.loaded||
-          visual.illustrations!==4||!visual.matched||visual.size?.w!==704||visual.size?.h!==105)
+          visual.illustrations!==4||!visual.matched||visual.size?.w!==704||visual.size?.h!==105||
+          visual.crops?.some((c,i)=>c.pos!==expectedCrops[i]||c.size!=='704px 105px'))
          throw Error('Owner shared-brand/art parity failed at '+width+': '+JSON.stringify(visual));
      }
      if(width===1440) {
