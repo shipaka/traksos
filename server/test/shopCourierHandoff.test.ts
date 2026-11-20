@@ -62,12 +62,10 @@ test('real delivery: courier verifies, then buyer separately confirms receiving 
   assert.equal((await t.api('GET',`/api/courier/jobs/${d.id}`,undefined,stranger.token)).status,403);
   assert.equal((await t.api('GET',`/api/shop/orders/${order.id}/receipt-code`,undefined,courier.token)).status,404);
 
-  const receipt=ok(await t.api('GET',`/api/shop/orders/${order.id}/receipt-code`,undefined,buyer.token));
-  assert.match(receipt.code,/^\d{6}$/);
-  assert.equal(receipt.verified,false);
-  assert.equal(receipt.buyerConfirmationRequired,true);
+  assert.equal((await t.api('GET',`/api/shop/orders/${order.id}/receipt-code`,undefined,buyer.token)).status,409,
+    'receipt code is not exposed before courier arrival');
   assert.equal((await t.api('POST',`/api/shop/orders/${order.id}/confirm-received`,{},buyer.token)).status,409);
-  assert.equal((await t.api('POST',`/api/courier/jobs/${d.id}/verify`,{code:receipt.code},courier.token)).status,409);
+  assert.equal((await t.api('POST',`/api/courier/jobs/${d.id}/verify`,{code:'000000'},courier.token)).status,409);
   assert.equal((await t.api('POST',`/api/courier/jobs/${d.id}/stage`,{status:'arrived'},courier.token)).status,409);
   assert.equal((await t.api('POST',`/api/admin/shop/orders/${order.id}/status`,{status:'done'},admin.token)).status,409);
 
@@ -76,6 +74,10 @@ test('real delivery: courier verifies, then buyer separately confirms receiving 
   ok(await t.api('POST',`/api/courier/jobs/${d.id}/stage`,{status:'picked_up'},courier.token));
   ok(await t.api('POST',`/api/courier/jobs/${d.id}/stage`,{status:'en_route'},courier.token));
   ok(await t.api('POST',`/api/courier/jobs/${d.id}/stage`,{status:'arrived'},courier.token));
+  const receipt=ok(await t.api('GET',`/api/shop/orders/${order.id}/receipt-code`,undefined,buyer.token));
+  assert.match(receipt.code,/^\d{6}$/);
+  assert.equal(receipt.verified,false);
+  assert.equal(receipt.buyerConfirmationRequired,true);
   const incorrect=receipt.code==='111111'?'222222':'111111';
   assert.equal((await t.api('POST',`/api/courier/jobs/${d.id}/verify`,{code:incorrect},courier.token)).status,400);
   assert.equal((await t.api('POST',`/api/courier/jobs/${d.id}/verify`,{code:incorrect},courier.token)).status,400);
@@ -119,13 +121,14 @@ test('fleet owner sees purchase but cannot access driver-only courier handoff co
   assert.equal((await t.api('POST',`/api/shop/orders/${order.id}/confirm-received`,{},buyer.token)).status,404);
   const own=ok(await t.api('GET','/api/shop/orders',undefined,driver.token));
   assert.equal(own.find((o:any)=>o.id===order.id)?.canConfirmCourierReceipt,true);
-  const receipt=ok(await t.api('GET',`/api/shop/orders/${order.id}/receipt-code`,undefined,driver.token));
-  assert.match(receipt.code,/^\d{6}$/);
+  assert.equal((await t.api('GET',`/api/shop/orders/${order.id}/receipt-code`,undefined,driver.token)).status,409);
   const resetPath=`/api/admin/shop/orders/${order.id}/courier/reset-receipt`;
   assert.equal((await t.api('POST',resetPath,
     {reason:'Попытка преждевременного сброса кода'},admin.token)).status,409);
   for(const status of ['picked_up','en_route','arrived'])
     ok(await t.api('POST',`/api/courier/jobs/${assigned.id}/stage`,{status},courier.token));
+  const receipt=ok(await t.api('GET',`/api/shop/orders/${order.id}/receipt-code`,undefined,driver.token));
+  assert.match(receipt.code,/^\d{6}$/);
   const wrong=receipt.code==='123456'?'654321':'123456';
   for(let attempt=0;attempt<5;attempt++)
     assert.equal((await t.api('POST',`/api/courier/jobs/${assigned.id}/verify`,
