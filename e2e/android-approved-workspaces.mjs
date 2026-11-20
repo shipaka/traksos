@@ -92,7 +92,7 @@ try {
       const urls=await desk.locator('.and19-services>a').evaluateAll(a=>a.map(x=>x.getAttribute('href')));
       if(JSON.stringify(urls)!==JSON.stringify(['#/sos','#/new/tow','#/services','#/new/consult']))
         throw Error(role+': service destinations changed '+JSON.stringify(urls));
-      const garage=desk.locator('.and19-equipment');
+      const garage=desk.locator('.and19-equipment[href="#/garage"]');
       if(await garage.getAttribute('href')!=='#/garage')throw Error(role+': vehicle history does not open garage');
       if(await desk.locator('.and19-sos').getAttribute('href')!=='#/sos')throw Error(role+': SOS missing');
     }
