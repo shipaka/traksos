@@ -59,6 +59,15 @@ async function run(width, height, mobile, nativePreview = false) {
       await page.goto(BASE+'/#/join');
       await page.getByRole('heading',{name:'Работать с TrakSOS'}).waitFor();
       await verifyPage(page,suffix+':join');
+      // The approved 20 Nov desktop login must not retain the legacy pink hover.
+      await page.goto(BASE+'/#/login');
+      await page.getByRole('heading',{name:'Вход по номеру телефона'}).waitFor();
+      const loginAction=page.locator('.auth-entry-options button').first();
+      await loginAction.hover();
+      const hoverBorder=await loginAction.evaluate(el=>getComputedStyle(el).borderTopColor);
+      check(hoverBorder==='rgb(255, 147, 77)',
+        suffix+': legacy pink authentication hover returned: '+hoverBorder);
+      await verifyPage(page,suffix+':login');
       check(!errors.length,suffix+': JS errors '+errors.join('; '));
       return;
     }
