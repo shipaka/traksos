@@ -37,6 +37,8 @@ import { PartnerFinance } from './services/partnerFinance.ts';
 import { InsuranceQuoteFlow } from './services/insuranceQuoteFlow.ts';
 import { PrivacyService } from './services/privacy.ts';
 import { StandingService } from './services/standing.ts';
+import { ShopAgencyLedger } from './services/shopAgencyLedger.ts';
+import { ShopAgencyBankReconciliation } from './services/shopAgencyBankReconciliation.ts';
 import { ShopService } from './services/shop.ts';
 import { ShopCatalogService } from './services/shopCatalog.ts';
 import { ModerationService } from './services/moderation.ts';
@@ -104,6 +106,8 @@ export function createApp(d: Deps) {
   const privacy = new PrivacyService(d.db, notifier, now);
   const standing = new StandingService(d.db, now, settings);
   const shop = new ShopService(d.db, notifier, settings);
+  const agency = new ShopAgencyLedger(d.db);
+  const agencyBank = new ShopAgencyBankReconciliation(d.db);
   const partCatalog = new ShopCatalogService(d.db, settings);
   const moderation = new ModerationService(d.db, notifier, reviews, now, d.sms);
   const warranty = new WarrantyClaimsService(d.db, notifier, now);
@@ -716,6 +720,108 @@ export function createApp(d: Deps) {
   r.post('/api/admin/shop/orders/:id/status', ['admin'], (c: AuthedCtx) => {
     const b = parse(z.object({ status: z.enum(['confirmed', 'ready', 'shipped', 'done', 'cancelled']), note: z.string().max(300).optional() }), c.body);
     return shop.setStatus(c.user, c.params.id, b.status, b.note);
+  });
+
+  // Separate private agency evidence ledger. Never changes shop payment flows or shop.enabled.
+  const agencyMoney = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
+  const agencyDate = z.string().min(10).max(40);
+  const agencyCaseBody = z.object({
+    shopOrderId:z.string().uuid(),lineIndex:z.number().int().nonnegative(),
+    operationKind:z.enum(['client_purchase_agent','supplier_sales_agent','own_inventory_sale']),
+    supplierName:z.string().trim().min(1).max(180),
+    article:z.string().trim().min(1).max(180),
+    clientName:z.string().trim().min(1).max(180),
+    clientInn:z.string().trim().max(12).nullable().optional(),
+    mandateRef:z.string().trim().max(180).nullable().optional(),
+    mandateAcceptedAt:agencyDate.nullable().optional(),
+    offerVersion:z.string().trim().max(120).nullable().optional(),
+    feeScheduleVersion:z.string().trim().max(120).nullable().optional(),
+    expectedReimbursement:agencyMoney,procurementFee:agencyMoney,platformFee:agencyMoney,
+  });
+  r.post('/api/admin/agency/cases', ['admin'], (c:AuthedCtx) =>
+    agency.createCase(c.user,parse(agencyCaseBody,c.body)));
+  r.get('/api/admin/agency/cases/:id', ['admin'], (c:AuthedCtx) =>
+    agency.detail(c.user,c.params.id));
+  r.get('/api/admin/agency/report', ['admin'], (c:AuthedCtx) =>
+    agency.report(c.user,c.query.get('from')??'',c.query.get('to')??''));
+  r.get('/api/admin/agency/report.csv', ['admin'], async (c:AuthedCtx) => {
+    const from=c.query.get('from')??'',to=c.query.get('to')??'';
+    const csv=await agency.csv(c.user,from,to);
+    return new Raw('text/csv; charset=utf-8',Buffer.from(csv),{
+      'content-disposition':`attachment; filename="traksos-agency-${from}-${to}.csv"`,
+    });
+  });
+  // Internal, unsigned, append-only report archives with a SHA-256 manifest.
+  r.post('/api/admin/agency/snapshots',['admin'],(c:AuthedCtx)=>
+    agency.archiveReport(c.user,parse(z.object({
+      from:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      to:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      requestKey:z.string().trim().min(8).max(120),
+      note:z.string().trim().min(8).max(1000),
+    }),c.body)));
+  r.get('/api/admin/agency/snapshots',['admin'],(c:AuthedCtx)=>
+    agency.listSnapshots(c.user));
+  r.get('/api/admin/agency/snapshots/:id',['admin'],(c:AuthedCtx)=>
+    agency.snapshot(c.user,c.params.id));
+  // Normalized *manual* bank CSV. No connection to bank APIs, no accounting postings.
+  r.post('/api/admin/agency/bank/statements',['admin'],(c:AuthedCtx)=>
+    agencyBank.importStatement(c.user,parse(z.object({
+      bankName:z.string().trim().min(2).max(160),
+      accountRef:z.string().trim().min(4).max(100),
+      filename:z.string().trim().min(1).max(180),
+      base64:z.string().min(8).max(650000),
+    }),c.body)));
+  r.get('/api/admin/agency/bank/statements',['admin'],(c:AuthedCtx)=>
+    agencyBank.statements(c.user));
+  r.get('/api/admin/agency/bank/statements/:id/rows',['admin'],(c:AuthedCtx)=>
+    agencyBank.statementRows(c.user,c.params.id));
+  r.get('/api/admin/agency/cases/:id/bank',['admin'],(c:AuthedCtx)=>
+    agencyBank.caseMatches(c.user,c.params.id));
+  r.post('/api/admin/agency/bank/matches',['admin'],(c:AuthedCtx)=>{
+    const b=parse(z.object({
+      rowId:z.string().uuid(),eventId:z.string().uuid(),
+      note:z.string().trim().min(8).max(1000),
+    }),c.body);
+    return agencyBank.match(c.user,b.rowId,b.eventId,b.note);
+  });
+  r.post('/api/admin/agency/bank/matches/:id/retract',['admin'],(c:AuthedCtx)=>
+    agencyBank.retract(c.user,c.params.id,
+      parse(z.object({note:z.string().trim().min(8).max(1000)}),c.body).note));
+  r.post('/api/admin/agency/documents', ['admin'], (c:AuthedCtx) =>
+    agency.addDocument(c.user,parse(z.object({
+      kind:z.enum(['purchase','mandate','handover','agent_report','payment_proof']),
+      supplierName:z.string().trim().min(1).max(180),
+      reference:z.string().trim().min(1).max(180),
+      issuedAt:agencyDate,amount:agencyMoney,vatAmount:agencyMoney,quantity:z.number().int().nonnegative().max(100000),
+      mime:z.enum(['application/pdf','image/jpeg','image/png']),
+      base64:z.string().min(8).max(650000),
+    }),c.body)));
+  r.post('/api/admin/agency/documents/:id/verify',['admin'],(c:AuthedCtx)=>
+    agency.reviewDocument(c.user,c.params.id,
+      parse(z.object({note:z.string().trim().min(8).max(1000)}),c.body).note));
+  r.get('/api/admin/agency/documents/:id/file',['admin'],async (c:AuthedCtx)=>{
+    const file=await agency.documentFile(c.user,c.params.id);
+    return new Raw(file.mime,file.bytes);
+  });
+  r.post('/api/admin/agency/cases/:id/allocations',['admin'],(c:AuthedCtx)=>
+    agency.allocate(c.user,c.params.id,parse(z.object({
+      documentId:z.string().uuid(),lineKey:z.string().trim().min(1).max(120),
+      quantity:z.number().int().nonnegative().max(100000),amount:agencyMoney,vatAmount:agencyMoney,
+    }),c.body)));
+  r.post('/api/admin/agency/cases/:id/events',['admin'],(c:AuthedCtx)=>
+    agency.addEvent(c.user,c.params.id,parse(z.object({
+      idempotencyKey:z.string().trim().min(2).max(160),
+      kind:z.enum(['customer_receipt','customer_receipt_reversal','supplier_payment',
+        'supplier_payment_reversal','customer_refund','supplier_refund','handover','agent_report']),
+      amount:agencyMoney,sourceRef:z.string().trim().min(2).max(300),occurredAt:agencyDate,
+      reversesEventId:z.string().uuid().nullable().optional(),
+      correctionReason:z.string().trim().min(8).max(1000).nullable().optional(),
+    }),c.body)));
+  r.post('/api/admin/agency/cases/:id/review',['admin'],(c:AuthedCtx)=>{
+    const b=parse(z.object({
+      kind:z.enum(['verified','accountant_approved']),note:z.string().trim().min(8).max(1000),
+    }),c.body);
+    return agency.reviewCase(c.user,c.params.id,b.kind,b.note);
   });
 
   // Модерация -----------------------------------------------------------------

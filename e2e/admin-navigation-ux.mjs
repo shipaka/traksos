@@ -13,7 +13,7 @@ const sections = [
   ['support','Обращения'],['search','Поиск'],['people','Все люди'],
   ['access','Регистрация и доступы'],
   ['verify','Проверка'],['bases','Рембазы'],['vehicleServices','Страхование и ТО'],
-  ['payments','Деньги'],['offers','Оферты'],
+  ['payments','Деньги'],['agency','Агентские закупки'],['offers','Оферты'],
   ['announcements','Объявления и комиссии'],['stats','Статистика'],
   ['flagged','Подозрительное'],['diagnostics','Журнал ошибок'],['settings','Настройки'],
 ];
@@ -78,13 +78,17 @@ try {
       await navigation.getByRole('button',{name,exact:true}).click();
       await page.waitForURL(new RegExp('#/admin/section/'+id+'$'));
       await page.locator('.admin-stage-head h2').getByText(name,{exact:true}).waitFor();
+      if(id==='agency') {
+        await page.getByText('Внутренний доказательный реестр.',{exact:false}).waitFor();
+        await page.getByRole('button',{name:'Сформировать реестр'}).waitFor();
+      }
       if(id==='access') {
         await page.getByRole('heading',{name:'Зарегистрировать человека вручную'}).waitFor();
         await page.getByRole('button',{name:'Создать учётную запись'}).waitFor();
         await page.getByRole('button',{name:'Создать обращение разработчику'}).waitFor();
       }
       await checkLayout(id);
-      if(['queue','summary','payments','vehicleServices','stats','settings'].includes(id))
+      if(['queue','summary','payments','agency','vehicleServices','stats','settings'].includes(id))
         await page.screenshot({path:'e2e/shots/admin-ux/'+id+'-'+width+'.png',fullPage:true});
     }
     // Refresh must retain the selected section. Going back to a section should work too.

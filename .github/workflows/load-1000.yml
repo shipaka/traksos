@@ -1,0 +1,52 @@
+name: 1000 mixed-role active sessions (isolated)
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/load-mixed-1000.mjs'
+      - '.github/workflows/load-1000.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mixed-load-1000:
+    name: 1000 real HTTP sessions / isolated PostgreSQL / no VPS
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/traksos_load_1000_ci
+      PGPASSWORD: postgres
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install package dependencies
+        run: npm install --no-audit --no-fund
+      - name: Create disposable only 1000-user DB
+        run: psql -h 127.0.0.1 -U postgres -c "create database traksos_load_1000_ci"
+      - name: One thousand real sessions, roles, SOS, support and finance permissions
+        run: node --import tsx scripts/load-mixed-1000.mjs
+      - name: Upload load performance and consistency report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-mixed-1000-report
+          path: test-results/load-mixed-1000.json
+          if-no-files-found: ignore
+          retention-days: 14
