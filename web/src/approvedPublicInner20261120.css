@@ -319,3 +319,40 @@
     z-index:3!important;
   }
 }
+
+
+/* At 900–1100px the five approved header groups need their own wrapped row.
+   Keep all links visible on laptop browsers and registration entry routes. */
+@media (min-width:900px) and (max-width:1100px) {
+  .guest-app:not(.guest-home) > .top {
+    box-sizing:border-box!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    grid-template-columns:minmax(170px,auto) minmax(0,1fr) 44px auto!important;
+  }
+  .guest-app:not(.guest-home) .guest-site-nav {
+    display:flex!important;
+    flex-wrap:wrap!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    column-gap:clamp(14px,2.6vw,30px)!important;
+    row-gap:3px!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    grid-column:1/-1!important;
+    grid-row:2!important;
+  }
+  .guest-app:not(.guest-home) .guest-site-nav .guest-nav-group,
+  .guest-app:not(.guest-home) .guest-site-nav > a {
+    flex:0 0 auto!important;
+    margin:0!important;
+  }
+  .guest-app:not(.guest-home) .auth-desktop-layout {
+    box-sizing:border-box!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+  }
+}
