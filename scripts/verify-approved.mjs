@@ -112,6 +112,8 @@ const allowedPublicVisuals = new Set([
   'traksos-brand-logo-approved-618.png',
   'traksos-service-scenes-shared.webp',
   'traksos-service-scenes-desktop-hq.webp',
+  // Explicitly approved nationwide map for the administrator PC (Russia, not SPb-only).
+  'traksos-russia-outline.svg',
 ]);
 const visualRootEntries = await readdir('web/public',{withFileTypes:true});
 const unexpectedVisuals = visualRootEntries.filter(entry =>
@@ -613,6 +615,45 @@ expect(photoMigration.includes('create table if not exists order_photos') &&
   androidPhotoPaths.includes('<cache-path name="order-photos"') &&
   photoIntegrationTest.includes('stranger.token'),
   '618.png Foto is REAL encrypted participant-scoped evidence and Android native chooser; debug photo never uploads');
+
+
+// Owner approved nine desktop cabinets on 20 Nov 2026. Source-level
+// invariants complement, but never replace, live Chromium screenshots.
+const pcSource=await read('web/src/screens/approvedPcCabinets20261120.tsx');
+const pcCss=await read('web/src/approvedPcCabinets20261120.css');
+const pcMap=await read('web/public/traksos-russia-outline.svg');
+expect(pcSource.includes("export type ApprovedPCRole") &&
+  ['driver','owner','master','tow','service','insurer','inspection','moderator','admin']
+    .every(role=>pcSource.includes("'"+role+"'")) &&
+  pcSource.includes("useDesktopSize()") &&
+  pcCss.includes("@media(min-width:1000px)") &&
+  unifiedShell.includes('ApprovedPcDesk') &&
+  unifiedShell.includes("approvedPcCabinets20261120.css"),
+  'nine real desktop role workspaces are routed and mobile viewport remains separate');
+expect(pcSource.includes("get<any[]>('/api/orders')") &&
+  pcSource.includes("get<any[]>('/api/orders?as=performer')") &&
+  pcSource.includes("get<any[]>('/api/performer/auctions')") &&
+  pcSource.includes("get<any>('/api/base')") &&
+  pcSource.includes("'/api/insurer/inspections'") &&
+  pcSource.includes("'/api/insurer/requests'") &&
+  pcSource.includes("get<any>('/api/admin/summary')") &&
+  pcSource.includes("'/api/mod/cases?kind='") &&
+  pcSource.includes('OfferForm') &&
+  pcSource.includes('RoadsideMap') &&
+  pcSource.includes('APPROVED_VISUALS.trakbotHello'),
+  'desktop cards, bids, inspections, moderation, map and bot use real API/approved assets');
+expect(pcSource.includes("href={'#/order/'+o.id+'?chat=1'}") &&
+  pcSource.includes('owner?get<any>(\'/api/fleet\')') &&
+  pcSource.includes('fleet.data?.cars') &&
+  pcSource.includes('dateIso(new Date') &&
+  pcSource.includes("get<any>('/api/orders/'+o.id)") &&
+  pcSource.includes('Math.abs(event.lat)<=90'),
+  'drivers and fleet owners have real order detail, order tabs, calendar and safe GPS handling');
+expect(pcMap.includes('viewBox="620 35 530 220"') &&
+  pcCss.includes("traksos-russia-outline.svg") &&
+  pcSource.includes('Без выдуманных точек')===false &&
+  pcSource.includes('Никаких выдуманных точек'),
+  'admin shows nationwide geographic outline without invented route markers');
 
 if (failures.length) {
   console.error('Approved design gate: '+failures.length+' failure(s).');
