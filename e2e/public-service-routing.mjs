@@ -223,14 +223,10 @@ try {
     const fixedPosition=width>=900 ? await page.locator('.partner-showcase').evaluate(el=>{
       const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};
     }) : null;
-    for(const [roleName,asset] of [
-      ['Эвакуаторщик','linear-gradient'],
-      ['Мастер','linear-gradient'],
-      ['СТО','linear-gradient'],
-      ['Страховой агент','linear-gradient'],
-    ]){
+    for(const roleName of ['Эвакуаторщик','Мастер','СТО','Страховой агент']){
       await page.getByRole('button',{name:roleName,exact:true}).click();
-      if(!(await photo()).includes(asset))throw Error('Wrong cinematic showcase when choosing '+roleName);
+      if(!(await photo()).includes('owner20-photo-background-approved.webp'))
+        throw Error('Approved photographic showcase missing when choosing '+roleName);
       if(width>=900 && fixedPosition) {
         const next=await page.locator('.partner-showcase').evaluate(el=>{
           const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};
@@ -254,23 +250,32 @@ try {
     if(!await page.locator('.guest-partner-role-master').evaluate(el=>!getComputedStyle(el).backgroundImage.includes('tracksos-photo-master')))
       throw Error('Retired Nov 14 signup card image returned');
 
-    // Latest 'Возможности' menu keeps all other approved functions discoverable.
-    await page.goto(BASE+'/#/');
+    // The inner pages use the same five sections as the approved owner desktop homepage.
+    await page.goto(BASE+'/#/explore/van');
     if(width>=900){
       const nav=page.locator('.guest-site-nav');
-      const all=nav.locator('.guest-nav-group');
-      await all.locator('summary').click();
+      const groups=nav.locator('.guest-nav-group');
+      if(await groups.count()!==4)throw Error('Approved public desktop navigation groups missing');
+      const services=groups.nth(1);
+      if(!(await services.locator('summary').innerText()).includes('Сервисы'))
+        throw Error('Second menu must expose approved services');
+      await services.locator('summary').click();
       for(const route of ['#/explore/van','#/explore/tow','#/explore/tech',
         '#/explore/air','#/explore/ecu','#/explore/parts','#/explore/insurance']) {
-        if(!(await all.locator('a[href="'+route+'"]').count()))
+        if(!(await services.locator('a[href="'+route+'"]').count()))
           throw Error('Missing actual capability '+route);
       }
-      await all.locator('summary').press('Escape');
-      if(await all.getAttribute('open')!==null)throw Error('Escape did not close capabilities');
-      await nav.getByRole('link',{name:'О платформе'}).click();
+      await services.locator('summary').press('Escape');
+      if(await services.getAttribute('open')!==null)throw Error('Escape did not close services');
+
+      const about=groups.first();
+      await about.locator('summary').click();
+      await about.locator('a[href="#/company"]').click();
       await page.getByRole('heading',{name:'Компания TrakSOS'}).waitFor();
-      await page.goto(BASE+'/#/');
-      await nav.getByRole('link',{name:'Тарифы'}).click();
+
+      await page.goto(BASE+'/#/explore/van');
+      await page.locator('.guest-site-nav .guest-nav-group').first().locator('summary').click();
+      await page.locator('.guest-site-nav a[href="#/explore/pricing"]').click();
       await page.getByRole('heading',{name:'Комиссии и тарифы TrakSOS'}).waitFor();
     } else {
       await page.locator('.guest-mobile-catalog > summary').click();
