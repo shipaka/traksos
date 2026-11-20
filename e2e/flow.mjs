@@ -101,7 +101,9 @@ async function login(page, phoneNum, how) {
     await page.getByRole('button', { name: 'Войти', exact: true }).click();
     return;
   }
-  await page.locator('input[type=checkbox]').check();
+  // Partner forms offer an independent master+STO checkbox. Only the
+  // explicitly labelled terms/privacy consent authorizes registration.
+  await page.getByRole('checkbox', { name: /Согласен с (агентским договором|офертой).*обработку персональных данных/ }).check();
   await page.getByRole('button', { name: 'Получить код' }).click();
   const hint = await page.getByText(/Тестовый режим: код/).textContent();
   await page.locator('input[autocomplete=one-time-code]').fill(hint.match(/\d{4}/)[0]);
