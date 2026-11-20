@@ -27,6 +27,46 @@ try {
       }
       await page.locator('.owner20-region>summary').click();
       if(!await page.locator('.owner20-region-menu').isVisible())throw Error('PC region disclosure failed');
+
+      // Verify the inner route on the real desktop renderer, not the homepage alone.
+      await page.goto(BASE+'/#/explore/van');
+      await page.locator('.guest-explore-hero').waitFor({state:'visible'});
+      const appearance=await page.locator('.guest-explore-hero').evaluate(el=>({
+        image:getComputedStyle(el,'::before').backgroundImage,
+        icon:getComputedStyle(el.querySelector('.guest-explore-glyph')).display
+      }));
+      if(!appearance.image.includes('owner20-photo-background-approved.webp') || appearance.icon!=='none')
+        throw Error('Approved public inner-page art missing: '+JSON.stringify(appearance));
+      const nav=page.getByRole('navigation',{name:'Разделы TrakSOS'});
+      const groups=nav.locator('.guest-nav-group');
+      if(await groups.count()!==4)throw Error('PC inner-page navigation differs from owner-approved homepage');
+      const services=groups.nth(1);
+      await services.locator('summary').click();
+      for(const href of ['#/explore/van','#/explore/tow','#/explore/tech','#/explore/air',
+        '#/explore/ecu','#/explore/parts','#/explore/insurance']){
+        if(!await services.locator('a[href="'+href+'"]').count())
+          throw Error('Missing PC capability '+href);
+      }
+      await services.locator('summary').press('Escape');
+      if(await services.getAttribute('open')!==null)throw Error('Escape did not close services');
+      await groups.first().locator('summary').click();
+      await groups.first().locator('a[href="#/company"]').click();
+      await page.getByRole('heading',{name:'Компания TrakSOS'}).waitFor();
+      await page.goto(BASE+'/#/explore/van');
+      await page.getByRole('navigation',{name:'Разделы TrakSOS'})
+        .locator('.guest-nav-group').first().locator('summary').click();
+      await page.locator('.guest-site-nav a[href="#/explore/pricing"]').click();
+      await page.getByRole('heading',{name:'Комиссии и тарифы TrakSOS'}).waitFor();
+
+      await page.goto(BASE+'/#/join');
+      const desktopPhoto=page.locator('.auth-desktop-showcase-photo');
+      await desktopPhoto.waitFor({state:'visible'});
+      for(const name of ['Эвакуаторщик','Мастер','СТО','Страховой агент']){
+        await page.getByRole('button',{name,exact:true}).click();
+        const artwork=await desktopPhoto.evaluate(el=>getComputedStyle(el).backgroundImage);
+        if(!artwork.includes('owner20-photo-background-approved.webp'))
+          throw Error('Desktop approved partner image missing for '+name+': '+artwork);
+      }
       if(jsErrors.length)throw Error('PC JS errors '+jsErrors.join('; '));
       await context.close();continue;
     }
@@ -225,8 +265,8 @@ try {
     }) : null;
     for(const roleName of ['Эвакуаторщик','Мастер','СТО','Страховой агент']){
       await page.getByRole('button',{name:roleName,exact:true}).click();
-      if(!(await photo()).includes('owner20-photo-background-approved.webp'))
-        throw Error('Approved photographic showcase missing when choosing '+roleName);
+      // Keep mobile artwork independently approved: do not enforce the desktop 617.png crop.
+      if((await photo())==='none')throw Error('Mobile partner artwork disappeared for '+roleName);
       if(width>=900 && fixedPosition) {
         const next=await page.locator('.partner-showcase').evaluate(el=>{
           const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};
