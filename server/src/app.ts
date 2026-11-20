@@ -50,6 +50,7 @@ import { InsuranceQuoteFlow } from './services/insuranceQuoteFlow.ts';
 import { PrivacyService } from './services/privacy.ts';
 import { StandingService } from './services/standing.ts';
 import { ShopService } from './services/shop.ts';
+import { ShopCourierDeliveries } from './services/shopCourierDeliveries.ts';
 import { ShopCatalogService } from './services/shopCatalog.ts';
 import { ModerationService } from './services/moderation.ts';
 import { UnilateralClosures } from './services/unilateralClosures.ts';
@@ -79,7 +80,7 @@ export interface Deps {
 }
 
 const money = z.number().int().nonnegative();
-const ROLES = ['client', 'driver', 'master', 'tow', 'service', 'insurer', 'inspection_operator', 'moderator', 'admin'];
+const ROLES = ['client', 'driver', 'master', 'tow', 'service', 'insurer', 'inspection_operator', 'courier', 'moderator', 'admin'];
 
 export function createApp(d: Deps) {
   const now = d.now ?? (() => new Date());
@@ -143,6 +144,7 @@ export function createApp(d: Deps) {
   const privacy = new PrivacyService(d.db, notifier, now);
   const standing = new StandingService(d.db, now, settings);
   const shop = new ShopService(d.db, notifier, settings);
+  const deliveries = new ShopCourierDeliveries(d.db, notifier);
   const partCatalog = new ShopCatalogService(d.db, settings);
   const moderation = new ModerationService(d.db, notifier, reviews, now, d.sms);
   const unilateral = new UnilateralClosures(d.db, orders, notifier, moderation, now);
@@ -941,6 +943,32 @@ export function createApp(d: Deps) {
   }), c.body)));
   r.get('/api/shop/orders', true, (c: AuthedCtx) => shop.myOrders(c.user));
   r.post('/api/shop/orders/:id/cancel', true, (c: AuthedCtx) => shop.cancelMine(c.user, c.params.id));
+  // Courier: courier credentials never expose other buyers, order codes or
+  // admin controls. A buyer separately confirms delivery after code verification.
+  r.get('/api/admin/couriers', ['admin'], () => deliveries.candidates());
+  r.post('/api/admin/shop/orders/:id/courier', ['admin'], (c:AuthedCtx) =>
+    deliveries.assign(c.user,c.params.id,parse(z.object({courierId:z.string().uuid()}),c.body).courierId));
+  r.post('/api/admin/shop/orders/:id/courier/reset-receipt', ['admin'], (c:AuthedCtx) =>
+    deliveries.resetReceipt(c.user,c.params.id,parse(z.object({
+      reason:z.string().trim().min(10).max(500)
+    }).strict(),c.body).reason));
+  r.get('/api/courier/presence', ['courier'], (c:AuthedCtx) => deliveries.presence(c.user));
+  r.put('/api/courier/presence', ['courier'], (c:AuthedCtx) =>
+    deliveries.setPresence(c.user,parse(z.object({online:z.boolean()}),c.body).online));
+  r.get('/api/courier/jobs', ['courier'], (c:AuthedCtx) => deliveries.list(c.user));
+  r.get('/api/courier/jobs/:id', ['courier'], (c:AuthedCtx) => deliveries.one(c.user,c.params.id));
+  r.post('/api/courier/jobs/:id/stage', ['courier'], (c:AuthedCtx) =>
+    deliveries.progress(c.user,c.params.id,parse(z.object({
+      status:z.enum(['picked_up','en_route','arrived'])
+    }),c.body).status));
+  r.post('/api/courier/jobs/:id/verify', ['courier'], (c:AuthedCtx) =>
+    deliveries.verify(c.user,c.params.id,parse(z.object({
+      code:z.string().regex(/^\d{6}$/)
+    }),c.body).code));
+  r.get('/api/shop/orders/:id/receipt-code', true, (c:AuthedCtx) =>
+    deliveries.receiptCode(c.user,c.params.id));
+  r.post('/api/shop/orders/:id/confirm-received', true, (c:AuthedCtx) =>
+    deliveries.confirmReceived(c.user,c.params.id));
   // Autokontinent purchase identifiers: strictly admin-only; there is no supplier API connection yet.
   r.get('/api/admin/shop/supplier/status', ['admin'], () => shop.supplierStatus());
   r.get('/api/admin/shop/products/:id/supplier', ['admin'], (c: AuthedCtx) => shop.supplierRef(c.params.id));

@@ -7,6 +7,7 @@ import { WorkerNotices } from './ops.tsx';
 import { RoadsideMap } from './roadsideMap.tsx';
 import { DestinationCard } from './DestinationCard.tsx';
 import { VerifiedBadge } from '../verifiedBadge.tsx';
+import { VehicleModelPhoto } from '../vehicleVisual.tsx';
 import { inServicePreview, servicePreviewPath, servicePreviewHref, previewServiceApi } from '../demo/servicePreviewApi.ts';
 // The same working STО components are used for both real accounts and the isolated admin preview.
 const baseGet=(url:string)=>inServicePreview()?previewServiceApi('GET',url):get(url);
@@ -56,11 +57,11 @@ function InvoicePoints({ amount, value, onChange }: { amount: number | null; val
   );
 }
 
-export function BaseHome({ initialTab='req' }: { initialTab?: 'req' | 'cars' | 'ready' | 'done' } = {}) {
+export function BaseHome({ initialTab='req' }: { initialTab?: 'req' | 'cars' | 'expected' | 'ready' | 'done' } = {}) {
   const preview=inServicePreview();
   const { me } = useMe();
   const cab = useLoad(() => baseGet('/api/base'), [], isBookingEvent);
-  const [tab, setTab] = useState<'req' | 'cars' | 'ready' | 'done'>(initialTab);
+  const [tab, setTab] = useState<'req' | 'cars' | 'expected' | 'ready' | 'done'>(initialTab);
   const { busy, run } = useAction();
   if (!cab.data) return <main>{!preview&&<WorkerNotices audience="service" />}<Loading error={cab.error} /></main>;
   const { center, groups } = cab.data;
@@ -87,6 +88,7 @@ export function BaseHome({ initialTab='req' }: { initialTab?: 'req' | 'cars' | '
     </main>
   );
   const cars = [...groups.expected, ...groups.repair, ...groups.ready];
+  const focus = groups.repair[0] ?? groups.ready[0] ?? groups.expected[0] ?? null;
   return (
     <main className="base-workspace">
       {!preview && !me?.roles.includes('master') && (
@@ -103,6 +105,7 @@ export function BaseHome({ initialTab='req' }: { initialTab?: 'req' | 'cars' | '
         <div className="base-command-actions">
           <button className="btn" onClick={()=>setTab('req')}>Входящие · {groups.requests.length}</button>
           <button className="btn ghost" onClick={()=>setTab('cars')}>В ремонте · {groups.repair.length}</button>
+          <button className="btn ghost" onClick={()=>setTab('expected')}>Записи · {groups.expected.length}</button>
           <button className="btn ghost" onClick={()=>setTab('ready')}>К выдаче · {groups.ready.length}</button>
         </div>
       </section>
@@ -135,14 +138,45 @@ export function BaseHome({ initialTab='req' }: { initialTab?: 'req' | 'cars' | '
         <div className="card tile"><span className="label">В ремонте</span><span className="tile-value">{groups.repair.length}</span></div>
         <div className="card tile"><span className="label">К выдаче</span><span className="tile-value">{groups.ready.length}</span></div>
       </div>
+      {focus&&<section className="and20-sto-focus" aria-label="Текущий ремонт или ближайшая запись">
+        <div className="and20-sto-focus-heading">
+          <strong>{groups.repair.length?'Текущий ремонт':focus.status==='ready'?'Готово к выдаче':'Ближайшая запись'}</strong>
+          <span className="and20-state">{focus.statusName||'В работе'}</span>
+        </div>
+        <div className="and20-sto-focus-vehicle">
+          <VehicleModelPhoto brand={focus.vehicle?.brand} model={focus.vehicle?.model}
+            year={focus.vehicle?.year} className="and20-sto-photo"/>
+          <div><strong>{carName(focus.vehicle)}</strong>
+            <p>{focus.needName||'Работы по заявке'}</p>
+            <small>{focus.client?.name||'Клиент из заявки'}</small>
+          </div>
+        </div>
+        <div className="and20-sto-focus-actions">
+          <a href={servicePreviewHref(`base/car/${focus.id}`)}>Открыть заказ</a>
+          {!preview&&<a href={'#/shop?bookingId='+encodeURIComponent(focus.id)}>Подобрать запчасти</a>}
+        </div>
+        <small>Расчёт и согласование работ — в карточке этого ремонта.</small>
+      </section>}
       <div className="scroll-x" role="tablist">
-        {([['req', `Входящие · ${groups.requests.length}`], ['cars', `Машины у вас · ${cars.length}`], ['ready', `К выдаче · ${groups.ready.length}`], ['done', 'История']] as const).map(([k, n]) => (
+        {([['req', `Входящие · ${groups.requests.length}`], ['cars', `Машины у вас · ${cars.length}`], ['expected', `Записи · ${groups.expected.length}`], ['ready', `К выдаче · ${groups.ready.length}`], ['done', 'История']] as const).map(([k, n]) => (
           <button key={k} className="chip" role="tab" aria-pressed={tab === k} onClick={() => setTab(k)}>{n}</button>
         ))}
       </div>
       {tab === 'req' && (groups.requests.length
         ? groups.requests.map((b: any) => <RequestCard key={b.id} b={b} onDone={cab.reload} />)
         : <div className="empty">Новых запросов нет. Они приходят уведомлением — со звуком, даже когда приложение закрыто.</div>)}
+      {tab === 'expected' && (groups.expected.length ? <div className="rows">
+        {groups.expected.map((b:any)=><a key={b.id} className="list-item"
+          href={servicePreviewHref(`base/car/${b.id}`)}>
+          <div className="stack" style={{gap:2}}>
+            <b>{carName(b.vehicle)}</b>
+            <span className="note">{b.client?.name||'Клиент'} · {b.needName||'Осмотр'}
+              {' · '}{b.whenDay ? fmtDay(b.whenDay) : 'Дата уточняется'}
+              {b.acceptTime ? ' к '+b.acceptTime : ''}</span>
+          </div>
+          <span className="pill">Открыть ›</span>
+        </a>)}
+      </div> : <div className="empty">Записей на ремонт пока нет</div>)}
       {tab === 'cars' && (cars.length ? (
         <div className="rows">
           {cars.map((b: any) => (

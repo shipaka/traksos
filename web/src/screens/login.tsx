@@ -81,6 +81,7 @@ export function homeFor(roles: string[], intent: Intent): string {
   if (intent === 'join') return roles.includes('insurer') ? '#/insurance' : performer ? '#/as/performer' : '#/as/service';
   if (roles.includes('admin')) return '#/as/admin';
   if (roles.includes('moderator')) return '#/as/moderator';
+  if (roles.includes('courier')) return '#/courier';
   if (roles.includes('insurer')) return '#/insurance';
   if (roles.includes('inspection_operator')) return '#/inspections';
   if (roles.includes('client') || roles.includes('driver')) return '#/as/client';
