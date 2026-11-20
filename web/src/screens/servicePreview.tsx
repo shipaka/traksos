@@ -22,6 +22,34 @@ export function ServicePreviewPage({section,sub,id}:{section?:string;sub?:string
     if(sub==='me')return <BaseSetup/>;
     return <BaseHome/>;
   }
+  if(section==='menu'){
+    const safeSections=[
+      ['base','Рабочий стол СТО'],
+      ['base/inbox','Заявки и заказы'],
+      ['base/me','Карточка рембазы'],
+      ['base/money','Финансы в песочнице']
+    ];
+    return <main className="tr-mobile-menu-page tr-service-preview-safe-menu" aria-label="Меню тестовой СТО">
+      <div className="tr-mobile-menu-hero">
+        <div><span className="tr-mobile-menu-eyebrow">TRAKSOS · ТЕСТОВЫЙ ЦЕНТР</span>
+          <h1>Меню СТО</h1>
+          <p>Только проверочные разделы · данные вымышленные</p></div>
+        <span aria-hidden="true">▤</span>
+      </div>
+      <section className="tr-mobile-menu-section">
+        <header className="tr-mobile-menu-section-head">
+          <span className="tr-mobile-menu-section-icon" aria-hidden="true">▤</span>
+          <span><h2>Рабочие разделы</h2><small>Каждый пункт остаётся внутри безопасной песочницы</small></span>
+        </header>
+        <nav className="tr-mobile-menu-links" aria-label="Тестовые разделы СТО">
+          {safeSections.map(([key,label])=><a key={key} href={servicePreviewHref(key)}>
+            <span>{label}</span><span className="tr-mobile-menu-chevron" aria-hidden="true">›</span>
+          </a>)}
+        </nav>
+      </section>
+      <a className="tr-mobile-menu-home" href="#/admin/test-center">← Вернуться в центр тестирования</a>
+    </main>;
+  }
   return <main className="service-preview-unavailable">
     <div className="service-preview-unavailable-icon" aria-hidden="true">▣</div>
     <h1>Работаем в тестовом кабинете СТО</h1>
