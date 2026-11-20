@@ -246,7 +246,7 @@ try {
       await button.waitFor();await button.click();
       if(await button.getAttribute('aria-pressed')!=='true')throw Error('Specialty selection not persisted: '+specialty);
     }
-    if(!await page.getByText('Специализации мастера · выбрано: 2').count())
+    if(!await page.getByText('Специализации выездного мастера · выбрано: 2').count())
       throw Error('Partner specialty accordion did not retain multiple choices');
     if(!await page.locator('.guest-partner-role-master').evaluate(el=>!getComputedStyle(el).backgroundImage.includes('tracksos-photo-master')))
       throw Error('Retired Nov 14 signup card image returned');
