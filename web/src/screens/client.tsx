@@ -51,7 +51,7 @@ export function Home() {
   if (mobileWorkspace && native.isApp) return <main className="client-home client-dashboard">
     <AndroidClientWorkspace orders={live} loading={!active.data && !active.error} error={active.error}
       retry={active.reload} me={me} insuranceInProgress={insuranceInProgress}
-      disabledServices={{repair:restricted('repair'),tow:restricted('tow'),service:restricted('service'),consult:restricted('consult')}} />
+      disabledServices={{repair:restricted('repair'),tow:restricted('tow'),service:restricted('service'),consult:restricted('consult'),shop:restricted('shop')}} />
   </main>;
   return (
     <main className="client-home client-dashboard">
@@ -1036,11 +1036,15 @@ export function Garage({focusVehicleId}:{focusVehicleId?:string}={}) {
           {v.trailer_plate && <span className="note">Прицеп {v.trailer_plate}</span>}
           {v.fixed_at && <span className="pill good" style={{ alignSelf: 'flex-start' }}>уточнено мастером · {fmtTime(v.fixed_at)}</span>}
           {seriesHint(v.brand, v.year) && <span className="note" style={{ color: 'var(--accent)' }}>{seriesHint(v.brand, v.year)}</span>}
+          <div className="row" style={{gap:8, flexWrap:'wrap'}}>
+            <a className="btn ghost small" href={`#/shop?vehicleId=${encodeURIComponent(v.id)}`}>Подобрать запчасти для этой машины</a>
+            <a className="btn ghost small" href={`#/shop/history/${v.id}`}>История покупок</a>
+          </div>
           <VehicleExtendedDetails vehicle={v} isDriver={isDriver} onSaved={()=>list.reload()} />
           <VehicleServiceApplication vehicleId={v.id} onCreated={() => setServiceHistoryVersion(v => v + 1)} />
           <VehicleServiceHistory id={v.id} isDriver={isDriver} refreshVersion={serviceHistoryVersion} />
           <VehicleHistory id={v.id} initialOpen={focusVehicleId===v.id} />
-          <a className="btn ghost small" href={`#/shop/history/${v.id}`}>Покупки и запчасти этой машины</a>
+
           {!isDriver && (driverFor === v.id ? (
             <div className="stack">
               <input className="field" type="tel" value={driverPhone} onChange={(e) => setDriverPhone(e.target.value)} />

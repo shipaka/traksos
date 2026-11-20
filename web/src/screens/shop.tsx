@@ -18,6 +18,13 @@ function useCart(): [Cart, (c: Cart) => void] {
 const photoUrl = (p: any) => `${API_URL}/api/shop/products/${p.id}/photo?v=${p.photoVersion}`;
 const STATUS_TONE: Record<string, string> = { new: 'accent', confirmed: 'accent', ready: 'good', shipped: 'accent', done: '', cancelled: 'bad' };
 const DELIVERY: Record<string, string> = { pickup: 'Самовывоз', delivery: 'Доставка', master: 'С мастером на заявке' };
+// Navigation passes opaque IDs, never VIN, vehicle details or customer information.
+const partsContext = () => new URLSearchParams(location.hash.split('?')[1] ?? '');
+const partsContextSuffix = (params: URLSearchParams) => {
+  const bookingId = params.get('bookingId'), vehicleId = params.get('vehicleId');
+  return bookingId ? '?bookingId=' + encodeURIComponent(bookingId)
+    : vehicleId ? '?vehicleId=' + encodeURIComponent(vehicleId) : '';
+};
 
 function Thumb({ p, size = 56 }: { p: any; size?: number }) {
   return p.hasPhoto
@@ -26,6 +33,26 @@ function Thumb({ p, size = 56 }: { p: any; size?: number }) {
 }
 
 export function Shop() {
+  const params = partsContext();
+  const contextBookingId = params.get('bookingId');
+  const contextVehicleId = params.get('vehicleId');
+  const contextSuffix = partsContextSuffix(params);
+  const contextualVehicle = useLoad<any>(() =>
+    contextBookingId ? get('/api/bookings/' + encodeURIComponent(contextBookingId)).then((b:any) => b?.vehicle ?? null)
+      : contextVehicleId ? get('/api/vehicles').then((fleet:any) =>
+        Array.isArray(fleet) ? fleet.find((v:any) => v.id === contextVehicleId) ?? null : null)
+      : Promise.resolve(null), [contextBookingId, contextVehicleId]);
+  const vehicleLabel = [contextualVehicle.data?.brand, contextualVehicle.data?.model, contextualVehicle.data?.year].filter(Boolean).join(' ');
+  const contextualBanner = (contextBookingId || contextVehicleId) && (
+    <section className="card col" aria-label="Подбор запчастей для техники">
+      <b>{contextBookingId ? 'Подбор для ремонтной заявки СТО' : 'Подбор для моей техники'}</b>
+      <span className="note">{contextualVehicle.error
+        ? 'Не удалось проверить данные машины. Уточните автомобиль в заявке перед подбором.'
+        : !contextualVehicle.data ? 'Проверяем данные автомобиля…'
+        : vehicleLabel || 'Автомобиль из заявки'}</span>
+      <span className="note">Поиск не подтверждает совместимость и не добавляет деталь автоматически в ремонт. Проверяйте применяемость по VIN и агрегату.</span>
+    </section>
+  );
   const c = useLoad(() => get('/api/shop?light=1'), []);
   const [cart, setCart] = useCart();
   const [cat, setCat] = useState('all');
@@ -59,6 +86,7 @@ export function Shop() {
   if (!d.enabled) return (
     <main className="track-shop-home">
       <div className="track-shop-hero"><span className="track-shop-eyebrow">TRAKSOS · ЗАПЧАСТИ ДЛЯ ГРУЗОВИКОВ</span><h1>Каталог запчастей</h1><p>Оригиналы, проверенные аналоги и история заказов вашей техники.</p><span className="track-shop-gear" aria-hidden="true"/></div>
+      {contextualBanner}
       <div className="card hi" style={{ alignItems: 'center', textAlign: 'center', padding: '32px 20px' }}>
         <span style={{ fontSize: 40 }} aria-hidden="true">🛒</span>
         <b style={{ fontSize: 20 }}>{d.closedTitle}</b>
@@ -73,9 +101,10 @@ export function Shop() {
   return (
     <main className="track-shop-home">
       <div className="track-shop-hero"><span className="track-shop-eyebrow">TRAKSOS · ЗАПЧАСТИ ДЛЯ ГРУЗОВИКОВ</span><h1>Найдём нужную деталь</h1><p>Удобный поиск по названию и артикулу, наличие, аналоги и история покупок.</p><span className="track-shop-gear" aria-hidden="true"/></div>
+      {contextualBanner}
       <div className="between" style={{ alignItems: 'flex-start' }}>
         <div><h1>Магазин</h1><div className="sub">{d.note}</div></div>
-        <button className="bell" aria-label={`Корзина, товаров: ${count}`} onClick={() => go('shop/cart')} style={{ position: 'relative' }}>
+        <button className="bell" aria-label={`Корзина, товаров: ${count}`} onClick={() => go('shop/cart' + contextSuffix)} style={{ position: 'relative' }}>
           🛒{count > 0 && <span className="badge">{count}</span>}
         </button>
       </div>
@@ -177,7 +206,7 @@ export function Shop() {
             onClick={() => setPage((n) => n + 1)}>Дальше</button>
         </div>
       )}
-      {count > 0 && <button className="btn" onClick={() => go('shop/cart')}>Корзина · {count} шт.</button>}
+      {count > 0 && <button className="btn" onClick={() => go('shop/cart' + contextSuffix)}>Корзина · {count} шт.</button>}
       <a className="linkrow" href="#/shop/history"><span><b>Мои покупки</b><small>Повторить заказ или подобрать аналоги</small></span><span aria-hidden="true">›</span></a>
     </main>
   );
@@ -250,6 +279,10 @@ export function ShopHistory({ vehicleId }: { vehicleId?: string }) {
 }
 
 export function ShopCart() {
+  const contextParams = partsContext();
+  const contextSuffix = partsContextSuffix(contextParams);
+  const selectedVehicleFromLink = contextParams.get('vehicleId');
+  const fromServiceBooking = !!contextParams.get('bookingId');
   const c = useLoad(() => get('/api/shop?light=1'), []);
   const live = useLoad(() => get('/api/orders').catch(() => []), []);
   const { me } = useMe();
@@ -261,6 +294,10 @@ export function ShopCart() {
   const vehicles = useLoad(() => c.data?.enabled && selectedIds
     ? get('/api/vehicles') : Promise.resolve([]), [c.data?.enabled, !!selectedIds]);
   const [vehicleId, setVehicleId] = useState('');
+  useEffect(() => {
+    if (selectedVehicleFromLink && ((vehicles.data ?? []) as any[]).some(v => v.id === selectedVehicleFromLink))
+      setVehicleId(selectedVehicleFromLink);
+  }, [selectedVehicleFromLink, vehicles.data]);
   const { busy, run } = useAction();
   const [delivery, setDelivery] = useState<'pickup' | 'delivery' | 'master' | ''>('');
   const [address, setAddress] = useState('');
@@ -284,8 +321,9 @@ export function ShopCart() {
   }
   return (
     <main>
-      <Back to="shop" label="Магазин" />
-      <div><h1>Корзина</h1><div className="sub">Оплата при получении — наличными, картой или СБП. Компаниям — по счёту.</div></div>
+      <Back to={'shop' + contextSuffix} label="Магазин" />
+      <div><h1>Корзина</h1><div className="sub">Доступные способы оплаты зависят от настроек магазина; компаниям — по счёту.</div></div>
+      {fromServiceBooking && <div className="note">Подбор открыт из ремонта СТО. Заказ товаров не меняет стоимость ремонта и не добавляет детали в смету автоматически.</div>}
       {!lines.length ? <div className="empty">{selection.error ?? (selectedIds ? 'Проверяем актуальную цену и наличие…' : 'Корзина пуста')}</div> : <>
         <div className="stack">
           {lines.map(({ p, qty }) => (
