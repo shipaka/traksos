@@ -30,7 +30,7 @@ try{
       const p=await fetch(BASE+'/api/performer/profile',{method:'PUT',headers:{authorization:'Bearer '+v.token,'content-type':'application/json'},body:JSON.stringify({kind:'master',specialties:[],brands:{},tier:'eco'})});
       if(!p.ok)throw Error('Synthetic master profile HTTP '+p.status);
     }
-    const ctx=await browser.newContext({viewport:{width:390,height:844},locale:'ru-RU'});
+    const ctx=await browser.newContext({viewport:{width:390,height:844},locale:'ru-RU',deviceScaleFactor:2});
     const page=await ctx.newPage();
     const errors=[];page.on('pageerror',err=>errors.push(err.message));
     await page.addInitScript(({token,mode})=>{
@@ -56,11 +56,22 @@ try{
       if(role==='master')await page.locator('.and19-line button').waitFor();
       else await page.locator('.and19-services').waitFor();
       await page.waitForTimeout(650);
-      const brand=await page.locator('.top .tr-approved-brand-logo img').evaluate(img=>({
-        src:img.getAttribute('src'),loaded:img.complete&&img.naturalWidth===274&&img.naturalHeight===46
-      }));
-      if(brand.src!=='/traksos-brand-logo-approved-618.png'||!brand.loaded)
-        throw Error(role+': native WebView brand diverges from approved 618: '+JSON.stringify(brand));
+      const brand=await page.locator('.top .tr-approved-brand-logo img').evaluate(img=>{
+        const rect=img.getBoundingClientRect();
+        return {src:img.getAttribute('src'),
+          loaded:img.complete&&img.naturalWidth===274&&img.naturalHeight===46,
+          naturalWidth:img.naturalWidth,naturalHeight:img.naturalHeight,
+          renderedWidth:rect.width,renderedHeight:rect.height};
+      });
+      if(brand.src!=='/traksos-brand-logo-approved-618.png'||!brand.loaded||
+         brand.renderedWidth>brand.naturalWidth+1||brand.renderedHeight>brand.naturalHeight+1)
+        throw Error(role+': approved logo missing, distorted, or upscaled beyond original pixels: '+JSON.stringify(brand));
+      if(Math.abs(brand.renderedWidth/brand.renderedHeight-brand.naturalWidth/brand.naturalHeight)>.08)
+        throw Error(role+': approved logo aspect ratio distorted: '+JSON.stringify(brand));
+      // Source is a literal crop from approved 618.png. On 2x displays it
+      // may be pixel-density limited; report truthfully rather than upscale
+      // or create an unauthorized replacement image.
+      console.log(role+' original approved logo nominal retina pixel coverage: '+(brand.naturalWidth/(brand.renderedWidth*2)).toFixed(2)+'x');
       if(role==='owner'){
         const art=await page.locator('.and19-services > a').evaluateAll(cards=>cards.map(card=>{
           const illustration=card.querySelector('.tr-service-illustration');
@@ -76,25 +87,30 @@ try{
             label:label.textContent,
             labelFont:textStyle.fontSize,
             labelVisible:textStyle.visibility!=='hidden'&&textStyle.display!=='none',
+            width:illustration.getBoundingClientRect().width,
+            height:illustration.getBoundingClientRect().height,
+            transform:visual.transform
           };
         }));
         const expected=[
           ['Выездной мастер','0px 0px'],
-          ['Эвакуатор','-176px 0px'],
-          ['СТО','-352px 0px'],
-          ['Консультация','-528px 0px'],
+          ['Эвакуатор','-88px 0px'],
+          ['СТО','-176px 0px'],
+          ['Консультация','-264px 0px'],
         ];
         if(art.length!==4 || art.some((a,i)=>
           a.missing||a.label!==expected[i][0]||a.position!==expected[i][1]||
-          a.size!=='704px 105px'||!a.image.includes('traksos-service-scenes-shared.webp')||
-          a.opacity<.45||!a.labelVisible||a.labelFont!=='10px'))
-          throw Error('Android four tiles must keep approved geometry, labels and the same PC scene crops: '+JSON.stringify(art));
+          a.size!=='352px 52.5px'||!a.image.includes('traksos-service-scenes-shared.webp')||
+          a.opacity<.45||!a.labelVisible||a.labelFont!=='10px'||
+          a.transform!=='none'||Math.abs(a.width-88)>.5||Math.abs(a.height-52.5)>.5))
+          throw Error('Android four tiles must share desktop atlas and use direct-size raster painting: '+JSON.stringify(art));
       }
       const size=await page.evaluate(()=>({client:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));
       if(size.scroll>size.client+3)throw Error(role+' horizontal overflow '+JSON.stringify(size));
       if(errors.length)throw Error(role+' JS errors: '+errors.join('; '));
-      await page.screenshot({path:output+'/'+role+'-android-390.png',fullPage:true});
-      console.log('Captured real Android native-bridge browser workspace: '+role);
+      await page.screenshot({path:output+'/'+role+'-android-390.png',fullPage:true,scale:'css'});
+      await page.screenshot({path:output+'/'+role+'-android-390-retina2x.png',fullPage:true,scale:'device'});
+      console.log('Captured real Android native-bridge browser workspace at CSS 390px + physical 2x: '+role);
     }finally{await ctx.close()}
   }
 }finally{await browser.close()}
