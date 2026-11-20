@@ -18,9 +18,11 @@ const LOCKED_ASSETS = {
   'android/app/src/main/res/drawable-xhdpi/ic_notify.png': '99e8a55cd6eb58ef',
   'android/app/src/main/res/drawable-hdpi/ic_notify.png': '051234c95f35fd2f',
   'android/app/src/main/res/drawable-mdpi/ic_notify.png': 'd8b301cdb07e6d88',
-  'branding/tracksos-rustore-icon.png': '2583f9590d32107b',
-  'web/public/icon-512.png': '2583f9590d32107b',
-  'web/public/icon-192.png': 'fa6451ff36f1fec3',
+  // Byte-exact source image explicitly approved 20 Nov, no recoloring or redraw.
+  'branding/approved-launcher-master-2026-11-20.png': '9ea519c3d4cc9b24',
+  'branding/tracksos-rustore-icon.png': 'c43899c1c510ac6d',
+  'web/public/icon-512.png': 'c43899c1c510ac6d',
+  'web/public/icon-192.png': 'f48bc0073cf5ec1c',
   // Exact approved images. Deliberate asset changes require a new owner-approved baseline.
   'web/public/tracksos-approved-hero-owner-20261119.webp': '7a7a9acec9ee7f32',
   // Original artwork from owner's 617.png on 20 Nov; keep mobile 19 Nov locked independently.
@@ -32,11 +34,11 @@ const LOCKED_ASSETS = {
   'web/public/traksos-service-scenes-shared.webp': '081ad11beeffb456',
   // Owner-authorized high-resolution equivalents of the same four services, for PC only.
   'web/public/traksos-service-scenes-desktop-hq.webp': '137d36d190895744',
-  'android/app/src/main/res/mipmap-mdpi/ic_launcher.png': '327f52a2d6e836e9',
-  'android/app/src/main/res/mipmap-hdpi/ic_launcher.png': 'f797b183e93c4bad',
-  'android/app/src/main/res/mipmap-xhdpi/ic_launcher.png': '27ea3b5ebbfe86ce',
-  'android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png': '3d47c3852548579f',
-  'android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png': 'fa6451ff36f1fec3',
+  'android/app/src/main/res/mipmap-mdpi/ic_launcher.png': '2aff2f9c8bb28208',
+  'android/app/src/main/res/mipmap-hdpi/ic_launcher.png': 'f46a432d506ce426',
+  'android/app/src/main/res/mipmap-xhdpi/ic_launcher.png': 'ed08c9c0041ca46f',
+  'android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png': 'ec7089c48d32d46c',
+  'android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png': 'f48bc0073cf5ec1c',
   'android/app/src/main/res/drawable-nodpi/splash_truck.webp': '7a7a9acec9ee7f32',
 };
 async function asset(path, minBytes = 5000) {
@@ -304,6 +306,7 @@ for(const role of ['client','owner','driver','master','tow','service','master_se
 const labels = await read('web/src/dict.ts');
 const native = await read('android/app/src/main/java/ru/traksos/app/MainActivity.kt');
 
+await asset('branding/approved-launcher-master-2026-11-20.png', 2000000);
 await asset('web/public/tracksos-approved-hero-owner-20261119.webp', 50000);
 await asset('android/app/src/main/res/drawable-nodpi/splash_truck.webp', 2000);
 await asset('android/app/src/main/res/mipmap-mdpi/ic_launcher.png', 1200);
@@ -314,8 +317,8 @@ await asset('android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png', 5000);
 await asset('web/public/icon-192.png', 5000);
 await asset('web/public/icon-512.png', 25000);
 await asset('branding/tracksos-rustore-icon.png', 25000);
-// These PNG resources have been rebuilt directly from the owner's 19 Nov PNG:
-// truck silhouette / wordmark. Pre-17 Nov launcher and notification bytes fail.
+// Launcher PNGs are now generated from the owner-approved 20 Nov cinematic icon.
+// Notification icons remain unchanged; never use the launcher for notifications.
 for (const icon of ["android/app/src/main/res/drawable-mdpi/ic_notify.png","android/app/src/main/res/drawable-hdpi/ic_notify.png","android/app/src/main/res/drawable-xhdpi/ic_notify.png","android/app/src/main/res/drawable-xxhdpi/ic_notify.png","android/app/src/main/res/drawable-xxxhdpi/ic_notify.png"]) {
   await asset(icon, 400);
 }
@@ -323,9 +326,18 @@ for (const icon of ["android/app/src/main/res/drawable-mdpi/ic_notify.png","andr
 expect(createHash('sha256').update(await readFile('web/public/icon-512.png')).digest('hex') ===
        createHash('sha256').update(await readFile('branding/tracksos-rustore-icon.png')).digest('hex'),
   'RuStore and PWA 512 use the same owner-approved cinematic icon');
-expect((await read('web/index.html')).includes('icon-192.png') &&
-       (await read('web/public/manifest.webmanifest')).includes('icon-512.png'),
-  'browser favicon and PWA manifest use approved raster artwork');
+const iconBytes=(path)=>readFile(path);
+const byteHash=async(path)=>createHash('sha256').update(await iconBytes(path)).digest('hex');
+expect(await byteHash('web/public/icon-192.png') ===
+       await byteHash('android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png'),
+  'Android xxXHDPI 192 and PWA 192 use the same exact approved icon bytes');
+const pwaManifest=JSON.parse(await read('web/public/manifest.webmanifest'));
+expect((await read('web/index.html')).includes('icon-192.png?v=approved-20261120') &&
+       (await read('web/index.html')).includes('manifest.webmanifest?v=approved-20261120') &&
+       pwaManifest.icons?.some(i=>i.src==='icon-192.png?v=approved-20261120'&&i.sizes==='192x192') &&
+       pwaManifest.icons?.some(i=>i.src==='icon-512.png?v=approved-20261120'&&i.sizes==='512x512') &&
+       (await read('android/app/src/main/AndroidManifest.xml')).includes('android:icon="@mipmap/ic_launcher"'),
+  'updated icon reaches Android launcher, cached browser favicons and PWA manifest');
 expect(!css.includes('tracksos-approved-map.webp') && css.includes('public-map-static'), 'pre-17 Nov map bitmap is excluded from active website');
 expect(!css.includes("url('../public/truck-scene.svg')"), 'old cartoon truck is not the active hero image');
 expect(landing.includes('public-map-static'), 'public map does not depend on network services');
