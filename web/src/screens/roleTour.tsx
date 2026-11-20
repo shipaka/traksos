@@ -19,8 +19,10 @@ function tourSteps(mode: string, role: string): TourStep[] {
     admin: { selector: 'main', title: 'Панель управления', description: 'Заявки, проверка партнёров, деньги, оферты и тестовый центр. Реальные изменения требуют подтверждения.' },
   };
   if (byRole[role]) start.push(byRole[role]);
+  const menuSelector = window.matchMedia('(max-width:899px)').matches
+    ? '.tabbar a[href="#/menu"]' : '.account-menu > summary';
   start.push(
-    { selector: '.account-menu > summary', title: 'Все функции — в Меню', description: 'Здесь профиль, финансы, история, документы, настройки и выход. На мобильном не нужно искать их среди нижних кнопок.' },
+    { selector: menuSelector, title: 'Все функции — в Меню', description: 'В Android нижняя кнопка «Меню» открывает рабочие разделы, документы, обучение, настройки и выход. На ПК то же находится в верхнем меню.' },
     { selector: '.tr-context-help > summary', title: 'Подсказка именно для этого экрана', description: '«Что здесь делать?» объясняет ближайший шаг и показывает ссылки на обучение и условия.' },
   );
   return start;
