@@ -156,3 +156,16 @@
  .owner20-bottom-card{padding:13px 10px}
  .owner20-bottom-card p{font-size:11px}
 }
+
+/* Reset the generic <main> layout (18px gap / 24px padding) inherited
+   from the old site. The owner's 1536×864 screenshot is edge-to-edge. */
+@media(min-width:900px){
+ .guest-app.guest-home .desktop-content > main.owner20-home{
+   display:block!important;flex:0 0 auto!important;
+   width:100%!important;max-width:1800px!important;
+   padding:0!important;margin:0 auto!important;gap:0!important;
+ }
+ .guest-app.guest-home .desktop-content > main.owner20-home > :is(header,section,nav,p){
+   flex:none;
+ }
+}
