@@ -1,0 +1,102 @@
+name: TrakSOS — безопасный выпуск на VPS
+run-name: "VPS release ${{ inputs.commit_sha }}"
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: 'Полный SHA уже проверенного коммита main (40 hex)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: traksos-production-release
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 45
+    steps:
+      - name: Validate release SHA
+        env:
+          TARGET_SHA: ${{ inputs.commit_sha }}
+        run: |
+          set -euo pipefail
+          [[ "$TARGET_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "Invalid SHA"; exit 1; }
+          echo "TARGET_SHA=$TARGET_SHA" >> "$GITHUB_ENV"
+
+      - name: Check out approved main at exact SHA
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Refuse non-main or outdated commit
+        run: |
+          set -euo pipefail
+          [[ "$(git rev-parse HEAD)" == "$TARGET_SHA" ]] || {
+            echo "The requested release is not the current main HEAD. Aborting."; exit 1;
+          }
+
+      - name: Configure pinned SSH host and key
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          for name in VPS_HOST VPS_USER VPS_SSH_KEY VPS_KNOWN_HOSTS; do
+            [[ -n "${!name}" ]] || { echo "Missing required secret: $name"; exit 1; }
+          done
+          [[ "$VPS_HOST" =~ ^[A-Za-z0-9._-]+$ ]] || exit 1
+          [[ "$VPS_USER" =~ ^[A-Za-z_][A-Za-z0-9_-]*$ ]] || exit 1
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
+          printf '%s\n' "$VPS_SSH_KEY" > "$HOME/.ssh/id_vps"
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/id_vps" "$HOME/.ssh/known_hosts"
+          echo "TRAKSOS_VPS_HOST=$VPS_HOST" >> "$GITHUB_ENV"
+          echo "TRAKSOS_VPS_USER=$VPS_USER" >> "$GITHUB_ENV"
+
+      - name: Deploy only fast-forwarded main with database backup and sandbox
+        run: |
+          set -euo pipefail
+          ssh -i "$HOME/.ssh/id_vps" -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes -o BatchMode=yes -o ConnectTimeout=15 \
+            "$TRAKSOS_VPS_USER@$TRAKSOS_VPS_HOST" bash -s -- "$TARGET_SHA" <<'REMOTE'
+          set -Eeuo pipefail
+          target="$1"
+          cd /root/traksos
+          [[ "$(git branch --show-current)" == "main" ]] ||
+            { echo "VPS is not on main; abort"; exit 1; }
+          [[ -z "$(git status --porcelain --untracked-files=no)" ]] ||
+            { echo "VPS has tracked local edits; abort"; exit 1; }
+          git fetch --no-tags origin main
+          [[ "$(git rev-parse origin/main)" == "$target" ]] ||
+            { echo "VPS origin/main SHA does not match requested release"; exit 1; }
+          git merge-base --is-ancestor HEAD origin/main ||
+            { echo "VPS has divergent or ahead local commits. Manual reconciliation required; no reset."; exit 1; }
+          git merge --ff-only origin/main
+          [[ "$(git rev-parse HEAD)" == "$target" ]] ||
+            { echo "Checkout mismatch"; exit 1; }
+          bash deploy/update-site.sh
+          bash deploy/doctor.sh
+          REMOTE
+
+      - name: Verify public HTTPS after release
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --max-time 20 \
+            --retry 3 --retry-delay 2 \
+            https://traksos.ru/api/health > /tmp/traksos-health.json
+          node -e "
+            const fs=require('fs');
+            const h=JSON.parse(fs.readFileSync('/tmp/traksos-health.json','utf8'));
+            if(!h.db || h.sandbox || h.buildRevision!==process.env.TARGET_SHA) process.exit(1);
+            console.log('Production health and revision verified');
+          "
