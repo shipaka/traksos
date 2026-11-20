@@ -118,10 +118,13 @@ function OrderRoute({order,role}:{order:any;role:'client'|'performer'}) {
   if(order.service==='consult')return null;
   const href=orderNavigationHref(order);
   const external=href.startsWith('https:');
+  // Native WebView delegates non-TrakSOS HTTPS URLs via ACTION_VIEW.
+  // It intentionally disables popup windows, so never use target=_blank there.
+  const openNewTab=external && !document.documentElement.classList.contains('traksos-native');
   const eta=Number(order.dispatch_eta_minutes);
   return <div className="and19-order-route">
     <a href={href} className="and19-route-button"
-      {...(external?{target:'_blank',rel:'noopener noreferrer'}:{})}
+      {...(openNewTab?{target:'_blank',rel:'noopener noreferrer'}:{})}
       aria-label={external?'Открыть дорожную навигацию по адресу заявки':'Открыть расположение и маршрут в заявке'}>
       <NavGlyph glyph="navigation"/>{role==='performer'?'Навигация':'Маршрут'}
     </a>
