@@ -53,7 +53,7 @@ jobs:
         run: node e2e/native-guest-layout.mjs
       - name: Реальные Android-кабинеты после входа (синтетические CI-аккаунты)
         run: node e2e/android-approved-real-screens.mjs
-      - name: Реальные переходы и три преимущества утверждённой публичной главной
+      - name: Реальные публичные переходы и безопасность без устаревшего дизайн-эталона
         run: node e2e/public-service-routing.mjs
       - name: PNG со всех проверенных экранов
         if: always()
@@ -67,7 +67,7 @@ jobs:
         if: always()
         run: |
           echo '### TrakSOS: screenshots — real Chromium, not mockups' >> "$GITHUB_STEP_SUMMARY"
-          echo 'Owner-approved reference: 19 Nov 2026; file SHA256 87dfe69efc473842707cfb85fbe5a8cde2f691732a5be35d0f82def1a69cdda5.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Current desktop visual canon: image #2 from 18 Nov, reconfirmed 20 Nov. Client/master and other Android references approved separately. This test checks functionality, not pixel-level visual acceptance.' >> "$GITHUB_STEP_SUMMARY"
           echo "Source HEAD: ${{ github.event.pull_request.head.sha || github.sha }}" >> "$GITHUB_STEP_SUMMARY"
           echo 'Artifact screens-real-browser contains actual HTML screenshots if build and Chromium launched.' >> "$GITHUB_STEP_SUMMARY"
           echo 'Passing this job does not mean visual owner acceptance, Android acceptance, or production deployment.' >> "$GITHUB_STEP_SUMMARY"
