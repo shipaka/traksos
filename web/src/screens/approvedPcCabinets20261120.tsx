@@ -217,6 +217,7 @@ function CustomerDesk({owner}:{owner:boolean}){
 function SelectedPerformerCase({order,tow}:{order:any;tow:boolean}){
   const detail=useLoad(()=>get<any>('/api/orders/'+order.id),[order.id],e=>e.type==='order'&&String(e.orderId)===String(order.id));
   const {busy,run}=useAction();
+  const [view,setView]=useState<'work'|'vehicle'|'bill'|'chat'|'history'>('work');
   const d=detail.data||order;
   const v=transport(d);
   const step=d.you==='performer'&&d.status==='accepted' ? {action:'depart',label:'Выехал'}
@@ -237,7 +238,10 @@ function SelectedPerformerCase({order,tow}:{order:any;tow:boolean}){
     <header><div><small>{tow?'ЭВАКУАЦИЯ':'ВЫЕЗДНОЙ РЕМОНТ'} · ВЫБРАННАЯ ЗАЯВКА</small>
       <h2>№{text(d.number||d.id)} · {SERVICES[d.service]?.name||text(d.service)}</h2></div>
       <span className="approved-pc-stage">{statusName(d)}</span></header>
-    <div className="approved-pc-performer-content">
+    <Tabs active={view} onChange={id=>setView(id as typeof view)} items={[
+      ['work','Работа',null],['vehicle','Клиент и ТС',null],['bill','Расчёт',null],
+      ['chat','Чат',null],['history','История',null]]}/>
+    {view==='work'&&<div className="approved-pc-performer-content">
       <div>
         <div className="approved-pc-photo-with-tech">
           <Photo v={v} href={d.vehicleId?'#/garage/'+d.vehicleId:undefined}/>
@@ -279,7 +283,32 @@ function SelectedPerformerCase({order,tow}:{order:any;tow:boolean}){
           <p className="approved-pc-caveat">Загруженные материалы прикрепляются к выбранному заказу. Закрытие и оплата подтверждаются отдельно.</p>
         </Pane>
       </div>
-    </div>
+    </div>}
+    {view==='vehicle'&&<div className="approved-pc-performer-content">
+      <div><Photo v={v} href={d.vehicleId?'#/garage/'+d.vehicleId:undefined}/><h3>{vehicleLabel(v)}</h3>
+        <p><b>VIN:</b> {text(v?.vin)}</p><p><b>Номер:</b> {text(v?.plate)}</p>
+        {v?.trailerPlate&&<p><b>Прицеп:</b> {v.trailerPlate}</p>}</div>
+      <Pane title="Клиент и условия"><p><b>Клиент:</b> {text(d.client?.company_name||d.client?.name||d.client_name)}</p>
+        <p><b>Место:</b> {text(d.address||d.estimate?.zoneName)}</p>
+        {d.comment&&<p>{d.comment}</p>}
+        <a className="approved-pc-small-link" href={'#/order/'+d.id+'/vehicle'}>Сведения и история транспорта →</a></Pane>
+    </div>}
+    {view==='bill'&&<Pane title="Расчёт и согласование">
+      <p>Сумма, расходники, время работы и подтверждение клиента доступны в действующей финансовой форме заказа.</p>
+      <a className="approved-pc-primary" href={'#/order/'+d.id}>Открыть расчёт по заявке</a>
+      <p className="approved-pc-caveat">Нельзя отмечать услугу оплаченной до подтверждения сервером.</p>
+    </Pane>}
+    {view==='chat'&&<Pane title="Связь по заявке">
+      <p>Вся переписка привязана к текущему заказу. Личные номера участников не раскрываются.</p>
+      <a className="approved-pc-primary" href={'#/order/'+d.id+'?chat=1'}>Открыть чат клиента</a>
+    </Pane>}
+    {view==='history'&&<Pane title="История заказа">
+      <p><b>Текущий статус:</b> {statusName(d)}</p>
+      {Array.isArray(d.events)&&d.events.slice(-8).map((e:any,i:number)=><p className="approved-pc-evidence" key={String(e.id||i)}>
+        {text(e.type)} · {text(e.created_at||e.at)}
+      </p>)}
+      <a className="approved-pc-primary" href={'#/order/'+d.id}>Все этапы, документы и подтверждения</a>
+    </Pane>}
   </section>;
 }
 
