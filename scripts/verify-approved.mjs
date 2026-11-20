@@ -634,7 +634,7 @@ expect(pcSource.includes("export type ApprovedPCRole") &&
   ['driver','owner','master','tow','service','insurer','inspection','moderator','admin']
     .every(role=>pcSource.includes("'"+role+"'")) &&
   pcSource.includes("useDesktopSize()") &&
-  pcCss.includes("@media(min-width:0px)") &&
+  pcCss.includes("@media(min-width:1000px)") &&
   pcCss.includes("html.traksos-browser .approved-pc-admin") &&
   pcSource.includes("role==='admin' && !native.isApp") &&
   unifiedShell.includes('ApprovedPcDesk') &&
