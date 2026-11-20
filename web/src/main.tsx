@@ -78,7 +78,7 @@ import { ModeratorDesk } from './screens/moderatorDesk.tsx';
 import { AdminTestCenter } from './screens/adminTestCenter.tsx';
 import { ServicePreviewBar,ServicePreviewPage } from './screens/servicePreview.tsx';
 import { SupportList, SupportNew, SupportThread, Notifications, useUnread } from './screens/support.tsx';
-import { InsurerCabinet } from './screens/insurer.tsx';
+import { InsurerCabinet, InsurerChats } from './screens/insurer.tsx';
 import { InsuranceApplication,InsuranceThread } from './screens/insuranceFlow.tsx';
 
 /** Last-resort screen protection: a broken widget must not produce a blank website. */
@@ -293,7 +293,7 @@ function App() {
     case 'booking': screen = <BookingPage id={b} />; break;
     case 'fleet': screen = isCustomer && !me.owner_id && !me.roles.includes('driver') ? <Fleet /> : <main><div className="empty">Парком управляет владелец</div></main>; break;
     case 'inspections': screen = isInspection || isInsurer ? <InsurerCabinet inspectionOnly /> : <Home />; break;
-    case 'insurance': screen = b === 'request' ? (route[2] === 'new' ? <InsuranceApplication vehicleId={route[3]??''} /> : <InsuranceThread requestId={route[2]??''} />) : isInsurer ? <InsurerCabinet /> : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
+    case 'insurance': screen = b === 'request' ? (route[2] === 'new' ? <InsuranceApplication vehicleId={route[3]??''} /> : <InsuranceThread requestId={route[2]??''} />) : isInsurer ? (b==='chats'?<InsurerChats/>:<InsurerCabinet/>) : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
     case 'help': screen = b === 'case' && route[2] ? <ScenarioLesson id={route[2]} /> : <Help />; break;
     case 'economics': screen = <EconomicsPage />; break;
     case 'learn': screen = <PlatformIntro />; break;
@@ -396,13 +396,13 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     : mode === 'service'
       ? [['/base', '⌂', 'Главная'], ['/base/inbox', '☷', 'Заявки'], ['/shop', '🛍', 'Магазин'], ['/base/money', '₽', 'Финансы'], ['/profile', '◉', 'Меню']]
     : mode === 'insurer'
-      ? [['/insurance', '▦', 'Главная'], ['/profile', '◉', 'Меню']]
+      ? [['/insurance', '⌂', 'Главная'], ['/insurance/requests', '☷', 'Заявки'], ['/insurance/chats', '▤', 'Чат'], ['/profile', '◉', 'Меню']]
     : mode === 'inspection'
       ? [['/inspections', '▣', 'Техосмотр'], ['/profile', '◉', 'Меню']]
     : mode === 'moderator'
-      ? [['/moderation', '⌂', 'Главная'], ['/support', '?', 'Обращения'], ['/profile', '◉', 'Меню']]
+      ? [['/moderation', '⌂', 'Главная'], ['/admin/section/queue', '☷', 'Очередь'], ['/support', '▤', 'Обращения'], ['/profile', '◉', 'Меню']]
     : [['/admin', '⌂', 'Главная'], ['/admin/section/orders', '☷', 'Заявки'],
-       ['/admin/section/people', '▤', 'Пользователи'], ['/profile', '◉', 'Меню']];
+       ['/admin/section/registry', '▤', 'Люди'], ['/profile', '◉', 'Меню']];
   // Все дополнительные функции доступны в шапке, даже когда они не в нижних вкладках.
   // Не показываем чужие роли и не создаём несуществующие страницы.
   const accountLinks: [string, string][] = mode === 'performer'
