@@ -618,18 +618,3 @@
    -webkit-mask-image:none!important;mask-image:none!important;
  }
 }
-
-/* Use the exact original owner-selected TrakSOS wordmark, not a placeholder truck SVG. */
-@media(min-width:900px){
- .guest-app.guest-home .owner20-mark{
-   display:block!important;
-   width:235px!important;
-   height:53px!important;
-   flex:0 0 235px!important;
-   margin-left:9px!important;
-   background:url('/owner20-header-logo-approved.webp') center / 235px 53px no-repeat!important;
- }
- .guest-app.guest-home .owner20-mark > * {
-   opacity:0!important;
- }
-}
