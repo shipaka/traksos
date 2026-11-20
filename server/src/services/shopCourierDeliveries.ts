@@ -170,10 +170,13 @@ export class ShopCourierDeliveries {
        data:{shopOrderId:result.d.shop_order_id}});
     return this.one(courier,id);
   }
+  /** Only the authenticated user who actually placed the shop order may
+   * reveal its receipt code or confirm receipt. A fleet owner must not
+   * confirm a driver's parcel merely by owning the company. */
   async receiptCode(buyer:AuthUser,orderId:string){
     const d=await this.db.one<any>(`select d.*,o.client_id,o.created_by,o.status as shop_status
       from shop_courier_deliveries d join shop_orders o on o.id=d.shop_order_id
-      where o.id=$1 and (o.client_id=$2 or o.created_by=$2)`,[orderId,buyer.id]);
+      where o.id=$1 and o.created_by=$2`,[orderId,buyer.id]);
     if(!d)throw notFound('Код для этого заказа недоступен');
     if(!ACTIVE.includes(d.status)||d.shop_status==='cancelled')
       throw conflict('no_active_delivery','Доставка сейчас не ожидает вручения');
@@ -187,7 +190,7 @@ export class ShopCourierDeliveries {
     const d=await this.db.tx(async q=>{
       const d=await q.one<any>(`select d.*,o.client_id,o.created_by,o.status as shop_status
         from shop_courier_deliveries d join shop_orders o on o.id=d.shop_order_id
-       where o.id=$1 and (o.client_id=$2 or o.created_by=$2) for update of d,o`,
+       where o.id=$1 and o.created_by=$2 for update of d,o`,
        [orderId,buyer.id]);
       if(!d)throw notFound('Заказ не найден в ваших доставках');
       if(d.status==='received')return d; // repeat request cannot double-close
