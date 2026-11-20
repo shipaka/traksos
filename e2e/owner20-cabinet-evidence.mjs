@@ -93,6 +93,25 @@ try{
      const dims=await page.evaluate(()=>({client:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));
      if(dims.scroll>dims.client+3)throw Error('Horizontal overflow '+JSON.stringify(dims));
      if(errors.length)throw Error('Uncaught errors '+errors.join('; '));
+     if(c.id==='owner'){
+       // Browser mobile and desktop must use the SAME original logo and the
+       // SAME four photographs; card proportions may differ with the viewport.
+       const visual=await page.evaluate(async()=>{
+         const logo=document.querySelector('.top .tr-approved-brand-logo img');
+         const scenes=Array.from(document.querySelectorAll('.desktop-quick-card .tr-service-illustration'));
+         const atlas=await fetch('/traksos-service-scenes-shared.webp');
+         const bmp=atlas.ok?await createImageBitmap(await atlas.blob()).catch(()=>null):null;
+         return {
+           logo:logo?.getAttribute('src'),loaded:logo?.complete&&logo?.naturalWidth>0,
+           illustrations:scenes.length,
+           matched:scenes.every(el=>getComputedStyle(el).backgroundImage.includes('traksos-service-scenes-shared.webp')),
+           size:bmp?{w:bmp.width,h:bmp.height}:null,
+         };
+       });
+       if(visual.logo!=='/traksos-brand-logo-approved-618.png'||!visual.loaded||
+          visual.illustrations!==4||!visual.matched||visual.size?.w!==704||visual.size?.h!==105)
+         throw Error('Owner shared-brand/art parity failed at '+width+': '+JSON.stringify(visual));
+     }
      if(width===1440) {
        // The desktop must show ONE onboarding prompt, not two stacked panels.
        const prompts=await page.locator('.tr-training-invite:visible, section.card[aria-label="Знакомство с TrakSOS"]:visible').count();
