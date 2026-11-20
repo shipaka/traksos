@@ -56,7 +56,7 @@ export function AndroidDesignReview({ role }: { role?: string }) {
     <header className="and19-review-header">
       <img src={APPROVED_VISUALS.logo} alt="TrakSOS" width="218" height="37" />
       <div className="and19-review-header-actions">
-        <span className="and19-review-bell" aria-label="Уведомления в демо недоступны" role="img">♧</span>
+        <span className="and19-review-bell" aria-label="Уведомления в демо недоступны" role="img"><NavGlyph glyph="bell" /></span>
         <a href="#/" aria-label="Выйти из режима просмотра"><NavGlyph glyph="◉" /></a>
       </div>
     </header>
