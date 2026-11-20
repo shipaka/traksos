@@ -29,6 +29,7 @@ import './approvedBottomNavigation20261120.css';
 import './desktopCabinetsOwner20261120.css';
 // Shared approved logo, cinematic empty illustrations and service art for PC, browser and APK WebView.
 import './approvedCrossPlatformVisuals.css';
+import './androidDesignReview.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
@@ -41,6 +42,7 @@ document.documentElement.classList.add('traksos-compact-guest');
 import { Login } from './screens/login.tsx';
 import { GuestExplore } from './screens/guestExplore.tsx';
 import { DemoPreviewGate } from './screens/demoPreview.tsx';
+import { AndroidDesignReview } from './screens/androidDesignReview.tsx';
 import { SandboxEnter, SandboxModeBar } from './screens/isolatedSandbox.tsx';
 import { GuestCompany, GuestOffers } from './screens/guestInfo.tsx';
 import { PUBLIC_CAPABILITIES } from './guestCatalog.ts';
@@ -229,6 +231,10 @@ function App() {
   // Handoff takes place on the separate sandbox origin. The ticket is not a
   // production login and never reaches normal application API endpoints.
   if (route[0] === 'sandbox-enter') return <SandboxEnter />;
+  // Native debug builds allow owner review of actual Android widgets with synthetic data.
+  // Release builds and browsers cannot enter this route; never grant a user session.
+  if (route[0] === 'android-review' && native.isPreviewBuild && !me)
+    return <AndroidDesignReview role={route[1]} />;
 
   // Ссылка-приглашение: запоминаем код, вход — как обычно
   if (route[0] === 'r' && route[1]) { try { localStorage.setItem('traksos.ref', route[1].toUpperCase()); } catch { /* */ } }
@@ -519,6 +525,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         </details>}
         {!isAuthEntry && <SiteQuickSearch authenticated={!!me} />}
         <div className="row" style={{ flexWrap: 'nowrap' }}>
+          {!me && native.isPreviewBuild && <a href="#/android-review/client" className="and19-review-entry" style={{color:'#ffad70',fontSize:12}}>Посмотреть кабинеты APK</a>}
           {!me && !isAuthEntry && <div className="guest-header-actions"><a href="#/login">Войти</a><a href="#/register" className="register">Зарегистрироваться</a></div>}
           {me && mode === 'performer' && <span className="pill accent">исполнитель</span>}
           {me && mode === 'admin' && <span className="pill accent">админ</span>}
