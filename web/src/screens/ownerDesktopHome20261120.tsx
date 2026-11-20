@@ -20,6 +20,26 @@ function rememberAllowed(key:string){
   if(key==='van'||key==='tow'||key==='sto'||key==='consult'||key==='parts'||key==='insurance'||key==='inspection') rememberGuestService(key);
 }
 function route(key:string) { return '#/explore/' + key; }
+function OwnerIcon({kind}:{kind:string}) {
+  const props={viewBox:'0 0 48 48',fill:'none',stroke:'currentColor',strokeWidth:3,strokeLinecap:'round' as const,strokeLinejoin:'round' as const,'aria-hidden':true as const};
+  let lines;
+  switch(kind){
+    case 'van': lines=<><path d="M32 6a12 12 0 0 0-11 15L7 35a5 5 0 0 0 7 7l14-14A12 12 0 0 0 43 17l-8 8-10-3-2-9Z"/></>;break;
+    case 'tow': lines=<><path d="M3 27h34l6 8v6H4V27Zm6-9h22l6 9H3l6-9ZM13 18V7h16l7 11"/><path d="M14 8 7 14l-3-3m29 2h10"/><circle cx="14" cy="40" r="4"/><circle cx="37" cy="40" r="4"/></>;break;
+    case 'sto': lines=<><path d="M3 19 24 5l21 14v25H3V19Z"/><path d="M13 44V25h22v19M13 33h22"/></>;break;
+    case 'ecu': lines=<><rect x="10" y="10" width="28" height="28" rx="3"/><path d="M16 4v6m8-6v6m8-6v6M16 38v6m8-6v6m8-6v6M4 16h6m-6 8h6m-6 8h6m28-16h6m-6 8h6m-6 8h6"/><rect x="17" y="17" width="14" height="14" rx="2"/></>;break;
+    case 'consult': lines=<><path d="M5 25V23a19 19 0 0 1 38 0v3M5 25v10c0 5 4 8 8 8h4V27h-4a8 8 0 0 0-8 8m38-10v10c0 5-4 8-8 8h-4V27h4a8 8 0 0 1 8 8"/></>;break;
+    case 'tech': lines=<><path d="M8 7h27a5 5 0 0 1 5 5v29H13a5 5 0 0 0 0-10h27"/><path d="M8 7v29a5 5 0 0 0 5 5m5-26h15m-15 6h15m-15 6h11"/></>;break;
+    case 'parts': lines=<><circle cx="24" cy="24" r="8"/><path d="M19 4h10l2 6 5 3 6-2 4 9-5 5 1 6 4 4-5 9-6-2-6 2-2 6H18l-2-6-6-2-6 2-4-9 5-4v-7l-5-5 4-9 6 2 6-3Z" transform="translate(2,-2) scale(.9)"/></>;break;
+    case 'insurance': lines=<><path d="M24 4 42 11v13c0 12-7 19-18 22C13 43 6 36 6 24V11Z"/><path d="m14 25 7 7 14-16"/></>;break;
+    case 'inspection': lines=<><rect x="10" y="7" width="27" height="37" rx="4"/><path d="M17 4h13v6H17zm1 17 3 3 6-7m-9 17 3 3 6-7M30 23h4m-4 10h4"/></>;break;
+    case 'warning': lines=<><path d="M20 7a5 5 0 0 1 8 0l18 30a5 5 0 0 1-4 8H6a5 5 0 0 1-4-8Z"/><path d="M24 18v12m0 7v1"/></>;break;
+    case 'air': lines=<><circle cx="24" cy="25" r="4" fill="currentColor" stroke="none"/><path d="M15 16a12 12 0 0 0 0 18m18-18a12 12 0 0 1 0 18M9 10a20 20 0 0 0 0 30m30-30a20 20 0 0 1 0 30"/></>;break;
+    default: lines=<><circle cx="24" cy="24" r="18"/><path d="M16 24h16m-8-8v16"/></>;
+  }
+  return <svg {...props}>{lines}</svg>;
+}
+
 function TruckLogo() {
   return <svg viewBox="0 0 64 42" fill="none" stroke="currentColor" strokeWidth="2.1" aria-hidden="true">
     <path d="M3 32V16l13-8 27 3 9 9v13H3m8-15h13l3-6m-1 6h16V13M3 37h56M8 6h14M45 22h12m-8 5h11"/>
@@ -29,7 +49,7 @@ function TruckLogo() {
 function Feature({item,index}:{item:typeof features[number];index:number}) {
   const [symbol,title,description,key,action] = item;
   return <a href={route(key)} className={'owner20-feature owner20-feature-'+key} onClick={() => rememberAllowed(key)}>
-    <div className="owner20-feature-title"><span aria-hidden="true">{symbol}</span><b>{title}</b></div>
+    <div className="owner20-feature-title"><span aria-hidden="true"><OwnerIcon kind={key}/></span><b>{title}</b></div>
     <p>{description}</p>
     <span className="owner20-feature-illustration" aria-hidden="true">{index === 0 ? '▤' : index===1?'▦':index===2?'⚙':index===3?'◇':'✓'}</span>
     <span className="owner20-feature-cta">{action}　→</span>
@@ -64,8 +84,8 @@ export function OwnerDesktopHome20261120() {
         <h1 id="owner20-heading">Помощь в дороге.<br/>Сервис и поддержка<br/><em>для грузового транспорта</em></h1>
         <p>Единая платформа для водителей, владельцев<br/>и автопарков по всей России</p>
         <div className="owner20-hero-links">
-          <a href="#/explore/van" onClick={() => rememberGuestService('van')} className="owner20-alert"><span aria-hidden="true">⚠</span><span><strong>SOS</strong><small>Экстренная помощь</small></span></a>
-          <a href="#/explore/air" className="owner20-broadcast"><span aria-hidden="true">◉</span><span><strong>Эфир</strong><small>Связь, опыт, помощь коллег</small></span></a>
+          <a href="#/explore/van" onClick={() => rememberGuestService('van')} className="owner20-alert"><span aria-hidden="true"><OwnerIcon kind="warning"/></span><span><strong>SOS</strong><small>Экстренная помощь</small></span></a>
+          <a href="#/explore/air" className="owner20-broadcast"><span aria-hidden="true"><OwnerIcon kind="air"/></span><span><strong>Эфир</strong><small>Связь, опыт, помощь коллег</small></span></a>
         </div>
       </div>
       <aside className="owner20-map" aria-label="Покрытие сервисов">
@@ -78,7 +98,7 @@ export function OwnerDesktopHome20261120() {
       </aside>
     </section>
     <nav className="owner20-quick" aria-label="Основные услуги" id="public-services">
-      {primary.map(([symbol,title,hint,key])=><a href={route(key)} key={key} onClick={() => rememberAllowed(key)}><span className="owner20-quick-icon" aria-hidden="true">{symbol}</span><span><b>{title}</b><small>{hint}</small></span></a>)}
+      {primary.map(([symbol,title,hint,key])=><a href={route(key)} key={key} onClick={() => rememberAllowed(key)}><span className="owner20-quick-icon" aria-hidden="true"><OwnerIcon kind={key}/></span><span><b>{title}</b><small>{hint}</small></span></a>)}
     </nav>
     <section className="owner20-features" aria-label="Дополнительные сервисы">
       {features.map((item,index)=><Feature key={item[3]} item={item} index={index}/>)}
