@@ -2,7 +2,11 @@
 export function NavGlyph({ glyph }: { glyph: string }) {
   return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
     strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    {glyph === '⌂' ? <><path d="m3 10 9-7 9 7v10H3z" /><path d="M9 20v-7h6v7" /></>
+    {glyph === 'menu' ? <path d="M4 6h16M4 12h16M4 18h16" />
+    : glyph === 'chat' ? <><path d="M5 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H10l-5 4v-4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" /><path d="M8 10h8M8 14h6" /></>
+    : glyph === 'truck' ? <><path d="M2 7h12v10H2zM14 10h4l4 4v3h-8z" /><circle cx="6" cy="18" r="2" /><circle cx="18" cy="18" r="2" /></>
+    : glyph === 'clipboard' ? <><rect x="5" y="4" width="14" height="18" rx="2" /><rect x="9" y="2" width="6" height="5" rx="1" /><path d="M9 11h6M9 15h6M9 19h4" /></>
+    : glyph === '⌂' ? <><path d="m3 10 9-7 9 7v10H3z" /><path d="M9 20v-7h6v7" /></>
     : glyph === '☷' || glyph === '☰' ? <><path d="M8 6h13M8 12h13M8 18h13" /><path d="M3 6h1M3 12h1M3 18h1" /></>
     : glyph === '✚' || glyph === '＋' ? <><circle cx="12" cy="12" r="9" /><path d="M12 7v10M7 12h10" /></>
     : glyph === '⚙' ? <><circle cx="12" cy="12" r="3.1" /><path d="M12 2v3m0 14v3M2 12h3m14 0h3M4.9 4.9 7 7m10 10 2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1" /></>
