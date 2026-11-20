@@ -457,9 +457,10 @@ const innerAndroidStyle = await read('web/src/androidInternalSections20261120.cs
 const androidRealScreens = await read('e2e/android-approved-real-screens.mjs');
 const mobileMenuBlock = shell.slice(shell.indexOf('const mobileTabs:'),shell.indexOf('const accountLinks:'));
 // Seven production roles plus the isolated STO sandbox variant (both remain navigable).
-expect((mobileMenuBlock.match(/\['\/menu', '◉', 'Меню'\]/g)??[]).length === 8 &&
+expect((mobileMenuBlock.match(/\['\/menu', 'menu', 'Меню'\]/g)??[]).length === 8 &&
   shell.includes("href==='/menu'?'/menu'") &&
   !mobileMenuBlock.includes("['/profile', '◉', 'Меню']") &&
+  !mobileMenuBlock.includes("['/menu', '◉', 'Меню']") &&
   shell.includes("case 'menu': screen =") &&
   shell.includes("<MobileRoleMenu mode={mode}") &&
   shell.includes("onLogout={safeLogout}") &&
@@ -519,6 +520,18 @@ expect(shell.includes('MobileSectionChrome title={sectionLabel} homeHref={worksp
   innerAndroidStyle.includes('tr-native-section-path') &&
   androidRealScreens.includes("view.chrome?.menu!=='#/menu'"),
   'Every native Android inner page has a real role-scope breadcrumb, consistent menu and accessible back navigation');
+
+const navGlyphs = await read('web/src/navGlyph.tsx');
+const reviewWithNav = await read('web/src/screens/androidDesignReview.tsx');
+expect(mobileMenuBlock.includes("['/work/chats', 'chat', 'Чат']") &&
+  mobileMenuBlock.includes("['/garage', 'truck', 'Техника']") &&
+  mobileMenuBlock.includes("['/orders', 'clipboard', 'Заявки']") &&
+  mobileMenuBlock.includes("['/menu', 'menu', 'Меню']") &&
+  ['menu','chat','truck','clipboard'].every(icon=>navGlyphs.includes("glyph === '"+icon+"'")) &&
+  reviewWithNav.includes("['chat','Чат']") &&
+  reviewWithNav.includes("['truck','Техника']") &&
+  reviewWithNav.includes("['menu','Меню']"),
+  '618 Android footer icons are actual matching SVGS: chat, truck, clipboard, menu, identical in live and preview');
 
 if (failures.length) {
   console.error('Approved design gate: '+failures.length+' failure(s).');
