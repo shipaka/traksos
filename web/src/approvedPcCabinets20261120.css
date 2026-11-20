@@ -1,6 +1,6 @@
 /* 20 Nov 2026 approved PC workspaces. Desktop only; Android/mobile remains unchanged.
    Each screen consumes live role-scoped APIs and existing workflows. */
-@media(min-width:1000px){
+/* Shared visual primitives also style the approved admin dashboard on mobile browsers.\n   Other roles continue to mount approved-pc only at desktop widths. */\n@media(min-width:0px){
 .approved-pc{
  --pc-ink:#06131a;--pc-panel:#0b2029;--pc-edge:#247585;--pc-hot:#ff791e;--pc-teal:#4ac5d4;
  color:#f5f9fc;min-width:0;max-width:1800px;margin:0 auto;padding:12px 16px 32px;
@@ -208,4 +208,58 @@
  .approved-pc-heading>img{height:115px}
  .approved-pc-bot img{width:42%}
 }
+}
+
+/* Approved administrator home for mobile browsers. Other mobile app role
+   dashboards remain untouched; navigation/actions retain their real routes. */
+@media (max-width:999px) {
+  html.traksos-browser .approved-pc-admin {
+    width:100%;min-width:0;max-width:100%;padding:10px 12px 95px;gap:12px;
+  }
+  html.traksos-browser .approved-pc-admin .approved-pc-heading {
+    display:grid;grid-template-columns:minmax(0,1fr) 94px;gap:8px;
+    min-height:115px;padding:15px;align-items:center;
+  }
+  html.traksos-browser .approved-pc-admin .approved-pc-heading h1 {
+    font-size:clamp(20px,5vw,28px);overflow-wrap:anywhere;
+  }
+  html.traksos-browser .approved-pc-admin .approved-pc-heading p {
+    font-size:12px;line-height:1.4;
+  }
+  html.traksos-browser .approved-pc-admin .approved-pc-heading>img {
+    height:90px;max-width:94px;object-fit:contain;
+  }
+  html.traksos-browser .approved-pc-admin .approved-pc-metrics {
+    grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+  }
+  html.traksos-browser .approved-pc-admin .approved-pc-metrics a {
+    min-height:80px;padding:10px;min-width:0;overflow-wrap:anywhere;
+  }
+  html.traksos-browser .approved-pc-admin .approved-pc-metrics strong {font-size:23px}
+  html.traksos-browser .approved-pc-admin .approved-pc-three {
+    display:flex;flex-direction:column;gap:12px;min-width:0;
+  }
+  html.traksos-browser .approved-pc-admin :is(.approved-pc-left,.approved-pc-center,.approved-pc-right) {
+    width:100%;min-width:0;display:flex;flex-direction:column;gap:10px;
+  }
+  html.traksos-browser .approved-pc-admin .approved-pc-pane {
+    padding:13px;max-width:100%;overflow:hidden;
+  }
+  html.traksos-browser .approved-pc-admin .approved-pc-stats {
+    grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+  }
+  html.traksos-browser .approved-pc-admin .approved-pc-stats p {
+    flex-direction:column;margin:0;min-width:0;overflow-wrap:anywhere;
+  }
+  html.traksos-browser .approved-pc-admin .approved-pc-case-actions a {
+    flex:1 1 120px;min-width:0;
+  }
+  html.traksos-browser .approved-pc-admin .approved-pc-russia {min-height:138px}
+}
+@media(max-width:370px) {
+  html.traksos-browser .approved-pc-admin {padding-inline:8px}
+  html.traksos-browser .approved-pc-admin .approved-pc-heading {
+    grid-template-columns:minmax(0,1fr) 70px;padding:11px;
+  }
+  html.traksos-browser .approved-pc-admin .approved-pc-heading>img {max-width:70px}
 }
