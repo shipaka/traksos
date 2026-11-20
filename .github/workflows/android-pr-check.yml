@@ -62,7 +62,8 @@ jobs:
           test -s android/app/src/main/assets/www/app.js
           test -s android/app/src/main/assets/www/app.css
           test -s android/app/src/main/assets/www/tracksos-approved-hero-owner-20261119.webp
-          test -s android/app/src/main/assets/www/tracksos-approved-hero-owner-20261119.webp
+          test -s android/app/src/main/assets/www/traksos-brand-logo-approved-618.png
+          test -s android/app/src/main/assets/www/vehicles/models/scania-r520-2016.webp
 
       - name: Build debug APK without release credentials
         working-directory: android
@@ -72,7 +73,7 @@ jobs:
         run: |
           APK=android/app/build/outputs/apk/debug/app-debug.apk
           test -s "$APK"
-          for asset in index.html app.js app.css tracksos-approved-hero-owner-20261119.webp; do
+          for asset in index.html app.js app.css tracksos-approved-hero-owner-20261119.webp traksos-brand-logo-approved-618.png vehicles/models/scania-r520-2016.webp; do
             unzip -Z1 "$APK" | grep -Fx "assets/www/$asset"
           done
           grep -F '"applicationId": "ru.traksos.app.preview"' android/app/build/outputs/apk/debug/output-metadata.json
@@ -156,6 +157,8 @@ jobs:
             runtime-errors.log
             activity-dump.txt
             emulator-screen.png
+            android-review-client.png
+            android-review-master.png
             emulator-ui.xml
             runtime-ready.log
           if-no-files-found: warn
