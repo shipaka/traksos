@@ -40,8 +40,8 @@
 }
 .app.role-client .desktop-quick-card:hover>.tr-service-illustration {
   opacity:.79;
-  transform:scale(1.03);
-  transform-origin:right bottom;
+  /* The approved 176x105 crop has no additional pixels to support zoom. */
+  transform:none;
 }
 /* Android keeps the approved 4-column phone geometry; imagery enriches the
    existing tiles without inserting another grid row or changing controls. */
@@ -57,11 +57,18 @@
 .and19-services>a>.tr-service-illustration {
   right:-7px;
   bottom:-5px;
-  /* Same approved scene as PC. Mobile tile proportions remain untouched. */
+  /* Paint the atlas directly at half-size, instead of GPU-scaling the
+     already cropped raster a second time. No layout/grid size changes. */
+  width:88px;
+  height:52.5px;
+  background-size:352px 52.5px;
   opacity:.49;
-  transform:scale(.51);
-  transform-origin:right bottom;
+  transform:none;
 }
+.and19-services>a>.tr-service-illustration--repair{background-position:0 0}
+.and19-services>a>.tr-service-illustration--tow{background-position:-88px 0}
+.and19-services>a>.tr-service-illustration--service{background-position:-176px 0}
+.and19-services>a>.tr-service-illustration--consult{background-position:-264px 0}
 /* Android's original direct-child icon rule assigns 23px to every span.
    The service label is now wrapped only to keep it above the photograph;
    restore the exact original 10px inherited text sizing. */
