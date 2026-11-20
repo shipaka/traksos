@@ -71,8 +71,8 @@ export function OwnerDesktopHome20261120() {
       <aside className="owner20-map" aria-label="Покрытие сервисов">
         <h2>Покрытие сервисов TrakSOS</h2>
         <div className="owner20-map-inner">
-          <div className="owner20-map-shape" role="img" aria-label="Демонстрационная схема покрытия. Подключение регионов уточняется."><span>РОССИЯ</span><i>ПИЛОТ<br/>СПБ / ЛО</i></div>
-          <div className="owner20-map-legend"><p><i className="teal"/>Пилотный регион</p><p><i/>Планируемое расширение</p><small>Доступность услуг зависит от региона и партнёрской сети.</small></div>
+          <div className="owner20-map-shape" role="img" aria-label="Демонстрационная схема карты России из утверждённого макета, не подтверждение фактического покрытия."><img src="/owner20-russia-coverage-reference.svg" alt="" aria-hidden="true" loading="eager"/><span className="owner20-map-demo-tag">ДЕМО</span></div>
+          <div className="owner20-map-legend"><p><i className="teal"/>Пример зоны покрытия</p><p><i/>Планируемое расширение</p><small>Доступность услуг зависит от региона и партнёрской сети.</small></div>
         </div>
         <a href="#/explore/guide">Подробнее о покрытии →</a>
       </aside>
