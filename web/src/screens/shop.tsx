@@ -276,8 +276,11 @@ function MyShopOrders({ orders, reload, canOrder }: { orders: any[]; reload: () 
             {openAnalog === i.productId && <HistoryAnalogs productId={i.productId} add={addItem} />}
           </div>)}
           {o.adminNote && <span>{o.adminNote}</span>}
-          {o.delivery==='delivery' && (o.status==='ready'||o.status==='shipped')&&
-            <CustomerCourierReceipt orderId={o.id} reload={reload}/>} 
+          {o.delivery==='delivery' && o.canConfirmCourierReceipt &&
+            ['ready','shipped'].includes(o.status) &&
+            <CustomerCourierReceipt orderId={o.id} reload={reload}/>}
+          {o.courierStatus && !o.canConfirmCourierReceipt && o.status!=='done' && o.status!=='cancelled' &&
+            <span className="note">Код вручения доступен только пользователю, который оформил заказ.</span>}
           {o.cancelReason && <span className="note">Отменён: {o.cancelReason}</span>}
           {o.status === 'new' && <button className="btn ghost small" disabled={busy} onClick={async () => { if (await run(() => post(`/api/shop/orders/${o.id}/cancel`), 'Заказ отменён')) reload(); }}>Отменить</button>}
         </div>
