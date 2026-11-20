@@ -37,6 +37,11 @@ export function Work({background=false}:{background?:boolean}={}) {
   const active = (jobs.data ?? []).filter((o: any) =>
     ['accepted','en_route','arrived','working','awaiting_confirmation'].includes(o.status) &&
     !(['pending_client','disputed'].includes(o.unilateral_status)));
+  const todayCount = (jobs.data ?? []).filter((o:any)=>{
+    const accepted=o?.accepted_at ? new Date(o.accepted_at) : null;
+    return accepted && !Number.isNaN(accepted.getTime()) &&
+      accepted.toDateString() === new Date().toDateString();
+  }).length;
   const toReview = (jobs.data ?? []).filter((o:any)=>
     ['pending_client','disputed'].includes(o.unilateral_status));
   const online = p.line_status === 'online' || p.line_status === 'on_job' || p.line_status === 'on_call';
@@ -52,7 +57,7 @@ export function Work({background=false}:{background?:boolean}={}) {
     <WorkerNotices />
     <AndroidPerformerWorkspace performer={p} active={active} auctions={auctions.data ?? []} online={online}
       busy={busy} setLine={setLine} balance={balance.data} reloadAuctions={auctions.reload}
-      pendingReview={toReview.length}/>
+      reloadJobs={jobs.reload} todayCount={todayCount} pendingReview={toReview.length}/>
     <LiveStrip who={p.kind === 'tow' ? 'tow' : 'master'} />
     {online && <LocationSharing />}
   </main>;
