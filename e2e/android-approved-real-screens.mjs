@@ -72,6 +72,23 @@ try{
       // may be pixel-density limited; report truthfully rather than upscale
       // or create an unauthorized replacement image.
       console.log(role+' original approved logo nominal retina pixel coverage: '+(brand.naturalWidth/(brand.renderedWidth*2)).toFixed(2)+'x');
+      // These icons are not placeholders: their SVGs represent the approved
+      // sections (truck, chat, clipboard, hamburger) in the real live Shell.
+      const chromeIcons=await page.locator('.tabbar').evaluate(el=>{
+        const d=href=>Array.from(el.querySelectorAll('a')).find(a=>a.getAttribute('href')===href)
+          ?.querySelector('svg')?.querySelector('path')?.getAttribute('d') ?? '';
+        return {menu:d('#/menu'),orders:d(roleDummyOrdersHref()),special:d(roleDummySpecialHref())};
+        function roleDummyOrdersHref(){
+          return el.closest('.role-performer') ? '#/work/jobs' : '#/orders';
+        }
+        function roleDummySpecialHref(){
+          return el.closest('.role-performer') ? '#/work/chats' : '#/garage';
+        }
+      });
+      if(!chromeIcons.menu.includes('M4 6h16')||
+         !chromeIcons.orders.includes('M9 11h6')||
+         (role==='owner'?!chromeIcons.special.includes('M2 7h12'):!chromeIcons.special.includes('M5 4h14')))
+        throw Error(role+': footer SVG does not match approved native 618 symbols '+JSON.stringify(chromeIcons));
       if(role==='owner'){
         const art=await page.locator('.and19-services > a').evaluateAll(cards=>cards.map(card=>{
           const illustration=card.querySelector('.tr-service-illustration');
