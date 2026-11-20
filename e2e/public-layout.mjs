@@ -85,16 +85,21 @@ async function run(width, height, mobile, nativePreview = false) {
         const carousel = document.querySelector('.public-hero-carousel')?.getBoundingClientRect();
         if (!hero || !visual || !paragraph || !actions || !carousel || !copy) return null;
         return {heroWidth:hero.width,heroHeight:hero.height,
-          pictureWidth:visual.width,pictureHeight:visual.height,
+          pictureWidth:visual.width,pictureHeight:visual.height,pictureBottom:visual.bottom,
           paragraphTop:paragraph.top,actionsTop:actions.top,copyBottom:copy.bottom,
           carouselTop:carousel.top,carouselHeight:carousel.height };
       });
       if (nativePreview) {
         check(!await page.evaluate(() => document.documentElement.classList.contains('traksos-browser')),
           suffix + ': Android must not activate browser-only styling');
-        check(heroGeometry && Math.abs(heroGeometry.heroWidth-heroGeometry.pictureWidth)<3 &&
-          Math.abs(heroGeometry.heroHeight-heroGeometry.pictureHeight)<3,
-          suffix + ': native artwork must cover the approved banner: ' + JSON.stringify(heroGeometry));
+        // The approved native guest entry shows the complete truck photo above the
+        // text and actions. Do not demand an obsolete full-bleed overlay.
+        check(heroGeometry && heroGeometry.pictureWidth <= heroGeometry.heroWidth + 2 &&
+          heroGeometry.pictureWidth >= heroGeometry.heroWidth * .75 &&
+          heroGeometry.pictureHeight >= heroGeometry.pictureWidth / 2 - 3 &&
+          heroGeometry.pictureHeight < heroGeometry.heroHeight &&
+          heroGeometry.pictureBottom <= heroGeometry.paragraphTop + 2,
+          suffix + ': native truck photo must be uncropped and separate from the text: ' + JSON.stringify(heroGeometry));
       } else {
         check(await page.evaluate(() => document.documentElement.classList.contains('traksos-browser')),
           suffix + ': regular Chrome must activate mobile browser styling');
