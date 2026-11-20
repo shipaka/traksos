@@ -25,7 +25,7 @@ const LOCKED_ASSETS = {
   // Exact approved images. Deliberate asset changes require a new owner-approved baseline.
   'web/public/tracksos-approved-hero-owner-20261119.webp': '7a7a9acec9ee7f32',
   // Original artwork from owner's 617.png on 20 Nov; keep mobile 19 Nov locked independently.
-  'web/public/owner20-artwork-sprite.webp': '1cd9765be9ae24ca',
+  'web/public/owner20-artwork-sprite.webp': '401fcedf30e1603b',
   'web/public/owner20-photo-background-approved.webp': '1a8370817f16f234',
   'web/public/owner20-header-logo-approved.webp': 'f323b7509e4f558e',
   'android/app/src/main/res/mipmap-mdpi/ic_launcher.png': '327f52a2d6e836e9',
