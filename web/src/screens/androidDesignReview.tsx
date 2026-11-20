@@ -25,7 +25,10 @@ const sampleOrder = {
   performer_rating: 4.9,
   performer_rating_count: 312,
   client_name: 'ООО «ТрансЛогистика» · пример',
-  vehicle: { brand: 'Scania', model: 'R520', year: 2019 },
+  // Owner-approved 618.png names R440 (2010). Never substitute the R520 photo:
+  // until a plate-redacted, license-checked R440 asset is bundled, the real
+  // ApprovedOrderTruck deliberately renders its clearly labeled illustration.
+  vehicle: { brand: 'Scania', model: 'R440', year: 2010 },
   // API and rub() always use kopecks, even in a zero-effect demo.
   money: { amount: 1000000, clientFee: 50000, total: 1050000 },
 };
