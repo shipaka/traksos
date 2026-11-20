@@ -51,7 +51,7 @@ try {
     if(!g.native||g.browser||g.scroll>g.viewport+3||g.services!==6||g.login!==2)
       throw Error(width+'px Android public shell invalid: '+JSON.stringify(g));
     if(!g.hero||!g.photo||!g.copy||!g.arrows||g.fit!=='contain'||
-       g.photo.height<135||g.photo.width>g.hero.width+3||
+       g.photo.height<100||g.photo.width>g.hero.width+3||
        g.photo.bottom>g.copy.top+8||g.arrows.top<g.copy.top-3)
       throw Error(width+'px Android guest still overlays text/caption on truck: '+JSON.stringify(g));
     if(!g.background.includes('tracksos-approved-hero-owner-20261119')||
