@@ -371,6 +371,12 @@ try {
     for(const path of ['register','login','join']){
       await p.goto(BASE+'/#/'+path);
       await p.locator('.auth-desktop-form').waitFor({state:'visible'});
+      const shell=await p.locator('.desktop-layout > .desktop-content').evaluate(el=>{
+        const rect=el.getBoundingClientRect();
+        return {right:rect.right,width:rect.width,viewport:document.documentElement.clientWidth};
+      });
+      if(shell.right < shell.viewport-20 || shell.width < shell.viewport-45)
+        throw Error('Legacy public sidebar still reserves space at 1024px: '+JSON.stringify(shell));
       const offenders=await p.evaluate(()=>{
         const vw=document.documentElement.clientWidth;
         return [...document.querySelectorAll('input,button,a,section,main,header')].filter(el=>{
