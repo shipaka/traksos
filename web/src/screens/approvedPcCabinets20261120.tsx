@@ -244,7 +244,7 @@ function SelectedPerformerCase({order,tow}:{order:any;tow:boolean}){
     {view==='work'&&<div className="approved-pc-performer-content">
       <div>
         <div className="approved-pc-photo-with-tech">
-          <Photo v={v} href={d.vehicleId?'#/garage/'+d.vehicleId:undefined}/>
+          <Photo v={v} href={'#/order/'+d.id+'/vehicle'}/>
           {!tow&&<a href="#/techbase/master" aria-label="Открыть ТехБазу по диагностике" className="approved-pc-techbook">▣ ТехБаза</a>}
         </div>
         <h3>{vehicleLabel(v)}</h3>
@@ -272,7 +272,7 @@ function SelectedPerformerCase({order,tow}:{order:any;tow:boolean}){
           {d.status==='awaiting_confirmation'&&<p>Работа ожидает подтверждения клиента. Оплата не считается состоявшейся.</p>}
           {(d.status==='completed'||d.status==='cancelled')&&<p>Заявка закрыта. История доступна для просмотра.</p>}
           <div className="approved-pc-case-actions">
-            <a href={'#/order/'+d.id+'?chat=1'}>Чат по заявке</a>
+            <a href={'#/order/'+d.id+'/chat'}>Чат по заявке</a>
             <a href={'#/order/'+d.id}>Все действия и история</a>
             {!tow&&<a href="#/techbase/master">ТехБаза</a>}
           </div>
@@ -285,7 +285,7 @@ function SelectedPerformerCase({order,tow}:{order:any;tow:boolean}){
       </div>
     </div>}
     {view==='vehicle'&&<div className="approved-pc-performer-content">
-      <div><Photo v={v} href={d.vehicleId?'#/garage/'+d.vehicleId:undefined}/><h3>{vehicleLabel(v)}</h3>
+      <div><Photo v={v} href={'#/order/'+d.id+'/vehicle'}/><h3>{vehicleLabel(v)}</h3>
         <p><b>VIN:</b> {text(v?.vin)}</p><p><b>Номер:</b> {text(v?.plate)}</p>
         {v?.trailerPlate&&<p><b>Прицеп:</b> {v.trailerPlate}</p>}</div>
       <Pane title="Клиент и условия"><p><b>Клиент:</b> {text(d.client?.company_name||d.client?.name||d.client_name)}</p>
@@ -295,19 +295,19 @@ function SelectedPerformerCase({order,tow}:{order:any;tow:boolean}){
     </div>}
     {view==='bill'&&<Pane title="Расчёт и согласование">
       <p>Сумма, расходники, время работы и подтверждение клиента доступны в действующей финансовой форме заказа.</p>
-      <a className="approved-pc-primary" href={'#/order/'+d.id}>Открыть расчёт по заявке</a>
+      <a className="approved-pc-primary" href={'#/order/'+d.id+'/finance'}>Открыть расчёт по заявке</a>
       <p className="approved-pc-caveat">Нельзя отмечать услугу оплаченной до подтверждения сервером.</p>
     </Pane>}
     {view==='chat'&&<Pane title="Связь по заявке">
       <p>Вся переписка привязана к текущему заказу. Личные номера участников не раскрываются.</p>
-      <a className="approved-pc-primary" href={'#/order/'+d.id+'?chat=1'}>Открыть чат клиента</a>
+      <a className="approved-pc-primary" href={'#/order/'+d.id+'/chat'}>Открыть чат клиента</a>
     </Pane>}
     {view==='history'&&<Pane title="История заказа">
       <p><b>Текущий статус:</b> {statusName(d)}</p>
       {Array.isArray(d.events)&&d.events.slice(-8).map((e:any,i:number)=><p className="approved-pc-evidence" key={String(e.id||i)}>
         {text(e.type)} · {text(e.created_at||e.at)}
       </p>)}
-      <a className="approved-pc-primary" href={'#/order/'+d.id}>Все этапы, документы и подтверждения</a>
+      <a className="approved-pc-primary" href={'#/order/'+d.id+'/history'}>Все этапы, документы и подтверждения</a>
     </Pane>}
   </section>;
 }
