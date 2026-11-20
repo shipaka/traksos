@@ -115,12 +115,12 @@ try {
       throw Error(width + 'px public Scania photograph is missing or has the wrong layout: ' + JSON.stringify(info));
     await p.getByRole('button',{name:'Следующее фото'}).click();
     const rescuePhoto=await art.evaluate(el=>getComputedStyle(el).backgroundImage);
-    if(!/tracksos-approved-hero-owner-20261119(?:-[A-Za-z0-9]+)?\\.webp/.test(rescuePhoto) ||
+    if(!/tracksos-approved-hero-owner-20261119(?:-[A-Za-z0-9]+)?\.webp/.test(rescuePhoto) ||
        !await p.getByRole('heading',{name:/Эвакуация грузовиков/}).count())
       throw Error(width+'px: tow slide must keep the approved photo and update its headline');
     await p.getByRole('button',{name:'Следующее фото'}).click();
     const stoPhoto=await art.evaluate(el=>getComputedStyle(el).backgroundImage);
-    if(!/tracksos-approved-hero-owner-20261119(?:-[A-Za-z0-9]+)?\\.webp/.test(stoPhoto) ||
+    if(!/tracksos-approved-hero-owner-20261119(?:-[A-Za-z0-9]+)?\.webp/.test(stoPhoto) ||
        !await p.getByRole('heading',{name:/Ремонт и запись в СТО/}).count())
       throw Error(width+'px: STO slide must keep the approved photo and update its headline');
     await p.getByRole('button',{name:/Показать фото 1:/}).click();
