@@ -263,3 +263,30 @@
   }
   html.traksos-browser .approved-pc-admin .approved-pc-heading>img {max-width:70px}
 }
+
+/* Chromium regression: a resized 390px browser could keep the desktop role
+   heading during a viewport transition, stretching the truck to 912px. */
+@media (max-width:999px) {
+  html.traksos-browser .approved-pc {
+    width:100%;min-width:0;max-width:100%;overflow-x:clip;
+  }
+  html.traksos-browser .approved-pc .approved-pc-heading {
+    width:100%;min-width:0;max-width:100%;
+    grid-template-columns:minmax(0,1fr) minmax(70px,25%);
+  }
+  html.traksos-browser .approved-pc .approved-pc-heading > img {
+    display:block;min-width:0;max-width:100%;width:100%;height:auto;max-height:110px;
+    object-fit:contain;object-position:center;
+  }
+  html.traksos-browser .approved-pc .approved-pc-three {
+    display:flex;flex-direction:column;min-width:0;
+  }
+}
+/* Map outline is the approved geographic asset; CSS pseudo-image must remain
+   present in Chromium, not silently disappear under other role styles. */
+html.traksos-browser .approved-pc-admin .approved-pc-russia::before {
+  content:"";display:block;position:absolute;inset:0;
+  background-image:url('/traksos-russia-outline.svg')!important;
+  background-position:center;background-size:contain;background-repeat:no-repeat;
+  opacity:.8;pointer-events:none;
+}
