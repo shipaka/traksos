@@ -33,7 +33,7 @@ try{
    if(c.needs && !account.user?.roles?.includes(c.needs))throw Error('Staff role not granted by local test config');
    const token=account.token;
    for(const width of [1440,390]){
-    const context=await browser.newContext({viewport:{width,height:900},locale:'ru-RU'});
+    const context=await browser.newContext({viewport:{width,height:width===390?844:900},locale:'ru-RU',deviceScaleFactor:1});
     const page=await context.newPage();
     const errors=[];page.on('pageerror',x=>errors.push(x.message));
     await page.addInitScript(({token,mode})=>{localStorage.setItem('traksos.token',token);localStorage.setItem('traksos.mode',mode)}, {token,mode:c.mode});
@@ -55,13 +55,25 @@ try{
      const dims=await page.evaluate(()=>({client:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));
      if(dims.scroll>dims.client+3)throw Error('Horizontal overflow '+JSON.stringify(dims));
      if(errors.length)throw Error('Uncaught errors '+errors.join('; '));
+     if(width===1440) {
+       // The desktop must show ONE onboarding prompt, not two stacked panels.
+       const prompts=await page.locator('.tr-training-invite:visible, section.card[aria-label="Знакомство с TrakSOS"]:visible').count();
+       if(prompts>1)throw Error('Duplicate desktop training prompts: '+prompts);
+     }
+     await page.screenshot({path:out+'/'+c.id+'-home-'+width+'-viewport.png',fullPage:false,animations:'disabled'});
      await page.screenshot({path:out+'/'+c.id+'-home-'+width+'.png',fullPage:true,animations:'disabled'});
      await page.goto(BASE+'/'+c.inside,{waitUntil:'domcontentloaded'});
      await page.locator('.account-menu > summary').waitFor({timeout:12000});
      await page.waitForTimeout(500);
      if(await page.getByText('Не удалось открыть раздел').count())throw Error('Inner route crashed');
+     await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'-viewport.png',fullPage:false,animations:'disabled'});
      await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'.png',fullPage:true,animations:'disabled'});
-     results.push({role:c.id,width,result:'screens saved'});
+     results.push({role:c.id,width,height:width===390?844:900,result:'screens saved',files:[
+       c.id+'-home-'+width+'-viewport.png',
+       c.id+'-home-'+width+'.png',
+       c.id+'-inside-'+width+'-viewport.png',
+       c.id+'-inside-'+width+'.png',
+     ]});
     }finally{await context.close()}
    }
   }catch(error){
