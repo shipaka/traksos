@@ -96,10 +96,40 @@ function OrderTitle({ order, client = false }: { order: any; client?: boolean })
 
 function OrderFacts({ order }: { order: any }) {
   return <div className="and19-facts">
+    {Boolean(order.description || order.problem) &&
+      <p className="and19-issue"><NavGlyph glyph="alert"/><span>{order.description || order.problem}</span></p>}
+    <p className="and19-order-address"><NavGlyph glyph="pin"/>
+      <span>{order.service === 'consult' ? 'Консультация без выезда'
+        : (order.address || order.estimate?.zoneName || 'Адрес — в карточке заявки')}</span></p>
     <VehicleLine order={order} />
-    {order.description && <p className="and19-issue"><span aria-hidden="true">⚠</span>{order.description}</p>}
-    <p><span aria-hidden="true">⌖</span> {order.service === 'consult' ? 'Консультация без выезда' : (order.address || order.estimate?.zoneName || 'Адрес в подробностях заявки')}</p>
-    <p className="and19-service">{SERVICES[order.service]?.name || 'Выездная помощь'}</p>
+  </div>;
+}
+/** A genuine Yandex road route only when a saved destination exists.
+ * Without coordinates, route detail is the safe fallback; never invent ETA. */
+function orderNavigationHref(order: any):string {
+  const lat=Number(order.lat), lng=Number(order.lng);
+  if(order.lat != null && order.lng != null && Number.isFinite(lat) &&
+     Number.isFinite(lng) && Math.abs(lat)<=90 && Math.abs(lng)<=180) {
+    return 'https://yandex.ru/maps/?rtext=~'+encodeURIComponent(lat+','+lng)+'&rtt=auto';
+  }
+  return '#/order/'+order.id;
+}
+function OrderRoute({order,role}:{order:any;role:'client'|'performer'}) {
+  if(order.service==='consult')return null;
+  const href=orderNavigationHref(order);
+  const external=href.startsWith('https:');
+  const eta=Number(order.dispatch_eta_minutes);
+  return <div className="and19-order-route">
+    <a href={href} className="and19-route-button"
+      {...(external?{target:'_blank',rel:'noopener noreferrer'}:{})}
+      aria-label={external?'Открыть дорожную навигацию по адресу заявки':'Открыть расположение и маршрут в заявке'}>
+      <NavGlyph glyph="navigation"/>{role==='performer'?'Навигация':'Маршрут'}
+    </a>
+    <span className="and19-route-eta"><NavGlyph glyph="clock"/>
+      {Number.isFinite(eta)&&eta>0&&eta<1441
+        ? <span>ETA ≈ {Math.round(eta)} мин <small>расчёт при подборе</small></span>
+        : <span>Время прибытия уточняется</span>}
+    </span>
   </div>;
 }
 
@@ -159,6 +189,7 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
             <ApprovedOrderTruck order={current} />
           </a>}
           <OrderFacts order={current} />
+          <OrderRoute order={current} role="client"/>
           {current.status !== 'searching' && <MobileTimeline order={current} />}
           {current.status === 'searching' && <p className="and19-search-active"><span className="and19-pulse" aria-hidden="true" />Поиск исполнителя продолжается · открыть отклики</p>}
           <a className="and19-link" href={'#/order/' + current.id}>Открыть заявку и связь с исполнителем <span aria-hidden="true">›</span></a>
@@ -242,6 +273,7 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
         <OrderTitle order={active[0]} />
         {active[0].service!=='consult' && <ApprovedOrderTruck order={active[0]} />}
         <OrderFacts order={active[0]} />
+        <OrderRoute order={active[0]} role="performer"/>
         <MobileTimeline order={active[0]} />
         <span className="and19-link">{performerNextStep(active[0].status)} <span aria-hidden="true">›</span></span>
       </a>
