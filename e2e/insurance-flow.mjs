@@ -163,19 +163,31 @@ try{
   await inboxPage.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','insurer')},partner.token);
   await inboxPage.goto(BASE+'/#/insurance');
   await acceptPendingOffers(inboxPage,partner.token);
-  await inboxPage.getByText('Получена новая заявка',{exact:true}).waitFor();
-  await inboxPage.getByRole('button',{name:'Требуют действий'}).waitFor();
+  // The approved desktop insurer has a real 3-column case workdesk, not
+  // the older mobile queue chips. Verify the assigned case and its actions.
+  const insurerDesk=inboxPage.locator('main.approved-pc-insurance');
+  await insurerDesk.waitFor();
+  await insurerDesk.getByRole('heading',{name:'Страховой партнёр'}).waitFor();
+  await insurerDesk.getByRole('tab',{name:/Страховые дела в работе/}).waitFor();
+  await insurerDesk.locator('.approved-pc-case').waitFor();
+  await insurerDesk.locator('a[href="#/insurance/request/'+requestId+'"]').first().waitFor();
+  await insurerDesk.getByText('Предложения ещё подготавливаются.',{exact:false}).waitFor();
   await inboxPage.screenshot({path:OUT+'/insurer-desktop-incoming.png',fullPage:true});
-  await inboxPage.getByRole('button',{name:'В работе',exact:true}).click();
-  await inboxPage.getByText('Нет заявок в работе.',{exact:true}).waitFor();
+  await insurerDesk.getByRole('tab',{name:/История/}).click();
+  await insurerDesk.getByText('Назначенных заявок в выбранном разделе нет.').waitFor();
+  await insurerDesk.getByRole('tab',{name:/Страховые дела в работе/}).click();
   await api('POST','/api/insurance/requests/'+requestId+'/accept',{},partner.token);
   const one={company:'Страховая А',product:'ОСАГО грузовика',premiumKopecks:3250000,
     description:'Цена агентом рассчитана вручную',coverage:'Условия согласовываются'};
   await api('POST','/api/insurance/requests/'+requestId+'/offers',
     {offers:[one,{...one,company:'Страховая Б',premiumKopecks:3560000}]},partner.token);
   await inboxPage.reload();
-  await inboxPage.getByRole('button',{name:'В работе',exact:true}).click();
-  await inboxPage.getByText('Предложения отправлены клиенту',{exact:true}).waitFor();
+  const quotedDesk=inboxPage.locator('main.approved-pc-insurance');
+  await quotedDesk.waitFor();
+  await quotedDesk.getByRole('tab',{name:/Страховые дела в работе/}).waitFor();
+  await quotedDesk.locator('.approved-pc-quote').filter({hasText:'Страховая А'}).waitFor();
+  await quotedDesk.locator('.approved-pc-quote').filter({hasText:'Страховая Б'}).waitFor();
+  await quotedDesk.getByText('Варианты отправлены. Ожидаем решения клиента.').waitFor();
   await inboxPage.screenshot({path:OUT+'/insurer-desktop-working.png',fullPage:true});
   await inboxContext.close();
   await clientPage.reload();
