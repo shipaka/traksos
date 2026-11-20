@@ -57,9 +57,22 @@
 .and19-services>a>.tr-service-illustration {
   right:-7px;
   bottom:-5px;
-  opacity:.31;
+  /* Same approved scene as PC. Mobile tile proportions remain untouched. */
+  opacity:.49;
   transform:scale(.51);
   transform-origin:right bottom;
+}
+/* Android's original direct-child icon rule assigns 23px to every span.
+   The service label is now wrapped only to keep it above the photograph;
+   restore the exact original 10px inherited text sizing. */
+.and19-services>a>.and19-service-label {
+  position:relative;
+  z-index:2;
+  font-size:inherit;
+  color:inherit;
+  font-weight:inherit;
+  line-height:inherit;
+  max-width:100%;
 }
 @media(max-width:899px) {
   .app.role-client .desktop-quick-card>.tr-service-illustration {
