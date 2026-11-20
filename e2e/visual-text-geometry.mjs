@@ -28,12 +28,15 @@ const cssAudit=async(page,selector,width)=>page.evaluate(({selector,width})=>{
    }
    const layer=getComputedStyle(card,'::after').backgroundImage;
    const icon=layer&&layer!=='none'?layer:getComputedStyle(card).backgroundImage;
-   const expected=(selector.includes('public-landing')
-     ? ['tracksos-photo-tow','tracksos-photo-master','tracksos-photo-sto','traksos-final-insurance','traksos-final-parts','tracksos-photo-consult']
-     : ['tracksos-photo-master','tracksos-photo-tow','tracksos-photo-sto','tracksos-photo-consult'])[i];
-   if(!icon||icon==='none')issues.push('missing illustration '+i);
-   if(expected&&!icon.includes(expected))
-     issues.push('reference photo mismatch '+i+': expected '+expected+', found '+icon);
+   // The latest six 19 Nov service cards use real SVG pictograms on new
+   // gradients, not any of the physically deleted 14–16 Nov photo tiles.
+   if(!icon||icon==='none')issues.push('missing current card surface '+i);
+   if(/tracksos-photo-|traksos-final-|tracksos-partner-.*approved/.test(icon))
+     issues.push('retired pre-17 Nov artwork returned in card '+i+': '+icon);
+   if(selector.includes('public-landing') && card.querySelectorAll('.public-service-icon svg').length!==1)
+     issues.push('missing approved service pictogram '+i);
+   if(!selector.includes('public-landing') && !icon.includes('gradient'))
+     issues.push('signed-in card lost its current gradient '+i);
  }
  const doc=document.documentElement;
  if(doc.scrollWidth>doc.clientWidth+3)
