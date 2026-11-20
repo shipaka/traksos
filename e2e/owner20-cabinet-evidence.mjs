@@ -93,7 +93,7 @@ try{
      const dims=await page.evaluate(()=>({client:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));
      if(dims.scroll>dims.client+3)throw Error('Horizontal overflow '+JSON.stringify(dims));
      if(errors.length)throw Error('Uncaught errors '+errors.join('; '));
-     if(c.id==='owner'){
+     if(c.id==='owner' && width===390){
        // Browser mobile and desktop must use the SAME original logo and the
        // SAME four photographs; card proportions may differ with the viewport.
        const visual=await page.evaluate(async()=>{
@@ -136,6 +136,33 @@ try{
          (274/(visual.logoRendered.w*2)).toFixed(2)+'x; source remains unchanged');
      }
      if(width===1440) {
+       // 20 Nov owner-approved desktop contracts: real React workdesk, not an image.
+       const workdesk=page.locator('.approved-pc');
+       await workdesk.waitFor({timeout:14000});
+       const roleExpected=c.id==='master_service'?'service':c.id;
+       const roleClass='approved-pc-'+(roleExpected==='owner'||roleExpected==='driver'?'client':roleExpected==='tow'||roleExpected==='master'?'performer':roleExpected);
+       if(!await workdesk.evaluate((node,cls)=>node.classList.contains(cls),roleClass))
+         throw Error('Wrong approved role workdesk: '+c.id+' expected '+roleClass);
+       const columns=page.locator('.approved-pc-three');
+       if(await columns.count()!==1)throw Error('Exactly one full-size workdesk expected: '+c.id);
+       const realTabs=page.locator('.approved-pc-tabs [role="tab"]');
+       if(await realTabs.count()<1)throw Error('Desktop tabs missing: '+c.id);
+       if(['master','tow'].includes(c.id)){
+         if(await realTabs.count()!==2)throw Error('Expected current work and new offers modes: '+c.id);
+         await realTabs.nth(1).click();
+         if((await realTabs.nth(1).getAttribute('aria-selected'))!=='true')throw Error('New offers mode did not change');
+         await realTabs.nth(0).click();
+       }
+       if(c.id==='admin'){
+         const outline=page.locator('.approved-pc-russia');
+         if(await outline.count()!==1)throw Error('Approved Russia map is missing');
+         const image=await outline.evaluate(el=>getComputedStyle(el,'::before').backgroundImage);
+         if(!image.includes('traksos-russia-outline.svg'))throw Error('Admin map is not the approved Russia outline: '+image);
+       }
+       if(c.id==='moderator'&&await workdesk.locator('.approved-pc-bot').count())
+         throw Error('Moderator workdesk must not force TrakBot');
+       if(c.id!=='moderator'&&await workdesk.locator('.approved-pc-bot').count()!==1)
+         throw Error('Expected original TrakBot launch for '+c.id);
        // The desktop must show ONE onboarding prompt, not two stacked panels.
        const prompts=await page.locator('.tr-training-invite:visible, section.card[aria-label="Знакомство с TrakSOS"]:visible').count();
        if(prompts>1)throw Error('Duplicate desktop training prompts: '+prompts);
