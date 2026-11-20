@@ -12,6 +12,11 @@ const sampleOrder = {
   id: 'SYNTHETIC-REVIEW',
   number: '78452 · ДЕМО',
   vehicle_id: 'SYNTHETIC-VEHICLE',
+  // Dates and ETA below are synthetic, available only in the DEBUG design tour.
+  created_at: '2026-11-20T12:34:00+03:00',
+  accepted_at: '2026-11-20T12:36:00+03:00',
+  en_route_at: '2026-11-20T12:40:00+03:00',
+  dispatch_eta_minutes: 28,
   service: 'repair',
   status: 'en_route',
   description: 'Не набирает давление в тормозной системе',
@@ -73,7 +78,11 @@ export function AndroidDesignReview({ role }: { role?: string }) {
         ? <AndroidPerformerWorkspace
             performer={{ kind: selected === 'tow' ? 'tow' : 'master', line_status: 'online',
               rating: 4.9, verification: 'approved' }}
-            active={[sampleOrder]} auctions={[]} online={true} busy={true}
+            active={[{...sampleOrder, money:{
+              amount:1000000, total:1000000, commission:50000,
+              commissionPct:5, payout:950000
+            }}]} auctions={[]} online={true} busy={false}
+            todayCount={3} reloadJobs={() => {}}
             setLine={() => {}} balance={{ to_pay: 950000 }} reloadAuctions={() => {}} />
         : <AndroidClientWorkspace
             orders={[sampleOrder]} loading={false} error={null}
