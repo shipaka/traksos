@@ -26,6 +26,7 @@ const LOCKED_ASSETS = {
   'web/public/tracksos-approved-hero-owner-20261119.webp': '7a7a9acec9ee7f32',
   // Original artwork from owner's 617.png on 20 Nov; keep mobile 19 Nov locked independently.
   'web/public/owner20-artwork-sprite.webp': '1cd9765be9ae24ca',
+  'web/public/owner20-photo-background-approved.webp': '1a8370817f16f234',
   'android/app/src/main/res/mipmap-mdpi/ic_launcher.png': '327f52a2d6e836e9',
   'android/app/src/main/res/mipmap-hdpi/ic_launcher.png': 'f797b183e93c4bad',
   'android/app/src/main/res/mipmap-xhdpi/ic_launcher.png': '27ea3b5ebbfe86ce',
@@ -102,6 +103,7 @@ const allowedPublicVisuals = new Set([
   'tracksos-approved-logo-owner-20261119.webp',
   'trakbot-approved-30.webp','trakbot-approved-hello.webp',
   'owner20-artwork-sprite.webp',
+  'owner20-photo-background-approved.webp',
 ]);
 const visualRootEntries = await readdir('web/public',{withFileTypes:true});
 const unexpectedVisuals = visualRootEntries.filter(entry =>
@@ -111,6 +113,7 @@ expect(unexpectedVisuals.length===0,
   'no obsolete artwork or unapproved new images in live public assets' +
   (unexpectedVisuals.length ? ': '+unexpectedVisuals.join(', ') : ''));
 await asset('web/public/owner20-artwork-sprite.webp', 20000);
+await asset('web/public/owner20-photo-background-approved.webp', 15000);
 for (const file of ['web/src/finalCanon.css','web/src/trackPhotos.css']) {
   let exists = false;
   try { await stat(file); exists = true; } catch {}

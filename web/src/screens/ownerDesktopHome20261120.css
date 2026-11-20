@@ -604,3 +604,17 @@
     --bot-size:32px!important;width:32px!important;height:32px!important;
   }
 }
+
+/* The precise 1536x324 road and truck cut from approved 617.png.
+   Only photographic pixels are present; labels and panels are DOM UI. */
+@media(min-width:1281px){
+ .guest-app.guest-home .owner20-photo::after{
+   left:0!important;top:0!important;
+   width:100%!important;height:324px!important;
+   background-image:url('/owner20-photo-background-approved.webp')!important;
+   background-position:center top!important;
+   background-size:100% 100%!important;
+   background-repeat:no-repeat!important;
+   -webkit-mask-image:none!important;mask-image:none!important;
+ }
+}
