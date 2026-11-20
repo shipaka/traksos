@@ -449,6 +449,38 @@ expect(liveOrderUi.includes("ptab === 'vehicle'") &&
   fleetUi.includes('href={`#/garage/${c.id}`}'),
   'vehicle history views are real, role-scoped and reachable from photo in master, garage and fleet');
 
+// The owner explicitly requires every accessible Android section to follow
+// the approved home language: a real menu, real role routes and restrained
+// animation. Source checks supplement, not replace, actual APK screenshots.
+const mobileRoleMenu = await read('web/src/mobileRoleMenu.tsx');
+const innerAndroidStyle = await read('web/src/androidInternalSections20261120.css');
+const androidRealScreens = await read('e2e/android-approved-real-screens.mjs');
+const mobileMenuBlock = shell.slice(shell.indexOf('const mobileTabs:'),shell.indexOf('const accountLinks:'));
+expect((mobileMenuBlock.match(/\['\/menu', '◉', 'Меню'\]/g)??[]).length === 7 &&
+  !mobileMenuBlock.includes("['/profile', '◉', 'Меню']") &&
+  shell.includes("case 'menu': screen =") &&
+  shell.includes("<MobileRoleMenu mode={mode}") &&
+  shell.includes("onLogout={safeLogout}") &&
+  !shell.includes("mobileTabs.length > 0 && !(route[0] === 'work'") &&
+  mobileRoleMenu.includes('quick.filter') &&
+  mobileRoleMenu.includes('uniqueEntries(account') &&
+  mobileRoleMenu.includes('uniqueEntries(help') &&
+  mobileRoleMenu.includes('tr-mobile-menu-logout'),
+  'All seven Android roles have a real accessible menu and section/account/help actions, including settings and documents');
+expect(shell.includes("import './androidInternalSections20261120.css';") &&
+  innerAndroidStyle.includes('html.traksos-native') &&
+  innerAndroidStyle.includes('main:not(.client-dashboard):not(.work-live-dashboard)') &&
+  innerAndroidStyle.includes('tr-mobile-menu-links') &&
+  innerAndroidStyle.includes('trAndroidInnerEnter') &&
+  innerAndroidStyle.includes('prefers-reduced-motion:reduce') &&
+  !innerAndroidStyle.includes('infinite'),
+  'All secondary Android screens have one coherent style, protected approved dashboards and reduced-motion support');
+expect(androidRealScreens.includes("owner+'-menu-android-390.png") ||
+  (androidRealScreens.includes("role+'-menu-android-390.png") &&
+  androidRealScreens.includes("role+'-menu-android-320.png") &&
+  androidRealScreens.includes("bottom Menu vanished inside profile/settings")),
+  'Real authenticated Android CI must capture and validate each role menu, including 320/390px and settings');
+
 if (failures.length) {
   console.error('Approved design gate: '+failures.length+' failure(s).');
   process.exitCode=1;
