@@ -11,6 +11,7 @@ import { ApprovedServiceIllustration } from '../approvedServiceIllustration.tsx'
 import { ApprovedOrderTruck } from '../approvedOrderTruck.tsx';
 import { vehicleReferencePhoto } from '../vehiclePhotoCatalog.ts';
 import { NavGlyph } from '../navGlyph.tsx';
+import { OrderPhotoCapture } from './orderPhotos.tsx';
 
 /** Render a single role dashboard per viewport, rather than hiding a live component tree with CSS. */
 export function useMobileWorkspace() {
@@ -243,10 +244,10 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
 }
 
 export function AndroidPerformerWorkspace({ performer, active, auctions, online, busy, setLine, balance,
-  reloadAuctions, reloadJobs, todayCount=0, pendingReview=0 }: {
+  reloadAuctions, reloadJobs, todayCount=0, pendingReview=0, reviewOnly=false }: {
   performer: any; active: any[]; auctions: any[]; online: boolean; busy: boolean;
   setLine: (status: string) => void; balance: any; reloadAuctions: () => void;
-  reloadJobs?: () => void; todayCount?: number; pendingReview?: number;
+  reloadJobs?: () => void; todayCount?: number; pendingReview?: number; reviewOnly?:boolean;
 }) {
   const tow = performer.kind === 'tow';
   const inJob = performer.line_status === 'on_job';
@@ -352,7 +353,7 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
     </a>}
     {performer.verification !== 'approved' && <a href="#/work/docs" className="and19-row-link">Проверка и документы профиля ›</a>}
     {current ? <nav className="and19-quick" aria-label="Дополнительные действия заявки">
-      <a href={'#/order/'+current.id+'/chat'}><NavGlyph glyph="chat"/>Чат и фото</a>
+      <OrderPhotoCapture orderId={current.id} reviewOnly={reviewOnly}/>
       <a href={'#/order/'+current.id+'/finance'}><NavGlyph glyph="filetext"/>Отчёт</a>
       <a href="#/shop"><NavGlyph glyph="⚙"/>Запчасти</a>
     </nav> : <nav className="and19-quick" aria-label="Действия специалиста">
