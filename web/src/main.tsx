@@ -94,6 +94,7 @@ import { AdminTestCenter } from './screens/adminTestCenter.tsx';
 import { ServicePreviewBar,ServicePreviewPage } from './screens/servicePreview.tsx';
 import { SupportList, SupportNew, SupportThread, Notifications, useUnread } from './screens/support.tsx';
 import { InsurerCabinet } from './screens/insurer.tsx';
+import {CourierDesk,CourierDelivery} from './screens/courier.tsx';
 import { ApprovedPcDesk, type ApprovedPCRole } from './screens/approvedPcCabinets20261120.tsx';
 import { InsuranceApplication,InsuranceThread } from './screens/insuranceFlow.tsx';
 
@@ -122,7 +123,7 @@ class ScreenErrorBoundary extends Component<
   }
 }
 
-type Mode = 'client' | 'performer' | 'admin' | 'moderator' | 'service' | 'insurer' | 'inspection';
+type Mode = 'client' | 'performer' | 'admin' | 'moderator' | 'service' | 'insurer' | 'inspection' | 'courier';
 const PERFORMER_ROLES = ['master', 'tow', 'service'];
 
 
@@ -151,7 +152,8 @@ function App() {
         }));
       } catch { /* private mode */ }
       // Первый вход исполнителя — сразу его кабинет
-      if (!localStorageGet('traksos.mode') && m.roles.some((r) => PERFORMER_ROLES.includes(r)) && !m.roles.includes('client')) setMode(m.roles.includes('service') && !m.roles.some((r) => r === 'master' || r === 'tow') ? 'service' : 'performer');
+      if (!localStorageGet('traksos.mode') && m.roles.includes('courier')) setMode('courier');
+      else if (!localStorageGet('traksos.mode') && m.roles.some((r) => PERFORMER_ROLES.includes(r)) && !m.roles.includes('client')) setMode(m.roles.includes('service') && !m.roles.some((r) => r === 'master' || r === 'tow') ? 'service' : 'performer');
     } catch (error) {
       if (error instanceof ApiError && error.code === 'network' && getToken()) {
         try {
@@ -190,8 +192,8 @@ function App() {
   useEffect(() => {
     const [x, m] = route;
     if (x !== 'as') return;
-    if (m === 'client' || m === 'performer' || m === 'admin' || m === 'moderator' || m === 'service' || m === 'insurer' || m === 'inspection') setMode(m);
-    location.replace('#/' + (m === 'performer' ? 'work' : m === 'admin' ? 'admin' : m === 'moderator' ? 'moderation' : m === 'service' ? 'base' : m === 'insurer' ? 'insurance' : m === 'inspection' ? 'inspections' : ''));
+    if (m === 'client' || m === 'performer' || m === 'admin' || m === 'moderator' || m === 'service' || m === 'insurer' || m === 'inspection' || m === 'courier') setMode(m);
+    location.replace('#/' + (m === 'performer' ? 'work' : m === 'admin' ? 'admin' : m === 'moderator' ? 'moderation' : m === 'service' ? 'base' : m === 'insurer' ? 'insurance' : m === 'inspection' ? 'inspections' : m === 'courier' ? 'courier' : ''));
   }, [route.join('/')]); // eslint-disable-line
   useEffect(() => {
     if (!ready) return; // Keep the native token until the initial auth check finishes.
@@ -245,27 +247,28 @@ function App() {
   const isService = me.roles.includes('service');
   const isInsurer = me.roles.includes('insurer');
   const isInspection = me.roles.includes('inspection_operator');
+  const isCourier = me.roles.includes('courier');
   // A saved/forced mode must never expose navigation for a role the account lacks.
-  const fallback: Mode = isInsurer ? 'insurer' : isInspection ? 'inspection'
+  const fallback: Mode = isCourier ? 'courier' : isInsurer ? 'insurer' : isInspection ? 'inspection'
     : isCustomer ? 'client' : isPerformer ? 'performer'
     : isService ? 'service' : isAdmin ? 'admin' : isModerator ? 'moderator' : 'client';
-  const permitted = mode === 'insurer' ? isInsurer : mode === 'inspection' ? isInspection : mode === 'admin' ? isAdmin : mode === 'moderator' ? isModerator
+  const permitted = mode === 'courier' ? isCourier : mode === 'insurer' ? isInsurer : mode === 'inspection' ? isInspection : mode === 'admin' ? isAdmin : mode === 'moderator' ? isModerator
     : mode === 'performer' ? isPerformer : mode === 'service' ? isService
     : isCustomer || isStaff;
   const allowedMode: Mode = permitted ? mode : fallback;
   const effMode: Mode = serviceSandbox ? 'service' : a === 'work' && isPerformer ? 'performer'
     : a === 'admin' && isAdmin ? 'admin' : a === 'moderation' && isModerator ? 'moderator'
-    : a === 'base' && isService ? 'service' : a === 'insurance' && isInsurer ? 'insurer' : a === 'inspections' && (isInspection||isInsurer) ? 'inspection' : allowedMode;
+    : a === 'base' && isService ? 'service' : a === 'insurance' && isInsurer ? 'insurer' : a === 'inspections' && (isInspection||isInsurer) ? 'inspection' : a === 'courier' && isCourier ? 'courier' : allowedMode;
 
   const desktopRole: ApprovedPCRole = effMode === 'client' ? (me.owner_id || me.roles.includes('driver') ? 'driver' : 'owner')
     : effMode === 'performer' ? (me.performer?.kind === 'tow' ? 'tow' : 'master')
     : effMode === 'service' ? 'service' : effMode === 'insurer' ? 'insurer' : effMode === 'inspection' ? 'inspection'
-    : effMode === 'moderator' ? 'moderator' : 'admin';
+    : effMode === 'courier' ? 'courier' : effMode === 'moderator' ? 'moderator' : 'admin';
   let screen;
   switch (a) {
     case undefined: screen = effMode === 'performer' && (!me.performer || me.performer.kind === 'ecu')
       ? (me.performer?.kind === 'ecu' ? <Work /> : <PerformerHub />)
-      : <ApprovedPcDesk role={desktopRole} fallback={effMode === 'insurer' ? <InsurerCabinet /> : effMode === 'inspection' ? <InsurerCabinet inspectionOnly /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isAdmin ? <Admin /> : effMode === 'moderator' && isModerator ? <ModeratorDesk /> : <Home />} />; break;
+      : <ApprovedPcDesk role={desktopRole} fallback={effMode === 'courier' ? <CourierDesk /> : effMode === 'insurer' ? <InsurerCabinet /> : effMode === 'inspection' ? <InsurerCabinet inspectionOnly /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isAdmin ? <Admin /> : effMode === 'moderator' && isModerator ? <ModeratorDesk /> : <Home />} />; break;
     case 'login': screen = <Home />; break;
     case 'sos': screen = isCustomer ? <Sos /> : <main><div className="empty">Для вызова SOS нужен клиентский аккаунт</div></main>; break;
     case 'new': screen = !isCustomer ? <main><div className="empty">Для заказа нужен клиентский аккаунт</div></main> : b === 'ecu' ? <main className="stack"><h1>Ремонт электронных блоков ЭБУ</h1><p>Специалист принимает блок в стационарной мастерской. Передайте техническое заключение из ранее оформленной консультации или выездной заявки: это бесплатно, и диагностика согласуется отдельно.</p><a className="btn" href="#/orders">Открыть мои заявки и заключения</a></main> : b === 'consult' ? <Consult /> : <NewOrder service={b ?? 'electric'} />; break;
@@ -298,6 +301,10 @@ function App() {
     case 'booking': screen = <BookingPage id={b} />; break;
     case 'fleet': screen = isCustomer && !me.owner_id && !me.roles.includes('driver') ? <Fleet /> : <main><div className="empty">Парком управляет владелец</div></main>; break;
     case 'inspections': screen = isInspection ? (b === 'processing' ? <InsurerCabinet inspectionOnly /> : <ApprovedPcDesk role="inspection" fallback={<InsurerCabinet inspectionOnly />} />) : <main><div className="empty">Нет прав оператора техосмотра</div></main>; break;
+    case 'courier': screen = !isCourier ? <main><div className="empty">Кабинет курьера доступен только назначенному курьеру.</div></main>
+      : b === 'jobs' && route[2] ? <CourierDelivery id={route[2]}/>
+      : b === 'jobs' ? <CourierDesk section="jobs"/> : b === 'chat' ? <CourierDesk section="chat"/>
+      : <ApprovedPcDesk role="courier" fallback={<CourierDesk />}/>; break;
     case 'insurance': screen = b === 'request' ? (route[2] === 'new' ? <InsuranceApplication vehicleId={route[3]??''} /> : <InsuranceThread requestId={route[2]??''} />) : isInsurer ? <ApprovedPcDesk role="insurer" fallback={<InsurerCabinet />} /> : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
     case 'help': screen = b === 'case' && route[2] ? <ScenarioLesson id={route[2]} /> : <Help />; break;
     case 'economics': screen = <EconomicsPage />; break;
@@ -380,7 +387,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   const sandboxHref=(href:string)=>serviceSandbox?'#/admin/test-center/service'+(href==='/menu'?'/menu':href==='/base'||href.startsWith('/base/')?href:'/unavailable'):'#'+href;
   // На телефоне оставляем только рабочие действия. Все прежние маршруты
   // сохраняются через меню; компьютерная боковая навигация остаётся полной.
-  const tabs: [string, string, string][] = !me ? [] : mode === 'performer'
+  const tabs: [string, string, string][] = !me ? [] : mode === 'courier'
+    ? [['/courier', '⌂', 'Рабочий стол'], ['/courier/jobs', '▤', 'Мои рейсы'], ['/courier/chat', '▧', 'Сообщения'], ['/profile', '◉', 'Настройки']]
+    : mode === 'performer'
     ? [['/work', '⌂', 'Главная'], ['/work/jobs', '☷', 'Заявки'], ['/work/me/schedule', '▦', 'График'], ['/profile', '◉', 'Профиль']]
     : mode === 'service'
       ? [['/base', '▤', 'Рембаза'], ['/support', '?', 'Связь'], ['/shop', '🛍', 'Магазин']]
@@ -394,7 +403,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       ? [['/admin', '▦', 'Рабочий стол'], ['/admin/section/orders', '☰', 'Заявки'], ['/admin/section/support', '?', 'Обращения']]
       : [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь'], ['/shop', '⚙', 'Запчасти'], ['/profile', '◉', 'Профиль']];
   // Mobile tabs only contain real role-dependent routes; extra tools remain in the menu.
-  const mobileTabs: [string, string, string][] = !me ? [] : mode === 'client'
+  const mobileTabs: [string, string, string][] = !me ? [] : mode === 'courier'
+    ? [['/courier', '⌂', 'Главная'], ['/courier/jobs', 'clipboard', 'Рейсы'], ['/courier/chat', 'chat', 'Чат'], ['/menu', 'menu', 'Меню']]
+    : mode === 'client'
     ? [['/', '⌂', 'Главная'], ['/orders', 'clipboard', 'Заявки'], ['/air', '◌', 'Эфир'], ['/garage', 'truck', 'Техника'], ['/menu', 'menu', 'Меню']]
     : mode === 'performer'
       ? [['/work', '⌂', 'Главная'], ['/work/jobs', 'clipboard', 'Заявки'], ['/work/chats', 'chat', 'Чат'], ['/menu', 'menu', 'Меню']]
@@ -412,7 +423,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
        ['/admin/section/people', '▤', 'Пользователи'], ['/menu', 'menu', 'Меню']];
   // Все дополнительные функции доступны в шапке, даже когда они не в нижних вкладках.
   // Не показываем чужие роли и не создаём несуществующие страницы.
-  const accountLinks: [string, string][] = mode === 'performer'
+  const accountLinks: [string, string][] = mode === 'courier'
+    ? [['/courier','Рабочий стол курьера'], ['/courier/jobs','Мои рейсы и история'], ['/courier/chat','Связь по доставкам'], ['/profile','Профиль и настройки']]
+    : mode === 'performer'
     ? [...(me?.roles.includes('service') ? [['/base', 'Моя СТО — стационарный ремонт']] as [string, string][] : []),
        ['/work/me', 'Профиль исполнителя'], ['/work/me/about', 'Личные сведения'],
        ['/work/me/phone', 'Телефон и вход'], ['/work/me/cars', 'Автомобили'],
@@ -548,6 +561,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {me && mode === 'moderator' && <span className="pill accent">модерация</span>}
           {me && mode === 'insurer' && <span className="pill accent">страхование</span>}
           {me && mode === 'service' && <span className="pill accent">рембаза</span>}
+          {me && mode === 'courier' && <span className="pill accent">курьер</span>}
           {me && !serviceSandbox && me.roles.includes('insurer') && me.roles.includes('inspection_operator') &&
             (mode === 'insurer' || mode === 'inspection') &&
             <nav className="cabinet-role-switch" aria-label="Рабочее направление партнёра">
@@ -588,7 +602,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
             {me ? <>
               {(mode === 'client'
                 ? [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь в дороге'], ['/shop', '⚙', 'Запчасти'], ['/garage', '▣', 'Мой транспорт'], ['/insurance/request/new', '◇', 'Страхование'], ['/services', '▤', 'Грузовые СТО']]
-                : mode === 'performer'
+                : mode === 'courier'
+                  ? tabs
+                  : mode === 'performer'
                   ? []
                   : mode === 'service'
                     ? [...tabs, ['/base/money', '₽', 'Финансы'], ['/base/me', '⚙', 'Карточка'], ...(me.roles.some(r => r === 'master' || r === 'tow') ? [['/work', '⚡', 'Выездной мастер']] : []), ['/profile', '◉', 'Аккаунт']]
