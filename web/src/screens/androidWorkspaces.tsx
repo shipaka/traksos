@@ -153,10 +153,10 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
     </a>
     <div className="and19-cover"><h1>Рабочий стол</h1></div>
     <div className="and19-services" aria-label="Вызвать помощь">
-      <a href={disabledServices?.repair ? undefined : '#/sos'} aria-disabled={disabledServices?.repair || undefined}><span aria-hidden="true">⚒</span><span className="and19-service-label">Выездной мастер</span><ApprovedServiceIllustration kind="repair" /></a>
-      <a href={disabledServices?.tow ? undefined : '#/new/tow'} aria-disabled={disabledServices?.tow || undefined}><span aria-hidden="true">↗</span><span className="and19-service-label">Эвакуатор</span><ApprovedServiceIllustration kind="tow" /></a>
-      <a href={disabledServices?.service ? undefined : '#/services'} aria-disabled={disabledServices?.service || undefined}><span aria-hidden="true">▤</span><span className="and19-service-label">СТО</span><ApprovedServiceIllustration kind="service" /></a>
-      <a href={disabledServices?.consult ? undefined : '#/new/consult'} aria-disabled={disabledServices?.consult || undefined}><span aria-hidden="true">◉</span><span className="and19-service-label">Консультация</span><ApprovedServiceIllustration kind="consult" /></a>
+      <a href={disabledServices?.repair ? undefined : '#/sos'} aria-disabled={disabledServices?.repair || undefined}><span className="and19-service-symbol"><NavGlyph glyph="wrench"/></span><span className="and19-service-label">Выездной мастер</span><ApprovedServiceIllustration kind="repair" /></a>
+      <a href={disabledServices?.tow ? undefined : '#/new/tow'} aria-disabled={disabledServices?.tow || undefined}><span className="and19-service-symbol"><NavGlyph glyph="tow"/></span><span className="and19-service-label">Эвакуатор</span><ApprovedServiceIllustration kind="tow" /></a>
+      <a href={disabledServices?.service ? undefined : '#/services'} aria-disabled={disabledServices?.service || undefined}><span className="and19-service-symbol"><NavGlyph glyph="garage"/></span><span className="and19-service-label">СТО</span><ApprovedServiceIllustration kind="service" /></a>
+      <a href={disabledServices?.consult ? undefined : '#/new/consult'} aria-disabled={disabledServices?.consult || undefined}><span className="and19-service-symbol"><NavGlyph glyph="headset"/></span><span className="and19-service-label">Консультация</span><ApprovedServiceIllustration kind="consult" /></a>
     </div>
     {insuranceInProgress.length > 0 && <section className="and19-insurance" role="region"
       aria-label="Мои активные страховые заявки">
@@ -187,22 +187,18 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
             href={current.vehicle_id ? '#/garage/' + current.vehicle_id : '#/order/' + current.id}
             aria-label={current.vehicle_id ? 'История и карточка автомобиля по заявке' : 'Открыть заявку и данные автомобиля'}>
             <ApprovedOrderTruck order={current} />
+            {current.status === 'en_route' && <span className="and19-photo-badge">Исполнитель в пути</span>}
           </a>}
           <OrderFacts order={current} />
           <OrderRoute order={current} role="client"/>
           {current.status !== 'searching' && <MobileTimeline order={current} />}
           {current.status === 'searching' && <p className="and19-search-active"><span className="and19-pulse" aria-hidden="true" />Поиск исполнителя продолжается · открыть отклики</p>}
-          <a className="and19-link" href={'#/order/' + current.id}>Открыть заявку и связь с исполнителем <span aria-hidden="true">›</span></a>
         </div>
-        {current.status !== 'searching' &&
-          <nav className="and19-order-shortcuts" aria-label="Действия по активной заявке">
-            <a href={'#/order/' + current.id + '?chat=1'}>Чат заявки</a>
-            <a href={'#/order/' + current.id}>Подробности</a>
-          </nav>}
+
       </section>
       : <section className="and19-panel and19-empty"><strong>Активных заявок нет</strong><ApprovedEmptyScene kind="orders" /><p>Выберите необходимую помощь — здесь появятся только реальные этапы поиска и отклики в заявке.</p></section>}
     {current?.performer_name && <div className="and19-assigned-performer">
-      <span className="and19-assigned-icon" aria-hidden="true">⚒</span>
+      <span className="and19-assigned-icon" aria-hidden="true"><NavGlyph glyph="◉"/></span>
       <span className="and19-assigned-copy">
         <strong>{current.performer_name}
           {current.performer_rating != null && Number.isFinite(Number(current.performer_rating)) &&
@@ -214,14 +210,14 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
         </strong>
         <small>{SERVICES[current.service]?.name || 'Исполнитель'} · заявка №{current.number}</small>
       </span>
-      <a href={'#/order/'+current.id+'?chat=1'} aria-label="Открыть чат с исполнителем">Чат</a>
-      <a href={'#/order/'+current.id} aria-label="Контакты исполнителя и подробности заявки">Связь</a>
+      <a href={'#/order/'+current.id} aria-label="Контакты исполнителя и подробности заявки"><NavGlyph glyph="phone"/></a>
+      <a href={'#/order/'+current.id+'?chat=1'} aria-label="Открыть чат с исполнителем"><NavGlyph glyph="chat"/></a>
     </div>}
     {current && current.status !== 'searching' && Number.isFinite(current.money?.total) &&
       <div className="and19-price and19-client-cost" aria-label="Стоимость активной заявки">
         <span>
           <small>{['awaiting_confirmation','completed'].includes(current.status) ? 'Сумма к подтверждению' : 'Предварительный расчёт'}</small>
-          <strong>Стоимость по заявке</strong>
+          <strong>Итоговая стоимость</strong>
           {Number.isFinite(current.money?.amount) && Number.isFinite(current.money?.clientFee) &&
             <small>Работы и выезд: {rub(current.money.amount)} · сервис: {rub(current.money.clientFee)}</small>}
         </span>
@@ -237,12 +233,8 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
         <small>История обслуживания, заявки, документы</small></span>
       <span aria-hidden="true">›</span>
     </a>
-    <a href={disabledServices?.shop ? undefined : "#/shop"} aria-disabled={disabledServices?.shop || undefined} className="and19-equipment and19-parts-shortcut" aria-label="Магазин запчастей">
-      <span className="and19-equipment-icon" aria-hidden="true">⚙</span>
-      <span><strong>Магазин запчастей</strong><small>{disabledServices?.shop ? 'Доступ ограничен владельцем автопарка' : 'По названию и артикулу · магазин пока закрыт'}</small></span>
-      <span aria-hidden="true">›</span>
-    </a>
-    <a href="#/sos" className="and19-action and19-sos">＋ Новая заявка / SOS-помощь</a>
+
+    <a href="#/sos" className="and19-action and19-sos"><NavGlyph glyph="✚"/> Новая заявка на сервис</a>
   </div>;
 }
 
