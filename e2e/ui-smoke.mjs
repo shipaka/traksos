@@ -22,6 +22,16 @@ try {
       const bot=page.getByRole('button',{name:'Открыть TrakBot'});
       assert(await bot.isVisible(), 'Final PC TrakBot must be user-opened');
       assert(await bot.locator('.trakbot-mascot-original').count()===1,'Owner-approved truck mascot missing');
+      const mascot=await bot.locator('.trakbot-mascot-original').evaluate(async el=>{
+        const value=getComputedStyle(el).backgroundImage;
+        const path='/trakbot-approved-hello.webp';
+        if(!value.includes(path))return {ok:false,value};
+        const response=await fetch(path);
+        if(!response.ok||!response.headers.get('content-type')?.includes('image/'))return {ok:false,status:response.status,value};
+        const bmp=await createImageBitmap(await response.blob()).catch(()=>null);
+        return {ok:!!bmp&&bmp.width>20&&bmp.height>20,value,width:bmp?.width,height:bmp?.height};
+      });
+      assert(mascot.ok,'TrakBot must display the exact loaded approved mascot, not a blank tile: '+JSON.stringify(mascot));
       assert(!await page.locator('.trakbot-dock-panel').count(),'TrakBot opened without a click');
       await bot.click();
       const invite=page.getByRole('dialog',{name:'TrakBot — личный помощник'});
