@@ -349,7 +349,15 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         intent.getStringExtra(EXTRA_PATH)?.let { path ->
-            web.evaluateJavascript("location.hash = ${JSONObject.quote("#/$path")}", null)
+            if (BuildConfig.DEBUG && path.startsWith("android-review/")) {
+                // The error screen uses loadDataWithBaseURL(null). Changing its
+                // hash keeps the fake error HTML instead of loading APK React.
+                // A fresh URL also works when the emulator has no network.
+                failed = false
+                web.loadUrl(urlFor(path))
+            } else {
+                web.evaluateJavascript("location.hash = ${JSONObject.quote("#/$path")}", null)
+            }
         }
     }
 
