@@ -29,6 +29,27 @@
 .approved-pc:not(.approved-pc-admin) .approved-pc-heading p{font-size:12px;margin:0}
 .approved-pc:not(.approved-pc-admin) .approved-pc-heading>img{height:75px}
 .approved-pc-heading>img{height:135px;max-width:100%;width:100%;object-fit:contain;object-position:right center;filter:drop-shadow(0 5px 18px #ff833128)}
+.approved-pc-fleet-footer{display:flex;flex-direction:column;gap:11px}
+.approved-pc-table-wrap{overflow-x:auto}
+.approved-pc-order-table{width:100%;border-collapse:separate;border-spacing:0 4px;font-size:12px;min-width:650px}
+.approved-pc-order-table th{text-align:left;color:#c1d8dd;font-weight:650;font-size:11px;padding:4px 8px}
+.approved-pc-order-table td{background:#0d2835;padding:9px 8px;max-width:280px;overflow-wrap:anywhere}
+.approved-pc-order-table tr.selected td{background:#3e2b1c;border-top:1px solid #be712c;border-bottom:1px solid #be712c}
+.approved-pc-order-table td:first-child{border-radius:7px 0 0 7px;color:#ffba80;font-weight:800}
+.approved-pc-order-table td:last-child{border-radius:0 7px 7px 0}
+.approved-pc-order-table button{background:#154351;border:1px solid #5696a3;color:#e9fcff;border-radius:7px;padding:7px 10px;white-space:nowrap}
+.approved-pc-order-table button:hover{background:#a75317;border-color:#ffad5b}
+.approved-pc-fleet-footer-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr);gap:11px}
+.approved-pc-fleet-footer-grid .approved-pc-pane{min-width:0}
+.approved-pc-fleet-vehicle-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.approved-pc-fleet-vehicle{display:grid;grid-template-columns:74px minmax(0,1fr);gap:2px 8px;padding:6px;
+ background:#102e3b;border:1px solid #366772;border-radius:9px;min-width:0}
+.approved-pc-fleet-vehicle:hover{border-color:#e98b43}
+.approved-pc-fleet-vehicle .approved-pc-photo{grid-row:span 3;aspect-ratio:3/4;min-width:0}
+.approved-pc-fleet-vehicle strong{font-size:12px;align-self:end;overflow-wrap:anywhere}
+.approved-pc-fleet-vehicle small{font-size:10px}
+.approved-pc-fleet-vehicle span{font-size:10px;color:#ffbd7d}
+@media(max-width:1250px){.approved-pc-fleet-footer-grid{grid-template-columns:1fr 1fr}.approved-pc-fleet-footer-grid>.approved-pc-pane:first-child{grid-column:1/-1}}
 .approved-pc-active-order-nav{display:flex;align-items:stretch;gap:9px;flex-wrap:wrap}
 .approved-pc-active-order-nav .approved-pc-tabs{flex:1;min-width:320px}
 .approved-pc-active-order-nav .approved-pc-tabs button{flex:1 1 auto;min-width:170px}
