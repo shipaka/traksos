@@ -89,7 +89,8 @@ try{
    const home='courier-home-'+width+'.png';
    await page.screenshot({path:output+'/'+home,fullPage:true,animations:'disabled'});
    report.screenshots.push(home);
-   await page.locator('a[href="#/courier/jobs"]').first().click();
+   // Click the visible role workdesk link, not the hidden duplicate in common navigation.
+   await page.locator((width===1440?'main.courier-pc':'main.courier-android')+' a[href="#/courier/jobs"]').first().click();
    await page.locator('main.courier-android').waitFor({state:'visible'});
    await page.getByRole('heading',{name:'Мои рейсы'}).waitFor();
    const jobs='courier-jobs-'+width+'.png';
