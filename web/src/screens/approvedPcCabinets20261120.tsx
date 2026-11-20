@@ -93,16 +93,23 @@ function RowItem({label,info,active,href,onClick,badge,v}:{label:string;info?:st
   return href?<a className={'approved-pc-row'+(active?' current':'')} href={href}>{body}</a>
     :<button type="button" className={'approved-pc-row'+(active?' current':'')} onClick={onClick}>{body}</button>;
 }
-function Calendar({items=[]}:{items?:any[]}) {
+function Calendar({items=[],kind='orders'}:{
+  items?:any[];kind?:'orders'|'service'|'insurance'|'inspection'
+}) {
   const [shift,setShift]=useState(0);
   const [chosen,setChosen]=useState('');
-  const ref=new Date(); const month=new Date(ref.getFullYear(),ref.getMonth()+shift,1);
+  const ref=new Date();const month=new Date(ref.getFullYear(),ref.getMonth()+shift,1);
   const monthDays=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();
   const pad=(month.getDay()+6)%7;
   const counts:Record<string,number>={};
   items.forEach(item=>{const d=orderDate(item);if(d)counts[d]=(counts[d]||0)+1});
   const days=Array.from({length:pad},()=>null as number|null).concat(Array.from({length:monthDays},(_,i)=>i+1));
   const monthName=month.toLocaleString('ru-RU',{month:'long',year:'numeric'});
+  const appointments=chosen?items.filter(item=>orderDate(item)===chosen):[];
+  const href=(item:any)=>kind==='service'?'#/base/car/'+item.id
+    :kind==='insurance'?'#/insurance/request/'+item.id
+    :kind==='inspection'?'#/inspections/processing'
+    :'#/order/'+item.id;
   return <Pane title="Календарь">
     <div className="approved-pc-cal-head"><button onClick={()=>setShift(v=>v-1)} aria-label="Предыдущий месяц">‹</button><b>{monthName}</b><button onClick={()=>setShift(v=>v+1)} aria-label="Следующий месяц">›</button></div>
     <div className="approved-pc-calendar">
@@ -113,7 +120,13 @@ function Calendar({items=[]}:{items?:any[]}) {
           aria-label={date+', записей: '+(counts[date]||0)}>{day}{counts[date]>0&&<i aria-hidden="true"/>}</button>;
       })())}
     </div>
-    {chosen&&<p className="approved-pc-cal-selection">{chosen.split('-').reverse().join('.')}: {counts[chosen]||0} записей</p>}
+    {chosen&&<div className="approved-pc-cal-results" role="region" aria-label={'Записи на '+chosen}>
+      <p className="approved-pc-cal-selection">{chosen.split('-').reverse().join('.')}: {appointments.length} записей</p>
+      {appointments.length?appointments.map((item:any)=><a key={item.id} href={href(item)} className="approved-pc-cal-entry">
+        <strong>№{text(item.number||item.id)}</strong>
+        <small>{vehicleLabel(transport(item))} · {text(item.needName||item.description||item.statusName,'Открыть запись')}</small>
+      </a>):<p className="approved-pc-caveat">На выбранную дату подтверждённых записей нет.</p>}
+    </div>}
   </Pane>;
 }
 function WorkLayout({left,center,right}:{left:ReactNode;center:ReactNode;right?:ReactNode}){
@@ -504,7 +517,7 @@ function ServiceDesk(){
           <RequestCard key={selected.id} b={selected} onDone={data.reload}/></section>
        :<SelectedServiceCase key={selected.id} booking={selected}/>):<Pane title="Рабочий стол рембазы"><Empty>Выберите машину слева или откройте новые обращения.</Empty>
         <a href="#/base/inbox" className="approved-pc-primary">Входящие заявки</a></Pane>}
-      right={<><Calendar items={[...expected,...buckets.repair]}/><Pane title="Управление"><a className="approved-pc-small-link" href="#/base/me">Карточка СТО и приём →</a>
+      right={<><Calendar kind="service" items={[...expected,...buckets.repair]}/><Pane title="Управление"><a className="approved-pc-small-link" href="#/base/me">Карточка СТО и приём →</a>
         <a className="approved-pc-small-link" href="#/base/money">Финансы СТО →</a></Pane><Bot message="Помогу с ремонтом, запчастями и заявками."/></>}/>}
   </main>;
 }
@@ -568,7 +581,7 @@ function InsuranceDesk({inspection}:{inspection:boolean}){
       :<><InsuranceProposals requestId={String(selected.id)}/>
         <a className="approved-pc-primary" href={'#/insurance/request/'+selected.id}>Открыть дело, варианты и переписку</a></>}
     </section>:<Pane title={inspection?'Техосмотры':'Страхование'}><Empty>Пока нет открытого дела. Новые назначенные заявки появятся здесь.</Empty></Pane>}
-    right={<><Calendar items={all}/><Pane title="Документы и следующее действие"><p>Проверяйте полноту документов в карточке выбранного дела.</p>
+    right={<><Calendar kind={inspection?'inspection':'insurance'} items={all}/><Pane title="Документы и следующее действие"><p>Проверяйте полноту документов в карточке выбранного дела.</p>
       {selected&&!inspection&&<a className="approved-pc-small-link" href={'#/insurance/request/'+selected.id}>Документы и предложения →</a>}
       {inspection&&<p className="approved-pc-caveat">Официальные карты/ЕАИСТО пока не подключены.</p>}
       </Pane><Bot message={inspection?'Помогу с порядком осмотра и документами.':'Помогу со страховым делом и документами.'}/></>}/>
