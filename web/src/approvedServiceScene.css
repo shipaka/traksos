@@ -82,15 +82,23 @@
   max-width:100%;
 }
 @media(max-width:899px) {
+  /* Mobile Chrome paints the same 704x105 image once at its final size.
+     The old transform(scale(.65)) triggered an extra GPU resampling pass. */
   .app.role-client .desktop-quick-card>.tr-service-illustration {
     right:-12px;
+    width:114.4px;
+    height:68.25px;
+    background-size:457.6px 68.25px;
     opacity:.30;
-    transform:scale(.65);
-    transform-origin:right bottom;
+    transform:none;
   }
+  .app.role-client .desktop-quick-card>.tr-service-illustration--repair{background-position:0 0}
+  .app.role-client .desktop-quick-card>.tr-service-illustration--tow{background-position:-114.4px 0}
+  .app.role-client .desktop-quick-card>.tr-service-illustration--service{background-position:-228.8px 0}
+  .app.role-client .desktop-quick-card>.tr-service-illustration--consult{background-position:-343.2px 0}
   .app.role-client .desktop-quick-card:hover>.tr-service-illustration {
     opacity:.40;
-    transform:scale(.65);
+    transform:none;
   }
 }
 @media(prefers-reduced-motion:reduce) {
