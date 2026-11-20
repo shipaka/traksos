@@ -366,6 +366,23 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   const [openGuestGroup, setOpenGuestGroup] = useState<string | null>(null);
   const [mobileCatalogOpen, setMobileCatalogOpen] = useState(false);
   const isAuthEntry = !me && ['login', 'register', 'join', 'reset', 'activate'].includes(route[0] ?? '');
+  const guestNavGroups: { title: string; links: { title: string; href: string }[] }[] = [
+    { title: 'О платформе', links: [
+      { title: 'О нас', href: '#/company' },
+      { title: 'Как работает', href: '#/explore/guide' },
+      { title: 'Комиссии', href: '#/explore/pricing' },
+      { title: 'Оферты и документы', href: '#/offers' },
+    ] },
+    { title: 'Сервисы', links: PUBLIC_CAPABILITIES.map(item => ({ title: item.title, href: item.href })) },
+    { title: 'Сообщество', links: [
+      { title: 'Эфир', href: '#/explore/air' },
+      { title: 'Клуб TrakSOS', href: '#/explore/club' },
+    ] },
+    { title: 'Партнёрам', links: [
+      { title: 'Хотим работать', href: '#/join' },
+      { title: 'Оферты партнёров', href: '#/offers' },
+    ] },
+  ];
   useEffect(() => {
     setOpenGuestGroup(null);
     setMobileCatalogOpen(false);
@@ -529,30 +546,22 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         {me && mode === 'client' && <nav className="track-top-shortcuts" aria-label="Быстрый доступ">
           <a href="#/">Главная</a><a href="#/orders">Заявки</a><a href="#/sos">Помощь в дороге</a><a href="#/shop">Запчасти</a>
         </nav>}
-        {!me && !isAuthEntry && <nav className="guest-site-nav" aria-label="Разделы TrakSOS">
-          <a href="#/" aria-current={route.length === 0 ? 'page' : undefined}>Главная</a>
-          <details className="guest-nav-group" open={openGuestGroup === 'Возможности'}
-            onMouseLeave={() => setOpenGuestGroup(null)}
-            onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpenGuestGroup(null); }}
-            onKeyDown={event => { if (event.key === 'Escape') { setOpenGuestGroup(null); (event.currentTarget.querySelector('summary') as HTMLElement | null)?.focus(); event.preventDefault(); } }}>
-            <summary aria-expanded={openGuestGroup === 'Возможности'}
-              onClick={event => { event.preventDefault(); setOpenGuestGroup(current => current === 'Возможности' ? null : 'Возможности'); }}>
-              Возможности <span aria-hidden="true">⌄</span>
-            </summary>
-            <div className="guest-nav-dropdown guest-nav-dropdown--all">
-              {PUBLIC_CAPABILITIES.map(item =>
-                <a key={item.href} href={item.href} onClick={() => setOpenGuestGroup(null)}>{item.title}</a>)}
-              <span className="guest-nav-hint">Услуги доступны после входа и только при наличии исполнителей</span>
-            </div>
-          </details>
-          <a href="#/explore/tech" className="guest-nav-techbase">ТехБаза</a>
-          <a href="#/company">О платформе</a>
-          <a href="#/explore/pricing">Тарифы</a>
-          <a href="#/help">Помощь</a>
-        </nav>}
-        {!me && isAuthEntry && <nav className="guest-auth-links" aria-label="О компании и документах">
-          <a href="#/">Главная</a><a href="#/company">Компания</a>
-          <a href="#/offers">Оферты</a><a href="#/offer/privacy">Документы</a>
+        {!me && <nav className="guest-site-nav" aria-label="Разделы TrakSOS">
+          {guestNavGroups.map(group => (
+            <details key={group.title} className="guest-nav-group" open={openGuestGroup === group.title}
+              onMouseLeave={() => setOpenGuestGroup(null)}
+              onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpenGuestGroup(null); }}
+              onKeyDown={event => { if (event.key === 'Escape') { setOpenGuestGroup(null); (event.currentTarget.querySelector('summary') as HTMLElement | null)?.focus(); event.preventDefault(); } }}>
+              <summary aria-expanded={openGuestGroup === group.title}
+                onClick={event => { event.preventDefault(); setOpenGuestGroup(current => current === group.title ? null : group.title); }}>
+                {group.title} <span aria-hidden="true">⌄</span>
+              </summary>
+              <div className="guest-nav-dropdown guest-nav-dropdown--all">
+                {group.links.map(link => <a key={link.href} href={link.href} onClick={() => setOpenGuestGroup(null)}>{link.title}</a>)}
+              </div>
+            </details>
+          ))}
+          <a href="#/help">Поддержка</a>
         </nav>}
         {!me && !isAuthEntry && <details className="guest-mobile-catalog" open={mobileCatalogOpen}>
           <summary onClick={event => { event.preventDefault(); setMobileCatalogOpen(v => !v); }}>Возможности <span aria-hidden="true">⌄</span></summary>
