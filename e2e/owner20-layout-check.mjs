@@ -40,7 +40,7 @@ try {
      const [sprite,approvedHero,approvedLogo]=await Promise.all([
        measure('/owner20-artwork-sprite.webp'),
        measure('/owner20-photo-background-approved.webp'),
-       measure('/owner20-header-logo-approved.webp'),
+       measure('/traksos-brand-logo-approved-618.png'),
      ]);
      const rect=(selector)=>{const r=document.querySelector(selector)?.getBoundingClientRect();return r&&{x:r.x,y:r.y,w:r.width,h:r.height};};
      return {
@@ -55,11 +55,11 @@ try {
    if(!art.photo.includes(expectedHero) ||
       !art.map.includes('owner20-artwork-sprite.webp') ||
       !art.feature.includes('owner20-artwork-sprite.webp') ||
-      !art.logo.includes('owner20-header-logo-approved.webp') ||
+      !art.logo.includes('traksos-brand-logo-approved-618.png') ||
       art.photo.includes('tracksos-approved-hero-owner-20261119') ||
       art.sprite?.w!==1018 || art.sprite?.h!==446 ||
       art.approvedHero?.w!==1536 || art.approvedHero?.h!==324 ||
-      art.approvedLogo?.w!==235 || art.approvedLogo?.h!==53)
+      art.approvedLogo?.w!==274 || art.approvedLogo?.h!==46)
      throw Error(width+': approved 617.png image or loaded size regressed '+JSON.stringify(art));
    if(width===1536){
      const near=(got,expected)=>Math.abs(got-expected)<=7;
