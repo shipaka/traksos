@@ -14,7 +14,7 @@ const features = [
   ['▦','Специалисты ЭБУ','Диагностика, ремонт и программирование','ecu','Подобрать'],
   ['⚙','Запчасти','Подбор и поставка для грузовой техники','parts','В каталог'],
   ['◇','Страхование','ОСАГО, КАСКО, грузы и автопарк','insurance','Подробнее'],
-  ['▤','Техосмотр','Для грузового транспорта','inspection','Подробнее']
+  ['▤','Техосмотр','Оформление и прохождение для грузового транспорта','inspection','Записаться']
 ] as const;
 function rememberAllowed(key:string){
   if(key==='van'||key==='tow'||key==='sto'||key==='consult'||key==='parts'||key==='insurance'||key==='inspection') rememberGuestService(key);
@@ -46,12 +46,12 @@ function TruckLogo() {
     <circle cx="15" cy="34" r="4"/><circle cx="43" cy="34" r="4"/>
   </svg>;
 }
-function Feature({item,index}:{item:typeof features[number];index:number}) {
+function Feature({item}:{item:typeof features[number]}) {
   const [symbol,title,description,key,action] = item;
   return <a href={route(key)} className={'owner20-feature owner20-feature-'+key} onClick={() => rememberAllowed(key)}>
     <div className="owner20-feature-title"><span aria-hidden="true"><OwnerIcon kind={key}/></span><b>{title}</b></div>
     <p>{description}</p>
-    <span className="owner20-feature-illustration" aria-hidden="true">{index === 0 ? '▤' : index===1?'▦':index===2?'⚙':index===3?'◇':'✓'}</span>
+    <span className="owner20-feature-illustration" aria-hidden="true" />
     <span className="owner20-feature-cta">{action}　→</span>
   </a>;
 }
@@ -91,7 +91,7 @@ export function OwnerDesktopHome20261120() {
       <aside className="owner20-map" aria-label="Покрытие сервисов">
         <h2>Покрытие сервисов TrakSOS</h2>
         <div className="owner20-map-inner">
-          <div className="owner20-map-shape" role="img" aria-label="Демонстрационная схема карты России из утверждённого макета, не подтверждение фактического покрытия."><img src="/owner20-russia-coverage-reference.svg" alt="" aria-hidden="true" loading="eager"/><span className="owner20-map-demo-tag">ДЕМО</span></div>
+          <div className="owner20-map-shape" role="img" aria-label="Иллюстрация России из утверждённого макета, не подтверждение фактического покрытия."><span className="owner20-map-source" aria-hidden="true" /><span className="owner20-map-demo-tag">ДЕМО</span></div>
           <div className="owner20-map-legend"><p><i className="teal"/>Пример зоны покрытия</p><p><i/>Планируемое расширение</p><small>Доступность услуг зависит от региона и партнёрской сети.</small></div>
         </div>
         <a href="#/explore/guide">Подробнее о покрытии →</a>
