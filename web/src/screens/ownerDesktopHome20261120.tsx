@@ -101,7 +101,7 @@ export function OwnerDesktopHome20261120() {
       {primary.map(([symbol,title,hint,key])=><a href={route(key)} key={key} onClick={() => rememberAllowed(key)}><span className="owner20-quick-icon" aria-hidden="true"><OwnerIcon kind={key}/></span><span><b>{title}</b><small>{hint}</small></span></a>)}
     </nav>
     <section className="owner20-features" aria-label="Дополнительные сервисы">
-      {features.map((item,index)=><Feature key={item[3]} item={item} index={index}/>)}
+      {features.map(item=><Feature key={item[3]} item={item}/>)}
     </section>
     <section className="owner20-bottom" aria-label="Сообщество и приложение">
       <a href="#/explore/air" className="owner20-bottom-card owner20-bottom-air"><b>◉　Эфир TrakSOS</b><p>Живое сообщество водителей и специалистов. Регионы, маршруты, опыт и помощь в пути.</p><span>Войти в Эфир　→</span></a>
