@@ -187,7 +187,7 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
             href={current.vehicle_id ? '#/garage/' + current.vehicle_id : '#/order/' + current.id}
             aria-label={current.vehicle_id ? 'История и карточка автомобиля по заявке' : 'Открыть заявку и данные автомобиля'}>
             <ApprovedOrderTruck order={current} />
-            {current.status === 'en_route' && <span className="and19-photo-badge">Исполнитель в пути</span>}
+            {current.status === 'en_route' && <span className="and19-photo-badge">{current.service==='tow'?'Эвакуатор в пути':'Мастер в пути'}</span>}
           </a>}
           <OrderFacts order={current} />
           <OrderRoute order={current} role="client"/>
@@ -215,11 +215,12 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
     </div>}
     {current && current.status !== 'searching' && Number.isFinite(current.money?.total) &&
       <div className="and19-price and19-client-cost" aria-label="Стоимость активной заявки">
+        <NavGlyph glyph="wallet"/>
         <span>
-          <small>{['awaiting_confirmation','completed'].includes(current.status) ? 'Сумма к подтверждению' : 'Предварительный расчёт'}</small>
-          <strong>Итоговая стоимость</strong>
+          <strong>{['awaiting_confirmation','completed'].includes(current.status) ?
+            'Сумма к подтверждению' : 'Итоговая стоимость'}</strong>
           {Number.isFinite(current.money?.amount) && Number.isFinite(current.money?.clientFee) &&
-            <small>Работы и выезд: {rub(current.money.amount)} · сервис: {rub(current.money.clientFee)}</small>}
+            <small>Работы {rub(current.money.amount)} + сервис TrakSOS {rub(current.money.clientFee)}</small>}
         </span>
         <strong>{rub(current.money.total)}</strong>
       </div>}
