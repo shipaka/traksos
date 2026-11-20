@@ -29,6 +29,13 @@
 .approved-pc:not(.approved-pc-admin) .approved-pc-heading p{font-size:12px;margin:0}
 .approved-pc:not(.approved-pc-admin) .approved-pc-heading>img{height:75px}
 .approved-pc-heading>img{height:135px;max-width:100%;width:100%;object-fit:contain;object-position:right center;filter:drop-shadow(0 5px 18px #ff833128)}
+.approved-pc-active-order-nav{display:flex;align-items:stretch;gap:9px;flex-wrap:wrap}
+.approved-pc-active-order-nav .approved-pc-tabs{flex:1;min-width:320px}
+.approved-pc-active-order-nav .approved-pc-tabs button{flex:1 1 auto;min-width:170px}
+.approved-pc-order-heading{display:flex;gap:9px;align-items:center;justify-content:center;white-space:nowrap;
+ padding:8px 15px;border-radius:11px;border:1px solid #3b7785;background:#112b38;
+ font-size:13px;font-weight:850;color:#e9f7f9}
+.approved-pc-order-heading strong{font-size:15px;color:#ffad68}
 .approved-pc-tabs{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
 .approved-pc-tabs button,.approved-pc-partner-switch a{
  display:flex;gap:9px;align-items:center;justify-content:center;min-height:47px;
