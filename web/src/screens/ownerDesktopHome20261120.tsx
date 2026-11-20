@@ -1,4 +1,5 @@
 import { rememberGuestService } from '../guestCatalog.ts';
+import { APPROVED_VISUALS } from '../approvedVisuals.ts';
 import './ownerDesktopHome20261120.css';
 
 /** The 20 November owner-approved desktop layout. Mobile stays on its separately approved view. */
@@ -40,12 +41,6 @@ function OwnerIcon({kind}:{kind:string}) {
   return <svg {...props}>{lines}</svg>;
 }
 
-function TruckLogo() {
-  return <svg viewBox="0 0 64 42" fill="none" stroke="currentColor" strokeWidth="2.1" aria-hidden="true">
-    <path d="M3 32V16l13-8 27 3 9 9v13H3m8-15h13l3-6m-1 6h16V13M3 37h56M8 6h14M45 22h12m-8 5h11"/>
-    <circle cx="15" cy="34" r="4"/><circle cx="43" cy="34" r="4"/>
-  </svg>;
-}
 function Feature({item}:{item:typeof features[number]}) {
   const [symbol,title,description,key,action] = item;
   return <a href={route(key)} className={'owner20-feature owner20-feature-'+key} onClick={() => rememberAllowed(key)}>
@@ -58,7 +53,7 @@ function Feature({item}:{item:typeof features[number]}) {
 export function OwnerDesktopHome20261120() {
   return <main className="owner20-home" id="public-home">
     <header className="owner20-top">
-      <a href="#/" className="owner20-mark" aria-label="TrakSOS — главная"><TruckLogo/><span>Trak<strong>SOS</strong></span></a>
+      <a href="#/" className="owner20-mark" aria-label="TrakSOS — главная"><img src={APPROVED_VISUALS.logo} alt="TrakSOS" width="235" height="39" /></a>
       <span className="owner20-tagline">Платформа помощи и сервисов<br/>для грузового транспорта</span>
       <nav className="owner20-topnav" aria-label="Основные разделы">
         <details><summary>О платформе</summary><div><a href="#/company">О нас</a><a href="#/explore/guide">Как работает</a><a href="#/explore/pricing">Комиссии</a></div></details>
