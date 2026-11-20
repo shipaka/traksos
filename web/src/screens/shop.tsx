@@ -277,8 +277,10 @@ function MyShopOrders({ orders, reload, canOrder }: { orders: any[]; reload: () 
           </div>)}
           {o.adminNote && <span>{o.adminNote}</span>}
           {o.delivery==='delivery' && o.canConfirmCourierReceipt &&
-            ['ready','shipped'].includes(o.status) &&
+            ['arrived','code_verified'].includes(o.courierStatus) && o.status==='shipped' &&
             <CustomerCourierReceipt orderId={o.id} reload={reload}/>}
+          {o.canConfirmCourierReceipt && !['arrived','code_verified','received','cancelled'].includes(o.courierStatus) &&
+            <span className="note">Код вручения станет доступен, когда курьер отметит «На месте».</span>}
           {o.courierStatus && !o.canConfirmCourierReceipt && o.status!=='done' && o.status!=='cancelled' &&
             <span className="note">Код вручения доступен только пользователю, который оформил заказ.</span>}
           {o.cancelReason && <span className="note">Отменён: {o.cancelReason}</span>}
