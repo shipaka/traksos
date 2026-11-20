@@ -145,7 +145,9 @@ try{
          throw Error('Wrong approved role workdesk: '+c.id+' expected '+roleClass);
        const columns=page.locator('.approved-pc-three');
        if(await columns.count()!==1)throw Error('Exactly one full-size workdesk expected: '+c.id);
-       const realTabs=page.locator('.approved-pc-tabs [role="tab"]');
+       const realTabs=page.locator(['owner','driver'].includes(c.id)
+         ?'.approved-pc-active-order-nav .approved-pc-tabs [role="tab"]'
+         :'.approved-pc > .approved-pc-tabs [role="tab"]');
        // A brand-new driver/fleet owner with zero active jobs has no fake order tab.
        if(!['driver','owner'].includes(c.id)&&await realTabs.count()<1)
          throw Error('Desktop tabs missing: '+c.id);
