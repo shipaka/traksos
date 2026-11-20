@@ -367,7 +367,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   );
   const serviceSandbox = route[0]==='admin'&&route[1]==='test-center'&&route[2]==='service'&&route.length>3;
   const here = serviceSandbox ? '/'+(route.slice(3).join('/')||'base') : '/'+route.join('/');
-  const sandboxHref=(href:string)=>serviceSandbox?'#/admin/test-center/service'+(href==='/base'||href.startsWith('/base/')?href:'/unavailable'):'#'+href;
+  const sandboxHref=(href:string)=>serviceSandbox?'#/admin/test-center/service'+(href==='/menu'?'/menu':href==='/base'||href.startsWith('/base/')?href:'/unavailable'):'#'+href;
   // На телефоне оставляем только рабочие действия. Все прежние маршруты
   // сохраняются через меню; компьютерная боковая навигация остаётся полной.
   const tabs: [string, string, string][] = !me ? [] : mode === 'performer'
@@ -389,7 +389,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     : mode === 'performer'
       ? [['/work', '⌂', 'Главная'], ['/work/jobs', '☷', 'Заявки'], ['/work/chats', '▤', 'Чат'], ['/menu', '◉', 'Меню']]
     : mode === 'service'
-      ? [['/base', '⌂', 'Главная'], ['/base/inbox', '☷', 'Заявки'], ['/shop', '🛍', 'Магазин'], ['/base/money', '₽', 'Финансы'], ['/menu', '◉', 'Меню']]
+      ? (serviceSandbox
+          ? [['/base', '⌂', 'Главная'], ['/base/inbox', '☷', 'Заявки'], ['/base/money', '₽', 'Финансы'], ['/menu', '◉', 'Меню']]
+          : [['/base', '⌂', 'Главная'], ['/base/inbox', '☷', 'Заявки'], ['/shop', '🛍', 'Магазин'], ['/base/money', '₽', 'Финансы'], ['/menu', '◉', 'Меню']])
     : mode === 'insurer'
       ? [['/insurance', '▦', 'Главная'], ['/menu', '◉', 'Меню']]
     : mode === 'inspection'
