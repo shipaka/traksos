@@ -74,16 +74,28 @@ try {
       console.log('visual entry route ' + width + 'px: ' + await page.evaluate(() => location.hash));
       await page.locator('.client-dashboard').waitFor({timeout: 20000});
       if (width < 900) {
-        await page.locator('.and19-client').waitFor({state:'visible'});
-        const hero = await page.locator('.and19-cover img').evaluate(img => ({
+        // Mobile CHROME uses the responsive web client dashboard. Android APK
+        // mounts a separate, owner-approved .and19-client workspace, tested by
+        // android-approved-real-screens / approved-truck-hero with a native bridge.
+        // Do not accidentally require the Android-only DOM in the browser.
+        await page.locator('.client-dashboard .desktop-quick-card').first().waitFor({state:'visible'});
+        const hero = await page.locator('.client-dashboard .client-hero-scania').evaluate(img => ({
           loaded: img.complete && img.naturalWidth > 100,
-          visible: getComputedStyle(img).display !== 'none'
+          visible: getComputedStyle(img).display !== 'none',
+          fit: getComputedStyle(img).objectFit
         }));
-        if (!hero.loaded || !hero.visible) throw Error('Approved mobile truck scene missing: '+JSON.stringify(hero));
-        if (await page.locator('.and19-services > a').count() !== 4)
-          throw Error('Mobile Android must show exactly four usable service entries');
-        if (await page.locator('.desktop-quick-card').count() !== 0)
-          throw Error('Mobile view should not render the desktop dashboard tree');
+        if (!hero.loaded || !hero.visible || hero.fit !== 'contain')
+          throw Error('Mobile browser approved truck photo missing: '+JSON.stringify(hero));
+        const entries=page.locator('.client-dashboard .desktop-quick-card');
+        if (await entries.count() !== 4)
+          throw Error('Mobile browser must expose four functional service entries');
+        for(const href of ['#/sos','#/new/tow','#/services','#/new/consult']){
+          if(!await entries.locator('a[href="'+href+'"]').count() &&
+             !await page.locator('.client-dashboard a.desktop-quick-card[href="'+href+'"]').count())
+            throw Error('Mobile browser service link missing: '+href);
+        }
+        if (await page.locator('.and19-client').count() !== 0)
+          throw Error('Android-only client workspace accidentally mounted in mobile browser');
       } else {
         const truck = await page.locator('.client-hero-scania').evaluate(img => ({
           loaded: img.complete && img.naturalWidth > 100,
