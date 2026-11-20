@@ -9,6 +9,7 @@ import { insurancePresentation } from '../insurancePresentation.ts';
 import { ApprovedEmptyScene } from '../approvedEmptyScene.tsx';
 import { ApprovedServiceIllustration } from '../approvedServiceIllustration.tsx';
 import { ApprovedOrderTruck } from '../approvedOrderTruck.tsx';
+import { NavGlyph } from '../navGlyph.tsx';
 
 /** Render a single role dashboard per viewport, rather than hiding a live component tree with CSS. */
 export function useMobileWorkspace() {
@@ -94,7 +95,10 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
   const current = orders.find(o => IN_PROGRESS.includes(o.status));
   const isDriver = !!me?.owner_id || me?.roles?.includes('driver');
   return <div className="and19-workspace and19-client" aria-label="Android рабочий стол клиента">
-    <div className="and19-role">{isDriver ? 'Водитель' : 'Клиент · Владелец автопарка'}</div>
+    <a className="and19-role and19-client-role" href="#/profile" aria-label="Открыть профиль и настройки кабинета">
+      <span className="and19-role-caption"><NavGlyph glyph="◉" />{isDriver ? 'Водитель автопарка' : 'Клиент · Владелец автопарка'}</span>
+      <span className="and19-role-chevron" aria-hidden="true">⌄</span>
+    </a>
     <div className="and19-cover"><h1>Рабочий стол</h1></div>
     <div className="and19-services" aria-label="Вызвать помощь">
       <a href={disabledServices?.repair ? undefined : '#/sos'} aria-disabled={disabledServices?.repair || undefined}><span aria-hidden="true">⚒</span><span className="and19-service-label">Выездной мастер</span><ApprovedServiceIllustration kind="repair" /></a>
@@ -175,7 +179,7 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
   const inJob = performer.line_status === 'on_job';
   return <div className="and19-workspace and19-performer" aria-label="Android рабочий стол исполнителя">
     <div className="and19-role and19-line">
-      <span>{tow ? 'Эвакуаторщик' : 'Выездной мастер'}</span>
+      <span className="and19-role-caption"><NavGlyph glyph="⚙" />{tow ? 'Эвакуаторщик' : 'Выездной мастер'}</span>
       <button type="button" disabled={busy || inJob} className={online ? 'and19-online' : 'and19-offline'}
         aria-label={inJob ? 'На выезде — нельзя сменить статус' : 'Изменить статус доступности'}
         onClick={() => setLine(online ? 'offline' : 'online')}>
