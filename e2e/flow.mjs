@@ -101,7 +101,9 @@ async function login(page, phoneNum, how) {
     await page.getByRole('button', { name: 'Войти', exact: true }).click();
     return;
   }
-  await page.locator('input[type=checkbox]').check();
+  // Partner registration also offers an optional master+STO role switch.
+  // Consent must target the explicit terms checkbox, never the first/all checkboxes.
+  await page.getByRole('checkbox', { name: /Согласен с (агентским договором|офертой).*обработку персональных данных/ }).check();
   await page.getByRole('button', { name: 'Получить код' }).click();
   const hint = await page.getByText(/Тестовый режим: код/).textContent();
   await page.locator('input[autocomplete=one-time-code]').fill(hint.match(/\d{4}/)[0]);
@@ -187,12 +189,12 @@ await login(k, '+79991112233', 'client');
 // Регистрация после выбора выездной помощи открывает нужный раздел SOS.
 await k.waitForURL(/#\/sos/);
 await k.goto(BASE + '/#/');
-await k.locator('.and19-client .and19-services > a').first().waitFor();
+await k.locator('.desktop-quick-links a.desktop-quick-card').first().waitFor();
 await assertDashboardTheme(k, 'client');
 await checkCabinetMenu(k, ['История заявок', 'Мой гараж', 'Мой автопарк', 'Оферта', 'Профиль и настройки']);
 await shot(k, '03-client-home');
 // Home and SOS share the approved direction-first flow.
-await k.locator('.and19-client .and19-services > a').first().click();
+await k.locator('.desktop-quick-links a.desktop-quick-card').first().click();
 await k.getByRole('button', { name: /Выездной мастер/ }).click();
 await k.getByRole('link', { name: /Электрик/ }).first().click();
 await k.getByRole('button', { name: /Вызвать мастера/ }).click(); // рано: подсветит, чего не хватает
@@ -279,12 +281,31 @@ await m.getByText('Как прошло с клиентом?').waitFor({ timeout:
 await m.getByRole('button', { name: '4 из 5' }).click();
 await m.getByRole('button', { name: 'Оставить отзыв' }).click();
 await m.goto(BASE + '/#/work');
-await m.getByText('Долг по комиссии с наличных').waitFor();
+// New cash orders must not create imaginary legacy debt. Verify the visible
+// finance summary against the actual authorized balance, not obsolete copy.
+const balanceSummary = m.locator('.work-mobile-balance');
+await balanceSummary.waitFor({ timeout: 12000 });
+const balanceText = await balanceSummary.innerText();
+const liveBalance = await m.evaluate(async () => {
+  const token = localStorage.getItem('traksos.token');
+  const res = await fetch('/api/performer/balance', { headers: { authorization: 'Bearer ' + token } });
+  if (!res.ok) throw Error('Balance API rejected: ' + res.status);
+  const state = await res.json();
+  return { cashDebt: Number(state.cash_debt), toPay: Number(state.to_pay) };
+});
+if (!Number.isFinite(liveBalance.cashDebt) || !Number.isFinite(liveBalance.toPay) ||
+    !balanceText.includes('К выплате:') ||
+    (liveBalance.cashDebt > 0) !== balanceText.includes('Историческая задолженность:'))
+  throw Error('Performer finance summary disagrees with authorized balance: ' +
+    JSON.stringify({ balance: liveBalance, text: balanceText }));
 await shot(m, '11-master-balance');
 
 // Админ в браузере
 await a.goto(BASE + '/#/admin');
 await a.getByRole('button', { name: 'Распределение' }).click();
+// Distribution settings are intentionally collapsed inside a native details section.
+// Open the real section before checking the authorized dispatch options.
+await a.getByText('Настройки распределения и торгов', { exact: true }).click();
 await a.getByText('Сначала заявки нам').waitFor();
 await assertDashboardTheme(a, 'admin');
 await checkCabinetMenu(a, ['Все заявки', 'Деньги и выплаты', 'Настройки площадки', 'Модерация — очередь'], { shopTab: false });
@@ -295,7 +316,7 @@ await shot(a, '13-admin-payments');
 
 // Переходы между кабинетами: из админки в клиента и обратно, «Назад» ведёт в свой список
 await clickCabinetLink(a, 'Кабинет клиента');
-await a.locator('.and19-client .and19-services > a').first().waitFor();
+await a.locator('.desktop-quick-links a.desktop-quick-card').first().waitFor();
 await clickCabinetLink(a, 'Профиль и настройки');
 await a.getByRole('button', { name: 'Кабинет администратора' }).click();
 await a.getByText('Администратор').first().waitFor();

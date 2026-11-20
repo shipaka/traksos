@@ -1,0 +1,416 @@
+/*
+ * 20 Nov owner-approved PC visual continuity.
+ * Only public inner routes: NEVER override the approved 617.png homepage,
+ * authenticated workspaces, Android-native dashboards, or service logic.
+ * Reuse approved photo and the graphite / warm-orange UI contract.
+ */
+@media (min-width: 900px) {
+  .guest-app:not(.guest-home) > .top {
+    background: #07151c !important;
+    border-bottom: 1px solid #34454d !important;
+    box-shadow: none !important;
+  }
+}
+.guest-app:not(.guest-home) .guest-site-nav a,
+.guest-app:not(.guest-home) .guest-site-nav .guest-nav-group > summary {
+  color: #f1f5f5 !important;
+}
+.guest-app:not(.guest-home) .guest-site-nav a:hover,
+.guest-app:not(.guest-home) .guest-site-nav a:focus-visible,
+.guest-app:not(.guest-home) .guest-site-nav .guest-nav-group[open] > summary {
+  color: #ffab6c !important;
+  border-bottom-color: #ff883f !important;
+}
+.guest-app:not(.guest-home) .guest-nav-dropdown {
+  background: #10222c !important;
+  border-color: #4e6067 !important;
+}
+.guest-app:not(.guest-home) .guest-nav-dropdown a:hover {
+  background: #213640 !important;
+}
+.guest-app:not(.guest-home) .guest-header-actions a.register {
+  color: #0a171b !important;
+  background: #ff883e !important;
+  border-color: #ff883e !important;
+  box-shadow: none !important;
+}
+.guest-app:not(.guest-home) .guest-header-actions a:not(.register) {
+  border-color: #82969c !important;
+  background: #0b1e27 !important;
+  color: #f3f9fa !important;
+}
+
+/* Photographic inner-page covers, cropped from the approved public PC artwork. */
+.guest-app:not(.guest-home) .guest-explore,
+.guest-app:not(.guest-home) .guest-info-page {
+  color: #eef5f5;
+  font-family: Arial, Inter, sans-serif;
+  width: min(1270px, calc(100% - 36px));
+}
+.guest-app:not(.guest-home) .guest-explore-back,
+.guest-app:not(.guest-home) .guest-info-top > a {
+  color: #ffad70;
+}
+.guest-app:not(.guest-home) .guest-explore-hero,
+.guest-app:not(.guest-home) .guest-info-hero {
+  position: relative;
+  background: linear-gradient(120deg,#102631 2%,#132c35 55%,#0a1b23 100%) !important;
+  border: 1px solid #52626a !important;
+  border-radius: 18px;
+  box-shadow: 0 16px 36px #0006;
+  min-height: 290px;
+  padding: clamp(24px,3.6vw,48px);
+}
+.guest-app:not(.guest-home) .guest-explore-hero::before,
+.guest-app:not(.guest-home) .guest-info-hero::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: 57%;
+  z-index: -1;
+  background: url('/owner20-photo-background-approved.webp') 58% 50% / cover no-repeat;
+  opacity: .72;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 38%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 38%);
+  pointer-events: none;
+}
+.guest-app:not(.guest-home) .guest-explore-hero::after,
+.guest-app:not(.guest-home) .guest-info-hero::after {
+  content: none !important;
+}
+.guest-app:not(.guest-home) .guest-explore-glyph {
+  display: none !important;
+}
+.guest-app:not(.guest-home) .guest-explore-eyebrow,
+.guest-app:not(.guest-home) .guest-info-overline,
+.guest-app:not(.guest-home) .guest-info-top > span {
+  color: #ffab6c;
+  letter-spacing: 1.1px;
+}
+.guest-app:not(.guest-home) .guest-explore h1,
+.guest-app:not(.guest-home) .guest-info-hero h1 {
+  color: #fff;
+  font-weight: 800;
+  max-width: 780px;
+}
+.guest-app:not(.guest-home) .guest-explore-hero > p,
+.guest-app:not(.guest-home) .guest-info-hero > p {
+  color: #e0e9e9;
+  max-width: 660px;
+}
+.guest-app:not(.guest-home) .guest-explore-cta,
+.guest-app:not(.guest-home) .guest-info-actions > a:first-child {
+  color: #161d20 !important;
+  background: linear-gradient(120deg,#ff9b4d,#f16a29) !important;
+  border: 1px solid #ff9b4d !important;
+  border-radius: 11px;
+  box-shadow: none !important;
+}
+.guest-app:not(.guest-home) .guest-explore-secondary,
+.guest-app:not(.guest-home) .guest-info-actions > a:not(:first-child) {
+  color: #f2f8f8 !important;
+  border: 1px solid #7a919b !important;
+  background: #102b35c4 !important;
+  border-radius: 11px;
+}
+.guest-app:not(.guest-home) .guest-explore-service-grid,
+.guest-app:not(.guest-home) .guest-info-grid {
+  gap: 13px;
+}
+.guest-app:not(.guest-home) .guest-explore-item,
+.guest-app:not(.guest-home) .guest-info-grid > a {
+  background: linear-gradient(135deg,#1a3440,#0b1c26) !important;
+  border: 1px solid #455d68 !important;
+  border-radius: 13px;
+  min-height: 70px;
+  font-size: 14px;
+}
+.guest-app:not(.guest-home) .guest-explore-item > span:first-child,
+.guest-app:not(.guest-home) .guest-explore-item > span:last-child,
+.guest-app:not(.guest-home) .guest-explore-workspaces article > p span {
+  color: #ff994d !important;
+}
+.guest-app:not(.guest-home) .guest-explore-item:hover,
+.guest-app:not(.guest-home) .guest-explore-item.selected,
+.guest-app:not(.guest-home) .guest-info-grid > a:hover {
+  background: #233d48 !important;
+  border-color: #ff9e62 !important;
+}
+.guest-app:not(.guest-home) .guest-explore-workspaces article {
+  background: linear-gradient(145deg,#172f39,#0b1e27);
+  border: 1px solid #40555f;
+  border-radius: 15px;
+}
+.guest-app:not(.guest-home) .guest-explore-workspaces article > span,
+.guest-app:not(.guest-home) .guest-explore-partner {
+  color: #ffaf76;
+}
+.guest-app:not(.guest-home) .guest-explore-note,
+.guest-app:not(.guest-home) .guest-info-note {
+  color: #afc3c9;
+}
+
+/* All sign-in variants show real approved road photography rather than a bare
+   navy placeholder (the earlier role variables resolved to gradient-only art). */
+@media (min-width:900px) {
+  .guest-app .auth-desktop-showcase.partner-showcase {
+    background: linear-gradient(135deg,#182e37,#0b1c25) !important;
+    border-color: #52636b !important;
+  }
+  .guest-app .partner-showcase .auth-desktop-showcase-photo {
+    background-image: url('/owner20-photo-background-approved.webp') !important;
+    background-size: cover !important;
+    background-position: 55% 50% !important;
+    border-color: #455862 !important;
+  }
+  .guest-app .partner-showcase .auth-desktop-showcase-copy span,
+  .guest-app .partner-showcase .partner-showcase-footnote {
+    color: #ffb47b !important;
+  }
+  .guest-app .auth-desktop-form .btn:not(.ghost):not(.bad):not(:disabled) {
+    background: #ff8740 !important;
+    color: #162029 !important;
+  }
+  .guest-app .auth-desktop-form .btn.ghost:not(:disabled) {
+    background: #152e39 !important;
+    border-color: #6a8792 !important;
+  }
+}
+
+/* The footer and cookie acknowledgement are part of the same public product. */
+.guest-app:not(.guest-home) .site-footer {
+  border-top: 1px solid #3a4b53 !important;
+  background: #081821 !important;
+  color: #dce8ea !important;
+}
+.guest-app:not(.guest-home) .site-footer .banner.col {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 20px;
+  background: #172f3a !important;
+  border: 1px solid #49616a !important;
+}
+.guest-app:not(.guest-home) .site-footer .banner .note {
+  color: #e6eff0 !important;
+}
+.guest-app:not(.guest-home) .site-footer .banner .btn {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-width: 110px;
+  min-height: 42px;
+  padding: 10px 16px;
+  color: #142027 !important;
+  background: #ff964d !important;
+  border: 1px solid #ff964d !important;
+  font-size: 14px;
+  font-weight: 800;
+  opacity: 1 !important;
+}
+.guest-app:not(.guest-home) .site-footer a {
+  color: #ffb783;
+}
+@media (max-width: 540px) {
+  .guest-app:not(.guest-home) .site-footer .banner.col {
+    flex-direction: column !important;
+    align-items: stretch;
+  }
+}
+
+/* Legal document is allowed to be absent: do not fabricate an offer or silently
+   treat an unpublished version as accepted. Give the state a readable layout. */
+.guest-app .public-offer-page {
+  max-width: 1000px;
+  margin: 22px auto 50px;
+  padding: clamp(16px,2vw,26px);
+}
+.guest-app .public-offer-page .offer-unpublished {
+  padding: clamp(24px,4vw,46px);
+  background: linear-gradient(135deg,#152f3a,#0d1e27);
+  border: 1px solid #50636a;
+  border-radius: 18px;
+  color: #ecf5f6;
+}
+.guest-app .public-offer-page .offer-unpublished h1 {
+  color: #fff;
+  font-size: clamp(24px,3vw,34px);
+  margin: 0 0 12px;
+}
+.guest-app .public-offer-page .offer-unpublished p {
+  color: #c0d2d5;
+  line-height: 1.6;
+}
+.guest-app .public-offer-page .offer-unpublished a {
+  display: inline-flex;
+  margin-top: 14px;
+  border: 1px solid #ff9956;
+  border-radius: 11px;
+  padding: 11px 18px;
+  color: #ffba88;
+  text-decoration: none;
+  font-weight: 700;
+}
+.guest-app:not(.guest-home) :is(a, button, summary):focus-visible {
+  outline: 3px solid #ffad75 !important;
+  outline-offset: 3px;
+}
+@media(max-width:899px) {
+  .guest-app:not(.guest-home) .guest-explore,
+  .guest-app:not(.guest-home) .guest-info-page {
+    width: 100%;
+    padding: 12px;
+  }
+  .guest-app:not(.guest-home) .guest-explore-hero,
+  .guest-app:not(.guest-home) .guest-info-hero {
+    min-height: 0;
+    padding: 23px;
+  }
+  .guest-app:not(.guest-home) .guest-explore-hero::before,
+  .guest-app:not(.guest-home) .guest-info-hero::before {
+    width: 65%;
+    opacity: .24;
+  }
+  .guest-app:not(.guest-home) .guest-explore-item,
+  .guest-app:not(.guest-home) .guest-info-grid > a {
+    font-size: 13px;
+    min-height: 58px;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  .guest-app:not(.guest-home) .guest-explore-hero *,
+  .guest-app:not(.guest-home) .guest-info-hero * { animation: none !important; }
+}
+
+
+/* Mobile approved road art: the file existed but was visually occluded by
+   overlapping legacy hero layers. Real DOM image is separately testable. */
+.public-hero-mobile-photo { display: none; }
+@media (max-width:899px) {
+  html.traksos-compact-guest .guest-app .public-landing .public-brand-hero::before {
+    display:none!important;
+    content:none!important;
+  }
+  html.traksos-compact-guest .guest-app .public-landing .public-hero-visual {
+    z-index:2!important;
+    opacity:1!important;
+    overflow:visible!important;
+    width:100%!important;
+    max-width:100%!important;
+  }
+  html.traksos-compact-guest .guest-app .public-landing .public-hero-visual .public-hero-mobile-photo {
+    display:block!important;
+    position:relative!important;
+    width:100%!important;
+    max-width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    aspect-ratio:2 / 1!important;
+    object-fit:contain!important;
+    object-position:center center!important;
+    opacity:1!important;
+    visibility:visible!important;
+    border-radius:9px;
+    pointer-events:none;
+  }
+  html.traksos-compact-guest .guest-app .public-landing .public-hero-copy {
+    z-index:3!important;
+  }
+}
+
+
+/* At 900–1100px the five approved header groups need their own wrapped row.
+   Keep all links visible on laptop browsers and registration entry routes. */
+@media (min-width:900px) and (max-width:1100px) {
+  .guest-app:not(.guest-home) > .top {
+    box-sizing:border-box!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    grid-template-columns:minmax(170px,auto) minmax(0,1fr) 44px auto!important;
+  }
+  .guest-app:not(.guest-home) .guest-site-nav {
+    display:flex!important;
+    flex-wrap:wrap!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    column-gap:clamp(14px,2.6vw,30px)!important;
+    row-gap:3px!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    grid-column:1/-1!important;
+    grid-row:2!important;
+  }
+  .guest-app:not(.guest-home) .guest-site-nav .guest-nav-group,
+  .guest-app:not(.guest-home) .guest-site-nav > a {
+    flex:0 0 auto!important;
+    margin:0!important;
+  }
+  .guest-app:not(.guest-home) .auth-desktop-layout {
+    box-sizing:border-box!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+  }
+}
+
+
+/* The old 19 Nov desktop shell reserved 220–260px for a sidebar, even when
+   the approved public header was already providing the complete navigation.
+   It left a blank strip on 1024px laptops and squeezed forms against it.
+   Remove that OLD public-only shell: signed-in workspaces are untouched. */
+@media(min-width:900px) {
+  .guest-app:not(.guest-home) > .desktop-layout {
+    display:block!important;
+    flex:1 1 auto!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    margin:0!important;
+    padding:0!important;
+    gap:0!important;
+  }
+  .guest-app:not(.guest-home) > .desktop-layout > .desktop-sidebar {
+    display:none!important;
+  }
+  .guest-app:not(.guest-home) > .desktop-layout > .desktop-content {
+    box-sizing:border-box!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    margin:0!important;
+    padding:0 clamp(16px,2.5vw,40px)!important;
+  }
+  .guest-app:not(.guest-home) > .desktop-layout > .desktop-content > main {
+    box-sizing:border-box!important;
+    width:100%!important;
+    max-width:1250px!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+  }
+  .guest-app:not(.guest-home) > .desktop-layout > .desktop-content > .site-footer {
+    box-sizing:border-box!important;
+    width:100%!important;
+    max-width:1250px!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+  }
+}
+
+/* Nov 20 auth hover regression: the legacy stylesheet still used pink
+   #ff4b99 on the first login action. Keep the approved graphite/orange theme
+   on public auth pages without touching authenticated workspaces or Android. */
+.guest-app:not(.guest-home) .auth-entry-options button {
+  border-color: #526b77;
+  background: #112a34;
+  color: #e6f1f1;
+}
+.guest-app:not(.guest-home) .auth-entry-options button:hover,
+.guest-app:not(.guest-home) .auth-entry-options button:focus-visible {
+  border-color: #ff934d;
+  background: #203844;
+  color: #fff;
+}

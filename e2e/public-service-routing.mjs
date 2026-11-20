@@ -1,8 +1,10 @@
 // Public TrakSOS routes and safety: design-independent tests of working links and protections.
  // Do not make these checks enforce a superseded 19 November visual reference.
 import { chromium } from 'playwright';
+import { mkdirSync } from 'node:fs';
 const BASE=process.env.BASE_URL??'http://127.0.0.1:8080';
 if (!['127.0.0.1','localhost'].includes(new URL(BASE).hostname)) throw Error('Local CI only');
+mkdirSync('e2e/shots/public-inner',{recursive:true});
 const browser=await chromium.launch();
 try {
   for (const [width,height] of [[390,844],[1440,900]]) {
@@ -27,10 +29,83 @@ try {
       }
       await page.locator('.owner20-region>summary').click();
       if(!await page.locator('.owner20-region-menu').isVisible())throw Error('PC region disclosure failed');
+
+      // Verify the inner route on the real desktop renderer, not the homepage alone.
+      await page.goto(BASE+'/#/explore/van');
+      await page.locator('.guest-explore-hero').waitFor({state:'visible'});
+      await page.screenshot({path:'e2e/shots/public-inner/pc-master-service-1440.png',fullPage:true});
+      await page.goto(BASE+'/#/explore/air');
+      await page.locator('.guest-explore-hero').waitFor({state:'visible'});
+      await page.screenshot({path:'e2e/shots/public-inner/pc-air-1440.png',fullPage:true});
+      await page.goto(BASE+'/#/explore/van');
+      await page.locator('.guest-explore-hero').waitFor({state:'visible'});
+      const appearance=await page.locator('.guest-explore-hero').evaluate(el=>({
+        image:getComputedStyle(el,'::before').backgroundImage,
+        icon:getComputedStyle(el.querySelector('.guest-explore-glyph')).display
+      }));
+      if(!appearance.image.includes('owner20-photo-background-approved.webp') || appearance.icon!=='none')
+        throw Error('Approved public inner-page art missing: '+JSON.stringify(appearance));
+      const nav=page.getByRole('navigation',{name:'Разделы TrakSOS'});
+      const groups=nav.locator('.guest-nav-group');
+      if(await groups.count()!==4)throw Error('PC inner-page navigation differs from owner-approved homepage');
+      const services=groups.nth(1);
+      await services.locator('summary').click();
+      for(const href of ['#/explore/van','#/explore/tow','#/explore/tech','#/explore/air',
+        '#/explore/ecu','#/explore/parts','#/explore/insurance']){
+        if(!await services.locator('a[href="'+href+'"]').count())
+          throw Error('Missing PC capability '+href);
+      }
+      await services.locator('summary').press('Escape');
+      if(await services.getAttribute('open')!==null)throw Error('Escape did not close services');
+      await groups.first().locator('summary').click();
+      await groups.first().locator('a[href="#/company"]').click();
+      await page.getByRole('heading',{name:'Компания TrakSOS'}).waitFor();
+      await page.screenshot({path:'e2e/shots/public-inner/pc-company-1440.png',fullPage:true});
+      await page.goto(BASE+'/#/explore/van');
+      await page.getByRole('navigation',{name:'Разделы TrakSOS'})
+        .locator('.guest-nav-group').first().locator('summary').click();
+      await page.locator('.guest-site-nav a[href="#/explore/pricing"]').click();
+      await page.getByRole('heading',{name:'Комиссии и тарифы TrakSOS'}).waitFor();
+
+      await page.goto(BASE+'/#/login');
+      await page.locator('.auth-desktop-showcase-photo').waitFor({state:'visible'});
+      await page.screenshot({path:'e2e/shots/public-inner/pc-login-1440.png',fullPage:true});
+      await page.goto(BASE+'/#/offer/privacy');
+      await page.locator('.public-offer-page').waitFor({state:'visible'});
+      await page.screenshot({path:'e2e/shots/public-inner/pc-privacy-1440.png',fullPage:true});
+      await page.goto(BASE+'/#/join');
+      const desktopPhoto=page.locator('.auth-desktop-showcase-photo');
+      await desktopPhoto.waitFor({state:'visible'});
+      for(const name of ['Эвакуаторщик','Мастер','СТО','Страховой агент']){
+        await page.getByRole('button',{name,exact:true}).click();
+        const artwork=await desktopPhoto.evaluate(el=>getComputedStyle(el).backgroundImage);
+        if(!artwork.includes('owner20-photo-background-approved.webp'))
+          throw Error('Desktop approved partner image missing for '+name+': '+artwork);
+      }
+      await page.screenshot({path:'e2e/shots/public-inner/pc-partner-1440.png',fullPage:true});
       if(jsErrors.length)throw Error('PC JS errors '+jsErrors.join('; '));
       await context.close();continue;
     }
     await page.getByRole('heading',{name:/TrakSOS.*помощь.*в пути/i}).waitFor();
+    const mobileTruck=page.locator('.public-hero-mobile-photo');
+    await mobileTruck.waitFor({state:'visible'});
+    await page.waitForFunction(() => {
+      const picture=document.querySelector('.public-hero-mobile-photo');
+      return picture instanceof HTMLImageElement && picture.complete && picture.naturalWidth>0;
+    });
+    const truckStyle=await mobileTruck.evaluate(el=>({
+      width:el.getBoundingClientRect().width,height:el.getBoundingClientRect().height,
+      display:getComputedStyle(el).display,
+    }));
+    if(truckStyle.display==='none'||truckStyle.width<240||truckStyle.height<120)
+      throw Error('Mobile approved truck photo is visually missing: '+JSON.stringify(truckStyle));
+    await page.goto(BASE+'/#/explore/van');
+    await page.locator('.guest-explore-hero h1').waitFor({state:'visible'});
+    await page.screenshot({path:'e2e/shots/public-inner/mobile-master-service-390.png',fullPage:true});
+    await page.goto(BASE+'/#/explore/air');
+    await page.locator('.guest-explore-hero h1').waitFor({state:'visible'});
+    await page.screenshot({path:'e2e/shots/public-inner/mobile-air-390.png',fullPage:true});
+    await page.goto(BASE+'/#/');
 
     // Only public guest actions are visible in the bottom menu, not protected workflows.
     const bottom=page.getByRole('navigation',{name:'Гостевая навигация TrakSOS'});
@@ -223,14 +298,10 @@ try {
     const fixedPosition=width>=900 ? await page.locator('.partner-showcase').evaluate(el=>{
       const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};
     }) : null;
-    for(const [roleName,asset] of [
-      ['Эвакуаторщик','linear-gradient'],
-      ['Мастер','linear-gradient'],
-      ['СТО','linear-gradient'],
-      ['Страховой агент','linear-gradient'],
-    ]){
+    for(const roleName of ['Эвакуаторщик','Мастер','СТО','Страховой агент']){
       await page.getByRole('button',{name:roleName,exact:true}).click();
-      if(!(await photo()).includes(asset))throw Error('Wrong cinematic showcase when choosing '+roleName);
+      // Keep mobile artwork independently approved: do not enforce the desktop 617.png crop.
+      if((await photo())==='none')throw Error('Mobile partner artwork disappeared for '+roleName);
       if(width>=900 && fixedPosition) {
         const next=await page.locator('.partner-showcase').evaluate(el=>{
           const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};
@@ -254,23 +325,32 @@ try {
     if(!await page.locator('.guest-partner-role-master').evaluate(el=>!getComputedStyle(el).backgroundImage.includes('tracksos-photo-master')))
       throw Error('Retired Nov 14 signup card image returned');
 
-    // Latest 'Возможности' menu keeps all other approved functions discoverable.
-    await page.goto(BASE+'/#/');
+    // The inner pages use the same five sections as the approved owner desktop homepage.
+    await page.goto(BASE+'/#/explore/van');
     if(width>=900){
       const nav=page.locator('.guest-site-nav');
-      const all=nav.locator('.guest-nav-group');
-      await all.locator('summary').click();
+      const groups=nav.locator('.guest-nav-group');
+      if(await groups.count()!==4)throw Error('Approved public desktop navigation groups missing');
+      const services=groups.nth(1);
+      if(!(await services.locator('summary').innerText()).includes('Сервисы'))
+        throw Error('Second menu must expose approved services');
+      await services.locator('summary').click();
       for(const route of ['#/explore/van','#/explore/tow','#/explore/tech',
         '#/explore/air','#/explore/ecu','#/explore/parts','#/explore/insurance']) {
-        if(!(await all.locator('a[href="'+route+'"]').count()))
+        if(!(await services.locator('a[href="'+route+'"]').count()))
           throw Error('Missing actual capability '+route);
       }
-      await all.locator('summary').press('Escape');
-      if(await all.getAttribute('open')!==null)throw Error('Escape did not close capabilities');
-      await nav.getByRole('link',{name:'О платформе'}).click();
+      await services.locator('summary').press('Escape');
+      if(await services.getAttribute('open')!==null)throw Error('Escape did not close services');
+
+      const about=groups.first();
+      await about.locator('summary').click();
+      await about.locator('a[href="#/company"]').click();
       await page.getByRole('heading',{name:'Компания TrakSOS'}).waitFor();
-      await page.goto(BASE+'/#/');
-      await nav.getByRole('link',{name:'Тарифы'}).click();
+
+      await page.goto(BASE+'/#/explore/van');
+      await page.locator('.guest-site-nav .guest-nav-group').first().locator('summary').click();
+      await page.locator('.guest-site-nav a[href="#/explore/pricing"]').click();
       await page.getByRole('heading',{name:'Комиссии и тарифы TrakSOS'}).waitFor();
     } else {
       await page.locator('.guest-mobile-catalog > summary').click();
@@ -283,5 +363,33 @@ try {
     if(jsErrors.length)throw Error('JS exceptions: '+jsErrors.join('; '));
     await context.close();
   }
+  // A real mid-size laptop is not equivalent to 1440px desktop; check auth
+  // links there independently so a link cannot sit at x=1108 on a 1024px screen.
+  const laptop=await browser.newContext({viewport:{width:1024,height:768},locale:'ru-RU'});
+  try {
+    const p=await laptop.newPage();
+    for(const path of ['register','login','join']){
+      await p.goto(BASE+'/#/'+path);
+      await p.locator('.auth-desktop-form').waitFor({state:'visible'});
+      const shell=await p.locator('.desktop-layout > .desktop-content').evaluate(el=>{
+        const rect=el.getBoundingClientRect();
+        return {right:rect.right,width:rect.width,viewport:document.documentElement.clientWidth};
+      });
+      if(shell.right < shell.viewport-20 || shell.width < shell.viewport-45)
+        throw Error('Legacy public sidebar still reserves space at 1024px: '+JSON.stringify(shell));
+      const offenders=await p.evaluate(()=>{
+        const vw=document.documentElement.clientWidth;
+        return [...document.querySelectorAll('input,button,a,section,main,header')].filter(el=>{
+          const r=el.getBoundingClientRect();
+          return r.width>0&&(r.right>vw+2||r.left < -2);
+        }).slice(0,5).map(el=>({
+          tag:el.tagName,className:el.className,href:el.getAttribute('href'),
+          right:Math.round(el.getBoundingClientRect().right),parent:el.parentElement?.className
+        }));
+      });
+      if(offenders.length)throw Error('1024px '+path+' extends offscreen: '+JSON.stringify(offenders));
+    }
+    await p.screenshot({path:'e2e/shots/public-inner/pc-login-laptop-1024.png',fullPage:true});
+  } finally {await laptop.close();}
 } finally {await browser.close();}
 console.log('PASS: public service routes, authorization gates, partner signup and capability menus');

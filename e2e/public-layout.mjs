@@ -20,7 +20,7 @@ async function verifyPage(page, label) {
     const overflow = document.documentElement.scrollWidth - viewport;
     const offending = [...document.querySelectorAll('input,button,a,section,main,header')]
       .filter(el => { const r = el.getBoundingClientRect(); return r.width > 0 && (r.right > viewport + 2 || r.left < -2); })
-      .slice(0, 8).map(el => [el.tagName, el.className, Math.round(el.getBoundingClientRect().right)]);
+      .slice(0, 8).map(el => [el.tagName, el.className, Math.round(el.getBoundingClientRect().right), el.getAttribute('href')||'', (el.parentElement?.className||'').toString().slice(0,65)]);
     return { viewport, overflow, offending };
   });
   check(layout.overflow <= 2, label + ': horizontal scroll: ' + JSON.stringify(layout));
@@ -59,6 +59,15 @@ async function run(width, height, mobile, nativePreview = false) {
       await page.goto(BASE+'/#/join');
       await page.getByRole('heading',{name:'Работать с TrakSOS'}).waitFor();
       await verifyPage(page,suffix+':join');
+      // The approved 20 Nov desktop login must not retain the legacy pink hover.
+      await page.goto(BASE+'/#/login');
+      await page.getByRole('heading',{name:'Вход по номеру телефона'}).waitFor();
+      const loginAction=page.locator('.auth-entry-options button').first();
+      await loginAction.hover();
+      const hoverBorder=await loginAction.evaluate(el=>getComputedStyle(el).borderTopColor);
+      check(hoverBorder==='rgb(255, 147, 77)',
+        suffix+': legacy pink authentication hover returned: '+hoverBorder);
+      await verifyPage(page,suffix+':login');
       check(!errors.length,suffix+': JS errors '+errors.join('; '));
       return;
     }
@@ -66,6 +75,14 @@ async function run(width, height, mobile, nativePreview = false) {
     check(await page.locator('.public-actions').getByRole('button', { name: 'Зарегистрироваться', exact: true }).isVisible(), 'Hero registration is not visible');
     check(await page.locator('.public-actions').getByRole('link', { name: 'Как это работает', exact: true }).isVisible(), 'Hero guide is not visible');
     const image = await page.locator('.public-hero-visual').evaluate(async el => {
+      // Approved compact UI uses a REAL <img>: validate loaded pixels rather than
+      // only the old CSS background URL, which could resolve but be visually hidden.
+      const real = el.querySelector('.public-hero-mobile-photo');
+      if (real instanceof HTMLImageElement) {
+        await real.decode().catch(() => {});
+        return { ok: real.complete && real.naturalWidth > 0,
+          width: real.naturalWidth, height: real.naturalHeight, source: 'approved-dom-image' };
+      }
       const bg = [getComputedStyle(el).backgroundImage, getComputedStyle(el,'::after').backgroundImage].join(' | ');
       const match = bg.match(/url\(["']?([^"')]+)["']?\)/);
       if (!match) return { ok: false, bg };
@@ -92,9 +109,16 @@ async function run(width, height, mobile, nativePreview = false) {
       if (nativePreview) {
         check(!await page.evaluate(() => document.documentElement.classList.contains('traksos-browser')),
           suffix + ': Android must not activate browser-only styling');
-        check(heroGeometry && Math.abs(heroGeometry.heroWidth-heroGeometry.pictureWidth)<3 &&
-          Math.abs(heroGeometry.heroHeight-heroGeometry.pictureHeight)<3,
-          suffix + ': native artwork must cover the approved banner: ' + JSON.stringify(heroGeometry));
+        // The newer, stricter native-guest-layout.mjs checks the approved photo
+        // ABOVE the text. The obsolete "full-bleed" assertion contradicted that
+        // requirement and rejected the very layout approved for Android WebView.
+        const nativeFit=await page.locator('.public-hero-visual').evaluate(el=>getComputedStyle(el).backgroundSize);
+        check(heroGeometry && heroGeometry.pictureWidth <= heroGeometry.heroWidth + 3 &&
+          heroGeometry.pictureHeight >= 100 &&
+          heroGeometry.pictureHeight < heroGeometry.heroHeight &&
+          nativeFit === 'contain',
+          suffix + ': Android dedicated truck photo must remain uncropped above text: ' +
+          JSON.stringify({heroGeometry,nativeFit}));
       } else {
         check(await page.evaluate(() => document.documentElement.classList.contains('traksos-browser')),
           suffix + ': regular Chrome must activate mobile browser styling');
