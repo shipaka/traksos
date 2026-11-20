@@ -684,6 +684,37 @@ function CourierAssign({order,onDone}:{order:any;onDone:()=>void}){
     </div>}
   </section>;
 }
+/** An administrator may rotate a locked or expired code, but cannot view it.
+ * A written reason and audit event are mandatory; the buyer sees it privately.
+ */
+function CourierReceiptRecovery({order,onDone}:{order:any;onDone:()=>void}){
+  const [reason,setReason]=useState('');
+  const {busy,run}=useAction();
+  const expires=order.courierCodeExpiresAt?new Date(order.courierCodeExpiresAt).getTime():NaN;
+  const expired=Number.isFinite(expires)&&expires<Date.now();
+  if(order.courierStatus!=='arrived'||order.status!=='shipped')return null;
+  if((order.courierCodeAttempts??0)<5&&!expired)return null;
+  return <section className="card stack" aria-label="Восстановление кода вручения">
+    <b>Код вручения {expired?'истёк':'заблокирован'}</b>
+    <p className="note">Администратор может выдать новый код после проверки ситуации.
+      Сам код показывается только покупателю в истории заказа.</p>
+    {(order.courierCodeResets??0)>=3
+      ? <p className="note">Лимит восстановления исчерпан — требуется разбирательство.</p>
+      : <>
+        <label className="stack"><span className="label">Причина восстановления</span>
+          <textarea className="field" value={reason} maxLength={500}
+            placeholder="Например: код истёк, согласовано с получателем"
+            onChange={e=>setReason(e.target.value)}/></label>
+        <button type="button" className="btn ghost small" disabled={busy||reason.trim().length<10}
+          onClick={async()=>{
+            const saved=await run(()=>post('/api/admin/shop/orders/'+encodeURIComponent(order.id)+
+              '/courier/reset-receipt',{reason:reason.trim()}),'Код обновлён для получателя');
+            if(saved){setReason('');onDone();}
+          }}>Выдать новый код получателю</button>
+      </>}
+  </section>;
+}
+
 function AdminShopOrders() {
   const [all, setAll] = useState(false);
   const l = useLoad(() => get(`/api/admin/shop/orders${all ? '' : '?status=open'}`), [all], (e) => e.type === 'shop');
@@ -707,6 +738,7 @@ function AdminShopOrders() {
           {o.comment && <span className="note">«{o.comment}»</span>}
           {o.adminNote && <span className="note">Клиенту: {o.adminNote}</span>}
           <CourierAssign order={o} onDone={l.reload}/>
+          <CourierReceiptRecovery order={o} onDone={l.reload}/>
           {NEXT[o.status] && <>
             <input className="field" placeholder="Сообщение клиенту · по желанию" value={note[o.id] ?? ''} onChange={(e) => setNote({ ...note, [o.id]: e.target.value })} />
             <div className="row">
