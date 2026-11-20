@@ -268,12 +268,12 @@ function App() {
   const desktopRole: ApprovedPCRole = effMode === 'client' ? (me.owner_id || me.roles.includes('driver') ? 'driver' : 'owner')
     : effMode === 'performer' ? (me.performer?.kind === 'tow' ? 'tow' : 'master')
     : effMode === 'service' ? 'service' : effMode === 'insurer' ? 'insurer' : effMode === 'inspection' ? 'inspection'
-    : effMode === 'moderator' ? 'moderator' : 'admin';
+    : effMode === 'courier' ? 'courier' : effMode === 'moderator' ? 'moderator' : 'admin';
   let screen;
   switch (a) {
-    case undefined: screen = effMode === 'courier' ? <CourierDesk /> : effMode === 'performer' && (!me.performer || me.performer.kind === 'ecu')
+    case undefined: screen = effMode === 'performer' && (!me.performer || me.performer.kind === 'ecu')
       ? (me.performer?.kind === 'ecu' ? <Work /> : <PerformerHub />)
-      : <ApprovedPcDesk role={desktopRole} fallback={effMode === 'insurer' ? <InsurerCabinet /> : effMode === 'inspection' ? <InsurerCabinet inspectionOnly /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isAdmin ? <Admin /> : effMode === 'moderator' && isModerator ? <ModeratorDesk /> : <Home />} />; break;
+      : <ApprovedPcDesk role={desktopRole} fallback={effMode === 'courier' ? <CourierDesk /> : effMode === 'insurer' ? <InsurerCabinet /> : effMode === 'inspection' ? <InsurerCabinet inspectionOnly /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isAdmin ? <Admin /> : effMode === 'moderator' && isModerator ? <ModeratorDesk /> : <Home />} />; break;
     case 'login': screen = <Home />; break;
     case 'sos': screen = isCustomer ? <Sos /> : <main><div className="empty">Для вызова SOS нужен клиентский аккаунт</div></main>; break;
     case 'new': screen = !isCustomer ? <main><div className="empty">Для заказа нужен клиентский аккаунт</div></main> : b === 'ecu' ? <main className="stack"><h1>Ремонт электронных блоков ЭБУ</h1><p>Специалист принимает блок в стационарной мастерской. Передайте техническое заключение из ранее оформленной консультации или выездной заявки: это бесплатно, и диагностика согласуется отдельно.</p><a className="btn" href="#/orders">Открыть мои заявки и заключения</a></main> : b === 'consult' ? <Consult /> : <NewOrder service={b ?? 'electric'} />; break;
@@ -310,7 +310,7 @@ function App() {
       ? <main><div className="empty">Кабинет курьера доступен только назначенному курьеру.</div></main>
       : b === 'jobs' && route[2]
         ? <CourierDelivery id={route[2]} />
-        : <CourierDesk section={b==='jobs'?'jobs':b==='chat'?'chat':'home'} />; break;
+        : b === 'jobs' ? <CourierDesk section="jobs" /> : b === 'chat' ? <CourierDesk section="chat" /> : <ApprovedPcDesk role="courier" fallback={<CourierDesk section="home" />} />; break;
     case 'insurance': screen = b === 'request'
       ? (route[2] === 'new' ? <InsuranceApplication vehicleId={route[3]??''} /> : <InsuranceThread requestId={route[2]??''} />)
       : isInsurer
