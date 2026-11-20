@@ -27,6 +27,8 @@ import './stoWorkdeskApproved20261120.css';
 import './approvedBottomNavigation20261120.css';
 // Final approved 20 Nov desktop cabinet language; Android remains separately approved.
 import './desktopCabinetsOwner20261120.css';
+// Shared approved logo, cinematic empty illustrations and service art for PC, browser and APK WebView.
+import './approvedCrossPlatformVisuals.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
