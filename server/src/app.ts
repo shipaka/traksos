@@ -20,6 +20,7 @@ import { financeGuide, type FinanceRole } from './domain/economicsGuide.ts';
 import { techBaseAudience, techBaseForRoles } from './domain/techbase.ts';
 import { ProfilesService } from './services/profiles.ts';
 import { OrdersService } from './services/orders.ts';
+import { OrderPhotosService } from './services/orderPhotos.ts';
 import { EcuHandoffService } from './services/ecuHandoff.ts';
 import { OrderContinuationService } from './services/orderContinuation.ts';
 import { OrderSlaService } from './services/orderSla.ts';
@@ -89,6 +90,7 @@ export function createApp(d: Deps) {
   const operatorDemo = new OperatorDemoAccess(d.db, now);
   const profiles = new ProfilesService(d.db, settings, now);
   const orders = new OrdersService(d.db, settings, notifier, now);
+  const orderPhotos = new OrderPhotosService(d.db, orders);
   const ecuHandoffs = new EcuHandoffService(d.db, notifier, now);
   const continuations = new OrderContinuationService(d.db, notifier, now);
   orders.continuations = continuations;
@@ -1282,6 +1284,18 @@ export function createApp(d: Deps) {
   r.get('/api/orders', true, (c: AuthedCtx) =>
     orders.list(c.user, c.query.get('as') === 'performer' ? 'performer' : 'client', c.query.get('status') ?? undefined));
   r.get('/api/orders/:id', true, (c: AuthedCtx) => orders.view(c.user, c.params.id));
+  // Order photographs are genuine repair evidence: encryption at rest,
+  // actor-scoped reads, and writes only by the assigned active performer.
+  r.get('/api/orders/:id/photos', true, (c: AuthedCtx) =>
+    orderPhotos.list(c.user,c.params.id));
+  r.post('/api/orders/:id/photos', performerRoles, (c: AuthedCtx) =>
+    orderPhotos.upload(c.user,c.params.id,parse(z.object({
+      dataUrl:z.string().min(100).max(2_100_000)
+    }).strict(),c.body).dataUrl));
+  r.get('/api/orders/:id/photos/:photoId/file', true, async (c: AuthedCtx) => {
+    const file=await orderPhotos.file(c.user,c.params.id,c.params.photoId);
+    return new Raw(file.mime,file.body);
+  });
   r.post('/api/orders/:id/accept', performerRoles, async (c: AuthedCtx) => (await offers.requirePerformer(c.user), orders.accept(c.user, c.params.id)));
   r.post('/api/orders/:id/decline', performerRoles, (c: AuthedCtx) => orders.decline(c.user, c.params.id));
   r.post('/api/orders/:id/drop', performerRoles, (c: AuthedCtx) => orders.drop(c.user, c.params.id, parse(z.object({ reason: z.string().min(2).max(300) }), c.body).reason));
@@ -1689,7 +1703,9 @@ export function createApp(d: Deps) {
     try {
       const m = r.match(req.method ?? 'GET', url.pathname);
       if (!m) throw notFound('Нет такого адреса');
-      const limit = url.pathname === '/api/performer/documents' || /^\/api\/insurance\/requests\/[^/]+\/policy$/.test(url.pathname) ? 8_000_000 : 1_000_000;
+      const limit = url.pathname === '/api/performer/documents' || /^\/api\/insurance\/requests\/[^/]+\/policy$/.test(url.pathname)
+        ? 8_000_000 : /^\/api\/orders\/[^/]+\/photos$/.test(url.pathname)
+          ? 2_200_000 : 1_000_000;
       const rawBody = ['POST', 'PUT', 'PATCH'].includes(req.method!) ? await readBody(req, limit) : '';
       let body: any = {};
       if (rawBody) {
