@@ -45,7 +45,7 @@ try {
      const rect=(selector)=>{const r=document.querySelector(selector)?.getBoundingClientRect();return r&&{x:r.x,y:r.y,w:r.width,h:r.height};};
      return {
        photo:pick(photo,'::after'),map:pick(map),feature:pick(feature),
-       logo:pick(logo),sprite,approvedHero,approvedLogo,
+       logo:logo?.querySelector('img')?.getAttribute('src')||'',sprite,approvedHero,approvedLogo,
        head:rect('.owner20-top'),hero:rect('.owner20-hero'),
        quick:rect('.owner20-quick'),features:rect('.owner20-features'),
        bottom:rect('.owner20-bottom'),coverage:rect('.owner20-map'),
