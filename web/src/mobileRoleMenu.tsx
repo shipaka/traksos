@@ -14,19 +14,22 @@ function uniqueEntries(links:MenuLink[], omit:Set<string>):MenuEntry[] {
   return entries;
 }
 
-function MenuSection({title,caption,entries,icon}:{title:string;caption:string;entries:MenuEntry[];icon:string}) {
+function MenuSection({title,caption,entries,icon,initiallyOpen=false}:{
+  title:string;caption:string;entries:MenuEntry[];icon:string;initiallyOpen?:boolean;
+}) {
   if (!entries.length) return null;
-  return <section className="tr-mobile-menu-section" aria-label={title}>
-    <header className="tr-mobile-menu-section-head">
+  return <details className="tr-mobile-menu-section" open={initiallyOpen}>
+    <summary className="tr-mobile-menu-section-head" aria-label={title}>
       <span className="tr-mobile-menu-section-icon"><NavGlyph glyph={icon}/></span>
-      <span><h2>{title}</h2><small>{caption}</small></span>
-    </header>
+      <span className="tr-mobile-menu-section-copy"><strong>{title}</strong><small>{caption}</small></span>
+      <span className="tr-mobile-menu-disclosure" aria-hidden="true">⌄</span>
+    </summary>
     <nav className="tr-mobile-menu-links" aria-label={title}>
       {entries.map(item=><a key={item.href} href={item.href}>
         <span>{item.label}</span><span className="tr-mobile-menu-chevron" aria-hidden="true">›</span>
       </a>)}
     </nav>
-  </section>;
+  </details>;
 }
 
 /**
@@ -61,8 +64,8 @@ export function MobileRoleMenu({mode,quick,account,help,onLogout}:{
       </div>
       <NavGlyph glyph="▦"/>
     </div>
-    <MenuSection title="Быстрый доступ" caption="Основные рабочие действия" entries={quickEntries} icon="⌂"/>
-    <MenuSection title="Разделы кабинета" caption="Заявки, техника, финансы и настройки по вашей роли" entries={workEntries} icon="▣"/>
+    <MenuSection title="Быстрый доступ" caption="Основные рабочие действия" entries={quickEntries} icon="⌂" initiallyOpen/>
+    <MenuSection title="Разделы кабинета" caption="Заявки, техника, финансы и настройки по вашей роли" entries={workEntries} icon="▣" initiallyOpen={mode!=='admin'}/>
     <MenuSection title="Помощь и документы" caption="Обучение, связь с поддержкой и правила" entries={helpEntries} icon="?"/>
     <section className="tr-mobile-menu-section tr-mobile-menu-account" aria-label="Управление аккаунтом">
       <header className="tr-mobile-menu-section-head"><span className="tr-mobile-menu-section-icon"><NavGlyph glyph="◉"/></span>
