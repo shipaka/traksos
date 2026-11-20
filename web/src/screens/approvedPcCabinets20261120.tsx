@@ -13,7 +13,7 @@ import {APPROVED_VISUALS} from '../approvedVisuals.ts';
 import {VehicleModelPhoto} from '../vehicleVisual.tsx';
 import {OfferForm} from './search.tsx';
 import {OrderPhotoGallery, OrderPhotoCapture} from './orderPhotos.tsx';
-import {BaseHome} from './base.tsx';
+import {BaseHome, RequestCard} from './base.tsx';
 import {native} from '../native.ts';
 
 export type ApprovedPCRole = 'driver'|'owner'|'master'|'tow'|'service'|'insurer'|'inspection'|'moderator'|'admin';
@@ -333,6 +333,75 @@ function PerformDesk({tow}:{tow:boolean}){
         <Bot message={tow?'Помогу с погрузкой и документами.':'Подскажу по диагностике и заявке.'}/></>}/>}
   </main>;
 }
+
+function SelectedServiceCase({booking}:{booking:any}){
+  const details=useLoad(()=>get<any>('/api/bookings/'+booking.id),[booking.id],e=>e.type==='booking');
+  const [tab,setTab]=useState<'work'|'client'|'bill'|'chat'|'history'>('work');
+  const d=details.data||booking;
+  const v=d.vehicle||booking.vehicle;
+  const statuses:[string,string][]=[
+    ['expected','Ожидаем'],['arrived','Принято'],['diagnostics','Диагностика'],
+    ['agreeing','Согласование'],['in_work','В работе'],['ready','К выдаче']
+  ];
+  const position=statuses.findIndex(([id])=>id===d.status);
+  return <section className="approved-pc-case approved-pc-service-case">
+    <header>
+      <div><small>КАРТОЧКА РЕМОНТА · СТО</small><h2>Ремонт №{text(d.number||d.id)} · {text(d.statusName,'Текущий этап')}</h2></div>
+      <span className="approved-pc-stage">{text(d.statusName,'В сервисе')}</span>
+    </header>
+    <Tabs active={tab} onChange={id=>setTab(id as typeof tab)} items={[
+      ['work','Работа',null],['client','Клиент и ТС',null],['bill','Смета',null],
+      ['chat','Чат',null],['history','История',null]
+    ]}/>
+    {tab==='work'&&<>
+      <div className="approved-pc-case-main approved-pc-sto-main">
+        <Photo v={v} href={'#/base/car/'+d.id}/>
+        <div className="approved-pc-facts">
+          <h3>{vehicleLabel(v)}</h3>
+          <p><b>Работы:</b> {text(d.needName||d.need,'Уточняются')}</p>
+          <p><b>Проблема:</b> {text(d.comment||d.description,'Описание в карточке')}</p>
+          <p><b>Поступление:</b> {text(d.whenDay,'Дата в заказе')} {text(d.acceptTime,'')}</p>
+          <p><b>Клиент:</b> {text(d.client?.name)}</p>
+          {v?.trailerPlate&&<p><b>Прицеп / полуприцеп:</b> {v.trailerPlate}</p>}
+          {Array.isArray(d.works)&&d.works.length>0&&<p><b>Согласованные работы:</b> {d.works.join(', ')}</p>}
+        </div>
+      </div>
+      <Pane title="Ход ремонта">
+        <div className="approved-pc-stage-steps">
+          {statuses.map(([id,label],i)=><span key={id}
+            className={d.status===id?'current':position>=0&&position>i?'done':''}>{label}</span>)}
+        </div>
+        <p className="approved-pc-caveat">Следующий этап подтверждается в серверной карточке, после проверки прав и состояния ремонта.</p>
+      </Pane>
+      <div className="approved-pc-case-actions"><a className="approved-pc-primary" href={'#/base/car/'+d.id}>Продолжить ремонт</a>
+        <a href={'#/base/car/'+d.id}>Документы и фото</a>
+        <a href={'#/base/car/'+d.id}>Согласовать работы</a>
+      </div>
+    </>}
+    {tab==='client'&&<div className="approved-pc-case-main approved-pc-sto-main">
+      <Photo v={v} href={'#/base/car/'+d.id}/><div className="approved-pc-facts">
+        <h3>{vehicleLabel(v)}</h3>
+        <p><b>Клиент:</b> {text(d.client?.name)}</p>
+        <p><b>VIN:</b> {text(v?.vin)}</p>
+        <p><b>Госномер:</b> {text(v?.plate)}</p>
+        {v?.trailerPlate&&<p><b>Прицеп:</b> {v.trailerPlate}</p>}
+        <p><b>Как доставят:</b> {d.arrival==='tow'?'Эвакуатором':'Своим ходом / уточняется в деле'}</p>
+        <a className="approved-pc-small-link" href={'#/base/car/'+d.id}>Карточка, история и документы →</a>
+      </div>
+    </div>}
+    {tab==='bill'&&<Pane title="Смета / согласование">
+      {d.amount!=null&&<p><b>Зафиксированная сумма:</b> {(Number(d.amount)/100).toLocaleString('ru-RU')} ₽</p>}
+      <p>Работы, цены и согласование проверяются в карточке ремонта; цифры из макета не применяются автоматически.</p>
+      <a className="approved-pc-primary" href={'#/base/car/'+d.id}>Открыть смету и согласование</a>
+    </Pane>}
+    {tab==='chat'&&<Pane title="Переписка с клиентом"><p>Сообщения и согласования связаны с реальным заказом.</p>
+      <a className="approved-pc-primary" href={'#/base/car/'+d.id}>Открыть общение по ремонту</a></Pane>}
+    {tab==='history'&&<Pane title="История обслуживания"><p>История, фото и изменения этапов доступны в карточке.</p>
+      <a className="approved-pc-primary" href={'#/base/car/'+d.id}>Открыть журнал ремонта</a></Pane>}
+    {details.error&&<p className="approved-pc-caveat">Подробности пока не загрузились: {String(details.error?.message||details.error)}</p>}
+  </section>;
+}
+
 function ServiceDesk(){
   const data=useLoad(()=>get<any>('/api/base'),[],e=>e.type==='booking');
   const [mode,setMode]=useState<'req'|'repair'|'ready'|'done'>('repair');
@@ -359,20 +428,11 @@ function ServiceDesk(){
             href={'#/base/car/'+b.id} badge={text(b.statusName,'Ожидаем')}/>)}
           {!expected.length&&<Empty>Подтверждённых приездов сейчас нет.</Empty>}
         </Pane></>}
-      center={selected?<section className="approved-pc-case">
-        <header><div><small>ВЫБРАННОЕ ДЕЛО СТО</small><h2>Ремонт №{text(selected.number||selected.id)}</h2></div>
-          <span className="approved-pc-stage">{text(selected.statusName)}</span></header>
-        <div className="approved-pc-case-main"><Photo v={selected.vehicle}/><div className="approved-pc-facts">
-          <h3>{vehicleLabel(selected.vehicle)}</h3>
-          <p><b>Работы:</b> {text(selected.needName,'Уточняются')}</p>
-          <p><b>Клиент:</b> {text(selected.client?.name)}</p>
-          <p><b>Дата:</b> {text(selected.whenDay)}</p>
-          {selected.vehicle?.trailerPlate&&<p><b>Прицеп:</b> {selected.vehicle.trailerPlate}</p>}
-        </div></div>
-        <div className="approved-pc-case-actions"><a className="approved-pc-primary" href={'#/base/car/'+selected.id}>Открыть ремонт / документы</a>
-          <a href="#/base/inbox">Входящие обращения</a></div>
-        <p className="approved-pc-caveat">Отдельный тягач, прицеп или сцепка — по данным клиента. Смета, чеклист, фото и переписка открываются в настоящем ремонтном деле.</p>
-      </section>:<Pane title="Рабочий стол рембазы"><Empty>Выберите машину слева или откройте новые обращения.</Empty>
+      center={selected?(mode==='req'
+       ?<section className="approved-pc-case approved-pc-service-case"><header><div><small>ВХОДЯЩЕЕ ОБРАЩЕНИЕ</small><h2>Новая заявка · {vehicleLabel(selected.vehicle)}</h2></div>
+          <span className="approved-pc-stage">{text(selected.statusName,'Ожидает ответа')}</span></header>
+          <RequestCard key={selected.id} b={selected} onDone={data.reload}/></section>
+       :<SelectedServiceCase key={selected.id} booking={selected}/>):<Pane title="Рабочий стол рембазы"><Empty>Выберите машину слева или откройте новые обращения.</Empty>
         <a href="#/base/inbox" className="approved-pc-primary">Входящие заявки</a></Pane>}
       right={<><Calendar items={[...expected,...buckets.repair]}/><Pane title="Управление"><a className="approved-pc-small-link" href="#/base/me">Карточка СТО и приём →</a>
         <a className="approved-pc-small-link" href="#/base/money">Финансы СТО →</a></Pane><Bot message="Помогу с ремонтом, запчастями и заявками."/></>}/>}
