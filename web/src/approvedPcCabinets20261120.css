@@ -70,6 +70,25 @@
 .approved-pc-case h3{font-size:19px;margin-bottom:7px}
 .approved-pc-stage{white-space:normal;flex-shrink:0;text-align:center;font-size:11px;font-weight:800;
  color:#ffd0a2;background:#492d16;padding:7px 10px;border:1px solid #b5671f;border-radius:9px}
+.approved-pc-performer-content{display:grid;grid-template-columns:minmax(190px,52%) minmax(175px,1fr);gap:12px;min-width:0}
+.approved-pc-performer-content>div{min-width:0}
+.approved-pc-performer-content h3{font-size:18px;margin:8px 0}
+.approved-pc-performer-content p{color:#cbdce5;font-size:12px;line-height:1.43}
+.approved-pc-performer-content p b{color:#fff}
+.approved-pc-performer-next{display:flex;flex-direction:column;gap:10px}
+.approved-pc-performer-next .approved-pc-pane{padding:12px}
+.approved-pc-performer-case .approved-pc-stage-steps{grid-template-columns:repeat(5,minmax(0,1fr));margin-top:13px}
+.approved-pc-photo-with-tech{position:relative}
+.approved-pc-photo-with-tech .approved-pc-photo{aspect-ratio:16/10}
+.approved-pc-techbook{position:absolute;left:8px;top:8px;display:inline-flex;align-items:center;gap:4px;background:#1c2939ed;border:1px solid #ffac4a;border-radius:9px;padding:8px 9px;font-size:11px;color:#fff8e9;text-decoration:none;box-shadow:0 3px 14px #000a}
+.approved-pc-techbook:hover{background:#b75b17}
+.approved-pc-next-step{display:flex;width:100%;min-height:50px;font-size:14px;border:1px solid #ffc06c;border-radius:11px;cursor:pointer;font-weight:800;margin:10px 0;text-decoration:none}
+.approved-pc-next-step:disabled{opacity:.58;cursor:wait}
+.approved-pc-performer-next .approved-pc-case-actions{gap:6px}
+.approved-pc-performer-next .approved-pc-case-actions a{min-height:38px;padding:8px;font-size:11px}
+.approved-pc-performer-next .tr-order-photo-gallery{margin-top:10px}
+.approved-pc-performer-next .and19-photo-capture{display:inline-flex;min-height:36px;border-radius:8px;padding:7px 12px;background:#143e4e;border:1px solid #548c98}
+
 .approved-pc-case-main{display:grid;grid-template-columns:minmax(155px,39%) minmax(170px,1fr);gap:13px;align-items:start;margin-bottom:16px}
 .approved-pc-facts{font-size:13px;line-height:1.35;color:#d2e2e7}
 .approved-pc-facts b{color:#fff}
