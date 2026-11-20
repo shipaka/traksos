@@ -12,6 +12,8 @@ import {STATUS, SERVICES} from '../dict.ts';
 import {APPROVED_VISUALS} from '../approvedVisuals.ts';
 import {VehicleModelPhoto} from '../vehicleVisual.tsx';
 import {OfferForm} from './search.tsx';
+import {BaseHome} from './base.tsx';
+import {native} from '../native.ts';
 
 export type ApprovedPCRole = 'driver'|'owner'|'master'|'tow'|'service'|'insurer'|'inspection'|'moderator'|'admin';
 const activeStates = new Set(['searching','accepted','en_route','arrived','working','awaiting_confirmation','pending_client','disputed']);
@@ -26,10 +28,10 @@ const dateIso = (value:Date) => [value.getFullYear(),String(value.getMonth()+1).
 const todayISO = () => dateIso(new Date());
 
 function useDesktopSize(){
-  const [wide,setWide]=useState(()=>typeof window!=='undefined' && window.matchMedia('(min-width: 1000px)').matches);
+  const [wide,setWide]=useState(()=>!native.isApp && typeof window!=='undefined' && window.matchMedia('(min-width: 1000px)').matches);
   useEffect(()=>{
     const mq=window.matchMedia('(min-width: 1000px)');
-    const sync=()=>setWide(mq.matches);
+    const sync=()=>setWide(!native.isApp && mq.matches);
     // Old Android WebViews have addListener/removeListener but not MQL.addEventListener.
     if (typeof mq.addEventListener === 'function') mq.addEventListener('change',sync);
     else mq.addListener(sync);
@@ -280,6 +282,8 @@ function ServiceDesk(){
   const list=buckets[mode];
   const selected=list.find((v:any)=>String(v.id)===chosen)||list[0];
   const expected=g?.expected||[];
+  // A brand-new repair station must complete the real onboarding before its workdesk appears.
+  if(data.data && !data.data.center) return <BaseHome />;
   const card=(b:any)=><RowItem key={b.id} label={vehicleLabel(b.vehicle)} info={text(b.needName,b.statusName)}
       badge={b.statusName} active={selected?.id===b.id} onClick={()=>setChosen(String(b.id))} v={b.vehicle}/>;
   return <main className="approved-pc approved-pc-service">
