@@ -60,6 +60,7 @@ async function ensureConfiguredWorkspace(c,token){
 }
 const browser=await chromium.launch();
 const results=[];
+let localAdminToken=null;
 try{
  for(const c of cases){
   try{
@@ -67,8 +68,20 @@ try{
    if(!/^\d{4,6}$/.test(sms?.devCode||''))throw Error('Dev SMS code not provided');
    const account=await post('/api/auth/verify',{phone:c.phone,code:sms.devCode,accountType:c.accountType,password:'Visual-Local-2026!'});
    if(!account?.token)throw Error('No session token');
-   if(c.needs && !account.user?.roles?.includes(c.needs))throw Error('Staff role not granted by local test config');
-   const token=account.token;
+   let token=account.token;
+   if(c.id==='admin' && account.user?.roles?.includes('admin'))localAdminToken=token;
+   // A moderator role is NEVER granted by SMS possession. Use the real
+   // administrator-only role assignment, then log in again because the
+   // backend correctly invalidates prior sessions on privilege changes.
+   if(c.id==='moderator' && !account.user?.roles?.includes('moderator')){
+     if(!localAdminToken)throw Error('Local admin account must be created first');
+     await post('/api/admin/users/'+account.user.id+'/roles',{roles:['moderator']},localAdminToken);
+     const fresh=await post('/api/auth/login',{phone:c.phone,password:'Visual-Local-2026!'});
+     if(!fresh.token)throw Error('Moderator password login failed after role assignment');
+     token=fresh.token;
+   }
+   const identity=await get('/api/me',token);
+   if(c.needs && !identity.roles?.includes(c.needs))throw Error('Staff role not confirmed by live /api/me: '+c.needs);
    await ensureConfiguredWorkspace(c,token);
    for(const width of (c.id==='admin'?[1440,1672,390]:[1440,390])){
     const context=await browser.newContext({viewport:{width,height:width===390?844:width===1672?941:900},locale:'ru-RU',deviceScaleFactor:c.id==='owner'?2:1});
@@ -91,7 +104,14 @@ try{
      await page.evaluate(()=>document.fonts.ready);
      await page.waitForTimeout(650);
      const dims=await page.evaluate(()=>({client:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));
-     if(dims.scroll>dims.client+3)throw Error('Horizontal overflow '+JSON.stringify(dims));
+     if(dims.scroll>dims.client+3){
+       const offenders=await page.evaluate(()=>Array.from(document.querySelectorAll('body *'))
+         .filter(el=>{const r=el.getBoundingClientRect();return r.width>0&&r.right>innerWidth+5;})
+         .slice(0,10).map(el=>({tag:el.tagName,cls:String(el.className).slice(0,100),
+           right:Math.round(el.getBoundingClientRect().right),
+           width:Math.round(el.getBoundingClientRect().width)})));
+       throw Error('Horizontal overflow '+JSON.stringify({dims,offenders}));
+     }
      if(errors.length)throw Error('Uncaught errors '+errors.join('; '));
      if(c.id==='owner' && width===390){
        // Browser mobile and desktop must use the SAME original logo and the
@@ -140,7 +160,7 @@ try{
        const workdesk=page.locator('.approved-pc');
        await workdesk.waitFor({timeout:14000});
        const roleExpected=c.id==='master_service'?'service':c.id;
-       const roleClass='approved-pc-'+(roleExpected==='owner'||roleExpected==='driver'?'client':roleExpected==='tow'||roleExpected==='master'?'performer':roleExpected);
+       const roleClass='approved-pc-'+(roleExpected==='owner'||roleExpected==='driver'?'client':roleExpected==='tow'||roleExpected==='master'?'performer':roleExpected==='insurer'?'insurance':roleExpected);
        if(!await workdesk.evaluate((node,cls)=>node.classList.contains(cls),roleClass))
          throw Error('Wrong approved role workdesk: '+c.id+' expected '+roleClass);
        const columns=page.locator('.approved-pc-three');
@@ -167,7 +187,7 @@ try{
        }
        if(c.id==='moderator'&&await workdesk.locator('.approved-pc-bot').count())
          throw Error('Moderator workdesk must not force TrakBot');
-       if(c.id!=='moderator'&&await workdesk.locator('.approved-pc-bot').count()!==1)
+       if(!['moderator','admin'].includes(c.id)&&await workdesk.locator('.approved-pc-bot').count()!==1)
          throw Error('Expected original TrakBot launch for '+c.id);
        // The desktop must show ONE onboarding prompt, not two stacked panels.
        const prompts=await page.locator('.tr-training-invite:visible, section.card[aria-label="Знакомство с TrakSOS"]:visible').count();
