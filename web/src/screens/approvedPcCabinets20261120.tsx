@@ -183,7 +183,12 @@ function CustomerDesk({owner}:{owner:boolean}){
   const cars=owner?(fleet.data?.cars||[]):[];
   return <main className="approved-pc approved-pc-client">
     <Heading title={owner?'Владелец автопарка':'Водитель'} description={owner?'Заявки, ремонт и состояние техники вашего автопарка':'Вся информация о помощи по выбранной заявке, без лишних сервисов'}/>
-    <Tabs active="active" onChange={()=>{}} items={[[owner?'active':'active','Активные заявки',orders.data?active.length:null]]}/>
+    <div className="approved-pc-active-order-nav">
+      <div className="approved-pc-order-heading"><span>Активные заявки</span>
+        <strong>{orders.data?active.length:'—'}</strong></div>
+      {active.length>0&&<Tabs active={String(selected?.id||'')} onChange={setChosen}
+        items={active.map((o:any)=>[String(o.id),'№'+text(o.number||o.id)+' · '+(SERVICES[o.service]?.name||text(o.service)),null])}/>}
+    </div>
     {orders.error&&<LoadingBlock error={orders.error} retry={orders.reload}/>}
     <WorkLayout left={<>
       <Pane title="Мои заявки">
