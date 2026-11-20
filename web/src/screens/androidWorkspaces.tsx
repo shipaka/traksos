@@ -5,6 +5,7 @@ import { SERVICES, STATUS } from '../dict.ts';
 import { useLoad } from '../ui.tsx';
 import { OfferForm } from './search.tsx';
 import { insurancePresentation } from '../insurancePresentation.ts';
+import { VehicleModelPhoto } from '../vehicleVisual.tsx';
 
 /** Render a single role dashboard per viewport, rather than hiding a live component tree with CSS. */
 export function useMobileWorkspace() {
@@ -140,7 +141,13 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
   performer: any; active: any[]; auctions: any[]; online: boolean; busy: boolean;
   setLine: (status: string) => void; balance: any; reloadAuctions: () => void; pendingReview?: number;
 }) {
-  const tow = performer.kind === 'tow';
+  // Tow operators have their own approved 20.11 workspace and milestones.
+  // Do not reuse the master repair card or show TechBase to a tow driver.
+  if (performer.kind === 'tow') return <AndroidTowWorkspace
+    performer={performer} active={active} auctions={auctions} online={online}
+    busy={busy} setLine={setLine} balance={balance} reloadAuctions={reloadAuctions}
+    pendingReview={pendingReview}/>;
+  const tow = false;
   const inJob = performer.line_status === 'on_job';
   return <div className="and19-workspace and19-performer" aria-label="Android рабочий стол исполнителя">
     <div className="and19-role and19-line">
@@ -192,6 +199,98 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
       <a href="#/work/jobs">Все заявки</a>
       <a href="#/work/me/money">Финансы</a>
       <a href="#/work/filter">Фильтры работ</a>
+    </div>
+  </div>;
+}
+
+/** Evacuation: only approved 20 November work actions. No fake payouts,
+ * virtual phone numbers, loaded/delivered statuses or prefilled destinations. */
+function AndroidTowWorkspace({ performer, active, auctions, online, busy, setLine, balance,
+  reloadAuctions, pendingReview }: {
+  performer: any; active: any[]; auctions: any[]; online: boolean; busy: boolean;
+  setLine: (status:string)=>void; balance:any; reloadAuctions:()=>void; pendingReview:number;
+}) {
+  const order = active[0];
+  const inJob = performer.line_status === 'on_job';
+  const stages = ['Принято','В пути','На месте','Погрузка','Доставлено'];
+  const stageIndex: Record<string, number> = {
+    accepted:0, en_route:1, arrived:2, working:3, awaiting_confirmation:3, completed:4
+  };
+  const progress = order ? stageIndex[order.status] ?? 0 : 0;
+  const pickup = order?.address || order?.estimate?.zoneName || '';
+  const delivery = order?.destination || order?.destination_address || order?.to_address || '';
+  const vehicle = order?.vehicle || {};
+  const brand = vehicle.brand || order?.v_brand || order?.brand;
+  const model = vehicle.model || order?.v_model || order?.model;
+  const year = vehicle.year || order?.v_year || order?.year;
+  const navHref = pickup ? 'https://www.google.com/maps/dir/?api=1&destination=' +
+    encodeURIComponent(pickup) : null;
+  return <div className="and19-workspace and19-performer and20-tow" aria-label="Android кабинет эвакуаторщика">
+    <div className="and19-role and19-line">
+      <span>Эвакуаторщик</span>
+      <button type="button" disabled={busy || inJob}
+        className={online ? 'and19-online' : 'and19-offline'}
+        aria-label={inJob ? 'На задании — изменение статуса недоступно' : 'Изменить доступность для вызовов'}
+        onClick={()=>setLine(online ? 'offline' : 'online')}>
+        <i/>{inJob?'На задании':online?'На линии':'Не на линии'}
+        <span className="and19-toggle" aria-hidden="true"/>
+      </button>
+    </div>
+    <h1 className="and20-tow-title">Рабочий стол</h1>
+    <div className="and20-tow-metrics" aria-label="Рабочие показатели">
+      <a href="#/work/jobs"><small>Новые</small><strong>{auctions.length}</strong></a>
+      <a href="#/work/jobs"><small>В работе</small><strong>{active.length}</strong></a>
+      <a href="#/work/me/schedule"><small>График</small><strong>Открыть</strong></a>
+    </div>
+    {order ? <section className="and19-panel and20-tow-job">
+      <div className="and19-panel-title"><strong>Заявка №{order.number ?? '—'}</strong>
+        <span className="and19-status">{STATUS[order.status]?.name ?? 'Статус уточняется'}</span></div>
+      <VehicleModelPhoto brand={brand} model={model} year={year} className="and20-tow-photo"/>
+      {order.description && <p className="and20-tow-problem">{order.description}</p>}
+      <div className="and20-tow-route">
+        <p><span aria-hidden="true">⌖</span><span><small>Точка погрузки</small>{pickup || 'Откройте адрес в заявке'}</span></p>
+        <p><span aria-hidden="true">⚑</span><span><small>Пункт доставки</small>{delivery || 'Уточняется в заявке'}</span></p>
+      </div>
+      <ol className="and20-tow-timeline" aria-label="Этапы эвакуации">
+        {stages.map((name,index)=><li key={name} className={index<progress?'passed':index===progress?'current':''}
+          aria-current={index===progress?'step':undefined}>
+          <span aria-hidden="true">{index<progress?'✓':index+1}</span><small>{name}</small>
+        </li>)}
+      </ol>
+      {order.status==='awaiting_confirmation' && <p className="and20-tow-disclaimer">
+        Работа передана на подтверждение. Доставку и оплату нельзя считать завершёнными без проверки статуса.
+      </p>}
+      <div className="and20-tow-actions">
+        <a className="and20-tow-primary" href={'#/order/'+encodeURIComponent(order.id)}>
+          Открыть заявку и следующий этап
+        </a>
+        {navHref && <a className="and20-tow-navigation" href={navHref} target="_blank"
+          rel="noopener noreferrer">Навигация</a>}
+      </div>
+      {active.length>1 && <a className="and19-row-link" href="#/work/jobs">
+        Остальные активные заявки · {active.length-1} ›
+      </a>}
+    </section> : <section className="and19-panel and19-empty">
+      <strong>{online?'Ожидаем заявку на эвакуацию':'Вы не на линии'}</strong>
+      <p>{online?'Новые предложения появятся здесь после назначения.':
+        'Включите доступность, когда будете готовы принимать заявки.'}</p>
+    </section>}
+    {pendingReview>0 && <a className="and19-row-link" href="#/work/jobs">
+      Ожидают подтверждения: {pendingReview} ›
+    </a>}
+    {auctions.length>0 && <section className="and19-auctions" aria-label="Новые вызовы">
+      <h2>Предложения эвакуации · {auctions.length}</h2>
+      {auctions.filter((a:any)=>a.service==='tow').map((a:any)=><article className="and19-panel" key={a.order_id}>
+        <strong>{a.is_sos?'SOS · ':''}{a.brand||'Грузовой автомобиль'}</strong>
+        <p>{a.address||a.estimate?.zoneName||'Адрес уточняется'}</p>
+        <OfferForm orderId={a.order_id} limits={a.limits} myPrice={a.my_price} onDone={reloadAuctions}/>
+      </article>)}
+    </section>}
+    {balance?.to_pay!=null && <a href="#/work/me/money" className="and19-row-link">
+      Проверенные начисления <strong>{rub(balance.to_pay)} ›</strong>
+    </a>}
+    <div className="and19-quick">
+      <a href="#/work/jobs">Мои заявки</a><a href="#/work/chats">Чат</a><a href="#/work/filter">Настройки вызовов</a>
     </div>
   </div>;
 }
