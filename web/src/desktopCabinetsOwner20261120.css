@@ -376,32 +376,22 @@
   }
 }
 
-/* First-login teaching must not consume a blank desktop hero-sized panel.
-   Keep the real lesson and its actions; only constrain desktop composition. */
-@media(min-width:900px) {
+/* One onboarding invitation on desktop. The compact top strip links to the
+   real training and tour; the second, larger introductory card is hidden.
+   Its React flow remains available on mobile (<900px), and desktop training
+   can always be reopened from the account menu. */
+@media (min-width:900px) {
   .app[class*="role-"] section.card[aria-label="Знакомство с TrakSOS"] {
-    display:flex!important;
-    flex-direction:row!important;
-    align-items:center!important;
-    justify-content:space-between!important;
-    flex-wrap:wrap!important;
-    gap:12px 20px!important;
+    display:none!important;
+  }
+  .app[class*="role-"] .tr-training-invite {
+    max-width:1480px;
     min-height:0!important;
     height:auto!important;
-    padding:16px 18px!important;
-    background:linear-gradient(110deg,#122d39,#0b1e29)!important;
-    border:1px solid #3b5661!important;
-  }
-  .app[class*="role-"] section.card[aria-label="Знакомство с TrakSOS"] > div:first-child{
-    flex:1 1 360px!important;
-    min-width:0;
-  }
-  .app[class*="role-"] section.card[aria-label="Знакомство с TrakSOS"] > div:first-child p{
-    margin:6px 0 0!important;
-  }
-  .app[class*="role-"] section.card[aria-label="Знакомство с TrakSOS"] > .row{
-    flex:0 1 auto!important;
-    margin:0!important;
-    align-self:center!important;
+    padding:11px 15px!important;
+    margin-block:8px!important;
+    border:1px solid #405966!important;
+    border-radius:12px!important;
+    background:linear-gradient(100deg,#122b37,#091a23)!important;
   }
 }
