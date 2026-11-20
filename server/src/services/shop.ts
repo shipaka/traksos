@@ -337,15 +337,15 @@ export class ShopService {
     const safePage = Math.max(0, Math.min(1000, Math.floor(page)));
     const params: unknown[] = [ownerId];
     const filters = ['s.client_id=$1'];
-    if (user.owner_id) { params.push(user.id); filters.push(`s.created_by=${params.length}`); }
-    if (vehicleId) { params.push(vehicleId); filters.push(`s.vehicle_id=${params.length}`); }
+    if (user.owner_id) { params.push(user.id); filters.push(`s.created_by=$${params.length}`); }
+    if (vehicleId) { params.push(vehicleId); filters.push(`s.vehicle_id=$${params.length}`); }
     const where = filters.join(' and ');
     const take = 20;
     const rows = await this.db.query<any>(
       `select s.*,d.status as courier_status
          from shop_orders s left join shop_courier_deliveries d on d.shop_order_id=s.id
         where ${where} order by s.created_at desc,s.id desc
-        limit ${params.length + 1} offset ${params.length + 2}`, [...params, take + 1, safePage * take]);
+        limit $${params.length + 1} offset $${params.length + 2}`, [...params, take + 1, safePage * take]);
     return { items: rows.slice(0, take).map((o: any) => ({
       ...this.orderView(o),courierStatus:o.courier_status??null,
       canConfirmCourierReceipt:!!o.courier_status&&o.created_by===user.id
