@@ -97,23 +97,26 @@ try {
         if (cards !== 4 || hubs !== 4)
           throw new Error(width + 'px wrong desktop card counts: ' + cards + '/' + hubs);
       }
-      // Confirm actual high-resolution bundled photos load, not only CSS URLs.
+      // Older photographic service cards were physically retired at the owner's
+      // request. Preserve only verified actual vehicle-model photos in the app.
       const photoDetails = await page.evaluate(async () => {
-        const keys = ['master', 'tow', 'sto', 'consult'];
-        return await Promise.all(keys.map(async key => {
+        const modelPhotos = ['scania-r520-2016.webp','volvo-fh-2013.webp',
+          'renault-premium-2006.webp','daf-xf105.webp',
+          'man-tgx-2007.webp','mercedes-actros-2019.webp'];
+        return await Promise.all(modelPhotos.map(async name => {
           const img = new Image();
-          img.src = '/tracksos-photo-' + key + '.webp';
+          img.src = '/vehicles/models/' + name;
           await img.decode();
-          return { key, w: img.naturalWidth, h: img.naturalHeight };
+          return {name, w:img.naturalWidth, h:img.naturalHeight};
         }));
       });
-      if (photoDetails.some(p => p.w < 700 || p.h < 480))
-        throw new Error(width + 'px service-photo quality/availability: ' + JSON.stringify(photoDetails));
+      if (photoDetails.some(p => p.w < 320 || p.h < 180))
+        throw new Error(width + 'px vehicle-model photo quality/availability: ' + JSON.stringify(photoDetails));
       if(width >= 900) for (const [index, key] of ['master', 'tow', 'sto', 'consult'].entries()) {
         const bg = await page.locator('.desktop-quick-card').nth(index).evaluate(el =>
           getComputedStyle(el).backgroundImage);
-        if (!bg.includes('tracksos-photo-' + key))
-          throw new Error(width + 'px service-photo CSS mismatch: ' + key + '/' + bg);
+        if (bg.includes('tracksos-photo-') || !bg.includes('gradient'))
+          throw new Error(width + 'px retired pre-17 Nov service photography or missing current background: ' + key + '/' + bg);
       }
       const pageWidth = await page.evaluate(() => ({
         viewport: document.documentElement.clientWidth,
