@@ -677,7 +677,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           ))}
         </nav>
       )}
-      {!serviceSandbox && !isAuthEntry && route[0] !== 'trakbot' && <TrakBotDock authenticated={!!me} />}
+      {/* 618.png has no overlapping floating robot. The same approved talking-truck
+          TrakBot remains in Android Menu > TrakBot and on the desktop. */}
+      {!native.isApp && !serviceSandbox && !isAuthEntry && route[0] !== 'trakbot' && <TrakBotDock authenticated={!!me} />}
       {me && !serviceSandbox && <RoleTour page={route[0] ?? ''} />}
     </div>
   );
