@@ -104,6 +104,13 @@
 .approved-pc-bot small{font-size:11px;line-height:1.3;color:#f1f6f7}
 .approved-pc-bot span{font-size:11px;color:#90dae5}
 .approved-pc-bot img{width:46%;object-fit:contain;max-height:165px;align-self:end;mix-blend-mode:normal}
+.approved-pc-quote{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:center;
+  background:linear-gradient(110deg,#102b39,#09232d);border:1px solid #356f7b;border-radius:9px;
+  padding:11px 10px;margin:6px 0;min-width:0;text-decoration:none}
+.approved-pc-quote strong{font-size:12px;color:#f4fbfd;min-width:0;overflow-wrap:anywhere}
+.approved-pc-quote span{font-size:14px;font-weight:900;color:#ffc17d;white-space:nowrap}
+.approved-pc-quote em{font-size:11px;color:#91ffc4;font-style:normal;grid-column:1/-1}
+.approved-pc-quote:hover{border-color:#ffa04f}
 .approved-pc-offer{display:grid;grid-template-columns:180px minmax(0,1fr);gap:15px;border:1px solid #2f7483;
  border-radius:13px;background:#102b36;padding:13px;margin-bottom:12px}
 .approved-pc-offer>div>h3{font-size:18px;margin:5px 0 8px}
