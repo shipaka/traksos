@@ -386,7 +386,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       : [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь'], ['/shop', '⚙', 'Запчасти'], ['/profile', '◉', 'Профиль']];
   // Mobile tabs only contain real role-dependent routes; extra tools remain in the menu.
   const mobileTabs: [string, string, string][] = !me ? [] : mode === 'client'
-    ? [['/', '⌂', 'Главная'], ['/orders', 'clipboard', 'Заявки'], ['/air', '◌', 'Эфир'], ['/garage', 'truck', 'Техника'], ['/shop', '🛍', 'Магазин'], ['/menu', 'menu', 'Меню']]
+    ? [['/', '⌂', 'Главная'], ['/orders', 'clipboard', 'Заявки'], ['/air', '◌', 'Эфир'], ['/garage', 'truck', 'Техника'], ['/menu', 'menu', 'Меню']]
     : mode === 'performer'
       ? [['/work', '⌂', 'Главная'], ['/work/jobs', 'clipboard', 'Заявки'], ['/work/chats', 'chat', 'Чат'], ['/menu', 'menu', 'Меню']]
     : mode === 'service'
