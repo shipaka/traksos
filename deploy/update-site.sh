@@ -19,8 +19,12 @@ for artwork in \
   web/public/traksos-brand-logo-approved-618.png; do
   [[ -s "$artwork" ]] || fail "Approved 617/618 artwork missing: $artwork. Refusing old design deployment."
 done
-grep -Fq "OwnerDesktopHome20261120" web/src/main.tsx ||
-  fail "Approved desktop home is not mounted in this revision."
+# Guest PC root is routed through Login, which mounts the approved
+# OwnerDesktopHome20261120 React component on desktop.
+grep -Fq 'OwnerDesktopHome20261120' web/src/screens/login.tsx ||
+  fail "Approved desktop home is not mounted by the guest login route."
+grep -Fq '<Login key={route[0]' web/src/main.tsx ||
+  fail "Guest entry route is not mounted in this revision."
 grep -Fq "approvedPcCabinets20261120.css" web/src/main.tsx ||
   fail "Approved role cabinets are not mounted in this revision."
 grep -Fq "androidOwnerVisualAlignment20261120.css" web/src/main.tsx ||
