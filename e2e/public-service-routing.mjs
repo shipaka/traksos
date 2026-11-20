@@ -87,6 +87,18 @@ try {
       await context.close();continue;
     }
     await page.getByRole('heading',{name:/TrakSOS.*помощь.*в пути/i}).waitFor();
+    const mobileTruck=page.locator('.public-hero-mobile-photo');
+    await mobileTruck.waitFor({state:'visible'});
+    await page.waitForFunction(() => {
+      const picture=document.querySelector('.public-hero-mobile-photo');
+      return picture instanceof HTMLImageElement && picture.complete && picture.naturalWidth>0;
+    });
+    const truckStyle=await mobileTruck.evaluate(el=>({
+      width:el.getBoundingClientRect().width,height:el.getBoundingClientRect().height,
+      display:getComputedStyle(el).display,
+    }));
+    if(truckStyle.display==='none'||truckStyle.width<240||truckStyle.height<120)
+      throw Error('Mobile approved truck photo is visually missing: '+JSON.stringify(truckStyle));
     await page.goto(BASE+'/#/explore/van');
     await page.locator('.guest-explore-hero h1').waitFor({state:'visible'});
     await page.screenshot({path:'e2e/shots/public-inner/mobile-master-service-390.png',fullPage:true});
