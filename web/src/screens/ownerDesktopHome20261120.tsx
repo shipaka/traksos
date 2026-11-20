@@ -47,7 +47,7 @@ export function OwnerDesktopHome20261120() {
         <details><summary>Партнёрам</summary><div><a href="#/join">Хотим работать</a><a href="#/offers">Оферты</a></div></details>
         <a href="#/help">Поддержка</a>
       </nav>
-      <span className="owner20-region" title="Пилотный регион">⌖ СПб и ЛО</span>
+      <details className="owner20-region"><summary>⌖ Выбрать регион</summary><div className="owner20-region-menu"><b>Регион запуска</b><p>Санкт-Петербург и Ленинградская область</p><small>В остальных регионах сервисы появятся по мере подключения партнёров.</small><a href="#/help">Уточнить доступность →</a></div></details>
       <a href="#/login" className="owner20-signin">♙　Войти</a>
     </header>
     <section className="owner20-hero" aria-labelledby="owner20-heading">
