@@ -47,6 +47,14 @@ export function OwnerDesktopHome20261120() {
         <details><summary>Партнёрам</summary><div><a href="#/join">Хотим работать</a><a href="#/offers">Оферты</a></div></details>
         <a href="#/help">Поддержка</a>
       </nav>
+      <details className="owner20-compact-menu">
+        <summary>☰ Разделы</summary>
+        <nav aria-label="Разделы сайта на небольшом экране ПК">
+          <a href="#/company">О платформе</a><a href="#/explore/van">Сервисы</a>
+          <a href="#/explore/air">Эфир</a><a href="#/explore/club">Клуб TrakSOS</a>
+          <a href="#/join">Партнёрам</a><a href="#/help">Поддержка</a>
+        </nav>
+      </details>
       <details className="owner20-region"><summary>⌖ Выбрать регион</summary><div className="owner20-region-menu"><b>Регион запуска</b><p>Санкт-Петербург и Ленинградская область</p><small>В остальных регионах сервисы появятся по мере подключения партнёров.</small><a href="#/help">Уточнить доступность →</a></div></details>
       <a href="#/login" className="owner20-signin">♙　Войти</a>
     </header>
