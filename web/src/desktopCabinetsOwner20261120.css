@@ -1,0 +1,200 @@
+/*
+ * TrakSOS desktop cabinets — owner-approved visual language, 20.11.2026.
+ * Reference: user PNG 617.png, 1536x864, SHA256
+ * cde831b7a4ae09622ca68a7f699303ef0a7ae679a76d2a306eb982bc43ed5a1a.
+ *
+ * No changes to Android/Chrome mobile geometry: Android 19.11 remains authoritative.
+ * Changes are purely presentational. Do not remove role permissions, working routes,
+ * notifications, financial safeguards, vehicle photos or pending application states.
+ */
+@media (min-width: 900px) {
+  .app[class*="role-"] {
+    --owner20-ink: #061016;
+    --owner20-surface: #0a1a23;
+    --owner20-panel: #102631;
+    --owner20-border: #304753;
+    --owner20-orange: #ff701c;
+    --owner20-orange-soft: #ffae70;
+    --owner20-teal: #27bbc0;
+    --owner20-white: #f8fafc;
+    --owner20-muted: #bccbd3;
+    --bg: var(--owner20-ink);
+    --primary: var(--owner20-orange);
+    --accent: var(--owner20-orange);
+    --muted: var(--owner20-muted);
+    --text: var(--owner20-white);
+    background: var(--owner20-ink);
+    color: var(--owner20-white);
+  }
+  .app[class*="role-"] .top {
+    background: linear-gradient(100deg,#071319,#0b1d26) !important;
+    border-bottom: 1px solid #2b424c;
+    color: var(--owner20-white);
+    box-shadow: 0 10px 32px #0006;
+  }
+  .app[class*="role-"] .top .logo {
+    font-weight: 900;
+    letter-spacing: -.025em;
+    color: var(--owner20-white);
+  }
+  .app[class*="role-"] .top .logo b {
+    color: var(--owner20-orange);
+  }
+  .app[class*="role-"] .desktop-layout {
+    background: radial-gradient(ellipse at 65% -12%, #11303b 0%,transparent 45%),var(--owner20-ink);
+  }
+  .app[class*="role-"] .desktop-sidebar {
+    background: linear-gradient(180deg,#0b1e27,#07151c) !important;
+    border-right: 1px solid #31454f;
+    box-shadow: 6px 0 22px #0002;
+  }
+  .app[class*="role-"] .desktop-sidebar-title,
+  .app[class*="role-"] .desktop-nav-section {
+    color: #aebfc9;
+    letter-spacing: .06em;
+  }
+  .app[class*="role-"] .desktop-nav-link {
+    color: #d9e4eb;
+    border: 1px solid transparent;
+    border-radius: 11px;
+    transition: border-color .15s,background-color .15s,transform .15s;
+  }
+  .app[class*="role-"] .desktop-nav-link:hover,
+  .app[class*="role-"] .desktop-nav-link:focus-visible {
+    background: #17313e;
+    border-color: #43606d;
+    transform: translateX(2px);
+  }
+  .app[class*="role-"] .desktop-nav-link.active,
+  .app[class*="role-"] .desktop-nav-link[aria-current="page"] {
+    background: linear-gradient(95deg,#442716,#182935) !important;
+    border-color: #ca6229 !important;
+    color: #fff !important;
+    box-shadow: inset 3px 0 0 var(--owner20-orange);
+  }
+  .app[class*="role-"] .desktop-content {
+    color: var(--owner20-white);
+    background: transparent;
+  }
+  .app[class*="role-"] .desktop-content > main {
+    color: var(--owner20-white);
+  }
+  .app[class*="role-"] .desktop-content main :is(h1,h2,h3) {
+    color: #f8fafc;
+    letter-spacing: -.025em;
+  }
+  .app[class*="role-"] .desktop-content main :is(.note,.sub,.label) {
+    color: #b7c9d4;
+  }
+  .app[class*="role-"] .desktop-content main .card:not(.flat),
+  .app[class*="role-"] .desktop-content main :is(.linkrow,.desktop-quick-card,.desktop-aside-card,.client-dashboard-hub,.insurer-workspace-card) {
+    background: linear-gradient(145deg,#172b37 0%,#0b1922 95%) !important;
+    color: var(--owner20-white);
+    border: 1px solid var(--owner20-border) !important;
+    border-radius: 15px !important;
+    box-shadow: 0 9px 28px #0005,inset 0 1px #ffffff0c;
+  }
+  .app[class*="role-"] .desktop-content main :is(.card,.linkrow,.desktop-quick-card,.client-dashboard-hub) :is(b,strong) {
+    color: #f6fafc;
+  }
+  .app[class*="role-"] .desktop-content main :is(.card,.linkrow,.desktop-quick-card,.client-dashboard-hub):is(a,button):hover {
+    border-color: #cc6b37 !important;
+    box-shadow: 0 10px 30px #0007, 0 0 0 1px #eb712930;
+  }
+  .app[class*="role-"] .desktop-content main .tile-value,
+  .app[class*="role-"] .desktop-content main .desktop-quick-icon,
+  .app[class*="role-"] .desktop-content main .client-dashboard-hub-icon {
+    color: var(--owner20-orange) !important;
+  }
+  .app[class*="role-"] .desktop-content main :is(.desktop-quick-card,.client-dashboard-hub) small {
+    color: #b9cbd6;
+  }
+  .app[class*="role-"] .desktop-content main :is(.desktop-primary-action,.btn:not(.ghost):not(.bad):not(.good),button.primary) {
+    color: #fff;
+    background: linear-gradient(130deg,#f35d18,#ff842f) !important;
+    border: 1px solid #fda063 !important;
+    box-shadow: 0 6px 22px #ff5b1833;
+    border-radius: 12px;
+    text-decoration: none;
+  }
+  .app[class*="role-"] .desktop-content main :is(.btn.ghost,.desktop-outline-action,.chip) {
+    border-color: #3e6e7a;
+    background: #0b222d;
+    color: #f0f7fa;
+  }
+  .app[class*="role-"] .desktop-content main .chip[aria-pressed="true"],
+  .app[class*="role-"] .desktop-content main :is([role="tab"][aria-selected="true"],.chip.active) {
+    background: #3c281c;
+    border-color: var(--owner20-orange);
+    color: #fff;
+  }
+  .app[class*="role-"] .desktop-content main :is(.desktop-hero,.work-command-hero,.base-command-hero,.insurer-workspace-hero,.cabinet-heading) {
+    background: linear-gradient(112deg,#102630 0%,#071821 60%,#173038 100%) !important;
+    border: 1px solid #435862 !important;
+    border-radius: 18px;
+    box-shadow: 0 12px 35px #0005,inset 0 1px #ffffff17;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .app[class*="role-"] .desktop-content main :is(.desktop-hero,.work-command-hero,.base-command-hero) {
+    position: relative;
+  }
+  .app[class*="role-"] .desktop-content main :is(.desktop-hero,.work-command-hero,.base-command-hero)::after {
+    content: "";
+    position: absolute;
+    height: 3px;
+    left: 0;right: 0;bottom: 0;
+    background: linear-gradient(90deg,var(--owner20-orange),#f59537,transparent 78%);
+    pointer-events: none;
+    z-index: 4;
+  }
+  .app.role-client .client-home .desktop-hero h1 span {
+    color: var(--owner20-orange) !important;
+  }
+  .app.role-client .client-home .desktop-hero .client-hero-scania,
+  .app.role-client .client-home .desktop-hero .client-hero-art {
+    /* Old Nov 19 truck is not a new owner-approved Nov 20 graphic. */
+    display: none !important;
+  }
+  .app[class*="role-"] .desktop-content main :is(.banner,.empty) {
+    background: #142b34;
+    border: 1px solid #355260;
+    color: #d3e0e6;
+    border-radius: 12px;
+  }
+  .app[class*="role-"] .desktop-content main :is(input,select,textarea):not([type="checkbox"]):not([type="radio"]) {
+    background: #081a24;
+    border-color: #3e5867;
+    color: #f8fbfd;
+    border-radius: 10px;
+  }
+  .app[class*="role-"] .desktop-content main :is(input,select,textarea):focus-visible,
+  .app[class*="role-"] :is(a,button,summary):focus-visible {
+    outline: 2px solid #ff9a4f !important;
+    outline-offset: 3px;
+  }
+  .app[class*="role-"] .desktop-content main :is(table,.list-item) {
+    border-color: #304a56;
+  }
+  .app[class*="role-"] .account-menu nav {
+    background: #0a1c26;
+    border: 1px solid #446371;
+    box-shadow: 0 14px 34px #0009;
+  }
+  .app[class*="role-"] .site-footer {
+    border-color: #30434f;
+    color: #aebfc9;
+  }
+}
+@media (min-width:900px) and (max-width:1150px) {
+  .app[class*="role-"] .desktop-content > main {
+    width: 100%;
+    min-width: 0;
+  }
+}
+@media (prefers-reduced-motion:reduce) {
+  .app[class*="role-"] .desktop-nav-link {
+    transition: none !important;
+    transform: none !important;
+  }
+}
