@@ -40,6 +40,23 @@ try {
       scroll:document.documentElement.scrollWidth
     }));
     if (!details.isNative || details.previewRole!==role)throw Error('Wrong role/native mode '+JSON.stringify(details));
+    // Regression gate: approved hero must be a real, visible bundled image.
+    const hero = await page.locator('.and19-cover img').evaluate(img => {
+      const bounds = img.getBoundingClientRect();
+      const parent = img.closest('.and19-cover');
+      const box = parent.getBoundingClientRect();
+      return {
+        loaded: img.complete && img.naturalWidth>0,
+        src:img.getAttribute('src'),
+        visible:bounds.width>200 && bounds.height>=100 && box.height>=100,
+        background:getComputedStyle(parent).backgroundColor
+      };
+    });
+    if (!hero.loaded || !hero.visible || hero.src!=='/tracksos-approved-hero-owner-20261119.webp')
+      throw Error(role+': approved photo missing from Android hero '+JSON.stringify(hero));
+    const nav = await page.locator('.and19-review-tabbar a').allTextContents();
+    if (nav.length!==((role==='client'||role==='driver')?6:4))
+      throw Error(role+': Android bottom navigation does not match live role layout '+JSON.stringify(nav));
     if (details.scroll>details.viewport+3)throw Error(role+': horizontal overflow '+JSON.stringify(details));
     if (role==='client' || role==='driver') {
       if (await page.locator('.and19-services>a').count()!==4)throw Error('Lost approved four services');
@@ -53,6 +70,11 @@ try {
       const toggle=page.locator('.and19-line button');
       if (!await toggle.count())throw Error('Performer availability is missing');
       if (!await page.locator('.and19-main-order .and19-timeline').count())throw Error('Performer timeline missing');
+      if (!await page.getByText('Открыть · отметить прибытие',{exact:false}).count())
+        throw Error('The approved master must show a real status-specific next step');
+      const links = await page.locator('.and19-order-shortcuts>a').evaluateAll(a => a.map(el=>el.getAttribute('href')));
+      if (links.length!==3 || !links.every(h=>h.startsWith('#/order/SYNTHETIC-REVIEW/')))
+        throw Error('The master has missing safe quick tabs '+JSON.stringify(links));
     }
     await page.screenshot({path:output+'/'+role+'-390.png'});
     // Clicking a live-looking action in review must not call the API or navigate.
