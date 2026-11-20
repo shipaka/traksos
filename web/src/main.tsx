@@ -346,6 +346,19 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   const route = useRoute();
   const [openGuestGroup, setOpenGuestGroup] = useState<string | null>(null);
   const [mobileCatalogOpen, setMobileCatalogOpen] = useState(false);
+  // The approved guest PC homepage owns its sole header and navigation.
+  // Mount it without the legacy shell instead of relying on CSS to conceal duplicates.
+  const [standaloneDesktopHome, setStandaloneDesktopHome] = useState(
+    () => !native.isApp && window.matchMedia('(min-width: 900px)').matches
+  );
+  useEffect(() => {
+    if (native.isApp) return;
+    const media = window.matchMedia('(min-width: 900px)');
+    const sync = () => setStandaloneDesktopHome(media.matches);
+    media.addEventListener('change', sync);
+    sync();
+    return () => media.removeEventListener('change', sync);
+  }, []);
   const isAuthEntry = !me && ['login', 'register', 'join', 'reset', 'activate'].includes(route[0] ?? '');
   useEffect(() => {
     setOpenGuestGroup(null);
@@ -494,6 +507,16 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       !window.confirm('При выходе из аккаунта статус «На линии» отключится. Просто сверните приложение, если хотите продолжать получать заявки. Выйти?')) return;
     void logout();
   };
+  // A single, standalone public desktop masthead. Legacy guest menus, second
+  // logo, side navigation and footer must never be mounted under the owner PC page.
+  // Mobile and Android continue through the existing responsive Shell.
+  if (!me && route.length === 0 && standaloneDesktopHome) return (
+    <div className="app guest-app guest-home guest-home-standalone">
+      <NetworkStatus />
+      <div className="desktop-layout"><div className="desktop-content">{children}</div></div>
+      <TrakBotDock authenticated={false} />
+    </div>
+  );
   return (
     <div className={`app ${me ? "role-"+mode : (route.length === 0 ? "guest-app guest-home" : "guest-app")}`}>
       <header className="top">
