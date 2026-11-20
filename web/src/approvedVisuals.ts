@@ -16,6 +16,8 @@ export const APPROVED_VISUALS = Object.freeze({
   trakbotReactions: '/trakbot-approved-30.webp',
   workspaceTruck: '/tracksos-approved-hero-owner-20261119.webp',
   serviceScenes: '/traksos-service-scenes-shared.webp',
+  // Same four services; higher-resolution illustrative photos for PC cabinets only.
+  desktopServiceScenes: '/traksos-service-scenes-desktop-hq.webp',
   publicPcPhoto: '/owner20-photo-background-approved.webp',
   publicPcAtlas: '/owner20-artwork-sprite.webp',
 } as const);
