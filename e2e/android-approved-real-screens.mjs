@@ -111,6 +111,47 @@ try{
       await page.screenshot({path:output+'/'+role+'-android-390.png',fullPage:true,scale:'css'});
       await page.screenshot({path:output+'/'+role+'-android-390-retina2x.png',fullPage:true,scale:'device'});
       console.log('Captured real Android native-bridge browser workspace at CSS 390px + physical 2x: '+role);
+      // After accepting the role's desktop, verify the WHOLE native app:
+      // bottom Menu opens role-specific sections, not only the Profile screen.
+      const menuTab=page.locator('.tabbar a[href="#/menu"]');
+      if(await menuTab.count()!==1)throw Error(role+': Android bottom Menu is missing');
+      await menuTab.click();
+      const menu=page.locator('main.tr-mobile-menu-page');
+      await menu.waitFor({state:'visible',timeout:15000});
+      const info=await menu.evaluate(el=>({
+        title:el.querySelector('h1')?.textContent,
+        groups:el.querySelectorAll('.tr-mobile-menu-section').length,
+        realLinks:Array.from(el.querySelectorAll('a[href]')).map(a=>a.getAttribute('href')),
+        visual:getComputedStyle(el.querySelector('.tr-mobile-menu-section')).backgroundImage,
+        animation:getComputedStyle(el).animationName,
+        scrollWidth:document.documentElement.scrollWidth,
+        clientWidth:document.documentElement.clientWidth
+      }));
+      if(info.title!=='Меню и разделы'||info.groups<3||info.realLinks.length<9||
+         info.realLinks.some(h=>!h?.startsWith('#/'))||
+         !info.visual.includes('gradient')||!info.animation.includes('trAndroidInnerEnter')||
+         info.scrollWidth>info.clientWidth+3)
+        throw Error(role+': menu visuals or role routes broken '+JSON.stringify(info));
+      if(role==='owner' && !info.realLinks.includes('#/air'))
+        throw Error('Owner lost approved driver Ether');
+      if(role==='master' && (!info.realLinks.includes('#/work/filter')||info.realLinks.includes('#/admin')))
+        throw Error('Master lost job filters or sees admin-only links');
+      if(await page.locator('.tabbar a[href="#/menu"].on').count()!==1)
+        throw Error(role+': selected Menu tab does not reflect its route');
+      await page.screenshot({path:output+'/'+role+'-menu-android-390.png',fullPage:true,scale:'css'});
+      await page.locator('.tr-mobile-menu-account a[href="#/profile"]').click();
+      await page.waitForURL(/#\\/profile$/, {timeout:10000});
+      if(await page.locator('main.tr-mobile-menu-page').count())
+        throw Error(role+': Profile shortcut did not navigate to real settings');
+      // Test an accessible small Android phone, without changing baseline 390px screenshots.
+      await page.goto(BASE+'/#/menu',{waitUntil:'domcontentloaded'});
+      await menu.waitFor({state:'visible'});
+      await page.setViewportSize({width:320,height:740});
+      await page.waitForTimeout(120);
+      const narrow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
+      if(narrow>3)throw Error(role+': menu horizontal overflow on 320px: '+narrow);
+      await page.screenshot({path:output+'/'+role+'-menu-android-320.png',fullPage:true,scale:'css'});
+      if(errors.length)throw Error(role+': menu JavaScript error(s) '+errors.join('; '));
     }finally{await ctx.close()}
   }
 }finally{await browser.close()}
