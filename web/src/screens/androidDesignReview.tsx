@@ -6,6 +6,7 @@
 import { useEffect, useState, type MouseEvent } from 'react';
 import { AndroidClientWorkspace, AndroidPerformerWorkspace } from './androidWorkspaces.tsx';
 import { APPROVED_VISUALS } from '../approvedVisuals.ts';
+import { NavGlyph } from '../navGlyph.tsx';
 
 const sampleOrder = {
   id: 'SYNTHETIC-REVIEW',
@@ -42,6 +43,12 @@ export function AndroidDesignReview({ role }: { role?: string }) {
       setMessage('Это просмотр оформления. Для реального действия откройте свой кабинет после входа.');
     }
   };
+  // Copy the actual role's Shell tab configuration and vector component.
+  // In review they cannot open authenticated screens or send a request.
+  const tabs: [string, string][] = performer
+    ? [['⌂','Главная'],['☷','Заявки'],['▤','Чат'],['◉','Меню']]
+    : [['⌂','Главная'],['☷','Заявки'],['◌','Эфир'],
+       ['▣','Техника'],['🛍','Магазин'],['◉','Меню']];
   return <div className={'app role-' + (performer ? 'performer' : 'client') + ' and19-review-page'}
     aria-label="Проверка Android APK по утверждённому дизайну">
     <header className="and19-review-header">
@@ -71,8 +78,16 @@ export function AndroidDesignReview({ role }: { role?: string }) {
     </div>
     {message && <p className="and19-review-message" role="status">{message}</p>}
     <footer className="and19-review-footer">
-      <span>Это реальные компоненты кабинетов Android, заполненные примерами только для сверки внешнего вида.</span>
+      <span>Настоящие компоненты Android. Данные — только пример для согласования.</span>
       <a href="#/">Перейти ко входу в TrakSOS</a>
     </footer>
+    <nav className="tabbar and19-review-tabbar" aria-label="Нижнее меню Android, режим просмотра">
+      {tabs.map(([glyph,title], index) =>
+        <a key={title} href="#/android-review" className={index === 0 ? 'on' : ''}
+          aria-current={index === 0 ? 'page' : undefined}
+          onClick={event => {event.preventDefault();setMessage('В режиме просмотра меню не меняет реальные данные.');}}>
+          <span className="ic"><NavGlyph glyph={glyph} /></span>{title}
+        </a>)}
+    </nav>
   </div>;
 }
