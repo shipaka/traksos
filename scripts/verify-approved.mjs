@@ -130,6 +130,9 @@ const unifiedClient = await read('web/src/screens/client.tsx');
 const unifiedMobile = await read('web/src/screens/androidWorkspaces.tsx');
 const unifiedShell = await read('web/src/main.tsx');
 const unifiedBot = await read('web/src/trakbotMascot.css');
+const unifiedOrderPhoto = await read('web/src/approvedOrderTruck.tsx');
+const unifiedSceneStyle = await read('web/src/approvedEmptyScene.css');
+const ownerPcHeader = await read('web/src/screens/ownerDesktopHome20261120.tsx');
 expect(unifiedVisuals.includes("logo: '/traksos-brand-logo-approved-618.png'") &&
   unifiedVisuals.includes("trakbotHello: '/trakbot-approved-hello.webp'") &&
   unifiedVisuals.includes("trakbotReactions: '/trakbot-approved-30.webp'") &&
@@ -145,6 +148,15 @@ expect(unifiedVisuals.includes("logo: '/traksos-brand-logo-approved-618.png'") &
 expect(!unifiedShell.includes('<span className="logo">Trak<b>Sos</b></span>') &&
   !unifiedMobile.includes('src="/tracksos-approved-hero-owner-20261119.webp"'),
   'no alternate text-only header or independently hard-coded Android truck illustration');
+expect(unifiedOrderPhoto.includes("vehicleReferencePhoto(brand,model,year)") &&
+  unifiedOrderPhoto.includes('is-illustration') &&
+  unifiedClient.includes('<ApprovedOrderTruck order={o} />') &&
+  unifiedMobile.includes('<ApprovedOrderTruck order={current} />') &&
+  unifiedMobile.includes('<ApprovedOrderTruck order={active[0]} />') &&
+  unifiedSceneStyle.includes('prefers-reduced-motion:reduce') &&
+  ownerPcHeader.includes('src={APPROVED_VISUALS.logo}') &&
+  !ownerPcHeader.includes('function TruckLogo()'),
+  'one exact-generation truck photo source with honest fallback, reduced motion and identical public/Android brand');
 for (const file of ['web/src/finalCanon.css','web/src/trackPhotos.css']) {
   let exists = false;
   try { await stat(file); exists = true; } catch {}
