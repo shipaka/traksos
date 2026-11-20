@@ -331,3 +331,47 @@
    border-color:#3f5c68
  }
 }
+
+/* 20 Nov desktop-only removal of legacy magenta role controls.
+   The Android 19 Nov layer is intentionally untouched. */
+@media (min-width: 900px) {
+  .app[class*="role-"] .desktop-content :is(.seg,.chip)[aria-pressed="true"],
+  .app[class*="role-"] .desktop-content .chip.active {
+    background: linear-gradient(115deg,#c74e17,#f97623) !important;
+    border-color: #ffa66a !important;
+    color: #fff !important;
+    box-shadow: 0 5px 15px #e65c2230;
+  }
+  .app[class*="role-"] .desktop-content .seg:not([aria-pressed="true"]) {
+    background: #102938;
+    color: #e6f0f5;
+    border-color: #3b5764;
+  }
+  .app[class*="role-"] .desktop-content :is(.btn,.opt).primary,
+  .app[class*="role-"] .desktop-content .btn:not(.ghost):not(.bad):not(.good) {
+    background: linear-gradient(125deg,#e95a17,#ff892f) !important;
+    border-color: #fca36e !important;
+    color: #fff !important;
+  }
+  .app[class*="role-"] .desktop-nav-sos:not(.active) {
+    color: #ff9858 !important;
+  }
+  .app[class*="role-"] .top .pill.accent {
+    background: #3d281d !important;
+    color: #ffc395 !important;
+    border-color: #996241 !important;
+  }
+  .app[class*="role-"] .trakbot-dock-launcher {
+    background: linear-gradient(115deg,#102630,#192d36);
+    border-color: #f18239;
+    box-shadow: 0 9px 22px #0008;
+  }
+  .app[class*="role-"] .trakbot-dock-panel {
+    background: #0b1d28;
+    border-color: #415966;
+  }
+  .app[class*="role-"] .trakbot-dock-head {
+    background: #142e3a;
+    border-color: #40555e;
+  }
+}
