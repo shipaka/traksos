@@ -22,3 +22,11 @@ create table if not exists shop_courier_deliveries (
 create index if not exists shop_courier_deliveries_courier_active
   on shop_courier_deliveries(courier_id,updated_at desc)
   where status <> 'received' and status <> 'cancelled';
+
+-- Availability is separate from route progress, and stays server-backed even
+-- when Android goes to the background. Offline must not erase assigned trips.
+create table if not exists shop_courier_presence (
+  courier_id uuid primary key references users(id) on delete cascade,
+  online boolean not null default false,
+  updated_at timestamptz not null default now()
+);
