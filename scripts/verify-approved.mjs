@@ -206,9 +206,8 @@ expect(sharedSceneKeys.every((kind,i)=>
 // On mobile the approved guest palette is graphite/orange, never magenta.
 const formerDesktopReference = await read('web/src/trackReference.css');
 const currentMobileGuest = await read('web/src/mobileBrowser.css');
-expect(!formerDesktopReference.includes('.guest-app .public-landing .public-hero-visual') &&
-  !formerDesktopReference.includes("background:url('../public/tracksos-approved-hero-owner-20261119.webp')"),
-  'no retired desktop guest hero overlay or legacy public image path');
+expect(!formerDesktopReference.includes('.guest-app .public-landing .public-hero-visual'),
+  'no retired desktop guest hero overlays; preserve signed-in client artwork');
 expect(!currentMobileGuest.includes('#fa5793'),
   'approved guest mobile benefits cannot revert to the old magenta accent');
 
