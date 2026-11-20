@@ -642,6 +642,45 @@ const NEXT: Record<string, [string, string][]> = {
   ready: [['shipped', 'Отправлен'], ['done', 'Получен']], shipped: [['done', 'Получен']],
 };
 
+function CourierAssign({order,onDone}:{order:any;onDone:()=>void}){
+  const [opened,setOpened]=useState(false);
+  const [selected,setSelected]=useState('');
+  const couriers=useLoad<any[]>(()=>opened?get('/api/admin/couriers'):Promise.resolve([]),[opened]);
+  const {busy,run}=useAction();
+  if(order.delivery!=='delivery')return null;
+  if(order.courierStatus&&order.courierStatus!=='assigned')return <p className="note">
+    Доставка курьером · {order.courierStatus==='received'?'Подтверждена получателем':
+      order.courierStatus==='code_verified'?'Код проверен — ожидаем подтверждение':
+      'В процессе'} · закрытие покупателем отдельно
+  </p>;
+  return <section className="courier-admin-assign">
+    {order.courierStatus==='assigned'&&<p className="note">Курьер назначен. Код доступен только покупателю.</p>}
+    {order.status==='ready'&&<button type="button" className="btn ghost small"
+      onClick={()=>setOpened(v=>!v)} aria-expanded={opened}>
+      {opened?'Скрыть выбор':'Назначить курьера'}
+    </button>}
+    {opened&&<div className="stack">
+      <p className="note">Назначать можно только подготовленные заказы с адресом.
+        Сменить назначение можно до начала рейса.</p>
+      {!couriers.data?<span className="note">{couriers.error||'Загружаем доступных курьеров…'}</span>
+        :couriers.data.length===0?<span className="note">Курьеров пока нет. Создайте отдельный аккаунт с ролью «Курьер» через раздел регистрации администратора.</span>
+        :<>
+          <label className="stack"><span className="label">Курьер для этой доставки</span>
+            <select className="field" value={selected} onChange={e=>setSelected(e.target.value)}>
+              <option value="">Выберите курьера</option>
+              {couriers.data.map((x:any)=><option key={x.id} value={x.id}>{x.name||'Курьер'} · {x.id.slice(0,8)}</option>)}
+            </select>
+          </label>
+          <button type="button" className="btn small" disabled={busy||!selected}
+            onClick={async()=>{
+              const saved=await run(()=>post('/api/admin/shop/orders/'+encodeURIComponent(order.id)+'/courier',
+                {courierId:selected}),'Курьер назначен');
+              if(saved){setOpened(false);onDone();}
+            }}>Сохранить назначение</button>
+        </>}
+    </div>}
+  </section>;
+}
 function AdminShopOrders() {
   const [all, setAll] = useState(false);
   const l = useLoad(() => get(`/api/admin/shop/orders${all ? '' : '?status=open'}`), [all], (e) => e.type === 'shop');
@@ -664,10 +703,13 @@ function AdminShopOrders() {
           <span className="note">{DELIVERY[o.delivery]}{o.address ? `: ${o.address}` : ''}{o.orderId ? ' · ' : ''}{o.orderId && <a href={`#/order/${o.orderId}`}>заявка</a>} · {o.payment === 'invoice' ? 'по счёту' : 'оплата при получении'}</span>
           {o.comment && <span className="note">«{o.comment}»</span>}
           {o.adminNote && <span className="note">Клиенту: {o.adminNote}</span>}
+          <CourierAssign order={o} onDone={l.reload}/>
           {NEXT[o.status] && <>
             <input className="field" placeholder="Сообщение клиенту · по желанию" value={note[o.id] ?? ''} onChange={(e) => setNote({ ...note, [o.id]: e.target.value })} />
             <div className="row">
-              {NEXT[o.status].map(([s, n]) => <button key={s} className="btn small" disabled={busy} onClick={() => act(o.id, s, n)}>{n}</button>)}
+              {NEXT[o.status].filter(([s])=>!o.courierStatus||!['done','shipped'].includes(s))
+                .map(([s, n]) => <button key={s} className="btn small" disabled={busy}
+                  onClick={() => act(o.id, s, n)}>{n}</button>)}
               <button className="btn ghost small" disabled={busy} onClick={() => act(o.id, 'cancelled', 'Заказ отменён, товар вернулся на склад')}>Отменить</button>
             </div>
           </>}
