@@ -60,6 +60,12 @@ try {
       if (!await page.locator('.and19-main-order').count())throw Error('Preview is not displaying a real workspace component');
       if (!await page.locator('.and19-assigned-performer').count())
         throw Error('Approved 618.png assigned-master card absent from synthetic role review');
+      const orderOfCost=await page.evaluate(()=>{
+        const assigned=document.querySelector('.and19-assigned-performer');
+        const cost=document.querySelector('.and19-client-cost');
+        return !!assigned && !!cost && !!(assigned.compareDocumentPosition(cost)&Node.DOCUMENT_POSITION_FOLLOWING);
+      });
+      if(!orderOfCost)throw Error('Approved 618.png requires master row before API-backed cost row');
       const photo=page.locator('.and19-main-order img[src*="/vehicles/models/"]');
       if (await photo.count()) {
         const ok=await photo.first().evaluate(img=>img.complete&&img.naturalWidth>0);
