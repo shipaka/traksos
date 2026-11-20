@@ -55,16 +55,15 @@ export function AndroidDesignReview({ role }: { role?: string }) {
     aria-label="Проверка Android APK по утверждённому дизайну">
     <header className="and19-review-header">
       <img src={APPROVED_VISUALS.logo} alt="TrakSOS" width="218" height="37" />
-      <a href="#/" aria-label="К обычному приложению">В приложение</a>
+      <div className="and19-review-header-actions">
+        <span className="and19-review-bell" aria-label="Уведомления в демо недоступны" role="img">♧</span>
+        <a href="#/" aria-label="Выйти из режима просмотра"><NavGlyph glyph="◉" /></a>
+      </div>
     </header>
-    <aside className="and19-review-warning" role="note">
-      <strong>ПРОСМОТР ДИЗАЙНА · ТЕСТОВЫЙ APK</strong>
-      <span>Все данные на этом экране вымышленные. Ни заявки, ни платежи, ни звонки не отправляются.</span>
-    </aside>
-    <nav className="and19-review-roles" aria-label="Просмотр рабочих столов">
-      {roles.map(item => <a href={'#/android-review/' + item.key} key={item.key}
-        aria-current={selected === item.key ? 'page' : undefined}>{item.title}</a>)}
-    </nav>
+    <div className="and19-review-indicator" role="note">
+      <strong>ДЕМО APK</strong>
+      <span>Вымышленные данные · без оплаты и отправки заявок</span>
+    </div>
     <div className="and19-review-live" onClickCapture={blockLiveAction}>
       {performer
         ? <AndroidPerformerWorkspace
@@ -79,6 +78,13 @@ export function AndroidDesignReview({ role }: { role?: string }) {
             retry={() => {}} insuranceInProgress={[]} />}
     </div>
     {message && <p className="and19-review-message" role="status">{message}</p>}
+    <details className="and19-review-switcher">
+      <summary>Посмотреть другой кабинет · {roles.find(item => item.key === selected)?.title}</summary>
+      <nav className="and19-review-roles" aria-label="Просмотр рабочих столов">
+        {roles.map(item => <a href={'#/android-review/' + item.key} key={item.key}
+          aria-current={selected === item.key ? 'page' : undefined}>{item.title}</a>)}
+      </nav>
+    </details>
     <footer className="and19-review-footer">
       <span>Настоящие компоненты Android. Данные — только пример для согласования.</span>
       <a href="#/">Перейти ко входу в TrakSOS</a>
