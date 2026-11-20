@@ -305,7 +305,9 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
 
           <div className="public-hero-caption" key={'caption-'+heroSlide}>{HERO_SLIDES[heroSlide].caption}</div>
         </div>
-        <div key={'slide-art-'+HERO_SLIDES[heroSlide].id} className={'public-hero-visual public-hero-slide-' + HERO_SLIDES[heroSlide].id} aria-hidden="true" />
+        <div key={'slide-art-'+HERO_SLIDES[heroSlide].id} className={'public-hero-visual public-hero-slide-' + HERO_SLIDES[heroSlide].id} aria-hidden="true">
+          <img className="public-hero-mobile-photo" src="/tracksos-approved-hero-owner-20261119.webp" alt="" loading="eager" decoding="async" />
+        </div>
         <div className="public-hero-carousel" role="group" aria-label="Фотографии TrakSOS">
           <div className="public-hero-dots">
             {HERO_SLIDES.map((slide, index) => <button key={slide.id} type="button"
