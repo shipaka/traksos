@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.app.KeyguardManager
 import android.content.Intent
+import android.content.ClipData
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.graphics.Color
@@ -24,6 +25,7 @@ import android.widget.ImageView
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.provider.MediaStore
 import android.webkit.GeolocationPermissions
 import android.webkit.CookieManager
 import android.webkit.ValueCallback
@@ -35,6 +37,7 @@ import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import androidx.webkit.WebViewAssetLoader
+import androidx.core.content.FileProvider
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.OnBackPressedCallback
@@ -50,6 +53,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import org.json.JSONObject
 import ru.rustore.sdk.pushclient.RuStorePushClient
+import java.io.File
 import java.lang.ref.WeakReference
 
 /** Оболочка: сайт TrakSOS в WebView + мост для пушей и вызовов */
@@ -154,8 +158,13 @@ class MainActivity : AppCompatActivity() {
     private var debugUiReadyLogged = false
     private val startupMinimumVisibleMs = 3_500L
     private var fileUploadCallback: ValueCallback<Array<Uri>>? = null
+    private var pendingCameraUri: Uri? = null
+    private var pendingCameraFile: File? = null
     private val filePicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val data = result.data
+        val captured = result.resultCode == RESULT_OK &&
+            (pendingCameraFile?.length() ?: 0L) > 0L &&
+            data?.clipData == null && data?.data == null
         val files = if (result.resultCode == RESULT_OK) {
             when {
                 data?.clipData != null -> {
@@ -163,9 +172,14 @@ class MainActivity : AppCompatActivity() {
                     (0 until clips.itemCount).map { clips.getItemAt(it).uri }.toTypedArray()
                 }
                 data?.data != null -> arrayOf(data.data!!)
+                captured -> pendingCameraUri?.let { arrayOf(it) }
                 else -> null
             }
         } else null
+        // Cache only the chosen full-resolution capture, not cancelled attempts.
+        if (!captured) pendingCameraFile?.delete()
+        pendingCameraUri = null
+        pendingCameraFile = null
         fileUploadCallback?.onReceiveValue(files)
         fileUploadCallback = null
     }
@@ -310,15 +324,46 @@ class MainActivity : AppCompatActivity() {
                 this@MainActivity.fileUploadCallback?.onReceiveValue(null)
                 this@MainActivity.fileUploadCallback = filePathCallback
                 return try {
-                    val choose = Intent(Intent.ACTION_GET_CONTENT).apply {
-                        type = "*/*"
-                        addCategory(Intent.CATEGORY_OPENABLE)
-                        putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("image/*", "application/pdf"))
-                        putExtra(Intent.EXTRA_ALLOW_MULTIPLE, fileChooserParams?.mode == WebChromeClient.FileChooserParams.MODE_OPEN_MULTIPLE)
+                    val accepts = fileChooserParams?.acceptTypes?.filter { it.isNotBlank() } ?: emptyList()
+                    val imagesOnly = accepts.isNotEmpty() && accepts.all {
+                        it.trim().startsWith("image/", ignoreCase = true)
                     }
-                    filePicker.launch(Intent.createChooser(choose, "Выберите фото или документ"))
+                    val choose = Intent(Intent.ACTION_GET_CONTENT).apply {
+                        type = if (imagesOnly) "image/*" else "*/*"
+                        addCategory(Intent.CATEGORY_OPENABLE)
+                        if (!imagesOnly) putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("image/*", "application/pdf"))
+                        putExtra(Intent.EXTRA_ALLOW_MULTIPLE,
+                            fileChooserParams?.mode == WebChromeClient.FileChooserParams.MODE_OPEN_MULTIPLE)
+                    }
+                    val camera = if (imagesOnly) {
+                        val dir = File(cacheDir, "order-photos").apply { mkdirs() }
+                        val output = File.createTempFile("traksos-", ".jpg", dir)
+                        val uri = FileProvider.getUriForFile(this@MainActivity,
+                            "${packageName}.fileprovider", output)
+                        pendingCameraFile = output
+                        pendingCameraUri = uri
+                        Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
+                            putExtra(MediaStore.EXTRA_OUTPUT, uri)
+                            clipData = ClipData.newUri(contentResolver, "TrakSOS repair photo", uri)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                                Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                        }
+                    } else null
+                    val launch = if (fileChooserParams?.isCaptureEnabled == true && camera != null) {
+                        camera
+                    } else {
+                        Intent.createChooser(choose, if(imagesOnly) "Фото для заявки" else "Выберите фото или документ")
+                            .apply {
+                                if (camera != null)
+                                    putExtra(Intent.EXTRA_INITIAL_INTENTS, arrayOf(camera))
+                            }
+                    }
+                    filePicker.launch(launch)
                     true
                 } catch (_: Exception) {
+                    pendingCameraFile?.delete()
+                    pendingCameraFile = null
+                    pendingCameraUri = null
                     this@MainActivity.fileUploadCallback?.onReceiveValue(null)
                     this@MainActivity.fileUploadCallback = null
                     false
