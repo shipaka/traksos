@@ -153,8 +153,8 @@ expect(androidAcceptance.includes("Object.defineProperty(window,'TrakSOSNative'"
   androidAcceptance.includes('for(const width of [320,390])'),
   'Android visual acceptance exercises the native bridge, hybrid workspace and narrow widths');
 
-expect(androidCss.includes('.and19-workspace') && browserCss.includes('html.traksos-browser'),
-  'Android and mobile browser keep their separate approved presentation layers');
+expect(androidCss.includes('.and19-workspace') && browserCss.includes('html:is(.traksos-browser,.traksos-native)') && shell.includes("classList.toggle('traksos-native', native.isApp)"),
+  'Android guest shares the approved narrow-screen public layout; authenticated Android cabinets remain separate');
 expect(!currentCss.includes('.and19-workspace') && !currentCss.includes('.app.role-performer'),
   'public 19 Nov CSS does not rewrite signed-in Android or performer workspaces');
 

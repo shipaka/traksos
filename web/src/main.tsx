@@ -30,6 +30,7 @@ import { MeCtx, ToastProvider, useRoute, useToast, type Me } from './ui.tsx';
 import { native } from './native.ts';
 // Native bridge is present before the bundled application starts.
 document.documentElement.classList.toggle('traksos-browser', !native.isApp);
+document.documentElement.classList.toggle('traksos-native', native.isApp);
 import { Login } from './screens/login.tsx';
 import { GuestExplore } from './screens/guestExplore.tsx';
 import { DemoPreviewGate } from './screens/demoPreview.tsx';

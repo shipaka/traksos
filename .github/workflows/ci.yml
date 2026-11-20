@@ -78,6 +78,7 @@ jobs:
           until curl -s localhost:8080/api/health >/dev/null; do sleep 1; done
           node e2e/public-shots.mjs e2e/shots
           node e2e/ui-smoke.mjs
+          node e2e/native-guest-layout.mjs
           node e2e/trakbot-android-compact.mjs
           node e2e/public-service-routing.mjs
           node e2e/temporary-demo-entry.mjs
