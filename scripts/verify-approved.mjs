@@ -27,7 +27,6 @@ const LOCKED_ASSETS = {
   // Original artwork from owner's 617.png on 20 Nov; keep mobile 19 Nov locked independently.
   'web/public/owner20-artwork-sprite.webp': '401fcedf30e1603b',
   'web/public/owner20-photo-background-approved.webp': '833c162d1fddcef0',
-  'web/public/owner20-header-logo-approved.webp': 'f323b7509e4f558e',
   // Cross-platform owner-selected branding/illustrations. These checks lock bytes,
   // not layout; unchanged native launcher art remains a separate approved asset.
   'web/public/traksos-brand-logo-approved-618.png': '10e9d529a5503140',
@@ -109,7 +108,6 @@ const allowedPublicVisuals = new Set([
   'trakbot-approved-30.webp','trakbot-approved-hello.webp',
   'owner20-artwork-sprite.webp',
   'owner20-photo-background-approved.webp',
-  'owner20-header-logo-approved.webp',
   'traksos-brand-logo-approved-618.png',
   'traksos-service-scenes-shared.webp',
 ]);
@@ -122,7 +120,11 @@ expect(unexpectedVisuals.length===0,
   (unexpectedVisuals.length ? ': '+unexpectedVisuals.join(', ') : ''));
 await asset('web/public/owner20-artwork-sprite.webp', 20000);
 await asset('web/public/owner20-photo-background-approved.webp', 15000);
-await asset('web/public/owner20-header-logo-approved.webp', 5000);
+// The superseded 617-only raster logo must not be served as an alternative
+// wordmark: the owner requested the exact 618 Android logo on all surfaces.
+try { await stat('web/public/owner20-header-logo-approved.webp'); expect(false,
+  'retired alternate public logo must be absent'); }
+catch { console.log('OK: no retired alternate desktop logo'); }
 await asset('web/public/traksos-brand-logo-approved-618.png', 16000);
 await asset('web/public/traksos-service-scenes-shared.webp', 16000);
 const unifiedVisuals = await read('web/src/approvedVisuals.ts');
