@@ -145,6 +145,7 @@ for (const path of ['web/src/trackVisual.css', 'web/src/trackPolish.css', 'web/s
   expect(!/\\.guest-app\\b|\\.public-[\\w-]+\\b|\\.track-guest-tabbar\\b/.test(retainedRoleStyles),
     'obsolete public layout cannot leak from signed-in cabinet stylesheet: ' + path);
 }
+const shell = await read('web/src/main.tsx');
 const androidCss = await read('web/src/androidApproved20261119.css');
 const browserCss = await read('web/src/mobileBrowser.css');
 const androidAcceptance = await read('e2e/android-approved-workspaces.mjs');
@@ -182,7 +183,6 @@ for (const name of ['autumn.webp','spring.webp','summer.webp','winter.webp']) {
   try { await stat('android/app/src/main/assets/seasonal_splash/'+name); present = true; } catch {}
   expect(!present, 'retired pre-17 Nov Android scene is absent: '+name);
 }
-const shell = await read('web/src/main.tsx');
 expect(landing.includes('/icon-192.png') &&
        shell.includes('/tracksos-approved-logo-owner-20261119.webp'),
        'mobile promo shows 19 Nov icon and guest sidebar uses owner-approved original logo');
