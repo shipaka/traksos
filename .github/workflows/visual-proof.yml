@@ -23,6 +23,8 @@ jobs:
           --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       DATABASE_URL: postgres://postgres@127.0.0.1:5432/traksos
+      ADMIN_PHONES: '+79990000348'
+      MODERATOR_PHONES: '+79990000349'
     steps:
       - name: Исходники точно из интеграционной ревизии
         uses: actions/checkout@v4
@@ -47,6 +49,9 @@ jobs:
           exit 1
       - name: Реальные снимки ПК и телефона на утверждённых размерах
         run: node e2e/public-shots.mjs e2e/shots
+      - name: Реальные ПК-кабинеты всех доступных тестовых ролей
+        continue-on-error: true
+        run: node e2e/owner20-cabinet-evidence.mjs
       - name: Реальная проверка TrakBot и переходов
         run: node e2e/ui-smoke.mjs
       - name: Настоящий Android WebView-гостевой экран, без наложения текста на фуру
@@ -67,7 +72,7 @@ jobs:
         if: always()
         run: |
           echo '### TrakSOS: screenshots — real Chromium, not mockups' >> "$GITHUB_STEP_SUMMARY"
-          echo 'Owner-approved reference: 19 Nov 2026; file SHA256 87dfe69efc473842707cfb85fbe5a8cde2f691732a5be35d0f82def1a69cdda5.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Owner-approved PC reference: 20 Nov 2026; PNG 617.png SHA256 cde831b7a4ae09622ca68a7f699303ef0a7ae679a76d2a306eb982bc43ed5a1a. Android separate 19 Nov.' >> "$GITHUB_STEP_SUMMARY"
           echo "Source HEAD: ${{ github.event.pull_request.head.sha || github.sha }}" >> "$GITHUB_STEP_SUMMARY"
           echo 'Artifact screens-real-browser contains actual HTML screenshots if build and Chromium launched.' >> "$GITHUB_STEP_SUMMARY"
           echo 'Passing this job does not mean visual owner acceptance, Android acceptance, or production deployment.' >> "$GITHUB_STEP_SUMMARY"
