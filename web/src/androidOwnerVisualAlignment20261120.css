@@ -432,3 +432,47 @@ html.traksos-reduced-motion .and19-workspace button{transition:none!important}
  .app.role-client .and19-assigned-performer>a,
  .app.role-performer .and19-assigned-performer>a{min-width:34px;padding:5px}
 }
+
+/* 618.png signed-in header: the same approved logo and a profile glyph instead
+ * of the desktop menu word. Summary stays a fully functional <details> button. */
+.account-menu-mobile-glyph{display:none}
+@media(max-width:899px){
+ .app:not(.guest-app) .account-menu .account-menu-desktop-glyph,
+ .app:not(.guest-app) .account-menu .account-menu-desktop-label{display:none}
+ .app:not(.guest-app) .account-menu .account-menu-mobile-glyph{
+   display:grid;
+   place-items:center;
+   width:27px;
+   height:27px;
+   color:#e6f6fc;
+ }
+ .app:not(.guest-app) .account-menu .account-menu-mobile-glyph svg{
+   width:24px;
+   height:24px;
+ }
+ .app:not(.guest-app) .account-menu>summary{
+   min-width:44px;
+   width:46px;
+   min-height:46px;
+   height:46px;
+   padding:6px;
+   border-radius:50%;
+   background:linear-gradient(135deg,#19384d,#0f2233);
+   border:1px solid #5e7c91;
+ }
+ .app:not(.guest-app) .top .tr-approved-brand-logo{
+   min-width:0;
+   flex:0 1 auto;
+   max-width:min(220px,62vw);
+ }
+ .app:not(.guest-app) .top .tr-approved-brand-logo img{
+   display:block;
+   max-width:100%;
+   width:min(220px,54vw);
+   height:auto;
+   object-fit:contain;
+ }
+}
+@media(max-width:340px){
+ .app:not(.guest-app) .top .tr-approved-brand-logo img{width:min(158px,50vw)}
+}
