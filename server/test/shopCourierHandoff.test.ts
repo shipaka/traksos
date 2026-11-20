@@ -109,7 +109,7 @@ test('fleet owner sees purchase but cannot access driver-only courier handoff co
   },driver.token));
   ok(await t.api('POST',`/api/admin/shop/orders/${order.id}/status`,{status:'confirmed'},admin.token));
   ok(await t.api('POST',`/api/admin/shop/orders/${order.id}/status`,{status:'ready'},admin.token));
-  ok(await t.api('POST',`/api/admin/shop/orders/${order.id}/courier`,{courierId:courier.id},admin.token));
+  const assigned=ok(await t.api('POST',`/api/admin/shop/orders/${order.id}/courier`,{courierId:courier.id},admin.token));
   const fleetOrders=ok(await t.api('GET','/api/shop/orders',undefined,buyer.token));
   const fleetHistory=ok(await t.api('GET','/api/shop/history',undefined,buyer.token));
   assert.equal(fleetOrders.find((o:any)=>o.id===order.id)?.courierStatus,'assigned');
@@ -121,4 +121,35 @@ test('fleet owner sees purchase but cannot access driver-only courier handoff co
   assert.equal(own.find((o:any)=>o.id===order.id)?.canConfirmCourierReceipt,true);
   const receipt=ok(await t.api('GET',`/api/shop/orders/${order.id}/receipt-code`,undefined,driver.token));
   assert.match(receipt.code,/^\d{6}$/);
+  const resetPath=`/api/admin/shop/orders/${order.id}/courier/reset-receipt`;
+  assert.equal((await t.api('POST',resetPath,
+    {reason:'Попытка преждевременного сброса кода'},admin.token)).status,409);
+  for(const status of ['picked_up','en_route','arrived'])
+    ok(await t.api('POST',`/api/courier/jobs/${assigned.id}/stage`,{status},courier.token));
+  const wrong=receipt.code==='123456'?'654321':'123456';
+  for(let attempt=0;attempt<5;attempt++)
+    assert.equal((await t.api('POST',`/api/courier/jobs/${assigned.id}/verify`,
+      {code:wrong},courier.token)).status,400);
+  assert.equal((await t.api('POST',`/api/courier/jobs/${assigned.id}/verify`,
+    {code:receipt.code},courier.token)).status,429,'after 5 guesses even correct code is blocked');
+  assert.equal((await t.api('POST',resetPath,
+    {reason:'Неудачная попытка доступа к коду'},courier.token)).status,403);
+  assert.equal((await t.api('POST',resetPath,{reason:'Коротко'},admin.token)).status,400);
+  const reset=ok(await t.api('POST',resetPath,
+    {reason:'Код заблокирован после пяти ошибок при вручении'},admin.token));
+  assert.equal(reset.codeReissued,true);
+  assert.equal(reset.resetCount,1);
+  assert.equal('code' in reset,false,'only the purchaser may see the reissued code');
+  const newReceipt=ok(await t.api('GET',
+    `/api/shop/orders/${order.id}/receipt-code`,undefined,driver.token));
+  assert.match(newReceipt.code,/^\d{6}$/);
+  assert.equal(newReceipt.verified,false);
+  ok(await t.api('POST',`/api/courier/jobs/${assigned.id}/verify`,
+    {code:newReceipt.code},courier.token));
+  assert.equal((await t.api('POST',resetPath,
+    {reason:'Запрещённый повторный сброс после проверки'},admin.token)).status,409);
+  ok(await t.api('POST',`/api/shop/orders/${order.id}/confirm-received`,{},driver.token));
+  const audit=await t.db.query<{action:string}>(
+    'select action from audit_log where target=$1',[assigned.id]);
+  assert.equal(audit.filter(x=>x.action==='courier.receipt_code_reset').length,1);
 });
