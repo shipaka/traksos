@@ -22,6 +22,19 @@
         android:theme="@style/Theme.TrakSOS"
         android:usesCleartextTraffic="false">
 
+        <!-- A camera thumbnail is not sufficient for repair evidence.
+             Keep full-resolution capture in private app cache and share only
+             a temporary content:// URI with the selected camera application. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
