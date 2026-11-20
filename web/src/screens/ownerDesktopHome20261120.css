@@ -26,7 +26,7 @@
  .owner20-signin{border:1px solid var(--orange);border-radius:9px;padding:10px 21px;font-size:13px;white-space:nowrap}
  .owner20-signin:hover{background:#432517}
  .owner20-hero{height:326px;position:relative;overflow:hidden;background:linear-gradient(90deg,#07121a 0%,#0c1822 35%,transparent 80%),#092231}
- .owner20-photo{position:absolute;inset:0;background-image:linear-gradient(90deg,#05131d 0%,#071923c9 33%,#07192314 66%,#06141ca1),url('/tracksos-approved-hero-owner-20261119.webp');background-position:center center,center 60%;background-size:cover;filter:saturate(.95)}
+ .owner20-photo{position:absolute;inset:0;background-image:linear-gradient(90deg,#05131d 0%,#071923c9 33%,#07192314 66%,#06141ca1),url('../../public/tracksos-approved-hero-owner-20261119.webp');background-position:center center,center 60%;background-size:cover;filter:saturate(.95)}
  .owner20-lead{position:absolute;top:27px;left:2.2%;z-index:1;max-width:57%;text-shadow:0 3px 14px #0008}
  .owner20-lead h1{font-size:clamp(27px,2.6vw,43px);line-height:1.05;letter-spacing:-.6px;color:#fff;font-weight:800;margin:0 0 12px}
  .owner20-lead h1 em{font-style:normal;color:var(--orange)}
