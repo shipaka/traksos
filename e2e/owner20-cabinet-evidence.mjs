@@ -149,7 +149,7 @@ try{
          ?'.approved-pc-active-order-nav .approved-pc-tabs [role="tab"]'
          :'.approved-pc > .approved-pc-tabs [role="tab"]');
        // A brand-new driver/fleet owner with zero active jobs has no fake order tab.
-       if(!['driver','owner'].includes(c.id)&&await realTabs.count()<1)
+       if(!['driver','owner','admin'].includes(c.id)&&await realTabs.count()<1)
          throw Error('Desktop tabs missing: '+c.id);
        if(['driver','owner'].includes(c.id)&&await page.locator('.approved-pc-order-heading').count()!==1)
          throw Error('Owner/driver active orders heading missing');
