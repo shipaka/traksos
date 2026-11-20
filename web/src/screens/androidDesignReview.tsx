@@ -11,14 +11,18 @@ import { NavGlyph } from '../navGlyph.tsx';
 const sampleOrder = {
   id: 'SYNTHETIC-REVIEW',
   number: '78452 · ДЕМО',
+  vehicle_id: 'SYNTHETIC-VEHICLE',
   service: 'repair',
   status: 'en_route',
   description: 'Не набирает давление в тормозной системе',
   address: 'Пример адреса: Санкт-Петербург, КАД, 68 км',
   performer_name: 'Мастер Иван · пример',
+  performer_rating: 4.9,
+  performer_rating_count: 312,
   client_name: 'ООО «ТрансЛогистика» · пример',
   vehicle: { brand: 'Scania', model: 'R520', year: 2019 },
-  money: { total: 10500 },
+  // API and rub() always use kopecks, even in a zero-effect demo.
+  money: { amount: 1000000, clientFee: 50000, total: 1050000 },
 };
 const roles = [
   { key: 'client', title: 'Клиент' },
@@ -70,7 +74,7 @@ export function AndroidDesignReview({ role }: { role?: string }) {
             performer={{ kind: selected === 'tow' ? 'tow' : 'master', line_status: 'online',
               rating: 4.9, verification: 'approved' }}
             active={[sampleOrder]} auctions={[]} online={true} busy={true}
-            setLine={() => {}} balance={{ to_pay: 9500 }} reloadAuctions={() => {}} />
+            setLine={() => {}} balance={{ to_pay: 950000 }} reloadAuctions={() => {}} />
         : <AndroidClientWorkspace
             orders={[sampleOrder]} loading={false} error={null}
             me={{ roles: selected === 'driver' ? ['driver'] : ['client'],
