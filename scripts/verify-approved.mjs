@@ -28,6 +28,10 @@ const LOCKED_ASSETS = {
   'web/public/owner20-artwork-sprite.webp': '401fcedf30e1603b',
   'web/public/owner20-photo-background-approved.webp': '833c162d1fddcef0',
   'web/public/owner20-header-logo-approved.webp': 'f323b7509e4f558e',
+  // Cross-platform owner-selected branding/illustrations. These checks lock bytes,
+  // not layout; unchanged native launcher art remains a separate approved asset.
+  'web/public/traksos-brand-logo-approved-618.png': '10e9d529a5503140',
+  'web/public/traksos-service-scenes-shared.webp': '081ad11beeffb456',
   'android/app/src/main/res/mipmap-mdpi/ic_launcher.png': '327f52a2d6e836e9',
   'android/app/src/main/res/mipmap-hdpi/ic_launcher.png': 'f797b183e93c4bad',
   'android/app/src/main/res/mipmap-xhdpi/ic_launcher.png': '27ea3b5ebbfe86ce',
@@ -106,6 +110,8 @@ const allowedPublicVisuals = new Set([
   'owner20-artwork-sprite.webp',
   'owner20-photo-background-approved.webp',
   'owner20-header-logo-approved.webp',
+  'traksos-brand-logo-approved-618.png',
+  'traksos-service-scenes-shared.webp',
 ]);
 const visualRootEntries = await readdir('web/public',{withFileTypes:true});
 const unexpectedVisuals = visualRootEntries.filter(entry =>
@@ -117,6 +123,28 @@ expect(unexpectedVisuals.length===0,
 await asset('web/public/owner20-artwork-sprite.webp', 20000);
 await asset('web/public/owner20-photo-background-approved.webp', 15000);
 await asset('web/public/owner20-header-logo-approved.webp', 5000);
+await asset('web/public/traksos-brand-logo-approved-618.png', 16000);
+await asset('web/public/traksos-service-scenes-shared.webp', 16000);
+const unifiedVisuals = await read('web/src/approvedVisuals.ts');
+const unifiedClient = await read('web/src/screens/client.tsx');
+const unifiedMobile = await read('web/src/screens/androidWorkspaces.tsx');
+const unifiedShell = await read('web/src/main.tsx');
+const unifiedBot = await read('web/src/trakbotMascot.css');
+expect(unifiedVisuals.includes("logo: '/traksos-brand-logo-approved-618.png'") &&
+  unifiedVisuals.includes("trakbotHello: '/trakbot-approved-hello.webp'") &&
+  unifiedVisuals.includes("trakbotReactions: '/trakbot-approved-30.webp'") &&
+  unifiedVisuals.includes("serviceScenes: '/traksos-service-scenes-shared.webp'") &&
+  unifiedShell.includes('src={APPROVED_VISUALS.logo}') &&
+  unifiedClient.includes('ApprovedServiceIllustration') &&
+  unifiedMobile.includes('ApprovedServiceIllustration') &&
+  unifiedClient.includes('ApprovedEmptyScene') &&
+  unifiedMobile.includes('ApprovedEmptyScene') &&
+  unifiedBot.includes('trakbot-approved-30.webp') &&
+  unifiedBot.includes('trakbot-approved-hello.webp'),
+  'Desktop, mobile browser and Android WebView must use same branded art, approved bot and truthful empty scenes');
+expect(!unifiedShell.includes('<span className="logo">Trak<b>Sos</b></span>') &&
+  !unifiedMobile.includes('src="/tracksos-approved-hero-owner-20261119.webp"'),
+  'no alternate text-only header or independently hard-coded Android truck illustration');
 for (const file of ['web/src/finalCanon.css','web/src/trackPhotos.css']) {
   let exists = false;
   try { await stat(file); exists = true; } catch {}
