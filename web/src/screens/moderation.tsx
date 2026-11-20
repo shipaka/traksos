@@ -7,8 +7,8 @@ import { useLoad, useAction, go, Loading, Back } from '../ui.tsx';
 const KINDS: [string, string][] = [['dispute', 'Споры'], ['appeal', 'Обжалования'], ['review', 'Отзывы и отметки']];
 const PRI: Record<number, [string, string]> = { 1: ['Срочно', 'bad'], 2: ['Обычно', 'warn'], 3: ['Не горит', ''] };
 
-export function ModQueue() {
-  const [kind, setKind] = useState<string>('dispute');
+export function ModQueue({initialKind='dispute'}:{initialKind?:'dispute'|'log'}={}) {
+  const [kind, setKind] = useState<string>(initialKind);
   const log = kind === 'log';
   const q = useLoad(() => get(`/api/mod/cases?${log ? 'status=resolved' : `kind=${kind}`}`), [kind], (e) => e.type === 'mod_case');
   const counts = q.data?.counts ?? {};
