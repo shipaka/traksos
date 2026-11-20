@@ -15,7 +15,7 @@ export function MobileSectionChrome({ title, homeHref }: {
       <strong>{title}</strong>
     </span>
     <a href="#/menu" className="tr-native-section-menu" aria-label="Открыть все разделы">
-      <NavGlyph glyph="☰" /><span>Разделы</span>
+      <NavGlyph glyph="menu" /><span>Разделы</span>
     </a>
   </nav>;
 }
