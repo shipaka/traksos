@@ -1755,7 +1755,7 @@ export function createApp(d: Deps) {
     }
   }
 
-  return { handle, hub, auth, settings, orders, payments, auction, documents, admin, support, unilateral, developerReportDelivery, warranty, warrantyRemediation, warrantyRecourse, profiles, chat, reviews, offers, notifier, privacy, ops, orderSla, router: r };
+  return { handle, hub, auth, settings, orders, orderPhotos, payments, auction, documents, admin, support, unilateral, developerReportDelivery, warranty, warrantyRemediation, warrantyRecourse, profiles, chat, reviews, offers, notifier, privacy, ops, orderSla, router: r };
 }
 
 export type App = ReturnType<typeof createApp>;
