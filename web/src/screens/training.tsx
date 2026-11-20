@@ -5,7 +5,7 @@ import { useMe } from '../ui.tsx';
 import { usePrices } from './client.tsx';
 import './training.css';
 
-type Role = 'owner' | 'driver' | 'master' | 'tow' | 'consultant' | 'service' | 'insurer' | 'inspection' | 'moderator' | 'admin';
+type Role = 'owner' | 'driver' | 'master' | 'tow' | 'consultant' | 'service' | 'insurer' | 'inspection' | 'courier' | 'moderator' | 'admin';
 type Lesson = { title: string; purpose: string; steps: string; path: string; href?: string; caution?: string };
 const lessons: Record<Role, Lesson[]> = {
   owner: [
@@ -54,6 +54,13 @@ const lessons: Record<Role, Lesson[]> = {
     { title: 'Продолжение в экосистеме', purpose: 'СТО может предложить дополнительную диагностику или выезд.', steps: 'Создайте предложение продолжения только с подтверждением клиента, отдельной ценой и новым исполнителем.', path: 'Ремонты', href: '#/base' },
     { title: 'Гарантии и расчёты', purpose: 'При претензии важны описание дефекта и результат.', steps: 'Сохраняйте доказательства работ. Возврат и рекламация — через оформленный спор.', path: 'Финансы', href: '#/base/money' },
   ],
+  courier: [
+    { title: 'Курьерская смена', purpose: 'Вы видите только назначенные вам доставки.', steps: 'Рабочий стол → проверяйте назначение и список посылок. Переключатель доступности влияет на готовность к новым рейсам.', path: 'Курьер', href: '#/courier' },
+    { title: 'Порядок остановок', purpose: 'Статусы всегда отражают факт, а не намерение.', steps: 'Назначен → Забрал → В пути → На месте. Не пропускайте этапы.', path: 'Рейсы', href: '#/courier/jobs' },
+    { title: 'Код вручения', purpose: 'Код получаете лично у получателя; в приложении курьера он никогда не показывается.', steps: 'После прибытия введите шесть цифр из истории покупок клиента. После пяти ошибок код блокируется. Администратор может восстановить его по записанной причине не более трёх раз; новый код видит только покупатель.', path: 'Доставка', href: '#/courier/jobs' },
+    { title: 'Отдельное подтверждение', purpose: 'Верный код ещё не завершает заказ.', steps: 'Покупатель отдельно подтверждает фактическое получение, только после этого статус будет «Вручено».', path: 'Рейсы', href: '#/courier/jobs', caution: 'Курьер не завершает заказ от имени покупателя.' },
+    { title: 'Вопросы и связь', purpose: 'Не раскрывайте личные телефоны получателей.', steps: 'При проблемах с выдачей, кодом или маршрутом напишите в поддержку TrakSOS.', path: 'Связь', href: '#/support' },
+  ],
   insurer: [
     { title: 'Полученные заявки', purpose: 'Страховые запросы отображаются отдельно от ремонтов.', steps: 'Откройте карточку, проверьте документы клиента и параметры автомобиля.', path: 'Страхование', href: '#/insurance' },
     { title: 'Подбор предложений', purpose: 'Клиент сравнивает страховщиков и условия.', steps: 'Добавляйте только реальные предложения с компанией, условиями, стоимостью и сроком действия.', path: 'Страхование', href: '#/insurance' },
@@ -79,6 +86,7 @@ const lessons: Record<Role, Lesson[]> = {
     { title: 'Деньги и тарифы', purpose: 'Изменения ставок должны соответствовать договорам.', steps: 'В настройках проверяйте комиссию, скидки, выплаты и бонусы до публикации.', path: 'Настройки', href: '#/admin/section/settings' },
     { title: 'Оферты и согласия', purpose: 'Каждая принятая редакция хранится с версией и датой.', steps: 'Публикуйте только проверенные тексты и соблюдайте сроки уведомления партнёров.', path: 'Оферты', href: '#/admin/section/offers' },
     { title: 'Тестовый центр', purpose: 'Проверьте кабинеты без настоящих SMS, оплат и заказов.', steps: 'Выберите роль, пройдите учебный сценарий, проверьте навигацию и возврат к админке.', path: 'Песочница', href: '#/admin/test-center' },
+    { title: 'Курьерские доставки', purpose: 'Получение подтверждает именно покупатель.', steps: 'Назначайте курьера из собранного заказа магазина. После пяти неверных попыток либо истечения срока восстанавливайте код только по документированной причине — максимум три раза; ни курьер, ни администратор сам код не видят.', path: 'Админка', href: '#/admin' },
     { title: 'Выпуск без риска', purpose: 'Рабочий сервер не обновляем только по готовности интерфейса.', steps: 'После PR требуются CI, изолированная проверка, резервная копия и отдельное разрешение на prod.', path: 'Заявки', href: '#/admin/section/orders' },
   ],
 };
@@ -86,13 +94,14 @@ const lessons: Record<Role, Lesson[]> = {
 const names: Record<Role, string> = {
   owner: 'Владелец автопарка', driver: 'Водитель', master: 'Выездной мастер',
   tow: 'Эвакуаторщик', consultant: 'Технический консультант', service: 'СТО',
-  insurer: 'Страховой партнёр', inspection: 'Техосмотр', moderator: 'Модератор', admin: 'Администратор',
+  insurer: 'Страховой партнёр', inspection: 'Техосмотр', courier: 'Курьер запчастей', moderator: 'Модератор', admin: 'Администратор',
 };
 export function trainingRole(mode: string, roles: string[] = [], ownerId?: string | null): Role {
   if (mode === 'admin') return 'admin';
   if (mode === 'moderator') return 'moderator';
   if (mode === 'insurer') return 'insurer';
   if (mode === 'inspection') return 'inspection';
+  if (mode === 'courier') return 'courier';
   if (mode === 'service') return 'service';
   if (mode === 'performer') return roles.includes('tow') && !roles.includes('master') ? 'tow' : 'master';
   return ownerId || roles.includes('driver') ? 'driver' : 'owner';
