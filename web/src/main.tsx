@@ -29,6 +29,8 @@ import './approvedBottomNavigation20261120.css';
 import './desktopCabinetsOwner20261120.css';
 // Shared approved logo, cinematic empty illustrations and service art for PC, browser and APK WebView.
 import './approvedCrossPlatformVisuals.css';
+// Functional PC workspaces, mounted only >=1000px; Android layouts remain unchanged.
+import './approvedPcCabinets20261120.css';
 import './androidDesignReview.css';
 // Last Android-only layer: prevent older desktop/mobile rules from hiding approved visuals.
 import './androidOwnerVisualAlignment20261120.css';
@@ -92,6 +94,7 @@ import { AdminTestCenter } from './screens/adminTestCenter.tsx';
 import { ServicePreviewBar,ServicePreviewPage } from './screens/servicePreview.tsx';
 import { SupportList, SupportNew, SupportThread, Notifications, useUnread } from './screens/support.tsx';
 import { InsurerCabinet } from './screens/insurer.tsx';
+import { ApprovedPcDesk, type ApprovedPCRole } from './screens/approvedPcCabinets20261120.tsx';
 import { InsuranceApplication,InsuranceThread } from './screens/insuranceFlow.tsx';
 
 /** Last-resort screen protection: a broken widget must not produce a blank website. */
@@ -254,9 +257,13 @@ function App() {
     : a === 'admin' && isAdmin ? 'admin' : a === 'moderation' && isModerator ? 'moderator'
     : a === 'base' && isService ? 'service' : a === 'insurance' && isInsurer ? 'insurer' : a === 'inspections' && (isInspection||isInsurer) ? 'inspection' : allowedMode;
 
+  const desktopRole: ApprovedPCRole = effMode === 'client' ? (me.owner_id || me.roles.includes('driver') ? 'driver' : 'owner')
+    : effMode === 'performer' ? (me.performer?.kind === 'tow' ? 'tow' : 'master')
+    : effMode === 'service' ? 'service' : effMode === 'insurer' ? 'insurer' : effMode === 'inspection' ? 'inspection'
+    : effMode === 'moderator' ? 'moderator' : 'admin';
   let screen;
   switch (a) {
-    case undefined: screen = effMode === 'insurer' ? <InsurerCabinet /> : effMode === 'inspection' ? <InsurerCabinet inspectionOnly /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isAdmin ? <Admin /> : effMode === 'moderator' && isModerator ? <ModeratorDesk /> : <Home />; break;
+    case undefined: screen = <ApprovedPcDesk role={desktopRole} fallback={effMode === 'insurer' ? <InsurerCabinet /> : effMode === 'inspection' ? <InsurerCabinet inspectionOnly /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isAdmin ? <Admin /> : effMode === 'moderator' && isModerator ? <ModeratorDesk /> : <Home />} />; break;
     case 'login': screen = <Home />; break;
     case 'sos': screen = isCustomer ? <Sos /> : <main><div className="empty">Для вызова SOS нужен клиентский аккаунт</div></main>; break;
     case 'new': screen = !isCustomer ? <main><div className="empty">Для заказа нужен клиентский аккаунт</div></main> : b === 'ecu' ? <main className="stack"><h1>Ремонт электронных блоков ЭБУ</h1><p>Специалист принимает блок в стационарной мастерской. Передайте техническое заключение из ранее оформленной консультации или выездной заявки: это бесплатно, и диагностика согласуется отдельно.</p><a className="btn" href="#/orders">Открыть мои заявки и заключения</a></main> : b === 'consult' ? <Consult /> : <NewOrder service={b ?? 'electric'} />; break;
@@ -280,16 +287,16 @@ function App() {
       }
       screen = !me.performer || b === 'profile' || (b === 'me' && !route[2]) ? <PerformerHub />
         : b === 'me' ? ({ about: <AboutSection />, phone: <PhoneSection />, schedule: <ScheduleSection />, cars: <CarsSection />, tax: <TaxSection />, money: <MoneySection />, level: <LevelSection /> } as Record<string, JSX.Element>)[route[2]] ?? <PerformerHub />
-        : b === 'filter' ? <FilterSection /> : b === 'jobs' ? <Orders as="performer" /> : b === 'chats' ? <AndroidMasterChats /> : b === 'docs' ? <Documents /> : <Work />;
+        : b === 'filter' ? <FilterSection /> : b === 'jobs' ? <Orders as="performer" /> : b === 'chats' ? <AndroidMasterChats /> : b === 'docs' ? <Documents /> : <ApprovedPcDesk role={me.performer?.kind === 'tow' ? 'tow' : 'master'} fallback={<Work />} />;
       break;
     case 'base': screen = !isService
       ? (isPerformer && b === 'me' ? <BaseSetup /> : <Home />)
-      : b === 'car' && route[2] ? <BaseCar id={route[2]} /> : b === 'me' ? <BaseSetup /> : b === 'money' ? <BaseMoney /> : <BaseHome key={b === 'inbox' ? 'inbox' : 'home'} initialTab="req" />; break;
+      : b === 'car' && route[2] ? <BaseCar id={route[2]} /> : b === 'me' ? <BaseSetup /> : b === 'money' ? <BaseMoney /> : b === 'inbox' ? <BaseHome key="inbox" initialTab="req" /> : <ApprovedPcDesk role="service" fallback={<BaseHome />} />; break;
     case 'services': screen = b && route[2] === 'book' ? <BookForm id={b} /> : b ? <CenterPage id={b} /> : <ServicesList />; break;
     case 'booking': screen = <BookingPage id={b} />; break;
     case 'fleet': screen = isCustomer && !me.owner_id && !me.roles.includes('driver') ? <Fleet /> : <main><div className="empty">Парком управляет владелец</div></main>; break;
-    case 'inspections': screen = isInspection || isInsurer ? <InsurerCabinet inspectionOnly /> : <Home />; break;
-    case 'insurance': screen = b === 'request' ? (route[2] === 'new' ? <InsuranceApplication vehicleId={route[3]??''} /> : <InsuranceThread requestId={route[2]??''} />) : isInsurer ? <InsurerCabinet /> : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
+    case 'inspections': screen = isInspection ? <ApprovedPcDesk role="inspection" fallback={<InsurerCabinet inspectionOnly />} /> : <main><div className="empty">Нет прав оператора техосмотра</div></main>; break;
+    case 'insurance': screen = b === 'request' ? (route[2] === 'new' ? <InsuranceApplication vehicleId={route[3]??''} /> : <InsuranceThread requestId={route[2]??''} />) : isInsurer ? <ApprovedPcDesk role="insurer" fallback={<InsurerCabinet />} /> : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
     case 'help': screen = b === 'case' && route[2] ? <ScenarioLesson id={route[2]} /> : <Help />; break;
     case 'economics': screen = <EconomicsPage />; break;
     case 'learn': screen = <PlatformIntro />; break;
@@ -312,8 +319,8 @@ function App() {
     case 'qr': screen = <QrJoin code={b} />; break;
     case 'appeal': screen = <Appeal />; break;
     case 'reviews': screen = <MyReviews />; break;
-    case 'admin': screen = !isStaff ? <Home /> : b === 'case' && route[2] ? <ModCase id={route[2]} /> : !isAdmin ? <ModeratorDesk /> : b === 'test-center' ? (serviceSandbox ? <ServicePreviewPage section={route[3]} sub={route[4]} id={route[5]} /> : <AdminTestCenter roleId={route[2]} fullFidelity />) : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : <Admin key={b === 'section' ? route[2] : 'summary'} initialSection={b === 'section' ? route[2] : undefined} />; break;
-    case 'moderation': screen = isModerator ? <ModeratorDesk /> : <Home />; break;
+    case 'admin': screen = !isStaff ? <Home /> : b === 'case' && route[2] ? <ModCase id={route[2]} /> : !isAdmin ? <ModeratorDesk /> : b === 'test-center' ? (serviceSandbox ? <ServicePreviewPage section={route[3]} sub={route[4]} id={route[5]} /> : <AdminTestCenter roleId={route[2]} fullFidelity />) : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : b === undefined ? <ApprovedPcDesk role="admin" fallback={<Admin />} /> : <Admin key={b === 'section' ? route[2] : 'summary'} initialSection={b === 'section' ? route[2] : undefined} />; break;
+    case 'moderation': screen = isModerator ? <ApprovedPcDesk role="moderator" fallback={<ModeratorDesk />} /> : <Home />; break;
     case 'offer': screen = <OfferPage audience={b ?? 'client'} />; break;
     case 'support': screen = b === 'new' ? <SupportNew /> : b ? <SupportThread id={b} /> : <SupportList />; break;
     case 'notifications': screen = <Notifications />; break;
