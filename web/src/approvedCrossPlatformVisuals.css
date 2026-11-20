@@ -92,3 +92,14 @@
 @media(prefers-reduced-motion:reduce) {
   .tr-approved-empty-action {transition:none;}
 }
+
+
+/* Public brand mark in the approved 618 crop has opaque dark pixels.
+   On our dark public shell, screen compositing makes those pixels visually
+   inherit the actual page surface instead of exposing a black rectangle.
+   Keep the owner's exact logo geometry, lettering and approved asset. */
+.guest-app .top .guest-approved-mark img,
+.guest-app .site-footer .tr-approved-brand-logo img,
+.guest-app.guest-home .owner20-mark img {
+  mix-blend-mode: screen;
+}
