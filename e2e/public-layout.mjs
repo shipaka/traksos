@@ -86,15 +86,21 @@ async function run(width, height, mobile, nativePreview = false) {
         if (!hero || !visual || !paragraph || !actions || !carousel || !copy) return null;
         return {heroWidth:hero.width,heroHeight:hero.height,
           pictureWidth:visual.width,pictureHeight:visual.height,
+          pictureBottom:visual.bottom,copyTop:copy.top,
           paragraphTop:paragraph.top,actionsTop:actions.top,copyBottom:copy.bottom,
           carouselTop:carousel.top,carouselHeight:carousel.height };
       });
       if (nativePreview) {
         check(!await page.evaluate(() => document.documentElement.classList.contains('traksos-browser')),
           suffix + ': Android must not activate browser-only styling');
-        check(heroGeometry && Math.abs(heroGeometry.heroWidth-heroGeometry.pictureWidth)<3 &&
-          Math.abs(heroGeometry.heroHeight-heroGeometry.pictureHeight)<3,
-          suffix + ': native artwork must cover the approved banner: ' + JSON.stringify(heroGeometry));
+        // Approved 618 mobile hero uses the *whole* truck photograph above copy,
+        // not the retired full-height background that covered the entire banner.
+        check(heroGeometry && heroGeometry.pictureWidth <= heroGeometry.heroWidth+2 &&
+          heroGeometry.pictureHeight >= heroGeometry.pictureWidth / 2 - 3 &&
+          heroGeometry.pictureHeight <= heroGeometry.pictureWidth / 2 + 3 &&
+          heroGeometry.pictureHeight < heroGeometry.heroHeight &&
+          heroGeometry.pictureBottom <= heroGeometry.copyTop+2,
+          suffix + ': native artwork must be an uncropped 2:1 photograph ABOVE the copy: ' + JSON.stringify(heroGeometry));
       } else {
         check(await page.evaluate(() => document.documentElement.classList.contains('traksos-browser')),
           suffix + ': regular Chrome must activate mobile browser styling');
