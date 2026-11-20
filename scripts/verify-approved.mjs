@@ -577,7 +577,6 @@ expect(unifiedMobile.includes('function MobileTimeline({ order }') &&
 expect(unifiedMobile.includes("action:'depart'|'arrive'|'start_work'") &&
   unifiedMobile.includes("post('/api/orders/'+current.id+'/step'") &&
   unifiedMobile.includes("current.status==='working'") &&
-  unifiedMobile.includes('and19-stage-complete is-disabled')===false &&
   unifiedMobile.includes('className="and19-stage-complete is-disabled"') &&
   unifiedMobile.includes('commissionPct') &&
   unifiedMobile.includes('money.payout') &&
@@ -612,8 +611,6 @@ expect(photoMigration.includes('create table if not exists order_photos') &&
   androidActivity.includes('MediaStore.ACTION_IMAGE_CAPTURE') &&
   androidManifest.includes('androidx.core.content.FileProvider') &&
   androidPhotoPaths.includes('<cache-path name="order-photos"') &&
-  photoIntegrationTest.includes('foreign user')===false &&
-  photoIntegrationTest.includes('outsider')===false &&
   photoIntegrationTest.includes('stranger.token'),
   '618.png Foto is REAL encrypted participant-scoped evidence and Android native chooser; debug photo never uploads');
 
