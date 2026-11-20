@@ -30,6 +30,8 @@ import './desktopCabinetsOwner20261120.css';
 // Shared approved logo, cinematic empty illustrations and service art for PC, browser and APK WebView.
 import './approvedCrossPlatformVisuals.css';
 import './androidDesignReview.css';
+// Last Android-only layer: prevent older desktop/mobile rules from hiding approved visuals.
+import './androidOwnerVisualAlignment20261120.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
