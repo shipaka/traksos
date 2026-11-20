@@ -1,6 +1,6 @@
 // Nightly and push-time gate: functional and asset integrity tests.
-// Current owner-approved public design is 19 Nov: SOS, Air, STO, ECU, Parts, Insurance.
-// Never restore the deleted 14 Nov design or the interim 18 Nov nine-card layout.
+// Approved PC design: owner's 617.png from 20 Nov; Android and mobile remain separate.
+// Never restore retired 14–19 Nov PC visuals or overwrite the approved mobile variant.
 // Artwork still requires visual inspection; source-level tests cannot prove logo pixels.
 // This only verifies invariants; visual fidelity is additionally checked via screenshots.
 import { readFile, readdir, stat } from 'node:fs/promises';

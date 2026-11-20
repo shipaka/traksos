@@ -90,7 +90,7 @@ jobs:
           node e2e/public-service-routing.mjs
           node e2e/temporary-demo-entry.mjs
           node e2e/header-search.mjs
-          node e2e/public-shots.mjs e2e/shots
+          # public-shots already ran before visual contract checks; avoid duplicate capture.
           SHOTS_DIR=e2e/shots/public node e2e/public-layout.mjs
           node e2e/offline.mjs
           SHOTS_DIR=e2e/shots/premium-unified-client node e2e/premium-unified-client.mjs
