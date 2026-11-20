@@ -2,6 +2,9 @@ name: Реальные скриншоты TrakSOS
 
 on:
   pull_request:
+    # Editing PR metadata can request a fresh visual proof even when automated
+    # commits do not emit a GitHub Actions synchronize event.
+    types: [opened, reopened, synchronize, edited]
   workflow_dispatch:
 
 # A separate visual proof run so failed backend tests do not suppress screenshots.
