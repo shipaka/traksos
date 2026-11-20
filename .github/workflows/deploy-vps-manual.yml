@@ -96,29 +96,51 @@ jobs:
       - name: Deploy only fast-forwarded main with database backup and sandbox
         run: |
           set -euo pipefail
+          release_log="$(mktemp)"
+          trap 'rm -f "$release_log"' EXIT
           ssh -i "$HOME/.ssh/id_vps" -o IdentitiesOnly=yes \
+            -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
             -o StrictHostKeyChecking=yes -o BatchMode=yes -o ConnectTimeout=15 \
-            "$TRAKSOS_VPS_USER@$TRAKSOS_VPS_HOST" bash -s -- "$TARGET_SHA" <<'REMOTE'
+            "$TRAKSOS_VPS_USER@$TRAKSOS_VPS_HOST" bash -s -- "$TARGET_SHA" <<'REMOTE' | tee "$release_log"
           set -Eeuo pipefail
           target="$1"
           cd /root/traksos
+          [[ "$(git rev-parse --show-toplevel)" == "/root/traksos" ]] ||
+            { echo "Unexpected checkout location; abort"; exit 1; }
           [[ "$(git branch --show-current)" == "main" ]] ||
             { echo "VPS is not on main; abort"; exit 1; }
           [[ -z "$(git status --porcelain --untracked-files=no)" ]] ||
             { echo "VPS has tracked local edits; abort"; exit 1; }
+          origin_url="$(git remote get-url origin)"
+          case "$origin_url" in
+            https://github.com/shipaka/traksos|https://github.com/shipaka/traksos.git|git@github.com:shipaka/traksos|git@github.com:shipaka/traksos.git) ;;
+            *) echo "Unexpected VPS Git origin; abort"; exit 1 ;;
+          esac
           git fetch --no-tags origin main
           [[ "$(git rev-parse origin/main)" == "$target" ]] ||
-            { echo "VPS origin/main SHA does not match requested release"; exit 1; }
-          git merge-base --is-ancestor HEAD origin/main ||
-            { echo "VPS has divergent or ahead local commits. Manual reconciliation required; no reset."; exit 1; }
-          git merge --ff-only origin/main
+            { echo "VPS origin/main differs from requested SHA; abort"; exit 1; }
+          if ! git merge-base --is-ancestor HEAD origin/main; then
+            echo "VPS Git history is divergent/ahead. No reset, app restart or DB changes."
+            echo "VPS_HEAD=$(git rev-parse HEAD)"
+            exit 1
+          fi
+          # No reset, no cleaning untracked files, no Git hooks.
+          git -c core.hooksPath=/dev/null merge --ff-only origin/main
           [[ "$(git rev-parse HEAD)" == "$target" ]] ||
             { echo "Checkout mismatch"; exit 1; }
+          # update-site.sh dumps and verifies PostgreSQL before replacing app;
+          # it also tests the new image against an isolated sandbox database.
           TRAKSOS_SANDBOX_DIR=/root/traksos-sandbox/deploy \
             TRAKSOS_SANDBOX_PROJECT=traksos-test \
             bash deploy/update-site.sh
           bash deploy/doctor.sh
+          echo "TRAKSOS_RELEASE_COMPLETE=$target"
           REMOTE
+          # authorized_keys may force a read-only "status" command that exits 0:
+          # this marker proves the real release command finished.
+          grep -Fxq "TRAKSOS_RELEASE_COMPLETE=$TARGET_SHA" "$release_log" || {
+            echo "Release completion marker absent. Not reporting a deployment."; exit 1;
+          }
 
       - name: Verify public HTTPS after release
         run: |
