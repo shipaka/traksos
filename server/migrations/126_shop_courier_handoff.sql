@@ -10,6 +10,7 @@ create table if not exists shop_courier_deliveries (
     check (status in ('assigned','picked_up','en_route','arrived','code_verified','received','cancelled')),
   code_nonce uuid not null default gen_random_uuid(),
   code_attempts integer not null default 0 check (code_attempts between 0 and 5),
+  code_resets integer not null default 0 check (code_resets between 0 and 3),
   code_expires_at timestamptz not null default (now() + interval '24 hours'),
   code_verified_at timestamptz,
   received_at timestamptz,
