@@ -10,6 +10,23 @@ command -v docker >/dev/null || fail "Docker unavailable"
 docker compose version >/dev/null 2>&1 || fail "Docker Compose unavailable"
 [[ "$(git branch --show-current)" == main ]] || fail "Expected the main branch"
 [[ -z "$(git status --porcelain --untracked-files=no)" ]] || fail "Tracked local changes detected. Resolve them before release."
+# Fail BEFORE a database dump or container replacement if a stale main checkout
+# lacks the exact approved owner PC / Android sources and bundled photographs.
+# These are source-presence gates; full screenshot acceptance is still CI-only.
+for artwork in \
+  web/public/owner20-artwork-sprite.webp \
+  web/public/owner20-photo-background-approved.webp \
+  web/public/traksos-brand-logo-approved-618.png; do
+  [[ -s "$artwork" ]] || fail "Approved 617/618 artwork missing: $artwork. Refusing old design deployment."
+done
+grep -Fq "OwnerDesktopHome20261120" web/src/main.tsx ||
+  fail "Approved desktop home is not mounted in this revision."
+grep -Fq "approvedPcCabinets20261120.css" web/src/main.tsx ||
+  fail "Approved role cabinets are not mounted in this revision."
+grep -Fq "androidOwnerVisualAlignment20261120.css" web/src/main.tsx ||
+  fail "Approved Android workspaces are not mounted in this revision."
+[[ -f scripts/verify-android-618.mjs ]] ||
+  fail "Approved Android 618 release guards are absent; refusing deployment."
 # Owner-approved 20 Nov 2026 launcher icon is part of the release contract.
 # Do not start a production rollout if this checkout lacks the exact approved
 # source image or is still carrying the previous Android/RuStore/PWA artwork.
