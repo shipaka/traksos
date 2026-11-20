@@ -636,7 +636,7 @@ expect(pcSource.includes("export type ApprovedPCRole") &&
   pcSource.includes("useDesktopSize()") &&
   pcCss.includes("@media(min-width:1000px)") &&
   pcCss.includes("html.traksos-browser .approved-pc-admin") &&
-  pcSource.includes("role==='admin' && !native.isApp") &&
+  pcSource.includes("role === 'admin' && !native.isApp") &&
   unifiedShell.includes('ApprovedPcDesk') &&
   unifiedShell.includes("approvedPcCabinets20261120.css"),
   'nine real desktop role workspaces remain routed; browser admin responsive, Android separate');
