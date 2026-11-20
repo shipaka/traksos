@@ -60,7 +60,7 @@ const ADMIN_SECTIONS: AdminSection[] = ADMIN_GROUPS.flatMap(group => group.items
 
 export function Admin({ initialSection }: { initialSection?: string }) {
   const [tab, setTab] = useState<AdminSection>(() =>
-    ADMIN_SECTIONS.includes(initialSection as AdminSection) ? initialSection as AdminSection : 'queue');
+    ADMIN_SECTIONS.includes(initialSection as AdminSection) ? initialSection as AdminSection : 'summary');
   const [navOpen, setNavOpen] = useState(false);
   const [filter, setFilter] = useState('');
   const selected = ADMIN_GROUPS.flatMap(group => group.items).find(item => item.id === tab)!;
@@ -80,12 +80,19 @@ export function Admin({ initialSection }: { initialSection?: string }) {
       <section className="admin-command-hero">
         <div className="admin-command-art" aria-hidden="true"><span>◈</span><i/><i/><i/></div>
         <span className="admin-command-eyebrow">TRAKSOS · ОПЕРАЦИОННЫЙ ЦЕНТР</span>
-        <h1>Администратор</h1>
+        <h1>Рабочий стол</h1>
         <p>Заявки, партнёры, страхование, финансы и качество сервиса — в одном рабочем пространстве.</p>
+        <div className="and20-admin-actions" aria-label="Основные действия администратора">
+          {([
+            ['demand','Проблемные заявки'],['verify','Проверка партнёров'],
+            ['support','Обращения'],['registry','Реестр пользователей'],
+          ] as [AdminSection,string][]).map(([id,label])=><button key={id} type="button"
+            className="and20-admin-action" onClick={()=>navigate(id)}>{label}<span aria-hidden="true">›</span>
+          </button>)}
+        </div>
         <div className="admin-command-actions">
-          <button type="button" className="btn" onClick={() => navigate('summary')}>Открыть общую сводку</button>
-          <button type="button" className="btn ghost" onClick={() => navigate('access')}>Добавить номер / передать проблему разработчику</button>
-          <a className="btn ghost" href="#/admin/test-center">Тестирование всех кабинетов (без реальных действий)</a>
+          <button type="button" className="btn" onClick={() => navigate('summary')}>Общая сводка</button>
+          <a className="btn ghost" href="#/admin/test-center">Тестирование кабинетов ролей</a>
         </div>
       </section>
       <div className="admin-shell">
