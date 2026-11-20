@@ -33,18 +33,20 @@ try {
       if(await next.getAttribute('href')!=='#/register')
         throw Error(id+': protected action did not route to registration');
     }
-    // Three lower tiles have real information pages, not blind registration.
+    // Owner-approved 19 Nov has only two supplementary lower cards.
+    // The platform guide is in the hero action, not a retired seventh tile.
     for(const [selector,destination,heading] of [
       ['.public-track-parts','parts','Запчасти'],
       ['.public-track-inspection','inspection','Техосмотр грузового транспорта'],
-      ['.public-track-guide','guide','Как работает TrakSOS'],
+      ['.public-button-outline','guide','Как работает TrakSOS'],
     ]) {
       await page.goto(BASE+'/#/');
-      await page.locator(selector).click();
+      const card=page.locator(selector).filter({hasText: destination==='guide' ? 'Как это работает' : undefined}).first();
+      await card.click();
       await page.waitForURL('**/#/explore/'+destination);
       await page.getByRole('heading',{name:heading,exact:destination!=='parts'}).waitFor();
       if(!await page.locator('.guest-explore-section').count())
-        throw Error(destination+': no informational content behind landing tile');
+        throw Error(destination+': no informational content behind approved route');
     }
     await page.goto(BASE+'/#/');
     await page.locator('.public-track-insurance').click();
