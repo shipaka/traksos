@@ -30,7 +30,7 @@ export function AdminSummary() {
   if (!d) return <Loading error={s.error} />;
   return (
     <div className="stack">
-      <span className="label">Сегодня · СПб и Ленобласть</span>
+      <span className="label">Сегодня · данные платформы</span>
       <div className="grid3">
         <Tile label="Заявок сегодня" value={d.today.orders} />
         <Tile label="На линии" value={d.today.mastersOnline + d.today.towOnline} hint={`эвакуаторов: ${d.today.towOnline}`} />
