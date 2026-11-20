@@ -2,9 +2,14 @@ import '../adminExperience.css';
 import { AdminServices } from './base.tsx';
 import { ModQueue } from './moderation.tsx';
 import { AdminSummary } from './adminSummary.tsx';
+import { AdminCaseCenter } from './adminCaseCenter.tsx';
+import { DispatcherDesk } from './DispatcherDesk.tsx';
+import { EcuAdminStations } from './ecuHandoffs.tsx';
 import { AdminSettings } from './adminSettings.tsx';
 import { AdminDiagnostics } from './adminDiagnostics.tsx';
 import { AdminAccountAccess } from './adminAccountAccess.tsx';
+import { AdminRegistry } from './adminRegistry.tsx';
+import { AdminServiceFinance } from './adminServiceFinance.tsx';
 import { useState } from 'react';
 import { useEffect } from 'react';
 import { SupportQueue } from './support.tsx';
@@ -14,27 +19,32 @@ import { VehicleServicesQueue } from './vehicleServicesAdmin.tsx';
 import { get, post, put, rub, fmtPhone, fmtTime, authedImage } from '../api.ts';
 import { STATUS, SERVICES, LINE } from '../dict.ts';
 import { useLoad, useAction, Loading } from '../ui.tsx';
+import { TRAKBOT_TERMS, type TrakBotOfferAudience } from '../trakbotTerms.ts';
 
-type AdminSection = 'stats' | 'search' | 'support' | 'verify' | 'people' | 'access' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'settings' | 'demand' | 'announcements' | 'vehicleServices' | 'diagnostics';
+type AdminSection = 'ecu' | 'cases' | 'stats' | 'search' | 'support' | 'verify' | 'people' | 'access' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'settings' | 'demand' | 'announcements' | 'vehicleServices' | 'diagnostics' | 'serviceFinance' | 'registry';
 type AdminNavItem = { id: AdminSection; name: string; description: string; symbol: string };
 const ADMIN_GROUPS: { name: string; items: AdminNavItem[] }[] = [
   { name: 'Операционная работа', items: [
     { id: 'queue', name: 'Модерация', description: 'Очередь проверок и обращений', symbol: '01' },
     { id: 'summary', name: 'Сводка', description: 'Общее состояние платформы', symbol: '02' },
-    { id: 'orders', name: 'Заявки', description: 'Работы и статусы исполнения', symbol: '03' },
+    { id: 'cases', name: 'Заявки и мультизаявки', description: 'Номера, история, модерация и расчёты', symbol: '03' },
+    { id: 'orders', name: 'Все заказы', description: 'Отдельные рабочие заказы исполнителей', symbol: '03+' },
     { id: 'dispatch', name: 'Распределение', description: 'Назначения и управление вызовами', symbol: '04' },
     { id: 'demand', name: 'Проблемные заявки', description: 'Найти и устранить задержки', symbol: '05' },
     { id: 'support', name: 'Обращения', description: 'Поддержка пользователей и партнёров', symbol: '06' },
   ] },
   { name: 'Люди и партнёры', items: [
+    { id: 'registry', name: 'Единая база', description: 'Компании, водители, мастера, эвакуаторы, СТО — поиск, регионы, CSV', symbol: 'CRM' },
     { id: 'search', name: 'Поиск', description: 'Люди, заявки и история', symbol: '07' },
     { id: 'people', name: 'Все люди', description: 'Пользователи и их права', symbol: '08' },
     { id: 'access', name: 'Регистрация и доступы', description: 'Создать учётную запись, выбрать роли и передать проблему разработчику', symbol: '08+' },
     { id: 'verify', name: 'Проверка', description: 'Документы и допуск исполнителей', symbol: '09' },
     { id: 'bases', name: 'Рембазы', description: 'Партнёрские станции ремонта', symbol: '10' },
+    { id: 'ecu', name: 'Стационарные ЭБУ', description: 'Проверка адресов ремонтников электронных блоков', symbol: '10+' },
     { id: 'vehicleServices', name: 'Страхование и ТО', description: 'Заявки и контроль партнёров', symbol: '11' },
   ] },
   { name: 'Финансы и документы', items: [
+    { id: 'serviceFinance', name: 'Счета и выплаты СТО', description: 'Поступления, возвраты и две независимые комиссии', symbol: 'СТО' },
     { id: 'payments', name: 'Деньги', description: 'Комиссии, отчёты и выплаты', symbol: '12' },
     { id: 'offers', name: 'Оферты', description: 'Документы для пользователей', symbol: '13' },
     { id: 'announcements', name: 'Объявления и комиссии', description: 'Оповещения и условия работы', symbol: '14' },
@@ -50,7 +60,7 @@ const ADMIN_SECTIONS: AdminSection[] = ADMIN_GROUPS.flatMap(group => group.items
 
 export function Admin({ initialSection }: { initialSection?: string }) {
   const [tab, setTab] = useState<AdminSection>(() =>
-    ADMIN_SECTIONS.includes(initialSection as AdminSection) ? initialSection as AdminSection : 'queue');
+    ADMIN_SECTIONS.includes(initialSection as AdminSection) ? initialSection as AdminSection : 'summary');
   const [navOpen, setNavOpen] = useState(false);
   const [filter, setFilter] = useState('');
   const selected = ADMIN_GROUPS.flatMap(group => group.items).find(item => item.id === tab)!;
@@ -70,12 +80,19 @@ export function Admin({ initialSection }: { initialSection?: string }) {
       <section className="admin-command-hero">
         <div className="admin-command-art" aria-hidden="true"><span>◈</span><i/><i/><i/></div>
         <span className="admin-command-eyebrow">TRAKSOS · ОПЕРАЦИОННЫЙ ЦЕНТР</span>
-        <h1>Администратор</h1>
+        <h1>Рабочий стол</h1>
         <p>Заявки, партнёры, страхование, финансы и качество сервиса — в одном рабочем пространстве.</p>
+        <div className="and20-admin-actions" aria-label="Основные действия администратора">
+          {([
+            ['demand','Проблемные заявки'],['verify','Проверка партнёров'],
+            ['support','Обращения'],['registry','Реестр пользователей'],
+          ] as [AdminSection,string][]).map(([id,label])=><button key={id} type="button"
+            className="and20-admin-action" onClick={()=>navigate(id)}>{label}<span aria-hidden="true">›</span>
+          </button>)}
+        </div>
         <div className="admin-command-actions">
-          <button type="button" className="btn" onClick={() => navigate('summary')}>Открыть общую сводку</button>
-          <button type="button" className="btn ghost" onClick={() => navigate('access')}>Добавить номер / передать проблему разработчику</button>
-          <a className="btn ghost" href="#/admin/test-center">Тестирование всех кабинетов (без реальных действий)</a>
+          <button type="button" className="btn" onClick={() => navigate('summary')}>Общая сводка</button>
+          <a className="btn ghost" href="#/admin/test-center">Тестирование кабинетов ролей</a>
         </div>
       </section>
       <div className="admin-shell">
@@ -119,10 +136,12 @@ export function Admin({ initialSection }: { initialSection?: string }) {
             {tab === 'stats' && <Stats />}
             {tab === 'demand' && <OpsDashboard />}
             {tab === 'announcements' && <WorkerCommunications />}
+            {tab === 'registry' && <AdminRegistry />}
             {tab === 'search' && <Search />}
             {tab === 'support' && <SupportQueue />}
             {tab === 'verify' && <Verify />}
             {tab === 'bases' && <AdminServices />}
+            {tab === 'ecu' && <EcuAdminStations />}
             {tab === 'queue' && <ModQueue />}
             {tab === 'summary' && <AdminSummary />}
             {tab === 'vehicleServices' && <>
@@ -133,16 +152,24 @@ export function Admin({ initialSection }: { initialSection?: string }) {
             {tab === 'offers' && <Offers />}
             {tab === 'people' && <People />}
             {tab === 'access' && <AdminAccountAccess />}
+            {tab === 'cases' && <AdminCaseCenter />}
             {tab === 'orders' && <AllOrders />}
-            {tab === 'dispatch' && <Dispatch />}
+            {tab === 'dispatch' && <div className="stack">
+              <DispatcherDesk />
+              <details className="card">
+                <summary>Настройки распределения и торгов</summary>
+                <Dispatch />
+              </details>
+            </div>}
             {tab === 'payments' && <Payments />}
+            {tab === 'serviceFinance' && <AdminServiceFinance />}
             {tab === 'flagged' && <Flagged />}
             {tab === 'diagnostics' && <AdminDiagnostics />}
           </div>
           <div className="admin-mobile-quick">
             <div className="admin-mobile-quick-heading"><b>Быстрые переходы</b><small>Частые задачи администратора</small></div>
             <div className="admin-mobile-quick-grid">
-              {(['access','verify','dispatch','payments','search','offers','support','stats'] as AdminSection[]).map(id => {
+              {(['registry','access','verify','dispatch','payments','search','support','stats'] as AdminSection[]).map(id => {
                 const item = ADMIN_GROUPS.flatMap(group => group.items).find(entry => entry.id === id)!;
                 return <button type="button" key={id} aria-label={item.name}
                   className="admin-mobile-quick-item" onClick={() => navigate(id)}>
@@ -209,31 +236,27 @@ function Payments() {
   const [period, setPeriod] = useState(() => new Date().toISOString().slice(0, 7));
   const [report, setReport] = useState<any[] | null>(null);
   if (!settings.data) return <Loading error={settings.error} />;
-  const p = settings.data.payments;
   const fees = settings.data.fees;
-  const toggle = (key: string, value: boolean) => run(() => put('/api/admin/settings/payments', { [key]: value }), 'Сохранено').then((r) => r && settings.reload());
 
   return (
     <div className="stack">
       <div className="card">
         <b>Способы оплаты</b>
-        <span className="note">Агентская схема: TrakSOS принимает деньги за исполнителя и перечисляет ему за вычетом вознаграждения. Безнал и счета включайте после проверки оферты юристом и бухгалтером.</span>
-        {([['cash', 'Наличные мастеру на месте'], ['online', 'СБП и карта в приложении'], ['invoice', 'Счёт для компаний']] as const).map(([k, n]) => (
-          <button key={k} className="opt" aria-pressed={!!p[k]} disabled={busy} onClick={() => toggle(k, !p[k])}>
-            <div className="between"><b>{n}</b><span className={`pill ${p[k] ? 'good' : ''}`}>{p[k] ? 'Включено' : 'Выключено'}</span></div>
-          </button>
-        ))}
+        <div className="banner warn">Реальные банковские платежи ещё не подключены. Тестовые списания и счета не разрешается выдавать за полученные деньги.</div>
+        <div className="sum"><span>СБП / карта</span><b>Не подключено</b></div>
+        <div className="sum"><span>Счета компаний</span><b>Подготовка документов через Точку, без приёма платежей</b></div>
+        <div className="note">Наличные для новых заказов исключены. Подключение оплаты требует отдельного банковского и юридического выпуска, а не переключателя администратора.</div>
       </div>
       <div className="card">
         <b>Комиссии</b>
         <div className="sum"><span>Сбор с клиента</span><span>{fees.clientFeePct}%</span></div>
         <div className="sum"><span>Вознаграждение с исполнителя</span><span>{fees.performerCommissionPct}%</span></div>
-        <div className="sum"><span>Долг по наличным — пауза с</span><span>{rub(fees.cashDebtLimit)}</span></div>
+        <div className="note">Исторические задолженности доступны в учёте, но новые наличные заказы не создаются.</div>
         <FeesEditor fees={fees} onDone={settings.reload} />
       </div>
       <div className="card">
         <b>Выплаты исполнителям</b>
-        <button className="btn" disabled={busy} onClick={() => run(() => post('/api/admin/payouts/run'), 'Выплаты отправлены')}>Выплатить всё, что ждёт</button>
+        <div className="banner warn">Автоматические банковские выплаты ещё не подключены. Отправка заблокирована: тестовые суммы нельзя отмечать реальными переводами.</div>
       </div>
       <div className="card">
         <b>Отчёт агента</b>
@@ -444,6 +467,7 @@ function FeesEditor({ fees, onDone }: { fees: any; onDone: () => void }) {
         <label className="stack" style={{ gap: 6 }}><span className="label">Пауза при долге, ₽</span><input className="field" inputMode="numeric" value={f.debt} onChange={(e) => setF({ ...f, debt: e.target.value.replace(/\D/g, '') })} /></label>
         <label className="stack" style={{ gap: 6 }}><span className="label">Без комиссии до</span><input className="field" type="date" value={f.free} onChange={(e) => setF({ ...f, free: e.target.value })} /></label>
       </div>
+      <span className="note">Изменение процентов немедленно меняет расчёты новых заявок и справку. До такого изменения необходимо подготовить юридически согласованную новую редакцию оферты; её публикация и повторное согласие пользователей — отдельные обязательные шаги. Для исполнителей действует срок уведомления, поэтому без согласованного перехода тарифы менять нельзя.</span>
       <span className="note">Новые проценты — для новых заявок. «Без комиссии до» — первый месяц для мастеров, включительно.</span>
       <button className="btn small" disabled={busy || !valid} onClick={() => run(() => put('/api/admin/settings/fees', {
         clientFeePct: num(f.client), performerCommissionPct: num(f.perf), cashDebtLimit: num(f.debt) * 100, freeUntil: f.free || null,
@@ -454,10 +478,11 @@ function FeesEditor({ fees, onDone }: { fees: any; onDone: () => void }) {
 
 // Оферты -----------------------------------------------------------------------
 
-const AUD: Record<string, string> = { client: 'Оферта для клиентов', performer: 'Агентский договор для исполнителей и рембаз', privacy: 'Согласие на обработку ПДн' };
+const AUD: Record<string, string> = { client: 'Оферта для клиентов', performer: 'Агентский договор для исполнителей и рембаз', insurer:'Договор страхового партнёра', inspection:'Договор оператора ТО', privacy: 'Согласие на обработку ПДн' };
 
 function Offers() {
   const list = useLoad(() => get('/api/admin/offers'), []);
+  const economicsAudit = useLoad(() => get('/api/admin/offers/economics-audit'), []);
   const { busy, run } = useAction();
   const [f, setF] = useState({ audience: 'client', version: '', summary: '', body: '', effectiveAt: '' });
   const [loaded, setLoaded] = useState(false);
@@ -469,6 +494,17 @@ function Offers() {
   const minPerf = new Date(Date.now() + 15 * 86_400_000).toISOString().slice(0, 10);
   return (
     <div className="stack">
+      <div className="card stack" aria-label="Сверка экономики с офертами">
+        <b>Контроль: тарифы и действующие редакции</b>
+        <p className="note">Цифры справки обновляются из настроек автоматически. Юридически принятые редакции неизменны: новые ставки, бонусы и рефералы необходимо утвердить новой версией оферты. Финансовый раздел приложения к ней при публикации формируется из действующих настроек.</p>
+        {(economicsAudit.data as any[]|undefined)?.map((record:any)=><div className="between" style={{gap:10,flexWrap:'wrap'}} key={record.audience}>
+          <span>{AUD[record.audience] ?? record.audience} · {record.version??'не опубликована'}</span>
+          <strong style={{color:record.requiresReview?'var(--warn, #bc6020)':'var(--accent, #2f84df)'}}>
+            {record.requiresReview?'Нужна новая редакция':'Расчёты совпадают'}
+          </strong>
+        </div>)}
+        {economicsAudit.error && <span className="note">Не удалось проверить соответствие экономических условий опубликованным редакциям.</span>}
+      </div>
       <div className="card">
         <b>Новая редакция</b>
         <span className="note">После публикации всем, кого касается, придёт уведомление, а при входе — окно «Условия изменились» с галочкой. Пока не примут, клиент не создаст заявку, исполнитель не выйдет на линию. Для исполнителей — не раньше чем через 15 дней (закон о платформах).</span>
@@ -479,16 +515,26 @@ function Offers() {
           <>
             <div className="grid2">
               <input className="field" placeholder="Номер редакции" value={f.version} onChange={(e) => setF({ ...f, version: e.target.value })} />
-              <input className="field" type="date" min={f.audience === 'performer' ? minPerf : undefined} value={f.effectiveAt} onChange={(e) => setF({ ...f, effectiveAt: e.target.value })} />
+              <input className="field" type="date" min={['performer','insurer','inspection'].includes(f.audience) ? minPerf : undefined} value={f.effectiveAt} onChange={(e) => setF({ ...f, effectiveAt: e.target.value })} />
             </div>
-            <span className="note">{f.effectiveAt ? '' : f.audience === 'performer' ? `Дата не выбрана — вступит ${new Date(minPerf).toLocaleDateString('ru-RU')}` : 'Дата не выбрана — вступит сразу'}</span>
+            <span className="note">{f.effectiveAt ? '' : ['performer','insurer','inspection'].includes(f.audience) ? `Дата не выбрана — вступит ${new Date(minPerf).toLocaleDateString('ru-RU')}` : 'Дата не выбрана — вступит сразу'}</span>
             <input className="field" placeholder="Что изменилось — одной строкой, люди увидят первым" value={f.summary} onChange={(e) => setF({ ...f, summary: e.target.value })} />
+            <div className="card flat" style={{ gap: 8 }}>
+              <b>Дополнения TrakBot — черновик, нужен юридический просмотр</b>
+              <span className="note">Три отдельных раздела для клиента, исполнителя и персональных данных. Уже принятые редакции не редактируются: создаётся новая версия с датой вступления. Для исполнителей сохраняется уведомление минимум за 15 дней.</span>
+              <button type="button" className="btn ghost small" onClick={() => {
+                const section = TRAKBOT_TERMS[f.audience as TrakBotOfferAudience];
+                if (!section || f.body.includes('## TrakBot')) return;
+                setF({ ...f, body: f.body.trimEnd() + '\\n\\n' + section.trim() + '\\n',
+                  summary: f.summary || 'Добавлены правила справочного ИИ TrakBot и дистанционных консультаций' });
+              }}>Добавить проект раздела TrakBot в эту редакцию</button>
+            </div>
             <textarea className="field" style={{ minHeight: 260, fontFamily: 'ui-monospace, monospace', fontSize: 13 }} value={f.body} onChange={(e) => setF({ ...f, body: e.target.value })}
               placeholder={'# Заголовок\n\nТекст. **Жирный** выделяется звёздочками.\n\n1. Пункт\n2. Пункт'} />
             <button className="btn" disabled={busy || !f.version || f.body.length < 50} onClick={() => run(() => post('/api/admin/offers', {
               audience: f.audience, version: f.version, summary: f.summary || undefined, body: f.body,
               effectiveAt: f.effectiveAt ? new Date(f.effectiveAt + 'T00:00:00+03:00').toISOString() : undefined,
-            }), 'Опубликовано — всем придёт уведомление').then((r) => { if (r) { setLoaded(false); list.reload(); } })}>Опубликовать</button>
+            }), 'Опубликовано — всем придёт уведомление').then((r) => { if (r) { setLoaded(false); list.reload(); economicsAudit.reload(); } })}>Опубликовать</button>
           </>
         )}
       </div>

@@ -21,23 +21,16 @@ async function checkCabinetMenu(page, expectedLinks, { shopTab = true } = {}) {
     if (!href || !href.startsWith('#/')) throw new Error('Invalid cabinet route for ' + label);
   }
   await summary.click();
-  if (!shopTab) return; // Admin, insurer, inspection and moderator use role-specific navigation.
-  const shop = page.locator('.tabbar').locator('a[href="#/shop"]');
-  try {
-    await shop.waitFor({ state: 'visible', timeout: 10000 });
-  } catch {
-    throw new Error('Shop tab must be visible for every account: ' + JSON.stringify({
-      url: page.url(),
-      tabbar: await page.locator('.tabbar').count(),
-      links: await page.locator('.tabbar a').allTextContents(),
-      menu: await page.locator('.account-menu nav a').allTextContents(),
-    }));
-  }
+  if (!shopTab) return; // Only client and masters have the parts catalog entry.
+  const shop = page.locator('.account-menu nav a[href="#/shop"]');
+  if(await shop.count() !== 1) throw Error('Parts catalogue must remain accessible in the account menu');
+  if(await page.locator('.tabbar a[href="#/shop"]').count())
+    throw Error('Android bottom tabs must not be overloaded by the closed parts catalog');
 }
 async function assertDashboardTheme(page, role) {
   const result = await page.evaluate(() => {
     const app = document.querySelector('.app');
-    const card = document.querySelector('.card') ?? document.querySelector('.client-dashboard .desktop-hero');
+    const card = document.querySelector('.and19-panel') ?? document.querySelector('.and19-cover') ?? document.querySelector('.card') ?? document.querySelector('.client-dashboard .desktop-hero');
     if (!app || !card) return null;
     const css = getComputedStyle(app);
     return {
@@ -48,7 +41,7 @@ async function assertDashboardTheme(page, role) {
       offenders: [...document.querySelectorAll('*')].filter(e => e.getBoundingClientRect().right > innerWidth + 2).slice(0, 6).map(e => [e.tagName, e.className, Math.round(e.getBoundingClientRect().right)]),
     };
   });
-  if (!result || result.theme !== '#f51a78' || !result.gradient.includes('gradient') || result.overflow)
+  if (!result || result.theme.toLowerCase() !== '#ff7627' || !result.gradient.includes('gradient') || result.overflow)
     throw new Error('Dashboard theme regression (' + role + '): ' + JSON.stringify(result));
 }
 
@@ -168,13 +161,24 @@ await shot(a, '01c-admin-verify');
 await a.getByRole('button', { name: 'Одобрить' }).click();
 await a.getByText('Очередь пуста').waitFor();
 await m.goto(BASE + '/#/work');
-const lineStatus = m.getByRole('button', { name: /Статус ·/ });
-await lineStatus.waitFor({ timeout: 10000 });
-await lineStatus.click();
-await m.getByRole('button', { name: 'Свободен', exact: false }).click();
+const availabilitySwitch = m.getByRole('switch', { name: 'Принимать новые заявки' });
+await availabilitySwitch.waitFor({ timeout: 10000 });
+if (await availabilitySwitch.getAttribute('aria-checked') !== 'true') await availabilitySwitch.click();
+await m.getByRole('searchbox', { name: /Поиск по своим заявкам/ }).waitFor();
 await m.getByText(/Геолокация включена/).waitFor();
 await assertDashboardTheme(m, 'master');
-await checkCabinetMenu(m, ['Профиль исполнителя', 'Финансы и выплаты', 'Проверка и документы', 'История заявок', 'Оферта']);
+await checkCabinetMenu(m, ['Профиль исполнителя', 'Финансы и выплаты', 'Проверка и документы', 'История заявок', 'Оферта'], { shopTab: false });
+// Mobile search is role-scoped and offers honest empty results before any jobs.
+// It must not route to the global user/partner registry.
+const masterSearch=m.getByRole('searchbox',{name:/Поиск по своим заявкам/});
+await masterSearch.waitFor();
+await masterSearch.fill('НЕСУЩЕСТВУЮЩАЯ-ЗАЯВКА-00991');
+await m.getByText('Ничего не найдено. Проверьте номер или переключите фильтр.').waitFor();
+await m.getByRole('button',{name:'Входящие',exact:true}).click();
+await m.getByRole('region',{name:'Найденные заявки'}).waitFor();
+await masterSearch.fill('');
+await m.getByRole('button',{name:'Мои',exact:true}).click();
+await m.getByRole('button',{name:'Свернуть поиск'}).click();
 await shot(m, '02-master-online');
 
 // Клиент
@@ -183,12 +187,12 @@ await login(k, '+79991112233', 'client');
 // Регистрация после выбора выездной помощи открывает нужный раздел SOS.
 await k.waitForURL(/#\/sos/);
 await k.goto(BASE + '/#/');
-await k.locator('.client-dashboard .desktop-quick-card').first().waitFor();
+await k.locator('.and19-client .and19-services > a').first().waitFor();
 await assertDashboardTheme(k, 'client');
 await checkCabinetMenu(k, ['История заявок', 'Мой гараж', 'Мой автопарк', 'Оферта', 'Профиль и настройки']);
 await shot(k, '03-client-home');
 // Home and SOS share the approved direction-first flow.
-await k.locator('.client-dashboard .desktop-quick-card').first().click();
+await k.locator('.and19-client .and19-services > a').first().click();
 await k.getByRole('button', { name: /Выездной мастер/ }).click();
 await k.getByRole('link', { name: /Электрик/ }).first().click();
 await k.getByRole('button', { name: /Вызвать мастера/ }).click(); // рано: подсветит, чего не хватает
@@ -217,7 +221,7 @@ const callStyle = await m.locator('[role="alertdialog"]').evaluate((el) => ({
   bg: getComputedStyle(el).backgroundImage,
   overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 2,
 }));
-if (callStyle.accent !== '#f51a78' || !callStyle.bg.includes('radial-gradient') || callStyle.overflow)
+if (callStyle.accent !== '#f77c24' || !callStyle.bg.includes('radial-gradient') || callStyle.overflow)
   throw new Error('Incoming SOS visual regression: ' + JSON.stringify(callStyle));
 await shot(m, '06-master-incoming-call');
 await m.getByRole('alertdialog').getByRole('button', { name: /Беру за/ }).click();
@@ -231,16 +235,26 @@ await k.getByRole('button', { name: /Выбрать за/ }).click();
 await m.waitForURL(/order\//, { timeout: 10000 });
 await k.getByText('Иван').first().waitFor({ timeout: 10000 });
 await shot(k, '07-client-accepted');
+// Tap the actual truck photo, not a dummy image: it opens this order's
+// server-authorized vehicle history, without another customer's prices.
+await m.locator('.trak-vehicle-photo-link').first().click();
+await m.waitForURL(/\/order\/[^/]+\/vehicle$/, {timeout: 10000});
+await m.getByRole('heading', {name:'История автомобиля'}).waitFor();
+await m.getByText('История обслуживания · без сумм').waitFor();
+await m.getByRole('link',{name:'Вернуться к заявке'}).click();
+await m.getByRole('tab',{name:'Работа'}).waitFor();
 
 // Чат
 // Чат свёрнут, пока не нажали
 await k.getByRole('button', { name: /Чат по заявке/ }).click();
 await k.locator('.compose input').fill('Позвоните мне 8 921 111-22-33');
 await k.locator('.compose button').click();
+await m.getByRole('tab', { name: 'Чат' }).click();
 await m.getByRole('button', { name: /Чат по заявке/ }).click();
 await m.getByText('[номер скрыт]').first().waitFor({ timeout: 10000 });
 
-// Статусы
+// Статусы: возврат на вкладку работы после переписки.
+await m.getByRole('tab', { name: 'Работа' }).click();
 await m.locator('button.btn', { hasText: 'Выехал' }).click();
 await m.locator('button.btn:not([disabled])', { hasText: 'Я на месте' }).waitFor();
 await m.locator('button.btn', { hasText: 'Я на месте' }).click();
@@ -281,7 +295,7 @@ await shot(a, '13-admin-payments');
 
 // Переходы между кабинетами: из админки в клиента и обратно, «Назад» ведёт в свой список
 await clickCabinetLink(a, 'Кабинет клиента');
-await a.locator('.client-dashboard .desktop-quick-card').first().waitFor();
+await a.locator('.and19-client .and19-services > a').first().waitFor();
 await clickCabinetLink(a, 'Профиль и настройки');
 await a.getByRole('button', { name: 'Кабинет администратора' }).click();
 await a.getByText('Администратор').first().waitFor();
@@ -346,8 +360,8 @@ await a.getByText('Начислено').first().waitFor();
 await shot(a, '15-admin-performer');
 
 // Админ: новая редакция оферты → клиенту окно с галочкой → принял
-await a.goto(BASE + '/#/admin');
-await a.getByRole('button', { name: 'Оферты', exact: true }).click();
+await a.goto(BASE + '/#/admin/section/offers');
+await a.getByRole('heading', { name: 'Оферты', exact: true }).waitFor();
 await a.getByRole('button', { name: 'Оферта для клиентов' }).click();
 await a.locator('textarea').fill('# Оферта для клиентов\n\nТестовая редакция для проверки окна согласия. Здесь будет текст от юриста.\n\n1. Пункт первый');
 await a.locator('input[placeholder^="Что изменилось"]').fill('Новая шкала отмены');
@@ -375,8 +389,8 @@ await k.getByRole('button', { name: 'Не согласен с суммой' }).c
 await k.locator('textarea').fill('Хочу уточнить итоговую сумму');
 await k.getByRole('button', { name: 'Отправить' }).click();
 await k.waitForURL(/#\/support\//);
-await a.goto(BASE + '/#/admin');
-await a.getByRole('button', { name: 'Обращения', exact: true }).click();
+await a.goto(BASE + '/#/admin/section/support');
+await a.getByRole('heading', { name: 'Обращения', exact: true }).waitFor();
 await a.getByText('Ждёт ответа').click();
 await a.locator('.compose input').fill('Здравствуйте! Сейчас проверим');
 await a.locator('.compose button').click();
@@ -384,10 +398,17 @@ await k.getByText('Сейчас проверим').waitFor({ timeout: 10000 });
 await shot(k, '17-client-support');
 await a.getByRole('button', { name: 'Закрыть обращение' }).click();
 await k.getByText(/Поддержка закрыла обращение/).waitFor({ timeout: 10000 });
-await a.goto(BASE + '/#/admin');
-await a.getByRole('button', { name: 'Статистика', exact: true }).click();
+await a.goto(BASE + '/#/admin/section/stats');
+await a.getByRole('heading', { name: 'Статистика', exact: true }).waitFor();
 await a.getByText('Заявок в день').waitFor();
 await shot(a, '18-admin-stats');
+// CRM smoke: admin can open unified participant database, filter and see actual cards.
+await a.goto(BASE + '/#/admin/section/registry');
+await a.getByRole('heading', { name: 'Единая база клиентов и партнёров' }).waitFor();
+await a.locator('input[placeholder^="Имя, компания, телефон"]').fill('79991112233');
+await a.getByRole('button', { name: 'Найти участников' }).click();
+await a.getByText(/Найдено участников:/).waitFor();
+await shot(a, '18b-admin-registry');
 await k.goto(BASE + '/#/notifications');
 await k.getByText('Поддержка ответила', { exact: false }).first().waitFor();
 
@@ -395,7 +416,7 @@ await k.getByText('Поддержка ответила', { exact: false }).first
 const sto = await mk();
 await login(sto, '+79993334455', 'СТО');
 await sto.waitForURL(/#\/base/);
-await checkCabinetMenu(sto, ['Заявки и история ремонтов', 'Карточка СТО', 'Финансы', 'Оферта']);
+await checkCabinetMenu(sto, ['Заявки и история ремонтов', 'Карточка СТО', 'Финансы', 'Оферта'], {shopTab:false});
 await shot(sto, '19-service-cabinet');
 await clickCabinetLink(sto, 'Карточка СТО');
 await sto.waitForURL(/#\/base\/me/);
@@ -407,11 +428,11 @@ const both = await mk();
 await login(both, '+79993334456', 'hybrid');
 await both.waitForURL(new RegExp('work'));
 await both.goto(BASE + '/#/work');
-await checkCabinetMenu(both, ['Моя СТО — стационарный ремонт', 'Профиль исполнителя']);
+await checkCabinetMenu(both, ['Моя СТО — стационарный ремонт', 'Профиль исполнителя'], { shopTab: false });
 await shot(both, '21-hybrid-master');
 await clickCabinetLink(both, 'Моя СТО — стационарный ремонт');
 await both.waitForURL(/#\/base$/);
-await checkCabinetMenu(both, ['Выездной мастер — заявки', 'Карточка СТО']);
+await checkCabinetMenu(both, ['Выездной мастер — заявки', 'Карточка СТО'], {shopTab:false});
 await shot(both, '22-hybrid-service');
 await clickCabinetLink(both, 'Выездной мастер — заявки');
 await both.waitForURL(/#\/work$/);

@@ -7,7 +7,6 @@ import { createSms } from './providers/sms.ts';
 import { sendInsuranceReminders } from './services/insuranceReminders.ts';
 import { createPush } from './providers/push.ts';
 import { MockProvider } from './payments/provider.ts';
-import { YooKassaProvider } from './payments/yookassa.ts';
 import { staticHandler } from './http/static.ts';
 import { PublicWeatherService } from './services/publicWeather.ts';
 import { attachRealtimeGateway } from './realtime/gateway.ts';
@@ -16,9 +15,9 @@ const db = await createDb(config.databaseUrl);
 const applied = await migrate(db);
 if (applied.length) console.log('Миграции:', applied.join(', '));
 
-const payments = config.payments.provider === 'yookassa'
-  ? new YooKassaProvider(config.payments.yookassaShopId, config.payments.yookassaSecretKey, config.payments.yookassaAgentId, config.payments.yookassaPayoutKey)
-  : new MockProvider(config.publicUrl);
+// Real acquiring/payouts are deliberately disconnected: TrakSOS chose Tochka.
+// The current Tochka integration handles invoice DOCUMENTS only, not real capture.
+const payments = new MockProvider(config.publicUrl);
 
 const app = createApp({ db, sms: createSms(), push: createPush(), payments });
 
@@ -56,12 +55,23 @@ const timer = setInterval(() => {
   app.orders.tick().catch((e) => console.error('[tick]', e));
   app.auction.tick().catch((e) => console.error('[auction]', e));
 }, 2_000);
+// Check stalled order stages once per minute, separately from the two-second call queue.
+const orderSlaTimer = setInterval(() => {
+  void app.orderSla.tick().catch((e) => console.error('[order-sla]', e));
+}, 60_000);
+void app.orderSla.tick().catch((e) => console.error('[order-sla]', e));
 // First human response deadline, one durable overdue notification at 60 min.
 // Database row locks and event uniqueness protect multi-instance operation.
 const supportSlaTimer = setInterval(() => {
   app.support.tickSla().catch((e) => console.error('[support-sla]', e));
 }, 30_000);
 void app.support.tickSla().catch((e) => console.error('[support-sla]', e));
+// Durable emergency handoff SLA: reminder and manual review only, never financial completion.
+const unilateralSlaTimer=setInterval(()=>{
+  void app.unilateral.tickSla().catch(e=>console.error('[unilateral-sla]',e));
+},60_000);
+void app.unilateral.tickSla().catch(e=>console.error('[unilateral-sla]',e));
+
 // Background delivery is durable across restarts. Missing webhook config keeps reports
 // in the internal admin queue; it never silently sends personal data externally.
 const developerDeliveryTimer = setInterval(() => {
@@ -109,6 +119,8 @@ for (const sig of ['SIGINT', 'SIGTERM'] as const) {
     clearInterval(hourly);
     clearInterval(captureTimer);
     clearInterval(supportSlaTimer);
+    clearInterval(orderSlaTimer);
+    clearInterval(unilateralSlaTimer);
     clearInterval(developerDeliveryTimer);
     server.close();
     await db.close();

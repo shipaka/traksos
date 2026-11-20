@@ -46,11 +46,61 @@ try {
       await modal.getByRole('button',{name:'Принимаю'}).click();
       await modal.waitFor({state:'detached',timeout:12000});
     }
+    // Catch stale PC and narrow-phone layouts in each real role, not only at 390px.
+    for (const width of [320, 390, 1440]) {
+      await page.setViewportSize({width, height: width === 1440 ? 900 : 844});
+      const size = await page.evaluate(() => ({
+        actual: document.documentElement.scrollWidth,
+        available: document.documentElement.clientWidth,
+      }));
+      if (size.actual > size.available + 3)
+        throw Error(kind + ': role layout overflows at ' + width + 'px');
+    }
+    await page.setViewportSize({width:390,height:844});
     await page.locator('.account-menu > summary').click();
     const links=await page.locator('.account-menu nav a[href^="#/"]').evaluateAll(
       els=>els.map(el=>({href:el.getAttribute('href'),text:(el.textContent??'').trim()}))
     );
     if(links.length < 6)throw Error(kind+': almost empty cabinet menu');
+    // Each account has its own direct economic explanation, not a generic
+    // performer pricing page or unapproved commission in the customer menu.
+    const financeMenu=links.find(l=>l.href==='#/economics');
+    if(!financeMenu || !financeMenu.text.includes('Комиссии, баллы и рефералы'))
+      throw Error(kind+': financial conditions and referral terms are missing from cabinet menu');
+    await page.goto(BASE+'/#/economics',{waitUntil:'domcontentloaded'});
+    await page.getByRole('heading',{name:'Комиссии, баллы и рефералы',exact:true}).waitFor();
+    const guide=page.locator('section.economics-guide');
+    await guide.waitFor({timeout:12000});
+    const financeText=(await guide.innerText()).replace(/\s+/g,' ');
+    if(!financeText.includes('Математика на примерах') &&
+      !['admin','insurer'].includes(kind) && kind!=='moderator_master')
+      throw Error(kind+': economics guide has no example math');
+    if(kind==='owner'||kind==='driver') {
+      if(!financeText.includes('10 500') || financeText.includes('исполнителю'))
+        throw Error(kind+': owner financial example or role privacy incorrect');
+    }
+    if(kind==='master'||kind==='tow') {
+      if(!financeText.includes('9 500') || financeText.includes('клиент оплачивает'))
+        throw Error(kind+': performer financial example or role privacy incorrect');
+    }
+    if(kind==='insurer' && !financeText.includes('Универсальная комиссия'))
+      throw Error(kind+': insurer must not inherit the master commission');
+
+
+    // Invite bonuses are calculated with different role-specific caps.
+    // This check also guards the registration welcome gift against stale FAQ text.
+    if(links.some(link=>link.href==='#/invite')) {
+      await page.goto(BASE+'/#/invite',{waitUntil:'domcontentloaded'});
+      await page.getByRole('heading',{name:'Пригласить в TrakSOS'}).waitFor();
+      const invitation=(await page.locator('main').textContent()??'').replace(/\s+/g,' ');
+      if((kind==='owner'||kind==='driver') && !invitation.includes('не более 10% стоимости услуги'))
+        throw Error(kind+': the invitation page shows the wrong client points cap');
+      if(['master','tow','service','master_service'].includes(kind) &&
+         !invitation.includes('не более 50% комиссии TrakSOS'))
+        throw Error(kind+': the invitation page shows the wrong performer points cap');
+      if(!invitation.includes('Приветственные баллы новому клиенту начисляются при регистрации'))
+        throw Error(kind+': welcome reward timing contradicts actual referral logic');
+    }
     const paths=[...new Set(links.map(l=>l.href))];
     if(kind!=='admin' && paths.some(path=>path.startsWith('#/admin/section')))
       throw Error(kind+': sees administrator menu routes');

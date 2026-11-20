@@ -1,0 +1,635 @@
+/* Owner's final PC reference: 617.png dated 2026-11-20. Desktop-only structure;
+ * the supplied reference is not bundled yet, so hero art is temporary.
+ * None of these rules affect Android/mobile screens. */
+@media(min-width:900px){
+ .guest-app.guest-home>.top,.guest-app.guest-home>.desktop-layout>.desktop-sidebar,.guest-app.guest-home>.desktop-layout>.desktop-content>.site-footer{display:none!important}
+ .guest-app.guest-home>.desktop-layout{display:block!important;min-height:100vh!important;margin:0!important;padding:0!important;width:100%!important;max-width:none!important;background:#061219!important}
+ .guest-app.guest-home>.desktop-layout>.desktop-content{width:100%!important;max-width:none!important;margin:0!important;padding:0!important;min-width:0!important;background:transparent!important;display:block!important}
+ .guest-app.guest-home{background:#061219!important;color:#f5fafc!important}
+ .owner20-home{--ink:#061219;--surface:#0d202b;--border:#344b55;--orange:#fb6a20;--teal:#11b5b4;min-height:100vh;width:100%;max-width:1800px;margin:0 auto;background:#061219;color:#f7fafc;font-family:Inter,Arial,sans-serif}
+ .owner20-home *{box-sizing:border-box}
+ .owner20-home a{color:inherit;text-decoration:none}
+ .owner20-home a:focus-visible,.owner20-home summary:focus-visible{outline:3px solid #ffad78;outline-offset:2px}
+ .owner20-top{height:66px;display:flex;align-items:center;gap:24px;padding:0 32px;background:#071923;border-bottom:1px solid #1c3541}
+ .owner20-mark{display:flex;align-items:center;gap:10px;flex:0 0 auto;white-space:nowrap;font-size:clamp(22px,2.2vw,35px);font-style:italic;font-weight:900;letter-spacing:-1.6px}
+ .owner20-mark svg{width:65px;height:42px;color:#fff}
+ .owner20-mark strong{color:var(--orange)}
+ .owner20-tagline{font-size:12px;line-height:1.35;color:#d5e1e6;margin-right:auto}
+ .owner20-topnav{display:flex;align-items:center;justify-content:center;gap:clamp(12px,1.8vw,32px);font-size:13px;white-space:nowrap}
+ .owner20-topnav details{position:relative}
+ .owner20-topnav summary{cursor:pointer;list-style:none}
+ .owner20-topnav summary:after{content:'⌄';margin-left:7px}
+ .owner20-topnav details>div{position:absolute;top:26px;left:-12px;background:#0b1d29;border:1px solid #476372;min-width:180px;padding:8px;border-radius:12px;z-index:20;box-shadow:0 12px 35px #000a;display:grid;gap:4px}
+ .owner20-topnav details>div a{padding:8px 10px;border-radius:7px}
+ .owner20-topnav details>div a:hover,.owner20-topnav>a:hover{color:#ff995c;background:#193440}
+ .owner20-region{font-size:12px;white-space:nowrap;color:#d5e1e6}
+ .owner20-signin{border:1px solid var(--orange);border-radius:9px;padding:10px 21px;font-size:13px;white-space:nowrap}
+ .owner20-signin:hover{background:#432517}
+ .owner20-hero{height:326px;position:relative;overflow:hidden;background:linear-gradient(90deg,#07121a 0%,#0c1822 35%,transparent 80%),#092231}
+ .owner20-photo{position:absolute;inset:0;background-image:linear-gradient(90deg,#05131d 0%,#071923c9 33%,#07192314 66%,#06141ca1),radial-gradient(ellipse at 55% 20%,#b36f4f,#142832 65%,#06151c);background-position:center center,center 60%;background-size:cover;filter:saturate(.95)}
+ .owner20-lead{position:absolute;top:27px;left:2.2%;z-index:1;max-width:57%;text-shadow:0 3px 14px #0008}
+ .owner20-lead h1{font-size:clamp(27px,2.6vw,43px);line-height:1.05;letter-spacing:-.6px;color:#fff;font-weight:800;margin:0 0 12px}
+ .owner20-lead h1 em{font-style:normal;color:var(--orange)}
+ .owner20-lead>p{color:#dfebef;font-size:clamp(12px,1.15vw,18px);line-height:1.32;margin:0 0 20px}
+ .owner20-hero-links{display:flex;gap:24px}
+ .owner20-hero-links a{width:245px;height:70px;display:flex;align-items:center;justify-content:center;gap:15px;border-radius:12px;text-align:left;box-shadow:0 7px 20px #0008}
+ .owner20-hero-links a>span:first-child{font-size:36px}
+ .owner20-hero-links strong{display:block;font-size:24px;line-height:1.2}
+ .owner20-hero-links small{font-size:12px;display:block}
+ .owner20-alert{background:linear-gradient(125deg,#fa7625,#ea4022);border:1px solid #ffa15c}
+ .owner20-broadcast{background:#071b28d9;border:1px solid #26c6ce}
+ .owner20-broadcast>span:first-child{color:var(--orange)}
+ .owner20-map{position:absolute;z-index:1;right:1%;top:29px;width:34%;height:245px;background:linear-gradient(120deg,#061722ed,#0d1c26f2);border:1px solid #263945;border-radius:15px;padding:13px 15px;box-shadow:0 18px 30px #0009}
+ .owner20-map h2{font-size:16px;margin:0 0 9px;color:#fff}
+ .owner20-map-inner{display:flex;gap:9px;height:160px}
+ .owner20-map-shape{width:65%;position:relative;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse,#1c5961a3,#07303c7d 49%,transparent 73%);color:#56d6d4;letter-spacing:7px;font-weight:900;font-size:17px;clip-path:polygon(1% 58%,13% 29%,28% 38%,41% 11%,52% 29%,73% 15%,80% 32%,93% 21%,100% 49%,87% 70%,68% 60%,56% 89%,35% 73%,19% 90%)}
+ .owner20-map-shape i{position:absolute;left:13%;bottom:38%;color:white;font-size:8px;letter-spacing:0;font-style:normal}
+ .owner20-map-legend{width:35%;font-size:10px;line-height:1.3}
+ .owner20-map-legend p{display:flex;gap:8px;margin:1px 0 12px}
+ .owner20-map-legend i{flex:0 0 13px;width:13px;height:13px;border-radius:3px;background:#899199}
+ .owner20-map-legend i.teal{background:#05a9a4}
+ .owner20-map-legend small{font-size:9px;color:#bdccd3}
+ .owner20-map>a{position:absolute;bottom:10px;right:12px;border:1px solid #66c4cf;border-radius:20px;padding:6px 12px;font-size:11px}
+ .owner20-quick{margin:0 2%;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:linear-gradient(130deg,#192d36,#091821);border:1px solid #3d5360;border-radius:15px;overflow:hidden;min-height:84px}
+ .owner20-quick>a{display:flex;gap:11px;padding:15px 12px;align-items:center;position:relative}
+ .owner20-quick>a:not(:last-child):after{content:'';position:absolute;right:0;top:19px;bottom:19px;width:1px;background:#3b5360}
+ .owner20-quick>a:hover,.owner20-feature:hover,.owner20-bottom a:hover{background-color:#1a3440}
+ .owner20-quick-icon{font-size:35px;line-height:1;color:var(--orange)}
+ .owner20-quick b{display:block;font-size:15px}
+ .owner20-quick small{display:block;color:#c9d6dc;font-size:11px;line-height:1.25;margin-top:3px}
+ .owner20-features{margin:16px 2% 0;display:grid;gap:13px;grid-template-columns:repeat(5,minmax(0,1fr))}
+ .owner20-feature{position:relative;background:linear-gradient(125deg,#1d313d,#0b1b25);border:1px solid #3d515b;border-radius:14px;height:145px;overflow:hidden;padding:15px 12px}
+ .owner20-feature-title{display:flex;align-items:center;gap:9px;font-size:16px;position:relative;z-index:2}
+ .owner20-feature-title span{color:#d3ebf1;font-size:20px}
+ .owner20-feature p{max-width:76%;font-size:11px;line-height:1.45;color:#c6d5dc;position:relative;z-index:2;margin:8px 0}
+ .owner20-feature-illustration{position:absolute;right:-3px;bottom:-16px;font-size:115px;font-weight:900;line-height:1;color:#aec9d438;transform:rotate(-13deg)}
+ .owner20-feature-cta{position:absolute;bottom:13px;left:12px;font-size:11px;border:1px solid #a6c0c9;padding:7px 12px;border-radius:20px;z-index:3}
+ .owner20-bottom{margin:16px 2% 0;display:grid;gap:13px;grid-template-columns:1.1fr 1.1fr .79fr .91fr}
+ .owner20-bottom-card{height:177px;position:relative;background:linear-gradient(130deg,#142b37,#071924);border:1px solid #3c535d;border-radius:14px;overflow:hidden;padding:18px 15px}
+ .owner20-bottom-card b{font-size:18px;color:#fff}
+ .owner20-bottom-card p{font-size:12px;line-height:1.4;max-width:75%;color:#d0dce1}
+ .owner20-bottom-air:after,.owner20-bottom-club:after{position:absolute;right:-9px;bottom:-12px;font-size:115px;color:#ffffff1d;pointer-events:none}
+ .owner20-bottom-air:after{content:'◉'}
+ .owner20-bottom-club:after{content:'♧'}
+ .owner20-bottom-card>a,.owner20-bottom-card>span:not(.owner20-store){position:absolute;bottom:15px;left:15px;border:1px solid #f1713d;border-radius:20px;padding:7px 13px;font-size:12px}
+ .owner20-bottom-why ul{padding-left:18px;margin:9px 0;list-style:'✓  ';font-size:12px;line-height:1.75}
+ .owner20-bottom-why li::marker{color:var(--orange)}
+ .owner20-store{position:absolute;bottom:15px;left:15px;color:#bbcbd1;font-size:12px}
+ .owner20-disclaimer{font-size:10px;color:#9aafb9;text-align:center;margin:10px 2% 20px}
+}
+@media(min-width:900px) and (max-width:1270px){
+ .owner20-top{gap:12px;padding:0 18px}
+ .owner20-tagline{display:none}
+ .owner20-topnav{margin-left:auto;gap:14px}
+ .owner20-lead h1{font-size:30px}
+ .owner20-hero-links{gap:10px}
+ .owner20-hero-links a{width:190px}
+ .owner20-map{width:33%}
+ .owner20-feature-title{font-size:13px}
+ .owner20-quick b{font-size:12px}
+ .owner20-quick-icon{font-size:28px}
+ .owner20-bottom-card b{font-size:15px}
+}
+
+/* The owner's third approved TrakBot truck appears, but never becomes an
+   oversized banner or displaces the 20 Nov hero and service cards. */
+@media(min-width:900px){
+ .guest-app.guest-home .trakbot-dock {right:12px!important;bottom:12px!important;z-index:96}
+ .guest-app.guest-home .trakbot-dock .trakbot-dock-launcher{
+   min-width:58px!important;width:62px!important;height:62px!important;min-height:62px!important;
+   padding:4px!important;justify-content:center!important;gap:0!important;
+   background:linear-gradient(145deg,#10313c,#071923)!important;
+   border:1px solid #fc7a2f!important;border-radius:50%!important;
+   box-shadow:0 6px 20px #000a,0 0 0 3px #071922!important;
+ }
+ .guest-app.guest-home .trakbot-dock-launcher .trakbot-mascot{
+   --bot-size:48px!important;width:48px!important;height:48px!important;
+ }
+ .guest-app.guest-home .trakbot-dock-launcher .trakbot-dock-label,
+ .guest-app.guest-home .trakbot-dock-launcher::after{display:none!important;content:none!important}
+ .guest-app.guest-home .trakbot-dock-panel--guest {border-color:#f4823b;background:#091e29;}
+ .guest-app.guest-home .trakbot-dock-head {background:#102d3b;border-color:#38525b;}
+ .owner20-region{position:relative;flex:0 0 auto}
+ .owner20-region>summary{cursor:pointer;white-space:nowrap;list-style:none;color:#e2edf2;font-weight:700}
+ .owner20-region>summary::marker{display:none}
+ .owner20-region>summary:after{content:'⌄';margin-left:5px;font-weight:400}
+ .owner20-region-menu{position:absolute;right:-38px;top:32px;z-index:99;width:250px;
+  display:grid;gap:7px;padding:14px;border:1px solid #47616b;border-radius:13px;
+  background:#0c202c;box-shadow:0 12px 35px #000b;line-height:1.4;white-space:normal}
+ .owner20-region-menu p{margin:0;font-size:12px}
+ .owner20-region-menu small{font-size:11px;color:#a9bec8}
+ .owner20-region-menu a{color:#ff9559;text-decoration:underline}
+}
+
+/* Desktop layout must start at viewport top, not inside legacy guest spacing. */
+@media(min-width:900px){
+ .guest-app.guest-home{margin:0!important;padding:0!important;gap:0!important}
+ .guest-app.guest-home>.desktop-layout,
+ .guest-app.guest-home>.desktop-layout>.desktop-content{margin:0!important;padding:0!important;gap:0!important}
+ .owner20-compact-menu{display:none;position:relative}
+ .owner20-compact-menu summary{cursor:pointer;white-space:nowrap;color:#e8f2f5}
+ .owner20-compact-menu nav{display:grid;position:absolute;top:30px;right:0;z-index:97;gap:6px;
+   width:225px;padding:12px;border-radius:12px;border:1px solid #45606a;
+   background:#0a202b;box-shadow:0 16px 36px #000b}
+ .owner20-compact-menu nav a{padding:8px 9px;border-radius:7px}
+ .owner20-compact-menu nav a:hover{background:#1a3642}
+}
+@media(min-width:900px) and (max-width:1150px){
+ .owner20-topnav{display:none}
+ .owner20-compact-menu{display:block;margin-left:auto;font-weight:700;font-size:13px}
+ .owner20-top{gap:12px}
+ .owner20-region{font-size:11px}
+ .owner20-mark{font-size:25px}
+ .owner20-mark svg{width:50px}
+ .owner20-lead{max-width:60%}
+ .owner20-hero-links a{width:165px;font-size:12px}
+ .owner20-map{width:34%;right:1%;padding:9px 8px}
+ .owner20-map-shape{letter-spacing:3px}
+ .owner20-map-legend{font-size:9px}
+ .owner20-quick>a{padding:10px 8px;gap:7px}
+ .owner20-quick-icon{font-size:23px}
+ .owner20-quick b{font-size:11.5px}
+ .owner20-quick small{font-size:9.5px}
+ .owner20-feature{padding:12px 9px}
+ .owner20-feature-title{gap:5px;font-size:12px}
+ .owner20-feature p{font-size:10px}
+ .owner20-bottom-card{padding:13px 10px}
+ .owner20-bottom-card p{font-size:11px}
+}
+
+/* Reset the generic <main> layout (18px gap / 24px padding) inherited
+   from the old site. The owner's 1536×864 screenshot is edge-to-edge. */
+@media(min-width:900px){
+ .guest-app.guest-home .desktop-content > main.owner20-home{
+   display:block!important;flex:0 0 auto!important;
+   width:100%!important;max-width:1800px!important;
+   padding:0!important;margin:0 auto!important;gap:0!important;
+ }
+ .guest-app.guest-home .desktop-content > main.owner20-home > :is(header,section,nav,p){
+   flex:none;
+ }
+}
+/* Real outline traced from the owner's 617.png; visual demo only.
+   Never derive actual regional availability from painted pixels. */
+@media(min-width:900px){
+ .owner20-map-shape{
+   clip-path:none!important;background:transparent!important;
+   display:flex;position:relative;align-items:center;justify-content:center;
+   overflow:hidden;width:65%;
+ }
+ .owner20-map-shape img{
+   display:block;width:100%;height:100%;object-fit:contain;
+   filter:drop-shadow(0 0 6px #12a6a533);
+ }
+ .owner20-map-shape .owner20-map-demo-tag{
+   position:absolute;bottom:8px;left:4px;color:#a7eced;font-size:9px;font-weight:800;
+   letter-spacing:.05em;background:#082a35dd;border:1px solid #287884;
+   border-radius:5px;padding:2px 5px;
+ }
+}
+/* Crisp vector service pictograms from the 20 Nov approved screenshot.
+   Do not fall back to platform-specific Unicode boxes. */
+@media(min-width:900px){
+ .owner20-quick-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 42px}
+ .owner20-quick-icon svg{display:block;width:42px;height:42px;stroke:#f97125}
+ .owner20-feature-title span{display:inline-flex;align-items:center;justify-content:center}
+ .owner20-feature-title svg{width:23px;height:23px;display:block;stroke:#e1edf1}
+ .owner20-hero-links a>span:first-child{display:inline-flex;align-items:center;justify-content:center;width:42px}
+ .owner20-hero-links a>span:first-child svg{width:40px;height:40px;stroke:#fff}
+ .owner20-broadcast>span:first-child svg{stroke:#f97125}
+}
+@media(min-width:900px) and (max-width:1150px){
+ .owner20-quick-icon{flex-basis:27px}
+ .owner20-quick-icon svg{width:27px;height:27px}
+}
+
+/* Old bottom guest tab bar is mobile-only; it must not leak below the approved PC homepage. */
+@media(min-width:900px){
+ .guest-app.guest-home > .track-guest-tabbar{display:none!important}
+}
+
+
+/*
+ * PIXEL-REFERENCE PASS 20.11 — source: exact owner PNG 617.png (1536x864).
+ * Photographic areas now use cropped pixels FROM THAT OWNER IMAGE, not stock
+ * trucks or emoji placeholders. Headings, buttons and navigation remain live
+ * HTML and keyboard accessible.
+ * The photo sprite is decorative only: facts and click targets stay HTML.
+ */
+@media (min-width: 1281px) {
+  .guest-app.guest-home,
+  .guest-app.guest-home > .desktop-layout,
+  .guest-app.guest-home > .desktop-layout > .desktop-content,
+  .guest-app.guest-home .desktop-content > main.owner20-home {
+    margin:0!important;
+    padding:0!important;
+    border:0!important;
+    row-gap:0!important;
+    box-shadow:none!important;
+  }
+  .guest-app.guest-home > .desktop-layout {margin-top:0!important;transform:none!important}
+  .guest-app.guest-home .owner20-home{font-family:Arial,Inter,sans-serif}
+  .guest-app.guest-home .owner20-top {
+    display:grid!important;
+    grid-template-columns:230px 210px minmax(0,1fr) 150px 112px;
+    gap:20px!important;
+    height:66px!important;
+    min-height:66px!important;
+    padding:0 16px 0 44px!important;
+    align-items:center;
+    background:#06131a!important;
+    border-bottom:1px solid #1d3038!important;
+  }
+  .guest-app.guest-home .owner20-mark {
+    font-size:37px!important;
+    font-weight:900;letter-spacing:-1.7px;
+    justify-self:start;
+    gap:9px!important;
+  }
+  .guest-app.guest-home .owner20-mark svg{width:63px!important;height:44px!important}
+  .guest-app.guest-home .owner20-tagline{
+    font-size:12px!important;line-height:1.35!important;
+    margin:0!important;color:#d8dfe2!important;
+  }
+  .guest-app.guest-home .owner20-topnav {
+    min-width:0;
+    margin:0!important;
+    display:flex!important;
+    justify-content:space-evenly!important;
+    gap:8px!important;
+    font-size:13px!important;
+  }
+  .guest-app.guest-home .owner20-region{
+    margin:0!important;justify-self:center;
+    font-size:12px!important;
+  }
+  .guest-app.guest-home .owner20-signin {
+    width:112px!important;min-width:0!important;
+    height:38px!important;
+    display:flex;align-items:center;justify-content:center;
+    border:1px solid #d76727!important;
+    border-radius:10px!important;
+    padding:0!important;
+    background:#0d1921!important;
+  }
+  .guest-app.guest-home .owner20-hero{
+    height:324px!important;
+    min-height:324px!important;
+    position:relative;
+    overflow:hidden;
+    background:linear-gradient(180deg,#122028 0%,#0f1e26 48%,#070f15 80%,#0b1012 100%)!important;
+  }
+  .guest-app.guest-home .owner20-photo {
+    display:block!important;
+    position:absolute!important;inset:0!important;
+    background:
+      linear-gradient(90deg,#08141a 0%,#0d1920 29%,transparent 40%,transparent 60%,#101a1c 93%,#07141a),
+      radial-gradient(ellipse at 60% 18%,#efaf79 0%,#875c4c 26%,transparent 51%),
+      linear-gradient(180deg,#14232d 5%,#333d40 49%,#0c181b 67%,#192027 75%,#090e12 100%)!important;
+    filter:none!important;
+    opacity:1!important;
+  }
+  .guest-app.guest-home .owner20-photo::before{
+    content:"";
+    position:absolute;inset:0;
+    pointer-events:none;
+    background:
+      linear-gradient(169deg,transparent 75%,#40434a33 76%,#0b131b 76.5%,transparent 78%),
+      linear-gradient(12deg,#070c0e 1%,transparent 24%),
+      repeating-linear-gradient(176deg,transparent 0 31px,#afb0aa11 32px,#191e2311 33px,transparent 35px);
+    opacity:.86;
+  }
+  .guest-app.guest-home .owner20-photo::after{
+    content:"";
+    position:absolute;left:34.5%;top:10px;
+    width:456px;height:314px;
+    background-image:url('/owner20-artwork-sprite.webp')!important;
+    background-position:0 0!important;
+    background-size:1018px 446px!important;
+    background-repeat:no-repeat!important;
+    -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 9%,#000 96%,transparent 100%);
+    mask-image:linear-gradient(90deg,transparent 0%,#000 9%,#000 96%,transparent 100%);
+    z-index:1;
+    pointer-events:none;
+  }
+  .guest-app.guest-home .owner20-lead{
+    left:2.32%!important;top:26px!important;
+    max-width:60%!important;
+    z-index:2!important;
+  }
+  .guest-app.guest-home .owner20-lead h1{
+    font:800 clamp(33px,2.5vw,38px)/1.07 Arial,Inter,sans-serif!important;
+    letter-spacing:-.8px!important;
+    margin:0 0 12px!important;
+    color:#fbfcfd!important;
+  }
+  .guest-app.guest-home .owner20-lead h1 em{color:#ff6a25!important}
+  .guest-app.guest-home .owner20-lead>p{
+    font-size:17px!important;
+    line-height:1.32!important;
+    margin:0 0 18px!important;
+    color:#d7dfe3!important;
+  }
+  .guest-app.guest-home .owner20-hero-links{gap:24px!important}
+  .guest-app.guest-home .owner20-hero-links>a{
+    width:245px!important;
+    height:71px!important;
+    min-height:71px!important;
+    border-radius:13px!important;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .guest-app.guest-home .owner20-alert{background:linear-gradient(125deg,#ff7433,#e73d1f)!important}
+  .guest-app.guest-home .owner20-broadcast{background:#071c27e6!important}
+  .guest-app.guest-home .owner20-map{
+    right:1%!important;top:30px!important;
+    width:34.8%!important;
+    height:246px!important;
+    padding:13px 15px!important;
+    background:linear-gradient(118deg,#09151df0,#0b1b25f5)!important;
+    border:1px solid #314550!important;
+    border-radius:15px!important;
+    z-index:3!important;
+    box-shadow:0 14px 40px #000a;
+  }
+  .guest-app.guest-home .owner20-map h2{
+    font-size:16px!important;
+    letter-spacing:-.3px;
+    margin:0 0 8px!important;
+  }
+  .guest-app.guest-home .owner20-map-inner{height:171px!important;gap:8px!important}
+  .guest-app.guest-home .owner20-map-shape{
+    width:65%!important;
+    height:165px!important;
+    flex:0 0 65%;
+    display:block!important;
+    overflow:hidden!important;
+    background:transparent!important;
+  }
+  .guest-app.guest-home .owner20-map-source{
+    width:332px;height:165px;display:block;
+    background-image:url('/owner20-artwork-sprite.webp')!important;
+    background-position:-459px 0!important;
+    background-size:1018px 446px!important;
+    background-repeat:no-repeat!important;
+    -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 4%,#000 100%);
+    mask-image:linear-gradient(90deg,transparent 0%,#000 4%,#000 100%);
+  }
+  .guest-app.guest-home .owner20-map-legend{
+    width:35%!important;
+    font-size:11px!important;
+    line-height:1.25!important;
+    color:#d7e4e9!important;
+  }
+  .guest-app.guest-home .owner20-map-legend p{margin-bottom:12px!important}
+  .guest-app.guest-home .owner20-map-legend small{font-size:10px!important}
+  .guest-app.guest-home .owner20-map>a{
+    bottom:11px!important;right:12px!important;
+    border-radius:21px!important;
+    border-color:#63bcc4!important;
+  }
+  .guest-app.guest-home .owner20-quick{
+    margin:0 1% 0 2%!important;
+    height:85px!important;min-height:85px!important;
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;
+    border-radius:15px!important;
+    background:linear-gradient(130deg,#1b2d38,#0a1820)!important;
+    transform:none!important;
+  }
+  .guest-app.guest-home .owner20-quick>a{
+    justify-content:center!important;
+    gap:13px!important;
+    padding:14px 8px!important;
+  }
+  .guest-app.guest-home .owner20-quick-icon svg{width:44px!important;height:44px!important}
+  .guest-app.guest-home .owner20-quick b{font-size:16px!important}
+  .guest-app.guest-home .owner20-quick small{font-size:12px!important}
+  .guest-app.guest-home .owner20-features{
+    margin:16px 1% 0 2%!important;
+    gap:14px!important;
+    grid-template-columns:1.1fr 1.08fr 1fr 1fr 1fr!important;
+  }
+  .guest-app.guest-home .owner20-feature{
+    height:144px!important;
+    border:1px solid #3d5260!important;
+    border-radius:15px!important;
+    padding:13px 14px!important;
+    isolation:isolate;
+    background:linear-gradient(128deg,#243540,#0c1d28)!important;
+    box-shadow:inset 0 1px #ffffff0a;
+  }
+  .guest-app.guest-home .owner20-feature-title{
+    font-size:17px!important;
+    gap:9px!important;
+    position:relative;z-index:3!important;
+    text-shadow:0 1px 6px #071319;
+  }
+  .guest-app.guest-home .owner20-feature p{
+    max-width:78%!important;
+    font-size:12px!important;
+    line-height:1.35!important;
+    margin:8px 0 0!important;
+    color:#d2dce1!important;
+    z-index:3!important;
+    text-shadow:0 1px 5px #06141a;
+  }
+  .guest-app.guest-home .owner20-feature-illustration{
+    display:block!important;
+    position:absolute!important;
+    top:auto!important;left:auto!important;
+    right:0!important;bottom:0!important;
+    transform:none!important;
+    width:167px;height:128px;
+    z-index:1!important;
+    font-size:0!important;
+    background-image:url('/owner20-artwork-sprite.webp')!important;
+    background-size:1018px 446px!important;
+    background-repeat:no-repeat!important;
+    background-position:0 -317px!important;
+    opacity:1!important;
+    color:transparent!important;
+    -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.5) 16%,#000 38%);
+    mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.5) 16%,#000 38%);
+  }
+  .guest-app.guest-home .owner20-feature-ecu .owner20-feature-illustration{
+    width:147px;height:128px;background-position:-172px -317px!important;
+  }
+  .guest-app.guest-home .owner20-feature-parts .owner20-feature-illustration{
+    width:123px;height:128px;background-position:-324px -317px!important;
+  }
+  .guest-app.guest-home .owner20-feature-insurance .owner20-feature-illustration{
+    width:136px;height:125px;background-position:-452px -317px!important;
+  }
+  .guest-app.guest-home .owner20-feature-inspection .owner20-feature-illustration{
+    width:111px;height:126px;background-position:-594px -317px!important;
+  }
+  .guest-app.guest-home .owner20-feature-cta{
+    bottom:13px!important;left:15px!important;
+    border-color:#9fb4c0!important;
+    border-radius:22px!important;
+    padding:7px 15px!important;
+    font-size:12px!important;
+    color:#f6fbfd!important;
+    background:#15232a66;
+    z-index:4!important;
+  }
+  .guest-app.guest-home .owner20-bottom{
+    margin:17px 1% 0 2%!important;
+    gap:13px!important;
+    grid-template-columns:1.1fr 1.1fr .79fr .91fr!important;
+  }
+  .guest-app.guest-home .owner20-bottom-card{
+    height:177px!important;
+    padding:17px 16px!important;
+    isolation:isolate;
+    border-color:#38515e!important;
+    background:linear-gradient(120deg,#102631,#071924)!important;
+  }
+  .guest-app.guest-home .owner20-bottom-card b{
+    font-size:18px!important;
+    position:relative;z-index:2;
+  }
+  .guest-app.guest-home .owner20-bottom-card p{
+    font-size:12px!important;
+    line-height:1.38!important;
+    max-width:77%!important;
+    position:relative;z-index:2;
+  }
+  .guest-app.guest-home .owner20-bottom-air::after,
+  .guest-app.guest-home .owner20-bottom-club::after{
+    content:""!important;display:block!important;
+    position:absolute!important;right:0!important;bottom:0!important;
+    width:218px;height:168px;
+    background:url('/owner20-artwork-sprite.webp') -797px 0 / 1018px 446px no-repeat!important;
+    font-size:0!important;opacity:1!important;
+    pointer-events:none;
+    -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.15) 17%,#000 55%);
+    mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.15) 17%,#000 55%);
+    z-index:1;
+  }
+  .guest-app.guest-home .owner20-bottom-club::after{
+    width:213px;height:167px;
+    background-position:-797px -170px!important;
+  }
+  .guest-app.guest-home .owner20-bottom-card>span:not(.owner20-store){
+    z-index:3!important;
+    bottom:23px!important;
+    left:16px!important;
+    border-color:#e86b3d!important;
+    background:#081b2599;
+  }
+  .guest-app.guest-home .owner20-bottom-why ul{font-size:12px!important;line-height:1.65!important}
+  .guest-app.guest-home .owner20-disclaimer{margin-top:35px!important}
+  .guest-app.guest-home .trakbot-dock .trakbot-dock-launcher{
+    width:48px!important;min-width:48px!important;
+    height:48px!important;min-height:48px!important;
+  }
+  .guest-app.guest-home .trakbot-dock-launcher .trakbot-mascot{
+    --bot-size:39px!important;width:39px!important;height:39px!important;
+  }
+}
+
+/* Mid-size desktop: preserve the SAME November 20 artwork with a fluid layout,
+   not the removed Nov 19 landing artwork. Android (<900px) remains unchanged. */
+@media (min-width:900px) and (max-width:1280px){
+ .guest-app.guest-home .owner20-photo{
+   background:linear-gradient(90deg,#07151d 0%,#0f2730 46%,#1e3440 78%,#09171f 100%),
+      radial-gradient(ellipse at 55% 20%,#b36f4f,#142832 65%,#06151c)!important;
+ }
+ .guest-app.guest-home .owner20-photo::after{
+   content:"";
+   position:absolute;top:12px;left:34.5%;
+   width:365px;height:251px;
+   background-image:url('/owner20-artwork-sprite.webp');
+   background-position:0 0;
+   background-size:814px 357px;
+   background-repeat:no-repeat;
+   -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 10%,#000 90%,transparent);
+   mask-image:linear-gradient(90deg,transparent 0%,#000 10%,#000 90%,transparent);
+ }
+ .guest-app.guest-home .owner20-map-source{
+   display:block;width:100%;height:100%;min-height:125px;
+   background-image:url('/owner20-artwork-sprite.webp');
+   background-position:-459px 0;
+   background-size:1018px 446px;
+   background-repeat:no-repeat;
+   transform-origin:top left;
+ }
+ .guest-app.guest-home .owner20-feature-illustration{
+   display:block;position:absolute;
+   right:0;bottom:0;top:auto;left:auto;
+   width:148px;height:125px;
+   background-image:url('/owner20-artwork-sprite.webp');
+   background-position:0 -317px;
+   background-size:1018px 446px;
+   background-repeat:no-repeat;
+   font-size:0;color:transparent;
+   transform:none!important;
+   -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 47%);
+   mask-image:linear-gradient(90deg,transparent 0%,#000 47%);
+ }
+ .guest-app.guest-home .owner20-feature-ecu .owner20-feature-illustration{width:142px;background-position:-172px -317px}
+ .guest-app.guest-home .owner20-feature-parts .owner20-feature-illustration{width:123px;background-position:-324px -317px}
+ .guest-app.guest-home .owner20-feature-insurance .owner20-feature-illustration{width:127px;background-position:-452px -317px}
+ .guest-app.guest-home .owner20-feature-inspection .owner20-feature-illustration{width:111px;background-position:-594px -317px}
+ .guest-app.guest-home .owner20-bottom-air::after,
+ .guest-app.guest-home .owner20-bottom-club::after{
+   display:block;content:""!important;
+   position:absolute;right:0;bottom:0;
+   width:218px;height:168px;
+   background-image:url('/owner20-artwork-sprite.webp');
+   background-position:-797px 0;
+   background-size:1018px 446px;
+   background-repeat:no-repeat;
+   font-size:0;
+   transform:none;
+   -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 55%);
+   mask-image:linear-gradient(90deg,transparent 0%,#000 55%);
+ }
+ .guest-app.guest-home .owner20-bottom-club::after{width:213px;height:167px;background-position:-797px -170px}
+}
+
+
+/* Owner 20 Nov: TrakBot mascot is present without covering RuStore or the
+   approved four lower cards. Only the PC guest homepage needs this footprint. */
+@media(min-width:1281px){
+  .guest-app.guest-home .trakbot-dock{
+    right:5px!important;bottom:4px!important;
+  }
+  .guest-app.guest-home .trakbot-dock .trakbot-dock-launcher{
+    width:40px!important;min-width:40px!important;
+    height:40px!important;min-height:40px!important;
+    padding:3px!important;
+  }
+  .guest-app.guest-home .trakbot-dock-launcher .trakbot-mascot{
+    --bot-size:32px!important;width:32px!important;height:32px!important;
+  }
+}
+
+/* The precise 1536x324 road and truck cut from approved 617.png.
+   Only photographic pixels are present; labels and panels are DOM UI. */
+@media(min-width:1281px){
+ .guest-app.guest-home .owner20-photo::after{
+   left:0!important;top:0!important;
+   width:100%!important;height:324px!important;
+   background-image:url('/owner20-photo-background-approved.webp')!important;
+   background-position:center top!important;
+   background-size:100% 100%!important;
+   background-repeat:no-repeat!important;
+   -webkit-mask-image:none!important;mask-image:none!important;
+ }
+}
+
+/* Approved 617.png contains text inside the decorative source sprite as well as
+   real accessible DOM labels. Hide only the sprite's baked-in label zone so
+   card titles are not visibly duplicated. The actual truck / artwork remains. */
+@media(min-width:1281px){
+ .guest-app.guest-home .owner20-feature-illustration{
+   -webkit-mask-image:linear-gradient(90deg,transparent 0%,transparent 43%,#000 75%)!important;
+   mask-image:linear-gradient(90deg,transparent 0%,transparent 43%,#000 75%)!important;
+ }
+ .guest-app.guest-home .owner20-bottom-air::after,
+ .guest-app.guest-home .owner20-bottom-club::after{
+   -webkit-mask-image:linear-gradient(90deg,transparent 0%,transparent 53%,#000 84%)!important;
+   mask-image:linear-gradient(90deg,transparent 0%,transparent 53%,#000 84%)!important;
+ }
+}

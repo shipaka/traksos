@@ -167,3 +167,18 @@
 .app.role-client .client-dashboard .desktop-quick-card *,
 .app.role-client .client-dashboard .client-dashboard-hubs>a,
 .app.role-client .client-dashboard .client-dashboard-hubs>a * { text-decoration:none!important; }
+
+/* Driver-only permission overlay: layout is unchanged, services remain visible. */
+.app.role-client .client-dashboard .desktop-quick-card.fleet-limited,
+.app.role-client .client-dashboard .client-dashboard-hubs > a.fleet-limited {
+  opacity:.63; filter:saturate(.20); cursor:not-allowed; transform:none!important;
+}
+.app.role-client .client-dashboard .desktop-quick-card.fleet-limited:hover,
+.app.role-client .client-dashboard .client-dashboard-hubs > a.fleet-limited:hover { transform:none!important; }
+.app.role-client .client-dashboard .fleet-limited-note {
+  display:block; font-size:11px; color:#d7e4ef; font-weight:650;
+  margin-top:4px; line-height:1.4;
+}
+.app.role-client .client-dashboard .desktop-quick-card.fleet-limited .fleet-limited-note {
+  flex-basis:100%; align-self:flex-end;
+}

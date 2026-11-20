@@ -1,0 +1,110 @@
+/* Photograph cut from the owner's actual 19 Nov 2026 approved PC screenshot.
+   Use a real bundled asset, not the legacy R520 with magenta livery. */
+.guest-app .public-landing .public-hero-visual.public-hero-slide-approved{
+ background-image:url('../public/tracksos-approved-hero-owner-20261119.webp')!important;
+ background-repeat:no-repeat!important;background-color:#031725!important;
+}
+@media(min-width:900px){
+ .guest-app .public-landing .public-hero-visual.public-hero-slide-approved{
+   background-size:auto 100%!important;background-position:right center!important;
+ }
+}
+@media(max-width:899px){
+ .guest-app .public-landing .public-hero-visual.public-hero-slide-approved{
+   background-size:contain!important;background-position:right bottom!important;
+ }
+}
+
+/* Stop the right-hand photo starting as a rectangle under the headline.
+   The accepted desktop has a continuous navy-to-road photograph transition. */
+@media(min-width:900px){
+  .guest-app .public-landing .public-hero-visual.public-hero-slide-approved{
+    -webkit-mask-image:linear-gradient(90deg,transparent 37%,rgba(0,0,0,.45) 44%,#000 52%)!important;
+    mask-image:linear-gradient(90deg,transparent 37%,rgba(0,0,0,.45) 44%,#000 52%)!important;
+  }
+}
+/* Mobile guest header: the old pseudo-element created a cyan/magenta slash
+   that does not exist in the owner's latest accepted wordmark. */
+.guest-app .top .guest-approved-mark::before,
+.guest-app .top .guest-approved-mark::after{display:none!important;content:none!important}
+@media(max-width:899px){
+  .guest-app .public-landing .public-hero-visual.public-hero-slide-approved{
+    -webkit-mask-image:none!important;mask-image:none!important;
+  }
+  .guest-app .public-landing .public-track-benefits{
+    display:flex!important;flex-wrap:wrap!important;align-items:center!important;
+    gap:7px!important;margin-top:10px!important;
+  }
+  .guest-app .public-landing .public-track-benefits>span{
+    display:inline-flex!important;align-items:center!important;gap:4px!important;
+    flex:0 1 auto!important;max-width:100%!important;min-width:0!important;
+    padding:4px 7px!important;font-size:10px!important;line-height:1.3!important;
+    white-space:normal!important;word-break:normal!important;
+    border:1px solid #305a73!important;border-radius:8px!important;
+    background:#0d3045!important;
+  }
+  .guest-app .public-landing .public-track-benefits i{
+    flex:0 0 auto!important;font-style:normal!important;
+  }
+  .guest-app .public-landing .public-hero-carousel{
+    position:relative!important;inset:auto!important;order:2!important;
+    display:flex!important;align-items:center!important;justify-content:center!important;
+    flex-wrap:wrap!important;gap:9px!important;width:100%!important;
+    min-width:0!important;min-height:44px!important;height:auto!important;
+    margin:0!important;padding:4px!important;background:transparent!important;
+    border:0!important;box-shadow:none!important;transform:none!important;
+  }
+  .guest-app .public-landing .public-hero-carousel .public-hero-dots{
+    position:static!important;display:flex!important;align-items:center!important;
+    justify-content:center!important;gap:8px!important;margin:0!important;
+    width:auto!important;height:auto!important;background:none!important;
+  }
+  html.traksos-compact-guest .guest-app .public-landing .public-hero-carousel button{
+    position:static!important;flex:0 0 auto!important;width:36px!important;height:36px!important;
+    min-width:36px!important;min-height:36px!important;padding:0!important;
+    display:grid!important;place-items:center!important;border:1px solid #315d78!important;
+    border-radius:50%!important;background:#0b2c43!important;color:#d9f7ff!important;
+    font-size:21px!important;box-shadow:none!important;
+  }
+  html.traksos-compact-guest .guest-app .public-landing .public-hero-carousel .public-hero-dot{
+    width:10px!important;height:10px!important;min-width:10px!important;min-height:10px!important;
+    border-radius:50%!important;background:#1b607f!important;border:1px solid #53b5db!important;
+  }
+  html.traksos-compact-guest .guest-app .public-landing .public-hero-carousel .public-hero-dot.active{
+    background:#08caf0!important;border-color:#08caf0!important;
+  }
+  .guest-app .public-landing .public-hero-carousel .public-hero-slide-status{
+    position:static!important;display:block!important;width:100%!important;
+    margin:0!important;padding:0!important;text-align:center!important;
+    font-size:11px!important;color:#bddeea!important;white-space:normal!important;
+  }
+}
+
+/* Owner reference 19 Nov: the phone teaser shows the same cyan/white truck
+   logo, not the retired magenta Android promo or a cover-cropped word fragment. */
+.guest-app .public-landing .public-app-card .public-app-phone{
+  background:linear-gradient(160deg,#041b31,#0b3e60)!important;
+  border:3px solid #071a2a!important;
+  outline:1px solid #257ba8!important;
+  box-shadow:8px 13px 24px rgba(0,0,0,.48)!important;
+  padding:8px 5px!important;
+  gap:0!important;
+  transform:rotate(-3deg)!important;
+}
+.guest-app .public-landing .public-app-card .public-app-phone-truck{
+  display:block!important;width:100%!important;height:auto!important;
+  max-height:128px!important;object-fit:contain!important;
+  border:0!important;border-radius:0!important;filter:none!important;
+  box-shadow:none!important;
+}
+.guest-app .public-landing .public-app-card .public-app-phone .public-app-logo,
+.guest-app .public-landing .public-app-card .public-app-phone>span:last-child{
+  display:none!important;
+}
+@media(min-width:1251px){
+  .guest-app .public-landing .public-service-tile b{
+    font-size:clamp(12px,.82vw,15px)!important;
+    white-space:nowrap!important;overflow-wrap:normal!important;
+    letter-spacing:-.025em!important;
+  }
+}

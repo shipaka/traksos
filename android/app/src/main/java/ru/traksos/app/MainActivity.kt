@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.app.KeyguardManager
 import android.content.Intent
+import android.content.ClipData
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.graphics.Color
@@ -24,6 +25,7 @@ import android.widget.ImageView
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.provider.MediaStore
 import android.webkit.GeolocationPermissions
 import android.webkit.CookieManager
 import android.webkit.ValueCallback
@@ -35,6 +37,7 @@ import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import androidx.webkit.WebViewAssetLoader
+import androidx.core.content.FileProvider
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.OnBackPressedCallback
@@ -50,6 +53,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import org.json.JSONObject
 import ru.rustore.sdk.pushclient.RuStorePushClient
+import java.io.File
 import java.lang.ref.WeakReference
 
 /** Оболочка: сайт TrakSOS в WebView + мост для пушей и вызовов */
@@ -149,13 +153,18 @@ class MainActivity : AppCompatActivity() {
     }
     private lateinit var bundledAssets: WebViewAssetLoader
     private var startupOverlay: View? = null
-    // Keep the agreed seasonal scene on screen long enough to notice.
+    // Only the owner's actual 19 Nov clean loading art is shown; obsolete seasonal backgrounds were retired.
     private var startupShownAt = 0L
     private var debugUiReadyLogged = false
     private val startupMinimumVisibleMs = 3_500L
     private var fileUploadCallback: ValueCallback<Array<Uri>>? = null
+    private var pendingCameraUri: Uri? = null
+    private var pendingCameraFile: File? = null
     private val filePicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val data = result.data
+        val captured = result.resultCode == RESULT_OK &&
+            (pendingCameraFile?.length() ?: 0L) > 0L &&
+            data?.clipData == null && data?.data == null
         val files = if (result.resultCode == RESULT_OK) {
             when {
                 data?.clipData != null -> {
@@ -163,9 +172,14 @@ class MainActivity : AppCompatActivity() {
                     (0 until clips.itemCount).map { clips.getItemAt(it).uri }.toTypedArray()
                 }
                 data?.data != null -> arrayOf(data.data!!)
+                captured -> pendingCameraUri?.let { arrayOf(it) }
                 else -> null
             }
         } else null
+        // Cache only the chosen full-resolution capture, not cancelled attempts.
+        if (!captured) pendingCameraFile?.delete()
+        pendingCameraUri = null
+        pendingCameraFile = null
         fileUploadCallback?.onReceiveValue(files)
         fileUploadCallback = null
     }
@@ -185,6 +199,18 @@ class MainActivity : AppCompatActivity() {
             .addPathHandler("/", BundledWeb(this))
             .build()
         web = WebView(this)
+        // Legacy Android 10 Google-API system images can carry Chromium WebView 74.
+        // On a headless/software GPU its hardware-backed surface may stay blank,
+        // even while JS and the React guest screen run normally. Use the CPU
+        // compositor only for that outdated engine; current WebViews stay GPU-backed.
+        if (Build.VERSION.SDK_INT in Build.VERSION_CODES.O..Build.VERSION_CODES.Q) {
+            val major = WebView.getCurrentWebViewPackage()?.versionName
+                ?.substringBefore('.')?.toIntOrNull()
+            if (major != null && major in 1..79) {
+                web.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+                if (BuildConfig.DEBUG) android.util.Log.i("TrakSOSRuntime", "LEGACY_WEBVIEW_SOFTWARE_LAYER=$major")
+            }
+        }
         if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val pkg = WebView.getCurrentWebViewPackage()
             android.util.Log.i("TrakSOSRuntime", "WEBVIEW_VERSION=" + (pkg?.versionName ?: "unknown"))
@@ -298,15 +324,46 @@ class MainActivity : AppCompatActivity() {
                 this@MainActivity.fileUploadCallback?.onReceiveValue(null)
                 this@MainActivity.fileUploadCallback = filePathCallback
                 return try {
-                    val choose = Intent(Intent.ACTION_GET_CONTENT).apply {
-                        type = "*/*"
-                        addCategory(Intent.CATEGORY_OPENABLE)
-                        putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("image/*", "application/pdf"))
-                        putExtra(Intent.EXTRA_ALLOW_MULTIPLE, fileChooserParams?.mode == WebChromeClient.FileChooserParams.MODE_OPEN_MULTIPLE)
+                    val accepts = fileChooserParams?.acceptTypes?.filter { it.isNotBlank() } ?: emptyList()
+                    val imagesOnly = accepts.isNotEmpty() && accepts.all {
+                        it.trim().startsWith("image/", ignoreCase = true)
                     }
-                    filePicker.launch(Intent.createChooser(choose, "Выберите фото или документ"))
+                    val choose = Intent(Intent.ACTION_GET_CONTENT).apply {
+                        type = if (imagesOnly) "image/*" else "*/*"
+                        addCategory(Intent.CATEGORY_OPENABLE)
+                        if (!imagesOnly) putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("image/*", "application/pdf"))
+                        putExtra(Intent.EXTRA_ALLOW_MULTIPLE,
+                            fileChooserParams?.mode == WebChromeClient.FileChooserParams.MODE_OPEN_MULTIPLE)
+                    }
+                    val camera = if (imagesOnly) {
+                        val dir = File(cacheDir, "order-photos").apply { mkdirs() }
+                        val output = File.createTempFile("traksos-", ".jpg", dir)
+                        val uri = FileProvider.getUriForFile(this@MainActivity,
+                            "${packageName}.fileprovider", output)
+                        pendingCameraFile = output
+                        pendingCameraUri = uri
+                        Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
+                            putExtra(MediaStore.EXTRA_OUTPUT, uri)
+                            clipData = ClipData.newUri(contentResolver, "TrakSOS repair photo", uri)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                                Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                        }
+                    } else null
+                    val launch = if (fileChooserParams?.isCaptureEnabled == true && camera != null) {
+                        camera
+                    } else {
+                        Intent.createChooser(choose, if(imagesOnly) "Фото для заявки" else "Выберите фото или документ")
+                            .apply {
+                                if (camera != null)
+                                    putExtra(Intent.EXTRA_INITIAL_INTENTS, arrayOf(camera))
+                            }
+                    }
+                    filePicker.launch(launch)
                     true
                 } catch (_: Exception) {
+                    pendingCameraFile?.delete()
+                    pendingCameraFile = null
+                    pendingCameraUri = null
                     this@MainActivity.fileUploadCallback?.onReceiveValue(null)
                     this@MainActivity.fileUploadCallback = null
                     false
@@ -337,7 +394,15 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         intent.getStringExtra(EXTRA_PATH)?.let { path ->
-            web.evaluateJavascript("location.hash = ${JSONObject.quote("#/$path")}", null)
+            if (BuildConfig.DEBUG && path.startsWith("android-review/")) {
+                // The error screen uses loadDataWithBaseURL(null). Changing its
+                // hash keeps the fake error HTML instead of loading APK React.
+                // A fresh URL also works when the emulator has no network.
+                failed = false
+                web.loadUrl(urlFor(path))
+            } else {
+                web.evaluateJavascript("location.hash = ${JSONObject.quote("#/$path")}", null)
+            }
         }
     }
 
@@ -428,64 +493,38 @@ class MainActivity : AppCompatActivity() {
         startupOverlay = null
     }
 
-    /** Экран ошибки: что случилось, «Повторить» и поле адреса сервера (для тестового стенда) */
+    /** No old mock dashboard: show an error and a real, bundled debug-only design review. */
     private fun showOffline(reason: String) {
         hideStartupOverlay()
         failed = true
         web.removeCallbacks(watchdog)
-        if (!BuildConfig.DEBUG) {
-            val safeReason = android.text.TextUtils.htmlEncode(reason)
-            val html = """
-            <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-            <style>*{box-sizing:border-box}body{background:linear-gradient(155deg,#041326,#112c49 65%,#28102e);margin:0;
-            display:flex;align-items:center;justify-content:center;min-height:100vh;color:white;font-family:Arial,sans-serif}
-            main{padding:28px;max-width:430px;text-align:center}
-            h1{font-size:36px;font-weight:900}em{font-style:normal;color:#fc1978}
-            p{line-height:1.55;color:#c9d9eb}button{background:#ef146a;color:white;width:100%;border:1px solid #ff74b0;
-            border-radius:14px;padding:16px;font-size:17px;font-weight:700;margin-top:22px}
-            small{color:#acbfd4;display:block;margin-top:15px;line-height:1.4}
-            </style></head><body><main><h1>Trak<em>SOS</em></h1>
-            <p>Нет связи с сервером TrakSOS. Проверьте интернет и попробуйте снова.</p>
-            <button onclick="TrakSOSNative.retry()">Повторить подключение</button>
-            <small>$safeReason</small></main></body></html>
-            """.trimIndent()
-            web.post { web.loadDataWithBaseURL(null, html, "text/html", "utf-8", null) }
-            return
-        }
-        val q = { t: String -> JSONObject.quote(t) }
+        val safeReason = android.text.TextUtils.htmlEncode(reason)
+        val debugActions = if (BuildConfig.DEBUG) """
+            <button class="review" onclick="TrakSOSNative.openDesignReview()">Проверить кабинеты Android</button>
+            <small>Только тестовый APK: вымышленные данные без SMS, звонков и оплаты.</small>
+        """.trimIndent() else ""
         val html = """
-        <html lang="ru"><head><meta name="viewport" content="width=device-width,initial-scale=1"><meta charset="utf-8">
-        <style>*{box-sizing:border-box}body{margin:0;background:#061426;color:#f4faff;font-family:Arial,sans-serif}
-        header{padding:20px;background:#0c223e;display:flex;justify-content:space-between;align-items:center}
-        strong.logo{font-size:24px;color:#00cceb}.badge{font-size:11px;color:#a8adb2}
-        main{padding:18px 18px 85px}.alert,.card{border-radius:14px;padding:16px;margin-bottom:14px}
-        .alert{background:#12344d;border:1px solid #09b9d0;font-size:13px;line-height:1.5}
-        .card{background:#0d2948;border:1px solid #276482}h2{margin:22px 0 12px}
-        p{font-size:14px;color:#b5bac0;line-height:1.5}
-        button.action{padding:13px;border:0;border-radius:12px;background:#00cceb;color:#171717;font-weight:bold;width:100%;font-size:15px}
-        button.secondary{padding:13px;border:1px solid #00cceb;border-radius:12px;background:none;color:#00cceb;width:100%}
-        .page{display:none}.page.active{display:block}
-        nav{position:fixed;bottom:0;display:flex;width:100%;background:#0c223e;border-top:1px solid #286581}
-        nav button{flex:1;padding:17px 0;background:none;border:0;color:#b5bac0;font-size:12px}
-        nav button.active{color:#00cceb;font-weight:bold}
-        input{width:100%;padding:14px;border:1px solid #276482;border-radius:10px;background:#061426;color:white;margin-bottom:12px}
-        </style></head><body><header><strong class="logo">TrakSOS</strong><span class="badge">АВТОНОМНОЕ ДЕМО</span></header>
-        <main><div class="alert">Сервер TrakSOS ещё не запущен. Это демонстрация интерфейса: реальные вызовы, заявки, вход и загрузка документов отключены.</div>
-        <section class="page active" id="home"><h2>Помощь грузовику</h2>
-        <div class="card"><b>🚨 Срочная помощь</b><p>Вызов специалиста при поломке на дороге.</p><button class="action" onclick="show('sos')">Открыть SOS</button></div>
-        <div class="card"><b>🔧 Выездной мастер</b><p>Электрик, диагностика и ремонт на месте.</p><button class="secondary" onclick="show('orders')">Заявки</button></div>
-        <div class="card"><b>🚛 Эвакуатор</b><p>Помощь с транспортировкой грузового автомобиля.</p></div></section>
-        <section class="page" id="sos"><h2>Вызов SOS</h2><div class="card"><b>Экстренная заявка</b><p>После подключения сервера здесь будут адрес, тип поломки, стоимость и поиск исполнителя.</p><button class="action" onclick="alert('Это демонстрация. SOS-вызов не отправлен.')">Проверить кнопку SOS</button></div></section>
-        <section class="page" id="orders"><h2>Мои заявки</h2><div class="card"><b>Заявок нет</b><p>История, чат, исполнители и документы появятся после запуска системы.</p></div></section>
-        <section class="page" id="profile"><h2>Личный кабинет</h2><div class="card"><b>Профиль · демо</b><p>Автомобили, страховки, документы и личные данные будут доступны после подключения сервера.</p></div>
-        <button class="secondary" onclick="document.getElementById('setup').style.display='block'">Настроить тестовый сервер</button>
-        <div id="setup" style="display:none"><p>Введите HTTPS-адрес работающего тестового стенда.</p><input id="u" placeholder="https://тестовый-сервер"><button class="action" onclick="TrakSOSNative.setServer(document.getElementById('u').value)">Сохранить и открыть</button>
-        <button class="secondary" style="margin-top:10px" onclick="TrakSOSNative.setServer('')">Вернуться в автономное демо</button><p id="r"></p></div></section></main>
-        <nav><button id="tab-home" class="active" onclick="show('home')">Главная</button><button id="tab-sos" onclick="show('sos')">SOS</button><button id="tab-orders" onclick="show('orders')">Заявки</button><button id="tab-profile" onclick="show('profile')">Кабинет</button></nav>
-        <script>function show(id){document.querySelectorAll('.page').forEach(function(e){e.classList.toggle('active',e.id===id)});document.querySelectorAll('nav button').forEach(function(e){e.classList.toggle('active',e.id==='tab-'+id)});scrollTo(0,0)}
-        document.getElementById('u').value=SERVER_VALUE;document.getElementById('r').textContent=REASON_VALUE;</script></body></html>
-        """.trimIndent().replace("SERVER_VALUE", q(Session.server(this))).replace("REASON_VALUE", q(reason))
+        <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+        <style>*{box-sizing:border-box}body{background:linear-gradient(160deg,#071523,#173146 75%,#0a1a2a);
+        margin:0;display:grid;place-items:center;min-height:100vh;color:white;font-family:Arial,sans-serif}
+        main{padding:26px;max-width:430px;width:100%;text-align:center}
+        h1{font-size:34px;font-weight:900}em{font-style:normal;color:#f88435}
+        p{line-height:1.55;color:#c9d9e5}button{background:linear-gradient(#f98a31,#e9651c);color:white;
+        width:100%;border:1px solid #ffa45e;border-radius:13px;padding:15px;font-size:16px;
+        font-weight:750;margin-top:13px}button.review{background:#19344a;border-color:#527c95}
+        small{color:#a8c1d3;display:block;margin-top:12px;line-height:1.45}
+        </style></head><body><main><h1>Trak<em>SOS</em></h1>
+        <p>Не удалось подключиться к серверу. Сам интерфейс приложения встроен в APK.</p>
+        <button onclick="TrakSOSNative.retry()">Повторить подключение</button>
+        $debugActions
+        <small>$safeReason</small></main></body></html>
+        """.trimIndent()
         web.post { web.loadDataWithBaseURL(null, html, "text/html", "utf-8", null) }
+    }
+
+    /** Switch from a network error to the actual APK-packaged React workspace. */
+    fun openDesignReview() {
+        if (BuildConfig.DEBUG) web.post { web.loadUrl(urlFor("android-review/client")) }
     }
 
     fun evalEvent(name: String, data: Map<String, String>) {
@@ -516,6 +555,22 @@ class MainActivity : AppCompatActivity() {
 class WebBridge(private val activity: MainActivity) {
     @JavascriptInterface
     fun isApp(): Boolean = true
+
+    /** Available only in the distinct debug APK; never bypasses backend login. */
+    @JavascriptInterface
+    fun isPreviewBuild(): Boolean = BuildConfig.DEBUG
+
+    @JavascriptInterface
+    fun openDesignReview() {
+        if (BuildConfig.DEBUG) activity.openDesignReview()
+    }
+
+    /** Emulator proof of the real React review screen (no customer data logged). */
+    @JavascriptInterface
+    fun designReviewReady(role: String) {
+        if (BuildConfig.DEBUG && role in setOf("client", "driver", "master", "tow"))
+            android.util.Log.i("TrakSOSRuntime", "DESIGN_REVIEW_RENDERED=" + role)
+    }
 
     /** Экран ошибки: «Повторить» */
     @JavascriptInterface

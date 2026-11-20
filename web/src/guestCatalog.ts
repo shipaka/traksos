@@ -8,6 +8,37 @@ export const SERVICE_TILES = [
   { id: 'parts', icon: '⚙', title: 'Запчасти', hint: 'Оригиналы и аналоги для грузовиков' },
   { id: 'consult', icon: '☏', title: 'Консультации', hint: 'Техническая помощь по телефону' },
 ] as const;
+// Owner-approved PUBLIC six tiles of 19 Nov 2026. Keep SERVICE_TILES
+// as the underlying technical catalogue: services not in this promotional
+// row (master, tow, consultation) must continue to work elsewhere.
+export const PUBLIC_HOME_TILES = [
+  { id:'sos', icon:'⚠', title:'SOS', hint:'Экстренная помощь на дороге', href:'#/explore/sos' },
+  { id:'air', icon:'◉', title:'Эфир', hint:'Общение и помощь водителей', href:'#/explore/air' },
+  { id:'sto', icon:'⚒', title:'СТО', hint:'Проверенные сервисы и ремонт', href:'#/explore/sto' },
+  { id:'ecu', icon:'▣', title:'ЭБУ', hint:'Диагностика и решения', href:'#/explore/ecu' },
+  { id:'parts', icon:'⚙', title:'Запчасти', hint:'Поиск и подбор деталей', href:'#/explore/parts' },
+  { id:'insurance', icon:'◇', title:'Страхование', hint:'Подбор полиса для грузовика', href:'#/explore/insurance' },
+] as const;
+
+// Working secondary navigation. Not appearing in the six-tile banner must
+// NEVER make an existing function disappear from the product.
+export const PUBLIC_CAPABILITIES = [
+  { title:'Помощь SOS', href:'#/explore/sos' },
+  { title:'Выездной мастер', href:'#/explore/van' },
+  { title:'Эвакуатор', href:'#/explore/tow' },
+  { title:'СТО и ремонт', href:'#/explore/sto' },
+  { title:'Ремонт ЭБУ', href:'#/explore/ecu' },
+  { title:'Консультация', href:'#/explore/consult' },
+  { title:'Эфир водителей', href:'#/explore/air' },
+  { title:'ТехБаза и справочник', href:'#/explore/tech' },
+  { title:'Мой гараж', href:'#/explore/garage' },
+  { title:'Запчасти', href:'#/explore/parts' },
+  { title:'Страхование', href:'#/explore/insurance' },
+  { title:'Обучение', href:'#/explore/training' },
+  { title:'TrakBot', href:'#/explore/trakbot' },
+  { title:'Партнёрам', href:'#/join' },
+] as const;
+
 export type ServiceId = typeof SERVICE_TILES[number]['id'];
 export type CatalogueItem = { label: string; key: string };
 export const CATALOGUE: Record<ServiceId,{
@@ -30,7 +61,7 @@ export const CATALOGUE: Record<ServiceId,{
     services: [
       {label:'Автоэлектрика',key:'electric'}, {label:'Компьютерная диагностика',key:'diag'},
       {label:'Пневматика и тормоза',key:'air'}, {label:'Автономные отопители',key:'autonomy'},
-      {label:'Выездной шиномонтаж',key:'tyre'},
+      {label:'Выездной шиномонтаж',key:'tyre'}, {label:'Выездной ремонт гидравлики',key:'hydraulics'},
     ],
     client:['Оформление заявки','Выбор специализации мастера','Контроль этапов работы','История ремонтов'],
     provider:['Настройка специализаций','Приём заявок и статус линии','График выездов','Финансовый раздел'],
@@ -40,7 +71,7 @@ export const CATALOGUE: Record<ServiceId,{
     services: [
       {label:'Запись в СТО',key:'booking'}, {label:'Ремонт грузовиков',key:'repair'}, {label:'Техническое обслуживание',key:'maintenance'},
       {label:'Компьютерная диагностика',key:'diagnostics'}, {label:'Ремонт прицепов',key:'trailer'},
-      {label:'Шиномонтаж',key:'tyre'},
+      {label:'Шиномонтаж',key:'tyre'}, {label:'Ремонт гидравлики',key:'hydraulics'},
     ],
     client:['Поиск и запись в СТО','История обслуживания','Документы и счета','Запчасти для ремонта'],
     provider:['Календарь записей','Рабочие заявки и ремонты','Раздел финансов','Магазин запчастей'],
@@ -88,7 +119,7 @@ export const TOP_CATALOGUE: { title: string; serviceIds: ServiceId[]; direct?: b
 export const MASTER_SPECIALTIES = [
   { id:'electric', name:'Электрик' }, {id:'diag',name:'Диагност'},
   {id:'air',name:'Пневматика и тормоза'}, {id:'autonomy',name:'Автономщик'},
-  {id:'tyre',name:'Шиномонтаж'}, {id:'consult',name:'Консультации'},
+  {id:'tyre',name:'Шиномонтаж'}, {id:'hydraulics',name:'Гидравлика'}, {id:'consult',name:'Консультации'},
 ] as const;
 
 /** Short-lived client-side navigation hint; never grants a role or access. */

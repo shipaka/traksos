@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { post, setToken, connectWs, ApiError } from '../api.ts';
 import { useAction, useMe, useToast, Field, go } from '../ui.tsx';
-import { SERVICE_TILES, MASTER_SPECIALTIES, rememberGuestService } from '../guestCatalog.ts';
+import { PUBLIC_HOME_TILES, MASTER_SPECIALTIES, rememberGuestService } from '../guestCatalog.ts';
+import { OwnerDesktopHome20261120 } from './ownerDesktopHome20261120.tsx';
 
 const HERO_SLIDES = [
-  { id: 'approved', label: 'Единая платформа TrakSOS', eyebrow: 'ЕДИНАЯ ПЛАТФОРМА ДЛЯ ГРУЗОВОГО ТРАНСПОРТА',
-    description: 'Эвакуация · Выездной мастер · Ремонт и ТО · Запчасти · Страхование · Техосмотры · Консультации',
+  { id: 'approved', label: 'Единая платформа TrakSOS', eyebrow: 'TRAKSOS · ПОМОЩЬ НА ДОРОГЕ И В ДЕЛЕ',
+    description: 'Единая платформа для водителей, перевозчиков и всех, кто работает с грузовой техникой',
     caption: 'Зона запуска: Санкт-Петербург и Ленинградская область. В других регионах выездные услуги пока недоступны.' },
   { id: 'rescue', label: 'Эвакуация грузового транспорта', eyebrow: 'TRAKSOS · ПОМОЩЬ НА ДОРОГЕ',
     description: 'Нужен эвакуатор? Опишите технику и маршрут, ознакомьтесь с предложениями исполнителей в личном кабинете.',
@@ -14,6 +15,20 @@ const HERO_SLIDES = [
     description: 'Ищите грузовые СТО, планируйте ремонт и обслуживание, следите за обращениями и историей работ.',
     caption: 'Запись доступна после входа при наличии подключённых станций.' },
 ] as const;
+
+
+/** Approved 19 November visual system: recognisable service icons, not font glyph boxes. */
+function PublicTileIcon({ id }: { id: typeof PUBLIC_HOME_TILES[number]['id'] }) {
+  const shared = { fill:'none', stroke:'currentColor', strokeWidth:2, strokeLinecap:'round' as const, strokeLinejoin:'round' as const };
+  return <svg viewBox="0 0 48 48" width="40" height="40" aria-hidden="true" focusable="false" {...shared}>
+    {id === 'sos' ? <><path d="M24 5 45 42H3Z"/><path d="M24 17v13m0 6v1"/></>
+      : id === 'air' ? <><circle cx="24" cy="25" r="4" fill="currentColor" stroke="none"/><path d="M15 16a12 12 0 0 0 0 18m18-18a12 12 0 0 1 0 18M9 10a20 20 0 0 0 0 30m30-30a20 20 0 0 1 0 30"/></>
+      : id === 'sto' ? <><path d="M29 5a13 13 0 0 0-11 18L5 36a5 5 0 0 0 7 7l13-13A13 13 0 0 0 43 14l-9 9-9-2-2-9Z"/></>
+      : id === 'ecu' ? <><rect x="11" y="11" width="26" height="26" rx="3"/><rect x="18" y="18" width="12" height="12" rx="1"/><path d="M17 4v7m7-7v7m7-7v7M17 37v7m7-7v7m7-7v7M4 17h7m-7 7h7m-7 7h7m26-14h7m-7 7h7m-7 7h7"/></>
+      : id === 'parts' ? <><path d="M19 5h10l2 6 5 2 6-2 5 9-5 4v6l5 4-5 9-6-2-5 2-2 6H19l-2-6-5-2-6 2-5-9 5-4v-6l-5-4 5-9 6 2 5-2Z" transform="translate(0,-3) scale(.96)"/><circle cx="24" cy="24" r="8"/></>
+      : <><path d="M24 4 42 12v14c0 10-7 17-18 20C13 43 6 36 6 26V12Z"/><path d="m15 25 6 6 12-13"/></>}
+  </svg>;
+}
 
 function PublicDemoMapBackdrop() {
   // The public demonstration map is a bundled, immutable asset.
@@ -66,6 +81,7 @@ export function homeFor(roles: string[], intent: Intent): string {
   if (intent === 'join') return roles.includes('insurer') ? '#/insurance' : performer ? '#/as/performer' : '#/as/service';
   if (roles.includes('admin')) return '#/as/admin';
   if (roles.includes('moderator')) return '#/as/moderator';
+  if (roles.includes('courier')) return '#/courier';
   if (roles.includes('insurer')) return '#/insurance';
   if (roles.includes('inspection_operator')) return '#/inspections';
   if (roles.includes('client') || roles.includes('driver')) return '#/as/client';
@@ -79,6 +95,8 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const { busy, run } = useAction();
   const [intent, setIntent] = useState<Intent | null>(driver ? 'login' : entry ?? null);
   const [heroSlide, setHeroSlide] = useState(0);
+  const [desktopPublic, setDesktopPublic] = useState(() => window.matchMedia('(min-width: 900px)').matches);
+  useEffect(() => { const q = window.matchMedia('(min-width: 900px)'); const update = () => setDesktopPublic(q.matches); q.addEventListener('change',update); return () => q.removeEventListener('change',update); }, []);
   const [phone, setPhone] = useState('+7 ');
   const [step, setStep] = useState<'phone' | 'code'>('phone');
   const [code, setCode] = useState('');
@@ -91,6 +109,9 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const [role, setRole] = useState<JoinRole | null>(null);
   const [customerType, setCustomerType] = useState<'owner' | 'driver'>('owner');
   const [specialties, setSpecialties] = useState<string[]>([]);
+  const [hybridMasterService, setHybridMasterService] = useState(false);
+  // A single vetted company may run both the mobile master and the fixed STO.
+  // The two cabinets and their scopes stay separate; no extra public role card.
   const [specialtiesOpen, setSpecialtiesOpen] = useState(true);
   const [insurerOnly, setInsurerOnly] = useState(false);
   const [agree, setAgree] = useState(false);
@@ -122,6 +143,8 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
     if (entry) go('');
   };
 
+  const partnerAccountType = intent === 'join' && (role === 'master' || role === 'service') && hybridMasterService
+    ? 'master_service' : role;
   async function sendCode() {
     if (busy) return;
     setCodeError('');
@@ -138,7 +161,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
       setCodeError('Выберите, кем хотите работать с TrakSOS.');
       return;
     }
-    if (intent === 'join' && role === 'master' && specialties.length === 0) {
+    if (intent === 'join' && (role === 'master' || hybridMasterService) && specialties.length === 0) {
       setCodeError('Выберите хотя бы одну специализацию мастера.');
       return;
     }
@@ -147,7 +170,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
     const r = await run(async () => {
       try {
         return await post('/api/auth/code', { phone, purpose: intent === 'reset' || intent === 'activate' ? 'reset' : 'register',
-          accountType: intent === 'join' ? role : intent === 'register' || intent === 'help' ? customerType : undefined });
+          accountType: intent === 'join' ? partnerAccountType : intent === 'register' || intent === 'help' ? customerType : undefined });
       } catch (e) {
         if (e instanceof ApiError && e.code === 'insurer_only') setInsurerOnly(true);
         setCodeError(authErrorMessage(e, 'Не удалось связаться с сервером. Проверьте интернет и повторите попытку.'));
@@ -192,7 +215,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
       try {
         return await post('/api/auth/verify', { phone, code,
           role: intent === 'join' ? role : undefined,
-          accountType: intent === 'join' ? role : intent === 'register' || intent === 'help' ? customerType : undefined,
+          accountType: intent === 'join' ? partnerAccountType : intent === 'register' || intent === 'help' ? customerType : undefined,
           purpose: intent === 'reset' || intent === 'activate' ? 'reset' : 'register', password,
           ref: (() => { try { return localStorage.getItem('traksos.ref') ?? undefined; } catch { return undefined; } })(), device: navigator.userAgent.slice(0, 200), acceptOffers: agree });
       } catch (e) {
@@ -205,7 +228,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
     if (r) await signedIn(r);
   }
   async function signedIn(r: any) {
-      if (intent === 'join' && role === 'master') {
+      if (intent === 'join' && (role === 'master' || hybridMasterService)) {
         try { sessionStorage.setItem('traksos.masterSpecialties', JSON.stringify(specialties)); } catch { /* private browsing */ }
       }
       toast('Вы вошли');
@@ -248,6 +271,8 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
     : intent === 'join' ? 'Выберите, кем подключаетесь. После входа заполните профиль — проверим и откроем заявки.'
     : intent === 'register' ? 'Укажите номер телефона. Если аккаунта ещё нет, создадим его после подтверждения SMS-кодом.'  : 'Вход по паролю, без SMS. Если забыли пароль — восстановите доступ.'; // legacy description
 
+  if (!intent && desktopPublic) return <OwnerDesktopHome20261120 />;
+
   if (!intent) return (
     <main className="public-home public-landing" id="public-home">
       <div className="public-landing-head">
@@ -259,7 +284,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         <div className="public-hero-copy">
           <span className="public-eyebrow">{HERO_SLIDES[heroSlide].eyebrow}</span>
           <h1 id="public-main-title" key={'title-'+heroSlide}>
-            {heroSlide === 0 ? <><em>Trak<b>SOS</b></em> — помощь<br/>в пути и полный сервис<br/>для грузовиков и прицепов</>
+            {heroSlide === 0 ? <><em>Trak<b>SOS</b></em> —<br/>помощь в пути</>
             : heroSlide === 1 ? <>Эвакуация грузовиков<br/>и помощь в пути<br/>с <em>Trak<b>SOS</b></em></>
             : <>Ремонт и запись в СТО<br/>для грузового транспорта<br/>с <em>Trak<b>SOS</b></em></>}
           </h1>
@@ -272,10 +297,10 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           </div>
           <div className="public-actions">
             <button type="button" className="public-button public-button-sos"
-              onClick={() => heroSlide === 0 ? go('login') : go(heroSlide === 1 ? 'explore/tow' : 'explore/sto')}>
-              {heroSlide === 0 ? 'Войти' : heroSlide === 1 ? 'Узнать об эвакуации' : 'Узнать о СТО'}
+              onClick={() => heroSlide === 0 ? go('register') : go(heroSlide === 1 ? 'explore/tow' : 'explore/sto')}>
+              {heroSlide === 0 ? 'Зарегистрироваться' : heroSlide === 1 ? 'Узнать об эвакуации' : 'Узнать о СТО'}
             </button>
-            <button type="button" className="public-button public-button-outline" onClick={() => go('register')}>Регистрация</button>
+            <a className="public-button public-button-outline" href="#/explore/guide">Как это работает</a>
           </div>
 
           <div className="public-hero-caption" key={'caption-'+heroSlide}>{HERO_SLIDES[heroSlide].caption}</div>
@@ -301,10 +326,10 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         <section className="public-real-services" id="public-services">
           <div className="public-section-head public-services-a11y-title"><span className="public-section-kicker">ПОМОЩЬ ГРУЗОВИКАМ</span><h2>Все услуги TrakSOS</h2></div>
           <div className="public-service-tiles">
-            {SERVICE_TILES.map(({id,icon,title,hint}) => (
-              <a href={'#/explore/' + id} className={'public-service-tile public-service-' + id}
-                key={id} onClick={() => rememberGuestService(id)}>
-                <span className="public-service-icon" aria-hidden="true">{icon}</span>
+            {PUBLIC_HOME_TILES.map(({id,title,hint,href}) => (
+              <a href={href} className={'public-service-tile public-service-' + id}
+                key={id}>
+                <span className="public-service-icon" aria-hidden="true"><PublicTileIcon id={id}/></span>
                 <b>{title}</b><small>{hint}</small><span className="public-service-arrow">Далее <span aria-hidden="true">›</span></span>
               </a>
             ))}
@@ -319,7 +344,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <h2>Мобильное приложение <em>TrakSOS</em></h2>
           <div className="public-app-phone" aria-hidden="true">
             <span className="public-app-logo">Trak<b>SOS</b></span>
-            <img className="public-app-phone-truck" src="/tracksos-approved-scania-r520.webp" alt="" loading="lazy" />
+            <img className="public-app-phone-truck" src="/icon-192.png?v=approved-20261120" alt="" loading="lazy" />
             <span>Помощь грузовику<br/>в дороге</span>
           </div>
           <p>Заявки, специалисты, документы и связь с мастером — в одном приложении.</p>
@@ -329,35 +354,36 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
       </div>
 
       <section className="public-why-strip" aria-label="Преимущества сервиса">
-        <article className="public-benefit public-benefit-speed"><span className="public-benefit-icon">⚡</span><b>Быстрая помощь</b><small>Обращение можно оформить онлайн</small></article>
-        <article className="public-benefit public-benefit-verified"><span className="public-benefit-icon">
+        <article className="public-benefit public-benefit-community"><span className="public-benefit-icon">
           <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M24 4 39 10v12c0 10-6 17-15 22C15 39 9 32 9 22V10Z" />
-            <path d="m17 24 5 5 10-11" />
-          </svg></span><b>Проверенные партнёры</b><small>Проверка мастеров, СТО и эвакуаторов</small></article>
+            <path d="M24 4 41 11v12c0 12-7 18-17 22C14 41 7 35 7 23V11Z" />
+            <path d="m15 24 6 6 12-13"/>
+          </svg></span><b>Надёжное сообщество</b><small>Реальный опыт, поддержка коллег и проверенные решения</small></article>
+        <article className="public-benefit public-benefit-speed"><span className="public-benefit-icon">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M27 3 8 27h15l-3 18 20-25H25Z"/>
+          </svg></span><b>Быстрая помощь</b><small>Оперативные ответы и конкретные действия в любой ситуации</small></article>
         <article className="public-benefit public-benefit-unified"><span className="public-benefit-icon">
           <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <circle cx="24" cy="12" r="6" /><circle cx="11" cy="34" r="6" /><circle cx="37" cy="34" r="6" />
-            <path d="m21 18-7 10m13-10 7 10M18 34h12" />
-          </svg></span><b>Всё в одном месте</b><small>Помощь, запчасти и страхование</small></article>
-        <article className="public-benefit public-benefit-value"><span className="public-benefit-icon">%</span><b>Выгодные условия</b><small>Для водителей и автопарков</small></article>
+            <path d="m24 4 19 11-19 11L5 15Z"/><path d="m5 23 19 11 19-11M5 32l19 11 19-11"/>
+          </svg></span><b>Всё в одном месте</b><small>Сервисы, инструменты и контакты для работы с грузовой техникой</small></article>
       </section>
       <div className="public-track-extras">
         <button type="button" className="public-track-insurance" onClick={() => { rememberGuestService('insurance'); go('register'); }}>
-          <span className="public-track-insurance-art" aria-hidden="true" />
+          
           <span><b>Страхование грузового транспорта</b>
           <small>ОСАГО, КАСКО, груз, ответственность — заявка через TrakSOS</small></span>
           <strong>Оформить заявку →</strong>
         </button>
         <div className="public-track-extras-grid">
           <a href="#/explore/parts" className="public-track-extra public-track-parts" onClick={() => rememberGuestService('parts')}>
-            <span className="public-track-extra-art" aria-hidden="true"/><b>Запчасти</b><small>Оригиналы и проверенные аналоги</small><span aria-hidden="true">›</span>
+            <b>Запчасти</b><small>Оригиналы и проверенные аналоги</small><span aria-hidden="true">›</span>
           </a>
           <a href="#/explore/inspection" className="public-track-extra public-track-inspection" onClick={() => rememberGuestService('inspection')}>
-            <span className="public-track-extra-art" aria-hidden="true"/><b>Техосмотр</b><small>Информация и доступные варианты</small><span aria-hidden="true">›</span>
+            <b>Техосмотр</b><small>Информация и доступные варианты</small><span aria-hidden="true">›</span>
           </a>
-          <a href="#/explore/guide" className="public-track-extra public-track-guide">
-            <span className="public-track-extra-art" aria-hidden="true"/><b>Полезное</b><small>Как работает сервис</small><span aria-hidden="true">›</span>
+          <a href="#/explore/tech" className="public-track-extra public-track-techbase">
+            <b>ТехБаза</b><small>Коды ошибок, схемы и проверенные технические источники</small><span aria-hidden="true">›</span>
           </a>
         </div>
       </div>
@@ -468,9 +494,13 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
                 <b>{partnerShowcase.tag}</b><span>{partnerShowcase.title}</span>
               </div>
             </div>
-            {role === 'master' && <details className="guest-master-specialties" open={specialtiesOpen}>
+            {(role === 'master' || role === 'service') && <label className="agree guest-partner-hybrid">
+              <input type="checkbox" checked={hybridMasterService} onChange={event=>setHybridMasterService(event.target.checked)}/>
+              <span><b>Работаю и выездным мастером, и в своей СТО</b> — открыть оба кабинета, профиль работ и режим работы каждого отдельно</span>
+            </label>}
+            {(role === 'master' || (role === 'service' && hybridMasterService)) && <details className="guest-master-specialties" open={specialtiesOpen}>
               <summary onClick={event => { event.preventDefault(); setSpecialtiesOpen(v => !v); }}>
-                Специализации мастера · выбрано: {specialties.length} <span aria-hidden="true">⌄</span>
+                Специализации выездного мастера · выбрано: {specialties.length} <span aria-hidden="true">⌄</span>
               </summary>
               <span className="label">Можно выбрать несколько вариантов</span>
               <div className="guest-master-specialties-grid">

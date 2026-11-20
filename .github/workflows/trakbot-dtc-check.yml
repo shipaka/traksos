@@ -1,0 +1,60 @@
+name: TrakBot — проверка справочника ошибок (CC0)
+
+on:
+  pull_request:
+    paths:
+      - 'server/src/ops/importObdex.ts'
+      - 'server/migrations/119_trakbot_private_dtc.sql'
+      - 'server/src/services/trakbot*.ts'
+      - 'server/package.json'
+      - '.github/workflows/trakbot-dtc-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  catalogue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: traksos_dtc_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://postgres@127.0.0.1:5432/traksos_dtc_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts
+      - name: Check licensing/source shape and SHA-256 (no DB writes)
+        run: npm -w server run check:dtc
+      - name: Import complete OBDex dataset into isolated CI PostgreSQL
+        run: npm -w server run import:dtc
+      - name: Validate count and provenance
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          DO $$
+          DECLARE n integer;
+          BEGIN
+            SELECT count(*) INTO n FROM diagnostic_codes WHERE protocol='OBD2' AND make='GENERIC';
+            IF n < 9533 THEN RAISE EXCEPTION 'Too few codes: %', n; END IF;
+            IF EXISTS (
+              SELECT 1 FROM diagnostic_codes WHERE source_license NOT IN ('CC0-1.0', 'original')
+            ) THEN RAISE EXCEPTION 'Unrecognized data license'; END IF;
+          END $$;
+          SQL
+          psql "$DATABASE_URL" -c "select substring(code,1,1) as family, count(*) from diagnostic_codes group by 1 order by 1"
+      - name: CI audit summary
+        if: always()
+        run: |
+          echo '### TrakBot reference catalogue' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Independent CC0 generic OBD-II codes only, downloaded to CI ephemeral PostgreSQL.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'No production DB accessed; no manufacturer/J1939 claims; no charge enabled.' >> "$GITHUB_STEP_SUMMARY"

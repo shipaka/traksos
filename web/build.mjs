@@ -20,6 +20,10 @@ const opts = {
     __API_URL__: JSON.stringify(process.env.API_URL ?? ''),
   },
   loader: { '.css': 'css', '.svg': 'file', '.webp': 'file' },
+  // Files from public/ are copied verbatim to dist/ before bundling.
+  // CSS url('/asset.webp') is a runtime root-relative URL, not a file to
+  // resolve from web/src; otherwise esbuild breaks the approved PC layout.
+  external: ['/*.webp', '/*.svg', '/*.png', '/*.jpg', '/*.jpeg'],
 };
 
 await rm('dist', { recursive: true, force: true });
@@ -38,7 +42,16 @@ if (watch) {
   // and authenticated responses are never stored in CacheStorage.
   const files = (await readdir('dist')).filter((name) =>
     /\.(?:js|css|svg|png|ico|webp|webmanifest|woff2)$/.test(name));
-  const staticPaths = ['/', '/index.html', ...files.map((file) => '/' + file)];
+  // Real manufacturer/model photography is shipped as static, privacy-safe
+  // local WebP. Precache these nested files for poor mobile connectivity;
+  // never precache a customer's own uploaded photo, orders or API responses.
+  const modelImages = (await readdir('dist/vehicles/models').catch(() => []))
+    .filter((name) => /^[a-z0-9-]+\.webp$/.test(name))
+    .map((name) => '/vehicles/models/' + name).sort();
+  const photoCredits = await readFile('dist/vehicle-photo-credits.html').then(
+    () => ['/vehicle-photo-credits.html'], () => []);
+  const staticPaths = ['/', '/index.html', ...files.map((file) => '/' + file),
+    ...modelImages, ...photoCredits];
   // Version the complete static bundle, including branded artwork. Otherwise
   // a truck image replacement under an unchanged file name stays in old PWA caches.
   const cacheHash = createHash('sha256');

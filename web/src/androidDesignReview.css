@@ -1,0 +1,122 @@
+/* Debug APK visual acceptance only: production route is not exposed. */
+.and19-review-page{min-height:100dvh;padding:0 0 28px;background:linear-gradient(175deg,#071524,#0c2032 63%,#071523);color:#edf7ff;overflow-x:hidden}
+.and19-review-header{min-height:64px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;background:#081a2c;border-bottom:1px solid #29445a}
+.and19-review-header img{max-width:60%;height:auto}
+.and19-review-header a,.and19-review-footer a{color:#a5eaf2;font-size:12px;text-decoration:none;border:1px solid #466376;border-radius:9px;padding:10px;min-height:44px;display:flex;align-items:center}
+.and19-review-warning{display:flex;flex-direction:column;gap:3px;margin:12px 12px 9px;border:1px solid #f18b3b;border-radius:12px;padding:11px 12px;background:#48301a77;color:#f9e4d4;font-size:11px;line-height:1.4}
+.and19-review-warning strong{color:#ffad66;font-size:12px;letter-spacing:.03em}
+.and19-review-roles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:0 12px 12px}
+.and19-review-roles a{display:grid;place-items:center;min-height:44px;padding:6px 2px;text-align:center;border:1px solid #456076;border-radius:10px;color:#c7d7e7;text-decoration:none;font-size:11px;background:#14283b}
+.and19-review-roles a[aria-current=page]{color:#fff;border-color:#ff8b32;background:linear-gradient(180deg,#d9651c,#9b3e15);font-weight:800}
+.and19-review-live{padding:0 12px}
+.and19-review-live .and19-workspace{display:flex!important;width:100%}
+.and19-review-live a,.and19-review-live button{cursor:pointer}
+.and19-review-live a:focus-visible,.and19-review-roles a:focus-visible{outline:2px solid #f89a51;outline-offset:2px}
+.and19-review-message{margin:10px 12px;color:#ffd8b7;font-size:13px}
+.and19-review-footer{display:flex;flex-direction:column;gap:12px;margin:13px 12px 0;padding:12px 0;border-top:1px solid #345268;color:#b4cad9;font-size:11px;line-height:1.5}
+.and19-review-footer a{width:max-content;max-width:100%}
+@media(max-width:340px){.and19-review-roles{gap:4px}.and19-review-roles a{font-size:10px}}
+@media(min-width:900px){.and19-review-page{max-width:425px;margin:0 auto;border-left:1px solid #35576d;border-right:1px solid #35576d}}
+
+/* Same fixed, role-specific navigation as a logged-in Android Shell. */
+@media(max-width:899px){
+ .and19-review-page{
+   padding-bottom:calc(96px + env(safe-area-inset-bottom));
+ }
+ .and19-review-page .and19-review-tabbar{
+   position:fixed;
+   z-index:100;
+   bottom:calc(5px + env(safe-area-inset-bottom));
+   left:50%;
+   transform:translateX(-50%);
+   display:grid;
+   align-items:stretch;
+   justify-content:stretch;
+   grid-template-columns:repeat(4,minmax(0,1fr));
+   width:min(430px,calc(100% - 16px));
+   padding:5px;
+   box-sizing:border-box;
+   background:#0b1e30;
+   border:1px solid #4b7086;
+   border-radius:15px;
+   box-shadow:0 -5px 24px #061523b5;
+ }
+ .and19-review-page.role-client .and19-review-tabbar{
+   /* Approved owner/driver Android: five tabs, never six. */
+   grid-template-columns:repeat(5,minmax(0,1fr));
+ }
+ .and19-review-page .and19-review-tabbar a{
+   min-width:0;
+   min-height:53px;
+   display:flex;
+   flex-direction:column;
+   gap:3px;
+   align-items:center;
+   justify-content:center;
+   padding:7px 1px;
+   color:#bad0e2;
+   text-decoration:none;
+   font-size:clamp(9px,2.7vw,11px);
+   font-weight:720;
+   line-height:1.1;
+   white-space:nowrap;
+ }
+ .and19-review-page .and19-review-tabbar a.on{
+   background:linear-gradient(145deg,#a54a16,#40291d);
+   color:#fff;
+   border:1px solid #d7772c;
+   border-radius:10px;
+ }
+ .and19-review-page .and19-review-tabbar .ic{
+   display:grid;
+   place-items:center;
+   width:22px;height:22px;
+   color:inherit;
+ }
+ .and19-review-page .and19-review-tabbar .ic svg{width:20px;height:20px}
+}
+
+/* Render the real 618.png visual before debug controls; the role switch lives
+ * below the real workspace so reviewers can inspect a clean first screen. */
+.and19-review-header{min-height:59px;padding:9px 12px;gap:8px}
+.and19-review-header img{width:min(208px,53vw);height:auto;max-width:100%}
+.and19-review-header-actions{display:flex;gap:11px;align-items:center;flex:none}
+.and19-review-header-actions a,
+.and19-review-header-actions .and19-review-bell{
+ display:grid;place-items:center;flex:none;
+ width:44px;height:44px;min-height:44px;padding:7px;
+ border-radius:50%;background:linear-gradient(145deg,#1b3b50,#122637);
+ border:1px solid #52748a;color:#e6f6fd;text-decoration:none;
+ box-sizing:border-box;
+}
+.and19-review-header-actions svg{width:22px;height:22px}
+.and19-review-indicator{
+ display:flex;align-items:center;justify-content:space-between;
+ gap:8px;min-height:25px;max-width:100%;
+ padding:3px 12px;color:#c4d5e1;font-size:10px;line-height:1.25;
+ background:#192b3a;border-bottom:1px solid #314a5b;
+}
+.and19-review-indicator strong{
+ color:#ffab68;font-size:10px;white-space:nowrap;letter-spacing:.04em;
+}
+.and19-review-indicator span{text-align:right;overflow-wrap:anywhere}
+.and19-review-live{padding:6px 12px 0}
+.and19-review-switcher{
+ margin:15px 12px 0;border:1px solid #57768a;
+ border-radius:12px;color:#e9f7fb;background:#142b3d;
+}
+.and19-review-switcher summary{
+ cursor:pointer;display:flex;align-items:center;
+ min-height:46px;padding:9px 12px;
+ color:#e9f7fb;font-size:12px;font-weight:800;
+}
+.and19-review-switcher[open] summary{border-bottom:1px solid #4b6b80}
+.and19-review-switcher .and19-review-roles{margin:9px}
+.and19-review-switcher .and19-review-roles a{min-height:44px}
+.and19-review-footer{padding-top:8px}
+@media(max-width:340px){
+ .and19-review-header img{width:min(163px,48vw)}
+ .and19-review-header-actions{gap:6px}
+ .and19-review-header-actions a,.and19-review-header-actions .and19-review-bell{width:42px;height:42px}
+ .and19-review-indicator span{font-size:9px}
+}

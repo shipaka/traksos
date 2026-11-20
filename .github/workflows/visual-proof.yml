@@ -1,0 +1,100 @@
+name: Реальные скриншоты TrakSOS
+
+on:
+  pull_request:
+    # Editing PR metadata can request a fresh visual proof even when automated
+    # commits do not emit a GitHub Actions synchronize event.
+    types: [opened, reopened, synchronize, edited]
+  workflow_dispatch:
+
+# A separate visual proof run so failed backend tests do not suppress screenshots.
+concurrency:
+  group: visual-proof-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: traksos
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://postgres@127.0.0.1:5432/traksos
+      ADMIN_PHONES: '+79990000348'
+      MODERATOR_PHONES: '+79990000349'
+    steps:
+      - name: Исходники точно из интеграционной ревизии
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - name: Сборка реального веб-приложения
+        run: npm -w web run build
+      - name: Установка Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Запуск тестового сервера
+        run: |
+          npm -w server start > /tmp/traksos-visual-server.log 2>&1 &
+          for attempt in {1..60}; do
+            if curl -fsS http://127.0.0.1:8080/api/health >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/traksos-visual-server.log
+          exit 1
+      - name: Реальные снимки ПК и телефона на утверждённых размерах
+        run: node e2e/public-shots.mjs e2e/shots
+      - name: Реальные ПК-кабинеты всех доступных тестовых ролей
+        continue-on-error: true
+        run: node e2e/owner20-cabinet-evidence.mjs
+      - name: "Активные ПК-заявки: Chromium, локальные синтетические данные, без оплаты"
+        continue-on-error: true
+        run: node e2e/approved-pc-active-work.mjs
+      - name: Проверка новой главной ПК 20 ноября (6 разрешений, реальные маршруты)
+        run: node e2e/owner20-layout-check.mjs
+      - name: Настоящий Android WebView-гостевой экран, без наложения текста на фуру
+        run: node e2e/native-guest-layout.mjs
+      - name: Реальные Android-кабинеты после входа (синтетические CI-аккаунты)
+        run: node e2e/android-approved-real-screens.mjs
+      - name: Дизайн-тур тестовой APK — реальные React-кабинеты, только синтетика
+        run: node e2e/android-apk-design-review.mjs
+      - name: Реальная проверка TrakBot и переходов
+        run: node e2e/ui-smoke.mjs
+      - name: Реальные переходы и сервисы
+        run: node e2e/public-service-routing.mjs
+      - name: Записать точную ревизию и происхождение скриншотов
+        if: always()
+        env:
+          CAPTURE_COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          CAPTURE_RUN_ID: ${{ github.run_id }}
+        run: |
+          mkdir -p e2e/shots
+          node -e "require('fs').writeFileSync('e2e/shots/capture-provenance.json',JSON.stringify({commit_sha:process.env.CAPTURE_COMMIT_SHA,workflow_run_id:process.env.CAPTURE_RUN_ID,source:'Playwright/Chromium on CI build; not design reference',captured_at:new Date().toISOString()},null,2)+'\\n')"
+      - name: PNG со всех проверенных экранов
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screens-real-browser
+          path: |
+            e2e/shots/**/*.png
+            e2e/shots/capture-provenance.json
+            e2e/shots/owner20-cabinets/capture-report.json
+            e2e/shots/pc-active-synthetic/report.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Честный протокол визуальной проверки
+        if: always()
+        run: |
+          echo '### TrakSOS: screenshots — real Chromium, not mockups' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Owner-approved PC reference: 20 Nov 2026; PNG 617.png SHA256 cde831b7a4ae09622ca68a7f699303ef0a7ae679a76d2a306eb982bc43ed5a1a. Android separate 19 Nov.' >> "$GITHUB_STEP_SUMMARY"
+          echo "Source HEAD: ${{ github.event.pull_request.head.sha || github.sha }}" >> "$GITHUB_STEP_SUMMARY"
+          echo 'Artifact screens-real-browser contains actual HTML screenshots if build and Chromium launched.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Passing this job does not mean visual owner acceptance, Android acceptance, or production deployment.' >> "$GITHUB_STEP_SUMMARY"

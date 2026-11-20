@@ -1,0 +1,982 @@
+/*
+ * Android visual alignment — 20 Nov 2026.
+ *
+ * Last mobile-only layer: lock real React client/master workspaces to the
+ * approved graphite + orange language, without replacing assets, the 4
+ * service actions, API data, tab destinations, or the desktop design.
+ * Also applies to the debug-only real-component review (same widgets).
+ */
+@media (max-width: 899px) {
+  .app.role-client .and19-workspace,
+  .app.role-performer .and19-workspace {
+    --and20-ink: #edf7fd;
+    --and20-muted: #b6cfdf;
+    --and20-border: #42677e;
+    --and20-bg: #0b2131;
+    --and20-accent: #f77a21;
+    gap: 10px;
+    color: var(--and20-ink);
+    min-width: 0;
+  }
+  /* A photograph belongs to the hero, not a blank strip below a heading. */
+  .app.role-client .and19-workspace > .and19-cover,
+  .app.role-performer .and19-workspace > .and19-cover {
+    display: flex;
+    position: relative;
+    min-height: 124px;
+    padding: 17px 14px;
+    border: 1px solid #456b7e;
+    border-radius: 17px;
+    background: #0a1b2c;
+    isolation: isolate;
+    overflow: hidden;
+    box-shadow: 0 8px 22px rgba(0, 7, 19, .23);
+  }
+  .app.role-client .and19-cover img,
+  .app.role-performer .and19-cover img {
+    display: block;
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 58% center;
+    opacity: 1;
+  }
+  .app.role-client .and19-cover::before,
+  .app.role-performer .and19-cover::before {
+    content: '';
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(90deg, rgba(6, 19, 34, .98) 0%, rgba(6, 19, 34, .80) 37%,
+      rgba(6, 19, 34, .10) 75%, rgba(6, 19, 34, .04) 100%);
+    pointer-events: none;
+  }
+  .app.role-client .and19-cover > div,
+  .app.role-performer .and19-cover > div {
+    position: relative;
+    z-index: 2;
+    width: 62%;
+    max-width: 62%;
+  }
+  .app.role-client .and19-cover h1,
+  .app.role-performer .and19-cover h1 {
+    color: #fff;
+    font-size: clamp(22px, 6.2vw, 28px);
+    line-height: 1.15;
+    margin: 6px 0 0;
+    text-shadow: 0 2px 7px rgba(2, 9, 17, .7);
+  }
+  .app.role-client .and19-role,
+  .app.role-performer .and19-role {
+    min-height: 44px;
+    border: 1px solid var(--and20-border);
+    border-radius: 11px;
+    background: linear-gradient(110deg, #1d3649, #0b1d30);
+    color: #f4f9ff;
+    padding: 8px 11px;
+    font-size: 12px;
+    font-weight: 760;
+  }
+  .app.role-performer .and19-line button {
+    min-height: 44px;
+    flex: 0 0 auto;
+    padding: 6px 9px;
+    font-size: 11px;
+    border-color: #5d7b8b;
+  }
+  .app.role-client .and19-services {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .app.role-client .and19-services > a {
+    min-width: 0;
+    min-height: 86px;
+    padding: 7px 3px 8px;
+    border-radius: 12px;
+    border: 1px solid #466980;
+    background: linear-gradient(145deg, #18364a, #0e2435);
+    color: #eaf4fb;
+    font-size: 10px;
+    font-weight: 790;
+    line-height: 1.2;
+    text-align: center;
+    box-shadow: inset 0 1px rgba(255, 255, 255, .05);
+  }
+  .app.role-client .and19-services > a:first-child {
+    border-color: #fb8f3d;
+    background: linear-gradient(145deg, #4d301c, #172c3b);
+    box-shadow: inset 0 0 0 1px rgba(253, 123, 37, .25);
+  }
+  .app.role-client .and19-services > a > .and19-service-label {
+    font-size: 10px;
+    line-height: 1.17;
+    color: #fff;
+    text-shadow: 0 1px 3px #06101a;
+  }
+  .app.role-client .and19-services > a > .tr-service-illustration {
+    display: block;
+    opacity: .55;
+    pointer-events: none;
+  }
+  .app.role-client .and19-panel,
+  .app.role-performer .and19-panel,
+  .app.role-client .and19-equipment,
+  .app.role-performer .and19-metrics > a {
+    border-color: var(--and20-border);
+    background: linear-gradient(145deg, #18364a, #0b2031);
+    box-shadow: 0 5px 14px rgba(2, 8, 18, .18);
+  }
+  .app.role-client .and19-main-order,
+  .app.role-performer .and19-main-order {
+    padding: 12px;
+    border-color: #568096;
+    border-radius: 15px;
+    background: linear-gradient(150deg, #1b3a50, #0d2233 68%);
+  }
+  .app.role-client .and19-main-order .and19-order-open,
+  .app.role-performer .and19-main-order .and19-order-open {
+    display: grid;
+    grid-template-columns: minmax(104px, 39%) minmax(0, 1fr);
+    gap: 9px 10px;
+    min-width: 0;
+  }
+  .app.role-client .and19-panel-title,
+  .app.role-performer .and19-panel-title {
+    grid-column: 1 / -1;
+    min-width: 0;
+    border-bottom: 1px solid #446b7f;
+    padding: 0 0 10px;
+    gap: 9px;
+  }
+  .app.role-client .and19-panel-title strong,
+  .app.role-performer .and19-panel-title strong {
+    color: #fff;
+    font-size: 15px;
+    line-height: 1.22;
+    overflow-wrap: anywhere;
+  }
+  .app.role-client .and19-status,
+  .app.role-performer .and19-status {
+    flex: 0 0 auto;
+    max-width: 46%;
+    font-size: 10px;
+    line-height: 1.2;
+    color: #a1f7ee;
+    background: #0d4a52;
+    border: 1px solid #44b2b1;
+  }
+  .app.role-client .and19-main-order .tr-approved-order-truck,
+  .app.role-performer .and19-main-order .tr-approved-order-truck {
+    display: block;
+    grid-column: 1;
+    width: 100%;
+    max-width: none;
+    height: 110px;
+    margin: 1px 0;
+    border-radius: 11px;
+    border-color: #4c768b;
+    background: #0b2234;
+    overflow: hidden;
+  }
+  .app.role-client .and19-main-order .tr-approved-order-truck img,
+  .app.role-performer .and19-main-order .tr-approved-order-truck img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .app.role-client .and19-main-order .and19-facts,
+  .app.role-performer .and19-main-order .and19-facts {
+    grid-column: 1 / -1;
+    min-width: 0;
+    margin: 0;
+    gap: 7px;
+    justify-content: center;
+  }
+  .app.role-client .and19-main-order .tr-approved-order-truck + .and19-facts,
+  .app.role-performer .and19-main-order .tr-approved-order-truck + .and19-facts {
+    grid-column: 2;
+  }
+  .app.role-client .and19-main-order .and19-facts p,
+  .app.role-performer .and19-main-order .and19-facts p {
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+    color: #e5f0f7;
+  }
+  .app.role-client .and19-main-order .and19-facts .and19-issue,
+  .app.role-performer .and19-main-order .and19-facts .and19-issue {
+    color: #fff0df;
+    font-weight: 770;
+  }
+  .app.role-client .and19-main-order .and19-price,
+  .app.role-performer .and19-main-order .and19-timeline,
+  .app.role-client .and19-main-order .and19-timeline,
+  .app.role-client .and19-main-order .and19-search-active,
+  .app.role-client .and19-main-order .and19-link,
+  .app.role-performer .and19-main-order .and19-link {
+    grid-column: 1 / -1;
+    margin: 0;
+  }
+  .app.role-client .and19-main-order .and19-price {
+    min-height: 39px;
+    background: #153144;
+    border-color: #456b7c;
+    color: #fff;
+  }
+  .app.role-client .and19-main-order .and19-link,
+  .app.role-performer .and19-main-order .and19-link {
+    min-height: 46px;
+    padding: 10px 12px;
+    font-size: 12px;
+    background: linear-gradient(180deg, #ff8d2e, #e85a11);
+    color: #fff!important;
+    border-color: #ffad66;
+    border-radius: 11px;
+    box-shadow: 0 4px 11px #8d3c174a;
+    text-align: left;
+  }
+  .app.role-client .and19-timeline,
+  .app.role-performer .and19-timeline {
+    margin: 4px 0 2px;
+    gap: 1px;
+  }
+  .app.role-client .and19-timeline li > small,
+  .app.role-performer .and19-timeline li > small {
+    color: #c1d5e2;
+    font-size: 9px;
+  }
+  .app.role-client .and19-order-shortcuts,
+  .app.role-performer .and19-order-shortcuts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(75px, 1fr));
+    gap: 7px;
+    margin-top: 9px;
+  }
+  .app.role-client .and19-order-shortcuts > a,
+  .app.role-performer .and19-order-shortcuts > a {
+    display: flex;
+    min-width: 0;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 8px 5px;
+    border: 1px solid #548095;
+    border-radius: 10px;
+    background: #183447;
+    color: #e9f5fc;
+    font-size: 11px;
+    line-height: 1.23;
+    font-weight: 750;
+  }
+  .app.role-client .and19-equipment {
+    min-height: 63px;
+    padding: 9px 11px;
+  }
+  .app.role-client .and19-equipment-icon { width:42px;height:42px; }
+  .app.role-client .and19-sos {
+    min-height: 48px;
+    background: linear-gradient(180deg,#ff8728,#e95d0d);
+    box-shadow: 0 5px 14px #ba4d1548;
+  }
+  .app.role-performer .and19-metrics { gap: 7px; }
+  .app.role-performer .and19-metrics > a { min-height: 64px; }
+  .app.role-client .and19-workspace a:focus-visible,
+  .app.role-performer .and19-workspace a:focus-visible,
+  .app.role-performer .and19-workspace button:focus-visible {
+    outline: 2px solid #ffad63;
+    outline-offset: 2px;
+  }
+}
+@media (max-width: 359px) {
+  .app.role-client .and19-main-order .and19-order-open,
+  .app.role-performer .and19-main-order .and19-order-open {
+    grid-template-columns: minmax(90px, 39%) minmax(0, 1fr);
+    gap: 7px;
+  }
+  .app.role-client .and19-main-order .tr-approved-order-truck,
+  .app.role-performer .and19-main-order .tr-approved-order-truck { height: 94px; }
+  .app.role-client .and19-main-order .and19-panel-title strong,
+  .app.role-performer .and19-main-order .and19-panel-title strong { font-size: 14px; }
+}
+/* No animations that falsely imply a completed job; honor accessibility. */
+@media (prefers-reduced-motion: reduce) {
+  .and19-workspace a,.and19-workspace button{transition:none!important}
+}
+html.traksos-reduced-motion .and19-workspace a,
+html.traksos-reduced-motion .and19-workspace button{transition:none!important}
+
+/*
+ * 618.png exact-layout correction: unlike the older mockups, the owner's
+ * approved Android heading is TEXT on the page, not a decorative truck banner.
+ * Keep the real/model-matched truck photograph inside the active order only.
+ */
+@media (max-width:899px) {
+ .app.role-client .and19-workspace > .and19-cover,
+ .app.role-performer .and19-workspace > .and19-cover {
+   display:block;
+   min-height:0;
+   margin:0;
+   padding:0 2px;
+   border:0;
+   border-radius:0;
+   background:none;
+   box-shadow:none;
+   overflow:visible;
+ }
+ .app.role-client .and19-workspace > .and19-cover::before,
+ .app.role-performer .and19-workspace > .and19-cover::before {
+   content:none;
+   display:none;
+ }
+ .app.role-client .and19-cover > h1,
+ .app.role-performer .and19-cover > h1 {
+   position:relative;
+   z-index:2;
+   margin:0;
+   padding:2px 0 1px;
+   font-size:clamp(24px,6.5vw,30px);
+   line-height:1.16;
+   color:#fff;
+   text-shadow:none;
+ }
+ .app.role-client .and19-services > a > span:first-child:not(.tr-service-illustration) {
+   font-size:26px;
+   line-height:1.05;
+   color:#f4f8fc;
+ }
+ .app.role-client .and19-services > a:first-child > span:first-child:not(.tr-service-illustration) {
+   color:#fff;
+   filter:drop-shadow(0 0 3px #e87b307d);
+ }
+ /* Approved 618: client details use cyan; orange is reserved for SOS/new order. */
+ .app.role-client .and19-main-order .and19-link {
+   border-color:#39bcd2;
+   background:linear-gradient(135deg,#0d657a,#124259);
+   color:#fff!important;
+   box-shadow:0 4px 11px #04668535;
+ }
+ .app.role-client .and19-assigned-performer,
+ .app.role-performer .and19-assigned-performer {
+   display:flex;
+   align-items:center;
+   gap:8px;
+   min-width:0;
+   min-height:59px;
+   padding:8px 10px;
+   border:1px solid #446b80;
+   border-radius:13px;
+   background:linear-gradient(135deg,#193b50,#0e2739);
+   color:#f4f9fc;
+   box-shadow:0 5px 12px #020b1640;
+ }
+ .app.role-client .and19-assigned-icon,
+ .app.role-performer .and19-assigned-icon {
+   display:grid;
+   place-items:center;
+   width:36px;
+   height:36px;
+   flex:none;
+   border-radius:50%;
+   border:1px solid #476c7d;
+   background:#16394b;
+   color:#ff9436;
+   font-size:18px;
+ }
+ .app.role-client .and19-assigned-copy,
+ .app.role-performer .and19-assigned-copy {
+   display:flex;
+   flex:1;
+   flex-direction:column;
+   gap:3px;
+   min-width:0;
+ }
+ .app.role-client .and19-assigned-copy strong,
+ .app.role-performer .and19-assigned-copy strong {
+   overflow-wrap:anywhere;
+   font-size:13px;
+   line-height:1.25;
+ }
+ .app.role-client .and19-assigned-copy small,
+ .app.role-performer .and19-assigned-copy small {
+   font-size:10px;
+   line-height:1.3;
+   color:#bdd7e4;
+ }
+ .app.role-client .and19-assigned-performer > a,
+ .app.role-performer .and19-assigned-performer > a {
+   display:grid;
+   place-items:center;
+   flex:none;
+   min-width:40px;
+   min-height:44px;
+   padding:8px;
+   border:1px solid #33c0d4;
+   border-radius:10px;
+   color:#e7f8ff;
+   background:#104052;
+   font-size:11px;
+   font-weight:800;
+ }
+}
+@media(max-width:359px){
+ .app.role-client .and19-assigned-performer,
+ .app.role-performer .and19-assigned-performer{gap:5px;padding:7px}
+ .app.role-client .and19-assigned-performer>a,
+ .app.role-performer .and19-assigned-performer>a{min-width:34px;padding:5px}
+}
+
+/* 618.png signed-in header: the same approved logo and a profile glyph instead
+ * of the desktop menu word. Summary stays a fully functional <details> button. */
+.account-menu-mobile-glyph{display:none}
+@media(max-width:899px){
+ .app:not(.guest-app) .account-menu .account-menu-desktop-glyph,
+ .app:not(.guest-app) .account-menu .account-menu-desktop-label{display:none}
+ .app:not(.guest-app) .account-menu .account-menu-mobile-glyph{
+   display:grid;
+   place-items:center;
+   width:27px;
+   height:27px;
+   color:#e6f6fc;
+ }
+ .app:not(.guest-app) .account-menu .account-menu-mobile-glyph svg{
+   width:24px;
+   height:24px;
+ }
+ .app:not(.guest-app) .account-menu>summary{
+   min-width:44px;
+   width:46px;
+   min-height:46px;
+   height:46px;
+   padding:6px;
+   border-radius:50%;
+   background:linear-gradient(135deg,#19384d,#0f2233);
+   border:1px solid #5e7c91;
+ }
+ .app:not(.guest-app) .top .tr-approved-brand-logo{
+   min-width:0;
+   flex:0 1 auto;
+   max-width:min(220px,62vw);
+ }
+ .app:not(.guest-app) .top .tr-approved-brand-logo img{
+   display:block;
+   max-width:100%;
+   width:min(220px,54vw);
+   height:auto;
+   object-fit:contain;
+ }
+}
+@media(max-width:340px){
+ .app:not(.guest-app) .top .tr-approved-brand-logo img{width:min(158px,50vw)}
+}
+
+/* Financial order card follows the assigned master in the accepted 618 client
+ * composition. Value is rendered only when returned by the order API. */
+@media(max-width:899px){
+ .app.role-client .and19-client-cost{
+   display:flex;
+   align-items:center;
+   justify-content:space-between;
+   gap:12px;
+   min-height:63px;
+   padding:10px 12px;
+   border:1px solid #497085;
+   border-radius:13px;
+   background:linear-gradient(145deg,#193a4c,#0d2739);
+   box-shadow:0 5px 12px #020b1640;
+ }
+ .app.role-client .and19-client-cost > span{
+   display:flex;
+   flex:1;
+   flex-direction:column;
+   gap:4px;
+   min-width:0;
+ }
+ .app.role-client .and19-client-cost > span > small{
+   font-size:10px;
+   color:#b4cfdf;
+ }
+ .app.role-client .and19-client-cost > span > strong{
+   font-size:12px;
+   font-weight:790;
+   color:#f4faff;
+ }
+ .app.role-client .and19-client-cost > strong{
+   flex:none;
+   font-size:20px;
+   font-weight:900;
+   color:#fff;
+   font-variant-numeric:tabular-nums;
+ }
+}
+
+/* Functional approved 618 account/availability strip, no nonworking chevron. */
+@media(max-width:899px){
+ .app.role-client .and19-client-role{
+   display:flex;
+   align-items:center;
+   justify-content:space-between;
+   gap:8px;
+   text-decoration:none;
+ }
+ .app.role-client .and19-client-role:focus-visible{outline:2px solid #ffad5f}
+ .app.role-client .and19-role-caption,
+ .app.role-performer .and19-role-caption{
+   display:flex;align-items:center;gap:8px;min-width:0;
+   font-size:clamp(11px,3.1vw,13px);font-weight:760;line-height:1.28;
+ }
+ .app.role-client .and19-role-caption svg,
+ .app.role-performer .and19-role-caption svg{
+   flex:none;width:19px;height:19px;color:#eff9ff;
+ }
+ .app.role-client .and19-role-chevron{
+   display:grid;place-items:center;flex:none;
+   width:24px;height:24px;font-size:22px;color:#d4e9f4;
+ }
+ .app.role-performer .and19-line{gap:5px}
+ .app.role-performer .and19-line .and19-role-caption{flex:1;min-width:0}
+}
+
+/* Real 618 client-order actions: the truck photo and the order itself lead
+ * to distinct real screens. No nested anchors, no synthetic click handlers. */
+@media(max-width:899px){
+ .app.role-client .and19-main-order .and19-order-heading-link{
+   grid-column:1/-1;
+   display:block;
+   min-width:0;
+   border-radius:9px;
+   color:#fff;
+   text-decoration:none;
+ }
+ .app.role-client .and19-main-order .and19-order-photo-link{
+   grid-column:1;
+   display:block;
+   min-width:0;
+   border-radius:11px;
+   text-decoration:none;
+   color:inherit;
+ }
+ .app.role-client .and19-main-order .and19-order-photo-link>.tr-approved-order-truck{
+   width:100%;
+   max-width:none;
+   margin:0;
+ }
+ .app.role-client .and19-main-order .and19-order-photo-link+.and19-facts{
+   grid-column:2;
+   min-width:0;
+   margin:0;
+ }
+ .app.role-client .and19-main-order .and19-order-open>a.and19-link{
+   grid-column:1/-1;
+   display:flex;
+   width:100%;
+   min-width:0;
+ }
+ .app.role-client .and19-main-order
+   :is(.and19-order-heading-link,.and19-order-photo-link,.and19-link):focus-visible{
+   outline:2px solid #73e1ef;
+   outline-offset:2px;
+ }
+ .app.role-client .and19-performer-rating{
+   display:inline-flex;
+   align-items:baseline;
+   gap:2px;
+   margin-left:7px;
+   font-size:11px;
+   font-weight:800;
+   color:#ffc05b;
+   white-space:nowrap;
+ }
+ .app.role-client .and19-performer-rating small{
+   font-size:9px;
+   font-weight:650;
+   color:#e5dfcd;
+ }
+ .app.role-client .and19-equipment-vehicle .and19-equipment-model{
+   display:block;
+   flex:none;
+   width:50px;
+   height:47px;
+   object-fit:cover;
+   border:1px solid #5e8ca1;
+   border-radius:10px;
+   background:#0a2131;
+ }
+ .app.role-client .and19-equipment-title{
+   color:#e3f4fc;
+   font-weight:700;
+   overflow-wrap:anywhere;
+ }
+ .app.role-client .and19-client-cost>span>small{
+   overflow-wrap:anywhere;
+ }
+}
+@media(max-width:359px){
+ .app.role-client .and19-main-order .and19-order-photo-link>.tr-approved-order-truck{
+   height:94px;
+ }
+ .app.role-client .and19-equipment-vehicle .and19-equipment-model{
+   width:43px;
+   height:43px;
+ }
+}
+
+/* Approved 618 service hierarchy: one unmistakable orange urgent action,
+ * three quiet graphite alternatives. Keep exact pre-approved routes and art. */
+@media(max-width:899px){
+ .app.role-client .and19-services>a:first-child{
+   border-color:#ff9d52;
+   background:linear-gradient(148deg,#cb5816,#ac440a 64%,#652b10);
+   box-shadow:inset 0 1px #ffd39a51,inset 0 -1px #6f2d1980,0 6px 19px #e26d1933;
+   color:#fff;
+ }
+ .app.role-client .and19-services>a:first-child>.and19-service-label{
+   color:#fff;
+   text-shadow:0 1px 4px #4e1d0c;
+ }
+ .app.role-client .and19-services>a:first-child>.tr-service-illustration{
+   opacity:.28;
+ }
+ .app.role-client .and19-services>a:not(:first-child){
+   background:linear-gradient(145deg,#1a3448,#102736 65%,#102234);
+   border-color:#476a7e;
+ }
+ .app.role-client .and19-services>a:focus-visible{
+   outline:2px solid #ffbe79;
+   outline-offset:2px;
+ }
+}
+
+/* 618.png — final home composition. Explicit classes protect authorized flows
+   from global card skins and keep 320–430px widths usable on actual Android. */
+@media(max-width:899px){
+ .app.role-client .and19-workspace,
+ .app.role-performer .and19-workspace{gap:8px}
+ .app.role-client .and19-service-symbol{
+   display:grid;place-items:center;
+   min-width:28px;min-height:31px;
+   color:#fff;
+ }
+ .app.role-client .and19-service-symbol svg{
+   display:block;width:29px;height:29px;
+   stroke-width:2.15;
+   filter:drop-shadow(0 2px 3px #05142466);
+ }
+ .app.role-client .and19-services>a{
+   min-height:85px;gap:4px;isolation:isolate;position:relative;
+ }
+ .app.role-client .and19-services>a>.tr-service-illustration{
+   position:absolute;inset:auto 0 1px;
+   z-index:-1;max-width:100%;opacity:.12!important;
+ }
+ .app.role-client .and19-services>a>.and19-service-label{
+   max-width:100%;font-size:clamp(9px,2.75vw,11px);
+   color:#fff;overflow-wrap:anywhere;
+   font-weight:800;
+ }
+ .app.role-client .and19-services>a:first-child>.tr-service-illustration{opacity:.07!important}
+ .app.role-client .and19-panel-title>strong::before{
+   content:'';display:inline-block;
+   width:9px;height:9px;vertical-align:2px;
+   border-radius:50%;margin-right:8px;
+   background:#42e47b;
+   box-shadow:0 0 0 3px #1a7a4842;
+ }
+ .app.role-client .and19-main-order .and19-order-heading-link,
+ .app.role-performer .and19-main-order .and19-order-heading-link{
+   grid-column:1/-1;min-width:0;color:inherit;text-decoration:none;
+ }
+ .app.role-client .and19-main-order .and19-order-heading-link .and19-panel-title,
+ .app.role-performer .and19-main-order .and19-order-heading-link .and19-panel-title{
+   min-width:0;margin-bottom:2px;
+ }
+ .app.role-client .and19-main-order .and19-order-photo-link,
+ .app.role-performer .and19-main-order .and19-order-photo-link{
+   display:block;position:relative;grid-column:1;min-width:0;align-self:start;
+   overflow:visible;border-radius:10px;color:inherit;
+ }
+ .app.role-client .and19-main-order .and19-order-photo-link>.tr-approved-order-truck,
+ .app.role-performer .and19-main-order .and19-order-photo-link>.tr-approved-order-truck{
+   width:100%;height:110px;max-width:none;min-width:0;display:block;
+   margin:0;border-radius:10px;border:1px solid #56788b;
+ }
+ .app.role-client .and19-main-order .and19-order-photo-link img,
+ .app.role-performer .and19-main-order .and19-order-photo-link img{
+   width:100%;height:100%;object-fit:cover;
+ }
+ .app.role-client .and19-photo-badge{
+   position:absolute;display:block;left:50%;bottom:-6px;
+   transform:translateX(-50%);min-width:max-content;
+   max-width:calc(100% - 6px);
+   padding:5px 8px;border-radius:9px;
+   border:1px solid #ffb668;
+   background:linear-gradient(145deg,#b8510d,#ec731a);
+   box-shadow:0 2px 8px #6a230b70;color:white;
+   font-size:10px;line-height:1;font-weight:800;text-align:center;
+ }
+ .app.role-client .and19-main-order .and19-order-photo-link+.and19-facts,
+ .app.role-performer .and19-main-order .and19-order-photo-link+.and19-facts{
+   grid-column:2;min-width:0;margin:0;
+ }
+ .app.role-client .and19-main-order .and19-facts,
+ .app.role-performer .and19-main-order .and19-facts{
+   gap:7px;min-width:0;align-self:center;
+ }
+ .app.role-client .and19-main-order .and19-facts .and19-issue,
+ .app.role-performer .and19-main-order .and19-facts .and19-issue{
+   display:flex;align-items:flex-start;gap:7px;
+   color:#f3f6fb;font-weight:800;
+   font-size:clamp(10px,2.7vw,12px);
+ }
+ .app.role-client .and19-main-order .and19-facts .and19-issue svg,
+ .app.role-performer .and19-main-order .and19-facts .and19-issue svg{
+   flex:none;width:24px;height:24px;color:#ff9b3d;
+ }
+ .app.role-client .and19-main-order .and19-facts .and19-order-address,
+ .app.role-performer .and19-main-order .and19-facts .and19-order-address{
+   display:flex;align-items:center;gap:7px;
+   font-size:11px;color:#d1e7f3;
+ }
+ .app.role-client .and19-main-order .and19-facts .and19-order-address svg,
+ .app.role-performer .and19-main-order .and19-facts .and19-order-address svg{
+   flex:none;width:19px;height:19px;color:#bddef0;
+ }
+ .app.role-client .and19-main-order .and19-facts .and19-vehicle,
+ .app.role-performer .and19-main-order .and19-facts .and19-vehicle{
+   font-size:10px;line-height:1.3;color:#bad5e2;
+ }
+ .app.role-client .and19-order-route,
+ .app.role-performer .and19-order-route{
+   grid-column:1/-1;min-width:0;
+   display:flex;align-items:center;gap:8px;
+   margin:6px 0 0;min-height:39px;
+ }
+ .app.role-client .and19-route-button,
+ .app.role-performer .and19-route-button{
+   display:flex;align-items:center;justify-content:center;gap:7px;
+   flex:0 0 42%;max-width:50%;
+   box-sizing:border-box;min-height:37px;padding:6px 8px;
+   border:1px solid #33b7ce;border-radius:10px;
+   color:#f5fdff;text-decoration:none;
+   background:linear-gradient(160deg,#146d88,#09536e);
+   font-size:11px;font-weight:800;
+   box-shadow:inset 0 1px #9feafa33;
+ }
+ .app.role-client .and19-route-button svg,
+ .app.role-performer .and19-route-button svg{
+   flex:none;width:19px;height:19px;
+ }
+ .app.role-client .and19-route-eta,
+ .app.role-performer .and19-route-eta{
+   display:flex;flex:1;align-items:center;gap:6px;min-width:0;
+   color:#ddebf3;font-size:10px;line-height:1.3;
+ }
+ .app.role-client .and19-route-eta svg,
+ .app.role-performer .and19-route-eta svg{
+   flex:none;width:18px;height:18px;
+ }
+ .app.role-client .and19-route-eta small,
+ .app.role-performer .and19-route-eta small{
+   display:block;color:#abc5d4;font-size:8px;
+ }
+ .app.role-client .and19-timeline,
+ .app.role-performer .and19-timeline{
+   grid-column:1/-1;margin:3px 0 0;padding:7px 0 0;
+   border-top:1px solid #345468;
+ }
+ .app.role-client .and19-timeline li,
+ .app.role-performer .and19-timeline li{gap:4px}
+ .app.role-client .and19-timeline li>span,
+ .app.role-performer .and19-timeline li>span{
+   width:24px;height:24px;
+ }
+ .app.role-client .and19-timeline li>span svg,
+ .app.role-performer .and19-timeline li>span svg{
+   width:15px;height:15px;stroke-width:2.35;
+ }
+ .app.role-client .and19-timeline li>time,
+ .app.role-performer .and19-timeline li>time{
+   color:#aac8d9;font-size:9px;line-height:1.1;
+   font-variant-numeric:tabular-nums;
+ }
+ .app.role-client .and19-client-cost{
+   display:flex;align-items:center;gap:9px;min-height:52px;
+   padding:9px 11px;background:linear-gradient(145deg,#19384d,#0d2334);
+   border-color:#477386;border-radius:13px;
+ }
+ .app.role-client .and19-client-cost>svg{
+   flex:none;width:28px;height:28px;color:#f5faff;
+ }
+ .app.role-client .and19-client-cost>span{
+   display:flex;flex-direction:column;flex:1;min-width:0;gap:3px;
+ }
+ .app.role-client .and19-client-cost>span strong{
+   font-size:12px;line-height:1.15;
+ }
+ .app.role-client .and19-client-cost>span small{
+   font-size:9px;line-height:1.25;
+ }
+ .app.role-client .and19-client-cost>strong{
+   flex:none;white-space:nowrap;
+   font-size:clamp(15px,4.5vw,20px);font-weight:850;
+ }
+ .app.role-client .and19-sos{min-height:49px;gap:9px;font-size:14px}
+ .app.role-client .and19-sos svg{width:22px;height:22px;flex:none}
+ .app.role-client .and19-assigned-performer>a svg,
+ .app.role-performer .and19-assigned-performer>a svg{
+   display:block;width:20px;height:20px;
+ }
+ .app.role-client .and19-assigned-icon svg,
+ .app.role-performer .and19-assigned-icon svg{
+   width:21px;height:21px;
+ }
+ /* The master uses the same card grammar as the owner, not a generic list. */
+ .app.role-performer .and19-metrics>a{
+   display:flex;flex-direction:row;align-items:center;gap:6px;
+   padding:9px 7px;min-height:57px;
+   background:linear-gradient(135deg,#1b3a50,#102638);
+ }
+ .app.role-performer .and19-metrics>a>svg{
+   flex:none;width:23px;height:23px;color:#f4a032;
+ }
+ .app.role-performer .and19-metrics>a>span{
+   min-width:0;display:flex;flex-direction:column;gap:2px;
+ }
+ .app.role-performer .and19-metrics small{font-size:9px}
+ .app.role-performer .and19-metrics strong{
+   font-size:clamp(11px,3vw,14px);
+   white-space:nowrap;
+ }
+ .app.role-performer .and19-main-order .and19-client-contact{
+   grid-column:1/-1;min-height:53px;
+   margin-top:3px;padding:6px 9px;
+ }
+ .app.role-performer .and19-main-order .and19-order-open{
+   grid-template-columns:minmax(104px,39%) minmax(0,1fr);
+   gap:9px 10px;
+ }
+ .app.role-performer .and19-stage-actions{
+   display:grid;grid-template-columns:1fr 1fr;gap:7px;
+   margin-top:9px;
+ }
+ .app.role-performer .and19-stage-actions>:is(a,button,span){
+   display:flex;align-items:center;justify-content:center;gap:7px;
+   box-sizing:border-box;min-width:0;min-height:48px;
+   padding:9px 6px;border:1px solid #ed944c;border-radius:12px;
+   font-family:inherit;font-weight:800;font-size:13px;line-height:1.15;text-decoration:none;color:#fff;
+   background:linear-gradient(180deg,#ff8c30,#df590f);
+   box-shadow:0 5px 12px #b655173f;
+ }
+ .app.role-performer .and19-stage-actions svg{width:19px;height:19px;flex:none}
+ .app.role-performer .and19-stage-actions>.and19-stage-complete{
+   background:linear-gradient(135deg,#264d60,#17384c);
+   border-color:#7092a2;color:#e4f7fe;
+   box-shadow:none;
+ }
+ .app.role-performer .and19-stage-actions>.is-disabled{
+   border-color:#4f6675;color:#8398a5;
+   background:#253542;box-shadow:none;
+   cursor:not-allowed;
+ }
+ .app.role-performer .and19-stage-actions button:disabled{
+   filter:saturate(.6);opacity:.67;cursor:wait;
+ }
+ .app.role-performer .and19-performer-finance{
+   display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;
+   min-width:0;min-height:70px;
+   padding:8px 5px;
+   border:1px solid #416b80;border-radius:14px;
+   color:#f6faff;text-decoration:none;
+   background:linear-gradient(145deg,#173449,#0e2434);
+ }
+ .app.role-performer .and19-performer-finance>span{
+   min-width:0;display:grid;
+   grid-template-columns:20px 1fr;
+   align-content:center;align-items:center;gap:3px 4px;
+   padding:2px 6px;
+ }
+ .app.role-performer .and19-performer-finance>span+span{
+   border-left:1px solid #45687c;
+ }
+ .app.role-performer .and19-performer-finance>span svg{
+   grid-row:1/3;width:20px;height:20px;color:#ddeefa;
+ }
+ .app.role-performer .and19-performer-finance>span small{
+   font-size:9px;color:#b9d6e1;line-height:1.2;
+ }
+ .app.role-performer .and19-performer-finance>span strong{
+   display:block;min-width:0;grid-column:2;
+   font-size:clamp(10px,3vw,13px);font-weight:800;
+   line-height:1.15;
+   white-space:normal;
+ }
+ .app.role-performer .and19-performer-finance>span:last-child strong{color:#ffb34b}
+ .app.role-performer .and19-performer-finance em{
+   color:#cddfeb;font-style:normal;font-size:9px;
+ }
+ .app.role-performer .and19-quick{
+   display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;
+ }
+ .app.role-performer .and19-quick>a{
+   display:flex;flex-direction:column;align-items:center;justify-content:center;
+   min-height:66px;gap:5px;padding:9px 5px;
+   border-radius:12px;border:1px solid #456f85;
+   background:linear-gradient(140deg,#1b3a50,#102739);
+   color:#f3fbfe;font-size:11px;font-weight:750;text-align:center;
+ }
+ .app.role-performer .and19-quick svg{width:25px;height:25px}
+}
+@media(max-width:359px){
+ .app.role-client .and19-main-order .and19-order-photo-link>.tr-approved-order-truck,
+ .app.role-performer .and19-main-order .and19-order-photo-link>.tr-approved-order-truck{
+   height:95px;
+ }
+ .app.role-client .and19-client-cost>strong{font-size:14px}
+ .app.role-performer .and19-performer-finance>span{padding:2px 3px;grid-template-columns:17px 1fr;gap:2px}
+ .app.role-performer .and19-performer-finance>span svg{width:16px;height:16px}
+ .app.role-performer .and19-stage-actions>:is(a,button,span){font-size:11px}
+}
+@media(prefers-reduced-motion:reduce){
+ .app.role-client .and19-workspace *,
+ .app.role-performer .and19-workspace *{animation-duration:.01ms!important;transition:none!important}
+}
+html.traksos-reduced-motion .app.role-client .and19-workspace *,
+html.traksos-reduced-motion .app.role-performer .and19-workspace *{
+ animation-duration:.01ms!important;transition:none!important;
+}
+
+/* Order camera tile is genuinely actionable: native photo picker/upload.
+ * In debug review it is an inert protected button styled identically. */
+@media(max-width:899px){
+ .app.role-performer .and19-quick>:is(label.and19-photo-capture,button.and19-photo-capture){
+   display:flex;position:relative;flex-direction:column;
+   align-items:center;justify-content:center;gap:5px;
+   box-sizing:border-box;min-height:66px;min-width:0;
+   padding:9px 5px;
+   border:1px solid #456f85;border-radius:12px;
+   background:linear-gradient(140deg,#1b3a50,#102739);
+   color:#f3fbfe;font:750 11px/1.35 system-ui,sans-serif;
+   text-decoration:none;text-align:center;cursor:pointer;
+   overflow:hidden;
+ }
+ .app.role-performer .and19-quick .and19-photo-capture>svg{
+   width:25px;height:25px;flex:none;
+ }
+ .app.role-performer .and19-photo-capture input[type=file]{
+   position:absolute;width:1px;height:1px;
+   opacity:0;overflow:hidden;pointer-events:none;
+ }
+ .app.role-performer .and19-quick .and19-photo-capture:focus-within{
+   outline:2px solid #6fe5f1;outline-offset:2px;
+ }
+ .app.role-performer .and19-quick .and19-photo-capture.is-busy{
+   opacity:.67;cursor:wait;
+ }
+}

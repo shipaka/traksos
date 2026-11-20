@@ -5,8 +5,8 @@ import { Verify, Flagged } from './admin.tsx';
 
 type DeskTab = 'cases' | 'support' | 'verify' | 'flagged';
 
-export function ModeratorDesk() {
-  const [tab, setTab] = useState<DeskTab>('cases');
+export function ModeratorDesk({initialTab='cases'}:{initialTab?:DeskTab}={}) {
+  const [tab, setTab] = useState<DeskTab>(initialTab);
   const options: [DeskTab, string][] = [
     ['cases', 'Споры и жалобы'],
     ['support', 'Обращения'],

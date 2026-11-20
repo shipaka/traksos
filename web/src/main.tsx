@@ -6,35 +6,66 @@ import './trackVisual.css';
 import './trackPolish.css';
 import './trackSearch.css';
 import './trackReference.css';
-import './trackPhotos.css';
 import './trackMatch.css';
 import './trackScenic.css';
 import './clientDashboardLatest.css';
 import './premiumVehiclePolish.css';
-import './finalCanon.css';
+import './roleShared20261119.css';
 // Insurance-only refinement follows the approved global visual canon.
 import './insurancePremiumStates.css';
-// Browser-only phone/tablet adaptation; approved Android and desktop layers stay untouched.
+// Mobile browser and Android use separate approved responsive layers.
 import './mobileBrowser.css';
+import './androidApproved20261119.css';
+import './trakbotDock.css';
+import './techbase.css';
+import './trainingPractice.css';
+import './scenarioCourses.css';
+// Approved public design is loaded last: previous role/guest CSS may not overwrite it.
+import './currentApproved20261119.css';
+import './approvedHeroImage20261119.css';
+import './stoWorkdeskApproved20261120.css';
+import './approvedBottomNavigation20261120.css';
+// Current courier/insurance mobile role overlays (before final owner-approved layers).
+import './approvedAndroidRoles20261120.css';
+// Final approved 20 Nov desktop cabinet language; Android remains separately approved.
+import './desktopCabinetsOwner20261120.css';
+// Shared approved logo, cinematic empty illustrations and service art for PC, browser and APK WebView.
+import './approvedCrossPlatformVisuals.css';
+// Functional PC workspaces, mounted only >=1000px; Android layouts remain unchanged.
+import './approvedPcCabinets20261120.css';
+import './androidDesignReview.css';
+// Last Android-only layer: prevent older desktop/mobile rules from hiding approved visuals.
+import './androidOwnerVisualAlignment20261120.css';
+// Android secondary routes and functional role menu; never restyle approved dashboards.
+import './androidInternalSections20261120.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
 import { MeCtx, ToastProvider, useRoute, useToast, type Me } from './ui.tsx';
 import { native } from './native.ts';
-// The bridge is installed before the WebView loads this bundle. Never style native as a browser.
+// Native bridge is present before the bundled application starts.
 document.documentElement.classList.toggle('traksos-browser', !native.isApp);
+document.documentElement.classList.toggle('traksos-native', native.isApp);
+document.documentElement.classList.add('traksos-compact-guest');
 import { Login } from './screens/login.tsx';
 import { GuestExplore } from './screens/guestExplore.tsx';
 import { DemoPreviewGate } from './screens/demoPreview.tsx';
+import { AndroidDesignReview } from './screens/androidDesignReview.tsx';
+import { NavGlyph } from './navGlyph.tsx';
+import { MobileRoleMenu } from './mobileRoleMenu.tsx';
+import { MobileSectionChrome } from './mobileSectionChrome.tsx';
 import { SandboxEnter, SandboxModeBar } from './screens/isolatedSandbox.tsx';
 import { GuestCompany, GuestOffers } from './screens/guestInfo.tsx';
-import { TOP_CATALOGUE, SERVICE_TILES, CATALOGUE, rememberGuestService } from './guestCatalog.ts';
+import { PUBLIC_CAPABILITIES } from './guestCatalog.ts';
 import { SiteQuickSearch } from './screens/siteQuickSearch.tsx';
 import { Invite } from './screens/invite.tsx';
 import { PerformerHub, ScheduleSection, AboutSection, PhoneSection, CarsSection, TaxSection, MoneySection, FilterSection, LevelSection } from './screens/performerCabinet.tsx';
 import { Consult, Home, Sos, NewOrder, Orders, Garage, Profile, logout } from './screens/client.tsx';
 import { Order } from './screens/order.tsx';
+import { EcuHandoffPage } from './screens/ecuHandoffs.tsx';
 import { Work,  IncomingCall } from './screens/performer.tsx';
+import { AndroidMasterChats } from './screens/androidWorkspaces.tsx';
+import { PerformerOrderWindow } from './screens/performerOrderWindow.tsx';
 import { Admin } from './screens/admin.tsx';
 import { Documents } from './screens/documents.tsx';
 import { OfferGate, OfferPage } from './screens/offers.tsx';
@@ -42,6 +73,20 @@ import { AdminUser } from './screens/adminUser.tsx';
 import { BaseHome, BaseCar, BaseSetup, BaseMoney, AdminServicePayouts, ServicesList, CenterPage, BookForm, BookingPage } from './screens/base.tsx';
 import { Fleet, QrJoin } from './screens/fleet.tsx';
 import { Help } from './screens/help.tsx';
+import { TechBase } from './screens/techbase.tsx';
+import { PlatformIntro, IntroInvitation } from './screens/platformIntro.tsx';
+import { EconomicsPage } from './screens/economicsGuide.tsx';
+import { ScenarioLesson } from './screens/scenarioEncyclopedia.tsx';
+import { TrakBotChat, TechCodes } from './screens/trakbot.tsx';
+import { DriverAir } from './screens/driverAir.tsx';
+import { TrakBotDock } from './trakbotDock.tsx';
+import { APPROVED_VISUALS } from './approvedVisuals.ts';
+import { RepairCases, TechnicalCasesReview } from './screens/technicalCases.tsx';
+import { Training, TrainingInvite } from './screens/training.tsx';
+import { TrainingPractice } from './screens/roleTrainingPractice.tsx';
+import { ContextHelp } from './screens/contextHelp.tsx';
+import { PricingLaboratory } from './screens/pricingLaboratory.tsx';
+import { RoleTour } from './screens/roleTour.tsx';
 import { Rules } from './screens/rules.tsx';
 import { Shop, ShopCart, ShopHistory } from './screens/shop.tsx';
 import { Privacy } from './screens/privacy.tsx';
@@ -50,7 +95,9 @@ import { ModeratorDesk } from './screens/moderatorDesk.tsx';
 import { AdminTestCenter } from './screens/adminTestCenter.tsx';
 import { ServicePreviewBar,ServicePreviewPage } from './screens/servicePreview.tsx';
 import { SupportList, SupportNew, SupportThread, Notifications, useUnread } from './screens/support.tsx';
-import { InsurerCabinet } from './screens/insurer.tsx';
+import { InsurerCabinet, InsurerChats } from './screens/insurer.tsx';
+import { CourierDesk, CourierDelivery } from './screens/courier.tsx';
+import { ApprovedPcDesk, type ApprovedPCRole } from './screens/approvedPcCabinets20261120.tsx';
 import { InsuranceApplication,InsuranceThread } from './screens/insuranceFlow.tsx';
 
 /** Last-resort screen protection: a broken widget must not produce a blank website. */
@@ -78,30 +125,9 @@ class ScreenErrorBoundary extends Component<
   }
 }
 
-type Mode = 'client' | 'performer' | 'admin' | 'moderator' | 'service' | 'insurer' | 'inspection';
+type Mode = 'client' | 'performer' | 'admin' | 'moderator' | 'service' | 'insurer' | 'inspection' | 'courier';
 const PERFORMER_ROLES = ['master', 'tow', 'service'];
 
-/** Consistent vector icons for the same mobile navigation on web and Android WebView. */
-function NavGlyph({ glyph }: { glyph: string }) {
-  return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
-    strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    {glyph === '⌂' ? <><path d="m3 10 9-7 9 7v10H3z" /><path d="M9 20v-7h6v7" /></>
-    : glyph === '☷' || glyph === '☰' ? <><path d="M8 6h13M8 12h13M8 18h13" /><path d="M3 6h1M3 12h1M3 18h1" /></>
-    : glyph === '✚' || glyph === '＋' ? <><circle cx="12" cy="12" r="9" /><path d="M12 7v10M7 12h10" /></>
-    : glyph === '⚙' ? <><circle cx="12" cy="12" r="3.1" /><path d="M12 2v3m0 14v3M2 12h3m14 0h3M4.9 4.9 7 7m10 10 2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1" /></>
-    : glyph === '◉' ? <><circle cx="12" cy="8" r="3.5" /><path d="M4.5 20c.8-3.6 3.4-5.4 7.5-5.4s6.7 1.8 7.5 5.4" /><circle cx="12" cy="12" r="10" opacity=".4" /></>
-    : glyph === '▣' ? <><rect x="6" y="3" width="12" height="18" rx="2" /><path d="M9 8h6M9 12h6m-6 4h4" /></>
-    : glyph === '▦' ? <><rect x="3" y="3" width="8" height="8" rx="1" /><rect x="13" y="3" width="8" height="8" rx="1" /><rect x="3" y="13" width="8" height="8" rx="1" /><rect x="13" y="13" width="8" height="8" rx="1" /></>
-    : glyph === '▤' ? <><path d="M4 21V6l8-4 8 4v15M2 21h20" /><path d="M8 9h2m4 0h2M8 13h2m4 0h2M10 21v-4h4v4" /></>
-    : glyph === '⚑' ? <><path d="M5 22V3m0 1c5-3 9 3 15 0v11c-6 3-10-3-15 0" /></>
-    : glyph === '⚡' ? <path d="M13 2 4 13h7l-1 9 10-12h-7z" />
-    : glyph === '🛍' ? <><path d="M4 8h16l-1.5 13h-13z" /><path d="M9 9V6a3 3 0 0 1 6 0v3" /></>
-    : glyph === '?' ? <><circle cx="12" cy="12" r="10" /><path d="M9 9a3 3 0 0 1 6 1c0 2-3 2-3 4m0 3h.01" /></>
-    : glyph === '◇' ? <><path d="m12 2 8 4v6c0 5-3.7 8-8 10-4.3-2-8-5-8-10V6z" /><path d="m8 12 2.5 2.5L16 9" /></>
-    : glyph === '₽' ? <><path d="M7 21V3h6a5 5 0 0 1 0 10H7M4 17h12" /></>
-    : <circle cx="12" cy="12" r="4" />}
-  </svg>;
-}
 
 
 function App() {
@@ -128,7 +154,8 @@ function App() {
         }));
       } catch { /* private mode */ }
       // Первый вход исполнителя — сразу его кабинет
-      if (!localStorageGet('traksos.mode') && m.roles.some((r) => PERFORMER_ROLES.includes(r)) && !m.roles.includes('client')) setMode(m.roles.includes('service') && !m.roles.some((r) => r === 'master' || r === 'tow') ? 'service' : 'performer');
+      if (!localStorageGet('traksos.mode') && m.roles.includes('courier')) setMode('courier');
+      else if (!localStorageGet('traksos.mode') && m.roles.some((r) => PERFORMER_ROLES.includes(r)) && !m.roles.includes('client')) setMode(m.roles.includes('service') && !m.roles.some((r) => r === 'master' || r === 'tow') ? 'service' : 'performer');
     } catch (error) {
       if (error instanceof ApiError && error.code === 'network' && getToken()) {
         try {
@@ -167,8 +194,8 @@ function App() {
   useEffect(() => {
     const [x, m] = route;
     if (x !== 'as') return;
-    if (m === 'client' || m === 'performer' || m === 'admin' || m === 'moderator' || m === 'service' || m === 'insurer' || m === 'inspection') setMode(m);
-    location.replace('#/' + (m === 'performer' ? 'work' : m === 'admin' ? 'admin' : m === 'moderator' ? 'moderation' : m === 'service' ? 'base' : m === 'insurer' ? 'insurance' : m === 'inspection' ? 'inspections' : ''));
+    if (m === 'client' || m === 'performer' || m === 'admin' || m === 'moderator' || m === 'service' || m === 'insurer' || m === 'inspection' || m === 'courier') setMode(m);
+    location.replace('#/' + (m === 'performer' ? 'work' : m === 'admin' ? 'admin' : m === 'moderator' ? 'moderation' : m === 'service' ? 'base' : m === 'insurer' ? 'insurance' : m === 'inspection' ? 'inspections' : m === 'courier' ? 'courier' : ''));
   }, [route.join('/')]); // eslint-disable-line
   useEffect(() => {
     if (!ready) return; // Keep the native token until the initial auth check finishes.
@@ -196,6 +223,10 @@ function App() {
   // Handoff takes place on the separate sandbox origin. The ticket is not a
   // production login and never reaches normal application API endpoints.
   if (route[0] === 'sandbox-enter') return <SandboxEnter />;
+  // Native debug builds allow owner review of actual Android widgets with synthetic data.
+  // Release builds and browsers cannot enter this route; never grant a user session.
+  if (route[0] === 'android-review' && native.isPreviewBuild && !me)
+    return <AndroidDesignReview role={route[1]} />;
 
   // Ссылка-приглашение: запоминаем код, вход — как обычно
   if (route[0] === 'r' && route[1]) { try { localStorage.setItem('traksos.ref', route[1].toUpperCase()); } catch { /* */ } }
@@ -218,43 +249,87 @@ function App() {
   const isService = me.roles.includes('service');
   const isInsurer = me.roles.includes('insurer');
   const isInspection = me.roles.includes('inspection_operator');
+  const isCourier = me.roles.includes('courier');
   // A saved/forced mode must never expose navigation for a role the account lacks.
-  const fallback: Mode = isInsurer ? 'insurer' : isInspection ? 'inspection'
+  const fallback: Mode = isCourier ? 'courier' : isInsurer ? 'insurer' : isInspection ? 'inspection'
     : isCustomer ? 'client' : isPerformer ? 'performer'
     : isService ? 'service' : isAdmin ? 'admin' : isModerator ? 'moderator' : 'client';
-  const permitted = mode === 'insurer' ? isInsurer : mode === 'inspection' ? isInspection : mode === 'admin' ? isAdmin : mode === 'moderator' ? isModerator
+  const permitted = mode === 'courier' ? isCourier : mode === 'insurer' ? isInsurer : mode === 'inspection' ? isInspection : mode === 'admin' ? isAdmin : mode === 'moderator' ? isModerator
     : mode === 'performer' ? isPerformer : mode === 'service' ? isService
     : isCustomer || isStaff;
   const allowedMode: Mode = permitted ? mode : fallback;
   const effMode: Mode = serviceSandbox ? 'service' : a === 'work' && isPerformer ? 'performer'
     : a === 'admin' && isAdmin ? 'admin' : a === 'moderation' && isModerator ? 'moderator'
-    : a === 'base' && isService ? 'service' : a === 'insurance' && isInsurer ? 'insurer' : a === 'inspections' && (isInspection||isInsurer) ? 'inspection' : allowedMode;
+    : a === 'base' && isService ? 'service' : a === 'insurance' && isInsurer ? 'insurer' : a === 'inspections' && (isInspection||isInsurer) ? 'inspection'
+    : a === 'courier' && isCourier ? 'courier' : allowedMode;
 
+  const desktopRole: ApprovedPCRole = effMode === 'client' ? (me.owner_id || me.roles.includes('driver') ? 'driver' : 'owner')
+    : effMode === 'performer' ? (me.performer?.kind === 'tow' ? 'tow' : 'master')
+    : effMode === 'service' ? 'service' : effMode === 'insurer' ? 'insurer' : effMode === 'inspection' ? 'inspection'
+    : effMode === 'moderator' ? 'moderator' : 'admin';
   let screen;
   switch (a) {
-    case undefined: screen = effMode === 'insurer' ? <InsurerCabinet /> : effMode === 'inspection' ? <InsurerCabinet inspectionOnly /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isAdmin ? <Admin /> : effMode === 'moderator' && isModerator ? <ModeratorDesk /> : <Home />; break;
+    case undefined: screen = effMode === 'courier' ? <CourierDesk /> : effMode === 'performer' && (!me.performer || me.performer.kind === 'ecu')
+      ? (me.performer?.kind === 'ecu' ? <Work /> : <PerformerHub />)
+      : <ApprovedPcDesk role={desktopRole} fallback={effMode === 'insurer' ? <InsurerCabinet /> : effMode === 'inspection' ? <InsurerCabinet inspectionOnly /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isAdmin ? <Admin /> : effMode === 'moderator' && isModerator ? <ModeratorDesk /> : <Home />} />; break;
     case 'login': screen = <Home />; break;
     case 'sos': screen = isCustomer ? <Sos /> : <main><div className="empty">Для вызова SOS нужен клиентский аккаунт</div></main>; break;
-    case 'new': screen = !isCustomer ? <main><div className="empty">Для заказа нужен клиентский аккаунт</div></main> : b === 'consult' ? <Consult /> : <NewOrder service={b ?? 'electric'} />; break;
-    case 'order': screen = <Order id={b} />; break;
+    case 'new': screen = !isCustomer ? <main><div className="empty">Для заказа нужен клиентский аккаунт</div></main> : b === 'ecu' ? <main className="stack"><h1>Ремонт электронных блоков ЭБУ</h1><p>Специалист принимает блок в стационарной мастерской. Передайте техническое заключение из ранее оформленной консультации или выездной заявки: это бесплатно, и диагностика согласуется отдельно.</p><a className="btn" href="#/orders">Открыть мои заявки и заключения</a></main> : b === 'consult' ? <Consult /> : <NewOrder service={b ?? 'electric'} />; break;
+    case 'order': screen = effMode === 'performer' && isPerformer && b
+      ? <PerformerOrderWindow id={b} initialTab={(['order','client','finance','chat','history','vehicle'].includes(route[2] ?? '') ? route[2] as 'order'|'client'|'finance'|'chat'|'history'|'vehicle' : 'order')} />
+      : <Order id={b} />; break;
+    case 'ecu-handoff': screen = <EcuHandoffPage id={b??''} />; break;
     case 'orders': screen = isCustomer ? <Orders as="client" /> : <main><div className="empty">Нет доступа к клиентским заявкам</div></main>; break;
-    case 'garage': screen = isCustomer ? <Garage /> : <main><div className="empty">Нет доступа к гаражу</div></main>; break;
+    case 'garage': screen = isCustomer ? <Garage focusVehicleId={b} /> : <main><div className="empty">Нет доступа к гаражу</div></main>; break;
     case 'profile': screen = <Profile />; break;
+    case 'menu': screen = <main className="tr-mobile-menu-route" />; break;
     case 'invite': screen = <Invite />; break;
     case 'r': screen = <Invite />; break;
     case 'work':
-      if (!isPerformer) { screen = <Home />; break; }
+      if (!isPerformer) {
+        // A station owner may add the mobile-master workplace using the
+        // existing real performer onboarding; no fake ninth UI shell.
+        screen = isService && (b === 'profile' || b === 'me')
+          ? <PerformerHub /> : <Home />;
+        break;
+      }
       screen = !me.performer || b === 'profile' || (b === 'me' && !route[2]) ? <PerformerHub />
         : b === 'me' ? ({ about: <AboutSection />, phone: <PhoneSection />, schedule: <ScheduleSection />, cars: <CarsSection />, tax: <TaxSection />, money: <MoneySection />, level: <LevelSection /> } as Record<string, JSX.Element>)[route[2]] ?? <PerformerHub />
-        : b === 'filter' ? <FilterSection /> : b === 'jobs' ? <Orders as="performer" /> : b === 'docs' ? <Documents /> : <Work />;
+        : b === 'filter' ? <FilterSection /> : b === 'jobs' ? <Orders as="performer" /> : b === 'chats' ? <AndroidMasterChats /> : b === 'docs' ? <Documents /> : me.performer?.kind === 'ecu' ? <Work /> : <ApprovedPcDesk role={me.performer?.kind === 'tow' ? 'tow' : 'master'} fallback={<Work />} />;
       break;
-    case 'base': screen = !isService ? <Home /> : b === 'car' && route[2] ? <BaseCar id={route[2]} /> : b === 'me' ? <BaseSetup /> : b === 'money' ? <BaseMoney /> : <BaseHome />; break;
+    case 'base': screen = !isService
+      ? (isPerformer && b === 'me' ? <BaseSetup /> : <Home />)
+      : b === 'car' && route[2] ? <BaseCar id={route[2]} /> : b === 'me' ? <BaseSetup /> : b === 'money' ? <BaseMoney /> : b === 'inbox' ? <BaseHome key="inbox" initialTab="req" /> : <ApprovedPcDesk role="service" fallback={<BaseHome />} />; break;
     case 'services': screen = b && route[2] === 'book' ? <BookForm id={b} /> : b ? <CenterPage id={b} /> : <ServicesList />; break;
     case 'booking': screen = <BookingPage id={b} />; break;
     case 'fleet': screen = isCustomer && !me.owner_id && !me.roles.includes('driver') ? <Fleet /> : <main><div className="empty">Парком управляет владелец</div></main>; break;
-    case 'inspections': screen = isInspection || isInsurer ? <InsurerCabinet inspectionOnly /> : <Home />; break;
-    case 'insurance': screen = b === 'request' ? (route[2] === 'new' ? <InsuranceApplication vehicleId={route[3]??''} /> : <InsuranceThread requestId={route[2]??''} />) : isInsurer ? <InsurerCabinet /> : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
-    case 'help': screen = <Help />; break;
+    case 'inspections': screen = isInspection ? (b === 'processing' ? <InsurerCabinet inspectionOnly /> : <ApprovedPcDesk role="inspection" fallback={<InsurerCabinet inspectionOnly />} />) : <main><div className="empty">Нет прав оператора техосмотра</div></main>; break;
+    case 'courier': screen = !isCourier
+      ? <main><div className="empty">Кабинет курьера доступен только назначенному курьеру.</div></main>
+      : b === 'jobs' && route[2]
+        ? <CourierDelivery id={route[2]} />
+        : <CourierDesk section={b==='jobs'?'jobs':b==='chat'?'chat':'home'} />; break;
+    case 'insurance': screen = b === 'request'
+      ? (route[2] === 'new' ? <InsuranceApplication vehicleId={route[3]??''} /> : <InsuranceThread requestId={route[2]??''} />)
+      : isInsurer
+        ? b === 'chats' ? <InsurerChats />
+          : b === 'requests' ? <InsurerCabinet />
+          : <ApprovedPcDesk role="insurer" fallback={<InsurerCabinet />} />
+        : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
+    case 'help': screen = b === 'case' && route[2] ? <ScenarioLesson id={route[2]} /> : <Help />; break;
+    case 'economics': screen = <EconomicsPage />; break;
+    case 'learn': screen = <PlatformIntro />; break;
+    case 'trakbot': screen = <TrakBotChat />; break;
+    case 'air': screen = <DriverAir />; break;
+    case 'techbase': screen = (b === 'master'
+      ? me.roles.some(r => ['master','service','admin','moderator'].includes(r))
+      : me.roles.some(r => ['client','driver','master','tow','service','admin','moderator'].includes(r)))
+      ? <TechBase key={b + ':' + (route[2] ?? '')} audience={b === 'master' ? 'master' : 'driver'} initialVehicleId={route[2]} />
+      : <main><div className="empty">Нет доступа к этому разделу ТехБазы</div></main>; break;
+    case 'tech': screen = b === 'codes' ? <TechCodes /> : b === 'cases' ? <RepairCases /> : b === 'review' && isAdmin ? <TechnicalCasesReview /> : <Help />; break;
+    case 'training': screen = <Training chapter={b} />; break;
+    case 'practice': screen = <TrainingPractice chapter={b} />; break;
+    case 'pricing-lab': screen = isAdmin ? <PricingLaboratory /> : <main><div className="empty">Нет доступа</div></main>; break;
     case 'rules': screen = <Rules />; break;
     case 'shop': screen = ((effMode === 'client' && isCustomer) || (effMode === 'performer' && isPerformer) || (effMode === 'service' && isService))
       ? (b === 'cart' ? <ShopCart /> : b === 'history' ? <ShopHistory vehicleId={route[2]} /> : <Shop />)
@@ -263,8 +338,8 @@ function App() {
     case 'qr': screen = <QrJoin code={b} />; break;
     case 'appeal': screen = <Appeal />; break;
     case 'reviews': screen = <MyReviews />; break;
-    case 'admin': screen = !isStaff ? <Home /> : b === 'case' && route[2] ? <ModCase id={route[2]} /> : !isAdmin ? <ModeratorDesk /> : b === 'test-center' ? (serviceSandbox ? <ServicePreviewPage section={route[3]} sub={route[4]} id={route[5]} /> : <AdminTestCenter roleId={route[2]} fullFidelity />) : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : <Admin key={b === 'section' ? route[2] : 'summary'} initialSection={b === 'section' ? route[2] : undefined} />; break;
-    case 'moderation': screen = isModerator ? <ModeratorDesk /> : <Home />; break;
+    case 'admin': screen = !isStaff ? <Home /> : b === 'case' && route[2] ? <ModCase id={route[2]} /> : !isAdmin ? <ModeratorDesk /> : b === 'test-center' ? (serviceSandbox ? <ServicePreviewPage section={route[3]} sub={route[4]} id={route[5]} /> : <AdminTestCenter roleId={route[2]} fullFidelity />) : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : b === undefined ? <ApprovedPcDesk role="admin" fallback={<Admin />} /> : <Admin key={b === 'section' ? route[2] : 'summary'} initialSection={b === 'section' ? route[2] : undefined} />; break;
+    case 'moderation': screen = isModerator ? (b === 'verify' || b === 'support' || b === 'flagged' || b === 'cases' ? <ModeratorDesk initialTab={b === 'verify' ? 'verify' : b === 'support' ? 'support' : b === 'flagged' ? 'flagged' : 'cases'} /> : <ApprovedPcDesk role="moderator" fallback={<ModeratorDesk />} />) : <Home />; break;
     case 'offer': screen = <OfferPage audience={b ?? 'client'} />; break;
     case 'support': screen = b === 'new' ? <SupportNew /> : b ? <SupportThread id={b} /> : <SupportList />; break;
     case 'notifications': screen = <Notifications />; break;
@@ -288,12 +363,10 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   const route = useRoute();
   const [openGuestGroup, setOpenGuestGroup] = useState<string | null>(null);
   const [mobileCatalogOpen, setMobileCatalogOpen] = useState(false);
-  const [mobileGroupOpen, setMobileGroupOpen] = useState<string | null>(null);
   const isAuthEntry = !me && ['login', 'register', 'join', 'reset', 'activate'].includes(route[0] ?? '');
   useEffect(() => {
     setOpenGuestGroup(null);
     setMobileCatalogOpen(false);
-    setMobileGroupOpen(null);
   }, [route.join('/')]);
   useEffect(() => {
     if (!openGuestGroup) return;
@@ -311,7 +384,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   if (isOperatorDemo) return (
     <div className="app operator-demo-app">
       <header className="top">
-        <span className="logo">Trak<b>SOS</b></span>
+        <span className="logo tr-approved-brand-logo"><img src={APPROVED_VISUALS.logo} width="220" height="37" alt="TrakSOS" /></span>
         <span className="operator-demo-badge">ТЕСТОВЫЙ РЕЖИМ</span>
       </header>
       <div className="operator-demo-content" style={{width:'100%', maxWidth:1440, margin:'0 auto'}}>
@@ -321,11 +394,13 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   );
   const serviceSandbox = route[0]==='admin'&&route[1]==='test-center'&&route[2]==='service'&&route.length>3;
   const here = serviceSandbox ? '/'+(route.slice(3).join('/')||'base') : '/'+route.join('/');
-  const sandboxHref=(href:string)=>serviceSandbox?'#/admin/test-center/service'+(href==='/base'||href.startsWith('/base/')?href:'/unavailable'):'#'+href;
+  const sandboxHref=(href:string)=>serviceSandbox?'#/admin/test-center/service'+(href==='/menu'?'/menu':href==='/base'||href.startsWith('/base/')?href:'/unavailable'):'#'+href;
   // На телефоне оставляем только рабочие действия. Все прежние маршруты
   // сохраняются через меню; компьютерная боковая навигация остаётся полной.
-  const tabs: [string, string, string][] = !me ? [] : mode === 'performer'
-    ? [['/work', '⚡', 'Линия'], ['/work/jobs', '☰', 'Заявки'], ['/shop', '🛍', 'Магазин']]
+  const tabs: [string, string, string][] = !me ? [] : mode === 'courier'
+    ? [['/courier','⌂','Главная'], ['/courier/jobs','☷','Рейсы'], ['/courier/chat','▤','Чат']]
+    : mode === 'performer'
+    ? [['/work', '⌂', 'Главная'], ['/work/jobs', '☷', 'Заявки'], ['/work/me/schedule', '▦', 'График'], ['/profile', '◉', 'Профиль']]
     : mode === 'service'
       ? [['/base', '▤', 'Рембаза'], ['/support', '?', 'Связь'], ['/shop', '🛍', 'Магазин']]
     : mode === 'inspection'
@@ -337,9 +412,30 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     : mode === 'admin'
       ? [['/admin', '▦', 'Рабочий стол'], ['/admin/section/orders', '☰', 'Заявки'], ['/admin/section/support', '?', 'Обращения']]
       : [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь'], ['/shop', '⚙', 'Запчасти'], ['/profile', '◉', 'Профиль']];
+  // Mobile tabs only contain real role-dependent routes; extra tools remain in the menu.
+  const mobileTabs: [string, string, string][] = !me ? [] : mode === 'courier'
+    ? [['/courier','⌂','Главная'], ['/courier/jobs','clipboard','Рейсы'], ['/courier/chat','chat','Чат'], ['/menu','menu','Меню']]
+    : mode === 'client'
+    ? [['/', '⌂', 'Главная'], ['/orders', 'clipboard', 'Заявки'], ['/air', '◌', 'Эфир'], ['/garage', 'truck', 'Техника'], ['/menu', 'menu', 'Меню']]
+    : mode === 'performer'
+      ? [['/work', '⌂', 'Главная'], ['/work/jobs', 'clipboard', 'Заявки'], ['/work/chats', 'chat', 'Чат'], ['/menu', 'menu', 'Меню']]
+    : mode === 'service'
+      ? (serviceSandbox
+          ? [['/base', '⌂', 'Главная'], ['/base/inbox', 'clipboard', 'Заявки'], ['/base/money', '₽', 'Финансы'], ['/menu', 'menu', 'Меню']]
+          : [['/base', '⌂', 'Главная'], ['/base/inbox', 'clipboard', 'Заявки'], ['/shop', '🛍', 'Магазин'], ['/base/money', '₽', 'Финансы'], ['/menu', 'menu', 'Меню']])
+    : mode === 'insurer'
+      ? [['/insurance', '⌂', 'Главная'], ['/insurance/requests', 'clipboard', 'Заявки'], ['/insurance/chats', 'chat', 'Чат'], ['/menu', 'menu', 'Меню']]
+    : mode === 'inspection'
+      ? [['/inspections', '▣', 'Техосмотр'], ['/menu', 'menu', 'Меню']]
+    : mode === 'moderator'
+      ? [['/moderation', '⌂', 'Главная'], ['/support', '?', 'Обращения'], ['/menu', 'menu', 'Меню']]
+    : [['/admin', '⌂', 'Главная'], ['/admin/section/orders', 'clipboard', 'Заявки'],
+       ['/admin/section/people', '▤', 'Пользователи'], ['/menu', 'menu', 'Меню']];
   // Все дополнительные функции доступны в шапке, даже когда они не в нижних вкладках.
   // Не показываем чужие роли и не создаём несуществующие страницы.
-  const accountLinks: [string, string][] = mode === 'performer'
+  const accountLinks: [string, string][] = mode === 'courier'
+    ? [['/courier','Рабочий стол курьера'], ['/courier/jobs','Мои рейсы'], ['/courier/chat','Связь по доставкам'], ['/profile','Профиль и настройки']]
+    : mode === 'performer'
     ? [...(me?.roles.includes('service') ? [['/base', 'Моя СТО — стационарный ремонт']] as [string, string][] : []),
        ['/work/me', 'Профиль исполнителя'], ['/work/me/about', 'Личные сведения'],
        ['/work/me/phone', 'Телефон и вход'], ['/work/me/cars', 'Автомобили'],
@@ -347,11 +443,11 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
        ['/work/me/money', 'Финансы и выплаты'], ['/work/me/tax', 'Налоговый статус'],
        ['/work/me/level', 'Рейтинг и уровень'], ['/work/docs', 'Проверка и документы'],
        ['/reviews', 'Отзывы'], ['/invite', 'Пригласить партнёра'],
-       ['/work/jobs', 'История заявок'], ['/profile', 'Аккаунт']]
+       ['/work/jobs', 'История заявок'], ['/shop', 'Магазин запчастей'], ['/profile', 'Аккаунт']]
     : mode === 'service'
       ? [...(me?.roles.some(r => r === 'master' || r === 'tow') ? [['/work', 'Выездной мастер — заявки']] as [string, string][] : []),
          ['/base', 'Заявки и история ремонтов'], ['/base/me', 'Карточка СТО'],
-         ['/base/money', 'Финансы'], ['/profile', 'Аккаунт'],
+         ['/base/money', 'Финансы'], ['/shop', 'Магазин запчастей'], ['/profile', 'Аккаунт'],
          ['/invite', 'Пригласить партнёра']]
     : mode === 'inspection'
       ? [['/inspections', 'Кабинет техосмотра'], ['/profile', 'Аккаунт']]
@@ -365,6 +461,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/admin', 'Административная сводка'],
          ['/admin/section/orders', 'Все заявки'],
          ['/admin/section/search', 'Поиск людей и заявок'],
+         ['/admin/section/registry', 'Единая база клиентов и партнёров'],
          ['/admin/section/people', 'Пользователи'],
          ['/admin/section/access', 'Регистрация и доступы'],
          ['/admin/section/verify', 'Проверка исполнителей'],
@@ -378,83 +475,110 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/admin/section/offers', 'Оферты площадки'],
          ['/admin/section/flagged', 'Подозрительные действия'],
          ['/admin/section/settings', 'Настройки площадки'],
+         ['/economics', 'Калькулятор прибыльности · проект'],
          ['/profile', 'Аккаунт'], ['/as/client', 'Кабинет клиента']]
-    : [['/orders', 'История заявок'], ['/garage', 'Мой гараж'],
+    : [['/air', 'Эфир водителей'], ['/orders', 'История заявок'], ['/garage', 'Мой гараж'],
        ...(!me?.owner_id && !me?.roles.includes('driver') ? [['/fleet', 'Мой автопарк']] as [string,string][] : []),
        ['/services', 'СТО и запись'],
        ['/reviews', 'Мои отзывы'], ['/invite', 'Пригласить друга'],
-       ['/profile', 'Профиль и настройки']];
+       ['/shop', 'Магазин запчастей'], ['/profile', 'Профиль и настройки']];
   const helpLinks: [string, string][] = [
+    ...(me?.roles.some(r => ['master','service','admin','moderator'].includes(r))
+      ? [['/techbase/master','ТехБаза специалиста'] as [string,string]] : []),
+    ...(me?.roles.some(r => ['client','driver','tow'].includes(r))
+      ? [['/techbase/driver','ТехБаза водителя'] as [string,string]] : []),
+    ...(me && (
+      me.roles.some(r => r === 'admin' || r === 'moderator') ||
+      (me.roles.some(r => r === 'client' || r === 'driver') &&
+        !me.roles.some(r => ['master','tow','service','insurer','inspection_operator'].includes(r)))
+    ) ? [['/air', 'Эфир водителей'] as [string,string]] : []),
     ['/support', 'Поддержка'], ['/notifications', 'Уведомления'],
-    ['/help', 'Помощь и подсказки'], ['/rules', 'Правила площадки'],
-    ['/offer/' + (mode === 'performer' || mode === 'service' ? 'performer' : mode === 'insurer' ? 'privacy' : 'client'), mode === 'insurer' ? 'Документы и условия' : 'Оферта'],
+    ['/learn', 'Знакомство с TrakSOS'], ['/training', 'Обучение по шагам'], ['/practice', 'Учебный тренажёр'], ['/help', 'Помощь и подсказки'],
+    ['/economics', 'Комиссии, баллы и рефералы'], ['/trakbot', 'TrakBot · личный чат'], ['/rules', 'Правила площадки'],
+    ['/offer/' + (mode === 'performer' || mode === 'service' ? 'performer' : mode === 'insurer' ? 'insurer' : mode === 'inspection' ? 'inspection' : mode === 'admin' || mode === 'moderator' ? 'privacy' : 'client'), mode === 'insurer' || mode === 'inspection' ? 'Договор партнёра' : 'Оферта'],
     ['/offer/privacy', 'Политика персональных данных'],
     ['/privacy', 'Мои персональные данные']];
+  // Visible on Android secondary screens only; the owner-approved dashboard
+  // composition is intentionally untouched. Titles come from authorized routes.
+  const workspaceHref = mobileTabs[0]?.[0] || '/';
+  const sectionPath = here.split('?')[0];
+  const innerSection = !!me && native.isApp && !serviceSandbox &&
+    !['/',workspaceHref,'/menu'].includes(sectionPath);
+  const scopedSectionNames: [string,string][] = [
+    ...mobileTabs.map(([path,,name])=>[path,name] as [string,string]),
+    ...accountLinks,...helpLinks
+  ];
+  const sectionLabel = scopedSectionNames
+    .filter(([path])=>path !== '/' && (path === sectionPath || sectionPath.startsWith(path+'/')))
+    .sort((a,b)=>b[0].length-a[0].length)[0]?.[1]
+    || (sectionPath.startsWith('/order/') ? 'Карточка заявки' : 'Рабочий раздел');
+  const safeLogout = () => {
+    if (me?.roles.some(r => r === 'master' || r === 'tow') &&
+      !window.confirm('При выходе из аккаунта статус «На линии» отключится. Просто сверните приложение, если хотите продолжать получать заявки. Выйти?')) return;
+    void logout();
+  };
   return (
-    <div className={`app ${me ? "role-"+mode : "guest-app"}`}>
+    <div className={`app ${me ? "role-"+mode : (route.length === 0 ? "guest-app guest-home" : "guest-app")}`}>
       <header className="top">
-        <span className="logo">Trak<b>SOS</b></span>
+        {me ? <span className="logo tr-approved-brand-logo"><img src={APPROVED_VISUALS.logo} width="220" height="37" alt="TrakSOS" /></span>
+          : <a href="#/" className="logo guest-approved-mark" aria-label="TrakSOS — главная">
+              <img src={APPROVED_VISUALS.logo} width="220" height="37" alt="TrakSOS"/>
+            </a>}
         {me && mode === 'client' && <nav className="track-top-shortcuts" aria-label="Быстрый доступ">
           <a href="#/">Главная</a><a href="#/orders">Заявки</a><a href="#/sos">Помощь в дороге</a><a href="#/shop">Запчасти</a>
         </nav>}
         {!me && !isAuthEntry && <nav className="guest-site-nav" aria-label="Разделы TrakSOS">
-          {TOP_CATALOGUE.map(group => <details key={group.title} className="guest-nav-group"
-            open={openGuestGroup === group.title}
-            onMouseEnter={() => { if (window.matchMedia('(hover: hover)').matches && openGuestGroup && openGuestGroup !== group.title) setOpenGuestGroup(group.title); }}
-            onMouseLeave={() => setOpenGuestGroup(current => current === group.title ? null : current)}
+          <a href="#/" aria-current={route.length === 0 ? 'page' : undefined}>Главная</a>
+          <details className="guest-nav-group" open={openGuestGroup === 'Возможности'}
+            onMouseLeave={() => setOpenGuestGroup(null)}
             onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpenGuestGroup(null); }}
             onKeyDown={event => { if (event.key === 'Escape') { setOpenGuestGroup(null); (event.currentTarget.querySelector('summary') as HTMLElement | null)?.focus(); event.preventDefault(); } }}>
-            <summary aria-expanded={openGuestGroup === group.title}
-              onClick={event => { event.preventDefault(); setOpenGuestGroup(current => current === group.title ? null : group.title); }}>
-              {group.title}<span aria-hidden="true">⌄</span></summary>
-            <div className="guest-nav-dropdown">
-              {group.serviceIds.flatMap(id => (group.serviceIds.length > 1
-                ? [{label: SERVICE_TILES.find(tile => tile.id === id)?.title || id, key: ''}]
-                : CATALOGUE[id].services).map(item => (
-                <a key={id + ':' + item.key}
-                  href={'#/explore/' + id + (item.key ? '/' + item.key : '')}
-                  onClick={() => { rememberGuestService(id, item.key || undefined); setOpenGuestGroup(null); }}>
-                  {item.label}
-                </a>
-              )))}
-              <span className="guest-nav-hint">{group.title === 'Запчасти' ? 'Магазин доступен после входа' : 'Описание и регистрация'}</span>
+            <summary aria-expanded={openGuestGroup === 'Возможности'}
+              onClick={event => { event.preventDefault(); setOpenGuestGroup(current => current === 'Возможности' ? null : 'Возможности'); }}>
+              Возможности <span aria-hidden="true">⌄</span>
+            </summary>
+            <div className="guest-nav-dropdown guest-nav-dropdown--all">
+              {PUBLIC_CAPABILITIES.map(item =>
+                <a key={item.href} href={item.href} onClick={() => setOpenGuestGroup(null)}>{item.title}</a>)}
+              <span className="guest-nav-hint">Услуги доступны после входа и только при наличии исполнителей</span>
             </div>
-          </details>)}
-          <a href="#/join" className="guest-business-link">Для партнёров</a>
-          <a href="#/company" className="guest-business-link">Компания</a>
-          <a href="#/offers" className="guest-business-link">Оферты</a>
+          </details>
+          <a href="#/explore/tech" className="guest-nav-techbase">ТехБаза</a>
+          <a href="#/company">О платформе</a>
+          <a href="#/explore/pricing">Тарифы</a>
+          <a href="#/help">Помощь</a>
         </nav>}
         {!me && isAuthEntry && <nav className="guest-auth-links" aria-label="О компании и документах">
           <a href="#/">Главная</a><a href="#/company">Компания</a>
           <a href="#/offers">Оферты</a><a href="#/offer/privacy">Документы</a>
         </nav>}
         {!me && !isAuthEntry && <details className="guest-mobile-catalog" open={mobileCatalogOpen}>
-          <summary onClick={event => { event.preventDefault(); setMobileCatalogOpen(v => !v); setMobileGroupOpen(null); }}>
-            Каталог услуг <span aria-hidden="true">⌄</span></summary>
-          <nav aria-label="Каталог услуг TrakSOS">
-            {TOP_CATALOGUE.map(group => <details key={group.title} open={mobileGroupOpen === group.title}>
-              <summary onClick={event => { event.preventDefault(); setMobileGroupOpen(current => current === group.title ? null : group.title); }}>{group.title}</summary>
-              <div>
-                {group.serviceIds.flatMap(id => (group.serviceIds.length > 1
-                  ? [{label: SERVICE_TILES.find(tile => tile.id === id)?.title || id, key: ''}]
-                  : CATALOGUE[id].services).map(item => <a key={id + ':' + item.key}
-                    href={'#/explore/' + id + (item.key ? '/' + item.key : '')}
-                    onClick={() => { rememberGuestService(id, item.key || undefined); setMobileCatalogOpen(false); setMobileGroupOpen(null); }}>{item.label}</a>))}
-              </div>
-            </details>)}
-            <a href="#/join" className="guest-mobile-business">Для партнёров · регистрация</a>
-            <a href="#/company" className="guest-mobile-business">Компания</a>
-            <a href="#/offers" className="guest-mobile-business">Оферты</a>
+          <summary onClick={event => { event.preventDefault(); setMobileCatalogOpen(v => !v); }}>Возможности <span aria-hidden="true">⌄</span></summary>
+          <nav aria-label="Возможности TrakSOS">
+            {PUBLIC_CAPABILITIES.map(item =>
+              <a key={item.href} href={item.href} onClick={() => setMobileCatalogOpen(false)}>{item.title}</a>)}
+            <a href="#/company" onClick={() => setMobileCatalogOpen(false)}>О платформе</a>
+            <a href="#/economics" onClick={() => setMobileCatalogOpen(false)}>Тарифы</a>
+            <a href="#/help" onClick={() => setMobileCatalogOpen(false)}>Помощь</a>
           </nav>
         </details>}
         {!isAuthEntry && <SiteQuickSearch authenticated={!!me} />}
         <div className="row" style={{ flexWrap: 'nowrap' }}>
+          {!me && native.isPreviewBuild && <a href="#/android-review/client" className="and19-review-entry" style={{color:'#ffad70',fontSize:12}}>Посмотреть кабинеты APK</a>}
           {!me && !isAuthEntry && <div className="guest-header-actions"><a href="#/login">Войти</a><a href="#/register" className="register">Зарегистрироваться</a></div>}
           {me && mode === 'performer' && <span className="pill accent">исполнитель</span>}
           {me && mode === 'admin' && <span className="pill accent">админ</span>}
           {me && mode === 'moderator' && <span className="pill accent">модерация</span>}
           {me && mode === 'insurer' && <span className="pill accent">страхование</span>}
           {me && mode === 'service' && <span className="pill accent">рембаза</span>}
+          {me && !serviceSandbox && me.roles.includes('insurer') && me.roles.includes('inspection_operator') &&
+            (mode === 'insurer' || mode === 'inspection') &&
+            <nav className="cabinet-role-switch" aria-label="Рабочее направление партнёра">
+              <a href="#/as/insurer" aria-label="Кабинет страхования"
+                aria-current={mode === 'insurer' ? 'page' : undefined}>Страхование</a>
+              <a href="#/as/inspection" aria-label="Кабинет техосмотра"
+                aria-current={mode === 'inspection' ? 'page' : undefined}>Техосмотр</a>
+            </nav>}
           {me && !serviceSandbox && me.roles.some(r => r === 'master' || r === 'tow') && me.roles.some(r => r === 'admin' || r === 'moderator') &&
             <nav className="cabinet-role-switch" aria-label="Режим кабинета">
               <a href="#/as/performer" aria-label="Выездной мастер" aria-current={mode === 'performer' ? 'page' : undefined}>Мастер</a>
@@ -465,31 +589,30 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {me && !serviceSandbox && <a href="#/help" className="bell" aria-label="Справка">?</a>}
           {me && !serviceSandbox && <Bell />}
           {me && <details className="account-menu" key={here}>
-            <summary aria-label="Открыть меню кабинета">☰ <span>Меню</span></summary>
+            <summary aria-label="Открыть меню кабинета"><span className="account-menu-desktop-glyph" aria-hidden="true">☰</span><span className="account-menu-desktop-label">Меню</span><span className="account-menu-mobile-glyph" aria-hidden="true"><NavGlyph glyph="◉" /></span></summary>
             <nav aria-label="Все разделы кабинета">
               <span className="account-menu-heading">Мой кабинет</span>
               {accountLinks.map(([href, label]) => <a key={href} href={sandboxHref(href)}>{label}</a>)}
               <span className="account-menu-heading">Помощь и документы</span>
+              {!serviceSandbox && <button type="button" className="account-menu-tour" onClick={() => window.dispatchEvent(new Event('traksos-tour-start'))}>Показать, где какие кнопки</button>}
               {helpLinks.map(([href, label]) => <a key={href} href={sandboxHref(href)}>{label}</a>)}
-              {!serviceSandbox && <button type="button" className="account-menu-logout" onClick={() => {
-                if (me.roles.some(r => r === 'master' || r === 'tow') &&
-                  !window.confirm('При выходе из аккаунта статус «На линии» отключится. Просто сверните приложение, если хотите продолжать получать заявки. Выйти?')) return;
-                void logout();
-              }}>Выйти из аккаунта</button>}
+              {!serviceSandbox && <button type="button" className="account-menu-logout" onClick={safeLogout}>Выйти из аккаунта</button>}
             </nav>
           </details>}
         </div>
       </header>
       <NetworkStatus />
+      {me && !native.isApp && !serviceSandbox && ['', 'work', 'base', 'admin', 'moderation', 'insurance', 'inspections'].includes(route[0] ?? '') && <TrainingInvite />}
+      {me && !serviceSandbox && (!native.isApp || !['', 'work', 'base', 'admin', 'moderation', 'insurance', 'inspections'].includes(route[0] ?? '') || route.length>1) && <ContextHelp page={route[0] ?? ''} />}
       <div className="desktop-layout">
         <aside className="desktop-sidebar" aria-label="Навигация по сайту">
-          <div className="desktop-sidebar-title">{me ? 'Рабочий кабинет' : isAuthEntry ? 'TrakSOS · вход и документы' : 'TrakSOS · помощь в дороге'}</div>
+          <div className="desktop-sidebar-title">{me ? 'Рабочий кабинет' : isAuthEntry ? 'TrakSos · вход и документы' : 'TrakSos · помощь в дороге'}</div>
           <nav className="desktop-nav">
             {me ? <>
               {(mode === 'client'
                 ? [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь в дороге'], ['/shop', '⚙', 'Запчасти'], ['/garage', '▣', 'Мой транспорт'], ['/insurance/request/new', '◇', 'Страхование'], ['/services', '▤', 'Грузовые СТО']]
                 : mode === 'performer'
-                  ? [...tabs, ['/work/me', '◉', 'Профиль'], ...(me.roles.includes('service') ? [['/base', '▤', 'Моя СТО']] : [])]
+                  ? []
                   : mode === 'service'
                     ? [...tabs, ['/base/money', '₽', 'Финансы'], ['/base/me', '⚙', 'Карточка'], ...(me.roles.some(r => r === 'master' || r === 'tow') ? [['/work', '⚡', 'Выездной мастер']] : []), ['/profile', '◉', 'Аккаунт']]
                     : mode === 'insurer' || mode === 'inspection'
@@ -500,9 +623,34 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                   <span aria-hidden="true">{ic}</span><span>{name}</span>
                 </a>
               ))}
+              {mode === 'performer' && <>
+                {([
+                  ['Рабочее место', [
+                    ['/work','⌂','Рабочий стол'], ['/work/jobs','☷','Мои заявки и история'],
+                    ['/work/me/schedule','▦','Календарь и график'], ['/work/filter','⚙','Настройки заявок']]],
+                  ['Финансы', [
+                    ['/work/me/money','₽','Начисления и выплаты']]],
+                  ['Сообщения и помощь', [
+                    ['/notifications','◉','Уведомления'], ['/support','?','Поддержка'],
+                    ['/work/docs','◇','Документы и проверки'], ['/help','ⓘ','Подсказки']]],
+                  ['Профиль и настройки', [
+                    ['/work/me','▣','Мой профиль'], ['/work/me/phone','⚿','Вход и безопасность'],
+                    ['/work/me/cars','⚙','Автомобили'], ['/work/me/tax','▤','Налоговый статус'],
+                    ['/offer/performer','☷','Оферта'], ['/shop','▦','Запчасти']]]
+                  ] as [string,[string,string,string][]][]).map(([group, links])=><div key={group}>
+                  <div className="desktop-sidebar-title desktop-nav-section">{group}</div>
+                  {links.map(([href,ic,name])=><a key={href} href={sandboxHref(href)}
+                    className={`desktop-nav-link ${here===href?'active':''}`}>
+                    <span aria-hidden="true">{ic}</span><span>{name}</span>
+                  </a>)}
+                </div>)}
+                {me.roles.includes('service') && <a className="desktop-nav-link" href="#/base">
+                  <span aria-hidden="true">▤</span><span>Моя СТО</span>
+                </a>}
+              </>}
               {mode === 'client' && <>
                 <div className="desktop-sidebar-title desktop-nav-section">Мой кабинет</div>
-                {([...(me && !me.owner_id && !me.roles.includes('driver') ? [['/fleet','▣','Мой парк']] as [string,string,string][] : []),['/support','?','Поддержка'],['/profile','◉','Профиль']] as [string,string,string][]).map(([href, ic, name]) => (
+                {([...(me && !me.owner_id && !me.roles.includes('driver') ? [['/fleet','▣','Мой парк']] as [string,string,string][] : []),['/air','☷','Эфир'],['/support','?','Поддержка'],['/profile','◉','Профиль']] as [string,string,string][]).map(([href, ic, name]) => (
                   <a key={href} href={sandboxHref(href)} className={`desktop-nav-link ${here === href || here.startsWith(href + '/') ? 'active' : ''}`}>
                     <span aria-hidden="true">{ic}</span><span>{name}</span>
                   </a>
@@ -527,7 +675,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {!me && <aside className="track-sidebar-app" aria-label="Мобильное приложение TrakSOS">
             <span className="track-sidebar-app-glow" aria-hidden="true" />
             <span className="track-sidebar-app-phone" aria-hidden="true">
-              <img src="/tracksos-approved-scania-r520.webp" alt="" loading="lazy" />
+              <img src={APPROVED_VISUALS.logo} alt="TrakSOS" loading="lazy" />
               <small>TrakSOS</small>
             </span>
             <span className="track-sidebar-app-copy">
@@ -539,8 +687,15 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           <div className="desktop-sidebar-bottom"><strong>TRAKSOS 24/7</strong><span>Помощь грузовикам</span><small>Санкт-Петербург и Ленинградская область</small></div>
         </aside>
         <div className="desktop-content">
-          {children}
-          <SiteFooter />
+          {innerSection && <MobileSectionChrome title={sectionLabel} homeHref={workspaceHref}/>}
+          {me && !native.isApp && !serviceSandbox && route.length===0 && <IntroInvitation key={me.id+'-'+mode} userId={me.id} mode={mode} roles={me.roles} />}
+          {me && route[0] === 'menu' && !serviceSandbox
+            ? <MobileRoleMenu mode={mode} quick={mobileTabs} account={accountLinks} help={helpLinks} onLogout={safeLogout} />
+            : children}
+          {/* Website legal/footer blocks belong to the browser, not beneath
+              the signed-in Android app's persistent bottom menu. The same
+              rules, offers and support are reachable through role Menu. */}
+          {(!native.isApp || !me) && <SiteFooter />}
         </div>
       </div>
       {!me && !route[0] && (
@@ -552,15 +707,20 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           <a href="#/register"><span aria-hidden="true"><NavGlyph glyph="＋" /></span>Регистрация</a>
         </nav>
       )}
-      {tabs.length > 0 && !(route[0] === 'work' && ['profile', 'docs'].includes(route[1] ?? '')) && !(route[0] === 'base' && route[1] === 'me') && (
+      {/* On Android the primary menu must remain reachable from every inner page. */}
+      {mobileTabs.length > 0 && (
         <nav className="tabbar">
-          {tabs.map(([href, ic, name]) => (
+          {mobileTabs.map(([href, ic, name]) => (
             <a key={href} href={sandboxHref(href)} className={`${here === href || (href !== '/' && here.startsWith(href + '/') && href !== '/work' && href !== '/base') ? 'on' : ''} ${href === '/sos' ? 'sosTab' : ''}`}>
               {href === '/sos' ? <><span className="ic"><NavGlyph glyph="✚" /></span>{name}</> : <><span className="ic"><NavGlyph glyph={ic} /></span>{name}</>}
             </a>
           ))}
         </nav>
       )}
+      {/* 618.png has no overlapping floating robot. The same approved talking-truck
+          TrakBot remains in Android Menu > TrakBot and on the desktop. */}
+      {!native.isApp && !serviceSandbox && !isAuthEntry && route[0] !== 'trakbot' && <TrakBotDock authenticated={!!me} />}
+      {me && !serviceSandbox && <RoleTour page={route[0] ?? ''} />}
     </div>
   );
 }
@@ -602,7 +762,7 @@ function SiteFooter() {
           <button className="btn ghost small" onClick={() => { try { localStorage.setItem('traksos.cookie', '1'); } catch { /* */ } setCookieOk(true); }}>Понятно</button>
         </div>
       )}
-      <span className="logo">Trak<b>SOS</b></span>
+      <span className="logo tr-approved-brand-logo"><img src={APPROVED_VISUALS.logo} width="220" height="37" alt="TrakSOS" /></span>
       <span className="note">{l?.tagline}</span>
       {req && <span className="note">{req}</span>}
       {l?.address && <span className="note">{l.address}</span>}
@@ -610,7 +770,7 @@ function SiteFooter() {
       <span className="row note" style={{ gap: 12 }}>
         <a href="#/company">Компания</a><a href="#/offers">Оферты</a><a href="#/offer/privacy">Персональные данные</a><a href="#/rules">Правила площадки</a>
       </span>
-      <span className="note">© {new Date().getFullYear()} {l?.brand ?? 'TrakSOS'}</span>
+      <span className="note">© {new Date().getFullYear()} {l?.brand ?? 'TrakSos'}</span>
     </footer>
   );
 }
@@ -619,7 +779,7 @@ function Bell() {
   const n = useUnread();
   return (
     <a href="#/notifications" className="bell" aria-label={n ? `Уведомления: ${n} новых` : 'Уведомления'}>
-      🔔{n > 0 && <span className="badge">{n > 99 ? '99+' : n}</span>}
+      <NavGlyph glyph="bell" />{n > 0 && <span className="badge">{n > 99 ? '99+' : n}</span>}
     </a>
   );
 }

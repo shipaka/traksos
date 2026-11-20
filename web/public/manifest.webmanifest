@@ -1,18 +1,18 @@
 {
-  "name": "TrakSOS",
-  "short_name": "TrakSOS",
+  "name": "TrakSos",
+  "short_name": "TrakSos",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#061426",
   "theme_color": "#061426",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "icon-192.png?v=approved-20261120",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icon-512.png",
+      "src": "icon-512.png?v=approved-20261120",
       "sizes": "512x512",
       "type": "image/png"
     }

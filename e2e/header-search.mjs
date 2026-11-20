@@ -1,39 +1,51 @@
-import { chromium } from 'playwright';
+// Approved 617 PC public header and approved mobile "Возможности" navigation.
+// The old guest search overlay intentionally is not visible; verify live links
+// rather than reintroducing a deleted legacy search bar.
+import {chromium} from 'playwright';
 const BASE=process.env.BASE_URL??'http://127.0.0.1:8080';
 if(!['127.0.0.1','localhost'].includes(new URL(BASE).hostname))
- throw Error('Header search smoke is local only');
+  throw Error('Header navigation smoke is local only');
 const browser=await chromium.launch();
 const errors=[];
-async function session(term, select, expectedHash, width=1440){
-  // A new browser document per case avoids testing search during a previous
-  // hash-router transition. This is the actual user opening a fresh page.
-  const page=await browser.newPage({viewport:{width,height:width<500?844:900},locale:'ru-RU'});
-  page.on('pageerror',err=>errors.push(err.message));
-  try{
-    await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
-    await page.getByRole('heading',{name:/TrakSOS.*помощь/}).waitFor();
-    const search=page.getByRole('searchbox',{name:'Поиск разделов и услуг'});
-    // Canonical header starts as a search icon; opening it must reveal a usable real input.
-    await page.locator('.track-site-search-icon').click();
-    await search.fill(term);
-    const options=page.locator('#track-search-list');
-    if(select){
-      const found=options.getByRole('option',{name:select});
-      await found.waitFor({state:'visible'});
-      await found.click();
-      await page.waitForURL(new RegExp('#/'+expectedHash+'$'));
-    } else {
-      await options.getByText(/Раздел не найден/).waitFor();
-      await search.press('Escape');
-      if(await options.count())throw Error('Escape did not close search results');
-    }
-  } finally {await page.close();}
+async function desktop(href,heading){
+ const page=await browser.newPage({viewport:{width:1440,height:900},locale:'ru-RU'});
+ page.on('pageerror',error=>errors.push(error.message));
+ try{
+   await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
+   await page.locator('.owner20-home').waitFor({state:'visible'});
+   const link=page.locator(href);
+   await link.waitFor({state:'visible'});
+   await link.click();
+   await page.locator('.guest-explore-hero h1').waitFor({state:'visible'});
+   if(!page.url().includes(heading))throw Error('Approved desktop tile went to wrong route '+page.url());
+   await page.locator('.guest-explore-cta[href="#/register"]').waitFor({state:'visible'});
+   const dims=await page.evaluate(()=>({client:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));
+   if(dims.scroll>dims.client+3)throw Error('Approved PC navigation horizontal overflow '+JSON.stringify(dims));
+ } finally {await page.close();}
+}
+async function mobile(){
+ const page=await browser.newPage({viewport:{width:390,height:844},locale:'ru-RU'});
+ page.on('pageerror',error=>errors.push(error.message));
+ try{
+   await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
+   await page.locator('.public-landing').waitFor({state:'visible'});
+   const catalogue=page.locator('.guest-mobile-catalog summary');
+   await catalogue.waitFor({state:'visible'});
+   await catalogue.click();
+   const nav=page.locator('.guest-mobile-catalog nav[aria-label="Возможности TrakSOS"]');
+   const parts=nav.locator('a[href="#/explore/parts"]');
+   await parts.waitFor({state:'visible'});
+   await parts.click();
+   await page.locator('.guest-explore-hero h1').waitFor({state:'visible'});
+   if(!page.url().endsWith('#/explore/parts'))throw Error('Mobile catalogue parts link broken');
+   const width=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
+   if(width>3)throw Error('Approved mobile header horizontal overflow '+width);
+ } finally {await page.close();}
 }
 try {
- await session('запчаст',/Запчасти и аналоги/,'register');
- await session('запчаст',/Запчасти и аналоги/,'register',390);
- await session('консультация',/Консультация специалиста/,'login');
- await session('несуществующее-направление',null,null);
+ await desktop('.owner20-feature-parts','#/explore/parts');
+ await desktop('.owner20-quick a[href="#/explore/consult"]','#/explore/consult');
+ await mobile();
  if(errors.length)throw Error('Page errors: '+errors.join(' | '));
- console.log('Approved icon-only expandable header search works on desktop and mobile');
-}finally{await browser.close();}
+ console.log('Approved 617 PC live service tiles and mobile capability navigation — PASS');
+} finally {await browser.close();}

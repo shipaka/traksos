@@ -97,6 +97,29 @@ try {
         if (!(await page.evaluate(() => location.hash)).startsWith('#/help'))
           throw new Error('Partner help link is broken');
       }
+      // Recover actual TechBase from its old source branch, but never mix
+      // public catalogue information with role-protected repair manuals.
+      const hasDriverBase = entry.name !== 'insurer';
+      const hasMasterBase = ['master','master_service','service'].includes(entry.name);
+      for (const [audience,allowed] of [['driver',hasDriverBase],['master',hasMasterBase]]) {
+        const response = await fetch(BASE + '/api/techbase?audience=' + audience, {
+          headers: { authorization: 'Bearer ' + result.token }
+        });
+        if (response.status !== (allowed ? 200 : 403))
+          throw new Error(entry.name + ' TechBase ' + audience + ': HTTP ' + response.status);
+        if (allowed) {
+          const payload = await response.json();
+          if (!payload.documents?.length || payload.documents.some(d => d.audience !== audience))
+            throw new Error(entry.name + ' TechBase returned missing or forbidden document');
+        }
+      }
+      if(hasMasterBase || hasDriverBase){
+        await page.goto(BASE + '/#/techbase/' + (hasMasterBase ? 'master' : 'driver'));
+        await page.getByRole('heading',{name:hasMasterBase?'ТехБаза мастера':'ТехБаза водителя'}).waitFor();
+      } else {
+        await page.goto(BASE + '/#/techbase/master');
+        await page.getByText('Нет доступа к этому разделу ТехБазы').waitFor();
+      }
       if (entry.name === 'driver') {
         await page.goto(BASE + '/#/fleet', { waitUntil: 'domcontentloaded' });
         await page.getByText('Парком управляет владелец').waitFor();

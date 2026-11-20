@@ -275,7 +275,7 @@
   z-index:0;
   right:1%;bottom:1%;
   width:43%;height:95%;
-  background:url('../public/tracksos-approved-scania-r520.webp') right bottom / contain no-repeat;
+  background:url('../public/tracksos-approved-hero-owner-20261119.webp') right bottom / contain no-repeat;
   opacity:.9;
   filter:drop-shadow(0 12px 15px #0007);
   pointer-events:none;
@@ -341,7 +341,7 @@
   padding:clamp(22px,3vw,34px);
   border:1px solid #487793;border-radius:23px;
   background:linear-gradient(92deg,#0a223a 5%,rgba(8,32,52,.9) 57%,rgba(8,32,52,.2)),
-    url('../public/tracksos-approved-scania-r520.webp') right center / contain no-repeat #0b2b42;
+    url('../public/tracksos-approved-hero-owner-20261119.webp') right center / contain no-repeat #0b2b42;
   box-shadow:0 14px 32px #0003;
 }
 .base-workspace.service-onboarding>.base-onboarding-hero h1{
@@ -380,7 +380,7 @@
 .performer-onboarding>div:first-of-type::after{
   content:"";position:absolute;z-index:-1;
   width:42%;inset:0 0 0 auto;
-  background:url('../public/tracksos-approved-scania-r520.webp') right center / contain no-repeat;
+  background:url('../public/tracksos-approved-hero-owner-20261119.webp') right center / contain no-repeat;
   opacity:.75;
 }
 .performer-onboarding>div:first-of-type h1{
@@ -448,7 +448,7 @@
 .client-section-hero-garage::after{
   content:"";pointer-events:none;z-index:0;
   position:absolute;inset:7px 5% 7px 57%;
-  background:url('../public/tracksos-approved-scania-r520.webp') right center / contain no-repeat;
+  background:url('../public/tracksos-approved-hero-owner-20261119.webp') right center / contain no-repeat;
   opacity:.78;
 }
 .client-section-hero-garage h1,.client-section-hero-garage .sub{max-width:52%;}

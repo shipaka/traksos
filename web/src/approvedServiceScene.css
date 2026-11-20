@@ -1,0 +1,116 @@
+/* One photographic atlas, one mapping of service -> illustration across all
+   authenticated surfaces. No fake order/customer content baked into labels. */
+.tr-service-illustration {
+  position:absolute;
+  z-index:0;
+  right:0;
+  bottom:0;
+  display:block;
+  flex:none;
+  pointer-events:none;
+  width:176px;
+  height:105px;
+  background-color:transparent;
+  background-image:var(--tr-service-mobile);
+  background-size:704px 105px;
+  background-repeat:no-repeat;
+  background-position:0 0;
+  opacity:.80;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 31%);
+  mask-image:linear-gradient(90deg,transparent 0%,#000 31%);
+  transition:opacity .18s ease,transform .18s ease;
+}
+.tr-service-illustration--repair{background-position:0 0}
+.tr-service-illustration--tow{background-position:-176px 0}
+.tr-service-illustration--service{background-position:-352px 0}
+.tr-service-illustration--consult{background-position:-528px 0}
+
+.app.role-client .desktop-quick-card {
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+}
+.app.role-client .desktop-quick-card>.desktop-quick-icon,
+.app.role-client .desktop-quick-card>span:nth-child(2),
+.app.role-client .desktop-quick-card>span:last-child:not(.tr-service-illustration) {
+  position:relative;
+  z-index:2;
+}
+.app.role-client .desktop-quick-card>.tr-service-illustration {
+  opacity:.66;
+}
+/* 4x density (2816x420) desktop photos: same four corresponding services.
+   Never apply desktop scene to 618.png-approved Android or mobile browser. */
+@media(min-width:900px){
+  .app.role-client .desktop-quick-card>.tr-service-illustration {
+    background-image:var(--tr-service-desktop);
+    background-size:704px 105px;
+  }
+}
+.app.role-client .desktop-quick-card:hover>.tr-service-illustration {
+  opacity:.79;
+  /* The approved 176x105 crop has no additional pixels to support zoom. */
+  transform:none;
+}
+/* Android keeps the approved 4-column phone geometry; imagery enriches the
+   existing tiles without inserting another grid row or changing controls. */
+.and19-services>a {
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+}
+.and19-services>a>span:not(.tr-service-illustration) {
+  position:relative;
+  z-index:2;
+}
+.and19-services>a>.tr-service-illustration {
+  right:-7px;
+  bottom:-5px;
+  /* Paint the atlas directly at half-size, instead of GPU-scaling the
+     already cropped raster a second time. No layout/grid size changes. */
+  width:88px;
+  height:52.5px;
+  background-size:352px 52.5px;
+  opacity:.49;
+  transform:none;
+}
+.and19-services>a>.tr-service-illustration--repair{background-position:0 0}
+.and19-services>a>.tr-service-illustration--tow{background-position:-88px 0}
+.and19-services>a>.tr-service-illustration--service{background-position:-176px 0}
+.and19-services>a>.tr-service-illustration--consult{background-position:-264px 0}
+/* Android's original direct-child icon rule assigns 23px to every span.
+   The service label is now wrapped only to keep it above the photograph;
+   restore the exact original 10px inherited text sizing. */
+.and19-services>a>.and19-service-label {
+  position:relative;
+  z-index:2;
+  font-size:inherit;
+  color:inherit;
+  font-weight:inherit;
+  line-height:inherit;
+  max-width:100%;
+}
+@media(max-width:899px) {
+  /* Mobile Chrome paints the same 704x105 image once at its final size.
+     The old transform(scale(.65)) triggered an extra GPU resampling pass. */
+  .app.role-client .desktop-quick-card>.tr-service-illustration {
+    right:-12px;
+    width:114.4px;
+    height:68.25px;
+    background-size:457.6px 68.25px;
+    opacity:.30;
+    transform:none;
+  }
+  .app.role-client .desktop-quick-card>.tr-service-illustration--repair{background-position:0 0}
+  .app.role-client .desktop-quick-card>.tr-service-illustration--tow{background-position:-114.4px 0}
+  .app.role-client .desktop-quick-card>.tr-service-illustration--service{background-position:-228.8px 0}
+  .app.role-client .desktop-quick-card>.tr-service-illustration--consult{background-position:-343.2px 0}
+  .app.role-client .desktop-quick-card:hover>.tr-service-illustration {
+    opacity:.40;
+    transform:none;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  .tr-service-illustration {transition:none!important;}
+}
+html.traksos-reduced-motion .tr-service-illustration{transition:none!important;}

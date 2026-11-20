@@ -1,0 +1,186 @@
+/* TrakSOS Android workspaces — approved 19 Nov 2026.
+   Mobile-only layer. Desktop CSS and existing workflows remain authoritative. */
+.and19-workspace{display:none}
+/* A bookmarked chat-inbox URL must also work on desktop, not render a blank page. */
+.and19-chats{display:flex;flex-direction:column;gap:12px;max-width:780px;margin:0 auto;padding:22px}
+.and19-chats .and19-row-link{display:flex;justify-content:space-between;gap:12px;padding:15px;text-decoration:none;color:#e5f6ff}
+.and19-chats .and19-panel{padding:16px}
+.and19-chats .and19-action{display:inline-flex;justify-content:center;align-items:center;min-height:42px;padding:8px 15px;border-radius:11px;background:#ef6c1b;color:white}
+@media(max-width:899px){
+ .and19-workspace{display:flex;flex-direction:column;gap:12px;min-width:0;color:#eef8ff;font-size:14px}
+ /* Only one responsive dashboard is rendered: never suppress real GPS or notices. */
+ .app.role-client .client-dashboard{max-width:100%;padding:12px 10px 22px}
+ .app.role-performer .work-live-dashboard{max-width:100%;padding:12px 10px 22px}
+ .app.role-performer .work-live-dashboard>.and19-workspace{width:100%}
+ .app:not(.guest-app){--accent:#ff7627;--accent-soft:#ff762727;--on-accent:#fff}
+ .and19-price{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:8px 11px;
+   border:1px solid #39637a;border-radius:10px;background:#0d2738}
+ .and19-price small{color:#bad6e4;font-size:11px}
+ .and19-price strong{font-size:18px;font-variant-numeric:tabular-nums;color:#fff}
+ .and19-workspace h1{font-size:clamp(24px,6.5vw,30px);line-height:1.12;margin:3px 0 0;color:#fff}
+ .and19-workspace h2{font-size:16px;color:#fff;margin:4px 0 9px}
+ .and19-workspace p{margin:3px 0;line-height:1.5}
+ .and19-workspace a{color:inherit;text-decoration:none}
+ .and19-workspace a:focus-visible,.and19-workspace button:focus-visible{outline:2px solid #78dfe9;outline-offset:3px}
+ .and19-role{border:1px solid #3e596d;background:linear-gradient(140deg,#10283b,#101d2d);border-radius:12px;
+   color:#eaf6ff;min-height:41px;display:flex;align-items:center;padding:9px 12px;font-size:13px;font-weight:750}
+ .and19-line{justify-content:space-between;gap:8px}
+ .and19-line button{cursor:pointer;display:flex;align-items:center;gap:6px;padding:5px 7px;background:#0d2836;
+   border:1px solid #4b6473;border-radius:20px;color:#d7f5ff;min-height:34px;font-size:11px}
+ .and19-line button i{width:8px;height:8px;background:#667781;border-radius:50%}
+ .and19-line button.and19-online i{background:#2de58c;box-shadow:0 0 6px #2de58c99}
+ .and19-line button:disabled{opacity:.7;cursor:not-allowed}
+ .and19-toggle{width:30px;height:16px;border-radius:20px;background:#4b5665;position:relative}
+ .and19-toggle:after{content:'';position:absolute;left:2px;top:2px;width:12px;height:12px;background:white;border-radius:50%;transition:transform .2s}
+ .and19-online .and19-toggle{background:#f86b17}.and19-online .and19-toggle:after{transform:translateX(14px)}
+ .and19-cover{position:relative;min-height:116px;border:1px solid #355d7a;border-radius:17px;overflow:hidden;
+   background:#0b2137;display:flex;align-items:center;padding:19px 14px}
+ .and19-cover:before{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;
+   background:linear-gradient(90deg,#071728 0%,#0c2235 44%,#0e243153 78%)}
+ .and19-cover>div{z-index:2;max-width:65%;position:relative}
+ .and19-cover small{font-size:9px;letter-spacing:.04em;color:#c4dce9}
+ .and19-cover img{position:absolute;width:100%;height:100%;right:0;object-fit:cover;object-position:center}
+ .and19-services{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+ .and19-services a{display:flex;min-width:0;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:89px;
+  padding:6px 3px;border:1px solid #365671;border-radius:12px;background:linear-gradient(140deg,#152e44,#102132);
+  font-size:10px;text-align:center;font-weight:800;line-height:1.18;overflow-wrap:anywhere}
+ .and19-services a:first-child{border-color:#ef711d;box-shadow:inset 0 0 19px #ec651021}
+ .and19-services a>span{font-size:23px;color:#fa7b24}
+ .and19-panel,.and19-equipment,.and19-row-link{border-radius:15px;border:1px solid #37627e;
+  background:linear-gradient(130deg,#142e45,#0e2032);box-shadow:0 7px 20px #020b164d}
+ .and19-panel{padding:13px;min-width:0}
+ .and19-panel-title{display:flex;justify-content:space-between;align-items:center;gap:6px;border-bottom:1px solid #35536a;padding-bottom:11px}
+ .and19-panel-title>strong{font-size:17px}
+ .and19-status{font-size:11px;color:#84e7ef;white-space:normal;text-align:right;border:1px solid #2a8aa1;border-radius:30px;
+   background:#063848;padding:3px 7px}
+ .and19-order-open{display:block;padding:0;min-width:0}
+ .and19-facts{display:flex;flex-direction:column;gap:6px;margin:12px 0 11px}
+ .and19-facts p{font-size:12px;color:#d9e8f3}
+ .and19-facts p>span{font-size:16px;color:#ff822f;margin-right:7px}
+ .and19-facts .and19-issue{font-weight:730;color:#f0e5da}
+ .and19-facts .and19-service{color:#92cadc}
+ .and19-timeline{list-style:none;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));margin:15px 0 10px;padding:0;gap:2px}
+ .and19-timeline li{display:flex;align-items:center;flex-direction:column;gap:5px;position:relative;text-align:center;min-width:0;color:#92a9b9}
+ .and19-timeline li:not(:last-child):after{content:'';position:absolute;z-index:0;top:10px;left:calc(50% + 12px);
+   width:calc(100% - 22px);height:2px;background:#537185}
+ .and19-timeline li.passed:not(:last-child):after{background:#30d38a}
+ .and19-timeline li>span{display:grid;place-items:center;width:23px;height:23px;border-radius:50%;
+   border:1px solid #638399;background:#18384e;color:#cedbe9;font-size:11px;z-index:1}
+ .and19-timeline li.passed>span{background:#10795e;border-color:#4cea99;color:white}
+ .and19-timeline li.current>span{border-color:#ff7620;background:#e76512;color:white;box-shadow:0 0 15px #ef661299}
+ .and19-timeline li>small{font-size:9px;line-height:1.2;overflow-wrap:anywhere}
+ .and19-timeline li.current>small{color:#ffd0a7;font-weight:800}
+ .and19-link{display:flex;justify-content:space-between;align-items:center;gap:8px;
+   border-radius:11px;border:1px solid #277e91;background:linear-gradient(90deg,#064454,#12314b);
+   color:#a7edf4!important;min-height:43px;padding:10px 11px;font-size:12px;font-weight:850}
+ .and19-link>span{font-size:19px}
+ .and19-row-link{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:50px;padding:12px;font-weight:800}
+ .and19-row-link span:last-child{color:#88d9e9}
+ .and19-equipment{display:flex;align-items:center;gap:12px;min-height:72px;padding:12px}
+ .and19-equipment>span:nth-child(2){flex:1;display:flex;flex-direction:column;gap:4px}
+ .and19-equipment small{color:#aac7da;font-size:11px}
+ .and19-equipment>span:last-child{font-size:24px;color:#79ddec}
+ .and19-equipment-icon{display:grid;place-items:center;font-size:25px;border-radius:11px;background:#193d53;width:47px;height:45px;color:#ff8d47}
+ .and19-workspace .and19-action{display:flex;align-items:center;justify-content:center;border:1px solid #ff9a4b;
+   min-height:47px;border-radius:13px;color:white!important;font-weight:900;font-size:14px;
+   padding:11px;background:linear-gradient(180deg,#ff8d27,#ef5710);box-shadow:0 5px 15px #d856104b;cursor:pointer}
+ .and19-empty{display:flex;flex-direction:column;gap:8px;color:#c6dbe5}
+ .and19-empty strong{color:#fff}
+ .and19-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+ .and19-metrics a{display:flex;flex-direction:column;gap:4px;border-radius:11px;border:1px solid #38617d;
+   background:#13283d;padding:10px;min-height:62px;min-width:0;overflow:hidden}
+ .and19-metrics small{font-size:10px;color:#a9cada}
+ .and19-metrics strong{font-size:16px;overflow-wrap:anywhere;color:#fff}
+ .and19-search-active{display:flex;align-items:center;gap:8px;padding:8px 0;color:#c9ecf2}
+ .and19-pulse{height:10px;width:10px;border-radius:50%;background:#34dae5;animation:and19-pulse 1.5s ease-in-out infinite}
+ .and19-quick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+ .and19-quick a{display:grid;place-items:center;min-height:45px;text-align:center;padding:8px 4px;font-size:11px;
+   background:#152f43;border:1px solid #345e78;border-radius:11px}
+ .and19-auctions .and19-panel{margin:9px 0}
+ .and19-loading{border:1px solid #37627e;border-radius:15px;background:#11273a;min-height:120px;
+   padding:15px;display:flex;gap:10px;flex-direction:column;overflow:hidden}
+ .and19-loading small{color:#a9cbdd}
+ .and19-skeleton{height:15px;border-radius:8px;width:80%;background:#2f546c;
+   background-image:linear-gradient(100deg,transparent,#78bad940,transparent);background-size:200% 100%;animation:and19-shimmer 1.2s linear infinite}
+ .and19-skeleton.big{height:23px;width:95%}
+ .and19-skeleton.short{width:48%}
+ .and19-chats{padding:12px}
+ .app:not(.guest-app) .tabbar a{transition:background .2s,border-color .2s,transform .16s}
+ .app:not(.guest-app) .tabbar a:active{transform:scale(.94)}
+ .app:not(.guest-app) .tabbar a.on{background:linear-gradient(180deg,#7435118f,#172f41);box-shadow:inset 0 0 14px #ef6b253b}
+ .app:not(.guest-app) .desktop-content>main{animation:and19-reveal .24s ease-out both}
+ .and19-workspace a:active,.and19-workspace button:active:not(:disabled){transform:scale(.982)}
+ .and19-workspace a,.and19-workspace button{transition:transform .14s ease,filter .16s ease,box-shadow .16s ease}
+}
+@keyframes and19-shimmer{to{background-position:-200% 0}}
+@keyframes and19-reveal{from{opacity:.76;transform:translateY(5px)}to{opacity:1;transform:none}}
+@keyframes and19-pulse{50%{opacity:.42;box-shadow:0 0 0 7px #34dae52b}}
+@media(prefers-reduced-motion:reduce){
+ .and19-skeleton,.and19-pulse,.app:not(.guest-app) .desktop-content>main{animation:none!important}
+ .and19-workspace a,.and19-workspace button,.app:not(.guest-app) .tabbar a{transition:none!important}
+}
+.traksos-reduced-motion .and19-skeleton,.traksos-reduced-motion .and19-pulse{animation:none!important}
+
+/* Search and incoming calls retain the server workflow; only visual feedback changes. */
+@media(max-width:899px){
+ .app.role-client .search-card{border:1px solid #36768d;background:linear-gradient(160deg,#102a41,#081e33);
+   border-radius:19px;box-shadow:inset 0 0 30px #15becd12}
+ .app.role-client .radar{max-width:75vw;background:radial-gradient(circle,#0ebdc31b 0%,#166a9124 44%,transparent 72%)}
+ .app.role-client .radar .wave{border-color:#35d9df99}
+ .app.role-client .radar .sweep{background:conic-gradient(from 0deg,#3ae6ee61,transparent 25%)}
+ .app.role-client .radar .core{background:#12566e;box-shadow:0 0 0 8px #37dded25,0 0 24px #28d2e847}
+ .app.role-client .radar .blip.on{background:#31ebb7;box-shadow:0 0 0 4px #2ddfb42d}
+ .app.role-client .offer.fresh{animation-duration:.38s}
+ .app.role-client .offer.best{border-color:#f98021;box-shadow:0 0 14px #f26d2225}
+ .app.role-client .search-card .and19-radar-note{font-size:11px;text-align:center;color:#add3e0}
+ .and19-search-error{color:#ffe0ca;padding:8px 10px;display:flex;flex-wrap:wrap;gap:8px;
+   align-items:center;background:#67321732;border:1px solid #d7775680;border-radius:10px;font-size:12px}
+ .and19-search-error button{background:#f06b1b;border:1px solid #ff8a3f;border-radius:8px;padding:6px;color:white}
+ .and19-search-error small{width:100%;color:#c9d7e6}
+ /* Existing role-specific data and actions remain untouched. */
+ .app.role-service .desktop-content .card,.app.role-insurer .desktop-content .card,
+ .app.role-moderator .desktop-content .card,.app.role-admin .desktop-content .card{
+   border-radius:15px;border-color:#37596d;background-color:#102739;
+ }
+ .app.role-service .desktop-content a,.app.role-insurer .desktop-content a,
+ .app.role-moderator .desktop-content a,.app.role-admin .desktop-content a{
+   -webkit-tap-highlight-color:transparent;
+ }
+ .app.role-service .desktop-content .btn:not(.ghost):not(.good):not(.bad),
+ .app.role-insurer .desktop-content .btn:not(.ghost):not(.good):not(.bad),
+ .app.role-moderator .desktop-content .btn:not(.ghost):not(.good):not(.bad),
+ .app.role-admin .desktop-content .btn:not(.ghost):not(.good):not(.bad){
+   border-color:#ee752f;background:linear-gradient(180deg,#f98229,#e95d16);color:white
+ }
+}
+@media(max-width:899px){
+ .call{--accent:#f77c24;--accent-soft:#f77c2428;background:radial-gradient(ellipse at 50% 18%,#1e4560,#0a2135 50%,#061526 100%)}
+ .call .ring{background:linear-gradient(145deg,#ff942d,#dc5017);animation:and19-call-pulse 1.65s ease-out infinite}
+ .call .pill.accent{background:#5e2e15;color:#ffe0ba;border-color:#ed833c}
+ .call .acts .btn.good{background:linear-gradient(120deg,#4ce9b9,#24bba1)}
+ .call .btn.bad{background:#402f36;border-color:#a97e82;color:#ffe6dc}
+ .call .label{letter-spacing:.06em}
+}
+@keyframes and19-call-pulse{0%{box-shadow:0 0 0 0 #f475286b}80%,100%{box-shadow:0 0 0 33px #f4752800}}
+@media(prefers-reduced-motion:reduce){.call .ring{animation:none!important}}
+.traksos-reduced-motion .call .ring{animation:none!important}
+
+/* Mobile insurance stays on the first screen, matching live client insurance workflow. */
+@media(max-width:899px){
+ .and19-insurance{display:flex;flex-direction:column;gap:9px;border-radius:16px;border:1px solid #3b627d;
+  background:linear-gradient(135deg,#102b40,#092135);padding:12px}
+ .and19-insurance-header{display:flex;justify-content:space-between;align-items:center;gap:10px}
+ .and19-insurance-header strong{font-size:14px;color:#effaff}
+ .and19-insurance-header a{font-size:11px;color:#88dce8;text-align:right}
+ .and19-insurance-card{display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:12px;
+  border:1px solid #34657a;background:#12354b;text-decoration:none;color:#e9f9ff}
+ .and19-insurance-card small{font-size:10px;color:#9acadd}
+ .and19-insurance-card strong{font-size:14px;color:#fff}
+ .and19-insurance-card>span{font-size:11px;color:#c0d9e8}
+ .and19-insurance-card em{font-size:11px;color:#66dce8;font-weight:800;font-style:normal}
+ .and19-insurance-card.tone-action{border-color:#ef8a3d;background:linear-gradient(125deg,#3e2d2b,#183247)}
+ .and19-insurance-more{font-size:11px;color:#87d8e6}
+}
+
+/* Disabled owner-controlled service actions stay visible but cannot start an order. */
+.and19-services a[aria-disabled="true"] { opacity: .48; cursor: not-allowed; }

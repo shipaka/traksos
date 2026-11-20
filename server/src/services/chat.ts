@@ -53,6 +53,16 @@ export class ChatService {
         where m.order_id=$1 and m.id > $2 order by m.id limit 500`,
       [orderId, afterId],
     );
+    // Legacy shared system messages sometimes contained the customer's surcharge and final bill.
+    // Never return those amounts to a performer/candidate, including old archived messages.
+    const role = this.orders.actorOf(user, order);
+    const visibleMessages = role === 'performer' || role === null ? (msgs as any[]).map(m => {
+      if (m.sender_role !== 'system') return m;
+      const body = String(m.body ?? '');
+      if (body.startsWith('Исполнитель закрыл выезд:') || /^Сумма\s+[\d\s,.]+\s*₽/.test(body))
+        return { ...m, body: 'Клиенту доступен подробный расчёт. Свои удержания и выплаты смотрите в разделе «Финансы».' };
+      return m;
+    }) : msgs;
     // Кто в чате: владелец, водитель (если заказывал он), исполнитель, поддержка — если подключалась
     const people = await this.db.query<{ id: string; name: string | null; who: string }>(
       `select u.id, u.name, x.who from (values ($1::uuid, 'owner'), ($2::uuid, 'driver'), ($3::uuid, 'performer')) x(id, who) join users u on u.id = x.id
@@ -63,7 +73,7 @@ export class ChatService {
     const ticket = await this.db.one('select 1 from support_tickets where order_id=$1 limit 1', [orderId]);
     const participants = people.map((p) => ({ who: p.who, name: p.name, you: p.id === user.id }));
     if ((support?.n ?? 0) > 0 || ticket) participants.push({ who: 'support', name: 'Поддержка TrakSOS', you: false });
-    return { messages: msgs, participants, quickReplies: quickRepliesFor(order.service, order.status, this.orders.actorOf(user, order)) };
+    return { messages: visibleMessages, participants, quickReplies: quickRepliesFor(order.service, order.status, role) };
   }
 
   async post(user: AuthUser, orderId: string, body: string, kind: 'text' | 'quick' = 'text') {
