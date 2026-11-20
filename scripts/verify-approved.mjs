@@ -630,6 +630,16 @@ expect(photoMigration.includes('create table if not exists order_photos') &&
 const pcSource=await read('web/src/screens/approvedPcCabinets20261120.tsx');
 const pcCss=await read('web/src/approvedPcCabinets20261120.css');
 const pcMap=await read('web/public/traksos-russia-outline.svg');
+const approvedCourierPC=await read('web/src/screens/approvedPcCourier20261120.tsx');
+const approvedCourierCSS=await read('web/src/screens/approvedPcCourier20261120.css');
+expect(pcSource.includes("if(role==='courier') return <ApprovedPcCourier/>") &&
+  unifiedShell.includes('<ApprovedPcDesk role="courier" fallback={<CourierDesk />} />') &&
+  approvedCourierPC.includes("get('/api/courier/jobs')") &&
+  approvedCourierPC.includes("get('/api/courier/presence')") &&
+  approvedCourierPC.includes('APPROVED_VISUALS.trakbotHello') &&
+  approvedCourierPC.includes('Схема, не географическая карта') &&
+  approvedCourierCSS.includes('.courier-pc'),
+  'approved courier PC uses real orders, correct routing, honest schematic and owner mascot');
 expect(pcSource.includes("export type ApprovedPCRole") &&
   ['driver','owner','master','tow','service','insurer','inspection','moderator','admin']
     .every(role=>pcSource.includes("'"+role+"'")) &&
