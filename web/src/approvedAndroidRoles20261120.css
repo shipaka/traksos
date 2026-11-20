@@ -336,3 +336,39 @@
   .and20-sto-focus-vehicle{grid-template-columns:minmax(86px,34%) minmax(0,1fr)}
   .and20-partner-stat small{font-size:9px}
 }
+
+
+/* A service booking or long tab label must NEVER widen the entire 390px
+   browser page. The appointment strip itself remains horizontally scrollable.
+   Keep this role-scoped so the approved PC and Android dashboards are intact. */
+@media (max-width:899px) {
+  .app.role-service main.base-workspace {
+    box-sizing:border-box;
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    overflow-x:clip;
+  }
+  .app.role-service main.base-workspace > * {
+    box-sizing:border-box;
+    max-width:100%;
+    min-width:0;
+  }
+  .app.role-service .base-workspace .scroll-x[role=tablist] {
+    display:flex;
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    overflow-x:auto;
+    overscroll-behavior-inline:contain;
+  }
+  .app.role-service .base-workspace .base-command-actions,
+  .app.role-service .base-workspace .and20-sto-focus-vehicle,
+  .app.role-service .base-workspace .and20-sto-focus-actions {
+    min-width:0;
+    max-width:100%;
+  }
+  .app.role-service .base-workspace :is(p,strong,small,span) {
+    overflow-wrap:anywhere;
+  }
+}
