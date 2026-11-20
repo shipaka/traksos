@@ -363,5 +363,27 @@ try {
     if(jsErrors.length)throw Error('JS exceptions: '+jsErrors.join('; '));
     await context.close();
   }
+  // A real mid-size laptop is not equivalent to 1440px desktop; check auth
+  // links there independently so a link cannot sit at x=1108 on a 1024px screen.
+  const laptop=await browser.newContext({viewport:{width:1024,height:768},locale:'ru-RU'});
+  try {
+    const p=await laptop.newPage();
+    for(const path of ['register','login','join']){
+      await p.goto(BASE+'/#/'+path);
+      await p.locator('.auth-desktop-form').waitFor({state:'visible'});
+      const offenders=await p.evaluate(()=>{
+        const vw=document.documentElement.clientWidth;
+        return [...document.querySelectorAll('input,button,a,section,main,header')].filter(el=>{
+          const r=el.getBoundingClientRect();
+          return r.width>0&&(r.right>vw+2||r.left < -2);
+        }).slice(0,5).map(el=>({
+          tag:el.tagName,className:el.className,href:el.getAttribute('href'),
+          right:Math.round(el.getBoundingClientRect().right),parent:el.parentElement?.className
+        }));
+      });
+      if(offenders.length)throw Error('1024px '+path+' extends offscreen: '+JSON.stringify(offenders));
+    }
+    await p.screenshot({path:'e2e/shots/public-inner/pc-login-laptop-1024.png',fullPage:true});
+  } finally {await laptop.close();}
 } finally {await browser.close();}
 console.log('PASS: public service routes, authorization gates, partner signup and capability menus');
