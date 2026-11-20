@@ -127,6 +127,11 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
     <a href="#/garage" className="and19-equipment">
       <span className="and19-equipment-icon" aria-hidden="true">▤</span><span><strong>{isDriver ? 'Моя машина' : 'Моя техника'}</strong><small>История ремонта, документы и обслуживание</small></span><span aria-hidden="true">›</span>
     </a>
+    <a href="#/shop" className="and19-equipment and19-parts-shortcut" aria-label="Магазин запчастей">
+      <span className="and19-equipment-icon" aria-hidden="true">⚙</span>
+      <span><strong>Магазин запчастей</strong><small>По названию, артикулу и каталогу · до открытия магазина — справка</small></span>
+      <span aria-hidden="true">›</span>
+    </a>
     <a href="#/sos" className="and19-action and19-sos">＋ Новая заявка / SOS-помощь</a>
   </div>;
 }
