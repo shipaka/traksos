@@ -71,7 +71,7 @@ try{
    const token=account.token;
    await ensureConfiguredWorkspace(c,token);
    for(const width of [1440,390]){
-    const context=await browser.newContext({viewport:{width,height:width===390?844:900},locale:'ru-RU',deviceScaleFactor:1});
+    const context=await browser.newContext({viewport:{width,height:width===390?844:900},locale:'ru-RU',deviceScaleFactor:c.id==='owner'?2:1});
     const page=await context.newPage();
     const errors=[];page.on('pageerror',x=>errors.push(x.message));
     await page.addInitScript(({token,mode})=>{localStorage.setItem('traksos.token',token);localStorage.setItem('traksos.mode',mode)}, {token,mode:c.mode});
@@ -103,6 +103,7 @@ try{
          const bmp=atlas.ok?await createImageBitmap(await atlas.blob()).catch(()=>null):null;
          return {
            logo:logo?.getAttribute('src'),loaded:logo?.complete&&logo?.naturalWidth===274&&logo?.naturalHeight===46,
+           logoRendered:logo?{w:logo.getBoundingClientRect().width,h:logo.getBoundingClientRect().height}:null,
            illustrations:scenes.length,
            matched:scenes.every(el=>getComputedStyle(el).backgroundImage.includes('traksos-service-scenes-shared.webp')),
            crops:scenes.map(el=>{
@@ -112,30 +113,41 @@ try{
            size:bmp?{w:bmp.width,h:bmp.height}:null,
          };
        });
-       const expectedCrops=['0px 0px','-176px 0px','-352px 0px','-528px 0px'];
+       const expectedCrops=width===390
+         ? ['0px 0px','-114.4px 0px','-228.8px 0px','-343.2px 0px']
+         : ['0px 0px','-176px 0px','-352px 0px','-528px 0px'];
+       const expectedSize=width===390?'457.6px 68.25px':'704px 105px';
        if(visual.logo!=='/traksos-brand-logo-approved-618.png'||!visual.loaded||
+          !visual.logoRendered||visual.logoRendered.w>274.5||visual.logoRendered.h>46.5||
+          Math.abs(visual.logoRendered.w/visual.logoRendered.h-274/46)>.08||
           visual.illustrations!==4||!visual.matched||visual.size?.w!==704||visual.size?.h!==105||
-          visual.crops?.some((c,i)=>c.pos!==expectedCrops[i]||c.size!=='704px 105px'))
-         throw Error('Owner shared-brand/art parity failed at '+width+': '+JSON.stringify(visual));
+          visual.crops?.some((c,i)=>c.pos!==expectedCrops[i]||c.size!==expectedSize))
+         throw Error('Owner brand/art damaged by upscaling or a wrong PC/mobile crop at '+width+': '+JSON.stringify(visual));
+       console.log('Approved logo source pixel coverage at '+width+'px viewport, DPR 2: '+
+         (274/(visual.logoRendered.w*2)).toFixed(2)+'x; source remains unchanged');
      }
      if(width===1440) {
        // The desktop must show ONE onboarding prompt, not two stacked panels.
        const prompts=await page.locator('.tr-training-invite:visible, section.card[aria-label="Знакомство с TrakSOS"]:visible').count();
        if(prompts>1)throw Error('Duplicate desktop training prompts: '+prompts);
      }
-     await page.screenshot({path:out+'/'+c.id+'-home-'+width+'-viewport.png',fullPage:false,animations:'disabled'});
-     await page.screenshot({path:out+'/'+c.id+'-home-'+width+'.png',fullPage:true,animations:'disabled'});
+     await page.screenshot({path:out+'/'+c.id+'-home-'+width+'-viewport.png',fullPage:false,animations:'disabled',scale:'css'});
+     await page.screenshot({path:out+'/'+c.id+'-home-'+width+'.png',fullPage:true,animations:'disabled',scale:'css'});
+     if(c.id==='owner')await page.screenshot({
+       path:out+'/'+c.id+'-home-'+width+'-retina2x.png',fullPage:false,animations:'disabled',scale:'device'
+     });
      await page.goto(BASE+'/'+c.inside,{waitUntil:'domcontentloaded'});
      await page.locator('.account-menu > summary').waitFor({timeout:12000});
      await page.waitForTimeout(500);
      if(await page.getByText('Не удалось открыть раздел').count())throw Error('Inner route crashed');
-     await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'-viewport.png',fullPage:false,animations:'disabled'});
-     await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'.png',fullPage:true,animations:'disabled'});
+     await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'-viewport.png',fullPage:false,animations:'disabled',scale:'css'});
+     await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'.png',fullPage:true,animations:'disabled',scale:'css'});
      results.push({role:c.id,width,height:width===390?844:900,result:'screens saved',files:[
        c.id+'-home-'+width+'-viewport.png',
        c.id+'-home-'+width+'.png',
        c.id+'-inside-'+width+'-viewport.png',
        c.id+'-inside-'+width+'.png',
+       ...(c.id==='owner'?[c.id+'-home-'+width+'-retina2x.png']:[]),
      ]});
     }finally{await context.close()}
    }
