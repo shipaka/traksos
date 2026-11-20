@@ -65,6 +65,7 @@ import { ScenarioLesson } from './screens/scenarioEncyclopedia.tsx';
 import { TrakBotChat, TechCodes } from './screens/trakbot.tsx';
 import { DriverAir } from './screens/driverAir.tsx';
 import { TrakBotDock } from './trakbotDock.tsx';
+import { APPROVED_VISUALS } from './approvedVisuals.ts';
 import { RepairCases, TechnicalCasesReview } from './screens/technicalCases.tsx';
 import { Training, TrainingInvite } from './screens/training.tsx';
 import { TrainingPractice } from './screens/roleTrainingPractice.tsx';
@@ -363,7 +364,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   if (isOperatorDemo) return (
     <div className="app operator-demo-app">
       <header className="top">
-        <span className="logo">Trak<b>Sos</b></span>
+        <span className="logo tr-approved-brand-logo"><img src={APPROVED_VISUALS.logo} width="220" height="37" alt="TrakSOS" /></span>
         <span className="operator-demo-badge">ТЕСТОВЫЙ РЕЖИМ</span>
       </header>
       <div className="operator-demo-content" style={{width:'100%', maxWidth:1440, margin:'0 auto'}}>
@@ -472,9 +473,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   return (
     <div className={`app ${me ? "role-"+mode : (route.length === 0 ? "guest-app guest-home" : "guest-app")}`}>
       <header className="top">
-        {me ? <span className="logo">Trak<b>Sos</b></span>
+        {me ? <span className="logo tr-approved-brand-logo"><img src={APPROVED_VISUALS.logo} width="220" height="37" alt="TrakSOS" /></span>
           : <a href="#/" className="logo guest-approved-mark" aria-label="TrakSOS — главная">
-              <img src="/tracksos-approved-logo-owner-20261119.webp" width="220" height="41" alt="TrakSOS"/>
+              <img src={APPROVED_VISUALS.logo} width="220" height="37" alt="TrakSOS"/>
             </a>}
         {me && mode === 'client' && <nav className="track-top-shortcuts" aria-label="Быстрый доступ">
           <a href="#/">Главная</a><a href="#/orders">Заявки</a><a href="#/sos">Помощь в дороге</a><a href="#/shop">Запчасти</a>
@@ -700,7 +701,7 @@ function SiteFooter() {
           <button className="btn ghost small" onClick={() => { try { localStorage.setItem('traksos.cookie', '1'); } catch { /* */ } setCookieOk(true); }}>Понятно</button>
         </div>
       )}
-      <span className="logo">Trak<b>Sos</b></span>
+      <span className="logo tr-approved-brand-logo"><img src={APPROVED_VISUALS.logo} width="220" height="37" alt="TrakSOS" /></span>
       <span className="note">{l?.tagline}</span>
       {req && <span className="note">{req}</span>}
       {l?.address && <span className="note">{l.address}</span>}
