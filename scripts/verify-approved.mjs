@@ -226,6 +226,11 @@ expect(approvedHeroLayer.includes('object-fit:contain!important') &&
   !approvedHeroLayer.includes('#f3197c'),
   'Android promo phone cannot crop approved logo into a retro magenta fragment');
 const heroVisualE2E = await read('e2e/approved-truck-hero.mjs');
+const publicLayoutE2E = await read('e2e/public-layout.mjs');
+expect(publicLayoutE2E.includes('heroGeometry.pictureBottom <= heroGeometry.copyTop+2') &&
+  publicLayoutE2E.includes('native artwork must be an uncropped 2:1 photograph ABOVE the copy') &&
+  !publicLayoutE2E.includes('native artwork must cover the approved banner'),
+  'Android guest regression test enforces approved 618 hero photo ABOVE copy, not retired overlay');
 expect(currentCss.includes(approvedPhoto) && approvedHeroLayer.includes(approvedPhoto)
   && !currentCss.includes('tracksos-approved-scenic-hero.webp'),
   'guest home has one approved Nov 19 truck image, with no legacy image fallback');
