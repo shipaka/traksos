@@ -62,12 +62,23 @@ jobs:
         run: node e2e/ui-smoke.mjs
       - name: Реальные переходы и сервисы
         run: node e2e/public-service-routing.mjs
+      - name: Записать точную ревизию и происхождение скриншотов
+        if: always()
+        env:
+          CAPTURE_COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          CAPTURE_RUN_ID: ${{ github.run_id }}
+        run: |
+          mkdir -p e2e/shots
+          node -e "require('fs').writeFileSync('e2e/shots/capture-provenance.json',JSON.stringify({commit_sha:process.env.CAPTURE_COMMIT_SHA,workflow_run_id:process.env.CAPTURE_RUN_ID,source:'Playwright/Chromium on CI build; not design reference',captured_at:new Date().toISOString()},null,2)+'\\n')"
       - name: PNG со всех проверенных экранов
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: screens-real-browser
-          path: e2e/shots/**/*.png
+          path: |
+            e2e/shots/**/*.png
+            e2e/shots/capture-provenance.json
+            e2e/shots/owner20-cabinets/capture-report.json
           if-no-files-found: warn
           retention-days: 14
       - name: Честный протокол визуальной проверки
