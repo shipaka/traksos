@@ -46,6 +46,7 @@ import { GuestExplore } from './screens/guestExplore.tsx';
 import { DemoPreviewGate } from './screens/demoPreview.tsx';
 import { AndroidDesignReview } from './screens/androidDesignReview.tsx';
 import { NavGlyph } from './navGlyph.tsx';
+import { MobileRoleMenu } from './mobileRoleMenu.tsx';
 import { SandboxEnter, SandboxModeBar } from './screens/isolatedSandbox.tsx';
 import { GuestCompany, GuestOffers } from './screens/guestInfo.tsx';
 import { PUBLIC_CAPABILITIES } from './guestCatalog.ts';
@@ -263,6 +264,7 @@ function App() {
     case 'orders': screen = isCustomer ? <Orders as="client" /> : <main><div className="empty">Нет доступа к клиентским заявкам</div></main>; break;
     case 'garage': screen = isCustomer ? <Garage focusVehicleId={b} /> : <main><div className="empty">Нет доступа к гаражу</div></main>; break;
     case 'profile': screen = <Profile />; break;
+    case 'menu': screen = <main className="tr-mobile-menu-route" />; break;
     case 'invite': screen = <Invite />; break;
     case 'r': screen = <Invite />; break;
     case 'work':
@@ -381,19 +383,19 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       : [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь'], ['/shop', '⚙', 'Запчасти'], ['/profile', '◉', 'Профиль']];
   // Mobile tabs only contain real role-dependent routes; extra tools remain in the menu.
   const mobileTabs: [string, string, string][] = !me ? [] : mode === 'client'
-    ? [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/air', '◌', 'Эфир'], ['/garage', '▣', 'Техника'], ['/shop', '🛍', 'Магазин'], ['/profile', '◉', 'Меню']]
+    ? [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/air', '◌', 'Эфир'], ['/garage', '▣', 'Техника'], ['/shop', '🛍', 'Магазин'], ['/menu', '◉', 'Меню']]
     : mode === 'performer'
-      ? [['/work', '⌂', 'Главная'], ['/work/jobs', '☷', 'Заявки'], ['/work/chats', '▤', 'Чат'], ['/profile', '◉', 'Меню']]
+      ? [['/work', '⌂', 'Главная'], ['/work/jobs', '☷', 'Заявки'], ['/work/chats', '▤', 'Чат'], ['/menu', '◉', 'Меню']]
     : mode === 'service'
-      ? [['/base', '⌂', 'Главная'], ['/base/inbox', '☷', 'Заявки'], ['/shop', '🛍', 'Магазин'], ['/base/money', '₽', 'Финансы'], ['/profile', '◉', 'Меню']]
+      ? [['/base', '⌂', 'Главная'], ['/base/inbox', '☷', 'Заявки'], ['/shop', '🛍', 'Магазин'], ['/base/money', '₽', 'Финансы'], ['/menu', '◉', 'Меню']]
     : mode === 'insurer'
-      ? [['/insurance', '▦', 'Главная'], ['/profile', '◉', 'Меню']]
+      ? [['/insurance', '▦', 'Главная'], ['/menu', '◉', 'Меню']]
     : mode === 'inspection'
-      ? [['/inspections', '▣', 'Техосмотр'], ['/profile', '◉', 'Меню']]
+      ? [['/inspections', '▣', 'Техосмотр'], ['/menu', '◉', 'Меню']]
     : mode === 'moderator'
-      ? [['/moderation', '⌂', 'Главная'], ['/support', '?', 'Обращения'], ['/profile', '◉', 'Меню']]
+      ? [['/moderation', '⌂', 'Главная'], ['/support', '?', 'Обращения'], ['/menu', '◉', 'Меню']]
     : [['/admin', '⌂', 'Главная'], ['/admin/section/orders', '☷', 'Заявки'],
-       ['/admin/section/people', '▤', 'Пользователи'], ['/profile', '◉', 'Меню']];
+       ['/admin/section/people', '▤', 'Пользователи'], ['/menu', '◉', 'Меню']];
   // Все дополнительные функции доступны в шапке, даже когда они не в нижних вкладках.
   // Не показываем чужие роли и не создаём несуществующие страницы.
   const accountLinks: [string, string][] = mode === 'performer'
@@ -459,6 +461,11 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     ['/offer/' + (mode === 'performer' || mode === 'service' ? 'performer' : mode === 'insurer' ? 'insurer' : mode === 'inspection' ? 'inspection' : mode === 'admin' || mode === 'moderator' ? 'privacy' : 'client'), mode === 'insurer' || mode === 'inspection' ? 'Договор партнёра' : 'Оферта'],
     ['/offer/privacy', 'Политика персональных данных'],
     ['/privacy', 'Мои персональные данные']];
+  const safeLogout = () => {
+    if (me?.roles.some(r => r === 'master' || r === 'tow') &&
+      !window.confirm('При выходе из аккаунта статус «На линии» отключится. Просто сверните приложение, если хотите продолжать получать заявки. Выйти?')) return;
+    void logout();
+  };
   return (
     <div className={`app ${me ? "role-"+mode : (route.length === 0 ? "guest-app guest-home" : "guest-app")}`}>
       <header className="top">
@@ -530,11 +537,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               <span className="account-menu-heading">Помощь и документы</span>
               {!serviceSandbox && <button type="button" className="account-menu-tour" onClick={() => window.dispatchEvent(new Event('traksos-tour-start'))}>Показать, где какие кнопки</button>}
               {helpLinks.map(([href, label]) => <a key={href} href={sandboxHref(href)}>{label}</a>)}
-              {!serviceSandbox && <button type="button" className="account-menu-logout" onClick={() => {
-                if (me.roles.some(r => r === 'master' || r === 'tow') &&
-                  !window.confirm('При выходе из аккаунта статус «На линии» отключится. Просто сверните приложение, если хотите продолжать получать заявки. Выйти?')) return;
-                void logout();
-              }}>Выйти из аккаунта</button>}
+              {!serviceSandbox && <button type="button" className="account-menu-logout" onClick={safeLogout}>Выйти из аккаунта</button>}
             </nav>
           </details>}
         </div>
@@ -626,7 +629,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         </aside>
         <div className="desktop-content">
           {me && !serviceSandbox && route.length===0 && <IntroInvitation key={me.id+'-'+mode} userId={me.id} mode={mode} roles={me.roles} />}
-          {children}
+          {me && route[0] === 'menu' && !serviceSandbox
+            ? <MobileRoleMenu mode={mode} quick={mobileTabs} account={accountLinks} help={helpLinks} onLogout={safeLogout} />
+            : children}
           <SiteFooter />
         </div>
       </div>
