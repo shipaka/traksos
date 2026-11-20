@@ -505,7 +505,7 @@
 .app.role-client .client-orders-page>h1::before,
 .app[class*="role-"] .account-profile-page>h1::before{
   content:"";position:absolute;left:0;top:16px;bottom:16px;
-  width:4px;background:linear-gradient(#82ebf3,#eb499c);
+  width:4px;background:linear-gradient(#ff9b4d,#f36a1e);
   border-radius:10px;
 }
 .app.role-client .client-orders-page>.scroll-x{
