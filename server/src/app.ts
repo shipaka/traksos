@@ -954,7 +954,7 @@ export function createApp(d: Deps) {
     }),c.body).status));
   r.post('/api/courier/jobs/:id/verify', ['courier'], (c:AuthedCtx) =>
     deliveries.verify(c.user,c.params.id,parse(z.object({
-      code:z.string().regex(/^\\d{6}$/)
+      code:z.string().regex(/^\d{6}$/)
     }),c.body).code));
   r.get('/api/shop/orders/:id/receipt-code', true, (c:AuthedCtx) =>
     deliveries.receiptCode(c.user,c.params.id));
