@@ -148,6 +148,7 @@ try{
       await page.screenshot({path:output+'/'+role+'-menu-help-android-390.png',fullPage:true,scale:'css'});
       await page.locator('.tr-mobile-menu-account a[href="#/profile"]').click();
       await page.waitForURL(url => url.hash === '#/profile', {timeout:10000});
+      await page.locator('main.account-profile-page').waitFor({state:'visible',timeout:15000});
       if(await page.locator('main.tr-mobile-menu-page').count())
         throw Error(role+': Profile shortcut did not navigate to real settings');
       if(await page.locator('.tabbar a[href="#/menu"]').count()!==1)
@@ -176,7 +177,7 @@ try{
       for(const [section,target] of destinations){
         await page.goto(BASE+'/'+target,{waitUntil:'domcontentloaded'});
         await page.locator('.desktop-content > main').first().waitFor({state:'visible',timeout:15000});
-        await page.waitForTimeout(230);
+        await page.waitForTimeout(450);
         const view=await page.evaluate(()=>({
           overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,
           hasMenu:!!document.querySelector('.tabbar a[href="#/menu"]'),
