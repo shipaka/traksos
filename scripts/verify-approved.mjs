@@ -533,6 +533,19 @@ expect(mobileMenuBlock.includes("['/work/chats', 'chat', 'Чат']") &&
   reviewWithNav.includes("['menu','Меню']"),
   '618 Android footer icons are actual matching SVGS: chat, truck, clipboard, menu, identical in live and preview');
 
+// Every navigation release must update the built-in training/help at the
+// same time: users must never be told to look for the Android menu at the top.
+const appTour = await read('web/src/screens/roleTour.tsx');
+const appTraining = await read('web/src/screens/training.tsx');
+const appIntroduction = await read('web/src/screens/platformIntro.tsx');
+const appContextHelp = await read('web/src/screens/contextHelp.tsx');
+expect(appTour.includes('.tabbar a[href="#/menu"]') &&
+  appTraining.includes('нижнее «Меню»') &&
+  appIntroduction.includes('нижнюю кнопку «Меню»') &&
+  !appIntroduction.includes('«Меню» вверху.') &&
+  appContextHelp.includes("menu: ['Меню и разделы'"),
+  'Android navigation, tutorials and contextual help describe the same actual bottom Menu and real sections');
+
 if (failures.length) {
   console.error('Approved design gate: '+failures.length+' failure(s).');
   process.exitCode=1;
