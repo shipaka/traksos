@@ -57,17 +57,38 @@ try{
       else await page.locator('.and19-services').waitFor();
       await page.waitForTimeout(650);
       const brand=await page.locator('.top .tr-approved-brand-logo img').evaluate(img=>({
-        src:img.getAttribute('src'),loaded:img.complete&&img.naturalWidth>0
+        src:img.getAttribute('src'),loaded:img.complete&&img.naturalWidth===274&&img.naturalHeight===46
       }));
       if(brand.src!=='/traksos-brand-logo-approved-618.png'||!brand.loaded)
         throw Error(role+': native WebView brand diverges from approved 618: '+JSON.stringify(brand));
       if(role==='owner'){
-        const art=await page.locator('.and19-services .tr-service-illustration').evaluateAll(elements=>({
-          count:elements.length,
-          shared:elements.every(el=>getComputedStyle(el).backgroundImage.includes('traksos-service-scenes-shared.webp'))
+        const art=await page.locator('.and19-services > a').evaluateAll(cards=>cards.map(card=>{
+          const illustration=card.querySelector('.tr-service-illustration');
+          const label=card.querySelector('.and19-service-label');
+          if(!illustration||!label)return {missing:true};
+          const visual=getComputedStyle(illustration);
+          const textStyle=getComputedStyle(label);
+          return {
+            image:visual.backgroundImage,
+            position:visual.backgroundPosition,
+            size:visual.backgroundSize,
+            opacity:Number(visual.opacity),
+            label:label.textContent,
+            labelFont:textStyle.fontSize,
+            labelVisible:textStyle.visibility!=='hidden'&&textStyle.display!=='none',
+          };
         }));
-        if(art.count!==4||!art.shared)
-          throw Error('Android must reuse the same desktop four-service visual atlas: '+JSON.stringify(art));
+        const expected=[
+          ['Выездной мастер','0px 0px'],
+          ['Эвакуатор','-176px 0px'],
+          ['СТО','-352px 0px'],
+          ['Консультация','-528px 0px'],
+        ];
+        if(art.length!==4 || art.some((a,i)=>
+          a.missing||a.label!==expected[i][0]||a.position!==expected[i][1]||
+          a.size!=='704px 105px'||!a.image.includes('traksos-service-scenes-shared.webp')||
+          a.opacity<.45||!a.labelVisible||a.labelFont!=='10px'))
+          throw Error('Android four tiles must keep approved geometry, labels and the same PC scene crops: '+JSON.stringify(art));
       }
       const size=await page.evaluate(()=>({client:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));
       if(size.scroll>size.client+3)throw Error(role+' horizontal overflow '+JSON.stringify(size));
