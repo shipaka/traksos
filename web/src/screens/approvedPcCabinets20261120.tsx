@@ -5,7 +5,8 @@
  * Desktop only; Android/mobile continues to use the already-approved routes.
  */
 import {useEffect, useState, type ReactNode} from 'react';
-import {get} from '../api.ts';
+import {get, onEvent} from '../api.ts';
+import {RoadsideMap} from './roadsideMap.tsx';
 import {useLoad, useMe} from '../ui.tsx';
 import {STATUS, SERVICES} from '../dict.ts';
 import {APPROVED_VISUALS} from '../approvedVisuals.ts';
@@ -111,26 +112,57 @@ function WorkLayout({left,center,right}:{left:ReactNode;center:ReactNode;right?:
   return <div className="approved-pc-three"><aside className="approved-pc-left">{left}</aside><div className="approved-pc-center">{center}</div><aside className="approved-pc-right">{right}</aside></div>;
 }
 function RealCase({o,owner=false}:{o:any;owner?:boolean}){
-  const v=transport(o);
+  const detail=useLoad(()=>get<any>('/api/orders/'+o.id),[o.id],e=>e.orderId===o.id&&e.type==='order');
+  const [gps,setGps]=useState<{lat:number;lng:number;at:number}|null>(null);
+  useEffect(()=>{
+    setGps(null); // Previous application's location cannot leak into a different case.
+    return onEvent((event:any)=>{
+      if(event.type==='performer_location'&&String(event.orderId)===String(o.id)
+         &&Number.isFinite(event.lat)&&Number.isFinite(event.lng)
+         &&Math.abs(event.lat)<=90&&Math.abs(event.lng)<=180)
+        setGps({lat:event.lat,lng:event.lng,at:Date.now()});
+    });
+  },[o.id]);
+  const d=detail.data||o;
+  const v=transport(d);
+  const p=d.performer;
+  const prev=Number.isFinite(p?.lat)&&Number.isFinite(p?.lng)?{lat:p.lat,lng:p.lng}:null;
+  const lastAt=gps?.at||(p?.location_at?Date.parse(p.location_at):null);
+  const fresh=lastAt!=null&&Date.now()-lastAt<=120000&&Date.now()-lastAt>=-30000;
+  const point=gps||prev;
+  const milestones=[['searching','Поиск'],['accepted','Назначен'],['en_route','Выехал'],['arrived','На месте'],['working','Работа'],['completed','Завершено']];
+  const current=milestones.findIndex(([id])=>id===d.status);
   return <section className="approved-pc-case">
-    <header><div><small>ВЫБРАННАЯ ЗАЯВКА</small><h2>№{text(o.number||o.id)} · {SERVICES[o.service]?.name||text(o.service,'Помощь на дороге')}</h2></div><span className="approved-pc-stage">{statusName(o)}</span></header>
+    <header><div><small>ВЫБРАННАЯ ЗАЯВКА</small><h2>№{text(d.number||d.id)} · {SERVICES[d.service]?.name||text(d.service,'Помощь на дороге')}</h2></div><span className="approved-pc-stage">{statusName(d)}</span></header>
     <div className="approved-pc-case-main">
-      <Photo v={v} href={o.vehicleId?'#/garage/'+o.vehicleId:undefined}/>
+      <Photo v={v} href={d.vehicleId?'#/garage/'+d.vehicleId:undefined}/>
       <div className="approved-pc-facts">
         <h3>{vehicleLabel(v)}</h3>
-        <p><b>Неисправность:</b> {text(o.description||o.problem,'Уточняется в заявке')}</p>
-        <p><b>Место помощи:</b> {text(o.address||o.estimate?.zoneName,'Адрес в подробностях')}</p>
-        <p><b>Исполнитель:</b> {text(o.performer_name||o.performer?.name,'Пока не назначен')}</p>
-        {o.etaMinutes!=null&&<p><b>Ожидаемое прибытие:</b> {o.etaMinutes} мин (данные заявки)</p>}
-        {o.estimatedArrivalAt&&<p><b>Плановое прибытие:</b> {fmtDate(o.estimatedArrivalAt)}</p>}
+        <p><b>Неисправность:</b> {text(d.description||d.problem,'Описание в заявке')}</p>
+        <p><b>Место помощи:</b> {text(d.address||d.estimate?.zoneName,'Адрес в подробностях')}</p>
+        <p><b>Исполнитель:</b> {text(p?.name||d.performer_name,'Пока не назначен')}</p>
+        {p?.car&&<p><b>Едет на:</b> {vehicleLabel(p.car)}</p>}
+        {p?.rating!=null&&<p><b>Рейтинг:</b> ★ {Number(p.rating).toFixed(1)}{p.rating_count!=null?' · '+p.rating_count+' отзывов':''}</p>}
+        {fresh&&<p className="approved-pc-gps-ok">GPS передавался недавно</p>}
+        {!fresh&&<p>Текущее местоположение исполнителя не подтверждено.</p>}
       </div>
     </div>
+    <div className="approved-pc-stage-steps" aria-label="Этапы заявки">
+      {milestones.map(([id,label],index)=><span key={id} className={id===d.status?'current':current>=0&&index<current?'done':''}>{label}</span>)}
+    </div>
+    {p&&d.service!=='consult'&&<div className="approved-pc-live-map">
+      <RoadsideMap point={fresh?point:null} kind="performer" updatedAt={lastAt}
+        synthetic={String(p.id||'').startsWith('demo-')}/>
+      {!fresh&&<p className="approved-pc-caveat">Маршрут и время прибытия не выдумываются: ожидаем актуальную геолокацию.</p>}
+    </div>}
     <div className="approved-pc-case-actions">
       <a className="approved-pc-primary" href={'#/order/'+o.id}>Открыть заявку и следующий шаг</a>
-      {o.vehicleId&&<a href={'#/garage/'+o.vehicleId}>История автомобиля</a>}
+      <a href={'#/order/'+o.id+'?chat=1'}>Чат и связь по заявке</a>
+      {d.vehicleId&&<a href={'#/garage/'+d.vehicleId}>История автомобиля</a>}
       {owner&&<a href="#/fleet">Управление автопарком</a>}
     </div>
-    <p className="approved-pc-caveat">Геолокация и ETA показываются только при наличии реальных данных. Сообщения, отзывы и последовательность этапов доступны внутри заявки.</p>
+    {detail.error&&<p className="approved-pc-caveat">Дополнительные сведения недоступны: {String(detail.error?.message||detail.error)}. Откройте карточку заявки.</p>}
+    <p className="approved-pc-caveat">Информация о заказе, изменениях и исполнителе поступает с сервера. Личные телефоны не раскрываются; общение только через предоставленные платформой способы связи.</p>
   </section>;
 }
 function CustomerDesk({owner}:{owner:boolean}){
@@ -310,7 +342,7 @@ function InsuranceDesk({inspection}:{inspection:boolean}){
       </div></div>
       {inspection?<><Pane title="Этапы осмотра"><p>Заявка → Назначение → Проверка → Фиксация результата</p>
         <p>Отметка о выполнении не является выдачей диагностической карты и не направляет её в ЕАИСТО.</p></Pane>
-        <a className="approved-pc-primary" href="#/inspections">Обновить очередь осмотров</a></>
+        <a className="approved-pc-primary" href="#/inspections/processing">Открыть рабочую обработку осмотра</a></>
       :<><Pane title="Предложения страховых компаний"><p>До 20 предложений с подтверждёнными тарифами и условиями — в страховом деле. Выбор делает клиент.</p></Pane>
         <a className="approved-pc-primary" href={'#/insurance/request/'+selected.id}>Открыть дело, варианты и переписку</a></>}
     </section>:<Pane title={inspection?'Техосмотры':'Страхование'}><Empty>Пока нет открытого дела. Новые назначенные заявки появятся здесь.</Empty></Pane>}
