@@ -73,7 +73,7 @@ function OrderFacts({ order }: { order: any }) {
 export function AndroidClientWorkspace({ orders, loading, error, me, retry, insuranceInProgress, disabledServices }: {
   orders: any[]; loading: boolean; error: string | null; me: any; retry: () => void;
   insuranceInProgress: any[];
-  disabledServices?: {repair:boolean; tow:boolean; service:boolean; consult:boolean};
+  disabledServices?: {repair:boolean; tow:boolean; service:boolean; consult:boolean; shop:boolean};
 }) {
   const current = orders.find(o => IN_PROGRESS.includes(o.status));
   const isDriver = !!me?.owner_id || me?.roles?.includes('driver');
@@ -127,9 +127,9 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
     <a href="#/garage" className="and19-equipment">
       <span className="and19-equipment-icon" aria-hidden="true">▤</span><span><strong>{isDriver ? 'Моя машина' : 'Моя техника'}</strong><small>История ремонта, документы и обслуживание</small></span><span aria-hidden="true">›</span>
     </a>
-    <a href="#/shop" className="and19-equipment and19-parts-shortcut" aria-label="Магазин запчастей">
+    <a href={disabledServices?.shop ? undefined : "#/shop"} aria-disabled={disabledServices?.shop || undefined} className="and19-equipment and19-parts-shortcut" aria-label="Магазин запчастей">
       <span className="and19-equipment-icon" aria-hidden="true">⚙</span>
-      <span><strong>Магазин запчастей</strong><small>По названию, артикулу и каталогу · до открытия магазина — справка</small></span>
+      <span><strong>Магазин запчастей</strong><small>{disabledServices?.shop ? 'Доступ ограничен владельцем автопарка' : 'По названию и артикулу · магазин пока закрыт'}</small></span>
       <span aria-hidden="true">›</span>
     </a>
     <a href="#/sos" className="and19-action and19-sos">＋ Новая заявка / SOS-помощь</a>
