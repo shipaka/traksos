@@ -263,7 +263,9 @@ function App() {
     : effMode === 'moderator' ? 'moderator' : 'admin';
   let screen;
   switch (a) {
-    case undefined: screen = <ApprovedPcDesk role={desktopRole} fallback={effMode === 'insurer' ? <InsurerCabinet /> : effMode === 'inspection' ? <InsurerCabinet inspectionOnly /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isAdmin ? <Admin /> : effMode === 'moderator' && isModerator ? <ModeratorDesk /> : <Home />} />; break;
+    case undefined: screen = effMode === 'performer' && (!me.performer || me.performer.kind === 'ecu')
+      ? (me.performer?.kind === 'ecu' ? <Work /> : <PerformerHub />)
+      : <ApprovedPcDesk role={desktopRole} fallback={effMode === 'insurer' ? <InsurerCabinet /> : effMode === 'inspection' ? <InsurerCabinet inspectionOnly /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isAdmin ? <Admin /> : effMode === 'moderator' && isModerator ? <ModeratorDesk /> : <Home />} />; break;
     case 'login': screen = <Home />; break;
     case 'sos': screen = isCustomer ? <Sos /> : <main><div className="empty">Для вызова SOS нужен клиентский аккаунт</div></main>; break;
     case 'new': screen = !isCustomer ? <main><div className="empty">Для заказа нужен клиентский аккаунт</div></main> : b === 'ecu' ? <main className="stack"><h1>Ремонт электронных блоков ЭБУ</h1><p>Специалист принимает блок в стационарной мастерской. Передайте техническое заключение из ранее оформленной консультации или выездной заявки: это бесплатно, и диагностика согласуется отдельно.</p><a className="btn" href="#/orders">Открыть мои заявки и заключения</a></main> : b === 'consult' ? <Consult /> : <NewOrder service={b ?? 'electric'} />; break;
@@ -287,7 +289,7 @@ function App() {
       }
       screen = !me.performer || b === 'profile' || (b === 'me' && !route[2]) ? <PerformerHub />
         : b === 'me' ? ({ about: <AboutSection />, phone: <PhoneSection />, schedule: <ScheduleSection />, cars: <CarsSection />, tax: <TaxSection />, money: <MoneySection />, level: <LevelSection /> } as Record<string, JSX.Element>)[route[2]] ?? <PerformerHub />
-        : b === 'filter' ? <FilterSection /> : b === 'jobs' ? <Orders as="performer" /> : b === 'chats' ? <AndroidMasterChats /> : b === 'docs' ? <Documents /> : <ApprovedPcDesk role={me.performer?.kind === 'tow' ? 'tow' : 'master'} fallback={<Work />} />;
+        : b === 'filter' ? <FilterSection /> : b === 'jobs' ? <Orders as="performer" /> : b === 'chats' ? <AndroidMasterChats /> : b === 'docs' ? <Documents /> : me.performer?.kind === 'ecu' ? <Work /> : <ApprovedPcDesk role={me.performer?.kind === 'tow' ? 'tow' : 'master'} fallback={<Work />} />;
       break;
     case 'base': screen = !isService
       ? (isPerformer && b === 'me' ? <BaseSetup /> : <Home />)
