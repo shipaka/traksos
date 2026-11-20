@@ -116,61 +116,7 @@
 /* Desktop reproduction corrections based on real Chromium screenshots
    versus the 19 Nov OWNER-APPROVED screenshot (not the obsolete 14 Nov files).
    Mobile and existing operational cabinets retain their separate layouts. */
-@media(min-width:1200px){
-  .guest-app .public-landing .public-brand-hero{
-    border:0!important;border-radius:0!important;
-    min-height:510px!important;
-    padding:32px clamp(32px,4vw,70px)!important;
-  }
-  .guest-app .public-landing .public-hero-copy{width:min(47%,650px)!important;}
-  .guest-app .public-landing .public-hero-visual.public-hero-slide-approved{
-    background-size:84% auto!important;
-    background-position:right center!important;
-    background-color:#061827!important;
-  }
-  .guest-app .public-landing .public-brand-hero::before{
-    background:linear-gradient(90deg,#031725 0%,rgba(3,23,37,.97) 21%,rgba(3,23,37,.5) 51%,rgba(3,23,37,.02) 79%)!important;
-  }
-  .guest-app .public-landing .public-content-grid{
-    grid-template-columns:minmax(0,1fr) minmax(270px,20%)!important;
-    gap:14px!important;margin-top:10px!important;
-    align-items:start!important;
-  }
-  .guest-app .public-landing .public-service-tiles{height:auto!important;align-items:start!important;}
-  .guest-app .public-landing .public-service-tile{
-    display:grid!important;grid-template-columns:48px minmax(0,1fr)!important;
-    grid-template-rows:58px minmax(0,1fr)!important;
-    gap:0 6px!important;align-content:center!important;
-    height:145px!important;min-height:145px!important;
-    padding:15px 10px!important;justify-content:initial!important;
-    border-radius:15px!important;
-  }
-  .guest-app .public-landing .public-service-tile .public-service-icon{
-    grid-column:1!important;grid-row:1/3!important;align-self:center!important;
-    width:44px!important;height:44px!important;place-items:center!important;
-  }
-  .guest-app .public-landing .public-service-tile b{
-    grid-column:2!important;grid-row:1!important;align-self:end!important;
-    font-size:clamp(13px,1.05vw,18px)!important;
-  }
-  .guest-app .public-landing .public-service-tile small{
-    grid-column:2!important;grid-row:2!important;align-self:start!important;
-    padding-top:7px!important;font-size:clamp(10px,.71vw,12px)!important;
-  }
-  .guest-app .public-landing .public-app-card{
-    min-height:172px!important;height:172px!important;
-    padding:14px 110px 12px 14px!important;
-    justify-content:center!important;
-  }
-  .guest-app .public-landing .public-why-strip{
-    grid-template-columns:repeat(3,minmax(0,1fr))!important;
-    gap:16px!important;margin:14px 0!important;padding:10px 20px!important;
-  }
-  .guest-app .public-landing .public-why-strip>article.public-benefit{
-    background:transparent!important;border:0!important;box-shadow:none!important;
-    min-height:85px!important;padding:13px 8px!important;
-  }
-}
+
 .guest-app .public-landing .public-service-icon svg{
   display:block;width:36px;height:36px;stroke:currentColor;
   filter:drop-shadow(0 0 5px rgba(0,204,255,.35));
@@ -186,29 +132,7 @@
 
 /* Owner's 19 Nov desktop reference: app teaser sits alongside (and slightly
    above) the compact service row; three benefits, not the obsolete four. */
-@media(min-width:1200px){
-  .guest-app .public-landing .public-app-card{
-    height:220px!important;min-height:220px!important;
-    margin-bottom:-75px!important;transform:translateY(-58px)!important;
-    z-index:4!important;padding-right:114px!important;
-  }
-  .guest-app .public-landing .public-app-card .public-app-phone{
-    top:16px!important;bottom:16px!important;width:99px!important;
-  }
-  .guest-app .public-landing .public-app-card .public-rustore-soon{
-    display:inline-flex!important;min-height:32px;align-items:center;
-    padding:5px 10px;border:1px solid #2ba5e0;border-radius:9px;
-    background:rgba(11,47,87,.8);color:#b3eaff!important;
-    font-weight:750;
-  }
-  .guest-app .public-landing .public-why-strip{
-    grid-template-columns:repeat(3,minmax(0,1fr))!important;
-    padding:19px 12px 8px!important;margin-top:13px!important;
-  }
-  .guest-app .public-landing .public-why-strip>article.public-benefit{
-    min-height:90px!important;padding:13px 9px!important;
-  }
-}
+
 
 /* CANON 19 NOV — page structure independent of deleted finalCanon.css.
    All approved front-page links remain real React links; this is presentation only. */
@@ -216,108 +140,12 @@
   .guest-app.guest-home .desktop-sidebar{display:none!important}
   .guest-app.guest-home .desktop-layout{display:block!important;max-width:none!important}
   .guest-app.guest-home .desktop-content{max-width:none!important;width:100%!important;padding:0!important;color:#f8fcff!important;background:#031725!important}
-  .guest-app.guest-home .desktop-content>main.public-landing{max-width:none!important;width:100%!important;margin:0!important;padding:0 0 40px!important;gap:0!important}
   .guest-app.guest-home .top{min-height:76px!important;padding:10px 3.5%!important;background:#041725!important}
   .guest-app.guest-home .track-site-search{display:none!important}
-  .guest-app .public-landing .public-landing-head{display:none!important}
-  .guest-app .public-landing .public-brand-hero{
-    position:relative!important;display:flex!important;min-height:510px!important;height:510px!important;
-    align-items:center!important;overflow:hidden!important;isolation:isolate;
-    padding:35px 4.7%!important;background:#041725!important;
-    border:0!important;border-radius:0!important;box-shadow:none!important;
-  }
-  .guest-app .public-landing .public-brand-hero::before{
-    position:absolute!important;inset:0!important;z-index:1!important;
-    filter:none!important;transform:none!important;opacity:1!important;
-    background:linear-gradient(90deg,#031725 0%,#031725e8 24%,#03172590 45%,transparent 70%)!important
-  }
-  .guest-app .public-landing .public-brand-hero::after{display:none!important}
-  .guest-app .public-landing .public-hero-visual{
-    position:absolute!important;inset:0!important;width:100%!important;height:100%!important;
-    opacity:1!important;overflow:hidden!important;-webkit-mask-image:none!important;mask-image:none!important;
-  }
-  .guest-app .public-landing .public-hero-visual::before,.guest-app .public-landing .public-hero-visual::after{display:none!important;content:none!important}
-  .guest-app .public-landing .public-hero-copy{
-    position:relative!important;z-index:3!important;width:48%!important;max-width:700px!important;
-    padding:0!important;margin:0!important;border:0!important;background:transparent!important;
-  }
-  .guest-app .public-landing .public-eyebrow,.guest-app .public-landing .public-track-benefits,.guest-app .public-landing .public-hero-caption{display:none!important}
-  .guest-app .public-landing .public-brand-hero h1{
-    margin:0 0 20px!important;max-width:680px!important;
-    font-size:clamp(39px,4.4vw,70px)!important;line-height:1.05!important;color:white!important;
-  }
-  .guest-app .public-landing .public-brand-hero h1 em{color:white!important}
-  .guest-app .public-landing .public-brand-hero h1 em b{color:#09caf1!important}
-  .guest-app .public-landing .public-hero-copy>p{max-width:555px!important;margin:0!important;font-size:clamp(16px,1.3vw,21px)!important;color:#f5f9ff!important}
-  .guest-app .public-landing .public-actions{margin-top:31px!important;display:flex!important;gap:18px!important}
-  .guest-app .public-landing .public-button{min-height:58px!important;padding:10px 20px!important;font-size:16px!important;border-radius:12px!important}
-  .guest-app .public-landing .public-content-grid{
-    display:grid!important;grid-template-columns:minmax(0,1fr) minmax(275px,20%)!important;
-    gap:20px!important;padding:0 30px!important;margin:0!important;align-items:start!important;
-  }
-  .guest-app .public-landing .public-real-services{
-    grid-column:1!important;grid-row:1!important;margin:0!important;padding:0!important;
-    background:none!important;border:0!important;box-shadow:none!important;
-  }
-  .guest-app .public-landing .public-services-a11y-title{position:absolute!important;width:1px!important;height:1px!important;clip-path:inset(50%)!important;overflow:hidden!important}
-  .guest-app .public-landing .public-service-tiles{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:14px!important;height:auto!important;width:100%!important}
-  .guest-app .public-landing .public-service-tile{
-    display:grid!important;grid-template-columns:40px minmax(0,1fr)!important;grid-template-rows:1fr 1fr!important;
-    align-items:center!important;justify-content:initial!important;
-    height:126px!important;min-height:126px!important;min-width:0!important;gap:0 6px!important;
-    padding:14px 8px!important;border:1px solid #244562!important;border-radius:16px!important;
-    background:linear-gradient(140deg,#102c45,#0b2136)!important;box-shadow:none!important;overflow:hidden!important;
-  }
-  .guest-app .public-landing .public-service-tile::before,.guest-app .public-landing .public-service-tile::after{display:none!important;content:none!important}
-  .guest-app .public-landing .public-service-tile .public-service-icon{position:static!important;grid-column:1!important;grid-row:1/3!important;display:grid!important;place-items:center!important;width:38px!important;height:42px!important;color:#08cafa!important}
-  .guest-app .public-landing .public-service-tile b{grid-column:2!important;grid-row:1!important;align-self:end!important;font-size:clamp(12px,.98vw,17px)!important;color:white!important;margin:0!important;text-shadow:none!important}
-  .guest-app .public-landing .public-service-tile small{grid-column:2!important;grid-row:2!important;align-self:start!important;font-size:clamp(9px,.68vw,12px)!important;line-height:1.36!important;color:#d4e3ee!important;margin:4px 0 0!important;text-shadow:none!important}
-  .guest-app .public-landing .public-app-card{
-    position:relative!important;min-width:0!important;
-    grid-column:2!important;grid-row:1!important;z-index:4!important;
-    height:218px!important;min-height:218px!important;transform:translateY(-49px)!important;
-    margin:0 0 -92px!important;padding:13px 107px 13px 14px!important;
-    display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center!important;
-    border-radius:19px!important;border:1px solid #0795c5!important;background:linear-gradient(145deg,#063758,#061a33)!important;
-  }
-  .guest-app .public-landing .public-app-card .public-app-phone{position:absolute!important;top:11px!important;bottom:11px!important;right:8px!important;width:93px!important;height:auto!important}
   /* The compact promo is a two-zone layout. Long copy must not retain the
      obsolete grid-column:3 minimum width and run outside the viewport. */
-  .guest-app .public-landing .public-app-card>:not(.public-app-phone){
-    box-sizing:border-box!important;min-width:0!important;max-width:100%!important;
-    overflow-wrap:anywhere!important;
-  }
-  .guest-app .public-landing .public-app-card>p,
-  .guest-app .public-landing .public-app-card>small{
-    width:100%!important;margin:0!important;white-space:normal!important;
-  }
-  .guest-app .public-landing .public-app-card>.public-rustore-soon{
-    max-width:100%!important;min-width:0!important;padding:6px 8px!important;
-    overflow-wrap:anywhere!important;white-space:normal!important;
-    text-align:center!important;
-  }
-  .guest-app .public-landing .public-app-card h2{font-size:clamp(15px,1.21vw,21px)!important;line-height:1.18!important}
-  .guest-app .public-landing .public-app-card h2 em{color:#21d5fa!important}
-  .guest-app .public-landing .public-why-strip{
-    display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:16px!important;
-    margin:13px 0 0!important;padding:29px 32px!important;
-    border-top:1px solid #1b4158!important;border-bottom:1px solid #1b4158!important;
-  }
-  .guest-app .public-landing .public-why-strip>.public-benefit{
-    display:grid!important;grid-template-columns:47px minmax(0,1fr)!important;
-    min-height:78px!important;gap:4px 12px!important;padding:5px 8px!important;
-    background:none!important;border:0!important;box-shadow:none!important;
-  }
-  .guest-app .public-landing .public-benefit-icon{grid-column:1!important;grid-row:1/3!important;width:42px!important;color:#e9faff!important}
-  .guest-app .public-landing .public-benefit-icon svg{width:42px;height:42px}
-  .guest-app .public-landing .public-benefit b{grid-column:2!important;font-size:16px!important;color:#fff!important}
-  .guest-app .public-landing .public-benefit small{grid-column:2!important;font-size:12px!important;color:#cfe3f0!important}
 }
-@media(min-width:900px) and (max-width:1250px){
-  .guest-app .public-landing .public-content-grid{grid-template-columns:1fr!important}
-  .guest-app .public-landing .public-app-card{grid-column:1!important;grid-row:2!important;transform:none!important;margin:12px 0 0!important;min-height:170px!important;height:auto!important}
-  .guest-app .public-landing .public-service-tiles{gap:8px!important}
-}
+
 
 /* Exact logo cropped from the OWNER'S accepted 19 Nov desktop source PNG:
    truck silhouette plus white/cyan TrakSOS mark, not a newly invented wordmark. */
@@ -347,11 +175,6 @@
     justify-content:space-evenly!important;align-items:center!important;
     gap:clamp(9px,1vw,17px)!important;
   }
-  .guest-app .public-landing .public-why-strip{
-    margin-top:62px!important;
-    grid-template-columns:repeat(3,minmax(0,1fr)) minmax(220px,22%)!important;
-    gap:12px!important;
-  }
 }
 .guest-app .public-landing .public-actions .public-button-sos{
   background:linear-gradient(105deg,#07d9f6,#05bdf3)!important;
@@ -368,28 +191,8 @@
    real application information, not grid columns from an obsolete layout.
    At 1440px the previous auto-placed span began at x=1313 and ended at 1466. */
 @media(min-width:1251px){
-  .guest-app .public-landing .public-app-card{
-    position:relative!important;overflow:hidden!important;
-    padding-bottom:45px!important;
-  }
-  .guest-app .public-landing .public-app-card>.public-rustore-soon{
-    position:absolute!important;display:flex!important;
-    left:14px!important;right:112px!important;bottom:10px!important;
-    top:auto!important;grid-column:auto!important;grid-row:auto!important;
-    width:auto!important;min-width:0!important;max-width:none!important;
-    min-height:30px!important;align-items:center!important;
-    justify-content:center!important;
-    margin:0!important;padding:5px 7px!important;
-    white-space:normal!important;overflow-wrap:anywhere!important;
-    font-size:11px!important;line-height:1.2!important;
-  }
   /* Reference contains two action chips, not a long explanatory disclaimer
      spilling past the teaser and mobile phone mockup. Keep in DOM for a11y. */
-  .guest-app .public-landing .public-app-card>small{
-    position:absolute!important;width:1px!important;height:1px!important;
-    padding:0!important;margin:-1px!important;overflow:hidden!important;
-    white-space:nowrap!important;clip-path:inset(50%)!important;
-  }
 }
 
 /* November 19 mobile public actions: the long Russian signup label was
@@ -411,9 +214,6 @@
   .guest-app .guest-site-nav>a.guest-nav-techbase:hover{color:#fff!important}
   /* Use the full image height on the right, not an oversized cover crop:
      the 19 Nov approved composition shows the whole cab and road. */
-  .guest-app .public-landing .public-hero-visual.public-hero-slide-approved{
-    background-size:auto 100%!important;background-position:right center!important;
-  }
 }
 .guest-app .public-track-extra.public-track-techbase{border-color:#217799!important;}
 .guest-app .public-track-extra.public-track-techbase b{color:#d9f8ff!important;}
@@ -435,41 +235,4 @@
 }
 /* Extra services are real functionality BELOW the approved first fold.
    Keep links accessible without allowing unstyled text over the lower panel. */
-@media(min-width:900px){
-  .guest-app .public-landing .public-track-extras{
-    box-sizing:border-box!important;width:100%!important;
-    display:grid!important;gap:16px!important;
-    margin:100px 0 0!important;padding:12px 32px 32px!important;
-  }
-  .guest-app .public-landing .public-track-insurance{
-    box-sizing:border-box!important;position:relative!important;
-    display:flex!important;align-items:center!important;gap:15px!important;
-    width:100%!important;min-height:90px!important;margin:0!important;
-    padding:14px 18px!important;border:1px solid #245574!important;
-    border-radius:16px!important;background:#0b2940!important;
-    color:#e9f8ff!important;text-align:left!important;
-  }
-  .guest-app .public-landing .public-track-insurance>span:nth-child(2){
-    flex:1 1 auto!important;min-width:0!important;
-  }
-  .guest-app .public-landing .public-track-insurance b,
-  .guest-app .public-landing .public-track-insurance small{
-    display:block!important;color:#e9f8ff!important;
-  }
-  .guest-app .public-landing .public-track-insurance strong{color:#66e5ff!important}
-  .guest-app .public-landing .public-track-extras-grid{
-    display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
-    gap:14px!important;
-  }
-  .guest-app .public-landing .public-track-extra{
-    display:flex!important;align-items:center!important;gap:10px!important;
-    min-width:0!important;min-height:70px!important;
-    padding:14px!important;border:1px solid #245574!important;
-    border-radius:14px!important;background:#0b2940!important;
-    color:#e9f8ff!important;text-decoration:none!important;
-  }
-  .guest-app .public-landing .public-track-extra b,
-  .guest-app .public-landing .public-track-extra small{
-    color:#e9f8ff!important;min-width:0!important;
-  }
-}
+
