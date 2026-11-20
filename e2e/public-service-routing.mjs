@@ -108,9 +108,9 @@ try {
     if(await bgImage()!==firstPhoto)throw Error('Hero dot did not select original photograph');
 
     // Benefit cards use recognizable vector artwork, no unexplained square glyph.
-    if(await page.locator('.public-benefit-verified svg').count()!==1 ||
-       await page.locator('.public-benefit-unified svg').count()!==1)
-      throw Error('Second and third benefit illustrations are not vectors');
+    const approvedBenefits=page.locator('.public-why-strip .public-benefit');
+    if(await approvedBenefits.count()!==3 || await approvedBenefits.locator('svg').count()!==3)
+      throw Error('19 Nov owner-approved three benefit icons must all be real vectors');
     if(width<900) {
       for(const tile of ['parts','inspection']) {
         const geometry=await page.locator('.public-track-'+tile).evaluate(el=>{

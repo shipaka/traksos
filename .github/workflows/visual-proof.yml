@@ -51,6 +51,8 @@ jobs:
         run: node e2e/ui-smoke.mjs
       - name: Настоящий Android WebView-гостевой экран, без наложения текста на фуру
         run: node e2e/native-guest-layout.mjs
+      - name: Реальные переходы и три преимущества утверждённой публичной главной
+        run: node e2e/public-service-routing.mjs
       - name: PNG со всех проверенных экранов
         if: always()
         uses: actions/upload-artifact@v4
