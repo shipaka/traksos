@@ -548,8 +548,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         </div>
       </header>
       <NetworkStatus />
-      {me && !serviceSandbox && ['', 'work', 'base', 'admin', 'moderation', 'insurance', 'inspections'].includes(route[0] ?? '') && <TrainingInvite />}
-      {me && !serviceSandbox && <ContextHelp page={route[0] ?? ''} />}
+      {me && !native.isApp && !serviceSandbox && ['', 'work', 'base', 'admin', 'moderation', 'insurance', 'inspections'].includes(route[0] ?? '') && <TrainingInvite />}
+      {me && !serviceSandbox && (!native.isApp || !['', 'work', 'base', 'admin', 'moderation', 'insurance', 'inspections'].includes(route[0] ?? '') || route.length>1) && <ContextHelp page={route[0] ?? ''} />}
       <div className="desktop-layout">
         <aside className="desktop-sidebar" aria-label="Навигация по сайту">
           <div className="desktop-sidebar-title">{me ? 'Рабочий кабинет' : isAuthEntry ? 'TrakSos · вход и документы' : 'TrakSos · помощь в дороге'}</div>
@@ -633,7 +633,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           <div className="desktop-sidebar-bottom"><strong>TRAKSOS 24/7</strong><span>Помощь грузовикам</span><small>Санкт-Петербург и Ленинградская область</small></div>
         </aside>
         <div className="desktop-content">
-          {me && !serviceSandbox && route.length===0 && <IntroInvitation key={me.id+'-'+mode} userId={me.id} mode={mode} roles={me.roles} />}
+          {me && !native.isApp && !serviceSandbox && route.length===0 && <IntroInvitation key={me.id+'-'+mode} userId={me.id} mode={mode} roles={me.roles} />}
           {children}
           <SiteFooter />
         </div>
