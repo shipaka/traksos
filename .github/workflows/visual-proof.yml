@@ -55,6 +55,9 @@ jobs:
       - name: Реальные ПК-кабинеты всех доступных тестовых ролей
         continue-on-error: true
         run: node e2e/owner20-cabinet-evidence.mjs
+      - name: Активные ПК-заявки: Chromium, локальные синтетические данные, без оплаты
+        continue-on-error: true
+        run: node e2e/approved-pc-active-work.mjs
       - name: Проверка новой главной ПК 20 ноября (6 разрешений, реальные маршруты)
         run: node e2e/owner20-layout-check.mjs
       - name: Настоящий Android WebView-гостевой экран, без наложения текста на фуру
@@ -84,6 +87,7 @@ jobs:
             e2e/shots/**/*.png
             e2e/shots/capture-provenance.json
             e2e/shots/owner20-cabinets/capture-report.json
+            e2e/shots/pc-active-synthetic/report.json
           if-no-files-found: warn
           retention-days: 14
       - name: Честный протокол визуальной проверки
