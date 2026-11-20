@@ -384,6 +384,43 @@ function InsuranceDesk({inspection}:{inspection:boolean}){
       </Pane><Bot message={inspection?'Помогу с порядком осмотра и документами.':'Помогу со страховым делом и документами.'}/></>}/>
   </main>;
 }
+
+function ModeratorSelectedCase({id}:{id:string}){
+  const detail=useLoad(()=>get<any>('/api/mod/cases/'+id),[id],e=>e.type==='mod_case');
+  const c=detail.data;
+  return <section className="approved-pc-case">
+    <header><div><small>ПРОВЕРЯЕМОЕ ДЕЛО</small><h2>Дело №{text(c?.number||id)}</h2></div>
+      {c&&<span className="approved-pc-stage">{text(c.kindName,'Разбирательство')}</span>}
+    </header>
+    {!c?<LoadingBlock error={detail.error} retry={detail.reload}/>:<>
+      <h3>{text(c.title)}</h3>
+      {c.text&&<Pane title="Обстоятельства"><p className="approved-pc-evidence">{c.text}</p></Pane>}
+      {c.order&&<Pane title="Связанная заявка">
+        <p><b>№{text(c.order.number)}</b> · {text(SERVICES[c.order.service]?.name||c.order.service)}</p>
+        <p>Клиент: {text(c.order.client_name)} · Исполнитель: {text(c.order.performer_name)}</p>
+        {c.order.result_note&&<p className="approved-pc-evidence">Комментарий исполнителя: {c.order.result_note}</p>}
+        <a className="approved-pc-small-link" href={'#/order/'+c.order.id}>Открыть связанную заявку →</a>
+      </Pane>}
+      {c.booking&&<Pane title="Данные СТО"><p>{text(c.booking.center)} · счёт №{text(c.booking.number)}</p>
+        <p>{Array.isArray(c.booking.works)?c.booking.works.join(', '):'Работы в деталях дела'}</p></Pane>}
+      {!!c.chat?.length&&<Pane title={'Переписка по делу · '+c.chat.length}>
+        {c.chat.slice(-5).map((m:any,i:number)=><p key={String(m.id||i)} className="approved-pc-evidence">
+          <b>{text(m.sender,'Участник')}</b>: {text(m.body,'Сообщение без текста')}
+        </p>)}
+        <a className="approved-pc-small-link" href={'#/admin/case/'+id}>Вся переписка и хронология →</a>
+      </Pane>}
+      {c.review&&<Pane title="Отзыв"><p>Рейтинг: {text(c.review.stars)}</p>
+        <p>{text(c.review.text,'Текст отзыва отсутствует')}</p></Pane>}
+      {Array.isArray(c.log)&&c.log.length>0&&<p className="approved-pc-caveat">Записей в журнале: {c.log.length}. Полный журнал — в деле.</p>}
+      {c.status!=='open'&&<p className="approved-pc-caveat">Уже принятое решение: {text(c.decisionName)}.</p>}
+      <div className="approved-pc-case-actions">
+        <a className="approved-pc-primary" href={'#/admin/case/'+id}>Открыть проверку и принять решение</a>
+      </div>
+      <p className="approved-pc-caveat">Решения доступны только при разрешённом доступе и сохраняются с записью в журнале. Здесь нет неподтверждённых блокировок или финансовых операций.</p>
+    </>}
+  </section>;
+}
+
 function ModeratorDesk(){
   const [kind,setKind]=useState<'dispute'|'appeal'|'review'>('dispute');
   const source=useLoad(()=>get<any>('/api/mod/cases?kind='+kind),[kind],e=>e.type==='mod_case');
@@ -400,14 +437,7 @@ function ModeratorDesk(){
       items.map((o:any)=><RowItem key={o.id} label={'№'+text(o.number)} info={text(o.title)}
         badge={o.priority===1?'Срочно':'На проверке'} active={selected?.id===o.id} onClick={()=>setChosen(String(o.id))}/>)
       :<Empty>Открытых дел в очереди нет.</Empty>}</Pane>}
-      center={selected?<section className="approved-pc-case">
-        <header><div><small>РАЗБОР ОБРАЩЕНИЯ</small><h2>Дело №{text(selected.number||selected.id)}</h2></div>
-          <span className="approved-pc-stage">Приоритет: {selected.priority===1?'срочно':'обычный'}</span></header>
-        <h3>{text(selected.title)}</h3><p>{text(selected.openedBy)} → {text(selected.target)}</p>
-        <p>Связанная заявка, сообщения сторон, документы, основания решения и журнал доступны в подробном деле.</p>
-        <div className="approved-pc-case-actions"><a className="approved-pc-primary" href={'#/admin/case/'+selected.id}>Открыть дело и принять решение</a></div>
-        <p className="approved-pc-caveat">Решения фиксируются на сервере. Из карточки здесь не создаются списания и блокировки.</p>
-      </section>:<Pane title="Модерация"><Empty>Выберите обращение слева.</Empty></Pane>}
+      center={selected?<ModeratorSelectedCase id={String(selected.id)}/>:<Pane title="Модерация"><Empty>Выберите обращение слева.</Empty></Pane>}
       right={<><Pane title="Что проверить"><p>✓ Связанная заявка и статус</p><p>✓ Доказательства обеих сторон</p><p>✓ Переписка и правила площадки</p><p>✓ Основание и журнал решения</p></Pane>
         <Pane title="Рабочие инструменты"><a className="approved-pc-small-link" href="#/moderation/support">Очередь поддержки →</a>
           <a className="approved-pc-small-link" href="#/moderation/verify">Проверка партнёров →</a></Pane></>}/>
