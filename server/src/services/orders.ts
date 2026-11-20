@@ -1079,8 +1079,13 @@ export class OrdersService {
               o.case_root_id, o.continuation_of, o.result, o.result_note, o.vehicle_id,
               uc.status as unilateral_status,
               v.brand as v_brand, v.model as v_model, v.year as v_year, v.plate as v_plate,
+              -- These fields are the same public professional card already shown
+              -- in the authenticated order detail. Never expose phone or raw GPS.
+              perf.name as performer_name, perf.rating::float as performer_rating,
+              perf.rating_count as performer_rating_count,
               (select coalesce(company_name, name) from users where id=o.client_id) as client_name
          from orders o left join vehicles v on v.id=o.vehicle_id
+         left join users perf on perf.id=o.performer_id
          left join order_unilateral_closures uc on uc.order_id=o.id where ${where} ${status ? 'and o.status = $2' : ''} order by o.created_at desc limit 100`,
       status ? [user.id, status] : [user.id],
     );
