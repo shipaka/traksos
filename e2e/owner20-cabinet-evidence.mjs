@@ -146,7 +146,11 @@ try{
        const columns=page.locator('.approved-pc-three');
        if(await columns.count()!==1)throw Error('Exactly one full-size workdesk expected: '+c.id);
        const realTabs=page.locator('.approved-pc-tabs [role="tab"]');
-       if(await realTabs.count()<1)throw Error('Desktop tabs missing: '+c.id);
+       // A brand-new driver/fleet owner with zero active jobs has no fake order tab.
+       if(!['driver','owner'].includes(c.id)&&await realTabs.count()<1)
+         throw Error('Desktop tabs missing: '+c.id);
+       if(['driver','owner'].includes(c.id)&&await page.locator('.approved-pc-order-heading').count()!==1)
+         throw Error('Owner/driver active orders heading missing');
        if(['master','tow'].includes(c.id)){
          if(await realTabs.count()!==2)throw Error('Expected current work and new offers modes: '+c.id);
          await realTabs.nth(1).click();
