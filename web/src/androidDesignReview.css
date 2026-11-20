@@ -17,3 +17,60 @@
 .and19-review-footer a{width:max-content;max-width:100%}
 @media(max-width:340px){.and19-review-roles{gap:4px}.and19-review-roles a{font-size:10px}}
 @media(min-width:900px){.and19-review-page{max-width:425px;margin:0 auto;border-left:1px solid #35576d;border-right:1px solid #35576d}}
+
+/* Same fixed, role-specific navigation as a logged-in Android Shell. */
+@media(max-width:899px){
+ .and19-review-page{
+   padding-bottom:calc(96px + env(safe-area-inset-bottom));
+ }
+ .and19-review-page .and19-review-tabbar{
+   position:fixed;
+   z-index:100;
+   bottom:calc(5px + env(safe-area-inset-bottom));
+   left:50%;
+   transform:translateX(-50%);
+   display:grid;
+   align-items:stretch;
+   justify-content:stretch;
+   grid-template-columns:repeat(4,minmax(0,1fr));
+   width:min(430px,calc(100% - 16px));
+   padding:5px;
+   box-sizing:border-box;
+   background:#0b1e30;
+   border:1px solid #4b7086;
+   border-radius:15px;
+   box-shadow:0 -5px 24px #061523b5;
+ }
+ .and19-review-page.role-client .and19-review-tabbar{
+   grid-template-columns:repeat(6,minmax(0,1fr));
+ }
+ .and19-review-page .and19-review-tabbar a{
+   min-width:0;
+   min-height:53px;
+   display:flex;
+   flex-direction:column;
+   gap:3px;
+   align-items:center;
+   justify-content:center;
+   padding:7px 1px;
+   color:#bad0e2;
+   text-decoration:none;
+   font-size:clamp(9px,2.7vw,11px);
+   font-weight:720;
+   line-height:1.1;
+   white-space:nowrap;
+ }
+ .and19-review-page .and19-review-tabbar a.on{
+   background:linear-gradient(145deg,#a54a16,#40291d);
+   color:#fff;
+   border:1px solid #d7772c;
+   border-radius:10px;
+ }
+ .and19-review-page .and19-review-tabbar .ic{
+   display:grid;
+   place-items:center;
+   width:22px;height:22px;
+   color:inherit;
+ }
+ .and19-review-page .and19-review-tabbar .ic svg{width:20px;height:20px}
+}
