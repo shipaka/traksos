@@ -27,6 +27,21 @@ export function courierNextStage(status:string):string|null{
 }
 export class ShopCourierDeliveries {
   constructor(private db:Db,private notify:Notifier) {}
+  async presence(courier:AuthUser){
+    const row=await this.db.one<{online:boolean;updated_at:Date}>(
+      'select online,updated_at from shop_courier_presence where courier_id=$1',
+      [courier.id]);
+    return {online:row?.online??false,updatedAt:row?.updated_at??null};
+  }
+  async setPresence(courier:AuthUser,online:boolean){
+    const row=await this.db.one<{online:boolean;updated_at:Date}>(`
+      insert into shop_courier_presence(courier_id,online) values ($1,$2)
+      on conflict(courier_id) do update set online=excluded.online,updated_at=now()
+      returning online,updated_at`,[courier.id,online]);
+    await this.db.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
+      [courier.id,'courier.availability',courier.id,{online}]);
+    return {online:row!.online,updatedAt:row!.updated_at};
+  }
   async candidates(){
     return this.db.query<{id:string;name:string|null}>(
       `select id,name from users where 'courier'=any(roles) and status='active'
