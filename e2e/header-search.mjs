@@ -11,7 +11,10 @@ async function session(term, select, expectedHash, width=1440){
   page.on('pageerror',err=>errors.push(err.message));
   try{
     await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
-    await page.getByRole('heading',{name:/TrakSOS.*помощь/}).waitFor();
+    // The owner-approved 617 desktop hero and separately approved mobile
+    // landing no longer use the retired "TrakSOS — помощь" heading.
+    await page.locator('.owner20-home:visible, .public-landing:visible').first()
+      .waitFor({state:'visible',timeout:15000});
     const search=page.getByRole('searchbox',{name:'Поиск разделов и услуг'});
     // Canonical header starts as a search icon; opening it must reveal a usable real input.
     await page.locator('.track-site-search-icon').click();
