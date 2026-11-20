@@ -1,8 +1,8 @@
 /* Android workspaces approved 19.11.2026. Only real API-backed values. */
 import { useEffect, useState } from 'react';
-import { get, rub } from '../api.ts';
+import { get, post, rub } from '../api.ts';
 import { SERVICES, STATUS } from '../dict.ts';
-import { useLoad } from '../ui.tsx';
+import { useLoad, useAction } from '../ui.tsx';
 import { OfferForm } from './search.tsx';
 import { insurancePresentation } from '../insurancePresentation.ts';
 
@@ -238,12 +238,29 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
   </div>;
 }
 
-export function AndroidPerformerWorkspace({ performer, active, auctions, online, busy, setLine, balance, reloadAuctions, pendingReview=0 }: {
+export function AndroidPerformerWorkspace({ performer, active, auctions, online, busy, setLine, balance,
+  reloadAuctions, reloadJobs, todayCount=0, pendingReview=0 }: {
   performer: any; active: any[]; auctions: any[]; online: boolean; busy: boolean;
-  setLine: (status: string) => void; balance: any; reloadAuctions: () => void; pendingReview?: number;
+  setLine: (status: string) => void; balance: any; reloadAuctions: () => void;
+  reloadJobs?: () => void; todayCount?: number; pendingReview?: number;
 }) {
   const tow = performer.kind === 'tow';
   const inJob = performer.line_status === 'on_job';
+  const current=active[0];
+  const { busy: stageBusy, run: runStage } = useAction();
+  const stepForStatus: Record<string, {action:'depart'|'arrive'|'start_work';label:string}> = {
+    accepted:{action:'depart',label:'Выехал'},
+    en_route:{action:'arrive',label:'Я на месте'},
+    arrived:{action:'start_work',label:'Начать работу'}
+  };
+  const nextStep=current ? stepForStatus[current.status] : null;
+  const confirmStep=async()=>{
+    if(!current || !nextStep || stageBusy || busy)return;
+    if(!window.confirm('Подтвердить этап «'+nextStep.label+'» по заявке №'+current.number+'?'))return;
+    const changed=await runStage(()=>post('/api/orders/'+current.id+'/step',
+      {action:nextStep.action}), 'Этап заявки обновлён');
+    if(changed)reloadJobs?.();
+  };
   return <div className="and19-workspace and19-performer" aria-label="Android рабочий стол исполнителя">
     <div className="and19-role and19-line">
       <span className="and19-role-caption"><NavGlyph glyph="⚙" />{tow ? 'Эвакуаторщик' : 'Выездной мастер'}</span>
@@ -256,38 +273,66 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
     </div>
     <div className="and19-cover"><h1>Рабочий стол</h1></div>
     <div className="and19-metrics">
-      <a href="#/work/jobs"><small>В работе</small><strong>{active.length}</strong></a>
-      <a href="#/work/me/level"><small>Рейтинг</small><strong>{performer.rating != null ? Number(performer.rating).toFixed(1) : '—'}</strong></a>
-      <a href="#/work/me/money"><small>К выплате</small><strong>{balance?.to_pay != null ? rub(balance.to_pay) : '—'}</strong></a>
+      <a href="#/work/jobs"><NavGlyph glyph="clipboard"/><span><small>Сегодня</small><strong>{todayCount} заяв.</strong></span></a>
+      <a href="#/work/me/level"><NavGlyph glyph="star"/><span><small>Рейтинг</small><strong>{performer.rating != null ? Number(performer.rating).toFixed(1).replace('.',',') : '—'}</strong></span></a>
+      <a href="#/work/me/money"><NavGlyph glyph="coins"/><span><small>К выплате</small><strong>{balance?.to_pay != null ? rub(balance.to_pay) : '—'}</strong></span></a>
     </div>
     {active.length ? <section className="and19-panel and19-main-order">
-      <a className="and19-order-open" href={'#/order/' + active[0].id}>
-        <OrderTitle order={active[0]} />
-        {active[0].service!=='consult' && <ApprovedOrderTruck order={active[0]} />}
-        <OrderFacts order={active[0]} />
-        <OrderRoute order={active[0]} role="performer"/>
-        <MobileTimeline order={active[0]} />
-        <span className="and19-link">{performerNextStep(active[0].status)} <span aria-hidden="true">›</span></span>
-      </a>
-      <nav className="and19-order-shortcuts" aria-label="Разделы текущей заявки">
-        <a href={'#/order/' + active[0].id + '/chat'}>Чат</a>
-        <a href={'#/order/' + active[0].id + '/client'}>Клиент и ТС</a>
-        <a href={'#/order/' + active[0].id + '/finance'}>Расчёт</a>
-      </nav>
-      {active[0].client_name && <div className="and19-assigned-performer and19-client-contact">
-        <span className="and19-assigned-icon" aria-hidden="true">◉</span>
-        <span className="and19-assigned-copy">
-          <strong>{active[0].client_name}</strong><small>Клиент по заявке №{active[0].number}</small>
-        </span>
-        <a href={'#/order/'+active[0].id+'/chat'}>Чат</a>
-      </div>}
-      {active.length > 1 && <a className="and19-row-link" href="#/work/jobs">Другие активные заявки: {active.length - 1} ›</a>}
+      <div className="and19-order-open">
+        <a href={'#/order/'+current.id} className="and19-order-heading-link"
+          aria-label={'Открыть заявку №'+current.number}><OrderTitle order={current}/></a>
+        {current.service!=='consult' && <a className="and19-order-photo-link"
+          href={'#/order/'+current.id+'/vehicle'} aria-label="Открыть технику и историю работ по заявке">
+          <ApprovedOrderTruck order={current} />
+        </a>}
+        <OrderFacts order={current} />
+        {current.client_name && <div className="and19-assigned-performer and19-client-contact">
+          <span className="and19-assigned-icon" aria-hidden="true"><NavGlyph glyph="◉"/></span>
+          <span className="and19-assigned-copy"><strong>{current.client_name}</strong>
+            <small>Клиент по заявке №{current.number}</small></span>
+          <a href={'#/order/'+current.id+'/client'} aria-label="Контакты клиента по заявке"><NavGlyph glyph="phone"/></a>
+          <a href={'#/order/'+current.id+'/chat'} aria-label="Открыть чат заявки"><NavGlyph glyph="chat"/></a>
+        </div>}
+        <OrderRoute order={current} role="performer"/>
+        <MobileTimeline order={current}/>
+      </div>
+      <div className="and19-stage-actions">
+        {nextStep ? <button type="button" className="and19-stage-primary"
+          disabled={stageBusy||busy} onClick={()=>{void confirmStep()}}>
+          <NavGlyph glyph={current.status==='en_route'?'pin':'check'}/>
+          {nextStep.label}
+        </button> : <a className="and19-stage-primary"
+          href={'#/order/'+current.id+'/finance'}>
+          {current.status==='working'?'Оформить результат':'Проверить заявку'}
+        </a>}
+        {current.status==='working'
+          ? <a href={'#/order/'+current.id+'/finance'} className="and19-stage-complete">
+              <NavGlyph glyph="check"/>Завершить
+            </a>
+          : <span className="and19-stage-complete is-disabled" aria-disabled="true">
+              <NavGlyph glyph="check"/>Завершить
+            </span>}
+      </div>
+      {active.length>1 && <a className="and19-row-link" href="#/work/jobs">
+        Другие активные заявки: {active.length-1} ›</a>}
     </section> : <section className="and19-panel and19-empty">
       <strong>{online ? 'Ожидаем подходящую заявку' : 'Вы не на линии'}</strong>
       <ApprovedEmptyScene kind="shift" />
       <p>{online ? 'Когда заявка поступит, вы получите входящий вызов. Приложение не нужно держать открытым.' : 'Включите статус «На линии», чтобы получать заявки. При необходимости настройте график.'}</p>
       <a href="#/work/filter" className="and19-link">Настройки заявок ›</a>
     </section>}
+    {current && current.money && Number.isFinite(current.money.amount) &&
+      <a href={'#/order/'+current.id+'/finance'} className="and19-performer-finance"
+        aria-label="Открыть реальный расчёт стоимости, комиссии и выплаты">
+        <span><NavGlyph glyph="coins"/><small>Стоимость работ</small>
+          <strong>{rub(current.money.amount)}</strong></span>
+        <span><NavGlyph glyph="₽"/><small>Комиссия платформы</small>
+          <strong>{Number.isFinite(current.money.commission)?rub(current.money.commission):'—'}
+            {Number.isFinite(current.money.commissionPct) &&
+              <em> ({current.money.commissionPct}%)</em>}</strong></span>
+        <span><NavGlyph glyph="wallet"/><small>К получению</small>
+          <strong>{Number.isFinite(current.money.payout)?rub(current.money.payout):'—'}</strong></span>
+      </a>}
     {pendingReview > 0 && <a className="and19-row-link" href="#/work/jobs">Работы завершены физически, ожидают решения клиента: {pendingReview} ›</a>}
     {auctions.length > 0 && <section className="and19-auctions">
       <h2>Новые подходящие заявки ({auctions.length})</h2>
@@ -302,11 +347,15 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
       Исторические расчёты по старым заявкам <strong>{rub(balance.cash_debt)} ›</strong>
     </a>}
     {performer.verification !== 'approved' && <a href="#/work/docs" className="and19-row-link">Проверка и документы профиля ›</a>}
-    <div className="and19-quick">
-      <a href="#/work/jobs">Все заявки</a>
-      <a href="#/work/me/money">Финансы</a>
-      <a href="#/work/filter">Фильтры работ</a>
-    </div>
+    {current ? <nav className="and19-quick" aria-label="Дополнительные действия заявки">
+      <a href={'#/order/'+current.id+'/chat'}><NavGlyph glyph="chat"/>Чат и фото</a>
+      <a href={'#/order/'+current.id+'/finance'}><NavGlyph glyph="filetext"/>Отчёт</a>
+      <a href="#/shop"><NavGlyph glyph="⚙"/>Запчасти</a>
+    </nav> : <nav className="and19-quick" aria-label="Действия специалиста">
+      <a href="#/work/jobs"><NavGlyph glyph="clipboard"/>Заявки</a>
+      <a href="#/work/me/money"><NavGlyph glyph="wallet"/>Финансы</a>
+      <a href="#/work/filter"><NavGlyph glyph="⚙"/>Фильтры</a>
+    </nav>}
   </div>;
 }
 
