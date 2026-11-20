@@ -109,7 +109,9 @@ try{
          .filter(el=>{const r=el.getBoundingClientRect();return r.width>0&&r.right>innerWidth+5;})
          .slice(0,10).map(el=>({tag:el.tagName,cls:String(el.className).slice(0,100),
            right:Math.round(el.getBoundingClientRect().right),
-           width:Math.round(el.getBoundingClientRect().width)})));
+           width:Math.round(el.getBoundingClientRect().width),
+           src:el.tagName==='IMG'?el.getAttribute('src'):null,
+           parent:String(el.parentElement?.className||'').slice(0,100)})));
        throw Error('Horizontal overflow '+JSON.stringify({dims,offenders}));
      }
      if(errors.length)throw Error('Uncaught errors '+errors.join('; '));
