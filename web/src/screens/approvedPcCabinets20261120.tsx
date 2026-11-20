@@ -318,6 +318,29 @@ function ServiceDesk(){
         <a className="approved-pc-small-link" href="#/base/money">Финансы СТО →</a></Pane><Bot message="Помогу с ремонтом, запчастями и заявками."/></>}/>}
   </main>;
 }
+
+/** Authorized live quote summary inside the approved insurance workdesk. */
+function InsuranceProposals({requestId}:{requestId:string}){
+  const caseData=useLoad(()=>get<any>('/api/insurance/requests/'+requestId),[requestId],
+    e=>e.type==='vehicle_service'&&String(e.requestId)===String(requestId));
+  const entries=caseData.data?.proposals||[];
+  const stage=caseData.data?.request?.insurance_stage;
+  const chosenId=caseData.data?.request?.insurance_choice_id;
+  return <Pane title={'Предложения страховых компаний · '+(caseData.data?entries.length:'—')+' из 20'}>
+    {!caseData.data?<LoadingBlock error={caseData.error} retry={caseData.reload}/>:
+      entries.length?entries.slice(0,20).map((quote:any)=>
+        <a key={quote.id} href={'#/insurance/request/'+requestId} className="approved-pc-quote">
+          <strong>{text(quote.company,'Страховая компания')} · {text(quote.product,'Полис')}</strong>
+          <span>{Number.isFinite(Number(quote.premium_kopecks))?
+            new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB'}).format(Number(quote.premium_kopecks)/100):'Стоимость уточняется'}</span>
+          {chosenId===quote.id&&<em>Выбран клиентом</em>}
+        </a>)
+      :<Empty>Предложения ещё подготавливаются. Данные появятся после сохранения в страховом деле.</Empty>}
+    {stage==='offers_sent'&&<p className="approved-pc-caveat">Варианты отправлены. Ожидаем решения клиента.</p>}
+    <a className="approved-pc-small-link" href={'#/insurance/request/'+requestId}>Открыть все варианты, документы и переписку →</a>
+  </Pane>;
+}
+
 function InsuranceDesk({inspection}:{inspection:boolean}){
   const {me}=useMe();
   const api=inspection?'/api/insurer/inspections':'/api/insurer/requests';
@@ -352,7 +375,7 @@ function InsuranceDesk({inspection}:{inspection:boolean}){
       {inspection?<><Pane title="Этапы осмотра"><p>Заявка → Назначение → Проверка → Фиксация результата</p>
         <p>Отметка о выполнении не является выдачей диагностической карты и не направляет её в ЕАИСТО.</p></Pane>
         <a className="approved-pc-primary" href="#/inspections/processing">Открыть рабочую обработку осмотра</a></>
-      :<><Pane title="Предложения страховых компаний"><p>До 20 предложений с подтверждёнными тарифами и условиями — в страховом деле. Выбор делает клиент.</p></Pane>
+      :<><InsuranceProposals requestId={String(selected.id)}/>
         <a className="approved-pc-primary" href={'#/insurance/request/'+selected.id}>Открыть дело, варианты и переписку</a></>}
     </section>:<Pane title={inspection?'Техосмотры':'Страхование'}><Empty>Пока нет открытого дела. Новые назначенные заявки появятся здесь.</Empty></Pane>}
     right={<><Calendar items={all}/><Pane title="Документы и следующее действие"><p>Проверяйте полноту документов в карточке выбранного дела.</p>
