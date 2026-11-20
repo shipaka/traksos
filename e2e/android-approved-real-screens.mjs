@@ -86,11 +86,15 @@ try{
          !chromeIcons.orders.includes('M9 11h6')||
          (role==='owner'?!chromeIcons.special.includes('M2 7h12'):!chromeIcons.special.includes('M5 4h14')))
         throw Error(role+': footer SVG does not match approved native 618 symbols '+JSON.stringify(chromeIcons));
+      const bottomCount=await page.locator('.tabbar>a').count();
+      if(bottomCount!==(role==='owner'?5:4))throw Error(
+        role+': original 618.png requires exactly 5 owner / 4 master tabs, got '+bottomCount);
       if(role==='owner'){
         const art=await page.locator('.and19-services > a').evaluateAll(cards=>cards.map(card=>{
           const illustration=card.querySelector('.tr-service-illustration');
           const label=card.querySelector('.and19-service-label');
-          if(!illustration||!label)return {missing:true};
+          const symbol=card.querySelector('.and19-service-symbol svg');
+          if(!illustration||!label||!symbol)return {missing:true};
           const visual=getComputedStyle(illustration);
           const textStyle=getComputedStyle(label);
           return {
@@ -98,6 +102,7 @@ try{
             position:visual.backgroundPosition,
             size:visual.backgroundSize,
             opacity:Number(visual.opacity),
+            vectorWidth:symbol.getBoundingClientRect().width,
             label:label.textContent,
             labelFont:textStyle.fontSize,
             labelVisible:textStyle.visibility!=='hidden'&&textStyle.display!=='none',
@@ -115,9 +120,9 @@ try{
         if(art.length!==4 || art.some((a,i)=>
           a.missing||a.label!==expected[i][0]||a.position!==expected[i][1]||
           a.size!=='352px 52.5px'||!a.image.includes('traksos-service-scenes-shared.webp')||
-          a.opacity<.45||!a.labelVisible||a.labelFont!=='10px'||
-          a.transform!=='none'||Math.abs(a.width-88)>.5||Math.abs(a.height-52.5)>.5))
-          throw Error('Android four tiles must share desktop atlas and use direct-size raster painting: '+JSON.stringify(art));
+          a.opacity<.03||a.opacity>.3||!a.labelVisible||a.vectorWidth<24||
+          a.transform!=='none'||a.width>88.5||a.width<40||a.height<20))
+          throw Error('618.png requires four crisp vector service symbols, with the desktop photo atlas only as a muted background: '+JSON.stringify(art));
       }
       const size=await page.evaluate(()=>({client:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));
       if(size.scroll>size.client+3)throw Error(role+' horizontal overflow '+JSON.stringify(size));
