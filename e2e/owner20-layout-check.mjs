@@ -26,7 +26,7 @@ try {
    if(width===1536){
     for(const key of ['van','tow','sto','ecu','consult','tech','parts','insurance','inspection','air','club']){
      await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
-     const link=page.locator('.owner20-home a[href="#/explore/'+key+'"]').first();
+     const link=page.locator('.owner20-home a[href="#/explore/'+key+'"]:visible').first();
      await link.waitFor();await link.click();
      await page.waitForURL('**/#/explore/'+key);
      await page.locator('.guest-explore-hero h1').waitFor();
