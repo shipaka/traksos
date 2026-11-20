@@ -139,6 +139,13 @@ try{
       if(await page.locator('.tabbar a[href="#/menu"].on').count()!==1)
         throw Error(role+': selected Menu tab does not reflect its route');
       await page.screenshot({path:output+'/'+role+'-menu-android-390.png',fullPage:true,scale:'css'});
+      const helpDetails=page.locator('details.tr-mobile-menu-section').last();
+      if(await helpDetails.getAttribute('open')!==null)
+        throw Error(role+': help and documents must be collapsed until explicitly requested');
+      await helpDetails.locator('summary').click();
+      if(!await helpDetails.locator('a[href="#/help"]').isVisible())
+        throw Error(role+': help menu failed to expand to the real section');
+      await page.screenshot({path:output+'/'+role+'-menu-help-android-390.png',fullPage:true,scale:'css'});
       await page.locator('.tr-mobile-menu-account a[href="#/profile"]').click();
       await page.waitForURL(url => url.hash === '#/profile', {timeout:10000});
       if(await page.locator('main.tr-mobile-menu-page').count())
@@ -158,6 +165,27 @@ try{
       if(narrow>3)throw Error(role+': menu horizontal overflow on 320px: '+narrow);
       await page.screenshot({path:output+'/'+role+'-menu-android-320.png',fullPage:true,scale:'css'});
       if(errors.length)throw Error(role+': menu JavaScript error(s) '+errors.join('; '));
+      // Important user-facing sections must be visually checked too; a
+      // polished desktop must not hide unfinished empty Android subpages.
+      const destinations = role==='owner'
+        ? [['orders','#/orders'],['vehicles','#/garage'],['parts','#/shop'],['account','#/profile']]
+        : [['orders','#/work/jobs'],['chats','#/work/chats'],
+           ['schedule','#/work/me/schedule'],['finance','#/work/me/money'],
+           ['account','#/profile']];
+      await page.setViewportSize({width:390,height:844});
+      for(const [section,target] of destinations){
+        await page.goto(BASE+'/'+target,{waitUntil:'domcontentloaded'});
+        await page.locator('.desktop-content > main').first().waitFor({state:'visible',timeout:15000});
+        await page.waitForTimeout(230);
+        const view=await page.evaluate(()=>({
+          overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,
+          hasMenu:!!document.querySelector('.tabbar a[href="#/menu"]'),
+          invalid:document.body.textContent?.includes('Такой страницы нет')
+        }));
+        if(view.overflow>3||!view.hasMenu||view.invalid)
+          throw Error(role+': section '+section+' is not a reachable Android page: '+JSON.stringify(view));
+        await page.screenshot({path:output+'/'+role+'-'+section+'-android-390.png',fullPage:true,scale:'css'});
+      }
     }finally{await ctx.close()}
   }
 }finally{await browser.close()}
