@@ -26,7 +26,7 @@ const LOCKED_ASSETS = {
   'web/public/tracksos-approved-hero-owner-20261119.webp': '7a7a9acec9ee7f32',
   // Original artwork from owner's 617.png on 20 Nov; keep mobile 19 Nov locked independently.
   'web/public/owner20-artwork-sprite.webp': '401fcedf30e1603b',
-  'web/public/owner20-photo-background-approved.webp': '1a8370817f16f234',
+  'web/public/owner20-photo-background-approved.webp': '833c162d1fddcef0',
   'web/public/owner20-header-logo-approved.webp': 'f323b7509e4f558e',
   'android/app/src/main/res/mipmap-mdpi/ic_launcher.png': '327f52a2d6e836e9',
   'android/app/src/main/res/mipmap-hdpi/ic_launcher.png': 'f797b183e93c4bad',
