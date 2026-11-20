@@ -41,7 +41,9 @@ try {
       ['.public-button-outline','guide','Как работает TrakSOS'],
     ]) {
       await page.goto(BASE+'/#/');
-      const card=page.locator(selector).filter({hasText: destination==='guide' ? 'Как это работает' : undefined}).first();
+      const card=destination==='guide'
+        ? page.locator('.public-actions').getByRole('link',{name:'Как это работает'})
+        : page.locator(selector).first();
       await card.click();
       await page.waitForURL('**/#/explore/'+destination);
       await page.getByRole('heading',{name:heading,exact:destination!=='parts'}).waitFor();
@@ -55,7 +57,7 @@ try {
     if(await page.evaluate(()=>sessionStorage.getItem('traksos.pendingLandingAction'))!=='insurance')
       throw Error('Insurance request intent lost while opening registration');
 
-    // The hero controls must actually change photographs and selected dot.
+    // Hero navigation changes the live service copy and selected dot; all slides use the same approved 19 Nov source photo.
     await page.goto(BASE+'/#/');
     const bgImage=()=>page.locator('.public-hero-visual').evaluate(el=>getComputedStyle(el).backgroundImage);
     const firstPhoto=await bgImage();
@@ -85,7 +87,7 @@ try {
         throw Error('Mobile browser hero must show a separate uncropped photograph: '+
           JSON.stringify({photoGeometry,mobilePhoto}));
     }
-    if(await page.locator('.public-hero-dots button').count()!==3)throw Error('Hero must show three selectable photographs');
+    if(await page.locator('.public-hero-dots button').count()!==3)throw Error('Hero must show three selectable service states');
     await page.getByRole('button',{name:'Следующее фото'}).click();
     const secondPhoto=await bgImage();
     await page.getByRole('heading',{name:/Эвакуация грузовиков/}).waitFor();
@@ -110,7 +112,7 @@ try {
        await page.locator('.public-benefit-unified svg').count()!==1)
       throw Error('Second and third benefit illustrations are not vectors');
     if(width<900) {
-      for(const tile of ['parts','inspection','guide']) {
+      for(const tile of ['parts','inspection']) {
         const geometry=await page.locator('.public-track-'+tile).evaluate(el=>{
           const art=el.querySelector('.public-track-extra-art')?.getBoundingClientRect();
           const label=el.querySelector('b')?.getBoundingClientRect();
