@@ -10,6 +10,25 @@ try {
     const jsErrors=[];
     page.on('pageerror',e=>jsErrors.push(e.message));
     await page.goto(BASE+'/#/');
+    if(width>=900){
+      await page.locator('.owner20-home').waitFor();
+      const links=page.locator('.owner20-quick>a');
+      if(await links.count()!==5)throw Error('Nov20 PC primary services row changed');
+      for(const key of ['van','tow','sto','ecu','consult']){
+        const link=links.locator('a[href="#/explore/'+key+'"]');
+        // The owning <a> is itself in the list; scope route query to the full page.
+        const entry=page.locator('.owner20-quick>a[href="#/explore/'+key+'"]');
+        if(await entry.count()!==1)throw Error('Missing PC service route '+key);
+        await entry.click();
+        await page.waitForURL('**/#/explore/'+key);
+        await page.locator('.guest-explore-hero h1').waitFor();
+        await page.goto(BASE+'/#/');
+      }
+      await page.locator('.owner20-region>summary').click();
+      if(!await page.locator('.owner20-region-menu').isVisible())throw Error('PC region disclosure failed');
+      if(jsErrors.length)throw Error('PC JS errors '+jsErrors.join('; '));
+      await context.close();continue;
+    }
     await page.getByRole('heading',{name:/TrakSOS.*помощь.*в пути/i}).waitFor();
 
     // Only public guest actions are visible in the bottom menu, not protected workflows.
