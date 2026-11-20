@@ -10,6 +10,20 @@ command -v docker >/dev/null || fail "Docker unavailable"
 docker compose version >/dev/null 2>&1 || fail "Docker Compose unavailable"
 [[ "$(git branch --show-current)" == main ]] || fail "Expected the main branch"
 [[ -z "$(git status --porcelain --untracked-files=no)" ]] || fail "Tracked local changes detected. Resolve them before release."
+# Owner-approved 20 Nov 2026 launcher icon is part of the release contract.
+# Do not start a production rollout if this checkout lacks the exact approved
+# source image or is still carrying the previous Android/RuStore/PWA artwork.
+command -v sha256sum >/dev/null || fail "sha256sum unavailable; cannot verify approved icon"
+if ! printf '%s\\n' \
+  '9ea519c3d4cc9b2465459479673cff698e89256e85a11c768d364ddfc2d19cf7  branding/approved-launcher-master-2026-11-20.png' \
+  'c43899c1c510ac6dbe33013e30e33630a4f97a791d528c26edf2cd2b523b03ab  branding/tracksos-rustore-icon.png' \
+  'c43899c1c510ac6dbe33013e30e33630a4f97a791d528c26edf2cd2b523b03ab  web/public/icon-512.png' \
+  'f48bc0073cf5ec1cd8ed784aeb88baad9feeb3a7e6145d5dab6693fc60411e4b  web/public/icon-192.png' \
+  | sha256sum --check --status; then
+  fail "Approved 20 Nov TrakSOS icon missing or changed. Do not release old icon."
+fi
+grep -Fq 'icon-192.png?v=approved-20261120' web/index.html ||
+  fail "PWA favicon is not versioned for approved 20 Nov icon"
 [[ -f deploy/.env ]] || fail "deploy/.env missing (server secrets were NOT created or modified)"
 [[ -f deploy/docker-compose.yml ]] || fail "Compose file missing"
 # Baked into the same release image for both prod and isolated test instances.
