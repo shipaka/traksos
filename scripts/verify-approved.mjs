@@ -168,7 +168,8 @@ expect(unifiedOrderPhoto.includes("vehicleReferencePhoto(brand,model,year)") &&
   unifiedOrderPhoto.includes('is-illustration') &&
   unifiedClient.includes('<ApprovedOrderTruck order={o} />') &&
   unifiedMobile.includes('<ApprovedOrderTruck order={current} />') &&
-  unifiedMobile.includes('<ApprovedOrderTruck order={active[0]} />') &&
+  // Both signed-in workspaces use current as the selected live order.
+  (unifiedMobile.match(/<ApprovedOrderTruck order=\{current\} \/>/g)?.length ?? 0)>=2 &&
   unifiedSceneStyle.includes('prefers-reduced-motion:reduce') &&
   ownerPcHeader.includes('src={APPROVED_VISUALS.logo}') &&
   !ownerPcHeader.includes('function TruckLogo()'),
@@ -431,8 +432,14 @@ const garageUi=await read('web/src/screens/client.tsx');
 const fleetUi=await read('web/src/screens/fleet.tsx');
 const photoCatalog=await read('web/src/vehiclePhotoCatalog.ts');
 const photoSourceManifest=JSON.parse(await read('scripts/vehiclePhotoSources.json'));
-expect(photoSourceManifest.items.length===6 &&
-  photoSourceManifest.items.every(x=>photoCatalog.includes(x.id+'.webp')) &&
+// Six image files are bundled now. A seventh CC0 R440 is merely a
+// plate-mask-checked SOURCE record until a reviewed WebP is actually imported.
+expect(photoSourceManifest.items.length===7 &&
+  photoSourceManifest.items.filter(x=>x.id!=='scania-r440-2010').length===6 &&
+  photoSourceManifest.items.filter(x=>x.id!=='scania-r440-2010').every(x=>photoCatalog.includes(x.id+'.webp')) &&
+  photoSourceManifest.items.some(x=>x.id==='scania-r440-2010' && x.model==='r440' &&
+    x.license==='CC0 1.0' && Array.isArray(x.redact) && x.redact.length>=3) &&
+  !photoCatalog.includes('scania-r440-2010.webp') &&
   vehicleVisual.includes('vehiclePhotoCatalog.ts') &&
   vehicleVisual.includes('Точное фото модели пока не добавлено') &&
   !vehicleVisual.includes('tracksos-hero-service-hq.webp') &&
@@ -506,7 +513,8 @@ expect(androidWorkspaceLive.includes('current?.performer_name') &&
   androidWorkspaceLive.includes("current.performer_rating") &&
   androidWorkspaceLive.includes('and19-order-photo-link') &&
   androidWorkspaceLive.includes("current.vehicle_id ? '#/garage/' + current.vehicle_id") &&
-  androidWorkspaceLive.includes("current.id + '?chat=1'") &&
+  (androidWorkspaceLive.includes("current.id + '?chat=1'") ||
+   androidWorkspaceLive.includes("current.id+'?chat=1'")) &&
   androidWorkspaceLive.includes('vehicleReferencePhoto(vehicleBrand, vehicleModel, vehicleYear)') &&
   androidWorkspaceLive.includes('current.money.amount') &&
   androidWorkspaceLive.includes('current.money.clientFee'),
