@@ -165,18 +165,20 @@ try {
       data.mapCss?.includes('gradient'),
       width + 'px: retired pre-17 Nov map/road art returned to active layout');
 
-    // Only post-17 Nov owner-approved visuals may be loaded by the active public site.
+    // Validate only active owner-approved artwork. The old 19 Nov alternate
+    // wordmark was intentionally removed; never request or decode its 404 HTML.
     for (const name of [
       'tracksos-approved-hero-owner-20261119.webp',
-      'tracksos-approved-logo-owner-20261119.webp'
+      'traksos-brand-logo-approved-618.png'
     ]) {
       const check = await page.evaluate(async (asset) => {
         const res = await fetch('/' + asset);
+        if (!res.ok || !res.headers.get('content-type')?.startsWith('image/')) return false;
         const blob = await res.blob();
-        const img=await createImageBitmap(blob);
-        const widthFloor=asset.includes('-hq')?1700:asset.includes('partner-')?1400:0;
-        const bytesFloor=asset.includes('logo-owner')?2_000:asset.includes('map')?10_000:asset.includes('-hq')?280_000:asset.includes('partner-')?180_000:50_000;
-        return res.ok && blob.type.startsWith('image/') && blob.size>bytesFloor && img.width>=widthFloor;
+        const logo = asset === 'traksos-brand-logo-approved-618.png';
+        if (blob.size < (logo ? 16000 : 50000)) return false;
+        const img = await createImageBitmap(blob).catch(() => null);
+        return !!img && (logo ? img.width === 274 && img.height === 46 : img.width >= 800);
       }, name);
       assert(check, width + 'px: approved image cannot be loaded: ' + name);
     }
