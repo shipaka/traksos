@@ -1,12 +1,13 @@
-/* 20 Nov agreed Android navigation: keep the five approved owner actions
-   and add a direct parts shop shortcut; driver never loses bottom "Эфир".
+/* Original 618.png owner navigation has exactly five tabs:
+   Main / Orders / Air / Vehicle / Menu. Parts remain reachable via Menu.
+   Driver never loses bottom "Эфир".
    No drawer overlays, scrolling tabs, or changes to the desktop sidebar. */
 @media (max-width:899px) {
   .app.role-client .tabbar {
     width:min(430px,calc(100% - 16px));
     box-sizing:border-box;
     display:grid;
-    grid-template-columns:repeat(6,minmax(0,1fr));
+    grid-template-columns:repeat(5,minmax(0,1fr));
     align-items:stretch;
     column-gap:3px;
     padding:5px;
