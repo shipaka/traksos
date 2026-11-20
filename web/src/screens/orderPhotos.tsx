@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react';
 import { API_URL, get, getToken, post } from '../api.ts';
 import { useLoad, useToast } from '../ui.tsx';
 import { NavGlyph } from '../navGlyph.tsx';
+import './orderPhotos.css';
 
 type PhotoMeta={id:string;mime:string;size_bytes:number;created_at:string;uploader_name:string|null};
 const MAX_UPLOAD=1_400_000;
