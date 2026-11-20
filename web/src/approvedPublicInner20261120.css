@@ -356,3 +356,46 @@
     min-width:0!important;
   }
 }
+
+
+/* The old 19 Nov desktop shell reserved 220–260px for a sidebar, even when
+   the approved public header was already providing the complete navigation.
+   It left a blank strip on 1024px laptops and squeezed forms against it.
+   Remove that OLD public-only shell: signed-in workspaces are untouched. */
+@media(min-width:900px) {
+  .guest-app:not(.guest-home) > .desktop-layout {
+    display:block!important;
+    flex:1 1 auto!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    margin:0!important;
+    padding:0!important;
+    gap:0!important;
+  }
+  .guest-app:not(.guest-home) > .desktop-layout > .desktop-sidebar {
+    display:none!important;
+  }
+  .guest-app:not(.guest-home) > .desktop-layout > .desktop-content {
+    box-sizing:border-box!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    margin:0!important;
+    padding:0 clamp(16px,2.5vw,40px)!important;
+  }
+  .guest-app:not(.guest-home) > .desktop-layout > .desktop-content > main {
+    box-sizing:border-box!important;
+    width:100%!important;
+    max-width:1250px!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+  }
+  .guest-app:not(.guest-home) > .desktop-layout > .desktop-content > .site-footer {
+    box-sizing:border-box!important;
+    width:100%!important;
+    max-width:1250px!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+  }
+}
