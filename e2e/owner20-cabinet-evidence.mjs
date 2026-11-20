@@ -70,8 +70,8 @@ try{
    if(c.needs && !account.user?.roles?.includes(c.needs))throw Error('Staff role not granted by local test config');
    const token=account.token;
    await ensureConfiguredWorkspace(c,token);
-   for(const width of [1440,390]){
-    const context=await browser.newContext({viewport:{width,height:width===390?844:900},locale:'ru-RU',deviceScaleFactor:c.id==='owner'?2:1});
+   for(const width of (c.id==='admin'?[1440,1672,390]:[1440,390])){
+    const context=await browser.newContext({viewport:{width,height:width===390?844:width===1672?941:900},locale:'ru-RU',deviceScaleFactor:c.id==='owner'?2:1});
     const page=await context.newPage();
     const errors=[];page.on('pageerror',x=>errors.push(x.message));
     await page.addInitScript(({token,mode})=>{localStorage.setItem('traksos.token',token);localStorage.setItem('traksos.mode',mode)}, {token,mode:c.mode});
@@ -135,7 +135,7 @@ try{
        console.log('Approved logo source pixel coverage at '+width+'px viewport, DPR 2: '+
          (274/(visual.logoRendered.w*2)).toFixed(2)+'x; source remains unchanged');
      }
-     if(width===1440) {
+     if(width>=1440) {
        // 20 Nov owner-approved desktop contracts: real React workdesk, not an image.
        const workdesk=page.locator('.approved-pc');
        await workdesk.waitFor({timeout:14000});
@@ -178,7 +178,7 @@ try{
      if(await page.getByText('Не удалось открыть раздел').count())throw Error('Inner route crashed');
      await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'-viewport.png',fullPage:false,animations:'disabled',scale:'css'});
      await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'.png',fullPage:true,animations:'disabled',scale:'css'});
-     results.push({role:c.id,width,height:width===390?844:900,result:'screens saved',files:[
+     results.push({role:c.id,width,height:width===390?844:width===1672?941:900,result:'screens saved',files:[
        c.id+'-home-'+width+'-viewport.png',
        c.id+'-home-'+width+'.png',
        c.id+'-inside-'+width+'-viewport.png',
