@@ -1,0 +1,83 @@
+/* 20 Nov 2026: owner-approved Android 618 logo is now the only logo for
+   Web, Android WebView and the PC cabinet. Keep original graphic untouched. */
+.app .top .tr-approved-brand-logo {
+  display:inline-flex;
+  align-items:center;
+  min-width:0;
+  max-width:220px;
+  flex:0 1 auto;
+  padding:0;
+  line-height:1;
+}
+.app .top .tr-approved-brand-logo img,
+.app .top .guest-approved-mark img {
+  display:block;
+  width:clamp(145px,16vw,220px);
+  max-width:100%;
+  height:auto;
+  object-fit:contain;
+}
+@media(max-width:389px){
+  .app .top .tr-approved-brand-logo img,
+  .app .top .guest-approved-mark img {width:142px;}
+}
+@media(min-width:900px){
+  /* The public PC hero layout remains 617.png. Its wordmark is harmonized
+     to the exactly same lettering used in approved Android 618.png. */
+  .guest-app.guest-home .owner20-mark {
+    background:url('/traksos-brand-logo-approved-618.png') center / 235px auto no-repeat!important;
+  }
+  .guest-app.guest-home .owner20-mark > * {opacity:0!important;}
+  .app.role-client .client-dashboard .tr-approved-empty-card {
+    background:linear-gradient(145deg,#112a35,#091a24)!important;
+    border-color:#345463!important;
+  }
+}
+.tr-approved-empty-card {
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  min-width:0;
+  padding:14px;
+  color:#eaf3f7;
+  border-radius:16px;
+  border:1px solid #385866;
+  background:linear-gradient(145deg,#112b37,#091b24);
+}
+.tr-approved-empty-card .tr-approved-empty-scene {
+  flex:none;
+}
+.tr-approved-empty-card strong {
+  font-size:clamp(15px,1.4vw,19px);
+  font-weight:750;
+  color:#fff;
+}
+.tr-approved-empty-card p,
+.tr-approved-empty-card span,
+.tr-approved-empty-card small{
+  color:#cedce5;
+}
+.tr-approved-empty-card p {margin:0;line-height:1.5;}
+.tr-approved-empty-card small {font-size:11px;line-height:1.45;}
+.tr-approved-empty-action {
+  display:inline-flex;
+  align-self:flex-start;
+  align-items:center;
+  min-height:42px;
+  border-radius:12px;
+  border:1px solid #ffac6c;
+  padding:9px 16px;
+  background:linear-gradient(120deg,#ed5c19,#fa832c);
+  color:white!important;
+  text-decoration:none;
+  font-weight:750;
+}
+.tr-approved-empty-action:hover {filter:brightness(1.08);}
+.tr-approved-garage-empty {margin:10px 0 16px;}
+.and19-empty .tr-approved-empty-scene {
+  margin:6px 0 4px;
+  border-radius:11px;
+}
+@media(prefers-reduced-motion:reduce) {
+  .tr-approved-empty-action {transition:none;}
+}
