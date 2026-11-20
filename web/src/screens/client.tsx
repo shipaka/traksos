@@ -51,7 +51,7 @@ export function Home() {
   if (mobileWorkspace && native.isApp) return <main className="client-home client-dashboard">
     <AndroidClientWorkspace orders={live} loading={!active.data && !active.error} error={active.error}
       retry={active.reload} me={me} insuranceInProgress={insuranceInProgress}
-      disabledServices={{repair:restricted('repair'),tow:restricted('tow'),service:restricted('service'),consult:restricted('consult')}} />
+      disabledServices={{repair:restricted('repair'),tow:restricted('tow'),service:restricted('service'),consult:restricted('consult'),shop:restricted('shop')}} />
   </main>;
   return (
     <main className="client-home client-dashboard">
