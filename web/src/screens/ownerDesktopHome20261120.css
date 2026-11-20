@@ -90,3 +90,33 @@
  .owner20-quick-icon{font-size:28px}
  .owner20-bottom-card b{font-size:15px}
 }
+
+/* The owner's third approved TrakBot truck appears, but never becomes an
+   oversized banner or displaces the 20 Nov hero and service cards. */
+@media(min-width:900px){
+ .guest-app.guest-home .trakbot-dock {right:12px!important;bottom:12px!important;z-index:96}
+ .guest-app.guest-home .trakbot-dock .trakbot-dock-launcher{
+   min-width:58px!important;width:62px!important;height:62px!important;min-height:62px!important;
+   padding:4px!important;justify-content:center!important;gap:0!important;
+   background:linear-gradient(145deg,#10313c,#071923)!important;
+   border:1px solid #fc7a2f!important;border-radius:50%!important;
+   box-shadow:0 6px 20px #000a,0 0 0 3px #071922!important;
+ }
+ .guest-app.guest-home .trakbot-dock-launcher .trakbot-mascot{
+   --bot-size:48px!important;width:48px!important;height:48px!important;
+ }
+ .guest-app.guest-home .trakbot-dock-launcher .trakbot-dock-label,
+ .guest-app.guest-home .trakbot-dock-launcher::after{display:none!important;content:none!important}
+ .guest-app.guest-home .trakbot-dock-panel--guest {border-color:#f4823b;background:#091e29;}
+ .guest-app.guest-home .trakbot-dock-head {background:#102d3b;border-color:#38525b;}
+ .owner20-region{position:relative;flex:0 0 auto}
+ .owner20-region>summary{cursor:pointer;white-space:nowrap;list-style:none;color:#e2edf2;font-weight:700}
+ .owner20-region>summary::marker{display:none}
+ .owner20-region>summary:after{content:'⌄';margin-left:5px;font-weight:400}
+ .owner20-region-menu{position:absolute;right:-38px;top:32px;z-index:99;width:250px;
+  display:grid;gap:7px;padding:14px;border:1px solid #47616b;border-radius:13px;
+  background:#0c202c;box-shadow:0 12px 35px #000b;line-height:1.4;white-space:normal}
+ .owner20-region-menu p{margin:0;font-size:12px}
+ .owner20-region-menu small{font-size:11px;color:#a9bec8}
+ .owner20-region-menu a{color:#ff9559;text-decoration:underline}
+}
