@@ -652,7 +652,10 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {me && route[0] === 'menu' && !serviceSandbox
             ? <MobileRoleMenu mode={mode} quick={mobileTabs} account={accountLinks} help={helpLinks} onLogout={safeLogout} />
             : children}
-          <SiteFooter />
+          {/* Website legal/footer blocks belong to the browser, not beneath
+              the signed-in Android app's persistent bottom menu. The same
+              rules, offers and support are reachable through role Menu. */}
+          {(!native.isApp || !me) && <SiteFooter />}
         </div>
       </div>
       {!me && !route[0] && (
