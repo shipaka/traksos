@@ -225,7 +225,10 @@ try {
       await button.waitFor();await button.click();
       if(await button.getAttribute('aria-pressed')!=='true')throw Error('Specialty selection not persisted: '+specialty);
     }
-    if(!await page.getByText('Специализации мастера · выбрано: 2').count())
+    // The master role has an explicit "выездного" label in the approved
+    // registration form. Compare selected button state and count, not obsolete copy.
+    const specialtySummary=page.locator('.guest-master-specialties > summary');
+    if(!/Специализации (выездного )?мастера\s*·\s*выбрано:\s*2/.test(await specialtySummary.innerText()))
       throw Error('Partner specialty accordion did not retain multiple choices');
     if(!await page.locator('.guest-partner-role-master').evaluate(el=>!getComputedStyle(el).backgroundImage.includes('tracksos-photo-master')))
       throw Error('Retired Nov 14 signup card image returned');
