@@ -52,7 +52,7 @@ try {
       el.complete && el.naturalWidth>0 && el.src.endsWith('/traksos-brand-logo-approved-618.png'));
     if(!logo) throw Error(role+': original 618.png logo is missing');
     const nav = await page.locator('.and19-review-tabbar a').allTextContents();
-    if (nav.length!==((role==='client'||role==='driver')?6:4))
+    if (nav.length!==((role==='client'||role==='driver')?5:4))
       throw Error(role+': Android bottom navigation does not match live role layout '+JSON.stringify(nav));
     if (details.scroll>details.viewport+3)throw Error(role+': horizontal overflow '+JSON.stringify(details));
     if (role==='client' || role==='driver') {
@@ -72,7 +72,7 @@ try {
       const chatLinks=await page.locator('.and19-client a[href*="chat=1"]').count();
       const costText=(await page.locator('.and19-client-cost').innerText()).replace(/\s/g,'');
       const ratingText=(await page.locator('.and19-performer-rating').innerText()).replace(/\s/g,'');
-      if(photoHref!=='#/garage/SYNTHETIC-VEHICLE'||chatLinks<2||
+      if(photoHref!=='#/garage/SYNTHETIC-VEHICLE'||chatLinks<1||
          !costText.includes('10500₽')||!costText.includes('10000₽')||
          !costText.includes('500₽')||!ratingText.includes('4,9'))
         throw Error('Client Android order routing/kopeck pricing/rating wrong '+JSON.stringify({photoHref,chatLinks,costText,ratingText}));
@@ -87,11 +87,26 @@ try {
       if (!await page.locator('.and19-main-order .and19-timeline').count())throw Error('Performer timeline missing');
       if (!await page.locator('.and19-client-contact').count())
         throw Error('Approved 618.png client-contact card absent from synthetic performer review');
-      if (!await page.getByText('Открыть · отметить прибытие',{exact:false}).count())
-        throw Error('The approved master must show a real status-specific next step');
-      const links = await page.locator('.and19-order-shortcuts>a').evaluateAll(a => a.map(el=>el.getAttribute('href')));
-      if (links.length!==3 || !links.every(h=>h.startsWith('#/order/SYNTHETIC-REVIEW/')))
-        throw Error('The master has missing safe quick tabs '+JSON.stringify(links));
+      const stage=page.locator('.and19-stage-primary');
+      if(await stage.count()!==1||!(await stage.innerText()).includes('Я на месте') ||
+         await page.locator('.and19-stage-complete.is-disabled').count()!==1)
+        throw Error('Master must show sequential functional arrival and disabled finish');
+      const money=(await page.locator('.and19-performer-finance').innerText()).replace(/\s/g,'');
+      if(!money.includes('10000₽')||!money.includes('500₽')||!money.includes('9500₽')||
+         money.includes('10500₽'))
+        throw Error('Performer must never see client surcharge; actual payout is 9500 ₽: '+money);
+      const quick = await page.locator('.and19-quick>a').allTextContents();
+      if(quick.length!==3||!quick.some(label=>label.includes('Запчасти')))
+        throw Error('The master has missing safe work shortcuts '+JSON.stringify(quick));
+    }
+    const stageTimes=await page.locator('.and19-timeline li time').count();
+    const dispatchEta=await page.locator('.and19-route-eta').innerText();
+    if(stageTimes!==3 || !dispatchEta.includes('28 мин'))
+      throw Error(role+': actual API-style stage times and dispatch ETA missing: '+JSON.stringify({stageTimes,dispatchEta}));
+    if(role==='client'||role==='driver') {
+      const actions=await page.locator('.and19-services a .and19-service-symbol svg').count();
+      if(actions!==4 || await page.locator('.and19-parts-shortcut').count()!==0)
+        throw Error('618.png has four scalable services and NO extra home shop card');
     }
     await page.screenshot({path:output+'/'+role+'-390.png'});
     // Clicking a live-looking action in review must not call the API or navigate.
