@@ -79,10 +79,13 @@ try {
         visible:bounds.width>100&&bounds.height>100,
         fullBleed:!!hero&&Math.abs(hero.width-bounds.width)<3&&Math.abs(hero.height-bounds.height)<3};
     });
-    if (!info.visible || !info.fullBleed ||
+    // The locked desktop keeps a full-bleed scene. Regular mobile browsers
+    // intentionally reserve a separate, uncropped image above the text.
+    if (!info.visible || (width >= 900 && !info.fullBleed) ||
+        (width < 900 && (info.fullBleed || info.fit !== 'contain')) ||
         !info.photo.includes('tracksos-approved-scenic-hero') ||
         info.photo.includes('traksos-final-hero'))
-      throw Error(width + 'px public editorial Scania hero does not fill the banner or uses baked controls: ' + JSON.stringify(info));
+      throw Error(width + 'px public Scania photograph is missing or has the wrong layout: ' + JSON.stringify(info));
     await p.getByRole('button',{name:'Следующее фото'}).click();
     const rescuePhoto=await art.evaluate(el=>getComputedStyle(el).backgroundImage);
     if(!rescuePhoto.includes('tracksos-hero-rescue-hq') ||
