@@ -54,6 +54,10 @@ jobs:
           fi
           printf '%s ssh-ed25519 %s\n' "$VPS_HOST" "$pinned_key" > "$known_hosts_file"
           chmod 600 "$key_file" "$known_hosts_file"
+          # Show only the PUBLIC fingerprint derived from the configured
+          # private key. No private material, public key body, or tokens.
+          echo "GitHub SSH identity fingerprint:"
+          ssh-keygen -y -f "$key_file" | ssh-keygen -lf -
           # No blanket StrictHostKeyChecking=no and no root shell: the
           # server's authorized_keys forced command only allows status.
           ssh -T -i "$key_file" -p 22 \
