@@ -42,7 +42,8 @@
    box-shadow:0 -5px 24px #061523b5;
  }
  .and19-review-page.role-client .and19-review-tabbar{
-   grid-template-columns:repeat(6,minmax(0,1fr));
+   /* Approved owner/driver Android: five tabs, never six. */
+   grid-template-columns:repeat(5,minmax(0,1fr));
  }
  .and19-review-page .and19-review-tabbar a{
    min-width:0;
