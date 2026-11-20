@@ -435,7 +435,9 @@ export class ShopService {
   async adminOrders(status?: string) {
     const rows = await this.db.query(
       `select s.*, u.name as client_name, u.phone as client_phone, u.company_name,
-           d.id as courier_delivery_id,d.status as courier_status,d.courier_id
+           d.id as courier_delivery_id,d.status as courier_status,d.courier_id,
+            d.code_attempts as courier_code_attempts,d.code_expires_at as courier_code_expires_at,
+            d.code_resets as courier_code_resets
          from shop_orders s join users u on u.id=s.client_id
          left join shop_courier_deliveries d on d.shop_order_id=s.id
         ${status === 'open' ? `where s.status in ('new','confirmed','ready','shipped')` : ''}
@@ -444,6 +446,9 @@ export class ShopService {
       courierDeliveryId:o.courier_delivery_id??null,
       courierStatus:o.courier_status??null,
       courierId:o.courier_id??null,
+      courierCodeAttempts:o.courier_code_attempts??null,
+      courierCodeExpiresAt:o.courier_code_expires_at??null,
+      courierCodeResets:o.courier_code_resets??null,
       client: { name: o.company_name || o.client_name, phone: o.client_phone } }));
   }
 
