@@ -625,7 +625,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {!me && <aside className="track-sidebar-app" aria-label="Мобильное приложение TrakSOS">
             <span className="track-sidebar-app-glow" aria-hidden="true" />
             <span className="track-sidebar-app-phone" aria-hidden="true">
-              <img src="/tracksos-approved-logo-owner-20261119.webp" alt="" loading="lazy" />
+              <img src={APPROVED_VISUALS.logo} alt="TrakSOS" loading="lazy" />
               <small>TrakSOS</small>
             </span>
             <span className="track-sidebar-app-copy">
