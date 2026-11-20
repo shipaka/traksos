@@ -67,6 +67,13 @@ export function OrderPhotoCapture({orderId,reviewOnly=false}:{
 
 function SecurePhoto({orderId,photo}:{orderId:string;photo:PhotoMeta}){
   const [src,setSrc]=useState('');
+  const [expanded,setExpanded]=useState(false);
+  useEffect(()=>{
+    if(!expanded)return;
+    const close=(event:KeyboardEvent)=>{if(event.key==='Escape')setExpanded(false)};
+    document.addEventListener('keydown',close);
+    return ()=>document.removeEventListener('keydown',close);
+  },[expanded]);
   useEffect(()=>{
     if(!getToken())return;
     if(sessionStorage.getItem('traksos.sandboxMode')==='1' &&
@@ -84,12 +91,22 @@ function SecurePhoto({orderId,photo}:{orderId:string;photo:PhotoMeta}){
       }).catch(()=>{});
     return ()=>{abort.abort();if(objectUrl)URL.revokeObjectURL(objectUrl)};
   },[orderId,photo.id]);
-  return <a className="tr-order-photo" href={src||undefined} target={src?'_blank':undefined}
-    rel="noopener noreferrer" aria-label={'Посмотреть фото ремонта от '+(photo.uploader_name||'исполнителя')}>
-    {src?<img src={src} loading="lazy" alt="Фотография ремонта по этой заявке"/>:
-      <span className="tr-order-photo-loading">Загружаем фото</span>}
-    <small>{photo.uploader_name||'Исполнитель'} · {new Date(photo.created_at).toLocaleDateString('ru-RU')}</small>
-  </a>;
+  return <>
+    <button className="tr-order-photo" type="button" disabled={!src}
+      onClick={()=>setExpanded(true)}
+      aria-label={'Посмотреть фото ремонта от '+(photo.uploader_name||'исполнителя')}>
+      {src?<img src={src} loading="lazy" alt="Фотография ремонта по этой заявке"/>:
+        <span className="tr-order-photo-loading">Загружаем фото</span>}
+      <small>{photo.uploader_name||'Исполнитель'} · {new Date(photo.created_at).toLocaleDateString('ru-RU')}</small>
+    </button>
+    {expanded&&src&&<div className="tr-order-photo-backdrop" onClick={()=>setExpanded(false)}>
+      <div className="tr-order-photo-modal" role="dialog" aria-modal="true"
+        aria-label="Фото ремонта" onClick={e=>e.stopPropagation()}>
+        <button autoFocus type="button" onClick={()=>setExpanded(false)}>Закрыть фото</button>
+        <img src={src} alt="Фотография ремонта, прикреплённая к заявке"/>
+      </div>
+    </div>}
+  </>;
 }
 
 export function OrderPhotoGallery({orderId}:{orderId:string}){
