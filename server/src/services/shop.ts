@@ -424,9 +424,17 @@ export class ShopService {
   // ——— Админ: заказы ———
   async adminOrders(status?: string) {
     const rows = await this.db.query(
-      `select s.*, u.name as client_name, u.phone as client_phone, u.company_name from shop_orders s join users u on u.id=s.client_id
-        ${status === 'open' ? `where s.status in ('new','confirmed','ready','shipped')` : ''} order by s.created_at desc limit 200`);
-    return rows.map((o: any) => ({ ...this.orderView(o), client: { name: o.company_name || o.client_name, phone: o.client_phone } }));
+      `select s.*, u.name as client_name, u.phone as client_phone, u.company_name,
+           d.id as courier_delivery_id,d.status as courier_status,d.courier_id
+         from shop_orders s join users u on u.id=s.client_id
+         left join shop_courier_deliveries d on d.shop_order_id=s.id
+        ${status === 'open' ? `where s.status in ('new','confirmed','ready','shipped')` : ''}
+        order by s.created_at desc limit 200`);
+    return rows.map((o: any) => ({ ...this.orderView(o),
+      courierDeliveryId:o.courier_delivery_id??null,
+      courierStatus:o.courier_status??null,
+      courierId:o.courier_id??null,
+      client: { name: o.company_name || o.client_name, phone: o.client_phone } }));
   }
 
   async setStatus(actor: AuthUser | null, id: string, status: string, note?: string) {
