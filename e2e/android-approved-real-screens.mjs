@@ -77,13 +77,10 @@ try{
       const chromeIcons=await page.locator('.tabbar').evaluate(el=>{
         const d=href=>Array.from(el.querySelectorAll('a')).find(a=>a.getAttribute('href')===href)
           ?.querySelector('svg')?.querySelector('path')?.getAttribute('d') ?? '';
-        return {menu:d('#/menu'),orders:d(roleDummyOrdersHref()),special:d(roleDummySpecialHref())};
-        function roleDummyOrdersHref(){
-          return el.closest('.role-performer') ? '#/work/jobs' : '#/orders';
-        }
-        function roleDummySpecialHref(){
-          return el.closest('.role-performer') ? '#/work/chats' : '#/garage';
-        }
+        const performer=!!el.closest('.app.role-performer');
+        return {menu:d('#/menu'),
+          orders:d(performer?'#/work/jobs':'#/orders'),
+          special:d(performer?'#/work/chats':'#/garage')};
       });
       if(!chromeIcons.menu.includes('M4 6h16')||
          !chromeIcons.orders.includes('M9 11h6')||
