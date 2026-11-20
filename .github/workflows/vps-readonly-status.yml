@@ -1,0 +1,52 @@
+name: VPS — безопасная проверка без изменений
+
+on:
+  workflow_dispatch:
+  # The first vetted merge to main automatically tests the bridge once.
+  # Later ordinary code deploys do not automatically open a VPS connection.
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/vps-readonly-status.yml'
+      - 'deploy/automation/github-vps-readonly-gate.sh'
+
+permissions:
+  contents: read
+
+jobs:
+  readonly-vps-status:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Validate private SSH configuration
+        env:
+          VPS_HOST: ${{ secrets.TRAKSOS_VPS_HOST }}
+          VPS_KEY: ${{ secrets.TRAKSOS_VPS_READONLY_KEY }}
+          VPS_HOST_KEY: ${{ secrets.TRAKSOS_VPS_HOST_KEY }}
+        run: |
+          test -n "$VPS_HOST" || { echo 'Missing TRAKSOS_VPS_HOST secret'; exit 1; }
+          test -n "$VPS_KEY" || { echo 'Missing TRAKSOS_VPS_READONLY_KEY secret'; exit 1; }
+          test -n "$VPS_HOST_KEY" || { echo 'Missing TRAKSOS_VPS_HOST_KEY secret'; exit 1; }
+      - name: Read health, running containers and checked-out revision
+        shell: bash
+        env:
+          VPS_HOST: ${{ secrets.TRAKSOS_VPS_HOST }}
+          VPS_KEY: ${{ secrets.TRAKSOS_VPS_READONLY_KEY }}
+          VPS_HOST_KEY: ${{ secrets.TRAKSOS_VPS_HOST_KEY }}
+        run: |
+          set -Eeuo pipefail
+          umask 077
+          key_file="$(mktemp)"
+          known_hosts_file="$(mktemp)"
+          trap 'rm -f "$key_file" "$known_hosts_file"' EXIT
+          printf '%s\n' "$VPS_KEY" > "$key_file"
+          printf '%s\n' "$VPS_HOST_KEY" > "$known_hosts_file"
+          chmod 600 "$key_file" "$known_hosts_file"
+          # No blanket StrictHostKeyChecking=no and no root shell: the
+          # server's authorized_keys forced command only allows status.
+          ssh -T -i "$key_file" -p 22 \
+            -o IdentitiesOnly=yes -o BatchMode=yes \
+            -o ConnectTimeout=15 \
+            -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$known_hosts_file" \
+            "root@$VPS_HOST" status
