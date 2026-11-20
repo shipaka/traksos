@@ -95,9 +95,15 @@ try {
       if(!money.includes('10000₽')||!money.includes('500₽')||!money.includes('9500₽')||
          money.includes('10500₽'))
         throw Error('Performer must never see client surcharge; actual payout is 9500 ₽: '+money);
-      const quick = await page.locator('.and19-quick>a').allTextContents();
-      if(quick.length!==3||!quick.some(label=>label.includes('Запчасти')))
-        throw Error('The master has missing safe work shortcuts '+JSON.stringify(quick));
+      const photo=page.locator('.and19-quick .and19-photo-capture');
+      const photoCount=await photo.count();
+      const fileInputs=await page.locator('.and19-review-page input[type="file"]').count();
+      if(photoCount!==1 || fileInputs!==0 || !await photo.getAttribute('aria-label'))
+        throw Error('Approved master Фото must be present but completely inert in synthetic DEBUG review');
+      const quick = await page.locator('.and19-quick>*').allTextContents();
+      if(quick.length!==3||!quick.some(label=>label.includes('Запчасти'))||
+         !quick.some(label=>label.includes('Фото')))
+        throw Error('The master has missing approved photo/report/parts actions '+JSON.stringify(quick));
     }
     const stageTimes=await page.locator('.and19-timeline li time').count();
     const dispatchEta=await page.locator('.and19-route-eta').innerText();
