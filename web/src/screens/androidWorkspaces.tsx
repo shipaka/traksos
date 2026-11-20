@@ -126,11 +126,6 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
           <OrderTitle order={current} />
           {current.service!=='consult' && <ApprovedOrderTruck order={current} />}
           <OrderFacts order={current} />
-          {current.status !== 'searching' && Number.isFinite(current.money?.total) &&
-            <div className="and19-price">
-              <small>{['awaiting_confirmation', 'completed'].includes(current.status) ? 'Сумма к подтверждению' : 'Предварительный расчёт'}</small>
-              <strong>{rub(current.money.total)}</strong>
-            </div>}
           {current.status !== 'searching' && <MobileTimeline status={current.status} />}
           {current.status === 'searching' && <p className="and19-search-active"><span className="and19-pulse" aria-hidden="true" />Поиск исполнителя продолжается · открыть отклики</p>}
           <span className="and19-link">Открыть заявку и связь с исполнителем <span aria-hidden="true">›</span></span>
@@ -151,6 +146,14 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
       <a href={'#/order/'+current.id+'/chat'} aria-label="Открыть чат с исполнителем">Чат</a>
       <a href={'#/order/'+current.id} aria-label="Контакты исполнителя и подробности заявки">Связь</a>
     </div>}
+    {current && current.status !== 'searching' && Number.isFinite(current.money?.total) &&
+      <div className="and19-price and19-client-cost" aria-label="Стоимость активной заявки">
+        <span>
+          <small>{['awaiting_confirmation','completed'].includes(current.status) ? 'Сумма к подтверждению' : 'Предварительный расчёт'}</small>
+          <strong>Стоимость по заявке</strong>
+        </span>
+        <strong>{rub(current.money.total)}</strong>
+      </div>}
     {orders.length > 1 && <a href="#/orders" className="and19-row-link">Все мои заявки <span>{orders.length} ›</span></a>}
     <a href="#/garage" className="and19-equipment">
       <span className="and19-equipment-icon" aria-hidden="true">▤</span><span><strong>{isDriver ? 'Моя машина' : 'Моя техника'}</strong><small>История ремонта, документы и обслуживание</small></span><span aria-hidden="true">›</span>
