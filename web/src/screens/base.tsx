@@ -60,7 +60,7 @@ export function BaseHome() {
   const preview=inServicePreview();
   const { me } = useMe();
   const cab = useLoad(() => baseGet('/api/base'), [], isBookingEvent);
-  const [tab, setTab] = useState<'req' | 'cars' | 'done'>('req');
+  const [tab, setTab] = useState<'req' | 'cars' | 'ready' | 'done'>('req');
   const { busy, run } = useAction();
   if (!cab.data) return <main>{!preview&&<WorkerNotices audience="service" />}<Loading error={cab.error} /></main>;
   const { center, groups } = cab.data;
@@ -101,9 +101,9 @@ export function BaseHome() {
         <h1>Рембаза «{center.name}»</h1>
         <p>{center.address} · {center.hours}</p>
         <div className="base-command-actions">
-          <button className="btn" onClick={()=>setTab('req')}>Входящие заявки · {groups.requests.length}</button>
-          <button className="btn ghost" onClick={()=>setTab('cars')}>Машины у вас</button>
-          <a className="btn ghost" href={servicePreviewHref('base/money')}>Финансы</a>
+          <button className="btn" onClick={()=>setTab('req')}>Входящие · {groups.requests.length}</button>
+          <button className="btn ghost" onClick={()=>setTab('cars')}>В ремонте · {groups.repair.length}</button>
+          <button className="btn ghost" onClick={()=>setTab('ready')}>К выдаче · {groups.ready.length}</button>
         </div>
       </section>
       <div className="row" style={{ gap: 6 }}>
@@ -131,12 +131,12 @@ export function BaseHome() {
         </div>
       )}
       <div className="grid3">
-        <div className="card tile"><span className="label">Запросы</span><span className="tile-value">{groups.requests.length}</span></div>
-        <div className="card tile"><span className="label">Ожидаем</span><span className="tile-value">{groups.expected.length}</span></div>
+        <div className="card tile"><span className="label">Входящие</span><span className="tile-value">{groups.requests.length}</span></div>
         <div className="card tile"><span className="label">В ремонте</span><span className="tile-value">{groups.repair.length}</span></div>
+        <div className="card tile"><span className="label">К выдаче</span><span className="tile-value">{groups.ready.length}</span></div>
       </div>
       <div className="scroll-x" role="tablist">
-        {([['req', `Входящие запросы · ${groups.requests.length}`], ['cars', `Машины у вас · ${cars.length}`], ['done', 'Закрытые']] as const).map(([k, n]) => (
+        {([['req', `Входящие · ${groups.requests.length}`], ['cars', `Машины у вас · ${cars.length}`], ['ready', `К выдаче · ${groups.ready.length}`], ['done', 'История']] as const).map(([k, n]) => (
           <button key={k} className="chip" role="tab" aria-pressed={tab === k} onClick={() => setTab(k)}>{n}</button>
         ))}
       </div>
@@ -158,6 +158,19 @@ export function BaseHome() {
           <span className="note">Нажмите на машину — откроется её карточка: статус, заметки, компания, история.</span>
         </div>
       ) : <div className="empty">Машин у вас пока нет. После «Готовы принять» машина появится здесь в «Ожидаем».</div>)}
+      {tab === 'ready' && (groups.ready.length ? (
+        <div className="rows">
+          {groups.ready.map((b: any) => (
+            <a key={b.id} href={servicePreviewHref(`base/car/${b.id}`)} className="list-item">
+              <div className="stack" style={{gap:2}}>
+                <b>{carName(b.vehicle)} · {b.vehicle?.plate ?? 'без номера'}</b>
+                <span className="note">{b.client?.name} · {b.needName} · {b.statusName}</span>
+              </div>
+              <span className="pill good">Открыть заказ ›</span>
+            </a>
+          ))}
+        </div>
+      ) : <div className="empty">Готовых к выдаче машин пока нет</div>)}
       {tab === 'done' && (groups.done.length ? (
         <div className="rows">
           {groups.done.map((b: any) => (
@@ -275,6 +288,13 @@ export function BaseCar({ id }: { id: string }) {
         )}
       </div>
 
+      {!inServicePreview() && ['expected', 'arrived', 'diagnostics', 'in_work', 'waiting_part', 'agreeing', 'ready'].includes(d.status) && (
+        <div className="card col" aria-label="Подбор запчастей для ремонта">
+          <b>Запчасти для этого ремонта</b>
+          <span className="note">Откроем подбор с данными этой машины. Совместимость проверяется отдельно; магазин пока закрыт для заказов.</span>
+          <a className="btn ghost small" href={'#/shop?bookingId=' + encodeURIComponent(id)}>Подобрать запчасти ›</a>
+        </div>
+      )}
       {d.handoff && <div className="card stack">
         <b>Техническое заключение предыдущего исполнителя</b>
         <span className="note">Из заявки №{d.handoff.sourceNumber} · {d.handoff.suggestedBy}</span>
