@@ -15,6 +15,7 @@ export const APPROVED_VISUALS = Object.freeze({
   trakbotHello: '/trakbot-approved-hello.webp',
   trakbotReactions: '/trakbot-approved-30.webp',
   workspaceTruck: '/tracksos-approved-hero-owner-20261119.webp',
+  serviceScenes: '/traksos-service-scenes-shared.webp',
   publicPcPhoto: '/owner20-photo-background-approved.webp',
   publicPcAtlas: '/owner20-artwork-sprite.webp',
 } as const);
