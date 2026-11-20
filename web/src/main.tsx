@@ -413,7 +413,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     : mode === 'service'
       ? [...(me?.roles.some(r => r === 'master' || r === 'tow') ? [['/work', 'Выездной мастер — заявки']] as [string, string][] : []),
          ['/base', 'Заявки и история ремонтов'], ['/base/me', 'Карточка СТО'],
-         ['/base/money', 'Финансы'], ['/profile', 'Аккаунт'],
+         ['/base/money', 'Финансы'], ['/shop', 'Магазин запчастей'], ['/profile', 'Аккаунт'],
          ['/invite', 'Пригласить партнёра']]
     : mode === 'inspection'
       ? [['/inspections', 'Кабинет техосмотра'], ['/profile', 'Аккаунт']]
@@ -447,7 +447,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
        ...(!me?.owner_id && !me?.roles.includes('driver') ? [['/fleet', 'Мой автопарк']] as [string,string][] : []),
        ['/services', 'СТО и запись'],
        ['/reviews', 'Мои отзывы'], ['/invite', 'Пригласить друга'],
-       ['/profile', 'Профиль и настройки']];
+       ['/shop', 'Магазин запчастей'], ['/profile', 'Профиль и настройки']];
   const helpLinks: [string, string][] = [
     ...(me?.roles.some(r => ['master','service','admin','moderator'].includes(r))
       ? [['/techbase/master','ТехБаза специалиста'] as [string,string]] : []),
