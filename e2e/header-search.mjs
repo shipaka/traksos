@@ -14,6 +14,8 @@ async function session(term, select, expectedHash){
    await page.goto(BASE+'/#/explore/parts',{waitUntil:'domcontentloaded'});
    await page.locator('.guest-explore-hero h1').waitFor({state:'visible'});
    const search=page.getByRole('searchbox',{name:'Поиск разделов и услуг'});
+   // Approved desktop header keeps search collapsed to an icon until focused.
+   await page.locator('.track-site-search-icon').click();
    await search.waitFor({state:'visible'});
    await search.fill(term);
    const options=page.locator('#track-search-list');
