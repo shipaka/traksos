@@ -54,7 +54,7 @@ export function AndroidDesignReview({ role }: { role?: string }) {
   const tabs: [string, string][] = performer
     ? [['⌂','Главная'],['clipboard','Заявки'],['chat','Чат'],['menu','Меню']]
     : [['⌂','Главная'],['clipboard','Заявки'],['◌','Эфир'],
-       ['truck','Техника'],['🛍','Магазин'],['menu','Меню']];
+       ['truck','Техника'],['menu','Меню']];
   return <div className={'app role-' + (performer ? 'performer' : 'client') + ' and19-review-page'}
     aria-label="Проверка Android APK по утверждённому дизайну">
     <header className="and19-review-header">
