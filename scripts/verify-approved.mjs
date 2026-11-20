@@ -655,6 +655,43 @@ expect(pcMap.includes('viewBox="620 35 530 220"') &&
   pcSource.includes('Никаких выдуманных точек'),
   'admin shows nationwide geographic outline without invented route markers');
 
+
+// New approved interactive PC contracts. These checks prevent empty placeholders,
+// accidental early completion, and broken main actions from re-entering the repo.
+const pcE2E=await read('e2e/approved-pc-active-work.mjs');
+expect(pcSource.includes('function SelectedPerformerCase(') &&
+  pcSource.includes("'depart',label:'Выехал'") &&
+  pcSource.includes("'arrive',label:'Подтвердить прибытие'") &&
+  pcSource.includes("'start_work',label:'Начать работу'") &&
+  pcSource.includes("d.you==='performer'") &&
+  pcSource.includes("+'/step',{action:step.action}") &&
+  pcSource.includes('OrderPhotoGallery') &&
+  pcSource.includes('OrderPhotoCapture') &&
+  pcSource.includes('approved-pc-techbook') &&
+  pcSource.includes("['work','Работа',null]"),
+  'real selected master/tow next-step sequence, picture report and internal case tabs');
+expect(pcSource.includes('function SelectedServiceCase(') &&
+  pcSource.includes('RequestCard key={selected.id}') &&
+  pcSource.includes("get<any>('/api/bookings/'+booking.id)") &&
+  pcSource.includes("const expected=g?.expected||[]") &&
+  pcSource.includes("expected.length") &&
+  (await read('web/src/screens/base.tsx')).includes('export function RequestCard('),
+  'new STO request actions and selected real repair stages without fake counts');
+expect(pcSource.includes('approved-pc-active-order-nav') &&
+  pcSource.includes('active.map((o:any)=>[String(o.id)') &&
+  !pcSource.includes('onChange={()=>{}}') &&
+  pcSource.includes('approved-pc-order-table') &&
+  pcSource.includes('approved-pc-fleet-vehicle-row') &&
+  pcSource.includes('function Calendar(') &&
+  pcSource.includes('appointments.map((item:any)'),
+  'owner active multi-order tabs, repair table, real fleet, and clickable calendar entries');
+expect(pcE2E.includes('SYNTHETIC local API data') &&
+  pcE2E.includes("['localhost','127.0.0.1']") &&
+  pcE2E.includes("serviceWorkers:'block'") &&
+  pcE2E.includes('synthetic:true,production:false') &&
+  pcE2E.includes("const changes={depart:'en_route',arrive:'arrived',start_work:'working'}"),
+  'signed-in real-browser synthetic fixture clearly labelled and state sequence guarded');
+
 if (failures.length) {
   console.error('Approved design gate: '+failures.length+' failure(s).');
   process.exitCode=1;
