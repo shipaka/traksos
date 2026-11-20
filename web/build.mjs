@@ -20,6 +20,10 @@ const opts = {
     __API_URL__: JSON.stringify(process.env.API_URL ?? ''),
   },
   loader: { '.css': 'css', '.svg': 'file', '.webp': 'file' },
+  // Files from public/ are copied verbatim to dist/ before bundling.
+  // CSS url('/asset.webp') is a runtime root-relative URL, not a file to
+  // resolve from web/src; otherwise esbuild breaks the approved PC layout.
+  external: ['/*.webp', '/*.svg', '/*.png', '/*.jpg', '/*.jpeg'],
 };
 
 await rm('dist', { recursive: true, force: true });
