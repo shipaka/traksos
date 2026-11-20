@@ -227,6 +227,13 @@ expect(approvedHeroLayer.includes('object-fit:contain!important') &&
   'Android promo phone cannot crop approved logo into a retro magenta fragment');
 const heroVisualE2E = await read('e2e/approved-truck-hero.mjs');
 const publicLayoutE2E = await read('e2e/public-layout.mjs');
+const ownerJourneyE2E = await read('e2e/premium-unified-client.mjs');
+expect(ownerJourneyE2E.includes("'.approved-pc.approved-pc-client'") &&
+  ownerJourneyE2E.includes("'.client-dashboard .and19-client'") &&
+  ownerJourneyE2E.includes("nativePreview:width<900") &&
+  !ownerJourneyE2E.includes("'.client-hero-scania'") &&
+  !ownerJourneyE2E.includes("'.and19-cover img'"),
+  'client owner browser journey tests only approved 617 PC and 618 native Android roles');
 expect(publicLayoutE2E.includes('heroGeometry.pictureBottom <= heroGeometry.copyTop+2') &&
   publicLayoutE2E.includes('native artwork must be an uncropped 2:1 photograph ABOVE the copy') &&
   !publicLayoutE2E.includes('native artwork must cover the approved banner'),
