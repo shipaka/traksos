@@ -476,3 +476,43 @@ html.traksos-reduced-motion .and19-workspace button{transition:none!important}
 @media(max-width:340px){
  .app:not(.guest-app) .top .tr-approved-brand-logo img{width:min(158px,50vw)}
 }
+
+/* Financial order card follows the assigned master in the accepted 618 client
+ * composition. Value is rendered only when returned by the order API. */
+@media(max-width:899px){
+ .app.role-client .and19-client-cost{
+   display:flex;
+   align-items:center;
+   justify-content:space-between;
+   gap:12px;
+   min-height:63px;
+   padding:10px 12px;
+   border:1px solid #497085;
+   border-radius:13px;
+   background:linear-gradient(145deg,#193a4c,#0d2739);
+   box-shadow:0 5px 12px #020b1640;
+ }
+ .app.role-client .and19-client-cost > span{
+   display:flex;
+   flex:1;
+   flex-direction:column;
+   gap:4px;
+   min-width:0;
+ }
+ .app.role-client .and19-client-cost > span > small{
+   font-size:10px;
+   color:#b4cfdf;
+ }
+ .app.role-client .and19-client-cost > span > strong{
+   font-size:12px;
+   font-weight:790;
+   color:#f4faff;
+ }
+ .app.role-client .and19-client-cost > strong{
+   flex:none;
+   font-size:20px;
+   font-weight:900;
+   color:#fff;
+   font-variant-numeric:tabular-nums;
+ }
+}
