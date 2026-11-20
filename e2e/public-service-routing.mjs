@@ -1,8 +1,10 @@
 // Public TrakSOS routes and safety: design-independent tests of working links and protections.
  // Do not make these checks enforce a superseded 19 November visual reference.
 import { chromium } from 'playwright';
+import { mkdirSync } from 'node:fs';
 const BASE=process.env.BASE_URL??'http://127.0.0.1:8080';
 if (!['127.0.0.1','localhost'].includes(new URL(BASE).hostname)) throw Error('Local CI only');
+mkdirSync('e2e/shots/public-inner',{recursive:true});
 const browser=await chromium.launch();
 try {
   for (const [width,height] of [[390,844],[1440,900]]) {
@@ -31,6 +33,12 @@ try {
       // Verify the inner route on the real desktop renderer, not the homepage alone.
       await page.goto(BASE+'/#/explore/van');
       await page.locator('.guest-explore-hero').waitFor({state:'visible'});
+      await page.screenshot({path:'e2e/shots/public-inner/pc-master-service-1440.png',fullPage:true});
+      await page.goto(BASE+'/#/explore/air');
+      await page.locator('.guest-explore-hero').waitFor({state:'visible'});
+      await page.screenshot({path:'e2e/shots/public-inner/pc-air-1440.png',fullPage:true});
+      await page.goto(BASE+'/#/explore/van');
+      await page.locator('.guest-explore-hero').waitFor({state:'visible'});
       const appearance=await page.locator('.guest-explore-hero').evaluate(el=>({
         image:getComputedStyle(el,'::before').backgroundImage,
         icon:getComputedStyle(el.querySelector('.guest-explore-glyph')).display
@@ -52,12 +60,19 @@ try {
       await groups.first().locator('summary').click();
       await groups.first().locator('a[href="#/company"]').click();
       await page.getByRole('heading',{name:'Компания TrakSOS'}).waitFor();
+      await page.screenshot({path:'e2e/shots/public-inner/pc-company-1440.png',fullPage:true});
       await page.goto(BASE+'/#/explore/van');
       await page.getByRole('navigation',{name:'Разделы TrakSOS'})
         .locator('.guest-nav-group').first().locator('summary').click();
       await page.locator('.guest-site-nav a[href="#/explore/pricing"]').click();
       await page.getByRole('heading',{name:'Комиссии и тарифы TrakSOS'}).waitFor();
 
+      await page.goto(BASE+'/#/login');
+      await page.locator('.auth-desktop-showcase-photo').waitFor({state:'visible'});
+      await page.screenshot({path:'e2e/shots/public-inner/pc-login-1440.png',fullPage:true});
+      await page.goto(BASE+'/#/offer/privacy');
+      await page.locator('.public-offer-page').waitFor({state:'visible'});
+      await page.screenshot({path:'e2e/shots/public-inner/pc-privacy-1440.png',fullPage:true});
       await page.goto(BASE+'/#/join');
       const desktopPhoto=page.locator('.auth-desktop-showcase-photo');
       await desktopPhoto.waitFor({state:'visible'});
@@ -67,10 +82,18 @@ try {
         if(!artwork.includes('owner20-photo-background-approved.webp'))
           throw Error('Desktop approved partner image missing for '+name+': '+artwork);
       }
+      await page.screenshot({path:'e2e/shots/public-inner/pc-partner-1440.png',fullPage:true});
       if(jsErrors.length)throw Error('PC JS errors '+jsErrors.join('; '));
       await context.close();continue;
     }
     await page.getByRole('heading',{name:/TrakSOS.*помощь.*в пути/i}).waitFor();
+    await page.goto(BASE+'/#/explore/van');
+    await page.locator('.guest-explore-hero h1').waitFor({state:'visible'});
+    await page.screenshot({path:'e2e/shots/public-inner/mobile-master-service-390.png',fullPage:true});
+    await page.goto(BASE+'/#/explore/air');
+    await page.locator('.guest-explore-hero h1').waitFor({state:'visible'});
+    await page.screenshot({path:'e2e/shots/public-inner/mobile-air-390.png',fullPage:true});
+    await page.goto(BASE+'/#/');
 
     // Only public guest actions are visible in the bottom menu, not protected workflows.
     const bottom=page.getByRole('navigation',{name:'Гостевая навигация TrakSOS'});
