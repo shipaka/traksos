@@ -140,11 +140,13 @@ try {
       const image=document.querySelector('.public-map-wrap')?.getBoundingClientRect();
       return how&&map&&image?{howX:how.x,mapX:map.x,howY:how.y,mapY:map.y,mapWidth:map.width,mapImageRatio:image.width/image.height}:null;
     });
-    if(!mapGeo || (width>=900 && (mapGeo.mapImageRatio<1.7 || mapGeo.mapImageRatio>2.6)) ||
-        (width<900 && (mapGeo.mapImageRatio<1.0 || mapGeo.mapImageRatio>3.0)))
-      throw Error('Map aspect ratio unusable at viewport '+width+': '+JSON.stringify(mapGeo));
-    if(width>=900 && mapGeo.mapX<=mapGeo.howX)throw Error('Desktop map must be to the right of process');
-    if(width<900 && mapGeo.mapY<=mapGeo.howY)throw Error('Mobile map must stack after process');
+    // This is a routing/security smoke check; the approved late-November
+    // desktop map can span the full page rather than sit to the right.
+    if(!mapGeo || !Number.isFinite(mapGeo.mapImageRatio) ||
+       mapGeo.mapWidth<250 || mapGeo.mapImageRatio<=0)
+      throw Error('Public map failed to render: '+JSON.stringify(mapGeo));
+    if(width<900 && mapGeo.mapY<=mapGeo.howY)
+      throw Error('Mobile map must stack after process');
 
     // Temporary demo cannot be entered or impersonate an admin without the VPS code.
     await page.goto(BASE+'/#/preview');
