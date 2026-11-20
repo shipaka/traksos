@@ -14,6 +14,28 @@ try {
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
     await page.goto(BASE + '/#/', { waitUntil: 'domcontentloaded' });
+    if(width>=900){
+      await page.locator('.owner20-home').waitFor({timeout:15000});
+      assert(await page.locator('.owner20-quick>a').count()===5,'Final PC services row must have 5 links');
+      assert(await page.locator('.owner20-features>a').count()===5,'Final PC features row must have 5 links');
+      assert(await page.locator('.owner20-bottom>.owner20-bottom-card').count()===4,'Final PC lower row must have 4 cards');
+      const bot=page.getByRole('button',{name:'Открыть TrakBot'});
+      assert(await bot.isVisible(), 'Final PC TrakBot must be user-opened');
+      assert(await bot.locator('.trakbot-mascot-original').count()===1,'Owner-approved truck mascot missing');
+      assert(!await page.locator('.trakbot-dock-panel').count(),'TrakBot opened without a click');
+      await bot.click();
+      const invite=page.getByRole('dialog',{name:'TrakBot — личный помощник'});
+      await invite.waitFor();
+      assert(await invite.getByRole('link',{name:'Зарегистрироваться'}).isVisible(),'Guest bot invitation not accessible');
+      await page.locator('.trakbot-dock-close').click();
+      assert(!await page.locator('.trakbot-dock-panel').count(),'TrakBot remains open');
+      const widths=await page.evaluate(()=>({client:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));
+      assert(widths.scroll<=widths.client+3,'Final PC overflow '+JSON.stringify(widths));
+      assert(!errors.length,'Final PC JS errors '+errors.join('; '));
+      console.log('OK: approved Nov20 PC, '+width+'px, TrakBot opt-in, 5+5+4 and zero overflow');
+      await context.close();
+      continue;
+    }
     await page.locator('.public-landing').waitFor({ timeout: 15000 });
     // TrakBot is opt-in and does not interrupt the public landing.
     const botLauncher = page.getByRole('button', { name: 'Открыть TrakBot' });
