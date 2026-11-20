@@ -30,6 +30,8 @@ const LOCKED_ASSETS = {
   // not layout; unchanged native launcher art remains a separate approved asset.
   'web/public/traksos-brand-logo-approved-618.png': '10e9d529a5503140',
   'web/public/traksos-service-scenes-shared.webp': '081ad11beeffb456',
+  // Owner-authorized high-resolution equivalents of the same four services, for PC only.
+  'web/public/traksos-service-scenes-desktop-hq.webp': '137d36d190895744',
   'android/app/src/main/res/mipmap-mdpi/ic_launcher.png': '327f52a2d6e836e9',
   'android/app/src/main/res/mipmap-hdpi/ic_launcher.png': 'f797b183e93c4bad',
   'android/app/src/main/res/mipmap-xhdpi/ic_launcher.png': '27ea3b5ebbfe86ce',
@@ -107,6 +109,7 @@ const allowedPublicVisuals = new Set([
   'owner20-photo-background-approved.webp',
   'traksos-brand-logo-approved-618.png',
   'traksos-service-scenes-shared.webp',
+  'traksos-service-scenes-desktop-hq.webp',
 ]);
 const visualRootEntries = await readdir('web/public',{withFileTypes:true});
 const unexpectedVisuals = visualRootEntries.filter(entry =>
@@ -130,9 +133,11 @@ for(const alternateLogo of [
 }
 await asset('web/public/traksos-brand-logo-approved-618.png', 16000);
 await asset('web/public/traksos-service-scenes-shared.webp', 16000);
+await asset('web/public/traksos-service-scenes-desktop-hq.webp', 200000);
 const unifiedVisuals = await read('web/src/approvedVisuals.ts');
 const unifiedClient = await read('web/src/screens/client.tsx');
 const unifiedMobile = await read('web/src/screens/androidWorkspaces.tsx');
+const unifiedSceneComponent = await read('web/src/approvedServiceIllustration.tsx');
 const unifiedShell = await read('web/src/main.tsx');
 const unifiedBot = await read('web/src/trakbotMascot.css');
 const unifiedOrderPhoto = await read('web/src/approvedOrderTruck.tsx');
@@ -143,6 +148,7 @@ expect(unifiedVisuals.includes("logo: '/traksos-brand-logo-approved-618.png'") &
   unifiedVisuals.includes("trakbotHello: '/trakbot-approved-hello.webp'") &&
   unifiedVisuals.includes("trakbotReactions: '/trakbot-approved-30.webp'") &&
   unifiedVisuals.includes("serviceScenes: '/traksos-service-scenes-shared.webp'") &&
+  unifiedVisuals.includes("desktopServiceScenes: '/traksos-service-scenes-desktop-hq.webp'") &&
   unifiedShell.includes('src={APPROVED_VISUALS.logo}') &&
   unifiedClient.includes('ApprovedServiceIllustration') &&
   unifiedMobile.includes('ApprovedServiceIllustration') &&
@@ -175,6 +181,11 @@ expect(sharedSceneKeys.every((kind,i)=>
   ) &&
   unifiedServiceSceneStyle.includes('.and19-services>a>.and19-service-label') &&
   unifiedServiceSceneStyle.includes('font-size:inherit;') &&
+  unifiedSceneComponent.includes('APPROVED_VISUALS.desktopServiceScenes') &&
+  unifiedSceneComponent.includes('APPROVED_VISUALS.serviceScenes') &&
+  unifiedServiceSceneStyle.includes('background-image:var(--tr-service-mobile);') &&
+  unifiedServiceSceneStyle.includes('background-image:var(--tr-service-desktop);') &&
+  unifiedServiceSceneStyle.includes('@media(min-width:900px)') &&
   unifiedServiceSceneStyle.includes('width:88px;') &&
   unifiedServiceSceneStyle.includes('height:52.5px;') &&
   unifiedServiceSceneStyle.includes('background-size:352px 52.5px;') &&
@@ -183,7 +194,7 @@ expect(sharedSceneKeys.every((kind,i)=>
   ['0 0','-88px 0','-176px 0','-264px 0'].every((pos,i)=>
     unifiedServiceSceneStyle.includes('.and19-services>a>.tr-service-illustration--'+sharedSceneKeys[i]+'{background-position:'+pos+'}')
   ),
-  'same PC/Android service photos with direct-size mobile raster paint; no extra GPU raster scaling');
+  'same four services with HQ PC photographs and owner-approved mobile pictures; preserve label geometry');
 
 for (const file of ['web/src/finalCanon.css','web/src/trackPhotos.css']) {
   let exists = false;
