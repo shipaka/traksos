@@ -46,10 +46,16 @@ try {
     const consoleErrors = [];
     page.on('pageerror', e => errors.push(e.message));
     page.on('console', e => { if (e.type() === 'error') consoleErrors.push(e.text()); });
-    await page.addInitScript(token => {
+    await page.addInitScript(({token,nativePreview}) => {
+      // Approved 618 mobile role UI appears inside Android WebView, not ordinary Chrome.
+      // This is the same local-only native bridge used by android-approved-real-screens.
+      if(nativePreview) Object.defineProperty(window,'TrakSOSNative',{
+        configurable:true,value:{isApp:()=>true,setSession:()=>{},pushToken:()=>'',
+        performerOnline:()=>{},appLockEnabled:()=>false,setAppLockEnabled:()=>false}
+      });
       localStorage.setItem('traksos.token', token);
       localStorage.setItem('traksos.mode', 'client');
-    }, account.token);
+    }, {token:account.token,nativePreview:width<900});
     try {
       await page.goto(BASE + '/#/', {waitUntil: 'domcontentloaded'});
       await page.locator('.app').waitFor({timeout: 20000});
@@ -72,30 +78,48 @@ try {
       if (await cookie.isVisible().catch(() => false)) await cookie.click();
       await page.waitForTimeout(200);
       console.log('visual entry route ' + width + 'px: ' + await page.evaluate(() => location.hash));
-      await page.locator('.client-dashboard').waitFor({timeout: 20000});
+      await page.locator(width < 900
+        ? '.client-dashboard .and19-client'
+        : '.approved-pc.approved-pc-client').waitFor({state:'visible',timeout:20000});
       if (width < 900) {
-        await page.locator('.and19-client').waitFor({state:'visible'});
-        const hero = await page.locator('.and19-cover img').evaluate(img => ({
-          loaded: img.complete && img.naturalWidth > 100,
-          visible: getComputedStyle(img).display !== 'none'
+        // Owner-approved Android 618: four active services and original logo;
+        // the old .and19-cover img is not part of the approved React layout.
+        await page.locator('.and19-cover h1').waitFor({state:'visible'});
+        const logo = await page.locator('.top .tr-approved-brand-logo img').evaluate(img => ({
+          loaded:img.complete && img.naturalWidth===274 && img.naturalHeight===46,
+          source:img.getAttribute('src'),visible:img.getBoundingClientRect().height>0
         }));
-        if (!hero.loaded || !hero.visible) throw Error('Approved mobile truck scene missing: '+JSON.stringify(hero));
-        if (await page.locator('.and19-services > a').count() !== 4)
-          throw Error('Mobile Android must show exactly four usable service entries');
-        if (await page.locator('.desktop-quick-card').count() !== 0)
-          throw Error('Mobile view should not render the desktop dashboard tree');
+        if (!logo.loaded || !logo.visible || logo.source!=='/traksos-brand-logo-approved-618.png')
+          throw Error('Approved original 618 brand missing: '+JSON.stringify(logo));
+        const services = page.locator('.and19-services > a');
+        if (await services.count()!==4)
+          throw Error('Approved Android 618 must show four service entries');
+        const targets=['#/sos','#/new/tow','#/services','#/new/consult'];
+        for (let i=0;i<targets.length;i++)
+          if (await services.nth(i).getAttribute('href')!==targets[i])
+            throw Error('Android service navigation mismatch '+i);
+        if (await page.locator('.desktop-quick-card,.approved-pc-client').count()!==0)
+          throw Error('Desktop workdesk must never mount inside native Android');
       } else {
-        const truck = await page.locator('.client-hero-scania').evaluate(img => ({
-          loaded: img.complete && img.naturalWidth > 100,
-          fit: getComputedStyle(img).objectFit,
-          visible: getComputedStyle(img).display !== 'none'
+        // Approved 20 November PC uses the 3-column owner workplace, not
+        // the retired .client-dashboard/.client-hero-scania storefront.
+        const heading=page.locator('.approved-pc-heading');
+        await heading.getByRole('heading',{name:'Владелец автопарка'}).waitFor();
+        const photo=await heading.locator('img').evaluate(img=>({
+          loaded:img.complete && img.naturalWidth>100,
+          visible:img.getBoundingClientRect().height>0
         }));
-        if (!truck.loaded || !truck.visible || truck.fit !== 'contain')
-          throw new Error(width + 'px approved Scania image issue: ' + JSON.stringify(truck));
-        const cards = await page.locator('.client-dashboard .desktop-quick-card').count();
-        const hubs = await page.locator('.client-dashboard-hubs > a').count();
-        if (cards !== 4 || hubs !== 4)
-          throw new Error(width + 'px wrong desktop card counts: ' + cards + '/' + hubs);
+        if(!photo.loaded||!photo.visible)
+          throw Error('Approved owner PC truck illustration missing: '+JSON.stringify(photo));
+        if (await page.locator('.approved-pc-three').count()!==1 ||
+            await page.locator('.approved-pc-order-heading').count()!==1)
+          throw Error('Owner PC active orders and 3-column workplace missing');
+        const actions=['#/sos','#/new/tow','#/services','#/orders'];
+        for (const href of actions)
+          if(!await page.locator('.approved-pc-client a[href="'+href+'"]').count())
+            throw Error('Approved owner PC functional service link missing: '+href);
+        if(await page.locator('.client-dashboard').count()!==0)
+          throw Error('Retired desktop client dashboard was mounted');
       }
       // Older photographic service cards were physically retired at the owner's
       // request. Preserve only verified actual vehicle-model photos in the app.
@@ -112,12 +136,8 @@ try {
       });
       if (photoDetails.some(p => p.w < 320 || p.h < 180))
         throw new Error(width + 'px vehicle-model photo quality/availability: ' + JSON.stringify(photoDetails));
-      if(width >= 900) for (const [index, key] of ['master', 'tow', 'sto', 'consult'].entries()) {
-        const bg = await page.locator('.desktop-quick-card').nth(index).evaluate(el =>
-          getComputedStyle(el).backgroundImage);
-        if (bg.includes('tracksos-photo-') || !bg.includes('gradient'))
-          throw new Error(width + 'px retired pre-17 Nov service photography or missing current background: ' + key + '/' + bg);
-      }
+      if(width>=900 && await page.locator('.desktop-quick-card').count())
+        throw Error('Retired desktop service cards reappeared over approved owner workplace');
       const pageWidth = await page.evaluate(() => ({
         viewport: document.documentElement.clientWidth,
         content: document.documentElement.scrollWidth
@@ -138,7 +158,7 @@ try {
         throw new Error(width + 'px expected 5 master specialties');
       await page.screenshot({path:OUT + '/specialties-' + width + '.png',fullPage:true});
       if (errors.length) throw new Error(width + 'px browser exception: ' + errors.join('; '));
-      console.log('PASS real client ' + width + 'px: approved device-specific workspace, 4 services, SOS, 5 specialties, no overflow');
+      console.log('PASS real client ' + width + 'px: approved 20 Nov PC/618 Android workspace, real SOS, five specialties, no overflow');
     } finally {
       await context.close();
     }
