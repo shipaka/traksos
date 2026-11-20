@@ -170,6 +170,44 @@ export class ShopCourierDeliveries {
        data:{shopOrderId:result.d.shop_order_id}});
     return this.one(courier,id);
   }
+  /** Support-only receipt-code recovery after expiry or five failed attempts.
+   * Never return the new code to administrator or courier. Every reset requires
+   * a reason and is limited to three per shipment to avoid brute-force churn.
+   */
+  async resetReceipt(actor:AuthUser,orderId:string,reason:string){
+    const result=await this.db.tx(async q=>{
+      const o=await q.one<{id:string;created_by:string;status:string}>(
+        'select id,created_by,status from shop_orders where id=$1 for update',[orderId]);
+      if(!o)throw notFound('Заказ магазина не найден');
+      const delivery=await q.one<any>(
+        'select * from shop_courier_deliveries where shop_order_id=$1 for update',[orderId]);
+      if(!delivery)throw notFound('Курьерская доставка для заказа не назначена');
+      if(delivery.status!=='arrived'||o.status!=='shipped')
+        throw conflict('receipt_reset_unavailable','Восстановить код можно только после прибытия курьера');
+      if(delivery.code_attempts<5&&new Date(delivery.code_expires_at).getTime()>=Date.now())
+        throw conflict('receipt_still_valid','Текущий код ещё действует и не заблокирован');
+      if(delivery.code_resets>=3)
+        throw conflict('receipt_reset_limit','Лимит восстановления исчерпан. Требуется разбирательство.');
+      const updated=await q.one<any>(`update shop_courier_deliveries set
+         code_nonce=gen_random_uuid(),code_attempts=0,code_resets=code_resets+1,
+         code_expires_at=now()+interval '24 hours',code_verified_at=null,
+         updated_at=now() where id=$1 returning *`,[delivery.id]);
+      await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
+        [actor.id,'courier.receipt_code_reset',delivery.id,{
+          shopOrderId:orderId,reason,previousAttempts:delivery.code_attempts,
+          resetCount:updated.code_resets
+        }]);
+      return {customer:o.created_by,id:delivery.id,expiresAt:updated.code_expires_at,
+        resetCount:updated.code_resets};
+    });
+    await this.notify.notify([result.customer],{type:'shop',shopOrderId:orderId},{
+      kind:'normal',title:'Для доставки обновлён код вручения',
+      body:'Откройте историю покупки. Показывайте новый код только прибывшему курьеру.',
+      data:{shopOrderId:orderId}
+    });
+    return {shopOrderId:orderId,expiresAt:result.expiresAt,
+      resetCount:result.resetCount,codeReissued:true};
+  }
   /** Only the authenticated user who actually placed the shop order may
    * reveal its receipt code or confirm receipt. A fleet owner must not
    * confirm a driver's parcel merely by owning the company. */
