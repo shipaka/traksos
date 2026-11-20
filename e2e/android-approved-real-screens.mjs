@@ -53,6 +53,11 @@ try{
         await modal.waitFor({state:'detached',timeout:15000});
       }
       await page.locator(selector).waitFor({state:'visible',timeout:20000});
+      // Approved mobile workspaces must be visible immediately after login.
+      // A first-run course or guided tour can be opened from Menu, not pushed
+      // above the only actionable card on a small Android screen.
+      if(await page.locator('.tr-training-invite,[aria-label="Знакомство с TrakSOS"],.tr-tour').count())
+        throw Error(role+': first-run overlay blocks approved workdesk');
       if(role==='master')await page.locator('.and19-line button').waitFor();
       else await page.locator('.and19-services').waitFor();
       await page.waitForTimeout(650);
