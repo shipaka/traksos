@@ -177,6 +177,49 @@
   }
 }
 
+/* The footer and cookie acknowledgement are part of the same public product. */
+.guest-app:not(.guest-home) .site-footer {
+  border-top: 1px solid #3a4b53 !important;
+  background: #081821 !important;
+  color: #dce8ea !important;
+}
+.guest-app:not(.guest-home) .site-footer .banner.col {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 20px;
+  background: #172f3a !important;
+  border: 1px solid #49616a !important;
+}
+.guest-app:not(.guest-home) .site-footer .banner .note {
+  color: #e6eff0 !important;
+}
+.guest-app:not(.guest-home) .site-footer .banner .btn {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-width: 110px;
+  min-height: 42px;
+  padding: 10px 16px;
+  color: #142027 !important;
+  background: #ff964d !important;
+  border: 1px solid #ff964d !important;
+  font-size: 14px;
+  font-weight: 800;
+  opacity: 1 !important;
+}
+.guest-app:not(.guest-home) .site-footer a {
+  color: #ffb783;
+}
+@media (max-width: 540px) {
+  .guest-app:not(.guest-home) .site-footer .banner.col {
+    flex-direction: column !important;
+    align-items: stretch;
+  }
+}
+
 /* Legal document is allowed to be absent: do not fabricate an offer or silently
    treat an unpublished version as accepted. Give the state a readable layout. */
 .guest-app .public-offer-page {
