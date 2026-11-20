@@ -4,6 +4,9 @@ name: Android PR smoke (unsigned debug)
 # no RuStore publishing and no production deployment.
 on:
   pull_request:
+    # Metadata edits can request fresh proof when GitHub App file commits
+    # do not emit a synchronize event on their own.
+    types: [opened, reopened, synchronize, edited]
     paths:
       - 'android/**'
       - 'web/**'
