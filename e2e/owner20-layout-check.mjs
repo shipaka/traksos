@@ -29,24 +29,38 @@ try {
      const photo=document.querySelector('.owner20-photo');
      const map=document.querySelector('.owner20-map-source');
      const feature=document.querySelector('.owner20-feature-illustration');
+     const logo=document.querySelector('.owner20-mark');
      const pick=(el,pseudo)=>el?getComputedStyle(el,pseudo).backgroundImage:'';
-     const res=await fetch('/owner20-artwork-sprite.webp');
-     const image=res.ok?await createImageBitmap(await res.blob()).catch(()=>null):null;
+     const measure=async (path)=>{
+       const res=await fetch(path);
+       if(!res.ok) return {status:res.status,w:0,h:0};
+       const image=await createImageBitmap(await res.blob()).catch(()=>null);
+       return {status:res.status,w:image?.width??0,h:image?.height??0};
+     };
+     const [sprite,approvedHero,approvedLogo]=await Promise.all([
+       measure('/owner20-artwork-sprite.webp'),
+       measure('/owner20-photo-background-approved.webp'),
+       measure('/owner20-header-logo-approved.webp'),
+     ]);
      const rect=(selector)=>{const r=document.querySelector(selector)?.getBoundingClientRect();return r&&{x:r.x,y:r.y,w:r.width,h:r.height};};
      return {
        photo:pick(photo,'::after'),map:pick(map),feature:pick(feature),
-       dimensions:image&&{w:image.width,h:image.height},
+       logo:pick(logo),sprite,approvedHero,approvedLogo,
        head:rect('.owner20-top'),hero:rect('.owner20-hero'),
        quick:rect('.owner20-quick'),features:rect('.owner20-features'),
        bottom:rect('.owner20-bottom'),coverage:rect('.owner20-map'),
      };
    });
-   if(!art.photo.includes('owner20-artwork-sprite') ||
-      !art.map.includes('owner20-artwork-sprite') ||
-      !art.feature.includes('owner20-artwork-sprite') ||
+   const expectedHero=width>=1281?'owner20-photo-background-approved.webp':'owner20-artwork-sprite.webp';
+   if(!art.photo.includes(expectedHero) ||
+      !art.map.includes('owner20-artwork-sprite.webp') ||
+      !art.feature.includes('owner20-artwork-sprite.webp') ||
+      !art.logo.includes('owner20-header-logo-approved.webp') ||
       art.photo.includes('tracksos-approved-hero-owner-20261119') ||
-      art.dimensions?.w!==1018 || art.dimensions?.h!==446)
-     throw Error(width+': wrong original 617.png photographic asset '+JSON.stringify(art));
+      art.sprite?.w!==1018 || art.sprite?.h!==446 ||
+      art.approvedHero?.w!==1536 || art.approvedHero?.h!==324 ||
+      art.approvedLogo?.w!==235 || art.approvedLogo?.h!==53)
+     throw Error(width+': approved 617.png image or loaded size regressed '+JSON.stringify(art));
    if(width===1536){
      const near=(got,expected)=>Math.abs(got-expected)<=7;
      if(!art.head||!art.hero||!art.quick||!art.features||!art.bottom||!art.coverage||
