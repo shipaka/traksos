@@ -212,6 +212,48 @@ export function Shop() {
   );
 }
 
+/** Receipt code is shown only to the authenticated buyer, never to couriers.
+ * Verification by the courier does NOT complete the shop order: buyer approval
+ * is a separate action, with an explicit acknowledgement of actual receipt.
+ */
+function CustomerCourierReceipt({orderId,reload}:{orderId:string;reload:()=>void}){
+  const [open,setOpen]=useState(false);
+  const [code,setCode]=useState<any>(null);
+  const [error,setError]=useState('');
+  const [agree,setAgree]=useState(false);
+  const {busy,run}=useAction();
+  const refresh=async()=>{
+    try{const x=await get('/api/shop/orders/'+encodeURIComponent(orderId)+'/receipt-code');setCode(x);setError('');}
+    catch(e){setError(e instanceof Error?e.message:'Код пока недоступен');}
+  };
+  return <section className="courier-customer-proof" aria-label="Подтверждение вручения заказа">
+    <button type="button" className="btn ghost small" aria-expanded={open} onClick={async()=>{
+      if(open){setOpen(false);return;}setOpen(true);await refresh();
+    }}>{open?'Скрыть код вручения':'Код вручения и подтверждение получения'}</button>
+    {open&&<>
+      <p className="note">Покажите код курьеру только после прибытия. Не подтверждайте получение заранее.</p>
+      {error&&<p role="alert" className="note">{error}</p>}
+      {code&&<div className="courier-customer-code">
+        <small>Ваш код (6 цифр)</small><strong>{code.code}</strong>
+        <span>Курьер проверяет его на своём устройстве.</span>
+      </div>}
+      {code?.verified ? <>
+        <label className="agree"><input type="checkbox" checked={agree}
+          onChange={e=>setAgree(e.target.checked)}/>
+          <span>Я лично получил(а) все указанные в заказе запчасти.</span></label>
+        <button type="button" className="btn" disabled={!agree||busy}
+          onClick={async()=>{
+            const result=await run(()=>post('/api/shop/orders/'+encodeURIComponent(orderId)+'/confirm-received'),
+              'Получение заказа подтверждено');
+            if(result){setOpen(false);reload();}
+          }}>Подтвердить фактическое получение</button>
+      </> : <button type="button" className="btn ghost small" disabled={busy}
+        onClick={refresh}>Проверить статус вручения</button>}
+      <p className="note">После проверки кода заказ не закрывается автоматически — последнее решение за получателем.</p>
+    </>}
+  </section>;
+}
+
 function MyShopOrders({ orders, reload, canOrder }: { orders: any[]; reload: () => void; canOrder: boolean }) {
   const { busy, run } = useAction();
   const [cart, setCart] = useCart();
@@ -234,6 +276,8 @@ function MyShopOrders({ orders, reload, canOrder }: { orders: any[]; reload: () 
             {openAnalog === i.productId && <HistoryAnalogs productId={i.productId} add={addItem} />}
           </div>)}
           {o.adminNote && <span>{o.adminNote}</span>}
+          {o.delivery==='delivery' && (o.status==='ready'||o.status==='shipped')&&
+            <CustomerCourierReceipt orderId={o.id} reload={reload}/>} 
           {o.cancelReason && <span className="note">Отменён: {o.cancelReason}</span>}
           {o.status === 'new' && <button className="btn ghost small" disabled={busy} onClick={async () => { if (await run(() => post(`/api/shop/orders/${o.id}/cancel`), 'Заказ отменён')) reload(); }}>Отменить</button>}
         </div>
