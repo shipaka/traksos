@@ -31,6 +31,8 @@ test('no random fallback: unknown/ambiguous/different generation gets no picture
     ['Volvo','FH16',2015],
     ['Volvo','FH',2025],
     ['Scania','R 520',2014],
+    // R440 2010 is only a pending licensed source: never substitute R520.
+    ['Scania','R 440',2010],
     ['Scania','S 520',2020],
     ['DAF','XF106',2014],
     ['Renault','Premium',1999],
@@ -59,8 +61,15 @@ test('Cyrillic manufacturer aliases select the exact listed vehicle',()=>{
 test('all published model assets are local WebP under 150 KiB and source metadata retained',()=>{
   const sources=JSON.parse(readFileSync(new URL('../../scripts/vehiclePhotoSources.json',import.meta.url),'utf8'));
   assert.equal(vehiclePhotoCoverage.length,6);
-  assert.equal(sources.items.length,vehiclePhotoCoverage.length);
-  for(const item of sources.items){
+  // Source manifest also contains one not-yet-processed 2010 R440 candidate.
+  // Until a plate-redacted WebP is reviewed and actually shipped, it MUST
+  // not be counted as a published photo or treated as an R520 substitute.
+  const published=sources.items.filter((item:any)=>
+    vehiclePhotoCoverage.some(x=>x.src.endsWith('/'+item.id+'.webp')));
+  const pending=sources.items.filter((item:any)=>!published.includes(item));
+  assert.deepEqual(pending.map((item:any)=>item.id),['scania-r440-2010']);
+  assert.equal(published.length,vehiclePhotoCoverage.length);
+  for(const item of published){
     const indexed=vehiclePhotoCoverage.find(x=>x.src.endsWith('/'+item.id+'.webp'));
     assert.ok(indexed, 'missing photo catalogue entry '+item.id);
     assert.equal(indexed?.author,item.author);
