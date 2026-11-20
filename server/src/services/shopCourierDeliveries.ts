@@ -12,7 +12,6 @@ type Stage='assigned'|'picked_up'|'en_route'|'arrived'|'code_verified'|'received
 const NEXT:Record<string,string>={
   assigned:'picked_up',picked_up:'en_route',en_route:'arrived'
 };
-const ACTIVE=['assigned','picked_up','en_route','arrived','code_verified'];
 function receiptCode(id:string,nonce:string):string {
   // Derived from a secret key and rotating random nonce: the six digits are
   // never stored in plaintext or returned to the courier.
@@ -216,8 +215,8 @@ export class ShopCourierDeliveries {
       from shop_courier_deliveries d join shop_orders o on o.id=d.shop_order_id
       where o.id=$1 and o.created_by=$2`,[orderId,buyer.id]);
     if(!d)throw notFound('Код для этого заказа недоступен');
-    if(!ACTIVE.includes(d.status)||d.shop_status==='cancelled')
-      throw conflict('no_active_delivery','Доставка сейчас не ожидает вручения');
+    if(!['arrived','code_verified'].includes(d.status)||d.shop_status!=='shipped')
+      throw conflict('courier_not_arrived','Код вручения будет доступен после прибытия курьера');
     if(new Date(d.code_expires_at).getTime()<Date.now())
       throw conflict('receipt_expired','Код получения устарел. Обратитесь в поддержку.');
     return {shopOrderId:orderId,code:receiptCode(d.id,d.code_nonce),
