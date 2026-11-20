@@ -1073,7 +1073,7 @@ export class OrdersService {
   async list(user: AuthUser, scope: 'client' | 'performer', status?: string) {
     const where = scope === 'performer' ? 'o.performer_id = $1' : user.owner_id ? 'o.created_by = $1' : '(o.client_id = $1 or o.created_by = $1)';
     const items = await this.db.query<any>(
-      `select o.id, o.number, o.status, o.service, o.is_sos, o.problem, o.description, o.address, o.brand, o.estimate, o.work_amount, o.call_out_amount,
+      `select o.id, o.number, o.status, o.service, o.is_sos, o.problem, o.description, o.address, o.lat, o.lng, o.brand, o.estimate, o.work_amount, o.call_out_amount,
               o.client_fee_pct, o.discount_amount, o.payment_method,
               o.created_at, o.accepted_at, o.en_route_at, o.arrived_at, o.completed_at, o.consult_of,
               o.performer_id, o.commission_pct_override, o.points_commission,
