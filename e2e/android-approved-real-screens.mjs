@@ -140,7 +140,7 @@ try{
         throw Error(role+': selected Menu tab does not reflect its route');
       await page.screenshot({path:output+'/'+role+'-menu-android-390.png',fullPage:true,scale:'css'});
       await page.locator('.tr-mobile-menu-account a[href="#/profile"]').click();
-      await page.waitForURL(/#\\/profile$/, {timeout:10000});
+      await page.waitForURL(url => url.hash === '#/profile', {timeout:10000});
       if(await page.locator('main.tr-mobile-menu-page').count())
         throw Error(role+': Profile shortcut did not navigate to real settings');
       // Test an accessible small Android phone, without changing baseline 390px screenshots.
