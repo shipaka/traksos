@@ -12,6 +12,7 @@ export function NavGlyph({ glyph }: { glyph: string }) {
     : glyph === '▦' ? <><rect x="3" y="3" width="8" height="8" rx="1" /><rect x="13" y="3" width="8" height="8" rx="1" /><rect x="3" y="13" width="8" height="8" rx="1" /><rect x="13" y="13" width="8" height="8" rx="1" /></>
     : glyph === '▤' ? <><path d="M4 21V6l8-4 8 4v15M2 21h20" /><path d="M8 9h2m4 0h2M8 13h2m4 0h2M10 21v-4h4v4" /></>
     : glyph === '⚑' ? <><path d="M5 22V3m0 1c5-3 9 3 15 0v11c-6 3-10-3-15 0" /></>
+    : glyph === 'bell' ? <><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" /><path d="M10 21a2 2 0 0 0 4 0" /></>
     : glyph === '⚡' ? <path d="M13 2 4 13h7l-1 9 10-12h-7z" />
     : glyph === '🛍' ? <><path d="M4 8h16l-1.5 13h-13z" /><path d="M9 9V6a3 3 0 0 1 6 0v3" /></>
     : glyph === '?' ? <><circle cx="12" cy="12" r="10" /><path d="M9 9a3 3 0 0 1 6 1c0 2-3 2-3 4m0 3h.01" /></>
