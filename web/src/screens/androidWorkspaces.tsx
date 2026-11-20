@@ -9,6 +9,7 @@ import { insurancePresentation } from '../insurancePresentation.ts';
 import { ApprovedEmptyScene } from '../approvedEmptyScene.tsx';
 import { ApprovedServiceIllustration } from '../approvedServiceIllustration.tsx';
 import { ApprovedOrderTruck } from '../approvedOrderTruck.tsx';
+import { vehicleReferencePhoto } from '../vehiclePhotoCatalog.ts';
 import { NavGlyph } from '../navGlyph.tsx';
 
 /** Render a single role dashboard per viewport, rather than hiding a live component tree with CSS. */
@@ -71,9 +72,9 @@ function VehicleLine({ order }: { order: any }) {
   return name ? <p className="and19-vehicle"><span aria-hidden="true">▤</span> {name}</p> : null;
 }
 
-function OrderTitle({ order }: { order: any }) {
+function OrderTitle({ order, client = false }: { order: any; client?: boolean }) {
   return <div className="and19-panel-title">
-    <strong>Заявка №{order.number ?? '—'}</strong>
+    <strong>{client ? 'Активная заявка' : 'Заявка'} №{order.number ?? '—'}</strong>
     <span className="and19-status">{STATUS[order.status]?.name || 'Статус уточняется'}</span>
   </div>;
 }
@@ -94,6 +95,12 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
 }) {
   const current = orders.find(o => IN_PROGRESS.includes(o.status));
   const isDriver = !!me?.owner_id || me?.roles?.includes('driver');
+  const vehicleBrand = current?.vehicle?.brand || current?.v_brand || current?.brand;
+  const vehicleModel = current?.vehicle?.model || current?.v_model || current?.model;
+  const vehicleYear = current?.vehicle?.year || current?.v_year || current?.year;
+  const currentVehiclePhoto = current?.vehicle_id
+    ? vehicleReferencePhoto(vehicleBrand, vehicleModel, vehicleYear) : null;
+  const currentVehicleName = [vehicleBrand,vehicleModel,vehicleYear].filter(Boolean).join(' ');
   return <div className="and19-workspace and19-client" aria-label="Android рабочий стол клиента">
     <a className="and19-role and19-client-role" href="#/profile" aria-label="Открыть профиль и настройки кабинета">
       <span className="and19-role-caption"><NavGlyph glyph="◉" />{isDriver ? 'Водитель автопарка' : 'Клиент · Владелец автопарка'}</span>
@@ -126,17 +133,24 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
     {loading ? <MobileLoading label="Проверяем активные заявки" /> : error && !current
       ? <section className="and19-panel" role="alert"><strong>Не удалось обновить заявки</strong><p>{error}</p><button className="and19-action" onClick={retry}>Повторить</button></section>
       : current ? <section className="and19-panel and19-main-order">
-        <a className="and19-order-open" href={'#/order/' + current.id} aria-label={'Открыть заявку №' + current.number}>
-          <OrderTitle order={current} />
-          {current.service!=='consult' && <ApprovedOrderTruck order={current} />}
+        <div className="and19-order-open">
+          <a className="and19-order-heading-link" href={'#/order/' + current.id}
+            aria-label={'Открыть заявку №' + current.number}>
+            <OrderTitle order={current} client />
+          </a>
+          {current.service!=='consult' && <a className="and19-order-photo-link"
+            href={current.vehicle_id ? '#/garage/' + current.vehicle_id : '#/order/' + current.id}
+            aria-label={current.vehicle_id ? 'История и карточка автомобиля по заявке' : 'Открыть заявку и данные автомобиля'}>
+            <ApprovedOrderTruck order={current} />
+          </a>}
           <OrderFacts order={current} />
           {current.status !== 'searching' && <MobileTimeline status={current.status} />}
           {current.status === 'searching' && <p className="and19-search-active"><span className="and19-pulse" aria-hidden="true" />Поиск исполнителя продолжается · открыть отклики</p>}
-          <span className="and19-link">Открыть заявку и связь с исполнителем <span aria-hidden="true">›</span></span>
-        </a>
+          <a className="and19-link" href={'#/order/' + current.id}>Открыть заявку и связь с исполнителем <span aria-hidden="true">›</span></a>
+        </div>
         {current.status !== 'searching' &&
           <nav className="and19-order-shortcuts" aria-label="Действия по активной заявке">
-            <a href={'#/order/' + current.id + '/chat'}>Чат заявки</a>
+            <a href={'#/order/' + current.id + '?chat=1'}>Чат заявки</a>
             <a href={'#/order/' + current.id}>Подробности</a>
           </nav>}
       </section>
@@ -144,10 +158,17 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
     {current?.performer_name && <div className="and19-assigned-performer">
       <span className="and19-assigned-icon" aria-hidden="true">⚒</span>
       <span className="and19-assigned-copy">
-        <strong>{current.performer_name}</strong>
+        <strong>{current.performer_name}
+          {current.performer_rating != null && Number.isFinite(Number(current.performer_rating)) &&
+            <span className="and19-performer-rating" aria-label={'Рейтинг исполнителя ' + Number(current.performer_rating).toFixed(1)}>
+              ★ {Number(current.performer_rating).toFixed(1).replace('.', ',')}
+              {Number.isInteger(current.performer_rating_count) && current.performer_rating_count > 0 &&
+                <small> ({current.performer_rating_count})</small>}
+            </span>}
+        </strong>
         <small>{SERVICES[current.service]?.name || 'Исполнитель'} · заявка №{current.number}</small>
       </span>
-      <a href={'#/order/'+current.id+'/chat'} aria-label="Открыть чат с исполнителем">Чат</a>
+      <a href={'#/order/'+current.id+'?chat=1'} aria-label="Открыть чат с исполнителем">Чат</a>
       <a href={'#/order/'+current.id} aria-label="Контакты исполнителя и подробности заявки">Связь</a>
     </div>}
     {current && current.status !== 'searching' && Number.isFinite(current.money?.total) &&
@@ -155,12 +176,20 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
         <span>
           <small>{['awaiting_confirmation','completed'].includes(current.status) ? 'Сумма к подтверждению' : 'Предварительный расчёт'}</small>
           <strong>Стоимость по заявке</strong>
+          {Number.isFinite(current.money?.amount) && Number.isFinite(current.money?.clientFee) &&
+            <small>Работы и выезд: {rub(current.money.amount)} · сервис: {rub(current.money.clientFee)}</small>}
         </span>
         <strong>{rub(current.money.total)}</strong>
       </div>}
     {orders.length > 1 && <a href="#/orders" className="and19-row-link">Все мои заявки <span>{orders.length} ›</span></a>}
-    <a href="#/garage" className="and19-equipment">
-      <span className="and19-equipment-icon" aria-hidden="true">▤</span><span><strong>{isDriver ? 'Моя машина' : 'Моя техника'}</strong><small>История ремонта, документы и обслуживание</small></span><span aria-hidden="true">›</span>
+    <a href={current?.vehicle_id ? '#/garage/'+current.vehicle_id : '#/garage'} className="and19-equipment and19-equipment-vehicle">
+      {currentVehiclePhoto ? <img className="and19-equipment-model" src={currentVehiclePhoto.src}
+        alt={currentVehiclePhoto.description} loading="lazy" />
+        : <span className="and19-equipment-icon" aria-hidden="true">▤</span>}
+      <span><strong>{isDriver ? 'Моя машина' : 'Моя техника'}</strong>
+        {current?.vehicle_id && currentVehicleName && <small className="and19-equipment-title">{currentVehicleName}</small>}
+        <small>История обслуживания, заявки, документы</small></span>
+      <span aria-hidden="true">›</span>
     </a>
     <a href={disabledServices?.shop ? undefined : "#/shop"} aria-disabled={disabledServices?.shop || undefined} className="and19-equipment and19-parts-shortcut" aria-label="Магазин запчастей">
       <span className="and19-equipment-icon" aria-hidden="true">⚙</span>
