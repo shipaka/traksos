@@ -97,3 +97,28 @@ test('real delivery: courier verifies, then buyer separately confirms receiving 
   assert.equal(events.filter(e=>e.action==='courier.customer_received').length,1,'idempotent buyer confirmation');
   assert.equal(events.filter(e=>e.action==='courier.code_rejected').length,2);
 });
+
+test('fleet owner sees purchase but cannot access driver-only courier handoff code',async()=>{
+  const driver=await t.login('+79990000604','driver');
+  await t.db.query('update users set owner_id=$2 where id=$1',[driver.id,buyer.id]);
+  const product=ok(await t.api('POST','/api/admin/shop/products',
+    {name:'Тестовый датчик тормозов',price:9000,stock:2},admin.token));
+  const order=ok(await t.api('POST','/api/shop/orders',{
+    items:[{productId:product.id,qty:1}],delivery:'delivery',
+    address:'Тестовый адрес водителя, дом 4'
+  },driver.token));
+  ok(await t.api('POST',`/api/admin/shop/orders/${order.id}/status`,{status:'confirmed'},admin.token));
+  ok(await t.api('POST',`/api/admin/shop/orders/${order.id}/status`,{status:'ready'},admin.token));
+  ok(await t.api('POST',`/api/admin/shop/orders/${order.id}/courier`,{courierId:courier.id},admin.token));
+  const fleetOrders=ok(await t.api('GET','/api/shop/orders',undefined,buyer.token));
+  const fleetHistory=ok(await t.api('GET','/api/shop/history',undefined,buyer.token));
+  assert.equal(fleetOrders.find((o:any)=>o.id===order.id)?.courierStatus,'assigned');
+  assert.equal(fleetOrders.find((o:any)=>o.id===order.id)?.canConfirmCourierReceipt,false);
+  assert.equal(fleetHistory.items.find((o:any)=>o.id===order.id)?.canConfirmCourierReceipt,false);
+  assert.equal((await t.api('GET',`/api/shop/orders/${order.id}/receipt-code`,undefined,buyer.token)).status,404);
+  assert.equal((await t.api('POST',`/api/shop/orders/${order.id}/confirm-received`,{},buyer.token)).status,404);
+  const own=ok(await t.api('GET','/api/shop/orders',undefined,driver.token));
+  assert.equal(own.find((o:any)=>o.id===order.id)?.canConfirmCourierReceipt,true);
+  const receipt=ok(await t.api('GET',`/api/shop/orders/${order.id}/receipt-code`,undefined,driver.token));
+  assert.match(receipt.code,/^\\d{6}$/);
+});
