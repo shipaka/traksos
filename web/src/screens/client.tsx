@@ -1219,6 +1219,13 @@ export function Profile() {
   const [name, setName] = useState(me?.name ?? '');
   const [company, setCompany] = useState(me?.company_name ?? '');
   const [inn, setInn] = useState(me?.company_inn ?? '');
+  const [passwordOpen, setPasswordOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [repeatPassword, setRepeatPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSaved, setPasswordSaved] = useState(false);
+  const [passwordSaving, setPasswordSaving] = useState(false);
   const [appLock, setAppLock] = useState(() => native.appLockEnabled());
   const [reducedMotion, setReducedMotion] = useState(() => localStorage.getItem('traksos.reduceMotion') === '1');
   const toggleMotion = (enabled: boolean) => {
@@ -1268,6 +1275,62 @@ export function Profile() {
         )}
         <button className="btn" disabled={busy}>Сохранить</button>
       </form>
+      <div className="card stack">
+        <b>Безопасность аккаунта</b>
+        <button type="button" className="btn ghost" onClick={() => {
+          setPasswordOpen(value => !value);
+          setPasswordError('');
+          setPasswordSaved(false);
+          setCurrentPassword('');
+          setNewPassword('');
+          setRepeatPassword('');
+        }}>{passwordOpen ? 'Скрыть смену пароля' : 'Сменить пароль'}</button>
+        {passwordOpen && <form className="stack" onSubmit={async (event) => {
+          event.preventDefault();
+          setPasswordError('');
+          setPasswordSaved(false);
+          if (newPassword.length < 10 || newPassword.length > 128) {
+            setPasswordError('Новый пароль должен содержать от 10 до 128 символов.');
+            return;
+          }
+          if (newPassword !== repeatPassword) {
+            setPasswordError('Новый пароль и подтверждение не совпадают.');
+            return;
+          }
+          setPasswordSaving(true);
+          try {
+            await post('/api/auth/change-password', { currentPassword, newPassword });
+            setPasswordSaved(true);
+            setPasswordOpen(false);
+            setCurrentPassword('');
+            setNewPassword('');
+            setRepeatPassword('');
+          } catch (error) {
+            setPasswordError(error instanceof Error ? error.message : 'Не удалось изменить пароль.');
+          } finally {
+            setPasswordSaving(false);
+          }
+        }}>
+          <label className="stack">Текущий пароль
+            <input className="field" type="password" autoComplete="current-password" required maxLength={128}
+              value={currentPassword} onChange={event => setCurrentPassword(event.target.value)} />
+          </label>
+          <label className="stack">Новый пароль
+            <input className="field" type="password" autoComplete="new-password" required minLength={10} maxLength={128}
+              value={newPassword} onChange={event => setNewPassword(event.target.value)} />
+          </label>
+          <label className="stack">Повторите новый пароль
+            <input className="field" type="password" autoComplete="new-password" required minLength={10} maxLength={128}
+              value={repeatPassword} onChange={event => setRepeatPassword(event.target.value)} />
+          </label>
+          <small className="note">После смены пароля другие активные сеансы будут завершены. Временные ограничения административного доступа эта операция не меняет.</small>
+          {passwordError && <p role="alert" className="note">{passwordError}</p>}
+          <button type="submit" className="btn" disabled={passwordSaving || !currentPassword || !newPassword || !repeatPassword}>
+            {passwordSaving ? 'Сохранение…' : 'Сохранить новый пароль'}
+          </button>
+        </form>}
+        {passwordSaved && <p role="status">Пароль изменён. Другие сеансы завершены.</p>}
+      </div>
       <div className="card stack">
         <b>Настройки приложения</b>
         <label className="row">
