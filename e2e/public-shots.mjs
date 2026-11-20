@@ -31,7 +31,7 @@ try {
         for (const [path,w,h] of [
           ['/owner20-artwork-sprite.webp',1018,446],
           ['/owner20-photo-background-approved.webp',1536,324],
-          ['/owner20-header-logo-approved.webp',235,53],
+          ['/traksos-brand-logo-approved-618.png',274,46],
         ]) {
           const response=await fetch(path);
           if(!response.ok)throw Error('Approved visual unavailable: '+path+' HTTP '+response.status);
