@@ -52,9 +52,9 @@ export function AndroidDesignReview({ role }: { role?: string }) {
   // Copy the actual role's Shell tab configuration and vector component.
   // In review they cannot open authenticated screens or send a request.
   const tabs: [string, string][] = performer
-    ? [['⌂','Главная'],['☷','Заявки'],['▤','Чат'],['◉','Меню']]
-    : [['⌂','Главная'],['☷','Заявки'],['◌','Эфир'],
-       ['▣','Техника'],['🛍','Магазин'],['◉','Меню']];
+    ? [['⌂','Главная'],['clipboard','Заявки'],['chat','Чат'],['menu','Меню']]
+    : [['⌂','Главная'],['clipboard','Заявки'],['◌','Эфир'],
+       ['truck','Техника'],['🛍','Магазин'],['menu','Меню']];
   return <div className={'app role-' + (performer ? 'performer' : 'client') + ' and19-review-page'}
     aria-label="Проверка Android APK по утверждённому дизайну">
     <header className="and19-review-header">
