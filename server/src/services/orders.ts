@@ -1074,7 +1074,8 @@ export class OrdersService {
     const where = scope === 'performer' ? 'o.performer_id = $1' : user.owner_id ? 'o.created_by = $1' : '(o.client_id = $1 or o.created_by = $1)';
     const items = await this.db.query<any>(
       `select o.id, o.number, o.status, o.service, o.is_sos, o.problem, o.description, o.address, o.brand, o.estimate, o.work_amount, o.call_out_amount,
-              o.client_fee_pct, o.discount_amount, o.payment_method, o.created_at, o.completed_at, o.consult_of,
+              o.client_fee_pct, o.discount_amount, o.payment_method,
+              o.created_at, o.accepted_at, o.en_route_at, o.arrived_at, o.completed_at, o.consult_of,
               o.performer_id, o.commission_pct_override, o.points_commission,
               o.case_root_id, o.continuation_of, o.result, o.result_note, o.vehicle_id,
               uc.status as unilateral_status,
@@ -1083,6 +1084,12 @@ export class OrdersService {
               -- in the authenticated order detail. Never expose phone or raw GPS.
               perf.name as performer_name, perf.rating::float as performer_rating,
               perf.rating_count as performer_rating_count,
+              -- Staged dispatch ETA is an estimate made at dispatch; never
+              -- present it as a fresh live GPS arrival time.
+              (select d.road_eta_minutes from order_dispatch d
+                 where d.order_id=o.id and d.performer_id=o.performer_id
+                   and d.road_eta_minutes is not null
+                 order by d.sent_at desc nulls last limit 1) as dispatch_eta_minutes,
               (select coalesce(company_name, name) from users where id=o.client_id) as client_name
          from orders o left join vehicles v on v.id=o.vehicle_id
          left join users perf on perf.id=o.performer_id
