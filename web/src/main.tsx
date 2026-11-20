@@ -23,6 +23,8 @@ import './scenarioCourses.css';
 // Approved public design is loaded last: previous role/guest CSS may not overwrite it.
 import './currentApproved20261119.css';
 import './approvedHeroImage20261119.css';
+// Desktop-only role styling; mobile Android stays on its separately approved 19 Nov layer.
+import './desktopCabinetsOwner20261120.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
