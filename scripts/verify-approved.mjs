@@ -137,6 +137,7 @@ const unifiedShell = await read('web/src/main.tsx');
 const unifiedBot = await read('web/src/trakbotMascot.css');
 const unifiedOrderPhoto = await read('web/src/approvedOrderTruck.tsx');
 const unifiedSceneStyle = await read('web/src/approvedEmptyScene.css');
+const unifiedServiceSceneStyle = await read('web/src/approvedServiceScene.css');
 const ownerPcHeader = await read('web/src/screens/ownerDesktopHome20261120.tsx');
 expect(unifiedVisuals.includes("logo: '/traksos-brand-logo-approved-618.png'") &&
   unifiedVisuals.includes("trakbotHello: '/trakbot-approved-hello.webp'") &&
@@ -162,6 +163,21 @@ expect(unifiedOrderPhoto.includes("vehicleReferencePhoto(brand,model,year)") &&
   ownerPcHeader.includes('src={APPROVED_VISUALS.logo}') &&
   !ownerPcHeader.includes('function TruckLogo()'),
   'one exact-generation truck photo source with honest fallback, reduced motion and identical public/Android brand');
+// The approved Android layout must keep its four service slots and original
+// 10px label size, while displaying the exact same four atlas crops as PC.
+const sharedSceneKeys=['repair','tow','service','consult'];
+const sharedScenePositions=['0 0','-176px 0','-352px 0','-528px 0'];
+expect(sharedSceneKeys.every((kind,i)=>
+  unifiedServiceSceneStyle.includes('.tr-service-illustration--'+kind+'{background-position:'+sharedScenePositions[i]+'}') &&
+  unifiedMobile.includes('<ApprovedServiceIllustration kind="'+kind+'" />')) &&
+  ['Выездной мастер','Эвакуатор','СТО','Консультация'].every(
+    label=>unifiedMobile.includes('className="and19-service-label">'+label+'</span>')
+  ) &&
+  unifiedServiceSceneStyle.includes('.and19-services>a>.and19-service-label') &&
+  unifiedServiceSceneStyle.includes('font-size:inherit;') &&
+  unifiedServiceSceneStyle.includes('transform:scale(.51);'),
+  'approved PC/Android service tiles share exactly four photos and keep original Android 4-column text geometry');
+
 for (const file of ['web/src/finalCanon.css','web/src/trackPhotos.css']) {
   let exists = false;
   try { await stat(file); exists = true; } catch {}
