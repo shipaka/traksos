@@ -75,12 +75,49 @@ echo "Checked out revision: $(git -C "$ROOT" rev-parse --short HEAD)"
 echo "Building new app image ..."
 docker compose build app || fail "Build failed. Existing app still running."
 # Validate the exact release image in sandbox BEFORE replacing production.
-[[ -f .env.sandbox && -f docker-compose.sandbox.yml ]] ||
-  fail "Sandbox not configured. Production unchanged."
-sandbox_compose=(docker compose -f docker-compose.yml -f docker-compose.sandbox.yml --profile sandbox)
+# Optional existing standalone sandbox:
+#   TRAKSOS_SANDBOX_DIR=/root/traksos-sandbox/deploy
+#   TRAKSOS_SANDBOX_PROJECT=traksos-test bash deploy/update-site.sh
+# The external project must ALREADY be running; never create or replace its DB.
+if [[ -n "${TRAKSOS_SANDBOX_DIR:-}" ]]; then
+  [[ -n "${TRAKSOS_SANDBOX_PROJECT:-}" ]] ||
+    fail "TRAKSOS_SANDBOX_PROJECT required for an external sandbox."
+  production_project="$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' "$db")"
+  [[ -n "$production_project" && "$TRAKSOS_SANDBOX_PROJECT" != "$production_project" ]] ||
+    fail "External sandbox project must not be production."
+  sandbox_dir="$(realpath -e "$TRAKSOS_SANDBOX_DIR")" ||
+    fail "External sandbox directory not found."
+  [[ "$sandbox_dir" != "$(pwd)" ]] ||
+    fail "External sandbox must have a separate deployment directory."
+  [[ -f "$sandbox_dir/.env" && -f "$sandbox_dir/.env.sandbox" &&
+     -f "$sandbox_dir/docker-compose.sandbox.yml" ]] ||
+    fail "External sandbox config missing. Production unchanged."
+  sandbox_compose=(docker compose --env-file "$sandbox_dir/.env"
+    -p "$TRAKSOS_SANDBOX_PROJECT"
+    -f "$sandbox_dir/docker-compose.sandbox.yml" --profile sandbox)
+else
+  [[ -f .env.sandbox && -f docker-compose.sandbox.yml ]] ||
+    fail "Sandbox not configured. Production unchanged."
+  sandbox_compose=(docker compose -f docker-compose.yml
+    -f docker-compose.sandbox.yml --profile sandbox)
+fi
+"${sandbox_compose[@]}" config --quiet ||
+  fail "Sandbox Compose configuration invalid. Production unchanged."
 sandbox_id="$("${sandbox_compose[@]}" ps -q sandbox-app)"
-[[ -n "$sandbox_id" && "$(docker inspect -f '{{.State.Running}}' "$sandbox_id" 2>/dev/null)" == true ]] ||
-  fail "Sandbox not running. Production unchanged."
+sandbox_db_id="$("${sandbox_compose[@]}" ps -q sandbox-db)"
+[[ -n "$sandbox_id" && -n "$sandbox_db_id" ]] ||
+  fail "Existing sandbox app/db not found. Production unchanged."
+for container in "$sandbox_id" "$sandbox_db_id"; do
+  [[ "$(docker inspect -f '{{.State.Running}}' "$container" 2>/dev/null)" == true ]] ||
+    fail "Sandbox container is not running. Production unchanged."
+done
+[[ "$sandbox_id" != "$(docker compose ps -q app)" &&
+   "$sandbox_db_id" != "$db" ]] ||
+  fail "Sandbox and production containers overlap. Production unchanged."
+prod_volume="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/var/lib/postgresql/data"}}{{.Name}}{{end}}{{end}}' "$db")"
+sandbox_volume="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/var/lib/postgresql/data"}}{{.Name}}{{end}}{{end}}' "$sandbox_db_id")"
+[[ -n "$prod_volume" && -n "$sandbox_volume" && "$prod_volume" != "$sandbox_volume" ]] ||
+  fail "Sandbox and production DB volumes are not isolated. Production unchanged."
 echo "Testing release image on isolated sandbox ..."
 "${sandbox_compose[@]}" up -d --no-deps sandbox-app ||
   fail "Sandbox update failed. Production unchanged."
