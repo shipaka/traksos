@@ -212,6 +212,48 @@ export function Shop() {
   );
 }
 
+/** Receipt code is shown only to the authenticated buyer, never to couriers.
+ * Verification by the courier does NOT complete the shop order: buyer approval
+ * is a separate action, with an explicit acknowledgement of actual receipt.
+ */
+function CustomerCourierReceipt({orderId,reload}:{orderId:string;reload:()=>void}){
+  const [open,setOpen]=useState(false);
+  const [code,setCode]=useState<any>(null);
+  const [error,setError]=useState('');
+  const [agree,setAgree]=useState(false);
+  const {busy,run}=useAction();
+  const refresh=async()=>{
+    try{const x=await get('/api/shop/orders/'+encodeURIComponent(orderId)+'/receipt-code');setCode(x);setError('');}
+    catch(e){setError(e instanceof Error?e.message:'Код пока недоступен');}
+  };
+  return <section className="courier-customer-proof" aria-label="Подтверждение вручения заказа">
+    <button type="button" className="btn ghost small" aria-expanded={open} onClick={async()=>{
+      if(open){setOpen(false);return;}setOpen(true);await refresh();
+    }}>{open?'Скрыть код вручения':'Код вручения и подтверждение получения'}</button>
+    {open&&<>
+      <p className="note">Покажите код курьеру только после прибытия. Не подтверждайте получение заранее.</p>
+      {error&&<p role="alert" className="note">{error}</p>}
+      {code&&<div className="courier-customer-code">
+        <small>Ваш код (6 цифр)</small><strong>{code.code}</strong>
+        <span>Курьер проверяет его на своём устройстве.</span>
+      </div>}
+      {code?.verified ? <>
+        <label className="agree"><input type="checkbox" checked={agree}
+          onChange={e=>setAgree(e.target.checked)}/>
+          <span>Я лично получил(а) все указанные в заказе запчасти.</span></label>
+        <button type="button" className="btn" disabled={!agree||busy}
+          onClick={async()=>{
+            const result=await run(()=>post('/api/shop/orders/'+encodeURIComponent(orderId)+'/confirm-received'),
+              'Получение заказа подтверждено');
+            if(result){setOpen(false);reload();}
+          }}>Подтвердить фактическое получение</button>
+      </> : <button type="button" className="btn ghost small" disabled={busy}
+        onClick={refresh}>Проверить статус вручения</button>}
+      <p className="note">После проверки кода заказ не закрывается автоматически — последнее решение за получателем.</p>
+    </>}
+  </section>;
+}
+
 function MyShopOrders({ orders, reload, canOrder }: { orders: any[]; reload: () => void; canOrder: boolean }) {
   const { busy, run } = useAction();
   const [cart, setCart] = useCart();
@@ -234,6 +276,13 @@ function MyShopOrders({ orders, reload, canOrder }: { orders: any[]; reload: () 
             {openAnalog === i.productId && <HistoryAnalogs productId={i.productId} add={addItem} />}
           </div>)}
           {o.adminNote && <span>{o.adminNote}</span>}
+          {o.delivery==='delivery' && o.canConfirmCourierReceipt &&
+            ['arrived','code_verified'].includes(o.courierStatus) && o.status==='shipped' &&
+            <CustomerCourierReceipt orderId={o.id} reload={reload}/>}
+          {o.canConfirmCourierReceipt && !['arrived','code_verified','received','cancelled'].includes(o.courierStatus) &&
+            <span className="note">Код вручения станет доступен, когда курьер отметит «На месте».</span>}
+          {o.courierStatus && !o.canConfirmCourierReceipt && o.status!=='done' && o.status!=='cancelled' &&
+            <span className="note">Код вручения доступен только пользователю, который оформил заказ.</span>}
           {o.cancelReason && <span className="note">Отменён: {o.cancelReason}</span>}
           {o.status === 'new' && <button className="btn ghost small" disabled={busy} onClick={async () => { if (await run(() => post(`/api/shop/orders/${o.id}/cancel`), 'Заказ отменён')) reload(); }}>Отменить</button>}
         </div>
@@ -598,6 +647,76 @@ const NEXT: Record<string, [string, string][]> = {
   ready: [['shipped', 'Отправлен'], ['done', 'Получен']], shipped: [['done', 'Получен']],
 };
 
+function CourierAssign({order,onDone}:{order:any;onDone:()=>void}){
+  const [opened,setOpened]=useState(false);
+  const [selected,setSelected]=useState('');
+  const couriers=useLoad<any[]>(()=>opened?get('/api/admin/couriers'):Promise.resolve([]),[opened]);
+  const {busy,run}=useAction();
+  if(order.delivery!=='delivery')return null;
+  if(order.courierStatus&&order.courierStatus!=='assigned')return <p className="note">
+    Доставка курьером · {order.courierStatus==='received'?'Подтверждена получателем':
+      order.courierStatus==='code_verified'?'Код проверен — ожидаем подтверждение':
+      'В процессе'} · закрытие покупателем отдельно
+  </p>;
+  return <section className="courier-admin-assign">
+    {order.courierStatus==='assigned'&&<p className="note">Курьер назначен. Код доступен только покупателю.</p>}
+    {order.status==='ready'&&<button type="button" className="btn ghost small"
+      onClick={()=>setOpened(v=>!v)} aria-expanded={opened}>
+      {opened?'Скрыть выбор':'Назначить курьера'}
+    </button>}
+    {opened&&<div className="stack">
+      <p className="note">Назначать можно только подготовленные заказы с адресом.
+        Сменить назначение можно до начала рейса.</p>
+      {!couriers.data?<span className="note">{couriers.error||'Загружаем доступных курьеров…'}</span>
+        :couriers.data.length===0?<span className="note">Курьеров пока нет. Создайте отдельный аккаунт с ролью «Курьер» через раздел регистрации администратора.</span>
+        :<>
+          <label className="stack"><span className="label">Курьер для этой доставки</span>
+            <select className="field" value={selected} onChange={e=>setSelected(e.target.value)}>
+              <option value="">Выберите курьера</option>
+              {couriers.data.map((x:any)=><option key={x.id} value={x.id}>{x.name||'Курьер'} · {x.id.slice(0,8)}</option>)}
+            </select>
+          </label>
+          <button type="button" className="btn small" disabled={busy||!selected}
+            onClick={async()=>{
+              const saved=await run(()=>post('/api/admin/shop/orders/'+encodeURIComponent(order.id)+'/courier',
+                {courierId:selected}),'Курьер назначен');
+              if(saved){setOpened(false);onDone();}
+            }}>Сохранить назначение</button>
+        </>}
+    </div>}
+  </section>;
+}
+/** An administrator may rotate a locked or expired code, but cannot view it.
+ * A written reason and audit event are mandatory; the buyer sees it privately.
+ */
+function CourierReceiptRecovery({order,onDone}:{order:any;onDone:()=>void}){
+  const [reason,setReason]=useState('');
+  const {busy,run}=useAction();
+  const expires=order.courierCodeExpiresAt?new Date(order.courierCodeExpiresAt).getTime():NaN;
+  const expired=Number.isFinite(expires)&&expires<Date.now();
+  if(order.courierStatus!=='arrived'||order.status!=='shipped')return null;
+  if((order.courierCodeAttempts??0)<5&&!expired)return null;
+  return <section className="card stack" aria-label="Восстановление кода вручения">
+    <b>Код вручения {expired?'истёк':'заблокирован'}</b>
+    <p className="note">Администратор может выдать новый код после проверки ситуации.
+      Сам код показывается только покупателю в истории заказа.</p>
+    {(order.courierCodeResets??0)>=3
+      ? <p className="note">Лимит восстановления исчерпан — требуется разбирательство.</p>
+      : <>
+        <label className="stack"><span className="label">Причина восстановления</span>
+          <textarea className="field" value={reason} maxLength={500}
+            placeholder="Например: код истёк, согласовано с получателем"
+            onChange={e=>setReason(e.target.value)}/></label>
+        <button type="button" className="btn ghost small" disabled={busy||reason.trim().length<10}
+          onClick={async()=>{
+            const saved=await run(()=>post('/api/admin/shop/orders/'+encodeURIComponent(order.id)+
+              '/courier/reset-receipt',{reason:reason.trim()}),'Код обновлён для получателя');
+            if(saved){setReason('');onDone();}
+          }}>Выдать новый код получателю</button>
+      </>}
+  </section>;
+}
+
 function AdminShopOrders() {
   const [all, setAll] = useState(false);
   const l = useLoad(() => get(`/api/admin/shop/orders${all ? '' : '?status=open'}`), [all], (e) => e.type === 'shop');
@@ -620,11 +739,17 @@ function AdminShopOrders() {
           <span className="note">{DELIVERY[o.delivery]}{o.address ? `: ${o.address}` : ''}{o.orderId ? ' · ' : ''}{o.orderId && <a href={`#/order/${o.orderId}`}>заявка</a>} · {o.payment === 'invoice' ? 'по счёту' : 'оплата при получении'}</span>
           {o.comment && <span className="note">«{o.comment}»</span>}
           {o.adminNote && <span className="note">Клиенту: {o.adminNote}</span>}
+          <CourierAssign order={o} onDone={l.reload}/>
+          <CourierReceiptRecovery order={o} onDone={l.reload}/>
           {NEXT[o.status] && <>
             <input className="field" placeholder="Сообщение клиенту · по желанию" value={note[o.id] ?? ''} onChange={(e) => setNote({ ...note, [o.id]: e.target.value })} />
             <div className="row">
-              {NEXT[o.status].map(([s, n]) => <button key={s} className="btn small" disabled={busy} onClick={() => act(o.id, s, n)}>{n}</button>)}
-              <button className="btn ghost small" disabled={busy} onClick={() => act(o.id, 'cancelled', 'Заказ отменён, товар вернулся на склад')}>Отменить</button>
+              {NEXT[o.status].filter(([s])=>!o.courierStatus||!['done','shipped'].includes(s))
+                .map(([s, n]) => <button key={s} className="btn small" disabled={busy}
+                  onClick={() => act(o.id, s, n)}>{n}</button>)}
+              {(!o.courierStatus||o.courierStatus==='assigned')&&
+                <button className="btn ghost small" disabled={busy}
+                  onClick={() => act(o.id, 'cancelled', 'Заказ отменён, товар вернулся на склад')}>Отменить</button>}
             </div>
           </>}
         </div>
