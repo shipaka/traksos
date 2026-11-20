@@ -15,8 +15,9 @@ import {OfferForm} from './search.tsx';
 import {OrderPhotoGallery, OrderPhotoCapture} from './orderPhotos.tsx';
 import {BaseHome, RequestCard} from './base.tsx';
 import {native} from '../native.ts';
+import {ApprovedPcCourier} from './approvedPcCourier20261120.tsx';
 
-export type ApprovedPCRole = 'driver'|'owner'|'master'|'tow'|'service'|'insurer'|'inspection'|'moderator'|'admin';
+export type ApprovedPCRole = 'driver'|'owner'|'master'|'tow'|'service'|'insurer'|'inspection'|'courier'|'moderator'|'admin';
 const activeStates = new Set(['searching','accepted','en_route','arrived','working','awaiting_confirmation','pending_client','disputed']);
 const text = (value:any, fallback='—') => value == null || value === '' ? fallback : String(value);
 const number = (value:any) => typeof value === 'number' ? value.toLocaleString('ru-RU') : '—';
@@ -53,6 +54,7 @@ export function ApprovedPcDesk({role,fallback}:{role:ApprovedPCRole;fallback:Rea
   if(role==='master'||role==='tow') return <PerformDesk tow={role==='tow'}/>;
   if(role==='service') return <ServiceDesk/>;
   if(role==='insurer'||role==='inspection') return <InsuranceDesk inspection={role==='inspection'}/>;
+  if(role==='courier') return <ApprovedPcCourier/>;
   if(role==='moderator') return <ModeratorDesk/>;
   return <AdminDesk/>;
 }
