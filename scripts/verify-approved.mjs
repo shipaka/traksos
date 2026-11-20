@@ -226,9 +226,28 @@ expect(approvedHeroLayer.includes('object-fit:contain!important') &&
   !approvedHeroLayer.includes('#f3197c'),
   'Android promo phone cannot crop approved logo into a retro magenta fragment');
 const heroVisualE2E = await read('e2e/approved-truck-hero.mjs');
+const publicLayoutE2E = await read('e2e/public-layout.mjs');
+const ownerJourneyE2E = await read('e2e/premium-unified-client.mjs');
+expect(ownerJourneyE2E.includes("'.approved-pc.approved-pc-client'") &&
+  ownerJourneyE2E.includes("'.client-dashboard .and19-client'") &&
+  ownerJourneyE2E.includes("nativePreview:width<900") &&
+  !ownerJourneyE2E.includes("'.client-hero-scania'") &&
+  !ownerJourneyE2E.includes("'.and19-cover img'"),
+  'client owner browser journey tests only approved 617 PC and 618 native Android roles');
+expect(publicLayoutE2E.includes('heroGeometry.pictureBottom <= heroGeometry.copyTop+2') &&
+  publicLayoutE2E.includes('native artwork must be an uncropped 2:1 photograph ABOVE the copy') &&
+  !publicLayoutE2E.includes('native artwork must cover the approved banner'),
+  'Android guest regression test enforces approved 618 hero photo ABOVE copy, not retired overlay');
 expect(currentCss.includes(approvedPhoto) && approvedHeroLayer.includes(approvedPhoto)
   && !currentCss.includes('tracksos-approved-scenic-hero.webp'),
   'guest home has one approved Nov 19 truck image, with no legacy image fallback');
+// The copied public/ asset MUST be referenced by its runtime root path.
+ // ../public/ is relative to dist/app.css and silently blanks the truck on mobile.
+expect(!currentCss.includes("../public/tracksos-approved-hero-owner-20261119.webp") &&
+  !approvedHeroLayer.includes("../public/tracksos-approved-hero-owner-20261119.webp") &&
+  currentCss.includes("url('/tracksos-approved-hero-owner-20261119.webp')") &&
+  approvedHeroLayer.includes("url('/tracksos-approved-hero-owner-20261119.webp')"),
+  'both approved guest hero layers resolve their images from the deployed public root');
 expect(heroVisualE2E.includes("tracksos-approved-hero-owner-20261119(?:-[A-Za-z0-9]+)")
   && heroVisualE2E.includes("info.photo.includes('tracksos-approved-scenic-hero')"),
   'browser screenshot gate rejects obsolete 14 Nov hero and requires actual owner image');
@@ -630,6 +649,16 @@ expect(photoMigration.includes('create table if not exists order_photos') &&
 const pcSource=await read('web/src/screens/approvedPcCabinets20261120.tsx');
 const pcCss=await read('web/src/approvedPcCabinets20261120.css');
 const pcMap=await read('web/public/traksos-russia-outline.svg');
+const approvedCourierPC=await read('web/src/screens/approvedPcCourier20261120.tsx');
+const approvedCourierCSS=await read('web/src/screens/approvedPcCourier20261120.css');
+expect(pcSource.includes("if(role==='courier') return <ApprovedPcCourier/>") &&
+  unifiedShell.includes('<ApprovedPcDesk role="courier" fallback={<CourierDesk />} />') &&
+  approvedCourierPC.includes("get('/api/courier/jobs')") &&
+  approvedCourierPC.includes("get('/api/courier/presence')") &&
+  approvedCourierPC.includes('APPROVED_VISUALS.trakbotHello') &&
+  approvedCourierPC.includes('Схема, не географическая карта') &&
+  approvedCourierCSS.includes('.courier-pc'),
+  'approved courier PC uses real orders, correct routing, honest schematic and owner mascot');
 expect(pcSource.includes("export type ApprovedPCRole") &&
   ['driver','owner','master','tow','service','insurer','inspection','moderator','admin']
     .every(role=>pcSource.includes("'"+role+"'")) &&
