@@ -84,7 +84,9 @@ jobs:
           git merge --ff-only origin/main
           [[ "$(git rev-parse HEAD)" == "$target" ]] ||
             { echo "Checkout mismatch"; exit 1; }
-          bash deploy/update-site.sh
+          TRAKSOS_SANDBOX_DIR=/root/traksos-sandbox/deploy \
+            TRAKSOS_SANDBOX_PROJECT=traksos-test \
+            bash deploy/update-site.sh
           bash deploy/doctor.sh
           REMOTE
 
