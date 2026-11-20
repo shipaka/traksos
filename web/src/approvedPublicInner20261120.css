@@ -283,3 +283,39 @@
   .guest-app:not(.guest-home) .guest-explore-hero *,
   .guest-app:not(.guest-home) .guest-info-hero * { animation: none !important; }
 }
+
+
+/* Mobile approved road art: the file existed but was visually occluded by
+   overlapping legacy hero layers. Real DOM image is separately testable. */
+.public-hero-mobile-photo { display: none; }
+@media (max-width:899px) {
+  html.traksos-compact-guest .guest-app .public-landing .public-brand-hero::before {
+    display:none!important;
+    content:none!important;
+  }
+  html.traksos-compact-guest .guest-app .public-landing .public-hero-visual {
+    z-index:2!important;
+    opacity:1!important;
+    overflow:visible!important;
+    width:100%!important;
+    max-width:100%!important;
+  }
+  html.traksos-compact-guest .guest-app .public-landing .public-hero-visual .public-hero-mobile-photo {
+    display:block!important;
+    position:relative!important;
+    width:100%!important;
+    max-width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    aspect-ratio:2 / 1!important;
+    object-fit:contain!important;
+    object-position:center center!important;
+    opacity:1!important;
+    visibility:visible!important;
+    border-radius:9px;
+    pointer-events:none;
+  }
+  html.traksos-compact-guest .guest-app .public-landing .public-hero-copy {
+    z-index:3!important;
+  }
+}
