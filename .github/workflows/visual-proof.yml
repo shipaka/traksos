@@ -61,6 +61,8 @@ jobs:
         run: node e2e/native-guest-layout.mjs
       - name: Реальные Android-кабинеты после входа (синтетические CI-аккаунты)
         run: node e2e/android-approved-real-screens.mjs
+      - name: Дизайн-тур тестовой APK — реальные React-кабинеты, только синтетика
+        run: node e2e/android-apk-design-review.mjs
       - name: Реальная проверка TrakBot и переходов
         run: node e2e/ui-smoke.mjs
       - name: Реальные переходы и сервисы
