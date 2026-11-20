@@ -56,6 +56,19 @@ try{
       if(role==='master')await page.locator('.and19-line button').waitFor();
       else await page.locator('.and19-services').waitFor();
       await page.waitForTimeout(650);
+      const brand=await page.locator('.top .tr-approved-brand-logo img').evaluate(img=>({
+        src:img.getAttribute('src'),loaded:img.complete&&img.naturalWidth>0
+      }));
+      if(brand.src!=='/traksos-brand-logo-approved-618.png'||!brand.loaded)
+        throw Error(role+': native WebView brand diverges from approved 618: '+JSON.stringify(brand));
+      if(role==='owner'){
+        const art=await page.locator('.and19-services .tr-service-illustration').evaluateAll(elements=>({
+          count:elements.length,
+          shared:elements.every(el=>getComputedStyle(el).backgroundImage.includes('traksos-service-scenes-shared.webp'))
+        }));
+        if(art.count!==4||!art.shared)
+          throw Error('Android must reuse the same desktop four-service visual atlas: '+JSON.stringify(art));
+      }
       const size=await page.evaluate(()=>({client:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));
       if(size.scroll>size.client+3)throw Error(role+' horizontal overflow '+JSON.stringify(size));
       if(errors.length)throw Error(role+' JS errors: '+errors.join('; '));
