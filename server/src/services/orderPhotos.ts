@@ -44,7 +44,7 @@ export class OrderPhotosService {
     const order=await this.orderForParticipant(user,orderId);
     if(this.orders.actorOf(user,order)!=='performer')
       throw forbidden('Добавлять фото ремонта может только назначенный исполнитель');
-    const match=/^data:(image\\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/]+={0,2})$/.exec(dataUrl);
+    const match=/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/]+={0,2})$/.exec(dataUrl);
     if(!match || !ALLOWED.has(match[1]))throw bad('bad_image','Нужна фотография JPEG, PNG или WEBP');
     const decoded=Buffer.from(match[2],'base64');
     if(decoded.length<1_000 || !sniff(match[1],decoded))throw bad('bad_image','Некорректный файл изображения');
