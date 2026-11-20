@@ -37,6 +37,7 @@ import { PartnerFinance } from './services/partnerFinance.ts';
 import { InsuranceQuoteFlow } from './services/insuranceQuoteFlow.ts';
 import { PrivacyService } from './services/privacy.ts';
 import { StandingService } from './services/standing.ts';
+import { registerVehicleReferenceRoutes } from './http/vehicleReferenceRoutes.ts';
 import { ShopService } from './services/shop.ts';
 import { ShopCatalogService } from './services/shopCatalog.ts';
 import { ModerationService } from './services/moderation.ts';
@@ -119,6 +120,7 @@ export function createApp(d: Deps) {
   centers.onDispute = (p) => moderation.open({ kind: 'dispute', title: p.title, text: p.text, openedBy: p.userId, targetId: p.targetId, bookingId: p.bookingId, ticketId: p.ticketId, priority: 1 });
 
   const r = new Router();
+  registerVehicleReferenceRoutes(r, d.db, settings, now);
   const staff = ['admin', 'moderator'];
   const performerRoles = ['master', 'tow', 'service'];
 

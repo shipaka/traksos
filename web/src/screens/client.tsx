@@ -822,7 +822,7 @@ export function Garage() {
   const { me } = useMe();
   const list = useLoad(() => get('/api/vehicles'), []);
   const { busy, run } = useAction();
-  const [form, setForm] = useState({ brand: '', model: '', year: '', plate: '', trailerPlate: '' });
+  const [form, setForm] = useState<VehicleValue & {plate:string;trailerPlate:string}>({ brand: '', model: '', year: '', plate: '', trailerPlate: '' });
   const [driverFor, setDriverFor] = useState<string | null>(null);
   const [driverPhone, setDriverPhone] = useState('+7 ');
   const isDriver = !!me?.owner_id;
@@ -835,10 +835,11 @@ export function Garage() {
   }, []);
 
   async function add() {
-    const r = await run(() => post('/api/vehicles', {
-      brand: form.brand, model: form.model || undefined, year: form.year ? Number(form.year) : undefined,
+    const r = await run(() => post('/api/vehicle-reference/vehicles', {
+      category: form.catalogCategory, brandKey: form.catalogBrandKey, modelKey: form.catalogModelKey,
+      year: form.year ? Number(form.year) : undefined,
       plate: form.plate || undefined, trailerPlate: form.trailerPlate || undefined,
-    }), 'Машина добавлена');
+    }), 'Машина добавлена из подтверждённого каталога');
     if (r) { setForm({ brand: '', model: '', year: '', plate: '', trailerPlate: '' }); list.reload(); }
   }
 
@@ -887,13 +888,13 @@ export function Garage() {
       {!isDriver && (
         <form className="card" onSubmit={(e) => { e.preventDefault(); add(); }}>
           <b>Добавить машину</b>
-          <VehicleFields value={{ brand: form.brand, model: form.model, year: form.year }} onChange={(v) => setForm({ ...form, ...v })} />
+          <VehicleFields value={form} onChange={(v) => setForm((prev) => ({ ...prev, ...v }))} />
           <div className="grid2">
             <input className="field" placeholder="Госномер тягача" value={form.plate} onChange={(e) => setForm({ ...form, plate: e.target.value })} />
             <input className="field" placeholder="Прицеп" value={form.trailerPlate} onChange={(e) => setForm({ ...form, trailerPlate: e.target.value })} />
           </div>
           <span className="note">Год влияет на подбор мастера: у разных поколений своя электрика.</span>
-          <button className="btn" disabled={busy || !form.brand}>Сохранить</button>
+          <button className="btn" disabled={busy || !form.catalogBrandKey || !form.catalogModelKey}>Сохранить</button>
         </form>
       )}
     </main>
