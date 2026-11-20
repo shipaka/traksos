@@ -539,6 +539,14 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {me && mode === 'moderator' && <span className="pill accent">модерация</span>}
           {me && mode === 'insurer' && <span className="pill accent">страхование</span>}
           {me && mode === 'service' && <span className="pill accent">рембаза</span>}
+          {me && !serviceSandbox && me.roles.includes('insurer') && me.roles.includes('inspection_operator') &&
+            (mode === 'insurer' || mode === 'inspection') &&
+            <nav className="cabinet-role-switch" aria-label="Рабочее направление партнёра">
+              <a href="#/as/insurer" aria-label="Кабинет страхования"
+                aria-current={mode === 'insurer' ? 'page' : undefined}>Страхование</a>
+              <a href="#/as/inspection" aria-label="Кабинет техосмотра"
+                aria-current={mode === 'inspection' ? 'page' : undefined}>Техосмотр</a>
+            </nav>}
           {me && !serviceSandbox && me.roles.some(r => r === 'master' || r === 'tow') && me.roles.some(r => r === 'admin' || r === 'moderator') &&
             <nav className="cabinet-role-switch" aria-label="Режим кабинета">
               <a href="#/as/performer" aria-label="Выездной мастер" aria-current={mode === 'performer' ? 'page' : undefined}>Мастер</a>
