@@ -181,10 +181,23 @@ try{
         const view=await page.evaluate(()=>({
           overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,
           hasMenu:!!document.querySelector('.tabbar a[href="#/menu"]'),
+          chrome:(()=>{
+            const el=document.querySelector('.desktop-content>.tr-native-section-path');
+            return el ? {
+              title:el.querySelector('.tr-native-section-current strong')?.textContent?.trim(),
+              home:el.querySelector('.tr-native-section-home')?.getAttribute('href'),
+              menu:el.querySelector('.tr-native-section-menu')?.getAttribute('href'),
+              visible:el.getBoundingClientRect().height>=40
+            } : null;
+          })(),
           invalid:document.body.textContent?.includes('Такой страницы нет')
         }));
-        if(view.overflow>3||!view.hasMenu||view.invalid)
-          throw Error(role+': section '+section+' is not a reachable Android page: '+JSON.stringify(view));
+        const expectedHome = role==='owner' ? '#/' : '#/work';
+        if(view.overflow>3||!view.hasMenu||view.invalid ||
+           view.chrome?.home!==expectedHome ||
+           view.chrome?.menu!=='#/menu' || !view.chrome?.visible ||
+           !view.chrome?.title)
+          throw Error(role+': section '+section+' is not a reachable styled Android page: '+JSON.stringify(view));
         await page.screenshot({path:output+'/'+role+'-'+section+'-android-390.png',fullPage:true,scale:'css'});
       }
     }finally{await ctx.close()}
