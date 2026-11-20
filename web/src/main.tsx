@@ -49,6 +49,7 @@ import { DemoPreviewGate } from './screens/demoPreview.tsx';
 import { AndroidDesignReview } from './screens/androidDesignReview.tsx';
 import { NavGlyph } from './navGlyph.tsx';
 import { MobileRoleMenu } from './mobileRoleMenu.tsx';
+import { MobileSectionChrome } from './mobileSectionChrome.tsx';
 import { SandboxEnter, SandboxModeBar } from './screens/isolatedSandbox.tsx';
 import { GuestCompany, GuestOffers } from './screens/guestInfo.tsx';
 import { PUBLIC_CAPABILITIES } from './guestCatalog.ts';
@@ -465,6 +466,20 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     ['/offer/' + (mode === 'performer' || mode === 'service' ? 'performer' : mode === 'insurer' ? 'insurer' : mode === 'inspection' ? 'inspection' : mode === 'admin' || mode === 'moderator' ? 'privacy' : 'client'), mode === 'insurer' || mode === 'inspection' ? 'Договор партнёра' : 'Оферта'],
     ['/offer/privacy', 'Политика персональных данных'],
     ['/privacy', 'Мои персональные данные']];
+  // Visible on Android secondary screens only; the owner-approved dashboard
+  // composition is intentionally untouched. Titles come from authorized routes.
+  const workspaceHref = mobileTabs[0]?.[0] || '/';
+  const sectionPath = here.split('?')[0];
+  const innerSection = !!me && native.isApp && !serviceSandbox &&
+    !['/',workspaceHref,'/menu'].includes(sectionPath);
+  const scopedSectionNames: [string,string][] = [
+    ...mobileTabs.map(([path,,name])=>[path,name] as [string,string]),
+    ...accountLinks,...helpLinks
+  ];
+  const sectionLabel = scopedSectionNames
+    .filter(([path])=>path !== '/' && (path === sectionPath || sectionPath.startsWith(path+'/')))
+    .sort((a,b)=>b[0].length-a[0].length)[0]?.[1]
+    || (sectionPath.startsWith('/order/') ? 'Карточка заявки' : 'Рабочий раздел');
   const safeLogout = () => {
     if (me?.roles.some(r => r === 'master' || r === 'tow') &&
       !window.confirm('При выходе из аккаунта статус «На линии» отключится. Просто сверните приложение, если хотите продолжать получать заявки. Выйти?')) return;
@@ -632,6 +647,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           <div className="desktop-sidebar-bottom"><strong>TRAKSOS 24/7</strong><span>Помощь грузовикам</span><small>Санкт-Петербург и Ленинградская область</small></div>
         </aside>
         <div className="desktop-content">
+          {innerSection && <MobileSectionChrome title={sectionLabel} homeHref={workspaceHref}/>}
           {me && !serviceSandbox && route.length===0 && <IntroInvitation key={me.id+'-'+mode} userId={me.id} mode={mode} roles={me.roles} />}
           {me && route[0] === 'menu' && !serviceSandbox
             ? <MobileRoleMenu mode={mode} quick={mobileTabs} account={accountLinks} help={helpLinks} onLogout={safeLogout} />
