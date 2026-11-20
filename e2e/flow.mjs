@@ -303,6 +303,9 @@ await shot(m, '11-master-balance');
 // Админ в браузере
 await a.goto(BASE + '/#/admin');
 await a.getByRole('button', { name: 'Распределение' }).click();
+// Distribution settings are intentionally collapsed inside a native details section.
+// Open the real section before checking the authorized dispatch options.
+await a.getByText('Настройки распределения и торгов', { exact: true }).click();
 await a.getByText('Сначала заявки нам').waitFor();
 await assertDashboardTheme(a, 'admin');
 await checkCabinetMenu(a, ['Все заявки', 'Деньги и выплаты', 'Настройки площадки', 'Модерация — очередь'], { shopTab: false });
