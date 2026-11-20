@@ -1,6 +1,6 @@
 // Сборка веб-приложения в web/dist. API_URL — адрес сервера для Android-сборки (по умолчанию тот же сайт).
 import { build, context } from 'esbuild';
-import { cp, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 
 const watch = process.argv.includes('--watch');
@@ -20,12 +20,26 @@ const opts = {
     __API_URL__: JSON.stringify(process.env.API_URL ?? ''),
   },
   loader: { '.css': 'css', '.svg': 'file', '.webp': 'file' },
+  // These approved images are already copied as immutable public assets.
+  // Resolve root-relative CSS URLs at runtime, not as src-relative imports.
+  // Keep their approved names/bytes and don't rewrite the visual composition.
+  external: [
+    '/traksos-russia-outline.svg',
+    '/owner20-artwork-sprite.webp',
+    '/owner20-photo-background-approved.webp',
+  ],
 };
 
 await rm('dist', { recursive: true, force: true });
 await mkdir('dist', { recursive: true });
 const html = await readFile('index.html', 'utf8');
 await writeFile('dist/index.html', html.replaceAll('%BUILD%', Date.now().toString(36)));
+// Fail the build if an approved CSS asset was accidentally removed.
+for (const name of ['traksos-russia-outline.svg', 'owner20-artwork-sprite.webp',
+  'owner20-photo-background-approved.webp']) {
+  const file = await stat('public/' + name);
+  if (!file.isFile() || file.size < 32) throw new Error('Missing approved public asset: ' + name);
+}
 await cp('public', 'dist', { recursive: true }).catch(() => {});
 
 if (watch) {
