@@ -12,6 +12,7 @@ import { VehiclePhotoLink } from '../vehicleVisual.tsx';
 import { APPROVED_VISUALS } from '../approvedVisuals.ts';
 import { ApprovedEmptyScene } from '../approvedEmptyScene.tsx';
 import { ApprovedServiceIllustration } from '../approvedServiceIllustration.tsx';
+import { ApprovedOrderTruck } from '../approvedOrderTruck.tsx';
 import { AndroidClientWorkspace, useMobileWorkspace } from './androidWorkspaces.tsx';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
@@ -121,6 +122,7 @@ export function Home() {
                   :STATUS[o.status]?.name}
               </span>
                 </div>
+                {o.service!=='consult' && <ApprovedOrderTruck order={o} />}
                 <span className="note">{o.service === 'consult' ? 'по телефону' : o.address ?? o.estimate?.zoneName} · открыть →</span>
               </a>
             ))}
