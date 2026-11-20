@@ -1,0 +1,314 @@
+/*
+ * Android visual alignment — 20 Nov 2026.
+ *
+ * Last mobile-only layer: lock real React client/master workspaces to the
+ * approved graphite + orange language, without replacing assets, the 4
+ * service actions, API data, tab destinations, or the desktop design.
+ * Also applies to the debug-only real-component review (same widgets).
+ */
+@media (max-width: 899px) {
+  .app.role-client .and19-workspace,
+  .app.role-performer .and19-workspace {
+    --and20-ink: #edf7fd;
+    --and20-muted: #b6cfdf;
+    --and20-border: #42677e;
+    --and20-bg: #0b2131;
+    --and20-accent: #f77a21;
+    gap: 10px;
+    color: var(--and20-ink);
+    min-width: 0;
+  }
+  /* A photograph belongs to the hero, not a blank strip below a heading. */
+  .app.role-client .and19-workspace > .and19-cover,
+  .app.role-performer .and19-workspace > .and19-cover {
+    display: flex;
+    position: relative;
+    min-height: 124px;
+    padding: 17px 14px;
+    border: 1px solid #456b7e;
+    border-radius: 17px;
+    background: #0a1b2c;
+    isolation: isolate;
+    overflow: hidden;
+    box-shadow: 0 8px 22px rgba(0, 7, 19, .23);
+  }
+  .app.role-client .and19-cover img,
+  .app.role-performer .and19-cover img {
+    display: block;
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 58% center;
+    opacity: 1;
+  }
+  .app.role-client .and19-cover::before,
+  .app.role-performer .and19-cover::before {
+    content: '';
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(90deg, rgba(6, 19, 34, .98) 0%, rgba(6, 19, 34, .80) 37%,
+      rgba(6, 19, 34, .10) 75%, rgba(6, 19, 34, .04) 100%);
+    pointer-events: none;
+  }
+  .app.role-client .and19-cover > div,
+  .app.role-performer .and19-cover > div {
+    position: relative;
+    z-index: 2;
+    width: 62%;
+    max-width: 62%;
+  }
+  .app.role-client .and19-cover h1,
+  .app.role-performer .and19-cover h1 {
+    color: #fff;
+    font-size: clamp(22px, 6.2vw, 28px);
+    line-height: 1.15;
+    margin: 6px 0 0;
+    text-shadow: 0 2px 7px rgba(2, 9, 17, .7);
+  }
+  .app.role-client .and19-role,
+  .app.role-performer .and19-role {
+    min-height: 44px;
+    border: 1px solid var(--and20-border);
+    border-radius: 11px;
+    background: linear-gradient(110deg, #1d3649, #0b1d30);
+    color: #f4f9ff;
+    padding: 8px 11px;
+    font-size: 12px;
+    font-weight: 760;
+  }
+  .app.role-performer .and19-line button {
+    min-height: 44px;
+    flex: 0 0 auto;
+    padding: 6px 9px;
+    font-size: 11px;
+    border-color: #5d7b8b;
+  }
+  .app.role-client .and19-services {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .app.role-client .and19-services > a {
+    min-width: 0;
+    min-height: 86px;
+    padding: 7px 3px 8px;
+    border-radius: 12px;
+    border: 1px solid #466980;
+    background: linear-gradient(145deg, #18364a, #0e2435);
+    color: #eaf4fb;
+    font-size: 10px;
+    font-weight: 790;
+    line-height: 1.2;
+    text-align: center;
+    box-shadow: inset 0 1px rgba(255, 255, 255, .05);
+  }
+  .app.role-client .and19-services > a:first-child {
+    border-color: #fb8f3d;
+    background: linear-gradient(145deg, #4d301c, #172c3b);
+    box-shadow: inset 0 0 0 1px rgba(253, 123, 37, .25);
+  }
+  .app.role-client .and19-services > a > .and19-service-label {
+    font-size: 10px;
+    line-height: 1.17;
+    color: #fff;
+    text-shadow: 0 1px 3px #06101a;
+  }
+  .app.role-client .and19-services > a > .tr-service-illustration {
+    display: block;
+    opacity: .55;
+    pointer-events: none;
+  }
+  .app.role-client .and19-panel,
+  .app.role-performer .and19-panel,
+  .app.role-client .and19-equipment,
+  .app.role-performer .and19-metrics > a {
+    border-color: var(--and20-border);
+    background: linear-gradient(145deg, #18364a, #0b2031);
+    box-shadow: 0 5px 14px rgba(2, 8, 18, .18);
+  }
+  .app.role-client .and19-main-order,
+  .app.role-performer .and19-main-order {
+    padding: 12px;
+    border-color: #568096;
+    border-radius: 15px;
+    background: linear-gradient(150deg, #1b3a50, #0d2233 68%);
+  }
+  .app.role-client .and19-main-order .and19-order-open,
+  .app.role-performer .and19-main-order .and19-order-open {
+    display: grid;
+    grid-template-columns: minmax(104px, 39%) minmax(0, 1fr);
+    gap: 9px 10px;
+    min-width: 0;
+  }
+  .app.role-client .and19-panel-title,
+  .app.role-performer .and19-panel-title {
+    grid-column: 1 / -1;
+    min-width: 0;
+    border-bottom: 1px solid #446b7f;
+    padding: 0 0 10px;
+    gap: 9px;
+  }
+  .app.role-client .and19-panel-title strong,
+  .app.role-performer .and19-panel-title strong {
+    color: #fff;
+    font-size: 15px;
+    line-height: 1.22;
+    overflow-wrap: anywhere;
+  }
+  .app.role-client .and19-status,
+  .app.role-performer .and19-status {
+    flex: 0 0 auto;
+    max-width: 46%;
+    font-size: 10px;
+    line-height: 1.2;
+    color: #a1f7ee;
+    background: #0d4a52;
+    border: 1px solid #44b2b1;
+  }
+  .app.role-client .and19-main-order .tr-approved-order-truck,
+  .app.role-performer .and19-main-order .tr-approved-order-truck {
+    display: block;
+    grid-column: 1;
+    width: 100%;
+    max-width: none;
+    height: 110px;
+    margin: 1px 0;
+    border-radius: 11px;
+    border-color: #4c768b;
+    background: #0b2234;
+    overflow: hidden;
+  }
+  .app.role-client .and19-main-order .tr-approved-order-truck img,
+  .app.role-performer .and19-main-order .tr-approved-order-truck img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .app.role-client .and19-main-order .and19-facts,
+  .app.role-performer .and19-main-order .and19-facts {
+    grid-column: 1 / -1;
+    min-width: 0;
+    margin: 0;
+    gap: 7px;
+    justify-content: center;
+  }
+  .app.role-client .and19-main-order .tr-approved-order-truck + .and19-facts,
+  .app.role-performer .and19-main-order .tr-approved-order-truck + .and19-facts {
+    grid-column: 2;
+  }
+  .app.role-client .and19-main-order .and19-facts p,
+  .app.role-performer .and19-main-order .and19-facts p {
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+    color: #e5f0f7;
+  }
+  .app.role-client .and19-main-order .and19-facts .and19-issue,
+  .app.role-performer .and19-main-order .and19-facts .and19-issue {
+    color: #fff0df;
+    font-weight: 770;
+  }
+  .app.role-client .and19-main-order .and19-price,
+  .app.role-performer .and19-main-order .and19-timeline,
+  .app.role-client .and19-main-order .and19-timeline,
+  .app.role-client .and19-main-order .and19-search-active,
+  .app.role-client .and19-main-order .and19-link,
+  .app.role-performer .and19-main-order .and19-link {
+    grid-column: 1 / -1;
+    margin: 0;
+  }
+  .app.role-client .and19-main-order .and19-price {
+    min-height: 39px;
+    background: #153144;
+    border-color: #456b7c;
+    color: #fff;
+  }
+  .app.role-client .and19-main-order .and19-link,
+  .app.role-performer .and19-main-order .and19-link {
+    min-height: 46px;
+    padding: 10px 12px;
+    font-size: 12px;
+    background: linear-gradient(180deg, #ff8d2e, #e85a11);
+    color: #fff!important;
+    border-color: #ffad66;
+    border-radius: 11px;
+    box-shadow: 0 4px 11px #8d3c174a;
+    text-align: left;
+  }
+  .app.role-client .and19-timeline,
+  .app.role-performer .and19-timeline {
+    margin: 4px 0 2px;
+    gap: 1px;
+  }
+  .app.role-client .and19-timeline li > small,
+  .app.role-performer .and19-timeline li > small {
+    color: #c1d5e2;
+    font-size: 9px;
+  }
+  .app.role-client .and19-order-shortcuts,
+  .app.role-performer .and19-order-shortcuts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(75px, 1fr));
+    gap: 7px;
+    margin-top: 9px;
+  }
+  .app.role-client .and19-order-shortcuts > a,
+  .app.role-performer .and19-order-shortcuts > a {
+    display: flex;
+    min-width: 0;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 8px 5px;
+    border: 1px solid #548095;
+    border-radius: 10px;
+    background: #183447;
+    color: #e9f5fc;
+    font-size: 11px;
+    line-height: 1.23;
+    font-weight: 750;
+  }
+  .app.role-client .and19-equipment {
+    min-height: 63px;
+    padding: 9px 11px;
+  }
+  .app.role-client .and19-equipment-icon { width:42px;height:42px; }
+  .app.role-client .and19-sos {
+    min-height: 48px;
+    background: linear-gradient(180deg,#ff8728,#e95d0d);
+    box-shadow: 0 5px 14px #ba4d1548;
+  }
+  .app.role-performer .and19-metrics { gap: 7px; }
+  .app.role-performer .and19-metrics > a { min-height: 64px; }
+  .app.role-client .and19-workspace a:focus-visible,
+  .app.role-performer .and19-workspace a:focus-visible,
+  .app.role-performer .and19-workspace button:focus-visible {
+    outline: 2px solid #ffad63;
+    outline-offset: 2px;
+  }
+}
+@media (max-width: 359px) {
+  .app.role-client .and19-main-order .and19-order-open,
+  .app.role-performer .and19-main-order .and19-order-open {
+    grid-template-columns: minmax(90px, 39%) minmax(0, 1fr);
+    gap: 7px;
+  }
+  .app.role-client .and19-main-order .tr-approved-order-truck,
+  .app.role-performer .and19-main-order .tr-approved-order-truck { height: 94px; }
+  .app.role-client .and19-main-order .and19-panel-title strong,
+  .app.role-performer .and19-main-order .and19-panel-title strong { font-size: 14px; }
+}
+/* No animations that falsely imply a completed job; honor accessibility. */
+@media (prefers-reduced-motion: reduce) {
+  .and19-workspace a,.and19-workspace button{transition:none!important}
+}
+html.traksos-reduced-motion .and19-workspace a,
+html.traksos-reduced-motion .and19-workspace button{transition:none!important}
