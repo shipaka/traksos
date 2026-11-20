@@ -7,10 +7,16 @@ import { OfferForm } from './search.tsx';
 import { WorkerNotices } from './ops.tsx';
 import { useToast } from '../ui.tsx';
 import { VerifiedBadge } from '../verifiedBadge.tsx';
+import {EcuDesk} from './ecuDesk.tsx';
 
 // Линия: статус, геолокация, входящие ---------------------------------------
 
-export function Work() {
+export function Work(){
+  const {me}=useMe();
+  return me?.performer?.kind==='ecu'?<EcuDesk/>:<StandardWork/>;
+}
+
+function StandardWork() {
   const { me, reload } = useMe();
   const { busy, run } = useAction();
   const balance = useLoad(() => get('/api/performer/balance'), [], (e) => e.type === 'balance' || e.type === 'order');

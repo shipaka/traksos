@@ -230,8 +230,13 @@ test('one cash settlement and 12-way SOS continuation race reconcile across clie
  const total=ok(await t.api('GET','/api/orders/'+id,undefined,customer.token)).money.total;
  const confirms=await burst('12 simultaneous cash confirmations of same invoice',
    Array.from({length:12},()=>({who:customer,method:'POST',path:'/api/orders/'+id+'/confirm',body:{total}})));
- assert.equal(confirms.filter(x=>x.status===200).length,1,'the same cash bill must be committed once');
- assert.ok(confirms.every(x=>[200,409].includes(x.status)),'concurrent loser must receive a clean conflict');
+ // Identical HTTP retries now acknowledge the single saved consent instead
+ // of returning 409. Ledger entries and financial events still occur once.
+ assert.equal(confirms.filter(x=>x.status===200).length,12,
+   '12 identical confirmations must acknowledge one immutable cash decision');
+ assert.equal((await t.db.one<{n:number}>(
+   "select count(*)::int as n from order_events where order_id=$1 and type='amount_confirmed'",
+   [id]))?.n,1,'one cash confirmation event across all retries');
  const confirmed=ok(await t.api('GET','/api/orders/'+id,undefined,customer.token));
  assert.equal(confirmed.status,'completed');
  assert.equal(confirmed.money.total,total);

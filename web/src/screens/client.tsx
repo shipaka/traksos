@@ -1,11 +1,15 @@
-import { useEffect, useState } from 'react';
-import { get, post, put, del, rub, fmtTime, fmtPhone } from '../api.ts';
+import { useEffect, useRef, useState } from 'react';
+import { get, post, put, del, rub, fmtTime, fmtPhone, postOrderIdempotent, newOrderRequestKey } from '../api.ts';
 import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF, ON_SITE, seriesHint } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFields, LiveStrip, type VehicleValue } from '../ui.tsx';
 import { BookingRows, BookingList, isOpenBooking } from './base.tsx';
 import { DriverRules } from './fleet.tsx';
 import { VehicleServiceApplication, VehicleServiceHistory } from './vehicleServices.tsx';
+import { VehicleOwnerGuide } from './VehicleOwnerGuide.tsx';
+import { VehicleOwnerExpenses } from './VehicleOwnerExpenses.tsx';
 import { native } from '../native.ts';
+import { EcuDiscovery } from './ecuDiscovery.tsx';
+import { EcuBlockGuide } from './ecuBlockGuide.tsx';
 import { insurancePresentation, isOpenInsuranceRequest } from '../insurancePresentation.ts';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
@@ -33,14 +37,19 @@ export function Home() {
     <main className="client-home client-dashboard">
       <section className="desktop-hero" aria-label="Помощь грузовому транспорту">
         <div className="desktop-hero-copy">
-          <span className="desktop-eyebrow">TRAKSOS · САНКТ-ПЕТЕРБУРГ И ЛЕНОБЛАСТЬ</span>
+          <span className="desktop-eyebrow">TRAKSOS · ЦИФРОВОЙ СЕРВИС ПО ВСЕЙ РОССИИ</span>
           <h1>Помощь грузовикам в пути <span>24/7</span></h1>
           <p>Выездной мастер, эвакуатор, грузовые СТО и консультации. Заявки, страхование и запчасти — в одном кабинете.</p>
           <div className="desktop-hero-buttons">
             <a className="desktop-primary-action" href="#/sos">SOS · Помощь в дороге ↗</a>
+            {me?.roles.some(r=>r==='driver'||r==='client')&&<a href="#/air"
+              className="desktop-air-action" aria-label="Водительский Эфир — маршруты, города и общение с коллегами">
+              <span className="desktop-air-action-signal" aria-hidden="true">◉</span>
+              <span><b>Водительский Эфир</b><small>Маршруты · города · коллеги</small></span>
+            </a>}
             <a className="desktop-outline-action" href="#/orders">Мои заявки</a>
           </div>
-          <div className="launch-region" role="note">Зона запуска: Санкт-Петербург и Ленинградская область</div>
+          <div className="launch-region" role="note">Выберите регион заявки — доступность исполнителей проверим отдельно</div>
         </div>
         <img className="client-hero-scania" src="/tracksos-approved-scenic-hero.webp" alt="Реалистичный грузовой тягач Scania на дороге в закатном свете" loading="eager" />
       </section>
@@ -69,11 +78,12 @@ export function Home() {
         <a href="#/new/consult" className="desktop-quick-card"><span className="desktop-quick-icon">☎</span><span><b>Консультация по телефону</b><small>Обсудить проблему со специалистом</small></span><span aria-hidden="true">↗</span></a>
       </section>
 
+      <EcuDiscovery place="home" />
       <div className="desktop-home-columns">
         <section className="desktop-home-main">
           <div className="mobile-home-heading">
             <h1>{me?.name ? `${me.name}, что случилось?` : 'Что случилось?'}</h1>
-            <div className="sub">Выберите проблему — подскажем, к кому обратиться. Работаем в Санкт-Петербурге и Ленинградской области.</div>
+            <div className="sub">Выберите проблему — подскажем, к кому обратиться. Наличие мастеров и СТО зависит от вашего региона.</div>
           </div>
           <div className="desktop-section-heading"><h2>Мои активные заявки</h2><a href="#/orders">Все заявки →</a></div>
           <div className="desktop-active-orders">
@@ -263,6 +273,7 @@ export function Consult() {
   const c = pricing.consult ?? { price: 70_000, backDiscount: 20_000, backHours: 48 };
 
   async function submit() {
+    if(!zoneId || !est || est.regionValidation?.available===false)return;
     const r = await run(() => post('/api/orders', {
       service: 'consult', problem: sym?.id, description: description.trim() || undefined,
       vehicleId: vehicleId || undefined, ...carBody(vehicleId, car), paymentMethod: 'cash',
@@ -373,12 +384,17 @@ export function NewOrder({ service }: { service: string }) {
   const sos = SYMPTOMS.find((p) => p.id === params.get('sos'));
   const sym = sos ?? SYMPTOMS.find((p) => p.id === params.get('p'));
   const fromConsult = params.get('from');
+  const additionalTo = service==='ecu'?params.get('additionalTo'):null;
   const { me } = useMe();
   const { busy, run } = useAction();
+  const submittedRequest=useRef<{body:string;key:string}|null>(null);
+  const [submissionUncertain,setSubmissionUncertain]=useState(false);
   const pricing = useLoad(() => get('/api/pricing'), []);
   const vehicles = useLoad(() => get('/api/vehicles'), []);
   const consult = useLoad(() => (fromConsult ? get(`/api/orders/${fromConsult}`) : Promise.resolve(null)), [fromConsult]);
-  const [agree, setAgree] = useState(false);
+  const related = useLoad(()=>additionalTo?get('/api/orders/'+additionalTo):Promise.resolve(null),[additionalTo]);
+  const [agreedQuoteKey, setAgreedQuoteKey] = useState<string | null>(null);
+  const [ecuSpecialistId,setEcuSpecialistId]=useState('');
 
   // A region is not a tariff zone. Neither GPS nor IP must silently assign
   // the Petersburg call-out price to another part of the country.
@@ -397,19 +413,55 @@ export function NewOrder({ service }: { service: string }) {
   const [geoState, setGeoState] = useState<'idle' | 'wait' | 'ok' | 'fail'>('idle');
   const [method, setMethod] = useState<'cash' | 'online' | 'invoice'>('cash');
   const [est, setEst] = useState<any>(null);
+  // Consent is bound to the exact displayed provisional quote and all
+  // order inputs. Any edit invalidates it synchronously, before a network
+  // request or an effect can run.
+  const agreementKey = JSON.stringify({
+    service, tier, regionId, zoneId, night, group, address:address.trim(),
+    latitude:geo?.lat??null, longitude:geo?.lng??null,
+    vehicleId, car, description, paymentMethod:method, additionalTo,
+    estimate:est?{callOut:est.callOut,hour:est.hour,night:est.night,
+      zoneId:est.zoneId,regionId:est.regionId,provisional:est.provisional}:null
+  });
+  const agree = Boolean(est && agreedQuoteKey === agreementKey);
+  const setAgree = (checked:boolean) =>
+    setAgreedQuoteKey(checked && est ? agreementKey : null);
   const [destination, setDestination] = useState(prefill.destination ?? '');
   const [cargo, setCargo] = useState<'tractor' | 'semitrailer' | 'coupling' | 'truck12' | 'bus' | 'special'>('tractor');
   const [loaded, setLoaded] = useState<'empty' | 'loaded' | 'adr'>('empty');
   const [driverOnSite, setDriverOnSite] = useState(true);
+  const [site, setSite] = useState<{ place?: string; pass?: string; meet?: string; state?: string; when?: string; time?: string; ecuBlockCode?: string; ecuBlockNote?: string }>({});
   const isTow = service === 'tow';
   const isConsult = service === 'consult';
+  const isEcu = service === 'ecu';
+  const ecuStations=useLoad<{stations:Array<{id:string;name:string;address:string;lat:number;lng:number;level:string;distanceKm:number|null}>}>(
+    ()=>isEcu?get('/api/ecu/stations'+(geo?('?lat='+encodeURIComponent(geo.lat)+'&lng='+encodeURIComponent(geo.lng)):''))
+      :Promise.resolve({stations:[]}),[isEcu,geo?.lat,geo?.lng]);
 
   useEffect(() => {
     if (pricing.data && night === null) setNight(pricing.data.nightNow);
   }, [pricing.data]); // eslint-disable-line
   useEffect(() => {
-    if (vehicles.data?.length && !vehicleId) setVehicleId(vehicles.data[0].id);
+    if (vehicles.data?.length && !vehicleId && !additionalTo) setVehicleId(vehicles.data[0].id);
   }, [vehicles.data]); // eslint-disable-line
+  // Related ECU service is separately priced but must use the same vehicle.
+  useEffect(()=>{
+    const parent=related.data;
+    if(!parent||!additionalTo)return;
+    if(parent.zoneId)setZoneId(parent.zoneId);
+    if(parent.vehicleId)setVehicleId(parent.vehicleId);
+    else if(parent.brand){
+      setVehicleId('');
+      setCar({brand:parent.brand,model:parent.model??'',
+        year:parent.year?String(parent.year):''});
+    }
+    if(parent.address)setAddress(parent.address);
+    if(Number.isFinite(parent.lat)&&Number.isFinite(parent.lng)){
+      setGeo({lat:parent.lat,lng:parent.lng});
+      setGeoState('ok');
+    }
+    if(!description)setDescription('Дополнительная диагностика ЭБУ после заявки №'+parent.number);
+  },[related.data,additionalTo]); // eslint-disable-line
   // Выезд после консультации: та же машина и описание
   useEffect(() => {
     const c = consult.data;
@@ -423,7 +475,7 @@ export function NewOrder({ service }: { service: string }) {
     let active = true;
     setEst(null);
     setCoverageError('');
-    if (night === null || (!isConsult && (!regionId || regionId === 'other' || !zoneId))) return;
+    if (isEcu || night === null || (!isConsult && (!regionId || regionId === 'other' || !zoneId))) return;
     const timer = window.setTimeout(() => {
       post('/api/pricing/estimate', {
         service, tier, regionId: regionId || undefined, zoneId: zoneId || 'phone',
@@ -457,55 +509,84 @@ export function NewOrder({ service }: { service: string }) {
   const methods = pricing.data?.payments;
 
   async function submit() {
-    const r = await run(() => post('/api/orders', {
-      service, isSos: !!sos, problem: sos?.id, description: description || undefined, address: address || undefined,
-      lat: geo?.lat, lng: geo?.lng, regionId: regionId || undefined, zoneId: zoneId || 'phone',
+    // Defensive guard even if the CallBar is invoked during a debounced update.
+    if(isEcu ? !ecuSpecialistId : (!zoneId || !est || !agree||(additionalTo&&(!related.data||zoneId!==related.data.zoneId))))return;
+    const payload = {
+      service, isSos: isEcu ? false : !!sos, problem: sos?.id, description: description || undefined, address: address || undefined,
+      ...(isEcu?{ecuSpecialistId}:{}),
+      lat: geo?.lat, lng: geo?.lng, regionId: isEcu?undefined:regionId || undefined, zoneId: isEcu?'ecu_station':zoneId || 'phone',
       tier: service === 'tow' ? undefined : tier, vehicleId: vehicleId || undefined,
       ...carBody(vehicleId, car), groupTrip: groupAllowed && group, night: night ?? undefined, paymentMethod: method,
       ...(isTow ? { destination: destination || undefined, cargo, loaded, driverOnSite } : {}),
       fromConsult: fromConsult || undefined,
+      additionalTo:additionalTo||undefined,
       site: isTow || !Object.keys(site).length ? undefined : { ...site, meet: site.meet || undefined, time: site.time || undefined },
-    }));
-    if (!r) return;
+    };
+    // The server may accept an order before mobile data drops.
+    // A user-triggered retry sends the identical idempotency key.
+    const serialized=JSON.stringify(payload);
+    if(!submittedRequest.current||submittedRequest.current.body!==serialized)
+      submittedRequest.current={body:serialized,key:newOrderRequestKey()};
+    const key=submittedRequest.current.key;
+    const r = await run(() => postOrderIdempotent(payload,key));
+    if (!r){setSubmissionUncertain(true);return;}
+    setSubmissionUncertain(false);
     if (r.confirmationUrl) location.href = r.confirmationUrl;
     else go(`order/${r.order.id}`);
   }
 
-  const [site, setSite] = useState<{ place?: string; pass?: string; meet?: string; state?: string; when?: string; time?: string }>({});
   const [tried, setTried] = useState(false);
   const need = {
     car: !!vehicleId || car.brand.trim().length >= 2,
     what: description.trim().length >= MIN_WHAT,
-    where: geoState === 'ok' || address.trim().length >= 3,
+    where: isEcu || geoState === 'ok' || address.trim().length >= 3,
     tow: !isTow || destination.trim().length >= 3,
   };
   const missing = [
-    !isConsult && !regionId && { id: 'f-where', name: 'регион' },
-    !isConsult && regionId !== 'other' && !zoneId && { id: 'f-where', name: 'тарифная зона' },
-    !isConsult && regionId === 'other' && { id: 'f-where', name: 'индивидуальное согласование региона' },
-    !est && { id: 'f-where', name: 'проверенная предварительная смета' },
+    !isConsult && !isEcu && !regionId && { id: 'f-where', name: 'регион' },
+    !isConsult && !isEcu && regionId !== 'other' && !zoneId && { id: 'f-where', name: 'тарифная зона' },
+    !isConsult && !isEcu && regionId === 'other' && { id: 'f-where', name: 'индивидуальное согласование региона' },
+    !isEcu && !est && { id: 'f-where', name: 'проверенная предварительная смета' },
     !need.car && { id: 'f-car', name: 'марка машины' },
     !need.what && { id: 'f-what', name: 'описание задачи' },
     !need.where && { id: 'f-where', name: 'где машина' },
+    !isEcu && !zoneId && { id: 'f-where', name: 'тарифная зона СПб/ЛО' },
+    !isEcu && !est && { id: 'f-where', name: 'подтверждённый предварительный расчёт' },
     !need.tow && { id: 'f-tow', name: 'куда везти' },
-    !agree && { id: 'f-agree', name: 'согласие с суммами' },
+    !isEcu && !agree && { id: 'f-agree', name: 'согласие с суммами' },
+    isEcu && !ecuSpecialistId && {id:'f-ecu-station',name:'стационарный специалист ЭБУ'},
   ].filter(Boolean) as { id: string; name: string }[];
 
   if (!pricing.data) return <main><Loading error={pricing.error} /></main>;
   const s = SERVICES[service];
 
   return (
-    <main>
-      <Back to={fromConsult ? `order/${fromConsult}` : sos ? 'sos' : ''} />
+    <main className={isEcu?'ecu-intake':undefined}>
+      <Back to={additionalTo?`order/${additionalTo}`:fromConsult ? `order/${fromConsult}` : sos ? 'sos' : ''} />
       <div>
         <h1>{sym ? sym.name : s?.name ?? 'Заявка'}</h1>
         <div className="sub">{sos ? `${s?.name} · срочный вызов` : sym ? s?.name : s?.hint}</div>
       </div>
       <SelfOrderWarning me={me} />
+      {submissionUncertain&&<div className="banner warn" role="alert">
+        Если ответ потерялся из-за связи, заявка могла быть оформлена.
+        Перед изменением формы проверьте <a href="#/orders">Мои заявки</a>.
+        Повтор отправки без изменения условий использует прежний ключ и не создаёт второй заказ.
+      </div>}
       <DriverRules />
-      {!isTow && !sos && (
+      {additionalTo&&<section className="card stack" aria-label="Дополнительная заявка по ЭБУ">
+        <strong>Дополнительный специалист в этом же обращении</strong>
+        {related.error?<p role="alert">Не удалось проверить первую заявку: {related.error}</p>:
+          related.data?<p className="note">
+            Первая заявка №{related.data.number} · {SERVICES[related.data.service]?.name??related.data.service}.
+            Автомобиль и тарифная зона должны совпадать.
+            ЭБУ получит отдельную заявку, со своей ценой, исполнителем, статусами и оплатой.
+            После подтверждения клиент увидит оба этапа в общей истории.
+          </p>:<p className="note">Проверяю доступ к первоначальной заявке…</p>}
+      </section>}
+      {!additionalTo&&!isTow && !sos && (
         <div className="scroll-x" role="tablist" aria-label="Какой мастер нужен">
-          {(['electric', 'air', 'autonomy', 'tyre', 'diag'] as const).map((k) => (
+          {(['electric', 'air', 'autonomy', 'tyre', 'diag', 'ecu'] as const).map((k) => (
             <button key={k} type="button" className="chip" role="tab" aria-pressed={service === k} onClick={() => { if (k !== service) go(`new/${k}${location.hash.includes('?') ? '?' + location.hash.split('?')[1] : ''}`); }}>{SERVICES[k].name}</button>
           ))}
         </div>
@@ -520,7 +601,8 @@ export function NewOrder({ service }: { service: string }) {
 
       <Step n={1} id="f-car" title="Машина" req done={need.car} missing={tried && !need.car}>
         {vehicles.data?.length ? (
-          <select className="field" value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
+          <select className="field" value={vehicleId} disabled={!!additionalTo}
+            onChange={(e) => setVehicleId(e.target.value)}>
             {vehicles.data.map((v: any) => <option key={v.id} value={v.id}>{v.brand} {v.model ?? ''} {v.year ?? ''} {v.plate ?? ''}</option>)}
             <option value="">Другая машина</option>
           </select>
@@ -533,9 +615,17 @@ export function NewOrder({ service }: { service: string }) {
       <Step n={2} id="f-what" title="Задача для специалиста" req done={need.what} missing={tried && !need.what}>
         <textarea className="field" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Коротко опишите, какая помощь нужна. Если причина неизвестна, так и напишите." />
         <span className="note">{need.what ? '✓ Хватит, чтобы специалист понял задачу' : `Хотя бы пару слов — ещё ${MIN_WHAT - description.trim().length} симв.`}</span>
+        {service==='ecu'&&<>
+          <EcuBlockGuide make={vehicles.data?.find((v:any)=>v.id===vehicleId)?.brand??car.brand}
+            selected={site.ecuBlockCode??'unknown'}
+            onSelect={code=>setSite(old=>({...old,ecuBlockCode:code}))}/>
+          <textarea className="field" maxLength={500} value={site.ecuBlockNote??''}
+            onChange={e=>setSite(old=>({...old,ecuBlockNote:e.target.value}))}
+            placeholder="Если блок не определён — симптомы, ошибка сканера, что уже проверяли"/>
+        </>}
       </Step>
 
-      <Step n={3} id="f-where" title={isTow ? 'Откуда забрать' : 'Где машина'} req done={need.where} missing={tried && !need.where}>
+      {!isEcu&&<Step n={3} id="f-where" title={isTow ? 'Откуда забрать' : 'Где машина'} req done={need.where} missing={tried && !need.where}>
         <input className="field" placeholder="Адрес: регион, населённый пункт, улица или км трассы" value={address} onChange={(e) => setAddress(e.target.value)} />
         <div className="row">
           <button type="button" className="chip" onClick={locate} disabled={geoState === 'wait'}>
@@ -590,9 +680,23 @@ export function NewOrder({ service }: { service: string }) {
             <small>Мастер едет к нескольким машинам рядом — вы платите 70% выезда. Может быть дольше.</small>
           </button>
         )}
-      </Step>
-
-      {!isTow && (
+      </Step>}
+      {isEcu&&<Step n={3} id="f-ecu-station" title="Стационарный специалист ЭБУ" req
+        done={!!ecuSpecialistId} missing={tried&&!ecuSpecialistId}>
+        <p className="note">Это не SOS и не выезд. Выберите конкретную проверенную мастерскую: показываем специалистов по всей стране, независимо от обычного радиуса выезда.</p>
+        {ecuStations.error&&<p role="alert">{ecuStations.error}</p>}
+        {!ecuStations.data&&!ecuStations.error&&<p className="note">Загружаю доступные мастерские…</p>}
+        {ecuStations.data?.stations.length===0&&<p className="note">Пока нет опубликованных проверенных мастерских. Запрос нельзя отправить без выбранного получателя.</p>}
+        {(ecuStations.data?.stations??[]).map(s=><div className="card flat stack" key={s.id}>
+          <div className="between"><b>{s.name}</b><span className="pill">{s.level==='priority'?'Эксперт по ЭБУ':s.level==='active'?'Проверенный специалист':'Проверенный профиль'}</span></div>
+          <span className="note">{s.address}{s.distanceKm!=null?' · по прямой около '+s.distanceKm+' км':''}</span>
+          <div className="row">
+            <button className="btn ghost" type="button" aria-pressed={ecuSpecialistId===s.id} onClick={()=>setEcuSpecialistId(s.id)}>{ecuSpecialistId===s.id?'Выбран специалист':'Выбрать мастерскую'}</button>
+            <a className="btn ghost" href={'https://yandex.ru/maps/?pt='+encodeURIComponent(s.lng+','+s.lat)+'&z=10&l=map'} target="_blank" rel="noopener noreferrer">Точка на карте</a>
+          </div>
+        </div>)}
+      </Step>}
+      {!isTow && !isEcu && (
         <Step n={4} id="f-site" title="Место и условия" done>
           <div className="grid4">{([['parking', 'Парковка'], ['yard', 'Стоянка'], ['plant', 'Завод'], ['road', 'Трасса']] as const).map(([k, n]) => (
             <button key={k} type="button" className="seg" style={{ fontSize: 13, padding: 0 }} aria-pressed={site.place === k} onClick={() => setSite({ ...site, place: site.place === k ? undefined : k })}>{n}</button>
@@ -620,7 +724,7 @@ export function NewOrder({ service }: { service: string }) {
         </Step>
       )}
 
-      {!isTow && ON_SITE[service] && (
+      {!isTow && !isEcu && ON_SITE[service] && (
         <details className="card">
           <summary><b>Что {SERVICES[service].name.toLowerCase()} сделает на месте, а что нет</b></summary>
           <div className="stack" style={{ gap: 4, marginTop: 8 }}>
@@ -630,9 +734,9 @@ export function NewOrder({ service }: { service: string }) {
           </div>
         </details>
       )}
-      {!isTow && regionId !== 'other' && <MastersNearby service={service} geo={geo} brand={vehicles.data?.find((v: any) => v.id === vehicleId)?.brand ?? car.brand} />}
+      {!isTow && !isEcu && regionId !== 'other' && <MastersNearby service={service} geo={geo} brand={vehicles.data?.find((v: any) => v.id === vehicleId)?.brand ?? car.brand} />}
 
-      {isTow ? (
+      {isEcu?null:isTow ? (
         <Step n={4} id="f-tow" title="Куда и что везём" req done={need.tow} missing={tried && !need.tow}>
           <input className="field" placeholder="Куда везти: сервис, стоянка, адрес" value={destination} onChange={(e) => setDestination(e.target.value)} />
           <Chips value={cargo} onChange={setCargo} options={[{ id: 'tractor', name: 'Тягач' }, { id: 'semitrailer', name: 'Полуприцеп' }, { id: 'coupling', name: 'Сцепка целиком' }, { id: 'truck12', name: 'Грузовик до 12 т' }, { id: 'bus', name: 'Автобус' }, { id: 'special', name: 'Спецтехника' }]} />
@@ -654,7 +758,7 @@ export function NewOrder({ service }: { service: string }) {
         </Step>
       )}
 
-      {regionId !== 'other' && <Step n={isTow ? 5 : 6} id="f-pay" title="Оплата" done>
+      {!isEcu && regionId !== 'other' && <Step n={isTow ? 5 : 6} id="f-pay" title="Оплата" done>
         <div className="grid2">
           <button type="button" className="seg" aria-pressed={method === 'cash'} onClick={() => setMethod('cash')}>Мастеру на месте</button>
           <button type="button" className="seg" aria-pressed={method === 'online'} disabled={!methods?.online} onClick={() => setMethod('online')}>СБП / карта</button>
@@ -664,7 +768,17 @@ export function NewOrder({ service }: { service: string }) {
         {method === 'online' && <span className="note">Выезд оплачивается сейчас и замораживается. Мастеру деньги уйдут после того, как вы подтвердите работу.</span>}
       </Step>}
 
-      {est && (
+      {false&&service==='ecu'&&!est&&<div className="card flat stack" id="f-agree" role="status">
+        <span className="label">7 · Подтверждение стоимости ЭБУ</span>
+        <p className="note">
+          Сначала укажите местоположение и осознанно выберите тарифную зону.
+          Здесь появится отдельный расчёт работы специалиста по электронным блокам.
+        </p>
+        <p className="note">
+          До получения расчёта согласие с суммой недоступно — заявку и оплату не создаём.
+        </p>
+      </div>}
+      {!isEcu && est && (
         <div className={`card hi ${tried && !agree ? 'missing' : ''}`} id="f-agree">
           {est.provisional && <div role="note" className="banner warn">
             {est.coverageNote || 'Предварительная смета. Проверим фактический адрес и согласуем стоимость до выезда.'}
@@ -693,9 +807,12 @@ export function NewOrder({ service }: { service: string }) {
         </div>
       )}
 
-      {regionId !== 'other' && <CallBar busy={busy} missing={missing}
-        price={est ? `предварительно: ${isTow ? 'перевозка' : 'выезд'} ${rub(est.callOut)}` : ''}
-        label={isTow ? 'Вызвать эвакуатор' : 'Вызвать мастера'}
+      {isEcu&&<div className="card hi stack"><b>Стоимость диагностики — до начала работы</b>
+        <p className="note">Первичное обращение бесплатно. Выбранный специалист предложит цену и объём диагностики; только после вашего отдельного подтверждения начнут работу. Ремонт, прошивка и запчасти потребуют новой сметы и согласия. Срок — 7 дней с возможностью продления на 3 дня по обоснованию.</p>
+      </div>}
+      {(isEcu||regionId !== 'other') && <CallBar busy={busy} missing={missing}
+        price={isEcu?'Цена по отдельному согласованию':est ? `предварительно: ${isTow ? 'перевозка' : 'выезд'} ${rub(est.callOut)}` : ''}
+        label={isEcu?'Отправить запрос выбранной мастерской':isTow ? 'Вызвать эвакуатор' : 'Вызвать мастера'}
         onGo={() => { setTried(true); if (missing.length) jump(missing[0].id); else submit(); }} />}
     </main>
   );
@@ -822,10 +939,10 @@ export function Garage() {
   const { me } = useMe();
   const list = useLoad(() => get('/api/vehicles'), []);
   const { busy, run } = useAction();
-  const [form, setForm] = useState({ brand: '', model: '', year: '', plate: '', trailerPlate: '' });
+  const [form, setForm] = useState<VehicleValue & {plate:string;trailerPlate:string}>({ brand: '', model: '', year: '', plate: '', trailerPlate: '' });
   const [driverFor, setDriverFor] = useState<string | null>(null);
   const [driverPhone, setDriverPhone] = useState('+7 ');
-  const isDriver = !!me?.owner_id;
+  const isDriver = !!me?.owner_id || !!me?.roles.includes('driver');
   const [serviceHistoryVersion, setServiceHistoryVersion] = useState(0);
   useEffect(() => {
     const refresh = () => { if (document.visibilityState === 'visible' && navigator.onLine) setServiceHistoryVersion(v => v + 1); };
@@ -835,10 +952,11 @@ export function Garage() {
   }, []);
 
   async function add() {
-    const r = await run(() => post('/api/vehicles', {
-      brand: form.brand, model: form.model || undefined, year: form.year ? Number(form.year) : undefined,
-      plate: form.plate || undefined, trailerPlate: form.trailerPlate || undefined,
-    }), 'Машина добавлена');
+    const r = await run(() => post('/api/vehicle-reference/vehicles', {
+      category: form.catalogCategory, brandKey: form.catalogBrandKey, modelKey: form.catalogModelKey,
+      year: form.year ? Number(form.year) : undefined,
+      plate: form.plate || undefined, trailerPlate: form.catalogCategory==='trailer'?undefined:(form.trailerPlate || undefined),
+    }), 'Машина добавлена из подтверждённого каталога');
     if (r) { setForm({ brand: '', model: '', year: '', plate: '', trailerPlate: '' }); list.reload(); }
   }
 
@@ -855,13 +973,17 @@ export function Garage() {
       )}
       {!list.data ? <Loading error={list.error} /> : list.data.map((v: any) => (
         <div key={v.id} className="card">
-          <div className="between"><b>{v.brand} {v.model ?? ''}{v.year ? `, ${v.year}` : ''}</b><span className="pill">{v.plate ?? 'без номера'}</span></div>
+          <div className="between"><b>{v.brand} {v.model ?? ''}{v.year ? `, ${v.year}` : ''}</b><span className="pill">{v.catalog_category==='trailer'?'Прицеп / полуприцеп · ':''}{v.plate ?? 'без номера'}</span></div>
+          <VehicleOwnerGuide vehicle={v} />
+          <a href={`#/experience/vehicle/${v.id}`} className="btn ghost small">Опыт эксплуатации этой модели</a>
           {v.trailer_plate && <span className="note">Прицеп {v.trailer_plate}</span>}
           {v.fixed_at && <span className="pill good" style={{ alignSelf: 'flex-start' }}>уточнено мастером · {fmtTime(v.fixed_at)}</span>}
           {seriesHint(v.brand, v.year) && <span className="note" style={{ color: 'var(--accent)' }}>{seriesHint(v.brand, v.year)}</span>}
           <VehicleServiceApplication vehicleId={v.id} onCreated={() => setServiceHistoryVersion(v => v + 1)} />
           <VehicleServiceHistory id={v.id} isDriver={isDriver} refreshVersion={serviceHistoryVersion} />
-          <VehicleHistory id={v.id} />
+          <VehicleHistory id={v.id} isDriver={isDriver} />
+          {!isDriver&&<VehicleOwnerExpenses vehicleId={v.id}/>}
+
           <a className="btn ghost small" href={`#/shop/history/${v.id}`}>Покупки и запчасти этой машины</a>
           {!isDriver && (driverFor === v.id ? (
             <div className="stack">
@@ -887,13 +1009,13 @@ export function Garage() {
       {!isDriver && (
         <form className="card" onSubmit={(e) => { e.preventDefault(); add(); }}>
           <b>Добавить машину</b>
-          <VehicleFields value={{ brand: form.brand, model: form.model, year: form.year }} onChange={(v) => setForm({ ...form, ...v })} />
+          <VehicleFields value={form} onChange={(v) => setForm((prev) => ({ ...prev, ...v }))} />
           <div className="grid2">
-            <input className="field" placeholder="Госномер тягача" value={form.plate} onChange={(e) => setForm({ ...form, plate: e.target.value })} />
-            <input className="field" placeholder="Прицеп" value={form.trailerPlate} onChange={(e) => setForm({ ...form, trailerPlate: e.target.value })} />
+            <input className="field" placeholder={form.catalogCategory==='trailer'?'Госномер прицепа / полуприцепа':'Госномер тягача'} value={form.plate} onChange={(e) => setForm({ ...form, plate: e.target.value })} />
+            {form.catalogCategory!=='trailer'&&<input className="field" placeholder="Номер связанного прицепа (необязательно)" value={form.trailerPlate} onChange={(e) => setForm({ ...form, trailerPlate: e.target.value })} />}
           </div>
           <span className="note">Год влияет на подбор мастера: у разных поколений своя электрика.</span>
-          <button className="btn" disabled={busy || !form.brand}>Сохранить</button>
+          <button className="btn" disabled={busy || !form.catalogBrandKey || !form.catalogModelKey}>Сохранить</button>
         </form>
       )}
     </main>
@@ -901,18 +1023,22 @@ export function Garage() {
 }
 
 /** История машины: что и когда делали, комментарий мастера. Свёрнута, раскрывается по нажатию. */
-function VehicleHistory({ id }: { id: string }) {
+function VehicleHistory({ id, isDriver }: { id: string; isDriver: boolean }) {
   const [open, setOpen] = useState(false);
   const h = useLoad(() => get(`/api/vehicles/${id}/history`), [id], (e) => e.type === 'order');
   const d = h.data;
   if (!d) return null;
-  if (!d.items.length) return <span className="note">История пока пустая — здесь будут все вызовы по этой машине и что делали мастера.</span>;
+  const finance=isDriver?null:<details className="vehicle-finance-summary"><summary className="linkrow" style={{cursor:'pointer'}}>Платежи и работы через TrakSOS</summary>
+    <div className="card stack"><b>Суммы завершённых заявок TrakSOS: {rub(d.summary.spent??0)}</b>
+    <span className="note">Показаны только суммы, связанные с историей заявок этой техники в TrakSOS. Внешние расходы, покупки вне платформы и неподтверждённые платежи сюда не включены.</span></div></details>;
+  if (!d.items.length) return <div className="stack">{finance}<span className="note">История пока пустая — здесь будут обращения и ремонты по этой машине.</span></div>;
   const last = d.summary.lastAt ? fmtTime(d.summary.lastAt) : '';
   return (
     <div className="stack" style={{ gap: 8 }}>
+      {finance}
       <button type="button" className="linkrow" onClick={() => setOpen(!open)} aria-expanded={open}>
         <span><b>История · {d.summary.total} {d.summary.total === 1 ? 'обращение' : d.summary.total < 5 ? 'обращения' : 'обращений'}</b>
-          <small>последнее {last}{d.summary.spent != null && d.summary.spent > 0 ? ` · всего ${rub(d.summary.spent)}` : ''}</small></span>
+          <small>последнее {last}{!isDriver&&d.summary.spent != null && d.summary.spent > 0 ? ` · всего ${rub(d.summary.spent)}` : ''}</small></span>
         <span aria-hidden="true">{open ? '˄' : '˅'}</span>
       </button>
       {open && (

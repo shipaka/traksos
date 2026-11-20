@@ -11,7 +11,19 @@ const store = {
 let token: string | null = store.get('traksos.token');
 export const getToken = () => token;
 export function setToken(t: string | null) {
-  if (token !== t) { disconnectWs(); store.set('traksos.offlineIdentity', null); }
+  if (token !== t) {
+    // A login switch/logout must never leave an old user's WS connection open.
+    disconnectWs();
+    store.set('traksos.offlineIdentity', null);
+    // Delete explicitly opted-in tab drafts when the account/token changes.
+    // A shared phone must not expose previous account's private unsent text.
+    try{
+      for(let i=sessionStorage.length-1;i>=0;i--){
+        const key=sessionStorage.key(i);
+        if(key?.startsWith('tracksos:air:opt-in-draft:v1:'))sessionStorage.removeItem(key);
+      }
+    }catch{/* Private/locked WebView storage must not interrupt logout. */}
+  }
   token = t;
   store.set('traksos.token', t);
 }
@@ -20,7 +32,7 @@ export class ApiError extends Error {
   constructor(public status: number, public code: string, message: string, public data?: any) { super(message); }
 }
 
-export async function api<T = any>(method: string, path: string, body?: unknown): Promise<T> {
+export async function api<T = any>(method: string, path: string, body?: unknown, extraHeaders: Record<string,string> = {}): Promise<T> {
   // The sandbox is the exact same frontend served from another origin.
   // Fail closed if a bundle was accidentally built with a remote production API.
   if (sessionStorage.getItem('traksos.sandboxMode') === '1' &&
@@ -35,7 +47,7 @@ export async function api<T = any>(method: string, path: string, body?: unknown)
     try {
       r = await fetch(API_URL + path, {
         method,
-        headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
+        headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}), ...extraHeaders },
         body: body === undefined ? undefined : JSON.stringify(body),
         cache: 'no-store',
         signal: timeout.signal,
@@ -59,6 +71,11 @@ export async function api<T = any>(method: string, path: string, body?: unknown)
 
 export const get = <T = any>(p: string) => api<T>('GET', p);
 export const post = <T = any>(p: string, b: unknown = {}) => api<T>('POST', p, b);
+/** Retry the same customer order with the same key; never create a second charge. */
+export const postOrderIdempotent = <T = any>(b: unknown, key: string) =>
+  api<T>('POST', '/api/orders', b, { 'idempotency-key': key });
+
+export { newOrderRequestKey } from './orderRequestKey.ts';
 export const put = <T = any>(p: string, b: unknown = {}) => api<T>('PUT', p, b);
 export const patch = <T = any>(p: string, b: unknown = {}) => api<T>('PATCH', p, b);
 export const del = <T = any>(p: string) => api<T>('DELETE', p);

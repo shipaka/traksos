@@ -4,6 +4,7 @@ import type { SettingsService } from './settings.ts';
 import type { Notifier } from './notify.ts';
 import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { estimate, isNight, billWork, type Tier, type Extra } from '../domain/pricing.ts';
+import {checkLegacyPricingLocation,legacyPricingWarning,legacyTariffZoneMismatch} from '../domain/pricingRegion.ts';
 import { assertRegionalTariff, CoverageError, type ServiceRegion } from '../domain/regionalCoverage.ts';
 import { rankCandidates, performerKindFor, type Candidate } from '../domain/dispatch.ts';
 import { transition, canDo, statusLabels, type Action, type Actor, type OrderStatus } from '../domain/orderState.ts';
@@ -37,11 +38,15 @@ export interface CreateOrderInput {
   loaded?: 'empty' | 'loaded' | 'adr';
   driverOnSite?: boolean;
   /** Условия на месте: тип места, пропуск, кто встретит, что с машиной, когда */
-  site?: { place?: string; pass?: string; meet?: string; state?: string; when?: string; time?: string };
+  site?: { place?: string; pass?: string; meet?: string; state?: string; when?: string; time?: string; ecuSpecialistId?: string };
   /** Выезд после консультации: подсказка мастера переходит в заявку, клиенту — скидка */
   fromConsult?: string;
   /** Следующий самостоятельный этап того же обращения. */
   continueFrom?: string;
+  /** Independent expert assignment grouped with an earlier job (client-confirmed). */
+  additionalTo?: string;
+  /** Explicit stationary ECU workshop chosen by client, never automatic SOS. */
+  ecuSpecialistId?: string;
 }
 
 /** Подсказка мастера после консультации */
@@ -96,12 +101,70 @@ export class OrdersService {
       if (previous) return reuse(previous);
     }
     const all = await this.settings.all();
+    const isEcu = i.service === 'ecu';
+    if (isEcu) {
+      if (i.isSos || i.continueFrom || i.fromConsult)
+        throw bad('ecu_not_sos', 'ЭБУ — отдельная стационарная услуга, не SOS');
+      if (!i.ecuSpecialistId)
+        throw bad('ecu_specialist_required', 'Выберите конкретного специалиста по ЭБУ');
+      if (i.paymentMethod && i.paymentMethod !== 'cash')
+        throw bad('ecu_payment_unavailable', 'Сперва согласуйте цену диагностики; онлайн-оплата пока закрыта');
+      const station = await this.db.one(
+        "select 1 from performer_profiles p join users u on u.id=p.user_id "+
+        "where p.user_id=$1 and p.kind='ecu' and p.verification='approved' "+
+        "and u.status='active' and p.extras #>> '{ecuStation,published}'='true' and p.extras #>> '{ecuStation,publicationConsentConfirmed}'='true'",
+        [i.ecuSpecialistId]);
+      if (!station) throw bad('ecu_station_unavailable','Выбранная мастерская пока не принимает заявки');
+      i = {...i,isSos:false,zoneId:'ecu_station',regionId:undefined,
+        paymentMethod:'cash',night:false,groupTrip:false,
+        site:{...(i.site??{}),ecuSpecialistId:i.ecuSpecialistId}};
+    }
     const method = i.paymentMethod ?? 'cash';
     await this.payments.assertMethodAllowed(method);
 
     const clientId = user.owner_id ?? user.id;
     // Previous stage must be closed; never mix its price into the next auction.
     let previous: any = null;
+    let additionalParent: any = null;
+    if(i.additionalTo){
+      if(i.continueFrom||i.fromConsult||i.service!=='ecu')
+        throw bad('bad_additional_service',
+          'Сейчас к другому заказу можно добавить только отдельную заявку специалисту по ЭБУ');
+      additionalParent=await this.db.one<any>(
+        'select * from orders where id=$1',[i.additionalTo]);
+      if(!additionalParent||additionalParent.client_id!==clientId||
+        (user.owner_id&&additionalParent.created_by!==user.id))
+        throw forbidden('Добавить эксперта можно только к своему обращению');
+      if(!['accepted','en_route','arrived','working','awaiting_confirmation','completed']
+        .includes(additionalParent.status))
+        throw conflict('source_order_not_started',
+          'Для подключения специалиста дождитесь принятия первой заявки');
+      if(i.vehicleId&&additionalParent.vehicle_id!==i.vehicleId)
+        throw bad('different_vehicle','Связанные работы выполняются по одному автомобилю');
+      if(additionalParent.brand&&i.brand&&
+        additionalParent.brand.toLowerCase()!==i.brand.toLowerCase())
+        throw bad('different_vehicle','Марка машины должна совпадать');
+      if(additionalParent.model&&i.model&&
+        additionalParent.model.toLowerCase()!==i.model.toLowerCase())
+        throw bad('different_vehicle','Модель машины должна совпадать');
+      if(additionalParent.year&&i.year&&additionalParent.year!==i.year)
+        throw bad('different_vehicle','Год машины должен совпадать');
+      // Workshop does not inherit the mechanic's call-out zone.
+      const already=await this.db.one(
+        "select 1 from orders where additional_to=$1 and service='ecu' "+
+        "and status not in ('cancelled','no_performer')",[additionalParent.id]);
+      if(already)
+        throw conflict('ecu_additional_exists',
+          'Специалист по ЭБУ уже вызван по этой заявке. Откройте связанную карточку.');
+      i={...i,vehicleId:additionalParent.vehicle_id??i.vehicleId,
+        brand:additionalParent.brand??i.brand,model:additionalParent.model??i.model,
+        year:additionalParent.year??i.year,
+        address:i.address||additionalParent.address||undefined,
+        lat:i.lat??additionalParent.lat??undefined,
+        lng:i.lng??additionalParent.lng??undefined,
+        description:i.description||
+          'Дополнительная диагностика и работа с ЭБУ после другого специалиста'};
+    }
     if (i.continueFrom) {
       if (i.fromConsult || i.service !== 'tow')
         throw bad('bad_continuation', 'Сейчас можно продолжить выезд мастера вызовом эвакуатора');
@@ -133,16 +196,41 @@ export class OrdersService {
     }
     // Critical: validate the declared location independently of the price zone,
     // before INSERT, bank hold, owner approval or dispatch. Never guess by IP.
-    try { assertRegionalTariff(i, true); }
-    catch (e) { if (e instanceof CoverageError) throw bad(e.code, e.message); throw e; }
+    if(!isEcu){
+      try { assertRegionalTariff(i, true); }
+      catch (e) { if (e instanceof CoverageError) throw bad(e.code, e.message); throw e; }
+    }
     const isConsult = i.service === 'consult';
+    if(!isConsult && !isEcu && checkLegacyPricingLocation({
+      address:i.address,lat:i.lat,lng:i.lng
+    })==='outside'){
+      throw conflict('outside_legacy_tariff_region',
+        'Нельзя оформить выезд по тарифам СПб/ЛО за их пределами. В вашем регионе нужен подтверждённый местный тариф. Заявку и оплату не создавали.');
+    }
+    if(!isConsult && !isEcu){
+      const zoneMismatch=legacyTariffZoneMismatch({address:i.address},i.zoneId);
+      if(zoneMismatch)throw conflict('mismatched_legacy_tariff_zone',
+        'Указанный населённый пункт не соответствует выбранной зоне выезда СПб/ЛО. Выберите правильную зону, прежде чем подтверждать цену.');
+    }
     const night = isConsult ? false : i.night ?? isNight(all.pricing, this.now());
     const tier = i.tier ?? 'eco';
-    const est = estimate(all.pricing, { service: i.service, tier, zoneId: i.zoneId, night, group: !isConsult && !!i.groupTrip });
+    // An ECU request carries NO platform-defined diagnostics or travel price.
+    // Zero is a non-billable unquoted inquiry, never an offer of free service.
+    const est = isEcu
+      ? {zoneId:'ecu_station',zoneName:'Точка ремонта ЭБУ',km:0,roadKm:0,
+         base:0,road:0,callOut:0,hour:null,night:false,group:false,
+         quoteRequired:true,ecuInquiry:true}
+      : estimate(all.pricing, { service: i.service, tier, zoneId: i.zoneId, night, group: !isConsult && !!i.groupTrip });
+    // Historic local quotes stay compatible; metadata makes the limits visible
+    // to the buyer and to the dispatched professional for NEW orders only.
+    const quotation= isConsult || isEcu ? est : {
+      ...est,
+      regionValidation:legacyPricingWarning({address:i.address,lat:i.lat,lng:i.lng})
+    };
     const defaultFee = method === 'cash' ? (all.fees.cashChargesClientFee ? all.fees.clientFeePct : 0) : all.fees.clientFeePct;
     // Персональный сбор клиента (назначает администратор) важнее общего. Консультация — фиксированная цена, сбор уже внутри.
     const personal = await this.db.one<{ fee_pct_override: string | null }>('select fee_pct_override from users where id=$1', [clientId]);
-    const feePct = isConsult ? 0 : personal?.fee_pct_override != null ? Number(personal.fee_pct_override) : defaultFee;
+    const feePct = isConsult || isEcu ? 0 : personal?.fee_pct_override != null ? Number(personal.fee_pct_override) : defaultFee;
 
     // Выезд после консультации: та же машина, подсказка мастера, скидка — если уложились в срок и скидку ещё не брали
     let consultOf: string | null = null;
@@ -170,16 +258,18 @@ export class OrdersService {
       `insert into orders(client_id, created_by, vehicle_id, service, is_sos, problem, description, address, lat, lng,
           zone_id, night, group_trip, tier, brand, estimate, payment_method, client_fee_pct, destination, cargo, loaded, driver_on_site,
           consult_of, discount_amount, discount_reason, model, year, site, status, owner_note,
-          commission_pct_override, commission_campaign_id, case_root_id, continuation_of,
+          commission_pct_override, commission_campaign_id, case_root_id, continuation_of, additional_to,
           create_request_key,create_request_hash,location_region)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37) returning *`,
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38) returning *`,
       [clientId, user.id, i.vehicleId ?? null, i.service, !!i.isSos, i.problem ?? null, i.description ?? null, isConsult ? null : i.address ?? null,
-        isConsult ? null : i.lat ?? null, isConsult ? null : i.lng ?? null, est.zoneId, night, est.group, tier, brand, est, method, feePct,
+        isConsult ? null : i.lat ?? null, isConsult ? null : i.lng ?? null, est.zoneId, night, est.group, tier, brand, quotation, method, feePct,
         i.destination ?? null, i.cargo ?? null, i.loaded ?? null, i.driverOnSite ?? null,
         consultOf, discount, discount ? CONSULT_DISCOUNT : null, model, year, isConsult ? null : i.site ?? null,
         gate ? 'awaiting_owner' : 'searching', gate, campaign?.commission_pct ?? null, campaign?.id ?? null,
-        previous ? (previous.case_root_id ?? previous.id) : null, previous?.id ?? null,
-        requestKey,requestHash, isConsult ? null : i.regionId],
+        previous ? (previous.case_root_id ?? previous.id) :
+          additionalParent ? (additionalParent.case_root_id ?? additionalParent.id) : null,
+        previous?.id ?? null, additionalParent?.id ?? null,
+        requestKey,requestHash, isConsult || isEcu ? null : i.regionId],
     ).catch(async (e: any) => {
       if (e?.code === '23505' && e?.constraint === 'orders_create_key_unique') {
         const prior = await this.db.one<any>(
@@ -187,12 +277,28 @@ export class OrdersService {
           [user.id,requestKey]);
         if (prior) { reused = true; return prior; }
       }
+      if(e?.code==='23505'&&e?.constraint==='orders_one_live_ecu_additional_idx')
+        throw conflict('ecu_additional_exists','Дополнительный специалист по ЭБУ уже вызван');
       if (e?.code === '23505' && e?.constraint === 'orders_one_live_continuation_idx')
         throw conflict('continuation_exists', 'Этап уже оформлен: откройте его из обращения');
       throw e;
     });
     if (reused) return reuse(order!);
-    await this.event(this.db, order!.id, user.id, 'created', { estimate: est, sos: !!i.isSos, continuationOf: previous?.id ?? null });
+    await this.event(this.db, order!.id, user.id, 'created', {
+      estimate:quotation,sos:!!i.isSos,continuationOf:previous?.id??null,
+      additionalTo:additionalParent?.id??null
+    });
+    if(additionalParent){
+      // A performer cannot trigger this: the client has just placed and
+      // accepted the separately priced ECU order on their own account.
+      await this.db.query(
+        "update order_ecu_referrals set status='used',linked_order_id=$2,resolved_at=now() "+
+        "where source_order_id=$1 and status='pending'",
+        [additionalParent.id,order!.id]);
+      await this.event(this.db,additionalParent.id,user.id,'expert_order_added',{
+        additionalOrderId:order!.id,service:'ecu'
+      });
+    }
 
     if (gate) {
       await this.event(this.db, order!.id, user.id, 'owner_approval_requested', { reason: gate });
@@ -205,6 +311,11 @@ export class OrdersService {
 
   /** Заявка пошла в работу: оплата (холд) и вызов исполнителей */
   async launch(user: AuthUser, order: any) {
+    // Stationary ECU inquiry: no call-out or pre-quote bank authorization.
+    if(order.service==='ecu'){
+      await this.startDispatch(order.id);
+      return {order:await this.view(user,order.id),confirmationUrl:null};
+    }
     // Owner-approved requests can launch later. Recheck the frozen location
     // snapshot before creating a bank hold. Do not reprice legacy orders with
     // a NULL region: their agreed amounts/cancellations remain unchanged.
@@ -278,7 +389,8 @@ export class OrdersService {
     const all = await this.settings.all();
     const order = await this.db.one('select * from orders where id=$1', [orderId]);
     if (!order || order.status !== 'searching') return;
-    if (!all.dispatch.priorityFirst) return this.auction.start(orderId, exclude);
+    if (order.service === 'ecu' || !all.dispatch.priorityFirst)
+      return this.auction.start(orderId, exclude);
     const kind = performerKindFor(order.service);
     const list = await this.db.query<Candidate>(
       `select p.user_id, p.kind, p.specialties, p.brands, p.is_priority, p.paused, p.line_status, p.verification,
@@ -491,6 +603,7 @@ export class OrdersService {
   async performerStep(user: AuthUser, orderId: string, action: 'depart' | 'arrive' | 'start_work') {
     const o = await this.mustBePerformer(user, orderId);
     if (o.service === 'consult') throw bad('consult_no_trip', 'Это консультация по телефону — выезда нет. Закройте её с подсказкой.');
+    if(o.service==='ecu')throw bad('ecu_stationary','ЭБУ — стационарная работа. Отметки о выезде и прибытии не применяются.');
     const to = transition(o.status, action, 'performer');
     const col = { depart: 'en_route_at', arrive: 'arrived_at', start_work: 'work_started_at' }[action];
     await this.guarded(this.db, `update orders set status=$2${col ? `, ${col}=$5` : ''} where id=$1 and status=$3 and performer_id=$4`,
@@ -523,25 +636,101 @@ export class OrdersService {
     return { ...bill, end: end.toISOString() };
   }
 
+  /** Workshop-only progress, no driving stages and no billable stopwatch. */
+  async startEcuWork(user:AuthUser,orderId:string){
+    const o=await this.mustBePerformer(user,orderId);
+    if(o.service!=='ecu')throw bad('not_ecu','Это действие только для стационарных ЭБУ');
+    if(o.status!=='accepted')throw conflict('ecu_bad_status','Нельзя начать диагностику в текущем статусе');
+    // Legacy zero-price acknowledgements are not consent to paid work.
+    // The selected diagnostic price and the scoped offer must both exist.
+    const agreed=await this.db.one<{id:string}>(
+      "select b.id from bids b where b.order_id=$1 and b.performer_id=$2 "+
+      "and b.status='chosen' and b.price=$3 and b.price>=100 "+
+      "and length(coalesce(b.ecu_diagnostic_scope,''))>=10",
+      [orderId,user.id,o.call_out_amount]);
+    if(!agreed)throw conflict('ecu_quote_not_accepted',
+      'Клиент должен подтвердить сумму и объём диагностики до начала работ');
+    await this.guarded(this.db,
+      "update orders set status='working',work_started_at=now() "+
+      "where id=$1 and status='accepted' and performer_id=$2",
+      [orderId,user.id]);
+    await this.event(this.db,orderId,user.id,'ecu_work_started',{timerBilling:false});
+    await this.notifier.notify([o.client_id,o.created_by],
+      {type:'order',orderId,status:'working'},
+      {kind:'normal',title:'Эксперт ЭБУ начал диагностику',
+       body:'Стоимость работ будет выставлена и подтверждена отдельно.',
+       data:{orderId}}).catch(()=>{});
+    return this.view(user,orderId);
+  }
+
+  /** ECU work is billed ONLY when the customer confirms the final itemized
+   * proposal. Earlier unpriced acceptance never creates a payable debt.
+   */
+  async proposeEcuTotal(user:AuthUser,orderId:string,p:{
+    amount:number;summary:string;warrantyDays?:7|14|30|null;warrantyWork?:string
+  }){
+    const o=await this.mustBePerformer(user,orderId);
+    if(o.service!=='ecu')throw bad('not_ecu','Это действие только для ЭБУ');
+    if(!['accepted','working','awaiting_confirmation'].includes(o.status))
+      throw conflict('ecu_bad_status','Стоимость можно предложить для принятой заявки ЭБУ');
+    const description=p.summary.trim();
+    if(description.length<5||description.length>300)
+      throw bad('ecu_work_summary','Коротко укажите выполненную работу');
+    const initial=Number(o.call_out_amount??0);
+    if(!Number.isInteger(p.amount)||p.amount<100||p.amount<initial)
+      throw bad('ecu_final_amount','Итоговая стоимость должна быть положительной и не ниже ранее предложенной диагностики');
+    const warranty=p.warrantyDays??null;
+    const warrantyWork=(p.warrantyWork??description).trim();
+    if(warranty!==null&&warrantyWork.length<5)
+      throw bad('warranty_work_required','Укажите работы, на которые даёте дополнительную гарантию');
+    const additional=p.amount-initial;
+    await this.guarded(this.db,
+      `update orders set status='awaiting_confirmation',work_amount=$2,
+        amount_proposed_at=$3,amount_confirmed_at=null,
+        result='solved',result_note=$4,warranty_days=$5,
+        warranty_work_summary=$6,bill=null
+       where id=$1 and status=$7 and performer_id=$8`,
+      [orderId,additional,this.now(),description,warranty,warrantyWork,o.status,user.id]);
+    const total=this.money({...o,work_amount:additional}).total;
+    await this.event(this.db,orderId,user.id,'ecu_final_price_proposed',
+      {work:description,contractPrice:p.amount,clientTotal:total,
+        initialDiagnosticOffer:initial,warrantyDays:warranty});
+    await this.notifier.notify([o.client_id,o.created_by],
+      {type:'order',orderId,status:'awaiting_confirmation'},
+      {kind:'normal',title:'Эксперт ЭБУ выставил итоговую смету',
+       body:'Проверьте выполненные работы и точную сумму перед согласием.',
+       data:{orderId}}).catch(()=>{});
+    return this.view(user,orderId);
+  }
+
   /** Мастер закрывает выезд. Сумму за работу он не вводит: она идёт по таймеру и цене часа, о которой договорились заранее.
    *  Сверху — только расходники и запчасти отдельными строками, клиент видит каждую. */
-  async proposeAmount(user: AuthUser, orderId: string, p: { extras?: Extra[]; result?: 'solved' | 'cause_found' | 'not_found'; note?: string }) {
+  async proposeAmount(user: AuthUser, orderId: string, p: {
+    extras?: Extra[]; result?: 'solved' | 'cause_found' | 'not_found';
+    note?: string; warrantyDays?:7|14|30|null; warrantyWork?:string
+  }) {
     const o = await this.mustBePerformer(user, orderId);
-    if (o.service === 'consult') throw bad('consult_fixed', 'Цена консультации фиксированная. Закройте её с подсказкой.');
+    if (o.service === 'consult' || o.service === 'ecu') throw bad('special_pricing', 'Для ЭБУ используйте итоговую смету без выездного таймера; консультация имеет фиксированную цену.');
     const to = transition(o.status, 'propose_amount', 'performer');
     if (['cause_found', 'not_found'].includes(p.result ?? '') && (p.note?.trim().length ?? 0) < 10)
       throw bad('result_reason_required', 'Напишите, почему неисправность нельзя устранить на месте (не меньше 10 символов)');
+    const warrantyDays=p.warrantyDays??null;
+    const warrantyWork=(p.warrantyWork??p.note??'').trim();
+    if(warrantyDays!==null&&warrantyWork.length<5)
+      throw bad('warranty_work_required','Для гарантии напишите, что именно выполнено (не менее 5 символов)');
     const extras = (p.extras ?? []).map((x) => ({ name: x.name.trim(), amount: x.amount })).filter((x) => x.name && x.amount > 0);
     if (extras.some((x) => !Number.isInteger(x.amount))) throw bad('bad_amount', 'Сумма — целое число копеек');
     const bill = await this.billFor(o, extras);
     await this.guarded(this.db,
       `update orders set status=$2, work_amount=$3, bill=$9, amount_proposed_at=$6, amount_confirmed_at=null,
          wait_minutes=$10, wait_started_at=null,
-         result=coalesce($4,result), result_note=coalesce($5,result_note) where id=$1 and status=$7 and performer_id=$8`,
-      [orderId, to, bill.total, p.result ?? null, p.note ?? null, this.now(), o.status, user.id, bill, bill.waitMinutes],
+         result=coalesce($4,result), result_note=coalesce($5,result_note),
+         warranty_days=$11, warranty_work_summary=$12
+         where id=$1 and status=$7 and performer_id=$8`,
+      [orderId, to, bill.total, p.result ?? null, p.note ?? null, this.now(), o.status, user.id, bill, bill.waitMinutes,warrantyDays,warrantyWork||null],
     );
     const m = this.money({ ...o, work_amount: bill.total });
-    await this.event(this.db, orderId, user.id, 'amount_proposed', { workAmount: bill.total, total: m.total, result: p.result, bill });
+    await this.event(this.db, orderId, user.id, 'amount_proposed', { workAmount: bill.total, total: m.total, result: p.result, bill,warrantyDays,warrantyWork });
     const parts = [
       bill.units ? `работа ${hoursText(bill.units, bill.step)} × ${rub(bill.hour!)}/ч = ${rub(bill.time)}` : null,
       bill.wait ? `ожидание ${bill.waitMinutes} мин ${rub(bill.wait)}` : null,
@@ -573,13 +762,52 @@ export class OrdersService {
     return this.view(user, orderId);
   }
 
-  async confirmAmount(user: AuthUser, orderId: string, expectedTotal?: number, points = 0) {
+  async confirmAmount(user: AuthUser, orderId: string, expectedTotal?: number, points = 0,
+    proposalVersion?: string) {
     const o = await this.mustBeClient(user, orderId);
+    const identicalConfirmation=async()=>{
+      const ev=await this.db.one<{data:any}>(
+        "select data from order_events where order_id=$1 and type='amount_confirmed' "+
+        "order by id desc limit 1",[orderId]);
+      if(!ev)throw conflict('confirmation_unverified',
+        'Подтверждённая заявка требует сверки финансовых событий');
+      if((expectedTotal!=null&&Number(ev.data?.total)!==expectedTotal)||
+        Number(ev.data?.requestedPoints??0)!==points||
+        (proposalVersion!=null&&ev.data?.proposalVersion!==proposalVersion))
+        throw conflict('confirmation_changed',
+          'Заявка была подтверждена на других условиях. Обновите карточку');
+      return this.view(user,orderId);
+    };
+    if(o.status==='completed')return identicalConfirmation();
     const to = transition(o.status, 'confirm_amount', 'client');
     const m = this.money(o);
-    let used = 0;
+    let used = 0,replayed=false;
     if (expectedTotal != null && expectedTotal !== m.total) throw conflict('amount_changed', 'Сумма изменилась — проверьте заново');
     await this.db.tx(async (q) => {
+      // A single order row lock serializes the buyer's decision against
+      // re-quoting, disputes and a second HTTP confirmation after packet loss.
+      const locked=await q.one<{status:string;work_amount:number|null;
+        amount_proposed_at:Date|null}>(
+        'select status,work_amount,amount_proposed_at from orders where id=$1 for update',
+        [orderId]);
+      if(!locked)throw notFound('Заявка не найдена');
+      if(locked.status==='completed'){replayed=true;return;}
+      const lockedVersion=locked.amount_proposed_at
+        ?new Date(locked.amount_proposed_at).toISOString():null;
+      const originalVersion=o.amount_proposed_at
+        ?new Date(o.amount_proposed_at).toISOString():null;
+      if(locked.status!=='awaiting_confirmation'||
+        locked.work_amount!==o.work_amount||
+        lockedVersion!==originalVersion||
+        (proposalVersion!=null&&lockedVersion!==proposalVersion))
+        throw conflict('quote_changed',
+          'Мастер изменил смету или состояние. Обновите карточку до подтверждения');
+      // Two DIFFERENT orders owned by the same fleet account must not
+      // both spend the same available bonus/points balance concurrently.
+      // Transaction-scoped lock; no heavy global lock or external state.
+      await q.query(
+        'select pg_advisory_xact_lock(hashtext($1),hashtext($2))',
+        ['tracksos:service-confirmation-credit',o.client_id]);
       // Бонусы клиента списываются сами в момент подтверждения
       const bonus = await q.one<{ b: number }>('select coalesce(sum(amount),0)::int b from bonus_entries where user_id=$1', [o.client_id]);
       const use = Math.min(bonus?.b ?? 0, m.total);
@@ -592,14 +820,27 @@ export class OrdersService {
       const pts = this.referral ? await this.referral.spendClientFee(q, o, m.clientFee, points) : 0;
       used += pts;
       // Подтверждаем ровно ту сумму, что видел клиент: если мастер успел её поменять — конфликт
-      await this.guarded(q, `update orders set status=$2, amount_confirmed_at=$3, completed_at=$3
+      await this.guarded(q, `update orders set status=$2, amount_confirmed_at=$3, completed_at=$3,
+          warranty_started_at=case when warranty_days is not null then $3::timestamptz else null::timestamptz end
           where id=$1 and status='awaiting_confirmation' and work_amount is not distinct from $4 and performer_id=$5`,
         [orderId, to, this.now(), o.work_amount, o.performer_id]);
       await q.query(`update performer_profiles set line_status='online' where user_id=$1 and line_status='on_job'`, [o.performer_id]);
-      await this.event(q, orderId, user.id, 'amount_confirmed', { total: m.total, method: o.payment_method });
+      await this.event(q, orderId, user.id, 'amount_confirmed', {
+        total:m.total,method:o.payment_method,requestedPoints:points,
+        proposalVersion:lockedVersion
+      });
+      // Consent, accounting and the performer's in-app notification must
+      // commit together. A push outage cannot erase this confirmation.
+      if(o.performer_id)
+        await q.query(
+          "insert into notifications(user_id,kind,title,body,data) "+
+          "values($1,'order',$2,$3,$4)",
+          [o.performer_id,'Сумма подтверждена',
+            'Заявка №'+o.number+': '+rub(m.total),{orderId}]);
       await this.payments.onConfirmed({ ...o, status: to, discount_amount: Number(o.discount_amount ?? 0) + used }, q);
       await this.referral?.afterOrder(q, { ...o, status: to }, m.amount);
     });
+    if(replayed)return identicalConfirmation();
     // The order and capture-intent transaction MUST commit before bank IO.
     // A transport failure leaves the durable intent for manual/provider reconciliation.
     await this.payments.processWorkPaymentForOrder(orderId)
@@ -607,8 +848,11 @@ export class OrdersService {
     await this.payments.processCaptureForOrder(orderId)
       .catch((e) => console.error('[order-capture]', e));
     await this.systemMessage(orderId, `Сумма ${rub(m.total - used)} подтверждена${used ? ` (бонусами и баллами ${rub(used)})` : ''}. Оставьте отзыв друг о друге.`);
-    await this.notifier.notify([o.performer_id], { type: 'order', orderId, status: to },
-      { kind: 'normal', title: 'Сумма подтверждена', body: `Заявка №${o.number}: ${rub(m.total)}`, data: { orderId } });
+    await this.notifier.deliverStored([o.performer_id],
+      {type:'order',orderId,status:to},
+      {kind:'normal',title:'Сумма подтверждена',
+        body:`Заявка №${o.number}: ${rub(m.total)}`,data:{orderId}})
+      .catch(e=>console.warn('[order-confirmation-push]',e));
     return this.view(user, orderId);
   }
 
@@ -778,16 +1022,29 @@ export class OrdersService {
     // a performer sees exclusively the price of their own contract.
     const caseRows = actor === 'client' || actor === 'admin'
       ? await this.db.query<any>(
-          `select id, number, status, service, result, result_note, continuation_of, estimate,
+          `select id, number, status, service, result, result_note, continuation_of, additional_to, estimate,
                   call_out_amount, work_amount, client_fee_pct, discount_amount
-             from orders where id=$1 or case_root_id=$1 order by created_at, number`, [caseRootId])
+             from orders where (id=$1 or case_root_id=$1)
+               and ($2::boolean or created_by=$3)
+             order by created_at, number`,
+            [caseRootId, actor==='admin'||!user.owner_id, user.id])
       : [];
+    const caseOtherStages=actor==='performer'
+      ? await this.db.query<{number:number;service:string;status:string}>(`
+          select number,service,status from orders
+          where (id=$1 or case_root_id=$1) and id<>$2
+          order by created_at,number limit 30`,[caseRootId,o.id])
+      : [];
+    // A confirmed expert sees that a related stage exists, not the other
+    // contractor's bill, private notes, contacts, messages or payout.
     const caseBookings = actor === 'client' || actor === 'admin'
       ? await this.db.query<any>(
           `select b.id, b.number, b.status, b.need, b.amount, b.discount, b.from_order_id
              from service_bookings b left join orders step on step.id=b.from_order_id
-            where b.case_root_id=$1 or step.id=$1 or step.case_root_id=$1
-            order by b.created_at, b.number`, [caseRootId])
+            where (b.case_root_id=$1 or step.id=$1 or step.case_root_id=$1)
+              and ($2::boolean or step.created_by=$3)
+            order by b.created_at, b.number`,
+            [caseRootId, actor==='admin'||!user.owner_id, user.id])
       : [];
     const caseServiceStages = caseBookings.map((b: any) => ({
       id: b.id, number: b.number, status: b.status, need: b.need,
@@ -795,6 +1052,7 @@ export class OrdersService {
     }));
     const caseSteps = caseRows.map((step: any) => ({
       id: step.id, number: step.number, service: step.service, status: step.status,
+      additionalTo:step.additional_to??null,continuationOf:step.continuation_of??null,
       result: step.result, resultNote: step.result_note, money: this.money(step),
     }));
     const caseConfirmedTotal = caseRows.filter((step: any) => step.status === 'completed')
@@ -812,26 +1070,43 @@ export class OrdersService {
           `select (select count(*)::int from order_dispatch where order_id=$1 and status in ('bidding','ringing','queued')) as candidates,
                   (select count(*)::int from bids where order_id=$1 and status='active') as offers`, [orderId])
       : null;
+    const ecuDiagnosticQuote=o.service==='ecu' && o.status!=='searching' && actor!==null
+      ? await this.db.one<{price:number;scope:string;quote_version:Date}>(
+          "select price,ecu_diagnostic_scope as scope,updated_at as quote_version "+
+          "from bids where order_id=$1 and status='chosen' and performer_id=$2",
+          [o.id,o.performer_id])
+      : null;
     return {
       id: o.id, number: o.number, status: o.status as OrderStatus, statusLabel: statusLabels[o.status as OrderStatus],
       service: o.service, isSos: o.is_sos, problem: o.problem, description: o.description,
       address: o.address, lat: o.lat, lng: o.lng, zoneId: o.zone_id, night: o.night, groupTrip: o.group_trip, tier: o.tier,
       brand: o.brand, model: o.model, year: o.year, vehicleId: o.vehicle_id, vehicle, estimate: o.estimate, paymentMethod: o.payment_method,
+      warrantyDays:o.warranty_days??null,warrantyWork:o.warranty_work_summary??null,warrantyStartedAt:o.warranty_started_at??null,
+      ecuDueAt:o.ecu_due_at??null,ecuExtensionsCount:o.ecu_extensions_count??0,
+      ecuDiagnosticQuote,
       auction: o.status === 'searching' && !!o.auction_until, auctionUntil: o.auction_until, autoPick: o.auto_pick, search, searchStage,
       limits: o.status === 'searching' ? this.auction.limits(o, (await this.settings.get('dispatch'))) : null,
       destination: o.destination, cargo: o.cargo, loaded: o.loaded, driverOnSite: o.driver_on_site, discountReason: o.discount_reason,
       money: this.money(o), result: o.result, resultNote: o.result_note,
       pointsFee: o.points_fee ?? 0, pointsCommission: actor === 'performer' || actor === 'admin' ? o.points_commission ?? 0 : undefined,
       points: actor === 'client' && o.status === 'awaiting_confirmation' && this.referral ? await this.referral.available(o.client_id, this.money(o).clientFee) : null,
+      amountProposalVersion:o.amount_proposed_at??null,
       bill: o.bill ?? null, billingStep: Number((await this.settings.get('pricing')).billingStepMinutes ?? 60),
       site: o.site, workStartedAt: o.work_started_at ?? null, waitRate: performer?.wait_rate ?? null, ownerNote: o.owner_note ?? null, partMode: o.part_mode ?? null, waitStartedAt: o.wait_started_at ?? null, waitMinutes: o.wait_minutes ?? 0,
       consultHint: o.consult_hint, consultOf: o.consult_of,
-      continuationOf: o.continuation_of ?? null, caseRootId,
+      continuationOf: o.continuation_of ?? null, additionalTo:o.additional_to??null,caseRootId,
+      caseOtherStages:caseOtherStages,
       caseSummary: {
         rootId: caseRootId, stages: caseSteps, serviceBookings: caseServiceStages,
         confirmedTotal: caseConfirmedTotal,
+        pendingCount:caseRows.filter((step:any)=>!['completed','cancelled','no_performer'].includes(step.status)).length,
+        separateContracts:true,
         multiStage: caseSteps.length + caseServiceStages.length > 1,
       },
+      hasActiveEcuAddition:actor==='client'
+        ? Boolean(await this.db.one(
+          "select 1 from orders where additional_to=$1 and service='ecu' "+
+          "and status not in ('cancelled','no_performer') limit 1",[o.id])) : false,
       canContinueWithTow: actor === 'client' && o.status === 'completed' &&
         o.service !== 'tow' && ['cause_found', 'not_found'].includes(o.result) &&
         !caseRows.some((step: any) => step.continuation_of === o.id && step.status !== 'cancelled'),
@@ -863,7 +1138,9 @@ export class OrdersService {
     const items = await this.db.query<any>(
       `select o.id, o.number, o.status, o.service, o.is_sos, o.problem, o.description, o.address, o.brand, o.estimate, o.work_amount, o.call_out_amount,
               o.client_fee_pct, o.discount_amount, o.payment_method, o.created_at, o.completed_at, o.consult_of,
-              o.case_root_id, o.continuation_of, o.result, o.result_note, o.vehicle_id,
+              o.case_root_id, o.continuation_of, o.additional_to,
+              (select number from orders parent where parent.id=o.additional_to) as parent_number,
+              o.result, o.result_note, o.vehicle_id,
               v.brand as v_brand, v.model as v_model, v.year as v_year, v.plate as v_plate,
               (select coalesce(company_name, name) from users where id=o.client_id) as client_name
          from orders o left join vehicles v on v.id=o.vehicle_id where ${where} ${status ? 'and o.status = $2' : ''} order by o.created_at desc limit 100`,

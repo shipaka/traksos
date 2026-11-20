@@ -58,6 +58,10 @@ jobs:
         run: npm run typecheck
       - name: Сервер — тесты
         run: npm test
+      - name: Миграции main → кандидат, сохранность данных и повторный прогон
+        run: |
+          git fetch --no-tags --depth=1 origin main
+          npx tsx scripts/check-main-upgrade.mjs
       - name: Веб — сборка
         run: npm -w web run build
       - name: Сверка утверждённого дизайна и комплектации
@@ -76,6 +80,7 @@ jobs:
           node e2e/public-shots.mjs e2e/shots
           SHOTS_DIR=e2e/shots/public node e2e/public-layout.mjs
           node e2e/offline.mjs
+          node e2e/ecu-price-consent.mjs
           SHOTS_DIR=e2e/shots/premium-unified-client node e2e/premium-unified-client.mjs
           node e2e/flow.mjs e2e/shots
           node e2e/sos-regional-pricing.mjs e2e/shots
@@ -97,6 +102,7 @@ jobs:
           node e2e/approved-truck-hero.mjs
           node e2e/visual-text-geometry.mjs
           node e2e/preview-login.mjs
+          SHOTS_DIR=e2e/shots/ecu-quote node e2e/ecu-diagnostic-consent-flow.mjs
       - name: Снимки экранов каждой проверяемой версии
         if: always()
         uses: actions/upload-artifact@v4

@@ -71,15 +71,23 @@ export class StandingService {
     const kind = performerKindFor(p.service);
     const list = await this.db.query<Candidate & { name: string | null; tier: string; call_out_price: number | null; created_at: Date; jobs: number; busy: boolean }>(
       `select p.user_id, p.kind, p.specialties, p.brands, p.is_priority, p.paused, p.line_status, p.verification, p.tier, p.call_out_price,
-              p.lat, p.lng, u.rating, p.accepts_group, u.status as user_status, p.schedule, p.off_schedule_until, p.extras, u.name, p.prep_minutes,
+              p.lat, p.lng, p.location_at, u.rating, p.accepts_group, u.status as user_status, p.schedule, p.off_schedule_until, p.extras, u.name, p.prep_minutes,
               (select count(*)::int from orders o where o.performer_id=p.user_id and o.status='completed') as jobs,
               exists (select 1 from orders x where x.performer_id=p.user_id and x.status in ('accepted','en_route','arrived','working')) as busy,
               0 as cash_debt
          from performer_profiles p join users u on u.id=p.user_id
         where p.kind=$1 and p.user_id<>$2 and p.verification='approved' and p.line_status in ('online','on_call','on_job')`, [kind, user.id]);
     const order = { service: p.service, brand: p.brand ?? null, lat: p.lat ?? null, lng: p.lng ?? null, group_trip: false };
-    const free = list.filter((c) => !c.busy && c.line_status !== 'on_job');
-    const ranked = rankCandidates(order as any, free, { radiusKm: all.dispatch.radiusKm, maxCandidates: 20, cashDebtLimit: Number.MAX_SAFE_INTEGER, now: this.now() });
+    // No "specialist can arrive" claims without BOTH customer GPS and fresh performer GPS.
+    // Unknown position, old data, phone-only status and busy performers are excluded.
+    const located = p.lat != null && p.lng != null && Number.isFinite(p.lat) && Number.isFinite(p.lng);
+    const freshAfter = this.now().getTime() - 15 * 60_000;
+    const free = located ? list.filter((c) => !c.busy && c.line_status === 'online'
+      && c.lat != null && c.lng != null
+      && Number.isFinite(Number(c.lat)) && Number.isFinite(Number(c.lng))
+      && !!(c as any).location_at && new Date((c as any).location_at).getTime() >= freshAfter) : [];
+
+    const ranked = rankCandidates(order as any, free, { radiusKm: Math.min(70, all.dispatch.radiusKm), maxCandidates: 20, cashDebtLimit: Number.MAX_SAFE_INTEGER, now: this.now() });
     const byId = new Map(free.map((c) => [c.user_id, c]));
     const speed = all.dispatch.citySpeedKmh || 40;
     const LEVEL: Record<string, number> = { excellent: 3, good: 2, last_resort: 1 };
@@ -93,6 +101,9 @@ export class StandingService {
         callOut: c.call_out_price ?? tierPrice,
       };
     });
-    return { online: list.length, free: free.length, match: ranked.length, items };
+    return { online: list.length, free: free.length, match: ranked.length, items,
+      localVerified: located && ranked.length > 0, canRecommend: located && ranked.length > 0,
+      coordinateFreshnessMinutes: 15, distanceMetric: 'straight_line_km',
+      reason: !located ? 'need_vehicle_location' : ranked.length ? null : 'no_verified_nearby_performer' };
   }
 }

@@ -1,7 +1,8 @@
 // Кабинет исполнителя по разделам: профиль — отдельно, фильтр заявок — отдельно, деньги — отдельно.
 // Каждый раздел — своя короткая страница со своей кнопкой «Сохранить», ничего не листается до конца.
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import '../vehicleOwnerGuide.css';
 import { get, put, post, rub, fmtTime, fmtPhone } from '../api.ts';
 import { BRANDS, BRAND_LEVELS, SERVICES } from '../dict.ts';
 import { FEE_PURPOSE } from '../dict.ts';
@@ -9,6 +10,7 @@ import { useLoad, useAction, useMe, go, Loading, Field, RubInput, Back } from '.
 
 const SPECIALTIES: { id: string; name: string }[] = [
   { id: 'electric', name: 'Электрика' }, { id: 'diag', name: 'Диагностика' }, { id: 'air', name: 'Пневма, тормоза' },
+  { id: 'ecu', name: 'Специалист по ЭБУ' },
   { id: 'autonomy', name: 'Автономки' }, { id: 'tyre', name: 'Шиномонтаж' }, { id: 'consult', name: 'Консультации' },
 ];
 
@@ -33,14 +35,18 @@ export function PerformerHub() {
   if (!p) return <PerformerOnboarding />;
   const cars = (p.cars?.length ? p.cars : p.car ? [p.car] : []) as any[];
   const rows: [string, string, string][] = [
-    ['work/me/about', 'Кто вы', `${me?.name ?? 'Имя не указано'} · ${p.kind === 'tow' ? 'эвакуатор' : 'мастер'}`],
+    ['work/me/about', 'Кто вы', `${me?.name ?? 'Имя не указано'} · ${p.kind === 'tow' ? 'эвакуатор' : p.kind === 'ecu' ? 'специалист по ЭБУ' : 'мастер'}`],
     ['work/me/phone', 'Телефон и вход', fmtPhone(me!.phone)],
-    ['work/me/cars', p.kind === 'tow' ? 'Эвакуаторы' : 'Машины', cars.length ? `${cars.length} из 3 · сегодня: ${p.car?.brand ?? '—'} ${p.car?.plate ?? ''}` : 'не добавлены'],
-    ['work/me/schedule', 'Распорядок', p.schedule?.on ? `${dayList(p.schedule.days)} · выезды ${p.schedule.from}–${p.schedule.to} · телефон до ${p.schedule.phoneTo}` : 'не задан — заявки идут, пока вы на линии'],
+    ...(p.kind === 'ecu' ? [] : [[
+      'work/me/cars', p.kind === 'tow' ? 'Эвакуаторы' : 'Машины',
+      cars.length ? `${cars.length} из 3 · сегодня: ${p.car?.brand ?? '—'} ${p.car?.plate ?? ''}` : 'не добавлены'
+    ]] as [string,string,string][]),
+    ['work/me/schedule', 'Распорядок', p.schedule?.on ? `${dayList(p.schedule.days)} · ${p.kind==='ecu'?'приём заказов':'выезды'} ${p.schedule.from}–${p.schedule.to} · телефон до ${p.schedule.phoneTo}` : 'не задан — заявки идут, пока вы на линии'],
     ['work/me/tax', 'Налоговый статус', p.tax_status ? `${p.tax_status === 'ip' ? 'ИП' : 'Самозанятый'} · ИНН ${p.inn ?? '—'}` : 'не указан'],
     ['work/me/money', 'Финансы', 'баланс, начисления, списания, выплаты'],
     ['invite', 'Пригласить и получать баллы', 'баллы гасят до половины комиссии'],
     ['work/me/level', 'Мой уровень и точность', 'Новичок · Проверенный · Лучший, точность подсказок по телефону'],
+    ['partner', 'TrakSOS Партнёр', 'Старт · Активный · Приоритетный, спрос по региону, качество и пересмотр'],
     ['work/docs', 'Проверка и фото', p.verification === 'approved' ? 'пройдена' : p.submitted_at ? 'на проверке' : 'нужно пройти'],
     ['support', 'Поддержка', 'обращения и ответы'],
     ['help', 'Справка', 'как приходят заявки, комиссия, опоздания'],
@@ -53,9 +59,11 @@ export function PerformerHub() {
   ];
   return (
     <main className="performer-workspace stack">
-      <section className="internal-role-hero internal-role-hero-performer"><span>TRAKSOS · ВЫЕЗДНОЙ СПЕЦИАЛИСТ</span><h1>Профиль</h1><p>Всё по разделам — откройте нужный.</p><a className="btn" href="#/work">← На линию и к заявкам</a></section>
+      <section className="internal-role-hero internal-role-hero-performer"><span>{p.kind==='ecu'?'TRAKSOS · СТАЦИОНАРНАЯ РАБОТА ЭБУ':'TRAKSOS · ВЫЕЗДНОЙ СПЕЦИАЛИСТ'}</span><h1>Профиль</h1><p>Всё по разделам — откройте нужный.</p><a className="btn" href="#/work">← На линию и к заявкам</a></section>
       <section className="performer-live-insights" aria-label="Обзор профиля исполнителя">
-        <div><span>Моя техника</span><strong>{cars.length}</strong><small>{p.kind==='tow'?'эвакуаторов':'автомобилей'}</small></div>
+        {p.kind==='ecu'
+          ? <div><span>Специализация</span><strong>ЭБУ</strong><small>стационарная мастерская</small></div>
+          : <div><span>Моя техника</span><strong>{cars.length}</strong><small>{p.kind==='tow'?'эвакуаторов':'автомобилей'}</small></div>}
         <div><span>Проверка</span><strong className="performer-verify">{p.verification==='approved'?'✓':p.verification==='rejected'?'!':'…'}</strong>
           <small>{p.verification==='approved'?'пройдена':p.verification==='rejected'?'требует исправления':'в процессе'}</small></div>
         <div><span>График</span><strong className="performer-verify">{p.schedule?.on?'●':'○'}</strong>
@@ -74,7 +82,14 @@ export function PerformerHub() {
 function PerformerOnboarding() {
   const { me, reload } = useMe();
   const { busy, run } = useAction();
-  const [kind, setKind] = useState(me?.roles.includes('tow') ? 'tow' : 'master');
+  const [kind, setKind] = useState(()=>{
+    if(me?.roles.includes('tow'))return 'tow';
+    try{
+      const selected=JSON.parse(sessionStorage.getItem('traksos.masterSpecialties')??'[]');
+      if(Array.isArray(selected)&&selected.includes('ecu'))return 'ecu';
+    }catch{/* Guest hints are never used as credentials. */}
+    return 'master';
+  });
   const canTow = !!me?.roles.includes('tow');
   const canMaster = !!me?.roles.includes('master');
   const [name, setName] = useState(me?.name ?? '');
@@ -92,10 +107,15 @@ function PerformerOnboarding() {
   const [taxStatus, setTax] = useState('');
   const [inn, setInn] = useState('');
   const isTow = kind === 'tow';
+  const isEcu = kind === 'ecu';
   async function save() {
     const body: any = { kind, name: name || undefined, taxStatus: taxStatus || null, inn: inn || null,
-      cars: car.brand && car.plate ? [car] : [], car: car.brand && car.plate ? car : null };
-    if (!isTow) body.specialties = spec;
+      ...(isEcu ? {} : {
+        cars: car.brand && car.plate ? [car] : [],
+        car: car.brand && car.plate ? car : null
+      }) };
+    if (isEcu) body.specialties = ['diag','electric'];
+    else if (!isTow) body.specialties = spec.filter(x=>x!=='ecu');
     if (await run(() => put('/api/performer/profile', body), 'Профиль сохранён — теперь фото для проверки')) {
       try { sessionStorage.removeItem('traksos.masterSpecialties'); } catch {}
       await reload(); go('work/docs');
@@ -108,11 +128,12 @@ function PerformerOnboarding() {
         <div className="step-head"><span className="step-n">1</span><b>Кто вы</b></div>
         <div className="grid2">
           {canMaster && <button type="button" className="seg" aria-pressed={kind === 'master'} onClick={() => setKind('master')}>Мастер</button>}
+          {canMaster && <button type="button" className="seg" aria-pressed={isEcu} onClick={() => setKind('ecu')}>Специалист по ЭБУ</button>}
           {canTow && <button type="button" className="seg" aria-pressed={kind === 'tow'} onClick={() => setKind('tow')}>Эвакуатор</button>}
         </div>
         <input className="field" placeholder="Имя, как увидят клиенты" value={name} onChange={(e) => setName(e.target.value)} />
       </div>
-      {!isTow && (
+      {!isTow&&!isEcu && (
         <div className="step-card">
           <div className="step-head"><span className="step-n">2</span><b>Что делаете</b></div>
           <div className="row">{SPECIALTIES.map((s) => (
@@ -121,15 +142,19 @@ function PerformerOnboarding() {
           ))}</div>
         </div>
       )}
-      <div className="step-card">
+      {isEcu&&<div className="step-card">
+        <b>Электронные блоки управления</b>
+        <p className="note">Диагностика, восстановление и программирование ЭБУ. В кабинет поступают отдельные заявки и дополнительные этапы после другого мастера. Заявки не объединяют оплату автоматически.</p>
+      </div>}
+      {!isEcu&&<div className="step-card">
         <div className="step-head"><span className="step-n">{isTow ? 2 : 3}</span><b>{isTow ? 'Эвакуатор' : 'Машина, на которой приезжаете'}</b></div>
         <CarInputs car={car} onChange={setCar} tow={isTow} />
-      </div>
+      </div>}
       <div className="step-card">
-        <div className="step-head"><span className="step-n">{isTow ? 3 : 4}</span><b>Налоговый статус</b></div>
+        <div className="step-head"><span className="step-n">{isEcu ? 2 : isTow ? 3 : 4}</span><b>Налоговый статус</b></div>
         <TaxInputs taxStatus={taxStatus} inn={inn} onChange={(t, i) => { setTax(t); setInn(i); }} />
       </div>
-      <button className="btn" disabled={busy || !name || (!isTow && !spec.length)} onClick={save}>Дальше — фото для проверки</button>
+      <button className="btn" disabled={busy || !name || (!isTow&&!isEcu && !spec.some(x=>x!=='ecu'))} onClick={save}>Дальше — фото для проверки</button>
     </main>
   );
 }
@@ -148,7 +173,7 @@ export function AboutSection() {
       <Field label="Имя, как увидят клиенты"><input className="field" value={name} onChange={(e) => setName(e.target.value)} /></Field>
       <div className="card">
         <dl className="kv">
-          <dt>Кто</dt><dd>{p.kind === 'tow' ? 'Эвакуатор' : 'Мастер'}</dd>
+          <dt>Кто</dt><dd>{p.kind === 'tow' ? 'Эвакуатор' : p.kind==='ecu'?'Стационарный специалист ЭБУ':'Мастер'}</dd>
           <dt>Рейтинг</dt><dd>{me?.rating ? `★ ${Number(me.rating).toFixed(1)} · ${me.rating_count} оценок` : 'пока нет оценок'}</dd>
           <dt>Проверка</dt><dd>{p.verification === 'approved' ? 'Пройдена' : p.verification === 'rejected' ? 'Не пройдена' : 'Ещё не пройдена'}</dd>
         </dl>
@@ -179,10 +204,75 @@ export function PhoneSection() {
 
 // Машины ----------------------------------------------------------------------
 
+type RecoveryMake={key:string;name:string};
+type RecoveryModel={key:string;name:string};
+type RecoveryPhoto={makeKey:string;src:string;caption:string;sourcePage:string;author:string;
+ license:string;licenseUrl:string;specificModelVerified:false};
+function RecoveryPhotoTile({photo}:{photo:RecoveryPhoto}){
+  const [failed,setFailed]=useState(false);
+  return <figure className="recovery-photo">
+    {failed?<div className="vehicle-owner-guide-fallback" aria-hidden="true">▰</div>
+      :<img loading="lazy" src={photo.src} alt={photo.caption}
+        referrerPolicy="no-referrer" onError={()=>setFailed(true)}/>}
+    <figcaption>{photo.caption}. <a href={photo.sourcePage} target="_blank" rel="noopener noreferrer">
+      {photo.author}</a>{' · '}<a href={photo.licenseUrl} target="_blank" rel="noopener noreferrer">{photo.license}</a>.
+      Это пример надстройки, не доказательство модели.</figcaption>
+  </figure>;
+}
 function CarInputs({ car, onChange, tow }: { car: { brand: string; color?: string; plate: string }; onChange: (c: any) => void; tow?: boolean }) {
+  const [makes,setMakes]=useState<RecoveryMake[]>([]);
+  const [models,setModels]=useState<RecoveryModel[]>([]);
+  const [makeKey,setMakeKey]=useState('');
+  const [modelKey,setModelKey]=useState('');
+  const [lookupError,setLookupError]=useState('');
+  const [recoveryPhotos,setRecoveryPhotos]=useState<RecoveryPhoto[]>([]);
+  useEffect(()=>{
+    if(!tow)return;
+    let live=true;
+    get<{items:RecoveryPhoto[]}>('/api/vehicle-reference/recovery-gallery')
+      .then(r=>{if(live)setRecoveryPhotos(r.items)}).catch(()=>{if(live)setRecoveryPhotos([])});
+    get<{items:RecoveryMake[]}>('/api/vehicle-reference/makes?purpose=tow&category=truck')
+      .then(r=>{if(live){setMakes(r.items);setLookupError('')}})
+      .catch(()=>{if(live)setLookupError('Справочник эвакуаторов пока недоступен')});
+    return()=>{live=false};
+  },[tow]);
+  useEffect(()=>{
+    if(!tow||!makeKey){setModels([]);return}
+    let live=true;
+    get<{items:RecoveryModel[]}>('/api/vehicle-reference/models?purpose=tow&category=truck&brandKey='+encodeURIComponent(makeKey))
+      .then(r=>{if(live){setModels(r.items);setLookupError('')}})
+      .catch(()=>{if(live){setModels([]);setLookupError('Не удалось загрузить список эвакуаторов')}});
+    return()=>{live=false};
+  },[tow,makeKey]);
+  const chooseRecovery=(next:string)=>{
+    setModelKey(next);
+    const make=makes.find(x=>x.key===makeKey),model=models.find(x=>x.key===next);
+    // The legacy performer API accepts only a compact display name, not catalog keys.
+    onChange({...car,brand:make&&model?(make.name+' '+model.name.split(' — ')[0]).slice(0,50):''});
+  };
   return (
     <>
-      <input className="field" placeholder={tow ? 'Марка эвакуатора: MAN TGS' : 'Марка: Lada Largus'} value={car.brand} onChange={(e) => onChange({ ...car, brand: e.target.value })} />
+      {tow?<section className="stack" aria-label="Подтверждённые тяжёлые эвакуаторы">
+        <small className="note">Только документированные машины с эвакуаторной надстройкой. Само шасси грузовика не означает, что это эвакуатор.</small>
+        <select className="field" aria-label="Производитель эвакуатора" value={makeKey} onChange={e=>{
+          setMakeKey(e.target.value);setModelKey('');onChange({...car,brand:''});
+        }}>
+          <option value="">Выберите производителя эвакуатора</option>
+          {makes.map(x=><option key={x.key} value={x.key}>{x.name}</option>)}
+        </select>
+        {makeKey&&<select className="field" aria-label="Модель тяжёлого эвакуатора" value={modelKey}
+          onChange={e=>chooseRecovery(e.target.value)}>
+          <option value="">Выберите подтверждённую модель</option>
+          {models.map(x=><option key={x.key} value={x.key}>{x.name}</option>)}
+        </select>}
+        {lookupError&&<small className="note" role="alert">{lookupError}. Если вашей модели нет, запросите её добавление через администратора.</small>}
+        {recoveryPhotos.some(p=>!makeKey||p.makeKey===makeKey)&&<div className="recovery-photo-gallery" aria-label="Иллюстрации тяжёлых эвакуаторов">
+          {recoveryPhotos.filter(p=>!makeKey||p.makeKey===makeKey)
+            .map(p=><RecoveryPhotoTile key={p.sourcePage} photo={p}/>)}
+        </div>}
+        {car.brand&&<small className="note">Выбрано: {car.brand}. Фото надстройки, её паспорт и допустимую массу необходимо подтвердить отдельно.</small>}
+      </section>:<input className="field" placeholder="Марка: Lada Largus" value={car.brand}
+        onChange={(e) => onChange({ ...car, brand: e.target.value })}/>}
       <div className="grid2">
         <input className="field" placeholder="Цвет" value={car.color ?? ''} onChange={(e) => onChange({ ...car, color: e.target.value })} />
         <input className="field" placeholder="Госномер" value={car.plate} onChange={(e) => onChange({ ...car, plate: e.target.value.toUpperCase() })} />
@@ -200,6 +290,11 @@ export function CarsSection() {
   const [add, setAdd] = useState({ brand: '', color: '', plate: '' });
   const tow = p.kind === 'tow';
   const commit = (list: any[], t: string) => save({ cars: list, car: list.find((c) => c.plate === t) ?? list[0] ?? null }, 'Машины сохранены');
+  if(p.kind==='ecu')return <main className="stack">
+    <Back to="work/me" label="Профиль" />
+    <h1>Стационарная специализация ЭБУ</h1>
+    <p className="note">Личный автомобиль не требуется и не участвует в заявках. Публикацию адреса мастерской подтверждает администратор по согласованию с владельцем точки.</p>
+  </main>;
   return (
     <main>
       <Back to="work/me" label="Профиль" />
@@ -254,6 +349,26 @@ export function ScheduleSection() {
       <Back to="work/me" label="Профиль" />
       <div><h1>Распорядок</h1><div className="sub">По нему решаем, звонить ли вам. Кончилось рабочее время — статус сам станет «Не на линии», пока вы не выйдете на линию вручную.</div></div>
       <VacationToggle />
+      <div className="card">
+        <b>Ваш часовой пояс</b>
+        <p className="note">Нужен для правильного времени выездов во всех регионах России. Часовой пояс не определяется по IP и не показывает вашу геолокацию в Эфире.</p>
+        <select className="field" value={s.timeZone??''} onChange={e=>setS({...s,timeZone:e.target.value||undefined})}>
+          <option value="">Не указан — текущий старый график считается по Москве</option>
+          <option value="Europe/Kaliningrad">Калининград (UTC+2)</option>
+          <option value="Europe/Moscow">Москва / Санкт-Петербург (UTC+3)</option>
+          <option value="Europe/Samara">Самара (UTC+4)</option>
+          <option value="Asia/Yekaterinburg">Екатеринбург (UTC+5)</option>
+          <option value="Asia/Omsk">Омск (UTC+6)</option>
+          <option value="Asia/Novosibirsk">Новосибирск (UTC+7)</option>
+          <option value="Asia/Krasnoyarsk">Красноярск (UTC+7)</option>
+          <option value="Asia/Irkutsk">Иркутск (UTC+8)</option>
+          <option value="Asia/Yakutsk">Якутск (UTC+9)</option>
+          <option value="Asia/Vladivostok">Владивосток (UTC+10)</option>
+          <option value="Asia/Sakhalin">Сахалин (UTC+11)</option>
+          <option value="Asia/Magadan">Магадан (UTC+11)</option>
+          <option value="Asia/Kamchatka">Камчатка (UTC+12)</option>
+        </select>
+      </div>
       <button className="opt" aria-pressed={s.on} onClick={() => setS({ ...s, on: !s.on })}>
         <b>{s.on ? '✓ Работаю по графику' : 'Без графика'}</b><small>{s.on ? 'Заявки — только в рабочие дни и часы' : 'Заявки идут всегда, пока вы на линии'}</small>
       </button>
@@ -657,7 +772,8 @@ export function LevelSection() {
   return (
     <main>
       <Back to="work/me" label="Профиль" />
-      <div><h1>Мой уровень</h1><div className="sub">Считается сам — по заказам, рейтингу, неприездам и спорам за 90 дней. Видно только вам.</div></div>
+      <div><h1>История опыта и точность</h1><div className="sub">Прежний показатель опыта — отдельно от новой программы «TrakSOS Партнёр». Количество заказов здесь не определяет новые привилегии.</div></div>
+      <a className="btn ghost" href="#/partner">TrakSOS Партнёр: уровни, спрос и апелляции</a>
       {!d ? <Loading error={s.error} /> : <>
         <div className="card">
           {LEVELS.map(([k, n, h]) => (

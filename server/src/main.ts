@@ -11,6 +11,7 @@ import { YooKassaProvider } from './payments/yookassa.ts';
 import { staticHandler } from './http/static.ts';
 import { PublicWeatherService } from './services/publicWeather.ts';
 import { attachRealtimeGateway } from './realtime/gateway.ts';
+import { pruneCommunityEvents } from './services/communityEventRetention.ts';
 
 const db = await createDb(config.databaseUrl);
 const applied = await migrate(db);
@@ -86,6 +87,11 @@ const housekeeping = async () => {
     // 30 days, not indefinitely. Future legal holds need a separate policy.
     db.query("delete from performer_route_samples where received_at < now() - interval '30 days'")
       .catch((e) => console.error('[gps-history-cleanup]', e)),
+    db.query("delete from community_road_events where expires_at < now() - interval '7 days'")
+      .catch((e) => console.error('[road-event-cleanup]', e)),
+    db.query('delete from realtime_ws_tickets where expires_at<now()')
+      .catch((e)=>console.error('[realtime-tickets-cleanup]',e)),
+    pruneCommunityEvents(db).catch((e) => console.error('[community-events-cleanup]', e)),
   ]);
 };
 const hourly = setInterval(() => { void housekeeping(); }, 3_600_000);

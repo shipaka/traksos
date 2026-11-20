@@ -39,27 +39,34 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
 
   const offers: any[] = data?.offers ?? [];
   const isTow = d.service === 'tow';
+  const isEcu = d.service === 'ecu';
+  const [ecuConsentKey,setEcuConsentKey]=useState<string|null>(null);
   const phrases = isTow ? TOW_PHRASES : d.service === 'consult' ? CONSULT_PHRASES : PHRASES;
   const phrase = usePhrase(phrases, offers.length > 0);
   const left = useLeft(d.autoPick ? d.auctionUntil : null);
   const lim = data?.limits ?? d.limits;
 
-  async function choose(id: string) {
-    const r = await run(() => post(`/api/orders/${d.id}/offers/${id}/choose`));
-    if (r) { toast('Исполнитель выбран'); onChosen(); }
+  async function choose(offer: any) {
+    const key=offer.id+'|'+offer.quote_version+'|'+offer.price;
+    if(isEcu && (ecuConsentKey!==key || !(offer.price>=100) ||
+      !offer.ecu_diagnostic_scope || !offer.quote_version))return;
+    const r = await run(() => post(`/api/orders/${d.id}/offers/${offer.id}/choose`,isEcu?{
+      acceptedPrice:offer.price,quoteVersion:new Date(offer.quote_version).toISOString(),ecuConsent:true
+    }:{}));
+    if (r) { toast(isEcu?'Стоимость диагностики согласована. Допработы только по новой смете.':'Исполнитель выбран'); onChosen(); }
   }
 
   return (
     <div className="stack" style={{ gap: 14 }}>
-      {d.service !== 'consult' && <RoadsideMap
+      {d.service !== 'consult' && !isEcu && <RoadsideMap
         point={Number.isFinite(d.lat)&&Number.isFinite(d.lng)?{lat:d.lat,lng:d.lng}:null}
         address={d.address} synthetic={String(d.id).startsWith('demo-')} />}
       <div className="card search-card">
         <Radar dots={Math.min(d.search?.candidates ?? 0, 8)} hits={offers.length} />
         <div className="stack" style={{ gap: 4, textAlign: 'center' }}>
-          <b className="search-title">{offers.length ? `${offers.length} ${plural(offers.length, 'отклик', 'отклика', 'откликов')}` : phrase}</b>
+          <b className="search-title">{isEcu?(offers.length?'Специалист предложил цену диагностики':'Ждём стоимость от выбранной мастерской'):offers.length ? `${offers.length} ${plural(offers.length, 'отклик', 'отклика', 'откликов')}` : phrase}</b>
           <span className="note">
-            {offers.length
+            {isEcu?'Другим мастерским запрос не отправляли. Сумму диагностики и объём работ вы согласовываете до начала диагностики.':offers.length
               ? (d.autoPick && left != null ? `Выберите сами — или через ${mmss(left)} назначим лучшего` : 'Выберите исполнителя — остальным сообщим сами')
               : d.search?.candidates ? `Заявку видят ${d.search.candidates} ${plural(d.search.candidates, d.service === 'tow' ? 'эвакуаторщик' : 'мастер', d.service === 'tow' ? 'эвакуаторщика' : 'мастера', d.service === 'tow' ? 'эвакуаторщиков' : 'мастеров')}${d.service === 'consult' ? ' на связи' : ' рядом'} — ждём, кто откликнется` : 'Звоним ближайшим'}
           </span>
@@ -71,13 +78,13 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
           Дальний выезд без отдельного согласия не назначается.
         </div>}
         {d.autoPick && left != null && data?.until && <Progress until={data.until} />}
-        {lim && <div className="sum" style={{ justifyContent: 'center', gap: 6 }}><span>{d.service === 'consult' ? 'Стоимость консультации' : `Обычная цена ${isTow ? 'перевозки' : 'выезда'}`}</span><b>{rub(lim.usual)}</b></div>}
+        {lim && !isEcu && <div className="sum" style={{ justifyContent: 'center', gap: 6 }}><span>{d.service === 'consult' ? 'Стоимость консультации' : `Обычная цена ${isTow ? 'перевозки' : 'выезда'}`}</span><b>{rub(lim.usual)}</b></div>}
       </div>
 
       {offers.length > 0 && (
         <>
           <div className="scroll-x">
-            {SORTS.filter((s) => d.service !== 'consult' || s.id === 'recommended').map((s) => <button key={s.id} className="chip" aria-pressed={sort === s.id} onClick={() => setSort(s.id)}>{s.name}</button>)}
+            {SORTS.filter((s) => (d.service !== 'consult' && !isEcu) || s.id === 'recommended').map((s) => <button key={s.id} className="chip" aria-pressed={sort === s.id} onClick={() => setSort(s.id)}>{s.name}</button>)}
           </div>
           <div className="stack">
             {offers.map((o, i) => {
@@ -85,10 +92,14 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
               seen.current.add(o.id);
               return (
                 <div key={o.id} className={`card offer ${fresh ? 'fresh' : ''} ${i === 0 && sort === 'recommended' ? 'best' : ''}`}>
-                  {i === 0 && sort === 'recommended' && <span className="pill accent" style={{ alignSelf: 'flex-start' }}>Лучший выбор</span>}
+                  {!isEcu && i === 0 && sort === 'recommended' && <span className="pill accent" style={{ alignSelf: 'flex-start' }}>Лучший выбор</span>}
                   <div className="between" style={{ alignItems: 'flex-start' }}>
                     <div className="stack" style={{ gap: 2 }}>
                       <b>{o.name ?? 'Исполнитель'}</b>
+                      {o.performer_kind==='ecu'&&o.performer_verification==='approved'&&
+                        <span className="pill accent" aria-label="Подтверждённая квалификация ЭБУ">
+                          {o.partner_level==='priority'?'Эксперт по ЭБУ':o.partner_level==='active'?'Проверенный специалист':'Профиль ЭБУ проверен'}
+                        </span>}
                       <span className="note">
                         {o.rating && o.rating_count >= 3 ? `★ ${o.rating.toFixed(1)} · ${o.rating_count} ${plural(o.rating_count, 'отзыв', 'отзыва', 'отзывов')}` : 'Новый на TrakSOS'}
                         {o.completed ? ` · ${o.completed} ${plural(o.completed, 'выезд', 'выезда', 'выездов')}` : ''}
@@ -96,20 +107,30 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
                     </div>
                     <div className="stack" style={{ gap: 2, alignItems: 'flex-end' }}>
                       <b className="offer-price">{rub(o.price)}</b>
-                      {o.diffPct !== 0 && <span className={`pill ${o.diffPct < 0 ? 'good' : ''}`}>{o.diffPct > 0 ? '+' : ''}{o.diffPct}%</span>}
+                      {o.diffPct!=null && o.diffPct !== 0 && <span className={`pill ${o.diffPct < 0 ? 'good' : ''}`}>{o.diffPct > 0 ? '+' : ''}{o.diffPct}%</span>}
                     </div>
                   </div>
                   <div className="row note">
-                    {d.service !== 'consult' && <span>Подача: {o.road_eta_minutes != null ? 'по маршруту ' : 'ориентировочно ~'}{o.eta_minutes} мин</span>}
-                    {d.service !== 'consult' && o.distance_km != null && <span>· {o.distance_km.toFixed(1)} км</span>}
-                    {o.hour_price && <span>· час {rub(o.hour_price)}</span>}
+                    {d.service !== 'consult' && !isEcu && <span>Подача: {o.road_eta_minutes != null ? 'по маршруту ' : 'ориентировочно ~'}{o.eta_minutes} мин</span>}
+                    {d.service !== 'consult' && !isEcu && o.distance_km != null && <span>· {o.distance_km.toFixed(1)} км</span>}
+                    {!isEcu && o.hour_price && <span>· час {rub(o.hour_price)}</span>}
                     {o.brand_level === 'excellent' && <span className="pill good">Знает {d.brand}</span>}
                   </div>
-                  {o.extras?.stock?.length > 0 && d.service !== 'consult' && <span className="note">С собой: {o.extras.stock.join(', ')}</span>}
-                  {(o.extras?.weekendPct || o.extras?.nightPct || o.extras?.waitRate) && d.service !== 'consult' ? <span className="note">Наценки мастера: {[o.extras.weekendPct && `выходные +${o.extras.weekendPct}%`, o.extras.nightPct && `ночь +${o.extras.nightPct}%`, o.extras.waitRate && `ожидание ${rub(o.extras.waitRate)}/ч`].filter(Boolean).join(' · ')}</span> : null}
-                  {o.extras?.prepay === 'always' && <span className="note" style={{ color: 'var(--warn)' }}>Берёт предоплату за работу</span>}
-                  {o.car && d.service !== 'consult' && <span className="note">Приедет на: {o.car.brand}{o.car.color ? `, ${o.car.color}` : ''}</span>}
-                  <button className="btn small" style={{ width: '100%' }} disabled={busy} onClick={() => choose(o.id)}>Выбрать за {rub(o.price)}</button>
+                  {o.extras?.stock?.length > 0 && d.service !== 'consult' && !isEcu && <span className="note">С собой: {o.extras.stock.join(', ')}</span>}
+                  {(o.extras?.weekendPct || o.extras?.nightPct || o.extras?.waitRate) && d.service !== 'consult' && !isEcu ? <span className="note">Наценки мастера: {[o.extras.weekendPct && `выходные +${o.extras.weekendPct}%`, o.extras.nightPct && `ночь +${o.extras.nightPct}%`, o.extras.waitRate && `ожидание ${rub(o.extras.waitRate)}/ч`].filter(Boolean).join(' · ')}</span> : null}
+                  {o.extras?.prepay === 'always' && !isEcu && <span className="note" style={{ color: 'var(--warn)' }}>Берёт предоплату за работу</span>}
+                  {o.car && d.service !== 'consult' && o.performer_kind!=='ecu' && <span className="note">Приедет на: {o.car.brand}{o.car.color ? `, ${o.car.color}` : ''}</span>}
+                  {isEcu&&<>
+                    <p className="note">Диагностика: {o.ecu_diagnostic_scope??'Объём не указан'}</p>
+                    <label className="agree">
+                      <input type="checkbox" checked={ecuConsentKey===o.id+'|'+o.quote_version+'|'+o.price}
+                        onChange={e=>setEcuConsentKey(e.target.checked?o.id+'|'+o.quote_version+'|'+o.price:null)}/>
+                      <span>Согласен на диагностику стоимостью {rub(o.price)} в указанном объёме у выбранного специалиста. Ремонт и дополнительные суммы потребуют нового согласия.</span>
+                    </label>
+                  </>}
+                  <button className="btn small" style={{width:'100%'} }
+                    disabled={busy||(isEcu&&(ecuConsentKey!==o.id+'|'+o.quote_version+'|'+o.price||!(o.price>=100)||!o.ecu_diagnostic_scope))}
+                    onClick={()=>choose(o)}>{isEcu?'Подтвердить диагностику '+rub(o.price):'Выбрать за '+rub(o.price)}</button>
                 </div>
               );
             })}

@@ -35,7 +35,7 @@ if (!account.token || !account.user?.roles?.includes('client')) {
 }
 const browser = await chromium.launch();
 try {
-  for (const width of [390, 1440]) {
+  for (const width of [320, 360, 390, 768, 1440]) {
     const context = await browser.newContext({
       viewport: { width, height: width < 600 ? 844 : 900 },
       deviceScaleFactor: 1,
@@ -84,6 +84,22 @@ try {
       const hubs = await page.locator('.client-dashboard-hubs > a').count();
       if (cards !== 4 || hubs !== 4)
         throw new Error(width + 'px wrong card counts: ' + cards + '/' + hubs);
+      // Keep the four service-photo cards intact. Daily Driver Air is a
+      // first-view SOS peer, not a stealth fifth service-card or privileged chat.
+      const airEntry = page.locator('.desktop-air-action[href="#/air"]');
+      if (!await airEntry.isVisible())
+        throw new Error(width + 'px: Driver Air is not visible beside SOS');
+      const hero = page.locator('.client-dashboard .desktop-hero');
+      if (await hero.locator('.desktop-primary-action[href="#/sos"]').count() !== 1 ||
+          await hero.locator('.desktop-air-action[href="#/air"]').count() !== 1)
+        throw new Error(width + 'px: SOS and Air must share the first hero');
+      const ecuEntry = page.locator('.ecu-discovery--home');
+      await ecuEntry.waitFor({timeout: 12000});
+      if (!await ecuEntry.isVisible() ||
+          await ecuEntry.locator('a[href="#/new/ecu"]').count() !== 1 ||
+          !await ecuEntry.locator('h2').getByText('Специалист по ЭБУ').count())
+        throw new Error(width + 'px: actual ECU order is not discoverable from the dashboard');
+
       // Confirm actual high-resolution bundled photos load, not only CSS URLs.
       const photoDetails = await page.evaluate(async () => {
         const keys = ['master', 'tow', 'sto', 'consult'];
@@ -121,8 +137,38 @@ try {
       if (await page.locator('.client-sos-specialty').count() !== 5)
         throw new Error(width + 'px expected 5 master specialties');
       await page.screenshot({path:OUT + '/specialties-' + width + '.png',fullPage:true});
+      // Stationary ECU is a dedicated customer service, not emergency SOS.
+      if(await page.locator('.ecu-discovery--sos').count())
+        throw new Error(width+'px: stationary ECU wrongly appears in SOS');
+      await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
+      const ecuFromHome=page.locator('.ecu-discovery--home a[href="#/new/ecu"]');
+      await ecuFromHome.waitFor({timeout:15000});
+      await ecuFromHome.click();
+      await page.waitForURL(/#\/new\/ecu(?:\?|$)/,{timeout:12000});
+      await page.getByRole('heading',{name:'Специалист по ЭБУ',exact:true}).waitFor({timeout:15000});
+      await page.locator('#f-car').waitFor({timeout:15000});
+      await page.locator('#f-what').waitFor();
+      await page.locator('#f-ecu-station').waitFor();
+      if(await page.locator('#f-agree input[type="checkbox"]').count())
+        throw new Error(width+'px: ECU cannot be prepriced before diagnostics');
+      const ecuFormWidth=await page.evaluate(()=>({
+        viewport:document.documentElement.clientWidth,
+        content:document.documentElement.scrollWidth
+      }));
+      if(ecuFormWidth.content>ecuFormWidth.viewport+3){
+        const offenders=await page.evaluate(()=>[...document.querySelectorAll('.ecu-intake *')]
+          .map(el=>({el,rect:el.getBoundingClientRect()}))
+          .filter(({rect})=>rect.width>0&&(rect.right>document.documentElement.clientWidth+2||rect.left< -2))
+          .slice(0,12).map(({el,rect})=>({
+            tag:el.tagName,klass:el.className,left:Math.round(rect.left),right:Math.round(rect.right),
+            text:(el.textContent??'').trim().slice(0,70)
+          })));
+        throw new Error(width+'px ECU order form overflow: '+
+          JSON.stringify({size:ecuFormWidth,offenders}));
+      }
+      await page.screenshot({path:OUT+'/ecu-form-'+width+'.png',fullPage:true});
       if (errors.length) throw new Error(width + 'px browser exception: ' + errors.join('; '));
-      console.log('PASS premium real client ' + width + 'px: Scania, 4 services, 4 hubs, SOS, 5 specialties, no overflow');
+      console.log('PASS premium client '+width+'px: Scania, SOS+Air, 4 services, independent ECU station form, 3 SOS, 5 roadside specialties, no overflow');
     } finally {
       await context.close();
     }

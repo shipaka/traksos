@@ -11,7 +11,11 @@ import { Search, OfferForm } from './search.tsx';
 import { RoadsideMap } from './roadsideMap.tsx';
 import { AdminRouteMap } from './AdminRouteMap.tsx';
 import { OrderTimeline } from './OrderTimeline.tsx';
+import { EcuReferralPanel } from './ecuReferralPanel.tsx';
 import { LocationSharing } from './performer.tsx';
+import {EcuRelatedOrders} from './ecuRelatedOrders.tsx';
+import {EcuDiagnosticQuote} from './ecuDesk.tsx';
+import {ServiceCaseLedger} from './serviceCaseLedger.tsx';
 import { RefundForm, payStatus } from './adminUser.tsx';
 
 export function Order({ id }: { id: string }) {
@@ -47,7 +51,16 @@ export function Order({ id }: { id: string }) {
         <span className={`pill ${STATUS[d.status]?.tone}`}>{isConsult && d.status === 'accepted' ? 'На связи' : isConsult && d.status === 'awaiting_confirmation' ? 'Ждём «Вопрос решён»' : STATUS[d.status]?.name}</span>
       </div>
 
+      <EcuRelatedOrders order={d}/>
+      {d.service==='ecu'&&<EcuDeadline d={d} onDone={o.reload}/>}
+      {(d.you==='client'||d.you==='admin')&&<ServiceCaseLedger orderId={id}/>}
       {isPerformer && ['accepted','en_route','arrived','working'].includes(d.status)
+        && <div className="card" role="region" aria-label="Технические материалы по заявке">
+          <b>ТехБаза по этой машине</b>
+          <p className="note">Доступ к проверенным схемам и инструкциям по марке, году и системе. Личные данные клиента не передаются в клуб.</p>
+          <a className="btn ghost" href={'#/techbase/order/'+id}>Найти технические материалы</a>
+        </div>}
+      {isPerformer && d.service!=='ecu' && ['accepted','en_route','arrived','working'].includes(d.status)
         && !location.hash.startsWith('#/admin/test-center') &&
         <section className="roadside-location-share" aria-label="Передача GPS при выезде">
           <b>GPS во время выезда</b>
@@ -60,26 +73,28 @@ export function Order({ id }: { id: string }) {
       {d.status === 'searching' && d.actions?.includes('cancel') && !isPerformer && <Cancel id={id} status={d.status} consult={isConsult} onDone={o.reload} />}
       {d.you === 'candidate' && <CandidateView d={d} onDone={o.reload} />}
 
-      {!isConsult && d.you !== 'candidate' && <Steps status={d.status} service={d.service} events={d.events} />}
+      {!isConsult && d.service!=='ecu' && d.you !== 'candidate' && <Steps status={d.status} service={d.service} events={d.events} />}
       {isConsult && !isPerformer && d.you !== 'candidate' && <ConsultClient d={d} />}
       {d.consultFrom?.hint && <ConsultHintCard from={d.consultFrom} />}
+      {d.you !== 'candidate' && <EcuReferralPanel order={d} />}
       {d.status === 'no_performer' && !isPerformer && <Retry id={id} onDone={o.reload} />}
 
-      {d.performer && !isPerformer && <PerformerCard p={d.performer} pos={perfPos} consult={isConsult} to={d.lat != null ? { lat: d.lat, lng: d.lng } : null} moving={['accepted', 'en_route'].includes(d.status)} />}
+      {d.performer && !isPerformer && d.service!=='ecu' && <PerformerCard p={d.performer} pos={perfPos} consult={isConsult} to={d.lat != null ? { lat: d.lat, lng: d.lng } : null} moving={['accepted', 'en_route'].includes(d.status)} />}
       {isPerformer && <ClientCard d={d} />}
       {d.service === 'tow' && !isPerformer && d.you !== 'candidate' && d.destination && <TowInfo d={d} />}
 
       {d.you !== 'candidate' && d.status !== 'searching' && <Money d={d} />}
 
       {d.you === 'admin' && <AdminPanel d={d} onDone={o.reload} />}
-      {d.you === 'admin' && !isConsult && <AdminRouteMap orderId={id} />}
+      {d.you === 'admin' && !isConsult && d.service!=='ecu' && <AdminRouteMap orderId={id} />}
       {(d.you === 'client' || d.you === 'admin') && <OrderTimeline
         events={d.events} createdAt={d.createdAt} acceptedAt={d.acceptedAt}
         arrivedAt={d.arrivedAt} completedAt={d.completedAt} isAdmin={d.you === 'admin'} />}
       {(d.you === 'client' || d.you === 'admin') && d.paymentMethod !== 'cash' && <PaymentsList id={id} admin={d.you === 'admin'} />}
-      {isPerformer && (isConsult ? <ConsultFinish d={d} onDone={o.reload} /> : <PerformerActions d={d} onDone={o.reload} />)}
-      {!isPerformer && ['arrived', 'working'].includes(d.status) && d.service !== 'consult' && <WorkInProgress d={d} />}
-      {d.you !== 'candidate' && d.you !== 'admin' && d.service !== 'tow' && d.service !== 'consult' && ['arrived', 'working'].includes(d.status) && <PartPicker d={d} onDone={o.reload} performer={isPerformer} />}
+      {isPerformer && d.service==='ecu' && <EcuStationaryActions d={d} onDone={o.reload}/>}
+      {isPerformer && d.service!=='ecu' && (isConsult ? <ConsultFinish d={d} onDone={o.reload} /> : <PerformerActions d={d} onDone={o.reload} />)}
+      {!isPerformer && ['arrived', 'working'].includes(d.status) && d.service !== 'consult' && d.service !== 'ecu' && <WorkInProgress d={d} />}
+      {d.you !== 'candidate' && d.you !== 'admin' && d.service !== 'tow' && d.service !== 'consult' && d.service !== 'ecu' && ['arrived', 'working'].includes(d.status) && <PartPicker d={d} onDone={o.reload} performer={isPerformer} />}
       {!isPerformer && d.status === 'awaiting_confirmation' && (isConsult ? <ConsultConfirm d={d} onDone={o.reload} /> : <ConfirmAmount d={d} onDone={o.reload} />)}
       {d.recommendedCenter && !isPerformer && d.you !== 'candidate' && (
         <div className="banner good col">
@@ -179,6 +194,13 @@ function TowInfo({ d }: { d: any }) {
 
 /** Исполнитель, которому предложена заявка: подробности и отклик */
 function CandidateView({ d, onDone }: { d: any; onDone: () => void }) {
+  const {busy,run}=useAction();
+  if(d.service==='ecu')return <section className="card stack">
+    <b>Запрос выбранной мастерской ЭБУ</b>
+    <p>{d.brand??'Грузовик'} {d.model??''} {d.year??''}</p>
+    {d.description&&<p className="note">{d.description}</p>}
+    <EcuDiagnosticQuote orderId={d.id} onDone={onDone}/>
+  </section>;
   if (d.status !== 'searching') return <div className="card"><b>Заявка уже у другого исполнителя</b></div>;
   return (
     <div className="stack">
@@ -354,9 +376,45 @@ function BillRows({ b }: { b: any }) {
   </>;
 }
 
+/** Stationary ECU repair: no location sharing, drive-to-client map or SOS timer. */
+function EcuDeadline({d,onDone}:{d:any;onDone:()=>void}){
+  const {busy,run}=useAction();
+  const [reason,setReason]=useState('');
+  const canExtend=['accepted','en_route','arrived','working','awaiting_confirmation'].includes(d.status)&&
+    ['performer','admin'].includes(d.you);
+  return <section className="card hi stack" aria-label="Срок работы ЭБУ">
+    <b>Стационарная мастерская ЭБУ</b>
+    <p className="note">Первоначальный срок — 7 дней после подтверждения специалиста. Ремонт и ожидание редких запчастей могут требовать больше времени.</p>
+    {d.ecuDueAt&&<p>Срок: <b>{new Date(d.ecuDueAt).toLocaleDateString('ru-RU')}</b> · продлений на 3 дня: {d.ecuExtensionsCount??0}</p>}
+    <small className="note">Срок информационный. Он не закрывает заказ автоматически и не списывает средства клиента.</small>
+    {canExtend&&<div className="stack">
+      <textarea className="field" maxLength={500} value={reason} onChange={e=>setReason(e.target.value)}
+        placeholder="Почему нужно продление: ждём деталь, продолжаем диагностику…" />
+      <button className="btn ghost" disabled={busy||reason.trim().length<8}
+        onClick={()=>run(()=>post('/api/orders/'+d.id+'/ecu/extend',{reason}),'Срок продлён на 3 дня')
+          .then(v=>{if(v){setReason('');onDone()}})}>Продлить на 3 дня</button>
+    </div>}
+  </section>;
+}
+
 function Money({ d }: { d: any }) {
   const m = d.money;
   const proposed = ['awaiting_confirmation', 'completed'].includes(d.status) || m.work > 0;
+  if(d.service==='ecu')return <section className="card stack" aria-label="Финансы стационарного ремонта ЭБУ">
+    <b>Итоговая стоимость ЭБУ</b>
+    {m.callOut>0&&<div className="sum"><span>Согласованная цена диагностики</span><b>{rub(m.callOut)}</b></div>}
+    {d.ecuDiagnosticQuote?.scope&&<p className="note">Согласованный объём диагностики: {d.ecuDiagnosticQuote.scope}</p>}
+    {!proposed?<p className="note">Начальная заявка бесплатна. До диагностики вы подтвердили стоимость и объём работ выбранного специалиста; дополнительные работы и ремонт оплачиваются только после новой отдельной сметы.</p>:<>
+      <div className="sum"><span>Диагностика и выполненные работы</span><b>{rub(m.amount)}</b></div>
+      {m.clientFee>0&&<div className="sum"><span>Сервисный сбор площадки</span><span>{rub(m.clientFee)}</span></div>}
+      <div className="sum total"><span>К подтверждению</span><b>{rub(m.total)}</b></div>
+      {d.resultNote&&<p className="note">Что сделано: {d.resultNote}</p>}
+      {d.warrantyDays!=null&&<p className="note">Дополнительная гарантия: {d.warrantyDays} дней
+        {d.warrantyStartedAt?' с '+new Date(d.warrantyStartedAt).toLocaleDateString('ru-RU'):' после приёмки работ'}.
+        {d.warrantyWork?' '+d.warrantyWork:''}</p>}
+      <small className="note">Цена диагностики согласована отдельно до начала работ. Любая новая сумма и ремонт требуют свежего согласия клиента. Автоматических списаний нет.</small>
+    </>}
+  </section>;
   if (d.service === 'consult') return (
     <div className="card">
       <div className="sum total"><span>Консультация</span><span>{rub(m.callOut)}</span></div>
@@ -378,6 +436,11 @@ function Money({ d }: { d: any }) {
         {d.paymentMethod === 'cash' ? 'Оплата мастеру на месте. Сумму подтверждаете в приложении.' : d.paymentMethod === 'online' ? 'Оплата через TrakSOS, мастеру — после подтверждения.' : 'Оплата по счёту на компанию.'}
       </span>
       {d.result && <span className="pill">{RESULTS[d.result]}{d.resultNote ? ` · ${d.resultNote}` : ''}</span>}
+      {d.warrantyDays!=null?<div className="note">
+        Дополнительная гарантия исполнителя: <b>{d.warrantyDays} дней</b>
+        {d.warrantyStartedAt?' с '+new Date(d.warrantyStartedAt).toLocaleDateString('ru-RU'):' после приёмки'}.
+        {d.warrantyWork?' Работы: '+d.warrantyWork:''}
+      </div>:<div className="note">Дополнительная гарантия не заявлена. Законные права клиента сохраняются.</div>}
     </div>
   );
 }
@@ -391,6 +454,8 @@ function PerformerActions({ d, onDone }: { d: any; onDone: () => void }) {
   const bill = liveBill(d, now, cleanExtras);
   const setExtra = (i: number, v: Partial<{ name: string; amount: number | null }>) => setExtras(extras.map((x, j) => (j === i ? { ...x, ...v } : x)));
   const [result, setResult] = useState<string>(d.result ?? 'solved');
+  const [warrantyDays,setWarrantyDays]=useState<number|null>(d.warrantyDays??null);
+  const [warrantyWork,setWarrantyWork]=useState<string>(d.warrantyWork??d.resultNote??'');
   const [note, setNote] = useState(d.resultNote ?? '');
   const [dropReason, setDropReason] = useState('');
   const [showDrop, setShowDrop] = useState(false);
@@ -437,9 +502,21 @@ function PerformerActions({ d, onDone }: { d: any; onDone: () => void }) {
               <button key={k} type="button" className="opt" aria-pressed={result === k} onClick={() => setResult(k)}><b>{v}</b></button>
             ))}
           </div>
-          <input className="field" placeholder="Что сделали — одной строкой" value={note} onChange={(e) => setNote(e.target.value)} maxLength={300} />
+          <input className="field" placeholder="Что сделали — одной строкой" value={note}
+            onChange={e=>{setNote(e.target.value);setWarrantyWork(e.target.value)}} maxLength={300}/>
+          <div className="card flat stack">
+            <b>Дополнительная гарантия исполнителя</b>
+            <div className="row">
+              {([null,7,14,30] as Array<number|null>).map(days=><button key={days??0} type="button"
+                className="chip" aria-pressed={warrantyDays===days} onClick={()=>setWarrantyDays(days)}>
+                {days==null?'Не заявлена':days+' дней'}</button>)}
+            </div>
+            <input className="field" placeholder="На какие работы распространяется гарантия"
+              maxLength={300} value={warrantyWork} onChange={e=>setWarrantyWork(e.target.value)}/>
+            <small className="note">Срок начинается после подтверждения работ клиентом. Без дополнительной гарантии права клиента сохраняются.</small>
+          </div>
           <button className="btn" disabled={busy} onClick={() =>
-            run(() => post(`/api/orders/${d.id}/amount`, { extras: cleanExtras, result, note: note || undefined }), 'Клиенту отправлено на подтверждение').then((r) => r && onDone())}>
+            run(() => post(`/api/orders/${d.id}/amount`, { extras: cleanExtras, result, note: note || undefined, warrantyDays, warrantyWork }), 'Клиенту отправлено на подтверждение').then((r) => r && onDone())}>
             {d.status === 'awaiting_confirmation' ? 'Исправить сумму' : 'Отправить клиенту'}
           </button>
         </div>
@@ -457,6 +534,48 @@ function PerformerActions({ d, onDone }: { d: any; onDone: () => void }) {
       ) : <button className="btn bad" onClick={() => setShowDrop(true)}>Не смогу приехать</button>)}
     </div>
   );
+}
+
+/** Specialist handles a stationary ECU job; no driving status or hourly billing. */
+function EcuStationaryActions({d,onDone}:{d:any;onDone:()=>void}){
+  const {busy,run}=useAction();
+  const [price,setPrice]=useState<number|null>(null);
+  const [summary,setSummary]=useState(d.resultNote??'');
+  const [warrantyDays,setWarrantyDays]=useState<number|null>(d.warrantyDays??null);
+  const [warrantyWork,setWarrantyWork]=useState(d.warrantyWork??'');
+  if(!['accepted','working','awaiting_confirmation'].includes(d.status))return null;
+  return <section className="card hi stack" aria-label="Работа специалиста ЭБУ">
+    <b>Диагностика и ремонт на стационарной точке</b>
+    {d.status==='accepted'&&<button type="button" className="btn" disabled={busy}
+      onClick={()=>run(()=>post('/api/orders/'+d.id+'/ecu/start',{}),'Диагностика начата')
+        .then(v=>v&&onDone())}>Приступили к диагностике блока</button>}
+    <p className="note">Диагностика начинается после согласования клиентом её цены и объёма. Ремонт, прошивка и доплаты требуют отдельного подтверждения итоговой сметы. Таймер выезда не применяется.</p>
+    <label>Что сделано
+      <textarea className="field" maxLength={300} value={summary} onChange={e=>setSummary(e.target.value)}
+        placeholder="Проверка блока, восстановление платы, диагностика…"/>
+    </label>
+    <Field label="Итоговая стоимость работ (₽)">
+      <RubInput value={price} onChange={setPrice}/>
+    </Field>
+    <div className="card flat stack">
+      <b>Дополнительная гарантия на результат</b>
+      <div className="row">{([null,7,14,30] as Array<number|null>).map(days=><button
+        key={days??0} className="chip" type="button" aria-pressed={warrantyDays===days}
+        onClick={()=>setWarrantyDays(days)}>{days==null?'Не заявлена':days+' дней'}</button>)}</div>
+      <input className="field" maxLength={300} value={warrantyWork}
+        onChange={e=>setWarrantyWork(e.target.value)} placeholder="На какие работы распространяется гарантия"/>
+      <small className="note">Гарантия начинается только после подтверждения итоговой суммы и приёмки работы клиентом.</small>
+    </div>
+    <button type="button" className="btn good"
+      disabled={busy||price==null||price<100||summary.trim().length<5}
+      onClick={()=>run(()=>post('/api/orders/'+d.id+'/ecu/final-price',{
+        amount:price,summary:summary.trim(),warrantyDays,warrantyWork:warrantyWork||summary.trim()
+      }),'Итоговая смета отправлена клиенту на отдельное согласование')
+        .then(v=>v&&onDone())}>
+      {d.status==='awaiting_confirmation'?'Исправить итоговую смету':'Предложить итоговую сумму клиенту'}
+    </button>
+    <small className="note">Изменение суммы отменяет прежнее согласие. До явного подтверждения клиентом деньги автоматически не списываются.</small>
+  </section>;
 }
 
 /** Мастер: клиент отказывается платить — сразу поддержка */
@@ -671,7 +790,9 @@ function ClientTab({ id, canEdit }: { id: string; canEdit: boolean }) {
 
 function ConfirmAmount({ d, onDone }: { d: any; onDone: () => void }) {
   const { busy, run } = useAction();
-  const [mode, setMode] = useState<null | 'menu' | 'extras' | 'not_done' | 'refuse'>(null);
+  const [mode, setMode] = useState<null | 'menu' | 'extras' | 'not_done' | 'refuse' | 'price'>(null);
+  const [ecuAccepted,setEcuAccepted]=useState(false);
+  useEffect(()=>setEcuAccepted(false),[d.amountProposalVersion]);
   const [reason, setReason] = useState('');
   const b = d.bill;
   // Баллы — по желанию: галочка и сколько списать (не больше половины сбора и остатка)
@@ -684,7 +805,13 @@ function ConfirmAmount({ d, onDone }: { d: any; onDone: () => void }) {
     <div className="card hi">
       <b>К оплате: {rub(d.money.total)}</b>
       <span className="note">Разбивка — в карточке «Сумма» выше.</span>
-      <span className="note">Выезд и время — по цене, о которой договорились до вызова. Оспорить можно только расходники и запчасти — и только если работа сделана. {d.paymentMethod === 'cash' ? 'Деньги отдайте мастеру.' : ''}</span>
+      <span className="note">{d.service==='ecu'
+        ? 'ЭБУ: окончательная сумма предложена после выполненной диагностики или ремонта. Изучите работу и цену перед согласием.'
+        : <>Выезд и время — по цене, о которой договорились до вызова. Оспорить можно только расходники и запчасти — и только если работа сделана. {d.paymentMethod === 'cash' ? 'Деньги отдайте мастеру.' : ''}</>}</span>
+      {d.service==='ecu'&&mode===null&&<label className="agree">
+        <input type="checkbox" checked={ecuAccepted} onChange={e=>setEcuAccepted(e.target.checked)}/>
+        <span>Подтверждаю именно эту итоговую цену {rub(d.money.total)} и описание работ.</span>
+      </label>}
       {mode === null && pmax > 0 && (
         <div className="card flat" style={{ gap: 6 }}>
           <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}><input type="checkbox" checked={usePts} onChange={(e) => setUsePts(e.target.checked)} style={{ marginTop: 3 }} />
@@ -693,20 +820,21 @@ function ConfirmAmount({ d, onDone }: { d: any; onDone: () => void }) {
         </div>
       )}
       {mode === null && <>
-        <button className="btn good" disabled={busy} onClick={() => send('confirm', { total: d.money.total, points: spend }, 'Сумма подтверждена')}>Подтверждаю {rub(d.money.total - spend)}{spend ? ' с баллами' : ''}</button>
+        <button className="btn good" disabled={busy||(d.service==='ecu'&&!ecuAccepted)} onClick={() => send('confirm', { total: d.money.total, points: spend, proposalVersion:d.amountProposalVersion??undefined, ecuConsent:d.service==='ecu'?ecuAccepted:undefined }, 'Сумма подтверждена')}>Подтверждаю {rub(d.money.total - spend)}{spend ? ' с баллами' : ''}</button>
         <button className="btn ghost" onClick={() => setMode('menu')}>Не согласен</button>
       </>}
       {mode === 'menu' && <div className="stack">
+        {d.service==='ecu'&&<button className="opt" onClick={()=>setMode('price')}><b>Не согласен с итоговой суммой ЭБУ</b><small>Укажите причину, автоматического списания нет.</small></button>}
         {b?.extras?.length > 0 && <button className="opt" onClick={() => setMode('extras')}><b>Не согласен с расходниками</b><small>Работа сделана, но строки за материалы и запчасти — не те. Мастер исправит их, время не пересчитывается.</small></button>}
         <button className="opt" onClick={() => setMode('not_done')}><b>Работа не выполнена</b><small>Поломка осталась или сделано не то. Подключим поддержку — разберёмся по чату и фото.</small></button>
         <button className="opt" onClick={() => setMode('refuse')}><b>Не буду платить</b><small>Без причины</small></button>
         <button className="btn ghost small" onClick={() => setMode(null)}>Назад</button>
       </div>}
-      {(mode === 'extras' || mode === 'not_done') && <>
-        <textarea className="field" placeholder={mode === 'extras' ? 'Какая строка не так и почему' : 'Что не сделано: поломка осталась, сделали не то…'} value={reason} onChange={(e) => setReason(e.target.value)} maxLength={500} />
-        <button className="btn bad" disabled={busy || reason.trim().length < 5} onClick={() => mode === 'extras'
+      {(mode === 'extras' || mode === 'not_done' || mode === 'price') && <>
+        <textarea className="field" placeholder={mode === 'extras' ? 'Какая строка не так и почему' : mode === 'price' ? 'Почему не согласны с суммой ЭБУ' : 'Что не сделано: поломка осталась, сделали не то…'} value={reason} onChange={(e) => setReason(e.target.value)} maxLength={500} />
+        <button className="btn bad" disabled={busy || reason.trim().length < 5} onClick={() => mode === 'extras' || mode === 'price'
           ? send('dispute', { reason }, 'Мастер получил ваше сообщение')
-          : send('nonpayment', { kind: 'not_done', reason }, 'Поддержка подключена')}>{mode === 'extras' ? 'Отправить мастеру' : 'Позвать поддержку'}</button>
+          : send('nonpayment', { kind: 'not_done', reason }, 'Поддержка подключена')}>{mode === 'extras' || mode === 'price' ? 'Оспорить сумму' : 'Позвать поддержку'}</button>
         <button className="btn ghost small" onClick={() => setMode('menu')}>Назад</button>
       </>}
       {mode === 'refuse' && <div className="banner warn col">
@@ -714,7 +842,7 @@ function ConfirmAmount({ d, onDone }: { d: any; onDone: () => void }) {
         <span className="note">По <a href="#/offer/client" target="_blank" rel="noreferrer">оферте</a> выезд и время работы по согласованной цене оплачиваются, если работа выполнена. Отказ платить за выполненную работу — нарушение договора: долг могут взыскать по закону, а аккаунт — заблокировать до оплаты.</span>
         <span className="note">Если работа не сделана — выберите «Работа не выполнена» и укажите причину.</span>
         <button className="btn" onClick={() => setMode('not_done')}>Работа не выполнена — указать причину</button>
-        <button className="btn good" disabled={busy} onClick={() => send('confirm', { total: d.money.total, points: spend }, 'Сумма подтверждена')}>Подтвердить {rub(d.money.total - spend)}</button>
+        <button className="btn good" disabled={busy||(d.service==='ecu'&&!ecuAccepted)} onClick={() => send('confirm', { total: d.money.total, points: spend, proposalVersion:d.amountProposalVersion??undefined, ecuConsent:d.service==='ecu'?ecuAccepted:undefined }, 'Сумма подтверждена')}>Подтвердить {rub(d.money.total - spend)}</button>
         <button className="btn bad small" disabled={busy} onClick={() => send('nonpayment', { kind: 'refuse' }, 'Поддержка подключена')}>Всё равно отказываюсь — позвать поддержку</button>
       </div>}
     </div>
@@ -760,7 +888,7 @@ function ConsultConfirm({ d, onDone }: { d: any; onDone: () => void }) {
       <b>Вопрос решён?</b>
       <span className="note">Подтвердите консультацию — {rub(d.money.total)}. Если без выезда не обойтись, вызовите мастера: подсказка перейдёт к нему, а вам скидка {rub(d.consultBack?.backDiscount ?? 0)}.</span>
       <button className="btn good" disabled={busy} onClick={() =>
-        run(() => post(`/api/orders/${d.id}/confirm`, { total: d.money.total }), 'Спасибо! Консультация закрыта').then((r) => r && onDone())}>Вопрос решён · {rub(d.money.total)}</button>
+        run(() => post(`/api/orders/${d.id}/confirm`, { total: d.money.total, proposalVersion:d.amountProposalVersion??undefined }), 'Спасибо! Консультация закрыта').then((r) => r && onDone())}>Вопрос решён · {rub(d.money.total)}</button>
       <button className="btn ghost" onClick={() => go(`new/electric?from=${d.id}`)}>Нужен выезд</button>
       <a className="btn ghost" href={`#/support/new?order=${d.id}`}>Помощи не было — в поддержку</a>
       <span className="note">Не нажмёте — консультация закроется сама через сутки.</span>

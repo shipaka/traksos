@@ -23,7 +23,18 @@ function staffRoleAllowed(phone: string, roles: string[]): boolean {
   return true;
 }
 
-const passwordValid = (p: string) => p.length >= 10 && p.length <= 128;
+/** Human-memorable passphrases are welcome; reject only obvious weak choices. */
+export function passwordValid(p: string): boolean {
+  if (p.length < 10 || p.length > 128) return false;
+  const compact = p.normalize('NFKC').toLocaleLowerCase('ru-RU').replace(/\s+/g, '');
+  if (compact.length < 10 || /^(.)\1+$/.test(compact)) return false;
+  if (['password123','password1234','qwerty12345','qwertyuiop','1234567890',
+      '0123456789','0987654321','admin12345','пароль12345',
+      'traksos1234','tracksos1234'].includes(compact)) return false;
+  // A short numeric code belongs to local Android unlock, not remote login.
+  if (/^\d{10,14}$/.test(compact)) return false;
+  return true;
+}
 function hashPassword(password: string) {
   const salt = randomBytes(16).toString('hex');
   return `scrypt:${salt}:${scryptSync(password, Buffer.from(salt,'hex'), 64).toString('hex')}`;
@@ -45,7 +56,8 @@ const PER_IP_HOUR = 15;
 
 export class AuthService {
   constructor(private db: Db, private sms: SmsProvider,
-    private now: () => Date = () => new Date(), private settings?: SettingsService) {}
+    private now: () => Date = () => new Date(), private settings?: SettingsService,
+    private verificationChannel: 'sms' | 'call' = config.sms.verificationChannel) {}
 
   private async ensureInsuranceRegistration(phone: string, choice?: AccountChoice) {
     // Legacy local CI fixtures remain supported without any partner configuration.
@@ -71,7 +83,17 @@ export class AuthService {
     const ttl = new Date(now.getTime() + CODE_TTL_MS);
     // Local and proxy-internal IPs are not a reliable individual identifier.
     const publicIp = ip && !/^(::1|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|::ffff:(127|10|192\.168)\.|fc|fd)/i.test(ip);
-    const code = newCode();
+    const callMode = this.verificationChannel === 'call';
+    if (callMode && !this.sms.verificationCall)
+      throw new HttpError(503, 'call_not_configured', 'Подтверждение входящим звонком пока недоступно');
+    // SMS.ru requires the real requester's IP for automatic calls. Do not
+    // silently bypass its anti-abuse checks with ip=-1 in production.
+    // Validate reverse-proxy TRUST_PROXY/X-Forwarded-For at rollout.
+    if (callMode && isProd && !publicIp)
+      throw new HttpError(503, 'call_client_ip_missing', 'Безопасная проверка номера временно недоступна. Обратитесь в поддержку.');
+    // Reserve quotas BEFORE contacting the provider. In call mode the 32-byte
+    // random placeholder can never be entered as a 4-digit verification code.
+    const code = callMode ? randomBytes(32).toString('hex') : newCode();
     const hash = hmac(phone + ':' + code);
 
     await this.db.tx(async (q) => {
@@ -108,7 +130,19 @@ export class AuthService {
       );
     });
     try {
-      await this.sms.send(phone, `TrakSOS: код ${purpose === 'reset' ? 'восстановления доступа' : 'регистрации'} ${code}. Никому его не сообщайте.`);
+      if (callMode) {
+        // The provider chooses the caller ID and rings the user's phone.
+        // Save only a keyed hash; never return the code or call metadata.
+        const deliveredCode = await this.sms.verificationCall!(phone, publicIp ? ip : '-1');
+        if (!/^\d{4}$/.test(deliveredCode)) throw new Error('Неверный формат кода от провайдера');
+        const stored = await this.db.one<{ code_hash: string }>(
+          'update auth_codes set code_hash=$3 where phone=$1 and code_hash=$2 returning code_hash',
+          [phone, hash, hmac(phone + ':' + deliveredCode)],
+        );
+        if (!stored) throw new Error('Запрос уже заменён; код звонка больше недействителен');
+      } else {
+        await this.sms.send(phone, `TrakSOS: код ${purpose === 'reset' ? 'восстановления доступа' : 'регистрации'} ${code}. Никому его не сообщайте.`);
+      }
     } catch (error) {
       if (error instanceof SmsRejectedError) {
         // Only a coarse, non-sensitive reason is logged. Do not log the number,
@@ -119,19 +153,22 @@ export class AuthService {
           : /отправител|sender|подпись/.test(reason) ? 'отправитель'
           : /лимит|quota|limit/.test(reason) ? 'лимит'
           : /номер|phone|recipient/.test(reason) ? 'получатель' : 'другая причина';
-        console.warn('SMS.ru не принял сообщение: ' + category);
+        console.warn('SMS.ru не принял ' + (callMode ? 'проверочный звонок' : 'сообщение') + ': ' + category);
         // SMS.ru explicitly refused the message: the code was never delivered.
         // Remove only this exact pending code, never one from a newer request.
         // Keep hourly/daily quotas to prevent repeated rejected requests being abused.
         await this.db.query('delete from auth_codes where phone=$1 and code_hash=$2', [phone, hash]);
-        throw new HttpError(502, 'sms_rejected',
-          'SMS.ru отклонил отправку. Проверьте баланс и ограничения SMS.ru; повторить можно после исправления.');
+        throw new HttpError(502, callMode ? 'call_rejected' : 'sms_rejected',
+          callMode
+            ? 'SMS.ru отклонил проверочный звонок. Проверьте доступность услуги и баланс; повторите запрос после исправления.'
+            : 'SMS.ru отклонил отправку. Проверьте баланс и ограничения SMS.ru; повторить можно после исправления.');
       }
       // Unknown network error: do NOT remove the pending code. SMS.ru may
       // have accepted it despite a lost response; keep the 60-second cooldown.
       throw error;
     }
-    return { phone, sent: true, devCode: this.sms.exposesCode && !isProd ? code : undefined };
+    return { phone, sent: true, channel: callMode ? 'call' : 'sms',
+      devCode: !callMode && this.sms.exposesCode && !isProd ? code : undefined };
   }
 
   /** role не передан — вход «как есть»: новый номер становится клиентом, у существующего роли не меняются */
@@ -140,18 +177,31 @@ export class AuthService {
     if (!phone) throw bad('bad_phone', 'Неверный номер');
     // Re-check on verification: users may forge accountType or re-use an old SMS.
     if (purpose === 'register') await this.ensureInsuranceRegistration(phone, accountType ?? (role as AccountChoice | undefined));
-    const row = await this.db.one<{ code_hash: string; expires_at: Date; attempts: number; purpose: string }>(
-      'select code_hash, expires_at, attempts, purpose from auth_codes where phone=$1', [phone],
-    );
-    if (!row || new Date(row.expires_at) < this.now()) throw bad('code_expired', 'Код устарел, запросите новый');
-    if (row.purpose !== purpose && isProd) throw bad('wrong_purpose', 'Запросите код для выбранной операции');
-    if (isProd && !passwordValid(password ?? '')) throw bad('weak_password', 'Пароль — от 10 до 128 символов');
-    if (row.attempts >= MAX_ATTEMPTS) throw new HttpError(429, 'too_many_attempts', 'Слишком много попыток, запросите новый код');
-    if (row.code_hash !== hmac(phone + ':' + code.trim())) {
-      await this.db.query('update auth_codes set attempts = attempts + 1 where phone=$1', [phone]);
-      throw bad('wrong_code', 'Неверный код');
-    }
-    await this.db.query('delete from auth_codes where phone=$1', [phone]);
+    if (isProd && !passwordValid(password ?? '')) throw bad('weak_password', 'Пароль: 10–128 символов. Не используйте очевидный набор цифр или повторов; лучше запоминающуюся длинную фразу');
+    // A four-digit code proves phone possession; it is never a password.
+    // Serialize both issuance and verification, preventing concurrent guessing
+    // from bypassing MAX_ATTEMPTS or consuming a valid code multiple times.
+    // Return an error rather than throwing inside the transaction so a wrong
+    // attempt COMMITs the increment and is shared across all server processes.
+    const outcome = await this.db.tx(async q => {
+      await q.query('select pg_advisory_xact_lock(hashtext($1))', ['sms:' + phone]);
+      const row = await q.one<{ code_hash: string; expires_at: Date; attempts: number; purpose: string }>(
+        'select code_hash, expires_at, attempts, purpose from auth_codes where phone=$1 for update', [phone],
+      );
+      if (!row || new Date(row.expires_at) < this.now())
+        return { error: bad('code_expired', 'Код устарел, запросите новый') };
+      if (row.purpose !== purpose && isProd)
+        return { error: bad('wrong_purpose', 'Запросите код для выбранной операции') };
+      if (row.attempts >= MAX_ATTEMPTS)
+        return { error: new HttpError(429, 'too_many_attempts', 'Слишком много попыток, запросите новый код') };
+      if (row.code_hash !== hmac(phone + ':' + code.trim())) {
+        await q.query('update auth_codes set attempts=attempts+1 where phone=$1', [phone]);
+        return { error: bad('wrong_code', 'Неверный код') };
+      }
+      await q.query('delete from auth_codes where phone=$1', [phone]);
+      return { error: null };
+    });
+    if (outcome.error) throw outcome.error;
 
     // Production never grants administrator privileges from control of an SMS number alone.
     // Historical development fixtures retain the old behavior solely outside production.
@@ -246,6 +296,8 @@ export class AuthService {
     return { token, user: safe };
   }
 
+  // Session hash lookup is shared by HTTP bearer auth and one-time WS tickets.
+  // A consumed ticket does not retain or reveal the long-lived bearer token.
   private async authenticateHash(hash:string):Promise<AuthUser|null>{
     const u=await this.db.one<AuthUser>(
       `select u.id,u.phone,u.name,u.roles,u.status,u.owner_id

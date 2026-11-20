@@ -1,0 +1,66 @@
+name: ECU diagnostic consent — isolated browser gate
+
+on:
+  pull_request:
+    paths:
+      - 'e2e/ecu-diagnostic-consent-flow.mjs'
+      - 'web/src/screens/ecuDesk.tsx'
+      - 'web/src/screens/search.tsx'
+      - 'server/src/services/auction.ts'
+      - '.github/workflows/ecu-diagnostic-browser.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: traksos-ecu-browser-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser:
+    name: True ECU price/scope consent on 390px and 1440px
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: traksos_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://postgres@127.0.0.1:5432/traksos_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - name: Build web
+        run: npm -w web run build
+      - name: Start synthetic local CI backend and browser
+        run: |
+          set -euo pipefail
+          npx playwright install --with-deps chromium
+          psql -h 127.0.0.1 -U postgres -c 'create database traksos'
+          DATABASE_URL=postgres://postgres@127.0.0.1:5432/traksos ADMIN_PHONES=+79990000001 MODERATOR_PHONES=+79990000147 npm -w server start &
+          backend=$!
+          trap 'kill "$backend" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 60); do
+            if curl -fsS --max-time 3 http://localhost:8080/api/health >/dev/null; then break; fi
+            if ! kill -0 "$backend" 2>/dev/null; then exit 1; fi
+            sleep 1
+          done
+          curl -fsS http://localhost:8080/api/health >/dev/null
+          SHOTS_DIR=e2e/shots/ecu-quote node e2e/ecu-diagnostic-consent-flow.mjs
+      - name: Screenshot evidence — only synthetic test data
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ecu-quote-screens
+          path: e2e/shots/ecu-quote/
+          if-no-files-found: ignore
+          retention-days: 14

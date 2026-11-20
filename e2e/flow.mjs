@@ -187,6 +187,17 @@ await k.locator('.client-dashboard .desktop-quick-card').first().waitFor();
 await assertDashboardTheme(k, 'client');
 await checkCabinetMenu(k, ['История заявок', 'Мой гараж', 'Мой автопарк', 'Оферта', 'Профиль и настройки']);
 await shot(k, '03-client-home');
+/* Regression: the garage must keep canonical make/model keys through
+   React form state. Do not save: later SOS smoke exercises a new request. */
+await k.goto(BASE + '/#/garage');
+await k.locator('select[aria-label="Марка"]').selectOption({ label: 'Scania' });
+await k.locator('select[aria-label="Модель"]').selectOption({ label: 'R Series' });
+const garageSave = k.locator('form').filter({ hasText: 'Добавить машину' }).getByRole('button', { name: 'Сохранить' });
+if (!(await garageSave.isEnabled()))
+  throw new Error('Catalog garage selection lost canonical brand/model keys');
+await k.goto(BASE + '/#/');
+await k.locator('.client-dashboard .desktop-quick-card').first().waitFor();
+
 // Home and SOS share the approved direction-first flow.
 await k.locator('.client-dashboard .desktop-quick-card').first().click();
 await k.getByRole('button', { name: /Выездной мастер/ }).click();
@@ -195,7 +206,7 @@ await k.getByRole('button', { name: /Вызвать мастера/ }).click(); 
 await k.getByText('Осталось:').waitFor();
 await k.locator('textarea').first().fill('Требуется диагностика электрики');
 await k.locator('select[aria-label="Марка"]').selectOption('Scania');
-await k.locator('select[aria-label="Модель"]').selectOption('R-серия');
+await k.locator('select[aria-label="Модель"]').selectOption({label: 'R Series'});
 await k.locator('select[aria-label="Год выпуска"]').selectOption('2012');
 await k.locator('input[placeholder^="Адрес"]').fill('Тосно, М-11, стоянка у АЗС');
 await k.getByRole('button', { name: 'Ленинградская область' }).click();

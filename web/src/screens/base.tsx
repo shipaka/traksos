@@ -230,6 +230,8 @@ export function BaseCar({ id }: { id: string }) {
   const [works, setWorks] = useState<string[] | null>(null);
   const [amount, setAmount] = useState<number | null>(null);
   const [invPts, setInvPts] = useState<number | null>(null);
+  const [warrantyDays,setWarrantyDays]=useState<number|null>(null);
+  const [warrantyWork,setWarrantyWork]=useState('');
   const [company, setCompany] = useState<any>(null);
   const d = b.data;
   if (!d) return <main><Back to={servicePreviewPath('base')} label="Рембаза" /><Loading error={b.error} /></main>;
@@ -303,8 +305,17 @@ export function BaseCar({ id }: { id: string }) {
           <b>Что делали — коротко</b>
           <div className="row">{WORKS.map((w) => <button key={w} type="button" className="chip" aria-pressed={works.includes(w)} onClick={() => setWorks(toggle(works, w))}>{w}</button>)}</div>
           <span className="note">Галочки вместо описаний. Подробности — в заметках, по желанию. Клиент сверит перечень.</span>
+          <div className="card flat stack">
+            <b>Дополнительная гарантия СТО на работы</b>
+            <div className="row">{([null,7,14,30] as Array<number|null>).map(days=><button type="button"
+              key={days??0} className="chip" aria-pressed={warrantyDays===days}
+              onClick={()=>setWarrantyDays(days)}>{days==null?'Не заявлена':days+' дней'}</button>)}</div>
+            <input className="field" maxLength={300} placeholder="Какие работы гарантирует СТО"
+              value={warrantyWork} onChange={e=>setWarrantyWork(e.target.value)}/>
+            <small className="note">Срок начнётся после подтверждения работ клиентом. Права по закону сохраняются.</small>
+          </div>
           <div className="grid2">
-            <button className="btn" disabled={busy || !works.length} onClick={async () => { if (await act('ready', { works }, 'Готово — клиент сверит работы')) setWorks(null); }}>Машина готова</button>
+            <button className="btn" disabled={busy || !works.length} onClick={async () => { if (await act('ready', { works,warrantyDays,warrantyWork:warrantyWork||works.join(', ') }, 'Готово — клиент сверит работы')) setWorks(null); }}>Машина готова</button>
             <button className="btn ghost" onClick={() => setWorks(null)}>Назад</button>
           </div>
         </div>
@@ -355,14 +366,15 @@ export function BaseSetup() {
   useEffect(() => {
     if (!cab.data || f) return;
     const c = cab.data.center;
-    setF(c ? { name: c.name, address: c.address, hours: c.hours, inn: c.inn ?? '', lat: c.lat, lng: c.lng, brands: c.brands, staff: c.staff, conditions: c.conditions, accepts: c.accepts, closedDays: (c.closed_days ?? []).map((x: string) => x.slice(0, 10)), paused: c.paused }
-      : { name: '', address: '', hours: '08:00–20:00', inn: '', lat: null, lng: null, brands: [], staff: { electric: 'own' }, conditions: ['parking'], accepts: ['quick', 'day'], closedDays: [], paused: false });
+    setF(c ? { name: c.name, address: c.address, hours: c.hours, timeZone: c.time_zone ?? '', inn: c.inn ?? '', lat: c.lat, lng: c.lng, brands: c.brands, staff: c.staff, conditions: c.conditions, accepts: c.accepts, closedDays: (c.closed_days ?? []).map((x: string) => x.slice(0, 10)), paused: c.paused }
+      : { name: '', address: '', hours: '08:00–20:00', timeZone: '', inn: '', lat: null, lng: null, brands: [], staff: { electric: 'own' }, conditions: ['parking'], accepts: ['quick', 'day'], closedDays: [], paused: false });
   }, [cab.data]); // eslint-disable-line
   if (!f) return <main><Loading error={cab.error} /></main>;
   const first = !cab.data?.center;
   const set = (k: string, v: any) => setF({ ...f, [k]: v });
   async function save() {
-    const body = { ...f, inn: f.inn || null, closedDays: f.closedDays.filter((d: string) => d >= mskDay()) };
+    const body = { ...f, inn: f.inn || null, timeZone: f.timeZone?.trim() || undefined,
+      closedDays: f.closedDays.filter((d: string) => d >= mskDay()) };
     if (await run(() => basePut('/api/base', body), first ? 'Карточка сохранена — осталось пройти проверку' : 'Карточка сервиса сохранена')) { await reload(); go(servicePreviewPath('base')); }
   }
   function locate() {
@@ -410,6 +422,24 @@ export function BaseSetup() {
           address={f.address} synthetic={inServicePreview()}/>
         <div className="grid2">
           <Field label="Часы работы"><input className="field" value={f.hours} onChange={(e) => set('hours', e.target.value)} /></Field>
+          <Field label="Часовой пояс СТО">
+            <select className="field" value={f.timeZone??''} onChange={e=>set('timeZone',e.target.value)}>
+              <option value="">Не определён — не показывать как работающую рядом</option>
+              <option value="Europe/Kaliningrad">Калининград (UTC+2)</option>
+              <option value="Europe/Moscow">Москва, Санкт-Петербург (UTC+3)</option>
+              <option value="Europe/Samara">Самара (UTC+4)</option>
+              <option value="Asia/Yekaterinburg">Екатеринбург (UTC+5)</option>
+              <option value="Asia/Omsk">Омск (UTC+6)</option>
+              <option value="Asia/Novosibirsk">Новосибирск (UTC+7)</option>
+              <option value="Asia/Krasnoyarsk">Красноярск (UTC+7)</option>
+              <option value="Asia/Irkutsk">Иркутск (UTC+8)</option>
+              <option value="Asia/Yakutsk">Якутск (UTC+9)</option>
+              <option value="Asia/Vladivostok">Владивосток (UTC+10)</option>
+              <option value="Asia/Magadan">Магадан (UTC+11)</option>
+              <option value="Asia/Sakhalin">Сахалин (UTC+11)</option>
+              <option value="Asia/Kamchatka">Камчатка (UTC+12)</option>
+            </select>
+          </Field>
           <Field label="ИНН компании"><input className="field" inputMode="numeric" value={f.inn} onChange={(e) => set('inn', e.target.value.replace(/\D/g, '').slice(0, 12))} /></Field>
         </div>
       </div>
@@ -794,6 +824,12 @@ export function BookingPage({ id }: { id: string }) {
           )}
         </div>
       )}
+      {d.warrantyDays!=null&&['invoiced','closed'].includes(d.status)&&
+        <div className="card flat">
+          <b>Дополнительная гарантия СТО: {d.warrantyDays} дней</b>
+          <p className="note">На работы: {d.warrantyWork??d.works.join(', ')}.
+            {d.warrantyStartedAt?' Действует с '+new Date(d.warrantyStartedAt).toLocaleDateString('ru-RU'):' Начнёт действовать после приёмки.'}</p>
+        </div>}
       {d.status === 'closed' && <div className="banner col"><b>Работы подтверждены</b><span className="note">{d.works.join(', ')} · {rub(d.toPay)}{d.reviewStars ? ` · ваша оценка ${'★'.repeat(d.reviewStars)}` : ''}. Ремонт записан в историю машины.</span></div>}
       {d.status === 'disputed' && <div className="banner warn col"><b>Спор по работам</b><span className="note">Модератор свяжется с вами и с сервисом. Ответ придёт в «Поддержку».</span></div>}
       {['new', 'clarify', 'expected'].includes(d.status) && (
