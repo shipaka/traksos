@@ -281,7 +281,23 @@ await m.getByText('Как прошло с клиентом?').waitFor({ timeout:
 await m.getByRole('button', { name: '4 из 5' }).click();
 await m.getByRole('button', { name: 'Оставить отзыв' }).click();
 await m.goto(BASE + '/#/work');
-await m.getByText('Долг по комиссии с наличных').waitFor();
+// New cash orders must not create imaginary legacy debt. Verify the visible
+// finance summary against the actual authorized balance, not obsolete copy.
+const balanceSummary = m.locator('.work-mobile-balance');
+await balanceSummary.waitFor({ timeout: 12000 });
+const balanceText = await balanceSummary.innerText();
+const liveBalance = await m.evaluate(async () => {
+  const token = localStorage.getItem('traksos.token');
+  const res = await fetch('/api/performer/balance', { headers: { authorization: 'Bearer ' + token } });
+  if (!res.ok) throw Error('Balance API rejected: ' + res.status);
+  const state = await res.json();
+  return { cashDebt: Number(state.cash_debt), toPay: Number(state.to_pay) };
+});
+if (!Number.isFinite(liveBalance.cashDebt) || !Number.isFinite(liveBalance.toPay) ||
+    !balanceText.includes('К выплате:') ||
+    (liveBalance.cashDebt > 0) !== balanceText.includes('Историческая задолженность:'))
+  throw Error('Performer finance summary disagrees with authorized balance: ' +
+    JSON.stringify({ balance: liveBalance, text: balanceText }));
 await shot(m, '11-master-balance');
 
 // Админ в браузере
