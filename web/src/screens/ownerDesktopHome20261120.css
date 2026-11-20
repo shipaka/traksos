@@ -26,7 +26,7 @@
  .owner20-signin{border:1px solid var(--orange);border-radius:9px;padding:10px 21px;font-size:13px;white-space:nowrap}
  .owner20-signin:hover{background:#432517}
  .owner20-hero{height:326px;position:relative;overflow:hidden;background:linear-gradient(90deg,#07121a 0%,#0c1822 35%,transparent 80%),#092231}
- .owner20-photo{position:absolute;inset:0;background-image:linear-gradient(90deg,#05131d 0%,#071923c9 33%,#07192314 66%,#06141ca1),url('../../public/tracksos-approved-hero-owner-20261119.webp');background-position:center center,center 60%;background-size:cover;filter:saturate(.95)}
+ .owner20-photo{position:absolute;inset:0;background-image:linear-gradient(90deg,#05131d 0%,#071923c9 33%,#07192314 66%,#06141ca1),radial-gradient(ellipse at 55% 20%,#b36f4f,#142832 65%,#06151c);background-position:center center,center 60%;background-size:cover;filter:saturate(.95)}
  .owner20-lead{position:absolute;top:27px;left:2.2%;z-index:1;max-width:57%;text-shadow:0 3px 14px #0008}
  .owner20-lead h1{font-size:clamp(27px,2.6vw,43px);line-height:1.05;letter-spacing:-.6px;color:#fff;font-weight:800;margin:0 0 12px}
  .owner20-lead h1 em{font-style:normal;color:var(--orange)}
@@ -526,4 +526,64 @@
   .guest-app.guest-home .trakbot-dock-launcher .trakbot-mascot{
     --bot-size:39px!important;width:39px!important;height:39px!important;
   }
+}
+
+/* Mid-size desktop: preserve the SAME November 20 artwork with a fluid layout,
+   not the removed Nov 19 landing artwork. Android (<900px) remains unchanged. */
+@media (min-width:900px) and (max-width:1280px){
+ .guest-app.guest-home .owner20-photo{
+   background:linear-gradient(90deg,#07151d 0%,#0f2730 46%,#1e3440 78%,#09171f 100%),
+      radial-gradient(ellipse at 55% 20%,#b36f4f,#142832 65%,#06151c)!important;
+ }
+ .guest-app.guest-home .owner20-photo::after{
+   content:"";
+   position:absolute;top:12px;left:34.5%;
+   width:365px;height:251px;
+   background-image:url('/owner20-artwork-sprite.webp');
+   background-position:0 0;
+   background-size:814px 357px;
+   background-repeat:no-repeat;
+   -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 10%,#000 90%,transparent);
+   mask-image:linear-gradient(90deg,transparent 0%,#000 10%,#000 90%,transparent);
+ }
+ .guest-app.guest-home .owner20-map-source{
+   display:block;width:100%;height:100%;min-height:125px;
+   background-image:url('/owner20-artwork-sprite.webp');
+   background-position:-459px 0;
+   background-size:1018px 446px;
+   background-repeat:no-repeat;
+   transform-origin:top left;
+ }
+ .guest-app.guest-home .owner20-feature-illustration{
+   display:block;position:absolute;
+   right:0;bottom:0;top:auto;left:auto;
+   width:148px;height:125px;
+   background-image:url('/owner20-artwork-sprite.webp');
+   background-position:0 -317px;
+   background-size:1018px 446px;
+   background-repeat:no-repeat;
+   font-size:0;color:transparent;
+   transform:none!important;
+   -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 47%);
+   mask-image:linear-gradient(90deg,transparent 0%,#000 47%);
+ }
+ .guest-app.guest-home .owner20-feature-ecu .owner20-feature-illustration{width:142px;background-position:-172px -317px}
+ .guest-app.guest-home .owner20-feature-parts .owner20-feature-illustration{width:123px;background-position:-324px -317px}
+ .guest-app.guest-home .owner20-feature-insurance .owner20-feature-illustration{width:127px;background-position:-452px -317px}
+ .guest-app.guest-home .owner20-feature-inspection .owner20-feature-illustration{width:111px;background-position:-594px -317px}
+ .guest-app.guest-home .owner20-bottom-air::after,
+ .guest-app.guest-home .owner20-bottom-club::after{
+   display:block;content:""!important;
+   position:absolute;right:0;bottom:0;
+   width:218px;height:168px;
+   background-image:url('/owner20-artwork-sprite.webp');
+   background-position:-797px 0;
+   background-size:1018px 446px;
+   background-repeat:no-repeat;
+   font-size:0;
+   transform:none;
+   -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 55%);
+   mask-image:linear-gradient(90deg,transparent 0%,#000 55%);
+ }
+ .guest-app.guest-home .owner20-bottom-club::after{width:213px;height:167px;background-position:-797px -170px}
 }
