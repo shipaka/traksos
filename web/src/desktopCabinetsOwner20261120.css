@@ -304,3 +304,30 @@
  .app.role-client .client-dashboard .desktop-quick-card{min-height:145px;padding:12px 10px;}
  .app.role-client .client-dashboard .desktop-quick-card b{font-size:13px}
 }
+
+/* Remove magenta/cyan remnants from active desktop role surfaces. */
+@media(min-width:900px){
+ .app[class*="role-"] .top .logo b,
+ .app[class*="role-"] .site-footer .logo b{color:#ff7629!important}
+ .app[class*="role-"] .desktop-content .seg[aria-pressed="true"],
+ .app[class*="role-"] .desktop-content .seg.active{
+   border-color:#ff813b!important;background:linear-gradient(125deg,#ec671e,#fc852e)!important;
+   color:#fff!important;box-shadow:none!important
+ }
+ .app[class*="role-"] .desktop-content .btn:not(.ghost):not(.bad):not(.good):not([disabled]){
+   background:linear-gradient(115deg,#ed6724,#fb8835)!important;
+   border-color:#e99a65!important;color:#fff!important
+ }
+ .app[class*="role-"] .desktop-content .desktop-hero h1 span,
+ .app[class*="role-"] .desktop-content .desktop-eyebrow{
+   color:#ff8a42!important
+ }
+ .app[class*="role-"] .desktop-content .chip[aria-pressed="true"]{
+   border-color:#ff7629!important;background:#50301d!important;color:#fff!important
+ }
+ .app[class*="role-"] .desktop-content .card.hi{border-color:#be6937!important}
+ .app[class*="role-"] .desktop-content .internal-role-hero{color:#fff!important}
+ .app[class*="role-"] .desktop-content .performer-onboarding :is(.step-card,.seg){
+   border-color:#3f5c68
+ }
+}
