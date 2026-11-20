@@ -66,7 +66,7 @@ jobs:
       - name: Сервер — тесты
         run: npm test
       - name: Инвентаризация активных модулей и CSS
-        run: node scripts/audit-ui-reachability.mjs
+        run: node scripts/audit-ui-reachability.mjs --strict
       - name: Веб — сборка
         run: npm -w web run build
       - name: TrackSalesBot — 30 состояний и единый персонаж
