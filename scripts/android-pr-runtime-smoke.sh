@@ -64,4 +64,23 @@ if [ -s emulator-ui.xml ] && grep -Eiq "System UI isn.t responding|App isn.t res
   echo 'FAIL: Android ANR dialog covers the application'
   exit 1
 fi
-echo "PASS: TrakSOS React guest interface rendered; seasonal splash ${visible_ms}ms; no native crash or ANR"
+# Review the ACTUAL React workspaces, not the removed fake offline dashboard.
+# This evidence comes from an installed APK in the emulator, not browser mockups.
+for role in client master; do
+  adb shell am start -W -n ru.traksos.app.preview/ru.traksos.app.MainActivity --es path "android-review/$role" >/dev/null
+  found=0
+  for attempt in $(seq 1 35); do
+    if adb logcat -d -s TrakSOSRuntime:I | grep -Fq "DESIGN_REVIEW_RENDERED=$role"; then
+      found=1
+      break
+    fi
+    sleep 1
+  done
+  if [ "$found" -ne 1 ]; then
+    echo "FAIL: installed APK did not render Android design review role=$role"
+    exit 1
+  fi
+  adb exec-out screencap -p > "android-review-$role.png"
+  python3 scripts/verify-android-screen.py "android-review-$role.png"
+done
+echo "PASS: TrakSOS guest and real React Android role screens rendered in APK; splash ${visible_ms}ms; no native crash or ANR"
