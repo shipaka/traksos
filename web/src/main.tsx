@@ -708,7 +708,7 @@ function Bell() {
   const n = useUnread();
   return (
     <a href="#/notifications" className="bell" aria-label={n ? `Уведомления: ${n} новых` : 'Уведомления'}>
-      🔔{n > 0 && <span className="badge">{n > 99 ? '99+' : n}</span>}
+      <NavGlyph glyph="bell" />{n > 0 && <span className="badge">{n > 99 ? '99+' : n}</span>}
     </a>
   );
 }
