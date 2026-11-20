@@ -485,6 +485,41 @@ expect(androidRealScreens.includes("owner+'-menu-android-390.png") ||
   androidRealScreens.includes("bottom Menu vanished inside profile/settings")),
   'Real authenticated Android CI must capture and validate each role menu, including 320/390px and settings');
 
+// The dashboard must be functional, not just visually styled:
+// assigned master info is furnished by real API projection, and the truck,
+// order and chat always lead to three correct authorized destinations.
+const androidWorkspaceLive = await read('web/src/screens/androidWorkspaces.tsx');
+const ordersServiceLive = await read('server/src/services/orders.ts');
+const androidReviewLive = await read('web/src/screens/androidDesignReview.tsx');
+const androidOrderReviewTest = await read('e2e/android-apk-design-review.mjs');
+const innerSectionComponent = await read('web/src/mobileSectionChrome.tsx');
+expect(ordersServiceLive.includes('perf.name as performer_name') &&
+  ordersServiceLive.includes('perf.rating::float as performer_rating') &&
+  ordersServiceLive.includes('perf.rating_count as performer_rating_count') &&
+  ordersServiceLive.includes('left join users perf on perf.id=o.performer_id') &&
+  !ordersServiceLive.includes('perf.phone as performer_phone'),
+  'Android assigned-master card uses authorized real public API name/rating, never private phone');
+expect(androidWorkspaceLive.includes('current?.performer_name') &&
+  androidWorkspaceLive.includes("current.performer_rating") &&
+  androidWorkspaceLive.includes('and19-order-photo-link') &&
+  androidWorkspaceLive.includes("current.vehicle_id ? '#/garage/' + current.vehicle_id") &&
+  androidWorkspaceLive.includes("current.id + '?chat=1'") &&
+  androidWorkspaceLive.includes('vehicleReferencePhoto(vehicleBrand, vehicleModel, vehicleYear)') &&
+  androidWorkspaceLive.includes('current.money.amount') &&
+  androidWorkspaceLive.includes('current.money.clientFee'),
+  'Android client order has three distinct links, exact-model vehicle image, real price breakdown and master rating');
+expect(androidReviewLive.includes("money: { amount: 1000000, clientFee: 50000, total: 1050000 }") &&
+  androidReviewLive.includes("vehicle_id: 'SYNTHETIC-VEHICLE'") &&
+  androidOrderReviewTest.includes('Client Android order routing/kopeck pricing/rating wrong'),
+  'Android synthetic screenshot review has realistically scaled kopecks and verifies actual destinations');
+expect(shell.includes('MobileSectionChrome title={sectionLabel} homeHref={workspaceHref}') &&
+  shell.includes("const innerSection = !!me && native.isApp && !serviceSandbox") &&
+  innerSectionComponent.includes('href={\'#\'+homeHref}') &&
+  innerSectionComponent.includes('href="#/menu"') &&
+  innerAndroidStyle.includes('tr-native-section-path') &&
+  androidRealScreens.includes("view.chrome?.menu!=='#/menu'"),
+  'Every native Android inner page has a real role-scope breadcrumb, consistent menu and accessible back navigation');
+
 if (failures.length) {
   console.error('Approved design gate: '+failures.length+' failure(s).');
   process.exitCode=1;
