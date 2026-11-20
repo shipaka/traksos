@@ -475,7 +475,9 @@ expect(shell.includes("import './androidInternalSections20261120.css';") &&
   innerAndroidStyle.includes('tr-mobile-menu-links') &&
   innerAndroidStyle.includes('trAndroidInnerEnter') &&
   innerAndroidStyle.includes('prefers-reduced-motion:reduce') &&
-  !innerAndroidStyle.includes('infinite'),
+  !innerAndroidStyle.includes('infinite') &&
+  !innerAndroidStyle.includes(".app:not(.guest-app) .top {") &&
+  !innerAndroidStyle.includes(".app:not(.guest-app) .tabbar {"),
   'All secondary Android screens have one coherent style, protected approved dashboards and reduced-motion support');
 expect(androidRealScreens.includes("owner+'-menu-android-390.png") ||
   (androidRealScreens.includes("role+'-menu-android-390.png") &&
