@@ -143,6 +143,12 @@ try{
       await page.waitForURL(url => url.hash === '#/profile', {timeout:10000});
       if(await page.locator('main.tr-mobile-menu-page').count())
         throw Error(role+': Profile shortcut did not navigate to real settings');
+      if(await page.locator('.tabbar a[href="#/menu"]').count()!==1)
+        throw Error(role+': bottom Menu vanished inside profile/settings');
+      if(role==='master') {
+        await page.goto(BASE+'/#/work/docs',{waitUntil:'domcontentloaded'});
+        await page.locator('.tabbar a[href="#/menu"]').waitFor({state:'visible'});
+      }
       // Test an accessible small Android phone, without changing baseline 390px screenshots.
       await page.goto(BASE+'/#/menu',{waitUntil:'domcontentloaded'});
       await menu.waitFor({state:'visible'});
