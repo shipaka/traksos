@@ -123,6 +123,8 @@ expect(!roleCss.includes('traksos-final-insurance.webp') &&
   roleCss.includes('.guest-app .partner-art-insurer{--partner-art:linear-gradient('),
   'retired insurer background cannot return; partner screen keeps a nonempty branded fallback');
 
+expect(!landing.includes('public-track-extra-art') && !landing.includes('public-track-insurance-art'),
+  'all retired photographic ghost slots were physically removed from public service cards');
 const approvedPhoto = 'tracksos-approved-hero-owner-20261119.webp';
 const approvedHeroLayer = await read('web/src/approvedHeroImage20261119.css');
 expect(approvedHeroLayer.includes('object-fit:contain!important') &&

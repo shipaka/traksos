@@ -364,20 +364,20 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
       </section>
       <div className="public-track-extras">
         <button type="button" className="public-track-insurance" onClick={() => { rememberGuestService('insurance'); go('register'); }}>
-          <span className="public-track-insurance-art" aria-hidden="true" />
+          
           <span><b>Страхование грузового транспорта</b>
           <small>ОСАГО, КАСКО, груз, ответственность — заявка через TrakSOS</small></span>
           <strong>Оформить заявку →</strong>
         </button>
         <div className="public-track-extras-grid">
           <a href="#/explore/parts" className="public-track-extra public-track-parts" onClick={() => rememberGuestService('parts')}>
-            <span className="public-track-extra-art" aria-hidden="true"/><b>Запчасти</b><small>Оригиналы и проверенные аналоги</small><span aria-hidden="true">›</span>
+            <b>Запчасти</b><small>Оригиналы и проверенные аналоги</small><span aria-hidden="true">›</span>
           </a>
           <a href="#/explore/inspection" className="public-track-extra public-track-inspection" onClick={() => rememberGuestService('inspection')}>
-            <span className="public-track-extra-art" aria-hidden="true"/><b>Техосмотр</b><small>Информация и доступные варианты</small><span aria-hidden="true">›</span>
+            <b>Техосмотр</b><small>Информация и доступные варианты</small><span aria-hidden="true">›</span>
           </a>
           <a href="#/explore/tech" className="public-track-extra public-track-techbase">
-            <span className="public-track-extra-art" aria-hidden="true"/><b>ТехБаза</b><small>Коды ошибок, схемы и проверенные технические источники</small><span aria-hidden="true">›</span>
+            <b>ТехБаза</b><small>Коды ошибок, схемы и проверенные технические источники</small><span aria-hidden="true">›</span>
           </a>
         </div>
       </div>

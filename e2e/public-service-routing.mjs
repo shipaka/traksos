@@ -112,14 +112,19 @@ try {
     if(await approvedBenefits.count()!==3 || await approvedBenefits.locator('svg').count()!==3)
       throw Error('19 Nov owner-approved three benefit icons must all be real vectors');
     if(width<900) {
-      for(const tile of ['parts','inspection']) {
-        const geometry=await page.locator('.public-track-'+tile).evaluate(el=>{
-          const art=el.querySelector('.public-track-extra-art')?.getBoundingClientRect();
+      // Pre-17 Nov photo art and its empty flex spacers were fully retired.
+      if(await page.locator('.public-track-extra-art, .public-track-insurance-art').count())
+        throw Error('Retired decorative art still occupies the new 19 Nov service cards');
+      for(const tile of ['parts','inspection','techbase']) {
+        const selector=tile==='techbase'?'.public-track-techbase':'.public-track-'+tile;
+        const geometry=await page.locator(selector).evaluate(el=>{
+          const card=el.getBoundingClientRect();
           const label=el.querySelector('b')?.getBoundingClientRect();
-          return art&&label ? {artBottom:art.bottom,labelTop:label.top} : null;
+          return label ? {inside:label.left>=card.left-2 && label.right<=card.right+2,
+            visible:label.height>=12,text:el.querySelector('b')?.textContent} : null;
         });
-        if(!geometry || geometry.artBottom>geometry.labelTop+3)
-          throw Error('Art overlaps text in '+tile+': '+JSON.stringify(geometry));
+        if(!geometry?.inside || !geometry.visible)
+          throw Error('Current 19 Nov service text is clipped in '+tile+': '+JSON.stringify(geometry));
       }
     }
 
