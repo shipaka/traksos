@@ -104,6 +104,9 @@
 .approved-pc-bot small{font-size:11px;line-height:1.3;color:#f1f6f7}
 .approved-pc-bot span{font-size:11px;color:#90dae5}
 .approved-pc-bot img{width:46%;object-fit:contain;max-height:165px;align-self:end;mix-blend-mode:normal}
+.approved-pc-evidence{font-size:12px;line-height:1.45;background:#0c2732;border-left:2px solid #45a3b0;
+  padding:8px 10px;border-radius:5px;white-space:pre-wrap;overflow-wrap:anywhere;color:#d8eaed}
+.approved-pc-moderator .approved-pc-case>.approved-pc-pane{margin-bottom:10px}
 .approved-pc-quote{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:center;
   background:linear-gradient(110deg,#102b39,#09232d);border:1px solid #356f7b;border-radius:9px;
   padding:11px 10px;margin:6px 0;min-width:0;text-decoration:none}
