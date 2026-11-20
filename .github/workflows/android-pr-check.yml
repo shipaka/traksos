@@ -9,6 +9,7 @@ on:
       - 'web/**'
       - 'server/**'
       - 'scripts/verify-approved.mjs'
+      - 'scripts/verify-android-618.mjs'
       - 'scripts/verify-brand.mjs'
       - 'scripts/android-pr-runtime-smoke.sh'
       - 'scripts/verify-android-screen.py'
@@ -49,6 +50,7 @@ jobs:
           node scripts/verify-current-policy.mjs
           npm -w web run build
           node scripts/verify-approved.mjs
+          node scripts/verify-android-618.mjs
           rm -rf android/app/src/main/assets/www
           mkdir -p android/app/src/main/assets/www
           cp -a web/dist/. android/app/src/main/assets/www/
