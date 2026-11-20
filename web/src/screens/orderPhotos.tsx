@@ -55,7 +55,7 @@ export function OrderPhotoCapture({orderId,reviewOnly=false}:{
     finally{setBusy(false);if(input.current)input.current.value='';}
   };
   if(reviewOnly)return <button type="button" className="and19-photo-capture" aria-label="Фото заявки — безопасное демо">
-    <NavGlyph glyph="camera"/>Фото
+    <NavGlyph glyph="camera"/><span>Фото</span>
   </button>;
   return <label className={'and19-photo-capture'+(busy?' is-busy':'')}
     aria-label="Прикрепить реальное фото к текущей заявке">
