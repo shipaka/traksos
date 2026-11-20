@@ -195,3 +195,112 @@
     transform: none !important;
   }
 }
+
+/* Owner 20 Nov: one practical PC interior language, not enlarged Android screenshots.
+   Consistent top-level roles; order status and financial math stay API-driven. */
+@media(min-width:900px){
+ .app[class*="role-"] .desktop-content{min-width:0}
+ .app[class*="role-"] .desktop-content > main{min-width:0;max-width:1480px}
+ .app[class*="role-"] .desktop-content :is(.desktop-hero,.work-command-hero,.base-command-hero,.admin-command-hero,.internal-role-hero,.cabinet-heading){
+   border:1px solid #3c5361!important;
+   background:linear-gradient(110deg,#102b35,#0a1923 70%,#102d37)!important;
+   color:#f8fbfe;
+ }
+ .app[class*="role-"] .desktop-content :is(.desktop-hero,.work-command-hero,.base-command-hero,.admin-command-hero,.internal-role-hero,.cabinet-heading) :is(p,small){
+   color:#c2d2da
+ }
+ .app[class*="role-"] .desktop-content :is(.desktop-section-heading,.admin-stage-head,.client-insurance-home-heading) a{
+   color:#ffad78
+ }
+ /* The main live request is the visual centre for clients and drivers. */
+ .app.role-client .client-dashboard .desktop-hero{
+   min-height:265px;padding:28px 32px;border-radius:18px
+ }
+ .app.role-client .client-dashboard .desktop-hero::before{
+   background:linear-gradient(90deg,#081b25 0%,#0c222ddd 45%,#071a2233 100%);
+ }
+ .app.role-client .client-dashboard .desktop-eyebrow{
+   color:#7ddddf;letter-spacing:.11em
+ }
+ .app.role-client .client-dashboard .desktop-hero h1 span{
+   color:#ff7d31!important
+ }
+ .app.role-client .client-dashboard .desktop-outline-action{
+   background:#102734;border:1px solid #47808d;color:#fff
+ }
+ .app.role-client .client-dashboard .desktop-quick-links{
+   gap:12px;grid-template-columns:repeat(4,minmax(0,1fr));
+ }
+ .app.role-client .client-dashboard .desktop-quick-card,
+ .app.role-client .client-dashboard .desktop-quick-card:nth-child(2),
+ .app.role-client .client-dashboard .desktop-quick-card:nth-child(3){
+   min-height:125px;
+   border:1px solid #36515f!important;
+   background:linear-gradient(130deg,#19343f,#0b1e28)!important;
+   border-radius:15px!important;padding:17px 14px;
+ }
+ .app.role-client .client-dashboard .desktop-quick-card:nth-child(1) {
+   background:linear-gradient(125deg,#2c2927,#12242e)!important;
+   border-color:#8d4c2e!important;
+ }
+ .app.role-client .client-dashboard .desktop-quick-icon{
+   border-radius:12px;background:#102e3b;color:#fa7a32
+ }
+ .app.role-client .client-dashboard .desktop-quick-card:hover{
+   transform:translateY(-2px);border-color:#ff9351!important
+ }
+ .app.role-client .client-dashboard .desktop-active-orders .card.hi{
+   border:1px solid #46636f!important;background:#0f2732!important;
+ }
+ .app.role-client .client-dashboard .desktop-active-orders .card.hi .pill{
+   border-color:#28b8b7
+ }
+ /* Specialists and tow operators: status, incoming work and one current
+    action have priority. Do not expose hidden reversal operations. */
+ .app.role-performer .desktop-content .work-command-hero,
+ .app.role-service .desktop-content .base-command-hero{
+   border-radius:18px!important;
+ }
+ .app.role-performer .desktop-content :is(.work-command-actions,.performer-live-insights),
+ .app.role-service .desktop-content :is(.base-command-actions,.grid3){
+   gap:12px
+ }
+ .app.role-performer .desktop-content :is(.performer-workspace,.performer-workspace .card),
+ .app.role-service .desktop-content .base-workspace{
+   color:#f5fafc
+ }
+ /* Admin: left section index, right working stage. No infinite wall of forms. */
+ .app.role-admin .admin-workspace .admin-navigation{
+   border:1px solid #36515e!important;
+   background:linear-gradient(175deg,#102b36,#081923)!important;
+   border-radius:17px;
+ }
+ .app.role-admin .admin-workspace .admin-nav-item.active{
+   border-color:#f18a4b!important;
+   background:linear-gradient(120deg,#3c2a24,#152b36)!important;
+   box-shadow:inset 3px 0 #ff762a!important;
+ }
+ .app.role-admin .admin-workspace .admin-nav-item.active .admin-nav-symbol{
+   background:#ff7a31;color:#121820;border-color:#ff7a31
+ }
+ .app.role-admin .admin-workspace .admin-stage-head{
+   background:linear-gradient(110deg,#142d38,#0a1d27)!important;
+   border-color:#365460!important
+ }
+ .app.role-admin .admin-workspace .admin-nav-search .field{
+   background:#061821;color:#fff;border:1px solid #405d69
+ }
+ .app[class*="role-"] .desktop-content :is(.cabinet-metrics,.grid3) .card.tile{
+   background:linear-gradient(135deg,#18313c,#0c202a)!important;
+ }
+ .app[class*="role-"] .desktop-content :is(.card,.linkrow,.list-item) :is(.note,.sub,small){
+   color:#b9cbd3
+ }
+ .app[class*="role-"] .desktop-content .pill.good{border-color:#35a982;color:#a8efcb}
+ .app[class*="role-"] .desktop-content .pill.warn{border-color:#c58b44;color:#ffe1a7}
+ .app[class*="role-"] .desktop-content .pill.bad{border-color:#d46b62;color:#ffd1cb}
+}
+@media(min-width:900px) and (max-width:1120px){
+ .app.role-client .client-dashboard .desktop-quick-card{min-height:145px;padding:12px 10px;}
+ .app.role-client .client-dashboard .desktop-quick-card b{font-size:13px}
+}
