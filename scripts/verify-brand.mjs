@@ -47,7 +47,10 @@ for (const file of individual) await scan(file);
 for (const [file, marker] of [
   ['web/index.html', '<title>TrakSos</title>'],
   ['android/app/src/main/res/values/strings.xml', '<string name="app_name">TrakSos</string>'],
-  ['web/src/main.tsx', 'Trak<b>Sos</b>'],
+  // The owner approved an exact raster logo crop in 618.png. The UI now
+  // renders that image instead of the older text-only Trak<b>Sos</b> markup.
+  ['web/src/main.tsx', 'tr-approved-brand-logo'],
+  ['web/src/approvedVisuals.ts', "logo: '/traksos-brand-logo-approved-618.png'"],
   ['server/src/domain/defaults.ts', "brand: 'TrakSOS'"],
 ]) {
   if (!(await readFile(file, 'utf8')).includes(marker))
