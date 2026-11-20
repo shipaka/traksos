@@ -92,7 +92,7 @@ try{
  await page.getByRole('tab',{name:'Клиент и ТС'}).click();
  assert(await page.getByText('Тестовый клиент CI').count()>0,'Client details tab broken');
  await page.getByRole('tab',{name:'История'}).click();
- await page.getByRole('tab',{name:'Работа'}).click();
+ await page.getByRole('tab',{name:'Работа',exact:true}).click();
  await page.getByRole('tab',{name:/Новые предложения/}).click();
  assert(await page.getByText('Тестовое предложение (не назначено)').count()>0,'New proposals mode not rendered');
  await page.screenshot({path:output+'/master-new-proposals-1647.png',fullPage:false,animations:'disabled'});
