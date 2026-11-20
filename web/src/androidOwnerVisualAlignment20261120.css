@@ -627,3 +627,29 @@ html.traksos-reduced-motion .and19-workspace button{transition:none!important}
    height:43px;
  }
 }
+
+/* Approved 618 service hierarchy: one unmistakable orange urgent action,
+ * three quiet graphite alternatives. Keep exact pre-approved routes and art. */
+@media(max-width:899px){
+ .app.role-client .and19-services>a:first-child{
+   border-color:#ff9d52;
+   background:linear-gradient(148deg,#cb5816,#ac440a 64%,#652b10);
+   box-shadow:inset 0 1px #ffd39a51,inset 0 -1px #6f2d1980,0 6px 19px #e26d1933;
+   color:#fff;
+ }
+ .app.role-client .and19-services>a:first-child>.and19-service-label{
+   color:#fff;
+   text-shadow:0 1px 4px #4e1d0c;
+ }
+ .app.role-client .and19-services>a:first-child>.tr-service-illustration{
+   opacity:.28;
+ }
+ .app.role-client .and19-services>a:not(:first-child){
+   background:linear-gradient(145deg,#1a3448,#102736 65%,#102234);
+   border-color:#476a7e;
+ }
+ .app.role-client .and19-services>a:focus-visible{
+   outline:2px solid #ffbe79;
+   outline-offset:2px;
+ }
+}
