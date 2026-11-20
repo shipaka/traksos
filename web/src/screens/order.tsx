@@ -16,6 +16,7 @@ import { OrderTimeline } from './OrderTimeline.tsx';
 import { LocationSharing } from './performer.tsx';
 import { RefundForm, payStatus } from './adminUser.tsx';
 import { VehiclePhotoLink } from '../vehicleVisual.tsx';
+import { OrderPhotoGallery } from './orderPhotos.tsx';
 
 type PerformerOrderTab = 'order' | 'client' | 'finance' | 'chat' | 'history' | 'vehicle';
 export function Order({ id, initialTab = 'order' }: { id: string; initialTab?: PerformerOrderTab }) {
@@ -125,6 +126,7 @@ export function Order({ id, initialTab = 'order' }: { id: string; initialTab?: P
         </div>)}
       <OrderContinuations order={d} />
       <EcuOrderPanel order={d} />
+      <OrderPhotoGallery orderId={id}/>
       {d.status === 'completed' && <Review id={id} you={d.you} />}
 
       {!isPerformer && d.status !== 'searching' && d.status !== 'no_performer' && <section id="order-chat"><Chat id={id} status={d.status} /></section>}
