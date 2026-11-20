@@ -168,14 +168,14 @@ try {
     // Only post-17 Nov owner-approved visuals may be loaded by the active public site.
     for (const name of [
       'tracksos-approved-hero-owner-20261119.webp',
-      'tracksos-approved-logo-owner-20261119.webp'
+      'traksos-brand-logo-approved-618.png'
     ]) {
       const check = await page.evaluate(async (asset) => {
         const res = await fetch('/' + asset);
         const blob = await res.blob();
         const img=await createImageBitmap(blob);
         const widthFloor=asset.includes('-hq')?1700:asset.includes('partner-')?1400:0;
-        const bytesFloor=asset.includes('logo-owner')?2_000:asset.includes('map')?10_000:asset.includes('-hq')?280_000:asset.includes('partner-')?180_000:50_000;
+        const bytesFloor=asset.includes('brand-logo-approved')?2_000:asset.includes('map')?10_000:asset.includes('-hq')?280_000:asset.includes('partner-')?180_000:50_000;
         return res.ok && blob.type.startsWith('image/') && blob.size>bytesFloor && img.width>=widthFloor;
       }, name);
       assert(check, width + 'px: approved image cannot be loaded: ' + name);
