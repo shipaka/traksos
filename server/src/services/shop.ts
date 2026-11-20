@@ -434,6 +434,25 @@ export class ShopService {
     if (!o) throw notFound('Заказ не найден');
     if (!(NEXT[o.status] ?? []).includes(status)) throw conflict('bad_status', `Из «${SHOP_STATUS[o.status]}» в «${SHOP_STATUS[status] ?? status}» нельзя`);
     await this.db.tx(async (q) => {
+      // Serialize with courier handoff and buyer confirmation. An admin cannot
+      // mark an assigned courier delivery received or bypass its status order.
+      const locked=await q.one<{status:string}>(
+        'select status from shop_orders where id=$1 for update',[id]);
+      if(!locked||locked.status!==o.status)
+        throw conflict('status_changed','Заказ изменился — обновите страницу');
+      const courier=await q.one<{id:string;status:string}>(
+        'select id,status from shop_courier_deliveries where shop_order_id=$1 for update',[id]);
+      if(courier){
+        if(status==='done'||status==='shipped')
+          throw conflict('courier_handoff_required',
+            'Доставку ведёт курьер. Получение подтверждает покупатель после проверки кода.');
+        if(status==='cancelled'&&courier.status!=='assigned')
+          throw conflict('courier_in_progress',
+            'Курьер уже выехал — откройте разбирательство прежде чем отменять передачу.');
+        if(status==='cancelled')await q.query(
+          `update shop_courier_deliveries set status='cancelled',updated_at=now()
+             where id=$1`,[courier.id]);
+      }
       if (status === 'cancelled') {
         // Вернуть зарезервированное на склад
         for (const it of o.items) if (it.inStock) await q.query('update shop_products set stock = coalesce(stock, 0) + $2 where id=$1', [it.productId, it.qty]);
