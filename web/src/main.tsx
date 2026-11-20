@@ -295,7 +295,7 @@ function App() {
     case 'services': screen = b && route[2] === 'book' ? <BookForm id={b} /> : b ? <CenterPage id={b} /> : <ServicesList />; break;
     case 'booking': screen = <BookingPage id={b} />; break;
     case 'fleet': screen = isCustomer && !me.owner_id && !me.roles.includes('driver') ? <Fleet /> : <main><div className="empty">Парком управляет владелец</div></main>; break;
-    case 'inspections': screen = isInspection ? <ApprovedPcDesk role="inspection" fallback={<InsurerCabinet inspectionOnly />} /> : <main><div className="empty">Нет прав оператора техосмотра</div></main>; break;
+    case 'inspections': screen = isInspection ? (b === 'processing' ? <InsurerCabinet inspectionOnly /> : <ApprovedPcDesk role="inspection" fallback={<InsurerCabinet inspectionOnly />} />) : <main><div className="empty">Нет прав оператора техосмотра</div></main>; break;
     case 'insurance': screen = b === 'request' ? (route[2] === 'new' ? <InsuranceApplication vehicleId={route[3]??''} /> : <InsuranceThread requestId={route[2]??''} />) : isInsurer ? <ApprovedPcDesk role="insurer" fallback={<InsurerCabinet />} /> : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
     case 'help': screen = b === 'case' && route[2] ? <ScenarioLesson id={route[2]} /> : <Help />; break;
     case 'economics': screen = <EconomicsPage />; break;
@@ -320,7 +320,7 @@ function App() {
     case 'appeal': screen = <Appeal />; break;
     case 'reviews': screen = <MyReviews />; break;
     case 'admin': screen = !isStaff ? <Home /> : b === 'case' && route[2] ? <ModCase id={route[2]} /> : !isAdmin ? <ModeratorDesk /> : b === 'test-center' ? (serviceSandbox ? <ServicePreviewPage section={route[3]} sub={route[4]} id={route[5]} /> : <AdminTestCenter roleId={route[2]} fullFidelity />) : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : b === undefined ? <ApprovedPcDesk role="admin" fallback={<Admin />} /> : <Admin key={b === 'section' ? route[2] : 'summary'} initialSection={b === 'section' ? route[2] : undefined} />; break;
-    case 'moderation': screen = isModerator ? <ApprovedPcDesk role="moderator" fallback={<ModeratorDesk />} /> : <Home />; break;
+    case 'moderation': screen = isModerator ? (b === 'verify' || b === 'support' || b === 'flagged' || b === 'cases' ? <ModeratorDesk initialTab={b === 'verify' ? 'verify' : b === 'support' ? 'support' : b === 'flagged' ? 'flagged' : 'cases'} /> : <ApprovedPcDesk role="moderator" fallback={<ModeratorDesk />} />) : <Home />; break;
     case 'offer': screen = <OfferPage audience={b ?? 'client'} />; break;
     case 'support': screen = b === 'new' ? <SupportNew /> : b ? <SupportThread id={b} /> : <SupportList />; break;
     case 'notifications': screen = <Notifications />; break;
