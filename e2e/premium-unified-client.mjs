@@ -72,7 +72,10 @@ try {
       if (await cookie.isVisible().catch(() => false)) await cookie.click();
       await page.waitForTimeout(200);
       console.log('visual entry route ' + width + 'px: ' + await page.evaluate(() => location.hash));
-      await page.locator('.client-dashboard').waitFor({timeout: 20000});
+      // Mobile browser uses the responsive client dashboard; the 20 Nov
+      // approved PC cabinet is a different, real API-backed React component.
+      await page.locator(width < 900 ? '.client-dashboard' : '.approved-pc-client')
+        .waitFor({timeout: 20000});
       if (width < 900) {
         // Mobile CHROME uses the responsive web client dashboard. Android APK
         // mounts a separate, owner-approved .and19-client workspace, tested by
@@ -97,17 +100,25 @@ try {
         if (await page.locator('.and19-client').count() !== 0)
           throw Error('Android-only client workspace accidentally mounted in mobile browser');
       } else {
-        const truck = await page.locator('.client-hero-scania').evaluate(img => ({
-          loaded: img.complete && img.naturalWidth > 100,
-          fit: getComputedStyle(img).objectFit,
-          visible: getComputedStyle(img).display !== 'none'
+        // The approved 20 Nov owner PC desk deliberately replaces the retired
+        // .client-dashboard. Verify the actual owner workspace and its routes,
+        // not four obsolete cards that no longer exist in the selected design.
+        const desk=page.locator('.approved-pc-client');
+        await desk.getByRole('heading',{name:'Владелец автопарка'}).waitFor();
+        const truck=await desk.locator('.approved-pc-heading img').evaluate(img=>({
+          loaded:img.complete && img.naturalWidth>100,
+          visible:getComputedStyle(img).display!=='none'
         }));
-        if (!truck.loaded || !truck.visible || truck.fit !== 'contain')
-          throw new Error(width + 'px approved Scania image issue: ' + JSON.stringify(truck));
-        const cards = await page.locator('.client-dashboard .desktop-quick-card').count();
-        const hubs = await page.locator('.client-dashboard-hubs > a').count();
-        if (cards !== 4 || hubs !== 4)
-          throw new Error(width + 'px wrong desktop card counts: ' + cards + '/' + hubs);
+        if(!truck.loaded || !truck.visible)
+          throw Error(width+'px approved PC truck artwork failed: '+JSON.stringify(truck));
+        for(const href of ['#/sos','#/new/tow','#/services','#/orders','#/garage','#/fleet']){
+          if(!await desk.locator('a[href="'+href+'"]').count())
+            throw Error(width+'px approved owner workspace lost a working route: '+href);
+        }
+        await desk.locator('.approved-pc-active-order-nav').waitFor();
+        await desk.locator('.approved-pc-three').waitFor();
+        if(await page.locator('.client-dashboard').count())
+          throw Error(width+'px retired PC client dashboard mounted alongside approved workspace');
       }
       // Older photographic service cards were physically retired at the owner's
       // request. Preserve only verified actual vehicle-model photos in the app.
@@ -124,12 +135,9 @@ try {
       });
       if (photoDetails.some(p => p.w < 320 || p.h < 180))
         throw new Error(width + 'px vehicle-model photo quality/availability: ' + JSON.stringify(photoDetails));
-      if(width >= 900) for (const [index, key] of ['master', 'tow', 'sto', 'consult'].entries()) {
-        const bg = await page.locator('.desktop-quick-card').nth(index).evaluate(el =>
-          getComputedStyle(el).backgroundImage);
-        if (bg.includes('tracksos-photo-') || !bg.includes('gradient'))
-          throw new Error(width + 'px retired pre-17 Nov service photography or missing current background: ' + key + '/' + bg);
-      }
+      // The new PC desk must never silently revive the retired 17 Nov cards.
+      if(width >= 900 && await page.locator('.desktop-quick-card').count())
+        throw Error(width+'px old photographic service cards reappeared in the 20 Nov approved PC desk');
       const pageWidth = await page.evaluate(() => ({
         viewport: document.documentElement.clientWidth,
         content: document.documentElement.scrollWidth
