@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { post, setToken, connectWs, ApiError } from '../api.ts';
 import { useAction, useMe, useToast, Field, go } from '../ui.tsx';
 import { PUBLIC_HOME_TILES, MASTER_SPECIALTIES, rememberGuestService } from '../guestCatalog.ts';
+import { OwnerDesktopHome20261120 } from './ownerDesktopHome20261120.tsx';
 
 const HERO_SLIDES = [
   { id: 'approved', label: 'Единая платформа TrakSOS', eyebrow: 'TRAKSOS · ПОМОЩЬ НА ДОРОГЕ И В ДЕЛЕ',
@@ -93,6 +94,8 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const { busy, run } = useAction();
   const [intent, setIntent] = useState<Intent | null>(driver ? 'login' : entry ?? null);
   const [heroSlide, setHeroSlide] = useState(0);
+  const [desktopPublic, setDesktopPublic] = useState(() => window.matchMedia('(min-width: 900px)').matches);
+  useEffect(() => { const q = window.matchMedia('(min-width: 900px)'); const update = () => setDesktopPublic(q.matches); q.addEventListener('change',update); return () => q.removeEventListener('change',update); }, []);
   const [phone, setPhone] = useState('+7 ');
   const [step, setStep] = useState<'phone' | 'code'>('phone');
   const [code, setCode] = useState('');
@@ -266,6 +269,8 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const sub = intent === 'activate' ? 'Администратор уже назначил ваш кабинет. Подтвердите свой номер SMS-кодом и задайте личный пароль. Роли изменить при активации нельзя.' : intent === 'reset' ? 'Отправим один SMS-код для смены пароля.' : intent === 'help' ? 'Подтвердите номер — и сразу к заявке. Мастер позвонит на него.'
     : intent === 'join' ? 'Выберите, кем подключаетесь. После входа заполните профиль — проверим и откроем заявки.'
     : intent === 'register' ? 'Укажите номер телефона. Если аккаунта ещё нет, создадим его после подтверждения SMS-кодом.'  : 'Вход по паролю, без SMS. Если забыли пароль — восстановите доступ.'; // legacy description
+
+  if (!intent && desktopPublic) return <OwnerDesktopHome20261120 />;
 
   if (!intent) return (
     <main className="public-home public-landing" id="public-home">
