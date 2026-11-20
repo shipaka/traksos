@@ -20,7 +20,7 @@ async function verifyPage(page, label) {
     const overflow = document.documentElement.scrollWidth - viewport;
     const offending = [...document.querySelectorAll('input,button,a,section,main,header')]
       .filter(el => { const r = el.getBoundingClientRect(); return r.width > 0 && (r.right > viewport + 2 || r.left < -2); })
-      .slice(0, 8).map(el => [el.tagName, el.className, Math.round(el.getBoundingClientRect().right)]);
+      .slice(0, 8).map(el => [el.tagName, el.className, Math.round(el.getBoundingClientRect().right), el.getAttribute('href')||'', (el.parentElement?.className||'').toString().slice(0,65)]);
     return { viewport, overflow, offending };
   });
   check(layout.overflow <= 2, label + ': horizontal scroll: ' + JSON.stringify(layout));
@@ -66,6 +66,14 @@ async function run(width, height, mobile, nativePreview = false) {
     check(await page.locator('.public-actions').getByRole('button', { name: 'Зарегистрироваться', exact: true }).isVisible(), 'Hero registration is not visible');
     check(await page.locator('.public-actions').getByRole('link', { name: 'Как это работает', exact: true }).isVisible(), 'Hero guide is not visible');
     const image = await page.locator('.public-hero-visual').evaluate(async el => {
+      // Approved compact UI uses a REAL <img>: validate loaded pixels rather than
+      // only the old CSS background URL, which could resolve but be visually hidden.
+      const real = el.querySelector('.public-hero-mobile-photo');
+      if (real instanceof HTMLImageElement) {
+        await real.decode().catch(() => {});
+        return { ok: real.complete && real.naturalWidth > 0,
+          width: real.naturalWidth, height: real.naturalHeight, source: 'approved-dom-image' };
+      }
       const bg = [getComputedStyle(el).backgroundImage, getComputedStyle(el,'::after').backgroundImage].join(' | ');
       const match = bg.match(/url\(["']?([^"')]+)["']?\)/);
       if (!match) return { ok: false, bg };
