@@ -1,7 +1,7 @@
 // Кабинет партнёра-страховщика: только назначенные администратором страховые заявки.
 import { useState } from 'react';
 import { get, patch, fmtTime } from '../api.ts';
-import { useLoad, useAction } from '../ui.tsx';
+import { useLoad, useAction, useRoute } from '../ui.tsx';
 import { insurancePresentation, insuranceQueueGroup } from '../insurancePresentation.ts';
 
 const labels: Record<string, string> = {
@@ -9,6 +9,9 @@ const labels: Record<string, string> = {
 };
 export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}={}) {
   const [workspace,setWorkspace]=useState<'insurance'|'inspection'|'finance'|'common'>(inspectionOnly?'inspection':'insurance');
+  const route = useRoute();
+  const inspectionId = inspectionOnly && route[0]==='inspections' ? route[1] : undefined;
+  const [checkedSteps,setCheckedSteps] = useState<Record<string,boolean>>({});
   const finance=useLoad(()=>get<{entries:{id:string;kind:string;entry_type:string;amount_kopecks:string;note:string|null;created_at:string}[];totals:{kind:string;accrued:string;paid:string;balance:string}[]}>('/api/insurer/finance'),[]);
   const money=(value:string|number)=>new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB'}).format(Number(value)/100);
   const inspections=useLoad(()=>get<any[]>('/api/insurer/inspections'),[],
@@ -55,6 +58,71 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
     if (filter !== 'all' && insuranceQueueGroup(r.insurance_stage, r.status) !== filter) return false;
     return [r.brand, r.model, r.plate, r.comment].some((value) => String(value ?? '').toLocaleLowerCase('ru-RU').includes(search.trim().toLocaleLowerCase('ru-RU')));
   });
+  // Separate approved inspection detail: available only to the assigned operator.
+  // The existing /api/insurer/inspections endpoint enforces tenant access.
+  if(inspectionId) {
+    const item = inspections.data?.find(r=>String(r.id)===inspectionId);
+    if(!inspections.data) return <main className="cabinet-page and20-inspection-detail">
+      <a href="#/inspections" className="and20-return">← К техосмотрам</a>
+      <div className="card">{inspections.error ? 'Не удалось загрузить техосмотр: '+inspections.error
+        : 'Загрузка назначенного техосмотра…'}</div>
+    </main>;
+    if(!item) return <main className="cabinet-page and20-inspection-detail">
+      <a href="#/inspections" className="and20-return">← К техосмотрам</a>
+      <div className="card">Техосмотр не найден среди назначенных вам заявок.</div>
+    </main>;
+    const canRecord = item.status==='sent_to_partner';
+    const verified = ['documents','vehicle','result'].every(k=>checkedSteps[inspectionId+':'+k]===true);
+    const note=(inspectionNotes[inspectionId]??'').trim();
+    return <main className="cabinet-page and20-inspection-detail">
+      <a href="#/inspections" className="and20-return">← К техосмотрам</a>
+      <section className="and20-role-header">
+        <span className="and20-kicker">TRAKSOS · ТЕХОСМОТР</span>
+        <h1>Техосмотр №{item.number||item.id}</h1>
+        <span className="and20-state">{item.status==='completed'?'Завершён':
+          item.status==='rejected'?'Отказ':'Назначен оператору'}</span>
+      </section>
+      <section className="card and20-inspection-vehicle">
+        <strong>{[item.brand,item.model,item.year].filter(Boolean).join(' ') || 'Транспортное средство'}</strong>
+        <span>{item.plate||'Госномер не указан'}</span>
+        {item.vin&&<span>VIN: {item.vin}</span>}
+        {item.customer_name&&<span>Клиент: {item.customer_name}</span>}
+        {item.comment&&<p>{item.comment}</p>}
+      </section>
+      <div className="and20-inspection-stages" aria-label="Ход техосмотра">
+        {['Получено','Назначено','Осмотр','Завершено'].map((step,index)=>
+          <span key={step} className={item.status==='completed'?'passed':index===1?'current':''}>{step}</span>)}
+      </div>
+      {canRecord ? <section className="card and20-inspection-checks">
+        <h2>Этапы работы</h2>
+        <p className="note">Отметьте только реально выполненные действия. TrakSOS не выдаёт диагностическую карту.</p>
+        {([
+          ['documents','Проверка документов'],
+          ['vehicle','Осмотр транспортного средства'],
+          ['result','Результат проверки'],
+        ] as const).map(([key,label])=><label key={key} className="and20-inspection-check">
+          <input type="checkbox" checked={checkedSteps[inspectionId+':'+key]===true}
+            onChange={e=>setCheckedSteps(old=>({...old,[inspectionId+':'+key]:e.target.checked}))}/>
+          <span>{label}</span>
+        </label>)}
+        <label className="and20-inspection-note">Комментарий / результат осмотра
+          <textarea className="field" maxLength={2000} value={inspectionNotes[inspectionId]||''}
+            placeholder="Фактические результаты проверки"
+            onChange={e=>setInspectionNotes(old=>({...old,[inspectionId]:e.target.value}))}/>
+        </label>
+        <button type="button" className="btn" disabled={busy||!verified||note.length<5}
+          onClick={()=>decideInspection(inspectionId,'completed')}>Внести результат техосмотра</button>
+        <button type="button" className="btn ghost" disabled={busy||note.length<5}
+          onClick={()=>decideInspection(inspectionId,'rejected')}>Отказать с указанием причины</button>
+        <p className="note">Завершение заявки в TrakSOS не означает выдачу диагностической карты. Её оформляют отдельно в уполномоченной системе.</p>
+      </section> : <section className="card">
+        <strong>{item.status==='completed'?'Заявка завершена':'Осмотр не активен'}</strong>
+        {item.staff_note&&<p>{item.staff_note}</p>}
+      </section>}
+    </main>;
+  }
+  const insurerPriority = (rows??[]).find(r=>insuranceQueueGroup(r.insurance_stage,r.status)==='action')
+    ??(rows??[]).find(r=>insuranceQueueGroup(r.insurance_stage,r.status)==='active');
   return (
     <main className="cabinet-page">
       <header className="cabinet-heading">
@@ -67,6 +135,29 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
           .map(([key,label])=><button type="button" key={key} className={'btn ghost'+(workspace===key?' active':'')}
             aria-pressed={workspace===key} onClick={()=>setWorkspace(key)}>{label}</button>)}
       </nav>
+      {workspace==='insurance'&&!inspectionOnly&&<section className="and20-insurer-overview"
+        aria-label="Оперативный страховой кабинет">
+        <div className="and20-role-header">
+          <span className="and20-kicker">TRAKSOS · СТРАХОВОЙ ПАРТНЁР</span>
+          <h2>Рабочий стол</h2>
+        </div>
+        <div className="and20-partner-stats">
+          {([
+            ['Новые',rows?.filter(r=>r.insurance_stage==='received'||r.status==='sent_to_partner').length],
+            ['В расчёте',rows?.filter(r=>r.insurance_stage==='preparing').length],
+            ['Отправлены',rows?.filter(r=>r.insurance_stage==='offers_sent').length],
+            ['Оформлены',rows?.filter(r=>r.insurance_stage==='policy_sent'||r.status==='completed').length],
+          ] as [string,number|undefined][]).map(([label,value])=><div key={label} className="and20-partner-stat">
+            <small>{label}</small><strong>{value??'—'}</strong>
+          </div>)}
+        </div>
+        {insurerPriority&&<a className="and20-insurer-focus" href={'#/insurance/request/'+encodeURIComponent(insurerPriority.id)}>
+          <span className="and20-card-heading">Заявка · {insurerPriority.brand||'Грузовой автомобиль'} {insurerPriority.model||''}</span>
+          <span className="and20-state">{insurancePresentation(insurerPriority.insurance_stage,insurerPriority.status,'partner').label}</span>
+          <span className="and20-small-text">{insurancePresentation(insurerPriority.insurance_stage,insurerPriority.status,'partner').next}</span>
+          <b>Открыть страховое дело ›</b>
+        </a>}
+      </section>}
       {workspace==='inspection'&&<section className="stack">
         <p className="sub">Здесь отображаются исключительно назначенные вам заявки на техосмотр. Страховые полисы и предложения в этом разделе не показываются.</p>
         <div className="cabinet-metrics">
@@ -85,6 +176,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
           <div className="empty">{inspectionView==='history'?'История техосмотров пока пуста':'Активных техосмотров сейчас нет'}</div> :
           inspections.data.filter(r=>inspectionView==='history' ? ['completed','rejected','cancelled'].includes(r.status) : !['completed','rejected','cancelled'].includes(r.status)).map(r=><article className="card stack" key={r.id}>
             <b>{r.brand} {r.model}</b><span>{r.plate||'Номер не указан'} · {fmtTime(r.created_at)}</span>
+            {inspectionOnly&&<a className="btn" href={'#/inspections/'+encodeURIComponent(r.id)}>Открыть техосмотр и этапы →</a>}
             <span className="pill">{r.status==='completed'?'Завершён':r.status==='rejected'?'Отклонён':'В обработке'}</span>
             {r.comment&&<p>{r.comment}</p>}{r.staff_note&&<p className="note">{r.staff_note}</p>}
             {r.status==='sent_to_partner'&&<>
