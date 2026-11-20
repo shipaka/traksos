@@ -7,6 +7,26 @@ import { insurancePresentation, insuranceQueueGroup } from '../insurancePresenta
 const labels: Record<string, string> = {
   sent_to_partner: 'Ждёт оформления', completed: 'Полис оформлен', rejected: 'Отказ',
 };
+/** Chat entry always resolves to a real assigned insurance case, never a
+ * generic or cross-partner inbox. The thread owns messages and permissions. */
+export function InsurerChats() {
+  const q=useLoad<any[]>(()=>get('/api/insurer/requests'),[],e=>e.type==='vehicle_service');
+  return <main className="and19-chats and19-workspace and20-insurer-chats">
+    <h1>Чаты по страховым делам</h1>
+    <p>Уточнения и документы хранятся внутри соответствующей заявки.</p>
+    {!q.data&&<div className="and19-panel">{q.error
+      ? 'Не удалось открыть переписку: '+q.error : 'Загружаем назначенные дела…'}</div>}
+    {q.data?.length===0&&<div className="and19-panel">Назначенных страховых дел пока нет.</div>}
+    {q.data?.map(r=><a className="and19-row-link" key={r.id}
+      href={'#/insurance/request/'+encodeURIComponent(r.id)}>
+      <span>{[r.brand,r.model].filter(Boolean).join(' ') || 'Страховое дело'}
+        <small>{insurancePresentation(r.insurance_stage,r.status,'partner').label}</small>
+      </span>
+      <span>Чат ›</span>
+    </a>)}
+  </main>;
+}
+
 export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}={}) {
   const [workspace,setWorkspace]=useState<'insurance'|'inspection'|'finance'|'common'>(inspectionOnly?'inspection':'insurance');
   const route = useRoute();
@@ -23,7 +43,8 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
   const [inspectionNotes,setInspectionNotes]=useState<Record<string,string>>({});
   const [inspectionView,setInspectionView]=useState<'active'|'history'>('active');
   const [expires, setExpires] = useState<Record<string, string>>({});
-  const [filter, setFilter] = useState<'action' | 'active' | 'all' | 'closed'>('action');
+  const [filter, setFilter] = useState<'action' | 'active' | 'all' | 'closed'>(
+    route[1]==='requests' ? 'all' : 'action');
   const [search, setSearch] = useState('');
   async function update(id: string, status: 'completed' | 'rejected') {
     const note = (notes[id] ?? '').trim();
