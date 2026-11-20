@@ -217,6 +217,13 @@ function People() {
 function AllOrders() {
   const list = useLoad(() => get('/api/admin/orders'), [], (e) => e.type === 'order');
   if (!list.data) return <Loading error={list.error} />;
+  if (list.data.length === 0) return (
+    <section className="card admin-orders-zero" role="status" aria-label="Нет заказов">
+      <h3>Заказов пока нет</h3>
+      <p className="note">Когда появятся заказы исполнителей, здесь будут их номера, статусы и переходы в карточки. Данные не подменяются демонстрационными.</p>
+      <a className="btn ghost" href="#/admin/section/cases">Открыть заявки и мультизаявки</a>
+    </section>
+  );
   return (
     <div className="rows">
       {list.data.map((o: any) => (
