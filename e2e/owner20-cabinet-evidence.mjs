@@ -99,13 +99,17 @@ try{
        const visual=await page.evaluate(async()=>{
          const logo=document.querySelector('.top .tr-approved-brand-logo img');
          const scenes=Array.from(document.querySelectorAll('.desktop-quick-card .tr-service-illustration'));
-         const atlas=await fetch('/traksos-service-scenes-shared.webp');
+         const chosenAtlas=window.innerWidth>=900
+           ? '/traksos-service-scenes-desktop-hq.webp'
+           : '/traksos-service-scenes-shared.webp';
+         const atlas=await fetch(chosenAtlas);
          const bmp=atlas.ok?await createImageBitmap(await atlas.blob()).catch(()=>null):null;
          return {
            logo:logo?.getAttribute('src'),loaded:logo?.complete&&logo?.naturalWidth===274&&logo?.naturalHeight===46,
            logoRendered:logo?{w:logo.getBoundingClientRect().width,h:logo.getBoundingClientRect().height}:null,
            illustrations:scenes.length,
-           matched:scenes.every(el=>getComputedStyle(el).backgroundImage.includes('traksos-service-scenes-shared.webp')),
+           matched:scenes.every(el=>getComputedStyle(el).backgroundImage.includes(chosenAtlas.slice(1))),
+           chosenAtlas,
            crops:scenes.map(el=>{
              const css=getComputedStyle(el);
              return {pos:css.backgroundPosition,size:css.backgroundSize};
@@ -117,10 +121,15 @@ try{
          ? ['0px 0px','-114.4px 0px','-228.8px 0px','-343.2px 0px']
          : ['0px 0px','-176px 0px','-352px 0px','-528px 0px'];
        const expectedSize=width===390?'457.6px 68.25px':'704px 105px';
+       const expectedAtlas=width===390
+         ? '/traksos-service-scenes-shared.webp'
+         : '/traksos-service-scenes-desktop-hq.webp';
+       const expectedPixels=width===390?{w:704,h:105}:{w:2816,h:420};
        if(visual.logo!=='/traksos-brand-logo-approved-618.png'||!visual.loaded||
           !visual.logoRendered||visual.logoRendered.w>274.5||visual.logoRendered.h>46.5||
           Math.abs(visual.logoRendered.w/visual.logoRendered.h-274/46)>.08||
-          visual.illustrations!==4||!visual.matched||visual.size?.w!==704||visual.size?.h!==105||
+          visual.illustrations!==4||!visual.matched||visual.chosenAtlas!==expectedAtlas||
+          visual.size?.w!==expectedPixels.w||visual.size?.h!==expectedPixels.h||
           visual.crops?.some((c,i)=>c.pos!==expectedCrops[i]||c.size!==expectedSize))
          throw Error('Owner brand/art damaged by upscaling or a wrong PC/mobile crop at '+width+': '+JSON.stringify(visual));
        console.log('Approved logo source pixel coverage at '+width+'px viewport, DPR 2: '+
