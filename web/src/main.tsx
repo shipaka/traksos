@@ -115,6 +115,7 @@ function NavGlyph({ glyph }: { glyph: string }) {
     : glyph === '☷' || glyph === '☰' ? <><path d="M8 6h13M8 12h13M8 18h13" /><path d="M3 6h1M3 12h1M3 18h1" /></>
     : glyph === '✚' || glyph === '＋' ? <><circle cx="12" cy="12" r="9" /><path d="M12 7v10M7 12h10" /></>
     : glyph === '⚙' ? <><circle cx="12" cy="12" r="3.1" /><path d="M12 2v3m0 14v3M2 12h3m14 0h3M4.9 4.9 7 7m10 10 2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1" /></>
+    : glyph === '◌' ? <><circle cx="12" cy="12" r="2.4"/><path d="M6.4 6.4a8 8 0 0 0 0 11.2m11.2-11.2a8 8 0 0 1 0 11.2M3.5 3.5a12 12 0 0 0 0 17m17-17a12 12 0 0 1 0 17"/></>
     : glyph === '◉' ? <><circle cx="12" cy="8" r="3.5" /><path d="M4.5 20c.8-3.6 3.4-5.4 7.5-5.4s6.7 1.8 7.5 5.4" /><circle cx="12" cy="12" r="10" opacity=".4" /></>
     : glyph === '▣' ? <><rect x="6" y="3" width="12" height="18" rx="2" /><path d="M9 8h6M9 12h6m-6 4h4" /></>
     : glyph === '▦' ? <><rect x="3" y="3" width="8" height="8" rx="1" /><rect x="13" y="3" width="8" height="8" rx="1" /><rect x="3" y="13" width="8" height="8" rx="1" /><rect x="13" y="13" width="8" height="8" rx="1" /></>
@@ -285,7 +286,7 @@ function App() {
       break;
     case 'base': screen = !isService
       ? (isPerformer && b === 'me' ? <BaseSetup /> : <Home />)
-      : b === 'car' && route[2] ? <BaseCar id={route[2]} /> : b === 'me' ? <BaseSetup /> : b === 'money' ? <BaseMoney /> : <BaseHome />; break;
+      : b === 'car' && route[2] ? <BaseCar id={route[2]} /> : b === 'me' ? <BaseSetup /> : b === 'money' ? <BaseMoney /> : <BaseHome key={b === 'inbox' ? 'inbox' : 'home'} initialTab="req" />; break;
     case 'services': screen = b && route[2] === 'book' ? <BookForm id={b} /> : b ? <CenterPage id={b} /> : <ServicesList />; break;
     case 'booking': screen = <BookingPage id={b} />; break;
     case 'fleet': screen = isCustomer && !me.owner_id && !me.roles.includes('driver') ? <Fleet /> : <main><div className="empty">Парком управляет владелец</div></main>; break;
@@ -387,11 +388,11 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       : [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь'], ['/shop', '⚙', 'Запчасти'], ['/profile', '◉', 'Профиль']];
   // Mobile tabs only contain real role-dependent routes; extra tools remain in the menu.
   const mobileTabs: [string, string, string][] = !me ? [] : mode === 'client'
-    ? [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'SOS'], ['/garage', '▣', 'Техника'], ['/profile', '◉', 'Меню']]
+    ? [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/air', '◌', 'Эфир'], ['/garage', '▣', 'Техника'], ['/profile', '◉', 'Меню']]
     : mode === 'performer'
       ? [['/work', '⌂', 'Главная'], ['/work/jobs', '☷', 'Заявки'], ['/work/chats', '▤', 'Чат'], ['/profile', '◉', 'Меню']]
     : mode === 'service'
-      ? [['/base', '⌂', 'Главная'], ['/base/me', '▤', 'Моя СТО'], ['/base/money', '₽', 'Финансы'], ['/profile', '◉', 'Меню']]
+      ? [['/base', '⌂', 'Главная'], ['/base/inbox', '☷', 'Заявки'], ['/base/money', '₽', 'Финансы'], ['/profile', '◉', 'Меню']]
     : mode === 'insurer'
       ? [['/insurance', '▦', 'Главная'], ['/profile', '◉', 'Меню']]
     : mode === 'inspection'
