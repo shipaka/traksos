@@ -113,9 +113,8 @@
   background-image:url('/tracksos-approved-hero-owner-20261119.webp')!important;
 }
 
-/* Desktop reproduction corrections based on real Chromium screenshots
-   versus the 19 Nov OWNER-APPROVED screenshot (not the obsolete 14 Nov files).
-   Mobile and existing operational cabinets retain their separate layouts. */
+/* Retained for the mobile-browser landing only. Desktop uses the
+   separately approved 20 November React home. */
 
 .guest-app .public-landing .public-service-icon svg{
   display:block;width:36px;height:36px;stroke:currentColor;
@@ -130,20 +129,10 @@
   }
 }
 
-/* Owner's 19 Nov desktop reference: app teaser sits alongside (and slightly
-   above) the compact service row; three benefits, not the obsolete four. */
-
-
-/* CANON 19 NOV — page structure independent of deleted finalCanon.css.
-   All approved front-page links remain real React links; this is presentation only. */
+/* Desktop 617 standalone shell: preserve only its content container layout. */
 @media(min-width:900px){
-  .guest-app.guest-home .desktop-sidebar{display:none!important}
   .guest-app.guest-home .desktop-layout{display:block!important;max-width:none!important}
   .guest-app.guest-home .desktop-content{max-width:none!important;width:100%!important;padding:0!important;color:#f8fcff!important;background:#031725!important}
-  .guest-app.guest-home .top{min-height:76px!important;padding:10px 3.5%!important;background:#041725!important}
-  .guest-app.guest-home .track-site-search{display:none!important}
-  /* The compact promo is a two-zone layout. Long copy must not retain the
-     obsolete grid-column:3 minimum width and run outside the viewport. */
 }
 
 
@@ -162,20 +151,6 @@
   .guest-app .top .guest-approved-mark{width:min(218px,66vw)!important;max-width:100%!important;}
 }
 
-/* OWNER HEADER/FOLD GEOMETRY (19 Nov, 1602x981 source).
-   With the guest search removed there is room for the approved single-row
-   desktop navigation. Do not affect the partner and authenticated headers. */
-@media(min-width:1251px){
-  .guest-app.guest-home .top{
-    display:flex!important;flex-wrap:nowrap!important;align-items:center!important;
-    gap:clamp(12px,1.5vw,24px)!important;
-  }
-  .guest-app.guest-home .top .guest-site-nav{
-    display:flex!important;flex:1 1 auto!important;min-width:0!important;
-    justify-content:space-evenly!important;align-items:center!important;
-    gap:clamp(9px,1vw,17px)!important;
-  }
-}
 .guest-app .public-landing .public-actions .public-button-sos{
   background:linear-gradient(105deg,#07d9f6,#05bdf3)!important;
   border:1px solid #25e6fb!important;color:#032436!important;
@@ -187,13 +162,6 @@
   text-decoration:none!important;
 }
 
-/* Strictly constrained desktop promo: RuStore and the text note are
-   real application information, not grid columns from an obsolete layout.
-   At 1440px the previous auto-placed span began at x=1313 and ended at 1466. */
-@media(min-width:1251px){
-  /* Reference contains two action chips, not a long explanatory disclaimer
-     spilling past the teaser and mobile phone mockup. Keep in DOM for a11y. */
-}
 
 /* November 19 mobile public actions: the long Russian signup label was
    visually clipped at 390px. Preserve the two existing actions and height. */
@@ -212,8 +180,6 @@
 @media(min-width:1251px){
   .guest-app .guest-site-nav>a.guest-nav-techbase{color:#6de0f9!important;white-space:nowrap!important}
   .guest-app .guest-site-nav>a.guest-nav-techbase:hover{color:#fff!important}
-  /* Use the full image height on the right, not an oversized cover crop:
-     the 19 Nov approved composition shows the whole cab and road. */
 }
 .guest-app .public-track-extra.public-track-techbase{border-color:#217799!important;}
 .guest-app .public-track-extra.public-track-techbase b{color:#d9f8ff!important;}
@@ -233,6 +199,4 @@
 @media(min-width:1251px){
   .guest-app .top .guest-site-nav>a.guest-nav-techbase{display:none!important}
 }
-/* Extra services are real functionality BELOW the approved first fold.
-   Keep links accessible without allowing unstyled text over the lower panel. */
 
