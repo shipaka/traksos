@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Back, useMe } from '../ui.tsx';
 import { TrainingPractice } from './trainingPractice.tsx';
 
-type Role = 'owner'|'driver'|'master'|'tow'|'service'|'insurer'|'inspection'|'moderator'|'admin';
+type Role = 'owner'|'driver'|'master'|'tow'|'service'|'insurer'|'inspection'|'courier'|'moderator'|'admin';
 type Lesson = { title:string; text:string; tip:string; path:string; link:string };
 type Course = { label:string; lessons:Lesson[] };
 const lesson=(title:string,text:string,tip:string,path:string,link:string):Lesson=>({title,text,tip,path,link});
@@ -11,6 +11,7 @@ export function learningRole(mode:string,roles:readonly string[]):Role {
   if(mode==='moderator') return 'moderator';
   if(mode==='insurer') return 'insurer';
   if(mode==='inspection') return 'inspection';
+  if(mode==='courier') return 'courier';
   if(mode==='service') return 'service';
   if(mode==='performer') return roles.includes('tow')?'tow':'master';
   return roles.includes('driver')?'driver':'owner';
@@ -52,6 +53,13 @@ export const courses:Record<Role,Course>={
     lesson('Карточка и расписание','Укажите марки, услуги и реальные сроки приёма.','Клиент видит заявленные вами условия.','/base/me','Моя СТО'),
     lesson('Статусы ремонта','Отмечайте фактический прогресс и готовность автомобиля.','Не подтверждайте несделанные работы.','/base','Заявки'),
     lesson('Счета и поддержка','Проверяйте начисления и обращайтесь за помощью приватно.','В публичный эфир водителей СТО не входит.','/base/money','Финансы'),
+  ]},
+  courier:{label:'Курьер TrakSOS',lessons:[
+    lesson('Только ваши доставки','Назначенные администратором посылки появятся на рабочем столе.','Не открывайте чужие заказы и не включайте линию, если не готовы к рейсу.','/courier','Главная'),
+    lesson('Забрал, в пути, на месте','Обновляйте этапы только после фактического действия.','Пропуск или откат этапов недоступен.','/courier/jobs','Рейсы'),
+    lesson('Шестизначный код','После прибытия получатель показывает код из истории покупок.','Код не выдаётся курьеру сервером и имеет ограничение попыток.','/courier/jobs','Доставка'),
+    lesson('Покупатель подтверждает вручение','Проверенный код не завершает выдачу. Клиент нажимает подтверждение отдельно.','Не закрывайте заказ за клиента.','/courier/jobs','Рейсы'),
+    lesson('Безопасная связь','При сложности обращайтесь через поддержку, личные номера не показываем.','Маршрут открывается без придуманной оценки времени.','/support','Поддержка'),
   ]},
   insurer:{label:'Страховой партнёр',lessons:[
     lesson('Страховой кабинет','Здесь обрабатываются заявки клиентов.','Уроки не создают полисов.','/insurance','Рабочий стол'),
