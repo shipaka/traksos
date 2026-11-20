@@ -52,7 +52,7 @@ export function MobileRoleMenu({mode,quick,account,help,onLogout}:{
   const helpEntries=uniqueEntries(help,new Set([...quick.map(([href])=>href),...account.map(([href])=>href)]));
   const roleTitle:{[key:string]:string}={
     client:'Владелец / водитель',performer:'Выездной специалист',
-    service:'СТО и рембаза',insurer:'Страховой партнёр',
+    service:'СТО и рембаза',insurer:'Страховой партнёр',courier:'Курьер доставки',
     inspection:'Техосмотр',moderator:'Модератор',admin:'Администратор'
   };
   return <main className="tr-mobile-menu-page" aria-label="Меню кабинета TrakSOS">
