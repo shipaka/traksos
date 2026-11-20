@@ -187,3 +187,18 @@
    border-radius:5px;padding:2px 5px;
  }
 }
+/* Crisp vector service pictograms from the 20 Nov approved screenshot.
+   Do not fall back to platform-specific Unicode boxes. */
+@media(min-width:900px){
+ .owner20-quick-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 42px}
+ .owner20-quick-icon svg{display:block;width:42px;height:42px;stroke:#f97125}
+ .owner20-feature-title span{display:inline-flex;align-items:center;justify-content:center}
+ .owner20-feature-title svg{width:23px;height:23px;display:block;stroke:#e1edf1}
+ .owner20-hero-links a>span:first-child{display:inline-flex;align-items:center;justify-content:center;width:42px}
+ .owner20-hero-links a>span:first-child svg{width:40px;height:40px;stroke:#fff}
+ .owner20-broadcast>span:first-child svg{stroke:#f97125}
+}
+@media(min-width:900px) and (max-width:1150px){
+ .owner20-quick-icon{flex-basis:27px}
+ .owner20-quick-icon svg{width:27px;height:27px}
+}
