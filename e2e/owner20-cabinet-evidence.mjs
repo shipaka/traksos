@@ -21,6 +21,43 @@ async function post(path,body,token){
  const r=await fetch(BASE+path,{method:'POST',headers:{'content-type':'application/json',...(token?{authorization:'Bearer '+token}:{})},body:JSON.stringify(body)});
  const data=await r.json().catch(()=>null);if(!r.ok)throw Error(path+' HTTP '+r.status+' '+JSON.stringify(data));return data;
 }
+async function get(path,token){
+ const r=await fetch(BASE+path,{headers:{authorization:'Bearer '+token}});
+ const data=await r.json().catch(()=>null);
+ if(!r.ok)throw Error(path+' HTTP '+r.status+' '+JSON.stringify(data));
+ return data;
+}
+async function put(path,body,token){
+ const r=await fetch(BASE+path,{method:'PUT',headers:{'content-type':'application/json',authorization:'Bearer '+token},body:JSON.stringify(body)});
+ const data=await r.json().catch(()=>null);
+ if(!r.ok)throw Error(path+' HTTP '+r.status+' '+JSON.stringify(data));
+ return data;
+}
+/** Prepare genuine role dashboards using LOCAL synthetic accounts.
+ * Avoid publishing fixture accounts, implying real partners or altering live data.
+ * No job/order/payment is created by this visual test. */
+async function ensureConfiguredWorkspace(c,token){
+ if(['master','tow','master_service'].includes(c.id)){
+  const profile=await get('/api/performer/profile',token);
+  const kind=c.id==='tow'?'tow':'master';
+  if(!profile){
+   await put('/api/performer/profile',{
+    kind,name:c.id==='tow'?'Тестовый эвакуаторщик — локальный стенд':'Тестовый мастер — локальный стенд',
+    specialties:kind==='tow'?[]:['electric','diag'],brands:{},tier:'eco'
+   },token);
+  }
+ }
+ if(['service','master_service'].includes(c.id)){
+  const data=await get('/api/base',token);
+  if(!data?.center){
+   await put('/api/base',{
+    name:'Тестовая СТО TrakSOS — локальный стенд',
+    address:'Санкт-Петербург, только тестовый стенд',
+    brands:['Scania','Volvo'],accepts:['quick','day']
+   },token);
+  }
+ }
+}
 const browser=await chromium.launch();
 const results=[];
 try{
@@ -32,6 +69,7 @@ try{
    if(!account?.token)throw Error('No session token');
    if(c.needs && !account.user?.roles?.includes(c.needs))throw Error('Staff role not granted by local test config');
    const token=account.token;
+   await ensureConfiguredWorkspace(c,token);
    for(const width of [1440,390]){
     const context=await browser.newContext({viewport:{width,height:width===390?844:900},locale:'ru-RU',deviceScaleFactor:1});
     const page=await context.newPage();
