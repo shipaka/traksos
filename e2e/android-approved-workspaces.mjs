@@ -93,7 +93,7 @@ try {
       if(JSON.stringify(urls)!==JSON.stringify(['#/sos','#/new/tow','#/services','#/new/consult']))
         throw Error(role+': service destinations changed '+JSON.stringify(urls));
       const garage=desk.locator('.and19-equipment');
-      if(await garage.getAttribute('href')!=='#/garage')throw Error(role+': vehicle history does not open garage');
+      if(!(await garage.getAttribute('href')||'').startsWith('#/garage'))throw Error(role+': vehicle history does not open a real garage card');
       if(await desk.locator('.and19-sos').getAttribute('href')!=='#/sos')throw Error(role+': SOS missing');
     }
     if(mode==='performer'){
@@ -108,15 +108,22 @@ try {
     if(links.some(v=>!v||!v.startsWith('#/')))throw Error(role+': dead mobile tab');
     // 20.11 owner-approved bottom navigation. Driver Air must remain immediately accessible.
     if(mode==='client'){
-      const expected=['#/','#/orders','#/air','#/garage','#/shop','#/profile'];
+      const expected=['#/','#/orders','#/air','#/garage','#/menu'];
       if(JSON.stringify(links)!==JSON.stringify(expected))
-        throw Error(role+': agreed Air, vehicle and parts bottom tabs changed '+JSON.stringify(links));
+        throw Error(role+': approved 618.png has exactly Main / Orders / Air / Vehicle / Menu '+JSON.stringify(links));
       const names=await tabs.allTextContents();
-      if(!names.some(t=>t.trim()==='Эфир')||!names.some(t=>t.trim()==='Магазин'))
-        throw Error(role+': missing driver Air or bottom store label');
+      if(!names.some(t=>t.trim()==='Эфир')||!names.some(t=>t.trim()==='Меню')||
+         names.some(t=>t.trim()==='Магазин'))
+        throw Error(role+': owner-approved bottom bar differs from 618.png');
+      await page.locator('.tabbar a[href="#/menu"]').click();
+      const menu=page.locator('main.tr-mobile-menu-page');
+      await menu.waitFor({state:'visible',timeout:10000});
+      if(!await menu.locator('a[href="#/shop"]').count())
+        throw Error('Parts shop must remain accessible via role Menu, not an obsolete sixth tab');
+      await page.goto(BASE+'/'+route,{waitUntil:'domcontentloaded'});
     }
     if(mode==='service'){
-      const expected=['#/base','#/base/inbox','#/shop','#/base/money','#/profile'];
+      const expected=['#/base','#/base/inbox','#/shop','#/base/money','#/menu'];
       if(JSON.stringify(links)!==JSON.stringify(expected))
         throw Error(role+': STO work actions and parts tab changed '+JSON.stringify(links));
     }
