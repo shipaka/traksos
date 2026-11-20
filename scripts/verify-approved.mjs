@@ -21,7 +21,6 @@ const LOCKED_ASSETS = {
   'branding/tracksos-rustore-icon.png': '2583f9590d32107b',
   'web/public/icon-512.png': '2583f9590d32107b',
   'web/public/icon-192.png': 'fa6451ff36f1fec3',
-  'web/public/tracksos-approved-header-logo-20261119.webp': '4820e2a77018e638',
   // Exact approved images. Deliberate asset changes require a new owner-approved baseline.
   'web/public/tracksos-approved-hero-owner-20261119.webp': '7a7a9acec9ee7f32',
   // Original artwork from owner's 617.png on 20 Nov; keep mobile 19 Nov locked independently.
@@ -102,9 +101,7 @@ expect(retiredReferences.length === 0,
 // validated generation/brand registry in /vehicles/models; do not delete it.
 const allowedPublicVisuals = new Set([
   'icon-192.png','icon-512.png',
-  'tracksos-approved-header-logo-20261119.webp',
   'tracksos-approved-hero-owner-20261119.webp',
-  'tracksos-approved-logo-owner-20261119.webp',
   'trakbot-approved-30.webp','trakbot-approved-hello.webp',
   'owner20-artwork-sprite.webp',
   'owner20-photo-background-approved.webp',
@@ -122,9 +119,15 @@ await asset('web/public/owner20-artwork-sprite.webp', 20000);
 await asset('web/public/owner20-photo-background-approved.webp', 15000);
 // The superseded 617-only raster logo must not be served as an alternative
 // wordmark: the owner requested the exact 618 Android logo on all surfaces.
-try { await stat('web/public/owner20-header-logo-approved.webp'); expect(false,
-  'retired alternate public logo must be absent'); }
-catch { console.log('OK: no retired alternate desktop logo'); }
+for(const alternateLogo of [
+  'owner20-header-logo-approved.webp',
+  'tracksos-approved-header-logo-20261119.webp',
+  'tracksos-approved-logo-owner-20261119.webp'
+]) {
+  let present=false;
+  try { await stat('web/public/'+alternateLogo); present=true; } catch {}
+  expect(!present,'retired competing brand raster absent from active public root: '+alternateLogo);
+}
 await asset('web/public/traksos-brand-logo-approved-618.png', 16000);
 await asset('web/public/traksos-service-scenes-shared.webp', 16000);
 const unifiedVisuals = await read('web/src/approvedVisuals.ts');
@@ -240,8 +243,9 @@ for (const name of ['autumn.webp','spring.webp','summer.webp','winter.webp']) {
   expect(!present, 'retired pre-17 Nov Android scene is absent: '+name);
 }
 expect(landing.includes('/icon-192.png') &&
-       shell.includes('/tracksos-approved-logo-owner-20261119.webp'),
-       'mobile promo shows 19 Nov icon and guest sidebar uses owner-approved original logo');
+       shell.includes('src={APPROVED_VISUALS.logo}') &&
+       !shell.includes('tracksos-approved-logo-owner-20261119.webp'),
+       'mobile promo preserves approved launcher icon and shares 618 brand with Android and desktop');
 const demo = await read('web/src/screens/adminTestCenter.tsx');
 const serviceDemo = await read('web/src/demo/servicePreviewApi.ts');
 expect(!/\bstructuredClone\s*\(/.test(serviceDemo),
@@ -266,9 +270,7 @@ for(const role of ['client','owner','driver','master','tow','service','master_se
 const labels = await read('web/src/dict.ts');
 const native = await read('android/app/src/main/java/ru/traksos/app/MainActivity.kt');
 
-await asset('web/public/tracksos-approved-header-logo-20261119.webp', 1600);
 await asset('web/public/tracksos-approved-hero-owner-20261119.webp', 50000);
-await asset('web/public/tracksos-approved-logo-owner-20261119.webp', 2000);
 await asset('android/app/src/main/res/drawable-nodpi/splash_truck.webp', 2000);
 await asset('android/app/src/main/res/mipmap-mdpi/ic_launcher.png', 1200);
 await asset('android/app/src/main/res/mipmap-hdpi/ic_launcher.png', 1800);
