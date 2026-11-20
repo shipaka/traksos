@@ -175,8 +175,15 @@ expect(sharedSceneKeys.every((kind,i)=>
   ) &&
   unifiedServiceSceneStyle.includes('.and19-services>a>.and19-service-label') &&
   unifiedServiceSceneStyle.includes('font-size:inherit;') &&
-  unifiedServiceSceneStyle.includes('transform:scale(.51);'),
-  'approved PC/Android service tiles share exactly four photos and keep original Android 4-column text geometry');
+  unifiedServiceSceneStyle.includes('width:88px;') &&
+  unifiedServiceSceneStyle.includes('height:52.5px;') &&
+  unifiedServiceSceneStyle.includes('background-size:352px 52.5px;') &&
+  !unifiedServiceSceneStyle.includes('transform:scale(.51);') &&
+  !unifiedServiceSceneStyle.includes('transform:scale(1.03);') &&
+  ['0 0','-88px 0','-176px 0','-264px 0'].every((pos,i)=>
+    unifiedServiceSceneStyle.includes('.and19-services>a>.tr-service-illustration--'+sharedSceneKeys[i]+'{background-position:'+pos+'}')
+  ),
+  'same PC/Android service photos with direct-size mobile raster paint; no extra GPU raster scaling');
 
 for (const file of ['web/src/finalCanon.css','web/src/trackPhotos.css']) {
   let exists = false;
