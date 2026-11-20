@@ -36,14 +36,29 @@ function stage(status: string) {
   return 0;
 }
 
-function MobileTimeline({ status }: { status: string }) {
+function stageTime(value: unknown): string | null {
+  if (!value || (typeof value !== 'string' && !(value instanceof Date))) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null :
+    new Intl.DateTimeFormat('ru-RU',{hour:'2-digit',minute:'2-digit'}).format(date);
+}
+function MobileTimeline({ order }: { order: any }) {
+  const status = order.status as string;
   const current = stage(status);
+  const recorded = [order.created_at, order.accepted_at, order.en_route_at,
+    order.arrived_at, order.completed_at];
   return <ol className="and19-timeline" aria-label="Ход выполнения заявки">
-    {MILESTONES.map((title, index) =>
-      <li key={title} className={index < current ? 'passed' : index === current ? 'current' : ''}
+    {MILESTONES.map((title, index) => {
+      const moment = stageTime(recorded[index]);
+      return <li key={title} className={index < current ? 'passed' : index === current ? 'current' : ''}
         aria-current={index === current ? 'step' : undefined}>
-        <span aria-hidden="true">{index < current || status === 'completed' ? '✓' : index + 1}</span><small>{title}</small>
-      </li>)}
+        <span aria-hidden="true">{index < current || status === 'completed'
+          ? <NavGlyph glyph="check" />
+          : index === 2 ? <NavGlyph glyph="truck" /> : index === 3 ? <NavGlyph glyph="pin" /> : index + 1}</span>
+        <small>{title}</small>
+        {moment && <time dateTime={new Date(recorded[index]).toISOString()}>{moment}</time>}
+      </li>;
+    })}
   </ol>;
 }
 
@@ -144,7 +159,7 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
             <ApprovedOrderTruck order={current} />
           </a>}
           <OrderFacts order={current} />
-          {current.status !== 'searching' && <MobileTimeline status={current.status} />}
+          {current.status !== 'searching' && <MobileTimeline order={current} />}
           {current.status === 'searching' && <p className="and19-search-active"><span className="and19-pulse" aria-hidden="true" />Поиск исполнителя продолжается · открыть отклики</p>}
           <a className="and19-link" href={'#/order/' + current.id}>Открыть заявку и связь с исполнителем <span aria-hidden="true">›</span></a>
         </div>
@@ -227,7 +242,7 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
         <OrderTitle order={active[0]} />
         {active[0].service!=='consult' && <ApprovedOrderTruck order={active[0]} />}
         <OrderFacts order={active[0]} />
-        <MobileTimeline status={active[0].status} />
+        <MobileTimeline order={active[0]} />
         <span className="and19-link">{performerNextStep(active[0].status)} <span aria-hidden="true">›</span></span>
       </a>
       <nav className="and19-order-shortcuts" aria-label="Разделы текущей заявки">
