@@ -16,6 +16,10 @@ try {
     await page.goto(BASE + '/#/', { waitUntil: 'domcontentloaded' });
     if(width>=900){
       await page.locator('.owner20-home').waitFor({timeout:15000});
+      assert(await page.locator('.app > header.top, .desktop-sidebar, .site-footer').count()===0,
+        'Final PC must not render legacy guest header/sidebar/footer');
+      assert(await page.locator('header.owner20-top').count()===1,
+        'Final PC should show exactly one approved header');
       assert(await page.locator('.owner20-quick>a').count()===5,'Final PC services row must have 5 links');
       assert(await page.locator('.owner20-features>a').count()===5,'Final PC features row must have 5 links');
       assert(await page.locator('.owner20-bottom>.owner20-bottom-card').count()===4,'Final PC lower row must have 4 cards');

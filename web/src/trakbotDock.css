@@ -266,3 +266,14 @@
     content:'›';color:#d5faff;font-size:28px;font-weight:400;
   }
 }
+
+/* Keep conversation history independently scrollable on phone-sized screens.
+   This avoids long diagnostic replies growing the whole compact dialog. */
+@media (min-width:360px) and (max-width:899px) {
+  .trakbot-compact-body .trakbot-dialog .msgs {
+    max-height:min(180px,28dvh)!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+    overscroll-behavior:contain;
+  }
+}

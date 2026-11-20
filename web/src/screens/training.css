@@ -1,20 +1,20 @@
-.tr-training-invite{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin:12px auto;padding:13px 18px;max-width:1100px;border:1px solid rgba(54,210,221,.35);border-radius:14px;background:linear-gradient(110deg,rgba(27,95,126,.16),rgba(255,255,255,.035))}
+.tr-training-invite{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin:12px auto;padding:13px 18px;max-width:1100px;border:1px solid rgba(255,118,39,.35);border-radius:14px;background:linear-gradient(110deg,rgba(27,95,126,.16),rgba(255,255,255,.035))}
 .tr-training-invite>div:first-child{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
 .tr-training-invite strong{font-weight:750}.tr-training-invite span{font-size:.92rem;opacity:.85}
 .tr-training-invite-actions{display:flex;align-items:center;gap:10px}
-.tr-training-invite-actions a{background:#12b7cf;color:#071823;padding:9px 13px;border-radius:9px;text-decoration:none;font-weight:750}
+.tr-training-invite-actions a{background:#ff7627;color:#071823;padding:9px 13px;border-radius:9px;text-decoration:none;font-weight:750}
 .tr-training-invite-actions button{border:0;background:transparent;color:inherit;cursor:pointer;text-decoration:underline;padding:9px}
 .tr-training-page{max-width:1070px;width:100%;margin:0 auto;padding:20px clamp(14px,3vw,30px) 60px;display:grid;gap:18px}
 .tr-training-hero{padding:22px 24px;border-radius:17px;background:linear-gradient(120deg,rgba(10,61,83,.35),rgba(55,20,70,.13));border:1px solid rgba(143,201,225,.20)}
 .tr-training-hero h1{margin:8px 0;font-size:clamp(1.65rem,3vw,2.3rem)}.tr-training-hero p{margin:5px 0 0;opacity:.85}
 .tr-training-roles{display:flex;flex-wrap:wrap;gap:7px}
 .tr-training-roles a{display:inline-flex;text-decoration:none;color:inherit;border:1px solid var(--line,#63819b);border-radius:100px;padding:8px 12px;font-size:.89rem}
-.tr-training-roles .selected{background:#12b7cf;color:#071823;border-color:#12b7cf;font-weight:750}
+.tr-training-roles .selected{background:#ff7627;color:#071823;border-color:#ff7627;font-weight:750}
 .tr-training-workspace,.tr-training-reference{border:1px solid rgba(138,187,203,.25);border-radius:17px;padding:clamp(16px,3vw,28px);background:var(--card,rgba(30,48,64,.25));display:grid;gap:19px}
 .tr-training-progress-label{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:9px}
 .tr-training-progress-label span{opacity:.72}
 .tr-training-track{height:7px;border-radius:99px;background:rgba(117,156,179,.22);overflow:hidden}
-.tr-training-track span{display:block;height:100%;background:linear-gradient(90deg,#109eb4,#37e1dc);border-radius:99px;transition:width .22s ease}
+.tr-training-track span{display:block;height:100%;background:linear-gradient(90deg,#db631f,#ffad6b);border-radius:99px;transition:width .22s ease}
 .tr-training-lesson{display:grid;gap:13px}
 .tr-training-lesson h2{margin:0;font-size:clamp(1.3rem,2.3vw,1.75rem)}
 .tr-training-purpose{margin:0;font-size:1.04rem;line-height:1.55}
@@ -22,14 +22,14 @@
 .tr-training-instruction p{margin:7px 0 0;line-height:1.6}
 .tr-training-caution{margin:0;padding:12px 15px;border-left:3px solid #d09c62;background:rgba(191,127,56,.09)}
 .tr-training-location{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
-.tr-training-location a{color:var(--accent,#15b9cd);text-decoration:underline;font-weight:700}
+.tr-training-location a{color:var(--accent,#ff7627);text-decoration:underline;font-weight:700}
 .tr-training-controls{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .tr-training-controls button{min-height:44px}
 .tr-training-step-links{display:flex;flex-wrap:wrap;gap:7px;border-top:1px solid rgba(120,167,182,.20);padding-top:15px}
 .tr-training-step-links button{font:inherit;text-align:left;cursor:pointer;border-radius:8px;border:1px solid rgba(125,168,188,.25);background:transparent;color:inherit;padding:8px 10px}
-.tr-training-step-links button.active{border-color:#12b7cf;background:rgba(18,183,207,.11)}
+.tr-training-step-links button.active{border-color:#ff7627;background:rgba(255,118,39,.11)}
 .tr-training-reference h2{margin:0}.tr-training-reference p{margin:0;line-height:1.55}
-.tr-training-reference a{color:var(--accent,#15b9cd)}
+.tr-training-reference a{color:var(--accent,#ff7627)}
 @media(max-width:650px){.tr-training-invite{margin:9px 12px}.tr-training-page{padding:14px 12px 90px}.tr-training-invite-actions{width:100%;justify-content:space-between}.tr-training-controls button{flex:1}.tr-training-reference .row{display:flex;flex-direction:column;align-items:flex-start}}
 @media(prefers-reduced-motion:reduce){.tr-training-track span{transition:none}}
 .tr-context-help{position:relative;margin:6px auto 0;width:calc(100% - 24px);max-width:1440px;z-index:5}
@@ -38,18 +38,18 @@
 .tr-context-help-content{max-width:580px;margin-top:7px;padding:15px 17px;border-radius:13px;border:1px solid rgba(103,174,197,.3);background:var(--card,#172e3d);box-shadow:0 8px 30px rgba(0,0,0,.13)}
 .tr-context-help-content p{line-height:1.52;margin:8px 0 12px}
 .tr-context-help-content .row{display:flex;flex-wrap:wrap;gap:14px}
-.tr-context-help-content a{color:var(--accent,#14b9cc);font-weight:650}
+.tr-context-help-content a{color:var(--accent,#ff7627);font-weight:650}
 .tr-training-practice-entry{display:grid;justify-items:start;gap:8px}
 .tr-training-practice-entry h2{margin:0}
 .tr-training-practice-entry a{margin-top:8px;text-decoration:none}
 .tr-training-practice .tr-training-step-links span{font-size:.84rem;padding:8px 10px;border-radius:9px;border:1px solid rgba(125,168,188,.25);opacity:.7}
-.tr-training-practice .tr-training-step-links span.active{background:rgba(18,183,207,.11);border-color:#12b7cf;opacity:1}
+.tr-training-practice .tr-training-step-links span.active{background:rgba(255,118,39,.11);border-color:#ff7627;opacity:1}
 
 .account-menu-tour{font:inherit;color:inherit;background:transparent;border:0;text-align:left;padding:10px 16px;cursor:pointer;width:100%}
-.account-menu-tour:hover,.account-menu-tour:focus-visible{background:rgba(14,178,205,.12);outline-offset:-2px}
+.account-menu-tour:hover,.account-menu-tour:focus-visible{background:rgba(255,118,39,.12);outline-offset:-2px}
 .tr-tour{position:fixed;inset:0;z-index:99999;font-size:1rem;color:#f8fbfd}
 .tr-tour-cover{position:absolute;inset:0;background:transparent;pointer-events:auto}
-.tr-tour-spot{position:fixed;border-radius:13px;border:2px solid #38dfed;box-shadow:0 0 0 110vmax rgba(3,12,23,.73),0 0 0 4px rgba(21,183,207,.13);pointer-events:none}
+.tr-tour-spot{position:fixed;border-radius:13px;border:2px solid #ffad6b;box-shadow:0 0 0 110vmax rgba(3,12,23,.73),0 0 0 4px rgba(255,118,39,.13);pointer-events:none}
 .tr-tour-bubble{position:fixed;display:grid;gap:11px;max-height:calc(100vh - 20px);overflow-y:auto;padding:20px 20px 18px;background:#102b40;border:1px solid #3a9ab3;border-radius:17px;box-shadow:0 14px 40px rgba(0,0,0,.35)}
 .tr-tour-bubble h2{font-size:1.25rem;line-height:1.2;margin:0;color:#fff}
 .tr-tour-bubble p{margin:0;line-height:1.55;color:#deedf2}

@@ -202,6 +202,17 @@ try{
      await page.locator('.account-menu > summary').waitFor({timeout:12000});
      await page.waitForTimeout(500);
      if(await page.getByText('Не удалось открыть раздел').count())throw Error('Inner route crashed');
+     if(c.id==='admin') await page.locator('.admin-stage-content .admin-orders-zero, .admin-stage-content .list-item').first().waitFor({timeout:12000});
+     if(c.id==='owner'){
+       const header=page.locator('.client-garage-page>.client-section-hero');
+       await header.waitFor();
+       const geometry=await header.evaluate(el=>({
+         height:el.getBoundingClientRect().height,
+         leftBorder:parseFloat(getComputedStyle(el).borderLeftWidth)
+       }));
+       if(geometry.height>160 || geometry.leftBorder<3)
+         throw Error('Owner garage restored an oversized old-style header: '+JSON.stringify(geometry));
+     }
      await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'-viewport.png',fullPage:false,animations:'disabled',scale:'css'});
      await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'.png',fullPage:true,animations:'disabled',scale:'css'});
      results.push({role:c.id,width,height:width===390?844:width===1672?941:900,result:'screens saved',files:[

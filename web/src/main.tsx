@@ -38,6 +38,8 @@ import './androidDesignReview.css';
 import './androidOwnerVisualAlignment20261120.css';
 // Android secondary routes and functional role menu; never restyle approved dashboards.
 import './androidInternalSections20261120.css';
+// Approved inner public pages share the 20 November graphite/orange desktop contract.
+import './approvedPublicInner20261120.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
@@ -266,12 +268,12 @@ function App() {
   const desktopRole: ApprovedPCRole = effMode === 'client' ? (me.owner_id || me.roles.includes('driver') ? 'driver' : 'owner')
     : effMode === 'performer' ? (me.performer?.kind === 'tow' ? 'tow' : 'master')
     : effMode === 'service' ? 'service' : effMode === 'insurer' ? 'insurer' : effMode === 'inspection' ? 'inspection'
-    : effMode === 'moderator' ? 'moderator' : 'admin';
+    : effMode === 'courier' ? 'courier' : effMode === 'moderator' ? 'moderator' : 'admin';
   let screen;
   switch (a) {
-    case undefined: screen = effMode === 'courier' ? <CourierDesk /> : effMode === 'performer' && (!me.performer || me.performer.kind === 'ecu')
+    case undefined: screen = effMode === 'performer' && (!me.performer || me.performer.kind === 'ecu')
       ? (me.performer?.kind === 'ecu' ? <Work /> : <PerformerHub />)
-      : <ApprovedPcDesk role={desktopRole} fallback={effMode === 'insurer' ? <InsurerCabinet /> : effMode === 'inspection' ? <InsurerCabinet inspectionOnly /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isAdmin ? <Admin /> : effMode === 'moderator' && isModerator ? <ModeratorDesk /> : <Home />} />; break;
+      : <ApprovedPcDesk role={desktopRole} fallback={effMode === 'courier' ? <CourierDesk /> : effMode === 'insurer' ? <InsurerCabinet /> : effMode === 'inspection' ? <InsurerCabinet inspectionOnly /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isAdmin ? <Admin /> : effMode === 'moderator' && isModerator ? <ModeratorDesk /> : <Home />} />; break;
     case 'login': screen = <Home />; break;
     case 'sos': screen = isCustomer ? <Sos /> : <main><div className="empty">Для вызова SOS нужен клиентский аккаунт</div></main>; break;
     case 'new': screen = !isCustomer ? <main><div className="empty">Для заказа нужен клиентский аккаунт</div></main> : b === 'ecu' ? <main className="stack"><h1>Ремонт электронных блоков ЭБУ</h1><p>Специалист принимает блок в стационарной мастерской. Передайте техническое заключение из ранее оформленной консультации или выездной заявки: это бесплатно, и диагностика согласуется отдельно.</p><a className="btn" href="#/orders">Открыть мои заявки и заключения</a></main> : b === 'consult' ? <Consult /> : <NewOrder service={b ?? 'electric'} />; break;
@@ -308,7 +310,7 @@ function App() {
       ? <main><div className="empty">Кабинет курьера доступен только назначенному курьеру.</div></main>
       : b === 'jobs' && route[2]
         ? <CourierDelivery id={route[2]} />
-        : <CourierDesk section={b==='jobs'?'jobs':b==='chat'?'chat':'home'} />; break;
+        : b === 'jobs' ? <CourierDesk section="jobs" /> : b === 'chat' ? <CourierDesk section="chat" /> : <ApprovedPcDesk role="courier" fallback={<CourierDesk />} />; break;
     case 'insurance': screen = b === 'request'
       ? (route[2] === 'new' ? <InsuranceApplication vehicleId={route[3]??''} /> : <InsuranceThread requestId={route[2]??''} />)
       : isInsurer
@@ -363,7 +365,34 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   const route = useRoute();
   const [openGuestGroup, setOpenGuestGroup] = useState<string | null>(null);
   const [mobileCatalogOpen, setMobileCatalogOpen] = useState(false);
+  // Desktop guest home owns its approved header, never mount the legacy one simultaneously.
+  const [standaloneDesktopHome, setStandaloneDesktopHome] = useState(() => !native.isApp && window.matchMedia('(min-width: 900px)').matches);
+  useEffect(() => {
+    if (native.isApp) return;
+    const media = window.matchMedia('(min-width: 900px)');
+    const sync = () => setStandaloneDesktopHome(media.matches);
+    media.addEventListener('change', sync);
+    sync();
+    return () => media.removeEventListener('change', sync);
+  }, []);
   const isAuthEntry = !me && ['login', 'register', 'join', 'reset', 'activate'].includes(route[0] ?? '');
+  const guestNavGroups: { title: string; links: { title: string; href: string }[] }[] = [
+    { title: 'О платформе', links: [
+      { title: 'О нас', href: '#/company' },
+      { title: 'Как работает', href: '#/explore/guide' },
+      { title: 'Комиссии', href: '#/explore/pricing' },
+      { title: 'Оферты и документы', href: '#/offers' },
+    ] },
+    { title: 'Сервисы', links: PUBLIC_CAPABILITIES.map(item => ({ title: item.title, href: item.href })) },
+    { title: 'Сообщество', links: [
+      { title: 'Эфир', href: '#/explore/air' },
+      { title: 'Клуб TrakSOS', href: '#/explore/club' },
+    ] },
+    { title: 'Партнёрам', links: [
+      { title: 'Хотим работать', href: '#/join' },
+      { title: 'Оферты партнёров', href: '#/offers' },
+    ] },
+  ];
   useEffect(() => {
     setOpenGuestGroup(null);
     setMobileCatalogOpen(false);
@@ -517,6 +546,13 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       !window.confirm('При выходе из аккаунта статус «На линии» отключится. Просто сверните приложение, если хотите продолжать получать заявки. Выйти?')) return;
     void logout();
   };
+  if (!me && route.length === 0 && standaloneDesktopHome) return (
+    <div className="app guest-app guest-home guest-home-standalone">
+      <NetworkStatus />
+      <div className="desktop-layout"><div className="desktop-content">{children}</div></div>
+      <TrakBotDock authenticated={false} />
+    </div>
+  );
   return (
     <div className={`app ${me ? "role-"+mode : (route.length === 0 ? "guest-app guest-home" : "guest-app")}`}>
       <header className="top">
@@ -527,30 +563,22 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         {me && mode === 'client' && <nav className="track-top-shortcuts" aria-label="Быстрый доступ">
           <a href="#/">Главная</a><a href="#/orders">Заявки</a><a href="#/sos">Помощь в дороге</a><a href="#/shop">Запчасти</a>
         </nav>}
-        {!me && !isAuthEntry && <nav className="guest-site-nav" aria-label="Разделы TrakSOS">
-          <a href="#/" aria-current={route.length === 0 ? 'page' : undefined}>Главная</a>
-          <details className="guest-nav-group" open={openGuestGroup === 'Возможности'}
-            onMouseLeave={() => setOpenGuestGroup(null)}
-            onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpenGuestGroup(null); }}
-            onKeyDown={event => { if (event.key === 'Escape') { setOpenGuestGroup(null); (event.currentTarget.querySelector('summary') as HTMLElement | null)?.focus(); event.preventDefault(); } }}>
-            <summary aria-expanded={openGuestGroup === 'Возможности'}
-              onClick={event => { event.preventDefault(); setOpenGuestGroup(current => current === 'Возможности' ? null : 'Возможности'); }}>
-              Возможности <span aria-hidden="true">⌄</span>
-            </summary>
-            <div className="guest-nav-dropdown guest-nav-dropdown--all">
-              {PUBLIC_CAPABILITIES.map(item =>
-                <a key={item.href} href={item.href} onClick={() => setOpenGuestGroup(null)}>{item.title}</a>)}
-              <span className="guest-nav-hint">Услуги доступны после входа и только при наличии исполнителей</span>
-            </div>
-          </details>
-          <a href="#/explore/tech" className="guest-nav-techbase">ТехБаза</a>
-          <a href="#/company">О платформе</a>
-          <a href="#/explore/pricing">Тарифы</a>
-          <a href="#/help">Помощь</a>
-        </nav>}
-        {!me && isAuthEntry && <nav className="guest-auth-links" aria-label="О компании и документах">
-          <a href="#/">Главная</a><a href="#/company">Компания</a>
-          <a href="#/offers">Оферты</a><a href="#/offer/privacy">Документы</a>
+        {!me && <nav className="guest-site-nav" aria-label="Разделы TrakSOS">
+          {guestNavGroups.map(group => (
+            <details key={group.title} className="guest-nav-group" open={openGuestGroup === group.title}
+              onMouseLeave={() => setOpenGuestGroup(null)}
+              onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpenGuestGroup(null); }}
+              onKeyDown={event => { if (event.key === 'Escape') { setOpenGuestGroup(null); (event.currentTarget.querySelector('summary') as HTMLElement | null)?.focus(); event.preventDefault(); } }}>
+              <summary aria-expanded={openGuestGroup === group.title}
+                onClick={event => { event.preventDefault(); setOpenGuestGroup(current => current === group.title ? null : group.title); }}>
+                {group.title} <span aria-hidden="true">⌄</span>
+              </summary>
+              <div className="guest-nav-dropdown guest-nav-dropdown--all">
+                {group.links.map(link => <a key={link.href} href={link.href} onClick={() => setOpenGuestGroup(null)}>{link.title}</a>)}
+              </div>
+            </details>
+          ))}
+          <a href="#/help">Поддержка</a>
         </nav>}
         {!me && !isAuthEntry && <details className="guest-mobile-catalog" open={mobileCatalogOpen}>
           <summary onClick={event => { event.preventDefault(); setMobileCatalogOpen(v => !v); }}>Возможности <span aria-hidden="true">⌄</span></summary>

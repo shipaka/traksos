@@ -201,6 +201,20 @@ expect(sharedSceneKeys.every((kind,i)=>
   ),
   'same four services with HQ PC photographs and owner-approved mobile pictures; preserve label geometry');
 
+// The 617 desktop home is a standalone component. Old public-landing
+// selectors cannot silently reintroduce its predecessor's hero or crop.
+// On mobile the approved guest palette is graphite/orange, never magenta.
+const formerDesktopReference = await read('web/src/trackReference.css');
+const currentMobileGuest = await read('web/src/mobileBrowser.css');
+expect(!formerDesktopReference.includes('.guest-app .public-landing .public-hero-visual'),
+  'no retired desktop guest hero overlays; preserve signed-in client artwork');
+expect(!currentMobileGuest.includes('#fa5793'),
+  'approved guest mobile benefits cannot revert to the old magenta accent');
+const formerHeroCss = await read('web/src/approvedHeroImage20261119.css');
+expect(!formerHeroCss.includes('@media(min-width:900px)') &&
+  !formerHeroCss.includes('@media(min-width:1251px)'),
+  'retired 19 Nov desktop guest hero overrides cannot return alongside standalone 617 home');
+
 for (const file of ['web/src/finalCanon.css','web/src/trackPhotos.css']) {
   let exists = false;
   try { await stat(file); exists = true; } catch {}

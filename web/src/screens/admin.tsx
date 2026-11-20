@@ -77,7 +77,9 @@ export function Admin({ initialSection }: { initialSection?: string }) {
   };
   return (
     <main className="admin-workspace">
-      <section className="admin-command-hero">
+      {/* The original landing hero is never repeated inside a selected admin
+          work section: that section already has its own title and actions. */}
+      {!initialSection && <section className="admin-command-hero">
         <div className="admin-command-art" aria-hidden="true"><span>◈</span><i/><i/><i/></div>
         <span className="admin-command-eyebrow">TRAKSOS · ОПЕРАЦИОННЫЙ ЦЕНТР</span>
         <h1>Рабочий стол</h1>
@@ -94,7 +96,7 @@ export function Admin({ initialSection }: { initialSection?: string }) {
           <button type="button" className="btn" onClick={() => navigate('summary')}>Общая сводка</button>
           <a className="btn ghost" href="#/admin/test-center">Тестирование кабинетов ролей</a>
         </div>
-      </section>
+      </section>}
       <div className="admin-shell">
         <button type="button" className="admin-nav-toggle" aria-controls="admin-section-navigation"
           aria-expanded={navOpen} onClick={() => setNavOpen(open => !open)}>
@@ -215,6 +217,13 @@ function People() {
 function AllOrders() {
   const list = useLoad(() => get('/api/admin/orders'), [], (e) => e.type === 'order');
   if (!list.data) return <Loading error={list.error} />;
+  if (list.data.length === 0) return (
+    <section className="card admin-orders-zero" role="status" aria-label="Нет заказов">
+      <h3>Заказов пока нет</h3>
+      <p className="note">Когда появятся заказы исполнителей, здесь будут их номера, статусы и переходы в карточки. Данные не подменяются демонстрационными.</p>
+      <a className="btn ghost" href="#/admin/section/cases">Открыть заявки и мультизаявки</a>
+    </section>
+  );
   return (
     <div className="rows">
       {list.data.map((o: any) => (

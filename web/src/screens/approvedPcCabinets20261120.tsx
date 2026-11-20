@@ -15,8 +15,9 @@ import {OfferForm} from './search.tsx';
 import {OrderPhotoGallery, OrderPhotoCapture} from './orderPhotos.tsx';
 import {BaseHome, RequestCard} from './base.tsx';
 import {native} from '../native.ts';
+import {ApprovedPcCourier} from './approvedPcCourier20261120.tsx';
 
-export type ApprovedPCRole = 'driver'|'owner'|'master'|'tow'|'service'|'insurer'|'inspection'|'moderator'|'admin';
+export type ApprovedPCRole = 'driver'|'owner'|'master'|'tow'|'service'|'insurer'|'inspection'|'courier'|'moderator'|'admin';
 const activeStates = new Set(['searching','accepted','en_route','arrived','working','awaiting_confirmation','pending_client','disputed']);
 const text = (value:any, fallback='—') => value == null || value === '' ? fallback : String(value);
 const number = (value:any) => typeof value === 'number' ? value.toLocaleString('ru-RU') : '—';
@@ -48,11 +49,12 @@ function useDesktopSize(){
 /** Never mount both versions simultaneously: avoids duplicate requests/actions. */
 export function ApprovedPcDesk({role,fallback}:{role:ApprovedPCRole;fallback:ReactNode}) {
   const wide=useDesktopSize();
-  if(!wide) return <>{fallback}</>;
+  if (!wide && !(role === 'admin' && !native.isApp)) return <>{fallback}</>;
   if(role==='owner'||role==='driver') return <CustomerDesk owner={role==='owner'}/>;
   if(role==='master'||role==='tow') return <PerformDesk tow={role==='tow'}/>;
   if(role==='service') return <ServiceDesk/>;
   if(role==='insurer'||role==='inspection') return <InsuranceDesk inspection={role==='inspection'}/>;
+  if(role==='courier') return <ApprovedPcCourier/>;
   if(role==='moderator') return <ModeratorDesk/>;
   return <AdminDesk/>;
 }

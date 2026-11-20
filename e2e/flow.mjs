@@ -101,7 +101,9 @@ async function login(page, phoneNum, how) {
     await page.getByRole('button', { name: 'Войти', exact: true }).click();
     return;
   }
-  await page.locator('input[type=checkbox]').check();
+  // Partner forms offer an independent master+STO checkbox. Only the
+  // explicitly labelled terms/privacy consent authorizes registration.
+  await page.getByRole('checkbox', { name: /Согласен с (агентским договором|офертой).*обработку персональных данных/ }).check();
   await page.getByRole('button', { name: 'Получить код' }).click();
   const hint = await page.getByText(/Тестовый режим: код/).textContent();
   await page.locator('input[autocomplete=one-time-code]').fill(hint.match(/\d{4}/)[0]);
@@ -187,12 +189,12 @@ await login(k, '+79991112233', 'client');
 // Регистрация после выбора выездной помощи открывает нужный раздел SOS.
 await k.waitForURL(/#\/sos/);
 await k.goto(BASE + '/#/');
-await k.locator('.and19-client .and19-services > a').first().waitFor();
+await k.locator('.client-dashboard .desktop-quick-links > a').first().waitFor();
 await assertDashboardTheme(k, 'client');
 await checkCabinetMenu(k, ['История заявок', 'Мой гараж', 'Мой автопарк', 'Оферта', 'Профиль и настройки']);
 await shot(k, '03-client-home');
-// Home and SOS share the approved direction-first flow.
-await k.locator('.and19-client .and19-services > a').first().click();
+// Mobile browser uses the real responsive client Home, not the native APK-only\n// .and19-client workspace. Home and SOS share the direction-first flow.
+await k.locator('.client-dashboard .desktop-quick-links > a').first().click();
 await k.getByRole('button', { name: /Выездной мастер/ }).click();
 await k.getByRole('link', { name: /Электрик/ }).first().click();
 await k.getByRole('button', { name: /Вызвать мастера/ }).click(); // рано: подсветит, чего не хватает
@@ -279,12 +281,14 @@ await m.getByText('Как прошло с клиентом?').waitFor({ timeout:
 await m.getByRole('button', { name: '4 из 5' }).click();
 await m.getByRole('button', { name: 'Оставить отзыв' }).click();
 await m.goto(BASE + '/#/work');
-await m.getByText('Долг по комиссии с наличных').waitFor();
+// Finance reports actual confirmed payout and only displays historical debt when present.
+await m.locator('.work-mobile-balance').getByText(/К выплате:/).waitFor();
 await shot(m, '11-master-balance');
 
 // Админ в браузере
 await a.goto(BASE + '/#/admin');
 await a.getByRole('button', { name: 'Распределение' }).click();
+await a.getByText('Настройки распределения и торгов', { exact: true }).click();
 await a.getByText('Сначала заявки нам').waitFor();
 await assertDashboardTheme(a, 'admin');
 await checkCabinetMenu(a, ['Все заявки', 'Деньги и выплаты', 'Настройки площадки', 'Модерация — очередь'], { shopTab: false });
@@ -295,7 +299,7 @@ await shot(a, '13-admin-payments');
 
 // Переходы между кабинетами: из админки в клиента и обратно, «Назад» ведёт в свой список
 await clickCabinetLink(a, 'Кабинет клиента');
-await a.locator('.and19-client .and19-services > a').first().waitFor();
+await a.locator('.client-dashboard .desktop-quick-links > a').first().waitFor();
 await clickCabinetLink(a, 'Профиль и настройки');
 await a.getByRole('button', { name: 'Кабинет администратора' }).click();
 await a.getByText('Администратор').first().waitFor();

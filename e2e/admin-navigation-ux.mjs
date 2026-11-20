@@ -78,6 +78,8 @@ try {
       await navigation.getByRole('button',{name,exact:true}).click();
       await page.waitForURL(new RegExp('#/admin/section/'+id+'$'));
       await page.locator('.admin-stage-head h2').getByText(name,{exact:true}).waitFor();
+      if (await page.locator('.admin-command-hero').count() !== 0)
+        throw Error(id + ': obsolete admin landing hero repeated above the actual section');
       if(id==='dispatch') {
         await page.getByRole('heading',{name:'Диспетчерская'}).waitFor();
         await page.getByRole('button',{name:'Обновить данные'}).waitFor();
