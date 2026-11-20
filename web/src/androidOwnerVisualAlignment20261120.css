@@ -543,3 +543,87 @@ html.traksos-reduced-motion .and19-workspace button{transition:none!important}
  .app.role-performer .and19-line{gap:5px}
  .app.role-performer .and19-line .and19-role-caption{flex:1;min-width:0}
 }
+
+/* Real 618 client-order actions: the truck photo and the order itself lead
+ * to distinct real screens. No nested anchors, no synthetic click handlers. */
+@media(max-width:899px){
+ .app.role-client .and19-main-order .and19-order-heading-link{
+   grid-column:1/-1;
+   display:block;
+   min-width:0;
+   border-radius:9px;
+   color:#fff;
+   text-decoration:none;
+ }
+ .app.role-client .and19-main-order .and19-order-photo-link{
+   grid-column:1;
+   display:block;
+   min-width:0;
+   border-radius:11px;
+   text-decoration:none;
+   color:inherit;
+ }
+ .app.role-client .and19-main-order .and19-order-photo-link>.tr-approved-order-truck{
+   width:100%;
+   max-width:none;
+   margin:0;
+ }
+ .app.role-client .and19-main-order .and19-order-photo-link+.and19-facts{
+   grid-column:2;
+   min-width:0;
+   margin:0;
+ }
+ .app.role-client .and19-main-order .and19-order-open>a.and19-link{
+   grid-column:1/-1;
+   display:flex;
+   width:100%;
+   min-width:0;
+ }
+ .app.role-client .and19-main-order
+   :is(.and19-order-heading-link,.and19-order-photo-link,.and19-link):focus-visible{
+   outline:2px solid #73e1ef;
+   outline-offset:2px;
+ }
+ .app.role-client .and19-performer-rating{
+   display:inline-flex;
+   align-items:baseline;
+   gap:2px;
+   margin-left:7px;
+   font-size:11px;
+   font-weight:800;
+   color:#ffc05b;
+   white-space:nowrap;
+ }
+ .app.role-client .and19-performer-rating small{
+   font-size:9px;
+   font-weight:650;
+   color:#e5dfcd;
+ }
+ .app.role-client .and19-equipment-vehicle .and19-equipment-model{
+   display:block;
+   flex:none;
+   width:50px;
+   height:47px;
+   object-fit:cover;
+   border:1px solid #5e8ca1;
+   border-radius:10px;
+   background:#0a2131;
+ }
+ .app.role-client .and19-equipment-title{
+   color:#e3f4fc;
+   font-weight:700;
+   overflow-wrap:anywhere;
+ }
+ .app.role-client .and19-client-cost>span>small{
+   overflow-wrap:anywhere;
+ }
+}
+@media(max-width:359px){
+ .app.role-client .and19-main-order .and19-order-photo-link>.tr-approved-order-truck{
+   height:94px;
+ }
+ .app.role-client .and19-equipment-vehicle .and19-equipment-model{
+   width:43px;
+   height:43px;
+ }
+}
