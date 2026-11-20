@@ -215,6 +215,42 @@ function CustomerDesk({owner}:{owner:boolean}){
           <a className="approved-pc-small-link" href="#/fleet">Открыть контроль доступа →</a></>
           :<><a className="approved-pc-small-link" href="#/orders">Заявки и история →</a><a className="approved-pc-small-link" href="#/garage">Моя техника →</a></>}
       </Pane><Bot message={owner?'Помогу с историей техники и заявками.':'Помогу с неисправностью или заявкой.'}/></>}/>
+    {owner&&<div className="approved-pc-fleet-footer">
+      <Pane title={'Все активные заявки автопарка · '+active.length}>
+        {active.length?<div className="approved-pc-table-wrap"><table className="approved-pc-order-table">
+          <thead><tr><th>Заявка</th><th>Транспорт</th><th>Водитель / клиент</th><th>Неисправность</th><th>Статус</th><th>Действие</th></tr></thead>
+          <tbody>{active.map((o:any)=><tr key={o.id} className={selected?.id===o.id?'selected':''}>
+            <td>№{text(o.number||o.id)}</td><td>{vehicleLabel(transport(o))}</td>
+            <td>{text(o.driver_name||o.driver?.name||o.client?.name,'—')}</td>
+            <td>{text(o.description||o.problem,'В заявке')}</td><td>{statusName(o)}</td>
+            <td><button type="button" onClick={()=>setChosen(String(o.id))}>Открыть ›</button></td>
+          </tr>)}</tbody>
+        </table></div>:<Empty>Активных ремонтов сейчас нет. Здесь появятся заявки по автопарку после их создания.</Empty>}
+      </Pane>
+      <div className="approved-pc-fleet-footer-grid">
+        <Pane title={'Мои машины · '+cars.length}>
+          <div className="approved-pc-fleet-vehicle-row">{cars.slice(0,4).map((c:any)=>
+            <a key={c.id} href={'#/garage/'+c.id} className="approved-pc-fleet-vehicle">
+              <Photo v={c}/><strong>{vehicleLabel(c)}</strong>
+              <small>{c.driver?.name?'Водитель: '+c.driver.name:'Водитель не назначен'}</small>
+              <span>История и документы ›</span>
+            </a>)}
+            {!cars.length&&<Empty>Машины ещё не добавлены в автопарк.</Empty>}
+          </div>
+          <a className="approved-pc-small-link" href="#/fleet">Управлять автопарком →</a>
+        </Pane>
+        <Pane title="Плановое ТО и документы">
+          <p>История обслуживания и документы хранятся в карточке соответствующего транспортного средства.</p>
+          <a className="approved-pc-small-link" href="#/garage">Открыть технику и документы →</a>
+          <p className="approved-pc-caveat">Даты будущего ТО показываются только после появления подтверждённых данных.</p>
+        </Pane>
+        <Pane title="Расходы на ремонт">
+          <p>Завершённые заявки, счета и подтверждённые суммы доступны в истории заказов.</p>
+          <a className="approved-pc-small-link" href="#/orders">История затрат и заказов →</a>
+          <p className="approved-pc-caveat">Без неподтверждённых начислений и сумм из демонстрационного макета.</p>
+        </Pane>
+      </div>
+    </div>}
   </main>;
 }
 
