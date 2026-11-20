@@ -635,7 +635,7 @@
     top:0;
     width:455px;
     height:319px;
-    background-image:url('/owner20-asset-sprite.webp');
+    background-image:url('/owner20-artwork-sprite.webp');
     background-repeat:no-repeat;
     background-position:0 0;
     background-size:1018px 446px;
@@ -676,7 +676,7 @@
     border:1px solid #273e47;
   }
   .owner20-map-shape{
-    background: url('/owner20-asset-sprite.webp') -455px 0 / 1018px 446px no-repeat!important;
+    background: url('/owner20-artwork-sprite.webp') -455px 0 / 1018px 446px no-repeat!important;
     clip-path:none!important;
     overflow:hidden;
   }
@@ -698,7 +698,7 @@
     line-height:0!important;
     color:transparent!important;
     transform:none!important;
-    background-image:url('/owner20-asset-sprite.webp');
+    background-image:url('/owner20-artwork-sprite.webp');
     background-repeat:no-repeat;
     background-size:1018px 446px;
     -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 15%,#000 100%);
@@ -718,7 +718,7 @@
     top:0;bottom:0;right:0;
     width:228px;
     height:168px;
-    background:url('/owner20-asset-sprite.webp') -790px 0 / 1018px 446px no-repeat;
+    background:url('/owner20-artwork-sprite.webp') -790px 0 / 1018px 446px no-repeat;
     color:transparent;
     pointer-events:none;
     -webkit-mask-image:linear-gradient(90deg,transparent,#000 29%);
