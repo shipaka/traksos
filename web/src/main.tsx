@@ -381,7 +381,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   const sandboxHref=(href:string)=>serviceSandbox?'#/admin/test-center/service'+(href==='/base'||href.startsWith('/base/')?href:'/unavailable'):'#'+href;
   // На телефоне оставляем только рабочие действия. Все прежние маршруты
   // сохраняются через меню; компьютерная боковая навигация остаётся полной.
-  const tabs: [string, string, string][] = !me ? [] : mode === 'performer'
+  const tabs: [string, string, string][] = !me ? [] : mode === 'courier'
+    ? [['/courier', '⌂', 'Главная'], ['/courier/jobs', '☷', 'Рейсы'], ['/support', '▤', 'Чат']]
+    : mode === 'performer'
     ? [['/work', '⌂', 'Главная'], ['/work/jobs', '☷', 'Заявки'], ['/work/me/schedule', '▦', 'График'], ['/profile', '◉', 'Профиль']]
     : mode === 'service'
       ? [['/base', '▤', 'Рембаза'], ['/support', '?', 'Связь'], ['/shop', '🛍', 'Магазин']]
@@ -395,7 +397,10 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       ? [['/admin', '▦', 'Рабочий стол'], ['/admin/section/orders', '☰', 'Заявки'], ['/admin/section/support', '?', 'Обращения']]
       : [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь'], ['/shop', '⚙', 'Запчасти'], ['/profile', '◉', 'Профиль']];
   // Mobile tabs only contain real role-dependent routes; extra tools remain in the menu.
-  const mobileTabs: [string, string, string][] = !me ? [] : mode === 'client'
+  const mobileTabs: [string, string, string][] = !me ? [] : mode === 'courier'
+    ? [['/courier', '⌂', 'Главная'], ['/courier/jobs', '☷', 'Рейсы'],
+       ['/courier/chat', '▤', 'Чат'], ['/profile', '◉', 'Меню']]
+    : mode === 'client'
     ? [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/air', '◌', 'Эфир'], ['/garage', '▣', 'Техника'], ['/shop', '🛍', 'Магазин'], ['/profile', '◉', 'Меню']]
     : mode === 'performer'
       ? [['/work', '⌂', 'Главная'], ['/work/jobs', '☷', 'Заявки'], ['/work/chats', '▤', 'Чат'], ['/profile', '◉', 'Меню']]
@@ -411,7 +416,10 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
        ['/admin/section/registry', '▤', 'Люди'], ['/profile', '◉', 'Меню']];
   // Все дополнительные функции доступны в шапке, даже когда они не в нижних вкладках.
   // Не показываем чужие роли и не создаём несуществующие страницы.
-  const accountLinks: [string, string][] = mode === 'performer'
+  const accountLinks: [string, string][] = mode === 'courier'
+    ? [['/courier','Рабочий стол курьера'],['/courier/jobs','Мои рейсы'],
+       ['/courier/chat','Связь по доставкам'],['/profile','Профиль и настройки']]
+    : mode === 'performer'
     ? [...(me?.roles.includes('service') ? [['/base', 'Моя СТО — стационарный ремонт']] as [string, string][] : []),
        ['/work/me', 'Профиль исполнителя'], ['/work/me/about', 'Личные сведения'],
        ['/work/me/phone', 'Телефон и вход'], ['/work/me/cars', 'Автомобили'],
