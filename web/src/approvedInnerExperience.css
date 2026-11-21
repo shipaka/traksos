@@ -263,3 +263,30 @@ html.traksos-reduced-motion .tr-inner-rail{
   flex:0 0 auto;font-size:10px;min-height:36px;white-space:nowrap;padding:7px 10px;
  }
 }
+
+/* Second pass after inspecting REAL Chromium 1440/390 captures:
+ * Old decorative headings duplicated the approved section hero, pushing
+ * functional forms and the user's real data below the viewport. Hide only
+ * verified heading-only nodes, never tabs, buttons or application data. */
+html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero)
+  > main.client-garage-page > .client-section-hero-garage,
+html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero)
+  > main.client-orders-page > h1,
+html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero)
+  > main.performer-orders-page > h1,
+html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero)
+  > main.account-profile-page > h1{
+ display:none!important;
+}
+/* Secondary performer hero retains its REAL "На линию" button; make it a
+ * compact tool panel rather than a second hero competing with 617 artwork. */
+@media(min-width:900px){
+ html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero)
+  > main.performer-workspace > .internal-role-hero{
+  padding:18px 23px;min-height:0;margin:0;
+ }
+ html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero)
+  > main.performer-workspace > .internal-role-hero h1{
+  font-size:clamp(19px,1.9vw,25px)!important;
+ }
+}
