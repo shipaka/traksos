@@ -503,7 +503,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/admin/section/offers', 'Оферты площадки'],
          ['/admin/section/flagged', 'Подозрительные действия'],
          ['/admin/section/settings', 'Настройки площадки'],
-         ['/economics', 'Калькулятор прибыльности · проект'],
+         ['/pricing-lab', 'Калькулятор прибыльности · проект'],
          ['/profile', 'Аккаунт'], ['/as/client', 'Кабинет клиента']]
     : [['/air', 'Эфир водителей'], ['/orders', 'История заявок'], ['/garage', 'Мой гараж'],
        ...(!me?.owner_id && !me?.roles.includes('driver') ? [['/fleet', 'Мой автопарк']] as [string,string][] : []),
