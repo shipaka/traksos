@@ -59,7 +59,12 @@ try {
       if(await page.getByRole('button',{name:'Открыть старый учебный тренажёр'}).count())
         throw Error(id+': obsolete legacy training entry has returned');
       await page.screenshot({path:'e2e/shots/sandbox/'+id+'-'+width+'.png',fullPage:true});
-      await page.locator('a[href="#/admin/test-center"]').first().click();
+      // A matching sidebar link exists but can be hidden at the current
+      // viewport. Exercise the visible Back control in the real role launcher.
+      const back=page.locator('main.sandbox-root a.btn.ghost[href="#/admin/test-center"]');
+      await back.waitFor({state:'visible',timeout:15000});
+      await back.click();
+      await page.waitForURL('**/#/admin/test-center');
       await page.getByRole('heading',{name:'Тестирование кабинетов'}).waitFor();
     }
     if (errors.length) throw new Error('Browser error at '+width+': '+errors.join('; '));
