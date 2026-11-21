@@ -77,6 +77,40 @@ try {
   `);
   require(Number(unsafeRefund?.n) === 0,'sandbox captured/refunded amounts exceed totals');
 
+  // Workshop billing is intentionally separate from ordinary order ledger.
+  // Verify every synthetic workshop invoice rather than only the one exercised
+  // in the scripted scenario. The customer surcharge must remain <= 5% of
+  // labour (no surcharge on parts), subject to the RUB 5000 fee ceiling.
+  const serviceInvoices = await db.query<{
+    id:string;amount:number;parts_amount:number;fee_base_amount:number;
+    client_fee:number;discount:number;commission:number;
+    received_amount:number;refunded_amount:number;paid_out_at:string|null;
+  }>(`
+    select id::text,amount,parts_amount,fee_base_amount,client_fee,discount,
+      commission,received_amount,refunded_amount,paid_out_at
+    from service_bookings where payment_required=true and amount is not null
+  `);
+  for (const inv of serviceInvoices) {
+    const money = (n:unknown) => Number(n ?? 0);
+    const amount=money(inv.amount), parts=money(inv.parts_amount);
+    const feeBase=money(inv.fee_base_amount),fee=money(inv.client_fee);
+    const discount=money(inv.discount),commission=money(inv.commission);
+    const received=money(inv.received_amount),refunded=money(inv.refunded_amount);
+    const total=amount+fee-discount;
+    require([amount,parts,feeBase,fee,discount,commission,received,refunded,total]
+      .every(Number.isSafeInteger),'workshop has non-integer kopecks: '+inv.id);
+    require(parts>=0 && parts<=amount && feeBase===amount-parts,
+      'STO parts and labour allocation diverged: '+inv.id);
+    require(fee>=0 && fee<=Math.min(Math.round(feeBase*0.05),500_000),
+      'STO customer fee exceeds agreed ceiling: '+inv.id);
+    require(discount>=0 && discount<=amount+fee && commission>=0 &&
+      commission<=feeBase,'STO commission or discount exceeds service amount: '+inv.id);
+    require(received>=0 && refunded>=0 && refunded<=received &&
+      received-refunded<=total,'STO synthetic receipts/refunds exceed customer total: '+inv.id);
+    require(!inv.paid_out_at || received-refunded>=total,
+      'STO payout recorded before a fully received synthetic invoice: '+inv.id);
+  }
+
   const orders = await db.one<{total:string;completed:string}>(`
     select count(*)::text as total,
       count(*) filter (where status='completed')::text as completed from orders
@@ -85,7 +119,8 @@ try {
     sandbox:true, database:'isolated', mode:'real-order-logic/fictitious-money',
     checkedRoles:SANDBOX_ROLES.length, users:Number(registered?.n),
     actualOrders:Number(orders?.total), completedOrders:Number(orders?.completed),
-    ledgerBalanced:true, providerReferencesValid:true, externalPayments:false,
+    ledgerBalanced:true, serviceInvoicesChecked:serviceInvoices.length,
+    providerReferencesValid:true, externalPayments:false,
   },null,2));
 } finally {
   await db.close();
