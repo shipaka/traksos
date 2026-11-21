@@ -23,6 +23,17 @@ try {
         await entry.click();
         await page.waitForURL('**/#/explore/'+key);
         await page.locator('.guest-explore-hero h1').waitFor();
+        // The 20 Nov road image must paint above the hero background:
+        // z-index:-1 used to hide it behind the solid panel.
+        const artwork=await page.locator('.guest-explore-hero').evaluate(el=>{
+          const image=getComputedStyle(el,'::before');
+          const text=getComputedStyle(el.querySelector('h1'));
+          return {isolation:getComputedStyle(el).isolation,image:image.backgroundImage,
+            imageLayer:image.zIndex,textLayer:text.zIndex};
+        });
+        if(artwork.isolation!=='isolate'||artwork.imageLayer!=='0'||
+           artwork.textLayer!=='1'||!artwork.image.includes('owner20-photo-background-approved.webp'))
+          throw Error(key+': approved PC inner-page road image obscured: '+JSON.stringify(artwork));
         await page.goto(BASE+'/#/');
       }
       await page.locator('.owner20-region>summary').click();

@@ -8,8 +8,9 @@ import { InspectionTrainingCabinet } from './inspectionTrainingCabinet.tsx';
 import { ModeratorTrainingCabinet } from './moderatorTrainingCabinet.tsx';
 import { MasterServiceTrainingCabinet } from './masterServiceTrainingCabinet.tsx';
 
-// Admin-only DEMONSTRATION. This file deliberately has no API imports or fetch:
-// even realistic-looking actions never touch real accounts, jobs, SMS or money.
+// The full-fidelity admin launcher only requests an isolated sandbox ticket.
+// Standalone guest-demo role simulations below stay in local React state;
+// they never send real customer requests or payment operations.
 type DemoRole = 'client'|'owner'|'driver'|'master'|'tow'|'service'|
   'master_service'|'insurer'|'inspection'|'courier'|'moderator'|'admin';
 type Section = 'overview'|'tasks'|'profile'|'history';
@@ -97,7 +98,6 @@ function iconLabel(role:RoleInfo, section:Section):string {
 /** Real screens, real domain logic, separate instance and completely independent database. */
 function FullFidelityRoleLauncher({role}:{role:RoleInfo}) {
   const [message,setMessage]=useState('Проверяем доступ к изолированной тестовой базе…');
-  const [fallback,setFallback]=useState(false);
   useEffect(() => {
     let active=true;
     void get<{enabled:boolean}>('/api/admin/sandbox/status')
@@ -112,14 +112,12 @@ function FullFidelityRoleLauncher({role}:{role:RoleInfo}) {
       }).catch(e => {if(active)setMessage(e instanceof Error?e.message:'Ошибка доступа к тестовому серверу');});
     return () => {active=false;};
   },[role.id]);
-  if(fallback) return <AdminTestCenter roleId={role.id} />;
   return <main className="sandbox-root stack" style={{maxWidth:720,margin:'28px auto'}}>
     <span className="pill accent">НАСТОЯЩИЙ КАБИНЕТ · ТЕСТОВАЯ ВЕРСИЯ</span>
     <h1>{role.label}</h1><p>{message}</p>
     <p className="note">На отдельном адресе открываются настоящие экраны TrakSOS с тестовыми аккаунтами, базой и платёжным имитатором. Песочница может содержать новые изменения раньше основного сайта.</p>
     <div className="row">
       <a className="btn ghost" href="#/admin/test-center">← Выбор кабинета</a>
-      <button type="button" className="btn ghost" onClick={()=>{if(role.id==='service')location.hash='#/admin/test-center/service/base';else setFallback(true);}}>Открыть старый учебный тренажёр</button>
     </div>
   </main>;
 }
