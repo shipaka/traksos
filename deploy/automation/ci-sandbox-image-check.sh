@@ -70,6 +70,10 @@ printf 'Verifying isolated candidate image for commit %s\n' "$rev"
 "${compose[@]}" exec -T -e TRAKSOS_RUN_DISPOSABLE_SCENARIO=true sandbox-app \
   node --import tsx server/src/ops/exerciseSandboxOrder.ts ||
   fail "Inter-role order lifecycle and shared financial totals diverged."
+# Verify the same tow-to-workshop handoff used by the real separate sandbox.
+"${compose[@]}" exec -T -e TRAKSOS_RUN_DISPOSABLE_SCENARIO=true sandbox-app \
+  node --import tsx server/src/ops/exerciseSandboxTowSto.ts ||
+  fail "Tow -> workshop -> virtual invoice settlement lifecycle failed."
 "${compose[@]}" exec -T sandbox-app node --import tsx server/src/ops/auditSandbox.ts ||
   fail "Sandbox role, data isolation or ledger conservation audit failed."
 
