@@ -99,16 +99,22 @@ async function run(width, height, mobile, nativePreview = false) {
         const carousel = document.querySelector('.public-hero-carousel')?.getBoundingClientRect();
         if (!hero || !visual || !paragraph || !actions || !carousel || !copy) return null;
         return {heroWidth:hero.width,heroHeight:hero.height,
-          pictureWidth:visual.width,pictureHeight:visual.height,
-          paragraphTop:paragraph.top,actionsTop:actions.top,copyBottom:copy.bottom,
+          pictureWidth:visual.width,pictureHeight:visual.height,pictureBottom:visual.bottom,
+          copyTop:copy.top,paragraphTop:paragraph.top,actionsTop:actions.top,copyBottom:copy.bottom,
           carouselTop:carousel.top,carouselHeight:carousel.height };
       });
       if (nativePreview) {
         check(!await page.evaluate(() => document.documentElement.classList.contains('traksos-browser')),
           suffix + ': Android must not activate browser-only styling');
-        check(heroGeometry && Math.abs(heroGeometry.heroWidth-heroGeometry.pictureWidth)<3 &&
-          Math.abs(heroGeometry.heroHeight-heroGeometry.pictureHeight)<3,
-          suffix + ': native artwork must cover the approved banner: ' + JSON.stringify(heroGeometry));
+        // The approved Android guest layout uses a separate uncropped truck
+        // photo above the text (see native-guest-layout.mjs). The obsolete
+        // "stretch to full banner" contract would hide that agreed layout.
+        check(heroGeometry && heroGeometry.pictureWidth > 200 &&
+          heroGeometry.pictureWidth <= heroGeometry.heroWidth + 3 &&
+          Math.abs(heroGeometry.pictureHeight - heroGeometry.pictureWidth / 2) <= 4 &&
+          heroGeometry.pictureBottom <= heroGeometry.copyTop + 8 &&
+          heroGeometry.pictureHeight < heroGeometry.heroHeight,
+          suffix + ': native photo must remain uncropped above approved copy: ' + JSON.stringify(heroGeometry));
       } else {
         check(await page.evaluate(() => document.documentElement.classList.contains('traksos-browser')),
           suffix + ': regular Chrome must activate mobile browser styling');
