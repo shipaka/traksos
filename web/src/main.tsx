@@ -820,7 +820,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       )}
       {/* 618.png has no overlapping floating robot. The same approved talking-truck
           TrakBot remains in Android Menu > TrakBot and on the desktop. */}
-      {!native.isApp && !isAuthEntry && route[0] !== 'trakbot' && !approvedDeskHasTrakBot && <TrakBotDock authenticated={!!me} />}
+      {!native.isApp && !isAuthEntry && route[0] !== 'trakbot' && mode !== 'moderator' && !approvedDeskHasTrakBot && <TrakBotDock authenticated={!!me} />}
       {me && <RoleTour page={route[0] ?? ''} />}
     </div>
   );
