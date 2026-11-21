@@ -130,7 +130,7 @@ export async function switchSandboxRole(
         (role==='master_service'&&!target.roles.includes('service')))
       throw forbidden();
     const token = newToken();
-    const expiresAt = new Date(Math.min(now+2*60*60_000,
+    const expiresAt = new Date(Math.min(now+12*60*60_000,
       new Date(supervisor.expires_at).getTime()));
     if(expiresAt.getTime()<=now)throw forbidden();
     await q.query(
