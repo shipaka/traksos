@@ -47,6 +47,13 @@ const roleCopy: Record<string,{name:string;home:string;actions:[string,string][]
   admin:{name:'Администратор',home:'/admin',actions:[['/admin/section/orders','Все заявки'],['/admin/section/diagnostics','Диагностика'],['/admin/test-center','Тестовые кабинеты']]},
 };
 function metaFor(path:string[], fallback:string):RouteMeta{
+  // A role's technical-library route must identify the REAL audience.
+  // The generic cabinet navigation label can be shared by driver/master,
+  // but their technical documents and titles are deliberately different.
+  if(path[0]==='techbase'&&path[1]==='master')
+    return {title:'ТехБаза мастера',subtitle:'Технические материалы, диагностика и схемы с проверкой применимости к конкретной технике.',marker:'ТЕХБАЗА'};
+  if(path[0]==='techbase'&&path[1]==='driver')
+    return {title:'ТехБаза водителя',subtitle:'Эксплуатация, безопасные проверки и инструкции по обслуживанию грузовика.',marker:'ТЕХБАЗА'};
   if(path[0]==='base'&&path[1]==='me')
     return {title:'Карточка СТО',subtitle:'Отметьте услуги, условия приёмки и фактический адрес въезда. Стоимость согласуется после осмотра.',marker:'СТО'};
   if(path[0]==='base'&&path[1]==='money')
