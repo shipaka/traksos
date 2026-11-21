@@ -305,3 +305,11 @@ html.traksos-browser .app.role-service .desktop-content:has(> .tr-inner-hero[dat
  > main > div:first-of-type > h1{
  display:none!important;
 }
+
+/* The canonical v3 mascot sprite is intentionally unchanged. Frame its
+ * existing square artwork as a proper, rounded icon tile in the new rail
+ * rather than letting a white rectangle look pasted onto the dark surface. */
+html.traksos-browser .app[class*="role-"] .tr-inner-bot-line .trakbot-mascot{
+ border:1px solid #88aebb;border-radius:12px;overflow:hidden;
+ box-shadow:0 5px 12px #0006;box-sizing:border-box;
+}
