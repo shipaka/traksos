@@ -72,18 +72,17 @@ try{
         // The isolated browser used to show a legacy 900px Fleet page even
         // though APK owned a separate approved client dashboard. Pin both
         // browser and APK to the same real mobile composition.
-        if(width<=390 && ['owner','client','driver'].includes(role)){
-          if(role==='owner'){
-            await page.locator('main.fleet-mobile-approved').waitFor({state:'visible'});
-            if(await page.locator('.internal-role-hero-fleet').count())
-              throw Error('Legacy desktop Fleet UI leaked into mobile browser');
-            if(!await page.locator('.fleet-mobile-car-link[href^="#/garage/"]').count())
-              throw Error('Owner mobile cards are not opening real vehicle history');
-          }else{
-            await page.locator('.and19-workspace.and19-client').waitFor({state:'visible'});
-            if(await page.locator('main .desktop-hero').count())
-              throw Error('Legacy browser client hero replaced approved Android shell');
-          }
+        if(role==='owner'){
+          await page.locator('main.fleet-mobile-approved').waitFor({state:'visible'});
+          if(await page.locator('main.fleet-workspace').count() ||
+             await page.locator('.internal-role-hero-fleet').count())
+            throw Error('Retired Fleet desktop renderer reappeared at '+width+'px');
+          if(!await page.locator('.fleet-mobile-car-link[href^="#/garage/"]').count())
+            throw Error('Approved fleet cards do not open real vehicle history');
+        }else if(width<=390 && ['client','driver'].includes(role)){
+          await page.locator('.and19-workspace.and19-client').waitFor({state:'visible'});
+          if(await page.locator('main .desktop-hero').count())
+            throw Error('Legacy mobile-browser client desk replaced Android-approved shell');
         }
         const geometry=await page.evaluate(()=>({
           client:document.documentElement.clientWidth,
@@ -107,6 +106,11 @@ try{
           throw Error('Horizontal scroll in '+role+' '+width+': '+JSON.stringify({geometry,offenders}));
         }
         if(errors.length)throw Error('JavaScript error in '+role+': '+errors.join('; '));
+        // A legal dialog or navigation click may leave the page scrolled.
+        // Reset before full-page proof so sticky header is not rendered
+        // halfway down the PNG and misrepresented as the live UI layout.
+        await page.evaluate(()=>window.scrollTo({top:0,left:0,behavior:'instant'}));
+        await page.waitForFunction(()=>window.scrollY===0,{timeout:5000});
         await page.screenshot({path:out+'/'+role+'-'+width+'.png',fullPage:true});
         // A real browser must switch roles without new SMS or new signed
         // admin handoff. Verify the resulting role cannot elevate itself.
