@@ -647,6 +647,7 @@ expect(photoMigration.includes('create table if not exists order_photos') &&
 // resurrect retired `Home` markup on 900–999px tablets or small laptops.
 const pcSource=await read('web/src/screens/approvedPcCabinets20261120.tsx');
 const pcCss=await read('web/src/approvedPcCabinets20261120.css');
+const courierPcCss=await read('web/src/screens/approvedPcCourier20261120.css');
 const pcMap=await read('web/public/traksos-russia-outline.svg');
 expect(pcSource.includes("export type ApprovedPCRole") &&
   ['driver','owner','master','tow','service','insurer','inspection','courier','moderator','admin']
@@ -659,6 +660,9 @@ expect(pcSource.includes("export type ApprovedPCRole") &&
   unifiedShell.includes('ApprovedPcDesk') &&
   unifiedShell.includes("approvedPcCabinets20261120.css"),
   'ten real desktop role workspaces start at 900px, without a legacy breakpoint gap');
+expect(courierPcCss.includes('@media(min-width:900px)') &&
+  !courierPcCss.includes('@media(min-width:1000px)'),
+  'approved PC courier stylesheet must activate at the 900px router breakpoint; no unstyled 960px truck');
 expect(pcSource.includes("get<any[]>('/api/orders')") &&
   pcSource.includes("get<any[]>('/api/orders?as=performer')") &&
   pcSource.includes("get<any[]>('/api/performer/auctions')") &&
