@@ -650,6 +650,7 @@ expect(photoMigration.includes('create table if not exists order_photos') &&
 // The only permitted visual sandbox is the authenticated full-fidelity build.
 const retiredDemo=await read('web/src/screens/demoPreview.tsx');
 const realTestCenter=await read('web/src/screens/adminTestCenter.tsx');
+const oldServicePreviewApi=await read('web/src/demo/servicePreviewApi.ts');
 expect(retiredDemo.includes('Старый демонстрационный просмотр закрыт') &&
   retiredDemo.includes('tr-approved-route-unavailable') &&
   !retiredDemo.includes('AdminTestCenter') &&
@@ -659,6 +660,11 @@ expect(retiredDemo.includes('Старый демонстрационный пр�
 expect(realTestCenter.includes('const fullFidelity = true;') &&
   !realTestCenter.includes('fullFidelity=false'),
   'test center cannot opt back into old fake training role screens');
+expect(oldServicePreviewApi.includes('inServicePreview(): false') &&
+  !oldServicePreviewApi.includes('demo-booking-') &&
+  !oldServicePreviewApi.includes('const original:') &&
+  !oldServicePreviewApi.includes('commissionFull:'),
+  'obsolete service preview must not ship fake orders, cached money or mock API data');
 expect((unifiedShell.match(/const serviceSandbox = false/g) || []).length === 2 &&
   !unifiedShell.includes("route[2] === 'service' && route.length > 3"),
   'retired fake STO subroutes must not bypass full-fidelity isolated sandbox');
