@@ -38,6 +38,8 @@ import './androidDesignReview.css';
 import './androidOwnerVisualAlignment20261120.css';
 // Android secondary routes and functional role menu; never restyle approved dashboards.
 import './androidInternalSections20261120.css';
+// Approved mobile fleet subpage replaces the former oversized desktop management cards.
+import './approvedFleetMobile20261121.css';
 // Approved inner public pages share the 20 November graphite/orange desktop contract.
 import './approvedPublicInner20261120.css';
 import { createRoot } from 'react-dom/client';
