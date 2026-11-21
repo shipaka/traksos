@@ -314,6 +314,17 @@ try{
            throw Error('Native hint is missing the private TrakBot action: '+c.id);
          if(await nativePage.locator('.tr-inner-hero').count())
            throw Error('Native screen accidentally mounted the desktop hero: '+c.id);
+         // Keep one clear section introduction: old title-only surfaces
+         // are visual debt, but active master controls remain intact.
+         const oldHeadingSelector=c.id==='owner'
+           ? '.client-garage-page > .client-section-hero-garage'
+           : ['insurer','moderator'].includes(c.id)
+             ? '.account-profile-page > h1'
+             : c.id==='service' ? 'main > div:first-of-type > h1' : '';
+         if(oldHeadingSelector && await nativePage.locator(oldHeadingSelector+':visible').count())
+           throw Error('Old giant native heading repeated the approved section intro: '+c.id);
+         if(c.id==='service' && await nativePage.locator('main input.field:visible').count()<1)
+           throw Error('STO form disappeared when removing duplicate introduction');
          const overflow=await nativePage.evaluate(
            ()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
          if(overflow>3 || nativeErrors.length)
