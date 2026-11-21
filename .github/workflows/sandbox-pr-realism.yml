@@ -1,0 +1,69 @@
+name: "TrakSOS — реальная межролевая песочница (PR)"
+
+on:
+  pull_request:
+    paths:
+      - 'server/src/payments/persistentSandboxMock.ts'
+      - 'server/src/ops/*Sandbox*.ts'
+      - 'server/src/ops/exerciseSandboxOrder.ts'
+      - 'server/src/main.ts'
+      - 'server/src/app.ts'
+      - 'server/src/seedSandbox.ts'
+      - 'deploy/docker-compose.sandbox.yml'
+      - '.github/workflows/sandbox-pr-realism.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: isolated-sandbox-pr-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scenario:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build unpublised candidate image locally, never push to GHCR
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker build --build-arg BUILD_REV="$GITHUB_SHA" \
+            -t "ghcr.io/shipaka/traksos:$GITHUB_SHA" .
+      - name: Isolated fictitious users → real orders → fictitious money → ledger audit
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          cd deploy
+          umask 077
+          export TRAKSOS_RELEASE_REV="$GITHUB_SHA"
+          export SANDBOX_DOMAIN="sandbox.invalid"
+          export SANDBOX_DB_PASSWORD="$(openssl rand -hex 24)"
+          app_secret="$(openssl rand -hex 32)"
+          shared_secret="$(openssl rand -hex 32)"
+          printf 'APP_SECRET=%s\nSANDBOX_SHARED_SECRET=%s\nSANDBOX_INSTANCE=true\nSMS_PROVIDER=log\nPUSH_PROVIDER=log\nPAYMENT_PROVIDER=mock\n' \
+            "$app_secret" "$shared_secret" > .env.sandbox
+          compose=(docker compose -p traksos-isolated-pr \
+            -f docker-compose.sandbox.yml --profile sandbox)
+          cleanup() {
+            "${compose[@]}" down --remove-orphans --volumes || true
+            rm -f .env.sandbox
+          }
+          trap cleanup EXIT
+          "${compose[@]}" config --format json | jq -e '
+            (.services["sandbox-app"].networks | if type=="array" then . else keys end | sort)
+             == (["sandbox_private","sandbox_public"] | sort)
+            and (.networks | to_entries | all(.value.internal == true))
+          ' >/dev/null
+          "${compose[@]}" up -d --wait --wait-timeout 240 sandbox-db sandbox-app
+          "${compose[@]}" exec -T sandbox-app node --import tsx server/src/seedSandbox.ts
+          "${compose[@]}" exec -T -e TRAKSOS_RUN_DISPOSABLE_SCENARIO=true sandbox-app \
+            node --import tsx server/src/ops/exerciseSandboxPayments.ts
+          "${compose[@]}" exec -T -e TRAKSOS_RUN_DISPOSABLE_SCENARIO=true sandbox-app \
+            node --import tsx server/src/ops/exerciseSandboxOrder.ts
+          "${compose[@]}" exec -T sandbox-app node --import tsx server/src/ops/auditSandbox.ts
+          echo 'PASS: separate network/DB, real order engine, virtual money and ledger'
