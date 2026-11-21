@@ -87,6 +87,15 @@
   .admin-orders-zero > .admin-orders-actions{grid-row:3;align-self:start}
 }
 @media(max-width:899px){
+ /* One remaining legacy magenta CTA survived on the actual 390px master
+    profile. Follow the approved 617/618 orange accents, not the old palette. */
+ html.traksos-browser .app.role-performer .desktop-content:has(> .tr-inner-hero)
+  > main.performer-workspace > .internal-role-hero-performer > a.btn{
+   background:linear-gradient(125deg,#ef8225,#a94c18)!important;
+   border-color:#f7a558!important;
+   box-shadow:inset 0 1px #ffcc8750,0 7px 20px #0004!important;
+   color:#fff!important;
+ }
  html.traksos-browser .app.role-client .desktop-content:has(> .tr-inner-hero[data-route="garage"])
   > main.client-garage-page > .tr-approved-garage-empty{
    display:grid!important;grid-template-columns:minmax(0,1fr) 112px;

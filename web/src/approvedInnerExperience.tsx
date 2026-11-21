@@ -108,8 +108,5 @@ export function ApprovedInnerRail({mode,route}:{mode:string;route:string[]}){
       <p>Подскажу, как работать с разделом «{label.toLowerCase()}». Вопросы обсуждаем лично, без сообщений в общем эфире.</p>
       <strong className="tr-inner-rail-cta">Открыть личный чат <span aria-hidden="true">↗</span></strong>
     </a>}
-    <div className="tr-inner-rail-footer">
-      <span className="tr-inner-rail-live" aria-hidden="true"/><span>Ваши заявки и суммы загружаются из сервера, без вымышленных данных.</span>
-    </div>
   </aside>;
 }

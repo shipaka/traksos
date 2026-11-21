@@ -11,9 +11,7 @@
    grid-column:1;grid-row:2;width:100%;min-width:0;
  }
  html.traksos-browser .app:is(.role-admin,.role-moderator)
- .desktop-content:has(> .tr-inner-hero) > .tr-inner-rail > .tr-inner-rail-status,
- html.traksos-browser .app:is(.role-admin,.role-moderator)
- .desktop-content:has(> .tr-inner-hero) > .tr-inner-rail > .tr-inner-rail-footer{
+ .desktop-content:has(> .tr-inner-hero) > .tr-inner-rail > .tr-inner-rail-status{
    display:none!important;
  }
  html.traksos-browser .app:is(.role-admin,.role-moderator)

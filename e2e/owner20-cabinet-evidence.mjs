@@ -198,6 +198,21 @@ try{
      const rail=page.locator('.desktop-content > .tr-inner-rail');
      if(await rail.count()!==1 || await rail.locator('.tr-inner-rail-tools a').count()<2)
        throw Error('Missing role-safe actions in approved inner rail: '+c.id+'/'+width);
+     // An always-on server/monetary loading claim is false on empty,
+     // offline, and sandbox screens; real states belong to each content card.
+     if(await rail.locator('.tr-inner-rail-footer').count())
+       throw Error('Unconditional fake loading status returned to the inner rail: '+c.id+'/'+width);
+     // On mobile browser inner pages TrakBot remains in Menu, but a
+     // fixed floating launcher must never obstruct input fields or CTAs.
+     if(width===390 && await page.locator('.trakbot-dock').count())
+       throw Error('Floating TrakBot overlaps narrow inner content: '+c.id+'/'+width);
+     if(width===390 && c.id==='master'){
+       const action=page.locator('main.performer-workspace .internal-role-hero-performer a.btn[href="#/work"]');
+       await action.waitFor({state:'visible',timeout:12000});
+       const gradient=await action.evaluate(node=>getComputedStyle(node).backgroundImage);
+       if(!gradient.includes('rgb(239, 130, 37)'))
+         throw Error('Master inner CTA reverted to legacy non-orange palette: '+gradient);
+     }
      if(['moderator','admin'].includes(c.id)){
        if(await rail.locator('.tr-inner-bot-card').count())
          throw Error('Staff inner pages unexpectedly show TrakBot: '+c.id+'/'+width);

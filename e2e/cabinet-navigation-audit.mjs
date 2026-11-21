@@ -92,6 +92,9 @@ try {
     if(links.some(link=>link.href==='#/invite')) {
       await page.goto(BASE+'/#/invite',{waitUntil:'domcontentloaded'});
       await page.locator('.tr-inner-hero').getByRole('heading',{name:'Пригласить в TrakSOS',exact:true}).waitFor();
+      // The shell hero renders before /api/me/referral finishes. Assert only
+      // after the real balance card appears, not while <Loading /> is shown.
+      await page.locator('main').getByText('Ваши баллы',{exact:true}).waitFor({timeout:12000});
       const invitation=(await page.locator('main').textContent()??'').replace(/\s+/g,' ');
       if((kind==='owner'||kind==='driver') && !invitation.includes('не более 10% стоимости услуги'))
         throw Error(kind+': the invitation page shows the wrong client points cap');

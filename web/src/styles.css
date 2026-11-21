@@ -120,7 +120,7 @@ select.field { appearance: none; }
 .stars button[aria-pressed="true"] { color: var(--accent); }
 
 /* Нижняя панель */
-.tabbar { position: fixed; left: 50%; transform: translateX(-50%); bottom: max(12px, env(safe-area-inset-bottom)); width: min(408px, calc(100% - 32px)); display: flex; gap: 4px; padding: 6px; border-radius: 20px; background: rgba(30,33,37,.94); border: 1px solid var(--line-2); backdrop-filter: blur(8px); z-index: 10; }
+.tabbar { position: fixed; left: 50%; transform: translateX(-50%); bottom: 12px; bottom: max(12px, env(safe-area-inset-bottom)); width: calc(100% - 32px); width: min(408px, calc(100% - 32px)); display: flex; gap: 4px; padding: 6px; border-radius: 20px; background: rgba(30,33,37,.94); border: 1px solid var(--line-2); backdrop-filter: blur(8px); z-index: 10; }
 .tabbar a { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px; border-radius: 14px; text-decoration: none; color: var(--muted); font-size: 11.5px; font-weight: 700; }
 .tabbar a.on { color: var(--fg); background: var(--surface-3); }
 .tabbar a.sosTab { color: var(--accent); }
