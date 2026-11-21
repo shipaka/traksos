@@ -309,7 +309,7 @@ function App() {
   const isPerformer = me.roles.some((r) => r === 'master' || r === 'tow');
   const isCustomer = me.roles.some((r) => r === 'client' || r === 'driver');
   const isAdmin = me.roles.includes('admin');
-  const serviceSandbox = isAdmin && a === 'admin' && b === 'test-center' && route[2] === 'service' && route.length > 3;
+  const serviceSandbox = false; // Retired: no mock SТО subroutes; use full-fidelity isolated HMAC test entry.
   const isModerator = me.roles.includes('moderator') || isAdmin;
   const isStaff = isModerator;
   const isService = me.roles.includes('service');
@@ -486,7 +486,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       </div>
     </div>
   );
-  const serviceSandbox = route[0]==='admin'&&route[1]==='test-center'&&route[2]==='service'&&route.length>3;
+  const serviceSandbox = false; // Never mount the deprecated fake SТО UI inside the production shell.
   const here = serviceSandbox ? '/'+(route.slice(3).join('/')||'base') : '/'+route.join('/');
   const sandboxHref=(href:string)=>serviceSandbox?'#/admin/test-center/service'+(href==='/menu'?'/menu':href==='/base'||href.startsWith('/base/')?href:'/unavailable'):'#'+href;
   // На телефоне оставляем только рабочие действия. Все прежние маршруты
