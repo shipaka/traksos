@@ -46,6 +46,8 @@ import './nativeWide20261121.css';
 import './approvedPublicInner20261120.css';
 // Approved 617/618 visual language now continues into every signed-in browser route.
 import './approvedInnerExperience.css';
+// Native 618 inner pages reuse the approved truck image in a compact contextual strip.
+import './androidInnerStudio20261121.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
