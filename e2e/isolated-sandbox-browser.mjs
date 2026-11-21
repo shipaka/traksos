@@ -17,7 +17,9 @@ await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true});
 const failures=[];
 try{
-  for(const width of [320,390,1440]){
+  // 960px is crucial: formerly between mobile 899px and PC 1000px,
+  // silently displaying the retired desktop dashboard.
+  for(const width of [320,390,960,1440]){
     for(const [role,landing] of roles){
       const context=await browser.newContext({
         viewport:{width,height:width===1440?900:844},locale:'ru-RU',
@@ -84,6 +86,15 @@ try{
           if(await page.locator('main .desktop-hero').count())
             throw Error('Legacy mobile-browser client desk replaced Android-approved shell');
         }
+        if(width===960 && ['client','driver'].includes(role)){
+          await page.locator('main.approved-pc-client').waitFor({state:'visible'});
+          if(await page.locator('main.client-dashboard').count())
+            throw Error('900–999px: obsolete client home mounted instead of approved PC workspace');
+        }
+        // Visited on a real backend, not mocked routes: these are the
+        // high-value inner screens reached by approved menu/role actions.
+        // Read-only navigation only: never accept offers, execute payments,
+        // make order transitions or send real SMS from this audit.
         const geometry=await page.evaluate(()=>({
           client:document.documentElement.clientWidth,
           scroll:document.documentElement.scrollWidth,
