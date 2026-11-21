@@ -126,6 +126,40 @@ try{
  report.push({role:'owner',status:'PASS',scenarios:['selected order','performer details','safe GPS absence'],
    screenshots:['owner-active-1647.png']});
  await oc.close();
+
+ // API failures must not masquerade as a genuinely empty approved desktop.
+ // Retry must recover to the truthful server-confirmed empty state.
+ const ec=await browser.newContext({viewport:{width:1440,height:900},locale:'ru-RU',serviceWorkers:'block'});
+ const ep=await ec.newPage();
+ let ordersUnavailable=true;
+ const unavailable={status:503,contentType:'application/json',body:JSON.stringify({error:'ci_outage',message:'Проверка недоступности API'})};
+ await ep.route(url=>url.pathname==='/api/orders',
+   route=>route.fulfill(ordersUnavailable?unavailable:json([])));
+ await ep.route(url=>url.pathname==='/api/fleet',route=>route.fulfill(unavailable));
+ await open(ep,owner.token,owner.mode,'#/');
+ await ep.locator('.approved-pc-center').getByText(/Ошибка загрузки данных/).waitFor();
+ const failedOwnerText=await ep.locator('main.approved-pc-client').innerText();
+ assert(!failedOwnerText.includes('Активных заявок сейчас нет.'),
+   'Client desktop falsely claims no orders while API is unavailable');
+ assert(!failedOwnerText.includes('Машины ещё не добавлены в автопарк.'),
+   'Fleet desktop falsely claims there are no vehicles while API failed');
+ ordersUnavailable=false;
+ await ep.locator('.approved-pc-center').getByRole('button',{name:'Обновить'}).click();
+ await ep.locator('.approved-pc-center').getByText(/Активных заявок сейчас нет/).waitFor();
+ report.push({role:'owner API error/retry',status:'PASS',
+   scenarios:['no false empty orders','no false empty fleet','retry on genuine empty response']});
+ await ec.close();
+
+ const mc=await browser.newContext({viewport:{width:1440,height:900},locale:'ru-RU',serviceWorkers:'block'});
+ const mp=await mc.newPage();
+ await mp.route(url=>url.pathname==='/api/orders'&&url.searchParams.get('as')==='performer',
+   route=>route.fulfill(unavailable));
+ await open(mp,master.token,master.mode,'#/work');
+ await mp.locator('.approved-pc-shift-empty').getByText(/Ошибка загрузки данных/).waitFor();
+ assert(await mp.locator('.approved-pc-shift-empty [data-orders="0"]').count()===0,
+   'Master dashboard must not display an empty shift until the server confirms zero orders');
+ report.push({role:'master API error',status:'PASS',scenarios:['no synthetic empty shift on server failure']});
+ await mc.close();
 }finally{await browser.close()}
 await writeFile(output+'/report.json',JSON.stringify({
  source:'Actual Chromium rendering of real React components; LOCAL SYNTHETIC API FIXTURES',
