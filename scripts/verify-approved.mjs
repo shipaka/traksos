@@ -275,9 +275,12 @@ const heroVisualE2E = await read('e2e/approved-truck-hero.mjs');
 expect(currentCss.includes(approvedPhoto) && approvedHeroLayer.includes(approvedPhoto)
   && !currentCss.includes('tracksos-approved-scenic-hero.webp'),
   'guest home has one approved Nov 19 truck image, with no legacy image fallback');
-expect(heroVisualE2E.includes("tracksos-approved-hero-owner-20261119(?:-[A-Za-z0-9]+)")
-  && heroVisualE2E.includes("info.photo.includes('tracksos-approved-scenic-hero')"),
-  'browser screenshot gate rejects obsolete 14 Nov hero and requires actual owner image');
+expect(heroVisualE2E.includes("tracksos-approved-hero-owner-20261119") &&
+  heroVisualE2E.includes("owner20-photo-background-approved.webp") &&
+  heroVisualE2E.includes("main.approved-pc.approved-pc-client") &&
+  heroVisualE2E.includes("main.client-dashboard .and19-workspace.and19-client") &&
+  !heroVisualE2E.includes("page.locator('.client-dashboard .desktop-hero')"),
+  'browser visual gate tests approved 617/618 real guest and account screens, never obsolete desktop-hero or fake phone hero');
 
 
 /* A retired guest stylesheet must never silently redraw the approved 19 Nov
