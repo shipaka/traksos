@@ -85,6 +85,25 @@ try {
       if(bounds.page>bounds.viewport+3)
         throw Error(role+': Android workspace horizontal overflow at '+width+'px');
     }
+    // Android on a tablet/resizable wide WebView must keep the approved 618.png
+    // client shell. Desktop CSS breakpoints must not remount legacy Home().
+    if(mode==='client'){
+      for(const width of [900,960,1200]){
+        await page.setViewportSize({width,height:844});
+        await page.locator('main.client-dashboard .and19-workspace.and19-client')
+          .waitFor({state:'visible',timeout:10000});
+        const old=await page.locator('.desktop-hero, .desktop-quick-links').count();
+        if(old)throw Error(role+': legacy desktop dashboard leaked into Android '+width+'px');
+        const bounds=await page.evaluate(()=>({
+          viewport:document.documentElement.clientWidth,
+          page:document.documentElement.scrollWidth
+        }));
+        if(bounds.page>bounds.viewport+3)
+          throw Error(role+': wide Android viewport overflows '+width+'px '+JSON.stringify(bounds));
+        await page.screenshot({path:'e2e/shots/android-approved/'+role+'-native-'+width+'.png'});
+      }
+      await page.setViewportSize({width:390,height:844});
+    }
     if(mode==='client'){
       const desk=page.locator('.and19-client');
       await desk.waitFor({state:'visible'});
