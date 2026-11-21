@@ -6,6 +6,7 @@
  */
 import {useEffect, useState, type ReactNode} from 'react';
 import {get, onEvent, post} from '../api.ts';
+import {insurancePresentation, insuranceQueueGroup, type InsuranceQueueGroup} from '../insurancePresentation.ts';
 import {RoadsideMap} from './roadsideMap.tsx';
 import {useAction, useLoad, useMe} from '../ui.tsx';
 import {STATUS, SERVICES} from '../dict.ts';
@@ -53,7 +54,7 @@ export function ApprovedPcDesk({role,fallback}:{role:ApprovedPCRole;fallback:Rea
   if(role==='owner'||role==='driver') return <CustomerDesk owner={role==='owner'}/>;
   if(role==='master'||role==='tow') return <PerformDesk tow={role==='tow'}/>;
   if(role==='service') return <ServiceDesk/>;
-  if(role==='insurer'||role==='inspection') return <InsuranceDesk inspection={role==='inspection'}/>;
+  if(role==='insurer'||role==='inspection') return <InsuranceDesk key={role} inspection={role==='inspection'}/>;
   if(role==='courier') return <ApprovedPcCourier/>;
   if(role==='moderator') return <ModeratorDesk/>;
   return <AdminDesk/>;
@@ -550,11 +551,17 @@ function InsuranceDesk({inspection}:{inspection:boolean}){
   const {me}=useMe();
   const api=inspection?'/api/insurer/inspections':'/api/insurer/requests';
   const source=useLoad(()=>get<any[]>(api),[api],e=>e.type==='vehicle_service');
-  const [mode,setMode]=useState<'active'|'done'>('active');
+  const [mode,setMode]=useState<InsuranceQueueGroup | 'all'>(inspection ? 'active' : 'action');
   const [chosen,setChosen]=useState('');
   const all=source.data||[];
-  const done=(o:any)=>['completed','rejected','cancelled'].includes(o.status);
-  const items=all.filter(o=>mode==='done'?done(o):!done(o));
+  const group = (o:any):InsuranceQueueGroup => inspection
+    ? (['completed','rejected','cancelled'].includes(o.status) ? 'closed' : 'active')
+    : insuranceQueueGroup(o.insurance_stage,o.status);
+  const stageLabel = (o:any) => insurancePresentation(o.insurance_stage,o.status,'partner').label;
+  const items=all.filter(o=>mode==='all' || group(o)===mode);
+  const filters:[InsuranceQueueGroup | 'all',string][] = inspection
+    ? [['active','Осмотры в работе'],['closed','История']]
+    : [['action','Требуют действий'],['active','В работе'],['all','Все'],['closed','История']];
   const selected=items.find(o=>String(o.id)===chosen)||items[0];
   const both=me?.roles.includes('insurer')&&me?.roles.includes('inspection_operator');
   return <main className="approved-pc approved-pc-insurance">
@@ -562,17 +569,16 @@ function InsuranceDesk({inspection}:{inspection:boolean}){
       description={inspection?'Назначенные проверки, результаты осмотра и документы':'Назначенные страховые дела, варианты полисов и документы'}/>
     {both&&<div className="approved-pc-partner-switch"><a className={!inspection?'selected':''} href="#/as/insurer">Страхование</a>
       <a className={inspection?'selected':''} href="#/as/inspection">Техосмотр</a></div>}
-    <Tabs items={[[ 'active',inspection?'Осмотры в работе':'Страховые дела в работе',source.data?all.filter(o=>!done(o)).length:null],
-      ['done','История',source.data?all.filter(done).length:null]]} active={mode} onChange={id=>{setMode(id as typeof mode);setChosen('')}}/>
+    <Tabs items={filters.map(([id,label])=>[id,label,source.data ? all.filter(o=>id==='all' || group(o)===id).length : null])} active={mode} onChange={id=>{setMode(id as typeof mode);setChosen('')}}/>
     <WorkLayout left={<Pane title={inspection?'Назначенные осмотры':'Страховые заявки'}>
       {!source.data?<LoadingBlock error={source.error} retry={source.reload}/>:items.length?items.map((o:any)=>
         <RowItem key={o.id} label={(inspection?'ТО ':'Полис ')+vehicleLabel(o)} info={text(o.comment)}
-          active={selected?.id===o.id} onClick={()=>setChosen(String(o.id))} badge={text(o.status) } v={o}/>)
-        :<Empty>Назначенных заявок в выбранном разделе нет.</Empty>}
+          active={selected?.id===o.id} onClick={()=>setChosen(String(o.id))} badge={inspection ? text(o.status) : stageLabel(o)} v={o}/>)
+        :<Empty>{!inspection && mode==='active' ? 'Нет заявок в работе.' : 'Назначенных заявок в выбранном разделе нет.'}</Empty>}
     </Pane>}
     center={selected?<section className="approved-pc-case">
       <header><div><small>{inspection?'ДЕЛО ТЕХОСМОТРА':'СТРАХОВОЕ ДЕЛО'}</small><h2>№{text(selected.number||selected.id)}</h2></div>
-        <span className="approved-pc-stage">{text(selected.status)}</span></header>
+        <span className="approved-pc-stage">{inspection ? text(selected.status) : stageLabel(selected)}</span></header>
       <div className="approved-pc-case-main"><Photo v={selected}/><div className="approved-pc-facts">
         <h3>{vehicleLabel(selected)}</h3><p><b>Клиент:</b> {text(selected.client_name||selected.client?.name)}</p>
         <p><b>VIN:</b> {text(selected.vin)}</p><p><b>Заявка:</b> {text(selected.comment,'Детали внутри дела')}</p>
