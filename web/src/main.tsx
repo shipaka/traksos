@@ -735,7 +735,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                   </a>)}
                 </div>)}
                 {me.roles.includes('service') && <a className="desktop-nav-link" href="#/base">
-                  <span aria-hidden="true">▤</span><span>Моя СТО</span>
+                  <span aria-hidden="true"><NavGlyph glyph="▤"/></span><span>Моя СТО</span>
                 </a>}
               </>}
               {mode === 'client' && <>
