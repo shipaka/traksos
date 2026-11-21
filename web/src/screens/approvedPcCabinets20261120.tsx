@@ -425,7 +425,7 @@ function PerformDesk({tow}:{tow:boolean}){
             </div>
             <ApprovedEmptyScene kind="shift"/>
           </div>}
-      </Pane>
+      </Pane>}
       right={<><Calendar items={all}/><Pane title="Моя смена"><p>Статус: <b>{text(me?.performer?.line_status)}</b></p>
         <a className="approved-pc-small-link" href="#/work/me/schedule">Расписание и доступность →</a></Pane>
         <Bot message={tow?'Помогу с погрузкой и документами.':'Подскажу по диагностике и заявке.'}/></>}/>}
