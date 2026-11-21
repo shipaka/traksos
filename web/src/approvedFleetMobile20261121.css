@@ -1,0 +1,122 @@
+/* Fleet is a working SUBSECTION of the approved 618 phone cabinet.
+ * Render the same layout in the Android WebView and mobile browser.
+ * No fake vehicle data, separate role shell or obsolete desktop cards. */
+@media (max-width: 899px) {
+  .app.role-client .fleet-mobile-approved {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 520px;
+    min-width: 0;
+    margin: 0 auto;
+    padding: 10px 12px calc(90px + env(safe-area-inset-bottom));
+    gap: 13px;
+    color: #eff8ff;
+  }
+  .fleet-mobile-approved *, .fleet-mobile-approved *::before,
+  .fleet-mobile-approved *::after { box-sizing: border-box; }
+  .fleet-mobile-approved :is(.fleet-mobile-back,.fleet-mobile-head,
+    .fleet-mobile-block,.fleet-mobile-car,.fleet-mobile-settings,
+    .fleet-mobile-settings-body,.fleet-mobile-car-info) { min-width: 0; max-width: 100%; }
+  .fleet-mobile-back { display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; color: #a6c6d8; font-size: 10px; letter-spacing: .03em; }
+  .fleet-mobile-back a { font-size: 12px; text-decoration: none; color: #ffab68;
+    min-height: 40px; display: flex; align-items: center; }
+  .fleet-mobile-back span { text-align: right; }
+  .fleet-mobile-heading { border: 1px solid #4d697b; border-radius: 17px;
+    background: radial-gradient(ellipse at 85% 10%, #ec7c2524, transparent 60%),
+      linear-gradient(155deg,#173447,#0c202f);
+    padding: 19px 16px; box-shadow: 0 9px 24px #0003; }
+  .fleet-mobile-heading .label { display: block; color: #ffae73;
+    letter-spacing: .10em; font-size: 10px; font-weight: 800; }
+  .fleet-mobile-heading h1 { margin: 8px 0 6px; color: #fff;
+    font-size: clamp(23px, 6vw, 29px); line-height: 1.15; }
+  .fleet-mobile-heading p { color: #c9dbe7; font-size: 12px; margin: 0; line-height: 1.5; }
+  .fleet-mobile-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px; width: 100%; }
+  .fleet-mobile-stats > div { min-width: 0; display: flex; flex-direction: column; align-items: flex-start;
+    border: 1px solid #446779; border-radius: 13px; padding: 11px 9px;
+    background: linear-gradient(150deg,#1d3a4d,#0b2232); gap: 5px; }
+  .fleet-mobile-stats strong { font-size: 24px; line-height: 1; color: #ff9f4b; }
+  .fleet-mobile-stats small { font-size: 10px; line-height: 1.25; color: #d4e7f0; }
+  .fleet-mobile-block { display: flex; flex-direction: column; gap: 10px; }
+  .fleet-mobile-block-title { display: flex; align-items: center;
+    justify-content: space-between; gap: 8px; }
+  .fleet-mobile-block h2 { margin: 0; color: #f4fbff; font-size: 17px; line-height: 1.3; }
+  .fleet-mobile-block-title a { color: #ffad66; font-size: 12px; white-space: nowrap; }
+  .fleet-mobile-car, .fleet-mobile-pending { display: flex; flex-direction: column; gap: 10px;
+    border: 1px solid #4c6d80; border-radius: 16px; padding: 10px;
+    background: linear-gradient(150deg,#19364a,#0b2233 75%);
+    box-shadow: 0 7px 19px #0003; }
+  .fleet-mobile-car-link { display: grid; grid-template-columns: minmax(0, 40%) minmax(0,1fr);
+    gap: 11px; min-width: 0; align-items: stretch; text-decoration: none; color: #eff8ff; }
+  .fleet-mobile-photo { min-width: 0; min-height: 104px; display: grid;
+    place-items: center; border: 1px solid #466f85; border-radius: 11px; overflow: hidden;
+    background: #102b3d; }
+  .fleet-mobile-photo img { display: block; width: 100%; max-width: 100%;
+    height: 100%; min-width: 0; max-height: 142px; object-fit: contain; object-position: center; }
+  .fleet-mobile-photo .trak-vehicle-no-photo { display: flex; width: 100%;
+    min-width: 0; max-width: 100%; height: 100%; min-height: 104px;
+    aspect-ratio: auto; border: 0; font-size: 10px; }
+  .fleet-mobile-car-info { display: flex; flex-direction: column; gap: 5px;
+    justify-content: center; overflow-wrap: anywhere; }
+  .fleet-mobile-car-info small { color: #ffab68; font-size: 9px; font-weight: 800; }
+  .fleet-mobile-car-info strong { font-size: 15px; line-height: 1.15; color: #fff; }
+  .fleet-mobile-car-info > span { color: #c8dde9; font-size: 11px; line-height: 1.4; }
+  .fleet-mobile-car-info em { margin-top: 5px; color: #82e9ed; font-size: 11px;
+    font-style: normal; font-weight: 750; }
+  .fleet-mobile-credit { display: block; align-self: flex-end; color: #c2d5e1;
+    font-size: 10px; text-decoration: underline; }
+  .fleet-mobile-driver { border-top: 1px solid #365970; padding-top: 9px;
+    display: flex; flex-direction: column; gap: 3px; }
+  .fleet-mobile-driver strong { font-size: 12px; color: #f5f9fc; overflow-wrap: anywhere; }
+  .fleet-mobile-driver small { font-size: 10px; color: #9fc1d3; }
+  .fleet-mobile-actions { display: flex; gap: 8px; min-width: 0; }
+  .fleet-mobile-actions > :is(button,.btn) { flex: 1 1 0; width: auto; min-width: 0;
+    min-height: 44px; padding: 8px 7px; font-size: 11px; line-height: 1.2; }
+  .fleet-mobile-actions > .btn:not(.ghost) { background: #eb7225; color: #fff; }
+  .fleet-mobile-expand { display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; width: 100%; min-height: 44px; padding: 9px 11px; border-radius: 10px;
+    border: 1px solid #4a778b; color: #e6f6ff; font-size: 11px; font-weight: 750;
+    text-align: left; background: #12394a; }
+  .fleet-mobile-expand span { font-size: 18px; color: #ffad66; }
+  .fleet-mobile-approved .fleet-vehicle-detail { min-width: 0; max-width: 100%; }
+  .fleet-mobile-approved .fleet-detail-tabs { display: flex; flex-wrap: wrap; }
+  .fleet-mobile-approved .fleet-detail-tabs .chip { min-width: 0; flex: 1 1 auto; }
+  .fleet-mobile-approved .fleet-vehicle-spec,
+  .fleet-mobile-approved .fleet-repair-history { min-width: 0; overflow-wrap: anywhere; }
+  .fleet-mobile-approved .fleet-vehicle-spec > div { min-width: 0; overflow-wrap: anywhere; }
+  .fleet-mobile-settings { border: 1px solid #4e7185; border-radius: 13px;
+    overflow: hidden; background: #132c3f; }
+  .fleet-mobile-settings summary { display: flex; justify-content: space-between;
+    align-items: center; gap: 9px; min-height: 51px; padding: 13px 14px;
+    color: #f4f9fc; font-weight: 800; font-size: 13px; cursor: pointer; list-style: none; }
+  .fleet-mobile-settings summary::-webkit-details-marker { display: none; }
+  .fleet-mobile-settings summary span { color: #ffac67; }
+  .fleet-mobile-settings[open] summary { border-bottom: 1px solid #40677d; }
+  .fleet-mobile-settings-body { display: flex; flex-direction: column; gap: 12px;
+    padding: 14px; font-size: 12px; color: #d2e3ec; min-width: 0; }
+  .fleet-mobile-settings-body > strong { color: #fff; font-size: 13px; }
+  .fleet-mobile-settings-body p { line-height: 1.5; margin: 0; }
+  .fleet-mobile-settings-body a { color: #ffc08c; }
+  .fleet-mobile-settings-body .btn { min-height: 44px; font-size: 12px; }
+  .fleet-mobile-fields { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 8px; }
+  .fleet-mobile-fields > * { min-width: 0; }
+  .fleet-mobile-fields input { max-width: 100%; width: 100%; }
+  .fleet-mobile-permission { display: flex; gap: 11px; align-items: flex-start;
+    border: 1px solid #365a72; border-radius: 10px; padding: 10px; min-width: 0; }
+  .fleet-mobile-permission input { width: 20px; height: 20px; flex: 0 0 20px; margin: 0; accent-color: #ff8535; }
+  .fleet-mobile-permission span { display: flex; flex-direction: column; gap: 3px;
+    min-width: 0; overflow-wrap: anywhere; }
+  .fleet-mobile-permission strong { font-size: 12px; color: #f4faff; }
+  .fleet-mobile-permission small { font-size: 10px; color: #a6c3d6; }
+  .fleet-mobile-pending strong { overflow-wrap: anywhere; }
+  .fleet-mobile-pending p { margin: 0; overflow-wrap: anywhere; font-size: 12px; }
+  .fleet-mobile-pending > a { color: #ffab68; font-size: 11px; }
+  @media(max-width:350px){
+    .fleet-mobile-approved .fleet-mobile-car-link { gap: 7px; }
+    .fleet-mobile-approved .fleet-mobile-car-info strong { font-size: 13px; }
+    .fleet-mobile-approved .fleet-mobile-fields { grid-template-columns: minmax(0, 1fr); }
+  }
+}
