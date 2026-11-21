@@ -70,6 +70,15 @@ try {
         botGeometry.position==='fixed' && botGeometry.border==='0px' &&
         botGeometry.mask && botGeometry.mask!=='none',
         width+'px: desktop guest TrakBot reverted to tiny square/ring '+JSON.stringify(botGeometry));
+      // The lower-right helper stays in place while the document scrolls.
+      // Add test-only height so this assertion still works on tall desktop displays.
+      const botBeforeScroll=await bot.boundingBox();
+      await page.evaluate(()=>{document.documentElement.style.minHeight='200vh';window.scrollTo(0,300);});
+      await page.waitForFunction(()=>window.scrollY>=250);
+      const botAfterScroll=await bot.boundingBox();
+      assert(botBeforeScroll&&botAfterScroll&&Math.abs(botAfterScroll.y-botBeforeScroll.y)<3,
+        width+'px: TrakBot moved with the document instead of staying fixed');
+      await page.evaluate(()=>{document.documentElement.style.minHeight='';window.scrollTo(0,0);});
       // Real pixel evidence of the collapsed mascot alongside the complete
       // 617 PC cards. Do not claim the CSS mask creates a new 3D asset.
       mkdirSync('e2e/shots/trakbot-proof',{recursive:true});
