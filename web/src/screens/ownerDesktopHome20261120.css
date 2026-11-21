@@ -669,3 +669,40 @@
  .guest-app.guest-home .trakbot-dock .trakbot-dock-launcher {transition:none!important;}
 }
 html.traksos-reduced-motion .guest-app.guest-home .trakbot-dock-launcher .trakbot-mascot {animation:none!important;}
+
+/* Source-sprite crop contract: the approved 617 atlas contains printed captions
+   inside its pixels. Only show each artwork's RIGHT-hand image zone, never
+   another image of the caption behind the real accessible DOM labels.
+   Every crop ends at its original atlas frame's right edge. */
+@media(min-width:900px){
+ .guest-app.guest-home .owner20-feature-tech .owner20-feature-illustration {
+   width:112px!important;background-position:-55px -317px!important;
+ }
+ .guest-app.guest-home .owner20-feature-ecu .owner20-feature-illustration {
+   width:94px!important;background-position:-225px -317px!important;
+ }
+ .guest-app.guest-home .owner20-feature-parts .owner20-feature-illustration {
+   width:110px!important;background-position:-337px -317px!important;
+ }
+ .guest-app.guest-home .owner20-feature-insurance .owner20-feature-illustration {
+   width:88px!important;background-position:-500px -317px!important;
+ }
+ .guest-app.guest-home .owner20-feature-inspection .owner20-feature-illustration {
+   width:81px!important;background-position:-624px -317px!important;
+ }
+ .guest-app.guest-home .owner20-feature-illustration {
+   -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.9) 12%,#000 24%)!important;
+   mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.9) 12%,#000 24%)!important;
+ }
+ .guest-app.guest-home .owner20-bottom-air::after {
+   width:133px!important;background-position:-882px 0!important;
+ }
+ .guest-app.guest-home .owner20-bottom-club::after {
+   width:133px!important;background-position:-877px -170px!important;
+ }
+ .guest-app.guest-home .owner20-bottom-air::after,
+ .guest-app.guest-home .owner20-bottom-club::after {
+   -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.9) 13%,#000 27%)!important;
+   mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.9) 13%,#000 27%)!important;
+ }
+}

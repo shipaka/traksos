@@ -40,7 +40,14 @@ try {
         t.gradient?.includes('linear-gradient') &&
         t.artRight <= t.cardRight+3 &&
         t.mask?.includes('linear-gradient')),
+
         width+'px: approved 617 right-image/left-copy card composition lost '+JSON.stringify(tiles));
+      const crop=await page.locator('.owner20-feature-illustration').evaluateAll(items=>items.map(el=>{
+        const r=el.getBoundingClientRect(),bg=getComputedStyle(el).backgroundPosition;
+        return {w:Math.round(r.width),bg};
+      }));
+      assert(crop.length===5 && crop.every(x=>x.w<=112),
+        width+'px: caption-bearing atlas region returned to feature cards '+JSON.stringify(crop));
       const bot=page.getByRole('button',{name:'Открыть TrakBot'});
       assert(await bot.isVisible(), 'Final PC TrakBot must be user-opened');
       assert(await bot.locator('.trakbot-mascot-original').count()===1,'Owner-approved truck mascot missing');

@@ -77,6 +77,12 @@ try {
       // Capture the fully rendered state after that finite reveal.
       await page.waitForTimeout(450);
       await verify('home-stable');
+      if (width >= 900) {
+        const inline=await page.locator('.approved-pc-bot').count();
+        const floating=await page.locator('.trakbot-dock-launcher').count();
+        if(inline > 0 && floating > 0)
+          throw Error(entry.name+': approved PC dashboard shows duplicate TrakBot card and floating dock');
+      }
       await page.screenshot({path:'e2e/shots/cabinet-ux/'+entry.name+'-home-'+width+'.png',fullPage:true});
       // Simulate a real user opening the cabinet menu and following a safe inner page.
       await page.locator('.account-menu > summary').click();

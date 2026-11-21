@@ -602,6 +602,19 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     .filter(([path])=>path !== '/' && (path === sectionPath || sectionPath.startsWith(path+'/')))
     .sort((a,b)=>b[0].length-a[0].length)[0]?.[1]
     || (sectionPath.startsWith('/order/') ? 'Карточка заявки' : 'Рабочий раздел');
+  // An approved desktop dashboard already contains its own TrakBot card.
+  // Do not mount a second floating copy of the same helper over its actions.
+  // Secondary pages and roles without the embedded card keep the dock.
+  const approvedDeskHasTrakBot = !!me && !native.isApp && !mobileShell && (
+    (route.length === 0 &&
+      ['client','performer','service','insurer','inspection'].includes(mode) &&
+      !(mode === 'performer' && (!me.performer || me.performer.kind === 'ecu'))) ||
+    (mode === 'performer' && route[0] === 'work' && !route[1] &&
+      !!me.performer && me.performer.kind !== 'ecu') ||
+    (mode === 'service' && route[0] === 'base' && !route[1]) ||
+    (mode === 'insurer' && route[0] === 'insurance' && !route[1]) ||
+    (mode === 'inspection' && route[0] === 'inspections' && !route[1])
+  );
   const safeLogout = () => {
     if (me?.roles.some(r => r === 'master' || r === 'tow') &&
       !window.confirm('При выходе из аккаунта статус «На линии» отключится. Просто сверните приложение, если хотите продолжать получать заявки. Выйти?')) return;
@@ -809,7 +822,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       )}
       {/* 618.png has no overlapping floating robot. The same approved talking-truck
           TrakBot remains in Android Menu > TrakBot and on the desktop. */}
-      {!native.isApp && !isAuthEntry && route[0] !== 'trakbot' && <TrakBotDock authenticated={!!me} />}
+      {!native.isApp && !isAuthEntry && route[0] !== 'trakbot' && !approvedDeskHasTrakBot && <TrakBotDock authenticated={!!me} />}
       {me && <RoleTour page={route[0] ?? ''} />}
     </div>
   );
