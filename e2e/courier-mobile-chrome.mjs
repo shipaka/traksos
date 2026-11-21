@@ -45,7 +45,7 @@ try{
   await footer.waitFor();
   assert.equal(await page.locator('.trakbot-dock').count(),0,
     width+': floating TrakBot covers courier actions/legal links');
-  const logo=footer.locator('> .logo');
+  const logo=footer.locator(':scope > .logo');
   assert.equal(await logo.count(),1);
   assert.equal(await logo.evaluate(node=>getComputedStyle(node).display),'none',
     width+': duplicate footer logo is still visible');
