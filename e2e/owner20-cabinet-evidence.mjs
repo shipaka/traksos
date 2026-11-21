@@ -204,6 +204,19 @@ try{
      }
      await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'-viewport.png',fullPage:false,animations:'disabled',scale:'css'});
      await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'.png',fullPage:true,animations:'disabled',scale:'css'});
+     // The inspection API accepts both insurers and inspection operators.
+     // Verify the partner UI applies the SAME role policy on direct navigation.
+     if(c.id==='insurer'){
+       if(!identity.roles.includes('insurer'))throw Error('Insurer role was not seeded');
+       await page.goto(BASE+'/#/inspections',{waitUntil:'domcontentloaded'});
+       await page.locator('.account-menu > summary').waitFor({timeout:14000});
+       if(await page.getByText('Нет прав оператора техосмотра').count())
+         throw Error('Insurer cannot access the inspection workspace despite server authorization');
+       await page.locator(width>=1440?'.approved-pc-insurance':'.partner-workspaces')
+         .first().waitFor({state:'visible',timeout:14000});
+       await page.screenshot({path:out+'/insurer-inspection-'+width+'-viewport.png',
+         fullPage:false,animations:'disabled',scale:'css'});
+     }
      results.push({role:c.id,width,height:width===390?844:width===1672?941:900,result:'screens saved',files:[
        c.id+'-home-'+width+'-viewport.png',
        c.id+'-home-'+width+'.png',
