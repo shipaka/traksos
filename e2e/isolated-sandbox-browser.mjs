@@ -134,6 +134,58 @@ try{
         await page.evaluate(()=>window.scrollTo({top:0,left:0,behavior:'instant'}));
         await page.waitForFunction(()=>window.scrollY===0,{timeout:5000});
         await page.screenshot({path:out+'/'+role+'-'+width+'.png',fullPage:true});
+        // The approved dashboard is not the finish line. Probe real
+        // secondary destinations while authenticated to catch old forms,
+        // wrong roles, empty screens and links to retired frontend sources.
+        if(width===390 || width===960){
+          const destinations={
+            client:['#/sos','#/orders','#/garage','#/menu'],
+            owner:['#/garage','#/orders','#/menu'],
+            driver:['#/orders','#/garage','#/menu'],
+            master:['#/work/jobs','#/work/me','#/menu'],
+            tow:['#/work/jobs','#/work/me','#/menu'],
+            service:['#/base/me','#/base/money','#/menu'],
+            master_service:['#/work/me','#/base','#/menu'],
+            insurer:['#/insurance/requests','#/menu'],
+            inspection:['#/inspections/processing','#/menu'],
+            courier:['#/courier/jobs','#/courier/chat','#/menu'],
+            moderator:['#/moderation/verify','#/menu'],
+            admin:['#/admin/section/orders','#/admin/test-center','#/menu'],
+          };
+          for(const destination of destinations[role]){
+            await page.goto(base+'/'+destination,{waitUntil:'domcontentloaded'});
+            await page.waitForFunction(target=>location.hash===target,destination,{timeout:15_000});
+            await page.locator('header.top .sandbox-test-badge').waitFor({state:'visible',timeout:15_000});
+            // Wait for the actual role section to render, not merely the hash.
+            await page.waitForTimeout(220);
+            const state=await page.evaluate(()=>{
+              const main=document.querySelector('.desktop-content main');
+              const text=(main?.innerText||'').trim();
+              const root=document.documentElement;
+              return {
+                mainClass:main?.className||'',
+                length:text.length,
+                preview:text.slice(0,160),
+                overflow:root.scrollWidth-root.clientWidth,
+                obsolete:!!document.querySelector('main.fleet-workspace, .internal-role-hero-fleet, main .desktop-hero, .desktop-quick-links'),
+                nativePreview:!!document.querySelector('.and19-review-page'),
+              };
+            });
+            if(state.length<8 ||
+               /Такой страницы нет|Не удалось открыть раздел|Вход по номеру телефона|Отсутствует приглашение/.test(state.preview)||
+               state.obsolete || state.nativePreview || state.overflow>3)
+              throw Error('Navigation regression '+role+' '+width+' '+destination+' '+JSON.stringify(state));
+            if(destination==='#/menu' && !await page.locator('main.tr-mobile-menu-page').isVisible())
+              throw Error('Approved role menu not mounted at '+role+' '+width);
+            if(errors.length)throw Error('Navigation JavaScript exception '+role+' '+destination+': '+errors.join('; '));
+            // Proof of the actual React panel, not a design mockup.
+            if(destination==='#/menu' || destination===destinations[role][0]){
+              const safe=destination.slice(2).replaceAll('/','-')||'home';
+              await page.screenshot({path:out+'/'+role+'-'+width+'-route-'+safe+'.png',fullPage:true,animations:'disabled'});
+            }
+            console.log('SANDBOX ROUTE PASS',role,width,destination,state.mainClass);
+          }
+        }
         // A real browser must switch roles without new SMS or new signed
         // admin handoff. Verify the resulting role cannot elevate itself.
         if(role==='admin'){
