@@ -158,8 +158,14 @@ try {
     // Refresh must retain the selected section. Going back to a section should work too.
     await page.reload({waitUntil:'domcontentloaded'});
     await page.locator('.admin-stage-head h2').getByText('Настройки',{exact:true}).waitFor();
+    // The empty API response must render a branded, actionable state, not a blank panel.
+    await page.route('**/api/admin/orders',route=>route.fulfill({status:200,json:[]}));
     await page.goto(BASE+'/#/admin/section/orders');
     await page.locator('.admin-stage-head h2').getByText('Все заказы',{exact:true}).waitFor();
+    await page.getByRole('status',{name:'Нет заказов'}).waitFor();
+    await page.locator('.admin-orders-zero .tr-approved-empty-scene img').waitFor();
+    await page.locator('.admin-orders-zero a[href="#/admin/section/cases"]').waitFor();
+    await page.screenshot({path:'e2e/shots/admin-ux/orders-empty-'+width+'.png',fullPage:true});
     await checkLayout('deep link');
     await context.close();
   }
