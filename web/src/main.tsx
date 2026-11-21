@@ -56,7 +56,7 @@ import { AndroidDesignReview } from './screens/androidDesignReview.tsx';
 import { NavGlyph } from './navGlyph.tsx';
 import { MobileRoleMenu } from './mobileRoleMenu.tsx';
 import { MobileSectionChrome } from './mobileSectionChrome.tsx';
-import { SandboxEnter, SandboxModeBar } from './screens/isolatedSandbox.tsx';
+import { SandboxEnter, SandboxModeBadge } from './screens/isolatedSandbox.tsx';
 import { GuestCompany, GuestOffers } from './screens/guestInfo.tsx';
 import { PUBLIC_CAPABILITIES } from './guestCatalog.ts';
 import { SiteQuickSearch } from './screens/siteQuickSearch.tsx';
@@ -351,7 +351,6 @@ function App() {
   return (
     <MeCtx.Provider value={{ me, reload, mode: effMode, setMode }}>
       <ScreenErrorBoundary key={route.join('/')}>
-        <SandboxModeBar />
         {serviceSandbox && <ServicePreviewBar />}
         <Shell mode={effMode} me={serviceSandbox ? {...me,roles:['service'],name:'Тестовый сервис'} : me}>{screen}</Shell>
         {!(a === 'admin' && b === 'test-center' && isAdmin) && <IncomingCall />}
@@ -592,6 +591,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         </details>}
         {!isAuthEntry && <SiteQuickSearch authenticated={!!me} />}
         <div className="row" style={{ flexWrap: 'nowrap' }}>
+          {me && <SandboxModeBadge />}
           {!me && native.isPreviewBuild && <a href="#/android-review/client" className="and19-review-entry" style={{color:'#ffad70',fontSize:12}}>Посмотреть кабинеты APK</a>}
           {!me && !isAuthEntry && <div className="guest-header-actions"><a href="#/login">Войти</a><a href="#/register" className="register">Зарегистрироваться</a></div>}
           {me && mode === 'performer' && <span className="pill accent">исполнитель</span>}
