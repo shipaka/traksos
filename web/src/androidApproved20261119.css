@@ -57,7 +57,9 @@
  .and19-facts{display:flex;flex-direction:column;gap:6px;margin:12px 0 11px}
  .and19-facts p{font-size:12px;color:#d9e8f3}
  /* Legacy p>span styled whole issue/address text as a 16px orange icon.
-    The approved React cards now use SVG icons, so scope that accent to\n    the remaining vehicle symbol instead of repainting real order facts. */\n .and19-facts .and19-vehicle>span{font-size:16px;color:#ff822f;margin-right:7px}
+    The approved React cards now use SVG icons, so scope that accent to
+    the remaining vehicle symbol instead of repainting real order facts. */
+ .and19-facts .and19-vehicle>span{font-size:16px;color:#ff822f;margin-right:7px}
  .and19-facts .and19-issue{font-weight:730;color:#f0e5da}
  .and19-facts .and19-service{color:#92cadc}
  .and19-timeline{list-style:none;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));margin:15px 0 10px;padding:0;gap:2px}
