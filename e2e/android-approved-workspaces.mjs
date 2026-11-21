@@ -128,8 +128,34 @@ try {
       await page.locator('main.fleet-mobile-approved').waitFor({state:'visible'});
       if(await page.locator('main.fleet-workspace .internal-role-hero-fleet').count())
         throw Error('owner: old Fleet desktop screen appeared inside Android');
-      if(await page.locator('.fleet-mobile-car-link[href^="#/garage/"]').count()===0)
-        throw Error('owner: approved mobile fleet has no real clickable vehicles');
+      // A brand-new owner genuinely has ZERO vehicles. Never manufacture
+      // fictitious trucks just to satisfy a screenshot test: compare the
+      // rendered cards to real fleet API records for this isolated account.
+      const fleetResponse=await fetch(BASE+'/api/fleet',{
+        headers:{authorization:'Bearer '+token}
+      });
+      if(!fleetResponse.ok)throw Error('owner: cannot load real fleet API: '+fleetResponse.status);
+      const fleetData=await fleetResponse.json();
+      const expectedCars=fleetData.cars??[];
+      const cards=page.locator('.fleet-mobile-car-link[href^="#/garage/"]');
+      const actualCards=await cards.count();
+      if(actualCards!==expectedCars.length)
+        throw Error('owner: vehicle cards do not match real server-owned fleet '+JSON.stringify({
+          expected:expectedCars.length,actual:actualCards
+        }));
+      if(expectedCars.length===0){
+        const add=page.getByRole('link',{name:'Добавьте машину'});
+        if(!await add.isVisible())
+          throw Error('owner: empty fleet must invite the user to add a vehicle');
+        await add.click();
+        await page.waitForURL('**/#/garage',{timeout:10000});
+        await page.goto(BASE+'/#/fleet',{waitUntil:'domcontentloaded'});
+        await page.locator('main.fleet-mobile-approved').waitFor({state:'visible'});
+      }else{
+        const expectedHref='#/garage/'+expectedCars[0].id;
+        if(await cards.first().getAttribute('href')!==expectedHref)
+          throw Error('owner: actual vehicle history route differs from backend vehicle ID');
+      }
       if(!await page.locator('.fleet-mobile-settings summary').count())
         throw Error('owner: settings were lost while replacing the legacy UI');
       for(const width of [320,390]){
