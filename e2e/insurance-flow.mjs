@@ -76,7 +76,7 @@ assert(history.find(x=>x.id===request.id).events.length>=3,'History events not p
 const browser=await chromium.launch();
 try{
   for(const item of [
-    {name:'owner',token:owner.token,hash:'#/garage',heading:'Мой гараж',expected:'Страхование и техосмотр'},
+    {name:'owner',token:owner.token,hash:'#/garage',heading:'Мой транспорт',expected:'Страхование и техосмотр'},
     {name:'insurer',token:partner.token,hash:'#/insurance',heading:'Страхование',expected:'Полис оформлен'},
     {name:'admin',token:admin.token,hash:'#/admin/section/vehicleServices',heading:'Страхование и ТО',expected:'Страхование и ТО'}
   ]){
@@ -97,7 +97,11 @@ try{
        await page.getByText('Страховые партнёры',{exact:true}).waitFor();
       await page.getByRole('button',{name:/Регистрация новых партнёров закрыта/}).waitFor();
     }
-    if(item.name==='owner')await page.getByText('Страхование и техосмотр',{exact:false}).first().click();
+    if(item.name==='owner'){
+      const vehicleCard=page.locator(`#garage-vehicle-${car.id}`);
+      await vehicleCard.getByRole('button',{name:/Страхование и техосмотр/}).click();
+      await vehicleCard.getByText(/Действует до 2030-11-13/).waitFor();
+    }
     await page.screenshot({path:OUT+'/'+item.name+'.png',fullPage:true});
     assert(errors.length===0,item.name+' JS errors: '+errors.join(' | '));
     await context.close();
