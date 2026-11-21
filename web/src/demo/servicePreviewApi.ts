@@ -15,7 +15,7 @@ import { ApiError } from '../api.ts';
 export const SERVICE_PREVIEW_ROOT = 'admin/test-center/service';
 export function inServicePreview(): false { return false; }
 export function servicePreviewPath(path: string): string {
-  return path.replace(/^\\/+/, '');
+  return path.replace(/^\/+/, '');
 }
 export function servicePreviewHref(path: string): string {
   return '#/' + servicePreviewPath(path);
