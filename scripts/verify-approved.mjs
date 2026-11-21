@@ -649,12 +649,16 @@ expect(photoMigration.includes('create table if not exists order_photos') &&
 // The legacy guest PIN demo was a collection of fake training mini-cabinets.
 // The only permitted visual sandbox is the authenticated full-fidelity build.
 const retiredDemo=await read('web/src/screens/demoPreview.tsx');
+const realTestCenter=await read('web/src/screens/adminTestCenter.tsx');
 expect(retiredDemo.includes('Старый демонстрационный просмотр закрыт') &&
   retiredDemo.includes('tr-approved-route-unavailable') &&
   !retiredDemo.includes('AdminTestCenter') &&
   !retiredDemo.includes('operatorDemoSession') &&
   !retiredDemo.includes('/api/public/demo/unlock'),
   'public PIN preview must never restore obsolete simulated role cabinets');
+expect(realTestCenter.includes('const fullFidelity = true;') &&
+  !realTestCenter.includes('fullFidelity=false'),
+  'test center cannot opt back into old fake training role screens');
 expect((unifiedShell.match(/const serviceSandbox = false/g) || []).length === 2 &&
   !unifiedShell.includes("route[2] === 'service' && route.length > 3"),
   'retired fake STO subroutes must not bypass full-fidelity isolated sandbox');
