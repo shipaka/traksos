@@ -642,19 +642,23 @@ expect(photoMigration.includes('create table if not exists order_photos') &&
   '618.png Foto is REAL encrypted participant-scoped evidence and Android native chooser; debug photo never uploads');
 
 
-// Owner approved nine desktop cabinets on 20 Nov 2026. Source-level
-// invariants complement, but never replace, live Chromium screenshots.
+// All ten independently renderable PC roles share the owner-approved 617
+// contract from 900px. A mismatch with mobile's 899px maximum can silently
+// resurrect retired `Home` markup on 900–999px tablets or small laptops.
 const pcSource=await read('web/src/screens/approvedPcCabinets20261120.tsx');
 const pcCss=await read('web/src/approvedPcCabinets20261120.css');
 const pcMap=await read('web/public/traksos-russia-outline.svg');
 expect(pcSource.includes("export type ApprovedPCRole") &&
-  ['driver','owner','master','tow','service','insurer','inspection','moderator','admin']
+  ['driver','owner','master','tow','service','insurer','inspection','courier','moderator','admin']
     .every(role=>pcSource.includes("'"+role+"'")) &&
   pcSource.includes("useDesktopSize()") &&
-  pcCss.includes("@media(min-width:1000px)") &&
+  pcSource.includes("window.matchMedia('(min-width: 900px)')") &&
+  pcCss.includes("@media(min-width:900px)") &&
+  pcCss.includes("@media (min-width:900px) and (max-width:1199px)") &&
+  !pcCss.includes('@media(min-width:1000px)') &&
   unifiedShell.includes('ApprovedPcDesk') &&
   unifiedShell.includes("approvedPcCabinets20261120.css"),
-  'nine real desktop role workspaces are routed and mobile viewport remains separate');
+  'ten real desktop role workspaces start at 900px, without a legacy breakpoint gap');
 expect(pcSource.includes("get<any[]>('/api/orders')") &&
   pcSource.includes("get<any[]>('/api/orders?as=performer')") &&
   pcSource.includes("get<any[]>('/api/performer/auctions')") &&
