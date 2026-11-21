@@ -72,8 +72,23 @@ try{
           client:document.documentElement.clientWidth,
           scroll:document.documentElement.scrollWidth,
         }));
-        if(geometry.scroll>geometry.client+3)
-          throw Error('Horizontal scroll in '+role+' '+width+': '+JSON.stringify(geometry));
+        if(geometry.scroll>geometry.client+3){
+          const offenders=await page.evaluate(()=>{
+            const viewport=document.documentElement.clientWidth;
+            return Array.from(document.querySelectorAll('body *')).map(el=>{
+              const rect=el.getBoundingClientRect();
+              const css=getComputedStyle(el);
+              return {tag:el.tagName.toLowerCase(),
+                cls:typeof el.className==='string'?el.className.slice(0,100):'',
+                width:Math.round(rect.width),left:Math.round(rect.left),
+                right:Math.round(rect.right),position:css.position,
+                minWidth:css.minWidth,overflowX:css.overflowX};
+            }).filter(x=>x.right>viewport+3 && x.width>0 && x.position!=='fixed')
+              .sort((a,b)=>b.right-a.right).slice(0,12);
+          });
+          await page.screenshot({path:out+'/'+role+'-'+width+'-OVERFLOW.png',fullPage:true});
+          throw Error('Horizontal scroll in '+role+' '+width+': '+JSON.stringify({geometry,offenders}));
+        }
         if(errors.length)throw Error('JavaScript error in '+role+': '+errors.join('; '));
         await page.screenshot({path:out+'/'+role+'-'+width+'.png',fullPage:true});
         // A real browser must switch roles without new SMS or new signed
