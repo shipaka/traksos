@@ -63,6 +63,19 @@ try{
     width+': approved four-button courier bottom navigation changed');
   assert.equal(errors.length,0,width+': page errors '+errors.join('; '));
 
+  // A nested route may match both its parent and own tab. The longest
+  // matching tab must be the ONLY highlighted navigation destination.
+  for(const [route,selected] of [['#/courier/jobs','#/courier/jobs'],
+                                  ['#/courier/chat','#/courier/chat']]){
+    await page.goto(BASE+'/'+route,{waitUntil:'domcontentloaded'});
+    await page.locator('.tabbar a[href="'+selected+'"]').waitFor();
+    await page.waitForTimeout(90);
+    const active=await page.locator('.tabbar a.on').evaluateAll(
+      links=>links.map(a=>a.getAttribute('href')));
+    assert.deepEqual(active,[selected],
+      width+': multiple courier bottom tabs selected for '+route);
+  }
+
   await page.goto(BASE+'/#/menu',{waitUntil:'domcontentloaded'});
   await page.locator('.tr-mobile-menu-page').waitFor();
   assert.equal(await page.locator('a[href="#/trakbot"]').count()>0,true,
