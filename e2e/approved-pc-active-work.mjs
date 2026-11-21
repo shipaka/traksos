@@ -151,7 +151,7 @@ try{
    localStorage.setItem('traksos.mode',mode);
  },owner);
  await mobilePage.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
- await mobilePage.locator('main.and19-client').waitFor({timeout:18000});
+ await mobilePage.locator('.and19-workspace.and19-client').waitFor({timeout:18000});
  assert(await mobilePage.locator('.tr-training-invite').count()===0,
    'Mobile browser 390px is obstructed by the old first-visit training ribbon');
  assert(await mobilePage.locator('section[aria-label="Знакомство с TrakSOS"]').count()===0,
