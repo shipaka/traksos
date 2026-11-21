@@ -704,6 +704,8 @@ expect(realTestCenter.includes('FullFidelityRoleLauncher') &&
   !realTestCenter.includes('TrainingCabinet') &&
   !realTestCenter.includes('SandboxCabinet'),
   'test center contains only signed isolated full-fidelity role launcher, no fake dashboard');
+expect(!/\.sandbox-(?:workspace|nav|panel|ticket|scenario|bars|metric|feature|fleet|bays|route|road-flow|hero|breadcrumb|footer)\b/.test(css),
+  'retired mock role UI may not ship dead CSS selectors');
 const liveBaseSource=await read('web/src/screens/base.tsx');
 expect(!unifiedShell.includes('serviceSandbox') && !unifiedShell.includes('ServicePreview') &&
   !liveBaseSource.includes('servicePreviewApi') && !liveBaseSource.includes('inServicePreview'),
