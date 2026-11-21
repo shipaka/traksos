@@ -79,6 +79,29 @@ try{
           throw Error('Horizontal scroll in '+role+' '+width+': '+JSON.stringify(geometry));
         if(errors.length)throw Error('JavaScript error in '+role+': '+errors.join('; '));
         await page.screenshot({path:out+'/'+role+'-'+width+'.png',fullPage:true});
+        // A real browser must switch roles without new SMS or new signed
+        // admin handoff. Verify the resulting role cannot elevate itself.
+        if(role==='admin'){
+          const choose=page.locator('#sandbox-switch-role');
+          await choose.waitFor();
+          await choose.selectOption('client');
+          await page.getByRole('button',{name:'Перейти',exact:true}).click();
+          await page.waitForFunction(()=>location.hash==='#/' &&
+            localStorage.getItem('traksos.token')?.length>30,{timeout:15_000});
+          const privilege=await page.evaluate(async()=>{
+            const token=localStorage.getItem('traksos.token');
+            const me=await fetch('/api/me',{headers:{authorization:'Bearer '+token}}).then(r=>r.json());
+            const attempt=await fetch('/api/sandbox/switch-role',{
+              method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+token},
+              body:JSON.stringify({role:'admin'}),
+            });
+            return {roles:me.roles,status:attempt.status};
+          });
+          if(!privilege.roles?.includes('client') || privilege.roles?.includes('admin') ||
+              privilege.status!==403)
+            throw Error('Browser role switch or non-supervisor isolation failed '+JSON.stringify(privilege));
+          console.log('SANDBOX BROWSER SWITCH PASS',width,'supervisor to client; client cannot escalate');
+        }
         console.log('SANDBOX BROWSER PASS',role,width,landing,'approved interface and isolated session');
       }finally{await context.close();}
     }
