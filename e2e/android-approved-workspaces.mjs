@@ -227,7 +227,7 @@ try {
     }
     if(mode==='performer'){
       await page.goto(BASE+'/#/work/chats',{waitUntil:'domcontentloaded'});
-      await page.getByRole('heading',{name:'Чаты по заявкам'}).waitFor();
+      await page.locator('.desktop-content > main').getByRole('heading',{name:'Чаты по заявкам'}).first().waitFor();
       if(await page.getByText('Такой страницы нет').count())throw Error(role+': chat inbox dead');
     }
     await ctx.close();
