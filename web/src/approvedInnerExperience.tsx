@@ -47,6 +47,8 @@ const roleCopy: Record<string,{name:string;home:string;actions:[string,string][]
   admin:{name:'Администратор',home:'/admin',actions:[['/admin/section/orders','Все заявки'],['/admin/section/diagnostics','Диагностика'],['/admin/test-center','Тестовые кабинеты']]},
 };
 function metaFor(path:string[], fallback:string):RouteMeta{
+  if(path[0]==='base'&&path[1]==='me')
+    return {title:'Карточка СТО',subtitle:'Отметьте услуги, условия приёмки и фактический адрес въезда. Стоимость согласуется после осмотра.',marker:'СТО'};
   const base=pageCopy[path[0]||''];
   if(!base)return {title:fallback||'Рабочий раздел',subtitle:'Важные инструменты и следующие действия находятся на этой странице.',marker:'РАЗДЕЛ'};
   if(path.length>1 && fallback && !['Рабочий раздел','Кабинет техосмотра'].includes(fallback))
@@ -56,7 +58,7 @@ function metaFor(path:string[], fallback:string):RouteMeta{
 export function ApprovedInnerHero({mode,route,title}:{mode:string;route:string[];title:string}){
   const role=roleCopy[mode]??roleCopy.client;
   const info=metaFor(route,title);
-  return <header className="tr-inner-hero" data-traksos-inner-ui="approved-617-618" key={route.join('/')}>
+  return <header className="tr-inner-hero" data-traksos-inner-ui="approved-617-618" data-route={route.join('/')} key={route.join('/')}>
     <div className="tr-inner-hero-copy">
       <nav className="tr-inner-crumbs" aria-label="Навигация по разделам">
         <a href={'#'+role.home}>Рабочий стол</a><span aria-hidden="true">/</span>
