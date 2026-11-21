@@ -224,6 +224,33 @@ try{
      if(c.id==='moderator'&&await page.locator('.trakbot-dock').count())
        throw Error('Moderator inner page unexpectedly shows floating TrakBot: '+width);
      if(c.id==='admin') await page.locator('.admin-stage-content .admin-orders-zero, .admin-stage-content .list-item').first().waitFor({timeout:12000});
+     // Real (not CSS mocks) space budget: show the first useful field
+     // sooner instead of repeating a 200px illustration beneath the hero.
+     if(c.id==='owner'){
+       const garageEmpty=page.locator('.client-garage-page > .tr-approved-garage-empty');
+       if(await garageEmpty.count()){
+         const height=await garageEmpty.evaluate(e=>Math.round(e.getBoundingClientRect().height));
+         if(height>240)throw Error('Garage empty card still pushes the vehicle form below fold: '+height+'px');
+         if(await page.locator('.client-garage-page input.field').count()<1)
+           throw Error('Compact garage empty state removed the real add-vehicle form');
+       }
+     }
+     if(['master','tow'].includes(c.id) && width>=1440){
+       const profileHero=page.locator('.performer-workspace > .internal-role-hero-performer');
+       if(await profileHero.count()){
+         const height=await profileHero.evaluate(e=>Math.round(e.getBoundingClientRect().height));
+         if(height>165)throw Error('Master profile old secondary hero still oversized: '+height+'px');
+         if(!await profileHero.locator('a[href="#/work"]').isVisible())
+           throw Error('Master lost real back-to-live-work action');
+       }
+     }
+     if(c.id==='admin' && width>=1440){
+       const empty=page.locator('.admin-orders-zero');
+       if(await empty.count() && await empty.isVisible()){
+         const height=await empty.evaluate(e=>Math.round(e.getBoundingClientRect().height));
+         if(height>245)throw Error('Admin old empty-state poster pushes order controls down: '+height+'px');
+       }
+     }
      if(c.id==='owner'){
        const header=page.locator('.client-garage-page>.client-section-hero');
        await header.waitFor({state:'attached'});
