@@ -78,6 +78,8 @@ try {
         // the SAME owner-approved phone dashboard (618.png). The old browser
         // desktop hero and six-tab cards have been retired. Check the actual
         // actions, role and route contracts rather than obsolete CSS names.
+        if(await page.locator('.tr-context-help').count())
+          throw Error('Legacy top help banner obscures approved 618 mobile browser');
         const app=page.locator('.app.role-client');
         await app.waitFor({state:'visible'});
         const desk=app.locator('main.client-dashboard .and19-workspace.and19-client');
