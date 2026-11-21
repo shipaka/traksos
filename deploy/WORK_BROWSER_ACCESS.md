@@ -57,8 +57,8 @@ own narrowly scoped publishing mechanism. Do not bypass either gate.
 3. After the admin handoff, the sandbox stores a **12-hour supervisor
    session**, only in that browser tab. The top TEST banner includes a
    role switcher for 12 fictional accounts. Switching sends a request to
-   `/api/sandbox/switch-role` and creates a separate, at most 2-hour,
-   role-scoped session, without SMS or repeat login.
+   `/api/sandbox/switch-role` and creates a separate role-scoped session valid no longer than the
+   remaining supervisor grant (at most 12 hours), without SMS or repeat login.
 4. The supervisor token is **not** the role token: a client, driver or
    switched-admin role cannot mint any other role. The supervisor exists
    only in the separate sandbox database. The production site exposes no
