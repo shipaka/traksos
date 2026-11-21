@@ -717,7 +717,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         </div>
       </header>
       <NetworkStatus />
-      {me && !mobileShell && <ContextHelp page={route[0] ?? ''} />}
+      {me && !mobileShell && !approvedInnerRoute && <ContextHelp page={route[0] ?? ''} />}
       <div className="desktop-layout">
         <aside className="desktop-sidebar" aria-label="Навигация по сайту">
           <div className="desktop-sidebar-title">{me ? 'Рабочий кабинет' : isAuthEntry ? 'TrakSos · вход и документы' : 'TrakSos · помощь в дороге'}</div>
