@@ -186,6 +186,19 @@ try{
             console.log('SANDBOX ROUTE PASS',role,width,destination,state.mainClass);
           }
         }
+        // A wrong-role deep link must NEVER show an old Home dashboard.
+        // Clear denial screens are safer than silently exposing a stale
+        // or misleading cabinet for an authenticated user.
+        if(role==='client' && width===390){
+          for(const forbidden of ['#/admin','#/moderation','#/base','#/work','#/login']){
+            await page.goto(base+'/'+forbidden,{waitUntil:'domcontentloaded'});
+            await page.locator('main.tr-approved-route-unavailable').waitFor({state:'visible',timeout:15000});
+            if(await page.locator('main.client-dashboard, main.approved-pc').count())
+              throw Error('Retired dashboard mounted on forbidden route '+forbidden);
+            if(errors.length)throw Error('Denied route Javascript failure '+forbidden+': '+errors.join('; '));
+            console.log('SANDBOX DENIED ROUTE PASS',forbidden,'neutral approved-only state');
+          }
+        }
         // A real browser must switch roles without new SMS or new signed
         // admin handoff. Verify the resulting role cannot elevate itself.
         if(role==='admin'){
