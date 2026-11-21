@@ -69,6 +69,22 @@ try{
         const content=await page.locator('main').first().innerText();
         if(!content.trim() || /Вход по номеру телефона|Отсутствует приглашение/.test(content))
           throw Error('Role did not open a real authenticated cabinet: '+role);
+        // The isolated browser used to show a legacy 900px Fleet page even
+        // though APK owned a separate approved client dashboard. Pin both
+        // browser and APK to the same real mobile composition.
+        if(width<=390 && ['owner','client','driver'].includes(role)){
+          if(role==='owner'){
+            await page.locator('main.fleet-mobile-approved').waitFor({state:'visible'});
+            if(await page.locator('.internal-role-hero-fleet').count())
+              throw Error('Legacy desktop Fleet UI leaked into mobile browser');
+            if(!await page.locator('.fleet-mobile-car-link[href^="#/garage/"]').count())
+              throw Error('Owner mobile cards are not opening real vehicle history');
+          }else{
+            await page.locator('.and19-workspace.and19-client').waitFor({state:'visible'});
+            if(await page.locator('main .desktop-hero').count())
+              throw Error('Legacy browser client hero replaced approved Android shell');
+          }
+        }
         const geometry=await page.evaluate(()=>({
           client:document.documentElement.clientWidth,
           scroll:document.documentElement.scrollWidth,
