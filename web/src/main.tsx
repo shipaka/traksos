@@ -103,6 +103,9 @@ import { InsurerCabinet, InsurerChats } from './screens/insurer.tsx';
 import { CourierDesk, CourierDelivery } from './screens/courier.tsx';
 import { ApprovedPcDesk, type ApprovedPCRole } from './screens/approvedPcCabinets20261120.tsx';
 import { InsuranceApplication,InsuranceThread } from './screens/insuranceFlow.tsx';
+// Injected by the exact same BUILD_REV that powers /api/health in the VPS image.
+declare const __TRAKSOS_BUILD_REV__: string;
+const BROWSER_BUILD_REV = __TRAKSOS_BUILD_REV__;
 
 /** Last-resort screen protection: a broken widget must not produce a blank website. */
 class ScreenErrorBoundary extends Component<
@@ -139,6 +142,28 @@ function App() {
   const toast = useToast();
   const [me, setMe] = useState<Me | null>(null);
   const [ready, setReady] = useState(false);
+  // A stale PWA/service-worker bundle must NEVER quietly render yesterday's
+  // dashboard against a newly deployed API. Native APK versions are allowed
+  // to lag the server and have a separate compatibility contract.
+  const [browserRevision, setBrowserRevision] = useState<'checking'|'ok'|'stale'>(() =>
+    native.isApp || !/^[a-f0-9]{40}$/.test(BROWSER_BUILD_REV) ? 'ok' : 'checking');
+  useEffect(() => {
+    if (browserRevision !== 'checking') return;
+    const abort = new AbortController();
+    const timer = setTimeout(() => abort.abort(), 6000);
+    let active = true;
+    void fetch('/api/health', { cache: 'no-store', signal: abort.signal })
+      .then(async response => response.ok ? await response.json() : null)
+      .then(result => {
+        if (!active) return;
+        const serverRevision = result?.buildRevision;
+        setBrowserRevision(typeof serverRevision === 'string' &&
+          /^[a-f0-9]{40}$/.test(serverRevision) && serverRevision !== BROWSER_BUILD_REV
+          ? 'stale' : 'ok');
+      }).catch(() => { if (active) setBrowserRevision('ok'); })
+      .finally(() => clearTimeout(timer));
+    return () => { active = false; clearTimeout(timer); abort.abort(); };
+  }, [browserRevision]);
   const [mode, setModeState] = useState<Mode>(() => (localStorageGet('traksos.mode') as Mode) || 'client');
   const setMode = (m: Mode) => { setModeState(m); localStorageSet('traksos.mode', m); };
 
@@ -223,7 +248,35 @@ function App() {
     if (e.type === 'order' && e.status === 'accepted' && modeRef.current !== 'performer' && !location.hash.startsWith('#/work')) toast('Исполнитель найден');
   }), [reload, toast]);
 
-  if (!ready) return <div className="traksos-start-loading" role="status" aria-label="Загрузка"><span className="traksos-start-loading-line" aria-hidden="true" /></div>;
+  if (!ready || browserRevision === 'checking')
+    return <div className="traksos-start-loading" role="status" aria-label="Проверка версии интерфейса">
+      <span className="traksos-start-loading-line" aria-hidden="true" />
+    </div>;
+  if (browserRevision === 'stale') return <div className="app" style={{minHeight:'100vh',padding:'10vh 16px 24px'}}> 
+    <main className="stack" style={{margin:'0 auto',maxWidth:590,padding:24,
+      background:'linear-gradient(145deg,#163849,#081e2c)',border:'1px solid #4e8190',borderRadius:18,
+      color:'#f3faff',boxShadow:'0 18px 40px #0007'}}> 
+      <span className="pill accent">TRAKSOS · ТРЕБУЕТСЯ ОБНОВЛЕНИЕ</span>
+      <h1 style={{fontSize:26}}>На сайте вышла новая версия</h1>
+      <p>Этот браузер сохранил предыдущую сборку. Чтобы не открыть старый интерфейс
+        и не смешать данные разных версий, текущий экран заблокирован.</p>
+      <button className="btn" type="button" onClick={async () => {
+        try {
+          if ('caches' in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.filter(key => key.startsWith('tracksos-static-'))
+              .map(key => caches.delete(key)));
+          }
+          if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(regs.map(reg => reg.update()));
+          }
+        } catch { /* Unavailable cache API must not trap the user. */ }
+        location.reload();
+      }}>Загрузить актуальный интерфейс</button>
+      <small style={{color:'#abc7d6'}}>Текущая сборка: {BROWSER_BUILD_REV.slice(0,12)}. Ничего из аккаунта не удалено.</small>
+    </main>
+  </div>;
   // Handoff takes place on the separate sandbox origin. The ticket is not a
   // production login and never reaches normal application API endpoints.
   if (route[0] === 'sandbox-enter') return <SandboxEnter />;
