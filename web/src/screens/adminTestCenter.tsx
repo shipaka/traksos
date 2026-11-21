@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { get, post } from '../api.ts';
+import { NavGlyph } from '../navGlyph.tsx';
 
 // Only the role-selection UI lives here. Authorized sandbox tickets open
 // actual TrakSOS role workspaces on a separate origin and isolated database.
@@ -8,16 +9,16 @@ type DemoRole='client'|'owner'|'driver'|'master'|'tow'|'service'|
   'master_service'|'insurer'|'inspection'|'courier'|'moderator'|'admin';
 type RoleInfo={id:DemoRole;icon:string;label:string;subtitle:string};
 const DEMO_ROLES:RoleInfo[]=[
-  {id:'client',icon:'✚',label:'Клиент',subtitle:'Помощь на дороге и мой гараж'},
+  {id:'client',icon:'＋',label:'Клиент',subtitle:'Помощь на дороге и мой гараж'},
   {id:'owner',icon:'▦',label:'Владелец / автопарк',subtitle:'Машины, водители и расходы'},
   {id:'driver',icon:'◉',label:'Сотрудник автопарка',subtitle:'Закреплённая техника'},
-  {id:'master',icon:'⚒',label:'Выездной мастер',subtitle:'Линия, выезды и выплаты'},
-  {id:'tow',icon:'↗',label:'Эвакуаторщик',subtitle:'Эвакуация грузового транспорта'},
-  {id:'service',icon:'▤',label:'Рембаза / СТО',subtitle:'Записи, боксы, заказ-наряды'},
-  {id:'master_service',icon:'◈',label:'Мастер и своя СТО',subtitle:'Выезды и стационарный ремонт'},
+  {id:'master',icon:'wrench',label:'Выездной мастер',subtitle:'Линия, выезды и выплаты'},
+  {id:'tow',icon:'tow',label:'Эвакуаторщик',subtitle:'Эвакуация грузового транспорта'},
+  {id:'service',icon:'garage',label:'Рембаза / СТО',subtitle:'Записи, боксы, заказ-наряды'},
+  {id:'master_service',icon:'garage',label:'Мастер и своя СТО',subtitle:'Выезды и стационарный ремонт'},
   {id:'insurer',icon:'◇',label:'Страховой партнёр',subtitle:'Заявки, документы, полисы'},
   {id:'inspection',icon:'▣',label:'Оператор техосмотра',subtitle:'Диагностические карты и осмотры'},
-  {id:'courier',icon:'▣',label:'Курьер запчастей',subtitle:'Рейсы и подтверждение доставки'},
+  {id:'courier',icon:'truck',label:'Курьер запчастей',subtitle:'Рейсы и подтверждение доставки'},
   {id:'moderator',icon:'⚑',label:'Модератор',subtitle:'Споры и проверка партнёров'},
   {id:'admin',icon:'⚙',label:'Администратор',subtitle:'Контроль платформы'},
 ];
@@ -66,7 +67,7 @@ export function AdminTestCenter({roleId}:{roleId?:string;fullFidelity?:boolean})
     </div>
     <div className="sandbox-role-grid" role="group" aria-label="Выбор тестового кабинета">
       {DEMO_ROLES.map(r=><a key={r.id} className="sandbox-role-card" href={rolePath(r.id)}>
-        <span className="sandbox-role-icon" aria-hidden="true">{r.icon}</span>
+        <span className="sandbox-role-icon" aria-hidden="true"><NavGlyph glyph={r.icon}/></span>
         <b>{r.label}</b><span>{r.subtitle}</span><strong>Открыть кабинет ↗</strong>
       </a>)}
     </div>

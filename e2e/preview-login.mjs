@@ -46,6 +46,10 @@ try {
     const previewLink = page.locator('main.approved-pc-admin a[href="#/admin/test-center"]').first();
     await previewLink.click();
     await page.getByRole('heading',{name:'Тестирование кабинетов'}).waitFor();
+    const roleCards=page.locator('main.sandbox-root .sandbox-role-card');
+    if(await roleCards.count()!==12 ||
+       await roleCards.locator('.sandbox-role-icon svg').count()!==12)
+      throw Error('Admin selector must display 12 real roles with consistent SVG icons');
     for (const [id,label] of [
       ['client','Клиент'],['owner','Владелец / автопарк'],['driver','Сотрудник автопарка'],
       ['master','Выездной мастер'],['tow','Эвакуаторщик'],['service','Рембаза / СТО'],

@@ -1170,6 +1170,7 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
 .sandbox-role-icon{display:grid;place-items:center;width:50px;height:50px;border-radius:15px;
   background:linear-gradient(135deg,rgba(33,215,237,.2),rgba(247,38,143,.18));color:#7eeaf7;
   font-size:25px;box-shadow:inset 0 0 0 1px rgba(123,226,248,.2);}
+.sandbox-role-icon svg{width:30px;height:30px;stroke-width:1.85;display:block;}
 .sandbox-role-card b{font-size:17px;line-height:1.3;}
 .sandbox-role-card>span:not(.sandbox-role-icon){font-size:12px;color:#bbd3e5;line-height:1.45;}
 .sandbox-role-card strong{margin-top:auto;font-size:12px;color:#66e7f6;}

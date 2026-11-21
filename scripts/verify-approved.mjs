@@ -701,6 +701,9 @@ expect(retiredDemo.includes('Старый демонстрационный пр�
   'public PIN preview must never restore obsolete simulated role cabinets');
 expect(realTestCenter.includes('FullFidelityRoleLauncher') &&
   realTestCenter.includes("'/api/admin/sandbox/ticket'") &&
+  realTestCenter.includes('<NavGlyph glyph={r.icon}/>') &&
+  realTestCenter.includes("id:'tow',icon:'tow'") &&
+  realTestCenter.includes("id:'master',icon:'wrench'") &&
   !realTestCenter.includes('TrainingCabinet') &&
   !realTestCenter.includes('SandboxCabinet'),
   'test center contains only signed isolated full-fidelity role launcher, no fake dashboard');
