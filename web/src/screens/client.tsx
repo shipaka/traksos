@@ -51,8 +51,11 @@ export function Home() {
   const insuranceInProgress = (services.data ?? []).filter(r =>
     r.kind === 'insurance' && isOpenInsuranceRequest(r.status));
   const live = (active.data ?? []).filter((o: any) => !['completed', 'cancelled'].includes(o.status));
-  // Native Android approved workspace, with existing fleet permissions still enforced.
-  if (mobileWorkspace && native.isApp) return <main className="client-home client-dashboard">
+  // The same approved Android-sized workspace is the ONLY signed-in phone UI,
+  // both in the APK WebView and the mobile browser. Previously the browser
+  // silently fell through to the obsolete desktop hero and widgets.
+  // Keep fleet permissions and real order data identical across both.
+  if (mobileWorkspace) return <main className="client-home client-dashboard">
     <AndroidClientWorkspace orders={live} loading={!active.data && !active.error} error={active.error}
       retry={active.reload} me={me} insuranceInProgress={insuranceInProgress}
       disabledServices={{repair:restricted('repair'),tow:restricted('tow'),service:restricted('service'),consult:restricted('consult'),shop:restricted('shop')}} />
