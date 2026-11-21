@@ -4,7 +4,7 @@
 // The domain is traksos.ru. Do not touch stable package names, storage keys or URLs.
 // Photographic assets require a separate human visual proof because text burned
 // into image pixels cannot be detected by this source-code check.
-import { readdir, readFile } from 'node:fs/promises';
+import { readdir, readFile, stat } from 'node:fs/promises';
 import { join, extname } from 'node:path';
 
 const roots = [
@@ -47,11 +47,22 @@ for (const file of individual) await scan(file);
 for (const [file, marker] of [
   ['web/index.html', '<title>TrakSos</title>'],
   ['android/app/src/main/res/values/strings.xml', '<string name="app_name">TrakSos</string>'],
-  ['web/src/main.tsx', 'Trak<b>Sos</b>'],
+  // Canonical 618.png owner-approved logo replaces the retired text-markup logo.
+  // Keep the visual gate tied to the actual <img> and image source registry.
+  ['web/src/main.tsx', '<img src={APPROVED_VISUALS.logo}'],
+  ['web/src/approvedVisuals.ts', "logo: '/traksos-brand-logo-approved-618.png'"],
   ['server/src/domain/defaults.ts', "brand: 'TrakSOS'"],
 ]) {
   if (!(await readFile(file, 'utf8')).includes(marker))
     failures.push(`${file} — missing required canonical branding`);
+}
+// Refuse a missing/empty real logo asset. This is a source check, not a visual approval.
+try {
+  const image = await stat('web/public/traksos-brand-logo-approved-618.png');
+  if (!image.isFile() || image.size < 1024)
+    failures.push('web/public/traksos-brand-logo-approved-618.png — approved logo asset is missing or empty');
+} catch {
+  failures.push('web/public/traksos-brand-logo-approved-618.png — approved logo asset is missing');
 }
 if (failures.length) {
   console.error('Brand gate blocked release: '+failures.length+' issue(s).');

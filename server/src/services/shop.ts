@@ -336,20 +336,26 @@ export class ShopService {
     const ownerId = user.owner_id ?? user.id;
     const safePage = Math.max(0, Math.min(1000, Math.floor(page)));
     const params: unknown[] = [ownerId];
-    const filters = ['client_id=$1'];
-    if (user.owner_id) { params.push(user.id); filters.push(`created_by=$${params.length}`); }
-    if (vehicleId) { params.push(vehicleId); filters.push(`vehicle_id=$${params.length}`); }
+    const filters = ['s.client_id=$1'];
+    if (user.owner_id) { params.push(user.id); filters.push(`s.created_by=$${params.length}`); }
+    if (vehicleId) { params.push(vehicleId); filters.push(`s.vehicle_id=$${params.length}`); }
     const where = filters.join(' and ');
     const take = 20;
     const rows = await this.db.query<any>(
-      `select * from shop_orders where ${where} order by created_at desc, id desc
-       limit $${params.length + 1} offset $${params.length + 2}`, [...params, take + 1, safePage * take]);
-    return { items: rows.slice(0, take).map((o: any) => this.orderView(o)), hasMore: rows.length > take, page: safePage };
+      `select s.*,d.status as courier_status
+         from shop_orders s left join shop_courier_deliveries d on d.shop_order_id=s.id
+        where ${where} order by s.created_at desc,s.id desc
+        limit $${params.length + 1} offset $${params.length + 2}`, [...params, take + 1, safePage * take]);
+    return { items: rows.slice(0, take).map((o: any) => ({
+      ...this.orderView(o),courierStatus:o.courier_status??null,
+      canConfirmCourierReceipt:!!o.courier_status&&o.created_by===user.id
+    })), hasMore: rows.length > take, page: safePage };
   }
 
   // ——— Клиент: заказ ———
   async order(user: AuthUser, p: { items: { productId: string; qty: number }[]; delivery: 'pickup' | 'delivery' | 'master'; address?: string | null; orderId?: string | null; payment?: 'on_receipt' | 'invoice'; comment?: string | null; vehicleId?: string | null }) {
-    if (user.roles.includes('insurer')) throw forbidden('Покупки доступны через отдельный клиентский или партнёрский аккаунт');
+    if (!user.roles.some(r=>['client','driver','master','tow','service'].includes(r)))
+      throw forbidden('Покупки доступны только в кабинете клиента или исполнителя ремонта');
     const s = await this.settings.get('shop');
     if (!s.enabled) throw conflict('shop_closed', s.closedTitle);
     if (user.owner_id) {
@@ -409,9 +415,13 @@ export class ShopService {
 
   async myOrders(user: AuthUser) {
     const rows = await this.db.query(
-      `select * from shop_orders where client_id=$1 ${user.owner_id ? 'and created_by=$2' : ''} order by created_at desc limit 50`,
+      `select s.*,d.status as courier_status
+         from shop_orders s left join shop_courier_deliveries d on d.shop_order_id=s.id
+        where s.client_id=$1 ${user.owner_id ? 'and s.created_by=$2' : ''}
+        order by s.created_at desc limit 50`,
       user.owner_id ? [user.owner_id, user.id] : [user.id]);
-    return rows.map((o) => this.orderView(o));
+    return rows.map((o: any) => ({...this.orderView(o),courierStatus:o.courier_status??null,
+      canConfirmCourierReceipt:!!o.courier_status&&o.created_by===user.id}));
   }
 
   async cancelMine(user: AuthUser, id: string) {
@@ -424,9 +434,22 @@ export class ShopService {
   // ——— Админ: заказы ———
   async adminOrders(status?: string) {
     const rows = await this.db.query(
-      `select s.*, u.name as client_name, u.phone as client_phone, u.company_name from shop_orders s join users u on u.id=s.client_id
-        ${status === 'open' ? `where s.status in ('new','confirmed','ready','shipped')` : ''} order by s.created_at desc limit 200`);
-    return rows.map((o: any) => ({ ...this.orderView(o), client: { name: o.company_name || o.client_name, phone: o.client_phone } }));
+      `select s.*, u.name as client_name, u.phone as client_phone, u.company_name,
+           d.id as courier_delivery_id,d.status as courier_status,d.courier_id,
+            d.code_attempts as courier_code_attempts,d.code_expires_at as courier_code_expires_at,
+            d.code_resets as courier_code_resets
+         from shop_orders s join users u on u.id=s.client_id
+         left join shop_courier_deliveries d on d.shop_order_id=s.id
+        ${status === 'open' ? `where s.status in ('new','confirmed','ready','shipped')` : ''}
+        order by s.created_at desc limit 200`);
+    return rows.map((o: any) => ({ ...this.orderView(o),
+      courierDeliveryId:o.courier_delivery_id??null,
+      courierStatus:o.courier_status??null,
+      courierId:o.courier_id??null,
+      courierCodeAttempts:o.courier_code_attempts??null,
+      courierCodeExpiresAt:o.courier_code_expires_at??null,
+      courierCodeResets:o.courier_code_resets??null,
+      client: { name: o.company_name || o.client_name, phone: o.client_phone } }));
   }
 
   async setStatus(actor: AuthUser | null, id: string, status: string, note?: string) {
@@ -434,6 +457,25 @@ export class ShopService {
     if (!o) throw notFound('Заказ не найден');
     if (!(NEXT[o.status] ?? []).includes(status)) throw conflict('bad_status', `Из «${SHOP_STATUS[o.status]}» в «${SHOP_STATUS[status] ?? status}» нельзя`);
     await this.db.tx(async (q) => {
+      // Serialize with courier handoff and buyer confirmation. An admin cannot
+      // mark an assigned courier delivery received or bypass its status order.
+      const locked=await q.one<{status:string}>(
+        'select status from shop_orders where id=$1 for update',[id]);
+      if(!locked||locked.status!==o.status)
+        throw conflict('status_changed','Заказ изменился — обновите страницу');
+      const courier=await q.one<{id:string;status:string}>(
+        'select id,status from shop_courier_deliveries where shop_order_id=$1 for update',[id]);
+      if(courier){
+        if(status==='done'||status==='shipped')
+          throw conflict('courier_handoff_required',
+            'Доставку ведёт курьер. Получение подтверждает покупатель после проверки кода.');
+        if(status==='cancelled'&&courier.status!=='assigned')
+          throw conflict('courier_in_progress',
+            'Курьер уже выехал — откройте разбирательство прежде чем отменять передачу.');
+        if(status==='cancelled')await q.query(
+          `update shop_courier_deliveries set status='cancelled',updated_at=now()
+             where id=$1`,[courier.id]);
+      }
       if (status === 'cancelled') {
         // Вернуть зарезервированное на склад
         for (const it of o.items) if (it.inStock) await q.query('update shop_products set stock = coalesce(stock, 0) + $2 where id=$1', [it.productId, it.qty]);

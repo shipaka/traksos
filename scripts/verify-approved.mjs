@@ -168,7 +168,7 @@ expect(unifiedOrderPhoto.includes("vehicleReferencePhoto(brand,model,year)") &&
   unifiedOrderPhoto.includes('is-illustration') &&
   unifiedClient.includes('<ApprovedOrderTruck order={o} />') &&
   unifiedMobile.includes('<ApprovedOrderTruck order={current} />') &&
-  unifiedMobile.includes('<ApprovedOrderTruck order={active[0]} />') &&
+  (unifiedMobile.match(/<ApprovedOrderTruck order={current} \/>/g)||[]).length >= 2 &&
   unifiedSceneStyle.includes('prefers-reduced-motion:reduce') &&
   ownerPcHeader.includes('src={APPROVED_VISUALS.logo}') &&
   !ownerPcHeader.includes('function TruckLogo()'),
@@ -458,8 +458,8 @@ const mobileRoleMenu = await read('web/src/mobileRoleMenu.tsx');
 const innerAndroidStyle = await read('web/src/androidInternalSections20261120.css');
 const androidRealScreens = await read('e2e/android-approved-real-screens.mjs');
 const mobileMenuBlock = shell.slice(shell.indexOf('const mobileTabs:'),shell.indexOf('const accountLinks:'));
-// Seven production roles plus the isolated STO sandbox variant (both remain navigable).
-expect((mobileMenuBlock.match(/\['\/menu', 'menu', 'Меню'\]/g)??[]).length === 8 &&
+// Eight production roles including the approved courier plus isolated STO sandbox.
+expect((mobileMenuBlock.match(/\['\/menu', 'menu', 'Меню'\]/g)??[]).length === 9 &&
   shell.includes("href==='/menu'?'/menu'") &&
   !mobileMenuBlock.includes("['/profile', '◉', 'Меню']") &&
   !mobileMenuBlock.includes("['/menu', '◉', 'Меню']") &&
@@ -506,7 +506,7 @@ expect(androidWorkspaceLive.includes('current?.performer_name') &&
   androidWorkspaceLive.includes("current.performer_rating") &&
   androidWorkspaceLive.includes('and19-order-photo-link') &&
   androidWorkspaceLive.includes("current.vehicle_id ? '#/garage/' + current.vehicle_id") &&
-  androidWorkspaceLive.includes("current.id + '?chat=1'") &&
+  androidWorkspaceLive.includes("href={'#/order/'+current.id+'?chat=1'}") &&
   androidWorkspaceLive.includes('vehicleReferencePhoto(vehicleBrand, vehicleModel, vehicleYear)') &&
   androidWorkspaceLive.includes('current.money.amount') &&
   androidWorkspaceLive.includes('current.money.clientFee'),

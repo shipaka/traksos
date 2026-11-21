@@ -55,8 +55,8 @@ try {
       if(!token || token.length<40) throw Error(width+': no scoped preview token');
       issuedTokens.push(token);
 
-      if(await page.locator('.sandbox-role-card').count()!==11)
-        throw Error(width+': the demo selector must expose eleven isolated roles');
+      if(await page.locator('.sandbox-role-card').count()!==12)
+        throw Error(width+': the demo selector must expose twelve isolated roles');
       const protectedMe=await fetch(BASE+'/api/me',{headers:{authorization:'Bearer '+token}});
       if(protectedMe.status!==401)
         throw Error(width+': preview token could authenticate against real /api/me');
@@ -95,7 +95,7 @@ try {
       if(errors.length)throw Error(width+': JavaScript error: '+errors.join('; '));
     }finally{await context.close();}
   }
-  console.log('Temporary one-use demo code: phone-free entry, 11 roles, two role routes, fresh-browser isolation, no real API login, expiry — PASS (390/1440)');
+  console.log('Temporary one-use demo code: phone-free entry, 12 roles including courier, two role routes, fresh-browser isolation, no real API login, expiry — PASS (390/1440)');
 }finally{
   if(browser)await browser.close();
   // Strictly local CI fixture cleanup. Never deletes other roles or real users.

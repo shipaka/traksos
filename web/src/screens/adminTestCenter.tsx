@@ -11,7 +11,7 @@ import { MasterServiceTrainingCabinet } from './masterServiceTrainingCabinet.tsx
 // Admin-only DEMONSTRATION. This file deliberately has no API imports or fetch:
 // even realistic-looking actions never touch real accounts, jobs, SMS or money.
 type DemoRole = 'client'|'owner'|'driver'|'master'|'tow'|'service'|
-  'master_service'|'insurer'|'inspection'|'moderator'|'admin';
+  'master_service'|'insurer'|'inspection'|'courier'|'moderator'|'admin';
 type Section = 'overview'|'tasks'|'profile'|'history';
 type Ticket = {id:number;title:string;status:'Новая'|'В работе'|'Завершена'|'Отменена'};
 type RoleInfo = {
@@ -66,6 +66,13 @@ const DEMO_ROLES:RoleInfo[] = [
     profile:'Оператор и документы',history:'История техосмотров',task:'Провести технический осмотр тягача',
     metrics:['1','2','1'],activity:['Получена заявка на техосмотр','Диагностическая карта ожидает оформления'],
     features:[['▣','Осмотры','Очередь назначенных транспортных средств'],['▤','Документы','Результаты и диагностические карты'],['₽','Финансы','Начисления и выплаты оператора']]},
+  {id:'courier',icon:'▣',label:'Курьер запчастей',subtitle:'Рейсы, адресная доставка и подтверждение получателя',
+    headline:'Рабочий стол курьера',section:'Мои рейсы',action:'Открыть доставку',
+    profile:'Профиль курьера',history:'История доставок',task:'Доставить запчасти клиенту',
+    metrics:['1','1','0'],activity:['Назначена учебная доставка','Подтверждение клиента обязательно'],
+    features:[['▣','Мои рейсы','Только назначенные курьеру остановки'],
+      ['⌖','Навигация','Адрес доставки в карточке заказа'],
+      ['✓','Вручение','Код и отдельное подтверждение покупателя']]},
   {id:'moderator',icon:'⚑',label:'Модератор',subtitle:'Споры и проверка партнёров',
     headline:'Контроль качества TrakSOS',section:'Очередь модерации',action:'Открыть обращение',
     profile:'Мой профиль',history:'Журнал решений',task:'Рассмотреть жалобу на услугу',

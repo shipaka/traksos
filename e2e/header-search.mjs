@@ -11,7 +11,8 @@ async function session(term, select, expectedHash, width=1440){
   page.on('pageerror',err=>errors.push(err.message));
   try{
     await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
-    await page.getByRole('heading',{name:/TrakSOS.*помощь/}).waitFor();
+    // Wait for the actual approved header control, not a retired hero heading.
+    await page.locator('.track-site-search-icon').waitFor({state:'visible'});
     const search=page.getByRole('searchbox',{name:'Поиск разделов и услуг'});
     // Canonical header starts as a search icon; opening it must reveal a usable real input.
     await page.locator('.track-site-search-icon').click();

@@ -157,8 +157,12 @@ try {
       const image=document.querySelector('.public-map-wrap')?.getBoundingClientRect();
       return how&&map&&image?{howX:how.x,mapX:map.x,howY:how.y,mapY:map.y,mapWidth:map.width,mapImageRatio:image.width/image.height}:null;
     });
-    if(!mapGeo || mapGeo.mapImageRatio<1.7 || mapGeo.mapImageRatio>2.6)
-      throw Error('Map intrinsic composition distorted: '+JSON.stringify(mapGeo));
+    // The approved mobile layout uses a 215px-high map with responsive width;
+    // desktop's wide aspect-ratio gate must not reject that intentional stack.
+    if(!mapGeo || !Number.isFinite(mapGeo.mapImageRatio) || mapGeo.mapWidth<160 || mapGeo.mapImageRatio<0.9)
+      throw Error('Map has invalid or collapsed geometry: '+JSON.stringify(mapGeo));
+    if(width>=900 && (mapGeo.mapImageRatio<1.7 || mapGeo.mapImageRatio>2.6))
+      throw Error('Desktop map composition distorted: '+JSON.stringify(mapGeo));
     if(width>=900 && mapGeo.mapX<=mapGeo.howX)throw Error('Desktop map must be to the right of process');
     if(width<900 && mapGeo.mapY<=mapGeo.howY)throw Error('Mobile map must stack after process');
 
@@ -242,7 +246,7 @@ try {
       await button.waitFor();await button.click();
       if(await button.getAttribute('aria-pressed')!=='true')throw Error('Specialty selection not persisted: '+specialty);
     }
-    if(!await page.getByText('Специализации мастера · выбрано: 2').count())
+    if(!await page.getByText('Специализации выездного мастера · выбрано: 2').count())
       throw Error('Partner specialty accordion did not retain multiple choices');
     if(!await page.locator('.guest-partner-role-master').evaluate(el=>!getComputedStyle(el).backgroundImage.includes('tracksos-photo-master')))
       throw Error('Retired Nov 14 signup card image returned');

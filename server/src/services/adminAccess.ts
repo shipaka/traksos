@@ -8,7 +8,7 @@ import { normalizePhone } from '../util.ts';
 import { validateRoles } from '../domain/roles.ts';
 
 export const MANUAL_ROLES = [
-  'client', 'driver', 'master', 'tow', 'service', 'insurer', 'inspection_operator',
+  'client', 'driver', 'master', 'tow', 'service', 'insurer', 'inspection_operator', 'courier',
 ] as const;
 export type ManualRole = typeof MANUAL_ROLES[number];
 
