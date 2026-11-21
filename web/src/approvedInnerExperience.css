@@ -246,3 +246,20 @@ html.traksos-reduced-motion .tr-inner-rail{
   grid-column:1;grid-row:3;
  }
 }
+
+/* On small phones the useful actions become a single low-profile strip,
+ * not another huge banner above the user's actual work. */
+@media(max-width:899px){
+ html.traksos-browser .app[class*="role-"] .tr-inner-rail{padding:0 9px 4px;}
+ html.traksos-browser .app[class*="role-"] .tr-inner-rail-tools{
+  gap:0;padding:7px 9px;border-radius:12px;box-shadow:none;
+ }
+ html.traksos-browser .app[class*="role-"] .tr-inner-rail-tools > :is(.tr-inner-rail-overline,h2){display:none}
+ html.traksos-browser .app[class*="role-"] .tr-inner-rail-tools nav{
+  display:flex;flex-flow:row nowrap;gap:7px;overflow-x:auto;scrollbar-width:none;
+ }
+ html.traksos-browser .app[class*="role-"] .tr-inner-rail-tools nav::-webkit-scrollbar{display:none}
+ html.traksos-browser .app[class*="role-"] .tr-inner-rail-tools nav a{
+  flex:0 0 auto;font-size:10px;min-height:36px;white-space:nowrap;padding:7px 10px;
+ }
+}
