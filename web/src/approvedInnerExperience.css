@@ -1,0 +1,227 @@
+/*
+ * TrakSOS 617/618 — approved visual continuation for authenticated inner
+ * browser routes. The route React <main> remains a direct child of
+ * .desktop-content so existing functional mobile/desktop selectors are kept.
+ * No layout changes to the accepted role dashboards or native WebView.
+ */
+html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero){
+ --tr-inner-ink:#071821;--tr-inner-panel:#102833;--tr-inner-line:#355464;
+ --tr-inner-muted:#bed1da;--tr-inner-orange:#ff7d32;
+ gap:14px;padding-top:15px;min-width:0;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-hero{
+ position:relative;isolation:isolate;overflow:hidden;
+ display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,34%);align-items:center;
+ min-height:188px;gap:18px;padding:22px clamp(18px,2.4vw,35px);
+ border:1px solid #486472;border-radius:20px;
+ background:radial-gradient(ellipse at 84% 0%,#24506477,transparent 47%),
+ linear-gradient(113deg,#102e3a,#091b26 67%,#102a34);
+ box-shadow:0 12px 35px #0005,inset 0 1px #fff1;
+ color:#f9fbfc;animation:tr-inner-reveal .38s cubic-bezier(.16,.72,.3,1) both;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-hero::before{
+ content:"";position:absolute;left:0;top:19px;bottom:19px;width:4px;
+ border-radius:0 5px 5px 0;background:#ff7625;box-shadow:0 0 21px #ff78285c;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-hero-copy{position:relative;z-index:2;min-width:0}
+html.traksos-browser .app[class*="role-"] .tr-inner-crumbs{
+ display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0 0 11px;
+ color:#abc9d1;font-size:11px;font-weight:700;letter-spacing:.02em;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-crumbs a{
+ color:#c5e3e5;text-decoration:none;border-bottom:1px solid transparent;
+ transition:border-color .18s,color .18s;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-crumbs a:hover{color:#ffb07b;border-color:#ffb07b}
+html.traksos-browser .app[class*="role-"] .tr-inner-crumbs [aria-current=page]{
+ color:#ffa069;text-transform:uppercase;letter-spacing:.06em;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-overline{
+ font-size:10px;letter-spacing:.15em;font-weight:800;color:#78b6c3;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-hero h1{
+ margin:6px 0 9px!important;font-family:var(--body,system-ui)!important;
+ font-size:clamp(25px,2.35vw,37px)!important;font-weight:860;
+ line-height:1.13;color:#fff;letter-spacing:-.032em;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-hero p{
+ margin:0;max-width:620px;color:#cfdee4;font-size:13px;line-height:1.57;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-back{
+ display:inline-flex;align-items:center;gap:8px;margin-top:15px;
+ padding:8px 13px;border-radius:10px;border:1px solid #577884;
+ background:#193d4b7a;color:#fff;text-decoration:none;
+ font-size:12px;font-weight:720;transition:transform .18s,background-color .18s,border-color .18s;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-back:hover{
+ transform:translateX(-2px);background:#254a59;border-color:#ff8d49;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-hero-art{
+ height:155px;align-self:stretch;position:relative;min-width:0;
+ display:grid;place-items:center;pointer-events:none;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-hero-art::before{
+ content:"";position:absolute;inset:3% 0 0;
+ background:radial-gradient(ellipse at 50% 56%,#237e8d60,transparent 63%);
+ filter:blur(7px);
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-hero-art img{
+ position:relative;z-index:2;width:100%;height:100%;max-width:360px;
+ object-fit:contain;object-position:center;
+ filter:drop-shadow(0 12px 14px #0008);
+ animation:tr-inner-truck-appear .56s cubic-bezier(.19,.75,.33,1) both;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-art-orbit{
+ position:absolute;left:8%;right:8%;top:52%;height:1px;opacity:.65;
+ background:linear-gradient(90deg,transparent,#48bdc3,transparent);
+ transform:rotate(-6deg);
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-art-orbit-two{
+ top:76%;transform:rotate(4deg);background:linear-gradient(90deg,transparent,#fa8a3d,transparent);
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-rail{
+ display:flex;flex-direction:column;align-self:start;gap:13px;min-width:0;
+ animation:tr-inner-reveal .38s .06s ease both;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-rail-card{
+ min-width:0;display:flex;flex-direction:column;gap:11px;padding:19px 17px;
+ color:#f4f8fb;border:1px solid #385968;border-radius:17px;
+ background:linear-gradient(148deg,#143340,#0b1e28 76%);
+ box-shadow:0 9px 26px #0004,inset 0 1px #fff1;
+ text-decoration:none;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-rail-overline{
+ font-size:10px;font-weight:850;letter-spacing:.115em;color:#f99b61;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-rail h2{
+ font-size:17px!important;line-height:1.22;margin:0;color:#fff;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-rail-tools nav{
+ display:flex;flex-direction:column;gap:7px;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-rail-tools nav a{
+ display:flex;align-items:center;justify-content:space-between;gap:10px;
+ border-radius:11px;background:#1a3b48;border:1px solid #3e5d69;
+ color:#e7f4f5;padding:10px 11px;font-size:12px;font-weight:680;
+ text-decoration:none;transition:transform .18s,border-color .18s,background-color .18s;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-rail-tools nav a:hover{
+ transform:translateX(3px);border-color:#f58a49;background:#294956;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-bot-card{
+ cursor:pointer;position:relative;overflow:hidden;
+ background:radial-gradient(circle at 100% 100%,#3b6d7877,transparent 54%),
+ linear-gradient(140deg,#122f3b,#0a1c27);
+ transition:transform .2s,border-color .2s,box-shadow .2s;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-bot-card:hover{
+ transform:translateY(-2px);border-color:#f8a36c;box-shadow:0 15px 34px #0005;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-bot-line{display:flex;align-items:center;gap:11px}
+html.traksos-browser .app[class*="role-"] .tr-inner-bot-line>span:last-child{
+ min-width:0;display:flex;flex-direction:column;gap:2px;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-bot-line b{font-size:17px;color:#fff}
+html.traksos-browser .app[class*="role-"] .tr-inner-bot-line small{color:#c4d7de;font-size:11px}
+html.traksos-browser .app[class*="role-"] .tr-inner-rail-card p{
+ font-size:12px;line-height:1.6;color:#c6d7df;margin:0;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-rail-cta{
+ display:flex;align-items:center;justify-content:space-between;gap:10px;
+ color:#ffb17e;font-size:12px;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-rail-mark{
+ font-size:40px;line-height:1;color:#f9a365;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-rail-footer{
+ display:flex;align-items:flex-start;gap:8px;padding:3px 8px;
+ font-size:10px;line-height:1.5;color:#9bb7c4;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-rail-live{
+ display:block;width:6px;height:6px;border-radius:50%;
+ margin-top:4px;flex:none;background:#57bdc7;box-shadow:0 0 0 3px #57bdc722;
+}
+html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero) > main{
+ min-width:0;width:100%;max-width:none;
+ animation:tr-inner-content-enter .3s ease both;
+}
+/* Consistent visual primitives for untouched live functionality. */
+@media(min-width:900px){
+ html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero) > main :is(.card,.panel,.tile,.linkrow,.opt,.empty){
+  border-radius:16px;border:1px solid #385565;
+  background-color:#102733;box-shadow:inset 0 1px #ffffff09,0 5px 20px #0003;
+  transition:border-color .19s,background-color .19s,box-shadow .19s,transform .19s;
+ }
+ html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero) > main :is(.linkrow,.opt):hover{
+  border-color:#f89e61;transform:translateY(-2px);box-shadow:0 9px 25px #0006;
+ }
+ html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero) > main :is(.btn,button:not([disabled])){
+  transition:border-color .19s,box-shadow .19s,background-color .19s,transform .19s;
+ }
+ html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero) > main :is(.btn,button:not([disabled])):active{
+  transform:scale(.99);
+ }
+ html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero) > main :is(input,textarea,select){
+  border-radius:10px;
+ }
+}
+@media(min-width:1370px){
+ html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero){
+  display:grid;grid-template-columns:minmax(0,1fr) 228px;
+  gap:14px 17px;align-content:start;
+ }
+ html.traksos-browser .app[class*="role-"] .desktop-content > .tr-inner-hero{grid-column:1/-1}
+ html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero) > main{
+  grid-column:1;grid-row:2;padding-top:0!important;min-height:0;
+ }
+ html.traksos-browser .app[class*="role-"] .desktop-content > .tr-inner-rail{grid-column:2;grid-row:2}
+ html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero) > .site-footer{grid-column:1/-1}
+}
+@media(min-width:900px) and (max-width:1369px){
+ html.traksos-browser .app[class*="role-"] .desktop-content > .tr-inner-rail{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  align-items:stretch;gap:12px;
+ }
+ html.traksos-browser .app[class*="role-"] .tr-inner-rail-footer{grid-column:1/-1}
+}
+@media(max-width:899px){
+ html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero){
+  gap:9px;padding-top:8px;max-width:100%;overflow-x:clip;
+ }
+ html.traksos-browser .app[class*="role-"] .tr-inner-hero{
+  margin:0 9px;display:block;min-height:0;padding:15px 15px 17px;border-radius:15px;
+ }
+ html.traksos-browser .app[class*="role-"] .tr-inner-hero-art{display:none}
+ html.traksos-browser .app[class*="role-"] .tr-inner-overline{font-size:9px}
+ html.traksos-browser .app[class*="role-"] .tr-inner-hero h1{font-size:24px!important;margin:5px 0 7px!important}
+ html.traksos-browser .app[class*="role-"] .tr-inner-hero p{font-size:12px}
+ html.traksos-browser .app[class*="role-"] .tr-inner-back{font-size:11px;margin-top:10px;padding:7px 10px}
+ html.traksos-browser .app[class*="role-"] .desktop-content > .tr-inner-rail{
+  padding:0 9px 17px;display:block;
+ }
+ html.traksos-browser .app[class*="role-"] .tr-inner-rail-tools nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));}
+ html.traksos-browser .app[class*="role-"] .tr-inner-rail-tools nav a{font-size:11px}
+ html.traksos-browser .app[class*="role-"] .tr-inner-rail-tools{padding:14px}
+ html.traksos-browser .app[class*="role-"] :is(.tr-inner-bot-card,.tr-inner-rail-status,.tr-inner-rail-footer){display:none}
+ html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero) > main{
+  min-width:0;max-width:100%;
+ }
+}
+@media(max-width:340px){
+ html.traksos-browser .app[class*="role-"] .tr-inner-hero{margin:0 6px;padding:14px}
+ html.traksos-browser .app[class*="role-"] .tr-inner-hero h1{font-size:21px!important}
+}
+@keyframes tr-inner-reveal{from{opacity:.45;transform:translateY(9px)}to{opacity:1;transform:none}}
+@keyframes tr-inner-truck-appear{from{opacity:.3;transform:translateY(9px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes tr-inner-content-enter{from{opacity:.8;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){
+ .tr-inner-hero,.tr-inner-hero-art img,.tr-inner-rail,
+ .desktop-content:has(> .tr-inner-hero)>main{
+  animation:none!important;transition:none!important;transform:none!important;
+ }
+}
+html.traksos-reduced-motion .tr-inner-hero,
+html.traksos-reduced-motion .tr-inner-hero-art img,
+html.traksos-reduced-motion .tr-inner-rail{
+ animation:none!important;transition:none!important;transform:none!important;
+}
