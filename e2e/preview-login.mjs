@@ -42,8 +42,8 @@ try {
     await page.locator('input[type=password]').fill(code);
     await page.getByRole('button',{name:'Войти',exact:true}).click();
     await page.waitForURL(/#\/admin(?:$|\/)/,{timeout:20_000});
-    await page.getByRole('heading',{name:'Администратор'}).waitFor();
-    const previewLink = page.getByRole('link',{name:/Тестирование всех кабинетов/}).first();
+    await page.locator('main.approved-pc-admin').waitFor();
+    const previewLink = page.locator('main.approved-pc-admin a[href="#/admin/test-center"]').first();
     await previewLink.click();
     await page.getByRole('heading',{name:'Тестирование кабинетов'}).waitFor();
     for (const [id,label] of [
