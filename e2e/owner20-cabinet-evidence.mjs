@@ -113,6 +113,8 @@ try{
        throw Error('Horizontal overflow '+JSON.stringify({dims,offenders}));
      }
      if(errors.length)throw Error('Uncaught errors '+errors.join('; '));
+     if(c.id==='moderator'&&await page.locator('.trakbot-dock').count())
+       throw Error('Moderator workdesk unexpectedly shows floating TrakBot: '+width);
      if(c.id==='owner' && width===390){
        // The 618.png phone dashboard uses four SVG service actions and
        // genuine vehicle/order links, not the retired desktop crop atlas.
@@ -187,6 +189,8 @@ try{
      await page.locator('.account-menu > summary').waitFor({timeout:12000});
      await page.waitForTimeout(500);
      if(await page.getByText('Не удалось открыть раздел').count())throw Error('Inner route crashed');
+     if(c.id==='moderator'&&await page.locator('.trakbot-dock').count())
+       throw Error('Moderator inner page unexpectedly shows floating TrakBot: '+width);
      if(c.id==='admin') await page.locator('.admin-stage-content .admin-orders-zero, .admin-stage-content .list-item').first().waitFor({timeout:12000});
      if(c.id==='owner'){
        const header=page.locator('.client-garage-page>.client-section-hero');
