@@ -15,6 +15,7 @@ const roles=SANDBOX_ROLES.map(role => [role,SANDBOX_LANDING[role]]);
 const out='e2e/shots/sandbox-real-browser';
 await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true});
+const failures=[];
 try{
   for(const width of [320,390,1440]){
     for(const [role,landing] of roles){
@@ -116,7 +117,17 @@ try{
           console.log('SANDBOX BROWSER SWITCH PASS',width,'supervisor to client; client cannot escalate');
         }
         console.log('SANDBOX BROWSER PASS',role,width,landing,'approved interface and isolated session');
+      }catch(err){
+        const detail=String(err instanceof Error ? err.stack ?? err.message : err);
+        failures.push({role,width,detail});
+        console.error('SANDBOX BROWSER FAIL',role,width,detail);
+        try{
+          await page.screenshot({path:out+'/'+role+'-'+width+'-ERROR.png',fullPage:true});
+        }catch{ /* Preserve the original failure if Chromium itself crashed. */ }
       }finally{await context.close();}
     }
   }
 }finally{await browser.close();}
+if(failures.length)
+  throw Error('Isolated role browser review failed ('+failures.length+' cases): '+
+    JSON.stringify(failures.map(({role,width,detail})=>({role,width,detail:detail.slice(0,450)}))));
