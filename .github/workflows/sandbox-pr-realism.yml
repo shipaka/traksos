@@ -111,7 +111,7 @@ jobs:
           # Only ephemeral loopback on this GitHub-hosted runner, never a VPS port.
           curl --fail --silent --show-error --max-time 15 \
             http://127.0.0.1:38123/api/health | jq -e '.sandbox==true and .db==true'
-          (cd .. && npm ci --no-audit --no-fund && npx playwright install --with-deps chromium)
+          (cd .. && npm install --no-audit --no-fund && npx playwright install --with-deps chromium)
           SANDBOX_BROWSER_BASE_URL="http://127.0.0.1:38123" \
           SANDBOX_SHARED_SECRET="$shared_secret" \
           TRAKSOS_RUN_DISPOSABLE_SCENARIO=true \
