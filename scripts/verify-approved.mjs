@@ -474,9 +474,9 @@ const mobileRoleMenu = await read('web/src/mobileRoleMenu.tsx');
 const innerAndroidStyle = await read('web/src/androidInternalSections20261120.css');
 const androidRealScreens = await read('e2e/android-approved-real-screens.mjs');
 const mobileMenuBlock = shell.slice(shell.indexOf('const mobileTabs:'),shell.indexOf('const accountLinks:'));
-// Seven production roles plus the isolated STO sandbox variant (both remain navigable).
-expect((mobileMenuBlock.match(/\['\/menu', 'menu', 'Меню'\]/g)??[]).length === 8 &&
-  shell.includes("href==='/menu'?'/menu'") &&
+// Exactly seven real role menus; the retired fake STO variant must never be counted.
+expect((mobileMenuBlock.match(/\['\/menu', 'menu', 'Меню'\]/g)??[]).length === 7 &&
+  shell.includes("const shellHref=(href:string)=>'#'+href;") &&
   !mobileMenuBlock.includes("['/profile', '◉', 'Меню']") &&
   !mobileMenuBlock.includes("['/menu', '◉', 'Меню']") &&
   shell.includes("case 'menu': screen =") &&
