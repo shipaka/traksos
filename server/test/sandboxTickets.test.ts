@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup } from './helpers.ts';
+import { config } from '../src/config.ts';
 import { exchangeSandboxTicket, issueSandboxTicket, switchSandboxRole, SANDBOX_ROLES, SANDBOX_LANDING, SANDBOX_USER_PHONE } from '../src/services/sandboxTickets.ts';
 
 const SHARED_SECRET = 'sandbox-test-only-' + 'a'.repeat(48);
@@ -81,6 +82,12 @@ test('primary site cannot exchange sandbox login credentials without SANDBOX_INS
 
 test('sandbox role matrix: all 12 isolated handoffs, courier and supervisor switching', async () => {
   const t = await setup();
+  // The CI helper has a different privileged phone allowlist from the real
+  // isolated sandbox. Temporarily reproduce the sandbox allowlist so the
+  // *existing* staff-auth protection is exercised rather than bypassed.
+  const oldAdmin=[...config.adminPhones],oldMod=[...config.moderatorPhones];
+  config.adminPhones.splice(0,config.adminPhones.length,SANDBOX_USER_PHONE.admin);
+  config.moderatorPhones.splice(0,config.moderatorPhones.length,SANDBOX_USER_PHONE.moderator);
   try {
     // Keep real DB/session timestamps and injected API clock aligned. This
     // regression test never uses a sandbox VPS or grants roles to real users.
@@ -136,6 +143,8 @@ test('sandbox role matrix: all 12 isolated handoffs, courier and supervisor swit
         SHARED_SECRET,t.db,at+500),
       (e:any)=>e.status===403,'unseeded courier must not silently fall back to client');
   } finally {
+    config.adminPhones.splice(0,config.adminPhones.length,...oldAdmin);
+    config.moderatorPhones.splice(0,config.moderatorPhones.length,...oldMod);
     await t.close();
   }
 });
