@@ -9,7 +9,7 @@ if(!['localhost','127.0.0.1'].includes(new URL(BASE).hostname))
 await mkdir('e2e/shots/android-guest',{recursive:true});
 const browser=await chromium.launch();
 try {
-  for(const width of [320,360,390,960,1200]){
+  for(const width of [320,360,390,900,960,1200]){
     const height=width===320?640:width===360?800:844;
     const ctx=await browser.newContext({viewport:{width,height},isMobile:true,
       hasTouch:true,deviceScaleFactor:1,locale:'ru-RU'});
@@ -85,6 +85,9 @@ try {
     await page.locator('.public-landing').waitFor();
     if(await page.locator('.owner20-home').count())
       throw Error(width+'px guest returned to PC shell after auth navigation');
+    await page.getByRole('button',{name:'Хотим работать',exact:true}).click();
+    await page.waitForURL('**/#/join');
+    await page.getByRole('heading',{name:'Работать с TrakSOS'}).waitFor();
     await ctx.close();
     console.log('PASS Android-bridge guest '+width+'px: approved landing, orange headline, login and registration, no old desktop fallback or overflow');
   }
