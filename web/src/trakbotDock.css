@@ -277,3 +277,17 @@
     overscroll-behavior:contain;
   }
 }
+
+/* 20 Nov guest approval: on a narrow browser the collapsed mascot cannot
+   float over the truck, headline, login controls or the four bottom tabs.
+   It stays present and operable after the page content, opening only on tap.
+   Native APK never mounts this floating browser-only component. */
+@media (max-width:899px) {
+  html.traksos-browser .guest-app.guest-home > .trakbot-dock {
+    position:relative!important;
+    right:auto!important;left:auto!important;top:auto!important;bottom:auto!important;
+    margin:10px 14px calc(105px + env(safe-area-inset-bottom)) auto!important;
+    width:max-content;max-width:calc(100% - 28px);
+    pointer-events:auto;
+  }
+}
