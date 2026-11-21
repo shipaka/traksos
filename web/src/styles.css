@@ -1832,3 +1832,19 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
     padding:5px 8px;
   }
 }
+
+/* A real isolated sandbox supervisor can change fictitious roles without
+   visiting the production admin or re-authenticating on every inspection. */
+.sandbox-supervisor-bar{display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;background:#081a2c;color:#eef9ff;border-bottom:1px solid #23748b;padding:10px 16px;min-height:60px}
+.sandbox-supervisor-bar b{font-size:12px;letter-spacing:.03em;color:#64dcea}
+.sandbox-supervisor-bar>span{font-size:12px;color:#bed5e3}
+.sandbox-supervisor-switcher{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-left:auto;min-width:0}
+.sandbox-supervisor-switcher label{font-size:12px;font-weight:700;color:#cbeaf6}
+.sandbox-supervisor-switcher select{min-height:40px;min-width:150px;max-width:250px;width:auto;border-radius:10px;background:#0b2c40;border:1px solid #397a92;color:#fff;padding:7px 12px;font:inherit}
+.sandbox-supervisor-switcher button{min-height:40px;white-space:nowrap}
+.sandbox-supervisor-error{color:#ffd19c;font-size:12px}
+@media(max-width:650px){
+ .sandbox-supervisor-bar{padding:8px 10px;gap:6px}
+ .sandbox-supervisor-switcher{width:100%;margin-left:0;gap:5px}
+ .sandbox-supervisor-switcher select{min-width:0;flex:1}
+}
