@@ -49,6 +49,8 @@ const roleCopy: Record<string,{name:string;home:string;actions:[string,string][]
 function metaFor(path:string[], fallback:string):RouteMeta{
   if(path[0]==='base'&&path[1]==='me')
     return {title:'Карточка СТО',subtitle:'Отметьте услуги, условия приёмки и фактический адрес въезда. Стоимость согласуется после осмотра.',marker:'СТО'};
+  if(path[0]==='base'&&path[1]==='money')
+    return {title:'Финансы СТО',subtitle:'Каждый счёт содержит работы, комиссию и выплату. Спорные суммы и сверки отражаются отдельно.',marker:'ФИНАНСЫ'};
   const base=pageCopy[path[0]||''];
   if(!base)return {title:fallback||'Рабочий раздел',subtitle:'Важные инструменты и следующие действия находятся на этой странице.',marker:'РАЗДЕЛ'};
   if(path.length>1 && fallback && !['Рабочий раздел','Кабинет техосмотра'].includes(fallback))
