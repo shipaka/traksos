@@ -225,3 +225,24 @@ html.traksos-reduced-motion .tr-inner-hero-art img,
 html.traksos-reduced-motion .tr-inner-rail{
  animation:none!important;transition:none!important;transform:none!important;
 }
+
+/* Admin and moderator inner tools are already multi-column workspaces.
+ * Keep their data tables full-width: quick actions live in a horizontal band. */
+@media(min-width:1370px){
+ html.traksos-browser .app:is(.role-admin,.role-moderator) .desktop-content:has(> .tr-inner-hero){
+  grid-template-columns:minmax(0,1fr);
+ }
+ html.traksos-browser .app:is(.role-admin,.role-moderator) .desktop-content > .tr-inner-rail{
+  grid-column:1;grid-row:2;display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:stretch;
+ }
+ html.traksos-browser .app:is(.role-admin,.role-moderator) .desktop-content > .tr-inner-rail .tr-inner-rail-tools nav{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+ }
+ html.traksos-browser .app:is(.role-admin,.role-moderator) .desktop-content > .tr-inner-rail .tr-inner-rail-footer{
+  grid-column:1/-1;
+ }
+ html.traksos-browser .app:is(.role-admin,.role-moderator) .desktop-content:has(> .tr-inner-hero)>main{
+  grid-column:1;grid-row:3;
+ }
+}
