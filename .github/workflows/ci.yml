@@ -108,6 +108,8 @@ jobs:
           node e2e/insurance-locked-ui.mjs
           node e2e/moderator-permission-check.mjs
           node e2e/admin-master-switch.mjs
+          # Mixed admin/client accounts must see agreements for the active workspace only.
+          node e2e/offer-gate-role-ui.mjs
           node e2e/staff-security.mjs
           node e2e/cabinet-navigation-audit.mjs
           node e2e/admin-navigation-ux.mjs
