@@ -290,3 +290,11 @@ html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero)
   font-size:clamp(19px,1.9vw,25px)!important;
  }
 }
+
+/* STO card used to repeat "Карточка сервиса" immediately after the new
+ * approved "Карточка СТО" hero. Its introductory text lives in the new
+ * subtitle. The Back link and ALL forms are siblings and remain intact. */
+html.traksos-browser .app.role-service .desktop-content:has(> .tr-inner-hero[data-route="base/me"])
+ > main > div:first-of-type{
+ display:none!important;
+}
