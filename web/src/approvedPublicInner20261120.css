@@ -54,6 +54,8 @@
 .guest-app:not(.guest-home) .guest-explore-hero,
 .guest-app:not(.guest-home) .guest-info-hero {
   position: relative;
+  isolation: isolate; /* keep approved road photography above the panel background */
+  overflow: hidden;
   background: linear-gradient(120deg,#102631 2%,#132c35 55%,#0a1b23 100%) !important;
   border: 1px solid #52626a !important;
   border-radius: 18px;
@@ -67,12 +69,18 @@
   position: absolute;
   top: 0; right: 0; bottom: 0;
   width: 57%;
-  z-index: -1;
+  z-index: 0;
   background: url('/owner20-photo-background-approved.webp') 58% 50% / cover no-repeat;
   opacity: .72;
   -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 38%);
   mask-image: linear-gradient(90deg, transparent 0%, #000 38%);
   pointer-events: none;
+}
+/* Keep the heading, controls and links above the road image overlay. */
+.guest-app:not(.guest-home) .guest-explore-hero > *,
+.guest-app:not(.guest-home) .guest-info-hero > * {
+  position: relative;
+  z-index: 1;
 }
 .guest-app:not(.guest-home) .guest-explore-hero::after,
 .guest-app:not(.guest-home) .guest-info-hero::after {
