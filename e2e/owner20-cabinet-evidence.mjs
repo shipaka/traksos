@@ -226,14 +226,14 @@ try{
      if(c.id==='admin') await page.locator('.admin-stage-content .admin-orders-zero, .admin-stage-content .list-item').first().waitFor({timeout:12000});
      if(c.id==='owner'){
        const header=page.locator('.client-garage-page>.client-section-hero');
-       await header.waitFor();
-       const geometry=await header.evaluate(el=>({
-         height:el.getBoundingClientRect().height,
-         leftBorder:parseFloat(getComputedStyle(el).borderLeftWidth)
-       }));
-       if(geometry.height>160 || geometry.leftBorder<3)
-         throw Error('Owner garage restored an oversized old-style header: '+JSON.stringify(geometry));
+       await header.waitFor({state:'attached'});
+       if(await header.isVisible())throw Error('Old garage hero duplicates the new approved inner heading');
      }
+     if(c.id==='driver' && await page.locator('.client-orders-page>h1:visible').count())
+       throw Error('Old orders heading duplicates the approved inner hero');
+     if(['insurer','moderator'].includes(c.id) &&
+        await page.locator('.account-profile-page>h1:visible').count())
+       throw Error('Old profile heading duplicates the approved inner hero');
      await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'-viewport.png',fullPage:false,animations:'disabled',scale:'css'});
      await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'.png',fullPage:true,animations:'disabled',scale:'css'});
      // The inspection API accepts both insurers and inspection operators.
