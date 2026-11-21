@@ -34,6 +34,37 @@ try{
         });
         await page.locator('.sandbox-isolated-banner').waitFor({timeout:25_000});
         await page.waitForFunction(expected=>location.hash===expected,landing,{timeout:20_000});
+        // The role needs an actually usable desk. Clear mandatory legal
+        // acceptance through the REAL interface, then close optional first-use
+        // invitations before screenshot evidence. These are fake sandbox users;
+        // never accept any legal document on behalf of a production account.
+        await page.waitForTimeout(450);
+        let accepted=0;
+        const legal=page.locator('div.call[role="dialog"][aria-modal="true"]');
+        for(let attempt=0;attempt<8;attempt++){
+          if(!(await legal.count()) || !(await legal.first().isVisible()))break;
+          const dialog=legal.first();
+          await dialog.locator('input[type="checkbox"]').check();
+          await dialog.getByRole('button',{name:'Принимаю',exact:true}).click();
+          accepted++;
+          await page.waitForTimeout(260);
+        }
+        if(await legal.count() && await legal.first().isVisible())
+          throw Error('Mandatory agreement still blocks sandbox '+role);
+        const optional=[
+          page.getByRole('button',{name:'Не сейчас',exact:true}),
+          page.getByRole('button',{name:'Позже',exact:true}),
+          page.getByRole('button',{name:'Понятно',exact:true}),
+        ];
+        for(const button of optional){
+          if(await button.count() && await button.first().isVisible())await button.first().click();
+        }
+        if(await page.getByRole('dialog',{name:'Короткая экскурсия по кабинету'}).count())
+          await page.getByRole('dialog',{name:'Короткая экскурсия по кабинету'})
+            .getByRole('button',{name:'Закрыть',exact:true}).click();
+        await page.waitForTimeout(200);
+        if(await page.locator('[role="dialog"][aria-modal="true"]').count())
+          throw Error('Unexpected blocking dialog after login in sandbox '+role);
         const banner=await page.locator('.sandbox-isolated-banner').innerText();
         if(!banner.includes('ДАННЫЕ ИЗОЛИРОВАНЫ'))
           throw Error('Sandbox data-isolation indicator missing for '+role);
