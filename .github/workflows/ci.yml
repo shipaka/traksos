@@ -54,7 +54,7 @@ jobs:
           # docker compose requires app.env_file to exist even for config-only checks.
           cp deploy/.env.example deploy/.env
           trap 'rm -f deploy/.env' EXIT
-          DB_PASSWORD=ci-only-check APP_SECRET=ci-only-check docker compose --env-file deploy/.env.example -f deploy/docker-compose.yml config --quiet
+          TRAKSOS_RELEASE_REV="$GITHUB_SHA" DB_PASSWORD=ci-only-check APP_SECRET=ci-only-check docker compose --env-file deploy/.env.example -f deploy/docker-compose.yml config --quiet
       - name: Проверка единого бренда TrakSOS
         run: node scripts/verify-brand.mjs
       - name: Согласованность обучения, экономики и оферт с логикой выпуска
