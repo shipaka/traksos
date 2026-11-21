@@ -30,3 +30,30 @@
 .trak-vehicle-photo-credits{font-size:11px;line-height:1.3;color:#f5b67e;align-self:flex-end;
  padding:4px 8px;text-decoration:underline;text-underline-offset:2px}
 .trak-vehicle-photo-credits:focus-visible{outline:3px solid #ffa357;outline-offset:2px}
+
+/* Fleet owners must see the entire matching vehicle photo without expanding
+   the page to the image's intrinsic (often 900px) width on a 320px phone.
+   This is deliberately scoped to fleet cards; other approved visuals retain
+   their existing sizing. */
+.fleet-vehicle-media {
+  display:block;
+  box-sizing:border-box;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+}
+.fleet-vehicle-media > img {
+  display:block;
+  box-sizing:border-box;
+  width:100%;
+  max-width:100%;
+  height:auto;
+  max-height:260px;
+  object-fit:contain;
+  object-position:center;
+}
+.fleet-vehicle-title {
+  min-width:0;
+  max-width:100%;
+  overflow-wrap:anywhere;
+}
