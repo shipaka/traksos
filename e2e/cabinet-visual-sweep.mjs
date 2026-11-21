@@ -113,6 +113,29 @@ try {
       await verify('inner');
       await page.waitForTimeout(450);
       await verify('inner-stable');
+      // Confirm the signed-in desktop helper is fixed, bigger than the
+      // retired 38px pill, and can open + close without route changes.
+      if(width===1440&&entry.name==='owner'){
+        const dock=page.locator('.app:not(.guest-app)> .trakbot-dock');
+        const launch=dock.locator('.trakbot-dock-launcher');
+        await launch.waitFor({state:'visible'});
+        const visual=await launch.evaluate(node=>{
+          const r=node.getBoundingClientRect(),styles=getComputedStyle(node);
+          const image=node.querySelector('.trakbot-mascot-original');
+          const label=node.querySelector('.trakbot-dock-label');
+          return {w:r.width,h:r.height,border:styles.borderTopWidth,
+            fixed:getComputedStyle(node.closest('.trakbot-dock')).position==='fixed',
+            mask:image?getComputedStyle(image).maskImage:'none',
+            label:label?getComputedStyle(label).display:'none'};
+        });
+        if(visual.w<82||visual.h<82||visual.border!=='0px'||!visual.fixed||
+           visual.mask==='none'||visual.label!=='none')
+          throw Error('Signed-in TrakBot regressed into small sticker pill '+JSON.stringify(visual));
+        await launch.click();
+        await dock.getByRole('dialog',{name:'TrakBot — личный помощник'}).waitFor({state:'visible'});
+        await page.keyboard.press('Escape');
+        await dock.getByRole('dialog',{name:'TrakBot — личный помощник'}).waitFor({state:'detached'});
+      }
       await page.screenshot({path:'e2e/shots/cabinet-ux/'+entry.name+'-inner-'+width+'.png',fullPage:true});
       await context.close();
     }

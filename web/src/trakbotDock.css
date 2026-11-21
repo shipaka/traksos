@@ -263,3 +263,38 @@
     pointer-events:auto;
   }
 }
+
+
+/* Approved signed-in PC inner pages: prominent fixed technician button, no
+   38px square avatar in a generic pill. The dashboard already has its own Bot
+   card and does not mount a duplicate. Native Android uses its role menu. */
+@media(min-width:900px){
+ .app:not(.guest-app)> .trakbot-dock{position:fixed;right:18px;bottom:18px;z-index:96}
+ .app:not(.guest-app)> .trakbot-dock .trakbot-dock-launcher{
+   display:grid;place-items:center;gap:0;
+   width:84px;min-width:84px;height:84px;min-height:84px;padding:0;
+   border:0;border-radius:0;background:transparent;box-shadow:none;
+   transition:transform .2s ease;
+ }
+ .app:not(.guest-app)> .trakbot-dock .trakbot-dock-launcher:hover{
+   transform:translateY(-4px) scale(1.035);filter:none;
+ }
+ .app:not(.guest-app)> .trakbot-dock .trakbot-dock-launcher .trakbot-mascot{
+   --bot-size:84px;width:84px;height:84px;
+   animation:trakbot-tech-bob 4s ease-in-out infinite;
+ }
+ .app:not(.guest-app)> .trakbot-dock .trakbot-dock-launcher .trakbot-mascot-original{
+   border-radius:50%;box-shadow:none;
+   -webkit-mask-image:radial-gradient(circle at 50% 50%,#000 0 58%,rgba(0,0,0,.85) 65%,transparent 80%);
+   mask-image:radial-gradient(circle at 50% 50%,#000 0 58%,rgba(0,0,0,.85) 65%,transparent 80%);
+ }
+ .app:not(.guest-app)> .trakbot-dock .trakbot-dock-label{display:none}
+ .app:not(.guest-app)> .trakbot-dock .trakbot-dock-launcher:focus-visible{
+   outline:3px solid #ff9d58;outline-offset:3px;border-radius:12px;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ .app:not(.guest-app)> .trakbot-dock .trakbot-dock-launcher .trakbot-mascot{animation:none!important}
+ .app:not(.guest-app)> .trakbot-dock .trakbot-dock-launcher{transition:none!important}
+}
+html.traksos-reduced-motion .app:not(.guest-app)> .trakbot-dock .trakbot-dock-launcher .trakbot-mascot{animation:none!important}

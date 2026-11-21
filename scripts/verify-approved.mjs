@@ -161,6 +161,11 @@ expect(unifiedPerformerEntry.includes('if (!p) return <PerformerHub />') &&
   nativeRoleAcceptance.includes("page.locator('main.performer-onboarding')") &&
   nativeRoleAcceptance.includes("name:'Станьте исполнителем'"),
   'all new performer/tow accounts use one canonical four-step onboarding, never the retired mini-page');
+const signedPcBotStyles=await read('web/src/trakbotDock.css');
+expect(signedPcBotStyles.includes('Approved signed-in PC inner pages: prominent fixed technician') &&
+  signedPcBotStyles.includes('width:84px;min-width:84px;height:84px;min-height:84px;') &&
+  signedPcBotStyles.includes('.app:not(.guest-app)> .trakbot-dock'),
+  'signed-in PC detail pages keep the approved larger floating technician without an old pill');
 const ownerPcUiContract=await read('web/src/screens/ownerDesktopHome20261120.css');
 expect(ownerPcUiContract.includes('Source-sprite crop contract:') &&
   ownerPcUiContract.includes('rgba(0,0,0,.9) 12%,#000 24%') &&
