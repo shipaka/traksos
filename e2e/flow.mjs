@@ -155,7 +155,7 @@ try {
 }
 // Approved admin verification is a protected work section, not the retired homepage tab.
 await a.goto(BASE + '/#/admin/section/verify');
-await a.getByRole('heading', { name: 'Проверка', exact: true }).waitFor();
+await a.locator('.desktop-content > main').getByRole('heading', { name: 'Проверка', exact: true }).first().waitFor();
 await a.getByText('Отправил').waitFor();
 for (let i = 0; i < n; i++) {
   await a.getByRole('button', { name: 'Принять' }).first().click();
@@ -290,7 +290,7 @@ await shot(m, '11-master-balance');
 
 // Админ в браузере
 await a.goto(BASE + '/#/admin/section/dispatch');
-await a.getByRole('heading', { name: 'Распределение', exact: true }).waitFor();
+await a.locator('.desktop-content > main').getByRole('heading', { name: 'Распределение', exact: true }).first().waitFor();
 await a.getByText('Настройки распределения и торгов', { exact: true }).click();
 await a.getByText('Сначала заявки нам').waitFor();
 await assertDashboardTheme(a, 'admin');
@@ -317,7 +317,7 @@ await shot(m, '16b-master-money');
 await m.getByText('← Профиль').click();
 await m.getByRole('button', { name: /Аккаунт/ }).click();
 await m.waitForURL(/#\/profile$/);
-await m.getByRole('heading', { name: 'Профиль', exact: true }).waitFor();
+await m.locator('.tr-inner-hero').getByRole('heading', { name: 'Профиль и настройки' }).waitFor();
 // Master/client isolation is checked after route state has settled.
 await m.waitForTimeout(250);
 if (await m.getByRole('button', { name: 'Кабинет клиента', exact: true }).isVisible()) {
@@ -366,7 +366,7 @@ await shot(a, '15-admin-performer');
 
 // Админ: новая редакция оферты → клиенту окно с галочкой → принял
 await a.goto(BASE + '/#/admin/section/offers');
-await a.getByRole('heading', { name: 'Оферты', exact: true }).waitFor();
+await a.locator('.desktop-content > main').getByRole('heading', { name: 'Оферты', exact: true }).first().waitFor();
 await a.getByRole('button', { name: 'Оферта для клиентов' }).click();
 await a.locator('textarea').fill('# Оферта для клиентов\n\nТестовая редакция для проверки окна согласия. Здесь будет текст от юриста.\n\n1. Пункт первый');
 await a.locator('input[placeholder^="Что изменилось"]').fill('Новая шкала отмены');
@@ -395,7 +395,7 @@ await k.locator('textarea').fill('Хочу уточнить итоговую с�
 await k.getByRole('button', { name: 'Отправить' }).click();
 await k.waitForURL(/#\/support\//);
 await a.goto(BASE + '/#/admin/section/support');
-await a.getByRole('heading', { name: 'Обращения', exact: true }).waitFor();
+await a.locator('.desktop-content > main').getByRole('heading', { name: 'Обращения', exact: true }).first().waitFor();
 await a.getByText('Ждёт ответа').click();
 await a.locator('.compose input').fill('Здравствуйте! Сейчас проверим');
 await a.locator('.compose button').click();
@@ -404,12 +404,12 @@ await shot(k, '17-client-support');
 await a.getByRole('button', { name: 'Закрыть обращение' }).click();
 await k.getByText(/Поддержка закрыла обращение/).waitFor({ timeout: 10000 });
 await a.goto(BASE + '/#/admin/section/stats');
-await a.getByRole('heading', { name: 'Статистика', exact: true }).waitFor();
+await a.locator('.desktop-content > main').getByRole('heading', { name: 'Статистика', exact: true }).first().waitFor();
 await a.getByText('Заявок в день').waitFor();
 await shot(a, '18-admin-stats');
 // CRM smoke: admin can open unified participant database, filter and see actual cards.
 await a.goto(BASE + '/#/admin/section/registry');
-await a.getByRole('heading', { name: 'Единая база клиентов и партнёров' }).waitFor();
+await a.locator('.desktop-content > main').getByRole('heading', { name: 'Единая база клиентов и партнёров' }).first().waitFor();
 await a.locator('input[placeholder^="Имя, компания, телефон"]').fill('79991112233');
 await a.getByRole('button', { name: 'Найти участников' }).click();
 await a.getByText(/Найдено участников:/).waitFor();
