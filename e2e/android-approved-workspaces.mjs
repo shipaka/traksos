@@ -53,10 +53,10 @@ try {
       await modal.getByRole('button',{name:'Принимаю'}).click();
       await modal.waitFor({state:'detached',timeout:15000});
     }
-    // The role matrix creates a brand-new tow account without a performer
-    // profile. Confirm that onboarding is visible, then finish it through the
-    // public API on this isolated CI database before testing the full workspace.
-    // A new partner must not be mistaken for a broken dashboard.
+    // Brand-new tow accounts have no profile yet. #/work now displays the
+    // canonical four-step PerformerOnboarding, NOT the retired "Заполните профиль"
+    // card from Work(). Exercise that real screen before provisioning the test
+    // profile via the ordinary authenticated API for the workspace smoke.
     if(role==='tow'){
       const profileResponse=await fetch(BASE+'/api/performer/profile',{
         headers:{authorization:'Bearer '+token}
@@ -64,8 +64,14 @@ try {
       if(!profileResponse.ok)throw Error(role+': cannot inspect performer onboarding '+profileResponse.status);
       const profile=await profileResponse.json();
       if(!profile){
-        await page.getByText('Заполните профиль',{exact:true}).waitFor({state:'visible'});
-        await page.getByRole('button',{name:'Заполнить',exact:true}).waitFor({state:'visible'});
+        const setup=page.locator('main.performer-onboarding');
+        await setup.waitFor({state:'visible',timeout:15000});
+        await setup.getByRole('heading',{name:'Станьте исполнителем'}).waitFor({state:'visible'});
+        const towRole=setup.getByRole('button',{name:'Эвакуатор',exact:true});
+        if(await towRole.getAttribute('aria-pressed')!=='true')
+          throw Error('tow: initial approved onboarding must preselect the registered tow role');
+        if(await page.getByText('Заполните профиль',{exact:true}).count())
+          throw Error('tow: retired Work() onboarding card leaked into native 618 shell');
         const created=await fetch(BASE+'/api/performer/profile',{
           method:'PUT',headers:{authorization:'Bearer '+token,'content-type':'application/json'},
           body:JSON.stringify({kind:'tow',specialties:[],brands:{},tier:'eco'})

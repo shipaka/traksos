@@ -154,6 +154,13 @@ expect(performerEmptySource.includes('<ApprovedEmptyScene kind="shift"/>') &&
   performerEmptySource.includes('!jobs.data?<LoadingBlock error={jobs.error} retry={jobs.reload}/>') &&
   performerEmptyStyle.includes('.approved-pc-performer .approved-pc-shift-empty-body'),
   'performer/tow empty shift preserves API loading, real offer CTA and cinematic illustration without fake work');
+const unifiedPerformerEntry=await read('web/src/screens/performer.tsx');
+const nativeRoleAcceptance=await read('e2e/android-approved-workspaces.mjs');
+expect(unifiedPerformerEntry.includes('if (!p) return <PerformerHub />') &&
+  !unifiedPerformerEntry.includes('Заполните профиль') &&
+  nativeRoleAcceptance.includes("page.locator('main.performer-onboarding')") &&
+  nativeRoleAcceptance.includes("name:'Станьте исполнителем'"),
+  'all new performer/tow accounts use one canonical four-step onboarding, never the retired mini-page');
 const ownerPcUiContract=await read('web/src/screens/ownerDesktopHome20261120.css');
 const botDockContract=await read('web/src/trakbotDock.css');
 expect(ownerPcUiContract.includes('UI CONTRACT 21.11: canonical desktop guest mascot') &&
