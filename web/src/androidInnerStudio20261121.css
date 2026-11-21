@@ -1,0 +1,88 @@
+/*
+ * Approved Android 618: secondary-route visual mini-studio, not a new
+ * dashboard. Existing native navigation, tasks, forms, API and bottom bar
+ * stay fully functional. Use only approved artwork and restrained motion.
+ */
+.tr-native-section-brief{display:none}
+@media(max-width:899px){
+ html.traksos-native .app:not(.guest-app) .desktop-content>.tr-native-section-brief{
+  position:relative;isolation:isolate;overflow:hidden;
+  box-sizing:border-box;display:block;
+  min-height:103px;margin:9px 12px 0;padding:13px 13px 12px;
+  border-radius:15px;border:1px solid #42667a;
+  background:radial-gradient(circle at 87% 52%,rgba(42,118,139,.39),transparent 45%),
+    linear-gradient(112deg,#102e40 4%,#091d2c 82%);
+  box-shadow:0 7px 21px #0004,inset 0 1px #ffffff12;
+  animation:tr-native-section-studio-enter .28s ease-out both;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-native-section-brief::before{
+  content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;
+  border-radius:0 3px 3px 0;background:#fc823e;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-native-section-brief-copy{
+  position:relative;z-index:2;width:69%;min-width:0;
+  display:flex;flex-direction:column;align-items:flex-start;gap:4px;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-native-section-kicker{
+  color:#faa56e;font-size:9px;letter-spacing:.1em;font-weight:850;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-native-section-brief p{
+  font-size:11px;line-height:1.37;color:#d4e7ee;margin:0;
+  display:-webkit-box;-webkit-box-orient:vertical;
+  -webkit-line-clamp:3;overflow:hidden;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-native-section-brief img{
+  position:absolute;right:-5px;top:0;bottom:0;display:block;
+  width:43%;height:100%;object-fit:cover;object-position:57% center;
+  opacity:.94;filter:contrast(1.03) saturate(1.08);
+  mask-image:linear-gradient(to right,transparent,#000 41%);
+  -webkit-mask-image:linear-gradient(to right,transparent,#000 41%);
+  pointer-events:none;z-index:0;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-native-section-brief::after{
+  content:"";position:absolute;right:0;bottom:0;height:34px;width:44%;
+  background:linear-gradient(0deg,rgba(7,25,35,.55),transparent);
+  pointer-events:none;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-native-section-assistant{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:10px;font-weight:750;color:#ffe0c9;
+  text-decoration:none;border-bottom:1px solid #e4945c88;
+  padding:2px 0 0;min-height:22px;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-native-assistant-dot{
+  width:5px;height:5px;display:block;flex:none;border-radius:50%;
+  background:#65cbd6;box-shadow:0 0 0 2px #65cbd628;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-native-section-assistant:focus-visible{
+  border-radius:3px;outline:2px solid #ffc39c;outline-offset:3px;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-native-section-staff{
+  font-size:9px;color:#adcfda;margin-top:2px;
+ }
+ /* The next working section begins promptly. Do not overlay controls. */
+ html.traksos-native .app:not(.guest-app) .desktop-content:has(> .tr-native-section-brief)>main{
+  padding-top:12px;
+ }
+}
+@media(max-width:359px){
+ html.traksos-native .app:not(.guest-app) .desktop-content>.tr-native-section-brief{
+  margin:7px 8px 0;min-height:98px;padding:11px 10px;
+ }
+ html.traksos-native .app:not(.guest-app) .tr-native-section-brief-copy{width:73%;}
+ html.traksos-native .app:not(.guest-app) .tr-native-section-brief p{font-size:10px;-webkit-line-clamp:3;}
+ html.traksos-native .app:not(.guest-app) .tr-native-section-brief img{width:40%;}
+ html.traksos-native .app:not(.guest-app) .tr-native-section-assistant{font-size:9px;}
+}
+@keyframes tr-native-section-studio-enter{
+ from{opacity:.66;transform:translateY(5px)}
+ to{opacity:1;transform:none}
+}
+@media(prefers-reduced-motion:reduce){
+ html.traksos-native .app:not(.guest-app) .desktop-content>.tr-native-section-brief{
+  animation:none!important;transform:none!important;
+ }
+}
+html.traksos-reduced-motion.traksos-native .app:not(.guest-app) .desktop-content>.tr-native-section-brief{
+ animation:none!important;transform:none!important;
+}
