@@ -120,7 +120,7 @@ try {
       await menu.waitFor({state:'visible',timeout:10000});
       if(!await menu.locator('a[href="#/shop"]').count())
         throw Error('Parts shop must remain accessible via role Menu, not an obsolete sixth tab');
-      await page.goto(BASE+'/'+route,{waitUntil:'domcontentloaded'});
+      await page.goto(BASE+'/'+home,{waitUntil:'domcontentloaded'});
     }
     if(mode==='service'){
       const expected=['#/base','#/base/inbox','#/shop','#/base/money','#/menu'];

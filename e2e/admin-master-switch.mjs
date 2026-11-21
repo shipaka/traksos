@@ -61,7 +61,7 @@ try {
     await page.getByRole('heading',{name:label,exact:true}).waitFor();
     if(await page.getByRole('button',{name:'Открыть старый учебный тренажёр'}).count())
       throw Error(id+': obsolete training launcher returned');
-    await page.locator('a[href="#/admin/test-center"]').first().click();
+    await page.getByRole('link',{name:'← Выбор кабинета'}).click();
     await page.getByRole('heading',{name:'Тестирование кабинетов'}).waitFor();
   }
   if(writes.length)throw new Error('Sandbox unexpectedly changed live API');
