@@ -158,6 +158,8 @@ try{
          !info.visual.includes('gradient')||!info.animation.includes('trAndroidInnerEnter')||
          info.scrollWidth>info.clientWidth+3)
         throw Error(role+': menu visuals or role routes broken '+JSON.stringify(info));
+      if(info.realLinks.filter(h=>h==='#/profile').length!==1)
+        throw Error(role+': Profile and settings appears more than once in Android Menu');
       if(role==='owner' && !info.realLinks.includes('#/air'))
         throw Error('Owner lost approved driver Ether');
       if(role==='master' && (!info.realLinks.includes('#/work/filter')||info.realLinks.includes('#/admin')))
