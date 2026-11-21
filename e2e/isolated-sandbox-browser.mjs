@@ -186,6 +186,27 @@ try{
             console.log('SANDBOX ROUTE PASS',role,width,destination,state.mainClass);
           }
         }
+        if (width === 390 && (role === 'driver' || role === 'owner')) {
+          const docs = [];
+          for (const audience of ['client', 'privacy']) {
+            const response = await page.request.get(base + '/api/offers/current/' + audience);
+            if (!response.ok()) throw Error('Missing sandbox document: ' + audience);
+            const doc = await response.json();
+            if (doc.audience !== audience || !doc.body || !doc.summary || !doc.version)
+              throw Error('Incomplete sandbox document: ' + audience);
+            await page.goto(base + '/#/offer/' + audience);
+            const body = page.locator('main.public-offer-page .offer-text');
+            const title = audience === 'privacy' ? 'Согласие на обработку персональных данных' : 'Оферта для клиентов';
+            await body.getByText(title, {exact:true}).first().waitFor();
+            await body.getByText('Редакция ' + doc.version, {exact:false}).waitFor();
+            if (audience === 'privacy')
+              await body.getByText('вымышленные данные', {exact:false}).first().waitFor();
+            await page.screenshot({path:out+'/'+role+'-'+width+'-document-'+audience+'.png', fullPage:true});
+            docs.push(doc);
+          }
+          if (docs[0].id === docs[1].id || docs[0].body === docs[1].body || docs[0].summary === docs[1].summary)
+            throw Error('Privacy duplicates client offer in ' + role);
+        }
         // A wrong-role deep link must NEVER show an old Home dashboard.
         // Clear denial screens are safer than silently exposing a stale
         // or misleading cabinet for an authenticated user.
