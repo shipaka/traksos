@@ -244,6 +244,15 @@ try{
            throw Error('Master lost real back-to-live-work action');
        }
      }
+     if(['admin','moderator'].includes(c.id) && width>=1440){
+       const staffRail=page.locator('.desktop-content > .tr-inner-rail');
+       const height=await staffRail.evaluate(el=>Math.round(el.getBoundingClientRect().height));
+       if(height>135)throw Error('Staff inner quick access became a second empty dashboard: '+height+'px');
+       if(await staffRail.locator('nav a:visible').count()<3)
+         throw Error('Compact staff rail lost authorized actions');
+       if(await staffRail.locator('.tr-inner-rail-status:visible').count())
+         throw Error('Decorative staff panel still pushes live controls below fold');
+     }
      if(c.id==='admin' && width>=1440){
        const empty=page.locator('.admin-orders-zero');
        if(await empty.count() && await empty.isVisible()){

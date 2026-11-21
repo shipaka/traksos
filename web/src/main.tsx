@@ -50,6 +50,8 @@ import './approvedInnerExperience.css';
 import './androidInnerStudio20261121.css';
 // Smaller actual content blocks following approved 617/618 inner page headers.
 import './approvedInnerDepth20261121.css';
+// Admin/moderator: avoid decorative panels pushing actual tables and forms down.
+import './approvedStaffInnerCompact20261121.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
