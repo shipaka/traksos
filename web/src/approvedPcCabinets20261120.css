@@ -404,3 +404,19 @@ html.traksos-browser .approved-pc-admin .approved-pc-russia::before {
    background:#133744;text-align:center;font-size:12px;
  }
 }
+
+/* The queue column can be narrow even on desktop. Keep the vehicle name
+   readable and give the insurance stage its own line below it. */
+.approved-pc-insurance .approved-pc-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+}
+.approved-pc-insurance .approved-pc-row > .approved-pc-photo {
+  grid-row: 1 / 3;
+}
+.approved-pc-insurance .approved-pc-row em {
+  grid-column: 2;
+  justify-self: start;
+  max-width: 100%;
+}
