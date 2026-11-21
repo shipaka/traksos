@@ -432,8 +432,6 @@
     background-position:0 -317px!important;
     opacity:1!important;
     color:transparent!important;
-    -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.5) 16%,#000 38%);
-    mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.5) 16%,#000 38%);
   }
   .guest-app.guest-home .owner20-feature-ecu .owner20-feature-illustration{
     width:147px;height:128px;background-position:-172px -317px!important;
@@ -487,8 +485,6 @@
     background:url('/owner20-artwork-sprite.webp') -797px 0 / 1018px 446px no-repeat!important;
     font-size:0!important;opacity:1!important;
     pointer-events:none;
-    -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.15) 17%,#000 55%);
-    mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.15) 17%,#000 55%);
     z-index:1;
   }
   .guest-app.guest-home .owner20-bottom-club::after{
@@ -543,8 +539,6 @@
    background-repeat:no-repeat;
    font-size:0;color:transparent;
    transform:none!important;
-   -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 47%);
-   mask-image:linear-gradient(90deg,transparent 0%,#000 47%);
  }
  .guest-app.guest-home .owner20-feature-ecu .owner20-feature-illustration{width:142px;background-position:-172px -317px}
  .guest-app.guest-home .owner20-feature-parts .owner20-feature-illustration{width:123px;background-position:-324px -317px}
@@ -561,8 +555,6 @@
    background-repeat:no-repeat;
    font-size:0;
    transform:none;
-   -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 55%);
-   mask-image:linear-gradient(90deg,transparent 0%,#000 55%);
  }
  .guest-app.guest-home .owner20-bottom-club::after{width:213px;height:167px;background-position:-797px -170px}
 }
@@ -582,20 +574,9 @@
  }
 }
 
-/* Approved 617.png contains text inside the decorative source sprite as well as
-   real accessible DOM labels. Hide only the sprite's baked-in label zone so
-   card titles are not visibly duplicated. The actual truck / artwork remains. */
-@media(min-width:1281px){
- .guest-app.guest-home .owner20-feature-illustration{
-   -webkit-mask-image:linear-gradient(90deg,transparent 0%,transparent 43%,#000 75%)!important;
-   mask-image:linear-gradient(90deg,transparent 0%,transparent 43%,#000 75%)!important;
- }
- .guest-app.guest-home .owner20-bottom-air::after,
- .guest-app.guest-home .owner20-bottom-club::after{
-   -webkit-mask-image:linear-gradient(90deg,transparent 0%,transparent 53%,#000 84%)!important;
-   mask-image:linear-gradient(90deg,transparent 0%,transparent 53%,#000 84%)!important;
- }
-}
+/* Owner 617 sprite captions are raster pixels. The only active desktop
+   artwork crop is defined in the source-sprite contract below, for all
+   widths >=900px. Do not reintroduce masks here or conceal missing art. */
 
 
 /* UI CONTRACT 21.11: canonical desktop guest mascot; no old pill/40px badge.
@@ -647,13 +628,9 @@
    background:linear-gradient(90deg,rgba(9,27,37,.76) 0%,rgba(9,27,37,.62) 30%,rgba(9,27,37,.18) 67%,transparent 100%);
  }
  .guest-app.guest-home .owner20-feature-illustration {
-   -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.50) 18%,#000 42%)!important;
-   mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.50) 18%,#000 42%)!important;
  }
  .guest-app.guest-home .owner20-bottom-air::after,
  .guest-app.guest-home .owner20-bottom-club::after {
-   -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.56) 24%,#000 58%)!important;
-   mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.56) 24%,#000 58%)!important;
  }
 }
 @media(min-width:900px) and (max-width:1199px){

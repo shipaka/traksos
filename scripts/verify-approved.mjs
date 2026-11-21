@@ -162,6 +162,13 @@ expect(unifiedPerformerEntry.includes('if (!p) return <PerformerHub />') &&
   nativeRoleAcceptance.includes("name:'Станьте исполнителем'"),
   'all new performer/tow accounts use one canonical four-step onboarding, never the retired mini-page');
 const ownerPcUiContract=await read('web/src/screens/ownerDesktopHome20261120.css');
+expect(ownerPcUiContract.includes('Source-sprite crop contract:') &&
+  ownerPcUiContract.includes('rgba(0,0,0,.9) 12%,#000 24%') &&
+  ownerPcUiContract.includes('rgba(0,0,0,.9) 13%,#000 27%') &&
+  !ownerPcUiContract.includes('transparent 43%,#000 75%') &&
+  !ownerPcUiContract.includes('transparent 53%,#000 84%') &&
+  !ownerPcUiContract.includes('rgba(0,0,0,.50) 18%,#000 42%'),
+  '617 desktop uses one effective artwork crop, not stacked contradictory mask patches');
 const botDockContract=await read('web/src/trakbotDock.css');
 expect(ownerPcUiContract.includes('UI CONTRACT 21.11: canonical desktop guest mascot') &&
   ownerPcUiContract.includes('owner20-feature::before') &&
