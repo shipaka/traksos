@@ -549,6 +549,22 @@
 }
 
 
+/* Dual-mode 320px header fit: keep the approved logo and both role links
+   visible instead of forcing all controls into one over-wide row. */
+@media (max-width: 380px) {
+  .app:not(.guest-app) .top:has(.cabinet-role-switch) {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+  .app:not(.guest-app) .top:has(.cabinet-role-switch) > .row {
+    display: flex;
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 0;
+    justify-content: flex-end;
+  }
+}
+
 /* One explicit account-mode control; staff-only links stay out of a master menu. */
 .app:not(.guest-app) .cabinet-role-switch{
   display:inline-flex;align-items:center;gap:3px;flex:0 0 auto;
