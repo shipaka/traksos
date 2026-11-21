@@ -29,6 +29,7 @@ export function SandboxEnter() {
       else sessionStorage.removeItem('traksos.sandboxSupervisorToken');
       if (typeof json.returnUrl === 'string' && json.returnUrl.startsWith('https://'))
         sessionStorage.setItem('traksos.sandboxReturnUrl', json.returnUrl);
+      try { localStorage.removeItem('traksos.mode'); } catch { /* private mode */ }
       setToken(json.token);
       location.replace(location.pathname + location.search + json.landing);
       location.reload();
@@ -78,6 +79,9 @@ export function SandboxModeBar() {
           data?.role !== selectedRole || typeof data?.token !== 'string' ||
           typeof data?.landing !== 'string' || !data.landing.startsWith('#/'))
         throw new Error(data?.message || 'Не удалось переключить тестовую роль');
+      // Prevent the previous cabinet's remembered navigation mode from
+      // overriding the newly selected role after the full page reload.
+      try { localStorage.removeItem('traksos.mode'); } catch { /* private mode */ }
       setToken(data.token);
       location.replace(location.pathname + location.search + data.landing);
       location.reload();
