@@ -132,6 +132,15 @@ class ScreenErrorBoundary extends Component<
   }
 }
 
+/* Denied routes never fall back to an obsolete role Home screen. */
+function UnavailableRole({label}:{label:string}) {
+  return <main className="tr-approved-route-unavailable" aria-label={label}>
+    <span className="tr-approved-route-eyebrow">TRAKSOS · ЛИЧНЫЙ КАБИНЕТ</span>
+    <h1>{label}</h1>
+    <p>Этот раздел недоступен для вашей роли. Другой кабинет не открывается автоматически.</p>
+    <a href="#/" className="btn">Вернуться в свой рабочий кабинет</a>
+  </main>;
+}
 type Mode = 'client' | 'performer' | 'admin' | 'moderator' | 'service' | 'insurer' | 'inspection' | 'courier';
 const PERFORMER_ROLES = ['master', 'tow', 'service'];
 
@@ -329,7 +338,7 @@ function App() {
     case undefined: screen = effMode === 'performer' && (!me.performer || me.performer.kind === 'ecu')
       ? (me.performer?.kind === 'ecu' ? <Work /> : <PerformerHub />)
       : <ApprovedPcDesk role={desktopRole} fallback={effMode === 'courier' ? <CourierDesk /> : effMode === 'insurer' ? <InsurerCabinet /> : effMode === 'inspection' ? <InsurerCabinet inspectionOnly /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isAdmin ? <Admin /> : effMode === 'moderator' && isModerator ? <ModeratorDesk /> : <Home />} />; break;
-    case 'login': screen = <Home />; break;
+    case 'login': screen = <UnavailableRole label="Вы уже вошли в TrakSOS" />; break;
     case 'sos': screen = isCustomer ? <Sos /> : <main><div className="empty">Для вызова SOS нужен клиентский аккаунт</div></main>; break;
     case 'new': screen = !isCustomer ? <main><div className="empty">Для заказа нужен клиентский аккаунт</div></main> : b === 'ecu' ? <main className="stack"><h1>Ремонт электронных блоков ЭБУ</h1><p>Специалист принимает блок в стационарной мастерской. Передайте техническое заключение из ранее оформленной консультации или выездной заявки: это бесплатно, и диагностика согласуется отдельно.</p><a className="btn" href="#/orders">Открыть мои заявки и заключения</a></main> : b === 'consult' ? <Consult /> : <NewOrder service={b ?? 'electric'} />; break;
     case 'order': screen = effMode === 'performer' && isPerformer && b
@@ -347,7 +356,7 @@ function App() {
         // A station owner may add the mobile-master workplace using the
         // existing real performer onboarding; no fake ninth UI shell.
         screen = isService && (b === 'profile' || b === 'me')
-          ? <PerformerHub /> : <Home />;
+          ? <PerformerHub /> : <UnavailableRole label="Кабинет выездного мастера недоступен" />;
         break;
       }
       screen = !me.performer || b === 'profile' || (b === 'me' && !route[2]) ? <PerformerHub />
@@ -355,7 +364,7 @@ function App() {
         : b === 'filter' ? <FilterSection /> : b === 'jobs' ? <Orders as="performer" /> : b === 'chats' ? <AndroidMasterChats /> : b === 'docs' ? <Documents /> : me.performer?.kind === 'ecu' ? <Work /> : <ApprovedPcDesk role={me.performer?.kind === 'tow' ? 'tow' : 'master'} fallback={<Work />} />;
       break;
     case 'base': screen = !isService
-      ? (isPerformer && b === 'me' ? <BaseSetup /> : <Home />)
+      ? (isPerformer && b === 'me' ? <BaseSetup /> : <UnavailableRole label="Кабинет СТО недоступен" />)
       : b === 'car' && route[2] ? <BaseCar id={route[2]} /> : b === 'me' ? <BaseSetup /> : b === 'money' ? <BaseMoney /> : b === 'inbox' ? <BaseHome key="inbox" initialTab="req" /> : <ApprovedPcDesk role="service" fallback={<BaseHome />} />; break;
     case 'services': screen = b && route[2] === 'book' ? <BookForm id={b} /> : b ? <CenterPage id={b} /> : <ServicesList />; break;
     case 'booking': screen = <BookingPage id={b} />; break;
@@ -395,8 +404,8 @@ function App() {
     case 'qr': screen = <QrJoin code={b} />; break;
     case 'appeal': screen = <Appeal />; break;
     case 'reviews': screen = <MyReviews />; break;
-    case 'admin': screen = !isStaff ? <Home /> : b === 'case' && route[2] ? <ModCase id={route[2]} /> : !isAdmin ? <ModeratorDesk /> : b === 'test-center' ? (serviceSandbox ? <ServicePreviewPage section={route[3]} sub={route[4]} id={route[5]} /> : <AdminTestCenter roleId={route[2]} fullFidelity />) : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : b === undefined ? <ApprovedPcDesk role="admin" fallback={<Admin />} /> : <Admin key={b === 'section' ? route[2] : 'summary'} initialSection={b === 'section' ? route[2] : undefined} />; break;
-    case 'moderation': screen = isModerator ? (b === 'verify' || b === 'support' || b === 'flagged' || b === 'cases' ? <ModeratorDesk initialTab={b === 'verify' ? 'verify' : b === 'support' ? 'support' : b === 'flagged' ? 'flagged' : 'cases'} /> : <ApprovedPcDesk role="moderator" fallback={<ModeratorDesk />} />) : <Home />; break;
+    case 'admin': screen = !isStaff ? <UnavailableRole label="Нет доступа к администрированию" /> : b === 'case' && route[2] ? <ModCase id={route[2]} /> : !isAdmin ? <ModeratorDesk /> : b === 'test-center' ? (serviceSandbox ? <ServicePreviewPage section={route[3]} sub={route[4]} id={route[5]} /> : <AdminTestCenter roleId={route[2]} fullFidelity />) : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : b === undefined ? <ApprovedPcDesk role="admin" fallback={<Admin />} /> : <Admin key={b === 'section' ? route[2] : 'summary'} initialSection={b === 'section' ? route[2] : undefined} />; break;
+    case 'moderation': screen = isModerator ? (b === 'verify' || b === 'support' || b === 'flagged' || b === 'cases' ? <ModeratorDesk initialTab={b === 'verify' ? 'verify' : b === 'support' ? 'support' : b === 'flagged' ? 'flagged' : 'cases'} /> : <ApprovedPcDesk role="moderator" fallback={<ModeratorDesk />} />) : <UnavailableRole label="Нет доступа к модерации" />; break;
     case 'offer': screen = <OfferPage audience={b ?? 'client'} />; break;
     case 'support': screen = b === 'new' ? <SupportNew /> : b ? <SupportThread id={b} /> : <SupportList />; break;
     case 'notifications': screen = <Notifications />; break;
