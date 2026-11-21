@@ -122,7 +122,10 @@ function FullFidelityRoleLauncher({role}:{role:RoleInfo}) {
   </main>;
 }
 
-export function AdminTestCenter({roleId,fullFidelity=false}:{roleId?:string;fullFidelity?:boolean}) {
+export function AdminTestCenter({roleId}:{roleId?:string;fullFidelity?:boolean}) {
+  // No caller can opt back into obsolete role mockups. Full-fidelity, same-code
+  // isolated sandbox is the only supported entry for every approved role.
+  const fullFidelity = true;
   const role=DEMO_ROLES.find(r=>r.id===roleId);
   if(role && fullFidelity)return <FullFidelityRoleLauncher role={role}/>;
   if(!role) return <main className="sandbox-root stack" aria-label="Тестовый центр администратора">
