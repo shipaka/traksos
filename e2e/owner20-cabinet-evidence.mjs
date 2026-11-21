@@ -229,6 +229,8 @@ try{
        await header.waitFor({state:'attached'});
        if(await header.isVisible())throw Error('Old garage hero duplicates the new approved inner heading');
      }
+     if(c.id==='service' && await page.locator('.desktop-content > main > div:first-of-type > h1:visible').count())
+       throw Error('Legacy STO intro duplicates approved service page');
      if(c.id==='driver' && await page.locator('.client-orders-page>h1:visible').count())
        throw Error('Old orders heading duplicates the approved inner hero');
      if(['insurer','moderator'].includes(c.id) &&
