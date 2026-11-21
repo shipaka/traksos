@@ -68,7 +68,7 @@ try {
     if(!financeMenu || !financeMenu.text.includes('Комиссии, баллы и рефералы'))
       throw Error(kind+': financial conditions and referral terms are missing from cabinet menu');
     await page.goto(BASE+'/#/economics',{waitUntil:'domcontentloaded'});
-    await page.getByRole('heading',{name:'Комиссии, баллы и рефералы',exact:true}).waitFor();
+    await page.locator('.desktop-content > main').getByRole('heading',{name:'Комиссии, баллы и рефералы',exact:true}).first().waitFor();
     const guide=page.locator('section.economics-guide');
     await guide.waitFor({timeout:12000});
     const financeText=(await guide.innerText()).replace(/\s+/g,' ');
@@ -91,7 +91,7 @@ try {
     // This check also guards the registration welcome gift against stale FAQ text.
     if(links.some(link=>link.href==='#/invite')) {
       await page.goto(BASE+'/#/invite',{waitUntil:'domcontentloaded'});
-      await page.getByRole('heading',{name:'Пригласить в TrakSOS'}).waitFor();
+      await page.locator('.tr-inner-hero').getByRole('heading',{name:'Пригласить в TrakSOS',exact:true}).waitFor();
       const invitation=(await page.locator('main').textContent()??'').replace(/\s+/g,' ');
       if((kind==='owner'||kind==='driver') && !invitation.includes('не более 10% стоимости услуги'))
         throw Error(kind+': the invitation page shows the wrong client points cap');
