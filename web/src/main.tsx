@@ -537,6 +537,12 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     .filter(([href])=>here===href ||
       (href!=='/' && href!=='/work' && href!=='/base' && here.startsWith(href+'/')))
     .sort((a,b)=>b[0].length-a[0].length)[0]?.[0];
+  // The desktop sidebar also has parent/child routes (for example, /admin
+  // and /admin/section/orders). Only the deepest rendered item is selected.
+  const isDesktopPrimaryActive=(href:string,links:readonly (readonly string[])[]) =>
+    (here===href || (href!=='/' && here.startsWith(href+'/'))) &&
+    !links.some(([other]) => other!==href && other.length>href.length &&
+      (here===other || here.startsWith(other+'/')));
   // Все дополнительные функции доступны в шапке, даже когда они не в нижних вкладках.
   // Не показываем чужие роли и не создаём несуществующие страницы.
   const accountLinks: [string, string][] = mode === 'courier'
@@ -743,8 +749,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                     : mode === 'insurer' || mode === 'inspection'
                       ? tabs
                       : mode === 'moderator' ? [...tabs, ['/profile', '◉', 'Аккаунт']]
-                      : [...tabs, ['/as/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]).map(([href, ic, name]) => (
-                <a key={href} href={shellHref(href)} className={`desktop-nav-link ${here === href || (href !== '/' && here.startsWith(href + '/')) ? 'active' : ''} ${href === '/sos' ? 'desktop-nav-sos' : ''}`}>
+                      : [...tabs, ['/as/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]).map(([href, ic, name], _index, links) => (
+                <a key={href} href={shellHref(href)} className={`desktop-nav-link ${isDesktopPrimaryActive(href,links) ? 'active' : ''} ${href === '/sos' ? 'desktop-nav-sos' : ''}`}>
                   <span aria-hidden="true"><NavGlyph glyph={ic}/></span><span>{name}</span>
                 </a>
               ))}
