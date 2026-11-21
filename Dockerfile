@@ -1,5 +1,7 @@
 # ТракSOS: сервер + собранное веб-приложение в одном образе
 FROM node:22-alpine AS build
+ARG BUILD_REV=unknown
+ENV TRAKSOS_BUILD_REV=$BUILD_REV
 WORKDIR /app
 COPY package.json ./
 COPY server/package.json server/

@@ -46,6 +46,10 @@ try {
     const previewLink = page.locator('main.approved-pc-admin a[href="#/admin/test-center"]').first();
     await previewLink.click();
     await page.getByRole('heading',{name:'Тестирование кабинетов'}).waitFor();
+    const roleCards=page.locator('main.sandbox-root .sandbox-role-card');
+    if(await roleCards.count()!==12 ||
+       await roleCards.locator('.sandbox-role-icon svg').count()!==12)
+      throw Error('Admin selector must display 12 real roles with consistent SVG icons');
     for (const [id,label] of [
       ['client','Клиент'],['owner','Владелец / автопарк'],['driver','Сотрудник автопарка'],
       ['master','Выездной мастер'],['tow','Эвакуаторщик'],['service','Рембаза / СТО'],
@@ -59,7 +63,12 @@ try {
       if(await page.getByRole('button',{name:'Открыть старый учебный тренажёр'}).count())
         throw Error(id+': obsolete legacy training entry has returned');
       await page.screenshot({path:'e2e/shots/sandbox/'+id+'-'+width+'.png',fullPage:true});
-      await page.locator('a[href="#/admin/test-center"]').first().click();
+      // A matching sidebar link exists but can be hidden at the current
+      // viewport. Exercise the visible Back control in the real role launcher.
+      const back=page.locator('main.sandbox-root a.btn.ghost[href="#/admin/test-center"]');
+      await back.waitFor({state:'visible',timeout:15000});
+      await back.click();
+      await page.waitForURL('**/#/admin/test-center');
       await page.getByRole('heading',{name:'Тестирование кабинетов'}).waitFor();
     }
     if (errors.length) throw new Error('Browser error at '+width+': '+errors.join('; '));

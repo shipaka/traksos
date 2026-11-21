@@ -256,6 +256,9 @@
   }
 }
 @media (max-width: 359px) {
+  html.traksos-compact-guest .guest-app .public-landing .public-service-tiles {
+    column-gap: 4px !important;
+  }
   html.traksos-compact-guest .guest-app .public-landing .public-app-card {
     padding-right: 103px !important;
   }

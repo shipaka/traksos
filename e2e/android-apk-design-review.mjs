@@ -119,6 +119,22 @@ try {
          !quick.some(label=>label.includes('Фото')))
         throw Error('The master has missing approved photo/report/parts actions '+JSON.stringify(quick));
     }
+    // Regression against the old CSS rule which colored every <p> child
+    // span 16px orange; the current approved component uses SVG for icons
+    // and the span contains the real issue/address text.
+    const factStyles=await page.locator('.and19-main-order .and19-facts').evaluate(node=>{
+      const sample=cls=>{
+        const p=node.querySelector('p.'+cls);
+        const span=p?.querySelector(':scope > span');
+        return p&&span?{label:cls,parentColor:getComputedStyle(p).color,
+          textColor:getComputedStyle(span).color,fontPx:parseFloat(getComputedStyle(span).fontSize)}:null;
+      };
+      return [sample('and19-issue'),sample('and19-order-address')];
+    });
+    if(factStyles.some(s=>!s || s.fontPx>13 || s.textColor!==s.parentColor))
+      throw Error(role+': obsolete oversized orange text leaked into approved Android facts '+JSON.stringify(factStyles));
+    if(await page.locator('.and19-timeline li:last-child > span svg').count()!==1)
+      throw Error(role+': approved last timeline step must show a check icon, not number five');
     const stageTimes=await page.locator('.and19-timeline li time').count();
     const dispatchEta=await page.locator('.and19-route-eta').innerText();
     if(stageTimes!==3 || !dispatchEta.includes('28 мин'))

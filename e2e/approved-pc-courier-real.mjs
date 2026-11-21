@@ -69,6 +69,8 @@ try{
    if(width===1440){
     if(await page.locator('.courier-pc-bot img').count()!==1)
       throw Error('Approved TrakBot is missing');
+    if(await page.locator('.app > .trakbot-dock').isVisible().catch(()=>false))
+      throw Error('Floating TrakBot duplicates the approved courier assistant card and obscures the trip');
     if(await page.locator('.courier-pc-schematic').count()!==1)
       throw Error('Approved schematic is missing');
     const toggle=page.locator('.courier-pc-presence[role="switch"]');

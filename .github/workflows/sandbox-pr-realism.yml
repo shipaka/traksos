@@ -1,0 +1,127 @@
+name: "TrakSOS — реальная межролевая песочница (PR)"
+
+on:
+  pull_request:
+    paths:
+      - 'server/src/payments/persistentSandboxMock.ts'
+      - 'server/src/ops/*Sandbox*.ts'
+      - 'server/src/ops/exerciseSandboxOrder.ts'
+      - 'server/src/main.ts'
+      - 'server/src/app.ts'
+      - 'server/src/seedSandbox.ts'
+      - 'e2e/isolated-sandbox-browser.mjs'
+      - 'deploy/docker-compose.sandbox.yml'
+      - '.github/workflows/sandbox-pr-realism.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: isolated-sandbox-pr-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scenario:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build unpublised candidate image locally, never push to GHCR
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker build --build-arg BUILD_REV="$GITHUB_SHA" \
+            -t "ghcr.io/shipaka/traksos:$GITHUB_SHA" .
+      - name: Isolated fictitious users → real orders → fake money → Chromium screenshot proof
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          cd deploy
+          umask 077
+          export TRAKSOS_RELEASE_REV="$GITHUB_SHA"
+          export SANDBOX_DOMAIN="sandbox.invalid"
+          export SANDBOX_DB_PASSWORD="$(openssl rand -hex 24)"
+          app_secret="$(openssl rand -hex 32)"
+          shared_secret="$(openssl rand -hex 32)"
+          # Docker internal networks deliberately reject host port publishing.
+          # A throwaway Nginx proxy is the ONLY container on a host-facing
+          # bridge; the sandbox app itself remains on two internal networks.
+          cat > .sandbox-browser-proxy-ci.conf <<'NGINX'
+          events {}
+          http {
+            server {
+              listen 8080;
+              location / {
+                proxy_pass http://sandbox-app:8080;
+                proxy_http_version 1.1;
+                proxy_read_timeout 40s;
+              }
+            }
+          }
+          NGINX
+          cat > .sandbox-loopback-ci.yml <<'LOOPBACK'
+          services:
+            sandbox-browser-proxy:
+              profiles: [sandbox]
+              image: nginx:1.27-alpine
+              restart: "no"
+              volumes:
+                - ./.sandbox-browser-proxy-ci.conf:/etc/nginx/nginx.conf:ro
+              ports:
+                - "127.0.0.1:38123:8080"
+              depends_on:
+                sandbox-app:
+                  condition: service_healthy
+              networks: [sandbox_public, sandbox_browser_loopback]
+          networks:
+            sandbox_browser_loopback:
+              internal: false
+          LOOPBACK
+          printf 'APP_SECRET=%s\nSANDBOX_SHARED_SECRET=%s\nSANDBOX_INSTANCE=true\nSMS_PROVIDER=log\nPUSH_PROVIDER=log\nPAYMENT_PROVIDER=mock\n' \
+            "$app_secret" "$shared_secret" > .env.sandbox
+          compose=(docker compose -p traksos-isolated-pr \
+            -f docker-compose.sandbox.yml -f .sandbox-loopback-ci.yml --profile sandbox)
+          cleanup() {
+            "${compose[@]}" down --remove-orphans --volumes || true
+            rm -f .env.sandbox .sandbox-loopback-ci.yml .sandbox-browser-proxy-ci.conf
+          }
+          trap cleanup EXIT
+          "${compose[@]}" config --format json | jq -e '
+            (.services["sandbox-app"].networks | if type=="array" then . else keys end | sort)
+              == (["sandbox_private","sandbox_public"] | sort)
+            and .networks.sandbox_private.internal == true
+            and .networks.sandbox_public.internal == true
+            and (.services["sandbox-browser-proxy"].networks
+              | if type=="array" then . else keys end | sort)
+              == (["sandbox_public","sandbox_browser_loopback"] | sort)
+            and (.services["sandbox-browser-proxy"].ports | all(.host_ip == "127.0.0.1"))
+          ' >/dev/null
+          "${compose[@]}" up -d --wait --wait-timeout 240 sandbox-db sandbox-app sandbox-browser-proxy
+          "${compose[@]}" exec -T sandbox-app node --import tsx server/src/seedSandbox.ts
+          "${compose[@]}" exec -T -e TRAKSOS_RUN_DISPOSABLE_SCENARIO=true sandbox-app \
+            node --import tsx server/src/ops/exerciseSandboxPayments.ts
+          "${compose[@]}" exec -T -e TRAKSOS_RUN_DISPOSABLE_SCENARIO=true sandbox-app \
+            node --import tsx server/src/ops/exerciseSandboxOrder.ts
+          "${compose[@]}" exec -T -e TRAKSOS_RUN_DISPOSABLE_SCENARIO=true sandbox-app \
+            node --import tsx server/src/ops/exerciseSandboxTowSto.ts
+          "${compose[@]}" exec -T sandbox-app node --import tsx server/src/ops/auditSandbox.ts
+          # Only ephemeral loopback on this GitHub-hosted runner, never a VPS port.
+          curl --fail --silent --show-error --max-time 15 \
+            http://127.0.0.1:38123/api/health | jq -e '.sandbox==true and .db==true'
+          (cd .. && npm install --no-audit --no-fund && npx playwright install --with-deps chromium)
+          SANDBOX_BROWSER_BASE_URL="http://127.0.0.1:38123" \
+          SANDBOX_SHARED_SECRET="$shared_secret" \
+          TRAKSOS_RUN_DISPOSABLE_SCENARIO=true \
+            node --import tsx ../e2e/isolated-sandbox-browser.mjs
+          echo 'PASS: separate network/DB, real order engine, virtual money, real browser cabinets'
+      - name: Upload actual 12 browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: isolated-sandbox-role-ui
+          path: deploy/e2e/shots/sandbox-real-browser
+          retention-days: 7
+          if-no-files-found: warn

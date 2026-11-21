@@ -114,46 +114,31 @@ try{
      }
      if(errors.length)throw Error('Uncaught errors '+errors.join('; '));
      if(c.id==='owner' && width===390){
-       // Browser mobile and desktop must use the SAME original logo and the
-       // SAME four photographs; card proportions may differ with the viewport.
-       const visual=await page.evaluate(async()=>{
+       // The 618.png phone dashboard uses four SVG service actions and
+       // genuine vehicle/order links, not the retired desktop crop atlas.
+       const desk=page.locator('main .and19-workspace.and19-client');
+       await desk.waitFor({state:'visible',timeout:14_000});
+       const visual=await page.evaluate(()=>{
          const logo=document.querySelector('.top .tr-approved-brand-logo img');
-         const scenes=Array.from(document.querySelectorAll('.desktop-quick-card .tr-service-illustration'));
-         const chosenAtlas=window.innerWidth>=900
-           ? '/traksos-service-scenes-desktop-hq.webp'
-           : '/traksos-service-scenes-shared.webp';
-         const atlas=await fetch(chosenAtlas);
-         const bmp=atlas.ok?await createImageBitmap(await atlas.blob()).catch(()=>null):null;
+         const services=Array.from(document.querySelectorAll('.and19-client .and19-services>a'));
          return {
-           logo:logo?.getAttribute('src'),loaded:logo?.complete&&logo?.naturalWidth===274&&logo?.naturalHeight===46,
-           logoRendered:logo?{w:logo.getBoundingClientRect().width,h:logo.getBoundingClientRect().height}:null,
-           illustrations:scenes.length,
-           matched:scenes.every(el=>getComputedStyle(el).backgroundImage.includes(chosenAtlas.slice(1))),
-           chosenAtlas,
-           crops:scenes.map(el=>{
-             const css=getComputedStyle(el);
-             return {pos:css.backgroundPosition,size:css.backgroundSize};
-           }),
-           size:bmp?{w:bmp.width,h:bmp.height}:null,
+           logo:logo?.getAttribute('src'),
+           logoLoaded:!!logo?.complete && logo.naturalWidth===274 && logo.naturalHeight===46,
+           logoWidth:logo?.getBoundingClientRect().width ?? 0,
+           icons:document.querySelectorAll('.and19-client .and19-service-symbol svg').length,
+           routes:services.map(a=>a.getAttribute('href')),
+           oldCards:document.querySelectorAll('.desktop-quick-links,.desktop-quick-card,.desktop-hero').length,
+           tabs:Array.from(document.querySelectorAll('.tabbar a')).map(a=>a.getAttribute('href')),
          };
        });
-       const expectedCrops=width===390
-         ? ['0px 0px','-114.4px 0px','-228.8px 0px','-343.2px 0px']
-         : ['0px 0px','-176px 0px','-352px 0px','-528px 0px'];
-       const expectedSize=width===390?'457.6px 68.25px':'704px 105px';
-       const expectedAtlas=width===390
-         ? '/traksos-service-scenes-shared.webp'
-         : '/traksos-service-scenes-desktop-hq.webp';
-       const expectedPixels=width===390?{w:704,h:105}:{w:2816,h:420};
-       if(visual.logo!=='/traksos-brand-logo-approved-618.png'||!visual.loaded||
-          !visual.logoRendered||visual.logoRendered.w>274.5||visual.logoRendered.h>46.5||
-          Math.abs(visual.logoRendered.w/visual.logoRendered.h-274/46)>.08||
-          visual.illustrations!==4||!visual.matched||visual.chosenAtlas!==expectedAtlas||
-          visual.size?.w!==expectedPixels.w||visual.size?.h!==expectedPixels.h||
-          visual.crops?.some((c,i)=>c.pos!==expectedCrops[i]||c.size!==expectedSize))
-         throw Error('Owner brand/art damaged by upscaling or a wrong PC/mobile crop at '+width+': '+JSON.stringify(visual));
-       console.log('Approved logo source pixel coverage at '+width+'px viewport, DPR 2: '+
-         (274/(visual.logoRendered.w*2)).toFixed(2)+'x; source remains unchanged');
+       const expected=['#/sos','#/new/tow','#/services','#/new/consult'];
+       const tabs=['#/','#/orders','#/air','#/garage','#/menu'];
+       if(visual.logo!=='/traksos-brand-logo-approved-618.png'||!visual.logoLoaded||
+          visual.logoWidth>274.5||visual.icons!==4||visual.oldCards!==0||
+          JSON.stringify(visual.routes)!==JSON.stringify(expected)||
+          JSON.stringify(visual.tabs)!==JSON.stringify(tabs))
+         throw Error('Owner-approved 618 phone actions, logo or navigation broken: '+JSON.stringify(visual));
+       console.log('Approved owner 618.png mobile workspace: real SVG services, links and logo PASS');
      }
      if(width>=1440) {
        // 20 Nov owner-approved desktop contracts: real React workdesk, not an image.

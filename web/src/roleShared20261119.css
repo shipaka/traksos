@@ -867,3 +867,61 @@
 @media(prefers-reduced-motion:reduce){
   .guest-app .partner-showcase .auth-desktop-showcase-photo{animation:none!important}
 }
+
+/* The approved graphite/orange route guard is intentionally a real empty
+ * state, not a legacy cabinet rendered under a different role. */
+.tr-approved-route-unavailable {
+ box-sizing:border-box;
+ min-width:0;
+ max-width:780px;
+ margin:clamp(16px,4vw,42px) auto;
+ display:flex;
+ flex-direction:column;
+ align-items:flex-start;
+ gap:14px;
+ padding:clamp(20px,4vw,34px);
+ color:#f4faff;
+ background:linear-gradient(140deg,#143446,#091e2d);
+ border:1px solid #497d91;
+ border-left:4px solid #fa822d;
+ border-radius:17px;
+ box-shadow:0 9px 25px #010a1660;
+}
+.tr-approved-route-unavailable * {box-sizing:border-box}
+.tr-approved-route-eyebrow {font-size:11px;color:#ffb476;letter-spacing:.1em;font-weight:800}
+.tr-approved-route-unavailable h1 {
+ margin:0;
+ color:#fff;
+ font-size:clamp(21px,3vw,30px);
+ line-height:1.18;
+ overflow-wrap:anywhere;
+}
+.tr-approved-route-unavailable p {
+ margin:0;
+ font-size:13px;
+ line-height:1.55;
+ color:#cfdfeb;
+}
+.tr-approved-route-unavailable a.btn {
+ display:inline-flex;
+ justify-content:center;
+ align-items:center;
+ min-height:46px;
+ max-width:100%;
+ padding:9px 13px;
+ background:linear-gradient(155deg,#ff9837,#ec681f);
+ color:#fff;
+ border:1px solid #ffd18a;
+ border-radius:10px;
+ text-align:center;
+ white-space:normal;
+ text-decoration:none;
+ font-size:12px;
+ font-weight:800;
+}
+@media(max-width:899px){
+ .app .tr-approved-route-unavailable {
+  width:calc(100% - 20px);
+  margin:13px auto 95px;
+ }
+}

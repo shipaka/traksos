@@ -190,6 +190,24 @@ async function run(width, height, mobile, nativePreview = false) {
       }
     }
     // The latest 19 Nov public six tiles are the only approved public row.
+    if(width<900 && !nativePreview){
+      // A collapsed browser bot must be reachable without covering the
+      // truck or signup controls; it lives below the actual page content.
+      const layout=await page.evaluate(()=>{
+        const hero=document.querySelector('.public-brand-hero')?.getBoundingClientRect();
+        const dock=document.querySelector('.guest-app.guest-home > .trakbot-dock')?.getBoundingClientRect();
+        const launcher=document.querySelector('.guest-app.guest-home > .trakbot-dock .trakbot-dock-launcher');
+        return hero&&dock&&launcher?{
+          heroBottom:hero.bottom,dockTop:dock.top,mode:getComputedStyle(launcher.closest('.trakbot-dock')).position
+        }:null;
+      });
+      check(layout && layout.mode!=='fixed' && layout.dockTop>layout.heroBottom+8,
+        suffix+': collapsed TrakBot overlays approved public photo and actions: '+JSON.stringify(layout));
+      const launcher=page.getByRole('button',{name:'Открыть TrakBot'});
+      await launcher.click();
+      await page.getByRole('dialog',{name:'TrakBot — личный помощник'}).waitFor();
+      await page.getByRole('button',{name:'Закрыть TrakBot'}).last().click();
+    }
     const services = page.locator('.public-service-tiles > a');
     check(await services.count() === 6, suffix + ': six approved service cards required');
     const labels = await services.locator('b').allTextContents();

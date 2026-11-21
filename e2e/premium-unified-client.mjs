@@ -74,22 +74,43 @@ try {
       console.log('visual entry route ' + width + 'px: ' + await page.evaluate(() => location.hash));
       await page.locator(width < 900 ? '.client-dashboard' : '.approved-pc-client').waitFor({timeout: 20000});
       if (width < 900) {
-        // A signed-in mobile BROWSER shows the responsive real Home. Only the
-        // native Android bridge renders .and19-client (tested separately).
-        if (await page.locator('.and19-client, .approved-pc-client').count() !== 0)
-          throw Error('Mobile browser mounted a native or desktop-only cabinet');
-        const truck = await page.locator('.client-hero-scania').evaluate(img => ({
-          loaded: img.complete && img.naturalWidth > 100,
-          fit: getComputedStyle(img).objectFit,
-          visible: img.getBoundingClientRect().width > 0 && getComputedStyle(img).display !== 'none'
-        }));
-        if (!truck.loaded || !truck.visible || truck.fit !== 'contain')
-          throw Error('Responsive browser truck missing or cropped: ' + JSON.stringify(truck));
-        const cards = page.locator('.client-dashboard .desktop-quick-card');
-        if (await cards.count() !== 4 || await page.locator('.client-dashboard-hubs > a').count() !== 4)
-          throw Error('Mobile browser lost its four help routes or cabinet destinations');
-        if (!await cards.first().isVisible())
-          throw Error('Mobile browser help actions are present but hidden');
+        // The signed-in mobile browser and Android APK intentionally mount
+        // the SAME owner-approved phone dashboard (618.png). The old browser
+        // desktop hero and six-tab cards have been retired. Check the actual
+        // actions, role and route contracts rather than obsolete CSS names.
+        if(await page.locator('.tr-context-help').count())
+          throw Error('Legacy top help banner obscures approved 618 mobile browser');
+        const app=page.locator('.app.role-client');
+        await app.waitFor({state:'visible'});
+        const desk=app.locator('main.client-dashboard .and19-workspace.and19-client');
+        await desk.waitFor({state:'visible'});
+        if (await page.locator('.client-dashboard .desktop-hero, .approved-pc-client').count())
+          throw Error('Retired desktop workspace leaked into the phone browser');
+        if (await desk.locator('.and19-services > a').count() !== 4)
+          throw Error('Approved phone dashboard must show all four roadside services');
+        const actions=await desk.locator('.and19-services > a').evaluateAll(els=>
+          els.map(el=>({href:el.getAttribute('href'),
+            visible:el.getBoundingClientRect().width>0 && getComputedStyle(el).display!=='none'})));
+        const expected=['#/sos','#/new/tow','#/services','#/new/consult'];
+        if (JSON.stringify(actions.map(x=>x.href))!==JSON.stringify(expected) ||
+            actions.some(x=>!x.visible))
+          throw Error('Approved phone roadside buttons broken or hidden: '+JSON.stringify(actions));
+        const owner=await desk.locator('.and19-client-role').innerText();
+        if (!owner.includes('Владелец автопарка'))
+          throw Error('Owner account lost its approved phone role: '+owner);
+        const equipment=desk.locator('.and19-equipment');
+        if (!(await equipment.getAttribute('href')||'').startsWith('#/garage'))
+          throw Error('Vehicle history must remain accessible from phone home');
+        if (await desk.locator('.and19-sos').getAttribute('href')!=='#/sos')
+          throw Error('SOS service destination missing on approved mobile UI');
+        const tabs=await page.locator('.tabbar a').evaluateAll(els=>els.map(el=>el.getAttribute('href')));
+        const expectedTabs=['#/','#/orders','#/air','#/garage','#/menu'];
+        if (JSON.stringify(tabs)!==JSON.stringify(expectedTabs))
+          throw Error('Approved phone tabs must be Main / Orders / Air / Vehicle / Menu: '+JSON.stringify(tabs));
+        if (tabs.includes('#/shop'))
+          throw Error('Parts shop must live in role menu, not old sixth bottom tab');
+        // The desktop hero truck is not the phone's main image. Its absence is
+        // deliberate; no test may reinsert the old 900px artwork to go green.
       } else {
         // >=1000px uses the approved 20 Nov PC workspace, not the retired
         // client-dashboard hero/cards. Do not reintroduce those to satisfy CI.

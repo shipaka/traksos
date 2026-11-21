@@ -23,6 +23,31 @@ try {
       assert(await page.locator('.owner20-quick>a').count()===5,'Final PC services row must have 5 links');
       assert(await page.locator('.owner20-features>a').count()===5,'Final PC features row must have 5 links');
       assert(await page.locator('.owner20-bottom>.owner20-bottom-card').count()===4,'Final PC lower row must have 4 cards');
+      // 617 cards: text on the left, source imagery on the right, continuous
+      // dimming gradient, not a hard-masked half-image or text baked into CSS.
+      const tiles=await page.locator('.owner20-feature').evaluateAll(items=>items.map(card=>{
+        const pic=card.querySelector('.owner20-feature-illustration');
+        const bounds=card.getBoundingClientRect(),art=pic?.getBoundingClientRect();
+        return {title:card.querySelector('b')?.textContent,
+          image:getComputedStyle(pic).backgroundImage,
+          gradient:getComputedStyle(card,'::before').backgroundImage,
+          artRight:art?.right,cardRight:bounds.right,
+          mask:getComputedStyle(pic).maskImage,
+        };
+      }));
+      assert(tiles.length===5&&tiles.every(t=>
+        t.image?.includes('owner20-artwork-sprite.webp') &&
+        t.gradient?.includes('linear-gradient') &&
+        t.artRight <= t.cardRight+3 &&
+        t.mask?.includes('linear-gradient')),
+
+        width+'px: approved 617 right-image/left-copy card composition lost '+JSON.stringify(tiles));
+      const crop=await page.locator('.owner20-feature-illustration').evaluateAll(items=>items.map(el=>{
+        const r=el.getBoundingClientRect(),bg=getComputedStyle(el).backgroundPosition;
+        return {w:Math.round(r.width),bg};
+      }));
+      assert(crop.length===5 && crop.every(x=>x.w<=112),
+        width+'px: caption-bearing atlas region returned to feature cards '+JSON.stringify(crop));
       const bot=page.getByRole('button',{name:'Открыть TrakBot'});
       assert(await bot.isVisible(), 'Final PC TrakBot must be user-opened');
       assert(await bot.locator('.trakbot-mascot-original').count()===1,'Owner-approved truck mascot missing');
@@ -36,6 +61,35 @@ try {
         return {ok:!!bmp&&bmp.width>20&&bmp.height>20,value,width:bmp?.width,height:bmp?.height};
       });
       assert(mascot.ok,'TrakBot must display the exact loaded approved mascot, not a blank tile: '+JSON.stringify(mascot));
+      // The owner-approved desktop no longer shrinks the technician to a
+      // 40px square with an exposed orange ring. Verify computed CSS, not
+      // an obsolete static declaration overridden downstream.
+      const botGeometry=await bot.evaluate(el=>{
+        const r=el.getBoundingClientRect(), c=getComputedStyle(el);
+        const mascot=el.querySelector('.trakbot-mascot-original');
+        const frame=mascot?getComputedStyle(mascot):null;
+        return {width:r.width,height:r.height,position:getComputedStyle(el.closest('.trakbot-dock')).position,
+          border:c.borderTopWidth,background:c.backgroundColor,mask:frame?.maskImage||frame?.webkitMaskImage,
+          art:frame?.backgroundImage};
+      });
+      assert(botGeometry.width >= (width < 1200 ? 75 : 90) &&
+        botGeometry.height >= (width < 1200 ? 75 : 90) &&
+        botGeometry.position==='fixed' && botGeometry.border==='0px' &&
+        botGeometry.mask && botGeometry.mask!=='none',
+        width+'px: desktop guest TrakBot reverted to tiny square/ring '+JSON.stringify(botGeometry));
+      // The lower-right helper stays in place while the document scrolls.
+      // Add test-only height so this assertion still works on tall desktop displays.
+      const botBeforeScroll=await bot.boundingBox();
+      await page.evaluate(()=>{document.documentElement.style.minHeight='200vh';window.scrollTo(0,300);});
+      await page.waitForFunction(()=>window.scrollY>=250);
+      const botAfterScroll=await bot.boundingBox();
+      assert(botBeforeScroll&&botAfterScroll&&Math.abs(botAfterScroll.y-botBeforeScroll.y)<3,
+        width+'px: TrakBot moved with the document instead of staying fixed');
+      await page.evaluate(()=>{document.documentElement.style.minHeight='';window.scrollTo(0,0);});
+      // Real pixel evidence of the collapsed mascot alongside the complete
+      // 617 PC cards. Do not claim the CSS mask creates a new 3D asset.
+      mkdirSync('e2e/shots/trakbot-proof',{recursive:true});
+      await page.screenshot({path:'e2e/shots/trakbot-proof/guest-launcher-'+width+'.png',animations:'disabled'});
       assert(!await page.locator('.trakbot-dock-panel').count(),'TrakBot opened without a click');
       await bot.click();
       const invite=page.getByRole('dialog',{name:'TrakBot — личный помощник'});

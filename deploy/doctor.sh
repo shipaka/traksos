@@ -12,6 +12,18 @@ command -v docker >/dev/null 2>&1 || { flag "Docker is missing"; exit 1; }
 docker compose version >/dev/null 2>&1 || { flag "Docker Compose is missing"; exit 1; }
 [[ -f .env ]] || { flag "deploy/.env is missing"; exit 1; }
 [[ -f Caddyfile ]] || flag "Caddyfile is missing"
+# Compare the running container against the exact checked-out Git revision.
+# A successful HTTP 200 on its own does not prove that the new design is deployed.
+if command -v git >/dev/null 2>&1; then
+  expected_revision="$(git -C .. rev-parse HEAD 2>/dev/null || true)"
+  if [[ "$expected_revision" =~ ^[0-9a-f]{40}$ ]]; then
+    export TRAKSOS_RELEASE_REV="$expected_revision"
+  else
+    flag "Git release SHA unavailable; cannot prove which UI build is running"
+  fi
+else
+  flag "Git is missing; deployment revision cannot be verified"
+fi
 info "TrackSOS pre-launch health (no secrets shown)"
 if docker compose config --quiet >/dev/null 2>&1; then pass "Compose configuration parses"; else flag "Compose configuration invalid"; fi
 for service in app db caddy backup; do
@@ -30,6 +42,13 @@ if [[ -n "$app" ]]; then
     case "$SMS_PROVIDER" in smsru) echo sms_real ;; log) echo sms_demo ;; *) echo sms_unknown ;; esac
     case "$PAYMENT_PROVIDER" in mock) echo payments_demo ;; yookassa) echo payments_real ;; *) echo payments_unknown ;; esac
   ' 2>/dev/null || true)"
+  if [[ -n "${TRAKSOS_RELEASE_REV:-}" ]]; then
+    if docker compose exec -T app node -e "fetch('http://127.0.0.1:8080/api/health',{signal:AbortSignal.timeout(8000)}).then(async r=>{const j=await r.json();process.exit(r.ok&&j.db&&!j.sandbox&&j.buildRevision===process.env.TRAKSOS_BUILD_REV?0:1)}).catch(()=>process.exit(1))" >/dev/null 2>&1; then
+      pass "Running app buildRevision matches exact checked-out Git SHA"
+    else
+      flag "Running app is NOT the checked-out release. Old UI may still be deployed; do not approve screenshot comparison."
+    fi
+  fi
   [[ "$env_result" == *prod_ok* ]] && pass "Production mode" || flag "NODE_ENV is not production"
   [[ "$env_result" == *admin_configured* ]] && pass "Admin phone list configured (value hidden)" || flag "ADMIN_PHONES missing"
   [[ "$env_result" == *sms_real* ]] && pass "SMS provider selected: SMS.ru" || flag "SMS provider is not SMS.ru; registration and password recovery are not ready for public use"

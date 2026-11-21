@@ -18,6 +18,7 @@ const opts = {
   define: {
     'process.env.NODE_ENV': JSON.stringify(watch ? 'development' : 'production'),
     __API_URL__: JSON.stringify(process.env.API_URL ?? ''),
+    __TRAKSOS_BUILD_REV__: JSON.stringify(process.env.TRAKSOS_BUILD_REV ?? 'unknown'),
   },
   loader: { '.css': 'css', '.svg': 'file', '.webp': 'file' },
   // Files from public/ are copied verbatim to dist/ before bundling.

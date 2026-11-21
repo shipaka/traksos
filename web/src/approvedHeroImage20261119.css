@@ -14,24 +14,25 @@
    that does not exist in the owner's latest accepted wordmark. */
 .guest-app .top .guest-approved-mark::before,
 .guest-app .top .guest-approved-mark::after{display:none!important;content:none!important}
+/* The 618 guest hero also renders in wide native WebViews. */
+.guest-app .public-landing .public-track-benefits{
+  display:flex!important;flex-wrap:wrap!important;align-items:center!important;
+  gap:7px!important;margin-top:10px!important;
+}
+.guest-app .public-landing .public-track-benefits>span{
+  display:inline-flex!important;align-items:center!important;gap:4px!important;
+  flex:0 1 auto!important;max-width:100%!important;min-width:0!important;
+  padding:4px 7px!important;font-size:10px!important;line-height:1.3!important;
+  white-space:normal!important;word-break:normal!important;
+  border:1px solid #305a73!important;border-radius:8px!important;
+  background:#0d3045!important;
+}
+.guest-app .public-landing .public-track-benefits i{
+  flex:0 0 auto!important;font-style:normal!important;
+}
 @media(max-width:899px){
   .guest-app .public-landing .public-hero-visual.public-hero-slide-approved{
     -webkit-mask-image:none!important;mask-image:none!important;
-  }
-  .guest-app .public-landing .public-track-benefits{
-    display:flex!important;flex-wrap:wrap!important;align-items:center!important;
-    gap:7px!important;margin-top:10px!important;
-  }
-  .guest-app .public-landing .public-track-benefits>span{
-    display:inline-flex!important;align-items:center!important;gap:4px!important;
-    flex:0 1 auto!important;max-width:100%!important;min-width:0!important;
-    padding:4px 7px!important;font-size:10px!important;line-height:1.3!important;
-    white-space:normal!important;word-break:normal!important;
-    border:1px solid #305a73!important;border-radius:8px!important;
-    background:#0d3045!important;
-  }
-  .guest-app .public-landing .public-track-benefits i{
-    flex:0 0 auto!important;font-style:normal!important;
   }
   .guest-app .public-landing .public-hero-carousel{
     position:relative!important;inset:auto!important;order:2!important;

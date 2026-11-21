@@ -36,7 +36,7 @@ def pixel_stats(path):
     previous = bytearray(stride)
     pos = 0
     hist = collections.Counter()
-    samples = 0
+    pixels = bytearray()
     for y in range(height):
         method = scan[pos]
         pos += 1
@@ -61,16 +61,24 @@ def pixel_stats(path):
                 off = x * channels
                 rgb = bytes(curr[off:off + 3])
                 hist[rgb] += 1
-                samples += 1
+                pixels.extend(rgb)
         previous = curr
-    return width, height, samples, len(hist), hist.most_common(1)[0][1] / samples
+    return width, height, pixels, len(hist), hist.most_common(1)[0][1] / (len(pixels) // 3)
 
 if __name__ == '__main__':
     try:
-        w, h, n, distinct, dom = pixel_stats(sys.argv[1])
+        w, h, pixels, distinct, dom = pixel_stats(sys.argv[1])
         print(f'Android screenshot {w}x{h}: {distinct} sampled colors, largest color {dom:.1%} of app viewport')
         if distinct < 30 or dom > .92:
             raise ValueError('App viewport appears uniform/black; guest UI not visibly rendered')
+        for previous in sys.argv[2:]:
+            pw, ph, other, _, _ = pixel_stats(previous)
+            if (pw, ph) != (w, h):
+                raise ValueError('screen dimensions changed between roles')
+            # Ignore system bars and tiny animation/clock changes.
+            changed = sum(abs(a - b) > 16 for a, b in zip(pixels, other))
+            if changed < 0.02 * len(pixels):
+                raise ValueError(f'app content still resembles {previous}')
     except (OSError, IndexError, ValueError, EOFError) as e:
         print(f'FAIL: screenshot validation: {e}', file=sys.stderr)
         sys.exit(1)
