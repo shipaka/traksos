@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { APPROVED_VISUALS } from './approvedVisuals.ts';
 import { TrakBotMascot } from './trakbotMascot.tsx';
 
@@ -102,4 +101,3 @@ export function ApprovedInnerRail({mode,route}:{mode:string;route:string[]}){
     </div>
   </aside>;
 }
-export function ApprovedInnerLayoutPreview({children}:{children:ReactNode}){return <>{children}</>;}
