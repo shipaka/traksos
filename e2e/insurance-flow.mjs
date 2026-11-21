@@ -91,9 +91,7 @@ try{
     if(item.name==='insurer') await page.getByRole('button',{name:'Все',exact:true}).click();
     if(item.name!=='admin') await page.getByText(item.expected,{exact:false}).first().waitFor();
     if(item.name==='admin') {
-      await page.getByRole('button',{name:/Разделы управления/}).click();
-      await page.getByRole('navigation',{name:'Разделы администрации'})
-        .getByRole('button',{name:'Страхование и ТО'}).click();
+      await page.locator('.admin-stage-head h2').getByText('Страхование и ТО',{exact:true}).waitFor();
       await page.getByRole('link',{name:'Управлять регистрацией страховых агентов'}).click();
       await page.getByRole('button',{name:/Страховые агенты/}).click();
        await page.getByText('Страховые партнёры',{exact:true}).waitFor();
