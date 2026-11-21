@@ -208,6 +208,15 @@ try{
      // Verify the partner UI applies the SAME role policy on direct navigation.
      if(c.id==='insurer'){
        if(!identity.roles.includes('insurer'))throw Error('Insurer role was not seeded');
+       // A fictitious assigned case is served ONLY to this local Chromium page.
+       // It exercises the exact detail link that was broken on the approved PC.
+       const assignedId='00000000-0000-4000-8000-000000000999';
+       const assignedInspection={id:assignedId,number:'LOCAL-TO-999',status:'sent_to_partner',
+         brand:'Scania',model:'R440',year:2014,plate:'ТЕСТ',client_name:'Локальный клиент CI',
+         comment:'Учебный осмотр — никаких реальных документов',created_at:new Date().toISOString()};
+       await page.route(url=>url.pathname==='/api/insurer/inspections',
+         route=>route.fulfill({status:200,contentType:'application/json',
+           body:JSON.stringify([assignedInspection])}));
        await page.goto(BASE+'/#/inspections',{waitUntil:'domcontentloaded'});
        await page.locator('.account-menu > summary').waitFor({timeout:14000});
        if(await page.getByText('Нет прав оператора техосмотра').count())
@@ -216,6 +225,14 @@ try{
          .first().waitFor({state:'visible',timeout:14000});
        await page.screenshot({path:out+'/insurer-inspection-'+width+'-viewport.png',
          fullPage:false,animations:'disabled',scale:'css'});
+       // The selected assigned case MUST open its own detail, not return the
+       // entire queue or a stale desktop workspace.
+       const assignedLink=page.locator('a[href="#/inspections/'+assignedId+'"]').first();
+       await assignedLink.waitFor({state:'visible',timeout:14000});
+       await assignedLink.click();
+       await page.locator('.and20-inspection-detail h1').getByText(/LOCAL-TO-999/).waitFor({timeout:14000});
+       if(await page.locator('.approved-pc').count())
+         throw Error('Selected inspection was not opened as its case detail');
        // Both submenu routes must resolve to their proper contents, rather
        // than the general approved dashboard or a fake missing inspection.
        await page.goto(BASE+'/#/inspections/processing',{waitUntil:'domcontentloaded'});
