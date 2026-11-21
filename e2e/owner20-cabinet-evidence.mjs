@@ -189,19 +189,55 @@ try{
      await page.locator('.account-menu > summary').waitFor({timeout:12000});
      await page.waitForTimeout(500);
      if(await page.getByText('Не удалось открыть раздел').count())throw Error('Inner route crashed');
+     const approvedInner=page.locator('.desktop-content > .tr-inner-hero[data-traksos-inner-ui="approved-617-618"]');
+     await approvedInner.waitFor({state:'visible',timeout:14000});
+     if(await page.locator('.desktop-content > main').count()!==1)
+       throw Error('Approved inner chrome detached the working React main: '+c.id+'/'+width);
+     if(await approvedInner.locator('a.tr-inner-back').count()!==1)
+       throw Error('No home breadcrumb on inner page: '+c.id+'/'+width);
+     const rail=page.locator('.desktop-content > .tr-inner-rail');
+     if(await rail.count()!==1 || await rail.locator('.tr-inner-rail-tools a').count()<2)
+       throw Error('Missing role-safe actions in approved inner rail: '+c.id+'/'+width);
+     if(['moderator','admin'].includes(c.id)){
+       if(await rail.locator('.tr-inner-bot-card').count())
+         throw Error('Staff inner pages unexpectedly show TrakBot: '+c.id+'/'+width);
+     }else if(await rail.locator('.tr-inner-bot-card[href="#/trakbot"]').count()!==1)
+       throw Error('No role-approved TrakBot in inner rail: '+c.id+'/'+width);
+     if(width>=1440){
+       const layout=await page.evaluate(()=>{
+         const h=document.querySelector('.tr-inner-hero');
+         const m=document.querySelector('.desktop-content > main');
+         const r=document.querySelector('.desktop-content > .tr-inner-rail');
+         const a=h?.getBoundingClientRect(),b=m?.getBoundingClientRect(),c=r?.getBoundingClientRect();
+         return {heroTop:a?.top,heroBottom:a?.bottom,mainTop:b?.top,mainRight:b?.right,
+           railTop:c?.top,railBottom:c?.bottom,railLeft:c?.left,railRight:c?.right,
+           width:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth};
+       });
+       const staffBand=['moderator','admin'].includes(c.id);
+       const overlapping=staffBand
+         ? layout.mainTop<layout.railBottom-4
+         : layout.mainRight>layout.railLeft+5;
+       if(layout.scroll>layout.width+3 || overlapping ||
+          layout.mainTop<layout.heroBottom-4)
+         throw Error('Approved inner content/rail overlap or overflow: '+JSON.stringify(layout));
+     }
      if(c.id==='moderator'&&await page.locator('.trakbot-dock').count())
        throw Error('Moderator inner page unexpectedly shows floating TrakBot: '+width);
      if(c.id==='admin') await page.locator('.admin-stage-content .admin-orders-zero, .admin-stage-content .list-item').first().waitFor({timeout:12000});
      if(c.id==='owner'){
        const header=page.locator('.client-garage-page>.client-section-hero');
-       await header.waitFor();
-       const geometry=await header.evaluate(el=>({
-         height:el.getBoundingClientRect().height,
-         leftBorder:parseFloat(getComputedStyle(el).borderLeftWidth)
-       }));
-       if(geometry.height>160 || geometry.leftBorder<3)
-         throw Error('Owner garage restored an oversized old-style header: '+JSON.stringify(geometry));
+       await header.waitFor({state:'attached'});
+       if(await header.isVisible())throw Error('Old garage hero duplicates the new approved inner heading');
      }
+     if(c.id==='master_service' && await page.locator('.desktop-content > main > div:first-of-type > h1:visible').count())
+       throw Error('STO finance screen repeats a huge old headline beneath the approved title');
+     if(c.id==='service' && await page.locator('.desktop-content > main > div:first-of-type > h1:visible').count())
+       throw Error('Legacy STO intro duplicates approved service page');
+     if(c.id==='driver' && await page.locator('.client-orders-page>h1:visible').count())
+       throw Error('Old orders heading duplicates the approved inner hero');
+     if(['insurer','moderator'].includes(c.id) &&
+        await page.locator('.account-profile-page>h1:visible').count())
+       throw Error('Old profile heading duplicates the approved inner hero');
      await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'-viewport.png',fullPage:false,animations:'disabled',scale:'css'});
      await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'.png',fullPage:true,animations:'disabled',scale:'css'});
      // The inspection API accepts both insurers and inspection operators.
