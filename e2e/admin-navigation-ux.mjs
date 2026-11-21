@@ -81,7 +81,7 @@ try {
       if (await page.locator('.admin-command-hero').count() !== 0)
         throw Error(id + ': obsolete admin landing hero repeated above the actual section');
       if(id==='dispatch') {
-        await page.getByRole('heading',{name:'Диспетчерская'}).waitFor();
+        await page.locator('.desktop-content > main').getByRole('heading',{name:'Диспетчерская'}).first().waitFor();
         await page.getByRole('button',{name:'Обновить данные'}).waitFor();
         await page.getByText('Настройки распределения и торгов').waitFor();
         const search = page.getByRole('searchbox',{name:'Найти заявку по номеру, имени или месту'});
