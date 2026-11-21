@@ -1,0 +1,120 @@
+/*
+ * TrakSOS approved 617/618 — compact actual work inside inner pages.
+ * Visual QA from real Chromium captures: 1440 owner / master / admin and
+ * 390 owner showed that an extra poster-sized illustration or secondary
+ * hero pushed the FIRST ACTUAL FORM below the fold.
+ *
+ * These rules are scoped to authenticated browser INNER routes only.
+ * All API-driven amounts, real input fields, buttons, status messages,
+ * document attachments and order links remain in the DOM and accessible.
+ */
+@media(min-width:900px) {
+ html.traksos-browser .app.role-client .desktop-content:has(> .tr-inner-hero[data-route="garage"])
+  > main.client-garage-page > .tr-approved-garage-empty {
+   display:grid!important;grid-template-columns:minmax(0,1fr) 230px;
+   grid-template-rows:auto auto;gap:7px 18px;align-items:center;
+   min-height:0!important;padding:19px 22px!important;
+   border-radius:17px!important;
+ }
+ html.traksos-browser .app.role-client .desktop-content:has(> .tr-inner-hero[data-route="garage"])
+  > main.client-garage-page > .tr-approved-garage-empty > .tr-approved-empty-scene {
+   grid-column:2;grid-row:1/span 2;align-self:stretch;
+   width:100%;min-width:0;height:122px!important;max-height:122px!important;
+   border:1px solid #315364;border-radius:12px;overflow:hidden;
+ }
+ html.traksos-browser .app.role-client .desktop-content:has(> .tr-inner-hero[data-route="garage"])
+  > main.client-garage-page > .tr-approved-garage-empty > strong {
+   grid-column:1;grid-row:1;align-self:end;font-size:18px;
+ }
+ html.traksos-browser .app.role-client .desktop-content:has(> .tr-inner-hero[data-route="garage"])
+  > main.client-garage-page > .tr-approved-garage-empty > p {
+   grid-column:1;grid-row:2;align-self:start;
+   font-size:13px;line-height:1.48;margin:0;max-width:690px;
+ }
+ /* Preserve the actual "На линию и к заявкам" action but make its
+    introduction a concise dashboard-action strip rather than a second hero. */
+ html.traksos-browser .app.role-performer .desktop-content:has(> .tr-inner-hero)
+  > main.performer-workspace > .internal-role-hero-performer {
+   min-height:0!important;display:grid!important;
+   grid-template-columns:minmax(0,1fr) max-content;
+   grid-template-rows:repeat(3,auto);
+   align-items:center;column-gap:20px;row-gap:4px!important;
+   padding:15px 19px!important;border-radius:16px!important;
+ }
+ html.traksos-browser .app.role-performer .desktop-content:has(> .tr-inner-hero)
+  > main.performer-workspace > .internal-role-hero-performer > :is(span,h1,p){
+   grid-column:1;min-width:0;margin:0!important;
+ }
+ html.traksos-browser .app.role-performer .desktop-content:has(> .tr-inner-hero)
+  > main.performer-workspace > .internal-role-hero-performer > span{grid-row:1}
+ html.traksos-browser .app.role-performer .desktop-content:has(> .tr-inner-hero)
+  > main.performer-workspace > .internal-role-hero-performer > h1{
+   grid-row:2;font-size:23px!important;
+ }
+ html.traksos-browser .app.role-performer .desktop-content:has(> .tr-inner-hero)
+  > main.performer-workspace > .internal-role-hero-performer > p{grid-row:3;font-size:12px;}
+ html.traksos-browser .app.role-performer .desktop-content:has(> .tr-inner-hero)
+  > main.performer-workspace > .internal-role-hero-performer > a.btn{
+   grid-column:2;grid-row:1/span 3;align-self:center!important;
+   max-width:100%;min-height:44px;white-space:nowrap;
+   box-sizing:border-box;
+ }
+ /* The admin screen keeps its full-width operational table; only the
+    old, repeated full-size empty truck illustration becomes a compact tile. */
+ html.traksos-browser .app.role-admin .desktop-content:has(> .tr-inner-hero)
+  .admin-orders-zero{
+   display:grid!important;
+   grid-template-columns:minmax(0,1fr) 184px;
+   grid-template-rows:auto auto auto;
+   gap:6px 19px;align-items:start;
+   min-height:0;padding:17px 20px;
+ }
+ html.traksos-browser .app.role-admin .desktop-content:has(> .tr-inner-hero)
+  .admin-orders-zero > .tr-approved-empty-scene{
+   grid-column:2;grid-row:1/span 3;height:119px!important;
+   align-self:center;min-width:0;max-width:100%;overflow:hidden;
+   border-radius:11px;
+ }
+ html.traksos-browser .app.role-admin .desktop-content:has(> .tr-inner-hero)
+  .admin-orders-zero > :is(h3,p,.admin-orders-actions){
+   grid-column:1;margin:0;
+ }
+ html.traksos-browser .app.role-admin .desktop-content:has(> .tr-inner-hero)
+  .admin-orders-zero > h3{grid-row:1;align-self:end}
+ html.traksos-browser .app.role-admin .desktop-content:has(> .tr-inner-hero)
+  .admin-orders-zero > p{grid-row:2;align-self:start}
+ html.traksos-browser .app.role-admin .desktop-content:has(> .tr-inner-hero)
+  .admin-orders-zero > .admin-orders-actions{grid-row:3;align-self:start}
+}
+@media(max-width:899px){
+ html.traksos-browser .app.role-client .desktop-content:has(> .tr-inner-hero[data-route="garage"])
+  > main.client-garage-page > .tr-approved-garage-empty{
+   display:grid!important;grid-template-columns:minmax(0,1fr) 112px;
+   grid-template-rows:auto auto;align-items:start;gap:5px 10px;
+   min-height:0!important;padding:14px!important;
+ }
+ html.traksos-browser .app.role-client .desktop-content:has(> .tr-inner-hero[data-route="garage"])
+  > main.client-garage-page > .tr-approved-garage-empty > .tr-approved-empty-scene{
+   grid-column:2;grid-row:1/span 2;
+   width:112px;max-width:100%;height:110px!important;max-height:110px!important;
+   border-radius:9px;overflow:hidden;
+ }
+ html.traksos-browser .app.role-client .desktop-content:has(> .tr-inner-hero[data-route="garage"])
+  > main.client-garage-page > .tr-approved-garage-empty > strong{
+   grid-column:1;grid-row:1;margin:0;font-size:15px;
+ }
+ html.traksos-browser .app.role-client .desktop-content:has(> .tr-inner-hero[data-route="garage"])
+  > main.client-garage-page > .tr-approved-garage-empty > p{
+   grid-column:1;grid-row:2;margin:0;font-size:11px;line-height:1.4;
+ }
+}
+@media(max-width:340px){
+ html.traksos-browser .app.role-client .desktop-content:has(> .tr-inner-hero[data-route="garage"])
+  > main.client-garage-page > .tr-approved-garage-empty{
+   grid-template-columns:minmax(0,1fr) 88px;
+ }
+ html.traksos-browser .app.role-client .desktop-content:has(> .tr-inner-hero[data-route="garage"])
+  > main.client-garage-page > .tr-approved-garage-empty > .tr-approved-empty-scene{
+   width:88px;height:90px!important;max-height:90px!important;
+ }
+}
