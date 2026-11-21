@@ -428,3 +428,11 @@ html.traksos-browser .approved-pc-admin .approved-pc-russia::before {
   justify-self: start;
   max-width: 100%;
 }
+
+/* The desktop administrator's role switches and moderation controls must
+ * never be obscured by a fixed chatbot launcher. TrakBot remains available
+ * through the cabinet's regular Menu/TrakBot link. Moderator needs no dock. */
+.app:has(.approved-pc-admin) > .trakbot-dock,
+.app:has(.approved-pc-moderator) > .trakbot-dock {
+  display: none;
+}
