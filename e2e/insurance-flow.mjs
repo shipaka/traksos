@@ -161,10 +161,10 @@ try{
   await inboxPage.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','insurer')},partner.token);
   await inboxPage.goto(BASE+'/#/insurance');
   await acceptPendingOffers(inboxPage,partner.token);
-  await inboxPage.getByText('Получена новая заявка',{exact:true}).waitFor();
-  await inboxPage.getByRole('button',{name:'Требуют действий'}).waitFor();
+  await inboxPage.locator('.approved-pc-case').getByText('Получена новая заявка',{exact:true}).waitFor();
+  await inboxPage.getByRole('tab',{name:/^Требуют действий/}).waitFor();
   await inboxPage.screenshot({path:OUT+'/insurer-desktop-incoming.png',fullPage:true});
-  await inboxPage.getByRole('button',{name:'В работе',exact:true}).click();
+  await inboxPage.getByRole('tab',{name:/^В работе/}).click();
   await inboxPage.getByText('Нет заявок в работе.',{exact:true}).waitFor();
   await api('POST','/api/insurance/requests/'+requestId+'/accept',{},partner.token);
   const one={company:'Страховая А',product:'ОСАГО грузовика',premiumKopecks:3250000,
@@ -172,8 +172,8 @@ try{
   await api('POST','/api/insurance/requests/'+requestId+'/offers',
     {offers:[one,{...one,company:'Страховая Б',premiumKopecks:3560000}]},partner.token);
   await inboxPage.reload();
-  await inboxPage.getByRole('button',{name:'В работе',exact:true}).click();
-  await inboxPage.getByText('Предложения отправлены клиенту',{exact:true}).waitFor();
+  await inboxPage.getByRole('tab',{name:/^В работе/}).click();
+  await inboxPage.locator('.approved-pc-case').getByText('Предложения отправлены клиенту',{exact:true}).waitFor();
   await inboxPage.screenshot({path:OUT+'/insurer-desktop-working.png',fullPage:true});
   await inboxContext.close();
   await clientPage.reload();
