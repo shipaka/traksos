@@ -147,6 +147,14 @@ const unifiedBot = await read('web/src/trakbotMascot.css');
 const unifiedOrderPhoto = await read('web/src/approvedOrderTruck.tsx');
 const unifiedSceneStyle = await read('web/src/approvedEmptyScene.css');
 const unifiedServiceSceneStyle = await read('web/src/approvedServiceScene.css');
+const ownerPcUiContract=await read('web/src/screens/ownerDesktopHome20261120.css');
+const botDockContract=await read('web/src/trakbotDock.css');
+expect(ownerPcUiContract.includes('UI CONTRACT 21.11: canonical desktop guest mascot') &&
+  ownerPcUiContract.includes('owner20-feature::before') &&
+  ownerPcUiContract.includes('radial-gradient(ellipse at 50% 53%') &&
+  !ownerPcUiContract.includes('width:40px!important;min-width:40px!important;') &&
+  !botDockContract.includes('a full-width cyan-edged launcher'),
+  'single desktop guest TrakBot/cinematic tile contract, not conflicting old pill or 40px fallback');
 const ownerPcHeader = await read('web/src/screens/ownerDesktopHome20261120.tsx');
 expect(unifiedVisuals.includes("logo: '/traksos-brand-logo-approved-618.png'") &&
   unifiedVisuals.includes("trakbotHello: '/trakbot-approved-hello.webp'") &&
