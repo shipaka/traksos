@@ -351,12 +351,19 @@ expect(!demo.includes('Открыть старый учебный тренажё
 expect(shell.includes("b === 'test-center' ? <AdminTestCenter roleId={route[2]} fullFidelity />") &&
   !shell.includes('serviceSandbox') && !shell.includes('ServicePreview'),
   'admin test center imports only the full-fidelity role sandbox');
-const oldTraining = await Promise.all([
+const retiredTraining=[
   'customerTrainingCabinet.tsx','fleetTrainingCabinet.tsx','performerTrainingCabinet.tsx',
-].map(name=>read('web/src/screens/'+name)));
-expect(oldTraining.every(src=>!src.includes("from '../api.ts'") && !src.includes('fetch(') &&
-  !src.includes('XMLHttpRequest')),
-  'old legacy training screens remain local-only, with no live production API calls');
+  'insurerTrainingCabinet.tsx','inspectionTrainingCabinet.tsx',
+  'moderatorTrainingCabinet.tsx','masterServiceTrainingCabinet.tsx'
+];
+for(const filename of retiredTraining){
+  let found=false;
+  try{await stat('web/src/screens/'+filename);found=true;}catch{/* absent */}
+  expect(!found,'retired mock training module must be physically removed: '+filename);
+}
+expect(!demo.includes('TrainingCabinet')&&!demo.includes('SandboxCabinet')&&
+  !demo.includes('initialTickets(')&&!demo.includes('function RoleScenario'),
+  'no synthetic role workspaces can be bundled into the real admin test center');
 for(const role of ['client','owner','driver','master','tow','service','master_service','insurer','moderator','admin']) {
   expect(demo.includes("id:'"+role+"'"), 'safe demo role exists: '+role);
 }
@@ -692,9 +699,11 @@ expect(retiredDemo.includes('Старый демонстрационный пр�
   !retiredDemo.includes('operatorDemoSession') &&
   !retiredDemo.includes('/api/public/demo/unlock'),
   'public PIN preview must never restore obsolete simulated role cabinets');
-expect(realTestCenter.includes('const fullFidelity = true;') &&
-  !realTestCenter.includes('fullFidelity=false'),
-  'test center cannot opt back into old fake training role screens');
+expect(realTestCenter.includes('FullFidelityRoleLauncher') &&
+  realTestCenter.includes("'/api/admin/sandbox/ticket'") &&
+  !realTestCenter.includes('TrainingCabinet') &&
+  !realTestCenter.includes('SandboxCabinet'),
+  'test center contains only signed isolated full-fidelity role launcher, no fake dashboard');
 const liveBaseSource=await read('web/src/screens/base.tsx');
 expect(!unifiedShell.includes('serviceSandbox') && !unifiedShell.includes('ServicePreview') &&
   !liveBaseSource.includes('servicePreviewApi') && !liveBaseSource.includes('inServicePreview'),
