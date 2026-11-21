@@ -66,6 +66,10 @@ printf 'Verifying isolated candidate image for commit %s\n' "$rev"
 "${compose[@]}" exec -T -e TRAKSOS_RUN_DISPOSABLE_SCENARIO=true sandbox-app \
   node --import tsx server/src/ops/exerciseSandboxPayments.ts ||
   fail "Fictitious checkout/capture/refund/payout lifecycle failed."
+# Execute a complete REAL client->master->admin order on fake users and money.
+"${compose[@]}" exec -T -e TRAKSOS_RUN_DISPOSABLE_SCENARIO=true sandbox-app \
+  node --import tsx server/src/ops/exerciseSandboxOrder.ts ||
+  fail "Inter-role order lifecycle and shared financial totals diverged."
 "${compose[@]}" exec -T sandbox-app node --import tsx server/src/ops/auditSandbox.ts ||
   fail "Sandbox role, data isolation or ledger conservation audit failed."
 
