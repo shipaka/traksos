@@ -1,13 +1,8 @@
 /* Photograph cut from the owner's actual 19 Nov 2026 approved PC screenshot.
    Use a real bundled asset, not the legacy R520 with magenta livery. */
 .guest-app .public-landing .public-hero-visual.public-hero-slide-approved{
- background-image:url('../public/tracksos-approved-hero-owner-20261119.webp')!important;
+ background-image:url('/tracksos-approved-hero-owner-20261119.webp')!important;
  background-repeat:no-repeat!important;background-color:#031725!important;
-}
-@media(min-width:900px){
- .guest-app .public-landing .public-hero-visual.public-hero-slide-approved{
-   background-size:auto 100%!important;background-position:right center!important;
- }
 }
 @media(max-width:899px){
  .guest-app .public-landing .public-hero-visual.public-hero-slide-approved{
@@ -15,36 +10,29 @@
  }
 }
 
-/* Stop the right-hand photo starting as a rectangle under the headline.
-   The accepted desktop has a continuous navy-to-road photograph transition. */
-@media(min-width:900px){
-  .guest-app .public-landing .public-hero-visual.public-hero-slide-approved{
-    -webkit-mask-image:linear-gradient(90deg,transparent 37%,rgba(0,0,0,.45) 44%,#000 52%)!important;
-    mask-image:linear-gradient(90deg,transparent 37%,rgba(0,0,0,.45) 44%,#000 52%)!important;
-  }
-}
 /* Mobile guest header: the old pseudo-element created a cyan/magenta slash
    that does not exist in the owner's latest accepted wordmark. */
 .guest-app .top .guest-approved-mark::before,
 .guest-app .top .guest-approved-mark::after{display:none!important;content:none!important}
+/* The 618 guest hero also renders in wide native WebViews. */
+.guest-app .public-landing .public-track-benefits{
+  display:flex!important;flex-wrap:wrap!important;align-items:center!important;
+  gap:7px!important;margin-top:10px!important;
+}
+.guest-app .public-landing .public-track-benefits>span{
+  display:inline-flex!important;align-items:center!important;gap:4px!important;
+  flex:0 1 auto!important;max-width:100%!important;min-width:0!important;
+  padding:4px 7px!important;font-size:10px!important;line-height:1.3!important;
+  white-space:normal!important;word-break:normal!important;
+  border:1px solid #305a73!important;border-radius:8px!important;
+  background:#0d3045!important;
+}
+.guest-app .public-landing .public-track-benefits i{
+  flex:0 0 auto!important;font-style:normal!important;
+}
 @media(max-width:899px){
   .guest-app .public-landing .public-hero-visual.public-hero-slide-approved{
     -webkit-mask-image:none!important;mask-image:none!important;
-  }
-  .guest-app .public-landing .public-track-benefits{
-    display:flex!important;flex-wrap:wrap!important;align-items:center!important;
-    gap:7px!important;margin-top:10px!important;
-  }
-  .guest-app .public-landing .public-track-benefits>span{
-    display:inline-flex!important;align-items:center!important;gap:4px!important;
-    flex:0 1 auto!important;max-width:100%!important;min-width:0!important;
-    padding:4px 7px!important;font-size:10px!important;line-height:1.3!important;
-    white-space:normal!important;word-break:normal!important;
-    border:1px solid #305a73!important;border-radius:8px!important;
-    background:#0d3045!important;
-  }
-  .guest-app .public-landing .public-track-benefits i{
-    flex:0 0 auto!important;font-style:normal!important;
   }
   .guest-app .public-landing .public-hero-carousel{
     position:relative!important;inset:auto!important;order:2!important;
@@ -100,11 +88,4 @@
 .guest-app .public-landing .public-app-card .public-app-phone .public-app-logo,
 .guest-app .public-landing .public-app-card .public-app-phone>span:last-child{
   display:none!important;
-}
-@media(min-width:1251px){
-  .guest-app .public-landing .public-service-tile b{
-    font-size:clamp(12px,.82vw,15px)!important;
-    white-space:nowrap!important;overflow-wrap:normal!important;
-    letter-spacing:-.025em!important;
-  }
 }

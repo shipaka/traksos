@@ -13,6 +13,10 @@ try {
   try{
    await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
    const root=page.locator('.owner20-home');await root.waitFor();
+   if(await page.locator('.app > header.top, .desktop-sidebar, .site-footer').count()!==0)
+     throw Error(width+': legacy header/sidebar/footer mounted on approved PC page');
+   if(await page.locator('header.owner20-top').count()!==1)
+     throw Error(width+': approved header should appear exactly once');
    const cards=await page.locator('.owner20-quick>a').count();
    const features=await page.locator('.owner20-features>a').count();
    const bottom=await page.locator('.owner20-bottom>.owner20-bottom-card').count();

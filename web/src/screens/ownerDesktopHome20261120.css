@@ -94,21 +94,6 @@
 /* The owner's third approved TrakBot truck appears, but never becomes an
    oversized banner or displaces the 20 Nov hero and service cards. */
 @media(min-width:900px){
- .guest-app.guest-home .trakbot-dock {right:12px!important;bottom:12px!important;z-index:96}
- .guest-app.guest-home .trakbot-dock .trakbot-dock-launcher{
-   min-width:58px!important;width:62px!important;height:62px!important;min-height:62px!important;
-   padding:4px!important;justify-content:center!important;gap:0!important;
-   background:linear-gradient(145deg,#10313c,#071923)!important;
-   border:1px solid #fc7a2f!important;border-radius:50%!important;
-   box-shadow:0 6px 20px #000a,0 0 0 3px #071922!important;
- }
- .guest-app.guest-home .trakbot-dock-launcher .trakbot-mascot{
-   --bot-size:48px!important;width:48px!important;height:48px!important;
- }
- .guest-app.guest-home .trakbot-dock-launcher .trakbot-dock-label,
- .guest-app.guest-home .trakbot-dock-launcher::after{display:none!important;content:none!important}
- .guest-app.guest-home .trakbot-dock-panel--guest {border-color:#f4823b;background:#091e29;}
- .guest-app.guest-home .trakbot-dock-head {background:#102d3b;border-color:#38525b;}
  .owner20-region{position:relative;flex:0 0 auto}
  .owner20-region>summary{cursor:pointer;white-space:nowrap;list-style:none;color:#e2edf2;font-weight:700}
  .owner20-region>summary::marker{display:none}
@@ -447,8 +432,6 @@
     background-position:0 -317px!important;
     opacity:1!important;
     color:transparent!important;
-    -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.5) 16%,#000 38%);
-    mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.5) 16%,#000 38%);
   }
   .guest-app.guest-home .owner20-feature-ecu .owner20-feature-illustration{
     width:147px;height:128px;background-position:-172px -317px!important;
@@ -502,8 +485,6 @@
     background:url('/owner20-artwork-sprite.webp') -797px 0 / 1018px 446px no-repeat!important;
     font-size:0!important;opacity:1!important;
     pointer-events:none;
-    -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.15) 17%,#000 55%);
-    mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.15) 17%,#000 55%);
     z-index:1;
   }
   .guest-app.guest-home .owner20-bottom-club::after{
@@ -519,13 +500,7 @@
   }
   .guest-app.guest-home .owner20-bottom-why ul{font-size:12px!important;line-height:1.65!important}
   .guest-app.guest-home .owner20-disclaimer{margin-top:35px!important}
-  .guest-app.guest-home .trakbot-dock .trakbot-dock-launcher{
-    width:48px!important;min-width:48px!important;
-    height:48px!important;min-height:48px!important;
-  }
-  .guest-app.guest-home .trakbot-dock-launcher .trakbot-mascot{
-    --bot-size:39px!important;width:39px!important;height:39px!important;
-  }
+
 }
 
 /* Mid-size desktop: preserve the SAME November 20 artwork with a fluid layout,
@@ -564,8 +539,6 @@
    background-repeat:no-repeat;
    font-size:0;color:transparent;
    transform:none!important;
-   -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 47%);
-   mask-image:linear-gradient(90deg,transparent 0%,#000 47%);
  }
  .guest-app.guest-home .owner20-feature-ecu .owner20-feature-illustration{width:142px;background-position:-172px -317px}
  .guest-app.guest-home .owner20-feature-parts .owner20-feature-illustration{width:123px;background-position:-324px -317px}
@@ -582,28 +555,10 @@
    background-repeat:no-repeat;
    font-size:0;
    transform:none;
-   -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 55%);
-   mask-image:linear-gradient(90deg,transparent 0%,#000 55%);
  }
  .guest-app.guest-home .owner20-bottom-club::after{width:213px;height:167px;background-position:-797px -170px}
 }
 
-
-/* Owner 20 Nov: TrakBot mascot is present without covering RuStore or the
-   approved four lower cards. Only the PC guest homepage needs this footprint. */
-@media(min-width:1281px){
-  .guest-app.guest-home .trakbot-dock{
-    right:5px!important;bottom:4px!important;
-  }
-  .guest-app.guest-home .trakbot-dock .trakbot-dock-launcher{
-    width:40px!important;min-width:40px!important;
-    height:40px!important;min-height:40px!important;
-    padding:3px!important;
-  }
-  .guest-app.guest-home .trakbot-dock-launcher .trakbot-mascot{
-    --bot-size:32px!important;width:32px!important;height:32px!important;
-  }
-}
 
 /* The precise 1536x324 road and truck cut from approved 617.png.
    Only photographic pixels are present; labels and panels are DOM UI. */
@@ -619,17 +574,112 @@
  }
 }
 
-/* Approved 617.png contains text inside the decorative source sprite as well as
-   real accessible DOM labels. Hide only the sprite's baked-in label zone so
-   card titles are not visibly duplicated. The actual truck / artwork remains. */
-@media(min-width:1281px){
- .guest-app.guest-home .owner20-feature-illustration{
-   -webkit-mask-image:linear-gradient(90deg,transparent 0%,transparent 43%,#000 75%)!important;
-   mask-image:linear-gradient(90deg,transparent 0%,transparent 43%,#000 75%)!important;
+/* Owner 617 sprite captions are raster pixels. The only active desktop
+   artwork crop is defined in the source-sprite contract below, for all
+   widths >=900px. Do not reintroduce masks here or conceal missing art. */
+
+
+/* UI CONTRACT 21.11: canonical desktop guest mascot; no old pill/40px badge.
+   The source v3 technician is immutable. Fade the opaque sticker corners into
+   the dark background instead of wrapping its square in a contrasting ring. */
+@media(min-width:900px){
+ .guest-app.guest-home > .trakbot-dock {
+   position:fixed!important;right:clamp(14px,1.4vw,28px)!important;
+   bottom:18px!important;z-index:96!important;
+ }
+ .guest-app.guest-home .trakbot-dock .trakbot-dock-launcher {
+   display:grid!important;place-items:center!important;
+   width:94px!important;min-width:94px!important;
+   height:94px!important;min-height:94px!important;
+   padding:0!important;gap:0!important;
+   border:0!important;border-radius:0!important;
+   background:transparent!important;box-shadow:none!important;
+   color:inherit!important;cursor:pointer;
+   transition:transform .22s ease!important;
+ }
+ .guest-app.guest-home .trakbot-dock-launcher:hover {
+   transform:translateY(-4px) scale(1.035)!important;
+   filter:none!important;
+ }
+ .guest-app.guest-home .trakbot-dock-launcher .trakbot-mascot {
+   --bot-size:94px!important;width:94px!important;height:94px!important;
+   animation:trakbot-tech-bob 3.8s ease-in-out infinite;
+ }
+ .guest-app.guest-home .trakbot-dock-launcher .trakbot-mascot-original {
+   border-radius:50%!important;box-shadow:none!important;
+   background-color:transparent!important;
+   mix-blend-mode:multiply;
+   filter:drop-shadow(0 7px 10px rgba(0,0,0,.55)) saturate(1.06)!important;
+   -webkit-mask-image:radial-gradient(ellipse at 50% 53%,#000 0 54%,rgba(0,0,0,.9) 62%,transparent 79%);
+   mask-image:radial-gradient(ellipse at 50% 53%,#000 0 54%,rgba(0,0,0,.9) 62%,transparent 79%);
+ }
+ .guest-app.guest-home .trakbot-dock-launcher .trakbot-dock-label,
+ .guest-app.guest-home .trakbot-dock-launcher::after {
+   display:none!important;content:none!important;
+ }
+ .guest-app.guest-home .trakbot-dock-launcher:focus-visible {
+   outline:3px solid #ff9d58!important;outline-offset:3px!important;border-radius:14px!important;
+ }
+ /* The approved 617 atlas still supplies the thematic images. Preserve each
+    complete RIGHT-hand artwork area; fade its left edge under the DOM text,
+    rather than deleting nearly half the image with a hard mask. */
+ .guest-app.guest-home .owner20-feature::before {
+   content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+   background:linear-gradient(90deg,rgba(9,27,37,.76) 0%,rgba(9,27,37,.62) 30%,rgba(9,27,37,.18) 67%,transparent 100%);
+ }
+ .guest-app.guest-home .owner20-feature-illustration {
  }
  .guest-app.guest-home .owner20-bottom-air::after,
- .guest-app.guest-home .owner20-bottom-club::after{
-   -webkit-mask-image:linear-gradient(90deg,transparent 0%,transparent 53%,#000 84%)!important;
-   mask-image:linear-gradient(90deg,transparent 0%,transparent 53%,#000 84%)!important;
+ .guest-app.guest-home .owner20-bottom-club::after {
+ }
+}
+@media(min-width:900px) and (max-width:1199px){
+ .guest-app.guest-home .trakbot-dock .trakbot-dock-launcher {
+   width:78px!important;min-width:78px!important;height:78px!important;min-height:78px!important;
+ }
+ .guest-app.guest-home .trakbot-dock-launcher .trakbot-mascot {
+   --bot-size:78px!important;width:78px!important;height:78px!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ .guest-app.guest-home .trakbot-dock-launcher .trakbot-mascot {animation:none!important;}
+ .guest-app.guest-home .trakbot-dock .trakbot-dock-launcher {transition:none!important;}
+}
+html.traksos-reduced-motion .guest-app.guest-home .trakbot-dock-launcher .trakbot-mascot {animation:none!important;}
+
+/* Source-sprite crop contract: the approved 617 atlas contains printed captions
+   inside its pixels. Only show each artwork's RIGHT-hand image zone, never
+   another image of the caption behind the real accessible DOM labels.
+   Every crop ends at its original atlas frame's right edge. */
+@media(min-width:900px){
+ .guest-app.guest-home .owner20-feature-tech .owner20-feature-illustration {
+   width:112px!important;background-position:-55px -317px!important;
+ }
+ .guest-app.guest-home .owner20-feature-ecu .owner20-feature-illustration {
+   width:94px!important;background-position:-225px -317px!important;
+ }
+ .guest-app.guest-home .owner20-feature-parts .owner20-feature-illustration {
+   width:110px!important;background-position:-337px -317px!important;
+ }
+ .guest-app.guest-home .owner20-feature-insurance .owner20-feature-illustration {
+   width:88px!important;background-position:-500px -317px!important;
+ }
+ .guest-app.guest-home .owner20-feature-inspection .owner20-feature-illustration {
+   width:81px!important;background-position:-624px -317px!important;
+ }
+ .guest-app.guest-home .owner20-feature-illustration {
+   -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.9) 12%,#000 24%)!important;
+   mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.9) 12%,#000 24%)!important;
+ }
+ .guest-app.guest-home .owner20-bottom-air::after {
+   width:133px!important;background-position:-882px 0!important;
+ }
+ .guest-app.guest-home .owner20-bottom-club::after {
+   width:133px!important;background-position:-877px -170px!important;
+ }
+ .guest-app.guest-home .owner20-bottom-air::after,
+ .guest-app.guest-home .owner20-bottom-club::after {
+   -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.9) 13%,#000 27%)!important;
+   mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.9) 13%,#000 27%)!important;
  }
 }

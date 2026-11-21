@@ -45,10 +45,10 @@ export function MobileRoleMenu({mode,quick,account,help,onLogout}:{
 }) {
   const home=quick.find(([href])=>href!=='/menu')?.[0] || '/';
   const quickEntries=uniqueEntries(
-    quick.filter(([href])=>href!=='/menu').map(([href,,label])=>[href,label]),
+    quick.filter(([href])=>href!=='/menu' && href!=='/profile').map(([href,,label])=>[href,label]),
     new Set<string>()
   );
-  const workEntries=uniqueEntries(account,new Set(quick.map(([href])=>href)));
+  const workEntries=uniqueEntries(account,new Set([...quick.map(([href])=>href),'/profile']));
   const helpEntries=uniqueEntries(help,new Set([...quick.map(([href])=>href),...account.map(([href])=>href)]));
   const roleTitle:{[key:string]:string}={
     client:'Владелец / водитель',performer:'Выездной специалист',

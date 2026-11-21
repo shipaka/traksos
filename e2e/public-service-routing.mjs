@@ -23,6 +23,17 @@ try {
         await entry.click();
         await page.waitForURL('**/#/explore/'+key);
         await page.locator('.guest-explore-hero h1').waitFor();
+        // The 20 Nov road image must paint above the hero background:
+        // z-index:-1 used to hide it behind the solid panel.
+        const artwork=await page.locator('.guest-explore-hero').evaluate(el=>{
+          const image=getComputedStyle(el,'::before');
+          const text=getComputedStyle(el.querySelector('h1'));
+          return {isolation:getComputedStyle(el).isolation,image:image.backgroundImage,
+            imageLayer:image.zIndex,textLayer:text.zIndex};
+        });
+        if(artwork.isolation!=='isolate'||artwork.imageLayer!=='0'||
+           artwork.textLayer!=='1'||!artwork.image.includes('owner20-photo-background-approved.webp'))
+          throw Error(key+': approved PC inner-page road image obscured: '+JSON.stringify(artwork));
         await page.goto(BASE+'/#/');
       }
       await page.locator('.owner20-region>summary').click();
@@ -167,15 +178,17 @@ try {
     if(width<900 && mapGeo.mapY<=mapGeo.howY)
       throw Error('Mobile map must stack after process');
 
-    // Temporary demo cannot be entered or impersonate an admin without the VPS code.
-    await page.goto(BASE+'/#/preview');
-    await page.getByRole('heading',{name:'Проверка тестовых кабинетов'}).waitFor();
-    if(await page.locator('.sandbox-role-card').count())
-      throw Error('Anonymous visitor bypassed the PC preview code');
-    await page.goto(BASE+'/#/admin/test-center');
-    await page.getByRole('heading',{name:'Проверка тестовых кабинетов'}).waitFor();
-    if(await page.locator('.sandbox-role-card').count())
-      throw Error('Anonymous visitor entered admin test center directly');
+    // The retired PIN-based public demo must not offer fake role copies.
+    // All real test cabinets now require authenticated admin access and
+    // a one-time ticket to the isolated full-fidelity instance.
+    for(const path of ['#/preview','#/admin/test-center']){
+      await page.goto(BASE+'/'+path);
+      await page.getByRole('heading',{name:'Старый демонстрационный просмотр закрыт'}).waitFor();
+      if(await page.locator('.sandbox-role-card,.sandbox-cabinet,#operator-demo-code').count())
+        throw Error('Obsolete guest demo UI leaked into '+path);
+      if(!await page.locator('.tr-approved-route-unavailable a[href="#/login"]').isVisible())
+        throw Error('Retired preview has no real sign-in destination '+path);
+    }
 
     await page.goto(BASE+'/#/company');
     await page.getByRole('heading',{name:'Компания TrakSOS'}).waitFor();

@@ -17,15 +17,19 @@ const shop=file('web/src/screens/shop.tsx');
 const policy=file('server/src/domain/paymentPolicy.ts');
 const approved=file('docs/ACTIVE_SOURCE_OF_TRUTH_2026-11-20.md');
 const readme=file('README.md');
-check(approved.includes('19 ноября')&&approved.includes('Точка')&&/наличн/i.test(approved),
-  'single 19 Nov canon and current settlement policy are documented');
+check(approved.includes('20 ноября')&&approved.includes('Точка')&&/наличн/i.test(approved),
+  'owner-approved 20 Nov canon and current settlement policy are documented');
 check(readme.includes('ACTIVE_SOURCE_OF_TRUTH_2026-11-20.md'),
   'README starts at current source, not a historical conversation');
-for(const path of ['NEXT_CHAT_TRACKSOS.md','docs/CONTINUE_NEXT_CHAT.md','docs/NEXT.md','docs/WORKBOARD.md']){
-  const s=file(path);
-  check(s.includes('ACTIVE_SOURCE_OF_TRUTH_2026-11-20.md') && !s.includes('YOOKASSA_') && !s.includes('ЮKassa'),
-    'historical starting point redirected: '+path);
+check(file('NEXT_CHAT_TRACKSOS.md').includes('ACTIVE_SOURCE_OF_TRUTH_2026-11-20.md'),
+  'one current entry point leads to approved project decisions');
+for(const stale of ['docs/CONTINUE_NEXT_CHAT.md','docs/NEXT.md','docs/WORKBOARD.md',
+  'docs/DESIGN_CANON_LATEST_2026-11-19.md']) {
+  check(!existsSync(stale), 'superseded instructions removed: '+stale);
 }
+check(file('docs/APPROVED_DESIGN.md').includes('617.png') &&
+  !file('docs/APPROVED_DESIGN.md').includes('ДЕЙСТВУЮЩИЙ ЭТАЛОН 19'),
+  'design guide no longer selects the obsolete 19 Nov PC version');
 check(!existsSync('server/src/payments/yookassa.ts'),
   'retired bank adapter is physically absent');
 check(!server.includes('YooKassaProvider') && server.includes('new MockProvider('),

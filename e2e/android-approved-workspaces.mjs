@@ -53,10 +53,10 @@ try {
       await modal.getByRole('button',{name:'Принимаю'}).click();
       await modal.waitFor({state:'detached',timeout:15000});
     }
-    // The role matrix creates a brand-new tow account without a performer
-    // profile. Confirm that onboarding is visible, then finish it through the
-    // public API on this isolated CI database before testing the full workspace.
-    // A new partner must not be mistaken for a broken dashboard.
+    // Brand-new tow accounts have no profile yet. #/work now displays the
+    // canonical four-step PerformerOnboarding, NOT the retired "Заполните профиль"
+    // card from Work(). Exercise that real screen before provisioning the test
+    // profile via the ordinary authenticated API for the workspace smoke.
     if(role==='tow'){
       const profileResponse=await fetch(BASE+'/api/performer/profile',{
         headers:{authorization:'Bearer '+token}
@@ -64,8 +64,14 @@ try {
       if(!profileResponse.ok)throw Error(role+': cannot inspect performer onboarding '+profileResponse.status);
       const profile=await profileResponse.json();
       if(!profile){
-        await page.getByText('Заполните профиль',{exact:true}).waitFor({state:'visible'});
-        await page.getByRole('button',{name:'Заполнить',exact:true}).waitFor({state:'visible'});
+        const setup=page.locator('main.performer-onboarding');
+        await setup.waitFor({state:'visible',timeout:15000});
+        await setup.getByRole('heading',{name:'Станьте исполнителем'}).waitFor({state:'visible'});
+        const towRole=setup.getByRole('button',{name:'Эвакуатор',exact:true});
+        if(await towRole.getAttribute('aria-pressed')!=='true')
+          throw Error('tow: initial approved onboarding must preselect the registered tow role');
+        if(await page.getByText('Заполните профиль',{exact:true}).count())
+          throw Error('tow: retired Work() onboarding card leaked into native 618 shell');
         const created=await fetch(BASE+'/api/performer/profile',{
           method:'PUT',headers:{authorization:'Bearer '+token,'content-type':'application/json'},
           body:JSON.stringify({kind:'tow',specialties:[],brands:{},tier:'eco'})
@@ -84,6 +90,27 @@ try {
       }));
       if(bounds.page>bounds.viewport+3)
         throw Error(role+': Android workspace horizontal overflow at '+width+'px');
+    }
+    // Android on a tablet/resizable wide WebView must keep the approved 618.png
+    // client shell. Desktop CSS breakpoints must not remount legacy Home().
+    if(mode==='client'){
+      for(const width of [900,960,1200]){
+        await page.setViewportSize({width,height:844});
+        await page.locator('main.client-dashboard .and19-workspace.and19-client')
+          .waitFor({state:'visible',timeout:10000});
+        if(!await page.locator('.and19-client').isVisible())
+          throw Error(role+': wide Android dashboard CSS is hidden at '+width+'px');
+        const old=await page.locator('.desktop-hero, .desktop-quick-links').count();
+        if(old)throw Error(role+': legacy desktop dashboard leaked into Android '+width+'px');
+        const bounds=await page.evaluate(()=>({
+          viewport:document.documentElement.clientWidth,
+          page:document.documentElement.scrollWidth
+        }));
+        if(bounds.page>bounds.viewport+3)
+          throw Error(role+': wide Android viewport overflows '+width+'px '+JSON.stringify(bounds));
+        await page.screenshot({path:'e2e/shots/android-approved/'+role+'-native-'+width+'.png'});
+      }
+      await page.setViewportSize({width:390,height:844});
     }
     if(mode==='client'){
       const desk=page.locator('.and19-client');
@@ -120,7 +147,56 @@ try {
       await menu.waitFor({state:'visible',timeout:10000});
       if(!await menu.locator('a[href="#/shop"]').count())
         throw Error('Parts shop must remain accessible via role Menu, not an obsolete sixth tab');
-      await page.goto(BASE+'/'+route,{waitUntil:'domcontentloaded'});
+      await page.goto(BASE+'/'+home,{waitUntil:'domcontentloaded'});
+    }
+    // Fleet management must not fall back to the old desktop form inside APK.
+    if(role==='owner'){
+      await page.goto(BASE+'/#/fleet',{waitUntil:'domcontentloaded'});
+      await page.locator('main.fleet-mobile-approved').waitFor({state:'visible'});
+      if(await page.locator('main.fleet-workspace .internal-role-hero-fleet').count())
+        throw Error('owner: old Fleet desktop screen appeared inside Android');
+      // A brand-new owner genuinely has ZERO vehicles. Never manufacture
+      // fictitious trucks just to satisfy a screenshot test: compare the
+      // rendered cards to real fleet API records for this isolated account.
+      const fleetResponse=await fetch(BASE+'/api/fleet',{
+        headers:{authorization:'Bearer '+token}
+      });
+      if(!fleetResponse.ok)throw Error('owner: cannot load real fleet API: '+fleetResponse.status);
+      const fleetData=await fleetResponse.json();
+      const expectedCars=fleetData.cars??[];
+      const cards=page.locator('.fleet-mobile-car-link[href^="#/garage/"]');
+      const actualCards=await cards.count();
+      if(actualCards!==expectedCars.length)
+        throw Error('owner: vehicle cards do not match real server-owned fleet '+JSON.stringify({
+          expected:expectedCars.length,actual:actualCards
+        }));
+      if(expectedCars.length===0){
+        const add=page.getByRole('link',{name:'Добавьте машину'});
+        if(!await add.isVisible())
+          throw Error('owner: empty fleet must invite the user to add a vehicle');
+        await add.click();
+        await page.waitForURL('**/#/garage',{timeout:10000});
+        await page.goto(BASE+'/#/fleet',{waitUntil:'domcontentloaded'});
+        await page.locator('main.fleet-mobile-approved').waitFor({state:'visible'});
+      }else{
+        const expectedHref='#/garage/'+expectedCars[0].id;
+        if(await cards.first().getAttribute('href')!==expectedHref)
+          throw Error('owner: actual vehicle history route differs from backend vehicle ID');
+      }
+      if(!await page.locator('.fleet-mobile-settings summary').count())
+        throw Error('owner: settings were lost while replacing the legacy UI');
+      for(const width of [320,390]){
+        await page.setViewportSize({width,height:844});
+        const size=await page.evaluate(()=>({
+          client:document.documentElement.clientWidth,
+          scroll:document.documentElement.scrollWidth
+        }));
+        if(size.scroll>size.client+3)
+          throw Error('owner: new fleet overflows at '+width+'px '+JSON.stringify(size));
+        await page.screenshot({path:'e2e/shots/android-approved/owner-fleet-'+width+'.png',
+          fullPage:true});
+      }
+      await page.goto(BASE+'/'+home,{waitUntil:'domcontentloaded'});
     }
     if(mode==='service'){
       const expected=['#/base','#/base/inbox','#/shop','#/base/money','#/menu'];

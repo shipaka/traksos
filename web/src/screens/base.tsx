@@ -8,11 +8,13 @@ import { RoadsideMap } from './roadsideMap.tsx';
 import { DestinationCard } from './DestinationCard.tsx';
 import { VerifiedBadge } from '../verifiedBadge.tsx';
 import { VehicleModelPhoto } from '../vehicleVisual.tsx';
-import { inServicePreview, servicePreviewPath, servicePreviewHref, previewServiceApi } from '../demo/servicePreviewApi.ts';
-// The same working STО components are used for both real accounts and the isolated admin preview.
-const baseGet=(url:string)=>inServicePreview()?previewServiceApi('GET',url):get(url);
-const basePost=(url:string,body:any)=>inServicePreview()?previewServiceApi('POST',url,body):post(url,body);
-const basePut=(url:string,body:any)=>inServicePreview()?previewServiceApi('PUT',url,body):put(url,body);
+// The station workplace always calls the real API. Authorized sandbox accounts
+// use the same code on a separate origin and isolated database.
+const baseGet = get;
+const basePost = post;
+const basePut = put;
+const baseRoutePath = (path:string) => path.replace(/^\/+/, '');
+const baseRouteHref = (path:string) => '#/' + baseRoutePath(path);
 
 export const NEEDS: Record<string, string> = {
   electric: 'Электрика', air: 'Пневматика', engine: 'Двигатель', gearbox: 'КПП', brakes: 'Тормоза',
@@ -58,16 +60,15 @@ function InvoicePoints({ amount, value, onChange }: { amount: number | null; val
 }
 
 export function BaseHome({ initialTab='req' }: { initialTab?: 'req' | 'cars' | 'expected' | 'ready' | 'done' } = {}) {
-  const preview=inServicePreview();
   const { me } = useMe();
   const cab = useLoad(() => baseGet('/api/base'), [], isBookingEvent);
   const [tab, setTab] = useState<'req' | 'cars' | 'expected' | 'ready' | 'done'>(initialTab);
   const { busy, run } = useAction();
-  if (!cab.data) return <main>{!preview&&<WorkerNotices audience="service" />}<Loading error={cab.error} /></main>;
+  if (!cab.data) return <main>{<WorkerNotices audience="service" />}<Loading error={cab.error} /></main>;
   const { center, groups } = cab.data;
   // Новая рембаза: на главной — что будет дальше, сама карточка — во вкладке «Карточка»
   if (!center) return (
-    <main className="base-workspace service-onboarding">{!preview&&<WorkerNotices audience="service" />}
+    <main className="base-workspace service-onboarding">{<WorkerNotices audience="service" />}
       <div className="base-onboarding-hero">
         <h1>Подключите рембазу</h1>
         <div className="sub">Три шага — и клиенты TrakSOS начнут записываться к вам, а мастера советовать вас после диагностики</div>
@@ -75,7 +76,7 @@ export function BaseHome({ initialTab='req' }: { initialTab?: 'req' | 'cars' | '
       <div className="card col">
         <b>1. Заполните карточку сервиса</b>
         <span className="note">Название, адрес, часы, какие марки и работы берёте, есть ли стоянка и яма.</span>
-        <a className="btn" href={servicePreviewHref('base/me')}>Заполнить карточку</a>
+        <a className="btn" href={baseRouteHref('base/me')}>Заполнить карточку</a>
       </div>
       <div className="card col">
         <b>2. Пройдите проверку</b>
@@ -91,13 +92,13 @@ export function BaseHome({ initialTab='req' }: { initialTab?: 'req' | 'cars' | '
   const focus = groups.repair[0] ?? groups.ready[0] ?? groups.expected[0] ?? null;
   return (
     <main className="base-workspace">
-      {!preview && !me?.roles.includes('master') && (
+      {!me?.roles.includes('master') && (
         <a className="btn ghost small" href="#/work/profile">Подключить выездного мастера — отдельный рабочий кабинет</a>
       )}
-      {!preview && me?.roles.includes('master') && (
+      {me?.roles.includes('master') && (
         <a className="btn ghost small" href="#/work">Перейти к выездным заявкам</a>
       )}
-{!preview&&<WorkerNotices audience="service" />}
+{<WorkerNotices audience="service" />}
       <section className="base-command-hero">
         <span className="base-command-eyebrow">TRAKSOS · КАБИНЕТ СЕРВИСНОГО ПАРТНЁРА</span>
         <h1>Рембаза «{center.name}»</h1>
@@ -129,7 +130,7 @@ export function BaseHome({ initialTab='req' }: { initialTab?: 'req' | 'cars' | '
           <span className="note">{center.accepts.map((a: string) => ACCEPTS[a]?.[0]).join(' · ') || 'не отмечено'}</span>
           <div className="grid2">
             <button className="btn" disabled={busy} onClick={async () => { if (await run(() => basePost('/api/base/confirm-accepts',{}), 'Спасибо, следующий вопрос — через неделю')) cab.reload(); }}>Да, всё так</button>
-            <button className="btn ghost" onClick={() => go(servicePreviewPath('base/me'))}>Изменить</button>
+            <button className="btn ghost" onClick={() => go(baseRoutePath('base/me'))}>Изменить</button>
           </div>
         </div>
       )}
@@ -152,8 +153,8 @@ export function BaseHome({ initialTab='req' }: { initialTab?: 'req' | 'cars' | '
           </div>
         </div>
         <div className="and20-sto-focus-actions">
-          <a href={servicePreviewHref(`base/car/${focus.id}`)}>Открыть заказ</a>
-          {!preview&&<a href={'#/shop?bookingId='+encodeURIComponent(focus.id)}>Подобрать запчасти</a>}
+          <a href={baseRouteHref(`base/car/${focus.id}`)}>Открыть заказ</a>
+          {<a href={'#/shop?bookingId='+encodeURIComponent(focus.id)}>Подобрать запчасти</a>}
         </div>
         <small>Расчёт и согласование работ — в карточке этого ремонта.</small>
       </section>}
@@ -167,7 +168,7 @@ export function BaseHome({ initialTab='req' }: { initialTab?: 'req' | 'cars' | '
         : <div className="empty">Новых запросов нет. Они приходят уведомлением — со звуком, даже когда приложение закрыто.</div>)}
       {tab === 'expected' && (groups.expected.length ? <div className="rows">
         {groups.expected.map((b:any)=><a key={b.id} className="list-item"
-          href={servicePreviewHref(`base/car/${b.id}`)}>
+          href={baseRouteHref(`base/car/${b.id}`)}>
           <div className="stack" style={{gap:2}}>
             <b>{carName(b.vehicle)}</b>
             <span className="note">{b.client?.name||'Клиент'} · {b.needName||'Осмотр'}
@@ -180,7 +181,7 @@ export function BaseHome({ initialTab='req' }: { initialTab?: 'req' | 'cars' | '
       {tab === 'cars' && (cars.length ? (
         <div className="rows">
           {cars.map((b: any) => (
-            <a key={b.id} href={servicePreviewHref(`base/car/${b.id}`)} className="list-item">
+            <a key={b.id} href={baseRouteHref(`base/car/${b.id}`)} className="list-item">
               <div className="stack" style={{ gap: 2 }}>
                 <b>{carName(b.vehicle)} · {b.vehicle?.plate ?? 'без номера'}</b>
                 <span className="note">{b.client?.name} · {b.needName} · {b.status === 'expected' ? `ожидаем ${fmtDay(b.whenDay)}${b.acceptTime ? ` к ${b.acceptTime}` : ''}` : b.daysInRepair ? `в ремонте ${b.daysInRepair} дн.` : ''}</span>
@@ -195,7 +196,7 @@ export function BaseHome({ initialTab='req' }: { initialTab?: 'req' | 'cars' | '
       {tab === 'ready' && (groups.ready.length ? (
         <div className="rows">
           {groups.ready.map((b: any) => (
-            <a key={b.id} href={servicePreviewHref(`base/car/${b.id}`)} className="list-item">
+            <a key={b.id} href={baseRouteHref(`base/car/${b.id}`)} className="list-item">
               <div className="stack" style={{gap:2}}>
                 <b>{carName(b.vehicle)} · {b.vehicle?.plate ?? 'без номера'}</b>
                 <span className="note">{b.client?.name} · {b.needName} · {b.statusName}</span>
@@ -208,7 +209,7 @@ export function BaseHome({ initialTab='req' }: { initialTab?: 'req' | 'cars' | '
       {tab === 'done' && (groups.done.length ? (
         <div className="rows">
           {groups.done.map((b: any) => (
-            <a key={b.id} href={servicePreviewHref(`base/car/${b.id}`)} className="list-item">
+            <a key={b.id} href={baseRouteHref(`base/car/${b.id}`)} className="list-item">
               <div className="stack" style={{ gap: 2 }}><b>{carName(b.vehicle)} · {b.vehicle?.plate ?? ''}</b><span className="note">{fmtTime(b.createdAt)} · {b.needName}{b.amount ? ` · ${rub(b.amount)}` : ''}</span></div>
               <span className={`pill ${TONE[b.status]}`}>{b.statusName}</span>
             </a>
@@ -288,12 +289,12 @@ export function BaseCar({ id }: { id: string }) {
   const [invPts, setInvPts] = useState<number | null>(null);
   const [company, setCompany] = useState<any>(null);
   const d = b.data;
-  if (!d) return <main><Back to={servicePreviewPath('base')} label="Рембаза" /><Loading error={b.error} /></main>;
+  if (!d) return <main><Back to={baseRoutePath('base')} label="Рембаза" /><Loading error={b.error} /></main>;
   const act = async (path: string, body: any, okText: string) => { const r = await run(() => basePost(`/api/base/bookings/${id}/${path}`, body), okText); if (r) b.setData(r); return r; };
   const inRepair = REPAIR.some(([s]) => s === d.status);
   return (
     <main>
-      <Back to={servicePreviewPath('base')} label="Рембаза" />
+      <Back to={baseRoutePath('base')} label="Рембаза" />
       <div>
         <h1>{carName(d.vehicle)}</h1>
         <div className="sub">Госномер {d.vehicle?.plate ?? '—'}{d.vehicle?.trailerPlate ? ` · прицеп ${d.vehicle.trailerPlate}` : ''} · чтобы узнать машину на въезде</div>
@@ -316,13 +317,13 @@ export function BaseCar({ id }: { id: string }) {
               <dt>Парк</dt><dd>{company.park} маш.</dd>
               <dt>Ремонтов в сервисах</dt><dd>{company.closedRepairs}{company.disputes ? ` · споров: ${company.disputes}` : ''}</dd>
             </dl>
-            {company.cars.length > 1 && <><span className="label">Машины компании у вас</span>{company.cars.map((c: any) => <a key={c.id} href={servicePreviewHref(`base/car/${c.id}`)} className="note">{carName(c.vehicle)} · {c.vehicle?.plate ?? ''} · {c.statusName}</a>)}</>}
+            {company.cars.length > 1 && <><span className="label">Машины компании у вас</span>{company.cars.map((c: any) => <a key={c.id} href={baseRouteHref(`base/car/${c.id}`)} className="note">{carName(c.vehicle)} · {c.vehicle?.plate ?? ''} · {c.statusName}</a>)}</>}
             <span className="note">Суммы и расходы компании не видны — только то, что нужно для работы.</span>
           </div>
         )}
       </div>
 
-      {!inServicePreview() && ['expected', 'arrived', 'diagnostics', 'in_work', 'waiting_part', 'agreeing', 'ready'].includes(d.status) && (
+      {['expected', 'arrived', 'diagnostics', 'in_work', 'waiting_part', 'agreeing', 'ready'].includes(d.status) && (
         <div className="card col" aria-label="Подбор запчастей для ремонта">
           <b>Запчасти для этого ремонта</b>
           <span className="note">Откроем подбор с данными этой машины. Совместимость проверяется отдельно; магазин пока закрыт для заказов.</span>
@@ -345,7 +346,7 @@ export function BaseCar({ id }: { id: string }) {
         <div className="grid2">
           <button className="btn" disabled={busy || (d.transport && !d.transport.deliveryReported)}
             onClick={() => act('status', { status: 'arrived' }, 'Клиент видит: машина приехала')}>Машина приехала</button>
-          <button className="btn ghost" disabled={busy} onClick={async () => { if (await act('respond', { action: 'undo' }, 'Ответ отменён')) go(servicePreviewPath('base')); }}>Отменить ответ</button>
+          <button className="btn ghost" disabled={busy} onClick={async () => { if (await act('respond', { action: 'undo' }, 'Ответ отменён')) go(baseRoutePath('base')); }}>Отменить ответ</button>
         </div>
       )}
       {inRepair && (
@@ -446,10 +447,9 @@ export function BaseSetup() {
   const set = (k: string, v: any) => setF({ ...f, [k]: v });
   async function save() {
     const body = { ...f, inn: f.inn || null, closedDays: f.closedDays.filter((d: string) => d >= mskDay()) };
-    if (await run(() => basePut('/api/base', body), first ? 'Карточка сохранена — осталось пройти проверку' : 'Карточка сервиса сохранена')) { await reload(); go(servicePreviewPath('base')); }
+    if (await run(() => basePut('/api/base', body), first ? 'Карточка сохранена — осталось пройти проверку' : 'Карточка сервиса сохранена')) { await reload(); go(baseRoutePath('base')); }
   }
   function locate() {
-    if(inServicePreview())return; // Never read a real device's GPS in a demonstration account.
     if(!navigator.geolocation){
       setGpsError('Геолокация недоступна в этом браузере. Проверьте разрешения или откройте сайт по HTTPS.');
       setGpsStatus('error');return;
@@ -471,7 +471,7 @@ export function BaseSetup() {
   }
   return (
     <main>
-      {!first && <Back to={servicePreviewPath('base')} label="Рембаза" />}
+      {!first && <Back to={baseRoutePath('base')} label="Рембаза" />}
       <div>
         <h1>Карточка сервиса</h1>
         <div className="sub">Один раз отметьте, что принимаете, кто у вас есть и условия. Цены не нужны: итог зависит от осмотра.</div>
@@ -480,9 +480,8 @@ export function BaseSetup() {
         <Field label="Название"><input className="field" value={f.name} onChange={(e) => set('name', e.target.value)} placeholder="Например, Шушары-Трак" /></Field>
         <Field label="Фактический адрес въезда на СТО"><input className="field" value={f.address} onChange={(e) => set('address', e.target.value)} placeholder="Шушары, Московское ш., 50" /></Field>
         <span className="note">Укажите место, куда водитель действительно привезёт грузовик, а не юридический адрес компании.</span>
-        <button type="button" className="btn ghost small" onClick={locate} disabled={gpsStatus==='loading'||inServicePreview()}>
-          {inServicePreview()?'GPS отключён в тестовом кабинете':
-           gpsStatus==='loading'?'Определяем координаты…':
+        <button type="button" className="btn ghost small" onClick={locate} disabled={gpsStatus==='loading'}>
+          {gpsStatus==='loading'?'Определяем координаты…':
            Number.isFinite(f.lat)&&Number.isFinite(f.lng)?`GPS: ${f.lat.toFixed(4)}, ${f.lng.toFixed(4)} · Обновить`:
            'Я нахожусь на базе — отметить точку по GPS'}
         </button>
@@ -490,7 +489,7 @@ export function BaseSetup() {
         {gpsStatus==='ok'&&<span className="note" role="status">Точка получена. Проверьте, что отметка стоит у въезда на территорию СТО.</span>}
         <RoadsideMap kind="service"
           point={Number.isFinite(f.lat)&&Number.isFinite(f.lng)?{lat:f.lat,lng:f.lng}:null}
-          address={f.address} synthetic={inServicePreview()}/>
+          address={f.address} synthetic={false}/>
         <div className="grid2">
           <Field label="Часы работы"><input className="field" value={f.hours} onChange={(e) => set('hours', e.target.value)} /></Field>
           <Field label="ИНН компании"><input className="field" inputMode="numeric" value={f.inn} onChange={(e) => set('inn', e.target.value.replace(/\D/g, '').slice(0, 12))} /></Field>
@@ -1103,7 +1102,7 @@ export function BaseMoney() {
                 {x.state === 'unpaid' && <span className="note">Клиент подтвердил работы. Выплата ожидает поступления оплаты.</span>}
                 {x.paidOutAt && <span className="note">Выплачено {fmtDay(x.paidOutAt)}</span>}
                 <div className="row" style={{ gap: 6, marginTop: 4 }}>
-                  <a className="btn ghost small" href={servicePreviewHref(`base/car/${x.id}`)}>Открыть счёт</a>
+                  <a className="btn ghost small" href={baseRouteHref(`base/car/${x.id}`)}>Открыть счёт</a>
                   <a className="btn ghost small" href="#/support/new">Вопрос по счёту</a>
                 </div>
               </div>

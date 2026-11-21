@@ -1,6 +1,6 @@
 // Nightly and push-time gate: functional and asset integrity tests.
-// Current owner-approved public design is 19 Nov: SOS, Air, STO, ECU, Parts, Insurance.
-// Never restore the deleted 14 Nov design or the interim 18 Nov nine-card layout.
+// Approved PC design: owner's 617.png from 20 Nov; Android and mobile remain separate.
+// Never restore retired 14–19 Nov PC visuals or overwrite the approved mobile variant.
 // Artwork still requires visual inspection; source-level tests cannot prove logo pixels.
 // This only verifies invariants; visual fidelity is additionally checked via screenshots.
 import { readFile, readdir, stat } from 'node:fs/promises';
@@ -147,6 +147,47 @@ const unifiedBot = await read('web/src/trakbotMascot.css');
 const unifiedOrderPhoto = await read('web/src/approvedOrderTruck.tsx');
 const unifiedSceneStyle = await read('web/src/approvedEmptyScene.css');
 const unifiedServiceSceneStyle = await read('web/src/approvedServiceScene.css');
+const performerEmptySource=await read('web/src/screens/approvedPcCabinets20261120.tsx');
+const performerEmptyStyle=await read('web/src/approvedPcCabinets20261120.css');
+expect(performerEmptySource.includes('<ApprovedEmptyScene kind="shift"/>') &&
+  performerEmptySource.includes('data-orders="0"') &&
+  performerEmptySource.includes('!jobs.data?<LoadingBlock error={jobs.error} retry={jobs.reload}/>') &&
+  performerEmptyStyle.includes('.approved-pc-performer .approved-pc-shift-empty-body'),
+  'performer/tow empty shift preserves API loading, real offer CTA and cinematic illustration without fake work');
+const unifiedPerformerEntry=await read('web/src/screens/performer.tsx');
+const nativeRoleAcceptance=await read('e2e/android-approved-workspaces.mjs');
+expect(unifiedPerformerEntry.includes('if (!p) return <PerformerHub />') &&
+  !unifiedPerformerEntry.includes('Заполните профиль') &&
+  nativeRoleAcceptance.includes("page.locator('main.performer-onboarding')") &&
+  nativeRoleAcceptance.includes("name:'Станьте исполнителем'"),
+  'all new performer/tow accounts use one canonical four-step onboarding, never the retired mini-page');
+const signedPcBotStyles=await read('web/src/trakbotDock.css');
+expect(signedPcBotStyles.includes('Approved signed-in PC inner pages: prominent fixed technician') &&
+  signedPcBotStyles.includes('width:84px;min-width:84px;height:84px;min-height:84px;') &&
+  signedPcBotStyles.includes('.app:not(.guest-app)> .trakbot-dock'),
+  'signed-in PC detail pages keep the approved larger floating technician without an old pill');
+const ownerPcUiContract=await read('web/src/screens/ownerDesktopHome20261120.css');
+expect(ownerPcUiContract.includes('Source-sprite crop contract:') &&
+  ownerPcUiContract.includes('rgba(0,0,0,.9) 12%,#000 24%') &&
+  ownerPcUiContract.includes('rgba(0,0,0,.9) 13%,#000 27%') &&
+  !ownerPcUiContract.includes('transparent 43%,#000 75%') &&
+  !ownerPcUiContract.includes('transparent 53%,#000 84%') &&
+  !ownerPcUiContract.includes('rgba(0,0,0,.50) 18%,#000 42%'),
+  '617 desktop uses one effective artwork crop, not stacked contradictory mask patches');
+const botDockContract=await read('web/src/trakbotDock.css');
+expect(ownerPcUiContract.includes('UI CONTRACT 21.11: canonical desktop guest mascot') &&
+  ownerPcUiContract.includes('owner20-feature::before') &&
+  ownerPcUiContract.includes('radial-gradient(ellipse at 50% 53%') &&
+  !ownerPcUiContract.includes('width:40px!important;min-width:40px!important;') &&
+  !botDockContract.includes('a full-width cyan-edged launcher'),
+  'single desktop guest TrakBot/cinematic tile contract, not conflicting old pill or 40px fallback');
+const roleSidebarSource=await read('web/src/main.tsx');
+const navGlyphSource=await read('web/src/navGlyph.tsx');
+expect(roleSidebarSource.includes('<NavGlyph glyph={ic}/>') &&
+  navGlyphSource.includes("glyph === '⚒'") &&
+  navGlyphSource.includes("glyph === 'ⓘ'") &&
+  navGlyphSource.includes("glyph === '⚿'"),
+  'signed-in desktop navigation shares consistent approved vector pictograms with mobile');
 const ownerPcHeader = await read('web/src/screens/ownerDesktopHome20261120.tsx');
 expect(unifiedVisuals.includes("logo: '/traksos-brand-logo-approved-618.png'") &&
   unifiedVisuals.includes("trakbotHello: '/trakbot-approved-hello.webp'") &&
@@ -201,6 +242,20 @@ expect(sharedSceneKeys.every((kind,i)=>
   ),
   'same four services with HQ PC photographs and owner-approved mobile pictures; preserve label geometry');
 
+// The 617 desktop home is a standalone component. Old public-landing
+// selectors cannot silently reintroduce its predecessor's hero or crop.
+// On mobile the approved guest palette is graphite/orange, never magenta.
+const formerDesktopReference = await read('web/src/trackReference.css');
+const currentMobileGuest = await read('web/src/mobileBrowser.css');
+expect(!formerDesktopReference.includes('.guest-app .public-landing .public-hero-visual'),
+  'no retired desktop guest hero overlays; preserve signed-in client artwork');
+expect(!currentMobileGuest.includes('#fa5793'),
+  'approved guest mobile benefits cannot revert to the old magenta accent');
+const formerHeroCss = await read('web/src/approvedHeroImage20261119.css');
+expect(!formerHeroCss.includes('@media(min-width:900px)') &&
+  !formerHeroCss.includes('@media(min-width:1251px)'),
+  'retired 19 Nov desktop guest hero overrides cannot return alongside standalone 617 home');
+
 for (const file of ['web/src/finalCanon.css','web/src/trackPhotos.css']) {
   let exists = false;
   try { await stat(file); exists = true; } catch {}
@@ -208,6 +263,9 @@ for (const file of ['web/src/finalCanon.css','web/src/trackPhotos.css']) {
 }
 
 const landing = await read('web/src/screens/login.tsx');
+expect(landing.includes("!native.isApp && window.matchMedia('(min-width: 900px)').matches") &&
+  !landing.includes("useState(() => window.matchMedia('(min-width: 900px)').matches)"),
+  'native WebView must never switch unauthenticated users to the desktop 617 landing');
 const catalogue = await read('web/src/guestCatalog.ts');
 const roleCss = await read('web/src/roleShared20261119.css');
 const currentCss = await read('web/src/currentApproved20261119.css');
@@ -229,9 +287,12 @@ const heroVisualE2E = await read('e2e/approved-truck-hero.mjs');
 expect(currentCss.includes(approvedPhoto) && approvedHeroLayer.includes(approvedPhoto)
   && !currentCss.includes('tracksos-approved-scenic-hero.webp'),
   'guest home has one approved Nov 19 truck image, with no legacy image fallback');
-expect(heroVisualE2E.includes("tracksos-approved-hero-owner-20261119(?:-[A-Za-z0-9]+)")
-  && heroVisualE2E.includes("info.photo.includes('tracksos-approved-scenic-hero')"),
-  'browser screenshot gate rejects obsolete 14 Nov hero and requires actual owner image');
+expect(heroVisualE2E.includes("tracksos-approved-hero-owner-20261119") &&
+  heroVisualE2E.includes("owner20-photo-background-approved.webp") &&
+  heroVisualE2E.includes("main.approved-pc.approved-pc-client") &&
+  heroVisualE2E.includes("main.client-dashboard .and19-workspace.and19-client") &&
+  !heroVisualE2E.includes("page.locator('.client-dashboard .desktop-hero')"),
+  'browser visual gate tests approved 617/618 real guest and account screens, never obsolete desktop-hero or fake phone hero');
 
 
 /* A retired guest stylesheet must never silently redraw the approved 19 Nov
@@ -247,6 +308,13 @@ const browserCss = await read('web/src/mobileBrowser.css');
 expect(browserCss.includes('@supports (aspect-ratio: 2 / 1)') && browserCss.includes('height: 156px !important') && browserCss.includes('top: auto !important;right: auto !important;bottom: auto !important;left: auto !important'),
   'legacy Android WebView must reserve visible uncropped truck photo and reset absolute offsets');
 const androidAcceptance = await read('e2e/android-approved-workspaces.mjs');
+const nativeWide = await read('web/src/nativeWide20261121.css');
+expect(unifiedShell.includes("import './nativeWide20261121.css';") &&
+  nativeWide.includes('html.traksos-native .app:not(.guest-app) .and19-workspace') &&
+  nativeWide.includes('html.traksos-native .guest-app .public-hero-visual') &&
+  nativeWide.includes('html.traksos-native .app .desktop-sidebar') &&
+  nativeWide.includes('html.traksos-native .app:not(.guest-app) .tabbar'),
+  'wide Android WebViews use only the 618 native shell, including guest entry and bottom navigation');
 expect(androidAcceptance.includes("Object.defineProperty(window,'TrakSOSNative'") &&
   androidAcceptance.includes("['master_service'") &&
   androidAcceptance.includes('for(const width of [320,390])'),
@@ -258,6 +326,9 @@ expect(!currentCss.includes('.and19-workspace') && !currentCss.includes('.app.ro
   'public 19 Nov CSS does not rewrite signed-in Android or performer workspaces');
 
 const css = await read('web/src/styles.css');
+expect(css.includes('--public-orange:#ff6a13') && !css.includes('--public-pink') &&
+  !css.includes('color:#f757a0') && !css.includes('color:#dd8caf'),
+  'approved public guest accent is orange, not the retired magenta');
 // The retired pre-19-Nov hero may remain in role-only visuals but must never be
 // a CSS fallback for the owner-approved public landing. Prevent old art regressing
 // into a future deploy even when the final CSS file changes its order.
@@ -286,23 +357,25 @@ expect(landing.includes('/icon-192.png') &&
        !shell.includes('tracksos-approved-logo-owner-20261119.webp'),
        'mobile promo preserves approved launcher icon and shares 618 brand with Android and desktop');
 const demo = await read('web/src/screens/adminTestCenter.tsx');
-const serviceDemo = await read('web/src/demo/servicePreviewApi.ts');
-expect(!/\bstructuredClone\s*\(/.test(serviceDemo),
-  'Android 10 WebView starts without unavailable structuredClone in admin demo module');
-expect(shell.includes("const serviceSandbox = isAdmin && a === 'admin' && b === 'test-center' && route[2] === 'service' && route.length > 3") &&
-  shell.includes("b === 'test-center' ? (serviceSandbox ? <ServicePreviewPage section={route[3]} sub={route[4]} id={route[5]} /> : <AdminTestCenter roleId={route[2]} fullFidelity />)"),
-  'admin-only test center launches full-fidelity real cabinet, with explicit legacy service fallback');
-expect(demo.includes("'/api/admin/sandbox/status'") &&
-  demo.includes("'/api/admin/sandbox/ticket'") &&
-  demo.includes('FullFidelityRoleLauncher') &&
-  !demo.includes('XMLHttpRequest'),
-  'isolated role handoff only uses admin-only sandbox authorization endpoints');
-const oldTraining = await Promise.all([
+expect(!demo.includes('Открыть старый учебный тренажёр') &&
+  !demo.includes('setFallback(true)'),
+  'approved admin role launcher cannot fall back into obsolete role trainers');
+expect(shell.includes("b === 'test-center' ? <AdminTestCenter roleId={route[2]} fullFidelity />") &&
+  !shell.includes('serviceSandbox') && !shell.includes('ServicePreview'),
+  'admin test center imports only the full-fidelity role sandbox');
+const retiredTraining=[
   'customerTrainingCabinet.tsx','fleetTrainingCabinet.tsx','performerTrainingCabinet.tsx',
-].map(name=>read('web/src/screens/'+name)));
-expect(oldTraining.every(src=>!src.includes("from '../api.ts'") && !src.includes('fetch(') &&
-  !src.includes('XMLHttpRequest')),
-  'old legacy training screens remain local-only, with no live production API calls');
+  'insurerTrainingCabinet.tsx','inspectionTrainingCabinet.tsx',
+  'moderatorTrainingCabinet.tsx','masterServiceTrainingCabinet.tsx'
+];
+for(const filename of retiredTraining){
+  let found=false;
+  try{await stat('web/src/screens/'+filename);found=true;}catch{/* absent */}
+  expect(!found,'retired mock training module must be physically removed: '+filename);
+}
+expect(!demo.includes('TrainingCabinet')&&!demo.includes('SandboxCabinet')&&
+  !demo.includes('initialTickets(')&&!demo.includes('function RoleScenario'),
+  'no synthetic role workspaces can be bundled into the real admin test center');
 for(const role of ['client','owner','driver','master','tow','service','master_service','insurer','moderator','admin']) {
   expect(demo.includes("id:'"+role+"'"), 'safe demo role exists: '+role);
 }
@@ -465,9 +538,9 @@ const mobileRoleMenu = await read('web/src/mobileRoleMenu.tsx');
 const innerAndroidStyle = await read('web/src/androidInternalSections20261120.css');
 const androidRealScreens = await read('e2e/android-approved-real-screens.mjs');
 const mobileMenuBlock = shell.slice(shell.indexOf('const mobileTabs:'),shell.indexOf('const accountLinks:'));
-// Seven production roles plus the isolated STO sandbox variant (both remain navigable).
-expect((mobileMenuBlock.match(/\['\/menu', 'menu', 'Меню'\]/g)??[]).length === 8 &&
-  shell.includes("href==='/menu'?'/menu'") &&
+// Exactly seven real role menus; the retired fake STO variant must never be counted.
+expect((mobileMenuBlock.match(/\['\/menu', 'menu', 'Меню'\]/g)??[]).length === 7 &&
+  shell.includes("const shellHref=(href:string)=>'#'+href;") &&
   !mobileMenuBlock.includes("['/profile', '◉', 'Меню']") &&
   !mobileMenuBlock.includes("['/menu', '◉', 'Меню']") &&
   shell.includes("case 'menu': screen =") &&
@@ -524,7 +597,7 @@ expect(androidReviewLive.includes("money: { amount: 1000000, clientFee: 50000, t
   androidOrderReviewTest.includes('Client Android order routing/kopeck pricing/rating wrong'),
   'Android synthetic screenshot review has realistically scaled kopecks and verifies actual destinations');
 expect(shell.includes('MobileSectionChrome title={sectionLabel} homeHref={workspaceHref}') &&
-  shell.includes("const innerSection = !!me && native.isApp && !serviceSandbox") &&
+  shell.includes("const innerSection = !!me && native.isApp") &&
   innerSectionComponent.includes('href={\'#\'+homeHref}') &&
   innerSectionComponent.includes('href="#/menu"') &&
   innerAndroidStyle.includes('tr-native-section-path') &&
@@ -567,7 +640,7 @@ expect(ownerNav818.length === 1 &&
   approvedNavCSS.includes('grid-template-columns:repeat(5,minmax(0,1fr));') &&
   !unifiedMobile.includes('className="and19-equipment and19-parts-shortcut"') &&
   unifiedMobile.includes('Новая заявка на сервис') &&
-  shell.includes('!native.isApp && !serviceSandbox') &&
+  shell.includes('!native.isApp && !isAuthEntry') &&
   shell.includes("['/work/chats', 'chat', 'Чат']"),
   '618.png client exactly five bottom tabs, four original services, separate shop in Menu, no floating native bot');
 
@@ -625,19 +698,56 @@ expect(photoMigration.includes('create table if not exists order_photos') &&
   '618.png Foto is REAL encrypted participant-scoped evidence and Android native chooser; debug photo never uploads');
 
 
-// Owner approved nine desktop cabinets on 20 Nov 2026. Source-level
-// invariants complement, but never replace, live Chromium screenshots.
+// All ten independently renderable PC roles share the owner-approved 617
+// contract from 900px. A mismatch with mobile's 899px maximum can silently
+// resurrect retired `Home` markup on 900–999px tablets or small laptops.
+// The legacy guest PIN demo was a collection of fake training mini-cabinets.
+// The only permitted visual sandbox is the authenticated full-fidelity build.
+const retiredDemo=await read('web/src/screens/demoPreview.tsx');
+const realTestCenter=await read('web/src/screens/adminTestCenter.tsx');
+expect(retiredDemo.includes('Старый демонстрационный просмотр закрыт') &&
+  retiredDemo.includes('tr-approved-route-unavailable') &&
+  !retiredDemo.includes('AdminTestCenter') &&
+  !retiredDemo.includes('operatorDemoSession') &&
+  !retiredDemo.includes('/api/public/demo/unlock'),
+  'public PIN preview must never restore obsolete simulated role cabinets');
+expect(realTestCenter.includes('FullFidelityRoleLauncher') &&
+  realTestCenter.includes("'/api/admin/sandbox/ticket'") &&
+  realTestCenter.includes('<NavGlyph glyph={r.icon}/>') &&
+  realTestCenter.includes("id:'tow',icon:'tow'") &&
+  realTestCenter.includes("id:'master',icon:'wrench'") &&
+  !realTestCenter.includes('TrainingCabinet') &&
+  !realTestCenter.includes('SandboxCabinet'),
+  'test center contains only signed isolated full-fidelity role launcher, no fake dashboard');
+expect(!/\.sandbox-(?:workspace|nav|panel|ticket|scenario|bars|metric|feature|fleet|bays|route|road-flow|hero|breadcrumb|footer)\b/.test(css),
+  'retired mock role UI may not ship dead CSS selectors');
+const liveBaseSource=await read('web/src/screens/base.tsx');
+expect(!unifiedShell.includes('serviceSandbox') && !unifiedShell.includes('ServicePreview') &&
+  !liveBaseSource.includes('servicePreviewApi') && !liveBaseSource.includes('inServicePreview'),
+  'obsolete mock routes and adapters cannot be bundled');
+for (const oldPath of ['web/src/screens/servicePreview.tsx','web/src/demo/servicePreviewApi.ts']) {
+  let remains=false;
+  try { await stat(oldPath); remains=true; } catch { /* physical removal required */ }
+  expect(!remains, 'retired STO preview source must be deleted: '+oldPath);
+}
 const pcSource=await read('web/src/screens/approvedPcCabinets20261120.tsx');
 const pcCss=await read('web/src/approvedPcCabinets20261120.css');
+const courierPcCss=await read('web/src/screens/approvedPcCourier20261120.css');
 const pcMap=await read('web/public/traksos-russia-outline.svg');
 expect(pcSource.includes("export type ApprovedPCRole") &&
-  ['driver','owner','master','tow','service','insurer','inspection','moderator','admin']
+  ['driver','owner','master','tow','service','insurer','inspection','courier','moderator','admin']
     .every(role=>pcSource.includes("'"+role+"'")) &&
   pcSource.includes("useDesktopSize()") &&
-  pcCss.includes("@media(min-width:1000px)") &&
+  pcSource.includes("window.matchMedia('(min-width: 900px)')") &&
+  pcCss.includes("@media(min-width:900px)") &&
+  pcCss.includes("@media (min-width:900px) and (max-width:1199px)") &&
+  !pcCss.includes('@media(min-width:1000px)') &&
   unifiedShell.includes('ApprovedPcDesk') &&
   unifiedShell.includes("approvedPcCabinets20261120.css"),
-  'nine real desktop role workspaces are routed and mobile viewport remains separate');
+  'ten real desktop role workspaces start at 900px, without a legacy breakpoint gap');
+expect(courierPcCss.includes('@media(min-width:900px)') &&
+  !courierPcCss.includes('@media(min-width:1000px)'),
+  'approved PC courier stylesheet must activate at the 900px router breakpoint; no unstyled 960px truck');
 expect(pcSource.includes("get<any[]>('/api/orders')") &&
   pcSource.includes("get<any[]>('/api/orders?as=performer')") &&
   pcSource.includes("get<any[]>('/api/performer/auctions')") &&

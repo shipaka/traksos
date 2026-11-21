@@ -256,6 +256,9 @@
   }
 }
 @media (max-width: 359px) {
+  html.traksos-compact-guest .guest-app .public-landing .public-service-tiles {
+    column-gap: 4px !important;
+  }
   html.traksos-compact-guest .guest-app .public-landing .public-app-card {
     padding-right: 103px !important;
   }
@@ -282,5 +285,236 @@
       height: auto !important;
       min-height: 0 !important;
     }
+  }
+}
+
+
+/* 20 Nov owner-reported production defects: public MOBILE landing only.
+   A prior desktop selector styled <div>, but real benefit entries are <article>.
+   Without a mobile article layout, bold titles and small copy render inline,
+   and SVG icons expand to the full grid cell. Do not change the PC 617 layout
+   or signed-in Android 618 workspaces. */
+@media (max-width: 899px) {
+  html.traksos-compact-guest .guest-app.guest-home .public-landing,
+  html.traksos-compact-guest .guest-app.guest-home .public-landing * {
+    box-sizing: border-box;
+  }
+  html.traksos-compact-guest .guest-app.guest-home .public-landing .public-why-strip {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 10px !important;
+    padding: 10px 0 !important;
+    margin: 12px 0 !important;
+    min-width: 0;
+  }
+  html.traksos-compact-guest .guest-app.guest-home .public-landing .public-why-strip > article.public-benefit {
+    display: grid !important;
+    grid-template-columns: 48px minmax(0, 1fr) !important;
+    grid-template-rows: auto auto !important;
+    align-content: center !important;
+    align-items: start !important;
+    gap: 5px 13px !important;
+    min-width: 0 !important;
+    min-height: 104px !important;
+    padding: 14px !important;
+    margin: 0 !important;
+    border: 1px solid #31516a !important;
+    border-radius: 16px !important;
+    background: linear-gradient(140deg, #122b41, #0b1d2e) !important;
+    box-shadow: none !important;
+  }
+  html.traksos-compact-guest .guest-app.guest-home .public-landing .public-why-strip .public-benefit-icon {
+    display: grid !important;
+    place-items: center !important;
+    grid-column: 1 !important;
+    grid-row: 1 / 3 !important;
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    color: #ff994d !important;
+  }
+  html.traksos-compact-guest .guest-app.guest-home .public-landing .public-why-strip .public-benefit-icon svg {
+    display: block !important;
+    width: 38px !important;
+    height: 38px !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    flex: none !important;
+  }
+  html.traksos-compact-guest .guest-app.guest-home .public-landing .public-why-strip > article.public-benefit > b {
+    display: block !important;
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    font-size: 16px !important;
+    line-height: 1.3 !important;
+    color: #fff !important;
+    white-space: normal !important;
+    overflow-wrap: normal !important;
+  }
+  html.traksos-compact-guest .guest-app.guest-home .public-landing .public-why-strip > article.public-benefit > small {
+    display: block !important;
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    font-size: 12px !important;
+    line-height: 1.5 !important;
+    color: #c5d9e8 !important;
+    white-space: normal !important;
+    overflow-wrap: break-word !important;
+  }
+
+  /* Insurance CTA and additional links previously had desktop-only CSS.
+     Preserve real URLs, click handlers and all source text. */
+  html.traksos-compact-guest .guest-app.guest-home .public-landing .public-track-extras {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 12px !important;
+    min-width: 0 !important;
+    margin: 10px 0 !important;
+    padding: 0 !important;
+  }
+  html.traksos-compact-guest .guest-app.guest-home .public-landing .public-track-insurance {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    gap: 12px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 130px !important;
+    margin: 0 !important;
+    padding: 18px !important;
+    text-align: left !important;
+    border: 1px solid #3c6580 !important;
+    border-radius: 16px !important;
+    background: linear-gradient(135deg, #14354a, #0c2233) !important;
+    color: #f5fbff !important;
+    font: inherit !important;
+    box-shadow: none !important;
+    cursor: pointer;
+  }
+  html.traksos-compact-guest .guest-app.guest-home .public-landing .public-track-insurance > span {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 7px !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+  html.traksos-compact-guest .guest-app.guest-home .public-landing .public-track-insurance b {
+    display: block !important;
+    font-size: 17px !important;
+    line-height: 1.25 !important;
+    color: #fff !important;
+    white-space: normal !important;
+  }
+  html.traksos-compact-guest .guest-app.guest-home .public-landing .public-track-insurance small {
+    display: block !important;
+    font-size: 13px !important;
+    line-height: 1.5 !important;
+    color: #c5dce7 !important;
+    white-space: normal !important;
+  }
+  html.traksos-compact-guest .guest-app.guest-home .public-landing .public-track-insurance > strong {
+    display: inline-flex !important;
+    align-items: center !important;
+    min-height: 40px !important;
+    padding: 9px 14px !important;
+    border: 1px solid #5ac9e2 !important;
+    border-radius: 10px !important;
+    background: #0b465d !important;
+    color: #e6fcff !important;
+    font-size: 13px !important;
+    line-height: 1.2 !important;
+    white-space: normal !important;
+  }
+  html.traksos-compact-guest .guest-app.guest-home .public-landing .public-track-extras-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 9px !important;
+  }
+  html.traksos-compact-guest .guest-app.guest-home .public-landing a.public-track-extra {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 5px !important;
+    min-width: 0 !important;
+    min-height: 80px !important;
+    margin: 0 !important;
+    padding: 13px 15px !important;
+    border: 1px solid #31516b !important;
+    border-radius: 13px !important;
+    background: #102b42 !important;
+    color: #f5fbff !important;
+    text-decoration: none !important;
+    overflow-wrap: break-word !important;
+  }
+  html.traksos-compact-guest .guest-app.guest-home .public-landing a.public-track-extra > b {
+    display: block !important;
+    color: #fff !important;
+    font-size: 15px !important;
+    line-height: 1.3 !important;
+  }
+  html.traksos-compact-guest .guest-app.guest-home .public-landing a.public-track-extra > small {
+    display: block !important;
+    color: #c7dce9 !important;
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+  }
+  html.traksos-compact-guest .guest-app.guest-home .public-landing a.public-track-extra > span {
+    display: none !important;
+  }
+
+  /* The old "map" was only a flat gradient. These clearly DEMO markers
+     illustrate possible categories, never real available businesses. */
+  html.traksos-compact-guest .guest-app.guest-home .public-landing .public-map-static {
+    background-color: #0c2c42 !important;
+    background-image:
+      radial-gradient(circle at 55% 52%, #f7fbff 0 3px, #25cbd8 4px 10px, transparent 11px),
+      radial-gradient(circle at 31% 32%, #f7fbff 0 3px, #ec6489 4px 9px, transparent 10px),
+      radial-gradient(circle at 74% 65%, #f7fbff 0 3px, #3d91e2 4px 9px, transparent 10px),
+      linear-gradient(125deg, transparent 0 31%, rgba(69,143,163,.42) 31.5% 32%, transparent 32.5% 65%, rgba(69,143,163,.32) 65.5% 66%, transparent 66.5%),
+      linear-gradient(25deg, transparent 0 24%, rgba(99,165,178,.32) 24.5% 25%, transparent 25.5% 59%, rgba(99,165,178,.28) 59.5% 60%, transparent 60.5%),
+      linear-gradient(140deg, #13435a, #0a273a) !important;
+    background-repeat: no-repeat !important;
+  }
+  html.traksos-compact-guest .guest-app.guest-home .public-landing .public-map-static::after {
+    content: 'Санкт-Петербург и ЛО · демонстрационная схема';
+    position: absolute;
+    bottom: 13px;
+    left: 12px;
+    right: 12px;
+    display: block;
+    padding: 8px 10px;
+    background: rgba(6, 22, 34, .88);
+    border: 1px solid #427087;
+    border-radius: 8px;
+    color: #d5ecf5;
+    font-size: 11px;
+    font-weight: 650;
+    line-height: 1.35;
+    text-align: center;
+  }
+  html.traksos-compact-guest .guest-app.guest-home .public-landing .public-how,
+  html.traksos-compact-guest .guest-app.guest-home .public-landing .public-demo-map,
+  html.traksos-compact-guest .guest-app.guest-home .public-landing .public-partner {
+    min-width: 0 !important;
+  }
+  html.traksos-compact-guest .guest-app.guest-home .public-landing .public-steps {
+    gap: 9px !important;
+  }
+  html.traksos-compact-guest .guest-app.guest-home .public-landing .public-steps > div {
+    min-width: 0 !important;
+  }
+}
+@media (min-width: 600px) and (max-width: 899px) {
+  html.traksos-compact-guest .guest-app.guest-home .public-landing .public-why-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  html.traksos-compact-guest .guest-app.guest-home .public-landing .public-track-extras-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
 }

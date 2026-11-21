@@ -1,0 +1,199 @@
+/* Only the native Android bridge on wide/resizable WebViews.
+   Keep the actual 618.png React screens visible without touching desktop 617.png
+   or impersonating a production user in a fake training component. */
+@media (min-width:900px) {
+  html.traksos-native body {
+    padding:0!important;margin:0;background:#07131e!important;
+  }
+  html.traksos-native .app {
+    max-width:none!important;width:100%;min-width:0!important;
+    background:#07131e!important;color:#ebf6ff!important;
+  }
+  html.traksos-native .app .top {
+    min-height:60px;padding:10px 18px!important;
+    background:linear-gradient(180deg,#071521,#0a1e2b)!important;
+    border-bottom:1px solid #365365!important;color:#f9fcff!important;
+  }
+  html.traksos-native .app .top .logo {color:#f4f5fb!important}
+  html.traksos-native .app .desktop-layout {
+    display:block!important;max-width:none!important;width:100%!important;
+  }
+  html.traksos-native .app .desktop-sidebar {display:none!important}
+  html.traksos-native .app .desktop-content {
+    width:100%!important;max-width:none!important;min-width:0!important;
+    padding:0 16px!important;color:#ebf6ff!important;background:#07131e!important;
+  }
+  html.traksos-native .app .desktop-content>main {
+    width:100%!important;max-width:760px!important;min-width:0!important;
+    margin:0 auto!important;padding:14px 0 104px!important;color:#ebf6ff!important;
+  }
+  html.traksos-native .app:not(.guest-app) .tabbar {
+    display:flex!important;position:fixed;z-index:20;
+    bottom:max(0px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
+    width:min(760px,100%);max-width:100%;border-radius:16px 16px 0 0;
+    background:linear-gradient(180deg,#122535,#071925);border:1px solid #3c6177;
+    padding:7px 9px;box-shadow:0 -6px 26px #0006;
+  }
+  html.traksos-native .app:not(.guest-app) .tabbar a {
+    color:#c9ddeb;min-width:0;min-height:46px;overflow-wrap:anywhere;
+  }
+  html.traksos-native .app:not(.guest-app) .tabbar a.on {
+    color:#fff1db;border:1px solid #f87c28;
+    background:linear-gradient(180deg,#6c310f,#251f21);
+  }
+  html.traksos-native .app:not(.guest-app) .and19-workspace {
+    display:flex!important;flex-direction:column;gap:10px;min-width:0;
+    color:#edf7fd;font-size:14px;
+  }
+  html.traksos-native .app:not(.guest-app) .and19-workspace h1,
+  html.traksos-native .app:not(.guest-app) .and19-workspace h2 {
+    color:#fff;font-weight:850;line-height:1.15;
+  }
+  html.traksos-native .app:not(.guest-app) .and19-workspace h1 {
+    font-size:clamp(23px,3vw,29px);margin:0 0 4px;
+  }
+  html.traksos-native .app:not(.guest-app) .and19-workspace p {margin:3px 0}
+  html.traksos-native .app:not(.guest-app) .and19-workspace a {color:inherit;text-decoration:none}
+  html.traksos-native .app:not(.guest-app) .and19-cover {
+    position:relative;isolation:isolate;min-height:124px;display:flex;
+    align-items:center;overflow:hidden;padding:16px;border:1px solid #456b7e;
+    border-radius:17px;background:#0a1b2c;
+  }
+  html.traksos-native .app:not(.guest-app) .and19-cover img {
+    display:block;position:absolute;inset:0;width:100%;height:100%;
+    object-fit:cover;object-position:58% center;
+  }
+  html.traksos-native .app:not(.guest-app) .and19-cover::before {
+    content:'';position:absolute;z-index:1;inset:0;pointer-events:none;
+    background:linear-gradient(90deg,#061322fa 0%,#061322d9 38%,#06132212 90%);
+  }
+  html.traksos-native .app:not(.guest-app) .and19-cover>div {position:relative;z-index:2;max-width:70%}
+  html.traksos-native .app:not(.guest-app) .and20-client-heading,
+  html.traksos-native .app:not(.guest-app) .and20-master-heading {
+    border:none;min-height:0;padding:0;background:none;box-shadow:none;overflow:visible;
+  }
+  html.traksos-native .app:not(.guest-app) .and20-client-heading::before,
+  html.traksos-native .app:not(.guest-app) .and20-master-heading::before {display:none}
+  html.traksos-native .app:not(.guest-app) .and19-services {
+    display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;min-width:0;
+  }
+  html.traksos-native .app:not(.guest-app) .and19-services>a {
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    min-height:94px;gap:4px;min-width:0;padding:7px 5px;
+    border:1px solid #496a7b;border-radius:14px;
+    background:linear-gradient(158deg,#193445,#0c1f2c);
+    color:#f4faff;font-size:11px;font-weight:730;text-align:center;
+  }
+  html.traksos-native .app:not(.guest-app) .and19-services>a:first-child {
+    border-color:#ff8f30;background:linear-gradient(155deg,#b74c12,#633013);
+  }
+  html.traksos-native .app:not(.guest-app) .and19-panel,
+  html.traksos-native .app:not(.guest-app) .and19-equipment,
+  html.traksos-native .app:not(.guest-app) .and19-row-link,
+  html.traksos-native .app:not(.guest-app) .and19-metrics>a {
+    border:1px solid #416478;border-radius:16px;
+    background:linear-gradient(150deg,#153143,#0b2130);
+    color:#ecf8ff;min-width:0;box-shadow:0 7px 15px #0003;
+  }
+  html.traksos-native .app:not(.guest-app) .and19-panel {padding:13px}
+  html.traksos-native .app:not(.guest-app) .and19-panel-title,
+  html.traksos-native .app:not(.guest-app) .and19-line {
+    display:flex;justify-content:space-between;align-items:center;gap:8px;
+  }
+  html.traksos-native .app:not(.guest-app) .and19-metrics {
+    display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;
+  }
+  html.traksos-native .app:not(.guest-app) .and19-metrics>a {padding:10px}
+  html.traksos-native .app:not(.guest-app) .and19-equipment {
+    display:flex;align-items:center;gap:10px;padding:13px;
+  }
+  html.traksos-native .app:not(.guest-app) .and19-link,
+  html.traksos-native .app:not(.guest-app) .and19-action {
+    display:flex;align-items:center;justify-content:center;min-height:44px;
+    border:1px solid #ff9244;border-radius:11px;padding:9px 11px;
+    background:linear-gradient(180deg,#e87820,#a94a14);
+    color:white!important;font-weight:820;overflow-wrap:anywhere;
+  }
+  html.traksos-native .app:not(.guest-app) .and19-price {
+    display:flex;justify-content:space-between;gap:10px;padding:9px;
+    border:1px solid #3e6176;border-radius:9px;background:#0d2738;
+  }
+  html.traksos-native .app:not(.guest-app) .and19-timeline {
+    display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
+    list-style:none;padding:0;gap:3px;
+  }
+  html.traksos-native .app:not(.guest-app) .and19-timeline li {
+    display:flex;flex-direction:column;align-items:center;min-width:0;text-align:center;
+  }
+  /* The pre-login Android home also remains mobile-first when the WebView
+     is wider than the browser desktop breakpoint. PC browsers stay untouched. */
+  html.traksos-native .guest-app.guest-home .top {
+    display:grid!important;grid-template-columns:minmax(0,1fr) auto;
+    gap:10px;padding:12px 18px!important;
+  }
+  html.traksos-native .guest-app .guest-site-nav {display:none!important}
+  html.traksos-native .guest-app .top>.row {
+    grid-column:1/-1;grid-row:2;margin:0!important;min-width:0;
+  }
+  html.traksos-native .guest-app .guest-header-actions {
+    display:grid;grid-template-columns:1fr 1fr;width:100%;gap:10px;
+  }
+  html.traksos-native .guest-app .guest-header-actions a {
+    display:flex;align-items:center;justify-content:center;min-height:44px;
+  }
+  html.traksos-native .guest-app .guest-mobile-catalog {
+    display:block;grid-column:1/-1;grid-row:3;
+    border:1px solid #326784;border-radius:12px;background:#0b2b46;
+    padding:10px;
+  }
+  html.traksos-native .guest-app .guest-mobile-catalog>nav {
+    max-height:55vh;overflow:auto;
+  }
+  html.traksos-native .guest-app .desktop-content>main.public-landing {
+    max-width:760px!important;padding:16px 0 92px!important;
+  }
+  html.traksos-native .guest-app .public-brand-hero {
+    display:flex!important;flex-direction:column!important;
+    min-height:0!important;height:auto!important;gap:12px;
+    border:1px solid #355b6e;padding:14px;border-radius:18px;
+    background:#061d2d;overflow:hidden;
+  }
+  html.traksos-native .guest-app .public-brand-hero::before {content:none!important;display:none!important}
+  html.traksos-native .guest-app .public-hero-visual {
+    display:block!important;position:relative!important;
+    inset:auto!important;order:0!important;width:100%!important;
+    max-width:100%!important;height:230px!important;
+    min-height:0!important;flex:0 0 auto!important;opacity:1!important;
+    background-size:contain!important;background-position:center!important;
+    background-repeat:no-repeat!important;
+  }
+  html.traksos-native .guest-app .public-hero-copy {
+    order:1!important;position:relative!important;width:100%!important;
+    max-width:100%!important;min-height:0!important;height:auto!important;
+    padding:0!important;background:none!important;
+  }
+  html.traksos-native .guest-app .public-brand-hero h1 {
+    font-size:clamp(26px,3.1vw,40px)!important;
+    line-height:1.17!important;max-width:none!important;
+  }
+  html.traksos-native .guest-app .public-hero-carousel {
+    display:flex!important;position:relative!important;inset:auto!important;
+    order:2!important;min-height:44px!important;
+    align-items:center;justify-content:center;margin:0!important;
+  }
+  html.traksos-native .guest-app .public-actions {
+    display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:9px!important;margin-top:13px!important;
+  }
+  html.traksos-native .guest-app .public-service-tiles {
+    display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+  html.traksos-native .guest-app .public-content-grid,
+  html.traksos-native .guest-app .public-location-process-grid {
+    display:flex!important;flex-direction:column!important;gap:12px!important;
+  }
+  html.traksos-native .guest-app .public-app-card {max-width:100%}
+  html.traksos-native .guest-app .public-why-strip {
+    display:grid!important;grid-template-columns:1fr!important;gap:12px;
+  }
+}

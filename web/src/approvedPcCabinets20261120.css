@@ -1,6 +1,8 @@
 /* 20 Nov 2026 approved PC workspaces. Desktop only; Android/mobile remains unchanged.
    Each screen consumes live role-scoped APIs and existing workflows. */
-@media(min-width:1000px){
+/* Shared visual primitives also style the approved admin dashboard on mobile browsers.
+   Other roles continue to mount approved-pc only at desktop widths. */
+@media(min-width:900px){
 .approved-pc{
  --pc-ink:#06131a;--pc-panel:#0b2029;--pc-edge:#247585;--pc-hot:#ff791e;--pc-teal:#4ac5d4;
  color:#f5f9fc;min-width:0;max-width:1800px;margin:0 auto;padding:12px 16px 32px;
@@ -208,4 +210,299 @@
  .approved-pc-heading>img{height:115px}
  .approved-pc-bot img{width:42%}
 }
+}
+
+/* Approved administrator home for mobile browsers. Other mobile app role
+   dashboards remain untouched; navigation/actions retain their real routes. */
+@media (max-width:899px) {
+  html.traksos-browser .approved-pc-admin {
+    width:100%;min-width:0;max-width:100%;padding:10px 12px 95px;gap:12px;
+  }
+  html.traksos-browser .approved-pc-admin .approved-pc-heading {
+    display:grid;grid-template-columns:minmax(0,1fr) 94px;gap:8px;
+    min-height:115px;padding:15px;align-items:center;
+  }
+  html.traksos-browser .approved-pc-admin .approved-pc-heading h1 {
+    font-size:clamp(20px,5vw,28px);overflow-wrap:anywhere;
+  }
+  html.traksos-browser .approved-pc-admin .approved-pc-heading p {
+    font-size:12px;line-height:1.4;
+  }
+  html.traksos-browser .approved-pc-admin .approved-pc-heading>img {
+    height:90px;max-width:94px;object-fit:contain;
+  }
+  html.traksos-browser .approved-pc-admin .approved-pc-metrics {
+    grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+  }
+  html.traksos-browser .approved-pc-admin .approved-pc-metrics a {
+    min-height:80px;padding:10px;min-width:0;overflow-wrap:anywhere;
+  }
+  html.traksos-browser .approved-pc-admin .approved-pc-metrics strong {font-size:23px}
+  html.traksos-browser .approved-pc-admin .approved-pc-three {
+    display:flex;flex-direction:column;gap:12px;min-width:0;
+  }
+  html.traksos-browser .approved-pc-admin :is(.approved-pc-left,.approved-pc-center,.approved-pc-right) {
+    width:100%;min-width:0;display:flex;flex-direction:column;gap:10px;
+  }
+  html.traksos-browser .approved-pc-admin .approved-pc-pane {
+    padding:13px;max-width:100%;overflow:hidden;
+  }
+  html.traksos-browser .approved-pc-admin .approved-pc-stats {
+    grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+  }
+  html.traksos-browser .approved-pc-admin .approved-pc-stats p {
+    flex-direction:column;margin:0;min-width:0;overflow-wrap:anywhere;
+  }
+  html.traksos-browser .approved-pc-admin .approved-pc-case-actions a {
+    flex:1 1 120px;min-width:0;
+  }
+  html.traksos-browser .approved-pc-admin .approved-pc-russia {min-height:138px}
+}
+@media(max-width:370px) {
+  html.traksos-browser .approved-pc-admin {padding-inline:8px}
+  html.traksos-browser .approved-pc-admin .approved-pc-heading {
+    grid-template-columns:minmax(0,1fr) 70px;padding:11px;
+  }
+  html.traksos-browser .approved-pc-admin .approved-pc-heading>img {max-width:70px}
+}
+
+/* Chromium regression: a resized 390px browser could keep the desktop role
+   heading during a viewport transition, stretching the truck to 912px. */
+@media (max-width:899px) {
+  html.traksos-browser .approved-pc {
+    width:100%;min-width:0;max-width:100%;overflow-x:clip;
+  }
+  html.traksos-browser .approved-pc .approved-pc-heading {
+    width:100%;min-width:0;max-width:100%;
+    grid-template-columns:minmax(0,1fr) minmax(70px,25%);
+  }
+  html.traksos-browser .approved-pc .approved-pc-heading > img {
+    display:block;min-width:0;max-width:100%;width:100%;height:auto;max-height:110px;
+    object-fit:contain;object-position:center;
+  }
+  html.traksos-browser .approved-pc .approved-pc-three {
+    display:flex;flex-direction:column;min-width:0;
+  }
+}
+/* Map outline is the approved geographic asset; CSS pseudo-image must remain
+   present in Chromium, not silently disappear under other role styles. */
+html.traksos-browser .approved-pc-admin .approved-pc-russia::before {
+  content:"";display:block;position:absolute;inset:0;
+  background-image:url('/traksos-russia-outline.svg')!important;
+  background-position:center;background-size:contain;background-repeat:no-repeat;
+  opacity:.8;pointer-events:none;
+}
+
+/* Browser-only approved administrator dashboard at phone widths. Desktop role
+   primitives above remain desktop-only; native Android is never restyled. */
+@media (max-width:899px) {
+ html.traksos-browser .approved-pc-admin {
+   --pc-edge:#247585;--pc-hot:#ff791e;--pc-teal:#4ac5d4;
+   box-sizing:border-box;color:#f5f9fc;background:#071721;display:flex;flex-direction:column;
+ }
+ html.traksos-browser .approved-pc-admin *,
+ html.traksos-browser .approved-pc-admin *::before,
+ html.traksos-browser .approved-pc-admin *::after {box-sizing:border-box}
+ html.traksos-browser .approved-pc-admin a {color:#e2f8fb;text-decoration:none}
+ html.traksos-browser .approved-pc-admin :is(h1,h2,h3) {color:#fff;margin:0}
+ html.traksos-browser .approved-pc-admin .approved-pc-eyebrow {
+   font-size:10px;letter-spacing:.1em;color:#f6a36a;font-weight:800;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-heading {
+   position:relative;overflow:hidden;border:1px solid #37647a;border-radius:16px;
+   background:linear-gradient(105deg,#122b38,#091922 70%,#122d3a);
+   box-shadow:0 7px 21px #0007;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-heading::before {
+   content:"";position:absolute;left:0;top:10px;bottom:10px;width:4px;
+   background:#ff791e;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-heading p {
+   color:#cbd8df;margin:5px 0 0;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-metrics a,
+ html.traksos-browser .approved-pc-admin .approved-pc-pane {
+   min-width:0;border:1px solid #367784;border-radius:12px;
+   background:linear-gradient(140deg,#12313c,#091c27);
+   box-shadow:0 5px 15px #0006;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-metrics a {
+   display:flex;flex-direction:column;gap:7px;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-metrics small {
+   font-size:12px;color:#c1d8dd;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-metrics strong {
+   color:#ffb46a;font-weight:850;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-pane h2 {
+   font-size:16px;margin:0 0 10px;padding:0 0 9px;
+   border-bottom:1px solid #315361;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-pane h2::before {
+   content:"";display:inline-block;width:4px;height:17px;border-radius:4px;
+   background:#ff881f;margin-right:8px;vertical-align:middle;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-small-link {
+   display:block;font-size:13px;font-weight:750;padding:10px 3px;
+   border-bottom:1px solid #2d5160;overflow-wrap:anywhere;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-row {
+   display:flex;align-items:center;gap:9px;min-width:0;padding:10px;
+   border:1px solid #285664;border-radius:10px;background:#133341;
+   margin-bottom:8px;color:#f4faff;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-row-copy {
+   display:flex;flex:1;min-width:0;flex-direction:column;gap:3px;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-row-copy small {
+   font-size:11px;color:#b8d2da;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-row em {
+   font-size:11px;color:#ffb36b;font-style:normal;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-stats p {
+   padding:11px;border:1px solid #355d69;border-radius:9px;background:#0d2330;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-stats strong {
+   color:#ffb36a;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-case-actions {
+   display:flex;gap:7px;flex-wrap:wrap;margin:12px 0;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-case-actions a,
+ html.traksos-browser .approved-pc-admin a.approved-pc-primary {
+   display:inline-flex;align-items:center;justify-content:center;
+   min-height:44px;border-radius:10px;border:1px solid #39818d;
+   padding:10px;text-align:center;background:#143442;color:#e9f8fc;
+   font-size:12px;font-weight:800;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-case-actions .approved-pc-primary,
+ html.traksos-browser .approved-pc-admin a.approved-pc-primary {
+   background:linear-gradient(110deg,#fa6817,#ff9626);border-color:#ffb56b;color:white;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-russia {
+   position:relative;display:flex;flex-direction:column;justify-content:center;
+   gap:7px;padding:14px;overflow:hidden;border-radius:12px;
+   border:1px solid #335b70;background:linear-gradient(115deg,#123244,#071923);
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-russia > * {
+   position:relative;z-index:1;max-width:65%;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-russia b {
+   font-size:23px;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-russia span,
+ html.traksos-browser .approved-pc-admin .approved-pc-caveat {
+   font-size:11px;color:#c9dce1;line-height:1.5;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-role-grid {
+   display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+ }
+ html.traksos-browser .approved-pc-admin .approved-pc-role-grid a {
+   padding:11px 7px;border:1px solid #39808b;border-radius:9px;
+   background:#133744;text-align:center;font-size:12px;
+ }
+}
+
+/* Insurance and courier desktop already contain approved TrakBot cards.
+   Never duplicate a floating dock over working documents or trip photos. */
+@media (min-width:900px) {
+  .app:has(.approved-pc-insurance) > .trakbot-dock,
+  .app:has(.courier-pc) > .trakbot-dock {
+    display: none;
+  }
+}
+
+/* The queue column can be narrow even on desktop. Keep the vehicle name
+   readable and give the insurance stage its own line below it. */
+.approved-pc-insurance .approved-pc-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+}
+.approved-pc-insurance .approved-pc-row > .approved-pc-photo {
+  grid-row: 1 / 3;
+}
+.approved-pc-insurance .approved-pc-row em {
+  grid-column: 2;
+  justify-self: start;
+  max-width: 100%;
+}
+
+/* The desktop administrator's role switches and moderation controls must
+ * never be obscured by a fixed chatbot launcher. TrakBot remains available
+ * through the cabinet's regular Menu/TrakBot link. Moderator needs no dock. */
+.app:has(.approved-pc-admin) > .trakbot-dock,
+.app:has(.approved-pc-moderator) > .trakbot-dock {
+  display: none;
+}
+
+
+/* 617/618 breakpoint agreement: approved PC role cabins from 900px.
+   Stack the three approved desktop zones on narrow computers and tablets,
+   rather than falling back to obsolete mobile/desktop legacy markup. */
+@media (min-width:900px) and (max-width:1199px) {
+ .approved-pc .approved-pc-three {
+   display:grid;
+   grid-template-columns:minmax(0,1fr);
+   gap:12px;
+ }
+ .approved-pc .approved-pc-three > :is(.approved-pc-left,.approved-pc-center,.approved-pc-right) {
+   width:100%;
+   min-width:0;
+   max-width:100%;
+ }
+ .approved-pc .approved-pc-heading {
+   grid-template-columns:minmax(0,1fr) minmax(82px,22%);
+   gap:10px;
+ }
+ .approved-pc :is(.approved-pc-row,.approved-pc-case,.approved-pc-pane) {
+   min-width:0;
+   max-width:100%;
+ }
+ .approved-pc .approved-pc-fleet-footer-grid {
+   grid-template-columns:minmax(0,1fr);
+ }
+ .approved-pc .approved-pc-fleet-footer-grid > .approved-pc-pane {
+   grid-column:1/-1;
+ }
+ .approved-pc .approved-pc-performer-content {
+   grid-template-columns:minmax(0,1fr);
+ }
+}
+
+
+/* Approved 617/618 visual grammar: a truthful empty performer/tow desk
+   retains the cinematic truck scene without fake orders, prices or statuses. */
+@media(min-width:900px){
+ .approved-pc-performer .approved-pc-shift-empty{min-height:254px}
+ .approved-pc-performer .approved-pc-shift-empty-body{
+   display:grid;grid-template-columns:minmax(0,1fr) minmax(165px,45%);
+   align-items:center;gap:14px;min-height:198px;padding:13px;
+   border:1px solid #315c69;border-radius:13px;
+   background:linear-gradient(115deg,#0d2531 0%,#0c202a 42%,#102f3e 100%);
+ }
+ .approved-pc-performer .approved-pc-shift-empty-copy{
+   min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:9px;
+ }
+ .approved-pc-performer .approved-pc-shift-empty-copy strong{
+   font-size:clamp(15px,1.5vw,20px);line-height:1.2;color:#f8fafc;
+ }
+ .approved-pc-performer .approved-pc-shift-empty-copy p{
+   font-size:12px;line-height:1.5;color:#c5dae4;margin:0;
+ }
+ .approved-pc-performer .approved-pc-shift-empty-copy .approved-pc-primary{margin:3px 0 0;min-height:42px}
+ .approved-pc-performer .approved-pc-shift-empty-copy .approved-pc-small-link{
+   font-size:11px;border-bottom:0;padding:1px 0;
+ }
+ .approved-pc-performer .approved-pc-shift-empty-body .tr-approved-empty-scene{
+   min-width:0;height:168px;border-radius:11px;
+ }
+}
+@media(min-width:900px) and (max-width:1350px){
+ .approved-pc-performer .approved-pc-shift-empty-body{
+   grid-template-columns:minmax(0,1fr);
+ }
+ .approved-pc-performer .approved-pc-shift-empty-body .tr-approved-empty-scene{height:140px}
 }

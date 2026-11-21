@@ -18,6 +18,11 @@ export async function seedSandbox(db: Db) {
     if (!u) throw new Error('sandbox fixture account missing');
     return u.id;
   };
+  // The dedicated fictitious tow driver receives exactly the same priority
+  // dispatch flow as a verified priority tow partner. No production profile is touched.
+  await db.query(`update performer_profiles
+    set is_priority=true, line_status='online'
+    where user_id=(select id from users where phone=$1)`, [SANDBOX_USER_PHONE.tow]);
   const combined = await upsert(SANDBOX_USER_PHONE.master_service, ['master','service'], 'Демо · мастер и СТО');
   await db.query(`insert into performer_profiles(user_id,kind,verification,line_status,specialties,brands,car,cars,tax_status,inn,verified_at)
     values ($1,'master','approved','online',array['electric','diag'],'{}'::jsonb,

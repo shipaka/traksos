@@ -32,7 +32,7 @@
 
 ## Где продолжать
 
-- `docs/CONTINUE_NEXT_CHAT.md` — подробный журнал и номера коммитов.
+- `docs/ACTIVE_SOURCE_OF_TRUTH_2026-11-20.md` — действующие решения; старые журналы сохранены только в Git.
 - `deploy/LAUNCH.md` — реальные команды запуска и восстановления, без передачи секретов в чат.
 - `docs/APPROVED_DESIGN.md` и `docs/QUALITY_GATE.md` — ограничения дизайна и качества.
 - `server/test/auth_password_roles.test.ts`, `server/test/push_sessions.test.ts`, `server/test/auth_line_session.test.ts`, `e2e/flow.mjs` — регрессии критичных операций.
