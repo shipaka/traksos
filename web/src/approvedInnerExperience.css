@@ -133,14 +133,6 @@ html.traksos-browser .app[class*="role-"] .tr-inner-rail-cta{
 html.traksos-browser .app[class*="role-"] .tr-inner-rail-mark{
  font-size:40px;line-height:1;color:#f9a365;
 }
-html.traksos-browser .app[class*="role-"] .tr-inner-rail-footer{
- display:flex;align-items:flex-start;gap:8px;padding:3px 8px;
- font-size:10px;line-height:1.5;color:#9bb7c4;
-}
-html.traksos-browser .app[class*="role-"] .tr-inner-rail-live{
- display:block;width:6px;height:6px;border-radius:50%;
- margin-top:4px;flex:none;background:#57bdc7;box-shadow:0 0 0 3px #57bdc722;
-}
 html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero) > main{
  min-width:0;width:100%;max-width:none;
  animation:tr-inner-content-enter .3s ease both;
@@ -182,7 +174,6 @@ html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero)
   display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
   align-items:stretch;gap:12px;
  }
- html.traksos-browser .app[class*="role-"] .tr-inner-rail-footer{grid-column:1/-1}
 }
 @media(max-width:899px){
  html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero){
@@ -202,7 +193,7 @@ html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero)
  html.traksos-browser .app[class*="role-"] .tr-inner-rail-tools nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));}
  html.traksos-browser .app[class*="role-"] .tr-inner-rail-tools nav a{font-size:11px}
  html.traksos-browser .app[class*="role-"] .tr-inner-rail-tools{padding:14px}
- html.traksos-browser .app[class*="role-"] :is(.tr-inner-bot-card,.tr-inner-rail-status,.tr-inner-rail-footer){display:none}
+ html.traksos-browser .app[class*="role-"] :is(.tr-inner-bot-card,.tr-inner-rail-status){display:none}
  html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero) > main{
   min-width:0;max-width:100%;
  }
@@ -238,9 +229,6 @@ html.traksos-reduced-motion .tr-inner-rail{
  }
  html.traksos-browser .app:is(.role-admin,.role-moderator) .desktop-content > .tr-inner-rail .tr-inner-rail-tools nav{
   display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
- }
- html.traksos-browser .app:is(.role-admin,.role-moderator) .desktop-content > .tr-inner-rail .tr-inner-rail-footer{
-  grid-column:1/-1;
  }
  html.traksos-browser .app:is(.role-admin,.role-moderator) .desktop-content:has(> .tr-inner-hero)>main{
   grid-column:1;grid-row:3;
