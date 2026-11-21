@@ -35,8 +35,8 @@ try {
       localStorage.setItem('traksos.token',value);
       localStorage.setItem('traksos.mode','admin');
     },token);
-    await page.goto(BASE+'/#/admin',{waitUntil:'domcontentloaded'});
-    await page.getByRole('heading',{name:'Администратор'}).waitFor();
+    await page.goto(BASE+'/#/admin/section/summary',{waitUntil:'domcontentloaded'});
+    await page.locator('.admin-stage-head h2').getByText('Сводка',{exact:true}).waitFor();
     const navigation = page.getByRole('navigation',{name:'Разделы администрации'});
     const mobile = width < 951;
     const openNav = async () => {
