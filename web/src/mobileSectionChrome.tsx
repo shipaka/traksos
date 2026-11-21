@@ -23,7 +23,7 @@ export function MobileSectionChrome({ title, homeHref, route=[], mode='client' }
         <NavGlyph glyph="menu" /><span>Разделы</span>
       </a>
     </nav>
-    <section className="tr-native-section-brief" aria-label="Подсказка по разделу">
+    <section className="tr-native-section-brief" data-route={route.join("/")} aria-label="Подсказка по разделу">
       <div className="tr-native-section-brief-copy">
         <span className="tr-native-section-kicker">{section.marker}</span>
         <p>{section.subtitle}</p>
