@@ -47,6 +47,6 @@ export function SandboxModeBadge() {
   } catch { /* private mode */ }
   if (!active) return null;
   return returnUrl
-    ? <a className="pill accent" href={returnUrl} aria-label="Тест. К выбору тестовых кабинетов" title="К выбору тестовых кабинетов">Тест</a>
-    : <span className="pill accent">Тест</span>;
+    ? <a className="pill accent sandbox-test-badge" href={returnUrl} aria-label="Тест. К выбору тестовых кабинетов" title="К выбору тестовых кабинетов">Тест</a>
+    : <span className="pill accent sandbox-test-badge">Тест</span>;
 }
