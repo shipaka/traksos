@@ -9,6 +9,7 @@ on:
       - 'server/src/main.ts'
       - 'server/src/app.ts'
       - 'server/src/seedSandbox.ts'
+      - 'e2e/isolated-sandbox-browser.mjs'
       - 'deploy/docker-compose.sandbox.yml'
       - '.github/workflows/sandbox-pr-realism.yml'
   workflow_dispatch:
@@ -34,7 +35,7 @@ jobs:
           set -Eeuo pipefail
           docker build --build-arg BUILD_REV="$GITHUB_SHA" \
             -t "ghcr.io/shipaka/traksos:$GITHUB_SHA" .
-      - name: Isolated fictitious users → real orders → fictitious money → ledger audit
+      - name: Isolated fictitious users → real orders → fake money → Chromium screenshot proof
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -45,13 +46,19 @@ jobs:
           export SANDBOX_DB_PASSWORD="$(openssl rand -hex 24)"
           app_secret="$(openssl rand -hex 32)"
           shared_secret="$(openssl rand -hex 32)"
+          cat > .sandbox-loopback-ci.yml <<'LOOPBACK'
+          services:
+            sandbox-app:
+              ports:
+                - "127.0.0.1:38123:8080"
+          LOOPBACK
           printf 'APP_SECRET=%s\nSANDBOX_SHARED_SECRET=%s\nSANDBOX_INSTANCE=true\nSMS_PROVIDER=log\nPUSH_PROVIDER=log\nPAYMENT_PROVIDER=mock\n' \
             "$app_secret" "$shared_secret" > .env.sandbox
           compose=(docker compose -p traksos-isolated-pr \
-            -f docker-compose.sandbox.yml --profile sandbox)
+            -f docker-compose.sandbox.yml -f .sandbox-loopback-ci.yml --profile sandbox)
           cleanup() {
             "${compose[@]}" down --remove-orphans --volumes || true
-            rm -f .env.sandbox
+            rm -f .env.sandbox .sandbox-loopback-ci.yml
           }
           trap cleanup EXIT
           "${compose[@]}" config --format json | jq -e '
@@ -68,4 +75,20 @@ jobs:
           "${compose[@]}" exec -T -e TRAKSOS_RUN_DISPOSABLE_SCENARIO=true sandbox-app \
             node --import tsx server/src/ops/exerciseSandboxTowSto.ts
           "${compose[@]}" exec -T sandbox-app node --import tsx server/src/ops/auditSandbox.ts
-          echo 'PASS: separate network/DB, real order engine, virtual money and ledger'
+          # Only ephemeral loopback on this GitHub-hosted runner, never a VPS port.
+          curl --fail --silent --show-error --max-time 15 \
+            http://127.0.0.1:38123/api/health | jq -e '.sandbox==true and .db==true'
+          (cd .. && npm ci --no-audit --no-fund && npx playwright install --with-deps chromium)
+          SANDBOX_BROWSER_BASE_URL="http://127.0.0.1:38123" \
+          SANDBOX_SHARED_SECRET="$shared_secret" \
+          TRAKSOS_RUN_DISPOSABLE_SCENARIO=true \
+            node --import tsx ../e2e/isolated-sandbox-browser.mjs
+          echo 'PASS: separate network/DB, real order engine, virtual money, real browser cabinets'
+      - name: Upload actual 12 browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: isolated-sandbox-role-ui
+          path: e2e/shots/sandbox-real-browser
+          retention-days: 7
+          if-no-files-found: warn
