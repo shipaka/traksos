@@ -162,14 +162,14 @@ try{
         throw Error('Master lost job filters or sees admin-only links');
       if(await page.locator('.tabbar a[href="#/menu"].on').count()!==1)
         throw Error(role+': selected Menu tab does not reflect its route');
-      await page.screenshot({path:output+'/'+role+'-menu-android-390.png',fullPage:true,scale:'css'});
+      // Capture the real fully-painted menu, not the first 0%-opacity frame\n      // of the approved 180ms opening animation. Only screenshot timing changes.\n      await page.screenshot({path:output+'/'+role+'-menu-android-390.png',fullPage:true,scale:'css',animations:'disabled'});
       const helpDetails=page.locator('details.tr-mobile-menu-section').last();
       if(await helpDetails.getAttribute('open')!==null)
         throw Error(role+': help and documents must be collapsed until explicitly requested');
       await helpDetails.locator('summary').click();
       if(!await helpDetails.locator('a[href="#/help"]').isVisible())
         throw Error(role+': help menu failed to expand to the real section');
-      await page.screenshot({path:output+'/'+role+'-menu-help-android-390.png',fullPage:true,scale:'css'});
+      await page.screenshot({path:output+'/'+role+'-menu-help-android-390.png',fullPage:true,scale:'css',animations:'disabled'});
       await page.locator('.tr-mobile-menu-account a[href="#/profile"]').click();
       await page.waitForURL(url => url.hash === '#/profile', {timeout:10000});
       await page.locator('main.account-profile-page').waitFor({state:'visible',timeout:15000});
@@ -188,7 +188,7 @@ try{
       await page.waitForTimeout(120);
       const narrow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
       if(narrow>3)throw Error(role+': menu horizontal overflow on 320px: '+narrow);
-      await page.screenshot({path:output+'/'+role+'-menu-android-320.png',fullPage:true,scale:'css'});
+      await page.screenshot({path:output+'/'+role+'-menu-android-320.png',fullPage:true,scale:'css',animations:'disabled'});
       if(errors.length)throw Error(role+': menu JavaScript error(s) '+errors.join('; '));
       // Important user-facing sections must be visually checked too; a
       // polished desktop must not hide unfinished empty Android subpages.
