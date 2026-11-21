@@ -405,10 +405,11 @@ html.traksos-browser .approved-pc-admin .approved-pc-russia::before {
  }
 }
 
-/* Insurance desktop already contains an approved TrakBot card with a
-   working chat link. Avoid a second floating launcher covering documents. */
+/* Insurance and courier desktop already contain approved TrakBot cards.
+   Never duplicate a floating dock over working documents or trip photos. */
 @media (min-width:900px) {
-  .app:has(.approved-pc-insurance) > .trakbot-dock {
+  .app:has(.approved-pc-insurance) > .trakbot-dock,
+  .app:has(.courier-pc) > .trakbot-dock {
     display: none;
   }
 }
