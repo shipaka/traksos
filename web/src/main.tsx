@@ -800,7 +800,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         </aside>
         <div className="desktop-content">
           {approvedInnerRoute && <ApprovedInnerHero mode={mode} route={route} title={sectionLabel}/>}
-          {innerSection && <MobileSectionChrome title={sectionLabel} homeHref={workspaceHref}/>}
+          {innerSection && <MobileSectionChrome title={sectionLabel} homeHref={workspaceHref} route={route} mode={mode}/>}
           {approvedInnerRoute && <ApprovedInnerRail mode={mode} route={route}/>}
           {me && route[0] === 'menu'
             ? <MobileRoleMenu mode={mode} quick={mobileTabs} account={accountLinks} help={helpLinks} onLogout={safeLogout} />
