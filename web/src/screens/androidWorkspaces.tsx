@@ -55,7 +55,7 @@ function MobileTimeline({ order }: { order: any }) {
         aria-current={index === current ? 'step' : undefined}>
         <span aria-hidden="true">{index < current || status === 'completed'
           ? <NavGlyph glyph="check" />
-          : index === 2 ? <NavGlyph glyph="truck" /> : index === 3 ? <NavGlyph glyph="pin" /> : index + 1}</span>
+          : index === 2 ? <NavGlyph glyph="truck" /> : index === 3 ? <NavGlyph glyph="pin" />\n          : index === 4 ? <NavGlyph glyph="check" /> : index + 1}</span>
         <small>{title}</small>
         {moment && <time dateTime={new Date(recorded[index]).toISOString()}>{moment}</time>}
       </li>;
