@@ -120,7 +120,30 @@ try {
       await menu.waitFor({state:'visible',timeout:10000});
       if(!await menu.locator('a[href="#/shop"]').count())
         throw Error('Parts shop must remain accessible via role Menu, not an obsolete sixth tab');
-      await page.goto(BASE+'/'+route,{waitUntil:'domcontentloaded'});
+      await page.goto(BASE+'/'+home,{waitUntil:'domcontentloaded'});
+    }
+    // Fleet management must not fall back to the old desktop form inside APK.
+    if(role==='owner'){
+      await page.goto(BASE+'/#/fleet',{waitUntil:'domcontentloaded'});
+      await page.locator('main.fleet-mobile-approved').waitFor({state:'visible'});
+      if(await page.locator('main.fleet-workspace .internal-role-hero-fleet').count())
+        throw Error('owner: old Fleet desktop screen appeared inside Android');
+      if(await page.locator('.fleet-mobile-car-link[href^="#/garage/"]').count()===0)
+        throw Error('owner: approved mobile fleet has no real clickable vehicles');
+      if(!await page.locator('.fleet-mobile-settings summary').count())
+        throw Error('owner: settings were lost while replacing the legacy UI');
+      for(const width of [320,390]){
+        await page.setViewportSize({width,height:844});
+        const size=await page.evaluate(()=>({
+          client:document.documentElement.clientWidth,
+          scroll:document.documentElement.scrollWidth
+        }));
+        if(size.scroll>size.client+3)
+          throw Error('owner: new fleet overflows at '+width+'px '+JSON.stringify(size));
+        await page.screenshot({path:'e2e/shots/android-approved/owner-fleet-'+width+'.png',
+          fullPage:true});
+      }
+      await page.goto(BASE+'/'+home,{waitUntil:'domcontentloaded'});
     }
     if(mode==='service'){
       const expected=['#/base','#/base/inbox','#/shop','#/base/money','#/menu'];
