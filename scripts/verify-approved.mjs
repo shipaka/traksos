@@ -654,6 +654,9 @@ expect(retiredDemo.includes('Старый демонстрационный пр�
   !retiredDemo.includes('operatorDemoSession') &&
   !retiredDemo.includes('/api/public/demo/unlock'),
   'public PIN preview must never restore obsolete simulated role cabinets');
+expect((unifiedShell.match(/const serviceSandbox = false/g) || []).length === 2 &&
+  !unifiedShell.includes("route[2] === 'service' && route.length > 3"),
+  'retired fake STO subroutes must not bypass full-fidelity isolated sandbox');
 
 const pcSource=await read('web/src/screens/approvedPcCabinets20261120.tsx');
 const pcCss=await read('web/src/approvedPcCabinets20261120.css');
