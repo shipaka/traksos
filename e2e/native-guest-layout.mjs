@@ -69,6 +69,19 @@ try {
     if(errors.length)throw Error(width+'px Android guest JS error: '+errors.join('; '));
     await page.screenshot({path:'e2e/shots/android-guest/native-'+width+'-viewport.png'});
     await page.screenshot({path:'e2e/shots/android-guest/native-'+width+'-full.png',fullPage:true});
+    // The two first-screen header controls must open actual authentication
+    // forms, not an obsolete second guest homepage or inactive buttons.
+    await page.locator('.guest-header-actions a[href="#/login"]').click();
+    await page.waitForURL('**/#/login');
+    await page.getByRole('heading',{name:'Вход по номеру телефона'}).waitFor();
+    await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
+    await page.locator('.guest-header-actions a[href="#/register"]').click();
+    await page.waitForURL('**/#/register');
+    await page.getByRole('heading',{name:'Регистрация в TrakSOS'}).waitFor();
+    await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
+    await page.locator('.public-landing').waitFor();
+    if(await page.locator('.owner20-home').count())
+      throw Error(width+'px guest returned to PC shell after auth navigation');
     await ctx.close();
     console.log('PASS Android-bridge guest '+width+'px: approved landing, orange headline, login and registration, no old desktop fallback or overflow');
   }
