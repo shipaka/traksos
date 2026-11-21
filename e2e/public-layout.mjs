@@ -69,10 +69,24 @@ async function run(width, height, mobile, nativePreview = false) {
       const bg = [getComputedStyle(el).backgroundImage, getComputedStyle(el,'::after').backgroundImage].join(' | ');
       const match = bg.match(/url\(["']?([^"')]+)["']?\)/);
       if (!match) return { ok: false, bg };
+      const uri = new URL(match[1],document.baseURI).href;
       const img = new Image();
-      img.src = match[1];
-      await img.decode().catch(() => {});
-      return { ok: img.naturalWidth > 0, width: img.naturalWidth, height: img.naturalHeight };
+      img.src = uri;
+      let decodeError = '';
+      await img.decode().catch(e => { decodeError = String(e).slice(0,160); });
+      const ok = img.naturalWidth > 0;
+      if(ok) return {ok:true,width:img.naturalWidth,height:img.naturalHeight};
+      // A failed photograph is a release blocker. Record the actual URL and
+      // HTTP response to distinguish wrong CSS paths from broken WebP bytes.
+      let httpStatus = -1, contentType = '', resourceLength = -1;
+      try {
+        const response = await fetch(uri,{cache:'no-store'});
+        httpStatus = response.status;
+        contentType = response.headers.get('content-type') ?? '';
+        resourceLength = (await response.arrayBuffer()).byteLength;
+      } catch(e) { decodeError += ' fetch: '+String(e).slice(0,160); }
+      return {ok:false,width:img.naturalWidth,height:img.naturalHeight,
+        url:uri,background:bg.slice(0,380),httpStatus,contentType,resourceLength,decodeError};
     });
     check(image.ok, 'Hero image failed to load: ' + JSON.stringify(image));
     if (mobile && width <= 430) {
