@@ -645,6 +645,16 @@ expect(photoMigration.includes('create table if not exists order_photos') &&
 // All ten independently renderable PC roles share the owner-approved 617
 // contract from 900px. A mismatch with mobile's 899px maximum can silently
 // resurrect retired `Home` markup on 900–999px tablets or small laptops.
+// The legacy guest PIN demo was a collection of fake training mini-cabinets.
+// The only permitted visual sandbox is the authenticated full-fidelity build.
+const retiredDemo=await read('web/src/screens/demoPreview.tsx');
+expect(retiredDemo.includes('Старый демонстрационный просмотр закрыт') &&
+  retiredDemo.includes('tr-approved-route-unavailable') &&
+  !retiredDemo.includes('AdminTestCenter') &&
+  !retiredDemo.includes('operatorDemoSession') &&
+  !retiredDemo.includes('/api/public/demo/unlock'),
+  'public PIN preview must never restore obsolete simulated role cabinets');
+
 const pcSource=await read('web/src/screens/approvedPcCabinets20261120.tsx');
 const pcCss=await read('web/src/approvedPcCabinets20261120.css');
 const courierPcCss=await read('web/src/screens/approvedPcCourier20261120.css');
