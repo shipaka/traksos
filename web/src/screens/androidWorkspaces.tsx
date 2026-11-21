@@ -1,5 +1,6 @@
 /* Android workspaces approved 19.11.2026. Only real API-backed values. */
 import { useEffect, useState } from 'react';
+import { native } from '../native.ts';
 import { get, post, rub } from '../api.ts';
 import { SERVICES, STATUS } from '../dict.ts';
 import { useLoad, useAction } from '../ui.tsx';
@@ -15,10 +16,12 @@ import { OrderPhotoCapture } from './orderPhotos.tsx';
 
 /** Render a single role dashboard per viewport, rather than hiding a live component tree with CSS. */
 export function useMobileWorkspace() {
-  const [mobile, setMobile] = useState(() => window.matchMedia('(max-width: 899px)').matches);
+  // Android WebView must never switch to the retired desktop dashboard when
+  // its logical width reaches 900px (tablets, resizing, desktop mode).
+  const [mobile, setMobile] = useState(() => native.isApp || window.matchMedia('(max-width: 899px)').matches);
   useEffect(() => {
     const media = window.matchMedia('(max-width: 899px)');
-    const update = () => setMobile(media.matches);
+    const update = () => setMobile(native.isApp || media.matches);
     update();
     media.addEventListener?.('change', update);
     return () => media.removeEventListener?.('change', update);
