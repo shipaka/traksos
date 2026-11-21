@@ -306,9 +306,10 @@ expect(!demo.includes('Открыть старый учебный тренажё
   'approved admin role launcher cannot fall back into obsolete role trainers');
 expect(!/\bstructuredClone\s*\(/.test(serviceDemo),
   'Android 10 WebView starts without unavailable structuredClone in admin demo module');
-expect(shell.includes("const serviceSandbox = isAdmin && a === 'admin' && b === 'test-center' && route[2] === 'service' && route.length > 3") &&
-  shell.includes("b === 'test-center' ? (serviceSandbox ? <ServicePreviewPage section={route[3]} sub={route[4]} id={route[5]} /> : <AdminTestCenter roleId={route[2]} fullFidelity />)"),
-  'admin-only test center launches full-fidelity real cabinet, with explicit legacy service fallback');
+expect(shell.includes("b === 'test-center' ? (serviceSandbox ? <ServicePreviewPage") &&
+  shell.includes("const serviceSandbox = false;") &&
+  shell.includes("<AdminTestCenter roleId={route[2]} fullFidelity />"),
+  'admin test center launches only the full-fidelity role sandbox; legacy service preview is permanently disabled');
 expect(demo.includes("'/api/admin/sandbox/status'") &&
   demo.includes("'/api/admin/sandbox/ticket'") &&
   demo.includes('FullFidelityRoleLauncher') &&
