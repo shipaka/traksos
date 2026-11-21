@@ -27,7 +27,7 @@ try{
       await context.addInitScript(token=>localStorage.setItem('traksos.token',token),auth.token);
       const page=await context.newPage();
       await page.goto(BASE+'/#/work/filter');
-      await page.getByRole('heading',{name:'Настройки заявок'}).waitFor({timeout:15000});
+      await page.locator('.desktop-content > main').getByRole('heading',{name:'Настройки заявок'}).first().waitFor({timeout:15000});
       await page.getByText(/не повышают очередь/).waitFor();
       await page.getByRole('button',{name:'С собой'}).click();
       await page.getByText(/наличие инструмента не меняет очередь/).waitFor();
@@ -41,7 +41,7 @@ try{
       await page.screenshot({path:OUT+'/request-settings-'+label+'.png'});
       await page.goto(BASE+'/#/work');
       await page.goto(BASE+'/#/work/filter');
-      await page.getByRole('heading',{name:'Настройки заявок'}).waitFor();
+      await page.locator('.desktop-content > main').getByRole('heading',{name:'Настройки заявок'}).first().waitFor();
       await page.getByRole('button',{name:'С собой'}).click();
       await page.getByRole('button',{name:/Сканер под марку/}).waitFor();
       assert.equal(await page.getByRole('button',{name:/Сканер под марку/}).getAttribute('aria-pressed'),'true',
