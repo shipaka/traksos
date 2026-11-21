@@ -428,7 +428,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <span className="public-section-kicker">ДЛЯ МАСТЕРОВ И СТО</span>
           <h2>Станьте партнёром TrakSOS</h2>
           <p>Подключайте свой сервис и работайте с заявками через отдельный кабинет.</p>
-          <button type="button" className="public-button public-button-partner" onClick={() => go('join')}>Подключиться →</button>
+          <button type="button" className="public-button public-button-partner" onClick={() => go('join')}>Хотим работать</button>
         </div>
       </div>
 
