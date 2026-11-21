@@ -106,3 +106,27 @@
  .courier-overview small{font-size:9px}
 }
 @media(prefers-reduced-motion:reduce){.courier-android *{transition:none!important}}
+
+
+/* Mobile-browser courier: the signed-in header already carries the brand.
+   Keep cookie consent, operator details and legal links in the footer; only
+   suppress the duplicated brand lock-up and marketing tagline. */
+@media (max-width: 899px) {
+ html.traksos-browser .app.role-courier .desktop-content > .site-footer {
+  box-sizing:border-box;
+  width:100%;
+  padding:14px 16px 112px;
+  gap:8px;
+ }
+ html.traksos-browser .app.role-courier .desktop-content > .site-footer > .logo,
+ html.traksos-browser .app.role-courier .desktop-content > .site-footer > .logo + .note {
+  display:none;
+ }
+ html.traksos-browser .app.role-courier .desktop-content > .site-footer > .row.note {
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px!important;
+  font-size:11px;
+  line-height:1.55;
+ }
+}
