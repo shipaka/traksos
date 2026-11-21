@@ -7,6 +7,7 @@ import { createSms } from './providers/sms.ts';
 import { sendInsuranceReminders } from './services/insuranceReminders.ts';
 import { createPush } from './providers/push.ts';
 import { MockProvider } from './payments/provider.ts';
+import { PersistentSandboxMockProvider, prepareSandboxMockDb } from './payments/persistentSandboxMock.ts';
 import { staticHandler } from './http/static.ts';
 import { PublicWeatherService } from './services/publicWeather.ts';
 import { attachRealtimeGateway } from './realtime/gateway.ts';
@@ -16,8 +17,12 @@ const applied = await migrate(db);
 if (applied.length) console.log('Миграции:', applied.join(', '));
 
 // Real acquiring/payouts are deliberately disconnected: TrakSOS chose Tochka.
-// The current Tochka integration handles invoice DOCUMENTS only, not real capture.
-const payments = new MockProvider(config.publicUrl);
+// The sandbox uses the same payment interface, but persists fake state in its
+// own PostgreSQL database so a restart cannot erase holds or duplicate payouts.
+if (config.sandboxInstance) await prepareSandboxMockDb(db);
+const payments = config.sandboxInstance
+  ? new PersistentSandboxMockProvider(db, config.publicUrl)
+  : new MockProvider(config.publicUrl);
 
 const app = createApp({ db, sms: createSms(), push: createPush(), payments });
 
