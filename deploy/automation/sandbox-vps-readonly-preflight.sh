@@ -66,6 +66,45 @@ else
   warn 'Cannot verify distinct database volumes'
 fi
 
+# The isolated sandbox must actually contain ALL 12 test accounts. Merely
+# having a healthy container is insufficient: a missing courier fixture makes
+# the signed handoff fail with sandbox_access_denied. Read only; display role
+# NAMES, never phone numbers, tokens, environment values or database rows.
+if docker container inspect "$SANDBOX_DB" >/dev/null 2>&1; then
+  if missing_roles="$(docker exec "$SANDBOX_DB" psql -U sandbox_user -d traksos_sandbox \
+      -X -A -t -q -v ON_ERROR_STOP=1 -c "
+    with required(label,phone,primary_role,secondary_role) as (values
+      ('client','+79000000002','client',null),
+      ('owner','+79000000003','client',null),
+      ('driver','+79000000004','driver','client'),
+      ('master','+79000000011','master',null),
+      ('tow','+79000000021','tow',null),
+      ('service','+79000000031','service',null),
+      ('master_service','+79000000051','master','service'),
+      ('insurer','+79000000052','insurer',null),
+      ('inspection','+79000000053','inspection_operator',null),
+      ('courier','+79000000054','courier',null),
+      ('moderator','+79000000005','moderator',null),
+      ('admin','+79000000001','admin',null)
+    )
+    select r.label from required r left join users u on u.phone=r.phone
+      where u.id is null or u.status <> 'active'
+        or not(r.primary_role=any(u.roles))
+        or (r.secondary_role is not null and not(r.secondary_role=any(u.roles)))
+      order by r.label;
+  " 2>/dev/null)"; then
+    if [[ -z "$missing_roles" ]]; then
+      echo 'SANDBOX_ROLE_FIXTURES=12/12 verified (read-only)'
+    else
+      warn "Sandbox role fixtures absent/inactive/incorrect: $(printf '%s' "$missing_roles" | paste -sd, -)"
+    fi
+  else
+    warn 'Cannot check sandbox role fixtures read-only; verify schema/database and sandbox DB container'
+  fi
+else
+  warn 'Cannot check sandbox role fixtures because the sandbox DB container is missing'
+fi
+
 # Public health endpoints do not expose any secrets; emit only allowlisted flags.
 for target in production sandbox; do
   if [[ "$target" == production ]]; then domain=traksos.ru; else domain=sandbox.traksos.ru; fi
