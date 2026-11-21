@@ -281,6 +281,58 @@ try{
        if(await page.locator('.approved-pc').count())
          throw Error('A direct inspection detail route incorrectly showed the generic desktop dashboard');
      }
+     // Native WebView-mode REAL Chromium rendering: the existing 618 role
+     // workdesk stays unchanged; only secondary pages gain an illustrated
+     // brief. Synthetic account/session belongs to local CI, never VPS.
+     if(width===390 && ['owner','master','service','insurer','admin','moderator'].includes(c.id)){
+       const nativeContext=await browser.newContext({
+         viewport:{width:390,height:844},locale:'ru-RU',serviceWorkers:'block'
+       });
+       try {
+         const nativePage=await nativeContext.newPage();
+         const nativeErrors=[];
+         nativePage.on('pageerror',e=>nativeErrors.push(e.message));
+         await nativePage.addInitScript(({token,mode})=>{
+           window.TrakSOSNative={
+             isApp:()=>true,isPreviewBuild:()=>false,setSession:()=>{},
+             pushToken:()=>'',performerOnline:()=>{},
+             appLockEnabled:()=>false,setAppLockEnabled:()=>false
+           };
+           localStorage.setItem('traksos.token',token);
+           localStorage.setItem('traksos.mode',mode);
+         },{token,mode:c.mode});
+         await nativePage.goto(BASE+'/'+c.inside,{waitUntil:'domcontentloaded'});
+         await nativePage.locator('.tr-native-section-path').waitFor({state:'visible',timeout:14000});
+         const studio=nativePage.locator('.tr-native-section-brief');
+         await studio.waitFor({state:'visible',timeout:14000});
+         await studio.locator('img[src="/tracksos-approved-hero-owner-20261119.webp"]')
+           .waitFor({state:'visible',timeout:14000});
+         const staff=['admin','moderator'].includes(c.id);
+         if(staff && await studio.locator('a[href="#/trakbot"]').count())
+           throw Error('Staff native hint incorrectly launches TrakBot: '+c.id);
+         if(!staff && await studio.locator('a[href="#/trakbot"]').count()!==1)
+           throw Error('Native hint is missing the private TrakBot action: '+c.id);
+         if(await nativePage.locator('.tr-inner-hero').count())
+           throw Error('Native screen accidentally mounted the desktop hero: '+c.id);
+         // Keep one clear section introduction: old title-only surfaces
+         // are visual debt, but active master controls remain intact.
+         const oldHeadingSelector=c.id==='owner'
+           ? '.client-garage-page > .client-section-hero-garage'
+           : ['insurer','moderator'].includes(c.id)
+             ? '.account-profile-page > h1'
+             : c.id==='service' ? 'main > div:first-of-type > h1' : '';
+         if(oldHeadingSelector && await nativePage.locator(oldHeadingSelector+':visible').count())
+           throw Error('Old giant native heading repeated the approved section intro: '+c.id);
+         if(c.id==='service' && await nativePage.locator('main input.field:visible').count()<1)
+           throw Error('STO form disappeared when removing duplicate introduction');
+         const overflow=await nativePage.evaluate(
+           ()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
+         if(overflow>3 || nativeErrors.length)
+           throw Error('Native approved inner overflow/runtime error: '+c.id+' '+overflow+' '+nativeErrors.join(';'));
+         await nativePage.screenshot({path:out+'/'+c.id+'-native-inside-390-viewport.png',
+           fullPage:false,animations:'disabled',scale:'css'});
+       }finally{await nativeContext.close()}
+     }
      results.push({role:c.id,width,height:width===390?844:width===1672?941:900,result:'screens saved',files:[
        c.id+'-home-'+width+'-viewport.png',
        c.id+'-home-'+width+'.png',

@@ -115,7 +115,14 @@ try {
       }
       if(hasMasterBase || hasDriverBase){
         await page.goto(BASE + '/#/techbase/' + (hasMasterBase ? 'master' : 'driver'));
-        await page.getByRole('heading',{name:hasMasterBase?'ТехБаза мастера':'ТехБаза водителя'}).waitFor();
+        const techTitle=hasMasterBase?'ТехБаза мастера':'ТехБаза водителя';
+        await page.locator('.tr-inner-hero[data-traksos-inner-ui="approved-617-618"]')
+          .getByRole('heading',{name:techTitle,exact:true}).waitFor();
+        if(await page.locator('main.techbase-page .techbase-hero h1:visible').count())
+          throw new Error('Old TechBase title duplicates approved 617 section heading');
+        // The legacy introductory text may be hidden, but the user's
+        // authorized documents and driver/master switch must not disappear.
+        await page.locator('main.techbase-page .techbase-filter').waitFor();
       } else {
         await page.goto(BASE + '/#/techbase/master');
         await page.getByText('Нет доступа к этому разделу ТехБазы').waitFor();

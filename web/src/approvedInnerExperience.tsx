@@ -57,6 +57,7 @@ function metaFor(path:string[], fallback:string):RouteMeta{
     return {...base,title:fallback.length<=52?fallback:base.title};
   return base;
 }
+export function approvedInnerSectionCopy(route:string[],title:string):RouteMeta { return metaFor(route,title); }
 export function ApprovedInnerHero({mode,route,title}:{mode:string;route:string[];title:string}){
   const role=roleCopy[mode]??roleCopy.client;
   const info=metaFor(route,title);

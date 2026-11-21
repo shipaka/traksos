@@ -46,6 +46,8 @@ import './nativeWide20261121.css';
 import './approvedPublicInner20261120.css';
 // Approved 617/618 visual language now continues into every signed-in browser route.
 import './approvedInnerExperience.css';
+// Native 618 inner pages reuse the approved truck image in a compact contextual strip.
+import './androidInnerStudio20261121.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
@@ -715,7 +717,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         </div>
       </header>
       <NetworkStatus />
-      {me && !mobileShell && <ContextHelp page={route[0] ?? ''} />}
+      {me && !mobileShell && !approvedInnerRoute && <ContextHelp page={route[0] ?? ''} />}
       <div className="desktop-layout">
         <aside className="desktop-sidebar" aria-label="Навигация по сайту">
           <div className="desktop-sidebar-title">{me ? 'Рабочий кабинет' : isAuthEntry ? 'TrakSos · вход и документы' : 'TrakSos · помощь в дороге'}</div>
@@ -800,7 +802,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         </aside>
         <div className="desktop-content">
           {approvedInnerRoute && <ApprovedInnerHero mode={mode} route={route} title={sectionLabel}/>}
-          {innerSection && <MobileSectionChrome title={sectionLabel} homeHref={workspaceHref}/>}
+          {innerSection && <MobileSectionChrome title={sectionLabel} homeHref={workspaceHref} route={route} mode={mode}/>}
           {approvedInnerRoute && <ApprovedInnerRail mode={mode} route={route}/>}
           {me && route[0] === 'menu'
             ? <MobileRoleMenu mode={mode} quick={mobileTabs} account={accountLinks} help={helpLinks} onLogout={safeLogout} />

@@ -313,3 +313,14 @@ html.traksos-browser .app[class*="role-"] .tr-inner-bot-line .trakbot-mascot{
  border:1px solid #88aebb;border-radius:12px;overflow:hidden;
  box-shadow:0 5px 12px #0006;box-sizing:border-box;
 }
+
+/* TechBase retains its driver/master access switch, but the old giant
+ * introductory panel must not duplicate the new 617 section hero. */
+html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero[data-route^="techbase/"])
+ > main.techbase-page > .techbase-hero > :is(.techbase-eyebrow,h1,p){display:none!important}
+html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero[data-route^="techbase/"])
+ > main.techbase-page > .techbase-hero:not(:has(.techbase-hero-actions > a)){display:none!important}
+html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero[data-route^="techbase/"])
+ > main.techbase-page > .techbase-hero:has(.techbase-hero-actions > a){
+ min-height:0;padding:12px 16px;border-radius:14px
+}
