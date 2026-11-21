@@ -549,9 +549,9 @@
 }
 
 
-/* Dual-mode 320px header fit: keep the approved logo and both role links
+/* Dual-mode phone header fit: keep the approved logo and both role links
    visible instead of forcing all controls into one over-wide row. */
-@media (max-width: 380px) {
+@media (max-width: 520px) {
   .app:not(.guest-app) .top:has(.cabinet-role-switch) {
     flex-wrap: wrap;
     row-gap: 4px;
