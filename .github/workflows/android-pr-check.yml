@@ -35,6 +35,8 @@ jobs:
       RUSTORE_PROJECT_ID: ""
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -107,6 +109,8 @@ jobs:
         api-level: [29, 35]
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Diagnose and enable KVM when available
         run: |
           if [ -c /dev/kvm ]; then
@@ -164,6 +168,7 @@ jobs:
             emulator-screen.png
             android-review-client.png
             android-review-master.png
+            android-review-*-ui.xml
             emulator-ui.xml
             runtime-ready.log
           if-no-files-found: warn
