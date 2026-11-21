@@ -80,7 +80,7 @@ import { BaseHome, BaseCar, BaseSetup, BaseMoney, AdminServicePayouts, ServicesL
 import { Fleet, QrJoin } from './screens/fleet.tsx';
 import { Help } from './screens/help.tsx';
 import { TechBase } from './screens/techbase.tsx';
-import { PlatformIntro, IntroInvitation } from './screens/platformIntro.tsx';
+import { PlatformIntro } from './screens/platformIntro.tsx';
 import { EconomicsPage } from './screens/economicsGuide.tsx';
 import { ScenarioLesson } from './screens/scenarioEncyclopedia.tsx';
 import { TrakBotChat, TechCodes } from './screens/trakbot.tsx';
@@ -88,7 +88,7 @@ import { DriverAir } from './screens/driverAir.tsx';
 import { TrakBotDock } from './trakbotDock.tsx';
 import { APPROVED_VISUALS } from './approvedVisuals.ts';
 import { RepairCases, TechnicalCasesReview } from './screens/technicalCases.tsx';
-import { Training, TrainingInvite } from './screens/training.tsx';
+import { Training } from './screens/training.tsx';
 import { TrainingPractice } from './screens/roleTrainingPractice.tsx';
 import { ContextHelp } from './screens/contextHelp.tsx';
 import { PricingLaboratory } from './screens/pricingLaboratory.tsx';
@@ -705,7 +705,6 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         </div>
       </header>
       <NetworkStatus />
-      {me && !native.isApp && ['', 'work', 'base', 'admin', 'moderation', 'insurance', 'inspections'].includes(route[0] ?? '') && <TrainingInvite />}
       {me && !mobileShell && <ContextHelp page={route[0] ?? ''} />}
       <div className="desktop-layout">
         <aside className="desktop-sidebar" aria-label="Навигация по сайту">
@@ -791,7 +790,6 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         </aside>
         <div className="desktop-content">
           {innerSection && <MobileSectionChrome title={sectionLabel} homeHref={workspaceHref}/>}
-          {me && !native.isApp && route.length===0 && <IntroInvitation key={me.id+'-'+mode} userId={me.id} mode={mode} roles={me.roles} />}
           {me && route[0] === 'menu'
             ? <MobileRoleMenu mode={mode} quick={mobileTabs} account={accountLinks} help={helpLinks} onLogout={safeLogout} />
             : children}
