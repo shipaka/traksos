@@ -216,6 +216,17 @@ try{
          .first().waitFor({state:'visible',timeout:14000});
        await page.screenshot({path:out+'/insurer-inspection-'+width+'-viewport.png',
          fullPage:false,animations:'disabled',scale:'css'});
+       // Both submenu routes must resolve to their proper contents, rather
+       // than the general approved dashboard or a fake missing inspection.
+       await page.goto(BASE+'/#/inspections/processing',{waitUntil:'domcontentloaded'});
+       await page.locator('.partner-workspaces').waitFor({state:'visible',timeout:14000});
+       if(await page.getByText('Техосмотр не найден среди назначенных вам заявок.').count())
+         throw Error('Inspection processing list was parsed as an inspection ID');
+       const unknownId='00000000-0000-4000-8000-000000000001';
+       await page.goto(BASE+'/#/inspections/'+unknownId,{waitUntil:'domcontentloaded'});
+       await page.getByText('Техосмотр не найден среди назначенных вам заявок.').waitFor({timeout:14000});
+       if(await page.locator('.approved-pc').count())
+         throw Error('A direct inspection detail route incorrectly showed the generic desktop dashboard');
      }
      results.push({role:c.id,width,height:width===390?844:width===1672?941:900,result:'screens saved',files:[
        c.id+'-home-'+width+'-viewport.png',
