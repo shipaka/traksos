@@ -44,6 +44,8 @@ import './approvedFleetMobile20261121.css';
 import './nativeWide20261121.css';
 // Approved inner public pages share the 20 November graphite/orange desktop contract.
 import './approvedPublicInner20261120.css';
+// Approved 617/618 visual language now continues into every signed-in browser route.
+import './approvedInnerExperience.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
@@ -60,6 +62,7 @@ import { AndroidDesignReview } from './screens/androidDesignReview.tsx';
 import { NavGlyph } from './navGlyph.tsx';
 import { MobileRoleMenu } from './mobileRoleMenu.tsx';
 import { MobileSectionChrome } from './mobileSectionChrome.tsx';
+import { ApprovedInnerHero, ApprovedInnerRail } from './approvedInnerExperience.tsx';
 import { SandboxEnter, SandboxModeBadge } from './screens/isolatedSandbox.tsx';
 import { GuestCompany, GuestOffers } from './screens/guestInfo.tsx';
 import { PUBLIC_CAPABILITIES } from './guestCatalog.ts';
@@ -602,6 +605,13 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     .filter(([path])=>path !== '/' && (path === sectionPath || sectionPath.startsWith(path+'/')))
     .sort((a,b)=>b[0].length-a[0].length)[0]?.[1]
     || (sectionPath.startsWith('/order/') ? 'Карточка заявки' : 'Рабочий раздел');
+  // Secondary routes keep their existing React screens, API calls and controls.
+  // Decorate only the authenticated BROWSER inner pages; the final native
+  // 618 WebView has its own approved inner breadcrumb and CSS contract.
+  const approvedInnerRoute = !!me && !native.isApp && route.length > 0 &&
+    !['/','/work','/base','/insurance','/inspections','/courier','/moderation','/admin'].includes(sectionPath) &&
+    !['menu','as','trakbot','android-review','preview'].includes(route[0] ?? '') &&
+    !(route[0] === 'admin' && route[1] === 'test-center');
   // An approved desktop dashboard already contains its own TrakBot card.
   // Do not mount a second floating copy of the same helper over its actions.
   // Secondary pages and roles without the embedded card keep the dock.
@@ -789,10 +799,12 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           <div className="desktop-sidebar-bottom"><strong>TRAKSOS 24/7</strong><span>Помощь грузовикам</span><small>Санкт-Петербург и Ленинградская область</small></div>
         </aside>
         <div className="desktop-content">
+          {approvedInnerRoute && <ApprovedInnerHero mode={mode} route={route} title={sectionLabel}/>}
           {innerSection && <MobileSectionChrome title={sectionLabel} homeHref={workspaceHref}/>}
           {me && route[0] === 'menu'
             ? <MobileRoleMenu mode={mode} quick={mobileTabs} account={accountLinks} help={helpLinks} onLogout={safeLogout} />
             : children}
+          {approvedInnerRoute && <ApprovedInnerRail mode={mode} route={route}/>}
           {/* Website legal/footer blocks belong to the browser, not beneath
               the signed-in Android app's persistent bottom menu. The same
               rules, offers and support are reachable through role Menu. */}
@@ -820,7 +832,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       )}
       {/* 618.png has no overlapping floating robot. The same approved talking-truck
           TrakBot remains in Android Menu > TrakBot and on the desktop. */}
-      {!native.isApp && !isAuthEntry && route[0] !== 'trakbot' && mode !== 'moderator' && !approvedDeskHasTrakBot && <TrakBotDock authenticated={!!me} />}
+      {!native.isApp && !isAuthEntry && route[0] !== 'trakbot' && mode !== 'moderator' && !approvedDeskHasTrakBot && !(approvedInnerRoute && !mobileShell) && <TrakBotDock authenticated={!!me} />}
       {me && <RoleTour page={route[0] ?? ''} />}
     </div>
   );
