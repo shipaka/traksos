@@ -710,7 +710,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                       : mode === 'moderator' ? [...tabs, ['/profile', '◉', 'Аккаунт']]
                       : [...tabs, ['/as/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]).map(([href, ic, name]) => (
                 <a key={href} href={shellHref(href)} className={`desktop-nav-link ${here === href || (href !== '/' && here.startsWith(href + '/')) ? 'active' : ''} ${href === '/sos' ? 'desktop-nav-sos' : ''}`}>
-                  <span aria-hidden="true">{ic}</span><span>{name}</span>
+                  <span aria-hidden="true"><NavGlyph glyph={ic}/></span><span>{name}</span>
                 </a>
               ))}
               {mode === 'performer' && <>
@@ -731,7 +731,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                   <div className="desktop-sidebar-title desktop-nav-section">{group}</div>
                   {links.map(([href,ic,name])=><a key={href} href={shellHref(href)}
                     className={`desktop-nav-link ${here===href?'active':''}`}>
-                    <span aria-hidden="true">{ic}</span><span>{name}</span>
+                    <span aria-hidden="true"><NavGlyph glyph={ic}/></span><span>{name}</span>
                   </a>)}
                 </div>)}
                 {me.roles.includes('service') && <a className="desktop-nav-link" href="#/base">
@@ -742,24 +742,24 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                 <div className="desktop-sidebar-title desktop-nav-section">Мой кабинет</div>
                 {([...(me && !me.owner_id && !me.roles.includes('driver') ? [['/fleet','▣','Мой парк']] as [string,string,string][] : []),['/air','☷','Эфир'],['/support','?','Поддержка'],['/profile','◉','Профиль']] as [string,string,string][]).map(([href, ic, name]) => (
                   <a key={href} href={shellHref(href)} className={`desktop-nav-link ${here === href || here.startsWith(href + '/') ? 'active' : ''}`}>
-                    <span aria-hidden="true">{ic}</span><span>{name}</span>
+                    <span aria-hidden="true"><NavGlyph glyph={ic}/></span><span>{name}</span>
                   </a>
                 ))}
               </>}
             </> : isAuthEntry ? <>
-              <a className="desktop-nav-link" href="#/"><span>⌂</span><span>Главная</span></a>
-              <a className="desktop-nav-link" href="#/company"><span>ⓘ</span><span>Компания</span></a>
-              <a className="desktop-nav-link" href="#/offers"><span>▤</span><span>Оферты</span></a>
-              <a className="desktop-nav-link" href="#/offer/privacy"><span>▣</span><span>Документы</span></a>
+              <a className="desktop-nav-link" href="#/"><span aria-hidden="true"><NavGlyph glyph="⌂"/></span><span>Главная</span></a>
+              <a className="desktop-nav-link" href="#/company"><span aria-hidden="true"><NavGlyph glyph="ⓘ"/></span><span>Компания</span></a>
+              <a className="desktop-nav-link" href="#/offers"><span aria-hidden="true"><NavGlyph glyph="▤"/></span><span>Оферты</span></a>
+              <a className="desktop-nav-link" href="#/offer/privacy"><span aria-hidden="true"><NavGlyph glyph="▣"/></span><span>Документы</span></a>
             </> : <>
-              <a className="desktop-nav-link active" href="#/"><span>⌂</span><span>Главная</span></a>
-              <a className="desktop-nav-link" href="#/explore/van"><span>⚒</span><span>Все услуги</span></a>
-              <a className="desktop-nav-link" href="#/login"><span>◉</span><span>Войти</span></a>
-              <a className="desktop-nav-link" href="#/register"><span>＋</span><span>Регистрация клиента</span></a>
-              <a className="desktop-nav-link" href="#/join"><span>▣</span><span>Для партнёров</span></a>
-              <a className="desktop-nav-link" href="#/company"><span>ⓘ</span><span>Компания</span></a>
-              <a className="desktop-nav-link" href="#/offers"><span>▤</span><span>Оферты</span></a>
-              <a className="desktop-nav-link" href="#/offer/privacy"><span>▣</span><span>Документы</span></a>
+              <a className="desktop-nav-link active" href="#/"><span aria-hidden="true"><NavGlyph glyph="⌂"/></span><span>Главная</span></a>
+              <a className="desktop-nav-link" href="#/explore/van"><span aria-hidden="true"><NavGlyph glyph="⚒"/></span><span>Все услуги</span></a>
+              <a className="desktop-nav-link" href="#/login"><span aria-hidden="true"><NavGlyph glyph="◉"/></span><span>Войти</span></a>
+              <a className="desktop-nav-link" href="#/register"><span aria-hidden="true"><NavGlyph glyph="＋"/></span><span>Регистрация клиента</span></a>
+              <a className="desktop-nav-link" href="#/join"><span aria-hidden="true"><NavGlyph glyph="▣"/></span><span>Для партнёров</span></a>
+              <a className="desktop-nav-link" href="#/company"><span aria-hidden="true"><NavGlyph glyph="ⓘ"/></span><span>Компания</span></a>
+              <a className="desktop-nav-link" href="#/offers"><span aria-hidden="true"><NavGlyph glyph="▤"/></span><span>Оферты</span></a>
+              <a className="desktop-nav-link" href="#/offer/privacy"><span aria-hidden="true"><NavGlyph glyph="▣"/></span><span>Документы</span></a>
                         </>}
           </nav>
           {!me && <aside className="track-sidebar-app" aria-label="Мобильное приложение TrakSOS">

@@ -39,6 +39,11 @@ try {
       async function verify(where) {
         await page.locator('.app').waitFor();
         await page.locator('.account-menu > summary').waitFor();
+        // An image can finish loading after the React shell mounts. Wait for
+        // actual decoding before measuring the approved logo's natural pixels.
+        await page.locator('header.top .tr-approved-brand-logo img').evaluate(async img => {
+          if (!img.complete) await img.decode();
+        });
         await page.locator('main').first().waitFor();
         await page.evaluate(()=>document.fonts.ready);
         const report=await page.evaluate(()=>({
@@ -48,6 +53,8 @@ try {
           missing:document.querySelector('main')?.textContent?.includes('Такой страницы нет'),
           failed:document.body.textContent?.includes('Не удалось открыть раздел'),
           nav:document.querySelectorAll('.account-menu nav a[href^="#/"]').length,
+          sidebar: {total:document.querySelectorAll('.desktop-sidebar .desktop-nav-link').length,
+            vector:document.querySelectorAll('.desktop-sidebar .desktop-nav-link>span:first-child>svg').length},
           legacy:[...document.querySelectorAll('.desktop-hero,.desktop-quick-links,.service-preview-admin-bar,.sandbox-role-card,#operator-demo-code')]
             .map(el=>el.className||el.id),
           logo:(()=>{
@@ -58,6 +65,7 @@ try {
         if(report.scroll>report.width+3 || report.body>report.width+3)
           throw Error(entry.name+' '+width+'px '+where+': horizontal overflow '+JSON.stringify(report));
         if(report.missing||report.failed||report.nav<5||report.legacy.length||
+           (width>=900 && (report.sidebar.total===0||report.sidebar.total!==report.sidebar.vector))||
            !report.logo.present||report.logo.src!=='/traksos-brand-logo-approved-618.png'||!report.logo.loaded)
           throw Error(entry.name+' '+width+'px '+where+': old interface, missing approved logo or broken navigation '+JSON.stringify(report));
         if(jsErrors.length)throw Error(entry.name+' '+width+'px '+where+': '+jsErrors.join('; '));

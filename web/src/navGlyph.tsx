@@ -18,6 +18,9 @@ export function NavGlyph({ glyph }: { glyph: string }) {
     : glyph === 'filetext' ? <><path d="M6 2h9l5 5v15H6zM15 2v6h5M9 12h8M9 16h8M9 20h6"/></>
     : glyph === 'check' ? <path d="M4 12l5 5L20 6"/>
     : glyph === 'menu' ? <path d="M4 6h16M4 12h16M4 18h16" />
+    : glyph === '⚒' ? <><path d="M14.7 6.3a4 4 0 0 0-5.2 5.2L3.7 17.3a2 2 0 0 0 2.9 2.9l5.8-5.8a4 4 0 0 0 5.2-5.2l-2.9 2.9-2.8-2.8z"/></>
+    : glyph === 'ⓘ' ? <><circle cx="12" cy="12" r="9"/><path d="M12 10.5v6m0-9v.3"/></>
+    : glyph === '⚿' ? <><rect x="4" y="10" width="16" height="12" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v4"/></>
     : glyph === 'chat' ? <><path d="M5 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H10l-5 4v-4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" /><path d="M8 10h8M8 14h6" /></>
     : glyph === 'truck' ? <><path d="M2 7h12v10H2zM14 10h4l4 4v3h-8z" /><circle cx="6" cy="18" r="2" /><circle cx="18" cy="18" r="2" /></>
     : glyph === 'clipboard' ? <><rect x="5" y="4" width="14" height="18" rx="2" /><rect x="9" y="2" width="6" height="5" rx="1" /><path d="M9 11h6M9 15h6M9 19h4" /></>

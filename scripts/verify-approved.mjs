@@ -155,6 +155,13 @@ expect(ownerPcUiContract.includes('UI CONTRACT 21.11: canonical desktop guest ma
   !ownerPcUiContract.includes('width:40px!important;min-width:40px!important;') &&
   !botDockContract.includes('a full-width cyan-edged launcher'),
   'single desktop guest TrakBot/cinematic tile contract, not conflicting old pill or 40px fallback');
+const roleSidebarSource=await read('web/src/main.tsx');
+const navGlyphSource=await read('web/src/navGlyph.tsx');
+expect(roleSidebarSource.includes('<NavGlyph glyph={ic}/>') &&
+  navGlyphSource.includes("glyph === '⚒'") &&
+  navGlyphSource.includes("glyph === 'ⓘ'") &&
+  navGlyphSource.includes("glyph === '⚿'"),
+  'signed-in desktop navigation shares consistent approved vector pictograms with mobile');
 const ownerPcHeader = await read('web/src/screens/ownerDesktopHome20261120.tsx');
 expect(unifiedVisuals.includes("logo: '/traksos-brand-logo-approved-618.png'") &&
   unifiedVisuals.includes("trakbotHello: '/trakbot-approved-hello.webp'") &&
