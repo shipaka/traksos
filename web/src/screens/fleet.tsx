@@ -6,6 +6,7 @@ import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '.
 import { qrSvg } from '../qr.ts';
 import { Login } from './login.tsx';
 import { VehicleModelPhoto, vehicleReferencePhoto } from '../vehicleVisual.tsx';
+import { useMobileWorkspace } from './androidWorkspaces.tsx';
 
 const ALLOW: [string, string, string][] = [
   ['repair', 'Вызов мастера', 'электрик, пневматика, автономка, шиномонтаж'],
@@ -38,6 +39,7 @@ function InsuranceReminderSettings() {
 }
 
 export function Fleet() {
+  const mobileWorkspace = useMobileWorkspace();
   const f = useLoad(() => get('/api/fleet'), [], (e) => e.type === 'order' || e.type === 'fleet');
   const { me, reload } = useMe();
   const { busy, run } = useAction();
@@ -58,6 +60,127 @@ export function Fleet() {
     const r = await run(() => put('/api/fleet', { mode: s.mode, perOrder: s.perOrder ?? null, perMonth: s.perMonth ?? null, allow: s.allow, edoPdfOnly: d.company.pdfOnly }), 'Сохранено');
     if (r) f.setData(r);
   }
+
+  // The approved phone workspace is shared by Android WebView and the mobile
+  // browser; legacy Fleet cards remain desktop-only. Real APIs are unchanged.
+  if (mobileWorkspace) return <main className="fleet-mobile-approved and19-workspace and19-client">
+    <nav className="fleet-mobile-back"><a href="#/">‹ Рабочий стол</a><span>TRAKSOS · АВТОПАРК</span></nav>
+    <header className="fleet-mobile-heading">
+      <span className="label">УПРАВЛЕНИЕ АВТОПАРКОМ</span>
+      <h1>Мои машины</h1>
+      <p>Автомобили, водители и заявки — все данные вашего автопарка.</p>
+    </header>
+    <div className="fleet-mobile-stats" aria-label="Состояние автопарка">
+      <div><strong>{d.cars.length}</strong><small>Машин</small></div>
+      <div><strong>{d.cars.filter((c:any)=>!!c.driver).length}</strong><small>С водителем</small></div>
+      <div><strong>{d.pending.length}</strong><small>Ждут решения</small></div>
+    </div>
+    {d.pending.length>0&&<section className="fleet-mobile-block">
+      <h2>Ожидают подтверждения</h2>
+      {d.pending.map((o:any)=><article key={o.id} className="fleet-mobile-pending">
+        <strong>{o.driver_name??'Водитель'} · {o.brand??''} {o.plate??''}</strong>
+        <p>{SERVICES[o.service]?.name??o.service} · {rub(o.amount)}</p>
+        {o.description&&<p>{o.description}</p>}
+        <div className="fleet-mobile-actions">
+          <button className="btn" disabled={busy} onClick={()=>decide(o.id,true)}>Подтвердить</button>
+          <button className="btn ghost" disabled={busy} onClick={()=>decide(o.id,false)}>Отклонить</button>
+        </div>
+        <a href={`#/order/${o.id}`}>Открыть заявку ›</a>
+      </article>)}
+    </section>}
+    <section className="fleet-mobile-block">
+      <div className="fleet-mobile-block-title"><h2>Моя техника</h2><a href="#/garage">В гараж ›</a></div>
+      {!d.cars.length&&<p>Автомобилей пока нет. <a href="#/garage">Добавьте машину</a>.</p>}
+      {d.cars.map((c:any)=><article key={c.id} className="fleet-mobile-car">
+        <a className="fleet-mobile-car-link" href={`#/garage/${c.id}`}
+           aria-label={`История и документы автомобиля ${c.brand} ${c.model??''}`}>
+          <div className="fleet-mobile-photo">
+            <VehicleModelPhoto brand={c.brand} model={c.model} year={c.year}/>
+          </div>
+          <div className="fleet-mobile-car-info">
+            <small>ТЕХНИКА АВТОПАРКА</small>
+            <strong>{c.brand} {c.model??''}</strong>
+            <span>{[c.year&&c.year+' г.',c.plate].filter(Boolean).join(' · ')||'Данные уточняются'}</span>
+            <em>История и документы ›</em>
+          </div>
+        </a>
+        {vehicleReferencePhoto(c.brand,c.model,c.year)&&<a className="fleet-mobile-credit"
+          href="/vehicle-photo-credits.html" target="_blank" rel="noopener noreferrer">Источник фото модели</a>}
+        <div className="fleet-mobile-driver">
+          <strong>{c.driver?'Водитель: '+(c.driver.name??c.driver.phone):'Водитель не назначен'}</strong>
+          <small>{c.driver?'За месяц '+rub(c.driver.monthSpent):'Выдайте доступ по QR-наклейке'}</small>
+        </div>
+        <button className="fleet-mobile-expand" type="button" aria-expanded={expandedCar===c.id}
+          onClick={()=>setExpandedCar(expandedCar===c.id?null:c.id)}>
+          {expandedCar===c.id?'Свернуть данные':'Характеристики, ремонты, запчасти'}
+          <span aria-hidden="true">{expandedCar===c.id?'⌃':'›'}</span>
+        </button>
+        {expandedCar===c.id&&<FleetVehicleDetails car={c}/>}
+        <div className="fleet-mobile-actions">
+          <button className="btn ghost small" type="button"
+            onClick={()=>setQrFor(qrFor===c.id?null:c.id)}>{qrFor===c.id?'Скрыть QR':'QR-наклейка'}</button>
+          <button className="btn ghost small" type="button" disabled={busy} onClick={async()=>{
+            if(!confirm('Выпустить новую наклейку? Старая перестанет пускать, текущий водитель потеряет доступ.'))return;
+            const r=await run(()=>post(`/api/fleet/vehicles/${c.id}/new-qr`),
+              'Новая наклейка: прежний водитель потерял доступ');
+            if(r)f.setData(r);
+          }}>Новая наклейка</button>
+        </div>
+        {qrFor===c.id&&<Sticker car={c}/>}
+      </article>)}
+    </section>
+    <details className="fleet-mobile-settings">
+      <summary>Оплата и разрешения водителей <span aria-hidden="true">⌄</span></summary>
+      <div className="fleet-mobile-settings-body">
+        <strong>Кто подтверждает заявки</strong>
+        <div className="fleet-mobile-actions">
+          <button type="button" className="seg" aria-pressed={s.mode!=='approve'}
+            onClick={()=>setS({...s,mode:'limit'})}>Сам до лимита</button>
+          <button type="button" className="seg" aria-pressed={s.mode==='approve'}
+            onClick={()=>setS({...s,mode:'approve'})}>Всё через меня</button>
+        </div>
+        {s.mode!=='approve'?<div className="fleet-mobile-fields">
+          <Field label="На заказ"><RubInput value={s.perOrder??null} onChange={v=>setS({...s,perOrder:v})} placeholder="без лимита"/></Field>
+          <Field label="В месяц"><RubInput value={s.perMonth??null} onChange={v=>setS({...s,perMonth:v})} placeholder="без лимита"/></Field>
+        </div>:<p>Заявки водителей поступают вам на подтверждение.</p>}
+        <strong>Доступные услуги</strong>
+        {ALLOW.map(([k,n,h])=><label className="fleet-mobile-permission" key={k}>
+          <input type="checkbox" checked={k==='insurance'||k==='inspection'?s.allow[k]===true:s.allow[k]!==false}
+            onChange={e=>setS({...s,allow:{...s.allow,[k]:e.target.checked}})}/>
+          <span><strong>{n}</strong><small>{h}</small></span>
+        </label>)}
+        <p>Срочный SOS доступен водителю независимо от ограничений.</p>
+        <button className="btn" disabled={busy} onClick={save}>Сохранить настройки</button>
+      </div>
+    </details>
+    <details className="fleet-mobile-settings">
+      <summary>Напоминания о страховке <span aria-hidden="true">⌄</span></summary>
+      <div className="fleet-mobile-settings-body"><InsuranceReminderSettings/></div>
+    </details>
+    <details className="fleet-mobile-settings">
+      <summary>Документы и ЭДО <span aria-hidden="true">⌄</span></summary>
+      <div className="fleet-mobile-settings-body">
+        <div className="fleet-mobile-fields">
+          <Field label="Оператор"><input className="field" placeholder="СБИС, Диадок…"
+            value={edo.edoOperator} onChange={e=>setEdo({...edo,edoOperator:e.target.value})}/></Field>
+          <Field label="ID участника"><input className="field" placeholder="ID участника"
+            value={edo.edoId} onChange={e=>setEdo({...edo,edoId:e.target.value})}/></Field>
+        </div>
+        <label className="fleet-mobile-permission">
+          <input type="checkbox" checked={d.company.pdfOnly} onChange={async e=>{
+            const r=await run(()=>put('/api/fleet',{edoPdfOnly:e.target.checked}),'Сохранено');
+            if(r)f.setData(r);
+          }}/><span><strong>Получать документы только в PDF</strong></span>
+        </label>
+        <button className="btn ghost" disabled={busy} onClick={async()=>{
+          if(await run(()=>patch('/api/me',{edoOperator:edo.edoOperator||null,edoId:edo.edoId||null}),
+            'ЭДО сохранено'))reload();
+        }}>Сохранить ЭДО</button>
+        {!d.company.inn&&<p>Укажите ИНН компании в <a href="#/profile">профиле</a>.</p>}
+      </div>
+    </details>
+  </main>;
+
   return (
     <main className="fleet-workspace stack">
       <Back to="garage" label="Гараж" />
