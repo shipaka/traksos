@@ -129,6 +129,99 @@ try {
     'select type from order_events where order_id=$1 order by id',[id]);
   for (const step of ['created','accepted','depart','arrive','start_work','amount_proposed','amount_confirmed'])
     check(history.some(event=>event.type===step),'missing durable order event: '+step);
+  // Independent second incident: fleet driver creates an order using the
+  // vehicle actually assigned by the owner. Owner approves it using the same
+  // real API, then master works, customer confirms and the mock bank settles.
+  const [fleetOwner,driver] = await Promise.all([roleToken('owner'),roleToken('driver')]);
+  await acceptTerms(fleetOwner,['client','privacy']);
+  await acceptTerms(driver,['client','privacy']);
+  const ownerFleet = await call('PUT','/api/fleet',fleetOwner,{mode:'approve'});
+  check(ownerFleet?.settings?.mode==='approve','fleet owner approval policy was not applied');
+  const ownVehicle=await db.one<{id:string}>(
+    "select id from vehicles where driver_id=(select id from users where phone=$1) limit 1",
+    ['+79000000004']);
+  check(ownVehicle?.id,'fictitious driver has no assigned fleet truck');
+  const driverCreated=await call('POST','/api/orders',driver,{
+    service:'electric',isSos:false,description:'Учебная заявка водителя '+randomUUID().slice(0,8),
+    vehicleId:ownVehicle.id,address:'Санкт-Петербург, учебная стоянка',
+    regionId:'spb',zoneId:'spb',city:'Санкт-Петербург',
+    lat:59.93,lng:30.36,tier:'eco',night:false,paymentMethod:'online',
+  });
+  const driverId=driverCreated?.order?.id;
+  check(driverId && driverCreated.order.status==='awaiting_owner' &&
+      !driverCreated.confirmationUrl,
+    'driver order was not held for fleet owner financial approval');
+  const fleetPending=await call('GET','/api/fleet',fleetOwner);
+  check(fleetPending.pending.some((o:any)=>o.id===driverId),
+    'new driver incident is missing from the owner approval queue');
+  const ownerApproved=await call('POST','/api/orders/'+driverId+'/owner-decision',fleetOwner,{
+    approve:true,
+  });
+  check(ownerApproved?.status==='searching',
+    'fleet owner approval did not launch the real order');
+  const fleetHold=await until('fleet owner bank hold',async()=>{
+    const ps=await call('GET','/api/orders/'+driverId+'/payments',fleetOwner);
+    return Array.isArray(ps) ? ps.find((p:any)=>p.kind==='call_out' && p.confirmation_url):null;
+  });
+  await fakeCheckout(fleetHold.confirmation_url);
+  await until('master incoming approved fleet job',async()=>{
+    const incoming=await call('GET','/api/performer/incoming',master);
+    return Array.isArray(incoming) && incoming.some((o:any)=>o.order_id===driverId)?true:null;
+  });
+  const fleetAccepted=await call('POST','/api/orders/'+driverId+'/accept',master,{});
+  check(fleetAccepted?.status==='accepted','master could not accept driver fleet order');
+  for (const action of ['depart','arrive','start_work'])
+    await call('POST','/api/orders/'+driverId+'/step',master,{action});
+  await call('POST','/api/orders/'+driverId+'/amount',master,{
+    extras:[{name:'Учебный кабель',amount:12_000}],result:'solved',
+    note:'Учебная диагностика транспорта владельца',
+  });
+  const [dv,ov,mv,av]=await Promise.all([
+    call('GET','/api/orders/'+driverId,driver),
+    call('GET','/api/orders/'+driverId,fleetOwner),
+    call('GET','/api/orders/'+driverId,master),
+    call('GET','/api/orders/'+driverId,admin),
+  ]);
+  check([dv,ov,mv,av].every(v=>v.number===dv.number && v.status==='awaiting_confirmation'),
+    'fleet order number or status diverged between four roles');
+  check(dv.money.total===ov.money.total && ov.money.total===av.money.total &&
+    mv.money.amount===ov.money.amount && mv.money.total===ov.money.amount &&
+    dv.money.total===dv.money.amount+dv.money.clientFee-dv.money.discount,
+    'fleet order amounts diverged between driver, owner, master and admin');
+  await call('POST','/api/orders/'+driverId+'/confirm',fleetOwner,{
+    total:ov.money.total,points:0,
+  });
+  const fleetWork=await until('fleet work fake checkout',async()=>{
+    const ps=await call('GET','/api/orders/'+driverId+'/payments',fleetOwner);
+    return Array.isArray(ps)?ps.find((p:any)=>p.kind==='work' && p.status==='pending' && p.confirmation_url):null;
+  });
+  await fakeCheckout(fleetWork.confirmation_url);
+  const driverCompleted=await until('driver order completed',async()=>{
+    const o=await call('GET','/api/orders/'+driverId,driver);
+    return o.status==='completed'?o:null;
+  });
+  const ownerCompleted=await call('GET','/api/orders/'+driverId,fleetOwner);
+  const masterCompleted=await call('GET','/api/orders/'+driverId,master);
+  check(driverCompleted.money.total===ownerCompleted.money.total &&
+    driverCompleted.money.total===ov.money.total &&
+    masterCompleted.money.amount===ov.money.amount,
+    'driver/owner/master final sum disagreed after payment');
+  const fleetLedger=await db.one<{sum:string}>(
+    'select coalesce(sum(amount),0)::text as sum from ledger_entries where order_id=$1',
+    [driverId]);
+  check(fleetLedger?.sum==='0','driver order ledger does not balance');
+  const fleetEvents=await db.query<{type:string}>(
+    'select type from order_events where order_id=$1 order by id',[driverId]);
+  for(const action of ['created','owner_approved','accepted','depart','arrive','amount_proposed','amount_confirmed'])
+    check(fleetEvents.some(e=>e.type===action),'fleet missing event '+action);
+  console.log(JSON.stringify({
+    result:'PASS',sandbox:true,case:'fleet-driver-owner-master-admin',
+    order:driverId,participantCount:4,
+    finalClientTotalKopecks:driverCompleted.money.total,
+    agreedWorkAmountKopecks:masterCompleted.money.amount,
+    ledgerBalanced:true,realMoney:false,
+  }));
+
   console.log(JSON.stringify({
     result:'PASS',sandbox:true,order:id,participants:['client','master','admin'],
     customerTotalKopecks:finished.money.total,baseAmountKopecks:finalMaster.money.amount,
