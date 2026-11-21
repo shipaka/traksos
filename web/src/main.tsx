@@ -68,7 +68,7 @@ import { Consult, Home, Sos, NewOrder, Orders, Garage, Profile, logout } from '.
 import { Order } from './screens/order.tsx';
 import { EcuHandoffPage } from './screens/ecuHandoffs.tsx';
 import { Work,  IncomingCall } from './screens/performer.tsx';
-import { AndroidMasterChats } from './screens/androidWorkspaces.tsx';
+import { AndroidMasterChats, useMobileWorkspace } from './screens/androidWorkspaces.tsx';
 import { PerformerOrderWindow } from './screens/performerOrderWindow.tsx';
 import { Admin } from './screens/admin.tsx';
 import { Documents } from './screens/documents.tsx';
@@ -364,6 +364,8 @@ function App() {
 
 function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: React.ReactNode }) {
   const route = useRoute();
+  // The approved 618 phone shell keeps tips under Menu, not as a second top banner.
+  const mobileShell = useMobileWorkspace();
   const [openGuestGroup, setOpenGuestGroup] = useState<string | null>(null);
   const [mobileCatalogOpen, setMobileCatalogOpen] = useState(false);
   // Desktop guest home owns its approved header, never mount the legacy one simultaneously.
@@ -633,7 +635,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       </header>
       <NetworkStatus />
       {me && !native.isApp && !serviceSandbox && ['', 'work', 'base', 'admin', 'moderation', 'insurance', 'inspections'].includes(route[0] ?? '') && <TrainingInvite />}
-      {me && !serviceSandbox && (!native.isApp || !['', 'work', 'base', 'admin', 'moderation', 'insurance', 'inspections'].includes(route[0] ?? '') || route.length>1) && <ContextHelp page={route[0] ?? ''} />}
+      {me && !mobileShell && !serviceSandbox && <ContextHelp page={route[0] ?? ''} />}
       <div className="desktop-layout">
         <aside className="desktop-sidebar" aria-label="Навигация по сайту">
           <div className="desktop-sidebar-title">{me ? 'Рабочий кабинет' : isAuthEntry ? 'TrakSos · вход и документы' : 'TrakSos · помощь в дороге'}</div>
