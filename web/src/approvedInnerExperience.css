@@ -298,3 +298,10 @@ html.traksos-browser .app.role-service .desktop-content:has(> .tr-inner-hero[dat
  > main > div:first-of-type{
  display:none!important;
 }
+
+/* Finance screens retain explanatory copy and ALL API-driven account rows,
+ * but not a second 40px headline identical to the approved section title. */
+html.traksos-browser .app.role-service .desktop-content:has(> .tr-inner-hero[data-route="base/money"])
+ > main > div:first-of-type > h1{
+ display:none!important;
+}
