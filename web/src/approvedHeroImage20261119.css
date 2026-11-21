@@ -1,7 +1,7 @@
 /* Photograph cut from the owner's actual 19 Nov 2026 approved PC screenshot.
    Use a real bundled asset, not the legacy R520 with magenta livery. */
 .guest-app .public-landing .public-hero-visual.public-hero-slide-approved{
- background-image:url('../public/tracksos-approved-hero-owner-20261119.webp')!important;
+ background-image:url('/tracksos-approved-hero-owner-20261119.webp')!important;
  background-repeat:no-repeat!important;background-color:#031725!important;
 }
 @media(min-width:900px){

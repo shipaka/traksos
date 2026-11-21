@@ -58,6 +58,25 @@ printf 'Verifying isolated candidate image for commit %s\n' "$rev"
     }).catch(fail);
 ' || fail "Sandbox API, DB, isolation or build revision verification failed."
 
+# Exercise actual isolated PostgreSQL (not a painted mock screen).
+# Seed the SAME accounts that the protected role handoff will use on the VPS.
+"${compose[@]}" exec -T sandbox-app node --import tsx server/src/seedSandbox.ts ||
+  fail "Fictitious actor roster could not be seeded in the isolated database."
+# Verify that virtual payments are durable and idempotent across provider recreation.
+"${compose[@]}" exec -T -e TRAKSOS_RUN_DISPOSABLE_SCENARIO=true sandbox-app \
+  node --import tsx server/src/ops/exerciseSandboxPayments.ts ||
+  fail "Fictitious checkout/capture/refund/payout lifecycle failed."
+# Execute a complete REAL client->master->admin order on fake users and money.
+"${compose[@]}" exec -T -e TRAKSOS_RUN_DISPOSABLE_SCENARIO=true sandbox-app \
+  node --import tsx server/src/ops/exerciseSandboxOrder.ts ||
+  fail "Inter-role order lifecycle and shared financial totals diverged."
+# Verify the same tow-to-workshop handoff used by the real separate sandbox.
+"${compose[@]}" exec -T -e TRAKSOS_RUN_DISPOSABLE_SCENARIO=true sandbox-app \
+  node --import tsx server/src/ops/exerciseSandboxTowSto.ts ||
+  fail "Tow -> workshop -> virtual invoice settlement lifecycle failed."
+"${compose[@]}" exec -T sandbox-app node --import tsx server/src/ops/auditSandbox.ts ||
+  fail "Sandbox role, data isolation or ledger conservation audit failed."
+
 printf 'PASS: immutable image, isolated DB, sandbox mode and revision. No VPS actions.\n'
 if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
   printf '### TrackSOS — sandbox candidate validated\n- Commit: %s\n- GHCR image: pinned to commit SHA\n- Environment: disposable GitHub-hosted runner only\n- Sandbox API, database and revision: PASS\n- VPS deployment: NOT performed\n' "$rev" >> "$GITHUB_STEP_SUMMARY"

@@ -9,11 +9,12 @@ import type { SmsProvider } from './providers/sms.ts';
 import type { PushProvider } from './providers/push.ts';
 import type { PaymentProvider } from './payments/provider.ts';
 import { MockProvider } from './payments/provider.ts';
+import { PersistentSandboxMockProvider } from './payments/persistentSandboxMock.ts';
 import { SettingsService } from './services/settings.ts';
 import { Notifier } from './services/notify.ts';
 import { AuthService, SELF_ROLES } from './services/auth.ts';
 import { OperatorDemoAccess } from './services/operatorDemo.ts';
-import { SANDBOX_ROLES, issueSandboxTicket, exchangeSandboxTicket } from './services/sandboxTickets.ts';
+import { SANDBOX_ROLES, issueSandboxTicket, exchangeSandboxTicket, switchSandboxRole } from './services/sandboxTickets.ts';
 import { SANDBOX_HANDOFF_PROTOCOL, assessSandboxPeerHealth } from './services/sandboxCompatibility.ts';
 import { ReferralService } from './services/referral.ts';
 import { financeGuide, type FinanceRole } from './domain/economicsGuide.ts';
@@ -256,6 +257,14 @@ export function createApp(d: Deps) {
     if (!config.sandboxInstance) throw notFound();
     const b = parse(z.object({ ticket: z.string().min(20).max(1300) }), c.body);
     return exchangeSandboxTicket(b.ticket, config.sandboxSharedSecret, d.db, now().getTime());
+  });
+  // One supervised Work/browser session can inspect all *fictitious* accounts
+  // on this separately deployed server without logging in repeatedly.
+  // Non-supervisor sessions, including a switched-admin session, cannot switch.
+  r.post('/api/sandbox/switch-role', true, (c: AuthedCtx) => {
+    if (!config.sandboxInstance) throw notFound();
+    const b = parse(z.object({ role:z.enum(SANDBOX_ROLES) }).strict(), c.body);
+    return switchSandboxRole(d.db, bearer(c.req) ?? '', b.role, now().getTime());
   });
 
   // Вход ---------------------------------------------------------------------
@@ -1460,14 +1469,54 @@ export function createApp(d: Deps) {
 
   // Платёжный сервис ---------------------------------------------------------
   r.post('/api/payments/webhook', false, (c: Ctx) => payments.handleWebhook(c.body));
-  if (!isProd) {
-    // Тестовая «страница оплаты»: GET показывает кнопку, POST проводит платёж
+  if (!isProd || config.sandboxInstance) {
+    // The real sandbox has an explicitly fake checkout page. No actual bank,
+    // SMS or receipt is used, yet the production order/payment engine runs.
+    if (config.sandboxInstance) {
+      r.get('/api/dev/mock-pay/:id', false, async (c: Ctx) => {
+        if (!(d.payments instanceof PersistentSandboxMockProvider) ||
+            !/^sandbox_mock_[0-9a-f-]{36}$/.test(c.params.id)) throw notFound();
+        const pay = await d.payments.getPayment(c.params.id);
+        const rubles = (pay.total / 100).toLocaleString('ru-RU', {minimumFractionDigits:2,maximumFractionDigits:2});
+        const html = `<!doctype html><html lang="ru"><meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <title>TrakSOS · учебная оплата</title>
+        <style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#081923;
+        color:#eff8ff;font:16px system-ui,sans-serif;padding:16px;box-sizing:border-box}
+        main{max-width:550px;border:1px solid #426277;border-radius:18px;padding:30px;
+        background:#152f3b}b{color:#ff993f}button,a{display:inline-block;padding:14px;
+        border-radius:10px;background:#ff883e;color:#10232c;font-weight:750;border:0}
+        small{display:block;color:#b9d2df;line-height:1.6;margin:16px 0}</style>
+        <main><b>TRAKSOS · ТОЛЬКО ПЕСОЧНИЦА</b><h1>Вымышленная оплата</h1>
+        <p>Сумма: <strong>${rubles} ₽</strong></p>
+        <small>Деньги не списываются. После подтверждения реальные обработчики заявки
+        изменят статусы и тестовые бухгалтерские проводки в отдельной базе.</small>
+        <form method="post" action="/api/dev/mock-pay/${c.params.id}">
+        <button type="submit">Подтвердить учебную оплату</button></form>
+        <p><a href="/#/orders">Вернуться к заявкам</a></p></main></html>`;
+        return new Raw('text/html; charset=utf-8',Buffer.from(html),{
+          'cache-control':'no-store',
+          'content-security-policy':"default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
+        });
+      });
+    }
     r.post('/api/dev/mock-pay/:id', false, async (c: Ctx) => {
-      if (!(d.payments instanceof MockProvider)) throw notFound();
-      const pay = await d.db.one('select capture_kind from (select kind as capture_kind from payments where provider_payment_id=$1) s', [c.params.id]);
+      const pay = await d.db.one<{capture_kind:string}>(
+        'select kind as capture_kind from payments where provider_payment_id=$1',[c.params.id]);
       if (!pay) throw notFound();
-      d.payments.simulate(c.params.id, pay.capture_kind === 'call_out' ? 'held' : 'captured');
-      return payments.handleWebhook({ paymentId: c.params.id });
+      const status = pay.capture_kind === 'call_out' ? 'held' : 'captured';
+      if (d.payments instanceof PersistentSandboxMockProvider) await d.payments.simulate(c.params.id,status);
+      else if (d.payments instanceof MockProvider) d.payments.simulate(c.params.id,status);
+      else throw notFound();
+      const result = await payments.handleWebhook({paymentId:c.params.id});
+      if (!config.sandboxInstance) return result;
+      return new Raw('text/html; charset=utf-8',Buffer.from(
+        '<!doctype html><html lang="ru"><meta charset="utf-8"><title>TrakSOS · Песочница</title>'+
+        '<main style="background:#0d2230;color:#fff;min-height:100vh;padding:3rem;font:18px system-ui">'+
+        '<h1>Учебная оплата принята</h1><p>Настоящие деньги не списывались.</p>'+
+        '<a style="color:#ff994a" href="/#/orders">Открыть историю заявок</a></main></html>'),{
+        'cache-control':'no-store','content-security-policy':"default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'",
+      });
     });
   }
 
