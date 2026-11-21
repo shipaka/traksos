@@ -597,7 +597,7 @@ function InsuranceDesk({inspection}:{inspection:boolean}){
       </div></div>
       {inspection?<><Pane title="Этапы осмотра"><p>Заявка → Назначение → Проверка → Фиксация результата</p>
         <p>Отметка о выполнении не является выдачей диагностической карты и не направляет её в ЕАИСТО.</p></Pane>
-        <a className="approved-pc-primary" href="#/inspections/processing">Открыть рабочую обработку осмотра</a></>
+        <a className="approved-pc-primary" href={"#/inspections/"+encodeURIComponent(String(selected.id))}>Открыть рабочую обработку осмотра</a></>
       :<><InsuranceProposals requestId={String(selected.id)}/>
         <a className="approved-pc-primary" href={'#/insurance/request/'+selected.id}>Открыть дело, варианты и переписку</a></>}
     </section>:<Pane title={inspection?'Техосмотры':'Страхование'}>
