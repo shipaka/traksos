@@ -1,0 +1,60 @@
+/*
+ * TrakSOS approved 617: operational admin/moderator pages.
+ * One compact role-specific action strip instead of a second screenful of
+ * decorative status panels above real queues, tables and profile forms.
+ * Keep ALL actual route links, security, real loaded data and interactions.
+ */
+@media(min-width:900px){
+ html.traksos-browser .app:is(.role-admin,.role-moderator)
+ .desktop-content:has(> .tr-inner-hero) > .tr-inner-rail{
+   display:block!important;align-self:stretch;
+   grid-column:1;grid-row:2;width:100%;min-width:0;
+ }
+ html.traksos-browser .app:is(.role-admin,.role-moderator)
+ .desktop-content:has(> .tr-inner-hero) > .tr-inner-rail > .tr-inner-rail-status,
+ html.traksos-browser .app:is(.role-admin,.role-moderator)
+ .desktop-content:has(> .tr-inner-hero) > .tr-inner-rail > .tr-inner-rail-footer{
+   display:none!important;
+ }
+ html.traksos-browser .app:is(.role-admin,.role-moderator)
+ .desktop-content:has(> .tr-inner-hero) > .tr-inner-rail > .tr-inner-rail-tools{
+   display:grid!important;
+   grid-template-columns:160px minmax(0,1fr);
+   grid-template-rows:auto auto;
+   gap:3px 17px;align-items:center;
+   min-height:0;padding:13px 17px;border-radius:14px;
+   background:linear-gradient(135deg,#13313e,#0b222e)!important;
+ }
+ html.traksos-browser .app:is(.role-admin,.role-moderator)
+ .desktop-content:has(> .tr-inner-hero) .tr-inner-rail-tools > .tr-inner-rail-overline{
+   grid-column:1;grid-row:1;letter-spacing:.09em;
+   align-self:end;font-size:9px;
+ }
+ html.traksos-browser .app:is(.role-admin,.role-moderator)
+ .desktop-content:has(> .tr-inner-hero) .tr-inner-rail-tools > h2{
+   grid-column:1;grid-row:2;align-self:start;
+   font-size:15px!important;
+ }
+ html.traksos-browser .app:is(.role-admin,.role-moderator)
+ .desktop-content:has(> .tr-inner-hero) .tr-inner-rail-tools > nav{
+   grid-column:2;grid-row:1/span 2;
+   display:flex!important;flex-direction:row;gap:9px;
+   align-items:stretch;min-width:0;overflow-x:auto;
+ }
+ html.traksos-browser .app:is(.role-admin,.role-moderator)
+ .desktop-content:has(> .tr-inner-hero) .tr-inner-rail-tools > nav > a{
+   flex:1 1 0;min-width:110px;min-height:39px;
+   display:flex;align-items:center;justify-content:space-between;
+   margin:0;white-space:normal;font-size:11px;padding:9px 10px;
+ }
+}
+@media(min-width:900px) and (max-width:1020px){
+ html.traksos-browser .app:is(.role-admin,.role-moderator)
+ .desktop-content:has(> .tr-inner-hero) .tr-inner-rail-tools{
+   grid-template-columns:130px minmax(0,1fr)!important;padding:10px 12px!important;
+ }
+ html.traksos-browser .app:is(.role-admin,.role-moderator)
+ .desktop-content:has(> .tr-inner-hero) .tr-inner-rail-tools > nav > a{
+   min-width:94px;font-size:10px;padding:8px;
+ }
+}
