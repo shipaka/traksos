@@ -202,6 +202,10 @@ try{
      // offline, and sandbox screens; real states belong to each content card.
      if(await rail.locator('.tr-inner-rail-footer').count())
        throw Error('Unconditional fake loading status returned to the inner rail: '+c.id+'/'+width);
+     // On mobile browser inner pages TrakBot remains in Menu, but a
+     // fixed floating launcher must never obstruct input fields or CTAs.
+     if(width===390 && await page.locator('.trakbot-dock').count())
+       throw Error('Floating TrakBot overlaps narrow inner content: '+c.id+'/'+width);
      if(['moderator','admin'].includes(c.id)){
        if(await rail.locator('.tr-inner-bot-card').count())
          throw Error('Staff inner pages unexpectedly show TrakBot: '+c.id+'/'+width);
