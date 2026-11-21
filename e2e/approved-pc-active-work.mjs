@@ -142,6 +142,27 @@ try{
    screenshots:['owner-active-1647.png']});
  await oc.close();
 
+ // The real mobile browser uses the approved 618-style workspace. Its first
+ // viewport must not be consumed by an unsolicited multi-line tutorial.
+ const mobileContext=await browser.newContext({viewport:{width:390,height:844},locale:'ru-RU',serviceWorkers:'block'});
+ const mobilePage=await mobileContext.newPage();
+ await mobilePage.addInitScript(({token,mode})=>{
+   localStorage.setItem('traksos.token',token);
+   localStorage.setItem('traksos.mode',mode);
+ },owner);
+ await mobilePage.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
+ await mobilePage.locator('main.and19-client').waitFor({timeout:18000});
+ assert(await mobilePage.locator('.tr-training-invite').count()===0,
+   'Mobile browser 390px is obstructed by the old first-visit training ribbon');
+ assert(await mobilePage.locator('section[aria-label="Знакомство с TrakSOS"]').count()===0,
+   'Mobile browser shows a second unsolicited introduction');
+ await mobilePage.screenshot({path:output+'/owner-mobile-no-training-banner-390.png',
+   fullPage:false,animations:'disabled'});
+ report.push({role:'owner mobile browser',status:'PASS',
+   scenarios:['approved 618 workspace starts without training banners'],
+   screenshots:['owner-mobile-no-training-banner-390.png']});
+ await mobileContext.close();
+
  // API failures must not masquerade as a genuinely empty approved desktop.
  // Retry must recover to the truthful server-confirmed empty state.
  const ec=await browser.newContext({viewport:{width:1440,height:900},locale:'ru-RU',serviceWorkers:'block'});
