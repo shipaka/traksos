@@ -26,6 +26,7 @@
  .and19-review-page .and19-review-tabbar{
    position:fixed;
    z-index:100;
+   bottom:5px;
    bottom:calc(5px + env(safe-area-inset-bottom));
    left:50%;
    transform:translateX(-50%);
@@ -33,6 +34,7 @@
    align-items:stretch;
    justify-content:stretch;
    grid-template-columns:repeat(4,minmax(0,1fr));
+   width:calc(100% - 16px);
    width:min(430px,calc(100% - 16px));
    padding:5px;
    box-sizing:border-box;
@@ -119,4 +121,12 @@
  .and19-review-header-actions{gap:6px}
  .and19-review-header-actions a,.and19-review-header-actions .and19-review-bell{width:42px;height:42px}
  .and19-review-indicator span{font-size:9px}
+}
+
+/* WebView 74 (Android API 29) cannot resolve CSS min()/max(): it otherwise
+   leaves the fixed preview navigation narrow and pinned over the header. */
+@supports not (width: min(430px, 100%)) {
+  @media (max-width:899px) {
+    html.traksos-native .and19-review-page .and19-review-tabbar { bottom:5px; }
+  }
 }
