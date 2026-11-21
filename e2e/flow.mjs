@@ -288,14 +288,14 @@ await m.locator('.work-mobile-balance').getByText(/К выплате:/).waitFor(
 await shot(m, '11-master-balance');
 
 // Админ в браузере
-await a.goto(BASE + '/#/admin');
-await a.getByRole('button', { name: 'Распределение' }).click();
+await a.goto(BASE + '/#/admin/section/dispatch');
+await a.getByRole('heading', { name: 'Распределение', exact: true }).waitFor();
 await a.getByText('Настройки распределения и торгов', { exact: true }).click();
 await a.getByText('Сначала заявки нам').waitFor();
 await assertDashboardTheme(a, 'admin');
 await checkCabinetMenu(a, ['Все заявки', 'Деньги и выплаты', 'Настройки площадки', 'Модерация — очередь'], { shopTab: false });
 await shot(a, '12-admin-dispatch');
-await a.getByRole('button', { name: 'Деньги', exact: true }).click();
+await a.goto(BASE + '/#/admin/section/payments');
 await a.getByText('Способы оплаты').waitFor();
 await shot(a, '13-admin-payments');
 
@@ -304,7 +304,7 @@ await clickCabinetLink(a, 'Кабинет клиента');
 await a.locator('.client-dashboard .desktop-quick-links > a').first().waitFor();
 await clickCabinetLink(a, 'Профиль и настройки');
 await a.getByRole('button', { name: 'Кабинет администратора' }).click();
-await a.getByText('Администратор').first().waitFor();
+await a.locator('main.approved-pc-admin').waitFor();
 await m.goto(BASE + '/#/work/jobs');
 await m.locator('a.list-item').first().click();
 await m.getByText('← Назад').click();
@@ -334,8 +334,7 @@ await m.getByText('Для вызова SOS нужен клиентский ак�
 await m.goto(BASE + '/#/work');
 
 // Админ: поиск → карточка клиента → бонусы; клиент видит их в профиле
-await a.goto(BASE + '/#/admin');
-await a.getByRole('button', { name: 'Поиск', exact: true }).click();
+await a.goto(BASE + '/#/admin/section/search');
 await a.locator('input[placeholder^="Телефон, имя"]').fill('1112233');
 await a.getByRole('button', { name: 'Найти' }).click();
 await a.locator('a.list-item').first().click();
@@ -353,8 +352,7 @@ await k.goto(BASE + '/#/profile');
 await k.getByText(/спишутся сами/).waitFor({ timeout: 10000 });
 
 // Админ: карточка мастера → начисление; мастер видит в балансе
-await a.goto(BASE + '/#/admin');
-await a.getByRole('button', { name: 'Поиск', exact: true }).click();
+await a.goto(BASE + '/#/admin/section/search');
 await a.locator('input[placeholder^="Телефон, имя"]').fill('2223344');
 await a.getByRole('button', { name: 'Найти' }).click();
 await a.locator('a.list-item').first().click();
