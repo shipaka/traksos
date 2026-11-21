@@ -801,10 +801,10 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         <div className="desktop-content">
           {approvedInnerRoute && <ApprovedInnerHero mode={mode} route={route} title={sectionLabel}/>}
           {innerSection && <MobileSectionChrome title={sectionLabel} homeHref={workspaceHref}/>}
+          {approvedInnerRoute && <ApprovedInnerRail mode={mode} route={route}/>}
           {me && route[0] === 'menu'
             ? <MobileRoleMenu mode={mode} quick={mobileTabs} account={accountLinks} help={helpLinks} onLogout={safeLogout} />
             : children}
-          {approvedInnerRoute && <ApprovedInnerRail mode={mode} route={route}/>}
           {/* Website legal/footer blocks belong to the browser, not beneath
               the signed-in Android app's persistent bottom menu. The same
               rules, offers and support are reachable through role Menu. */}
