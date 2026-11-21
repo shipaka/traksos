@@ -2,7 +2,7 @@
    Each screen consumes live role-scoped APIs and existing workflows. */
 /* Shared visual primitives also style the approved admin dashboard on mobile browsers.
    Other roles continue to mount approved-pc only at desktop widths. */
-@media(min-width:1000px){
+@media(min-width:900px){
 .approved-pc{
  --pc-ink:#06131a;--pc-panel:#0b2029;--pc-edge:#247585;--pc-hot:#ff791e;--pc-teal:#4ac5d4;
  color:#f5f9fc;min-width:0;max-width:1800px;margin:0 auto;padding:12px 16px 32px;
@@ -214,7 +214,7 @@
 
 /* Approved administrator home for mobile browsers. Other mobile app role
    dashboards remain untouched; navigation/actions retain their real routes. */
-@media (max-width:999px) {
+@media (max-width:899px) {
   html.traksos-browser .approved-pc-admin {
     width:100%;min-width:0;max-width:100%;padding:10px 12px 95px;gap:12px;
   }
@@ -268,7 +268,7 @@
 
 /* Chromium regression: a resized 390px browser could keep the desktop role
    heading during a viewport transition, stretching the truck to 912px. */
-@media (max-width:999px) {
+@media (max-width:899px) {
   html.traksos-browser .approved-pc {
     width:100%;min-width:0;max-width:100%;overflow-x:clip;
   }
@@ -295,7 +295,7 @@ html.traksos-browser .approved-pc-admin .approved-pc-russia::before {
 
 /* Browser-only approved administrator dashboard at phone widths. Desktop role
    primitives above remain desktop-only; native Android is never restyled. */
-@media (max-width:999px) {
+@media (max-width:899px) {
  html.traksos-browser .approved-pc-admin {
    --pc-edge:#247585;--pc-hot:#ff791e;--pc-teal:#4ac5d4;
    box-sizing:border-box;color:#f5f9fc;background:#071721;display:flex;flex-direction:column;
@@ -407,7 +407,7 @@ html.traksos-browser .approved-pc-admin .approved-pc-russia::before {
 
 /* Insurance desktop already contains an approved TrakBot card with a
    working chat link. Avoid a second floating launcher covering documents. */
-@media (min-width: 1000px) {
+@media (min-width:900px) {
   .app:has(.approved-pc-insurance) > .trakbot-dock {
     display: none;
   }
@@ -435,4 +435,38 @@ html.traksos-browser .approved-pc-admin .approved-pc-russia::before {
 .app:has(.approved-pc-admin) > .trakbot-dock,
 .app:has(.approved-pc-moderator) > .trakbot-dock {
   display: none;
+}
+
+
+/* 617/618 breakpoint agreement: approved PC role cabins from 900px.
+   Stack the three approved desktop zones on narrow computers and tablets,
+   rather than falling back to obsolete mobile/desktop legacy markup. */
+@media (min-width:900px) and (max-width:1199px) {
+ .approved-pc .approved-pc-three {
+   display:grid;
+   grid-template-columns:minmax(0,1fr);
+   gap:12px;
+ }
+ .approved-pc .approved-pc-three > :is(.approved-pc-left,.approved-pc-center,.approved-pc-right) {
+   width:100%;
+   min-width:0;
+   max-width:100%;
+ }
+ .approved-pc .approved-pc-heading {
+   grid-template-columns:minmax(0,1fr) minmax(82px,22%);
+   gap:10px;
+ }
+ .approved-pc :is(.approved-pc-row,.approved-pc-case,.approved-pc-pane) {
+   min-width:0;
+   max-width:100%;
+ }
+ .approved-pc .approved-pc-fleet-footer-grid {
+   grid-template-columns:minmax(0,1fr);
+ }
+ .approved-pc .approved-pc-fleet-footer-grid > .approved-pc-pane {
+   grid-column:1/-1;
+ }
+ .approved-pc .approved-pc-performer-content {
+   grid-template-columns:minmax(0,1fr);
+ }
 }
