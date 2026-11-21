@@ -14,7 +14,7 @@ import { SettingsService } from './services/settings.ts';
 import { Notifier } from './services/notify.ts';
 import { AuthService, SELF_ROLES } from './services/auth.ts';
 import { OperatorDemoAccess } from './services/operatorDemo.ts';
-import { SANDBOX_ROLES, issueSandboxTicket, exchangeSandboxTicket } from './services/sandboxTickets.ts';
+import { SANDBOX_ROLES, issueSandboxTicket, exchangeSandboxTicket, switchSandboxRole } from './services/sandboxTickets.ts';
 import { SANDBOX_HANDOFF_PROTOCOL, assessSandboxPeerHealth } from './services/sandboxCompatibility.ts';
 import { ReferralService } from './services/referral.ts';
 import { financeGuide, type FinanceRole } from './domain/economicsGuide.ts';
@@ -257,6 +257,14 @@ export function createApp(d: Deps) {
     if (!config.sandboxInstance) throw notFound();
     const b = parse(z.object({ ticket: z.string().min(20).max(1300) }), c.body);
     return exchangeSandboxTicket(b.ticket, config.sandboxSharedSecret, d.db, now().getTime());
+  });
+  // One supervised Work/browser session can inspect all *fictitious* accounts
+  // on this separately deployed server without logging in repeatedly.
+  // Non-supervisor sessions, including a switched-admin session, cannot switch.
+  r.post('/api/sandbox/switch-role', true, (c: AuthedCtx) => {
+    if (!config.sandboxInstance) throw notFound();
+    const b = parse(z.object({ role:z.enum(SANDBOX_ROLES) }).strict(), c.body);
+    return switchSandboxRole(d.db, bearer(c.req) ?? '', b.role, now().getTime());
   });
 
   // Вход ---------------------------------------------------------------------
