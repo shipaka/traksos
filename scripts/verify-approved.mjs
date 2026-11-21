@@ -264,6 +264,13 @@ const browserCss = await read('web/src/mobileBrowser.css');
 expect(browserCss.includes('@supports (aspect-ratio: 2 / 1)') && browserCss.includes('height: 156px !important') && browserCss.includes('top: auto !important;right: auto !important;bottom: auto !important;left: auto !important'),
   'legacy Android WebView must reserve visible uncropped truck photo and reset absolute offsets');
 const androidAcceptance = await read('e2e/android-approved-workspaces.mjs');
+const nativeWide = await read('web/src/nativeWide20261121.css');
+expect(unifiedShell.includes("import './nativeWide20261121.css';") &&
+  nativeWide.includes('html.traksos-native .app:not(.guest-app) .and19-workspace') &&
+  nativeWide.includes('html.traksos-native .guest-app .public-hero-visual') &&
+  nativeWide.includes('html.traksos-native .app .desktop-sidebar') &&
+  nativeWide.includes('html.traksos-native .app:not(.guest-app) .tabbar'),
+  'wide Android WebViews use only the 618 native shell, including guest entry and bottom navigation');
 expect(androidAcceptance.includes("Object.defineProperty(window,'TrakSOSNative'") &&
   androidAcceptance.includes("['master_service'") &&
   androidAcceptance.includes('for(const width of [320,390])'),

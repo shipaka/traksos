@@ -40,6 +40,8 @@ import './androidOwnerVisualAlignment20261120.css';
 import './androidInternalSections20261120.css';
 // Approved mobile fleet subpage replaces the former oversized desktop management cards.
 import './approvedFleetMobile20261121.css';
+// The native bridge does not turn into the PC website when a tablet exceeds 899px.
+import './nativeWide20261121.css';
 // Approved inner public pages share the 20 November graphite/orange desktop contract.
 import './approvedPublicInner20261120.css';
 import { createRoot } from 'react-dom/client';

@@ -92,6 +92,8 @@ try {
         await page.setViewportSize({width,height:844});
         await page.locator('main.client-dashboard .and19-workspace.and19-client')
           .waitFor({state:'visible',timeout:10000});
+        if(!await page.locator('.and19-client').isVisible())
+          throw Error(role+': wide Android dashboard CSS is hidden at '+width+'px');
         const old=await page.locator('.desktop-hero, .desktop-quick-links').count();
         if(old)throw Error(role+': legacy desktop dashboard leaked into Android '+width+'px');
         const bounds=await page.evaluate(()=>({

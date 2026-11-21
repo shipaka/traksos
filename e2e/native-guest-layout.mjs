@@ -59,6 +59,9 @@ try {
     if(!await page.locator('.guest-header-actions a[href="#/login"]').isVisible() ||
        !await page.locator('.guest-header-actions a[href="#/register"]').isVisible())
       throw Error(width+'px guest requires visible login and registration buttons');
+    if(width>=900 && (!g.hero||!g.photo||!g.copy||g.fit!=='contain'||
+       g.photo.bottom>g.copy.top+8||g.photo.width>g.hero.width+3))
+      throw Error(width+'px wide Android guest image covers copy instead of preceding it: '+JSON.stringify(g));
     if(width<900 && (!g.hero||!g.photo||!g.copy||!g.arrows||g.fit!=='contain'||
        g.photo.height<100||g.photo.width>g.hero.width+3||
        g.photo.bottom>g.copy.top+8||g.arrows.top<g.copy.top-3))
