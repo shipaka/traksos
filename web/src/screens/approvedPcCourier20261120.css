@@ -1,7 +1,9 @@
 /* Owner-approved bright courier PC visual, 20 Nov 2026.
    This layer affects courier desktop only: never override the Android home
    or other previously approved TrakSOS workspaces. */
-@media(min-width:1000px){
+/* Keep pace with ApprovedPcDesk at >=900px. 900–999px must not show
+   unstyled full-size imagery / retired courier layout. */
+@media(min-width:900px){
 .courier-pc{--courier-orange:#ff821c;--courier-turquoise:#00f4db;--courier-edge:#4d7d94;
  background:radial-gradient(ellipse at 62% 0%,#123b5b58,transparent 57%),#071523;
  max-width:none;min-height:calc(100vh - 98px);padding:16px 22px 34px;color:#f4f9ff;gap:17px}
