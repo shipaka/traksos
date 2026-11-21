@@ -33,7 +33,7 @@ try {
   page.on('pageerror',e=>exceptions.push(e.message));
   await page.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','admin')},token);
   await page.goto(BASE+'/#/admin');
-  await page.getByRole('heading',{name:'Администратор'}).waitFor();
+  await page.locator('main.approved-pc-admin').waitFor();
   const modeSwitch=page.getByRole('navigation',{name:'Режим кабинета'});
   await modeSwitch.getByRole('link',{name:'Выездной мастер'}).click();
   await page.waitForURL(/#\/work/);
@@ -140,7 +140,7 @@ try {
   }
   if(writes.length)throw new Error('Sandbox unexpectedly changed live API');
   await page.getByRole('link',{name:'Вернуться в админку'}).click();
-  await page.getByRole('heading',{name:'Администратор'}).waitFor();
+  await page.locator('main.approved-pc-admin').waitFor();
   if(exceptions.length)throw new Error('JavaScript error: '+exceptions.join(' | '));
   console.log('Admin and master cabinets switch correctly within one account');
   await context.close();
