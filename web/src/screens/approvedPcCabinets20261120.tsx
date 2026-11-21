@@ -31,9 +31,9 @@ const dateIso = (value:Date) => [value.getFullYear(),String(value.getMonth()+1).
 const todayISO = () => dateIso(new Date());
 
 function useDesktopSize(){
-  const [wide,setWide]=useState(()=>!native.isApp && typeof window!=='undefined' && window.matchMedia('(min-width: 1000px)').matches);
+  const [wide,setWide]=useState(()=>!native.isApp && typeof window!=='undefined' && window.matchMedia('(min-width: 900px)').matches);
   useEffect(()=>{
-    const mq=window.matchMedia('(min-width: 1000px)');
+    const mq=window.matchMedia('(min-width: 900px)');
     const sync=()=>setWide(!native.isApp && mq.matches);
     // Old Android WebViews have addListener/removeListener but not MQL.addEventListener.
     if (typeof mq.addEventListener === 'function') mq.addEventListener('change',sync);
@@ -47,7 +47,7 @@ function useDesktopSize(){
   return wide;
 }
 
-/** Never mount both versions simultaneously: avoids duplicate requests/actions. */
+/** One breakpoint: phone/tablet <900, approved PC >=900. Never mount both. */
 export function ApprovedPcDesk({role,fallback}:{role:ApprovedPCRole;fallback:ReactNode}) {
   const wide=useDesktopSize();
   if (!wide && !(role === 'admin' && !native.isApp)) return <>{fallback}</>;
