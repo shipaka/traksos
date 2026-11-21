@@ -162,7 +162,9 @@ try{
         throw Error('Master lost job filters or sees admin-only links');
       if(await page.locator('.tabbar a[href="#/menu"].on').count()!==1)
         throw Error(role+': selected Menu tab does not reflect its route');
-      // Capture the real fully-painted menu, not the first 0%-opacity frame\n      // of the approved 180ms opening animation. Only screenshot timing changes.\n      await page.screenshot({path:output+'/'+role+'-menu-android-390.png',fullPage:true,scale:'css',animations:'disabled'});
+      // Capture the real fully-painted menu, not the first 0%-opacity frame
+      // of the approved 180ms opening animation. Only screenshot timing changes.
+      await page.screenshot({path:output+'/'+role+'-menu-android-390.png',fullPage:true,scale:'css',animations:'disabled'});
       const helpDetails=page.locator('details.tr-mobile-menu-section').last();
       if(await helpDetails.getAttribute('open')!==null)
         throw Error(role+': help and documents must be collapsed until explicitly requested');
