@@ -14,14 +14,24 @@ export function reportApiError(e: unknown) {
 }
 
 export function OfferGate() {
-  const { me } = useMe();
+  const { me, mode } = useMe();
   const [pending, setPending] = useState<any[]>([]);
   const load = () => get('/api/me/offers').then((list: any[]) => setPending(list.filter((x) => x.current && !x.accepted))).catch(() => {});
   useEffect(() => { if (me) load(); }, [me?.id]); // eslint-disable-line
   useEffect(() => onEvent((e) => { if (e.type === 'offer') load(); }), []);
   useEffect(() => { const f = () => load(); offerRequired.addEventListener('need', f); return () => offerRequired.removeEventListener('need', f); }, []);
-  if (!me || !pending.length) return null;
-  return <OfferModal key={pending[0].current.id} item={pending[0]} left={pending.length} onDone={load} />;
+  // One account can also be an admin, moderator or master. Only request
+  // documents relevant to the CURRENT workspace. Server-side consent gates
+  // remain unchanged and protect actions when the user switches roles.
+  const audiencesByMode: Record<string,string[]> = {
+    client:['client'], performer:['performer'], service:['performer'],
+    insurer:['insurer'], inspection:['inspection'],
+    courier:[], admin:[], moderator:[],
+  };
+  const visible=pending.filter(item=>item.audience==='privacy' ||
+    audiencesByMode[mode]?.includes(item.audience));
+  if (!me || !visible.length) return null;
+  return <OfferModal key={visible[0].current.id} item={visible[0]} left={visible.length} onDone={load} />;
 }
 
 function OfferModal({ item, left, onDone }: { item: any; left: number; onDone: () => void }) {
@@ -33,7 +43,8 @@ function OfferModal({ item, left, onDone }: { item: any; left: number; onDone: (
     <div className="call" role="dialog" aria-modal="true" aria-label={item.name} style={{ justifyContent: 'flex-start', gap: 14, overflowY: 'auto' }}>
       <span className="label" style={{ color: 'var(--accent)' }}>Условия изменились{left > 1 ? ` · ещё ${left - 1}` : ''}</span>
       <h1>{item.name}</h1>
-      <span className="note">Редакция {item.current.version} · действует с {new Date(item.current.effective_at).toLocaleDateString('ru-RU')}</span>
+      <span className="note">Редакция {item.current.version} · с {new Date(item.current.effective_at).toLocaleDateString('ru-RU')}</span>
+      {String(item.current.version).toLowerCase().includes('черновик') && <p className="note" role="note">Тестовый черновик для проверки интерфейса. Это не согласованный юридический документ и не окончательный текст для публикации.</p>}
       {item.current.summary && <div className="card"><b>Что изменилось</b><span>{item.current.summary}</span></div>}
       <div className="card offer-text">{full ? <Markdown text={full.body ?? ''} /> : 'Загружаю текст…'}</div>
       <label className="row" style={{ flexWrap: 'nowrap', alignItems: 'flex-start' }}>
@@ -93,7 +104,9 @@ export function OfferPage({ audience }: { audience: string }) {
             <Markdown text={o.body ?? ''} />
           </div>
           {audience !== 'privacy' && <EconomicsGuide inOffer />}
-          <p className="note">Действующая правовая редакция — текст выше. Изменение тарифов требует новой опубликованной версии документа и предусмотренного принятия пользователем; примеры текущей экономики не изменяют уже подписанную редакцию задним числом.</p>
+          {String(o.version).toLowerCase().includes('черновик')
+            ? <p className="note" role="note">Тестовый черновик. Не является окончательной юридической редакцией. До публикации реального согласия или оферты требуется проверенный текст.</p>
+            : <p className="note">Действующая правовая редакция — текст выше. Изменение тарифов требует новой опубликованной версии документа и предусмотренного принятия пользователем; примеры текущей экономики не изменяют уже подписанную редакцию задним числом.</p>}
         </>
       )}
     </main>
