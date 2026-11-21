@@ -82,8 +82,15 @@ try {
         }),
       });
     });
-    // This background page needs only notifications; avoid unrelated pricing/help calls.
+    // On authenticated secondary routes the approved mobile browser keeps
+    // TrakBot in Menu rather than covering real input fields with a dock.
     await page.goto(BASE+'/#/notifications',{waitUntil:'domcontentloaded'});
+    await page.locator('.account-menu > summary').waitFor({timeout:15000});
+    assert(await page.locator('.trakbot-dock').count()===0,
+      'The floating bot must not overlay a signed-in secondary page');
+    // Menu is a lightweight real entry surface that avoids unrelated
+    // order/pricing traffic; the independent compact-chat test stays opt-in.
+    await page.goto(BASE+'/#/menu',{waitUntil:'domcontentloaded'});
     const launch = page.getByRole('button',{name:'Открыть TrakBot'});
     await launch.waitFor({timeout:15000});
     await launch.click();
