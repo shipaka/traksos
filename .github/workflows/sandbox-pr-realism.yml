@@ -46,11 +46,39 @@ jobs:
           export SANDBOX_DB_PASSWORD="$(openssl rand -hex 24)"
           app_secret="$(openssl rand -hex 32)"
           shared_secret="$(openssl rand -hex 32)"
+          # Docker internal networks deliberately reject host port publishing.
+          # A throwaway Nginx proxy is the ONLY container on a host-facing
+          # bridge; the sandbox app itself remains on two internal networks.
+          cat > .sandbox-browser-proxy-ci.conf <<'NGINX'
+          events {}
+          http {
+            server {
+              listen 8080;
+              location / {
+                proxy_pass http://sandbox-app:8080;
+                proxy_http_version 1.1;
+                proxy_read_timeout 40s;
+              }
+            }
+          }
+          NGINX
           cat > .sandbox-loopback-ci.yml <<'LOOPBACK'
           services:
-            sandbox-app:
+            sandbox-browser-proxy:
+              profiles: [sandbox]
+              image: nginx:1.27-alpine
+              restart: "no"
+              volumes:
+                - ./.sandbox-browser-proxy-ci.conf:/etc/nginx/nginx.conf:ro
               ports:
                 - "127.0.0.1:38123:8080"
+              depends_on:
+                sandbox-app:
+                  condition: service_healthy
+              networks: [sandbox_public, sandbox_browser_loopback]
+          networks:
+            sandbox_browser_loopback:
+              internal: false
           LOOPBACK
           printf 'APP_SECRET=%s\nSANDBOX_SHARED_SECRET=%s\nSANDBOX_INSTANCE=true\nSMS_PROVIDER=log\nPUSH_PROVIDER=log\nPAYMENT_PROVIDER=mock\n' \
             "$app_secret" "$shared_secret" > .env.sandbox
@@ -58,15 +86,20 @@ jobs:
             -f docker-compose.sandbox.yml -f .sandbox-loopback-ci.yml --profile sandbox)
           cleanup() {
             "${compose[@]}" down --remove-orphans --volumes || true
-            rm -f .env.sandbox .sandbox-loopback-ci.yml
+            rm -f .env.sandbox .sandbox-loopback-ci.yml .sandbox-browser-proxy-ci.conf
           }
           trap cleanup EXIT
           "${compose[@]}" config --format json | jq -e '
             (.services["sandbox-app"].networks | if type=="array" then . else keys end | sort)
-             == (["sandbox_private","sandbox_public"] | sort)
-            and (.networks | to_entries | all(.value.internal == true))
+              == (["sandbox_private","sandbox_public"] | sort)
+            and .networks.sandbox_private.internal == true
+            and .networks.sandbox_public.internal == true
+            and (.services["sandbox-browser-proxy"].networks
+              | if type=="array" then . else keys end | sort)
+              == (["sandbox_public","sandbox_browser_loopback"] | sort)
+            and (.services["sandbox-browser-proxy"].ports | all(.host_ip == "127.0.0.1"))
           ' >/dev/null
-          "${compose[@]}" up -d --wait --wait-timeout 240 sandbox-db sandbox-app
+          "${compose[@]}" up -d --wait --wait-timeout 240 sandbox-db sandbox-app sandbox-browser-proxy
           "${compose[@]}" exec -T sandbox-app node --import tsx server/src/seedSandbox.ts
           "${compose[@]}" exec -T -e TRAKSOS_RUN_DISPOSABLE_SCENARIO=true sandbox-app \
             node --import tsx server/src/ops/exerciseSandboxPayments.ts
