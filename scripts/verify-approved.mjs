@@ -222,6 +222,9 @@ for (const file of ['web/src/finalCanon.css','web/src/trackPhotos.css']) {
 }
 
 const landing = await read('web/src/screens/login.tsx');
+expect(landing.includes("!native.isApp && window.matchMedia('(min-width: 900px)').matches") &&
+  !landing.includes("useState(() => window.matchMedia('(min-width: 900px)').matches)"),
+  'native WebView must never switch unauthenticated users to the desktop 617 landing');
 const catalogue = await read('web/src/guestCatalog.ts');
 const roleCss = await read('web/src/roleShared20261119.css');
 const currentCss = await read('web/src/currentApproved20261119.css');
@@ -272,6 +275,9 @@ expect(!currentCss.includes('.and19-workspace') && !currentCss.includes('.app.ro
   'public 19 Nov CSS does not rewrite signed-in Android or performer workspaces');
 
 const css = await read('web/src/styles.css');
+expect(css.includes('--public-orange:#ff6a13') && !css.includes('--public-pink') &&
+  !css.includes('color:#f757a0') && !css.includes('color:#dd8caf'),
+  'approved public guest accent is orange, not the retired magenta');
 // The retired pre-19-Nov hero may remain in role-only visuals but must never be
 // a CSS fallback for the owner-approved public landing. Prevent old art regressing
 // into a future deploy even when the final CSS file changes its order.

@@ -9,7 +9,7 @@ if(!['localhost','127.0.0.1'].includes(new URL(BASE).hostname))
 await mkdir('e2e/shots/android-guest',{recursive:true});
 const browser=await chromium.launch();
 try {
-  for(const width of [320,360,390]){
+  for(const width of [320,360,390,960,1200]){
     const height=width===320?640:width===360?800:844;
     const ctx=await browser.newContext({viewport:{width,height},isMobile:true,
       hasTouch:true,deviceScaleFactor:1,locale:'ru-RU'});
@@ -51,9 +51,17 @@ try {
     });
     if(!g.native||!g.home||g.browser||g.scroll>g.viewport+3||g.services!==6||g.login!==2)
       throw Error(width+'px Android public shell invalid: '+JSON.stringify(g));
-    if(!g.hero||!g.photo||!g.copy||!g.arrows||g.fit!=='contain'||
+    if(await page.locator('.owner20-home').count())
+      throw Error(width+'px native guest accidentally switched to 617 desktop home');
+    const accent=await page.locator('.public-brand-hero h1 em').evaluate(el=>getComputedStyle(el).color);
+    if(accent!=='rgb(255, 106, 19)')
+      throw Error(width+'px obsolete magenta guest headline returned: '+accent);
+    if(!await page.locator('.guest-header-actions a[href="#/login"]').isVisible() ||
+       !await page.locator('.guest-header-actions a[href="#/register"]').isVisible())
+      throw Error(width+'px guest requires visible login and registration buttons');
+    if(width<900 && (!g.hero||!g.photo||!g.copy||!g.arrows||g.fit!=='contain'||
        g.photo.height<100||g.photo.width>g.hero.width+3||
-       g.photo.bottom>g.copy.top+8||g.arrows.top<g.copy.top-3)
+       g.photo.bottom>g.copy.top+8||g.arrows.top<g.copy.top-3))
       throw Error(width+'px Android guest still overlays text/caption on truck: '+JSON.stringify(g));
     if(!g.background.includes('tracksos-approved-hero-owner-20261119')||
        /tracksos-approved-(?:scenic-hero|scania-r520|truck)\.webp/.test(g.background))
@@ -62,6 +70,6 @@ try {
     await page.screenshot({path:'e2e/shots/android-guest/native-'+width+'-viewport.png'});
     await page.screenshot({path:'e2e/shots/android-guest/native-'+width+'-full.png',fullPage:true});
     await ctx.close();
-    console.log('PASS real Android-bridge guest layout '+width+'px: photo above copy, six clickable services, no overflow');
+    console.log('PASS Android-bridge guest '+width+'px: approved landing, orange headline, login and registration, no old desktop fallback or overflow');
   }
 } finally {await browser.close();}
