@@ -153,7 +153,9 @@ try {
   };
   throw new Error('Admin login did not reach the dashboard: ' + JSON.stringify(diagnostics), { cause: error });
 }
-await a.getByRole('button', { name: 'Проверка', exact: true }).click();
+// Approved admin verification is a protected work section, not the retired homepage tab.
+await a.goto(BASE + '/#/admin/section/verify');
+await a.getByRole('heading', { name: 'Проверка', exact: true }).waitFor();
 await a.getByText('Отправил').waitFor();
 for (let i = 0; i < n; i++) {
   await a.getByRole('button', { name: 'Принять' }).first().click();
