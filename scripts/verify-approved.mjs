@@ -300,21 +300,12 @@ expect(landing.includes('/icon-192.png') &&
        !shell.includes('tracksos-approved-logo-owner-20261119.webp'),
        'mobile promo preserves approved launcher icon and shares 618 brand with Android and desktop');
 const demo = await read('web/src/screens/adminTestCenter.tsx');
-const serviceDemo = await read('web/src/demo/servicePreviewApi.ts');
 expect(!demo.includes('Открыть старый учебный тренажёр') &&
   !demo.includes('setFallback(true)'),
   'approved admin role launcher cannot fall back into obsolete role trainers');
-expect(!/\bstructuredClone\s*\(/.test(serviceDemo),
-  'Android 10 WebView starts without unavailable structuredClone in admin demo module');
-expect(shell.includes("b === 'test-center' ? (serviceSandbox ? <ServicePreviewPage") &&
-  shell.includes("const serviceSandbox = false;") &&
-  shell.includes("<AdminTestCenter roleId={route[2]} fullFidelity />"),
-  'admin test center launches only the full-fidelity role sandbox; legacy service preview is permanently disabled');
-expect(demo.includes("'/api/admin/sandbox/status'") &&
-  demo.includes("'/api/admin/sandbox/ticket'") &&
-  demo.includes('FullFidelityRoleLauncher') &&
-  !demo.includes('XMLHttpRequest'),
-  'isolated role handoff only uses admin-only sandbox authorization endpoints');
+expect(shell.includes("b === 'test-center' ? <AdminTestCenter roleId={route[2]} fullFidelity />") &&
+  !shell.includes('serviceSandbox') && !shell.includes('ServicePreview'),
+  'admin test center imports only the full-fidelity role sandbox');
 const oldTraining = await Promise.all([
   'customerTrainingCabinet.tsx','fleetTrainingCabinet.tsx','performerTrainingCabinet.tsx',
 ].map(name=>read('web/src/screens/'+name)));
@@ -542,7 +533,7 @@ expect(androidReviewLive.includes("money: { amount: 1000000, clientFee: 50000, t
   androidOrderReviewTest.includes('Client Android order routing/kopeck pricing/rating wrong'),
   'Android synthetic screenshot review has realistically scaled kopecks and verifies actual destinations');
 expect(shell.includes('MobileSectionChrome title={sectionLabel} homeHref={workspaceHref}') &&
-  shell.includes("const innerSection = !!me && native.isApp && !serviceSandbox") &&
+  shell.includes("const innerSection = !!me && native.isApp") &&
   innerSectionComponent.includes('href={\'#\'+homeHref}') &&
   innerSectionComponent.includes('href="#/menu"') &&
   innerAndroidStyle.includes('tr-native-section-path') &&
@@ -585,7 +576,7 @@ expect(ownerNav818.length === 1 &&
   approvedNavCSS.includes('grid-template-columns:repeat(5,minmax(0,1fr));') &&
   !unifiedMobile.includes('className="and19-equipment and19-parts-shortcut"') &&
   unifiedMobile.includes('Новая заявка на сервис') &&
-  shell.includes('!native.isApp && !serviceSandbox') &&
+  shell.includes('!native.isApp && !isAuthEntry') &&
   shell.includes("['/work/chats', 'chat', 'Чат']"),
   '618.png client exactly five bottom tabs, four original services, separate shop in Menu, no floating native bot');
 
@@ -650,7 +641,6 @@ expect(photoMigration.includes('create table if not exists order_photos') &&
 // The only permitted visual sandbox is the authenticated full-fidelity build.
 const retiredDemo=await read('web/src/screens/demoPreview.tsx');
 const realTestCenter=await read('web/src/screens/adminTestCenter.tsx');
-const oldServicePreviewApi=await read('web/src/demo/servicePreviewApi.ts');
 expect(retiredDemo.includes('Старый демонстрационный просмотр закрыт') &&
   retiredDemo.includes('tr-approved-route-unavailable') &&
   !retiredDemo.includes('AdminTestCenter') &&
@@ -660,15 +650,15 @@ expect(retiredDemo.includes('Старый демонстрационный пр�
 expect(realTestCenter.includes('const fullFidelity = true;') &&
   !realTestCenter.includes('fullFidelity=false'),
   'test center cannot opt back into old fake training role screens');
-expect(oldServicePreviewApi.includes('inServicePreview(): false') &&
-  !oldServicePreviewApi.includes('demo-booking-') &&
-  !oldServicePreviewApi.includes('const original:') &&
-  !oldServicePreviewApi.includes('commissionFull:'),
-  'obsolete service preview must not ship fake orders, cached money or mock API data');
-expect((unifiedShell.match(/const serviceSandbox = false/g) || []).length === 2 &&
-  !unifiedShell.includes("route[2] === 'service' && route.length > 3"),
-  'retired fake STO subroutes must not bypass full-fidelity isolated sandbox');
-
+const liveBaseSource=await read('web/src/screens/base.tsx');
+expect(!unifiedShell.includes('serviceSandbox') && !unifiedShell.includes('ServicePreview') &&
+  !liveBaseSource.includes('servicePreviewApi') && !liveBaseSource.includes('inServicePreview'),
+  'obsolete mock routes and adapters cannot be bundled');
+for (const oldPath of ['web/src/screens/servicePreview.tsx','web/src/demo/servicePreviewApi.ts']) {
+  let remains=false;
+  try { await stat(oldPath); remains=true; } catch { /* physical removal required */ }
+  expect(!remains, 'retired STO preview source must be deleted: '+oldPath);
+}
 const pcSource=await read('web/src/screens/approvedPcCabinets20261120.tsx');
 const pcCss=await read('web/src/approvedPcCabinets20261120.css');
 const courierPcCss=await read('web/src/screens/approvedPcCourier20261120.css');

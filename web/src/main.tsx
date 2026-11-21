@@ -97,7 +97,6 @@ import { Privacy } from './screens/privacy.tsx';
 import { ModCase, Appeal, MyReviews } from './screens/moderation.tsx';
 import { ModeratorDesk } from './screens/moderatorDesk.tsx';
 import { AdminTestCenter } from './screens/adminTestCenter.tsx';
-import { ServicePreviewBar,ServicePreviewPage } from './screens/servicePreview.tsx';
 import { SupportList, SupportNew, SupportThread, Notifications, useUnread } from './screens/support.tsx';
 import { InsurerCabinet, InsurerChats } from './screens/insurer.tsx';
 import { CourierDesk, CourierDelivery } from './screens/courier.tsx';
@@ -309,7 +308,6 @@ function App() {
   const isPerformer = me.roles.some((r) => r === 'master' || r === 'tow');
   const isCustomer = me.roles.some((r) => r === 'client' || r === 'driver');
   const isAdmin = me.roles.includes('admin');
-  const serviceSandbox = false; // Retired: no mock SТО subroutes; use full-fidelity isolated HMAC test entry.
   const isModerator = me.roles.includes('moderator') || isAdmin;
   const isStaff = isModerator;
   const isService = me.roles.includes('service');
@@ -324,7 +322,7 @@ function App() {
     : mode === 'performer' ? isPerformer : mode === 'service' ? isService
     : isCustomer || isStaff;
   const allowedMode: Mode = permitted ? mode : fallback;
-  const effMode: Mode = serviceSandbox ? 'service' : a === 'work' && isPerformer ? 'performer'
+  const effMode: Mode = a === 'work' && isPerformer ? 'performer'
     : a === 'admin' && isAdmin ? 'admin' : a === 'moderation' && isModerator ? 'moderator'
     : a === 'base' && isService ? 'service' : a === 'insurance' && isInsurer ? 'insurer' : a === 'inspections' && (isInspection||isInsurer) ? 'inspection'
     : a === 'courier' && isCourier ? 'courier' : allowedMode;
@@ -404,7 +402,7 @@ function App() {
     case 'qr': screen = <QrJoin code={b} />; break;
     case 'appeal': screen = <Appeal />; break;
     case 'reviews': screen = <MyReviews />; break;
-    case 'admin': screen = !isStaff ? <UnavailableRole label="Нет доступа к администрированию" /> : b === 'case' && route[2] ? <ModCase id={route[2]} /> : !isAdmin ? <ModeratorDesk /> : b === 'test-center' ? (serviceSandbox ? <ServicePreviewPage section={route[3]} sub={route[4]} id={route[5]} /> : <AdminTestCenter roleId={route[2]} fullFidelity />) : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : b === undefined ? <ApprovedPcDesk role="admin" fallback={<Admin />} /> : <Admin key={b === 'section' ? route[2] : 'summary'} initialSection={b === 'section' ? route[2] : undefined} />; break;
+    case 'admin': screen = !isStaff ? <UnavailableRole label="Нет доступа к администрированию" /> : b === 'case' && route[2] ? <ModCase id={route[2]} /> : !isAdmin ? <ModeratorDesk /> : b === 'test-center' ? <AdminTestCenter roleId={route[2]} fullFidelity /> : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : b === undefined ? <ApprovedPcDesk role="admin" fallback={<Admin />} /> : <Admin key={b === 'section' ? route[2] : 'summary'} initialSection={b === 'section' ? route[2] : undefined} />; break;
     case 'moderation': screen = isModerator ? (b === 'verify' || b === 'support' || b === 'flagged' || b === 'cases' ? <ModeratorDesk initialTab={b === 'verify' ? 'verify' : b === 'support' ? 'support' : b === 'flagged' ? 'flagged' : 'cases'} /> : <ApprovedPcDesk role="moderator" fallback={<ModeratorDesk />} />) : <UnavailableRole label="Нет доступа к модерации" />; break;
     case 'offer': screen = <OfferPage audience={b ?? 'client'} />; break;
     case 'support': screen = b === 'new' ? <SupportNew /> : b ? <SupportThread id={b} /> : <SupportList />; break;
@@ -415,8 +413,7 @@ function App() {
   return (
     <MeCtx.Provider value={{ me, reload, mode: effMode, setMode }}>
       <ScreenErrorBoundary key={route.join('/')}>
-        {serviceSandbox && <ServicePreviewBar />}
-        <Shell mode={effMode} me={serviceSandbox ? {...me,roles:['service'],name:'Тестовый сервис'} : me}>{screen}</Shell>
+        <Shell mode={effMode} me={me}>{screen}</Shell>
         {!(a === 'admin' && b === 'test-center' && isAdmin) && <IncomingCall />}
         {!(a === 'admin' && b === 'test-center' && isAdmin) && <OfferGate />}
       </ScreenErrorBoundary>
@@ -486,9 +483,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       </div>
     </div>
   );
-  const serviceSandbox = false; // Never mount the deprecated fake SТО UI inside the production shell.
-  const here = serviceSandbox ? '/'+(route.slice(3).join('/')||'base') : '/'+route.join('/');
-  const sandboxHref=(href:string)=>serviceSandbox?'#/admin/test-center/service'+(href==='/menu'?'/menu':href==='/base'||href.startsWith('/base/')?href:'/unavailable'):'#'+href;
+  const here = '/'+route.join('/');
+  const shellHref=(href:string)=>'#'+href;
   // На телефоне оставляем только рабочие действия. Все прежние маршруты
   // сохраняются через меню; компьютерная боковая навигация остаётся полной.
   const tabs: [string, string, string][] = !me ? [] : mode === 'courier'
@@ -514,9 +510,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     : mode === 'performer'
       ? [['/work', '⌂', 'Главная'], ['/work/jobs', 'clipboard', 'Заявки'], ['/work/chats', 'chat', 'Чат'], ['/menu', 'menu', 'Меню']]
     : mode === 'service'
-      ? (serviceSandbox
-          ? [['/base', '⌂', 'Главная'], ['/base/inbox', 'clipboard', 'Заявки'], ['/base/money', '₽', 'Финансы'], ['/menu', 'menu', 'Меню']]
-          : [['/base', '⌂', 'Главная'], ['/base/inbox', 'clipboard', 'Заявки'], ['/shop', '🛍', 'Магазин'], ['/base/money', '₽', 'Финансы'], ['/menu', 'menu', 'Меню']])
+      ? [['/base', '⌂', 'Главная'], ['/base/inbox', 'clipboard', 'Заявки'], ['/shop', '🛍', 'Магазин'], ['/base/money', '₽', 'Финансы'], ['/menu', 'menu', 'Меню']]
     : mode === 'insurer'
       ? [['/insurance', '⌂', 'Главная'], ['/insurance/requests', 'clipboard', 'Заявки'], ['/insurance/chats', 'chat', 'Чат'], ['/menu', 'menu', 'Меню']]
     : mode === 'inspection'
@@ -596,7 +590,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   // composition is intentionally untouched. Titles come from authorized routes.
   const workspaceHref = mobileTabs[0]?.[0] || '/';
   const sectionPath = here.split('?')[0];
-  const innerSection = !!me && native.isApp && !serviceSandbox &&
+  const innerSection = !!me && native.isApp &&
     !['/',workspaceHref,'/menu'].includes(sectionPath);
   const scopedSectionNames: [string,string][] = [
     ...mobileTabs.map(([path,,name])=>[path,name] as [string,string]),
@@ -665,7 +659,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {me && mode === 'moderator' && <span className="pill accent">модерация</span>}
           {me && mode === 'insurer' && <span className="pill accent">страхование</span>}
           {me && mode === 'service' && <span className="pill accent">рембаза</span>}
-          {me && !serviceSandbox && me.roles.includes('insurer') && me.roles.includes('inspection_operator') &&
+          {me && me.roles.includes('insurer') && me.roles.includes('inspection_operator') &&
             (mode === 'insurer' || mode === 'inspection') &&
             <nav className="cabinet-role-switch" aria-label="Рабочее направление партнёра">
               <a href="#/as/insurer" aria-label="Кабинет страхования"
@@ -673,31 +667,31 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               <a href="#/as/inspection" aria-label="Кабинет техосмотра"
                 aria-current={mode === 'inspection' ? 'page' : undefined}>Техосмотр</a>
             </nav>}
-          {me && !serviceSandbox && me.roles.some(r => r === 'master' || r === 'tow') && me.roles.some(r => r === 'admin' || r === 'moderator') &&
+          {me && me.roles.some(r => r === 'master' || r === 'tow') && me.roles.some(r => r === 'admin' || r === 'moderator') &&
             <nav className="cabinet-role-switch" aria-label="Режим кабинета">
               <a href="#/as/performer" aria-label="Выездной мастер" aria-current={mode === 'performer' ? 'page' : undefined}>Мастер</a>
               {me.roles.includes('admin')
                 ? <a href="#/as/admin" aria-label="Администратор" aria-current={mode === 'admin' ? 'page' : undefined}>Админ</a>
                 : <a href="#/as/moderator" aria-label="Модератор" aria-current={mode === 'moderator' ? 'page' : undefined}>Модер.</a>}
             </nav>}
-          {me && !serviceSandbox && <a href="#/help" className="bell" aria-label="Справка">?</a>}
-          {me && !serviceSandbox && <Bell />}
+          {me && <a href="#/help" className="bell" aria-label="Справка">?</a>}
+          {me && <Bell />}
           {me && <details className="account-menu" key={here}>
             <summary aria-label="Открыть меню кабинета"><span className="account-menu-desktop-glyph" aria-hidden="true">☰</span><span className="account-menu-desktop-label">Меню</span><span className="account-menu-mobile-glyph" aria-hidden="true"><NavGlyph glyph="◉" /></span></summary>
             <nav aria-label="Все разделы кабинета">
               <span className="account-menu-heading">Мой кабинет</span>
-              {accountLinks.map(([href, label]) => <a key={href} href={sandboxHref(href)}>{label}</a>)}
+              {accountLinks.map(([href, label]) => <a key={href} href={shellHref(href)}>{label}</a>)}
               <span className="account-menu-heading">Помощь и документы</span>
-              {!serviceSandbox && <button type="button" className="account-menu-tour" onClick={() => window.dispatchEvent(new Event('traksos-tour-start'))}>Показать, где какие кнопки</button>}
-              {helpLinks.map(([href, label]) => <a key={href} href={sandboxHref(href)}>{label}</a>)}
-              {!serviceSandbox && <button type="button" className="account-menu-logout" onClick={safeLogout}>Выйти из аккаунта</button>}
+              {<button type="button" className="account-menu-tour" onClick={() => window.dispatchEvent(new Event('traksos-tour-start'))}>Показать, где какие кнопки</button>}
+              {helpLinks.map(([href, label]) => <a key={href} href={shellHref(href)}>{label}</a>)}
+              {<button type="button" className="account-menu-logout" onClick={safeLogout}>Выйти из аккаунта</button>}
             </nav>
           </details>}
         </div>
       </header>
       <NetworkStatus />
-      {me && !native.isApp && !serviceSandbox && ['', 'work', 'base', 'admin', 'moderation', 'insurance', 'inspections'].includes(route[0] ?? '') && <TrainingInvite />}
-      {me && !mobileShell && !serviceSandbox && <ContextHelp page={route[0] ?? ''} />}
+      {me && !native.isApp && ['', 'work', 'base', 'admin', 'moderation', 'insurance', 'inspections'].includes(route[0] ?? '') && <TrainingInvite />}
+      {me && !mobileShell && <ContextHelp page={route[0] ?? ''} />}
       <div className="desktop-layout">
         <aside className="desktop-sidebar" aria-label="Навигация по сайту">
           <div className="desktop-sidebar-title">{me ? 'Рабочий кабинет' : isAuthEntry ? 'TrakSos · вход и документы' : 'TrakSos · помощь в дороге'}</div>
@@ -713,7 +707,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                       ? tabs
                       : mode === 'moderator' ? [...tabs, ['/profile', '◉', 'Аккаунт']]
                       : [...tabs, ['/as/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]).map(([href, ic, name]) => (
-                <a key={href} href={sandboxHref(href)} className={`desktop-nav-link ${here === href || (href !== '/' && here.startsWith(href + '/')) ? 'active' : ''} ${href === '/sos' ? 'desktop-nav-sos' : ''}`}>
+                <a key={href} href={shellHref(href)} className={`desktop-nav-link ${here === href || (href !== '/' && here.startsWith(href + '/')) ? 'active' : ''} ${href === '/sos' ? 'desktop-nav-sos' : ''}`}>
                   <span aria-hidden="true">{ic}</span><span>{name}</span>
                 </a>
               ))}
@@ -733,7 +727,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                     ['/offer/performer','☷','Оферта'], ['/shop','▦','Запчасти']]]
                   ] as [string,[string,string,string][]][]).map(([group, links])=><div key={group}>
                   <div className="desktop-sidebar-title desktop-nav-section">{group}</div>
-                  {links.map(([href,ic,name])=><a key={href} href={sandboxHref(href)}
+                  {links.map(([href,ic,name])=><a key={href} href={shellHref(href)}
                     className={`desktop-nav-link ${here===href?'active':''}`}>
                     <span aria-hidden="true">{ic}</span><span>{name}</span>
                   </a>)}
@@ -745,7 +739,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               {mode === 'client' && <>
                 <div className="desktop-sidebar-title desktop-nav-section">Мой кабинет</div>
                 {([...(me && !me.owner_id && !me.roles.includes('driver') ? [['/fleet','▣','Мой парк']] as [string,string,string][] : []),['/air','☷','Эфир'],['/support','?','Поддержка'],['/profile','◉','Профиль']] as [string,string,string][]).map(([href, ic, name]) => (
-                  <a key={href} href={sandboxHref(href)} className={`desktop-nav-link ${here === href || here.startsWith(href + '/') ? 'active' : ''}`}>
+                  <a key={href} href={shellHref(href)} className={`desktop-nav-link ${here === href || here.startsWith(href + '/') ? 'active' : ''}`}>
                     <span aria-hidden="true">{ic}</span><span>{name}</span>
                   </a>
                 ))}
@@ -782,8 +776,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         </aside>
         <div className="desktop-content">
           {innerSection && <MobileSectionChrome title={sectionLabel} homeHref={workspaceHref}/>}
-          {me && !native.isApp && !serviceSandbox && route.length===0 && <IntroInvitation key={me.id+'-'+mode} userId={me.id} mode={mode} roles={me.roles} />}
-          {me && route[0] === 'menu' && !serviceSandbox
+          {me && !native.isApp && route.length===0 && <IntroInvitation key={me.id+'-'+mode} userId={me.id} mode={mode} roles={me.roles} />}
+          {me && route[0] === 'menu'
             ? <MobileRoleMenu mode={mode} quick={mobileTabs} account={accountLinks} help={helpLinks} onLogout={safeLogout} />
             : children}
           {/* Website legal/footer blocks belong to the browser, not beneath
@@ -805,7 +799,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       {mobileTabs.length > 0 && (
         <nav className="tabbar">
           {mobileTabs.map(([href, ic, name]) => (
-            <a key={href} href={sandboxHref(href)} className={`${here === href || (href !== '/' && here.startsWith(href + '/') && href !== '/work' && href !== '/base') ? 'on' : ''} ${href === '/sos' ? 'sosTab' : ''}`}>
+            <a key={href} href={shellHref(href)} className={`${here === href || (href !== '/' && here.startsWith(href + '/') && href !== '/work' && href !== '/base') ? 'on' : ''} ${href === '/sos' ? 'sosTab' : ''}`}>
               {href === '/sos' ? <><span className="ic"><NavGlyph glyph="✚" /></span>{name}</> : <><span className="ic"><NavGlyph glyph={ic} /></span>{name}</>}
             </a>
           ))}
@@ -813,8 +807,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       )}
       {/* 618.png has no overlapping floating robot. The same approved talking-truck
           TrakBot remains in Android Menu > TrakBot and on the desktop. */}
-      {!native.isApp && !serviceSandbox && !isAuthEntry && route[0] !== 'trakbot' && <TrakBotDock authenticated={!!me} />}
-      {me && !serviceSandbox && <RoleTour page={route[0] ?? ''} />}
+      {!native.isApp && !isAuthEntry && route[0] !== 'trakbot' && <TrakBotDock authenticated={!!me} />}
+      {me && <RoleTour page={route[0] ?? ''} />}
     </div>
   );
 }
