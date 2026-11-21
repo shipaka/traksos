@@ -60,6 +60,8 @@ try{
         throw Error(role+': first-run overlay blocks approved workdesk');
       if(role==='master')await page.locator('.and19-line button').waitFor();
       else await page.locator('.and19-services').waitFor();
+      if(await page.locator('.tr-context-help').count())
+        throw Error(role+': old top help chip must stay inside mobile Menu, not on approved 618 workdesk');
       await page.waitForTimeout(650);
       const brand=await page.locator('.top .tr-approved-brand-logo img').evaluate(img=>{
         const rect=img.getBoundingClientRect();
