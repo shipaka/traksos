@@ -147,6 +147,13 @@ const unifiedBot = await read('web/src/trakbotMascot.css');
 const unifiedOrderPhoto = await read('web/src/approvedOrderTruck.tsx');
 const unifiedSceneStyle = await read('web/src/approvedEmptyScene.css');
 const unifiedServiceSceneStyle = await read('web/src/approvedServiceScene.css');
+const performerEmptySource=await read('web/src/screens/approvedPcCabinets20261120.tsx');
+const performerEmptyStyle=await read('web/src/approvedPcCabinets20261120.css');
+expect(performerEmptySource.includes('<ApprovedEmptyScene kind="shift"/>') &&
+  performerEmptySource.includes('data-orders="0"') &&
+  performerEmptySource.includes('!jobs.data?<LoadingBlock error={jobs.error} retry={jobs.reload}/>') &&
+  performerEmptyStyle.includes('.approved-pc-performer .approved-pc-shift-empty-body'),
+  'performer/tow empty shift preserves API loading, real offer CTA and cinematic illustration without fake work');
 const ownerPcUiContract=await read('web/src/screens/ownerDesktopHome20261120.css');
 const botDockContract=await read('web/src/trakbotDock.css');
 expect(ownerPcUiContract.includes('UI CONTRACT 21.11: canonical desktop guest mascot') &&

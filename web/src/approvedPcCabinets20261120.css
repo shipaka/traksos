@@ -471,3 +471,38 @@ html.traksos-browser .approved-pc-admin .approved-pc-russia::before {
    grid-template-columns:minmax(0,1fr);
  }
 }
+
+
+/* Approved 617/618 visual grammar: a truthful empty performer/tow desk
+   retains the cinematic truck scene without fake orders, prices or statuses. */
+@media(min-width:900px){
+ .approved-pc-performer .approved-pc-shift-empty{min-height:254px}
+ .approved-pc-performer .approved-pc-shift-empty-body{
+   display:grid;grid-template-columns:minmax(0,1fr) minmax(165px,45%);
+   align-items:center;gap:14px;min-height:198px;padding:13px;
+   border:1px solid #315c69;border-radius:13px;
+   background:linear-gradient(115deg,#0d2531 0%,#0c202a 42%,#102f3e 100%);
+ }
+ .approved-pc-performer .approved-pc-shift-empty-copy{
+   min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:9px;
+ }
+ .approved-pc-performer .approved-pc-shift-empty-copy strong{
+   font-size:clamp(15px,1.5vw,20px);line-height:1.2;color:#f8fafc;
+ }
+ .approved-pc-performer .approved-pc-shift-empty-copy p{
+   font-size:12px;line-height:1.5;color:#c5dae4;margin:0;
+ }
+ .approved-pc-performer .approved-pc-shift-empty-copy .approved-pc-primary{margin:3px 0 0;min-height:42px}
+ .approved-pc-performer .approved-pc-shift-empty-copy .approved-pc-small-link{
+   font-size:11px;border-bottom:0;padding:1px 0;
+ }
+ .approved-pc-performer .approved-pc-shift-empty-body .tr-approved-empty-scene{
+   min-width:0;height:168px;border-radius:11px;
+ }
+}
+@media(min-width:900px) and (max-width:1350px){
+ .approved-pc-performer .approved-pc-shift-empty-body{
+   grid-template-columns:minmax(0,1fr);
+ }
+ .approved-pc-performer .approved-pc-shift-empty-body .tr-approved-empty-scene{height:140px}
+}

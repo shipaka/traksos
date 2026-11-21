@@ -11,6 +11,7 @@ import {RoadsideMap} from './roadsideMap.tsx';
 import {useAction, useLoad, useMe} from '../ui.tsx';
 import {STATUS, SERVICES} from '../dict.ts';
 import {APPROVED_VISUALS} from '../approvedVisuals.ts';
+import {ApprovedEmptyScene} from '../approvedEmptyScene.tsx';
 import {VehicleModelPhoto} from '../vehicleVisual.tsx';
 import {OfferForm} from './search.tsx';
 import {OrderPhotoGallery, OrderPhotoCapture} from './orderPhotos.tsx';
@@ -412,8 +413,19 @@ function PerformDesk({tow}:{tow:boolean}){
           onClick={()=>setChosen(String(o.id))} badge={statusName(o)}/>)}
         {!planned.length&&<Empty>Записей на следующие дни нет.</Empty>}
       </Pane></>}
-      center={selected?<SelectedPerformerCase key={selected.id} order={selected} tow={tow}/>:<Pane title="Рабочая смена"><Empty>Нет принятых активных заявок. Перейдите в новые предложения.</Empty>
-        <button className="approved-pc-primary" onClick={()=>setMode('offers')}>Проверить предложения</button></Pane>}
+      center={selected?<SelectedPerformerCase key={selected.id} order={selected} tow={tow}/>:<Pane title={tow?'Рабочая эвакуация':'Рабочая смена'} className="approved-pc-shift-empty">
+        {!jobs.data?<LoadingBlock error={jobs.error} retry={jobs.reload}/>:
+          <div className="approved-pc-shift-empty-body" data-orders="0">
+            <div className="approved-pc-shift-empty-copy">
+              <strong>{tow?'Готовы к следующей эвакуации':'Готовы к следующему выезду'}</strong>
+              <p>{tow?'Принятых эвакуаций сейчас нет. Проверьте новые предложения по доступной зоне и технике.':
+                'Принятых выездных заявок сейчас нет. Новые предложения появляются с учётом специализаций и зоны работы.'}</p>
+              <button className="approved-pc-primary" type="button" onClick={()=>setMode('offers')}>Проверить предложения</button>
+              <a className="approved-pc-small-link" href="#/work/me/schedule">Мой график и доступность →</a>
+            </div>
+            <ApprovedEmptyScene kind="shift"/>
+          </div>}
+      </Pane>
       right={<><Calendar items={all}/><Pane title="Моя смена"><p>Статус: <b>{text(me?.performer?.line_status)}</b></p>
         <a className="approved-pc-small-link" href="#/work/me/schedule">Расписание и доступность →</a></Pane>
         <Bot message={tow?'Помогу с погрузкой и документами.':'Подскажу по диагностике и заявке.'}/></>}/>}

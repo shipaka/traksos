@@ -83,6 +83,24 @@ try {
         if(inline > 0 && floating > 0)
           throw Error(entry.name+': approved PC dashboard shows duplicate TrakBot card and floating dock');
       }
+      // Show the approved branded illustration and live CTA only after the
+      // performer/tow order API confirms a genuinely empty shift.
+      if(width===1440 && ['master','tow'].includes(entry.name) &&
+         await page.locator('.approved-pc-shift-empty-body').count()){
+        const empty=page.locator('.approved-pc-shift-empty-body');
+        const scene=empty.locator('.tr-approved-empty-scene img');
+        const valid=await scene.evaluate(async img=>{
+          if(!img.complete) await img.decode().catch(()=>{});
+          return img.naturalWidth>50;
+        });
+        if(!valid||await empty.getAttribute('data-orders')!=='0')
+          throw Error(entry.name+': missing approved artwork or false empty job state');
+        await empty.getByRole('button',{name:'Проверить предложения'}).click();
+        if(await page.getByRole('tab',{name:/Новые предложения/}).getAttribute('aria-selected')!=='true')
+          throw Error(entry.name+': empty shift CTA did not open the real offers');
+        await page.getByRole('tab',{name:/Текущая работа/}).click();
+        await empty.waitFor();
+      }
       await page.screenshot({path:'e2e/shots/cabinet-ux/'+entry.name+'-home-'+width+'.png',fullPage:true});
       // Simulate a real user opening the cabinet menu and following a safe inner page.
       await page.locator('.account-menu > summary').click();
