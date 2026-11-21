@@ -530,6 +530,13 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       ? [['/moderation', '⌂', 'Главная'], ['/support', '?', 'Обращения'], ['/menu', 'menu', 'Меню']]
     : [['/admin', '⌂', 'Главная'], ['/admin/section/orders', 'clipboard', 'Заявки'],
        ['/admin/section/people', '▤', 'Пользователи'], ['/menu', 'menu', 'Меню']];
+  // Only one bottom tab can be active. A parent route such as /courier
+  // also matches /courier/jobs, but the most specific existing tab wins.
+  // Keep the deliberate exclusions for /work and /base secondary forms.
+  const activeMobileTabHref=mobileTabs
+    .filter(([href])=>here===href ||
+      (href!=='/' && href!=='/work' && href!=='/base' && here.startsWith(href+'/')))
+    .sort((a,b)=>b[0].length-a[0].length)[0]?.[0];
   // Все дополнительные функции доступны в шапке, даже когда они не в нижних вкладках.
   // Не показываем чужие роли и не создаём несуществующие страницы.
   const accountLinks: [string, string][] = mode === 'courier'
@@ -830,7 +837,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       {mobileTabs.length > 0 && (
         <nav className="tabbar">
           {mobileTabs.map(([href, ic, name]) => (
-            <a key={href} href={shellHref(href)} className={`${here === href || (href !== '/' && here.startsWith(href + '/') && href !== '/work' && href !== '/base') ? 'on' : ''} ${href === '/sos' ? 'sosTab' : ''}`}>
+            <a key={href} href={shellHref(href)} className={`${activeMobileTabHref === href ? 'on' : ''} ${href === '/sos' ? 'sosTab' : ''}`}>
               {href === '/sos' ? <><span className="ic"><NavGlyph glyph="✚" /></span>{name}</> : <><span className="ic"><NavGlyph glyph={ic} /></span>{name}</>}
             </a>
           ))}
