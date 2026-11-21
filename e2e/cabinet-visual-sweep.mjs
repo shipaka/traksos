@@ -47,12 +47,19 @@ try {
           body:document.body.scrollWidth,
           missing:document.querySelector('main')?.textContent?.includes('Такой страницы нет'),
           failed:document.body.textContent?.includes('Не удалось открыть раздел'),
-          nav:document.querySelectorAll('.account-menu nav a[href^="#/"]').length
+          nav:document.querySelectorAll('.account-menu nav a[href^="#/"]').length,
+          legacy:[...document.querySelectorAll('.desktop-hero,.desktop-quick-links,.service-preview-admin-bar,.sandbox-role-card,#operator-demo-code')]
+            .map(el=>el.className||el.id),
+          logo:(()=>{
+            const img=document.querySelector('header.top .tr-approved-brand-logo img');
+            return {present:!!img,src:img?.getAttribute('src')||'',loaded:!!img?.complete&&img.naturalWidth===274&&img.naturalHeight===46};
+          })()
         }));
         if(report.scroll>report.width+3 || report.body>report.width+3)
           throw Error(entry.name+' '+width+'px '+where+': horizontal overflow '+JSON.stringify(report));
-        if(report.missing||report.failed||report.nav<5)
-          throw Error(entry.name+' '+width+'px '+where+': broken screen or missing cabinet navigation '+JSON.stringify(report));
+        if(report.missing||report.failed||report.nav<5||report.legacy.length||
+           !report.logo.present||report.logo.src!=='/traksos-brand-logo-approved-618.png'||!report.logo.loaded)
+          throw Error(entry.name+' '+width+'px '+where+': old interface, missing approved logo or broken navigation '+JSON.stringify(report));
         if(jsErrors.length)throw Error(entry.name+' '+width+'px '+where+': '+jsErrors.join('; '));
       }
       await page.goto(BASE+'/'+entry.home,{waitUntil:'domcontentloaded'});
