@@ -65,5 +65,7 @@ jobs:
             node --import tsx server/src/ops/exerciseSandboxPayments.ts
           "${compose[@]}" exec -T -e TRAKSOS_RUN_DISPOSABLE_SCENARIO=true sandbox-app \
             node --import tsx server/src/ops/exerciseSandboxOrder.ts
+          "${compose[@]}" exec -T -e TRAKSOS_RUN_DISPOSABLE_SCENARIO=true sandbox-app \
+            node --import tsx server/src/ops/exerciseSandboxTowSto.ts
           "${compose[@]}" exec -T sandbox-app node --import tsx server/src/ops/auditSandbox.ts
           echo 'PASS: separate network/DB, real order engine, virtual money and ledger'
