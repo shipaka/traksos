@@ -210,10 +210,14 @@ try{
          const r=document.querySelector('.desktop-content > .tr-inner-rail');
          const a=h?.getBoundingClientRect(),b=m?.getBoundingClientRect(),c=r?.getBoundingClientRect();
          return {heroTop:a?.top,heroBottom:a?.bottom,mainTop:b?.top,mainRight:b?.right,
-           railTop:c?.top,railLeft:c?.left,railRight:c?.right,
+           railTop:c?.top,railBottom:c?.bottom,railLeft:c?.left,railRight:c?.right,
            width:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth};
        });
-       if(layout.scroll>layout.width+3 || layout.mainRight>layout.railLeft+5 ||
+       const staffBand=['moderator','admin'].includes(c.id);
+       const overlapping=staffBand
+         ? layout.mainTop<layout.railBottom-4
+         : layout.mainRight>layout.railLeft+5;
+       if(layout.scroll>layout.width+3 || overlapping ||
           layout.mainTop<layout.heroBottom-4)
          throw Error('Approved inner content/rail overlap or overflow: '+JSON.stringify(layout));
      }
