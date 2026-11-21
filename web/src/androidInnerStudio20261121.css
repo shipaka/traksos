@@ -86,3 +86,21 @@
 html.traksos-reduced-motion.traksos-native .app:not(.guest-app) .desktop-content>.tr-native-section-brief{
  animation:none!important;transform:none!important;
 }
+
+/* Visual QA on six REAL rendered native-mode Chromium screens: the approved
+ * caption already explains these pages. Suppress only duplicate old headlines;
+ * never remove input fields, workflow buttons, booking totals or API states. */
+@media(max-width:899px){
+ html.traksos-native .app:not(.guest-app) .desktop-content:has(> .tr-native-section-brief)
+ > main.client-garage-page > .client-section-hero-garage,
+ html.traksos-native .app:not(.guest-app) .desktop-content:has(> .tr-native-section-brief)
+ > main.account-profile-page > h1,
+ html.traksos-native .app:not(.guest-app) .desktop-content:has(> .tr-native-section-brief[data-route="base/me"])
+ > main > div:first-of-type{
+  display:none!important;
+ }
+ html.traksos-native .app:not(.guest-app) .desktop-content:has(> .tr-native-section-brief)
+ > main.client-orders-page > h1{
+  display:none!important;
+ }
+}
