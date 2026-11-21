@@ -688,8 +688,10 @@ function AdminDesk(){
     right={<><Pane title="Состояние платформы"><p>Реальный статус интеграций — в диагностике; зелёные индикаторы из макета не являются подтверждением работы.</p>
       <a className="approved-pc-small-link" href="#/admin/section/diagnostics">Открыть диагностику →</a></Pane>
       <Pane title="Тестовые кабинеты"><div className="approved-pc-role-grid">
-        {[['owner','Владелец'],['driver','Водитель'],['master','Мастер'],['tow','Эвакуатор'],
-          ['service','СТО'],['insurer','Страхование'],['inspection','Техосмотр'],['moderator','Модератор'],['admin','Администратор']]
+        {[['client','Клиент'],['owner','Владелец'],['driver','Водитель'],['master','Мастер'],
+          ['tow','Эвакуатор'],['service','СТО'],['master_service','Мастер + СТО'],
+          ['insurer','Страхование'],['inspection','Техосмотр'],['courier','Курьер'],
+          ['moderator','Модератор'],['admin','Администратор']]
           .map(([id,label])=><a key={id} href={'#/admin/test-center/'+id}>{label}</a>)}
       </div><a className="approved-pc-primary" href="#/admin/test-center">Открыть тест-центр</a></Pane></>}/>
   </main>;
