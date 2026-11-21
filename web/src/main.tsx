@@ -48,6 +48,8 @@ import './approvedPublicInner20261120.css';
 import './approvedInnerExperience.css';
 // Native 618 inner pages reuse the approved truck image in a compact contextual strip.
 import './androidInnerStudio20261121.css';
+// Smaller actual content blocks following approved 617/618 inner page headers.
+import './approvedInnerDepth20261121.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
