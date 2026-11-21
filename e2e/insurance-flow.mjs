@@ -109,7 +109,7 @@ try{
   await clientPage.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','client')},owner.token);
   await clientPage.goto(BASE+'/#/insurance/request/new/'+truck.id);
   await acceptPendingOffers(clientPage,owner.token);
-  await clientPage.getByRole('heading',{name:'Заявка на страхование грузовика'}).waitFor();
+  await clientPage.locator('.desktop-content > main').getByRole('heading',{name:'Заявка на страхование грузовика'}).first().waitFor();
   await clientPage.locator('select').first().selectOption(partner.user.id);
   await clientPage.getByRole('button',{name:'Продолжить'}).click();
   await clientPage.getByLabel('Фамилия').fill('Иванов');
