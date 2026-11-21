@@ -104,3 +104,14 @@ html.traksos-reduced-motion.traksos-native .app:not(.guest-app) .desktop-content
   display:none!important;
  }
 }
+
+/* The 618 native introduction uses the same title as PC. Preserve driver
+ * vs master authorization links but avoid a second large legacy title. */
+@media(max-width:899px){
+ html.traksos-native .app:not(.guest-app) .desktop-content:has(> .tr-native-section-brief[data-route^="techbase/"])
+ > main.techbase-page > .techbase-hero > :is(.techbase-eyebrow,h1,p){display:none!important}
+ html.traksos-native .app:not(.guest-app) .desktop-content:has(> .tr-native-section-brief[data-route^="techbase/"])
+ > main.techbase-page > .techbase-hero:not(:has(.techbase-hero-actions > a)){display:none!important}
+ html.traksos-native .app:not(.guest-app) .desktop-content:has(> .tr-native-section-brief[data-route^="techbase/"])
+ > main.techbase-page > .techbase-hero:has(.techbase-hero-actions > a){min-height:0;padding:10px;border-radius:12px}
+}
