@@ -38,7 +38,7 @@ export function SandboxEnter() {
   </main>;
 }
 
-export function SandboxModeBar() {
+export function SandboxModeBadge() {
   let active = false;
   let returnUrl = '';
   try {
@@ -46,9 +46,7 @@ export function SandboxModeBar() {
     returnUrl = sessionStorage.getItem('traksos.sandboxReturnUrl') ?? '';
   } catch { /* private mode */ }
   if (!active) return null;
-  return <div className="banner sandbox-isolated-banner" role="note" style={{position:'sticky',top:0,zIndex:1200,margin:0}}>
-    <b>ТЕСТОВЫЙ КАБИНЕТ · ДАННЫЕ ИЗОЛИРОВАНЫ</b>
-    <span>Те же экраны и действия, отдельная база. Никаких настоящих SMS и платежей.</span>
-    {returnUrl && <a className="btn ghost small" href={returnUrl}>← К выбору тестовых кабинетов</a>}
-  </div>;
+  return returnUrl
+    ? <a className="pill accent" href={returnUrl} aria-label="Тест. К выбору тестовых кабинетов" title="К выбору тестовых кабинетов">Тест</a>
+    : <span className="pill accent">Тест</span>;
 }
