@@ -82,5 +82,39 @@ try{
     width+': opt-in TrakBot must remain available in Menu');
   await context.close();
  }
- console.log('Courier browser 320/390: compact footer, visible legal/cookie, no bot overlay, Menu link OK');
+ // Same parent-prefix bug affected the real desktop admin orders screenshot:
+ // /admin and /admin/section/orders were both marked active.
+ const desktop=await browser.newContext({viewport:{width:1440,height:900},locale:'ru-RU'});
+ const adminPage=await desktop.newPage();
+ await adminPage.addInitScript(()=>{
+   localStorage.setItem('traksos.token','local-admin-nav-only');
+   localStorage.setItem('traksos.mode','admin');
+ });
+ await adminPage.route('**/api/**',async route=>{
+   const path=new URL(route.request().url()).pathname;
+   const body=path==='/api/me'
+    ? {id:'local-admin-nav',phone:'+79990000001',roles:['admin'],status:'active',
+       name:'Тестовая админка',owner_id:null,company_name:null,company_inn:null,
+       rating:null,rating_count:0,performer:null}
+    : path==='/api/me/offers' ? []
+    : path==='/api/me/notifications' ? {unread:0,items:[]}
+    : path==='/api/legal' ? {brand:'TrakSOS'}
+    : path==='/api/auth/realtime-ticket' ? {ticket:'mock-ci-ticket'}
+    : null;
+   await route.fulfill({status:body===null?404:200,contentType:'application/json',
+     body:JSON.stringify(body??{})});
+ });
+ for(const [route,expected] of [['#/admin','#/admin'],
+                                 ['#/admin/section/orders','#/admin/section/orders'],
+                                 ['#/admin/section/support','#/admin/section/support']]){
+   await adminPage.goto(BASE+'/'+route,{waitUntil:'domcontentloaded'});
+   await adminPage.locator('.desktop-sidebar .desktop-nav').waitFor();
+   await adminPage.locator('.desktop-nav-link[href="'+expected+'"]').waitFor();
+   const active=await adminPage.locator('.desktop-sidebar .desktop-nav .desktop-nav-link.active')
+     .evaluateAll(items=>items.map(a=>a.getAttribute('href')));
+   assert.deepEqual(active,[expected],
+     'Desktop admin sidebar has multiple selected routes on '+route);
+ }
+ await desktop.close();
+ console.log('Courier mobile 320/390 + admin desktop 1440: exactly one active navigation item; footer and consent visible');
 }finally{await browser.close();}
