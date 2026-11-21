@@ -206,6 +206,13 @@ try{
      // fixed floating launcher must never obstruct input fields or CTAs.
      if(width===390 && await page.locator('.trakbot-dock').count())
        throw Error('Floating TrakBot overlaps narrow inner content: '+c.id+'/'+width);
+     if(width===390 && c.id==='master'){
+       const action=page.locator('main.performer-workspace .internal-role-hero-performer a.btn[href="#/work"]');
+       await action.waitFor({state:'visible',timeout:12000});
+       const gradient=await action.evaluate(node=>getComputedStyle(node).backgroundImage);
+       if(!gradient.includes('rgb(239, 130, 37)'))
+         throw Error('Master inner CTA reverted to legacy non-orange palette: '+gradient);
+     }
      if(['moderator','admin'].includes(c.id)){
        if(await rail.locator('.tr-inner-bot-card').count())
          throw Error('Staff inner pages unexpectedly show TrakBot: '+c.id+'/'+width);
