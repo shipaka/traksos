@@ -105,6 +105,17 @@ try{
           await page.screenshot({path:out+'/'+role+'-'+width+'-OVERFLOW.png',fullPage:true});
           throw Error('Horizontal scroll in '+role+' '+width+': '+JSON.stringify({geometry,offenders}));
         }
+        // Every working role must be reachable directly from the real
+        // admin dashboard, not only from a hidden test-center URL.
+        if(role==='admin'){
+          const links=await page.locator('.approved-pc-role-grid a').evaluateAll(nodes=>
+            nodes.map(node=>node.getAttribute('href')));
+          const required=SANDBOX_ROLES.map(id=>'#/admin/test-center/'+id);
+          const missing=required.filter(href=>!links.includes(href));
+          if(missing.length || links.length!==required.length)
+            throw Error('Admin role launcher differs from the 12 real sandbox roles: '+
+              JSON.stringify({missing,links}));
+        }
         if(errors.length)throw Error('JavaScript error in '+role+': '+errors.join('; '));
         // A legal dialog or navigation click may leave the page scrolled.
         // Reset before full-page proof so sticky header is not rendered
