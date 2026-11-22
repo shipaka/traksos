@@ -640,10 +640,10 @@
   content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
   background:linear-gradient(180deg,rgba(4,16,29,.08),rgba(4,16,29,.70) 48%,#06172cf5);
 }
-.guest-app .guest-partner-role-master{background-image:linear-gradient(145deg,#0b3754,#071b31)!important}
-.guest-app .guest-partner-role-tow{background-image:linear-gradient(145deg,#0b3754,#071b31)!important}
-.guest-app .guest-partner-role-service{background-image:linear-gradient(145deg,#0b3754,#071b31)!important}
-.guest-app .guest-partner-role-insurer{background-image:linear-gradient(145deg,#0b3754,#071b31)!important}
+.guest-app .guest-partner-role-master{background-image:url('/partner-master-illustration.svg')!important}
+.guest-app .guest-partner-role-tow{background-image:url('/partner-tow-illustration.svg')!important}
+.guest-app .guest-partner-role-service{background-image:url('/partner-sto-illustration.svg')!important}
+.guest-app .guest-partner-role-insurer{background-image:url('/partner-insurer-illustration.svg')!important}
 .guest-app .guest-partner-roles .guest-partner-role b{font-size:clamp(15px,1.4vw,19px);text-shadow:0 2px 7px #000}
 .guest-app .guest-partner-roles .guest-partner-role small{color:#d7eaf5;font-size:12px;line-height:1.35;text-shadow:0 2px 6px #000}
 .guest-app .guest-partner-roles .guest-partner-role[aria-pressed=true]{
@@ -769,10 +769,10 @@
 /* Pre-17 Nov partner photography retired; only current palette remains until approved replacement assets.
    The same four source images render consistently in desktop + mobile webview. */
 .guest-app .partner-art-intro{--partner-art:url('../public/tracksos-approved-hero-owner-20261119.webp')}
-.guest-app .partner-art-tow{--partner-art:linear-gradient(145deg,#0b3754,#071b31)}
-.guest-app .partner-art-master{--partner-art:linear-gradient(145deg,#0b3754,#071b31)}
-.guest-app .partner-art-service{--partner-art:linear-gradient(145deg,#0b3754,#071b31)}
-.guest-app .partner-art-insurer{--partner-art:linear-gradient(145deg,#0b3754,#071b31)}
+.guest-app .partner-art-tow{--partner-art:url('/partner-tow-illustration.svg')}
+.guest-app .partner-art-master{--partner-art:url('/partner-master-illustration.svg')}
+.guest-app .partner-art-service{--partner-art:url('/partner-sto-illustration.svg')}
+.guest-app .partner-art-insurer{--partner-art:url('/partner-insurer-illustration.svg')}
 .guest-app .guest-partner-mobile-preview{display:none}
 @media(min-width:900px){
   .guest-app .auth-desktop-layout{
