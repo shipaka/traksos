@@ -298,3 +298,20 @@
  .app:not(.guest-app)> .trakbot-dock .trakbot-dock-launcher{transition:none!important}
 }
 html.traksos-reduced-motion .app:not(.guest-app)> .trakbot-dock .trakbot-dock-launcher .trakbot-mascot{animation:none!important}
+
+/* Prevent flex-shrinking long TrakBot messages inside compact scroll list. */
+/* .msgs is a column flex container. Its default child flex-shrink:1 was
+   squeezing 20 repeated diagnostic sentences into the 150px viewport at
+   412×915, leaving scrollHeight===clientHeight and hiding text. Only the
+   list itself shrinks; each message keeps its natural readable height. */
+.trakbot-compact-body .trakbot-dialog .msgs > .msg,
+.trakbot-compact-body .trakbot-dialog .msgs > .trakbot-typing {
+  flex:0 0 auto!important;
+  min-height:max-content;
+}
+.trakbot-compact-body .trakbot-dialog .msgs {
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior-y:contain;
+  min-height:0!important;
+}
