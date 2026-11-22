@@ -58,6 +58,9 @@ try {
           titleInBounds:!!titleRect&&titleRect.left>=bounds.left-2&&titleRect.right<=bounds.right+2,
           descInBounds:!!descRect&&descRect.left>=bounds.left-2&&descRect.right<=bounds.right+2,
           ctaInBounds:!!ctaRect&&ctaRect.left>=bounds.left-2&&ctaRect.right<=bounds.right+2&&ctaRect.bottom<=bounds.bottom+2,
+          textNotCovered:!!titleRect&&!!descRect&&!!ctaRect&&
+            titleRect.bottom<=descRect.top+2 && descRect.bottom<=ctaRect.top+3,
+          textFits:!!title&&!!desc&&title.scrollHeight<=title.clientHeight+2&&desc.scrollHeight<=desc.clientHeight+2,
           caption:card.querySelector('b')?.textContent?.trim(),
         };
       }));
@@ -67,7 +70,8 @@ try {
         tile.src?.includes('/feature-art/traksos-feature-'+tile.key+'-desktop-20261122.webp') &&
         tile.loaded && tile.artFull && !tile.oldAtlas &&
         tile.overlay?.includes('linear-gradient') &&
-        tile.titleInBounds && tile.descInBounds && tile.ctaInBounds),
+        tile.titleInBounds && tile.descInBounds && tile.ctaInBounds &&
+        tile.textNotCovered && tile.textFits),
         width+'px: new canonical full-card feature photo, visible DOM copy, or CTA failed: '+JSON.stringify(tiles));
       const botShortcut=page.locator('.owner20-quick-trakbot');
       assert(await botShortcut.count()===1,'TrakBot should occupy exactly the fifth quick tile');
