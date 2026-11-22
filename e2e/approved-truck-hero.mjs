@@ -130,7 +130,7 @@ try{
       const home=p.locator('main.owner20-home');
       await home.waitFor({state:'visible'});
       const hero=home.locator('.owner20-photo');
-      const photo=await hero.evaluate(el=>getComputedStyle(el,'::after').backgroundImage);
+      const photo=await hero.evaluate(el=>getComputedStyle(el).backgroundImage);
       if(!photo.includes('owner20-photo-background-approved.webp'))
         throw Error('617 PC hero must use owner-approved background, not retired truck: '+photo);
       const approved=await p.request.get(BASE+'/owner20-photo-background-approved.webp');
