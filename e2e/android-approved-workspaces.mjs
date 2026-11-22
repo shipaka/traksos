@@ -91,27 +91,32 @@ try {
       if(bounds.page>bounds.viewport+3)
         throw Error(role+': Android workspace horizontal overflow at '+width+'px');
     }
-    // Android on a tablet/resizable wide WebView must keep the approved 618.png
-    // client shell. Desktop CSS breakpoints must not remount legacy Home().
-    if(mode==='client'){
-      for(const width of [900,960,1200]){
-        await page.setViewportSize({width,height:844});
+    // Every native role must retain 618 (not an old desktop fallback) across
+    // Android tablets, resizable windows and desktop-mode logical widths.
+    for(const width of [900,960,1200]){
+      await page.setViewportSize({width,height:844});
+      await page.locator('main:visible').first().waitFor({state:'visible',timeout:10000});
+      if(!await page.evaluate(()=>document.documentElement.classList.contains('traksos-native')))
+        throw Error(role+': native bridge unexpectedly deactivated at '+width+'px');
+      if(mode==='client'){
         await page.locator('main.client-dashboard .and19-workspace.and19-client')
           .waitFor({state:'visible',timeout:10000});
         if(!await page.locator('.and19-client').isVisible())
-          throw Error(role+': wide Android dashboard CSS is hidden at '+width+'px');
-        const old=await page.locator('.desktop-hero, .desktop-quick-links').count();
-        if(old)throw Error(role+': legacy desktop dashboard leaked into Android '+width+'px');
-        const bounds=await page.evaluate(()=>({
-          viewport:document.documentElement.clientWidth,
-          page:document.documentElement.scrollWidth
-        }));
-        if(bounds.page>bounds.viewport+3)
-          throw Error(role+': wide Android viewport overflows '+width+'px '+JSON.stringify(bounds));
-        await page.screenshot({path:'e2e/shots/android-approved/'+role+'-native-'+width+'.png'});
+          throw Error(role+': approved 618 dashboard hidden at '+width+'px');
       }
-      await page.setViewportSize({width:390,height:844});
+      const old=await page.locator('.desktop-hero, .desktop-quick-links, main.approved-pc:visible').count();
+      if(old)throw Error(role+': retired desktop workspace mounted in Android '+width+'px');
+      const bounds=await page.evaluate(()=>({
+        viewport:document.documentElement.clientWidth,
+        page:document.documentElement.scrollWidth
+      }));
+      if(bounds.page>bounds.viewport+3)
+        throw Error(role+': native Android width overflow at '+width+'px '+JSON.stringify(bounds));
+      if(!await page.locator('.tabbar a:visible').count())
+        throw Error(role+': working native bottom navigation missing at '+width+'px');
+      await page.screenshot({path:'e2e/shots/android-approved/'+role+'-native-'+width+'.png'});
     }
+    await page.setViewportSize({width:390,height:844});
     if(mode==='client'){
       const desk=page.locator('.and19-client');
       await desk.waitFor({state:'visible'});
