@@ -73,8 +73,8 @@ export function botReactionFor(body: string): BotReactionId {
 }
 
 export function TrakBotMascot({
-  reaction = 'hello', size = 'regular', active = false
-}: { reaction?: BotReactionId; size?: 'small'|'regular'|'large'; active?: boolean }) {
+  reaction = 'hello', size = 'regular', active = false, ambient = false
+}: { reaction?: BotReactionId; size?: 'small'|'regular'|'large'; active?: boolean; ambient?: boolean }) {
   const info = byId.get(reaction) ?? BOT_REACTIONS[0];
   const index = BOT_REACTIONS.findIndex(item => item.id === info.id);
   // Five columns, six rows: each frame is cropped from the original
@@ -82,7 +82,7 @@ export function TrakBotMascot({
   const framePosition = {
     backgroundPosition: (index % 5) * 25 + '% ' + Math.floor(index / 5) * 20 + '%',
   };
-  return <span className={'trakbot-mascot trakbot-mascot--' + size + ' trakbot-mascot--' + reaction + (active ? ' is-active' : '')}
+  return <span className={'trakbot-mascot trakbot-mascot--' + size + ' trakbot-mascot--' + reaction + (active ? ' is-active' : '') + (ambient ? ' is-ambient' : '')}
     title={info.label} aria-hidden="true" data-reaction={info.id}>
     <span className="trakbot-mascot-truck trakbot-mascot-original" style={framePosition} />
   </span>;
