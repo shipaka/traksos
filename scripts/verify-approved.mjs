@@ -810,6 +810,49 @@ expect(pcE2E.includes('SYNTHETIC local API data') &&
   pcE2E.includes("const changes={depart:'en_route',arrive:'arrived',start_work:'working'}"),
   'signed-in real-browser synthetic fixture clearly labelled and state sequence guarded');
 
+
+// Protect the canonical design pointer: archival 19 Nov layouts must never become
+// the declared source of truth again, even if older PRs are cherry-picked.
+const approvedDesignDoc = await read('docs/APPROVED_DESIGN.md');
+expect(
+  approvedDesignDoc.includes('617.png') &&
+  approvedDesignDoc.includes('ACTIVE_SOURCE_OF_TRUTH_2026-11-20.md') &&
+  approvedDesignDoc.includes('ANDROID_ROLE_APPROVAL_REGISTER_2026-11-20.md') &&
+  !approvedDesignDoc.includes('**ДЕЙСТВУЮЩИЙ ЭТАЛОН 19 НОЯБРЯ 2026:**'),
+  'approved design index points to 617 and the 20 Nov canonical decisions, not retired 19 Nov PC design'
+);
+
+
+// Guard the current desktop/mobile split. An old PR must not silently
+// restore the obsolete 1000px switch or hide the approved browser admin desk.
+const pcWorkspaceSource = await read('web/src/screens/approvedPcCabinets20261120.tsx');
+expect(
+  pcWorkspaceSource.includes("matchMedia('(min-width: 900px)')") &&
+  pcWorkspaceSource.includes("role === 'admin' && !native.isApp") &&
+  !pcWorkspaceSource.includes("matchMedia('(min-width: 1000px)')"),
+  'approved PC/mobile boundary remains 900px and browser admin uses approved workspace'
+);
+
+// The approved desktop stylesheet must not reintroduce 19 Nov Android as the
+// authoritative mobile design when older UI branches are cherry-picked.
+const desktopOwnerCss = await read('web/src/desktopCabinetsOwner20261120.css');
+expect(
+  desktopOwnerCss.includes('approved 618.png') &&
+  desktopOwnerCss.includes('20 Nov Android role register') &&
+  !desktopOwnerCss.includes('Android 19.11 remains authoritative'),
+  'desktop cabinet stylesheet references approved 618 mobile design, not retired Android authority'
+);
+
+// The retired admin homepage tab no longer exists. Keep the browser E2E
+// verification on its protected route rather than a missing button.
+const browserFlow = await read('e2e/flow.mjs');
+expect(
+  browserFlow.includes("await a.goto(BASE + '/#/admin/section/verify')") &&
+  browserFlow.includes("getByRole('heading', { name: 'Проверка', exact: true })") &&
+  !browserFlow.includes("getByRole('button', { name: 'Проверка', exact: true }).click()"),
+  'browser admin verification uses approved protected section, not retired home tab'
+);
+
 if (failures.length) {
   console.error('Approved design gate: '+failures.length+' failure(s).');
   process.exitCode=1;
