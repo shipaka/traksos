@@ -225,7 +225,7 @@ function App() {
   // replace the user's approved role workspace, even through old bookmarked links.
   useEffect(() => {
     if (!ready || !me) return;
-    if (['login','register','join','reset','activate','explore','company','offers','economics'].includes(route[0] ?? ''))
+    if (['login','register','join','reset','activate','explore','company','offers'].includes(route[0] ?? ''))
       location.replace('#/');
   }, [ready, me?.id, route.join('/')]); // eslint-disable-line
   useEffect(() => {
