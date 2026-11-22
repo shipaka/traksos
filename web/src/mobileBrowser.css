@@ -530,3 +530,26 @@
     scroll-margin-block-end: calc(84px + env(safe-area-inset-bottom, 0px));
   }
 }
+
+/* Authenticated 618 mobile browser: no second giant TrakSOS logo below
+ * the workdesk. Preserve cookie consent, operator contacts and document links.
+ * The same approved rule previously applied only to the courier cabinet. */
+@media (max-width: 899px) {
+  html.traksos-browser .app[class*="role-"] .desktop-content > .site-footer {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 14px 16px 112px;
+    gap: 8px;
+  }
+  html.traksos-browser .app[class*="role-"] .desktop-content > .site-footer > .logo,
+  html.traksos-browser .app[class*="role-"] .desktop-content > .site-footer > .logo + .note {
+    display: none;
+  }
+  html.traksos-browser .app[class*="role-"] .desktop-content > .site-footer > .row.note {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px !important;
+    font-size: 11px;
+    line-height: 1.55;
+  }
+}

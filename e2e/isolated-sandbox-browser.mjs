@@ -116,6 +116,17 @@ try{
           await page.screenshot({path:out+'/'+role+'-'+width+'-OVERFLOW.png',fullPage:true});
           throw Error('Horizontal scroll in '+role+' '+width+': '+JSON.stringify({geometry,offenders}));
         }
+        // On mobile the approved header already contains the brand. The
+        // legal footer stays functional, but must never repeat a large logo.
+        if(width<=390){
+          const secondLogo=page.locator('.desktop-content > footer.site-footer > .logo');
+          if(await secondLogo.count() && await secondLogo.first().isVisible())
+            throw Error('Duplicate mobile workdesk logo in footer '+role+' '+width);
+          const legalFooter=page.locator('.desktop-content > footer.site-footer');
+          if(await legalFooter.count() &&
+             !await legalFooter.getByRole('link',{name:'Правила площадки'}).count())
+            throw Error('Legal footer links disappeared from mobile '+role+' '+width);
+        }
         // Every working role must be reachable directly from the real
         // admin dashboard, not only from a hidden test-center URL.
         if(role==='admin'){
