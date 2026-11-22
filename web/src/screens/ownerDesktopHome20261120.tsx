@@ -71,7 +71,7 @@ export function OwnerDesktopHome20261120() {
         </nav>
       </details>
       <details className="owner20-region"><summary>⌖ Выбрать регион</summary><div className="owner20-region-menu"><b>Регион запуска</b><p>Санкт-Петербург и Ленинградская область</p><small>В остальных регионах сервисы появятся по мере подключения партнёров.</small><a href="#/help">Уточнить доступность →</a></div></details>
-      <a href="#/login" className="owner20-signin">♙　Войти</a>
+      <a href="#/login" className="owner20-signin"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 21v-2.2a7 7 0 0 1 14 0V21"/></svg><span>Войти</span></a>
     </header>
     <section className="owner20-hero" aria-labelledby="owner20-heading">
       <div className="owner20-photo" aria-hidden="true"/>
