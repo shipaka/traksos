@@ -1,0 +1,39 @@
+name: 617 - исправление брендов на утвержденном фото
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - fix/owner617-only-photo-tiles-no-redesign-20261122
+    paths:
+      - scripts/repair_617_branding.py
+      - .github/workflows/owner617-photo-art.yml
+permissions:
+  contents: write
+jobs:
+  photo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Dependencies
+        run: pip install --disable-pip-version-check 'Pillow==11.3.0' 'numpy==2.2.6' 'opencv-python-headless==4.12.0.88'
+      - name: Preserve 617 hero composition and remove truck lettering
+        run: python scripts/repair_617_branding.py
+      - name: Save photographic proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: 617-brandfree-photo
+          path: web/public/owner20-photo-brandless-20261122.webp
+      - name: Commit photographic output to this review branch only
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add web/public/owner20-photo-brandless-20261122.webp
+          if ! git diff --cached --quiet; then
+            git commit -m 'art(617): exact-size truck photograph without brands'
+            git push origin HEAD:${GITHUB_REF_NAME}
+          fi
