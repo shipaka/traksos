@@ -624,6 +624,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     <div className="app guest-app guest-home guest-home-standalone">
       <NetworkStatus />
       <div className="desktop-layout"><div className="desktop-content">{children}</div></div>
+      <SiteFooter />
       <TrakBotDock authenticated={false} />
     </div>
   );
@@ -869,7 +870,7 @@ function SiteFooter() {
       {l?.address && <span className="note">{l.address}</span>}
       {contacts && <span className="note">Поддержка: {contacts}</span>}
       <span className="row note" style={{ gap: 12 }}>
-        <a href="#/company">Компания</a><a href="#/offers">Оферты</a><a href="#/offer/privacy">Персональные данные</a><a href="#/rules">Правила площадки</a>
+        <a href="#/explore/guide">Маркетплейс выездной помощи</a><a href="#/company">Компания</a><a href="#/offers">Оферты</a><a href="#/offer/privacy">Персональные данные</a><a href="#/rules">Правила площадки</a>
       </span>
       <span className="note">© {new Date().getFullYear()} {l?.brand ?? 'TrakSos'}</span>
     </footer>
