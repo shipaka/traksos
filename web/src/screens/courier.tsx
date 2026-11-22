@@ -78,7 +78,7 @@ export function CourierDesk({section='home'}:{section?:'home'|'jobs'|'chat'}={})
   const packages=active.reduce((n,j)=>n+j.items.reduce((s,i)=>s+(i.qty||0),0),0);
   return <main className="courier-android" aria-label="Рабочий кабинет курьера TrakSOS">
     <div className="courier-role"><b>▣ Курьер TrakSOS</b><CourierStatusSwitch/></div>
-    <h1>{section==='jobs'?'Мои рейсы':section==='chat'?'Связь по доставкам':'Рабочий стол'}</h1>
+    <h1>{section==='jobs'?'Мои доставки':section==='chat'?'Связь по доставкам':'Рабочий стол'}</h1>
     {section==='chat'?<>
       <p className="courier-muted">Сообщения с получателем пока не подключены. Вопросы по доставке решает поддержка TrakSOS — без раскрытия личных телефонов.</p>
       <a href="#/support" className="courier-primary">Открыть обращения в поддержку</a>
@@ -86,25 +86,25 @@ export function CourierDesk({section='home'}:{section?:'home'|'jobs'|'chat'}={})
         Доставка №{j.orderNumber} · {STATUS[j.status]} <span aria-hidden="true">›</span></a>)}
     </>:<>
       {section==='home'&&<div className="courier-overview">
-        <a href="#/courier/jobs"><small>Мои рейсы</small><strong>{active.length}</strong></a>
+        <a href="#/courier/jobs"><small>Мои доставки</small><strong>{active.length}</strong></a>
         <a href="#/courier/jobs"><small>Посылки</small><strong>{packages}</strong></a>
         <a href="#/courier/jobs"><small>Остановки</small><strong>{active.length}</strong></a>
       </div>}
       {!tasks.data?<section className="courier-trip">
-        <b>{tasks.error?'Не удалось загрузить доставки':'Загружаем текущие рейсы…'}</b>
+        <b>{tasks.error?'Не удалось загрузить доставки':'Загружаем текущие доставки…'}</b>
         {tasks.error&&<button className="courier-primary" type="button" onClick={tasks.reload}>Повторить</button>}
       </section>:
         section==='home' ? current
           ? <><CourierJobLink job={current} focus/>
              {active.length>1&&<a className="courier-list-row" href="#/courier/jobs">
                Ещё остановки · {active.length-1} <span aria-hidden="true">›</span></a>}</>
-          : <section className="courier-trip"><b>Назначенных рейсов нет</b>
-              <p>Новые доставки появятся здесь после назначения диспетчером. Пустой рейс не имитирует настоящую доставку.</p></section>
+          : <section className="courier-trip"><b>Назначенных доставок нет</b>
+              <p>Новые доставки появятся здесь после назначения диспетчером. Нет выдуманных маршрутов без назначенной доставки.</p></section>
         : list.length
           ? list.map(j=><CourierJobLink job={j} key={j.id}/>)
           : <section className="courier-trip">Доставок пока нет.</section>}
       {current&&section==='home'&&<div className="courier-main-actions">
-        <a className="courier-primary" href={'#/courier/jobs/'+encodeURIComponent(current.id)}>Продолжить рейс</a>
+        <a className="courier-primary" href={'#/courier/jobs/'+encodeURIComponent(current.id)}>Продолжить доставку</a>
         {directions(current.deliveryAddress)&&<a className="courier-navigation"
           href={directions(current.deliveryAddress)!} target="_blank" rel="noopener noreferrer">Навигация</a>}
       </div>}
@@ -125,7 +125,7 @@ export function CourierDelivery({id}:{id:string}){
     if(result)d.reload();
   };
   return <main className="courier-android courier-detail" aria-label="Карточка курьерской доставки">
-    <a className="courier-back" href="#/courier/jobs">← К моим рейсам</a>
+    <a className="courier-back" href="#/courier/jobs">← К моим доставкам</a>
     {!job?<section className="courier-trip">{d.error||'Загружаем назначенную доставку…'}</section>:<>
       <h1>Доставка №{job.orderNumber}</h1>
       <span className="courier-trip-state">{STATUS[job.status]}</span>
