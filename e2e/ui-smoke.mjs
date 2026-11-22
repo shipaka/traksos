@@ -376,8 +376,23 @@ try {
       width+'px: hybrid partner unexpectedly creates a fifth public role card');
     await page.goto(BASE + '/#/company');
     await page.getByRole('heading', {name:'Компания TrakSOS'}).waitFor();
+    if(width===390) {
+      mkdirSync('e2e/shots/public-documents',{recursive:true});
+      await page.screenshot({path:'e2e/shots/public-documents/company-390.png',
+        fullPage:true,animations:'disabled'});
+    }
     await page.goto(BASE + '/#/offers');
     await page.getByRole('heading', {name:'Оферты и документы'}).waitFor();
+    if(width===390) {
+      await page.screenshot({path:'e2e/shots/public-documents/offers-390.png',
+        fullPage:true,animations:'disabled'});
+      for(const [key,path] of [['rules','rules'],['privacy','offer/privacy']]) {
+        await page.goto(BASE+'/#/'+path);
+        await page.locator('main').first().waitFor();
+        await page.screenshot({path:'e2e/shots/public-documents/'+key+'-390.png',
+          fullPage:true,animations:'disabled'});
+      }
+    }
     assert(errors.length === 0, width + 'px: browser errors: ' + errors.join('; '));
     console.log('OK: viewport ' + width + 'px, 6 cards, Company/Offers, 4 partner roles, no overflow');
     await context.close();
