@@ -167,20 +167,28 @@ expect(signedPcBotStyles.includes('Approved signed-in PC inner pages: prominent 
   signedPcBotStyles.includes('.app:not(.guest-app)> .trakbot-dock'),
   'signed-in PC detail pages keep the approved larger floating technician without an old pill');
 const ownerPcUiContract=await read('web/src/screens/ownerDesktopHome20261120.css');
-expect(ownerPcUiContract.includes('Source-sprite crop contract:') &&
-  ownerPcUiContract.includes('rgba(0,0,0,.9) 12%,#000 24%') &&
-  ownerPcUiContract.includes('rgba(0,0,0,.9) 13%,#000 27%') &&
-  !ownerPcUiContract.includes('transparent 43%,#000 75%') &&
-  !ownerPcUiContract.includes('transparent 53%,#000 84%') &&
-  !ownerPcUiContract.includes('rgba(0,0,0,.50) 18%,#000 42%'),
-  '617 desktop uses one effective artwork crop, not stacked contradictory mask patches');
+const ownerPcSource=await read('web/src/screens/ownerDesktopHome20261120.tsx');
+const ownerFeatureArt=await read('web/src/screens/ownerFeatureArt20261122.tsx');
+expect(ownerPcUiContract.includes('PC VISUAL CONTRACT 22.11:') &&
+  ownerPcUiContract.includes("url('/owner20-photo-background-approved.webp')") &&
+  ownerPcUiContract.includes('background-size:cover!important') &&
+  ownerPcUiContract.includes('No reused sprite coordinates, baked lettering') &&
+  !ownerPcUiContract.includes('Source-sprite crop contract:') &&
+  !ownerPcUiContract.includes('owner20-feature::before'),
+  '617 desktop: full-bleed real road photograph and independent unmasked service art');
+expect(ownerPcSource.includes('<OwnerFeatureArt kind={key} />') &&
+  ownerPcSource.includes("'Шиномонтаж','Выездной ремонт колёс','tyre'") &&
+  ownerPcSource.includes("rememberGuestService('van','tyre')") &&
+  !ownerPcSource.includes("'ЭБУ','Диагностика и ремонт электронных блоков','ecu'") &&
+  ['tech','ecu','parts','insurance','inspection'].every(name => ownerFeatureArt.includes("kind === '"+name+"'")),
+  'PC five cards are unique caption-free vector art; tyre replaces duplicate upper ECU route');
 const botDockContract=await read('web/src/trakbotDock.css');
 expect(ownerPcUiContract.includes('UI CONTRACT 21.11: canonical desktop guest mascot') &&
-  ownerPcUiContract.includes('owner20-feature::before') &&
+  !ownerPcUiContract.includes('owner20-feature::before') &&
   ownerPcUiContract.includes('radial-gradient(ellipse at 50% 53%') &&
   !ownerPcUiContract.includes('width:40px!important;min-width:40px!important;') &&
   !botDockContract.includes('a full-width cyan-edged launcher'),
-  'single desktop guest TrakBot/cinematic tile contract, not conflicting old pill or 40px fallback');
+  'single desktop guest TrakBot contract, no legacy image veil or 40px fallback');
 const roleSidebarSource=await read('web/src/main.tsx');
 const navGlyphSource=await read('web/src/navGlyph.tsx');
 expect(roleSidebarSource.includes('<NavGlyph glyph={ic}/>') &&
