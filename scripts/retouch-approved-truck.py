@@ -11,6 +11,7 @@ Run in CI: python3 scripts/retouch-approved-truck.py
 from __future__ import annotations
 import hashlib
 import json
+import shutil
 from pathlib import Path
 
 import cv2
@@ -71,6 +72,19 @@ def main() -> None:
         )
 
     OUT.mkdir(parents=True, exist_ok=True)
+    # The owner-approved PC hero and artwork atlas are DIFFERENT compositions.
+    # Copy their exact bytes into this artifact for independent, localized
+    # evidence and future review. Never drop the whole newly generated truck
+    # image into either of these visually approved crops.
+    other_originals = [
+        "owner20-photo-background-approved.webp",
+        "owner20-artwork-sprite.webp",
+    ]
+    for filename in other_originals:
+        original = Path("web/public") / filename
+        if not original.exists():
+            raise SystemExit(f"Missing approved PC original: {original}")
+        shutil.copy2(original, OUT / ("original-" + filename))
     Image.fromarray(rgb).save(OUT / "00-exact-approved-original.png")
     Image.fromarray(mask).save(OUT / "01-logo-pixels-mask.png")
     inspect_box = (176, 207, 312, 261)
