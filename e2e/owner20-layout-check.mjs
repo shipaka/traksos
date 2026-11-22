@@ -87,6 +87,18 @@ try {
    }
    await page.screenshot({path:'e2e/shots/owner20-pc/home-'+width+'.png',fullPage:true,animations:'disabled'});
    if(width===1536){
+    // The approved coverage artwork stays visually unchanged but the whole
+    // existing 617 map tile must be a keyboard-accessible demo information link.
+    const mapLink=page.locator('.owner20-map > a.owner20-map-inner');
+    if(await mapLink.count()!==1 || !await mapLink.isVisible() ||
+       await mapLink.getAttribute('href')!=='#/explore/guide')
+      throw Error('617 coverage map is not a working demo link');
+    const accessible=await mapLink.getAttribute('aria-label');
+    if(!accessible?.includes('демонстрационная'))
+      throw Error('Coverage link falsely implies real-time provider coverage');
+    await mapLink.click();
+    await page.waitForURL('**/#/explore/guide');
+    await page.getByRole('heading',{name:'Как работает TrakSOS'}).waitFor();
     for(const key of ['van','tow','sto','ecu','consult','tech','parts','insurance','inspection','air','club']){
      await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
      const link=page.locator('.owner20-home a[href="#/explore/'+key+'"]:visible').first();
