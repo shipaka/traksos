@@ -1292,7 +1292,7 @@ export function Profile() {
         <span className="note">При возвращении в приложение после перерыва. Статус «На линии» и входящие вызовы не отключаются.</span>
       </div>}
       <a href="#/invite" className="card account-profile-invite" style={{ textDecoration: 'none', color: 'inherit', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span><b>🎁 Пригласить и получать баллы</b><small className="note" style={{ display: 'block' }}>Баллы гасят сбор и комиссию TrakSOS</small></span><span>›</span>
+        <span><b className="account-profile-invite-label"><svg aria-hidden="true" className="account-profile-gift" width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9h18v12H3V9Zm-1-5h20v5H2V4Zm10 0v17M12 4c-4-4-8-2-6 1 1 2 4 2 6-1Zm0 0c4-4 8-2 6 1-1 2-4 2-6-1Z"/></svg>Пригласить и получать баллы</b><small className="note" style={{ display: 'block' }}>Баллы гасят сбор и комиссию TrakSOS</small></span><span>›</span>
       </a>
       <div className="card account-profile-facts">
         <h2>Данные учётной записи</h2>
@@ -1390,6 +1390,7 @@ export function Profile() {
         {me.roles.some((r) => r === 'admin' || r === 'moderator') && mode !== 'admin' && <button className="btn ghost" onClick={() => go('as/admin')}>Кабинет администратора</button>}
         <button className="btn ghost" onClick={() => go('support')}>Поддержка</button>
         <button className="btn ghost" onClick={() => go('help')}>Справка: как всё устроено</button>
+        <button className="btn ghost" onClick={() => go('trakbot')}>TrakBot — личный помощник</button>
         <button className="btn ghost" onClick={() => go('privacy')}>Персональные данные и удаление аккаунта</button>
         <button className="btn ghost" onClick={() => go('reviews')}>Отзывы обо мне</button>
         <button className="btn ghost" onClick={() => go('appeal')}>Оспорить нарушение или блокировку</button>
