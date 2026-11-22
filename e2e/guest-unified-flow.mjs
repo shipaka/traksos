@@ -72,20 +72,35 @@ try {
     await page.getByRole('dialog',{name:'Регистрация в TrakSOS'}).waitFor();
 
     await visit('join','Работать с TrakSOS');
-    await page.getByRole('dialog').getByRole('button',{name:'СТО',exact:true}).click();
+    const partner=page.getByRole('dialog',{name:'Работать с TrakSOS'});
+    for(const [role,art] of [
+      ['Мастер','partner-master-illustration.svg'],
+      ['Эвакуаторщик','partner-tow-illustration.svg'],
+      ['СТО','partner-sto-illustration.svg'],
+      ['Страховой агент','partner-insurer-illustration.svg']
+    ]){
+      const card=partner.getByRole('button',{name:role,exact:true});
+      await card.waitFor();
+      const background=await card.evaluate(el=>getComputedStyle(el).backgroundImage);
+      if(!background.includes(art))throw Error(width+': missing role scene '+role+' '+background);
+      const resource=await page.request.get(BASE+'/'+art);
+      if(!resource.ok() || !(resource.headers()['content-type']||'').includes('image/svg+xml'))
+        throw Error(width+': role image failed to load '+art);
+    }
+    await partner.getByRole('button',{name:'СТО',exact:true}).click();
     await page.screenshot({path:`e2e/shots/guest-unified/partner-${width}.png`,animations:'disabled'});
     await visit('offers','Оферты и документы');
     const offers=page.getByRole('dialog',{name:'Оферты и документы'});
-    await offers.getByRole('link',{name:/Договор с исполнителями и СТО/}).click();
+    await offers.getByRole('link',{name:/Договор для мастеров, эвакуаторов и СТО/}).click();
     await page.waitForURL('**/#/offer/performer');
-    await page.getByRole('dialog',{name:'Договор с исполнителями и СТО'}).waitFor();
-    await visit('help','Поддержка TrakSOS');
-    await page.getByRole('dialog',{name:'Поддержка TrakSOS'}).getByRole('link',{name:/Я мастер, СТО/}).click();
-    await page.waitForURL('**/#/join');
-    await page.getByRole('dialog',{name:'Работать с TrakSOS'}).waitFor();
-    await visit('company','О платформе TrakSOS');
-    await visit('explore/guide','Как работает TrakSOS');
-    await visit('explore/pricing','Комиссии TrakSOS');
+    await page.getByRole('dialog',{name:'Договор для мастеров, эвакуаторов и СТО'}).waitFor();
+    // Only offers and actual legal documents are exempt from authentication.
+    for(const route of ['help','support','company','economics','explore/guide','explore/pricing']){
+      const signIn=await visit(route,'Вход по номеру телефона');
+      if(!await signIn.getByRole('button',{name:'Нет аккаунта? Зарегистрироваться'}).isVisible())
+        throw Error(width+'/'+route+': guest information still opens instead of login');
+    }
+    await visit('rules','Правила площадки');
 
     for(const id of ['van','tow','sto','ecu','consult','parts','insurance','inspection','air','club','tech']){
       const panel=await visit('explore/'+id,'Вход по номеру телефона');
