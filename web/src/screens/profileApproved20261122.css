@@ -1,146 +1,264 @@
-/* Candidate for owner approval: signed-in PC Profile inner screen.
- * Never change the already-approved 618 Android/mobile profile geometry.
- * No data/API changes; existing password, security, role-switch, logout work.
- */
-@media (min-width:900px){
- html:not(.traksos-native) .app[class*="role-"] .desktop-content > main.account-profile-page{
-   display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
-   gap:17px;align-items:start;max-width:1320px;width:100%;
-   --profile-bg:#081921;--profile-panel:#122934;
-   --profile-line:#385460;--profile-ink:#f2f8fa;--profile-muted:#c2d2d9;
-   color:var(--profile-ink);
+/* TrakSOS Profile · refined desktop candidate (NOT APPROVED)
+   Intentional, scoped replacement of the previous bright card+shield design.
+   Source of truth remains approved PC role workdesks and Android 618.
+   No page-wide overrides, no changes to data models or API actions. */
+@media (min-width:900px) {
+ html:not(.traksos-native) .app[class*="role-"] .desktop-content > main.account-profile-page {
+   --profile-line:rgba(170,200,211,.16);
+   --profile-muted:#a7bbc5;
+   --profile-bright:#eef4f6;
+   --profile-surface:#10212a;
+   display:grid;
+   grid-template-columns:minmax(0,1.46fr) minmax(300px,.94fr);
+   grid-template-areas:
+     "hero hero"
+     "nav nav"
+     "data facts"
+     "data security"
+     "data settings"
+     "invite invite"
+     "nav2 nav2";
+   align-items:start;
+   column-gap:22px;
+   row-gap:15px;
+   width:100%;
+   max-width:1320px;
+   margin:0 auto;
+   min-width:0;
+   color:var(--profile-bright);
  }
  html:not(.traksos-native) .account-profile-page > .account-profile-mobile-title{display:none}
  html:not(.traksos-native) .account-profile-page > .account-profile-hero{
-   display:flex;align-items:center;justify-content:space-between;position:relative;isolation:isolate;
-   grid-column:1/-1;min-height:250px;box-sizing:border-box;overflow:hidden;
-   padding:30px clamp(25px,3.6vw,52px);
-   background:radial-gradient(circle at 82% 45%,#2066788a,transparent 39%),
-     linear-gradient(110deg,#17333f 0%,#091b26 68%,#0d2e39);
-   border:1px solid #45636d;border-radius:19px;
-   box-shadow:0 12px 35px #0005,inset 0 1px #ffffff1a;
+   grid-area:hero;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,350px);
+   align-items:center;gap:30px;position:relative;isolation:isolate;overflow:hidden;
+   min-height:170px;padding:27px clamp(28px,3vw,42px);
+   box-sizing:border-box;
+   border:1px solid rgba(172,200,213,.19);border-radius:13px;
+   background:
+     radial-gradient(ellipse 70% 115% at 101% 108%,rgba(41,90,102,.24),transparent 76%),
+     linear-gradient(115deg,#12252e,#0b1b24 82%);
+ }
+ html:not(.traksos-native) .account-profile-page > .account-profile-hero:before{
+   content:"";position:absolute;right:-100px;top:-175px;width:520px;height:520px;
+   border:1px solid rgba(138,181,195,.09);border-radius:50%;pointer-events:none;z-index:-1;
+   box-shadow:0 0 0 39px rgba(138,181,195,.018),0 0 0 92px rgba(138,181,195,.015);
  }
  html:not(.traksos-native) .account-profile-page > .account-profile-hero:after{
-   content:"";position:absolute;pointer-events:none;inset:auto 0 0;height:3px;
-   background:linear-gradient(90deg,#f8782f,#e3a66c44 60%,transparent);
+   content:"";position:absolute;left:40px;bottom:0;width:56px;height:2px;
+   background:#f48749;
  }
  html:not(.traksos-native) .account-profile-page .account-profile-hero-copy{
-   position:relative;z-index:1;display:flex;flex-direction:column;align-items:flex-start;
-   gap:13px;max-width:675px;min-width:0;
+   display:flex;flex-direction:column;align-items:flex-start;gap:9px;
+   min-width:0;max-width:640px;
  }
- html:not(.traksos-native) .account-profile-page .account-profile-eyebrow{
-   font-size:11px;font-weight:800;letter-spacing:1.5px;color:#ffa164;
+ html:not(.traksos-native) .account-profile-page .account-profile-eyebrow,
+ html:not(.traksos-native) .account-profile-page .account-profile-section-index{
+   display:inline-flex;align-items:center;gap:8px;
+   font-size:10px;font-weight:700;letter-spacing:1.4px;color:#8faebb;
  }
+ html:not(.traksos-native) .account-profile-page .account-profile-eyebrow-mark{
+   display:block;width:7px;height:7px;border-radius:1px;background:#f48a4c;
+ }
+ html:not(.traksos-native) .account-profile-page .account-profile-index{color:#5d7e8d}
  html:not(.traksos-native) .account-profile-page .account-profile-hero h1{
-   margin:0;font-size:clamp(30px,3vw,44px);line-height:1.08;color:#fff;font-weight:800;
+   margin:0;color:#f8fafb;font-size:clamp(33px,3vw,46px);
+   line-height:1.12;letter-spacing:-1.7px;font-weight:650;
  }
+ html:not(.traksos-native) .account-profile-page .account-profile-heading-dot{color:#f58a4c}
  html:not(.traksos-native) .account-profile-page .account-profile-hero p{
-   font-size:14px;line-height:1.6;color:#d3e2e7;max-width:585px;margin:0;
+   max-width:490px;margin:0;color:#abbec6;font-size:13px;line-height:1.6;
  }
- html:not(.traksos-native) .account-profile-page .account-profile-meta{
-   display:flex;align-items:center;flex-wrap:wrap;gap:10px;
-   color:#eef7fa;font-size:12px;
+ html:not(.traksos-native) .account-profile-page .account-profile-identity{
+   display:flex;flex-direction:column;gap:13px;min-width:0;
+   padding:11px 0 11px 26px;border-left:1px solid rgba(172,200,213,.14);
  }
- html:not(.traksos-native) .account-profile-page .account-profile-meta span{
-   padding:8px 12px;border-radius:9px;background:#173c48;
-   border:1px solid #457180;font-weight:700;
+ html:not(.traksos-native) .account-profile-page .account-profile-identity-overline{
+   font-size:10px;color:#7595a3;letter-spacing:1.35px;font-weight:700;
  }
- html:not(.traksos-native) .account-profile-page .account-profile-meta .account-profile-role{
-   background:#423025;border-color:#a36542;color:#ffd0aa;
+ html:not(.traksos-native) .account-profile-page .account-profile-identity-row{display:flex;gap:13px;align-items:center;min-width:0}
+ html:not(.traksos-native) .account-profile-page .account-profile-avatar{
+   width:43px;height:43px;box-sizing:border-box;flex:0 0 43px;
+   display:grid;place-items:center;border-radius:12px;
+   background:#183540;border:1px solid #3b5966;color:#ddbfa7;
  }
- html:not(.traksos-native) .account-profile-page .account-profile-hero-art{
-   position:relative;z-index:1;flex:0 0 min(27%,270px);width:min(27%,270px);
-   max-height:220px;filter:drop-shadow(0 14px 22px #0006);
+ html:not(.traksos-native) .account-profile-page .account-profile-identity-text{
+   display:flex;flex-direction:column;gap:5px;min-width:0;
+ }
+ html:not(.traksos-native) .account-profile-page .account-profile-identity-text strong{
+   font-size:13px;font-weight:650;color:#eff4f6;overflow-wrap:anywhere;
+ }
+ html:not(.traksos-native) .account-profile-page .account-profile-identity-text small{
+   font-size:12px;color:#90aebb;font-variant-numeric:tabular-nums;
  }
  html:not(.traksos-native) .account-profile-page > .account-profile-shortcuts{
-   grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;
+   grid-area:nav;display:flex;gap:clamp(20px,3vw,45px);
+   padding:0 4px;margin:0 0 9px;min-height:47px;
+   align-items:center;border-bottom:1px solid var(--profile-line);
  }
  html:not(.traksos-native) .account-profile-page .account-profile-shortcuts button{
-   display:flex;align-items:center;justify-content:space-between;gap:15px;
-   padding:17px 19px;min-height:58px;cursor:pointer;text-align:left;
-   color:#f3f9fb;background:linear-gradient(125deg,#17333f,#0d222e);
-   border:1px solid #41616b;border-radius:13px;font-size:14px;font-weight:750;
-   transition:transform .18s ease,border-color .18s ease,background .18s ease;
+   position:relative;display:inline-flex;align-items:center;gap:8px;
+   min-width:0;min-height:47px;padding:8px 2px;
+   background:transparent;border:0;border-radius:0;color:#b4c5cb;
+   cursor:pointer;font-size:13px;font-weight:600;letter-spacing:0;white-space:nowrap;
+   transition:color .17s ease;
  }
- html:not(.traksos-native) .account-profile-page .account-profile-shortcuts button span{color:#ffad76;font-size:18px}
  html:not(.traksos-native) .account-profile-page .account-profile-shortcuts button:hover{
-   transform:translateY(-2px);border-color:#f99756;background:#1b3946;
+   color:#fff;background:transparent;
  }
- html:not(.traksos-native) .account-profile-page > .account-profile-invite{
-   grid-column:1/-1;display:flex;min-height:75px;
-   padding:19px 22px;border-radius:14px;
-   background:linear-gradient(100deg,#25333a,#1d2a32)!important;
-   border:1px solid #80563a!important;
-   text-decoration:none;color:#fff;box-shadow:0 6px 24px #0003;
+ html:not(.traksos-native) .account-profile-page .account-profile-shortcuts button:hover:after,
+ html:not(.traksos-native) .account-profile-page .account-profile-shortcuts button:focus-visible:after{
+   content:"";position:absolute;height:2px;bottom:-1px;left:0;right:0;background:#ef854d;
  }
- html:not(.traksos-native) .account-profile-page > .account-profile-facts,
- html:not(.traksos-native) .account-profile-page > .account-profile-data,
- html:not(.traksos-native) .account-profile-page > .account-profile-security,
- html:not(.traksos-native) .account-profile-page > .account-profile-settings{
-   box-sizing:border-box;padding:24px;min-width:0;
-   background:linear-gradient(145deg,#142e39,#0b1d28);
-   border:1px solid var(--profile-line);border-radius:16px;
-   box-shadow:0 8px 28px #0003;color:var(--profile-ink);
+ html:not(.traksos-native) .account-profile-page .account-profile-tab-index{
+   color:#75919e;font-size:10px;font-variant-numeric:tabular-nums;
+ }
+ html:not(.traksos-native) .account-profile-page > .account-profile-data{grid-area:data}
+ html:not(.traksos-native) .account-profile-page > .account-profile-facts{grid-area:facts}
+ html:not(.traksos-native) .account-profile-page > .account-profile-security{grid-area:security}
+ html:not(.traksos-native) .account-profile-page > .account-profile-settings{grid-area:settings}
+ html:not(.traksos-native) .account-profile-page > :is(.account-profile-data,.account-profile-facts,.account-profile-security,.account-profile-settings){
+   min-width:0;box-sizing:border-box;
+   padding:25px clamp(22px,2vw,31px);
+   color:var(--profile-bright);
+   background:linear-gradient(135deg,#132631,#0d1e28);
+   border:1px solid var(--profile-line);
+   border-radius:13px;box-shadow:none;
  }
  html:not(.traksos-native) .account-profile-page > .account-profile-data{
-   scroll-margin-top:90px;gap:15px;
+   display:flex;flex-direction:column;gap:17px;
+   scroll-margin-top:85px;
  }
- html:not(.traksos-native) .account-profile-page > .account-profile-security{
-   scroll-margin-top:90px;
+ html:not(.traksos-native) .account-profile-page :is(.account-profile-security,.account-profile-settings){
+   scroll-margin-top:85px;
  }
- html:not(.traksos-native) .account-profile-page > .account-profile-settings{
-   scroll-margin-top:90px;
+ html:not(.traksos-native) .account-profile-page .account-profile-section-heading{
+   display:flex;flex-direction:column;gap:5px;
+   padding-bottom:15px;border-bottom:1px solid rgba(170,200,211,.1);
+ }
+ html:not(.traksos-native) .account-profile-page .account-profile-section-heading p{
+   color:#99b0ba;margin:0;font-size:12px;line-height:1.6;
  }
  html:not(.traksos-native) .account-profile-page h2{
-   margin:0 0 9px;color:#f8fbfd;font-size:19px;line-height:1.25;
+   margin:4px 0 11px;color:#f4f7f8;
+   font-size:19px;font-weight:620;letter-spacing:-.28px;line-height:1.25;
  }
+ html:not(.traksos-native) .account-profile-page .account-profile-data .account-profile-section-heading h2{margin:0}
  html:not(.traksos-native) .account-profile-page > .account-profile-facts dl{
-   display:grid;grid-template-columns:minmax(100px,1fr) minmax(0,1.6fr);
-   gap:12px 14px;margin:10px 0;align-items:baseline;
+   display:grid;grid-template-columns:minmax(75px,.72fr) minmax(0,1.5fr);
+   align-items:center;gap:14px;margin:16px 0 0;
  }
- html:not(.traksos-native) .account-profile-page > .account-profile-facts dd{overflow-wrap:anywhere}
+ html:not(.traksos-native) .account-profile-page > .account-profile-facts :is(dt,dd){
+   margin:0;font-size:12px;min-width:0;
+ }
+ html:not(.traksos-native) .account-profile-page > .account-profile-facts dt{color:#91abb7}
+ html:not(.traksos-native) .account-profile-page > .account-profile-facts dd{color:#e6edf0;overflow-wrap:anywhere;font-weight:600}
+ html:not(.traksos-native) .account-profile-page > .account-profile-data input.field,
+ html:not(.traksos-native) .account-profile-page > .account-profile-security input.field{
+   min-height:46px;color:#e8f1f4!important;
+   background:#091b25!important;border:1px solid #334d5a!important;
+   border-radius:9px;box-shadow:none!important;
+   transition:border-color .2s ease,box-shadow .2s ease;
+ }
+ html:not(.traksos-native) .account-profile-page > :is(.account-profile-data,.account-profile-security) input.field:focus{
+   border-color:#a46c50!important;box-shadow:0 0 0 3px #c27b3422!important;
+ }
+ html:not(.traksos-native) .account-profile-page .account-profile-data label{
+   font-size:12px;font-weight:650;color:#aabec9;
+ }
+ html:not(.traksos-native) .account-profile-page .account-profile-data label .field{margin-top:5px}
+ html:not(.traksos-native) .account-profile-page > .account-profile-data .btn:not(.ghost):not(.bad):not(.good){
+   align-self:flex-start;min-height:44px;min-width:170px;
+   padding:11px 22px;border-radius:9px!important;font-weight:720;
+   background:#ef8646!important;border:1px solid #f4a36f!important;
+   color:#101c24!important;box-shadow:none!important;
+   transition:background .17s ease,transform .17s ease;
+ }
+ html:not(.traksos-native) .account-profile-page > .account-profile-data .btn:not([disabled]):hover{
+   background:#ffa66e!important;transform:translateY(-1px);
+ }
+ html:not(.traksos-native) .account-profile-page .account-profile-security .btn.ghost{
+   align-self:flex-start;font-size:12px;min-height:38px;
+   background:#1b3541;border:1px solid #365360;border-radius:8px;
+ }
+ html:not(.traksos-native) .account-profile-page .account-profile-settings .note,
+ html:not(.traksos-native) .account-profile-page .account-profile-security .note{
+   color:#9fb6c1;line-height:1.6;font-size:12px;
+ }
+ html:not(.traksos-native) .account-profile-page > .account-profile-invite{
+   grid-area:invite;display:flex;align-items:center;justify-content:space-between;min-width:0;
+   padding:17px 23px;min-height:65px;color:#e9f2f4;
+   text-decoration:none;background:#101f28!important;
+   border:1px solid var(--profile-line)!important;
+   border-radius:11px;box-shadow:none!important;
+   transition:border-color .18s ease,background .18s ease;
+ }
+ html:not(.traksos-native) .account-profile-page > .account-profile-invite:hover{
+   border-color:#a76e4b!important;background:#152b34!important;
+ }
+ html:not(.traksos-native) .account-profile-page .account-profile-invite-label{
+   display:inline-flex;align-items:center;gap:10px;
+   font-size:13px;font-weight:600;
+ }
+ html:not(.traksos-native) .account-profile-page .account-profile-gift{
+   flex:0 0 21px;width:21px;height:21px;color:#ce906d;
+ }
  html:not(.traksos-native) .account-profile-page > .account-profile-navigation{
-   grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
-   gap:10px;align-items:stretch;
+   grid-area:nav2;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+   align-items:stretch;gap:9px;min-width:0;
  }
- html:not(.traksos-native) .account-profile-page > .account-profile-navigation > button{
-   white-space:normal;text-align:center;min-height:49px;
+ html:not(.traksos-native) .account-profile-page > .account-profile-navigation button{
+   min-height:41px;white-space:normal;border-radius:9px;
+   border:1px solid #334c59;background:#132832;color:#bcd1da;
+   font-size:12px;font-weight:600;line-height:1.35;
+ }
+ html:not(.traksos-native) .account-profile-page > .account-profile-navigation button:hover{
+   background:#1a3540;border-color:#6e8b95;color:#fff;
+ }
+ html:not(.traksos-native) .account-profile-page > .account-profile-navigation button.bad{
+   background:#311f20!important;border-color:#875756!important;color:#f5c9c5!important;
  }
  html:not(.traksos-native) .account-profile-page :is(a,button,input):focus-visible{
-   outline:2px solid #ffad76;outline-offset:3px;
+   outline:2px solid #ffad7a;outline-offset:3px;
  }
 }
-@media (min-width:900px) and (max-width:1190px){
- html:not(.traksos-native) .account-profile-page > .account-profile-hero{gap:12px;padding:24px}
- html:not(.traksos-native) .account-profile-page .account-profile-hero-art{width:170px;flex-basis:170px}
- html:not(.traksos-native) .account-profile-page > .account-profile-navigation{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (min-width:900px) and (max-width:1200px){
+ html:not(.traksos-native) .app[class*="role-"] .desktop-content > main.account-profile-page{
+   column-gap:15px;grid-template-columns:minmax(0,1.15fr) minmax(270px,.85fr)
+ }
+ html:not(.traksos-native) .account-profile-page > .account-profile-hero{
+   grid-template-columns:minmax(0,1fr) minmax(185px,300px);padding:24px;gap:15px;
+ }
+ html:not(.traksos-native) .account-profile-page > .account-profile-navigation{
+   grid-template-columns:repeat(2,minmax(0,1fr));
+ }
 }
+/* Desktop candidate never replaces the distinct Android 618 screen. */
 @media (max-width:899px){
  .account-profile-page > .account-profile-hero,
  .account-profile-page > .account-profile-shortcuts{display:none}
 }
 html.traksos-native .account-profile-page > .account-profile-hero,
 html.traksos-native .account-profile-page > .account-profile-shortcuts{display:none}
-@media(prefers-reduced-motion:reduce){
- .account-profile-page .account-profile-shortcuts button{transition:none!important}
-}
-
-/* Browser evidence 31f551b: the former magenta Save button and white inputs
-   were out of place in the 618 dark UI, and the floating assistant covered
-   the Save field. Preserve mobile form geometry; correct only the visual canon. */
+/* Keep the approved mobile screen labels and original layout, only improve
+   known contrast problems without changing cards, navigation, or geometry. */
 .app[class*="role-"] main.account-profile-page .account-profile-invite-label{
-  display:inline-flex;align-items:center;gap:9px;
+ display:inline-flex;align-items:center;gap:8px;
 }
 .app[class*="role-"] main.account-profile-page .account-profile-gift{
-  display:inline-block;flex:0 0 23px;color:#ffab72;vertical-align:middle;
+ flex:0 0 22px;display:inline-block;color:#dca078;
 }
 .app[class*="role-"] main.account-profile-page .account-profile-data input.field{
-  background:#081c27!important;color:#f7fafb!important;
-  border:1px solid #426473!important;box-shadow:none!important;
+ color:#f1f6f8!important;background:#091c26!important;border:1px solid #3b5a68!important;
 }
-.app[class*="role-"] main.account-profile-page .btn:not(.ghost):not(.bad):not(.good):not([disabled]){
-  background:linear-gradient(112deg,#ff9c45,#ee6e23)!important;
-  color:#101c24!important;border:1px solid #ffc28c!important;
-  box-shadow:0 5px 17px #f56a2730!important;
+.app[class*="role-"] main.account-profile-page input.field::placeholder{color:#96b0bc}
+@media(max-width:899px){
+ .app[class*="role-"] main.account-profile-page .btn:not(.ghost):not(.bad):not(.good):not([disabled]){
+   background:linear-gradient(112deg,#ff9949,#e77830)!important;
+   border:1px solid #f5b07b!important;color:#13212a!important;box-shadow:none!important;
+ }
 }
-.app[class*="role-"] main.account-profile-page input.field::placeholder{color:#91aebc}
+@media(prefers-reduced-motion:reduce){
+ .account-profile-page .account-profile-shortcuts button,
+ .account-profile-page .account-profile-invite,
+ .account-profile-page .account-profile-data .btn{transition:none!important;transform:none!important}
+}
