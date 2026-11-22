@@ -94,7 +94,7 @@ export function OfferPage({ audience }: { audience: string }) {
         <section className="offer-unpublished" role="status">
           <h1>Документ пока не опубликован</h1>
           <p>На сервере пока нет доступной действующей редакции для этого раздела. Мы не заменяем юридический текст примером или черновиком.</p>
-          <a href="#/help">Связаться с поддержкой</a>
+          <a href="#/login">Войти для обращения в поддержку</a>
         </section>
       ) : (
         <>
