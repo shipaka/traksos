@@ -690,3 +690,51 @@ html.traksos-reduced-motion .guest-app.guest-home .trakbot-dock-launcher .trakbo
    mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.9) 13%,#000 27%)!important;
  }
 }
+
+/* The SAME approved 617 navigation component is mounted on every guest PC
+   page (login, register, support, company, services). No second legacy
+   header/topnav is rendered. Only its surface layout is shared here. */
+@media(min-width:1281px){
+ .guest-app:not(.guest-home) > .owner20-top{
+   box-sizing:border-box;
+   width:100%;max-width:1800px;margin:0 auto;
+   height:66px;min-height:66px;
+   display:grid!important;
+   grid-template-columns:230px 210px minmax(0,1fr) 150px 112px;
+   align-items:center;gap:20px!important;
+   padding:0 16px 0 44px!important;
+   border-bottom:1px solid #1d3038!important;
+   background:#06131a!important;
+ }
+ .guest-app:not(.guest-home) > .owner20-top .owner20-topnav{
+   display:flex!important;min-width:0;margin:0!important;
+   justify-content:space-evenly!important;gap:8px!important;
+   font-size:13px!important;
+ }
+ .guest-app:not(.guest-home) > .owner20-top .owner20-tagline{
+   font-size:12px!important;line-height:1.35!important;
+   margin:0!important;color:#d8dfe2!important;
+ }
+ .guest-app:not(.guest-home) > .owner20-top .owner20-signin{
+   width:112px;min-width:0;height:38px;
+   display:flex;align-items:center;justify-content:center;
+   border-color:#d76727;border-radius:10px;padding:0;
+ }
+}
+@media(min-width:900px) and (max-width:1280px){
+ .guest-app:not(.guest-home) > .owner20-top{
+   box-sizing:border-box;max-width:none;gap:12px;padding:0 18px;min-width:0;
+ }
+ .guest-app:not(.guest-home) > .owner20-top .owner20-topnav{
+   min-width:0;margin-left:auto;gap:clamp(8px,1.1vw,16px);
+ }
+ .guest-app:not(.guest-home) > .owner20-top .owner20-mark{
+   flex-shrink:0;max-width:220px;
+ }
+}
+@media(min-width:900px) and (max-width:1150px){
+ .guest-app:not(.guest-home) > .owner20-top .owner20-topnav{display:none!important}
+ .guest-app:not(.guest-home) > .owner20-top .owner20-compact-menu{display:block}
+}
+/* The active guest PC route uses its one header. The 618 browser/mobile
+   markup is intentionally independent and untouched below 900 px. */
