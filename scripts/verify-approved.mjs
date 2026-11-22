@@ -132,6 +132,21 @@ const unexpectedVisuals = visualRootEntries.filter(entry =>
 expect(unexpectedVisuals.length===0,
   'no obsolete artwork or unapproved new images in live public assets' +
   (unexpectedVisuals.length ? ': '+unexpectedVisuals.join(', ') : ''));
+// Prevent legacy cabinet/guest styles from silently reintroducing the
+// unretouched manufacturer marks. The original assets remain byte-locked as
+// archival references, but no running web component may point to them.
+const staleSharedTruckReferences = [];
+for (const relative of await readdir('web/src', { recursive: true })) {
+  if (!/\.(?:css|tsx?|jsx?|mjs)$/.test(relative)) continue;
+  const source = await read('web/src/' + relative);
+  if (/tracksos-approved-hero-owner-20261119\.webp|owner20-artwork-sprite\.webp|owner20-photo-background-approved\.webp/.test(source)) {
+    staleSharedTruckReferences.push(relative);
+  }
+}
+expect(staleSharedTruckReferences.length === 0,
+  'all guest, auth, PC, Android WebView and archived role styles load retouched exact originals; old marked photos absent from active source' +
+  (staleSharedTruckReferences.length ? ': ' + staleSharedTruckReferences.join(', ') : ''));
+
 // Require exact audited bytes and original scene in every public/mobile source.
 await asset('web/public/tracksos-approved-hero-owner-20261119-retouched.webp', 250000);
 await asset('web/public/owner20-artwork-sprite.webp', 20000);
