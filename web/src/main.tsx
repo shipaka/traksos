@@ -230,6 +230,12 @@ function App() {
   }, []);
 
   useEffect(() => { reload(); }, [reload]);
+  // Authenticated bookmarks must resolve to the user's real workspace, not
+  // resurrect a guest-only service preview or a dead legacy route.
+  useEffect(() => {
+    if (!ready || !me || route[0] !== 'explore') return;
+    if (GUEST_AUTH_SERVICE_ROUTES.has(route[1] ?? '')) location.replace('#/');
+  }, [ready, me?.id, route.join('/')]); // eslint-disable-line
   useEffect(() => {
     // Refresh the role/profile when the device reconnects or returns to foreground.
     // Live orders are always re-read from the API; no mutation is queued offline.
