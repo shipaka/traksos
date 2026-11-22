@@ -1,5 +1,7 @@
 import { rememberGuestService, rememberGuestAction } from '../guestCatalog.ts';
 import { APPROVED_VISUALS } from '../approvedVisuals.ts';
+import { requestTrakBotOpen } from '../trakbotEvents.ts';
+import { TrakBotMascot } from '../trakbotMascot.tsx';
 import './ownerDesktopHome20261120.css';
 
 /** The 20 November owner-approved desktop layout. Mobile stays on its separately approved view. */
@@ -7,7 +9,8 @@ const primary = [
   ['⚒','Выездной мастер','Диагностика и ремонт на месте','van'],
   ['↗','Эвакуация','Быстрая и безопасная','tow'],
   ['⌂','СТО','Ремонт и обслуживание','sto'],
-  ['◉','Консультация','Профессиональная помощь онлайн','consult']
+  ['◉','Консультация','Профессиональная помощь онлайн','consult'],
+  ['✦','TrakBot · ИИ','Наш технический помощник','trakbot']
 ] as const;
 const features = [
   ['▤','ТехБаза','Техническая библиотека и практический опыт','tech','Перейти'],
@@ -58,7 +61,7 @@ export function OwnerDesktopHome20261120({ overlayBackground = false }: { overla
       <span className="owner20-tagline">Платформа помощи и сервисов<br/>для грузового транспорта</span>
       <nav className="owner20-topnav" aria-label="Основные разделы">
         <details><summary>О платформе</summary><div><a href="#/company">О нас</a></div></details>
-        <details><summary>Сервисы</summary><div>{primary.map(item=><a href={route(item[3])} key={item[3]} onClick={() => rememberAllowed(item[3])}>{item[1]}</a>)}<a href="#/explore/parts" onClick={() => rememberAllowed("parts")}>Запчасти</a><a href="#/explore/insurance" onClick={() => rememberAllowed("insurance")}>Страхование</a><a href="#/explore/ecu" onClick={() => rememberAllowed("ecu")}>Специалисты ЭБУ</a></div></details>
+        <details><summary>Сервисы</summary><div>{primary.map(item=>item[3]==='trakbot' ? <a href="#/trakbot" key={item[3]} onClick={event=>{event.preventDefault();requestTrakBotOpen();}}>{item[1]}</a> : <a href={route(item[3])} key={item[3]} onClick={() => rememberAllowed(item[3])}>{item[1]}</a>)}<a href="#/explore/parts" onClick={() => rememberAllowed("parts")}>Запчасти</a><a href="#/explore/insurance" onClick={() => rememberAllowed("insurance")}>Страхование</a><a href="#/explore/ecu" onClick={() => rememberAllowed("ecu")}>Специалисты ЭБУ</a></div></details>
         <details><summary>Сообщество</summary><div><a href="#/explore/air">Эфир</a><a href="#/explore/club">Клуб TrakSOS</a></div></details>
         <details><summary>Партнёрам</summary><div><a href="#/join">Хотим работать</a></div></details>
         <a href="#/login">Поддержка</a>
@@ -94,7 +97,9 @@ export function OwnerDesktopHome20261120({ overlayBackground = false }: { overla
       </aside>
     </section>
     <nav className="owner20-quick" aria-label="Основные услуги" id="public-services">
-      {primary.map(([symbol,title,hint,key])=><a href={route(key)} key={key} onClick={() => rememberAllowed(key)}><span className="owner20-quick-icon" aria-hidden="true"><OwnerIcon kind={key}/></span><span><b>{title}</b><small>{hint}</small></span></a>)}
+      {primary.map(([symbol,title,hint,key])=>key==='trakbot'
+        ? <a href="#/trakbot" key={key} className="owner20-quick-trakbot" aria-label="Открыть TrakBot — ИИ-помощник" onClick={event=>{event.preventDefault();requestTrakBotOpen();}}><span className="owner20-quick-icon" aria-hidden="true"><TrakBotMascot reaction="hello" size="small" ambient /></span><span><b>{title}</b><small>{hint}</small></span></a>
+        : <a href={route(key)} key={key} onClick={() => rememberAllowed(key)}><span className="owner20-quick-icon" aria-hidden="true"><OwnerIcon kind={key}/></span><span><b>{title}</b><small>{hint}</small></span></a>)}
     </nav>
     <section className="owner20-features" aria-label="Дополнительные сервисы">
       {features.map(item=><Feature key={item[3]} item={item}/>)}
