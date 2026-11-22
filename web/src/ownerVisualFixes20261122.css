@@ -947,3 +947,18 @@ html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > div:f
     top:34px!important;
   }
 }
+
+/* Narrow-desktop 617 QA: float must not cover app-phone artwork. */
+@media(min-width:900px) and (max-width:1199px){
+  .guest-app.guest-home .owner20-bottom-app::after {
+    /* Move the existing CSS phone ABOVE the fixed TrakBot dock rather
+       than shrinking, hiding or duplicating the approved mascot. */
+    top:8px!important;right:6px!important;
+  }
+  .guest-app.guest-home .owner20-bottom-app::before {
+    top:16px!important;right:13px!important;
+  }
+  .guest-app.guest-home .owner20-bottom-app>b{
+    display:block!important;max-width:58%!important;
+  }
+}
