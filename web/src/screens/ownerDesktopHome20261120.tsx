@@ -1,4 +1,4 @@
-import { rememberGuestService } from '../guestCatalog.ts';
+import { rememberGuestService, rememberGuestAction } from '../guestCatalog.ts';
 import { APPROVED_VISUALS } from '../approvedVisuals.ts';
 import './ownerDesktopHome20261120.css';
 
@@ -7,7 +7,6 @@ const primary = [
   ['⚒','Выездной мастер','Диагностика и ремонт на месте','van'],
   ['↗','Эвакуация','Быстрая и безопасная','tow'],
   ['⌂','СТО','Ремонт и обслуживание','sto'],
-  ['▦','ЭБУ','Диагностика и ремонт электронных блоков','ecu'],
   ['◉','Консультация','Профессиональная помощь онлайн','consult']
 ] as const;
 const features = [
@@ -19,6 +18,7 @@ const features = [
 ] as const;
 function rememberAllowed(key:string){
   if(key==='van'||key==='tow'||key==='sto'||key==='consult'||key==='parts'||key==='insurance'||key==='inspection') rememberGuestService(key);
+  else if(key==='ecu'||key==='air'||key==='club'||key==='tech') rememberGuestAction(key);
 }
 function route(key:string) { return '#/explore/' + key; }
 function OwnerIcon({kind}:{kind:string}) {
@@ -57,11 +57,11 @@ export function OwnerDesktopHome20261120({ overlayBackground = false }: { overla
       <a href="#/" className="owner20-mark" aria-label="TrakSOS — главная"><img src={APPROVED_VISUALS.logo} alt="TrakSOS" width="235" height="39" /></a>
       <span className="owner20-tagline">Платформа помощи и сервисов<br/>для грузового транспорта</span>
       <nav className="owner20-topnav" aria-label="Основные разделы">
-        <details><summary>О платформе</summary><div><a href="#/company">О нас</a><a href="#/explore/guide">Как работает</a><a href="#/explore/pricing">Комиссии</a></div></details>
-        <details><summary>Сервисы</summary><div>{primary.map(item=><a href={route(item[3])} key={item[3]}>{item[1]}</a>)}<a href="#/explore/parts">Запчасти</a><a href="#/explore/insurance">Страхование</a></div></details>
+        <details><summary>О платформе</summary><div><a href="#/company">О нас</a></div></details>
+        <details><summary>Сервисы</summary><div>{primary.map(item=><a href={route(item[3])} key={item[3]} onClick={() => rememberAllowed(item[3])}>{item[1]}</a>)}<a href="#/explore/parts" onClick={() => rememberAllowed("parts")}>Запчасти</a><a href="#/explore/insurance" onClick={() => rememberAllowed("insurance")}>Страхование</a></div></details>
         <details><summary>Сообщество</summary><div><a href="#/explore/air">Эфир</a><a href="#/explore/club">Клуб TrakSOS</a></div></details>
-        <details><summary>Партнёрам</summary><div><a href="#/join">Хотим работать</a><a href="#/offers">Оферты</a></div></details>
-        <a href="#/help">Поддержка</a>
+        <details><summary>Партнёрам</summary><div><a href="#/join">Хотим работать</a></div></details>
+        <a href="#/login">Поддержка</a>
       </nav>
       <details className="owner20-compact-menu">
         <summary>☰ Разделы</summary>
@@ -71,7 +71,7 @@ export function OwnerDesktopHome20261120({ overlayBackground = false }: { overla
           <a href="#/join">Партнёрам</a><a href="#/help">Поддержка</a>
         </nav>
       </details>
-      <details className="owner20-region"><summary>⌖ Выбрать регион</summary><div className="owner20-region-menu"><b>Регион запуска</b><p>Санкт-Петербург и Ленинградская область</p><small>В остальных регионах сервисы появятся по мере подключения партнёров.</small><a href="#/help">Уточнить доступность →</a></div></details>
+      <details className="owner20-region"><summary>⌖ Выбрать регион</summary><div className="owner20-region-menu"><b>Регион запуска</b><p>Санкт-Петербург и Ленинградская область</p><small>В остальных регионах сервисы появятся по мере подключения партнёров.</small><a href="#/login">Уточнить доступность →</a></div></details>
       <a href="#/login" className="owner20-signin"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 21v-2.2a7 7 0 0 1 14 0V21"/></svg><span>Войти</span></a>
     </header>
     <section className="owner20-hero" aria-labelledby="owner20-heading">
@@ -90,7 +90,7 @@ export function OwnerDesktopHome20261120({ overlayBackground = false }: { overla
           <div className="owner20-map-shape" role="img" aria-label="Иллюстрация России из утверждённого макета, не подтверждение фактического покрытия."><span className="owner20-map-source" aria-hidden="true" /><span className="owner20-map-demo-tag">ДЕМО</span></div>
           <div className="owner20-map-legend"><p><i className="teal"/>Пример зоны покрытия</p><p><i/>Планируемое расширение</p><small>Доступность услуг зависит от региона и партнёрской сети.</small></div>
         </div>
-        <a href="#/explore/guide">Подробнее о покрытии →</a>
+        <a href="#/login">Подробнее о покрытии →</a>
       </aside>
     </section>
     <nav className="owner20-quick" aria-label="Основные услуги" id="public-services">
