@@ -81,7 +81,25 @@ try {
       if (await cookie.isVisible().catch(() => false)) await cookie.click();
       await page.waitForTimeout(200);
       console.log('visual entry route ' + width + 'px: ' + await page.evaluate(() => location.hash));
-      await page.locator('.client-dashboard').waitFor({timeout: 20000});
+      try {
+        await page.locator('.client-dashboard').waitFor({timeout: 20000});
+      } catch (error) {
+        const diagnostic = await page.evaluate(() => ({
+          hash: location.hash,
+          title: document.title,
+          appClass: document.querySelector('.app')?.className,
+          headings: [...document.querySelectorAll('h1,h2,[role="alert"]')]
+            .slice(0, 12).map(el => el.textContent?.trim().slice(0, 120)),
+          dialogs: [...document.querySelectorAll('[role="dialog"]')]
+            .map(el => el.textContent?.trim().slice(0, 200)),
+          hasToken: Boolean(localStorage.getItem('traksos.token')),
+          mode: localStorage.getItem('traksos.mode')
+        }));
+        await page.screenshot({path: OUT + '/dashboard-missing-' + width + '.png', fullPage: true});
+        console.error('client dashboard missing ' + width + 'px: ' +
+          JSON.stringify({diagnostic, errors, consoleErrors}).slice(0, 6500));
+        throw error;
+      }
       if (width < 900) {
         await page.locator('.and19-client').waitFor({state:'visible'});
         const hero = await page.locator('.and19-cover img').evaluate(img => ({
