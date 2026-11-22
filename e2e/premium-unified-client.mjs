@@ -46,6 +46,15 @@ try {
     const consoleErrors = [];
     page.on('pageerror', e => errors.push(e.message));
     page.on('console', e => { if (e.type() === 'error') consoleErrors.push(e.text()); });
+    // The approved .and19-client tree is native-only. Emulate the APK bridge
+    // for the mobile assertion, while desktop stays in its browser mode.
+    if (width < 900) await page.addInitScript(() => {
+      Object.defineProperty(window, 'TrakSOSNative', {configurable: true, value: {
+        isApp: () => true, setSession: () => {}, pushToken: () => '',
+        performerOnline: () => {}, appLockEnabled: () => false,
+        setAppLockEnabled: () => false
+      }});
+    });
     await page.addInitScript(token => {
       localStorage.setItem('traksos.token', token);
       localStorage.setItem('traksos.mode', 'client');
