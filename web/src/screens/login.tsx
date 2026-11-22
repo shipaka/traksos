@@ -1,4 +1,5 @@
 import { TrakServiceIcon } from '../trakServiceIcon.tsx';
+import { TrakAppPhone } from '../trakAppPhone.tsx';
 import { useEffect, useState } from 'react';
 import { native } from '../native.ts';
 import { post, setToken, connectWs, ApiError } from '../api.ts';
@@ -436,11 +437,7 @@ export function Login({ driver, entry, serviceContext }: {
         {!(window as any).TrakSOSNative && <aside className="public-app-card">
           <div className="public-section-kicker">TRAKSOS В ТЕЛЕФОНЕ</div>
           <h2>Мобильное приложение <em>TrakSOS</em></h2>
-          <div className="public-app-phone" aria-hidden="true">
-            <span className="public-app-logo">Trak<b>SOS</b></span>
-            <img className="public-app-phone-truck" src="/icon-192.png?v=approved-20261120" alt="" loading="lazy" />
-            <span>Помощь грузовику<br/>в дороге</span>
-          </div>
+          <TrakAppPhone className="public-app-phone"/>
           <p>Заявки, специалисты, документы и связь с мастером — в одном приложении.</p>
           <span className="public-rustore-soon">Скоро в RuStore</span>
           <small>Ссылка на скачивание появится после публикации приложения.</small>
