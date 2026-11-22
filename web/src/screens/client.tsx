@@ -1409,6 +1409,10 @@ export function Profile() {
         <span className="note">Уменьшает эффекты и движения интерфейса на слабых устройствах.</span>
       </div>
       <div className="stack account-profile-navigation">
+        <div className="account-profile-secondary-head">
+          <div><span>ПРОСТРАНСТВО TRAKSOS</span><h2>Дополнительные возможности</h2></div>
+          <p>Документы, поддержка, другие роли и управление доступом.</p>
+        </div>
         {isCustomer && mode !== 'client' && <button className="btn ghost" onClick={() => go('as/client')}>Кабинет клиента</button>}
         {isPerformer && mode !== 'performer' && <button className="btn ghost" onClick={() => go('as/performer')}>Кабинет исполнителя</button>}
 
