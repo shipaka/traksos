@@ -1242,3 +1242,32 @@ html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > div:f
 @media(prefers-reduced-motion:reduce){
  .app .performer-schedule-accordion>summary>span:last-child{transition:none}
 }
+
+/* 23 Nov Android: vehicle complete within mobile photo frame */
+/* The source images must be visible COMPLETELY: a 2:1 cargo truck in
+   a 1:1 thumbnail must not lose its headlights, cabin or trailer.
+   A graphite photographic surround fills the entire tile instead of
+   distorting the vehicle to make it cover the frame. */
+@media(max-width:899px){
+  .app:not(.guest-app) .and19-main-order .tr-approved-order-truck,
+  .app:not(.guest-app) .and20-client-truck,
+  .app:not(.guest-app) .and20-tow-job .and20-tow-photo,
+  .app:not(.guest-app) .and20-sto-photo {
+    background:radial-gradient(ellipse at 70% 48%,#24485b,#0a2231 82%)!important;
+    overflow:hidden;
+  }
+  .app:not(.guest-app) .and19-main-order .tr-approved-order-truck img,
+  .app:not(.guest-app) .and19-main-order .and19-order-photo-link img,
+  .app:not(.guest-app) img.and20-client-truck,
+  .app:not(.guest-app) img.and20-tow-photo,
+  .app:not(.guest-app) img.and20-sto-photo {
+    width:100%!important;height:100%!important;
+    object-fit:contain!important;object-position:center center!important;
+    transform:none!important;
+  }
+  /* Keep accessible text for a reference, but don't print a tiny
+     "Иллюстрация" badge OVER the vehicle on the phone. PC retains it. */
+  .app:not(.guest-app) .tr-approved-order-truck.is-illustration > small {
+    display:none!important;
+  }
+}
