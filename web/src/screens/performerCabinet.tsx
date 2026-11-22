@@ -262,7 +262,7 @@ export function ScheduleSection() {
       <Back to="work/me" label="Профиль" />
       <div><h1>Распорядок</h1><div className="sub">По нему решаем, звонить ли вам. Кончилось рабочее время — статус сам станет «Не на линии», пока вы не выйдете на линию вручную.</div></div>
       <VacationToggle />
-      <button className="opt" aria-pressed={s.on} onClick={() => setS({ ...s, on: !s.on })}>
+      <button className="opt performer-schedule-enabled" aria-pressed={s.on} onClick={() => setS({ ...s, on: !s.on })}>
         <b>{s.on ? '✓ Работаю по графику' : 'Без графика'}</b><small>{s.on ? 'Заявки — только в рабочие дни и часы' : 'Заявки идут всегда, пока вы на линии'}</small>
       </button>
       {s.on && (
