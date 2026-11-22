@@ -1253,6 +1253,7 @@ export function Profile() {
     });
   return (
     <main className="account-profile-page">
+      <h1 className="account-profile-mobile-title">Профиль</h1>
       <header className="account-profile-hero">
         <div className="account-profile-hero-copy">
           <span className="account-profile-eyebrow">TRAKSOS · МОЙ КАБИНЕТ</span>
