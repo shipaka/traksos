@@ -169,6 +169,12 @@ try{
          if((await realTabs.nth(1).getAttribute('aria-selected'))!=='true')throw Error('New offers mode did not change');
          await realTabs.nth(0).click();
        }
+       if(c.id==='inspection'){
+         await workdesk.getByRole('heading',{name:'Оператор техосмотра'}).waitFor();
+         await workdesk.getByText('Официальные карты/ЕАИСТО пока не подключены.').waitFor();
+         if(await workdesk.getByRole('heading',{name:'Страховой партнёр'}).count())
+           throw Error('Inspection workspace accidentally fell back to insurer header');
+       }
        if(c.id==='admin'){
          const outline=page.locator('.approved-pc-russia');
          if(await outline.count()!==1)throw Error('Approved Russia map is missing');
