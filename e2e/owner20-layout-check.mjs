@@ -42,8 +42,8 @@ try {
        return {status:res.status,w:image?.width??0,h:image?.height??0};
      };
      const [sprite,approvedHero,approvedLogo]=await Promise.all([
-       measure('/owner20-artwork-sprite.webp'),
-       measure('/owner20-photo-background-approved.webp'),
+       measure('/owner20-artwork-sprite-retouched.webp'),
+       measure('/owner20-photo-background-approved-retouched.webp'),
        measure('/traksos-brand-logo-approved-618.png'),
      ]);
      const rect=(selector)=>{const r=document.querySelector(selector)?.getBoundingClientRect();return r&&{x:r.x,y:r.y,w:r.width,h:r.height};};
@@ -55,10 +55,10 @@ try {
        bottom:rect('.owner20-bottom'),coverage:rect('.owner20-map'),
      };
    });
-   const expectedHero=width>=1281?'owner20-photo-background-approved.webp':'owner20-artwork-sprite.webp';
+   const expectedHero=width>=1281?'owner20-photo-background-approved-retouched.webp':'owner20-artwork-sprite-retouched.webp';
    if(!art.photo.includes(expectedHero) ||
-      !art.map.includes('owner20-artwork-sprite.webp') ||
-      !art.feature.includes('owner20-artwork-sprite.webp') ||
+      !art.map.includes('owner20-artwork-sprite-retouched.webp') ||
+      !art.feature.includes('owner20-artwork-sprite-retouched.webp') ||
       !art.logo.includes('traksos-brand-logo-approved-618.png') ||
       art.photo.includes('tracksos-approved-hero-owner-20261119') ||
       art.sprite?.w!==1018 || art.sprite?.h!==446 ||

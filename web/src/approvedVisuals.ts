@@ -14,12 +14,12 @@ export const APPROVED_VISUALS = Object.freeze({
   logo: '/traksos-brand-logo-approved-618.png',
   trakbotHello: '/trakbot-approved-hello.webp',
   trakbotReactions: '/trakbot-approved-30.webp',
-  workspaceTruck: '/tracksos-approved-hero-owner-20261119.webp',
+  workspaceTruck: '/tracksos-approved-hero-owner-20261119-retouched.webp',
   serviceScenes: '/traksos-service-scenes-shared.webp',
   // Same four services; higher-resolution illustrative photos for PC cabinets only.
   desktopServiceScenes: '/traksos-service-scenes-desktop-hq.webp',
-  publicPcPhoto: '/owner20-photo-background-approved.webp',
-  publicPcAtlas: '/owner20-artwork-sprite.webp',
+  publicPcPhoto: '/owner20-photo-background-approved-retouched.webp',
+  publicPcAtlas: '/owner20-artwork-sprite-retouched.webp',
 } as const);
 
 export const APPROVED_SCENE_COPY = Object.freeze({

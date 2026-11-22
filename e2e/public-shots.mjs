@@ -29,8 +29,8 @@ try {
       // of the owner-approved 20 Nov artwork, not an HTML-only placeholder.
       await page.evaluate(async () => {
         for (const [path,w,h] of [
-          ['/owner20-artwork-sprite.webp',1018,446],
-          ['/owner20-photo-background-approved.webp',1536,324],
+          ['/owner20-artwork-sprite-retouched.webp',1018,446],
+          ['/owner20-photo-background-approved-retouched.webp',1536,324],
           ['/traksos-brand-logo-approved-618.png',274,46],
         ]) {
           const response=await fetch(path);

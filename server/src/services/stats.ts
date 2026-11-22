@@ -158,6 +158,14 @@ export class StatsService {
     const rep = await this.db.one<{ clients: number; returned: number }>(
       `with c as (select client_id, count(*) n from orders where status='completed' group by client_id)
        select count(*)::int as clients, count(*) filter (where n >= 2)::int as returned from c`);
+    // Actual coordinates of approved partner workshops; not client tracking.
+    const centers = await this.db.query<{
+      id: string; name: string; address: string; lat: number; lng: number;
+    }>(`select id, name, address, lat, lng from service_centers
+       where verification='approved' and paused=false
+         and lat between -90 and 90 and lng between -180 and 180
+         and not (lat=0 and lng=0)
+       order by name, id limit 30`);
     return {
       today: { orders: r.orders_today, mastersOnline: r.masters_online, towOnline: r.tow_online, disputesOpen: r.disputes_open, modOpen: r.mod_open, supportOpen: r.support_open },
       money: { paidMonth: r.paid_month, platformMonth: r.platform_month, toPayout: r.to_payout, frozen: r.frozen, awaitingConfirmation: r.awaiting_confirmation, cashDebts: r.cash_debts },
@@ -165,6 +173,7 @@ export class StatsService {
         consultToVisit: r.consults ? round(r.consults_to_visit / r.consults) : null, newClients: r.new_clients },
       quality: { disputesOpen: r.disputes_open, dropsMonth: r.drops_month, completedMonth: r.completed_month, performersRating: r.performers_rating,
         repeat: rep?.clients ? round(rep.returned / rep.clients) : null },
+      coverage: { centers },
     };
   }
 

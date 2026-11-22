@@ -1,0 +1,226 @@
+/* Browser-only authentication overlay.
+ * It overlays approved 617.png PC and 618.png mobile-browser pages without
+ * altering their photography, routes, headers or cabinet layouts.
+ * The Android native authentication experience remains unchanged. */
+.tr-auth-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  background: rgba(2, 9, 14, .65);
+  -webkit-backdrop-filter: blur(7px) saturate(.85);
+  backdrop-filter: blur(7px) saturate(.85);
+  animation: tr-auth-shade-in .46s ease-out both;
+}
+.auth-desktop-layout.tr-auth-panel {
+  box-sizing: border-box !important;
+  position: fixed !important;
+  isolation: isolate;
+  z-index: 10051 !important;
+  top: clamp(66px, 9vh, 105px) !important;
+  right: clamp(16px, 6vw, 110px) !important;
+  left: auto !important;
+  bottom: auto !important;
+  width: min(440px, calc(100vw - 32px)) !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-height: calc(100dvh - 88px) !important;
+  display: block !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  margin: 0 !important;
+  padding: 29px 29px 26px !important;
+  color: #eef7fa !important;
+  background: linear-gradient(145deg, rgba(20, 41, 52, .98), rgba(6, 20, 30, .99) 74%) !important;
+  border: 1px solid rgba(132, 178, 188, .4) !important;
+  border-radius: 23px !important;
+  box-shadow: 0 33px 110px rgba(0, 0, 0, .64), inset 0 1px rgba(255,255,255,.09), 0 0 40px rgba(244, 100, 37, .075) !important;
+  transform-origin: 92% 2%;
+  will-change: transform, opacity;
+  animation: tr-auth-sheet-in .56s cubic-bezier(.16,1,.3,1) both;
+}
+.auth-desktop-layout.tr-auth-panel:is(.tr-auth-panel--register,.tr-auth-panel--join) {
+  width: min(590px, calc(100vw - 32px)) !important;
+}
+.auth-desktop-layout.tr-auth-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 31px;
+  right: 31px;
+  height: 2px;
+  background: linear-gradient(95deg, transparent 1%, #ff6a29 23%, #ffd1a4 52%, #ff8b49 78%, transparent 99%);
+  background-size: 240% 100%;
+  box-shadow: 0 0 24px rgba(252,116,59,.45);
+  pointer-events: none;
+  animation: tr-auth-trace 1s cubic-bezier(.16,1,.3,1) both;
+}
+.auth-desktop-layout.tr-auth-panel::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  z-index: -1;
+  top: -125px;
+  right: -98px;
+  width: 330px;
+  height: 340px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(255, 122, 55, .17) 0%, rgba(251, 112, 48, .08) 35%, transparent 71%);
+  opacity: .62;
+  animation: tr-auth-glow-arrive .9s ease-out both;
+}
+.auth-desktop-layout.tr-auth-panel .auth-desktop-form {
+  position: relative;
+  max-width: none !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  gap: 17px !important;
+  justify-content: flex-start !important;
+}
+.tr-auth-panel .auth-desktop-form::before {
+  content: 'TRAKSOS · ЛИЧНЫЙ ДОСТУП';
+  display: block;
+  padding-right: 40px;
+  color: #ff9c66;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 1.9px;
+}
+.tr-auth-panel h1 {
+  color: #fff !important;
+  font-size: clamp(25px, 2.2vw, 31px) !important;
+  line-height: 1.17 !important;
+  font-weight: 800 !important;
+  letter-spacing: -.7px;
+  margin: 0 40px 8px 0 !important;
+}
+.tr-auth-panel .sub,
+.tr-auth-panel .note { color: #b7cbd4 !important; line-height: 1.5 !important; }
+.tr-auth-panel .label { color: #dcebf1 !important; }
+.tr-auth-panel .field {
+  background: rgba(2, 14, 23, .62) !important;
+  border: 1px solid rgba(124, 165, 177, .38) !important;
+  border-radius: 11px !important;
+  color: #fff !important;
+  min-width: 0;
+  width: 100%;
+  min-height: 45px;
+}
+.tr-auth-panel .field:focus {
+  border-color: #ff9355 !important;
+  outline: 2px solid rgba(255, 147, 85, .25) !important;
+}
+.tr-auth-panel .btn:not(.ghost) {
+  border: 1px solid rgba(255, 175, 119, .5) !important;
+  background: linear-gradient(120deg, #fd813e, #ef5528) !important;
+  color: #fff !important;
+  box-shadow: 0 8px 20px rgba(210, 65, 25, .21);
+  animation: tr-auth-cta-warmth 1.8s ease-in-out .58s 2;
+  transition: transform .2s ease, filter .2s ease, box-shadow .2s ease;
+  border-radius: 11px !important;
+  min-height: 44px;
+}
+ .tr-auth-panel .btn:not(.ghost):not(:disabled):hover {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+  box-shadow: 0 11px 29px rgba(255, 110, 49, .32);
+}
+.tr-auth-panel .btn.ghost {
+  color: #dbeaf0 !important;
+  border: 1px solid rgba(143, 181, 190, .27) !important;
+  background: rgba(26, 52, 63, .34) !important;
+  border-radius: 11px !important;
+  min-height: 40px;
+}
+.tr-auth-panel .btn:disabled { opacity: .6; cursor: wait; }
+.tr-auth-panel .btn:focus-visible,
+.tr-auth-panel .tr-auth-close:focus-visible,
+.tr-auth-panel a:focus-visible { outline: 3px solid #ffae70 !important; outline-offset: 2px; }
+.tr-auth-close {
+  position: absolute;
+  top: -5px;
+  right: 0;
+  z-index: 3;
+  width: 35px;
+  height: 35px;
+  background: rgba(116, 144, 156, .13);
+  color: #f1f8fa;
+  border: 1px solid rgba(143, 181, 190, .25);
+  border-radius: 11px;
+  cursor: pointer;
+  font-size: 25px;
+  line-height: 25px;
+}
+.tr-auth-close:hover { background: rgba(250, 112, 48, .18); border-color: #f98b56; }
+.tr-auth-panel .guest-signup-kind { display: flex; gap: 8px; flex-wrap: wrap; }
+.tr-auth-panel .guest-signup-kind a { color: #e7f4f8; border-radius: 10px; }
+.tr-auth-panel .guest-signup-kind a[aria-current='page'] { border-color: #ff985b; color: #ffad78; }
+.tr-auth-panel .guest-partner-mobile-preview { display: none !important; }
+.tr-auth-panel .guest-partner-roles { gap: 9px; }
+.tr-auth-panel .guest-partner-role {
+  background: rgba(7, 28, 38, .65);
+  border: 1px solid rgba(127, 172, 182, .35);
+  border-radius: 13px;
+}
+.tr-auth-panel .guest-partner-role[aria-pressed='true'],
+.tr-auth-panel .seg[aria-pressed='true'] { border-color: #ff9052 !important; box-shadow: inset 0 0 0 1px rgba(255,144,82,.35); }
+.tr-auth-panel .agree a { color: #ffb488; }
+.tr-auth-panel .auth-desktop-showcase { display: none !important; }
+@keyframes tr-auth-shade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes tr-auth-sheet-in {
+  0% { opacity: 0; transform: translate3d(34px, -8px, 0) rotate(1.4deg) scale(.94); }
+  60% { opacity: 1; transform: translate3d(-3px, 0, 0) rotate(-.24deg) scale(1.005); }
+  100% { opacity: 1; transform: translate3d(0,0,0) rotate(0) scale(1); }
+}
+@keyframes tr-auth-trace {
+  from { opacity: .15; background-position: 100% 0; }
+  to { opacity: 1; background-position: 0 0; }
+}
+@keyframes tr-auth-glow-arrive {
+  0% { opacity: 0; transform: translate3d(55px,-30px,0) scale(.7); }
+  100% { opacity: .62; transform: translate3d(0,0,0) scale(1); }
+}
+@keyframes tr-auth-cta-warmth {
+  0%, 100% { box-shadow: 0 8px 20px rgba(210,65,25,.21); }
+  50% { box-shadow: 0 9px 28px rgba(255,127,55,.46), 0 0 0 4px rgba(252,111,44,.1); }
+}
+@media (max-width: 899px) {
+  .auth-desktop-layout.tr-auth-panel,
+  .auth-desktop-layout.tr-auth-panel:is(.tr-auth-panel--register,.tr-auth-panel--join) {
+    top: max(12px, env(safe-area-inset-top)) !important;
+    right: 12px !important;
+    left: 12px !important;
+    bottom: auto !important;
+    width: auto !important;
+    max-height: calc(100dvh - 24px - env(safe-area-inset-top)) !important;
+    padding: 24px 20px 21px !important;
+    border-radius: 20px !important;
+  }
+  /* Phone and tablet panels bloom vertically, never slide beyond the viewport. */
+  .auth-desktop-layout.tr-auth-panel {
+    transform-origin: 50% 8%;
+  }
+  @keyframes tr-auth-sheet-in {
+    0% { opacity: 0; transform: translate3d(0, 13px, 0) scale(.94); }
+    63% { opacity: 1; transform: translate3d(0, -2px, 0) scale(1.004); }
+    100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+  }
+  .tr-auth-panel .guest-partner-roles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tr-auth-panel .guest-partner-role { min-width: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tr-auth-backdrop, .auth-desktop-layout.tr-auth-panel,
+  .auth-desktop-layout.tr-auth-panel::before, .auth-desktop-layout.tr-auth-panel::after,
+  .tr-auth-panel .btn:not(.ghost) { animation: none !important; transition: none !important; }
+
+}
+.traksos-reduced-motion .tr-auth-backdrop,
+.traksos-reduced-motion .auth-desktop-layout.tr-auth-panel,
+.traksos-reduced-motion .auth-desktop-layout.tr-auth-panel::before,
+.traksos-reduced-motion .auth-desktop-layout.tr-auth-panel::after,
+.traksos-reduced-motion .tr-auth-panel .btn:not(.ghost) { animation: none !important; transition: none !important; }

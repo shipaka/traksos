@@ -110,7 +110,7 @@ try{
         h:el.getBoundingClientRect().height
       }));
       if(info.w<100||info.h<100||
-         !info.photo.includes('tracksos-approved-hero-owner-20261119')||
+         !info.photo.includes('tracksos-approved-hero-owner-20261119-retouched')||
          info.photo.includes('tracksos-approved-scenic-hero'))
         throw Error('Approved mobile browser photo replaced by obsolete asset '+JSON.stringify(info));
       if(await home.locator('.public-service-tiles>a').count()!==6)
@@ -131,9 +131,9 @@ try{
       await home.waitFor({state:'visible'});
       const hero=home.locator('.owner20-photo');
       const photo=await hero.evaluate(el=>getComputedStyle(el,'::after').backgroundImage);
-      if(!photo.includes('owner20-photo-background-approved.webp'))
+      if(!photo.includes('owner20-photo-background-approved-retouched.webp'))
         throw Error('617 PC hero must use owner-approved background, not retired truck: '+photo);
-      const approved=await p.request.get(BASE+'/owner20-photo-background-approved.webp');
+      const approved=await p.request.get(BASE+'/owner20-photo-background-approved-retouched.webp');
       if(!approved.ok()||(await approved.body()).byteLength<15000)
         throw Error('617 PC approved hero image is unavailable');
       if(await home.locator('.owner20-quick>a').count()!==5||

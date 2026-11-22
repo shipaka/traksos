@@ -167,10 +167,51 @@ try{
          await realTabs.nth(0).click();
        }
        if(c.id==='admin'){
-         const outline=page.locator('.approved-pc-russia');
-         if(await outline.count()!==1)throw Error('Approved Russia map is missing');
-         const image=await outline.evaluate(el=>getComputedStyle(el,'::before').backgroundImage);
-         if(!image.includes('traksos-russia-outline.svg'))throw Error('Admin map is not the approved Russia outline: '+image);
+         await page.locator('.approved-pc-geo-compact, .approved-pc-geo-live').first().waitFor({timeout:14000});
+         // The decorative outline was a regression: it showed an imaginary
+         // geography regardless of real server data.
+         if(await page.locator('.approved-pc-russia').count())
+           throw Error('Admin still displays the static fake Russia map');
+         const geoApi=await fetch(BASE+'/api/admin/summary',{
+           headers:{authorization:'Bearer '+token}
+         }).then(r=>r.json());
+         const count=geoApi.coverage?.centers?.length||0;
+         const compact=page.locator('.approved-pc-geo-compact');
+         const live=page.locator('.approved-pc-geo-live');
+         if(count===0){
+           if(await compact.count()!==1||await live.count()||
+             await compact.getAttribute('open')!==null)
+             throw Error('No real coordinates: admin coverage must be one collapsed line');
+         }else if(await live.count()!==1 ||
+           await live.locator('.roadside-map iframe').count()!==1){
+           throw Error('Verified coordinates not displayed on actual admin map');
+         }
+       }
+       if(c.id==='admin'&&width===1440){
+         // Strictly SYNTHETIC LOCAL browser fixture. Prove that a new verified
+         // coordinate opens the REAL map and that it disappears again when
+         // the fixture is removed. Never include mocked points in screenshots.
+         const fixture='**/api/admin/summary';
+         const replaceCoverage=async(route)=>{
+           const response=await route.fetch();
+           const actual=await response.json();
+           await route.fulfill({response,json:{...actual,coverage:{centers:[{
+             id:'synthetic-ci-sto',name:'Тестовая СТО — только CI',
+             address:'Синтетические координаты, не реальный партнёр',
+             lat:59.9343,lng:30.3351
+           }]}}});
+         };
+         await page.route(fixture,replaceCoverage);
+         await page.reload({waitUntil:'domcontentloaded'});
+         await page.locator('.approved-pc-geo-live .roadside-map iframe').waitFor({timeout:14000});
+         if(await page.locator('.approved-pc-geo-compact').count())
+           throw Error('New confirmed point did not expand verified partner map');
+         const mapUrl=await page.locator('.approved-pc-geo-live iframe').getAttribute('src');
+         if(!mapUrl?.includes('59.934300')||!mapUrl.includes('30.335100'))
+           throw Error('Admin map did not use API-confirmed coordinates');
+         await page.unroute(fixture,replaceCoverage);
+         await page.reload({waitUntil:'domcontentloaded'});
+         await page.locator('.approved-pc-geo-compact, .approved-pc-geo-live').first().waitFor({timeout:14000});
        }
        if(c.id==='moderator'&&await workdesk.locator('.approved-pc-bot').count())
          throw Error('Moderator workdesk must not force TrakBot');
@@ -193,6 +234,29 @@ try{
        throw Error('Moderator inner page unexpectedly shows floating TrakBot: '+width);
      if(c.id==='admin') await page.locator('.admin-stage-content .admin-orders-zero, .admin-stage-content .list-item').first().waitFor({timeout:12000});
      if(c.id==='owner'){
+       const savedVehicles=await fetch(BASE+'/api/vehicles',{headers:{
+         authorization:'Bearer '+token
+       }}).then(r=>r.json());
+       if(Array.isArray(savedVehicles)&&savedVehicles.length===0){
+         await page.locator('.tr-approved-garage-compact').waitFor();
+         if(await page.locator('.tr-approved-empty-scene--fleet').count()||
+            await page.locator('.tr-approved-garage-empty').count())
+           throw Error('Empty garage still shows a fictional truck and route');
+         if(await page.locator('.tr-approved-garage-compact-link').count()!==1)
+           throw Error('Empty owner garage lost Add Vehicle action');
+         if(width===390){
+           const geometry=await page.locator('.tr-approved-garage-compact').evaluate(el=>{
+             const copy=el.querySelector('.tr-approved-garage-compact-copy').getBoundingClientRect();
+             const action=el.querySelector('.tr-approved-garage-compact-link').getBoundingClientRect();
+             return {copyWidth:copy.width,copyBottom:copy.bottom,
+               actionTop:action.top,actionRight:action.right,
+               viewportWidth:document.documentElement.clientWidth};
+           });
+           if(geometry.copyWidth<170||geometry.actionTop<geometry.copyBottom-2||
+              geometry.actionRight>geometry.viewportWidth+2)
+             throw Error('Phone empty garage text wraps into a thin column or overlaps button: '+JSON.stringify(geometry));
+         }
+       }
        const header=page.locator('.client-garage-page>.client-section-hero');
        await header.waitFor();
        const geometry=await header.evaluate(el=>({

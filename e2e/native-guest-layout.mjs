@@ -26,7 +26,7 @@ try {
     await page.locator('.guest-app .public-landing').waitFor();
     await page.locator('.public-service-tile').first().waitFor();
     await page.evaluate(async()=>{await document.fonts.ready;const image=new Image();
-      image.src='/tracksos-approved-hero-owner-20261119.webp';await image.decode();});
+      image.src='/tracksos-approved-hero-owner-20261119-retouched.webp';await image.decode();});
     const g=await page.evaluate(()=>{
       const rect=s=>document.querySelector(s)?.getBoundingClientRect();
       const hero=rect('.public-brand-hero');
