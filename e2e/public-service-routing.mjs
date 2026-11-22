@@ -90,8 +90,8 @@ try {
         'Region availability should open sign-in');
       check(await page.locator('.owner20-map a[href="#/login"]').count()===1,
         'Coverage details should open sign-in');
-      check(await top.locator('a[href="#/join"]').count()===0,
-        'Partner action should live inside partner submenu');
+      check(await top.locator(':scope > a[href="#/join"]').count()===0,
+        'Partner action must be inside submenu, not a second top-level link');
       await page.locator('.owner20-topnav details').nth(3).locator('summary').click();
       check(await page.locator('.owner20-topnav details').nth(3).locator('a[href="#/join"]').count()===1,
         'Partner CTA does not lead to partner signup');
