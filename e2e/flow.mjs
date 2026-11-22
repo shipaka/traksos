@@ -281,7 +281,18 @@ await m.getByText('Как прошло с клиентом?').waitFor({ timeout:
 await m.getByRole('button', { name: '4 из 5' }).click();
 await m.getByRole('button', { name: 'Оставить отзыв' }).click();
 await m.goto(BASE + '/#/work');
-await m.getByText('Долг по комиссии с наличных').waitFor();
+try {
+  await m.getByText('Долг по комиссии с наличных').waitFor({ timeout: 10000 });
+} catch (error) {
+  const diagnostics = await m.evaluate(() => ({
+    hash: location.hash,
+    headings: [...document.querySelectorAll('h1,h2,h3')].map(el => el.textContent?.trim()).slice(0, 30),
+    visibleText: document.body.innerText.slice(0, 4500),
+  }));
+  console.error('Master balance screen missing:', JSON.stringify(diagnostics));
+  await shot(m, '11-master-balance-missing');
+  throw error;
+}
 await shot(m, '11-master-balance');
 
 // Админ в браузере
