@@ -22,18 +22,14 @@ try {
         if(await entry.count()!==1)throw Error('Missing PC service route '+key);
         await entry.click();
         await page.waitForURL('**/#/explore/'+key);
-        await page.locator('.guest-explore-hero h1').waitFor();
-        // The 20 Nov road image must paint above the hero background:
-        // z-index:-1 used to hide it behind the solid panel.
-        const artwork=await page.locator('.guest-explore-hero').evaluate(el=>{
-          const image=getComputedStyle(el,'::before');
-          const text=getComputedStyle(el.querySelector('h1'));
-          return {isolation:getComputedStyle(el).isolation,image:image.backgroundImage,
-            imageLayer:image.zIndex,textLayer:text.zIndex};
-        });
-        if(artwork.isolation!=='isolate'||artwork.imageLayer!=='0'||
-           artwork.textLayer!=='1'||!artwork.image.includes('owner20-photo-background-approved.webp'))
-          throw Error(key+': approved PC inner-page road image obscured: '+JSON.stringify(artwork));
+        const dialog=page.getByRole('dialog',{name:'Вход по номеру телефона'});
+        await dialog.waitFor();
+        if(!await page.locator('.owner20-home').isVisible())
+          throw Error(key+': approved PC homepage replaced by intermediary page');
+        if(!await dialog.getByText('Вы выбрали:',{exact:false}).count())
+          throw Error(key+': selected service context missing');
+        if(await page.locator('.guest-explore-hero:visible').count())
+          throw Error(key+': obsolete full-page service preview returned');
         await page.goto(BASE+'/#/');
       }
       await page.locator('.owner20-region>summary').click();
@@ -50,19 +46,22 @@ try {
         if(await bottom.getByText(missing,{exact:true}).count())throw Error('Protected guest tab '+missing);
       if(await bottom.locator('a').count()!==4)throw Error('Guest tabbar count incorrect');
     }
-    // Every currently rendered service tile must open a real,
-    // readable preview, not silently return to the initial guest homepage.
+    // Every approved mobile tile opens contextual login on the same background,
+    // with one visible registration action and without a white/blue intermediate page.
     for(const id of ['sos','air','sto','ecu','parts','insurance']) {
       await page.goto(BASE+'/#/');
       const card=page.locator('.public-service-tile.public-service-'+id);
       await card.waitFor({state:'visible'});
       await card.click();
       await page.waitForURL('**/#/explore/'+id);
-      await page.locator('.guest-explore-hero h1').waitFor({state:'visible'});
-      const next=page.locator('.guest-explore-cta');
-      await next.waitFor({state:'visible'});
-      if(await next.getAttribute('href')!=='#/register')
-        throw Error(id+': protected action did not route to registration');
+      const dialog=page.getByRole('dialog',{name:'Вход по номеру телефона'});
+      await dialog.waitFor();
+      if(!await page.locator('.public-home').isVisible())
+        throw Error(id+': approved mobile homepage replaced');
+      if(!await dialog.getByRole('button',{name:'Нет аккаунта? Зарегистрироваться'}).isVisible())
+        throw Error(id+': registration missing directly below login');
+      if(await page.locator('.guest-explore-hero:visible').count())
+        throw Error(id+': legacy service preview returned');
     }
     // Supplemental public services must stay navigable.
     // The platform guide is in the hero action, not a retired seventh tile.
@@ -77,9 +76,16 @@ try {
         : page.locator(selector).first();
       await card.click();
       await page.waitForURL('**/#/explore/'+destination);
-      await page.getByRole('heading',{name:heading,exact:destination!=='parts'}).waitFor();
-      if(!await page.locator('.guest-explore-section').count())
-        throw Error(destination+': no informational content behind approved route');
+      if(destination==='guide'){
+        await page.getByRole('dialog',{name:'Как работает TrakSOS'}).waitFor();
+        if(!await page.locator('.tr-guest-info-items').count())
+          throw Error('How-it-works information missing from compact sheet');
+      } else {
+        const dialog=page.getByRole('dialog',{name:'Вход по номеру телефона'});
+        await dialog.waitFor();
+        if(!await dialog.getByText('Вы выбрали:',{exact:false}).count())
+          throw Error(destination+': selected service is not explained');
+      }
     }
     await page.goto(BASE+'/#/');
     await page.locator('.public-track-insurance').click();
@@ -191,7 +197,7 @@ try {
     }
 
     await page.goto(BASE+'/#/company');
-    await page.getByRole('heading',{name:'Компания TrakSOS'}).waitFor();
+    await page.getByRole('dialog',{name:'О платформе TrakSOS'}).waitFor();
     await page.goto(BASE+'/#/offers');
     await page.getByRole('heading',{name:'Оферты и документы'}).waitFor();
     for(const path of ['#/offer/client','#/offer/performer','#/offer/privacy']){
@@ -278,10 +284,10 @@ try {
       await all.locator('summary').press('Escape');
       if(await all.getAttribute('open')!==null)throw Error('Escape did not close capabilities');
       await nav.getByRole('link',{name:'О платформе'}).click();
-      await page.getByRole('heading',{name:'Компания TrakSOS'}).waitFor();
+      await page.getByRole('dialog',{name:'О платформе TrakSOS'}).waitFor();
       await page.goto(BASE+'/#/');
       await nav.getByRole('link',{name:'Тарифы'}).click();
-      await page.getByRole('heading',{name:'Комиссии и тарифы TrakSOS'}).waitFor();
+      await page.getByRole('dialog',{name:'Комиссии TrakSOS'}).waitFor();
     } else {
       await page.locator('.guest-mobile-catalog > summary').click();
       const nav=page.getByRole('navigation',{name:'Возможности TrakSOS'});
