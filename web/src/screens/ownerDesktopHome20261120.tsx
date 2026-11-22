@@ -1,6 +1,6 @@
 import { rememberGuestService } from '../guestCatalog.ts';
 import { APPROVED_VISUALS } from '../approvedVisuals.ts';
-import { OwnerFeatureArt } from './ownerFeatureArt20261122.tsx';
+import { OwnerFeatureArt, OwnerCommunityArt } from './ownerFeatureArt20261122.tsx';
 import './ownerDesktopHome20261120.css';
 
 /** The 20 November owner-approved desktop layout. Mobile stays on its separately approved view. */
@@ -28,8 +28,8 @@ function OwnerIcon({kind}:{kind:string}) {
   let lines;
   switch(kind){
     case 'van': lines=<><path d="M30 5a12 12 0 0 0-10 18L7 36a5 5 0 0 0 7 7l13-13A12 12 0 0 0 43 15l-9 9-9-3-3-9Z"/><circle cx="10.5" cy="39.5" r="1"/></>;break;
-    case 'tow': lines=<><path d="M4 34h29l8 6v4H4V34Z"/><path d="M9 34V23h14l8 11M12 23V12h15l6 11M23 12l-6-7M29 8h11v8l-5 5h-5"/><circle cx="13" cy="43" r="3.4"/><circle cx="35" cy="43" r="3.4"/><path d="M40 21v6m-4 0h8"/></>;break;
-    case 'sto': lines=<><path d="M3 19 24 5l21 14v25H3V19Z"/><path d="M13 44V25h22v19M13 33h22"/></>;break;
+    case 'tow': lines=<><path d="M4 33h21l7 7h11v4H4V33Z"/><path d="M7 33V22h13l8 11M10 22V12h18m-10 0h20v5m0 0-8 7v5"/><path d="m30 29 4 4 4-4"/><circle cx="13" cy="43" r="3.2"/><circle cx="35" cy="43" r="3.2"/><path d="M10 27h8m-2-15 3-5h12"/></>;break;
+    case 'sto': lines=<><path d="M4 21 24 7l20 14v23H4Z"/><path d="M12 43V24h24v19M12 30h24M12 36h24"/><path d="M17 16h14M24 7v8"/><circle cx="24" cy="18" r="2"/></>;break;
     case 'tyre': lines=<><circle cx="24" cy="24" r="19"/><circle cx="24" cy="24" r="12"/><circle cx="24" cy="24" r="5"/><path d="M24 5v7m0 24v7M5 24h7m24 0h7M10 10l5 5m18 18 5 5M38 10l-5 5M15 33l-5 5"/></>;break;
     case 'ecu': lines=<><rect x="10" y="10" width="28" height="28" rx="3"/><path d="M16 4v6m8-6v6m8-6v6M16 38v6m8-6v6m8-6v6M4 16h6m-6 8h6m-6 8h6m28-16h6m-6 8h6m-6 8h6"/><rect x="17" y="17" width="14" height="14" rx="2"/></>;break;
     case 'consult': lines=<><path d="M5 25V23a19 19 0 0 1 38 0v3M5 25v10c0 5 4 8 8 8h4V27h-4a8 8 0 0 0-8 8m38-10v10c0 5-4 8-8 8h-4V27h4a8 8 0 0 1 8 8"/></>;break;
@@ -102,8 +102,8 @@ export function OwnerDesktopHome20261120() {
       {features.map(item=><Feature key={item[3]} item={item}/>)}
     </section>
     <section className="owner20-bottom" aria-label="Сообщество и приложение">
-      <a href="#/explore/air" className="owner20-bottom-card owner20-bottom-air"><b>◉　Эфир TrakSOS</b><p>Живое сообщество водителей и специалистов. Регионы, маршруты, опыт и помощь в пути.</p><span>Войти в Эфир　→</span></a>
-      <a href="#/explore/club" className="owner20-bottom-card owner20-bottom-club"><b>♧　Клуб TrakSOS</b><p>Профессиональное сообщество. Обсуждения, советы, разборы, проекты.</p><span>О Клубе　→</span></a>
+      <a href="#/explore/air" className="owner20-bottom-card owner20-bottom-air"><b>◉　Эфир TrakSOS</b><p>Живое сообщество водителей и специалистов. Регионы, маршруты, опыт и помощь в пути.</p><span className="owner20-community-art" aria-hidden="true"><OwnerCommunityArt kind="air" /></span><span className="owner20-bottom-cta">Войти в Эфир　→</span></a>
+      <a href="#/explore/club" className="owner20-bottom-card owner20-bottom-club"><b>♧　Клуб TrakSOS</b><p>Профессиональное сообщество. Обсуждения, советы, разборы, проекты.</p><span className="owner20-community-art" aria-hidden="true"><OwnerCommunityArt kind="club" /></span><span className="owner20-bottom-cta">О Клубе　→</span></a>
       <div className="owner20-bottom-card owner20-bottom-why"><b>Почему TrakSOS</b><ul><li>Реальная помощь в дороге</li><li>Проверенные исполнители</li><li>Профессиональное сообщество</li><li>Техническая база знаний</li><li>Развитие сервисов по регионам</li></ul></div>
       <div className="owner20-bottom-card owner20-bottom-app"><b>▯　Приложение TrakSOS</b><p>Все сервисы платформы в вашем телефоне</p><span className="owner20-store">Готовится к публикации в RuStore</span></div>
     </section>
