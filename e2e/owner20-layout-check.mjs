@@ -135,6 +135,21 @@ try {
      if(bottomReading.length!==4||bottomReading.some(x=>!x.headingOk||!x.copyOk||!x.actionOk||
          !x.storeOk||!x.bulletsOk||!x.fullBleed))
        throw Error(width+': bottom strip has clipped text, extra photo slice or hidden CTA: '+JSON.stringify(bottomReading));
+     const phoneBot=await page.evaluate(()=>{
+       const card=document.querySelector('.owner20-bottom-app');
+       const bot=document.querySelector('.trakbot-dock-launcher');
+       if(!card||!bot) return {missing:true};
+       const c=card.getBoundingClientRect(),b=bot.getBoundingClientRect(),
+         p=getComputedStyle(card,'::after');
+       const x=c.right-parseFloat(p.right)-parseFloat(p.width);
+       const y=c.top+parseFloat(p.top);
+       return {phone:[x,y,parseFloat(p.width),parseFloat(p.height)],
+         dock:[b.x,b.y,b.width,b.height],
+         overlaps:x<b.right && x+parseFloat(p.width)>b.left &&
+           y<b.bottom && y+parseFloat(p.height)>b.top};
+     });
+     if(phoneBot.missing||phoneBot.overlaps)
+       throw Error(width+': floating TrakBot covers app phone or assistant is absent: '+JSON.stringify(phoneBot));
    }
    if(width===1536){
      const near=(got,expected)=>Math.abs(got-expected)<=7;
