@@ -11,6 +11,7 @@ import {RoadsideMap} from './roadsideMap.tsx';
 import {useAction, useLoad, useMe} from '../ui.tsx';
 import {STATUS, SERVICES} from '../dict.ts';
 import {APPROVED_VISUALS} from '../approvedVisuals.ts';
+import {TrakBotMascot} from '../trakbotMascot.tsx';
 import {ApprovedEmptyScene} from '../approvedEmptyScene.tsx';
 import {VehicleModelPhoto} from '../vehicleVisual.tsx';
 import {OfferForm} from './search.tsx';
@@ -84,7 +85,7 @@ function Tabs({items,active,onChange}:{items:[string,string,number|string|null][
 function Bot({message='Помогу разобраться с заявкой и документами.'}:{message?:string}){
   return <a href="#/trakbot" className="approved-pc-bot" aria-label="Открыть личный чат TrakBot">
     <div><b>TrakBot</b><small>{message}</small><span>Открыть помощника ›</span></div>
-    <img src={APPROVED_VISUALS.trakbotHello} alt="TrakBot, утверждённый грузовичок-техник №3"/>
+    <TrakBotMascot reaction="hello" size="large" ambient />
   </a>;
 }
 function Photo({v,href}:{v:any;href?:string}){
