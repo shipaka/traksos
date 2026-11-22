@@ -28,7 +28,7 @@
 .trakbot-dock-brand{display:flex;align-items:center;gap:10px;}
 .trakbot-dock-brand > span:last-child{display:flex;flex-direction:column;gap:2px;}
 .trakbot-dock-brand small{font-size:11px;color:#a4c5d9;}
-.trakbot-dock-close{border:1px solid #53768d;border-radius:50%;width:35px;height:35px;background:transparent;color:#fff;font-size:24px;cursor:pointer;}
+.trakbot-dock-close{box-sizing:border-box;flex:0 0 36px;display:grid;place-items:center;align-self:center;margin:0;padding:0;border:1px solid #53768d;border-radius:50%;width:36px;height:36px;line-height:1;background:transparent;color:#fff;font-size:24px;cursor:pointer;}
 .trakbot-compact-body{overflow-y:auto;overscroll-behavior:contain;padding:12px;display:flex;flex-direction:column;gap:10px;min-height:0;}
 .trakbot-compact-body .trakbot-compact-title{display:none;}
 .trakbot-compact-body .card{margin:0;}
