@@ -506,3 +506,84 @@ html.traksos-browser .approved-pc-admin .approved-pc-russia::before {
  }
  .approved-pc-performer .approved-pc-shift-empty-body .tr-approved-empty-scene{height:140px}
 }
+
+/* TrakSOS COMPACT EMPTY GEO CONTRACT · only approved real STO coordinates.
+   No big blank map or decorative Russia coverage in the no-data state. */
+.approved-pc-admin .approved-pc-geo-compact,
+.approved-pc-admin .approved-pc-geo-loading{
+  box-sizing:border-box;min-width:0;border:1px solid #36515e;
+  border-radius:12px;background:#102630;color:#e8f3f7;
+  overflow:hidden;
+}
+.approved-pc-admin .approved-pc-geo-compact summary{
+  display:flex;align-items:center;gap:10px;min-height:56px;
+  cursor:pointer;list-style:none;padding:12px 15px;
+  transition:background .16s ease,border-color .16s ease;
+}
+.approved-pc-admin .approved-pc-geo-compact summary::-webkit-details-marker{display:none}
+.approved-pc-admin .approved-pc-geo-compact summary:hover{background:#193441}
+.approved-pc-admin .approved-pc-geo-compact-title{
+  color:#eef7f9;font-size:13px;font-weight:770;
+}
+.approved-pc-admin .approved-pc-geo-compact-state{
+  margin-left:auto;font-size:11px;font-weight:560;color:#a4bdc7;
+  text-align:right;
+}
+.approved-pc-admin .approved-pc-geo-chevron{
+  display:inline-block;flex:0 0 8px;width:8px;height:8px;
+  border:solid #ffae75;border-width:0 1.6px 1.6px 0;
+  transform:translateY(-2px) rotate(45deg);
+  transition:transform .18s ease;
+}
+.approved-pc-admin .approved-pc-geo-compact[open] .approved-pc-geo-chevron{
+  transform:translateY(2px) rotate(225deg);
+}
+.approved-pc-admin .approved-pc-geo-compact-body{
+  padding:12px 17px 17px;border-top:1px solid #284653;
+  animation:tr-admin-geo-reveal .22s ease-out both;
+}
+.approved-pc-admin .approved-pc-geo-compact-body p{
+  color:#b9ced8;margin:0 0 10px;font-size:12px;line-height:1.5;
+}
+.approved-pc-admin .approved-pc-geo-compact-body a{
+  color:#ffb17e;text-decoration:none;font-size:12px;font-weight:760;
+}
+.approved-pc-admin .approved-pc-geo-loading{padding:12px 15px}
+.approved-pc-admin .approved-pc-geo-loading>span{
+  color:#a7bfca;font-size:12px;font-weight:730;
+}
+.approved-pc-admin .approved-pc-geo-live{
+  min-width:0;animation:tr-admin-geo-reveal .35s ease-out both;
+}
+.approved-pc-admin .approved-pc-geo-live .roadside-map{
+  min-width:0;border:1px solid #45616d;border-radius:11px;overflow:hidden;
+}
+.approved-pc-admin .approved-pc-geo-switch{
+  display:flex;flex-wrap:wrap;gap:7px;margin:0 0 11px;
+}
+.approved-pc-admin .approved-pc-geo-switch button{
+  border:1px solid #395967;border-radius:9px;background:#122e3a;
+  color:#d1e6ed;font-size:11px;padding:9px 11px;
+}
+.approved-pc-admin .approved-pc-geo-switch button.selected{
+  border-color:#e58d4b;background:#462c1c;color:#ffca9a;
+}
+.approved-pc-admin .approved-pc-geo-details{display:flex;flex-direction:column;gap:5px;margin:10px 0}
+.approved-pc-admin .approved-pc-geo-details strong{font-size:13px;color:#f4f8fa}
+.approved-pc-admin .approved-pc-geo-details small{font-size:11px;color:#c0d2d9}
+@keyframes tr-admin-geo-reveal{
+  from{opacity:.3;transform:translateY(8px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@media(max-width:550px){
+ .approved-pc-admin .approved-pc-geo-compact summary{flex-wrap:wrap;row-gap:5px}
+ .approved-pc-admin .approved-pc-geo-compact-state{margin-left:0}
+ .approved-pc-admin .approved-pc-geo-chevron{margin-left:auto}
+}
+@media(prefers-reduced-motion:reduce){
+ .approved-pc-admin .approved-pc-geo-live,
+ .approved-pc-admin .approved-pc-geo-compact-body{animation:none!important}
+ .approved-pc-admin .approved-pc-geo-compact summary,
+ .approved-pc-admin .approved-pc-geo-chevron{transition:none!important}
+}
+

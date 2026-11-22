@@ -671,9 +671,14 @@ function ModeratorDesk(){
   </main>;
 }
 function AdminDesk(){
-  const summary=useLoad(()=>get<any>('/api/admin/summary'),[],e=>e.type==='order'||e.type==='mod_case');
+  const summary=useLoad(()=>get<any>('/api/admin/summary'),[],e=>['order','mod_case','service','partner','registry'].includes(e.type));
   const live=useLoad(()=>get<any[]>('/api/admin/live'),[],e=>e.type==='order');
   const d=summary.data;
+  const [geoChoice,setGeoChoice]=useState('');
+  const geoCenters = (Array.isArray(d?.coverage?.centers)?d.coverage.centers:[])
+    .filter((c:any)=>Number.isFinite(c?.lat)&&Number.isFinite(c?.lng)
+      &&Math.abs(c.lat)<=90&&Math.abs(c.lng)<=180);
+  const geoSelected = geoCenters.find((c:any)=>c.id===geoChoice)||geoCenters[0];
   const alertItems=(live.data||[]).filter((o:any)=>o.unilateral_status==='disputed'||o.status==='no_performer'||o.is_sos).slice(0,5);
   const tiles:[string,string,string][]=[['Заявок сегодня',d?number(d.today?.orders):'—','#/admin/section/cases'],
     ['На линии',d?number((d.today?.mastersOnline||0)+(d.today?.towOnline||0)):'—','#/admin/section/dispatch'],
@@ -696,11 +701,35 @@ function AdminDesk(){
       {summary.error&&<LoadingBlock error={summary.error} retry={summary.reload}/>}
       <div className="approved-pc-case-actions"><a className="approved-pc-primary" href="#/admin/section/summary">Полная сводка</a>
         <a href="#/admin/section/stats">Аналитика</a><a href="#/admin/section/settings">Настройки</a></div>
-      </Pane><Pane title="Россия · регионы обслуживания">
-        <div className="approved-pc-russia"><b>Россия</b><span>Региональные данные — по фактической географии заказов.</span>
-          <a href="#/admin/section/registry">Поиск партнёров по регионам →</a></div>
-        <p className="approved-pc-caveat">Никаких выдуманных точек на карте: до подключения геоданных показываем переход к фильтрам реестра.</p>
-      </Pane></>}
+      </Pane>
+      {!d
+        ? <div className="approved-pc-geo-loading"><span>Карта партнёров</span><LoadingBlock error={summary.error} retry={summary.reload}/></div>
+        : geoCenters.length>0
+        ? <Pane title={'Карта партнёрских СТО · '+geoCenters.length} className="approved-pc-geo-live">
+            {geoCenters.length>1&&<div className="approved-pc-geo-switch" role="group" aria-label="Выбор партнёрского СТО">
+              {geoCenters.map((c:any)=><button type="button" key={c.id} className={c.id===geoSelected?.id?'selected':''}
+                aria-pressed={c.id===geoSelected?.id}
+                onClick={()=>setGeoChoice(c.id)}>{text(c.name,'СТО')}</button>)}
+            </div>}
+            <div className="approved-pc-geo-details">
+              <strong>{text(geoSelected?.name,'Партнёрское СТО')}</strong>
+              <small>{text(geoSelected?.address,'Адрес не указан')}</small>
+            </div>
+            <RoadsideMap point={{lat:geoSelected.lat,lng:geoSelected.lng}} kind="service"
+              address={geoSelected.address}/>
+            <p className="approved-pc-caveat">Показаны только проверенные действующие СТО с фактическими координатами. Это не карта передвижения клиентов.</p>
+            <a className="approved-pc-small-link" href="#/admin/section/registry">Все партнёры в реестре →</a>
+          </Pane>
+        : <details className="approved-pc-geo-compact">
+            <summary><span className="approved-pc-geo-compact-title">Карта обслуживания</span>
+              <span className="approved-pc-geo-compact-state">Пока нет подтверждённых точек</span>
+              <span className="approved-pc-geo-chevron" aria-hidden="true"/></summary>
+            <div className="approved-pc-geo-compact-body">
+              <p>Карта раскроется автоматически, когда у проверенных партнёрских СТО появятся реальные координаты. Пока показывать нечего.</p>
+              <a href="#/admin/section/registry">Открыть реестр партнёров →</a>
+            </div>
+          </details>}
+      </>}
     right={<><Pane title="Состояние платформы"><p>Реальный статус интеграций — в диагностике; зелёные индикаторы из макета не являются подтверждением работы.</p>
       <a className="approved-pc-small-link" href="#/admin/section/diagnostics">Открыть диагностику →</a></Pane>
       <Pane title="Тестовые кабинеты"><div className="approved-pc-role-grid">

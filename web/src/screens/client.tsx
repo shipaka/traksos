@@ -1043,10 +1043,17 @@ export function Garage({focusVehicleId}:{focusVehicleId?:string}={}) {
           <span><b>Мой парк</b><small>водители и лимиты, QR-наклейки, подтверждение заказов, ЭДО</small></span><span aria-hidden="true">›</span>
         </button>
       )}
-      {list.data?.length===0 && <section className="tr-approved-empty-card tr-approved-garage-empty" aria-label="Транспорт пока не добавлен">
-        <ApprovedEmptyScene kind="fleet" />
-        <strong>{isDriver?'Транспорт пока не закреплён за вами':'Ваш автопарк пока пуст'}</strong>
-        <p>{isDriver?'Попросите владельца автопарка назначить вашу машину.':'Добавьте грузовик или прицеп с помощью формы ниже. Фотография на иллюстрации не является вашей машиной.'}</p>
+      {list.data?.length===0 && <section className="tr-approved-garage-compact" aria-label="Транспорт пока не добавлен" role="status">
+        <span className="tr-approved-garage-compact-symbol" aria-hidden="true">▤</span>
+        <div className="tr-approved-garage-compact-copy">
+          <strong>{isDriver?'Транспорт ещё не назначен':'Ваш автопарк пока пуст'}</strong>
+          <p>{isDriver?'Когда владелец закрепит за вами машину, она появится здесь.':'Добавьте первый грузовик или прицеп — здесь появятся его карточка, документы и история.'}</p>
+        </div>
+        {!isDriver && <button type="button" className="tr-approved-garage-compact-link" onClick={() =>
+          document.getElementById('garage-add-form')?.scrollIntoView({
+            behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'
+          })
+        }>Добавить машину <span aria-hidden="true">↗</span></button>}
       </section>}
       {!list.data ? <Loading error={list.error} /> : list.data.map((v: any) => (
         <div key={v.id} id={`garage-vehicle-${v.id}`} className="card">
@@ -1086,7 +1093,7 @@ export function Garage({focusVehicleId}:{focusVehicleId?:string}={}) {
       ))}
 
       {!isDriver && (
-        <form className="card" onSubmit={(e) => { e.preventDefault(); add(); }}>
+        <form id="garage-add-form" className="card" onSubmit={(e) => { e.preventDefault(); add(); }}>
           <b>Добавить машину</b>
           <VehicleFields value={{ brand: form.brand, model: form.model, year: form.year }} onChange={(v) => setForm({ ...form, ...v })} />
           <div className="grid2">

@@ -736,7 +736,7 @@ for (const oldPath of ['web/src/screens/servicePreview.tsx','web/src/demo/servic
 const pcSource=await read('web/src/screens/approvedPcCabinets20261120.tsx');
 const pcCss=await read('web/src/approvedPcCabinets20261120.css');
 const courierPcCss=await read('web/src/screens/approvedPcCourier20261120.css');
-const pcMap=await read('web/public/traksos-russia-outline.svg');
+const pcGeoService=await read('server/src/services/stats.ts');
 expect(pcSource.includes("export type ApprovedPCRole") &&
   ['driver','owner','master','tow','service','insurer','inspection','courier','moderator','admin']
     .every(role=>pcSource.includes("'"+role+"'")) &&
@@ -770,11 +770,14 @@ expect(pcSource.includes("href={'#/order/'+o.id+'?chat=1'}") &&
   pcSource.includes("get<any>('/api/orders/'+o.id)") &&
   pcSource.includes('Math.abs(event.lat)<=90'),
   'drivers and fleet owners have real order detail, order tabs, calendar and safe GPS handling');
-expect(pcMap.includes('viewBox="620 35 530 220"') &&
-  pcCss.includes("traksos-russia-outline.svg") &&
-  pcSource.includes('Без выдуманных точек')===false &&
-  pcSource.includes('Никаких выдуманных точек'),
-  'admin shows nationwide geographic outline without invented route markers');
+expect(pcSource.includes('geoCenters.length>0') &&
+  pcSource.includes('approved-pc-geo-compact') &&
+  pcSource.includes('approved-pc-geo-live') &&
+  pcSource.includes('RoadsideMap point={{lat:geoSelected.lat,lng:geoSelected.lng}}') &&
+  !pcSource.includes('className="approved-pc-russia"') &&
+  pcGeoService.includes("verification='approved' and paused=false") &&
+  pcCss.includes('approved-pc-geo-compact'),
+  'admin collapses unverified geography and displays actual partner points only');
 
 
 // New approved interactive PC contracts. These checks prevent empty placeholders,
