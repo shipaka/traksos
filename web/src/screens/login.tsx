@@ -540,7 +540,7 @@ export function Login({ driver, entry, publicInfo, serviceContext }: {
           <Field label="Пароль"><input className="field" type="password" autoComplete="current-password" value={password} onChange={(e) => { setPassword(e.target.value); setLoginError(''); }} /></Field>
           {loginError && <div role="alert" className="card" style={{ borderColor: 'var(--danger, #e25b69)' }}>{loginError}</div>}
           <button className="btn" disabled={loginBusy}>{loginBusy ? 'Входим…' : 'Войти'}</button>
-          <button type="button" className="btn ghost tr-auth-register-link" onClick={() => go('register')}>Нет аккаунта? Зарегистрироваться</button>
+          <button type="button" className="btn ghost tr-auth-register-link guest-explore-cta" onClick={() => go('register')}>Нет аккаунта? Зарегистрироваться</button>
           <button type="button" className="btn ghost tr-auth-partner-link" onClick={() => go('join')}>Мастер, эвакуатор, СТО? Регистрация партнёра</button>
           <button type="button" className="btn ghost" onClick={() => { setIntent('reset'); setStep('phone'); }}>Забыли пароль?</button>
           <button type="button" className="btn ghost" onClick={backToPublic}>Назад</button>
