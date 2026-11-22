@@ -15,16 +15,39 @@ try {
       await page.locator('.owner20-home').waitFor();
       const links=page.locator('.owner20-quick>a');
       if(await links.count()!==5)throw Error('Nov20 PC primary services row changed');
-      for(const key of ['van','tow','sto','ecu','consult']){
-        const link=links.locator('a[href="#/explore/'+key+'"]');
-        // The owning <a> is itself in the list; scope route query to the full page.
-        const entry=page.locator('.owner20-quick>a[href="#/explore/'+key+'"]');
-        if(await entry.count()!==1)throw Error('Missing PC service route '+key);
+      // One route per real service. ECU remains only in the lower specialist row;
+      // tyre has its own upper tile but reuses the working mobile-master catalogue.
+      const actions=[
+        ['Выездной мастер','van'],['Эвакуация','tow'],['СТО','sto'],
+        ['Шиномонтаж','van'],['Консультация','consult'],
+      ];
+      const upper=await links.locator('b').allTextContents();
+      if(upper.join('|')!==actions.map(item=>item[0]).join('|'))
+        throw Error('PC service labels changed or duplicate ECU returned: '+upper.join('|'));
+      if(await page.locator('.owner20-feature-ecu').count()!==1)
+        throw Error('The single specialist ECU entry must stay in the feature row');
+      const featureArt=page.locator('.owner20-feature-illustration svg');
+      if(await featureArt.count()!==5)
+        throw Error('All five PC service feature illustrations must be independent SVGs');
+      const photo=await page.locator('.owner20-photo').evaluate(el=>({
+        background:getComputedStyle(el).backgroundImage,
+        size:getComputedStyle(el).backgroundSize,
+        after:getComputedStyle(el,'::after').content,
+      }));
+      if(!photo.background.includes('owner20-photo-background-approved.webp')||
+         photo.size!=='cover'||photo.after!=='none')
+        throw Error('PC hero must show one real truck/sky/road photograph: '+JSON.stringify(photo));
+      for(const [index,[label,key]] of actions.entries()){
+        const entry=links.nth(index);
+        if(await entry.getAttribute('href')!=='#/explore/'+key)
+          throw Error(label+': wrong route');
         await entry.click();
         await page.waitForURL('**/#/explore/'+key);
         await page.locator('.guest-explore-hero h1').waitFor();
-        // The 20 Nov road image must paint above the hero background:
-        // z-index:-1 used to hide it behind the solid panel.
+        if(label==='Шиномонтаж'){
+          const specialty=await page.evaluate(()=>sessionStorage.getItem('traksos.pendingCatalogChoice'));
+          if(specialty!=='van/tyre')throw Error('Tyre specialization was lost: '+specialty);
+        }
         const artwork=await page.locator('.guest-explore-hero').evaluate(el=>{
           const image=getComputedStyle(el,'::before');
           const text=getComputedStyle(el.querySelector('h1'));
