@@ -335,6 +335,27 @@ try {
     }
     assert(await page.locator('.guest-partner-role[aria-pressed="true"]').count()===0,
       width+'px: a new partner must choose a role');
+    // Real role-by-role evidence, not a generated mock. Each approved photo
+    // panel and selected state is captured on the actual React form.
+    if (width===390) {
+      mkdirSync('e2e/shots/partners-review',{recursive:true});
+      for (const [key,roleLabel] of [
+        ['master','Мастер'],['tow','Эвакуаторщик'],['service','СТО'],['insurer','Страховой агент']
+      ]) {
+        await page.getByRole('button',{name:roleLabel,exact:true}).click();
+        const chosen=page.locator('.guest-partner-role-'+key);
+        assert(await chosen.getAttribute('aria-pressed')==='true',
+          key+': partner tile no longer selects its proper registration role');
+        const visual=await chosen.evaluate(el=>{
+          const style=getComputedStyle(el,'::before');
+          return {image:style.backgroundImage,position:style.backgroundPosition,size:style.backgroundSize};
+        });
+        assert(visual.image.includes(key==='insurer'?'linear-gradient':'traksos-service-scenes-desktop-hq.webp'),
+          key+': partner visual failed to load canonical scene '+JSON.stringify(visual));
+        await page.screenshot({path:'e2e/shots/partners-review/partner-'+key+'-390.png',
+          fullPage:true,animations:'disabled'});
+      }
+    }
     await page.getByRole('button',{name:'Мастер',exact:true}).click();
     for (const name of ['Электрик','Автономщик','Гидравлика']) {
       assert(await page.getByRole('button', {name,exact:true}).isVisible(),
