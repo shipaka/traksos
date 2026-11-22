@@ -106,24 +106,52 @@ try {
       throw Error(kind+': sees administrator menu routes');
     if(kind==='admin' && !paths.includes('#/admin/section/queue'))
       throw Error('Admin moderation shortcut missing');
-    for(const href of paths){
-      console.log('Navigating:',kind,href);
-      await page.goto(BASE+'/'+href,{waitUntil:'domcontentloaded'});
-      try {
-        await page.locator('.app').waitFor({timeout:12000});
-      } catch {
-        throw Error(kind+': app shell did not render for '+href+
-          ' (actual URL '+page.url()+', JS errors: '+errors.join('; ')+')');
+    const coverage=[];
+    // Reproduce actual clicks, not merely a hard-coded GET/navigation call.
+    // Audit every menu destination in both owner-approved desktop and phone
+    // compositions. Never press a payment, profile-save, SOS or cancel action.
+    for(const width of [390,1440]) {
+      await page.setViewportSize({width,height:width===390?844:900});
+      for(const href of paths){
+        console.log('Clicking role menu:',kind,width,href);
+        await page.goto(BASE+'/'+initial,{waitUntil:'domcontentloaded'});
+        const menu=page.locator('.account-menu > summary');
+        await menu.waitFor();
+        await menu.click();
+        const link=page.locator('.account-menu nav a[href="'+href+'"]').first();
+        if(await link.count()!==1)throw Error(kind+': role menu link vanished '+href);
+        await link.click();
+        await page.waitForURL(url=>url.hash===href,{timeout:12000});
+        await page.locator('.app > header.top').waitFor();
+        const state=await page.evaluate(()=>{
+          const app=document.querySelector('.app');
+          const main=document.querySelector('.desktop-content main');
+          const logo=document.querySelector('.top .tr-approved-brand-logo img');
+          const css=app?getComputedStyle(app):null;
+          return {
+            missing:main?.textContent?.includes('Такой страницы нет'),
+            failed:document.body.textContent?.includes('Не удалось открыть раздел'),
+            overflow:document.documentElement.scrollWidth>document.documentElement.clientWidth+3,
+            obsolete:!!document.querySelector('.desktop-content .public-landing,.desktop-content .desktop-hero,.desktop-content .desktop-quick-links'),
+            roleApp:app?.className.includes('role-')||false,
+            logo:logo?.getAttribute('src'),
+            accent:css?.getPropertyValue('--accent').trim(),
+            help:!!document.querySelector('main.approved-help'),
+            width:document.documentElement.clientWidth
+          };
+        });
+        if(state.missing||state.failed||state.overflow||state.obsolete||!state.roleApp||
+           state.logo!=='/traksos-brand-logo-approved-618.png')
+          throw Error(kind+' '+width+'px '+href+': returned obsolete or broken cabinet screen '+JSON.stringify(state));
+        if(width>=900 && state.accent!=='#ff701c')
+          throw Error(kind+' '+width+'px '+href+': approved desktop palette missing '+JSON.stringify(state));
+        if(href==='#/help' && !state.help)
+          throw Error(kind+' '+width+'px '+href+': legacy help route returned instead of rebuilt help');
+        if(errors.length)throw Error(kind+' '+width+'px '+href+': JS error '+errors.join('; '));
+        coverage.push({href,width,accent:state.accent});
       }
-      const state=await page.evaluate(()=>({
-        missing:document.querySelector('main')?.textContent?.includes('Такой страницы нет'),
-        overflow:document.documentElement.scrollWidth>document.documentElement.clientWidth+3,
-      }));
-      if(state.missing)throw Error(kind+': dead link '+href);
-      if(state.overflow)throw Error(kind+': horizontal overflow on '+href);
-      if(errors.length)throw Error(kind+': script error at '+href+': '+errors.join('; '));
     }
-    report.push({role:kind,visited:paths.length});
+    report.push({role:kind,visited:paths.length,verifiedRouteSizes:coverage.length});
     await ctx.close();
   }
 } finally {await browser.close();}
