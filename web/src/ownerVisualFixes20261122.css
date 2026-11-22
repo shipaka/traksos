@@ -992,3 +992,17 @@ html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > div:f
     width:21px;height:21px;
   }
 }
+
+/* 390px partner review: keep the evacuation title as one readable word. */
+@media(max-width:420px){
+  .guest-app .guest-partner-roles .guest-partner-role-tow .guest-partner-role-label {
+    max-width:100%!important;
+  }
+  .guest-app .guest-partner-roles .guest-partner-role-tow .guest-partner-role-label b{
+    font-size:12px!important;
+    letter-spacing:-.32px!important;
+    white-space:nowrap!important;
+    overflow-wrap:normal!important;
+    word-break:normal!important;
+  }
+}
