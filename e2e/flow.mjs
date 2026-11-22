@@ -317,7 +317,10 @@ await shot(m, '16b-master-money');
 await m.getByText('← Профиль').click();
 await m.getByRole('button', { name: /Аккаунт/ }).click();
 await m.waitForURL(/#\/profile$/);
-await m.getByRole('heading', { name: 'Профиль', exact: true }).waitFor();
+// The approved 617/618 secondary-page chrome is the one visible title.
+// The old page heading is deliberately hidden, but working account forms stay mounted.
+await m.locator('.desktop-content > .tr-inner-hero h1').waitFor({state:'visible'});
+await m.locator('main.account-profile-page').waitFor({state:'visible'});
 // Master/client isolation is checked after route state has settled.
 await m.waitForTimeout(250);
 if (await m.getByRole('button', { name: 'Кабинет клиента', exact: true }).isVisible()) {
