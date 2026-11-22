@@ -90,6 +90,7 @@ async function login(page, phoneNum, how) {
     const selected=page.getByRole('dialog',{name:'Вход по номеру телефона'});
     await selected.waitFor();
     await selected.getByRole('button',{name:'Нет аккаунта? Зарегистрироваться'}).click();
+    await page.waitForURL('**/#/register');
     await page.getByRole('dialog',{name:'Регистрация в TrakSOS'}).waitFor();
   } else if (how === 'login') {
     await page.goto(BASE + '/#/login');
@@ -108,7 +109,11 @@ async function login(page, phoneNum, how) {
   // explicitly labelled terms/privacy consent authorizes registration.
   await page.getByRole('checkbox', { name: /Согласен с (агентским договором|офертой).*обработку персональных данных/ }).check();
   await page.getByRole('button', { name: 'Получить код' }).click();
-  const hint = await page.getByText(/Тестовый режим: код/).textContent();
+  const codeHint = page.getByText(/Тестовый режим: код/);
+  const error = page.locator('form [role=alert]');
+  await codeHint.or(error).first().waitFor();
+  if (await error.isVisible()) throw Error('Registration rejected: '+await error.innerText());
+  const hint = await codeHint.textContent();
   await page.locator('input[autocomplete=one-time-code]').fill(hint.match(/\d{4}/)[0]);
   await page.locator('input[type=password]').fill(password);
   await page.getByRole('button', { name: 'Зарегистрироваться' }).click();

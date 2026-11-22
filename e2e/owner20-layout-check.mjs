@@ -95,6 +95,14 @@ try {
        throw Error('1536x864 approved 617.png geometry regressed: '+JSON.stringify(art));
    }
    await page.screenshot({path:'e2e/shots/owner20-pc/home-'+width+'.png',fullPage:true,animations:'disabled'});
+    const botShortcut=page.locator('.owner20-quick-trakbot');
+    if(await botShortcut.count()!==1) throw Error('TrakBot shortcut missing');
+    await botShortcut.click();
+    await page.getByRole('dialog',{name:'TrakBot — личный помощник'}).waitFor();
+    if(!page.url().endsWith('/#/')) throw Error('TrakBot shortcut navigated off 617 landing');
+    if(await page.locator('.trakbot-dock-panel').count()!==1) throw Error('Duplicate TrakBot panels');
+    await page.locator('.trakbot-dock-close').click();
+    if(await page.locator('.trakbot-dock-panel').count()!==0) throw Error('TrakBot shortcut did not close');
    if(width===1536){
     // All native drop-downs are mutually exclusive, including keyboard Escape.
     const menus=page.locator('.owner20-topnav details');
@@ -106,14 +114,6 @@ try {
       throw Error('Top menus overlap rather than switching');
     await menus.nth(1).locator('summary').press('Escape');
     if(await menus.nth(1).evaluate(el=>el.open)) throw Error('Escape did not close services menu');
-    const botShortcut=page.locator('.owner20-quick-trakbot');
-    if(await botShortcut.count()!==1) throw Error('TrakBot shortcut missing');
-    await botShortcut.click();
-    await page.getByRole('dialog',{name:'TrakBot — личный помощник'}).waitFor();
-    if(!page.url().endsWith('/#/')) throw Error('TrakBot shortcut navigated off 617 landing');
-    if(await page.locator('.trakbot-dock-panel').count()!==1) throw Error('Duplicate TrakBot panels');
-    await page.locator('.trakbot-dock-close').click();
-    if(await page.locator('.trakbot-dock-panel').count()!==0) throw Error('TrakBot shortcut did not close');
     for(const key of ['van','tow','sto','ecu','consult','tech','parts','insurance','inspection','air','club']){
      await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
      const link=page.locator('.owner20-home a[href="#/explore/'+key+'"]:visible').first();

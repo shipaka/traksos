@@ -134,8 +134,8 @@ export function Login({ driver, entry, serviceContext }: {
       sessionStorage.setItem('traksos.authTransition', 'register');
       sessionStorage.setItem('traksos.authPhoneDraft', phone);
     } catch { /* Strict private browsing */ }
-    setIntent('register');
-    setStep('phone');
+    // The register route mounts a fresh form and restores the phone draft.
+    // Avoid a transient, editable registration form on the old login route.
     go('register');
   };
   const [step, setStep] = useState<'phone' | 'code'>('phone');
