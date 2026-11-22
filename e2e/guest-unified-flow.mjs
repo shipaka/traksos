@@ -55,10 +55,15 @@ try {
       throw Error(width+': separate partner signup path missing');
     await page.screenshot({path:`e2e/shots/guest-unified/ecu-login-${width}.png`,animations:'disabled'});
 
+    // Phone typed before switching panels must survive the hash route
+    // transition, even when the action happens immediately after typing.
+    await auth.locator('input[type=tel]').fill('+7 999 111 22 33');
     await auth.getByRole('button',{name:'Нет аккаунта? Зарегистрироваться'}).click();
     await page.waitForURL('**/#/register');
     const signup=page.getByRole('dialog',{name:'Регистрация в TrakSOS'});
     await signup.waitFor();
+    if((await signup.locator('input[type=tel]').inputValue()).replace(/\\D/g,'')!=='79991112233')
+      throw Error(width+': login → registration lost the phone field');
     if(!await home.isVisible())throw Error(width+': signup left approved homepage');
     await signup.getByRole('button',{name:'Владелец / автопарк'}).waitFor();
     await signup.getByRole('button',{name:'Водитель автопарка'}).waitFor();
