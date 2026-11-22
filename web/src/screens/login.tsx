@@ -320,7 +320,8 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const showOverlay = !native.isApp && !!intent;
 
   const mobileLanding = (
-    <main className="public-home public-landing" id="public-home">
+    <main className="public-home public-landing" id="public-home"
+      inert={showOverlay || undefined} aria-hidden={showOverlay || undefined}>
       <div className="public-landing-head">
         <span className="public-landing-region">◉ Санкт-Петербург и Ленинградская область</span>
 
@@ -476,7 +477,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
 
   return (
     <>
-      {showOverlay && (desktopPublic ? <OwnerDesktopHome20261120 /> : mobileLanding)}
+      {showOverlay && (desktopPublic ? <OwnerDesktopHome20261120 overlayBackground /> : mobileLanding)}
       {showOverlay && <div className="tr-auth-backdrop" onClick={backToPublic} aria-hidden="true" />}
       <main className={'auth-desktop-layout' + (showOverlay ? ' tr-auth-panel tr-auth-panel--' + intent : '')}
         role={showOverlay ? 'dialog' : undefined} aria-modal={showOverlay ? true : undefined}
