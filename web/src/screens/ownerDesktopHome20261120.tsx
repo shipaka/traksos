@@ -86,10 +86,10 @@ export function OwnerDesktopHome20261120({ overlayBackground = false }: { overla
       </div>
       <aside className="owner20-map" aria-label="Покрытие сервисов">
         <h2>Покрытие сервисов TrakSOS</h2>
-        <div className="owner20-map-inner">
+        <a href="#/explore/guide" className="owner20-map-inner" aria-label="Подробнее о зоне покрытия TrakSOS — демонстрационная карта">
           <div className="owner20-map-shape" role="img" aria-label="Иллюстрация России из утверждённого макета, не подтверждение фактического покрытия."><span className="owner20-map-source" aria-hidden="true" /><span className="owner20-map-demo-tag">ДЕМО</span></div>
           <div className="owner20-map-legend"><p><i className="teal"/>Пример зоны покрытия</p><p><i/>Планируемое расширение</p><small>Доступность услуг зависит от региона и партнёрской сети.</small></div>
-        </div>
+        </a>
         <a href="#/explore/guide">Подробнее о покрытии →</a>
       </aside>
     </section>
