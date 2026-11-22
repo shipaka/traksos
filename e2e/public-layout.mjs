@@ -343,13 +343,15 @@ async function run(width, height, mobile, nativePreview = false) {
       const catalogue = page.locator('.guest-site-nav .guest-nav-group').first();
       await catalogue.locator('summary').click();
       await catalogue.locator('a[href="#/explore/van"]').click();
-      await page.getByRole('heading', { name: 'Выездной мастер' }).waitFor();
+      await page.getByRole('dialog',{name:'Вход по номеру телефона'}).waitFor();
+      check(await page.locator('.owner20-home').isVisible(),
+        suffix+': approved homepage replaced by intermediary page');
       await verifyPage(page, suffix + ':catalogue');
     } else {
       await page.goto(BASE + '/#/');
       await page.locator('.guest-mobile-catalog > summary').click();
       await page.getByRole('navigation',{name:'Возможности TrakSOS'}).getByRole('link',{name:'О платформе'}).click();
-      await page.getByRole('heading',{name:'Компания TrakSOS'}).waitFor();
+      await page.getByRole('dialog',{name:'О платформе TrakSOS'}).waitFor();
       await verifyPage(page, suffix + ':company');
     }
     check(errors.length === 0, 'JS exceptions: ' + errors.join(' | '));
