@@ -113,7 +113,7 @@ export function Home() {
                <strong>Активных заявок пока нет</strong>
                <span>Выберите помощь — здесь появится ход реальной заявки, связь с исполнителем и статусы.</span>
                <a className="tr-approved-empty-action" href="#/sos">Создать заявку на помощь →</a>
-               <small>Иллюстрация маршрута — пример, не выполняемая заявка. Страховые заявки отображаются отдельно.</small>
+               <small>Нет действующей заявки или маршрута. Страховые заявки отображаются отдельно.</small>
              </div> : null}
             {live.map((o: any) => (
               <a key={o.id} href={`#/order/${o.id}`} className="card hi" style={{ textDecoration: 'none', color: 'inherit' }}>
