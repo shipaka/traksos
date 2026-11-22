@@ -257,14 +257,14 @@ try{
              throw Error('Phone empty garage text wraps into a thin column or overlaps button: '+JSON.stringify(geometry));
          }
        }
+       // The new 617 inner hero owns the section title. The retired garage
+       // heading remains in React for compatibility, but must not be visible.
        const header=page.locator('.client-garage-page>.client-section-hero');
-       await header.waitFor();
-       const geometry=await header.evaluate(el=>({
-         height:el.getBoundingClientRect().height,
-         leftBorder:parseFloat(getComputedStyle(el).borderLeftWidth)
-       }));
-       if(geometry.height>160 || geometry.leftBorder<3)
-         throw Error('Owner garage restored an oversized old-style header: '+JSON.stringify(geometry));
+       await header.waitFor({state:'attached'});
+       if(await header.isVisible())
+         throw Error('Old garage hero duplicates approved inner heading');
+       await page.locator('.desktop-content > .tr-inner-hero[data-traksos-inner-ui="approved-617-618"]')
+         .waitFor({state:'visible'});
      }
      await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'-viewport.png',fullPage:false,animations:'disabled',scale:'css'});
      await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'.png',fullPage:true,animations:'disabled',scale:'css'});
