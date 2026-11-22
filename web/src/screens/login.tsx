@@ -467,6 +467,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           {loginError && <div role="alert" className="card" style={{ borderColor: 'var(--danger, #e25b69)' }}>{loginError}</div>}
           <button className="btn" disabled={loginBusy}>{loginBusy ? 'Входим…' : 'Войти'}</button>
           <button type="button" className="btn ghost" onClick={() => { setIntent('reset'); setStep('phone'); }}>Забыли пароль?</button>
+          <button type="button" className="btn ghost" onClick={() => { setIntent('register'); setStep('phone'); go('register'); }}>Зарегистрироваться как клиент</button>
           <button type="button" className="btn ghost" onClick={backToPublic}>Назад</button>
         </form>
       ) : step === 'phone' ? (
