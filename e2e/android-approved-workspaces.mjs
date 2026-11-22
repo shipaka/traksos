@@ -46,7 +46,10 @@ try {
     // This is a synthetic CI account: accept any current synthetic legal offer.
     const offersResponse=await fetch(BASE+'/api/me/offers',{headers:{authorization:'Bearer '+token}});
     if(!offersResponse.ok)throw Error(role+': cannot inspect offer gate');
-    for(const offer of (await offersResponse.json()).filter(o=>o.current&&!o.accepted)){
+    const legalAudiences={client:['client'],performer:['performer'],
+      service:['performer'],insurer:['insurer'],moderator:[],admin:[]}[mode]??[];
+    for(const offer of (await offersResponse.json()).filter(o=>o.current&&!o.accepted &&
+      (o.audience==='privacy'||legalAudiences.includes(o.audience)))){
       const modal=page.getByRole('dialog',{name:offer.name});
       await modal.waitFor({state:'visible',timeout:15000});
       await modal.locator('input[type=checkbox]').check();
