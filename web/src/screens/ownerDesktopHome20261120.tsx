@@ -58,7 +58,7 @@ export function OwnerDesktopHome20261120({ overlayBackground = false }: { overla
       <span className="owner20-tagline">Платформа помощи и сервисов<br/>для грузового транспорта</span>
       <nav className="owner20-topnav" aria-label="Основные разделы">
         <details><summary>О платформе</summary><div><a href="#/company">О нас</a></div></details>
-        <details><summary>Сервисы</summary><div>{primary.map(item=><a href={route(item[3])} key={item[3]} onClick={() => rememberAllowed(item[3])}>{item[1]}</a>)}<a href="#/explore/parts" onClick={() => rememberAllowed("parts")}>Запчасти</a><a href="#/explore/insurance" onClick={() => rememberAllowed("insurance")}>Страхование</a></div></details>
+        <details><summary>Сервисы</summary><div>{primary.map(item=><a href={route(item[3])} key={item[3]} onClick={() => rememberAllowed(item[3])}>{item[1]}</a>)}<a href="#/explore/parts" onClick={() => rememberAllowed("parts")}>Запчасти</a><a href="#/explore/insurance" onClick={() => rememberAllowed("insurance")}>Страхование</a><a href="#/explore/ecu" onClick={() => rememberAllowed("ecu")}>Специалисты ЭБУ</a></div></details>
         <details><summary>Сообщество</summary><div><a href="#/explore/air">Эфир</a><a href="#/explore/club">Клуб TrakSOS</a></div></details>
         <details><summary>Партнёрам</summary><div><a href="#/join">Хотим работать</a></div></details>
         <a href="#/login">Поддержка</a>
@@ -68,7 +68,7 @@ export function OwnerDesktopHome20261120({ overlayBackground = false }: { overla
         <nav aria-label="Разделы сайта на небольшом экране ПК">
           <a href="#/company">О платформе</a><a href="#/explore/van">Сервисы</a>
           <a href="#/explore/air">Эфир</a><a href="#/explore/club">Клуб TrakSOS</a>
-          <a href="#/join">Партнёрам</a><a href="#/help">Поддержка</a>
+          <a href="#/join">Партнёрам</a><a href="#/login">Поддержка</a>
         </nav>
       </details>
       <details className="owner20-region"><summary>⌖ Выбрать регион</summary><div className="owner20-region-menu"><b>Регион запуска</b><p>Санкт-Петербург и Ленинградская область</p><small>В остальных регионах сервисы появятся по мере подключения партнёров.</small><a href="#/login">Уточнить доступность →</a></div></details>
