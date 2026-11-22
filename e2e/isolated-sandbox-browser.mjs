@@ -137,7 +137,8 @@ try{
         // The approved dashboard is not the finish line. Probe real
         // secondary destinations while authenticated to catch old forms,
         // wrong roles, empty screens and links to retired frontend sources.
-        if(width===390 || width===960){
+        // Include 1440px desktop inner routes: prior scans only checked desktop workspaces.
+        if(width===390 || width===960 || width===1440){
           const destinations={
             client:['#/sos','#/orders','#/garage','#/menu'],
             owner:['#/garage','#/orders','#/menu'],
@@ -152,7 +153,7 @@ try{
             moderator:['#/moderation/verify','#/menu'],
             admin:['#/admin/section/orders','#/admin/test-center','#/menu'],
           };
-          for(const destination of destinations[role]){
+          for(const destination of destinations[role].filter(path=>width!==1440 || path!=='#/menu')){
             await page.goto(base+'/'+destination,{waitUntil:'domcontentloaded'});
             await page.waitForFunction(target=>location.hash===target,destination,{timeout:15_000});
             await page.locator('header.top .sandbox-test-badge').waitFor({state:'visible',timeout:15_000});
@@ -175,10 +176,18 @@ try{
                /Такой страницы нет|Не удалось открыть раздел|Вход по номеру телефона|Отсутствует приглашение/.test(state.preview)||
                state.obsolete || state.nativePreview || state.overflow>3)
               throw Error('Navigation regression '+role+' '+width+' '+destination+' '+JSON.stringify(state));
+            // A desktop secondary route must retain the approved 617 inner header.
+            // The administrative test-center and main workspaces deliberately use
+            // their own approved shells, not the ordinary section header.
+            if(width===1440 && !['#/admin/test-center','#/base'].includes(destination) &&
+               !(await page.locator('.desktop-content > .tr-inner-hero[data-traksos-inner-ui="approved-617-618"]').isVisible()))
+              throw Error('Desktop 617 secondary route returned without approved inner shell '+
+                role+' '+destination);
             if(destination==='#/menu' && !await page.locator('main.tr-mobile-menu-page').isVisible())
               throw Error('Approved role menu not mounted at '+role+' '+width);
             if(errors.length)throw Error('Navigation JavaScript exception '+role+' '+destination+': '+errors.join('; '));
             // Proof of the actual React panel, not a design mockup.
+            // Capture genuine deep-route screenshots at 1440px too.
             if(destination==='#/menu' || destination===destinations[role][0]){
               const safe=destination.slice(2).replaceAll('/','-')||'home';
               await page.screenshot({path:out+'/'+role+'-'+width+'-route-'+safe+'.png',fullPage:true,animations:'disabled'});
