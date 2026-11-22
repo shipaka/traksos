@@ -153,6 +153,24 @@ try{
        const roleClass='approved-pc-'+(roleExpected==='owner'||roleExpected==='driver'?'client':roleExpected==='tow'||roleExpected==='master'?'performer':roleExpected==='insurer'?'insurance':roleExpected);
        if(!await workdesk.evaluate((node,cls)=>node.classList.contains(cls),roleClass))
          throw Error('Wrong approved role workdesk: '+c.id+' expected '+roleClass);
+       const symbolRoles={master:'master',tow:'tow',service:'service',
+         master_service:'service',insurer:'insurer'};
+       const symbolKind=symbolRoles[c.id];
+       if(symbolKind){
+         const roleSymbol=workdesk.locator('.approved-pc-heading-role-icon');
+         if(await roleSymbol.count()!==1||
+            await roleSymbol.getAttribute('data-role-icon')!==symbolKind||
+            await roleSymbol.locator('svg[aria-hidden="true"]').count()!==1)
+           throw Error('Desktop cabinet role icon differs from public/partner shared SVG for '+c.id);
+         const geom=await roleSymbol.evaluate(el=>{
+           const r=el.getBoundingClientRect();
+           const heading=el.closest('.approved-pc-heading')?.getBoundingClientRect();
+           return {right:r.right,bottom:r.bottom,left:r.left,
+             headingRight:heading?.right,headingBottom:heading?.bottom};
+         });
+         if(geom.right>geom.headingRight+2||geom.bottom>geom.headingBottom+2)
+           throw Error('Cabinet icon overlays outside its banner: '+JSON.stringify(geom));
+       }
        const columns=page.locator('.approved-pc-three');
        if(await columns.count()!==1)throw Error('Exactly one full-size workdesk expected: '+c.id);
        const realTabs=page.locator(['owner','driver'].includes(c.id)
