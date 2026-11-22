@@ -29,16 +29,28 @@ try {
     const page=await ctx.newPage();
     const errors=[];
     page.on('pageerror', e=>errors.push(e.message));
-    await page.addInitScript(t=>localStorage.setItem('traksos.token',t),token);
+    const activeMode = ({owner:'client',driver:'client',master:'performer',
+      tow:'performer',service:'service',master_service:'service',
+      insurer:'insurer',admin:'admin',moderator_master:'moderator'})[kind];
+    if(!activeMode) throw Error(kind+': unknown audit account mode');
+    await page.addInitScript(({token,mode})=>{
+      localStorage.setItem('traksos.token',token);
+      localStorage.setItem('traksos.mode',mode);
+    },{token,mode:activeMode});
     await page.goto(BASE+'/'+initial,{waitUntil:'domcontentloaded'});
     await page.locator('.account-menu > summary').waitFor();
-    // Previous E2E tests publish a new client offer. All synthetic users must
-    // accept it through the actual UI before their navigation can be audited.
+    // An earlier E2E publishes a new CLIENT offer. An unrelated partner or
+    // admin must NOT accept that offer to reach their own cabinet. The actual
+    // owner/driver must still accept it through the real UI.
     const offersResponse = await fetch(BASE+'/api/me/offers',{
       headers:{authorization:'Bearer '+token}});
     if(!offersResponse.ok)throw Error(kind+': failed loading required offer status');
     const offers = await offersResponse.json();
-    const pendingOffers = offers.filter(item=>item.current && !item.accepted);
+    const audiencesByMode={client:['client'],performer:['performer'],
+      service:['performer'],insurer:['insurer'],inspection:['inspection'],
+      admin:[],moderator:[],courier:[]};
+    const pendingOffers = offers.filter(item=>item.current && !item.accepted &&
+      (item.audience==='privacy' || audiencesByMode[activeMode].includes(item.audience)));
     for(const item of pendingOffers){
       const modal=page.getByRole('dialog',{name:item.name});
       await modal.waitFor({state:'visible',timeout:12000});
@@ -46,6 +58,9 @@ try {
       await modal.getByRole('button',{name:'Принимаю'}).click();
       await modal.waitFor({state:'detached',timeout:12000});
     }
+    if(['admin','moderator'].includes(activeMode) &&
+       await page.getByRole('dialog',{name:'Оферта для клиентов'}).count())
+      throw Error(kind+': unrelated client offer is blocking staff cabinet');
     // Catch stale PC and narrow-phone layouts in each real role, not only at 390px.
     for (const width of [320, 390, 1440]) {
       await page.setViewportSize({width, height: width === 1440 ? 900 : 844});

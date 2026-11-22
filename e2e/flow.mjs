@@ -372,11 +372,11 @@ await a.locator('textarea').fill('# Оферта для клиентов\n\nТе
 await a.locator('input[placeholder^="Что изменилось"]').fill('Новая шкала отмены');
 await a.getByRole('button', { name: 'Опубликовать' }).click();
 await a.getByText(/Опубликовано/).waitFor();
-// Админ тоже пользователь — новую редакцию для клиентов принимает и он
-await a.getByRole('dialog').waitFor({ timeout: 10000 });
-await a.getByRole('dialog').locator('input[type=checkbox]').check();
-await a.getByRole('button', { name: 'Принимаю' }).click();
-await a.getByRole('dialog').waitFor({ state: 'detached' });
+// Клиентская оферта относится к активному кабинету клиента, а не к админке.
+// Публикация редакции не должна перекрывать рабочие инструменты администратора.
+await a.locator('.app.role-admin').waitFor();
+if (await a.getByRole('dialog', { name: 'Оферта для клиентов' }).count() !== 0)
+  throw new Error('Client offer incorrectly blocks the administrator cabinet');
 await k.goto(BASE + '/#/');
 await k.getByRole('dialog').waitFor({ timeout: 10000 });
 await shot(k, '16-client-offer-gate');

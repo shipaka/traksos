@@ -14,7 +14,10 @@ const sizes = [
 const sample = [
   { id:'b-1', role:'bot', body:'Привет! Помогу разобраться с неисправностью грузовика.', created_at:'2026-11-19T10:00:00Z' },
   { id:'u-1', role:'user', body:'Подскажи, пожалуйста, что означает P0420?', created_at:'2026-11-19T10:01:00Z' },
-  { id:'b-2', role:'bot', body:'Это общий код OBD-II. Для грузовика важны модель, год и блок управления. Не путайте универсальный код с заводской диагностикой. .repeat(12), created_at:2026-11-19T10:02:00Z' },
+  // The fixture must exceed the *largest* 768x850 chat viewport, not merely
+  // 320x640. Four sentences fit on taller phones, producing a false failure
+  // when the test asserts that the message list is actually scrollable.
+  { id:'b-2', role:'bot', body:'Это общий код OBD-II. Для грузовика важны модель, год и блок управления. Не путайте универсальный код с заводской диагностикой. '.repeat(20), created_at:'2026-11-19T10:02:00Z' },
 ];
 
 try {
@@ -108,6 +111,7 @@ try {
         input:rect('.trakbot-dialog .compose input'),send:rect('.trakbot-dialog .compose button[type=submit]'),
         messages:rect('.trakbot-dialog .msgs'),galleryCount:document.querySelectorAll('.trakbot-reactions-gallery').length,
         scrollableMessages:document.querySelector('.trakbot-dialog .msgs')?.scrollHeight > document.querySelector('.trakbot-dialog .msgs')?.clientHeight,
+         messageHeights:(()=>{const node=document.querySelector('.trakbot-dialog .msgs');return node?{scroll:node.scrollHeight,client:node.clientHeight}:null;})(),
         overflowingNodes:[...document.querySelectorAll('body *')].filter(e=>{
           const r=e.getBoundingClientRect();
           return r.width>0 && r.height>0 && (r.right> (window.visualViewport?.width??window.innerWidth)+3 || r.left< -3);
@@ -134,7 +138,7 @@ try {
     assert(geometry.scrollWidth<=geometry.vw+wiggle,
       width+'×'+height+': page horizontal overflow '+geometry.scrollWidth+'/'+geometry.vw+' offenders '+JSON.stringify(geometry.overflowingNodes));
     assert(geometry.scrollableMessages,
-      width+'×'+height+': long messages should scroll inside chat, not enlarge panel');
+      width+'×'+height+': long messages should scroll inside chat, not enlarge panel '+JSON.stringify(geometry.messageHeights));
 
     const input=page.getByRole('textbox',{name:'Сообщение TrakBot'});
     await input.fill('Есть проблема с тормозами');

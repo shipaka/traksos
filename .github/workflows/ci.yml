@@ -109,6 +109,8 @@ jobs:
           node e2e/insurance-locked-ui.mjs
           node e2e/moderator-permission-check.mjs
           node e2e/admin-master-switch.mjs
+          # Consent modal follows the active role even for mixed admin/client accounts.
+          node e2e/offer-gate-role-ui.mjs
           node e2e/staff-security.mjs
           node e2e/cabinet-navigation-audit.mjs
           node e2e/admin-navigation-ux.mjs
