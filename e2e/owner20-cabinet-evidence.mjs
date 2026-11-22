@@ -9,12 +9,14 @@ await mkdir(out,{recursive:true});
 const cases=[
  {id:'owner',phone:'+79990000341',accountType:'owner',mode:'client',url:'#/',inside:'#/garage'},
  {id:'driver',phone:'+79990000342',accountType:'driver',mode:'client',url:'#/',inside:'#/orders'},
+ {id:'client',phone:'+79990000350',accountType:'owner',mode:'client',url:'#/',inside:'#/orders'},
  {id:'master',phone:'+79990000343',accountType:'master',mode:'performer',url:'#/work',inside:'#/work/me'},
  {id:'tow',phone:'+79990000344',accountType:'tow',mode:'performer',url:'#/work',inside:'#/work/jobs'},
  {id:'service',phone:'+79990000345',accountType:'service',mode:'service',url:'#/base',inside:'#/base/me'},
  {id:'master_service',phone:'+79990000346',accountType:'master_service',mode:'service',url:'#/base',inside:'#/base/money'},
  {id:'insurer',phone:'+79990000347',accountType:'insurer',mode:'insurer',url:'#/insurance',inside:'#/profile'},
  {id:'admin',phone:'+79990000348',accountType:'owner',mode:'admin',url:'#/admin',inside:'#/admin/section/orders',needs:'admin'},
+ {id:'inspection',phone:'+79990000351',accountType:'owner',mode:'inspection',url:'#/inspections',inside:'#/inspections/processing',needs:'inspection_operator'},
  {id:'moderator',phone:'+79990000349',accountType:'owner',mode:'moderator',url:'#/moderation',inside:'#/profile',needs:'moderator'}
 ];
 async function post(path,body,token){
@@ -70,14 +72,15 @@ try{
    if(!account?.token)throw Error('No session token');
    let token=account.token;
    if(c.id==='admin' && account.user?.roles?.includes('admin'))localAdminToken=token;
-   // A moderator role is NEVER granted by SMS possession. Use the real
-   // administrator-only role assignment, then log in again because the
-   // backend correctly invalidates prior sessions on privilege changes.
-   if(c.id==='moderator' && !account.user?.roles?.includes('moderator')){
-     if(!localAdminToken)throw Error('Local admin account must be created first');
-     await post('/api/admin/users/'+account.user.id+'/roles',{roles:['moderator']},localAdminToken);
+   // Privileged local fixtures are never granted by SMS possession. Use
+   // the REAL administrator-only role editor and log in again, because it
+   // invalidates sessions on privilege changes. Local CI database only.
+   const grantedRole=c.id==='moderator'?'moderator':c.id==='inspection'?'inspection_operator':null;
+   if(grantedRole && !account.user?.roles?.includes(grantedRole)){
+     if(!localAdminToken)throw Error('Local admin must be created before '+c.id);
+     await post('/api/admin/users/'+account.user.id+'/roles',{roles:[grantedRole]},localAdminToken);
      const fresh=await post('/api/auth/login',{phone:c.phone,password:'Visual-Local-2026!'});
-     if(!fresh.token)throw Error('Moderator password login failed after role assignment');
+     if(!fresh.token)throw Error(c.id+' password login failed after real role assignment');
      token=fresh.token;
    }
    const identity=await get('/api/me',token);
@@ -146,25 +149,31 @@ try{
        // 20 Nov owner-approved desktop contracts: real React workdesk, not an image.
        const workdesk=page.locator('.approved-pc');
        await workdesk.waitFor({timeout:14000});
-       const roleExpected=c.id==='master_service'?'service':c.id;
-       const roleClass='approved-pc-'+(roleExpected==='owner'||roleExpected==='driver'?'client':roleExpected==='tow'||roleExpected==='master'?'performer':roleExpected==='insurer'?'insurance':roleExpected);
+       const roleExpected=c.id==='master_service'?'service':c.id==='client'?'owner':c.id;
+       const roleClass='approved-pc-'+(roleExpected==='owner'||roleExpected==='driver'?'client':roleExpected==='tow'||roleExpected==='master'?'performer':(roleExpected==='insurer'||roleExpected==='inspection')?'insurance':roleExpected);
        if(!await workdesk.evaluate((node,cls)=>node.classList.contains(cls),roleClass))
          throw Error('Wrong approved role workdesk: '+c.id+' expected '+roleClass);
        const columns=page.locator('.approved-pc-three');
        if(await columns.count()!==1)throw Error('Exactly one full-size workdesk expected: '+c.id);
-       const realTabs=page.locator(['owner','driver'].includes(c.id)
+       const realTabs=page.locator(['owner','driver','client'].includes(c.id)
          ?'.approved-pc-active-order-nav .approved-pc-tabs [role="tab"]'
          :'.approved-pc > .approved-pc-tabs [role="tab"]');
        // A brand-new driver/fleet owner with zero active jobs has no fake order tab.
-       if(!['driver','owner','admin'].includes(c.id)&&await realTabs.count()<1)
+       if(!['driver','owner','client','admin'].includes(c.id)&&await realTabs.count()<1)
          throw Error('Desktop tabs missing: '+c.id);
-       if(['driver','owner'].includes(c.id)&&await page.locator('.approved-pc-order-heading').count()!==1)
+       if(['driver','owner','client'].includes(c.id)&&await page.locator('.approved-pc-order-heading').count()!==1)
          throw Error('Owner/driver active orders heading missing');
        if(['master','tow'].includes(c.id)){
          if(await realTabs.count()!==2)throw Error('Expected current work and new offers modes: '+c.id);
          await realTabs.nth(1).click();
          if((await realTabs.nth(1).getAttribute('aria-selected'))!=='true')throw Error('New offers mode did not change');
          await realTabs.nth(0).click();
+       }
+       if(c.id==='inspection'){
+         await workdesk.getByRole('heading',{name:'Оператор техосмотра'}).waitFor();
+         await workdesk.getByText('Официальные карты/ЕАИСТО пока не подключены.').waitFor();
+         if(await workdesk.getByRole('heading',{name:'Страховой партнёр'}).count())
+           throw Error('Inspection workspace accidentally fell back to insurer header');
        }
        if(c.id==='admin'){
          const outline=page.locator('.approved-pc-russia');
@@ -191,6 +200,22 @@ try{
      if(await page.getByText('Не удалось открыть раздел').count())throw Error('Inner route crashed');
      const approvedInner=page.locator('.desktop-content > .tr-inner-hero[data-traksos-inner-ui="approved-617-618"]');
      await approvedInner.waitFor({state:'visible',timeout:14000});
+     if(c.id==='inspection'){
+       const tabs=page.locator('.desktop-content > main.cabinet-page .partner-workspaces');
+       const inspectionTab=tabs.getByRole('button',{name:'Техосмотры',exact:true});
+       await inspectionTab.waitFor({state:'visible'});
+       if(await inspectionTab.getAttribute('aria-pressed')!=='true')
+         throw Error('Inspection tab is not selected on its own route: '+width);
+       const selectedColor=await inspectionTab.evaluate(el=>getComputedStyle(el).backgroundImage);
+       if(!selectedColor.includes('rgb(239, 130, 37)'))
+         throw Error('Legacy cyan inspection tab violates approved 617 orange: '+width+' '+selectedColor);
+       await tabs.getByRole('button',{name:'Финансы',exact:true}).click();
+       if(await tabs.getByRole('button',{name:'Финансы',exact:true}).getAttribute('aria-pressed')!=='true')
+         throw Error('Inspection finance tab does not respond: '+width);
+       await inspectionTab.click();
+       if(await inspectionTab.getAttribute('aria-pressed')!=='true')
+         throw Error('Inspection tab cannot be restored: '+width);
+     }
      const performerMarker = {tow:'ЭВАКУАТОРЩИК',master:'МАСТЕР'}[c.id];
      if(performerMarker && await approvedInner.locator('.tr-inner-crumbs [aria-current="page"]').innerText() !== performerMarker)
        throw Error('Wrong performer breadcrumb: '+c.id+'/'+width);
@@ -368,7 +393,7 @@ try{
      // Native WebView-mode REAL Chromium rendering: the existing 618 role
      // workdesk stays unchanged; only secondary pages gain an illustrated
      // brief. Synthetic account/session belongs to local CI, never VPS.
-     if(width===390 && ['owner','master','tow','service','insurer','admin','moderator'].includes(c.id)){
+     if(width===390 && ['owner','master','tow','service','insurer','inspection','admin','moderator'].includes(c.id)){
        const nativeContext=await browser.newContext({
          viewport:{width:390,height:844},locale:'ru-RU',serviceWorkers:'block'
        });
