@@ -515,7 +515,41 @@ export function Login({ driver, entry, serviceContext }: {
     </main>
   );
 
-  if (!intent) return desktopPublic ? <OwnerDesktopHome20261120 /> : mobileLanding;
+  // Native Android is designed for thumb interaction: a welcome stage with
+  // explicit sign-in/registration, followed by optional expandable services.
+  // Browser mobile and 617 PC keep their independently approved layouts.
+  const nativeLanding = (
+    <main className="public-home public-landing tr-native-welcome" id="public-home"
+      aria-label="Главная приложения TrakSOS">
+      <section className="tr-native-welcome-stage" aria-labelledby="tr-native-welcome-title">
+        <span className="tr-native-welcome-kicker">TRAKSOS · ПОМОЩЬ ГРУЗОВИКАМ</span>
+        <div className="tr-native-welcome-photo">
+          <img src="/tracksos-approved-hero-owner-20261119-retouched.webp"
+            alt="Фирменный грузовик TrakSOS на дороге" loading="eager" decoding="async"/>
+        </div>
+        <h1 id="tr-native-welcome-title">Помощь в дороге — <em>в одном приложении</em></h1>
+        <p>Выездные мастера, эвакуация, СТО и консультации. Заявки и история доступны после входа.</p>
+        <div className="tr-native-welcome-actions">
+          <a href="#/login" className="tr-native-welcome-login">Войти</a>
+          <a href="#/register" className="tr-native-welcome-register">Зарегистрироваться</a>
+        </div>
+        <small>Выездные услуги запускаются в Санкт-Петербурге и Ленинградской области.</small>
+      </section>
+      <details className="tr-native-welcome-services" id="public-services">
+        <summary>Услуги TrakSOS <span>Показать все <span aria-hidden="true">⌄</span></span></summary>
+        <nav className="tr-native-welcome-service-list" aria-label="Услуги TrakSOS">
+          {PUBLIC_HOME_TILES.map(({id,title,href}) => (
+            <a key={id} href={href} className={'public-service-tile tr-native-welcome-service-'+id}>
+              <span className="public-service-icon" aria-hidden="true"><PublicTileIcon id={id}/></span>
+              <strong>{title}</strong><span aria-hidden="true">›</span>
+            </a>
+          ))}
+        </nav>
+      </details>
+      <a href="#/join" className="tr-native-welcome-partner">Хотим работать с TrakSOS <span aria-hidden="true">›</span></a>
+    </main>
+  );
+  if (!intent) return native.isApp ? nativeLanding : desktopPublic ? <OwnerDesktopHome20261120 /> : mobileLanding;
 
   return (
     <>
