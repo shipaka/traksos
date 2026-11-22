@@ -11,6 +11,7 @@ import {RoadsideMap} from './roadsideMap.tsx';
 import {useAction, useLoad, useMe} from '../ui.tsx';
 import {STATUS, SERVICES} from '../dict.ts';
 import {APPROVED_VISUALS} from '../approvedVisuals.ts';
+import {FeatureArtwork, type FeatureArtworkKey} from '../featureArtwork20261122.tsx';
 import {TrakBotMascot} from '../trakbotMascot.tsx';
 import {ApprovedEmptyScene} from '../approvedEmptyScene.tsx';
 import {VehicleModelPhoto} from '../vehicleVisual.tsx';
@@ -62,10 +63,10 @@ export function ApprovedPcDesk({role,fallback}:{role:ApprovedPCRole;fallback:Rea
   return <AdminDesk/>;
 }
 
-function Heading({title,description,children}:{title:string;description:string;children?:ReactNode}){
-  return <header className="approved-pc-heading">
+function Heading({title,description,children,artKey}:{title:string;description:string;children?:ReactNode;artKey?:FeatureArtworkKey}){
+  return <header className="approved-pc-heading" data-feature-art={artKey}>
     <div><span className="approved-pc-eyebrow">TRAKSOS · РАБОЧИЙ КАБИНЕТ</span><h1>{title}</h1><p>{description}</p></div>
-    <img src={APPROVED_VISUALS.workspaceTruck} alt="Иллюстрация TrakSOS, не транспорт клиента"/>
+    {artKey?<FeatureArtwork kind={artKey}/>:<img src={APPROVED_VISUALS.workspaceTruck} alt="Иллюстрация TrakSOS, не транспорт клиента"/>}
     {children}
   </header>;
 }
@@ -579,6 +580,7 @@ function InsuranceDesk({inspection}:{inspection:boolean}){
   const both=me?.roles.includes('insurer')&&me?.roles.includes('inspection_operator');
   return <main className="approved-pc approved-pc-insurance">
     <Heading title={inspection?'Оператор техосмотра':'Страховой партнёр'}
+      artKey={inspection?'inspection':'insurance'}
       description={inspection?'Назначенные проверки, результаты осмотра и документы':'Назначенные страховые дела, варианты полисов и документы'}/>
     {both&&<div className="approved-pc-partner-switch"><a className={!inspection?'selected':''} href="#/as/insurer">Страхование</a>
       <a className={inspection?'selected':''} href="#/as/inspection">Техосмотр</a></div>}
