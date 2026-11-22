@@ -46,6 +46,7 @@ import './nativeWide20261121.css';
 import './approvedPublicInner20261120.css';
 // Auth opens as a browser-only sheet above the approved landing, never a new visual page.
 import './authOverlay20261122.css';
+import './guestUnifiedFlow20261122.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
@@ -56,6 +57,7 @@ document.documentElement.classList.toggle('traksos-browser', !native.isApp);
 document.documentElement.classList.toggle('traksos-native', native.isApp);
 document.documentElement.classList.add('traksos-compact-guest');
 import { Login } from './screens/login.tsx';
+import type { GuestInfoKind } from './screens/guestUnifiedInfo20261122.tsx';
 import { GuestExplore } from './screens/guestExplore.tsx';
 import { DemoPreviewGate } from './screens/demoPreview.tsx';
 import { AndroidDesignReview } from './screens/androidDesignReview.tsx';
@@ -219,6 +221,13 @@ function App() {
   }, []);
 
   useEffect(() => { reload(); }, [reload]);
+  // Once authenticated, public promotional and guest onboarding pages no longer
+  // replace the user's approved role workspace, even through old bookmarked links.
+  useEffect(() => {
+    if (!ready || !me) return;
+    if (['login','register','join','reset','activate','explore','company','offers','economics'].includes(route[0] ?? ''))
+      location.replace('#/');
+  }, [ready, me?.id, route.join('/')]); // eslint-disable-line
   useEffect(() => {
     // Refresh the role/profile when the device reconnects or returns to foreground.
     // Live orders are always re-read from the API; no mutation is queued offline.
@@ -300,9 +309,23 @@ function App() {
   // Ссылка-приглашение: запоминаем код, вход — как обычно
   if (route[0] === 'r' && route[1]) { try { localStorage.setItem('traksos.ref', route[1].toUpperCase()); } catch { /* */ } }
   if (!me) {
+    const info: GuestInfoKind | undefined = native.isApp ? undefined
+      : route[0] === 'company' ? 'company'
+      : route[0] === 'offers' ? 'offers'
+      : route[0] === 'help' || route[0] === 'support' ? 'help'
+      : route[0] === 'rules' ? 'rules'
+      : route[0] === 'economics' ? 'pricing'
+      : route[0] === 'privacy' ? 'offer:privacy'
+      : route[0] === 'offer' ? (`offer:${route[1] || 'client'}` as GuestInfoKind)
+      : route[0] === 'explore' && route[1] === 'guide' ? 'guide'
+      : route[0] === 'explore' && route[1] === 'pricing' ? 'pricing' : undefined;
+    const requestedService = !native.isApp && route[0] === 'explore' && !info ? route[1] : undefined;
+    const unifiedGuestOverlay = !native.isApp && (info || route[0] === 'explore');
     return (
       <MeCtx.Provider value={{ me: null, reload, mode: 'client', setMode }}>
-        <Shell mode="client" me={null}>{(route[0] === 'admin' && route[1] === 'test-center') || route[0] === 'preview' ? <DemoPreviewGate roleId={route[0]==='admin' ? route[2] : undefined} /> : route[0] === 'offer' ? <OfferPage audience={route[1] ?? 'client'} /> : route[0] === 'qr' && route[1] ? <QrJoin code={route[1]} /> : route[0] === 'rules' ? <Rules /> : route[0] === 'help' ? <Help /> : route[0] === 'explore' ? <GuestExplore id={route[1] || ''} itemKey={route[2]} /> : route[0] === 'company' ? <GuestCompany /> : route[0] === 'offers' ? <GuestOffers /> : <>{route[0] === 'r' && <div className="banner good" style={{ margin: '12px 16px 0' }}><span>Вас пригласили в TrakSOS — после входа на счёт придут подарочные баллы.</span></div>}<Login key={route[0] ?? 'public'} entry={route[0] === 'login' ? 'login' : route[0] === 'register' ? 'register' : route[0] === 'join' ? 'join' : route[0] === 'reset' ? 'reset' : route[0] === 'activate' ? 'activate' : undefined} /></>}</Shell>
+        <Shell mode="client" me={null}>{unifiedGuestOverlay
+          ? <Login key={route.join('/')} entry={info ? undefined : 'login'} publicInfo={info} serviceContext={requestedService}/>
+          : (route[0] === 'admin' && route[1] === 'test-center') || route[0] === 'preview' ? <DemoPreviewGate roleId={route[0]==='admin' ? route[2] : undefined} /> : route[0] === 'offer' ? <OfferPage audience={route[1] ?? 'client'} /> : route[0] === 'qr' && route[1] ? <QrJoin code={route[1]} /> : route[0] === 'rules' ? <Rules /> : route[0] === 'help' ? <Help /> : route[0] === 'explore' ? <GuestExplore id={route[1] || ''} itemKey={route[2]} /> : route[0] === 'company' ? <GuestCompany /> : route[0] === 'offers' ? <GuestOffers /> : <>{route[0] === 'r' && <div className="banner good" style={{ margin: '12px 16px 0' }}><span>Вас пригласили в TrakSOS — после входа на счёт придут подарочные баллы.</span></div>}<Login key={route[0] ?? 'public'} entry={route[0] === 'login' ? 'login' : route[0] === 'register' ? 'register' : route[0] === 'join' ? 'join' : route[0] === 'reset' ? 'reset' : route[0] === 'activate' ? 'activate' : undefined} /></>}</Shell>
       </MeCtx.Provider>
     );
   }
@@ -442,6 +465,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     return () => media.removeEventListener('change', sync);
   }, []);
   const isAuthEntry = !me && ['login', 'register', 'join', 'reset', 'activate'].includes(route[0] ?? '');
+  const isGuestSiteSheet = !me && !native.isApp &&
+    ['explore','company','offers','offer','rules','help','support','economics','privacy'].includes(route[0] ?? '');
   const guestNavGroups: { title: string; links: { title: string; href: string }[] }[] = [
     { title: 'О платформе', links: [
       { title: 'О нас', href: '#/company' },
@@ -478,7 +503,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     (route[0] === 'admin' && route[1] === 'test-center'));
   if (isOperatorDemo) return (
     <div className="app operator-demo-app">
-      <header className="top">
+      <header className="top" inert={!me && !native.isApp && (isAuthEntry || isGuestSiteSheet) || undefined}
+        aria-hidden={!me && !native.isApp && (isAuthEntry || isGuestSiteSheet) || undefined}>
         <span className="logo tr-approved-brand-logo"><img src={APPROVED_VISUALS.logo} width="220" height="37" alt="TrakSOS" /></span>
         <span className="operator-demo-badge">ТЕСТОВЫЙ РЕЖИМ</span>
       </header>
@@ -622,7 +648,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       !window.confirm('При выходе из аккаунта статус «На линии» отключится. Просто сверните приложение, если хотите продолжать получать заявки. Выйти?')) return;
     void logout();
   };
-  if (!me && standaloneDesktopHome && (route.length === 0 || isAuthEntry)) return (
+  if (!me && standaloneDesktopHome && (route.length === 0 || isAuthEntry || isGuestSiteSheet)) return (
     <div className="app guest-app guest-home guest-home-standalone">
       <NetworkStatus />
       <div className="desktop-layout"><div className="desktop-content">{children}</div></div>
