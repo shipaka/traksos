@@ -204,6 +204,29 @@ try{
      }
      await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'-viewport.png',fullPage:false,animations:'disabled',scale:'css'});
      await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'.png',fullPage:true,animations:'disabled',scale:'css'});
+     // Candidate for owner's approval: REAL profile rendered by the same
+     // authenticated Chromium session, with local synthetic data only.
+     if(['owner','service','insurer','admin'].includes(c.id) && [390,1440].includes(width)){
+       await page.goto(BASE+'/#/profile',{waitUntil:'domcontentloaded'});
+       const profile=page.locator('main.account-profile-page');
+       await profile.waitFor({state:'visible',timeout:14000});
+       const newHero=profile.locator('.account-profile-hero');
+       const mobileTitle=profile.locator('.account-profile-mobile-title');
+       if(width===1440){
+         if(!await newHero.isVisible()||await mobileTitle.isVisible())
+           throw Error(c.id+': PC profile candidate did not mount as a full inner screen');
+         if(await profile.locator('.account-profile-shortcuts button').count()!==3)
+           throw Error(c.id+': Profile candidate lost its real section controls');
+       }else if(await newHero.isVisible()||!await mobileTitle.isVisible()){
+         throw Error(c.id+': Android/browser phone profile changed from approved composition');
+       }
+       const scroll=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
+       if(scroll>3)throw Error(c.id+': profile horizontal overflow '+scroll);
+       await page.evaluate(()=>window.scrollTo(0,0));
+       await page.screenshot({path:out+'/'+c.id+'-profile-'+width+'-viewport.png',
+         fullPage:false,animations:'disabled',scale:'css'});
+       console.log('REAL PROFILE CANDIDATE',c.id,width,'saved in owner20-cabinets');
+     }
      // The inspection API accepts both insurers and inspection operators.
      // Verify the partner UI applies the SAME role policy on direct navigation.
      if(c.id==='insurer'){
