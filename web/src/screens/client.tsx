@@ -10,6 +10,7 @@ import { saveNewOrderDraft, readNewOrderDraft, clearNewOrderDraft, type SavedNew
 import { insurancePresentation, isOpenInsuranceRequest } from '../insurancePresentation.ts';
 import { VehiclePhotoLink } from '../vehicleVisual.tsx';
 import { APPROVED_VISUALS } from '../approvedVisuals.ts';
+import './profileApproved20261122.css';
 import { ApprovedEmptyScene } from '../approvedEmptyScene.tsx';
 import { ApprovedServiceIllustration } from '../approvedServiceIllustration.tsx';
 import { ApprovedOrderTruck } from '../approvedOrderTruck.tsx';
@@ -1239,9 +1240,44 @@ export function Profile() {
   if (!me) return null;
   const isPerformer = me.roles.some((r) => r === 'master' || r === 'tow');
   const isCustomer = me.roles.some((r) => r === 'client' || r === 'driver');
+  const roleLabel: Record<string,string> = {
+    client: me.owner_id || me.roles.includes('driver') ? 'Водитель автопарка' : 'Владелец автопарка',
+    performer: me.performer?.kind === 'tow' ? 'Эвакуаторщик' : 'Выездной мастер',
+    service: 'СТО / рембаза', insurer: 'Страховой партнёр',
+    inspection: 'Оператор техосмотра', courier: 'Курьер',
+    moderator: 'Модератор', admin: 'Администратор',
+  };
+  const scrollToSection = (id:string) =>
+    document.getElementById(id)?.scrollIntoView({
+      behavior: reducedMotion ? 'auto' : 'smooth', block: 'start'
+    });
   return (
     <main className="account-profile-page">
-      <h1>Профиль</h1>
+      <header className="account-profile-hero">
+        <div className="account-profile-hero-copy">
+          <span className="account-profile-eyebrow">TRAKSOS · МОЙ КАБИНЕТ</span>
+          <h1>Профиль</h1>
+          <p>Ваши контактные данные, безопасность и настройки — в одном месте. Все изменения сохраняются в действующей учётной записи.</p>
+          <div className="account-profile-meta">
+            <span className="account-profile-role">{roleLabel[mode] ?? 'Участник TrakSOS'}</span>
+            <span className="account-profile-phone">{fmtPhone(me.phone)}</span>
+          </div>
+        </div>
+        <svg className="account-profile-hero-art" viewBox="0 0 270 225" aria-hidden="true" fill="none">
+          <circle cx="142" cy="110" r="100" stroke="#2D7285" strokeWidth="1.5" strokeDasharray="6 8"/>
+          <circle cx="142" cy="110" r="78" stroke="#315766" strokeWidth="1.5"/>
+          <path d="M142 47L197 69V111C197 149 174 177 142 189C110 177 87 149 87 111V69L142 47Z" stroke="#F98C4A" strokeWidth="4" fill="#15333F"/>
+          <path d="M119 113L136 130L167 97" stroke="#F8C39A" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round"/>
+          <circle cx="45" cy="69" r="5" fill="#F98C4A"/>
+          <circle cx="240" cy="157" r="4" fill="#20ABB4"/>
+          <path d="M19 163H67M217 55H252M22 177H53" stroke="#4E8794" strokeWidth="2" strokeLinecap="round"/>
+        </svg>
+      </header>
+      <nav className="account-profile-shortcuts" aria-label="Разделы профиля">
+        <button type="button" onClick={() => scrollToSection('account-profile-info')}>Личные данные <span aria-hidden="true">↗</span></button>
+        <button type="button" onClick={() => scrollToSection('account-profile-security')}>Безопасность <span aria-hidden="true">↗</span></button>
+        <button type="button" onClick={() => scrollToSection('account-profile-settings')}>Настройки <span aria-hidden="true">↗</span></button>
+      </nav>
       {native.isApp && <div className="card">
         <b>Быстрый безопасный вход</b>
         <label className="row" style={{ alignItems: 'center' }}>
@@ -1254,10 +1290,11 @@ export function Profile() {
         </label>
         <span className="note">При возвращении в приложение после перерыва. Статус «На линии» и входящие вызовы не отключаются.</span>
       </div>}
-      <a href="#/invite" className="card" style={{ textDecoration: 'none', color: 'inherit', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+      <a href="#/invite" className="card account-profile-invite" style={{ textDecoration: 'none', color: 'inherit', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <span><b>🎁 Пригласить и получать баллы</b><small className="note" style={{ display: 'block' }}>Баллы гасят сбор и комиссию TrakSOS</small></span><span>›</span>
       </a>
-      <div className="card">
+      <div className="card account-profile-facts">
+        <h2>Данные учётной записи</h2>
         <dl className="kv">
           <dt>Телефон</dt><dd>{fmtPhone(me.phone)}</dd>
           <dt>Рейтинг</dt><dd>{me.rating ? `${me.rating.toFixed(2)} · ${me.rating_count} оценок` : 'пока нет оценок'}</dd>
@@ -1265,10 +1302,11 @@ export function Profile() {
           {(me as any).personalFee && <><dt>Ваш сбор</dt><dd>{(me as any).feePct}% — персональные условия</dd></>}
         </dl>
       </div>
-      <form className="stack" onSubmit={async (e) => {
+      <form id="account-profile-info" className="stack account-profile-data" onSubmit={async (e) => {
         e.preventDefault();
         if (await run(() => (patchMe({ name, companyName: company || null, companyInn: inn || null })), 'Сохранено')) reload();
       }}>
+        <h2>Личные данные</h2>
         <Field label="Имя"><input className="field" value={name} onChange={(e) => setName(e.target.value)} /></Field>
         {!me.owner_id && !me.roles.includes('driver') && (
           <>
@@ -1278,8 +1316,8 @@ export function Profile() {
         )}
         <button className="btn" disabled={busy}>Сохранить</button>
       </form>
-      <div className="card stack">
-        <b>Безопасность аккаунта</b>
+      <div id="account-profile-security" className="card stack account-profile-security">
+        <h2>Безопасность аккаунта</h2>
         <button type="button" className="btn ghost" onClick={() => {
           setPasswordOpen(value => !value);
           setPasswordError('');
@@ -1334,15 +1372,15 @@ export function Profile() {
         </form>}
         {passwordSaved && <p role="status">Пароль изменён. Другие сеансы завершены.</p>}
       </div>
-      <div className="card stack">
-        <b>Настройки приложения</b>
+      <div id="account-profile-settings" className="card stack account-profile-settings">
+        <h2>Настройки приложения</h2>
         <label className="row">
           <input type="checkbox" checked={reducedMotion} onChange={e => toggleMotion(e.target.checked)} />
           <span>Уменьшить анимацию</span>
         </label>
         <span className="note">Уменьшает эффекты и движения интерфейса на слабых устройствах.</span>
       </div>
-      <div className="stack">
+      <div className="stack account-profile-navigation">
         {isCustomer && mode !== 'client' && <button className="btn ghost" onClick={() => go('as/client')}>Кабинет клиента</button>}
         {isPerformer && mode !== 'performer' && <button className="btn ghost" onClick={() => go('as/performer')}>Кабинет исполнителя</button>}
 
