@@ -206,6 +206,16 @@ try{
      // fixed floating launcher must never obstruct input fields or CTAs.
      if(width===390 && await page.locator('.trakbot-dock').count())
        throw Error('Floating TrakBot overlaps narrow inner content: '+c.id+'/'+width);
+      if (c.id === 'tow' && width === 390) {
+        const history = page.getByRole('tablist').filter({has:page.getByRole('button', {name:'Все заявки', exact:true})});
+        for (const name of ['По машинам', 'Чёрный список', 'Все заявки']) {
+          const button = history.getByRole('button', {name, exact:true});
+          await button.click();
+          await history.locator('button[aria-pressed="true"]').filter({hasText:name}).waitFor();
+          if (await button.evaluate(el => getComputedStyle(el).backgroundColor) !== 'rgb(169, 76, 24)')
+            throw Error('Unexpected active history color on ' + name);
+        }
+      }
      if(width===390 && c.id==='master'){
        const action=page.locator('main.performer-workspace .internal-role-hero-performer a.btn[href="#/work"]');
        await action.waitFor({state:'visible',timeout:12000});

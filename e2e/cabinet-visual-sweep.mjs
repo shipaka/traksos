@@ -113,16 +113,6 @@ try {
       await verify('inner');
       await page.waitForTimeout(450);
       await verify('inner-stable');
-      if (entry.name === 'tow' && width === 390) {
-        const history = page.getByRole('tablist').filter({has:page.getByRole('button', {name:'Все заявки', exact:true})});
-        for (const name of ['По машинам', 'Чёрный список', 'Все заявки']) {
-          const button = history.getByRole('button', {name, exact:true});
-          await button.click();
-          await history.locator('button[aria-pressed="true"]').filter({hasText:name}).waitFor();
-          if (await button.evaluate(el => getComputedStyle(el).backgroundColor) !== 'rgb(169, 76, 24)')
-            throw Error('Unexpected active history color on ' + name);
-        }
-      }
       // The approved 617 inner page uses its role-safe TrakBot rail action,
       // not the retired fixed 84px assistant over live forms. Test the real
       // click and browser Back path instead of waiting for a hidden launcher.
