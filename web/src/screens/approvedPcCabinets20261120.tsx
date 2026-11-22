@@ -64,8 +64,8 @@ export function ApprovedPcDesk({role,fallback}:{role:ApprovedPCRole;fallback:Rea
   return <AdminDesk/>;
 }
 
-function Heading({title,description,children,artKey,roleIcon}:{title:string;description:string;children?:ReactNode;artKey?:FeatureArtworkKey;roleIcon?:TrakServiceIconKind}){
-  return <header className="approved-pc-heading" data-feature-art={artKey}>
+function Heading({title,description,children,artKey,roleIcon,roleArt}:{title:string;description:string;children?:ReactNode;artKey?:FeatureArtworkKey;roleIcon?:TrakServiceIconKind;roleArt?:ApprovedPCRole}){
+  return <header className="approved-pc-heading" data-feature-art={artKey} data-role-art={roleArt}>
     <div>
       <span className="approved-pc-eyebrow">TRAKSOS · РАБОЧИЙ КАБИНЕТ</span>
       <div className="approved-pc-heading-title-row">
@@ -209,7 +209,7 @@ function CustomerDesk({owner}:{owner:boolean}){
   const selected=active.find((o:any)=>String(o.id)===chosen)||active[0];
   const cars=owner?(fleet.data?.cars||[]):[];
   return <main className="approved-pc approved-pc-client">
-    <Heading title={owner?'Владелец автопарка':'Водитель'} description={owner?'Заявки, ремонт и состояние техники вашего автопарка':'Вся информация о помощи по выбранной заявке, без лишних сервисов'}/>
+    <Heading title={owner?'Владелец автопарка':'Водитель'} roleArt={owner?'owner':'driver'} description={owner?'Заявки, ремонт и состояние техники вашего автопарка':'Вся информация о помощи по выбранной заявке, без лишних сервисов'}/>
     <div className="approved-pc-active-order-nav">
       <div className="approved-pc-order-heading"><span>Активные заявки</span>
         <strong>{orders.data?active.length:'—'}</strong></div>
@@ -392,7 +392,7 @@ function PerformDesk({tow}:{tow:boolean}){
   const selected=[...current,...planned].find((o:any)=>String(o.id)===chosen)||current[0]||planned[0];
   const offers=auctions.data||[];
   return <main className="approved-pc approved-pc-performer">
-    <Heading title={tow?'Эвакуаторщик':'Выездной мастер'} roleIcon={tow?'tow':'master'} description={tow?'Эвакуации, погрузка, доставка и передача автомобиля':'Выезды, техника клиента, этапы работ и расписание'}/>
+    <Heading title={tow?'Эвакуаторщик':'Выездной мастер'} roleArt={tow?'tow':'master'} roleIcon={tow?'tow':'master'} description={tow?'Эвакуации, погрузка, доставка и передача автомобиля':'Выезды, техника клиента, этапы работ и расписание'}/>
     <Tabs items={[[ 'work','Текущая работа · '+(jobs.data?current.length:'—')+'  |  Запланировано · '+(jobs.data?planned.length:'—'),null ],
       ['offers','Новые предложения',auctions.data?offers.length:null]]} active={mode} onChange={(id)=>setMode(id as 'work'|'offers')}/>
     {mode==='offers'?<WorkLayout left={<Pane title="Параметры и доступность">
@@ -524,7 +524,7 @@ function ServiceDesk(){
   const card=(b:any)=><RowItem key={b.id} label={vehicleLabel(b.vehicle)} info={text(b.needName,b.statusName)}
       badge={b.statusName} active={selected?.id===b.id} onClick={()=>setChosen(String(b.id))} v={b.vehicle}/>;
   return <main className="approved-pc approved-pc-service">
-    <Heading title="СТО / рембаза" roleIcon="service" description={data.data?.center?.name||'Входящие обращения, ремонт, ожидание и выдача транспорта'}/>
+    <Heading title="СТО / рембаза" roleArt="service" roleIcon="service" description={data.data?.center?.name||'Входящие обращения, ремонт, ожидание и выдача транспорта'}/>
     <Tabs active={mode} onChange={(id)=>{setMode(id as typeof mode);setChosen('')}} items={[
       ['req','Входящие',g?buckets.req.length:null],['repair','В ремонте',g?buckets.repair.length:null],
       ['ready','К выдаче',g?buckets.ready.length:null],['done','История',g?buckets.done.length:null]]}/>
@@ -588,6 +588,7 @@ function InsuranceDesk({inspection}:{inspection:boolean}){
   const both=me?.roles.includes('insurer')&&me?.roles.includes('inspection_operator');
   return <main className="approved-pc approved-pc-insurance">
     <Heading title={inspection?'Оператор техосмотра':'Страховой партнёр'}
+      roleArt={inspection?'inspection':'insurer'}
       roleIcon={inspection?undefined:'insurer'}
       artKey={inspection?'inspection':'insurance'}
       description={inspection?'Назначенные проверки, результаты осмотра и документы':'Назначенные страховые дела, варианты полисов и документы'}/>
@@ -666,7 +667,7 @@ function ModeratorDesk(){
   const items=source.data?.items||[];
   const selected=items.find((o:any)=>String(o.id)===chosen)||items[0];
   return <main className="approved-pc approved-pc-moderator">
-    <Heading title="Модератор" description="Споры, обращения, проверка партнёров и журнал решений"/>
+    <Heading title="Модератор" roleArt="moderator" description="Споры, обращения, проверка партнёров и журнал решений"/>
     <Tabs active={kind} onChange={id=>{setKind(id as typeof kind);setChosen('')}} items={[
       ['dispute','Споры и жалобы',null],['appeal','Обжалования',null],['review','Отзывы и отметки',null]]}/>
     <div className="approved-pc-subnav"><a href="#/moderation/support">Обращения</a><a href="#/moderation/verify">Проверка партнёров</a>
@@ -698,7 +699,7 @@ function AdminDesk(){
     ['Открытые споры',d?number(d.today?.disputesOpen):'—','#/admin/section/queue'],
     ['В очереди модерации',d?number(d.today?.modOpen):'—','#/admin/section/queue']];
   return <main className="approved-pc approved-pc-admin">
-    <Heading title="Центр управления TrakSOS" description="Операции · Партнёры · Заявки · Проверки · Безопасность"/>
+    <Heading title="Центр управления TrakSOS" roleArt="admin" description="Операции · Партнёры · Заявки · Проверки · Безопасность"/>
     <div className="approved-pc-metrics">{tiles.map(([label,value,href])=><a href={href} key={label}><small>{label}</small><strong>{value}</strong></a>)}</div>
     <WorkLayout left={<><Pane title="Требуют внимания">{!live.data?<LoadingBlock error={live.error} retry={live.reload}/>:alertItems.length?
       alertItems.map((o:any)=><RowItem href={'#/order/'+o.id} key={o.id} label={'№'+text(o.number)} info={text(o.address,statusName(o))}
