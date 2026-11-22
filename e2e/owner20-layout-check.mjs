@@ -13,8 +13,17 @@ try {
   try{
    await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
    const root=page.locator('.owner20-home');await root.waitFor();
-   if(await page.locator('.app > header.top, .desktop-sidebar, .site-footer').count()!==0)
-     throw Error(width+': legacy header/sidebar/footer mounted on approved PC page');
+   if(await page.locator('.app > header.top, .desktop-sidebar').count()!==0)
+     throw Error(width+': legacy header/sidebar mounted on approved PC page');
+   const footer=page.locator('.guest-home-standalone > .site-footer');
+   if(await footer.count()!==1||!await footer.isVisible())
+     throw Error(width+': existing legal/footer block missing beneath final 617 page');
+   if(!await footer.getByText('Маркетплейс выездной помощи грузовому транспорту').count())
+     throw Error(width+': footer heading missing');
+   for(const href of ['#/company','#/offers','#/offer/privacy','#/rules']){
+     if(await footer.locator('a[href="'+href+'"]').count()!==1)
+       throw Error(width+': footer route missing '+href);
+   }
    if(await page.locator('header.owner20-top').count()!==1)
      throw Error(width+': approved header should appear exactly once');
    const cards=await page.locator('.owner20-quick>a').count();
