@@ -6,6 +6,7 @@ import { useLoad, useAction } from '../ui.tsx';
 import { OfferForm } from './search.tsx';
 import { insurancePresentation } from '../insurancePresentation.ts';
 
+import { APPROVED_VISUALS } from '../approvedVisuals.ts';
 import { ApprovedEmptyScene } from '../approvedEmptyScene.tsx';
 import { ApprovedServiceIllustration } from '../approvedServiceIllustration.tsx';
 import { ApprovedOrderTruck } from '../approvedOrderTruck.tsx';
@@ -155,7 +156,7 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
       <span className="and19-role-caption"><NavGlyph glyph="◉" />{isDriver ? 'Водитель автопарка' : 'Клиент · Владелец автопарка'}</span>
       <span className="and19-role-chevron" aria-hidden="true">⌄</span>
     </a>
-    <div className="and19-cover"><h1>Рабочий стол</h1></div>
+    <div className="and19-cover"><img src={APPROVED_VISUALS.workspaceTruck} alt="Утверждённая иллюстрация грузовика на дороге" loading="eager" /><h1>Рабочий стол</h1></div>
     <div className="and19-services" aria-label="Вызвать помощь">
       <a href={disabledServices?.repair ? undefined : '#/sos'} aria-disabled={disabledServices?.repair || undefined}><span className="and19-service-symbol"><NavGlyph glyph="wrench"/></span><span className="and19-service-label">Выездной мастер</span><ApprovedServiceIllustration kind="repair" /></a>
       <a href={disabledServices?.tow ? undefined : '#/new/tow'} aria-disabled={disabledServices?.tow || undefined}><span className="and19-service-symbol"><NavGlyph glyph="tow"/></span><span className="and19-service-label">Эвакуатор</span><ApprovedServiceIllustration kind="tow" /></a>
