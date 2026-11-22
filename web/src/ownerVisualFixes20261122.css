@@ -962,3 +962,33 @@ html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > div:f
     display:block!important;max-width:58%!important;
   }
 }
+
+/* Shared role identifiers in desktop cabinet banners: same shape as guest icons. */
+@media(min-width:900px){
+  html.traksos-browser .approved-pc-heading .approved-pc-heading-title-row{
+    display:flex;align-items:center;gap:9px;
+    min-width:0;max-width:100%;
+  }
+  html.traksos-browser .approved-pc-heading .approved-pc-heading-title-row h1{
+    margin:0!important;min-width:0;
+  }
+  html.traksos-browser .approved-pc-heading .approved-pc-heading-role-icon{
+    display:grid;place-items:center;
+    flex:0 0 35px;width:35px;height:35px;
+    border:1px solid rgba(246,145,72,.52);
+    background-color:rgba(6,28,36,.75);
+    border-radius:10px;color:#ffa86e;
+    box-shadow:0 3px 12px rgba(0,0,0,.26);
+  }
+  html.traksos-browser .approved-pc-heading .approved-pc-heading-role-icon svg{
+    width:25px;height:25px;display:block;
+  }
+}
+@media(min-width:900px) and (max-width:1100px){
+  html.traksos-browser .approved-pc-heading .approved-pc-heading-role-icon{
+    flex-basis:29px;width:29px;height:29px;
+  }
+  html.traksos-browser .approved-pc-heading .approved-pc-heading-role-icon svg{
+    width:21px;height:21px;
+  }
+}
