@@ -679,3 +679,106 @@ html .guest-partner-roles .guest-partner-role.guest-partner-role-service::before
     animation:none!important;
   }
 }
+
+/* Owner 22 Nov: canonical full-bleed feature photographs — one asset family per service. */
+/* No old bitmap atlas, no extra cutout over the photo, no burnt-in words.
+   Desktop/mobile/Android variants come from featureArtwork20261122.tsx;
+   all five key names are stable throughout the project. */
+.guest-app.guest-home .owner20-features .owner20-feature {
+  isolation:isolate!important;
+  position:relative!important;
+  overflow:hidden!important;
+  background:#071b26!important;
+  border-color:#425765!important;
+  box-shadow:inset 0 0 0 1px rgba(176,213,223,.04);
+}
+.guest-app.guest-home .owner20-features .owner20-feature .traksos-feature-art,
+.traksos-feature-art {
+  position:absolute;inset:0;display:block;z-index:0;
+  overflow:hidden;pointer-events:none;
+  border-radius:inherit;
+}
+.guest-app.guest-home .owner20-features .owner20-feature .traksos-feature-art img,
+.traksos-feature-art img {
+  display:block;width:100%;height:100%;
+  object-fit:cover;object-position:right center;
+  max-width:none;filter:none!important;
+}
+.guest-app.guest-home .owner20-features .owner20-feature::before {
+  content:""!important;position:absolute!important;inset:0!important;
+  z-index:1!important;
+  background:linear-gradient(90deg,
+    rgba(3,15,23,.98) 0%,
+    rgba(5,19,28,.96) 24%,
+    rgba(7,22,32,.81) 47%,
+    rgba(9,24,33,.20) 76%,
+    rgba(7,22,31,.05) 100%)!important;
+  opacity:1!important;
+  border:0!important;box-shadow:none!important;
+  transform:none!important;pointer-events:none;
+}
+.guest-app.guest-home .owner20-features .owner20-feature::after {
+  display:none!important;content:none!important;
+}
+.guest-app.guest-home .owner20-features .owner20-feature-illustration {
+  display:none!important;
+}
+.guest-app.guest-home .owner20-features .owner20-feature-title,
+.guest-app.guest-home .owner20-features .owner20-feature p,
+.guest-app.guest-home .owner20-features .owner20-feature-cta {
+  position:relative;z-index:2!important;
+  color:#eff8fb!important;
+  text-shadow:0 2px 8px rgba(0,0,0,.93);
+}
+.guest-app.guest-home .owner20-features .owner20-feature-title {
+  display:flex!important;align-items:flex-start!important;
+  max-width:76%!important;
+  gap:6px!important;line-height:1.17!important;
+  overflow-wrap:anywhere;
+}
+.guest-app.guest-home .owner20-features .owner20-feature-title span {
+  flex:0 0 20px;max-width:20px;
+}
+.guest-app.guest-home .owner20-features .owner20-feature-title svg {
+  width:20px!important;height:20px!important;
+}
+.guest-app.guest-home .owner20-features .owner20-feature p {
+  max-width:66%!important;
+  line-height:1.26!important;
+  overflow-wrap:normal;hyphens:auto;
+  margin-top:8px!important;margin-bottom:30px!important;
+}
+.guest-app.guest-home .owner20-features .owner20-feature-cta {
+  position:absolute!important;left:12px!important;bottom:12px!important;
+  max-width:72%!important;margin:0!important;
+  min-height:26px;display:flex;align-items:center;
+  border-color:rgba(230,246,248,.77)!important;
+  background:rgba(8,23,32,.38)!important;
+  text-shadow:none!important;
+}
+.guest-app.guest-home .owner20-features .owner20-feature:focus-visible {
+  outline:3px solid #ffad79!important;outline-offset:3px!important;
+}
+@media(min-width:900px) and (max-width:1179px){
+  .guest-app.guest-home .owner20-features .owner20-feature {
+    height:155px!important;
+    padding:11px 9px!important;
+  }
+  .guest-app.guest-home .owner20-features .owner20-feature-title{
+    font-size:clamp(11px,1.14vw,14px)!important;
+    max-width:78%!important;
+  }
+  .guest-app.guest-home .owner20-features .owner20-feature p {
+    font-size:10px!important;
+    max-width:72%!important;
+    margin-top:6px!important;
+  }
+  .guest-app.guest-home .owner20-features .owner20-feature-cta{
+    left:9px!important;bottom:9px!important;
+    font-size:10px!important;padding:5px 7px!important;
+    max-width:80%!important;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+ .guest-app.guest-home .owner20-features .traksos-feature-art img {transition:none!important}
+}
