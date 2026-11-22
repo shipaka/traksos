@@ -1,3 +1,4 @@
+import { TrakServiceIcon } from '../trakServiceIcon.tsx';
 import { useEffect, useState } from 'react';
 import { native } from '../native.ts';
 import { post, setToken, connectWs, ApiError } from '../api.ts';
@@ -585,7 +586,8 @@ export function Login({ driver, entry, serviceContext }: {
               <button key={r.id} type="button" className={'opt guest-partner-role guest-partner-role-' + r.id} aria-pressed={role === r.id}
                 aria-label={r.name} aria-describedby={'join-role-hint-' + r.id}
                 onClick={() => setRole(r.id)}>
-                <b>{r.name}</b><small id={'join-role-hint-' + r.id}>{r.hint}</small>
+                <span className="guest-partner-role-label"><TrakServiceIcon kind={r.id}/><b>{r.name}</b></span>
+                <small id={'join-role-hint-' + r.id}>{r.hint}</small>
               </button>
             ))}
             </div>
