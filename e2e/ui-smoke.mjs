@@ -27,7 +27,7 @@ try {
         'The legal footer must not overlap any part of approved 617: '+JSON.stringify(fgeom));
       assert(await page.locator('header.owner20-top').count()===1,
         'Final PC should show exactly one approved header');
-      assert(await page.locator('.owner20-quick>a').count()===4,'Owner 22 Nov: no duplicate ECU, four quick services');
+      assert(await page.locator('.owner20-quick>a').count()===5,'Owner 22 Nov: balanced five quick services');
       assert(await page.locator('.owner20-quick>a').filter({hasText:'ЭБУ'}).count()===0,
         'ECU must appear only in the illustrated specialist card');
       assert(await page.locator('.owner20-features>a').count()===5,'Final PC features row must have 5 links');
@@ -57,6 +57,15 @@ try {
       }));
       assert(crop.length===5 && crop.every(x=>x.w<=112),
         width+'px: caption-bearing atlas region returned to feature cards '+JSON.stringify(crop));
+      const botShortcut=page.locator('.owner20-quick-trakbot');
+      assert(await botShortcut.count()===1,'TrakBot should occupy exactly the fifth quick tile');
+      await botShortcut.click();
+      await page.getByRole('dialog',{name:'TrakBot — личный помощник'}).waitFor();
+      assert(await page.locator('.trakbot-dock-panel').count()===1,
+        'Quick TrakBot entry must open one existing assistant');
+      assert(page.url().endsWith('/#/'),'Quick TrakBot must preserve approved landing route');
+      await page.locator('.trakbot-dock-close').click();
+      assert(await page.locator('.trakbot-dock-panel').count()===0,'Quick TrakBot remained open');
       const bot=page.getByRole('button',{name:'Открыть TrakBot'});
       assert(await bot.isVisible(), 'Final PC TrakBot must be user-opened');
       assert(await bot.locator('.trakbot-mascot-original').count()===1,'Owner-approved truck mascot missing');
@@ -109,7 +118,7 @@ try {
       const widths=await page.evaluate(()=>({client:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));
       assert(widths.scroll<=widths.client+3,'Final PC overflow '+JSON.stringify(widths));
       assert(!errors.length,'Final PC JS errors '+errors.join('; '));
-      console.log('OK: approved Nov20 PC, '+width+'px, TrakBot opt-in, 4+5+4 and zero overflow');
+      console.log('OK: approved Nov20 PC, '+width+'px, TrakBot opt-in, 5+5+4 and zero overflow');
       await context.close();
       continue;
     }
