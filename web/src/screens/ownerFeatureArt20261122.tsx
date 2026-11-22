@@ -104,3 +104,46 @@ export function OwnerFeatureArt({ kind }: { kind: FeatureArtKind }) {
     </>}
   </svg>;
 }
+
+
+/** Companion illustrations for the two community cards; captions stay outside SVG. */
+export function OwnerCommunityArt({ kind }: { kind:'air'|'club' }) {
+  const prefix='owner-community-20261122-'+kind;
+  return <svg viewBox="0 0 180 152" xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id={prefix+'-metal'} x1="0" y1="0" x2="1" y2="1">
+        <stop stopColor="#e6f1f3"/><stop offset=".55" stopColor="#759bab"/><stop offset="1" stopColor="#2a586b"/>
+      </linearGradient>
+      <linearGradient id={prefix+'-warm'} x1="0" y1="0" x2="1" y2="1">
+        <stop stopColor="#ffd095"/><stop offset=".5" stopColor="#f48740"/><stop offset="1" stopColor="#ae3e20"/>
+      </linearGradient>
+      <radialGradient id={prefix+'-haze'}>
+        <stop stopColor="#47bfce" stopOpacity=".36"/><stop offset="1" stopColor="#47bfce" stopOpacity="0"/>
+      </radialGradient>
+    </defs>
+    <ellipse cx="94" cy="100" rx="79" ry="54" fill={`url(#${prefix}-haze)`}/>
+    {kind==='air' ? <>
+      <g fill="none" stroke="#71d9df" strokeLinecap="round">
+        <path d="M63 29q42-35 82 0" strokeWidth="4" opacity=".73"/>
+        <path d="M73 43q31-27 61 0" strokeWidth="4" opacity=".87"/>
+        <path d="M85 55q18-17 36 0" strokeWidth="4"/>
+      </g>
+      <circle cx="103" cy="65" r="7" fill={`url(#${prefix}-warm)`}/>
+      <path d="m103 73-4 44m4-39 19 35m-19-35-17 37" stroke="#d9eaf1" strokeWidth="4" strokeLinecap="round"/>
+      <path d="M24 112h55l12-27h35l26 28v14H24Z" fill="#203e4d" stroke="#b7d6e0" strokeWidth="2"/>
+      <path d="M91 89h30l18 22H83Z" fill="#5c93a4" stroke="#c6e6ec" strokeWidth="2"/>
+      <path d="M94 94h23l12 13H89Z" fill="#113644"/>
+      <path d="M27 116h124" stroke="#ff914c" strokeWidth="3" strokeLinecap="round"/>
+      <circle cx="51" cy="126" r="11" fill="#0c1d28" stroke="#bdd1db" strokeWidth="3"/><circle cx="125" cy="126" r="11" fill="#0c1d28" stroke="#bdd1db" strokeWidth="3"/>
+    </> : <>
+      <path d="M54 24 87 15l22 25-8 35-36 8-21-26Z" fill="#193744" stroke="#6fc0d2" strokeWidth="2.5"/>
+      <path d="M115 38 149 48l6 37-30 24-33-12-6-34Z" fill="#152f3d" stroke="#c6dee4" strokeWidth="2.5"/>
+      <circle cx="82" cy="48" r="17" fill="#2c596c" stroke="#8fe1e7" strokeWidth="2.5"/>
+      <circle cx="128" cy="71" r="17" fill="#244758" stroke="#8fe1e7" strokeWidth="2.5"/>
+      <path d="M58 90q21-17 42 0m8 16q22-18 42 0" fill="none" stroke="#f9a56a" strokeWidth="6" strokeLinecap="round"/>
+      <path d="m50 115 25-14 23 14 20-8 29 18" fill="none" stroke="#bed7e1" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="m73 107 12 8 12-5" fill="none" stroke="#ffb071" strokeWidth="3" strokeLinecap="round"/>
+    </>}
+  </svg>;
+}
