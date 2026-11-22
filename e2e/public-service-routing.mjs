@@ -37,15 +37,17 @@ try {
     const landing=desktop?'.owner20-home':'.public-landing';
     await page.locator(landing).waitFor({state:'visible'});
     const publicGlyphs={};
-    if(desktop){
-      for(const [key,selector] of [
-        ['master','.owner20-quick a[href="#/explore/van"] svg'],
-        ['tow','.owner20-quick a[href="#/explore/tow"] svg'],
-        ['service','.owner20-quick a[href="#/explore/sto"] svg'],
-        ['insurer','.owner20-feature-insurance svg'],
-      ]){
-        publicGlyphs[key]=await page.locator(selector).first().evaluate(el=>el.innerHTML);
-      }
+    const glyphSelectors=desktop?[
+      ['master','.owner20-quick a[href="#/explore/van"] svg'],
+      ['tow','.owner20-quick a[href="#/explore/tow"] svg'],
+      ['service','.owner20-quick a[href="#/explore/sto"] svg'],
+      ['insurer','.owner20-feature-insurance svg'],
+    ]:[
+      ['service','.public-service-sto .public-service-icon svg'],
+      ['insurer','.public-service-insurance .public-service-icon svg'],
+    ];
+    for(const [key,selector] of glyphSelectors){
+      publicGlyphs[key]=await page.locator(selector).first().evaluate(el=>el.innerHTML);
     }
 
     if(desktop){
@@ -168,10 +170,10 @@ try {
       const symbol=btn.locator('.guest-partner-role-label svg');
       check(await symbol.count()===1,
         key+': partner choice lacks canonical vector service symbol');
-      if(desktop) {
+      if(publicGlyphs[key]) {
         const glyph=await symbol.evaluate(el=>el.innerHTML);
         check(glyph===publicGlyphs[key],
-          key+': partner icon no longer matches exact public service pictogram');
+          key+': partner icon no longer matches exact '+(desktop?'PC':'mobile/Android')+' public service pictogram');
       }
       if(width===390) {
         const image=await btn.evaluate(el=>({
